@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
- * kbdअगर.h -- Xen भव keyboard/mouse
+ * kbdif.h -- Xen virtual keyboard/mouse
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a copy
- * of this software and associated करोcumentation files (the "Software"), to
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
  * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modअगरy, merge, publish, distribute, sublicense, and/or
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
  * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to करो so, subject to the following conditions:
+ * furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -24,23 +23,23 @@
  * Copyright (C) 2006 Red Hat, Inc., Markus Armbruster <armbru@redhat.com>
  */
 
-#अगर_अघोषित __XEN_PUBLIC_IO_KBDIF_H__
-#घोषणा __XEN_PUBLIC_IO_KBDIF_H__
+#ifndef __XEN_PUBLIC_IO_KBDIF_H__
+#define __XEN_PUBLIC_IO_KBDIF_H__
 
 /*
  *****************************************************************************
  *                     Feature and Parameter Negotiation
  *****************************************************************************
  *
- * The two halves of a para-भव driver utilize nodes within
+ * The two halves of a para-virtual driver utilize nodes within
  * XenStore to communicate capabilities and to negotiate operating parameters.
- * This section क्रमागतerates these nodes which reside in the respective front and
+ * This section enumerates these nodes which reside in the respective front and
  * backend portions of XenStore, following XenBus convention.
  *
- * All data in XenStore is stored as strings.  Nodes specअगरying numeric
+ * All data in XenStore is stored as strings.  Nodes specifying numeric
  * values are encoded in decimal. Integer value ranges listed below are
- * expressed as fixed sized पूर्णांकeger types capable of storing the conversion
- * of a properly क्रमmated node string, without loss of inक्रमmation.
+ * expressed as fixed sized integer types capable of storing the conversion
+ * of a properly formated node string, without loss of information.
  *
  *****************************************************************************
  *                            Backend XenBus Nodes
@@ -49,38 +48,38 @@
  *---------------------------- Features supported ----------------------------
  *
  * Capable backend advertises supported features by publishing
- * corresponding entries in XenStore and माला_दो 1 as the value of the entry.
+ * corresponding entries in XenStore and puts 1 as the value of the entry.
  * If a feature is not supported then 0 must be set or feature entry omitted.
  *
  * feature-disable-keyboard
- *      Values:         <uपूर्णांक>
+ *      Values:         <uint>
  *
- *      If there is no need to expose a भव keyboard device by the
+ *      If there is no need to expose a virtual keyboard device by the
  *      frontend then this must be set to 1.
  *
- * feature-disable-poपूर्णांकer
- *      Values:         <uपूर्णांक>
+ * feature-disable-pointer
+ *      Values:         <uint>
  *
- *      If there is no need to expose a भव poपूर्णांकer device by the
+ *      If there is no need to expose a virtual pointer device by the
  *      frontend then this must be set to 1.
  *
- * feature-असल-poपूर्णांकer
- *      Values:         <uपूर्णांक>
+ * feature-abs-pointer
+ *      Values:         <uint>
  *
- *      Backends, which support reporting of असलolute coordinates क्रम poपूर्णांकer
+ *      Backends, which support reporting of absolute coordinates for pointer
  *      device should set this to 1.
  *
  * feature-multi-touch
- *      Values:         <uपूर्णांक>
+ *      Values:         <uint>
  *
  *      Backends, which support reporting of multi-touch events
  *      should set this to 1.
  *
- * feature-raw-poपूर्णांकer
- *      Values:        <uपूर्णांक>
+ * feature-raw-pointer
+ *      Values:        <uint>
  *
- *      Backends, which support reporting raw (unscaled) असलolute coordinates
- *      क्रम poपूर्णांकer devices should set this to 1. Raw (unscaled) values have
+ *      Backends, which support reporting raw (unscaled) absolute coordinates
+ *      for pointer devices should set this to 1. Raw (unscaled) values have
  *      a range of [0, 0x7fff].
  *
  *-----------------------  Device Instance Parameters ------------------------
@@ -88,42 +87,42 @@
  * unique-id
  *      Values:         <string>
  *
- *      After device instance initialization it is asचिन्हित a unique ID,
- *      so every instance of the frontend can be identअगरied by the backend
+ *      After device instance initialization it is assigned a unique ID,
+ *      so every instance of the frontend can be identified by the backend
  *      by this ID. This can be UUID or such.
  *
- *------------------------- Poपूर्णांकer Device Parameters ------------------------
+ *------------------------- Pointer Device Parameters ------------------------
  *
  * width
- *      Values:         <uपूर्णांक>
+ *      Values:         <uint>
  *
  *      Maximum X coordinate (width) to be used by the frontend
- *      जबतक reporting input events, pixels, [0; UINT32_MAX].
+ *      while reporting input events, pixels, [0; UINT32_MAX].
  *
  * height
- *      Values:         <uपूर्णांक>
+ *      Values:         <uint>
  *
  *      Maximum Y coordinate (height) to be used by the frontend
- *      जबतक reporting input events, pixels, [0; UINT32_MAX].
+ *      while reporting input events, pixels, [0; UINT32_MAX].
  *
  *----------------------- Multi-touch Device Parameters ----------------------
  *
  * multi-touch-num-contacts
- *      Values:         <uपूर्णांक>
+ *      Values:         <uint>
  *
  *      Number of simultaneous touches reported.
  *
  * multi-touch-width
- *      Values:         <uपूर्णांक>
+ *      Values:         <uint>
  *
  *      Width of the touch area to be used by the frontend
- *      जबतक reporting input events, pixels, [0; UINT32_MAX].
+ *      while reporting input events, pixels, [0; UINT32_MAX].
  *
  * multi-touch-height
- *      Values:         <uपूर्णांक>
+ *      Values:         <uint>
  *
  *      Height of the touch area to be used by the frontend
- *      जबतक reporting input events, pixels, [0; UINT32_MAX].
+ *      while reporting input events, pixels, [0; UINT32_MAX].
  *
  *****************************************************************************
  *                            Frontend XenBus Nodes
@@ -132,45 +131,45 @@
  *------------------------------ Feature request -----------------------------
  *
  * Capable frontend requests features from backend via setting corresponding
- * entries to 1 in XenStore. Requests क्रम features not advertised as supported
+ * entries to 1 in XenStore. Requests for features not advertised as supported
  * by the backend have no effect.
  *
- * request-असल-poपूर्णांकer
- *      Values:         <uपूर्णांक>
+ * request-abs-pointer
+ *      Values:         <uint>
  *
- *      Request backend to report असलolute poपूर्णांकer coordinates
+ *      Request backend to report absolute pointer coordinates
  *      (XENKBD_TYPE_POS) instead of relative ones (XENKBD_TYPE_MOTION).
  *
  * request-multi-touch
- *      Values:         <uपूर्णांक>
+ *      Values:         <uint>
  *
  *      Request backend to report multi-touch events.
  *
- * request-raw-poपूर्णांकer
- *      Values:         <uपूर्णांक>
+ * request-raw-pointer
+ *      Values:         <uint>
  *
- *      Request backend to report raw unscaled असलolute poपूर्णांकer coordinates.
- *      This option is only valid अगर request-असल-poपूर्णांकer is also set.
+ *      Request backend to report raw unscaled absolute pointer coordinates.
+ *      This option is only valid if request-abs-pointer is also set.
  *      Raw unscaled coordinates have the range [0, 0x7fff]
  *
  *----------------------- Request Transport Parameters -----------------------
  *
  * event-channel
- *      Values:         <uपूर्णांक>
+ *      Values:         <uint>
  *
- *      The identअगरier of the Xen event channel used to संकेत activity
+ *      The identifier of the Xen event channel used to signal activity
  *      in the ring buffer.
  *
  * page-gref
- *      Values:         <uपूर्णांक>
+ *      Values:         <uint>
  *
- *      The Xen grant reference granting permission क्रम the backend to map
+ *      The Xen grant reference granting permission for the backend to map
  *      a sole page in a single page sized event ring buffer.
  *
  * page-ref
- *      Values:         <uपूर्णांक>
+ *      Values:         <uint>
  *
- *      OBSOLETE, not recommended क्रम use.
+ *      OBSOLETE, not recommended for use.
  *      PFN of the shared page.
  */
 
@@ -178,57 +177,57 @@
  * EVENT CODES.
  */
 
-#घोषणा XENKBD_TYPE_MOTION		1
-#घोषणा XENKBD_TYPE_RESERVED		2
-#घोषणा XENKBD_TYPE_KEY			3
-#घोषणा XENKBD_TYPE_POS			4
-#घोषणा XENKBD_TYPE_MTOUCH		5
+#define XENKBD_TYPE_MOTION		1
+#define XENKBD_TYPE_RESERVED		2
+#define XENKBD_TYPE_KEY			3
+#define XENKBD_TYPE_POS			4
+#define XENKBD_TYPE_MTOUCH		5
 
 /* Multi-touch event sub-codes */
 
-#घोषणा XENKBD_MT_EV_DOWN		0
-#घोषणा XENKBD_MT_EV_UP			1
-#घोषणा XENKBD_MT_EV_MOTION		2
-#घोषणा XENKBD_MT_EV_SYN		3
-#घोषणा XENKBD_MT_EV_SHAPE		4
-#घोषणा XENKBD_MT_EV_ORIENT		5
+#define XENKBD_MT_EV_DOWN		0
+#define XENKBD_MT_EV_UP			1
+#define XENKBD_MT_EV_MOTION		2
+#define XENKBD_MT_EV_SYN		3
+#define XENKBD_MT_EV_SHAPE		4
+#define XENKBD_MT_EV_ORIENT		5
 
 /*
  * CONSTANTS, XENSTORE FIELD AND PATH NAME STRINGS, HELPERS.
  */
 
-#घोषणा XENKBD_DRIVER_NAME		"vkbd"
+#define XENKBD_DRIVER_NAME		"vkbd"
 
-#घोषणा XENKBD_FIELD_FEAT_DSBL_KEYBRD	"feature-disable-keyboard"
-#घोषणा XENKBD_FIELD_FEAT_DSBL_POINTER	"feature-disable-pointer"
-#घोषणा XENKBD_FIELD_FEAT_ABS_POINTER	"feature-abs-pointer"
-#घोषणा XENKBD_FIELD_FEAT_RAW_POINTER	"feature-raw-pointer"
-#घोषणा XENKBD_FIELD_FEAT_MTOUCH	"feature-multi-touch"
-#घोषणा XENKBD_FIELD_REQ_ABS_POINTER	"request-abs-pointer"
-#घोषणा XENKBD_FIELD_REQ_RAW_POINTER	"request-raw-pointer"
-#घोषणा XENKBD_FIELD_REQ_MTOUCH		"request-multi-touch"
-#घोषणा XENKBD_FIELD_RING_GREF		"page-gref"
-#घोषणा XENKBD_FIELD_EVT_CHANNEL	"event-channel"
-#घोषणा XENKBD_FIELD_WIDTH		"width"
-#घोषणा XENKBD_FIELD_HEIGHT		"height"
-#घोषणा XENKBD_FIELD_MT_WIDTH		"multi-touch-width"
-#घोषणा XENKBD_FIELD_MT_HEIGHT		"multi-touch-height"
-#घोषणा XENKBD_FIELD_MT_NUM_CONTACTS	"multi-touch-num-contacts"
-#घोषणा XENKBD_FIELD_UNIQUE_ID		"unique-id"
+#define XENKBD_FIELD_FEAT_DSBL_KEYBRD	"feature-disable-keyboard"
+#define XENKBD_FIELD_FEAT_DSBL_POINTER	"feature-disable-pointer"
+#define XENKBD_FIELD_FEAT_ABS_POINTER	"feature-abs-pointer"
+#define XENKBD_FIELD_FEAT_RAW_POINTER	"feature-raw-pointer"
+#define XENKBD_FIELD_FEAT_MTOUCH	"feature-multi-touch"
+#define XENKBD_FIELD_REQ_ABS_POINTER	"request-abs-pointer"
+#define XENKBD_FIELD_REQ_RAW_POINTER	"request-raw-pointer"
+#define XENKBD_FIELD_REQ_MTOUCH		"request-multi-touch"
+#define XENKBD_FIELD_RING_GREF		"page-gref"
+#define XENKBD_FIELD_EVT_CHANNEL	"event-channel"
+#define XENKBD_FIELD_WIDTH		"width"
+#define XENKBD_FIELD_HEIGHT		"height"
+#define XENKBD_FIELD_MT_WIDTH		"multi-touch-width"
+#define XENKBD_FIELD_MT_HEIGHT		"multi-touch-height"
+#define XENKBD_FIELD_MT_NUM_CONTACTS	"multi-touch-num-contacts"
+#define XENKBD_FIELD_UNIQUE_ID		"unique-id"
 
-/* OBSOLETE, not recommended क्रम use */
-#घोषणा XENKBD_FIELD_RING_REF		"page-ref"
+/* OBSOLETE, not recommended for use */
+#define XENKBD_FIELD_RING_REF		"page-ref"
 
 /*
  *****************************************************************************
  * Description of the protocol between frontend and backend driver.
  *****************************************************************************
  *
- * The two halves of a Para-भव driver communicate with
+ * The two halves of a Para-virtual driver communicate with
  * each other using a shared page and an event channel.
- * Shared page contains a ring with event काष्ठाures.
+ * Shared page contains a ring with event structures.
  *
- * All reserved fields in the काष्ठाures below must be 0.
+ * All reserved fields in the structures below must be 0.
  *
  *****************************************************************************
  *                           Backend to frontend events
@@ -242,10 +241,10 @@
  * +-----------------+
  * |       type      |
  * +-----------------+
- * type - uपूर्णांक8_t, event code, XENKBD_TYPE_???
+ * type - uint8_t, event code, XENKBD_TYPE_???
  *
  *
- * Poपूर्णांकer relative movement event
+ * Pointer relative movement event
  *         0                1                 2               3        octet
  * +----------------+----------------+----------------+----------------+
  * |  _TYPE_MOTION  |                     reserved                     | 4
@@ -263,20 +262,20 @@
  * |                             reserved                              | 40
  * +----------------+----------------+----------------+----------------+
  *
- * rel_x - पूर्णांक32_t, relative X motion
- * rel_y - पूर्णांक32_t, relative Y motion
- * rel_z - पूर्णांक32_t, relative Z motion (wheel)
+ * rel_x - int32_t, relative X motion
+ * rel_y - int32_t, relative Y motion
+ * rel_z - int32_t, relative Z motion (wheel)
  */
 
-काष्ठा xenkbd_motion अणु
-	uपूर्णांक8_t type;
-	पूर्णांक32_t rel_x;
-	पूर्णांक32_t rel_y;
-	पूर्णांक32_t rel_z;
-पूर्ण;
+struct xenkbd_motion {
+	uint8_t type;
+	int32_t rel_x;
+	int32_t rel_y;
+	int32_t rel_z;
+};
 
 /*
- * Key event (includes poपूर्णांकer buttons)
+ * Key event (includes pointer buttons)
  *         0                1                 2               3        octet
  * +----------------+----------------+----------------+----------------+
  * |  _TYPE_KEY     |     pressed    |            reserved             | 4
@@ -290,25 +289,25 @@
  * |                             reserved                              | 40
  * +----------------+----------------+----------------+----------------+
  *
- * pressed - uपूर्णांक8_t, 1 अगर pressed; 0 otherwise
- * keycode - uपूर्णांक32_t, KEY_* from linux/input.h
+ * pressed - uint8_t, 1 if pressed; 0 otherwise
+ * keycode - uint32_t, KEY_* from linux/input.h
  */
 
-काष्ठा xenkbd_key अणु
-	uपूर्णांक8_t type;
-	uपूर्णांक8_t pressed;
-	uपूर्णांक32_t keycode;
-पूर्ण;
+struct xenkbd_key {
+	uint8_t type;
+	uint8_t pressed;
+	uint32_t keycode;
+};
 
 /*
- * Poपूर्णांकer असलolute position event
+ * Pointer absolute position event
  *         0                1                 2               3        octet
  * +----------------+----------------+----------------+----------------+
  * |  _TYPE_POS     |                     reserved                     | 4
  * +----------------+----------------+----------------+----------------+
- * |                               असल_x                               | 8
+ * |                               abs_x                               | 8
  * +----------------+----------------+----------------+----------------+
- * |                               असल_y                               | 12
+ * |                               abs_y                               | 12
  * +----------------+----------------+----------------+----------------+
  * |                               rel_z                               | 16
  * +----------------+----------------+----------------+----------------+
@@ -319,17 +318,17 @@
  * |                             reserved                              | 40
  * +----------------+----------------+----------------+----------------+
  *
- * असल_x - पूर्णांक32_t, असलolute X position (in FB pixels)
- * असल_y - पूर्णांक32_t, असलolute Y position (in FB pixels)
- * rel_z - पूर्णांक32_t, relative Z motion (wheel)
+ * abs_x - int32_t, absolute X position (in FB pixels)
+ * abs_y - int32_t, absolute Y position (in FB pixels)
+ * rel_z - int32_t, relative Z motion (wheel)
  */
 
-काष्ठा xenkbd_position अणु
-	uपूर्णांक8_t type;
-	पूर्णांक32_t असल_x;
-	पूर्णांक32_t असल_y;
-	पूर्णांक32_t rel_z;
-पूर्ण;
+struct xenkbd_position {
+	uint8_t type;
+	int32_t abs_x;
+	int32_t abs_y;
+	int32_t rel_z;
+};
 
 /*
  * Multi-touch event and its sub-types
@@ -346,23 +345,23 @@
  * event_type - unt8_t, multi-touch event sub-type, XENKBD_MT_EV_???
  * contact_id - unt8_t, ID of the contact
  *
- * Touch पूर्णांकeractions can consist of one or more contacts.
+ * Touch interactions can consist of one or more contacts.
  * For each contact, a series of events is generated, starting
- * with a करोwn event, followed by zero or more motion events,
+ * with a down event, followed by zero or more motion events,
  * and ending with an up event. Events relating to the same
- * contact poपूर्णांक can be identअगरied by the ID of the sequence: contact ID.
+ * contact point can be identified by the ID of the sequence: contact ID.
  * Contact ID may be reused after XENKBD_MT_EV_UP event and
  * is in the [0; XENKBD_FIELD_NUM_CONTACTS - 1] range.
  *
- * For further inक्रमmation please refer to करोcumentation on Wayland [1],
- * Linux [2] and Winकरोws [3] multi-touch support.
+ * For further information please refer to documentation on Wayland [1],
+ * Linux [2] and Windows [3] multi-touch support.
  *
- * [1] https://cgit.मुक्तdesktop.org/wayland/wayland/tree/protocol/wayland.xml
- * [2] https://www.kernel.org/करोc/Documentation/input/multi-touch-protocol.rst
+ * [1] https://cgit.freedesktop.org/wayland/wayland/tree/protocol/wayland.xml
+ * [2] https://www.kernel.org/doc/Documentation/input/multi-touch-protocol.rst
  * [3] https://msdn.microsoft.com/en-us/library/jj151564(v=vs.85).aspx
  *
  *
- * Multi-touch करोwn event - sent when a new touch is made: touch is asचिन्हित
+ * Multi-touch down event - sent when a new touch is made: touch is assigned
  * a unique contact ID, sent with this and consequent events related
  * to this touch.
  *         0                1                 2               3        octet
@@ -371,9 +370,9 @@
  * +----------------+----------------+----------------+----------------+
  * |                             reserved                              | 8
  * +----------------+----------------+----------------+----------------+
- * |                               असल_x                               | 12
+ * |                               abs_x                               | 12
  * +----------------+----------------+----------------+----------------+
- * |                               असल_y                               | 16
+ * |                               abs_y                               | 16
  * +----------------+----------------+----------------+----------------+
  * |                             reserved                              | 20
  * +----------------+----------------+----------------+----------------+
@@ -382,8 +381,8 @@
  * |                             reserved                              | 40
  * +----------------+----------------+----------------+----------------+
  *
- * असल_x - पूर्णांक32_t, असलolute X position, in pixels
- * असल_y - पूर्णांक32_t, असलolute Y position, in pixels
+ * abs_x - int32_t, absolute X position, in pixels
+ * abs_y - int32_t, absolute Y position, in pixels
  *
  * Multi-touch contact release event
  *         0                1                 2               3        octet
@@ -404,9 +403,9 @@
  * +----------------+----------------+----------------+----------------+
  * |                             reserved                              | 8
  * +----------------+----------------+----------------+----------------+
- * |                               असल_x                               | 12
+ * |                               abs_x                               | 12
  * +----------------+----------------+----------------+----------------+
- * |                               असल_y                               | 16
+ * |                               abs_y                               | 16
  * +----------------+----------------+----------------+----------------+
  * |                             reserved                              | 20
  * +----------------+----------------+----------------+----------------+
@@ -415,11 +414,11 @@
  * |                             reserved                              | 40
  * +----------------+----------------+----------------+----------------+
  *
- * असल_x - पूर्णांक32_t, असलolute X position, in pixels,
- * असल_y - पूर्णांक32_t, असलolute Y position, in pixels,
+ * abs_x - int32_t, absolute X position, in pixels,
+ * abs_y - int32_t, absolute Y position, in pixels,
  *
  * Multi-touch input synchronization event - shows end of a set of events
- * which logically beदीर्घ together.
+ * which logically belong together.
  *         0                1                 2               3        octet
  * +----------------+----------------+----------------+----------------+
  * |  _TYPE_MTOUCH  |  _MT_EV_SYN    |   contact_id   |    reserved    | 4
@@ -431,10 +430,10 @@
  * |                             reserved                              | 40
  * +----------------+----------------+----------------+----------------+
  *
- * Multi-touch shape event - touch poपूर्णांक's shape has changed its shape.
+ * Multi-touch shape event - touch point's shape has changed its shape.
  * Shape is approximated by an ellipse through the major and minor axis
- * lengths: major is the दीर्घer diameter of the ellipse and minor is the
- * लघुer one. Center of the ellipse is reported via
+ * lengths: major is the longer diameter of the ellipse and minor is the
+ * shorter one. Center of the ellipse is reported via
  * XENKBD_MT_EV_DOWN/XENKBD_MT_EV_MOTION events.
  *         0                1                 2               3        octet
  * +----------------+----------------+----------------+----------------+
@@ -456,8 +455,8 @@
  * major - unt32_t, length of the major axis, pixels
  * minor - unt32_t, length of the minor axis, pixels
  *
- * Multi-touch orientation event - touch poपूर्णांक's shape has changed
- * its orientation: calculated as a घड़ीwise angle between the major axis
+ * Multi-touch orientation event - touch point's shape has changed
+ * its orientation: calculated as a clockwise angle between the major axis
  * of the ellipse and positive Y axis in degrees, [-180; +180].
  *         0                1                 2               3        octet
  * +----------------+----------------+----------------+----------------+
@@ -474,37 +473,37 @@
  * |                             reserved                              | 40
  * +----------------+----------------+----------------+----------------+
  *
- * orientation - पूर्णांक16_t, घड़ीwise angle of the major axis
+ * orientation - int16_t, clockwise angle of the major axis
  */
 
-काष्ठा xenkbd_mtouch अणु
-	uपूर्णांक8_t type;			/* XENKBD_TYPE_MTOUCH */
-	uपूर्णांक8_t event_type;		/* XENKBD_MT_EV_??? */
-	uपूर्णांक8_t contact_id;
-	uपूर्णांक8_t reserved[5];		/* reserved क्रम the future use */
-	जोड़ अणु
-		काष्ठा अणु
-			पूर्णांक32_t असल_x;	/* असलolute X position, pixels */
-			पूर्णांक32_t असल_y;	/* असलolute Y position, pixels */
-		पूर्ण pos;
-		काष्ठा अणु
-			uपूर्णांक32_t major;	/* length of the major axis, pixels */
-			uपूर्णांक32_t minor;	/* length of the minor axis, pixels */
-		पूर्ण shape;
-		पूर्णांक16_t orientation;	/* घड़ीwise angle of the major axis */
-	पूर्ण u;
-पूर्ण;
+struct xenkbd_mtouch {
+	uint8_t type;			/* XENKBD_TYPE_MTOUCH */
+	uint8_t event_type;		/* XENKBD_MT_EV_??? */
+	uint8_t contact_id;
+	uint8_t reserved[5];		/* reserved for the future use */
+	union {
+		struct {
+			int32_t abs_x;	/* absolute X position, pixels */
+			int32_t abs_y;	/* absolute Y position, pixels */
+		} pos;
+		struct {
+			uint32_t major;	/* length of the major axis, pixels */
+			uint32_t minor;	/* length of the minor axis, pixels */
+		} shape;
+		int16_t orientation;	/* clockwise angle of the major axis */
+	} u;
+};
 
-#घोषणा XENKBD_IN_EVENT_SIZE 40
+#define XENKBD_IN_EVENT_SIZE 40
 
-जोड़ xenkbd_in_event अणु
-	uपूर्णांक8_t type;
-	काष्ठा xenkbd_motion motion;
-	काष्ठा xenkbd_key key;
-	काष्ठा xenkbd_position pos;
-	काष्ठा xenkbd_mtouch mtouch;
-	अक्षर pad[XENKBD_IN_EVENT_SIZE];
-पूर्ण;
+union xenkbd_in_event {
+	uint8_t type;
+	struct xenkbd_motion motion;
+	struct xenkbd_key key;
+	struct xenkbd_position pos;
+	struct xenkbd_mtouch mtouch;
+	char pad[XENKBD_IN_EVENT_SIZE];
+};
 
 /*
  *****************************************************************************
@@ -521,15 +520,15 @@
  * +-----------------+
  * |       type      |
  * +-----------------+
- * type - uपूर्णांक8_t, event code
+ * type - uint8_t, event code
  */
 
-#घोषणा XENKBD_OUT_EVENT_SIZE 40
+#define XENKBD_OUT_EVENT_SIZE 40
 
-जोड़ xenkbd_out_event अणु
-	uपूर्णांक8_t type;
-	अक्षर pad[XENKBD_OUT_EVENT_SIZE];
-पूर्ण;
+union xenkbd_out_event {
+	uint8_t type;
+	char pad[XENKBD_OUT_EVENT_SIZE];
+};
 
 /*
  *****************************************************************************
@@ -537,25 +536,25 @@
  *****************************************************************************
  */
 
-#घोषणा XENKBD_IN_RING_SIZE 2048
-#घोषणा XENKBD_IN_RING_LEN (XENKBD_IN_RING_SIZE / XENKBD_IN_EVENT_SIZE)
-#घोषणा XENKBD_IN_RING_OFFS 1024
-#घोषणा XENKBD_IN_RING(page) \
-	((जोड़ xenkbd_in_event *)((अक्षर *)(page) + XENKBD_IN_RING_OFFS))
-#घोषणा XENKBD_IN_RING_REF(page, idx) \
+#define XENKBD_IN_RING_SIZE 2048
+#define XENKBD_IN_RING_LEN (XENKBD_IN_RING_SIZE / XENKBD_IN_EVENT_SIZE)
+#define XENKBD_IN_RING_OFFS 1024
+#define XENKBD_IN_RING(page) \
+	((union xenkbd_in_event *)((char *)(page) + XENKBD_IN_RING_OFFS))
+#define XENKBD_IN_RING_REF(page, idx) \
 	(XENKBD_IN_RING((page))[(idx) % XENKBD_IN_RING_LEN])
 
-#घोषणा XENKBD_OUT_RING_SIZE 1024
-#घोषणा XENKBD_OUT_RING_LEN (XENKBD_OUT_RING_SIZE / XENKBD_OUT_EVENT_SIZE)
-#घोषणा XENKBD_OUT_RING_OFFS (XENKBD_IN_RING_OFFS + XENKBD_IN_RING_SIZE)
-#घोषणा XENKBD_OUT_RING(page) \
-	((जोड़ xenkbd_out_event *)((अक्षर *)(page) + XENKBD_OUT_RING_OFFS))
-#घोषणा XENKBD_OUT_RING_REF(page, idx) \
+#define XENKBD_OUT_RING_SIZE 1024
+#define XENKBD_OUT_RING_LEN (XENKBD_OUT_RING_SIZE / XENKBD_OUT_EVENT_SIZE)
+#define XENKBD_OUT_RING_OFFS (XENKBD_IN_RING_OFFS + XENKBD_IN_RING_SIZE)
+#define XENKBD_OUT_RING(page) \
+	((union xenkbd_out_event *)((char *)(page) + XENKBD_OUT_RING_OFFS))
+#define XENKBD_OUT_RING_REF(page, idx) \
 	(XENKBD_OUT_RING((page))[(idx) % XENKBD_OUT_RING_LEN])
 
-काष्ठा xenkbd_page अणु
-	uपूर्णांक32_t in_cons, in_prod;
-	uपूर्णांक32_t out_cons, out_prod;
-पूर्ण;
+struct xenkbd_page {
+	uint32_t in_cons, in_prod;
+	uint32_t out_cons, out_prod;
+};
 
-#पूर्ण_अगर /* __XEN_PUBLIC_IO_KBDIF_H__ */
+#endif /* __XEN_PUBLIC_IO_KBDIF_H__ */

@@ -1,939 +1,938 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * linux/fs/seq_file.c
  *
- * helper functions क्रम making synthetic files from sequences of records.
+ * helper functions for making synthetic files from sequences of records.
  * initial implementation -- AV, Oct 2001.
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/cache.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/export.h>
-#समावेश <linux/seq_file.h>
-#समावेश <linux/vदो_स्मृति.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/cred.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/prपूर्णांकk.h>
-#समावेश <linux/string_helpers.h>
-#समावेश <linux/uपन.स>
+#include <linux/cache.h>
+#include <linux/fs.h>
+#include <linux/export.h>
+#include <linux/seq_file.h>
+#include <linux/vmalloc.h>
+#include <linux/slab.h>
+#include <linux/cred.h>
+#include <linux/mm.h>
+#include <linux/printk.h>
+#include <linux/string_helpers.h>
+#include <linux/uio.h>
 
-#समावेश <linux/uaccess.h>
-#समावेश <यंत्र/page.h>
+#include <linux/uaccess.h>
+#include <asm/page.h>
 
-अटल काष्ठा kmem_cache *seq_file_cache __ro_after_init;
+static struct kmem_cache *seq_file_cache __ro_after_init;
 
-अटल व्योम seq_set_overflow(काष्ठा seq_file *m)
-अणु
+static void seq_set_overflow(struct seq_file *m)
+{
 	m->count = m->size;
-पूर्ण
+}
 
-अटल व्योम *seq_buf_alloc(अचिन्हित दीर्घ size)
-अणु
-	वापस kvदो_स्मृति(size, GFP_KERNEL_ACCOUNT);
-पूर्ण
+static void *seq_buf_alloc(unsigned long size)
+{
+	return kvmalloc(size, GFP_KERNEL_ACCOUNT);
+}
 
 /**
- *	seq_खोलो -	initialize sequential file
+ *	seq_open -	initialize sequential file
  *	@file: file we initialize
  *	@op: method table describing the sequence
  *
- *	seq_खोलो() sets @file, associating it with a sequence described
- *	by @op.  @op->start() sets the iterator up and वापसs the first
- *	element of sequence. @op->stop() shuts it करोwn.  @op->next()
- *	वापसs the next element of sequence.  @op->show() prपूर्णांकs element
- *	पूर्णांकo the buffer.  In हाल of error ->start() and ->next() वापस
- *	ERR_PTR(error).  In the end of sequence they वापस %शून्य. ->show()
- *	वापसs 0 in हाल of success and negative number in हाल of error.
+ *	seq_open() sets @file, associating it with a sequence described
+ *	by @op.  @op->start() sets the iterator up and returns the first
+ *	element of sequence. @op->stop() shuts it down.  @op->next()
+ *	returns the next element of sequence.  @op->show() prints element
+ *	into the buffer.  In case of error ->start() and ->next() return
+ *	ERR_PTR(error).  In the end of sequence they return %NULL. ->show()
+ *	returns 0 in case of success and negative number in case of error.
  *	Returning SEQ_SKIP means "discard this element and move on".
- *	Note: seq_खोलो() will allocate a काष्ठा seq_file and store its
- *	poपूर्णांकer in @file->निजी_data. This poपूर्णांकer should not be modअगरied.
+ *	Note: seq_open() will allocate a struct seq_file and store its
+ *	pointer in @file->private_data. This pointer should not be modified.
  */
-पूर्णांक seq_खोलो(काष्ठा file *file, स्थिर काष्ठा seq_operations *op)
-अणु
-	काष्ठा seq_file *p;
+int seq_open(struct file *file, const struct seq_operations *op)
+{
+	struct seq_file *p;
 
-	WARN_ON(file->निजी_data);
+	WARN_ON(file->private_data);
 
 	p = kmem_cache_zalloc(seq_file_cache, GFP_KERNEL);
-	अगर (!p)
-		वापस -ENOMEM;
+	if (!p)
+		return -ENOMEM;
 
-	file->निजी_data = p;
+	file->private_data = p;
 
 	mutex_init(&p->lock);
 	p->op = op;
 
-	// No refcounting: the lअगरeसमय of 'p' is स्थिरrained
-	// to the lअगरeसमय of the file.
+	// No refcounting: the lifetime of 'p' is constrained
+	// to the lifetime of the file.
 	p->file = file;
 
 	/*
-	 * seq_files support lseek() and pपढ़ो().  They करो not implement
-	 * ग_लिखो() at all, but we clear FMODE_PWRITE here क्रम historical
+	 * seq_files support lseek() and pread().  They do not implement
+	 * write() at all, but we clear FMODE_PWRITE here for historical
 	 * reasons.
 	 *
-	 * If a client of seq_files a) implements file.ग_लिखो() and b) wishes to
-	 * support pग_लिखो() then that client will need to implement its own
-	 * file.खोलो() which calls seq_खोलो() and then sets FMODE_PWRITE.
+	 * If a client of seq_files a) implements file.write() and b) wishes to
+	 * support pwrite() then that client will need to implement its own
+	 * file.open() which calls seq_open() and then sets FMODE_PWRITE.
 	 */
 	file->f_mode &= ~FMODE_PWRITE;
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL(seq_खोलो);
+	return 0;
+}
+EXPORT_SYMBOL(seq_open);
 
-अटल पूर्णांक traverse(काष्ठा seq_file *m, loff_t offset)
-अणु
+static int traverse(struct seq_file *m, loff_t offset)
+{
 	loff_t pos = 0;
-	पूर्णांक error = 0;
-	व्योम *p;
+	int error = 0;
+	void *p;
 
 	m->index = 0;
 	m->count = m->from = 0;
-	अगर (!offset)
-		वापस 0;
+	if (!offset)
+		return 0;
 
-	अगर (!m->buf) अणु
+	if (!m->buf) {
 		m->buf = seq_buf_alloc(m->size = PAGE_SIZE);
-		अगर (!m->buf)
-			वापस -ENOMEM;
-	पूर्ण
+		if (!m->buf)
+			return -ENOMEM;
+	}
 	p = m->op->start(m, &m->index);
-	जबतक (p) अणु
+	while (p) {
 		error = PTR_ERR(p);
-		अगर (IS_ERR(p))
-			अवरोध;
+		if (IS_ERR(p))
+			break;
 		error = m->op->show(m, p);
-		अगर (error < 0)
-			अवरोध;
-		अगर (unlikely(error)) अणु
+		if (error < 0)
+			break;
+		if (unlikely(error)) {
 			error = 0;
 			m->count = 0;
-		पूर्ण
-		अगर (seq_has_overflowed(m))
-			जाओ Eoverflow;
+		}
+		if (seq_has_overflowed(m))
+			goto Eoverflow;
 		p = m->op->next(m, p, &m->index);
-		अगर (pos + m->count > offset) अणु
+		if (pos + m->count > offset) {
 			m->from = offset - pos;
 			m->count -= m->from;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		pos += m->count;
 		m->count = 0;
-		अगर (pos == offset)
-			अवरोध;
-	पूर्ण
+		if (pos == offset)
+			break;
+	}
 	m->op->stop(m, p);
-	वापस error;
+	return error;
 
 Eoverflow:
 	m->op->stop(m, p);
-	kvमुक्त(m->buf);
+	kvfree(m->buf);
 	m->count = 0;
 	m->buf = seq_buf_alloc(m->size <<= 1);
-	वापस !m->buf ? -ENOMEM : -EAGAIN;
-पूर्ण
+	return !m->buf ? -ENOMEM : -EAGAIN;
+}
 
 /**
- *	seq_पढ़ो -	->पढ़ो() method क्रम sequential files.
- *	@file: the file to पढ़ो from
- *	@buf: the buffer to पढ़ो to
- *	@size: the maximum number of bytes to पढ़ो
+ *	seq_read -	->read() method for sequential files.
+ *	@file: the file to read from
+ *	@buf: the buffer to read to
+ *	@size: the maximum number of bytes to read
  *	@ppos: the current position in the file
  *
- *	Ready-made ->f_op->पढ़ो()
+ *	Ready-made ->f_op->read()
  */
-sमाप_प्रकार seq_पढ़ो(काष्ठा file *file, अक्षर __user *buf, माप_प्रकार size, loff_t *ppos)
-अणु
-	काष्ठा iovec iov = अणु .iov_base = buf, .iov_len = sizeपूर्ण;
-	काष्ठा kiocb kiocb;
-	काष्ठा iov_iter iter;
-	sमाप_प्रकार ret;
+ssize_t seq_read(struct file *file, char __user *buf, size_t size, loff_t *ppos)
+{
+	struct iovec iov = { .iov_base = buf, .iov_len = size};
+	struct kiocb kiocb;
+	struct iov_iter iter;
+	ssize_t ret;
 
 	init_sync_kiocb(&kiocb, file);
 	iov_iter_init(&iter, READ, &iov, 1, size);
 
 	kiocb.ki_pos = *ppos;
-	ret = seq_पढ़ो_iter(&kiocb, &iter);
+	ret = seq_read_iter(&kiocb, &iter);
 	*ppos = kiocb.ki_pos;
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL(seq_पढ़ो);
+	return ret;
+}
+EXPORT_SYMBOL(seq_read);
 
 /*
- * Ready-made ->f_op->पढ़ो_iter()
+ * Ready-made ->f_op->read_iter()
  */
-sमाप_प्रकार seq_पढ़ो_iter(काष्ठा kiocb *iocb, काष्ठा iov_iter *iter)
-अणु
-	काष्ठा seq_file *m = iocb->ki_filp->निजी_data;
-	माप_प्रकार copied = 0;
-	माप_प्रकार n;
-	व्योम *p;
-	पूर्णांक err = 0;
+ssize_t seq_read_iter(struct kiocb *iocb, struct iov_iter *iter)
+{
+	struct seq_file *m = iocb->ki_filp->private_data;
+	size_t copied = 0;
+	size_t n;
+	void *p;
+	int err = 0;
 
-	अगर (!iov_iter_count(iter))
-		वापस 0;
+	if (!iov_iter_count(iter))
+		return 0;
 
 	mutex_lock(&m->lock);
 
 	/*
-	 * अगर request is to पढ़ो from zero offset, reset iterator to first
-	 * record as it might have been alपढ़ोy advanced by previous requests
+	 * if request is to read from zero offset, reset iterator to first
+	 * record as it might have been already advanced by previous requests
 	 */
-	अगर (iocb->ki_pos == 0) अणु
+	if (iocb->ki_pos == 0) {
 		m->index = 0;
 		m->count = 0;
-	पूर्ण
+	}
 
 	/* Don't assume ki_pos is where we left it */
-	अगर (unlikely(iocb->ki_pos != m->पढ़ो_pos)) अणु
-		जबतक ((err = traverse(m, iocb->ki_pos)) == -EAGAIN)
+	if (unlikely(iocb->ki_pos != m->read_pos)) {
+		while ((err = traverse(m, iocb->ki_pos)) == -EAGAIN)
 			;
-		अगर (err) अणु
+		if (err) {
 			/* With prejudice... */
-			m->पढ़ो_pos = 0;
+			m->read_pos = 0;
 			m->index = 0;
 			m->count = 0;
-			जाओ Done;
-		पूर्ण अन्यथा अणु
-			m->पढ़ो_pos = iocb->ki_pos;
-		पूर्ण
-	पूर्ण
+			goto Done;
+		} else {
+			m->read_pos = iocb->ki_pos;
+		}
+	}
 
-	/* grab buffer अगर we didn't have one */
-	अगर (!m->buf) अणु
+	/* grab buffer if we didn't have one */
+	if (!m->buf) {
 		m->buf = seq_buf_alloc(m->size = PAGE_SIZE);
-		अगर (!m->buf)
-			जाओ Enomem;
-	पूर्ण
+		if (!m->buf)
+			goto Enomem;
+	}
 	// something left in the buffer - copy it out first
-	अगर (m->count) अणु
+	if (m->count) {
 		n = copy_to_iter(m->buf + m->from, m->count, iter);
 		m->count -= n;
 		m->from += n;
 		copied += n;
-		अगर (m->count)	// hadn't managed to copy everything
-			जाओ Done;
-	पूर्ण
+		if (m->count)	// hadn't managed to copy everything
+			goto Done;
+	}
 	// get a non-empty record in the buffer
 	m->from = 0;
 	p = m->op->start(m, &m->index);
-	जबतक (1) अणु
+	while (1) {
 		err = PTR_ERR(p);
-		अगर (!p || IS_ERR(p))	// खातापूर्ण or an error
-			अवरोध;
+		if (!p || IS_ERR(p))	// EOF or an error
+			break;
 		err = m->op->show(m, p);
-		अगर (err < 0)		// hard error
-			अवरोध;
-		अगर (unlikely(err))	// ->show() says "skip it"
+		if (err < 0)		// hard error
+			break;
+		if (unlikely(err))	// ->show() says "skip it"
 			m->count = 0;
-		अगर (unlikely(!m->count)) अणु // empty record
+		if (unlikely(!m->count)) { // empty record
 			p = m->op->next(m, p, &m->index);
-			जारी;
-		पूर्ण
-		अगर (!seq_has_overflowed(m)) // got it
-			जाओ Fill;
+			continue;
+		}
+		if (!seq_has_overflowed(m)) // got it
+			goto Fill;
 		// need a bigger buffer
 		m->op->stop(m, p);
-		kvमुक्त(m->buf);
+		kvfree(m->buf);
 		m->count = 0;
 		m->buf = seq_buf_alloc(m->size <<= 1);
-		अगर (!m->buf)
-			जाओ Enomem;
+		if (!m->buf)
+			goto Enomem;
 		p = m->op->start(m, &m->index);
-	पूर्ण
-	// खातापूर्ण or an error
+	}
+	// EOF or an error
 	m->op->stop(m, p);
 	m->count = 0;
-	जाओ Done;
+	goto Done;
 Fill:
-	// one non-empty record is in the buffer; अगर they want more,
-	// try to fit more in, but in any हाल we need to advance
-	// the iterator once क्रम every record shown.
-	जबतक (1) अणु
-		माप_प्रकार offs = m->count;
+	// one non-empty record is in the buffer; if they want more,
+	// try to fit more in, but in any case we need to advance
+	// the iterator once for every record shown.
+	while (1) {
+		size_t offs = m->count;
 		loff_t pos = m->index;
 
 		p = m->op->next(m, p, &m->index);
-		अगर (pos == m->index) अणु
+		if (pos == m->index) {
 			pr_info_ratelimited("buggy .next function %ps did not update position index\n",
 					    m->op->next);
 			m->index++;
-		पूर्ण
-		अगर (!p || IS_ERR(p))	// no next record क्रम us
-			अवरोध;
-		अगर (m->count >= iov_iter_count(iter))
-			अवरोध;
+		}
+		if (!p || IS_ERR(p))	// no next record for us
+			break;
+		if (m->count >= iov_iter_count(iter))
+			break;
 		err = m->op->show(m, p);
-		अगर (err > 0) अणु		// ->show() says "skip it"
+		if (err > 0) {		// ->show() says "skip it"
 			m->count = offs;
-		पूर्ण अन्यथा अगर (err || seq_has_overflowed(m)) अणु
+		} else if (err || seq_has_overflowed(m)) {
 			m->count = offs;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 	m->op->stop(m, p);
 	n = copy_to_iter(m->buf, m->count, iter);
 	copied += n;
 	m->count -= n;
 	m->from = n;
 Done:
-	अगर (unlikely(!copied)) अणु
+	if (unlikely(!copied)) {
 		copied = m->count ? -EFAULT : err;
-	पूर्ण अन्यथा अणु
+	} else {
 		iocb->ki_pos += copied;
-		m->पढ़ो_pos += copied;
-	पूर्ण
+		m->read_pos += copied;
+	}
 	mutex_unlock(&m->lock);
-	वापस copied;
+	return copied;
 Enomem:
 	err = -ENOMEM;
-	जाओ Done;
-पूर्ण
-EXPORT_SYMBOL(seq_पढ़ो_iter);
+	goto Done;
+}
+EXPORT_SYMBOL(seq_read_iter);
 
 /**
- *	seq_lseek -	->llseek() method क्रम sequential files.
+ *	seq_lseek -	->llseek() method for sequential files.
  *	@file: the file in question
  *	@offset: new position
- *	@whence: 0 क्रम असलolute, 1 क्रम relative position
+ *	@whence: 0 for absolute, 1 for relative position
  *
  *	Ready-made ->f_op->llseek()
  */
-loff_t seq_lseek(काष्ठा file *file, loff_t offset, पूर्णांक whence)
-अणु
-	काष्ठा seq_file *m = file->निजी_data;
+loff_t seq_lseek(struct file *file, loff_t offset, int whence)
+{
+	struct seq_file *m = file->private_data;
 	loff_t retval = -EINVAL;
 
 	mutex_lock(&m->lock);
-	चयन (whence) अणु
-	हाल प्रस्तुत_से:
+	switch (whence) {
+	case SEEK_CUR:
 		offset += file->f_pos;
 		fallthrough;
-	हाल शुरू_से:
-		अगर (offset < 0)
-			अवरोध;
+	case SEEK_SET:
+		if (offset < 0)
+			break;
 		retval = offset;
-		अगर (offset != m->पढ़ो_pos) अणु
-			जबतक ((retval = traverse(m, offset)) == -EAGAIN)
+		if (offset != m->read_pos) {
+			while ((retval = traverse(m, offset)) == -EAGAIN)
 				;
-			अगर (retval) अणु
+			if (retval) {
 				/* with extreme prejudice... */
 				file->f_pos = 0;
-				m->पढ़ो_pos = 0;
+				m->read_pos = 0;
 				m->index = 0;
 				m->count = 0;
-			पूर्ण अन्यथा अणु
-				m->पढ़ो_pos = offset;
+			} else {
+				m->read_pos = offset;
 				retval = file->f_pos = offset;
-			पूर्ण
-		पूर्ण अन्यथा अणु
+			}
+		} else {
 			file->f_pos = offset;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	mutex_unlock(&m->lock);
-	वापस retval;
-पूर्ण
+	return retval;
+}
 EXPORT_SYMBOL(seq_lseek);
 
 /**
- *	seq_release -	मुक्त the काष्ठाures associated with sequential file.
+ *	seq_release -	free the structures associated with sequential file.
  *	@file: file in question
  *	@inode: its inode
  *
- *	Frees the काष्ठाures associated with sequential file; can be used
- *	as ->f_op->release() अगर you करोn't have निजी data to destroy.
+ *	Frees the structures associated with sequential file; can be used
+ *	as ->f_op->release() if you don't have private data to destroy.
  */
-पूर्णांक seq_release(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा seq_file *m = file->निजी_data;
-	kvमुक्त(m->buf);
-	kmem_cache_मुक्त(seq_file_cache, m);
-	वापस 0;
-पूर्ण
+int seq_release(struct inode *inode, struct file *file)
+{
+	struct seq_file *m = file->private_data;
+	kvfree(m->buf);
+	kmem_cache_free(seq_file_cache, m);
+	return 0;
+}
 EXPORT_SYMBOL(seq_release);
 
 /**
- *	seq_escape -	prपूर्णांक string पूर्णांकo buffer, escaping some अक्षरacters
+ *	seq_escape -	print string into buffer, escaping some characters
  *	@m:	target buffer
  *	@s:	string
- *	@esc:	set of अक्षरacters that need escaping
+ *	@esc:	set of characters that need escaping
  *
- *	Puts string पूर्णांकo buffer, replacing each occurrence of अक्षरacter from
+ *	Puts string into buffer, replacing each occurrence of character from
  *	@esc with usual octal escape.
- *	Use seq_has_overflowed() to check क्रम errors.
+ *	Use seq_has_overflowed() to check for errors.
  */
-व्योम seq_escape(काष्ठा seq_file *m, स्थिर अक्षर *s, स्थिर अक्षर *esc)
-अणु
-	अक्षर *buf;
-	माप_प्रकार size = seq_get_buf(m, &buf);
-	पूर्णांक ret;
+void seq_escape(struct seq_file *m, const char *s, const char *esc)
+{
+	char *buf;
+	size_t size = seq_get_buf(m, &buf);
+	int ret;
 
 	ret = string_escape_str(s, buf, size, ESCAPE_OCTAL, esc);
 	seq_commit(m, ret < size ? ret : -1);
-पूर्ण
+}
 EXPORT_SYMBOL(seq_escape);
 
-व्योम seq_escape_mem_ascii(काष्ठा seq_file *m, स्थिर अक्षर *src, माप_प्रकार isz)
-अणु
-	अक्षर *buf;
-	माप_प्रकार size = seq_get_buf(m, &buf);
-	पूर्णांक ret;
+void seq_escape_mem_ascii(struct seq_file *m, const char *src, size_t isz)
+{
+	char *buf;
+	size_t size = seq_get_buf(m, &buf);
+	int ret;
 
 	ret = string_escape_mem_ascii(src, isz, buf, size);
 	seq_commit(m, ret < size ? ret : -1);
-पूर्ण
+}
 EXPORT_SYMBOL(seq_escape_mem_ascii);
 
-व्योम seq_भ_लिखो(काष्ठा seq_file *m, स्थिर अक्षर *f, बहु_सूची args)
-अणु
-	पूर्णांक len;
+void seq_vprintf(struct seq_file *m, const char *f, va_list args)
+{
+	int len;
 
-	अगर (m->count < m->size) अणु
-		len = vsnम_लिखो(m->buf + m->count, m->size - m->count, f, args);
-		अगर (m->count + len < m->size) अणु
+	if (m->count < m->size) {
+		len = vsnprintf(m->buf + m->count, m->size - m->count, f, args);
+		if (m->count + len < m->size) {
 			m->count += len;
-			वापस;
-		पूर्ण
-	पूर्ण
+			return;
+		}
+	}
 	seq_set_overflow(m);
-पूर्ण
-EXPORT_SYMBOL(seq_भ_लिखो);
+}
+EXPORT_SYMBOL(seq_vprintf);
 
-व्योम seq_म_लिखो(काष्ठा seq_file *m, स्थिर अक्षर *f, ...)
-अणु
-	बहु_सूची args;
+void seq_printf(struct seq_file *m, const char *f, ...)
+{
+	va_list args;
 
-	बहु_शुरू(args, f);
-	seq_भ_लिखो(m, f, args);
-	बहु_पूर्ण(args);
-पूर्ण
-EXPORT_SYMBOL(seq_म_लिखो);
+	va_start(args, f);
+	seq_vprintf(m, f, args);
+	va_end(args);
+}
+EXPORT_SYMBOL(seq_printf);
 
-#अगर_घोषित CONFIG_BINARY_PRINTF
-व्योम seq_bम_लिखो(काष्ठा seq_file *m, स्थिर अक्षर *f, स्थिर u32 *binary)
-अणु
-	पूर्णांक len;
+#ifdef CONFIG_BINARY_PRINTF
+void seq_bprintf(struct seq_file *m, const char *f, const u32 *binary)
+{
+	int len;
 
-	अगर (m->count < m->size) अणु
-		len = bstr_म_लिखो(m->buf + m->count, m->size - m->count, f,
+	if (m->count < m->size) {
+		len = bstr_printf(m->buf + m->count, m->size - m->count, f,
 				  binary);
-		अगर (m->count + len < m->size) अणु
+		if (m->count + len < m->size) {
 			m->count += len;
-			वापस;
-		पूर्ण
-	पूर्ण
+			return;
+		}
+	}
 	seq_set_overflow(m);
-पूर्ण
-EXPORT_SYMBOL(seq_bम_लिखो);
-#पूर्ण_अगर /* CONFIG_BINARY_PRINTF */
+}
+EXPORT_SYMBOL(seq_bprintf);
+#endif /* CONFIG_BINARY_PRINTF */
 
 /**
  *	mangle_path -	mangle and copy path to buffer beginning
  *	@s: buffer start
  *	@p: beginning of path in above buffer
- *	@esc: set of अक्षरacters that need escaping
+ *	@esc: set of characters that need escaping
  *
- *      Copy the path from @p to @s, replacing each occurrence of अक्षरacter from
+ *      Copy the path from @p to @s, replacing each occurrence of character from
  *      @esc with usual octal escape.
- *      Returns poपूर्णांकer past last written अक्षरacter in @s, or शून्य in हाल of
+ *      Returns pointer past last written character in @s, or NULL in case of
  *      failure.
  */
-अक्षर *mangle_path(अक्षर *s, स्थिर अक्षर *p, स्थिर अक्षर *esc)
-अणु
-	जबतक (s <= p) अणु
-		अक्षर c = *p++;
-		अगर (!c) अणु
-			वापस s;
-		पूर्ण अन्यथा अगर (!म_अक्षर(esc, c)) अणु
+char *mangle_path(char *s, const char *p, const char *esc)
+{
+	while (s <= p) {
+		char c = *p++;
+		if (!c) {
+			return s;
+		} else if (!strchr(esc, c)) {
 			*s++ = c;
-		पूर्ण अन्यथा अगर (s + 4 > p) अणु
-			अवरोध;
-		पूर्ण अन्यथा अणु
+		} else if (s + 4 > p) {
+			break;
+		} else {
 			*s++ = '\\';
 			*s++ = '0' + ((c & 0300) >> 6);
 			*s++ = '0' + ((c & 070) >> 3);
 			*s++ = '0' + (c & 07);
-		पूर्ण
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+		}
+	}
+	return NULL;
+}
 EXPORT_SYMBOL(mangle_path);
 
 /**
- * seq_path - seq_file पूर्णांकerface to prपूर्णांक a pathname
+ * seq_path - seq_file interface to print a pathname
  * @m: the seq_file handle
- * @path: the काष्ठा path to prपूर्णांक
- * @esc: set of अक्षरacters to escape in the output
+ * @path: the struct path to print
+ * @esc: set of characters to escape in the output
  *
- * वापस the असलolute path of 'path', as represented by the
+ * return the absolute path of 'path', as represented by the
  * dentry / mnt pair in the path parameter.
  */
-पूर्णांक seq_path(काष्ठा seq_file *m, स्थिर काष्ठा path *path, स्थिर अक्षर *esc)
-अणु
-	अक्षर *buf;
-	माप_प्रकार size = seq_get_buf(m, &buf);
-	पूर्णांक res = -1;
+int seq_path(struct seq_file *m, const struct path *path, const char *esc)
+{
+	char *buf;
+	size_t size = seq_get_buf(m, &buf);
+	int res = -1;
 
-	अगर (size) अणु
-		अक्षर *p = d_path(path, buf, size);
-		अगर (!IS_ERR(p)) अणु
-			अक्षर *end = mangle_path(buf, p, esc);
-			अगर (end)
+	if (size) {
+		char *p = d_path(path, buf, size);
+		if (!IS_ERR(p)) {
+			char *end = mangle_path(buf, p, esc);
+			if (end)
 				res = end - buf;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	seq_commit(m, res);
 
-	वापस res;
-पूर्ण
+	return res;
+}
 EXPORT_SYMBOL(seq_path);
 
 /**
- * seq_file_path - seq_file पूर्णांकerface to prपूर्णांक a pathname of a file
+ * seq_file_path - seq_file interface to print a pathname of a file
  * @m: the seq_file handle
- * @file: the काष्ठा file to prपूर्णांक
- * @esc: set of अक्षरacters to escape in the output
+ * @file: the struct file to print
+ * @esc: set of characters to escape in the output
  *
- * वापस the असलolute path to the file.
+ * return the absolute path to the file.
  */
-पूर्णांक seq_file_path(काष्ठा seq_file *m, काष्ठा file *file, स्थिर अक्षर *esc)
-अणु
-	वापस seq_path(m, &file->f_path, esc);
-पूर्ण
+int seq_file_path(struct seq_file *m, struct file *file, const char *esc)
+{
+	return seq_path(m, &file->f_path, esc);
+}
 EXPORT_SYMBOL(seq_file_path);
 
 /*
  * Same as seq_path, but relative to supplied root.
  */
-पूर्णांक seq_path_root(काष्ठा seq_file *m, स्थिर काष्ठा path *path,
-		  स्थिर काष्ठा path *root, स्थिर अक्षर *esc)
-अणु
-	अक्षर *buf;
-	माप_प्रकार size = seq_get_buf(m, &buf);
-	पूर्णांक res = -ENAMETOOLONG;
+int seq_path_root(struct seq_file *m, const struct path *path,
+		  const struct path *root, const char *esc)
+{
+	char *buf;
+	size_t size = seq_get_buf(m, &buf);
+	int res = -ENAMETOOLONG;
 
-	अगर (size) अणु
-		अक्षर *p;
+	if (size) {
+		char *p;
 
 		p = __d_path(path, root, buf, size);
-		अगर (!p)
-			वापस SEQ_SKIP;
+		if (!p)
+			return SEQ_SKIP;
 		res = PTR_ERR(p);
-		अगर (!IS_ERR(p)) अणु
-			अक्षर *end = mangle_path(buf, p, esc);
-			अगर (end)
+		if (!IS_ERR(p)) {
+			char *end = mangle_path(buf, p, esc);
+			if (end)
 				res = end - buf;
-			अन्यथा
+			else
 				res = -ENAMETOOLONG;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	seq_commit(m, res);
 
-	वापस res < 0 && res != -ENAMETOOLONG ? res : 0;
-पूर्ण
+	return res < 0 && res != -ENAMETOOLONG ? res : 0;
+}
 
 /*
- * वापसs the path of the 'dentry' from the root of its fileप्रणाली.
+ * returns the path of the 'dentry' from the root of its filesystem.
  */
-पूर्णांक seq_dentry(काष्ठा seq_file *m, काष्ठा dentry *dentry, स्थिर अक्षर *esc)
-अणु
-	अक्षर *buf;
-	माप_प्रकार size = seq_get_buf(m, &buf);
-	पूर्णांक res = -1;
+int seq_dentry(struct seq_file *m, struct dentry *dentry, const char *esc)
+{
+	char *buf;
+	size_t size = seq_get_buf(m, &buf);
+	int res = -1;
 
-	अगर (size) अणु
-		अक्षर *p = dentry_path(dentry, buf, size);
-		अगर (!IS_ERR(p)) अणु
-			अक्षर *end = mangle_path(buf, p, esc);
-			अगर (end)
+	if (size) {
+		char *p = dentry_path(dentry, buf, size);
+		if (!IS_ERR(p)) {
+			char *end = mangle_path(buf, p, esc);
+			if (end)
 				res = end - buf;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	seq_commit(m, res);
 
-	वापस res;
-पूर्ण
+	return res;
+}
 EXPORT_SYMBOL(seq_dentry);
 
-अटल व्योम *single_start(काष्ठा seq_file *p, loff_t *pos)
-अणु
-	वापस शून्य + (*pos == 0);
-पूर्ण
+static void *single_start(struct seq_file *p, loff_t *pos)
+{
+	return NULL + (*pos == 0);
+}
 
-अटल व्योम *single_next(काष्ठा seq_file *p, व्योम *v, loff_t *pos)
-अणु
+static void *single_next(struct seq_file *p, void *v, loff_t *pos)
+{
 	++*pos;
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल व्योम single_stop(काष्ठा seq_file *p, व्योम *v)
-अणु
-पूर्ण
+static void single_stop(struct seq_file *p, void *v)
+{
+}
 
-पूर्णांक single_खोलो(काष्ठा file *file, पूर्णांक (*show)(काष्ठा seq_file *, व्योम *),
-		व्योम *data)
-अणु
-	काष्ठा seq_operations *op = kदो_स्मृति(माप(*op), GFP_KERNEL_ACCOUNT);
-	पूर्णांक res = -ENOMEM;
+int single_open(struct file *file, int (*show)(struct seq_file *, void *),
+		void *data)
+{
+	struct seq_operations *op = kmalloc(sizeof(*op), GFP_KERNEL_ACCOUNT);
+	int res = -ENOMEM;
 
-	अगर (op) अणु
+	if (op) {
 		op->start = single_start;
 		op->next = single_next;
 		op->stop = single_stop;
 		op->show = show;
-		res = seq_खोलो(file, op);
-		अगर (!res)
-			((काष्ठा seq_file *)file->निजी_data)->निजी = data;
-		अन्यथा
-			kमुक्त(op);
-	पूर्ण
-	वापस res;
-पूर्ण
-EXPORT_SYMBOL(single_खोलो);
+		res = seq_open(file, op);
+		if (!res)
+			((struct seq_file *)file->private_data)->private = data;
+		else
+			kfree(op);
+	}
+	return res;
+}
+EXPORT_SYMBOL(single_open);
 
-पूर्णांक single_खोलो_size(काष्ठा file *file, पूर्णांक (*show)(काष्ठा seq_file *, व्योम *),
-		व्योम *data, माप_प्रकार size)
-अणु
-	अक्षर *buf = seq_buf_alloc(size);
-	पूर्णांक ret;
-	अगर (!buf)
-		वापस -ENOMEM;
-	ret = single_खोलो(file, show, data);
-	अगर (ret) अणु
-		kvमुक्त(buf);
-		वापस ret;
-	पूर्ण
-	((काष्ठा seq_file *)file->निजी_data)->buf = buf;
-	((काष्ठा seq_file *)file->निजी_data)->size = size;
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL(single_खोलो_size);
+int single_open_size(struct file *file, int (*show)(struct seq_file *, void *),
+		void *data, size_t size)
+{
+	char *buf = seq_buf_alloc(size);
+	int ret;
+	if (!buf)
+		return -ENOMEM;
+	ret = single_open(file, show, data);
+	if (ret) {
+		kvfree(buf);
+		return ret;
+	}
+	((struct seq_file *)file->private_data)->buf = buf;
+	((struct seq_file *)file->private_data)->size = size;
+	return 0;
+}
+EXPORT_SYMBOL(single_open_size);
 
-पूर्णांक single_release(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	स्थिर काष्ठा seq_operations *op = ((काष्ठा seq_file *)file->निजी_data)->op;
-	पूर्णांक res = seq_release(inode, file);
-	kमुक्त(op);
-	वापस res;
-पूर्ण
+int single_release(struct inode *inode, struct file *file)
+{
+	const struct seq_operations *op = ((struct seq_file *)file->private_data)->op;
+	int res = seq_release(inode, file);
+	kfree(op);
+	return res;
+}
 EXPORT_SYMBOL(single_release);
 
-पूर्णांक seq_release_निजी(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा seq_file *seq = file->निजी_data;
+int seq_release_private(struct inode *inode, struct file *file)
+{
+	struct seq_file *seq = file->private_data;
 
-	kमुक्त(seq->निजी);
-	seq->निजी = शून्य;
-	वापस seq_release(inode, file);
-पूर्ण
-EXPORT_SYMBOL(seq_release_निजी);
+	kfree(seq->private);
+	seq->private = NULL;
+	return seq_release(inode, file);
+}
+EXPORT_SYMBOL(seq_release_private);
 
-व्योम *__seq_खोलो_निजी(काष्ठा file *f, स्थिर काष्ठा seq_operations *ops,
-		पूर्णांक psize)
-अणु
-	पूर्णांक rc;
-	व्योम *निजी;
-	काष्ठा seq_file *seq;
+void *__seq_open_private(struct file *f, const struct seq_operations *ops,
+		int psize)
+{
+	int rc;
+	void *private;
+	struct seq_file *seq;
 
-	निजी = kzalloc(psize, GFP_KERNEL_ACCOUNT);
-	अगर (निजी == शून्य)
-		जाओ out;
+	private = kzalloc(psize, GFP_KERNEL_ACCOUNT);
+	if (private == NULL)
+		goto out;
 
-	rc = seq_खोलो(f, ops);
-	अगर (rc < 0)
-		जाओ out_मुक्त;
+	rc = seq_open(f, ops);
+	if (rc < 0)
+		goto out_free;
 
-	seq = f->निजी_data;
-	seq->निजी = निजी;
-	वापस निजी;
+	seq = f->private_data;
+	seq->private = private;
+	return private;
 
-out_मुक्त:
-	kमुक्त(निजी);
+out_free:
+	kfree(private);
 out:
-	वापस शून्य;
-पूर्ण
-EXPORT_SYMBOL(__seq_खोलो_निजी);
+	return NULL;
+}
+EXPORT_SYMBOL(__seq_open_private);
 
-पूर्णांक seq_खोलो_निजी(काष्ठा file *filp, स्थिर काष्ठा seq_operations *ops,
-		पूर्णांक psize)
-अणु
-	वापस __seq_खोलो_निजी(filp, ops, psize) ? 0 : -ENOMEM;
-पूर्ण
-EXPORT_SYMBOL(seq_खोलो_निजी);
+int seq_open_private(struct file *filp, const struct seq_operations *ops,
+		int psize)
+{
+	return __seq_open_private(filp, ops, psize) ? 0 : -ENOMEM;
+}
+EXPORT_SYMBOL(seq_open_private);
 
-व्योम seq_अ_दो(काष्ठा seq_file *m, अक्षर c)
-अणु
-	अगर (m->count >= m->size)
-		वापस;
+void seq_putc(struct seq_file *m, char c)
+{
+	if (m->count >= m->size)
+		return;
 
 	m->buf[m->count++] = c;
-पूर्ण
-EXPORT_SYMBOL(seq_अ_दो);
+}
+EXPORT_SYMBOL(seq_putc);
 
-व्योम seq_माला_दो(काष्ठा seq_file *m, स्थिर अक्षर *s)
-अणु
-	पूर्णांक len = म_माप(s);
+void seq_puts(struct seq_file *m, const char *s)
+{
+	int len = strlen(s);
 
-	अगर (m->count + len >= m->size) अणु
+	if (m->count + len >= m->size) {
 		seq_set_overflow(m);
-		वापस;
-	पूर्ण
-	स_नकल(m->buf + m->count, s, len);
+		return;
+	}
+	memcpy(m->buf + m->count, s, len);
 	m->count += len;
-पूर्ण
-EXPORT_SYMBOL(seq_माला_दो);
+}
+EXPORT_SYMBOL(seq_puts);
 
 /**
- * seq_put_decimal_ull_width - A helper routine क्रम putting decimal numbers
- * 			       without rich क्रमmat of म_लिखो().
+ * seq_put_decimal_ull_width - A helper routine for putting decimal numbers
+ * 			       without rich format of printf().
  * only 'unsigned long long' is supported.
- * @m: seq_file identअगरying the buffer to which data should be written
- * @delimiter: a string which is prपूर्णांकed beक्रमe the number
+ * @m: seq_file identifying the buffer to which data should be written
+ * @delimiter: a string which is printed before the number
  * @num: the number
  * @width: a minimum field width
  *
- * This routine will put म_माप(delimiter) + number पूर्णांकo seq_filed.
+ * This routine will put strlen(delimiter) + number into seq_filed.
  * This routine is very quick when you show lots of numbers.
- * In usual हालs, it will be better to use seq_म_लिखो(). It's easier to पढ़ो.
+ * In usual cases, it will be better to use seq_printf(). It's easier to read.
  */
-व्योम seq_put_decimal_ull_width(काष्ठा seq_file *m, स्थिर अक्षर *delimiter,
-			 अचिन्हित दीर्घ दीर्घ num, अचिन्हित पूर्णांक width)
-अणु
-	पूर्णांक len;
+void seq_put_decimal_ull_width(struct seq_file *m, const char *delimiter,
+			 unsigned long long num, unsigned int width)
+{
+	int len;
 
-	अगर (m->count + 2 >= m->size) /* we'll ग_लिखो 2 bytes at least */
-		जाओ overflow;
+	if (m->count + 2 >= m->size) /* we'll write 2 bytes at least */
+		goto overflow;
 
-	अगर (delimiter && delimiter[0]) अणु
-		अगर (delimiter[1] == 0)
-			seq_अ_दो(m, delimiter[0]);
-		अन्यथा
-			seq_माला_दो(m, delimiter);
-	पूर्ण
+	if (delimiter && delimiter[0]) {
+		if (delimiter[1] == 0)
+			seq_putc(m, delimiter[0]);
+		else
+			seq_puts(m, delimiter);
+	}
 
-	अगर (!width)
+	if (!width)
 		width = 1;
 
-	अगर (m->count + width >= m->size)
-		जाओ overflow;
+	if (m->count + width >= m->size)
+		goto overflow;
 
 	len = num_to_str(m->buf + m->count, m->size - m->count, num, width);
-	अगर (!len)
-		जाओ overflow;
+	if (!len)
+		goto overflow;
 
 	m->count += len;
-	वापस;
+	return;
 
 overflow:
 	seq_set_overflow(m);
-पूर्ण
+}
 
-व्योम seq_put_decimal_ull(काष्ठा seq_file *m, स्थिर अक्षर *delimiter,
-			 अचिन्हित दीर्घ दीर्घ num)
-अणु
-	वापस seq_put_decimal_ull_width(m, delimiter, num, 0);
-पूर्ण
+void seq_put_decimal_ull(struct seq_file *m, const char *delimiter,
+			 unsigned long long num)
+{
+	return seq_put_decimal_ull_width(m, delimiter, num, 0);
+}
 EXPORT_SYMBOL(seq_put_decimal_ull);
 
 /**
  * seq_put_hex_ll - put a number in hexadecimal notation
- * @m: seq_file identअगरying the buffer to which data should be written
- * @delimiter: a string which is prपूर्णांकed beक्रमe the number
+ * @m: seq_file identifying the buffer to which data should be written
+ * @delimiter: a string which is printed before the number
  * @v: the number
  * @width: a minimum field width
  *
- * seq_put_hex_ll(m, "", v, 8) is equal to seq_म_लिखो(m, "%08llx", v)
+ * seq_put_hex_ll(m, "", v, 8) is equal to seq_printf(m, "%08llx", v)
  *
  * This routine is very quick when you show lots of numbers.
- * In usual हालs, it will be better to use seq_म_लिखो(). It's easier to पढ़ो.
+ * In usual cases, it will be better to use seq_printf(). It's easier to read.
  */
-व्योम seq_put_hex_ll(काष्ठा seq_file *m, स्थिर अक्षर *delimiter,
-				अचिन्हित दीर्घ दीर्घ v, अचिन्हित पूर्णांक width)
-अणु
-	अचिन्हित पूर्णांक len;
-	पूर्णांक i;
+void seq_put_hex_ll(struct seq_file *m, const char *delimiter,
+				unsigned long long v, unsigned int width)
+{
+	unsigned int len;
+	int i;
 
-	अगर (delimiter && delimiter[0]) अणु
-		अगर (delimiter[1] == 0)
-			seq_अ_दो(m, delimiter[0]);
-		अन्यथा
-			seq_माला_दो(m, delimiter);
-	पूर्ण
+	if (delimiter && delimiter[0]) {
+		if (delimiter[1] == 0)
+			seq_putc(m, delimiter[0]);
+		else
+			seq_puts(m, delimiter);
+	}
 
 	/* If x is 0, the result of __builtin_clzll is undefined */
-	अगर (v == 0)
+	if (v == 0)
 		len = 1;
-	अन्यथा
-		len = (माप(v) * 8 - __builtin_clzll(v) + 3) / 4;
+	else
+		len = (sizeof(v) * 8 - __builtin_clzll(v) + 3) / 4;
 
-	अगर (len < width)
+	if (len < width)
 		len = width;
 
-	अगर (m->count + len > m->size) अणु
+	if (m->count + len > m->size) {
 		seq_set_overflow(m);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	क्रम (i = len - 1; i >= 0; i--) अणु
+	for (i = len - 1; i >= 0; i--) {
 		m->buf[m->count + i] = hex_asc[0xf & v];
 		v = v >> 4;
-	पूर्ण
+	}
 	m->count += len;
-पूर्ण
+}
 
-व्योम seq_put_decimal_ll(काष्ठा seq_file *m, स्थिर अक्षर *delimiter, दीर्घ दीर्घ num)
-अणु
-	पूर्णांक len;
+void seq_put_decimal_ll(struct seq_file *m, const char *delimiter, long long num)
+{
+	int len;
 
-	अगर (m->count + 3 >= m->size) /* we'll ग_लिखो 2 bytes at least */
-		जाओ overflow;
+	if (m->count + 3 >= m->size) /* we'll write 2 bytes at least */
+		goto overflow;
 
-	अगर (delimiter && delimiter[0]) अणु
-		अगर (delimiter[1] == 0)
-			seq_अ_दो(m, delimiter[0]);
-		अन्यथा
-			seq_माला_दो(m, delimiter);
-	पूर्ण
+	if (delimiter && delimiter[0]) {
+		if (delimiter[1] == 0)
+			seq_putc(m, delimiter[0]);
+		else
+			seq_puts(m, delimiter);
+	}
 
-	अगर (m->count + 2 >= m->size)
-		जाओ overflow;
+	if (m->count + 2 >= m->size)
+		goto overflow;
 
-	अगर (num < 0) अणु
+	if (num < 0) {
 		m->buf[m->count++] = '-';
 		num = -num;
-	पूर्ण
+	}
 
-	अगर (num < 10) अणु
+	if (num < 10) {
 		m->buf[m->count++] = num + '0';
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	len = num_to_str(m->buf + m->count, m->size - m->count, num, 0);
-	अगर (!len)
-		जाओ overflow;
+	if (!len)
+		goto overflow;
 
 	m->count += len;
-	वापस;
+	return;
 
 overflow:
 	seq_set_overflow(m);
-पूर्ण
+}
 EXPORT_SYMBOL(seq_put_decimal_ll);
 
 /**
- * seq_ग_लिखो - ग_लिखो arbitrary data to buffer
- * @seq: seq_file identअगरying the buffer to which data should be written
+ * seq_write - write arbitrary data to buffer
+ * @seq: seq_file identifying the buffer to which data should be written
  * @data: data address
  * @len: number of bytes
  *
  * Return 0 on success, non-zero otherwise.
  */
-पूर्णांक seq_ग_लिखो(काष्ठा seq_file *seq, स्थिर व्योम *data, माप_प्रकार len)
-अणु
-	अगर (seq->count + len < seq->size) अणु
-		स_नकल(seq->buf + seq->count, data, len);
+int seq_write(struct seq_file *seq, const void *data, size_t len)
+{
+	if (seq->count + len < seq->size) {
+		memcpy(seq->buf + seq->count, data, len);
 		seq->count += len;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 	seq_set_overflow(seq);
-	वापस -1;
-पूर्ण
-EXPORT_SYMBOL(seq_ग_लिखो);
+	return -1;
+}
+EXPORT_SYMBOL(seq_write);
 
 /**
- * seq_pad - ग_लिखो padding spaces to buffer
- * @m: seq_file identअगरying the buffer to which data should be written
- * @c: the byte to append after padding अगर non-zero
+ * seq_pad - write padding spaces to buffer
+ * @m: seq_file identifying the buffer to which data should be written
+ * @c: the byte to append after padding if non-zero
  */
-व्योम seq_pad(काष्ठा seq_file *m, अक्षर c)
-अणु
-	पूर्णांक size = m->pad_until - m->count;
-	अगर (size > 0) अणु
-		अगर (size + m->count > m->size) अणु
+void seq_pad(struct seq_file *m, char c)
+{
+	int size = m->pad_until - m->count;
+	if (size > 0) {
+		if (size + m->count > m->size) {
 			seq_set_overflow(m);
-			वापस;
-		पूर्ण
-		स_रखो(m->buf + m->count, ' ', size);
+			return;
+		}
+		memset(m->buf + m->count, ' ', size);
 		m->count += size;
-	पूर्ण
-	अगर (c)
-		seq_अ_दो(m, c);
-पूर्ण
+	}
+	if (c)
+		seq_putc(m, c);
+}
 EXPORT_SYMBOL(seq_pad);
 
-/* A complete analogue of prपूर्णांक_hex_dump() */
-व्योम seq_hex_dump(काष्ठा seq_file *m, स्थिर अक्षर *prefix_str, पूर्णांक prefix_type,
-		  पूर्णांक rowsize, पूर्णांक groupsize, स्थिर व्योम *buf, माप_प्रकार len,
+/* A complete analogue of print_hex_dump() */
+void seq_hex_dump(struct seq_file *m, const char *prefix_str, int prefix_type,
+		  int rowsize, int groupsize, const void *buf, size_t len,
 		  bool ascii)
-अणु
-	स्थिर u8 *ptr = buf;
-	पूर्णांक i, linelen, reमुख्यing = len;
-	अक्षर *buffer;
-	माप_प्रकार size;
-	पूर्णांक ret;
+{
+	const u8 *ptr = buf;
+	int i, linelen, remaining = len;
+	char *buffer;
+	size_t size;
+	int ret;
 
-	अगर (rowsize != 16 && rowsize != 32)
+	if (rowsize != 16 && rowsize != 32)
 		rowsize = 16;
 
-	क्रम (i = 0; i < len && !seq_has_overflowed(m); i += rowsize) अणु
-		linelen = min(reमुख्यing, rowsize);
-		reमुख्यing -= rowsize;
+	for (i = 0; i < len && !seq_has_overflowed(m); i += rowsize) {
+		linelen = min(remaining, rowsize);
+		remaining -= rowsize;
 
-		चयन (prefix_type) अणु
-		हाल DUMP_PREFIX_ADDRESS:
-			seq_म_लिखो(m, "%s%p: ", prefix_str, ptr + i);
-			अवरोध;
-		हाल DUMP_PREFIX_OFFSET:
-			seq_म_लिखो(m, "%s%.8x: ", prefix_str, i);
-			अवरोध;
-		शेष:
-			seq_म_लिखो(m, "%s", prefix_str);
-			अवरोध;
-		पूर्ण
+		switch (prefix_type) {
+		case DUMP_PREFIX_ADDRESS:
+			seq_printf(m, "%s%p: ", prefix_str, ptr + i);
+			break;
+		case DUMP_PREFIX_OFFSET:
+			seq_printf(m, "%s%.8x: ", prefix_str, i);
+			break;
+		default:
+			seq_printf(m, "%s", prefix_str);
+			break;
+		}
 
 		size = seq_get_buf(m, &buffer);
 		ret = hex_dump_to_buffer(ptr + i, linelen, rowsize, groupsize,
 					 buffer, size, ascii);
 		seq_commit(m, ret < size ? ret : -1);
 
-		seq_अ_दो(m, '\n');
-	पूर्ण
-पूर्ण
+		seq_putc(m, '\n');
+	}
+}
 EXPORT_SYMBOL(seq_hex_dump);
 
-काष्ठा list_head *seq_list_start(काष्ठा list_head *head, loff_t pos)
-अणु
-	काष्ठा list_head *lh;
+struct list_head *seq_list_start(struct list_head *head, loff_t pos)
+{
+	struct list_head *lh;
 
-	list_क्रम_each(lh, head)
-		अगर (pos-- == 0)
-			वापस lh;
+	list_for_each(lh, head)
+		if (pos-- == 0)
+			return lh;
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 EXPORT_SYMBOL(seq_list_start);
 
-काष्ठा list_head *seq_list_start_head(काष्ठा list_head *head, loff_t pos)
-अणु
-	अगर (!pos)
-		वापस head;
+struct list_head *seq_list_start_head(struct list_head *head, loff_t pos)
+{
+	if (!pos)
+		return head;
 
-	वापस seq_list_start(head, pos - 1);
-पूर्ण
+	return seq_list_start(head, pos - 1);
+}
 EXPORT_SYMBOL(seq_list_start_head);
 
-काष्ठा list_head *seq_list_next(व्योम *v, काष्ठा list_head *head, loff_t *ppos)
-अणु
-	काष्ठा list_head *lh;
+struct list_head *seq_list_next(void *v, struct list_head *head, loff_t *ppos)
+{
+	struct list_head *lh;
 
-	lh = ((काष्ठा list_head *)v)->next;
+	lh = ((struct list_head *)v)->next;
 	++*ppos;
-	वापस lh == head ? शून्य : lh;
-पूर्ण
+	return lh == head ? NULL : lh;
+}
 EXPORT_SYMBOL(seq_list_next);
 
 /**
@@ -943,15 +942,15 @@ EXPORT_SYMBOL(seq_list_next);
  *
  * Called at seq_file->op->start().
  */
-काष्ठा hlist_node *seq_hlist_start(काष्ठा hlist_head *head, loff_t pos)
-अणु
-	काष्ठा hlist_node *node;
+struct hlist_node *seq_hlist_start(struct hlist_head *head, loff_t pos)
+{
+	struct hlist_node *node;
 
-	hlist_क्रम_each(node, head)
-		अगर (pos-- == 0)
-			वापस node;
-	वापस शून्य;
-पूर्ण
+	hlist_for_each(node, head)
+		if (pos-- == 0)
+			return node;
+	return NULL;
+}
 EXPORT_SYMBOL(seq_hlist_start);
 
 /**
@@ -959,16 +958,16 @@ EXPORT_SYMBOL(seq_hlist_start);
  * @head: the head of the hlist
  * @pos:  the start position of the sequence
  *
- * Called at seq_file->op->start(). Call this function अगर you want to
- * prपूर्णांक a header at the top of the output.
+ * Called at seq_file->op->start(). Call this function if you want to
+ * print a header at the top of the output.
  */
-काष्ठा hlist_node *seq_hlist_start_head(काष्ठा hlist_head *head, loff_t pos)
-अणु
-	अगर (!pos)
-		वापस SEQ_START_TOKEN;
+struct hlist_node *seq_hlist_start_head(struct hlist_head *head, loff_t pos)
+{
+	if (!pos)
+		return SEQ_START_TOKEN;
 
-	वापस seq_hlist_start(head, pos - 1);
-पूर्ण
+	return seq_hlist_start(head, pos - 1);
+}
 EXPORT_SYMBOL(seq_hlist_start_head);
 
 /**
@@ -979,21 +978,21 @@ EXPORT_SYMBOL(seq_hlist_start_head);
  *
  * Called at seq_file->op->next().
  */
-काष्ठा hlist_node *seq_hlist_next(व्योम *v, काष्ठा hlist_head *head,
+struct hlist_node *seq_hlist_next(void *v, struct hlist_head *head,
 				  loff_t *ppos)
-अणु
-	काष्ठा hlist_node *node = v;
+{
+	struct hlist_node *node = v;
 
 	++*ppos;
-	अगर (v == SEQ_START_TOKEN)
-		वापस head->first;
-	अन्यथा
-		वापस node->next;
-पूर्ण
+	if (v == SEQ_START_TOKEN)
+		return head->first;
+	else
+		return node->next;
+}
 EXPORT_SYMBOL(seq_hlist_next);
 
 /**
- * seq_hlist_start_rcu - start an iteration of a hlist रक्षित by RCU
+ * seq_hlist_start_rcu - start an iteration of a hlist protected by RCU
  * @head: the head of the hlist
  * @pos:  the start position of the sequence
  *
@@ -1001,44 +1000,44 @@ EXPORT_SYMBOL(seq_hlist_next);
  *
  * This list-traversal primitive may safely run concurrently with
  * the _rcu list-mutation primitives such as hlist_add_head_rcu()
- * as दीर्घ as the traversal is guarded by rcu_पढ़ो_lock().
+ * as long as the traversal is guarded by rcu_read_lock().
  */
-काष्ठा hlist_node *seq_hlist_start_rcu(काष्ठा hlist_head *head,
+struct hlist_node *seq_hlist_start_rcu(struct hlist_head *head,
 				       loff_t pos)
-अणु
-	काष्ठा hlist_node *node;
+{
+	struct hlist_node *node;
 
-	__hlist_क्रम_each_rcu(node, head)
-		अगर (pos-- == 0)
-			वापस node;
-	वापस शून्य;
-पूर्ण
+	__hlist_for_each_rcu(node, head)
+		if (pos-- == 0)
+			return node;
+	return NULL;
+}
 EXPORT_SYMBOL(seq_hlist_start_rcu);
 
 /**
- * seq_hlist_start_head_rcu - start an iteration of a hlist रक्षित by RCU
+ * seq_hlist_start_head_rcu - start an iteration of a hlist protected by RCU
  * @head: the head of the hlist
  * @pos:  the start position of the sequence
  *
- * Called at seq_file->op->start(). Call this function अगर you want to
- * prपूर्णांक a header at the top of the output.
+ * Called at seq_file->op->start(). Call this function if you want to
+ * print a header at the top of the output.
  *
  * This list-traversal primitive may safely run concurrently with
  * the _rcu list-mutation primitives such as hlist_add_head_rcu()
- * as दीर्घ as the traversal is guarded by rcu_पढ़ो_lock().
+ * as long as the traversal is guarded by rcu_read_lock().
  */
-काष्ठा hlist_node *seq_hlist_start_head_rcu(काष्ठा hlist_head *head,
+struct hlist_node *seq_hlist_start_head_rcu(struct hlist_head *head,
 					    loff_t pos)
-अणु
-	अगर (!pos)
-		वापस SEQ_START_TOKEN;
+{
+	if (!pos)
+		return SEQ_START_TOKEN;
 
-	वापस seq_hlist_start_rcu(head, pos - 1);
-पूर्ण
+	return seq_hlist_start_rcu(head, pos - 1);
+}
 EXPORT_SYMBOL(seq_hlist_start_head_rcu);
 
 /**
- * seq_hlist_next_rcu - move to the next position of the hlist रक्षित by RCU
+ * seq_hlist_next_rcu - move to the next position of the hlist protected by RCU
  * @v:    the current iterator
  * @head: the head of the hlist
  * @ppos: the current position
@@ -1047,77 +1046,77 @@ EXPORT_SYMBOL(seq_hlist_start_head_rcu);
  *
  * This list-traversal primitive may safely run concurrently with
  * the _rcu list-mutation primitives such as hlist_add_head_rcu()
- * as दीर्घ as the traversal is guarded by rcu_पढ़ो_lock().
+ * as long as the traversal is guarded by rcu_read_lock().
  */
-काष्ठा hlist_node *seq_hlist_next_rcu(व्योम *v,
-				      काष्ठा hlist_head *head,
+struct hlist_node *seq_hlist_next_rcu(void *v,
+				      struct hlist_head *head,
 				      loff_t *ppos)
-अणु
-	काष्ठा hlist_node *node = v;
+{
+	struct hlist_node *node = v;
 
 	++*ppos;
-	अगर (v == SEQ_START_TOKEN)
-		वापस rcu_dereference(head->first);
-	अन्यथा
-		वापस rcu_dereference(node->next);
-पूर्ण
+	if (v == SEQ_START_TOKEN)
+		return rcu_dereference(head->first);
+	else
+		return rcu_dereference(node->next);
+}
 EXPORT_SYMBOL(seq_hlist_next_rcu);
 
 /**
  * seq_hlist_start_percpu - start an iteration of a percpu hlist array
- * @head: poपूर्णांकer to percpu array of काष्ठा hlist_heads
- * @cpu:  poपूर्णांकer to cpu "cursor"
+ * @head: pointer to percpu array of struct hlist_heads
+ * @cpu:  pointer to cpu "cursor"
  * @pos:  start position of sequence
  *
  * Called at seq_file->op->start().
  */
-काष्ठा hlist_node *
-seq_hlist_start_percpu(काष्ठा hlist_head __percpu *head, पूर्णांक *cpu, loff_t pos)
-अणु
-	काष्ठा hlist_node *node;
+struct hlist_node *
+seq_hlist_start_percpu(struct hlist_head __percpu *head, int *cpu, loff_t pos)
+{
+	struct hlist_node *node;
 
-	क्रम_each_possible_cpu(*cpu) अणु
-		hlist_क्रम_each(node, per_cpu_ptr(head, *cpu)) अणु
-			अगर (pos-- == 0)
-				वापस node;
-		पूर्ण
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+	for_each_possible_cpu(*cpu) {
+		hlist_for_each(node, per_cpu_ptr(head, *cpu)) {
+			if (pos-- == 0)
+				return node;
+		}
+	}
+	return NULL;
+}
 EXPORT_SYMBOL(seq_hlist_start_percpu);
 
 /**
  * seq_hlist_next_percpu - move to the next position of the percpu hlist array
- * @v:    poपूर्णांकer to current hlist_node
- * @head: poपूर्णांकer to percpu array of काष्ठा hlist_heads
- * @cpu:  poपूर्णांकer to cpu "cursor"
+ * @v:    pointer to current hlist_node
+ * @head: pointer to percpu array of struct hlist_heads
+ * @cpu:  pointer to cpu "cursor"
  * @pos:  start position of sequence
  *
  * Called at seq_file->op->next().
  */
-काष्ठा hlist_node *
-seq_hlist_next_percpu(व्योम *v, काष्ठा hlist_head __percpu *head,
-			पूर्णांक *cpu, loff_t *pos)
-अणु
-	काष्ठा hlist_node *node = v;
+struct hlist_node *
+seq_hlist_next_percpu(void *v, struct hlist_head __percpu *head,
+			int *cpu, loff_t *pos)
+{
+	struct hlist_node *node = v;
 
 	++*pos;
 
-	अगर (node->next)
-		वापस node->next;
+	if (node->next)
+		return node->next;
 
-	क्रम (*cpu = cpumask_next(*cpu, cpu_possible_mask); *cpu < nr_cpu_ids;
-	     *cpu = cpumask_next(*cpu, cpu_possible_mask)) अणु
-		काष्ठा hlist_head *bucket = per_cpu_ptr(head, *cpu);
+	for (*cpu = cpumask_next(*cpu, cpu_possible_mask); *cpu < nr_cpu_ids;
+	     *cpu = cpumask_next(*cpu, cpu_possible_mask)) {
+		struct hlist_head *bucket = per_cpu_ptr(head, *cpu);
 
-		अगर (!hlist_empty(bucket))
-			वापस bucket->first;
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+		if (!hlist_empty(bucket))
+			return bucket->first;
+	}
+	return NULL;
+}
 EXPORT_SYMBOL(seq_hlist_next_percpu);
 
-व्योम __init seq_file_init(व्योम)
-अणु
+void __init seq_file_init(void)
+{
 	seq_file_cache = KMEM_CACHE(seq_file, SLAB_ACCOUNT|SLAB_PANIC);
-पूर्ण
+}

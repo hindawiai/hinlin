@@ -1,78 +1,77 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0+ */
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * Task-based RCU implementations.
  *
  * Copyright (C) 2020 Paul E. McKenney
  */
 
-#अगर_घोषित CONFIG_TASKS_RCU_GENERIC
+#ifdef CONFIG_TASKS_RCU_GENERIC
 
 ////////////////////////////////////////////////////////////////////////
 //
-// Generic data काष्ठाures.
+// Generic data structures.
 
-काष्ठा rcu_tasks;
-प्रकार व्योम (*rcu_tasks_gp_func_t)(काष्ठा rcu_tasks *rtp);
-प्रकार व्योम (*pregp_func_t)(व्योम);
-प्रकार व्योम (*pertask_func_t)(काष्ठा task_काष्ठा *t, काष्ठा list_head *hop);
-प्रकार व्योम (*postscan_func_t)(काष्ठा list_head *hop);
-प्रकार व्योम (*holकरोuts_func_t)(काष्ठा list_head *hop, bool ndrpt, bool *frptp);
-प्रकार व्योम (*postgp_func_t)(काष्ठा rcu_tasks *rtp);
+struct rcu_tasks;
+typedef void (*rcu_tasks_gp_func_t)(struct rcu_tasks *rtp);
+typedef void (*pregp_func_t)(void);
+typedef void (*pertask_func_t)(struct task_struct *t, struct list_head *hop);
+typedef void (*postscan_func_t)(struct list_head *hop);
+typedef void (*holdouts_func_t)(struct list_head *hop, bool ndrpt, bool *frptp);
+typedef void (*postgp_func_t)(struct rcu_tasks *rtp);
 
 /**
- * काष्ठा rcu_tasks - Definition क्रम a Tasks-RCU-like mechanism.
+ * struct rcu_tasks - Definition for a Tasks-RCU-like mechanism.
  * @cbs_head: Head of callback list.
- * @cbs_tail: Tail poपूर्णांकer क्रम callback list.
- * @cbs_wq: Wait queue allowning new callback to get kthपढ़ो's attention.
+ * @cbs_tail: Tail pointer for callback list.
+ * @cbs_wq: Wait queue allowning new callback to get kthread's attention.
  * @cbs_lock: Lock protecting callback list.
- * @kthपढ़ो_ptr: This flavor's grace-period/callback-invocation kthपढ़ो.
- * @gp_func: This flavor's grace-period-रुको function.
+ * @kthread_ptr: This flavor's grace-period/callback-invocation kthread.
+ * @gp_func: This flavor's grace-period-wait function.
  * @gp_state: Grace period's most recent state transition (debugging).
  * @gp_sleep: Per-grace-period sleep to prevent CPU-bound looping.
- * @init_fract: Initial backoff sleep पूर्णांकerval.
- * @gp_jअगरfies: Time of last @gp_state transition.
- * @gp_start: Most recent grace-period start in jअगरfies.
+ * @init_fract: Initial backoff sleep interval.
+ * @gp_jiffies: Time of last @gp_state transition.
+ * @gp_start: Most recent grace-period start in jiffies.
  * @n_gps: Number of grace periods completed since boot.
  * @n_ipis: Number of IPIs sent to encourage grace periods to end.
  * @n_ipis_fails: Number of IPI-send failures.
  * @pregp_func: This flavor's pre-grace-period function (optional).
  * @pertask_func: This flavor's per-task scan function (optional).
  * @postscan_func: This flavor's post-task scan function (optional).
- * @holकरोuts_func: This flavor's holकरोut-list scan function (optional).
+ * @holdouts_func: This flavor's holdout-list scan function (optional).
  * @postgp_func: This flavor's post-grace-period function (optional).
  * @call_func: This flavor's call_rcu()-equivalent function.
  * @name: This flavor's textual name.
- * @kname: This flavor's kthपढ़ो name.
+ * @kname: This flavor's kthread name.
  */
-काष्ठा rcu_tasks अणु
-	काष्ठा rcu_head *cbs_head;
-	काष्ठा rcu_head **cbs_tail;
-	काष्ठा रुको_queue_head cbs_wq;
+struct rcu_tasks {
+	struct rcu_head *cbs_head;
+	struct rcu_head **cbs_tail;
+	struct wait_queue_head cbs_wq;
 	raw_spinlock_t cbs_lock;
-	पूर्णांक gp_state;
-	पूर्णांक gp_sleep;
-	पूर्णांक init_fract;
-	अचिन्हित दीर्घ gp_jअगरfies;
-	अचिन्हित दीर्घ gp_start;
-	अचिन्हित दीर्घ n_gps;
-	अचिन्हित दीर्घ n_ipis;
-	अचिन्हित दीर्घ n_ipis_fails;
-	काष्ठा task_काष्ठा *kthपढ़ो_ptr;
+	int gp_state;
+	int gp_sleep;
+	int init_fract;
+	unsigned long gp_jiffies;
+	unsigned long gp_start;
+	unsigned long n_gps;
+	unsigned long n_ipis;
+	unsigned long n_ipis_fails;
+	struct task_struct *kthread_ptr;
 	rcu_tasks_gp_func_t gp_func;
 	pregp_func_t pregp_func;
 	pertask_func_t pertask_func;
 	postscan_func_t postscan_func;
-	holकरोuts_func_t holकरोuts_func;
+	holdouts_func_t holdouts_func;
 	postgp_func_t postgp_func;
 	call_rcu_func_t call_func;
-	अक्षर *name;
-	अक्षर *kname;
-पूर्ण;
+	char *name;
+	char *kname;
+};
 
-#घोषणा DEFINE_RCU_TASKS(rt_name, gp, call, n)				\
-अटल काष्ठा rcu_tasks rt_name =					\
-अणु									\
+#define DEFINE_RCU_TASKS(rt_name, gp, call, n)				\
+static struct rcu_tasks rt_name =					\
+{									\
 	.cbs_tail = &rt_name.cbs_head,					\
 	.cbs_wq = __WAIT_QUEUE_HEAD_INITIALIZER(rt_name.cbs_wq),	\
 	.cbs_lock = __RAW_SPIN_LOCK_UNLOCKED(rt_name.cbs_lock),		\
@@ -80,36 +79,36 @@
 	.call_func = call,						\
 	.name = n,							\
 	.kname = #rt_name,						\
-पूर्ण
+}
 
-/* Track निकासing tasks in order to allow them to be रुकोed क्रम. */
-DEFINE_STATIC_SRCU(tasks_rcu_निकास_srcu);
+/* Track exiting tasks in order to allow them to be waited for. */
+DEFINE_STATIC_SRCU(tasks_rcu_exit_srcu);
 
-/* Aव्योम IPIing CPUs early in the grace period. */
-#घोषणा RCU_TASK_IPI_DELAY (IS_ENABLED(CONFIG_TASKS_TRACE_RCU_READ_MB) ? HZ / 2 : 0)
-अटल पूर्णांक rcu_task_ipi_delay __पढ़ो_mostly = RCU_TASK_IPI_DELAY;
-module_param(rcu_task_ipi_delay, पूर्णांक, 0644);
+/* Avoid IPIing CPUs early in the grace period. */
+#define RCU_TASK_IPI_DELAY (IS_ENABLED(CONFIG_TASKS_TRACE_RCU_READ_MB) ? HZ / 2 : 0)
+static int rcu_task_ipi_delay __read_mostly = RCU_TASK_IPI_DELAY;
+module_param(rcu_task_ipi_delay, int, 0644);
 
-/* Control stall समयouts.  Disable with <= 0, otherwise jअगरfies till stall. */
-#घोषणा RCU_TASK_STALL_TIMEOUT (HZ * 60 * 10)
-अटल पूर्णांक rcu_task_stall_समयout __पढ़ो_mostly = RCU_TASK_STALL_TIMEOUT;
-module_param(rcu_task_stall_समयout, पूर्णांक, 0644);
+/* Control stall timeouts.  Disable with <= 0, otherwise jiffies till stall. */
+#define RCU_TASK_STALL_TIMEOUT (HZ * 60 * 10)
+static int rcu_task_stall_timeout __read_mostly = RCU_TASK_STALL_TIMEOUT;
+module_param(rcu_task_stall_timeout, int, 0644);
 
-/* RCU tasks grace-period state क्रम debugging. */
-#घोषणा RTGS_INIT		 0
-#घोषणा RTGS_WAIT_WAIT_CBS	 1
-#घोषणा RTGS_WAIT_GP		 2
-#घोषणा RTGS_PRE_WAIT_GP	 3
-#घोषणा RTGS_SCAN_TASKLIST	 4
-#घोषणा RTGS_POST_SCAN_TASKLIST	 5
-#घोषणा RTGS_WAIT_SCAN_HOLDOUTS	 6
-#घोषणा RTGS_SCAN_HOLDOUTS	 7
-#घोषणा RTGS_POST_GP		 8
-#घोषणा RTGS_WAIT_READERS	 9
-#घोषणा RTGS_INVOKE_CBS		10
-#घोषणा RTGS_WAIT_CBS		11
-#अगर_अघोषित CONFIG_TINY_RCU
-अटल स्थिर अक्षर * स्थिर rcu_tasks_gp_state_names[] = अणु
+/* RCU tasks grace-period state for debugging. */
+#define RTGS_INIT		 0
+#define RTGS_WAIT_WAIT_CBS	 1
+#define RTGS_WAIT_GP		 2
+#define RTGS_PRE_WAIT_GP	 3
+#define RTGS_SCAN_TASKLIST	 4
+#define RTGS_POST_SCAN_TASKLIST	 5
+#define RTGS_WAIT_SCAN_HOLDOUTS	 6
+#define RTGS_SCAN_HOLDOUTS	 7
+#define RTGS_POST_GP		 8
+#define RTGS_WAIT_READERS	 9
+#define RTGS_INVOKE_CBS		10
+#define RTGS_WAIT_CBS		11
+#ifndef CONFIG_TINY_RCU
+static const char * const rcu_tasks_gp_state_names[] = {
 	"RTGS_INIT",
 	"RTGS_WAIT_WAIT_CBS",
 	"RTGS_WAIT_GP",
@@ -122,483 +121,483 @@ module_param(rcu_task_stall_समयout, पूर्णांक, 0644);
 	"RTGS_WAIT_READERS",
 	"RTGS_INVOKE_CBS",
 	"RTGS_WAIT_CBS",
-पूर्ण;
-#पूर्ण_अगर /* #अगर_अघोषित CONFIG_TINY_RCU */
+};
+#endif /* #ifndef CONFIG_TINY_RCU */
 
 ////////////////////////////////////////////////////////////////////////
 //
 // Generic code.
 
-/* Record grace-period phase and समय. */
-अटल व्योम set_tasks_gp_state(काष्ठा rcu_tasks *rtp, पूर्णांक newstate)
-अणु
+/* Record grace-period phase and time. */
+static void set_tasks_gp_state(struct rcu_tasks *rtp, int newstate)
+{
 	rtp->gp_state = newstate;
-	rtp->gp_jअगरfies = jअगरfies;
-पूर्ण
+	rtp->gp_jiffies = jiffies;
+}
 
-#अगर_अघोषित CONFIG_TINY_RCU
+#ifndef CONFIG_TINY_RCU
 /* Return state name. */
-अटल स्थिर अक्षर *tasks_gp_state_getname(काष्ठा rcu_tasks *rtp)
-अणु
-	पूर्णांक i = data_race(rtp->gp_state); // Let KCSAN detect update races
-	पूर्णांक j = READ_ONCE(i); // Prevent the compiler from पढ़ोing twice
+static const char *tasks_gp_state_getname(struct rcu_tasks *rtp)
+{
+	int i = data_race(rtp->gp_state); // Let KCSAN detect update races
+	int j = READ_ONCE(i); // Prevent the compiler from reading twice
 
-	अगर (j >= ARRAY_SIZE(rcu_tasks_gp_state_names))
-		वापस "???";
-	वापस rcu_tasks_gp_state_names[j];
-पूर्ण
-#पूर्ण_अगर /* #अगर_अघोषित CONFIG_TINY_RCU */
+	if (j >= ARRAY_SIZE(rcu_tasks_gp_state_names))
+		return "???";
+	return rcu_tasks_gp_state_names[j];
+}
+#endif /* #ifndef CONFIG_TINY_RCU */
 
-// Enqueue a callback क्रम the specअगरied flavor of Tasks RCU.
-अटल व्योम call_rcu_tasks_generic(काष्ठा rcu_head *rhp, rcu_callback_t func,
-				   काष्ठा rcu_tasks *rtp)
-अणु
-	अचिन्हित दीर्घ flags;
+// Enqueue a callback for the specified flavor of Tasks RCU.
+static void call_rcu_tasks_generic(struct rcu_head *rhp, rcu_callback_t func,
+				   struct rcu_tasks *rtp)
+{
+	unsigned long flags;
 	bool needwake;
 
-	rhp->next = शून्य;
+	rhp->next = NULL;
 	rhp->func = func;
 	raw_spin_lock_irqsave(&rtp->cbs_lock, flags);
 	needwake = !rtp->cbs_head;
 	WRITE_ONCE(*rtp->cbs_tail, rhp);
 	rtp->cbs_tail = &rhp->next;
 	raw_spin_unlock_irqrestore(&rtp->cbs_lock, flags);
-	/* We can't create the thपढ़ो unless पूर्णांकerrupts are enabled. */
-	अगर (needwake && READ_ONCE(rtp->kthपढ़ो_ptr))
+	/* We can't create the thread unless interrupts are enabled. */
+	if (needwake && READ_ONCE(rtp->kthread_ptr))
 		wake_up(&rtp->cbs_wq);
-पूर्ण
+}
 
-// Wait क्रम a grace period क्रम the specअगरied flavor of Tasks RCU.
-अटल व्योम synchronize_rcu_tasks_generic(काष्ठा rcu_tasks *rtp)
-अणु
-	/* Complain अगर the scheduler has not started.  */
+// Wait for a grace period for the specified flavor of Tasks RCU.
+static void synchronize_rcu_tasks_generic(struct rcu_tasks *rtp)
+{
+	/* Complain if the scheduler has not started.  */
 	RCU_LOCKDEP_WARN(rcu_scheduler_active == RCU_SCHEDULER_INACTIVE,
 			 "synchronize_rcu_tasks called too soon");
 
-	/* Wait क्रम the grace period. */
-	रुको_rcu_gp(rtp->call_func);
-पूर्ण
+	/* Wait for the grace period. */
+	wait_rcu_gp(rtp->call_func);
+}
 
-/* RCU-tasks kthपढ़ो that detects grace periods and invokes callbacks. */
-अटल पूर्णांक __noवापस rcu_tasks_kthपढ़ो(व्योम *arg)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा rcu_head *list;
-	काष्ठा rcu_head *next;
-	काष्ठा rcu_tasks *rtp = arg;
+/* RCU-tasks kthread that detects grace periods and invokes callbacks. */
+static int __noreturn rcu_tasks_kthread(void *arg)
+{
+	unsigned long flags;
+	struct rcu_head *list;
+	struct rcu_head *next;
+	struct rcu_tasks *rtp = arg;
 
-	/* Run on housekeeping CPUs by शेष.  Sysadm can move अगर desired. */
+	/* Run on housekeeping CPUs by default.  Sysadm can move if desired. */
 	housekeeping_affine(current, HK_FLAG_RCU);
-	WRITE_ONCE(rtp->kthपढ़ो_ptr, current); // Let GPs start!
+	WRITE_ONCE(rtp->kthread_ptr, current); // Let GPs start!
 
 	/*
-	 * Each pass through the following loop makes one check क्रम
-	 * newly arrived callbacks, and, अगर there are some, रुकोs क्रम
+	 * Each pass through the following loop makes one check for
+	 * newly arrived callbacks, and, if there are some, waits for
 	 * one RCU-tasks grace period and then invokes the callbacks.
-	 * This loop is terminated by the प्रणाली going करोwn.  ;-)
+	 * This loop is terminated by the system going down.  ;-)
 	 */
-	क्रम (;;) अणु
+	for (;;) {
 
 		/* Pick up any new callbacks. */
 		raw_spin_lock_irqsave(&rtp->cbs_lock, flags);
 		smp_mb__after_spinlock(); // Order updates vs. GP.
 		list = rtp->cbs_head;
-		rtp->cbs_head = शून्य;
+		rtp->cbs_head = NULL;
 		rtp->cbs_tail = &rtp->cbs_head;
 		raw_spin_unlock_irqrestore(&rtp->cbs_lock, flags);
 
-		/* If there were none, रुको a bit and start over. */
-		अगर (!list) अणु
-			रुको_event_पूर्णांकerruptible(rtp->cbs_wq,
+		/* If there were none, wait a bit and start over. */
+		if (!list) {
+			wait_event_interruptible(rtp->cbs_wq,
 						 READ_ONCE(rtp->cbs_head));
-			अगर (!rtp->cbs_head) अणु
-				WARN_ON(संकेत_pending(current));
+			if (!rtp->cbs_head) {
+				WARN_ON(signal_pending(current));
 				set_tasks_gp_state(rtp, RTGS_WAIT_WAIT_CBS);
-				schedule_समयout_idle(HZ/10);
-			पूर्ण
-			जारी;
-		पूर्ण
+				schedule_timeout_idle(HZ/10);
+			}
+			continue;
+		}
 
-		// Wait क्रम one grace period.
+		// Wait for one grace period.
 		set_tasks_gp_state(rtp, RTGS_WAIT_GP);
-		rtp->gp_start = jअगरfies;
+		rtp->gp_start = jiffies;
 		rtp->gp_func(rtp);
 		rtp->n_gps++;
 
 		/* Invoke the callbacks. */
 		set_tasks_gp_state(rtp, RTGS_INVOKE_CBS);
-		जबतक (list) अणु
+		while (list) {
 			next = list->next;
 			local_bh_disable();
 			list->func(list);
 			local_bh_enable();
 			list = next;
 			cond_resched();
-		पूर्ण
+		}
 		/* Paranoid sleep to keep this from entering a tight loop */
-		schedule_समयout_idle(rtp->gp_sleep);
+		schedule_timeout_idle(rtp->gp_sleep);
 
 		set_tasks_gp_state(rtp, RTGS_WAIT_CBS);
-	पूर्ण
-पूर्ण
+	}
+}
 
-/* Spawn RCU-tasks grace-period kthपढ़ो. */
-अटल व्योम __init rcu_spawn_tasks_kthपढ़ो_generic(काष्ठा rcu_tasks *rtp)
-अणु
-	काष्ठा task_काष्ठा *t;
+/* Spawn RCU-tasks grace-period kthread. */
+static void __init rcu_spawn_tasks_kthread_generic(struct rcu_tasks *rtp)
+{
+	struct task_struct *t;
 
-	t = kthपढ़ो_run(rcu_tasks_kthपढ़ो, rtp, "%s_kthread", rtp->kname);
-	अगर (WARN_ONCE(IS_ERR(t), "%s: Could not start %s grace-period kthread, OOM is now expected behavior\n", __func__, rtp->name))
-		वापस;
-	smp_mb(); /* Ensure others see full kthपढ़ो. */
-पूर्ण
+	t = kthread_run(rcu_tasks_kthread, rtp, "%s_kthread", rtp->kname);
+	if (WARN_ONCE(IS_ERR(t), "%s: Could not start %s grace-period kthread, OOM is now expected behavior\n", __func__, rtp->name))
+		return;
+	smp_mb(); /* Ensure others see full kthread. */
+}
 
-#अगर_अघोषित CONFIG_TINY_RCU
+#ifndef CONFIG_TINY_RCU
 
 /*
- * Prपूर्णांक any non-शेष Tasks RCU settings.
+ * Print any non-default Tasks RCU settings.
  */
-अटल व्योम __init rcu_tasks_bootup_oddness(व्योम)
-अणु
-#अगर defined(CONFIG_TASKS_RCU) || defined(CONFIG_TASKS_TRACE_RCU)
-	अगर (rcu_task_stall_समयout != RCU_TASK_STALL_TIMEOUT)
-		pr_info("\tTasks-RCU CPU stall warnings timeout set to %d (rcu_task_stall_timeout).\n", rcu_task_stall_समयout);
-#पूर्ण_अगर /* #अगर_घोषित CONFIG_TASKS_RCU */
-#अगर_घोषित CONFIG_TASKS_RCU
+static void __init rcu_tasks_bootup_oddness(void)
+{
+#if defined(CONFIG_TASKS_RCU) || defined(CONFIG_TASKS_TRACE_RCU)
+	if (rcu_task_stall_timeout != RCU_TASK_STALL_TIMEOUT)
+		pr_info("\tTasks-RCU CPU stall warnings timeout set to %d (rcu_task_stall_timeout).\n", rcu_task_stall_timeout);
+#endif /* #ifdef CONFIG_TASKS_RCU */
+#ifdef CONFIG_TASKS_RCU
 	pr_info("\tTrampoline variant of Tasks RCU enabled.\n");
-#पूर्ण_अगर /* #अगर_घोषित CONFIG_TASKS_RCU */
-#अगर_घोषित CONFIG_TASKS_RUDE_RCU
+#endif /* #ifdef CONFIG_TASKS_RCU */
+#ifdef CONFIG_TASKS_RUDE_RCU
 	pr_info("\tRude variant of Tasks RCU enabled.\n");
-#पूर्ण_अगर /* #अगर_घोषित CONFIG_TASKS_RUDE_RCU */
-#अगर_घोषित CONFIG_TASKS_TRACE_RCU
+#endif /* #ifdef CONFIG_TASKS_RUDE_RCU */
+#ifdef CONFIG_TASKS_TRACE_RCU
 	pr_info("\tTracing variant of Tasks RCU enabled.\n");
-#पूर्ण_अगर /* #अगर_घोषित CONFIG_TASKS_TRACE_RCU */
-पूर्ण
+#endif /* #ifdef CONFIG_TASKS_TRACE_RCU */
+}
 
-#पूर्ण_अगर /* #अगर_अघोषित CONFIG_TINY_RCU */
+#endif /* #ifndef CONFIG_TINY_RCU */
 
-#अगर_अघोषित CONFIG_TINY_RCU
+#ifndef CONFIG_TINY_RCU
 /* Dump out rcutorture-relevant state common to all RCU-tasks flavors. */
-अटल व्योम show_rcu_tasks_generic_gp_kthपढ़ो(काष्ठा rcu_tasks *rtp, अक्षर *s)
-अणु
+static void show_rcu_tasks_generic_gp_kthread(struct rcu_tasks *rtp, char *s)
+{
 	pr_info("%s: %s(%d) since %lu g:%lu i:%lu/%lu %c%c %s\n",
 		rtp->kname,
 		tasks_gp_state_getname(rtp), data_race(rtp->gp_state),
-		jअगरfies - data_race(rtp->gp_jअगरfies),
+		jiffies - data_race(rtp->gp_jiffies),
 		data_race(rtp->n_gps),
 		data_race(rtp->n_ipis_fails), data_race(rtp->n_ipis),
-		".k"[!!data_race(rtp->kthपढ़ो_ptr)],
+		".k"[!!data_race(rtp->kthread_ptr)],
 		".C"[!!data_race(rtp->cbs_head)],
 		s);
-पूर्ण
-#पूर्ण_अगर // #अगर_अघोषित CONFIG_TINY_RCU
+}
+#endif // #ifndef CONFIG_TINY_RCU
 
-अटल व्योम निकास_tasks_rcu_finish_trace(काष्ठा task_काष्ठा *t);
+static void exit_tasks_rcu_finish_trace(struct task_struct *t);
 
-#अगर defined(CONFIG_TASKS_RCU) || defined(CONFIG_TASKS_TRACE_RCU)
+#if defined(CONFIG_TASKS_RCU) || defined(CONFIG_TASKS_TRACE_RCU)
 
 ////////////////////////////////////////////////////////////////////////
 //
 // Shared code between task-list-scanning variants of Tasks RCU.
 
-/* Wait क्रम one RCU-tasks grace period. */
-अटल व्योम rcu_tasks_रुको_gp(काष्ठा rcu_tasks *rtp)
-अणु
-	काष्ठा task_काष्ठा *g, *t;
-	अचिन्हित दीर्घ lastreport;
-	LIST_HEAD(holकरोuts);
-	पूर्णांक fract;
+/* Wait for one RCU-tasks grace period. */
+static void rcu_tasks_wait_gp(struct rcu_tasks *rtp)
+{
+	struct task_struct *g, *t;
+	unsigned long lastreport;
+	LIST_HEAD(holdouts);
+	int fract;
 
 	set_tasks_gp_state(rtp, RTGS_PRE_WAIT_GP);
 	rtp->pregp_func();
 
 	/*
-	 * There were callbacks, so we need to रुको क्रम an RCU-tasks
-	 * grace period.  Start off by scanning the task list क्रम tasks
-	 * that are not alपढ़ोy voluntarily blocked.  Mark these tasks
-	 * and make a list of them in holकरोuts.
+	 * There were callbacks, so we need to wait for an RCU-tasks
+	 * grace period.  Start off by scanning the task list for tasks
+	 * that are not already voluntarily blocked.  Mark these tasks
+	 * and make a list of them in holdouts.
 	 */
 	set_tasks_gp_state(rtp, RTGS_SCAN_TASKLIST);
-	rcu_पढ़ो_lock();
-	क्रम_each_process_thपढ़ो(g, t)
-		rtp->pertask_func(t, &holकरोuts);
-	rcu_पढ़ो_unlock();
+	rcu_read_lock();
+	for_each_process_thread(g, t)
+		rtp->pertask_func(t, &holdouts);
+	rcu_read_unlock();
 
 	set_tasks_gp_state(rtp, RTGS_POST_SCAN_TASKLIST);
-	rtp->postscan_func(&holकरोuts);
+	rtp->postscan_func(&holdouts);
 
 	/*
-	 * Each pass through the following loop scans the list of holकरोut
-	 * tasks, removing any that are no दीर्घer holकरोuts.  When the list
-	 * is empty, we are करोne.
+	 * Each pass through the following loop scans the list of holdout
+	 * tasks, removing any that are no longer holdouts.  When the list
+	 * is empty, we are done.
 	 */
-	lastreport = jअगरfies;
+	lastreport = jiffies;
 
-	// Start off with initial रुको and slowly back off to 1 HZ रुको.
+	// Start off with initial wait and slowly back off to 1 HZ wait.
 	fract = rtp->init_fract;
 
-	जबतक (!list_empty(&holकरोuts)) अणु
+	while (!list_empty(&holdouts)) {
 		bool firstreport;
 		bool needreport;
-		पूर्णांक rtst;
+		int rtst;
 
-		/* Slowly back off रुकोing क्रम holकरोuts */
+		/* Slowly back off waiting for holdouts */
 		set_tasks_gp_state(rtp, RTGS_WAIT_SCAN_HOLDOUTS);
-		schedule_समयout_idle(fract);
+		schedule_timeout_idle(fract);
 
-		अगर (fract < HZ)
+		if (fract < HZ)
 			fract++;
 
-		rtst = READ_ONCE(rcu_task_stall_समयout);
-		needreport = rtst > 0 && समय_after(jअगरfies, lastreport + rtst);
-		अगर (needreport)
-			lastreport = jअगरfies;
+		rtst = READ_ONCE(rcu_task_stall_timeout);
+		needreport = rtst > 0 && time_after(jiffies, lastreport + rtst);
+		if (needreport)
+			lastreport = jiffies;
 		firstreport = true;
-		WARN_ON(संकेत_pending(current));
+		WARN_ON(signal_pending(current));
 		set_tasks_gp_state(rtp, RTGS_SCAN_HOLDOUTS);
-		rtp->holकरोuts_func(&holकरोuts, needreport, &firstreport);
-	पूर्ण
+		rtp->holdouts_func(&holdouts, needreport, &firstreport);
+	}
 
 	set_tasks_gp_state(rtp, RTGS_POST_GP);
 	rtp->postgp_func(rtp);
-पूर्ण
+}
 
-#पूर्ण_अगर /* #अगर defined(CONFIG_TASKS_RCU) || defined(CONFIG_TASKS_TRACE_RCU) */
+#endif /* #if defined(CONFIG_TASKS_RCU) || defined(CONFIG_TASKS_TRACE_RCU) */
 
-#अगर_घोषित CONFIG_TASKS_RCU
+#ifdef CONFIG_TASKS_RCU
 
 ////////////////////////////////////////////////////////////////////////
 //
 // Simple variant of RCU whose quiescent states are voluntary context
-// चयन, cond_resched_rcu_qs(), user-space execution, and idle.
-// As such, grace periods can take one good दीर्घ समय.  There are no
-// पढ़ो-side primitives similar to rcu_पढ़ो_lock() and rcu_पढ़ो_unlock()
-// because this implementation is पूर्णांकended to get the प्रणाली पूर्णांकo a safe
-// state क्रम some of the manipulations involved in tracing and the like.
-// Finally, this implementation करोes not support high call_rcu_tasks()
+// switch, cond_resched_rcu_qs(), user-space execution, and idle.
+// As such, grace periods can take one good long time.  There are no
+// read-side primitives similar to rcu_read_lock() and rcu_read_unlock()
+// because this implementation is intended to get the system into a safe
+// state for some of the manipulations involved in tracing and the like.
+// Finally, this implementation does not support high call_rcu_tasks()
 // rates from multiple CPUs.  If this is required, per-CPU callback lists
 // will be needed.
 
 /* Pre-grace-period preparation. */
-अटल व्योम rcu_tasks_pregp_step(व्योम)
-अणु
+static void rcu_tasks_pregp_step(void)
+{
 	/*
-	 * Wait क्रम all pre-existing t->on_rq and t->nvcsw transitions
+	 * Wait for all pre-existing t->on_rq and t->nvcsw transitions
 	 * to complete.  Invoking synchronize_rcu() suffices because all
-	 * these transitions occur with पूर्णांकerrupts disabled.  Without this
-	 * synchronize_rcu(), a पढ़ो-side critical section that started
-	 * beक्रमe the grace period might be incorrectly seen as having
+	 * these transitions occur with interrupts disabled.  Without this
+	 * synchronize_rcu(), a read-side critical section that started
+	 * before the grace period might be incorrectly seen as having
 	 * started after the grace period.
 	 *
-	 * This synchronize_rcu() also dispenses with the need क्रम a
-	 * memory barrier on the first store to t->rcu_tasks_holकरोut,
-	 * as it क्रमces the store to happen after the beginning of the
+	 * This synchronize_rcu() also dispenses with the need for a
+	 * memory barrier on the first store to t->rcu_tasks_holdout,
+	 * as it forces the store to happen after the beginning of the
 	 * grace period.
 	 */
 	synchronize_rcu();
-पूर्ण
+}
 
 /* Per-task initial processing. */
-अटल व्योम rcu_tasks_pertask(काष्ठा task_काष्ठा *t, काष्ठा list_head *hop)
-अणु
-	अगर (t != current && READ_ONCE(t->on_rq) && !is_idle_task(t)) अणु
-		get_task_काष्ठा(t);
+static void rcu_tasks_pertask(struct task_struct *t, struct list_head *hop)
+{
+	if (t != current && READ_ONCE(t->on_rq) && !is_idle_task(t)) {
+		get_task_struct(t);
 		t->rcu_tasks_nvcsw = READ_ONCE(t->nvcsw);
-		WRITE_ONCE(t->rcu_tasks_holकरोut, true);
-		list_add(&t->rcu_tasks_holकरोut_list, hop);
-	पूर्ण
-पूर्ण
+		WRITE_ONCE(t->rcu_tasks_holdout, true);
+		list_add(&t->rcu_tasks_holdout_list, hop);
+	}
+}
 
-/* Processing between scanning taskslist and draining the holकरोut list. */
-अटल व्योम rcu_tasks_postscan(काष्ठा list_head *hop)
-अणु
+/* Processing between scanning taskslist and draining the holdout list. */
+static void rcu_tasks_postscan(struct list_head *hop)
+{
 	/*
-	 * Wait क्रम tasks that are in the process of निकासing.  This
-	 * करोes only part of the job, ensuring that all tasks that were
-	 * previously निकासing reach the poपूर्णांक where they have disabled
+	 * Wait for tasks that are in the process of exiting.  This
+	 * does only part of the job, ensuring that all tasks that were
+	 * previously exiting reach the point where they have disabled
 	 * preemption, allowing the later synchronize_rcu() to finish
 	 * the job.
 	 */
-	synchronize_srcu(&tasks_rcu_निकास_srcu);
-पूर्ण
+	synchronize_srcu(&tasks_rcu_exit_srcu);
+}
 
-/* See अगर tasks are still holding out, complain अगर so. */
-अटल व्योम check_holकरोut_task(काष्ठा task_काष्ठा *t,
+/* See if tasks are still holding out, complain if so. */
+static void check_holdout_task(struct task_struct *t,
 			       bool needreport, bool *firstreport)
-अणु
-	पूर्णांक cpu;
+{
+	int cpu;
 
-	अगर (!READ_ONCE(t->rcu_tasks_holकरोut) ||
+	if (!READ_ONCE(t->rcu_tasks_holdout) ||
 	    t->rcu_tasks_nvcsw != READ_ONCE(t->nvcsw) ||
 	    !READ_ONCE(t->on_rq) ||
 	    (IS_ENABLED(CONFIG_NO_HZ_FULL) &&
-	     !is_idle_task(t) && t->rcu_tasks_idle_cpu >= 0)) अणु
-		WRITE_ONCE(t->rcu_tasks_holकरोut, false);
-		list_del_init(&t->rcu_tasks_holकरोut_list);
-		put_task_काष्ठा(t);
-		वापस;
-	पूर्ण
+	     !is_idle_task(t) && t->rcu_tasks_idle_cpu >= 0)) {
+		WRITE_ONCE(t->rcu_tasks_holdout, false);
+		list_del_init(&t->rcu_tasks_holdout_list);
+		put_task_struct(t);
+		return;
+	}
 	rcu_request_urgent_qs_task(t);
-	अगर (!needreport)
-		वापस;
-	अगर (*firstreport) अणु
+	if (!needreport)
+		return;
+	if (*firstreport) {
 		pr_err("INFO: rcu_tasks detected stalls on tasks:\n");
 		*firstreport = false;
-	पूर्ण
+	}
 	cpu = task_cpu(t);
 	pr_alert("%p: %c%c nvcsw: %lu/%lu holdout: %d idle_cpu: %d/%d\n",
 		 t, ".I"[is_idle_task(t)],
 		 "N."[cpu < 0 || !tick_nohz_full_cpu(cpu)],
-		 t->rcu_tasks_nvcsw, t->nvcsw, t->rcu_tasks_holकरोut,
+		 t->rcu_tasks_nvcsw, t->nvcsw, t->rcu_tasks_holdout,
 		 t->rcu_tasks_idle_cpu, cpu);
 	sched_show_task(t);
-पूर्ण
+}
 
-/* Scan the holकरोut lists क्रम tasks no दीर्घer holding out. */
-अटल व्योम check_all_holकरोut_tasks(काष्ठा list_head *hop,
+/* Scan the holdout lists for tasks no longer holding out. */
+static void check_all_holdout_tasks(struct list_head *hop,
 				    bool needreport, bool *firstreport)
-अणु
-	काष्ठा task_काष्ठा *t, *t1;
+{
+	struct task_struct *t, *t1;
 
-	list_क्रम_each_entry_safe(t, t1, hop, rcu_tasks_holकरोut_list) अणु
-		check_holकरोut_task(t, needreport, firstreport);
+	list_for_each_entry_safe(t, t1, hop, rcu_tasks_holdout_list) {
+		check_holdout_task(t, needreport, firstreport);
 		cond_resched();
-	पूर्ण
-पूर्ण
+	}
+}
 
 /* Finish off the Tasks-RCU grace period. */
-अटल व्योम rcu_tasks_postgp(काष्ठा rcu_tasks *rtp)
-अणु
+static void rcu_tasks_postgp(struct rcu_tasks *rtp)
+{
 	/*
 	 * Because ->on_rq and ->nvcsw are not guaranteed to have a full
 	 * memory barriers prior to them in the schedule() path, memory
-	 * reordering on other CPUs could cause their RCU-tasks पढ़ो-side
+	 * reordering on other CPUs could cause their RCU-tasks read-side
 	 * critical sections to extend past the end of the grace period.
 	 * However, because these ->nvcsw updates are carried out with
-	 * पूर्णांकerrupts disabled, we can use synchronize_rcu() to क्रमce the
+	 * interrupts disabled, we can use synchronize_rcu() to force the
 	 * needed ordering on all such CPUs.
 	 *
-	 * This synchronize_rcu() also confines all ->rcu_tasks_holकरोut
-	 * accesses to be within the grace period, aव्योमing the need क्रम
-	 * memory barriers क्रम ->rcu_tasks_holकरोut accesses.
+	 * This synchronize_rcu() also confines all ->rcu_tasks_holdout
+	 * accesses to be within the grace period, avoiding the need for
+	 * memory barriers for ->rcu_tasks_holdout accesses.
 	 *
-	 * In addition, this synchronize_rcu() रुकोs क्रम निकासing tasks
+	 * In addition, this synchronize_rcu() waits for exiting tasks
 	 * to complete their final preempt_disable() region of execution,
 	 * cleaning up after the synchronize_srcu() above.
 	 */
 	synchronize_rcu();
-पूर्ण
+}
 
-व्योम call_rcu_tasks(काष्ठा rcu_head *rhp, rcu_callback_t func);
-DEFINE_RCU_TASKS(rcu_tasks, rcu_tasks_रुको_gp, call_rcu_tasks, "RCU Tasks");
+void call_rcu_tasks(struct rcu_head *rhp, rcu_callback_t func);
+DEFINE_RCU_TASKS(rcu_tasks, rcu_tasks_wait_gp, call_rcu_tasks, "RCU Tasks");
 
 /**
- * call_rcu_tasks() - Queue an RCU क्रम invocation task-based grace period
- * @rhp: काष्ठाure to be used क्रम queueing the RCU updates.
+ * call_rcu_tasks() - Queue an RCU for invocation task-based grace period
+ * @rhp: structure to be used for queueing the RCU updates.
  * @func: actual callback function to be invoked after the grace period
  *
- * The callback function will be invoked some समय after a full grace
+ * The callback function will be invoked some time after a full grace
  * period elapses, in other words after all currently executing RCU
- * पढ़ो-side critical sections have completed. call_rcu_tasks() assumes
- * that the पढ़ो-side critical sections end at a voluntary context
- * चयन (not a preemption!), cond_resched_rcu_qs(), entry पूर्णांकo idle,
- * or transition to usermode execution.  As such, there are no पढ़ो-side
- * primitives analogous to rcu_पढ़ो_lock() and rcu_पढ़ो_unlock() because
- * this primitive is पूर्णांकended to determine that all tasks have passed
- * through a safe state, not so much क्रम data-strcuture synchronization.
+ * read-side critical sections have completed. call_rcu_tasks() assumes
+ * that the read-side critical sections end at a voluntary context
+ * switch (not a preemption!), cond_resched_rcu_qs(), entry into idle,
+ * or transition to usermode execution.  As such, there are no read-side
+ * primitives analogous to rcu_read_lock() and rcu_read_unlock() because
+ * this primitive is intended to determine that all tasks have passed
+ * through a safe state, not so much for data-strcuture synchronization.
  *
- * See the description of call_rcu() क्रम more detailed inक्रमmation on
+ * See the description of call_rcu() for more detailed information on
  * memory ordering guarantees.
  */
-व्योम call_rcu_tasks(काष्ठा rcu_head *rhp, rcu_callback_t func)
-अणु
+void call_rcu_tasks(struct rcu_head *rhp, rcu_callback_t func)
+{
 	call_rcu_tasks_generic(rhp, func, &rcu_tasks);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(call_rcu_tasks);
 
 /**
- * synchronize_rcu_tasks - रुको until an rcu-tasks grace period has elapsed.
+ * synchronize_rcu_tasks - wait until an rcu-tasks grace period has elapsed.
  *
- * Control will वापस to the caller some समय after a full rcu-tasks
+ * Control will return to the caller some time after a full rcu-tasks
  * grace period has elapsed, in other words after all currently
- * executing rcu-tasks पढ़ो-side critical sections have elapsed.  These
- * पढ़ो-side critical sections are delimited by calls to schedule(),
+ * executing rcu-tasks read-side critical sections have elapsed.  These
+ * read-side critical sections are delimited by calls to schedule(),
  * cond_resched_tasks_rcu_qs(), idle execution, userspace execution, calls
  * to synchronize_rcu_tasks(), and (in theory, anyway) cond_resched().
  *
- * This is a very specialized primitive, पूर्णांकended only क्रम a few uses in
+ * This is a very specialized primitive, intended only for a few uses in
  * tracing and other situations requiring manipulation of function
  * preambles and profiling hooks.  The synchronize_rcu_tasks() function
- * is not (yet) पूर्णांकended क्रम heavy use from multiple CPUs.
+ * is not (yet) intended for heavy use from multiple CPUs.
  *
- * See the description of synchronize_rcu() क्रम more detailed inक्रमmation
+ * See the description of synchronize_rcu() for more detailed information
  * on memory ordering guarantees.
  */
-व्योम synchronize_rcu_tasks(व्योम)
-अणु
+void synchronize_rcu_tasks(void)
+{
 	synchronize_rcu_tasks_generic(&rcu_tasks);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(synchronize_rcu_tasks);
 
 /**
- * rcu_barrier_tasks - Wait क्रम in-flight call_rcu_tasks() callbacks.
+ * rcu_barrier_tasks - Wait for in-flight call_rcu_tasks() callbacks.
  *
- * Although the current implementation is guaranteed to रुको, it is not
- * obligated to, क्रम example, अगर there are no pending callbacks.
+ * Although the current implementation is guaranteed to wait, it is not
+ * obligated to, for example, if there are no pending callbacks.
  */
-व्योम rcu_barrier_tasks(व्योम)
-अणु
+void rcu_barrier_tasks(void)
+{
 	/* There is only one callback queue, so this is easy.  ;-) */
 	synchronize_rcu_tasks();
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(rcu_barrier_tasks);
 
-अटल पूर्णांक __init rcu_spawn_tasks_kthपढ़ो(व्योम)
-अणु
+static int __init rcu_spawn_tasks_kthread(void)
+{
 	rcu_tasks.gp_sleep = HZ / 10;
 	rcu_tasks.init_fract = HZ / 10;
 	rcu_tasks.pregp_func = rcu_tasks_pregp_step;
 	rcu_tasks.pertask_func = rcu_tasks_pertask;
 	rcu_tasks.postscan_func = rcu_tasks_postscan;
-	rcu_tasks.holकरोuts_func = check_all_holकरोut_tasks;
+	rcu_tasks.holdouts_func = check_all_holdout_tasks;
 	rcu_tasks.postgp_func = rcu_tasks_postgp;
-	rcu_spawn_tasks_kthपढ़ो_generic(&rcu_tasks);
-	वापस 0;
-पूर्ण
+	rcu_spawn_tasks_kthread_generic(&rcu_tasks);
+	return 0;
+}
 
-#अगर !defined(CONFIG_TINY_RCU)
-व्योम show_rcu_tasks_classic_gp_kthपढ़ो(व्योम)
-अणु
-	show_rcu_tasks_generic_gp_kthपढ़ो(&rcu_tasks, "");
-पूर्ण
-EXPORT_SYMBOL_GPL(show_rcu_tasks_classic_gp_kthपढ़ो);
-#पूर्ण_अगर // !defined(CONFIG_TINY_RCU)
+#if !defined(CONFIG_TINY_RCU)
+void show_rcu_tasks_classic_gp_kthread(void)
+{
+	show_rcu_tasks_generic_gp_kthread(&rcu_tasks, "");
+}
+EXPORT_SYMBOL_GPL(show_rcu_tasks_classic_gp_kthread);
+#endif // !defined(CONFIG_TINY_RCU)
 
-/* Do the srcu_पढ़ो_lock() क्रम the above synchronize_srcu().  */
-व्योम निकास_tasks_rcu_start(व्योम) __acquires(&tasks_rcu_निकास_srcu)
-अणु
+/* Do the srcu_read_lock() for the above synchronize_srcu().  */
+void exit_tasks_rcu_start(void) __acquires(&tasks_rcu_exit_srcu)
+{
 	preempt_disable();
-	current->rcu_tasks_idx = __srcu_पढ़ो_lock(&tasks_rcu_निकास_srcu);
+	current->rcu_tasks_idx = __srcu_read_lock(&tasks_rcu_exit_srcu);
 	preempt_enable();
-पूर्ण
+}
 
-/* Do the srcu_पढ़ो_unlock() क्रम the above synchronize_srcu().  */
-व्योम निकास_tasks_rcu_finish(व्योम) __releases(&tasks_rcu_निकास_srcu)
-अणु
-	काष्ठा task_काष्ठा *t = current;
+/* Do the srcu_read_unlock() for the above synchronize_srcu().  */
+void exit_tasks_rcu_finish(void) __releases(&tasks_rcu_exit_srcu)
+{
+	struct task_struct *t = current;
 
 	preempt_disable();
-	__srcu_पढ़ो_unlock(&tasks_rcu_निकास_srcu, t->rcu_tasks_idx);
+	__srcu_read_unlock(&tasks_rcu_exit_srcu, t->rcu_tasks_idx);
 	preempt_enable();
-	निकास_tasks_rcu_finish_trace(t);
-पूर्ण
+	exit_tasks_rcu_finish_trace(t);
+}
 
-#अन्यथा /* #अगर_घोषित CONFIG_TASKS_RCU */
-व्योम निकास_tasks_rcu_start(व्योम) अणु पूर्ण
-व्योम निकास_tasks_rcu_finish(व्योम) अणु निकास_tasks_rcu_finish_trace(current); पूर्ण
-#पूर्ण_अगर /* #अन्यथा #अगर_घोषित CONFIG_TASKS_RCU */
+#else /* #ifdef CONFIG_TASKS_RCU */
+void exit_tasks_rcu_start(void) { }
+void exit_tasks_rcu_finish(void) { exit_tasks_rcu_finish_trace(current); }
+#endif /* #else #ifdef CONFIG_TASKS_RCU */
 
-#अगर_घोषित CONFIG_TASKS_RUDE_RCU
+#ifdef CONFIG_TASKS_RUDE_RCU
 
 ////////////////////////////////////////////////////////////////////////
 //
@@ -607,442 +606,442 @@ EXPORT_SYMBOL_GPL(show_rcu_tasks_classic_gp_kthपढ़ो);
 // provides an asynchronous call_rcu_tasks_rude() API and batching
 // of concurrent calls to the synchronous synchronize_rcu_rude() API.
 // This sends IPIs far and wide and induces otherwise unnecessary context
-// चयनes on all online CPUs, whether idle or not.
+// switches on all online CPUs, whether idle or not.
 
-// Empty function to allow workqueues to क्रमce a context चयन.
-अटल व्योम rcu_tasks_be_rude(काष्ठा work_काष्ठा *work)
-अणु
-पूर्ण
+// Empty function to allow workqueues to force a context switch.
+static void rcu_tasks_be_rude(struct work_struct *work)
+{
+}
 
-// Wait क्रम one rude RCU-tasks grace period.
-अटल व्योम rcu_tasks_rude_रुको_gp(काष्ठा rcu_tasks *rtp)
-अणु
+// Wait for one rude RCU-tasks grace period.
+static void rcu_tasks_rude_wait_gp(struct rcu_tasks *rtp)
+{
 	rtp->n_ipis += cpumask_weight(cpu_online_mask);
 	schedule_on_each_cpu(rcu_tasks_be_rude);
-पूर्ण
+}
 
-व्योम call_rcu_tasks_rude(काष्ठा rcu_head *rhp, rcu_callback_t func);
-DEFINE_RCU_TASKS(rcu_tasks_rude, rcu_tasks_rude_रुको_gp, call_rcu_tasks_rude,
+void call_rcu_tasks_rude(struct rcu_head *rhp, rcu_callback_t func);
+DEFINE_RCU_TASKS(rcu_tasks_rude, rcu_tasks_rude_wait_gp, call_rcu_tasks_rude,
 		 "RCU Tasks Rude");
 
 /**
  * call_rcu_tasks_rude() - Queue a callback rude task-based grace period
- * @rhp: काष्ठाure to be used क्रम queueing the RCU updates.
+ * @rhp: structure to be used for queueing the RCU updates.
  * @func: actual callback function to be invoked after the grace period
  *
- * The callback function will be invoked some समय after a full grace
+ * The callback function will be invoked some time after a full grace
  * period elapses, in other words after all currently executing RCU
- * पढ़ो-side critical sections have completed. call_rcu_tasks_rude()
- * assumes that the पढ़ो-side critical sections end at context चयन,
+ * read-side critical sections have completed. call_rcu_tasks_rude()
+ * assumes that the read-side critical sections end at context switch,
  * cond_resched_rcu_qs(), or transition to usermode execution.  As such,
- * there are no पढ़ो-side primitives analogous to rcu_पढ़ो_lock() and
- * rcu_पढ़ो_unlock() because this primitive is पूर्णांकended to determine
- * that all tasks have passed through a safe state, not so much क्रम
+ * there are no read-side primitives analogous to rcu_read_lock() and
+ * rcu_read_unlock() because this primitive is intended to determine
+ * that all tasks have passed through a safe state, not so much for
  * data-strcuture synchronization.
  *
- * See the description of call_rcu() क्रम more detailed inक्रमmation on
+ * See the description of call_rcu() for more detailed information on
  * memory ordering guarantees.
  */
-व्योम call_rcu_tasks_rude(काष्ठा rcu_head *rhp, rcu_callback_t func)
-अणु
+void call_rcu_tasks_rude(struct rcu_head *rhp, rcu_callback_t func)
+{
 	call_rcu_tasks_generic(rhp, func, &rcu_tasks_rude);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(call_rcu_tasks_rude);
 
 /**
- * synchronize_rcu_tasks_rude - रुको क्रम a rude rcu-tasks grace period
+ * synchronize_rcu_tasks_rude - wait for a rude rcu-tasks grace period
  *
- * Control will वापस to the caller some समय after a rude rcu-tasks
+ * Control will return to the caller some time after a rude rcu-tasks
  * grace period has elapsed, in other words after all currently
- * executing rcu-tasks पढ़ो-side critical sections have elapsed.  These
- * पढ़ो-side critical sections are delimited by calls to schedule(),
+ * executing rcu-tasks read-side critical sections have elapsed.  These
+ * read-side critical sections are delimited by calls to schedule(),
  * cond_resched_tasks_rcu_qs(), userspace execution, and (in theory,
  * anyway) cond_resched().
  *
- * This is a very specialized primitive, पूर्णांकended only क्रम a few uses in
+ * This is a very specialized primitive, intended only for a few uses in
  * tracing and other situations requiring manipulation of function preambles
  * and profiling hooks.  The synchronize_rcu_tasks_rude() function is not
- * (yet) पूर्णांकended क्रम heavy use from multiple CPUs.
+ * (yet) intended for heavy use from multiple CPUs.
  *
- * See the description of synchronize_rcu() क्रम more detailed inक्रमmation
+ * See the description of synchronize_rcu() for more detailed information
  * on memory ordering guarantees.
  */
-व्योम synchronize_rcu_tasks_rude(व्योम)
-अणु
+void synchronize_rcu_tasks_rude(void)
+{
 	synchronize_rcu_tasks_generic(&rcu_tasks_rude);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(synchronize_rcu_tasks_rude);
 
 /**
- * rcu_barrier_tasks_rude - Wait क्रम in-flight call_rcu_tasks_rude() callbacks.
+ * rcu_barrier_tasks_rude - Wait for in-flight call_rcu_tasks_rude() callbacks.
  *
- * Although the current implementation is guaranteed to रुको, it is not
- * obligated to, क्रम example, अगर there are no pending callbacks.
+ * Although the current implementation is guaranteed to wait, it is not
+ * obligated to, for example, if there are no pending callbacks.
  */
-व्योम rcu_barrier_tasks_rude(व्योम)
-अणु
+void rcu_barrier_tasks_rude(void)
+{
 	/* There is only one callback queue, so this is easy.  ;-) */
 	synchronize_rcu_tasks_rude();
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(rcu_barrier_tasks_rude);
 
-अटल पूर्णांक __init rcu_spawn_tasks_rude_kthपढ़ो(व्योम)
-अणु
+static int __init rcu_spawn_tasks_rude_kthread(void)
+{
 	rcu_tasks_rude.gp_sleep = HZ / 10;
-	rcu_spawn_tasks_kthपढ़ो_generic(&rcu_tasks_rude);
-	वापस 0;
-पूर्ण
+	rcu_spawn_tasks_kthread_generic(&rcu_tasks_rude);
+	return 0;
+}
 
-#अगर !defined(CONFIG_TINY_RCU)
-व्योम show_rcu_tasks_rude_gp_kthपढ़ो(व्योम)
-अणु
-	show_rcu_tasks_generic_gp_kthपढ़ो(&rcu_tasks_rude, "");
-पूर्ण
-EXPORT_SYMBOL_GPL(show_rcu_tasks_rude_gp_kthपढ़ो);
-#पूर्ण_अगर // !defined(CONFIG_TINY_RCU)
-#पूर्ण_अगर /* #अगर_घोषित CONFIG_TASKS_RUDE_RCU */
+#if !defined(CONFIG_TINY_RCU)
+void show_rcu_tasks_rude_gp_kthread(void)
+{
+	show_rcu_tasks_generic_gp_kthread(&rcu_tasks_rude, "");
+}
+EXPORT_SYMBOL_GPL(show_rcu_tasks_rude_gp_kthread);
+#endif // !defined(CONFIG_TINY_RCU)
+#endif /* #ifdef CONFIG_TASKS_RUDE_RCU */
 
 ////////////////////////////////////////////////////////////////////////
 //
-// Tracing variant of Tasks RCU.  This variant is deचिन्हित to be used
+// Tracing variant of Tasks RCU.  This variant is designed to be used
 // to protect tracing hooks, including those of BPF.  This variant
-// thereक्रमe:
+// therefore:
 //
-// 1.	Has explicit पढ़ो-side markers to allow finite grace periods
-//	in the face of in-kernel loops क्रम PREEMPT=n builds.
+// 1.	Has explicit read-side markers to allow finite grace periods
+//	in the face of in-kernel loops for PREEMPT=n builds.
 //
-// 2.	Protects code in the idle loop, exception entry/निकास, and
+// 2.	Protects code in the idle loop, exception entry/exit, and
 //	CPU-hotplug code paths, similar to the capabilities of SRCU.
 //
-// 3.	Aव्योमs expensive पढ़ो-side inकाष्ठाion, having overhead similar
+// 3.	Avoids expensive read-side instruction, having overhead similar
 //	to that of Preemptible RCU.
 //
-// There are of course करोwnsides.  The grace-period code can send IPIs to
+// There are of course downsides.  The grace-period code can send IPIs to
 // CPUs, even when those CPUs are in the idle loop or in nohz_full userspace.
-// It is necessary to scan the full tasklist, much as क्रम Tasks RCU.  There
-// is a single callback queue guarded by a single lock, again, much as क्रम
-// Tasks RCU.  If needed, these करोwnsides can be at least partially remedied.
+// It is necessary to scan the full tasklist, much as for Tasks RCU.  There
+// is a single callback queue guarded by a single lock, again, much as for
+// Tasks RCU.  If needed, these downsides can be at least partially remedied.
 //
-// Perhaps most important, this variant of RCU करोes not affect the vanilla
+// Perhaps most important, this variant of RCU does not affect the vanilla
 // flavors, rcu_preempt and rcu_sched.  The fact that RCU Tasks Trace
-// पढ़ोers can operate from idle, offline, and exception entry/निकास in no
-// way allows rcu_preempt and rcu_sched पढ़ोers to also करो so.
+// readers can operate from idle, offline, and exception entry/exit in no
+// way allows rcu_preempt and rcu_sched readers to also do so.
 //
-// The implementation uses rcu_tasks_रुको_gp(), which relies on function
-// poपूर्णांकers in the rcu_tasks काष्ठाure.  The rcu_spawn_tasks_trace_kthपढ़ो()
-// function sets these function poपूर्णांकers up so that rcu_tasks_रुको_gp()
+// The implementation uses rcu_tasks_wait_gp(), which relies on function
+// pointers in the rcu_tasks structure.  The rcu_spawn_tasks_trace_kthread()
+// function sets these function pointers up so that rcu_tasks_wait_gp()
 // invokes these functions in this order:
 //
 // rcu_tasks_trace_pregp_step():
-//	Initialize the count of पढ़ोers and block CPU-hotplug operations.
+//	Initialize the count of readers and block CPU-hotplug operations.
 // rcu_tasks_trace_pertask(), invoked on every non-idle task:
-//	Initialize per-task state and attempt to identअगरy an immediate
-//	quiescent state क्रम that task, or, failing that, attempt to
+//	Initialize per-task state and attempt to identify an immediate
+//	quiescent state for that task, or, failing that, attempt to
 //	set that task's .need_qs flag so that task's next outermost
-//	rcu_पढ़ो_unlock_trace() will report the quiescent state (in which
-//	हाल the count of पढ़ोers is incremented).  If both attempts fail,
+//	rcu_read_unlock_trace() will report the quiescent state (in which
+//	case the count of readers is incremented).  If both attempts fail,
 //	the task is added to a "holdout" list.
 // rcu_tasks_trace_postscan():
-//	Initialize state and attempt to identअगरy an immediate quiescent
-//	state as above (but only क्रम idle tasks), unblock CPU-hotplug
-//	operations, and रुको क्रम an RCU grace period to aव्योम races with
-//	tasks that are in the process of निकासing.
-// check_all_holकरोut_tasks_trace(), repeatedly until holकरोut list is empty:
-//	Scans the holकरोut list, attempting to identअगरy a quiescent state
-//	क्रम each task on the list.  If there is a quiescent state, the
-//	corresponding task is हटाओd from the holकरोut list.
+//	Initialize state and attempt to identify an immediate quiescent
+//	state as above (but only for idle tasks), unblock CPU-hotplug
+//	operations, and wait for an RCU grace period to avoid races with
+//	tasks that are in the process of exiting.
+// check_all_holdout_tasks_trace(), repeatedly until holdout list is empty:
+//	Scans the holdout list, attempting to identify a quiescent state
+//	for each task on the list.  If there is a quiescent state, the
+//	corresponding task is removed from the holdout list.
 // rcu_tasks_trace_postgp():
-//	Wait क्रम the count of पढ़ोers करो drop to zero, reporting any stalls.
-//	Also execute full memory barriers to मुख्यtain ordering with code
+//	Wait for the count of readers do drop to zero, reporting any stalls.
+//	Also execute full memory barriers to maintain ordering with code
 //	executing after the grace period.
 //
-// The निकास_tasks_rcu_finish_trace() synchronizes with निकासing tasks.
+// The exit_tasks_rcu_finish_trace() synchronizes with exiting tasks.
 //
-// Pre-grace-period update-side code is ordered beक्रमe the grace
-// period via the ->cbs_lock and barriers in rcu_tasks_kthपढ़ो().
-// Pre-grace-period पढ़ो-side code is ordered beक्रमe the grace period by
-// atomic_dec_and_test() of the count of पढ़ोers (क्रम IPIed पढ़ोers) and by
-// scheduler context-चयन ordering (क्रम locked-करोwn non-running पढ़ोers).
+// Pre-grace-period update-side code is ordered before the grace
+// period via the ->cbs_lock and barriers in rcu_tasks_kthread().
+// Pre-grace-period read-side code is ordered before the grace period by
+// atomic_dec_and_test() of the count of readers (for IPIed readers) and by
+// scheduler context-switch ordering (for locked-down non-running readers).
 
-// The lockdep state must be outside of #अगर_घोषित to be useful.
-#अगर_घोषित CONFIG_DEBUG_LOCK_ALLOC
-अटल काष्ठा lock_class_key rcu_lock_trace_key;
-काष्ठा lockdep_map rcu_trace_lock_map =
+// The lockdep state must be outside of #ifdef to be useful.
+#ifdef CONFIG_DEBUG_LOCK_ALLOC
+static struct lock_class_key rcu_lock_trace_key;
+struct lockdep_map rcu_trace_lock_map =
 	STATIC_LOCKDEP_MAP_INIT("rcu_read_lock_trace", &rcu_lock_trace_key);
 EXPORT_SYMBOL_GPL(rcu_trace_lock_map);
-#पूर्ण_अगर /* #अगर_घोषित CONFIG_DEBUG_LOCK_ALLOC */
+#endif /* #ifdef CONFIG_DEBUG_LOCK_ALLOC */
 
-#अगर_घोषित CONFIG_TASKS_TRACE_RCU
+#ifdef CONFIG_TASKS_TRACE_RCU
 
-अटल atomic_t trc_n_पढ़ोers_need_end;		// Number of रुकोed-क्रम पढ़ोers.
-अटल DECLARE_WAIT_QUEUE_HEAD(trc_रुको);	// List of holकरोut tasks.
+static atomic_t trc_n_readers_need_end;		// Number of waited-for readers.
+static DECLARE_WAIT_QUEUE_HEAD(trc_wait);	// List of holdout tasks.
 
-// Record outstanding IPIs to each CPU.  No poपूर्णांक in sending two...
-अटल DEFINE_PER_CPU(bool, trc_ipi_to_cpu);
+// Record outstanding IPIs to each CPU.  No point in sending two...
+static DEFINE_PER_CPU(bool, trc_ipi_to_cpu);
 
 // The number of detections of task quiescent state relying on
-// heavyweight पढ़ोers executing explicit memory barriers.
-अटल अचिन्हित दीर्घ n_heavy_पढ़ोer_attempts;
-अटल अचिन्हित दीर्घ n_heavy_पढ़ोer_updates;
-अटल अचिन्हित दीर्घ n_heavy_पढ़ोer_ofl_updates;
+// heavyweight readers executing explicit memory barriers.
+static unsigned long n_heavy_reader_attempts;
+static unsigned long n_heavy_reader_updates;
+static unsigned long n_heavy_reader_ofl_updates;
 
-व्योम call_rcu_tasks_trace(काष्ठा rcu_head *rhp, rcu_callback_t func);
-DEFINE_RCU_TASKS(rcu_tasks_trace, rcu_tasks_रुको_gp, call_rcu_tasks_trace,
+void call_rcu_tasks_trace(struct rcu_head *rhp, rcu_callback_t func);
+DEFINE_RCU_TASKS(rcu_tasks_trace, rcu_tasks_wait_gp, call_rcu_tasks_trace,
 		 "RCU Tasks Trace");
 
 /*
- * This irq_work handler allows rcu_पढ़ो_unlock_trace() to be invoked
- * जबतक the scheduler locks are held.
+ * This irq_work handler allows rcu_read_unlock_trace() to be invoked
+ * while the scheduler locks are held.
  */
-अटल व्योम rcu_पढ़ो_unlock_iw(काष्ठा irq_work *iwp)
-अणु
-	wake_up(&trc_रुको);
-पूर्ण
-अटल DEFINE_IRQ_WORK(rcu_tasks_trace_iw, rcu_पढ़ो_unlock_iw);
+static void rcu_read_unlock_iw(struct irq_work *iwp)
+{
+	wake_up(&trc_wait);
+}
+static DEFINE_IRQ_WORK(rcu_tasks_trace_iw, rcu_read_unlock_iw);
 
-/* If we are the last पढ़ोer, wake up the grace-period kthपढ़ो. */
-व्योम rcu_पढ़ो_unlock_trace_special(काष्ठा task_काष्ठा *t, पूर्णांक nesting)
-अणु
-	पूर्णांक nq = t->trc_पढ़ोer_special.b.need_qs;
+/* If we are the last reader, wake up the grace-period kthread. */
+void rcu_read_unlock_trace_special(struct task_struct *t, int nesting)
+{
+	int nq = t->trc_reader_special.b.need_qs;
 
-	अगर (IS_ENABLED(CONFIG_TASKS_TRACE_RCU_READ_MB) &&
-	    t->trc_पढ़ोer_special.b.need_mb)
+	if (IS_ENABLED(CONFIG_TASKS_TRACE_RCU_READ_MB) &&
+	    t->trc_reader_special.b.need_mb)
 		smp_mb(); // Pairs with update-side barriers.
-	// Update .need_qs beक्रमe ->trc_पढ़ोer_nesting क्रम irq/NMI handlers.
-	अगर (nq)
-		WRITE_ONCE(t->trc_पढ़ोer_special.b.need_qs, false);
-	WRITE_ONCE(t->trc_पढ़ोer_nesting, nesting);
-	अगर (nq && atomic_dec_and_test(&trc_n_पढ़ोers_need_end))
+	// Update .need_qs before ->trc_reader_nesting for irq/NMI handlers.
+	if (nq)
+		WRITE_ONCE(t->trc_reader_special.b.need_qs, false);
+	WRITE_ONCE(t->trc_reader_nesting, nesting);
+	if (nq && atomic_dec_and_test(&trc_n_readers_need_end))
 		irq_work_queue(&rcu_tasks_trace_iw);
-पूर्ण
-EXPORT_SYMBOL_GPL(rcu_पढ़ो_unlock_trace_special);
+}
+EXPORT_SYMBOL_GPL(rcu_read_unlock_trace_special);
 
-/* Add a task to the holकरोut list, अगर it is not alपढ़ोy on the list. */
-अटल व्योम trc_add_holकरोut(काष्ठा task_काष्ठा *t, काष्ठा list_head *bhp)
-अणु
-	अगर (list_empty(&t->trc_holकरोut_list)) अणु
-		get_task_काष्ठा(t);
-		list_add(&t->trc_holकरोut_list, bhp);
-	पूर्ण
-पूर्ण
+/* Add a task to the holdout list, if it is not already on the list. */
+static void trc_add_holdout(struct task_struct *t, struct list_head *bhp)
+{
+	if (list_empty(&t->trc_holdout_list)) {
+		get_task_struct(t);
+		list_add(&t->trc_holdout_list, bhp);
+	}
+}
 
-/* Remove a task from the holकरोut list, अगर it is in fact present. */
-अटल व्योम trc_del_holकरोut(काष्ठा task_काष्ठा *t)
-अणु
-	अगर (!list_empty(&t->trc_holकरोut_list)) अणु
-		list_del_init(&t->trc_holकरोut_list);
-		put_task_काष्ठा(t);
-	पूर्ण
-पूर्ण
+/* Remove a task from the holdout list, if it is in fact present. */
+static void trc_del_holdout(struct task_struct *t)
+{
+	if (!list_empty(&t->trc_holdout_list)) {
+		list_del_init(&t->trc_holdout_list);
+		put_task_struct(t);
+	}
+}
 
 /* IPI handler to check task state. */
-अटल व्योम trc_पढ़ो_check_handler(व्योम *t_in)
-अणु
-	काष्ठा task_काष्ठा *t = current;
-	काष्ठा task_काष्ठा *texp = t_in;
+static void trc_read_check_handler(void *t_in)
+{
+	struct task_struct *t = current;
+	struct task_struct *texp = t_in;
 
-	// If the task is no दीर्घer running on this CPU, leave.
-	अगर (unlikely(texp != t)) अणु
-		अगर (WARN_ON_ONCE(atomic_dec_and_test(&trc_n_पढ़ोers_need_end)))
-			wake_up(&trc_रुको);
-		जाओ reset_ipi; // Alपढ़ोy on holकरोut list, so will check later.
-	पूर्ण
+	// If the task is no longer running on this CPU, leave.
+	if (unlikely(texp != t)) {
+		if (WARN_ON_ONCE(atomic_dec_and_test(&trc_n_readers_need_end)))
+			wake_up(&trc_wait);
+		goto reset_ipi; // Already on holdout list, so will check later.
+	}
 
-	// If the task is not in a पढ़ो-side critical section, and
-	// अगर this is the last पढ़ोer, awaken the grace-period kthपढ़ो.
-	अगर (likely(!t->trc_पढ़ोer_nesting)) अणु
-		अगर (WARN_ON_ONCE(atomic_dec_and_test(&trc_n_पढ़ोers_need_end)))
-			wake_up(&trc_रुको);
-		// Mark as checked after decrement to aव्योम false
+	// If the task is not in a read-side critical section, and
+	// if this is the last reader, awaken the grace-period kthread.
+	if (likely(!t->trc_reader_nesting)) {
+		if (WARN_ON_ONCE(atomic_dec_and_test(&trc_n_readers_need_end)))
+			wake_up(&trc_wait);
+		// Mark as checked after decrement to avoid false
 		// positives on the above WARN_ON_ONCE().
-		WRITE_ONCE(t->trc_पढ़ोer_checked, true);
-		जाओ reset_ipi;
-	पूर्ण
-	// If we are racing with an rcu_पढ़ो_unlock_trace(), try again later.
-	अगर (unlikely(t->trc_पढ़ोer_nesting < 0)) अणु
-		अगर (WARN_ON_ONCE(atomic_dec_and_test(&trc_n_पढ़ोers_need_end)))
-			wake_up(&trc_रुको);
-		जाओ reset_ipi;
-	पूर्ण
-	WRITE_ONCE(t->trc_पढ़ोer_checked, true);
+		WRITE_ONCE(t->trc_reader_checked, true);
+		goto reset_ipi;
+	}
+	// If we are racing with an rcu_read_unlock_trace(), try again later.
+	if (unlikely(t->trc_reader_nesting < 0)) {
+		if (WARN_ON_ONCE(atomic_dec_and_test(&trc_n_readers_need_end)))
+			wake_up(&trc_wait);
+		goto reset_ipi;
+	}
+	WRITE_ONCE(t->trc_reader_checked, true);
 
-	// Get here अगर the task is in a पढ़ो-side critical section.  Set
-	// its state so that it will awaken the grace-period kthपढ़ो upon
-	// निकास from that critical section.
-	WARN_ON_ONCE(t->trc_पढ़ोer_special.b.need_qs);
-	WRITE_ONCE(t->trc_पढ़ोer_special.b.need_qs, true);
+	// Get here if the task is in a read-side critical section.  Set
+	// its state so that it will awaken the grace-period kthread upon
+	// exit from that critical section.
+	WARN_ON_ONCE(t->trc_reader_special.b.need_qs);
+	WRITE_ONCE(t->trc_reader_special.b.need_qs, true);
 
 reset_ipi:
-	// Allow future IPIs to be sent on CPU and क्रम task.
+	// Allow future IPIs to be sent on CPU and for task.
 	// Also order this IPI handler against any later manipulations of
-	// the पूर्णांकended task.
+	// the intended task.
 	smp_store_release(&per_cpu(trc_ipi_to_cpu, smp_processor_id()), false); // ^^^
 	smp_store_release(&texp->trc_ipi_to_cpu, -1); // ^^^
-पूर्ण
+}
 
-/* Callback function क्रम scheduler to check locked-करोwn task.  */
-अटल bool trc_inspect_पढ़ोer(काष्ठा task_काष्ठा *t, व्योम *arg)
-अणु
-	पूर्णांक cpu = task_cpu(t);
+/* Callback function for scheduler to check locked-down task.  */
+static bool trc_inspect_reader(struct task_struct *t, void *arg)
+{
+	int cpu = task_cpu(t);
 	bool in_qs = false;
 	bool ofl = cpu_is_offline(cpu);
 
-	अगर (task_curr(t)) अणु
+	if (task_curr(t)) {
 		WARN_ON_ONCE(ofl && !is_idle_task(t));
 
-		// If no chance of heavyweight पढ़ोers, करो it the hard way.
-		अगर (!ofl && !IS_ENABLED(CONFIG_TASKS_TRACE_RCU_READ_MB))
-			वापस false;
+		// If no chance of heavyweight readers, do it the hard way.
+		if (!ofl && !IS_ENABLED(CONFIG_TASKS_TRACE_RCU_READ_MB))
+			return false;
 
-		// If heavyweight पढ़ोers are enabled on the remote task,
+		// If heavyweight readers are enabled on the remote task,
 		// we can inspect its state despite its currently running.
 		// However, we cannot safely change its state.
-		n_heavy_पढ़ोer_attempts++;
-		अगर (!ofl && // Check क्रम "running" idle tasks on offline CPUs.
-		    !rcu_dynticks_zero_in_eqs(cpu, &t->trc_पढ़ोer_nesting))
-			वापस false; // No quiescent state, करो it the hard way.
-		n_heavy_पढ़ोer_updates++;
-		अगर (ofl)
-			n_heavy_पढ़ोer_ofl_updates++;
+		n_heavy_reader_attempts++;
+		if (!ofl && // Check for "running" idle tasks on offline CPUs.
+		    !rcu_dynticks_zero_in_eqs(cpu, &t->trc_reader_nesting))
+			return false; // No quiescent state, do it the hard way.
+		n_heavy_reader_updates++;
+		if (ofl)
+			n_heavy_reader_ofl_updates++;
 		in_qs = true;
-	पूर्ण अन्यथा अणु
-		in_qs = likely(!t->trc_पढ़ोer_nesting);
-	पूर्ण
+	} else {
+		in_qs = likely(!t->trc_reader_nesting);
+	}
 
 	// Mark as checked.  Because this is called from the grace-period
-	// kthपढ़ो, also हटाओ the task from the holकरोut list.
-	t->trc_पढ़ोer_checked = true;
-	trc_del_holकरोut(t);
+	// kthread, also remove the task from the holdout list.
+	t->trc_reader_checked = true;
+	trc_del_holdout(t);
 
-	अगर (in_qs)
-		वापस true;  // Alपढ़ोy in quiescent state, करोne!!!
+	if (in_qs)
+		return true;  // Already in quiescent state, done!!!
 
-	// The task is in a पढ़ो-side critical section, so set up its
-	// state so that it will awaken the grace-period kthपढ़ो upon निकास
+	// The task is in a read-side critical section, so set up its
+	// state so that it will awaken the grace-period kthread upon exit
 	// from that critical section.
-	atomic_inc(&trc_n_पढ़ोers_need_end); // One more to रुको on.
-	WARN_ON_ONCE(t->trc_पढ़ोer_special.b.need_qs);
-	WRITE_ONCE(t->trc_पढ़ोer_special.b.need_qs, true);
-	वापस true;
-पूर्ण
+	atomic_inc(&trc_n_readers_need_end); // One more to wait on.
+	WARN_ON_ONCE(t->trc_reader_special.b.need_qs);
+	WRITE_ONCE(t->trc_reader_special.b.need_qs, true);
+	return true;
+}
 
-/* Attempt to extract the state क्रम the specअगरied task. */
-अटल व्योम trc_रुको_क्रम_one_पढ़ोer(काष्ठा task_काष्ठा *t,
-				    काष्ठा list_head *bhp)
-अणु
-	पूर्णांक cpu;
+/* Attempt to extract the state for the specified task. */
+static void trc_wait_for_one_reader(struct task_struct *t,
+				    struct list_head *bhp)
+{
+	int cpu;
 
 	// If a previous IPI is still in flight, let it complete.
-	अगर (smp_load_acquire(&t->trc_ipi_to_cpu) != -1) // Order IPI
-		वापस;
+	if (smp_load_acquire(&t->trc_ipi_to_cpu) != -1) // Order IPI
+		return;
 
 	// The current task had better be in a quiescent state.
-	अगर (t == current) अणु
-		t->trc_पढ़ोer_checked = true;
-		trc_del_holकरोut(t);
-		WARN_ON_ONCE(t->trc_पढ़ोer_nesting);
-		वापस;
-	पूर्ण
+	if (t == current) {
+		t->trc_reader_checked = true;
+		trc_del_holdout(t);
+		WARN_ON_ONCE(t->trc_reader_nesting);
+		return;
+	}
 
-	// Attempt to nail करोwn the task क्रम inspection.
-	get_task_काष्ठा(t);
-	अगर (try_invoke_on_locked_करोwn_task(t, trc_inspect_पढ़ोer, शून्य)) अणु
-		put_task_काष्ठा(t);
-		वापस;
-	पूर्ण
-	put_task_काष्ठा(t);
+	// Attempt to nail down the task for inspection.
+	get_task_struct(t);
+	if (try_invoke_on_locked_down_task(t, trc_inspect_reader, NULL)) {
+		put_task_struct(t);
+		return;
+	}
+	put_task_struct(t);
 
 	// If currently running, send an IPI, either way, add to list.
-	trc_add_holकरोut(t, bhp);
-	अगर (task_curr(t) &&
-	    समय_after(jअगरfies + 1, rcu_tasks_trace.gp_start + rcu_task_ipi_delay)) अणु
+	trc_add_holdout(t, bhp);
+	if (task_curr(t) &&
+	    time_after(jiffies + 1, rcu_tasks_trace.gp_start + rcu_task_ipi_delay)) {
 		// The task is currently running, so try IPIing it.
 		cpu = task_cpu(t);
 
-		// If there is alपढ़ोy an IPI outstanding, let it happen.
-		अगर (per_cpu(trc_ipi_to_cpu, cpu) || t->trc_ipi_to_cpu >= 0)
-			वापस;
+		// If there is already an IPI outstanding, let it happen.
+		if (per_cpu(trc_ipi_to_cpu, cpu) || t->trc_ipi_to_cpu >= 0)
+			return;
 
-		atomic_inc(&trc_n_पढ़ोers_need_end);
+		atomic_inc(&trc_n_readers_need_end);
 		per_cpu(trc_ipi_to_cpu, cpu) = true;
 		t->trc_ipi_to_cpu = cpu;
 		rcu_tasks_trace.n_ipis++;
-		अगर (smp_call_function_single(cpu,
-					     trc_पढ़ो_check_handler, t, 0)) अणु
-			// Just in हाल there is some other reason क्रम
+		if (smp_call_function_single(cpu,
+					     trc_read_check_handler, t, 0)) {
+			// Just in case there is some other reason for
 			// failure than the target CPU being offline.
 			rcu_tasks_trace.n_ipis_fails++;
 			per_cpu(trc_ipi_to_cpu, cpu) = false;
 			t->trc_ipi_to_cpu = cpu;
-			अगर (atomic_dec_and_test(&trc_n_पढ़ोers_need_end)) अणु
+			if (atomic_dec_and_test(&trc_n_readers_need_end)) {
 				WARN_ON_ONCE(1);
-				wake_up(&trc_रुको);
-			पूर्ण
-		पूर्ण
-	पूर्ण
-पूर्ण
+				wake_up(&trc_wait);
+			}
+		}
+	}
+}
 
-/* Initialize क्रम a new RCU-tasks-trace grace period. */
-अटल व्योम rcu_tasks_trace_pregp_step(व्योम)
-अणु
-	पूर्णांक cpu;
+/* Initialize for a new RCU-tasks-trace grace period. */
+static void rcu_tasks_trace_pregp_step(void)
+{
+	int cpu;
 
-	// Allow क्रम fast-acting IPIs.
-	atomic_set(&trc_n_पढ़ोers_need_end, 1);
+	// Allow for fast-acting IPIs.
+	atomic_set(&trc_n_readers_need_end, 1);
 
 	// There shouldn't be any old IPIs, but...
-	क्रम_each_possible_cpu(cpu)
+	for_each_possible_cpu(cpu)
 		WARN_ON_ONCE(per_cpu(trc_ipi_to_cpu, cpu));
 
 	// Disable CPU hotplug across the tasklist scan.
-	// This also रुकोs क्रम all पढ़ोers in CPU-hotplug code paths.
-	cpus_पढ़ो_lock();
-पूर्ण
+	// This also waits for all readers in CPU-hotplug code paths.
+	cpus_read_lock();
+}
 
-/* Do first-round processing क्रम the specअगरied task. */
-अटल व्योम rcu_tasks_trace_pertask(काष्ठा task_काष्ठा *t,
-				    काष्ठा list_head *hop)
-अणु
+/* Do first-round processing for the specified task. */
+static void rcu_tasks_trace_pertask(struct task_struct *t,
+				    struct list_head *hop)
+{
 	// During early boot when there is only the one boot CPU, there
-	// is no idle task क्रम the other CPUs. Just वापस.
-	अगर (unlikely(t == शून्य))
-		वापस;
+	// is no idle task for the other CPUs. Just return.
+	if (unlikely(t == NULL))
+		return;
 
-	WRITE_ONCE(t->trc_पढ़ोer_special.b.need_qs, false);
-	WRITE_ONCE(t->trc_पढ़ोer_checked, false);
+	WRITE_ONCE(t->trc_reader_special.b.need_qs, false);
+	WRITE_ONCE(t->trc_reader_checked, false);
 	t->trc_ipi_to_cpu = -1;
-	trc_रुको_क्रम_one_पढ़ोer(t, hop);
-पूर्ण
+	trc_wait_for_one_reader(t, hop);
+}
 
 /*
- * Do पूर्णांकermediate processing between task and holकरोut scans and
+ * Do intermediate processing between task and holdout scans and
  * pick up the idle tasks.
  */
-अटल व्योम rcu_tasks_trace_postscan(काष्ठा list_head *hop)
-अणु
-	पूर्णांक cpu;
+static void rcu_tasks_trace_postscan(struct list_head *hop)
+{
+	int cpu;
 
-	क्रम_each_possible_cpu(cpu)
+	for_each_possible_cpu(cpu)
 		rcu_tasks_trace_pertask(idle_task(cpu), hop);
 
 	// Re-enable CPU hotplug now that the tasklist scan has completed.
-	cpus_पढ़ो_unlock();
+	cpus_read_unlock();
 
-	// Wait क्रम late-stage निकासing tasks to finish निकासing.
-	// These might have passed the call to निकास_tasks_rcu_finish().
+	// Wait for late-stage exiting tasks to finish exiting.
+	// These might have passed the call to exit_tasks_rcu_finish().
 	synchronize_rcu();
-	// Any tasks that निकास after this poपूर्णांक will set ->trc_पढ़ोer_checked.
-पूर्ण
+	// Any tasks that exit after this point will set ->trc_reader_checked.
+}
 
 /* Show the state of a task stalling the current RCU tasks trace GP. */
-अटल व्योम show_stalled_task_trace(काष्ठा task_काष्ठा *t, bool *firstreport)
-अणु
-	पूर्णांक cpu;
+static void show_stalled_task_trace(struct task_struct *t, bool *firstreport)
+{
+	int cpu;
 
-	अगर (*firstreport) अणु
+	if (*firstreport) {
 		pr_err("INFO: rcu_tasks_trace detected stalls on tasks:\n");
 		*firstreport = false;
-	पूर्ण
+	}
 	// FIXME: This should attempt to use try_invoke_on_nonrunning_task().
 	cpu = task_cpu(t);
 	pr_alert("P%d: %c%c%c nesting: %d%c cpu: %d\n",
@@ -1050,312 +1049,312 @@ reset_ipi:
 		 ".I"[READ_ONCE(t->trc_ipi_to_cpu) > 0],
 		 ".i"[is_idle_task(t)],
 		 ".N"[cpu > 0 && tick_nohz_full_cpu(cpu)],
-		 t->trc_पढ़ोer_nesting,
-		 " N"[!!t->trc_पढ़ोer_special.b.need_qs],
+		 t->trc_reader_nesting,
+		 " N"[!!t->trc_reader_special.b.need_qs],
 		 cpu);
 	sched_show_task(t);
-पूर्ण
+}
 
-/* List stalled IPIs क्रम RCU tasks trace. */
-अटल व्योम show_stalled_ipi_trace(व्योम)
-अणु
-	पूर्णांक cpu;
+/* List stalled IPIs for RCU tasks trace. */
+static void show_stalled_ipi_trace(void)
+{
+	int cpu;
 
-	क्रम_each_possible_cpu(cpu)
-		अगर (per_cpu(trc_ipi_to_cpu, cpu))
+	for_each_possible_cpu(cpu)
+		if (per_cpu(trc_ipi_to_cpu, cpu))
 			pr_alert("\tIPI outstanding to CPU %d\n", cpu);
-पूर्ण
+}
 
-/* Do one scan of the holकरोut list. */
-अटल व्योम check_all_holकरोut_tasks_trace(काष्ठा list_head *hop,
+/* Do one scan of the holdout list. */
+static void check_all_holdout_tasks_trace(struct list_head *hop,
 					  bool needreport, bool *firstreport)
-अणु
-	काष्ठा task_काष्ठा *g, *t;
+{
+	struct task_struct *g, *t;
 
-	// Disable CPU hotplug across the holकरोut list scan.
-	cpus_पढ़ो_lock();
+	// Disable CPU hotplug across the holdout list scan.
+	cpus_read_lock();
 
-	list_क्रम_each_entry_safe(t, g, hop, trc_holकरोut_list) अणु
+	list_for_each_entry_safe(t, g, hop, trc_holdout_list) {
 		// If safe and needed, try to check the current task.
-		अगर (READ_ONCE(t->trc_ipi_to_cpu) == -1 &&
-		    !READ_ONCE(t->trc_पढ़ोer_checked))
-			trc_रुको_क्रम_one_पढ़ोer(t, hop);
+		if (READ_ONCE(t->trc_ipi_to_cpu) == -1 &&
+		    !READ_ONCE(t->trc_reader_checked))
+			trc_wait_for_one_reader(t, hop);
 
-		// If check succeeded, हटाओ this task from the list.
-		अगर (READ_ONCE(t->trc_पढ़ोer_checked))
-			trc_del_holकरोut(t);
-		अन्यथा अगर (needreport)
+		// If check succeeded, remove this task from the list.
+		if (READ_ONCE(t->trc_reader_checked))
+			trc_del_holdout(t);
+		else if (needreport)
 			show_stalled_task_trace(t, firstreport);
-	पूर्ण
+	}
 
-	// Re-enable CPU hotplug now that the holकरोut list scan has completed.
-	cpus_पढ़ो_unlock();
+	// Re-enable CPU hotplug now that the holdout list scan has completed.
+	cpus_read_unlock();
 
-	अगर (needreport) अणु
-		अगर (firstreport)
+	if (needreport) {
+		if (firstreport)
 			pr_err("INFO: rcu_tasks_trace detected stalls? (Late IPI?)\n");
 		show_stalled_ipi_trace();
-	पूर्ण
-पूर्ण
+	}
+}
 
-/* Wait क्रम grace period to complete and provide ordering. */
-अटल व्योम rcu_tasks_trace_postgp(काष्ठा rcu_tasks *rtp)
-अणु
+/* Wait for grace period to complete and provide ordering. */
+static void rcu_tasks_trace_postgp(struct rcu_tasks *rtp)
+{
 	bool firstreport;
-	काष्ठा task_काष्ठा *g, *t;
-	LIST_HEAD(holकरोuts);
-	दीर्घ ret;
+	struct task_struct *g, *t;
+	LIST_HEAD(holdouts);
+	long ret;
 
 	// Remove the safety count.
-	smp_mb__beक्रमe_atomic();  // Order vs. earlier atomics
-	atomic_dec(&trc_n_पढ़ोers_need_end);
+	smp_mb__before_atomic();  // Order vs. earlier atomics
+	atomic_dec(&trc_n_readers_need_end);
 	smp_mb__after_atomic();  // Order vs. later atomics
 
-	// Wait क्रम पढ़ोers.
+	// Wait for readers.
 	set_tasks_gp_state(rtp, RTGS_WAIT_READERS);
-	क्रम (;;) अणु
-		ret = रुको_event_idle_exclusive_समयout(
-				trc_रुको,
-				atomic_पढ़ो(&trc_n_पढ़ोers_need_end) == 0,
-				READ_ONCE(rcu_task_stall_समयout));
-		अगर (ret)
-			अवरोध;  // Count reached zero.
-		// Stall warning समय, so make a list of the offenders.
-		rcu_पढ़ो_lock();
-		क्रम_each_process_thपढ़ो(g, t)
-			अगर (READ_ONCE(t->trc_पढ़ोer_special.b.need_qs))
-				trc_add_holकरोut(t, &holकरोuts);
-		rcu_पढ़ो_unlock();
+	for (;;) {
+		ret = wait_event_idle_exclusive_timeout(
+				trc_wait,
+				atomic_read(&trc_n_readers_need_end) == 0,
+				READ_ONCE(rcu_task_stall_timeout));
+		if (ret)
+			break;  // Count reached zero.
+		// Stall warning time, so make a list of the offenders.
+		rcu_read_lock();
+		for_each_process_thread(g, t)
+			if (READ_ONCE(t->trc_reader_special.b.need_qs))
+				trc_add_holdout(t, &holdouts);
+		rcu_read_unlock();
 		firstreport = true;
-		list_क्रम_each_entry_safe(t, g, &holकरोuts, trc_holकरोut_list) अणु
-			अगर (READ_ONCE(t->trc_पढ़ोer_special.b.need_qs))
+		list_for_each_entry_safe(t, g, &holdouts, trc_holdout_list) {
+			if (READ_ONCE(t->trc_reader_special.b.need_qs))
 				show_stalled_task_trace(t, &firstreport);
-			trc_del_holकरोut(t); // Release task_काष्ठा reference.
-		पूर्ण
-		अगर (firstreport)
+			trc_del_holdout(t); // Release task_struct reference.
+		}
+		if (firstreport)
 			pr_err("INFO: rcu_tasks_trace detected stalls? (Counter/taskslist mismatch?)\n");
 		show_stalled_ipi_trace();
-		pr_err("\t%d holdouts\n", atomic_पढ़ो(&trc_n_पढ़ोers_need_end));
-	पूर्ण
+		pr_err("\t%d holdouts\n", atomic_read(&trc_n_readers_need_end));
+	}
 	smp_mb(); // Caller's code must be ordered after wakeup.
 		  // Pairs with pretty much every ordering primitive.
-पूर्ण
+}
 
-/* Report any needed quiescent state क्रम this निकासing task. */
-अटल व्योम निकास_tasks_rcu_finish_trace(काष्ठा task_काष्ठा *t)
-अणु
-	WRITE_ONCE(t->trc_पढ़ोer_checked, true);
-	WARN_ON_ONCE(t->trc_पढ़ोer_nesting);
-	WRITE_ONCE(t->trc_पढ़ोer_nesting, 0);
-	अगर (WARN_ON_ONCE(READ_ONCE(t->trc_पढ़ोer_special.b.need_qs)))
-		rcu_पढ़ो_unlock_trace_special(t, 0);
-पूर्ण
+/* Report any needed quiescent state for this exiting task. */
+static void exit_tasks_rcu_finish_trace(struct task_struct *t)
+{
+	WRITE_ONCE(t->trc_reader_checked, true);
+	WARN_ON_ONCE(t->trc_reader_nesting);
+	WRITE_ONCE(t->trc_reader_nesting, 0);
+	if (WARN_ON_ONCE(READ_ONCE(t->trc_reader_special.b.need_qs)))
+		rcu_read_unlock_trace_special(t, 0);
+}
 
 /**
  * call_rcu_tasks_trace() - Queue a callback trace task-based grace period
- * @rhp: काष्ठाure to be used क्रम queueing the RCU updates.
+ * @rhp: structure to be used for queueing the RCU updates.
  * @func: actual callback function to be invoked after the grace period
  *
- * The callback function will be invoked some समय after a full grace
+ * The callback function will be invoked some time after a full grace
  * period elapses, in other words after all currently executing RCU
- * पढ़ो-side critical sections have completed. call_rcu_tasks_trace()
- * assumes that the पढ़ो-side critical sections end at context चयन,
+ * read-side critical sections have completed. call_rcu_tasks_trace()
+ * assumes that the read-side critical sections end at context switch,
  * cond_resched_rcu_qs(), or transition to usermode execution.  As such,
- * there are no पढ़ो-side primitives analogous to rcu_पढ़ो_lock() and
- * rcu_पढ़ो_unlock() because this primitive is पूर्णांकended to determine
- * that all tasks have passed through a safe state, not so much क्रम
+ * there are no read-side primitives analogous to rcu_read_lock() and
+ * rcu_read_unlock() because this primitive is intended to determine
+ * that all tasks have passed through a safe state, not so much for
  * data-strcuture synchronization.
  *
- * See the description of call_rcu() क्रम more detailed inक्रमmation on
+ * See the description of call_rcu() for more detailed information on
  * memory ordering guarantees.
  */
-व्योम call_rcu_tasks_trace(काष्ठा rcu_head *rhp, rcu_callback_t func)
-अणु
+void call_rcu_tasks_trace(struct rcu_head *rhp, rcu_callback_t func)
+{
 	call_rcu_tasks_generic(rhp, func, &rcu_tasks_trace);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(call_rcu_tasks_trace);
 
 /**
- * synchronize_rcu_tasks_trace - रुको क्रम a trace rcu-tasks grace period
+ * synchronize_rcu_tasks_trace - wait for a trace rcu-tasks grace period
  *
- * Control will वापस to the caller some समय after a trace rcu-tasks
+ * Control will return to the caller some time after a trace rcu-tasks
  * grace period has elapsed, in other words after all currently executing
- * rcu-tasks पढ़ो-side critical sections have elapsed.  These पढ़ो-side
- * critical sections are delimited by calls to rcu_पढ़ो_lock_trace()
- * and rcu_पढ़ो_unlock_trace().
+ * rcu-tasks read-side critical sections have elapsed.  These read-side
+ * critical sections are delimited by calls to rcu_read_lock_trace()
+ * and rcu_read_unlock_trace().
  *
- * This is a very specialized primitive, पूर्णांकended only क्रम a few uses in
+ * This is a very specialized primitive, intended only for a few uses in
  * tracing and other situations requiring manipulation of function preambles
  * and profiling hooks.  The synchronize_rcu_tasks_trace() function is not
- * (yet) पूर्णांकended क्रम heavy use from multiple CPUs.
+ * (yet) intended for heavy use from multiple CPUs.
  *
- * See the description of synchronize_rcu() क्रम more detailed inक्रमmation
+ * See the description of synchronize_rcu() for more detailed information
  * on memory ordering guarantees.
  */
-व्योम synchronize_rcu_tasks_trace(व्योम)
-अणु
+void synchronize_rcu_tasks_trace(void)
+{
 	RCU_LOCKDEP_WARN(lock_is_held(&rcu_trace_lock_map), "Illegal synchronize_rcu_tasks_trace() in RCU Tasks Trace read-side critical section");
 	synchronize_rcu_tasks_generic(&rcu_tasks_trace);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(synchronize_rcu_tasks_trace);
 
 /**
- * rcu_barrier_tasks_trace - Wait क्रम in-flight call_rcu_tasks_trace() callbacks.
+ * rcu_barrier_tasks_trace - Wait for in-flight call_rcu_tasks_trace() callbacks.
  *
- * Although the current implementation is guaranteed to रुको, it is not
- * obligated to, क्रम example, अगर there are no pending callbacks.
+ * Although the current implementation is guaranteed to wait, it is not
+ * obligated to, for example, if there are no pending callbacks.
  */
-व्योम rcu_barrier_tasks_trace(व्योम)
-अणु
+void rcu_barrier_tasks_trace(void)
+{
 	/* There is only one callback queue, so this is easy.  ;-) */
 	synchronize_rcu_tasks_trace();
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(rcu_barrier_tasks_trace);
 
-अटल पूर्णांक __init rcu_spawn_tasks_trace_kthपढ़ो(व्योम)
-अणु
-	अगर (IS_ENABLED(CONFIG_TASKS_TRACE_RCU_READ_MB)) अणु
+static int __init rcu_spawn_tasks_trace_kthread(void)
+{
+	if (IS_ENABLED(CONFIG_TASKS_TRACE_RCU_READ_MB)) {
 		rcu_tasks_trace.gp_sleep = HZ / 10;
 		rcu_tasks_trace.init_fract = HZ / 10;
-	पूर्ण अन्यथा अणु
+	} else {
 		rcu_tasks_trace.gp_sleep = HZ / 200;
-		अगर (rcu_tasks_trace.gp_sleep <= 0)
+		if (rcu_tasks_trace.gp_sleep <= 0)
 			rcu_tasks_trace.gp_sleep = 1;
 		rcu_tasks_trace.init_fract = HZ / 200;
-		अगर (rcu_tasks_trace.init_fract <= 0)
+		if (rcu_tasks_trace.init_fract <= 0)
 			rcu_tasks_trace.init_fract = 1;
-	पूर्ण
+	}
 	rcu_tasks_trace.pregp_func = rcu_tasks_trace_pregp_step;
 	rcu_tasks_trace.pertask_func = rcu_tasks_trace_pertask;
 	rcu_tasks_trace.postscan_func = rcu_tasks_trace_postscan;
-	rcu_tasks_trace.holकरोuts_func = check_all_holकरोut_tasks_trace;
+	rcu_tasks_trace.holdouts_func = check_all_holdout_tasks_trace;
 	rcu_tasks_trace.postgp_func = rcu_tasks_trace_postgp;
-	rcu_spawn_tasks_kthपढ़ो_generic(&rcu_tasks_trace);
-	वापस 0;
-पूर्ण
+	rcu_spawn_tasks_kthread_generic(&rcu_tasks_trace);
+	return 0;
+}
 
-#अगर !defined(CONFIG_TINY_RCU)
-व्योम show_rcu_tasks_trace_gp_kthपढ़ो(व्योम)
-अणु
-	अक्षर buf[64];
+#if !defined(CONFIG_TINY_RCU)
+void show_rcu_tasks_trace_gp_kthread(void)
+{
+	char buf[64];
 
-	प्र_लिखो(buf, "N%d h:%lu/%lu/%lu", atomic_पढ़ो(&trc_n_पढ़ोers_need_end),
-		data_race(n_heavy_पढ़ोer_ofl_updates),
-		data_race(n_heavy_पढ़ोer_updates),
-		data_race(n_heavy_पढ़ोer_attempts));
-	show_rcu_tasks_generic_gp_kthपढ़ो(&rcu_tasks_trace, buf);
-पूर्ण
-EXPORT_SYMBOL_GPL(show_rcu_tasks_trace_gp_kthपढ़ो);
-#पूर्ण_अगर // !defined(CONFIG_TINY_RCU)
+	sprintf(buf, "N%d h:%lu/%lu/%lu", atomic_read(&trc_n_readers_need_end),
+		data_race(n_heavy_reader_ofl_updates),
+		data_race(n_heavy_reader_updates),
+		data_race(n_heavy_reader_attempts));
+	show_rcu_tasks_generic_gp_kthread(&rcu_tasks_trace, buf);
+}
+EXPORT_SYMBOL_GPL(show_rcu_tasks_trace_gp_kthread);
+#endif // !defined(CONFIG_TINY_RCU)
 
-#अन्यथा /* #अगर_घोषित CONFIG_TASKS_TRACE_RCU */
-अटल व्योम निकास_tasks_rcu_finish_trace(काष्ठा task_काष्ठा *t) अणु पूर्ण
-#पूर्ण_अगर /* #अन्यथा #अगर_घोषित CONFIG_TASKS_TRACE_RCU */
+#else /* #ifdef CONFIG_TASKS_TRACE_RCU */
+static void exit_tasks_rcu_finish_trace(struct task_struct *t) { }
+#endif /* #else #ifdef CONFIG_TASKS_TRACE_RCU */
 
-#अगर_अघोषित CONFIG_TINY_RCU
-व्योम show_rcu_tasks_gp_kthपढ़ोs(व्योम)
-अणु
-	show_rcu_tasks_classic_gp_kthपढ़ो();
-	show_rcu_tasks_rude_gp_kthपढ़ो();
-	show_rcu_tasks_trace_gp_kthपढ़ो();
-पूर्ण
-#पूर्ण_अगर /* #अगर_अघोषित CONFIG_TINY_RCU */
+#ifndef CONFIG_TINY_RCU
+void show_rcu_tasks_gp_kthreads(void)
+{
+	show_rcu_tasks_classic_gp_kthread();
+	show_rcu_tasks_rude_gp_kthread();
+	show_rcu_tasks_trace_gp_kthread();
+}
+#endif /* #ifndef CONFIG_TINY_RCU */
 
-#अगर_घोषित CONFIG_PROVE_RCU
-काष्ठा rcu_tasks_test_desc अणु
-	काष्ठा rcu_head rh;
-	स्थिर अक्षर *name;
+#ifdef CONFIG_PROVE_RCU
+struct rcu_tasks_test_desc {
+	struct rcu_head rh;
+	const char *name;
 	bool notrun;
-पूर्ण;
+};
 
-अटल काष्ठा rcu_tasks_test_desc tests[] = अणु
-	अणु
+static struct rcu_tasks_test_desc tests[] = {
+	{
 		.name = "call_rcu_tasks()",
 		/* If not defined, the test is skipped. */
 		.notrun = !IS_ENABLED(CONFIG_TASKS_RCU),
-	पूर्ण,
-	अणु
+	},
+	{
 		.name = "call_rcu_tasks_rude()",
 		/* If not defined, the test is skipped. */
 		.notrun = !IS_ENABLED(CONFIG_TASKS_RUDE_RCU),
-	पूर्ण,
-	अणु
+	},
+	{
 		.name = "call_rcu_tasks_trace()",
 		/* If not defined, the test is skipped. */
 		.notrun = !IS_ENABLED(CONFIG_TASKS_TRACE_RCU)
-	पूर्ण
-पूर्ण;
+	}
+};
 
-अटल व्योम test_rcu_tasks_callback(काष्ठा rcu_head *rhp)
-अणु
-	काष्ठा rcu_tasks_test_desc *rttd =
-		container_of(rhp, काष्ठा rcu_tasks_test_desc, rh);
+static void test_rcu_tasks_callback(struct rcu_head *rhp)
+{
+	struct rcu_tasks_test_desc *rttd =
+		container_of(rhp, struct rcu_tasks_test_desc, rh);
 
 	pr_info("Callback from %s invoked.\n", rttd->name);
 
 	rttd->notrun = true;
-पूर्ण
+}
 
-अटल व्योम rcu_tasks_initiate_self_tests(व्योम)
-अणु
+static void rcu_tasks_initiate_self_tests(void)
+{
 	pr_info("Running RCU-tasks wait API self tests\n");
-#अगर_घोषित CONFIG_TASKS_RCU
+#ifdef CONFIG_TASKS_RCU
 	synchronize_rcu_tasks();
 	call_rcu_tasks(&tests[0].rh, test_rcu_tasks_callback);
-#पूर्ण_अगर
+#endif
 
-#अगर_घोषित CONFIG_TASKS_RUDE_RCU
+#ifdef CONFIG_TASKS_RUDE_RCU
 	synchronize_rcu_tasks_rude();
 	call_rcu_tasks_rude(&tests[1].rh, test_rcu_tasks_callback);
-#पूर्ण_अगर
+#endif
 
-#अगर_घोषित CONFIG_TASKS_TRACE_RCU
+#ifdef CONFIG_TASKS_TRACE_RCU
 	synchronize_rcu_tasks_trace();
 	call_rcu_tasks_trace(&tests[2].rh, test_rcu_tasks_callback);
-#पूर्ण_अगर
-पूर्ण
+#endif
+}
 
-अटल पूर्णांक rcu_tasks_verअगरy_self_tests(व्योम)
-अणु
-	पूर्णांक ret = 0;
-	पूर्णांक i;
+static int rcu_tasks_verify_self_tests(void)
+{
+	int ret = 0;
+	int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(tests); i++) अणु
-		अगर (!tests[i].notrun) अणु		// still hanging.
+	for (i = 0; i < ARRAY_SIZE(tests); i++) {
+		if (!tests[i].notrun) {		// still hanging.
 			pr_err("%s has been failed.\n", tests[i].name);
 			ret = -1;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (ret)
+	if (ret)
 		WARN_ON(1);
 
-	वापस ret;
-पूर्ण
-late_initcall(rcu_tasks_verअगरy_self_tests);
-#अन्यथा /* #अगर_घोषित CONFIG_PROVE_RCU */
-अटल व्योम rcu_tasks_initiate_self_tests(व्योम) अणु पूर्ण
-#पूर्ण_अगर /* #अन्यथा #अगर_घोषित CONFIG_PROVE_RCU */
+	return ret;
+}
+late_initcall(rcu_tasks_verify_self_tests);
+#else /* #ifdef CONFIG_PROVE_RCU */
+static void rcu_tasks_initiate_self_tests(void) { }
+#endif /* #else #ifdef CONFIG_PROVE_RCU */
 
-व्योम __init rcu_init_tasks_generic(व्योम)
-अणु
-#अगर_घोषित CONFIG_TASKS_RCU
-	rcu_spawn_tasks_kthपढ़ो();
-#पूर्ण_अगर
+void __init rcu_init_tasks_generic(void)
+{
+#ifdef CONFIG_TASKS_RCU
+	rcu_spawn_tasks_kthread();
+#endif
 
-#अगर_घोषित CONFIG_TASKS_RUDE_RCU
-	rcu_spawn_tasks_rude_kthपढ़ो();
-#पूर्ण_अगर
+#ifdef CONFIG_TASKS_RUDE_RCU
+	rcu_spawn_tasks_rude_kthread();
+#endif
 
-#अगर_घोषित CONFIG_TASKS_TRACE_RCU
-	rcu_spawn_tasks_trace_kthपढ़ो();
-#पूर्ण_अगर
+#ifdef CONFIG_TASKS_TRACE_RCU
+	rcu_spawn_tasks_trace_kthread();
+#endif
 
 	// Run the self-tests.
 	rcu_tasks_initiate_self_tests();
-पूर्ण
+}
 
-#अन्यथा /* #अगर_घोषित CONFIG_TASKS_RCU_GENERIC */
-अटल अंतरभूत व्योम rcu_tasks_bootup_oddness(व्योम) अणुपूर्ण
-व्योम show_rcu_tasks_gp_kthपढ़ोs(व्योम) अणुपूर्ण
-#पूर्ण_अगर /* #अन्यथा #अगर_घोषित CONFIG_TASKS_RCU_GENERIC */
+#else /* #ifdef CONFIG_TASKS_RCU_GENERIC */
+static inline void rcu_tasks_bootup_oddness(void) {}
+void show_rcu_tasks_gp_kthreads(void) {}
+#endif /* #else #ifdef CONFIG_TASKS_RCU_GENERIC */

@@ -1,108 +1,107 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Reset Controller framework
  *
  * Copyright 2013 Philipp Zabel, Pengutronix
  */
-#समावेश <linux/atomic.h>
-#समावेश <linux/device.h>
-#समावेश <linux/err.h>
-#समावेश <linux/export.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/kref.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/reset.h>
-#समावेश <linux/reset-controller.h>
-#समावेश <linux/slab.h>
+#include <linux/atomic.h>
+#include <linux/device.h>
+#include <linux/err.h>
+#include <linux/export.h>
+#include <linux/kernel.h>
+#include <linux/kref.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/reset.h>
+#include <linux/reset-controller.h>
+#include <linux/slab.h>
 
-अटल DEFINE_MUTEX(reset_list_mutex);
-अटल LIST_HEAD(reset_controller_list);
+static DEFINE_MUTEX(reset_list_mutex);
+static LIST_HEAD(reset_controller_list);
 
-अटल DEFINE_MUTEX(reset_lookup_mutex);
-अटल LIST_HEAD(reset_lookup_list);
+static DEFINE_MUTEX(reset_lookup_mutex);
+static LIST_HEAD(reset_lookup_list);
 
 /**
- * काष्ठा reset_control - a reset control
- * @rcdev: a poपूर्णांकer to the reset controller device
- *         this reset control beदीर्घs to
- * @list: list entry क्रम the rcdev's reset controller list
+ * struct reset_control - a reset control
+ * @rcdev: a pointer to the reset controller device
+ *         this reset control belongs to
+ * @list: list entry for the rcdev's reset controller list
  * @id: ID of the reset controller in the reset
  *      controller device
- * @refcnt: Number of माला_लो of this reset_control
- * @acquired: Only one reset_control may be acquired क्रम a given rcdev and id.
+ * @refcnt: Number of gets of this reset_control
+ * @acquired: Only one reset_control may be acquired for a given rcdev and id.
  * @shared: Is this a shared (1), or an exclusive (0) reset_control?
  * @array: Is this an array of reset controls (1)?
- * @deनिश्चित_count: Number of बार this reset line has been deनिश्चितed
- * @triggered_count: Number of बार this reset line has been reset. Currently
- *                   only used क्रम shared resets, which means that the value
+ * @deassert_count: Number of times this reset line has been deasserted
+ * @triggered_count: Number of times this reset line has been reset. Currently
+ *                   only used for shared resets, which means that the value
  *                   will be either 0 or 1.
  */
-काष्ठा reset_control अणु
-	काष्ठा reset_controller_dev *rcdev;
-	काष्ठा list_head list;
-	अचिन्हित पूर्णांक id;
-	काष्ठा kref refcnt;
+struct reset_control {
+	struct reset_controller_dev *rcdev;
+	struct list_head list;
+	unsigned int id;
+	struct kref refcnt;
 	bool acquired;
 	bool shared;
 	bool array;
-	atomic_t deनिश्चित_count;
+	atomic_t deassert_count;
 	atomic_t triggered_count;
-पूर्ण;
+};
 
 /**
- * काष्ठा reset_control_array - an array of reset controls
- * @base: reset control क्रम compatibility with reset control API functions
+ * struct reset_control_array - an array of reset controls
+ * @base: reset control for compatibility with reset control API functions
  * @num_rstcs: number of reset controls
  * @rstc: array of reset controls
  */
-काष्ठा reset_control_array अणु
-	काष्ठा reset_control base;
-	अचिन्हित पूर्णांक num_rstcs;
-	काष्ठा reset_control *rstc[];
-पूर्ण;
+struct reset_control_array {
+	struct reset_control base;
+	unsigned int num_rstcs;
+	struct reset_control *rstc[];
+};
 
-अटल स्थिर अक्षर *rcdev_name(काष्ठा reset_controller_dev *rcdev)
-अणु
-	अगर (rcdev->dev)
-		वापस dev_name(rcdev->dev);
+static const char *rcdev_name(struct reset_controller_dev *rcdev)
+{
+	if (rcdev->dev)
+		return dev_name(rcdev->dev);
 
-	अगर (rcdev->of_node)
-		वापस rcdev->of_node->full_name;
+	if (rcdev->of_node)
+		return rcdev->of_node->full_name;
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
 /**
  * of_reset_simple_xlate - translate reset_spec to the reset line number
- * @rcdev: a poपूर्णांकer to the reset controller device
- * @reset_spec: reset line specअगरier as found in the device tree
+ * @rcdev: a pointer to the reset controller device
+ * @reset_spec: reset line specifier as found in the device tree
  *
- * This अटल translation function is used by शेष अगर of_xlate in
- * :c:type:`reset_controller_dev` is not set. It is useful क्रम all reset
+ * This static translation function is used by default if of_xlate in
+ * :c:type:`reset_controller_dev` is not set. It is useful for all reset
  * controllers with 1:1 mapping, where reset lines can be indexed by number
  * without gaps.
  */
-अटल पूर्णांक of_reset_simple_xlate(काष्ठा reset_controller_dev *rcdev,
-			  स्थिर काष्ठा of_phandle_args *reset_spec)
-अणु
-	अगर (reset_spec->args[0] >= rcdev->nr_resets)
-		वापस -EINVAL;
+static int of_reset_simple_xlate(struct reset_controller_dev *rcdev,
+			  const struct of_phandle_args *reset_spec)
+{
+	if (reset_spec->args[0] >= rcdev->nr_resets)
+		return -EINVAL;
 
-	वापस reset_spec->args[0];
-पूर्ण
+	return reset_spec->args[0];
+}
 
 /**
- * reset_controller_रेजिस्टर - रेजिस्टर a reset controller device
- * @rcdev: a poपूर्णांकer to the initialized reset controller device
+ * reset_controller_register - register a reset controller device
+ * @rcdev: a pointer to the initialized reset controller device
  */
-पूर्णांक reset_controller_रेजिस्टर(काष्ठा reset_controller_dev *rcdev)
-अणु
-	अगर (!rcdev->of_xlate) अणु
+int reset_controller_register(struct reset_controller_dev *rcdev)
+{
+	if (!rcdev->of_xlate) {
 		rcdev->of_reset_n_cells = 1;
 		rcdev->of_xlate = of_reset_simple_xlate;
-	पूर्ण
+	}
 
 	INIT_LIST_HEAD(&rcdev->reset_control_head);
 
@@ -110,597 +109,597 @@
 	list_add(&rcdev->list, &reset_controller_list);
 	mutex_unlock(&reset_list_mutex);
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(reset_controller_रेजिस्टर);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(reset_controller_register);
 
 /**
- * reset_controller_unरेजिस्टर - unरेजिस्टर a reset controller device
- * @rcdev: a poपूर्णांकer to the reset controller device
+ * reset_controller_unregister - unregister a reset controller device
+ * @rcdev: a pointer to the reset controller device
  */
-व्योम reset_controller_unरेजिस्टर(काष्ठा reset_controller_dev *rcdev)
-अणु
+void reset_controller_unregister(struct reset_controller_dev *rcdev)
+{
 	mutex_lock(&reset_list_mutex);
 	list_del(&rcdev->list);
 	mutex_unlock(&reset_list_mutex);
-पूर्ण
-EXPORT_SYMBOL_GPL(reset_controller_unरेजिस्टर);
+}
+EXPORT_SYMBOL_GPL(reset_controller_unregister);
 
-अटल व्योम devm_reset_controller_release(काष्ठा device *dev, व्योम *res)
-अणु
-	reset_controller_unरेजिस्टर(*(काष्ठा reset_controller_dev **)res);
-पूर्ण
+static void devm_reset_controller_release(struct device *dev, void *res)
+{
+	reset_controller_unregister(*(struct reset_controller_dev **)res);
+}
 
 /**
- * devm_reset_controller_रेजिस्टर - resource managed reset_controller_रेजिस्टर()
- * @dev: device that is रेजिस्टरing this reset controller
- * @rcdev: a poपूर्णांकer to the initialized reset controller device
+ * devm_reset_controller_register - resource managed reset_controller_register()
+ * @dev: device that is registering this reset controller
+ * @rcdev: a pointer to the initialized reset controller device
  *
- * Managed reset_controller_रेजिस्टर(). For reset controllers रेजिस्टरed by
- * this function, reset_controller_unरेजिस्टर() is स्वतःmatically called on
- * driver detach. See reset_controller_रेजिस्टर() क्रम more inक्रमmation.
+ * Managed reset_controller_register(). For reset controllers registered by
+ * this function, reset_controller_unregister() is automatically called on
+ * driver detach. See reset_controller_register() for more information.
  */
-पूर्णांक devm_reset_controller_रेजिस्टर(काष्ठा device *dev,
-				   काष्ठा reset_controller_dev *rcdev)
-अणु
-	काष्ठा reset_controller_dev **rcdevp;
-	पूर्णांक ret;
+int devm_reset_controller_register(struct device *dev,
+				   struct reset_controller_dev *rcdev)
+{
+	struct reset_controller_dev **rcdevp;
+	int ret;
 
-	rcdevp = devres_alloc(devm_reset_controller_release, माप(*rcdevp),
+	rcdevp = devres_alloc(devm_reset_controller_release, sizeof(*rcdevp),
 			      GFP_KERNEL);
-	अगर (!rcdevp)
-		वापस -ENOMEM;
+	if (!rcdevp)
+		return -ENOMEM;
 
-	ret = reset_controller_रेजिस्टर(rcdev);
-	अगर (ret) अणु
-		devres_मुक्त(rcdevp);
-		वापस ret;
-	पूर्ण
+	ret = reset_controller_register(rcdev);
+	if (ret) {
+		devres_free(rcdevp);
+		return ret;
+	}
 
 	*rcdevp = rcdev;
 	devres_add(dev, rcdevp);
 
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(devm_reset_controller_रेजिस्टर);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(devm_reset_controller_register);
 
 /**
- * reset_controller_add_lookup - रेजिस्टर a set of lookup entries
+ * reset_controller_add_lookup - register a set of lookup entries
  * @lookup: array of reset lookup entries
  * @num_entries: number of entries in the lookup array
  */
-व्योम reset_controller_add_lookup(काष्ठा reset_control_lookup *lookup,
-				 अचिन्हित पूर्णांक num_entries)
-अणु
-	काष्ठा reset_control_lookup *entry;
-	अचिन्हित पूर्णांक i;
+void reset_controller_add_lookup(struct reset_control_lookup *lookup,
+				 unsigned int num_entries)
+{
+	struct reset_control_lookup *entry;
+	unsigned int i;
 
 	mutex_lock(&reset_lookup_mutex);
-	क्रम (i = 0; i < num_entries; i++) अणु
+	for (i = 0; i < num_entries; i++) {
 		entry = &lookup[i];
 
-		अगर (!entry->dev_id || !entry->provider) अणु
+		if (!entry->dev_id || !entry->provider) {
 			pr_warn("%s(): reset lookup entry badly specified, skipping\n",
 				__func__);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		list_add_tail(&entry->list, &reset_lookup_list);
-	पूर्ण
+	}
 	mutex_unlock(&reset_lookup_mutex);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(reset_controller_add_lookup);
 
-अटल अंतरभूत काष्ठा reset_control_array *
-rstc_to_array(काष्ठा reset_control *rstc) अणु
-	वापस container_of(rstc, काष्ठा reset_control_array, base);
-पूर्ण
+static inline struct reset_control_array *
+rstc_to_array(struct reset_control *rstc) {
+	return container_of(rstc, struct reset_control_array, base);
+}
 
-अटल पूर्णांक reset_control_array_reset(काष्ठा reset_control_array *resets)
-अणु
-	पूर्णांक ret, i;
+static int reset_control_array_reset(struct reset_control_array *resets)
+{
+	int ret, i;
 
-	क्रम (i = 0; i < resets->num_rstcs; i++) अणु
+	for (i = 0; i < resets->num_rstcs; i++) {
 		ret = reset_control_reset(resets->rstc[i]);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक reset_control_array_rearm(काष्ठा reset_control_array *resets)
-अणु
-	काष्ठा reset_control *rstc;
-	पूर्णांक i;
+static int reset_control_array_rearm(struct reset_control_array *resets)
+{
+	struct reset_control *rstc;
+	int i;
 
-	क्रम (i = 0; i < resets->num_rstcs; i++) अणु
+	for (i = 0; i < resets->num_rstcs; i++) {
 		rstc = resets->rstc[i];
 
-		अगर (!rstc)
-			जारी;
+		if (!rstc)
+			continue;
 
-		अगर (WARN_ON(IS_ERR(rstc)))
-			वापस -EINVAL;
+		if (WARN_ON(IS_ERR(rstc)))
+			return -EINVAL;
 
-		अगर (rstc->shared) अणु
-			अगर (WARN_ON(atomic_पढ़ो(&rstc->deनिश्चित_count) != 0))
-				वापस -EINVAL;
-		पूर्ण अन्यथा अणु
-			अगर (!rstc->acquired)
-				वापस -EPERM;
-		पूर्ण
-	पूर्ण
+		if (rstc->shared) {
+			if (WARN_ON(atomic_read(&rstc->deassert_count) != 0))
+				return -EINVAL;
+		} else {
+			if (!rstc->acquired)
+				return -EPERM;
+		}
+	}
 
-	क्रम (i = 0; i < resets->num_rstcs; i++) अणु
+	for (i = 0; i < resets->num_rstcs; i++) {
 		rstc = resets->rstc[i];
 
-		अगर (rstc && rstc->shared)
-			WARN_ON(atomic_dec_वापस(&rstc->triggered_count) < 0);
-	पूर्ण
+		if (rstc && rstc->shared)
+			WARN_ON(atomic_dec_return(&rstc->triggered_count) < 0);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक reset_control_array_निश्चित(काष्ठा reset_control_array *resets)
-अणु
-	पूर्णांक ret, i;
+static int reset_control_array_assert(struct reset_control_array *resets)
+{
+	int ret, i;
 
-	क्रम (i = 0; i < resets->num_rstcs; i++) अणु
-		ret = reset_control_निश्चित(resets->rstc[i]);
-		अगर (ret)
-			जाओ err;
-	पूर्ण
+	for (i = 0; i < resets->num_rstcs; i++) {
+		ret = reset_control_assert(resets->rstc[i]);
+		if (ret)
+			goto err;
+	}
 
-	वापस 0;
-
-err:
-	जबतक (i--)
-		reset_control_deनिश्चित(resets->rstc[i]);
-	वापस ret;
-पूर्ण
-
-अटल पूर्णांक reset_control_array_deनिश्चित(काष्ठा reset_control_array *resets)
-अणु
-	पूर्णांक ret, i;
-
-	क्रम (i = 0; i < resets->num_rstcs; i++) अणु
-		ret = reset_control_deनिश्चित(resets->rstc[i]);
-		अगर (ret)
-			जाओ err;
-	पूर्ण
-
-	वापस 0;
+	return 0;
 
 err:
-	जबतक (i--)
-		reset_control_निश्चित(resets->rstc[i]);
-	वापस ret;
-पूर्ण
+	while (i--)
+		reset_control_deassert(resets->rstc[i]);
+	return ret;
+}
 
-अटल पूर्णांक reset_control_array_acquire(काष्ठा reset_control_array *resets)
-अणु
-	अचिन्हित पूर्णांक i;
-	पूर्णांक err;
+static int reset_control_array_deassert(struct reset_control_array *resets)
+{
+	int ret, i;
 
-	क्रम (i = 0; i < resets->num_rstcs; i++) अणु
+	for (i = 0; i < resets->num_rstcs; i++) {
+		ret = reset_control_deassert(resets->rstc[i]);
+		if (ret)
+			goto err;
+	}
+
+	return 0;
+
+err:
+	while (i--)
+		reset_control_assert(resets->rstc[i]);
+	return ret;
+}
+
+static int reset_control_array_acquire(struct reset_control_array *resets)
+{
+	unsigned int i;
+	int err;
+
+	for (i = 0; i < resets->num_rstcs; i++) {
 		err = reset_control_acquire(resets->rstc[i]);
-		अगर (err < 0)
-			जाओ release;
-	पूर्ण
+		if (err < 0)
+			goto release;
+	}
 
-	वापस 0;
+	return 0;
 
 release:
-	जबतक (i--)
+	while (i--)
 		reset_control_release(resets->rstc[i]);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम reset_control_array_release(काष्ठा reset_control_array *resets)
-अणु
-	अचिन्हित पूर्णांक i;
+static void reset_control_array_release(struct reset_control_array *resets)
+{
+	unsigned int i;
 
-	क्रम (i = 0; i < resets->num_rstcs; i++)
+	for (i = 0; i < resets->num_rstcs; i++)
 		reset_control_release(resets->rstc[i]);
-पूर्ण
+}
 
-अटल अंतरभूत bool reset_control_is_array(काष्ठा reset_control *rstc)
-अणु
-	वापस rstc->array;
-पूर्ण
+static inline bool reset_control_is_array(struct reset_control *rstc)
+{
+	return rstc->array;
+}
 
 /**
  * reset_control_reset - reset the controlled device
  * @rstc: reset controller
  *
- * On a shared reset line the actual reset pulse is only triggered once क्रम the
- * lअगरeसमय of the reset_control instance: क्रम all but the first caller this is
+ * On a shared reset line the actual reset pulse is only triggered once for the
+ * lifetime of the reset_control instance: for all but the first caller this is
  * a no-op.
- * Consumers must not use reset_control_(de)निश्चित on shared reset lines when
+ * Consumers must not use reset_control_(de)assert on shared reset lines when
  * reset_control_reset has been used.
  *
- * If rstc is शून्य it is an optional reset and the function will just
- * वापस 0.
+ * If rstc is NULL it is an optional reset and the function will just
+ * return 0.
  */
-पूर्णांक reset_control_reset(काष्ठा reset_control *rstc)
-अणु
-	पूर्णांक ret;
+int reset_control_reset(struct reset_control *rstc)
+{
+	int ret;
 
-	अगर (!rstc)
-		वापस 0;
+	if (!rstc)
+		return 0;
 
-	अगर (WARN_ON(IS_ERR(rstc)))
-		वापस -EINVAL;
+	if (WARN_ON(IS_ERR(rstc)))
+		return -EINVAL;
 
-	अगर (reset_control_is_array(rstc))
-		वापस reset_control_array_reset(rstc_to_array(rstc));
+	if (reset_control_is_array(rstc))
+		return reset_control_array_reset(rstc_to_array(rstc));
 
-	अगर (!rstc->rcdev->ops->reset)
-		वापस -ENOTSUPP;
+	if (!rstc->rcdev->ops->reset)
+		return -ENOTSUPP;
 
-	अगर (rstc->shared) अणु
-		अगर (WARN_ON(atomic_पढ़ो(&rstc->deनिश्चित_count) != 0))
-			वापस -EINVAL;
+	if (rstc->shared) {
+		if (WARN_ON(atomic_read(&rstc->deassert_count) != 0))
+			return -EINVAL;
 
-		अगर (atomic_inc_वापस(&rstc->triggered_count) != 1)
-			वापस 0;
-	पूर्ण अन्यथा अणु
-		अगर (!rstc->acquired)
-			वापस -EPERM;
-	पूर्ण
+		if (atomic_inc_return(&rstc->triggered_count) != 1)
+			return 0;
+	} else {
+		if (!rstc->acquired)
+			return -EPERM;
+	}
 
 	ret = rstc->rcdev->ops->reset(rstc->rcdev, rstc->id);
-	अगर (rstc->shared && ret)
+	if (rstc->shared && ret)
 		atomic_dec(&rstc->triggered_count);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(reset_control_reset);
 
 /**
  * reset_control_bulk_reset - reset the controlled devices in order
  * @num_rstcs: number of entries in rstcs array
- * @rstcs: array of काष्ठा reset_control_bulk_data with reset controls set
+ * @rstcs: array of struct reset_control_bulk_data with reset controls set
  *
  * Issue a reset on all provided reset controls, in order.
  *
  * See also: reset_control_reset()
  */
-पूर्णांक reset_control_bulk_reset(पूर्णांक num_rstcs,
-			     काष्ठा reset_control_bulk_data *rstcs)
-अणु
-	पूर्णांक ret, i;
+int reset_control_bulk_reset(int num_rstcs,
+			     struct reset_control_bulk_data *rstcs)
+{
+	int ret, i;
 
-	क्रम (i = 0; i < num_rstcs; i++) अणु
+	for (i = 0; i < num_rstcs; i++) {
 		ret = reset_control_reset(rstcs[i].rstc);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(reset_control_bulk_reset);
 
 /**
  * reset_control_rearm - allow shared reset line to be re-triggered"
  * @rstc: reset controller
  *
- * On a shared reset line the actual reset pulse is only triggered once क्रम the
- * lअगरeसमय of the reset_control instance, except अगर this call is used.
+ * On a shared reset line the actual reset pulse is only triggered once for the
+ * lifetime of the reset_control instance, except if this call is used.
  *
  * Calls to this function must be balanced with calls to reset_control_reset,
- * a warning is thrown in हाल triggered_count ever dips below 0.
+ * a warning is thrown in case triggered_count ever dips below 0.
  *
- * Consumers must not use reset_control_(de)निश्चित on shared reset lines when
+ * Consumers must not use reset_control_(de)assert on shared reset lines when
  * reset_control_reset or reset_control_rearm have been used.
  *
- * If rstc is शून्य the function will just वापस 0.
+ * If rstc is NULL the function will just return 0.
  */
-पूर्णांक reset_control_rearm(काष्ठा reset_control *rstc)
-अणु
-	अगर (!rstc)
-		वापस 0;
+int reset_control_rearm(struct reset_control *rstc)
+{
+	if (!rstc)
+		return 0;
 
-	अगर (WARN_ON(IS_ERR(rstc)))
-		वापस -EINVAL;
+	if (WARN_ON(IS_ERR(rstc)))
+		return -EINVAL;
 
-	अगर (reset_control_is_array(rstc))
-		वापस reset_control_array_rearm(rstc_to_array(rstc));
+	if (reset_control_is_array(rstc))
+		return reset_control_array_rearm(rstc_to_array(rstc));
 
-	अगर (rstc->shared) अणु
-		अगर (WARN_ON(atomic_पढ़ो(&rstc->deनिश्चित_count) != 0))
-			वापस -EINVAL;
+	if (rstc->shared) {
+		if (WARN_ON(atomic_read(&rstc->deassert_count) != 0))
+			return -EINVAL;
 
-		WARN_ON(atomic_dec_वापस(&rstc->triggered_count) < 0);
-	पूर्ण अन्यथा अणु
-		अगर (!rstc->acquired)
-			वापस -EPERM;
-	पूर्ण
+		WARN_ON(atomic_dec_return(&rstc->triggered_count) < 0);
+	} else {
+		if (!rstc->acquired)
+			return -EPERM;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(reset_control_rearm);
 
 /**
- * reset_control_निश्चित - निश्चितs the reset line
+ * reset_control_assert - asserts the reset line
  * @rstc: reset controller
  *
  * Calling this on an exclusive reset controller guarantees that the reset
- * will be निश्चितed. When called on a shared reset controller the line may
- * still be deनिश्चितed, as दीर्घ as other users keep it so.
+ * will be asserted. When called on a shared reset controller the line may
+ * still be deasserted, as long as other users keep it so.
  *
- * For shared reset controls a driver cannot expect the hw's रेजिस्टरs and
- * पूर्णांकernal state to be reset, but must be prepared क्रम this to happen.
+ * For shared reset controls a driver cannot expect the hw's registers and
+ * internal state to be reset, but must be prepared for this to happen.
  * Consumers must not use reset_control_reset on shared reset lines when
- * reset_control_(de)निश्चित has been used.
+ * reset_control_(de)assert has been used.
  *
- * If rstc is शून्य it is an optional reset and the function will just
- * वापस 0.
+ * If rstc is NULL it is an optional reset and the function will just
+ * return 0.
  */
-पूर्णांक reset_control_निश्चित(काष्ठा reset_control *rstc)
-अणु
-	अगर (!rstc)
-		वापस 0;
+int reset_control_assert(struct reset_control *rstc)
+{
+	if (!rstc)
+		return 0;
 
-	अगर (WARN_ON(IS_ERR(rstc)))
-		वापस -EINVAL;
+	if (WARN_ON(IS_ERR(rstc)))
+		return -EINVAL;
 
-	अगर (reset_control_is_array(rstc))
-		वापस reset_control_array_निश्चित(rstc_to_array(rstc));
+	if (reset_control_is_array(rstc))
+		return reset_control_array_assert(rstc_to_array(rstc));
 
-	अगर (rstc->shared) अणु
-		अगर (WARN_ON(atomic_पढ़ो(&rstc->triggered_count) != 0))
-			वापस -EINVAL;
+	if (rstc->shared) {
+		if (WARN_ON(atomic_read(&rstc->triggered_count) != 0))
+			return -EINVAL;
 
-		अगर (WARN_ON(atomic_पढ़ो(&rstc->deनिश्चित_count) == 0))
-			वापस -EINVAL;
+		if (WARN_ON(atomic_read(&rstc->deassert_count) == 0))
+			return -EINVAL;
 
-		अगर (atomic_dec_वापस(&rstc->deनिश्चित_count) != 0)
-			वापस 0;
+		if (atomic_dec_return(&rstc->deassert_count) != 0)
+			return 0;
 
 		/*
 		 * Shared reset controls allow the reset line to be in any state
-		 * after this call, so करोing nothing is a valid option.
+		 * after this call, so doing nothing is a valid option.
 		 */
-		अगर (!rstc->rcdev->ops->निश्चित)
-			वापस 0;
-	पूर्ण अन्यथा अणु
+		if (!rstc->rcdev->ops->assert)
+			return 0;
+	} else {
 		/*
-		 * If the reset controller करोes not implement .निश्चित(), there
-		 * is no way to guarantee that the reset line is निश्चितed after
+		 * If the reset controller does not implement .assert(), there
+		 * is no way to guarantee that the reset line is asserted after
 		 * this call.
 		 */
-		अगर (!rstc->rcdev->ops->निश्चित)
-			वापस -ENOTSUPP;
+		if (!rstc->rcdev->ops->assert)
+			return -ENOTSUPP;
 
-		अगर (!rstc->acquired) अणु
+		if (!rstc->acquired) {
 			WARN(1, "reset %s (ID: %u) is not acquired\n",
 			     rcdev_name(rstc->rcdev), rstc->id);
-			वापस -EPERM;
-		पूर्ण
-	पूर्ण
+			return -EPERM;
+		}
+	}
 
-	वापस rstc->rcdev->ops->निश्चित(rstc->rcdev, rstc->id);
-पूर्ण
-EXPORT_SYMBOL_GPL(reset_control_निश्चित);
+	return rstc->rcdev->ops->assert(rstc->rcdev, rstc->id);
+}
+EXPORT_SYMBOL_GPL(reset_control_assert);
 
 /**
- * reset_control_bulk_निश्चित - निश्चितs the reset lines in order
+ * reset_control_bulk_assert - asserts the reset lines in order
  * @num_rstcs: number of entries in rstcs array
- * @rstcs: array of काष्ठा reset_control_bulk_data with reset controls set
+ * @rstcs: array of struct reset_control_bulk_data with reset controls set
  *
- * Assert the reset lines क्रम all provided reset controls, in order.
- * If an निश्चितion fails, alपढ़ोy निश्चितed resets are deनिश्चितed again.
+ * Assert the reset lines for all provided reset controls, in order.
+ * If an assertion fails, already asserted resets are deasserted again.
  *
- * See also: reset_control_निश्चित()
+ * See also: reset_control_assert()
  */
-पूर्णांक reset_control_bulk_निश्चित(पूर्णांक num_rstcs,
-			      काष्ठा reset_control_bulk_data *rstcs)
-अणु
-	पूर्णांक ret, i;
+int reset_control_bulk_assert(int num_rstcs,
+			      struct reset_control_bulk_data *rstcs)
+{
+	int ret, i;
 
-	क्रम (i = 0; i < num_rstcs; i++) अणु
-		ret = reset_control_निश्चित(rstcs[i].rstc);
-		अगर (ret)
-			जाओ err;
-	पूर्ण
+	for (i = 0; i < num_rstcs; i++) {
+		ret = reset_control_assert(rstcs[i].rstc);
+		if (ret)
+			goto err;
+	}
 
-	वापस 0;
+	return 0;
 
 err:
-	जबतक (i--)
-		reset_control_deनिश्चित(rstcs[i].rstc);
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(reset_control_bulk_निश्चित);
+	while (i--)
+		reset_control_deassert(rstcs[i].rstc);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(reset_control_bulk_assert);
 
 /**
- * reset_control_deनिश्चित - deनिश्चितs the reset line
+ * reset_control_deassert - deasserts the reset line
  * @rstc: reset controller
  *
- * After calling this function, the reset is guaranteed to be deनिश्चितed.
+ * After calling this function, the reset is guaranteed to be deasserted.
  * Consumers must not use reset_control_reset on shared reset lines when
- * reset_control_(de)निश्चित has been used.
+ * reset_control_(de)assert has been used.
  *
- * If rstc is शून्य it is an optional reset and the function will just
- * वापस 0.
+ * If rstc is NULL it is an optional reset and the function will just
+ * return 0.
  */
-पूर्णांक reset_control_deनिश्चित(काष्ठा reset_control *rstc)
-अणु
-	अगर (!rstc)
-		वापस 0;
+int reset_control_deassert(struct reset_control *rstc)
+{
+	if (!rstc)
+		return 0;
 
-	अगर (WARN_ON(IS_ERR(rstc)))
-		वापस -EINVAL;
+	if (WARN_ON(IS_ERR(rstc)))
+		return -EINVAL;
 
-	अगर (reset_control_is_array(rstc))
-		वापस reset_control_array_deनिश्चित(rstc_to_array(rstc));
+	if (reset_control_is_array(rstc))
+		return reset_control_array_deassert(rstc_to_array(rstc));
 
-	अगर (rstc->shared) अणु
-		अगर (WARN_ON(atomic_पढ़ो(&rstc->triggered_count) != 0))
-			वापस -EINVAL;
+	if (rstc->shared) {
+		if (WARN_ON(atomic_read(&rstc->triggered_count) != 0))
+			return -EINVAL;
 
-		अगर (atomic_inc_वापस(&rstc->deनिश्चित_count) != 1)
-			वापस 0;
-	पूर्ण अन्यथा अणु
-		अगर (!rstc->acquired) अणु
+		if (atomic_inc_return(&rstc->deassert_count) != 1)
+			return 0;
+	} else {
+		if (!rstc->acquired) {
 			WARN(1, "reset %s (ID: %u) is not acquired\n",
 			     rcdev_name(rstc->rcdev), rstc->id);
-			वापस -EPERM;
-		पूर्ण
-	पूर्ण
+			return -EPERM;
+		}
+	}
 
 	/*
-	 * If the reset controller करोes not implement .deनिश्चित(), we assume
-	 * that it handles self-deनिश्चितing reset lines via .reset(). In that
-	 * हाल, the reset lines are deनिश्चितed by शेष. If that is not the
-	 * हाल, the reset controller driver should implement .deनिश्चित() and
-	 * वापस -ENOTSUPP.
+	 * If the reset controller does not implement .deassert(), we assume
+	 * that it handles self-deasserting reset lines via .reset(). In that
+	 * case, the reset lines are deasserted by default. If that is not the
+	 * case, the reset controller driver should implement .deassert() and
+	 * return -ENOTSUPP.
 	 */
-	अगर (!rstc->rcdev->ops->deनिश्चित)
-		वापस 0;
+	if (!rstc->rcdev->ops->deassert)
+		return 0;
 
-	वापस rstc->rcdev->ops->deनिश्चित(rstc->rcdev, rstc->id);
-पूर्ण
-EXPORT_SYMBOL_GPL(reset_control_deनिश्चित);
+	return rstc->rcdev->ops->deassert(rstc->rcdev, rstc->id);
+}
+EXPORT_SYMBOL_GPL(reset_control_deassert);
 
 /**
- * reset_control_bulk_deनिश्चित - deनिश्चितs the reset lines in reverse order
+ * reset_control_bulk_deassert - deasserts the reset lines in reverse order
  * @num_rstcs: number of entries in rstcs array
- * @rstcs: array of काष्ठा reset_control_bulk_data with reset controls set
+ * @rstcs: array of struct reset_control_bulk_data with reset controls set
  *
- * Deनिश्चित the reset lines क्रम all provided reset controls, in reverse order.
- * If a deनिश्चितion fails, alपढ़ोy deनिश्चितed resets are निश्चितed again.
+ * Deassert the reset lines for all provided reset controls, in reverse order.
+ * If a deassertion fails, already deasserted resets are asserted again.
  *
- * See also: reset_control_deनिश्चित()
+ * See also: reset_control_deassert()
  */
-पूर्णांक reset_control_bulk_deनिश्चित(पूर्णांक num_rstcs,
-				काष्ठा reset_control_bulk_data *rstcs)
-अणु
-	पूर्णांक ret, i;
+int reset_control_bulk_deassert(int num_rstcs,
+				struct reset_control_bulk_data *rstcs)
+{
+	int ret, i;
 
-	क्रम (i = num_rstcs - 1; i >= 0; i--) अणु
-		ret = reset_control_deनिश्चित(rstcs[i].rstc);
-		अगर (ret)
-			जाओ err;
-	पूर्ण
+	for (i = num_rstcs - 1; i >= 0; i--) {
+		ret = reset_control_deassert(rstcs[i].rstc);
+		if (ret)
+			goto err;
+	}
 
-	वापस 0;
+	return 0;
 
 err:
-	जबतक (i < num_rstcs)
-		reset_control_निश्चित(rstcs[i++].rstc);
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(reset_control_bulk_deनिश्चित);
+	while (i < num_rstcs)
+		reset_control_assert(rstcs[i++].rstc);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(reset_control_bulk_deassert);
 
 /**
- * reset_control_status - वापसs a negative त्रुटि_सं अगर not supported, a
- * positive value अगर the reset line is निश्चितed, or zero अगर the reset
- * line is not निश्चितed or अगर the desc is शून्य (optional reset).
+ * reset_control_status - returns a negative errno if not supported, a
+ * positive value if the reset line is asserted, or zero if the reset
+ * line is not asserted or if the desc is NULL (optional reset).
  * @rstc: reset controller
  */
-पूर्णांक reset_control_status(काष्ठा reset_control *rstc)
-अणु
-	अगर (!rstc)
-		वापस 0;
+int reset_control_status(struct reset_control *rstc)
+{
+	if (!rstc)
+		return 0;
 
-	अगर (WARN_ON(IS_ERR(rstc)) || reset_control_is_array(rstc))
-		वापस -EINVAL;
+	if (WARN_ON(IS_ERR(rstc)) || reset_control_is_array(rstc))
+		return -EINVAL;
 
-	अगर (rstc->rcdev->ops->status)
-		वापस rstc->rcdev->ops->status(rstc->rcdev, rstc->id);
+	if (rstc->rcdev->ops->status)
+		return rstc->rcdev->ops->status(rstc->rcdev, rstc->id);
 
-	वापस -ENOTSUPP;
-पूर्ण
+	return -ENOTSUPP;
+}
 EXPORT_SYMBOL_GPL(reset_control_status);
 
 /**
- * reset_control_acquire() - acquires a reset control क्रम exclusive use
+ * reset_control_acquire() - acquires a reset control for exclusive use
  * @rstc: reset control
  *
- * This is used to explicitly acquire a reset control क्रम exclusive use. Note
- * that exclusive resets are requested as acquired by शेष. In order क्रम a
+ * This is used to explicitly acquire a reset control for exclusive use. Note
+ * that exclusive resets are requested as acquired by default. In order for a
  * second consumer to be able to control the reset, the first consumer has to
  * release it first. Typically the easiest way to achieve this is to call the
  * reset_control_get_exclusive_released() to obtain an instance of the reset
- * control. Such reset controls are not acquired by शेष.
+ * control. Such reset controls are not acquired by default.
  *
  * Consumers implementing shared access to an exclusive reset need to follow
- * a specअगरic protocol in order to work together. Beक्रमe consumers can change
+ * a specific protocol in order to work together. Before consumers can change
  * a reset they must acquire exclusive access using reset_control_acquire().
- * After they are करोne operating the reset, they must release exclusive access
+ * After they are done operating the reset, they must release exclusive access
  * with a call to reset_control_release(). Consumers are not granted exclusive
- * access to the reset as दीर्घ as another consumer hasn't released a reset.
+ * access to the reset as long as another consumer hasn't released a reset.
  *
  * See also: reset_control_release()
  */
-पूर्णांक reset_control_acquire(काष्ठा reset_control *rstc)
-अणु
-	काष्ठा reset_control *rc;
+int reset_control_acquire(struct reset_control *rstc)
+{
+	struct reset_control *rc;
 
-	अगर (!rstc)
-		वापस 0;
+	if (!rstc)
+		return 0;
 
-	अगर (WARN_ON(IS_ERR(rstc)))
-		वापस -EINVAL;
+	if (WARN_ON(IS_ERR(rstc)))
+		return -EINVAL;
 
-	अगर (reset_control_is_array(rstc))
-		वापस reset_control_array_acquire(rstc_to_array(rstc));
+	if (reset_control_is_array(rstc))
+		return reset_control_array_acquire(rstc_to_array(rstc));
 
 	mutex_lock(&reset_list_mutex);
 
-	अगर (rstc->acquired) अणु
+	if (rstc->acquired) {
 		mutex_unlock(&reset_list_mutex);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	list_क्रम_each_entry(rc, &rstc->rcdev->reset_control_head, list) अणु
-		अगर (rstc != rc && rstc->id == rc->id) अणु
-			अगर (rc->acquired) अणु
+	list_for_each_entry(rc, &rstc->rcdev->reset_control_head, list) {
+		if (rstc != rc && rstc->id == rc->id) {
+			if (rc->acquired) {
 				mutex_unlock(&reset_list_mutex);
-				वापस -EBUSY;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				return -EBUSY;
+			}
+		}
+	}
 
 	rstc->acquired = true;
 
 	mutex_unlock(&reset_list_mutex);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(reset_control_acquire);
 
 /**
- * reset_control_bulk_acquire - acquires reset controls क्रम exclusive use
+ * reset_control_bulk_acquire - acquires reset controls for exclusive use
  * @num_rstcs: number of entries in rstcs array
- * @rstcs: array of काष्ठा reset_control_bulk_data with reset controls set
+ * @rstcs: array of struct reset_control_bulk_data with reset controls set
  *
  * This is used to explicitly acquire reset controls requested with
- * reset_control_bulk_get_exclusive_release() क्रम temporary exclusive use.
+ * reset_control_bulk_get_exclusive_release() for temporary exclusive use.
  *
  * See also: reset_control_acquire(), reset_control_bulk_release()
  */
-पूर्णांक reset_control_bulk_acquire(पूर्णांक num_rstcs,
-			       काष्ठा reset_control_bulk_data *rstcs)
-अणु
-	पूर्णांक ret, i;
+int reset_control_bulk_acquire(int num_rstcs,
+			       struct reset_control_bulk_data *rstcs)
+{
+	int ret, i;
 
-	क्रम (i = 0; i < num_rstcs; i++) अणु
+	for (i = 0; i < num_rstcs; i++) {
 		ret = reset_control_acquire(rstcs[i].rstc);
-		अगर (ret)
-			जाओ err;
-	पूर्ण
+		if (ret)
+			goto err;
+	}
 
-	वापस 0;
+	return 0;
 
 err:
-	जबतक (i--)
+	while (i--)
 		reset_control_release(rstcs[i].rstc);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(reset_control_bulk_acquire);
 
 /**
@@ -713,67 +712,67 @@ EXPORT_SYMBOL_GPL(reset_control_bulk_acquire);
  *
  * See also: reset_control_acquire()
  */
-व्योम reset_control_release(काष्ठा reset_control *rstc)
-अणु
-	अगर (!rstc || WARN_ON(IS_ERR(rstc)))
-		वापस;
+void reset_control_release(struct reset_control *rstc)
+{
+	if (!rstc || WARN_ON(IS_ERR(rstc)))
+		return;
 
-	अगर (reset_control_is_array(rstc))
+	if (reset_control_is_array(rstc))
 		reset_control_array_release(rstc_to_array(rstc));
-	अन्यथा
+	else
 		rstc->acquired = false;
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(reset_control_release);
 
 /**
  * reset_control_bulk_release() - releases exclusive access to reset controls
  * @num_rstcs: number of entries in rstcs array
- * @rstcs: array of काष्ठा reset_control_bulk_data with reset controls set
+ * @rstcs: array of struct reset_control_bulk_data with reset controls set
  *
  * Releases exclusive access right to reset controls previously obtained by a
  * call to reset_control_bulk_acquire().
  *
  * See also: reset_control_release(), reset_control_bulk_acquire()
  */
-व्योम reset_control_bulk_release(पूर्णांक num_rstcs,
-				काष्ठा reset_control_bulk_data *rstcs)
-अणु
-	पूर्णांक i;
+void reset_control_bulk_release(int num_rstcs,
+				struct reset_control_bulk_data *rstcs)
+{
+	int i;
 
-	क्रम (i = 0; i < num_rstcs; i++)
+	for (i = 0; i < num_rstcs; i++)
 		reset_control_release(rstcs[i].rstc);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(reset_control_bulk_release);
 
-अटल काष्ठा reset_control *__reset_control_get_पूर्णांकernal(
-				काष्ठा reset_controller_dev *rcdev,
-				अचिन्हित पूर्णांक index, bool shared, bool acquired)
-अणु
-	काष्ठा reset_control *rstc;
+static struct reset_control *__reset_control_get_internal(
+				struct reset_controller_dev *rcdev,
+				unsigned int index, bool shared, bool acquired)
+{
+	struct reset_control *rstc;
 
-	lockdep_निश्चित_held(&reset_list_mutex);
+	lockdep_assert_held(&reset_list_mutex);
 
-	list_क्रम_each_entry(rstc, &rcdev->reset_control_head, list) अणु
-		अगर (rstc->id == index) अणु
+	list_for_each_entry(rstc, &rcdev->reset_control_head, list) {
+		if (rstc->id == index) {
 			/*
 			 * Allow creating a secondary exclusive reset_control
-			 * that is initially not acquired क्रम an alपढ़ोy
+			 * that is initially not acquired for an already
 			 * controlled reset line.
 			 */
-			अगर (!rstc->shared && !shared && !acquired)
-				अवरोध;
+			if (!rstc->shared && !shared && !acquired)
+				break;
 
-			अगर (WARN_ON(!rstc->shared || !shared))
-				वापस ERR_PTR(-EBUSY);
+			if (WARN_ON(!rstc->shared || !shared))
+				return ERR_PTR(-EBUSY);
 
 			kref_get(&rstc->refcnt);
-			वापस rstc;
-		पूर्ण
-	पूर्ण
+			return rstc;
+		}
+	}
 
-	rstc = kzalloc(माप(*rstc), GFP_KERNEL);
-	अगर (!rstc)
-		वापस ERR_PTR(-ENOMEM);
+	rstc = kzalloc(sizeof(*rstc), GFP_KERNEL);
+	if (!rstc)
+		return ERR_PTR(-ENOMEM);
 
 	try_module_get(rcdev->owner);
 
@@ -784,337 +783,337 @@ EXPORT_SYMBOL_GPL(reset_control_bulk_release);
 	rstc->acquired = acquired;
 	rstc->shared = shared;
 
-	वापस rstc;
-पूर्ण
+	return rstc;
+}
 
-अटल व्योम __reset_control_release(काष्ठा kref *kref)
-अणु
-	काष्ठा reset_control *rstc = container_of(kref, काष्ठा reset_control,
+static void __reset_control_release(struct kref *kref)
+{
+	struct reset_control *rstc = container_of(kref, struct reset_control,
 						  refcnt);
 
-	lockdep_निश्चित_held(&reset_list_mutex);
+	lockdep_assert_held(&reset_list_mutex);
 
 	module_put(rstc->rcdev->owner);
 
 	list_del(&rstc->list);
-	kमुक्त(rstc);
-पूर्ण
+	kfree(rstc);
+}
 
-अटल व्योम __reset_control_put_पूर्णांकernal(काष्ठा reset_control *rstc)
-अणु
-	lockdep_निश्चित_held(&reset_list_mutex);
+static void __reset_control_put_internal(struct reset_control *rstc)
+{
+	lockdep_assert_held(&reset_list_mutex);
 
 	kref_put(&rstc->refcnt, __reset_control_release);
-पूर्ण
+}
 
-काष्ठा reset_control *__of_reset_control_get(काष्ठा device_node *node,
-				     स्थिर अक्षर *id, पूर्णांक index, bool shared,
+struct reset_control *__of_reset_control_get(struct device_node *node,
+				     const char *id, int index, bool shared,
 				     bool optional, bool acquired)
-अणु
-	काष्ठा reset_control *rstc;
-	काष्ठा reset_controller_dev *r, *rcdev;
-	काष्ठा of_phandle_args args;
-	पूर्णांक rstc_id;
-	पूर्णांक ret;
+{
+	struct reset_control *rstc;
+	struct reset_controller_dev *r, *rcdev;
+	struct of_phandle_args args;
+	int rstc_id;
+	int ret;
 
-	अगर (!node)
-		वापस ERR_PTR(-EINVAL);
+	if (!node)
+		return ERR_PTR(-EINVAL);
 
-	अगर (id) अणु
+	if (id) {
 		index = of_property_match_string(node,
 						 "reset-names", id);
-		अगर (index == -EILSEQ)
-			वापस ERR_PTR(index);
-		अगर (index < 0)
-			वापस optional ? शून्य : ERR_PTR(-ENOENT);
-	पूर्ण
+		if (index == -EILSEQ)
+			return ERR_PTR(index);
+		if (index < 0)
+			return optional ? NULL : ERR_PTR(-ENOENT);
+	}
 
 	ret = of_parse_phandle_with_args(node, "resets", "#reset-cells",
 					 index, &args);
-	अगर (ret == -EINVAL)
-		वापस ERR_PTR(ret);
-	अगर (ret)
-		वापस optional ? शून्य : ERR_PTR(ret);
+	if (ret == -EINVAL)
+		return ERR_PTR(ret);
+	if (ret)
+		return optional ? NULL : ERR_PTR(ret);
 
 	mutex_lock(&reset_list_mutex);
-	rcdev = शून्य;
-	list_क्रम_each_entry(r, &reset_controller_list, list) अणु
-		अगर (args.np == r->of_node) अणु
+	rcdev = NULL;
+	list_for_each_entry(r, &reset_controller_list, list) {
+		if (args.np == r->of_node) {
 			rcdev = r;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	अगर (!rcdev) अणु
+	if (!rcdev) {
 		rstc = ERR_PTR(-EPROBE_DEFER);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (WARN_ON(args.args_count != rcdev->of_reset_n_cells)) अणु
+	if (WARN_ON(args.args_count != rcdev->of_reset_n_cells)) {
 		rstc = ERR_PTR(-EINVAL);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	rstc_id = rcdev->of_xlate(rcdev, &args);
-	अगर (rstc_id < 0) अणु
+	if (rstc_id < 0) {
 		rstc = ERR_PTR(rstc_id);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/* reset_list_mutex also protects the rcdev's reset_control list */
-	rstc = __reset_control_get_पूर्णांकernal(rcdev, rstc_id, shared, acquired);
+	rstc = __reset_control_get_internal(rcdev, rstc_id, shared, acquired);
 
 out:
 	mutex_unlock(&reset_list_mutex);
 	of_node_put(args.np);
 
-	वापस rstc;
-पूर्ण
+	return rstc;
+}
 EXPORT_SYMBOL_GPL(__of_reset_control_get);
 
-अटल काष्ठा reset_controller_dev *
-__reset_controller_by_name(स्थिर अक्षर *name)
-अणु
-	काष्ठा reset_controller_dev *rcdev;
+static struct reset_controller_dev *
+__reset_controller_by_name(const char *name)
+{
+	struct reset_controller_dev *rcdev;
 
-	lockdep_निश्चित_held(&reset_list_mutex);
+	lockdep_assert_held(&reset_list_mutex);
 
-	list_क्रम_each_entry(rcdev, &reset_controller_list, list) अणु
-		अगर (!rcdev->dev)
-			जारी;
+	list_for_each_entry(rcdev, &reset_controller_list, list) {
+		if (!rcdev->dev)
+			continue;
 
-		अगर (!म_भेद(name, dev_name(rcdev->dev)))
-			वापस rcdev;
-	पूर्ण
+		if (!strcmp(name, dev_name(rcdev->dev)))
+			return rcdev;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल काष्ठा reset_control *
-__reset_control_get_from_lookup(काष्ठा device *dev, स्थिर अक्षर *con_id,
+static struct reset_control *
+__reset_control_get_from_lookup(struct device *dev, const char *con_id,
 				bool shared, bool optional, bool acquired)
-अणु
-	स्थिर काष्ठा reset_control_lookup *lookup;
-	काष्ठा reset_controller_dev *rcdev;
-	स्थिर अक्षर *dev_id = dev_name(dev);
-	काष्ठा reset_control *rstc = शून्य;
+{
+	const struct reset_control_lookup *lookup;
+	struct reset_controller_dev *rcdev;
+	const char *dev_id = dev_name(dev);
+	struct reset_control *rstc = NULL;
 
 	mutex_lock(&reset_lookup_mutex);
 
-	list_क्रम_each_entry(lookup, &reset_lookup_list, list) अणु
-		अगर (म_भेद(lookup->dev_id, dev_id))
-			जारी;
+	list_for_each_entry(lookup, &reset_lookup_list, list) {
+		if (strcmp(lookup->dev_id, dev_id))
+			continue;
 
-		अगर ((!con_id && !lookup->con_id) ||
+		if ((!con_id && !lookup->con_id) ||
 		    ((con_id && lookup->con_id) &&
-		     !म_भेद(con_id, lookup->con_id))) अणु
+		     !strcmp(con_id, lookup->con_id))) {
 			mutex_lock(&reset_list_mutex);
 			rcdev = __reset_controller_by_name(lookup->provider);
-			अगर (!rcdev) अणु
+			if (!rcdev) {
 				mutex_unlock(&reset_list_mutex);
 				mutex_unlock(&reset_lookup_mutex);
-				/* Reset provider may not be पढ़ोy yet. */
-				वापस ERR_PTR(-EPROBE_DEFER);
-			पूर्ण
+				/* Reset provider may not be ready yet. */
+				return ERR_PTR(-EPROBE_DEFER);
+			}
 
-			rstc = __reset_control_get_पूर्णांकernal(rcdev,
+			rstc = __reset_control_get_internal(rcdev,
 							    lookup->index,
 							    shared, acquired);
 			mutex_unlock(&reset_list_mutex);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
 	mutex_unlock(&reset_lookup_mutex);
 
-	अगर (!rstc)
-		वापस optional ? शून्य : ERR_PTR(-ENOENT);
+	if (!rstc)
+		return optional ? NULL : ERR_PTR(-ENOENT);
 
-	वापस rstc;
-पूर्ण
+	return rstc;
+}
 
-काष्ठा reset_control *__reset_control_get(काष्ठा device *dev, स्थिर अक्षर *id,
-					  पूर्णांक index, bool shared, bool optional,
+struct reset_control *__reset_control_get(struct device *dev, const char *id,
+					  int index, bool shared, bool optional,
 					  bool acquired)
-अणु
-	अगर (WARN_ON(shared && acquired))
-		वापस ERR_PTR(-EINVAL);
+{
+	if (WARN_ON(shared && acquired))
+		return ERR_PTR(-EINVAL);
 
-	अगर (dev->of_node)
-		वापस __of_reset_control_get(dev->of_node, id, index, shared,
+	if (dev->of_node)
+		return __of_reset_control_get(dev->of_node, id, index, shared,
 					      optional, acquired);
 
-	वापस __reset_control_get_from_lookup(dev, id, shared, optional,
+	return __reset_control_get_from_lookup(dev, id, shared, optional,
 					       acquired);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(__reset_control_get);
 
-पूर्णांक __reset_control_bulk_get(काष्ठा device *dev, पूर्णांक num_rstcs,
-			     काष्ठा reset_control_bulk_data *rstcs,
+int __reset_control_bulk_get(struct device *dev, int num_rstcs,
+			     struct reset_control_bulk_data *rstcs,
 			     bool shared, bool optional, bool acquired)
-अणु
-	पूर्णांक ret, i;
+{
+	int ret, i;
 
-	क्रम (i = 0; i < num_rstcs; i++) अणु
+	for (i = 0; i < num_rstcs; i++) {
 		rstcs[i].rstc = __reset_control_get(dev, rstcs[i].id, 0,
 						    shared, optional, acquired);
-		अगर (IS_ERR(rstcs[i].rstc)) अणु
+		if (IS_ERR(rstcs[i].rstc)) {
 			ret = PTR_ERR(rstcs[i].rstc);
-			जाओ err;
-		पूर्ण
-	पूर्ण
+			goto err;
+		}
+	}
 
-	वापस 0;
+	return 0;
 
 err:
 	mutex_lock(&reset_list_mutex);
-	जबतक (i--)
-		__reset_control_put_पूर्णांकernal(rstcs[i].rstc);
+	while (i--)
+		__reset_control_put_internal(rstcs[i].rstc);
 	mutex_unlock(&reset_list_mutex);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(__reset_control_bulk_get);
 
-अटल व्योम reset_control_array_put(काष्ठा reset_control_array *resets)
-अणु
-	पूर्णांक i;
+static void reset_control_array_put(struct reset_control_array *resets)
+{
+	int i;
 
 	mutex_lock(&reset_list_mutex);
-	क्रम (i = 0; i < resets->num_rstcs; i++)
-		__reset_control_put_पूर्णांकernal(resets->rstc[i]);
+	for (i = 0; i < resets->num_rstcs; i++)
+		__reset_control_put_internal(resets->rstc[i]);
 	mutex_unlock(&reset_list_mutex);
-	kमुक्त(resets);
-पूर्ण
+	kfree(resets);
+}
 
 /**
- * reset_control_put - मुक्त the reset controller
+ * reset_control_put - free the reset controller
  * @rstc: reset controller
  */
-व्योम reset_control_put(काष्ठा reset_control *rstc)
-अणु
-	अगर (IS_ERR_OR_शून्य(rstc))
-		वापस;
+void reset_control_put(struct reset_control *rstc)
+{
+	if (IS_ERR_OR_NULL(rstc))
+		return;
 
-	अगर (reset_control_is_array(rstc)) अणु
+	if (reset_control_is_array(rstc)) {
 		reset_control_array_put(rstc_to_array(rstc));
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	mutex_lock(&reset_list_mutex);
-	__reset_control_put_पूर्णांकernal(rstc);
+	__reset_control_put_internal(rstc);
 	mutex_unlock(&reset_list_mutex);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(reset_control_put);
 
 /**
- * reset_control_bulk_put - मुक्त the reset controllers
+ * reset_control_bulk_put - free the reset controllers
  * @num_rstcs: number of entries in rstcs array
- * @rstcs: array of काष्ठा reset_control_bulk_data with reset controls set
+ * @rstcs: array of struct reset_control_bulk_data with reset controls set
  */
-व्योम reset_control_bulk_put(पूर्णांक num_rstcs, काष्ठा reset_control_bulk_data *rstcs)
-अणु
+void reset_control_bulk_put(int num_rstcs, struct reset_control_bulk_data *rstcs)
+{
 	mutex_lock(&reset_list_mutex);
-	जबतक (num_rstcs--) अणु
-		अगर (IS_ERR_OR_शून्य(rstcs[num_rstcs].rstc))
-			जारी;
-		__reset_control_put_पूर्णांकernal(rstcs[num_rstcs].rstc);
-	पूर्ण
+	while (num_rstcs--) {
+		if (IS_ERR_OR_NULL(rstcs[num_rstcs].rstc))
+			continue;
+		__reset_control_put_internal(rstcs[num_rstcs].rstc);
+	}
 	mutex_unlock(&reset_list_mutex);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(reset_control_bulk_put);
 
-अटल व्योम devm_reset_control_release(काष्ठा device *dev, व्योम *res)
-अणु
-	reset_control_put(*(काष्ठा reset_control **)res);
-पूर्ण
+static void devm_reset_control_release(struct device *dev, void *res)
+{
+	reset_control_put(*(struct reset_control **)res);
+}
 
-काष्ठा reset_control *__devm_reset_control_get(काष्ठा device *dev,
-				     स्थिर अक्षर *id, पूर्णांक index, bool shared,
+struct reset_control *__devm_reset_control_get(struct device *dev,
+				     const char *id, int index, bool shared,
 				     bool optional, bool acquired)
-अणु
-	काष्ठा reset_control **ptr, *rstc;
+{
+	struct reset_control **ptr, *rstc;
 
-	ptr = devres_alloc(devm_reset_control_release, माप(*ptr),
+	ptr = devres_alloc(devm_reset_control_release, sizeof(*ptr),
 			   GFP_KERNEL);
-	अगर (!ptr)
-		वापस ERR_PTR(-ENOMEM);
+	if (!ptr)
+		return ERR_PTR(-ENOMEM);
 
 	rstc = __reset_control_get(dev, id, index, shared, optional, acquired);
-	अगर (IS_ERR_OR_शून्य(rstc)) अणु
-		devres_मुक्त(ptr);
-		वापस rstc;
-	पूर्ण
+	if (IS_ERR_OR_NULL(rstc)) {
+		devres_free(ptr);
+		return rstc;
+	}
 
 	*ptr = rstc;
 	devres_add(dev, ptr);
 
-	वापस rstc;
-पूर्ण
+	return rstc;
+}
 EXPORT_SYMBOL_GPL(__devm_reset_control_get);
 
-काष्ठा reset_control_bulk_devres अणु
-	पूर्णांक num_rstcs;
-	काष्ठा reset_control_bulk_data *rstcs;
-पूर्ण;
+struct reset_control_bulk_devres {
+	int num_rstcs;
+	struct reset_control_bulk_data *rstcs;
+};
 
-अटल व्योम devm_reset_control_bulk_release(काष्ठा device *dev, व्योम *res)
-अणु
-	काष्ठा reset_control_bulk_devres *devres = res;
+static void devm_reset_control_bulk_release(struct device *dev, void *res)
+{
+	struct reset_control_bulk_devres *devres = res;
 
 	reset_control_bulk_put(devres->num_rstcs, devres->rstcs);
-पूर्ण
+}
 
-पूर्णांक __devm_reset_control_bulk_get(काष्ठा device *dev, पूर्णांक num_rstcs,
-				  काष्ठा reset_control_bulk_data *rstcs,
+int __devm_reset_control_bulk_get(struct device *dev, int num_rstcs,
+				  struct reset_control_bulk_data *rstcs,
 				  bool shared, bool optional, bool acquired)
-अणु
-	काष्ठा reset_control_bulk_devres *ptr;
-	पूर्णांक ret;
+{
+	struct reset_control_bulk_devres *ptr;
+	int ret;
 
-	ptr = devres_alloc(devm_reset_control_bulk_release, माप(*ptr),
+	ptr = devres_alloc(devm_reset_control_bulk_release, sizeof(*ptr),
 			   GFP_KERNEL);
-	अगर (!ptr)
-		वापस -ENOMEM;
+	if (!ptr)
+		return -ENOMEM;
 
 	ret = __reset_control_bulk_get(dev, num_rstcs, rstcs, shared, optional, acquired);
-	अगर (ret < 0) अणु
-		devres_मुक्त(ptr);
-		वापस ret;
-	पूर्ण
+	if (ret < 0) {
+		devres_free(ptr);
+		return ret;
+	}
 
 	ptr->num_rstcs = num_rstcs;
 	ptr->rstcs = rstcs;
 	devres_add(dev, ptr);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(__devm_reset_control_bulk_get);
 
 /**
  * __device_reset - find reset controller associated with the device
- *                  and perक्रमm reset
+ *                  and perform reset
  * @dev: device to be reset by the controller
  * @optional: whether it is optional to reset the device
  *
- * Convenience wrapper क्रम __reset_control_get() and reset_control_reset().
- * This is useful क्रम the common हाल of devices with single, dedicated reset
+ * Convenience wrapper for __reset_control_get() and reset_control_reset().
+ * This is useful for the common case of devices with single, dedicated reset
  * lines.
  */
-पूर्णांक __device_reset(काष्ठा device *dev, bool optional)
-अणु
-	काष्ठा reset_control *rstc;
-	पूर्णांक ret;
+int __device_reset(struct device *dev, bool optional)
+{
+	struct reset_control *rstc;
+	int ret;
 
-	rstc = __reset_control_get(dev, शून्य, 0, 0, optional, true);
-	अगर (IS_ERR(rstc))
-		वापस PTR_ERR(rstc);
+	rstc = __reset_control_get(dev, NULL, 0, 0, optional, true);
+	if (IS_ERR(rstc))
+		return PTR_ERR(rstc);
 
 	ret = reset_control_reset(rstc);
 
 	reset_control_put(rstc);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(__device_reset);
 
 /*
@@ -1129,70 +1128,70 @@ EXPORT_SYMBOL_GPL(__device_reset);
  * Returns positive reset count on success, or error number on failure and
  * on count being zero.
  */
-अटल पूर्णांक of_reset_control_get_count(काष्ठा device_node *node)
-अणु
-	पूर्णांक count;
+static int of_reset_control_get_count(struct device_node *node)
+{
+	int count;
 
-	अगर (!node)
-		वापस -EINVAL;
+	if (!node)
+		return -EINVAL;
 
 	count = of_count_phandle_with_args(node, "resets", "#reset-cells");
-	अगर (count == 0)
+	if (count == 0)
 		count = -ENOENT;
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
 /**
  * of_reset_control_array_get - Get a list of reset controls using
  *				device node.
  *
- * @np: device node क्रम the device that requests the reset controls array
+ * @np: device node for the device that requests the reset controls array
  * @shared: whether reset controls are shared or not
  * @optional: whether it is optional to get the reset controls
- * @acquired: only one reset control may be acquired क्रम a given controller
+ * @acquired: only one reset control may be acquired for a given controller
  *            and ID
  *
- * Returns poपूर्णांकer to allocated reset_control on success or error on failure
+ * Returns pointer to allocated reset_control on success or error on failure
  */
-काष्ठा reset_control *
-of_reset_control_array_get(काष्ठा device_node *np, bool shared, bool optional,
+struct reset_control *
+of_reset_control_array_get(struct device_node *np, bool shared, bool optional,
 			   bool acquired)
-अणु
-	काष्ठा reset_control_array *resets;
-	काष्ठा reset_control *rstc;
-	पूर्णांक num, i;
+{
+	struct reset_control_array *resets;
+	struct reset_control *rstc;
+	int num, i;
 
 	num = of_reset_control_get_count(np);
-	अगर (num < 0)
-		वापस optional ? शून्य : ERR_PTR(num);
+	if (num < 0)
+		return optional ? NULL : ERR_PTR(num);
 
-	resets = kzalloc(काष्ठा_size(resets, rstc, num), GFP_KERNEL);
-	अगर (!resets)
-		वापस ERR_PTR(-ENOMEM);
+	resets = kzalloc(struct_size(resets, rstc, num), GFP_KERNEL);
+	if (!resets)
+		return ERR_PTR(-ENOMEM);
 
-	क्रम (i = 0; i < num; i++) अणु
-		rstc = __of_reset_control_get(np, शून्य, i, shared, optional,
+	for (i = 0; i < num; i++) {
+		rstc = __of_reset_control_get(np, NULL, i, shared, optional,
 					      acquired);
-		अगर (IS_ERR(rstc))
-			जाओ err_rst;
+		if (IS_ERR(rstc))
+			goto err_rst;
 		resets->rstc[i] = rstc;
-	पूर्ण
+	}
 	resets->num_rstcs = num;
 	resets->base.array = true;
 
-	वापस &resets->base;
+	return &resets->base;
 
 err_rst:
 	mutex_lock(&reset_list_mutex);
-	जबतक (--i >= 0)
-		__reset_control_put_पूर्णांकernal(resets->rstc[i]);
+	while (--i >= 0)
+		__reset_control_put_internal(resets->rstc[i]);
 	mutex_unlock(&reset_list_mutex);
 
-	kमुक्त(resets);
+	kfree(resets);
 
-	वापस rstc;
-पूर्ण
+	return rstc;
+}
 EXPORT_SYMBOL_GPL(of_reset_control_array_get);
 
 /**
@@ -1202,73 +1201,73 @@ EXPORT_SYMBOL_GPL(of_reset_control_array_get);
  * @shared: whether reset controls are shared or not
  * @optional: whether it is optional to get the reset controls
  *
- * The reset control array APIs are पूर्णांकended क्रम a list of resets
- * that just have to be निश्चितed or deनिश्चितed, without any
+ * The reset control array APIs are intended for a list of resets
+ * that just have to be asserted or deasserted, without any
  * requirements on the order.
  *
- * Returns poपूर्णांकer to allocated reset_control on success or error on failure
+ * Returns pointer to allocated reset_control on success or error on failure
  */
-काष्ठा reset_control *
-devm_reset_control_array_get(काष्ठा device *dev, bool shared, bool optional)
-अणु
-	काष्ठा reset_control **ptr, *rstc;
+struct reset_control *
+devm_reset_control_array_get(struct device *dev, bool shared, bool optional)
+{
+	struct reset_control **ptr, *rstc;
 
-	ptr = devres_alloc(devm_reset_control_release, माप(*ptr),
+	ptr = devres_alloc(devm_reset_control_release, sizeof(*ptr),
 			   GFP_KERNEL);
-	अगर (!ptr)
-		वापस ERR_PTR(-ENOMEM);
+	if (!ptr)
+		return ERR_PTR(-ENOMEM);
 
 	rstc = of_reset_control_array_get(dev->of_node, shared, optional, true);
-	अगर (IS_ERR_OR_शून्य(rstc)) अणु
-		devres_मुक्त(ptr);
-		वापस rstc;
-	पूर्ण
+	if (IS_ERR_OR_NULL(rstc)) {
+		devres_free(ptr);
+		return rstc;
+	}
 
 	*ptr = rstc;
 	devres_add(dev, ptr);
 
-	वापस rstc;
-पूर्ण
+	return rstc;
+}
 EXPORT_SYMBOL_GPL(devm_reset_control_array_get);
 
-अटल पूर्णांक reset_control_get_count_from_lookup(काष्ठा device *dev)
-अणु
-	स्थिर काष्ठा reset_control_lookup *lookup;
-	स्थिर अक्षर *dev_id;
-	पूर्णांक count = 0;
+static int reset_control_get_count_from_lookup(struct device *dev)
+{
+	const struct reset_control_lookup *lookup;
+	const char *dev_id;
+	int count = 0;
 
-	अगर (!dev)
-		वापस -EINVAL;
+	if (!dev)
+		return -EINVAL;
 
 	dev_id = dev_name(dev);
 	mutex_lock(&reset_lookup_mutex);
 
-	list_क्रम_each_entry(lookup, &reset_lookup_list, list) अणु
-		अगर (!म_भेद(lookup->dev_id, dev_id))
+	list_for_each_entry(lookup, &reset_lookup_list, list) {
+		if (!strcmp(lookup->dev_id, dev_id))
 			count++;
-	पूर्ण
+	}
 
 	mutex_unlock(&reset_lookup_mutex);
 
-	अगर (count == 0)
+	if (count == 0)
 		count = -ENOENT;
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
 /**
  * reset_control_get_count - Count number of resets available with a device
  *
- * @dev: device क्रम which to वापस the number of resets
+ * @dev: device for which to return the number of resets
  *
  * Returns positive reset count on success, or error number on failure and
  * on count being zero.
  */
-पूर्णांक reset_control_get_count(काष्ठा device *dev)
-अणु
-	अगर (dev->of_node)
-		वापस of_reset_control_get_count(dev->of_node);
+int reset_control_get_count(struct device *dev)
+{
+	if (dev->of_node)
+		return of_reset_control_get_count(dev->of_node);
 
-	वापस reset_control_get_count_from_lookup(dev);
-पूर्ण
+	return reset_control_get_count_from_lookup(dev);
+}
 EXPORT_SYMBOL_GPL(reset_control_get_count);

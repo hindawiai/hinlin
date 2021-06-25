@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  *  Pvpanic Device Support
  *
@@ -8,107 +7,107 @@
  *  Copyright (C) 2021 Oracle.
  */
 
-#समावेश <linux/पन.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/kexec.h>
-#समावेश <linux/mod_devicetable.h>
-#समावेश <linux/module.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/types.h>
-#समावेश <linux/cdev.h>
-#समावेश <linux/list.h>
+#include <linux/io.h>
+#include <linux/kernel.h>
+#include <linux/kexec.h>
+#include <linux/mod_devicetable.h>
+#include <linux/module.h>
+#include <linux/platform_device.h>
+#include <linux/types.h>
+#include <linux/cdev.h>
+#include <linux/list.h>
 
-#समावेश <uapi/misc/pvpanic.h>
+#include <uapi/misc/pvpanic.h>
 
-#समावेश "pvpanic.h"
+#include "pvpanic.h"
 
 MODULE_AUTHOR("Mihai Carabas <mihai.carabas@oracle.com>");
 MODULE_DESCRIPTION("pvpanic device driver ");
 MODULE_LICENSE("GPL");
 
-अटल काष्ठा list_head pvpanic_list;
-अटल spinlock_t pvpanic_lock;
+static struct list_head pvpanic_list;
+static spinlock_t pvpanic_lock;
 
-अटल व्योम
-pvpanic_send_event(अचिन्हित पूर्णांक event)
-अणु
-	काष्ठा pvpanic_instance *pi_cur;
+static void
+pvpanic_send_event(unsigned int event)
+{
+	struct pvpanic_instance *pi_cur;
 
 	spin_lock(&pvpanic_lock);
-	list_क्रम_each_entry(pi_cur, &pvpanic_list, list) अणु
-		अगर (event & pi_cur->capability & pi_cur->events)
-			ioग_लिखो8(event, pi_cur->base);
-	पूर्ण
+	list_for_each_entry(pi_cur, &pvpanic_list, list) {
+		if (event & pi_cur->capability & pi_cur->events)
+			iowrite8(event, pi_cur->base);
+	}
 	spin_unlock(&pvpanic_lock);
-पूर्ण
+}
 
-अटल पूर्णांक
-pvpanic_panic_notअगरy(काष्ठा notअगरier_block *nb, अचिन्हित दीर्घ code,
-		     व्योम *unused)
-अणु
-	अचिन्हित पूर्णांक event = PVPANIC_PANICKED;
+static int
+pvpanic_panic_notify(struct notifier_block *nb, unsigned long code,
+		     void *unused)
+{
+	unsigned int event = PVPANIC_PANICKED;
 
-	अगर (kexec_crash_loaded())
+	if (kexec_crash_loaded())
 		event = PVPANIC_CRASH_LOADED;
 
 	pvpanic_send_event(event);
 
-	वापस NOTIFY_DONE;
-पूर्ण
+	return NOTIFY_DONE;
+}
 
-अटल काष्ठा notअगरier_block pvpanic_panic_nb = अणु
-	.notअगरier_call = pvpanic_panic_notअगरy,
-	.priority = 1, /* let this called beक्रमe broken drm_fb_helper */
-पूर्ण;
+static struct notifier_block pvpanic_panic_nb = {
+	.notifier_call = pvpanic_panic_notify,
+	.priority = 1, /* let this called before broken drm_fb_helper */
+};
 
-पूर्णांक pvpanic_probe(काष्ठा pvpanic_instance *pi)
-अणु
-	अगर (!pi || !pi->base)
-		वापस -EINVAL;
+int pvpanic_probe(struct pvpanic_instance *pi)
+{
+	if (!pi || !pi->base)
+		return -EINVAL;
 
 	spin_lock(&pvpanic_lock);
 	list_add(&pi->list, &pvpanic_list);
 	spin_unlock(&pvpanic_lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(pvpanic_probe);
 
-व्योम pvpanic_हटाओ(काष्ठा pvpanic_instance *pi)
-अणु
-	काष्ठा pvpanic_instance *pi_cur, *pi_next;
+void pvpanic_remove(struct pvpanic_instance *pi)
+{
+	struct pvpanic_instance *pi_cur, *pi_next;
 
-	अगर (!pi)
-		वापस;
+	if (!pi)
+		return;
 
 	spin_lock(&pvpanic_lock);
-	list_क्रम_each_entry_safe(pi_cur, pi_next, &pvpanic_list, list) अणु
-		अगर (pi_cur == pi) अणु
+	list_for_each_entry_safe(pi_cur, pi_next, &pvpanic_list, list) {
+		if (pi_cur == pi) {
 			list_del(&pi_cur->list);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 	spin_unlock(&pvpanic_lock);
-पूर्ण
-EXPORT_SYMBOL_GPL(pvpanic_हटाओ);
+}
+EXPORT_SYMBOL_GPL(pvpanic_remove);
 
-अटल पूर्णांक pvpanic_init(व्योम)
-अणु
+static int pvpanic_init(void)
+{
 	INIT_LIST_HEAD(&pvpanic_list);
 	spin_lock_init(&pvpanic_lock);
 
-	atomic_notअगरier_chain_रेजिस्टर(&panic_notअगरier_list,
+	atomic_notifier_chain_register(&panic_notifier_list,
 				       &pvpanic_panic_nb);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम pvpanic_निकास(व्योम)
-अणु
-	atomic_notअगरier_chain_unरेजिस्टर(&panic_notअगरier_list,
+static void pvpanic_exit(void)
+{
+	atomic_notifier_chain_unregister(&panic_notifier_list,
 					 &pvpanic_panic_nb);
 
-पूर्ण
+}
 
 module_init(pvpanic_init);
-module_निकास(pvpanic_निकास);
+module_exit(pvpanic_exit);

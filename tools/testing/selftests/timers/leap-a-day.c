@@ -1,25 +1,24 @@
-<शैली गुरु>
 /* Leap second stress test
  *              by: John Stultz (john.stultz@linaro.org)
  *              (C) Copyright IBM 2012
  *              (C) Copyright 2013, 2015 Linaro Limited
  *              Licensed under the GPLv2
  *
- *  This test संकेतs the kernel to insert a leap second
- *  every day at midnight GMT. This allows क्रम stressing the
+ *  This test signals the kernel to insert a leap second
+ *  every day at midnight GMT. This allows for stressing the
  *  kernel's leap-second behavior, as well as how well applications
  *  handle the leap-second discontinuity.
  *
  *  Usage: leap-a-day [-s] [-i <num>]
  *
  *  Options:
- *	-s:	Each iteration, set the date to 10 seconds beक्रमe midnight GMT.
+ *	-s:	Each iteration, set the date to 10 seconds before midnight GMT.
  *		This speeds up the number of leapsecond transitions tested,
- *		but because it calls समय_रखोofday frequently, advancing the
- *		समय by 24 hours every ~16 seconds, it may cause application
+ *		but because it calls settimeofday frequently, advancing the
+ *		time by 24 hours every ~16 seconds, it may cause application
  *		disruption.
  *
- *	-i:	Number of iterations to run (शेष: infinite)
+ *	-i:	Number of iterations to run (default: infinite)
  *
  *  Other notes: Disabling NTP prior to running this is advised, as the two
  *		 may conflict in their commands to the kernel.
@@ -27,7 +26,7 @@
  *  To build:
  *	$ gcc leap-a-day.c -o leap-a-day -lrt
  *
- *   This program is मुक्त software: you can redistribute it and/or modअगरy
+ *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
  *   the Free Software Foundation, either version 2 of the License, or
  *   (at your option) any later version.
@@ -35,345 +34,345 @@
  *   This program is distributed in the hope that it will be useful,
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of
  *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *   GNU General Public License क्रम more details.
+ *   GNU General Public License for more details.
  */
 
 
 
-#समावेश <मानकपन.स>
-#समावेश <मानककोष.स>
-#समावेश <समय.स>
-#समावेश <sys/समय.स>
-#समावेश <sys/समयx.h>
-#समावेश <sys/त्रुटिसं.स>
-#समावेश <माला.स>
-#समावेश <संकेत.स>
-#समावेश <unistd.h>
-#समावेश "../kselftest.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+#include <sys/time.h>
+#include <sys/timex.h>
+#include <sys/errno.h>
+#include <string.h>
+#include <signal.h>
+#include <unistd.h>
+#include "../kselftest.h"
 
-#घोषणा NSEC_PER_SEC 1000000000ULL
-#घोषणा CLOCK_TAI 11
+#define NSEC_PER_SEC 1000000000ULL
+#define CLOCK_TAI 11
 
-समय_प्रकार next_leap;
-पूर्णांक error_found;
+time_t next_leap;
+int error_found;
 
-/* वापसs 1 अगर a <= b, 0 otherwise */
-अटल अंतरभूत पूर्णांक in_order(काष्ठा बारpec a, काष्ठा बारpec b)
-अणु
-	अगर (a.tv_sec < b.tv_sec)
-		वापस 1;
-	अगर (a.tv_sec > b.tv_sec)
-		वापस 0;
-	अगर (a.tv_nsec > b.tv_nsec)
-		वापस 0;
-	वापस 1;
-पूर्ण
+/* returns 1 if a <= b, 0 otherwise */
+static inline int in_order(struct timespec a, struct timespec b)
+{
+	if (a.tv_sec < b.tv_sec)
+		return 1;
+	if (a.tv_sec > b.tv_sec)
+		return 0;
+	if (a.tv_nsec > b.tv_nsec)
+		return 0;
+	return 1;
+}
 
-काष्ठा बारpec बारpec_add(काष्ठा बारpec ts, अचिन्हित दीर्घ दीर्घ ns)
-अणु
+struct timespec timespec_add(struct timespec ts, unsigned long long ns)
+{
 	ts.tv_nsec += ns;
-	जबतक (ts.tv_nsec >= NSEC_PER_SEC) अणु
+	while (ts.tv_nsec >= NSEC_PER_SEC) {
 		ts.tv_nsec -= NSEC_PER_SEC;
 		ts.tv_sec++;
-	पूर्ण
-	वापस ts;
-पूर्ण
+	}
+	return ts;
+}
 
-अक्षर *समय_state_str(पूर्णांक state)
-अणु
-	चयन (state) अणु
-	हाल TIME_OK:	वापस "TIME_OK";
-	हाल TIME_INS:	वापस "TIME_INS";
-	हाल TIME_DEL:	वापस "TIME_DEL";
-	हाल TIME_OOP:	वापस "TIME_OOP";
-	हाल TIME_WAIT:	वापस "TIME_WAIT";
-	हाल TIME_BAD:	वापस "TIME_BAD";
-	पूर्ण
-	वापस "ERROR";
-पूर्ण
+char *time_state_str(int state)
+{
+	switch (state) {
+	case TIME_OK:	return "TIME_OK";
+	case TIME_INS:	return "TIME_INS";
+	case TIME_DEL:	return "TIME_DEL";
+	case TIME_OOP:	return "TIME_OOP";
+	case TIME_WAIT:	return "TIME_WAIT";
+	case TIME_BAD:	return "TIME_BAD";
+	}
+	return "ERROR";
+}
 
-/* clear NTP समय_status & समय_state */
-पूर्णांक clear_समय_state(व्योम)
-अणु
-	काष्ठा समयx tx;
-	पूर्णांक ret;
+/* clear NTP time_status & time_state */
+int clear_time_state(void)
+{
+	struct timex tx;
+	int ret;
 
 	/*
-	 * We have to call adjसमय twice here, as kernels
+	 * We have to call adjtime twice here, as kernels
 	 * prior to 6b1859dba01c7 (included in 3.5 and
 	 * -stable), had an issue with the state machine
 	 * and wouldn't clear the STA_INS/DEL flag directly.
 	 */
 	tx.modes = ADJ_STATUS;
 	tx.status = STA_PLL;
-	ret = adjसमयx(&tx);
+	ret = adjtimex(&tx);
 
 	/* Clear maxerror, as it can cause UNSYNC to be set */
 	tx.modes = ADJ_MAXERROR;
 	tx.maxerror = 0;
-	ret = adjसमयx(&tx);
+	ret = adjtimex(&tx);
 
 	/* Clear the status */
 	tx.modes = ADJ_STATUS;
 	tx.status = 0;
-	ret = adjसमयx(&tx);
+	ret = adjtimex(&tx);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /* Make sure we cleanup on ctrl-c */
-व्योम handler(पूर्णांक unused)
-अणु
-	clear_समय_state();
-	निकास(0);
-पूर्ण
+void handler(int unused)
+{
+	clear_time_state();
+	exit(0);
+}
 
-व्योम sigalarm(पूर्णांक signo)
-अणु
-	काष्ठा समयx tx;
-	पूर्णांक ret;
+void sigalarm(int signo)
+{
+	struct timex tx;
+	int ret;
 
 	tx.modes = 0;
-	ret = adjसमयx(&tx);
+	ret = adjtimex(&tx);
 
-	अगर (tx.समय.tv_sec < next_leap) अणु
-		म_लिखो("Error: Early timer expiration! (Should be %ld)\n", next_leap);
+	if (tx.time.tv_sec < next_leap) {
+		printf("Error: Early timer expiration! (Should be %ld)\n", next_leap);
 		error_found = 1;
-		म_लिखो("adjtimex: %10ld sec + %6ld us (%i)\t%s\n",
-					tx.समय.tv_sec,
-					tx.समय.tv_usec,
+		printf("adjtimex: %10ld sec + %6ld us (%i)\t%s\n",
+					tx.time.tv_sec,
+					tx.time.tv_usec,
 					tx.tai,
-					समय_state_str(ret));
-	पूर्ण
-	अगर (ret != TIME_WAIT) अणु
-		म_लिखो("Error: Timer seeing incorrect NTP state? (Should be TIME_WAIT)\n");
+					time_state_str(ret));
+	}
+	if (ret != TIME_WAIT) {
+		printf("Error: Timer seeing incorrect NTP state? (Should be TIME_WAIT)\n");
 		error_found = 1;
-		म_लिखो("adjtimex: %10ld sec + %6ld us (%i)\t%s\n",
-					tx.समय.tv_sec,
-					tx.समय.tv_usec,
+		printf("adjtimex: %10ld sec + %6ld us (%i)\t%s\n",
+					tx.time.tv_sec,
+					tx.time.tv_usec,
 					tx.tai,
-					समय_state_str(ret));
-	पूर्ण
-पूर्ण
+					time_state_str(ret));
+	}
+}
 
 
-/* Test क्रम known hrसमयr failure */
-व्योम test_hrसमयr_failure(व्योम)
-अणु
-	काष्ठा बारpec now, target;
+/* Test for known hrtimer failure */
+void test_hrtimer_failure(void)
+{
+	struct timespec now, target;
 
-	घड़ी_समय_लो(CLOCK_REALTIME, &now);
-	target = बारpec_add(now, NSEC_PER_SEC/2);
-	घड़ी_nanosleep(CLOCK_REALTIME, TIMER_ABSTIME, &target, शून्य);
-	घड़ी_समय_लो(CLOCK_REALTIME, &now);
+	clock_gettime(CLOCK_REALTIME, &now);
+	target = timespec_add(now, NSEC_PER_SEC/2);
+	clock_nanosleep(CLOCK_REALTIME, TIMER_ABSTIME, &target, NULL);
+	clock_gettime(CLOCK_REALTIME, &now);
 
-	अगर (!in_order(target, now)) अणु
-		म_लिखो("ERROR: hrtimer early expiration failure observed.\n");
+	if (!in_order(target, now)) {
+		printf("ERROR: hrtimer early expiration failure observed.\n");
 		error_found = 1;
-	पूर्ण
-पूर्ण
+	}
+}
 
-पूर्णांक मुख्य(पूर्णांक argc, अक्षर **argv)
-अणु
-	समयr_t पंचांग1;
-	काष्ठा iसमयrspec its1;
-	काष्ठा sigevent se;
-	काष्ठा sigaction act;
-	पूर्णांक signum = SIGRTMAX;
-	पूर्णांक समय_रखो = 1;
-	पूर्णांक tai_समय = 0;
-	पूर्णांक insert = 1;
-	पूर्णांक iterations = 10;
-	पूर्णांक opt;
+int main(int argc, char **argv)
+{
+	timer_t tm1;
+	struct itimerspec its1;
+	struct sigevent se;
+	struct sigaction act;
+	int signum = SIGRTMAX;
+	int settime = 1;
+	int tai_time = 0;
+	int insert = 1;
+	int iterations = 10;
+	int opt;
 
 	/* Process arguments */
-	जबतक ((opt = getopt(argc, argv, "sti:")) != -1) अणु
-		चयन (opt) अणु
-		हाल 'w':
-			म_लिखो("Only setting leap-flag, not changing time. It could take up to a day for leap to trigger.\n");
-			समय_रखो = 0;
-			अवरोध;
-		हाल 'i':
-			iterations = म_से_प(optarg);
-			अवरोध;
-		हाल 't':
-			tai_समय = 1;
-			अवरोध;
-		शेष:
-			म_लिखो("Usage: %s [-w] [-i <iterations>]\n", argv[0]);
-			म_लिखो("	-w: Set flag and wait for leap second each iteration");
-			म_लिखो("	    (default sets time to right before leapsecond)\n");
-			म_लिखो("	-i: Number of iterations (-1 = infinite, default is 10)\n");
-			म_लिखो("	-t: Print TAI time\n");
-			निकास(-1);
-		पूर्ण
-	पूर्ण
+	while ((opt = getopt(argc, argv, "sti:")) != -1) {
+		switch (opt) {
+		case 'w':
+			printf("Only setting leap-flag, not changing time. It could take up to a day for leap to trigger.\n");
+			settime = 0;
+			break;
+		case 'i':
+			iterations = atoi(optarg);
+			break;
+		case 't':
+			tai_time = 1;
+			break;
+		default:
+			printf("Usage: %s [-w] [-i <iterations>]\n", argv[0]);
+			printf("	-w: Set flag and wait for leap second each iteration");
+			printf("	    (default sets time to right before leapsecond)\n");
+			printf("	-i: Number of iterations (-1 = infinite, default is 10)\n");
+			printf("	-t: Print TAI time\n");
+			exit(-1);
+		}
+	}
 
-	/* Make sure TAI support is present अगर -t was used */
-	अगर (tai_समय) अणु
-		काष्ठा बारpec ts;
+	/* Make sure TAI support is present if -t was used */
+	if (tai_time) {
+		struct timespec ts;
 
-		अगर (घड़ी_समय_लो(CLOCK_TAI, &ts)) अणु
-			म_लिखो("System doesn't support CLOCK_TAI\n");
-			ksft_निकास_fail();
-		पूर्ण
-	पूर्ण
+		if (clock_gettime(CLOCK_TAI, &ts)) {
+			printf("System doesn't support CLOCK_TAI\n");
+			ksft_exit_fail();
+		}
+	}
 
-	संकेत(संक_विघ्न, handler);
-	संकेत(SIGKILL, handler);
+	signal(SIGINT, handler);
+	signal(SIGKILL, handler);
 
-	/* Set up समयr संकेत handler: */
+	/* Set up timer signal handler: */
 	sigfillset(&act.sa_mask);
 	act.sa_flags = 0;
 	act.sa_handler = sigalarm;
-	sigaction(signum, &act, शून्य);
+	sigaction(signum, &act, NULL);
 
-	अगर (iterations < 0)
-		म_लिखो("This runs continuously. Press ctrl-c to stop\n");
-	अन्यथा
-		म_लिखो("Running for %i iterations. Press ctrl-c to stop\n", iterations);
+	if (iterations < 0)
+		printf("This runs continuously. Press ctrl-c to stop\n");
+	else
+		printf("Running for %i iterations. Press ctrl-c to stop\n", iterations);
 
-	म_लिखो("\n");
-	जबतक (1) अणु
-		पूर्णांक ret;
-		काष्ठा बारpec ts;
-		काष्ठा समयx tx;
-		समय_प्रकार now;
+	printf("\n");
+	while (1) {
+		int ret;
+		struct timespec ts;
+		struct timex tx;
+		time_t now;
 
-		/* Get the current समय */
-		घड़ी_समय_लो(CLOCK_REALTIME, &ts);
+		/* Get the current time */
+		clock_gettime(CLOCK_REALTIME, &ts);
 
 		/* Calculate the next possible leap second 23:59:60 GMT */
 		next_leap = ts.tv_sec;
 		next_leap += 86400 - (next_leap % 86400);
 
-		अगर (समय_रखो) अणु
-			काष्ठा समयval tv;
+		if (settime) {
+			struct timeval tv;
 
 			tv.tv_sec = next_leap - 10;
 			tv.tv_usec = 0;
-			समय_रखोofday(&tv, शून्य);
-			म_लिखो("Setting time to %s", स_समय(&tv.tv_sec));
-		पूर्ण
+			settimeofday(&tv, NULL);
+			printf("Setting time to %s", ctime(&tv.tv_sec));
+		}
 
-		/* Reset NTP समय state */
-		clear_समय_state();
+		/* Reset NTP time state */
+		clear_time_state();
 
 		/* Set the leap second insert flag */
 		tx.modes = ADJ_STATUS;
-		अगर (insert)
+		if (insert)
 			tx.status = STA_INS;
-		अन्यथा
+		else
 			tx.status = STA_DEL;
-		ret = adjसमयx(&tx);
-		अगर (ret < 0) अणु
-			म_लिखो("Error: Problem setting STA_INS/STA_DEL!: %s\n",
-							समय_state_str(ret));
-			वापस ksft_निकास_fail();
-		पूर्ण
+		ret = adjtimex(&tx);
+		if (ret < 0) {
+			printf("Error: Problem setting STA_INS/STA_DEL!: %s\n",
+							time_state_str(ret));
+			return ksft_exit_fail();
+		}
 
 		/* Validate STA_INS was set */
 		tx.modes = 0;
-		ret = adjसमयx(&tx);
-		अगर (tx.status != STA_INS && tx.status != STA_DEL) अणु
-			म_लिखो("Error: STA_INS/STA_DEL not set!: %s\n",
-							समय_state_str(ret));
-			वापस ksft_निकास_fail();
-		पूर्ण
+		ret = adjtimex(&tx);
+		if (tx.status != STA_INS && tx.status != STA_DEL) {
+			printf("Error: STA_INS/STA_DEL not set!: %s\n",
+							time_state_str(ret));
+			return ksft_exit_fail();
+		}
 
-		अगर (tai_समय) अणु
-			म_लिखो("Using TAI time,"
+		if (tai_time) {
+			printf("Using TAI time,"
 				" no inconsistencies should be seen!\n");
-		पूर्ण
+		}
 
-		म_लिखो("Scheduling leap second for %s", स_समय(&next_leap));
+		printf("Scheduling leap second for %s", ctime(&next_leap));
 
-		/* Set up समयr */
-		म_लिखो("Setting timer for %ld -  %s", next_leap, स_समय(&next_leap));
-		स_रखो(&se, 0, माप(se));
-		se.sigev_notअगरy = SIGEV_SIGNAL;
+		/* Set up timer */
+		printf("Setting timer for %ld -  %s", next_leap, ctime(&next_leap));
+		memset(&se, 0, sizeof(se));
+		se.sigev_notify = SIGEV_SIGNAL;
 		se.sigev_signo = signum;
-		se.sigev_value.sival_पूर्णांक = 0;
-		अगर (समयr_create(CLOCK_REALTIME, &se, &पंचांग1) == -1) अणु
-			म_लिखो("Error: timer_create failed\n");
-			वापस ksft_निकास_fail();
-		पूर्ण
+		se.sigev_value.sival_int = 0;
+		if (timer_create(CLOCK_REALTIME, &se, &tm1) == -1) {
+			printf("Error: timer_create failed\n");
+			return ksft_exit_fail();
+		}
 		its1.it_value.tv_sec = next_leap;
 		its1.it_value.tv_nsec = 0;
-		its1.it_पूर्णांकerval.tv_sec = 0;
-		its1.it_पूर्णांकerval.tv_nsec = 0;
-		समयr_समय_रखो(पंचांग1, TIMER_ABSTIME, &its1, शून्य);
+		its1.it_interval.tv_sec = 0;
+		its1.it_interval.tv_nsec = 0;
+		timer_settime(tm1, TIMER_ABSTIME, &its1, NULL);
 
-		/* Wake up 3 seconds beक्रमe leap */
+		/* Wake up 3 seconds before leap */
 		ts.tv_sec = next_leap - 3;
 		ts.tv_nsec = 0;
 
 
-		जबतक (घड़ी_nanosleep(CLOCK_REALTIME, TIMER_ABSTIME, &ts, शून्य))
-			म_लिखो("Something woke us up, returning to sleep\n");
+		while (clock_nanosleep(CLOCK_REALTIME, TIMER_ABSTIME, &ts, NULL))
+			printf("Something woke us up, returning to sleep\n");
 
 		/* Validate STA_INS is still set */
 		tx.modes = 0;
-		ret = adjसमयx(&tx);
-		अगर (tx.status != STA_INS && tx.status != STA_DEL) अणु
-			म_लिखो("Something cleared STA_INS/STA_DEL, setting it again.\n");
+		ret = adjtimex(&tx);
+		if (tx.status != STA_INS && tx.status != STA_DEL) {
+			printf("Something cleared STA_INS/STA_DEL, setting it again.\n");
 			tx.modes = ADJ_STATUS;
-			अगर (insert)
+			if (insert)
 				tx.status = STA_INS;
-			अन्यथा
+			else
 				tx.status = STA_DEL;
-			ret = adjसमयx(&tx);
-		पूर्ण
+			ret = adjtimex(&tx);
+		}
 
-		/* Check adjसमयx output every half second */
-		now = tx.समय.tv_sec;
-		जबतक (now < next_leap + 2) अणु
-			अक्षर buf[26];
-			काष्ठा बारpec tai;
-			पूर्णांक ret;
+		/* Check adjtimex output every half second */
+		now = tx.time.tv_sec;
+		while (now < next_leap + 2) {
+			char buf[26];
+			struct timespec tai;
+			int ret;
 
 			tx.modes = 0;
-			ret = adjसमयx(&tx);
+			ret = adjtimex(&tx);
 
-			अगर (tai_समय) अणु
-				घड़ी_समय_लो(CLOCK_TAI, &tai);
-				म_लिखो("%ld sec, %9ld ns\t%s\n",
+			if (tai_time) {
+				clock_gettime(CLOCK_TAI, &tai);
+				printf("%ld sec, %9ld ns\t%s\n",
 						tai.tv_sec,
 						tai.tv_nsec,
-						समय_state_str(ret));
-			पूर्ण अन्यथा अणु
-				स_समय_r(&tx.समय.tv_sec, buf);
-				buf[म_माप(buf)-1] = 0; /*हटाओ trailing\न */
+						time_state_str(ret));
+			} else {
+				ctime_r(&tx.time.tv_sec, buf);
+				buf[strlen(buf)-1] = 0; /*remove trailing\n */
 
-				म_लिखो("%s + %6ld us (%i)\t%s\n",
+				printf("%s + %6ld us (%i)\t%s\n",
 						buf,
-						tx.समय.tv_usec,
+						tx.time.tv_usec,
 						tx.tai,
-						समय_state_str(ret));
-			पूर्ण
-			now = tx.समय.tv_sec;
-			/* Sleep क्रम another half second */
+						time_state_str(ret));
+			}
+			now = tx.time.tv_sec;
+			/* Sleep for another half second */
 			ts.tv_sec = 0;
 			ts.tv_nsec = NSEC_PER_SEC / 2;
-			घड़ी_nanosleep(CLOCK_MONOTONIC, 0, &ts, शून्य);
-		पूर्ण
+			clock_nanosleep(CLOCK_MONOTONIC, 0, &ts, NULL);
+		}
 		/* Switch to using other mode */
 		insert = !insert;
 
-		/* Note अगर kernel has known hrसमयr failure */
-		test_hrसमयr_failure();
+		/* Note if kernel has known hrtimer failure */
+		test_hrtimer_failure();
 
-		म_लिखो("Leap complete\n");
-		अगर (error_found) अणु
-			म_लिखो("Errors observed\n");
-			clear_समय_state();
-			वापस ksft_निकास_fail();
-		पूर्ण
-		म_लिखो("\n");
-		अगर ((iterations != -1) && !(--iterations))
-			अवरोध;
-	पूर्ण
+		printf("Leap complete\n");
+		if (error_found) {
+			printf("Errors observed\n");
+			clear_time_state();
+			return ksft_exit_fail();
+		}
+		printf("\n");
+		if ((iterations != -1) && !(--iterations))
+			break;
+	}
 
-	clear_समय_state();
-	वापस ksft_निकास_pass();
-पूर्ण
+	clear_time_state();
+	return ksft_exit_pass();
+}

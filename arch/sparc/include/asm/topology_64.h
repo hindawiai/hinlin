@@ -1,66 +1,65 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _ASM_SPARC64_TOPOLOGY_H
-#घोषणा _ASM_SPARC64_TOPOLOGY_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _ASM_SPARC64_TOPOLOGY_H
+#define _ASM_SPARC64_TOPOLOGY_H
 
-#अगर_घोषित CONFIG_NUMA
+#ifdef CONFIG_NUMA
 
-#समावेश <यंत्र/mmzone.h>
+#include <asm/mmzone.h>
 
-अटल अंतरभूत पूर्णांक cpu_to_node(पूर्णांक cpu)
-अणु
-	वापस numa_cpu_lookup_table[cpu];
-पूर्ण
+static inline int cpu_to_node(int cpu)
+{
+	return numa_cpu_lookup_table[cpu];
+}
 
-#घोषणा cpumask_of_node(node) ((node) == -1 ?				\
+#define cpumask_of_node(node) ((node) == -1 ?				\
 			       cpu_all_mask :				\
 			       &numa_cpumask_lookup_table[node])
 
-काष्ठा pci_bus;
-#अगर_घोषित CONFIG_PCI
-पूर्णांक pcibus_to_node(काष्ठा pci_bus *pbus);
-#अन्यथा
-अटल अंतरभूत पूर्णांक pcibus_to_node(काष्ठा pci_bus *pbus)
-अणु
-	वापस -1;
-पूर्ण
-#पूर्ण_अगर
+struct pci_bus;
+#ifdef CONFIG_PCI
+int pcibus_to_node(struct pci_bus *pbus);
+#else
+static inline int pcibus_to_node(struct pci_bus *pbus)
+{
+	return -1;
+}
+#endif
 
-#घोषणा cpumask_of_pcibus(bus)	\
+#define cpumask_of_pcibus(bus)	\
 	(pcibus_to_node(bus) == -1 ? \
 	 cpu_all_mask : \
 	 cpumask_of_node(pcibus_to_node(bus)))
 
-पूर्णांक __node_distance(पूर्णांक, पूर्णांक);
-#घोषणा node_distance(a, b) __node_distance(a, b)
+int __node_distance(int, int);
+#define node_distance(a, b) __node_distance(a, b)
 
-#अन्यथा /* CONFIG_NUMA */
+#else /* CONFIG_NUMA */
 
-#समावेश <यंत्र-generic/topology.h>
+#include <asm-generic/topology.h>
 
-#पूर्ण_अगर /* !(CONFIG_NUMA) */
+#endif /* !(CONFIG_NUMA) */
 
-#अगर_घोषित CONFIG_SMP
+#ifdef CONFIG_SMP
 
-#समावेश <यंत्र/cpudata.h>
+#include <asm/cpudata.h>
 
-#घोषणा topology_physical_package_id(cpu)	(cpu_data(cpu).proc_id)
-#घोषणा topology_core_id(cpu)			(cpu_data(cpu).core_id)
-#घोषणा topology_core_cpumask(cpu)		(&cpu_core_sib_map[cpu])
-#घोषणा topology_core_cache_cpumask(cpu)	(&cpu_core_sib_cache_map[cpu])
-#घोषणा topology_sibling_cpumask(cpu)		(&per_cpu(cpu_sibling_map, cpu))
-#पूर्ण_अगर /* CONFIG_SMP */
+#define topology_physical_package_id(cpu)	(cpu_data(cpu).proc_id)
+#define topology_core_id(cpu)			(cpu_data(cpu).core_id)
+#define topology_core_cpumask(cpu)		(&cpu_core_sib_map[cpu])
+#define topology_core_cache_cpumask(cpu)	(&cpu_core_sib_cache_map[cpu])
+#define topology_sibling_cpumask(cpu)		(&per_cpu(cpu_sibling_map, cpu))
+#endif /* CONFIG_SMP */
 
-बाह्य cpumask_t cpu_core_map[NR_CPUS];
-बाह्य cpumask_t cpu_core_sib_map[NR_CPUS];
-बाह्य cpumask_t cpu_core_sib_cache_map[NR_CPUS];
+extern cpumask_t cpu_core_map[NR_CPUS];
+extern cpumask_t cpu_core_sib_map[NR_CPUS];
+extern cpumask_t cpu_core_sib_cache_map[NR_CPUS];
 
 /**
  * Return cores that shares the last level cache.
  */
-अटल अंतरभूत स्थिर काष्ठा cpumask *cpu_coregroup_mask(पूर्णांक cpu)
-अणु
-	वापस &cpu_core_sib_cache_map[cpu];
-पूर्ण
+static inline const struct cpumask *cpu_coregroup_mask(int cpu)
+{
+	return &cpu_core_sib_cache_map[cpu];
+}
 
-#पूर्ण_अगर /* _ASM_SPARC64_TOPOLOGY_H */
+#endif /* _ASM_SPARC64_TOPOLOGY_H */

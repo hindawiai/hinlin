@@ -1,204 +1,203 @@
-<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the मुख्य directory of this archive
- * क्रम more details.
+ * License.  See the file "COPYING" in the main directory of this archive
+ * for more details.
  *
  * Copyright (C) 1994 - 1999, 2000, 03 Ralf Baechle
  * Copyright (C) 1999, 2000 Silicon Graphics, Inc.
  */
-#अगर_अघोषित _ASM_PAGE_H
-#घोषणा _ASM_PAGE_H
+#ifndef _ASM_PAGE_H
+#define _ASM_PAGE_H
 
-#समावेश <spaces.h>
-#समावेश <linux/स्थिर.h>
-#समावेश <linux/kernel.h>
-#समावेश <यंत्र/mipsregs.h>
+#include <spaces.h>
+#include <linux/const.h>
+#include <linux/kernel.h>
+#include <asm/mipsregs.h>
 
 /*
  * PAGE_SHIFT determines the page size
  */
-#अगर_घोषित CONFIG_PAGE_SIZE_4KB
-#घोषणा PAGE_SHIFT	12
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_PAGE_SIZE_8KB
-#घोषणा PAGE_SHIFT	13
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_PAGE_SIZE_16KB
-#घोषणा PAGE_SHIFT	14
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_PAGE_SIZE_32KB
-#घोषणा PAGE_SHIFT	15
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_PAGE_SIZE_64KB
-#घोषणा PAGE_SHIFT	16
-#पूर्ण_अगर
-#घोषणा PAGE_SIZE	(_AC(1,UL) << PAGE_SHIFT)
-#घोषणा PAGE_MASK	(~((1 << PAGE_SHIFT) - 1))
+#ifdef CONFIG_PAGE_SIZE_4KB
+#define PAGE_SHIFT	12
+#endif
+#ifdef CONFIG_PAGE_SIZE_8KB
+#define PAGE_SHIFT	13
+#endif
+#ifdef CONFIG_PAGE_SIZE_16KB
+#define PAGE_SHIFT	14
+#endif
+#ifdef CONFIG_PAGE_SIZE_32KB
+#define PAGE_SHIFT	15
+#endif
+#ifdef CONFIG_PAGE_SIZE_64KB
+#define PAGE_SHIFT	16
+#endif
+#define PAGE_SIZE	(_AC(1,UL) << PAGE_SHIFT)
+#define PAGE_MASK	(~((1 << PAGE_SHIFT) - 1))
 
 /*
- * This is used क्रम calculating the real page sizes
- * क्रम FTLB or VTLB + FTLB configurations.
+ * This is used for calculating the real page sizes
+ * for FTLB or VTLB + FTLB configurations.
  */
-अटल अंतरभूत अचिन्हित पूर्णांक page_size_ftlb(अचिन्हित पूर्णांक mmuextdef)
-अणु
-	चयन (mmuextdef) अणु
-	हाल MIPS_CONF4_MMUEXTDEF_FTLBSIZEEXT:
-		अगर (PAGE_SIZE == (1 << 30))
-			वापस 5;
-		अगर (PAGE_SIZE == (1llu << 32))
-			वापस 6;
-		अगर (PAGE_SIZE > (256 << 10))
-			वापस 7; /* reserved */
+static inline unsigned int page_size_ftlb(unsigned int mmuextdef)
+{
+	switch (mmuextdef) {
+	case MIPS_CONF4_MMUEXTDEF_FTLBSIZEEXT:
+		if (PAGE_SIZE == (1 << 30))
+			return 5;
+		if (PAGE_SIZE == (1llu << 32))
+			return 6;
+		if (PAGE_SIZE > (256 << 10))
+			return 7; /* reserved */
 		fallthrough;
-	हाल MIPS_CONF4_MMUEXTDEF_VTLBSIZEEXT:
-		वापस (PAGE_SHIFT - 10) / 2;
-	शेष:
+	case MIPS_CONF4_MMUEXTDEF_VTLBSIZEEXT:
+		return (PAGE_SHIFT - 10) / 2;
+	default:
 		panic("Invalid FTLB configuration with Conf4_mmuextdef=%d value\n",
 		      mmuextdef >> 14);
-	पूर्ण
-पूर्ण
+	}
+}
 
-#अगर_घोषित CONFIG_MIPS_HUGE_TLB_SUPPORT
-#घोषणा HPAGE_SHIFT	(PAGE_SHIFT + PAGE_SHIFT - 3)
-#घोषणा HPAGE_SIZE	(_AC(1,UL) << HPAGE_SHIFT)
-#घोषणा HPAGE_MASK	(~(HPAGE_SIZE - 1))
-#घोषणा HUGETLB_PAGE_ORDER	(HPAGE_SHIFT - PAGE_SHIFT)
-#अन्यथा /* !CONFIG_MIPS_HUGE_TLB_SUPPORT */
-#घोषणा HPAGE_SHIFT	(अणुBUILD_BUG(); 0; पूर्ण)
-#घोषणा HPAGE_SIZE	(अणुBUILD_BUG(); 0; पूर्ण)
-#घोषणा HPAGE_MASK	(अणुBUILD_BUG(); 0; पूर्ण)
-#घोषणा HUGETLB_PAGE_ORDER	(अणुBUILD_BUG(); 0; पूर्ण)
-#पूर्ण_अगर /* CONFIG_MIPS_HUGE_TLB_SUPPORT */
+#ifdef CONFIG_MIPS_HUGE_TLB_SUPPORT
+#define HPAGE_SHIFT	(PAGE_SHIFT + PAGE_SHIFT - 3)
+#define HPAGE_SIZE	(_AC(1,UL) << HPAGE_SHIFT)
+#define HPAGE_MASK	(~(HPAGE_SIZE - 1))
+#define HUGETLB_PAGE_ORDER	(HPAGE_SHIFT - PAGE_SHIFT)
+#else /* !CONFIG_MIPS_HUGE_TLB_SUPPORT */
+#define HPAGE_SHIFT	({BUILD_BUG(); 0; })
+#define HPAGE_SIZE	({BUILD_BUG(); 0; })
+#define HPAGE_MASK	({BUILD_BUG(); 0; })
+#define HUGETLB_PAGE_ORDER	({BUILD_BUG(); 0; })
+#endif /* CONFIG_MIPS_HUGE_TLB_SUPPORT */
 
-#समावेश <linux/pfn.h>
+#include <linux/pfn.h>
 
-बाह्य व्योम build_clear_page(व्योम);
-बाह्य व्योम build_copy_page(व्योम);
+extern void build_clear_page(void);
+extern void build_copy_page(void);
 
 /*
  * It's normally defined only for FLATMEM config but it's
- * used in our early mem init code क्रम all memory models.
+ * used in our early mem init code for all memory models.
  * So always define it.
  */
-#अगर_घोषित CONFIG_MIPS_AUTO_PFN_OFFSET
-बाह्य अचिन्हित दीर्घ ARCH_PFN_OFFSET;
+#ifdef CONFIG_MIPS_AUTO_PFN_OFFSET
+extern unsigned long ARCH_PFN_OFFSET;
 # define ARCH_PFN_OFFSET	ARCH_PFN_OFFSET
-#अन्यथा
+#else
 # define ARCH_PFN_OFFSET	PFN_UP(PHYS_OFFSET)
-#पूर्ण_अगर
+#endif
 
-बाह्य व्योम clear_page(व्योम * page);
-बाह्य व्योम copy_page(व्योम * to, व्योम * from);
+extern void clear_page(void * page);
+extern void copy_page(void * to, void * from);
 
-बाह्य अचिन्हित दीर्घ shm_align_mask;
+extern unsigned long shm_align_mask;
 
-अटल अंतरभूत अचिन्हित दीर्घ pages_करो_alias(अचिन्हित दीर्घ addr1,
-	अचिन्हित दीर्घ addr2)
-अणु
-	वापस (addr1 ^ addr2) & shm_align_mask;
-पूर्ण
+static inline unsigned long pages_do_alias(unsigned long addr1,
+	unsigned long addr2)
+{
+	return (addr1 ^ addr2) & shm_align_mask;
+}
 
-काष्ठा page;
+struct page;
 
-अटल अंतरभूत व्योम clear_user_page(व्योम *addr, अचिन्हित दीर्घ vaddr,
-	काष्ठा page *page)
-अणु
-	बाह्य व्योम (*flush_data_cache_page)(अचिन्हित दीर्घ addr);
+static inline void clear_user_page(void *addr, unsigned long vaddr,
+	struct page *page)
+{
+	extern void (*flush_data_cache_page)(unsigned long addr);
 
 	clear_page(addr);
-	अगर (pages_करो_alias((अचिन्हित दीर्घ) addr, vaddr & PAGE_MASK))
-		flush_data_cache_page((अचिन्हित दीर्घ)addr);
-पूर्ण
+	if (pages_do_alias((unsigned long) addr, vaddr & PAGE_MASK))
+		flush_data_cache_page((unsigned long)addr);
+}
 
-काष्ठा vm_area_काष्ठा;
-बाह्य व्योम copy_user_highpage(काष्ठा page *to, काष्ठा page *from,
-	अचिन्हित दीर्घ vaddr, काष्ठा vm_area_काष्ठा *vma);
+struct vm_area_struct;
+extern void copy_user_highpage(struct page *to, struct page *from,
+	unsigned long vaddr, struct vm_area_struct *vma);
 
-#घोषणा __HAVE_ARCH_COPY_USER_HIGHPAGE
+#define __HAVE_ARCH_COPY_USER_HIGHPAGE
 
 /*
  * These are used to make use of C type-checking..
  */
-#अगर_घोषित CONFIG_PHYS_ADDR_T_64BIT
-  #अगर_घोषित CONFIG_CPU_MIPS32
-    प्रकार काष्ठा अणु अचिन्हित दीर्घ pte_low, pte_high; पूर्ण pte_t;
-    #घोषणा pte_val(x)	  ((x).pte_low | ((अचिन्हित दीर्घ दीर्घ)(x).pte_high << 32))
-    #घोषणा __pte(x)	  (अणु pte_t __pte = अणु(x), ((अचिन्हित दीर्घ दीर्घ)(x)) >> 32पूर्ण; __pte; पूर्ण)
-  #अन्यथा
-     प्रकार काष्ठा अणु अचिन्हित दीर्घ दीर्घ pte; पूर्ण pte_t;
-     #घोषणा pte_val(x) ((x).pte)
-     #घोषणा __pte(x)	((pte_t) अणु (x) पूर्ण )
-  #पूर्ण_अगर
-#अन्यथा
-प्रकार काष्ठा अणु अचिन्हित दीर्घ pte; पूर्ण pte_t;
-#घोषणा pte_val(x)	((x).pte)
-#घोषणा __pte(x)	((pte_t) अणु (x) पूर्ण )
-#पूर्ण_अगर
-प्रकार काष्ठा page *pgtable_t;
+#ifdef CONFIG_PHYS_ADDR_T_64BIT
+  #ifdef CONFIG_CPU_MIPS32
+    typedef struct { unsigned long pte_low, pte_high; } pte_t;
+    #define pte_val(x)	  ((x).pte_low | ((unsigned long long)(x).pte_high << 32))
+    #define __pte(x)	  ({ pte_t __pte = {(x), ((unsigned long long)(x)) >> 32}; __pte; })
+  #else
+     typedef struct { unsigned long long pte; } pte_t;
+     #define pte_val(x) ((x).pte)
+     #define __pte(x)	((pte_t) { (x) } )
+  #endif
+#else
+typedef struct { unsigned long pte; } pte_t;
+#define pte_val(x)	((x).pte)
+#define __pte(x)	((pte_t) { (x) } )
+#endif
+typedef struct page *pgtable_t;
 
 /*
- * Right now we करोn't support 4-level pagetables, so all pud-related
- * definitions come from <यंत्र-generic/pgtable-nopud.h>.
+ * Right now we don't support 4-level pagetables, so all pud-related
+ * definitions come from <asm-generic/pgtable-nopud.h>.
  */
 
 /*
  * Finall the top of the hierarchy, the pgd
  */
-प्रकार काष्ठा अणु अचिन्हित दीर्घ pgd; पूर्ण pgd_t;
-#घोषणा pgd_val(x)	((x).pgd)
-#घोषणा __pgd(x)	((pgd_t) अणु (x) पूर्ण )
+typedef struct { unsigned long pgd; } pgd_t;
+#define pgd_val(x)	((x).pgd)
+#define __pgd(x)	((pgd_t) { (x) } )
 
 /*
  * Manipulate page protection bits
  */
-प्रकार काष्ठा अणु अचिन्हित दीर्घ pgprot; पूर्ण pgprot_t;
-#घोषणा pgprot_val(x)	((x).pgprot)
-#घोषणा __pgprot(x)	((pgprot_t) अणु (x) पूर्ण )
-#घोषणा pte_pgprot(x)	__pgprot(pte_val(x) & ~_PFN_MASK)
+typedef struct { unsigned long pgprot; } pgprot_t;
+#define pgprot_val(x)	((x).pgprot)
+#define __pgprot(x)	((pgprot_t) { (x) } )
+#define pte_pgprot(x)	__pgprot(pte_val(x) & ~_PFN_MASK)
 
 /*
  * On R4000-style MMUs where a TLB entry is mapping a adjacent even / odd
  * pair of pages we only have a single global bit per pair of pages.  When
- * writing to the TLB make sure we always have the bit set क्रम both pages
+ * writing to the TLB make sure we always have the bit set for both pages
  * or none.  This macro is used to access the `buddy' of the pte we're just
  * working on.
  */
-#घोषणा ptep_buddy(x)	((pte_t *)((अचिन्हित दीर्घ)(x) ^ माप(pte_t)))
+#define ptep_buddy(x)	((pte_t *)((unsigned long)(x) ^ sizeof(pte_t)))
 
 /*
  * __pa()/__va() should be used only during mem init.
  */
-अटल अंतरभूत अचिन्हित दीर्घ ___pa(अचिन्हित दीर्घ x)
-अणु
-	अगर (IS_ENABLED(CONFIG_64BIT)) अणु
+static inline unsigned long ___pa(unsigned long x)
+{
+	if (IS_ENABLED(CONFIG_64BIT)) {
 		/*
-		 * For MIPS64 the भव address may either be in one of
+		 * For MIPS64 the virtual address may either be in one of
 		 * the compatibility segements ckseg0 or ckseg1, or it may
 		 * be in xkphys.
 		 */
-		वापस x < CKSEG0 ? XPHYSADDR(x) : CPHYSADDR(x);
-	पूर्ण
+		return x < CKSEG0 ? XPHYSADDR(x) : CPHYSADDR(x);
+	}
 
-	अगर (!IS_ENABLED(CONFIG_EVA)) अणु
+	if (!IS_ENABLED(CONFIG_EVA)) {
 		/*
 		 * We're using the standard MIPS32 legacy memory map, ie.
 		 * the address x is going to be in kseg0 or kseg1. We can
-		 * handle either हाल by masking out the desired bits using
+		 * handle either case by masking out the desired bits using
 		 * CPHYSADDR.
 		 */
-		वापस CPHYSADDR(x);
-	पूर्ण
+		return CPHYSADDR(x);
+	}
 
 	/*
 	 * EVA is in use so the memory map could be anything, making it not
 	 * safe to just mask out bits.
 	 */
-	वापस x - PAGE_OFFSET + PHYS_OFFSET;
-पूर्ण
-#घोषणा __pa(x)		___pa((अचिन्हित दीर्घ)(x))
-#घोषणा __va(x)		((व्योम *)((अचिन्हित दीर्घ)(x) + PAGE_OFFSET - PHYS_OFFSET))
-#समावेश <यंत्र/पन.स>
+	return x - PAGE_OFFSET + PHYS_OFFSET;
+}
+#define __pa(x)		___pa((unsigned long)(x))
+#define __va(x)		((void *)((unsigned long)(x) + PAGE_OFFSET - PHYS_OFFSET))
+#include <asm/io.h>
 
 /*
  * RELOC_HIDE was originally added by 6007b903dfe5f1d13e0c711ac2894bdd4a61b1ad
@@ -206,69 +205,69 @@
  * discussion can be found in
  * https://lore.kernel.org/lkml/a2ebde260608230500o3407b108hc03debb9da6e62c@mail.gmail.com
  *
- * It is unclear अगर the misscompilations mentioned in
+ * It is unclear if the misscompilations mentioned in
  * https://lore.kernel.org/lkml/1281303490-390-1-git-send-email-namhyung@gmail.com
  * also affect MIPS so we keep this one until GCC 3.x has been retired
- * beक्रमe we can apply https://patchwork.linux-mips.org/patch/1541/
+ * before we can apply https://patchwork.linux-mips.org/patch/1541/
  */
-#घोषणा __pa_symbol_nodebug(x)	__pa(RELOC_HIDE((अचिन्हित दीर्घ)(x), 0))
+#define __pa_symbol_nodebug(x)	__pa(RELOC_HIDE((unsigned long)(x), 0))
 
-#अगर_घोषित CONFIG_DEBUG_VIRTUAL
-बाह्य phys_addr_t __phys_addr_symbol(अचिन्हित दीर्घ x);
-#अन्यथा
-#घोषणा __phys_addr_symbol(x)	__pa_symbol_nodebug(x)
-#पूर्ण_अगर
+#ifdef CONFIG_DEBUG_VIRTUAL
+extern phys_addr_t __phys_addr_symbol(unsigned long x);
+#else
+#define __phys_addr_symbol(x)	__pa_symbol_nodebug(x)
+#endif
 
-#अगर_अघोषित __pa_symbol
-#घोषणा __pa_symbol(x)		__phys_addr_symbol((अचिन्हित दीर्घ)(x))
-#पूर्ण_अगर
+#ifndef __pa_symbol
+#define __pa_symbol(x)		__phys_addr_symbol((unsigned long)(x))
+#endif
 
-#घोषणा pfn_to_kaddr(pfn)	__va((pfn) << PAGE_SHIFT)
+#define pfn_to_kaddr(pfn)	__va((pfn) << PAGE_SHIFT)
 
-#अगर_घोषित CONFIG_FLATMEM
+#ifdef CONFIG_FLATMEM
 
-अटल अंतरभूत पूर्णांक pfn_valid(अचिन्हित दीर्घ pfn)
-अणु
-	/* aव्योम <linux/mm.h> include hell */
-	बाह्य अचिन्हित दीर्घ max_mapnr;
-	अचिन्हित दीर्घ pfn_offset = ARCH_PFN_OFFSET;
+static inline int pfn_valid(unsigned long pfn)
+{
+	/* avoid <linux/mm.h> include hell */
+	extern unsigned long max_mapnr;
+	unsigned long pfn_offset = ARCH_PFN_OFFSET;
 
-	वापस pfn >= pfn_offset && pfn < max_mapnr;
-पूर्ण
+	return pfn >= pfn_offset && pfn < max_mapnr;
+}
 
-#या_अगर defined(CONFIG_SPARSEMEM)
+#elif defined(CONFIG_SPARSEMEM)
 
 /* pfn_valid is defined in linux/mmzone.h */
 
-#या_अगर defined(CONFIG_NEED_MULTIPLE_NODES)
+#elif defined(CONFIG_NEED_MULTIPLE_NODES)
 
-#घोषणा pfn_valid(pfn)							\
-(अणु									\
-	अचिन्हित दीर्घ __pfn = (pfn);					\
-	पूर्णांक __n = pfn_to_nid(__pfn);					\
+#define pfn_valid(pfn)							\
+({									\
+	unsigned long __pfn = (pfn);					\
+	int __n = pfn_to_nid(__pfn);					\
 	((__n >= 0) ? (__pfn < NODE_DATA(__n)->node_start_pfn +		\
 			       NODE_DATA(__n)->node_spanned_pages)	\
 		    : 0);						\
-पूर्ण)
+})
 
-#पूर्ण_अगर
+#endif
 
-#घोषणा virt_to_pfn(kaddr)   	PFN_DOWN(virt_to_phys((व्योम *)(kaddr)))
-#घोषणा virt_to_page(kaddr)	pfn_to_page(virt_to_pfn(kaddr))
+#define virt_to_pfn(kaddr)   	PFN_DOWN(virt_to_phys((void *)(kaddr)))
+#define virt_to_page(kaddr)	pfn_to_page(virt_to_pfn(kaddr))
 
-बाह्य bool __virt_addr_valid(स्थिर अस्थिर व्योम *kaddr);
-#घोषणा virt_addr_valid(kaddr)						\
-	__virt_addr_valid((स्थिर अस्थिर व्योम *) (kaddr))
+extern bool __virt_addr_valid(const volatile void *kaddr);
+#define virt_addr_valid(kaddr)						\
+	__virt_addr_valid((const volatile void *) (kaddr))
 
-#घोषणा VM_DATA_DEFAULT_FLAGS	VM_DATA_FLAGS_TSK_EXEC
+#define VM_DATA_DEFAULT_FLAGS	VM_DATA_FLAGS_TSK_EXEC
 
-बाह्य अचिन्हित दीर्घ __kaslr_offset;
-अटल अंतरभूत अचिन्हित दीर्घ kaslr_offset(व्योम)
-अणु
-	वापस __kaslr_offset;
-पूर्ण
+extern unsigned long __kaslr_offset;
+static inline unsigned long kaslr_offset(void)
+{
+	return __kaslr_offset;
+}
 
-#समावेश <यंत्र-generic/memory_model.h>
-#समावेश <यंत्र-generic/getorder.h>
+#include <asm-generic/memory_model.h>
+#include <asm-generic/getorder.h>
 
-#पूर्ण_अगर /* _ASM_PAGE_H */
+#endif /* _ASM_PAGE_H */

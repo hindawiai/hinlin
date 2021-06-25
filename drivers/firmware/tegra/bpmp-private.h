@@ -1,35 +1,34 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Copyright (c) 2018, NVIDIA CORPORATION.
  */
 
-#अगर_अघोषित __FIRMWARE_TEGRA_BPMP_PRIVATE_H
-#घोषणा __FIRMWARE_TEGRA_BPMP_PRIVATE_H
+#ifndef __FIRMWARE_TEGRA_BPMP_PRIVATE_H
+#define __FIRMWARE_TEGRA_BPMP_PRIVATE_H
 
-#समावेश <soc/tegra/bpmp.h>
+#include <soc/tegra/bpmp.h>
 
-काष्ठा tegra_bpmp_ops अणु
-	पूर्णांक (*init)(काष्ठा tegra_bpmp *bpmp);
-	व्योम (*deinit)(काष्ठा tegra_bpmp *bpmp);
-	bool (*is_response_पढ़ोy)(काष्ठा tegra_bpmp_channel *channel);
-	bool (*is_request_पढ़ोy)(काष्ठा tegra_bpmp_channel *channel);
-	पूर्णांक (*ack_response)(काष्ठा tegra_bpmp_channel *channel);
-	पूर्णांक (*ack_request)(काष्ठा tegra_bpmp_channel *channel);
-	bool (*is_response_channel_मुक्त)(काष्ठा tegra_bpmp_channel *channel);
-	bool (*is_request_channel_मुक्त)(काष्ठा tegra_bpmp_channel *channel);
-	पूर्णांक (*post_response)(काष्ठा tegra_bpmp_channel *channel);
-	पूर्णांक (*post_request)(काष्ठा tegra_bpmp_channel *channel);
-	पूर्णांक (*ring_करोorbell)(काष्ठा tegra_bpmp *bpmp);
-	पूर्णांक (*resume)(काष्ठा tegra_bpmp *bpmp);
-पूर्ण;
+struct tegra_bpmp_ops {
+	int (*init)(struct tegra_bpmp *bpmp);
+	void (*deinit)(struct tegra_bpmp *bpmp);
+	bool (*is_response_ready)(struct tegra_bpmp_channel *channel);
+	bool (*is_request_ready)(struct tegra_bpmp_channel *channel);
+	int (*ack_response)(struct tegra_bpmp_channel *channel);
+	int (*ack_request)(struct tegra_bpmp_channel *channel);
+	bool (*is_response_channel_free)(struct tegra_bpmp_channel *channel);
+	bool (*is_request_channel_free)(struct tegra_bpmp_channel *channel);
+	int (*post_response)(struct tegra_bpmp_channel *channel);
+	int (*post_request)(struct tegra_bpmp_channel *channel);
+	int (*ring_doorbell)(struct tegra_bpmp *bpmp);
+	int (*resume)(struct tegra_bpmp *bpmp);
+};
 
-#अगर IS_ENABLED(CONFIG_ARCH_TEGRA_186_SOC) || \
+#if IS_ENABLED(CONFIG_ARCH_TEGRA_186_SOC) || \
     IS_ENABLED(CONFIG_ARCH_TEGRA_194_SOC)
-बाह्य स्थिर काष्ठा tegra_bpmp_ops tegra186_bpmp_ops;
-#पूर्ण_अगर
-#अगर IS_ENABLED(CONFIG_ARCH_TEGRA_210_SOC)
-बाह्य स्थिर काष्ठा tegra_bpmp_ops tegra210_bpmp_ops;
-#पूर्ण_अगर
+extern const struct tegra_bpmp_ops tegra186_bpmp_ops;
+#endif
+#if IS_ENABLED(CONFIG_ARCH_TEGRA_210_SOC)
+extern const struct tegra_bpmp_ops tegra210_bpmp_ops;
+#endif
 
-#पूर्ण_अगर
+#endif

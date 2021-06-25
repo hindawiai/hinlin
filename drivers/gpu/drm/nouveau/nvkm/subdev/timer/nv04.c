@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2012 Red Hat Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,109 +21,109 @@
  *
  * Authors: Ben Skeggs
  */
-#समावेश "priv.h"
-#समावेश "regsnv04.h"
+#include "priv.h"
+#include "regsnv04.h"
 
-व्योम
-nv04_समयr_समय(काष्ठा nvkm_समयr *पंचांगr, u64 समय)
-अणु
-	काष्ठा nvkm_subdev *subdev = &पंचांगr->subdev;
-	काष्ठा nvkm_device *device = subdev->device;
-	u32 hi = upper_32_bits(समय);
-	u32 lo = lower_32_bits(समय);
+void
+nv04_timer_time(struct nvkm_timer *tmr, u64 time)
+{
+	struct nvkm_subdev *subdev = &tmr->subdev;
+	struct nvkm_device *device = subdev->device;
+	u32 hi = upper_32_bits(time);
+	u32 lo = lower_32_bits(time);
 
 	nvkm_debug(subdev, "time low        : %08x\n", lo);
 	nvkm_debug(subdev, "time high       : %08x\n", hi);
 
 	nvkm_wr32(device, NV04_PTIMER_TIME_1, hi);
 	nvkm_wr32(device, NV04_PTIMER_TIME_0, lo);
-पूर्ण
+}
 
 u64
-nv04_समयr_पढ़ो(काष्ठा nvkm_समयr *पंचांगr)
-अणु
-	काष्ठा nvkm_device *device = पंचांगr->subdev.device;
+nv04_timer_read(struct nvkm_timer *tmr)
+{
+	struct nvkm_device *device = tmr->subdev.device;
 	u32 hi, lo;
 
-	करो अणु
+	do {
 		hi = nvkm_rd32(device, NV04_PTIMER_TIME_1);
 		lo = nvkm_rd32(device, NV04_PTIMER_TIME_0);
-	पूर्ण जबतक (hi != nvkm_rd32(device, NV04_PTIMER_TIME_1));
+	} while (hi != nvkm_rd32(device, NV04_PTIMER_TIME_1));
 
-	वापस ((u64)hi << 32 | lo);
-पूर्ण
+	return ((u64)hi << 32 | lo);
+}
 
-व्योम
-nv04_समयr_alarm_fini(काष्ठा nvkm_समयr *पंचांगr)
-अणु
-	काष्ठा nvkm_device *device = पंचांगr->subdev.device;
+void
+nv04_timer_alarm_fini(struct nvkm_timer *tmr)
+{
+	struct nvkm_device *device = tmr->subdev.device;
 	nvkm_wr32(device, NV04_PTIMER_INTR_EN_0, 0x00000000);
-पूर्ण
+}
 
-व्योम
-nv04_समयr_alarm_init(काष्ठा nvkm_समयr *पंचांगr, u32 समय)
-अणु
-	काष्ठा nvkm_device *device = पंचांगr->subdev.device;
-	nvkm_wr32(device, NV04_PTIMER_ALARM_0, समय);
+void
+nv04_timer_alarm_init(struct nvkm_timer *tmr, u32 time)
+{
+	struct nvkm_device *device = tmr->subdev.device;
+	nvkm_wr32(device, NV04_PTIMER_ALARM_0, time);
 	nvkm_wr32(device, NV04_PTIMER_INTR_EN_0, 0x00000001);
-पूर्ण
+}
 
-व्योम
-nv04_समयr_पूर्णांकr(काष्ठा nvkm_समयr *पंचांगr)
-अणु
-	काष्ठा nvkm_subdev *subdev = &पंचांगr->subdev;
-	काष्ठा nvkm_device *device = subdev->device;
+void
+nv04_timer_intr(struct nvkm_timer *tmr)
+{
+	struct nvkm_subdev *subdev = &tmr->subdev;
+	struct nvkm_device *device = subdev->device;
 	u32 stat = nvkm_rd32(device, NV04_PTIMER_INTR_0);
 
-	अगर (stat & 0x00000001) अणु
+	if (stat & 0x00000001) {
 		nvkm_wr32(device, NV04_PTIMER_INTR_0, 0x00000001);
-		nvkm_समयr_alarm_trigger(पंचांगr);
+		nvkm_timer_alarm_trigger(tmr);
 		stat &= ~0x00000001;
-	पूर्ण
+	}
 
-	अगर (stat) अणु
+	if (stat) {
 		nvkm_error(subdev, "intr %08x\n", stat);
 		nvkm_wr32(device, NV04_PTIMER_INTR_0, stat);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम
-nv04_समयr_init(काष्ठा nvkm_समयr *पंचांगr)
-अणु
-	काष्ठा nvkm_subdev *subdev = &पंचांगr->subdev;
-	काष्ठा nvkm_device *device = subdev->device;
+static void
+nv04_timer_init(struct nvkm_timer *tmr)
+{
+	struct nvkm_subdev *subdev = &tmr->subdev;
+	struct nvkm_device *device = subdev->device;
 	u32 f = 0; /*XXX: nvclk */
 	u32 n, d;
 
-	/* aim क्रम 31.25MHz, which gives us nanosecond बारtamps */
+	/* aim for 31.25MHz, which gives us nanosecond timestamps */
 	d = 1000000 / 32;
 	n = f;
 
-	अगर (!f) अणु
+	if (!f) {
 		n = nvkm_rd32(device, NV04_PTIMER_NUMERATOR);
 		d = nvkm_rd32(device, NV04_PTIMER_DENOMINATOR);
-		अगर (!n || !d) अणु
+		if (!n || !d) {
 			n = 1;
 			d = 1;
-		पूर्ण
+		}
 		nvkm_warn(subdev, "unknown input clock freq\n");
-	पूर्ण
+	}
 
 	/* reduce ratio to acceptable values */
-	जबतक (((n % 5) == 0) && ((d % 5) == 0)) अणु
+	while (((n % 5) == 0) && ((d % 5) == 0)) {
 		n /= 5;
 		d /= 5;
-	पूर्ण
+	}
 
-	जबतक (((n % 2) == 0) && ((d % 2) == 0)) अणु
+	while (((n % 2) == 0) && ((d % 2) == 0)) {
 		n /= 2;
 		d /= 2;
-	पूर्ण
+	}
 
-	जबतक (n > 0xffff || d > 0xffff) अणु
+	while (n > 0xffff || d > 0xffff) {
 		n >>= 1;
 		d >>= 1;
-	पूर्ण
+	}
 
 	nvkm_debug(subdev, "input frequency : %dHz\n", f);
 	nvkm_debug(subdev, "numerator       : %08x\n", n);
@@ -133,21 +132,21 @@ nv04_समयr_init(काष्ठा nvkm_समयr *पंचांगr)
 
 	nvkm_wr32(device, NV04_PTIMER_NUMERATOR, n);
 	nvkm_wr32(device, NV04_PTIMER_DENOMINATOR, d);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा nvkm_समयr_func
-nv04_समयr = अणु
-	.init = nv04_समयr_init,
-	.पूर्णांकr = nv04_समयr_पूर्णांकr,
-	.पढ़ो = nv04_समयr_पढ़ो,
-	.समय = nv04_समयr_समय,
-	.alarm_init = nv04_समयr_alarm_init,
-	.alarm_fini = nv04_समयr_alarm_fini,
-पूर्ण;
+static const struct nvkm_timer_func
+nv04_timer = {
+	.init = nv04_timer_init,
+	.intr = nv04_timer_intr,
+	.read = nv04_timer_read,
+	.time = nv04_timer_time,
+	.alarm_init = nv04_timer_alarm_init,
+	.alarm_fini = nv04_timer_alarm_fini,
+};
 
-पूर्णांक
-nv04_समयr_new(काष्ठा nvkm_device *device, क्रमागत nvkm_subdev_type type, पूर्णांक inst,
-	       काष्ठा nvkm_समयr **pपंचांगr)
-अणु
-	वापस nvkm_समयr_new_(&nv04_समयr, device, type, inst, pपंचांगr);
-पूर्ण
+int
+nv04_timer_new(struct nvkm_device *device, enum nvkm_subdev_type type, int inst,
+	       struct nvkm_timer **ptmr)
+{
+	return nvkm_timer_new_(&nv04_timer, device, type, inst, ptmr);
+}

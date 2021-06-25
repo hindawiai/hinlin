@@ -1,260 +1,259 @@
-<शैली गुरु>
 /*
- * Copyright 2013-2017 by PaX Team <pageexec@मुक्तmail.hu>
+ * Copyright 2013-2017 by PaX Team <pageexec@freemail.hu>
  * Licensed under the GPL v2
  *
  * Note: the choice of the license means that the compilation process is
  *       NOT 'eligible' as defined by gcc's library exception to the GPL v3,
- *       but क्रम the kernel it करोesn't matter since it doesn't link against
+ *       but for the kernel it doesn't matter since it doesn't link against
  *       any of the gcc libraries
  *
- * gcc plugin to क्रमcibly initialize certain local variables that could
- * otherwise leak kernel stack to userland अगर they aren't properly initialized
+ * gcc plugin to forcibly initialize certain local variables that could
+ * otherwise leak kernel stack to userland if they aren't properly initialized
  * by later code
  *
  * Homepage: https://pax.grsecurity.net/
  *
  * Options:
- * -fplugin-arg-काष्ठाleak_plugin-disable
- * -fplugin-arg-काष्ठाleak_plugin-verbose
- * -fplugin-arg-काष्ठाleak_plugin-byref
- * -fplugin-arg-काष्ठाleak_plugin-byref-all
+ * -fplugin-arg-structleak_plugin-disable
+ * -fplugin-arg-structleak_plugin-verbose
+ * -fplugin-arg-structleak_plugin-byref
+ * -fplugin-arg-structleak_plugin-byref-all
  *
  * Usage:
- * $ # क्रम 4.5/4.6/C based 4.7
- * $ gcc -I`gcc -prपूर्णांक-file-name=plugin`/include -I`gcc -prपूर्णांक-file-name=plugin`/include/c-family -fPIC -shared -O2 -o काष्ठाleak_plugin.so काष्ठाleak_plugin.c
- * $ # क्रम C++ based 4.7/4.8+
- * $ g++ -I`g++ -prपूर्णांक-file-name=plugin`/include -I`g++ -prपूर्णांक-file-name=plugin`/include/c-family -fPIC -shared -O2 -o काष्ठाleak_plugin.so काष्ठाleak_plugin.c
- * $ gcc -fplugin=./काष्ठाleak_plugin.so test.c -O2
+ * $ # for 4.5/4.6/C based 4.7
+ * $ gcc -I`gcc -print-file-name=plugin`/include -I`gcc -print-file-name=plugin`/include/c-family -fPIC -shared -O2 -o structleak_plugin.so structleak_plugin.c
+ * $ # for C++ based 4.7/4.8+
+ * $ g++ -I`g++ -print-file-name=plugin`/include -I`g++ -print-file-name=plugin`/include/c-family -fPIC -shared -O2 -o structleak_plugin.so structleak_plugin.c
+ * $ gcc -fplugin=./structleak_plugin.so test.c -O2
  *
  * TODO: eliminate redundant initializers
  */
 
-#समावेश "gcc-common.h"
+#include "gcc-common.h"
 
 /* unused C type flag in all versions 4.5-6 */
-#घोषणा TYPE_USERSPACE(TYPE) TYPE_LANG_FLAG_5(TYPE)
+#define TYPE_USERSPACE(TYPE) TYPE_LANG_FLAG_5(TYPE)
 
-__visible पूर्णांक plugin_is_GPL_compatible;
+__visible int plugin_is_GPL_compatible;
 
-अटल काष्ठा plugin_info काष्ठाleak_plugin_info = अणु
+static struct plugin_info structleak_plugin_info = {
 	.version	= "20190125vanilla",
 	.help		= "disable\tdo not activate plugin\n"
 			  "byref\tinit structs passed by reference\n"
 			  "byref-all\tinit anything passed by reference\n"
 			  "verbose\tprint all initialized variables\n",
-पूर्ण;
+};
 
-#घोषणा BYREF_STRUCT	1
-#घोषणा BYREF_ALL	2
+#define BYREF_STRUCT	1
+#define BYREF_ALL	2
 
-अटल bool verbose;
-अटल पूर्णांक byref;
+static bool verbose;
+static int byref;
 
-अटल tree handle_user_attribute(tree *node, tree name, tree args, पूर्णांक flags, bool *no_add_attrs)
-अणु
+static tree handle_user_attribute(tree *node, tree name, tree args, int flags, bool *no_add_attrs)
+{
 	*no_add_attrs = true;
 
-	/* check क्रम types? क्रम now accept everything linux has to offer */
-	अगर (TREE_CODE(*node) != FIELD_DECL)
-		वापस शून्य_TREE;
+	/* check for types? for now accept everything linux has to offer */
+	if (TREE_CODE(*node) != FIELD_DECL)
+		return NULL_TREE;
 
 	*no_add_attrs = false;
-	वापस शून्य_TREE;
-पूर्ण
+	return NULL_TREE;
+}
 
-अटल काष्ठा attribute_spec user_attr = अणु पूर्ण;
+static struct attribute_spec user_attr = { };
 
-अटल व्योम रेजिस्टर_attributes(व्योम *event_data, व्योम *data)
-अणु
+static void register_attributes(void *event_data, void *data)
+{
 	user_attr.name			= "user";
 	user_attr.handler		= handle_user_attribute;
 	user_attr.affects_type_identity	= true;
 
-	रेजिस्टर_attribute(&user_attr);
-पूर्ण
+	register_attribute(&user_attr);
+}
 
-अटल tree get_field_type(tree field)
-अणु
-	वापस strip_array_types(TREE_TYPE(field));
-पूर्ण
+static tree get_field_type(tree field)
+{
+	return strip_array_types(TREE_TYPE(field));
+}
 
-अटल bool is_userspace_type(tree type)
-अणु
+static bool is_userspace_type(tree type)
+{
 	tree field;
 
-	क्रम (field = TYPE_FIELDS(type); field; field = TREE_CHAIN(field)) अणु
+	for (field = TYPE_FIELDS(type); field; field = TREE_CHAIN(field)) {
 		tree fieldtype = get_field_type(field);
-		क्रमागत tree_code code = TREE_CODE(fieldtype);
+		enum tree_code code = TREE_CODE(fieldtype);
 
-		अगर (code == RECORD_TYPE || code == UNION_TYPE)
-			अगर (is_userspace_type(fieldtype))
-				वापस true;
+		if (code == RECORD_TYPE || code == UNION_TYPE)
+			if (is_userspace_type(fieldtype))
+				return true;
 
-		अगर (lookup_attribute("user", DECL_ATTRIBUTES(field)))
-			वापस true;
-	पूर्ण
-	वापस false;
-पूर्ण
+		if (lookup_attribute("user", DECL_ATTRIBUTES(field)))
+			return true;
+	}
+	return false;
+}
 
-अटल व्योम finish_type(व्योम *event_data, व्योम *data)
-अणु
+static void finish_type(void *event_data, void *data)
+{
 	tree type = (tree)event_data;
 
-	अगर (type == शून्य_TREE || type == error_mark_node)
-		वापस;
+	if (type == NULL_TREE || type == error_mark_node)
+		return;
 
-#अगर BUILDING_GCC_VERSION >= 5000
-	अगर (TREE_CODE(type) == ENUMERAL_TYPE)
-		वापस;
-#पूर्ण_अगर
+#if BUILDING_GCC_VERSION >= 5000
+	if (TREE_CODE(type) == ENUMERAL_TYPE)
+		return;
+#endif
 
-	अगर (TYPE_USERSPACE(type))
-		वापस;
+	if (TYPE_USERSPACE(type))
+		return;
 
-	अगर (is_userspace_type(type))
+	if (is_userspace_type(type))
 		TYPE_USERSPACE(type) = 1;
-पूर्ण
+}
 
-अटल व्योम initialize(tree var)
-अणु
+static void initialize(tree var)
+{
 	basic_block bb;
-	gimple_sपंचांगt_iterator gsi;
+	gimple_stmt_iterator gsi;
 	tree initializer;
-	gimple init_sपंचांगt;
+	gimple init_stmt;
 	tree type;
 
-	/* this is the original entry bb beक्रमe the क्रमced split */
+	/* this is the original entry bb before the forced split */
 	bb = single_succ(ENTRY_BLOCK_PTR_FOR_FN(cfun));
 
-	/* first check अगर variable is alपढ़ोy initialized, warn otherwise */
-	क्रम (gsi = gsi_start_bb(bb); !gsi_end_p(gsi); gsi_next(&gsi)) अणु
-		gimple sपंचांगt = gsi_sपंचांगt(gsi);
+	/* first check if variable is already initialized, warn otherwise */
+	for (gsi = gsi_start_bb(bb); !gsi_end_p(gsi); gsi_next(&gsi)) {
+		gimple stmt = gsi_stmt(gsi);
 		tree rhs1;
 
-		/* we're looking क्रम an assignment of a single rhs... */
-		अगर (!gimple_assign_single_p(sपंचांगt))
-			जारी;
-		rhs1 = gimple_assign_rhs1(sपंचांगt);
+		/* we're looking for an assignment of a single rhs... */
+		if (!gimple_assign_single_p(stmt))
+			continue;
+		rhs1 = gimple_assign_rhs1(stmt);
 		/* ... of a non-clobbering expression... */
-		अगर (TREE_CLOBBER_P(rhs1))
-			जारी;
+		if (TREE_CLOBBER_P(rhs1))
+			continue;
 		/* ... to our variable... */
-		अगर (gimple_get_lhs(sपंचांगt) != var)
-			जारी;
-		/* अगर it's an initializer then we're good */
-		अगर (TREE_CODE(rhs1) == CONSTRUCTOR)
-			वापस;
-	पूर्ण
+		if (gimple_get_lhs(stmt) != var)
+			continue;
+		/* if it's an initializer then we're good */
+		if (TREE_CODE(rhs1) == CONSTRUCTOR)
+			return;
+	}
 
-	/* these aren't the 0days you're looking क्रम */
-	अगर (verbose)
-		inक्रमm(DECL_SOURCE_LOCATION(var),
+	/* these aren't the 0days you're looking for */
+	if (verbose)
+		inform(DECL_SOURCE_LOCATION(var),
 			"%s variable will be forcibly initialized",
 			(byref && TREE_ADDRESSABLE(var)) ? "byref"
 							 : "userspace");
 
 	/* build the initializer expression */
 	type = TREE_TYPE(var);
-	अगर (AGGREGATE_TYPE_P(type))
-		initializer = build_स्थिरructor(type, शून्य);
-	अन्यथा
-		initializer = fold_convert(type, पूर्णांकeger_zero_node);
+	if (AGGREGATE_TYPE_P(type))
+		initializer = build_constructor(type, NULL);
+	else
+		initializer = fold_convert(type, integer_zero_node);
 
-	/* build the initializer sपंचांगt */
-	init_sपंचांगt = gimple_build_assign(var, initializer);
+	/* build the initializer stmt */
+	init_stmt = gimple_build_assign(var, initializer);
 	gsi = gsi_after_labels(single_succ(ENTRY_BLOCK_PTR_FOR_FN(cfun)));
-	gsi_insert_beक्रमe(&gsi, init_sपंचांगt, GSI_NEW_STMT);
-	update_sपंचांगt(init_sपंचांगt);
-पूर्ण
+	gsi_insert_before(&gsi, init_stmt, GSI_NEW_STMT);
+	update_stmt(init_stmt);
+}
 
-अटल अचिन्हित पूर्णांक काष्ठाleak_execute(व्योम)
-अणु
+static unsigned int structleak_execute(void)
+{
 	basic_block bb;
 	tree var;
-	अचिन्हित पूर्णांक i;
+	unsigned int i;
 
-	/* split the first bb where we can put the क्रमced initializers */
-	gcc_निश्चित(single_succ_p(ENTRY_BLOCK_PTR_FOR_FN(cfun)));
+	/* split the first bb where we can put the forced initializers */
+	gcc_assert(single_succ_p(ENTRY_BLOCK_PTR_FOR_FN(cfun)));
 	bb = single_succ(ENTRY_BLOCK_PTR_FOR_FN(cfun));
-	अगर (!single_pred_p(bb)) अणु
+	if (!single_pred_p(bb)) {
 		split_edge(single_succ_edge(ENTRY_BLOCK_PTR_FOR_FN(cfun)));
-		gcc_निश्चित(single_succ_p(ENTRY_BLOCK_PTR_FOR_FN(cfun)));
-	पूर्ण
+		gcc_assert(single_succ_p(ENTRY_BLOCK_PTR_FOR_FN(cfun)));
+	}
 
-	/* क्रमागतerate all local variables and क्रमcibly initialize our tarमाला_लो */
-	FOR_EACH_LOCAL_DECL(cfun, i, var) अणु
+	/* enumerate all local variables and forcibly initialize our targets */
+	FOR_EACH_LOCAL_DECL(cfun, i, var) {
 		tree type = TREE_TYPE(var);
 
-		gcc_निश्चित(DECL_P(var));
-		अगर (!स्वतः_var_in_fn_p(var, current_function_decl))
-			जारी;
+		gcc_assert(DECL_P(var));
+		if (!auto_var_in_fn_p(var, current_function_decl))
+			continue;
 
-		/* only care about काष्ठाure types unless byref-all */
-		अगर (byref != BYREF_ALL && TREE_CODE(type) != RECORD_TYPE && TREE_CODE(type) != UNION_TYPE)
-			जारी;
+		/* only care about structure types unless byref-all */
+		if (byref != BYREF_ALL && TREE_CODE(type) != RECORD_TYPE && TREE_CODE(type) != UNION_TYPE)
+			continue;
 
-		/* अगर the type is of पूर्णांकerest, examine the variable */
-		अगर (TYPE_USERSPACE(type) ||
+		/* if the type is of interest, examine the variable */
+		if (TYPE_USERSPACE(type) ||
 		    (byref && TREE_ADDRESSABLE(var)))
 			initialize(var);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#घोषणा PASS_NAME काष्ठाleak
-#घोषणा NO_GATE
-#घोषणा PROPERTIES_REQUIRED PROP_cfg
-#घोषणा TODO_FLAGS_FINISH TODO_verअगरy_il | TODO_verअगरy_ssa | TODO_verअगरy_sपंचांगts | TODO_dump_func | TODO_हटाओ_unused_locals | TODO_update_ssa | TODO_ggc_collect | TODO_verअगरy_flow
-#समावेश "gcc-generate-gimple-pass.h"
+#define PASS_NAME structleak
+#define NO_GATE
+#define PROPERTIES_REQUIRED PROP_cfg
+#define TODO_FLAGS_FINISH TODO_verify_il | TODO_verify_ssa | TODO_verify_stmts | TODO_dump_func | TODO_remove_unused_locals | TODO_update_ssa | TODO_ggc_collect | TODO_verify_flow
+#include "gcc-generate-gimple-pass.h"
 
-__visible पूर्णांक plugin_init(काष्ठा plugin_name_args *plugin_info, काष्ठा plugin_gcc_version *version)
-अणु
-	पूर्णांक i;
-	स्थिर अक्षर * स्थिर plugin_name = plugin_info->base_name;
-	स्थिर पूर्णांक argc = plugin_info->argc;
-	स्थिर काष्ठा plugin_argument * स्थिर argv = plugin_info->argv;
+__visible int plugin_init(struct plugin_name_args *plugin_info, struct plugin_gcc_version *version)
+{
+	int i;
+	const char * const plugin_name = plugin_info->base_name;
+	const int argc = plugin_info->argc;
+	const struct plugin_argument * const argv = plugin_info->argv;
 	bool enable = true;
 
-	PASS_INFO(काष्ठाleak, "early_optimizations", 1, PASS_POS_INSERT_BEFORE);
+	PASS_INFO(structleak, "early_optimizations", 1, PASS_POS_INSERT_BEFORE);
 
-	अगर (!plugin_शेष_version_check(version, &gcc_version)) अणु
+	if (!plugin_default_version_check(version, &gcc_version)) {
 		error(G_("incompatible gcc/plugin versions"));
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 
-	अगर (म_भेदन(lang_hooks.name, "GNU C", 5) && !म_भेदन(lang_hooks.name, "GNU C+", 6)) अणु
-		inक्रमm(UNKNOWN_LOCATION, G_("%s supports C only, not %s"), plugin_name, lang_hooks.name);
+	if (strncmp(lang_hooks.name, "GNU C", 5) && !strncmp(lang_hooks.name, "GNU C+", 6)) {
+		inform(UNKNOWN_LOCATION, G_("%s supports C only, not %s"), plugin_name, lang_hooks.name);
 		enable = false;
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < argc; ++i) अणु
-		अगर (!म_भेद(argv[i].key, "disable")) अणु
+	for (i = 0; i < argc; ++i) {
+		if (!strcmp(argv[i].key, "disable")) {
 			enable = false;
-			जारी;
-		पूर्ण
-		अगर (!म_भेद(argv[i].key, "verbose")) अणु
+			continue;
+		}
+		if (!strcmp(argv[i].key, "verbose")) {
 			verbose = true;
-			जारी;
-		पूर्ण
-		अगर (!म_भेद(argv[i].key, "byref")) अणु
+			continue;
+		}
+		if (!strcmp(argv[i].key, "byref")) {
 			byref = BYREF_STRUCT;
-			जारी;
-		पूर्ण
-		अगर (!म_भेद(argv[i].key, "byref-all")) अणु
+			continue;
+		}
+		if (!strcmp(argv[i].key, "byref-all")) {
 			byref = BYREF_ALL;
-			जारी;
-		पूर्ण
+			continue;
+		}
 		error(G_("unknown option '-fplugin-arg-%s-%s'"), plugin_name, argv[i].key);
-	पूर्ण
+	}
 
-	रेजिस्टर_callback(plugin_name, PLUGIN_INFO, शून्य, &काष्ठाleak_plugin_info);
-	अगर (enable) अणु
-		रेजिस्टर_callback(plugin_name, PLUGIN_PASS_MANAGER_SETUP, शून्य, &काष्ठाleak_pass_info);
-		रेजिस्टर_callback(plugin_name, PLUGIN_FINISH_TYPE, finish_type, शून्य);
-	पूर्ण
-	रेजिस्टर_callback(plugin_name, PLUGIN_ATTRIBUTES, रेजिस्टर_attributes, शून्य);
+	register_callback(plugin_name, PLUGIN_INFO, NULL, &structleak_plugin_info);
+	if (enable) {
+		register_callback(plugin_name, PLUGIN_PASS_MANAGER_SETUP, NULL, &structleak_pass_info);
+		register_callback(plugin_name, PLUGIN_FINISH_TYPE, finish_type, NULL);
+	}
+	register_callback(plugin_name, PLUGIN_ATTRIBUTES, register_attributes, NULL);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

@@ -1,79 +1,78 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (C) 2012 Regents of the University of Calअगरornia
+ * Copyright (C) 2012 Regents of the University of California
  */
 
-#अगर_अघोषित _ASM_RISCV_SWITCH_TO_H
-#घोषणा _ASM_RISCV_SWITCH_TO_H
+#ifndef _ASM_RISCV_SWITCH_TO_H
+#define _ASM_RISCV_SWITCH_TO_H
 
-#समावेश <linux/sched/task_stack.h>
-#समावेश <यंत्र/processor.h>
-#समावेश <यंत्र/ptrace.h>
-#समावेश <यंत्र/csr.h>
+#include <linux/sched/task_stack.h>
+#include <asm/processor.h>
+#include <asm/ptrace.h>
+#include <asm/csr.h>
 
-#अगर_घोषित CONFIG_FPU
-बाह्य व्योम __ख_स्थितिe_save(काष्ठा task_काष्ठा *save_to);
-बाह्य व्योम __ख_स्थितिe_restore(काष्ठा task_काष्ठा *restore_from);
+#ifdef CONFIG_FPU
+extern void __fstate_save(struct task_struct *save_to);
+extern void __fstate_restore(struct task_struct *restore_from);
 
-अटल अंतरभूत व्योम __ख_स्थितिe_clean(काष्ठा pt_regs *regs)
-अणु
+static inline void __fstate_clean(struct pt_regs *regs)
+{
 	regs->status = (regs->status & ~SR_FS) | SR_FS_CLEAN;
-पूर्ण
+}
 
-अटल अंतरभूत व्योम ख_स्थितिe_off(काष्ठा task_काष्ठा *task,
-			      काष्ठा pt_regs *regs)
-अणु
+static inline void fstate_off(struct task_struct *task,
+			      struct pt_regs *regs)
+{
 	regs->status = (regs->status & ~SR_FS) | SR_FS_OFF;
-पूर्ण
+}
 
-अटल अंतरभूत व्योम ख_स्थितिe_save(काष्ठा task_काष्ठा *task,
-			       काष्ठा pt_regs *regs)
-अणु
-	अगर ((regs->status & SR_FS) == SR_FS_सूचीTY) अणु
-		__ख_स्थितिe_save(task);
-		__ख_स्थितिe_clean(regs);
-	पूर्ण
-पूर्ण
+static inline void fstate_save(struct task_struct *task,
+			       struct pt_regs *regs)
+{
+	if ((regs->status & SR_FS) == SR_FS_DIRTY) {
+		__fstate_save(task);
+		__fstate_clean(regs);
+	}
+}
 
-अटल अंतरभूत व्योम ख_स्थितिe_restore(काष्ठा task_काष्ठा *task,
-				  काष्ठा pt_regs *regs)
-अणु
-	अगर ((regs->status & SR_FS) != SR_FS_OFF) अणु
-		__ख_स्थितिe_restore(task);
-		__ख_स्थितिe_clean(regs);
-	पूर्ण
-पूर्ण
+static inline void fstate_restore(struct task_struct *task,
+				  struct pt_regs *regs)
+{
+	if ((regs->status & SR_FS) != SR_FS_OFF) {
+		__fstate_restore(task);
+		__fstate_clean(regs);
+	}
+}
 
-अटल अंतरभूत व्योम __चयन_to_aux(काष्ठा task_काष्ठा *prev,
-				   काष्ठा task_काष्ठा *next)
-अणु
-	काष्ठा pt_regs *regs;
+static inline void __switch_to_aux(struct task_struct *prev,
+				   struct task_struct *next)
+{
+	struct pt_regs *regs;
 
 	regs = task_pt_regs(prev);
-	अगर (unlikely(regs->status & SR_SD))
-		ख_स्थितिe_save(prev, regs);
-	ख_स्थितिe_restore(next, task_pt_regs(next));
-पूर्ण
+	if (unlikely(regs->status & SR_SD))
+		fstate_save(prev, regs);
+	fstate_restore(next, task_pt_regs(next));
+}
 
-बाह्य bool has_fpu;
-#अन्यथा
-#घोषणा has_fpu false
-#घोषणा ख_स्थितिe_save(task, regs) करो अणु पूर्ण जबतक (0)
-#घोषणा ख_स्थितिe_restore(task, regs) करो अणु पूर्ण जबतक (0)
-#घोषणा __चयन_to_aux(__prev, __next) करो अणु पूर्ण जबतक (0)
-#पूर्ण_अगर
+extern bool has_fpu;
+#else
+#define has_fpu false
+#define fstate_save(task, regs) do { } while (0)
+#define fstate_restore(task, regs) do { } while (0)
+#define __switch_to_aux(__prev, __next) do { } while (0)
+#endif
 
-बाह्य काष्ठा task_काष्ठा *__चयन_to(काष्ठा task_काष्ठा *,
-				       काष्ठा task_काष्ठा *);
+extern struct task_struct *__switch_to(struct task_struct *,
+				       struct task_struct *);
 
-#घोषणा चयन_to(prev, next, last)			\
-करो अणु							\
-	काष्ठा task_काष्ठा *__prev = (prev);		\
-	काष्ठा task_काष्ठा *__next = (next);		\
-	अगर (has_fpu)					\
-		__चयन_to_aux(__prev, __next);	\
-	((last) = __चयन_to(__prev, __next));		\
-पूर्ण जबतक (0)
+#define switch_to(prev, next, last)			\
+do {							\
+	struct task_struct *__prev = (prev);		\
+	struct task_struct *__next = (next);		\
+	if (has_fpu)					\
+		__switch_to_aux(__prev, __next);	\
+	((last) = __switch_to(__prev, __next));		\
+} while (0)
 
-#पूर्ण_अगर /* _ASM_RISCV_SWITCH_TO_H */
+#endif /* _ASM_RISCV_SWITCH_TO_H */

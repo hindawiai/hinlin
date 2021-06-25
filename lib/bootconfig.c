@@ -1,61 +1,60 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Extra Boot Config
  * Masami Hiramatsu <mhiramat@kernel.org>
  */
 
-#घोषणा pr_fmt(fmt)    "bootconfig: " fmt
+#define pr_fmt(fmt)    "bootconfig: " fmt
 
-#समावेश <linux/bootconfig.h>
-#समावेश <linux/bug.h>
-#समावेश <linux/प्रकार.स>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/memblock.h>
-#समावेश <linux/prपूर्णांकk.h>
-#समावेश <linux/माला.स>
+#include <linux/bootconfig.h>
+#include <linux/bug.h>
+#include <linux/ctype.h>
+#include <linux/errno.h>
+#include <linux/kernel.h>
+#include <linux/memblock.h>
+#include <linux/printk.h>
+#include <linux/string.h>
 
 /*
- * Extra Boot Config (XBC) is given as tree-काष्ठाured ascii text of
+ * Extra Boot Config (XBC) is given as tree-structured ascii text of
  * key-value pairs on memory.
  * xbc_parse() parses the text to build a simple tree. Each tree node is
  * simply a key word or a value. A key node may have a next key node or/and
  * a child node (both key and value). A value node may have a next value
- * node (क्रम array).
+ * node (for array).
  */
 
-अटल काष्ठा xbc_node *xbc_nodes __initdata;
-अटल पूर्णांक xbc_node_num __initdata;
-अटल अक्षर *xbc_data __initdata;
-अटल माप_प्रकार xbc_data_size __initdata;
-अटल काष्ठा xbc_node *last_parent __initdata;
-अटल स्थिर अक्षर *xbc_err_msg __initdata;
-अटल पूर्णांक xbc_err_pos __initdata;
-अटल पूर्णांक खोलो_brace[XBC_DEPTH_MAX] __initdata;
-अटल पूर्णांक brace_index __initdata;
+static struct xbc_node *xbc_nodes __initdata;
+static int xbc_node_num __initdata;
+static char *xbc_data __initdata;
+static size_t xbc_data_size __initdata;
+static struct xbc_node *last_parent __initdata;
+static const char *xbc_err_msg __initdata;
+static int xbc_err_pos __initdata;
+static int open_brace[XBC_DEPTH_MAX] __initdata;
+static int brace_index __initdata;
 
-अटल पूर्णांक __init xbc_parse_error(स्थिर अक्षर *msg, स्थिर अक्षर *p)
-अणु
+static int __init xbc_parse_error(const char *msg, const char *p)
+{
 	xbc_err_msg = msg;
-	xbc_err_pos = (पूर्णांक)(p - xbc_data);
+	xbc_err_pos = (int)(p - xbc_data);
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
 /**
  * xbc_root_node() - Get the root node of extended boot config
  *
  * Return the address of root node of extended boot config. If the
- * extended boot config is not initiized, वापस शून्य.
+ * extended boot config is not initiized, return NULL.
  */
-काष्ठा xbc_node * __init xbc_root_node(व्योम)
-अणु
-	अगर (unlikely(!xbc_data))
-		वापस शून्य;
+struct xbc_node * __init xbc_root_node(void)
+{
+	if (unlikely(!xbc_data))
+		return NULL;
 
-	वापस xbc_nodes;
-पूर्ण
+	return xbc_nodes;
+}
 
 /**
  * xbc_node_index() - Get the index of XBC node
@@ -63,84 +62,84 @@
  *
  * Return the index number of @node in XBC node list.
  */
-पूर्णांक __init xbc_node_index(काष्ठा xbc_node *node)
-अणु
-	वापस node - &xbc_nodes[0];
-पूर्ण
+int __init xbc_node_index(struct xbc_node *node)
+{
+	return node - &xbc_nodes[0];
+}
 
 /**
  * xbc_node_get_parent() - Get the parent XBC node
  * @node: An XBC node.
  *
  * Return the parent node of @node. If the node is top node of the tree,
- * वापस शून्य.
+ * return NULL.
  */
-काष्ठा xbc_node * __init xbc_node_get_parent(काष्ठा xbc_node *node)
-अणु
-	वापस node->parent == XBC_NODE_MAX ? शून्य : &xbc_nodes[node->parent];
-पूर्ण
+struct xbc_node * __init xbc_node_get_parent(struct xbc_node *node)
+{
+	return node->parent == XBC_NODE_MAX ? NULL : &xbc_nodes[node->parent];
+}
 
 /**
  * xbc_node_get_child() - Get the child XBC node
  * @node: An XBC node.
  *
- * Return the first child node of @node. If the node has no child, वापस
- * शून्य.
+ * Return the first child node of @node. If the node has no child, return
+ * NULL.
  */
-काष्ठा xbc_node * __init xbc_node_get_child(काष्ठा xbc_node *node)
-अणु
-	वापस node->child ? &xbc_nodes[node->child] : शून्य;
-पूर्ण
+struct xbc_node * __init xbc_node_get_child(struct xbc_node *node)
+{
+	return node->child ? &xbc_nodes[node->child] : NULL;
+}
 
 /**
  * xbc_node_get_next() - Get the next sibling XBC node
  * @node: An XBC node.
  *
  * Return the NEXT sibling node of @node. If the node has no next sibling,
- * वापस शून्य. Note that even अगर this वापसs शून्य, it करोesn't mean @node
+ * return NULL. Note that even if this returns NULL, it doesn't mean @node
  * has no siblings. (You also has to check whether the parent's child node
  * is @node or not.)
  */
-काष्ठा xbc_node * __init xbc_node_get_next(काष्ठा xbc_node *node)
-अणु
-	वापस node->next ? &xbc_nodes[node->next] : शून्य;
-पूर्ण
+struct xbc_node * __init xbc_node_get_next(struct xbc_node *node)
+{
+	return node->next ? &xbc_nodes[node->next] : NULL;
+}
 
 /**
  * xbc_node_get_data() - Get the data of XBC node
  * @node: An XBC node.
  *
  * Return the data (which is always a null terminated string) of @node.
- * If the node has invalid data, warn and वापस शून्य.
+ * If the node has invalid data, warn and return NULL.
  */
-स्थिर अक्षर * __init xbc_node_get_data(काष्ठा xbc_node *node)
-अणु
-	पूर्णांक offset = node->data & ~XBC_VALUE;
+const char * __init xbc_node_get_data(struct xbc_node *node)
+{
+	int offset = node->data & ~XBC_VALUE;
 
-	अगर (WARN_ON(offset >= xbc_data_size))
-		वापस शून्य;
+	if (WARN_ON(offset >= xbc_data_size))
+		return NULL;
 
-	वापस xbc_data + offset;
-पूर्ण
+	return xbc_data + offset;
+}
 
-अटल bool __init
-xbc_node_match_prefix(काष्ठा xbc_node *node, स्थिर अक्षर **prefix)
-अणु
-	स्थिर अक्षर *p = xbc_node_get_data(node);
-	पूर्णांक len = म_माप(p);
+static bool __init
+xbc_node_match_prefix(struct xbc_node *node, const char **prefix)
+{
+	const char *p = xbc_node_get_data(node);
+	int len = strlen(p);
 
-	अगर (म_भेदन(*prefix, p, len))
-		वापस false;
+	if (strncmp(*prefix, p, len))
+		return false;
 
 	p = *prefix + len;
-	अगर (*p == '.')
+	if (*p == '.')
 		p++;
-	अन्यथा अगर (*p != '\0')
-		वापस false;
+	else if (*p != '\0')
+		return false;
 	*prefix = p;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
 /**
  * xbc_node_find_child() - Find a child node which matches given key
@@ -148,64 +147,64 @@ xbc_node_match_prefix(काष्ठा xbc_node *node, स्थिर अक�
  * @key: A key string.
  *
  * Search a node under @parent which matches @key. The @key can contain
- * several words joपूर्णांकed with '.'. If @parent is शून्य, this searches the
- * node from whole tree. Return शून्य अगर no node is matched.
+ * several words jointed with '.'. If @parent is NULL, this searches the
+ * node from whole tree. Return NULL if no node is matched.
  */
-काष्ठा xbc_node * __init
-xbc_node_find_child(काष्ठा xbc_node *parent, स्थिर अक्षर *key)
-अणु
-	काष्ठा xbc_node *node;
+struct xbc_node * __init
+xbc_node_find_child(struct xbc_node *parent, const char *key)
+{
+	struct xbc_node *node;
 
-	अगर (parent)
+	if (parent)
 		node = xbc_node_get_child(parent);
-	अन्यथा
+	else
 		node = xbc_root_node();
 
-	जबतक (node && xbc_node_is_key(node)) अणु
-		अगर (!xbc_node_match_prefix(node, &key))
+	while (node && xbc_node_is_key(node)) {
+		if (!xbc_node_match_prefix(node, &key))
 			node = xbc_node_get_next(node);
-		अन्यथा अगर (*key != '\0')
+		else if (*key != '\0')
 			node = xbc_node_get_child(node);
-		अन्यथा
-			अवरोध;
-	पूर्ण
+		else
+			break;
+	}
 
-	वापस node;
-पूर्ण
+	return node;
+}
 
 /**
  * xbc_node_find_value() - Find a value node which matches given key
  * @parent: An XBC node.
  * @key: A key string.
- * @vnode: A container poपूर्णांकer of found XBC node.
+ * @vnode: A container pointer of found XBC node.
  *
  * Search a value node under @parent whose (parent) key node matches @key,
- * store it in *@vnode, and वापसs the value string.
- * The @key can contain several words joपूर्णांकed with '.'. If @parent is शून्य,
- * this searches the node from whole tree. Return the value string अगर a
- * matched key found, वापस शून्य अगर no node is matched.
- * Note that this वापसs 0-length string and stores शून्य in *@vnode अगर the
- * key has no value. And also it will वापस the value of the first entry अगर
+ * store it in *@vnode, and returns the value string.
+ * The @key can contain several words jointed with '.'. If @parent is NULL,
+ * this searches the node from whole tree. Return the value string if a
+ * matched key found, return NULL if no node is matched.
+ * Note that this returns 0-length string and stores NULL in *@vnode if the
+ * key has no value. And also it will return the value of the first entry if
  * the value is an array.
  */
-स्थिर अक्षर * __init
-xbc_node_find_value(काष्ठा xbc_node *parent, स्थिर अक्षर *key,
-		    काष्ठा xbc_node **vnode)
-अणु
-	काष्ठा xbc_node *node = xbc_node_find_child(parent, key);
+const char * __init
+xbc_node_find_value(struct xbc_node *parent, const char *key,
+		    struct xbc_node **vnode)
+{
+	struct xbc_node *node = xbc_node_find_child(parent, key);
 
-	अगर (!node || !xbc_node_is_key(node))
-		वापस शून्य;
+	if (!node || !xbc_node_is_key(node))
+		return NULL;
 
 	node = xbc_node_get_child(node);
-	अगर (node && !xbc_node_is_value(node))
-		वापस शून्य;
+	if (node && !xbc_node_is_value(node))
+		return NULL;
 
-	अगर (vnode)
+	if (vnode)
 		*vnode = node;
 
-	वापस node ? xbc_node_get_data(node) : "";
-पूर्ण
+	return node ? xbc_node_get_data(node) : "";
+}
 
 /**
  * xbc_node_compose_key_after() - Compose partial key string of the XBC node
@@ -214,54 +213,54 @@ xbc_node_find_value(काष्ठा xbc_node *parent, स्थिर अक�
  * @buf: A buffer to store the key.
  * @size: The size of the @buf.
  *
- * Compose the partial key of the @node पूर्णांकo @buf, which is starting right
- * after @root (@root is not included.) If @root is शून्य, this वापसs full
+ * Compose the partial key of the @node into @buf, which is starting right
+ * after @root (@root is not included.) If @root is NULL, this returns full
  * key words of @node.
  * Returns the total length of the key stored in @buf. Returns -EINVAL
- * अगर @node is शून्य or @root is not the ancestor of @node or @root is @node,
- * or वापसs -दुस्फल अगर the key depth is deeper than max depth.
+ * if @node is NULL or @root is not the ancestor of @node or @root is @node,
+ * or returns -ERANGE if the key depth is deeper than max depth.
  * This is expected to be used with xbc_find_node() to list up all (child)
  * keys under given key.
  */
-पूर्णांक __init xbc_node_compose_key_after(काष्ठा xbc_node *root,
-				      काष्ठा xbc_node *node,
-				      अक्षर *buf, माप_प्रकार size)
-अणु
+int __init xbc_node_compose_key_after(struct xbc_node *root,
+				      struct xbc_node *node,
+				      char *buf, size_t size)
+{
 	u16 keys[XBC_DEPTH_MAX];
-	पूर्णांक depth = 0, ret = 0, total = 0;
+	int depth = 0, ret = 0, total = 0;
 
-	अगर (!node || node == root)
-		वापस -EINVAL;
+	if (!node || node == root)
+		return -EINVAL;
 
-	अगर (xbc_node_is_value(node))
+	if (xbc_node_is_value(node))
 		node = xbc_node_get_parent(node);
 
-	जबतक (node && node != root) अणु
+	while (node && node != root) {
 		keys[depth++] = xbc_node_index(node);
-		अगर (depth == XBC_DEPTH_MAX)
-			वापस -दुस्फल;
+		if (depth == XBC_DEPTH_MAX)
+			return -ERANGE;
 		node = xbc_node_get_parent(node);
-	पूर्ण
-	अगर (!node && root)
-		वापस -EINVAL;
+	}
+	if (!node && root)
+		return -EINVAL;
 
-	जबतक (--depth >= 0) अणु
+	while (--depth >= 0) {
 		node = xbc_nodes + keys[depth];
-		ret = snम_लिखो(buf, size, "%s%s", xbc_node_get_data(node),
+		ret = snprintf(buf, size, "%s%s", xbc_node_get_data(node),
 			       depth ? "." : "");
-		अगर (ret < 0)
-			वापस ret;
-		अगर (ret > size) अणु
+		if (ret < 0)
+			return ret;
+		if (ret > size) {
 			size = 0;
-		पूर्ण अन्यथा अणु
+		} else {
 			size -= ret;
 			buf += ret;
-		पूर्ण
+		}
 		total += ret;
-	पूर्ण
+	}
 
-	वापस total;
-पूर्ण
+	return total;
+}
 
 /**
  * xbc_node_find_next_leaf() - Find the next leaf node under given node
@@ -270,613 +269,613 @@ xbc_node_find_value(काष्ठा xbc_node *parent, स्थिर अक�
  *
  * Search the next leaf node (which means the terminal key node) of @node
  * under @root node (including @root node itself).
- * Return the next node or शून्य अगर next leaf node is not found.
+ * Return the next node or NULL if next leaf node is not found.
  */
-काष्ठा xbc_node * __init xbc_node_find_next_leaf(काष्ठा xbc_node *root,
-						 काष्ठा xbc_node *node)
-अणु
-	अगर (unlikely(!xbc_data))
-		वापस शून्य;
+struct xbc_node * __init xbc_node_find_next_leaf(struct xbc_node *root,
+						 struct xbc_node *node)
+{
+	if (unlikely(!xbc_data))
+		return NULL;
 
-	अगर (!node) अणु	/* First try */
+	if (!node) {	/* First try */
 		node = root;
-		अगर (!node)
+		if (!node)
 			node = xbc_nodes;
-	पूर्ण अन्यथा अणु
-		अगर (node == root)	/* @root was a leaf, no child node. */
-			वापस शून्य;
+	} else {
+		if (node == root)	/* @root was a leaf, no child node. */
+			return NULL;
 
-		जबतक (!node->next) अणु
+		while (!node->next) {
 			node = xbc_node_get_parent(node);
-			अगर (node == root)
-				वापस शून्य;
+			if (node == root)
+				return NULL;
 			/* User passed a node which is not uder parent */
-			अगर (WARN_ON(!node))
-				वापस शून्य;
-		पूर्ण
+			if (WARN_ON(!node))
+				return NULL;
+		}
 		node = xbc_node_get_next(node);
-	पूर्ण
+	}
 
-	जबतक (node && !xbc_node_is_leaf(node))
+	while (node && !xbc_node_is_leaf(node))
 		node = xbc_node_get_child(node);
 
-	वापस node;
-पूर्ण
+	return node;
+}
 
 /**
  * xbc_node_find_next_key_value() - Find the next key-value pair nodes
  * @root: An XBC root node
- * @leaf: A container poपूर्णांकer of XBC node which starts from.
+ * @leaf: A container pointer of XBC node which starts from.
  *
  * Search the next leaf node (which means the terminal key node) of *@leaf
- * under @root node. Returns the value and update *@leaf अगर next leaf node
- * is found, or शून्य अगर no next leaf node is found.
- * Note that this वापसs 0-length string अगर the key has no value, or
- * the value of the first entry अगर the value is an array.
+ * under @root node. Returns the value and update *@leaf if next leaf node
+ * is found, or NULL if no next leaf node is found.
+ * Note that this returns 0-length string if the key has no value, or
+ * the value of the first entry if the value is an array.
  */
-स्थिर अक्षर * __init xbc_node_find_next_key_value(काष्ठा xbc_node *root,
-						 काष्ठा xbc_node **leaf)
-अणु
+const char * __init xbc_node_find_next_key_value(struct xbc_node *root,
+						 struct xbc_node **leaf)
+{
 	/* tip must be passed */
-	अगर (WARN_ON(!leaf))
-		वापस शून्य;
+	if (WARN_ON(!leaf))
+		return NULL;
 
 	*leaf = xbc_node_find_next_leaf(root, *leaf);
-	अगर (!*leaf)
-		वापस शून्य;
-	अगर ((*leaf)->child)
-		वापस xbc_node_get_data(xbc_node_get_child(*leaf));
-	अन्यथा
-		वापस "";	/* No value key */
-पूर्ण
+	if (!*leaf)
+		return NULL;
+	if ((*leaf)->child)
+		return xbc_node_get_data(xbc_node_get_child(*leaf));
+	else
+		return "";	/* No value key */
+}
 
 /* XBC parse and tree build */
 
-अटल पूर्णांक __init xbc_init_node(काष्ठा xbc_node *node, अक्षर *data, u32 flag)
-अणु
-	अचिन्हित दीर्घ offset = data - xbc_data;
+static int __init xbc_init_node(struct xbc_node *node, char *data, u32 flag)
+{
+	unsigned long offset = data - xbc_data;
 
-	अगर (WARN_ON(offset >= XBC_DATA_MAX))
-		वापस -EINVAL;
+	if (WARN_ON(offset >= XBC_DATA_MAX))
+		return -EINVAL;
 
 	node->data = (u16)offset | flag;
 	node->child = 0;
 	node->next = 0;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा xbc_node * __init xbc_add_node(अक्षर *data, u32 flag)
-अणु
-	काष्ठा xbc_node *node;
+static struct xbc_node * __init xbc_add_node(char *data, u32 flag)
+{
+	struct xbc_node *node;
 
-	अगर (xbc_node_num == XBC_NODE_MAX)
-		वापस शून्य;
+	if (xbc_node_num == XBC_NODE_MAX)
+		return NULL;
 
 	node = &xbc_nodes[xbc_node_num++];
-	अगर (xbc_init_node(node, data, flag) < 0)
-		वापस शून्य;
+	if (xbc_init_node(node, data, flag) < 0)
+		return NULL;
 
-	वापस node;
-पूर्ण
+	return node;
+}
 
-अटल अंतरभूत __init काष्ठा xbc_node *xbc_last_sibling(काष्ठा xbc_node *node)
-अणु
-	जबतक (node->next)
+static inline __init struct xbc_node *xbc_last_sibling(struct xbc_node *node)
+{
+	while (node->next)
 		node = xbc_node_get_next(node);
 
-	वापस node;
-पूर्ण
+	return node;
+}
 
-अटल काष्ठा xbc_node * __init xbc_add_sibling(अक्षर *data, u32 flag)
-अणु
-	काष्ठा xbc_node *sib, *node = xbc_add_node(data, flag);
+static struct xbc_node * __init xbc_add_sibling(char *data, u32 flag)
+{
+	struct xbc_node *sib, *node = xbc_add_node(data, flag);
 
-	अगर (node) अणु
-		अगर (!last_parent) अणु
+	if (node) {
+		if (!last_parent) {
 			node->parent = XBC_NODE_MAX;
 			sib = xbc_last_sibling(xbc_nodes);
 			sib->next = xbc_node_index(node);
-		पूर्ण अन्यथा अणु
+		} else {
 			node->parent = xbc_node_index(last_parent);
-			अगर (!last_parent->child) अणु
+			if (!last_parent->child) {
 				last_parent->child = xbc_node_index(node);
-			पूर्ण अन्यथा अणु
+			} else {
 				sib = xbc_node_get_child(last_parent);
 				sib = xbc_last_sibling(sib);
 				sib->next = xbc_node_index(node);
-			पूर्ण
-		पूर्ण
-	पूर्ण अन्यथा
+			}
+		}
+	} else
 		xbc_parse_error("Too many nodes", data);
 
-	वापस node;
-पूर्ण
+	return node;
+}
 
-अटल अंतरभूत __init काष्ठा xbc_node *xbc_add_child(अक्षर *data, u32 flag)
-अणु
-	काष्ठा xbc_node *node = xbc_add_sibling(data, flag);
+static inline __init struct xbc_node *xbc_add_child(char *data, u32 flag)
+{
+	struct xbc_node *node = xbc_add_sibling(data, flag);
 
-	अगर (node)
+	if (node)
 		last_parent = node;
 
-	वापस node;
-पूर्ण
+	return node;
+}
 
-अटल अंतरभूत __init bool xbc_valid_keyword(अक्षर *key)
-अणु
-	अगर (key[0] == '\0')
-		वापस false;
+static inline __init bool xbc_valid_keyword(char *key)
+{
+	if (key[0] == '\0')
+		return false;
 
-	जबतक (है_अक्षर_अंक(*key) || *key == '-' || *key == '_')
+	while (isalnum(*key) || *key == '-' || *key == '_')
 		key++;
 
-	वापस *key == '\0';
-पूर्ण
+	return *key == '\0';
+}
 
-अटल अक्षर *skip_comment(अक्षर *p)
-अणु
-	अक्षर *ret;
+static char *skip_comment(char *p)
+{
+	char *ret;
 
-	ret = म_अक्षर(p, '\n');
-	अगर (!ret)
-		ret = p + म_माप(p);
-	अन्यथा
+	ret = strchr(p, '\n');
+	if (!ret)
+		ret = p + strlen(p);
+	else
 		ret++;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल अक्षर *skip_spaces_until_newline(अक्षर *p)
-अणु
-	जबतक (है_खाली(*p) && *p != '\n')
+static char *skip_spaces_until_newline(char *p)
+{
+	while (isspace(*p) && *p != '\n')
 		p++;
-	वापस p;
-पूर्ण
+	return p;
+}
 
-अटल पूर्णांक __init __xbc_खोलो_brace(अक्षर *p)
-अणु
-	/* Push the last key as खोलो brace */
-	खोलो_brace[brace_index++] = xbc_node_index(last_parent);
-	अगर (brace_index >= XBC_DEPTH_MAX)
-		वापस xbc_parse_error("Exceed max depth of braces", p);
+static int __init __xbc_open_brace(char *p)
+{
+	/* Push the last key as open brace */
+	open_brace[brace_index++] = xbc_node_index(last_parent);
+	if (brace_index >= XBC_DEPTH_MAX)
+		return xbc_parse_error("Exceed max depth of braces", p);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __init __xbc_बंद_brace(अक्षर *p)
-अणु
+static int __init __xbc_close_brace(char *p)
+{
 	brace_index--;
-	अगर (!last_parent || brace_index < 0 ||
-	    (खोलो_brace[brace_index] != xbc_node_index(last_parent)))
-		वापस xbc_parse_error("Unexpected closing brace", p);
+	if (!last_parent || brace_index < 0 ||
+	    (open_brace[brace_index] != xbc_node_index(last_parent)))
+		return xbc_parse_error("Unexpected closing brace", p);
 
-	अगर (brace_index == 0)
-		last_parent = शून्य;
-	अन्यथा
-		last_parent = &xbc_nodes[खोलो_brace[brace_index - 1]];
+	if (brace_index == 0)
+		last_parent = NULL;
+	else
+		last_parent = &xbc_nodes[open_brace[brace_index - 1]];
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Return delimiter or error, no node added. As same as lib/cmdline.c,
- * you can use " around spaces, but can't escape " क्रम value.
+ * you can use " around spaces, but can't escape " for value.
  */
-अटल पूर्णांक __init __xbc_parse_value(अक्षर **__v, अक्षर **__n)
-अणु
-	अक्षर *p, *v = *__v;
-	पूर्णांक c, quotes = 0;
+static int __init __xbc_parse_value(char **__v, char **__n)
+{
+	char *p, *v = *__v;
+	int c, quotes = 0;
 
 	v = skip_spaces(v);
-	जबतक (*v == '#') अणु
+	while (*v == '#') {
 		v = skip_comment(v);
 		v = skip_spaces(v);
-	पूर्ण
-	अगर (*v == '"' || *v == '\'') अणु
+	}
+	if (*v == '"' || *v == '\'') {
 		quotes = *v;
 		v++;
-	पूर्ण
+	}
 	p = v - 1;
-	जबतक ((c = *++p)) अणु
-		अगर (!है_छाप(c) && !है_खाली(c))
-			वापस xbc_parse_error("Non printable value", p);
-		अगर (quotes) अणु
-			अगर (c != quotes)
-				जारी;
+	while ((c = *++p)) {
+		if (!isprint(c) && !isspace(c))
+			return xbc_parse_error("Non printable value", p);
+		if (quotes) {
+			if (c != quotes)
+				continue;
 			quotes = 0;
 			*p++ = '\0';
 			p = skip_spaces_until_newline(p);
 			c = *p;
-			अगर (c && !म_अक्षर(",;\n#}", c))
-				वापस xbc_parse_error("No value delimiter", p);
-			अगर (*p)
+			if (c && !strchr(",;\n#}", c))
+				return xbc_parse_error("No value delimiter", p);
+			if (*p)
 				p++;
-			अवरोध;
-		पूर्ण
-		अगर (म_अक्षर(",;\n#}", c)) अणु
+			break;
+		}
+		if (strchr(",;\n#}", c)) {
 			*p++ = '\0';
 			v = strim(v);
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	अगर (quotes)
-		वापस xbc_parse_error("No closing quotes", p);
-	अगर (c == '#') अणु
+			break;
+		}
+	}
+	if (quotes)
+		return xbc_parse_error("No closing quotes", p);
+	if (c == '#') {
 		p = skip_comment(p);
 		c = '\n';	/* A comment must be treated as a newline */
-	पूर्ण
+	}
 	*__n = p;
 	*__v = v;
 
-	वापस c;
-पूर्ण
+	return c;
+}
 
-अटल पूर्णांक __init xbc_parse_array(अक्षर **__v)
-अणु
-	काष्ठा xbc_node *node;
-	अक्षर *next;
-	पूर्णांक c = 0;
+static int __init xbc_parse_array(char **__v)
+{
+	struct xbc_node *node;
+	char *next;
+	int c = 0;
 
-	करो अणु
+	do {
 		c = __xbc_parse_value(__v, &next);
-		अगर (c < 0)
-			वापस c;
+		if (c < 0)
+			return c;
 
 		node = xbc_add_sibling(*__v, XBC_VALUE);
-		अगर (!node)
-			वापस -ENOMEM;
+		if (!node)
+			return -ENOMEM;
 		*__v = next;
-	पूर्ण जबतक (c == ',');
+	} while (c == ',');
 	node->next = 0;
 
-	वापस c;
-पूर्ण
+	return c;
+}
 
-अटल अंतरभूत __init
-काष्ठा xbc_node *find_match_node(काष्ठा xbc_node *node, अक्षर *k)
-अणु
-	जबतक (node) अणु
-		अगर (!म_भेद(xbc_node_get_data(node), k))
-			अवरोध;
+static inline __init
+struct xbc_node *find_match_node(struct xbc_node *node, char *k)
+{
+	while (node) {
+		if (!strcmp(xbc_node_get_data(node), k))
+			break;
 		node = xbc_node_get_next(node);
-	पूर्ण
-	वापस node;
-पूर्ण
+	}
+	return node;
+}
 
-अटल पूर्णांक __init __xbc_add_key(अक्षर *k)
-अणु
-	काष्ठा xbc_node *node, *child;
+static int __init __xbc_add_key(char *k)
+{
+	struct xbc_node *node, *child;
 
-	अगर (!xbc_valid_keyword(k))
-		वापस xbc_parse_error("Invalid keyword", k);
+	if (!xbc_valid_keyword(k))
+		return xbc_parse_error("Invalid keyword", k);
 
-	अगर (unlikely(xbc_node_num == 0))
-		जाओ add_node;
+	if (unlikely(xbc_node_num == 0))
+		goto add_node;
 
-	अगर (!last_parent)	/* the first level */
+	if (!last_parent)	/* the first level */
 		node = find_match_node(xbc_nodes, k);
-	अन्यथा अणु
+	else {
 		child = xbc_node_get_child(last_parent);
-		अगर (child && xbc_node_is_value(child))
-			वापस xbc_parse_error("Subkey is mixed with value", k);
+		if (child && xbc_node_is_value(child))
+			return xbc_parse_error("Subkey is mixed with value", k);
 		node = find_match_node(child, k);
-	पूर्ण
+	}
 
-	अगर (node)
+	if (node)
 		last_parent = node;
-	अन्यथा अणु
+	else {
 add_node:
 		node = xbc_add_child(k, XBC_KEY);
-		अगर (!node)
-			वापस -ENOMEM;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		if (!node)
+			return -ENOMEM;
+	}
+	return 0;
+}
 
-अटल पूर्णांक __init __xbc_parse_keys(अक्षर *k)
-अणु
-	अक्षर *p;
-	पूर्णांक ret;
+static int __init __xbc_parse_keys(char *k)
+{
+	char *p;
+	int ret;
 
 	k = strim(k);
-	जबतक ((p = म_अक्षर(k, '.'))) अणु
+	while ((p = strchr(k, '.'))) {
 		*p++ = '\0';
 		ret = __xbc_add_key(k);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 		k = p;
-	पूर्ण
+	}
 
-	वापस __xbc_add_key(k);
-पूर्ण
+	return __xbc_add_key(k);
+}
 
-अटल पूर्णांक __init xbc_parse_kv(अक्षर **k, अक्षर *v, पूर्णांक op)
-अणु
-	काष्ठा xbc_node *prev_parent = last_parent;
-	काष्ठा xbc_node *child;
-	अक्षर *next;
-	पूर्णांक c, ret;
+static int __init xbc_parse_kv(char **k, char *v, int op)
+{
+	struct xbc_node *prev_parent = last_parent;
+	struct xbc_node *child;
+	char *next;
+	int c, ret;
 
 	ret = __xbc_parse_keys(*k);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	child = xbc_node_get_child(last_parent);
-	अगर (child) अणु
-		अगर (xbc_node_is_key(child))
-			वापस xbc_parse_error("Value is mixed with subkey", v);
-		अन्यथा अगर (op == '=')
-			वापस xbc_parse_error("Value is redefined", v);
-	पूर्ण
+	if (child) {
+		if (xbc_node_is_key(child))
+			return xbc_parse_error("Value is mixed with subkey", v);
+		else if (op == '=')
+			return xbc_parse_error("Value is redefined", v);
+	}
 
 	c = __xbc_parse_value(&v, &next);
-	अगर (c < 0)
-		वापस c;
+	if (c < 0)
+		return c;
 
-	अगर (op == ':' && child) अणु
+	if (op == ':' && child) {
 		xbc_init_node(child, v, XBC_VALUE);
-	पूर्ण अन्यथा अगर (!xbc_add_sibling(v, XBC_VALUE))
-		वापस -ENOMEM;
+	} else if (!xbc_add_sibling(v, XBC_VALUE))
+		return -ENOMEM;
 
-	अगर (c == ',') अणु	/* Array */
+	if (c == ',') {	/* Array */
 		c = xbc_parse_array(&next);
-		अगर (c < 0)
-			वापस c;
-	पूर्ण
+		if (c < 0)
+			return c;
+	}
 
 	last_parent = prev_parent;
 
-	अगर (c == '}') अणु
-		ret = __xbc_बंद_brace(next - 1);
-		अगर (ret < 0)
-			वापस ret;
-	पूर्ण
+	if (c == '}') {
+		ret = __xbc_close_brace(next - 1);
+		if (ret < 0)
+			return ret;
+	}
 
 	*k = next;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __init xbc_parse_key(अक्षर **k, अक्षर *n)
-अणु
-	काष्ठा xbc_node *prev_parent = last_parent;
-	पूर्णांक ret;
+static int __init xbc_parse_key(char **k, char *n)
+{
+	struct xbc_node *prev_parent = last_parent;
+	int ret;
 
 	*k = strim(*k);
-	अगर (**k != '\0') अणु
+	if (**k != '\0') {
 		ret = __xbc_parse_keys(*k);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 		last_parent = prev_parent;
-	पूर्ण
+	}
 	*k = n;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __init xbc_खोलो_brace(अक्षर **k, अक्षर *n)
-अणु
-	पूर्णांक ret;
+static int __init xbc_open_brace(char **k, char *n)
+{
+	int ret;
 
 	ret = __xbc_parse_keys(*k);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 	*k = n;
 
-	वापस __xbc_खोलो_brace(n - 1);
-पूर्ण
+	return __xbc_open_brace(n - 1);
+}
 
-अटल पूर्णांक __init xbc_बंद_brace(अक्षर **k, अक्षर *n)
-अणु
-	पूर्णांक ret;
+static int __init xbc_close_brace(char **k, char *n)
+{
+	int ret;
 
 	ret = xbc_parse_key(k, n);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 	/* k is updated in xbc_parse_key() */
 
-	वापस __xbc_बंद_brace(n - 1);
-पूर्ण
+	return __xbc_close_brace(n - 1);
+}
 
-अटल पूर्णांक __init xbc_verअगरy_tree(व्योम)
-अणु
-	पूर्णांक i, depth, len, wlen;
-	काष्ठा xbc_node *n, *m;
+static int __init xbc_verify_tree(void)
+{
+	int i, depth, len, wlen;
+	struct xbc_node *n, *m;
 
 	/* Brace closing */
-	अगर (brace_index) अणु
-		n = &xbc_nodes[खोलो_brace[brace_index]];
-		वापस xbc_parse_error("Brace is not closed",
+	if (brace_index) {
+		n = &xbc_nodes[open_brace[brace_index]];
+		return xbc_parse_error("Brace is not closed",
 					xbc_node_get_data(n));
-	पूर्ण
+	}
 
 	/* Empty tree */
-	अगर (xbc_node_num == 0) अणु
+	if (xbc_node_num == 0) {
 		xbc_parse_error("Empty config", xbc_data);
-		वापस -ENOENT;
-	पूर्ण
+		return -ENOENT;
+	}
 
-	क्रम (i = 0; i < xbc_node_num; i++) अणु
-		अगर (xbc_nodes[i].next > xbc_node_num) अणु
-			वापस xbc_parse_error("No closing brace",
+	for (i = 0; i < xbc_node_num; i++) {
+		if (xbc_nodes[i].next > xbc_node_num) {
+			return xbc_parse_error("No closing brace",
 				xbc_node_get_data(xbc_nodes + i));
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/* Key tree limitation check */
 	n = &xbc_nodes[0];
 	depth = 1;
 	len = 0;
 
-	जबतक (n) अणु
-		wlen = म_माप(xbc_node_get_data(n)) + 1;
+	while (n) {
+		wlen = strlen(xbc_node_get_data(n)) + 1;
 		len += wlen;
-		अगर (len > XBC_KEYLEN_MAX)
-			वापस xbc_parse_error("Too long key length",
+		if (len > XBC_KEYLEN_MAX)
+			return xbc_parse_error("Too long key length",
 				xbc_node_get_data(n));
 
 		m = xbc_node_get_child(n);
-		अगर (m && xbc_node_is_key(m)) अणु
+		if (m && xbc_node_is_key(m)) {
 			n = m;
 			depth++;
-			अगर (depth > XBC_DEPTH_MAX)
-				वापस xbc_parse_error("Too many key words",
+			if (depth > XBC_DEPTH_MAX)
+				return xbc_parse_error("Too many key words",
 						xbc_node_get_data(n));
-			जारी;
-		पूर्ण
+			continue;
+		}
 		len -= wlen;
 		m = xbc_node_get_next(n);
-		जबतक (!m) अणु
+		while (!m) {
 			n = xbc_node_get_parent(n);
-			अगर (!n)
-				अवरोध;
-			len -= म_माप(xbc_node_get_data(n)) + 1;
+			if (!n)
+				break;
+			len -= strlen(xbc_node_get_data(n)) + 1;
 			depth--;
 			m = xbc_node_get_next(n);
-		पूर्ण
+		}
 		n = m;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * xbc_destroy_all() - Clean up all parsed bootconfig
  *
- * This clears all data काष्ठाures of parsed bootconfig on memory.
+ * This clears all data structures of parsed bootconfig on memory.
  * If you need to reuse xbc_init() with new boot config, you can
  * use this.
  */
-व्योम __init xbc_destroy_all(व्योम)
-अणु
-	xbc_data = शून्य;
+void __init xbc_destroy_all(void)
+{
+	xbc_data = NULL;
 	xbc_data_size = 0;
 	xbc_node_num = 0;
-	memblock_मुक्त(__pa(xbc_nodes), माप(काष्ठा xbc_node) * XBC_NODE_MAX);
-	xbc_nodes = शून्य;
+	memblock_free(__pa(xbc_nodes), sizeof(struct xbc_node) * XBC_NODE_MAX);
+	xbc_nodes = NULL;
 	brace_index = 0;
-पूर्ण
+}
 
 /**
- * xbc_init() - Parse given XBC file and build XBC पूर्णांकernal tree
+ * xbc_init() - Parse given XBC file and build XBC internal tree
  * @buf: boot config text
- * @emsg: A poपूर्णांकer of स्थिर अक्षर * to store the error message
- * @epos: A poपूर्णांकer of पूर्णांक to store the error position
+ * @emsg: A pointer of const char * to store the error message
+ * @epos: A pointer of int to store the error position
  *
  * This parses the boot config text in @buf. @buf must be a
  * null terminated string and smaller than XBC_DATA_MAX.
- * Return the number of stored nodes (>0) अगर succeeded, or -त्रुटि_सं
- * अगर there is any error.
- * In error हालs, @emsg will be updated with an error message and
+ * Return the number of stored nodes (>0) if succeeded, or -errno
+ * if there is any error.
+ * In error cases, @emsg will be updated with an error message and
  * @epos will be updated with the error position which is the byte offset
  * of @buf. If the error is not a parser error, @epos will be -1.
  */
-पूर्णांक __init xbc_init(अक्षर *buf, स्थिर अक्षर **emsg, पूर्णांक *epos)
-अणु
-	अक्षर *p, *q;
-	पूर्णांक ret, c;
+int __init xbc_init(char *buf, const char **emsg, int *epos)
+{
+	char *p, *q;
+	int ret, c;
 
-	अगर (epos)
+	if (epos)
 		*epos = -1;
 
-	अगर (xbc_data) अणु
-		अगर (emsg)
+	if (xbc_data) {
+		if (emsg)
 			*emsg = "Bootconfig is already initialized";
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
-	ret = म_माप(buf);
-	अगर (ret > XBC_DATA_MAX - 1 || ret == 0) अणु
-		अगर (emsg)
+	ret = strlen(buf);
+	if (ret > XBC_DATA_MAX - 1 || ret == 0) {
+		if (emsg)
 			*emsg = ret ? "Config data is too big" :
 				"Config data is empty";
-		वापस -दुस्फल;
-	पूर्ण
+		return -ERANGE;
+	}
 
-	xbc_nodes = memblock_alloc(माप(काष्ठा xbc_node) * XBC_NODE_MAX,
+	xbc_nodes = memblock_alloc(sizeof(struct xbc_node) * XBC_NODE_MAX,
 				   SMP_CACHE_BYTES);
-	अगर (!xbc_nodes) अणु
-		अगर (emsg)
+	if (!xbc_nodes) {
+		if (emsg)
 			*emsg = "Failed to allocate bootconfig nodes";
-		वापस -ENOMEM;
-	पूर्ण
-	स_रखो(xbc_nodes, 0, माप(काष्ठा xbc_node) * XBC_NODE_MAX);
+		return -ENOMEM;
+	}
+	memset(xbc_nodes, 0, sizeof(struct xbc_node) * XBC_NODE_MAX);
 	xbc_data = buf;
 	xbc_data_size = ret + 1;
-	last_parent = शून्य;
+	last_parent = NULL;
 
 	p = buf;
-	करो अणु
+	do {
 		q = strpbrk(p, "{}=+;:\n#");
-		अगर (!q) अणु
+		if (!q) {
 			p = skip_spaces(p);
-			अगर (*p != '\0')
+			if (*p != '\0')
 				ret = xbc_parse_error("No delimiter", p);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		c = *q;
 		*q++ = '\0';
-		चयन (c) अणु
-		हाल ':':
-		हाल '+':
-			अगर (*q++ != '=') अणु
+		switch (c) {
+		case ':':
+		case '+':
+			if (*q++ != '=') {
 				ret = xbc_parse_error(c == '+' ?
 						"Wrong '+' operator" :
 						"Wrong ':' operator",
 							q - 2);
-				अवरोध;
-			पूर्ण
+				break;
+			}
 			fallthrough;
-		हाल '=':
+		case '=':
 			ret = xbc_parse_kv(&p, q, c);
-			अवरोध;
-		हाल '{':
-			ret = xbc_खोलो_brace(&p, q);
-			अवरोध;
-		हाल '#':
+			break;
+		case '{':
+			ret = xbc_open_brace(&p, q);
+			break;
+		case '#':
 			q = skip_comment(q);
 			fallthrough;
-		हाल ';':
-		हाल '\n':
+		case ';':
+		case '\n':
 			ret = xbc_parse_key(&p, q);
-			अवरोध;
-		हाल '}':
-			ret = xbc_बंद_brace(&p, q);
-			अवरोध;
-		पूर्ण
-	पूर्ण जबतक (!ret);
+			break;
+		case '}':
+			ret = xbc_close_brace(&p, q);
+			break;
+		}
+	} while (!ret);
 
-	अगर (!ret)
-		ret = xbc_verअगरy_tree();
+	if (!ret)
+		ret = xbc_verify_tree();
 
-	अगर (ret < 0) अणु
-		अगर (epos)
+	if (ret < 0) {
+		if (epos)
 			*epos = xbc_err_pos;
-		अगर (emsg)
+		if (emsg)
 			*emsg = xbc_err_msg;
 		xbc_destroy_all();
-	पूर्ण अन्यथा
+	} else
 		ret = xbc_node_num;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
  * xbc_debug_dump() - Dump current XBC node list
  *
- * Dump the current XBC node list on prपूर्णांकk buffer क्रम debug.
+ * Dump the current XBC node list on printk buffer for debug.
  */
-व्योम __init xbc_debug_dump(व्योम)
-अणु
-	पूर्णांक i;
+void __init xbc_debug_dump(void)
+{
+	int i;
 
-	क्रम (i = 0; i < xbc_node_num; i++) अणु
+	for (i = 0; i < xbc_node_num; i++) {
 		pr_debug("[%d] %s (%s) .next=%d, .child=%d .parent=%d\n", i,
 			xbc_node_get_data(xbc_nodes + i),
 			xbc_node_is_value(xbc_nodes + i) ? "value" : "key",
 			xbc_nodes[i].next, xbc_nodes[i].child,
 			xbc_nodes[i].parent);
-	पूर्ण
-पूर्ण
+	}
+}

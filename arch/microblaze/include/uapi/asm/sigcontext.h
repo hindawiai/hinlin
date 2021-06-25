@@ -1,22 +1,21 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
 /*
- * Copyright (C) 2006 Aपंचांगark Techno, Inc.
+ * Copyright (C) 2006 Atmark Techno, Inc.
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License. See the file "COPYING" in the मुख्य directory of this archive
- * क्रम more details.
+ * License. See the file "COPYING" in the main directory of this archive
+ * for more details.
  */
 
-#अगर_अघोषित _ASM_MICROBLAZE_SIGCONTEXT_H
-#घोषणा _ASM_MICROBLAZE_SIGCONTEXT_H
+#ifndef _ASM_MICROBLAZE_SIGCONTEXT_H
+#define _ASM_MICROBLAZE_SIGCONTEXT_H
 
 /* FIXME should be linux/ptrace.h */
-#समावेश <यंत्र/ptrace.h>
+#include <asm/ptrace.h>
 
-काष्ठा sigcontext अणु
-	काष्ठा pt_regs regs;
-	अचिन्हित दीर्घ oldmask;
-पूर्ण;
+struct sigcontext {
+	struct pt_regs regs;
+	unsigned long oldmask;
+};
 
-#पूर्ण_अगर /* _ASM_MICROBLAZE_SIGCONTEXT_H */
+#endif /* _ASM_MICROBLAZE_SIGCONTEXT_H */

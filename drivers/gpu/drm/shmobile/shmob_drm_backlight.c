@@ -1,87 +1,86 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * shmob_drm_backlight.c  --  SH Mobile DRM Backlight
  *
  * Copyright (C) 2012 Renesas Electronics Corporation
  *
- * Laurent Pinअक्षरt (laurent.pinअक्षरt@ideasonboard.com)
+ * Laurent Pinchart (laurent.pinchart@ideasonboard.com)
  */
 
-#समावेश <linux/backlight.h>
+#include <linux/backlight.h>
 
-#समावेश "shmob_drm_backlight.h"
-#समावेश "shmob_drm_crtc.h"
-#समावेश "shmob_drm_drv.h"
+#include "shmob_drm_backlight.h"
+#include "shmob_drm_crtc.h"
+#include "shmob_drm_drv.h"
 
-अटल पूर्णांक shmob_drm_backlight_update(काष्ठा backlight_device *bdev)
-अणु
-	काष्ठा shmob_drm_connector *scon = bl_get_data(bdev);
-	काष्ठा shmob_drm_device *sdev = scon->connector.dev->dev_निजी;
-	स्थिर काष्ठा shmob_drm_backlight_data *bdata = &sdev->pdata->backlight;
-	पूर्णांक brightness = bdev->props.brightness;
+static int shmob_drm_backlight_update(struct backlight_device *bdev)
+{
+	struct shmob_drm_connector *scon = bl_get_data(bdev);
+	struct shmob_drm_device *sdev = scon->connector.dev->dev_private;
+	const struct shmob_drm_backlight_data *bdata = &sdev->pdata->backlight;
+	int brightness = bdev->props.brightness;
 
-	अगर (bdev->props.घातer != FB_BLANK_UNBLANK ||
+	if (bdev->props.power != FB_BLANK_UNBLANK ||
 	    bdev->props.state & BL_CORE_SUSPENDED)
 		brightness = 0;
 
-	वापस bdata->set_brightness(brightness);
-पूर्ण
+	return bdata->set_brightness(brightness);
+}
 
-अटल पूर्णांक shmob_drm_backlight_get_brightness(काष्ठा backlight_device *bdev)
-अणु
-	काष्ठा shmob_drm_connector *scon = bl_get_data(bdev);
-	काष्ठा shmob_drm_device *sdev = scon->connector.dev->dev_निजी;
-	स्थिर काष्ठा shmob_drm_backlight_data *bdata = &sdev->pdata->backlight;
+static int shmob_drm_backlight_get_brightness(struct backlight_device *bdev)
+{
+	struct shmob_drm_connector *scon = bl_get_data(bdev);
+	struct shmob_drm_device *sdev = scon->connector.dev->dev_private;
+	const struct shmob_drm_backlight_data *bdata = &sdev->pdata->backlight;
 
-	वापस bdata->get_brightness();
-पूर्ण
+	return bdata->get_brightness();
+}
 
-अटल स्थिर काष्ठा backlight_ops shmob_drm_backlight_ops = अणु
+static const struct backlight_ops shmob_drm_backlight_ops = {
 	.options	= BL_CORE_SUSPENDRESUME,
 	.update_status	= shmob_drm_backlight_update,
 	.get_brightness	= shmob_drm_backlight_get_brightness,
-पूर्ण;
+};
 
-व्योम shmob_drm_backlight_dpms(काष्ठा shmob_drm_connector *scon, पूर्णांक mode)
-अणु
-	अगर (scon->backlight == शून्य)
-		वापस;
+void shmob_drm_backlight_dpms(struct shmob_drm_connector *scon, int mode)
+{
+	if (scon->backlight == NULL)
+		return;
 
-	scon->backlight->props.घातer = mode == DRM_MODE_DPMS_ON
+	scon->backlight->props.power = mode == DRM_MODE_DPMS_ON
 				     ? FB_BLANK_UNBLANK : FB_BLANK_POWERDOWN;
 	backlight_update_status(scon->backlight);
-पूर्ण
+}
 
-पूर्णांक shmob_drm_backlight_init(काष्ठा shmob_drm_connector *scon)
-अणु
-	काष्ठा shmob_drm_device *sdev = scon->connector.dev->dev_निजी;
-	स्थिर काष्ठा shmob_drm_backlight_data *bdata = &sdev->pdata->backlight;
-	काष्ठा drm_connector *connector = &scon->connector;
-	काष्ठा drm_device *dev = connector->dev;
-	काष्ठा backlight_device *backlight;
+int shmob_drm_backlight_init(struct shmob_drm_connector *scon)
+{
+	struct shmob_drm_device *sdev = scon->connector.dev->dev_private;
+	const struct shmob_drm_backlight_data *bdata = &sdev->pdata->backlight;
+	struct drm_connector *connector = &scon->connector;
+	struct drm_device *dev = connector->dev;
+	struct backlight_device *backlight;
 
-	अगर (!bdata->max_brightness)
-		वापस 0;
+	if (!bdata->max_brightness)
+		return 0;
 
-	backlight = backlight_device_रेजिस्टर(bdata->name, dev->dev, scon,
-					      &shmob_drm_backlight_ops, शून्य);
-	अगर (IS_ERR(backlight)) अणु
+	backlight = backlight_device_register(bdata->name, dev->dev, scon,
+					      &shmob_drm_backlight_ops, NULL);
+	if (IS_ERR(backlight)) {
 		dev_err(dev->dev, "unable to register backlight device: %ld\n",
 			PTR_ERR(backlight));
-		वापस PTR_ERR(backlight);
-	पूर्ण
+		return PTR_ERR(backlight);
+	}
 
 	backlight->props.max_brightness = bdata->max_brightness;
 	backlight->props.brightness = bdata->max_brightness;
-	backlight->props.घातer = FB_BLANK_POWERDOWN;
+	backlight->props.power = FB_BLANK_POWERDOWN;
 	backlight_update_status(backlight);
 
 	scon->backlight = backlight;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम shmob_drm_backlight_निकास(काष्ठा shmob_drm_connector *scon)
-अणु
-	backlight_device_unरेजिस्टर(scon->backlight);
-पूर्ण
+void shmob_drm_backlight_exit(struct shmob_drm_connector *scon)
+{
+	backlight_device_unregister(scon->backlight);
+}

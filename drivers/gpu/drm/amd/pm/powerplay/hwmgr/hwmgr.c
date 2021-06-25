@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2015 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,81 +21,81 @@
  *
  */
 
-#समावेश "pp_debug.h"
-#समावेश <linux/delay.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/types.h>
-#समावेश <linux/pci.h>
-#समावेश <drm/amdgpu_drm.h>
-#समावेश "power_state.h"
-#समावेश "hwmgr.h"
-#समावेश "ppsmc.h"
-#समावेश "amd_acpi.h"
-#समावेश "pp_psm.h"
-#समावेश "vega10_hwmgr.h"
+#include "pp_debug.h"
+#include <linux/delay.h>
+#include <linux/kernel.h>
+#include <linux/slab.h>
+#include <linux/types.h>
+#include <linux/pci.h>
+#include <drm/amdgpu_drm.h>
+#include "power_state.h"
+#include "hwmgr.h"
+#include "ppsmc.h"
+#include "amd_acpi.h"
+#include "pp_psm.h"
+#include "vega10_hwmgr.h"
 
-बाह्य स्थिर काष्ठा pp_smumgr_func ci_smu_funcs;
-बाह्य स्थिर काष्ठा pp_smumgr_func smu8_smu_funcs;
-बाह्य स्थिर काष्ठा pp_smumgr_func iceland_smu_funcs;
-बाह्य स्थिर काष्ठा pp_smumgr_func tonga_smu_funcs;
-बाह्य स्थिर काष्ठा pp_smumgr_func fiji_smu_funcs;
-बाह्य स्थिर काष्ठा pp_smumgr_func polaris10_smu_funcs;
-बाह्य स्थिर काष्ठा pp_smumgr_func vegam_smu_funcs;
-बाह्य स्थिर काष्ठा pp_smumgr_func vega10_smu_funcs;
-बाह्य स्थिर काष्ठा pp_smumgr_func vega12_smu_funcs;
-बाह्य स्थिर काष्ठा pp_smumgr_func smu10_smu_funcs;
-बाह्य स्थिर काष्ठा pp_smumgr_func vega20_smu_funcs;
+extern const struct pp_smumgr_func ci_smu_funcs;
+extern const struct pp_smumgr_func smu8_smu_funcs;
+extern const struct pp_smumgr_func iceland_smu_funcs;
+extern const struct pp_smumgr_func tonga_smu_funcs;
+extern const struct pp_smumgr_func fiji_smu_funcs;
+extern const struct pp_smumgr_func polaris10_smu_funcs;
+extern const struct pp_smumgr_func vegam_smu_funcs;
+extern const struct pp_smumgr_func vega10_smu_funcs;
+extern const struct pp_smumgr_func vega12_smu_funcs;
+extern const struct pp_smumgr_func smu10_smu_funcs;
+extern const struct pp_smumgr_func vega20_smu_funcs;
 
-बाह्य पूर्णांक smu10_init_function_poपूर्णांकers(काष्ठा pp_hwmgr *hwmgr);
+extern int smu10_init_function_pointers(struct pp_hwmgr *hwmgr);
 
-अटल पूर्णांक polaris_set_asic_special_caps(काष्ठा pp_hwmgr *hwmgr);
-अटल व्योम hwmgr_init_शेष_caps(काष्ठा pp_hwmgr *hwmgr);
-अटल पूर्णांक hwmgr_set_user_specअगरy_caps(काष्ठा pp_hwmgr *hwmgr);
-अटल पूर्णांक fiji_set_asic_special_caps(काष्ठा pp_hwmgr *hwmgr);
-अटल पूर्णांक tonga_set_asic_special_caps(काष्ठा pp_hwmgr *hwmgr);
-अटल पूर्णांक topaz_set_asic_special_caps(काष्ठा pp_hwmgr *hwmgr);
-अटल पूर्णांक ci_set_asic_special_caps(काष्ठा pp_hwmgr *hwmgr);
+static int polaris_set_asic_special_caps(struct pp_hwmgr *hwmgr);
+static void hwmgr_init_default_caps(struct pp_hwmgr *hwmgr);
+static int hwmgr_set_user_specify_caps(struct pp_hwmgr *hwmgr);
+static int fiji_set_asic_special_caps(struct pp_hwmgr *hwmgr);
+static int tonga_set_asic_special_caps(struct pp_hwmgr *hwmgr);
+static int topaz_set_asic_special_caps(struct pp_hwmgr *hwmgr);
+static int ci_set_asic_special_caps(struct pp_hwmgr *hwmgr);
 
 
-अटल व्योम hwmgr_init_workload_prority(काष्ठा pp_hwmgr *hwmgr)
-अणु
-	hwmgr->workload_prority[PP_SMC_POWER_PROखाता_BOOTUP_DEFAULT] = 0;
-	hwmgr->workload_prority[PP_SMC_POWER_PROखाता_FULLSCREEN3D] = 1;
-	hwmgr->workload_prority[PP_SMC_POWER_PROखाता_POWERSAVING] = 2;
-	hwmgr->workload_prority[PP_SMC_POWER_PROखाता_VIDEO] = 3;
-	hwmgr->workload_prority[PP_SMC_POWER_PROखाता_VR] = 4;
-	hwmgr->workload_prority[PP_SMC_POWER_PROखाता_COMPUTE] = 5;
+static void hwmgr_init_workload_prority(struct pp_hwmgr *hwmgr)
+{
+	hwmgr->workload_prority[PP_SMC_POWER_PROFILE_BOOTUP_DEFAULT] = 0;
+	hwmgr->workload_prority[PP_SMC_POWER_PROFILE_FULLSCREEN3D] = 1;
+	hwmgr->workload_prority[PP_SMC_POWER_PROFILE_POWERSAVING] = 2;
+	hwmgr->workload_prority[PP_SMC_POWER_PROFILE_VIDEO] = 3;
+	hwmgr->workload_prority[PP_SMC_POWER_PROFILE_VR] = 4;
+	hwmgr->workload_prority[PP_SMC_POWER_PROFILE_COMPUTE] = 5;
 
-	hwmgr->workload_setting[0] = PP_SMC_POWER_PROखाता_BOOTUP_DEFAULT;
-	hwmgr->workload_setting[1] = PP_SMC_POWER_PROखाता_FULLSCREEN3D;
-	hwmgr->workload_setting[2] = PP_SMC_POWER_PROखाता_POWERSAVING;
-	hwmgr->workload_setting[3] = PP_SMC_POWER_PROखाता_VIDEO;
-	hwmgr->workload_setting[4] = PP_SMC_POWER_PROखाता_VR;
-	hwmgr->workload_setting[5] = PP_SMC_POWER_PROखाता_COMPUTE;
-पूर्ण
+	hwmgr->workload_setting[0] = PP_SMC_POWER_PROFILE_BOOTUP_DEFAULT;
+	hwmgr->workload_setting[1] = PP_SMC_POWER_PROFILE_FULLSCREEN3D;
+	hwmgr->workload_setting[2] = PP_SMC_POWER_PROFILE_POWERSAVING;
+	hwmgr->workload_setting[3] = PP_SMC_POWER_PROFILE_VIDEO;
+	hwmgr->workload_setting[4] = PP_SMC_POWER_PROFILE_VR;
+	hwmgr->workload_setting[5] = PP_SMC_POWER_PROFILE_COMPUTE;
+}
 
-पूर्णांक hwmgr_early_init(काष्ठा pp_hwmgr *hwmgr)
-अणु
-	काष्ठा amdgpu_device *adev;
+int hwmgr_early_init(struct pp_hwmgr *hwmgr)
+{
+	struct amdgpu_device *adev;
 
-	अगर (!hwmgr)
-		वापस -EINVAL;
+	if (!hwmgr)
+		return -EINVAL;
 
-	hwmgr->usec_समयout = AMD_MAX_USEC_TIMEOUT;
+	hwmgr->usec_timeout = AMD_MAX_USEC_TIMEOUT;
 	hwmgr->pp_table_version = PP_TABLE_V1;
 	hwmgr->dpm_level = AMD_DPM_FORCED_LEVEL_AUTO;
 	hwmgr->request_dpm_level = AMD_DPM_FORCED_LEVEL_AUTO;
-	hwmgr_init_शेष_caps(hwmgr);
-	hwmgr_set_user_specअगरy_caps(hwmgr);
-	hwmgr->fan_ctrl_is_in_शेष_mode = true;
+	hwmgr_init_default_caps(hwmgr);
+	hwmgr_set_user_specify_caps(hwmgr);
+	hwmgr->fan_ctrl_is_in_default_mode = true;
 	hwmgr_init_workload_prority(hwmgr);
 	hwmgr->gfxoff_state_changed_by_workload = false;
 
 	adev = hwmgr->adev;
 
-	चयन (hwmgr->chip_family) अणु
-	हाल AMDGPU_FAMILY_CI:
+	switch (hwmgr->chip_family) {
+	case AMDGPU_FAMILY_CI:
 		adev->pm.pp_feature &= ~PP_GFXOFF_MASK;
 		hwmgr->smumgr_funcs = &ci_smu_funcs;
 		ci_set_asic_special_caps(hwmgr);
@@ -105,463 +104,463 @@
 					 PP_GFXOFF_MASK);
 		hwmgr->pp_table_version = PP_TABLE_V0;
 		hwmgr->od_enabled = false;
-		smu7_init_function_poपूर्णांकers(hwmgr);
-		अवरोध;
-	हाल AMDGPU_FAMILY_CZ:
+		smu7_init_function_pointers(hwmgr);
+		break;
+	case AMDGPU_FAMILY_CZ:
 		adev->pm.pp_feature &= ~PP_GFXOFF_MASK;
 		hwmgr->od_enabled = false;
 		hwmgr->smumgr_funcs = &smu8_smu_funcs;
 		hwmgr->feature_mask &= ~PP_GFXOFF_MASK;
-		smu8_init_function_poपूर्णांकers(hwmgr);
-		अवरोध;
-	हाल AMDGPU_FAMILY_VI:
+		smu8_init_function_pointers(hwmgr);
+		break;
+	case AMDGPU_FAMILY_VI:
 		adev->pm.pp_feature &= ~PP_GFXOFF_MASK;
 		hwmgr->feature_mask &= ~PP_GFXOFF_MASK;
-		चयन (hwmgr->chip_id) अणु
-		हाल CHIP_TOPAZ:
+		switch (hwmgr->chip_id) {
+		case CHIP_TOPAZ:
 			hwmgr->smumgr_funcs = &iceland_smu_funcs;
 			topaz_set_asic_special_caps(hwmgr);
 			hwmgr->feature_mask &= ~ (PP_VBI_TIME_SUPPORT_MASK |
 						PP_ENABLE_GFX_CG_THRU_SMU);
 			hwmgr->pp_table_version = PP_TABLE_V0;
 			hwmgr->od_enabled = false;
-			अवरोध;
-		हाल CHIP_TONGA:
+			break;
+		case CHIP_TONGA:
 			hwmgr->smumgr_funcs = &tonga_smu_funcs;
 			tonga_set_asic_special_caps(hwmgr);
 			hwmgr->feature_mask &= ~PP_VBI_TIME_SUPPORT_MASK;
-			अवरोध;
-		हाल CHIP_FIJI:
+			break;
+		case CHIP_FIJI:
 			hwmgr->smumgr_funcs = &fiji_smu_funcs;
 			fiji_set_asic_special_caps(hwmgr);
 			hwmgr->feature_mask &= ~ (PP_VBI_TIME_SUPPORT_MASK |
 						PP_ENABLE_GFX_CG_THRU_SMU);
-			अवरोध;
-		हाल CHIP_POLARIS11:
-		हाल CHIP_POLARIS10:
-		हाल CHIP_POLARIS12:
+			break;
+		case CHIP_POLARIS11:
+		case CHIP_POLARIS10:
+		case CHIP_POLARIS12:
 			hwmgr->smumgr_funcs = &polaris10_smu_funcs;
 			polaris_set_asic_special_caps(hwmgr);
 			hwmgr->feature_mask &= ~(PP_UVD_HANDSHAKE_MASK);
-			अवरोध;
-		हाल CHIP_VEGAM:
+			break;
+		case CHIP_VEGAM:
 			hwmgr->smumgr_funcs = &vegam_smu_funcs;
 			polaris_set_asic_special_caps(hwmgr);
 			hwmgr->feature_mask &= ~(PP_UVD_HANDSHAKE_MASK);
-			अवरोध;
-		शेष:
-			वापस -EINVAL;
-		पूर्ण
-		smu7_init_function_poपूर्णांकers(hwmgr);
-		अवरोध;
-	हाल AMDGPU_FAMILY_AI:
-		चयन (hwmgr->chip_id) अणु
-		हाल CHIP_VEGA10:
+			break;
+		default:
+			return -EINVAL;
+		}
+		smu7_init_function_pointers(hwmgr);
+		break;
+	case AMDGPU_FAMILY_AI:
+		switch (hwmgr->chip_id) {
+		case CHIP_VEGA10:
 			adev->pm.pp_feature &= ~PP_GFXOFF_MASK;
 			hwmgr->feature_mask &= ~PP_GFXOFF_MASK;
 			hwmgr->smumgr_funcs = &vega10_smu_funcs;
 			vega10_hwmgr_init(hwmgr);
-			अवरोध;
-		हाल CHIP_VEGA12:
+			break;
+		case CHIP_VEGA12:
 			hwmgr->smumgr_funcs = &vega12_smu_funcs;
 			vega12_hwmgr_init(hwmgr);
-			अवरोध;
-		हाल CHIP_VEGA20:
+			break;
+		case CHIP_VEGA20:
 			adev->pm.pp_feature &= ~PP_GFXOFF_MASK;
 			hwmgr->feature_mask &= ~PP_GFXOFF_MASK;
 			hwmgr->smumgr_funcs = &vega20_smu_funcs;
 			vega20_hwmgr_init(hwmgr);
-			अवरोध;
-		शेष:
-			वापस -EINVAL;
-		पूर्ण
-		अवरोध;
-	हाल AMDGPU_FAMILY_RV:
-		चयन (hwmgr->chip_id) अणु
-		हाल CHIP_RAVEN:
+			break;
+		default:
+			return -EINVAL;
+		}
+		break;
+	case AMDGPU_FAMILY_RV:
+		switch (hwmgr->chip_id) {
+		case CHIP_RAVEN:
 			hwmgr->od_enabled = false;
 			hwmgr->smumgr_funcs = &smu10_smu_funcs;
-			smu10_init_function_poपूर्णांकers(hwmgr);
-			अवरोध;
-		शेष:
-			वापस -EINVAL;
-		पूर्ण
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+			smu10_init_function_pointers(hwmgr);
+			break;
+		default:
+			return -EINVAL;
+		}
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक hwmgr_sw_init(काष्ठा pp_hwmgr *hwmgr)
-अणु
-	अगर (!hwmgr|| !hwmgr->smumgr_funcs || !hwmgr->smumgr_funcs->smu_init)
-		वापस -EINVAL;
+int hwmgr_sw_init(struct pp_hwmgr *hwmgr)
+{
+	if (!hwmgr|| !hwmgr->smumgr_funcs || !hwmgr->smumgr_funcs->smu_init)
+		return -EINVAL;
 
-	phm_रेजिस्टर_irq_handlers(hwmgr);
+	phm_register_irq_handlers(hwmgr);
 	pr_info("hwmgr_sw_init smu backed is %s\n", hwmgr->smumgr_funcs->name);
 
-	वापस hwmgr->smumgr_funcs->smu_init(hwmgr);
-पूर्ण
+	return hwmgr->smumgr_funcs->smu_init(hwmgr);
+}
 
 
-पूर्णांक hwmgr_sw_fini(काष्ठा pp_hwmgr *hwmgr)
-अणु
-	अगर (hwmgr && hwmgr->smumgr_funcs && hwmgr->smumgr_funcs->smu_fini)
+int hwmgr_sw_fini(struct pp_hwmgr *hwmgr)
+{
+	if (hwmgr && hwmgr->smumgr_funcs && hwmgr->smumgr_funcs->smu_fini)
 		hwmgr->smumgr_funcs->smu_fini(hwmgr);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक hwmgr_hw_init(काष्ठा pp_hwmgr *hwmgr)
-अणु
-	पूर्णांक ret = 0;
+int hwmgr_hw_init(struct pp_hwmgr *hwmgr)
+{
+	int ret = 0;
 
-	hwmgr->pp_one_vf = amdgpu_sriov_is_pp_one_vf((काष्ठा amdgpu_device *)hwmgr->adev);
+	hwmgr->pp_one_vf = amdgpu_sriov_is_pp_one_vf((struct amdgpu_device *)hwmgr->adev);
 	hwmgr->pm_en = (amdgpu_dpm && (hwmgr->not_vf || hwmgr->pp_one_vf))
 			? true : false;
-	अगर (!hwmgr->pm_en)
-		वापस 0;
+	if (!hwmgr->pm_en)
+		return 0;
 
-	अगर (!hwmgr->pptable_func ||
+	if (!hwmgr->pptable_func ||
 	    !hwmgr->pptable_func->pptable_init ||
-	    !hwmgr->hwmgr_func->backend_init) अणु
+	    !hwmgr->hwmgr_func->backend_init) {
 		hwmgr->pm_en = false;
 		pr_info("dpm not supported \n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	ret = hwmgr->pptable_func->pptable_init(hwmgr);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 
-	((काष्ठा amdgpu_device *)hwmgr->adev)->pm.no_fan =
+	((struct amdgpu_device *)hwmgr->adev)->pm.no_fan =
 				hwmgr->thermal_controller.fanInfo.bNoFan;
 
 	ret = hwmgr->hwmgr_func->backend_init(hwmgr);
-	अगर (ret)
-		जाओ err1;
+	if (ret)
+		goto err1;
  /* make sure dc limits are valid */
-	अगर ((hwmgr->dyn_state.max_घड़ी_voltage_on_dc.sclk == 0) ||
-			(hwmgr->dyn_state.max_घड़ी_voltage_on_dc.mclk == 0))
-			hwmgr->dyn_state.max_घड़ी_voltage_on_dc =
-					hwmgr->dyn_state.max_घड़ी_voltage_on_ac;
+	if ((hwmgr->dyn_state.max_clock_voltage_on_dc.sclk == 0) ||
+			(hwmgr->dyn_state.max_clock_voltage_on_dc.mclk == 0))
+			hwmgr->dyn_state.max_clock_voltage_on_dc =
+					hwmgr->dyn_state.max_clock_voltage_on_ac;
 
-	ret = psm_init_घातer_state_table(hwmgr);
-	अगर (ret)
-		जाओ err2;
+	ret = psm_init_power_state_table(hwmgr);
+	if (ret)
+		goto err2;
 
 	ret = phm_setup_asic(hwmgr);
-	अगर (ret)
-		जाओ err2;
+	if (ret)
+		goto err2;
 
 	ret = phm_enable_dynamic_state_management(hwmgr);
-	अगर (ret)
-		जाओ err2;
+	if (ret)
+		goto err2;
 	ret = phm_start_thermal_controller(hwmgr);
-	ret |= psm_set_perक्रमmance_states(hwmgr);
-	अगर (ret)
-		जाओ err2;
+	ret |= psm_set_performance_states(hwmgr);
+	if (ret)
+		goto err2;
 
-	((काष्ठा amdgpu_device *)hwmgr->adev)->pm.dpm_enabled = true;
+	((struct amdgpu_device *)hwmgr->adev)->pm.dpm_enabled = true;
 
-	वापस 0;
+	return 0;
 err2:
-	अगर (hwmgr->hwmgr_func->backend_fini)
+	if (hwmgr->hwmgr_func->backend_fini)
 		hwmgr->hwmgr_func->backend_fini(hwmgr);
 err1:
-	अगर (hwmgr->pptable_func->pptable_fini)
+	if (hwmgr->pptable_func->pptable_fini)
 		hwmgr->pptable_func->pptable_fini(hwmgr);
 err:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक hwmgr_hw_fini(काष्ठा pp_hwmgr *hwmgr)
-अणु
-	अगर (!hwmgr || !hwmgr->pm_en || !hwmgr->not_vf)
-		वापस 0;
+int hwmgr_hw_fini(struct pp_hwmgr *hwmgr)
+{
+	if (!hwmgr || !hwmgr->pm_en || !hwmgr->not_vf)
+		return 0;
 
 	phm_stop_thermal_controller(hwmgr);
 	psm_set_boot_states(hwmgr);
-	psm_adjust_घातer_state_dynamic(hwmgr, true, शून्य);
+	psm_adjust_power_state_dynamic(hwmgr, true, NULL);
 	phm_disable_dynamic_state_management(hwmgr);
-	phm_disable_घड़ी_घातer_gatings(hwmgr);
+	phm_disable_clock_power_gatings(hwmgr);
 
-	अगर (hwmgr->hwmgr_func->backend_fini)
+	if (hwmgr->hwmgr_func->backend_fini)
 		hwmgr->hwmgr_func->backend_fini(hwmgr);
-	अगर (hwmgr->pptable_func->pptable_fini)
+	if (hwmgr->pptable_func->pptable_fini)
 		hwmgr->pptable_func->pptable_fini(hwmgr);
-	वापस psm_fini_घातer_state_table(hwmgr);
-पूर्ण
+	return psm_fini_power_state_table(hwmgr);
+}
 
-पूर्णांक hwmgr_suspend(काष्ठा pp_hwmgr *hwmgr)
-अणु
-	पूर्णांक ret = 0;
+int hwmgr_suspend(struct pp_hwmgr *hwmgr)
+{
+	int ret = 0;
 
-	अगर (!hwmgr || !hwmgr->pm_en || !hwmgr->not_vf)
-		वापस 0;
+	if (!hwmgr || !hwmgr->pm_en || !hwmgr->not_vf)
+		return 0;
 
 	phm_disable_smc_firmware_ctf(hwmgr);
 	ret = psm_set_boot_states(hwmgr);
-	अगर (ret)
-		वापस ret;
-	ret = psm_adjust_घातer_state_dynamic(hwmgr, true, शून्य);
-	अगर (ret)
-		वापस ret;
-	ret = phm_घातer_करोwn_asic(hwmgr);
+	if (ret)
+		return ret;
+	ret = psm_adjust_power_state_dynamic(hwmgr, true, NULL);
+	if (ret)
+		return ret;
+	ret = phm_power_down_asic(hwmgr);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक hwmgr_resume(काष्ठा pp_hwmgr *hwmgr)
-अणु
-	पूर्णांक ret = 0;
+int hwmgr_resume(struct pp_hwmgr *hwmgr)
+{
+	int ret = 0;
 
-	अगर (!hwmgr)
-		वापस -EINVAL;
+	if (!hwmgr)
+		return -EINVAL;
 
-	अगर (!hwmgr->not_vf || !hwmgr->pm_en)
-		वापस 0;
+	if (!hwmgr->not_vf || !hwmgr->pm_en)
+		return 0;
 
 	ret = phm_setup_asic(hwmgr);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = phm_enable_dynamic_state_management(hwmgr);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 	ret = phm_start_thermal_controller(hwmgr);
-	ret |= psm_set_perक्रमmance_states(hwmgr);
-	अगर (ret)
-		वापस ret;
+	ret |= psm_set_performance_states(hwmgr);
+	if (ret)
+		return ret;
 
-	ret = psm_adjust_घातer_state_dynamic(hwmgr, false, शून्य);
+	ret = psm_adjust_power_state_dynamic(hwmgr, false, NULL);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल क्रमागत PP_StateUILabel घातer_state_convert(क्रमागत amd_pm_state_type  state)
-अणु
-	चयन (state) अणु
-	हाल POWER_STATE_TYPE_BATTERY:
-		वापस PP_StateUILabel_Battery;
-	हाल POWER_STATE_TYPE_BALANCED:
-		वापस PP_StateUILabel_Balanced;
-	हाल POWER_STATE_TYPE_PERFORMANCE:
-		वापस PP_StateUILabel_Perक्रमmance;
-	शेष:
-		वापस PP_StateUILabel_None;
-	पूर्ण
-पूर्ण
+static enum PP_StateUILabel power_state_convert(enum amd_pm_state_type  state)
+{
+	switch (state) {
+	case POWER_STATE_TYPE_BATTERY:
+		return PP_StateUILabel_Battery;
+	case POWER_STATE_TYPE_BALANCED:
+		return PP_StateUILabel_Balanced;
+	case POWER_STATE_TYPE_PERFORMANCE:
+		return PP_StateUILabel_Performance;
+	default:
+		return PP_StateUILabel_None;
+	}
+}
 
-पूर्णांक hwmgr_handle_task(काष्ठा pp_hwmgr *hwmgr, क्रमागत amd_pp_task task_id,
-		क्रमागत amd_pm_state_type *user_state)
-अणु
-	पूर्णांक ret = 0;
+int hwmgr_handle_task(struct pp_hwmgr *hwmgr, enum amd_pp_task task_id,
+		enum amd_pm_state_type *user_state)
+{
+	int ret = 0;
 
-	अगर (hwmgr == शून्य)
-		वापस -EINVAL;
+	if (hwmgr == NULL)
+		return -EINVAL;
 
-	चयन (task_id) अणु
-	हाल AMD_PP_TASK_DISPLAY_CONFIG_CHANGE:
-		अगर (!hwmgr->not_vf)
-			वापस ret;
+	switch (task_id) {
+	case AMD_PP_TASK_DISPLAY_CONFIG_CHANGE:
+		if (!hwmgr->not_vf)
+			return ret;
 		ret = phm_pre_display_configuration_changed(hwmgr);
-		अगर (ret)
-			वापस ret;
-		ret = phm_set_cpu_घातer_state(hwmgr);
-		अगर (ret)
-			वापस ret;
-		ret = psm_set_perक्रमmance_states(hwmgr);
-		अगर (ret)
-			वापस ret;
-		ret = psm_adjust_घातer_state_dynamic(hwmgr, false, शून्य);
-		अवरोध;
-	हाल AMD_PP_TASK_ENABLE_USER_STATE:
-	अणु
-		क्रमागत PP_StateUILabel requested_ui_label;
-		काष्ठा pp_घातer_state *requested_ps = शून्य;
+		if (ret)
+			return ret;
+		ret = phm_set_cpu_power_state(hwmgr);
+		if (ret)
+			return ret;
+		ret = psm_set_performance_states(hwmgr);
+		if (ret)
+			return ret;
+		ret = psm_adjust_power_state_dynamic(hwmgr, false, NULL);
+		break;
+	case AMD_PP_TASK_ENABLE_USER_STATE:
+	{
+		enum PP_StateUILabel requested_ui_label;
+		struct pp_power_state *requested_ps = NULL;
 
-		अगर (!hwmgr->not_vf)
-			वापस ret;
-		अगर (user_state == शून्य) अणु
+		if (!hwmgr->not_vf)
+			return ret;
+		if (user_state == NULL) {
 			ret = -EINVAL;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		requested_ui_label = घातer_state_convert(*user_state);
-		ret = psm_set_user_perक्रमmance_state(hwmgr, requested_ui_label, &requested_ps);
-		अगर (ret)
-			वापस ret;
-		ret = psm_adjust_घातer_state_dynamic(hwmgr, true, requested_ps);
-		अवरोध;
-	पूर्ण
-	हाल AMD_PP_TASK_COMPLETE_INIT:
-	हाल AMD_PP_TASK_READJUST_POWER_STATE:
-		ret = psm_adjust_घातer_state_dynamic(hwmgr, true, शून्य);
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-	वापस ret;
-पूर्ण
+		requested_ui_label = power_state_convert(*user_state);
+		ret = psm_set_user_performance_state(hwmgr, requested_ui_label, &requested_ps);
+		if (ret)
+			return ret;
+		ret = psm_adjust_power_state_dynamic(hwmgr, true, requested_ps);
+		break;
+	}
+	case AMD_PP_TASK_COMPLETE_INIT:
+	case AMD_PP_TASK_READJUST_POWER_STATE:
+		ret = psm_adjust_power_state_dynamic(hwmgr, true, NULL);
+		break;
+	default:
+		break;
+	}
+	return ret;
+}
 
-व्योम hwmgr_init_शेष_caps(काष्ठा pp_hwmgr *hwmgr)
-अणु
-	phm_cap_unset(hwmgr->platक्रमm_descriptor.platक्रमmCaps, PHM_Platक्रमmCaps_PCIEPerक्रमmanceRequest);
+void hwmgr_init_default_caps(struct pp_hwmgr *hwmgr)
+{
+	phm_cap_unset(hwmgr->platform_descriptor.platformCaps, PHM_PlatformCaps_PCIEPerformanceRequest);
 
-	phm_cap_set(hwmgr->platक्रमm_descriptor.platक्रमmCaps, PHM_Platक्रमmCaps_UVDDPM);
-	phm_cap_set(hwmgr->platक्रमm_descriptor.platक्रमmCaps, PHM_Platक्रमmCaps_VCEDPM);
+	phm_cap_set(hwmgr->platform_descriptor.platformCaps, PHM_PlatformCaps_UVDDPM);
+	phm_cap_set(hwmgr->platform_descriptor.platformCaps, PHM_PlatformCaps_VCEDPM);
 
-#अगर defined(CONFIG_ACPI)
-	अगर (amdgpu_acpi_is_pcie_perक्रमmance_request_supported(hwmgr->adev))
-		phm_cap_set(hwmgr->platक्रमm_descriptor.platक्रमmCaps, PHM_Platक्रमmCaps_PCIEPerक्रमmanceRequest);
-#पूर्ण_अगर
+#if defined(CONFIG_ACPI)
+	if (amdgpu_acpi_is_pcie_performance_request_supported(hwmgr->adev))
+		phm_cap_set(hwmgr->platform_descriptor.platformCaps, PHM_PlatformCaps_PCIEPerformanceRequest);
+#endif
 
-	phm_cap_set(hwmgr->platक्रमm_descriptor.platक्रमmCaps,
-		PHM_Platक्रमmCaps_DynamicPatchPowerState);
+	phm_cap_set(hwmgr->platform_descriptor.platformCaps,
+		PHM_PlatformCaps_DynamicPatchPowerState);
 
-	phm_cap_set(hwmgr->platक्रमm_descriptor.platक्रमmCaps,
-		PHM_Platक्रमmCaps_EnableSMU7ThermalManagement);
+	phm_cap_set(hwmgr->platform_descriptor.platformCaps,
+		PHM_PlatformCaps_EnableSMU7ThermalManagement);
 
-	phm_cap_set(hwmgr->platक्रमm_descriptor.platक्रमmCaps,
-			PHM_Platक्रमmCaps_DynamicPowerManagement);
+	phm_cap_set(hwmgr->platform_descriptor.platformCaps,
+			PHM_PlatformCaps_DynamicPowerManagement);
 
-	phm_cap_set(hwmgr->platक्रमm_descriptor.platक्रमmCaps,
-					PHM_Platक्रमmCaps_SMC);
+	phm_cap_set(hwmgr->platform_descriptor.platformCaps,
+					PHM_PlatformCaps_SMC);
 
-	phm_cap_set(hwmgr->platक्रमm_descriptor.platक्रमmCaps,
-					PHM_Platक्रमmCaps_DynamicUVDState);
+	phm_cap_set(hwmgr->platform_descriptor.platformCaps,
+					PHM_PlatformCaps_DynamicUVDState);
 
-	phm_cap_set(hwmgr->platक्रमm_descriptor.platक्रमmCaps,
-						PHM_Platक्रमmCaps_FanSpeedInTableIsRPM);
-	वापस;
-पूर्ण
+	phm_cap_set(hwmgr->platform_descriptor.platformCaps,
+						PHM_PlatformCaps_FanSpeedInTableIsRPM);
+	return;
+}
 
-पूर्णांक hwmgr_set_user_specअगरy_caps(काष्ठा pp_hwmgr *hwmgr)
-अणु
-	अगर (hwmgr->feature_mask & PP_SCLK_DEEP_SLEEP_MASK)
-		phm_cap_set(hwmgr->platक्रमm_descriptor.platक्रमmCaps,
-			PHM_Platक्रमmCaps_SclkDeepSleep);
-	अन्यथा
-		phm_cap_unset(hwmgr->platक्रमm_descriptor.platक्रमmCaps,
-			PHM_Platक्रमmCaps_SclkDeepSleep);
+int hwmgr_set_user_specify_caps(struct pp_hwmgr *hwmgr)
+{
+	if (hwmgr->feature_mask & PP_SCLK_DEEP_SLEEP_MASK)
+		phm_cap_set(hwmgr->platform_descriptor.platformCaps,
+			PHM_PlatformCaps_SclkDeepSleep);
+	else
+		phm_cap_unset(hwmgr->platform_descriptor.platformCaps,
+			PHM_PlatformCaps_SclkDeepSleep);
 
-	अगर (hwmgr->feature_mask & PP_POWER_CONTAINMENT_MASK) अणु
-		phm_cap_set(hwmgr->platक्रमm_descriptor.platक्रमmCaps,
-			    PHM_Platक्रमmCaps_PowerContainment);
-		phm_cap_set(hwmgr->platक्रमm_descriptor.platक्रमmCaps,
-			PHM_Platक्रमmCaps_CAC);
-	पूर्ण अन्यथा अणु
-		phm_cap_unset(hwmgr->platक्रमm_descriptor.platक्रमmCaps,
-			    PHM_Platक्रमmCaps_PowerContainment);
-		phm_cap_unset(hwmgr->platक्रमm_descriptor.platक्रमmCaps,
-			PHM_Platक्रमmCaps_CAC);
-	पूर्ण
+	if (hwmgr->feature_mask & PP_POWER_CONTAINMENT_MASK) {
+		phm_cap_set(hwmgr->platform_descriptor.platformCaps,
+			    PHM_PlatformCaps_PowerContainment);
+		phm_cap_set(hwmgr->platform_descriptor.platformCaps,
+			PHM_PlatformCaps_CAC);
+	} else {
+		phm_cap_unset(hwmgr->platform_descriptor.platformCaps,
+			    PHM_PlatformCaps_PowerContainment);
+		phm_cap_unset(hwmgr->platform_descriptor.platformCaps,
+			PHM_PlatformCaps_CAC);
+	}
 
-	अगर (hwmgr->feature_mask & PP_OVERDRIVE_MASK)
+	if (hwmgr->feature_mask & PP_OVERDRIVE_MASK)
 		hwmgr->od_enabled = true;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक polaris_set_asic_special_caps(काष्ठा pp_hwmgr *hwmgr)
-अणु
-	phm_cap_set(hwmgr->platक्रमm_descriptor.platक्रमmCaps,
-						PHM_Platक्रमmCaps_EVV);
-	phm_cap_set(hwmgr->platक्रमm_descriptor.platक्रमmCaps,
-						PHM_Platक्रमmCaps_SQRamping);
-	phm_cap_set(hwmgr->platक्रमm_descriptor.platक्रमmCaps,
-						PHM_Platक्रमmCaps_RegulatorHot);
+int polaris_set_asic_special_caps(struct pp_hwmgr *hwmgr)
+{
+	phm_cap_set(hwmgr->platform_descriptor.platformCaps,
+						PHM_PlatformCaps_EVV);
+	phm_cap_set(hwmgr->platform_descriptor.platformCaps,
+						PHM_PlatformCaps_SQRamping);
+	phm_cap_set(hwmgr->platform_descriptor.platformCaps,
+						PHM_PlatformCaps_RegulatorHot);
 
-	phm_cap_set(hwmgr->platक्रमm_descriptor.platक्रमmCaps,
-			PHM_Platक्रमmCaps_MemorySpपढ़ोSpectrumSupport);
-	phm_cap_set(hwmgr->platक्रमm_descriptor.platक्रमmCaps,
-			PHM_Platक्रमmCaps_EngineSpपढ़ोSpectrumSupport);
+	phm_cap_set(hwmgr->platform_descriptor.platformCaps,
+			PHM_PlatformCaps_MemorySpreadSpectrumSupport);
+	phm_cap_set(hwmgr->platform_descriptor.platformCaps,
+			PHM_PlatformCaps_EngineSpreadSpectrumSupport);
 
-	phm_cap_set(hwmgr->platक्रमm_descriptor.platक्रमmCaps,
-					PHM_Platक्रमmCaps_AutomaticDCTransition);
+	phm_cap_set(hwmgr->platform_descriptor.platformCaps,
+					PHM_PlatformCaps_AutomaticDCTransition);
 
-	अगर (((hwmgr->chip_id == CHIP_POLARIS11) && !hwmgr->is_kicker) ||
+	if (((hwmgr->chip_id == CHIP_POLARIS11) && !hwmgr->is_kicker) ||
 	    (hwmgr->chip_id == CHIP_POLARIS12))
-		phm_cap_set(hwmgr->platक्रमm_descriptor.platक्रमmCaps,
-				PHM_Platक्रमmCaps_SPLLShutकरोwnSupport);
+		phm_cap_set(hwmgr->platform_descriptor.platformCaps,
+				PHM_PlatformCaps_SPLLShutdownSupport);
 
-	अगर (hwmgr->chip_id != CHIP_POLARIS11) अणु
-		phm_cap_set(hwmgr->platक्रमm_descriptor.platक्रमmCaps,
-							PHM_Platक्रमmCaps_DBRamping);
-		phm_cap_set(hwmgr->platक्रमm_descriptor.platक्रमmCaps,
-							PHM_Platक्रमmCaps_TDRamping);
-		phm_cap_set(hwmgr->platक्रमm_descriptor.platक्रमmCaps,
-							PHM_Platक्रमmCaps_TCPRamping);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	if (hwmgr->chip_id != CHIP_POLARIS11) {
+		phm_cap_set(hwmgr->platform_descriptor.platformCaps,
+							PHM_PlatformCaps_DBRamping);
+		phm_cap_set(hwmgr->platform_descriptor.platformCaps,
+							PHM_PlatformCaps_TDRamping);
+		phm_cap_set(hwmgr->platform_descriptor.platformCaps,
+							PHM_PlatformCaps_TCPRamping);
+	}
+	return 0;
+}
 
-पूर्णांक fiji_set_asic_special_caps(काष्ठा pp_hwmgr *hwmgr)
-अणु
-	phm_cap_set(hwmgr->platक्रमm_descriptor.platक्रमmCaps,
-						PHM_Platक्रमmCaps_EVV);
-	phm_cap_unset(hwmgr->platक्रमm_descriptor.platक्रमmCaps,
-			PHM_Platक्रमmCaps_SQRamping);
-	phm_cap_unset(hwmgr->platक्रमm_descriptor.platक्रमmCaps,
-			PHM_Platक्रमmCaps_DBRamping);
-	phm_cap_unset(hwmgr->platक्रमm_descriptor.platक्रमmCaps,
-			PHM_Platक्रमmCaps_TDRamping);
-	phm_cap_unset(hwmgr->platक्रमm_descriptor.platक्रमmCaps,
-			PHM_Platक्रमmCaps_TCPRamping);
-	वापस 0;
-पूर्ण
+int fiji_set_asic_special_caps(struct pp_hwmgr *hwmgr)
+{
+	phm_cap_set(hwmgr->platform_descriptor.platformCaps,
+						PHM_PlatformCaps_EVV);
+	phm_cap_unset(hwmgr->platform_descriptor.platformCaps,
+			PHM_PlatformCaps_SQRamping);
+	phm_cap_unset(hwmgr->platform_descriptor.platformCaps,
+			PHM_PlatformCaps_DBRamping);
+	phm_cap_unset(hwmgr->platform_descriptor.platformCaps,
+			PHM_PlatformCaps_TDRamping);
+	phm_cap_unset(hwmgr->platform_descriptor.platformCaps,
+			PHM_PlatformCaps_TCPRamping);
+	return 0;
+}
 
-पूर्णांक tonga_set_asic_special_caps(काष्ठा pp_hwmgr *hwmgr)
-अणु
-	phm_cap_set(hwmgr->platक्रमm_descriptor.platक्रमmCaps,
-						PHM_Platक्रमmCaps_EVV);
-	phm_cap_unset(hwmgr->platक्रमm_descriptor.platक्रमmCaps,
-			PHM_Platक्रमmCaps_SQRamping);
-	phm_cap_unset(hwmgr->platक्रमm_descriptor.platक्रमmCaps,
-			PHM_Platक्रमmCaps_DBRamping);
-	phm_cap_unset(hwmgr->platक्रमm_descriptor.platक्रमmCaps,
-			PHM_Platक्रमmCaps_TDRamping);
-	phm_cap_unset(hwmgr->platक्रमm_descriptor.platक्रमmCaps,
-			PHM_Platक्रमmCaps_TCPRamping);
+int tonga_set_asic_special_caps(struct pp_hwmgr *hwmgr)
+{
+	phm_cap_set(hwmgr->platform_descriptor.platformCaps,
+						PHM_PlatformCaps_EVV);
+	phm_cap_unset(hwmgr->platform_descriptor.platformCaps,
+			PHM_PlatformCaps_SQRamping);
+	phm_cap_unset(hwmgr->platform_descriptor.platformCaps,
+			PHM_PlatformCaps_DBRamping);
+	phm_cap_unset(hwmgr->platform_descriptor.platformCaps,
+			PHM_PlatformCaps_TDRamping);
+	phm_cap_unset(hwmgr->platform_descriptor.platformCaps,
+			PHM_PlatformCaps_TCPRamping);
 
-	phm_cap_unset(hwmgr->platक्रमm_descriptor.platक्रमmCaps,
-		      PHM_Platक्रमmCaps_UVDPowerGating);
-	phm_cap_unset(hwmgr->platक्रमm_descriptor.platक्रमmCaps,
-		      PHM_Platक्रमmCaps_VCEPowerGating);
-	वापस 0;
-पूर्ण
+	phm_cap_unset(hwmgr->platform_descriptor.platformCaps,
+		      PHM_PlatformCaps_UVDPowerGating);
+	phm_cap_unset(hwmgr->platform_descriptor.platformCaps,
+		      PHM_PlatformCaps_VCEPowerGating);
+	return 0;
+}
 
-पूर्णांक topaz_set_asic_special_caps(काष्ठा pp_hwmgr *hwmgr)
-अणु
-	phm_cap_set(hwmgr->platक्रमm_descriptor.platक्रमmCaps,
-						PHM_Platक्रमmCaps_EVV);
-	phm_cap_unset(hwmgr->platक्रमm_descriptor.platक्रमmCaps,
-			PHM_Platक्रमmCaps_SQRamping);
-	phm_cap_unset(hwmgr->platक्रमm_descriptor.platक्रमmCaps,
-			PHM_Platक्रमmCaps_DBRamping);
-	phm_cap_unset(hwmgr->platक्रमm_descriptor.platक्रमmCaps,
-			PHM_Platक्रमmCaps_TDRamping);
-	phm_cap_unset(hwmgr->platक्रमm_descriptor.platक्रमmCaps,
-			PHM_Platक्रमmCaps_TCPRamping);
-	वापस 0;
-पूर्ण
+int topaz_set_asic_special_caps(struct pp_hwmgr *hwmgr)
+{
+	phm_cap_set(hwmgr->platform_descriptor.platformCaps,
+						PHM_PlatformCaps_EVV);
+	phm_cap_unset(hwmgr->platform_descriptor.platformCaps,
+			PHM_PlatformCaps_SQRamping);
+	phm_cap_unset(hwmgr->platform_descriptor.platformCaps,
+			PHM_PlatformCaps_DBRamping);
+	phm_cap_unset(hwmgr->platform_descriptor.platformCaps,
+			PHM_PlatformCaps_TDRamping);
+	phm_cap_unset(hwmgr->platform_descriptor.platformCaps,
+			PHM_PlatformCaps_TCPRamping);
+	return 0;
+}
 
-पूर्णांक ci_set_asic_special_caps(काष्ठा pp_hwmgr *hwmgr)
-अणु
-	phm_cap_unset(hwmgr->platक्रमm_descriptor.platक्रमmCaps,
-			PHM_Platक्रमmCaps_SQRamping);
-	phm_cap_unset(hwmgr->platक्रमm_descriptor.platक्रमmCaps,
-			PHM_Platक्रमmCaps_DBRamping);
-	phm_cap_unset(hwmgr->platक्रमm_descriptor.platक्रमmCaps,
-			PHM_Platक्रमmCaps_TDRamping);
-	phm_cap_unset(hwmgr->platक्रमm_descriptor.platक्रमmCaps,
-			PHM_Platक्रमmCaps_TCPRamping);
-	phm_cap_set(hwmgr->platक्रमm_descriptor.platक्रमmCaps,
-			PHM_Platक्रमmCaps_MemorySpपढ़ोSpectrumSupport);
-	phm_cap_set(hwmgr->platक्रमm_descriptor.platक्रमmCaps,
-			PHM_Platक्रमmCaps_EngineSpपढ़ोSpectrumSupport);
-	वापस 0;
-पूर्ण
+int ci_set_asic_special_caps(struct pp_hwmgr *hwmgr)
+{
+	phm_cap_unset(hwmgr->platform_descriptor.platformCaps,
+			PHM_PlatformCaps_SQRamping);
+	phm_cap_unset(hwmgr->platform_descriptor.platformCaps,
+			PHM_PlatformCaps_DBRamping);
+	phm_cap_unset(hwmgr->platform_descriptor.platformCaps,
+			PHM_PlatformCaps_TDRamping);
+	phm_cap_unset(hwmgr->platform_descriptor.platformCaps,
+			PHM_PlatformCaps_TCPRamping);
+	phm_cap_set(hwmgr->platform_descriptor.platformCaps,
+			PHM_PlatformCaps_MemorySpreadSpectrumSupport);
+	phm_cap_set(hwmgr->platform_descriptor.platformCaps,
+			PHM_PlatformCaps_EngineSpreadSpectrumSupport);
+	return 0;
+}

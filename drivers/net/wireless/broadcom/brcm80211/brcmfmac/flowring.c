@@ -1,32 +1,31 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: ISC
+// SPDX-License-Identifier: ISC
 /*
  * Copyright (c) 2014 Broadcom Corporation
  */
 
 
-#समावेश <linux/types.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/etherdevice.h>
-#समावेश <brcmu_utils.h>
+#include <linux/types.h>
+#include <linux/netdevice.h>
+#include <linux/etherdevice.h>
+#include <brcmu_utils.h>
 
-#समावेश "core.h"
-#समावेश "debug.h"
-#समावेश "bus.h"
-#समावेश "proto.h"
-#समावेश "flowring.h"
-#समावेश "msgbuf.h"
-#समावेश "common.h"
+#include "core.h"
+#include "debug.h"
+#include "bus.h"
+#include "proto.h"
+#include "flowring.h"
+#include "msgbuf.h"
+#include "common.h"
 
 
-#घोषणा BRCMF_FLOWRING_HIGH		1024
-#घोषणा BRCMF_FLOWRING_LOW		(BRCMF_FLOWRING_HIGH - 256)
-#घोषणा BRCMF_FLOWRING_INVALID_IFIDX	0xff
+#define BRCMF_FLOWRING_HIGH		1024
+#define BRCMF_FLOWRING_LOW		(BRCMF_FLOWRING_HIGH - 256)
+#define BRCMF_FLOWRING_INVALID_IFIDX	0xff
 
-#घोषणा BRCMF_FLOWRING_HASH_AP(da, fअगरo, अगरidx) (da[5] * 2 + fअगरo + अगरidx * 16)
-#घोषणा BRCMF_FLOWRING_HASH_STA(fअगरo, अगरidx) (fअगरo + अगरidx * 16)
+#define BRCMF_FLOWRING_HASH_AP(da, fifo, ifidx) (da[5] * 2 + fifo + ifidx * 16)
+#define BRCMF_FLOWRING_HASH_STA(fifo, ifidx) (fifo + ifidx * 16)
 
-अटल स्थिर u8 brcmf_flowring_prio2fअगरo[] = अणु
+static const u8 brcmf_flowring_prio2fifo[] = {
 	0,
 	1,
 	1,
@@ -35,124 +34,124 @@
 	2,
 	3,
 	3
-पूर्ण;
+};
 
-अटल स्थिर u8 ALLFFMAC[ETH_ALEN] = अणु 0xff, 0xff, 0xff, 0xff, 0xff, 0xff पूर्ण;
+static const u8 ALLFFMAC[ETH_ALEN] = { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
 
 
-अटल bool
-brcmf_flowring_is_tdls_mac(काष्ठा brcmf_flowring *flow, u8 mac[ETH_ALEN])
-अणु
-	काष्ठा brcmf_flowring_tdls_entry *search;
+static bool
+brcmf_flowring_is_tdls_mac(struct brcmf_flowring *flow, u8 mac[ETH_ALEN])
+{
+	struct brcmf_flowring_tdls_entry *search;
 
 	search = flow->tdls_entry;
 
-	जबतक (search) अणु
-		अगर (स_भेद(search->mac, mac, ETH_ALEN) == 0)
-			वापस true;
+	while (search) {
+		if (memcmp(search->mac, mac, ETH_ALEN) == 0)
+			return true;
 		search = search->next;
-	पूर्ण
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
 
-u32 brcmf_flowring_lookup(काष्ठा brcmf_flowring *flow, u8 da[ETH_ALEN],
-			  u8 prio, u8 अगरidx)
-अणु
-	काष्ठा brcmf_flowring_hash *hash;
+u32 brcmf_flowring_lookup(struct brcmf_flowring *flow, u8 da[ETH_ALEN],
+			  u8 prio, u8 ifidx)
+{
+	struct brcmf_flowring_hash *hash;
 	u16 hash_idx;
 	u32 i;
 	bool found;
 	bool sta;
-	u8 fअगरo;
+	u8 fifo;
 	u8 *mac;
 
-	fअगरo = brcmf_flowring_prio2fअगरo[prio];
-	sta = (flow->addr_mode[अगरidx] == ADDR_INसूचीECT);
+	fifo = brcmf_flowring_prio2fifo[prio];
+	sta = (flow->addr_mode[ifidx] == ADDR_INDIRECT);
 	mac = da;
-	अगर ((!sta) && (is_multicast_ether_addr(da))) अणु
+	if ((!sta) && (is_multicast_ether_addr(da))) {
 		mac = (u8 *)ALLFFMAC;
-		fअगरo = 0;
-	पूर्ण
-	अगर ((sta) && (flow->tdls_active) &&
-	    (brcmf_flowring_is_tdls_mac(flow, da))) अणु
+		fifo = 0;
+	}
+	if ((sta) && (flow->tdls_active) &&
+	    (brcmf_flowring_is_tdls_mac(flow, da))) {
 		sta = false;
-	पूर्ण
-	hash_idx =  sta ? BRCMF_FLOWRING_HASH_STA(fअगरo, अगरidx) :
-			  BRCMF_FLOWRING_HASH_AP(mac, fअगरo, अगरidx);
+	}
+	hash_idx =  sta ? BRCMF_FLOWRING_HASH_STA(fifo, ifidx) :
+			  BRCMF_FLOWRING_HASH_AP(mac, fifo, ifidx);
 	hash_idx &= (BRCMF_FLOWRING_HASHSIZE - 1);
 	found = false;
 	hash = flow->hash;
-	क्रम (i = 0; i < BRCMF_FLOWRING_HASHSIZE; i++) अणु
-		अगर ((sta || (स_भेद(hash[hash_idx].mac, mac, ETH_ALEN) == 0)) &&
-		    (hash[hash_idx].fअगरo == fअगरo) &&
-		    (hash[hash_idx].अगरidx == अगरidx)) अणु
+	for (i = 0; i < BRCMF_FLOWRING_HASHSIZE; i++) {
+		if ((sta || (memcmp(hash[hash_idx].mac, mac, ETH_ALEN) == 0)) &&
+		    (hash[hash_idx].fifo == fifo) &&
+		    (hash[hash_idx].ifidx == ifidx)) {
 			found = true;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		hash_idx++;
 		hash_idx &= (BRCMF_FLOWRING_HASHSIZE - 1);
-	पूर्ण
-	अगर (found)
-		वापस hash[hash_idx].flowid;
+	}
+	if (found)
+		return hash[hash_idx].flowid;
 
-	वापस BRCMF_FLOWRING_INVALID_ID;
-पूर्ण
+	return BRCMF_FLOWRING_INVALID_ID;
+}
 
 
-u32 brcmf_flowring_create(काष्ठा brcmf_flowring *flow, u8 da[ETH_ALEN],
-			  u8 prio, u8 अगरidx)
-अणु
-	काष्ठा brcmf_flowring_ring *ring;
-	काष्ठा brcmf_flowring_hash *hash;
+u32 brcmf_flowring_create(struct brcmf_flowring *flow, u8 da[ETH_ALEN],
+			  u8 prio, u8 ifidx)
+{
+	struct brcmf_flowring_ring *ring;
+	struct brcmf_flowring_hash *hash;
 	u16 hash_idx;
 	u32 i;
 	bool found;
-	u8 fअगरo;
+	u8 fifo;
 	bool sta;
 	u8 *mac;
 
-	fअगरo = brcmf_flowring_prio2fअगरo[prio];
-	sta = (flow->addr_mode[अगरidx] == ADDR_INसूचीECT);
+	fifo = brcmf_flowring_prio2fifo[prio];
+	sta = (flow->addr_mode[ifidx] == ADDR_INDIRECT);
 	mac = da;
-	अगर ((!sta) && (is_multicast_ether_addr(da))) अणु
+	if ((!sta) && (is_multicast_ether_addr(da))) {
 		mac = (u8 *)ALLFFMAC;
-		fअगरo = 0;
-	पूर्ण
-	अगर ((sta) && (flow->tdls_active) &&
-	    (brcmf_flowring_is_tdls_mac(flow, da))) अणु
+		fifo = 0;
+	}
+	if ((sta) && (flow->tdls_active) &&
+	    (brcmf_flowring_is_tdls_mac(flow, da))) {
 		sta = false;
-	पूर्ण
-	hash_idx =  sta ? BRCMF_FLOWRING_HASH_STA(fअगरo, अगरidx) :
-			  BRCMF_FLOWRING_HASH_AP(mac, fअगरo, अगरidx);
+	}
+	hash_idx =  sta ? BRCMF_FLOWRING_HASH_STA(fifo, ifidx) :
+			  BRCMF_FLOWRING_HASH_AP(mac, fifo, ifidx);
 	hash_idx &= (BRCMF_FLOWRING_HASHSIZE - 1);
 	found = false;
 	hash = flow->hash;
-	क्रम (i = 0; i < BRCMF_FLOWRING_HASHSIZE; i++) अणु
-		अगर ((hash[hash_idx].अगरidx == BRCMF_FLOWRING_INVALID_IFIDX) &&
-		    (is_zero_ether_addr(hash[hash_idx].mac))) अणु
+	for (i = 0; i < BRCMF_FLOWRING_HASHSIZE; i++) {
+		if ((hash[hash_idx].ifidx == BRCMF_FLOWRING_INVALID_IFIDX) &&
+		    (is_zero_ether_addr(hash[hash_idx].mac))) {
 			found = true;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		hash_idx++;
 		hash_idx &= (BRCMF_FLOWRING_HASHSIZE - 1);
-	पूर्ण
-	अगर (found) अणु
-		क्रम (i = 0; i < flow->nrofrings; i++) अणु
-			अगर (flow->rings[i] == शून्य)
-				अवरोध;
-		पूर्ण
-		अगर (i == flow->nrofrings)
-			वापस -ENOMEM;
+	}
+	if (found) {
+		for (i = 0; i < flow->nrofrings; i++) {
+			if (flow->rings[i] == NULL)
+				break;
+		}
+		if (i == flow->nrofrings)
+			return -ENOMEM;
 
-		ring = kzalloc(माप(*ring), GFP_ATOMIC);
-		अगर (!ring)
-			वापस -ENOMEM;
+		ring = kzalloc(sizeof(*ring), GFP_ATOMIC);
+		if (!ring)
+			return -ENOMEM;
 
-		स_नकल(hash[hash_idx].mac, mac, ETH_ALEN);
-		hash[hash_idx].fअगरo = fअगरo;
-		hash[hash_idx].अगरidx = अगरidx;
+		memcpy(hash[hash_idx].mac, mac, ETH_ALEN);
+		hash[hash_idx].fifo = fifo;
+		hash[hash_idx].ifidx = ifidx;
 		hash[hash_idx].flowid = i;
 
 		ring->hash_id = hash_idx;
@@ -160,353 +159,353 @@ u32 brcmf_flowring_create(काष्ठा brcmf_flowring *flow, u8 da[ETH_ALE
 		skb_queue_head_init(&ring->skblist);
 		flow->rings[i] = ring;
 
-		वापस i;
-	पूर्ण
-	वापस BRCMF_FLOWRING_INVALID_ID;
-पूर्ण
+		return i;
+	}
+	return BRCMF_FLOWRING_INVALID_ID;
+}
 
 
-u8 brcmf_flowring_tid(काष्ठा brcmf_flowring *flow, u16 flowid)
-अणु
-	काष्ठा brcmf_flowring_ring *ring;
+u8 brcmf_flowring_tid(struct brcmf_flowring *flow, u16 flowid)
+{
+	struct brcmf_flowring_ring *ring;
 
 	ring = flow->rings[flowid];
 
-	वापस flow->hash[ring->hash_id].fअगरo;
-पूर्ण
+	return flow->hash[ring->hash_id].fifo;
+}
 
 
-अटल व्योम brcmf_flowring_block(काष्ठा brcmf_flowring *flow, u16 flowid,
+static void brcmf_flowring_block(struct brcmf_flowring *flow, u16 flowid,
 				 bool blocked)
-अणु
-	काष्ठा brcmf_flowring_ring *ring;
-	काष्ठा brcmf_bus *bus_अगर;
-	काष्ठा brcmf_pub *drvr;
-	काष्ठा brcmf_अगर *अगरp;
+{
+	struct brcmf_flowring_ring *ring;
+	struct brcmf_bus *bus_if;
+	struct brcmf_pub *drvr;
+	struct brcmf_if *ifp;
 	bool currently_blocked;
-	पूर्णांक i;
-	u8 अगरidx;
-	अचिन्हित दीर्घ flags;
+	int i;
+	u8 ifidx;
+	unsigned long flags;
 
 	spin_lock_irqsave(&flow->block_lock, flags);
 
 	ring = flow->rings[flowid];
-	अगर (ring->blocked == blocked) अणु
+	if (ring->blocked == blocked) {
 		spin_unlock_irqrestore(&flow->block_lock, flags);
-		वापस;
-	पूर्ण
-	अगरidx = brcmf_flowring_अगरidx_get(flow, flowid);
+		return;
+	}
+	ifidx = brcmf_flowring_ifidx_get(flow, flowid);
 
 	currently_blocked = false;
-	क्रम (i = 0; i < flow->nrofrings; i++) अणु
-		अगर ((flow->rings[i]) && (i != flowid)) अणु
+	for (i = 0; i < flow->nrofrings; i++) {
+		if ((flow->rings[i]) && (i != flowid)) {
 			ring = flow->rings[i];
-			अगर ((ring->status == RING_OPEN) &&
-			    (brcmf_flowring_अगरidx_get(flow, i) == अगरidx)) अणु
-				अगर (ring->blocked) अणु
+			if ((ring->status == RING_OPEN) &&
+			    (brcmf_flowring_ifidx_get(flow, i) == ifidx)) {
+				if (ring->blocked) {
 					currently_blocked = true;
-					अवरोध;
-				पूर्ण
-			पूर्ण
-		पूर्ण
-	पूर्ण
+					break;
+				}
+			}
+		}
+	}
 	flow->rings[flowid]->blocked = blocked;
-	अगर (currently_blocked) अणु
+	if (currently_blocked) {
 		spin_unlock_irqrestore(&flow->block_lock, flags);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	bus_अगर = dev_get_drvdata(flow->dev);
-	drvr = bus_अगर->drvr;
-	अगरp = brcmf_get_अगरp(drvr, अगरidx);
-	brcmf_txflowblock_अगर(अगरp, BRCMF_NETIF_STOP_REASON_FLOW, blocked);
+	bus_if = dev_get_drvdata(flow->dev);
+	drvr = bus_if->drvr;
+	ifp = brcmf_get_ifp(drvr, ifidx);
+	brcmf_txflowblock_if(ifp, BRCMF_NETIF_STOP_REASON_FLOW, blocked);
 
 	spin_unlock_irqrestore(&flow->block_lock, flags);
-पूर्ण
+}
 
 
-व्योम brcmf_flowring_delete(काष्ठा brcmf_flowring *flow, u16 flowid)
-अणु
-	काष्ठा brcmf_bus *bus_अगर = dev_get_drvdata(flow->dev);
-	काष्ठा brcmf_flowring_ring *ring;
-	काष्ठा brcmf_अगर *अगरp;
+void brcmf_flowring_delete(struct brcmf_flowring *flow, u16 flowid)
+{
+	struct brcmf_bus *bus_if = dev_get_drvdata(flow->dev);
+	struct brcmf_flowring_ring *ring;
+	struct brcmf_if *ifp;
 	u16 hash_idx;
-	u8 अगरidx;
-	काष्ठा sk_buff *skb;
+	u8 ifidx;
+	struct sk_buff *skb;
 
 	ring = flow->rings[flowid];
-	अगर (!ring)
-		वापस;
+	if (!ring)
+		return;
 
-	अगरidx = brcmf_flowring_अगरidx_get(flow, flowid);
-	अगरp = brcmf_get_अगरp(bus_अगर->drvr, अगरidx);
+	ifidx = brcmf_flowring_ifidx_get(flow, flowid);
+	ifp = brcmf_get_ifp(bus_if->drvr, ifidx);
 
 	brcmf_flowring_block(flow, flowid, false);
 	hash_idx = ring->hash_id;
-	flow->hash[hash_idx].अगरidx = BRCMF_FLOWRING_INVALID_IFIDX;
+	flow->hash[hash_idx].ifidx = BRCMF_FLOWRING_INVALID_IFIDX;
 	eth_zero_addr(flow->hash[hash_idx].mac);
-	flow->rings[flowid] = शून्य;
+	flow->rings[flowid] = NULL;
 
 	skb = skb_dequeue(&ring->skblist);
-	जबतक (skb) अणु
-		brcmf_txfinalize(अगरp, skb, false);
+	while (skb) {
+		brcmf_txfinalize(ifp, skb, false);
 		skb = skb_dequeue(&ring->skblist);
-	पूर्ण
+	}
 
-	kमुक्त(ring);
-पूर्ण
+	kfree(ring);
+}
 
 
-u32 brcmf_flowring_enqueue(काष्ठा brcmf_flowring *flow, u16 flowid,
-			   काष्ठा sk_buff *skb)
-अणु
-	काष्ठा brcmf_flowring_ring *ring;
+u32 brcmf_flowring_enqueue(struct brcmf_flowring *flow, u16 flowid,
+			   struct sk_buff *skb)
+{
+	struct brcmf_flowring_ring *ring;
 
 	ring = flow->rings[flowid];
 
 	skb_queue_tail(&ring->skblist, skb);
 
-	अगर (!ring->blocked &&
-	    (skb_queue_len(&ring->skblist) > BRCMF_FLOWRING_HIGH)) अणु
+	if (!ring->blocked &&
+	    (skb_queue_len(&ring->skblist) > BRCMF_FLOWRING_HIGH)) {
 		brcmf_flowring_block(flow, flowid, true);
 		brcmf_dbg(MSGBUF, "Flowcontrol: BLOCK for ring %d\n", flowid);
 		/* To prevent (work around) possible race condition, check
 		 * queue len again. It is also possible to use locking to
-		 * protect, but that is undesirable क्रम every enqueue and
+		 * protect, but that is undesirable for every enqueue and
 		 * dequeue. This simple check will solve a possible race
-		 * condition अगर it occurs.
+		 * condition if it occurs.
 		 */
-		अगर (skb_queue_len(&ring->skblist) < BRCMF_FLOWRING_LOW)
+		if (skb_queue_len(&ring->skblist) < BRCMF_FLOWRING_LOW)
 			brcmf_flowring_block(flow, flowid, false);
-	पूर्ण
-	वापस skb_queue_len(&ring->skblist);
-पूर्ण
+	}
+	return skb_queue_len(&ring->skblist);
+}
 
 
-काष्ठा sk_buff *brcmf_flowring_dequeue(काष्ठा brcmf_flowring *flow, u16 flowid)
-अणु
-	काष्ठा brcmf_flowring_ring *ring;
-	काष्ठा sk_buff *skb;
+struct sk_buff *brcmf_flowring_dequeue(struct brcmf_flowring *flow, u16 flowid)
+{
+	struct brcmf_flowring_ring *ring;
+	struct sk_buff *skb;
 
 	ring = flow->rings[flowid];
-	अगर (ring->status != RING_OPEN)
-		वापस शून्य;
+	if (ring->status != RING_OPEN)
+		return NULL;
 
 	skb = skb_dequeue(&ring->skblist);
 
-	अगर (ring->blocked &&
-	    (skb_queue_len(&ring->skblist) < BRCMF_FLOWRING_LOW)) अणु
+	if (ring->blocked &&
+	    (skb_queue_len(&ring->skblist) < BRCMF_FLOWRING_LOW)) {
 		brcmf_flowring_block(flow, flowid, false);
 		brcmf_dbg(MSGBUF, "Flowcontrol: OPEN for ring %d\n", flowid);
-	पूर्ण
+	}
 
-	वापस skb;
-पूर्ण
+	return skb;
+}
 
 
-व्योम brcmf_flowring_reinsert(काष्ठा brcmf_flowring *flow, u16 flowid,
-			     काष्ठा sk_buff *skb)
-अणु
-	काष्ठा brcmf_flowring_ring *ring;
+void brcmf_flowring_reinsert(struct brcmf_flowring *flow, u16 flowid,
+			     struct sk_buff *skb)
+{
+	struct brcmf_flowring_ring *ring;
 
 	ring = flow->rings[flowid];
 
 	skb_queue_head(&ring->skblist, skb);
-पूर्ण
+}
 
 
-u32 brcmf_flowring_qlen(काष्ठा brcmf_flowring *flow, u16 flowid)
-अणु
-	काष्ठा brcmf_flowring_ring *ring;
-
-	ring = flow->rings[flowid];
-	अगर (!ring)
-		वापस 0;
-
-	अगर (ring->status != RING_OPEN)
-		वापस 0;
-
-	वापस skb_queue_len(&ring->skblist);
-पूर्ण
-
-
-व्योम brcmf_flowring_खोलो(काष्ठा brcmf_flowring *flow, u16 flowid)
-अणु
-	काष्ठा brcmf_flowring_ring *ring;
+u32 brcmf_flowring_qlen(struct brcmf_flowring *flow, u16 flowid)
+{
+	struct brcmf_flowring_ring *ring;
 
 	ring = flow->rings[flowid];
-	अगर (!ring) अणु
+	if (!ring)
+		return 0;
+
+	if (ring->status != RING_OPEN)
+		return 0;
+
+	return skb_queue_len(&ring->skblist);
+}
+
+
+void brcmf_flowring_open(struct brcmf_flowring *flow, u16 flowid)
+{
+	struct brcmf_flowring_ring *ring;
+
+	ring = flow->rings[flowid];
+	if (!ring) {
 		brcmf_err("Ring NULL, for flowid %d\n", flowid);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	ring->status = RING_OPEN;
-पूर्ण
+}
 
 
-u8 brcmf_flowring_अगरidx_get(काष्ठा brcmf_flowring *flow, u16 flowid)
-अणु
-	काष्ठा brcmf_flowring_ring *ring;
+u8 brcmf_flowring_ifidx_get(struct brcmf_flowring *flow, u16 flowid)
+{
+	struct brcmf_flowring_ring *ring;
 	u16 hash_idx;
 
 	ring = flow->rings[flowid];
 	hash_idx = ring->hash_id;
 
-	वापस flow->hash[hash_idx].अगरidx;
-पूर्ण
+	return flow->hash[hash_idx].ifidx;
+}
 
 
-काष्ठा brcmf_flowring *brcmf_flowring_attach(काष्ठा device *dev, u16 nrofrings)
-अणु
-	काष्ठा brcmf_flowring *flow;
+struct brcmf_flowring *brcmf_flowring_attach(struct device *dev, u16 nrofrings)
+{
+	struct brcmf_flowring *flow;
 	u32 i;
 
-	flow = kzalloc(माप(*flow), GFP_KERNEL);
-	अगर (flow) अणु
+	flow = kzalloc(sizeof(*flow), GFP_KERNEL);
+	if (flow) {
 		flow->dev = dev;
 		flow->nrofrings = nrofrings;
 		spin_lock_init(&flow->block_lock);
-		क्रम (i = 0; i < ARRAY_SIZE(flow->addr_mode); i++)
-			flow->addr_mode[i] = ADDR_INसूचीECT;
-		क्रम (i = 0; i < ARRAY_SIZE(flow->hash); i++)
-			flow->hash[i].अगरidx = BRCMF_FLOWRING_INVALID_IFIDX;
-		flow->rings = kसुस्मृति(nrofrings, माप(*flow->rings),
+		for (i = 0; i < ARRAY_SIZE(flow->addr_mode); i++)
+			flow->addr_mode[i] = ADDR_INDIRECT;
+		for (i = 0; i < ARRAY_SIZE(flow->hash); i++)
+			flow->hash[i].ifidx = BRCMF_FLOWRING_INVALID_IFIDX;
+		flow->rings = kcalloc(nrofrings, sizeof(*flow->rings),
 				      GFP_KERNEL);
-		अगर (!flow->rings) अणु
-			kमुक्त(flow);
-			flow = शून्य;
-		पूर्ण
-	पूर्ण
+		if (!flow->rings) {
+			kfree(flow);
+			flow = NULL;
+		}
+	}
 
-	वापस flow;
-पूर्ण
+	return flow;
+}
 
 
-व्योम brcmf_flowring_detach(काष्ठा brcmf_flowring *flow)
-अणु
-	काष्ठा brcmf_bus *bus_अगर = dev_get_drvdata(flow->dev);
-	काष्ठा brcmf_pub *drvr = bus_अगर->drvr;
-	काष्ठा brcmf_flowring_tdls_entry *search;
-	काष्ठा brcmf_flowring_tdls_entry *हटाओ;
+void brcmf_flowring_detach(struct brcmf_flowring *flow)
+{
+	struct brcmf_bus *bus_if = dev_get_drvdata(flow->dev);
+	struct brcmf_pub *drvr = bus_if->drvr;
+	struct brcmf_flowring_tdls_entry *search;
+	struct brcmf_flowring_tdls_entry *remove;
 	u16 flowid;
 
-	क्रम (flowid = 0; flowid < flow->nrofrings; flowid++) अणु
-		अगर (flow->rings[flowid])
+	for (flowid = 0; flowid < flow->nrofrings; flowid++) {
+		if (flow->rings[flowid])
 			brcmf_msgbuf_delete_flowring(drvr, flowid);
-	पूर्ण
+	}
 
 	search = flow->tdls_entry;
-	जबतक (search) अणु
-		हटाओ = search;
+	while (search) {
+		remove = search;
 		search = search->next;
-		kमुक्त(हटाओ);
-	पूर्ण
-	kमुक्त(flow->rings);
-	kमुक्त(flow);
-पूर्ण
+		kfree(remove);
+	}
+	kfree(flow->rings);
+	kfree(flow);
+}
 
 
-व्योम brcmf_flowring_configure_addr_mode(काष्ठा brcmf_flowring *flow, पूर्णांक अगरidx,
-					क्रमागत proto_addr_mode addr_mode)
-अणु
-	काष्ठा brcmf_bus *bus_अगर = dev_get_drvdata(flow->dev);
-	काष्ठा brcmf_pub *drvr = bus_अगर->drvr;
+void brcmf_flowring_configure_addr_mode(struct brcmf_flowring *flow, int ifidx,
+					enum proto_addr_mode addr_mode)
+{
+	struct brcmf_bus *bus_if = dev_get_drvdata(flow->dev);
+	struct brcmf_pub *drvr = bus_if->drvr;
 	u32 i;
 	u16 flowid;
 
-	अगर (flow->addr_mode[अगरidx] != addr_mode) अणु
-		क्रम (i = 0; i < ARRAY_SIZE(flow->hash); i++) अणु
-			अगर (flow->hash[i].अगरidx == अगरidx) अणु
+	if (flow->addr_mode[ifidx] != addr_mode) {
+		for (i = 0; i < ARRAY_SIZE(flow->hash); i++) {
+			if (flow->hash[i].ifidx == ifidx) {
 				flowid = flow->hash[i].flowid;
-				अगर (flow->rings[flowid]->status != RING_OPEN)
-					जारी;
+				if (flow->rings[flowid]->status != RING_OPEN)
+					continue;
 				flow->rings[flowid]->status = RING_CLOSING;
 				brcmf_msgbuf_delete_flowring(drvr, flowid);
-			पूर्ण
-		पूर्ण
-		flow->addr_mode[अगरidx] = addr_mode;
-	पूर्ण
-पूर्ण
+			}
+		}
+		flow->addr_mode[ifidx] = addr_mode;
+	}
+}
 
 
-व्योम brcmf_flowring_delete_peer(काष्ठा brcmf_flowring *flow, पूर्णांक अगरidx,
+void brcmf_flowring_delete_peer(struct brcmf_flowring *flow, int ifidx,
 				u8 peer[ETH_ALEN])
-अणु
-	काष्ठा brcmf_bus *bus_अगर = dev_get_drvdata(flow->dev);
-	काष्ठा brcmf_pub *drvr = bus_अगर->drvr;
-	काष्ठा brcmf_flowring_hash *hash;
-	काष्ठा brcmf_flowring_tdls_entry *prev;
-	काष्ठा brcmf_flowring_tdls_entry *search;
+{
+	struct brcmf_bus *bus_if = dev_get_drvdata(flow->dev);
+	struct brcmf_pub *drvr = bus_if->drvr;
+	struct brcmf_flowring_hash *hash;
+	struct brcmf_flowring_tdls_entry *prev;
+	struct brcmf_flowring_tdls_entry *search;
 	u32 i;
 	u16 flowid;
 	bool sta;
 
-	sta = (flow->addr_mode[अगरidx] == ADDR_INसूचीECT);
+	sta = (flow->addr_mode[ifidx] == ADDR_INDIRECT);
 
 	search = flow->tdls_entry;
-	prev = शून्य;
-	जबतक (search) अणु
-		अगर (स_भेद(search->mac, peer, ETH_ALEN) == 0) अणु
+	prev = NULL;
+	while (search) {
+		if (memcmp(search->mac, peer, ETH_ALEN) == 0) {
 			sta = false;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		prev = search;
 		search = search->next;
-	पूर्ण
+	}
 
 	hash = flow->hash;
-	क्रम (i = 0; i < BRCMF_FLOWRING_HASHSIZE; i++) अणु
-		अगर ((sta || (स_भेद(hash[i].mac, peer, ETH_ALEN) == 0)) &&
-		    (hash[i].अगरidx == अगरidx)) अणु
+	for (i = 0; i < BRCMF_FLOWRING_HASHSIZE; i++) {
+		if ((sta || (memcmp(hash[i].mac, peer, ETH_ALEN) == 0)) &&
+		    (hash[i].ifidx == ifidx)) {
 			flowid = flow->hash[i].flowid;
-			अगर (flow->rings[flowid]->status == RING_OPEN) अणु
+			if (flow->rings[flowid]->status == RING_OPEN) {
 				flow->rings[flowid]->status = RING_CLOSING;
 				brcmf_msgbuf_delete_flowring(drvr, flowid);
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
-	अगर (search) अणु
-		अगर (prev)
+	if (search) {
+		if (prev)
 			prev->next = search->next;
-		अन्यथा
+		else
 			flow->tdls_entry = search->next;
-		kमुक्त(search);
-		अगर (flow->tdls_entry == शून्य)
+		kfree(search);
+		if (flow->tdls_entry == NULL)
 			flow->tdls_active = false;
-	पूर्ण
-पूर्ण
+	}
+}
 
 
-व्योम brcmf_flowring_add_tdls_peer(काष्ठा brcmf_flowring *flow, पूर्णांक अगरidx,
+void brcmf_flowring_add_tdls_peer(struct brcmf_flowring *flow, int ifidx,
 				  u8 peer[ETH_ALEN])
-अणु
-	काष्ठा brcmf_flowring_tdls_entry *tdls_entry;
-	काष्ठा brcmf_flowring_tdls_entry *search;
+{
+	struct brcmf_flowring_tdls_entry *tdls_entry;
+	struct brcmf_flowring_tdls_entry *search;
 
-	tdls_entry = kzalloc(माप(*tdls_entry), GFP_ATOMIC);
-	अगर (tdls_entry == शून्य)
-		वापस;
+	tdls_entry = kzalloc(sizeof(*tdls_entry), GFP_ATOMIC);
+	if (tdls_entry == NULL)
+		return;
 
-	स_नकल(tdls_entry->mac, peer, ETH_ALEN);
-	tdls_entry->next = शून्य;
-	अगर (flow->tdls_entry == शून्य) अणु
+	memcpy(tdls_entry->mac, peer, ETH_ALEN);
+	tdls_entry->next = NULL;
+	if (flow->tdls_entry == NULL) {
 		flow->tdls_entry = tdls_entry;
-	पूर्ण अन्यथा अणु
+	} else {
 		search = flow->tdls_entry;
-		अगर (स_भेद(search->mac, peer, ETH_ALEN) == 0)
-			जाओ मुक्त_entry;
-		जबतक (search->next) अणु
+		if (memcmp(search->mac, peer, ETH_ALEN) == 0)
+			goto free_entry;
+		while (search->next) {
 			search = search->next;
-			अगर (स_भेद(search->mac, peer, ETH_ALEN) == 0)
-				जाओ मुक्त_entry;
-		पूर्ण
+			if (memcmp(search->mac, peer, ETH_ALEN) == 0)
+				goto free_entry;
+		}
 		search->next = tdls_entry;
-	पूर्ण
+	}
 
 	flow->tdls_active = true;
-	वापस;
+	return;
 
-मुक्त_entry:
-	kमुक्त(tdls_entry);
-पूर्ण
+free_entry:
+	kfree(tdls_entry);
+}

@@ -1,357 +1,356 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 
-#घोषणा _GNU_SOURCE
-#समावेश <त्रुटिसं.स>
-#समावेश <fcntl.h>
-#समावेश <pthपढ़ो.h>
-#समावेश <sched.h>
-#समावेश <stdbool.h>
-#समावेश <मानकपन.स>
-#समावेश <मानककोष.स>
-#समावेश <माला.स>
-#समावेश <sys/fsuid.h>
-#समावेश <sys/ioctl.h>
-#समावेश <sys/mount.h>
-#समावेश <sys/socket.h>
-#समावेश <sys/स्थिति.स>
-#समावेश <sys/sysinfo.h>
-#समावेश <sys/types.h>
-#समावेश <sys/रुको.h>
-#समावेश <unistd.h>
-#समावेश <linux/android/binder.h>
-#समावेश <linux/android/binderfs.h>
+#define _GNU_SOURCE
+#include <errno.h>
+#include <fcntl.h>
+#include <pthread.h>
+#include <sched.h>
+#include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/fsuid.h>
+#include <sys/ioctl.h>
+#include <sys/mount.h>
+#include <sys/socket.h>
+#include <sys/stat.h>
+#include <sys/sysinfo.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <unistd.h>
+#include <linux/android/binder.h>
+#include <linux/android/binderfs.h>
 
-#समावेश "../../kselftest_harness.h"
+#include "../../kselftest_harness.h"
 
-#घोषणा DEFAULT_THREADS 4
+#define DEFAULT_THREADS 4
 
-#घोषणा PTR_TO_INT(p) ((पूर्णांक)((पूर्णांकptr_t)(p)))
-#घोषणा INT_TO_PTR(u) ((व्योम *)((पूर्णांकptr_t)(u)))
+#define PTR_TO_INT(p) ((int)((intptr_t)(p)))
+#define INT_TO_PTR(u) ((void *)((intptr_t)(u)))
 
-#घोषणा बंद_prot_त्रुटि_सं_disarm(fd) \
-	अगर (fd >= 0) अणु              \
-		पूर्णांक _e_ = त्रुटि_सं;    \
-		बंद(fd);          \
-		त्रुटि_सं = _e_;        \
+#define close_prot_errno_disarm(fd) \
+	if (fd >= 0) {              \
+		int _e_ = errno;    \
+		close(fd);          \
+		errno = _e_;        \
 		fd = -EBADF;        \
-	पूर्ण
+	}
 
-अटल व्योम change_mountns(काष्ठा __test_metadata *_metadata)
-अणु
-	पूर्णांक ret;
+static void change_mountns(struct __test_metadata *_metadata)
+{
+	int ret;
 
 	ret = unshare(CLONE_NEWNS);
-	ASSERT_EQ(ret, 0) अणु
+	ASSERT_EQ(ret, 0) {
 		TH_LOG("%s - Failed to unshare mount namespace",
-			म_त्रुटि(त्रुटि_सं));
-	पूर्ण
+			strerror(errno));
+	}
 
-	ret = mount(शून्य, "/", शून्य, MS_REC | MS_PRIVATE, 0);
-	ASSERT_EQ(ret, 0) अणु
+	ret = mount(NULL, "/", NULL, MS_REC | MS_PRIVATE, 0);
+	ASSERT_EQ(ret, 0) {
 		TH_LOG("%s - Failed to mount / as private",
-			म_त्रुटि(त्रुटि_सं));
-	पूर्ण
-पूर्ण
+			strerror(errno));
+	}
+}
 
-अटल पूर्णांक __करो_binderfs_test(काष्ठा __test_metadata *_metadata)
-अणु
-	पूर्णांक fd, ret, saved_त्रुटि_सं, result = 1;
-	माप_प्रकार len;
-	sमाप_प्रकार wret;
-	काष्ठा binderfs_device device = अणु 0 पूर्ण;
-	काष्ठा binder_version version = अणु 0 पूर्ण;
-	अक्षर binderfs_mntpt[] = P_पंचांगpdir "/binderfs_XXXXXX",
-		device_path[माप(P_पंचांगpdir "/binderfs_XXXXXX/") + BINDERFS_MAX_NAME];
+static int __do_binderfs_test(struct __test_metadata *_metadata)
+{
+	int fd, ret, saved_errno, result = 1;
+	size_t len;
+	ssize_t wret;
+	struct binderfs_device device = { 0 };
+	struct binder_version version = { 0 };
+	char binderfs_mntpt[] = P_tmpdir "/binderfs_XXXXXX",
+		device_path[sizeof(P_tmpdir "/binderfs_XXXXXX/") + BINDERFS_MAX_NAME];
 
 	change_mountns(_metadata);
 
-	EXPECT_NE(mkdtemp(binderfs_mntpt), शून्य) अणु
+	EXPECT_NE(mkdtemp(binderfs_mntpt), NULL) {
 		TH_LOG("%s - Failed to create binderfs mountpoint",
-			म_त्रुटि(त्रुटि_सं));
-		जाओ out;
-	पूर्ण
+			strerror(errno));
+		goto out;
+	}
 
-	ret = mount(शून्य, binderfs_mntpt, "binder", 0, 0);
-	EXPECT_EQ(ret, 0) अणु
-		अगर (त्रुटि_सं == ENODEV)
-			SKIP(जाओ out, "binderfs missing");
-		TH_LOG("%s - Failed to mount binderfs", म_त्रुटि(त्रुटि_सं));
-		जाओ सूची_हटाओ;
-	पूर्ण
+	ret = mount(NULL, binderfs_mntpt, "binder", 0, 0);
+	EXPECT_EQ(ret, 0) {
+		if (errno == ENODEV)
+			SKIP(goto out, "binderfs missing");
+		TH_LOG("%s - Failed to mount binderfs", strerror(errno));
+		goto rmdir;
+	}
 
 	/* success: binderfs mounted */
 
-	स_नकल(device.name, "my-binder", म_माप("my-binder"));
+	memcpy(device.name, "my-binder", strlen("my-binder"));
 
-	snम_लिखो(device_path, माप(device_path), "%s/binder-control", binderfs_mntpt);
-	fd = खोलो(device_path, O_RDONLY | O_CLOEXEC);
-	EXPECT_GE(fd, 0) अणु
+	snprintf(device_path, sizeof(device_path), "%s/binder-control", binderfs_mntpt);
+	fd = open(device_path, O_RDONLY | O_CLOEXEC);
+	EXPECT_GE(fd, 0) {
 		TH_LOG("%s - Failed to open binder-control device",
-			म_त्रुटि(त्रुटि_सं));
-		जाओ umount;
-	पूर्ण
+			strerror(errno));
+		goto umount;
+	}
 
 	ret = ioctl(fd, BINDER_CTL_ADD, &device);
-	saved_त्रुटि_सं = त्रुटि_सं;
-	बंद(fd);
-	त्रुटि_सं = saved_त्रुटि_सं;
-	EXPECT_GE(ret, 0) अणु
+	saved_errno = errno;
+	close(fd);
+	errno = saved_errno;
+	EXPECT_GE(ret, 0) {
 		TH_LOG("%s - Failed to allocate new binder device",
-			म_त्रुटि(त्रुटि_सं));
-		जाओ umount;
-	पूर्ण
+			strerror(errno));
+		goto umount;
+	}
 
 	TH_LOG("Allocated new binder device with major %d, minor %d, and name %s",
 		device.major, device.minor, device.name);
 
 	/* success: binder device allocation */
 
-	snम_लिखो(device_path, माप(device_path), "%s/my-binder", binderfs_mntpt);
-	fd = खोलो(device_path, O_CLOEXEC | O_RDONLY);
-	EXPECT_GE(fd, 0) अणु
+	snprintf(device_path, sizeof(device_path), "%s/my-binder", binderfs_mntpt);
+	fd = open(device_path, O_CLOEXEC | O_RDONLY);
+	EXPECT_GE(fd, 0) {
 		TH_LOG("%s - Failed to open my-binder device",
-			म_त्रुटि(त्रुटि_सं));
-		जाओ umount;
-	पूर्ण
+			strerror(errno));
+		goto umount;
+	}
 
 	ret = ioctl(fd, BINDER_VERSION, &version);
-	saved_त्रुटि_सं = त्रुटि_सं;
-	बंद(fd);
-	त्रुटि_सं = saved_त्रुटि_सं;
-	EXPECT_GE(ret, 0) अणु
+	saved_errno = errno;
+	close(fd);
+	errno = saved_errno;
+	EXPECT_GE(ret, 0) {
 		TH_LOG("%s - Failed to open perform BINDER_VERSION request",
-			म_त्रुटि(त्रुटि_सं));
-		जाओ umount;
-	पूर्ण
+			strerror(errno));
+		goto umount;
+	}
 
 	TH_LOG("Detected binder version: %d", version.protocol_version);
 
 	/* success: binder transaction with binderfs binder device */
 
 	ret = unlink(device_path);
-	EXPECT_EQ(ret, 0) अणु
+	EXPECT_EQ(ret, 0) {
 		TH_LOG("%s - Failed to delete binder device",
-			म_त्रुटि(त्रुटि_सं));
-		जाओ umount;
-	पूर्ण
+			strerror(errno));
+		goto umount;
+	}
 
 	/* success: binder device removal */
 
-	snम_लिखो(device_path, माप(device_path), "%s/binder-control", binderfs_mntpt);
+	snprintf(device_path, sizeof(device_path), "%s/binder-control", binderfs_mntpt);
 	ret = unlink(device_path);
-	EXPECT_NE(ret, 0) अणु
+	EXPECT_NE(ret, 0) {
 		TH_LOG("Managed to delete binder-control device");
-		जाओ umount;
-	पूर्ण
-	EXPECT_EQ(त्रुटि_सं, EPERM) अणु
+		goto umount;
+	}
+	EXPECT_EQ(errno, EPERM) {
 		TH_LOG("%s - Failed to delete binder-control device but exited with unexpected error code",
-			म_त्रुटि(त्रुटि_सं));
-		जाओ umount;
-	पूर्ण
+			strerror(errno));
+		goto umount;
+	}
 
 	/* success: binder-control device removal failed as expected */
 	result = 0;
 
 umount:
 	ret = umount2(binderfs_mntpt, MNT_DETACH);
-	EXPECT_EQ(ret, 0) अणु
-		TH_LOG("%s - Failed to unmount binderfs", म_त्रुटि(त्रुटि_सं));
-	पूर्ण
-सूची_हटाओ:
-	ret = सूची_हटाओ(binderfs_mntpt);
-	EXPECT_EQ(ret, 0) अणु
-		TH_LOG("%s - Failed to rmdir binderfs mount", म_त्रुटि(त्रुटि_सं));
-	पूर्ण
+	EXPECT_EQ(ret, 0) {
+		TH_LOG("%s - Failed to unmount binderfs", strerror(errno));
+	}
+rmdir:
+	ret = rmdir(binderfs_mntpt);
+	EXPECT_EQ(ret, 0) {
+		TH_LOG("%s - Failed to rmdir binderfs mount", strerror(errno));
+	}
 out:
-	वापस result;
-पूर्ण
+	return result;
+}
 
-अटल पूर्णांक रुको_क्रम_pid(pid_t pid)
-अणु
-	पूर्णांक status, ret;
+static int wait_for_pid(pid_t pid)
+{
+	int status, ret;
 
 again:
-	ret = रुकोpid(pid, &status, 0);
-	अगर (ret == -1) अणु
-		अगर (त्रुटि_सं == EINTR)
-			जाओ again;
+	ret = waitpid(pid, &status, 0);
+	if (ret == -1) {
+		if (errno == EINTR)
+			goto again;
 
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	अगर (!WIFEXITED(status))
-		वापस -1;
+	if (!WIFEXITED(status))
+		return -1;
 
-	वापस WEXITSTATUS(status);
-पूर्ण
+	return WEXITSTATUS(status);
+}
 
-अटल पूर्णांक setid_userns_root(व्योम)
-अणु
-	अगर (setuid(0))
-		वापस -1;
-	अगर (setgid(0))
-		वापस -1;
+static int setid_userns_root(void)
+{
+	if (setuid(0))
+		return -1;
+	if (setgid(0))
+		return -1;
 
 	setfsuid(0);
 	setfsgid(0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-क्रमागत idmap_type अणु
+enum idmap_type {
 	UID_MAP,
 	GID_MAP,
-पूर्ण;
+};
 
-अटल sमाप_प्रकार पढ़ो_noपूर्णांकr(पूर्णांक fd, व्योम *buf, माप_प्रकार count)
-अणु
-	sमाप_प्रकार ret;
+static ssize_t read_nointr(int fd, void *buf, size_t count)
+{
+	ssize_t ret;
 again:
-	ret = पढ़ो(fd, buf, count);
-	अगर (ret < 0 && त्रुटि_सं == EINTR)
-		जाओ again;
+	ret = read(fd, buf, count);
+	if (ret < 0 && errno == EINTR)
+		goto again;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल sमाप_प्रकार ग_लिखो_noपूर्णांकr(पूर्णांक fd, स्थिर व्योम *buf, माप_प्रकार count)
-अणु
-	sमाप_प्रकार ret;
+static ssize_t write_nointr(int fd, const void *buf, size_t count)
+{
+	ssize_t ret;
 again:
-	ret = ग_लिखो(fd, buf, count);
-	अगर (ret < 0 && त्रुटि_सं == EINTR)
-		जाओ again;
+	ret = write(fd, buf, count);
+	if (ret < 0 && errno == EINTR)
+		goto again;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक ग_लिखो_id_mapping(क्रमागत idmap_type type, pid_t pid, स्थिर अक्षर *buf,
-			    माप_प्रकार buf_size)
-अणु
-	पूर्णांक fd;
-	पूर्णांक ret;
-	अक्षर path[4096];
+static int write_id_mapping(enum idmap_type type, pid_t pid, const char *buf,
+			    size_t buf_size)
+{
+	int fd;
+	int ret;
+	char path[4096];
 
-	अगर (type == GID_MAP) अणु
-		पूर्णांक setgroups_fd;
+	if (type == GID_MAP) {
+		int setgroups_fd;
 
-		snम_लिखो(path, माप(path), "/proc/%d/setgroups", pid);
-		setgroups_fd = खोलो(path, O_WRONLY | O_CLOEXEC | O_NOFOLLOW);
-		अगर (setgroups_fd < 0 && त्रुटि_सं != ENOENT)
-			वापस -1;
+		snprintf(path, sizeof(path), "/proc/%d/setgroups", pid);
+		setgroups_fd = open(path, O_WRONLY | O_CLOEXEC | O_NOFOLLOW);
+		if (setgroups_fd < 0 && errno != ENOENT)
+			return -1;
 
-		अगर (setgroups_fd >= 0) अणु
-			ret = ग_लिखो_noपूर्णांकr(setgroups_fd, "deny", माप("deny") - 1);
-			बंद_prot_त्रुटि_सं_disarm(setgroups_fd);
-			अगर (ret != माप("deny") - 1)
-				वापस -1;
-		पूर्ण
-	पूर्ण
+		if (setgroups_fd >= 0) {
+			ret = write_nointr(setgroups_fd, "deny", sizeof("deny") - 1);
+			close_prot_errno_disarm(setgroups_fd);
+			if (ret != sizeof("deny") - 1)
+				return -1;
+		}
+	}
 
-	चयन (type) अणु
-	हाल UID_MAP:
-		ret = snम_लिखो(path, माप(path), "/proc/%d/uid_map", pid);
-		अवरोध;
-	हाल GID_MAP:
-		ret = snम_लिखो(path, माप(path), "/proc/%d/gid_map", pid);
-		अवरोध;
-	शेष:
-		वापस -1;
-	पूर्ण
-	अगर (ret < 0 || ret >= माप(path))
-		वापस -E2BIG;
+	switch (type) {
+	case UID_MAP:
+		ret = snprintf(path, sizeof(path), "/proc/%d/uid_map", pid);
+		break;
+	case GID_MAP:
+		ret = snprintf(path, sizeof(path), "/proc/%d/gid_map", pid);
+		break;
+	default:
+		return -1;
+	}
+	if (ret < 0 || ret >= sizeof(path))
+		return -E2BIG;
 
-	fd = खोलो(path, O_WRONLY | O_CLOEXEC | O_NOFOLLOW);
-	अगर (fd < 0)
-		वापस -1;
+	fd = open(path, O_WRONLY | O_CLOEXEC | O_NOFOLLOW);
+	if (fd < 0)
+		return -1;
 
-	ret = ग_लिखो_noपूर्णांकr(fd, buf, buf_size);
-	बंद_prot_त्रुटि_सं_disarm(fd);
-	अगर (ret != buf_size)
-		वापस -1;
+	ret = write_nointr(fd, buf, buf_size);
+	close_prot_errno_disarm(fd);
+	if (ret != buf_size)
+		return -1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम change_userns(काष्ठा __test_metadata *_metadata, पूर्णांक syncfds[2])
-अणु
-	पूर्णांक ret;
-	अक्षर buf;
+static void change_userns(struct __test_metadata *_metadata, int syncfds[2])
+{
+	int ret;
+	char buf;
 
-	बंद_prot_त्रुटि_सं_disarm(syncfds[1]);
+	close_prot_errno_disarm(syncfds[1]);
 
 	ret = unshare(CLONE_NEWUSER);
-	ASSERT_EQ(ret, 0) अणु
+	ASSERT_EQ(ret, 0) {
 		TH_LOG("%s - Failed to unshare user namespace",
-			म_त्रुटि(त्रुटि_सं));
-	पूर्ण
+			strerror(errno));
+	}
 
-	ret = ग_लिखो_noपूर्णांकr(syncfds[0], "1", 1);
-	ASSERT_EQ(ret, 1) अणु
+	ret = write_nointr(syncfds[0], "1", 1);
+	ASSERT_EQ(ret, 1) {
 		TH_LOG("write_nointr() failed");
-	पूर्ण
+	}
 
-	ret = पढ़ो_noपूर्णांकr(syncfds[0], &buf, 1);
-	ASSERT_EQ(ret, 1) अणु
+	ret = read_nointr(syncfds[0], &buf, 1);
+	ASSERT_EQ(ret, 1) {
 		TH_LOG("read_nointr() failed");
-	पूर्ण
+	}
 
-	बंद_prot_त्रुटि_सं_disarm(syncfds[0]);
+	close_prot_errno_disarm(syncfds[0]);
 
-	ASSERT_EQ(setid_userns_root(), 0) अणु
+	ASSERT_EQ(setid_userns_root(), 0) {
 		TH_LOG("setid_userns_root() failed");
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम change_idmaps(काष्ठा __test_metadata *_metadata, पूर्णांक syncfds[2], pid_t pid)
-अणु
-	पूर्णांक ret;
-	अक्षर buf;
-	अक्षर id_map[4096];
+static void change_idmaps(struct __test_metadata *_metadata, int syncfds[2], pid_t pid)
+{
+	int ret;
+	char buf;
+	char id_map[4096];
 
-	बंद_prot_त्रुटि_सं_disarm(syncfds[0]);
+	close_prot_errno_disarm(syncfds[0]);
 
-	ret = पढ़ो_noपूर्णांकr(syncfds[1], &buf, 1);
-	ASSERT_EQ(ret, 1) अणु
+	ret = read_nointr(syncfds[1], &buf, 1);
+	ASSERT_EQ(ret, 1) {
 		TH_LOG("read_nointr() failed");
-	पूर्ण
+	}
 
-	snम_लिखो(id_map, माप(id_map), "0 %d 1\n", getuid());
-	ret = ग_लिखो_id_mapping(UID_MAP, pid, id_map, म_माप(id_map));
-	ASSERT_EQ(ret, 0) अणु
+	snprintf(id_map, sizeof(id_map), "0 %d 1\n", getuid());
+	ret = write_id_mapping(UID_MAP, pid, id_map, strlen(id_map));
+	ASSERT_EQ(ret, 0) {
 		TH_LOG("write_id_mapping(UID_MAP) failed");
-	पूर्ण
+	}
 
-	snम_लिखो(id_map, माप(id_map), "0 %d 1\n", getgid());
-	ret = ग_लिखो_id_mapping(GID_MAP, pid, id_map, म_माप(id_map));
-	ASSERT_EQ(ret, 0) अणु
+	snprintf(id_map, sizeof(id_map), "0 %d 1\n", getgid());
+	ret = write_id_mapping(GID_MAP, pid, id_map, strlen(id_map));
+	ASSERT_EQ(ret, 0) {
 		TH_LOG("write_id_mapping(GID_MAP) failed");
-	पूर्ण
+	}
 
-	ret = ग_लिखो_noपूर्णांकr(syncfds[1], "1", 1);
-	ASSERT_EQ(ret, 1) अणु
+	ret = write_nointr(syncfds[1], "1", 1);
+	ASSERT_EQ(ret, 1) {
 		TH_LOG("write_nointr() failed");
-	पूर्ण
+	}
 
-	बंद_prot_त्रुटि_सं_disarm(syncfds[1]);
-पूर्ण
+	close_prot_errno_disarm(syncfds[1]);
+}
 
-काष्ठा __test_metadata *_thपढ़ो_metadata;
-अटल व्योम *binder_version_thपढ़ो(व्योम *data)
-अणु
-	काष्ठा __test_metadata *_metadata = _thपढ़ो_metadata;
-	पूर्णांक fd = PTR_TO_INT(data);
-	काष्ठा binder_version version = अणु 0 पूर्ण;
-	पूर्णांक ret;
+struct __test_metadata *_thread_metadata;
+static void *binder_version_thread(void *data)
+{
+	struct __test_metadata *_metadata = _thread_metadata;
+	int fd = PTR_TO_INT(data);
+	struct binder_version version = { 0 };
+	int ret;
 
 	ret = ioctl(fd, BINDER_VERSION, &version);
-	अगर (ret < 0)
+	if (ret < 0)
 		TH_LOG("%s - Failed to open perform BINDER_VERSION request\n",
-			म_त्रुटि(त्रुटि_सं));
+			strerror(errno));
 
-	pthपढ़ो_निकास(data);
-पूर्ण
+	pthread_exit(data);
+}
 
 /*
  * Regression test:
@@ -360,163 +359,163 @@ again:
  * 211b64e4b5b6 ("binderfs: use refcount for binder control devices too")
  */
 TEST(binderfs_stress)
-अणु
-	पूर्णांक fds[1000];
-	पूर्णांक syncfds[2];
+{
+	int fds[1000];
+	int syncfds[2];
 	pid_t pid;
-	पूर्णांक fd, ret;
-	माप_प्रकार len;
-	काष्ठा binderfs_device device = अणु 0 पूर्ण;
-	अक्षर binderfs_mntpt[] = P_पंचांगpdir "/binderfs_XXXXXX",
-		device_path[माप(P_पंचांगpdir "/binderfs_XXXXXX/") + BINDERFS_MAX_NAME];
+	int fd, ret;
+	size_t len;
+	struct binderfs_device device = { 0 };
+	char binderfs_mntpt[] = P_tmpdir "/binderfs_XXXXXX",
+		device_path[sizeof(P_tmpdir "/binderfs_XXXXXX/") + BINDERFS_MAX_NAME];
 
 	ret = socketpair(PF_LOCAL, SOCK_STREAM | SOCK_CLOEXEC, 0, syncfds);
-	ASSERT_EQ(ret, 0) अणु
-		TH_LOG("%s - Failed to create socket pair", म_त्रुटि(त्रुटि_सं));
-	पूर्ण
+	ASSERT_EQ(ret, 0) {
+		TH_LOG("%s - Failed to create socket pair", strerror(errno));
+	}
 
-	pid = विभाजन();
-	ASSERT_GE(pid, 0) अणु
-		TH_LOG("%s - Failed to fork", म_त्रुटि(त्रुटि_सं));
-		बंद_prot_त्रुटि_सं_disarm(syncfds[0]);
-		बंद_prot_त्रुटि_सं_disarm(syncfds[1]);
-	पूर्ण
+	pid = fork();
+	ASSERT_GE(pid, 0) {
+		TH_LOG("%s - Failed to fork", strerror(errno));
+		close_prot_errno_disarm(syncfds[0]);
+		close_prot_errno_disarm(syncfds[1]);
+	}
 
-	अगर (pid == 0) अणु
-		पूर्णांक i, j, k, nthपढ़ोs;
-		pthपढ़ो_attr_t attr;
-		pthपढ़ो_t thपढ़ोs[DEFAULT_THREADS];
+	if (pid == 0) {
+		int i, j, k, nthreads;
+		pthread_attr_t attr;
+		pthread_t threads[DEFAULT_THREADS];
 		change_userns(_metadata, syncfds);
 		change_mountns(_metadata);
 
-		ASSERT_NE(mkdtemp(binderfs_mntpt), शून्य) अणु
+		ASSERT_NE(mkdtemp(binderfs_mntpt), NULL) {
 			TH_LOG("%s - Failed to create binderfs mountpoint",
-				म_त्रुटि(त्रुटि_सं));
-		पूर्ण
+				strerror(errno));
+		}
 
-		ret = mount(शून्य, binderfs_mntpt, "binder", 0, 0);
-		ASSERT_EQ(ret, 0) अणु
-			TH_LOG("%s - Failed to mount binderfs", म_त्रुटि(त्रुटि_सं));
-		पूर्ण
+		ret = mount(NULL, binderfs_mntpt, "binder", 0, 0);
+		ASSERT_EQ(ret, 0) {
+			TH_LOG("%s - Failed to mount binderfs", strerror(errno));
+		}
 
-		क्रम (पूर्णांक i = 0; i < ARRAY_SIZE(fds); i++) अणु
+		for (int i = 0; i < ARRAY_SIZE(fds); i++) {
 
-			snम_लिखो(device_path, माप(device_path),
+			snprintf(device_path, sizeof(device_path),
 				 "%s/binder-control", binderfs_mntpt);
-			fd = खोलो(device_path, O_RDONLY | O_CLOEXEC);
-			ASSERT_GE(fd, 0) अणु
+			fd = open(device_path, O_RDONLY | O_CLOEXEC);
+			ASSERT_GE(fd, 0) {
 				TH_LOG("%s - Failed to open binder-control device",
-					म_त्रुटि(त्रुटि_सं));
-			पूर्ण
+					strerror(errno));
+			}
 
-			स_रखो(&device, 0, माप(device));
-			snम_लिखो(device.name, माप(device.name), "%d", i);
+			memset(&device, 0, sizeof(device));
+			snprintf(device.name, sizeof(device.name), "%d", i);
 			ret = ioctl(fd, BINDER_CTL_ADD, &device);
-			बंद_prot_त्रुटि_सं_disarm(fd);
-			ASSERT_EQ(ret, 0) अणु
+			close_prot_errno_disarm(fd);
+			ASSERT_EQ(ret, 0) {
 				TH_LOG("%s - Failed to allocate new binder device",
-					म_त्रुटि(त्रुटि_सं));
-			पूर्ण
+					strerror(errno));
+			}
 
-			snम_लिखो(device_path, माप(device_path), "%s/%d",
+			snprintf(device_path, sizeof(device_path), "%s/%d",
 				 binderfs_mntpt, i);
-			fds[i] = खोलो(device_path, O_RDONLY | O_CLOEXEC);
-			ASSERT_GE(fds[i], 0) अणु
-				TH_LOG("%s - Failed to open binder device", म_त्रुटि(त्रुटि_सं));
-			पूर्ण
-		पूर्ण
+			fds[i] = open(device_path, O_RDONLY | O_CLOEXEC);
+			ASSERT_GE(fds[i], 0) {
+				TH_LOG("%s - Failed to open binder device", strerror(errno));
+			}
+		}
 
 		ret = umount2(binderfs_mntpt, MNT_DETACH);
-		ASSERT_EQ(ret, 0) अणु
-			TH_LOG("%s - Failed to unmount binderfs", म_त्रुटि(त्रुटि_सं));
-			सूची_हटाओ(binderfs_mntpt);
-		पूर्ण
+		ASSERT_EQ(ret, 0) {
+			TH_LOG("%s - Failed to unmount binderfs", strerror(errno));
+			rmdir(binderfs_mntpt);
+		}
 
-		nthपढ़ोs = get_nprocs_conf();
-		अगर (nthपढ़ोs > DEFAULT_THREADS)
-			nthपढ़ोs = DEFAULT_THREADS;
+		nthreads = get_nprocs_conf();
+		if (nthreads > DEFAULT_THREADS)
+			nthreads = DEFAULT_THREADS;
 
-		_thपढ़ो_metadata = _metadata;
-		pthपढ़ो_attr_init(&attr);
-		क्रम (k = 0; k < ARRAY_SIZE(fds); k++) अणु
-			क्रम (i = 0; i < nthपढ़ोs; i++) अणु
-				ret = pthपढ़ो_create(&thपढ़ोs[i], &attr, binder_version_thपढ़ो, INT_TO_PTR(fds[k]));
-				अगर (ret) अणु
+		_thread_metadata = _metadata;
+		pthread_attr_init(&attr);
+		for (k = 0; k < ARRAY_SIZE(fds); k++) {
+			for (i = 0; i < nthreads; i++) {
+				ret = pthread_create(&threads[i], &attr, binder_version_thread, INT_TO_PTR(fds[k]));
+				if (ret) {
 					TH_LOG("%s - Failed to create thread %d",
-						म_त्रुटि(त्रुटि_सं), i);
-					अवरोध;
-				पूर्ण
-			पूर्ण
+						strerror(errno), i);
+					break;
+				}
+			}
 
-			क्रम (j = 0; j < i; j++) अणु
-				व्योम *fdptr = शून्य;
+			for (j = 0; j < i; j++) {
+				void *fdptr = NULL;
 
-				ret = pthपढ़ो_join(thपढ़ोs[j], &fdptr);
-				अगर (ret)
+				ret = pthread_join(threads[j], &fdptr);
+				if (ret)
 					TH_LOG("%s - Failed to join thread %d for fd %d",
-						म_त्रुटि(त्रुटि_सं), j, PTR_TO_INT(fdptr));
-			पूर्ण
-		पूर्ण
-		pthपढ़ो_attr_destroy(&attr);
+						strerror(errno), j, PTR_TO_INT(fdptr));
+			}
+		}
+		pthread_attr_destroy(&attr);
 
-		क्रम (k = 0; k < ARRAY_SIZE(fds); k++)
-			बंद(fds[k]);
+		for (k = 0; k < ARRAY_SIZE(fds); k++)
+			close(fds[k]);
 
-		निकास(निकास_सफल);
-	पूर्ण
+		exit(EXIT_SUCCESS);
+	}
 
 	change_idmaps(_metadata, syncfds, pid);
 
-	ret = रुको_क्रम_pid(pid);
-	ASSERT_EQ(ret, 0) अणु
+	ret = wait_for_pid(pid);
+	ASSERT_EQ(ret, 0) {
 		TH_LOG("wait_for_pid() failed");
-	पूर्ण
-पूर्ण
+	}
+}
 
 TEST(binderfs_test_privileged)
-अणु
-	अगर (geteuid() != 0)
-		SKIP(वापस, "Tests are not run as root. Skipping privileged tests");
+{
+	if (geteuid() != 0)
+		SKIP(return, "Tests are not run as root. Skipping privileged tests");
 
-	अगर (__करो_binderfs_test(_metadata))
-		SKIP(वापस, "The Android binderfs filesystem is not available");
-पूर्ण
+	if (__do_binderfs_test(_metadata))
+		SKIP(return, "The Android binderfs filesystem is not available");
+}
 
 TEST(binderfs_test_unprivileged)
-अणु
-	पूर्णांक ret;
-	पूर्णांक syncfds[2];
+{
+	int ret;
+	int syncfds[2];
 	pid_t pid;
 
 	ret = socketpair(PF_LOCAL, SOCK_STREAM | SOCK_CLOEXEC, 0, syncfds);
-	ASSERT_EQ(ret, 0) अणु
-		TH_LOG("%s - Failed to create socket pair", म_त्रुटि(त्रुटि_सं));
-	पूर्ण
+	ASSERT_EQ(ret, 0) {
+		TH_LOG("%s - Failed to create socket pair", strerror(errno));
+	}
 
-	pid = विभाजन();
-	ASSERT_GE(pid, 0) अणु
-		बंद_prot_त्रुटि_सं_disarm(syncfds[0]);
-		बंद_prot_त्रुटि_सं_disarm(syncfds[1]);
-		TH_LOG("%s - Failed to fork", म_त्रुटि(त्रुटि_सं));
-	पूर्ण
+	pid = fork();
+	ASSERT_GE(pid, 0) {
+		close_prot_errno_disarm(syncfds[0]);
+		close_prot_errno_disarm(syncfds[1]);
+		TH_LOG("%s - Failed to fork", strerror(errno));
+	}
 
-	अगर (pid == 0) अणु
+	if (pid == 0) {
 		change_userns(_metadata, syncfds);
-		अगर (__करो_binderfs_test(_metadata))
-			निकास(2);
-		निकास(निकास_सफल);
-	पूर्ण
+		if (__do_binderfs_test(_metadata))
+			exit(2);
+		exit(EXIT_SUCCESS);
+	}
 
 	change_idmaps(_metadata, syncfds, pid);
 
-	ret = रुको_क्रम_pid(pid);
-	अगर (ret) अणु
-		अगर (ret == 2)
-			SKIP(वापस, "The Android binderfs filesystem is not available");
-		ASSERT_EQ(ret, 0) अणु
+	ret = wait_for_pid(pid);
+	if (ret) {
+		if (ret == 2)
+			SKIP(return, "The Android binderfs filesystem is not available");
+		ASSERT_EQ(ret, 0) {
 			TH_LOG("wait_for_pid() failed");
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
 TEST_HARNESS_MAIN

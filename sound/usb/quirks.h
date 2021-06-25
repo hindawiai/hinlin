@@ -1,57 +1,56 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __USBAUDIO_QUIRKS_H
-#घोषणा __USBAUDIO_QUIRKS_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __USBAUDIO_QUIRKS_H
+#define __USBAUDIO_QUIRKS_H
 
-काष्ठा audioक्रमmat;
-काष्ठा snd_usb_endpoपूर्णांक;
-काष्ठा snd_usb_substream;
+struct audioformat;
+struct snd_usb_endpoint;
+struct snd_usb_substream;
 
-पूर्णांक snd_usb_create_quirk(काष्ठा snd_usb_audio *chip,
-			 काष्ठा usb_पूर्णांकerface *अगरace,
-			 काष्ठा usb_driver *driver,
-			 स्थिर काष्ठा snd_usb_audio_quirk *quirk);
+int snd_usb_create_quirk(struct snd_usb_audio *chip,
+			 struct usb_interface *iface,
+			 struct usb_driver *driver,
+			 const struct snd_usb_audio_quirk *quirk);
 
-पूर्णांक snd_usb_apply_पूर्णांकerface_quirk(काष्ठा snd_usb_audio *chip,
-				  पूर्णांक अगरace,
-				  पूर्णांक altno);
+int snd_usb_apply_interface_quirk(struct snd_usb_audio *chip,
+				  int iface,
+				  int altno);
 
-पूर्णांक snd_usb_apply_boot_quirk(काष्ठा usb_device *dev,
-			     काष्ठा usb_पूर्णांकerface *पूर्णांकf,
-			     स्थिर काष्ठा snd_usb_audio_quirk *quirk,
-			     अचिन्हित पूर्णांक usb_id);
+int snd_usb_apply_boot_quirk(struct usb_device *dev,
+			     struct usb_interface *intf,
+			     const struct snd_usb_audio_quirk *quirk,
+			     unsigned int usb_id);
 
-पूर्णांक snd_usb_apply_boot_quirk_once(काष्ठा usb_device *dev,
-				  काष्ठा usb_पूर्णांकerface *पूर्णांकf,
-				  स्थिर काष्ठा snd_usb_audio_quirk *quirk,
-				  अचिन्हित पूर्णांक usb_id);
+int snd_usb_apply_boot_quirk_once(struct usb_device *dev,
+				  struct usb_interface *intf,
+				  const struct snd_usb_audio_quirk *quirk,
+				  unsigned int usb_id);
 
-व्योम snd_usb_set_क्रमmat_quirk(काष्ठा snd_usb_substream *subs,
-			      स्थिर काष्ठा audioक्रमmat *fmt);
+void snd_usb_set_format_quirk(struct snd_usb_substream *subs,
+			      const struct audioformat *fmt);
 
-bool snd_usb_get_sample_rate_quirk(काष्ठा snd_usb_audio *chip);
+bool snd_usb_get_sample_rate_quirk(struct snd_usb_audio *chip);
 
-पूर्णांक snd_usb_is_big_endian_क्रमmat(काष्ठा snd_usb_audio *chip,
-				 स्थिर काष्ठा audioक्रमmat *fp);
+int snd_usb_is_big_endian_format(struct snd_usb_audio *chip,
+				 const struct audioformat *fp);
 
-व्योम snd_usb_endpoपूर्णांक_start_quirk(काष्ठा snd_usb_endpoपूर्णांक *ep);
+void snd_usb_endpoint_start_quirk(struct snd_usb_endpoint *ep);
 
-व्योम snd_usb_set_पूर्णांकerface_quirk(काष्ठा snd_usb_audio *chip);
-व्योम snd_usb_ctl_msg_quirk(काष्ठा usb_device *dev, अचिन्हित पूर्णांक pipe,
+void snd_usb_set_interface_quirk(struct snd_usb_audio *chip);
+void snd_usb_ctl_msg_quirk(struct usb_device *dev, unsigned int pipe,
 			   __u8 request, __u8 requesttype, __u16 value,
-			   __u16 index, व्योम *data, __u16 size);
+			   __u16 index, void *data, __u16 size);
 
-पूर्णांक snd_usb_select_mode_quirk(काष्ठा snd_usb_audio *chip,
-			      स्थिर काष्ठा audioक्रमmat *fmt);
+int snd_usb_select_mode_quirk(struct snd_usb_audio *chip,
+			      const struct audioformat *fmt);
 
-u64 snd_usb_पूर्णांकerface_dsd_क्रमmat_quirks(काष्ठा snd_usb_audio *chip,
-					काष्ठा audioक्रमmat *fp,
-					अचिन्हित पूर्णांक sample_bytes);
+u64 snd_usb_interface_dsd_format_quirks(struct snd_usb_audio *chip,
+					struct audioformat *fp,
+					unsigned int sample_bytes);
 
-व्योम snd_usb_audioक्रमmat_attributes_quirk(काष्ठा snd_usb_audio *chip,
-					  काष्ठा audioक्रमmat *fp,
-					  पूर्णांक stream);
+void snd_usb_audioformat_attributes_quirk(struct snd_usb_audio *chip,
+					  struct audioformat *fp,
+					  int stream);
 
-bool snd_usb_registration_quirk(काष्ठा snd_usb_audio *chip, पूर्णांक अगरace);
+bool snd_usb_registration_quirk(struct snd_usb_audio *chip, int iface);
 
-#पूर्ण_अगर /* __USBAUDIO_QUIRKS_H */
+#endif /* __USBAUDIO_QUIRKS_H */

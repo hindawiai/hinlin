@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * f_sourcesink.c - USB peripheral source/sink configuration driver
  *
@@ -7,435 +6,435 @@
  * Copyright (C) 2008 by Nokia Corporation
  */
 
-/* #घोषणा VERBOSE_DEBUG */
+/* #define VERBOSE_DEBUG */
 
-#समावेश <linux/slab.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/device.h>
-#समावेश <linux/module.h>
-#समावेश <linux/usb/composite.h>
-#समावेश <linux/err.h>
+#include <linux/slab.h>
+#include <linux/kernel.h>
+#include <linux/device.h>
+#include <linux/module.h>
+#include <linux/usb/composite.h>
+#include <linux/err.h>
 
-#समावेश "g_zero.h"
-#समावेश "u_f.h"
+#include "g_zero.h"
+#include "u_f.h"
 
 /*
- * SOURCE/SINK FUNCTION ... a primary testing vehicle क्रम USB peripheral
+ * SOURCE/SINK FUNCTION ... a primary testing vehicle for USB peripheral
  * controller drivers.
  *
  * This just sinks bulk packets OUT to the peripheral and sources them IN
- * to the host, optionally with specअगरic data patterns क्रम पूर्णांकegrity tests.
+ * to the host, optionally with specific data patterns for integrity tests.
  * As such it supports basic functionality and load tests.
  *
  * In terms of control messaging, this supports all the standard requests
  * plus two that support control-OUT tests.  If the optional "autoresume"
- * mode is enabled, it provides good functional coverage क्रम the "USBCV"
+ * mode is enabled, it provides good functional coverage for the "USBCV"
  * test harness from USB-IF.
  */
-काष्ठा f_sourcesink अणु
-	काष्ठा usb_function	function;
+struct f_sourcesink {
+	struct usb_function	function;
 
-	काष्ठा usb_ep		*in_ep;
-	काष्ठा usb_ep		*out_ep;
-	काष्ठा usb_ep		*iso_in_ep;
-	काष्ठा usb_ep		*iso_out_ep;
-	पूर्णांक			cur_alt;
+	struct usb_ep		*in_ep;
+	struct usb_ep		*out_ep;
+	struct usb_ep		*iso_in_ep;
+	struct usb_ep		*iso_out_ep;
+	int			cur_alt;
 
-	अचिन्हित pattern;
-	अचिन्हित isoc_पूर्णांकerval;
-	अचिन्हित isoc_maxpacket;
-	अचिन्हित isoc_mult;
-	अचिन्हित isoc_maxburst;
-	अचिन्हित buflen;
-	अचिन्हित bulk_qlen;
-	अचिन्हित iso_qlen;
-पूर्ण;
+	unsigned pattern;
+	unsigned isoc_interval;
+	unsigned isoc_maxpacket;
+	unsigned isoc_mult;
+	unsigned isoc_maxburst;
+	unsigned buflen;
+	unsigned bulk_qlen;
+	unsigned iso_qlen;
+};
 
-अटल अंतरभूत काष्ठा f_sourcesink *func_to_ss(काष्ठा usb_function *f)
-अणु
-	वापस container_of(f, काष्ठा f_sourcesink, function);
-पूर्ण
+static inline struct f_sourcesink *func_to_ss(struct usb_function *f)
+{
+	return container_of(f, struct f_sourcesink, function);
+}
 
 /*-------------------------------------------------------------------------*/
 
-अटल काष्ठा usb_पूर्णांकerface_descriptor source_sink_पूर्णांकf_alt0 = अणु
+static struct usb_interface_descriptor source_sink_intf_alt0 = {
 	.bLength =		USB_DT_INTERFACE_SIZE,
 	.bDescriptorType =	USB_DT_INTERFACE,
 
 	.bAlternateSetting =	0,
-	.bNumEndpoपूर्णांकs =	2,
+	.bNumEndpoints =	2,
 	.bInterfaceClass =	USB_CLASS_VENDOR_SPEC,
 	/* .iInterface		= DYNAMIC */
-पूर्ण;
+};
 
-अटल काष्ठा usb_पूर्णांकerface_descriptor source_sink_पूर्णांकf_alt1 = अणु
+static struct usb_interface_descriptor source_sink_intf_alt1 = {
 	.bLength =		USB_DT_INTERFACE_SIZE,
 	.bDescriptorType =	USB_DT_INTERFACE,
 
 	.bAlternateSetting =	1,
-	.bNumEndpoपूर्णांकs =	4,
+	.bNumEndpoints =	4,
 	.bInterfaceClass =	USB_CLASS_VENDOR_SPEC,
 	/* .iInterface		= DYNAMIC */
-पूर्ण;
+};
 
 /* full speed support: */
 
-अटल काष्ठा usb_endpoपूर्णांक_descriptor fs_source_desc = अणु
+static struct usb_endpoint_descriptor fs_source_desc = {
 	.bLength =		USB_DT_ENDPOINT_SIZE,
 	.bDescriptorType =	USB_DT_ENDPOINT,
 
-	.bEndpoपूर्णांकAddress =	USB_सूची_IN,
+	.bEndpointAddress =	USB_DIR_IN,
 	.bmAttributes =		USB_ENDPOINT_XFER_BULK,
-पूर्ण;
+};
 
-अटल काष्ठा usb_endpoपूर्णांक_descriptor fs_sink_desc = अणु
+static struct usb_endpoint_descriptor fs_sink_desc = {
 	.bLength =		USB_DT_ENDPOINT_SIZE,
 	.bDescriptorType =	USB_DT_ENDPOINT,
 
-	.bEndpoपूर्णांकAddress =	USB_सूची_OUT,
+	.bEndpointAddress =	USB_DIR_OUT,
 	.bmAttributes =		USB_ENDPOINT_XFER_BULK,
-पूर्ण;
+};
 
-अटल काष्ठा usb_endpoपूर्णांक_descriptor fs_iso_source_desc = अणु
+static struct usb_endpoint_descriptor fs_iso_source_desc = {
 	.bLength =		USB_DT_ENDPOINT_SIZE,
 	.bDescriptorType =	USB_DT_ENDPOINT,
 
-	.bEndpoपूर्णांकAddress =	USB_सूची_IN,
+	.bEndpointAddress =	USB_DIR_IN,
 	.bmAttributes =		USB_ENDPOINT_XFER_ISOC,
 	.wMaxPacketSize =	cpu_to_le16(1023),
 	.bInterval =		4,
-पूर्ण;
+};
 
-अटल काष्ठा usb_endpoपूर्णांक_descriptor fs_iso_sink_desc = अणु
+static struct usb_endpoint_descriptor fs_iso_sink_desc = {
 	.bLength =		USB_DT_ENDPOINT_SIZE,
 	.bDescriptorType =	USB_DT_ENDPOINT,
 
-	.bEndpoपूर्णांकAddress =	USB_सूची_OUT,
+	.bEndpointAddress =	USB_DIR_OUT,
 	.bmAttributes =		USB_ENDPOINT_XFER_ISOC,
 	.wMaxPacketSize =	cpu_to_le16(1023),
 	.bInterval =		4,
-पूर्ण;
+};
 
-अटल काष्ठा usb_descriptor_header *fs_source_sink_descs[] = अणु
-	(काष्ठा usb_descriptor_header *) &source_sink_पूर्णांकf_alt0,
-	(काष्ठा usb_descriptor_header *) &fs_sink_desc,
-	(काष्ठा usb_descriptor_header *) &fs_source_desc,
-	(काष्ठा usb_descriptor_header *) &source_sink_पूर्णांकf_alt1,
-#घोषणा FS_ALT_IFC_1_OFFSET	3
-	(काष्ठा usb_descriptor_header *) &fs_sink_desc,
-	(काष्ठा usb_descriptor_header *) &fs_source_desc,
-	(काष्ठा usb_descriptor_header *) &fs_iso_sink_desc,
-	(काष्ठा usb_descriptor_header *) &fs_iso_source_desc,
-	शून्य,
-पूर्ण;
+static struct usb_descriptor_header *fs_source_sink_descs[] = {
+	(struct usb_descriptor_header *) &source_sink_intf_alt0,
+	(struct usb_descriptor_header *) &fs_sink_desc,
+	(struct usb_descriptor_header *) &fs_source_desc,
+	(struct usb_descriptor_header *) &source_sink_intf_alt1,
+#define FS_ALT_IFC_1_OFFSET	3
+	(struct usb_descriptor_header *) &fs_sink_desc,
+	(struct usb_descriptor_header *) &fs_source_desc,
+	(struct usb_descriptor_header *) &fs_iso_sink_desc,
+	(struct usb_descriptor_header *) &fs_iso_source_desc,
+	NULL,
+};
 
 /* high speed support: */
 
-अटल काष्ठा usb_endpoपूर्णांक_descriptor hs_source_desc = अणु
+static struct usb_endpoint_descriptor hs_source_desc = {
 	.bLength =		USB_DT_ENDPOINT_SIZE,
 	.bDescriptorType =	USB_DT_ENDPOINT,
 
 	.bmAttributes =		USB_ENDPOINT_XFER_BULK,
 	.wMaxPacketSize =	cpu_to_le16(512),
-पूर्ण;
+};
 
-अटल काष्ठा usb_endpoपूर्णांक_descriptor hs_sink_desc = अणु
+static struct usb_endpoint_descriptor hs_sink_desc = {
 	.bLength =		USB_DT_ENDPOINT_SIZE,
 	.bDescriptorType =	USB_DT_ENDPOINT,
 
 	.bmAttributes =		USB_ENDPOINT_XFER_BULK,
 	.wMaxPacketSize =	cpu_to_le16(512),
-पूर्ण;
+};
 
-अटल काष्ठा usb_endpoपूर्णांक_descriptor hs_iso_source_desc = अणु
+static struct usb_endpoint_descriptor hs_iso_source_desc = {
 	.bLength =		USB_DT_ENDPOINT_SIZE,
 	.bDescriptorType =	USB_DT_ENDPOINT,
 
 	.bmAttributes =		USB_ENDPOINT_XFER_ISOC,
 	.wMaxPacketSize =	cpu_to_le16(1024),
 	.bInterval =		4,
-पूर्ण;
+};
 
-अटल काष्ठा usb_endpoपूर्णांक_descriptor hs_iso_sink_desc = अणु
+static struct usb_endpoint_descriptor hs_iso_sink_desc = {
 	.bLength =		USB_DT_ENDPOINT_SIZE,
 	.bDescriptorType =	USB_DT_ENDPOINT,
 
 	.bmAttributes =		USB_ENDPOINT_XFER_ISOC,
 	.wMaxPacketSize =	cpu_to_le16(1024),
 	.bInterval =		4,
-पूर्ण;
+};
 
-अटल काष्ठा usb_descriptor_header *hs_source_sink_descs[] = अणु
-	(काष्ठा usb_descriptor_header *) &source_sink_पूर्णांकf_alt0,
-	(काष्ठा usb_descriptor_header *) &hs_source_desc,
-	(काष्ठा usb_descriptor_header *) &hs_sink_desc,
-	(काष्ठा usb_descriptor_header *) &source_sink_पूर्णांकf_alt1,
-#घोषणा HS_ALT_IFC_1_OFFSET	3
-	(काष्ठा usb_descriptor_header *) &hs_source_desc,
-	(काष्ठा usb_descriptor_header *) &hs_sink_desc,
-	(काष्ठा usb_descriptor_header *) &hs_iso_source_desc,
-	(काष्ठा usb_descriptor_header *) &hs_iso_sink_desc,
-	शून्य,
-पूर्ण;
+static struct usb_descriptor_header *hs_source_sink_descs[] = {
+	(struct usb_descriptor_header *) &source_sink_intf_alt0,
+	(struct usb_descriptor_header *) &hs_source_desc,
+	(struct usb_descriptor_header *) &hs_sink_desc,
+	(struct usb_descriptor_header *) &source_sink_intf_alt1,
+#define HS_ALT_IFC_1_OFFSET	3
+	(struct usb_descriptor_header *) &hs_source_desc,
+	(struct usb_descriptor_header *) &hs_sink_desc,
+	(struct usb_descriptor_header *) &hs_iso_source_desc,
+	(struct usb_descriptor_header *) &hs_iso_sink_desc,
+	NULL,
+};
 
 /* super speed support: */
 
-अटल काष्ठा usb_endpoपूर्णांक_descriptor ss_source_desc = अणु
+static struct usb_endpoint_descriptor ss_source_desc = {
 	.bLength =		USB_DT_ENDPOINT_SIZE,
 	.bDescriptorType =	USB_DT_ENDPOINT,
 
 	.bmAttributes =		USB_ENDPOINT_XFER_BULK,
 	.wMaxPacketSize =	cpu_to_le16(1024),
-पूर्ण;
+};
 
-अटल काष्ठा usb_ss_ep_comp_descriptor ss_source_comp_desc = अणु
+static struct usb_ss_ep_comp_descriptor ss_source_comp_desc = {
 	.bLength =		USB_DT_SS_EP_COMP_SIZE,
 	.bDescriptorType =	USB_DT_SS_ENDPOINT_COMP,
 
 	.bMaxBurst =		0,
 	.bmAttributes =		0,
 	.wBytesPerInterval =	0,
-पूर्ण;
+};
 
-अटल काष्ठा usb_endpoपूर्णांक_descriptor ss_sink_desc = अणु
+static struct usb_endpoint_descriptor ss_sink_desc = {
 	.bLength =		USB_DT_ENDPOINT_SIZE,
 	.bDescriptorType =	USB_DT_ENDPOINT,
 
 	.bmAttributes =		USB_ENDPOINT_XFER_BULK,
 	.wMaxPacketSize =	cpu_to_le16(1024),
-पूर्ण;
+};
 
-अटल काष्ठा usb_ss_ep_comp_descriptor ss_sink_comp_desc = अणु
+static struct usb_ss_ep_comp_descriptor ss_sink_comp_desc = {
 	.bLength =		USB_DT_SS_EP_COMP_SIZE,
 	.bDescriptorType =	USB_DT_SS_ENDPOINT_COMP,
 
 	.bMaxBurst =		0,
 	.bmAttributes =		0,
 	.wBytesPerInterval =	0,
-पूर्ण;
+};
 
-अटल काष्ठा usb_endpoपूर्णांक_descriptor ss_iso_source_desc = अणु
+static struct usb_endpoint_descriptor ss_iso_source_desc = {
 	.bLength =		USB_DT_ENDPOINT_SIZE,
 	.bDescriptorType =	USB_DT_ENDPOINT,
 
 	.bmAttributes =		USB_ENDPOINT_XFER_ISOC,
 	.wMaxPacketSize =	cpu_to_le16(1024),
 	.bInterval =		4,
-पूर्ण;
+};
 
-अटल काष्ठा usb_ss_ep_comp_descriptor ss_iso_source_comp_desc = अणु
+static struct usb_ss_ep_comp_descriptor ss_iso_source_comp_desc = {
 	.bLength =		USB_DT_SS_EP_COMP_SIZE,
 	.bDescriptorType =	USB_DT_SS_ENDPOINT_COMP,
 
 	.bMaxBurst =		0,
 	.bmAttributes =		0,
 	.wBytesPerInterval =	cpu_to_le16(1024),
-पूर्ण;
+};
 
-अटल काष्ठा usb_endpoपूर्णांक_descriptor ss_iso_sink_desc = अणु
+static struct usb_endpoint_descriptor ss_iso_sink_desc = {
 	.bLength =		USB_DT_ENDPOINT_SIZE,
 	.bDescriptorType =	USB_DT_ENDPOINT,
 
 	.bmAttributes =		USB_ENDPOINT_XFER_ISOC,
 	.wMaxPacketSize =	cpu_to_le16(1024),
 	.bInterval =		4,
-पूर्ण;
+};
 
-अटल काष्ठा usb_ss_ep_comp_descriptor ss_iso_sink_comp_desc = अणु
+static struct usb_ss_ep_comp_descriptor ss_iso_sink_comp_desc = {
 	.bLength =		USB_DT_SS_EP_COMP_SIZE,
 	.bDescriptorType =	USB_DT_SS_ENDPOINT_COMP,
 
 	.bMaxBurst =		0,
 	.bmAttributes =		0,
 	.wBytesPerInterval =	cpu_to_le16(1024),
-पूर्ण;
+};
 
-अटल काष्ठा usb_descriptor_header *ss_source_sink_descs[] = अणु
-	(काष्ठा usb_descriptor_header *) &source_sink_पूर्णांकf_alt0,
-	(काष्ठा usb_descriptor_header *) &ss_source_desc,
-	(काष्ठा usb_descriptor_header *) &ss_source_comp_desc,
-	(काष्ठा usb_descriptor_header *) &ss_sink_desc,
-	(काष्ठा usb_descriptor_header *) &ss_sink_comp_desc,
-	(काष्ठा usb_descriptor_header *) &source_sink_पूर्णांकf_alt1,
-#घोषणा SS_ALT_IFC_1_OFFSET	5
-	(काष्ठा usb_descriptor_header *) &ss_source_desc,
-	(काष्ठा usb_descriptor_header *) &ss_source_comp_desc,
-	(काष्ठा usb_descriptor_header *) &ss_sink_desc,
-	(काष्ठा usb_descriptor_header *) &ss_sink_comp_desc,
-	(काष्ठा usb_descriptor_header *) &ss_iso_source_desc,
-	(काष्ठा usb_descriptor_header *) &ss_iso_source_comp_desc,
-	(काष्ठा usb_descriptor_header *) &ss_iso_sink_desc,
-	(काष्ठा usb_descriptor_header *) &ss_iso_sink_comp_desc,
-	शून्य,
-पूर्ण;
+static struct usb_descriptor_header *ss_source_sink_descs[] = {
+	(struct usb_descriptor_header *) &source_sink_intf_alt0,
+	(struct usb_descriptor_header *) &ss_source_desc,
+	(struct usb_descriptor_header *) &ss_source_comp_desc,
+	(struct usb_descriptor_header *) &ss_sink_desc,
+	(struct usb_descriptor_header *) &ss_sink_comp_desc,
+	(struct usb_descriptor_header *) &source_sink_intf_alt1,
+#define SS_ALT_IFC_1_OFFSET	5
+	(struct usb_descriptor_header *) &ss_source_desc,
+	(struct usb_descriptor_header *) &ss_source_comp_desc,
+	(struct usb_descriptor_header *) &ss_sink_desc,
+	(struct usb_descriptor_header *) &ss_sink_comp_desc,
+	(struct usb_descriptor_header *) &ss_iso_source_desc,
+	(struct usb_descriptor_header *) &ss_iso_source_comp_desc,
+	(struct usb_descriptor_header *) &ss_iso_sink_desc,
+	(struct usb_descriptor_header *) &ss_iso_sink_comp_desc,
+	NULL,
+};
 
-/* function-specअगरic strings: */
+/* function-specific strings: */
 
-अटल काष्ठा usb_string strings_sourcesink[] = अणु
+static struct usb_string strings_sourcesink[] = {
 	[0].s = "source and sink data",
-	अणु  पूर्ण			/* end of list */
-पूर्ण;
+	{  }			/* end of list */
+};
 
-अटल काष्ठा usb_gadget_strings stringtab_sourcesink = अणु
+static struct usb_gadget_strings stringtab_sourcesink = {
 	.language	= 0x0409,	/* en-us */
 	.strings	= strings_sourcesink,
-पूर्ण;
+};
 
-अटल काष्ठा usb_gadget_strings *sourcesink_strings[] = अणु
+static struct usb_gadget_strings *sourcesink_strings[] = {
 	&stringtab_sourcesink,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
 /*-------------------------------------------------------------------------*/
 
-अटल अंतरभूत काष्ठा usb_request *ss_alloc_ep_req(काष्ठा usb_ep *ep, पूर्णांक len)
-अणु
-	वापस alloc_ep_req(ep, len);
-पूर्ण
+static inline struct usb_request *ss_alloc_ep_req(struct usb_ep *ep, int len)
+{
+	return alloc_ep_req(ep, len);
+}
 
-अटल व्योम disable_ep(काष्ठा usb_composite_dev *cdev, काष्ठा usb_ep *ep)
-अणु
-	पूर्णांक			value;
+static void disable_ep(struct usb_composite_dev *cdev, struct usb_ep *ep)
+{
+	int			value;
 
 	value = usb_ep_disable(ep);
-	अगर (value < 0)
+	if (value < 0)
 		DBG(cdev, "disable %s --> %d\n", ep->name, value);
-पूर्ण
+}
 
-व्योम disable_endpoपूर्णांकs(काष्ठा usb_composite_dev *cdev,
-		काष्ठा usb_ep *in, काष्ठा usb_ep *out,
-		काष्ठा usb_ep *iso_in, काष्ठा usb_ep *iso_out)
-अणु
+void disable_endpoints(struct usb_composite_dev *cdev,
+		struct usb_ep *in, struct usb_ep *out,
+		struct usb_ep *iso_in, struct usb_ep *iso_out)
+{
 	disable_ep(cdev, in);
 	disable_ep(cdev, out);
-	अगर (iso_in)
+	if (iso_in)
 		disable_ep(cdev, iso_in);
-	अगर (iso_out)
+	if (iso_out)
 		disable_ep(cdev, iso_out);
-पूर्ण
+}
 
-अटल पूर्णांक
-sourcesink_bind(काष्ठा usb_configuration *c, काष्ठा usb_function *f)
-अणु
-	काष्ठा usb_composite_dev *cdev = c->cdev;
-	काष्ठा f_sourcesink	*ss = func_to_ss(f);
-	पूर्णांक	id;
-	पूर्णांक ret;
+static int
+sourcesink_bind(struct usb_configuration *c, struct usb_function *f)
+{
+	struct usb_composite_dev *cdev = c->cdev;
+	struct f_sourcesink	*ss = func_to_ss(f);
+	int	id;
+	int ret;
 
-	/* allocate पूर्णांकerface ID(s) */
-	id = usb_पूर्णांकerface_id(c, f);
-	अगर (id < 0)
-		वापस id;
-	source_sink_पूर्णांकf_alt0.bInterfaceNumber = id;
-	source_sink_पूर्णांकf_alt1.bInterfaceNumber = id;
+	/* allocate interface ID(s) */
+	id = usb_interface_id(c, f);
+	if (id < 0)
+		return id;
+	source_sink_intf_alt0.bInterfaceNumber = id;
+	source_sink_intf_alt1.bInterfaceNumber = id;
 
-	/* allocate bulk endpoपूर्णांकs */
-	ss->in_ep = usb_ep_स्वतःconfig(cdev->gadget, &fs_source_desc);
-	अगर (!ss->in_ep) अणु
-स्वतःconf_fail:
+	/* allocate bulk endpoints */
+	ss->in_ep = usb_ep_autoconfig(cdev->gadget, &fs_source_desc);
+	if (!ss->in_ep) {
+autoconf_fail:
 		ERROR(cdev, "%s: can't autoconfigure on %s\n",
 			f->name, cdev->gadget->name);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	ss->out_ep = usb_ep_स्वतःconfig(cdev->gadget, &fs_sink_desc);
-	अगर (!ss->out_ep)
-		जाओ स्वतःconf_fail;
+	ss->out_ep = usb_ep_autoconfig(cdev->gadget, &fs_sink_desc);
+	if (!ss->out_ep)
+		goto autoconf_fail;
 
 	/* sanity check the isoc module parameters */
-	अगर (ss->isoc_पूर्णांकerval < 1)
-		ss->isoc_पूर्णांकerval = 1;
-	अगर (ss->isoc_पूर्णांकerval > 16)
-		ss->isoc_पूर्णांकerval = 16;
-	अगर (ss->isoc_mult > 2)
+	if (ss->isoc_interval < 1)
+		ss->isoc_interval = 1;
+	if (ss->isoc_interval > 16)
+		ss->isoc_interval = 16;
+	if (ss->isoc_mult > 2)
 		ss->isoc_mult = 2;
-	अगर (ss->isoc_maxburst > 15)
+	if (ss->isoc_maxburst > 15)
 		ss->isoc_maxburst = 15;
 
 	/* fill in the FS isoc descriptors from the module parameters */
 	fs_iso_source_desc.wMaxPacketSize = ss->isoc_maxpacket > 1023 ?
 						1023 : ss->isoc_maxpacket;
-	fs_iso_source_desc.bInterval = ss->isoc_पूर्णांकerval;
+	fs_iso_source_desc.bInterval = ss->isoc_interval;
 	fs_iso_sink_desc.wMaxPacketSize = ss->isoc_maxpacket > 1023 ?
 						1023 : ss->isoc_maxpacket;
-	fs_iso_sink_desc.bInterval = ss->isoc_पूर्णांकerval;
+	fs_iso_sink_desc.bInterval = ss->isoc_interval;
 
-	/* allocate iso endpoपूर्णांकs */
-	ss->iso_in_ep = usb_ep_स्वतःconfig(cdev->gadget, &fs_iso_source_desc);
-	अगर (!ss->iso_in_ep)
-		जाओ no_iso;
+	/* allocate iso endpoints */
+	ss->iso_in_ep = usb_ep_autoconfig(cdev->gadget, &fs_iso_source_desc);
+	if (!ss->iso_in_ep)
+		goto no_iso;
 
-	ss->iso_out_ep = usb_ep_स्वतःconfig(cdev->gadget, &fs_iso_sink_desc);
-	अगर (!ss->iso_out_ep) अणु
-		usb_ep_स्वतःconfig_release(ss->iso_in_ep);
-		ss->iso_in_ep = शून्य;
+	ss->iso_out_ep = usb_ep_autoconfig(cdev->gadget, &fs_iso_sink_desc);
+	if (!ss->iso_out_ep) {
+		usb_ep_autoconfig_release(ss->iso_in_ep);
+		ss->iso_in_ep = NULL;
 no_iso:
 		/*
-		 * We still want to work even अगर the UDC करोesn't have isoc
-		 * endpoपूर्णांकs, so null out the alt पूर्णांकerface that contains
-		 * them and जारी.
+		 * We still want to work even if the UDC doesn't have isoc
+		 * endpoints, so null out the alt interface that contains
+		 * them and continue.
 		 */
-		fs_source_sink_descs[FS_ALT_IFC_1_OFFSET] = शून्य;
-		hs_source_sink_descs[HS_ALT_IFC_1_OFFSET] = शून्य;
-		ss_source_sink_descs[SS_ALT_IFC_1_OFFSET] = शून्य;
-	पूर्ण
+		fs_source_sink_descs[FS_ALT_IFC_1_OFFSET] = NULL;
+		hs_source_sink_descs[HS_ALT_IFC_1_OFFSET] = NULL;
+		ss_source_sink_descs[SS_ALT_IFC_1_OFFSET] = NULL;
+	}
 
-	अगर (ss->isoc_maxpacket > 1024)
+	if (ss->isoc_maxpacket > 1024)
 		ss->isoc_maxpacket = 1024;
 
 	/* support high speed hardware */
-	hs_source_desc.bEndpoपूर्णांकAddress = fs_source_desc.bEndpoपूर्णांकAddress;
-	hs_sink_desc.bEndpoपूर्णांकAddress = fs_sink_desc.bEndpoपूर्णांकAddress;
+	hs_source_desc.bEndpointAddress = fs_source_desc.bEndpointAddress;
+	hs_sink_desc.bEndpointAddress = fs_sink_desc.bEndpointAddress;
 
 	/*
 	 * Fill in the HS isoc descriptors from the module parameters.
-	 * We assume that the user knows what they are करोing and won't
-	 * give parameters that their UDC करोesn't support.
+	 * We assume that the user knows what they are doing and won't
+	 * give parameters that their UDC doesn't support.
 	 */
 	hs_iso_source_desc.wMaxPacketSize = ss->isoc_maxpacket;
 	hs_iso_source_desc.wMaxPacketSize |= ss->isoc_mult << 11;
-	hs_iso_source_desc.bInterval = ss->isoc_पूर्णांकerval;
-	hs_iso_source_desc.bEndpoपूर्णांकAddress =
-		fs_iso_source_desc.bEndpoपूर्णांकAddress;
+	hs_iso_source_desc.bInterval = ss->isoc_interval;
+	hs_iso_source_desc.bEndpointAddress =
+		fs_iso_source_desc.bEndpointAddress;
 
 	hs_iso_sink_desc.wMaxPacketSize = ss->isoc_maxpacket;
 	hs_iso_sink_desc.wMaxPacketSize |= ss->isoc_mult << 11;
-	hs_iso_sink_desc.bInterval = ss->isoc_पूर्णांकerval;
-	hs_iso_sink_desc.bEndpoपूर्णांकAddress = fs_iso_sink_desc.bEndpoपूर्णांकAddress;
+	hs_iso_sink_desc.bInterval = ss->isoc_interval;
+	hs_iso_sink_desc.bEndpointAddress = fs_iso_sink_desc.bEndpointAddress;
 
 	/* support super speed hardware */
-	ss_source_desc.bEndpoपूर्णांकAddress =
-		fs_source_desc.bEndpoपूर्णांकAddress;
-	ss_sink_desc.bEndpoपूर्णांकAddress =
-		fs_sink_desc.bEndpoपूर्णांकAddress;
+	ss_source_desc.bEndpointAddress =
+		fs_source_desc.bEndpointAddress;
+	ss_sink_desc.bEndpointAddress =
+		fs_sink_desc.bEndpointAddress;
 
 	/*
 	 * Fill in the SS isoc descriptors from the module parameters.
-	 * We assume that the user knows what they are करोing and won't
-	 * give parameters that their UDC करोesn't support.
+	 * We assume that the user knows what they are doing and won't
+	 * give parameters that their UDC doesn't support.
 	 */
 	ss_iso_source_desc.wMaxPacketSize = ss->isoc_maxpacket;
-	ss_iso_source_desc.bInterval = ss->isoc_पूर्णांकerval;
+	ss_iso_source_desc.bInterval = ss->isoc_interval;
 	ss_iso_source_comp_desc.bmAttributes = ss->isoc_mult;
 	ss_iso_source_comp_desc.bMaxBurst = ss->isoc_maxburst;
 	ss_iso_source_comp_desc.wBytesPerInterval = ss->isoc_maxpacket *
 		(ss->isoc_mult + 1) * (ss->isoc_maxburst + 1);
-	ss_iso_source_desc.bEndpoपूर्णांकAddress =
-		fs_iso_source_desc.bEndpoपूर्णांकAddress;
+	ss_iso_source_desc.bEndpointAddress =
+		fs_iso_source_desc.bEndpointAddress;
 
 	ss_iso_sink_desc.wMaxPacketSize = ss->isoc_maxpacket;
-	ss_iso_sink_desc.bInterval = ss->isoc_पूर्णांकerval;
+	ss_iso_sink_desc.bInterval = ss->isoc_interval;
 	ss_iso_sink_comp_desc.bmAttributes = ss->isoc_mult;
 	ss_iso_sink_comp_desc.bMaxBurst = ss->isoc_maxburst;
 	ss_iso_sink_comp_desc.wBytesPerInterval = ss->isoc_maxpacket *
 		(ss->isoc_mult + 1) * (ss->isoc_maxburst + 1);
-	ss_iso_sink_desc.bEndpoपूर्णांकAddress = fs_iso_sink_desc.bEndpoपूर्णांकAddress;
+	ss_iso_sink_desc.bEndpointAddress = fs_iso_sink_desc.bEndpointAddress;
 
 	ret = usb_assign_descriptors(f, fs_source_sink_descs,
 			hs_source_sink_descs, ss_source_sink_descs,
 			ss_source_sink_descs);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	DBG(cdev, "%s speed %s: IN/%s, OUT/%s, ISO-IN/%s, ISO-OUT/%s\n",
 	    (gadget_is_superspeed(c->cdev->gadget) ? "super" :
@@ -443,414 +442,414 @@ no_iso:
 			f->name, ss->in_ep->name, ss->out_ep->name,
 			ss->iso_in_ep ? ss->iso_in_ep->name : "<none>",
 			ss->iso_out_ep ? ss->iso_out_ep->name : "<none>");
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम
-sourcesink_मुक्त_func(काष्ठा usb_function *f)
-अणु
-	काष्ठा f_ss_opts *opts;
+static void
+sourcesink_free_func(struct usb_function *f)
+{
+	struct f_ss_opts *opts;
 
-	opts = container_of(f->fi, काष्ठा f_ss_opts, func_inst);
+	opts = container_of(f->fi, struct f_ss_opts, func_inst);
 
 	mutex_lock(&opts->lock);
 	opts->refcnt--;
 	mutex_unlock(&opts->lock);
 
-	usb_मुक्त_all_descriptors(f);
-	kमुक्त(func_to_ss(f));
-पूर्ण
+	usb_free_all_descriptors(f);
+	kfree(func_to_ss(f));
+}
 
-/* optionally require specअगरic source/sink data patterns  */
-अटल पूर्णांक check_पढ़ो_data(काष्ठा f_sourcesink *ss, काष्ठा usb_request *req)
-अणु
-	अचिन्हित		i;
+/* optionally require specific source/sink data patterns  */
+static int check_read_data(struct f_sourcesink *ss, struct usb_request *req)
+{
+	unsigned		i;
 	u8			*buf = req->buf;
-	काष्ठा usb_composite_dev *cdev = ss->function.config->cdev;
-	पूर्णांक max_packet_size = le16_to_cpu(ss->out_ep->desc->wMaxPacketSize);
+	struct usb_composite_dev *cdev = ss->function.config->cdev;
+	int max_packet_size = le16_to_cpu(ss->out_ep->desc->wMaxPacketSize);
 
-	अगर (ss->pattern == 2)
-		वापस 0;
+	if (ss->pattern == 2)
+		return 0;
 
-	क्रम (i = 0; i < req->actual; i++, buf++) अणु
-		चयन (ss->pattern) अणु
+	for (i = 0; i < req->actual; i++, buf++) {
+		switch (ss->pattern) {
 
 		/* all-zeroes has no synchronization issues */
-		हाल 0:
-			अगर (*buf == 0)
-				जारी;
-			अवरोध;
+		case 0:
+			if (*buf == 0)
+				continue;
+			break;
 
-		/* "mod63" stays in sync with लघु-terminated transfers,
+		/* "mod63" stays in sync with short-terminated transfers,
 		 * OR otherwise when host and gadget agree on how large
-		 * each usb transfer request should be.  Resync is करोne
-		 * with set_पूर्णांकerface or set_config.  (We *WANT* it to
-		 * get quickly out of sync अगर controllers or their drivers
-		 * stutter क्रम any reason, including buffer duplication...)
+		 * each usb transfer request should be.  Resync is done
+		 * with set_interface or set_config.  (We *WANT* it to
+		 * get quickly out of sync if controllers or their drivers
+		 * stutter for any reason, including buffer duplication...)
 		 */
-		हाल 1:
-			अगर (*buf == (u8)((i % max_packet_size) % 63))
-				जारी;
-			अवरोध;
-		पूर्ण
+		case 1:
+			if (*buf == (u8)((i % max_packet_size) % 63))
+				continue;
+			break;
+		}
 		ERROR(cdev, "bad OUT byte, buf[%d] = %d\n", i, *buf);
 		usb_ep_set_halt(ss->out_ep);
-		वापस -EINVAL;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return -EINVAL;
+	}
+	return 0;
+}
 
-अटल व्योम reinit_ग_लिखो_data(काष्ठा usb_ep *ep, काष्ठा usb_request *req)
-अणु
-	अचिन्हित	i;
+static void reinit_write_data(struct usb_ep *ep, struct usb_request *req)
+{
+	unsigned	i;
 	u8		*buf = req->buf;
-	पूर्णांक max_packet_size = le16_to_cpu(ep->desc->wMaxPacketSize);
-	काष्ठा f_sourcesink *ss = ep->driver_data;
+	int max_packet_size = le16_to_cpu(ep->desc->wMaxPacketSize);
+	struct f_sourcesink *ss = ep->driver_data;
 
-	चयन (ss->pattern) अणु
-	हाल 0:
-		स_रखो(req->buf, 0, req->length);
-		अवरोध;
-	हाल 1:
-		क्रम  (i = 0; i < req->length; i++)
+	switch (ss->pattern) {
+	case 0:
+		memset(req->buf, 0, req->length);
+		break;
+	case 1:
+		for  (i = 0; i < req->length; i++)
 			*buf++ = (u8) ((i % max_packet_size) % 63);
-		अवरोध;
-	हाल 2:
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	case 2:
+		break;
+	}
+}
 
-अटल व्योम source_sink_complete(काष्ठा usb_ep *ep, काष्ठा usb_request *req)
-अणु
-	काष्ठा usb_composite_dev	*cdev;
-	काष्ठा f_sourcesink		*ss = ep->driver_data;
-	पूर्णांक				status = req->status;
+static void source_sink_complete(struct usb_ep *ep, struct usb_request *req)
+{
+	struct usb_composite_dev	*cdev;
+	struct f_sourcesink		*ss = ep->driver_data;
+	int				status = req->status;
 
-	/* driver_data will be null अगर ep has been disabled */
-	अगर (!ss)
-		वापस;
+	/* driver_data will be null if ep has been disabled */
+	if (!ss)
+		return;
 
 	cdev = ss->function.config->cdev;
 
-	चयन (status) अणु
+	switch (status) {
 
-	हाल 0:				/* normal completion? */
-		अगर (ep == ss->out_ep) अणु
-			check_पढ़ो_data(ss, req);
-			अगर (ss->pattern != 2)
-				स_रखो(req->buf, 0x55, req->length);
-		पूर्ण
-		अवरोध;
+	case 0:				/* normal completion? */
+		if (ep == ss->out_ep) {
+			check_read_data(ss, req);
+			if (ss->pattern != 2)
+				memset(req->buf, 0x55, req->length);
+		}
+		break;
 
-	/* this endpoपूर्णांक is normally active जबतक we're configured */
-	हाल -ECONNABORTED:		/* hardware क्रमced ep reset */
-	हाल -ECONNRESET:		/* request dequeued */
-	हाल -ESHUTDOWN:		/* disconnect from host */
+	/* this endpoint is normally active while we're configured */
+	case -ECONNABORTED:		/* hardware forced ep reset */
+	case -ECONNRESET:		/* request dequeued */
+	case -ESHUTDOWN:		/* disconnect from host */
 		VDBG(cdev, "%s gone (%d), %d/%d\n", ep->name, status,
 				req->actual, req->length);
-		अगर (ep == ss->out_ep)
-			check_पढ़ो_data(ss, req);
-		मुक्त_ep_req(ep, req);
-		वापस;
+		if (ep == ss->out_ep)
+			check_read_data(ss, req);
+		free_ep_req(ep, req);
+		return;
 
-	हाल -EOVERFLOW:		/* buffer overrun on पढ़ो means that
+	case -EOVERFLOW:		/* buffer overrun on read means that
 					 * we didn't provide a big enough
 					 * buffer.
 					 */
-	शेष:
-#अगर 1
+	default:
+#if 1
 		DBG(cdev, "%s complete --> %d, %d/%d\n", ep->name,
 				status, req->actual, req->length);
-		अवरोध;
-#पूर्ण_अगर
-	हाल -EREMOTEIO:		/* लघु पढ़ो */
-		अवरोध;
-	पूर्ण
+		break;
+#endif
+	case -EREMOTEIO:		/* short read */
+		break;
+	}
 
 	status = usb_ep_queue(ep, req, GFP_ATOMIC);
-	अगर (status) अणु
+	if (status) {
 		ERROR(cdev, "kill %s:  resubmit %d bytes --> %d\n",
 				ep->name, req->length, status);
 		usb_ep_set_halt(ep);
 		/* FIXME recover later ... somehow */
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक source_sink_start_ep(काष्ठा f_sourcesink *ss, bool is_in,
-		bool is_iso, पूर्णांक speed)
-अणु
-	काष्ठा usb_ep		*ep;
-	काष्ठा usb_request	*req;
-	पूर्णांक			i, size, qlen, status = 0;
+static int source_sink_start_ep(struct f_sourcesink *ss, bool is_in,
+		bool is_iso, int speed)
+{
+	struct usb_ep		*ep;
+	struct usb_request	*req;
+	int			i, size, qlen, status = 0;
 
-	अगर (is_iso) अणु
-		चयन (speed) अणु
-		हाल USB_SPEED_SUPER:
+	if (is_iso) {
+		switch (speed) {
+		case USB_SPEED_SUPER:
 			size = ss->isoc_maxpacket *
 					(ss->isoc_mult + 1) *
 					(ss->isoc_maxburst + 1);
-			अवरोध;
-		हाल USB_SPEED_HIGH:
+			break;
+		case USB_SPEED_HIGH:
 			size = ss->isoc_maxpacket * (ss->isoc_mult + 1);
-			अवरोध;
-		शेष:
+			break;
+		default:
 			size = ss->isoc_maxpacket > 1023 ?
 					1023 : ss->isoc_maxpacket;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		ep = is_in ? ss->iso_in_ep : ss->iso_out_ep;
 		qlen = ss->iso_qlen;
-	पूर्ण अन्यथा अणु
+	} else {
 		ep = is_in ? ss->in_ep : ss->out_ep;
 		qlen = ss->bulk_qlen;
 		size = ss->buflen;
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < qlen; i++) अणु
+	for (i = 0; i < qlen; i++) {
 		req = ss_alloc_ep_req(ep, size);
-		अगर (!req)
-			वापस -ENOMEM;
+		if (!req)
+			return -ENOMEM;
 
 		req->complete = source_sink_complete;
-		अगर (is_in)
-			reinit_ग_लिखो_data(ep, req);
-		अन्यथा अगर (ss->pattern != 2)
-			स_रखो(req->buf, 0x55, req->length);
+		if (is_in)
+			reinit_write_data(ep, req);
+		else if (ss->pattern != 2)
+			memset(req->buf, 0x55, req->length);
 
 		status = usb_ep_queue(ep, req, GFP_ATOMIC);
-		अगर (status) अणु
-			काष्ठा usb_composite_dev	*cdev;
+		if (status) {
+			struct usb_composite_dev	*cdev;
 
 			cdev = ss->function.config->cdev;
 			ERROR(cdev, "start %s%s %s --> %d\n",
 			      is_iso ? "ISO-" : "", is_in ? "IN" : "OUT",
 			      ep->name, status);
-			मुक्त_ep_req(ep, req);
-			वापस status;
-		पूर्ण
-	पूर्ण
+			free_ep_req(ep, req);
+			return status;
+		}
+	}
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल व्योम disable_source_sink(काष्ठा f_sourcesink *ss)
-अणु
-	काष्ठा usb_composite_dev	*cdev;
+static void disable_source_sink(struct f_sourcesink *ss)
+{
+	struct usb_composite_dev	*cdev;
 
 	cdev = ss->function.config->cdev;
-	disable_endpoपूर्णांकs(cdev, ss->in_ep, ss->out_ep, ss->iso_in_ep,
+	disable_endpoints(cdev, ss->in_ep, ss->out_ep, ss->iso_in_ep,
 			ss->iso_out_ep);
 	VDBG(cdev, "%s disabled\n", ss->function.name);
-पूर्ण
+}
 
-अटल पूर्णांक
-enable_source_sink(काष्ठा usb_composite_dev *cdev, काष्ठा f_sourcesink *ss,
-		पूर्णांक alt)
-अणु
-	पूर्णांक					result = 0;
-	पूर्णांक					speed = cdev->gadget->speed;
-	काष्ठा usb_ep				*ep;
+static int
+enable_source_sink(struct usb_composite_dev *cdev, struct f_sourcesink *ss,
+		int alt)
+{
+	int					result = 0;
+	int					speed = cdev->gadget->speed;
+	struct usb_ep				*ep;
 
-	/* one bulk endpoपूर्णांक ग_लिखोs (sources) zeroes IN (to the host) */
+	/* one bulk endpoint writes (sources) zeroes IN (to the host) */
 	ep = ss->in_ep;
 	result = config_ep_by_speed(cdev->gadget, &(ss->function), ep);
-	अगर (result)
-		वापस result;
+	if (result)
+		return result;
 	result = usb_ep_enable(ep);
-	अगर (result < 0)
-		वापस result;
+	if (result < 0)
+		return result;
 	ep->driver_data = ss;
 
 	result = source_sink_start_ep(ss, true, false, speed);
-	अगर (result < 0) अणु
+	if (result < 0) {
 fail:
 		ep = ss->in_ep;
 		usb_ep_disable(ep);
-		वापस result;
-	पूर्ण
+		return result;
+	}
 
-	/* one bulk endpoपूर्णांक पढ़ोs (sinks) anything OUT (from the host) */
+	/* one bulk endpoint reads (sinks) anything OUT (from the host) */
 	ep = ss->out_ep;
 	result = config_ep_by_speed(cdev->gadget, &(ss->function), ep);
-	अगर (result)
-		जाओ fail;
+	if (result)
+		goto fail;
 	result = usb_ep_enable(ep);
-	अगर (result < 0)
-		जाओ fail;
+	if (result < 0)
+		goto fail;
 	ep->driver_data = ss;
 
 	result = source_sink_start_ep(ss, false, false, speed);
-	अगर (result < 0) अणु
+	if (result < 0) {
 fail2:
 		ep = ss->out_ep;
 		usb_ep_disable(ep);
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
-	अगर (alt == 0)
-		जाओ out;
+	if (alt == 0)
+		goto out;
 
-	/* one iso endpoपूर्णांक ग_लिखोs (sources) zeroes IN (to the host) */
+	/* one iso endpoint writes (sources) zeroes IN (to the host) */
 	ep = ss->iso_in_ep;
-	अगर (ep) अणु
+	if (ep) {
 		result = config_ep_by_speed(cdev->gadget, &(ss->function), ep);
-		अगर (result)
-			जाओ fail2;
+		if (result)
+			goto fail2;
 		result = usb_ep_enable(ep);
-		अगर (result < 0)
-			जाओ fail2;
+		if (result < 0)
+			goto fail2;
 		ep->driver_data = ss;
 
 		result = source_sink_start_ep(ss, true, true, speed);
-		अगर (result < 0) अणु
+		if (result < 0) {
 fail3:
 			ep = ss->iso_in_ep;
-			अगर (ep)
+			if (ep)
 				usb_ep_disable(ep);
-			जाओ fail2;
-		पूर्ण
-	पूर्ण
+			goto fail2;
+		}
+	}
 
-	/* one iso endpoपूर्णांक पढ़ोs (sinks) anything OUT (from the host) */
+	/* one iso endpoint reads (sinks) anything OUT (from the host) */
 	ep = ss->iso_out_ep;
-	अगर (ep) अणु
+	if (ep) {
 		result = config_ep_by_speed(cdev->gadget, &(ss->function), ep);
-		अगर (result)
-			जाओ fail3;
+		if (result)
+			goto fail3;
 		result = usb_ep_enable(ep);
-		अगर (result < 0)
-			जाओ fail3;
+		if (result < 0)
+			goto fail3;
 		ep->driver_data = ss;
 
 		result = source_sink_start_ep(ss, false, true, speed);
-		अगर (result < 0) अणु
+		if (result < 0) {
 			usb_ep_disable(ep);
-			जाओ fail3;
-		पूर्ण
-	पूर्ण
+			goto fail3;
+		}
+	}
 out:
 	ss->cur_alt = alt;
 
 	DBG(cdev, "%s enabled, alt intf %d\n", ss->function.name, alt);
-	वापस result;
-पूर्ण
+	return result;
+}
 
-अटल पूर्णांक sourcesink_set_alt(काष्ठा usb_function *f,
-		अचिन्हित पूर्णांकf, अचिन्हित alt)
-अणु
-	काष्ठा f_sourcesink		*ss = func_to_ss(f);
-	काष्ठा usb_composite_dev	*cdev = f->config->cdev;
-
-	disable_source_sink(ss);
-	वापस enable_source_sink(cdev, ss, alt);
-पूर्ण
-
-अटल पूर्णांक sourcesink_get_alt(काष्ठा usb_function *f, अचिन्हित पूर्णांकf)
-अणु
-	काष्ठा f_sourcesink		*ss = func_to_ss(f);
-
-	वापस ss->cur_alt;
-पूर्ण
-
-अटल व्योम sourcesink_disable(काष्ठा usb_function *f)
-अणु
-	काष्ठा f_sourcesink	*ss = func_to_ss(f);
+static int sourcesink_set_alt(struct usb_function *f,
+		unsigned intf, unsigned alt)
+{
+	struct f_sourcesink		*ss = func_to_ss(f);
+	struct usb_composite_dev	*cdev = f->config->cdev;
 
 	disable_source_sink(ss);
-पूर्ण
+	return enable_source_sink(cdev, ss, alt);
+}
+
+static int sourcesink_get_alt(struct usb_function *f, unsigned intf)
+{
+	struct f_sourcesink		*ss = func_to_ss(f);
+
+	return ss->cur_alt;
+}
+
+static void sourcesink_disable(struct usb_function *f)
+{
+	struct f_sourcesink	*ss = func_to_ss(f);
+
+	disable_source_sink(ss);
+}
 
 /*-------------------------------------------------------------------------*/
 
-अटल पूर्णांक sourcesink_setup(काष्ठा usb_function *f,
-		स्थिर काष्ठा usb_ctrlrequest *ctrl)
-अणु
-	काष्ठा usb_configuration        *c = f->config;
-	काष्ठा usb_request	*req = c->cdev->req;
-	पूर्णांक			value = -EOPNOTSUPP;
+static int sourcesink_setup(struct usb_function *f,
+		const struct usb_ctrlrequest *ctrl)
+{
+	struct usb_configuration        *c = f->config;
+	struct usb_request	*req = c->cdev->req;
+	int			value = -EOPNOTSUPP;
 	u16			w_index = le16_to_cpu(ctrl->wIndex);
 	u16			w_value = le16_to_cpu(ctrl->wValue);
 	u16			w_length = le16_to_cpu(ctrl->wLength);
 
-	req->length = USB_COMP_EP0_बफ_मान;
+	req->length = USB_COMP_EP0_BUFSIZ;
 
-	/* composite driver infraकाष्ठाure handles everything except
+	/* composite driver infrastructure handles everything except
 	 * the two control test requests.
 	 */
-	चयन (ctrl->bRequest) अणु
+	switch (ctrl->bRequest) {
 
 	/*
-	 * These are the same venकरोr-specअगरic requests supported by
+	 * These are the same vendor-specific requests supported by
 	 * Intel's USB 2.0 compliance test devices.  We exceed that
 	 * device spec by allowing multiple-packet requests.
 	 *
 	 * NOTE:  the Control-OUT data stays in req->buf ... better
-	 * would be copying it पूर्णांकo a scratch buffer, so that other
-	 * requests may safely पूर्णांकervene.
+	 * would be copying it into a scratch buffer, so that other
+	 * requests may safely intervene.
 	 */
-	हाल 0x5b:	/* control WRITE test -- fill the buffer */
-		अगर (ctrl->bRequestType != (USB_सूची_OUT|USB_TYPE_VENDOR))
-			जाओ unknown;
-		अगर (w_value || w_index)
-			अवरोध;
-		/* just पढ़ो that many bytes पूर्णांकo the buffer */
-		अगर (w_length > req->length)
-			अवरोध;
+	case 0x5b:	/* control WRITE test -- fill the buffer */
+		if (ctrl->bRequestType != (USB_DIR_OUT|USB_TYPE_VENDOR))
+			goto unknown;
+		if (w_value || w_index)
+			break;
+		/* just read that many bytes into the buffer */
+		if (w_length > req->length)
+			break;
 		value = w_length;
-		अवरोध;
-	हाल 0x5c:	/* control READ test -- वापस the buffer */
-		अगर (ctrl->bRequestType != (USB_सूची_IN|USB_TYPE_VENDOR))
-			जाओ unknown;
-		अगर (w_value || w_index)
-			अवरोध;
+		break;
+	case 0x5c:	/* control READ test -- return the buffer */
+		if (ctrl->bRequestType != (USB_DIR_IN|USB_TYPE_VENDOR))
+			goto unknown;
+		if (w_value || w_index)
+			break;
 		/* expect those bytes are still in the buffer; send back */
-		अगर (w_length > req->length)
-			अवरोध;
+		if (w_length > req->length)
+			break;
 		value = w_length;
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 unknown:
 		VDBG(c->cdev,
 			"unknown control req%02x.%02x v%04x i%04x l%d\n",
 			ctrl->bRequestType, ctrl->bRequest,
 			w_value, w_index, w_length);
-	पूर्ण
+	}
 
 	/* respond with data transfer or status phase? */
-	अगर (value >= 0) अणु
+	if (value >= 0) {
 		VDBG(c->cdev, "source/sink req%02x.%02x v%04x i%04x l%d\n",
 			ctrl->bRequestType, ctrl->bRequest,
 			w_value, w_index, w_length);
 		req->zero = 0;
 		req->length = value;
 		value = usb_ep_queue(c->cdev->gadget->ep0, req, GFP_ATOMIC);
-		अगर (value < 0)
+		if (value < 0)
 			ERROR(c->cdev, "source/sink response, err %d\n",
 					value);
-	पूर्ण
+	}
 
 	/* device either stalls (value < 0) or reports success */
-	वापस value;
-पूर्ण
+	return value;
+}
 
-अटल काष्ठा usb_function *source_sink_alloc_func(
-		काष्ठा usb_function_instance *fi)
-अणु
-	काष्ठा f_sourcesink     *ss;
-	काष्ठा f_ss_opts	*ss_opts;
+static struct usb_function *source_sink_alloc_func(
+		struct usb_function_instance *fi)
+{
+	struct f_sourcesink     *ss;
+	struct f_ss_opts	*ss_opts;
 
-	ss = kzalloc(माप(*ss), GFP_KERNEL);
-	अगर (!ss)
-		वापस ERR_PTR(-ENOMEM);
+	ss = kzalloc(sizeof(*ss), GFP_KERNEL);
+	if (!ss)
+		return ERR_PTR(-ENOMEM);
 
-	ss_opts =  container_of(fi, काष्ठा f_ss_opts, func_inst);
+	ss_opts =  container_of(fi, struct f_ss_opts, func_inst);
 
 	mutex_lock(&ss_opts->lock);
 	ss_opts->refcnt++;
 	mutex_unlock(&ss_opts->lock);
 
 	ss->pattern = ss_opts->pattern;
-	ss->isoc_पूर्णांकerval = ss_opts->isoc_पूर्णांकerval;
+	ss->isoc_interval = ss_opts->isoc_interval;
 	ss->isoc_maxpacket = ss_opts->isoc_maxpacket;
 	ss->isoc_mult = ss_opts->isoc_mult;
 	ss->isoc_maxburst = ss_opts->isoc_maxburst;
@@ -866,393 +865,393 @@ unknown:
 	ss->function.setup = sourcesink_setup;
 	ss->function.strings = sourcesink_strings;
 
-	ss->function.मुक्त_func = sourcesink_मुक्त_func;
+	ss->function.free_func = sourcesink_free_func;
 
-	वापस &ss->function;
-पूर्ण
+	return &ss->function;
+}
 
-अटल अंतरभूत काष्ठा f_ss_opts *to_f_ss_opts(काष्ठा config_item *item)
-अणु
-	वापस container_of(to_config_group(item), काष्ठा f_ss_opts,
+static inline struct f_ss_opts *to_f_ss_opts(struct config_item *item)
+{
+	return container_of(to_config_group(item), struct f_ss_opts,
 			    func_inst.group);
-पूर्ण
+}
 
-अटल व्योम ss_attr_release(काष्ठा config_item *item)
-अणु
-	काष्ठा f_ss_opts *ss_opts = to_f_ss_opts(item);
+static void ss_attr_release(struct config_item *item)
+{
+	struct f_ss_opts *ss_opts = to_f_ss_opts(item);
 
 	usb_put_function_instance(&ss_opts->func_inst);
-पूर्ण
+}
 
-अटल काष्ठा configfs_item_operations ss_item_ops = अणु
+static struct configfs_item_operations ss_item_ops = {
 	.release		= ss_attr_release,
-पूर्ण;
+};
 
-अटल sमाप_प्रकार f_ss_opts_pattern_show(काष्ठा config_item *item, अक्षर *page)
-अणु
-	काष्ठा f_ss_opts *opts = to_f_ss_opts(item);
-	पूर्णांक result;
+static ssize_t f_ss_opts_pattern_show(struct config_item *item, char *page)
+{
+	struct f_ss_opts *opts = to_f_ss_opts(item);
+	int result;
 
 	mutex_lock(&opts->lock);
-	result = प्र_लिखो(page, "%u\n", opts->pattern);
+	result = sprintf(page, "%u\n", opts->pattern);
 	mutex_unlock(&opts->lock);
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
-अटल sमाप_प्रकार f_ss_opts_pattern_store(काष्ठा config_item *item,
-				       स्थिर अक्षर *page, माप_प्रकार len)
-अणु
-	काष्ठा f_ss_opts *opts = to_f_ss_opts(item);
-	पूर्णांक ret;
+static ssize_t f_ss_opts_pattern_store(struct config_item *item,
+				       const char *page, size_t len)
+{
+	struct f_ss_opts *opts = to_f_ss_opts(item);
+	int ret;
 	u8 num;
 
 	mutex_lock(&opts->lock);
-	अगर (opts->refcnt) अणु
+	if (opts->refcnt) {
 		ret = -EBUSY;
-		जाओ end;
-	पूर्ण
+		goto end;
+	}
 
 	ret = kstrtou8(page, 0, &num);
-	अगर (ret)
-		जाओ end;
+	if (ret)
+		goto end;
 
-	अगर (num != 0 && num != 1 && num != 2) अणु
+	if (num != 0 && num != 1 && num != 2) {
 		ret = -EINVAL;
-		जाओ end;
-	पूर्ण
+		goto end;
+	}
 
 	opts->pattern = num;
 	ret = len;
 end:
 	mutex_unlock(&opts->lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 CONFIGFS_ATTR(f_ss_opts_, pattern);
 
-अटल sमाप_प्रकार f_ss_opts_isoc_पूर्णांकerval_show(काष्ठा config_item *item, अक्षर *page)
-अणु
-	काष्ठा f_ss_opts *opts = to_f_ss_opts(item);
-	पूर्णांक result;
+static ssize_t f_ss_opts_isoc_interval_show(struct config_item *item, char *page)
+{
+	struct f_ss_opts *opts = to_f_ss_opts(item);
+	int result;
 
 	mutex_lock(&opts->lock);
-	result = प्र_लिखो(page, "%u\n", opts->isoc_पूर्णांकerval);
+	result = sprintf(page, "%u\n", opts->isoc_interval);
 	mutex_unlock(&opts->lock);
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
-अटल sमाप_प्रकार f_ss_opts_isoc_पूर्णांकerval_store(काष्ठा config_item *item,
-				       स्थिर अक्षर *page, माप_प्रकार len)
-अणु
-	काष्ठा f_ss_opts *opts = to_f_ss_opts(item);
-	पूर्णांक ret;
+static ssize_t f_ss_opts_isoc_interval_store(struct config_item *item,
+				       const char *page, size_t len)
+{
+	struct f_ss_opts *opts = to_f_ss_opts(item);
+	int ret;
 	u8 num;
 
 	mutex_lock(&opts->lock);
-	अगर (opts->refcnt) अणु
+	if (opts->refcnt) {
 		ret = -EBUSY;
-		जाओ end;
-	पूर्ण
+		goto end;
+	}
 
 	ret = kstrtou8(page, 0, &num);
-	अगर (ret)
-		जाओ end;
+	if (ret)
+		goto end;
 
-	अगर (num > 16) अणु
+	if (num > 16) {
 		ret = -EINVAL;
-		जाओ end;
-	पूर्ण
+		goto end;
+	}
 
-	opts->isoc_पूर्णांकerval = num;
+	opts->isoc_interval = num;
 	ret = len;
 end:
 	mutex_unlock(&opts->lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-CONFIGFS_ATTR(f_ss_opts_, isoc_पूर्णांकerval);
+CONFIGFS_ATTR(f_ss_opts_, isoc_interval);
 
-अटल sमाप_प्रकार f_ss_opts_isoc_maxpacket_show(काष्ठा config_item *item, अक्षर *page)
-अणु
-	काष्ठा f_ss_opts *opts = to_f_ss_opts(item);
-	पूर्णांक result;
+static ssize_t f_ss_opts_isoc_maxpacket_show(struct config_item *item, char *page)
+{
+	struct f_ss_opts *opts = to_f_ss_opts(item);
+	int result;
 
 	mutex_lock(&opts->lock);
-	result = प्र_लिखो(page, "%u\n", opts->isoc_maxpacket);
+	result = sprintf(page, "%u\n", opts->isoc_maxpacket);
 	mutex_unlock(&opts->lock);
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
-अटल sमाप_प्रकार f_ss_opts_isoc_maxpacket_store(काष्ठा config_item *item,
-				       स्थिर अक्षर *page, माप_प्रकार len)
-अणु
-	काष्ठा f_ss_opts *opts = to_f_ss_opts(item);
-	पूर्णांक ret;
+static ssize_t f_ss_opts_isoc_maxpacket_store(struct config_item *item,
+				       const char *page, size_t len)
+{
+	struct f_ss_opts *opts = to_f_ss_opts(item);
+	int ret;
 	u16 num;
 
 	mutex_lock(&opts->lock);
-	अगर (opts->refcnt) अणु
+	if (opts->refcnt) {
 		ret = -EBUSY;
-		जाओ end;
-	पूर्ण
+		goto end;
+	}
 
 	ret = kstrtou16(page, 0, &num);
-	अगर (ret)
-		जाओ end;
+	if (ret)
+		goto end;
 
-	अगर (num > 1024) अणु
+	if (num > 1024) {
 		ret = -EINVAL;
-		जाओ end;
-	पूर्ण
+		goto end;
+	}
 
 	opts->isoc_maxpacket = num;
 	ret = len;
 end:
 	mutex_unlock(&opts->lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 CONFIGFS_ATTR(f_ss_opts_, isoc_maxpacket);
 
-अटल sमाप_प्रकार f_ss_opts_isoc_mult_show(काष्ठा config_item *item, अक्षर *page)
-अणु
-	काष्ठा f_ss_opts *opts = to_f_ss_opts(item);
-	पूर्णांक result;
+static ssize_t f_ss_opts_isoc_mult_show(struct config_item *item, char *page)
+{
+	struct f_ss_opts *opts = to_f_ss_opts(item);
+	int result;
 
 	mutex_lock(&opts->lock);
-	result = प्र_लिखो(page, "%u\n", opts->isoc_mult);
+	result = sprintf(page, "%u\n", opts->isoc_mult);
 	mutex_unlock(&opts->lock);
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
-अटल sमाप_प्रकार f_ss_opts_isoc_mult_store(काष्ठा config_item *item,
-				       स्थिर अक्षर *page, माप_प्रकार len)
-अणु
-	काष्ठा f_ss_opts *opts = to_f_ss_opts(item);
-	पूर्णांक ret;
+static ssize_t f_ss_opts_isoc_mult_store(struct config_item *item,
+				       const char *page, size_t len)
+{
+	struct f_ss_opts *opts = to_f_ss_opts(item);
+	int ret;
 	u8 num;
 
 	mutex_lock(&opts->lock);
-	अगर (opts->refcnt) अणु
+	if (opts->refcnt) {
 		ret = -EBUSY;
-		जाओ end;
-	पूर्ण
+		goto end;
+	}
 
 	ret = kstrtou8(page, 0, &num);
-	अगर (ret)
-		जाओ end;
+	if (ret)
+		goto end;
 
-	अगर (num > 2) अणु
+	if (num > 2) {
 		ret = -EINVAL;
-		जाओ end;
-	पूर्ण
+		goto end;
+	}
 
 	opts->isoc_mult = num;
 	ret = len;
 end:
 	mutex_unlock(&opts->lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 CONFIGFS_ATTR(f_ss_opts_, isoc_mult);
 
-अटल sमाप_प्रकार f_ss_opts_isoc_maxburst_show(काष्ठा config_item *item, अक्षर *page)
-अणु
-	काष्ठा f_ss_opts *opts = to_f_ss_opts(item);
-	पूर्णांक result;
+static ssize_t f_ss_opts_isoc_maxburst_show(struct config_item *item, char *page)
+{
+	struct f_ss_opts *opts = to_f_ss_opts(item);
+	int result;
 
 	mutex_lock(&opts->lock);
-	result = प्र_लिखो(page, "%u\n", opts->isoc_maxburst);
+	result = sprintf(page, "%u\n", opts->isoc_maxburst);
 	mutex_unlock(&opts->lock);
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
-अटल sमाप_प्रकार f_ss_opts_isoc_maxburst_store(काष्ठा config_item *item,
-				       स्थिर अक्षर *page, माप_प्रकार len)
-अणु
-	काष्ठा f_ss_opts *opts = to_f_ss_opts(item);
-	पूर्णांक ret;
+static ssize_t f_ss_opts_isoc_maxburst_store(struct config_item *item,
+				       const char *page, size_t len)
+{
+	struct f_ss_opts *opts = to_f_ss_opts(item);
+	int ret;
 	u8 num;
 
 	mutex_lock(&opts->lock);
-	अगर (opts->refcnt) अणु
+	if (opts->refcnt) {
 		ret = -EBUSY;
-		जाओ end;
-	पूर्ण
+		goto end;
+	}
 
 	ret = kstrtou8(page, 0, &num);
-	अगर (ret)
-		जाओ end;
+	if (ret)
+		goto end;
 
-	अगर (num > 15) अणु
+	if (num > 15) {
 		ret = -EINVAL;
-		जाओ end;
-	पूर्ण
+		goto end;
+	}
 
 	opts->isoc_maxburst = num;
 	ret = len;
 end:
 	mutex_unlock(&opts->lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 CONFIGFS_ATTR(f_ss_opts_, isoc_maxburst);
 
-अटल sमाप_प्रकार f_ss_opts_bulk_buflen_show(काष्ठा config_item *item, अक्षर *page)
-अणु
-	काष्ठा f_ss_opts *opts = to_f_ss_opts(item);
-	पूर्णांक result;
+static ssize_t f_ss_opts_bulk_buflen_show(struct config_item *item, char *page)
+{
+	struct f_ss_opts *opts = to_f_ss_opts(item);
+	int result;
 
 	mutex_lock(&opts->lock);
-	result = प्र_लिखो(page, "%u\n", opts->bulk_buflen);
+	result = sprintf(page, "%u\n", opts->bulk_buflen);
 	mutex_unlock(&opts->lock);
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
-अटल sमाप_प्रकार f_ss_opts_bulk_buflen_store(काष्ठा config_item *item,
-					   स्थिर अक्षर *page, माप_प्रकार len)
-अणु
-	काष्ठा f_ss_opts *opts = to_f_ss_opts(item);
-	पूर्णांक ret;
+static ssize_t f_ss_opts_bulk_buflen_store(struct config_item *item,
+					   const char *page, size_t len)
+{
+	struct f_ss_opts *opts = to_f_ss_opts(item);
+	int ret;
 	u32 num;
 
 	mutex_lock(&opts->lock);
-	अगर (opts->refcnt) अणु
+	if (opts->refcnt) {
 		ret = -EBUSY;
-		जाओ end;
-	पूर्ण
+		goto end;
+	}
 
 	ret = kstrtou32(page, 0, &num);
-	अगर (ret)
-		जाओ end;
+	if (ret)
+		goto end;
 
 	opts->bulk_buflen = num;
 	ret = len;
 end:
 	mutex_unlock(&opts->lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 CONFIGFS_ATTR(f_ss_opts_, bulk_buflen);
 
-अटल sमाप_प्रकार f_ss_opts_bulk_qlen_show(काष्ठा config_item *item, अक्षर *page)
-अणु
-	काष्ठा f_ss_opts *opts = to_f_ss_opts(item);
-	पूर्णांक result;
+static ssize_t f_ss_opts_bulk_qlen_show(struct config_item *item, char *page)
+{
+	struct f_ss_opts *opts = to_f_ss_opts(item);
+	int result;
 
 	mutex_lock(&opts->lock);
-	result = प्र_लिखो(page, "%u\n", opts->bulk_qlen);
+	result = sprintf(page, "%u\n", opts->bulk_qlen);
 	mutex_unlock(&opts->lock);
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
-अटल sमाप_प्रकार f_ss_opts_bulk_qlen_store(काष्ठा config_item *item,
-					   स्थिर अक्षर *page, माप_प्रकार len)
-अणु
-	काष्ठा f_ss_opts *opts = to_f_ss_opts(item);
-	पूर्णांक ret;
+static ssize_t f_ss_opts_bulk_qlen_store(struct config_item *item,
+					   const char *page, size_t len)
+{
+	struct f_ss_opts *opts = to_f_ss_opts(item);
+	int ret;
 	u32 num;
 
 	mutex_lock(&opts->lock);
-	अगर (opts->refcnt) अणु
+	if (opts->refcnt) {
 		ret = -EBUSY;
-		जाओ end;
-	पूर्ण
+		goto end;
+	}
 
 	ret = kstrtou32(page, 0, &num);
-	अगर (ret)
-		जाओ end;
+	if (ret)
+		goto end;
 
 	opts->bulk_qlen = num;
 	ret = len;
 end:
 	mutex_unlock(&opts->lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 CONFIGFS_ATTR(f_ss_opts_, bulk_qlen);
 
-अटल sमाप_प्रकार f_ss_opts_iso_qlen_show(काष्ठा config_item *item, अक्षर *page)
-अणु
-	काष्ठा f_ss_opts *opts = to_f_ss_opts(item);
-	पूर्णांक result;
+static ssize_t f_ss_opts_iso_qlen_show(struct config_item *item, char *page)
+{
+	struct f_ss_opts *opts = to_f_ss_opts(item);
+	int result;
 
 	mutex_lock(&opts->lock);
-	result = प्र_लिखो(page, "%u\n", opts->iso_qlen);
+	result = sprintf(page, "%u\n", opts->iso_qlen);
 	mutex_unlock(&opts->lock);
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
-अटल sमाप_प्रकार f_ss_opts_iso_qlen_store(काष्ठा config_item *item,
-					   स्थिर अक्षर *page, माप_प्रकार len)
-अणु
-	काष्ठा f_ss_opts *opts = to_f_ss_opts(item);
-	पूर्णांक ret;
+static ssize_t f_ss_opts_iso_qlen_store(struct config_item *item,
+					   const char *page, size_t len)
+{
+	struct f_ss_opts *opts = to_f_ss_opts(item);
+	int ret;
 	u32 num;
 
 	mutex_lock(&opts->lock);
-	अगर (opts->refcnt) अणु
+	if (opts->refcnt) {
 		ret = -EBUSY;
-		जाओ end;
-	पूर्ण
+		goto end;
+	}
 
 	ret = kstrtou32(page, 0, &num);
-	अगर (ret)
-		जाओ end;
+	if (ret)
+		goto end;
 
 	opts->iso_qlen = num;
 	ret = len;
 end:
 	mutex_unlock(&opts->lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 CONFIGFS_ATTR(f_ss_opts_, iso_qlen);
 
-अटल काष्ठा configfs_attribute *ss_attrs[] = अणु
+static struct configfs_attribute *ss_attrs[] = {
 	&f_ss_opts_attr_pattern,
-	&f_ss_opts_attr_isoc_पूर्णांकerval,
+	&f_ss_opts_attr_isoc_interval,
 	&f_ss_opts_attr_isoc_maxpacket,
 	&f_ss_opts_attr_isoc_mult,
 	&f_ss_opts_attr_isoc_maxburst,
 	&f_ss_opts_attr_bulk_buflen,
 	&f_ss_opts_attr_bulk_qlen,
 	&f_ss_opts_attr_iso_qlen,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल स्थिर काष्ठा config_item_type ss_func_type = अणु
+static const struct config_item_type ss_func_type = {
 	.ct_item_ops    = &ss_item_ops,
 	.ct_attrs	= ss_attrs,
 	.ct_owner       = THIS_MODULE,
-पूर्ण;
+};
 
-अटल व्योम source_sink_मुक्त_instance(काष्ठा usb_function_instance *fi)
-अणु
-	काष्ठा f_ss_opts *ss_opts;
+static void source_sink_free_instance(struct usb_function_instance *fi)
+{
+	struct f_ss_opts *ss_opts;
 
-	ss_opts = container_of(fi, काष्ठा f_ss_opts, func_inst);
-	kमुक्त(ss_opts);
-पूर्ण
+	ss_opts = container_of(fi, struct f_ss_opts, func_inst);
+	kfree(ss_opts);
+}
 
-अटल काष्ठा usb_function_instance *source_sink_alloc_inst(व्योम)
-अणु
-	काष्ठा f_ss_opts *ss_opts;
+static struct usb_function_instance *source_sink_alloc_inst(void)
+{
+	struct f_ss_opts *ss_opts;
 
-	ss_opts = kzalloc(माप(*ss_opts), GFP_KERNEL);
-	अगर (!ss_opts)
-		वापस ERR_PTR(-ENOMEM);
+	ss_opts = kzalloc(sizeof(*ss_opts), GFP_KERNEL);
+	if (!ss_opts)
+		return ERR_PTR(-ENOMEM);
 	mutex_init(&ss_opts->lock);
-	ss_opts->func_inst.मुक्त_func_inst = source_sink_मुक्त_instance;
-	ss_opts->isoc_पूर्णांकerval = GZERO_ISOC_INTERVAL;
+	ss_opts->func_inst.free_func_inst = source_sink_free_instance;
+	ss_opts->isoc_interval = GZERO_ISOC_INTERVAL;
 	ss_opts->isoc_maxpacket = GZERO_ISOC_MAXPACKET;
 	ss_opts->bulk_buflen = GZERO_BULK_BUFLEN;
 	ss_opts->bulk_qlen = GZERO_SS_BULK_QLEN;
@@ -1261,29 +1260,29 @@ CONFIGFS_ATTR(f_ss_opts_, iso_qlen);
 	config_group_init_type_name(&ss_opts->func_inst.group, "",
 				    &ss_func_type);
 
-	वापस &ss_opts->func_inst;
-पूर्ण
+	return &ss_opts->func_inst;
+}
 DECLARE_USB_FUNCTION(SourceSink, source_sink_alloc_inst,
 		source_sink_alloc_func);
 
-अटल पूर्णांक __init sslb_modinit(व्योम)
-अणु
-	पूर्णांक ret;
+static int __init sslb_modinit(void)
+{
+	int ret;
 
-	ret = usb_function_रेजिस्टर(&SourceSinkusb_func);
-	अगर (ret)
-		वापस ret;
+	ret = usb_function_register(&SourceSinkusb_func);
+	if (ret)
+		return ret;
 	ret = lb_modinit();
-	अगर (ret)
-		usb_function_unरेजिस्टर(&SourceSinkusb_func);
-	वापस ret;
-पूर्ण
-अटल व्योम __निकास sslb_modनिकास(व्योम)
-अणु
-	usb_function_unरेजिस्टर(&SourceSinkusb_func);
-	lb_modनिकास();
-पूर्ण
+	if (ret)
+		usb_function_unregister(&SourceSinkusb_func);
+	return ret;
+}
+static void __exit sslb_modexit(void)
+{
+	usb_function_unregister(&SourceSinkusb_func);
+	lb_modexit();
+}
 module_init(sslb_modinit);
-module_निकास(sslb_modनिकास);
+module_exit(sslb_modexit);
 
 MODULE_LICENSE("GPL");

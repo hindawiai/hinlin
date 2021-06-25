@@ -1,7 +1,6 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित BOOT_COMPRESSED_MISC_H
-#घोषणा BOOT_COMPRESSED_MISC_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef BOOT_COMPRESSED_MISC_H
+#define BOOT_COMPRESSED_MISC_H
 
 /*
  * Special hack: we have to be careful, because no indirections are allowed here,
@@ -9,164 +8,164 @@
  * we just keep it from happening. (This list needs to be extended when new
  * paravirt and debugging variants are added.)
  */
-#अघोषित CONFIG_PARAVIRT
-#अघोषित CONFIG_PARAVIRT_XXL
-#अघोषित CONFIG_PARAVIRT_SPINLOCKS
-#अघोषित CONFIG_KASAN
-#अघोषित CONFIG_KASAN_GENERIC
+#undef CONFIG_PARAVIRT
+#undef CONFIG_PARAVIRT_XXL
+#undef CONFIG_PARAVIRT_SPINLOCKS
+#undef CONFIG_KASAN
+#undef CONFIG_KASAN_GENERIC
 
 /* cpu_feature_enabled() cannot be used this early */
-#घोषणा USE_EARLY_PGTABLE_L5
+#define USE_EARLY_PGTABLE_L5
 
-#समावेश <linux/linkage.h>
-#समावेश <linux/screen_info.h>
-#समावेश <linux/elf.h>
-#समावेश <linux/पन.स>
-#समावेश <यंत्र/page.h>
-#समावेश <यंत्र/boot.h>
-#समावेश <यंत्र/bootparam.h>
-#समावेश <यंत्र/desc_defs.h>
+#include <linux/linkage.h>
+#include <linux/screen_info.h>
+#include <linux/elf.h>
+#include <linux/io.h>
+#include <asm/page.h>
+#include <asm/boot.h>
+#include <asm/bootparam.h>
+#include <asm/desc_defs.h>
 
-#घोषणा BOOT_CTYPE_H
-#समावेश <linux/acpi.h>
+#define BOOT_CTYPE_H
+#include <linux/acpi.h>
 
-#घोषणा BOOT_BOOT_H
-#समावेश "../ctype.h"
+#define BOOT_BOOT_H
+#include "../ctype.h"
 
-#अगर_घोषित CONFIG_X86_64
-#घोषणा memptr दीर्घ
-#अन्यथा
-#घोषणा memptr अचिन्हित
-#पूर्ण_अगर
+#ifdef CONFIG_X86_64
+#define memptr long
+#else
+#define memptr unsigned
+#endif
 
 /* boot/compressed/vmlinux start and end markers */
-बाह्य अक्षर _head[], _end[];
+extern char _head[], _end[];
 
 /* misc.c */
-बाह्य memptr मुक्त_mem_ptr;
-बाह्य memptr मुक्त_mem_end_ptr;
-बाह्य काष्ठा boot_params *boot_params;
-व्योम __माला_दोtr(स्थिर अक्षर *s);
-व्योम __puthex(अचिन्हित दीर्घ value);
-#घोषणा error_माला_दोtr(__x)  __माला_दोtr(__x)
-#घोषणा error_puthex(__x)  __puthex(__x)
+extern memptr free_mem_ptr;
+extern memptr free_mem_end_ptr;
+extern struct boot_params *boot_params;
+void __putstr(const char *s);
+void __puthex(unsigned long value);
+#define error_putstr(__x)  __putstr(__x)
+#define error_puthex(__x)  __puthex(__x)
 
-#अगर_घोषित CONFIG_X86_VERBOSE_BOOTUP
+#ifdef CONFIG_X86_VERBOSE_BOOTUP
 
-#घोषणा debug_माला_दोtr(__x)  __माला_दोtr(__x)
-#घोषणा debug_puthex(__x)  __puthex(__x)
-#घोषणा debug_putaddr(__x) अणु \
-		debug_माला_दोtr(#__x ": 0x"); \
-		debug_puthex((अचिन्हित दीर्घ)(__x)); \
-		debug_माला_दोtr("\n"); \
-	पूर्ण
+#define debug_putstr(__x)  __putstr(__x)
+#define debug_puthex(__x)  __puthex(__x)
+#define debug_putaddr(__x) { \
+		debug_putstr(#__x ": 0x"); \
+		debug_puthex((unsigned long)(__x)); \
+		debug_putstr("\n"); \
+	}
 
-#अन्यथा
+#else
 
-अटल अंतरभूत व्योम debug_माला_दोtr(स्थिर अक्षर *s)
-अणु पूर्ण
-अटल अंतरभूत व्योम debug_puthex(अचिन्हित दीर्घ value)
-अणु पूर्ण
-#घोषणा debug_putaddr(x) /* */
+static inline void debug_putstr(const char *s)
+{ }
+static inline void debug_puthex(unsigned long value)
+{ }
+#define debug_putaddr(x) /* */
 
-#पूर्ण_अगर
+#endif
 
 /* cmdline.c */
-पूर्णांक cmdline_find_option(स्थिर अक्षर *option, अक्षर *buffer, पूर्णांक bufsize);
-पूर्णांक cmdline_find_option_bool(स्थिर अक्षर *option);
+int cmdline_find_option(const char *option, char *buffer, int bufsize);
+int cmdline_find_option_bool(const char *option);
 
-काष्ठा mem_vector अणु
+struct mem_vector {
 	u64 start;
 	u64 size;
-पूर्ण;
+};
 
-#अगर_घोषित CONFIG_RANDOMIZE_BASE
+#ifdef CONFIG_RANDOMIZE_BASE
 /* kaslr.c */
-व्योम choose_अक्रमom_location(अचिन्हित दीर्घ input,
-			    अचिन्हित दीर्घ input_size,
-			    अचिन्हित दीर्घ *output,
-			    अचिन्हित दीर्घ output_size,
-			    अचिन्हित दीर्घ *virt_addr);
-#अन्यथा
-अटल अंतरभूत व्योम choose_अक्रमom_location(अचिन्हित दीर्घ input,
-					  अचिन्हित दीर्घ input_size,
-					  अचिन्हित दीर्घ *output,
-					  अचिन्हित दीर्घ output_size,
-					  अचिन्हित दीर्घ *virt_addr)
-अणु
-पूर्ण
-#पूर्ण_अगर
+void choose_random_location(unsigned long input,
+			    unsigned long input_size,
+			    unsigned long *output,
+			    unsigned long output_size,
+			    unsigned long *virt_addr);
+#else
+static inline void choose_random_location(unsigned long input,
+					  unsigned long input_size,
+					  unsigned long *output,
+					  unsigned long output_size,
+					  unsigned long *virt_addr)
+{
+}
+#endif
 
 /* cpuflags.c */
-bool has_cpuflag(पूर्णांक flag);
+bool has_cpuflag(int flag);
 
-#अगर_घोषित CONFIG_X86_64
-बाह्य पूर्णांक set_page_decrypted(अचिन्हित दीर्घ address);
-बाह्य पूर्णांक set_page_encrypted(अचिन्हित दीर्घ address);
-बाह्य पूर्णांक set_page_non_present(अचिन्हित दीर्घ address);
-बाह्य अचिन्हित अक्षर _pgtable[];
-#पूर्ण_अगर
+#ifdef CONFIG_X86_64
+extern int set_page_decrypted(unsigned long address);
+extern int set_page_encrypted(unsigned long address);
+extern int set_page_non_present(unsigned long address);
+extern unsigned char _pgtable[];
+#endif
 
-#अगर_घोषित CONFIG_EARLY_PRINTK
+#ifdef CONFIG_EARLY_PRINTK
 /* early_serial_console.c */
-बाह्य पूर्णांक early_serial_base;
-व्योम console_init(व्योम);
-#अन्यथा
-अटल स्थिर पूर्णांक early_serial_base;
-अटल अंतरभूत व्योम console_init(व्योम)
-अणु पूर्ण
-#पूर्ण_अगर
+extern int early_serial_base;
+void console_init(void);
+#else
+static const int early_serial_base;
+static inline void console_init(void)
+{ }
+#endif
 
-व्योम set_sev_encryption_mask(व्योम);
+void set_sev_encryption_mask(void);
 
-#अगर_घोषित CONFIG_AMD_MEM_ENCRYPT
-व्योम sev_es_shutकरोwn_ghcb(व्योम);
-बाह्य bool sev_es_check_ghcb_fault(अचिन्हित दीर्घ address);
-#अन्यथा
-अटल अंतरभूत व्योम sev_es_shutकरोwn_ghcb(व्योम) अणु पूर्ण
-अटल अंतरभूत bool sev_es_check_ghcb_fault(अचिन्हित दीर्घ address)
-अणु
-	वापस false;
-पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_AMD_MEM_ENCRYPT
+void sev_es_shutdown_ghcb(void);
+extern bool sev_es_check_ghcb_fault(unsigned long address);
+#else
+static inline void sev_es_shutdown_ghcb(void) { }
+static inline bool sev_es_check_ghcb_fault(unsigned long address)
+{
+	return false;
+}
+#endif
 
 /* acpi.c */
-#अगर_घोषित CONFIG_ACPI
-acpi_physical_address get_rsdp_addr(व्योम);
-#अन्यथा
-अटल अंतरभूत acpi_physical_address get_rsdp_addr(व्योम) अणु वापस 0; पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_ACPI
+acpi_physical_address get_rsdp_addr(void);
+#else
+static inline acpi_physical_address get_rsdp_addr(void) { return 0; }
+#endif
 
-#अगर defined(CONFIG_RANDOMIZE_BASE) && defined(CONFIG_MEMORY_HOTREMOVE) && defined(CONFIG_ACPI)
-बाह्य काष्ठा mem_vector immovable_mem[MAX_NUMNODES*2];
-पूर्णांक count_immovable_mem_regions(व्योम);
-#अन्यथा
-अटल अंतरभूत पूर्णांक count_immovable_mem_regions(व्योम) अणु वापस 0; पूर्ण
-#पूर्ण_अगर
+#if defined(CONFIG_RANDOMIZE_BASE) && defined(CONFIG_MEMORY_HOTREMOVE) && defined(CONFIG_ACPI)
+extern struct mem_vector immovable_mem[MAX_NUMNODES*2];
+int count_immovable_mem_regions(void);
+#else
+static inline int count_immovable_mem_regions(void) { return 0; }
+#endif
 
 /* ident_map_64.c */
-#अगर_घोषित CONFIG_X86_5LEVEL
-बाह्य अचिन्हित पूर्णांक __pgtable_l5_enabled, pgdir_shअगरt, ptrs_per_p4d;
-#पूर्ण_अगर
+#ifdef CONFIG_X86_5LEVEL
+extern unsigned int __pgtable_l5_enabled, pgdir_shift, ptrs_per_p4d;
+#endif
 
 /* Used by PAGE_KERN* macros: */
-बाह्य pteval_t __शेष_kernel_pte_mask;
+extern pteval_t __default_kernel_pte_mask;
 
 /* idt_64.c */
-बाह्य gate_desc boot_idt[BOOT_IDT_ENTRIES];
-बाह्य काष्ठा desc_ptr boot_idt_desc;
+extern gate_desc boot_idt[BOOT_IDT_ENTRIES];
+extern struct desc_ptr boot_idt_desc;
 
-#अगर_घोषित CONFIG_X86_64
-व्योम cleanup_exception_handling(व्योम);
-#अन्यथा
-अटल अंतरभूत व्योम cleanup_exception_handling(व्योम) अणु पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_X86_64
+void cleanup_exception_handling(void);
+#else
+static inline void cleanup_exception_handling(void) { }
+#endif
 
-/* IDT Entry Poपूर्णांकs */
-व्योम boot_page_fault(व्योम);
-व्योम boot_stage1_vc(व्योम);
-व्योम boot_stage2_vc(व्योम);
+/* IDT Entry Points */
+void boot_page_fault(void);
+void boot_stage1_vc(void);
+void boot_stage2_vc(void);
 
-अचिन्हित दीर्घ sev_verअगरy_cbit(अचिन्हित दीर्घ cr3);
+unsigned long sev_verify_cbit(unsigned long cr3);
 
-#पूर्ण_अगर /* BOOT_COMPRESSED_MISC_H */
+#endif /* BOOT_COMPRESSED_MISC_H */

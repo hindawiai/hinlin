@@ -1,89 +1,88 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Virtual DMA allocation
  *
- * (C) 1999 Thomas Bogenकरोerfer (tsbogend@alpha.franken.de)
+ * (C) 1999 Thomas Bogendoerfer (tsbogend@alpha.franken.de)
  *
- * 11/26/2000 -- disabled the existing code because it didn't work क्रम
- * me in 2.4.  Replaced with a signअगरicantly more primitive version
+ * 11/26/2000 -- disabled the existing code because it didn't work for
+ * me in 2.4.  Replaced with a significantly more primitive version
  * similar to the sun3 code.  the old functionality was probably more
  * desirable, but....   -- Sam Creasey (sammy@oh.verio.com)
  *
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/init.h>
-#समावेश <linux/bitops.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/memblock.h>
-#समावेश <linux/vदो_स्मृति.h>
+#include <linux/kernel.h>
+#include <linux/init.h>
+#include <linux/bitops.h>
+#include <linux/mm.h>
+#include <linux/memblock.h>
+#include <linux/vmalloc.h>
 
-#समावेश <यंत्र/sun3x.h>
-#समावेश <यंत्र/dvma.h>
-#समावेश <यंत्र/पन.स>
-#समावेश <यंत्र/page.h>
-#समावेश <यंत्र/tlbflush.h>
+#include <asm/sun3x.h>
+#include <asm/dvma.h>
+#include <asm/io.h>
+#include <asm/page.h>
+#include <asm/tlbflush.h>
 
 /* IOMMU support */
 
-#घोषणा IOMMU_ADDR_MASK            0x03ffe000
-#घोषणा IOMMU_CACHE_INHIBIT        0x00000040
-#घोषणा IOMMU_FULL_BLOCK           0x00000020
-#घोषणा IOMMU_MODIFIED             0x00000010
-#घोषणा IOMMU_USED                 0x00000008
-#घोषणा IOMMU_WRITE_PROTECT        0x00000004
-#घोषणा IOMMU_DT_MASK              0x00000003
-#घोषणा IOMMU_DT_INVALID           0x00000000
-#घोषणा IOMMU_DT_VALID             0x00000001
-#घोषणा IOMMU_DT_BAD               0x00000002
+#define IOMMU_ADDR_MASK            0x03ffe000
+#define IOMMU_CACHE_INHIBIT        0x00000040
+#define IOMMU_FULL_BLOCK           0x00000020
+#define IOMMU_MODIFIED             0x00000010
+#define IOMMU_USED                 0x00000008
+#define IOMMU_WRITE_PROTECT        0x00000004
+#define IOMMU_DT_MASK              0x00000003
+#define IOMMU_DT_INVALID           0x00000000
+#define IOMMU_DT_VALID             0x00000001
+#define IOMMU_DT_BAD               0x00000002
 
 
-अटल अस्थिर अचिन्हित दीर्घ *iommu_pte = (अचिन्हित दीर्घ *)SUN3X_IOMMU;
+static volatile unsigned long *iommu_pte = (unsigned long *)SUN3X_IOMMU;
 
 
-#घोषणा dvma_entry_paddr(index)		(iommu_pte[index] & IOMMU_ADDR_MASK)
-#घोषणा dvma_entry_vaddr(index,paddr)	((index << DVMA_PAGE_SHIFT) |  \
+#define dvma_entry_paddr(index)		(iommu_pte[index] & IOMMU_ADDR_MASK)
+#define dvma_entry_vaddr(index,paddr)	((index << DVMA_PAGE_SHIFT) |  \
 					 (paddr & (DVMA_PAGE_SIZE-1)))
-#अगर 0
-#घोषणा dvma_entry_set(index,addr)	(iommu_pte[index] =            \
+#if 0
+#define dvma_entry_set(index,addr)	(iommu_pte[index] =            \
 					    (addr & IOMMU_ADDR_MASK) | \
 				             IOMMU_DT_VALID | IOMMU_CACHE_INHIBIT)
-#अन्यथा
-#घोषणा dvma_entry_set(index,addr)	(iommu_pte[index] =            \
+#else
+#define dvma_entry_set(index,addr)	(iommu_pte[index] =            \
 					    (addr & IOMMU_ADDR_MASK) | \
 				             IOMMU_DT_VALID)
-#पूर्ण_अगर
-#घोषणा dvma_entry_clr(index)		(iommu_pte[index] = IOMMU_DT_INVALID)
-#घोषणा dvma_entry_hash(addr)		((addr >> DVMA_PAGE_SHIFT) ^ \
+#endif
+#define dvma_entry_clr(index)		(iommu_pte[index] = IOMMU_DT_INVALID)
+#define dvma_entry_hash(addr)		((addr >> DVMA_PAGE_SHIFT) ^ \
 					 ((addr & 0x03c00000) >>     \
 						(DVMA_PAGE_SHIFT+4)))
 
-#अगर_घोषित DEBUG
-/* code to prपूर्णांक out a dvma mapping क्रम debugging purposes */
-व्योम dvma_prपूर्णांक (अचिन्हित दीर्घ dvma_addr)
-अणु
+#ifdef DEBUG
+/* code to print out a dvma mapping for debugging purposes */
+void dvma_print (unsigned long dvma_addr)
+{
 
-	अचिन्हित दीर्घ index;
+	unsigned long index;
 
 	index = dvma_addr >> DVMA_PAGE_SHIFT;
 
 	pr_info("idx %lx dvma_addr %08lx paddr %08lx\n", index, dvma_addr,
 		dvma_entry_paddr(index));
-पूर्ण
-#पूर्ण_अगर
+}
+#endif
 
 
-/* create a भव mapping क्रम a page asचिन्हित within the IOMMU
+/* create a virtual mapping for a page assigned within the IOMMU
    so that the cpu can reach it easily */
-अंतरभूत पूर्णांक dvma_map_cpu(अचिन्हित दीर्घ kaddr,
-			       अचिन्हित दीर्घ vaddr, पूर्णांक len)
-अणु
+inline int dvma_map_cpu(unsigned long kaddr,
+			       unsigned long vaddr, int len)
+{
 	pgd_t *pgd;
 	p4d_t *p4d;
 	pud_t *pud;
-	अचिन्हित दीर्घ end;
-	पूर्णांक ret = 0;
+	unsigned long end;
+	int ret = 0;
 
 	kaddr &= PAGE_MASK;
 	vaddr &= PAGE_MASK;
@@ -95,35 +94,35 @@
 	p4d = p4d_offset(pgd, vaddr);
 	pud = pud_offset(p4d, vaddr);
 
-	करो अणु
+	do {
 		pmd_t *pmd;
-		अचिन्हित दीर्घ end2;
+		unsigned long end2;
 
-		अगर((pmd = pmd_alloc(&init_mm, pud, vaddr)) == शून्य) अणु
+		if((pmd = pmd_alloc(&init_mm, pud, vaddr)) == NULL) {
 			ret = -ENOMEM;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
-		अगर((end & PGसूची_MASK) > (vaddr & PGसूची_MASK))
-			end2 = (vaddr + (PGसूची_SIZE-1)) & PGसूची_MASK;
-		अन्यथा
+		if((end & PGDIR_MASK) > (vaddr & PGDIR_MASK))
+			end2 = (vaddr + (PGDIR_SIZE-1)) & PGDIR_MASK;
+		else
 			end2 = end;
 
-		करो अणु
+		do {
 			pte_t *pte;
-			अचिन्हित दीर्घ end3;
+			unsigned long end3;
 
-			अगर((pte = pte_alloc_kernel(pmd, vaddr)) == शून्य) अणु
+			if((pte = pte_alloc_kernel(pmd, vaddr)) == NULL) {
 				ret = -ENOMEM;
-				जाओ out;
-			पूर्ण
+				goto out;
+			}
 
-			अगर((end2 & PMD_MASK) > (vaddr & PMD_MASK))
+			if((end2 & PMD_MASK) > (vaddr & PMD_MASK))
 				end3 = (vaddr + (PMD_SIZE-1)) & PMD_MASK;
-			अन्यथा
+			else
 				end3 = end2;
 
-			करो अणु
+			do {
 				pr_debug("mapping %08lx phys to %08lx\n",
 					 __pa(kaddr), vaddr);
 				set_pte(pte, pfn_pte(virt_to_pfn(kaddr),
@@ -131,32 +130,32 @@
 				pte++;
 				kaddr += PAGE_SIZE;
 				vaddr += PAGE_SIZE;
-			पूर्ण जबतक(vaddr < end3);
+			} while(vaddr < end3);
 
-		पूर्ण जबतक(vaddr < end2);
+		} while(vaddr < end2);
 
-	पूर्ण जबतक(vaddr < end);
+	} while(vaddr < end);
 
 	flush_tlb_all();
 
  out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 
-अंतरभूत पूर्णांक dvma_map_iommu(अचिन्हित दीर्घ kaddr, अचिन्हित दीर्घ baddr,
-				 पूर्णांक len)
-अणु
-	अचिन्हित दीर्घ end, index;
+inline int dvma_map_iommu(unsigned long kaddr, unsigned long baddr,
+				 int len)
+{
+	unsigned long end, index;
 
 	index = baddr >> DVMA_PAGE_SHIFT;
 	end = ((baddr+len) >> DVMA_PAGE_SHIFT);
 
-	अगर(len & ~DVMA_PAGE_MASK)
+	if(len & ~DVMA_PAGE_MASK)
 		end++;
 
-	क्रम(; index < end ; index++) अणु
-//		अगर(dvma_entry_use(index))
+	for(; index < end ; index++) {
+//		if(dvma_entry_use(index))
 //			BUG();
 //		pr_info("mapping pa %lx to ba %lx\n", __pa(kaddr),
 //			index << DVMA_PAGE_SHIFT);
@@ -167,36 +166,36 @@
 //		dvma_entry_inc(index);
 
 		kaddr += DVMA_PAGE_SIZE;
-	पूर्ण
+	}
 
-#अगर_घोषित DEBUG
-	क्रम(index = (baddr >> DVMA_PAGE_SHIFT); index < end; index++)
-		dvma_prपूर्णांक(index << DVMA_PAGE_SHIFT);
-#पूर्ण_अगर
-	वापस 0;
+#ifdef DEBUG
+	for(index = (baddr >> DVMA_PAGE_SHIFT); index < end; index++)
+		dvma_print(index << DVMA_PAGE_SHIFT);
+#endif
+	return 0;
 
-पूर्ण
+}
 
-व्योम dvma_unmap_iommu(अचिन्हित दीर्घ baddr, पूर्णांक len)
-अणु
+void dvma_unmap_iommu(unsigned long baddr, int len)
+{
 
-	पूर्णांक index, end;
+	int index, end;
 
 
 	index = baddr >> DVMA_PAGE_SHIFT;
 	end = (DVMA_PAGE_ALIGN(baddr+len) >> DVMA_PAGE_SHIFT);
 
-	क्रम(; index < end ; index++) अणु
+	for(; index < end ; index++) {
 		pr_debug("freeing bus mapping %08x\n",
 			 index << DVMA_PAGE_SHIFT);
-#अगर 0
-		अगर(!dvma_entry_use(index))
+#if 0
+		if(!dvma_entry_use(index))
 			pr_info("dvma_unmap freeing unused entry %04x\n",
 				index);
-		अन्यथा
+		else
 			dvma_entry_dec(index);
-#पूर्ण_अगर
+#endif
 		dvma_entry_clr(index);
-	पूर्ण
+	}
 
-पूर्ण
+}

@@ -1,303 +1,302 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * tools/testing/selftests/kvm/lib/test_util.c
  *
  * Copyright (C) 2020, Google LLC.
  */
 
-#समावेश <निश्चित.स>
-#समावेश <प्रकार.स>
-#समावेश <सीमा.स>
-#समावेश <मानककोष.स>
-#समावेश <समय.स>
-#समावेश <sys/स्थिति.स>
-#समावेश <linux/mman.h>
-#समावेश "linux/kernel.h"
+#include <assert.h>
+#include <ctype.h>
+#include <limits.h>
+#include <stdlib.h>
+#include <time.h>
+#include <sys/stat.h>
+#include <linux/mman.h>
+#include "linux/kernel.h"
 
-#समावेश "test_util.h"
+#include "test_util.h"
 
 /*
  * Parses "[0-9]+[kmgt]?".
  */
-माप_प्रकार parse_size(स्थिर अक्षर *size)
-अणु
-	माप_प्रकार base;
-	अक्षर *scale;
-	पूर्णांक shअगरt = 0;
+size_t parse_size(const char *size)
+{
+	size_t base;
+	char *scale;
+	int shift = 0;
 
-	TEST_ASSERT(size && है_अंक(size[0]), "Need at least one digit in '%s'", size);
+	TEST_ASSERT(size && isdigit(size[0]), "Need at least one digit in '%s'", size);
 
-	base = म_से_अदीर्घl(size, &scale, 0);
+	base = strtoull(size, &scale, 0);
 
-	TEST_ASSERT(base != ULदीर्घ_उच्च, "Overflow parsing size!");
+	TEST_ASSERT(base != ULLONG_MAX, "Overflow parsing size!");
 
-	चयन (छोटे(*scale)) अणु
-	हाल 't':
-		shअगरt = 40;
-		अवरोध;
-	हाल 'g':
-		shअगरt = 30;
-		अवरोध;
-	हाल 'm':
-		shअगरt = 20;
-		अवरोध;
-	हाल 'k':
-		shअगरt = 10;
-		अवरोध;
-	हाल 'b':
-	हाल '\0':
-		shअगरt = 0;
-		अवरोध;
-	शेष:
+	switch (tolower(*scale)) {
+	case 't':
+		shift = 40;
+		break;
+	case 'g':
+		shift = 30;
+		break;
+	case 'm':
+		shift = 20;
+		break;
+	case 'k':
+		shift = 10;
+		break;
+	case 'b':
+	case '\0':
+		shift = 0;
+		break;
+	default:
 		TEST_ASSERT(false, "Unknown size letter %c", *scale);
-	पूर्ण
+	}
 
-	TEST_ASSERT((base << shअगरt) >> shअगरt == base, "Overflow scaling size!");
+	TEST_ASSERT((base << shift) >> shift == base, "Overflow scaling size!");
 
-	वापस base << shअगरt;
-पूर्ण
+	return base << shift;
+}
 
-पूर्णांक64_t बारpec_to_ns(काष्ठा बारpec ts)
-अणु
-	वापस (पूर्णांक64_t)ts.tv_nsec + 1000000000LL * (पूर्णांक64_t)ts.tv_sec;
-पूर्ण
+int64_t timespec_to_ns(struct timespec ts)
+{
+	return (int64_t)ts.tv_nsec + 1000000000LL * (int64_t)ts.tv_sec;
+}
 
-काष्ठा बारpec बारpec_add_ns(काष्ठा बारpec ts, पूर्णांक64_t ns)
-अणु
-	काष्ठा बारpec res;
+struct timespec timespec_add_ns(struct timespec ts, int64_t ns)
+{
+	struct timespec res;
 
 	res.tv_nsec = ts.tv_nsec + ns;
 	res.tv_sec = ts.tv_sec + res.tv_nsec / 1000000000LL;
 	res.tv_nsec %= 1000000000LL;
 
-	वापस res;
-पूर्ण
+	return res;
+}
 
-काष्ठा बारpec बारpec_add(काष्ठा बारpec ts1, काष्ठा बारpec ts2)
-अणु
-	पूर्णांक64_t ns1 = बारpec_to_ns(ts1);
-	पूर्णांक64_t ns2 = बारpec_to_ns(ts2);
-	वापस बारpec_add_ns((काष्ठा बारpec)अणु0पूर्ण, ns1 + ns2);
-पूर्ण
+struct timespec timespec_add(struct timespec ts1, struct timespec ts2)
+{
+	int64_t ns1 = timespec_to_ns(ts1);
+	int64_t ns2 = timespec_to_ns(ts2);
+	return timespec_add_ns((struct timespec){0}, ns1 + ns2);
+}
 
-काष्ठा बारpec बारpec_sub(काष्ठा बारpec ts1, काष्ठा बारpec ts2)
-अणु
-	पूर्णांक64_t ns1 = बारpec_to_ns(ts1);
-	पूर्णांक64_t ns2 = बारpec_to_ns(ts2);
-	वापस बारpec_add_ns((काष्ठा बारpec)अणु0पूर्ण, ns1 - ns2);
-पूर्ण
+struct timespec timespec_sub(struct timespec ts1, struct timespec ts2)
+{
+	int64_t ns1 = timespec_to_ns(ts1);
+	int64_t ns2 = timespec_to_ns(ts2);
+	return timespec_add_ns((struct timespec){0}, ns1 - ns2);
+}
 
-काष्ठा बारpec बारpec_elapsed(काष्ठा बारpec start)
-अणु
-	काष्ठा बारpec end;
+struct timespec timespec_elapsed(struct timespec start)
+{
+	struct timespec end;
 
-	घड़ी_समय_लो(CLOCK_MONOTONIC, &end);
-	वापस बारpec_sub(end, start);
-पूर्ण
+	clock_gettime(CLOCK_MONOTONIC, &end);
+	return timespec_sub(end, start);
+}
 
-काष्ठा बारpec बारpec_भाग(काष्ठा बारpec ts, पूर्णांक भागisor)
-अणु
-	पूर्णांक64_t ns = बारpec_to_ns(ts) / भागisor;
+struct timespec timespec_div(struct timespec ts, int divisor)
+{
+	int64_t ns = timespec_to_ns(ts) / divisor;
 
-	वापस बारpec_add_ns((काष्ठा बारpec)अणु0पूर्ण, ns);
-पूर्ण
+	return timespec_add_ns((struct timespec){0}, ns);
+}
 
-व्योम prपूर्णांक_skip(स्थिर अक्षर *fmt, ...)
-अणु
-	बहु_सूची ap;
+void print_skip(const char *fmt, ...)
+{
+	va_list ap;
 
-	निश्चित(fmt);
-	बहु_शुरू(ap, fmt);
-	भ_लिखो(fmt, ap);
-	बहु_पूर्ण(ap);
-	माला_दो(", skipping test");
-पूर्ण
+	assert(fmt);
+	va_start(ap, fmt);
+	vprintf(fmt, ap);
+	va_end(ap);
+	puts(", skipping test");
+}
 
-bool thp_configured(व्योम)
-अणु
-	पूर्णांक ret;
-	काष्ठा stat statbuf;
+bool thp_configured(void)
+{
+	int ret;
+	struct stat statbuf;
 
 	ret = stat("/sys/kernel/mm/transparent_hugepage", &statbuf);
-	TEST_ASSERT(ret == 0 || (ret == -1 && त्रुटि_सं == ENOENT),
+	TEST_ASSERT(ret == 0 || (ret == -1 && errno == ENOENT),
 		    "Error in stating /sys/kernel/mm/transparent_hugepage");
 
-	वापस ret == 0;
-पूर्ण
+	return ret == 0;
+}
 
-माप_प्रकार get_trans_hugepagesz(व्योम)
-अणु
-	माप_प्रकार size;
-	खाता *f;
+size_t get_trans_hugepagesz(void)
+{
+	size_t size;
+	FILE *f;
 
 	TEST_ASSERT(thp_configured(), "THP is not configured in host kernel");
 
-	f = ख_खोलो("/sys/kernel/mm/transparent_hugepage/hpage_pmd_size", "r");
-	TEST_ASSERT(f != शून्य, "Error in opening transparent_hugepage/hpage_pmd_size");
+	f = fopen("/sys/kernel/mm/transparent_hugepage/hpage_pmd_size", "r");
+	TEST_ASSERT(f != NULL, "Error in opening transparent_hugepage/hpage_pmd_size");
 
-	ख_पूछो(f, "%ld", &size);
-	ख_बंद(f);
+	fscanf(f, "%ld", &size);
+	fclose(f);
 
-	वापस size;
-पूर्ण
+	return size;
+}
 
-माप_प्रकार get_def_hugetlb_pagesz(व्योम)
-अणु
-	अक्षर buf[64];
-	स्थिर अक्षर *tag = "Hugepagesize:";
-	खाता *f;
+size_t get_def_hugetlb_pagesz(void)
+{
+	char buf[64];
+	const char *tag = "Hugepagesize:";
+	FILE *f;
 
-	f = ख_खोलो("/proc/meminfo", "r");
-	TEST_ASSERT(f != शून्य, "Error in opening /proc/meminfo");
+	f = fopen("/proc/meminfo", "r");
+	TEST_ASSERT(f != NULL, "Error in opening /proc/meminfo");
 
-	जबतक (ख_माला_लो(buf, माप(buf), f) != शून्य) अणु
-		अगर (म_माला(buf, tag) == buf) अणु
-			ख_बंद(f);
-			वापस म_से_अदीर्घl(buf + म_माप(tag), शून्य, 10) << 10;
-		पूर्ण
-	पूर्ण
+	while (fgets(buf, sizeof(buf), f) != NULL) {
+		if (strstr(buf, tag) == buf) {
+			fclose(f);
+			return strtoull(buf + strlen(tag), NULL, 10) << 10;
+		}
+	}
 
-	अगर (ख_पूर्ण(f))
+	if (feof(f))
 		TEST_FAIL("HUGETLB is not configured in host kernel");
-	अन्यथा
+	else
 		TEST_FAIL("Error in reading /proc/meminfo");
 
-	ख_बंद(f);
-	वापस 0;
-पूर्ण
+	fclose(f);
+	return 0;
+}
 
-#घोषणा ANON_FLAGS	(MAP_PRIVATE | MAP_ANONYMOUS)
-#घोषणा ANON_HUGE_FLAGS	(ANON_FLAGS | MAP_HUGETLB)
+#define ANON_FLAGS	(MAP_PRIVATE | MAP_ANONYMOUS)
+#define ANON_HUGE_FLAGS	(ANON_FLAGS | MAP_HUGETLB)
 
-स्थिर काष्ठा vm_mem_backing_src_alias *vm_mem_backing_src_alias(uपूर्णांक32_t i)
-अणु
-	अटल स्थिर काष्ठा vm_mem_backing_src_alias aliases[] = अणु
-		[VM_MEM_SRC_ANONYMOUS] = अणु
+const struct vm_mem_backing_src_alias *vm_mem_backing_src_alias(uint32_t i)
+{
+	static const struct vm_mem_backing_src_alias aliases[] = {
+		[VM_MEM_SRC_ANONYMOUS] = {
 			.name = "anonymous",
 			.flag = ANON_FLAGS,
-		पूर्ण,
-		[VM_MEM_SRC_ANONYMOUS_THP] = अणु
+		},
+		[VM_MEM_SRC_ANONYMOUS_THP] = {
 			.name = "anonymous_thp",
 			.flag = ANON_FLAGS,
-		पूर्ण,
-		[VM_MEM_SRC_ANONYMOUS_HUGETLB] = अणु
+		},
+		[VM_MEM_SRC_ANONYMOUS_HUGETLB] = {
 			.name = "anonymous_hugetlb",
 			.flag = ANON_HUGE_FLAGS,
-		पूर्ण,
-		[VM_MEM_SRC_ANONYMOUS_HUGETLB_16KB] = अणु
+		},
+		[VM_MEM_SRC_ANONYMOUS_HUGETLB_16KB] = {
 			.name = "anonymous_hugetlb_16kb",
 			.flag = ANON_HUGE_FLAGS | MAP_HUGE_16KB,
-		पूर्ण,
-		[VM_MEM_SRC_ANONYMOUS_HUGETLB_64KB] = अणु
+		},
+		[VM_MEM_SRC_ANONYMOUS_HUGETLB_64KB] = {
 			.name = "anonymous_hugetlb_64kb",
 			.flag = ANON_HUGE_FLAGS | MAP_HUGE_64KB,
-		पूर्ण,
-		[VM_MEM_SRC_ANONYMOUS_HUGETLB_512KB] = अणु
+		},
+		[VM_MEM_SRC_ANONYMOUS_HUGETLB_512KB] = {
 			.name = "anonymous_hugetlb_512kb",
 			.flag = ANON_HUGE_FLAGS | MAP_HUGE_512KB,
-		पूर्ण,
-		[VM_MEM_SRC_ANONYMOUS_HUGETLB_1MB] = अणु
+		},
+		[VM_MEM_SRC_ANONYMOUS_HUGETLB_1MB] = {
 			.name = "anonymous_hugetlb_1mb",
 			.flag = ANON_HUGE_FLAGS | MAP_HUGE_1MB,
-		पूर्ण,
-		[VM_MEM_SRC_ANONYMOUS_HUGETLB_2MB] = अणु
+		},
+		[VM_MEM_SRC_ANONYMOUS_HUGETLB_2MB] = {
 			.name = "anonymous_hugetlb_2mb",
 			.flag = ANON_HUGE_FLAGS | MAP_HUGE_2MB,
-		पूर्ण,
-		[VM_MEM_SRC_ANONYMOUS_HUGETLB_8MB] = अणु
+		},
+		[VM_MEM_SRC_ANONYMOUS_HUGETLB_8MB] = {
 			.name = "anonymous_hugetlb_8mb",
 			.flag = ANON_HUGE_FLAGS | MAP_HUGE_8MB,
-		पूर्ण,
-		[VM_MEM_SRC_ANONYMOUS_HUGETLB_16MB] = अणु
+		},
+		[VM_MEM_SRC_ANONYMOUS_HUGETLB_16MB] = {
 			.name = "anonymous_hugetlb_16mb",
 			.flag = ANON_HUGE_FLAGS | MAP_HUGE_16MB,
-		पूर्ण,
-		[VM_MEM_SRC_ANONYMOUS_HUGETLB_32MB] = अणु
+		},
+		[VM_MEM_SRC_ANONYMOUS_HUGETLB_32MB] = {
 			.name = "anonymous_hugetlb_32mb",
 			.flag = ANON_HUGE_FLAGS | MAP_HUGE_32MB,
-		पूर्ण,
-		[VM_MEM_SRC_ANONYMOUS_HUGETLB_256MB] = अणु
+		},
+		[VM_MEM_SRC_ANONYMOUS_HUGETLB_256MB] = {
 			.name = "anonymous_hugetlb_256mb",
 			.flag = ANON_HUGE_FLAGS | MAP_HUGE_256MB,
-		पूर्ण,
-		[VM_MEM_SRC_ANONYMOUS_HUGETLB_512MB] = अणु
+		},
+		[VM_MEM_SRC_ANONYMOUS_HUGETLB_512MB] = {
 			.name = "anonymous_hugetlb_512mb",
 			.flag = ANON_HUGE_FLAGS | MAP_HUGE_512MB,
-		पूर्ण,
-		[VM_MEM_SRC_ANONYMOUS_HUGETLB_1GB] = अणु
+		},
+		[VM_MEM_SRC_ANONYMOUS_HUGETLB_1GB] = {
 			.name = "anonymous_hugetlb_1gb",
 			.flag = ANON_HUGE_FLAGS | MAP_HUGE_1GB,
-		पूर्ण,
-		[VM_MEM_SRC_ANONYMOUS_HUGETLB_2GB] = अणु
+		},
+		[VM_MEM_SRC_ANONYMOUS_HUGETLB_2GB] = {
 			.name = "anonymous_hugetlb_2gb",
 			.flag = ANON_HUGE_FLAGS | MAP_HUGE_2GB,
-		पूर्ण,
-		[VM_MEM_SRC_ANONYMOUS_HUGETLB_16GB] = अणु
+		},
+		[VM_MEM_SRC_ANONYMOUS_HUGETLB_16GB] = {
 			.name = "anonymous_hugetlb_16gb",
 			.flag = ANON_HUGE_FLAGS | MAP_HUGE_16GB,
-		पूर्ण,
-		[VM_MEM_SRC_SHMEM] = अणु
+		},
+		[VM_MEM_SRC_SHMEM] = {
 			.name = "shmem",
 			.flag = MAP_SHARED,
-		पूर्ण,
-		[VM_MEM_SRC_SHARED_HUGETLB] = अणु
+		},
+		[VM_MEM_SRC_SHARED_HUGETLB] = {
 			.name = "shared_hugetlb",
 			/*
 			 * No MAP_HUGETLB, we use MFD_HUGETLB instead. Since
-			 * we're using "file backed" memory, we need to specअगरy
+			 * we're using "file backed" memory, we need to specify
 			 * this when the FD is created, not when the area is
 			 * mapped.
 			 */
 			.flag = MAP_SHARED,
-		पूर्ण,
-	पूर्ण;
-	_Static_निश्चित(ARRAY_SIZE(aliases) == NUM_SRC_TYPES,
+		},
+	};
+	_Static_assert(ARRAY_SIZE(aliases) == NUM_SRC_TYPES,
 		       "Missing new backing src types?");
 
 	TEST_ASSERT(i < NUM_SRC_TYPES, "Backing src type ID %d too big", i);
 
-	वापस &aliases[i];
-पूर्ण
+	return &aliases[i];
+}
 
-#घोषणा MAP_HUGE_PAGE_SIZE(x) (1ULL << ((x >> MAP_HUGE_SHIFT) & MAP_HUGE_MASK))
+#define MAP_HUGE_PAGE_SIZE(x) (1ULL << ((x >> MAP_HUGE_SHIFT) & MAP_HUGE_MASK))
 
-माप_प्रकार get_backing_src_pagesz(uपूर्णांक32_t i)
-अणु
-	uपूर्णांक32_t flag = vm_mem_backing_src_alias(i)->flag;
+size_t get_backing_src_pagesz(uint32_t i)
+{
+	uint32_t flag = vm_mem_backing_src_alias(i)->flag;
 
-	चयन (i) अणु
-	हाल VM_MEM_SRC_ANONYMOUS:
-	हाल VM_MEM_SRC_SHMEM:
-		वापस getpagesize();
-	हाल VM_MEM_SRC_ANONYMOUS_THP:
-		वापस get_trans_hugepagesz();
-	हाल VM_MEM_SRC_ANONYMOUS_HUGETLB:
-	हाल VM_MEM_SRC_SHARED_HUGETLB:
-		वापस get_def_hugetlb_pagesz();
-	शेष:
-		वापस MAP_HUGE_PAGE_SIZE(flag);
-	पूर्ण
-पूर्ण
+	switch (i) {
+	case VM_MEM_SRC_ANONYMOUS:
+	case VM_MEM_SRC_SHMEM:
+		return getpagesize();
+	case VM_MEM_SRC_ANONYMOUS_THP:
+		return get_trans_hugepagesz();
+	case VM_MEM_SRC_ANONYMOUS_HUGETLB:
+	case VM_MEM_SRC_SHARED_HUGETLB:
+		return get_def_hugetlb_pagesz();
+	default:
+		return MAP_HUGE_PAGE_SIZE(flag);
+	}
+}
 
-व्योम backing_src_help(व्योम)
-अणु
-	पूर्णांक i;
+void backing_src_help(void)
+{
+	int i;
 
-	म_लिखो("Available backing src types:\n");
-	क्रम (i = 0; i < NUM_SRC_TYPES; i++)
-		म_लिखो("\t%s\n", vm_mem_backing_src_alias(i)->name);
-पूर्ण
+	printf("Available backing src types:\n");
+	for (i = 0; i < NUM_SRC_TYPES; i++)
+		printf("\t%s\n", vm_mem_backing_src_alias(i)->name);
+}
 
-क्रमागत vm_mem_backing_src_type parse_backing_src_type(स्थिर अक्षर *type_name)
-अणु
-	पूर्णांक i;
+enum vm_mem_backing_src_type parse_backing_src_type(const char *type_name)
+{
+	int i;
 
-	क्रम (i = 0; i < NUM_SRC_TYPES; i++)
-		अगर (!म_भेद(type_name, vm_mem_backing_src_alias(i)->name))
-			वापस i;
+	for (i = 0; i < NUM_SRC_TYPES; i++)
+		if (!strcmp(type_name, vm_mem_backing_src_alias(i)->name))
+			return i;
 
 	backing_src_help();
 	TEST_FAIL("Unknown backing src type: %s", type_name);
-	वापस -1;
-पूर्ण
+	return -1;
+}

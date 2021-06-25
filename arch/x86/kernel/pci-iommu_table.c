@@ -1,78 +1,77 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <linux/dma-mapping.h>
-#समावेश <यंत्र/iommu_table.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/kallsyms.h>
+// SPDX-License-Identifier: GPL-2.0
+#include <linux/dma-mapping.h>
+#include <asm/iommu_table.h>
+#include <linux/string.h>
+#include <linux/kallsyms.h>
 
-अटल काष्ठा iommu_table_entry * __init
-find_dependents_of(काष्ठा iommu_table_entry *start,
-		   काष्ठा iommu_table_entry *finish,
-		   काष्ठा iommu_table_entry *q)
-अणु
-	काष्ठा iommu_table_entry *p;
+static struct iommu_table_entry * __init
+find_dependents_of(struct iommu_table_entry *start,
+		   struct iommu_table_entry *finish,
+		   struct iommu_table_entry *q)
+{
+	struct iommu_table_entry *p;
 
-	अगर (!q)
-		वापस शून्य;
+	if (!q)
+		return NULL;
 
-	क्रम (p = start; p < finish; p++)
-		अगर (p->detect == q->depend)
-			वापस p;
+	for (p = start; p < finish; p++)
+		if (p->detect == q->depend)
+			return p;
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
 
-व्योम __init sort_iommu_table(काष्ठा iommu_table_entry *start,
-			     काष्ठा iommu_table_entry *finish) अणु
+void __init sort_iommu_table(struct iommu_table_entry *start,
+			     struct iommu_table_entry *finish) {
 
-	काष्ठा iommu_table_entry *p, *q, पंचांगp;
+	struct iommu_table_entry *p, *q, tmp;
 
-	क्रम (p = start; p < finish; p++) अणु
+	for (p = start; p < finish; p++) {
 again:
 		q = find_dependents_of(start, finish, p);
 		/* We are bit sneaky here. We use the memory address to figure
-		 * out अगर the node we depend on is past our poपूर्णांक, अगर so, swap.
+		 * out if the node we depend on is past our point, if so, swap.
 		 */
-		अगर (q > p) अणु
-			पंचांगp = *p;
-			स_हटाओ(p, q, माप(*p));
-			*q = पंचांगp;
-			जाओ again;
-		पूर्ण
-	पूर्ण
+		if (q > p) {
+			tmp = *p;
+			memmove(p, q, sizeof(*p));
+			*q = tmp;
+			goto again;
+		}
+	}
 
-पूर्ण
+}
 
-#अगर_घोषित DEBUG
-व्योम __init check_iommu_entries(काष्ठा iommu_table_entry *start,
-				काष्ठा iommu_table_entry *finish)
-अणु
-	काष्ठा iommu_table_entry *p, *q, *x;
+#ifdef DEBUG
+void __init check_iommu_entries(struct iommu_table_entry *start,
+				struct iommu_table_entry *finish)
+{
+	struct iommu_table_entry *p, *q, *x;
 
 	/* Simple cyclic dependency checker. */
-	क्रम (p = start; p < finish; p++) अणु
+	for (p = start; p < finish; p++) {
 		q = find_dependents_of(start, finish, p);
 		x = find_dependents_of(start, finish, q);
-		अगर (p == x) अणु
-			prपूर्णांकk(KERN_ERR "CYCLIC DEPENDENCY FOUND! %pS depends on %pS and vice-versa. BREAKING IT.\n",
+		if (p == x) {
+			printk(KERN_ERR "CYCLIC DEPENDENCY FOUND! %pS depends on %pS and vice-versa. BREAKING IT.\n",
 			       p->detect, q->detect);
 			/* Heavy handed way..*/
-			x->depend = शून्य;
-		पूर्ण
-	पूर्ण
+			x->depend = NULL;
+		}
+	}
 
-	क्रम (p = start; p < finish; p++) अणु
+	for (p = start; p < finish; p++) {
 		q = find_dependents_of(p, finish, p);
-		अगर (q && q > p) अणु
-			prपूर्णांकk(KERN_ERR "EXECUTION ORDER INVALID! %pS should be called before %pS!\n",
+		if (q && q > p) {
+			printk(KERN_ERR "EXECUTION ORDER INVALID! %pS should be called before %pS!\n",
 			       p->detect, q->detect);
-		पूर्ण
-	पूर्ण
-पूर्ण
-#अन्यथा
-व्योम __init check_iommu_entries(काष्ठा iommu_table_entry *start,
-				       काष्ठा iommu_table_entry *finish)
-अणु
-पूर्ण
-#पूर्ण_अगर
+		}
+	}
+}
+#else
+void __init check_iommu_entries(struct iommu_table_entry *start,
+				       struct iommu_table_entry *finish)
+{
+}
+#endif

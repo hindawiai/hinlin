@@ -1,521 +1,520 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * ChaCha20-Poly1305 AEAD, RFC7539
  *
  * Copyright (C) 2015 Martin Willi
  */
 
-#समावेश <crypto/पूर्णांकernal/aead.h>
-#समावेश <crypto/पूर्णांकernal/hash.h>
-#समावेश <crypto/पूर्णांकernal/skcipher.h>
-#समावेश <crypto/scatterwalk.h>
-#समावेश <crypto/chacha.h>
-#समावेश <crypto/poly1305.h>
-#समावेश <linux/err.h>
-#समावेश <linux/init.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
+#include <crypto/internal/aead.h>
+#include <crypto/internal/hash.h>
+#include <crypto/internal/skcipher.h>
+#include <crypto/scatterwalk.h>
+#include <crypto/chacha.h>
+#include <crypto/poly1305.h>
+#include <linux/err.h>
+#include <linux/init.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
 
-काष्ठा chachapoly_instance_ctx अणु
-	काष्ठा crypto_skcipher_spawn chacha;
-	काष्ठा crypto_ahash_spawn poly;
-	अचिन्हित पूर्णांक saltlen;
-पूर्ण;
+struct chachapoly_instance_ctx {
+	struct crypto_skcipher_spawn chacha;
+	struct crypto_ahash_spawn poly;
+	unsigned int saltlen;
+};
 
-काष्ठा chachapoly_ctx अणु
-	काष्ठा crypto_skcipher *chacha;
-	काष्ठा crypto_ahash *poly;
-	/* key bytes we use क्रम the ChaCha20 IV */
-	अचिन्हित पूर्णांक saltlen;
+struct chachapoly_ctx {
+	struct crypto_skcipher *chacha;
+	struct crypto_ahash *poly;
+	/* key bytes we use for the ChaCha20 IV */
+	unsigned int saltlen;
 	u8 salt[];
-पूर्ण;
+};
 
-काष्ठा poly_req अणु
-	/* zero byte padding क्रम AD/ciphertext, as needed */
+struct poly_req {
+	/* zero byte padding for AD/ciphertext, as needed */
 	u8 pad[POLY1305_BLOCK_SIZE];
 	/* tail data with AD/ciphertext lengths */
-	काष्ठा अणु
+	struct {
 		__le64 assoclen;
 		__le64 cryptlen;
-	पूर्ण tail;
-	काष्ठा scatterlist src[1];
-	काष्ठा ahash_request req; /* must be last member */
-पूर्ण;
+	} tail;
+	struct scatterlist src[1];
+	struct ahash_request req; /* must be last member */
+};
 
-काष्ठा chacha_req अणु
+struct chacha_req {
 	u8 iv[CHACHA_IV_SIZE];
-	काष्ठा scatterlist src[1];
-	काष्ठा skcipher_request req; /* must be last member */
-पूर्ण;
+	struct scatterlist src[1];
+	struct skcipher_request req; /* must be last member */
+};
 
-काष्ठा chachapoly_req_ctx अणु
-	काष्ठा scatterlist src[2];
-	काष्ठा scatterlist dst[2];
-	/* the key we generate क्रम Poly1305 using Chacha20 */
+struct chachapoly_req_ctx {
+	struct scatterlist src[2];
+	struct scatterlist dst[2];
+	/* the key we generate for Poly1305 using Chacha20 */
 	u8 key[POLY1305_KEY_SIZE];
 	/* calculated Poly1305 tag */
 	u8 tag[POLY1305_DIGEST_SIZE];
 	/* length of data to en/decrypt, without ICV */
-	अचिन्हित पूर्णांक cryptlen;
+	unsigned int cryptlen;
 	/* Actual AD, excluding IV */
-	अचिन्हित पूर्णांक assoclen;
-	/* request flags, with MAY_SLEEP cleared अगर needed */
+	unsigned int assoclen;
+	/* request flags, with MAY_SLEEP cleared if needed */
 	u32 flags;
-	जोड़ अणु
-		काष्ठा poly_req poly;
-		काष्ठा chacha_req chacha;
-	पूर्ण u;
-पूर्ण;
+	union {
+		struct poly_req poly;
+		struct chacha_req chacha;
+	} u;
+};
 
-अटल अंतरभूत व्योम async_करोne_जारी(काष्ठा aead_request *req, पूर्णांक err,
-				       पूर्णांक (*cont)(काष्ठा aead_request *))
-अणु
-	अगर (!err) अणु
-		काष्ठा chachapoly_req_ctx *rctx = aead_request_ctx(req);
+static inline void async_done_continue(struct aead_request *req, int err,
+				       int (*cont)(struct aead_request *))
+{
+	if (!err) {
+		struct chachapoly_req_ctx *rctx = aead_request_ctx(req);
 
 		rctx->flags &= ~CRYPTO_TFM_REQ_MAY_SLEEP;
 		err = cont(req);
-	पूर्ण
+	}
 
-	अगर (err != -EINPROGRESS && err != -EBUSY)
+	if (err != -EINPROGRESS && err != -EBUSY)
 		aead_request_complete(req, err);
-पूर्ण
+}
 
-अटल व्योम chacha_iv(u8 *iv, काष्ठा aead_request *req, u32 icb)
-अणु
-	काष्ठा chachapoly_ctx *ctx = crypto_aead_ctx(crypto_aead_reqtfm(req));
+static void chacha_iv(u8 *iv, struct aead_request *req, u32 icb)
+{
+	struct chachapoly_ctx *ctx = crypto_aead_ctx(crypto_aead_reqtfm(req));
 	__le32 leicb = cpu_to_le32(icb);
 
-	स_नकल(iv, &leicb, माप(leicb));
-	स_नकल(iv + माप(leicb), ctx->salt, ctx->saltlen);
-	स_नकल(iv + माप(leicb) + ctx->saltlen, req->iv,
-	       CHACHA_IV_SIZE - माप(leicb) - ctx->saltlen);
-पूर्ण
+	memcpy(iv, &leicb, sizeof(leicb));
+	memcpy(iv + sizeof(leicb), ctx->salt, ctx->saltlen);
+	memcpy(iv + sizeof(leicb) + ctx->saltlen, req->iv,
+	       CHACHA_IV_SIZE - sizeof(leicb) - ctx->saltlen);
+}
 
-अटल पूर्णांक poly_verअगरy_tag(काष्ठा aead_request *req)
-अणु
-	काष्ठा chachapoly_req_ctx *rctx = aead_request_ctx(req);
-	u8 tag[माप(rctx->tag)];
+static int poly_verify_tag(struct aead_request *req)
+{
+	struct chachapoly_req_ctx *rctx = aead_request_ctx(req);
+	u8 tag[sizeof(rctx->tag)];
 
 	scatterwalk_map_and_copy(tag, req->src,
 				 req->assoclen + rctx->cryptlen,
-				 माप(tag), 0);
-	अगर (crypto_memneq(tag, rctx->tag, माप(tag)))
-		वापस -EBADMSG;
-	वापस 0;
-पूर्ण
+				 sizeof(tag), 0);
+	if (crypto_memneq(tag, rctx->tag, sizeof(tag)))
+		return -EBADMSG;
+	return 0;
+}
 
-अटल पूर्णांक poly_copy_tag(काष्ठा aead_request *req)
-अणु
-	काष्ठा chachapoly_req_ctx *rctx = aead_request_ctx(req);
+static int poly_copy_tag(struct aead_request *req)
+{
+	struct chachapoly_req_ctx *rctx = aead_request_ctx(req);
 
 	scatterwalk_map_and_copy(rctx->tag, req->dst,
 				 req->assoclen + rctx->cryptlen,
-				 माप(rctx->tag), 1);
-	वापस 0;
-पूर्ण
+				 sizeof(rctx->tag), 1);
+	return 0;
+}
 
-अटल व्योम chacha_decrypt_करोne(काष्ठा crypto_async_request *areq, पूर्णांक err)
-अणु
-	async_करोne_जारी(areq->data, err, poly_verअगरy_tag);
-पूर्ण
+static void chacha_decrypt_done(struct crypto_async_request *areq, int err)
+{
+	async_done_continue(areq->data, err, poly_verify_tag);
+}
 
-अटल पूर्णांक chacha_decrypt(काष्ठा aead_request *req)
-अणु
-	काष्ठा chachapoly_ctx *ctx = crypto_aead_ctx(crypto_aead_reqtfm(req));
-	काष्ठा chachapoly_req_ctx *rctx = aead_request_ctx(req);
-	काष्ठा chacha_req *creq = &rctx->u.chacha;
-	काष्ठा scatterlist *src, *dst;
-	पूर्णांक err;
+static int chacha_decrypt(struct aead_request *req)
+{
+	struct chachapoly_ctx *ctx = crypto_aead_ctx(crypto_aead_reqtfm(req));
+	struct chachapoly_req_ctx *rctx = aead_request_ctx(req);
+	struct chacha_req *creq = &rctx->u.chacha;
+	struct scatterlist *src, *dst;
+	int err;
 
-	अगर (rctx->cryptlen == 0)
-		जाओ skip;
+	if (rctx->cryptlen == 0)
+		goto skip;
 
 	chacha_iv(creq->iv, req, 1);
 
 	src = scatterwalk_ffwd(rctx->src, req->src, req->assoclen);
 	dst = src;
-	अगर (req->src != req->dst)
+	if (req->src != req->dst)
 		dst = scatterwalk_ffwd(rctx->dst, req->dst, req->assoclen);
 
 	skcipher_request_set_callback(&creq->req, rctx->flags,
-				      chacha_decrypt_करोne, req);
+				      chacha_decrypt_done, req);
 	skcipher_request_set_tfm(&creq->req, ctx->chacha);
 	skcipher_request_set_crypt(&creq->req, src, dst,
 				   rctx->cryptlen, creq->iv);
 	err = crypto_skcipher_decrypt(&creq->req);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 skip:
-	वापस poly_verअगरy_tag(req);
-पूर्ण
+	return poly_verify_tag(req);
+}
 
-अटल पूर्णांक poly_tail_जारी(काष्ठा aead_request *req)
-अणु
-	काष्ठा chachapoly_req_ctx *rctx = aead_request_ctx(req);
+static int poly_tail_continue(struct aead_request *req)
+{
+	struct chachapoly_req_ctx *rctx = aead_request_ctx(req);
 
-	अगर (rctx->cryptlen == req->cryptlen) /* encrypting */
-		वापस poly_copy_tag(req);
+	if (rctx->cryptlen == req->cryptlen) /* encrypting */
+		return poly_copy_tag(req);
 
-	वापस chacha_decrypt(req);
-पूर्ण
+	return chacha_decrypt(req);
+}
 
-अटल व्योम poly_tail_करोne(काष्ठा crypto_async_request *areq, पूर्णांक err)
-अणु
-	async_करोne_जारी(areq->data, err, poly_tail_जारी);
-पूर्ण
+static void poly_tail_done(struct crypto_async_request *areq, int err)
+{
+	async_done_continue(areq->data, err, poly_tail_continue);
+}
 
-अटल पूर्णांक poly_tail(काष्ठा aead_request *req)
-अणु
-	काष्ठा crypto_aead *tfm = crypto_aead_reqtfm(req);
-	काष्ठा chachapoly_ctx *ctx = crypto_aead_ctx(tfm);
-	काष्ठा chachapoly_req_ctx *rctx = aead_request_ctx(req);
-	काष्ठा poly_req *preq = &rctx->u.poly;
-	पूर्णांक err;
+static int poly_tail(struct aead_request *req)
+{
+	struct crypto_aead *tfm = crypto_aead_reqtfm(req);
+	struct chachapoly_ctx *ctx = crypto_aead_ctx(tfm);
+	struct chachapoly_req_ctx *rctx = aead_request_ctx(req);
+	struct poly_req *preq = &rctx->u.poly;
+	int err;
 
 	preq->tail.assoclen = cpu_to_le64(rctx->assoclen);
 	preq->tail.cryptlen = cpu_to_le64(rctx->cryptlen);
-	sg_init_one(preq->src, &preq->tail, माप(preq->tail));
+	sg_init_one(preq->src, &preq->tail, sizeof(preq->tail));
 
 	ahash_request_set_callback(&preq->req, rctx->flags,
-				   poly_tail_करोne, req);
+				   poly_tail_done, req);
 	ahash_request_set_tfm(&preq->req, ctx->poly);
 	ahash_request_set_crypt(&preq->req, preq->src,
-				rctx->tag, माप(preq->tail));
+				rctx->tag, sizeof(preq->tail));
 
 	err = crypto_ahash_finup(&preq->req);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	वापस poly_tail_जारी(req);
-पूर्ण
+	return poly_tail_continue(req);
+}
 
-अटल व्योम poly_cipherpad_करोne(काष्ठा crypto_async_request *areq, पूर्णांक err)
-अणु
-	async_करोne_जारी(areq->data, err, poly_tail);
-पूर्ण
+static void poly_cipherpad_done(struct crypto_async_request *areq, int err)
+{
+	async_done_continue(areq->data, err, poly_tail);
+}
 
-अटल पूर्णांक poly_cipherpad(काष्ठा aead_request *req)
-अणु
-	काष्ठा chachapoly_ctx *ctx = crypto_aead_ctx(crypto_aead_reqtfm(req));
-	काष्ठा chachapoly_req_ctx *rctx = aead_request_ctx(req);
-	काष्ठा poly_req *preq = &rctx->u.poly;
-	अचिन्हित पूर्णांक padlen;
-	पूर्णांक err;
+static int poly_cipherpad(struct aead_request *req)
+{
+	struct chachapoly_ctx *ctx = crypto_aead_ctx(crypto_aead_reqtfm(req));
+	struct chachapoly_req_ctx *rctx = aead_request_ctx(req);
+	struct poly_req *preq = &rctx->u.poly;
+	unsigned int padlen;
+	int err;
 
 	padlen = -rctx->cryptlen % POLY1305_BLOCK_SIZE;
-	स_रखो(preq->pad, 0, माप(preq->pad));
+	memset(preq->pad, 0, sizeof(preq->pad));
 	sg_init_one(preq->src, preq->pad, padlen);
 
 	ahash_request_set_callback(&preq->req, rctx->flags,
-				   poly_cipherpad_करोne, req);
+				   poly_cipherpad_done, req);
 	ahash_request_set_tfm(&preq->req, ctx->poly);
-	ahash_request_set_crypt(&preq->req, preq->src, शून्य, padlen);
+	ahash_request_set_crypt(&preq->req, preq->src, NULL, padlen);
 
 	err = crypto_ahash_update(&preq->req);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	वापस poly_tail(req);
-पूर्ण
+	return poly_tail(req);
+}
 
-अटल व्योम poly_cipher_करोne(काष्ठा crypto_async_request *areq, पूर्णांक err)
-अणु
-	async_करोne_जारी(areq->data, err, poly_cipherpad);
-पूर्ण
+static void poly_cipher_done(struct crypto_async_request *areq, int err)
+{
+	async_done_continue(areq->data, err, poly_cipherpad);
+}
 
-अटल पूर्णांक poly_cipher(काष्ठा aead_request *req)
-अणु
-	काष्ठा chachapoly_ctx *ctx = crypto_aead_ctx(crypto_aead_reqtfm(req));
-	काष्ठा chachapoly_req_ctx *rctx = aead_request_ctx(req);
-	काष्ठा poly_req *preq = &rctx->u.poly;
-	काष्ठा scatterlist *crypt = req->src;
-	पूर्णांक err;
+static int poly_cipher(struct aead_request *req)
+{
+	struct chachapoly_ctx *ctx = crypto_aead_ctx(crypto_aead_reqtfm(req));
+	struct chachapoly_req_ctx *rctx = aead_request_ctx(req);
+	struct poly_req *preq = &rctx->u.poly;
+	struct scatterlist *crypt = req->src;
+	int err;
 
-	अगर (rctx->cryptlen == req->cryptlen) /* encrypting */
+	if (rctx->cryptlen == req->cryptlen) /* encrypting */
 		crypt = req->dst;
 
 	crypt = scatterwalk_ffwd(rctx->src, crypt, req->assoclen);
 
 	ahash_request_set_callback(&preq->req, rctx->flags,
-				   poly_cipher_करोne, req);
+				   poly_cipher_done, req);
 	ahash_request_set_tfm(&preq->req, ctx->poly);
-	ahash_request_set_crypt(&preq->req, crypt, शून्य, rctx->cryptlen);
+	ahash_request_set_crypt(&preq->req, crypt, NULL, rctx->cryptlen);
 
 	err = crypto_ahash_update(&preq->req);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	वापस poly_cipherpad(req);
-पूर्ण
+	return poly_cipherpad(req);
+}
 
-अटल व्योम poly_adpad_करोne(काष्ठा crypto_async_request *areq, पूर्णांक err)
-अणु
-	async_करोne_जारी(areq->data, err, poly_cipher);
-पूर्ण
+static void poly_adpad_done(struct crypto_async_request *areq, int err)
+{
+	async_done_continue(areq->data, err, poly_cipher);
+}
 
-अटल पूर्णांक poly_adpad(काष्ठा aead_request *req)
-अणु
-	काष्ठा chachapoly_ctx *ctx = crypto_aead_ctx(crypto_aead_reqtfm(req));
-	काष्ठा chachapoly_req_ctx *rctx = aead_request_ctx(req);
-	काष्ठा poly_req *preq = &rctx->u.poly;
-	अचिन्हित पूर्णांक padlen;
-	पूर्णांक err;
+static int poly_adpad(struct aead_request *req)
+{
+	struct chachapoly_ctx *ctx = crypto_aead_ctx(crypto_aead_reqtfm(req));
+	struct chachapoly_req_ctx *rctx = aead_request_ctx(req);
+	struct poly_req *preq = &rctx->u.poly;
+	unsigned int padlen;
+	int err;
 
 	padlen = -rctx->assoclen % POLY1305_BLOCK_SIZE;
-	स_रखो(preq->pad, 0, माप(preq->pad));
+	memset(preq->pad, 0, sizeof(preq->pad));
 	sg_init_one(preq->src, preq->pad, padlen);
 
 	ahash_request_set_callback(&preq->req, rctx->flags,
-				   poly_adpad_करोne, req);
+				   poly_adpad_done, req);
 	ahash_request_set_tfm(&preq->req, ctx->poly);
-	ahash_request_set_crypt(&preq->req, preq->src, शून्य, padlen);
+	ahash_request_set_crypt(&preq->req, preq->src, NULL, padlen);
 
 	err = crypto_ahash_update(&preq->req);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	वापस poly_cipher(req);
-पूर्ण
+	return poly_cipher(req);
+}
 
-अटल व्योम poly_ad_करोne(काष्ठा crypto_async_request *areq, पूर्णांक err)
-अणु
-	async_करोne_जारी(areq->data, err, poly_adpad);
-पूर्ण
+static void poly_ad_done(struct crypto_async_request *areq, int err)
+{
+	async_done_continue(areq->data, err, poly_adpad);
+}
 
-अटल पूर्णांक poly_ad(काष्ठा aead_request *req)
-अणु
-	काष्ठा chachapoly_ctx *ctx = crypto_aead_ctx(crypto_aead_reqtfm(req));
-	काष्ठा chachapoly_req_ctx *rctx = aead_request_ctx(req);
-	काष्ठा poly_req *preq = &rctx->u.poly;
-	पूर्णांक err;
+static int poly_ad(struct aead_request *req)
+{
+	struct chachapoly_ctx *ctx = crypto_aead_ctx(crypto_aead_reqtfm(req));
+	struct chachapoly_req_ctx *rctx = aead_request_ctx(req);
+	struct poly_req *preq = &rctx->u.poly;
+	int err;
 
 	ahash_request_set_callback(&preq->req, rctx->flags,
-				   poly_ad_करोne, req);
+				   poly_ad_done, req);
 	ahash_request_set_tfm(&preq->req, ctx->poly);
-	ahash_request_set_crypt(&preq->req, req->src, शून्य, rctx->assoclen);
+	ahash_request_set_crypt(&preq->req, req->src, NULL, rctx->assoclen);
 
 	err = crypto_ahash_update(&preq->req);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	वापस poly_adpad(req);
-पूर्ण
+	return poly_adpad(req);
+}
 
-अटल व्योम poly_setkey_करोne(काष्ठा crypto_async_request *areq, पूर्णांक err)
-अणु
-	async_करोne_जारी(areq->data, err, poly_ad);
-पूर्ण
+static void poly_setkey_done(struct crypto_async_request *areq, int err)
+{
+	async_done_continue(areq->data, err, poly_ad);
+}
 
-अटल पूर्णांक poly_setkey(काष्ठा aead_request *req)
-अणु
-	काष्ठा chachapoly_ctx *ctx = crypto_aead_ctx(crypto_aead_reqtfm(req));
-	काष्ठा chachapoly_req_ctx *rctx = aead_request_ctx(req);
-	काष्ठा poly_req *preq = &rctx->u.poly;
-	पूर्णांक err;
+static int poly_setkey(struct aead_request *req)
+{
+	struct chachapoly_ctx *ctx = crypto_aead_ctx(crypto_aead_reqtfm(req));
+	struct chachapoly_req_ctx *rctx = aead_request_ctx(req);
+	struct poly_req *preq = &rctx->u.poly;
+	int err;
 
-	sg_init_one(preq->src, rctx->key, माप(rctx->key));
+	sg_init_one(preq->src, rctx->key, sizeof(rctx->key));
 
 	ahash_request_set_callback(&preq->req, rctx->flags,
-				   poly_setkey_करोne, req);
+				   poly_setkey_done, req);
 	ahash_request_set_tfm(&preq->req, ctx->poly);
-	ahash_request_set_crypt(&preq->req, preq->src, शून्य, माप(rctx->key));
+	ahash_request_set_crypt(&preq->req, preq->src, NULL, sizeof(rctx->key));
 
 	err = crypto_ahash_update(&preq->req);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	वापस poly_ad(req);
-पूर्ण
+	return poly_ad(req);
+}
 
-अटल व्योम poly_init_करोne(काष्ठा crypto_async_request *areq, पूर्णांक err)
-अणु
-	async_करोne_जारी(areq->data, err, poly_setkey);
-पूर्ण
+static void poly_init_done(struct crypto_async_request *areq, int err)
+{
+	async_done_continue(areq->data, err, poly_setkey);
+}
 
-अटल पूर्णांक poly_init(काष्ठा aead_request *req)
-अणु
-	काष्ठा chachapoly_ctx *ctx = crypto_aead_ctx(crypto_aead_reqtfm(req));
-	काष्ठा chachapoly_req_ctx *rctx = aead_request_ctx(req);
-	काष्ठा poly_req *preq = &rctx->u.poly;
-	पूर्णांक err;
+static int poly_init(struct aead_request *req)
+{
+	struct chachapoly_ctx *ctx = crypto_aead_ctx(crypto_aead_reqtfm(req));
+	struct chachapoly_req_ctx *rctx = aead_request_ctx(req);
+	struct poly_req *preq = &rctx->u.poly;
+	int err;
 
 	ahash_request_set_callback(&preq->req, rctx->flags,
-				   poly_init_करोne, req);
+				   poly_init_done, req);
 	ahash_request_set_tfm(&preq->req, ctx->poly);
 
 	err = crypto_ahash_init(&preq->req);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	वापस poly_setkey(req);
-पूर्ण
+	return poly_setkey(req);
+}
 
-अटल व्योम poly_genkey_करोne(काष्ठा crypto_async_request *areq, पूर्णांक err)
-अणु
-	async_करोne_जारी(areq->data, err, poly_init);
-पूर्ण
+static void poly_genkey_done(struct crypto_async_request *areq, int err)
+{
+	async_done_continue(areq->data, err, poly_init);
+}
 
-अटल पूर्णांक poly_genkey(काष्ठा aead_request *req)
-अणु
-	काष्ठा crypto_aead *tfm = crypto_aead_reqtfm(req);
-	काष्ठा chachapoly_ctx *ctx = crypto_aead_ctx(tfm);
-	काष्ठा chachapoly_req_ctx *rctx = aead_request_ctx(req);
-	काष्ठा chacha_req *creq = &rctx->u.chacha;
-	पूर्णांक err;
+static int poly_genkey(struct aead_request *req)
+{
+	struct crypto_aead *tfm = crypto_aead_reqtfm(req);
+	struct chachapoly_ctx *ctx = crypto_aead_ctx(tfm);
+	struct chachapoly_req_ctx *rctx = aead_request_ctx(req);
+	struct chacha_req *creq = &rctx->u.chacha;
+	int err;
 
 	rctx->assoclen = req->assoclen;
 
-	अगर (crypto_aead_ivsize(tfm) == 8) अणु
-		अगर (rctx->assoclen < 8)
-			वापस -EINVAL;
+	if (crypto_aead_ivsize(tfm) == 8) {
+		if (rctx->assoclen < 8)
+			return -EINVAL;
 		rctx->assoclen -= 8;
-	पूर्ण
+	}
 
-	स_रखो(rctx->key, 0, माप(rctx->key));
-	sg_init_one(creq->src, rctx->key, माप(rctx->key));
+	memset(rctx->key, 0, sizeof(rctx->key));
+	sg_init_one(creq->src, rctx->key, sizeof(rctx->key));
 
 	chacha_iv(creq->iv, req, 0);
 
 	skcipher_request_set_callback(&creq->req, rctx->flags,
-				      poly_genkey_करोne, req);
+				      poly_genkey_done, req);
 	skcipher_request_set_tfm(&creq->req, ctx->chacha);
 	skcipher_request_set_crypt(&creq->req, creq->src, creq->src,
 				   POLY1305_KEY_SIZE, creq->iv);
 
 	err = crypto_skcipher_decrypt(&creq->req);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	वापस poly_init(req);
-पूर्ण
+	return poly_init(req);
+}
 
-अटल व्योम chacha_encrypt_करोne(काष्ठा crypto_async_request *areq, पूर्णांक err)
-अणु
-	async_करोne_जारी(areq->data, err, poly_genkey);
-पूर्ण
+static void chacha_encrypt_done(struct crypto_async_request *areq, int err)
+{
+	async_done_continue(areq->data, err, poly_genkey);
+}
 
-अटल पूर्णांक chacha_encrypt(काष्ठा aead_request *req)
-अणु
-	काष्ठा chachapoly_ctx *ctx = crypto_aead_ctx(crypto_aead_reqtfm(req));
-	काष्ठा chachapoly_req_ctx *rctx = aead_request_ctx(req);
-	काष्ठा chacha_req *creq = &rctx->u.chacha;
-	काष्ठा scatterlist *src, *dst;
-	पूर्णांक err;
+static int chacha_encrypt(struct aead_request *req)
+{
+	struct chachapoly_ctx *ctx = crypto_aead_ctx(crypto_aead_reqtfm(req));
+	struct chachapoly_req_ctx *rctx = aead_request_ctx(req);
+	struct chacha_req *creq = &rctx->u.chacha;
+	struct scatterlist *src, *dst;
+	int err;
 
-	अगर (req->cryptlen == 0)
-		जाओ skip;
+	if (req->cryptlen == 0)
+		goto skip;
 
 	chacha_iv(creq->iv, req, 1);
 
 	src = scatterwalk_ffwd(rctx->src, req->src, req->assoclen);
 	dst = src;
-	अगर (req->src != req->dst)
+	if (req->src != req->dst)
 		dst = scatterwalk_ffwd(rctx->dst, req->dst, req->assoclen);
 
 	skcipher_request_set_callback(&creq->req, rctx->flags,
-				      chacha_encrypt_करोne, req);
+				      chacha_encrypt_done, req);
 	skcipher_request_set_tfm(&creq->req, ctx->chacha);
 	skcipher_request_set_crypt(&creq->req, src, dst,
 				   req->cryptlen, creq->iv);
 	err = crypto_skcipher_encrypt(&creq->req);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 skip:
-	वापस poly_genkey(req);
-पूर्ण
+	return poly_genkey(req);
+}
 
-अटल पूर्णांक chachapoly_encrypt(काष्ठा aead_request *req)
-अणु
-	काष्ठा chachapoly_req_ctx *rctx = aead_request_ctx(req);
+static int chachapoly_encrypt(struct aead_request *req)
+{
+	struct chachapoly_req_ctx *rctx = aead_request_ctx(req);
 
 	rctx->cryptlen = req->cryptlen;
 	rctx->flags = aead_request_flags(req);
 
 	/* encrypt call chain:
-	 * - chacha_encrypt/करोne()
-	 * - poly_genkey/करोne()
-	 * - poly_init/करोne()
-	 * - poly_setkey/करोne()
-	 * - poly_ad/करोne()
-	 * - poly_adpad/करोne()
-	 * - poly_cipher/करोne()
-	 * - poly_cipherpad/करोne()
-	 * - poly_tail/करोne/जारी()
+	 * - chacha_encrypt/done()
+	 * - poly_genkey/done()
+	 * - poly_init/done()
+	 * - poly_setkey/done()
+	 * - poly_ad/done()
+	 * - poly_adpad/done()
+	 * - poly_cipher/done()
+	 * - poly_cipherpad/done()
+	 * - poly_tail/done/continue()
 	 * - poly_copy_tag()
 	 */
-	वापस chacha_encrypt(req);
-पूर्ण
+	return chacha_encrypt(req);
+}
 
-अटल पूर्णांक chachapoly_decrypt(काष्ठा aead_request *req)
-अणु
-	काष्ठा chachapoly_req_ctx *rctx = aead_request_ctx(req);
+static int chachapoly_decrypt(struct aead_request *req)
+{
+	struct chachapoly_req_ctx *rctx = aead_request_ctx(req);
 
 	rctx->cryptlen = req->cryptlen - POLY1305_DIGEST_SIZE;
 	rctx->flags = aead_request_flags(req);
 
 	/* decrypt call chain:
-	 * - poly_genkey/करोne()
-	 * - poly_init/करोne()
-	 * - poly_setkey/करोne()
-	 * - poly_ad/करोne()
-	 * - poly_adpad/करोne()
-	 * - poly_cipher/करोne()
-	 * - poly_cipherpad/करोne()
-	 * - poly_tail/करोne/जारी()
-	 * - chacha_decrypt/करोne()
-	 * - poly_verअगरy_tag()
+	 * - poly_genkey/done()
+	 * - poly_init/done()
+	 * - poly_setkey/done()
+	 * - poly_ad/done()
+	 * - poly_adpad/done()
+	 * - poly_cipher/done()
+	 * - poly_cipherpad/done()
+	 * - poly_tail/done/continue()
+	 * - chacha_decrypt/done()
+	 * - poly_verify_tag()
 	 */
-	वापस poly_genkey(req);
-पूर्ण
+	return poly_genkey(req);
+}
 
-अटल पूर्णांक chachapoly_setkey(काष्ठा crypto_aead *aead, स्थिर u8 *key,
-			     अचिन्हित पूर्णांक keylen)
-अणु
-	काष्ठा chachapoly_ctx *ctx = crypto_aead_ctx(aead);
+static int chachapoly_setkey(struct crypto_aead *aead, const u8 *key,
+			     unsigned int keylen)
+{
+	struct chachapoly_ctx *ctx = crypto_aead_ctx(aead);
 
-	अगर (keylen != ctx->saltlen + CHACHA_KEY_SIZE)
-		वापस -EINVAL;
+	if (keylen != ctx->saltlen + CHACHA_KEY_SIZE)
+		return -EINVAL;
 
 	keylen -= ctx->saltlen;
-	स_नकल(ctx->salt, key + keylen, ctx->saltlen);
+	memcpy(ctx->salt, key + keylen, ctx->saltlen);
 
 	crypto_skcipher_clear_flags(ctx->chacha, CRYPTO_TFM_REQ_MASK);
 	crypto_skcipher_set_flags(ctx->chacha, crypto_aead_get_flags(aead) &
 					       CRYPTO_TFM_REQ_MASK);
-	वापस crypto_skcipher_setkey(ctx->chacha, key, keylen);
-पूर्ण
+	return crypto_skcipher_setkey(ctx->chacha, key, keylen);
+}
 
-अटल पूर्णांक chachapoly_setauthsize(काष्ठा crypto_aead *tfm,
-				  अचिन्हित पूर्णांक authsize)
-अणु
-	अगर (authsize != POLY1305_DIGEST_SIZE)
-		वापस -EINVAL;
+static int chachapoly_setauthsize(struct crypto_aead *tfm,
+				  unsigned int authsize)
+{
+	if (authsize != POLY1305_DIGEST_SIZE)
+		return -EINVAL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक chachapoly_init(काष्ठा crypto_aead *tfm)
-अणु
-	काष्ठा aead_instance *inst = aead_alg_instance(tfm);
-	काष्ठा chachapoly_instance_ctx *ictx = aead_instance_ctx(inst);
-	काष्ठा chachapoly_ctx *ctx = crypto_aead_ctx(tfm);
-	काष्ठा crypto_skcipher *chacha;
-	काष्ठा crypto_ahash *poly;
-	अचिन्हित दीर्घ align;
+static int chachapoly_init(struct crypto_aead *tfm)
+{
+	struct aead_instance *inst = aead_alg_instance(tfm);
+	struct chachapoly_instance_ctx *ictx = aead_instance_ctx(inst);
+	struct chachapoly_ctx *ctx = crypto_aead_ctx(tfm);
+	struct crypto_skcipher *chacha;
+	struct crypto_ahash *poly;
+	unsigned long align;
 
 	poly = crypto_spawn_ahash(&ictx->poly);
-	अगर (IS_ERR(poly))
-		वापस PTR_ERR(poly);
+	if (IS_ERR(poly))
+		return PTR_ERR(poly);
 
 	chacha = crypto_spawn_skcipher(&ictx->chacha);
-	अगर (IS_ERR(chacha)) अणु
-		crypto_मुक्त_ahash(poly);
-		वापस PTR_ERR(chacha);
-	पूर्ण
+	if (IS_ERR(chacha)) {
+		crypto_free_ahash(poly);
+		return PTR_ERR(chacha);
+	}
 
 	ctx->chacha = chacha;
 	ctx->poly = poly;
@@ -525,152 +524,152 @@ skip:
 	align &= ~(crypto_tfm_ctx_alignment() - 1);
 	crypto_aead_set_reqsize(
 		tfm,
-		align + दुरत्व(काष्ठा chachapoly_req_ctx, u) +
-		max(दुरत्व(काष्ठा chacha_req, req) +
-		    माप(काष्ठा skcipher_request) +
+		align + offsetof(struct chachapoly_req_ctx, u) +
+		max(offsetof(struct chacha_req, req) +
+		    sizeof(struct skcipher_request) +
 		    crypto_skcipher_reqsize(chacha),
-		    दुरत्व(काष्ठा poly_req, req) +
-		    माप(काष्ठा ahash_request) +
+		    offsetof(struct poly_req, req) +
+		    sizeof(struct ahash_request) +
 		    crypto_ahash_reqsize(poly)));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम chachapoly_निकास(काष्ठा crypto_aead *tfm)
-अणु
-	काष्ठा chachapoly_ctx *ctx = crypto_aead_ctx(tfm);
+static void chachapoly_exit(struct crypto_aead *tfm)
+{
+	struct chachapoly_ctx *ctx = crypto_aead_ctx(tfm);
 
-	crypto_मुक्त_ahash(ctx->poly);
-	crypto_मुक्त_skcipher(ctx->chacha);
-पूर्ण
+	crypto_free_ahash(ctx->poly);
+	crypto_free_skcipher(ctx->chacha);
+}
 
-अटल व्योम chachapoly_मुक्त(काष्ठा aead_instance *inst)
-अणु
-	काष्ठा chachapoly_instance_ctx *ctx = aead_instance_ctx(inst);
+static void chachapoly_free(struct aead_instance *inst)
+{
+	struct chachapoly_instance_ctx *ctx = aead_instance_ctx(inst);
 
 	crypto_drop_skcipher(&ctx->chacha);
 	crypto_drop_ahash(&ctx->poly);
-	kमुक्त(inst);
-पूर्ण
+	kfree(inst);
+}
 
-अटल पूर्णांक chachapoly_create(काष्ठा crypto_ढाँचा *पंचांगpl, काष्ठा rtattr **tb,
-			     स्थिर अक्षर *name, अचिन्हित पूर्णांक ivsize)
-अणु
+static int chachapoly_create(struct crypto_template *tmpl, struct rtattr **tb,
+			     const char *name, unsigned int ivsize)
+{
 	u32 mask;
-	काष्ठा aead_instance *inst;
-	काष्ठा chachapoly_instance_ctx *ctx;
-	काष्ठा skcipher_alg *chacha;
-	काष्ठा hash_alg_common *poly;
-	पूर्णांक err;
+	struct aead_instance *inst;
+	struct chachapoly_instance_ctx *ctx;
+	struct skcipher_alg *chacha;
+	struct hash_alg_common *poly;
+	int err;
 
-	अगर (ivsize > CHACHAPOLY_IV_SIZE)
-		वापस -EINVAL;
+	if (ivsize > CHACHAPOLY_IV_SIZE)
+		return -EINVAL;
 
 	err = crypto_check_attr_type(tb, CRYPTO_ALG_TYPE_AEAD, &mask);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	inst = kzalloc(माप(*inst) + माप(*ctx), GFP_KERNEL);
-	अगर (!inst)
-		वापस -ENOMEM;
+	inst = kzalloc(sizeof(*inst) + sizeof(*ctx), GFP_KERNEL);
+	if (!inst)
+		return -ENOMEM;
 	ctx = aead_instance_ctx(inst);
 	ctx->saltlen = CHACHAPOLY_IV_SIZE - ivsize;
 
 	err = crypto_grab_skcipher(&ctx->chacha, aead_crypto_instance(inst),
 				   crypto_attr_alg_name(tb[1]), 0, mask);
-	अगर (err)
-		जाओ err_मुक्त_inst;
+	if (err)
+		goto err_free_inst;
 	chacha = crypto_spawn_skcipher_alg(&ctx->chacha);
 
 	err = crypto_grab_ahash(&ctx->poly, aead_crypto_instance(inst),
 				crypto_attr_alg_name(tb[2]), 0, mask);
-	अगर (err)
-		जाओ err_मुक्त_inst;
+	if (err)
+		goto err_free_inst;
 	poly = crypto_spawn_ahash_alg(&ctx->poly);
 
 	err = -EINVAL;
-	अगर (poly->digestsize != POLY1305_DIGEST_SIZE)
-		जाओ err_मुक्त_inst;
+	if (poly->digestsize != POLY1305_DIGEST_SIZE)
+		goto err_free_inst;
 	/* Need 16-byte IV size, including Initial Block Counter value */
-	अगर (crypto_skcipher_alg_ivsize(chacha) != CHACHA_IV_SIZE)
-		जाओ err_मुक्त_inst;
+	if (crypto_skcipher_alg_ivsize(chacha) != CHACHA_IV_SIZE)
+		goto err_free_inst;
 	/* Not a stream cipher? */
-	अगर (chacha->base.cra_blocksize != 1)
-		जाओ err_मुक्त_inst;
+	if (chacha->base.cra_blocksize != 1)
+		goto err_free_inst;
 
 	err = -ENAMETOOLONG;
-	अगर (snम_लिखो(inst->alg.base.cra_name, CRYPTO_MAX_ALG_NAME,
+	if (snprintf(inst->alg.base.cra_name, CRYPTO_MAX_ALG_NAME,
 		     "%s(%s,%s)", name, chacha->base.cra_name,
 		     poly->base.cra_name) >= CRYPTO_MAX_ALG_NAME)
-		जाओ err_मुक्त_inst;
-	अगर (snम_लिखो(inst->alg.base.cra_driver_name, CRYPTO_MAX_ALG_NAME,
+		goto err_free_inst;
+	if (snprintf(inst->alg.base.cra_driver_name, CRYPTO_MAX_ALG_NAME,
 		     "%s(%s,%s)", name, chacha->base.cra_driver_name,
 		     poly->base.cra_driver_name) >= CRYPTO_MAX_ALG_NAME)
-		जाओ err_मुक्त_inst;
+		goto err_free_inst;
 
 	inst->alg.base.cra_priority = (chacha->base.cra_priority +
 				       poly->base.cra_priority) / 2;
 	inst->alg.base.cra_blocksize = 1;
 	inst->alg.base.cra_alignmask = chacha->base.cra_alignmask |
 				       poly->base.cra_alignmask;
-	inst->alg.base.cra_ctxsize = माप(काष्ठा chachapoly_ctx) +
+	inst->alg.base.cra_ctxsize = sizeof(struct chachapoly_ctx) +
 				     ctx->saltlen;
 	inst->alg.ivsize = ivsize;
 	inst->alg.chunksize = crypto_skcipher_alg_chunksize(chacha);
 	inst->alg.maxauthsize = POLY1305_DIGEST_SIZE;
 	inst->alg.init = chachapoly_init;
-	inst->alg.निकास = chachapoly_निकास;
+	inst->alg.exit = chachapoly_exit;
 	inst->alg.encrypt = chachapoly_encrypt;
 	inst->alg.decrypt = chachapoly_decrypt;
 	inst->alg.setkey = chachapoly_setkey;
 	inst->alg.setauthsize = chachapoly_setauthsize;
 
-	inst->मुक्त = chachapoly_मुक्त;
+	inst->free = chachapoly_free;
 
-	err = aead_रेजिस्टर_instance(पंचांगpl, inst);
-	अगर (err) अणु
-err_मुक्त_inst:
-		chachapoly_मुक्त(inst);
-	पूर्ण
-	वापस err;
-पूर्ण
+	err = aead_register_instance(tmpl, inst);
+	if (err) {
+err_free_inst:
+		chachapoly_free(inst);
+	}
+	return err;
+}
 
-अटल पूर्णांक rfc7539_create(काष्ठा crypto_ढाँचा *पंचांगpl, काष्ठा rtattr **tb)
-अणु
-	वापस chachapoly_create(पंचांगpl, tb, "rfc7539", 12);
-पूर्ण
+static int rfc7539_create(struct crypto_template *tmpl, struct rtattr **tb)
+{
+	return chachapoly_create(tmpl, tb, "rfc7539", 12);
+}
 
-अटल पूर्णांक rfc7539esp_create(काष्ठा crypto_ढाँचा *पंचांगpl, काष्ठा rtattr **tb)
-अणु
-	वापस chachapoly_create(पंचांगpl, tb, "rfc7539esp", 8);
-पूर्ण
+static int rfc7539esp_create(struct crypto_template *tmpl, struct rtattr **tb)
+{
+	return chachapoly_create(tmpl, tb, "rfc7539esp", 8);
+}
 
-अटल काष्ठा crypto_ढाँचा rfc7539_पंचांगpls[] = अणु
-	अणु
+static struct crypto_template rfc7539_tmpls[] = {
+	{
 		.name = "rfc7539",
 		.create = rfc7539_create,
 		.module = THIS_MODULE,
-	पूर्ण, अणु
+	}, {
 		.name = "rfc7539esp",
 		.create = rfc7539esp_create,
 		.module = THIS_MODULE,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक __init chacha20poly1305_module_init(व्योम)
-अणु
-	वापस crypto_रेजिस्टर_ढाँचाs(rfc7539_पंचांगpls,
-					 ARRAY_SIZE(rfc7539_पंचांगpls));
-पूर्ण
+static int __init chacha20poly1305_module_init(void)
+{
+	return crypto_register_templates(rfc7539_tmpls,
+					 ARRAY_SIZE(rfc7539_tmpls));
+}
 
-अटल व्योम __निकास chacha20poly1305_module_निकास(व्योम)
-अणु
-	crypto_unरेजिस्टर_ढाँचाs(rfc7539_पंचांगpls,
-				    ARRAY_SIZE(rfc7539_पंचांगpls));
-पूर्ण
+static void __exit chacha20poly1305_module_exit(void)
+{
+	crypto_unregister_templates(rfc7539_tmpls,
+				    ARRAY_SIZE(rfc7539_tmpls));
+}
 
 subsys_initcall(chacha20poly1305_module_init);
-module_निकास(chacha20poly1305_module_निकास);
+module_exit(chacha20poly1305_module_exit);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Martin Willi <martin@strongswan.org>");

@@ -1,100 +1,99 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: (GPL-2.0+ OR BSD-3-Clause)
+// SPDX-License-Identifier: (GPL-2.0+ OR BSD-3-Clause)
 /*
  * Copyright 2013-2016 Freescale Semiconductor Inc.
  *
  */
-#समावेश <linux/kernel.h>
-#समावेश <linux/fsl/mc.h>
+#include <linux/kernel.h>
+#include <linux/fsl/mc.h>
 
-#समावेश "fsl-mc-private.h"
+#include "fsl-mc-private.h"
 
 /**
- * dpmcp_खोलो() - Open a control session क्रम the specअगरied object.
- * @mc_io:	Poपूर्णांकer to MC portal's I/O object
+ * dpmcp_open() - Open a control session for the specified object.
+ * @mc_io:	Pointer to MC portal's I/O object
  * @cmd_flags:	Command flags; one or more of 'MC_CMD_FLAG_'
  * @dpmcp_id:	DPMCP unique ID
  * @token:	Returned token; use in subsequent API calls
  *
- * This function can be used to खोलो a control session क्रम an
- * alपढ़ोy created object; an object may have been declared in
+ * This function can be used to open a control session for an
+ * already created object; an object may have been declared in
  * the DPL or by calling the dpmcp_create function.
- * This function वापसs a unique authentication token,
- * associated with the specअगरic object ID and the specअगरic MC
- * portal; this token must be used in all subsequent commands क्रम
- * this specअगरic object
+ * This function returns a unique authentication token,
+ * associated with the specific object ID and the specific MC
+ * portal; this token must be used in all subsequent commands for
+ * this specific object
  *
  * Return:	'0' on Success; Error code otherwise.
  */
-पूर्णांक dpmcp_खोलो(काष्ठा fsl_mc_io *mc_io,
+int dpmcp_open(struct fsl_mc_io *mc_io,
 	       u32 cmd_flags,
-	       पूर्णांक dpmcp_id,
+	       int dpmcp_id,
 	       u16 *token)
-अणु
-	काष्ठा fsl_mc_command cmd = अणु 0 पूर्ण;
-	काष्ठा dpmcp_cmd_खोलो *cmd_params;
-	पूर्णांक err;
+{
+	struct fsl_mc_command cmd = { 0 };
+	struct dpmcp_cmd_open *cmd_params;
+	int err;
 
 	/* prepare command */
 	cmd.header = mc_encode_cmd_header(DPMCP_CMDID_OPEN,
 					  cmd_flags, 0);
-	cmd_params = (काष्ठा dpmcp_cmd_खोलो *)cmd.params;
+	cmd_params = (struct dpmcp_cmd_open *)cmd.params;
 	cmd_params->dpmcp_id = cpu_to_le32(dpmcp_id);
 
 	/* send command to mc*/
 	err = mc_send_command(mc_io, &cmd);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	/* retrieve response parameters */
-	*token = mc_cmd_hdr_पढ़ो_token(&cmd);
+	*token = mc_cmd_hdr_read_token(&cmd);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /**
- * dpmcp_बंद() - Close the control session of the object
- * @mc_io:	Poपूर्णांकer to MC portal's I/O object
+ * dpmcp_close() - Close the control session of the object
+ * @mc_io:	Pointer to MC portal's I/O object
  * @cmd_flags:	Command flags; one or more of 'MC_CMD_FLAG_'
  * @token:	Token of DPMCP object
  *
  * After this function is called, no further operations are
- * allowed on the object without खोलोing a new control session.
+ * allowed on the object without opening a new control session.
  *
  * Return:	'0' on Success; Error code otherwise.
  */
-पूर्णांक dpmcp_बंद(काष्ठा fsl_mc_io *mc_io,
+int dpmcp_close(struct fsl_mc_io *mc_io,
 		u32 cmd_flags,
 		u16 token)
-अणु
-	काष्ठा fsl_mc_command cmd = अणु 0 पूर्ण;
+{
+	struct fsl_mc_command cmd = { 0 };
 
 	/* prepare command */
 	cmd.header = mc_encode_cmd_header(DPMCP_CMDID_CLOSE,
 					  cmd_flags, token);
 
 	/* send command to mc*/
-	वापस mc_send_command(mc_io, &cmd);
-पूर्ण
+	return mc_send_command(mc_io, &cmd);
+}
 
 /**
- * dpmcp_reset() - Reset the DPMCP, वापसs the object to initial state.
- * @mc_io:	Poपूर्णांकer to MC portal's I/O object
+ * dpmcp_reset() - Reset the DPMCP, returns the object to initial state.
+ * @mc_io:	Pointer to MC portal's I/O object
  * @cmd_flags:	Command flags; one or more of 'MC_CMD_FLAG_'
  * @token:	Token of DPMCP object
  *
  * Return:	'0' on Success; Error code otherwise.
  */
-पूर्णांक dpmcp_reset(काष्ठा fsl_mc_io *mc_io,
+int dpmcp_reset(struct fsl_mc_io *mc_io,
 		u32 cmd_flags,
 		u16 token)
-अणु
-	काष्ठा fsl_mc_command cmd = अणु 0 पूर्ण;
+{
+	struct fsl_mc_command cmd = { 0 };
 
 	/* prepare command */
 	cmd.header = mc_encode_cmd_header(DPMCP_CMDID_RESET,
 					  cmd_flags, token);
 
 	/* send command to mc*/
-	वापस mc_send_command(mc_io, &cmd);
-पूर्ण
+	return mc_send_command(mc_io, &cmd);
+}

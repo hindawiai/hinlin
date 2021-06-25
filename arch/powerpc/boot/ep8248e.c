@@ -1,53 +1,52 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Embedded Planet EP8248E with PlanetCore firmware
  *
- * Author: Scott Wood <scottwood@मुक्तscale.com>
+ * Author: Scott Wood <scottwood@freescale.com>
  *
  * Copyright (c) 2007 Freescale Semiconductor, Inc.
  */
 
-#समावेश "ops.h"
-#समावेश "stdio.h"
-#समावेश "planetcore.h"
-#समावेश "pq2.h"
+#include "ops.h"
+#include "stdio.h"
+#include "planetcore.h"
+#include "pq2.h"
 
-अटल अक्षर *table;
-अटल u64 mem_size;
+static char *table;
+static u64 mem_size;
 
-#समावेश <पन.स>
+#include <io.h>
 
-अटल व्योम platक्रमm_fixups(व्योम)
-अणु
+static void platform_fixups(void)
+{
 	u64 val;
 
 	dt_fixup_memory(0, mem_size);
 	planetcore_set_mac_addrs(table);
 
-	अगर (!planetcore_get_decimal(table, PLANETCORE_KEY_CRYSTAL_HZ, &val)) अणु
-		म_लिखो("No PlanetCore crystal frequency key.\r\n");
-		वापस;
-	पूर्ण
+	if (!planetcore_get_decimal(table, PLANETCORE_KEY_CRYSTAL_HZ, &val)) {
+		printf("No PlanetCore crystal frequency key.\r\n");
+		return;
+	}
 
-	pq2_fixup_घड़ीs(val);
-पूर्ण
+	pq2_fixup_clocks(val);
+}
 
-व्योम platक्रमm_init(अचिन्हित दीर्घ r3, अचिन्हित दीर्घ r4, अचिन्हित दीर्घ r5,
-                   अचिन्हित दीर्घ r6, अचिन्हित दीर्घ r7)
-अणु
-	table = (अक्षर *)r3;
+void platform_init(unsigned long r3, unsigned long r4, unsigned long r5,
+                   unsigned long r6, unsigned long r7)
+{
+	table = (char *)r3;
 	planetcore_prepare_table(table);
 
-	अगर (!planetcore_get_decimal(table, PLANETCORE_KEY_MB_RAM, &mem_size))
-		वापस;
+	if (!planetcore_get_decimal(table, PLANETCORE_KEY_MB_RAM, &mem_size))
+		return;
 
 	mem_size *= 1024 * 1024;
-	simple_alloc_init(_end, mem_size - (अचिन्हित दीर्घ)_end, 32, 64);
+	simple_alloc_init(_end, mem_size - (unsigned long)_end, 32, 64);
 
 	fdt_init(_dtb_start);
 
-	planetcore_set_मानक_निकास_path(table);
+	planetcore_set_stdout_path(table);
 	serial_console_init();
-	platक्रमm_ops.fixups = platक्रमm_fixups;
-पूर्ण
+	platform_ops.fixups = platform_fixups;
+}

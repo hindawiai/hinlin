@@ -1,573 +1,572 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * APBridge ALSA SoC dummy codec driver
  * Copyright 2016 Google Inc.
  * Copyright 2016 Linaro Ltd.
  */
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <sound/soc.h>
-#समावेश <sound/pcm_params.h>
-#समावेश <uapi/linux/input.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/pm_runtime.h>
+#include <sound/soc.h>
+#include <sound/pcm_params.h>
+#include <uapi/linux/input.h>
 
-#समावेश "audio_codec.h"
-#समावेश "audio_apbridgea.h"
-#समावेश "audio_manager.h"
-#समावेश "audio_helper.h"
+#include "audio_codec.h"
+#include "audio_apbridgea.h"
+#include "audio_manager.h"
+#include "audio_helper.h"
 
-अटल काष्ठा gbaudio_codec_info *gbcodec;
+static struct gbaudio_codec_info *gbcodec;
 
-अटल काष्ठा gbaudio_data_connection *
-find_data(काष्ठा gbaudio_module_info *module, पूर्णांक id)
-अणु
-	काष्ठा gbaudio_data_connection *data;
+static struct gbaudio_data_connection *
+find_data(struct gbaudio_module_info *module, int id)
+{
+	struct gbaudio_data_connection *data;
 
-	list_क्रम_each_entry(data, &module->data_list, list) अणु
-		अगर (id == data->id)
-			वापस data;
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+	list_for_each_entry(data, &module->data_list, list) {
+		if (id == data->id)
+			return data;
+	}
+	return NULL;
+}
 
-अटल काष्ठा gbaudio_stream_params *
-find_dai_stream_params(काष्ठा gbaudio_codec_info *codec, पूर्णांक id, पूर्णांक stream)
-अणु
-	काष्ठा gbaudio_codec_dai *dai;
+static struct gbaudio_stream_params *
+find_dai_stream_params(struct gbaudio_codec_info *codec, int id, int stream)
+{
+	struct gbaudio_codec_dai *dai;
 
-	list_क्रम_each_entry(dai, &codec->dai_list, list) अणु
-		अगर (dai->id == id)
-			वापस &dai->params[stream];
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+	list_for_each_entry(dai, &codec->dai_list, list) {
+		if (dai->id == id)
+			return &dai->params[stream];
+	}
+	return NULL;
+}
 
-अटल पूर्णांक gbaudio_module_enable_tx(काष्ठा gbaudio_codec_info *codec,
-				    काष्ठा gbaudio_module_info *module, पूर्णांक id)
-अणु
-	पूर्णांक module_state, ret = 0;
+static int gbaudio_module_enable_tx(struct gbaudio_codec_info *codec,
+				    struct gbaudio_module_info *module, int id)
+{
+	int module_state, ret = 0;
 	u16 data_cport, i2s_port, cportid;
 	u8 sig_bits, channels;
-	u32 क्रमmat, rate;
-	काष्ठा gbaudio_data_connection *data;
-	काष्ठा gbaudio_stream_params *params;
+	u32 format, rate;
+	struct gbaudio_data_connection *data;
+	struct gbaudio_stream_params *params;
 
 	/* find the dai */
 	data = find_data(module, id);
-	अगर (!data) अणु
+	if (!data) {
 		dev_err(module->dev, "%d:DATA connection missing\n", id);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 	module_state = data->state[SNDRV_PCM_STREAM_PLAYBACK];
 
 	params = find_dai_stream_params(codec, id, SNDRV_PCM_STREAM_PLAYBACK);
-	अगर (!params) अणु
+	if (!params) {
 		dev_err(codec->dev, "Failed to fetch dai_stream pointer\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	/* रेजिस्टर cport */
-	अगर (module_state < GBAUDIO_CODEC_STARTUP) अणु
-		i2s_port = 0;	/* fixed क्रम now */
+	/* register cport */
+	if (module_state < GBAUDIO_CODEC_STARTUP) {
+		i2s_port = 0;	/* fixed for now */
 		cportid = data->connection->hd_cport_id;
-		ret = gb_audio_apbridgea_रेजिस्टर_cport(data->connection,
+		ret = gb_audio_apbridgea_register_cport(data->connection,
 							i2s_port, cportid,
-							AUDIO_APBRIDGEA_सूचीECTION_TX);
-		अगर (ret) अणु
+							AUDIO_APBRIDGEA_DIRECTION_TX);
+		if (ret) {
 			dev_err_ratelimited(module->dev, "reg_cport failed:%d\n", ret);
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 		data->state[SNDRV_PCM_STREAM_PLAYBACK] = GBAUDIO_CODEC_STARTUP;
 		dev_dbg(module->dev, "Dynamic Register %d DAI\n", cportid);
-	पूर्ण
+	}
 
 	/* hw_params */
-	अगर (module_state < GBAUDIO_CODEC_HWPARAMS) अणु
-		क्रमmat = params->क्रमmat;
+	if (module_state < GBAUDIO_CODEC_HWPARAMS) {
+		format = params->format;
 		channels = params->channels;
 		rate = params->rate;
 		sig_bits = params->sig_bits;
-		data_cport = data->connection->पूर्णांकf_cport_id;
+		data_cport = data->connection->intf_cport_id;
 		ret = gb_audio_gb_set_pcm(module->mgmt_connection, data_cport,
-					  क्रमmat, rate, channels, sig_bits);
-		अगर (ret) अणु
+					  format, rate, channels, sig_bits);
+		if (ret) {
 			dev_err_ratelimited(module->dev, "set_pcm failed:%d\n", ret);
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 		data->state[SNDRV_PCM_STREAM_PLAYBACK] = GBAUDIO_CODEC_HWPARAMS;
 		dev_dbg(module->dev, "Dynamic hw_params %d DAI\n", data_cport);
-	पूर्ण
+	}
 
 	/* prepare */
-	अगर (module_state < GBAUDIO_CODEC_PREPARE) अणु
-		data_cport = data->connection->पूर्णांकf_cport_id;
+	if (module_state < GBAUDIO_CODEC_PREPARE) {
+		data_cport = data->connection->intf_cport_id;
 		ret = gb_audio_gb_set_tx_data_size(module->mgmt_connection,
 						   data_cport, 192);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err_ratelimited(module->dev,
 					    "set_tx_data_size failed:%d\n",
 					    ret);
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 		ret = gb_audio_gb_activate_tx(module->mgmt_connection, data_cport);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err_ratelimited(module->dev,
 					    "activate_tx failed:%d\n", ret);
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 		data->state[SNDRV_PCM_STREAM_PLAYBACK] = GBAUDIO_CODEC_PREPARE;
 		dev_dbg(module->dev, "Dynamic prepare %d DAI\n", data_cport);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक gbaudio_module_disable_tx(काष्ठा gbaudio_module_info *module, पूर्णांक id)
-अणु
-	पूर्णांक ret;
+static int gbaudio_module_disable_tx(struct gbaudio_module_info *module, int id)
+{
+	int ret;
 	u16 data_cport, cportid, i2s_port;
-	पूर्णांक module_state;
-	काष्ठा gbaudio_data_connection *data;
+	int module_state;
+	struct gbaudio_data_connection *data;
 
 	/* find the dai */
 	data = find_data(module, id);
-	अगर (!data) अणु
+	if (!data) {
 		dev_err(module->dev, "%d:DATA connection missing\n", id);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 	module_state = data->state[SNDRV_PCM_STREAM_PLAYBACK];
 
-	अगर (module_state > GBAUDIO_CODEC_HWPARAMS) अणु
-		data_cport = data->connection->पूर्णांकf_cport_id;
+	if (module_state > GBAUDIO_CODEC_HWPARAMS) {
+		data_cport = data->connection->intf_cport_id;
 		ret = gb_audio_gb_deactivate_tx(module->mgmt_connection,
 						data_cport);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err_ratelimited(module->dev,
 					    "deactivate_tx failed:%d\n", ret);
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 		dev_dbg(module->dev, "Dynamic deactivate %d DAI\n", data_cport);
 		data->state[SNDRV_PCM_STREAM_PLAYBACK] = GBAUDIO_CODEC_HWPARAMS;
-	पूर्ण
+	}
 
-	अगर (module_state > GBAUDIO_CODEC_SHUTDOWN) अणु
-		i2s_port = 0;	/* fixed क्रम now */
+	if (module_state > GBAUDIO_CODEC_SHUTDOWN) {
+		i2s_port = 0;	/* fixed for now */
 		cportid = data->connection->hd_cport_id;
-		ret = gb_audio_apbridgea_unरेजिस्टर_cport(data->connection,
+		ret = gb_audio_apbridgea_unregister_cport(data->connection,
 							  i2s_port, cportid,
-							  AUDIO_APBRIDGEA_सूचीECTION_TX);
-		अगर (ret) अणु
+							  AUDIO_APBRIDGEA_DIRECTION_TX);
+		if (ret) {
 			dev_err_ratelimited(module->dev,
 					    "unregister_cport failed:%d\n", ret);
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 		dev_dbg(module->dev, "Dynamic Unregister %d DAI\n", cportid);
 		data->state[SNDRV_PCM_STREAM_PLAYBACK] = GBAUDIO_CODEC_SHUTDOWN;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक gbaudio_module_enable_rx(काष्ठा gbaudio_codec_info *codec,
-				    काष्ठा gbaudio_module_info *module, पूर्णांक id)
-अणु
-	पूर्णांक module_state, ret = 0;
+static int gbaudio_module_enable_rx(struct gbaudio_codec_info *codec,
+				    struct gbaudio_module_info *module, int id)
+{
+	int module_state, ret = 0;
 	u16 data_cport, i2s_port, cportid;
 	u8 sig_bits, channels;
-	u32 क्रमmat, rate;
-	काष्ठा gbaudio_data_connection *data;
-	काष्ठा gbaudio_stream_params *params;
+	u32 format, rate;
+	struct gbaudio_data_connection *data;
+	struct gbaudio_stream_params *params;
 
 	/* find the dai */
 	data = find_data(module, id);
-	अगर (!data) अणु
+	if (!data) {
 		dev_err(module->dev, "%d:DATA connection missing\n", id);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 	module_state = data->state[SNDRV_PCM_STREAM_CAPTURE];
 
 	params = find_dai_stream_params(codec, id, SNDRV_PCM_STREAM_CAPTURE);
-	अगर (!params) अणु
+	if (!params) {
 		dev_err(codec->dev, "Failed to fetch dai_stream pointer\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	/* रेजिस्टर cport */
-	अगर (module_state < GBAUDIO_CODEC_STARTUP) अणु
-		i2s_port = 0;	/* fixed क्रम now */
+	/* register cport */
+	if (module_state < GBAUDIO_CODEC_STARTUP) {
+		i2s_port = 0;	/* fixed for now */
 		cportid = data->connection->hd_cport_id;
-		ret = gb_audio_apbridgea_रेजिस्टर_cport(data->connection,
+		ret = gb_audio_apbridgea_register_cport(data->connection,
 							i2s_port, cportid,
-							AUDIO_APBRIDGEA_सूचीECTION_RX);
-		अगर (ret) अणु
+							AUDIO_APBRIDGEA_DIRECTION_RX);
+		if (ret) {
 			dev_err_ratelimited(module->dev, "reg_cport failed:%d\n", ret);
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 		data->state[SNDRV_PCM_STREAM_CAPTURE] = GBAUDIO_CODEC_STARTUP;
 		dev_dbg(module->dev, "Dynamic Register %d DAI\n", cportid);
-	पूर्ण
+	}
 
 	/* hw_params */
-	अगर (module_state < GBAUDIO_CODEC_HWPARAMS) अणु
-		क्रमmat = params->क्रमmat;
+	if (module_state < GBAUDIO_CODEC_HWPARAMS) {
+		format = params->format;
 		channels = params->channels;
 		rate = params->rate;
 		sig_bits = params->sig_bits;
-		data_cport = data->connection->पूर्णांकf_cport_id;
+		data_cport = data->connection->intf_cport_id;
 		ret = gb_audio_gb_set_pcm(module->mgmt_connection, data_cport,
-					  क्रमmat, rate, channels, sig_bits);
-		अगर (ret) अणु
+					  format, rate, channels, sig_bits);
+		if (ret) {
 			dev_err_ratelimited(module->dev, "set_pcm failed:%d\n", ret);
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 		data->state[SNDRV_PCM_STREAM_CAPTURE] = GBAUDIO_CODEC_HWPARAMS;
 		dev_dbg(module->dev, "Dynamic hw_params %d DAI\n", data_cport);
-	पूर्ण
+	}
 
 	/* prepare */
-	अगर (module_state < GBAUDIO_CODEC_PREPARE) अणु
-		data_cport = data->connection->पूर्णांकf_cport_id;
+	if (module_state < GBAUDIO_CODEC_PREPARE) {
+		data_cport = data->connection->intf_cport_id;
 		ret = gb_audio_gb_set_rx_data_size(module->mgmt_connection,
 						   data_cport, 192);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err_ratelimited(module->dev,
 					    "set_rx_data_size failed:%d\n",
 					    ret);
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 		ret = gb_audio_gb_activate_rx(module->mgmt_connection,
 					      data_cport);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err_ratelimited(module->dev,
 					    "activate_rx failed:%d\n", ret);
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 		data->state[SNDRV_PCM_STREAM_CAPTURE] = GBAUDIO_CODEC_PREPARE;
 		dev_dbg(module->dev, "Dynamic prepare %d DAI\n", data_cport);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक gbaudio_module_disable_rx(काष्ठा gbaudio_module_info *module, पूर्णांक id)
-अणु
-	पूर्णांक ret;
+static int gbaudio_module_disable_rx(struct gbaudio_module_info *module, int id)
+{
+	int ret;
 	u16 data_cport, cportid, i2s_port;
-	पूर्णांक module_state;
-	काष्ठा gbaudio_data_connection *data;
+	int module_state;
+	struct gbaudio_data_connection *data;
 
 	/* find the dai */
 	data = find_data(module, id);
-	अगर (!data) अणु
+	if (!data) {
 		dev_err(module->dev, "%d:DATA connection missing\n", id);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 	module_state = data->state[SNDRV_PCM_STREAM_CAPTURE];
 
-	अगर (module_state > GBAUDIO_CODEC_HWPARAMS) अणु
-		data_cport = data->connection->पूर्णांकf_cport_id;
+	if (module_state > GBAUDIO_CODEC_HWPARAMS) {
+		data_cport = data->connection->intf_cport_id;
 		ret = gb_audio_gb_deactivate_rx(module->mgmt_connection,
 						data_cport);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err_ratelimited(module->dev,
 					    "deactivate_rx failed:%d\n", ret);
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 		dev_dbg(module->dev, "Dynamic deactivate %d DAI\n", data_cport);
 		data->state[SNDRV_PCM_STREAM_CAPTURE] = GBAUDIO_CODEC_HWPARAMS;
-	पूर्ण
+	}
 
-	अगर (module_state > GBAUDIO_CODEC_SHUTDOWN) अणु
-		i2s_port = 0;	/* fixed क्रम now */
+	if (module_state > GBAUDIO_CODEC_SHUTDOWN) {
+		i2s_port = 0;	/* fixed for now */
 		cportid = data->connection->hd_cport_id;
-		ret = gb_audio_apbridgea_unरेजिस्टर_cport(data->connection,
+		ret = gb_audio_apbridgea_unregister_cport(data->connection,
 							  i2s_port, cportid,
-							  AUDIO_APBRIDGEA_सूचीECTION_RX);
-		अगर (ret) अणु
+							  AUDIO_APBRIDGEA_DIRECTION_RX);
+		if (ret) {
 			dev_err_ratelimited(module->dev,
 					    "unregister_cport failed:%d\n", ret);
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 		dev_dbg(module->dev, "Dynamic Unregister %d DAI\n", cportid);
 		data->state[SNDRV_PCM_STREAM_CAPTURE] = GBAUDIO_CODEC_SHUTDOWN;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक gbaudio_module_update(काष्ठा gbaudio_codec_info *codec,
-			  काष्ठा snd_soc_dapm_widget *w,
-			  काष्ठा gbaudio_module_info *module, पूर्णांक enable)
-अणु
-	पूर्णांक dai_id, ret;
-	अक्षर पूर्णांकf_name[NAME_SIZE], dir[NAME_SIZE];
+int gbaudio_module_update(struct gbaudio_codec_info *codec,
+			  struct snd_soc_dapm_widget *w,
+			  struct gbaudio_module_info *module, int enable)
+{
+	int dai_id, ret;
+	char intf_name[NAME_SIZE], dir[NAME_SIZE];
 
 	dev_dbg(module->dev, "%s:Module update %s sequence\n", w->name,
 		enable ? "Enable" : "Disable");
 
-	अगर ((w->id != snd_soc_dapm_aअगर_in) && (w->id != snd_soc_dapm_aअगर_out)) अणु
+	if ((w->id != snd_soc_dapm_aif_in) && (w->id != snd_soc_dapm_aif_out)) {
 		dev_dbg(codec->dev, "No action required for %s\n", w->name);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	/* parse dai_id from AIF widget's stream_name */
-	ret = माला_पूछो(w->sname, "%s %d %s", पूर्णांकf_name, &dai_id, dir);
-	अगर (ret < 3) अणु
+	ret = sscanf(w->sname, "%s %d %s", intf_name, &dai_id, dir);
+	if (ret < 3) {
 		dev_err(codec->dev, "Error while parsing dai_id for %s\n", w->name);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	mutex_lock(&codec->lock);
-	अगर (w->id == snd_soc_dapm_aअगर_in) अणु
-		अगर (enable)
+	if (w->id == snd_soc_dapm_aif_in) {
+		if (enable)
 			ret = gbaudio_module_enable_tx(codec, module, dai_id);
-		अन्यथा
+		else
 			ret = gbaudio_module_disable_tx(module, dai_id);
-	पूर्ण अन्यथा अगर (w->id == snd_soc_dapm_aअगर_out) अणु
-		अगर (enable)
+	} else if (w->id == snd_soc_dapm_aif_out) {
+		if (enable)
 			ret = gbaudio_module_enable_rx(codec, module, dai_id);
-		अन्यथा
+		else
 			ret = gbaudio_module_disable_rx(module, dai_id);
-	पूर्ण
+	}
 
 	mutex_unlock(&codec->lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL(gbaudio_module_update);
 
 /*
  * codec DAI ops
  */
-अटल पूर्णांक gbcodec_startup(काष्ठा snd_pcm_substream *substream,
-			   काष्ठा snd_soc_dai *dai)
-अणु
-	काष्ठा gbaudio_codec_info *codec = dev_get_drvdata(dai->dev);
-	काष्ठा gbaudio_stream_params *params;
+static int gbcodec_startup(struct snd_pcm_substream *substream,
+			   struct snd_soc_dai *dai)
+{
+	struct gbaudio_codec_info *codec = dev_get_drvdata(dai->dev);
+	struct gbaudio_stream_params *params;
 
 	mutex_lock(&codec->lock);
 
-	अगर (list_empty(&codec->module_list)) अणु
+	if (list_empty(&codec->module_list)) {
 		dev_err(codec->dev, "No codec module available\n");
 		mutex_unlock(&codec->lock);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	params = find_dai_stream_params(codec, dai->id, substream->stream);
-	अगर (!params) अणु
+	if (!params) {
 		dev_err(codec->dev, "Failed to fetch dai_stream pointer\n");
 		mutex_unlock(&codec->lock);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	params->state = GBAUDIO_CODEC_STARTUP;
 	mutex_unlock(&codec->lock);
-	/* to prevent suspend in हाल of active audio */
+	/* to prevent suspend in case of active audio */
 	pm_stay_awake(dai->dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम gbcodec_shutकरोwn(काष्ठा snd_pcm_substream *substream,
-			     काष्ठा snd_soc_dai *dai)
-अणु
-	काष्ठा gbaudio_codec_info *codec = dev_get_drvdata(dai->dev);
-	काष्ठा gbaudio_stream_params *params;
+static void gbcodec_shutdown(struct snd_pcm_substream *substream,
+			     struct snd_soc_dai *dai)
+{
+	struct gbaudio_codec_info *codec = dev_get_drvdata(dai->dev);
+	struct gbaudio_stream_params *params;
 
 	mutex_lock(&codec->lock);
 
-	अगर (list_empty(&codec->module_list))
+	if (list_empty(&codec->module_list))
 		dev_info(codec->dev, "No codec module available during shutdown\n");
 
 	params = find_dai_stream_params(codec, dai->id, substream->stream);
-	अगर (!params) अणु
+	if (!params) {
 		dev_err(codec->dev, "Failed to fetch dai_stream pointer\n");
 		mutex_unlock(&codec->lock);
-		वापस;
-	पूर्ण
+		return;
+	}
 	params->state = GBAUDIO_CODEC_SHUTDOWN;
 	mutex_unlock(&codec->lock);
 	pm_relax(dai->dev);
-पूर्ण
+}
 
-अटल पूर्णांक gbcodec_hw_params(काष्ठा snd_pcm_substream *substream,
-			     काष्ठा snd_pcm_hw_params *hwparams,
-			     काष्ठा snd_soc_dai *dai)
-अणु
-	पूर्णांक ret;
+static int gbcodec_hw_params(struct snd_pcm_substream *substream,
+			     struct snd_pcm_hw_params *hwparams,
+			     struct snd_soc_dai *dai)
+{
+	int ret;
 	u8 sig_bits, channels;
-	u32 क्रमmat, rate;
-	काष्ठा gbaudio_module_info *module;
-	काष्ठा gbaudio_data_connection *data;
-	काष्ठा gb_bundle *bundle;
-	काष्ठा gbaudio_codec_info *codec = dev_get_drvdata(dai->dev);
-	काष्ठा gbaudio_stream_params *params;
+	u32 format, rate;
+	struct gbaudio_module_info *module;
+	struct gbaudio_data_connection *data;
+	struct gb_bundle *bundle;
+	struct gbaudio_codec_info *codec = dev_get_drvdata(dai->dev);
+	struct gbaudio_stream_params *params;
 
 	mutex_lock(&codec->lock);
 
-	अगर (list_empty(&codec->module_list)) अणु
+	if (list_empty(&codec->module_list)) {
 		dev_err(codec->dev, "No codec module available\n");
 		mutex_unlock(&codec->lock);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	/*
 	 * assuming, currently only 48000 Hz, 16BIT_LE, stereo
-	 * is supported, validate params beक्रमe configuring codec
+	 * is supported, validate params before configuring codec
 	 */
-	अगर (params_channels(hwparams) != 2) अणु
+	if (params_channels(hwparams) != 2) {
 		dev_err(dai->dev, "Invalid channel count:%d\n",
 			params_channels(hwparams));
 		mutex_unlock(&codec->lock);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	channels = params_channels(hwparams);
 
-	अगर (params_rate(hwparams) != 48000) अणु
+	if (params_rate(hwparams) != 48000) {
 		dev_err(dai->dev, "Invalid sampling rate:%d\n",
 			params_rate(hwparams));
 		mutex_unlock(&codec->lock);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	rate = GB_AUDIO_PCM_RATE_48000;
 
-	अगर (params_क्रमmat(hwparams) != SNDRV_PCM_FORMAT_S16_LE) अणु
-		dev_err(dai->dev, "Invalid format:%d\n", params_क्रमmat(hwparams));
+	if (params_format(hwparams) != SNDRV_PCM_FORMAT_S16_LE) {
+		dev_err(dai->dev, "Invalid format:%d\n", params_format(hwparams));
 		mutex_unlock(&codec->lock);
-		वापस -EINVAL;
-	पूर्ण
-	क्रमmat = GB_AUDIO_PCM_FMT_S16_LE;
+		return -EINVAL;
+	}
+	format = GB_AUDIO_PCM_FMT_S16_LE;
 
 	/* find the data connection */
-	list_क्रम_each_entry(module, &codec->module_list, list) अणु
+	list_for_each_entry(module, &codec->module_list, list) {
 		data = find_data(module, dai->id);
-		अगर (data)
-			अवरोध;
-	पूर्ण
+		if (data)
+			break;
+	}
 
-	अगर (!data) अणु
+	if (!data) {
 		dev_err(dai->dev, "DATA connection missing\n");
 		mutex_unlock(&codec->lock);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	params = find_dai_stream_params(codec, dai->id, substream->stream);
-	अगर (!params) अणु
+	if (!params) {
 		dev_err(codec->dev, "Failed to fetch dai_stream pointer\n");
 		mutex_unlock(&codec->lock);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	bundle = to_gb_bundle(module->dev);
-	ret = gb_pm_runसमय_get_sync(bundle);
-	अगर (ret) अणु
+	ret = gb_pm_runtime_get_sync(bundle);
+	if (ret) {
 		mutex_unlock(&codec->lock);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	ret = gb_audio_apbridgea_set_config(data->connection, 0,
 					    AUDIO_APBRIDGEA_PCM_FMT_16,
 					    AUDIO_APBRIDGEA_PCM_RATE_48000,
 					    6144000);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err_ratelimited(dai->dev, "%d: Error during set_config\n",
 				    ret);
-		gb_pm_runसमय_put_noidle(bundle);
+		gb_pm_runtime_put_noidle(bundle);
 		mutex_unlock(&codec->lock);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	gb_pm_runसमय_put_noidle(bundle);
+	gb_pm_runtime_put_noidle(bundle);
 
-	अगर (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
+	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
 		sig_bits = dai->driver->playback.sig_bits;
-	अन्यथा
+	else
 		sig_bits = dai->driver->capture.sig_bits;
 
 	params->state = GBAUDIO_CODEC_HWPARAMS;
-	params->क्रमmat = क्रमmat;
+	params->format = format;
 	params->rate = rate;
 	params->channels = channels;
 	params->sig_bits = sig_bits;
 
 	mutex_unlock(&codec->lock);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक gbcodec_prepare(काष्ठा snd_pcm_substream *substream,
-			   काष्ठा snd_soc_dai *dai)
-अणु
-	पूर्णांक ret;
-	काष्ठा gbaudio_module_info *module;
-	काष्ठा gbaudio_data_connection *data;
-	काष्ठा gb_bundle *bundle;
-	काष्ठा gbaudio_codec_info *codec = dev_get_drvdata(dai->dev);
-	काष्ठा gbaudio_stream_params *params;
+static int gbcodec_prepare(struct snd_pcm_substream *substream,
+			   struct snd_soc_dai *dai)
+{
+	int ret;
+	struct gbaudio_module_info *module;
+	struct gbaudio_data_connection *data;
+	struct gb_bundle *bundle;
+	struct gbaudio_codec_info *codec = dev_get_drvdata(dai->dev);
+	struct gbaudio_stream_params *params;
 
 	mutex_lock(&codec->lock);
 
-	अगर (list_empty(&codec->module_list)) अणु
+	if (list_empty(&codec->module_list)) {
 		dev_err(codec->dev, "No codec module available\n");
 		mutex_unlock(&codec->lock);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	list_क्रम_each_entry(module, &codec->module_list, list) अणु
+	list_for_each_entry(module, &codec->module_list, list) {
 		/* find the dai */
 		data = find_data(module, dai->id);
-		अगर (data)
-			अवरोध;
-	पूर्ण
-	अगर (!data) अणु
+		if (data)
+			break;
+	}
+	if (!data) {
 		dev_err(dai->dev, "DATA connection missing\n");
 		mutex_unlock(&codec->lock);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	params = find_dai_stream_params(codec, dai->id, substream->stream);
-	अगर (!params) अणु
+	if (!params) {
 		dev_err(codec->dev, "Failed to fetch dai_stream pointer\n");
 		mutex_unlock(&codec->lock);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	bundle = to_gb_bundle(module->dev);
-	ret = gb_pm_runसमय_get_sync(bundle);
-	अगर (ret) अणु
+	ret = gb_pm_runtime_get_sync(bundle);
+	if (ret) {
 		mutex_unlock(&codec->lock);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	चयन (substream->stream) अणु
-	हाल SNDRV_PCM_STREAM_PLAYBACK:
+	switch (substream->stream) {
+	case SNDRV_PCM_STREAM_PLAYBACK:
 		ret = gb_audio_apbridgea_set_tx_data_size(data->connection, 0, 192);
-		अवरोध;
-	हाल SNDRV_PCM_STREAM_CAPTURE:
+		break;
+	case SNDRV_PCM_STREAM_CAPTURE:
 		ret = gb_audio_apbridgea_set_rx_data_size(data->connection, 0, 192);
-		अवरोध;
-	पूर्ण
-	अगर (ret) अणु
-		gb_pm_runसमय_put_noidle(bundle);
+		break;
+	}
+	if (ret) {
+		gb_pm_runtime_put_noidle(bundle);
 		mutex_unlock(&codec->lock);
 		dev_err_ratelimited(dai->dev, "set_data_size failed:%d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	gb_pm_runसमय_put_noidle(bundle);
+	gb_pm_runtime_put_noidle(bundle);
 
 	params->state = GBAUDIO_CODEC_PREPARE;
 	mutex_unlock(&codec->lock);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक gbcodec_mute_stream(काष्ठा snd_soc_dai *dai, पूर्णांक mute, पूर्णांक stream)
-अणु
-	पूर्णांक ret;
-	काष्ठा gbaudio_data_connection *data;
-	काष्ठा gbaudio_module_info *module;
-	काष्ठा gb_bundle *bundle;
-	काष्ठा gbaudio_codec_info *codec = dev_get_drvdata(dai->dev);
-	काष्ठा gbaudio_stream_params *params;
+static int gbcodec_mute_stream(struct snd_soc_dai *dai, int mute, int stream)
+{
+	int ret;
+	struct gbaudio_data_connection *data;
+	struct gbaudio_module_info *module;
+	struct gb_bundle *bundle;
+	struct gbaudio_codec_info *codec = dev_get_drvdata(dai->dev);
+	struct gbaudio_stream_params *params;
 
 	dev_dbg(dai->dev, "Mute:%d, Direction:%s\n", mute,
 		stream ? "CAPTURE" : "PLAYBACK");
@@ -575,164 +574,164 @@ EXPORT_SYMBOL(gbaudio_module_update);
 	mutex_lock(&codec->lock);
 
 	params = find_dai_stream_params(codec, dai->id, stream);
-	अगर (!params) अणु
+	if (!params) {
 		dev_err(codec->dev, "Failed to fetch dai_stream pointer\n");
 		mutex_unlock(&codec->lock);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (list_empty(&codec->module_list)) अणु
+	if (list_empty(&codec->module_list)) {
 		dev_err(codec->dev, "No codec module available\n");
-		अगर (mute) अणु
+		if (mute) {
 			params->state = GBAUDIO_CODEC_STOP;
 			ret = 0;
-		पूर्ण अन्यथा अणु
+		} else {
 			ret = -ENODEV;
-		पूर्ण
+		}
 		mutex_unlock(&codec->lock);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	list_क्रम_each_entry(module, &codec->module_list, list) अणु
+	list_for_each_entry(module, &codec->module_list, list) {
 		/* find the dai */
 		data = find_data(module, dai->id);
-		अगर (data)
-			अवरोध;
-	पूर्ण
-	अगर (!data) अणु
+		if (data)
+			break;
+	}
+	if (!data) {
 		dev_err(dai->dev, "%s:%s DATA connection missing\n",
 			dai->name, module->name);
 		mutex_unlock(&codec->lock);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	bundle = to_gb_bundle(module->dev);
-	ret = gb_pm_runसमय_get_sync(bundle);
-	अगर (ret) अणु
+	ret = gb_pm_runtime_get_sync(bundle);
+	if (ret) {
 		mutex_unlock(&codec->lock);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	अगर (!mute && !stream) अणु/* start playback */
+	if (!mute && !stream) {/* start playback */
 		ret = gb_audio_apbridgea_prepare_tx(data->connection, 0);
-		अगर (!ret)
+		if (!ret)
 			ret = gb_audio_apbridgea_start_tx(data->connection, 0, 0);
 		params->state = GBAUDIO_CODEC_START;
-	पूर्ण अन्यथा अगर (!mute && stream) अणु/* start capture */
+	} else if (!mute && stream) {/* start capture */
 		ret = gb_audio_apbridgea_prepare_rx(data->connection, 0);
-		अगर (!ret)
+		if (!ret)
 			ret = gb_audio_apbridgea_start_rx(data->connection, 0);
 		params->state = GBAUDIO_CODEC_START;
-	पूर्ण अन्यथा अगर (mute && !stream) अणु/* stop playback */
+	} else if (mute && !stream) {/* stop playback */
 		ret = gb_audio_apbridgea_stop_tx(data->connection, 0);
-		अगर (!ret)
-			ret = gb_audio_apbridgea_shutकरोwn_tx(data->connection, 0);
+		if (!ret)
+			ret = gb_audio_apbridgea_shutdown_tx(data->connection, 0);
 		params->state = GBAUDIO_CODEC_STOP;
-	पूर्ण अन्यथा अगर (mute && stream) अणु/* stop capture */
+	} else if (mute && stream) {/* stop capture */
 		ret = gb_audio_apbridgea_stop_rx(data->connection, 0);
-		अगर (!ret)
-			ret = gb_audio_apbridgea_shutकरोwn_rx(data->connection, 0);
+		if (!ret)
+			ret = gb_audio_apbridgea_shutdown_rx(data->connection, 0);
 		params->state = GBAUDIO_CODEC_STOP;
-	पूर्ण अन्यथा अणु
+	} else {
 		ret = -EINVAL;
-	पूर्ण
+	}
 
-	अगर (ret)
+	if (ret)
 		dev_err_ratelimited(dai->dev,
 				    "%s:Error during %s %s stream:%d\n",
 				    module->name, mute ? "Mute" : "Unmute",
 				    stream ? "Capture" : "Playback", ret);
 
-	gb_pm_runसमय_put_noidle(bundle);
+	gb_pm_runtime_put_noidle(bundle);
 	mutex_unlock(&codec->lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा snd_soc_dai_ops gbcodec_dai_ops = अणु
+static const struct snd_soc_dai_ops gbcodec_dai_ops = {
 	.startup = gbcodec_startup,
-	.shutकरोwn = gbcodec_shutकरोwn,
+	.shutdown = gbcodec_shutdown,
 	.hw_params = gbcodec_hw_params,
 	.prepare = gbcodec_prepare,
 	.mute_stream = gbcodec_mute_stream,
-पूर्ण;
+};
 
-अटल काष्ठा snd_soc_dai_driver gbaudio_dai[] = अणु
-	अणु
+static struct snd_soc_dai_driver gbaudio_dai[] = {
+	{
 		.name = "apb-i2s0",
 		.id = 0,
-		.playback = अणु
+		.playback = {
 			.stream_name = "I2S 0 Playback",
 			.rates = SNDRV_PCM_RATE_48000,
-			.क्रमmats = SNDRV_PCM_FMTBIT_S16_LE,
+			.formats = SNDRV_PCM_FMTBIT_S16_LE,
 			.rate_max = 48000,
 			.rate_min = 48000,
 			.channels_min = 1,
 			.channels_max = 2,
 			.sig_bits = 16,
-		पूर्ण,
-		.capture = अणु
+		},
+		.capture = {
 			.stream_name = "I2S 0 Capture",
 			.rates = SNDRV_PCM_RATE_48000,
-			.क्रमmats = SNDRV_PCM_FMTBIT_S16_LE,
+			.formats = SNDRV_PCM_FMTBIT_S16_LE,
 			.rate_max = 48000,
 			.rate_min = 48000,
 			.channels_min = 1,
 			.channels_max = 2,
 			.sig_bits = 16,
-		पूर्ण,
+		},
 		.ops = &gbcodec_dai_ops,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक gbaudio_init_jack(काष्ठा gbaudio_module_info *module,
-			     काष्ठा snd_soc_card *card)
-अणु
-	पूर्णांक ret;
-	काष्ठा gbaudio_jack *jack, *n;
-	काष्ठा snd_soc_jack_pin *headset, *button;
+static int gbaudio_init_jack(struct gbaudio_module_info *module,
+			     struct snd_soc_card *card)
+{
+	int ret;
+	struct gbaudio_jack *jack, *n;
+	struct snd_soc_jack_pin *headset, *button;
 
-	अगर (!module->jack_mask)
-		वापस 0;
+	if (!module->jack_mask)
+		return 0;
 
-	snम_लिखो(module->jack_name, NAME_SIZE, "GB %d Headset Jack",
+	snprintf(module->jack_name, NAME_SIZE, "GB %d Headset Jack",
 		 module->dev_id);
 
-	headset = devm_kzalloc(module->dev, माप(*headset), GFP_KERNEL);
-	अगर (!headset)
-		वापस -ENOMEM;
+	headset = devm_kzalloc(module->dev, sizeof(*headset), GFP_KERNEL);
+	if (!headset)
+		return -ENOMEM;
 
 	headset->pin = module->jack_name;
 	headset->mask = module->jack_mask;
 	ret = snd_soc_card_jack_new(card, module->jack_name, module->jack_mask,
 				    &module->headset.jack, headset, 1);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(module->dev, "Failed to create new jack\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	/* Add to module's jack list */
 	list_add(&module->headset.list, &module->jack_list);
 
-	अगर (!module->button_mask)
-		वापस 0;
+	if (!module->button_mask)
+		return 0;
 
-	snम_लिखो(module->button_name, NAME_SIZE, "GB %d Button Jack",
+	snprintf(module->button_name, NAME_SIZE, "GB %d Button Jack",
 		 module->dev_id);
-	button = devm_kzalloc(module->dev, माप(*button), GFP_KERNEL);
-	अगर (!button) अणु
+	button = devm_kzalloc(module->dev, sizeof(*button), GFP_KERNEL);
+	if (!button) {
 		ret = -ENOMEM;
-		जाओ मुक्त_jacks;
-	पूर्ण
+		goto free_jacks;
+	}
 
 	button->pin = module->button_name;
 	button->mask = module->button_mask;
 	ret = snd_soc_card_jack_new(card, module->button_name,
 				    module->button_mask, &module->button.jack,
 				    button, 1);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(module->dev, "Failed to create button jack\n");
-		जाओ मुक्त_jacks;
-	पूर्ण
+		goto free_jacks;
+	}
 
 	/* Add to module's jack list */
 	list_add(&module->button.list, &module->jack_list);
@@ -745,361 +744,361 @@ EXPORT_SYMBOL(gbaudio_module_update);
 	 * BTN_3 = KEY_VOLUMEDOWN
 	 */
 
-	अगर (module->button_mask & SND_JACK_BTN_0) अणु
+	if (module->button_mask & SND_JACK_BTN_0) {
 		ret = snd_jack_set_key(module->button.jack.jack, SND_JACK_BTN_0,
 				       KEY_MEDIA);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(module->dev, "Failed to set BTN_0\n");
-			जाओ मुक्त_jacks;
-		पूर्ण
-	पूर्ण
+			goto free_jacks;
+		}
+	}
 
-	अगर (module->button_mask & SND_JACK_BTN_1) अणु
+	if (module->button_mask & SND_JACK_BTN_1) {
 		ret = snd_jack_set_key(module->button.jack.jack, SND_JACK_BTN_1,
 				       KEY_VOICECOMMAND);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(module->dev, "Failed to set BTN_1\n");
-			जाओ मुक्त_jacks;
-		पूर्ण
-	पूर्ण
+			goto free_jacks;
+		}
+	}
 
-	अगर (module->button_mask & SND_JACK_BTN_2) अणु
+	if (module->button_mask & SND_JACK_BTN_2) {
 		ret = snd_jack_set_key(module->button.jack.jack, SND_JACK_BTN_2,
 				       KEY_VOLUMEUP);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(module->dev, "Failed to set BTN_2\n");
-			जाओ मुक्त_jacks;
-		पूर्ण
-	पूर्ण
+			goto free_jacks;
+		}
+	}
 
-	अगर (module->button_mask & SND_JACK_BTN_3) अणु
+	if (module->button_mask & SND_JACK_BTN_3) {
 		ret = snd_jack_set_key(module->button.jack.jack, SND_JACK_BTN_3,
 				       KEY_VOLUMEDOWN);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(module->dev, "Failed to set BTN_0\n");
-			जाओ मुक्त_jacks;
-		पूर्ण
-	पूर्ण
+			goto free_jacks;
+		}
+	}
 
 	/* FIXME
-	 * verअगरy अगर this is really required
+	 * verify if this is really required
 	set_bit(INPUT_PROP_NO_DUMMY_RELEASE,
 		module->button.jack.jack->input_dev->propbit);
 	*/
 
-	वापस 0;
+	return 0;
 
-मुक्त_jacks:
-	list_क्रम_each_entry_safe(jack, n, &module->jack_list, list) अणु
-		snd_device_मुक्त(card->snd_card, jack->jack.jack);
+free_jacks:
+	list_for_each_entry_safe(jack, n, &module->jack_list, list) {
+		snd_device_free(card->snd_card, jack->jack.jack);
 		list_del(&jack->list);
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक gbaudio_रेजिस्टर_module(काष्ठा gbaudio_module_info *module)
-अणु
-	पूर्णांक ret;
-	काष्ठा snd_soc_component *comp;
-	काष्ठा snd_card *card;
-	काष्ठा gbaudio_jack *jack = शून्य;
+int gbaudio_register_module(struct gbaudio_module_info *module)
+{
+	int ret;
+	struct snd_soc_component *comp;
+	struct snd_card *card;
+	struct gbaudio_jack *jack = NULL;
 
-	अगर (!gbcodec) अणु
+	if (!gbcodec) {
 		dev_err(module->dev, "GB Codec not yet probed\n");
-		वापस -EAGAIN;
-	पूर्ण
+		return -EAGAIN;
+	}
 
 	comp = gbcodec->component;
 	card = comp->card->snd_card;
 
-	करोwn_ग_लिखो(&card->controls_rwsem);
+	down_write(&card->controls_rwsem);
 
-	अगर (module->num_dais) अणु
+	if (module->num_dais) {
 		dev_err(gbcodec->dev,
 			"%d:DAIs not supported via gbcodec driver\n",
 			module->num_dais);
-		up_ग_लिखो(&card->controls_rwsem);
-		वापस -EINVAL;
-	पूर्ण
+		up_write(&card->controls_rwsem);
+		return -EINVAL;
+	}
 
 	ret = gbaudio_init_jack(module, comp->card);
-	अगर (ret) अणु
-		up_ग_लिखो(&card->controls_rwsem);
-		वापस ret;
-	पूर्ण
+	if (ret) {
+		up_write(&card->controls_rwsem);
+		return ret;
+	}
 
-	अगर (module->dapm_widमाला_लो)
-		snd_soc_dapm_new_controls(&comp->dapm, module->dapm_widमाला_लो,
-					  module->num_dapm_widमाला_लो);
-	अगर (module->controls)
+	if (module->dapm_widgets)
+		snd_soc_dapm_new_controls(&comp->dapm, module->dapm_widgets,
+					  module->num_dapm_widgets);
+	if (module->controls)
 		snd_soc_add_component_controls(comp, module->controls,
 					       module->num_controls);
-	अगर (module->dapm_routes)
+	if (module->dapm_routes)
 		snd_soc_dapm_add_routes(&comp->dapm, module->dapm_routes,
 					module->num_dapm_routes);
 
-	/* card alपढ़ोy instantiated, create widमाला_लो here only */
-	अगर (comp->card->instantiated) अणु
-		gbaudio_dapm_link_component_dai_widमाला_लो(comp->card, &comp->dapm);
-#अगर_घोषित CONFIG_SND_JACK
+	/* card already instantiated, create widgets here only */
+	if (comp->card->instantiated) {
+		gbaudio_dapm_link_component_dai_widgets(comp->card, &comp->dapm);
+#ifdef CONFIG_SND_JACK
 		/*
-		 * रेजिस्टर jack devices क्रम this module
+		 * register jack devices for this module
 		 * from codec->jack_list
 		 */
-		list_क्रम_each_entry(jack, &module->jack_list, list) अणु
-			snd_device_रेजिस्टर(comp->card->snd_card,
+		list_for_each_entry(jack, &module->jack_list, list) {
+			snd_device_register(comp->card->snd_card,
 					    jack->jack.jack);
-		पूर्ण
-#पूर्ण_अगर
-	पूर्ण
+		}
+#endif
+	}
 
 	mutex_lock(&gbcodec->lock);
 	list_add(&module->list, &gbcodec->module_list);
 	mutex_unlock(&gbcodec->lock);
 
-	अगर (comp->card->instantiated)
-		ret = snd_soc_dapm_new_widमाला_लो(comp->card);
+	if (comp->card->instantiated)
+		ret = snd_soc_dapm_new_widgets(comp->card);
 	dev_dbg(comp->dev, "Registered %s module\n", module->name);
 
-	up_ग_लिखो(&card->controls_rwsem);
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL(gbaudio_रेजिस्टर_module);
+	up_write(&card->controls_rwsem);
+	return ret;
+}
+EXPORT_SYMBOL(gbaudio_register_module);
 
-अटल व्योम gbaudio_codec_clean_data_tx(काष्ठा gbaudio_data_connection *data)
-अणु
+static void gbaudio_codec_clean_data_tx(struct gbaudio_data_connection *data)
+{
 	u16 i2s_port, cportid;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (list_is_singular(&gbcodec->module_list)) अणु
+	if (list_is_singular(&gbcodec->module_list)) {
 		ret = gb_audio_apbridgea_stop_tx(data->connection, 0);
-		अगर (ret)
-			वापस;
-		ret = gb_audio_apbridgea_shutकरोwn_tx(data->connection, 0);
-		अगर (ret)
-			वापस;
-	पूर्ण
-	i2s_port = 0;	/* fixed क्रम now */
+		if (ret)
+			return;
+		ret = gb_audio_apbridgea_shutdown_tx(data->connection, 0);
+		if (ret)
+			return;
+	}
+	i2s_port = 0;	/* fixed for now */
 	cportid = data->connection->hd_cport_id;
-	ret = gb_audio_apbridgea_unरेजिस्टर_cport(data->connection,
+	ret = gb_audio_apbridgea_unregister_cport(data->connection,
 						  i2s_port, cportid,
-						  AUDIO_APBRIDGEA_सूचीECTION_TX);
+						  AUDIO_APBRIDGEA_DIRECTION_TX);
 	data->state[0] = GBAUDIO_CODEC_SHUTDOWN;
-पूर्ण
+}
 
-अटल व्योम gbaudio_codec_clean_data_rx(काष्ठा gbaudio_data_connection *data)
-अणु
+static void gbaudio_codec_clean_data_rx(struct gbaudio_data_connection *data)
+{
 	u16 i2s_port, cportid;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (list_is_singular(&gbcodec->module_list)) अणु
+	if (list_is_singular(&gbcodec->module_list)) {
 		ret = gb_audio_apbridgea_stop_rx(data->connection, 0);
-		अगर (ret)
-			वापस;
-		ret = gb_audio_apbridgea_shutकरोwn_rx(data->connection, 0);
-		अगर (ret)
-			वापस;
-	पूर्ण
-	i2s_port = 0;	/* fixed क्रम now */
+		if (ret)
+			return;
+		ret = gb_audio_apbridgea_shutdown_rx(data->connection, 0);
+		if (ret)
+			return;
+	}
+	i2s_port = 0;	/* fixed for now */
 	cportid = data->connection->hd_cport_id;
-	ret = gb_audio_apbridgea_unरेजिस्टर_cport(data->connection,
+	ret = gb_audio_apbridgea_unregister_cport(data->connection,
 						  i2s_port, cportid,
-						  AUDIO_APBRIDGEA_सूचीECTION_RX);
+						  AUDIO_APBRIDGEA_DIRECTION_RX);
 	data->state[1] = GBAUDIO_CODEC_SHUTDOWN;
-पूर्ण
+}
 
-अटल व्योम gbaudio_codec_cleanup(काष्ठा gbaudio_module_info *module)
-अणु
-	काष्ठा gbaudio_data_connection *data;
-	पूर्णांक pb_state, cap_state;
+static void gbaudio_codec_cleanup(struct gbaudio_module_info *module)
+{
+	struct gbaudio_data_connection *data;
+	int pb_state, cap_state;
 
 	dev_dbg(gbcodec->dev, "%s: removed, cleanup APBridge\n", module->name);
-	list_क्रम_each_entry(data, &module->data_list, list) अणु
+	list_for_each_entry(data, &module->data_list, list) {
 		pb_state = data->state[0];
 		cap_state = data->state[1];
 
-		अगर (pb_state > GBAUDIO_CODEC_SHUTDOWN)
+		if (pb_state > GBAUDIO_CODEC_SHUTDOWN)
 			gbaudio_codec_clean_data_tx(data);
 
-		अगर (cap_state > GBAUDIO_CODEC_SHUTDOWN)
+		if (cap_state > GBAUDIO_CODEC_SHUTDOWN)
 			gbaudio_codec_clean_data_rx(data);
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम gbaudio_unरेजिस्टर_module(काष्ठा gbaudio_module_info *module)
-अणु
-	काष्ठा snd_soc_component *comp = gbcodec->component;
-	काष्ठा snd_card *card = comp->card->snd_card;
-	काष्ठा gbaudio_jack *jack, *n;
-	पूर्णांक mask;
+void gbaudio_unregister_module(struct gbaudio_module_info *module)
+{
+	struct snd_soc_component *comp = gbcodec->component;
+	struct snd_card *card = comp->card->snd_card;
+	struct gbaudio_jack *jack, *n;
+	int mask;
 
 	dev_dbg(comp->dev, "Unregister %s module\n", module->name);
 
-	करोwn_ग_लिखो(&card->controls_rwsem);
+	down_write(&card->controls_rwsem);
 	mutex_lock(&gbcodec->lock);
 	gbaudio_codec_cleanup(module);
 	list_del(&module->list);
 	dev_dbg(comp->dev, "Process Unregister %s module\n", module->name);
 	mutex_unlock(&gbcodec->lock);
 
-#अगर_घोषित CONFIG_SND_JACK
-	/* मुक्त jack devices क्रम this module jack_list */
-	list_क्रम_each_entry_safe(jack, n, &module->jack_list, list) अणु
-		अगर (jack == &module->headset)
+#ifdef CONFIG_SND_JACK
+	/* free jack devices for this module jack_list */
+	list_for_each_entry_safe(jack, n, &module->jack_list, list) {
+		if (jack == &module->headset)
 			mask = GBCODEC_JACK_MASK;
-		अन्यथा अगर (jack == &module->button)
+		else if (jack == &module->button)
 			mask = GBCODEC_JACK_BUTTON_MASK;
-		अन्यथा
+		else
 			mask = 0;
-		अगर (mask) अणु
+		if (mask) {
 			dev_dbg(module->dev, "Report %s removal\n",
 				jack->jack.jack->id);
 			snd_soc_jack_report(&jack->jack, 0, mask);
-			snd_device_मुक्त(comp->card->snd_card,
+			snd_device_free(comp->card->snd_card,
 					jack->jack.jack);
 			list_del(&jack->list);
-		पूर्ण
-	पूर्ण
-#पूर्ण_अगर
+		}
+	}
+#endif
 
-	अगर (module->dapm_routes) अणु
+	if (module->dapm_routes) {
 		dev_dbg(comp->dev, "Removing %d routes\n",
 			module->num_dapm_routes);
 		snd_soc_dapm_del_routes(&comp->dapm, module->dapm_routes,
 					module->num_dapm_routes);
-	पूर्ण
-	अगर (module->controls) अणु
+	}
+	if (module->controls) {
 		dev_dbg(comp->dev, "Removing %d controls\n",
 			module->num_controls);
 		/* release control semaphore */
-		up_ग_लिखो(&card->controls_rwsem);
-		gbaudio_हटाओ_component_controls(comp, module->controls,
+		up_write(&card->controls_rwsem);
+		gbaudio_remove_component_controls(comp, module->controls,
 						  module->num_controls);
-		करोwn_ग_लिखो(&card->controls_rwsem);
-	पूर्ण
-	अगर (module->dapm_widमाला_लो) अणु
+		down_write(&card->controls_rwsem);
+	}
+	if (module->dapm_widgets) {
 		dev_dbg(comp->dev, "Removing %d widgets\n",
-			module->num_dapm_widमाला_लो);
-		gbaudio_dapm_मुक्त_controls(&comp->dapm, module->dapm_widमाला_लो,
-					   module->num_dapm_widमाला_लो);
-	पूर्ण
+			module->num_dapm_widgets);
+		gbaudio_dapm_free_controls(&comp->dapm, module->dapm_widgets,
+					   module->num_dapm_widgets);
+	}
 
 	dev_dbg(comp->dev, "Unregistered %s module\n", module->name);
 
-	up_ग_लिखो(&card->controls_rwsem);
-पूर्ण
-EXPORT_SYMBOL(gbaudio_unरेजिस्टर_module);
+	up_write(&card->controls_rwsem);
+}
+EXPORT_SYMBOL(gbaudio_unregister_module);
 
 /*
  * component driver ops
  */
-अटल पूर्णांक gbcodec_probe(काष्ठा snd_soc_component *comp)
-अणु
-	पूर्णांक i;
-	काष्ठा gbaudio_codec_info *info;
-	काष्ठा gbaudio_codec_dai *dai;
+static int gbcodec_probe(struct snd_soc_component *comp)
+{
+	int i;
+	struct gbaudio_codec_info *info;
+	struct gbaudio_codec_dai *dai;
 
-	info = devm_kzalloc(comp->dev, माप(*info), GFP_KERNEL);
-	अगर (!info)
-		वापस -ENOMEM;
+	info = devm_kzalloc(comp->dev, sizeof(*info), GFP_KERNEL);
+	if (!info)
+		return -ENOMEM;
 
 	info->dev = comp->dev;
 	INIT_LIST_HEAD(&info->module_list);
 	mutex_init(&info->lock);
 	INIT_LIST_HEAD(&info->dai_list);
 
-	/* init dai_list used to मुख्यtain runसमय stream info */
-	क्रम (i = 0; i < ARRAY_SIZE(gbaudio_dai); i++) अणु
-		dai = devm_kzalloc(comp->dev, माप(*dai), GFP_KERNEL);
-		अगर (!dai)
-			वापस -ENOMEM;
+	/* init dai_list used to maintain runtime stream info */
+	for (i = 0; i < ARRAY_SIZE(gbaudio_dai); i++) {
+		dai = devm_kzalloc(comp->dev, sizeof(*dai), GFP_KERNEL);
+		if (!dai)
+			return -ENOMEM;
 		dai->id = gbaudio_dai[i].id;
 		list_add(&dai->list, &info->dai_list);
-	पूर्ण
+	}
 
 	info->component = comp;
 	snd_soc_component_set_drvdata(comp, info);
 	gbcodec = info;
 
 	device_init_wakeup(comp->dev, 1);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम gbcodec_हटाओ(काष्ठा snd_soc_component *comp)
-अणु
-	/* Empty function क्रम now */
-	वापस;
-पूर्ण
+static void gbcodec_remove(struct snd_soc_component *comp)
+{
+	/* Empty function for now */
+	return;
+}
 
-अटल पूर्णांक gbcodec_ग_लिखो(काष्ठा snd_soc_component *comp, अचिन्हित पूर्णांक reg,
-			 अचिन्हित पूर्णांक value)
-अणु
-	वापस 0;
-पूर्ण
+static int gbcodec_write(struct snd_soc_component *comp, unsigned int reg,
+			 unsigned int value)
+{
+	return 0;
+}
 
-अटल अचिन्हित पूर्णांक gbcodec_पढ़ो(काष्ठा snd_soc_component *comp,
-				 अचिन्हित पूर्णांक reg)
-अणु
-	वापस 0;
-पूर्ण
+static unsigned int gbcodec_read(struct snd_soc_component *comp,
+				 unsigned int reg)
+{
+	return 0;
+}
 
-अटल स्थिर काष्ठा snd_soc_component_driver soc_codec_dev_gbaudio = अणु
+static const struct snd_soc_component_driver soc_codec_dev_gbaudio = {
 	.probe	= gbcodec_probe,
-	.हटाओ	= gbcodec_हटाओ,
+	.remove	= gbcodec_remove,
 
-	.पढ़ो = gbcodec_पढ़ो,
-	.ग_लिखो = gbcodec_ग_लिखो,
-पूर्ण;
+	.read = gbcodec_read,
+	.write = gbcodec_write,
+};
 
-#अगर_घोषित CONFIG_PM
-अटल पूर्णांक gbaudio_codec_suspend(काष्ठा device *dev)
-अणु
+#ifdef CONFIG_PM
+static int gbaudio_codec_suspend(struct device *dev)
+{
 	dev_dbg(dev, "%s: suspend\n", __func__);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक gbaudio_codec_resume(काष्ठा device *dev)
-अणु
+static int gbaudio_codec_resume(struct device *dev)
+{
 	dev_dbg(dev, "%s: resume\n", __func__);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा dev_pm_ops gbaudio_codec_pm_ops = अणु
+static const struct dev_pm_ops gbaudio_codec_pm_ops = {
 	.suspend	= gbaudio_codec_suspend,
 	.resume		= gbaudio_codec_resume,
-पूर्ण;
-#पूर्ण_अगर
+};
+#endif
 
-अटल पूर्णांक gbaudio_codec_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	वापस devm_snd_soc_रेजिस्टर_component(&pdev->dev,
+static int gbaudio_codec_probe(struct platform_device *pdev)
+{
+	return devm_snd_soc_register_component(&pdev->dev,
 			&soc_codec_dev_gbaudio,
 			gbaudio_dai, ARRAY_SIZE(gbaudio_dai));
-पूर्ण
+}
 
-अटल पूर्णांक gbaudio_codec_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	वापस 0;
-पूर्ण
+static int gbaudio_codec_remove(struct platform_device *pdev)
+{
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id greybus_asoc_machine_of_match[]  = अणु
-	अणु .compatible = "toshiba,apb-dummy-codec", पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct of_device_id greybus_asoc_machine_of_match[]  = {
+	{ .compatible = "toshiba,apb-dummy-codec", },
+	{},
+};
 
-अटल काष्ठा platक्रमm_driver gbaudio_codec_driver = अणु
-	.driver = अणु
+static struct platform_driver gbaudio_codec_driver = {
+	.driver = {
 		.name = "apb-dummy-codec",
-#अगर_घोषित CONFIG_PM
+#ifdef CONFIG_PM
 		.pm = &gbaudio_codec_pm_ops,
-#पूर्ण_अगर
+#endif
 		.of_match_table = greybus_asoc_machine_of_match,
-	पूर्ण,
+	},
 	.probe = gbaudio_codec_probe,
-	.हटाओ = gbaudio_codec_हटाओ,
-पूर्ण;
-module_platक्रमm_driver(gbaudio_codec_driver);
+	.remove = gbaudio_codec_remove,
+};
+module_platform_driver(gbaudio_codec_driver);
 
 MODULE_DESCRIPTION("APBridge ALSA SoC dummy codec driver");
 MODULE_AUTHOR("Vaibhav Agarwal <vaibhav.agarwal@linaro.org>");

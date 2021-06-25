@@ -1,4 +1,3 @@
-<शैली गुरु>
 /*
  *  linux/net/sunrpc/gss_krb5_crypto.c
  *
@@ -15,19 +14,19 @@
  * All rights reserved.
  *
  * Export of this software from the United States of America may require
- * a specअगरic license from the United States Government.  It is the
+ * a specific license from the United States Government.  It is the
  * responsibility of any person or organization contemplating export to
- * obtain such a license beक्रमe exporting.
+ * obtain such a license before exporting.
  *
- * WITHIN THAT CONSTRAINT, permission to use, copy, modअगरy, and
- * distribute this software and its करोcumentation क्रम any purpose and
+ * WITHIN THAT CONSTRAINT, permission to use, copy, modify, and
+ * distribute this software and its documentation for any purpose and
  * without fee is hereby granted, provided that the above copyright
  * notice appear in all copies and that both that copyright notice and
- * this permission notice appear in supporting करोcumentation, and that
- * the name of FundsXpress. not be used in advertising or खुलाity pertaining
- * to distribution of the software without specअगरic, written prior
+ * this permission notice appear in supporting documentation, and that
+ * the name of FundsXpress. not be used in advertising or publicity pertaining
+ * to distribution of the software without specific, written prior
  * permission.  FundsXpress makes no representations about the suitability of
- * this software क्रम any purpose.  It is provided "as is" without express
+ * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
  *
  * THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
@@ -35,323 +34,323 @@
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-#समावेश <crypto/algapi.h>
-#समावेश <crypto/hash.h>
-#समावेश <crypto/skcipher.h>
-#समावेश <linux/err.h>
-#समावेश <linux/types.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/scatterlist.h>
-#समावेश <linux/highस्मृति.स>
-#समावेश <linux/pagemap.h>
-#समावेश <linux/अक्रमom.h>
-#समावेश <linux/sunrpc/gss_krb5.h>
-#समावेश <linux/sunrpc/xdr.h>
+#include <crypto/algapi.h>
+#include <crypto/hash.h>
+#include <crypto/skcipher.h>
+#include <linux/err.h>
+#include <linux/types.h>
+#include <linux/mm.h>
+#include <linux/scatterlist.h>
+#include <linux/highmem.h>
+#include <linux/pagemap.h>
+#include <linux/random.h>
+#include <linux/sunrpc/gss_krb5.h>
+#include <linux/sunrpc/xdr.h>
 
-#अगर IS_ENABLED(CONFIG_SUNRPC_DEBUG)
+#if IS_ENABLED(CONFIG_SUNRPC_DEBUG)
 # define RPCDBG_FACILITY        RPCDBG_AUTH
-#पूर्ण_अगर
+#endif
 
 u32
 krb5_encrypt(
-	काष्ठा crypto_sync_skcipher *tfm,
-	व्योम * iv,
-	व्योम * in,
-	व्योम * out,
-	पूर्णांक length)
-अणु
+	struct crypto_sync_skcipher *tfm,
+	void * iv,
+	void * in,
+	void * out,
+	int length)
+{
 	u32 ret = -EINVAL;
-	काष्ठा scatterlist sg[1];
-	u8 local_iv[GSS_KRB5_MAX_BLOCKSIZE] = अणु0पूर्ण;
+	struct scatterlist sg[1];
+	u8 local_iv[GSS_KRB5_MAX_BLOCKSIZE] = {0};
 	SYNC_SKCIPHER_REQUEST_ON_STACK(req, tfm);
 
-	अगर (length % crypto_sync_skcipher_blocksize(tfm) != 0)
-		जाओ out;
+	if (length % crypto_sync_skcipher_blocksize(tfm) != 0)
+		goto out;
 
-	अगर (crypto_sync_skcipher_ivsize(tfm) > GSS_KRB5_MAX_BLOCKSIZE) अणु
-		dprपूर्णांकk("RPC:       gss_k5encrypt: tfm iv size too large %d\n",
+	if (crypto_sync_skcipher_ivsize(tfm) > GSS_KRB5_MAX_BLOCKSIZE) {
+		dprintk("RPC:       gss_k5encrypt: tfm iv size too large %d\n",
 			crypto_sync_skcipher_ivsize(tfm));
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (iv)
-		स_नकल(local_iv, iv, crypto_sync_skcipher_ivsize(tfm));
+	if (iv)
+		memcpy(local_iv, iv, crypto_sync_skcipher_ivsize(tfm));
 
-	स_नकल(out, in, length);
+	memcpy(out, in, length);
 	sg_init_one(sg, out, length);
 
 	skcipher_request_set_sync_tfm(req, tfm);
-	skcipher_request_set_callback(req, 0, शून्य, शून्य);
+	skcipher_request_set_callback(req, 0, NULL, NULL);
 	skcipher_request_set_crypt(req, sg, sg, length, local_iv);
 
 	ret = crypto_skcipher_encrypt(req);
 	skcipher_request_zero(req);
 out:
-	dprपूर्णांकk("RPC:       krb5_encrypt returns %d\n", ret);
-	वापस ret;
-पूर्ण
+	dprintk("RPC:       krb5_encrypt returns %d\n", ret);
+	return ret;
+}
 
 u32
 krb5_decrypt(
-     काष्ठा crypto_sync_skcipher *tfm,
-     व्योम * iv,
-     व्योम * in,
-     व्योम * out,
-     पूर्णांक length)
-अणु
+     struct crypto_sync_skcipher *tfm,
+     void * iv,
+     void * in,
+     void * out,
+     int length)
+{
 	u32 ret = -EINVAL;
-	काष्ठा scatterlist sg[1];
-	u8 local_iv[GSS_KRB5_MAX_BLOCKSIZE] = अणु0पूर्ण;
+	struct scatterlist sg[1];
+	u8 local_iv[GSS_KRB5_MAX_BLOCKSIZE] = {0};
 	SYNC_SKCIPHER_REQUEST_ON_STACK(req, tfm);
 
-	अगर (length % crypto_sync_skcipher_blocksize(tfm) != 0)
-		जाओ out;
+	if (length % crypto_sync_skcipher_blocksize(tfm) != 0)
+		goto out;
 
-	अगर (crypto_sync_skcipher_ivsize(tfm) > GSS_KRB5_MAX_BLOCKSIZE) अणु
-		dprपूर्णांकk("RPC:       gss_k5decrypt: tfm iv size too large %d\n",
+	if (crypto_sync_skcipher_ivsize(tfm) > GSS_KRB5_MAX_BLOCKSIZE) {
+		dprintk("RPC:       gss_k5decrypt: tfm iv size too large %d\n",
 			crypto_sync_skcipher_ivsize(tfm));
-		जाओ out;
-	पूर्ण
-	अगर (iv)
-		स_नकल(local_iv, iv, crypto_sync_skcipher_ivsize(tfm));
+		goto out;
+	}
+	if (iv)
+		memcpy(local_iv, iv, crypto_sync_skcipher_ivsize(tfm));
 
-	स_नकल(out, in, length);
+	memcpy(out, in, length);
 	sg_init_one(sg, out, length);
 
 	skcipher_request_set_sync_tfm(req, tfm);
-	skcipher_request_set_callback(req, 0, शून्य, शून्य);
+	skcipher_request_set_callback(req, 0, NULL, NULL);
 	skcipher_request_set_crypt(req, sg, sg, length, local_iv);
 
 	ret = crypto_skcipher_decrypt(req);
 	skcipher_request_zero(req);
 out:
-	dprपूर्णांकk("RPC:       gss_k5decrypt returns %d\n",ret);
-	वापस ret;
-पूर्ण
+	dprintk("RPC:       gss_k5decrypt returns %d\n",ret);
+	return ret;
+}
 
-अटल पूर्णांक
-checksummer(काष्ठा scatterlist *sg, व्योम *data)
-अणु
-	काष्ठा ahash_request *req = data;
+static int
+checksummer(struct scatterlist *sg, void *data)
+{
+	struct ahash_request *req = data;
 
-	ahash_request_set_crypt(req, sg, शून्य, sg->length);
+	ahash_request_set_crypt(req, sg, NULL, sg->length);
 
-	वापस crypto_ahash_update(req);
-पूर्ण
+	return crypto_ahash_update(req);
+}
 
 /*
- * checksum the plaपूर्णांकext data and hdrlen bytes of the token header
- * The checksum is perक्रमmed over the first 8 bytes of the
+ * checksum the plaintext data and hdrlen bytes of the token header
+ * The checksum is performed over the first 8 bytes of the
  * gss token header and then over the data body
  */
 u32
-make_checksum(काष्ठा krb5_ctx *kctx, अक्षर *header, पूर्णांक hdrlen,
-	      काष्ठा xdr_buf *body, पूर्णांक body_offset, u8 *cksumkey,
-	      अचिन्हित पूर्णांक usage, काष्ठा xdr_netobj *cksumout)
-अणु
-	काष्ठा crypto_ahash *tfm;
-	काष्ठा ahash_request *req;
-	काष्ठा scatterlist              sg[1];
-	पूर्णांक err = -1;
+make_checksum(struct krb5_ctx *kctx, char *header, int hdrlen,
+	      struct xdr_buf *body, int body_offset, u8 *cksumkey,
+	      unsigned int usage, struct xdr_netobj *cksumout)
+{
+	struct crypto_ahash *tfm;
+	struct ahash_request *req;
+	struct scatterlist              sg[1];
+	int err = -1;
 	u8 *checksumdata;
-	अचिन्हित पूर्णांक checksumlen;
+	unsigned int checksumlen;
 
-	अगर (cksumout->len < kctx->gk5e->cksumlength) अणु
-		dprपूर्णांकk("%s: checksum buffer length, %u, too small for %s\n",
+	if (cksumout->len < kctx->gk5e->cksumlength) {
+		dprintk("%s: checksum buffer length, %u, too small for %s\n",
 			__func__, cksumout->len, kctx->gk5e->name);
-		वापस GSS_S_FAILURE;
-	पूर्ण
+		return GSS_S_FAILURE;
+	}
 
-	checksumdata = kदो_स्मृति(GSS_KRB5_MAX_CKSUM_LEN, GFP_NOFS);
-	अगर (checksumdata == शून्य)
-		वापस GSS_S_FAILURE;
+	checksumdata = kmalloc(GSS_KRB5_MAX_CKSUM_LEN, GFP_NOFS);
+	if (checksumdata == NULL)
+		return GSS_S_FAILURE;
 
 	tfm = crypto_alloc_ahash(kctx->gk5e->cksum_name, 0, CRYPTO_ALG_ASYNC);
-	अगर (IS_ERR(tfm))
-		जाओ out_मुक्त_cksum;
+	if (IS_ERR(tfm))
+		goto out_free_cksum;
 
 	req = ahash_request_alloc(tfm, GFP_NOFS);
-	अगर (!req)
-		जाओ out_मुक्त_ahash;
+	if (!req)
+		goto out_free_ahash;
 
-	ahash_request_set_callback(req, CRYPTO_TFM_REQ_MAY_SLEEP, शून्य, शून्य);
+	ahash_request_set_callback(req, CRYPTO_TFM_REQ_MAY_SLEEP, NULL, NULL);
 
 	checksumlen = crypto_ahash_digestsize(tfm);
 
-	अगर (cksumkey != शून्य) अणु
+	if (cksumkey != NULL) {
 		err = crypto_ahash_setkey(tfm, cksumkey,
 					  kctx->gk5e->keylength);
-		अगर (err)
-			जाओ out;
-	पूर्ण
+		if (err)
+			goto out;
+	}
 
 	err = crypto_ahash_init(req);
-	अगर (err)
-		जाओ out;
+	if (err)
+		goto out;
 	sg_init_one(sg, header, hdrlen);
-	ahash_request_set_crypt(req, sg, शून्य, hdrlen);
+	ahash_request_set_crypt(req, sg, NULL, hdrlen);
 	err = crypto_ahash_update(req);
-	अगर (err)
-		जाओ out;
+	if (err)
+		goto out;
 	err = xdr_process_buf(body, body_offset, body->len - body_offset,
 			      checksummer, req);
-	अगर (err)
-		जाओ out;
-	ahash_request_set_crypt(req, शून्य, checksumdata, 0);
+	if (err)
+		goto out;
+	ahash_request_set_crypt(req, NULL, checksumdata, 0);
 	err = crypto_ahash_final(req);
-	अगर (err)
-		जाओ out;
+	if (err)
+		goto out;
 
-	चयन (kctx->gk5e->ctype) अणु
-	हाल CKSUMTYPE_RSA_MD5:
-		err = kctx->gk5e->encrypt(kctx->seq, शून्य, checksumdata,
+	switch (kctx->gk5e->ctype) {
+	case CKSUMTYPE_RSA_MD5:
+		err = kctx->gk5e->encrypt(kctx->seq, NULL, checksumdata,
 					  checksumdata, checksumlen);
-		अगर (err)
-			जाओ out;
-		स_नकल(cksumout->data,
+		if (err)
+			goto out;
+		memcpy(cksumout->data,
 		       checksumdata + checksumlen - kctx->gk5e->cksumlength,
 		       kctx->gk5e->cksumlength);
-		अवरोध;
-	हाल CKSUMTYPE_HMAC_SHA1_DES3:
-		स_नकल(cksumout->data, checksumdata, kctx->gk5e->cksumlength);
-		अवरोध;
-	शेष:
+		break;
+	case CKSUMTYPE_HMAC_SHA1_DES3:
+		memcpy(cksumout->data, checksumdata, kctx->gk5e->cksumlength);
+		break;
+	default:
 		BUG();
-		अवरोध;
-	पूर्ण
+		break;
+	}
 	cksumout->len = kctx->gk5e->cksumlength;
 out:
-	ahash_request_मुक्त(req);
-out_मुक्त_ahash:
-	crypto_मुक्त_ahash(tfm);
-out_मुक्त_cksum:
-	kमुक्त(checksumdata);
-	वापस err ? GSS_S_FAILURE : 0;
-पूर्ण
+	ahash_request_free(req);
+out_free_ahash:
+	crypto_free_ahash(tfm);
+out_free_cksum:
+	kfree(checksumdata);
+	return err ? GSS_S_FAILURE : 0;
+}
 
 /*
- * checksum the plaपूर्णांकext data and hdrlen bytes of the token header
- * Per rfc4121, sec. 4.2.4, the checksum is perक्रमmed over the data
+ * checksum the plaintext data and hdrlen bytes of the token header
+ * Per rfc4121, sec. 4.2.4, the checksum is performed over the data
  * body then over the first 16 octets of the MIC token
  * Inclusion of the header data in the calculation of the
  * checksum is optional.
  */
 u32
-make_checksum_v2(काष्ठा krb5_ctx *kctx, अक्षर *header, पूर्णांक hdrlen,
-		 काष्ठा xdr_buf *body, पूर्णांक body_offset, u8 *cksumkey,
-		 अचिन्हित पूर्णांक usage, काष्ठा xdr_netobj *cksumout)
-अणु
-	काष्ठा crypto_ahash *tfm;
-	काष्ठा ahash_request *req;
-	काष्ठा scatterlist sg[1];
-	पूर्णांक err = -1;
+make_checksum_v2(struct krb5_ctx *kctx, char *header, int hdrlen,
+		 struct xdr_buf *body, int body_offset, u8 *cksumkey,
+		 unsigned int usage, struct xdr_netobj *cksumout)
+{
+	struct crypto_ahash *tfm;
+	struct ahash_request *req;
+	struct scatterlist sg[1];
+	int err = -1;
 	u8 *checksumdata;
 
-	अगर (kctx->gk5e->keyed_cksum == 0) अणु
-		dprपूर्णांकk("%s: expected keyed hash for %s\n",
+	if (kctx->gk5e->keyed_cksum == 0) {
+		dprintk("%s: expected keyed hash for %s\n",
 			__func__, kctx->gk5e->name);
-		वापस GSS_S_FAILURE;
-	पूर्ण
-	अगर (cksumkey == शून्य) अणु
-		dprपूर्णांकk("%s: no key supplied for %s\n",
+		return GSS_S_FAILURE;
+	}
+	if (cksumkey == NULL) {
+		dprintk("%s: no key supplied for %s\n",
 			__func__, kctx->gk5e->name);
-		वापस GSS_S_FAILURE;
-	पूर्ण
+		return GSS_S_FAILURE;
+	}
 
-	checksumdata = kदो_स्मृति(GSS_KRB5_MAX_CKSUM_LEN, GFP_NOFS);
-	अगर (!checksumdata)
-		वापस GSS_S_FAILURE;
+	checksumdata = kmalloc(GSS_KRB5_MAX_CKSUM_LEN, GFP_NOFS);
+	if (!checksumdata)
+		return GSS_S_FAILURE;
 
 	tfm = crypto_alloc_ahash(kctx->gk5e->cksum_name, 0, CRYPTO_ALG_ASYNC);
-	अगर (IS_ERR(tfm))
-		जाओ out_मुक्त_cksum;
+	if (IS_ERR(tfm))
+		goto out_free_cksum;
 
 	req = ahash_request_alloc(tfm, GFP_NOFS);
-	अगर (!req)
-		जाओ out_मुक्त_ahash;
+	if (!req)
+		goto out_free_ahash;
 
-	ahash_request_set_callback(req, CRYPTO_TFM_REQ_MAY_SLEEP, शून्य, शून्य);
+	ahash_request_set_callback(req, CRYPTO_TFM_REQ_MAY_SLEEP, NULL, NULL);
 
 	err = crypto_ahash_setkey(tfm, cksumkey, kctx->gk5e->keylength);
-	अगर (err)
-		जाओ out;
+	if (err)
+		goto out;
 
 	err = crypto_ahash_init(req);
-	अगर (err)
-		जाओ out;
+	if (err)
+		goto out;
 	err = xdr_process_buf(body, body_offset, body->len - body_offset,
 			      checksummer, req);
-	अगर (err)
-		जाओ out;
-	अगर (header != शून्य) अणु
+	if (err)
+		goto out;
+	if (header != NULL) {
 		sg_init_one(sg, header, hdrlen);
-		ahash_request_set_crypt(req, sg, शून्य, hdrlen);
+		ahash_request_set_crypt(req, sg, NULL, hdrlen);
 		err = crypto_ahash_update(req);
-		अगर (err)
-			जाओ out;
-	पूर्ण
-	ahash_request_set_crypt(req, शून्य, checksumdata, 0);
+		if (err)
+			goto out;
+	}
+	ahash_request_set_crypt(req, NULL, checksumdata, 0);
 	err = crypto_ahash_final(req);
-	अगर (err)
-		जाओ out;
+	if (err)
+		goto out;
 
 	cksumout->len = kctx->gk5e->cksumlength;
 
-	चयन (kctx->gk5e->ctype) अणु
-	हाल CKSUMTYPE_HMAC_SHA1_96_AES128:
-	हाल CKSUMTYPE_HMAC_SHA1_96_AES256:
+	switch (kctx->gk5e->ctype) {
+	case CKSUMTYPE_HMAC_SHA1_96_AES128:
+	case CKSUMTYPE_HMAC_SHA1_96_AES256:
 		/* note that this truncates the hash */
-		स_नकल(cksumout->data, checksumdata, kctx->gk5e->cksumlength);
-		अवरोध;
-	शेष:
+		memcpy(cksumout->data, checksumdata, kctx->gk5e->cksumlength);
+		break;
+	default:
 		BUG();
-		अवरोध;
-	पूर्ण
+		break;
+	}
 out:
-	ahash_request_मुक्त(req);
-out_मुक्त_ahash:
-	crypto_मुक्त_ahash(tfm);
-out_मुक्त_cksum:
-	kमुक्त(checksumdata);
-	वापस err ? GSS_S_FAILURE : 0;
-पूर्ण
+	ahash_request_free(req);
+out_free_ahash:
+	crypto_free_ahash(tfm);
+out_free_cksum:
+	kfree(checksumdata);
+	return err ? GSS_S_FAILURE : 0;
+}
 
-काष्ठा encryptor_desc अणु
+struct encryptor_desc {
 	u8 iv[GSS_KRB5_MAX_BLOCKSIZE];
-	काष्ठा skcipher_request *req;
-	पूर्णांक pos;
-	काष्ठा xdr_buf *outbuf;
-	काष्ठा page **pages;
-	काष्ठा scatterlist infrags[4];
-	काष्ठा scatterlist outfrags[4];
-	पूर्णांक fragno;
-	पूर्णांक fraglen;
-पूर्ण;
+	struct skcipher_request *req;
+	int pos;
+	struct xdr_buf *outbuf;
+	struct page **pages;
+	struct scatterlist infrags[4];
+	struct scatterlist outfrags[4];
+	int fragno;
+	int fraglen;
+};
 
-अटल पूर्णांक
-encryptor(काष्ठा scatterlist *sg, व्योम *data)
-अणु
-	काष्ठा encryptor_desc *desc = data;
-	काष्ठा xdr_buf *outbuf = desc->outbuf;
-	काष्ठा crypto_sync_skcipher *tfm =
+static int
+encryptor(struct scatterlist *sg, void *data)
+{
+	struct encryptor_desc *desc = data;
+	struct xdr_buf *outbuf = desc->outbuf;
+	struct crypto_sync_skcipher *tfm =
 		crypto_sync_skcipher_reqtfm(desc->req);
-	काष्ठा page *in_page;
-	पूर्णांक thislen = desc->fraglen + sg->length;
-	पूर्णांक fraglen, ret;
-	पूर्णांक page_pos;
+	struct page *in_page;
+	int thislen = desc->fraglen + sg->length;
+	int fraglen, ret;
+	int page_pos;
 
-	/* Worst हाल is 4 fragments: head, end of page 1, start
+	/* Worst case is 4 fragments: head, end of page 1, start
 	 * of page 2, tail.  Anything more is a bug. */
 	BUG_ON(desc->fragno > 3);
 
 	page_pos = desc->pos - outbuf->head[0].iov_len;
-	अगर (page_pos >= 0 && page_pos < outbuf->page_len) अणु
+	if (page_pos >= 0 && page_pos < outbuf->page_len) {
 		/* pages are not in place: */
-		पूर्णांक i = (page_pos + outbuf->page_base) >> PAGE_SHIFT;
+		int i = (page_pos + outbuf->page_base) >> PAGE_SHIFT;
 		in_page = desc->pages[i];
-	पूर्ण अन्यथा अणु
+	} else {
 		in_page = sg_page(sg);
-	पूर्ण
+	}
 	sg_set_page(&desc->infrags[desc->fragno], in_page, sg->length,
 		    sg->offset);
 	sg_set_page(&desc->outfrags[desc->fragno], sg_page(sg), sg->length,
@@ -363,8 +362,8 @@ encryptor(काष्ठा scatterlist *sg, व्योम *data)
 	fraglen = thislen & (crypto_sync_skcipher_blocksize(tfm) - 1);
 	thislen -= fraglen;
 
-	अगर (thislen == 0)
-		वापस 0;
+	if (thislen == 0)
+		return 0;
 
 	sg_mark_end(&desc->infrags[desc->fragno - 1]);
 	sg_mark_end(&desc->outfrags[desc->fragno - 1]);
@@ -373,40 +372,40 @@ encryptor(काष्ठा scatterlist *sg, व्योम *data)
 				   thislen, desc->iv);
 
 	ret = crypto_skcipher_encrypt(desc->req);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	sg_init_table(desc->infrags, 4);
 	sg_init_table(desc->outfrags, 4);
 
-	अगर (fraglen) अणु
+	if (fraglen) {
 		sg_set_page(&desc->outfrags[0], sg_page(sg), fraglen,
 				sg->offset + sg->length - fraglen);
 		desc->infrags[0] = desc->outfrags[0];
 		sg_assign_page(&desc->infrags[0], in_page);
 		desc->fragno = 1;
 		desc->fraglen = fraglen;
-	पूर्ण अन्यथा अणु
+	} else {
 		desc->fragno = 0;
 		desc->fraglen = 0;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-पूर्णांक
-gss_encrypt_xdr_buf(काष्ठा crypto_sync_skcipher *tfm, काष्ठा xdr_buf *buf,
-		    पूर्णांक offset, काष्ठा page **pages)
-अणु
-	पूर्णांक ret;
-	काष्ठा encryptor_desc desc;
+int
+gss_encrypt_xdr_buf(struct crypto_sync_skcipher *tfm, struct xdr_buf *buf,
+		    int offset, struct page **pages)
+{
+	int ret;
+	struct encryptor_desc desc;
 	SYNC_SKCIPHER_REQUEST_ON_STACK(req, tfm);
 
 	BUG_ON((buf->len - offset) % crypto_sync_skcipher_blocksize(tfm) != 0);
 
 	skcipher_request_set_sync_tfm(req, tfm);
-	skcipher_request_set_callback(req, 0, शून्य, शून्य);
+	skcipher_request_set_callback(req, 0, NULL, NULL);
 
-	स_रखो(desc.iv, 0, माप(desc.iv));
+	memset(desc.iv, 0, sizeof(desc.iv));
 	desc.req = req;
 	desc.pos = offset;
 	desc.outbuf = buf;
@@ -419,27 +418,27 @@ gss_encrypt_xdr_buf(काष्ठा crypto_sync_skcipher *tfm, काष्�
 
 	ret = xdr_process_buf(buf, offset, buf->len - offset, encryptor, &desc);
 	skcipher_request_zero(req);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-काष्ठा decryptor_desc अणु
+struct decryptor_desc {
 	u8 iv[GSS_KRB5_MAX_BLOCKSIZE];
-	काष्ठा skcipher_request *req;
-	काष्ठा scatterlist frags[4];
-	पूर्णांक fragno;
-	पूर्णांक fraglen;
-पूर्ण;
+	struct skcipher_request *req;
+	struct scatterlist frags[4];
+	int fragno;
+	int fraglen;
+};
 
-अटल पूर्णांक
-decryptor(काष्ठा scatterlist *sg, व्योम *data)
-अणु
-	काष्ठा decryptor_desc *desc = data;
-	पूर्णांक thislen = desc->fraglen + sg->length;
-	काष्ठा crypto_sync_skcipher *tfm =
+static int
+decryptor(struct scatterlist *sg, void *data)
+{
+	struct decryptor_desc *desc = data;
+	int thislen = desc->fraglen + sg->length;
+	struct crypto_sync_skcipher *tfm =
 		crypto_sync_skcipher_reqtfm(desc->req);
-	पूर्णांक fraglen, ret;
+	int fraglen, ret;
 
-	/* Worst हाल is 4 fragments: head, end of page 1, start
+	/* Worst case is 4 fragments: head, end of page 1, start
 	 * of page 2, tail.  Anything more is a bug. */
 	BUG_ON(desc->fragno > 3);
 	sg_set_page(&desc->frags[desc->fragno], sg_page(sg), sg->length,
@@ -450,8 +449,8 @@ decryptor(काष्ठा scatterlist *sg, व्योम *data)
 	fraglen = thislen & (crypto_sync_skcipher_blocksize(tfm) - 1);
 	thislen -= fraglen;
 
-	अगर (thislen == 0)
-		वापस 0;
+	if (thislen == 0)
+		return 0;
 
 	sg_mark_end(&desc->frags[desc->fragno - 1]);
 
@@ -459,38 +458,38 @@ decryptor(काष्ठा scatterlist *sg, व्योम *data)
 				   thislen, desc->iv);
 
 	ret = crypto_skcipher_decrypt(desc->req);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	sg_init_table(desc->frags, 4);
 
-	अगर (fraglen) अणु
+	if (fraglen) {
 		sg_set_page(&desc->frags[0], sg_page(sg), fraglen,
 				sg->offset + sg->length - fraglen);
 		desc->fragno = 1;
 		desc->fraglen = fraglen;
-	पूर्ण अन्यथा अणु
+	} else {
 		desc->fragno = 0;
 		desc->fraglen = 0;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-पूर्णांक
-gss_decrypt_xdr_buf(काष्ठा crypto_sync_skcipher *tfm, काष्ठा xdr_buf *buf,
-		    पूर्णांक offset)
-अणु
-	पूर्णांक ret;
-	काष्ठा decryptor_desc desc;
+int
+gss_decrypt_xdr_buf(struct crypto_sync_skcipher *tfm, struct xdr_buf *buf,
+		    int offset)
+{
+	int ret;
+	struct decryptor_desc desc;
 	SYNC_SKCIPHER_REQUEST_ON_STACK(req, tfm);
 
 	/* XXXJBF: */
 	BUG_ON((buf->len - offset) % crypto_sync_skcipher_blocksize(tfm) != 0);
 
 	skcipher_request_set_sync_tfm(req, tfm);
-	skcipher_request_set_callback(req, 0, शून्य, शून्य);
+	skcipher_request_set_callback(req, 0, NULL, NULL);
 
-	स_रखो(desc.iv, 0, माप(desc.iv));
+	memset(desc.iv, 0, sizeof(desc.iv));
 	desc.req = req;
 	desc.fragno = 0;
 	desc.fraglen = 0;
@@ -499,150 +498,150 @@ gss_decrypt_xdr_buf(काष्ठा crypto_sync_skcipher *tfm, काष्�
 
 	ret = xdr_process_buf(buf, offset, buf->len - offset, decryptor, &desc);
 	skcipher_request_zero(req);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
  * This function makes the assumption that it was ultimately called
  * from gss_wrap().
  *
- * The client auth_gss code moves any existing tail data पूर्णांकo a
- * separate page beक्रमe calling gss_wrap.
+ * The client auth_gss code moves any existing tail data into a
+ * separate page before calling gss_wrap.
  * The server svcauth_gss code ensures that both the head and the
- * tail have slack space of RPC_MAX_AUTH_SIZE beक्रमe calling gss_wrap.
+ * tail have slack space of RPC_MAX_AUTH_SIZE before calling gss_wrap.
  *
  * Even with that guarantee, this function may be called more than
- * once in the processing of gss_wrap().  The best we can करो is
- * verअगरy at compile-समय (see GSS_KRB5_SLACK_CHECK) that the
- * largest expected shअगरt will fit within RPC_MAX_AUTH_SIZE.
- * At run-समय we can verअगरy that a single invocation of this
- * function करोesn't attempt to use more the RPC_MAX_AUTH_SIZE.
+ * once in the processing of gss_wrap().  The best we can do is
+ * verify at compile-time (see GSS_KRB5_SLACK_CHECK) that the
+ * largest expected shift will fit within RPC_MAX_AUTH_SIZE.
+ * At run-time we can verify that a single invocation of this
+ * function doesn't attempt to use more the RPC_MAX_AUTH_SIZE.
  */
 
-पूर्णांक
-xdr_extend_head(काष्ठा xdr_buf *buf, अचिन्हित पूर्णांक base, अचिन्हित पूर्णांक shअगरtlen)
-अणु
+int
+xdr_extend_head(struct xdr_buf *buf, unsigned int base, unsigned int shiftlen)
+{
 	u8 *p;
 
-	अगर (shअगरtlen == 0)
-		वापस 0;
+	if (shiftlen == 0)
+		return 0;
 
 	BUILD_BUG_ON(GSS_KRB5_MAX_SLACK_NEEDED > RPC_MAX_AUTH_SIZE);
-	BUG_ON(shअगरtlen > RPC_MAX_AUTH_SIZE);
+	BUG_ON(shiftlen > RPC_MAX_AUTH_SIZE);
 
 	p = buf->head[0].iov_base + base;
 
-	स_हटाओ(p + shअगरtlen, p, buf->head[0].iov_len - base);
+	memmove(p + shiftlen, p, buf->head[0].iov_len - base);
 
-	buf->head[0].iov_len += shअगरtlen;
-	buf->len += shअगरtlen;
+	buf->head[0].iov_len += shiftlen;
+	buf->len += shiftlen;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल u32
-gss_krb5_cts_crypt(काष्ठा crypto_sync_skcipher *cipher, काष्ठा xdr_buf *buf,
-		   u32 offset, u8 *iv, काष्ठा page **pages, पूर्णांक encrypt)
-अणु
+static u32
+gss_krb5_cts_crypt(struct crypto_sync_skcipher *cipher, struct xdr_buf *buf,
+		   u32 offset, u8 *iv, struct page **pages, int encrypt)
+{
 	u32 ret;
-	काष्ठा scatterlist sg[1];
+	struct scatterlist sg[1];
 	SYNC_SKCIPHER_REQUEST_ON_STACK(req, cipher);
 	u8 *data;
-	काष्ठा page **save_pages;
+	struct page **save_pages;
 	u32 len = buf->len - offset;
 
-	अगर (len > GSS_KRB5_MAX_BLOCKSIZE * 2) अणु
+	if (len > GSS_KRB5_MAX_BLOCKSIZE * 2) {
 		WARN_ON(0);
-		वापस -ENOMEM;
-	पूर्ण
-	data = kदो_स्मृति(GSS_KRB5_MAX_BLOCKSIZE * 2, GFP_NOFS);
-	अगर (!data)
-		वापस -ENOMEM;
+		return -ENOMEM;
+	}
+	data = kmalloc(GSS_KRB5_MAX_BLOCKSIZE * 2, GFP_NOFS);
+	if (!data)
+		return -ENOMEM;
 
 	/*
-	 * For encryption, we want to पढ़ो from the cleartext
-	 * page cache pages, and ग_लिखो the encrypted data to
+	 * For encryption, we want to read from the cleartext
+	 * page cache pages, and write the encrypted data to
 	 * the supplied xdr_buf pages.
 	 */
 	save_pages = buf->pages;
-	अगर (encrypt)
+	if (encrypt)
 		buf->pages = pages;
 
-	ret = पढ़ो_bytes_from_xdr_buf(buf, offset, data, len);
+	ret = read_bytes_from_xdr_buf(buf, offset, data, len);
 	buf->pages = save_pages;
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
 	sg_init_one(sg, data, len);
 
 	skcipher_request_set_sync_tfm(req, cipher);
-	skcipher_request_set_callback(req, 0, शून्य, शून्य);
+	skcipher_request_set_callback(req, 0, NULL, NULL);
 	skcipher_request_set_crypt(req, sg, sg, len, iv);
 
-	अगर (encrypt)
+	if (encrypt)
 		ret = crypto_skcipher_encrypt(req);
-	अन्यथा
+	else
 		ret = crypto_skcipher_decrypt(req);
 
 	skcipher_request_zero(req);
 
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
-	ret = ग_लिखो_bytes_to_xdr_buf(buf, offset, data, len);
+	ret = write_bytes_to_xdr_buf(buf, offset, data, len);
 
 out:
-	kमुक्त(data);
-	वापस ret;
-पूर्ण
+	kfree(data);
+	return ret;
+}
 
 u32
-gss_krb5_aes_encrypt(काष्ठा krb5_ctx *kctx, u32 offset,
-		     काष्ठा xdr_buf *buf, काष्ठा page **pages)
-अणु
+gss_krb5_aes_encrypt(struct krb5_ctx *kctx, u32 offset,
+		     struct xdr_buf *buf, struct page **pages)
+{
 	u32 err;
-	काष्ठा xdr_netobj hmac;
+	struct xdr_netobj hmac;
 	u8 *cksumkey;
 	u8 *ecptr;
-	काष्ठा crypto_sync_skcipher *cipher, *aux_cipher;
-	पूर्णांक blocksize;
-	काष्ठा page **save_pages;
-	पूर्णांक nblocks, nbytes;
-	काष्ठा encryptor_desc desc;
+	struct crypto_sync_skcipher *cipher, *aux_cipher;
+	int blocksize;
+	struct page **save_pages;
+	int nblocks, nbytes;
+	struct encryptor_desc desc;
 	u32 cbcbytes;
-	अचिन्हित पूर्णांक usage;
+	unsigned int usage;
 
-	अगर (kctx->initiate) अणु
+	if (kctx->initiate) {
 		cipher = kctx->initiator_enc;
 		aux_cipher = kctx->initiator_enc_aux;
-		cksumkey = kctx->initiator_पूर्णांकeg;
+		cksumkey = kctx->initiator_integ;
 		usage = KG_USAGE_INITIATOR_SEAL;
-	पूर्ण अन्यथा अणु
+	} else {
 		cipher = kctx->acceptor_enc;
 		aux_cipher = kctx->acceptor_enc_aux;
-		cksumkey = kctx->acceptor_पूर्णांकeg;
+		cksumkey = kctx->acceptor_integ;
 		usage = KG_USAGE_ACCEPTOR_SEAL;
-	पूर्ण
+	}
 	blocksize = crypto_sync_skcipher_blocksize(cipher);
 
 	/* hide the gss token header and insert the confounder */
 	offset += GSS_KRB5_TOK_HDR_LEN;
-	अगर (xdr_extend_head(buf, offset, kctx->gk5e->conflen))
-		वापस GSS_S_FAILURE;
+	if (xdr_extend_head(buf, offset, kctx->gk5e->conflen))
+		return GSS_S_FAILURE;
 	gss_krb5_make_confounder(buf->head[0].iov_base + offset, kctx->gk5e->conflen);
 	offset -= GSS_KRB5_TOK_HDR_LEN;
 
-	अगर (buf->tail[0].iov_base != शून्य) अणु
+	if (buf->tail[0].iov_base != NULL) {
 		ecptr = buf->tail[0].iov_base + buf->tail[0].iov_len;
-	पूर्ण अन्यथा अणु
+	} else {
 		buf->tail[0].iov_base = buf->head[0].iov_base
 							+ buf->head[0].iov_len;
 		buf->tail[0].iov_len = 0;
 		ecptr = buf->tail[0].iov_base;
-	पूर्ण
+	}
 
-	/* copy plaपूर्णांकext gss token header after filler (अगर any) */
-	स_नकल(ecptr, buf->head[0].iov_base + offset, GSS_KRB5_TOK_HDR_LEN);
+	/* copy plaintext gss token header after filler (if any) */
+	memcpy(ecptr, buf->head[0].iov_base + offset, GSS_KRB5_TOK_HDR_LEN);
 	buf->tail[0].iov_len += GSS_KRB5_TOK_HDR_LEN;
 	buf->len += GSS_KRB5_TOK_HDR_LEN;
 
@@ -651,31 +650,31 @@ gss_krb5_aes_encrypt(काष्ठा krb5_ctx *kctx, u32 offset,
 	hmac.data = buf->tail[0].iov_base + buf->tail[0].iov_len;
 
 	/*
-	 * When we are called, pages poपूर्णांकs to the real page cache
-	 * data -- which we can't go and encrypt!  buf->pages poपूर्णांकs
+	 * When we are called, pages points to the real page cache
+	 * data -- which we can't go and encrypt!  buf->pages points
 	 * to scratch pages which we are going to send off to the
-	 * client/server.  Swap in the plaपूर्णांकext pages to calculate
+	 * client/server.  Swap in the plaintext pages to calculate
 	 * the hmac.
 	 */
 	save_pages = buf->pages;
 	buf->pages = pages;
 
-	err = make_checksum_v2(kctx, शून्य, 0, buf,
+	err = make_checksum_v2(kctx, NULL, 0, buf,
 			       offset + GSS_KRB5_TOK_HDR_LEN,
 			       cksumkey, usage, &hmac);
 	buf->pages = save_pages;
-	अगर (err)
-		वापस GSS_S_FAILURE;
+	if (err)
+		return GSS_S_FAILURE;
 
 	nbytes = buf->len - offset - GSS_KRB5_TOK_HDR_LEN;
 	nblocks = (nbytes + blocksize - 1) / blocksize;
 	cbcbytes = 0;
-	अगर (nblocks > 2)
+	if (nblocks > 2)
 		cbcbytes = (nblocks - 2) * blocksize;
 
-	स_रखो(desc.iv, 0, माप(desc.iv));
+	memset(desc.iv, 0, sizeof(desc.iv));
 
-	अगर (cbcbytes) अणु
+	if (cbcbytes) {
 		SYNC_SKCIPHER_REQUEST_ON_STACK(req, aux_cipher);
 
 		desc.pos = offset + GSS_KRB5_TOK_HDR_LEN;
@@ -686,7 +685,7 @@ gss_krb5_aes_encrypt(काष्ठा krb5_ctx *kctx, u32 offset,
 		desc.req = req;
 
 		skcipher_request_set_sync_tfm(req, aux_cipher);
-		skcipher_request_set_callback(req, 0, शून्य, शून्य);
+		skcipher_request_set_callback(req, 0, NULL, NULL);
 
 		sg_init_table(desc.infrags, 4);
 		sg_init_table(desc.outfrags, 4);
@@ -694,55 +693,55 @@ gss_krb5_aes_encrypt(काष्ठा krb5_ctx *kctx, u32 offset,
 		err = xdr_process_buf(buf, offset + GSS_KRB5_TOK_HDR_LEN,
 				      cbcbytes, encryptor, &desc);
 		skcipher_request_zero(req);
-		अगर (err)
-			जाओ out_err;
-	पूर्ण
+		if (err)
+			goto out_err;
+	}
 
-	/* Make sure IV carries क्रमward from any CBC results. */
+	/* Make sure IV carries forward from any CBC results. */
 	err = gss_krb5_cts_crypt(cipher, buf,
 				 offset + GSS_KRB5_TOK_HDR_LEN + cbcbytes,
 				 desc.iv, pages, 1);
-	अगर (err) अणु
+	if (err) {
 		err = GSS_S_FAILURE;
-		जाओ out_err;
-	पूर्ण
+		goto out_err;
+	}
 
-	/* Now update buf to account क्रम HMAC */
+	/* Now update buf to account for HMAC */
 	buf->tail[0].iov_len += kctx->gk5e->cksumlength;
 	buf->len += kctx->gk5e->cksumlength;
 
 out_err:
-	अगर (err)
+	if (err)
 		err = GSS_S_FAILURE;
-	वापस err;
-पूर्ण
+	return err;
+}
 
 u32
-gss_krb5_aes_decrypt(काष्ठा krb5_ctx *kctx, u32 offset, u32 len,
-		     काष्ठा xdr_buf *buf, u32 *headskip, u32 *tailskip)
-अणु
-	काष्ठा xdr_buf subbuf;
+gss_krb5_aes_decrypt(struct krb5_ctx *kctx, u32 offset, u32 len,
+		     struct xdr_buf *buf, u32 *headskip, u32 *tailskip)
+{
+	struct xdr_buf subbuf;
 	u32 ret = 0;
 	u8 *cksum_key;
-	काष्ठा crypto_sync_skcipher *cipher, *aux_cipher;
-	काष्ठा xdr_netobj our_hmac_obj;
+	struct crypto_sync_skcipher *cipher, *aux_cipher;
+	struct xdr_netobj our_hmac_obj;
 	u8 our_hmac[GSS_KRB5_MAX_CKSUM_LEN];
 	u8 pkt_hmac[GSS_KRB5_MAX_CKSUM_LEN];
-	पूर्णांक nblocks, blocksize, cbcbytes;
-	काष्ठा decryptor_desc desc;
-	अचिन्हित पूर्णांक usage;
+	int nblocks, blocksize, cbcbytes;
+	struct decryptor_desc desc;
+	unsigned int usage;
 
-	अगर (kctx->initiate) अणु
+	if (kctx->initiate) {
 		cipher = kctx->acceptor_enc;
 		aux_cipher = kctx->acceptor_enc_aux;
-		cksum_key = kctx->acceptor_पूर्णांकeg;
+		cksum_key = kctx->acceptor_integ;
 		usage = KG_USAGE_ACCEPTOR_SEAL;
-	पूर्ण अन्यथा अणु
+	} else {
 		cipher = kctx->initiator_enc;
 		aux_cipher = kctx->initiator_enc_aux;
-		cksum_key = kctx->initiator_पूर्णांकeg;
+		cksum_key = kctx->initiator_integ;
 		usage = KG_USAGE_INITIATOR_SEAL;
-	पूर्ण
+	}
 	blocksize = crypto_sync_skcipher_blocksize(cipher);
 
 
@@ -754,12 +753,12 @@ gss_krb5_aes_decrypt(काष्ठा krb5_ctx *kctx, u32 offset, u32 len,
 	nblocks = (subbuf.len + blocksize - 1) / blocksize;
 
 	cbcbytes = 0;
-	अगर (nblocks > 2)
+	if (nblocks > 2)
 		cbcbytes = (nblocks - 2) * blocksize;
 
-	स_रखो(desc.iv, 0, माप(desc.iv));
+	memset(desc.iv, 0, sizeof(desc.iv));
 
-	अगर (cbcbytes) अणु
+	if (cbcbytes) {
 		SYNC_SKCIPHER_REQUEST_ON_STACK(req, aux_cipher);
 
 		desc.fragno = 0;
@@ -767,45 +766,45 @@ gss_krb5_aes_decrypt(काष्ठा krb5_ctx *kctx, u32 offset, u32 len,
 		desc.req = req;
 
 		skcipher_request_set_sync_tfm(req, aux_cipher);
-		skcipher_request_set_callback(req, 0, शून्य, शून्य);
+		skcipher_request_set_callback(req, 0, NULL, NULL);
 
 		sg_init_table(desc.frags, 4);
 
 		ret = xdr_process_buf(&subbuf, 0, cbcbytes, decryptor, &desc);
 		skcipher_request_zero(req);
-		अगर (ret)
-			जाओ out_err;
-	पूर्ण
+		if (ret)
+			goto out_err;
+	}
 
-	/* Make sure IV carries क्रमward from any CBC results. */
-	ret = gss_krb5_cts_crypt(cipher, &subbuf, cbcbytes, desc.iv, शून्य, 0);
-	अगर (ret)
-		जाओ out_err;
+	/* Make sure IV carries forward from any CBC results. */
+	ret = gss_krb5_cts_crypt(cipher, &subbuf, cbcbytes, desc.iv, NULL, 0);
+	if (ret)
+		goto out_err;
 
 
-	/* Calculate our hmac over the plaपूर्णांकext data */
-	our_hmac_obj.len = माप(our_hmac);
+	/* Calculate our hmac over the plaintext data */
+	our_hmac_obj.len = sizeof(our_hmac);
 	our_hmac_obj.data = our_hmac;
 
-	ret = make_checksum_v2(kctx, शून्य, 0, &subbuf, 0,
+	ret = make_checksum_v2(kctx, NULL, 0, &subbuf, 0,
 			       cksum_key, usage, &our_hmac_obj);
-	अगर (ret)
-		जाओ out_err;
+	if (ret)
+		goto out_err;
 
 	/* Get the packet's hmac value */
-	ret = पढ़ो_bytes_from_xdr_buf(buf, len - kctx->gk5e->cksumlength,
+	ret = read_bytes_from_xdr_buf(buf, len - kctx->gk5e->cksumlength,
 				      pkt_hmac, kctx->gk5e->cksumlength);
-	अगर (ret)
-		जाओ out_err;
+	if (ret)
+		goto out_err;
 
-	अगर (crypto_memneq(pkt_hmac, our_hmac, kctx->gk5e->cksumlength) != 0) अणु
+	if (crypto_memneq(pkt_hmac, our_hmac, kctx->gk5e->cksumlength) != 0) {
 		ret = GSS_S_BAD_SIG;
-		जाओ out_err;
-	पूर्ण
+		goto out_err;
+	}
 	*headskip = kctx->gk5e->conflen;
 	*tailskip = kctx->gk5e->cksumlength;
 out_err:
-	अगर (ret && ret != GSS_S_BAD_SIG)
+	if (ret && ret != GSS_S_BAD_SIG)
 		ret = GSS_S_FAILURE;
-	वापस ret;
-पूर्ण
+	return ret;
+}

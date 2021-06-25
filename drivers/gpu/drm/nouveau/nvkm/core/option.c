@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2012 Red Hat Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,119 +21,119 @@
  *
  * Authors: Ben Skeggs
  */
-#समावेश <core/option.h>
-#समावेश <core/debug.h>
+#include <core/option.h>
+#include <core/debug.h>
 
-स्थिर अक्षर *
-nvkm_stropt(स्थिर अक्षर *optstr, स्थिर अक्षर *opt, पूर्णांक *arglen)
-अणु
-	जबतक (optstr && *optstr != '\0') अणु
-		पूर्णांक len = म_खोज(optstr, ",=");
-		चयन (optstr[len]) अणु
-		हाल '=':
-			अगर (!strnहालcmpz(optstr, opt, len)) अणु
+const char *
+nvkm_stropt(const char *optstr, const char *opt, int *arglen)
+{
+	while (optstr && *optstr != '\0') {
+		int len = strcspn(optstr, ",=");
+		switch (optstr[len]) {
+		case '=':
+			if (!strncasecmpz(optstr, opt, len)) {
 				optstr += len + 1;
-				*arglen = म_खोज(optstr, ",=");
-				वापस *arglen ? optstr : शून्य;
-			पूर्ण
+				*arglen = strcspn(optstr, ",=");
+				return *arglen ? optstr : NULL;
+			}
 			optstr++;
-			अवरोध;
-		हाल ',':
+			break;
+		case ',':
 			optstr++;
-			अवरोध;
-		शेष:
-			अवरोध;
-		पूर्ण
+			break;
+		default:
+			break;
+		}
 		optstr += len;
-	पूर्ण
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
 bool
-nvkm_boolopt(स्थिर अक्षर *optstr, स्थिर अक्षर *opt, bool value)
-अणु
-	पूर्णांक arglen;
+nvkm_boolopt(const char *optstr, const char *opt, bool value)
+{
+	int arglen;
 
 	optstr = nvkm_stropt(optstr, opt, &arglen);
-	अगर (optstr) अणु
-		अगर (!strnहालcmpz(optstr, "0", arglen) ||
-		    !strnहालcmpz(optstr, "no", arglen) ||
-		    !strnहालcmpz(optstr, "off", arglen) ||
-		    !strnहालcmpz(optstr, "false", arglen))
+	if (optstr) {
+		if (!strncasecmpz(optstr, "0", arglen) ||
+		    !strncasecmpz(optstr, "no", arglen) ||
+		    !strncasecmpz(optstr, "off", arglen) ||
+		    !strncasecmpz(optstr, "false", arglen))
 			value = false;
-		अन्यथा
-		अगर (!strnहालcmpz(optstr, "1", arglen) ||
-		    !strnहालcmpz(optstr, "yes", arglen) ||
-		    !strnहालcmpz(optstr, "on", arglen) ||
-		    !strnहालcmpz(optstr, "true", arglen))
+		else
+		if (!strncasecmpz(optstr, "1", arglen) ||
+		    !strncasecmpz(optstr, "yes", arglen) ||
+		    !strncasecmpz(optstr, "on", arglen) ||
+		    !strncasecmpz(optstr, "true", arglen))
 			value = true;
-	पूर्ण
+	}
 
-	वापस value;
-पूर्ण
+	return value;
+}
 
-दीर्घ
-nvkm_दीर्घopt(स्थिर अक्षर *optstr, स्थिर अक्षर *opt, दीर्घ value)
-अणु
-	दीर्घ result = value;
-	पूर्णांक arglen;
-	अक्षर *s;
+long
+nvkm_longopt(const char *optstr, const char *opt, long value)
+{
+	long result = value;
+	int arglen;
+	char *s;
 
 	optstr = nvkm_stropt(optstr, opt, &arglen);
-	अगर (optstr && (s = kstrndup(optstr, arglen, GFP_KERNEL))) अणु
-		पूर्णांक ret = kम_से_दीर्घ(s, 0, &value);
-		अगर (ret == 0)
+	if (optstr && (s = kstrndup(optstr, arglen, GFP_KERNEL))) {
+		int ret = kstrtol(s, 0, &value);
+		if (ret == 0)
 			result = value;
-		kमुक्त(s);
-	पूर्ण
+		kfree(s);
+	}
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
-पूर्णांक
-nvkm_dbgopt(स्थिर अक्षर *optstr, स्थिर अक्षर *sub)
-अणु
-	पूर्णांक mode = 1, level = CONFIG_NOUVEAU_DEBUG_DEFAULT;
+int
+nvkm_dbgopt(const char *optstr, const char *sub)
+{
+	int mode = 1, level = CONFIG_NOUVEAU_DEBUG_DEFAULT;
 
-	जबतक (optstr) अणु
-		पूर्णांक len = म_खोज(optstr, ",=");
-		चयन (optstr[len]) अणु
-		हाल '=':
-			अगर (strnहालcmpz(optstr, sub, len))
+	while (optstr) {
+		int len = strcspn(optstr, ",=");
+		switch (optstr[len]) {
+		case '=':
+			if (strncasecmpz(optstr, sub, len))
 				mode = 0;
 			optstr++;
-			अवरोध;
-		शेष:
-			अगर (mode) अणु
-				अगर (!strnहालcmpz(optstr, "fatal", len))
+			break;
+		default:
+			if (mode) {
+				if (!strncasecmpz(optstr, "fatal", len))
 					level = NV_DBG_FATAL;
-				अन्यथा अगर (!strnहालcmpz(optstr, "error", len))
+				else if (!strncasecmpz(optstr, "error", len))
 					level = NV_DBG_ERROR;
-				अन्यथा अगर (!strnहालcmpz(optstr, "warn", len))
+				else if (!strncasecmpz(optstr, "warn", len))
 					level = NV_DBG_WARN;
-				अन्यथा अगर (!strnहालcmpz(optstr, "info", len))
+				else if (!strncasecmpz(optstr, "info", len))
 					level = NV_DBG_INFO;
-				अन्यथा अगर (!strnहालcmpz(optstr, "debug", len))
+				else if (!strncasecmpz(optstr, "debug", len))
 					level = NV_DBG_DEBUG;
-				अन्यथा अगर (!strnहालcmpz(optstr, "trace", len))
+				else if (!strncasecmpz(optstr, "trace", len))
 					level = NV_DBG_TRACE;
-				अन्यथा अगर (!strnहालcmpz(optstr, "paranoia", len))
+				else if (!strncasecmpz(optstr, "paranoia", len))
 					level = NV_DBG_PARANOIA;
-				अन्यथा अगर (!strnहालcmpz(optstr, "spam", len))
+				else if (!strncasecmpz(optstr, "spam", len))
 					level = NV_DBG_SPAM;
-			पूर्ण
+			}
 
-			अगर (optstr[len] != '\0') अणु
+			if (optstr[len] != '\0') {
 				optstr++;
 				mode = 1;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 
-			वापस level;
-		पूर्ण
+			return level;
+		}
 		optstr += len;
-	पूर्ण
+	}
 
-	वापस level;
-पूर्ण
+	return level;
+}

@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Virtio SCSI HBA driver
  *
@@ -11,106 +10,106 @@
  *  Paolo Bonzini   <pbonzini@redhat.com>
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/mempool.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/virtपन.स>
-#समावेश <linux/virtio_ids.h>
-#समावेश <linux/virtio_config.h>
-#समावेश <linux/virtio_scsi.h>
-#समावेश <linux/cpu.h>
-#समावेश <linux/blkdev.h>
-#समावेश <scsi/scsi_host.h>
-#समावेश <scsi/scsi_device.h>
-#समावेश <scsi/scsi_cmnd.h>
-#समावेश <scsi/scsi_tcq.h>
-#समावेश <scsi/scsi_devinfo.h>
-#समावेश <linux/seqlock.h>
-#समावेश <linux/blk-mq-virtपन.स>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/mempool.h>
+#include <linux/interrupt.h>
+#include <linux/virtio.h>
+#include <linux/virtio_ids.h>
+#include <linux/virtio_config.h>
+#include <linux/virtio_scsi.h>
+#include <linux/cpu.h>
+#include <linux/blkdev.h>
+#include <scsi/scsi_host.h>
+#include <scsi/scsi_device.h>
+#include <scsi/scsi_cmnd.h>
+#include <scsi/scsi_tcq.h>
+#include <scsi/scsi_devinfo.h>
+#include <linux/seqlock.h>
+#include <linux/blk-mq-virtio.h>
 
-#समावेश "sd.h"
+#include "sd.h"
 
-#घोषणा VIRTIO_SCSI_MEMPOOL_SZ 64
-#घोषणा VIRTIO_SCSI_EVENT_LEN 8
-#घोषणा VIRTIO_SCSI_VQ_BASE 2
+#define VIRTIO_SCSI_MEMPOOL_SZ 64
+#define VIRTIO_SCSI_EVENT_LEN 8
+#define VIRTIO_SCSI_VQ_BASE 2
 
 /* Command queue element */
-काष्ठा virtio_scsi_cmd अणु
-	काष्ठा scsi_cmnd *sc;
-	काष्ठा completion *comp;
-	जोड़ अणु
-		काष्ठा virtio_scsi_cmd_req       cmd;
-		काष्ठा virtio_scsi_cmd_req_pi    cmd_pi;
-		काष्ठा virtio_scsi_ctrl_पंचांगf_req  पंचांगf;
-		काष्ठा virtio_scsi_ctrl_an_req   an;
-	पूर्ण req;
-	जोड़ अणु
-		काष्ठा virtio_scsi_cmd_resp      cmd;
-		काष्ठा virtio_scsi_ctrl_पंचांगf_resp पंचांगf;
-		काष्ठा virtio_scsi_ctrl_an_resp  an;
-		काष्ठा virtio_scsi_event         evt;
-	पूर्ण resp;
-पूर्ण ____cacheline_aligned_in_smp;
+struct virtio_scsi_cmd {
+	struct scsi_cmnd *sc;
+	struct completion *comp;
+	union {
+		struct virtio_scsi_cmd_req       cmd;
+		struct virtio_scsi_cmd_req_pi    cmd_pi;
+		struct virtio_scsi_ctrl_tmf_req  tmf;
+		struct virtio_scsi_ctrl_an_req   an;
+	} req;
+	union {
+		struct virtio_scsi_cmd_resp      cmd;
+		struct virtio_scsi_ctrl_tmf_resp tmf;
+		struct virtio_scsi_ctrl_an_resp  an;
+		struct virtio_scsi_event         evt;
+	} resp;
+} ____cacheline_aligned_in_smp;
 
-काष्ठा virtio_scsi_event_node अणु
-	काष्ठा virtio_scsi *vscsi;
-	काष्ठा virtio_scsi_event event;
-	काष्ठा work_काष्ठा work;
-पूर्ण;
+struct virtio_scsi_event_node {
+	struct virtio_scsi *vscsi;
+	struct virtio_scsi_event event;
+	struct work_struct work;
+};
 
-काष्ठा virtio_scsi_vq अणु
+struct virtio_scsi_vq {
 	/* Protects vq */
 	spinlock_t vq_lock;
 
-	काष्ठा virtqueue *vq;
-पूर्ण;
+	struct virtqueue *vq;
+};
 
 /* Driver instance state */
-काष्ठा virtio_scsi अणु
-	काष्ठा virtio_device *vdev;
+struct virtio_scsi {
+	struct virtio_device *vdev;
 
-	/* Get some buffers पढ़ोy क्रम event vq */
-	काष्ठा virtio_scsi_event_node event_list[VIRTIO_SCSI_EVENT_LEN];
+	/* Get some buffers ready for event vq */
+	struct virtio_scsi_event_node event_list[VIRTIO_SCSI_EVENT_LEN];
 
 	u32 num_queues;
 
-	काष्ठा hlist_node node;
+	struct hlist_node node;
 
 	/* Protected by event_vq lock */
 	bool stop_events;
 
-	काष्ठा virtio_scsi_vq ctrl_vq;
-	काष्ठा virtio_scsi_vq event_vq;
-	काष्ठा virtio_scsi_vq req_vqs[];
-पूर्ण;
+	struct virtio_scsi_vq ctrl_vq;
+	struct virtio_scsi_vq event_vq;
+	struct virtio_scsi_vq req_vqs[];
+};
 
-अटल काष्ठा kmem_cache *virtscsi_cmd_cache;
-अटल mempool_t *virtscsi_cmd_pool;
+static struct kmem_cache *virtscsi_cmd_cache;
+static mempool_t *virtscsi_cmd_pool;
 
-अटल अंतरभूत काष्ठा Scsi_Host *virtio_scsi_host(काष्ठा virtio_device *vdev)
-अणु
-	वापस vdev->priv;
-पूर्ण
+static inline struct Scsi_Host *virtio_scsi_host(struct virtio_device *vdev)
+{
+	return vdev->priv;
+}
 
-अटल व्योम virtscsi_compute_resid(काष्ठा scsi_cmnd *sc, u32 resid)
-अणु
-	अगर (resid)
+static void virtscsi_compute_resid(struct scsi_cmnd *sc, u32 resid)
+{
+	if (resid)
 		scsi_set_resid(sc, resid);
-पूर्ण
+}
 
 /*
- * virtscsi_complete_cmd - finish a scsi_cmd and invoke scsi_करोne
+ * virtscsi_complete_cmd - finish a scsi_cmd and invoke scsi_done
  *
  * Called with vq_lock held.
  */
-अटल व्योम virtscsi_complete_cmd(काष्ठा virtio_scsi *vscsi, व्योम *buf)
-अणु
-	काष्ठा virtio_scsi_cmd *cmd = buf;
-	काष्ठा scsi_cmnd *sc = cmd->sc;
-	काष्ठा virtio_scsi_cmd_resp *resp = &cmd->resp.cmd;
+static void virtscsi_complete_cmd(struct virtio_scsi *vscsi, void *buf)
+{
+	struct virtio_scsi_cmd *cmd = buf;
+	struct scsi_cmnd *sc = cmd->sc;
+	struct virtio_scsi_cmd_resp *resp = &cmd->resp.cmd;
 
 	dev_dbg(&sc->device->sdev_gendev,
 		"cmd %p response %u status %#02x sense_len %u\n",
@@ -118,455 +117,455 @@
 
 	sc->result = resp->status;
 	virtscsi_compute_resid(sc, virtio32_to_cpu(vscsi->vdev, resp->resid));
-	चयन (resp->response) अणु
-	हाल VIRTIO_SCSI_S_OK:
+	switch (resp->response) {
+	case VIRTIO_SCSI_S_OK:
 		set_host_byte(sc, DID_OK);
-		अवरोध;
-	हाल VIRTIO_SCSI_S_OVERRUN:
+		break;
+	case VIRTIO_SCSI_S_OVERRUN:
 		set_host_byte(sc, DID_ERROR);
-		अवरोध;
-	हाल VIRTIO_SCSI_S_ABORTED:
+		break;
+	case VIRTIO_SCSI_S_ABORTED:
 		set_host_byte(sc, DID_ABORT);
-		अवरोध;
-	हाल VIRTIO_SCSI_S_BAD_TARGET:
+		break;
+	case VIRTIO_SCSI_S_BAD_TARGET:
 		set_host_byte(sc, DID_BAD_TARGET);
-		अवरोध;
-	हाल VIRTIO_SCSI_S_RESET:
+		break;
+	case VIRTIO_SCSI_S_RESET:
 		set_host_byte(sc, DID_RESET);
-		अवरोध;
-	हाल VIRTIO_SCSI_S_BUSY:
+		break;
+	case VIRTIO_SCSI_S_BUSY:
 		set_host_byte(sc, DID_BUS_BUSY);
-		अवरोध;
-	हाल VIRTIO_SCSI_S_TRANSPORT_FAILURE:
+		break;
+	case VIRTIO_SCSI_S_TRANSPORT_FAILURE:
 		set_host_byte(sc, DID_TRANSPORT_DISRUPTED);
-		अवरोध;
-	हाल VIRTIO_SCSI_S_TARGET_FAILURE:
+		break;
+	case VIRTIO_SCSI_S_TARGET_FAILURE:
 		set_host_byte(sc, DID_TARGET_FAILURE);
-		अवरोध;
-	हाल VIRTIO_SCSI_S_NEXUS_FAILURE:
+		break;
+	case VIRTIO_SCSI_S_NEXUS_FAILURE:
 		set_host_byte(sc, DID_NEXUS_FAILURE);
-		अवरोध;
-	शेष:
-		scmd_prपूर्णांकk(KERN_WARNING, sc, "Unknown response %d",
+		break;
+	default:
+		scmd_printk(KERN_WARNING, sc, "Unknown response %d",
 			    resp->response);
 		fallthrough;
-	हाल VIRTIO_SCSI_S_FAILURE:
+	case VIRTIO_SCSI_S_FAILURE:
 		set_host_byte(sc, DID_ERROR);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	WARN_ON(virtio32_to_cpu(vscsi->vdev, resp->sense_len) >
 		VIRTIO_SCSI_SENSE_SIZE);
-	अगर (sc->sense_buffer) अणु
-		स_नकल(sc->sense_buffer, resp->sense,
+	if (sc->sense_buffer) {
+		memcpy(sc->sense_buffer, resp->sense,
 		       min_t(u32,
 			     virtio32_to_cpu(vscsi->vdev, resp->sense_len),
 			     VIRTIO_SCSI_SENSE_SIZE));
-		अगर (resp->sense_len)
+		if (resp->sense_len)
 			set_driver_byte(sc, DRIVER_SENSE);
-	पूर्ण
+	}
 
-	sc->scsi_करोne(sc);
-पूर्ण
+	sc->scsi_done(sc);
+}
 
-अटल व्योम virtscsi_vq_करोne(काष्ठा virtio_scsi *vscsi,
-			     काष्ठा virtio_scsi_vq *virtscsi_vq,
-			     व्योम (*fn)(काष्ठा virtio_scsi *vscsi, व्योम *buf))
-अणु
-	व्योम *buf;
-	अचिन्हित पूर्णांक len;
-	अचिन्हित दीर्घ flags;
-	काष्ठा virtqueue *vq = virtscsi_vq->vq;
+static void virtscsi_vq_done(struct virtio_scsi *vscsi,
+			     struct virtio_scsi_vq *virtscsi_vq,
+			     void (*fn)(struct virtio_scsi *vscsi, void *buf))
+{
+	void *buf;
+	unsigned int len;
+	unsigned long flags;
+	struct virtqueue *vq = virtscsi_vq->vq;
 
 	spin_lock_irqsave(&virtscsi_vq->vq_lock, flags);
-	करो अणु
+	do {
 		virtqueue_disable_cb(vq);
-		जबतक ((buf = virtqueue_get_buf(vq, &len)) != शून्य)
+		while ((buf = virtqueue_get_buf(vq, &len)) != NULL)
 			fn(vscsi, buf);
 
-		अगर (unlikely(virtqueue_is_broken(vq)))
-			अवरोध;
-	पूर्ण जबतक (!virtqueue_enable_cb(vq));
+		if (unlikely(virtqueue_is_broken(vq)))
+			break;
+	} while (!virtqueue_enable_cb(vq));
 	spin_unlock_irqrestore(&virtscsi_vq->vq_lock, flags);
-पूर्ण
+}
 
-अटल व्योम virtscsi_req_करोne(काष्ठा virtqueue *vq)
-अणु
-	काष्ठा Scsi_Host *sh = virtio_scsi_host(vq->vdev);
-	काष्ठा virtio_scsi *vscsi = shost_priv(sh);
-	पूर्णांक index = vq->index - VIRTIO_SCSI_VQ_BASE;
-	काष्ठा virtio_scsi_vq *req_vq = &vscsi->req_vqs[index];
+static void virtscsi_req_done(struct virtqueue *vq)
+{
+	struct Scsi_Host *sh = virtio_scsi_host(vq->vdev);
+	struct virtio_scsi *vscsi = shost_priv(sh);
+	int index = vq->index - VIRTIO_SCSI_VQ_BASE;
+	struct virtio_scsi_vq *req_vq = &vscsi->req_vqs[index];
 
-	virtscsi_vq_करोne(vscsi, req_vq, virtscsi_complete_cmd);
-पूर्ण;
+	virtscsi_vq_done(vscsi, req_vq, virtscsi_complete_cmd);
+};
 
-अटल व्योम virtscsi_poll_requests(काष्ठा virtio_scsi *vscsi)
-अणु
-	पूर्णांक i, num_vqs;
+static void virtscsi_poll_requests(struct virtio_scsi *vscsi)
+{
+	int i, num_vqs;
 
 	num_vqs = vscsi->num_queues;
-	क्रम (i = 0; i < num_vqs; i++)
-		virtscsi_vq_करोne(vscsi, &vscsi->req_vqs[i],
+	for (i = 0; i < num_vqs; i++)
+		virtscsi_vq_done(vscsi, &vscsi->req_vqs[i],
 				 virtscsi_complete_cmd);
-पूर्ण
+}
 
-अटल व्योम virtscsi_complete_मुक्त(काष्ठा virtio_scsi *vscsi, व्योम *buf)
-अणु
-	काष्ठा virtio_scsi_cmd *cmd = buf;
+static void virtscsi_complete_free(struct virtio_scsi *vscsi, void *buf)
+{
+	struct virtio_scsi_cmd *cmd = buf;
 
-	अगर (cmd->comp)
+	if (cmd->comp)
 		complete(cmd->comp);
-पूर्ण
+}
 
-अटल व्योम virtscsi_ctrl_करोne(काष्ठा virtqueue *vq)
-अणु
-	काष्ठा Scsi_Host *sh = virtio_scsi_host(vq->vdev);
-	काष्ठा virtio_scsi *vscsi = shost_priv(sh);
+static void virtscsi_ctrl_done(struct virtqueue *vq)
+{
+	struct Scsi_Host *sh = virtio_scsi_host(vq->vdev);
+	struct virtio_scsi *vscsi = shost_priv(sh);
 
-	virtscsi_vq_करोne(vscsi, &vscsi->ctrl_vq, virtscsi_complete_मुक्त);
-पूर्ण;
+	virtscsi_vq_done(vscsi, &vscsi->ctrl_vq, virtscsi_complete_free);
+};
 
-अटल व्योम virtscsi_handle_event(काष्ठा work_काष्ठा *work);
+static void virtscsi_handle_event(struct work_struct *work);
 
-अटल पूर्णांक virtscsi_kick_event(काष्ठा virtio_scsi *vscsi,
-			       काष्ठा virtio_scsi_event_node *event_node)
-अणु
-	पूर्णांक err;
-	काष्ठा scatterlist sg;
-	अचिन्हित दीर्घ flags;
+static int virtscsi_kick_event(struct virtio_scsi *vscsi,
+			       struct virtio_scsi_event_node *event_node)
+{
+	int err;
+	struct scatterlist sg;
+	unsigned long flags;
 
 	INIT_WORK(&event_node->work, virtscsi_handle_event);
-	sg_init_one(&sg, &event_node->event, माप(काष्ठा virtio_scsi_event));
+	sg_init_one(&sg, &event_node->event, sizeof(struct virtio_scsi_event));
 
 	spin_lock_irqsave(&vscsi->event_vq.vq_lock, flags);
 
 	err = virtqueue_add_inbuf(vscsi->event_vq.vq, &sg, 1, event_node,
 				  GFP_ATOMIC);
-	अगर (!err)
+	if (!err)
 		virtqueue_kick(vscsi->event_vq.vq);
 
 	spin_unlock_irqrestore(&vscsi->event_vq.vq_lock, flags);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक virtscsi_kick_event_all(काष्ठा virtio_scsi *vscsi)
-अणु
-	पूर्णांक i;
+static int virtscsi_kick_event_all(struct virtio_scsi *vscsi)
+{
+	int i;
 
-	क्रम (i = 0; i < VIRTIO_SCSI_EVENT_LEN; i++) अणु
+	for (i = 0; i < VIRTIO_SCSI_EVENT_LEN; i++) {
 		vscsi->event_list[i].vscsi = vscsi;
 		virtscsi_kick_event(vscsi, &vscsi->event_list[i]);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम virtscsi_cancel_event_work(काष्ठा virtio_scsi *vscsi)
-अणु
-	पूर्णांक i;
+static void virtscsi_cancel_event_work(struct virtio_scsi *vscsi)
+{
+	int i;
 
-	/* Stop scheduling work beक्रमe calling cancel_work_sync.  */
+	/* Stop scheduling work before calling cancel_work_sync.  */
 	spin_lock_irq(&vscsi->event_vq.vq_lock);
 	vscsi->stop_events = true;
 	spin_unlock_irq(&vscsi->event_vq.vq_lock);
 
-	क्रम (i = 0; i < VIRTIO_SCSI_EVENT_LEN; i++)
+	for (i = 0; i < VIRTIO_SCSI_EVENT_LEN; i++)
 		cancel_work_sync(&vscsi->event_list[i].work);
-पूर्ण
+}
 
-अटल व्योम virtscsi_handle_transport_reset(काष्ठा virtio_scsi *vscsi,
-					    काष्ठा virtio_scsi_event *event)
-अणु
-	काष्ठा scsi_device *sdev;
-	काष्ठा Scsi_Host *shost = virtio_scsi_host(vscsi->vdev);
-	अचिन्हित पूर्णांक target = event->lun[1];
-	अचिन्हित पूर्णांक lun = (event->lun[2] << 8) | event->lun[3];
+static void virtscsi_handle_transport_reset(struct virtio_scsi *vscsi,
+					    struct virtio_scsi_event *event)
+{
+	struct scsi_device *sdev;
+	struct Scsi_Host *shost = virtio_scsi_host(vscsi->vdev);
+	unsigned int target = event->lun[1];
+	unsigned int lun = (event->lun[2] << 8) | event->lun[3];
 
-	चयन (virtio32_to_cpu(vscsi->vdev, event->reason)) अणु
-	हाल VIRTIO_SCSI_EVT_RESET_RESCAN:
-		अगर (lun == 0) अणु
+	switch (virtio32_to_cpu(vscsi->vdev, event->reason)) {
+	case VIRTIO_SCSI_EVT_RESET_RESCAN:
+		if (lun == 0) {
 			scsi_scan_target(&shost->shost_gendev, 0, target,
 					 SCAN_WILD_CARD, SCSI_SCAN_INITIAL);
-		पूर्ण अन्यथा अणु
+		} else {
 			scsi_add_device(shost, 0, target, lun);
-		पूर्ण
-		अवरोध;
-	हाल VIRTIO_SCSI_EVT_RESET_REMOVED:
+		}
+		break;
+	case VIRTIO_SCSI_EVT_RESET_REMOVED:
 		sdev = scsi_device_lookup(shost, 0, target, lun);
-		अगर (sdev) अणु
-			scsi_हटाओ_device(sdev);
+		if (sdev) {
+			scsi_remove_device(sdev);
 			scsi_device_put(sdev);
-		पूर्ण अन्यथा अणु
+		} else {
 			pr_err("SCSI device %d 0 %d %d not found\n",
 				shost->host_no, target, lun);
-		पूर्ण
-		अवरोध;
-	शेष:
+		}
+		break;
+	default:
 		pr_info("Unsupport virtio scsi event reason %x\n", event->reason);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम virtscsi_handle_param_change(काष्ठा virtio_scsi *vscsi,
-					 काष्ठा virtio_scsi_event *event)
-अणु
-	काष्ठा scsi_device *sdev;
-	काष्ठा Scsi_Host *shost = virtio_scsi_host(vscsi->vdev);
-	अचिन्हित पूर्णांक target = event->lun[1];
-	अचिन्हित पूर्णांक lun = (event->lun[2] << 8) | event->lun[3];
+static void virtscsi_handle_param_change(struct virtio_scsi *vscsi,
+					 struct virtio_scsi_event *event)
+{
+	struct scsi_device *sdev;
+	struct Scsi_Host *shost = virtio_scsi_host(vscsi->vdev);
+	unsigned int target = event->lun[1];
+	unsigned int lun = (event->lun[2] << 8) | event->lun[3];
 	u8 asc = virtio32_to_cpu(vscsi->vdev, event->reason) & 255;
 	u8 ascq = virtio32_to_cpu(vscsi->vdev, event->reason) >> 8;
 
 	sdev = scsi_device_lookup(shost, 0, target, lun);
-	अगर (!sdev) अणु
+	if (!sdev) {
 		pr_err("SCSI device %d 0 %d %d not found\n",
 			shost->host_no, target, lun);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/* Handle "Parameters changed", "Mode parameters changed", and
 	   "Capacity data has changed".  */
-	अगर (asc == 0x2a && (ascq == 0x00 || ascq == 0x01 || ascq == 0x09))
+	if (asc == 0x2a && (ascq == 0x00 || ascq == 0x01 || ascq == 0x09))
 		scsi_rescan_device(&sdev->sdev_gendev);
 
 	scsi_device_put(sdev);
-पूर्ण
+}
 
-अटल व्योम virtscsi_rescan_hotunplug(काष्ठा virtio_scsi *vscsi)
-अणु
-	काष्ठा scsi_device *sdev;
-	काष्ठा Scsi_Host *shost = virtio_scsi_host(vscsi->vdev);
-	अचिन्हित अक्षर scsi_cmd[MAX_COMMAND_SIZE];
-	पूर्णांक result, inquiry_len, inq_result_len = 256;
-	अक्षर *inq_result = kदो_स्मृति(inq_result_len, GFP_KERNEL);
+static void virtscsi_rescan_hotunplug(struct virtio_scsi *vscsi)
+{
+	struct scsi_device *sdev;
+	struct Scsi_Host *shost = virtio_scsi_host(vscsi->vdev);
+	unsigned char scsi_cmd[MAX_COMMAND_SIZE];
+	int result, inquiry_len, inq_result_len = 256;
+	char *inq_result = kmalloc(inq_result_len, GFP_KERNEL);
 
-	shost_क्रम_each_device(sdev, shost) अणु
+	shost_for_each_device(sdev, shost) {
 		inquiry_len = sdev->inquiry_len ? sdev->inquiry_len : 36;
 
-		स_रखो(scsi_cmd, 0, माप(scsi_cmd));
+		memset(scsi_cmd, 0, sizeof(scsi_cmd));
 		scsi_cmd[0] = INQUIRY;
-		scsi_cmd[4] = (अचिन्हित अक्षर) inquiry_len;
+		scsi_cmd[4] = (unsigned char) inquiry_len;
 
-		स_रखो(inq_result, 0, inq_result_len);
+		memset(inq_result, 0, inq_result_len);
 
 		result = scsi_execute_req(sdev, scsi_cmd, DMA_FROM_DEVICE,
-					  inq_result, inquiry_len, शून्य,
-					  SD_TIMEOUT, SD_MAX_RETRIES, शून्य);
+					  inq_result, inquiry_len, NULL,
+					  SD_TIMEOUT, SD_MAX_RETRIES, NULL);
 
-		अगर (result == 0 && inq_result[0] >> 5) अणु
+		if (result == 0 && inq_result[0] >> 5) {
 			/* PQ indicates the LUN is not attached */
-			scsi_हटाओ_device(sdev);
-		पूर्ण अन्यथा अगर (host_byte(result) == DID_BAD_TARGET) अणु
+			scsi_remove_device(sdev);
+		} else if (host_byte(result) == DID_BAD_TARGET) {
 			/*
 			 * If all LUNs of a virtio-scsi device are unplugged
 			 * it will respond with BAD TARGET on any INQUIRY
 			 * command.
-			 * Remove the device in this हाल as well.
+			 * Remove the device in this case as well.
 			 */
-			scsi_हटाओ_device(sdev);
-		पूर्ण
-	पूर्ण
+			scsi_remove_device(sdev);
+		}
+	}
 
-	kमुक्त(inq_result);
-पूर्ण
+	kfree(inq_result);
+}
 
-अटल व्योम virtscsi_handle_event(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा virtio_scsi_event_node *event_node =
-		container_of(work, काष्ठा virtio_scsi_event_node, work);
-	काष्ठा virtio_scsi *vscsi = event_node->vscsi;
-	काष्ठा virtio_scsi_event *event = &event_node->event;
+static void virtscsi_handle_event(struct work_struct *work)
+{
+	struct virtio_scsi_event_node *event_node =
+		container_of(work, struct virtio_scsi_event_node, work);
+	struct virtio_scsi *vscsi = event_node->vscsi;
+	struct virtio_scsi_event *event = &event_node->event;
 
-	अगर (event->event &
-	    cpu_to_virtio32(vscsi->vdev, VIRTIO_SCSI_T_EVENTS_MISSED)) अणु
+	if (event->event &
+	    cpu_to_virtio32(vscsi->vdev, VIRTIO_SCSI_T_EVENTS_MISSED)) {
 		event->event &= ~cpu_to_virtio32(vscsi->vdev,
 						   VIRTIO_SCSI_T_EVENTS_MISSED);
 		virtscsi_rescan_hotunplug(vscsi);
 		scsi_scan_host(virtio_scsi_host(vscsi->vdev));
-	पूर्ण
+	}
 
-	चयन (virtio32_to_cpu(vscsi->vdev, event->event)) अणु
-	हाल VIRTIO_SCSI_T_NO_EVENT:
-		अवरोध;
-	हाल VIRTIO_SCSI_T_TRANSPORT_RESET:
+	switch (virtio32_to_cpu(vscsi->vdev, event->event)) {
+	case VIRTIO_SCSI_T_NO_EVENT:
+		break;
+	case VIRTIO_SCSI_T_TRANSPORT_RESET:
 		virtscsi_handle_transport_reset(vscsi, event);
-		अवरोध;
-	हाल VIRTIO_SCSI_T_PARAM_CHANGE:
+		break;
+	case VIRTIO_SCSI_T_PARAM_CHANGE:
 		virtscsi_handle_param_change(vscsi, event);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		pr_err("Unsupport virtio scsi event %x\n", event->event);
-	पूर्ण
+	}
 	virtscsi_kick_event(vscsi, event_node);
-पूर्ण
+}
 
-अटल व्योम virtscsi_complete_event(काष्ठा virtio_scsi *vscsi, व्योम *buf)
-अणु
-	काष्ठा virtio_scsi_event_node *event_node = buf;
+static void virtscsi_complete_event(struct virtio_scsi *vscsi, void *buf)
+{
+	struct virtio_scsi_event_node *event_node = buf;
 
-	अगर (!vscsi->stop_events)
-		queue_work(प्रणाली_मुक्तzable_wq, &event_node->work);
-पूर्ण
+	if (!vscsi->stop_events)
+		queue_work(system_freezable_wq, &event_node->work);
+}
 
-अटल व्योम virtscsi_event_करोne(काष्ठा virtqueue *vq)
-अणु
-	काष्ठा Scsi_Host *sh = virtio_scsi_host(vq->vdev);
-	काष्ठा virtio_scsi *vscsi = shost_priv(sh);
+static void virtscsi_event_done(struct virtqueue *vq)
+{
+	struct Scsi_Host *sh = virtio_scsi_host(vq->vdev);
+	struct virtio_scsi *vscsi = shost_priv(sh);
 
-	virtscsi_vq_करोne(vscsi, &vscsi->event_vq, virtscsi_complete_event);
-पूर्ण;
+	virtscsi_vq_done(vscsi, &vscsi->event_vq, virtscsi_complete_event);
+};
 
-अटल पूर्णांक __virtscsi_add_cmd(काष्ठा virtqueue *vq,
-			    काष्ठा virtio_scsi_cmd *cmd,
-			    माप_प्रकार req_size, माप_प्रकार resp_size)
-अणु
-	काष्ठा scsi_cmnd *sc = cmd->sc;
-	काष्ठा scatterlist *sgs[6], req, resp;
-	काष्ठा sg_table *out, *in;
-	अचिन्हित out_num = 0, in_num = 0;
+static int __virtscsi_add_cmd(struct virtqueue *vq,
+			    struct virtio_scsi_cmd *cmd,
+			    size_t req_size, size_t resp_size)
+{
+	struct scsi_cmnd *sc = cmd->sc;
+	struct scatterlist *sgs[6], req, resp;
+	struct sg_table *out, *in;
+	unsigned out_num = 0, in_num = 0;
 
-	out = in = शून्य;
+	out = in = NULL;
 
-	अगर (sc && sc->sc_data_direction != DMA_NONE) अणु
-		अगर (sc->sc_data_direction != DMA_FROM_DEVICE)
+	if (sc && sc->sc_data_direction != DMA_NONE) {
+		if (sc->sc_data_direction != DMA_FROM_DEVICE)
 			out = &sc->sdb.table;
-		अगर (sc->sc_data_direction != DMA_TO_DEVICE)
+		if (sc->sc_data_direction != DMA_TO_DEVICE)
 			in = &sc->sdb.table;
-	पूर्ण
+	}
 
 	/* Request header.  */
 	sg_init_one(&req, &cmd->req, req_size);
 	sgs[out_num++] = &req;
 
 	/* Data-out buffer.  */
-	अगर (out) अणु
-		/* Place WRITE protection SGLs beक्रमe Data OUT payload */
-		अगर (scsi_prot_sg_count(sc))
+	if (out) {
+		/* Place WRITE protection SGLs before Data OUT payload */
+		if (scsi_prot_sg_count(sc))
 			sgs[out_num++] = scsi_prot_sglist(sc);
 		sgs[out_num++] = out->sgl;
-	पूर्ण
+	}
 
 	/* Response header.  */
 	sg_init_one(&resp, &cmd->resp, resp_size);
 	sgs[out_num + in_num++] = &resp;
 
 	/* Data-in buffer */
-	अगर (in) अणु
-		/* Place READ protection SGLs beक्रमe Data IN payload */
-		अगर (scsi_prot_sg_count(sc))
+	if (in) {
+		/* Place READ protection SGLs before Data IN payload */
+		if (scsi_prot_sg_count(sc))
 			sgs[out_num + in_num++] = scsi_prot_sglist(sc);
 		sgs[out_num + in_num++] = in->sgl;
-	पूर्ण
+	}
 
-	वापस virtqueue_add_sgs(vq, sgs, out_num, in_num, cmd, GFP_ATOMIC);
-पूर्ण
+	return virtqueue_add_sgs(vq, sgs, out_num, in_num, cmd, GFP_ATOMIC);
+}
 
-अटल व्योम virtscsi_kick_vq(काष्ठा virtio_scsi_vq *vq)
-अणु
+static void virtscsi_kick_vq(struct virtio_scsi_vq *vq)
+{
 	bool needs_kick;
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 
 	spin_lock_irqsave(&vq->vq_lock, flags);
 	needs_kick = virtqueue_kick_prepare(vq->vq);
 	spin_unlock_irqrestore(&vq->vq_lock, flags);
 
-	अगर (needs_kick)
-		virtqueue_notअगरy(vq->vq);
-पूर्ण
+	if (needs_kick)
+		virtqueue_notify(vq->vq);
+}
 
 /**
  * virtscsi_add_cmd - add a virtio_scsi_cmd to a virtqueue, optionally kick it
- * @vq		: the काष्ठा virtqueue we're talking about
- * @cmd		: command काष्ठाure
+ * @vq		: the struct virtqueue we're talking about
+ * @cmd		: command structure
  * @req_size	: size of the request buffer
  * @resp_size	: size of the response buffer
  * @kick	: whether to kick the virtqueue immediately
  */
-अटल पूर्णांक virtscsi_add_cmd(काष्ठा virtio_scsi_vq *vq,
-			     काष्ठा virtio_scsi_cmd *cmd,
-			     माप_प्रकार req_size, माप_प्रकार resp_size,
+static int virtscsi_add_cmd(struct virtio_scsi_vq *vq,
+			     struct virtio_scsi_cmd *cmd,
+			     size_t req_size, size_t resp_size,
 			     bool kick)
-अणु
-	अचिन्हित दीर्घ flags;
-	पूर्णांक err;
+{
+	unsigned long flags;
+	int err;
 	bool needs_kick = false;
 
 	spin_lock_irqsave(&vq->vq_lock, flags);
 	err = __virtscsi_add_cmd(vq->vq, cmd, req_size, resp_size);
-	अगर (!err && kick)
+	if (!err && kick)
 		needs_kick = virtqueue_kick_prepare(vq->vq);
 
 	spin_unlock_irqrestore(&vq->vq_lock, flags);
 
-	अगर (needs_kick)
-		virtqueue_notअगरy(vq->vq);
-	वापस err;
-पूर्ण
+	if (needs_kick)
+		virtqueue_notify(vq->vq);
+	return err;
+}
 
-अटल व्योम virtio_scsi_init_hdr(काष्ठा virtio_device *vdev,
-				 काष्ठा virtio_scsi_cmd_req *cmd,
-				 काष्ठा scsi_cmnd *sc)
-अणु
+static void virtio_scsi_init_hdr(struct virtio_device *vdev,
+				 struct virtio_scsi_cmd_req *cmd,
+				 struct scsi_cmnd *sc)
+{
 	cmd->lun[0] = 1;
 	cmd->lun[1] = sc->device->id;
 	cmd->lun[2] = (sc->device->lun >> 8) | 0x40;
 	cmd->lun[3] = sc->device->lun & 0xff;
-	cmd->tag = cpu_to_virtio64(vdev, (अचिन्हित दीर्घ)sc);
+	cmd->tag = cpu_to_virtio64(vdev, (unsigned long)sc);
 	cmd->task_attr = VIRTIO_SCSI_S_SIMPLE;
 	cmd->prio = 0;
 	cmd->crn = 0;
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_BLK_DEV_INTEGRITY
-अटल व्योम virtio_scsi_init_hdr_pi(काष्ठा virtio_device *vdev,
-				    काष्ठा virtio_scsi_cmd_req_pi *cmd_pi,
-				    काष्ठा scsi_cmnd *sc)
-अणु
-	काष्ठा request *rq = sc->request;
-	काष्ठा blk_पूर्णांकegrity *bi;
+#ifdef CONFIG_BLK_DEV_INTEGRITY
+static void virtio_scsi_init_hdr_pi(struct virtio_device *vdev,
+				    struct virtio_scsi_cmd_req_pi *cmd_pi,
+				    struct scsi_cmnd *sc)
+{
+	struct request *rq = sc->request;
+	struct blk_integrity *bi;
 
-	virtio_scsi_init_hdr(vdev, (काष्ठा virtio_scsi_cmd_req *)cmd_pi, sc);
+	virtio_scsi_init_hdr(vdev, (struct virtio_scsi_cmd_req *)cmd_pi, sc);
 
-	अगर (!rq || !scsi_prot_sg_count(sc))
-		वापस;
+	if (!rq || !scsi_prot_sg_count(sc))
+		return;
 
-	bi = blk_get_पूर्णांकegrity(rq->rq_disk);
+	bi = blk_get_integrity(rq->rq_disk);
 
-	अगर (sc->sc_data_direction == DMA_TO_DEVICE)
+	if (sc->sc_data_direction == DMA_TO_DEVICE)
 		cmd_pi->pi_bytesout = cpu_to_virtio32(vdev,
-						      bio_पूर्णांकegrity_bytes(bi,
+						      bio_integrity_bytes(bi,
 							blk_rq_sectors(rq)));
-	अन्यथा अगर (sc->sc_data_direction == DMA_FROM_DEVICE)
+	else if (sc->sc_data_direction == DMA_FROM_DEVICE)
 		cmd_pi->pi_bytesin = cpu_to_virtio32(vdev,
-						     bio_पूर्णांकegrity_bytes(bi,
+						     bio_integrity_bytes(bi,
 							blk_rq_sectors(rq)));
-पूर्ण
-#पूर्ण_अगर
+}
+#endif
 
-अटल काष्ठा virtio_scsi_vq *virtscsi_pick_vq_mq(काष्ठा virtio_scsi *vscsi,
-						  काष्ठा scsi_cmnd *sc)
-अणु
+static struct virtio_scsi_vq *virtscsi_pick_vq_mq(struct virtio_scsi *vscsi,
+						  struct scsi_cmnd *sc)
+{
 	u32 tag = blk_mq_unique_tag(sc->request);
 	u16 hwq = blk_mq_unique_tag_to_hwq(tag);
 
-	वापस &vscsi->req_vqs[hwq];
-पूर्ण
+	return &vscsi->req_vqs[hwq];
+}
 
-अटल पूर्णांक virtscsi_queuecommand(काष्ठा Scsi_Host *shost,
-				 काष्ठा scsi_cmnd *sc)
-अणु
-	काष्ठा virtio_scsi *vscsi = shost_priv(shost);
-	काष्ठा virtio_scsi_vq *req_vq = virtscsi_pick_vq_mq(vscsi, sc);
-	काष्ठा virtio_scsi_cmd *cmd = scsi_cmd_priv(sc);
+static int virtscsi_queuecommand(struct Scsi_Host *shost,
+				 struct scsi_cmnd *sc)
+{
+	struct virtio_scsi *vscsi = shost_priv(shost);
+	struct virtio_scsi_vq *req_vq = virtscsi_pick_vq_mq(vscsi, sc);
+	struct virtio_scsi_cmd *cmd = scsi_cmd_priv(sc);
 	bool kick;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक req_size;
-	पूर्णांक ret;
+	unsigned long flags;
+	int req_size;
+	int ret;
 
 	BUG_ON(scsi_sg_count(sc) > shost->sg_tablesize);
 
-	/* TODO: check feature bit and fail अगर unsupported?  */
-	BUG_ON(sc->sc_data_direction == DMA_BIसूचीECTIONAL);
+	/* TODO: check feature bit and fail if unsupported?  */
+	BUG_ON(sc->sc_data_direction == DMA_BIDIRECTIONAL);
 
 	dev_dbg(&sc->device->sdev_gendev,
 		"cmd %p CDB: %#02x\n", sc, sc->cmnd[0]);
@@ -575,76 +574,76 @@
 
 	BUG_ON(sc->cmd_len > VIRTIO_SCSI_CDB_SIZE);
 
-#अगर_घोषित CONFIG_BLK_DEV_INTEGRITY
-	अगर (virtio_has_feature(vscsi->vdev, VIRTIO_SCSI_F_T10_PI)) अणु
+#ifdef CONFIG_BLK_DEV_INTEGRITY
+	if (virtio_has_feature(vscsi->vdev, VIRTIO_SCSI_F_T10_PI)) {
 		virtio_scsi_init_hdr_pi(vscsi->vdev, &cmd->req.cmd_pi, sc);
-		स_नकल(cmd->req.cmd_pi.cdb, sc->cmnd, sc->cmd_len);
-		req_size = माप(cmd->req.cmd_pi);
-	पूर्ण अन्यथा
-#पूर्ण_अगर
-	अणु
+		memcpy(cmd->req.cmd_pi.cdb, sc->cmnd, sc->cmd_len);
+		req_size = sizeof(cmd->req.cmd_pi);
+	} else
+#endif
+	{
 		virtio_scsi_init_hdr(vscsi->vdev, &cmd->req.cmd, sc);
-		स_नकल(cmd->req.cmd.cdb, sc->cmnd, sc->cmd_len);
-		req_size = माप(cmd->req.cmd);
-	पूर्ण
+		memcpy(cmd->req.cmd.cdb, sc->cmnd, sc->cmd_len);
+		req_size = sizeof(cmd->req.cmd);
+	}
 
 	kick = (sc->flags & SCMD_LAST) != 0;
-	ret = virtscsi_add_cmd(req_vq, cmd, req_size, माप(cmd->resp.cmd), kick);
-	अगर (ret == -EIO) अणु
+	ret = virtscsi_add_cmd(req_vq, cmd, req_size, sizeof(cmd->resp.cmd), kick);
+	if (ret == -EIO) {
 		cmd->resp.cmd.response = VIRTIO_SCSI_S_BAD_TARGET;
 		spin_lock_irqsave(&req_vq->vq_lock, flags);
 		virtscsi_complete_cmd(vscsi, cmd);
 		spin_unlock_irqrestore(&req_vq->vq_lock, flags);
-	पूर्ण अन्यथा अगर (ret != 0) अणु
-		वापस SCSI_MLQUEUE_HOST_BUSY;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	} else if (ret != 0) {
+		return SCSI_MLQUEUE_HOST_BUSY;
+	}
+	return 0;
+}
 
-अटल पूर्णांक virtscsi_पंचांगf(काष्ठा virtio_scsi *vscsi, काष्ठा virtio_scsi_cmd *cmd)
-अणु
+static int virtscsi_tmf(struct virtio_scsi *vscsi, struct virtio_scsi_cmd *cmd)
+{
 	DECLARE_COMPLETION_ONSTACK(comp);
-	पूर्णांक ret = FAILED;
+	int ret = FAILED;
 
 	cmd->comp = &comp;
-	अगर (virtscsi_add_cmd(&vscsi->ctrl_vq, cmd,
-			      माप cmd->req.पंचांगf, माप cmd->resp.पंचांगf, true) < 0)
-		जाओ out;
+	if (virtscsi_add_cmd(&vscsi->ctrl_vq, cmd,
+			      sizeof cmd->req.tmf, sizeof cmd->resp.tmf, true) < 0)
+		goto out;
 
-	रुको_क्रम_completion(&comp);
-	अगर (cmd->resp.पंचांगf.response == VIRTIO_SCSI_S_OK ||
-	    cmd->resp.पंचांगf.response == VIRTIO_SCSI_S_FUNCTION_SUCCEEDED)
+	wait_for_completion(&comp);
+	if (cmd->resp.tmf.response == VIRTIO_SCSI_S_OK ||
+	    cmd->resp.tmf.response == VIRTIO_SCSI_S_FUNCTION_SUCCEEDED)
 		ret = SUCCESS;
 
 	/*
 	 * The spec guarantees that all requests related to the TMF have
-	 * been completed, but the callback might not have run yet अगर
-	 * we're using independent पूर्णांकerrupts (e.g. MSI).  Poll the
+	 * been completed, but the callback might not have run yet if
+	 * we're using independent interrupts (e.g. MSI).  Poll the
 	 * virtqueues once.
 	 *
-	 * In the पात हाल, sc->scsi_करोne will करो nothing, because
-	 * the block layer must have detected a समयout and as a result
+	 * In the abort case, sc->scsi_done will do nothing, because
+	 * the block layer must have detected a timeout and as a result
 	 * REQ_ATOM_COMPLETE has been set.
 	 */
 	virtscsi_poll_requests(vscsi);
 
 out:
-	mempool_मुक्त(cmd, virtscsi_cmd_pool);
-	वापस ret;
-पूर्ण
+	mempool_free(cmd, virtscsi_cmd_pool);
+	return ret;
+}
 
-अटल पूर्णांक virtscsi_device_reset(काष्ठा scsi_cmnd *sc)
-अणु
-	काष्ठा virtio_scsi *vscsi = shost_priv(sc->device->host);
-	काष्ठा virtio_scsi_cmd *cmd;
+static int virtscsi_device_reset(struct scsi_cmnd *sc)
+{
+	struct virtio_scsi *vscsi = shost_priv(sc->device->host);
+	struct virtio_scsi_cmd *cmd;
 
-	sdev_prपूर्णांकk(KERN_INFO, sc->device, "device reset\n");
+	sdev_printk(KERN_INFO, sc->device, "device reset\n");
 	cmd = mempool_alloc(virtscsi_cmd_pool, GFP_NOIO);
-	अगर (!cmd)
-		वापस FAILED;
+	if (!cmd)
+		return FAILED;
 
-	स_रखो(cmd, 0, माप(*cmd));
-	cmd->req.पंचांगf = (काष्ठा virtio_scsi_ctrl_पंचांगf_req)अणु
+	memset(cmd, 0, sizeof(*cmd));
+	cmd->req.tmf = (struct virtio_scsi_ctrl_tmf_req){
 		.type = VIRTIO_SCSI_T_TMF,
 		.subtype = cpu_to_virtio32(vscsi->vdev,
 					     VIRTIO_SCSI_T_TMF_LOGICAL_UNIT_RESET),
@@ -652,30 +651,30 @@ out:
 		.lun[1] = sc->device->id,
 		.lun[2] = (sc->device->lun >> 8) | 0x40,
 		.lun[3] = sc->device->lun & 0xff,
-	पूर्ण;
-	वापस virtscsi_पंचांगf(vscsi, cmd);
-पूर्ण
+	};
+	return virtscsi_tmf(vscsi, cmd);
+}
 
-अटल पूर्णांक virtscsi_device_alloc(काष्ठा scsi_device *sdevice)
-अणु
+static int virtscsi_device_alloc(struct scsi_device *sdevice)
+{
 	/*
-	 * Passed through SCSI tarमाला_लो (e.g. with qemu's 'scsi-block')
+	 * Passed through SCSI targets (e.g. with qemu's 'scsi-block')
 	 * may have transfer limits which come from the host SCSI
 	 * controller or something on the host side other than the
 	 * target itself.
 	 *
 	 * To make this work properly, the hypervisor can adjust the
-	 * target's VPD inक्रमmation to advertise these limits.  But
-	 * क्रम that to work, the guest has to look at the VPD pages,
-	 * which we won't करो by शेष अगर it is an SPC-2 device, even
-	 * अगर it करोes actually support it.
+	 * target's VPD information to advertise these limits.  But
+	 * for that to work, the guest has to look at the VPD pages,
+	 * which we won't do by default if it is an SPC-2 device, even
+	 * if it does actually support it.
 	 *
-	 * So, set the blist to always try to पढ़ो the VPD pages.
+	 * So, set the blist to always try to read the VPD pages.
 	 */
 	sdevice->sdev_bflags = BLIST_TRY_VPD_PAGES;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
 /**
@@ -683,147 +682,147 @@ out:
  * @sdev:	Virtscsi target whose queue depth to change
  * @qdepth:	New queue depth
  */
-अटल पूर्णांक virtscsi_change_queue_depth(काष्ठा scsi_device *sdev, पूर्णांक qdepth)
-अणु
-	काष्ठा Scsi_Host *shost = sdev->host;
-	पूर्णांक max_depth = shost->cmd_per_lun;
+static int virtscsi_change_queue_depth(struct scsi_device *sdev, int qdepth)
+{
+	struct Scsi_Host *shost = sdev->host;
+	int max_depth = shost->cmd_per_lun;
 
-	वापस scsi_change_queue_depth(sdev, min(max_depth, qdepth));
-पूर्ण
+	return scsi_change_queue_depth(sdev, min(max_depth, qdepth));
+}
 
-अटल पूर्णांक virtscsi_पात(काष्ठा scsi_cmnd *sc)
-अणु
-	काष्ठा virtio_scsi *vscsi = shost_priv(sc->device->host);
-	काष्ठा virtio_scsi_cmd *cmd;
+static int virtscsi_abort(struct scsi_cmnd *sc)
+{
+	struct virtio_scsi *vscsi = shost_priv(sc->device->host);
+	struct virtio_scsi_cmd *cmd;
 
-	scmd_prपूर्णांकk(KERN_INFO, sc, "abort\n");
+	scmd_printk(KERN_INFO, sc, "abort\n");
 	cmd = mempool_alloc(virtscsi_cmd_pool, GFP_NOIO);
-	अगर (!cmd)
-		वापस FAILED;
+	if (!cmd)
+		return FAILED;
 
-	स_रखो(cmd, 0, माप(*cmd));
-	cmd->req.पंचांगf = (काष्ठा virtio_scsi_ctrl_पंचांगf_req)अणु
+	memset(cmd, 0, sizeof(*cmd));
+	cmd->req.tmf = (struct virtio_scsi_ctrl_tmf_req){
 		.type = VIRTIO_SCSI_T_TMF,
 		.subtype = VIRTIO_SCSI_T_TMF_ABORT_TASK,
 		.lun[0] = 1,
 		.lun[1] = sc->device->id,
 		.lun[2] = (sc->device->lun >> 8) | 0x40,
 		.lun[3] = sc->device->lun & 0xff,
-		.tag = cpu_to_virtio64(vscsi->vdev, (अचिन्हित दीर्घ)sc),
-	पूर्ण;
-	वापस virtscsi_पंचांगf(vscsi, cmd);
-पूर्ण
+		.tag = cpu_to_virtio64(vscsi->vdev, (unsigned long)sc),
+	};
+	return virtscsi_tmf(vscsi, cmd);
+}
 
-अटल पूर्णांक virtscsi_map_queues(काष्ठा Scsi_Host *shost)
-अणु
-	काष्ठा virtio_scsi *vscsi = shost_priv(shost);
-	काष्ठा blk_mq_queue_map *qmap = &shost->tag_set.map[HCTX_TYPE_DEFAULT];
+static int virtscsi_map_queues(struct Scsi_Host *shost)
+{
+	struct virtio_scsi *vscsi = shost_priv(shost);
+	struct blk_mq_queue_map *qmap = &shost->tag_set.map[HCTX_TYPE_DEFAULT];
 
-	वापस blk_mq_virtio_map_queues(qmap, vscsi->vdev, 2);
-पूर्ण
+	return blk_mq_virtio_map_queues(qmap, vscsi->vdev, 2);
+}
 
-अटल व्योम virtscsi_commit_rqs(काष्ठा Scsi_Host *shost, u16 hwq)
-अणु
-	काष्ठा virtio_scsi *vscsi = shost_priv(shost);
+static void virtscsi_commit_rqs(struct Scsi_Host *shost, u16 hwq)
+{
+	struct virtio_scsi *vscsi = shost_priv(shost);
 
 	virtscsi_kick_vq(&vscsi->req_vqs[hwq]);
-पूर्ण
+}
 
 /*
  * The host guarantees to respond to each command, although I/O
- * latencies might be higher than on bare metal.  Reset the समयr
- * unconditionally to give the host a chance to perक्रमm EH.
+ * latencies might be higher than on bare metal.  Reset the timer
+ * unconditionally to give the host a chance to perform EH.
  */
-अटल क्रमागत blk_eh_समयr_वापस virtscsi_eh_समयd_out(काष्ठा scsi_cmnd *scmnd)
-अणु
-	वापस BLK_EH_RESET_TIMER;
-पूर्ण
+static enum blk_eh_timer_return virtscsi_eh_timed_out(struct scsi_cmnd *scmnd)
+{
+	return BLK_EH_RESET_TIMER;
+}
 
-अटल काष्ठा scsi_host_ढाँचा virtscsi_host_ढाँचा = अणु
+static struct scsi_host_template virtscsi_host_template = {
 	.module = THIS_MODULE,
 	.name = "Virtio SCSI HBA",
 	.proc_name = "virtio_scsi",
 	.this_id = -1,
-	.cmd_size = माप(काष्ठा virtio_scsi_cmd),
+	.cmd_size = sizeof(struct virtio_scsi_cmd),
 	.queuecommand = virtscsi_queuecommand,
 	.commit_rqs = virtscsi_commit_rqs,
 	.change_queue_depth = virtscsi_change_queue_depth,
-	.eh_पात_handler = virtscsi_पात,
+	.eh_abort_handler = virtscsi_abort,
 	.eh_device_reset_handler = virtscsi_device_reset,
-	.eh_समयd_out = virtscsi_eh_समयd_out,
+	.eh_timed_out = virtscsi_eh_timed_out,
 	.slave_alloc = virtscsi_device_alloc,
 
-	.dma_boundary = अच_पूर्णांक_उच्च,
+	.dma_boundary = UINT_MAX,
 	.map_queues = virtscsi_map_queues,
 	.track_queue_depth = 1,
-पूर्ण;
+};
 
-#घोषणा virtscsi_config_get(vdev, fld) \
-	(अणु \
-		__virtio_native_type(काष्ठा virtio_scsi_config, fld) __val; \
-		virtio_cपढ़ो(vdev, काष्ठा virtio_scsi_config, fld, &__val); \
+#define virtscsi_config_get(vdev, fld) \
+	({ \
+		__virtio_native_type(struct virtio_scsi_config, fld) __val; \
+		virtio_cread(vdev, struct virtio_scsi_config, fld, &__val); \
 		__val; \
-	पूर्ण)
+	})
 
-#घोषणा virtscsi_config_set(vdev, fld, val) \
-	करो अणु \
-		__virtio_native_type(काष्ठा virtio_scsi_config, fld) __val = (val); \
-		virtio_cग_लिखो(vdev, काष्ठा virtio_scsi_config, fld, &__val); \
-	पूर्ण जबतक(0)
+#define virtscsi_config_set(vdev, fld, val) \
+	do { \
+		__virtio_native_type(struct virtio_scsi_config, fld) __val = (val); \
+		virtio_cwrite(vdev, struct virtio_scsi_config, fld, &__val); \
+	} while(0)
 
-अटल व्योम virtscsi_init_vq(काष्ठा virtio_scsi_vq *virtscsi_vq,
-			     काष्ठा virtqueue *vq)
-अणु
+static void virtscsi_init_vq(struct virtio_scsi_vq *virtscsi_vq,
+			     struct virtqueue *vq)
+{
 	spin_lock_init(&virtscsi_vq->vq_lock);
 	virtscsi_vq->vq = vq;
-पूर्ण
+}
 
-अटल व्योम virtscsi_हटाओ_vqs(काष्ठा virtio_device *vdev)
-अणु
+static void virtscsi_remove_vqs(struct virtio_device *vdev)
+{
 	/* Stop all the virtqueues. */
 	vdev->config->reset(vdev);
 	vdev->config->del_vqs(vdev);
-पूर्ण
+}
 
-अटल पूर्णांक virtscsi_init(काष्ठा virtio_device *vdev,
-			 काष्ठा virtio_scsi *vscsi)
-अणु
-	पूर्णांक err;
+static int virtscsi_init(struct virtio_device *vdev,
+			 struct virtio_scsi *vscsi)
+{
+	int err;
 	u32 i;
 	u32 num_vqs;
 	vq_callback_t **callbacks;
-	स्थिर अक्षर **names;
-	काष्ठा virtqueue **vqs;
-	काष्ठा irq_affinity desc = अणु .pre_vectors = 2 पूर्ण;
+	const char **names;
+	struct virtqueue **vqs;
+	struct irq_affinity desc = { .pre_vectors = 2 };
 
 	num_vqs = vscsi->num_queues + VIRTIO_SCSI_VQ_BASE;
-	vqs = kदो_स्मृति_array(num_vqs, माप(काष्ठा virtqueue *), GFP_KERNEL);
-	callbacks = kदो_स्मृति_array(num_vqs, माप(vq_callback_t *),
+	vqs = kmalloc_array(num_vqs, sizeof(struct virtqueue *), GFP_KERNEL);
+	callbacks = kmalloc_array(num_vqs, sizeof(vq_callback_t *),
 				  GFP_KERNEL);
-	names = kदो_स्मृति_array(num_vqs, माप(अक्षर *), GFP_KERNEL);
+	names = kmalloc_array(num_vqs, sizeof(char *), GFP_KERNEL);
 
-	अगर (!callbacks || !vqs || !names) अणु
+	if (!callbacks || !vqs || !names) {
 		err = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	callbacks[0] = virtscsi_ctrl_करोne;
-	callbacks[1] = virtscsi_event_करोne;
+	callbacks[0] = virtscsi_ctrl_done;
+	callbacks[1] = virtscsi_event_done;
 	names[0] = "control";
 	names[1] = "event";
-	क्रम (i = VIRTIO_SCSI_VQ_BASE; i < num_vqs; i++) अणु
-		callbacks[i] = virtscsi_req_करोne;
+	for (i = VIRTIO_SCSI_VQ_BASE; i < num_vqs; i++) {
+		callbacks[i] = virtscsi_req_done;
 		names[i] = "request";
-	पूर्ण
+	}
 
-	/* Discover virtqueues and ग_लिखो inक्रमmation to configuration.  */
+	/* Discover virtqueues and write information to configuration.  */
 	err = virtio_find_vqs(vdev, num_vqs, vqs, callbacks, names, &desc);
-	अगर (err)
-		जाओ out;
+	if (err)
+		goto out;
 
 	virtscsi_init_vq(&vscsi->ctrl_vq, vqs[0]);
 	virtscsi_init_vq(&vscsi->event_vq, vqs[1]);
-	क्रम (i = VIRTIO_SCSI_VQ_BASE; i < num_vqs; i++)
+	for (i = VIRTIO_SCSI_VQ_BASE; i < num_vqs; i++)
 		virtscsi_init_vq(&vscsi->req_vqs[i - VIRTIO_SCSI_VQ_BASE],
 				 vqs[i]);
 
@@ -833,39 +832,39 @@ out:
 	err = 0;
 
 out:
-	kमुक्त(names);
-	kमुक्त(callbacks);
-	kमुक्त(vqs);
-	अगर (err)
-		virtscsi_हटाओ_vqs(vdev);
-	वापस err;
-पूर्ण
+	kfree(names);
+	kfree(callbacks);
+	kfree(vqs);
+	if (err)
+		virtscsi_remove_vqs(vdev);
+	return err;
+}
 
-अटल पूर्णांक virtscsi_probe(काष्ठा virtio_device *vdev)
-अणु
-	काष्ठा Scsi_Host *shost;
-	काष्ठा virtio_scsi *vscsi;
-	पूर्णांक err;
-	u32 sg_elems, num_tarमाला_लो;
+static int virtscsi_probe(struct virtio_device *vdev)
+{
+	struct Scsi_Host *shost;
+	struct virtio_scsi *vscsi;
+	int err;
+	u32 sg_elems, num_targets;
 	u32 cmd_per_lun;
 	u32 num_queues;
 
-	अगर (!vdev->config->get) अणु
+	if (!vdev->config->get) {
 		dev_err(&vdev->dev, "%s failure: config access disabled\n",
 			__func__);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	/* We need to know how many queues beक्रमe we allocate. */
+	/* We need to know how many queues before we allocate. */
 	num_queues = virtscsi_config_get(vdev, num_queues) ? : 1;
-	num_queues = min_t(अचिन्हित पूर्णांक, nr_cpu_ids, num_queues);
+	num_queues = min_t(unsigned int, nr_cpu_ids, num_queues);
 
-	num_tarमाला_लो = virtscsi_config_get(vdev, max_target) + 1;
+	num_targets = virtscsi_config_get(vdev, max_target) + 1;
 
-	shost = scsi_host_alloc(&virtscsi_host_ढाँचा,
-				काष्ठा_size(vscsi, req_vqs, num_queues));
-	अगर (!shost)
-		वापस -ENOMEM;
+	shost = scsi_host_alloc(&virtscsi_host_template,
+				struct_size(vscsi, req_vqs, num_queues));
+	if (!shost)
+		return -ENOMEM;
 
 	sg_elems = virtscsi_config_get(vdev, seg_max) ?: 1;
 	shost->sg_tablesize = sg_elems;
@@ -875,8 +874,8 @@ out:
 	vdev->priv = shost;
 
 	err = virtscsi_init(vdev, vscsi);
-	अगर (err)
-		जाओ virtscsi_init_failed;
+	if (err)
+		goto virtscsi_init_failed;
 
 	shost->can_queue = virtqueue_get_vring_size(vscsi->req_vqs[0].vq);
 
@@ -884,18 +883,18 @@ out:
 	shost->cmd_per_lun = min_t(u32, cmd_per_lun, shost->can_queue);
 	shost->max_sectors = virtscsi_config_get(vdev, max_sectors) ?: 0xFFFF;
 
-	/* LUNs > 256 are reported with क्रमmat 1, so they go in the range
+	/* LUNs > 256 are reported with format 1, so they go in the range
 	 * 16640-32767.
 	 */
 	shost->max_lun = virtscsi_config_get(vdev, max_lun) + 1 + 0x4000;
-	shost->max_id = num_tarमाला_लो;
+	shost->max_id = num_targets;
 	shost->max_channel = 0;
 	shost->max_cmd_len = VIRTIO_SCSI_CDB_SIZE;
 	shost->nr_hw_queues = num_queues;
 
-#अगर_घोषित CONFIG_BLK_DEV_INTEGRITY
-	अगर (virtio_has_feature(vdev, VIRTIO_SCSI_F_T10_PI)) अणु
-		पूर्णांक host_prot;
+#ifdef CONFIG_BLK_DEV_INTEGRITY
+	if (virtio_has_feature(vdev, VIRTIO_SCSI_F_T10_PI)) {
+		int host_prot;
 
 		host_prot = SHOST_DIF_TYPE1_PROTECTION | SHOST_DIF_TYPE2_PROTECTION |
 			    SHOST_DIF_TYPE3_PROTECTION | SHOST_DIX_TYPE1_PROTECTION |
@@ -903,134 +902,134 @@ out:
 
 		scsi_host_set_prot(shost, host_prot);
 		scsi_host_set_guard(shost, SHOST_DIX_GUARD_CRC);
-	पूर्ण
-#पूर्ण_अगर
+	}
+#endif
 
 	err = scsi_add_host(shost, &vdev->dev);
-	अगर (err)
-		जाओ scsi_add_host_failed;
+	if (err)
+		goto scsi_add_host_failed;
 
-	virtio_device_पढ़ोy(vdev);
+	virtio_device_ready(vdev);
 
-	अगर (virtio_has_feature(vdev, VIRTIO_SCSI_F_HOTPLUG))
+	if (virtio_has_feature(vdev, VIRTIO_SCSI_F_HOTPLUG))
 		virtscsi_kick_event_all(vscsi);
 
 	scsi_scan_host(shost);
-	वापस 0;
+	return 0;
 
 scsi_add_host_failed:
 	vdev->config->del_vqs(vdev);
 virtscsi_init_failed:
 	scsi_host_put(shost);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम virtscsi_हटाओ(काष्ठा virtio_device *vdev)
-अणु
-	काष्ठा Scsi_Host *shost = virtio_scsi_host(vdev);
-	काष्ठा virtio_scsi *vscsi = shost_priv(shost);
+static void virtscsi_remove(struct virtio_device *vdev)
+{
+	struct Scsi_Host *shost = virtio_scsi_host(vdev);
+	struct virtio_scsi *vscsi = shost_priv(shost);
 
-	अगर (virtio_has_feature(vdev, VIRTIO_SCSI_F_HOTPLUG))
+	if (virtio_has_feature(vdev, VIRTIO_SCSI_F_HOTPLUG))
 		virtscsi_cancel_event_work(vscsi);
 
-	scsi_हटाओ_host(shost);
-	virtscsi_हटाओ_vqs(vdev);
+	scsi_remove_host(shost);
+	virtscsi_remove_vqs(vdev);
 	scsi_host_put(shost);
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_PM_SLEEP
-अटल पूर्णांक virtscsi_मुक्तze(काष्ठा virtio_device *vdev)
-अणु
-	virtscsi_हटाओ_vqs(vdev);
-	वापस 0;
-पूर्ण
+#ifdef CONFIG_PM_SLEEP
+static int virtscsi_freeze(struct virtio_device *vdev)
+{
+	virtscsi_remove_vqs(vdev);
+	return 0;
+}
 
-अटल पूर्णांक virtscsi_restore(काष्ठा virtio_device *vdev)
-अणु
-	काष्ठा Scsi_Host *sh = virtio_scsi_host(vdev);
-	काष्ठा virtio_scsi *vscsi = shost_priv(sh);
-	पूर्णांक err;
+static int virtscsi_restore(struct virtio_device *vdev)
+{
+	struct Scsi_Host *sh = virtio_scsi_host(vdev);
+	struct virtio_scsi *vscsi = shost_priv(sh);
+	int err;
 
 	err = virtscsi_init(vdev, vscsi);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	virtio_device_पढ़ोy(vdev);
+	virtio_device_ready(vdev);
 
-	अगर (virtio_has_feature(vdev, VIRTIO_SCSI_F_HOTPLUG))
+	if (virtio_has_feature(vdev, VIRTIO_SCSI_F_HOTPLUG))
 		virtscsi_kick_event_all(vscsi);
 
-	वापस err;
-पूर्ण
-#पूर्ण_अगर
+	return err;
+}
+#endif
 
-अटल काष्ठा virtio_device_id id_table[] = अणु
-	अणु VIRTIO_ID_SCSI, VIRTIO_DEV_ANY_ID पूर्ण,
-	अणु 0 पूर्ण,
-पूर्ण;
+static struct virtio_device_id id_table[] = {
+	{ VIRTIO_ID_SCSI, VIRTIO_DEV_ANY_ID },
+	{ 0 },
+};
 
-अटल अचिन्हित पूर्णांक features[] = अणु
+static unsigned int features[] = {
 	VIRTIO_SCSI_F_HOTPLUG,
 	VIRTIO_SCSI_F_CHANGE,
-#अगर_घोषित CONFIG_BLK_DEV_INTEGRITY
+#ifdef CONFIG_BLK_DEV_INTEGRITY
 	VIRTIO_SCSI_F_T10_PI,
-#पूर्ण_अगर
-पूर्ण;
+#endif
+};
 
-अटल काष्ठा virtio_driver virtio_scsi_driver = अणु
+static struct virtio_driver virtio_scsi_driver = {
 	.feature_table = features,
 	.feature_table_size = ARRAY_SIZE(features),
 	.driver.name = KBUILD_MODNAME,
 	.driver.owner = THIS_MODULE,
 	.id_table = id_table,
 	.probe = virtscsi_probe,
-#अगर_घोषित CONFIG_PM_SLEEP
-	.मुक्तze = virtscsi_मुक्तze,
+#ifdef CONFIG_PM_SLEEP
+	.freeze = virtscsi_freeze,
 	.restore = virtscsi_restore,
-#पूर्ण_अगर
-	.हटाओ = virtscsi_हटाओ,
-पूर्ण;
+#endif
+	.remove = virtscsi_remove,
+};
 
-अटल पूर्णांक __init init(व्योम)
-अणु
-	पूर्णांक ret = -ENOMEM;
+static int __init init(void)
+{
+	int ret = -ENOMEM;
 
 	virtscsi_cmd_cache = KMEM_CACHE(virtio_scsi_cmd, 0);
-	अगर (!virtscsi_cmd_cache) अणु
+	if (!virtscsi_cmd_cache) {
 		pr_err("kmem_cache_create() for virtscsi_cmd_cache failed\n");
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
 
 	virtscsi_cmd_pool =
 		mempool_create_slab_pool(VIRTIO_SCSI_MEMPOOL_SZ,
 					 virtscsi_cmd_cache);
-	अगर (!virtscsi_cmd_pool) अणु
+	if (!virtscsi_cmd_pool) {
 		pr_err("mempool_create() for virtscsi_cmd_pool failed\n");
-		जाओ error;
-	पूर्ण
-	ret = रेजिस्टर_virtio_driver(&virtio_scsi_driver);
-	अगर (ret < 0)
-		जाओ error;
+		goto error;
+	}
+	ret = register_virtio_driver(&virtio_scsi_driver);
+	if (ret < 0)
+		goto error;
 
-	वापस 0;
+	return 0;
 
 error:
 	mempool_destroy(virtscsi_cmd_pool);
-	virtscsi_cmd_pool = शून्य;
+	virtscsi_cmd_pool = NULL;
 	kmem_cache_destroy(virtscsi_cmd_cache);
-	virtscsi_cmd_cache = शून्य;
-	वापस ret;
-पूर्ण
+	virtscsi_cmd_cache = NULL;
+	return ret;
+}
 
-अटल व्योम __निकास fini(व्योम)
-अणु
-	unरेजिस्टर_virtio_driver(&virtio_scsi_driver);
+static void __exit fini(void)
+{
+	unregister_virtio_driver(&virtio_scsi_driver);
 	mempool_destroy(virtscsi_cmd_pool);
 	kmem_cache_destroy(virtscsi_cmd_cache);
-पूर्ण
+}
 module_init(init);
-module_निकास(fini);
+module_exit(fini);
 
 MODULE_DEVICE_TABLE(virtio, id_table);
 MODULE_DESCRIPTION("Virtio SCSI HBA driver");

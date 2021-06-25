@@ -1,8 +1,7 @@
-<शैली गुरु>
 /*
  *  Copyright (c) 2008 Silicon Graphics, Inc.  All Rights Reserved.
  *
- *  This program is मुक्त software; you can redistribute it and/or modअगरy
+ *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU Lesser General Public License as published by
  *  the Free Software Foundation; either version 2.1 of the License, or
  *  (at your option) any later version.
@@ -10,145 +9,145 @@
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU Lesser General Public License क्रम more details.
+ *  GNU Lesser General Public License for more details.
  *
  *  You should have received a copy of the GNU Lesser General Public License
- *  aदीर्घ with this program; अगर not, ग_लिखो to the Free Software
+ *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
  */
 
-#अगर_अघोषित __GRULIB_H__
-#घोषणा __GRULIB_H__
+#ifndef __GRULIB_H__
+#define __GRULIB_H__
 
-#घोषणा GRU_BASENAME		"gru"
-#घोषणा GRU_FULLNAME		"/dev/gru"
-#घोषणा GRU_IOCTL_NUM 		 'G'
+#define GRU_BASENAME		"gru"
+#define GRU_FULLNAME		"/dev/gru"
+#define GRU_IOCTL_NUM 		 'G'
 
 /*
- * Maximum number of GRU segments that a user can have खोलो
- * ZZZ temp - set high क्रम testing. Revisit.
+ * Maximum number of GRU segments that a user can have open
+ * ZZZ temp - set high for testing. Revisit.
  */
-#घोषणा GRU_MAX_OPEN_CONTEXTS		32
+#define GRU_MAX_OPEN_CONTEXTS		32
 
 /* Set Number of Request Blocks */
-#घोषणा GRU_CREATE_CONTEXT		_IOWR(GRU_IOCTL_NUM, 1, व्योम *)
+#define GRU_CREATE_CONTEXT		_IOWR(GRU_IOCTL_NUM, 1, void *)
 
 /*  Set Context Options */
-#घोषणा GRU_SET_CONTEXT_OPTION		_IOWR(GRU_IOCTL_NUM, 4, व्योम *)
+#define GRU_SET_CONTEXT_OPTION		_IOWR(GRU_IOCTL_NUM, 4, void *)
 
 /* Fetch exception detail */
-#घोषणा GRU_USER_GET_EXCEPTION_DETAIL	_IOWR(GRU_IOCTL_NUM, 6, व्योम *)
+#define GRU_USER_GET_EXCEPTION_DETAIL	_IOWR(GRU_IOCTL_NUM, 6, void *)
 
 /* For user call_os handling - normally a TLB fault */
-#घोषणा GRU_USER_CALL_OS		_IOWR(GRU_IOCTL_NUM, 8, व्योम *)
+#define GRU_USER_CALL_OS		_IOWR(GRU_IOCTL_NUM, 8, void *)
 
 /* For user unload context */
-#घोषणा GRU_USER_UNLOAD_CONTEXT		_IOWR(GRU_IOCTL_NUM, 9, व्योम *)
+#define GRU_USER_UNLOAD_CONTEXT		_IOWR(GRU_IOCTL_NUM, 9, void *)
 
 /* For dumpping GRU chiplet state */
-#घोषणा GRU_DUMP_CHIPLET_STATE		_IOWR(GRU_IOCTL_NUM, 11, व्योम *)
+#define GRU_DUMP_CHIPLET_STATE		_IOWR(GRU_IOCTL_NUM, 11, void *)
 
 /* For getting gseg statistics */
-#घोषणा GRU_GET_GSEG_STATISTICS		_IOWR(GRU_IOCTL_NUM, 12, व्योम *)
+#define GRU_GET_GSEG_STATISTICS		_IOWR(GRU_IOCTL_NUM, 12, void *)
 
-/* For user TLB flushing (primarily क्रम tests) */
-#घोषणा GRU_USER_FLUSH_TLB		_IOWR(GRU_IOCTL_NUM, 50, व्योम *)
+/* For user TLB flushing (primarily for tests) */
+#define GRU_USER_FLUSH_TLB		_IOWR(GRU_IOCTL_NUM, 50, void *)
 
-/* Get some config options (primarily क्रम tests & emulator) */
-#घोषणा GRU_GET_CONFIG_INFO		_IOWR(GRU_IOCTL_NUM, 51, व्योम *)
+/* Get some config options (primarily for tests & emulator) */
+#define GRU_GET_CONFIG_INFO		_IOWR(GRU_IOCTL_NUM, 51, void *)
 
 /* Various kernel self-tests */
-#घोषणा GRU_KTEST			_IOWR(GRU_IOCTL_NUM, 52, व्योम *)
+#define GRU_KTEST			_IOWR(GRU_IOCTL_NUM, 52, void *)
 
-#घोषणा CONTEXT_WINDOW_BYTES(th)        (GRU_GSEG_PAGESIZE * (th))
-#घोषणा THREAD_POINTER(p, th)		(p + GRU_GSEG_PAGESIZE * (th))
-#घोषणा GSEG_START(cb)			((व्योम *)((अचिन्हित दीर्घ)(cb) & ~(GRU_GSEG_PAGESIZE - 1)))
+#define CONTEXT_WINDOW_BYTES(th)        (GRU_GSEG_PAGESIZE * (th))
+#define THREAD_POINTER(p, th)		(p + GRU_GSEG_PAGESIZE * (th))
+#define GSEG_START(cb)			((void *)((unsigned long)(cb) & ~(GRU_GSEG_PAGESIZE - 1)))
 
-काष्ठा gru_get_gseg_statistics_req अणु
-	अचिन्हित दीर्घ			gseg;
-	काष्ठा gru_gseg_statistics	stats;
-पूर्ण;
+struct gru_get_gseg_statistics_req {
+	unsigned long			gseg;
+	struct gru_gseg_statistics	stats;
+};
 
 /*
  * Structure used to pass TLB flush parameters to the driver
  */
-काष्ठा gru_create_context_req अणु
-	अचिन्हित दीर्घ		gseg;
-	अचिन्हित पूर्णांक		data_segment_bytes;
-	अचिन्हित पूर्णांक		control_blocks;
-	अचिन्हित पूर्णांक		maximum_thपढ़ो_count;
-	अचिन्हित पूर्णांक		options;
-	अचिन्हित अक्षर		tlb_preload_count;
-पूर्ण;
+struct gru_create_context_req {
+	unsigned long		gseg;
+	unsigned int		data_segment_bytes;
+	unsigned int		control_blocks;
+	unsigned int		maximum_thread_count;
+	unsigned int		options;
+	unsigned char		tlb_preload_count;
+};
 
 /*
  * Structure used to pass unload context parameters to the driver
  */
-काष्ठा gru_unload_context_req अणु
-	अचिन्हित दीर्घ	gseg;
-पूर्ण;
+struct gru_unload_context_req {
+	unsigned long	gseg;
+};
 
 /*
  * Structure used to set context options
  */
-क्रमागत अणुsco_gseg_owner, sco_cch_req_slice, sco_blade_chipletपूर्ण;
-काष्ठा gru_set_context_option_req अणु
-	अचिन्हित दीर्घ	gseg;
-	पूर्णांक		op;
-	पूर्णांक		val0;
-	दीर्घ		val1;
-पूर्ण;
+enum {sco_gseg_owner, sco_cch_req_slice, sco_blade_chiplet};
+struct gru_set_context_option_req {
+	unsigned long	gseg;
+	int		op;
+	int		val0;
+	long		val1;
+};
 
 /*
  * Structure used to pass TLB flush parameters to the driver
  */
-काष्ठा gru_flush_tlb_req अणु
-	अचिन्हित दीर्घ	gseg;
-	अचिन्हित दीर्घ	vaddr;
-	माप_प्रकार		len;
-पूर्ण;
+struct gru_flush_tlb_req {
+	unsigned long	gseg;
+	unsigned long	vaddr;
+	size_t		len;
+};
 
 /*
  * Structure used to pass TLB flush parameters to the driver
  */
-क्रमागत अणुdcs_pid, dcs_gidपूर्ण;
-काष्ठा gru_dump_chiplet_state_req अणु
-	अचिन्हित पूर्णांक	op;
-	अचिन्हित पूर्णांक	gid;
-	पूर्णांक		ctxnum;
-	अक्षर		data_opt;
-	अक्षर		lock_cch;
-	अक्षर		flush_cbrs;
-	अक्षर		fill[10];
+enum {dcs_pid, dcs_gid};
+struct gru_dump_chiplet_state_req {
+	unsigned int	op;
+	unsigned int	gid;
+	int		ctxnum;
+	char		data_opt;
+	char		lock_cch;
+	char		flush_cbrs;
+	char		fill[10];
 	pid_t		pid;
-	व्योम		*buf;
-	माप_प्रकार		buflen;
+	void		*buf;
+	size_t		buflen;
 	/* ---- output --- */
-	अचिन्हित पूर्णांक	num_contexts;
-पूर्ण;
+	unsigned int	num_contexts;
+};
 
-#घोषणा GRU_DUMP_MAGIC	0x3474ab6c
-काष्ठा gru_dump_context_header अणु
-	अचिन्हित पूर्णांक	magic;
-	अचिन्हित पूर्णांक	gid;
-	अचिन्हित अक्षर	ctxnum;
-	अचिन्हित अक्षर	cbrcnt;
-	अचिन्हित अक्षर	dsrcnt;
+#define GRU_DUMP_MAGIC	0x3474ab6c
+struct gru_dump_context_header {
+	unsigned int	magic;
+	unsigned int	gid;
+	unsigned char	ctxnum;
+	unsigned char	cbrcnt;
+	unsigned char	dsrcnt;
 	pid_t		pid;
-	अचिन्हित दीर्घ	vaddr;
-	पूर्णांक		cch_locked;
-	अचिन्हित दीर्घ	data[];
-पूर्ण;
+	unsigned long	vaddr;
+	int		cch_locked;
+	unsigned long	data[];
+};
 
 /*
- * GRU configuration info (temp - क्रम testing)
+ * GRU configuration info (temp - for testing)
  */
-काष्ठा gru_config_info अणु
-	पूर्णांक		cpus;
-	पूर्णांक		blades;
-	पूर्णांक		nodes;
-	पूर्णांक		chiplets;
-	पूर्णांक		fill[16];
-पूर्ण;
+struct gru_config_info {
+	int		cpus;
+	int		blades;
+	int		nodes;
+	int		chiplets;
+	int		fill[16];
+};
 
-#पूर्ण_अगर /* __GRULIB_H__ */
+#endif /* __GRULIB_H__ */

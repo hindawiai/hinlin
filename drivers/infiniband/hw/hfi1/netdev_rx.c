@@ -1,83 +1,82 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: (GPL-2.0 OR BSD-3-Clause)
+// SPDX-License-Identifier: (GPL-2.0 OR BSD-3-Clause)
 /*
  * Copyright(c) 2020 Intel Corporation.
  *
  */
 
 /*
- * This file contains HFI1 support क्रम netdev RX functionality
+ * This file contains HFI1 support for netdev RX functionality
  */
 
-#समावेश "sdma.h"
-#समावेश "verbs.h"
-#समावेश "netdev.h"
-#समावेश "hfi.h"
+#include "sdma.h"
+#include "verbs.h"
+#include "netdev.h"
+#include "hfi.h"
 
-#समावेश <linux/netdevice.h>
-#समावेश <linux/etherdevice.h>
-#समावेश <rdma/ib_verbs.h>
+#include <linux/netdevice.h>
+#include <linux/etherdevice.h>
+#include <rdma/ib_verbs.h>
 
-अटल पूर्णांक hfi1_netdev_setup_ctxt(काष्ठा hfi1_netdev_rx *rx,
-				  काष्ठा hfi1_ctxtdata *uctxt)
-अणु
-	अचिन्हित पूर्णांक rcvctrl_ops;
-	काष्ठा hfi1_devdata *dd = rx->dd;
-	पूर्णांक ret;
+static int hfi1_netdev_setup_ctxt(struct hfi1_netdev_rx *rx,
+				  struct hfi1_ctxtdata *uctxt)
+{
+	unsigned int rcvctrl_ops;
+	struct hfi1_devdata *dd = rx->dd;
+	int ret;
 
 	uctxt->rhf_rcv_function_map = netdev_rhf_rcv_functions;
-	uctxt->करो_पूर्णांकerrupt = &handle_receive_पूर्णांकerrupt_napi_sp;
+	uctxt->do_interrupt = &handle_receive_interrupt_napi_sp;
 
 	/* Now allocate the RcvHdr queue and eager buffers. */
 	ret = hfi1_create_rcvhdrq(dd, uctxt);
-	अगर (ret)
-		जाओ करोne;
+	if (ret)
+		goto done;
 
 	ret = hfi1_setup_eagerbufs(uctxt);
-	अगर (ret)
-		जाओ करोne;
+	if (ret)
+		goto done;
 
 	clear_rcvhdrtail(uctxt);
 
 	rcvctrl_ops = HFI1_RCVCTRL_CTXT_DIS;
 	rcvctrl_ops |= HFI1_RCVCTRL_INTRAVAIL_DIS;
 
-	अगर (!HFI1_CAP_KGET_MASK(uctxt->flags, MULTI_PKT_EGR))
+	if (!HFI1_CAP_KGET_MASK(uctxt->flags, MULTI_PKT_EGR))
 		rcvctrl_ops |= HFI1_RCVCTRL_ONE_PKT_EGR_ENB;
-	अगर (HFI1_CAP_KGET_MASK(uctxt->flags, NODROP_EGR_FULL))
+	if (HFI1_CAP_KGET_MASK(uctxt->flags, NODROP_EGR_FULL))
 		rcvctrl_ops |= HFI1_RCVCTRL_NO_EGR_DROP_ENB;
-	अगर (HFI1_CAP_KGET_MASK(uctxt->flags, NODROP_RHQ_FULL))
+	if (HFI1_CAP_KGET_MASK(uctxt->flags, NODROP_RHQ_FULL))
 		rcvctrl_ops |= HFI1_RCVCTRL_NO_RHQ_DROP_ENB;
-	अगर (HFI1_CAP_KGET_MASK(uctxt->flags, DMA_RTAIL))
+	if (HFI1_CAP_KGET_MASK(uctxt->flags, DMA_RTAIL))
 		rcvctrl_ops |= HFI1_RCVCTRL_TAILUPD_ENB;
 
 	hfi1_rcvctrl(uctxt->dd, rcvctrl_ops, uctxt);
-करोne:
-	वापस ret;
-पूर्ण
+done:
+	return ret;
+}
 
-अटल पूर्णांक hfi1_netdev_allocate_ctxt(काष्ठा hfi1_devdata *dd,
-				     काष्ठा hfi1_ctxtdata **ctxt)
-अणु
-	काष्ठा hfi1_ctxtdata *uctxt;
-	पूर्णांक ret;
+static int hfi1_netdev_allocate_ctxt(struct hfi1_devdata *dd,
+				     struct hfi1_ctxtdata **ctxt)
+{
+	struct hfi1_ctxtdata *uctxt;
+	int ret;
 
-	अगर (dd->flags & HFI1_FROZEN)
-		वापस -EIO;
+	if (dd->flags & HFI1_FROZEN)
+		return -EIO;
 
 	ret = hfi1_create_ctxtdata(dd->pport, dd->node, &uctxt);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dd_dev_err(dd, "Unable to create ctxtdata, failing open\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	uctxt->flags = HFI1_CAP_KGET(MULTI_PKT_EGR) |
 		HFI1_CAP_KGET(NODROP_RHQ_FULL) |
 		HFI1_CAP_KGET(NODROP_EGR_FULL) |
 		HFI1_CAP_KGET(DMA_RTAIL);
 	/* Netdev contexts are always NO_RDMA_RTAIL */
-	uctxt->fast_handler = handle_receive_पूर्णांकerrupt_napi_fp;
-	uctxt->slow_handler = handle_receive_पूर्णांकerrupt_napi_sp;
+	uctxt->fast_handler = handle_receive_interrupt_napi_fp;
+	uctxt->slow_handler = handle_receive_interrupt_napi_sp;
 	hfi1_set_seq_cnt(uctxt, 1);
 	uctxt->is_vnic = true;
 
@@ -86,17 +85,17 @@
 	dd_dev_info(dd, "created netdev context %d\n", uctxt->ctxt);
 	*ctxt = uctxt;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम hfi1_netdev_deallocate_ctxt(काष्ठा hfi1_devdata *dd,
-					काष्ठा hfi1_ctxtdata *uctxt)
-अणु
+static void hfi1_netdev_deallocate_ctxt(struct hfi1_devdata *dd,
+					struct hfi1_ctxtdata *uctxt)
+{
 	flush_wc();
 
 	/*
-	 * Disable receive context and पूर्णांकerrupt available, reset all
-	 * RcvCtxtCtrl bits to शेष values.
+	 * Disable receive context and interrupt available, reset all
+	 * RcvCtxtCtrl bits to default values.
 	 */
 	hfi1_rcvctrl(dd, HFI1_RCVCTRL_CTXT_DIS |
 		     HFI1_RCVCTRL_TIDFLOW_DIS |
@@ -105,10 +104,10 @@
 		     HFI1_RCVCTRL_NO_RHQ_DROP_DIS |
 		     HFI1_RCVCTRL_NO_EGR_DROP_DIS, uctxt);
 
-	अगर (uctxt->msix_पूर्णांकr != CCE_NUM_MSIX_VECTORS)
-		msix_मुक्त_irq(dd, uctxt->msix_पूर्णांकr);
+	if (uctxt->msix_intr != CCE_NUM_MSIX_VECTORS)
+		msix_free_irq(dd, uctxt->msix_intr);
 
-	uctxt->msix_पूर्णांकr = CCE_NUM_MSIX_VECTORS;
+	uctxt->msix_intr = CCE_NUM_MSIX_VECTORS;
 	uctxt->event_flags = 0;
 
 	hfi1_clear_tids(uctxt);
@@ -116,96 +115,96 @@
 
 	hfi1_stats.sps_ctxts--;
 
-	hfi1_मुक्त_ctxt(uctxt);
-पूर्ण
+	hfi1_free_ctxt(uctxt);
+}
 
-अटल पूर्णांक hfi1_netdev_allot_ctxt(काष्ठा hfi1_netdev_rx *rx,
-				  काष्ठा hfi1_ctxtdata **ctxt)
-अणु
-	पूर्णांक rc;
-	काष्ठा hfi1_devdata *dd = rx->dd;
+static int hfi1_netdev_allot_ctxt(struct hfi1_netdev_rx *rx,
+				  struct hfi1_ctxtdata **ctxt)
+{
+	int rc;
+	struct hfi1_devdata *dd = rx->dd;
 
 	rc = hfi1_netdev_allocate_ctxt(dd, ctxt);
-	अगर (rc) अणु
+	if (rc) {
 		dd_dev_err(dd, "netdev ctxt alloc failed %d\n", rc);
-		वापस rc;
-	पूर्ण
+		return rc;
+	}
 
 	rc = hfi1_netdev_setup_ctxt(rx, *ctxt);
-	अगर (rc) अणु
+	if (rc) {
 		dd_dev_err(dd, "netdev ctxt setup failed %d\n", rc);
 		hfi1_netdev_deallocate_ctxt(dd, *ctxt);
-		*ctxt = शून्य;
-	पूर्ण
+		*ctxt = NULL;
+	}
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /**
  * hfi1_num_netdev_contexts - Count of netdev recv contexts to use.
  * @dd: device on which to allocate netdev contexts
  * @available_contexts: count of available receive contexts
- * @cpu_mask: mask of possible cpus to include क्रम contexts
+ * @cpu_mask: mask of possible cpus to include for contexts
  *
- * Return: count of physical cores on a node or the reमुख्यing available recv
- * contexts क्रम netdev recv context usage up to the maximum of
+ * Return: count of physical cores on a node or the remaining available recv
+ * contexts for netdev recv context usage up to the maximum of
  * HFI1_MAX_NETDEV_CTXTS.
- * A value of 0 can be वापसed when acceleration is explicitly turned off,
+ * A value of 0 can be returned when acceleration is explicitly turned off,
  * a memory allocation error occurs or when there are no available contexts.
  *
  */
-u32 hfi1_num_netdev_contexts(काष्ठा hfi1_devdata *dd, u32 available_contexts,
-			     काष्ठा cpumask *cpu_mask)
-अणु
+u32 hfi1_num_netdev_contexts(struct hfi1_devdata *dd, u32 available_contexts,
+			     struct cpumask *cpu_mask)
+{
 	cpumask_var_t node_cpu_mask;
-	अचिन्हित पूर्णांक available_cpus;
+	unsigned int available_cpus;
 
-	अगर (!HFI1_CAP_IS_KSET(AIP))
-		वापस 0;
+	if (!HFI1_CAP_IS_KSET(AIP))
+		return 0;
 
 	/* Always give user contexts priority over netdev contexts */
-	अगर (available_contexts == 0) अणु
+	if (available_contexts == 0) {
 		dd_dev_info(dd, "No receive contexts available for netdevs.\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (!zalloc_cpumask_var(&node_cpu_mask, GFP_KERNEL)) अणु
+	if (!zalloc_cpumask_var(&node_cpu_mask, GFP_KERNEL)) {
 		dd_dev_err(dd, "Unable to allocate cpu_mask for netdevs.\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	cpumask_and(node_cpu_mask, cpu_mask, cpumask_of_node(dd->node));
 
 	available_cpus = cpumask_weight(node_cpu_mask);
 
-	मुक्त_cpumask_var(node_cpu_mask);
+	free_cpumask_var(node_cpu_mask);
 
-	वापस min3(available_cpus, available_contexts,
+	return min3(available_cpus, available_contexts,
 		    (u32)HFI1_MAX_NETDEV_CTXTS);
-पूर्ण
+}
 
-अटल पूर्णांक hfi1_netdev_rxq_init(काष्ठा hfi1_netdev_rx *rx)
-अणु
-	पूर्णांक i;
-	पूर्णांक rc;
-	काष्ठा hfi1_devdata *dd = rx->dd;
-	काष्ठा net_device *dev = &rx->rx_napi;
+static int hfi1_netdev_rxq_init(struct hfi1_netdev_rx *rx)
+{
+	int i;
+	int rc;
+	struct hfi1_devdata *dd = rx->dd;
+	struct net_device *dev = &rx->rx_napi;
 
 	rx->num_rx_q = dd->num_netdev_contexts;
-	rx->rxq = kसुस्मृति_node(rx->num_rx_q, माप(*rx->rxq),
+	rx->rxq = kcalloc_node(rx->num_rx_q, sizeof(*rx->rxq),
 			       GFP_KERNEL, dd->node);
 
-	अगर (!rx->rxq) अणु
+	if (!rx->rxq) {
 		dd_dev_err(dd, "Unable to allocate netdev queue data\n");
-		वापस (-ENOMEM);
-	पूर्ण
+		return (-ENOMEM);
+	}
 
-	क्रम (i = 0; i < rx->num_rx_q; i++) अणु
-		काष्ठा hfi1_netdev_rxq *rxq = &rx->rxq[i];
+	for (i = 0; i < rx->num_rx_q; i++) {
+		struct hfi1_netdev_rxq *rxq = &rx->rxq[i];
 
 		rc = hfi1_netdev_allot_ctxt(rx, &rxq->rcd);
-		अगर (rc)
-			जाओ bail_context_irq_failure;
+		if (rc)
+			goto bail_context_irq_failure;
 
 		hfi1_rcd_get(rxq->rcd);
 		rxq->rx = rx;
@@ -217,56 +216,56 @@ u32 hfi1_num_netdev_contexts(काष्ठा hfi1_devdata *dd, u32 available_
 		 * right now.
 		 */
 		set_bit(NAPI_STATE_NO_BUSY_POLL, &rxq->napi.state);
-		netअगर_napi_add(dev, &rxq->napi, hfi1_netdev_rx_napi, 64);
+		netif_napi_add(dev, &rxq->napi, hfi1_netdev_rx_napi, 64);
 		rc = msix_netdev_request_rcd_irq(rxq->rcd);
-		अगर (rc)
-			जाओ bail_context_irq_failure;
-	पूर्ण
+		if (rc)
+			goto bail_context_irq_failure;
+	}
 
-	वापस 0;
+	return 0;
 
 bail_context_irq_failure:
 	dd_dev_err(dd, "Unable to allot receive context\n");
-	क्रम (; i >= 0; i--) अणु
-		काष्ठा hfi1_netdev_rxq *rxq = &rx->rxq[i];
+	for (; i >= 0; i--) {
+		struct hfi1_netdev_rxq *rxq = &rx->rxq[i];
 
-		अगर (rxq->rcd) अणु
+		if (rxq->rcd) {
 			hfi1_netdev_deallocate_ctxt(dd, rxq->rcd);
 			hfi1_rcd_put(rxq->rcd);
-			rxq->rcd = शून्य;
-		पूर्ण
-	पूर्ण
-	kमुक्त(rx->rxq);
-	rx->rxq = शून्य;
+			rxq->rcd = NULL;
+		}
+	}
+	kfree(rx->rxq);
+	rx->rxq = NULL;
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल व्योम hfi1_netdev_rxq_deinit(काष्ठा hfi1_netdev_rx *rx)
-अणु
-	पूर्णांक i;
-	काष्ठा hfi1_devdata *dd = rx->dd;
+static void hfi1_netdev_rxq_deinit(struct hfi1_netdev_rx *rx)
+{
+	int i;
+	struct hfi1_devdata *dd = rx->dd;
 
-	क्रम (i = 0; i < rx->num_rx_q; i++) अणु
-		काष्ठा hfi1_netdev_rxq *rxq = &rx->rxq[i];
+	for (i = 0; i < rx->num_rx_q; i++) {
+		struct hfi1_netdev_rxq *rxq = &rx->rxq[i];
 
-		netअगर_napi_del(&rxq->napi);
+		netif_napi_del(&rxq->napi);
 		hfi1_netdev_deallocate_ctxt(dd, rxq->rcd);
 		hfi1_rcd_put(rxq->rcd);
-		rxq->rcd = शून्य;
-	पूर्ण
+		rxq->rcd = NULL;
+	}
 
-	kमुक्त(rx->rxq);
-	rx->rxq = शून्य;
+	kfree(rx->rxq);
+	rx->rxq = NULL;
 	rx->num_rx_q = 0;
-पूर्ण
+}
 
-अटल व्योम enable_queues(काष्ठा hfi1_netdev_rx *rx)
-अणु
-	पूर्णांक i;
+static void enable_queues(struct hfi1_netdev_rx *rx)
+{
+	int i;
 
-	क्रम (i = 0; i < rx->num_rx_q; i++) अणु
-		काष्ठा hfi1_netdev_rxq *rxq = &rx->rxq[i];
+	for (i = 0; i < rx->num_rx_q; i++) {
+		struct hfi1_netdev_rxq *rxq = &rx->rxq[i];
 
 		dd_dev_info(rx->dd, "enabling queue %d on context %d\n", i,
 			    rxq->rcd->ctxt);
@@ -274,92 +273,92 @@ bail_context_irq_failure:
 		hfi1_rcvctrl(rx->dd,
 			     HFI1_RCVCTRL_CTXT_ENB | HFI1_RCVCTRL_INTRAVAIL_ENB,
 			     rxq->rcd);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम disable_queues(काष्ठा hfi1_netdev_rx *rx)
-अणु
-	पूर्णांक i;
+static void disable_queues(struct hfi1_netdev_rx *rx)
+{
+	int i;
 
 	msix_netdev_synchronize_irq(rx->dd);
 
-	क्रम (i = 0; i < rx->num_rx_q; i++) अणु
-		काष्ठा hfi1_netdev_rxq *rxq = &rx->rxq[i];
+	for (i = 0; i < rx->num_rx_q; i++) {
+		struct hfi1_netdev_rxq *rxq = &rx->rxq[i];
 
 		dd_dev_info(rx->dd, "disabling queue %d on context %d\n", i,
 			    rxq->rcd->ctxt);
 
-		/* रुको क्रम napi अगर it was scheduled */
+		/* wait for napi if it was scheduled */
 		hfi1_rcvctrl(rx->dd,
 			     HFI1_RCVCTRL_CTXT_DIS | HFI1_RCVCTRL_INTRAVAIL_DIS,
 			     rxq->rcd);
 		napi_synchronize(&rxq->napi);
 		napi_disable(&rxq->napi);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
- * hfi1_netdev_rx_init - Incrememnts netdevs counter. When called first समय,
- * it allocates receive queue data and calls netअगर_napi_add
- * क्रम each queue.
+ * hfi1_netdev_rx_init - Incrememnts netdevs counter. When called first time,
+ * it allocates receive queue data and calls netif_napi_add
+ * for each queue.
  *
  * @dd: hfi1 dev data
  */
-पूर्णांक hfi1_netdev_rx_init(काष्ठा hfi1_devdata *dd)
-अणु
-	काष्ठा hfi1_netdev_rx *rx = dd->netdev_rx;
-	पूर्णांक res;
+int hfi1_netdev_rx_init(struct hfi1_devdata *dd)
+{
+	struct hfi1_netdev_rx *rx = dd->netdev_rx;
+	int res;
 
-	अगर (atomic_fetch_inc(&rx->netdevs))
-		वापस 0;
+	if (atomic_fetch_inc(&rx->netdevs))
+		return 0;
 
 	mutex_lock(&hfi1_mutex);
 	res = hfi1_netdev_rxq_init(rx);
 	mutex_unlock(&hfi1_mutex);
-	वापस res;
-पूर्ण
+	return res;
+}
 
 /**
  * hfi1_netdev_rx_destroy - Decrements netdevs counter, when it reaches 0
- * napi is deleted and receive queses memory is मुक्तd.
+ * napi is deleted and receive queses memory is freed.
  *
  * @dd: hfi1 dev data
  */
-पूर्णांक hfi1_netdev_rx_destroy(काष्ठा hfi1_devdata *dd)
-अणु
-	काष्ठा hfi1_netdev_rx *rx = dd->netdev_rx;
+int hfi1_netdev_rx_destroy(struct hfi1_devdata *dd)
+{
+	struct hfi1_netdev_rx *rx = dd->netdev_rx;
 
-	/* destroy the RX queues only अगर it is the last netdev going away */
-	अगर (atomic_fetch_add_unless(&rx->netdevs, -1, 0) == 1) अणु
+	/* destroy the RX queues only if it is the last netdev going away */
+	if (atomic_fetch_add_unless(&rx->netdevs, -1, 0) == 1) {
 		mutex_lock(&hfi1_mutex);
 		hfi1_netdev_rxq_deinit(rx);
 		mutex_unlock(&hfi1_mutex);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * hfi1_alloc_rx - Allocates the rx support काष्ठाure
+ * hfi1_alloc_rx - Allocates the rx support structure
  * @dd: hfi1 dev data
  *
- * Allocate the rx काष्ठाure to support gathering the receive
+ * Allocate the rx structure to support gathering the receive
  * resources and the dummy netdev.
  *
- * Updates dd काष्ठा poपूर्णांकer upon success.
+ * Updates dd struct pointer upon success.
  *
  * Return: 0 (success) -error on failure
  *
  */
-पूर्णांक hfi1_alloc_rx(काष्ठा hfi1_devdata *dd)
-अणु
-	काष्ठा hfi1_netdev_rx *rx;
+int hfi1_alloc_rx(struct hfi1_devdata *dd)
+{
+	struct hfi1_netdev_rx *rx;
 
-	dd_dev_info(dd, "allocating rx size %ld\n", माप(*rx));
-	rx = kzalloc_node(माप(*rx), GFP_KERNEL, dd->node);
+	dd_dev_info(dd, "allocating rx size %ld\n", sizeof(*rx));
+	rx = kzalloc_node(sizeof(*rx), GFP_KERNEL, dd->node);
 
-	अगर (!rx)
-		वापस -ENOMEM;
+	if (!rx)
+		return -ENOMEM;
 	rx->dd = dd;
 	init_dummy_netdev(&rx->rx_napi);
 
@@ -368,116 +367,116 @@ bail_context_irq_failure:
 	atomic_set(&rx->netdevs, 0);
 	dd->netdev_rx = rx;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम hfi1_मुक्त_rx(काष्ठा hfi1_devdata *dd)
-अणु
-	अगर (dd->netdev_rx) अणु
+void hfi1_free_rx(struct hfi1_devdata *dd)
+{
+	if (dd->netdev_rx) {
 		dd_dev_info(dd, "hfi1 rx freed\n");
-		kमुक्त(dd->netdev_rx);
-		dd->netdev_rx = शून्य;
-	पूर्ण
-पूर्ण
+		kfree(dd->netdev_rx);
+		dd->netdev_rx = NULL;
+	}
+}
 
 /**
  * hfi1_netdev_enable_queues - This is napi enable function.
  * It enables napi objects associated with queues.
  * When at least one device has called it it increments atomic counter.
  * Disable function decrements counter and when it is 0,
- * calls napi_disable क्रम every queue.
+ * calls napi_disable for every queue.
  *
  * @dd: hfi1 dev data
  */
-व्योम hfi1_netdev_enable_queues(काष्ठा hfi1_devdata *dd)
-अणु
-	काष्ठा hfi1_netdev_rx *rx;
+void hfi1_netdev_enable_queues(struct hfi1_devdata *dd)
+{
+	struct hfi1_netdev_rx *rx;
 
-	अगर (!dd->netdev_rx)
-		वापस;
+	if (!dd->netdev_rx)
+		return;
 
 	rx = dd->netdev_rx;
-	अगर (atomic_fetch_inc(&rx->enabled))
-		वापस;
+	if (atomic_fetch_inc(&rx->enabled))
+		return;
 
 	mutex_lock(&hfi1_mutex);
 	enable_queues(rx);
 	mutex_unlock(&hfi1_mutex);
-पूर्ण
+}
 
-व्योम hfi1_netdev_disable_queues(काष्ठा hfi1_devdata *dd)
-अणु
-	काष्ठा hfi1_netdev_rx *rx;
+void hfi1_netdev_disable_queues(struct hfi1_devdata *dd)
+{
+	struct hfi1_netdev_rx *rx;
 
-	अगर (!dd->netdev_rx)
-		वापस;
+	if (!dd->netdev_rx)
+		return;
 
 	rx = dd->netdev_rx;
-	अगर (atomic_dec_अगर_positive(&rx->enabled))
-		वापस;
+	if (atomic_dec_if_positive(&rx->enabled))
+		return;
 
 	mutex_lock(&hfi1_mutex);
 	disable_queues(rx);
 	mutex_unlock(&hfi1_mutex);
-पूर्ण
+}
 
 /**
- * hfi1_netdev_add_data - Registers data with unique identअगरier
- * to be requested later this is needed क्रम VNIC and IPoIB VLANs
+ * hfi1_netdev_add_data - Registers data with unique identifier
+ * to be requested later this is needed for VNIC and IPoIB VLANs
  * implementations.
- * This call is रक्षित by mutex idr_lock.
+ * This call is protected by mutex idr_lock.
  *
  * @dd: hfi1 dev data
- * @id: requested पूर्णांकeger id up to पूर्णांक_उच्च
+ * @id: requested integer id up to INT_MAX
  * @data: data to be associated with index
  */
-पूर्णांक hfi1_netdev_add_data(काष्ठा hfi1_devdata *dd, पूर्णांक id, व्योम *data)
-अणु
-	काष्ठा hfi1_netdev_rx *rx = dd->netdev_rx;
+int hfi1_netdev_add_data(struct hfi1_devdata *dd, int id, void *data)
+{
+	struct hfi1_netdev_rx *rx = dd->netdev_rx;
 
-	वापस xa_insert(&rx->dev_tbl, id, data, GFP_NOWAIT);
-पूर्ण
+	return xa_insert(&rx->dev_tbl, id, data, GFP_NOWAIT);
+}
 
 /**
- * hfi1_netdev_हटाओ_data - Removes data with previously given id.
- * Returns the reference to हटाओd entry.
+ * hfi1_netdev_remove_data - Removes data with previously given id.
+ * Returns the reference to removed entry.
  *
  * @dd: hfi1 dev data
- * @id: requested पूर्णांकeger id up to पूर्णांक_उच्च
+ * @id: requested integer id up to INT_MAX
  */
-व्योम *hfi1_netdev_हटाओ_data(काष्ठा hfi1_devdata *dd, पूर्णांक id)
-अणु
-	काष्ठा hfi1_netdev_rx *rx = dd->netdev_rx;
+void *hfi1_netdev_remove_data(struct hfi1_devdata *dd, int id)
+{
+	struct hfi1_netdev_rx *rx = dd->netdev_rx;
 
-	वापस xa_erase(&rx->dev_tbl, id);
-पूर्ण
+	return xa_erase(&rx->dev_tbl, id);
+}
 
 /**
  * hfi1_netdev_get_data - Gets data with given id
  *
  * @dd: hfi1 dev data
- * @id: requested पूर्णांकeger id up to पूर्णांक_उच्च
+ * @id: requested integer id up to INT_MAX
  */
-व्योम *hfi1_netdev_get_data(काष्ठा hfi1_devdata *dd, पूर्णांक id)
-अणु
-	काष्ठा hfi1_netdev_rx *rx = dd->netdev_rx;
+void *hfi1_netdev_get_data(struct hfi1_devdata *dd, int id)
+{
+	struct hfi1_netdev_rx *rx = dd->netdev_rx;
 
-	वापस xa_load(&rx->dev_tbl, id);
-पूर्ण
+	return xa_load(&rx->dev_tbl, id);
+}
 
 /**
  * hfi1_netdev_get_first_data - Gets first entry with greater or equal id.
  *
  * @dd: hfi1 dev data
- * @start_id: requested पूर्णांकeger id up to पूर्णांक_उच्च
+ * @start_id: requested integer id up to INT_MAX
  */
-व्योम *hfi1_netdev_get_first_data(काष्ठा hfi1_devdata *dd, पूर्णांक *start_id)
-अणु
-	काष्ठा hfi1_netdev_rx *rx = dd->netdev_rx;
-	अचिन्हित दीर्घ index = *start_id;
-	व्योम *ret;
+void *hfi1_netdev_get_first_data(struct hfi1_devdata *dd, int *start_id)
+{
+	struct hfi1_netdev_rx *rx = dd->netdev_rx;
+	unsigned long index = *start_id;
+	void *ret;
 
-	ret = xa_find(&rx->dev_tbl, &index, अच_पूर्णांक_उच्च, XA_PRESENT);
-	*start_id = (पूर्णांक)index;
-	वापस ret;
-पूर्ण
+	ret = xa_find(&rx->dev_tbl, &index, UINT_MAX, XA_PRESENT);
+	*start_id = (int)index;
+	return ret;
+}

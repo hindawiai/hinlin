@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * linux/drivers/video/omap2/omapfb-ioctl.c
  *
@@ -10,110 +9,110 @@
  * by Imre Deak.
  */
 
-#समावेश <linux/fb.h>
-#समावेश <linux/device.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/omapfb.h>
-#समावेश <linux/vदो_स्मृति.h>
-#समावेश <linux/export.h>
-#समावेश <linux/sizes.h>
+#include <linux/fb.h>
+#include <linux/device.h>
+#include <linux/uaccess.h>
+#include <linux/platform_device.h>
+#include <linux/mm.h>
+#include <linux/omapfb.h>
+#include <linux/vmalloc.h>
+#include <linux/export.h>
+#include <linux/sizes.h>
 
-#समावेश <video/omapfb_dss.h>
-#समावेश <video/omapvrfb.h>
+#include <video/omapfb_dss.h>
+#include <video/omapvrfb.h>
 
-#समावेश "omapfb.h"
+#include "omapfb.h"
 
-अटल u8 get_mem_idx(काष्ठा omapfb_info *ofbi)
-अणु
-	अगर (ofbi->id == ofbi->region->id)
-		वापस 0;
+static u8 get_mem_idx(struct omapfb_info *ofbi)
+{
+	if (ofbi->id == ofbi->region->id)
+		return 0;
 
-	वापस OMAPFB_MEM_IDX_ENABLED | ofbi->region->id;
-पूर्ण
+	return OMAPFB_MEM_IDX_ENABLED | ofbi->region->id;
+}
 
-अटल काष्ठा omapfb2_mem_region *get_mem_region(काष्ठा omapfb_info *ofbi,
+static struct omapfb2_mem_region *get_mem_region(struct omapfb_info *ofbi,
 						 u8 mem_idx)
-अणु
-	काष्ठा omapfb2_device *fbdev = ofbi->fbdev;
+{
+	struct omapfb2_device *fbdev = ofbi->fbdev;
 
-	अगर (mem_idx & OMAPFB_MEM_IDX_ENABLED)
+	if (mem_idx & OMAPFB_MEM_IDX_ENABLED)
 		mem_idx &= OMAPFB_MEM_IDX_MASK;
-	अन्यथा
+	else
 		mem_idx = ofbi->id;
 
-	अगर (mem_idx >= fbdev->num_fbs)
-		वापस शून्य;
+	if (mem_idx >= fbdev->num_fbs)
+		return NULL;
 
-	वापस &fbdev->regions[mem_idx];
-पूर्ण
+	return &fbdev->regions[mem_idx];
+}
 
-अटल पूर्णांक omapfb_setup_plane(काष्ठा fb_info *fbi, काष्ठा omapfb_plane_info *pi)
-अणु
-	काष्ठा omapfb_info *ofbi = FB2OFB(fbi);
-	काष्ठा omapfb2_device *fbdev = ofbi->fbdev;
-	काष्ठा omap_overlay *ovl;
-	काष्ठा omap_overlay_info old_info;
-	काष्ठा omapfb2_mem_region *old_rg, *new_rg;
-	पूर्णांक r = 0;
+static int omapfb_setup_plane(struct fb_info *fbi, struct omapfb_plane_info *pi)
+{
+	struct omapfb_info *ofbi = FB2OFB(fbi);
+	struct omapfb2_device *fbdev = ofbi->fbdev;
+	struct omap_overlay *ovl;
+	struct omap_overlay_info old_info;
+	struct omapfb2_mem_region *old_rg, *new_rg;
+	int r = 0;
 
 	DBG("omapfb_setup_plane\n");
 
-	अगर (ofbi->num_overlays == 0) अणु
+	if (ofbi->num_overlays == 0) {
 		r = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/* XXX uses only the first overlay */
 	ovl = ofbi->overlays[0];
 
 	old_rg = ofbi->region;
 	new_rg = get_mem_region(ofbi, pi->mem_idx);
-	अगर (!new_rg) अणु
+	if (!new_rg) {
 		r = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	/* Take the locks in a specअगरic order to keep lockdep happy */
-	अगर (old_rg->id < new_rg->id) अणु
+	/* Take the locks in a specific order to keep lockdep happy */
+	if (old_rg->id < new_rg->id) {
 		omapfb_get_mem_region(old_rg);
 		omapfb_get_mem_region(new_rg);
-	पूर्ण अन्यथा अगर (new_rg->id < old_rg->id) अणु
+	} else if (new_rg->id < old_rg->id) {
 		omapfb_get_mem_region(new_rg);
 		omapfb_get_mem_region(old_rg);
-	पूर्ण अन्यथा
+	} else
 		omapfb_get_mem_region(old_rg);
 
-	अगर (pi->enabled && !new_rg->size) अणु
+	if (pi->enabled && !new_rg->size) {
 		/*
 		 * This plane's memory was freed, can't enable it
-		 * until it's पुनः_स्मृतिated.
+		 * until it's reallocated.
 		 */
 		r = -EINVAL;
-		जाओ put_mem;
-	पूर्ण
+		goto put_mem;
+	}
 
 	ovl->get_overlay_info(ovl, &old_info);
 
-	अगर (old_rg != new_rg) अणु
+	if (old_rg != new_rg) {
 		ofbi->region = new_rg;
 		set_fb_fix(fbi);
-	पूर्ण
+	}
 
-	अगर (!pi->enabled) अणु
+	if (!pi->enabled) {
 		r = ovl->disable(ovl);
-		अगर (r)
-			जाओ unकरो;
-	पूर्ण
+		if (r)
+			goto undo;
+	}
 
-	अगर (pi->enabled) अणु
+	if (pi->enabled) {
 		r = omapfb_setup_overlay(fbi, ovl, pi->pos_x, pi->pos_y,
 			pi->out_width, pi->out_height);
-		अगर (r)
-			जाओ unकरो;
-	पूर्ण अन्यथा अणु
-		काष्ठा omap_overlay_info info;
+		if (r)
+			goto undo;
+	} else {
+		struct omap_overlay_info info;
 
 		ovl->get_overlay_info(ovl, &info);
 
@@ -123,66 +122,66 @@
 		info.out_height = pi->out_height;
 
 		r = ovl->set_overlay_info(ovl, &info);
-		अगर (r)
-			जाओ unकरो;
-	पूर्ण
+		if (r)
+			goto undo;
+	}
 
-	अगर (ovl->manager) अणु
+	if (ovl->manager) {
 		r = ovl->manager->apply(ovl->manager);
-		अगर (r)
-			जाओ unकरो;
-	पूर्ण
+		if (r)
+			goto undo;
+	}
 
-	अगर (pi->enabled) अणु
+	if (pi->enabled) {
 		r = ovl->enable(ovl);
-		अगर (r)
-			जाओ unकरो;
-	पूर्ण
+		if (r)
+			goto undo;
+	}
 
-	/* Release the locks in a specअगरic order to keep lockdep happy */
-	अगर (old_rg->id > new_rg->id) अणु
+	/* Release the locks in a specific order to keep lockdep happy */
+	if (old_rg->id > new_rg->id) {
 		omapfb_put_mem_region(old_rg);
 		omapfb_put_mem_region(new_rg);
-	पूर्ण अन्यथा अगर (new_rg->id > old_rg->id) अणु
+	} else if (new_rg->id > old_rg->id) {
 		omapfb_put_mem_region(new_rg);
 		omapfb_put_mem_region(old_rg);
-	पूर्ण अन्यथा
+	} else
 		omapfb_put_mem_region(old_rg);
 
-	वापस 0;
+	return 0;
 
- unकरो:
-	अगर (old_rg != new_rg) अणु
+ undo:
+	if (old_rg != new_rg) {
 		ofbi->region = old_rg;
 		set_fb_fix(fbi);
-	पूर्ण
+	}
 
 	ovl->set_overlay_info(ovl, &old_info);
  put_mem:
-	/* Release the locks in a specअगरic order to keep lockdep happy */
-	अगर (old_rg->id > new_rg->id) अणु
+	/* Release the locks in a specific order to keep lockdep happy */
+	if (old_rg->id > new_rg->id) {
 		omapfb_put_mem_region(old_rg);
 		omapfb_put_mem_region(new_rg);
-	पूर्ण अन्यथा अगर (new_rg->id > old_rg->id) अणु
+	} else if (new_rg->id > old_rg->id) {
 		omapfb_put_mem_region(new_rg);
 		omapfb_put_mem_region(old_rg);
-	पूर्ण अन्यथा
+	} else
 		omapfb_put_mem_region(old_rg);
  out:
 	dev_err(fbdev->dev, "setup_plane failed\n");
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल पूर्णांक omapfb_query_plane(काष्ठा fb_info *fbi, काष्ठा omapfb_plane_info *pi)
-अणु
-	काष्ठा omapfb_info *ofbi = FB2OFB(fbi);
+static int omapfb_query_plane(struct fb_info *fbi, struct omapfb_plane_info *pi)
+{
+	struct omapfb_info *ofbi = FB2OFB(fbi);
 
-	अगर (ofbi->num_overlays == 0) अणु
-		स_रखो(pi, 0, माप(*pi));
-	पूर्ण अन्यथा अणु
-		काष्ठा omap_overlay *ovl;
-		काष्ठा omap_overlay_info ovli;
+	if (ofbi->num_overlays == 0) {
+		memset(pi, 0, sizeof(*pi));
+	} else {
+		struct omap_overlay *ovl;
+		struct omap_overlay_info ovli;
 
 		ovl = ofbi->overlays[0];
 		ovl->get_overlay_info(ovl, &ovli);
@@ -195,160 +194,160 @@
 		pi->mem_idx = get_mem_idx(ofbi);
 		pi->out_width = ovli.out_width;
 		pi->out_height = ovli.out_height;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक omapfb_setup_mem(काष्ठा fb_info *fbi, काष्ठा omapfb_mem_info *mi)
-अणु
-	काष्ठा omapfb_info *ofbi = FB2OFB(fbi);
-	काष्ठा omapfb2_device *fbdev = ofbi->fbdev;
-	काष्ठा omap_dss_device *display = fb2display(fbi);
-	काष्ठा omapfb2_mem_region *rg;
-	पूर्णांक r = 0, i;
-	माप_प्रकार size;
+static int omapfb_setup_mem(struct fb_info *fbi, struct omapfb_mem_info *mi)
+{
+	struct omapfb_info *ofbi = FB2OFB(fbi);
+	struct omapfb2_device *fbdev = ofbi->fbdev;
+	struct omap_dss_device *display = fb2display(fbi);
+	struct omapfb2_mem_region *rg;
+	int r = 0, i;
+	size_t size;
 
-	अगर (mi->type != OMAPFB_MEMTYPE_SDRAM)
-		वापस -EINVAL;
+	if (mi->type != OMAPFB_MEMTYPE_SDRAM)
+		return -EINVAL;
 
 	size = PAGE_ALIGN(mi->size);
 
-	अगर (display && display->driver->sync)
+	if (display && display->driver->sync)
 		display->driver->sync(display);
 
 	rg = ofbi->region;
 
-	करोwn_ग_लिखो_nested(&rg->lock, rg->id);
+	down_write_nested(&rg->lock, rg->id);
 	atomic_inc(&rg->lock_count);
 
-	अगर (rg->size == size && rg->type == mi->type)
-		जाओ out;
+	if (rg->size == size && rg->type == mi->type)
+		goto out;
 
-	अगर (atomic_पढ़ो(&rg->map_count)) अणु
+	if (atomic_read(&rg->map_count)) {
 		r = -EBUSY;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	क्रम (i = 0; i < fbdev->num_fbs; i++) अणु
-		काष्ठा omapfb_info *ofbi2 = FB2OFB(fbdev->fbs[i]);
-		पूर्णांक j;
+	for (i = 0; i < fbdev->num_fbs; i++) {
+		struct omapfb_info *ofbi2 = FB2OFB(fbdev->fbs[i]);
+		int j;
 
-		अगर (ofbi2->region != rg)
-			जारी;
+		if (ofbi2->region != rg)
+			continue;
 
-		क्रम (j = 0; j < ofbi2->num_overlays; j++) अणु
-			काष्ठा omap_overlay *ovl;
+		for (j = 0; j < ofbi2->num_overlays; j++) {
+			struct omap_overlay *ovl;
 			ovl = ofbi2->overlays[j];
-			अगर (ovl->is_enabled(ovl)) अणु
+			if (ovl->is_enabled(ovl)) {
 				r = -EBUSY;
-				जाओ out;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				goto out;
+			}
+		}
+	}
 
-	r = omapfb_पुनः_स्मृति_fbmem(fbi, size, mi->type);
-	अगर (r) अणु
+	r = omapfb_realloc_fbmem(fbi, size, mi->type);
+	if (r) {
 		dev_err(fbdev->dev, "realloc fbmem failed\n");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
  out:
 	atomic_dec(&rg->lock_count);
-	up_ग_लिखो(&rg->lock);
+	up_write(&rg->lock);
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल पूर्णांक omapfb_query_mem(काष्ठा fb_info *fbi, काष्ठा omapfb_mem_info *mi)
-अणु
-	काष्ठा omapfb_info *ofbi = FB2OFB(fbi);
-	काष्ठा omapfb2_mem_region *rg;
+static int omapfb_query_mem(struct fb_info *fbi, struct omapfb_mem_info *mi)
+{
+	struct omapfb_info *ofbi = FB2OFB(fbi);
+	struct omapfb2_mem_region *rg;
 
 	rg = omapfb_get_mem_region(ofbi->region);
-	स_रखो(mi, 0, माप(*mi));
+	memset(mi, 0, sizeof(*mi));
 
 	mi->size = rg->size;
 	mi->type = rg->type;
 
 	omapfb_put_mem_region(rg);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक omapfb_update_winकरोw(काष्ठा fb_info *fbi,
+static int omapfb_update_window(struct fb_info *fbi,
 		u32 x, u32 y, u32 w, u32 h)
-अणु
-	काष्ठा omap_dss_device *display = fb2display(fbi);
+{
+	struct omap_dss_device *display = fb2display(fbi);
 	u16 dw, dh;
 
-	अगर (!display)
-		वापस 0;
+	if (!display)
+		return 0;
 
-	अगर (w == 0 || h == 0)
-		वापस 0;
+	if (w == 0 || h == 0)
+		return 0;
 
 	display->driver->get_resolution(display, &dw, &dh);
 
-	अगर (x + w > dw || y + h > dh)
-		वापस -EINVAL;
+	if (x + w > dw || y + h > dh)
+		return -EINVAL;
 
-	वापस display->driver->update(display, x, y, w, h);
-पूर्ण
+	return display->driver->update(display, x, y, w, h);
+}
 
-पूर्णांक omapfb_set_update_mode(काष्ठा fb_info *fbi,
-				   क्रमागत omapfb_update_mode mode)
-अणु
-	काष्ठा omap_dss_device *display = fb2display(fbi);
-	काष्ठा omapfb_info *ofbi = FB2OFB(fbi);
-	काष्ठा omapfb2_device *fbdev = ofbi->fbdev;
-	काष्ठा omapfb_display_data *d;
-	पूर्णांक r;
+int omapfb_set_update_mode(struct fb_info *fbi,
+				   enum omapfb_update_mode mode)
+{
+	struct omap_dss_device *display = fb2display(fbi);
+	struct omapfb_info *ofbi = FB2OFB(fbi);
+	struct omapfb2_device *fbdev = ofbi->fbdev;
+	struct omapfb_display_data *d;
+	int r;
 
-	अगर (!display)
-		वापस -EINVAL;
+	if (!display)
+		return -EINVAL;
 
-	अगर (mode != OMAPFB_AUTO_UPDATE && mode != OMAPFB_MANUAL_UPDATE)
-		वापस -EINVAL;
+	if (mode != OMAPFB_AUTO_UPDATE && mode != OMAPFB_MANUAL_UPDATE)
+		return -EINVAL;
 
 	omapfb_lock(fbdev);
 
 	d = get_display_data(fbdev, display);
 
-	अगर (d->update_mode == mode) अणु
+	if (d->update_mode == mode) {
 		omapfb_unlock(fbdev);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	r = 0;
 
-	अगर (display->caps & OMAP_DSS_DISPLAY_CAP_MANUAL_UPDATE) अणु
-		अगर (mode == OMAPFB_AUTO_UPDATE)
-			omapfb_start_स्वतः_update(fbdev, display);
-		अन्यथा /* MANUAL_UPDATE */
-			omapfb_stop_स्वतः_update(fbdev, display);
+	if (display->caps & OMAP_DSS_DISPLAY_CAP_MANUAL_UPDATE) {
+		if (mode == OMAPFB_AUTO_UPDATE)
+			omapfb_start_auto_update(fbdev, display);
+		else /* MANUAL_UPDATE */
+			omapfb_stop_auto_update(fbdev, display);
 
 		d->update_mode = mode;
-	पूर्ण अन्यथा अणु /* AUTO_UPDATE */
-		अगर (mode == OMAPFB_MANUAL_UPDATE)
+	} else { /* AUTO_UPDATE */
+		if (mode == OMAPFB_MANUAL_UPDATE)
 			r = -EINVAL;
-	पूर्ण
+	}
 
 	omapfb_unlock(fbdev);
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-पूर्णांक omapfb_get_update_mode(काष्ठा fb_info *fbi,
-		क्रमागत omapfb_update_mode *mode)
-अणु
-	काष्ठा omap_dss_device *display = fb2display(fbi);
-	काष्ठा omapfb_info *ofbi = FB2OFB(fbi);
-	काष्ठा omapfb2_device *fbdev = ofbi->fbdev;
-	काष्ठा omapfb_display_data *d;
+int omapfb_get_update_mode(struct fb_info *fbi,
+		enum omapfb_update_mode *mode)
+{
+	struct omap_dss_device *display = fb2display(fbi);
+	struct omapfb_info *ofbi = FB2OFB(fbi);
+	struct omapfb2_device *fbdev = ofbi->fbdev;
+	struct omapfb_display_data *d;
 
-	अगर (!display)
-		वापस -EINVAL;
+	if (!display)
+		return -EINVAL;
 
 	omapfb_lock(fbdev);
 
@@ -358,46 +357,46 @@
 
 	omapfb_unlock(fbdev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* XXX this color key handling is a hack... */
-अटल काष्ठा omapfb_color_key omapfb_color_keys[2];
+static struct omapfb_color_key omapfb_color_keys[2];
 
-अटल पूर्णांक _omapfb_set_color_key(काष्ठा omap_overlay_manager *mgr,
-		काष्ठा omapfb_color_key *ck)
-अणु
-	काष्ठा omap_overlay_manager_info info;
-	क्रमागत omap_dss_trans_key_type kt;
-	पूर्णांक r;
+static int _omapfb_set_color_key(struct omap_overlay_manager *mgr,
+		struct omapfb_color_key *ck)
+{
+	struct omap_overlay_manager_info info;
+	enum omap_dss_trans_key_type kt;
+	int r;
 
 	mgr->get_manager_info(mgr, &info);
 
-	अगर (ck->key_type == OMAPFB_COLOR_KEY_DISABLED) अणु
+	if (ck->key_type == OMAPFB_COLOR_KEY_DISABLED) {
 		info.trans_enabled = false;
 		omapfb_color_keys[mgr->id] = *ck;
 
 		r = mgr->set_manager_info(mgr, &info);
-		अगर (r)
-			वापस r;
+		if (r)
+			return r;
 
 		r = mgr->apply(mgr);
 
-		वापस r;
-	पूर्ण
+		return r;
+	}
 
-	चयन (ck->key_type) अणु
-	हाल OMAPFB_COLOR_KEY_GFX_DST:
+	switch (ck->key_type) {
+	case OMAPFB_COLOR_KEY_GFX_DST:
 		kt = OMAP_DSS_COLOR_KEY_GFX_DST;
-		अवरोध;
-	हाल OMAPFB_COLOR_KEY_VID_SRC:
+		break;
+	case OMAPFB_COLOR_KEY_VID_SRC:
 		kt = OMAP_DSS_COLOR_KEY_VID_SRC;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	info.शेष_color = ck->background;
+	info.default_color = ck->background;
 	info.trans_key = ck->trans_key;
 	info.trans_key_type = kt;
 	info.trans_enabled = true;
@@ -405,144 +404,144 @@
 	omapfb_color_keys[mgr->id] = *ck;
 
 	r = mgr->set_manager_info(mgr, &info);
-	अगर (r)
-		वापस r;
+	if (r)
+		return r;
 
 	r = mgr->apply(mgr);
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल पूर्णांक omapfb_set_color_key(काष्ठा fb_info *fbi,
-		काष्ठा omapfb_color_key *ck)
-अणु
-	काष्ठा omapfb_info *ofbi = FB2OFB(fbi);
-	काष्ठा omapfb2_device *fbdev = ofbi->fbdev;
-	पूर्णांक r;
-	पूर्णांक i;
-	काष्ठा omap_overlay_manager *mgr = शून्य;
+static int omapfb_set_color_key(struct fb_info *fbi,
+		struct omapfb_color_key *ck)
+{
+	struct omapfb_info *ofbi = FB2OFB(fbi);
+	struct omapfb2_device *fbdev = ofbi->fbdev;
+	int r;
+	int i;
+	struct omap_overlay_manager *mgr = NULL;
 
 	omapfb_lock(fbdev);
 
-	क्रम (i = 0; i < ofbi->num_overlays; i++) अणु
-		अगर (ofbi->overlays[i]->manager) अणु
+	for (i = 0; i < ofbi->num_overlays; i++) {
+		if (ofbi->overlays[i]->manager) {
 			mgr = ofbi->overlays[i]->manager;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	अगर (!mgr) अणु
+	if (!mgr) {
 		r = -EINVAL;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	r = _omapfb_set_color_key(mgr, ck);
 err:
 	omapfb_unlock(fbdev);
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल पूर्णांक omapfb_get_color_key(काष्ठा fb_info *fbi,
-		काष्ठा omapfb_color_key *ck)
-अणु
-	काष्ठा omapfb_info *ofbi = FB2OFB(fbi);
-	काष्ठा omapfb2_device *fbdev = ofbi->fbdev;
-	काष्ठा omap_overlay_manager *mgr = शून्य;
-	पूर्णांक r = 0;
-	पूर्णांक i;
+static int omapfb_get_color_key(struct fb_info *fbi,
+		struct omapfb_color_key *ck)
+{
+	struct omapfb_info *ofbi = FB2OFB(fbi);
+	struct omapfb2_device *fbdev = ofbi->fbdev;
+	struct omap_overlay_manager *mgr = NULL;
+	int r = 0;
+	int i;
 
 	omapfb_lock(fbdev);
 
-	क्रम (i = 0; i < ofbi->num_overlays; i++) अणु
-		अगर (ofbi->overlays[i]->manager) अणु
+	for (i = 0; i < ofbi->num_overlays; i++) {
+		if (ofbi->overlays[i]->manager) {
 			mgr = ofbi->overlays[i]->manager;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	अगर (!mgr) अणु
+	if (!mgr) {
 		r = -EINVAL;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	*ck = omapfb_color_keys[mgr->id];
 err:
 	omapfb_unlock(fbdev);
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल पूर्णांक omapfb_memory_पढ़ो(काष्ठा fb_info *fbi,
-		काष्ठा omapfb_memory_पढ़ो *mr)
-अणु
-	काष्ठा omap_dss_device *display = fb2display(fbi);
-	व्योम *buf;
-	पूर्णांक r;
+static int omapfb_memory_read(struct fb_info *fbi,
+		struct omapfb_memory_read *mr)
+{
+	struct omap_dss_device *display = fb2display(fbi);
+	void *buf;
+	int r;
 
-	अगर (!display || !display->driver->memory_पढ़ो)
-		वापस -ENOENT;
+	if (!display || !display->driver->memory_read)
+		return -ENOENT;
 
-	अगर (mr->w > 4096 || mr->h > 4096)
-		वापस -EINVAL;
+	if (mr->w > 4096 || mr->h > 4096)
+		return -EINVAL;
 
-	अगर (mr->w * mr->h * 3 > mr->buffer_size)
-		वापस -EINVAL;
+	if (mr->w * mr->h * 3 > mr->buffer_size)
+		return -EINVAL;
 
-	buf = vदो_स्मृति(mr->buffer_size);
-	अगर (!buf) अणु
+	buf = vmalloc(mr->buffer_size);
+	if (!buf) {
 		DBG("vmalloc failed\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	r = display->driver->memory_पढ़ो(display, buf, mr->buffer_size,
+	r = display->driver->memory_read(display, buf, mr->buffer_size,
 			mr->x, mr->y, mr->w, mr->h);
 
-	अगर (r > 0) अणु
-		अगर (copy_to_user(mr->buffer, buf, r))
+	if (r > 0) {
+		if (copy_to_user(mr->buffer, buf, r))
 			r = -EFAULT;
-	पूर्ण
+	}
 
-	vमुक्त(buf);
+	vfree(buf);
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल पूर्णांक omapfb_get_ovl_colormode(काष्ठा omapfb2_device *fbdev,
-			     काष्ठा omapfb_ovl_colormode *mode)
-अणु
-	पूर्णांक ovl_idx = mode->overlay_idx;
-	पूर्णांक mode_idx = mode->mode_idx;
-	काष्ठा omap_overlay *ovl;
-	क्रमागत omap_color_mode supported_modes;
-	काष्ठा fb_var_screeninfo var;
-	पूर्णांक i;
+static int omapfb_get_ovl_colormode(struct omapfb2_device *fbdev,
+			     struct omapfb_ovl_colormode *mode)
+{
+	int ovl_idx = mode->overlay_idx;
+	int mode_idx = mode->mode_idx;
+	struct omap_overlay *ovl;
+	enum omap_color_mode supported_modes;
+	struct fb_var_screeninfo var;
+	int i;
 
-	अगर (ovl_idx >= fbdev->num_overlays)
-		वापस -ENODEV;
+	if (ovl_idx >= fbdev->num_overlays)
+		return -ENODEV;
 	ovl = fbdev->overlays[ovl_idx];
 	supported_modes = ovl->supported_modes;
 
 	mode_idx = mode->mode_idx;
 
-	क्रम (i = 0; i < माप(supported_modes) * 8; i++) अणु
-		अगर (!(supported_modes & (1 << i)))
-			जारी;
+	for (i = 0; i < sizeof(supported_modes) * 8; i++) {
+		if (!(supported_modes & (1 << i)))
+			continue;
 		/*
 		 * It's possible that the FB doesn't support a mode
 		 * that is supported by the overlay, so call the
 		 * following here.
 		 */
-		अगर (dss_mode_to_fb_mode(1 << i, &var) < 0)
-			जारी;
+		if (dss_mode_to_fb_mode(1 << i, &var) < 0)
+			continue;
 
 		mode_idx--;
-		अगर (mode_idx < 0)
-			अवरोध;
-	पूर्ण
+		if (mode_idx < 0)
+			break;
+	}
 
-	अगर (i == माप(supported_modes) * 8)
-		वापस -ENOENT;
+	if (i == sizeof(supported_modes) * 8)
+		return -ENOENT;
 
 	mode->bits_per_pixel = var.bits_per_pixel;
 	mode->nonstd = var.nonstd;
@@ -551,367 +550,367 @@ err:
 	mode->blue = var.blue;
 	mode->transp = var.transp;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक omapfb_रुको_क्रम_go(काष्ठा fb_info *fbi)
-अणु
-	काष्ठा omapfb_info *ofbi = FB2OFB(fbi);
-	पूर्णांक r = 0;
-	पूर्णांक i;
+static int omapfb_wait_for_go(struct fb_info *fbi)
+{
+	struct omapfb_info *ofbi = FB2OFB(fbi);
+	int r = 0;
+	int i;
 
-	क्रम (i = 0; i < ofbi->num_overlays; ++i) अणु
-		काष्ठा omap_overlay *ovl = ofbi->overlays[i];
-		r = ovl->रुको_क्रम_go(ovl);
-		अगर (r)
-			अवरोध;
-	पूर्ण
+	for (i = 0; i < ofbi->num_overlays; ++i) {
+		struct omap_overlay *ovl = ofbi->overlays[i];
+		r = ovl->wait_for_go(ovl);
+		if (r)
+			break;
+	}
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-पूर्णांक omapfb_ioctl(काष्ठा fb_info *fbi, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
-अणु
-	काष्ठा omapfb_info *ofbi = FB2OFB(fbi);
-	काष्ठा omapfb2_device *fbdev = ofbi->fbdev;
-	काष्ठा omap_dss_device *display = fb2display(fbi);
-	काष्ठा omap_overlay_manager *mgr;
+int omapfb_ioctl(struct fb_info *fbi, unsigned int cmd, unsigned long arg)
+{
+	struct omapfb_info *ofbi = FB2OFB(fbi);
+	struct omapfb2_device *fbdev = ofbi->fbdev;
+	struct omap_dss_device *display = fb2display(fbi);
+	struct omap_overlay_manager *mgr;
 
-	जोड़ अणु
-		काष्ठा omapfb_update_winकरोw_old	uwnd_o;
-		काष्ठा omapfb_update_winकरोw	uwnd;
-		काष्ठा omapfb_plane_info	plane_info;
-		काष्ठा omapfb_caps		caps;
-		काष्ठा omapfb_mem_info          mem_info;
-		काष्ठा omapfb_color_key		color_key;
-		काष्ठा omapfb_ovl_colormode	ovl_colormode;
-		क्रमागत omapfb_update_mode		update_mode;
-		पूर्णांक test_num;
-		काष्ठा omapfb_memory_पढ़ो	memory_पढ़ो;
-		काष्ठा omapfb_vram_info		vram_info;
-		काष्ठा omapfb_tearsync_info	tearsync_info;
-		काष्ठा omapfb_display_info	display_info;
+	union {
+		struct omapfb_update_window_old	uwnd_o;
+		struct omapfb_update_window	uwnd;
+		struct omapfb_plane_info	plane_info;
+		struct omapfb_caps		caps;
+		struct omapfb_mem_info          mem_info;
+		struct omapfb_color_key		color_key;
+		struct omapfb_ovl_colormode	ovl_colormode;
+		enum omapfb_update_mode		update_mode;
+		int test_num;
+		struct omapfb_memory_read	memory_read;
+		struct omapfb_vram_info		vram_info;
+		struct omapfb_tearsync_info	tearsync_info;
+		struct omapfb_display_info	display_info;
 		u32				crt;
-	पूर्ण p;
+	} p;
 
-	पूर्णांक r = 0;
+	int r = 0;
 
-	स_रखो(&p, 0, माप(p));
+	memset(&p, 0, sizeof(p));
 
-	चयन (cmd) अणु
-	हाल OMAPFB_SYNC_GFX:
+	switch (cmd) {
+	case OMAPFB_SYNC_GFX:
 		DBG("ioctl SYNC_GFX\n");
-		अगर (!display || !display->driver->sync) अणु
-			/* DSS1 never वापसs an error here, so we neither */
+		if (!display || !display->driver->sync) {
+			/* DSS1 never returns an error here, so we neither */
 			/*r = -EINVAL;*/
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		r = display->driver->sync(display);
-		अवरोध;
+		break;
 
-	हाल OMAPFB_UPDATE_WINDOW_OLD:
+	case OMAPFB_UPDATE_WINDOW_OLD:
 		DBG("ioctl UPDATE_WINDOW_OLD\n");
-		अगर (!display || !display->driver->update) अणु
+		if (!display || !display->driver->update) {
 			r = -EINVAL;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (copy_from_user(&p.uwnd_o,
-					(व्योम __user *)arg,
-					माप(p.uwnd_o))) अणु
+		if (copy_from_user(&p.uwnd_o,
+					(void __user *)arg,
+					sizeof(p.uwnd_o))) {
 			r = -EFAULT;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		r = omapfb_update_winकरोw(fbi, p.uwnd_o.x, p.uwnd_o.y,
+		r = omapfb_update_window(fbi, p.uwnd_o.x, p.uwnd_o.y,
 				p.uwnd_o.width, p.uwnd_o.height);
-		अवरोध;
+		break;
 
-	हाल OMAPFB_UPDATE_WINDOW:
+	case OMAPFB_UPDATE_WINDOW:
 		DBG("ioctl UPDATE_WINDOW\n");
-		अगर (!display || !display->driver->update) अणु
+		if (!display || !display->driver->update) {
 			r = -EINVAL;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (copy_from_user(&p.uwnd, (व्योम __user *)arg,
-					माप(p.uwnd))) अणु
+		if (copy_from_user(&p.uwnd, (void __user *)arg,
+					sizeof(p.uwnd))) {
 			r = -EFAULT;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		r = omapfb_update_winकरोw(fbi, p.uwnd.x, p.uwnd.y,
+		r = omapfb_update_window(fbi, p.uwnd.x, p.uwnd.y,
 				p.uwnd.width, p.uwnd.height);
-		अवरोध;
+		break;
 
-	हाल OMAPFB_SETUP_PLANE:
+	case OMAPFB_SETUP_PLANE:
 		DBG("ioctl SETUP_PLANE\n");
-		अगर (copy_from_user(&p.plane_info, (व्योम __user *)arg,
-					माप(p.plane_info)))
+		if (copy_from_user(&p.plane_info, (void __user *)arg,
+					sizeof(p.plane_info)))
 			r = -EFAULT;
-		अन्यथा
+		else
 			r = omapfb_setup_plane(fbi, &p.plane_info);
-		अवरोध;
+		break;
 
-	हाल OMAPFB_QUERY_PLANE:
+	case OMAPFB_QUERY_PLANE:
 		DBG("ioctl QUERY_PLANE\n");
 		r = omapfb_query_plane(fbi, &p.plane_info);
-		अगर (r < 0)
-			अवरोध;
-		अगर (copy_to_user((व्योम __user *)arg, &p.plane_info,
-					माप(p.plane_info)))
+		if (r < 0)
+			break;
+		if (copy_to_user((void __user *)arg, &p.plane_info,
+					sizeof(p.plane_info)))
 			r = -EFAULT;
-		अवरोध;
+		break;
 
-	हाल OMAPFB_SETUP_MEM:
+	case OMAPFB_SETUP_MEM:
 		DBG("ioctl SETUP_MEM\n");
-		अगर (copy_from_user(&p.mem_info, (व्योम __user *)arg,
-					माप(p.mem_info)))
+		if (copy_from_user(&p.mem_info, (void __user *)arg,
+					sizeof(p.mem_info)))
 			r = -EFAULT;
-		अन्यथा
+		else
 			r = omapfb_setup_mem(fbi, &p.mem_info);
-		अवरोध;
+		break;
 
-	हाल OMAPFB_QUERY_MEM:
+	case OMAPFB_QUERY_MEM:
 		DBG("ioctl QUERY_MEM\n");
 		r = omapfb_query_mem(fbi, &p.mem_info);
-		अगर (r < 0)
-			अवरोध;
-		अगर (copy_to_user((व्योम __user *)arg, &p.mem_info,
-					माप(p.mem_info)))
+		if (r < 0)
+			break;
+		if (copy_to_user((void __user *)arg, &p.mem_info,
+					sizeof(p.mem_info)))
 			r = -EFAULT;
-		अवरोध;
+		break;
 
-	हाल OMAPFB_GET_CAPS:
+	case OMAPFB_GET_CAPS:
 		DBG("ioctl GET_CAPS\n");
-		अगर (!display) अणु
+		if (!display) {
 			r = -EINVAL;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		स_रखो(&p.caps, 0, माप(p.caps));
-		अगर (display->caps & OMAP_DSS_DISPLAY_CAP_MANUAL_UPDATE)
+		memset(&p.caps, 0, sizeof(p.caps));
+		if (display->caps & OMAP_DSS_DISPLAY_CAP_MANUAL_UPDATE)
 			p.caps.ctrl |= OMAPFB_CAPS_MANUAL_UPDATE;
-		अगर (display->caps & OMAP_DSS_DISPLAY_CAP_TEAR_ELIM)
+		if (display->caps & OMAP_DSS_DISPLAY_CAP_TEAR_ELIM)
 			p.caps.ctrl |= OMAPFB_CAPS_TEARSYNC;
 
-		अगर (copy_to_user((व्योम __user *)arg, &p.caps, माप(p.caps)))
+		if (copy_to_user((void __user *)arg, &p.caps, sizeof(p.caps)))
 			r = -EFAULT;
-		अवरोध;
+		break;
 
-	हाल OMAPFB_GET_OVERLAY_COLORMODE:
+	case OMAPFB_GET_OVERLAY_COLORMODE:
 		DBG("ioctl GET_OVERLAY_COLORMODE\n");
-		अगर (copy_from_user(&p.ovl_colormode, (व्योम __user *)arg,
-				   माप(p.ovl_colormode))) अणु
+		if (copy_from_user(&p.ovl_colormode, (void __user *)arg,
+				   sizeof(p.ovl_colormode))) {
 			r = -EFAULT;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		r = omapfb_get_ovl_colormode(fbdev, &p.ovl_colormode);
-		अगर (r < 0)
-			अवरोध;
-		अगर (copy_to_user((व्योम __user *)arg, &p.ovl_colormode,
-				 माप(p.ovl_colormode)))
+		if (r < 0)
+			break;
+		if (copy_to_user((void __user *)arg, &p.ovl_colormode,
+				 sizeof(p.ovl_colormode)))
 			r = -EFAULT;
-		अवरोध;
+		break;
 
-	हाल OMAPFB_SET_UPDATE_MODE:
+	case OMAPFB_SET_UPDATE_MODE:
 		DBG("ioctl SET_UPDATE_MODE\n");
-		अगर (get_user(p.update_mode, (पूर्णांक __user *)arg))
+		if (get_user(p.update_mode, (int __user *)arg))
 			r = -EFAULT;
-		अन्यथा
+		else
 			r = omapfb_set_update_mode(fbi, p.update_mode);
-		अवरोध;
+		break;
 
-	हाल OMAPFB_GET_UPDATE_MODE:
+	case OMAPFB_GET_UPDATE_MODE:
 		DBG("ioctl GET_UPDATE_MODE\n");
 		r = omapfb_get_update_mode(fbi, &p.update_mode);
-		अगर (r)
-			अवरोध;
-		अगर (put_user(p.update_mode,
-					(क्रमागत omapfb_update_mode __user *)arg))
+		if (r)
+			break;
+		if (put_user(p.update_mode,
+					(enum omapfb_update_mode __user *)arg))
 			r = -EFAULT;
-		अवरोध;
+		break;
 
-	हाल OMAPFB_SET_COLOR_KEY:
+	case OMAPFB_SET_COLOR_KEY:
 		DBG("ioctl SET_COLOR_KEY\n");
-		अगर (copy_from_user(&p.color_key, (व्योम __user *)arg,
-				   माप(p.color_key)))
+		if (copy_from_user(&p.color_key, (void __user *)arg,
+				   sizeof(p.color_key)))
 			r = -EFAULT;
-		अन्यथा
+		else
 			r = omapfb_set_color_key(fbi, &p.color_key);
-		अवरोध;
+		break;
 
-	हाल OMAPFB_GET_COLOR_KEY:
+	case OMAPFB_GET_COLOR_KEY:
 		DBG("ioctl GET_COLOR_KEY\n");
 		r = omapfb_get_color_key(fbi, &p.color_key);
-		अगर (r)
-			अवरोध;
-		अगर (copy_to_user((व्योम __user *)arg, &p.color_key,
-				 माप(p.color_key)))
+		if (r)
+			break;
+		if (copy_to_user((void __user *)arg, &p.color_key,
+				 sizeof(p.color_key)))
 			r = -EFAULT;
-		अवरोध;
+		break;
 
-	हाल FBIO_WAITFORVSYNC:
-		अगर (get_user(p.crt, (__u32 __user *)arg)) अणु
+	case FBIO_WAITFORVSYNC:
+		if (get_user(p.crt, (__u32 __user *)arg)) {
 			r = -EFAULT;
-			अवरोध;
-		पूर्ण
-		अगर (p.crt != 0) अणु
+			break;
+		}
+		if (p.crt != 0) {
 			r = -ENODEV;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		fallthrough;
 
-	हाल OMAPFB_WAITFORVSYNC:
+	case OMAPFB_WAITFORVSYNC:
 		DBG("ioctl WAITFORVSYNC\n");
 
-		अगर (!display) अणु
+		if (!display) {
 			r = -EINVAL;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		mgr = omapdss_find_mgr_from_display(display);
-		अगर (!mgr) अणु
+		if (!mgr) {
 			r = -EINVAL;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		r = mgr->रुको_क्रम_vsync(mgr);
-		अवरोध;
+		r = mgr->wait_for_vsync(mgr);
+		break;
 
-	हाल OMAPFB_WAITFORGO:
+	case OMAPFB_WAITFORGO:
 		DBG("ioctl WAITFORGO\n");
-		अगर (!display) अणु
+		if (!display) {
 			r = -EINVAL;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		r = omapfb_रुको_क्रम_go(fbi);
-		अवरोध;
+		r = omapfb_wait_for_go(fbi);
+		break;
 
-	/* LCD and CTRL tests करो the same thing क्रम backward
+	/* LCD and CTRL tests do the same thing for backward
 	 * compatibility */
-	हाल OMAPFB_LCD_TEST:
+	case OMAPFB_LCD_TEST:
 		DBG("ioctl LCD_TEST\n");
-		अगर (get_user(p.test_num, (पूर्णांक __user *)arg)) अणु
+		if (get_user(p.test_num, (int __user *)arg)) {
 			r = -EFAULT;
-			अवरोध;
-		पूर्ण
-		अगर (!display || !display->driver->run_test) अणु
+			break;
+		}
+		if (!display || !display->driver->run_test) {
 			r = -EINVAL;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		r = display->driver->run_test(display, p.test_num);
 
-		अवरोध;
+		break;
 
-	हाल OMAPFB_CTRL_TEST:
+	case OMAPFB_CTRL_TEST:
 		DBG("ioctl CTRL_TEST\n");
-		अगर (get_user(p.test_num, (पूर्णांक __user *)arg)) अणु
+		if (get_user(p.test_num, (int __user *)arg)) {
 			r = -EFAULT;
-			अवरोध;
-		पूर्ण
-		अगर (!display || !display->driver->run_test) अणु
+			break;
+		}
+		if (!display || !display->driver->run_test) {
 			r = -EINVAL;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		r = display->driver->run_test(display, p.test_num);
 
-		अवरोध;
+		break;
 
-	हाल OMAPFB_MEMORY_READ:
+	case OMAPFB_MEMORY_READ:
 		DBG("ioctl MEMORY_READ\n");
 
-		अगर (copy_from_user(&p.memory_पढ़ो, (व्योम __user *)arg,
-					माप(p.memory_पढ़ो))) अणु
+		if (copy_from_user(&p.memory_read, (void __user *)arg,
+					sizeof(p.memory_read))) {
 			r = -EFAULT;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		r = omapfb_memory_पढ़ो(fbi, &p.memory_पढ़ो);
+		r = omapfb_memory_read(fbi, &p.memory_read);
 
-		अवरोध;
+		break;
 
-	हाल OMAPFB_GET_VRAM_INFO: अणु
+	case OMAPFB_GET_VRAM_INFO: {
 		DBG("ioctl GET_VRAM_INFO\n");
 
 		/*
-		 * We करोn't have the ability to get this vram info anymore.
+		 * We don't have the ability to get this vram info anymore.
 		 * Fill in something that should keep the applications working.
 		 */
 		p.vram_info.total = SZ_1M * 64;
-		p.vram_info.मुक्त = SZ_1M * 64;
-		p.vram_info.largest_मुक्त_block = SZ_1M * 64;
+		p.vram_info.free = SZ_1M * 64;
+		p.vram_info.largest_free_block = SZ_1M * 64;
 
-		अगर (copy_to_user((व्योम __user *)arg, &p.vram_info,
-					माप(p.vram_info)))
+		if (copy_to_user((void __user *)arg, &p.vram_info,
+					sizeof(p.vram_info)))
 			r = -EFAULT;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	हाल OMAPFB_SET_TEARSYNC: अणु
+	case OMAPFB_SET_TEARSYNC: {
 		DBG("ioctl SET_TEARSYNC\n");
 
-		अगर (copy_from_user(&p.tearsync_info, (व्योम __user *)arg,
-					माप(p.tearsync_info))) अणु
+		if (copy_from_user(&p.tearsync_info, (void __user *)arg,
+					sizeof(p.tearsync_info))) {
 			r = -EFAULT;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (!display || !display->driver->enable_te) अणु
+		if (!display || !display->driver->enable_te) {
 			r = -ENODEV;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		r = display->driver->enable_te(display,
 				!!p.tearsync_info.enabled);
 
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	हाल OMAPFB_GET_DISPLAY_INFO: अणु
+	case OMAPFB_GET_DISPLAY_INFO: {
 		u16 xres, yres;
 
 		DBG("ioctl GET_DISPLAY_INFO\n");
 
-		अगर (display == शून्य) अणु
+		if (display == NULL) {
 			r = -ENODEV;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		display->driver->get_resolution(display, &xres, &yres);
 
 		p.display_info.xres = xres;
 		p.display_info.yres = yres;
 
-		अगर (display->driver->get_dimensions) अणु
+		if (display->driver->get_dimensions) {
 			u32 w, h;
 			display->driver->get_dimensions(display, &w, &h);
 			p.display_info.width = w;
 			p.display_info.height = h;
-		पूर्ण अन्यथा अणु
+		} else {
 			p.display_info.width = 0;
 			p.display_info.height = 0;
-		पूर्ण
+		}
 
-		अगर (copy_to_user((व्योम __user *)arg, &p.display_info,
-					माप(p.display_info)))
+		if (copy_to_user((void __user *)arg, &p.display_info,
+					sizeof(p.display_info)))
 			r = -EFAULT;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	शेष:
+	default:
 		dev_err(fbdev->dev, "Unknown ioctl 0x%x\n", cmd);
 		r = -EINVAL;
-	पूर्ण
+	}
 
-	अगर (r < 0)
+	if (r < 0)
 		DBG("ioctl failed: %d\n", r);
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
 

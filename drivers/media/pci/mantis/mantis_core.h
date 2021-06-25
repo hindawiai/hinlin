@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
 	Mantis PCI bridge driver
 
@@ -7,38 +6,38 @@
 
 */
 
-#अगर_अघोषित __MANTIS_CORE_H
-#घोषणा __MANTIS_CORE_H
+#ifndef __MANTIS_CORE_H
+#define __MANTIS_CORE_H
 
-#समावेश "mantis_common.h"
-
-
-#घोषणा FE_TYPE_SAT	0
-#घोषणा FE_TYPE_CAB	1
-#घोषणा FE_TYPE_TER	2
-
-#घोषणा FE_TYPE_TS204	0
-#घोषणा FE_TYPE_TS188	1
+#include "mantis_common.h"
 
 
-काष्ठा venकरोrname अणु
-	u8  *sub_venकरोr_name;
-	u32 sub_venकरोr_id;
-पूर्ण;
+#define FE_TYPE_SAT	0
+#define FE_TYPE_CAB	1
+#define FE_TYPE_TER	2
 
-काष्ठा devicetype अणु
+#define FE_TYPE_TS204	0
+#define FE_TYPE_TS188	1
+
+
+struct vendorname {
+	u8  *sub_vendor_name;
+	u32 sub_vendor_id;
+};
+
+struct devicetype {
 	u8  *sub_device_name;
 	u32 sub_device_id;
 	u8  device_type;
 	u32 type_flags;
-पूर्ण;
+};
 
 
-बाह्य पूर्णांक mantis_dma_init(काष्ठा mantis_pci *mantis);
-बाह्य पूर्णांक mantis_dma_निकास(काष्ठा mantis_pci *mantis);
-बाह्य व्योम mantis_dma_start(काष्ठा mantis_pci *mantis);
-बाह्य व्योम mantis_dma_stop(काष्ठा mantis_pci *mantis);
-बाह्य पूर्णांक mantis_i2c_init(काष्ठा mantis_pci *mantis);
-बाह्य पूर्णांक mantis_i2c_निकास(काष्ठा mantis_pci *mantis);
+extern int mantis_dma_init(struct mantis_pci *mantis);
+extern int mantis_dma_exit(struct mantis_pci *mantis);
+extern void mantis_dma_start(struct mantis_pci *mantis);
+extern void mantis_dma_stop(struct mantis_pci *mantis);
+extern int mantis_i2c_init(struct mantis_pci *mantis);
+extern int mantis_i2c_exit(struct mantis_pci *mantis);
 
-#पूर्ण_अगर /* __MANTIS_CORE_H */
+#endif /* __MANTIS_CORE_H */

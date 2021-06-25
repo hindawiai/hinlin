@@ -1,102 +1,101 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * transport_class.h - a generic container क्रम all transport classes
+ * transport_class.h - a generic container for all transport classes
  *
  * Copyright (c) 2005 - James Bottomley <James.Bottomley@steeleye.com>
  */
 
-#अगर_अघोषित _TRANSPORT_CLASS_H_
-#घोषणा _TRANSPORT_CLASS_H_
+#ifndef _TRANSPORT_CLASS_H_
+#define _TRANSPORT_CLASS_H_
 
-#समावेश <linux/device.h>
-#समावेश <linux/bug.h>
-#समावेश <linux/attribute_container.h>
+#include <linux/device.h>
+#include <linux/bug.h>
+#include <linux/attribute_container.h>
 
-काष्ठा transport_container;
+struct transport_container;
 
-काष्ठा transport_class अणु
-	काष्ठा class class;
-	पूर्णांक (*setup)(काष्ठा transport_container *, काष्ठा device *,
-		     काष्ठा device *);
-	पूर्णांक (*configure)(काष्ठा transport_container *, काष्ठा device *,
-			 काष्ठा device *);
-	पूर्णांक (*हटाओ)(काष्ठा transport_container *, काष्ठा device *,
-		      काष्ठा device *);
-पूर्ण;
+struct transport_class {
+	struct class class;
+	int (*setup)(struct transport_container *, struct device *,
+		     struct device *);
+	int (*configure)(struct transport_container *, struct device *,
+			 struct device *);
+	int (*remove)(struct transport_container *, struct device *,
+		      struct device *);
+};
 
-#घोषणा DECLARE_TRANSPORT_CLASS(cls, nm, su, rm, cfg)			\
-काष्ठा transport_class cls = अणु						\
-	.class = अणु							\
+#define DECLARE_TRANSPORT_CLASS(cls, nm, su, rm, cfg)			\
+struct transport_class cls = {						\
+	.class = {							\
 		.name = nm,						\
-	पूर्ण,								\
+	},								\
 	.setup = su,							\
-	.हटाओ = rm,							\
+	.remove = rm,							\
 	.configure = cfg,						\
-पूर्ण
+}
 
 
-काष्ठा anon_transport_class अणु
-	काष्ठा transport_class tclass;
-	काष्ठा attribute_container container;
-पूर्ण;
+struct anon_transport_class {
+	struct transport_class tclass;
+	struct attribute_container container;
+};
 
-#घोषणा DECLARE_ANON_TRANSPORT_CLASS(cls, mtch, cfg)		\
-काष्ठा anon_transport_class cls = अणु				\
-	.tclass = अणु						\
+#define DECLARE_ANON_TRANSPORT_CLASS(cls, mtch, cfg)		\
+struct anon_transport_class cls = {				\
+	.tclass = {						\
 		.configure = cfg,				\
-	पूर्ण,							\
-	. container = अणु						\
+	},							\
+	. container = {						\
 		.match = mtch,					\
-	पूर्ण,							\
-पूर्ण
+	},							\
+}
 
-#घोषणा class_to_transport_class(x) \
-	container_of(x, काष्ठा transport_class, class)
+#define class_to_transport_class(x) \
+	container_of(x, struct transport_class, class)
 
-काष्ठा transport_container अणु
-	काष्ठा attribute_container ac;
-	स्थिर काष्ठा attribute_group *statistics;
-पूर्ण;
+struct transport_container {
+	struct attribute_container ac;
+	const struct attribute_group *statistics;
+};
 
-#घोषणा attribute_container_to_transport_container(x) \
-	container_of(x, काष्ठा transport_container, ac)
+#define attribute_container_to_transport_container(x) \
+	container_of(x, struct transport_container, ac)
 
-व्योम transport_हटाओ_device(काष्ठा device *);
-पूर्णांक transport_add_device(काष्ठा device *);
-व्योम transport_setup_device(काष्ठा device *);
-व्योम transport_configure_device(काष्ठा device *);
-व्योम transport_destroy_device(काष्ठा device *);
+void transport_remove_device(struct device *);
+int transport_add_device(struct device *);
+void transport_setup_device(struct device *);
+void transport_configure_device(struct device *);
+void transport_destroy_device(struct device *);
 
-अटल अंतरभूत पूर्णांक
-transport_रेजिस्टर_device(काष्ठा device *dev)
-अणु
+static inline int
+transport_register_device(struct device *dev)
+{
 	transport_setup_device(dev);
-	वापस transport_add_device(dev);
-पूर्ण
+	return transport_add_device(dev);
+}
 
-अटल अंतरभूत व्योम
-transport_unरेजिस्टर_device(काष्ठा device *dev)
-अणु
-	transport_हटाओ_device(dev);
+static inline void
+transport_unregister_device(struct device *dev)
+{
+	transport_remove_device(dev);
 	transport_destroy_device(dev);
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक transport_container_रेजिस्टर(काष्ठा transport_container *tc)
-अणु
-	वापस attribute_container_रेजिस्टर(&tc->ac);
-पूर्ण
+static inline int transport_container_register(struct transport_container *tc)
+{
+	return attribute_container_register(&tc->ac);
+}
 
-अटल अंतरभूत व्योम transport_container_unरेजिस्टर(काष्ठा transport_container *tc)
-अणु
-	अगर (unlikely(attribute_container_unरेजिस्टर(&tc->ac)))
+static inline void transport_container_unregister(struct transport_container *tc)
+{
+	if (unlikely(attribute_container_unregister(&tc->ac)))
 		BUG();
-पूर्ण
+}
 
-पूर्णांक transport_class_रेजिस्टर(काष्ठा transport_class *);
-पूर्णांक anon_transport_class_रेजिस्टर(काष्ठा anon_transport_class *);
-व्योम transport_class_unरेजिस्टर(काष्ठा transport_class *);
-व्योम anon_transport_class_unरेजिस्टर(काष्ठा anon_transport_class *);
+int transport_class_register(struct transport_class *);
+int anon_transport_class_register(struct anon_transport_class *);
+void transport_class_unregister(struct transport_class *);
+void anon_transport_class_unregister(struct anon_transport_class *);
 
 
-#पूर्ण_अगर
+#endif

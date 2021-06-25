@@ -1,35 +1,34 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __SPARC_MMU_CONTEXT_H
-#घोषणा __SPARC_MMU_CONTEXT_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __SPARC_MMU_CONTEXT_H
+#define __SPARC_MMU_CONTEXT_H
 
-#अगर_अघोषित __ASSEMBLY__
+#ifndef __ASSEMBLY__
 
-#समावेश <यंत्र-generic/mm_hooks.h>
+#include <asm-generic/mm_hooks.h>
 
 /* Initialize a new mmu context.  This is invoked when a new
  * address space instance (unique or shared) is instantiated.
  */
-#घोषणा init_new_context init_new_context
-पूर्णांक init_new_context(काष्ठा task_काष्ठा *tsk, काष्ठा mm_काष्ठा *mm);
+#define init_new_context init_new_context
+int init_new_context(struct task_struct *tsk, struct mm_struct *mm);
 
 /* Destroy a dead context.  This occurs when mmput drops the
  * mm_users count to zero, the mmaps have been released, and
  * all the page tables have been flushed.  Our job is to destroy
- * any reमुख्यing processor-specअगरic state.
+ * any remaining processor-specific state.
  */
-#घोषणा destroy_context destroy_context
-व्योम destroy_context(काष्ठा mm_काष्ठा *mm);
+#define destroy_context destroy_context
+void destroy_context(struct mm_struct *mm);
 
 /* Switch the current MM context. */
-व्योम चयन_mm(काष्ठा mm_काष्ठा *old_mm, काष्ठा mm_काष्ठा *mm,
-	       काष्ठा task_काष्ठा *tsk);
+void switch_mm(struct mm_struct *old_mm, struct mm_struct *mm,
+	       struct task_struct *tsk);
 
-/* Activate a new MM instance क्रम the current task. */
-#घोषणा activate_mm(active_mm, mm) चयन_mm((active_mm), (mm), शून्य)
+/* Activate a new MM instance for the current task. */
+#define activate_mm(active_mm, mm) switch_mm((active_mm), (mm), NULL)
 
-#समावेश <यंत्र-generic/mmu_context.h>
+#include <asm-generic/mmu_context.h>
 
-#पूर्ण_अगर /* !(__ASSEMBLY__) */
+#endif /* !(__ASSEMBLY__) */
 
-#पूर्ण_अगर /* !(__SPARC_MMU_CONTEXT_H) */
+#endif /* !(__SPARC_MMU_CONTEXT_H) */

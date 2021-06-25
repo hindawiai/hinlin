@@ -1,43 +1,42 @@
-<शैली गुरु>
 /*
  *  font.h -- `Soft' font definitions
  *
  *  Created 1995 by Geert Uytterhoeven
  *
  *  This file is subject to the terms and conditions of the GNU General Public
- *  License.  See the file COPYING in the मुख्य directory of this archive
- *  क्रम more details.
+ *  License.  See the file COPYING in the main directory of this archive
+ *  for more details.
  */
 
-#अगर_अघोषित _VIDEO_FONT_H
-#घोषणा _VIDEO_FONT_H
+#ifndef _VIDEO_FONT_H
+#define _VIDEO_FONT_H
 
-#समावेश <linux/types.h>
+#include <linux/types.h>
 
-काष्ठा font_desc अणु
-    पूर्णांक idx;
-    स्थिर अक्षर *name;
-    अचिन्हित पूर्णांक width, height;
-    अचिन्हित पूर्णांक अक्षरcount;
-    स्थिर व्योम *data;
-    पूर्णांक pref;
-पूर्ण;
+struct font_desc {
+    int idx;
+    const char *name;
+    unsigned int width, height;
+    unsigned int charcount;
+    const void *data;
+    int pref;
+};
 
-#घोषणा VGA8x8_IDX	0
-#घोषणा VGA8x16_IDX	1
-#घोषणा PEARL8x8_IDX	2
-#घोषणा VGA6x11_IDX	3
-#घोषणा FONT7x14_IDX	4
-#घोषणा	FONT10x18_IDX	5
-#घोषणा SUN8x16_IDX	6
-#घोषणा SUN12x22_IDX	7
-#घोषणा ACORN8x8_IDX	8
-#घोषणा	MINI4x6_IDX	9
-#घोषणा FONT6x10_IDX	10
-#घोषणा TER16x32_IDX	11
-#घोषणा FONT6x8_IDX	12
+#define VGA8x8_IDX	0
+#define VGA8x16_IDX	1
+#define PEARL8x8_IDX	2
+#define VGA6x11_IDX	3
+#define FONT7x14_IDX	4
+#define	FONT10x18_IDX	5
+#define SUN8x16_IDX	6
+#define SUN12x22_IDX	7
+#define ACORN8x8_IDX	8
+#define	MINI4x6_IDX	9
+#define FONT6x10_IDX	10
+#define TER16x32_IDX	11
+#define FONT6x8_IDX	12
 
-बाह्य स्थिर काष्ठा font_desc	font_vga_8x8,
+extern const struct font_desc	font_vga_8x8,
 			font_vga_8x16,
 			font_pearl_8x8,
 			font_vga_6x11,
@@ -51,29 +50,29 @@
 			font_ter_16x32,
 			font_6x8;
 
-/* Find a font with a specअगरic name */
+/* Find a font with a specific name */
 
-बाह्य स्थिर काष्ठा font_desc *find_font(स्थिर अक्षर *name);
+extern const struct font_desc *find_font(const char *name);
 
-/* Get the शेष font क्रम a specअगरic screen size */
+/* Get the default font for a specific screen size */
 
-बाह्य स्थिर काष्ठा font_desc *get_शेष_font(पूर्णांक xres, पूर्णांक yres,
+extern const struct font_desc *get_default_font(int xres, int yres,
 						u32 font_w, u32 font_h);
 
-/* Max. length क्रम the name of a predefined font */
-#घोषणा MAX_FONT_NAME	32
+/* Max. length for the name of a predefined font */
+#define MAX_FONT_NAME	32
 
 /* Extra word getters */
-#घोषणा REFCOUNT(fd)	(((पूर्णांक *)(fd))[-1])
-#घोषणा FNTSIZE(fd)	(((पूर्णांक *)(fd))[-2])
-#घोषणा FNTCHARCNT(fd)	(((पूर्णांक *)(fd))[-3])
-#घोषणा FNTSUM(fd)	(((पूर्णांक *)(fd))[-4])
+#define REFCOUNT(fd)	(((int *)(fd))[-1])
+#define FNTSIZE(fd)	(((int *)(fd))[-2])
+#define FNTCHARCNT(fd)	(((int *)(fd))[-3])
+#define FNTSUM(fd)	(((int *)(fd))[-4])
 
-#घोषणा FONT_EXTRA_WORDS 4
+#define FONT_EXTRA_WORDS 4
 
-काष्ठा font_data अणु
-	अचिन्हित पूर्णांक extra[FONT_EXTRA_WORDS];
-	स्थिर अचिन्हित अक्षर data[];
-पूर्ण __packed;
+struct font_data {
+	unsigned int extra[FONT_EXTRA_WORDS];
+	const unsigned char data[];
+} __packed;
 
-#पूर्ण_अगर /* _VIDEO_FONT_H */
+#endif /* _VIDEO_FONT_H */

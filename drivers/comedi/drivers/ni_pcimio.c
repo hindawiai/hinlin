@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
- * Comedi driver क्रम NI PCI-MIO E series cards
+ * Comedi driver for NI PCI-MIO E series cards
  *
  * COMEDI - Linux Control and Measurement Device Interface
  * Copyright (C) 1997-8 David A. Schleef <ds@schleef.org>
@@ -29,40 +28,40 @@
  * Updated: Mon, 16 Jan 2017 12:56:04 +0000
  *
  * These boards are almost identical to the AT-MIO E series, except that
- * they use the PCI bus instead of ISA (i.e., AT). See the notes क्रम the
- * ni_aपंचांगio.o driver क्रम additional inक्रमmation about these boards.
+ * they use the PCI bus instead of ISA (i.e., AT). See the notes for the
+ * ni_atmio.o driver for additional information about these boards.
  *
  * Autocalibration is supported on many of the devices, using the
- * comedi_calibrate (or comedi_soft_calibrate क्रम m-series) utility.
- * M-Series boards करो analog input and analog output calibration entirely
- * in software. The software calibration corrects the analog input क्रम
- * offset, gain and nonlinearity. The analog outमाला_दो are corrected क्रम
- * offset and gain. See the comedilib करोcumentation on
- * comedi_get_softcal_converter() क्रम more inक्रमmation.
+ * comedi_calibrate (or comedi_soft_calibrate for m-series) utility.
+ * M-Series boards do analog input and analog output calibration entirely
+ * in software. The software calibration corrects the analog input for
+ * offset, gain and nonlinearity. The analog outputs are corrected for
+ * offset and gain. See the comedilib documentation on
+ * comedi_get_softcal_converter() for more information.
  *
- * By शेष, the driver uses DMA to transfer analog input data to
+ * By default, the driver uses DMA to transfer analog input data to
  * memory.  When DMA is enabled, not all triggering features are
  * supported.
  *
  * Digital I/O may not work on 673x.
  *
  * Note that the PCI-6143 is a simultaineous sampling device with 8
- * convertors. With this board all of the convertors perक्रमm one
- * simultaineous sample during a scan पूर्णांकerval. The period क्रम a scan
- * is used क्रम the convert समय in a Comedi cmd. The convert trigger
- * source is normally set to TRIG_NOW by शेष.
+ * convertors. With this board all of the convertors perform one
+ * simultaineous sample during a scan interval. The period for a scan
+ * is used for the convert time in a Comedi cmd. The convert trigger
+ * source is normally set to TRIG_NOW by default.
  *
  * The RTSI trigger bus is supported on these cards on subdevice 10.
- * See the comedilib करोcumentation क्रम details.
+ * See the comedilib documentation for details.
  *
- * Inक्रमmation (number of channels, bits, etc.) क्रम some devices may be
- * incorrect. Please check this and submit a bug अगर there are problems
- * क्रम your device.
+ * Information (number of channels, bits, etc.) for some devices may be
+ * incorrect. Please check this and submit a bug if there are problems
+ * for your device.
  *
- * SCXI is probably broken क्रम m-series boards.
+ * SCXI is probably broken for m-series boards.
  *
  * Bugs:
- * - When DMA is enabled, COMEDI_EV_CONVERT करोes not work correctly.
+ * - When DMA is enabled, COMEDI_EV_CONVERT does not work correctly.
  */
 
 /*
@@ -79,42 +78,42 @@
  *	322138a.pdf  PCI-6052E and DAQPad-6052E User Manual
  *
  * ISSUES:
- * - need to deal with बाह्यal reference क्रम DAC, and other DAC
+ * - need to deal with external reference for DAC, and other DAC
  *   properties in board properties
  * - deal with at-mio-16de-10 revision D to N changes, etc.
  * - need to add other CALDAC type
- * - need to slow करोwn DAC loading. I करोn't trust NI's claim that
- *   two ग_लिखोs to the PCI bus slows IO enough. I would prefer to
+ * - need to slow down DAC loading. I don't trust NI's claim that
+ *   two writes to the PCI bus slows IO enough. I would prefer to
  *   use udelay().
- *   Timing specs: (घड़ी)
+ *   Timing specs: (clock)
  *	AD8522		30ns
  *	DAC8043		120ns
  *	DAC8800		60ns
  *	MB88341		?
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/delay.h>
+#include <linux/module.h>
+#include <linux/delay.h>
 
-#समावेश "../comedi_pci.h"
+#include "../comedi_pci.h"
 
-#समावेश <यंत्र/byteorder.h>
+#include <asm/byteorder.h>
 
-#समावेश "ni_stc.h"
-#समावेश "mite.h"
+#include "ni_stc.h"
+#include "mite.h"
 
-#घोषणा PCIDMA
+#define PCIDMA
 
 /*
- * These are not all the possible ao ranges क्रम 628x boards.
- * They can करो OFFSET +- REFERENCE where OFFSET can be
+ * These are not all the possible ao ranges for 628x boards.
+ * They can do OFFSET +- REFERENCE where OFFSET can be
  * 0V, 5V, APFI<0,1>, or AO<0...3> and RANGE can
  * be 10V, 5V, 2V, 1V, APFI<0,1>, AO<0...3>.  That's
- * 63 dअगरferent possibilities.  An AO channel
+ * 63 different possibilities.  An AO channel
  * can not act as it's own OFFSET or REFERENCE.
  */
-अटल स्थिर काष्ठा comedi_lrange range_ni_M_628x_ao = अणु
-	8, अणु
+static const struct comedi_lrange range_ni_M_628x_ao = {
+	8, {
 		BIP_RANGE(10),
 		BIP_RANGE(5),
 		BIP_RANGE(2),
@@ -124,18 +123,18 @@
 		RANGE(3, 7),
 		RANGE(4, 6),
 		RANGE_ext(-1, 1)
-	पूर्ण
-पूर्ण;
+	}
+};
 
-अटल स्थिर काष्ठा comedi_lrange range_ni_M_625x_ao = अणु
-	3, अणु
+static const struct comedi_lrange range_ni_M_625x_ao = {
+	3, {
 		BIP_RANGE(10),
 		BIP_RANGE(5),
 		RANGE_ext(-1, 1)
-	पूर्ण
-पूर्ण;
+	}
+};
 
-क्रमागत ni_pcimio_boardid अणु
+enum ni_pcimio_boardid {
 	BOARD_PCIMIO_16XE_50,
 	BOARD_PCIMIO_16XE_10,
 	BOARD_PCI6014,
@@ -204,14 +203,14 @@
 	BOARD_PXI6289,
 	BOARD_PCI6143,
 	BOARD_PXI6143,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा ni_board_काष्ठा ni_boards[] = अणु
-	[BOARD_PCIMIO_16XE_50] = अणु
+static const struct ni_board_struct ni_boards[] = {
+	[BOARD_PCIMIO_16XE_50] = {
 		.name		= "pci-mio-16xe-50",
 		.n_adchan	= 16,
 		.ai_maxdata	= 0xffff,
-		.ai_fअगरo_depth	= 2048,
+		.ai_fifo_depth	= 2048,
 		.alwaysdither	= 1,
 		.gainlkup	= ai_gain_8,
 		.ai_speed	= 50000,
@@ -219,28 +218,28 @@
 		.ao_maxdata	= 0x0fff,
 		.ao_range_table	= &range_bipolar10,
 		.ao_speed	= 50000,
-		.caldac		= अणु dac8800, dac8043 पूर्ण,
-	पूर्ण,
-	[BOARD_PCIMIO_16XE_10] = अणु
+		.caldac		= { dac8800, dac8043 },
+	},
+	[BOARD_PCIMIO_16XE_10] = {
 		.name		= "pci-mio-16xe-10",	/*  aka pci-6030E */
 		.n_adchan	= 16,
 		.ai_maxdata	= 0xffff,
-		.ai_fअगरo_depth	= 512,
+		.ai_fifo_depth	= 512,
 		.alwaysdither	= 1,
 		.gainlkup	= ai_gain_14,
 		.ai_speed	= 10000,
 		.n_aochan	= 2,
 		.ao_maxdata	= 0xffff,
-		.ao_fअगरo_depth	= 2048,
+		.ao_fifo_depth	= 2048,
 		.ao_range_table	= &range_ni_E_ao_ext,
 		.ao_speed	= 10000,
-		.caldac		= अणु dac8800, dac8043, ad8522 पूर्ण,
-	पूर्ण,
-	[BOARD_PCI6014] = अणु
+		.caldac		= { dac8800, dac8043, ad8522 },
+	},
+	[BOARD_PCI6014] = {
 		.name		= "pci-6014",
 		.n_adchan	= 16,
 		.ai_maxdata	= 0xffff,
-		.ai_fअगरo_depth	= 512,
+		.ai_fifo_depth	= 512,
 		.alwaysdither	= 1,
 		.gainlkup	= ai_gain_4,
 		.ai_speed	= 5000,
@@ -248,42 +247,42 @@
 		.ao_maxdata	= 0xffff,
 		.ao_range_table	= &range_bipolar10,
 		.ao_speed	= 100000,
-		.caldac		= अणु ad8804_debug पूर्ण,
-	पूर्ण,
-	[BOARD_PXI6030E] = अणु
+		.caldac		= { ad8804_debug },
+	},
+	[BOARD_PXI6030E] = {
 		.name		= "pxi-6030e",
 		.n_adchan	= 16,
 		.ai_maxdata	= 0xffff,
-		.ai_fअगरo_depth	= 512,
+		.ai_fifo_depth	= 512,
 		.alwaysdither	= 1,
 		.gainlkup	= ai_gain_14,
 		.ai_speed	= 10000,
 		.n_aochan	= 2,
 		.ao_maxdata	= 0xffff,
-		.ao_fअगरo_depth	= 2048,
+		.ao_fifo_depth	= 2048,
 		.ao_range_table	= &range_ni_E_ao_ext,
 		.ao_speed	= 10000,
-		.caldac		= अणु dac8800, dac8043, ad8522 पूर्ण,
-	पूर्ण,
-	[BOARD_PCIMIO_16E_1] = अणु
+		.caldac		= { dac8800, dac8043, ad8522 },
+	},
+	[BOARD_PCIMIO_16E_1] = {
 		.name		= "pci-mio-16e-1",	/* aka pci-6070e */
 		.n_adchan	= 16,
 		.ai_maxdata	= 0x0fff,
-		.ai_fअगरo_depth	= 512,
+		.ai_fifo_depth	= 512,
 		.gainlkup	= ai_gain_16,
 		.ai_speed	= 800,
 		.n_aochan	= 2,
 		.ao_maxdata	= 0x0fff,
-		.ao_fअगरo_depth	= 2048,
+		.ao_fifo_depth	= 2048,
 		.ao_range_table	= &range_ni_E_ao_ext,
 		.ao_speed	= 1000,
-		.caldac		= अणु mb88341 पूर्ण,
-	पूर्ण,
-	[BOARD_PCIMIO_16E_4] = अणु
+		.caldac		= { mb88341 },
+	},
+	[BOARD_PCIMIO_16E_4] = {
 		.name		= "pci-mio-16e-4",	/* aka pci-6040e */
 		.n_adchan	= 16,
 		.ai_maxdata	= 0x0fff,
-		.ai_fअगरo_depth	= 512,
+		.ai_fifo_depth	= 512,
 		.gainlkup	= ai_gain_16,
 		/*
 		 * there have been reported problems with
@@ -292,140 +291,140 @@
 		.ai_speed	= 2000,
 		.n_aochan	= 2,
 		.ao_maxdata	= 0x0fff,
-		.ao_fअगरo_depth	= 512,
+		.ao_fifo_depth	= 512,
 		.ao_range_table	= &range_ni_E_ao_ext,
 		.ao_speed	= 1000,
-		.caldac		= अणु ad8804_debug पूर्ण,	/* करोc says mb88341 */
-	पूर्ण,
-	[BOARD_PXI6040E] = अणु
+		.caldac		= { ad8804_debug },	/* doc says mb88341 */
+	},
+	[BOARD_PXI6040E] = {
 		.name		= "pxi-6040e",
 		.n_adchan	= 16,
 		.ai_maxdata	= 0x0fff,
-		.ai_fअगरo_depth	= 512,
+		.ai_fifo_depth	= 512,
 		.gainlkup	= ai_gain_16,
 		.ai_speed	= 2000,
 		.n_aochan	= 2,
 		.ao_maxdata	= 0x0fff,
-		.ao_fअगरo_depth	= 512,
+		.ao_fifo_depth	= 512,
 		.ao_range_table	= &range_ni_E_ao_ext,
 		.ao_speed	= 1000,
-		.caldac		= अणु mb88341 पूर्ण,
-	पूर्ण,
-	[BOARD_PCI6031E] = अणु
+		.caldac		= { mb88341 },
+	},
+	[BOARD_PCI6031E] = {
 		.name		= "pci-6031e",
 		.n_adchan	= 64,
 		.ai_maxdata	= 0xffff,
-		.ai_fअगरo_depth	= 512,
+		.ai_fifo_depth	= 512,
 		.alwaysdither	= 1,
 		.gainlkup	= ai_gain_14,
 		.ai_speed	= 10000,
 		.n_aochan	= 2,
 		.ao_maxdata	= 0xffff,
-		.ao_fअगरo_depth	= 2048,
+		.ao_fifo_depth	= 2048,
 		.ao_range_table	= &range_ni_E_ao_ext,
 		.ao_speed	= 10000,
-		.caldac		= अणु dac8800, dac8043, ad8522 पूर्ण,
-	पूर्ण,
-	[BOARD_PCI6032E] = अणु
+		.caldac		= { dac8800, dac8043, ad8522 },
+	},
+	[BOARD_PCI6032E] = {
 		.name		= "pci-6032e",
 		.n_adchan	= 16,
 		.ai_maxdata	= 0xffff,
-		.ai_fअगरo_depth	= 512,
+		.ai_fifo_depth	= 512,
 		.alwaysdither	= 1,
 		.gainlkup	= ai_gain_14,
 		.ai_speed	= 10000,
-		.caldac		= अणु dac8800, dac8043, ad8522 पूर्ण,
-	पूर्ण,
-	[BOARD_PCI6033E] = अणु
+		.caldac		= { dac8800, dac8043, ad8522 },
+	},
+	[BOARD_PCI6033E] = {
 		.name		= "pci-6033e",
 		.n_adchan	= 64,
 		.ai_maxdata	= 0xffff,
-		.ai_fअगरo_depth	= 512,
+		.ai_fifo_depth	= 512,
 		.alwaysdither	= 1,
 		.gainlkup	= ai_gain_14,
 		.ai_speed	= 10000,
-		.caldac		= अणु dac8800, dac8043, ad8522 पूर्ण,
-	पूर्ण,
-	[BOARD_PCI6071E] = अणु
+		.caldac		= { dac8800, dac8043, ad8522 },
+	},
+	[BOARD_PCI6071E] = {
 		.name		= "pci-6071e",
 		.n_adchan	= 64,
 		.ai_maxdata	= 0x0fff,
-		.ai_fअगरo_depth	= 512,
+		.ai_fifo_depth	= 512,
 		.alwaysdither	= 1,
 		.gainlkup	= ai_gain_16,
 		.ai_speed	= 800,
 		.n_aochan	= 2,
 		.ao_maxdata	= 0x0fff,
-		.ao_fअगरo_depth	= 2048,
+		.ao_fifo_depth	= 2048,
 		.ao_range_table	= &range_ni_E_ao_ext,
 		.ao_speed	= 1000,
-		.caldac		= अणु ad8804_debug पूर्ण,
-	पूर्ण,
-	[BOARD_PCI6023E] = अणु
+		.caldac		= { ad8804_debug },
+	},
+	[BOARD_PCI6023E] = {
 		.name		= "pci-6023e",
 		.n_adchan	= 16,
 		.ai_maxdata	= 0x0fff,
-		.ai_fअगरo_depth	= 512,
+		.ai_fifo_depth	= 512,
 		.gainlkup	= ai_gain_4,
 		.ai_speed	= 5000,
-		.caldac		= अणु ad8804_debug पूर्ण,	/* manual is wrong */
-	पूर्ण,
-	[BOARD_PCI6024E] = अणु
+		.caldac		= { ad8804_debug },	/* manual is wrong */
+	},
+	[BOARD_PCI6024E] = {
 		.name		= "pci-6024e",
 		.n_adchan	= 16,
 		.ai_maxdata	= 0x0fff,
-		.ai_fअगरo_depth	= 512,
+		.ai_fifo_depth	= 512,
 		.gainlkup	= ai_gain_4,
 		.ai_speed	= 5000,
 		.n_aochan	= 2,
 		.ao_maxdata	= 0x0fff,
 		.ao_range_table	= &range_bipolar10,
 		.ao_speed	= 100000,
-		.caldac		= अणु ad8804_debug पूर्ण,	/* manual is wrong */
-	पूर्ण,
-	[BOARD_PCI6025E] = अणु
+		.caldac		= { ad8804_debug },	/* manual is wrong */
+	},
+	[BOARD_PCI6025E] = {
 		.name		= "pci-6025e",
 		.n_adchan	= 16,
 		.ai_maxdata	= 0x0fff,
-		.ai_fअगरo_depth	= 512,
+		.ai_fifo_depth	= 512,
 		.gainlkup	= ai_gain_4,
 		.ai_speed	= 5000,
 		.n_aochan	= 2,
 		.ao_maxdata	= 0x0fff,
 		.ao_range_table	= &range_bipolar10,
 		.ao_speed	= 100000,
-		.caldac		= अणु ad8804_debug पूर्ण,	/* manual is wrong */
+		.caldac		= { ad8804_debug },	/* manual is wrong */
 		.has_8255	= 1,
-	पूर्ण,
-	[BOARD_PXI6025E] = अणु
+	},
+	[BOARD_PXI6025E] = {
 		.name		= "pxi-6025e",
 		.n_adchan	= 16,
 		.ai_maxdata	= 0x0fff,
-		.ai_fअगरo_depth	= 512,
+		.ai_fifo_depth	= 512,
 		.gainlkup	= ai_gain_4,
 		.ai_speed	= 5000,
 		.n_aochan	= 2,
 		.ao_maxdata	= 0x0fff,
 		.ao_range_table	= &range_ni_E_ao_ext,
 		.ao_speed	= 100000,
-		.caldac		= अणु ad8804_debug पूर्ण,	/* manual is wrong */
+		.caldac		= { ad8804_debug },	/* manual is wrong */
 		.has_8255	= 1,
-	पूर्ण,
-	[BOARD_PCI6034E] = अणु
+	},
+	[BOARD_PCI6034E] = {
 		.name		= "pci-6034e",
 		.n_adchan	= 16,
 		.ai_maxdata	= 0xffff,
-		.ai_fअगरo_depth	= 512,
+		.ai_fifo_depth	= 512,
 		.alwaysdither	= 1,
 		.gainlkup	= ai_gain_4,
 		.ai_speed	= 5000,
-		.caldac		= अणु ad8804_debug पूर्ण,
-	पूर्ण,
-	[BOARD_PCI6035E] = अणु
+		.caldac		= { ad8804_debug },
+	},
+	[BOARD_PCI6035E] = {
 		.name		= "pci-6035e",
 		.n_adchan	= 16,
 		.ai_maxdata	= 0xffff,
-		.ai_fअगरo_depth	= 512,
+		.ai_fifo_depth	= 512,
 		.alwaysdither	= 1,
 		.gainlkup	= ai_gain_4,
 		.ai_speed	= 5000,
@@ -433,29 +432,29 @@
 		.ao_maxdata	= 0x0fff,
 		.ao_range_table	= &range_bipolar10,
 		.ao_speed	= 100000,
-		.caldac		= अणु ad8804_debug पूर्ण,
-	पूर्ण,
-	[BOARD_PCI6052E] = अणु
+		.caldac		= { ad8804_debug },
+	},
+	[BOARD_PCI6052E] = {
 		.name		= "pci-6052e",
 		.n_adchan	= 16,
 		.ai_maxdata	= 0xffff,
-		.ai_fअगरo_depth	= 512,
+		.ai_fifo_depth	= 512,
 		.alwaysdither	= 1,
 		.gainlkup	= ai_gain_16,
 		.ai_speed	= 3000,
 		.n_aochan	= 2,
 		.ao_maxdata	= 0xffff,
-		.ao_fअगरo_depth	= 2048,
+		.ao_fifo_depth	= 2048,
 		.ao_range_table	= &range_ni_E_ao_ext,
 		.ao_speed	= 3000,
 		/* manual is wrong */
-		.caldac		= अणु ad8804_debug, ad8804_debug, ad8522 पूर्ण,
-	पूर्ण,
-	[BOARD_PCI6110] = अणु
+		.caldac		= { ad8804_debug, ad8804_debug, ad8522 },
+	},
+	[BOARD_PCI6110] = {
 		.name		= "pci-6110",
 		.n_adchan	= 4,
 		.ai_maxdata	= 0x0fff,
-		.ai_fअगरo_depth	= 8192,
+		.ai_fifo_depth	= 8192,
 		.alwaysdither	= 0,
 		.gainlkup	= ai_gain_611x,
 		.ai_speed	= 200,
@@ -463,209 +462,209 @@
 		.ao_maxdata	= 0xffff,
 		.reg_type	= ni_reg_611x,
 		.ao_range_table	= &range_bipolar10,
-		.ao_fअगरo_depth	= 2048,
+		.ao_fifo_depth	= 2048,
 		.ao_speed	= 250,
-		.caldac		= अणु ad8804, ad8804 पूर्ण,
-	पूर्ण,
-	[BOARD_PCI6111] = अणु
+		.caldac		= { ad8804, ad8804 },
+	},
+	[BOARD_PCI6111] = {
 		.name		= "pci-6111",
 		.n_adchan	= 2,
 		.ai_maxdata	= 0x0fff,
-		.ai_fअगरo_depth	= 8192,
+		.ai_fifo_depth	= 8192,
 		.gainlkup	= ai_gain_611x,
 		.ai_speed	= 200,
 		.n_aochan	= 2,
 		.ao_maxdata	= 0xffff,
 		.reg_type	= ni_reg_611x,
 		.ao_range_table	= &range_bipolar10,
-		.ao_fअगरo_depth	= 2048,
+		.ao_fifo_depth	= 2048,
 		.ao_speed	= 250,
-		.caldac		= अणु ad8804, ad8804 पूर्ण,
-	पूर्ण,
-#अगर 0
+		.caldac		= { ad8804, ad8804 },
+	},
+#if 0
 	/* The 6115 boards probably need their own driver */
-	[BOARD_PCI6115] = अणु	/* .device_id = 0x2ed0, */
+	[BOARD_PCI6115] = {	/* .device_id = 0x2ed0, */
 		.name		= "pci-6115",
 		.n_adchan	= 4,
 		.ai_maxdata	= 0x0fff,
-		.ai_fअगरo_depth	= 8192,
+		.ai_fifo_depth	= 8192,
 		.gainlkup	= ai_gain_611x,
 		.ai_speed	= 100,
 		.n_aochan	= 2,
 		.ao_maxdata	= 0xffff,
 		.ao_671x	= 1,
-		.ao_fअगरo_depth	= 2048,
+		.ao_fifo_depth	= 2048,
 		.ao_speed	= 250,
 		.reg_611x	= 1,
 		/* XXX */
-		.caldac		= अणु ad8804_debug, ad8804_debug, ad8804_debug पूर्ण,
-	पूर्ण,
-#पूर्ण_अगर
-#अगर 0
-	[BOARD_PXI6115] = अणु	/* .device_id = ????, */
+		.caldac		= { ad8804_debug, ad8804_debug, ad8804_debug },
+	},
+#endif
+#if 0
+	[BOARD_PXI6115] = {	/* .device_id = ????, */
 		.name		= "pxi-6115",
 		.n_adchan	= 4,
 		.ai_maxdata	= 0x0fff,
-		.ai_fअगरo_depth	= 8192,
+		.ai_fifo_depth	= 8192,
 		.gainlkup	= ai_gain_611x,
 		.ai_speed	= 100,
 		.n_aochan	= 2,
 		.ao_maxdata	= 0xffff,
 		.ao_671x	= 1,
-		.ao_fअगरo_depth	= 2048,
+		.ao_fifo_depth	= 2048,
 		.ao_speed	= 250,
 		.reg_611x	= 1,
 		/* XXX */
-		.caldac		= अणु ad8804_debug, ad8804_debug, ad8804_debug पूर्ण,
-	पूर्ण,
-#पूर्ण_अगर
-	[BOARD_PCI6711] = अणु
+		.caldac		= { ad8804_debug, ad8804_debug, ad8804_debug },
+	},
+#endif
+	[BOARD_PCI6711] = {
 		.name = "pci-6711",
 		.n_aochan	= 4,
 		.ao_maxdata	= 0x0fff,
-		/* data sheet says 8192, but fअगरo really holds 16384 samples */
-		.ao_fअगरo_depth	= 16384,
+		/* data sheet says 8192, but fifo really holds 16384 samples */
+		.ao_fifo_depth	= 16384,
 		.ao_range_table	= &range_bipolar10,
 		.ao_speed	= 1000,
 		.reg_type	= ni_reg_6711,
-		.caldac		= अणु ad8804_debug पूर्ण,
-	पूर्ण,
-	[BOARD_PXI6711] = अणु
+		.caldac		= { ad8804_debug },
+	},
+	[BOARD_PXI6711] = {
 		.name		= "pxi-6711",
 		.n_aochan	= 4,
 		.ao_maxdata	= 0x0fff,
-		.ao_fअगरo_depth	= 16384,
+		.ao_fifo_depth	= 16384,
 		.ao_range_table	= &range_bipolar10,
 		.ao_speed	= 1000,
 		.reg_type	= ni_reg_6711,
-		.caldac		= अणु ad8804_debug पूर्ण,
-	पूर्ण,
-	[BOARD_PCI6713] = अणु
+		.caldac		= { ad8804_debug },
+	},
+	[BOARD_PCI6713] = {
 		.name		= "pci-6713",
 		.n_aochan	= 8,
 		.ao_maxdata	= 0x0fff,
-		.ao_fअगरo_depth	= 16384,
+		.ao_fifo_depth	= 16384,
 		.ao_range_table	= &range_bipolar10,
 		.ao_speed	= 1000,
 		.reg_type	= ni_reg_6713,
-		.caldac		= अणु ad8804_debug, ad8804_debug पूर्ण,
-	पूर्ण,
-	[BOARD_PXI6713] = अणु
+		.caldac		= { ad8804_debug, ad8804_debug },
+	},
+	[BOARD_PXI6713] = {
 		.name		= "pxi-6713",
 		.n_aochan	= 8,
 		.ao_maxdata	= 0x0fff,
-		.ao_fअगरo_depth	= 16384,
+		.ao_fifo_depth	= 16384,
 		.ao_range_table	= &range_bipolar10,
 		.ao_speed	= 1000,
 		.reg_type	= ni_reg_6713,
-		.caldac		= अणु ad8804_debug, ad8804_debug पूर्ण,
-	पूर्ण,
-	[BOARD_PCI6731] = अणु
+		.caldac		= { ad8804_debug, ad8804_debug },
+	},
+	[BOARD_PCI6731] = {
 		.name		= "pci-6731",
 		.n_aochan	= 4,
 		.ao_maxdata	= 0xffff,
-		.ao_fअगरo_depth	= 8192,
+		.ao_fifo_depth	= 8192,
 		.ao_range_table	= &range_bipolar10,
 		.ao_speed	= 1000,
 		.reg_type	= ni_reg_6711,
-		.caldac		= अणु ad8804_debug पूर्ण,
-	पूर्ण,
-#अगर 0
-	[BOARD_PXI6731] = अणु	/* .device_id = ????, */
+		.caldac		= { ad8804_debug },
+	},
+#if 0
+	[BOARD_PXI6731] = {	/* .device_id = ????, */
 		.name		= "pxi-6731",
 		.n_aochan	= 4,
 		.ao_maxdata	= 0xffff,
-		.ao_fअगरo_depth	= 8192,
+		.ao_fifo_depth	= 8192,
 		.ao_range_table	= &range_bipolar10,
 		.reg_type	= ni_reg_6711,
-		.caldac		= अणु ad8804_debug पूर्ण,
-	पूर्ण,
-#पूर्ण_अगर
-	[BOARD_PCI6733] = अणु
+		.caldac		= { ad8804_debug },
+	},
+#endif
+	[BOARD_PCI6733] = {
 		.name		= "pci-6733",
 		.n_aochan	= 8,
 		.ao_maxdata	= 0xffff,
-		.ao_fअगरo_depth	= 16384,
+		.ao_fifo_depth	= 16384,
 		.ao_range_table	= &range_bipolar10,
 		.ao_speed	= 1000,
 		.reg_type	= ni_reg_6713,
-		.caldac		= अणु ad8804_debug, ad8804_debug पूर्ण,
-	पूर्ण,
-	[BOARD_PXI6733] = अणु
+		.caldac		= { ad8804_debug, ad8804_debug },
+	},
+	[BOARD_PXI6733] = {
 		.name		= "pxi-6733",
 		.n_aochan	= 8,
 		.ao_maxdata	= 0xffff,
-		.ao_fअगरo_depth	= 16384,
+		.ao_fifo_depth	= 16384,
 		.ao_range_table	= &range_bipolar10,
 		.ao_speed	= 1000,
 		.reg_type	= ni_reg_6713,
-		.caldac		= अणु ad8804_debug, ad8804_debug पूर्ण,
-	पूर्ण,
-	[BOARD_PXI6071E] = अणु
+		.caldac		= { ad8804_debug, ad8804_debug },
+	},
+	[BOARD_PXI6071E] = {
 		.name		= "pxi-6071e",
 		.n_adchan	= 64,
 		.ai_maxdata	= 0x0fff,
-		.ai_fअगरo_depth	= 512,
+		.ai_fifo_depth	= 512,
 		.alwaysdither	= 1,
 		.gainlkup	= ai_gain_16,
 		.ai_speed	= 800,
 		.n_aochan	= 2,
 		.ao_maxdata	= 0x0fff,
-		.ao_fअगरo_depth	= 2048,
+		.ao_fifo_depth	= 2048,
 		.ao_range_table	= &range_ni_E_ao_ext,
 		.ao_speed	= 1000,
-		.caldac		= अणु ad8804_debug पूर्ण,
-	पूर्ण,
-	[BOARD_PXI6070E] = अणु
+		.caldac		= { ad8804_debug },
+	},
+	[BOARD_PXI6070E] = {
 		.name		= "pxi-6070e",
 		.n_adchan	= 16,
 		.ai_maxdata	= 0x0fff,
-		.ai_fअगरo_depth	= 512,
+		.ai_fifo_depth	= 512,
 		.alwaysdither	= 1,
 		.gainlkup	= ai_gain_16,
 		.ai_speed	= 800,
 		.n_aochan	= 2,
 		.ao_maxdata	= 0x0fff,
-		.ao_fअगरo_depth	= 2048,
+		.ao_fifo_depth	= 2048,
 		.ao_range_table	= &range_ni_E_ao_ext,
 		.ao_speed	= 1000,
-		.caldac		= अणु ad8804_debug पूर्ण,
-	पूर्ण,
-	[BOARD_PXI6052E] = अणु
+		.caldac		= { ad8804_debug },
+	},
+	[BOARD_PXI6052E] = {
 		.name		= "pxi-6052e",
 		.n_adchan	= 16,
 		.ai_maxdata	= 0xffff,
-		.ai_fअगरo_depth	= 512,
+		.ai_fifo_depth	= 512,
 		.alwaysdither	= 1,
 		.gainlkup	= ai_gain_16,
 		.ai_speed	= 3000,
 		.n_aochan	= 2,
 		.ao_maxdata	= 0xffff,
-		.ao_fअगरo_depth	= 2048,
+		.ao_fifo_depth	= 2048,
 		.ao_range_table	= &range_ni_E_ao_ext,
 		.ao_speed	= 3000,
-		.caldac		= अणु mb88341, mb88341, ad8522 पूर्ण,
-	पूर्ण,
-	[BOARD_PXI6031E] = अणु
+		.caldac		= { mb88341, mb88341, ad8522 },
+	},
+	[BOARD_PXI6031E] = {
 		.name		= "pxi-6031e",
 		.n_adchan	= 64,
 		.ai_maxdata	= 0xffff,
-		.ai_fअगरo_depth	= 512,
+		.ai_fifo_depth	= 512,
 		.alwaysdither	= 1,
 		.gainlkup	= ai_gain_14,
 		.ai_speed	= 10000,
 		.n_aochan	= 2,
 		.ao_maxdata	= 0xffff,
-		.ao_fअगरo_depth	= 2048,
+		.ao_fifo_depth	= 2048,
 		.ao_range_table	= &range_ni_E_ao_ext,
 		.ao_speed	= 10000,
-		.caldac		= अणु dac8800, dac8043, ad8522 पूर्ण,
-	पूर्ण,
-	[BOARD_PCI6036E] = अणु
+		.caldac		= { dac8800, dac8043, ad8522 },
+	},
+	[BOARD_PCI6036E] = {
 		.name = "pci-6036e",
 		.n_adchan	= 16,
 		.ai_maxdata	= 0xffff,
-		.ai_fअगरo_depth	= 512,
+		.ai_fifo_depth	= 512,
 		.alwaysdither	= 1,
 		.gainlkup	= ai_gain_4,
 		.ai_speed	= 5000,
@@ -673,705 +672,705 @@
 		.ao_maxdata	= 0xffff,
 		.ao_range_table	= &range_bipolar10,
 		.ao_speed	= 100000,
-		.caldac		= अणु ad8804_debug पूर्ण,
-	पूर्ण,
-	[BOARD_PCI6220] = अणु
+		.caldac		= { ad8804_debug },
+	},
+	[BOARD_PCI6220] = {
 		.name		= "pci-6220",
 		.n_adchan	= 16,
 		.ai_maxdata	= 0xffff,
-		.ai_fअगरo_depth	= 512,		/* FIXME: guess */
+		.ai_fifo_depth	= 512,		/* FIXME: guess */
 		.gainlkup	= ai_gain_622x,
 		.ai_speed	= 4000,
 		.reg_type	= ni_reg_622x,
-		.caldac		= अणु caldac_none पूर्ण,
-	पूर्ण,
-	[BOARD_PXI6220] = अणु
+		.caldac		= { caldac_none },
+	},
+	[BOARD_PXI6220] = {
 		.name		= "pxi-6220",
 		.n_adchan	= 16,
 		.ai_maxdata	= 0xffff,
-		.ai_fअगरo_depth	= 512,		/* FIXME: guess */
+		.ai_fifo_depth	= 512,		/* FIXME: guess */
 		.gainlkup	= ai_gain_622x,
 		.ai_speed	= 4000,
 		.reg_type	= ni_reg_622x,
-		.caldac		= अणु caldac_none पूर्ण,
+		.caldac		= { caldac_none },
 		.dio_speed	= 1000,
-	पूर्ण,
-	[BOARD_PCI6221] = अणु
+	},
+	[BOARD_PCI6221] = {
 		.name		= "pci-6221",
 		.n_adchan	= 16,
 		.ai_maxdata	= 0xffff,
-		.ai_fअगरo_depth	= 4095,
+		.ai_fifo_depth	= 4095,
 		.gainlkup	= ai_gain_622x,
 		.ai_speed	= 4000,
 		.n_aochan	= 2,
 		.ao_maxdata	= 0xffff,
-		.ao_fअगरo_depth	= 8191,
+		.ao_fifo_depth	= 8191,
 		.ao_range_table	= &range_bipolar10,
 		.reg_type	= ni_reg_622x,
 		.ao_speed	= 1200,
-		.caldac		= अणु caldac_none पूर्ण,
+		.caldac		= { caldac_none },
 		.dio_speed	= 1000,
-	पूर्ण,
-	[BOARD_PCI6221_37PIN] = अणु
+	},
+	[BOARD_PCI6221_37PIN] = {
 		.name		= "pci-6221_37pin",
 		.n_adchan	= 16,
 		.ai_maxdata	= 0xffff,
-		.ai_fअगरo_depth	= 4095,
+		.ai_fifo_depth	= 4095,
 		.gainlkup	= ai_gain_622x,
 		.ai_speed	= 4000,
 		.n_aochan	= 2,
 		.ao_maxdata	= 0xffff,
-		.ao_fअगरo_depth	= 8191,
+		.ao_fifo_depth	= 8191,
 		.ao_range_table	= &range_bipolar10,
 		.reg_type	= ni_reg_622x,
 		.ao_speed	= 1200,
-		.caldac		= अणु caldac_none पूर्ण,
-	पूर्ण,
-	[BOARD_PXI6221] = अणु
+		.caldac		= { caldac_none },
+	},
+	[BOARD_PXI6221] = {
 		.name		= "pxi-6221",
 		.n_adchan	= 16,
 		.ai_maxdata	= 0xffff,
-		.ai_fअगरo_depth	= 4095,
+		.ai_fifo_depth	= 4095,
 		.gainlkup	= ai_gain_622x,
 		.ai_speed	= 4000,
 		.n_aochan	= 2,
 		.ao_maxdata	= 0xffff,
-		.ao_fअगरo_depth	= 8191,
+		.ao_fifo_depth	= 8191,
 		.ao_range_table	= &range_bipolar10,
 		.reg_type	= ni_reg_622x,
 		.ao_speed	= 1200,
-		.caldac		= अणु caldac_none पूर्ण,
+		.caldac		= { caldac_none },
 		.dio_speed	= 1000,
-	पूर्ण,
-	[BOARD_PCI6224] = अणु
+	},
+	[BOARD_PCI6224] = {
 		.name		= "pci-6224",
 		.n_adchan	= 32,
 		.ai_maxdata	= 0xffff,
-		.ai_fअगरo_depth	= 4095,
+		.ai_fifo_depth	= 4095,
 		.gainlkup	= ai_gain_622x,
 		.ai_speed	= 4000,
 		.reg_type	= ni_reg_622x,
 		.has_32dio_chan	= 1,
-		.caldac		= अणु caldac_none पूर्ण,
+		.caldac		= { caldac_none },
 		.dio_speed	= 1000,
-	पूर्ण,
-	[BOARD_PXI6224] = अणु
+	},
+	[BOARD_PXI6224] = {
 		.name		= "pxi-6224",
 		.n_adchan	= 32,
 		.ai_maxdata	= 0xffff,
-		.ai_fअगरo_depth	= 4095,
+		.ai_fifo_depth	= 4095,
 		.gainlkup	= ai_gain_622x,
 		.ai_speed	= 4000,
 		.reg_type	= ni_reg_622x,
 		.has_32dio_chan	= 1,
-		.caldac		= अणु caldac_none पूर्ण,
+		.caldac		= { caldac_none },
 		.dio_speed	= 1000,
-	पूर्ण,
-	[BOARD_PCI6225] = अणु
+	},
+	[BOARD_PCI6225] = {
 		.name		= "pci-6225",
 		.n_adchan	= 80,
 		.ai_maxdata	= 0xffff,
-		.ai_fअगरo_depth	= 4095,
+		.ai_fifo_depth	= 4095,
 		.gainlkup	= ai_gain_622x,
 		.ai_speed	= 4000,
 		.n_aochan	= 2,
 		.ao_maxdata	= 0xffff,
-		.ao_fअगरo_depth	= 8191,
+		.ao_fifo_depth	= 8191,
 		.ao_range_table	= &range_bipolar10,
 		.reg_type	= ni_reg_622x,
 		.ao_speed	= 1200,
 		.has_32dio_chan	= 1,
-		.caldac		= अणु caldac_none पूर्ण,
+		.caldac		= { caldac_none },
 		.dio_speed	= 1000,
-	पूर्ण,
-	[BOARD_PXI6225] = अणु
+	},
+	[BOARD_PXI6225] = {
 		.name		= "pxi-6225",
 		.n_adchan	= 80,
 		.ai_maxdata	= 0xffff,
-		.ai_fअगरo_depth	= 4095,
+		.ai_fifo_depth	= 4095,
 		.gainlkup	= ai_gain_622x,
 		.ai_speed	= 4000,
 		.n_aochan	= 2,
 		.ao_maxdata	= 0xffff,
-		.ao_fअगरo_depth	= 8191,
+		.ao_fifo_depth	= 8191,
 		.ao_range_table	= &range_bipolar10,
 		.reg_type	= ni_reg_622x,
 		.ao_speed	= 1200,
 		.has_32dio_chan	= 1,
-		.caldac		= अणु caldac_none पूर्ण,
+		.caldac		= { caldac_none },
 		.dio_speed	= 1000,
-	पूर्ण,
-	[BOARD_PCI6229] = अणु
+	},
+	[BOARD_PCI6229] = {
 		.name		= "pci-6229",
 		.n_adchan	= 32,
 		.ai_maxdata	= 0xffff,
-		.ai_fअगरo_depth	= 4095,
+		.ai_fifo_depth	= 4095,
 		.gainlkup	= ai_gain_622x,
 		.ai_speed	= 4000,
 		.n_aochan	= 4,
 		.ao_maxdata	= 0xffff,
-		.ao_fअगरo_depth	= 8191,
+		.ao_fifo_depth	= 8191,
 		.ao_range_table	= &range_bipolar10,
 		.reg_type	= ni_reg_622x,
 		.ao_speed	= 1200,
 		.has_32dio_chan	= 1,
-		.caldac		= अणु caldac_none पूर्ण,
-	पूर्ण,
-	[BOARD_PXI6229] = अणु
+		.caldac		= { caldac_none },
+	},
+	[BOARD_PXI6229] = {
 		.name		= "pxi-6229",
 		.n_adchan	= 32,
 		.ai_maxdata	= 0xffff,
-		.ai_fअगरo_depth	= 4095,
+		.ai_fifo_depth	= 4095,
 		.gainlkup	= ai_gain_622x,
 		.ai_speed	= 4000,
 		.n_aochan	= 4,
 		.ao_maxdata	= 0xffff,
-		.ao_fअगरo_depth	= 8191,
+		.ao_fifo_depth	= 8191,
 		.ao_range_table	= &range_bipolar10,
 		.reg_type	= ni_reg_622x,
 		.ao_speed	= 1200,
 		.has_32dio_chan	= 1,
-		.caldac		= अणु caldac_none पूर्ण,
+		.caldac		= { caldac_none },
 		.dio_speed	= 1000,
-	पूर्ण,
-	[BOARD_PCI6250] = अणु
+	},
+	[BOARD_PCI6250] = {
 		.name		= "pci-6250",
 		.n_adchan	= 16,
 		.ai_maxdata	= 0xffff,
-		.ai_fअगरo_depth	= 4095,
+		.ai_fifo_depth	= 4095,
 		.gainlkup	= ai_gain_628x,
 		.ai_speed	= 800,
 		.reg_type	= ni_reg_625x,
-		.caldac		= अणु caldac_none पूर्ण,
-	पूर्ण,
-	[BOARD_PXI6250] = अणु
+		.caldac		= { caldac_none },
+	},
+	[BOARD_PXI6250] = {
 		.name		= "pxi-6250",
 		.n_adchan	= 16,
 		.ai_maxdata	= 0xffff,
-		.ai_fअगरo_depth	= 4095,
+		.ai_fifo_depth	= 4095,
 		.gainlkup	= ai_gain_628x,
 		.ai_speed	= 800,
 		.reg_type	= ni_reg_625x,
-		.caldac		= अणु caldac_none पूर्ण,
+		.caldac		= { caldac_none },
 		.dio_speed	= 100,
-	पूर्ण,
-	[BOARD_PCI6251] = अणु
+	},
+	[BOARD_PCI6251] = {
 		.name		= "pci-6251",
 		.n_adchan	= 16,
 		.ai_maxdata	= 0xffff,
-		.ai_fअगरo_depth	= 4095,
+		.ai_fifo_depth	= 4095,
 		.gainlkup	= ai_gain_628x,
 		.ai_speed	= 800,
 		.n_aochan	= 2,
 		.ao_maxdata	= 0xffff,
-		.ao_fअगरo_depth	= 8191,
+		.ao_fifo_depth	= 8191,
 		.ao_range_table	= &range_ni_M_625x_ao,
 		.reg_type	= ni_reg_625x,
 		.ao_speed	= 350,
-		.caldac		= अणु caldac_none पूर्ण,
+		.caldac		= { caldac_none },
 		.dio_speed	= 100,
-	पूर्ण,
-	[BOARD_PXI6251] = अणु
+	},
+	[BOARD_PXI6251] = {
 		.name		= "pxi-6251",
 		.n_adchan	= 16,
 		.ai_maxdata	= 0xffff,
-		.ai_fअगरo_depth	= 4095,
+		.ai_fifo_depth	= 4095,
 		.gainlkup	= ai_gain_628x,
 		.ai_speed	= 800,
 		.n_aochan	= 2,
 		.ao_maxdata	= 0xffff,
-		.ao_fअगरo_depth	= 8191,
+		.ao_fifo_depth	= 8191,
 		.ao_range_table	= &range_ni_M_625x_ao,
 		.reg_type	= ni_reg_625x,
 		.ao_speed	= 350,
-		.caldac		= अणु caldac_none पूर्ण,
+		.caldac		= { caldac_none },
 		.dio_speed	= 100,
-	पूर्ण,
-	[BOARD_PCIE6251] = अणु
+	},
+	[BOARD_PCIE6251] = {
 		.name		= "pcie-6251",
 		.alt_route_name	= "pci-6251",
 		.n_adchan	= 16,
 		.ai_maxdata	= 0xffff,
-		.ai_fअगरo_depth	= 4095,
+		.ai_fifo_depth	= 4095,
 		.gainlkup	= ai_gain_628x,
 		.ai_speed	= 800,
 		.n_aochan	= 2,
 		.ao_maxdata	= 0xffff,
-		.ao_fअगरo_depth	= 8191,
+		.ao_fifo_depth	= 8191,
 		.ao_range_table	= &range_ni_M_625x_ao,
 		.reg_type	= ni_reg_625x,
 		.ao_speed	= 350,
-		.caldac		= अणु caldac_none पूर्ण,
+		.caldac		= { caldac_none },
 		.dio_speed	= 100,
-	पूर्ण,
-	[BOARD_PXIE6251] = अणु
+	},
+	[BOARD_PXIE6251] = {
 		.name		= "pxie-6251",
 		.n_adchan	= 16,
 		.ai_maxdata	= 0xffff,
-		.ai_fअगरo_depth	= 4095,
+		.ai_fifo_depth	= 4095,
 		.gainlkup	= ai_gain_628x,
 		.ai_speed	= 800,
 		.n_aochan	= 2,
 		.ao_maxdata	= 0xffff,
-		.ao_fअगरo_depth	= 8191,
+		.ao_fifo_depth	= 8191,
 		.ao_range_table	= &range_ni_M_625x_ao,
 		.reg_type	= ni_reg_625x,
 		.ao_speed	= 350,
-		.caldac		= अणु caldac_none पूर्ण,
+		.caldac		= { caldac_none },
 		.dio_speed	= 100,
-	पूर्ण,
-	[BOARD_PCI6254] = अणु
+	},
+	[BOARD_PCI6254] = {
 		.name		= "pci-6254",
 		.n_adchan	= 32,
 		.ai_maxdata	= 0xffff,
-		.ai_fअगरo_depth	= 4095,
+		.ai_fifo_depth	= 4095,
 		.gainlkup	= ai_gain_628x,
 		.ai_speed	= 800,
 		.reg_type	= ni_reg_625x,
 		.has_32dio_chan	= 1,
-		.caldac		= अणु caldac_none पूर्ण,
-	पूर्ण,
-	[BOARD_PXI6254] = अणु
+		.caldac		= { caldac_none },
+	},
+	[BOARD_PXI6254] = {
 		.name		= "pxi-6254",
 		.n_adchan	= 32,
 		.ai_maxdata	= 0xffff,
-		.ai_fअगरo_depth	= 4095,
+		.ai_fifo_depth	= 4095,
 		.gainlkup	= ai_gain_628x,
 		.ai_speed	= 800,
 		.reg_type	= ni_reg_625x,
 		.has_32dio_chan	= 1,
-		.caldac		= अणु caldac_none पूर्ण,
+		.caldac		= { caldac_none },
 		.dio_speed	= 100,
-	पूर्ण,
-	[BOARD_PCI6259] = अणु
+	},
+	[BOARD_PCI6259] = {
 		.name		= "pci-6259",
 		.n_adchan	= 32,
 		.ai_maxdata	= 0xffff,
-		.ai_fअगरo_depth	= 4095,
+		.ai_fifo_depth	= 4095,
 		.gainlkup	= ai_gain_628x,
 		.ai_speed	= 800,
 		.n_aochan	= 4,
 		.ao_maxdata	= 0xffff,
-		.ao_fअगरo_depth	= 8191,
+		.ao_fifo_depth	= 8191,
 		.ao_range_table	= &range_ni_M_625x_ao,
 		.reg_type	= ni_reg_625x,
 		.ao_speed	= 350,
 		.has_32dio_chan	= 1,
-		.caldac		= अणु caldac_none पूर्ण,
-	पूर्ण,
-	[BOARD_PXI6259] = अणु
+		.caldac		= { caldac_none },
+	},
+	[BOARD_PXI6259] = {
 		.name		= "pxi-6259",
 		.n_adchan	= 32,
 		.ai_maxdata	= 0xffff,
-		.ai_fअगरo_depth	= 4095,
+		.ai_fifo_depth	= 4095,
 		.gainlkup	= ai_gain_628x,
 		.ai_speed	= 800,
 		.n_aochan	= 4,
 		.ao_maxdata	= 0xffff,
-		.ao_fअगरo_depth	= 8191,
+		.ao_fifo_depth	= 8191,
 		.ao_range_table	= &range_ni_M_625x_ao,
 		.reg_type	= ni_reg_625x,
 		.ao_speed	= 350,
 		.has_32dio_chan	= 1,
-		.caldac		= अणु caldac_none पूर्ण,
+		.caldac		= { caldac_none },
 		.dio_speed	= 100,
-	पूर्ण,
-	[BOARD_PCIE6259] = अणु
+	},
+	[BOARD_PCIE6259] = {
 		.name		= "pcie-6259",
 		.alt_route_name	= "pci-6259",
 		.n_adchan	= 32,
 		.ai_maxdata	= 0xffff,
-		.ai_fअगरo_depth	= 4095,
+		.ai_fifo_depth	= 4095,
 		.gainlkup	= ai_gain_628x,
 		.ai_speed	= 800,
 		.n_aochan	= 4,
 		.ao_maxdata	= 0xffff,
-		.ao_fअगरo_depth	= 8191,
+		.ao_fifo_depth	= 8191,
 		.ao_range_table	= &range_ni_M_625x_ao,
 		.reg_type	= ni_reg_625x,
 		.ao_speed	= 350,
 		.has_32dio_chan	= 1,
-		.caldac		= अणु caldac_none पूर्ण,
-	पूर्ण,
-	[BOARD_PXIE6259] = अणु
+		.caldac		= { caldac_none },
+	},
+	[BOARD_PXIE6259] = {
 		.name		= "pxie-6259",
 		.n_adchan	= 32,
 		.ai_maxdata	= 0xffff,
-		.ai_fअगरo_depth	= 4095,
+		.ai_fifo_depth	= 4095,
 		.gainlkup	= ai_gain_628x,
 		.ai_speed	= 800,
 		.n_aochan	= 4,
 		.ao_maxdata	= 0xffff,
-		.ao_fअगरo_depth	= 8191,
+		.ao_fifo_depth	= 8191,
 		.ao_range_table	= &range_ni_M_625x_ao,
 		.reg_type	= ni_reg_625x,
 		.ao_speed	= 350,
 		.has_32dio_chan	= 1,
-		.caldac		= अणु caldac_none पूर्ण,
+		.caldac		= { caldac_none },
 		.dio_speed	= 100,
-	पूर्ण,
-	[BOARD_PCI6280] = अणु
+	},
+	[BOARD_PCI6280] = {
 		.name		= "pci-6280",
 		.n_adchan	= 16,
 		.ai_maxdata	= 0x3ffff,
-		.ai_fअगरo_depth	= 2047,
+		.ai_fifo_depth	= 2047,
 		.gainlkup	= ai_gain_628x,
 		.ai_speed	= 1600,
-		.ao_fअगरo_depth	= 8191,
+		.ao_fifo_depth	= 8191,
 		.reg_type	= ni_reg_628x,
-		.caldac		= अणु caldac_none पूर्ण,
-	पूर्ण,
-	[BOARD_PXI6280] = अणु
+		.caldac		= { caldac_none },
+	},
+	[BOARD_PXI6280] = {
 		.name		= "pxi-6280",
 		.n_adchan	= 16,
 		.ai_maxdata	= 0x3ffff,
-		.ai_fअगरo_depth	= 2047,
+		.ai_fifo_depth	= 2047,
 		.gainlkup	= ai_gain_628x,
 		.ai_speed	= 1600,
-		.ao_fअगरo_depth	= 8191,
+		.ao_fifo_depth	= 8191,
 		.reg_type	= ni_reg_628x,
-		.caldac		= अणु caldac_none पूर्ण,
+		.caldac		= { caldac_none },
 		.dio_speed	= 100,
-	पूर्ण,
-	[BOARD_PCI6281] = अणु
+	},
+	[BOARD_PCI6281] = {
 		.name		= "pci-6281",
 		.n_adchan	= 16,
 		.ai_maxdata	= 0x3ffff,
-		.ai_fअगरo_depth	= 2047,
+		.ai_fifo_depth	= 2047,
 		.gainlkup	= ai_gain_628x,
 		.ai_speed	= 1600,
 		.n_aochan	= 2,
 		.ao_maxdata	= 0xffff,
-		.ao_fअगरo_depth	= 8191,
+		.ao_fifo_depth	= 8191,
 		.ao_range_table = &range_ni_M_628x_ao,
 		.reg_type	= ni_reg_628x,
 		.ao_speed	= 350,
-		.caldac		= अणु caldac_none पूर्ण,
+		.caldac		= { caldac_none },
 		.dio_speed	= 100,
-	पूर्ण,
-	[BOARD_PXI6281] = अणु
+	},
+	[BOARD_PXI6281] = {
 		.name		= "pxi-6281",
 		.n_adchan	= 16,
 		.ai_maxdata	= 0x3ffff,
-		.ai_fअगरo_depth	= 2047,
+		.ai_fifo_depth	= 2047,
 		.gainlkup	= ai_gain_628x,
 		.ai_speed	= 1600,
 		.n_aochan	= 2,
 		.ao_maxdata	= 0xffff,
-		.ao_fअगरo_depth	= 8191,
+		.ao_fifo_depth	= 8191,
 		.ao_range_table	= &range_ni_M_628x_ao,
 		.reg_type	= ni_reg_628x,
 		.ao_speed	= 350,
-		.caldac		= अणु caldac_none पूर्ण,
+		.caldac		= { caldac_none },
 		.dio_speed	= 100,
-	पूर्ण,
-	[BOARD_PCI6284] = अणु
+	},
+	[BOARD_PCI6284] = {
 		.name		= "pci-6284",
 		.n_adchan	= 32,
 		.ai_maxdata	= 0x3ffff,
-		.ai_fअगरo_depth	= 2047,
+		.ai_fifo_depth	= 2047,
 		.gainlkup	= ai_gain_628x,
 		.ai_speed	= 1600,
 		.reg_type	= ni_reg_628x,
 		.has_32dio_chan	= 1,
-		.caldac		= अणु caldac_none पूर्ण,
-	पूर्ण,
-	[BOARD_PXI6284] = अणु
+		.caldac		= { caldac_none },
+	},
+	[BOARD_PXI6284] = {
 		.name		= "pxi-6284",
 		.n_adchan	= 32,
 		.ai_maxdata	= 0x3ffff,
-		.ai_fअगरo_depth	= 2047,
+		.ai_fifo_depth	= 2047,
 		.gainlkup	= ai_gain_628x,
 		.ai_speed	= 1600,
 		.reg_type	= ni_reg_628x,
 		.has_32dio_chan	= 1,
-		.caldac		= अणु caldac_none पूर्ण,
+		.caldac		= { caldac_none },
 		.dio_speed	= 100,
-	पूर्ण,
-	[BOARD_PCI6289] = अणु
+	},
+	[BOARD_PCI6289] = {
 		.name		= "pci-6289",
 		.n_adchan	= 32,
 		.ai_maxdata	= 0x3ffff,
-		.ai_fअगरo_depth	= 2047,
+		.ai_fifo_depth	= 2047,
 		.gainlkup	= ai_gain_628x,
 		.ai_speed	= 1600,
 		.n_aochan	= 4,
 		.ao_maxdata	= 0xffff,
-		.ao_fअगरo_depth	= 8191,
+		.ao_fifo_depth	= 8191,
 		.ao_range_table	= &range_ni_M_628x_ao,
 		.reg_type	= ni_reg_628x,
 		.ao_speed	= 350,
 		.has_32dio_chan	= 1,
-		.caldac		= अणु caldac_none पूर्ण,
-	पूर्ण,
-	[BOARD_PXI6289] = अणु
+		.caldac		= { caldac_none },
+	},
+	[BOARD_PXI6289] = {
 		.name		= "pxi-6289",
 		.n_adchan	= 32,
 		.ai_maxdata	= 0x3ffff,
-		.ai_fअगरo_depth	= 2047,
+		.ai_fifo_depth	= 2047,
 		.gainlkup	= ai_gain_628x,
 		.ai_speed	= 1600,
 		.n_aochan	= 4,
 		.ao_maxdata	= 0xffff,
-		.ao_fअगरo_depth	= 8191,
+		.ao_fifo_depth	= 8191,
 		.ao_range_table	= &range_ni_M_628x_ao,
 		.reg_type	= ni_reg_628x,
 		.ao_speed	= 350,
 		.has_32dio_chan	= 1,
-		.caldac		= अणु caldac_none पूर्ण,
+		.caldac		= { caldac_none },
 		.dio_speed	= 100,
-	पूर्ण,
-	[BOARD_PCI6143] = अणु
+	},
+	[BOARD_PCI6143] = {
 		.name		= "pci-6143",
 		.n_adchan	= 8,
 		.ai_maxdata	= 0xffff,
-		.ai_fअगरo_depth	= 1024,
+		.ai_fifo_depth	= 1024,
 		.gainlkup	= ai_gain_6143,
 		.ai_speed	= 4000,
 		.reg_type	= ni_reg_6143,
-		.caldac		= अणु ad8804_debug, ad8804_debug पूर्ण,
-	पूर्ण,
-	[BOARD_PXI6143] = अणु
+		.caldac		= { ad8804_debug, ad8804_debug },
+	},
+	[BOARD_PXI6143] = {
 		.name		= "pxi-6143",
 		.n_adchan	= 8,
 		.ai_maxdata	= 0xffff,
-		.ai_fअगरo_depth	= 1024,
+		.ai_fifo_depth	= 1024,
 		.gainlkup	= ai_gain_6143,
 		.ai_speed	= 4000,
 		.reg_type	= ni_reg_6143,
-		.caldac		= अणु ad8804_debug, ad8804_debug पूर्ण,
-	पूर्ण,
-पूर्ण;
+		.caldac		= { ad8804_debug, ad8804_debug },
+	},
+};
 
-#समावेश "ni_mio_common.c"
+#include "ni_mio_common.c"
 
-अटल पूर्णांक pcimio_ai_change(काष्ठा comedi_device *dev,
-			    काष्ठा comedi_subdevice *s)
-अणु
-	काष्ठा ni_निजी *devpriv = dev->निजी;
-	पूर्णांक ret;
+static int pcimio_ai_change(struct comedi_device *dev,
+			    struct comedi_subdevice *s)
+{
+	struct ni_private *devpriv = dev->private;
+	int ret;
 
 	ret = mite_buf_change(devpriv->ai_mite_ring, s);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक pcimio_ao_change(काष्ठा comedi_device *dev,
-			    काष्ठा comedi_subdevice *s)
-अणु
-	काष्ठा ni_निजी *devpriv = dev->निजी;
-	पूर्णांक ret;
+static int pcimio_ao_change(struct comedi_device *dev,
+			    struct comedi_subdevice *s)
+{
+	struct ni_private *devpriv = dev->private;
+	int ret;
 
 	ret = mite_buf_change(devpriv->ao_mite_ring, s);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक pcimio_gpct0_change(काष्ठा comedi_device *dev,
-			       काष्ठा comedi_subdevice *s)
-अणु
-	काष्ठा ni_निजी *devpriv = dev->निजी;
-	पूर्णांक ret;
+static int pcimio_gpct0_change(struct comedi_device *dev,
+			       struct comedi_subdevice *s)
+{
+	struct ni_private *devpriv = dev->private;
+	int ret;
 
 	ret = mite_buf_change(devpriv->gpct_mite_ring[0], s);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक pcimio_gpct1_change(काष्ठा comedi_device *dev,
-			       काष्ठा comedi_subdevice *s)
-अणु
-	काष्ठा ni_निजी *devpriv = dev->निजी;
-	पूर्णांक ret;
+static int pcimio_gpct1_change(struct comedi_device *dev,
+			       struct comedi_subdevice *s)
+{
+	struct ni_private *devpriv = dev->private;
+	int ret;
 
 	ret = mite_buf_change(devpriv->gpct_mite_ring[1], s);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक pcimio_dio_change(काष्ठा comedi_device *dev,
-			     काष्ठा comedi_subdevice *s)
-अणु
-	काष्ठा ni_निजी *devpriv = dev->निजी;
-	पूर्णांक ret;
+static int pcimio_dio_change(struct comedi_device *dev,
+			     struct comedi_subdevice *s)
+{
+	struct ni_private *devpriv = dev->private;
+	int ret;
 
-	ret = mite_buf_change(devpriv->cकरो_mite_ring, s);
-	अगर (ret < 0)
-		वापस ret;
+	ret = mite_buf_change(devpriv->cdo_mite_ring, s);
+	if (ret < 0)
+		return ret;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम m_series_init_eeprom_buffer(काष्ठा comedi_device *dev)
-अणु
-	काष्ठा ni_निजी *devpriv = dev->निजी;
-	काष्ठा mite *mite = devpriv->mite;
-	resource_माप_प्रकार daq_phys_addr;
-	अटल स्थिर पूर्णांक start_cal_eeprom = 0x400;
-	अटल स्थिर अचिन्हित पूर्णांक winकरोw_size = 10;
-	अचिन्हित पूर्णांक old_iodwbsr_bits;
-	अचिन्हित पूर्णांक old_iodwbsr1_bits;
-	अचिन्हित पूर्णांक old_iodwcr1_bits;
-	पूर्णांक i;
+static void m_series_init_eeprom_buffer(struct comedi_device *dev)
+{
+	struct ni_private *devpriv = dev->private;
+	struct mite *mite = devpriv->mite;
+	resource_size_t daq_phys_addr;
+	static const int start_cal_eeprom = 0x400;
+	static const unsigned int window_size = 10;
+	unsigned int old_iodwbsr_bits;
+	unsigned int old_iodwbsr1_bits;
+	unsigned int old_iodwcr1_bits;
+	int i;
 
-	/* IO Winकरोw 1 needs to be temporarily mapped to पढ़ो the eeprom */
+	/* IO Window 1 needs to be temporarily mapped to read the eeprom */
 	daq_phys_addr = pci_resource_start(mite->pcidev, 1);
 
-	old_iodwbsr_bits = पढ़ोl(mite->mmio + MITE_IODWBSR);
-	old_iodwbsr1_bits = पढ़ोl(mite->mmio + MITE_IODWBSR_1);
-	old_iodwcr1_bits = पढ़ोl(mite->mmio + MITE_IODWCR_1);
-	ग_लिखोl(0x0, mite->mmio + MITE_IODWBSR);
-	ग_लिखोl(((0x80 | winकरोw_size) | daq_phys_addr),
+	old_iodwbsr_bits = readl(mite->mmio + MITE_IODWBSR);
+	old_iodwbsr1_bits = readl(mite->mmio + MITE_IODWBSR_1);
+	old_iodwcr1_bits = readl(mite->mmio + MITE_IODWCR_1);
+	writel(0x0, mite->mmio + MITE_IODWBSR);
+	writel(((0x80 | window_size) | daq_phys_addr),
 	       mite->mmio + MITE_IODWBSR_1);
-	ग_लिखोl(0x1 | old_iodwcr1_bits, mite->mmio + MITE_IODWCR_1);
-	ग_लिखोl(0xf, mite->mmio + 0x30);
+	writel(0x1 | old_iodwcr1_bits, mite->mmio + MITE_IODWCR_1);
+	writel(0xf, mite->mmio + 0x30);
 
-	क्रम (i = 0; i < M_SERIES_EEPROM_SIZE; ++i)
-		devpriv->eeprom_buffer[i] = ni_पढ़ोb(dev, start_cal_eeprom + i);
+	for (i = 0; i < M_SERIES_EEPROM_SIZE; ++i)
+		devpriv->eeprom_buffer[i] = ni_readb(dev, start_cal_eeprom + i);
 
-	ग_लिखोl(old_iodwbsr1_bits, mite->mmio + MITE_IODWBSR_1);
-	ग_लिखोl(old_iodwbsr_bits, mite->mmio + MITE_IODWBSR);
-	ग_लिखोl(old_iodwcr1_bits, mite->mmio + MITE_IODWCR_1);
-	ग_लिखोl(0x0, mite->mmio + 0x30);
-पूर्ण
+	writel(old_iodwbsr1_bits, mite->mmio + MITE_IODWBSR_1);
+	writel(old_iodwbsr_bits, mite->mmio + MITE_IODWBSR);
+	writel(old_iodwcr1_bits, mite->mmio + MITE_IODWCR_1);
+	writel(0x0, mite->mmio + 0x30);
+}
 
-अटल व्योम init_6143(काष्ठा comedi_device *dev)
-अणु
-	स्थिर काष्ठा ni_board_काष्ठा *board = dev->board_ptr;
-	काष्ठा ni_निजी *devpriv = dev->निजी;
+static void init_6143(struct comedi_device *dev)
+{
+	const struct ni_board_struct *board = dev->board_ptr;
+	struct ni_private *devpriv = dev->private;
 
-	/*  Disable पूर्णांकerrupts */
-	ni_stc_ग_लिखोw(dev, 0, NISTC_INT_CTRL_REG);
+	/*  Disable interrupts */
+	ni_stc_writew(dev, 0, NISTC_INT_CTRL_REG);
 
-	/*  Initialise 6143 AI specअगरic bits */
+	/*  Initialise 6143 AI specific bits */
 
 	/* Set G0,G1 DMA mode to E series version */
-	ni_ग_लिखोb(dev, 0x00, NI6143_MAGIC_REG);
+	ni_writeb(dev, 0x00, NI6143_MAGIC_REG);
 	/* Set EOCMode, ADCMode and pipelinedelay */
-	ni_ग_लिखोb(dev, 0x80, NI6143_PIPELINE_DELAY_REG);
+	ni_writeb(dev, 0x80, NI6143_PIPELINE_DELAY_REG);
 	/* Set EOC Delay */
-	ni_ग_लिखोb(dev, 0x00, NI6143_EOC_SET_REG);
+	ni_writeb(dev, 0x00, NI6143_EOC_SET_REG);
 
 	/* Set the FIFO half full level */
-	ni_ग_लिखोl(dev, board->ai_fअगरo_depth / 2, NI6143_AI_FIFO_FLAG_REG);
+	ni_writel(dev, board->ai_fifo_depth / 2, NI6143_AI_FIFO_FLAG_REG);
 
 	/*  Strobe Relay disable bit */
 	devpriv->ai_calib_source_enabled = 0;
-	ni_ग_लिखोw(dev, devpriv->ai_calib_source | NI6143_CALIB_CHAN_RELAY_OFF,
+	ni_writew(dev, devpriv->ai_calib_source | NI6143_CALIB_CHAN_RELAY_OFF,
 		  NI6143_CALIB_CHAN_REG);
-	ni_ग_लिखोw(dev, devpriv->ai_calib_source, NI6143_CALIB_CHAN_REG);
-पूर्ण
+	ni_writew(dev, devpriv->ai_calib_source, NI6143_CALIB_CHAN_REG);
+}
 
-अटल व्योम pcimio_detach(काष्ठा comedi_device *dev)
-अणु
-	काष्ठा ni_निजी *devpriv = dev->निजी;
+static void pcimio_detach(struct comedi_device *dev)
+{
+	struct ni_private *devpriv = dev->private;
 
 	mio_common_detach(dev);
-	अगर (dev->irq)
-		मुक्त_irq(dev->irq, dev);
-	अगर (devpriv) अणु
-		mite_मुक्त_ring(devpriv->ai_mite_ring);
-		mite_मुक्त_ring(devpriv->ao_mite_ring);
-		mite_मुक्त_ring(devpriv->cकरो_mite_ring);
-		mite_मुक्त_ring(devpriv->gpct_mite_ring[0]);
-		mite_मुक्त_ring(devpriv->gpct_mite_ring[1]);
+	if (dev->irq)
+		free_irq(dev->irq, dev);
+	if (devpriv) {
+		mite_free_ring(devpriv->ai_mite_ring);
+		mite_free_ring(devpriv->ao_mite_ring);
+		mite_free_ring(devpriv->cdo_mite_ring);
+		mite_free_ring(devpriv->gpct_mite_ring[0]);
+		mite_free_ring(devpriv->gpct_mite_ring[1]);
 		mite_detach(devpriv->mite);
-	पूर्ण
-	अगर (dev->mmio)
+	}
+	if (dev->mmio)
 		iounmap(dev->mmio);
 	comedi_pci_disable(dev);
-पूर्ण
+}
 
-अटल पूर्णांक pcimio_स्वतः_attach(काष्ठा comedi_device *dev,
-			      अचिन्हित दीर्घ context)
-अणु
-	काष्ठा pci_dev *pcidev = comedi_to_pci_dev(dev);
-	स्थिर काष्ठा ni_board_काष्ठा *board = शून्य;
-	काष्ठा ni_निजी *devpriv;
-	अचिन्हित पूर्णांक irq;
-	पूर्णांक ret;
+static int pcimio_auto_attach(struct comedi_device *dev,
+			      unsigned long context)
+{
+	struct pci_dev *pcidev = comedi_to_pci_dev(dev);
+	const struct ni_board_struct *board = NULL;
+	struct ni_private *devpriv;
+	unsigned int irq;
+	int ret;
 
-	अगर (context < ARRAY_SIZE(ni_boards))
+	if (context < ARRAY_SIZE(ni_boards))
 		board = &ni_boards[context];
-	अगर (!board)
-		वापस -ENODEV;
+	if (!board)
+		return -ENODEV;
 	dev->board_ptr = board;
 	dev->board_name = board->name;
 
 	ret = comedi_pci_enable(dev);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	ret = ni_alloc_निजी(dev);
-	अगर (ret)
-		वापस ret;
-	devpriv = dev->निजी;
+	ret = ni_alloc_private(dev);
+	if (ret)
+		return ret;
+	devpriv = dev->private;
 
 	devpriv->mite = mite_attach(dev, false);	/* use win0 */
-	अगर (!devpriv->mite)
-		वापस -ENOMEM;
+	if (!devpriv->mite)
+		return -ENOMEM;
 
-	अगर (board->reg_type & ni_reg_m_series_mask)
+	if (board->reg_type & ni_reg_m_series_mask)
 		devpriv->is_m_series = 1;
-	अगर (board->reg_type & ni_reg_6xxx_mask)
+	if (board->reg_type & ni_reg_6xxx_mask)
 		devpriv->is_6xxx = 1;
-	अगर (board->reg_type == ni_reg_611x)
+	if (board->reg_type == ni_reg_611x)
 		devpriv->is_611x = 1;
-	अगर (board->reg_type == ni_reg_6143)
+	if (board->reg_type == ni_reg_6143)
 		devpriv->is_6143 = 1;
-	अगर (board->reg_type == ni_reg_622x)
+	if (board->reg_type == ni_reg_622x)
 		devpriv->is_622x = 1;
-	अगर (board->reg_type == ni_reg_625x)
+	if (board->reg_type == ni_reg_625x)
 		devpriv->is_625x = 1;
-	अगर (board->reg_type == ni_reg_628x)
+	if (board->reg_type == ni_reg_628x)
 		devpriv->is_628x = 1;
-	अगर (board->reg_type & ni_reg_67xx_mask)
+	if (board->reg_type & ni_reg_67xx_mask)
 		devpriv->is_67xx = 1;
-	अगर (board->reg_type == ni_reg_6711)
+	if (board->reg_type == ni_reg_6711)
 		devpriv->is_6711 = 1;
-	अगर (board->reg_type == ni_reg_6713)
+	if (board->reg_type == ni_reg_6713)
 		devpriv->is_6713 = 1;
 
 	devpriv->ai_mite_ring = mite_alloc_ring(devpriv->mite);
-	अगर (!devpriv->ai_mite_ring)
-		वापस -ENOMEM;
+	if (!devpriv->ai_mite_ring)
+		return -ENOMEM;
 	devpriv->ao_mite_ring = mite_alloc_ring(devpriv->mite);
-	अगर (!devpriv->ao_mite_ring)
-		वापस -ENOMEM;
-	devpriv->cकरो_mite_ring = mite_alloc_ring(devpriv->mite);
-	अगर (!devpriv->cकरो_mite_ring)
-		वापस -ENOMEM;
+	if (!devpriv->ao_mite_ring)
+		return -ENOMEM;
+	devpriv->cdo_mite_ring = mite_alloc_ring(devpriv->mite);
+	if (!devpriv->cdo_mite_ring)
+		return -ENOMEM;
 	devpriv->gpct_mite_ring[0] = mite_alloc_ring(devpriv->mite);
-	अगर (!devpriv->gpct_mite_ring[0])
-		वापस -ENOMEM;
+	if (!devpriv->gpct_mite_ring[0])
+		return -ENOMEM;
 	devpriv->gpct_mite_ring[1] = mite_alloc_ring(devpriv->mite);
-	अगर (!devpriv->gpct_mite_ring[1])
-		वापस -ENOMEM;
+	if (!devpriv->gpct_mite_ring[1])
+		return -ENOMEM;
 
-	अगर (devpriv->is_m_series)
+	if (devpriv->is_m_series)
 		m_series_init_eeprom_buffer(dev);
-	अगर (devpriv->is_6143)
+	if (devpriv->is_6143)
 		init_6143(dev);
 
 	irq = pcidev->irq;
-	अगर (irq) अणु
-		ret = request_irq(irq, ni_E_पूर्णांकerrupt, IRQF_SHARED,
+	if (irq) {
+		ret = request_irq(irq, ni_E_interrupt, IRQF_SHARED,
 				  dev->board_name, dev);
-		अगर (ret == 0)
+		if (ret == 0)
 			dev->irq = irq;
-	पूर्ण
+	}
 
 	ret = ni_E_init(dev, 0, 1);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	dev->subdevices[NI_AI_SUBDEV].buf_change = &pcimio_ai_change;
 	dev->subdevices[NI_AO_SUBDEV].buf_change = &pcimio_ao_change;
@@ -1379,98 +1378,98 @@
 	dev->subdevices[NI_GPCT_SUBDEV(1)].buf_change = &pcimio_gpct1_change;
 	dev->subdevices[NI_DIO_SUBDEV].buf_change = &pcimio_dio_change;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा comedi_driver ni_pcimio_driver = अणु
+static struct comedi_driver ni_pcimio_driver = {
 	.driver_name	= "ni_pcimio",
 	.module		= THIS_MODULE,
-	.स्वतः_attach	= pcimio_स्वतः_attach,
+	.auto_attach	= pcimio_auto_attach,
 	.detach		= pcimio_detach,
-पूर्ण;
+};
 
-अटल पूर्णांक ni_pcimio_pci_probe(काष्ठा pci_dev *dev,
-			       स्थिर काष्ठा pci_device_id *id)
-अणु
-	वापस comedi_pci_स्वतः_config(dev, &ni_pcimio_driver, id->driver_data);
-पूर्ण
+static int ni_pcimio_pci_probe(struct pci_dev *dev,
+			       const struct pci_device_id *id)
+{
+	return comedi_pci_auto_config(dev, &ni_pcimio_driver, id->driver_data);
+}
 
-अटल स्थिर काष्ठा pci_device_id ni_pcimio_pci_table[] = अणु
-	अणु PCI_VDEVICE(NI, 0x0162), BOARD_PCIMIO_16XE_50 पूर्ण,	/* 0x1620? */
-	अणु PCI_VDEVICE(NI, 0x1170), BOARD_PCIMIO_16XE_10 पूर्ण,
-	अणु PCI_VDEVICE(NI, 0x1180), BOARD_PCIMIO_16E_1 पूर्ण,
-	अणु PCI_VDEVICE(NI, 0x1190), BOARD_PCIMIO_16E_4 पूर्ण,
-	अणु PCI_VDEVICE(NI, 0x11b0), BOARD_PXI6070E पूर्ण,
-	अणु PCI_VDEVICE(NI, 0x11c0), BOARD_PXI6040E पूर्ण,
-	अणु PCI_VDEVICE(NI, 0x11d0), BOARD_PXI6030E पूर्ण,
-	अणु PCI_VDEVICE(NI, 0x1270), BOARD_PCI6032E पूर्ण,
-	अणु PCI_VDEVICE(NI, 0x1330), BOARD_PCI6031E पूर्ण,
-	अणु PCI_VDEVICE(NI, 0x1340), BOARD_PCI6033E पूर्ण,
-	अणु PCI_VDEVICE(NI, 0x1350), BOARD_PCI6071E पूर्ण,
-	अणु PCI_VDEVICE(NI, 0x14e0), BOARD_PCI6110 पूर्ण,
-	अणु PCI_VDEVICE(NI, 0x14f0), BOARD_PCI6111 पूर्ण,
-	अणु PCI_VDEVICE(NI, 0x1580), BOARD_PXI6031E पूर्ण,
-	अणु PCI_VDEVICE(NI, 0x15b0), BOARD_PXI6071E पूर्ण,
-	अणु PCI_VDEVICE(NI, 0x1880), BOARD_PCI6711 पूर्ण,
-	अणु PCI_VDEVICE(NI, 0x1870), BOARD_PCI6713 पूर्ण,
-	अणु PCI_VDEVICE(NI, 0x18b0), BOARD_PCI6052E पूर्ण,
-	अणु PCI_VDEVICE(NI, 0x18c0), BOARD_PXI6052E पूर्ण,
-	अणु PCI_VDEVICE(NI, 0x2410), BOARD_PCI6733 पूर्ण,
-	अणु PCI_VDEVICE(NI, 0x2420), BOARD_PXI6733 पूर्ण,
-	अणु PCI_VDEVICE(NI, 0x2430), BOARD_PCI6731 पूर्ण,
-	अणु PCI_VDEVICE(NI, 0x2890), BOARD_PCI6036E पूर्ण,
-	अणु PCI_VDEVICE(NI, 0x28c0), BOARD_PCI6014 पूर्ण,
-	अणु PCI_VDEVICE(NI, 0x2a60), BOARD_PCI6023E पूर्ण,
-	अणु PCI_VDEVICE(NI, 0x2a70), BOARD_PCI6024E पूर्ण,
-	अणु PCI_VDEVICE(NI, 0x2a80), BOARD_PCI6025E पूर्ण,
-	अणु PCI_VDEVICE(NI, 0x2ab0), BOARD_PXI6025E पूर्ण,
-	अणु PCI_VDEVICE(NI, 0x2b80), BOARD_PXI6713 पूर्ण,
-	अणु PCI_VDEVICE(NI, 0x2b90), BOARD_PXI6711 पूर्ण,
-	अणु PCI_VDEVICE(NI, 0x2c80), BOARD_PCI6035E पूर्ण,
-	अणु PCI_VDEVICE(NI, 0x2ca0), BOARD_PCI6034E पूर्ण,
-	अणु PCI_VDEVICE(NI, 0x70aa), BOARD_PCI6229 पूर्ण,
-	अणु PCI_VDEVICE(NI, 0x70ab), BOARD_PCI6259 पूर्ण,
-	अणु PCI_VDEVICE(NI, 0x70ac), BOARD_PCI6289 पूर्ण,
-	अणु PCI_VDEVICE(NI, 0x70ad), BOARD_PXI6251 पूर्ण,
-	अणु PCI_VDEVICE(NI, 0x70ae), BOARD_PXI6220 पूर्ण,
-	अणु PCI_VDEVICE(NI, 0x70af), BOARD_PCI6221 पूर्ण,
-	अणु PCI_VDEVICE(NI, 0x70b0), BOARD_PCI6220 पूर्ण,
-	अणु PCI_VDEVICE(NI, 0x70b1), BOARD_PXI6229 पूर्ण,
-	अणु PCI_VDEVICE(NI, 0x70b2), BOARD_PXI6259 पूर्ण,
-	अणु PCI_VDEVICE(NI, 0x70b3), BOARD_PXI6289 पूर्ण,
-	अणु PCI_VDEVICE(NI, 0x70b4), BOARD_PCI6250 पूर्ण,
-	अणु PCI_VDEVICE(NI, 0x70b5), BOARD_PXI6221 पूर्ण,
-	अणु PCI_VDEVICE(NI, 0x70b6), BOARD_PCI6280 पूर्ण,
-	अणु PCI_VDEVICE(NI, 0x70b7), BOARD_PCI6254 पूर्ण,
-	अणु PCI_VDEVICE(NI, 0x70b8), BOARD_PCI6251 पूर्ण,
-	अणु PCI_VDEVICE(NI, 0x70b9), BOARD_PXI6250 पूर्ण,
-	अणु PCI_VDEVICE(NI, 0x70ba), BOARD_PXI6254 पूर्ण,
-	अणु PCI_VDEVICE(NI, 0x70bb), BOARD_PXI6280 पूर्ण,
-	अणु PCI_VDEVICE(NI, 0x70bc), BOARD_PCI6284 पूर्ण,
-	अणु PCI_VDEVICE(NI, 0x70bd), BOARD_PCI6281 पूर्ण,
-	अणु PCI_VDEVICE(NI, 0x70be), BOARD_PXI6284 पूर्ण,
-	अणु PCI_VDEVICE(NI, 0x70bf), BOARD_PXI6281 पूर्ण,
-	अणु PCI_VDEVICE(NI, 0x70c0), BOARD_PCI6143 पूर्ण,
-	अणु PCI_VDEVICE(NI, 0x70f2), BOARD_PCI6224 पूर्ण,
-	अणु PCI_VDEVICE(NI, 0x70f3), BOARD_PXI6224 पूर्ण,
-	अणु PCI_VDEVICE(NI, 0x710d), BOARD_PXI6143 पूर्ण,
-	अणु PCI_VDEVICE(NI, 0x716c), BOARD_PCI6225 पूर्ण,
-	अणु PCI_VDEVICE(NI, 0x716d), BOARD_PXI6225 पूर्ण,
-	अणु PCI_VDEVICE(NI, 0x717d), BOARD_PCIE6251 पूर्ण,
-	अणु PCI_VDEVICE(NI, 0x717f), BOARD_PCIE6259 पूर्ण,
-	अणु PCI_VDEVICE(NI, 0x71bc), BOARD_PCI6221_37PIN पूर्ण,
-	अणु PCI_VDEVICE(NI, 0x72e8), BOARD_PXIE6251 पूर्ण,
-	अणु PCI_VDEVICE(NI, 0x72e9), BOARD_PXIE6259 पूर्ण,
-	अणु 0 पूर्ण
-पूर्ण;
+static const struct pci_device_id ni_pcimio_pci_table[] = {
+	{ PCI_VDEVICE(NI, 0x0162), BOARD_PCIMIO_16XE_50 },	/* 0x1620? */
+	{ PCI_VDEVICE(NI, 0x1170), BOARD_PCIMIO_16XE_10 },
+	{ PCI_VDEVICE(NI, 0x1180), BOARD_PCIMIO_16E_1 },
+	{ PCI_VDEVICE(NI, 0x1190), BOARD_PCIMIO_16E_4 },
+	{ PCI_VDEVICE(NI, 0x11b0), BOARD_PXI6070E },
+	{ PCI_VDEVICE(NI, 0x11c0), BOARD_PXI6040E },
+	{ PCI_VDEVICE(NI, 0x11d0), BOARD_PXI6030E },
+	{ PCI_VDEVICE(NI, 0x1270), BOARD_PCI6032E },
+	{ PCI_VDEVICE(NI, 0x1330), BOARD_PCI6031E },
+	{ PCI_VDEVICE(NI, 0x1340), BOARD_PCI6033E },
+	{ PCI_VDEVICE(NI, 0x1350), BOARD_PCI6071E },
+	{ PCI_VDEVICE(NI, 0x14e0), BOARD_PCI6110 },
+	{ PCI_VDEVICE(NI, 0x14f0), BOARD_PCI6111 },
+	{ PCI_VDEVICE(NI, 0x1580), BOARD_PXI6031E },
+	{ PCI_VDEVICE(NI, 0x15b0), BOARD_PXI6071E },
+	{ PCI_VDEVICE(NI, 0x1880), BOARD_PCI6711 },
+	{ PCI_VDEVICE(NI, 0x1870), BOARD_PCI6713 },
+	{ PCI_VDEVICE(NI, 0x18b0), BOARD_PCI6052E },
+	{ PCI_VDEVICE(NI, 0x18c0), BOARD_PXI6052E },
+	{ PCI_VDEVICE(NI, 0x2410), BOARD_PCI6733 },
+	{ PCI_VDEVICE(NI, 0x2420), BOARD_PXI6733 },
+	{ PCI_VDEVICE(NI, 0x2430), BOARD_PCI6731 },
+	{ PCI_VDEVICE(NI, 0x2890), BOARD_PCI6036E },
+	{ PCI_VDEVICE(NI, 0x28c0), BOARD_PCI6014 },
+	{ PCI_VDEVICE(NI, 0x2a60), BOARD_PCI6023E },
+	{ PCI_VDEVICE(NI, 0x2a70), BOARD_PCI6024E },
+	{ PCI_VDEVICE(NI, 0x2a80), BOARD_PCI6025E },
+	{ PCI_VDEVICE(NI, 0x2ab0), BOARD_PXI6025E },
+	{ PCI_VDEVICE(NI, 0x2b80), BOARD_PXI6713 },
+	{ PCI_VDEVICE(NI, 0x2b90), BOARD_PXI6711 },
+	{ PCI_VDEVICE(NI, 0x2c80), BOARD_PCI6035E },
+	{ PCI_VDEVICE(NI, 0x2ca0), BOARD_PCI6034E },
+	{ PCI_VDEVICE(NI, 0x70aa), BOARD_PCI6229 },
+	{ PCI_VDEVICE(NI, 0x70ab), BOARD_PCI6259 },
+	{ PCI_VDEVICE(NI, 0x70ac), BOARD_PCI6289 },
+	{ PCI_VDEVICE(NI, 0x70ad), BOARD_PXI6251 },
+	{ PCI_VDEVICE(NI, 0x70ae), BOARD_PXI6220 },
+	{ PCI_VDEVICE(NI, 0x70af), BOARD_PCI6221 },
+	{ PCI_VDEVICE(NI, 0x70b0), BOARD_PCI6220 },
+	{ PCI_VDEVICE(NI, 0x70b1), BOARD_PXI6229 },
+	{ PCI_VDEVICE(NI, 0x70b2), BOARD_PXI6259 },
+	{ PCI_VDEVICE(NI, 0x70b3), BOARD_PXI6289 },
+	{ PCI_VDEVICE(NI, 0x70b4), BOARD_PCI6250 },
+	{ PCI_VDEVICE(NI, 0x70b5), BOARD_PXI6221 },
+	{ PCI_VDEVICE(NI, 0x70b6), BOARD_PCI6280 },
+	{ PCI_VDEVICE(NI, 0x70b7), BOARD_PCI6254 },
+	{ PCI_VDEVICE(NI, 0x70b8), BOARD_PCI6251 },
+	{ PCI_VDEVICE(NI, 0x70b9), BOARD_PXI6250 },
+	{ PCI_VDEVICE(NI, 0x70ba), BOARD_PXI6254 },
+	{ PCI_VDEVICE(NI, 0x70bb), BOARD_PXI6280 },
+	{ PCI_VDEVICE(NI, 0x70bc), BOARD_PCI6284 },
+	{ PCI_VDEVICE(NI, 0x70bd), BOARD_PCI6281 },
+	{ PCI_VDEVICE(NI, 0x70be), BOARD_PXI6284 },
+	{ PCI_VDEVICE(NI, 0x70bf), BOARD_PXI6281 },
+	{ PCI_VDEVICE(NI, 0x70c0), BOARD_PCI6143 },
+	{ PCI_VDEVICE(NI, 0x70f2), BOARD_PCI6224 },
+	{ PCI_VDEVICE(NI, 0x70f3), BOARD_PXI6224 },
+	{ PCI_VDEVICE(NI, 0x710d), BOARD_PXI6143 },
+	{ PCI_VDEVICE(NI, 0x716c), BOARD_PCI6225 },
+	{ PCI_VDEVICE(NI, 0x716d), BOARD_PXI6225 },
+	{ PCI_VDEVICE(NI, 0x717d), BOARD_PCIE6251 },
+	{ PCI_VDEVICE(NI, 0x717f), BOARD_PCIE6259 },
+	{ PCI_VDEVICE(NI, 0x71bc), BOARD_PCI6221_37PIN },
+	{ PCI_VDEVICE(NI, 0x72e8), BOARD_PXIE6251 },
+	{ PCI_VDEVICE(NI, 0x72e9), BOARD_PXIE6259 },
+	{ 0 }
+};
 MODULE_DEVICE_TABLE(pci, ni_pcimio_pci_table);
 
-अटल काष्ठा pci_driver ni_pcimio_pci_driver = अणु
+static struct pci_driver ni_pcimio_pci_driver = {
 	.name		= "ni_pcimio",
 	.id_table	= ni_pcimio_pci_table,
 	.probe		= ni_pcimio_pci_probe,
-	.हटाओ		= comedi_pci_स्वतः_unconfig,
-पूर्ण;
+	.remove		= comedi_pci_auto_unconfig,
+};
 module_comedi_pci_driver(ni_pcimio_driver, ni_pcimio_pci_driver);
 
 MODULE_AUTHOR("Comedi https://www.comedi.org");

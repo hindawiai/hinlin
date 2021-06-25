@@ -1,150 +1,149 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
- * Amlogic Meson8 DDR घड़ी controller
+ * Amlogic Meson8 DDR clock controller
  *
  * Copyright (C) 2019 Martin Blumenstingl <martin.blumenstingl@googlemail.com>
  */
 
-#समावेश <dt-bindings/घड़ी/meson8-ddr-clkc.h>
+#include <dt-bindings/clock/meson8-ddr-clkc.h>
 
-#समावेश <linux/clk-provider.h>
-#समावेश <linux/platक्रमm_device.h>
+#include <linux/clk-provider.h>
+#include <linux/platform_device.h>
 
-#समावेश "clk-regmap.h"
-#समावेश "clk-pll.h"
+#include "clk-regmap.h"
+#include "clk-pll.h"
 
-#घोषणा AM_DDR_PLL_CNTL			0x00
-#घोषणा AM_DDR_PLL_CNTL1		0x04
-#घोषणा AM_DDR_PLL_CNTL2		0x08
-#घोषणा AM_DDR_PLL_CNTL3		0x0c
-#घोषणा AM_DDR_PLL_CNTL4		0x10
-#घोषणा AM_DDR_PLL_STS			0x14
-#घोषणा DDR_CLK_CNTL			0x18
-#घोषणा DDR_CLK_STS			0x1c
+#define AM_DDR_PLL_CNTL			0x00
+#define AM_DDR_PLL_CNTL1		0x04
+#define AM_DDR_PLL_CNTL2		0x08
+#define AM_DDR_PLL_CNTL3		0x0c
+#define AM_DDR_PLL_CNTL4		0x10
+#define AM_DDR_PLL_STS			0x14
+#define DDR_CLK_CNTL			0x18
+#define DDR_CLK_STS			0x1c
 
-अटल काष्ठा clk_regmap meson8_ddr_pll_dco = अणु
-	.data = &(काष्ठा meson_clk_pll_data)अणु
-		.en = अणु
+static struct clk_regmap meson8_ddr_pll_dco = {
+	.data = &(struct meson_clk_pll_data){
+		.en = {
 			.reg_off = AM_DDR_PLL_CNTL,
-			.shअगरt   = 30,
+			.shift   = 30,
 			.width   = 1,
-		पूर्ण,
-		.m = अणु
+		},
+		.m = {
 			.reg_off = AM_DDR_PLL_CNTL,
-			.shअगरt   = 0,
+			.shift   = 0,
 			.width   = 9,
-		पूर्ण,
-		.n = अणु
+		},
+		.n = {
 			.reg_off = AM_DDR_PLL_CNTL,
-			.shअगरt   = 9,
+			.shift   = 9,
 			.width   = 5,
-		पूर्ण,
-		.l = अणु
+		},
+		.l = {
 			.reg_off = AM_DDR_PLL_CNTL,
-			.shअगरt   = 31,
+			.shift   = 31,
 			.width   = 1,
-		पूर्ण,
-		.rst = अणु
+		},
+		.rst = {
 			.reg_off = AM_DDR_PLL_CNTL,
-			.shअगरt   = 29,
+			.shift   = 29,
 			.width   = 1,
-		पूर्ण,
-	पूर्ण,
-	.hw.init = &(काष्ठा clk_init_data)अणु
+		},
+	},
+	.hw.init = &(struct clk_init_data){
 		.name = "ddr_pll_dco",
 		.ops = &meson_clk_pll_ro_ops,
-		.parent_data = &(स्थिर काष्ठा clk_parent_data) अणु
+		.parent_data = &(const struct clk_parent_data) {
 			.fw_name = "xtal",
-		पूर्ण,
+		},
 		.num_parents = 1,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल काष्ठा clk_regmap meson8_ddr_pll = अणु
-	.data = &(काष्ठा clk_regmap_भाग_data)अणु
+static struct clk_regmap meson8_ddr_pll = {
+	.data = &(struct clk_regmap_div_data){
 		.offset = AM_DDR_PLL_CNTL,
-		.shअगरt = 16,
+		.shift = 16,
 		.width = 2,
 		.flags = CLK_DIVIDER_POWER_OF_TWO,
-	पूर्ण,
-	.hw.init = &(काष्ठा clk_init_data)अणु
+	},
+	.hw.init = &(struct clk_init_data){
 		.name = "ddr_pll",
-		.ops = &clk_regmap_भागider_ro_ops,
-		.parent_hws = (स्थिर काष्ठा clk_hw *[]) अणु
+		.ops = &clk_regmap_divider_ro_ops,
+		.parent_hws = (const struct clk_hw *[]) {
 			&meson8_ddr_pll_dco.hw
-		पूर्ण,
+		},
 		.num_parents = 1,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल काष्ठा clk_hw_onecell_data meson8_ddr_clk_hw_onecell_data = अणु
-	.hws = अणु
+static struct clk_hw_onecell_data meson8_ddr_clk_hw_onecell_data = {
+	.hws = {
 		[DDR_CLKID_DDR_PLL_DCO]		= &meson8_ddr_pll_dco.hw,
 		[DDR_CLKID_DDR_PLL]		= &meson8_ddr_pll.hw,
-	पूर्ण,
+	},
 	.num = 2,
-पूर्ण;
+};
 
-अटल काष्ठा clk_regmap *स्थिर meson8_ddr_clk_regmaps[] = अणु
+static struct clk_regmap *const meson8_ddr_clk_regmaps[] = {
 	&meson8_ddr_pll_dco,
 	&meson8_ddr_pll,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा regmap_config meson8_ddr_clkc_regmap_config = अणु
+static const struct regmap_config meson8_ddr_clkc_regmap_config = {
 	.reg_bits = 8,
 	.val_bits = 32,
 	.reg_stride = 4,
-	.max_रेजिस्टर = DDR_CLK_STS,
-पूर्ण;
+	.max_register = DDR_CLK_STS,
+};
 
-अटल पूर्णांक meson8_ddr_clkc_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा regmap *regmap;
-	व्योम __iomem *base;
-	काष्ठा clk_hw *hw;
-	पूर्णांक ret, i;
+static int meson8_ddr_clkc_probe(struct platform_device *pdev)
+{
+	struct regmap *regmap;
+	void __iomem *base;
+	struct clk_hw *hw;
+	int ret, i;
 
-	base = devm_platक्रमm_ioremap_resource(pdev, 0);
-	अगर (IS_ERR(base))
-		वापस PTR_ERR(base);
+	base = devm_platform_ioremap_resource(pdev, 0);
+	if (IS_ERR(base))
+		return PTR_ERR(base);
 
 	regmap = devm_regmap_init_mmio(&pdev->dev, base,
 				       &meson8_ddr_clkc_regmap_config);
-	अगर (IS_ERR(regmap))
-		वापस PTR_ERR(regmap);
+	if (IS_ERR(regmap))
+		return PTR_ERR(regmap);
 
 	/* Populate regmap */
-	क्रम (i = 0; i < ARRAY_SIZE(meson8_ddr_clk_regmaps); i++)
+	for (i = 0; i < ARRAY_SIZE(meson8_ddr_clk_regmaps); i++)
 		meson8_ddr_clk_regmaps[i]->map = regmap;
 
 	/* Register all clks */
-	क्रम (i = 0; i < meson8_ddr_clk_hw_onecell_data.num; i++) अणु
+	for (i = 0; i < meson8_ddr_clk_hw_onecell_data.num; i++) {
 		hw = meson8_ddr_clk_hw_onecell_data.hws[i];
 
-		ret = devm_clk_hw_रेजिस्टर(&pdev->dev, hw);
-		अगर (ret) अणु
+		ret = devm_clk_hw_register(&pdev->dev, hw);
+		if (ret) {
 			dev_err(&pdev->dev, "Clock registration failed\n");
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
-	वापस devm_of_clk_add_hw_provider(&pdev->dev, of_clk_hw_onecell_get,
+	return devm_of_clk_add_hw_provider(&pdev->dev, of_clk_hw_onecell_get,
 					   &meson8_ddr_clk_hw_onecell_data);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा of_device_id meson8_ddr_clkc_match_table[] = अणु
-	अणु .compatible = "amlogic,meson8-ddr-clkc" पूर्ण,
-	अणु .compatible = "amlogic,meson8b-ddr-clkc" पूर्ण,
-	अणु /* sentinel */ पूर्ण
-पूर्ण;
+static const struct of_device_id meson8_ddr_clkc_match_table[] = {
+	{ .compatible = "amlogic,meson8-ddr-clkc" },
+	{ .compatible = "amlogic,meson8b-ddr-clkc" },
+	{ /* sentinel */ }
+};
 
-अटल काष्ठा platक्रमm_driver meson8_ddr_clkc_driver = अणु
+static struct platform_driver meson8_ddr_clkc_driver = {
 	.probe		= meson8_ddr_clkc_probe,
-	.driver		= अणु
+	.driver		= {
 		.name	= "meson8-ddr-clkc",
 		.of_match_table = meson8_ddr_clkc_match_table,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-builtin_platक्रमm_driver(meson8_ddr_clkc_driver);
+builtin_platform_driver(meson8_ddr_clkc_driver);

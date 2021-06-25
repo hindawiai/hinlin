@@ -1,62 +1,61 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Event अक्षर devices, giving access to raw input device events.
+ * Event char devices, giving access to raw input device events.
  *
  * Copyright (c) 1999-2002 Vojtech Pavlik
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#घोषणा EVDEV_MINOR_BASE	64
-#घोषणा EVDEV_MINORS		32
-#घोषणा EVDEV_MIN_BUFFER_SIZE	64U
-#घोषणा EVDEV_BUF_PACKETS	8
+#define EVDEV_MINOR_BASE	64
+#define EVDEV_MINORS		32
+#define EVDEV_MIN_BUFFER_SIZE	64U
+#define EVDEV_BUF_PACKETS	8
 
-#समावेश <linux/poll.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/vदो_स्मृति.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/module.h>
-#समावेश <linux/init.h>
-#समावेश <linux/input/mt.h>
-#समावेश <linux/major.h>
-#समावेश <linux/device.h>
-#समावेश <linux/cdev.h>
-#समावेश "input-compat.h"
+#include <linux/poll.h>
+#include <linux/sched.h>
+#include <linux/slab.h>
+#include <linux/vmalloc.h>
+#include <linux/mm.h>
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/input/mt.h>
+#include <linux/major.h>
+#include <linux/device.h>
+#include <linux/cdev.h>
+#include "input-compat.h"
 
-काष्ठा evdev अणु
-	पूर्णांक खोलो;
-	काष्ठा input_handle handle;
-	काष्ठा evdev_client __rcu *grab;
-	काष्ठा list_head client_list;
+struct evdev {
+	int open;
+	struct input_handle handle;
+	struct evdev_client __rcu *grab;
+	struct list_head client_list;
 	spinlock_t client_lock; /* protects client_list */
-	काष्ठा mutex mutex;
-	काष्ठा device dev;
-	काष्ठा cdev cdev;
+	struct mutex mutex;
+	struct device dev;
+	struct cdev cdev;
 	bool exist;
-पूर्ण;
+};
 
-काष्ठा evdev_client अणु
-	अचिन्हित पूर्णांक head;
-	अचिन्हित पूर्णांक tail;
-	अचिन्हित पूर्णांक packet_head; /* [future] position of the first element of next packet */
+struct evdev_client {
+	unsigned int head;
+	unsigned int tail;
+	unsigned int packet_head; /* [future] position of the first element of next packet */
 	spinlock_t buffer_lock; /* protects access to buffer, head and tail */
-	रुको_queue_head_t रुको;
-	काष्ठा fasync_काष्ठा *fasync;
-	काष्ठा evdev *evdev;
-	काष्ठा list_head node;
-	क्रमागत input_घड़ी_प्रकारype clk_type;
+	wait_queue_head_t wait;
+	struct fasync_struct *fasync;
+	struct evdev *evdev;
+	struct list_head node;
+	enum input_clock_type clk_type;
 	bool revoked;
-	अचिन्हित दीर्घ *evmasks[EV_CNT];
-	अचिन्हित पूर्णांक bufsize;
-	काष्ठा input_event buffer[];
-पूर्ण;
+	unsigned long *evmasks[EV_CNT];
+	unsigned int bufsize;
+	struct input_event buffer[];
+};
 
-अटल माप_प्रकार evdev_get_mask_cnt(अचिन्हित पूर्णांक type)
-अणु
-	अटल स्थिर माप_प्रकार counts[EV_CNT] = अणु
+static size_t evdev_get_mask_cnt(unsigned int type)
+{
+	static const size_t counts[EV_CNT] = {
 		/* EV_SYN==0 is EV_CNT, _not_ SYN_CNT, see EVIOCGBIT */
 		[EV_SYN]	= EV_CNT,
 		[EV_KEY]	= KEY_CNT,
@@ -67,44 +66,44 @@
 		[EV_LED]	= LED_CNT,
 		[EV_SND]	= SND_CNT,
 		[EV_FF]		= FF_CNT,
-	पूर्ण;
+	};
 
-	वापस (type < EV_CNT) ? counts[type] : 0;
-पूर्ण
+	return (type < EV_CNT) ? counts[type] : 0;
+}
 
 /* requires the buffer lock to be held */
-अटल bool __evdev_is_filtered(काष्ठा evdev_client *client,
-				अचिन्हित पूर्णांक type,
-				अचिन्हित पूर्णांक code)
-अणु
-	अचिन्हित दीर्घ *mask;
-	माप_प्रकार cnt;
+static bool __evdev_is_filtered(struct evdev_client *client,
+				unsigned int type,
+				unsigned int code)
+{
+	unsigned long *mask;
+	size_t cnt;
 
 	/* EV_SYN and unknown codes are never filtered */
-	अगर (type == EV_SYN || type >= EV_CNT)
-		वापस false;
+	if (type == EV_SYN || type >= EV_CNT)
+		return false;
 
 	/* first test whether the type is filtered */
 	mask = client->evmasks[0];
-	अगर (mask && !test_bit(type, mask))
-		वापस true;
+	if (mask && !test_bit(type, mask))
+		return true;
 
 	/* unknown values are never filtered */
 	cnt = evdev_get_mask_cnt(type);
-	अगर (!cnt || code >= cnt)
-		वापस false;
+	if (!cnt || code >= cnt)
+		return false;
 
 	mask = client->evmasks[type];
-	वापस mask && !test_bit(code, mask);
-पूर्ण
+	return mask && !test_bit(code, mask);
+}
 
 /* flush queued events of type @type, caller must hold client->buffer_lock */
-अटल व्योम __evdev_flush_queue(काष्ठा evdev_client *client, अचिन्हित पूर्णांक type)
-अणु
-	अचिन्हित पूर्णांक i, head, num;
-	अचिन्हित पूर्णांक mask = client->bufsize - 1;
+static void __evdev_flush_queue(struct evdev_client *client, unsigned int type)
+{
+	unsigned int i, head, num;
+	unsigned int mask = client->bufsize - 1;
 	bool is_report;
-	काष्ठा input_event *ev;
+	struct input_event *ev;
 
 	BUG_ON(type == EV_SYN);
 
@@ -114,38 +113,38 @@
 	/* init to 1 so a leading SYN_REPORT will not be dropped */
 	num = 1;
 
-	क्रम (i = client->tail; i != client->head; i = (i + 1) & mask) अणु
+	for (i = client->tail; i != client->head; i = (i + 1) & mask) {
 		ev = &client->buffer[i];
 		is_report = ev->type == EV_SYN && ev->code == SYN_REPORT;
 
-		अगर (ev->type == type) अणु
+		if (ev->type == type) {
 			/* drop matched entry */
-			जारी;
-		पूर्ण अन्यथा अगर (is_report && !num) अणु
+			continue;
+		} else if (is_report && !num) {
 			/* drop empty SYN_REPORT groups */
-			जारी;
-		पूर्ण अन्यथा अगर (head != i) अणु
+			continue;
+		} else if (head != i) {
 			/* move entry to fill the gap */
 			client->buffer[head] = *ev;
-		पूर्ण
+		}
 
 		num++;
 		head = (head + 1) & mask;
 
-		अगर (is_report) अणु
+		if (is_report) {
 			num = 0;
 			client->packet_head = head;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	client->head = head;
-पूर्ण
+}
 
-अटल व्योम __evdev_queue_syn_dropped(काष्ठा evdev_client *client)
-अणु
-	kसमय_प्रकार *ev_समय = input_get_बारtamp(client->evdev->handle.dev);
-	काष्ठा बारpec64 ts = kसमय_प्रकारo_बारpec64(ev_समय[client->clk_type]);
-	काष्ठा input_event ev;
+static void __evdev_queue_syn_dropped(struct evdev_client *client)
+{
+	ktime_t *ev_time = input_get_timestamp(client->evdev->handle.dev);
+	struct timespec64 ts = ktime_to_timespec64(ev_time[client->clk_type]);
+	struct input_event ev;
 
 	ev.input_event_sec = ts.tv_sec;
 	ev.input_event_usec = ts.tv_nsec / NSEC_PER_USEC;
@@ -156,292 +155,292 @@
 	client->buffer[client->head++] = ev;
 	client->head &= client->bufsize - 1;
 
-	अगर (unlikely(client->head == client->tail)) अणु
+	if (unlikely(client->head == client->tail)) {
 		/* drop queue but keep our SYN_DROPPED event */
 		client->tail = (client->head - 1) & (client->bufsize - 1);
 		client->packet_head = client->tail;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम evdev_queue_syn_dropped(काष्ठा evdev_client *client)
-अणु
-	अचिन्हित दीर्घ flags;
+static void evdev_queue_syn_dropped(struct evdev_client *client)
+{
+	unsigned long flags;
 
 	spin_lock_irqsave(&client->buffer_lock, flags);
 	__evdev_queue_syn_dropped(client);
 	spin_unlock_irqrestore(&client->buffer_lock, flags);
-पूर्ण
+}
 
-अटल पूर्णांक evdev_set_clk_type(काष्ठा evdev_client *client, अचिन्हित पूर्णांक clkid)
-अणु
-	अचिन्हित दीर्घ flags;
-	क्रमागत input_घड़ी_प्रकारype clk_type;
+static int evdev_set_clk_type(struct evdev_client *client, unsigned int clkid)
+{
+	unsigned long flags;
+	enum input_clock_type clk_type;
 
-	चयन (clkid) अणु
+	switch (clkid) {
 
-	हाल CLOCK_REALTIME:
+	case CLOCK_REALTIME:
 		clk_type = INPUT_CLK_REAL;
-		अवरोध;
-	हाल CLOCK_MONOTONIC:
+		break;
+	case CLOCK_MONOTONIC:
 		clk_type = INPUT_CLK_MONO;
-		अवरोध;
-	हाल CLOCK_BOOTTIME:
+		break;
+	case CLOCK_BOOTTIME:
 		clk_type = INPUT_CLK_BOOT;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	अगर (client->clk_type != clk_type) अणु
+	if (client->clk_type != clk_type) {
 		client->clk_type = clk_type;
 
 		/*
 		 * Flush pending events and queue SYN_DROPPED event,
-		 * but only अगर the queue is not empty.
+		 * but only if the queue is not empty.
 		 */
 		spin_lock_irqsave(&client->buffer_lock, flags);
 
-		अगर (client->head != client->tail) अणु
+		if (client->head != client->tail) {
 			client->packet_head = client->head = client->tail;
 			__evdev_queue_syn_dropped(client);
-		पूर्ण
+		}
 
 		spin_unlock_irqrestore(&client->buffer_lock, flags);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम __pass_event(काष्ठा evdev_client *client,
-			 स्थिर काष्ठा input_event *event)
-अणु
+static void __pass_event(struct evdev_client *client,
+			 const struct input_event *event)
+{
 	client->buffer[client->head++] = *event;
 	client->head &= client->bufsize - 1;
 
-	अगर (unlikely(client->head == client->tail)) अणु
+	if (unlikely(client->head == client->tail)) {
 		/*
 		 * This effectively "drops" all unconsumed events, leaving
 		 * EV_SYN/SYN_DROPPED plus the newest event in the queue.
 		 */
 		client->tail = (client->head - 2) & (client->bufsize - 1);
 
-		client->buffer[client->tail] = (काष्ठा input_event) अणु
+		client->buffer[client->tail] = (struct input_event) {
 			.input_event_sec = event->input_event_sec,
 			.input_event_usec = event->input_event_usec,
 			.type = EV_SYN,
 			.code = SYN_DROPPED,
 			.value = 0,
-		पूर्ण;
+		};
 
 		client->packet_head = client->tail;
-	पूर्ण
+	}
 
-	अगर (event->type == EV_SYN && event->code == SYN_REPORT) अणु
+	if (event->type == EV_SYN && event->code == SYN_REPORT) {
 		client->packet_head = client->head;
-		समाप्त_fasync(&client->fasync, SIGIO, POLL_IN);
-	पूर्ण
-पूर्ण
+		kill_fasync(&client->fasync, SIGIO, POLL_IN);
+	}
+}
 
-अटल व्योम evdev_pass_values(काष्ठा evdev_client *client,
-			स्थिर काष्ठा input_value *vals, अचिन्हित पूर्णांक count,
-			kसमय_प्रकार *ev_समय)
-अणु
-	स्थिर काष्ठा input_value *v;
-	काष्ठा input_event event;
-	काष्ठा बारpec64 ts;
+static void evdev_pass_values(struct evdev_client *client,
+			const struct input_value *vals, unsigned int count,
+			ktime_t *ev_time)
+{
+	const struct input_value *v;
+	struct input_event event;
+	struct timespec64 ts;
 	bool wakeup = false;
 
-	अगर (client->revoked)
-		वापस;
+	if (client->revoked)
+		return;
 
-	ts = kसमय_प्रकारo_बारpec64(ev_समय[client->clk_type]);
+	ts = ktime_to_timespec64(ev_time[client->clk_type]);
 	event.input_event_sec = ts.tv_sec;
 	event.input_event_usec = ts.tv_nsec / NSEC_PER_USEC;
 
 	/* Interrupts are disabled, just acquire the lock. */
 	spin_lock(&client->buffer_lock);
 
-	क्रम (v = vals; v != vals + count; v++) अणु
-		अगर (__evdev_is_filtered(client, v->type, v->code))
-			जारी;
+	for (v = vals; v != vals + count; v++) {
+		if (__evdev_is_filtered(client, v->type, v->code))
+			continue;
 
-		अगर (v->type == EV_SYN && v->code == SYN_REPORT) अणु
+		if (v->type == EV_SYN && v->code == SYN_REPORT) {
 			/* drop empty SYN_REPORT */
-			अगर (client->packet_head == client->head)
-				जारी;
+			if (client->packet_head == client->head)
+				continue;
 
 			wakeup = true;
-		पूर्ण
+		}
 
 		event.type = v->type;
 		event.code = v->code;
 		event.value = v->value;
 		__pass_event(client, &event);
-	पूर्ण
+	}
 
 	spin_unlock(&client->buffer_lock);
 
-	अगर (wakeup)
-		wake_up_पूर्णांकerruptible_poll(&client->रुको,
+	if (wakeup)
+		wake_up_interruptible_poll(&client->wait,
 			EPOLLIN | EPOLLOUT | EPOLLRDNORM | EPOLLWRNORM);
-पूर्ण
+}
 
 /*
  * Pass incoming events to all connected clients.
  */
-अटल व्योम evdev_events(काष्ठा input_handle *handle,
-			 स्थिर काष्ठा input_value *vals, अचिन्हित पूर्णांक count)
-अणु
-	काष्ठा evdev *evdev = handle->निजी;
-	काष्ठा evdev_client *client;
-	kसमय_प्रकार *ev_समय = input_get_बारtamp(handle->dev);
+static void evdev_events(struct input_handle *handle,
+			 const struct input_value *vals, unsigned int count)
+{
+	struct evdev *evdev = handle->private;
+	struct evdev_client *client;
+	ktime_t *ev_time = input_get_timestamp(handle->dev);
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 
 	client = rcu_dereference(evdev->grab);
 
-	अगर (client)
-		evdev_pass_values(client, vals, count, ev_समय);
-	अन्यथा
-		list_क्रम_each_entry_rcu(client, &evdev->client_list, node)
-			evdev_pass_values(client, vals, count, ev_समय);
+	if (client)
+		evdev_pass_values(client, vals, count, ev_time);
+	else
+		list_for_each_entry_rcu(client, &evdev->client_list, node)
+			evdev_pass_values(client, vals, count, ev_time);
 
-	rcu_पढ़ो_unlock();
-पूर्ण
+	rcu_read_unlock();
+}
 
 /*
  * Pass incoming event to all connected clients.
  */
-अटल व्योम evdev_event(काष्ठा input_handle *handle,
-			अचिन्हित पूर्णांक type, अचिन्हित पूर्णांक code, पूर्णांक value)
-अणु
-	काष्ठा input_value vals[] = अणु अणु type, code, value पूर्ण पूर्ण;
+static void evdev_event(struct input_handle *handle,
+			unsigned int type, unsigned int code, int value)
+{
+	struct input_value vals[] = { { type, code, value } };
 
 	evdev_events(handle, vals, 1);
-पूर्ण
+}
 
-अटल पूर्णांक evdev_fasync(पूर्णांक fd, काष्ठा file *file, पूर्णांक on)
-अणु
-	काष्ठा evdev_client *client = file->निजी_data;
+static int evdev_fasync(int fd, struct file *file, int on)
+{
+	struct evdev_client *client = file->private_data;
 
-	वापस fasync_helper(fd, file, on, &client->fasync);
-पूर्ण
+	return fasync_helper(fd, file, on, &client->fasync);
+}
 
-अटल व्योम evdev_मुक्त(काष्ठा device *dev)
-अणु
-	काष्ठा evdev *evdev = container_of(dev, काष्ठा evdev, dev);
+static void evdev_free(struct device *dev)
+{
+	struct evdev *evdev = container_of(dev, struct evdev, dev);
 
 	input_put_device(evdev->handle.dev);
-	kमुक्त(evdev);
-पूर्ण
+	kfree(evdev);
+}
 
 /*
- * Grअसल an event device (aदीर्घ with underlying input device).
+ * Grabs an event device (along with underlying input device).
  * This function is called with evdev->mutex taken.
  */
-अटल पूर्णांक evdev_grab(काष्ठा evdev *evdev, काष्ठा evdev_client *client)
-अणु
-	पूर्णांक error;
+static int evdev_grab(struct evdev *evdev, struct evdev_client *client)
+{
+	int error;
 
-	अगर (evdev->grab)
-		वापस -EBUSY;
+	if (evdev->grab)
+		return -EBUSY;
 
 	error = input_grab_device(&evdev->handle);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
-	rcu_assign_poपूर्णांकer(evdev->grab, client);
+	rcu_assign_pointer(evdev->grab, client);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक evdev_ungrab(काष्ठा evdev *evdev, काष्ठा evdev_client *client)
-अणु
-	काष्ठा evdev_client *grab = rcu_dereference_रक्षित(evdev->grab,
+static int evdev_ungrab(struct evdev *evdev, struct evdev_client *client)
+{
+	struct evdev_client *grab = rcu_dereference_protected(evdev->grab,
 					lockdep_is_held(&evdev->mutex));
 
-	अगर (grab != client)
-		वापस  -EINVAL;
+	if (grab != client)
+		return  -EINVAL;
 
-	rcu_assign_poपूर्णांकer(evdev->grab, शून्य);
+	rcu_assign_pointer(evdev->grab, NULL);
 	synchronize_rcu();
 	input_release_device(&evdev->handle);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम evdev_attach_client(काष्ठा evdev *evdev,
-				काष्ठा evdev_client *client)
-अणु
+static void evdev_attach_client(struct evdev *evdev,
+				struct evdev_client *client)
+{
 	spin_lock(&evdev->client_lock);
 	list_add_tail_rcu(&client->node, &evdev->client_list);
 	spin_unlock(&evdev->client_lock);
-पूर्ण
+}
 
-अटल व्योम evdev_detach_client(काष्ठा evdev *evdev,
-				काष्ठा evdev_client *client)
-अणु
+static void evdev_detach_client(struct evdev *evdev,
+				struct evdev_client *client)
+{
 	spin_lock(&evdev->client_lock);
 	list_del_rcu(&client->node);
 	spin_unlock(&evdev->client_lock);
 	synchronize_rcu();
-पूर्ण
+}
 
-अटल पूर्णांक evdev_खोलो_device(काष्ठा evdev *evdev)
-अणु
-	पूर्णांक retval;
+static int evdev_open_device(struct evdev *evdev)
+{
+	int retval;
 
-	retval = mutex_lock_पूर्णांकerruptible(&evdev->mutex);
-	अगर (retval)
-		वापस retval;
+	retval = mutex_lock_interruptible(&evdev->mutex);
+	if (retval)
+		return retval;
 
-	अगर (!evdev->exist)
+	if (!evdev->exist)
 		retval = -ENODEV;
-	अन्यथा अगर (!evdev->खोलो++) अणु
-		retval = input_खोलो_device(&evdev->handle);
-		अगर (retval)
-			evdev->खोलो--;
-	पूर्ण
+	else if (!evdev->open++) {
+		retval = input_open_device(&evdev->handle);
+		if (retval)
+			evdev->open--;
+	}
 
 	mutex_unlock(&evdev->mutex);
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-अटल व्योम evdev_बंद_device(काष्ठा evdev *evdev)
-अणु
+static void evdev_close_device(struct evdev *evdev)
+{
 	mutex_lock(&evdev->mutex);
 
-	अगर (evdev->exist && !--evdev->खोलो)
-		input_बंद_device(&evdev->handle);
+	if (evdev->exist && !--evdev->open)
+		input_close_device(&evdev->handle);
 
 	mutex_unlock(&evdev->mutex);
-पूर्ण
+}
 
 /*
- * Wake up users रुकोing क्रम IO so they can disconnect from
+ * Wake up users waiting for IO so they can disconnect from
  * dead device.
  */
-अटल व्योम evdev_hangup(काष्ठा evdev *evdev)
-अणु
-	काष्ठा evdev_client *client;
+static void evdev_hangup(struct evdev *evdev)
+{
+	struct evdev_client *client;
 
 	spin_lock(&evdev->client_lock);
-	list_क्रम_each_entry(client, &evdev->client_list, node) अणु
-		समाप्त_fasync(&client->fasync, SIGIO, POLL_HUP);
-		wake_up_पूर्णांकerruptible_poll(&client->रुको, EPOLLHUP | EPOLLERR);
-	पूर्ण
+	list_for_each_entry(client, &evdev->client_list, node) {
+		kill_fasync(&client->fasync, SIGIO, POLL_HUP);
+		wake_up_interruptible_poll(&client->wait, EPOLLHUP | EPOLLERR);
+	}
 	spin_unlock(&evdev->client_lock);
-पूर्ण
+}
 
-अटल पूर्णांक evdev_release(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा evdev_client *client = file->निजी_data;
-	काष्ठा evdev *evdev = client->evdev;
-	अचिन्हित पूर्णांक i;
+static int evdev_release(struct inode *inode, struct file *file)
+{
+	struct evdev_client *client = file->private_data;
+	struct evdev *evdev = client->evdev;
+	unsigned int i;
 
 	mutex_lock(&evdev->mutex);
 
-	अगर (evdev->exist && !client->revoked)
+	if (evdev->exist && !client->revoked)
 		input_flush_device(&evdev->handle, file);
 
 	evdev_ungrab(evdev, client);
@@ -449,427 +448,427 @@
 
 	evdev_detach_client(evdev, client);
 
-	क्रम (i = 0; i < EV_CNT; ++i)
-		biपंचांगap_मुक्त(client->evmasks[i]);
+	for (i = 0; i < EV_CNT; ++i)
+		bitmap_free(client->evmasks[i]);
 
-	kvमुक्त(client);
+	kvfree(client);
 
-	evdev_बंद_device(evdev);
+	evdev_close_device(evdev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अचिन्हित पूर्णांक evdev_compute_buffer_size(काष्ठा input_dev *dev)
-अणु
-	अचिन्हित पूर्णांक n_events =
-		max(dev->hपूर्णांक_events_per_packet * EVDEV_BUF_PACKETS,
+static unsigned int evdev_compute_buffer_size(struct input_dev *dev)
+{
+	unsigned int n_events =
+		max(dev->hint_events_per_packet * EVDEV_BUF_PACKETS,
 		    EVDEV_MIN_BUFFER_SIZE);
 
-	वापस roundup_घात_of_two(n_events);
-पूर्ण
+	return roundup_pow_of_two(n_events);
+}
 
-अटल पूर्णांक evdev_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा evdev *evdev = container_of(inode->i_cdev, काष्ठा evdev, cdev);
-	अचिन्हित पूर्णांक bufsize = evdev_compute_buffer_size(evdev->handle.dev);
-	काष्ठा evdev_client *client;
-	पूर्णांक error;
+static int evdev_open(struct inode *inode, struct file *file)
+{
+	struct evdev *evdev = container_of(inode->i_cdev, struct evdev, cdev);
+	unsigned int bufsize = evdev_compute_buffer_size(evdev->handle.dev);
+	struct evdev_client *client;
+	int error;
 
-	client = kvzalloc(काष्ठा_size(client, buffer, bufsize), GFP_KERNEL);
-	अगर (!client)
-		वापस -ENOMEM;
+	client = kvzalloc(struct_size(client, buffer, bufsize), GFP_KERNEL);
+	if (!client)
+		return -ENOMEM;
 
-	init_रुकोqueue_head(&client->रुको);
+	init_waitqueue_head(&client->wait);
 	client->bufsize = bufsize;
 	spin_lock_init(&client->buffer_lock);
 	client->evdev = evdev;
 	evdev_attach_client(evdev, client);
 
-	error = evdev_खोलो_device(evdev);
-	अगर (error)
-		जाओ err_मुक्त_client;
+	error = evdev_open_device(evdev);
+	if (error)
+		goto err_free_client;
 
-	file->निजी_data = client;
-	stream_खोलो(inode, file);
+	file->private_data = client;
+	stream_open(inode, file);
 
-	वापस 0;
+	return 0;
 
- err_मुक्त_client:
+ err_free_client:
 	evdev_detach_client(evdev, client);
-	kvमुक्त(client);
-	वापस error;
-पूर्ण
+	kvfree(client);
+	return error;
+}
 
-अटल sमाप_प्रकार evdev_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buffer,
-			   माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा evdev_client *client = file->निजी_data;
-	काष्ठा evdev *evdev = client->evdev;
-	काष्ठा input_event event;
-	पूर्णांक retval = 0;
+static ssize_t evdev_write(struct file *file, const char __user *buffer,
+			   size_t count, loff_t *ppos)
+{
+	struct evdev_client *client = file->private_data;
+	struct evdev *evdev = client->evdev;
+	struct input_event event;
+	int retval = 0;
 
-	अगर (count != 0 && count < input_event_size())
-		वापस -EINVAL;
+	if (count != 0 && count < input_event_size())
+		return -EINVAL;
 
-	retval = mutex_lock_पूर्णांकerruptible(&evdev->mutex);
-	अगर (retval)
-		वापस retval;
+	retval = mutex_lock_interruptible(&evdev->mutex);
+	if (retval)
+		return retval;
 
-	अगर (!evdev->exist || client->revoked) अणु
+	if (!evdev->exist || client->revoked) {
 		retval = -ENODEV;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	जबतक (retval + input_event_size() <= count) अणु
+	while (retval + input_event_size() <= count) {
 
-		अगर (input_event_from_user(buffer + retval, &event)) अणु
+		if (input_event_from_user(buffer + retval, &event)) {
 			retval = -EFAULT;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		retval += input_event_size();
 
 		input_inject_event(&evdev->handle,
 				   event.type, event.code, event.value);
 		cond_resched();
-	पूर्ण
+	}
 
  out:
 	mutex_unlock(&evdev->mutex);
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-अटल पूर्णांक evdev_fetch_next_event(काष्ठा evdev_client *client,
-				  काष्ठा input_event *event)
-अणु
-	पूर्णांक have_event;
+static int evdev_fetch_next_event(struct evdev_client *client,
+				  struct input_event *event)
+{
+	int have_event;
 
 	spin_lock_irq(&client->buffer_lock);
 
 	have_event = client->packet_head != client->tail;
-	अगर (have_event) अणु
+	if (have_event) {
 		*event = client->buffer[client->tail++];
 		client->tail &= client->bufsize - 1;
-	पूर्ण
+	}
 
 	spin_unlock_irq(&client->buffer_lock);
 
-	वापस have_event;
-पूर्ण
+	return have_event;
+}
 
-अटल sमाप_प्रकार evdev_पढ़ो(काष्ठा file *file, अक्षर __user *buffer,
-			  माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा evdev_client *client = file->निजी_data;
-	काष्ठा evdev *evdev = client->evdev;
-	काष्ठा input_event event;
-	माप_प्रकार पढ़ो = 0;
-	पूर्णांक error;
+static ssize_t evdev_read(struct file *file, char __user *buffer,
+			  size_t count, loff_t *ppos)
+{
+	struct evdev_client *client = file->private_data;
+	struct evdev *evdev = client->evdev;
+	struct input_event event;
+	size_t read = 0;
+	int error;
 
-	अगर (count != 0 && count < input_event_size())
-		वापस -EINVAL;
+	if (count != 0 && count < input_event_size())
+		return -EINVAL;
 
-	क्रम (;;) अणु
-		अगर (!evdev->exist || client->revoked)
-			वापस -ENODEV;
+	for (;;) {
+		if (!evdev->exist || client->revoked)
+			return -ENODEV;
 
-		अगर (client->packet_head == client->tail &&
+		if (client->packet_head == client->tail &&
 		    (file->f_flags & O_NONBLOCK))
-			वापस -EAGAIN;
+			return -EAGAIN;
 
 		/*
-		 * count == 0 is special - no IO is करोne but we check
-		 * क्रम error conditions (see above).
+		 * count == 0 is special - no IO is done but we check
+		 * for error conditions (see above).
 		 */
-		अगर (count == 0)
-			अवरोध;
+		if (count == 0)
+			break;
 
-		जबतक (पढ़ो + input_event_size() <= count &&
-		       evdev_fetch_next_event(client, &event)) अणु
+		while (read + input_event_size() <= count &&
+		       evdev_fetch_next_event(client, &event)) {
 
-			अगर (input_event_to_user(buffer + पढ़ो, &event))
-				वापस -EFAULT;
+			if (input_event_to_user(buffer + read, &event))
+				return -EFAULT;
 
-			पढ़ो += input_event_size();
-		पूर्ण
+			read += input_event_size();
+		}
 
-		अगर (पढ़ो)
-			अवरोध;
+		if (read)
+			break;
 
-		अगर (!(file->f_flags & O_NONBLOCK)) अणु
-			error = रुको_event_पूर्णांकerruptible(client->रुको,
+		if (!(file->f_flags & O_NONBLOCK)) {
+			error = wait_event_interruptible(client->wait,
 					client->packet_head != client->tail ||
 					!evdev->exist || client->revoked);
-			अगर (error)
-				वापस error;
-		पूर्ण
-	पूर्ण
+			if (error)
+				return error;
+		}
+	}
 
-	वापस पढ़ो;
-पूर्ण
+	return read;
+}
 
 /* No kernel lock - fine */
-अटल __poll_t evdev_poll(काष्ठा file *file, poll_table *रुको)
-अणु
-	काष्ठा evdev_client *client = file->निजी_data;
-	काष्ठा evdev *evdev = client->evdev;
+static __poll_t evdev_poll(struct file *file, poll_table *wait)
+{
+	struct evdev_client *client = file->private_data;
+	struct evdev *evdev = client->evdev;
 	__poll_t mask;
 
-	poll_रुको(file, &client->रुको, रुको);
+	poll_wait(file, &client->wait, wait);
 
-	अगर (evdev->exist && !client->revoked)
+	if (evdev->exist && !client->revoked)
 		mask = EPOLLOUT | EPOLLWRNORM;
-	अन्यथा
+	else
 		mask = EPOLLHUP | EPOLLERR;
 
-	अगर (client->packet_head != client->tail)
+	if (client->packet_head != client->tail)
 		mask |= EPOLLIN | EPOLLRDNORM;
 
-	वापस mask;
-पूर्ण
+	return mask;
+}
 
-#अगर_घोषित CONFIG_COMPAT
+#ifdef CONFIG_COMPAT
 
-#घोषणा BITS_PER_LONG_COMPAT (माप(compat_दीर्घ_t) * 8)
-#घोषणा BITS_TO_LONGS_COMPAT(x) ((((x) - 1) / BITS_PER_LONG_COMPAT) + 1)
+#define BITS_PER_LONG_COMPAT (sizeof(compat_long_t) * 8)
+#define BITS_TO_LONGS_COMPAT(x) ((((x) - 1) / BITS_PER_LONG_COMPAT) + 1)
 
-#अगर_घोषित __BIG_ENDIAN
-अटल पूर्णांक bits_to_user(अचिन्हित दीर्घ *bits, अचिन्हित पूर्णांक maxbit,
-			अचिन्हित पूर्णांक maxlen, व्योम __user *p, पूर्णांक compat)
-अणु
-	पूर्णांक len, i;
+#ifdef __BIG_ENDIAN
+static int bits_to_user(unsigned long *bits, unsigned int maxbit,
+			unsigned int maxlen, void __user *p, int compat)
+{
+	int len, i;
 
-	अगर (compat) अणु
-		len = BITS_TO_LONGS_COMPAT(maxbit) * माप(compat_दीर्घ_t);
-		अगर (len > maxlen)
+	if (compat) {
+		len = BITS_TO_LONGS_COMPAT(maxbit) * sizeof(compat_long_t);
+		if (len > maxlen)
 			len = maxlen;
 
-		क्रम (i = 0; i < len / माप(compat_दीर्घ_t); i++)
-			अगर (copy_to_user((compat_दीर्घ_t __user *) p + i,
-					 (compat_दीर्घ_t *) bits +
+		for (i = 0; i < len / sizeof(compat_long_t); i++)
+			if (copy_to_user((compat_long_t __user *) p + i,
+					 (compat_long_t *) bits +
 						i + 1 - ((i % 2) << 1),
-					 माप(compat_दीर्घ_t)))
-				वापस -EFAULT;
-	पूर्ण अन्यथा अणु
-		len = BITS_TO_LONGS(maxbit) * माप(दीर्घ);
-		अगर (len > maxlen)
+					 sizeof(compat_long_t)))
+				return -EFAULT;
+	} else {
+		len = BITS_TO_LONGS(maxbit) * sizeof(long);
+		if (len > maxlen)
 			len = maxlen;
 
-		अगर (copy_to_user(p, bits, len))
-			वापस -EFAULT;
-	पूर्ण
+		if (copy_to_user(p, bits, len))
+			return -EFAULT;
+	}
 
-	वापस len;
-पूर्ण
+	return len;
+}
 
-अटल पूर्णांक bits_from_user(अचिन्हित दीर्घ *bits, अचिन्हित पूर्णांक maxbit,
-			  अचिन्हित पूर्णांक maxlen, स्थिर व्योम __user *p, पूर्णांक compat)
-अणु
-	पूर्णांक len, i;
+static int bits_from_user(unsigned long *bits, unsigned int maxbit,
+			  unsigned int maxlen, const void __user *p, int compat)
+{
+	int len, i;
 
-	अगर (compat) अणु
-		अगर (maxlen % माप(compat_दीर्घ_t))
-			वापस -EINVAL;
+	if (compat) {
+		if (maxlen % sizeof(compat_long_t))
+			return -EINVAL;
 
-		len = BITS_TO_LONGS_COMPAT(maxbit) * माप(compat_दीर्घ_t);
-		अगर (len > maxlen)
+		len = BITS_TO_LONGS_COMPAT(maxbit) * sizeof(compat_long_t);
+		if (len > maxlen)
 			len = maxlen;
 
-		क्रम (i = 0; i < len / माप(compat_दीर्घ_t); i++)
-			अगर (copy_from_user((compat_दीर्घ_t *) bits +
+		for (i = 0; i < len / sizeof(compat_long_t); i++)
+			if (copy_from_user((compat_long_t *) bits +
 						i + 1 - ((i % 2) << 1),
-					   (compat_दीर्घ_t __user *) p + i,
-					   माप(compat_दीर्घ_t)))
-				वापस -EFAULT;
-		अगर (i % 2)
-			*((compat_दीर्घ_t *) bits + i - 1) = 0;
+					   (compat_long_t __user *) p + i,
+					   sizeof(compat_long_t)))
+				return -EFAULT;
+		if (i % 2)
+			*((compat_long_t *) bits + i - 1) = 0;
 
-	पूर्ण अन्यथा अणु
-		अगर (maxlen % माप(दीर्घ))
-			वापस -EINVAL;
+	} else {
+		if (maxlen % sizeof(long))
+			return -EINVAL;
 
-		len = BITS_TO_LONGS(maxbit) * माप(दीर्घ);
-		अगर (len > maxlen)
+		len = BITS_TO_LONGS(maxbit) * sizeof(long);
+		if (len > maxlen)
 			len = maxlen;
 
-		अगर (copy_from_user(bits, p, len))
-			वापस -EFAULT;
-	पूर्ण
+		if (copy_from_user(bits, p, len))
+			return -EFAULT;
+	}
 
-	वापस len;
-पूर्ण
+	return len;
+}
 
-#अन्यथा
+#else
 
-अटल पूर्णांक bits_to_user(अचिन्हित दीर्घ *bits, अचिन्हित पूर्णांक maxbit,
-			अचिन्हित पूर्णांक maxlen, व्योम __user *p, पूर्णांक compat)
-अणु
-	पूर्णांक len = compat ?
-			BITS_TO_LONGS_COMPAT(maxbit) * माप(compat_दीर्घ_t) :
-			BITS_TO_LONGS(maxbit) * माप(दीर्घ);
+static int bits_to_user(unsigned long *bits, unsigned int maxbit,
+			unsigned int maxlen, void __user *p, int compat)
+{
+	int len = compat ?
+			BITS_TO_LONGS_COMPAT(maxbit) * sizeof(compat_long_t) :
+			BITS_TO_LONGS(maxbit) * sizeof(long);
 
-	अगर (len > maxlen)
+	if (len > maxlen)
 		len = maxlen;
 
-	वापस copy_to_user(p, bits, len) ? -EFAULT : len;
-पूर्ण
+	return copy_to_user(p, bits, len) ? -EFAULT : len;
+}
 
-अटल पूर्णांक bits_from_user(अचिन्हित दीर्घ *bits, अचिन्हित पूर्णांक maxbit,
-			  अचिन्हित पूर्णांक maxlen, स्थिर व्योम __user *p, पूर्णांक compat)
-अणु
-	माप_प्रकार chunk_size = compat ? माप(compat_दीर्घ_t) : माप(दीर्घ);
-	पूर्णांक len;
+static int bits_from_user(unsigned long *bits, unsigned int maxbit,
+			  unsigned int maxlen, const void __user *p, int compat)
+{
+	size_t chunk_size = compat ? sizeof(compat_long_t) : sizeof(long);
+	int len;
 
-	अगर (maxlen % chunk_size)
-		वापस -EINVAL;
+	if (maxlen % chunk_size)
+		return -EINVAL;
 
 	len = compat ? BITS_TO_LONGS_COMPAT(maxbit) : BITS_TO_LONGS(maxbit);
 	len *= chunk_size;
-	अगर (len > maxlen)
+	if (len > maxlen)
 		len = maxlen;
 
-	वापस copy_from_user(bits, p, len) ? -EFAULT : len;
-पूर्ण
+	return copy_from_user(bits, p, len) ? -EFAULT : len;
+}
 
-#पूर्ण_अगर /* __BIG_ENDIAN */
+#endif /* __BIG_ENDIAN */
 
-#अन्यथा
+#else
 
-अटल पूर्णांक bits_to_user(अचिन्हित दीर्घ *bits, अचिन्हित पूर्णांक maxbit,
-			अचिन्हित पूर्णांक maxlen, व्योम __user *p, पूर्णांक compat)
-अणु
-	पूर्णांक len = BITS_TO_LONGS(maxbit) * माप(दीर्घ);
+static int bits_to_user(unsigned long *bits, unsigned int maxbit,
+			unsigned int maxlen, void __user *p, int compat)
+{
+	int len = BITS_TO_LONGS(maxbit) * sizeof(long);
 
-	अगर (len > maxlen)
+	if (len > maxlen)
 		len = maxlen;
 
-	वापस copy_to_user(p, bits, len) ? -EFAULT : len;
-पूर्ण
+	return copy_to_user(p, bits, len) ? -EFAULT : len;
+}
 
-अटल पूर्णांक bits_from_user(अचिन्हित दीर्घ *bits, अचिन्हित पूर्णांक maxbit,
-			  अचिन्हित पूर्णांक maxlen, स्थिर व्योम __user *p, पूर्णांक compat)
-अणु
-	पूर्णांक len;
+static int bits_from_user(unsigned long *bits, unsigned int maxbit,
+			  unsigned int maxlen, const void __user *p, int compat)
+{
+	int len;
 
-	अगर (maxlen % माप(दीर्घ))
-		वापस -EINVAL;
+	if (maxlen % sizeof(long))
+		return -EINVAL;
 
-	len = BITS_TO_LONGS(maxbit) * माप(दीर्घ);
-	अगर (len > maxlen)
+	len = BITS_TO_LONGS(maxbit) * sizeof(long);
+	if (len > maxlen)
 		len = maxlen;
 
-	वापस copy_from_user(bits, p, len) ? -EFAULT : len;
-पूर्ण
+	return copy_from_user(bits, p, len) ? -EFAULT : len;
+}
 
-#पूर्ण_अगर /* CONFIG_COMPAT */
+#endif /* CONFIG_COMPAT */
 
-अटल पूर्णांक str_to_user(स्थिर अक्षर *str, अचिन्हित पूर्णांक maxlen, व्योम __user *p)
-अणु
-	पूर्णांक len;
+static int str_to_user(const char *str, unsigned int maxlen, void __user *p)
+{
+	int len;
 
-	अगर (!str)
-		वापस -ENOENT;
+	if (!str)
+		return -ENOENT;
 
-	len = म_माप(str) + 1;
-	अगर (len > maxlen)
+	len = strlen(str) + 1;
+	if (len > maxlen)
 		len = maxlen;
 
-	वापस copy_to_user(p, str, len) ? -EFAULT : len;
-पूर्ण
+	return copy_to_user(p, str, len) ? -EFAULT : len;
+}
 
-अटल पूर्णांक handle_eviocgbit(काष्ठा input_dev *dev,
-			    अचिन्हित पूर्णांक type, अचिन्हित पूर्णांक size,
-			    व्योम __user *p, पूर्णांक compat_mode)
-अणु
-	अचिन्हित दीर्घ *bits;
-	पूर्णांक len;
+static int handle_eviocgbit(struct input_dev *dev,
+			    unsigned int type, unsigned int size,
+			    void __user *p, int compat_mode)
+{
+	unsigned long *bits;
+	int len;
 
-	चयन (type) अणु
+	switch (type) {
 
-	हाल      0: bits = dev->evbit;  len = EV_MAX;  अवरोध;
-	हाल EV_KEY: bits = dev->keybit; len = KEY_MAX; अवरोध;
-	हाल EV_REL: bits = dev->relbit; len = REL_MAX; अवरोध;
-	हाल EV_ABS: bits = dev->असलbit; len = ABS_MAX; अवरोध;
-	हाल EV_MSC: bits = dev->mscbit; len = MSC_MAX; अवरोध;
-	हाल EV_LED: bits = dev->ledbit; len = LED_MAX; अवरोध;
-	हाल EV_SND: bits = dev->sndbit; len = SND_MAX; अवरोध;
-	हाल EV_FF:  bits = dev->ffbit;  len = FF_MAX;  अवरोध;
-	हाल EV_SW:  bits = dev->swbit;  len = SW_MAX;  अवरोध;
-	शेष: वापस -EINVAL;
-	पूर्ण
+	case      0: bits = dev->evbit;  len = EV_MAX;  break;
+	case EV_KEY: bits = dev->keybit; len = KEY_MAX; break;
+	case EV_REL: bits = dev->relbit; len = REL_MAX; break;
+	case EV_ABS: bits = dev->absbit; len = ABS_MAX; break;
+	case EV_MSC: bits = dev->mscbit; len = MSC_MAX; break;
+	case EV_LED: bits = dev->ledbit; len = LED_MAX; break;
+	case EV_SND: bits = dev->sndbit; len = SND_MAX; break;
+	case EV_FF:  bits = dev->ffbit;  len = FF_MAX;  break;
+	case EV_SW:  bits = dev->swbit;  len = SW_MAX;  break;
+	default: return -EINVAL;
+	}
 
-	वापस bits_to_user(bits, len, size, p, compat_mode);
-पूर्ण
+	return bits_to_user(bits, len, size, p, compat_mode);
+}
 
-अटल पूर्णांक evdev_handle_get_keycode(काष्ठा input_dev *dev, व्योम __user *p)
-अणु
-	काष्ठा input_keymap_entry ke = अणु
-		.len	= माप(अचिन्हित पूर्णांक),
+static int evdev_handle_get_keycode(struct input_dev *dev, void __user *p)
+{
+	struct input_keymap_entry ke = {
+		.len	= sizeof(unsigned int),
 		.flags	= 0,
-	पूर्ण;
-	पूर्णांक __user *ip = (पूर्णांक __user *)p;
-	पूर्णांक error;
+	};
+	int __user *ip = (int __user *)p;
+	int error;
 
-	/* legacy हाल */
-	अगर (copy_from_user(ke.scancode, p, माप(अचिन्हित पूर्णांक)))
-		वापस -EFAULT;
+	/* legacy case */
+	if (copy_from_user(ke.scancode, p, sizeof(unsigned int)))
+		return -EFAULT;
 
 	error = input_get_keycode(dev, &ke);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
-	अगर (put_user(ke.keycode, ip + 1))
-		वापस -EFAULT;
+	if (put_user(ke.keycode, ip + 1))
+		return -EFAULT;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक evdev_handle_get_keycode_v2(काष्ठा input_dev *dev, व्योम __user *p)
-अणु
-	काष्ठा input_keymap_entry ke;
-	पूर्णांक error;
+static int evdev_handle_get_keycode_v2(struct input_dev *dev, void __user *p)
+{
+	struct input_keymap_entry ke;
+	int error;
 
-	अगर (copy_from_user(&ke, p, माप(ke)))
-		वापस -EFAULT;
+	if (copy_from_user(&ke, p, sizeof(ke)))
+		return -EFAULT;
 
 	error = input_get_keycode(dev, &ke);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
-	अगर (copy_to_user(p, &ke, माप(ke)))
-		वापस -EFAULT;
+	if (copy_to_user(p, &ke, sizeof(ke)))
+		return -EFAULT;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक evdev_handle_set_keycode(काष्ठा input_dev *dev, व्योम __user *p)
-अणु
-	काष्ठा input_keymap_entry ke = अणु
-		.len	= माप(अचिन्हित पूर्णांक),
+static int evdev_handle_set_keycode(struct input_dev *dev, void __user *p)
+{
+	struct input_keymap_entry ke = {
+		.len	= sizeof(unsigned int),
 		.flags	= 0,
-	पूर्ण;
-	पूर्णांक __user *ip = (पूर्णांक __user *)p;
+	};
+	int __user *ip = (int __user *)p;
 
-	अगर (copy_from_user(ke.scancode, p, माप(अचिन्हित पूर्णांक)))
-		वापस -EFAULT;
+	if (copy_from_user(ke.scancode, p, sizeof(unsigned int)))
+		return -EFAULT;
 
-	अगर (get_user(ke.keycode, ip + 1))
-		वापस -EFAULT;
+	if (get_user(ke.keycode, ip + 1))
+		return -EFAULT;
 
-	वापस input_set_keycode(dev, &ke);
-पूर्ण
+	return input_set_keycode(dev, &ke);
+}
 
-अटल पूर्णांक evdev_handle_set_keycode_v2(काष्ठा input_dev *dev, व्योम __user *p)
-अणु
-	काष्ठा input_keymap_entry ke;
+static int evdev_handle_set_keycode_v2(struct input_dev *dev, void __user *p)
+{
+	struct input_keymap_entry ke;
 
-	अगर (copy_from_user(&ke, p, माप(ke)))
-		वापस -EFAULT;
+	if (copy_from_user(&ke, p, sizeof(ke)))
+		return -EFAULT;
 
-	अगर (ke.len > माप(ke.scancode))
-		वापस -EINVAL;
+	if (ke.len > sizeof(ke.scancode))
+		return -EINVAL;
 
-	वापस input_set_keycode(dev, &ke);
-पूर्ण
+	return input_set_keycode(dev, &ke);
+}
 
 /*
  * If we transfer state to the user, we should flush all pending events
@@ -879,28 +878,28 @@
  * event so user-space will notice missing events.
  *
  * LOCKING:
- * We need to take event_lock beक्रमe buffer_lock to aव्योम dead-locks. But we
+ * We need to take event_lock before buffer_lock to avoid dead-locks. But we
  * need the even_lock only to guarantee consistent state. We can safely release
- * it जबतक flushing the queue. This allows input-core to handle filters जबतक
+ * it while flushing the queue. This allows input-core to handle filters while
  * we flush the queue.
  */
-अटल पूर्णांक evdev_handle_get_val(काष्ठा evdev_client *client,
-				काष्ठा input_dev *dev, अचिन्हित पूर्णांक type,
-				अचिन्हित दीर्घ *bits, अचिन्हित पूर्णांक maxbit,
-				अचिन्हित पूर्णांक maxlen, व्योम __user *p,
-				पूर्णांक compat)
-अणु
-	पूर्णांक ret;
-	अचिन्हित दीर्घ *mem;
+static int evdev_handle_get_val(struct evdev_client *client,
+				struct input_dev *dev, unsigned int type,
+				unsigned long *bits, unsigned int maxbit,
+				unsigned int maxlen, void __user *p,
+				int compat)
+{
+	int ret;
+	unsigned long *mem;
 
-	mem = biपंचांगap_alloc(maxbit, GFP_KERNEL);
-	अगर (!mem)
-		वापस -ENOMEM;
+	mem = bitmap_alloc(maxbit, GFP_KERNEL);
+	if (!mem)
+		return -ENOMEM;
 
 	spin_lock_irq(&dev->event_lock);
 	spin_lock(&client->buffer_lock);
 
-	biपंचांगap_copy(mem, bits, maxbit);
+	bitmap_copy(mem, bits, maxbit);
 
 	spin_unlock(&dev->event_lock);
 
@@ -909,334 +908,334 @@
 	spin_unlock_irq(&client->buffer_lock);
 
 	ret = bits_to_user(mem, maxbit, maxlen, p, compat);
-	अगर (ret < 0)
+	if (ret < 0)
 		evdev_queue_syn_dropped(client);
 
-	biपंचांगap_मुक्त(mem);
+	bitmap_free(mem);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक evdev_handle_mt_request(काष्ठा input_dev *dev,
-				   अचिन्हित पूर्णांक size,
-				   पूर्णांक __user *ip)
-अणु
-	स्थिर काष्ठा input_mt *mt = dev->mt;
-	अचिन्हित पूर्णांक code;
-	पूर्णांक max_slots;
-	पूर्णांक i;
+static int evdev_handle_mt_request(struct input_dev *dev,
+				   unsigned int size,
+				   int __user *ip)
+{
+	const struct input_mt *mt = dev->mt;
+	unsigned int code;
+	int max_slots;
+	int i;
 
-	अगर (get_user(code, &ip[0]))
-		वापस -EFAULT;
-	अगर (!mt || !input_is_mt_value(code))
-		वापस -EINVAL;
+	if (get_user(code, &ip[0]))
+		return -EFAULT;
+	if (!mt || !input_is_mt_value(code))
+		return -EINVAL;
 
-	max_slots = (size - माप(__u32)) / माप(__s32);
-	क्रम (i = 0; i < mt->num_slots && i < max_slots; i++) अणु
-		पूर्णांक value = input_mt_get_value(&mt->slots[i], code);
-		अगर (put_user(value, &ip[1 + i]))
-			वापस -EFAULT;
-	पूर्ण
+	max_slots = (size - sizeof(__u32)) / sizeof(__s32);
+	for (i = 0; i < mt->num_slots && i < max_slots; i++) {
+		int value = input_mt_get_value(&mt->slots[i], code);
+		if (put_user(value, &ip[1 + i]))
+			return -EFAULT;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक evdev_revoke(काष्ठा evdev *evdev, काष्ठा evdev_client *client,
-			काष्ठा file *file)
-अणु
+static int evdev_revoke(struct evdev *evdev, struct evdev_client *client,
+			struct file *file)
+{
 	client->revoked = true;
 	evdev_ungrab(evdev, client);
 	input_flush_device(&evdev->handle, file);
-	wake_up_पूर्णांकerruptible_poll(&client->रुको, EPOLLHUP | EPOLLERR);
+	wake_up_interruptible_poll(&client->wait, EPOLLHUP | EPOLLERR);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* must be called with evdev-mutex held */
-अटल पूर्णांक evdev_set_mask(काष्ठा evdev_client *client,
-			  अचिन्हित पूर्णांक type,
-			  स्थिर व्योम __user *codes,
+static int evdev_set_mask(struct evdev_client *client,
+			  unsigned int type,
+			  const void __user *codes,
 			  u32 codes_size,
-			  पूर्णांक compat)
-अणु
-	अचिन्हित दीर्घ flags, *mask, *oldmask;
-	माप_प्रकार cnt;
-	पूर्णांक error;
+			  int compat)
+{
+	unsigned long flags, *mask, *oldmask;
+	size_t cnt;
+	int error;
 
-	/* we allow unknown types and 'codes_size > size' क्रम क्रमward-compat */
+	/* we allow unknown types and 'codes_size > size' for forward-compat */
 	cnt = evdev_get_mask_cnt(type);
-	अगर (!cnt)
-		वापस 0;
+	if (!cnt)
+		return 0;
 
-	mask = biपंचांगap_zalloc(cnt, GFP_KERNEL);
-	अगर (!mask)
-		वापस -ENOMEM;
+	mask = bitmap_zalloc(cnt, GFP_KERNEL);
+	if (!mask)
+		return -ENOMEM;
 
 	error = bits_from_user(mask, cnt - 1, codes_size, codes, compat);
-	अगर (error < 0) अणु
-		biपंचांगap_मुक्त(mask);
-		वापस error;
-	पूर्ण
+	if (error < 0) {
+		bitmap_free(mask);
+		return error;
+	}
 
 	spin_lock_irqsave(&client->buffer_lock, flags);
 	oldmask = client->evmasks[type];
 	client->evmasks[type] = mask;
 	spin_unlock_irqrestore(&client->buffer_lock, flags);
 
-	biपंचांगap_मुक्त(oldmask);
+	bitmap_free(oldmask);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* must be called with evdev-mutex held */
-अटल पूर्णांक evdev_get_mask(काष्ठा evdev_client *client,
-			  अचिन्हित पूर्णांक type,
-			  व्योम __user *codes,
+static int evdev_get_mask(struct evdev_client *client,
+			  unsigned int type,
+			  void __user *codes,
 			  u32 codes_size,
-			  पूर्णांक compat)
-अणु
-	अचिन्हित दीर्घ *mask;
-	माप_प्रकार cnt, size, xfer_size;
-	पूर्णांक i;
-	पूर्णांक error;
+			  int compat)
+{
+	unsigned long *mask;
+	size_t cnt, size, xfer_size;
+	int i;
+	int error;
 
-	/* we allow unknown types and 'codes_size > size' क्रम क्रमward-compat */
+	/* we allow unknown types and 'codes_size > size' for forward-compat */
 	cnt = evdev_get_mask_cnt(type);
-	size = माप(अचिन्हित दीर्घ) * BITS_TO_LONGS(cnt);
-	xfer_size = min_t(माप_प्रकार, codes_size, size);
+	size = sizeof(unsigned long) * BITS_TO_LONGS(cnt);
+	xfer_size = min_t(size_t, codes_size, size);
 
-	अगर (cnt > 0) अणु
+	if (cnt > 0) {
 		mask = client->evmasks[type];
-		अगर (mask) अणु
+		if (mask) {
 			error = bits_to_user(mask, cnt - 1,
 					     xfer_size, codes, compat);
-			अगर (error < 0)
-				वापस error;
-		पूर्ण अन्यथा अणु
+			if (error < 0)
+				return error;
+		} else {
 			/* fake mask with all bits set */
-			क्रम (i = 0; i < xfer_size; i++)
-				अगर (put_user(0xffU, (u8 __user *)codes + i))
-					वापस -EFAULT;
-		पूर्ण
-	पूर्ण
+			for (i = 0; i < xfer_size; i++)
+				if (put_user(0xffU, (u8 __user *)codes + i))
+					return -EFAULT;
+		}
+	}
 
-	अगर (xfer_size < codes_size)
-		अगर (clear_user(codes + xfer_size, codes_size - xfer_size))
-			वापस -EFAULT;
+	if (xfer_size < codes_size)
+		if (clear_user(codes + xfer_size, codes_size - xfer_size))
+			return -EFAULT;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल दीर्घ evdev_करो_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd,
-			   व्योम __user *p, पूर्णांक compat_mode)
-अणु
-	काष्ठा evdev_client *client = file->निजी_data;
-	काष्ठा evdev *evdev = client->evdev;
-	काष्ठा input_dev *dev = evdev->handle.dev;
-	काष्ठा input_असलinfo असल;
-	काष्ठा input_mask mask;
-	काष्ठा ff_effect effect;
-	पूर्णांक __user *ip = (पूर्णांक __user *)p;
-	अचिन्हित पूर्णांक i, t, u, v;
-	अचिन्हित पूर्णांक size;
-	पूर्णांक error;
+static long evdev_do_ioctl(struct file *file, unsigned int cmd,
+			   void __user *p, int compat_mode)
+{
+	struct evdev_client *client = file->private_data;
+	struct evdev *evdev = client->evdev;
+	struct input_dev *dev = evdev->handle.dev;
+	struct input_absinfo abs;
+	struct input_mask mask;
+	struct ff_effect effect;
+	int __user *ip = (int __user *)p;
+	unsigned int i, t, u, v;
+	unsigned int size;
+	int error;
 
-	/* First we check क्रम fixed-length commands */
-	चयन (cmd) अणु
+	/* First we check for fixed-length commands */
+	switch (cmd) {
 
-	हाल EVIOCGVERSION:
-		वापस put_user(EV_VERSION, ip);
+	case EVIOCGVERSION:
+		return put_user(EV_VERSION, ip);
 
-	हाल EVIOCGID:
-		अगर (copy_to_user(p, &dev->id, माप(काष्ठा input_id)))
-			वापस -EFAULT;
-		वापस 0;
+	case EVIOCGID:
+		if (copy_to_user(p, &dev->id, sizeof(struct input_id)))
+			return -EFAULT;
+		return 0;
 
-	हाल EVIOCGREP:
-		अगर (!test_bit(EV_REP, dev->evbit))
-			वापस -ENOSYS;
-		अगर (put_user(dev->rep[REP_DELAY], ip))
-			वापस -EFAULT;
-		अगर (put_user(dev->rep[REP_PERIOD], ip + 1))
-			वापस -EFAULT;
-		वापस 0;
+	case EVIOCGREP:
+		if (!test_bit(EV_REP, dev->evbit))
+			return -ENOSYS;
+		if (put_user(dev->rep[REP_DELAY], ip))
+			return -EFAULT;
+		if (put_user(dev->rep[REP_PERIOD], ip + 1))
+			return -EFAULT;
+		return 0;
 
-	हाल EVIOCSREP:
-		अगर (!test_bit(EV_REP, dev->evbit))
-			वापस -ENOSYS;
-		अगर (get_user(u, ip))
-			वापस -EFAULT;
-		अगर (get_user(v, ip + 1))
-			वापस -EFAULT;
+	case EVIOCSREP:
+		if (!test_bit(EV_REP, dev->evbit))
+			return -ENOSYS;
+		if (get_user(u, ip))
+			return -EFAULT;
+		if (get_user(v, ip + 1))
+			return -EFAULT;
 
 		input_inject_event(&evdev->handle, EV_REP, REP_DELAY, u);
 		input_inject_event(&evdev->handle, EV_REP, REP_PERIOD, v);
 
-		वापस 0;
+		return 0;
 
-	हाल EVIOCRMFF:
-		वापस input_ff_erase(dev, (पूर्णांक)(अचिन्हित दीर्घ) p, file);
+	case EVIOCRMFF:
+		return input_ff_erase(dev, (int)(unsigned long) p, file);
 
-	हाल EVIOCGEFFECTS:
+	case EVIOCGEFFECTS:
 		i = test_bit(EV_FF, dev->evbit) ?
 				dev->ff->max_effects : 0;
-		अगर (put_user(i, ip))
-			वापस -EFAULT;
-		वापस 0;
+		if (put_user(i, ip))
+			return -EFAULT;
+		return 0;
 
-	हाल EVIOCGRAB:
-		अगर (p)
-			वापस evdev_grab(evdev, client);
-		अन्यथा
-			वापस evdev_ungrab(evdev, client);
+	case EVIOCGRAB:
+		if (p)
+			return evdev_grab(evdev, client);
+		else
+			return evdev_ungrab(evdev, client);
 
-	हाल EVIOCREVOKE:
-		अगर (p)
-			वापस -EINVAL;
-		अन्यथा
-			वापस evdev_revoke(evdev, client, file);
+	case EVIOCREVOKE:
+		if (p)
+			return -EINVAL;
+		else
+			return evdev_revoke(evdev, client, file);
 
-	हाल EVIOCGMASK: अणु
-		व्योम __user *codes_ptr;
+	case EVIOCGMASK: {
+		void __user *codes_ptr;
 
-		अगर (copy_from_user(&mask, p, माप(mask)))
-			वापस -EFAULT;
+		if (copy_from_user(&mask, p, sizeof(mask)))
+			return -EFAULT;
 
-		codes_ptr = (व्योम __user *)(अचिन्हित दीर्घ)mask.codes_ptr;
-		वापस evdev_get_mask(client,
+		codes_ptr = (void __user *)(unsigned long)mask.codes_ptr;
+		return evdev_get_mask(client,
 				      mask.type, codes_ptr, mask.codes_size,
 				      compat_mode);
-	पूर्ण
+	}
 
-	हाल EVIOCSMASK: अणु
-		स्थिर व्योम __user *codes_ptr;
+	case EVIOCSMASK: {
+		const void __user *codes_ptr;
 
-		अगर (copy_from_user(&mask, p, माप(mask)))
-			वापस -EFAULT;
+		if (copy_from_user(&mask, p, sizeof(mask)))
+			return -EFAULT;
 
-		codes_ptr = (स्थिर व्योम __user *)(अचिन्हित दीर्घ)mask.codes_ptr;
-		वापस evdev_set_mask(client,
+		codes_ptr = (const void __user *)(unsigned long)mask.codes_ptr;
+		return evdev_set_mask(client,
 				      mask.type, codes_ptr, mask.codes_size,
 				      compat_mode);
-	पूर्ण
+	}
 
-	हाल EVIOCSCLOCKID:
-		अगर (copy_from_user(&i, p, माप(अचिन्हित पूर्णांक)))
-			वापस -EFAULT;
+	case EVIOCSCLOCKID:
+		if (copy_from_user(&i, p, sizeof(unsigned int)))
+			return -EFAULT;
 
-		वापस evdev_set_clk_type(client, i);
+		return evdev_set_clk_type(client, i);
 
-	हाल EVIOCGKEYCODE:
-		वापस evdev_handle_get_keycode(dev, p);
+	case EVIOCGKEYCODE:
+		return evdev_handle_get_keycode(dev, p);
 
-	हाल EVIOCSKEYCODE:
-		वापस evdev_handle_set_keycode(dev, p);
+	case EVIOCSKEYCODE:
+		return evdev_handle_set_keycode(dev, p);
 
-	हाल EVIOCGKEYCODE_V2:
-		वापस evdev_handle_get_keycode_v2(dev, p);
+	case EVIOCGKEYCODE_V2:
+		return evdev_handle_get_keycode_v2(dev, p);
 
-	हाल EVIOCSKEYCODE_V2:
-		वापस evdev_handle_set_keycode_v2(dev, p);
-	पूर्ण
+	case EVIOCSKEYCODE_V2:
+		return evdev_handle_set_keycode_v2(dev, p);
+	}
 
 	size = _IOC_SIZE(cmd);
 
 	/* Now check variable-length commands */
-#घोषणा EVIOC_MASK_SIZE(nr)	((nr) & ~(_IOC_SIZEMASK << _IOC_SIZESHIFT))
-	चयन (EVIOC_MASK_SIZE(cmd)) अणु
+#define EVIOC_MASK_SIZE(nr)	((nr) & ~(_IOC_SIZEMASK << _IOC_SIZESHIFT))
+	switch (EVIOC_MASK_SIZE(cmd)) {
 
-	हाल EVIOCGPROP(0):
-		वापस bits_to_user(dev->propbit, INPUT_PROP_MAX,
+	case EVIOCGPROP(0):
+		return bits_to_user(dev->propbit, INPUT_PROP_MAX,
 				    size, p, compat_mode);
 
-	हाल EVIOCGMTSLOTS(0):
-		वापस evdev_handle_mt_request(dev, size, ip);
+	case EVIOCGMTSLOTS(0):
+		return evdev_handle_mt_request(dev, size, ip);
 
-	हाल EVIOCGKEY(0):
-		वापस evdev_handle_get_val(client, dev, EV_KEY, dev->key,
+	case EVIOCGKEY(0):
+		return evdev_handle_get_val(client, dev, EV_KEY, dev->key,
 					    KEY_MAX, size, p, compat_mode);
 
-	हाल EVIOCGLED(0):
-		वापस evdev_handle_get_val(client, dev, EV_LED, dev->led,
+	case EVIOCGLED(0):
+		return evdev_handle_get_val(client, dev, EV_LED, dev->led,
 					    LED_MAX, size, p, compat_mode);
 
-	हाल EVIOCGSND(0):
-		वापस evdev_handle_get_val(client, dev, EV_SND, dev->snd,
+	case EVIOCGSND(0):
+		return evdev_handle_get_val(client, dev, EV_SND, dev->snd,
 					    SND_MAX, size, p, compat_mode);
 
-	हाल EVIOCGSW(0):
-		वापस evdev_handle_get_val(client, dev, EV_SW, dev->sw,
+	case EVIOCGSW(0):
+		return evdev_handle_get_val(client, dev, EV_SW, dev->sw,
 					    SW_MAX, size, p, compat_mode);
 
-	हाल EVIOCGNAME(0):
-		वापस str_to_user(dev->name, size, p);
+	case EVIOCGNAME(0):
+		return str_to_user(dev->name, size, p);
 
-	हाल EVIOCGPHYS(0):
-		वापस str_to_user(dev->phys, size, p);
+	case EVIOCGPHYS(0):
+		return str_to_user(dev->phys, size, p);
 
-	हाल EVIOCGUNIQ(0):
-		वापस str_to_user(dev->uniq, size, p);
+	case EVIOCGUNIQ(0):
+		return str_to_user(dev->uniq, size, p);
 
-	हाल EVIOC_MASK_SIZE(EVIOCSFF):
-		अगर (input_ff_effect_from_user(p, size, &effect))
-			वापस -EFAULT;
+	case EVIOC_MASK_SIZE(EVIOCSFF):
+		if (input_ff_effect_from_user(p, size, &effect))
+			return -EFAULT;
 
 		error = input_ff_upload(dev, &effect, file);
-		अगर (error)
-			वापस error;
+		if (error)
+			return error;
 
-		अगर (put_user(effect.id, &(((काष्ठा ff_effect __user *)p)->id)))
-			वापस -EFAULT;
+		if (put_user(effect.id, &(((struct ff_effect __user *)p)->id)))
+			return -EFAULT;
 
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	/* Multi-number variable-length handlers */
-	अगर (_IOC_TYPE(cmd) != 'E')
-		वापस -EINVAL;
+	if (_IOC_TYPE(cmd) != 'E')
+		return -EINVAL;
 
-	अगर (_IOC_सूची(cmd) == _IOC_READ) अणु
+	if (_IOC_DIR(cmd) == _IOC_READ) {
 
-		अगर ((_IOC_NR(cmd) & ~EV_MAX) == _IOC_NR(EVIOCGBIT(0, 0)))
-			वापस handle_eviocgbit(dev,
+		if ((_IOC_NR(cmd) & ~EV_MAX) == _IOC_NR(EVIOCGBIT(0, 0)))
+			return handle_eviocgbit(dev,
 						_IOC_NR(cmd) & EV_MAX, size,
 						p, compat_mode);
 
-		अगर ((_IOC_NR(cmd) & ~ABS_MAX) == _IOC_NR(EVIOCGABS(0))) अणु
+		if ((_IOC_NR(cmd) & ~ABS_MAX) == _IOC_NR(EVIOCGABS(0))) {
 
-			अगर (!dev->असलinfo)
-				वापस -EINVAL;
-
-			t = _IOC_NR(cmd) & ABS_MAX;
-			असल = dev->असलinfo[t];
-
-			अगर (copy_to_user(p, &असल, min_t(माप_प्रकार,
-					size, माप(काष्ठा input_असलinfo))))
-				वापस -EFAULT;
-
-			वापस 0;
-		पूर्ण
-	पूर्ण
-
-	अगर (_IOC_सूची(cmd) == _IOC_WRITE) अणु
-
-		अगर ((_IOC_NR(cmd) & ~ABS_MAX) == _IOC_NR(EVIOCSABS(0))) अणु
-
-			अगर (!dev->असलinfo)
-				वापस -EINVAL;
+			if (!dev->absinfo)
+				return -EINVAL;
 
 			t = _IOC_NR(cmd) & ABS_MAX;
+			abs = dev->absinfo[t];
 
-			अगर (copy_from_user(&असल, p, min_t(माप_प्रकार,
-					size, माप(काष्ठा input_असलinfo))))
-				वापस -EFAULT;
+			if (copy_to_user(p, &abs, min_t(size_t,
+					size, sizeof(struct input_absinfo))))
+				return -EFAULT;
 
-			अगर (size < माप(काष्ठा input_असलinfo))
-				असल.resolution = 0;
+			return 0;
+		}
+	}
+
+	if (_IOC_DIR(cmd) == _IOC_WRITE) {
+
+		if ((_IOC_NR(cmd) & ~ABS_MAX) == _IOC_NR(EVIOCSABS(0))) {
+
+			if (!dev->absinfo)
+				return -EINVAL;
+
+			t = _IOC_NR(cmd) & ABS_MAX;
+
+			if (copy_from_user(&abs, p, min_t(size_t,
+					size, sizeof(struct input_absinfo))))
+				return -EFAULT;
+
+			if (size < sizeof(struct input_absinfo))
+				abs.resolution = 0;
 
 			/* We can't change number of reserved MT slots */
-			अगर (t == ABS_MT_SLOT)
-				वापस -EINVAL;
+			if (t == ABS_MT_SLOT)
+				return -EINVAL;
 
 			/*
 			 * Take event lock to ensure that we are not
@@ -1244,117 +1243,117 @@
 			 * of event.
 			 */
 			spin_lock_irq(&dev->event_lock);
-			dev->असलinfo[t] = असल;
+			dev->absinfo[t] = abs;
 			spin_unlock_irq(&dev->event_lock);
 
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			return 0;
+		}
+	}
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल दीर्घ evdev_ioctl_handler(काष्ठा file *file, अचिन्हित पूर्णांक cmd,
-				व्योम __user *p, पूर्णांक compat_mode)
-अणु
-	काष्ठा evdev_client *client = file->निजी_data;
-	काष्ठा evdev *evdev = client->evdev;
-	पूर्णांक retval;
+static long evdev_ioctl_handler(struct file *file, unsigned int cmd,
+				void __user *p, int compat_mode)
+{
+	struct evdev_client *client = file->private_data;
+	struct evdev *evdev = client->evdev;
+	int retval;
 
-	retval = mutex_lock_पूर्णांकerruptible(&evdev->mutex);
-	अगर (retval)
-		वापस retval;
+	retval = mutex_lock_interruptible(&evdev->mutex);
+	if (retval)
+		return retval;
 
-	अगर (!evdev->exist || client->revoked) अणु
+	if (!evdev->exist || client->revoked) {
 		retval = -ENODEV;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	retval = evdev_करो_ioctl(file, cmd, p, compat_mode);
+	retval = evdev_do_ioctl(file, cmd, p, compat_mode);
 
  out:
 	mutex_unlock(&evdev->mutex);
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-अटल दीर्घ evdev_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
-अणु
-	वापस evdev_ioctl_handler(file, cmd, (व्योम __user *)arg, 0);
-पूर्ण
+static long evdev_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
+{
+	return evdev_ioctl_handler(file, cmd, (void __user *)arg, 0);
+}
 
-#अगर_घोषित CONFIG_COMPAT
-अटल दीर्घ evdev_ioctl_compat(काष्ठा file *file,
-				अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
-अणु
-	वापस evdev_ioctl_handler(file, cmd, compat_ptr(arg), 1);
-पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_COMPAT
+static long evdev_ioctl_compat(struct file *file,
+				unsigned int cmd, unsigned long arg)
+{
+	return evdev_ioctl_handler(file, cmd, compat_ptr(arg), 1);
+}
+#endif
 
-अटल स्थिर काष्ठा file_operations evdev_fops = अणु
+static const struct file_operations evdev_fops = {
 	.owner		= THIS_MODULE,
-	.पढ़ो		= evdev_पढ़ो,
-	.ग_लिखो		= evdev_ग_लिखो,
+	.read		= evdev_read,
+	.write		= evdev_write,
 	.poll		= evdev_poll,
-	.खोलो		= evdev_खोलो,
+	.open		= evdev_open,
 	.release	= evdev_release,
 	.unlocked_ioctl	= evdev_ioctl,
-#अगर_घोषित CONFIG_COMPAT
+#ifdef CONFIG_COMPAT
 	.compat_ioctl	= evdev_ioctl_compat,
-#पूर्ण_अगर
+#endif
 	.fasync		= evdev_fasync,
 	.llseek		= no_llseek,
-पूर्ण;
+};
 
 /*
- * Mark device non-existent. This disables ग_लिखोs, ioctls and
- * prevents new users from खोलोing the device. Alपढ़ोy posted
- * blocking पढ़ोs will stay, however new ones will fail.
+ * Mark device non-existent. This disables writes, ioctls and
+ * prevents new users from opening the device. Already posted
+ * blocking reads will stay, however new ones will fail.
  */
-अटल व्योम evdev_mark_dead(काष्ठा evdev *evdev)
-अणु
+static void evdev_mark_dead(struct evdev *evdev)
+{
 	mutex_lock(&evdev->mutex);
 	evdev->exist = false;
 	mutex_unlock(&evdev->mutex);
-पूर्ण
+}
 
-अटल व्योम evdev_cleanup(काष्ठा evdev *evdev)
-अणु
-	काष्ठा input_handle *handle = &evdev->handle;
+static void evdev_cleanup(struct evdev *evdev)
+{
+	struct input_handle *handle = &evdev->handle;
 
 	evdev_mark_dead(evdev);
 	evdev_hangup(evdev);
 
-	/* evdev is marked dead so no one अन्यथा accesses evdev->खोलो */
-	अगर (evdev->खोलो) अणु
-		input_flush_device(handle, शून्य);
-		input_बंद_device(handle);
-	पूर्ण
-पूर्ण
+	/* evdev is marked dead so no one else accesses evdev->open */
+	if (evdev->open) {
+		input_flush_device(handle, NULL);
+		input_close_device(handle);
+	}
+}
 
 /*
  * Create new evdev device. Note that input core serializes calls
  * to connect and disconnect.
  */
-अटल पूर्णांक evdev_connect(काष्ठा input_handler *handler, काष्ठा input_dev *dev,
-			 स्थिर काष्ठा input_device_id *id)
-अणु
-	काष्ठा evdev *evdev;
-	पूर्णांक minor;
-	पूर्णांक dev_no;
-	पूर्णांक error;
+static int evdev_connect(struct input_handler *handler, struct input_dev *dev,
+			 const struct input_device_id *id)
+{
+	struct evdev *evdev;
+	int minor;
+	int dev_no;
+	int error;
 
 	minor = input_get_new_minor(EVDEV_MINOR_BASE, EVDEV_MINORS, true);
-	अगर (minor < 0) अणु
+	if (minor < 0) {
 		error = minor;
 		pr_err("failed to reserve new minor: %d\n", error);
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
-	evdev = kzalloc(माप(काष्ठा evdev), GFP_KERNEL);
-	अगर (!evdev) अणु
+	evdev = kzalloc(sizeof(struct evdev), GFP_KERNEL);
+	if (!evdev) {
 		error = -ENOMEM;
-		जाओ err_मुक्त_minor;
-	पूर्ण
+		goto err_free_minor;
+	}
 
 	INIT_LIST_HEAD(&evdev->client_list);
 	spin_lock_init(&evdev->client_lock);
@@ -1362,63 +1361,63 @@
 	evdev->exist = true;
 
 	dev_no = minor;
-	/* Normalize device number अगर it falls पूर्णांकo legacy range */
-	अगर (dev_no < EVDEV_MINOR_BASE + EVDEV_MINORS)
+	/* Normalize device number if it falls into legacy range */
+	if (dev_no < EVDEV_MINOR_BASE + EVDEV_MINORS)
 		dev_no -= EVDEV_MINOR_BASE;
 	dev_set_name(&evdev->dev, "event%d", dev_no);
 
 	evdev->handle.dev = input_get_device(dev);
 	evdev->handle.name = dev_name(&evdev->dev);
 	evdev->handle.handler = handler;
-	evdev->handle.निजी = evdev;
+	evdev->handle.private = evdev;
 
 	evdev->dev.devt = MKDEV(INPUT_MAJOR, minor);
 	evdev->dev.class = &input_class;
 	evdev->dev.parent = &dev->dev;
-	evdev->dev.release = evdev_मुक्त;
+	evdev->dev.release = evdev_free;
 	device_initialize(&evdev->dev);
 
-	error = input_रेजिस्टर_handle(&evdev->handle);
-	अगर (error)
-		जाओ err_मुक्त_evdev;
+	error = input_register_handle(&evdev->handle);
+	if (error)
+		goto err_free_evdev;
 
 	cdev_init(&evdev->cdev, &evdev_fops);
 
 	error = cdev_device_add(&evdev->cdev, &evdev->dev);
-	अगर (error)
-		जाओ err_cleanup_evdev;
+	if (error)
+		goto err_cleanup_evdev;
 
-	वापस 0;
+	return 0;
 
  err_cleanup_evdev:
 	evdev_cleanup(evdev);
-	input_unरेजिस्टर_handle(&evdev->handle);
- err_मुक्त_evdev:
+	input_unregister_handle(&evdev->handle);
+ err_free_evdev:
 	put_device(&evdev->dev);
- err_मुक्त_minor:
-	input_मुक्त_minor(minor);
-	वापस error;
-पूर्ण
+ err_free_minor:
+	input_free_minor(minor);
+	return error;
+}
 
-अटल व्योम evdev_disconnect(काष्ठा input_handle *handle)
-अणु
-	काष्ठा evdev *evdev = handle->निजी;
+static void evdev_disconnect(struct input_handle *handle)
+{
+	struct evdev *evdev = handle->private;
 
 	cdev_device_del(&evdev->cdev, &evdev->dev);
 	evdev_cleanup(evdev);
-	input_मुक्त_minor(MINOR(evdev->dev.devt));
-	input_unरेजिस्टर_handle(handle);
+	input_free_minor(MINOR(evdev->dev.devt));
+	input_unregister_handle(handle);
 	put_device(&evdev->dev);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा input_device_id evdev_ids[] = अणु
-	अणु .driver_info = 1 पूर्ण,	/* Matches all devices */
-	अणु पूर्ण,			/* Terminating zero entry */
-पूर्ण;
+static const struct input_device_id evdev_ids[] = {
+	{ .driver_info = 1 },	/* Matches all devices */
+	{ },			/* Terminating zero entry */
+};
 
 MODULE_DEVICE_TABLE(input, evdev_ids);
 
-अटल काष्ठा input_handler evdev_handler = अणु
+static struct input_handler evdev_handler = {
 	.event		= evdev_event,
 	.events		= evdev_events,
 	.connect	= evdev_connect,
@@ -1427,20 +1426,20 @@ MODULE_DEVICE_TABLE(input, evdev_ids);
 	.minor		= EVDEV_MINOR_BASE,
 	.name		= "evdev",
 	.id_table	= evdev_ids,
-पूर्ण;
+};
 
-अटल पूर्णांक __init evdev_init(व्योम)
-अणु
-	वापस input_रेजिस्टर_handler(&evdev_handler);
-पूर्ण
+static int __init evdev_init(void)
+{
+	return input_register_handler(&evdev_handler);
+}
 
-अटल व्योम __निकास evdev_निकास(व्योम)
-अणु
-	input_unरेजिस्टर_handler(&evdev_handler);
-पूर्ण
+static void __exit evdev_exit(void)
+{
+	input_unregister_handler(&evdev_handler);
+}
 
 module_init(evdev_init);
-module_निकास(evdev_निकास);
+module_exit(evdev_exit);
 
 MODULE_AUTHOR("Vojtech Pavlik <vojtech@ucw.cz>");
 MODULE_DESCRIPTION("Input driver event char devices");

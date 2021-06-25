@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  *  (c) 1999 Andreas Gal		<gal@cs.uni-magdeburg.de>
  *  (c) 2000-2001 Vojtech Pavlik	<vojtech@ucw.cz>
@@ -10,723 +9,723 @@
 
 /*
  *
- * Should you need to contact me, the author, you can करो so either by
+ * Should you need to contact me, the author, you can do so either by
  * e-mail - mail your message to <vojtech@ucw.cz>, or by paper mail:
- * Vojtech Pavlik, Simunkova 1594, Prague 8, 182 00 Czech Reखुला
+ * Vojtech Pavlik, Simunkova 1594, Prague 8, 182 00 Czech Republic
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/debugfs.h>
-#समावेश <linux/seq_file.h>
-#समावेश <linux/kfअगरo.h>
-#समावेश <linux/sched/संकेत.स>
-#समावेश <linux/export.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/poll.h>
+#include <linux/debugfs.h>
+#include <linux/seq_file.h>
+#include <linux/kfifo.h>
+#include <linux/sched/signal.h>
+#include <linux/export.h>
+#include <linux/slab.h>
+#include <linux/uaccess.h>
+#include <linux/poll.h>
 
-#समावेश <linux/hid.h>
-#समावेश <linux/hid-debug.h>
+#include <linux/hid.h>
+#include <linux/hid-debug.h>
 
-अटल काष्ठा dentry *hid_debug_root;
+static struct dentry *hid_debug_root;
 
-काष्ठा hid_usage_entry अणु
-	अचिन्हित  page;
-	अचिन्हित  usage;
-	स्थिर अक्षर     *description;
-पूर्ण;
+struct hid_usage_entry {
+	unsigned  page;
+	unsigned  usage;
+	const char     *description;
+};
 
-अटल स्थिर काष्ठा hid_usage_entry hid_usage_table[] = अणु
-  अणु  0,      0, "Undefined" पूर्ण,
-  अणु  1,      0, "GenericDesktop" पूर्ण,
-    अणु0, 0x01, "Pointer"पूर्ण,
-    अणु0, 0x02, "Mouse"पूर्ण,
-    अणु0, 0x04, "Joystick"पूर्ण,
-    अणु0, 0x05, "GamePad"पूर्ण,
-    अणु0, 0x06, "Keyboard"पूर्ण,
-    अणु0, 0x07, "Keypad"पूर्ण,
-    अणु0, 0x08, "MultiAxis"पूर्ण,
-      अणु0, 0x30, "X"पूर्ण,
-      अणु0, 0x31, "Y"पूर्ण,
-      अणु0, 0x32, "Z"पूर्ण,
-      अणु0, 0x33, "Rx"पूर्ण,
-      अणु0, 0x34, "Ry"पूर्ण,
-      अणु0, 0x35, "Rz"पूर्ण,
-      अणु0, 0x36, "Slider"पूर्ण,
-      अणु0, 0x37, "Dial"पूर्ण,
-      अणु0, 0x38, "Wheel"पूर्ण,
-      अणु0, 0x39, "HatSwitch"पूर्ण,
-    अणु0, 0x3a, "CountedBuffer"पूर्ण,
-      अणु0, 0x3b, "ByteCount"पूर्ण,
-      अणु0, 0x3c, "MotionWakeup"पूर्ण,
-      अणु0, 0x3d, "Start"पूर्ण,
-      अणु0, 0x3e, "Select"पूर्ण,
-      अणु0, 0x40, "Vx"पूर्ण,
-      अणु0, 0x41, "Vy"पूर्ण,
-      अणु0, 0x42, "Vz"पूर्ण,
-      अणु0, 0x43, "Vbrx"पूर्ण,
-      अणु0, 0x44, "Vbry"पूर्ण,
-      अणु0, 0x45, "Vbrz"पूर्ण,
-      अणु0, 0x46, "Vno"पूर्ण,
-    अणु0, 0x80, "SystemControl"पूर्ण,
-      अणु0, 0x81, "SystemPowerDown"पूर्ण,
-      अणु0, 0x82, "SystemSleep"पूर्ण,
-      अणु0, 0x83, "SystemWakeUp"पूर्ण,
-      अणु0, 0x84, "SystemContextMenu"पूर्ण,
-      अणु0, 0x85, "SystemMainMenu"पूर्ण,
-      अणु0, 0x86, "SystemAppMenu"पूर्ण,
-      अणु0, 0x87, "SystemMenuHelp"पूर्ण,
-      अणु0, 0x88, "SystemMenuExit"पूर्ण,
-      अणु0, 0x89, "SystemMenuSelect"पूर्ण,
-      अणु0, 0x8a, "SystemMenuRight"पूर्ण,
-      अणु0, 0x8b, "SystemMenuLeft"पूर्ण,
-      अणु0, 0x8c, "SystemMenuUp"पूर्ण,
-      अणु0, 0x8d, "SystemMenuDown"पूर्ण,
-      अणु0, 0x90, "D-PadUp"पूर्ण,
-      अणु0, 0x91, "D-PadDown"पूर्ण,
-      अणु0, 0x92, "D-PadRight"पूर्ण,
-      अणु0, 0x93, "D-PadLeft"पूर्ण,
-  अणु  2, 0, "Simulation" पूर्ण,
-      अणु0, 0xb0, "Aileron"पूर्ण,
-      अणु0, 0xb1, "AileronTrim"पूर्ण,
-      अणु0, 0xb2, "Anti-Torque"पूर्ण,
-      अणु0, 0xb3, "Autopilot"पूर्ण,
-      अणु0, 0xb4, "Chaff"पूर्ण,
-      अणु0, 0xb5, "Collective"पूर्ण,
-      अणु0, 0xb6, "DiveBrake"पूर्ण,
-      अणु0, 0xb7, "ElectronicCountermeasures"पूर्ण,
-      अणु0, 0xb8, "Elevator"पूर्ण,
-      अणु0, 0xb9, "ElevatorTrim"पूर्ण,
-      अणु0, 0xba, "Rudder"पूर्ण,
-      अणु0, 0xbb, "Throttle"पूर्ण,
-      अणु0, 0xbc, "FlightCommunications"पूर्ण,
-      अणु0, 0xbd, "FlareRelease"पूर्ण,
-      अणु0, 0xbe, "LandingGear"पूर्ण,
-      अणु0, 0xbf, "ToeBrake"पूर्ण,
-  अणु  6, 0, "GenericDeviceControls" पूर्ण,
-      अणु0, 0x20, "BatteryStrength" पूर्ण,
-      अणु0, 0x21, "WirelessChannel" पूर्ण,
-      अणु0, 0x22, "WirelessID" पूर्ण,
-      अणु0, 0x23, "DiscoverWirelessControl" पूर्ण,
-      अणु0, 0x24, "SecurityCodeCharacterEntered" पूर्ण,
-      अणु0, 0x25, "SecurityCodeCharactedErased" पूर्ण,
-      अणु0, 0x26, "SecurityCodeCleared" पूर्ण,
-  अणु  7, 0, "Keyboard" पूर्ण,
-  अणु  8, 0, "LED" पूर्ण,
-      अणु0, 0x01, "NumLock"पूर्ण,
-      अणु0, 0x02, "CapsLock"पूर्ण,
-      अणु0, 0x03, "ScrollLock"पूर्ण,
-      अणु0, 0x04, "Compose"पूर्ण,
-      अणु0, 0x05, "Kana"पूर्ण,
-      अणु0, 0x4b, "GenericIndicator"पूर्ण,
-  अणु  9, 0, "Button" पूर्ण,
-  अणु 10, 0, "Ordinal" पूर्ण,
-  अणु 12, 0, "Consumer" पूर्ण,
-      अणु0, 0x238, "HorizontalWheel"पूर्ण,
-  अणु 13, 0, "Digitizers" पूर्ण,
-    अणु0, 0x01, "Digitizer"पूर्ण,
-    अणु0, 0x02, "Pen"पूर्ण,
-    अणु0, 0x03, "LightPen"पूर्ण,
-    अणु0, 0x04, "TouchScreen"पूर्ण,
-    अणु0, 0x05, "TouchPad"पूर्ण,
-    अणु0, 0x0e, "DeviceConfiguration"पूर्ण,
-    अणु0, 0x20, "Stylus"पूर्ण,
-    अणु0, 0x21, "Puck"पूर्ण,
-    अणु0, 0x22, "Finger"पूर्ण,
-    अणु0, 0x23, "DeviceSettings"पूर्ण,
-    अणु0, 0x30, "TipPressure"पूर्ण,
-    अणु0, 0x31, "BarrelPressure"पूर्ण,
-    अणु0, 0x32, "InRange"पूर्ण,
-    अणु0, 0x33, "Touch"पूर्ण,
-    अणु0, 0x34, "UnTouch"पूर्ण,
-    अणु0, 0x35, "Tap"पूर्ण,
-    अणु0, 0x39, "TabletFunctionKey"पूर्ण,
-    अणु0, 0x3a, "ProgramChangeKey"पूर्ण,
-    अणु0, 0x3c, "Invert"पूर्ण,
-    अणु0, 0x42, "TipSwitch"पूर्ण,
-    अणु0, 0x43, "SecondaryTipSwitch"पूर्ण,
-    अणु0, 0x44, "BarrelSwitch"पूर्ण,
-    अणु0, 0x45, "Eraser"पूर्ण,
-    अणु0, 0x46, "TabletPick"पूर्ण,
-    अणु0, 0x47, "Confidence"पूर्ण,
-    अणु0, 0x48, "Width"पूर्ण,
-    अणु0, 0x49, "Height"पूर्ण,
-    अणु0, 0x51, "ContactID"पूर्ण,
-    अणु0, 0x52, "InputMode"पूर्ण,
-    अणु0, 0x53, "DeviceIndex"पूर्ण,
-    अणु0, 0x54, "ContactCount"पूर्ण,
-    अणु0, 0x55, "ContactMaximumNumber"पूर्ण,
-    अणु0, 0x59, "ButtonType"पूर्ण,
-    अणु0, 0x5A, "SecondaryBarrelSwitch"पूर्ण,
-    अणु0, 0x5B, "TransducerSerialNumber"पूर्ण,
-  अणु 15, 0, "PhysicalInterfaceDevice" पूर्ण,
-    अणु0, 0x00, "Undefined"पूर्ण,
-    अणु0, 0x01, "Physical_Interface_Device"पूर्ण,
-      अणु0, 0x20, "Normal"पूर्ण,
-    अणु0, 0x21, "Set_Effect_Report"पूर्ण,
-      अणु0, 0x22, "Effect_Block_Index"पूर्ण,
-      अणु0, 0x23, "Parameter_Block_Offset"पूर्ण,
-      अणु0, 0x24, "ROM_Flag"पूर्ण,
-      अणु0, 0x25, "Effect_Type"पूर्ण,
-        अणु0, 0x26, "ET_Constant_Force"पूर्ण,
-        अणु0, 0x27, "ET_Ramp"पूर्ण,
-        अणु0, 0x28, "ET_Custom_Force_Data"पूर्ण,
-        अणु0, 0x30, "ET_Square"पूर्ण,
-        अणु0, 0x31, "ET_Sine"पूर्ण,
-        अणु0, 0x32, "ET_Triangle"पूर्ण,
-        अणु0, 0x33, "ET_Sawtooth_Up"पूर्ण,
-        अणु0, 0x34, "ET_Sawtooth_Down"पूर्ण,
-        अणु0, 0x40, "ET_Spring"पूर्ण,
-        अणु0, 0x41, "ET_Damper"पूर्ण,
-        अणु0, 0x42, "ET_Inertia"पूर्ण,
-        अणु0, 0x43, "ET_Friction"पूर्ण,
-      अणु0, 0x50, "Duration"पूर्ण,
-      अणु0, 0x51, "Sample_Period"पूर्ण,
-      अणु0, 0x52, "Gain"पूर्ण,
-      अणु0, 0x53, "Trigger_Button"पूर्ण,
-      अणु0, 0x54, "Trigger_Repeat_Interval"पूर्ण,
-      अणु0, 0x55, "Axes_Enable"पूर्ण,
-        अणु0, 0x56, "Direction_Enable"पूर्ण,
-      अणु0, 0x57, "Direction"पूर्ण,
-      अणु0, 0x58, "Type_Specific_Block_Offset"पूर्ण,
-        अणु0, 0x59, "Block_Type"पूर्ण,
-        अणु0, 0x5A, "Set_Envelope_Report"पूर्ण,
-          अणु0, 0x5B, "Attack_Level"पूर्ण,
-          अणु0, 0x5C, "Attack_Time"पूर्ण,
-          अणु0, 0x5D, "Fade_Level"पूर्ण,
-          अणु0, 0x5E, "Fade_Time"पूर्ण,
-        अणु0, 0x5F, "Set_Condition_Report"पूर्ण,
-        अणु0, 0x60, "CP_Offset"पूर्ण,
-        अणु0, 0x61, "Positive_Coefficient"पूर्ण,
-        अणु0, 0x62, "Negative_Coefficient"पूर्ण,
-        अणु0, 0x63, "Positive_Saturation"पूर्ण,
-        अणु0, 0x64, "Negative_Saturation"पूर्ण,
-        अणु0, 0x65, "Dead_Band"पूर्ण,
-      अणु0, 0x66, "Download_Force_Sample"पूर्ण,
-      अणु0, 0x67, "Isoch_Custom_Force_Enable"पूर्ण,
-      अणु0, 0x68, "Custom_Force_Data_Report"पूर्ण,
-        अणु0, 0x69, "Custom_Force_Data"पूर्ण,
-        अणु0, 0x6A, "Custom_Force_Vendor_Defined_Data"पूर्ण,
-      अणु0, 0x6B, "Set_Custom_Force_Report"पूर्ण,
-        अणु0, 0x6C, "Custom_Force_Data_Offset"पूर्ण,
-        अणु0, 0x6D, "Sample_Count"पूर्ण,
-      अणु0, 0x6E, "Set_Periodic_Report"पूर्ण,
-        अणु0, 0x6F, "Offset"पूर्ण,
-        अणु0, 0x70, "Magnitude"पूर्ण,
-        अणु0, 0x71, "Phase"पूर्ण,
-        अणु0, 0x72, "Period"पूर्ण,
-      अणु0, 0x73, "Set_Constant_Force_Report"पूर्ण,
-        अणु0, 0x74, "Set_Ramp_Force_Report"पूर्ण,
-        अणु0, 0x75, "Ramp_Start"पूर्ण,
-        अणु0, 0x76, "Ramp_End"पूर्ण,
-      अणु0, 0x77, "Effect_Operation_Report"पूर्ण,
-        अणु0, 0x78, "Effect_Operation"पूर्ण,
-          अणु0, 0x79, "Op_Effect_Start"पूर्ण,
-          अणु0, 0x7A, "Op_Effect_Start_Solo"पूर्ण,
-          अणु0, 0x7B, "Op_Effect_Stop"पूर्ण,
-          अणु0, 0x7C, "Loop_Count"पूर्ण,
-      अणु0, 0x7D, "Device_Gain_Report"पूर्ण,
-        अणु0, 0x7E, "Device_Gain"पूर्ण,
-    अणु0, 0x7F, "PID_Pool_Report"पूर्ण,
-      अणु0, 0x80, "RAM_Pool_Size"पूर्ण,
-      अणु0, 0x81, "ROM_Pool_Size"पूर्ण,
-      अणु0, 0x82, "ROM_Effect_Block_Count"पूर्ण,
-      अणु0, 0x83, "Simultaneous_Effects_Max"पूर्ण,
-      अणु0, 0x84, "Pool_Alignment"पूर्ण,
-    अणु0, 0x85, "PID_Pool_Move_Report"पूर्ण,
-      अणु0, 0x86, "Move_Source"पूर्ण,
-      अणु0, 0x87, "Move_Destination"पूर्ण,
-      अणु0, 0x88, "Move_Length"पूर्ण,
-    अणु0, 0x89, "PID_Block_Load_Report"पूर्ण,
-      अणु0, 0x8B, "Block_Load_Status"पूर्ण,
-      अणु0, 0x8C, "Block_Load_Success"पूर्ण,
-      अणु0, 0x8D, "Block_Load_Full"पूर्ण,
-      अणु0, 0x8E, "Block_Load_Error"पूर्ण,
-      अणु0, 0x8F, "Block_Handle"पूर्ण,
-      अणु0, 0x90, "PID_Block_Free_Report"पूर्ण,
-      अणु0, 0x91, "Type_Specific_Block_Handle"पूर्ण,
-    अणु0, 0x92, "PID_State_Report"पूर्ण,
-      अणु0, 0x94, "Effect_Playing"पूर्ण,
-      अणु0, 0x95, "PID_Device_Control_Report"पूर्ण,
-        अणु0, 0x96, "PID_Device_Control"पूर्ण,
-        अणु0, 0x97, "DC_Enable_Actuators"पूर्ण,
-        अणु0, 0x98, "DC_Disable_Actuators"पूर्ण,
-        अणु0, 0x99, "DC_Stop_All_Effects"पूर्ण,
-        अणु0, 0x9A, "DC_Device_Reset"पूर्ण,
-        अणु0, 0x9B, "DC_Device_Pause"पूर्ण,
-        अणु0, 0x9C, "DC_Device_Continue"पूर्ण,
-      अणु0, 0x9F, "Device_Paused"पूर्ण,
-      अणु0, 0xA0, "Actuators_Enabled"पूर्ण,
-      अणु0, 0xA4, "Safety_Switch"पूर्ण,
-      अणु0, 0xA5, "Actuator_Override_Switch"पूर्ण,
-      अणु0, 0xA6, "Actuator_Power"पूर्ण,
-    अणु0, 0xA7, "Start_Delay"पूर्ण,
-    अणु0, 0xA8, "Parameter_Block_Size"पूर्ण,
-    अणु0, 0xA9, "Device_Managed_Pool"पूर्ण,
-    अणु0, 0xAA, "Shared_Parameter_Blocks"पूर्ण,
-    अणु0, 0xAB, "Create_New_Effect_Report"पूर्ण,
-    अणु0, 0xAC, "RAM_Pool_Available"पूर्ण,
-  अणु  0x20, 0, "Sensor" पूर्ण,
-    अणु 0x20, 0x01, "Sensor" पूर्ण,
-    अणु 0x20, 0x10, "Biometric" पूर्ण,
-      अणु 0x20, 0x11, "BiometricHumanPresence" पूर्ण,
-      अणु 0x20, 0x12, "BiometricHumanProximity" पूर्ण,
-      अणु 0x20, 0x13, "BiometricHumanTouch" पूर्ण,
-    अणु 0x20, 0x20, "Electrical" पूर्ण,
-      अणु 0x20, 0x21, "ElectricalCapacitance" पूर्ण,
-      अणु 0x20, 0x22, "ElectricalCurrent" पूर्ण,
-      अणु 0x20, 0x23, "ElectricalPower" पूर्ण,
-      अणु 0x20, 0x24, "ElectricalInductance" पूर्ण,
-      अणु 0x20, 0x25, "ElectricalResistance" पूर्ण,
-      अणु 0x20, 0x26, "ElectricalVoltage" पूर्ण,
-      अणु 0x20, 0x27, "ElectricalPoteniometer" पूर्ण,
-      अणु 0x20, 0x28, "ElectricalFrequency" पूर्ण,
-      अणु 0x20, 0x29, "ElectricalPeriod" पूर्ण,
-    अणु 0x20, 0x30, "Environmental" पूर्ण,
-      अणु 0x20, 0x31, "EnvironmentalAtmosphericPressure" पूर्ण,
-      अणु 0x20, 0x32, "EnvironmentalHumidity" पूर्ण,
-      अणु 0x20, 0x33, "EnvironmentalTemperature" पूर्ण,
-      अणु 0x20, 0x34, "EnvironmentalWindDirection" पूर्ण,
-      अणु 0x20, 0x35, "EnvironmentalWindSpeed" पूर्ण,
-    अणु 0x20, 0x40, "Light" पूर्ण,
-      अणु 0x20, 0x41, "LightAmbientLight" पूर्ण,
-      अणु 0x20, 0x42, "LightConsumerInfrared" पूर्ण,
-    अणु 0x20, 0x50, "Location" पूर्ण,
-      अणु 0x20, 0x51, "LocationBroadcast" पूर्ण,
-      अणु 0x20, 0x52, "LocationDeadReckoning" पूर्ण,
-      अणु 0x20, 0x53, "LocationGPS" पूर्ण,
-      अणु 0x20, 0x54, "LocationLookup" पूर्ण,
-      अणु 0x20, 0x55, "LocationOther" पूर्ण,
-      अणु 0x20, 0x56, "LocationStatic" पूर्ण,
-      अणु 0x20, 0x57, "LocationTriangulation" पूर्ण,
-    अणु 0x20, 0x60, "Mechanical" पूर्ण,
-      अणु 0x20, 0x61, "MechanicalBooleanSwitch" पूर्ण,
-      अणु 0x20, 0x62, "MechanicalBooleanSwitchArray" पूर्ण,
-      अणु 0x20, 0x63, "MechanicalMultivalueSwitch" पूर्ण,
-      अणु 0x20, 0x64, "MechanicalForce" पूर्ण,
-      अणु 0x20, 0x65, "MechanicalPressure" पूर्ण,
-      अणु 0x20, 0x66, "MechanicalStrain" पूर्ण,
-      अणु 0x20, 0x67, "MechanicalWeight" पूर्ण,
-      अणु 0x20, 0x68, "MechanicalHapticVibrator" पूर्ण,
-      अणु 0x20, 0x69, "MechanicalHallEffectSwitch" पूर्ण,
-    अणु 0x20, 0x70, "Motion" पूर्ण,
-      अणु 0x20, 0x71, "MotionAccelerometer1D" पूर्ण,
-      अणु 0x20, 0x72, "MotionAccelerometer2D" पूर्ण,
-      अणु 0x20, 0x73, "MotionAccelerometer3D" पूर्ण,
-      अणु 0x20, 0x74, "MotionGyrometer1D" पूर्ण,
-      अणु 0x20, 0x75, "MotionGyrometer2D" पूर्ण,
-      अणु 0x20, 0x76, "MotionGyrometer3D" पूर्ण,
-      अणु 0x20, 0x77, "MotionMotionDetector" पूर्ण,
-      अणु 0x20, 0x78, "MotionSpeedometer" पूर्ण,
-      अणु 0x20, 0x79, "MotionAccelerometer" पूर्ण,
-      अणु 0x20, 0x7A, "MotionGyrometer" पूर्ण,
-    अणु 0x20, 0x80, "Orientation" पूर्ण,
-      अणु 0x20, 0x81, "OrientationCompass1D" पूर्ण,
-      अणु 0x20, 0x82, "OrientationCompass2D" पूर्ण,
-      अणु 0x20, 0x83, "OrientationCompass3D" पूर्ण,
-      अणु 0x20, 0x84, "OrientationInclinometer1D" पूर्ण,
-      अणु 0x20, 0x85, "OrientationInclinometer2D" पूर्ण,
-      अणु 0x20, 0x86, "OrientationInclinometer3D" पूर्ण,
-      अणु 0x20, 0x87, "OrientationDistance1D" पूर्ण,
-      अणु 0x20, 0x88, "OrientationDistance2D" पूर्ण,
-      अणु 0x20, 0x89, "OrientationDistance3D" पूर्ण,
-      अणु 0x20, 0x8A, "OrientationDeviceOrientation" पूर्ण,
-      अणु 0x20, 0x8B, "OrientationCompass" पूर्ण,
-      अणु 0x20, 0x8C, "OrientationInclinometer" पूर्ण,
-      अणु 0x20, 0x8D, "OrientationDistance" पूर्ण,
-    अणु 0x20, 0x90, "Scanner" पूर्ण,
-      अणु 0x20, 0x91, "ScannerBarcode" पूर्ण,
-      अणु 0x20, 0x91, "ScannerRFID" पूर्ण,
-      अणु 0x20, 0x91, "ScannerNFC" पूर्ण,
-    अणु 0x20, 0xA0, "Time" पूर्ण,
-      अणु 0x20, 0xA1, "TimeAlarmTimer" पूर्ण,
-      अणु 0x20, 0xA2, "TimeRealTimeClock" पूर्ण,
-    अणु 0x20, 0xE0, "Other" पूर्ण,
-      अणु 0x20, 0xE1, "OtherCustom" पूर्ण,
-      अणु 0x20, 0xE2, "OtherGeneric" पूर्ण,
-      अणु 0x20, 0xE3, "OtherGenericEnumerator" पूर्ण,
-  अणु 0x84, 0, "Power Device" पूर्ण,
-    अणु 0x84, 0x02, "PresentStatus" पूर्ण,
-    अणु 0x84, 0x03, "ChangeStatus" पूर्ण,
-    अणु 0x84, 0x04, "UPS" पूर्ण,
-    अणु 0x84, 0x05, "PowerSupply" पूर्ण,
-    अणु 0x84, 0x10, "BatterySystem" पूर्ण,
-    अणु 0x84, 0x11, "BatterySystemID" पूर्ण,
-    अणु 0x84, 0x12, "Battery" पूर्ण,
-    अणु 0x84, 0x13, "BatteryID" पूर्ण,
-    अणु 0x84, 0x14, "Charger" पूर्ण,
-    अणु 0x84, 0x15, "ChargerID" पूर्ण,
-    अणु 0x84, 0x16, "PowerConverter" पूर्ण,
-    अणु 0x84, 0x17, "PowerConverterID" पूर्ण,
-    अणु 0x84, 0x18, "OutletSystem" पूर्ण,
-    अणु 0x84, 0x19, "OutletSystemID" पूर्ण,
-    अणु 0x84, 0x1a, "Input" पूर्ण,
-    अणु 0x84, 0x1b, "InputID" पूर्ण,
-    अणु 0x84, 0x1c, "Output" पूर्ण,
-    अणु 0x84, 0x1d, "OutputID" पूर्ण,
-    अणु 0x84, 0x1e, "Flow" पूर्ण,
-    अणु 0x84, 0x1f, "FlowID" पूर्ण,
-    अणु 0x84, 0x20, "Outlet" पूर्ण,
-    अणु 0x84, 0x21, "OutletID" पूर्ण,
-    अणु 0x84, 0x22, "Gang" पूर्ण,
-    अणु 0x84, 0x24, "PowerSummary" पूर्ण,
-    अणु 0x84, 0x25, "PowerSummaryID" पूर्ण,
-    अणु 0x84, 0x30, "Voltage" पूर्ण,
-    अणु 0x84, 0x31, "Current" पूर्ण,
-    अणु 0x84, 0x32, "Frequency" पूर्ण,
-    अणु 0x84, 0x33, "ApparentPower" पूर्ण,
-    अणु 0x84, 0x35, "PercentLoad" पूर्ण,
-    अणु 0x84, 0x40, "ConfigVoltage" पूर्ण,
-    अणु 0x84, 0x41, "ConfigCurrent" पूर्ण,
-    अणु 0x84, 0x43, "ConfigApparentPower" पूर्ण,
-    अणु 0x84, 0x53, "LowVoltageTransfer" पूर्ण,
-    अणु 0x84, 0x54, "HighVoltageTransfer" पूर्ण,
-    अणु 0x84, 0x56, "DelayBeforeStartup" पूर्ण,
-    अणु 0x84, 0x57, "DelayBeforeShutdown" पूर्ण,
-    अणु 0x84, 0x58, "Test" पूर्ण,
-    अणु 0x84, 0x5a, "AudibleAlarmControl" पूर्ण,
-    अणु 0x84, 0x60, "Present" पूर्ण,
-    अणु 0x84, 0x61, "Good" पूर्ण,
-    अणु 0x84, 0x62, "InternalFailure" पूर्ण,
-    अणु 0x84, 0x65, "Overload" पूर्ण,
-    अणु 0x84, 0x66, "OverCharged" पूर्ण,
-    अणु 0x84, 0x67, "OverTemperature" पूर्ण,
-    अणु 0x84, 0x68, "ShutdownRequested" पूर्ण,
-    अणु 0x84, 0x69, "ShutdownImminent" पूर्ण,
-    अणु 0x84, 0x6b, "SwitchOn/Off" पूर्ण,
-    अणु 0x84, 0x6c, "Switchable" पूर्ण,
-    अणु 0x84, 0x6d, "Used" पूर्ण,
-    अणु 0x84, 0x6e, "Boost" पूर्ण,
-    अणु 0x84, 0x73, "CommunicationLost" पूर्ण,
-    अणु 0x84, 0xfd, "iManufacturer" पूर्ण,
-    अणु 0x84, 0xfe, "iProduct" पूर्ण,
-    अणु 0x84, 0xff, "iSerialNumber" पूर्ण,
-  अणु 0x85, 0, "Battery System" पूर्ण,
-    अणु 0x85, 0x01, "SMBBatteryMode" पूर्ण,
-    अणु 0x85, 0x02, "SMBBatteryStatus" पूर्ण,
-    अणु 0x85, 0x03, "SMBAlarmWarning" पूर्ण,
-    अणु 0x85, 0x04, "SMBChargerMode" पूर्ण,
-    अणु 0x85, 0x05, "SMBChargerStatus" पूर्ण,
-    अणु 0x85, 0x06, "SMBChargerSpecInfo" पूर्ण,
-    अणु 0x85, 0x07, "SMBSelectorState" पूर्ण,
-    अणु 0x85, 0x08, "SMBSelectorPresets" पूर्ण,
-    अणु 0x85, 0x09, "SMBSelectorInfo" पूर्ण,
-    अणु 0x85, 0x29, "RemainingCapacityLimit" पूर्ण,
-    अणु 0x85, 0x2c, "CapacityMode" पूर्ण,
-    अणु 0x85, 0x42, "BelowRemainingCapacityLimit" पूर्ण,
-    अणु 0x85, 0x44, "Charging" पूर्ण,
-    अणु 0x85, 0x45, "Discharging" पूर्ण,
-    अणु 0x85, 0x4b, "NeedReplacement" पूर्ण,
-    अणु 0x85, 0x65, "AbsoluteStateOfCharge" पूर्ण,
-    अणु 0x85, 0x66, "RemainingCapacity" पूर्ण,
-    अणु 0x85, 0x68, "RunTimeToEmpty" पूर्ण,
-    अणु 0x85, 0x6a, "AverageTimeToFull" पूर्ण,
-    अणु 0x85, 0x83, "DesignCapacity" पूर्ण,
-    अणु 0x85, 0x85, "ManufacturerDate" पूर्ण,
-    अणु 0x85, 0x89, "iDeviceChemistry" पूर्ण,
-    अणु 0x85, 0x8b, "Rechargeable" पूर्ण,
-    अणु 0x85, 0x8f, "iOEMInformation" पूर्ण,
-    अणु 0x85, 0x8d, "CapacityGranularity1" पूर्ण,
-    अणु 0x85, 0xd0, "ACPresent" पूर्ण,
-  /* pages 0xff00 to 0xffff are venकरोr-specअगरic */
-  अणु 0xffff, 0, "Vendor-specific-FF" पूर्ण,
-  अणु 0, 0, शून्य पूर्ण
-पूर्ण;
+static const struct hid_usage_entry hid_usage_table[] = {
+  {  0,      0, "Undefined" },
+  {  1,      0, "GenericDesktop" },
+    {0, 0x01, "Pointer"},
+    {0, 0x02, "Mouse"},
+    {0, 0x04, "Joystick"},
+    {0, 0x05, "GamePad"},
+    {0, 0x06, "Keyboard"},
+    {0, 0x07, "Keypad"},
+    {0, 0x08, "MultiAxis"},
+      {0, 0x30, "X"},
+      {0, 0x31, "Y"},
+      {0, 0x32, "Z"},
+      {0, 0x33, "Rx"},
+      {0, 0x34, "Ry"},
+      {0, 0x35, "Rz"},
+      {0, 0x36, "Slider"},
+      {0, 0x37, "Dial"},
+      {0, 0x38, "Wheel"},
+      {0, 0x39, "HatSwitch"},
+    {0, 0x3a, "CountedBuffer"},
+      {0, 0x3b, "ByteCount"},
+      {0, 0x3c, "MotionWakeup"},
+      {0, 0x3d, "Start"},
+      {0, 0x3e, "Select"},
+      {0, 0x40, "Vx"},
+      {0, 0x41, "Vy"},
+      {0, 0x42, "Vz"},
+      {0, 0x43, "Vbrx"},
+      {0, 0x44, "Vbry"},
+      {0, 0x45, "Vbrz"},
+      {0, 0x46, "Vno"},
+    {0, 0x80, "SystemControl"},
+      {0, 0x81, "SystemPowerDown"},
+      {0, 0x82, "SystemSleep"},
+      {0, 0x83, "SystemWakeUp"},
+      {0, 0x84, "SystemContextMenu"},
+      {0, 0x85, "SystemMainMenu"},
+      {0, 0x86, "SystemAppMenu"},
+      {0, 0x87, "SystemMenuHelp"},
+      {0, 0x88, "SystemMenuExit"},
+      {0, 0x89, "SystemMenuSelect"},
+      {0, 0x8a, "SystemMenuRight"},
+      {0, 0x8b, "SystemMenuLeft"},
+      {0, 0x8c, "SystemMenuUp"},
+      {0, 0x8d, "SystemMenuDown"},
+      {0, 0x90, "D-PadUp"},
+      {0, 0x91, "D-PadDown"},
+      {0, 0x92, "D-PadRight"},
+      {0, 0x93, "D-PadLeft"},
+  {  2, 0, "Simulation" },
+      {0, 0xb0, "Aileron"},
+      {0, 0xb1, "AileronTrim"},
+      {0, 0xb2, "Anti-Torque"},
+      {0, 0xb3, "Autopilot"},
+      {0, 0xb4, "Chaff"},
+      {0, 0xb5, "Collective"},
+      {0, 0xb6, "DiveBrake"},
+      {0, 0xb7, "ElectronicCountermeasures"},
+      {0, 0xb8, "Elevator"},
+      {0, 0xb9, "ElevatorTrim"},
+      {0, 0xba, "Rudder"},
+      {0, 0xbb, "Throttle"},
+      {0, 0xbc, "FlightCommunications"},
+      {0, 0xbd, "FlareRelease"},
+      {0, 0xbe, "LandingGear"},
+      {0, 0xbf, "ToeBrake"},
+  {  6, 0, "GenericDeviceControls" },
+      {0, 0x20, "BatteryStrength" },
+      {0, 0x21, "WirelessChannel" },
+      {0, 0x22, "WirelessID" },
+      {0, 0x23, "DiscoverWirelessControl" },
+      {0, 0x24, "SecurityCodeCharacterEntered" },
+      {0, 0x25, "SecurityCodeCharactedErased" },
+      {0, 0x26, "SecurityCodeCleared" },
+  {  7, 0, "Keyboard" },
+  {  8, 0, "LED" },
+      {0, 0x01, "NumLock"},
+      {0, 0x02, "CapsLock"},
+      {0, 0x03, "ScrollLock"},
+      {0, 0x04, "Compose"},
+      {0, 0x05, "Kana"},
+      {0, 0x4b, "GenericIndicator"},
+  {  9, 0, "Button" },
+  { 10, 0, "Ordinal" },
+  { 12, 0, "Consumer" },
+      {0, 0x238, "HorizontalWheel"},
+  { 13, 0, "Digitizers" },
+    {0, 0x01, "Digitizer"},
+    {0, 0x02, "Pen"},
+    {0, 0x03, "LightPen"},
+    {0, 0x04, "TouchScreen"},
+    {0, 0x05, "TouchPad"},
+    {0, 0x0e, "DeviceConfiguration"},
+    {0, 0x20, "Stylus"},
+    {0, 0x21, "Puck"},
+    {0, 0x22, "Finger"},
+    {0, 0x23, "DeviceSettings"},
+    {0, 0x30, "TipPressure"},
+    {0, 0x31, "BarrelPressure"},
+    {0, 0x32, "InRange"},
+    {0, 0x33, "Touch"},
+    {0, 0x34, "UnTouch"},
+    {0, 0x35, "Tap"},
+    {0, 0x39, "TabletFunctionKey"},
+    {0, 0x3a, "ProgramChangeKey"},
+    {0, 0x3c, "Invert"},
+    {0, 0x42, "TipSwitch"},
+    {0, 0x43, "SecondaryTipSwitch"},
+    {0, 0x44, "BarrelSwitch"},
+    {0, 0x45, "Eraser"},
+    {0, 0x46, "TabletPick"},
+    {0, 0x47, "Confidence"},
+    {0, 0x48, "Width"},
+    {0, 0x49, "Height"},
+    {0, 0x51, "ContactID"},
+    {0, 0x52, "InputMode"},
+    {0, 0x53, "DeviceIndex"},
+    {0, 0x54, "ContactCount"},
+    {0, 0x55, "ContactMaximumNumber"},
+    {0, 0x59, "ButtonType"},
+    {0, 0x5A, "SecondaryBarrelSwitch"},
+    {0, 0x5B, "TransducerSerialNumber"},
+  { 15, 0, "PhysicalInterfaceDevice" },
+    {0, 0x00, "Undefined"},
+    {0, 0x01, "Physical_Interface_Device"},
+      {0, 0x20, "Normal"},
+    {0, 0x21, "Set_Effect_Report"},
+      {0, 0x22, "Effect_Block_Index"},
+      {0, 0x23, "Parameter_Block_Offset"},
+      {0, 0x24, "ROM_Flag"},
+      {0, 0x25, "Effect_Type"},
+        {0, 0x26, "ET_Constant_Force"},
+        {0, 0x27, "ET_Ramp"},
+        {0, 0x28, "ET_Custom_Force_Data"},
+        {0, 0x30, "ET_Square"},
+        {0, 0x31, "ET_Sine"},
+        {0, 0x32, "ET_Triangle"},
+        {0, 0x33, "ET_Sawtooth_Up"},
+        {0, 0x34, "ET_Sawtooth_Down"},
+        {0, 0x40, "ET_Spring"},
+        {0, 0x41, "ET_Damper"},
+        {0, 0x42, "ET_Inertia"},
+        {0, 0x43, "ET_Friction"},
+      {0, 0x50, "Duration"},
+      {0, 0x51, "Sample_Period"},
+      {0, 0x52, "Gain"},
+      {0, 0x53, "Trigger_Button"},
+      {0, 0x54, "Trigger_Repeat_Interval"},
+      {0, 0x55, "Axes_Enable"},
+        {0, 0x56, "Direction_Enable"},
+      {0, 0x57, "Direction"},
+      {0, 0x58, "Type_Specific_Block_Offset"},
+        {0, 0x59, "Block_Type"},
+        {0, 0x5A, "Set_Envelope_Report"},
+          {0, 0x5B, "Attack_Level"},
+          {0, 0x5C, "Attack_Time"},
+          {0, 0x5D, "Fade_Level"},
+          {0, 0x5E, "Fade_Time"},
+        {0, 0x5F, "Set_Condition_Report"},
+        {0, 0x60, "CP_Offset"},
+        {0, 0x61, "Positive_Coefficient"},
+        {0, 0x62, "Negative_Coefficient"},
+        {0, 0x63, "Positive_Saturation"},
+        {0, 0x64, "Negative_Saturation"},
+        {0, 0x65, "Dead_Band"},
+      {0, 0x66, "Download_Force_Sample"},
+      {0, 0x67, "Isoch_Custom_Force_Enable"},
+      {0, 0x68, "Custom_Force_Data_Report"},
+        {0, 0x69, "Custom_Force_Data"},
+        {0, 0x6A, "Custom_Force_Vendor_Defined_Data"},
+      {0, 0x6B, "Set_Custom_Force_Report"},
+        {0, 0x6C, "Custom_Force_Data_Offset"},
+        {0, 0x6D, "Sample_Count"},
+      {0, 0x6E, "Set_Periodic_Report"},
+        {0, 0x6F, "Offset"},
+        {0, 0x70, "Magnitude"},
+        {0, 0x71, "Phase"},
+        {0, 0x72, "Period"},
+      {0, 0x73, "Set_Constant_Force_Report"},
+        {0, 0x74, "Set_Ramp_Force_Report"},
+        {0, 0x75, "Ramp_Start"},
+        {0, 0x76, "Ramp_End"},
+      {0, 0x77, "Effect_Operation_Report"},
+        {0, 0x78, "Effect_Operation"},
+          {0, 0x79, "Op_Effect_Start"},
+          {0, 0x7A, "Op_Effect_Start_Solo"},
+          {0, 0x7B, "Op_Effect_Stop"},
+          {0, 0x7C, "Loop_Count"},
+      {0, 0x7D, "Device_Gain_Report"},
+        {0, 0x7E, "Device_Gain"},
+    {0, 0x7F, "PID_Pool_Report"},
+      {0, 0x80, "RAM_Pool_Size"},
+      {0, 0x81, "ROM_Pool_Size"},
+      {0, 0x82, "ROM_Effect_Block_Count"},
+      {0, 0x83, "Simultaneous_Effects_Max"},
+      {0, 0x84, "Pool_Alignment"},
+    {0, 0x85, "PID_Pool_Move_Report"},
+      {0, 0x86, "Move_Source"},
+      {0, 0x87, "Move_Destination"},
+      {0, 0x88, "Move_Length"},
+    {0, 0x89, "PID_Block_Load_Report"},
+      {0, 0x8B, "Block_Load_Status"},
+      {0, 0x8C, "Block_Load_Success"},
+      {0, 0x8D, "Block_Load_Full"},
+      {0, 0x8E, "Block_Load_Error"},
+      {0, 0x8F, "Block_Handle"},
+      {0, 0x90, "PID_Block_Free_Report"},
+      {0, 0x91, "Type_Specific_Block_Handle"},
+    {0, 0x92, "PID_State_Report"},
+      {0, 0x94, "Effect_Playing"},
+      {0, 0x95, "PID_Device_Control_Report"},
+        {0, 0x96, "PID_Device_Control"},
+        {0, 0x97, "DC_Enable_Actuators"},
+        {0, 0x98, "DC_Disable_Actuators"},
+        {0, 0x99, "DC_Stop_All_Effects"},
+        {0, 0x9A, "DC_Device_Reset"},
+        {0, 0x9B, "DC_Device_Pause"},
+        {0, 0x9C, "DC_Device_Continue"},
+      {0, 0x9F, "Device_Paused"},
+      {0, 0xA0, "Actuators_Enabled"},
+      {0, 0xA4, "Safety_Switch"},
+      {0, 0xA5, "Actuator_Override_Switch"},
+      {0, 0xA6, "Actuator_Power"},
+    {0, 0xA7, "Start_Delay"},
+    {0, 0xA8, "Parameter_Block_Size"},
+    {0, 0xA9, "Device_Managed_Pool"},
+    {0, 0xAA, "Shared_Parameter_Blocks"},
+    {0, 0xAB, "Create_New_Effect_Report"},
+    {0, 0xAC, "RAM_Pool_Available"},
+  {  0x20, 0, "Sensor" },
+    { 0x20, 0x01, "Sensor" },
+    { 0x20, 0x10, "Biometric" },
+      { 0x20, 0x11, "BiometricHumanPresence" },
+      { 0x20, 0x12, "BiometricHumanProximity" },
+      { 0x20, 0x13, "BiometricHumanTouch" },
+    { 0x20, 0x20, "Electrical" },
+      { 0x20, 0x21, "ElectricalCapacitance" },
+      { 0x20, 0x22, "ElectricalCurrent" },
+      { 0x20, 0x23, "ElectricalPower" },
+      { 0x20, 0x24, "ElectricalInductance" },
+      { 0x20, 0x25, "ElectricalResistance" },
+      { 0x20, 0x26, "ElectricalVoltage" },
+      { 0x20, 0x27, "ElectricalPoteniometer" },
+      { 0x20, 0x28, "ElectricalFrequency" },
+      { 0x20, 0x29, "ElectricalPeriod" },
+    { 0x20, 0x30, "Environmental" },
+      { 0x20, 0x31, "EnvironmentalAtmosphericPressure" },
+      { 0x20, 0x32, "EnvironmentalHumidity" },
+      { 0x20, 0x33, "EnvironmentalTemperature" },
+      { 0x20, 0x34, "EnvironmentalWindDirection" },
+      { 0x20, 0x35, "EnvironmentalWindSpeed" },
+    { 0x20, 0x40, "Light" },
+      { 0x20, 0x41, "LightAmbientLight" },
+      { 0x20, 0x42, "LightConsumerInfrared" },
+    { 0x20, 0x50, "Location" },
+      { 0x20, 0x51, "LocationBroadcast" },
+      { 0x20, 0x52, "LocationDeadReckoning" },
+      { 0x20, 0x53, "LocationGPS" },
+      { 0x20, 0x54, "LocationLookup" },
+      { 0x20, 0x55, "LocationOther" },
+      { 0x20, 0x56, "LocationStatic" },
+      { 0x20, 0x57, "LocationTriangulation" },
+    { 0x20, 0x60, "Mechanical" },
+      { 0x20, 0x61, "MechanicalBooleanSwitch" },
+      { 0x20, 0x62, "MechanicalBooleanSwitchArray" },
+      { 0x20, 0x63, "MechanicalMultivalueSwitch" },
+      { 0x20, 0x64, "MechanicalForce" },
+      { 0x20, 0x65, "MechanicalPressure" },
+      { 0x20, 0x66, "MechanicalStrain" },
+      { 0x20, 0x67, "MechanicalWeight" },
+      { 0x20, 0x68, "MechanicalHapticVibrator" },
+      { 0x20, 0x69, "MechanicalHallEffectSwitch" },
+    { 0x20, 0x70, "Motion" },
+      { 0x20, 0x71, "MotionAccelerometer1D" },
+      { 0x20, 0x72, "MotionAccelerometer2D" },
+      { 0x20, 0x73, "MotionAccelerometer3D" },
+      { 0x20, 0x74, "MotionGyrometer1D" },
+      { 0x20, 0x75, "MotionGyrometer2D" },
+      { 0x20, 0x76, "MotionGyrometer3D" },
+      { 0x20, 0x77, "MotionMotionDetector" },
+      { 0x20, 0x78, "MotionSpeedometer" },
+      { 0x20, 0x79, "MotionAccelerometer" },
+      { 0x20, 0x7A, "MotionGyrometer" },
+    { 0x20, 0x80, "Orientation" },
+      { 0x20, 0x81, "OrientationCompass1D" },
+      { 0x20, 0x82, "OrientationCompass2D" },
+      { 0x20, 0x83, "OrientationCompass3D" },
+      { 0x20, 0x84, "OrientationInclinometer1D" },
+      { 0x20, 0x85, "OrientationInclinometer2D" },
+      { 0x20, 0x86, "OrientationInclinometer3D" },
+      { 0x20, 0x87, "OrientationDistance1D" },
+      { 0x20, 0x88, "OrientationDistance2D" },
+      { 0x20, 0x89, "OrientationDistance3D" },
+      { 0x20, 0x8A, "OrientationDeviceOrientation" },
+      { 0x20, 0x8B, "OrientationCompass" },
+      { 0x20, 0x8C, "OrientationInclinometer" },
+      { 0x20, 0x8D, "OrientationDistance" },
+    { 0x20, 0x90, "Scanner" },
+      { 0x20, 0x91, "ScannerBarcode" },
+      { 0x20, 0x91, "ScannerRFID" },
+      { 0x20, 0x91, "ScannerNFC" },
+    { 0x20, 0xA0, "Time" },
+      { 0x20, 0xA1, "TimeAlarmTimer" },
+      { 0x20, 0xA2, "TimeRealTimeClock" },
+    { 0x20, 0xE0, "Other" },
+      { 0x20, 0xE1, "OtherCustom" },
+      { 0x20, 0xE2, "OtherGeneric" },
+      { 0x20, 0xE3, "OtherGenericEnumerator" },
+  { 0x84, 0, "Power Device" },
+    { 0x84, 0x02, "PresentStatus" },
+    { 0x84, 0x03, "ChangeStatus" },
+    { 0x84, 0x04, "UPS" },
+    { 0x84, 0x05, "PowerSupply" },
+    { 0x84, 0x10, "BatterySystem" },
+    { 0x84, 0x11, "BatterySystemID" },
+    { 0x84, 0x12, "Battery" },
+    { 0x84, 0x13, "BatteryID" },
+    { 0x84, 0x14, "Charger" },
+    { 0x84, 0x15, "ChargerID" },
+    { 0x84, 0x16, "PowerConverter" },
+    { 0x84, 0x17, "PowerConverterID" },
+    { 0x84, 0x18, "OutletSystem" },
+    { 0x84, 0x19, "OutletSystemID" },
+    { 0x84, 0x1a, "Input" },
+    { 0x84, 0x1b, "InputID" },
+    { 0x84, 0x1c, "Output" },
+    { 0x84, 0x1d, "OutputID" },
+    { 0x84, 0x1e, "Flow" },
+    { 0x84, 0x1f, "FlowID" },
+    { 0x84, 0x20, "Outlet" },
+    { 0x84, 0x21, "OutletID" },
+    { 0x84, 0x22, "Gang" },
+    { 0x84, 0x24, "PowerSummary" },
+    { 0x84, 0x25, "PowerSummaryID" },
+    { 0x84, 0x30, "Voltage" },
+    { 0x84, 0x31, "Current" },
+    { 0x84, 0x32, "Frequency" },
+    { 0x84, 0x33, "ApparentPower" },
+    { 0x84, 0x35, "PercentLoad" },
+    { 0x84, 0x40, "ConfigVoltage" },
+    { 0x84, 0x41, "ConfigCurrent" },
+    { 0x84, 0x43, "ConfigApparentPower" },
+    { 0x84, 0x53, "LowVoltageTransfer" },
+    { 0x84, 0x54, "HighVoltageTransfer" },
+    { 0x84, 0x56, "DelayBeforeStartup" },
+    { 0x84, 0x57, "DelayBeforeShutdown" },
+    { 0x84, 0x58, "Test" },
+    { 0x84, 0x5a, "AudibleAlarmControl" },
+    { 0x84, 0x60, "Present" },
+    { 0x84, 0x61, "Good" },
+    { 0x84, 0x62, "InternalFailure" },
+    { 0x84, 0x65, "Overload" },
+    { 0x84, 0x66, "OverCharged" },
+    { 0x84, 0x67, "OverTemperature" },
+    { 0x84, 0x68, "ShutdownRequested" },
+    { 0x84, 0x69, "ShutdownImminent" },
+    { 0x84, 0x6b, "SwitchOn/Off" },
+    { 0x84, 0x6c, "Switchable" },
+    { 0x84, 0x6d, "Used" },
+    { 0x84, 0x6e, "Boost" },
+    { 0x84, 0x73, "CommunicationLost" },
+    { 0x84, 0xfd, "iManufacturer" },
+    { 0x84, 0xfe, "iProduct" },
+    { 0x84, 0xff, "iSerialNumber" },
+  { 0x85, 0, "Battery System" },
+    { 0x85, 0x01, "SMBBatteryMode" },
+    { 0x85, 0x02, "SMBBatteryStatus" },
+    { 0x85, 0x03, "SMBAlarmWarning" },
+    { 0x85, 0x04, "SMBChargerMode" },
+    { 0x85, 0x05, "SMBChargerStatus" },
+    { 0x85, 0x06, "SMBChargerSpecInfo" },
+    { 0x85, 0x07, "SMBSelectorState" },
+    { 0x85, 0x08, "SMBSelectorPresets" },
+    { 0x85, 0x09, "SMBSelectorInfo" },
+    { 0x85, 0x29, "RemainingCapacityLimit" },
+    { 0x85, 0x2c, "CapacityMode" },
+    { 0x85, 0x42, "BelowRemainingCapacityLimit" },
+    { 0x85, 0x44, "Charging" },
+    { 0x85, 0x45, "Discharging" },
+    { 0x85, 0x4b, "NeedReplacement" },
+    { 0x85, 0x65, "AbsoluteStateOfCharge" },
+    { 0x85, 0x66, "RemainingCapacity" },
+    { 0x85, 0x68, "RunTimeToEmpty" },
+    { 0x85, 0x6a, "AverageTimeToFull" },
+    { 0x85, 0x83, "DesignCapacity" },
+    { 0x85, 0x85, "ManufacturerDate" },
+    { 0x85, 0x89, "iDeviceChemistry" },
+    { 0x85, 0x8b, "Rechargeable" },
+    { 0x85, 0x8f, "iOEMInformation" },
+    { 0x85, 0x8d, "CapacityGranularity1" },
+    { 0x85, 0xd0, "ACPresent" },
+  /* pages 0xff00 to 0xffff are vendor-specific */
+  { 0xffff, 0, "Vendor-specific-FF" },
+  { 0, 0, NULL }
+};
 
-/* Either output directly पूर्णांकo simple seq_file, or (अगर f == शून्य)
+/* Either output directly into simple seq_file, or (if f == NULL)
  * allocate a separate buffer that will then be passed to the 'events'
  * ringbuffer.
  *
- * This is because these functions can be called both क्रम "one-shot"
- * "rdesc" जबतक resolving, or क्रम blocking "events".
+ * This is because these functions can be called both for "one-shot"
+ * "rdesc" while resolving, or for blocking "events".
  *
- * This holds both क्रम resolv_usage_page() and hid_resolv_usage().
+ * This holds both for resolv_usage_page() and hid_resolv_usage().
  */
-अटल अक्षर *resolv_usage_page(अचिन्हित page, काष्ठा seq_file *f) अणु
-	स्थिर काष्ठा hid_usage_entry *p;
-	अक्षर *buf = शून्य;
+static char *resolv_usage_page(unsigned page, struct seq_file *f) {
+	const struct hid_usage_entry *p;
+	char *buf = NULL;
 
-	अगर (!f) अणु
-		buf = kzalloc(HID_DEBUG_बफ_मानE, GFP_ATOMIC);
-		अगर (!buf)
-			वापस ERR_PTR(-ENOMEM);
-	पूर्ण
+	if (!f) {
+		buf = kzalloc(HID_DEBUG_BUFSIZE, GFP_ATOMIC);
+		if (!buf)
+			return ERR_PTR(-ENOMEM);
+	}
 
-	क्रम (p = hid_usage_table; p->description; p++)
-		अगर (p->page == page) अणु
-			अगर (!f) अणु
-				snम_लिखो(buf, HID_DEBUG_बफ_मानE, "%s",
+	for (p = hid_usage_table; p->description; p++)
+		if (p->page == page) {
+			if (!f) {
+				snprintf(buf, HID_DEBUG_BUFSIZE, "%s",
 						p->description);
-				वापस buf;
-			पूर्ण
-			अन्यथा अणु
-				seq_म_लिखो(f, "%s", p->description);
-				वापस शून्य;
-			पूर्ण
-		पूर्ण
-	अगर (!f)
-		snम_लिखो(buf, HID_DEBUG_बफ_मानE, "%04x", page);
-	अन्यथा
-		seq_म_लिखो(f, "%04x", page);
-	वापस buf;
-पूर्ण
+				return buf;
+			}
+			else {
+				seq_printf(f, "%s", p->description);
+				return NULL;
+			}
+		}
+	if (!f)
+		snprintf(buf, HID_DEBUG_BUFSIZE, "%04x", page);
+	else
+		seq_printf(f, "%04x", page);
+	return buf;
+}
 
-अक्षर *hid_resolv_usage(अचिन्हित usage, काष्ठा seq_file *f) अणु
-	स्थिर काष्ठा hid_usage_entry *p;
-	अक्षर *buf = शून्य;
-	पूर्णांक len = 0;
+char *hid_resolv_usage(unsigned usage, struct seq_file *f) {
+	const struct hid_usage_entry *p;
+	char *buf = NULL;
+	int len = 0;
 
 	buf = resolv_usage_page(usage >> 16, f);
-	अगर (IS_ERR(buf)) अणु
+	if (IS_ERR(buf)) {
 		pr_err("error allocating HID debug buffer\n");
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
 
-	अगर (!f) अणु
-		len = म_माप(buf);
-		snम_लिखो(buf+len, max(0, HID_DEBUG_बफ_मानE - len), ".");
+	if (!f) {
+		len = strlen(buf);
+		snprintf(buf+len, max(0, HID_DEBUG_BUFSIZE - len), ".");
 		len++;
-	पूर्ण
-	अन्यथा अणु
-		seq_म_लिखो(f, ".");
-	पूर्ण
-	क्रम (p = hid_usage_table; p->description; p++)
-		अगर (p->page == (usage >> 16)) अणु
-			क्रम(++p; p->description && p->usage != 0; p++)
-				अगर (p->usage == (usage & 0xffff)) अणु
-					अगर (!f)
-						snम_लिखो(buf + len,
-							max(0,HID_DEBUG_बफ_मानE - len - 1),
+	}
+	else {
+		seq_printf(f, ".");
+	}
+	for (p = hid_usage_table; p->description; p++)
+		if (p->page == (usage >> 16)) {
+			for(++p; p->description && p->usage != 0; p++)
+				if (p->usage == (usage & 0xffff)) {
+					if (!f)
+						snprintf(buf + len,
+							max(0,HID_DEBUG_BUFSIZE - len - 1),
 							"%s", p->description);
-					अन्यथा
-						seq_म_लिखो(f,
+					else
+						seq_printf(f,
 							"%s",
 							p->description);
-					वापस buf;
-				पूर्ण
-			अवरोध;
-		पूर्ण
-	अगर (!f)
-		snम_लिखो(buf + len, max(0, HID_DEBUG_बफ_मानE - len - 1),
+					return buf;
+				}
+			break;
+		}
+	if (!f)
+		snprintf(buf + len, max(0, HID_DEBUG_BUFSIZE - len - 1),
 				"%04x", usage & 0xffff);
-	अन्यथा
-		seq_म_लिखो(f, "%04x", usage & 0xffff);
-	वापस buf;
-पूर्ण
+	else
+		seq_printf(f, "%04x", usage & 0xffff);
+	return buf;
+}
 EXPORT_SYMBOL_GPL(hid_resolv_usage);
 
-अटल व्योम tab(पूर्णांक n, काष्ठा seq_file *f) अणु
-	seq_म_लिखो(f, "%*s", n, "");
-पूर्ण
+static void tab(int n, struct seq_file *f) {
+	seq_printf(f, "%*s", n, "");
+}
 
-व्योम hid_dump_field(काष्ठा hid_field *field, पूर्णांक n, काष्ठा seq_file *f) अणु
-	पूर्णांक j;
+void hid_dump_field(struct hid_field *field, int n, struct seq_file *f) {
+	int j;
 
-	अगर (field->physical) अणु
+	if (field->physical) {
 		tab(n, f);
-		seq_म_लिखो(f, "Physical(");
-		hid_resolv_usage(field->physical, f); seq_म_लिखो(f, ")\n");
-	पूर्ण
-	अगर (field->logical) अणु
+		seq_printf(f, "Physical(");
+		hid_resolv_usage(field->physical, f); seq_printf(f, ")\n");
+	}
+	if (field->logical) {
 		tab(n, f);
-		seq_म_लिखो(f, "Logical(");
-		hid_resolv_usage(field->logical, f); seq_म_लिखो(f, ")\n");
-	पूर्ण
-	अगर (field->application) अणु
+		seq_printf(f, "Logical(");
+		hid_resolv_usage(field->logical, f); seq_printf(f, ")\n");
+	}
+	if (field->application) {
 		tab(n, f);
-		seq_म_लिखो(f, "Application(");
-		hid_resolv_usage(field->application, f); seq_म_लिखो(f, ")\n");
-	पूर्ण
-	tab(n, f); seq_म_लिखो(f, "Usage(%d)\n", field->maxusage);
-	क्रम (j = 0; j < field->maxusage; j++) अणु
-		tab(n+2, f); hid_resolv_usage(field->usage[j].hid, f); seq_म_लिखो(f, "\n");
-	पूर्ण
-	अगर (field->logical_minimum != field->logical_maximum) अणु
-		tab(n, f); seq_म_लिखो(f, "Logical Minimum(%d)\n", field->logical_minimum);
-		tab(n, f); seq_म_लिखो(f, "Logical Maximum(%d)\n", field->logical_maximum);
-	पूर्ण
-	अगर (field->physical_minimum != field->physical_maximum) अणु
-		tab(n, f); seq_म_लिखो(f, "Physical Minimum(%d)\n", field->physical_minimum);
-		tab(n, f); seq_म_लिखो(f, "Physical Maximum(%d)\n", field->physical_maximum);
-	पूर्ण
-	अगर (field->unit_exponent) अणु
-		tab(n, f); seq_म_लिखो(f, "Unit Exponent(%d)\n", field->unit_exponent);
-	पूर्ण
-	अगर (field->unit) अणु
-		अटल स्थिर अक्षर *प्रणालीs[5] = अणु "None", "SI Linear", "SI Rotation", "English Linear", "English Rotation" पूर्ण;
-		अटल स्थिर अक्षर *units[5][8] = अणु
-			अणु "None", "None", "None", "None", "None", "None", "None", "None" पूर्ण,
-			अणु "None", "Centimeter", "Gram", "Seconds", "Kelvin",     "Ampere", "Candela", "None" पूर्ण,
-			अणु "None", "Radians",    "Gram", "Seconds", "Kelvin",     "Ampere", "Candela", "None" पूर्ण,
-			अणु "None", "Inch",       "Slug", "Seconds", "Fahrenheit", "Ampere", "Candela", "None" पूर्ण,
-			अणु "None", "Degrees",    "Slug", "Seconds", "Fahrenheit", "Ampere", "Candela", "None" पूर्ण
-		पूर्ण;
+		seq_printf(f, "Application(");
+		hid_resolv_usage(field->application, f); seq_printf(f, ")\n");
+	}
+	tab(n, f); seq_printf(f, "Usage(%d)\n", field->maxusage);
+	for (j = 0; j < field->maxusage; j++) {
+		tab(n+2, f); hid_resolv_usage(field->usage[j].hid, f); seq_printf(f, "\n");
+	}
+	if (field->logical_minimum != field->logical_maximum) {
+		tab(n, f); seq_printf(f, "Logical Minimum(%d)\n", field->logical_minimum);
+		tab(n, f); seq_printf(f, "Logical Maximum(%d)\n", field->logical_maximum);
+	}
+	if (field->physical_minimum != field->physical_maximum) {
+		tab(n, f); seq_printf(f, "Physical Minimum(%d)\n", field->physical_minimum);
+		tab(n, f); seq_printf(f, "Physical Maximum(%d)\n", field->physical_maximum);
+	}
+	if (field->unit_exponent) {
+		tab(n, f); seq_printf(f, "Unit Exponent(%d)\n", field->unit_exponent);
+	}
+	if (field->unit) {
+		static const char *systems[5] = { "None", "SI Linear", "SI Rotation", "English Linear", "English Rotation" };
+		static const char *units[5][8] = {
+			{ "None", "None", "None", "None", "None", "None", "None", "None" },
+			{ "None", "Centimeter", "Gram", "Seconds", "Kelvin",     "Ampere", "Candela", "None" },
+			{ "None", "Radians",    "Gram", "Seconds", "Kelvin",     "Ampere", "Candela", "None" },
+			{ "None", "Inch",       "Slug", "Seconds", "Fahrenheit", "Ampere", "Candela", "None" },
+			{ "None", "Degrees",    "Slug", "Seconds", "Fahrenheit", "Ampere", "Candela", "None" }
+		};
 
-		पूर्णांक i;
-		पूर्णांक sys;
+		int i;
+		int sys;
                 __u32 data = field->unit;
 
-		/* First nibble tells us which प्रणाली we're in. */
+		/* First nibble tells us which system we're in. */
 		sys = data & 0xf;
 		data >>= 4;
 
-		अगर(sys > 4) अणु
-			tab(n, f); seq_म_लिखो(f, "Unit(Invalid)\n");
-		पूर्ण
-		अन्यथा अणु
-			पूर्णांक earlier_unit = 0;
+		if(sys > 4) {
+			tab(n, f); seq_printf(f, "Unit(Invalid)\n");
+		}
+		else {
+			int earlier_unit = 0;
 
-			tab(n, f); seq_म_लिखो(f, "Unit(%s : ", प्रणालीs[sys]);
+			tab(n, f); seq_printf(f, "Unit(%s : ", systems[sys]);
 
-			क्रम (i=1 ; i<माप(__u32)*2 ; i++) अणु
-				अक्षर nibble = data & 0xf;
+			for (i=1 ; i<sizeof(__u32)*2 ; i++) {
+				char nibble = data & 0xf;
 				data >>= 4;
-				अगर (nibble != 0) अणु
-					अगर(earlier_unit++ > 0)
-						seq_म_लिखो(f, "*");
-					seq_म_लिखो(f, "%s", units[sys][i]);
-					अगर(nibble != 1) अणु
-						/* This is a _चिन्हित_ nibble(!) */
+				if (nibble != 0) {
+					if(earlier_unit++ > 0)
+						seq_printf(f, "*");
+					seq_printf(f, "%s", units[sys][i]);
+					if(nibble != 1) {
+						/* This is a _signed_ nibble(!) */
 
-						पूर्णांक val = nibble & 0x7;
-						अगर(nibble & 0x08)
+						int val = nibble & 0x7;
+						if(nibble & 0x08)
 							val = -((0x7 & ~val) +1);
-						seq_म_लिखो(f, "^%d", val);
-					पूर्ण
-				पूर्ण
-			पूर्ण
-			seq_म_लिखो(f, ")\n");
-		पूर्ण
-	पूर्ण
-	tab(n, f); seq_म_लिखो(f, "Report Size(%u)\n", field->report_size);
-	tab(n, f); seq_म_लिखो(f, "Report Count(%u)\n", field->report_count);
-	tab(n, f); seq_म_लिखो(f, "Report Offset(%u)\n", field->report_offset);
+						seq_printf(f, "^%d", val);
+					}
+				}
+			}
+			seq_printf(f, ")\n");
+		}
+	}
+	tab(n, f); seq_printf(f, "Report Size(%u)\n", field->report_size);
+	tab(n, f); seq_printf(f, "Report Count(%u)\n", field->report_count);
+	tab(n, f); seq_printf(f, "Report Offset(%u)\n", field->report_offset);
 
-	tab(n, f); seq_म_लिखो(f, "Flags( ");
+	tab(n, f); seq_printf(f, "Flags( ");
 	j = field->flags;
-	seq_म_लिखो(f, "%s", HID_MAIN_ITEM_CONSTANT & j ? "Constant " : "");
-	seq_म_लिखो(f, "%s", HID_MAIN_ITEM_VARIABLE & j ? "Variable " : "Array ");
-	seq_म_लिखो(f, "%s", HID_MAIN_ITEM_RELATIVE & j ? "Relative " : "Absolute ");
-	seq_म_लिखो(f, "%s", HID_MAIN_ITEM_WRAP & j ? "Wrap " : "");
-	seq_म_लिखो(f, "%s", HID_MAIN_ITEM_NONLINEAR & j ? "NonLinear " : "");
-	seq_म_लिखो(f, "%s", HID_MAIN_ITEM_NO_PREFERRED & j ? "NoPreferredState " : "");
-	seq_म_लिखो(f, "%s", HID_MAIN_ITEM_शून्य_STATE & j ? "NullState " : "");
-	seq_म_लिखो(f, "%s", HID_MAIN_ITEM_VOLATILE & j ? "Volatile " : "");
-	seq_म_लिखो(f, "%s", HID_MAIN_ITEM_BUFFERED_BYTE & j ? "BufferedByte " : "");
-	seq_म_लिखो(f, ")\n");
-पूर्ण
+	seq_printf(f, "%s", HID_MAIN_ITEM_CONSTANT & j ? "Constant " : "");
+	seq_printf(f, "%s", HID_MAIN_ITEM_VARIABLE & j ? "Variable " : "Array ");
+	seq_printf(f, "%s", HID_MAIN_ITEM_RELATIVE & j ? "Relative " : "Absolute ");
+	seq_printf(f, "%s", HID_MAIN_ITEM_WRAP & j ? "Wrap " : "");
+	seq_printf(f, "%s", HID_MAIN_ITEM_NONLINEAR & j ? "NonLinear " : "");
+	seq_printf(f, "%s", HID_MAIN_ITEM_NO_PREFERRED & j ? "NoPreferredState " : "");
+	seq_printf(f, "%s", HID_MAIN_ITEM_NULL_STATE & j ? "NullState " : "");
+	seq_printf(f, "%s", HID_MAIN_ITEM_VOLATILE & j ? "Volatile " : "");
+	seq_printf(f, "%s", HID_MAIN_ITEM_BUFFERED_BYTE & j ? "BufferedByte " : "");
+	seq_printf(f, ")\n");
+}
 EXPORT_SYMBOL_GPL(hid_dump_field);
 
-व्योम hid_dump_device(काष्ठा hid_device *device, काष्ठा seq_file *f)
-अणु
-	काष्ठा hid_report_क्रमागत *report_क्रमागत;
-	काष्ठा hid_report *report;
-	काष्ठा list_head *list;
-	अचिन्हित i,k;
-	अटल स्थिर अक्षर *table[] = अणु"INPUT", "OUTPUT", "FEATURE"पूर्ण;
+void hid_dump_device(struct hid_device *device, struct seq_file *f)
+{
+	struct hid_report_enum *report_enum;
+	struct hid_report *report;
+	struct list_head *list;
+	unsigned i,k;
+	static const char *table[] = {"INPUT", "OUTPUT", "FEATURE"};
 
-	क्रम (i = 0; i < HID_REPORT_TYPES; i++) अणु
-		report_क्रमागत = device->report_क्रमागत + i;
-		list = report_क्रमागत->report_list.next;
-		जबतक (list != &report_क्रमागत->report_list) अणु
-			report = (काष्ठा hid_report *) list;
+	for (i = 0; i < HID_REPORT_TYPES; i++) {
+		report_enum = device->report_enum + i;
+		list = report_enum->report_list.next;
+		while (list != &report_enum->report_list) {
+			report = (struct hid_report *) list;
 			tab(2, f);
-			seq_म_लिखो(f, "%s", table[i]);
-			अगर (report->id)
-				seq_म_लिखो(f, "(%d)", report->id);
-			seq_म_लिखो(f, "[%s]", table[report->type]);
-			seq_म_लिखो(f, "\n");
-			क्रम (k = 0; k < report->maxfield; k++) अणु
+			seq_printf(f, "%s", table[i]);
+			if (report->id)
+				seq_printf(f, "(%d)", report->id);
+			seq_printf(f, "[%s]", table[report->type]);
+			seq_printf(f, "\n");
+			for (k = 0; k < report->maxfield; k++) {
 				tab(4, f);
-				seq_म_लिखो(f, "Field(%d)\n", k);
+				seq_printf(f, "Field(%d)\n", k);
 				hid_dump_field(report->field[k], 6, f);
-			पूर्ण
+			}
 			list = list->next;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 EXPORT_SYMBOL_GPL(hid_dump_device);
 
 /* enqueue string to 'events' ring buffer */
-व्योम hid_debug_event(काष्ठा hid_device *hdev, अक्षर *buf)
-अणु
-	काष्ठा hid_debug_list *list;
-	अचिन्हित दीर्घ flags;
+void hid_debug_event(struct hid_device *hdev, char *buf)
+{
+	struct hid_debug_list *list;
+	unsigned long flags;
 
 	spin_lock_irqsave(&hdev->debug_list_lock, flags);
-	list_क्रम_each_entry(list, &hdev->debug_list, node)
-		kfअगरo_in(&list->hid_debug_fअगरo, buf, म_माप(buf));
+	list_for_each_entry(list, &hdev->debug_list, node)
+		kfifo_in(&list->hid_debug_fifo, buf, strlen(buf));
 	spin_unlock_irqrestore(&hdev->debug_list_lock, flags);
 
-	wake_up_पूर्णांकerruptible(&hdev->debug_रुको);
-पूर्ण
+	wake_up_interruptible(&hdev->debug_wait);
+}
 EXPORT_SYMBOL_GPL(hid_debug_event);
 
-व्योम hid_dump_report(काष्ठा hid_device *hid, पूर्णांक type, u8 *data,
-		पूर्णांक size)
-अणु
-	काष्ठा hid_report_क्रमागत *report_क्रमागत;
-	अक्षर *buf;
-	अचिन्हित पूर्णांक i;
+void hid_dump_report(struct hid_device *hid, int type, u8 *data,
+		int size)
+{
+	struct hid_report_enum *report_enum;
+	char *buf;
+	unsigned int i;
 
-	buf = kदो_स्मृति(HID_DEBUG_बफ_मानE, GFP_ATOMIC);
+	buf = kmalloc(HID_DEBUG_BUFSIZE, GFP_ATOMIC);
 
-	अगर (!buf)
-		वापस;
+	if (!buf)
+		return;
 
-	report_क्रमागत = hid->report_क्रमागत + type;
+	report_enum = hid->report_enum + type;
 
 	/* dump the report */
-	snम_लिखो(buf, HID_DEBUG_बफ_मानE - 1,
+	snprintf(buf, HID_DEBUG_BUFSIZE - 1,
 			"\nreport (size %u) (%snumbered) = ", size,
-			report_क्रमागत->numbered ? "" : "un");
+			report_enum->numbered ? "" : "un");
 	hid_debug_event(hid, buf);
 
-	क्रम (i = 0; i < size; i++) अणु
-		snम_लिखो(buf, HID_DEBUG_बफ_मानE - 1,
+	for (i = 0; i < size; i++) {
+		snprintf(buf, HID_DEBUG_BUFSIZE - 1,
 				" %02x", data[i]);
 		hid_debug_event(hid, buf);
-	पूर्ण
+	}
 	hid_debug_event(hid, "\n");
-	kमुक्त(buf);
-पूर्ण
+	kfree(buf);
+}
 EXPORT_SYMBOL_GPL(hid_dump_report);
 
-व्योम hid_dump_input(काष्ठा hid_device *hdev, काष्ठा hid_usage *usage, __s32 value)
-अणु
-	अक्षर *buf;
-	पूर्णांक len;
+void hid_dump_input(struct hid_device *hdev, struct hid_usage *usage, __s32 value)
+{
+	char *buf;
+	int len;
 
-	buf = hid_resolv_usage(usage->hid, शून्य);
-	अगर (!buf)
-		वापस;
-	len = म_माप(buf);
-	snम_लिखो(buf + len, HID_DEBUG_बफ_मानE - len - 1, " = %d\n", value);
+	buf = hid_resolv_usage(usage->hid, NULL);
+	if (!buf)
+		return;
+	len = strlen(buf);
+	snprintf(buf + len, HID_DEBUG_BUFSIZE - len - 1, " = %d\n", value);
 
 	hid_debug_event(hdev, buf);
 
-	kमुक्त(buf);
-	wake_up_पूर्णांकerruptible(&hdev->debug_रुको);
-पूर्ण
+	kfree(buf);
+	wake_up_interruptible(&hdev->debug_wait);
+}
 EXPORT_SYMBOL_GPL(hid_dump_input);
 
-अटल स्थिर अक्षर *events[EV_MAX + 1] = अणु
+static const char *events[EV_MAX + 1] = {
 	[EV_SYN] = "Sync",			[EV_KEY] = "Key",
 	[EV_REL] = "Relative",			[EV_ABS] = "Absolute",
 	[EV_MSC] = "Misc",			[EV_LED] = "LED",
 	[EV_SND] = "Sound",			[EV_REP] = "Repeat",
 	[EV_FF] = "ForceFeedback",		[EV_PWR] = "Power",
 	[EV_FF_STATUS] = "ForceFeedbackStatus",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर *syncs[3] = अणु
+static const char *syncs[3] = {
 	[SYN_REPORT] = "Report",		[SYN_CONFIG] = "Config",
 	[SYN_MT_REPORT] = "MT Report",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर *keys[KEY_MAX + 1] = अणु
+static const char *keys[KEY_MAX + 1] = {
 	[KEY_RESERVED] = "Reserved",		[KEY_ESC] = "Esc",
 	[KEY_1] = "1",				[KEY_2] = "2",
 	[KEY_3] = "3",				[KEY_4] = "4",
@@ -798,8 +797,8 @@ EXPORT_SYMBOL_GPL(hid_dump_input);
 	[KEY_HELP] = "Help",			[KEY_MENU] = "Menu",
 	[KEY_CALC] = "Calc",			[KEY_SETUP] = "Setup",
 	[KEY_SLEEP] = "Sleep",			[KEY_WAKEUP] = "WakeUp",
-	[KEY_खाता] = "File",			[KEY_SENDखाता] = "SendFile",
-	[KEY_DELETEखाता] = "DeleteFile",	[KEY_XFER] = "X-fer",
+	[KEY_FILE] = "File",			[KEY_SENDFILE] = "SendFile",
+	[KEY_DELETEFILE] = "DeleteFile",	[KEY_XFER] = "X-fer",
 	[KEY_PROG1] = "Prog1",			[KEY_PROG2] = "Prog2",
 	[KEY_WWW] = "WWW",			[KEY_MSDOS] = "MSDOS",
 	[KEY_COFFEE] = "Coffee",		[KEY_ROTATE_DISPLAY] = "RotateDisplay",
@@ -832,7 +831,7 @@ EXPORT_SYMBOL_GPL(hid_dump_input);
 	[KEY_CAMERA] = "Camera",		[KEY_SOUND] = "Sound",
 	[KEY_QUESTION] = "Question",		[KEY_EMAIL] = "Email",
 	[KEY_CHAT] = "Chat",			[KEY_SEARCH] = "Search",
-	[KEY_CONNECT] = "Connect",		[KEY_FIन_अंकCE] = "Finance",
+	[KEY_CONNECT] = "Connect",		[KEY_FINANCE] = "Finance",
 	[KEY_SPORT] = "Sport",			[KEY_SHOP] = "Shop",
 	[KEY_ALTERASE] = "AlternateErase",	[KEY_CANCEL] = "Cancel",
 	[KEY_BRIGHTNESSDOWN] = "BrightnessDown", [KEY_BRIGHTNESSUP] = "BrightnessUp",
@@ -891,7 +890,7 @@ EXPORT_SYMBOL_GPL(hid_dump_input);
 	[KEY_PLAYER] = "Player",		[KEY_TEXT] = "Text",
 	[KEY_DVD] = "DVD",			[KEY_AUX] = "Aux",
 	[KEY_MP3] = "MP3",			[KEY_AUDIO] = "Audio",
-	[KEY_VIDEO] = "Video",			[KEY_सूचीECTORY] = "Directory",
+	[KEY_VIDEO] = "Video",			[KEY_DIRECTORY] = "Directory",
 	[KEY_LIST] = "List",			[KEY_MEMO] = "Memo",
 	[KEY_CALENDAR] = "Calendar",		[KEY_RED] = "Red",
 	[KEY_GREEN] = "Green",			[KEY_YELLOW] = "Yellow",
@@ -943,17 +942,17 @@ EXPORT_SYMBOL_GPL(hid_dump_input);
 	[KEY_KBDINPUTASSIST_NEXTGROUP] = "KbdInputAssistNextGroup",
 	[KEY_KBDINPUTASSIST_ACCEPT] = "KbdInputAssistAccept",
 	[KEY_KBDINPUTASSIST_CANCEL] = "KbdInputAssistCancel",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर *relatives[REL_MAX + 1] = अणु
+static const char *relatives[REL_MAX + 1] = {
 	[REL_X] = "X",			[REL_Y] = "Y",
 	[REL_Z] = "Z",			[REL_RX] = "Rx",
 	[REL_RY] = "Ry",		[REL_RZ] = "Rz",
 	[REL_HWHEEL] = "HWheel",	[REL_DIAL] = "Dial",
 	[REL_WHEEL] = "Wheel",		[REL_MISC] = "Misc",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर *असलolutes[ABS_CNT] = अणु
+static const char *absolutes[ABS_CNT] = {
 	[ABS_X] = "X",			[ABS_Y] = "Y",
 	[ABS_Z] = "Z",			[ABS_RX] = "Rx",
 	[ABS_RY] = "Ry",		[ABS_RZ] = "Rz",
@@ -976,246 +975,246 @@ EXPORT_SYMBOL_GPL(hid_dump_input);
 	[ABS_MT_POSITION_Y] = "MTPositionY",
 	[ABS_MT_TOOL_TYPE] = "MTToolType",
 	[ABS_MT_BLOB_ID] = "MTBlobID",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर *misc[MSC_MAX + 1] = अणु
+static const char *misc[MSC_MAX + 1] = {
 	[MSC_SERIAL] = "Serial",	[MSC_PULSELED] = "Pulseled",
 	[MSC_GESTURE] = "Gesture",	[MSC_RAW] = "RawData"
-पूर्ण;
+};
 
-अटल स्थिर अक्षर *leds[LED_MAX + 1] = अणु
+static const char *leds[LED_MAX + 1] = {
 	[LED_NUML] = "NumLock",		[LED_CAPSL] = "CapsLock",
 	[LED_SCROLLL] = "ScrollLock",	[LED_COMPOSE] = "Compose",
 	[LED_KANA] = "Kana",		[LED_SLEEP] = "Sleep",
 	[LED_SUSPEND] = "Suspend",	[LED_MUTE] = "Mute",
 	[LED_MISC] = "Misc",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर *repeats[REP_MAX + 1] = अणु
+static const char *repeats[REP_MAX + 1] = {
 	[REP_DELAY] = "Delay",		[REP_PERIOD] = "Period"
-पूर्ण;
+};
 
-अटल स्थिर अक्षर *sounds[SND_MAX + 1] = अणु
+static const char *sounds[SND_MAX + 1] = {
 	[SND_CLICK] = "Click",		[SND_BELL] = "Bell",
 	[SND_TONE] = "Tone"
-पूर्ण;
+};
 
-अटल स्थिर अक्षर **names[EV_MAX + 1] = अणु
+static const char **names[EV_MAX + 1] = {
 	[EV_SYN] = syncs,			[EV_KEY] = keys,
-	[EV_REL] = relatives,			[EV_ABS] = असलolutes,
+	[EV_REL] = relatives,			[EV_ABS] = absolutes,
 	[EV_MSC] = misc,			[EV_LED] = leds,
 	[EV_SND] = sounds,			[EV_REP] = repeats,
-पूर्ण;
+};
 
-अटल व्योम hid_resolv_event(__u8 type, __u16 code, काष्ठा seq_file *f)
-अणु
-	seq_म_लिखो(f, "%s.%s", events[type] ? events[type] : "?",
+static void hid_resolv_event(__u8 type, __u16 code, struct seq_file *f)
+{
+	seq_printf(f, "%s.%s", events[type] ? events[type] : "?",
 		names[type] ? (names[type][code] ? names[type][code] : "?") : "?");
-पूर्ण
+}
 
-अटल व्योम hid_dump_input_mapping(काष्ठा hid_device *hid, काष्ठा seq_file *f)
-अणु
-	पूर्णांक i, j, k;
-	काष्ठा hid_report *report;
-	काष्ठा hid_usage *usage;
+static void hid_dump_input_mapping(struct hid_device *hid, struct seq_file *f)
+{
+	int i, j, k;
+	struct hid_report *report;
+	struct hid_usage *usage;
 
-	क्रम (k = HID_INPUT_REPORT; k <= HID_OUTPUT_REPORT; k++) अणु
-		list_क्रम_each_entry(report, &hid->report_क्रमागत[k].report_list, list) अणु
-			क्रम (i = 0; i < report->maxfield; i++) अणु
-				क्रम ( j = 0; j < report->field[i]->maxusage; j++) अणु
+	for (k = HID_INPUT_REPORT; k <= HID_OUTPUT_REPORT; k++) {
+		list_for_each_entry(report, &hid->report_enum[k].report_list, list) {
+			for (i = 0; i < report->maxfield; i++) {
+				for ( j = 0; j < report->field[i]->maxusage; j++) {
 					usage = report->field[i]->usage + j;
 					hid_resolv_usage(usage->hid, f);
-					seq_म_लिखो(f, " ---> ");
+					seq_printf(f, " ---> ");
 					hid_resolv_event(usage->type, usage->code, f);
-					seq_म_लिखो(f, "\n");
-				पूर्ण
-			पूर्ण
-		पूर्ण
-	पूर्ण
+					seq_printf(f, "\n");
+				}
+			}
+		}
+	}
 
-पूर्ण
+}
 
-अटल पूर्णांक hid_debug_rdesc_show(काष्ठा seq_file *f, व्योम *p)
-अणु
-	काष्ठा hid_device *hdev = f->निजी;
-	स्थिर __u8 *rdesc = hdev->rdesc;
-	अचिन्हित rsize = hdev->rsize;
-	पूर्णांक i;
+static int hid_debug_rdesc_show(struct seq_file *f, void *p)
+{
+	struct hid_device *hdev = f->private;
+	const __u8 *rdesc = hdev->rdesc;
+	unsigned rsize = hdev->rsize;
+	int i;
 
-	अगर (!rdesc) अणु
+	if (!rdesc) {
 		rdesc = hdev->dev_rdesc;
 		rsize = hdev->dev_rsize;
-	पूर्ण
+	}
 
 	/* dump HID report descriptor */
-	क्रम (i = 0; i < rsize; i++)
-		seq_म_लिखो(f, "%02x ", rdesc[i]);
-	seq_म_लिखो(f, "\n\n");
+	for (i = 0; i < rsize; i++)
+		seq_printf(f, "%02x ", rdesc[i]);
+	seq_printf(f, "\n\n");
 
 	/* dump parsed data and input mappings */
-	अगर (करोwn_पूर्णांकerruptible(&hdev->driver_input_lock))
-		वापस 0;
+	if (down_interruptible(&hdev->driver_input_lock))
+		return 0;
 
 	hid_dump_device(hdev, f);
-	seq_म_लिखो(f, "\n");
+	seq_printf(f, "\n");
 	hid_dump_input_mapping(hdev, f);
 
 	up(&hdev->driver_input_lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक hid_debug_events_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	पूर्णांक err = 0;
-	काष्ठा hid_debug_list *list;
-	अचिन्हित दीर्घ flags;
+static int hid_debug_events_open(struct inode *inode, struct file *file)
+{
+	int err = 0;
+	struct hid_debug_list *list;
+	unsigned long flags;
 
-	अगर (!(list = kzalloc(माप(काष्ठा hid_debug_list), GFP_KERNEL))) अणु
+	if (!(list = kzalloc(sizeof(struct hid_debug_list), GFP_KERNEL))) {
 		err = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	err = kfअगरo_alloc(&list->hid_debug_fअगरo, HID_DEBUG_FIFOSIZE, GFP_KERNEL);
-	अगर (err) अणु
-		kमुक्त(list);
-		जाओ out;
-	पूर्ण
-	list->hdev = (काष्ठा hid_device *) inode->i_निजी;
-	file->निजी_data = list;
-	mutex_init(&list->पढ़ो_mutex);
+	err = kfifo_alloc(&list->hid_debug_fifo, HID_DEBUG_FIFOSIZE, GFP_KERNEL);
+	if (err) {
+		kfree(list);
+		goto out;
+	}
+	list->hdev = (struct hid_device *) inode->i_private;
+	file->private_data = list;
+	mutex_init(&list->read_mutex);
 
 	spin_lock_irqsave(&list->hdev->debug_list_lock, flags);
 	list_add_tail(&list->node, &list->hdev->debug_list);
 	spin_unlock_irqrestore(&list->hdev->debug_list_lock, flags);
 
 out:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल sमाप_प्रकार hid_debug_events_पढ़ो(काष्ठा file *file, अक्षर __user *buffer,
-		माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा hid_debug_list *list = file->निजी_data;
-	पूर्णांक ret = 0, copied;
-	DECLARE_WAITQUEUE(रुको, current);
+static ssize_t hid_debug_events_read(struct file *file, char __user *buffer,
+		size_t count, loff_t *ppos)
+{
+	struct hid_debug_list *list = file->private_data;
+	int ret = 0, copied;
+	DECLARE_WAITQUEUE(wait, current);
 
-	mutex_lock(&list->पढ़ो_mutex);
-	अगर (kfअगरo_is_empty(&list->hid_debug_fअगरo)) अणु
-		add_रुको_queue(&list->hdev->debug_रुको, &रुको);
+	mutex_lock(&list->read_mutex);
+	if (kfifo_is_empty(&list->hid_debug_fifo)) {
+		add_wait_queue(&list->hdev->debug_wait, &wait);
 		set_current_state(TASK_INTERRUPTIBLE);
 
-		जबतक (kfअगरo_is_empty(&list->hid_debug_fअगरo)) अणु
-			अगर (संकेत_pending(current)) अणु
+		while (kfifo_is_empty(&list->hid_debug_fifo)) {
+			if (signal_pending(current)) {
 				ret = -ERESTARTSYS;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 
-			/* अगर list->hdev is शून्य we cannot हटाओ_रुको_queue().
-			 * अगर list->hdev->debug is 0 then hid_debug_unरेजिस्टर()
-			 * was alपढ़ोy called and list->hdev is being destroyed.
-			 * अगर we add हटाओ_रुको_queue() here we can hit a race.
+			/* if list->hdev is NULL we cannot remove_wait_queue().
+			 * if list->hdev->debug is 0 then hid_debug_unregister()
+			 * was already called and list->hdev is being destroyed.
+			 * if we add remove_wait_queue() here we can hit a race.
 			 */
-			अगर (!list->hdev || !list->hdev->debug) अणु
+			if (!list->hdev || !list->hdev->debug) {
 				ret = -EIO;
 				set_current_state(TASK_RUNNING);
-				जाओ out;
-			पूर्ण
+				goto out;
+			}
 
-			अगर (file->f_flags & O_NONBLOCK) अणु
+			if (file->f_flags & O_NONBLOCK) {
 				ret = -EAGAIN;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 
-			/* allow O_NONBLOCK from other thपढ़ोs */
-			mutex_unlock(&list->पढ़ो_mutex);
+			/* allow O_NONBLOCK from other threads */
+			mutex_unlock(&list->read_mutex);
 			schedule();
-			mutex_lock(&list->पढ़ो_mutex);
+			mutex_lock(&list->read_mutex);
 			set_current_state(TASK_INTERRUPTIBLE);
-		पूर्ण
+		}
 
 		__set_current_state(TASK_RUNNING);
-		हटाओ_रुको_queue(&list->hdev->debug_रुको, &रुको);
+		remove_wait_queue(&list->hdev->debug_wait, &wait);
 
-		अगर (ret)
-			जाओ out;
-	पूर्ण
+		if (ret)
+			goto out;
+	}
 
-	/* pass the fअगरo content to userspace, locking is not needed with only
-	 * one concurrent पढ़ोer and one concurrent ग_लिखोr
+	/* pass the fifo content to userspace, locking is not needed with only
+	 * one concurrent reader and one concurrent writer
 	 */
-	ret = kfअगरo_to_user(&list->hid_debug_fअगरo, buffer, count, &copied);
-	अगर (ret)
-		जाओ out;
+	ret = kfifo_to_user(&list->hid_debug_fifo, buffer, count, &copied);
+	if (ret)
+		goto out;
 	ret = copied;
 out:
-	mutex_unlock(&list->पढ़ो_mutex);
-	वापस ret;
-पूर्ण
+	mutex_unlock(&list->read_mutex);
+	return ret;
+}
 
-अटल __poll_t hid_debug_events_poll(काष्ठा file *file, poll_table *रुको)
-अणु
-	काष्ठा hid_debug_list *list = file->निजी_data;
+static __poll_t hid_debug_events_poll(struct file *file, poll_table *wait)
+{
+	struct hid_debug_list *list = file->private_data;
 
-	poll_रुको(file, &list->hdev->debug_रुको, रुको);
-	अगर (!kfअगरo_is_empty(&list->hid_debug_fअगरo))
-		वापस EPOLLIN | EPOLLRDNORM;
-	अगर (!list->hdev->debug)
-		वापस EPOLLERR | EPOLLHUP;
-	वापस 0;
-पूर्ण
+	poll_wait(file, &list->hdev->debug_wait, wait);
+	if (!kfifo_is_empty(&list->hid_debug_fifo))
+		return EPOLLIN | EPOLLRDNORM;
+	if (!list->hdev->debug)
+		return EPOLLERR | EPOLLHUP;
+	return 0;
+}
 
-अटल पूर्णांक hid_debug_events_release(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा hid_debug_list *list = file->निजी_data;
-	अचिन्हित दीर्घ flags;
+static int hid_debug_events_release(struct inode *inode, struct file *file)
+{
+	struct hid_debug_list *list = file->private_data;
+	unsigned long flags;
 
 	spin_lock_irqsave(&list->hdev->debug_list_lock, flags);
 	list_del(&list->node);
 	spin_unlock_irqrestore(&list->hdev->debug_list_lock, flags);
-	kfअगरo_मुक्त(&list->hid_debug_fअगरo);
-	kमुक्त(list);
+	kfifo_free(&list->hid_debug_fifo);
+	kfree(list);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 DEFINE_SHOW_ATTRIBUTE(hid_debug_rdesc);
 
-अटल स्थिर काष्ठा file_operations hid_debug_events_fops = अणु
+static const struct file_operations hid_debug_events_fops = {
 	.owner =        THIS_MODULE,
-	.खोलो           = hid_debug_events_खोलो,
-	.पढ़ो           = hid_debug_events_पढ़ो,
+	.open           = hid_debug_events_open,
+	.read           = hid_debug_events_read,
 	.poll		= hid_debug_events_poll,
 	.release        = hid_debug_events_release,
 	.llseek		= noop_llseek,
-पूर्ण;
+};
 
 
-व्योम hid_debug_रेजिस्टर(काष्ठा hid_device *hdev, स्थिर अक्षर *name)
-अणु
+void hid_debug_register(struct hid_device *hdev, const char *name)
+{
 	hdev->debug_dir = debugfs_create_dir(name, hid_debug_root);
 	hdev->debug_rdesc = debugfs_create_file("rdesc", 0400,
 			hdev->debug_dir, hdev, &hid_debug_rdesc_fops);
 	hdev->debug_events = debugfs_create_file("events", 0400,
 			hdev->debug_dir, hdev, &hid_debug_events_fops);
 	hdev->debug = 1;
-पूर्ण
+}
 
-व्योम hid_debug_unरेजिस्टर(काष्ठा hid_device *hdev)
-अणु
+void hid_debug_unregister(struct hid_device *hdev)
+{
 	hdev->debug = 0;
-	wake_up_पूर्णांकerruptible(&hdev->debug_रुको);
-	debugfs_हटाओ(hdev->debug_rdesc);
-	debugfs_हटाओ(hdev->debug_events);
-	debugfs_हटाओ(hdev->debug_dir);
-पूर्ण
+	wake_up_interruptible(&hdev->debug_wait);
+	debugfs_remove(hdev->debug_rdesc);
+	debugfs_remove(hdev->debug_events);
+	debugfs_remove(hdev->debug_dir);
+}
 
-व्योम hid_debug_init(व्योम)
-अणु
-	hid_debug_root = debugfs_create_dir("hid", शून्य);
-पूर्ण
+void hid_debug_init(void)
+{
+	hid_debug_root = debugfs_create_dir("hid", NULL);
+}
 
-व्योम hid_debug_निकास(व्योम)
-अणु
-	debugfs_हटाओ_recursive(hid_debug_root);
-पूर्ण
+void hid_debug_exit(void)
+{
+	debugfs_remove_recursive(hid_debug_root);
+}

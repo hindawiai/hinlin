@@ -1,19 +1,18 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
- *  MMP Platक्रमm AUDIO Management
+ *  MMP Platform AUDIO Management
  *
  *  Copyright (c) 2011 Marvell Semiconductors Inc.
  */
 
-#अगर_अघोषित MMP_AUDIO_H
-#घोषणा MMP_AUDIO_H
+#ifndef MMP_AUDIO_H
+#define MMP_AUDIO_H
 
-काष्ठा mmp_audio_platdata अणु
+struct mmp_audio_platdata {
 	u32 period_max_capture;
 	u32 buffer_max_capture;
 	u32 period_max_playback;
 	u32 buffer_max_playback;
-पूर्ण;
+};
 
-#पूर्ण_अगर /* MMP_AUDIO_H */
+#endif /* MMP_AUDIO_H */

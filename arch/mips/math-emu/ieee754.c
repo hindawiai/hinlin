@@ -1,44 +1,43 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
-/* ieee754 भग्नing poपूर्णांक arithmetic
- * single and द्विगुन precision
+// SPDX-License-Identifier: GPL-2.0-only
+/* ieee754 floating point arithmetic
+ * single and double precision
  *
  * BUGS
- * not much dp करोne
- * करोesn't generate IEEE754_INEXACT
+ * not much dp done
+ * doesn't generate IEEE754_INEXACT
  */
 /*
- * MIPS भग्नing poपूर्णांक support
+ * MIPS floating point support
  * Copyright (C) 1994-2000 Algorithmics Ltd.
  */
 
-#समावेश <linux/compiler.h>
+#include <linux/compiler.h>
 
-#समावेश "ieee754.h"
-#समावेश "ieee754sp.h"
-#समावेश "ieee754dp.h"
+#include "ieee754.h"
+#include "ieee754sp.h"
+#include "ieee754dp.h"
 
 /*
- * Special स्थिरants
+ * Special constants
  */
 
 /*
- * Older GCC requires the inner braces क्रम initialization of जोड़ ieee754dp's
- * anonymous काष्ठा member.  Without an error will result.
+ * Older GCC requires the inner braces for initialization of union ieee754dp's
+ * anonymous struct member.  Without an error will result.
  */
-#घोषणा xPCNST(s, b, m, ebias)						\
-अणु									\
-	अणु								\
+#define xPCNST(s, b, m, ebias)						\
+{									\
+	{								\
 		.sign	= (s),						\
 		.bexp	= (b) + ebias,					\
 		.mant	= (m)						\
-	पूर्ण								\
-पूर्ण
+	}								\
+}
 
-#घोषणा DPCNST(s, b, m)							\
+#define DPCNST(s, b, m)							\
 	xPCNST(s, b, m, DP_EBIAS)
 
-स्थिर जोड़ ieee754dp __ieee754dp_spcvals[] = अणु
+const union ieee754dp __ieee754dp_spcvals[] = {
 	DPCNST(0, DP_EMIN - 1, 0x0000000000000ULL),	/* + zero   */
 	DPCNST(1, DP_EMIN - 1, 0x0000000000000ULL),	/* - zero   */
 	DPCNST(0, 0,	       0x0000000000000ULL),	/* + 1.0   */
@@ -57,12 +56,12 @@
 	DPCNST(1, DP_EMIN - 1, 0x0000000000001ULL),	/* - min denormal */
 	DPCNST(0, 31,          0x0000000000000ULL),	/* + 1.0e31 */
 	DPCNST(0, 63,          0x0000000000000ULL),	/* + 1.0e63 */
-पूर्ण;
+};
 
-#घोषणा SPCNST(s, b, m)							\
+#define SPCNST(s, b, m)							\
 	xPCNST(s, b, m, SP_EBIAS)
 
-स्थिर जोड़ ieee754sp __ieee754sp_spcvals[] = अणु
+const union ieee754sp __ieee754sp_spcvals[] = {
 	SPCNST(0, SP_EMIN - 1, 0x000000),	/* + zero   */
 	SPCNST(1, SP_EMIN - 1, 0x000000),	/* - zero   */
 	SPCNST(0, 0,	       0x000000),	/* + 1.0   */
@@ -81,4 +80,4 @@
 	SPCNST(1, SP_EMIN - 1, 0x000001),	/* - min denormal */
 	SPCNST(0, 31,	       0x000000),	/* + 1.0e31 */
 	SPCNST(0, 63,	       0x000000),	/* + 1.0e63 */
-पूर्ण;
+};

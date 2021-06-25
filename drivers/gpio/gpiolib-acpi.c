@@ -1,106 +1,105 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * ACPI helpers क्रम GPIO API
+ * ACPI helpers for GPIO API
  *
  * Copyright (C) 2012, Intel Corporation
- * Authors: Mathias Nyman <mathias.nyman@linux.पूर्णांकel.com>
- *          Mika Westerberg <mika.westerberg@linux.पूर्णांकel.com>
+ * Authors: Mathias Nyman <mathias.nyman@linux.intel.com>
+ *          Mika Westerberg <mika.westerberg@linux.intel.com>
  */
 
-#समावेश <linux/dmi.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/gpio/consumer.h>
-#समावेश <linux/gpio/driver.h>
-#समावेश <linux/gpio/machine.h>
-#समावेश <linux/export.h>
-#समावेश <linux/acpi.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/pinctrl/pinctrl.h>
+#include <linux/dmi.h>
+#include <linux/errno.h>
+#include <linux/gpio/consumer.h>
+#include <linux/gpio/driver.h>
+#include <linux/gpio/machine.h>
+#include <linux/export.h>
+#include <linux/acpi.h>
+#include <linux/interrupt.h>
+#include <linux/mutex.h>
+#include <linux/pinctrl/pinctrl.h>
 
-#समावेश "gpiolib.h"
-#समावेश "gpiolib-acpi.h"
+#include "gpiolib.h"
+#include "gpiolib-acpi.h"
 
-अटल पूर्णांक run_edge_events_on_boot = -1;
-module_param(run_edge_events_on_boot, पूर्णांक, 0444);
+static int run_edge_events_on_boot = -1;
+module_param(run_edge_events_on_boot, int, 0444);
 MODULE_PARM_DESC(run_edge_events_on_boot,
 		 "Run edge _AEI event-handlers at boot: 0=no, 1=yes, -1=auto");
 
-अटल अक्षर *ignore_wake;
-module_param(ignore_wake, अक्षरp, 0444);
+static char *ignore_wake;
+module_param(ignore_wake, charp, 0444);
 MODULE_PARM_DESC(ignore_wake,
 		 "controller@pin combos on which to ignore the ACPI wake flag "
 		 "ignore_wake=controller@pin[,controller@pin[,...]]");
 
-काष्ठा acpi_gpiolib_dmi_quirk अणु
+struct acpi_gpiolib_dmi_quirk {
 	bool no_edge_events_on_boot;
-	अक्षर *ignore_wake;
-पूर्ण;
+	char *ignore_wake;
+};
 
 /**
- * काष्ठा acpi_gpio_event - ACPI GPIO event handler data
+ * struct acpi_gpio_event - ACPI GPIO event handler data
  *
- * @node:	  list-entry of the events list of the काष्ठा acpi_gpio_chip
+ * @node:	  list-entry of the events list of the struct acpi_gpio_chip
  * @handle:	  handle of ACPI method to execute when the IRQ triggers
  * @handler:	  handler function to pass to request_irq() when requesting the IRQ
- * @pin:	  GPIO pin number on the काष्ठा gpio_chip
- * @irq:	  Linux IRQ number क्रम the event, क्रम request_irq() / मुक्त_irq()
+ * @pin:	  GPIO pin number on the struct gpio_chip
+ * @irq:	  Linux IRQ number for the event, for request_irq() / free_irq()
  * @irqflags:	  flags to pass to request_irq() when requesting the IRQ
  * @irq_is_wake:  If the ACPI flags indicate the IRQ is a wakeup source
- * @irq_requested:True अगर request_irq() has been करोne
- * @desc:	  काष्ठा gpio_desc क्रम the GPIO pin क्रम this event
+ * @irq_requested:True if request_irq() has been done
+ * @desc:	  struct gpio_desc for the GPIO pin for this event
  */
-काष्ठा acpi_gpio_event अणु
-	काष्ठा list_head node;
+struct acpi_gpio_event {
+	struct list_head node;
 	acpi_handle handle;
 	irq_handler_t handler;
-	अचिन्हित पूर्णांक pin;
-	अचिन्हित पूर्णांक irq;
-	अचिन्हित दीर्घ irqflags;
+	unsigned int pin;
+	unsigned int irq;
+	unsigned long irqflags;
 	bool irq_is_wake;
 	bool irq_requested;
-	काष्ठा gpio_desc *desc;
-पूर्ण;
+	struct gpio_desc *desc;
+};
 
-काष्ठा acpi_gpio_connection अणु
-	काष्ठा list_head node;
-	अचिन्हित पूर्णांक pin;
-	काष्ठा gpio_desc *desc;
-पूर्ण;
+struct acpi_gpio_connection {
+	struct list_head node;
+	unsigned int pin;
+	struct gpio_desc *desc;
+};
 
-काष्ठा acpi_gpio_chip अणु
+struct acpi_gpio_chip {
 	/*
 	 * ACPICA requires that the first field of the context parameter
 	 * passed to acpi_install_address_space_handler() is large enough
-	 * to hold काष्ठा acpi_connection_info.
+	 * to hold struct acpi_connection_info.
 	 */
-	काष्ठा acpi_connection_info conn_info;
-	काष्ठा list_head conns;
-	काष्ठा mutex conn_lock;
-	काष्ठा gpio_chip *chip;
-	काष्ठा list_head events;
-	काष्ठा list_head deferred_req_irqs_list_entry;
-पूर्ण;
+	struct acpi_connection_info conn_info;
+	struct list_head conns;
+	struct mutex conn_lock;
+	struct gpio_chip *chip;
+	struct list_head events;
+	struct list_head deferred_req_irqs_list_entry;
+};
 
 /*
- * For GPIO chips which call acpi_gpiochip_request_पूर्णांकerrupts() beक्रमe late_init
- * (so builtin drivers) we रेजिस्टर the ACPI GpioInt IRQ handlers from a
- * late_initcall_sync() handler, so that other builtin drivers can रेजिस्टर their
- * OpRegions beक्रमe the event handlers can run. This list contains GPIO chips
- * क्रम which the acpi_gpiochip_request_irqs() call has been deferred.
+ * For GPIO chips which call acpi_gpiochip_request_interrupts() before late_init
+ * (so builtin drivers) we register the ACPI GpioInt IRQ handlers from a
+ * late_initcall_sync() handler, so that other builtin drivers can register their
+ * OpRegions before the event handlers can run. This list contains GPIO chips
+ * for which the acpi_gpiochip_request_irqs() call has been deferred.
  */
-अटल DEFINE_MUTEX(acpi_gpio_deferred_req_irqs_lock);
-अटल LIST_HEAD(acpi_gpio_deferred_req_irqs_list);
-अटल bool acpi_gpio_deferred_req_irqs_करोne;
+static DEFINE_MUTEX(acpi_gpio_deferred_req_irqs_lock);
+static LIST_HEAD(acpi_gpio_deferred_req_irqs_list);
+static bool acpi_gpio_deferred_req_irqs_done;
 
-अटल पूर्णांक acpi_gpiochip_find(काष्ठा gpio_chip *gc, व्योम *data)
-अणु
-	अगर (!gc->parent)
-		वापस false;
+static int acpi_gpiochip_find(struct gpio_chip *gc, void *data)
+{
+	if (!gc->parent)
+		return false;
 
-	वापस ACPI_HANDLE(gc->parent) == data;
-पूर्ण
+	return ACPI_HANDLE(gc->parent) == data;
+}
 
 /**
  * acpi_get_gpiod() - Translate ACPI GPIO pin to GPIO descriptor usable with GPIO API
@@ -108,299 +107,299 @@ MODULE_PARM_DESC(ignore_wake,
  * @pin:	ACPI GPIO pin number (0-based, controller-relative)
  *
  * Return: GPIO descriptor to use with Linux generic GPIO API, or ERR_PTR
- * error value. Specअगरically वापसs %-EPROBE_DEFER अगर the referenced GPIO
- * controller करोes not have GPIO chip रेजिस्टरed at the moment. This is to
+ * error value. Specifically returns %-EPROBE_DEFER if the referenced GPIO
+ * controller does not have GPIO chip registered at the moment. This is to
  * support probe deferral.
  */
-अटल काष्ठा gpio_desc *acpi_get_gpiod(अक्षर *path, पूर्णांक pin)
-अणु
-	काष्ठा gpio_chip *chip;
+static struct gpio_desc *acpi_get_gpiod(char *path, int pin)
+{
+	struct gpio_chip *chip;
 	acpi_handle handle;
 	acpi_status status;
 
-	status = acpi_get_handle(शून्य, path, &handle);
-	अगर (ACPI_FAILURE(status))
-		वापस ERR_PTR(-ENODEV);
+	status = acpi_get_handle(NULL, path, &handle);
+	if (ACPI_FAILURE(status))
+		return ERR_PTR(-ENODEV);
 
 	chip = gpiochip_find(handle, acpi_gpiochip_find);
-	अगर (!chip)
-		वापस ERR_PTR(-EPROBE_DEFER);
+	if (!chip)
+		return ERR_PTR(-EPROBE_DEFER);
 
-	वापस gpiochip_get_desc(chip, pin);
-पूर्ण
+	return gpiochip_get_desc(chip, pin);
+}
 
-अटल irqवापस_t acpi_gpio_irq_handler(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा acpi_gpio_event *event = data;
+static irqreturn_t acpi_gpio_irq_handler(int irq, void *data)
+{
+	struct acpi_gpio_event *event = data;
 
-	acpi_evaluate_object(event->handle, शून्य, शून्य, शून्य);
+	acpi_evaluate_object(event->handle, NULL, NULL, NULL);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल irqवापस_t acpi_gpio_irq_handler_evt(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा acpi_gpio_event *event = data;
+static irqreturn_t acpi_gpio_irq_handler_evt(int irq, void *data)
+{
+	struct acpi_gpio_event *event = data;
 
-	acpi_execute_simple_method(event->handle, शून्य, event->pin);
+	acpi_execute_simple_method(event->handle, NULL, event->pin);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल व्योम acpi_gpio_chip_dh(acpi_handle handle, व्योम *data)
-अणु
+static void acpi_gpio_chip_dh(acpi_handle handle, void *data)
+{
 	/* The address of this function is used as a key. */
-पूर्ण
+}
 
-bool acpi_gpio_get_irq_resource(काष्ठा acpi_resource *ares,
-				काष्ठा acpi_resource_gpio **agpio)
-अणु
-	काष्ठा acpi_resource_gpio *gpio;
+bool acpi_gpio_get_irq_resource(struct acpi_resource *ares,
+				struct acpi_resource_gpio **agpio)
+{
+	struct acpi_resource_gpio *gpio;
 
-	अगर (ares->type != ACPI_RESOURCE_TYPE_GPIO)
-		वापस false;
+	if (ares->type != ACPI_RESOURCE_TYPE_GPIO)
+		return false;
 
 	gpio = &ares->data.gpio;
-	अगर (gpio->connection_type != ACPI_RESOURCE_GPIO_TYPE_INT)
-		वापस false;
+	if (gpio->connection_type != ACPI_RESOURCE_GPIO_TYPE_INT)
+		return false;
 
 	*agpio = gpio;
-	वापस true;
-पूर्ण
+	return true;
+}
 EXPORT_SYMBOL_GPL(acpi_gpio_get_irq_resource);
 
-अटल व्योम acpi_gpiochip_request_irq(काष्ठा acpi_gpio_chip *acpi_gpio,
-				      काष्ठा acpi_gpio_event *event)
-अणु
-	पूर्णांक ret, value;
+static void acpi_gpiochip_request_irq(struct acpi_gpio_chip *acpi_gpio,
+				      struct acpi_gpio_event *event)
+{
+	int ret, value;
 
-	ret = request_thपढ़ोed_irq(event->irq, शून्य, event->handler,
+	ret = request_threaded_irq(event->irq, NULL, event->handler,
 				   event->irqflags | IRQF_ONESHOT, "ACPI:Event", event);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(acpi_gpio->chip->parent,
 			"Failed to setup interrupt handler for %d\n",
 			event->irq);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (event->irq_is_wake)
+	if (event->irq_is_wake)
 		enable_irq_wake(event->irq);
 
 	event->irq_requested = true;
 
 	/* Make sure we trigger the initial state of edge-triggered IRQs */
-	अगर (run_edge_events_on_boot &&
-	    (event->irqflags & (IRQF_TRIGGER_RISING | IRQF_TRIGGER_FALLING))) अणु
+	if (run_edge_events_on_boot &&
+	    (event->irqflags & (IRQF_TRIGGER_RISING | IRQF_TRIGGER_FALLING))) {
 		value = gpiod_get_raw_value_cansleep(event->desc);
-		अगर (((event->irqflags & IRQF_TRIGGER_RISING) && value == 1) ||
+		if (((event->irqflags & IRQF_TRIGGER_RISING) && value == 1) ||
 		    ((event->irqflags & IRQF_TRIGGER_FALLING) && value == 0))
 			event->handler(event->irq, event);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम acpi_gpiochip_request_irqs(काष्ठा acpi_gpio_chip *acpi_gpio)
-अणु
-	काष्ठा acpi_gpio_event *event;
+static void acpi_gpiochip_request_irqs(struct acpi_gpio_chip *acpi_gpio)
+{
+	struct acpi_gpio_event *event;
 
-	list_क्रम_each_entry(event, &acpi_gpio->events, node)
+	list_for_each_entry(event, &acpi_gpio->events, node)
 		acpi_gpiochip_request_irq(acpi_gpio, event);
-पूर्ण
+}
 
-अटल क्रमागत gpiod_flags
-acpi_gpio_to_gpiod_flags(स्थिर काष्ठा acpi_resource_gpio *agpio, पूर्णांक polarity)
-अणु
+static enum gpiod_flags
+acpi_gpio_to_gpiod_flags(const struct acpi_resource_gpio *agpio, int polarity)
+{
 	/* GpioInt() implies input configuration */
-	अगर (agpio->connection_type == ACPI_RESOURCE_GPIO_TYPE_INT)
-		वापस GPIOD_IN;
+	if (agpio->connection_type == ACPI_RESOURCE_GPIO_TYPE_INT)
+		return GPIOD_IN;
 
-	चयन (agpio->io_restriction) अणु
-	हाल ACPI_IO_RESTRICT_INPUT:
-		वापस GPIOD_IN;
-	हाल ACPI_IO_RESTRICT_OUTPUT:
+	switch (agpio->io_restriction) {
+	case ACPI_IO_RESTRICT_INPUT:
+		return GPIOD_IN;
+	case ACPI_IO_RESTRICT_OUTPUT:
 		/*
-		 * ACPI GPIO resources करोn't contain an initial value क्रम the
-		 * GPIO. Thereक्रमe we deduce that value from the pull field
+		 * ACPI GPIO resources don't contain an initial value for the
+		 * GPIO. Therefore we deduce that value from the pull field
 		 * and the polarity instead. If the pin is pulled up we assume
-		 * शेष to be high, अगर it is pulled करोwn we assume शेष
+		 * default to be high, if it is pulled down we assume default
 		 * to be low, otherwise we leave pin untouched. For active low
-		 * polarity values will be चयनed. See also
+		 * polarity values will be switched. See also
 		 * Documentation/firmware-guide/acpi/gpio-properties.rst.
 		 */
-		चयन (agpio->pin_config) अणु
-		हाल ACPI_PIN_CONFIG_PULLUP:
-			वापस polarity == GPIO_ACTIVE_LOW ? GPIOD_OUT_LOW : GPIOD_OUT_HIGH;
-		हाल ACPI_PIN_CONFIG_PULLDOWN:
-			वापस polarity == GPIO_ACTIVE_LOW ? GPIOD_OUT_HIGH : GPIOD_OUT_LOW;
-		शेष:
-			अवरोध;
-		पूर्ण
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+		switch (agpio->pin_config) {
+		case ACPI_PIN_CONFIG_PULLUP:
+			return polarity == GPIO_ACTIVE_LOW ? GPIOD_OUT_LOW : GPIOD_OUT_HIGH;
+		case ACPI_PIN_CONFIG_PULLDOWN:
+			return polarity == GPIO_ACTIVE_LOW ? GPIOD_OUT_HIGH : GPIOD_OUT_LOW;
+		default:
+			break;
+		}
+		break;
+	default:
+		break;
+	}
 
 	/*
 	 * Assume that the BIOS has configured the direction and pull
 	 * accordingly.
 	 */
-	वापस GPIOD_ASIS;
-पूर्ण
+	return GPIOD_ASIS;
+}
 
-अटल काष्ठा gpio_desc *acpi_request_own_gpiod(काष्ठा gpio_chip *chip,
-						काष्ठा acpi_resource_gpio *agpio,
-						अचिन्हित पूर्णांक index,
-						स्थिर अक्षर *label)
-अणु
-	पूर्णांक polarity = GPIO_ACTIVE_HIGH;
-	क्रमागत gpiod_flags flags = acpi_gpio_to_gpiod_flags(agpio, polarity);
-	अचिन्हित पूर्णांक pin = agpio->pin_table[index];
-	काष्ठा gpio_desc *desc;
-	पूर्णांक ret;
+static struct gpio_desc *acpi_request_own_gpiod(struct gpio_chip *chip,
+						struct acpi_resource_gpio *agpio,
+						unsigned int index,
+						const char *label)
+{
+	int polarity = GPIO_ACTIVE_HIGH;
+	enum gpiod_flags flags = acpi_gpio_to_gpiod_flags(agpio, polarity);
+	unsigned int pin = agpio->pin_table[index];
+	struct gpio_desc *desc;
+	int ret;
 
 	desc = gpiochip_request_own_desc(chip, pin, label, polarity, flags);
-	अगर (IS_ERR(desc))
-		वापस desc;
+	if (IS_ERR(desc))
+		return desc;
 
-	ret = gpio_set_debounce_समयout(desc, agpio->debounce_समयout);
-	अगर (ret)
-		gpiochip_मुक्त_own_desc(desc);
+	ret = gpio_set_debounce_timeout(desc, agpio->debounce_timeout);
+	if (ret)
+		gpiochip_free_own_desc(desc);
 
-	वापस ret ? ERR_PTR(ret) : desc;
-पूर्ण
+	return ret ? ERR_PTR(ret) : desc;
+}
 
-अटल bool acpi_gpio_in_ignore_list(स्थिर अक्षर *controller_in, पूर्णांक pin_in)
-अणु
-	स्थिर अक्षर *controller, *pin_str;
-	पूर्णांक len, pin;
-	अक्षर *endp;
+static bool acpi_gpio_in_ignore_list(const char *controller_in, int pin_in)
+{
+	const char *controller, *pin_str;
+	int len, pin;
+	char *endp;
 
 	controller = ignore_wake;
-	जबतक (controller) अणु
-		pin_str = म_अक्षर(controller, '@');
-		अगर (!pin_str)
-			जाओ err;
+	while (controller) {
+		pin_str = strchr(controller, '@');
+		if (!pin_str)
+			goto err;
 
 		len = pin_str - controller;
-		अगर (len == म_माप(controller_in) &&
-		    म_भेदन(controller, controller_in, len) == 0) अणु
-			pin = simple_म_से_अदीर्घ(pin_str + 1, &endp, 10);
-			अगर (*endp != 0 && *endp != ',')
-				जाओ err;
+		if (len == strlen(controller_in) &&
+		    strncmp(controller, controller_in, len) == 0) {
+			pin = simple_strtoul(pin_str + 1, &endp, 10);
+			if (*endp != 0 && *endp != ',')
+				goto err;
 
-			अगर (pin == pin_in)
-				वापस true;
-		पूर्ण
+			if (pin == pin_in)
+				return true;
+		}
 
-		controller = म_अक्षर(controller, ',');
-		अगर (controller)
+		controller = strchr(controller, ',');
+		if (controller)
 			controller++;
-	पूर्ण
+	}
 
-	वापस false;
+	return false;
 err:
 	pr_err_once("Error invalid value for gpiolib_acpi.ignore_wake: %s\n",
 		    ignore_wake);
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल bool acpi_gpio_irq_is_wake(काष्ठा device *parent,
-				  काष्ठा acpi_resource_gpio *agpio)
-अणु
-	पूर्णांक pin = agpio->pin_table[0];
+static bool acpi_gpio_irq_is_wake(struct device *parent,
+				  struct acpi_resource_gpio *agpio)
+{
+	int pin = agpio->pin_table[0];
 
-	अगर (agpio->wake_capable != ACPI_WAKE_CAPABLE)
-		वापस false;
+	if (agpio->wake_capable != ACPI_WAKE_CAPABLE)
+		return false;
 
-	अगर (acpi_gpio_in_ignore_list(dev_name(parent), pin)) अणु
+	if (acpi_gpio_in_ignore_list(dev_name(parent), pin)) {
 		dev_info(parent, "Ignoring wakeup on pin %d\n", pin);
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-/* Always वापसs AE_OK so that we keep looping over the resources */
-अटल acpi_status acpi_gpiochip_alloc_event(काष्ठा acpi_resource *ares,
-					     व्योम *context)
-अणु
-	काष्ठा acpi_gpio_chip *acpi_gpio = context;
-	काष्ठा gpio_chip *chip = acpi_gpio->chip;
-	काष्ठा acpi_resource_gpio *agpio;
+/* Always returns AE_OK so that we keep looping over the resources */
+static acpi_status acpi_gpiochip_alloc_event(struct acpi_resource *ares,
+					     void *context)
+{
+	struct acpi_gpio_chip *acpi_gpio = context;
+	struct gpio_chip *chip = acpi_gpio->chip;
+	struct acpi_resource_gpio *agpio;
 	acpi_handle handle, evt_handle;
-	काष्ठा acpi_gpio_event *event;
-	irq_handler_t handler = शून्य;
-	काष्ठा gpio_desc *desc;
-	पूर्णांक ret, pin, irq;
+	struct acpi_gpio_event *event;
+	irq_handler_t handler = NULL;
+	struct gpio_desc *desc;
+	int ret, pin, irq;
 
-	अगर (!acpi_gpio_get_irq_resource(ares, &agpio))
-		वापस AE_OK;
+	if (!acpi_gpio_get_irq_resource(ares, &agpio))
+		return AE_OK;
 
 	handle = ACPI_HANDLE(chip->parent);
 	pin = agpio->pin_table[0];
 
-	अगर (pin <= 255) अणु
-		अक्षर ev_name[5];
-		प्र_लिखो(ev_name, "_%c%02hhX",
+	if (pin <= 255) {
+		char ev_name[5];
+		sprintf(ev_name, "_%c%02hhX",
 			agpio->triggering == ACPI_EDGE_SENSITIVE ? 'E' : 'L',
 			pin);
-		अगर (ACPI_SUCCESS(acpi_get_handle(handle, ev_name, &evt_handle)))
+		if (ACPI_SUCCESS(acpi_get_handle(handle, ev_name, &evt_handle)))
 			handler = acpi_gpio_irq_handler;
-	पूर्ण
-	अगर (!handler) अणु
-		अगर (ACPI_SUCCESS(acpi_get_handle(handle, "_EVT", &evt_handle)))
+	}
+	if (!handler) {
+		if (ACPI_SUCCESS(acpi_get_handle(handle, "_EVT", &evt_handle)))
 			handler = acpi_gpio_irq_handler_evt;
-	पूर्ण
-	अगर (!handler)
-		वापस AE_OK;
+	}
+	if (!handler)
+		return AE_OK;
 
 	desc = acpi_request_own_gpiod(chip, agpio, 0, "ACPI:Event");
-	अगर (IS_ERR(desc)) अणु
+	if (IS_ERR(desc)) {
 		dev_err(chip->parent,
 			"Failed to request GPIO for pin 0x%04X, err %ld\n",
 			pin, PTR_ERR(desc));
-		वापस AE_OK;
-	पूर्ण
+		return AE_OK;
+	}
 
 	ret = gpiochip_lock_as_irq(chip, pin);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(chip->parent,
 			"Failed to lock GPIO pin 0x%04X as interrupt, err %d\n",
 			pin, ret);
-		जाओ fail_मुक्त_desc;
-	पूर्ण
+		goto fail_free_desc;
+	}
 
 	irq = gpiod_to_irq(desc);
-	अगर (irq < 0) अणु
+	if (irq < 0) {
 		dev_err(chip->parent,
 			"Failed to translate GPIO pin 0x%04X to IRQ, err %d\n",
 			pin, irq);
-		जाओ fail_unlock_irq;
-	पूर्ण
+		goto fail_unlock_irq;
+	}
 
-	event = kzalloc(माप(*event), GFP_KERNEL);
-	अगर (!event)
-		जाओ fail_unlock_irq;
+	event = kzalloc(sizeof(*event), GFP_KERNEL);
+	if (!event)
+		goto fail_unlock_irq;
 
 	event->irqflags = IRQF_ONESHOT;
-	अगर (agpio->triggering == ACPI_LEVEL_SENSITIVE) अणु
-		अगर (agpio->polarity == ACPI_ACTIVE_HIGH)
+	if (agpio->triggering == ACPI_LEVEL_SENSITIVE) {
+		if (agpio->polarity == ACPI_ACTIVE_HIGH)
 			event->irqflags |= IRQF_TRIGGER_HIGH;
-		अन्यथा
+		else
 			event->irqflags |= IRQF_TRIGGER_LOW;
-	पूर्ण अन्यथा अणु
-		चयन (agpio->polarity) अणु
-		हाल ACPI_ACTIVE_HIGH:
+	} else {
+		switch (agpio->polarity) {
+		case ACPI_ACTIVE_HIGH:
 			event->irqflags |= IRQF_TRIGGER_RISING;
-			अवरोध;
-		हाल ACPI_ACTIVE_LOW:
+			break;
+		case ACPI_ACTIVE_LOW:
 			event->irqflags |= IRQF_TRIGGER_FALLING;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			event->irqflags |= IRQF_TRIGGER_RISING |
 					   IRQF_TRIGGER_FALLING;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
 	event->handle = evt_handle;
 	event->handler = handler;
@@ -411,169 +410,169 @@ err:
 
 	list_add_tail(&event->node, &acpi_gpio->events);
 
-	वापस AE_OK;
+	return AE_OK;
 
 fail_unlock_irq:
 	gpiochip_unlock_as_irq(chip, pin);
-fail_मुक्त_desc:
-	gpiochip_मुक्त_own_desc(desc);
+fail_free_desc:
+	gpiochip_free_own_desc(desc);
 
-	वापस AE_OK;
-पूर्ण
+	return AE_OK;
+}
 
 /**
- * acpi_gpiochip_request_पूर्णांकerrupts() - Register isr क्रम gpio chip ACPI events
+ * acpi_gpiochip_request_interrupts() - Register isr for gpio chip ACPI events
  * @chip:      GPIO chip
  *
- * ACPI5 platक्रमms can use GPIO संकेतed ACPI events. These GPIO पूर्णांकerrupts are
+ * ACPI5 platforms can use GPIO signaled ACPI events. These GPIO interrupts are
  * handled by ACPI event methods which need to be called from the GPIO
- * chip's पूर्णांकerrupt handler. acpi_gpiochip_request_पूर्णांकerrupts() finds out which
- * GPIO pins have ACPI event methods and assigns पूर्णांकerrupt handlers that calls
- * the ACPI event methods क्रम those pins.
+ * chip's interrupt handler. acpi_gpiochip_request_interrupts() finds out which
+ * GPIO pins have ACPI event methods and assigns interrupt handlers that calls
+ * the ACPI event methods for those pins.
  */
-व्योम acpi_gpiochip_request_पूर्णांकerrupts(काष्ठा gpio_chip *chip)
-अणु
-	काष्ठा acpi_gpio_chip *acpi_gpio;
+void acpi_gpiochip_request_interrupts(struct gpio_chip *chip)
+{
+	struct acpi_gpio_chip *acpi_gpio;
 	acpi_handle handle;
 	acpi_status status;
 	bool defer;
 
-	अगर (!chip->parent || !chip->to_irq)
-		वापस;
+	if (!chip->parent || !chip->to_irq)
+		return;
 
 	handle = ACPI_HANDLE(chip->parent);
-	अगर (!handle)
-		वापस;
+	if (!handle)
+		return;
 
-	status = acpi_get_data(handle, acpi_gpio_chip_dh, (व्योम **)&acpi_gpio);
-	अगर (ACPI_FAILURE(status))
-		वापस;
+	status = acpi_get_data(handle, acpi_gpio_chip_dh, (void **)&acpi_gpio);
+	if (ACPI_FAILURE(status))
+		return;
 
 	acpi_walk_resources(handle, "_AEI",
 			    acpi_gpiochip_alloc_event, acpi_gpio);
 
 	mutex_lock(&acpi_gpio_deferred_req_irqs_lock);
-	defer = !acpi_gpio_deferred_req_irqs_करोne;
-	अगर (defer)
+	defer = !acpi_gpio_deferred_req_irqs_done;
+	if (defer)
 		list_add(&acpi_gpio->deferred_req_irqs_list_entry,
 			 &acpi_gpio_deferred_req_irqs_list);
 	mutex_unlock(&acpi_gpio_deferred_req_irqs_lock);
 
-	अगर (defer)
-		वापस;
+	if (defer)
+		return;
 
 	acpi_gpiochip_request_irqs(acpi_gpio);
-पूर्ण
-EXPORT_SYMBOL_GPL(acpi_gpiochip_request_पूर्णांकerrupts);
+}
+EXPORT_SYMBOL_GPL(acpi_gpiochip_request_interrupts);
 
 /**
- * acpi_gpiochip_मुक्त_पूर्णांकerrupts() - Free GPIO ACPI event पूर्णांकerrupts.
+ * acpi_gpiochip_free_interrupts() - Free GPIO ACPI event interrupts.
  * @chip:      GPIO chip
  *
- * Free पूर्णांकerrupts associated with GPIO ACPI event method क्रम the given
+ * Free interrupts associated with GPIO ACPI event method for the given
  * GPIO chip.
  */
-व्योम acpi_gpiochip_मुक्त_पूर्णांकerrupts(काष्ठा gpio_chip *chip)
-अणु
-	काष्ठा acpi_gpio_chip *acpi_gpio;
-	काष्ठा acpi_gpio_event *event, *ep;
+void acpi_gpiochip_free_interrupts(struct gpio_chip *chip)
+{
+	struct acpi_gpio_chip *acpi_gpio;
+	struct acpi_gpio_event *event, *ep;
 	acpi_handle handle;
 	acpi_status status;
 
-	अगर (!chip->parent || !chip->to_irq)
-		वापस;
+	if (!chip->parent || !chip->to_irq)
+		return;
 
 	handle = ACPI_HANDLE(chip->parent);
-	अगर (!handle)
-		वापस;
+	if (!handle)
+		return;
 
-	status = acpi_get_data(handle, acpi_gpio_chip_dh, (व्योम **)&acpi_gpio);
-	अगर (ACPI_FAILURE(status))
-		वापस;
+	status = acpi_get_data(handle, acpi_gpio_chip_dh, (void **)&acpi_gpio);
+	if (ACPI_FAILURE(status))
+		return;
 
 	mutex_lock(&acpi_gpio_deferred_req_irqs_lock);
-	अगर (!list_empty(&acpi_gpio->deferred_req_irqs_list_entry))
+	if (!list_empty(&acpi_gpio->deferred_req_irqs_list_entry))
 		list_del_init(&acpi_gpio->deferred_req_irqs_list_entry);
 	mutex_unlock(&acpi_gpio_deferred_req_irqs_lock);
 
-	list_क्रम_each_entry_safe_reverse(event, ep, &acpi_gpio->events, node) अणु
-		अगर (event->irq_requested) अणु
-			अगर (event->irq_is_wake)
+	list_for_each_entry_safe_reverse(event, ep, &acpi_gpio->events, node) {
+		if (event->irq_requested) {
+			if (event->irq_is_wake)
 				disable_irq_wake(event->irq);
 
-			मुक्त_irq(event->irq, event);
-		पूर्ण
+			free_irq(event->irq, event);
+		}
 
 		gpiochip_unlock_as_irq(chip, event->pin);
-		gpiochip_मुक्त_own_desc(event->desc);
+		gpiochip_free_own_desc(event->desc);
 		list_del(&event->node);
-		kमुक्त(event);
-	पूर्ण
-पूर्ण
-EXPORT_SYMBOL_GPL(acpi_gpiochip_मुक्त_पूर्णांकerrupts);
+		kfree(event);
+	}
+}
+EXPORT_SYMBOL_GPL(acpi_gpiochip_free_interrupts);
 
-पूर्णांक acpi_dev_add_driver_gpios(काष्ठा acpi_device *adev,
-			      स्थिर काष्ठा acpi_gpio_mapping *gpios)
-अणु
-	अगर (adev && gpios) अणु
+int acpi_dev_add_driver_gpios(struct acpi_device *adev,
+			      const struct acpi_gpio_mapping *gpios)
+{
+	if (adev && gpios) {
 		adev->driver_gpios = gpios;
-		वापस 0;
-	पूर्ण
-	वापस -EINVAL;
-पूर्ण
+		return 0;
+	}
+	return -EINVAL;
+}
 EXPORT_SYMBOL_GPL(acpi_dev_add_driver_gpios);
 
-व्योम acpi_dev_हटाओ_driver_gpios(काष्ठा acpi_device *adev)
-अणु
-	अगर (adev)
-		adev->driver_gpios = शून्य;
-पूर्ण
-EXPORT_SYMBOL_GPL(acpi_dev_हटाओ_driver_gpios);
+void acpi_dev_remove_driver_gpios(struct acpi_device *adev)
+{
+	if (adev)
+		adev->driver_gpios = NULL;
+}
+EXPORT_SYMBOL_GPL(acpi_dev_remove_driver_gpios);
 
-अटल व्योम devm_acpi_dev_release_driver_gpios(काष्ठा device *dev, व्योम *res)
-अणु
-	acpi_dev_हटाओ_driver_gpios(ACPI_COMPANION(dev));
-पूर्ण
+static void devm_acpi_dev_release_driver_gpios(struct device *dev, void *res)
+{
+	acpi_dev_remove_driver_gpios(ACPI_COMPANION(dev));
+}
 
-पूर्णांक devm_acpi_dev_add_driver_gpios(काष्ठा device *dev,
-				   स्थिर काष्ठा acpi_gpio_mapping *gpios)
-अणु
-	व्योम *res;
-	पूर्णांक ret;
+int devm_acpi_dev_add_driver_gpios(struct device *dev,
+				   const struct acpi_gpio_mapping *gpios)
+{
+	void *res;
+	int ret;
 
 	res = devres_alloc(devm_acpi_dev_release_driver_gpios, 0, GFP_KERNEL);
-	अगर (!res)
-		वापस -ENOMEM;
+	if (!res)
+		return -ENOMEM;
 
 	ret = acpi_dev_add_driver_gpios(ACPI_COMPANION(dev), gpios);
-	अगर (ret) अणु
-		devres_मुक्त(res);
-		वापस ret;
-	पूर्ण
+	if (ret) {
+		devres_free(res);
+		return ret;
+	}
 	devres_add(dev, res);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(devm_acpi_dev_add_driver_gpios);
 
-व्योम devm_acpi_dev_हटाओ_driver_gpios(काष्ठा device *dev)
-अणु
-	WARN_ON(devres_release(dev, devm_acpi_dev_release_driver_gpios, शून्य, शून्य));
-पूर्ण
-EXPORT_SYMBOL_GPL(devm_acpi_dev_हटाओ_driver_gpios);
+void devm_acpi_dev_remove_driver_gpios(struct device *dev)
+{
+	WARN_ON(devres_release(dev, devm_acpi_dev_release_driver_gpios, NULL, NULL));
+}
+EXPORT_SYMBOL_GPL(devm_acpi_dev_remove_driver_gpios);
 
-अटल bool acpi_get_driver_gpio_data(काष्ठा acpi_device *adev,
-				      स्थिर अक्षर *name, पूर्णांक index,
-				      काष्ठा fwnode_reference_args *args,
-				      अचिन्हित पूर्णांक *quirks)
-अणु
-	स्थिर काष्ठा acpi_gpio_mapping *gm;
+static bool acpi_get_driver_gpio_data(struct acpi_device *adev,
+				      const char *name, int index,
+				      struct fwnode_reference_args *args,
+				      unsigned int *quirks)
+{
+	const struct acpi_gpio_mapping *gm;
 
-	अगर (!adev->driver_gpios)
-		वापस false;
+	if (!adev->driver_gpios)
+		return false;
 
-	क्रम (gm = adev->driver_gpios; gm->name; gm++)
-		अगर (!म_भेद(name, gm->name) && gm->data && index < gm->size) अणु
-			स्थिर काष्ठा acpi_gpio_params *par = gm->data + index;
+	for (gm = adev->driver_gpios; gm->name; gm++)
+		if (!strcmp(name, gm->name) && gm->data && index < gm->size) {
+			const struct acpi_gpio_params *par = gm->data + index;
 
 			args->fwnode = acpi_fwnode_handle(adev);
 			args->args[0] = par->crs_entry_index;
@@ -582,199 +581,199 @@ EXPORT_SYMBOL_GPL(devm_acpi_dev_हटाओ_driver_gpios);
 			args->nargs = 3;
 
 			*quirks = gm->quirks;
-			वापस true;
-		पूर्ण
+			return true;
+		}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल पूर्णांक
-__acpi_gpio_update_gpiod_flags(क्रमागत gpiod_flags *flags, क्रमागत gpiod_flags update)
-अणु
-	स्थिर क्रमागत gpiod_flags mask =
-		GPIOD_FLAGS_BIT_सूची_SET | GPIOD_FLAGS_BIT_सूची_OUT |
-		GPIOD_FLAGS_BIT_सूची_VAL;
-	पूर्णांक ret = 0;
+static int
+__acpi_gpio_update_gpiod_flags(enum gpiod_flags *flags, enum gpiod_flags update)
+{
+	const enum gpiod_flags mask =
+		GPIOD_FLAGS_BIT_DIR_SET | GPIOD_FLAGS_BIT_DIR_OUT |
+		GPIOD_FLAGS_BIT_DIR_VAL;
+	int ret = 0;
 
 	/*
-	 * Check अगर the BIOS has IoRestriction with explicitly set direction
+	 * Check if the BIOS has IoRestriction with explicitly set direction
 	 * and update @flags accordingly. Otherwise use whatever caller asked
-	 * क्रम.
+	 * for.
 	 */
-	अगर (update & GPIOD_FLAGS_BIT_सूची_SET) अणु
-		क्रमागत gpiod_flags dअगरf = *flags ^ update;
+	if (update & GPIOD_FLAGS_BIT_DIR_SET) {
+		enum gpiod_flags diff = *flags ^ update;
 
 		/*
-		 * Check अगर caller supplied incompatible GPIO initialization
+		 * Check if caller supplied incompatible GPIO initialization
 		 * flags.
 		 *
-		 * Return %-EINVAL to notअगरy that firmware has dअगरferent
+		 * Return %-EINVAL to notify that firmware has different
 		 * settings and we are going to use them.
 		 */
-		अगर (((*flags & GPIOD_FLAGS_BIT_सूची_SET) && (dअगरf & GPIOD_FLAGS_BIT_सूची_OUT)) ||
-		    ((*flags & GPIOD_FLAGS_BIT_सूची_OUT) && (dअगरf & GPIOD_FLAGS_BIT_सूची_VAL)))
+		if (((*flags & GPIOD_FLAGS_BIT_DIR_SET) && (diff & GPIOD_FLAGS_BIT_DIR_OUT)) ||
+		    ((*flags & GPIOD_FLAGS_BIT_DIR_OUT) && (diff & GPIOD_FLAGS_BIT_DIR_VAL)))
 			ret = -EINVAL;
 		*flags = (*flags & ~mask) | (update & mask);
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 
-पूर्णांक
-acpi_gpio_update_gpiod_flags(क्रमागत gpiod_flags *flags, काष्ठा acpi_gpio_info *info)
-अणु
-	काष्ठा device *dev = &info->adev->dev;
-	क्रमागत gpiod_flags old = *flags;
-	पूर्णांक ret;
+int
+acpi_gpio_update_gpiod_flags(enum gpiod_flags *flags, struct acpi_gpio_info *info)
+{
+	struct device *dev = &info->adev->dev;
+	enum gpiod_flags old = *flags;
+	int ret;
 
 	ret = __acpi_gpio_update_gpiod_flags(&old, info->flags);
-	अगर (info->quirks & ACPI_GPIO_QUIRK_NO_IO_RESTRICTION) अणु
-		अगर (ret)
+	if (info->quirks & ACPI_GPIO_QUIRK_NO_IO_RESTRICTION) {
+		if (ret)
 			dev_warn(dev, FW_BUG "GPIO not in correct mode, fixing\n");
-	पूर्ण अन्यथा अणु
-		अगर (ret)
+	} else {
+		if (ret)
 			dev_dbg(dev, "Override GPIO initialization flags\n");
 		*flags = old;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक acpi_gpio_update_gpiod_lookup_flags(अचिन्हित दीर्घ *lookupflags,
-					काष्ठा acpi_gpio_info *info)
-अणु
-	चयन (info->pin_config) अणु
-	हाल ACPI_PIN_CONFIG_PULLUP:
+int acpi_gpio_update_gpiod_lookup_flags(unsigned long *lookupflags,
+					struct acpi_gpio_info *info)
+{
+	switch (info->pin_config) {
+	case ACPI_PIN_CONFIG_PULLUP:
 		*lookupflags |= GPIO_PULL_UP;
-		अवरोध;
-	हाल ACPI_PIN_CONFIG_PULLDOWN:
+		break;
+	case ACPI_PIN_CONFIG_PULLDOWN:
 		*lookupflags |= GPIO_PULL_DOWN;
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+		break;
+	default:
+		break;
+	}
 
-	अगर (info->polarity == GPIO_ACTIVE_LOW)
+	if (info->polarity == GPIO_ACTIVE_LOW)
 		*lookupflags |= GPIO_ACTIVE_LOW;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-काष्ठा acpi_gpio_lookup अणु
-	काष्ठा acpi_gpio_info info;
-	पूर्णांक index;
+struct acpi_gpio_lookup {
+	struct acpi_gpio_info info;
+	int index;
 	u16 pin_index;
 	bool active_low;
-	काष्ठा gpio_desc *desc;
-	पूर्णांक n;
-पूर्ण;
+	struct gpio_desc *desc;
+	int n;
+};
 
-अटल पूर्णांक acpi_populate_gpio_lookup(काष्ठा acpi_resource *ares, व्योम *data)
-अणु
-	काष्ठा acpi_gpio_lookup *lookup = data;
+static int acpi_populate_gpio_lookup(struct acpi_resource *ares, void *data)
+{
+	struct acpi_gpio_lookup *lookup = data;
 
-	अगर (ares->type != ACPI_RESOURCE_TYPE_GPIO)
-		वापस 1;
+	if (ares->type != ACPI_RESOURCE_TYPE_GPIO)
+		return 1;
 
-	अगर (!lookup->desc) अणु
-		स्थिर काष्ठा acpi_resource_gpio *agpio = &ares->data.gpio;
-		bool gpioपूर्णांक = agpio->connection_type == ACPI_RESOURCE_GPIO_TYPE_INT;
-		काष्ठा gpio_desc *desc;
+	if (!lookup->desc) {
+		const struct acpi_resource_gpio *agpio = &ares->data.gpio;
+		bool gpioint = agpio->connection_type == ACPI_RESOURCE_GPIO_TYPE_INT;
+		struct gpio_desc *desc;
 		u16 pin_index;
 
-		अगर (lookup->info.quirks & ACPI_GPIO_QUIRK_ONLY_GPIOIO && gpioपूर्णांक)
+		if (lookup->info.quirks & ACPI_GPIO_QUIRK_ONLY_GPIOIO && gpioint)
 			lookup->index++;
 
-		अगर (lookup->n++ != lookup->index)
-			वापस 1;
+		if (lookup->n++ != lookup->index)
+			return 1;
 
 		pin_index = lookup->pin_index;
-		अगर (pin_index >= agpio->pin_table_length)
-			वापस 1;
+		if (pin_index >= agpio->pin_table_length)
+			return 1;
 
-		अगर (lookup->info.quirks & ACPI_GPIO_QUIRK_ABSOLUTE_NUMBER)
+		if (lookup->info.quirks & ACPI_GPIO_QUIRK_ABSOLUTE_NUMBER)
 			desc = gpio_to_desc(agpio->pin_table[pin_index]);
-		अन्यथा
+		else
 			desc = acpi_get_gpiod(agpio->resource_source.string_ptr,
 					      agpio->pin_table[pin_index]);
 		lookup->desc = desc;
 		lookup->info.pin_config = agpio->pin_config;
-		lookup->info.debounce = agpio->debounce_समयout;
-		lookup->info.gpioपूर्णांक = gpioपूर्णांक;
+		lookup->info.debounce = agpio->debounce_timeout;
+		lookup->info.gpioint = gpioint;
 
 		/*
-		 * Polarity and triggering are only specअगरied क्रम GpioInt
+		 * Polarity and triggering are only specified for GpioInt
 		 * resource.
 		 * Note: we expect here:
 		 * - ACPI_ACTIVE_LOW == GPIO_ACTIVE_LOW
 		 * - ACPI_ACTIVE_HIGH == GPIO_ACTIVE_HIGH
 		 */
-		अगर (lookup->info.gpioपूर्णांक) अणु
+		if (lookup->info.gpioint) {
 			lookup->info.polarity = agpio->polarity;
 			lookup->info.triggering = agpio->triggering;
-		पूर्ण अन्यथा अणु
+		} else {
 			lookup->info.polarity = lookup->active_low;
-		पूर्ण
+		}
 
 		lookup->info.flags = acpi_gpio_to_gpiod_flags(agpio, lookup->info.polarity);
-	पूर्ण
+	}
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल पूर्णांक acpi_gpio_resource_lookup(काष्ठा acpi_gpio_lookup *lookup,
-				     काष्ठा acpi_gpio_info *info)
-अणु
-	काष्ठा acpi_device *adev = lookup->info.adev;
-	काष्ठा list_head res_list;
-	पूर्णांक ret;
+static int acpi_gpio_resource_lookup(struct acpi_gpio_lookup *lookup,
+				     struct acpi_gpio_info *info)
+{
+	struct acpi_device *adev = lookup->info.adev;
+	struct list_head res_list;
+	int ret;
 
 	INIT_LIST_HEAD(&res_list);
 
 	ret = acpi_dev_get_resources(adev, &res_list,
 				     acpi_populate_gpio_lookup,
 				     lookup);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	acpi_dev_मुक्त_resource_list(&res_list);
+	acpi_dev_free_resource_list(&res_list);
 
-	अगर (!lookup->desc)
-		वापस -ENOENT;
+	if (!lookup->desc)
+		return -ENOENT;
 
-	अगर (info)
+	if (info)
 		*info = lookup->info;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक acpi_gpio_property_lookup(काष्ठा fwnode_handle *fwnode,
-				     स्थिर अक्षर *propname, पूर्णांक index,
-				     काष्ठा acpi_gpio_lookup *lookup)
-अणु
-	काष्ठा fwnode_reference_args args;
-	अचिन्हित पूर्णांक quirks = 0;
-	पूर्णांक ret;
+static int acpi_gpio_property_lookup(struct fwnode_handle *fwnode,
+				     const char *propname, int index,
+				     struct acpi_gpio_lookup *lookup)
+{
+	struct fwnode_reference_args args;
+	unsigned int quirks = 0;
+	int ret;
 
-	स_रखो(&args, 0, माप(args));
+	memset(&args, 0, sizeof(args));
 	ret = __acpi_node_get_property_reference(fwnode, propname, index, 3,
 						 &args);
-	अगर (ret) अणु
-		काष्ठा acpi_device *adev = to_acpi_device_node(fwnode);
+	if (ret) {
+		struct acpi_device *adev = to_acpi_device_node(fwnode);
 
-		अगर (!adev)
-			वापस ret;
+		if (!adev)
+			return ret;
 
-		अगर (!acpi_get_driver_gpio_data(adev, propname, index, &args,
+		if (!acpi_get_driver_gpio_data(adev, propname, index, &args,
 					       &quirks))
-			वापस ret;
-	पूर्ण
+			return ret;
+	}
 	/*
 	 * The property was found and resolved, so need to lookup the GPIO based
-	 * on वापसed args.
+	 * on returned args.
 	 */
-	अगर (!to_acpi_device_node(args.fwnode))
-		वापस -EINVAL;
-	अगर (args.nargs != 3)
-		वापस -EPROTO;
+	if (!to_acpi_device_node(args.fwnode))
+		return -EINVAL;
+	if (args.nargs != 3)
+		return -EPROTO;
 
 	lookup->index = args.args[0];
 	lookup->pin_index = args.args[1];
@@ -783,171 +782,171 @@ acpi_gpio_update_gpiod_flags(क्रमागत gpiod_flags *flags, काष
 	lookup->info.adev = to_acpi_device_node(args.fwnode);
 	lookup->info.quirks = quirks;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * acpi_get_gpiod_by_index() - get a GPIO descriptor from device resources
- * @adev: poपूर्णांकer to a ACPI device to get GPIO from
+ * @adev: pointer to a ACPI device to get GPIO from
  * @propname: Property name of the GPIO (optional)
  * @index: index of GpioIo/GpioInt resource (starting from %0)
- * @info: info poपूर्णांकer to fill in (optional)
+ * @info: info pointer to fill in (optional)
  *
- * Function goes through ACPI resources क्रम @adev and based on @index looks
+ * Function goes through ACPI resources for @adev and based on @index looks
  * up a GpioIo/GpioInt resource, translates it to the Linux GPIO descriptor,
- * and वापसs it. @index matches GpioIo/GpioInt resources only so अगर there
+ * and returns it. @index matches GpioIo/GpioInt resources only so if there
  * are total %3 GPIO resources, the index goes from %0 to %2.
  *
- * If @propname is specअगरied the GPIO is looked using device property. In
- * that हाल @index is used to select the GPIO entry in the property value
- * (in हाल of multiple).
+ * If @propname is specified the GPIO is looked using device property. In
+ * that case @index is used to select the GPIO entry in the property value
+ * (in case of multiple).
  *
  * If the GPIO cannot be translated or there is an error, an ERR_PTR is
- * वापसed.
+ * returned.
  *
- * Note: अगर the GPIO resource has multiple entries in the pin list, this
- * function only वापसs the first.
+ * Note: if the GPIO resource has multiple entries in the pin list, this
+ * function only returns the first.
  */
-अटल काष्ठा gpio_desc *acpi_get_gpiod_by_index(काष्ठा acpi_device *adev,
-					  स्थिर अक्षर *propname, पूर्णांक index,
-					  काष्ठा acpi_gpio_info *info)
-अणु
-	काष्ठा acpi_gpio_lookup lookup;
-	पूर्णांक ret;
+static struct gpio_desc *acpi_get_gpiod_by_index(struct acpi_device *adev,
+					  const char *propname, int index,
+					  struct acpi_gpio_info *info)
+{
+	struct acpi_gpio_lookup lookup;
+	int ret;
 
-	अगर (!adev)
-		वापस ERR_PTR(-ENODEV);
+	if (!adev)
+		return ERR_PTR(-ENODEV);
 
-	स_रखो(&lookup, 0, माप(lookup));
+	memset(&lookup, 0, sizeof(lookup));
 	lookup.index = index;
 
-	अगर (propname) अणु
+	if (propname) {
 		dev_dbg(&adev->dev, "GPIO: looking up %s\n", propname);
 
 		ret = acpi_gpio_property_lookup(acpi_fwnode_handle(adev),
 						propname, index, &lookup);
-		अगर (ret)
-			वापस ERR_PTR(ret);
+		if (ret)
+			return ERR_PTR(ret);
 
 		dev_dbg(&adev->dev, "GPIO: _DSD returned %s %d %u %u\n",
 			dev_name(&lookup.info.adev->dev), lookup.index,
 			lookup.pin_index, lookup.active_low);
-	पूर्ण अन्यथा अणु
+	} else {
 		dev_dbg(&adev->dev, "GPIO: looking up %d in _CRS\n", index);
 		lookup.info.adev = adev;
-	पूर्ण
+	}
 
 	ret = acpi_gpio_resource_lookup(&lookup, info);
-	वापस ret ? ERR_PTR(ret) : lookup.desc;
-पूर्ण
+	return ret ? ERR_PTR(ret) : lookup.desc;
+}
 
-अटल bool acpi_can_fallback_to_crs(काष्ठा acpi_device *adev,
-				     स्थिर अक्षर *con_id)
-अणु
-	/* Never allow fallback अगर the device has properties */
-	अगर (acpi_dev_has_props(adev) || adev->driver_gpios)
-		वापस false;
+static bool acpi_can_fallback_to_crs(struct acpi_device *adev,
+				     const char *con_id)
+{
+	/* Never allow fallback if the device has properties */
+	if (acpi_dev_has_props(adev) || adev->driver_gpios)
+		return false;
 
-	वापस con_id == शून्य;
-पूर्ण
+	return con_id == NULL;
+}
 
-काष्ठा gpio_desc *acpi_find_gpio(काष्ठा device *dev,
-				 स्थिर अक्षर *con_id,
-				 अचिन्हित पूर्णांक idx,
-				 क्रमागत gpiod_flags *dflags,
-				 अचिन्हित दीर्घ *lookupflags)
-अणु
-	काष्ठा acpi_device *adev = ACPI_COMPANION(dev);
-	काष्ठा acpi_gpio_info info;
-	काष्ठा gpio_desc *desc;
-	अक्षर propname[32];
-	पूर्णांक i;
+struct gpio_desc *acpi_find_gpio(struct device *dev,
+				 const char *con_id,
+				 unsigned int idx,
+				 enum gpiod_flags *dflags,
+				 unsigned long *lookupflags)
+{
+	struct acpi_device *adev = ACPI_COMPANION(dev);
+	struct acpi_gpio_info info;
+	struct gpio_desc *desc;
+	char propname[32];
+	int i;
 
 	/* Try first from _DSD */
-	क्रम (i = 0; i < ARRAY_SIZE(gpio_suffixes); i++) अणु
-		अगर (con_id) अणु
-			snम_लिखो(propname, माप(propname), "%s-%s",
+	for (i = 0; i < ARRAY_SIZE(gpio_suffixes); i++) {
+		if (con_id) {
+			snprintf(propname, sizeof(propname), "%s-%s",
 				 con_id, gpio_suffixes[i]);
-		पूर्ण अन्यथा अणु
-			snम_लिखो(propname, माप(propname), "%s",
+		} else {
+			snprintf(propname, sizeof(propname), "%s",
 				 gpio_suffixes[i]);
-		पूर्ण
+		}
 
 		desc = acpi_get_gpiod_by_index(adev, propname, idx, &info);
-		अगर (!IS_ERR(desc))
-			अवरोध;
-		अगर (PTR_ERR(desc) == -EPROBE_DEFER)
-			वापस ERR_CAST(desc);
-	पूर्ण
+		if (!IS_ERR(desc))
+			break;
+		if (PTR_ERR(desc) == -EPROBE_DEFER)
+			return ERR_CAST(desc);
+	}
 
 	/* Then from plain _CRS GPIOs */
-	अगर (IS_ERR(desc)) अणु
-		अगर (!acpi_can_fallback_to_crs(adev, con_id))
-			वापस ERR_PTR(-ENOENT);
+	if (IS_ERR(desc)) {
+		if (!acpi_can_fallback_to_crs(adev, con_id))
+			return ERR_PTR(-ENOENT);
 
-		desc = acpi_get_gpiod_by_index(adev, शून्य, idx, &info);
-		अगर (IS_ERR(desc))
-			वापस desc;
-	पूर्ण
+		desc = acpi_get_gpiod_by_index(adev, NULL, idx, &info);
+		if (IS_ERR(desc))
+			return desc;
+	}
 
-	अगर (info.gpioपूर्णांक &&
-	    (*dflags == GPIOD_OUT_LOW || *dflags == GPIOD_OUT_HIGH)) अणु
+	if (info.gpioint &&
+	    (*dflags == GPIOD_OUT_LOW || *dflags == GPIOD_OUT_HIGH)) {
 		dev_dbg(dev, "refusing GpioInt() entry when doing GPIOD_OUT_* lookup\n");
-		वापस ERR_PTR(-ENOENT);
-	पूर्ण
+		return ERR_PTR(-ENOENT);
+	}
 
 	acpi_gpio_update_gpiod_flags(dflags, &info);
 	acpi_gpio_update_gpiod_lookup_flags(lookupflags, &info);
-	वापस desc;
-पूर्ण
+	return desc;
+}
 
 /**
  * acpi_node_get_gpiod() - get a GPIO descriptor from ACPI resources
- * @fwnode: poपूर्णांकer to an ACPI firmware node to get the GPIO inक्रमmation from
+ * @fwnode: pointer to an ACPI firmware node to get the GPIO information from
  * @propname: Property name of the GPIO
  * @index: index of GpioIo/GpioInt resource (starting from %0)
- * @info: info poपूर्णांकer to fill in (optional)
+ * @info: info pointer to fill in (optional)
  *
- * If @fwnode is an ACPI device object, call acpi_get_gpiod_by_index() क्रम it.
+ * If @fwnode is an ACPI device object, call acpi_get_gpiod_by_index() for it.
  * Otherwise (i.e. it is a data-only non-device object), use the property-based
- * GPIO lookup to get to the GPIO resource with the relevant inक्रमmation and use
- * that to obtain the GPIO descriptor to वापस.
+ * GPIO lookup to get to the GPIO resource with the relevant information and use
+ * that to obtain the GPIO descriptor to return.
  *
  * If the GPIO cannot be translated or there is an error an ERR_PTR is
- * वापसed.
+ * returned.
  */
-काष्ठा gpio_desc *acpi_node_get_gpiod(काष्ठा fwnode_handle *fwnode,
-				      स्थिर अक्षर *propname, पूर्णांक index,
-				      काष्ठा acpi_gpio_info *info)
-अणु
-	काष्ठा acpi_gpio_lookup lookup;
-	काष्ठा acpi_device *adev;
-	पूर्णांक ret;
+struct gpio_desc *acpi_node_get_gpiod(struct fwnode_handle *fwnode,
+				      const char *propname, int index,
+				      struct acpi_gpio_info *info)
+{
+	struct acpi_gpio_lookup lookup;
+	struct acpi_device *adev;
+	int ret;
 
 	adev = to_acpi_device_node(fwnode);
-	अगर (adev)
-		वापस acpi_get_gpiod_by_index(adev, propname, index, info);
+	if (adev)
+		return acpi_get_gpiod_by_index(adev, propname, index, info);
 
-	अगर (!is_acpi_data_node(fwnode))
-		वापस ERR_PTR(-ENODEV);
+	if (!is_acpi_data_node(fwnode))
+		return ERR_PTR(-ENODEV);
 
-	अगर (!propname)
-		वापस ERR_PTR(-EINVAL);
+	if (!propname)
+		return ERR_PTR(-EINVAL);
 
-	स_रखो(&lookup, 0, माप(lookup));
+	memset(&lookup, 0, sizeof(lookup));
 	lookup.index = index;
 
 	ret = acpi_gpio_property_lookup(fwnode, propname, index, &lookup);
-	अगर (ret)
-		वापस ERR_PTR(ret);
+	if (ret)
+		return ERR_PTR(ret);
 
 	ret = acpi_gpio_resource_lookup(&lookup, info);
-	वापस ret ? ERR_PTR(ret) : lookup.desc;
-पूर्ण
+	return ret ? ERR_PTR(ret) : lookup.desc;
+}
 
 /**
  * acpi_dev_gpio_irq_get_by() - Find GpioInt and translate it to Linux IRQ number
- * @adev: poपूर्णांकer to a ACPI device to get IRQ from
+ * @adev: pointer to a ACPI device to get IRQ from
  * @name: optional name of GpioInt resource
  * @index: index of GpioInt resource (starting from %0)
  *
@@ -955,176 +954,176 @@ acpi_gpio_update_gpiod_flags(क्रमागत gpiod_flags *flags, काष
  * used to translate from the GPIO offset in the resource to the Linux IRQ
  * number.
  *
- * The function is idempotent, though each समय it runs it will configure GPIO
+ * The function is idempotent, though each time it runs it will configure GPIO
  * pin direction according to the flags in GpioInt resource.
  *
  * The function takes optional @name parameter. If the resource has a property
- * name, then only those will be taken पूर्णांकo account.
+ * name, then only those will be taken into account.
  *
- * Return: Linux IRQ number (> %0) on success, negative त्रुटि_सं on failure.
+ * Return: Linux IRQ number (> %0) on success, negative errno on failure.
  */
-पूर्णांक acpi_dev_gpio_irq_get_by(काष्ठा acpi_device *adev, स्थिर अक्षर *name, पूर्णांक index)
-अणु
-	पूर्णांक idx, i;
-	अचिन्हित पूर्णांक irq_flags;
-	पूर्णांक ret;
+int acpi_dev_gpio_irq_get_by(struct acpi_device *adev, const char *name, int index)
+{
+	int idx, i;
+	unsigned int irq_flags;
+	int ret;
 
-	क्रम (i = 0, idx = 0; idx <= index; i++) अणु
-		काष्ठा acpi_gpio_info info;
-		काष्ठा gpio_desc *desc;
+	for (i = 0, idx = 0; idx <= index; i++) {
+		struct acpi_gpio_info info;
+		struct gpio_desc *desc;
 
 		desc = acpi_get_gpiod_by_index(adev, name, i, &info);
 
-		/* Ignore -EPROBE_DEFER, it only matters अगर idx matches */
-		अगर (IS_ERR(desc) && PTR_ERR(desc) != -EPROBE_DEFER)
-			वापस PTR_ERR(desc);
+		/* Ignore -EPROBE_DEFER, it only matters if idx matches */
+		if (IS_ERR(desc) && PTR_ERR(desc) != -EPROBE_DEFER)
+			return PTR_ERR(desc);
 
-		अगर (info.gpioपूर्णांक && idx++ == index) अणु
-			अचिन्हित दीर्घ lflags = GPIO_LOOKUP_FLAGS_DEFAULT;
-			क्रमागत gpiod_flags dflags = GPIOD_ASIS;
-			अक्षर label[32];
-			पूर्णांक irq;
+		if (info.gpioint && idx++ == index) {
+			unsigned long lflags = GPIO_LOOKUP_FLAGS_DEFAULT;
+			enum gpiod_flags dflags = GPIOD_ASIS;
+			char label[32];
+			int irq;
 
-			अगर (IS_ERR(desc))
-				वापस PTR_ERR(desc);
+			if (IS_ERR(desc))
+				return PTR_ERR(desc);
 
 			irq = gpiod_to_irq(desc);
-			अगर (irq < 0)
-				वापस irq;
+			if (irq < 0)
+				return irq;
 
 			acpi_gpio_update_gpiod_flags(&dflags, &info);
 			acpi_gpio_update_gpiod_lookup_flags(&lflags, &info);
 
-			snम_लिखो(label, माप(label), "GpioInt() %d", index);
+			snprintf(label, sizeof(label), "GpioInt() %d", index);
 			ret = gpiod_configure_flags(desc, label, lflags, dflags);
-			अगर (ret < 0)
-				वापस ret;
+			if (ret < 0)
+				return ret;
 
-			ret = gpio_set_debounce_समयout(desc, info.debounce);
-			अगर (ret)
-				वापस ret;
+			ret = gpio_set_debounce_timeout(desc, info.debounce);
+			if (ret)
+				return ret;
 
 			irq_flags = acpi_dev_get_irq_type(info.triggering,
 							  info.polarity);
 
-			/* Set type अगर specअगरied and dअगरferent than the current one */
-			अगर (irq_flags != IRQ_TYPE_NONE &&
+			/* Set type if specified and different than the current one */
+			if (irq_flags != IRQ_TYPE_NONE &&
 			    irq_flags != irq_get_trigger_type(irq))
 				irq_set_irq_type(irq, irq_flags);
 
-			वापस irq;
-		पूर्ण
+			return irq;
+		}
 
-	पूर्ण
-	वापस -ENOENT;
-पूर्ण
+	}
+	return -ENOENT;
+}
 EXPORT_SYMBOL_GPL(acpi_dev_gpio_irq_get_by);
 
-अटल acpi_status
+static acpi_status
 acpi_gpio_adr_space_handler(u32 function, acpi_physical_address address,
-			    u32 bits, u64 *value, व्योम *handler_context,
-			    व्योम *region_context)
-अणु
-	काष्ठा acpi_gpio_chip *achip = region_context;
-	काष्ठा gpio_chip *chip = achip->chip;
-	काष्ठा acpi_resource_gpio *agpio;
-	काष्ठा acpi_resource *ares;
+			    u32 bits, u64 *value, void *handler_context,
+			    void *region_context)
+{
+	struct acpi_gpio_chip *achip = region_context;
+	struct gpio_chip *chip = achip->chip;
+	struct acpi_resource_gpio *agpio;
+	struct acpi_resource *ares;
 	u16 pin_index = address;
 	acpi_status status;
-	पूर्णांक length;
-	पूर्णांक i;
+	int length;
+	int i;
 
 	status = acpi_buffer_to_resource(achip->conn_info.connection,
 					 achip->conn_info.length, &ares);
-	अगर (ACPI_FAILURE(status))
-		वापस status;
+	if (ACPI_FAILURE(status))
+		return status;
 
-	अगर (WARN_ON(ares->type != ACPI_RESOURCE_TYPE_GPIO)) अणु
+	if (WARN_ON(ares->type != ACPI_RESOURCE_TYPE_GPIO)) {
 		ACPI_FREE(ares);
-		वापस AE_BAD_PARAMETER;
-	पूर्ण
+		return AE_BAD_PARAMETER;
+	}
 
 	agpio = &ares->data.gpio;
 
-	अगर (WARN_ON(agpio->io_restriction == ACPI_IO_RESTRICT_INPUT &&
-	    function == ACPI_WRITE)) अणु
+	if (WARN_ON(agpio->io_restriction == ACPI_IO_RESTRICT_INPUT &&
+	    function == ACPI_WRITE)) {
 		ACPI_FREE(ares);
-		वापस AE_BAD_PARAMETER;
-	पूर्ण
+		return AE_BAD_PARAMETER;
+	}
 
 	length = min_t(u16, agpio->pin_table_length, pin_index + bits);
-	क्रम (i = pin_index; i < length; ++i) अणु
-		पूर्णांक pin = agpio->pin_table[i];
-		काष्ठा acpi_gpio_connection *conn;
-		काष्ठा gpio_desc *desc;
+	for (i = pin_index; i < length; ++i) {
+		int pin = agpio->pin_table[i];
+		struct acpi_gpio_connection *conn;
+		struct gpio_desc *desc;
 		bool found;
 
 		mutex_lock(&achip->conn_lock);
 
 		found = false;
-		list_क्रम_each_entry(conn, &achip->conns, node) अणु
-			अगर (conn->pin == pin) अणु
+		list_for_each_entry(conn, &achip->conns, node) {
+			if (conn->pin == pin) {
 				found = true;
 				desc = conn->desc;
-				अवरोध;
-			पूर्ण
-		पूर्ण
+				break;
+			}
+		}
 
 		/*
 		 * The same GPIO can be shared between operation region and
-		 * event but only अगर the access here is ACPI_READ. In that
-		 * हाल we "borrow" the event GPIO instead.
+		 * event but only if the access here is ACPI_READ. In that
+		 * case we "borrow" the event GPIO instead.
 		 */
-		अगर (!found && agpio->shareable == ACPI_SHARED &&
-		     function == ACPI_READ) अणु
-			काष्ठा acpi_gpio_event *event;
+		if (!found && agpio->shareable == ACPI_SHARED &&
+		     function == ACPI_READ) {
+			struct acpi_gpio_event *event;
 
-			list_क्रम_each_entry(event, &achip->events, node) अणु
-				अगर (event->pin == pin) अणु
+			list_for_each_entry(event, &achip->events, node) {
+				if (event->pin == pin) {
 					desc = event->desc;
 					found = true;
-					अवरोध;
-				पूर्ण
-			पूर्ण
-		पूर्ण
+					break;
+				}
+			}
+		}
 
-		अगर (!found) अणु
+		if (!found) {
 			desc = acpi_request_own_gpiod(chip, agpio, i, "ACPI:OpRegion");
-			अगर (IS_ERR(desc)) अणु
+			if (IS_ERR(desc)) {
 				mutex_unlock(&achip->conn_lock);
 				status = AE_ERROR;
-				जाओ out;
-			पूर्ण
+				goto out;
+			}
 
-			conn = kzalloc(माप(*conn), GFP_KERNEL);
-			अगर (!conn) अणु
-				gpiochip_मुक्त_own_desc(desc);
+			conn = kzalloc(sizeof(*conn), GFP_KERNEL);
+			if (!conn) {
+				gpiochip_free_own_desc(desc);
 				mutex_unlock(&achip->conn_lock);
 				status = AE_NO_MEMORY;
-				जाओ out;
-			पूर्ण
+				goto out;
+			}
 
 			conn->pin = pin;
 			conn->desc = desc;
 			list_add_tail(&conn->node, &achip->conns);
-		पूर्ण
+		}
 
 		mutex_unlock(&achip->conn_lock);
 
-		अगर (function == ACPI_WRITE)
+		if (function == ACPI_WRITE)
 			gpiod_set_raw_value_cansleep(desc, !!(*value & BIT(i)));
-		अन्यथा
+		else
 			*value |= (u64)gpiod_get_raw_value_cansleep(desc) << i;
-	पूर्ण
+	}
 
 out:
 	ACPI_FREE(ares);
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल व्योम acpi_gpiochip_request_regions(काष्ठा acpi_gpio_chip *achip)
-अणु
-	काष्ठा gpio_chip *chip = achip->chip;
+static void acpi_gpiochip_request_regions(struct acpi_gpio_chip *achip)
+{
+	struct gpio_chip *chip = achip->chip;
 	acpi_handle handle = ACPI_HANDLE(chip->parent);
 	acpi_status status;
 
@@ -1132,409 +1131,409 @@ out:
 	mutex_init(&achip->conn_lock);
 	status = acpi_install_address_space_handler(handle, ACPI_ADR_SPACE_GPIO,
 						    acpi_gpio_adr_space_handler,
-						    शून्य, achip);
-	अगर (ACPI_FAILURE(status))
+						    NULL, achip);
+	if (ACPI_FAILURE(status))
 		dev_err(chip->parent,
 		        "Failed to install GPIO OpRegion handler\n");
-पूर्ण
+}
 
-अटल व्योम acpi_gpiochip_मुक्त_regions(काष्ठा acpi_gpio_chip *achip)
-अणु
-	काष्ठा gpio_chip *chip = achip->chip;
+static void acpi_gpiochip_free_regions(struct acpi_gpio_chip *achip)
+{
+	struct gpio_chip *chip = achip->chip;
 	acpi_handle handle = ACPI_HANDLE(chip->parent);
-	काष्ठा acpi_gpio_connection *conn, *पंचांगp;
+	struct acpi_gpio_connection *conn, *tmp;
 	acpi_status status;
 
-	status = acpi_हटाओ_address_space_handler(handle, ACPI_ADR_SPACE_GPIO,
+	status = acpi_remove_address_space_handler(handle, ACPI_ADR_SPACE_GPIO,
 						   acpi_gpio_adr_space_handler);
-	अगर (ACPI_FAILURE(status)) अणु
+	if (ACPI_FAILURE(status)) {
 		dev_err(chip->parent,
 			"Failed to remove GPIO OpRegion handler\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	list_क्रम_each_entry_safe_reverse(conn, पंचांगp, &achip->conns, node) अणु
-		gpiochip_मुक्त_own_desc(conn->desc);
+	list_for_each_entry_safe_reverse(conn, tmp, &achip->conns, node) {
+		gpiochip_free_own_desc(conn->desc);
 		list_del(&conn->node);
-		kमुक्त(conn);
-	पूर्ण
-पूर्ण
+		kfree(conn);
+	}
+}
 
-अटल काष्ठा gpio_desc *
-acpi_gpiochip_parse_own_gpio(काष्ठा acpi_gpio_chip *achip,
-			     काष्ठा fwnode_handle *fwnode,
-			     स्थिर अक्षर **name,
-			     अचिन्हित दीर्घ *lflags,
-			     क्रमागत gpiod_flags *dflags)
-अणु
-	काष्ठा gpio_chip *chip = achip->chip;
-	काष्ठा gpio_desc *desc;
+static struct gpio_desc *
+acpi_gpiochip_parse_own_gpio(struct acpi_gpio_chip *achip,
+			     struct fwnode_handle *fwnode,
+			     const char **name,
+			     unsigned long *lflags,
+			     enum gpiod_flags *dflags)
+{
+	struct gpio_chip *chip = achip->chip;
+	struct gpio_desc *desc;
 	u32 gpios[2];
-	पूर्णांक ret;
+	int ret;
 
 	*lflags = GPIO_LOOKUP_FLAGS_DEFAULT;
 	*dflags = GPIOD_ASIS;
-	*name = शून्य;
+	*name = NULL;
 
-	ret = fwnode_property_पढ़ो_u32_array(fwnode, "gpios", gpios,
+	ret = fwnode_property_read_u32_array(fwnode, "gpios", gpios,
 					     ARRAY_SIZE(gpios));
-	अगर (ret < 0)
-		वापस ERR_PTR(ret);
+	if (ret < 0)
+		return ERR_PTR(ret);
 
 	desc = gpiochip_get_desc(chip, gpios[0]);
-	अगर (IS_ERR(desc))
-		वापस desc;
+	if (IS_ERR(desc))
+		return desc;
 
-	अगर (gpios[1])
+	if (gpios[1])
 		*lflags |= GPIO_ACTIVE_LOW;
 
-	अगर (fwnode_property_present(fwnode, "input"))
+	if (fwnode_property_present(fwnode, "input"))
 		*dflags |= GPIOD_IN;
-	अन्यथा अगर (fwnode_property_present(fwnode, "output-low"))
+	else if (fwnode_property_present(fwnode, "output-low"))
 		*dflags |= GPIOD_OUT_LOW;
-	अन्यथा अगर (fwnode_property_present(fwnode, "output-high"))
+	else if (fwnode_property_present(fwnode, "output-high"))
 		*dflags |= GPIOD_OUT_HIGH;
-	अन्यथा
-		वापस ERR_PTR(-EINVAL);
+	else
+		return ERR_PTR(-EINVAL);
 
-	fwnode_property_पढ़ो_string(fwnode, "line-name", name);
+	fwnode_property_read_string(fwnode, "line-name", name);
 
-	वापस desc;
-पूर्ण
+	return desc;
+}
 
-अटल व्योम acpi_gpiochip_scan_gpios(काष्ठा acpi_gpio_chip *achip)
-अणु
-	काष्ठा gpio_chip *chip = achip->chip;
-	काष्ठा fwnode_handle *fwnode;
+static void acpi_gpiochip_scan_gpios(struct acpi_gpio_chip *achip)
+{
+	struct gpio_chip *chip = achip->chip;
+	struct fwnode_handle *fwnode;
 
-	device_क्रम_each_child_node(chip->parent, fwnode) अणु
-		अचिन्हित दीर्घ lflags;
-		क्रमागत gpiod_flags dflags;
-		काष्ठा gpio_desc *desc;
-		स्थिर अक्षर *name;
-		पूर्णांक ret;
+	device_for_each_child_node(chip->parent, fwnode) {
+		unsigned long lflags;
+		enum gpiod_flags dflags;
+		struct gpio_desc *desc;
+		const char *name;
+		int ret;
 
-		अगर (!fwnode_property_present(fwnode, "gpio-hog"))
-			जारी;
+		if (!fwnode_property_present(fwnode, "gpio-hog"))
+			continue;
 
 		desc = acpi_gpiochip_parse_own_gpio(achip, fwnode, &name,
 						    &lflags, &dflags);
-		अगर (IS_ERR(desc))
-			जारी;
+		if (IS_ERR(desc))
+			continue;
 
 		ret = gpiod_hog(desc, name, lflags, dflags);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(chip->parent, "Failed to hog GPIO\n");
 			fwnode_handle_put(fwnode);
-			वापस;
-		पूर्ण
-	पूर्ण
-पूर्ण
+			return;
+		}
+	}
+}
 
-व्योम acpi_gpiochip_add(काष्ठा gpio_chip *chip)
-अणु
-	काष्ठा acpi_gpio_chip *acpi_gpio;
+void acpi_gpiochip_add(struct gpio_chip *chip)
+{
+	struct acpi_gpio_chip *acpi_gpio;
 	acpi_handle handle;
 	acpi_status status;
 
-	अगर (!chip || !chip->parent)
-		वापस;
+	if (!chip || !chip->parent)
+		return;
 
 	handle = ACPI_HANDLE(chip->parent);
-	अगर (!handle)
-		वापस;
+	if (!handle)
+		return;
 
-	acpi_gpio = kzalloc(माप(*acpi_gpio), GFP_KERNEL);
-	अगर (!acpi_gpio) अणु
+	acpi_gpio = kzalloc(sizeof(*acpi_gpio), GFP_KERNEL);
+	if (!acpi_gpio) {
 		dev_err(chip->parent,
 			"Failed to allocate memory for ACPI GPIO chip\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	acpi_gpio->chip = chip;
 	INIT_LIST_HEAD(&acpi_gpio->events);
 	INIT_LIST_HEAD(&acpi_gpio->deferred_req_irqs_list_entry);
 
 	status = acpi_attach_data(handle, acpi_gpio_chip_dh, acpi_gpio);
-	अगर (ACPI_FAILURE(status)) अणु
+	if (ACPI_FAILURE(status)) {
 		dev_err(chip->parent, "Failed to attach ACPI GPIO chip\n");
-		kमुक्त(acpi_gpio);
-		वापस;
-	पूर्ण
+		kfree(acpi_gpio);
+		return;
+	}
 
 	acpi_gpiochip_request_regions(acpi_gpio);
 	acpi_gpiochip_scan_gpios(acpi_gpio);
 	acpi_walk_dep_device_list(handle);
-पूर्ण
+}
 
-व्योम acpi_gpiochip_हटाओ(काष्ठा gpio_chip *chip)
-अणु
-	काष्ठा acpi_gpio_chip *acpi_gpio;
+void acpi_gpiochip_remove(struct gpio_chip *chip)
+{
+	struct acpi_gpio_chip *acpi_gpio;
 	acpi_handle handle;
 	acpi_status status;
 
-	अगर (!chip || !chip->parent)
-		वापस;
+	if (!chip || !chip->parent)
+		return;
 
 	handle = ACPI_HANDLE(chip->parent);
-	अगर (!handle)
-		वापस;
+	if (!handle)
+		return;
 
-	status = acpi_get_data(handle, acpi_gpio_chip_dh, (व्योम **)&acpi_gpio);
-	अगर (ACPI_FAILURE(status)) अणु
+	status = acpi_get_data(handle, acpi_gpio_chip_dh, (void **)&acpi_gpio);
+	if (ACPI_FAILURE(status)) {
 		dev_warn(chip->parent, "Failed to retrieve ACPI GPIO chip\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	acpi_gpiochip_मुक्त_regions(acpi_gpio);
+	acpi_gpiochip_free_regions(acpi_gpio);
 
 	acpi_detach_data(handle, acpi_gpio_chip_dh);
-	kमुक्त(acpi_gpio);
-पूर्ण
+	kfree(acpi_gpio);
+}
 
-व्योम acpi_gpio_dev_init(काष्ठा gpio_chip *gc, काष्ठा gpio_device *gdev)
-अणु
-	/* Set शेष fwnode to parent's one अगर present */
-	अगर (gc->parent)
+void acpi_gpio_dev_init(struct gpio_chip *gc, struct gpio_device *gdev)
+{
+	/* Set default fwnode to parent's one if present */
+	if (gc->parent)
 		ACPI_COMPANION_SET(&gdev->dev, ACPI_COMPANION(gc->parent));
-पूर्ण
+}
 
-अटल पूर्णांक acpi_gpio_package_count(स्थिर जोड़ acpi_object *obj)
-अणु
-	स्थिर जोड़ acpi_object *element = obj->package.elements;
-	स्थिर जोड़ acpi_object *end = element + obj->package.count;
-	अचिन्हित पूर्णांक count = 0;
+static int acpi_gpio_package_count(const union acpi_object *obj)
+{
+	const union acpi_object *element = obj->package.elements;
+	const union acpi_object *end = element + obj->package.count;
+	unsigned int count = 0;
 
-	जबतक (element < end) अणु
-		चयन (element->type) अणु
-		हाल ACPI_TYPE_LOCAL_REFERENCE:
+	while (element < end) {
+		switch (element->type) {
+		case ACPI_TYPE_LOCAL_REFERENCE:
 			element += 3;
 			fallthrough;
-		हाल ACPI_TYPE_INTEGER:
+		case ACPI_TYPE_INTEGER:
 			element++;
 			count++;
-			अवरोध;
+			break;
 
-		शेष:
-			वापस -EPROTO;
-		पूर्ण
-	पूर्ण
+		default:
+			return -EPROTO;
+		}
+	}
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल पूर्णांक acpi_find_gpio_count(काष्ठा acpi_resource *ares, व्योम *data)
-अणु
-	अचिन्हित पूर्णांक *count = data;
+static int acpi_find_gpio_count(struct acpi_resource *ares, void *data)
+{
+	unsigned int *count = data;
 
-	अगर (ares->type == ACPI_RESOURCE_TYPE_GPIO)
+	if (ares->type == ACPI_RESOURCE_TYPE_GPIO)
 		*count += ares->data.gpio.pin_table_length;
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
 /**
  * acpi_gpio_count - count the GPIOs associated with a device / function
- * @dev:	GPIO consumer, can be %शून्य क्रम प्रणाली-global GPIOs
+ * @dev:	GPIO consumer, can be %NULL for system-global GPIOs
  * @con_id:	function within the GPIO consumer
  *
  * Return:
  * The number of GPIOs associated with a device / function or %-ENOENT,
- * अगर no GPIO has been asचिन्हित to the requested function.
+ * if no GPIO has been assigned to the requested function.
  */
-पूर्णांक acpi_gpio_count(काष्ठा device *dev, स्थिर अक्षर *con_id)
-अणु
-	काष्ठा acpi_device *adev = ACPI_COMPANION(dev);
-	स्थिर जोड़ acpi_object *obj;
-	स्थिर काष्ठा acpi_gpio_mapping *gm;
-	पूर्णांक count = -ENOENT;
-	पूर्णांक ret;
-	अक्षर propname[32];
-	अचिन्हित पूर्णांक i;
+int acpi_gpio_count(struct device *dev, const char *con_id)
+{
+	struct acpi_device *adev = ACPI_COMPANION(dev);
+	const union acpi_object *obj;
+	const struct acpi_gpio_mapping *gm;
+	int count = -ENOENT;
+	int ret;
+	char propname[32];
+	unsigned int i;
 
 	/* Try first from _DSD */
-	क्रम (i = 0; i < ARRAY_SIZE(gpio_suffixes); i++) अणु
-		अगर (con_id)
-			snम_लिखो(propname, माप(propname), "%s-%s",
+	for (i = 0; i < ARRAY_SIZE(gpio_suffixes); i++) {
+		if (con_id)
+			snprintf(propname, sizeof(propname), "%s-%s",
 				 con_id, gpio_suffixes[i]);
-		अन्यथा
-			snम_लिखो(propname, माप(propname), "%s",
+		else
+			snprintf(propname, sizeof(propname), "%s",
 				 gpio_suffixes[i]);
 
 		ret = acpi_dev_get_property(adev, propname, ACPI_TYPE_ANY,
 					    &obj);
-		अगर (ret == 0) अणु
-			अगर (obj->type == ACPI_TYPE_LOCAL_REFERENCE)
+		if (ret == 0) {
+			if (obj->type == ACPI_TYPE_LOCAL_REFERENCE)
 				count = 1;
-			अन्यथा अगर (obj->type == ACPI_TYPE_PACKAGE)
+			else if (obj->type == ACPI_TYPE_PACKAGE)
 				count = acpi_gpio_package_count(obj);
-		पूर्ण अन्यथा अगर (adev->driver_gpios) अणु
-			क्रम (gm = adev->driver_gpios; gm->name; gm++)
-				अगर (म_भेद(propname, gm->name) == 0) अणु
+		} else if (adev->driver_gpios) {
+			for (gm = adev->driver_gpios; gm->name; gm++)
+				if (strcmp(propname, gm->name) == 0) {
 					count = gm->size;
-					अवरोध;
-				पूर्ण
-		पूर्ण
-		अगर (count > 0)
-			अवरोध;
-	पूर्ण
+					break;
+				}
+		}
+		if (count > 0)
+			break;
+	}
 
 	/* Then from plain _CRS GPIOs */
-	अगर (count < 0) अणु
-		काष्ठा list_head resource_list;
-		अचिन्हित पूर्णांक crs_count = 0;
+	if (count < 0) {
+		struct list_head resource_list;
+		unsigned int crs_count = 0;
 
-		अगर (!acpi_can_fallback_to_crs(adev, con_id))
-			वापस count;
+		if (!acpi_can_fallback_to_crs(adev, con_id))
+			return count;
 
 		INIT_LIST_HEAD(&resource_list);
 		acpi_dev_get_resources(adev, &resource_list,
 				       acpi_find_gpio_count, &crs_count);
-		acpi_dev_मुक्त_resource_list(&resource_list);
-		अगर (crs_count > 0)
+		acpi_dev_free_resource_list(&resource_list);
+		if (crs_count > 0)
 			count = crs_count;
-	पूर्ण
-	वापस count ? count : -ENOENT;
-पूर्ण
+	}
+	return count ? count : -ENOENT;
+}
 
 /* Run deferred acpi_gpiochip_request_irqs() */
-अटल पूर्णांक __init acpi_gpio_handle_deferred_request_irqs(व्योम)
-अणु
-	काष्ठा acpi_gpio_chip *acpi_gpio, *पंचांगp;
+static int __init acpi_gpio_handle_deferred_request_irqs(void)
+{
+	struct acpi_gpio_chip *acpi_gpio, *tmp;
 
 	mutex_lock(&acpi_gpio_deferred_req_irqs_lock);
-	list_क्रम_each_entry_safe(acpi_gpio, पंचांगp,
+	list_for_each_entry_safe(acpi_gpio, tmp,
 				 &acpi_gpio_deferred_req_irqs_list,
 				 deferred_req_irqs_list_entry)
 		acpi_gpiochip_request_irqs(acpi_gpio);
 
-	acpi_gpio_deferred_req_irqs_करोne = true;
+	acpi_gpio_deferred_req_irqs_done = true;
 	mutex_unlock(&acpi_gpio_deferred_req_irqs_lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 /* We must use _sync so that this runs after the first deferred_probe run */
 late_initcall_sync(acpi_gpio_handle_deferred_request_irqs);
 
-अटल स्थिर काष्ठा dmi_प्रणाली_id gpiolib_acpi_quirks[] __initस्थिर = अणु
-	अणु
+static const struct dmi_system_id gpiolib_acpi_quirks[] __initconst = {
+	{
 		/*
-		 * The Minix Neo Z83-4 has a micro-USB-B id-pin handler क्रम
-		 * a non existing micro-USB-B connector which माला_दो the HDMI
-		 * DDC pins in GPIO mode, अवरोधing HDMI support.
+		 * The Minix Neo Z83-4 has a micro-USB-B id-pin handler for
+		 * a non existing micro-USB-B connector which puts the HDMI
+		 * DDC pins in GPIO mode, breaking HDMI support.
 		 */
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_SYS_VENDOR, "MINIX"),
 			DMI_MATCH(DMI_PRODUCT_NAME, "Z83-4"),
-		पूर्ण,
-		.driver_data = &(काष्ठा acpi_gpiolib_dmi_quirk) अणु
+		},
+		.driver_data = &(struct acpi_gpiolib_dmi_quirk) {
 			.no_edge_events_on_boot = true,
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		/*
 		 * The Terra Pad 1061 has a micro-USB-B id-pin handler, which
 		 * instead of controlling the actual micro-USB-B turns the 5V
-		 * boost क्रम its USB-A connector off. The actual micro-USB-B
-		 * connector is wired क्रम अक्षरging only.
+		 * boost for its USB-A connector off. The actual micro-USB-B
+		 * connector is wired for charging only.
 		 */
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_SYS_VENDOR, "Wortmann_AG"),
 			DMI_MATCH(DMI_PRODUCT_NAME, "TERRA_PAD_1061"),
-		पूर्ण,
-		.driver_data = &(काष्ठा acpi_gpiolib_dmi_quirk) अणु
+		},
+		.driver_data = &(struct acpi_gpiolib_dmi_quirk) {
 			.no_edge_events_on_boot = true,
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		/*
 		 * The Dell Venue 10 Pro 5055, with Bay Trail SoC + TI PMIC uses an
-		 * बाह्यal embedded-controller connected via I2C + an ACPI GPIO
+		 * external embedded-controller connected via I2C + an ACPI GPIO
 		 * event handler on INT33FFC:02 pin 12, causing spurious wakeups.
 		 */
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_SYS_VENDOR, "Dell Inc."),
 			DMI_MATCH(DMI_PRODUCT_NAME, "Venue 10 Pro 5055"),
-		पूर्ण,
-		.driver_data = &(काष्ठा acpi_gpiolib_dmi_quirk) अणु
+		},
+		.driver_data = &(struct acpi_gpiolib_dmi_quirk) {
 			.ignore_wake = "INT33FC:02@12",
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		/*
 		 * HP X2 10 models with Cherry Trail SoC + TI PMIC use an
-		 * बाह्यal embedded-controller connected via I2C + an ACPI GPIO
+		 * external embedded-controller connected via I2C + an ACPI GPIO
 		 * event handler on INT33FF:01 pin 0, causing spurious wakeups.
-		 * When suspending by closing the LID, the घातer to the USB
+		 * When suspending by closing the LID, the power to the USB
 		 * keyboard is turned off, causing INT0002 ACPI events to
 		 * trigger once the XHCI controller notices the keyboard is
 		 * gone. So INT0002 events cause spurious wakeups too. Ignoring
-		 * EC wakes अवरोधs wakeup when खोलोing the lid, the user needs
-		 * to press the घातer-button to wakeup the प्रणाली. The
+		 * EC wakes breaks wakeup when opening the lid, the user needs
+		 * to press the power-button to wakeup the system. The
 		 * alternative is suspend simply not working, which is worse.
 		 */
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_SYS_VENDOR, "HP"),
 			DMI_MATCH(DMI_PRODUCT_NAME, "HP x2 Detachable 10-p0XX"),
-		पूर्ण,
-		.driver_data = &(काष्ठा acpi_gpiolib_dmi_quirk) अणु
+		},
+		.driver_data = &(struct acpi_gpiolib_dmi_quirk) {
 			.ignore_wake = "INT33FF:01@0,INT0002:00@2",
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		/*
 		 * HP X2 10 models with Bay Trail SoC + AXP288 PMIC use an
-		 * बाह्यal embedded-controller connected via I2C + an ACPI GPIO
+		 * external embedded-controller connected via I2C + an ACPI GPIO
 		 * event handler on INT33FC:02 pin 28, causing spurious wakeups.
 		 */
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_SYS_VENDOR, "Hewlett-Packard"),
 			DMI_MATCH(DMI_PRODUCT_NAME, "HP Pavilion x2 Detachable"),
 			DMI_MATCH(DMI_BOARD_NAME, "815D"),
-		पूर्ण,
-		.driver_data = &(काष्ठा acpi_gpiolib_dmi_quirk) अणु
+		},
+		.driver_data = &(struct acpi_gpiolib_dmi_quirk) {
 			.ignore_wake = "INT33FC:02@28",
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		/*
 		 * HP X2 10 models with Cherry Trail SoC + AXP288 PMIC use an
-		 * बाह्यal embedded-controller connected via I2C + an ACPI GPIO
+		 * external embedded-controller connected via I2C + an ACPI GPIO
 		 * event handler on INT33FF:01 pin 0, causing spurious wakeups.
 		 */
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_SYS_VENDOR, "HP"),
 			DMI_MATCH(DMI_PRODUCT_NAME, "HP Pavilion x2 Detachable"),
 			DMI_MATCH(DMI_BOARD_NAME, "813E"),
-		पूर्ण,
-		.driver_data = &(काष्ठा acpi_gpiolib_dmi_quirk) अणु
+		},
+		.driver_data = &(struct acpi_gpiolib_dmi_quirk) {
 			.ignore_wake = "INT33FF:01@0",
-		पूर्ण,
-	पूर्ण,
-	अणुपूर्ण /* Terminating entry */
-पूर्ण;
+		},
+	},
+	{} /* Terminating entry */
+};
 
-अटल पूर्णांक __init acpi_gpio_setup_params(व्योम)
-अणु
-	स्थिर काष्ठा acpi_gpiolib_dmi_quirk *quirk = शून्य;
-	स्थिर काष्ठा dmi_प्रणाली_id *id;
+static int __init acpi_gpio_setup_params(void)
+{
+	const struct acpi_gpiolib_dmi_quirk *quirk = NULL;
+	const struct dmi_system_id *id;
 
 	id = dmi_first_match(gpiolib_acpi_quirks);
-	अगर (id)
+	if (id)
 		quirk = id->driver_data;
 
-	अगर (run_edge_events_on_boot < 0) अणु
-		अगर (quirk && quirk->no_edge_events_on_boot)
+	if (run_edge_events_on_boot < 0) {
+		if (quirk && quirk->no_edge_events_on_boot)
 			run_edge_events_on_boot = 0;
-		अन्यथा
+		else
 			run_edge_events_on_boot = 1;
-	पूर्ण
+	}
 
-	अगर (ignore_wake == शून्य && quirk && quirk->ignore_wake)
+	if (ignore_wake == NULL && quirk && quirk->ignore_wake)
 		ignore_wake = quirk->ignore_wake;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* Directly after dmi_setup() which runs as core_initcall() */
 postcore_initcall(acpi_gpio_setup_params);

@@ -1,124 +1,123 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * KVM dirty ring implementation
  *
  * Copyright 2019 Red Hat, Inc.
  */
-#समावेश <linux/kvm_host.h>
-#समावेश <linux/kvm.h>
-#समावेश <linux/vदो_स्मृति.h>
-#समावेश <linux/kvm_dirty_ring.h>
-#समावेश <trace/events/kvm.h>
-#समावेश "mmu_lock.h"
+#include <linux/kvm_host.h>
+#include <linux/kvm.h>
+#include <linux/vmalloc.h>
+#include <linux/kvm_dirty_ring.h>
+#include <trace/events/kvm.h>
+#include "mmu_lock.h"
 
-पूर्णांक __weak kvm_cpu_dirty_log_size(व्योम)
-अणु
-	वापस 0;
-पूर्ण
+int __weak kvm_cpu_dirty_log_size(void)
+{
+	return 0;
+}
 
-u32 kvm_dirty_ring_get_rsvd_entries(व्योम)
-अणु
-	वापस KVM_सूचीTY_RING_RSVD_ENTRIES + kvm_cpu_dirty_log_size();
-पूर्ण
+u32 kvm_dirty_ring_get_rsvd_entries(void)
+{
+	return KVM_DIRTY_RING_RSVD_ENTRIES + kvm_cpu_dirty_log_size();
+}
 
-अटल u32 kvm_dirty_ring_used(काष्ठा kvm_dirty_ring *ring)
-अणु
-	वापस READ_ONCE(ring->dirty_index) - READ_ONCE(ring->reset_index);
-पूर्ण
+static u32 kvm_dirty_ring_used(struct kvm_dirty_ring *ring)
+{
+	return READ_ONCE(ring->dirty_index) - READ_ONCE(ring->reset_index);
+}
 
-bool kvm_dirty_ring_soft_full(काष्ठा kvm_dirty_ring *ring)
-अणु
-	वापस kvm_dirty_ring_used(ring) >= ring->soft_limit;
-पूर्ण
+bool kvm_dirty_ring_soft_full(struct kvm_dirty_ring *ring)
+{
+	return kvm_dirty_ring_used(ring) >= ring->soft_limit;
+}
 
-अटल bool kvm_dirty_ring_full(काष्ठा kvm_dirty_ring *ring)
-अणु
-	वापस kvm_dirty_ring_used(ring) >= ring->size;
-पूर्ण
+static bool kvm_dirty_ring_full(struct kvm_dirty_ring *ring)
+{
+	return kvm_dirty_ring_used(ring) >= ring->size;
+}
 
-काष्ठा kvm_dirty_ring *kvm_dirty_ring_get(काष्ठा kvm *kvm)
-अणु
-	काष्ठा kvm_vcpu *vcpu = kvm_get_running_vcpu();
+struct kvm_dirty_ring *kvm_dirty_ring_get(struct kvm *kvm)
+{
+	struct kvm_vcpu *vcpu = kvm_get_running_vcpu();
 
 	WARN_ON_ONCE(vcpu->kvm != kvm);
 
-	वापस &vcpu->dirty_ring;
-पूर्ण
+	return &vcpu->dirty_ring;
+}
 
-अटल व्योम kvm_reset_dirty_gfn(काष्ठा kvm *kvm, u32 slot, u64 offset, u64 mask)
-अणु
-	काष्ठा kvm_memory_slot *memslot;
-	पूर्णांक as_id, id;
+static void kvm_reset_dirty_gfn(struct kvm *kvm, u32 slot, u64 offset, u64 mask)
+{
+	struct kvm_memory_slot *memslot;
+	int as_id, id;
 
 	as_id = slot >> 16;
 	id = (u16)slot;
 
-	अगर (as_id >= KVM_ADDRESS_SPACE_NUM || id >= KVM_USER_MEM_SLOTS)
-		वापस;
+	if (as_id >= KVM_ADDRESS_SPACE_NUM || id >= KVM_USER_MEM_SLOTS)
+		return;
 
 	memslot = id_to_memslot(__kvm_memslots(kvm, as_id), id);
 
-	अगर (!memslot || (offset + __fls(mask)) >= memslot->npages)
-		वापस;
+	if (!memslot || (offset + __fls(mask)) >= memslot->npages)
+		return;
 
 	KVM_MMU_LOCK(kvm);
 	kvm_arch_mmu_enable_log_dirty_pt_masked(kvm, memslot, offset, mask);
 	KVM_MMU_UNLOCK(kvm);
-पूर्ण
+}
 
-पूर्णांक kvm_dirty_ring_alloc(काष्ठा kvm_dirty_ring *ring, पूर्णांक index, u32 size)
-अणु
+int kvm_dirty_ring_alloc(struct kvm_dirty_ring *ring, int index, u32 size)
+{
 	ring->dirty_gfns = vzalloc(size);
-	अगर (!ring->dirty_gfns)
-		वापस -ENOMEM;
+	if (!ring->dirty_gfns)
+		return -ENOMEM;
 
-	ring->size = size / माप(काष्ठा kvm_dirty_gfn);
+	ring->size = size / sizeof(struct kvm_dirty_gfn);
 	ring->soft_limit = ring->size - kvm_dirty_ring_get_rsvd_entries();
 	ring->dirty_index = 0;
 	ring->reset_index = 0;
 	ring->index = index;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत व्योम kvm_dirty_gfn_set_invalid(काष्ठा kvm_dirty_gfn *gfn)
-अणु
+static inline void kvm_dirty_gfn_set_invalid(struct kvm_dirty_gfn *gfn)
+{
 	gfn->flags = 0;
-पूर्ण
+}
 
-अटल अंतरभूत व्योम kvm_dirty_gfn_set_dirtied(काष्ठा kvm_dirty_gfn *gfn)
-अणु
-	gfn->flags = KVM_सूचीTY_GFN_F_सूचीTY;
-पूर्ण
+static inline void kvm_dirty_gfn_set_dirtied(struct kvm_dirty_gfn *gfn)
+{
+	gfn->flags = KVM_DIRTY_GFN_F_DIRTY;
+}
 
-अटल अंतरभूत bool kvm_dirty_gfn_invalid(काष्ठा kvm_dirty_gfn *gfn)
-अणु
-	वापस gfn->flags == 0;
-पूर्ण
+static inline bool kvm_dirty_gfn_invalid(struct kvm_dirty_gfn *gfn)
+{
+	return gfn->flags == 0;
+}
 
-अटल अंतरभूत bool kvm_dirty_gfn_harvested(काष्ठा kvm_dirty_gfn *gfn)
-अणु
-	वापस gfn->flags & KVM_सूचीTY_GFN_F_RESET;
-पूर्ण
+static inline bool kvm_dirty_gfn_harvested(struct kvm_dirty_gfn *gfn)
+{
+	return gfn->flags & KVM_DIRTY_GFN_F_RESET;
+}
 
-पूर्णांक kvm_dirty_ring_reset(काष्ठा kvm *kvm, काष्ठा kvm_dirty_ring *ring)
-अणु
+int kvm_dirty_ring_reset(struct kvm *kvm, struct kvm_dirty_ring *ring)
+{
 	u32 cur_slot, next_slot;
 	u64 cur_offset, next_offset;
-	अचिन्हित दीर्घ mask;
-	पूर्णांक count = 0;
-	काष्ठा kvm_dirty_gfn *entry;
+	unsigned long mask;
+	int count = 0;
+	struct kvm_dirty_gfn *entry;
 	bool first_round = true;
 
 	/* This is only needed to make compilers happy */
 	cur_slot = cur_offset = mask = 0;
 
-	जबतक (true) अणु
+	while (true) {
 		entry = &ring->dirty_gfns[ring->reset_index & (ring->size - 1)];
 
-		अगर (!kvm_dirty_gfn_harvested(entry))
-			अवरोध;
+		if (!kvm_dirty_gfn_harvested(entry))
+			break;
 
 		next_slot = READ_ONCE(entry->slot);
 		next_offset = READ_ONCE(entry->offset);
@@ -132,39 +131,39 @@ bool kvm_dirty_ring_soft_full(काष्ठा kvm_dirty_ring *ring)
 		 * Try to coalesce the reset operations when the guest is
 		 * scanning pages in the same slot.
 		 */
-		अगर (!first_round && next_slot == cur_slot) अणु
+		if (!first_round && next_slot == cur_slot) {
 			s64 delta = next_offset - cur_offset;
 
-			अगर (delta >= 0 && delta < BITS_PER_LONG) अणु
+			if (delta >= 0 && delta < BITS_PER_LONG) {
 				mask |= 1ull << delta;
-				जारी;
-			पूर्ण
+				continue;
+			}
 
 			/* Backwards visit, careful about overflows!  */
-			अगर (delta > -BITS_PER_LONG && delta < 0 &&
-			    (mask << -delta >> -delta) == mask) अणु
+			if (delta > -BITS_PER_LONG && delta < 0 &&
+			    (mask << -delta >> -delta) == mask) {
 				cur_offset = next_offset;
 				mask = (mask << -delta) | 1;
-				जारी;
-			पूर्ण
-		पूर्ण
+				continue;
+			}
+		}
 		kvm_reset_dirty_gfn(kvm, cur_slot, cur_offset, mask);
 		cur_slot = next_slot;
 		cur_offset = next_offset;
 		mask = 1;
 		first_round = false;
-	पूर्ण
+	}
 
 	kvm_reset_dirty_gfn(kvm, cur_slot, cur_offset, mask);
 
 	trace_kvm_dirty_ring_reset(ring);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-व्योम kvm_dirty_ring_push(काष्ठा kvm_dirty_ring *ring, u32 slot, u64 offset)
-अणु
-	काष्ठा kvm_dirty_gfn *entry;
+void kvm_dirty_ring_push(struct kvm_dirty_ring *ring, u32 slot, u64 offset)
+{
+	struct kvm_dirty_gfn *entry;
 
 	/* It should never get full */
 	WARN_ON_ONCE(kvm_dirty_ring_full(ring));
@@ -174,22 +173,22 @@ bool kvm_dirty_ring_soft_full(काष्ठा kvm_dirty_ring *ring)
 	entry->slot = slot;
 	entry->offset = offset;
 	/*
-	 * Make sure the data is filled in beक्रमe we publish this to
-	 * the userspace program.  There's no paired kernel-side पढ़ोer.
+	 * Make sure the data is filled in before we publish this to
+	 * the userspace program.  There's no paired kernel-side reader.
 	 */
 	smp_wmb();
 	kvm_dirty_gfn_set_dirtied(entry);
 	ring->dirty_index++;
 	trace_kvm_dirty_ring_push(ring, slot, offset);
-पूर्ण
+}
 
-काष्ठा page *kvm_dirty_ring_get_page(काष्ठा kvm_dirty_ring *ring, u32 offset)
-अणु
-	वापस vदो_स्मृति_to_page((व्योम *)ring->dirty_gfns + offset * PAGE_SIZE);
-पूर्ण
+struct page *kvm_dirty_ring_get_page(struct kvm_dirty_ring *ring, u32 offset)
+{
+	return vmalloc_to_page((void *)ring->dirty_gfns + offset * PAGE_SIZE);
+}
 
-व्योम kvm_dirty_ring_मुक्त(काष्ठा kvm_dirty_ring *ring)
-अणु
-	vमुक्त(ring->dirty_gfns);
-	ring->dirty_gfns = शून्य;
-पूर्ण
+void kvm_dirty_ring_free(struct kvm_dirty_ring *ring)
+{
+	vfree(ring->dirty_gfns);
+	ring->dirty_gfns = NULL;
+}

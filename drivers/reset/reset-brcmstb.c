@@ -1,100 +1,99 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Broadcom STB generic reset controller क्रम SW_INIT style reset controller
+ * Broadcom STB generic reset controller for SW_INIT style reset controller
  *
  * Author: Florian Fainelli <f.fainelli@gmail.com>
  * Copyright (C) 2018 Broadcom
  */
-#समावेश <linux/delay.h>
-#समावेश <linux/device.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/reset-controller.h>
-#समावेश <linux/types.h>
+#include <linux/delay.h>
+#include <linux/device.h>
+#include <linux/io.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/platform_device.h>
+#include <linux/reset-controller.h>
+#include <linux/types.h>
 
-काष्ठा brcmstb_reset अणु
-	व्योम __iomem *base;
-	काष्ठा reset_controller_dev rcdev;
-पूर्ण;
+struct brcmstb_reset {
+	void __iomem *base;
+	struct reset_controller_dev rcdev;
+};
 
-#घोषणा SW_INIT_SET		0x00
-#घोषणा SW_INIT_CLEAR		0x04
-#घोषणा SW_INIT_STATUS		0x08
+#define SW_INIT_SET		0x00
+#define SW_INIT_CLEAR		0x04
+#define SW_INIT_STATUS		0x08
 
-#घोषणा SW_INIT_BIT(id)		BIT((id) & 0x1f)
-#घोषणा SW_INIT_BANK(id)	((id) >> 5)
+#define SW_INIT_BIT(id)		BIT((id) & 0x1f)
+#define SW_INIT_BANK(id)	((id) >> 5)
 
-/* A full bank contains extra रेजिस्टरs that we are not utilizing but still
- * qualअगरy as a single bank.
+/* A full bank contains extra registers that we are not utilizing but still
+ * qualify as a single bank.
  */
-#घोषणा SW_INIT_BANK_SIZE	0x18
+#define SW_INIT_BANK_SIZE	0x18
 
-अटल अंतरभूत
-काष्ठा brcmstb_reset *to_brcmstb(काष्ठा reset_controller_dev *rcdev)
-अणु
-	वापस container_of(rcdev, काष्ठा brcmstb_reset, rcdev);
-पूर्ण
+static inline
+struct brcmstb_reset *to_brcmstb(struct reset_controller_dev *rcdev)
+{
+	return container_of(rcdev, struct brcmstb_reset, rcdev);
+}
 
-अटल पूर्णांक brcmstb_reset_निश्चित(काष्ठा reset_controller_dev *rcdev,
-				अचिन्हित दीर्घ id)
-अणु
-	अचिन्हित पूर्णांक off = SW_INIT_BANK(id) * SW_INIT_BANK_SIZE;
-	काष्ठा brcmstb_reset *priv = to_brcmstb(rcdev);
+static int brcmstb_reset_assert(struct reset_controller_dev *rcdev,
+				unsigned long id)
+{
+	unsigned int off = SW_INIT_BANK(id) * SW_INIT_BANK_SIZE;
+	struct brcmstb_reset *priv = to_brcmstb(rcdev);
 
-	ग_लिखोl_relaxed(SW_INIT_BIT(id), priv->base + off + SW_INIT_SET);
+	writel_relaxed(SW_INIT_BIT(id), priv->base + off + SW_INIT_SET);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक brcmstb_reset_deनिश्चित(काष्ठा reset_controller_dev *rcdev,
-				  अचिन्हित दीर्घ id)
-अणु
-	अचिन्हित पूर्णांक off = SW_INIT_BANK(id) * SW_INIT_BANK_SIZE;
-	काष्ठा brcmstb_reset *priv = to_brcmstb(rcdev);
+static int brcmstb_reset_deassert(struct reset_controller_dev *rcdev,
+				  unsigned long id)
+{
+	unsigned int off = SW_INIT_BANK(id) * SW_INIT_BANK_SIZE;
+	struct brcmstb_reset *priv = to_brcmstb(rcdev);
 
-	ग_लिखोl_relaxed(SW_INIT_BIT(id), priv->base + off + SW_INIT_CLEAR);
-	/* Maximum reset delay after de-निश्चितing a line and seeing block
-	 * operation is typically 14us क्रम the worst हाल, build some slack
+	writel_relaxed(SW_INIT_BIT(id), priv->base + off + SW_INIT_CLEAR);
+	/* Maximum reset delay after de-asserting a line and seeing block
+	 * operation is typically 14us for the worst case, build some slack
 	 * here.
 	 */
 	usleep_range(100, 200);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक brcmstb_reset_status(काष्ठा reset_controller_dev *rcdev,
-				अचिन्हित दीर्घ id)
-अणु
-	अचिन्हित पूर्णांक off = SW_INIT_BANK(id) * SW_INIT_BANK_SIZE;
-	काष्ठा brcmstb_reset *priv = to_brcmstb(rcdev);
+static int brcmstb_reset_status(struct reset_controller_dev *rcdev,
+				unsigned long id)
+{
+	unsigned int off = SW_INIT_BANK(id) * SW_INIT_BANK_SIZE;
+	struct brcmstb_reset *priv = to_brcmstb(rcdev);
 
-	वापस पढ़ोl_relaxed(priv->base + off + SW_INIT_STATUS) &
+	return readl_relaxed(priv->base + off + SW_INIT_STATUS) &
 			     SW_INIT_BIT(id);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा reset_control_ops brcmstb_reset_ops = अणु
-	.निश्चित	= brcmstb_reset_निश्चित,
-	.deनिश्चित = brcmstb_reset_deनिश्चित,
+static const struct reset_control_ops brcmstb_reset_ops = {
+	.assert	= brcmstb_reset_assert,
+	.deassert = brcmstb_reset_deassert,
 	.status = brcmstb_reset_status,
-पूर्ण;
+};
 
-अटल पूर्णांक brcmstb_reset_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *kdev = &pdev->dev;
-	काष्ठा brcmstb_reset *priv;
-	काष्ठा resource *res;
+static int brcmstb_reset_probe(struct platform_device *pdev)
+{
+	struct device *kdev = &pdev->dev;
+	struct brcmstb_reset *priv;
+	struct resource *res;
 
-	priv = devm_kzalloc(kdev, माप(*priv), GFP_KERNEL);
-	अगर (!priv)
-		वापस -ENOMEM;
+	priv = devm_kzalloc(kdev, sizeof(*priv), GFP_KERNEL);
+	if (!priv)
+		return -ENOMEM;
 
-	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	priv->base = devm_ioremap_resource(kdev, res);
-	अगर (IS_ERR(priv->base))
-		वापस PTR_ERR(priv->base);
+	if (IS_ERR(priv->base))
+		return PTR_ERR(priv->base);
 
 	dev_set_drvdata(kdev, priv);
 
@@ -103,24 +102,24 @@
 						   SW_INIT_BANK_SIZE) * 32;
 	priv->rcdev.ops = &brcmstb_reset_ops;
 	priv->rcdev.of_node = kdev->of_node;
-	/* Use शेषs: 1 cell and simple xlate function */
+	/* Use defaults: 1 cell and simple xlate function */
 
-	वापस devm_reset_controller_रेजिस्टर(kdev, &priv->rcdev);
-पूर्ण
+	return devm_reset_controller_register(kdev, &priv->rcdev);
+}
 
-अटल स्थिर काष्ठा of_device_id brcmstb_reset_of_match[] = अणु
-	अणु .compatible = "brcm,brcmstb-reset" पूर्ण,
-	अणु /* sentinel */ पूर्ण
-पूर्ण;
+static const struct of_device_id brcmstb_reset_of_match[] = {
+	{ .compatible = "brcm,brcmstb-reset" },
+	{ /* sentinel */ }
+};
 
-अटल काष्ठा platक्रमm_driver brcmstb_reset_driver = अणु
+static struct platform_driver brcmstb_reset_driver = {
 	.probe	= brcmstb_reset_probe,
-	.driver	= अणु
+	.driver	= {
 		.name = "brcmstb-reset",
 		.of_match_table = brcmstb_reset_of_match,
-	पूर्ण,
-पूर्ण;
-module_platक्रमm_driver(brcmstb_reset_driver);
+	},
+};
+module_platform_driver(brcmstb_reset_driver);
 
 MODULE_AUTHOR("Broadcom");
 MODULE_DESCRIPTION("Broadcom STB reset controller");

@@ -1,23 +1,22 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __GPIO_PXA_H
-#घोषणा __GPIO_PXA_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __GPIO_PXA_H
+#define __GPIO_PXA_H
 
-#घोषणा GPIO_bit(x)	(1 << ((x) & 0x1f))
+#define GPIO_bit(x)	(1 << ((x) & 0x1f))
 
-#घोषणा gpio_to_bank(gpio)	((gpio) >> 5)
+#define gpio_to_bank(gpio)	((gpio) >> 5)
 
 /* NOTE: some PXAs have fewer on-chip GPIOs (like PXA255, with 85).
- * Those हालs currently cause holes in the GPIO number space, the
+ * Those cases currently cause holes in the GPIO number space, the
  * actual number of the last GPIO is recorded by 'pxa_last_gpio'.
  */
-बाह्य पूर्णांक pxa_last_gpio;
+extern int pxa_last_gpio;
 
-बाह्य पूर्णांक pxa_irq_to_gpio(पूर्णांक irq);
+extern int pxa_irq_to_gpio(int irq);
 
-काष्ठा pxa_gpio_platक्रमm_data अणु
-	पूर्णांक irq_base;
-	पूर्णांक (*gpio_set_wake)(अचिन्हित पूर्णांक gpio, अचिन्हित पूर्णांक on);
-पूर्ण;
+struct pxa_gpio_platform_data {
+	int irq_base;
+	int (*gpio_set_wake)(unsigned int gpio, unsigned int on);
+};
 
-#पूर्ण_अगर /* __GPIO_PXA_H */
+#endif /* __GPIO_PXA_H */

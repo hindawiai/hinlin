@@ -1,6 +1,5 @@
-<शैली गुरु>
 /*
- * Generic platक्रमm device PATA driver
+ * Generic platform device PATA driver
  *
  * Copyright (C) 2006 - 2007  Paul Mundt
  *
@@ -9,78 +8,78 @@
  *   Copyright 2005-2006 Red Hat Inc, all rights reserved.
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the मुख्य directory of this archive
- * क्रम more details.
+ * License.  See the file "COPYING" in the main directory of this archive
+ * for more details.
  */
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/blkdev.h>
-#समावेश <scsi/scsi_host.h>
-#समावेश <linux/ata.h>
-#समावेश <linux/libata.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/ata_platक्रमm.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/blkdev.h>
+#include <scsi/scsi_host.h>
+#include <linux/ata.h>
+#include <linux/libata.h>
+#include <linux/platform_device.h>
+#include <linux/ata_platform.h>
 
-#घोषणा DRV_NAME "pata_platform"
-#घोषणा DRV_VERSION "1.2"
+#define DRV_NAME "pata_platform"
+#define DRV_VERSION "1.2"
 
-अटल पूर्णांक pio_mask = 1;
-module_param(pio_mask, पूर्णांक, 0);
+static int pio_mask = 1;
+module_param(pio_mask, int, 0);
 MODULE_PARM_DESC(pio_mask, "PIO modes supported, mode 0 only by default");
 
 /*
- * Provide our own set_mode() as we करोn't want to change anything that has
- * alपढ़ोy been configured..
+ * Provide our own set_mode() as we don't want to change anything that has
+ * already been configured..
  */
-अटल पूर्णांक pata_platक्रमm_set_mode(काष्ठा ata_link *link, काष्ठा ata_device **unused)
-अणु
-	काष्ठा ata_device *dev;
+static int pata_platform_set_mode(struct ata_link *link, struct ata_device **unused)
+{
+	struct ata_device *dev;
 
-	ata_क्रम_each_dev(dev, link, ENABLED) अणु
-		/* We करोn't really care */
+	ata_for_each_dev(dev, link, ENABLED) {
+		/* We don't really care */
 		dev->pio_mode = dev->xfer_mode = XFER_PIO_0;
-		dev->xfer_shअगरt = ATA_SHIFT_PIO;
+		dev->xfer_shift = ATA_SHIFT_PIO;
 		dev->flags |= ATA_DFLAG_PIO;
 		ata_dev_info(dev, "configured for PIO\n");
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल काष्ठा scsi_host_ढाँचा pata_platक्रमm_sht = अणु
+static struct scsi_host_template pata_platform_sht = {
 	ATA_PIO_SHT(DRV_NAME),
-पूर्ण;
+};
 
-अटल व्योम pata_platक्रमm_setup_port(काष्ठा ata_ioports *ioaddr,
-				     अचिन्हित पूर्णांक shअगरt)
-अणु
-	/* Fixup the port shअगरt क्रम platक्रमms that need it */
-	ioaddr->data_addr	= ioaddr->cmd_addr + (ATA_REG_DATA    << shअगरt);
-	ioaddr->error_addr	= ioaddr->cmd_addr + (ATA_REG_ERR     << shअगरt);
-	ioaddr->feature_addr	= ioaddr->cmd_addr + (ATA_REG_FEATURE << shअगरt);
-	ioaddr->nsect_addr	= ioaddr->cmd_addr + (ATA_REG_NSECT   << shअगरt);
-	ioaddr->lbal_addr	= ioaddr->cmd_addr + (ATA_REG_LBAL    << shअगरt);
-	ioaddr->lbam_addr	= ioaddr->cmd_addr + (ATA_REG_LBAM    << shअगरt);
-	ioaddr->lbah_addr	= ioaddr->cmd_addr + (ATA_REG_LBAH    << shअगरt);
-	ioaddr->device_addr	= ioaddr->cmd_addr + (ATA_REG_DEVICE  << shअगरt);
-	ioaddr->status_addr	= ioaddr->cmd_addr + (ATA_REG_STATUS  << shअगरt);
-	ioaddr->command_addr	= ioaddr->cmd_addr + (ATA_REG_CMD     << shअगरt);
-पूर्ण
+static void pata_platform_setup_port(struct ata_ioports *ioaddr,
+				     unsigned int shift)
+{
+	/* Fixup the port shift for platforms that need it */
+	ioaddr->data_addr	= ioaddr->cmd_addr + (ATA_REG_DATA    << shift);
+	ioaddr->error_addr	= ioaddr->cmd_addr + (ATA_REG_ERR     << shift);
+	ioaddr->feature_addr	= ioaddr->cmd_addr + (ATA_REG_FEATURE << shift);
+	ioaddr->nsect_addr	= ioaddr->cmd_addr + (ATA_REG_NSECT   << shift);
+	ioaddr->lbal_addr	= ioaddr->cmd_addr + (ATA_REG_LBAL    << shift);
+	ioaddr->lbam_addr	= ioaddr->cmd_addr + (ATA_REG_LBAM    << shift);
+	ioaddr->lbah_addr	= ioaddr->cmd_addr + (ATA_REG_LBAH    << shift);
+	ioaddr->device_addr	= ioaddr->cmd_addr + (ATA_REG_DEVICE  << shift);
+	ioaddr->status_addr	= ioaddr->cmd_addr + (ATA_REG_STATUS  << shift);
+	ioaddr->command_addr	= ioaddr->cmd_addr + (ATA_REG_CMD     << shift);
+}
 
 /**
- *	__pata_platक्रमm_probe		-	attach a platक्रमm पूर्णांकerface
+ *	__pata_platform_probe		-	attach a platform interface
  *	@dev: device
  *	@io_res: Resource representing I/O base
  *	@ctl_res: Resource representing CTL base
  *	@irq_res: Resource representing IRQ and its flags
- *	@ioport_shअगरt: I/O port shअगरt
+ *	@ioport_shift: I/O port shift
  *	@__pio_mask: PIO mask
- *	@sht: scsi_host_ढाँचा to use when रेजिस्टरing
+ *	@sht: scsi_host_template to use when registering
  *	@use16bit: Flag to indicate 16-bit IO instead of 32-bit
  *
- *	Register a platक्रमm bus IDE पूर्णांकerface. Such पूर्णांकerfaces are PIO and we
- *	assume करो not support IRQ sharing.
+ *	Register a platform bus IDE interface. Such interfaces are PIO and we
+ *	assume do not support IRQ sharing.
  *
- *	Platक्रमm devices are expected to contain at least 2 resources per port:
+ *	Platform devices are expected to contain at least 2 resources per port:
  *
  *		- I/O Base (IORESOURCE_IO or IORESOURCE_MEM)
  *		- CTL Base (IORESOURCE_IO or IORESOURCE_MEM)
@@ -95,19 +94,19 @@ MODULE_PARM_DESC(pio_mask, "PIO modes supported, mode 0 only by default");
  *
  *	If no IRQ resource is present, PIO polling mode is used instead.
  */
-पूर्णांक __pata_platक्रमm_probe(काष्ठा device *dev, काष्ठा resource *io_res,
-			  काष्ठा resource *ctl_res, काष्ठा resource *irq_res,
-			  अचिन्हित पूर्णांक ioport_shअगरt, पूर्णांक __pio_mask,
-			  काष्ठा scsi_host_ढाँचा *sht, bool use16bit)
-अणु
-	काष्ठा ata_host *host;
-	काष्ठा ata_port *ap;
-	अचिन्हित पूर्णांक mmio;
-	पूर्णांक irq = 0;
-	पूर्णांक irq_flags = 0;
+int __pata_platform_probe(struct device *dev, struct resource *io_res,
+			  struct resource *ctl_res, struct resource *irq_res,
+			  unsigned int ioport_shift, int __pio_mask,
+			  struct scsi_host_template *sht, bool use16bit)
+{
+	struct ata_host *host;
+	struct ata_port *ap;
+	unsigned int mmio;
+	int irq = 0;
+	int irq_flags = 0;
 
 	/*
-	 * Check क्रम MMIO
+	 * Check for MMIO
 	 */
 	mmio = (( io_res->flags == IORESOURCE_MEM) &&
 		(ctl_res->flags == IORESOURCE_MEM));
@@ -115,126 +114,126 @@ MODULE_PARM_DESC(pio_mask, "PIO modes supported, mode 0 only by default");
 	/*
 	 * And the IRQ
 	 */
-	अगर (irq_res && irq_res->start > 0) अणु
+	if (irq_res && irq_res->start > 0) {
 		irq = irq_res->start;
 		irq_flags = (irq_res->flags & IRQF_TRIGGER_MASK) | IRQF_SHARED;
-	पूर्ण
+	}
 
 	/*
 	 * Now that that's out of the way, wire up the port..
 	 */
 	host = ata_host_alloc(dev, 1);
-	अगर (!host)
-		वापस -ENOMEM;
+	if (!host)
+		return -ENOMEM;
 	ap = host->ports[0];
 
-	ap->ops = devm_kzalloc(dev, माप(*ap->ops), GFP_KERNEL);
+	ap->ops = devm_kzalloc(dev, sizeof(*ap->ops), GFP_KERNEL);
 	ap->ops->inherits = &ata_sff_port_ops;
 	ap->ops->cable_detect = ata_cable_unknown;
-	ap->ops->set_mode = pata_platक्रमm_set_mode;
-	अगर (use16bit)
+	ap->ops->set_mode = pata_platform_set_mode;
+	if (use16bit)
 		ap->ops->sff_data_xfer = ata_sff_data_xfer;
-	अन्यथा
+	else
 		ap->ops->sff_data_xfer = ata_sff_data_xfer32;
 
 	ap->pio_mask = __pio_mask;
 	ap->flags |= ATA_FLAG_SLAVE_POSS;
 
 	/*
-	 * Use polling mode अगर there's no IRQ
+	 * Use polling mode if there's no IRQ
 	 */
-	अगर (!irq) अणु
+	if (!irq) {
 		ap->flags |= ATA_FLAG_PIO_POLLING;
 		ata_port_desc(ap, "no IRQ, using PIO polling");
-	पूर्ण
+	}
 
 	/*
-	 * Handle the MMIO हाल
+	 * Handle the MMIO case
 	 */
-	अगर (mmio) अणु
+	if (mmio) {
 		ap->ioaddr.cmd_addr = devm_ioremap(dev, io_res->start,
 				resource_size(io_res));
 		ap->ioaddr.ctl_addr = devm_ioremap(dev, ctl_res->start,
 				resource_size(ctl_res));
-	पूर्ण अन्यथा अणु
+	} else {
 		ap->ioaddr.cmd_addr = devm_ioport_map(dev, io_res->start,
 				resource_size(io_res));
 		ap->ioaddr.ctl_addr = devm_ioport_map(dev, ctl_res->start,
 				resource_size(ctl_res));
-	पूर्ण
-	अगर (!ap->ioaddr.cmd_addr || !ap->ioaddr.ctl_addr) अणु
+	}
+	if (!ap->ioaddr.cmd_addr || !ap->ioaddr.ctl_addr) {
 		dev_err(dev, "failed to map IO/CTL base\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	ap->ioaddr.altstatus_addr = ap->ioaddr.ctl_addr;
 
-	pata_platक्रमm_setup_port(&ap->ioaddr, ioport_shअगरt);
+	pata_platform_setup_port(&ap->ioaddr, ioport_shift);
 
 	ata_port_desc(ap, "%s cmd 0x%llx ctl 0x%llx", mmio ? "mmio" : "ioport",
-		      (अचिन्हित दीर्घ दीर्घ)io_res->start,
-		      (अचिन्हित दीर्घ दीर्घ)ctl_res->start);
+		      (unsigned long long)io_res->start,
+		      (unsigned long long)ctl_res->start);
 
 	/* activate */
-	वापस ata_host_activate(host, irq, irq ? ata_sff_पूर्णांकerrupt : शून्य,
+	return ata_host_activate(host, irq, irq ? ata_sff_interrupt : NULL,
 				 irq_flags, sht);
-पूर्ण
-EXPORT_SYMBOL_GPL(__pata_platक्रमm_probe);
+}
+EXPORT_SYMBOL_GPL(__pata_platform_probe);
 
-अटल पूर्णांक pata_platक्रमm_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा resource *io_res;
-	काष्ठा resource *ctl_res;
-	काष्ठा resource *irq_res;
-	काष्ठा pata_platक्रमm_info *pp_info = dev_get_platdata(&pdev->dev);
+static int pata_platform_probe(struct platform_device *pdev)
+{
+	struct resource *io_res;
+	struct resource *ctl_res;
+	struct resource *irq_res;
+	struct pata_platform_info *pp_info = dev_get_platdata(&pdev->dev);
 
 	/*
 	 * Simple resource validation ..
 	 */
-	अगर ((pdev->num_resources != 3) && (pdev->num_resources != 2)) अणु
+	if ((pdev->num_resources != 3) && (pdev->num_resources != 2)) {
 		dev_err(&pdev->dev, "invalid number of resources\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/*
 	 * Get the I/O base first
 	 */
-	io_res = platक्रमm_get_resource(pdev, IORESOURCE_IO, 0);
-	अगर (io_res == शून्य) अणु
-		io_res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
-		अगर (unlikely(io_res == शून्य))
-			वापस -EINVAL;
-	पूर्ण
+	io_res = platform_get_resource(pdev, IORESOURCE_IO, 0);
+	if (io_res == NULL) {
+		io_res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+		if (unlikely(io_res == NULL))
+			return -EINVAL;
+	}
 
 	/*
 	 * Then the CTL base
 	 */
-	ctl_res = platक्रमm_get_resource(pdev, IORESOURCE_IO, 1);
-	अगर (ctl_res == शून्य) अणु
-		ctl_res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 1);
-		अगर (unlikely(ctl_res == शून्य))
-			वापस -EINVAL;
-	पूर्ण
+	ctl_res = platform_get_resource(pdev, IORESOURCE_IO, 1);
+	if (ctl_res == NULL) {
+		ctl_res = platform_get_resource(pdev, IORESOURCE_MEM, 1);
+		if (unlikely(ctl_res == NULL))
+			return -EINVAL;
+	}
 
 	/*
 	 * And the IRQ
 	 */
-	irq_res = platक्रमm_get_resource(pdev, IORESOURCE_IRQ, 0);
+	irq_res = platform_get_resource(pdev, IORESOURCE_IRQ, 0);
 
-	वापस __pata_platक्रमm_probe(&pdev->dev, io_res, ctl_res, irq_res,
-				     pp_info ? pp_info->ioport_shअगरt : 0,
-				     pio_mask, &pata_platक्रमm_sht, false);
-पूर्ण
+	return __pata_platform_probe(&pdev->dev, io_res, ctl_res, irq_res,
+				     pp_info ? pp_info->ioport_shift : 0,
+				     pio_mask, &pata_platform_sht, false);
+}
 
-अटल काष्ठा platक्रमm_driver pata_platक्रमm_driver = अणु
-	.probe		= pata_platक्रमm_probe,
-	.हटाओ		= ata_platक्रमm_हटाओ_one,
-	.driver = अणु
+static struct platform_driver pata_platform_driver = {
+	.probe		= pata_platform_probe,
+	.remove		= ata_platform_remove_one,
+	.driver = {
 		.name		= DRV_NAME,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver(pata_platक्रमm_driver);
+module_platform_driver(pata_platform_driver);
 
 MODULE_AUTHOR("Paul Mundt");
 MODULE_DESCRIPTION("low-level driver for platform device ATA");

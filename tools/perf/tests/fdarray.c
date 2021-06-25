@@ -1,85 +1,84 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <api/fd/array.h>
-#समावेश <poll.h>
-#समावेश "util/debug.h"
-#समावेश "tests/tests.h"
+// SPDX-License-Identifier: GPL-2.0
+#include <api/fd/array.h>
+#include <poll.h>
+#include "util/debug.h"
+#include "tests/tests.h"
 
-अटल व्योम fdarray__init_revents(काष्ठा fdarray *fda, लघु revents)
-अणु
-	पूर्णांक fd;
+static void fdarray__init_revents(struct fdarray *fda, short revents)
+{
+	int fd;
 
 	fda->nr = fda->nr_alloc;
 
-	क्रम (fd = 0; fd < fda->nr; ++fd) अणु
+	for (fd = 0; fd < fda->nr; ++fd) {
 		fda->entries[fd].fd	 = fda->nr - fd;
 		fda->entries[fd].events  = revents;
 		fda->entries[fd].revents = revents;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक fdarray__ख_लिखो_prefix(काष्ठा fdarray *fda, स्थिर अक्षर *prefix, खाता *fp)
-अणु
-	पूर्णांक prपूर्णांकed = 0;
+static int fdarray__fprintf_prefix(struct fdarray *fda, const char *prefix, FILE *fp)
+{
+	int printed = 0;
 
-	अगर (verbose <= 0)
-		वापस 0;
+	if (verbose <= 0)
+		return 0;
 
-	prपूर्णांकed += ख_लिखो(fp, "\n%s: ", prefix);
-	वापस prपूर्णांकed + fdarray__ख_लिखो(fda, fp);
-पूर्ण
+	printed += fprintf(fp, "\n%s: ", prefix);
+	return printed + fdarray__fprintf(fda, fp);
+}
 
-पूर्णांक test__fdarray__filter(काष्ठा test *test __maybe_unused, पूर्णांक subtest __maybe_unused)
-अणु
-	पूर्णांक nr_fds, err = TEST_FAIL;
-	काष्ठा fdarray *fda = fdarray__new(5, 5);
+int test__fdarray__filter(struct test *test __maybe_unused, int subtest __maybe_unused)
+{
+	int nr_fds, err = TEST_FAIL;
+	struct fdarray *fda = fdarray__new(5, 5);
 
-	अगर (fda == शून्य) अणु
+	if (fda == NULL) {
 		pr_debug("\nfdarray__new() failed!");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	fdarray__init_revents(fda, POLLIN);
-	nr_fds = fdarray__filter(fda, POLLHUP, शून्य, शून्य);
-	अगर (nr_fds != fda->nr_alloc) अणु
+	nr_fds = fdarray__filter(fda, POLLHUP, NULL, NULL);
+	if (nr_fds != fda->nr_alloc) {
 		pr_debug("\nfdarray__filter()=%d != %d shouldn't have filtered anything",
 			 nr_fds, fda->nr_alloc);
-		जाओ out_delete;
-	पूर्ण
+		goto out_delete;
+	}
 
 	fdarray__init_revents(fda, POLLHUP);
-	nr_fds = fdarray__filter(fda, POLLHUP, शून्य, शून्य);
-	अगर (nr_fds != 0) अणु
+	nr_fds = fdarray__filter(fda, POLLHUP, NULL, NULL);
+	if (nr_fds != 0) {
 		pr_debug("\nfdarray__filter()=%d != %d, should have filtered all fds",
 			 nr_fds, fda->nr_alloc);
-		जाओ out_delete;
-	पूर्ण
+		goto out_delete;
+	}
 
 	fdarray__init_revents(fda, POLLHUP);
 	fda->entries[2].revents = POLLIN;
 
 	pr_debug("\nfiltering all but fda->entries[2]:");
-	fdarray__ख_लिखो_prefix(fda, "before", मानक_त्रुटि);
-	nr_fds = fdarray__filter(fda, POLLHUP, शून्य, शून्य);
-	fdarray__ख_लिखो_prefix(fda, " after", मानक_त्रुटि);
-	अगर (nr_fds != 1) अणु
+	fdarray__fprintf_prefix(fda, "before", stderr);
+	nr_fds = fdarray__filter(fda, POLLHUP, NULL, NULL);
+	fdarray__fprintf_prefix(fda, " after", stderr);
+	if (nr_fds != 1) {
 		pr_debug("\nfdarray__filter()=%d != 1, should have left just one event", nr_fds);
-		जाओ out_delete;
-	पूर्ण
+		goto out_delete;
+	}
 
 	fdarray__init_revents(fda, POLLHUP);
 	fda->entries[0].revents = POLLIN;
 	fda->entries[3].revents = POLLIN;
 
 	pr_debug("\nfiltering all but (fda->entries[0], fda->entries[3]):");
-	fdarray__ख_लिखो_prefix(fda, "before", मानक_त्रुटि);
-	nr_fds = fdarray__filter(fda, POLLHUP, शून्य, शून्य);
-	fdarray__ख_लिखो_prefix(fda, " after", मानक_त्रुटि);
-	अगर (nr_fds != 2) अणु
+	fdarray__fprintf_prefix(fda, "before", stderr);
+	nr_fds = fdarray__filter(fda, POLLHUP, NULL, NULL);
+	fdarray__fprintf_prefix(fda, " after", stderr);
+	if (nr_fds != 2) {
 		pr_debug("\nfdarray__filter()=%d != 2, should have left just two events",
 			 nr_fds);
-		जाओ out_delete;
-	पूर्ण
+		goto out_delete;
+	}
 
 	pr_debug("\n");
 
@@ -87,69 +86,69 @@
 out_delete:
 	fdarray__delete(fda);
 out:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक test__fdarray__add(काष्ठा test *test __maybe_unused, पूर्णांक subtest __maybe_unused)
-अणु
-	पूर्णांक err = TEST_FAIL;
-	काष्ठा fdarray *fda = fdarray__new(2, 2);
+int test__fdarray__add(struct test *test __maybe_unused, int subtest __maybe_unused)
+{
+	int err = TEST_FAIL;
+	struct fdarray *fda = fdarray__new(2, 2);
 
-	अगर (fda == शून्य) अणु
+	if (fda == NULL) {
 		pr_debug("\nfdarray__new() failed!");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-#घोषणा FDA_CHECK(_idx, _fd, _revents)					   \
-	अगर (fda->entries[_idx].fd != _fd) अणु				   \
+#define FDA_CHECK(_idx, _fd, _revents)					   \
+	if (fda->entries[_idx].fd != _fd) {				   \
 		pr_debug("\n%d: fda->entries[%d](%d) != %d!",		   \
 			 __LINE__, _idx, fda->entries[1].fd, _fd);	   \
-		जाओ out_delete;					   \
-	पूर्ण								   \
-	अगर (fda->entries[_idx].events != (_revents)) अणु			   \
+		goto out_delete;					   \
+	}								   \
+	if (fda->entries[_idx].events != (_revents)) {			   \
 		pr_debug("\n%d: fda->entries[%d].revents(%d) != %d!",	   \
 			 __LINE__, _idx, fda->entries[_idx].fd, _revents); \
-		जाओ out_delete;					   \
-	पूर्ण
+		goto out_delete;					   \
+	}
 
-#घोषणा FDA_ADD(_idx, _fd, _revents, _nr)				   \
-	अगर (fdarray__add(fda, _fd, _revents, fdarray_flag__शेष) < 0) अणु \
+#define FDA_ADD(_idx, _fd, _revents, _nr)				   \
+	if (fdarray__add(fda, _fd, _revents, fdarray_flag__default) < 0) { \
 		pr_debug("\n%d: fdarray__add(fda, %d, %d) failed!",	   \
 			 __LINE__,_fd, _revents);			   \
-		जाओ out_delete;					   \
-	पूर्ण								   \
-	अगर (fda->nr != _nr) अणु						   \
+		goto out_delete;					   \
+	}								   \
+	if (fda->nr != _nr) {						   \
 		pr_debug("\n%d: fdarray__add(fda, %d, %d)=%d != %d",	   \
 			 __LINE__,_fd, _revents, fda->nr, _nr);		   \
-		जाओ out_delete;					   \
-	पूर्ण								   \
+		goto out_delete;					   \
+	}								   \
 	FDA_CHECK(_idx, _fd, _revents)
 
 	FDA_ADD(0, 1, POLLIN, 1);
 	FDA_ADD(1, 2, POLLERR, 2);
 
-	fdarray__ख_लिखो_prefix(fda, "before growing array", मानक_त्रुटि);
+	fdarray__fprintf_prefix(fda, "before growing array", stderr);
 
 	FDA_ADD(2, 35, POLLHUP, 3);
 
-	अगर (fda->entries == शून्य) अणु
+	if (fda->entries == NULL) {
 		pr_debug("\nfdarray__add(fda, 35, POLLHUP) should have allocated fda->pollfd!");
-		जाओ out_delete;
-	पूर्ण
+		goto out_delete;
+	}
 
-	fdarray__ख_लिखो_prefix(fda, "after 3rd add", मानक_त्रुटि);
+	fdarray__fprintf_prefix(fda, "after 3rd add", stderr);
 
 	FDA_ADD(3, 88, POLLIN | POLLOUT, 4);
 
-	fdarray__ख_लिखो_prefix(fda, "after 4th add", मानक_त्रुटि);
+	fdarray__fprintf_prefix(fda, "after 4th add", stderr);
 
 	FDA_CHECK(0, 1, POLLIN);
 	FDA_CHECK(1, 2, POLLERR);
 	FDA_CHECK(2, 35, POLLHUP);
 	FDA_CHECK(3, 88, POLLIN | POLLOUT);
 
-#अघोषित FDA_ADD
-#अघोषित FDA_CHECK
+#undef FDA_ADD
+#undef FDA_CHECK
 
 	pr_debug("\n");
 
@@ -157,5 +156,5 @@ out:
 out_delete:
 	fdarray__delete(fda);
 out:
-	वापस err;
-पूर्ण
+	return err;
+}

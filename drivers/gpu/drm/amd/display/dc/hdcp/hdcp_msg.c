@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2019 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -24,23 +23,23 @@
  *
  */
 
-#समावेश <linux/slab.h>
+#include <linux/slab.h>
 
-#समावेश "dm_services.h"
-#समावेश "dm_helpers.h"
-#समावेश "include/hdcp_types.h"
-#समावेश "include/i2caux_interface.h"
-#समावेश "include/signal_types.h"
-#समावेश "core_types.h"
-#समावेश "dc_link_ddc.h"
-#समावेश "link_hwss.h"
+#include "dm_services.h"
+#include "dm_helpers.h"
+#include "include/hdcp_types.h"
+#include "include/i2caux_interface.h"
+#include "include/signal_types.h"
+#include "core_types.h"
+#include "dc_link_ddc.h"
+#include "link_hwss.h"
 
-#घोषणा DC_LOGGER \
+#define DC_LOGGER \
 	link->ctx->logger
-#घोषणा HDCP14_KSV_SIZE 5
-#घोषणा HDCP14_MAX_KSV_FIFO_SIZE 127*HDCP14_KSV_SIZE
+#define HDCP14_KSV_SIZE 5
+#define HDCP14_MAX_KSV_FIFO_SIZE 127*HDCP14_KSV_SIZE
 
-अटल स्थिर bool hdcp_cmd_is_पढ़ो[HDCP_MESSAGE_ID_MAX] = अणु
+static const bool hdcp_cmd_is_read[HDCP_MESSAGE_ID_MAX] = {
 	[HDCP_MESSAGE_ID_READ_BKSV] = true,
 	[HDCP_MESSAGE_ID_READ_RI_R0] = true,
 	[HDCP_MESSAGE_ID_READ_PJ] = true,
@@ -74,9 +73,9 @@
 	[HDCP_MESSAGE_ID_READ_REPEATER_AUTH_STREAM_READY] = true,
 	[HDCP_MESSAGE_ID_READ_RXSTATUS] = true,
 	[HDCP_MESSAGE_ID_WRITE_CONTENT_STREAM_TYPE] = false
-पूर्ण;
+};
 
-अटल स्थिर uपूर्णांक8_t hdcp_i2c_offsets[HDCP_MESSAGE_ID_MAX] = अणु
+static const uint8_t hdcp_i2c_offsets[HDCP_MESSAGE_ID_MAX] = {
 	[HDCP_MESSAGE_ID_READ_BKSV] = 0x0,
 	[HDCP_MESSAGE_ID_READ_RI_R0] = 0x8,
 	[HDCP_MESSAGE_ID_READ_PJ] = 0xA,
@@ -109,64 +108,64 @@
 	[HDCP_MESSAGE_ID_READ_REPEATER_AUTH_STREAM_READY] = 0x80,
 	[HDCP_MESSAGE_ID_READ_RXSTATUS] = 0x70,
 	[HDCP_MESSAGE_ID_WRITE_CONTENT_STREAM_TYPE] = 0x0,
-पूर्ण;
+};
 
-काष्ठा protection_properties अणु
+struct protection_properties {
 	bool supported;
 	bool (*process_transaction)(
-		काष्ठा dc_link *link,
-		काष्ठा hdcp_protection_message *message_info);
-पूर्ण;
+		struct dc_link *link,
+		struct hdcp_protection_message *message_info);
+};
 
-अटल स्थिर काष्ठा protection_properties non_supported_protection = अणु
+static const struct protection_properties non_supported_protection = {
 	.supported = false
-पूर्ण;
+};
 
-अटल bool hdmi_14_process_transaction(
-	काष्ठा dc_link *link,
-	काष्ठा hdcp_protection_message *message_info)
-अणु
-	uपूर्णांक8_t *buff = शून्य;
+static bool hdmi_14_process_transaction(
+	struct dc_link *link,
+	struct hdcp_protection_message *message_info)
+{
+	uint8_t *buff = NULL;
 	bool result;
-	स्थिर uपूर्णांक8_t hdcp_i2c_addr_link_primary = 0x3a; /* 0x74 >> 1*/
-	स्थिर uपूर्णांक8_t hdcp_i2c_addr_link_secondary = 0x3b; /* 0x76 >> 1*/
-	काष्ठा i2c_command i2c_command;
-	uपूर्णांक8_t offset = hdcp_i2c_offsets[message_info->msg_id];
-	काष्ठा i2c_payload i2c_payloads[] = अणु
-		अणु true, 0, 1, &offset पूर्ण,
-		/* actual hdcp payload, will be filled later, zeroed क्रम now*/
-		अणु 0 पूर्ण
-	पूर्ण;
+	const uint8_t hdcp_i2c_addr_link_primary = 0x3a; /* 0x74 >> 1*/
+	const uint8_t hdcp_i2c_addr_link_secondary = 0x3b; /* 0x76 >> 1*/
+	struct i2c_command i2c_command;
+	uint8_t offset = hdcp_i2c_offsets[message_info->msg_id];
+	struct i2c_payload i2c_payloads[] = {
+		{ true, 0, 1, &offset },
+		/* actual hdcp payload, will be filled later, zeroed for now*/
+		{ 0 }
+	};
 
-	चयन (message_info->link) अणु
-	हाल HDCP_LINK_SECONDARY:
+	switch (message_info->link) {
+	case HDCP_LINK_SECONDARY:
 		i2c_payloads[0].address = hdcp_i2c_addr_link_secondary;
 		i2c_payloads[1].address = hdcp_i2c_addr_link_secondary;
-		अवरोध;
-	हाल HDCP_LINK_PRIMARY:
-	शेष:
+		break;
+	case HDCP_LINK_PRIMARY:
+	default:
 		i2c_payloads[0].address = hdcp_i2c_addr_link_primary;
 		i2c_payloads[1].address = hdcp_i2c_addr_link_primary;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	अगर (hdcp_cmd_is_पढ़ो[message_info->msg_id]) अणु
-		i2c_payloads[1].ग_लिखो = false;
+	if (hdcp_cmd_is_read[message_info->msg_id]) {
+		i2c_payloads[1].write = false;
 		i2c_command.number_of_payloads = ARRAY_SIZE(i2c_payloads);
 		i2c_payloads[1].length = message_info->length;
 		i2c_payloads[1].data = message_info->data;
-	पूर्ण अन्यथा अणु
+	} else {
 		i2c_command.number_of_payloads = 1;
 		buff = kzalloc(message_info->length + 1, GFP_KERNEL);
 
-		अगर (!buff)
-			वापस false;
+		if (!buff)
+			return false;
 
 		buff[0] = offset;
-		स_हटाओ(&buff[1], message_info->data, message_info->length);
+		memmove(&buff[1], message_info->data, message_info->length);
 		i2c_payloads[0].length = message_info->length + 1;
 		i2c_payloads[0].data = buff;
-	पूर्ण
+	}
 
 	i2c_command.payloads = i2c_payloads;
 	i2c_command.engine = I2C_COMMAND_ENGINE_HW;//only HW
@@ -176,17 +175,17 @@
 			link->ctx,
 			link,
 			&i2c_command);
-	kमुक्त(buff);
+	kfree(buff);
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
-अटल स्थिर काष्ठा protection_properties hdmi_14_protection = अणु
+static const struct protection_properties hdmi_14_protection = {
 	.supported = true,
 	.process_transaction = hdmi_14_process_transaction
-पूर्ण;
+};
 
-अटल स्थिर uपूर्णांक32_t hdcp_dpcd_addrs[HDCP_MESSAGE_ID_MAX] = अणु
+static const uint32_t hdcp_dpcd_addrs[HDCP_MESSAGE_ID_MAX] = {
 	[HDCP_MESSAGE_ID_READ_BKSV] = 0x68000,
 	[HDCP_MESSAGE_ID_READ_RI_R0] = 0x68005,
 	[HDCP_MESSAGE_ID_READ_PJ] = 0xFFFFFFFF,
@@ -219,51 +218,51 @@
 	[HDCP_MESSAGE_ID_READ_REPEATER_AUTH_STREAM_READY] = 0x69473,
 	[HDCP_MESSAGE_ID_READ_RXSTATUS] = 0x69493,
 	[HDCP_MESSAGE_ID_WRITE_CONTENT_STREAM_TYPE] = 0x69494
-पूर्ण;
+};
 
-अटल bool dpcd_access_helper(
-	काष्ठा dc_link *link,
-	uपूर्णांक32_t length,
-	uपूर्णांक8_t *data,
-	uपूर्णांक32_t dpcd_addr,
-	bool is_पढ़ो)
-अणु
-	क्रमागत dc_status status;
-	uपूर्णांक32_t cur_length = 0;
-	uपूर्णांक32_t offset = 0;
-	uपूर्णांक32_t ksv_पढ़ो_size = 0x6803b - 0x6802c;
+static bool dpcd_access_helper(
+	struct dc_link *link,
+	uint32_t length,
+	uint8_t *data,
+	uint32_t dpcd_addr,
+	bool is_read)
+{
+	enum dc_status status;
+	uint32_t cur_length = 0;
+	uint32_t offset = 0;
+	uint32_t ksv_read_size = 0x6803b - 0x6802c;
 
 	/* Read KSV, need repeatedly handle */
-	अगर (dpcd_addr == 0x6802c) अणु
-		अगर (length % HDCP14_KSV_SIZE) अणु
+	if (dpcd_addr == 0x6802c) {
+		if (length % HDCP14_KSV_SIZE) {
 			DC_LOG_ERROR("%s: KsvFifo Size(%d) is not a multiple of HDCP14_KSV_SIZE(%d)\n",
 				__func__,
 				length,
 				HDCP14_KSV_SIZE);
-		पूर्ण
-		अगर (length > HDCP14_MAX_KSV_FIFO_SIZE) अणु
+		}
+		if (length > HDCP14_MAX_KSV_FIFO_SIZE) {
 			DC_LOG_ERROR("%s: KsvFifo Size(%d) is greater than HDCP14_MAX_KSV_FIFO_SIZE(%d)\n",
 				__func__,
 				length,
 				HDCP14_MAX_KSV_FIFO_SIZE);
-		पूर्ण
+		}
 
 		DC_LOG_ERROR("%s: Reading %d Ksv(s) from KsvFifo\n",
 			__func__,
 			length / HDCP14_KSV_SIZE);
 
-		जबतक (length > 0) अणु
-			अगर (length > ksv_पढ़ो_size) अणु
-				status = core_link_पढ़ो_dpcd(
+		while (length > 0) {
+			if (length > ksv_read_size) {
+				status = core_link_read_dpcd(
 					link,
 					dpcd_addr + offset,
 					data + offset,
-					ksv_पढ़ो_size);
+					ksv_read_size);
 
-				data += ksv_पढ़ो_size;
-				length -= ksv_पढ़ो_size;
-			पूर्ण अन्यथा अणु
-				status = core_link_पढ़ो_dpcd(
+				data += ksv_read_size;
+				length -= ksv_read_size;
+			} else {
+				status = core_link_read_dpcd(
 					link,
 					dpcd_addr + offset,
 					data + offset,
@@ -271,145 +270,145 @@
 
 				data += length;
 				length = 0;
-			पूर्ण
+			}
 
-			अगर (status != DC_OK)
-				वापस false;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		जबतक (length > 0) अणु
-			अगर (length > DEFAULT_AUX_MAX_DATA_SIZE)
+			if (status != DC_OK)
+				return false;
+		}
+	} else {
+		while (length > 0) {
+			if (length > DEFAULT_AUX_MAX_DATA_SIZE)
 				cur_length = DEFAULT_AUX_MAX_DATA_SIZE;
-			अन्यथा
+			else
 				cur_length = length;
 
-			अगर (is_पढ़ो) अणु
-				status = core_link_पढ़ो_dpcd(
+			if (is_read) {
+				status = core_link_read_dpcd(
 					link,
 					dpcd_addr + offset,
 					data + offset,
 					cur_length);
-			पूर्ण अन्यथा अणु
-				status = core_link_ग_लिखो_dpcd(
+			} else {
+				status = core_link_write_dpcd(
 					link,
 					dpcd_addr + offset,
 					data + offset,
 					cur_length);
-			पूर्ण
+			}
 
-			अगर (status != DC_OK)
-				वापस false;
+			if (status != DC_OK)
+				return false;
 
 			length -= cur_length;
 			offset += cur_length;
-		पूर्ण
-	पूर्ण
-	वापस true;
-पूर्ण
+		}
+	}
+	return true;
+}
 
-अटल bool dp_11_process_transaction(
-	काष्ठा dc_link *link,
-	काष्ठा hdcp_protection_message *message_info)
-अणु
-	वापस dpcd_access_helper(
+static bool dp_11_process_transaction(
+	struct dc_link *link,
+	struct hdcp_protection_message *message_info)
+{
+	return dpcd_access_helper(
 		link,
 		message_info->length,
 		message_info->data,
 		hdcp_dpcd_addrs[message_info->msg_id],
-		hdcp_cmd_is_पढ़ो[message_info->msg_id]);
-पूर्ण
+		hdcp_cmd_is_read[message_info->msg_id]);
+}
 
-अटल स्थिर काष्ठा protection_properties dp_11_protection = अणु
+static const struct protection_properties dp_11_protection = {
 	.supported = true,
 	.process_transaction = dp_11_process_transaction
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा protection_properties *get_protection_properties_by_संकेत(
-	काष्ठा dc_link *link,
-	क्रमागत संकेत_type st,
-	क्रमागत hdcp_version version)
-अणु
-	चयन (version) अणु
-	हाल HDCP_VERSION_14:
-		चयन (st) अणु
-		हाल SIGNAL_TYPE_DVI_SINGLE_LINK:
-		हाल SIGNAL_TYPE_DVI_DUAL_LINK:
-		हाल SIGNAL_TYPE_HDMI_TYPE_A:
-			वापस &hdmi_14_protection;
-		हाल SIGNAL_TYPE_DISPLAY_PORT:
-			अगर (link &&
-				(link->dpcd_caps.करोngle_type == DISPLAY_DONGLE_DP_VGA_CONVERTER ||
-				link->dpcd_caps.करोngle_caps.करोngle_type == DISPLAY_DONGLE_DP_VGA_CONVERTER)) अणु
-				वापस &non_supported_protection;
-			पूर्ण
-			वापस &dp_11_protection;
-		हाल SIGNAL_TYPE_DISPLAY_PORT_MST:
-		हाल SIGNAL_TYPE_EDP:
-			वापस &dp_11_protection;
-		शेष:
-			वापस &non_supported_protection;
-		पूर्ण
-		अवरोध;
-	हाल HDCP_VERSION_22:
-		चयन (st) अणु
-		हाल SIGNAL_TYPE_DVI_SINGLE_LINK:
-		हाल SIGNAL_TYPE_DVI_DUAL_LINK:
-		हाल SIGNAL_TYPE_HDMI_TYPE_A:
-			वापस &hdmi_14_protection; //toकरो version2.2
-		हाल SIGNAL_TYPE_DISPLAY_PORT:
-		हाल SIGNAL_TYPE_DISPLAY_PORT_MST:
-		हाल SIGNAL_TYPE_EDP:
-			वापस &dp_11_protection;  //toकरो version2.2
-		शेष:
-			वापस &non_supported_protection;
-		पूर्ण
-		अवरोध;
-	शेष:
-		वापस &non_supported_protection;
-	पूर्ण
-पूर्ण
+static const struct protection_properties *get_protection_properties_by_signal(
+	struct dc_link *link,
+	enum signal_type st,
+	enum hdcp_version version)
+{
+	switch (version) {
+	case HDCP_VERSION_14:
+		switch (st) {
+		case SIGNAL_TYPE_DVI_SINGLE_LINK:
+		case SIGNAL_TYPE_DVI_DUAL_LINK:
+		case SIGNAL_TYPE_HDMI_TYPE_A:
+			return &hdmi_14_protection;
+		case SIGNAL_TYPE_DISPLAY_PORT:
+			if (link &&
+				(link->dpcd_caps.dongle_type == DISPLAY_DONGLE_DP_VGA_CONVERTER ||
+				link->dpcd_caps.dongle_caps.dongle_type == DISPLAY_DONGLE_DP_VGA_CONVERTER)) {
+				return &non_supported_protection;
+			}
+			return &dp_11_protection;
+		case SIGNAL_TYPE_DISPLAY_PORT_MST:
+		case SIGNAL_TYPE_EDP:
+			return &dp_11_protection;
+		default:
+			return &non_supported_protection;
+		}
+		break;
+	case HDCP_VERSION_22:
+		switch (st) {
+		case SIGNAL_TYPE_DVI_SINGLE_LINK:
+		case SIGNAL_TYPE_DVI_DUAL_LINK:
+		case SIGNAL_TYPE_HDMI_TYPE_A:
+			return &hdmi_14_protection; //todo version2.2
+		case SIGNAL_TYPE_DISPLAY_PORT:
+		case SIGNAL_TYPE_DISPLAY_PORT_MST:
+		case SIGNAL_TYPE_EDP:
+			return &dp_11_protection;  //todo version2.2
+		default:
+			return &non_supported_protection;
+		}
+		break;
+	default:
+		return &non_supported_protection;
+	}
+}
 
-क्रमागत hdcp_message_status dc_process_hdcp_msg(
-	क्रमागत संकेत_type संकेत,
-	काष्ठा dc_link *link,
-	काष्ठा hdcp_protection_message *message_info)
-अणु
-	क्रमागत hdcp_message_status status = HDCP_MESSAGE_FAILURE;
-	uपूर्णांक32_t i = 0;
+enum hdcp_message_status dc_process_hdcp_msg(
+	enum signal_type signal,
+	struct dc_link *link,
+	struct hdcp_protection_message *message_info)
+{
+	enum hdcp_message_status status = HDCP_MESSAGE_FAILURE;
+	uint32_t i = 0;
 
-	स्थिर काष्ठा protection_properties *protection_props;
+	const struct protection_properties *protection_props;
 
-	अगर (!message_info)
-		वापस HDCP_MESSAGE_UNSUPPORTED;
+	if (!message_info)
+		return HDCP_MESSAGE_UNSUPPORTED;
 
-	अगर (message_info->msg_id < HDCP_MESSAGE_ID_READ_BKSV ||
+	if (message_info->msg_id < HDCP_MESSAGE_ID_READ_BKSV ||
 		message_info->msg_id >= HDCP_MESSAGE_ID_MAX)
-		वापस HDCP_MESSAGE_UNSUPPORTED;
+		return HDCP_MESSAGE_UNSUPPORTED;
 
 	protection_props =
-		get_protection_properties_by_संकेत(
+		get_protection_properties_by_signal(
 			link,
-			संकेत,
+			signal,
 			message_info->version);
 
-	अगर (!protection_props->supported)
-		वापस HDCP_MESSAGE_UNSUPPORTED;
+	if (!protection_props->supported)
+		return HDCP_MESSAGE_UNSUPPORTED;
 
-	अगर (protection_props->process_transaction(
+	if (protection_props->process_transaction(
 		link,
-		message_info)) अणु
+		message_info)) {
 		status = HDCP_MESSAGE_SUCCESS;
-	पूर्ण अन्यथा अणु
-		क्रम (i = 0; i < message_info->max_retries; i++) अणु
-			अगर (protection_props->process_transaction(
+	} else {
+		for (i = 0; i < message_info->max_retries; i++) {
+			if (protection_props->process_transaction(
 						link,
-						message_info)) अणु
+						message_info)) {
 				status = HDCP_MESSAGE_SUCCESS;
-				अवरोध;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				break;
+			}
+		}
+	}
 
-	वापस status;
-पूर्ण
+	return status;
+}
 

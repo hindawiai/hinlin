@@ -1,8 +1,7 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <मानकपन.स>
+// SPDX-License-Identifier: GPL-2.0
+#include <stdio.h>
 
-पूर्णांक मुख्य(व्योम)
-अणु
-	वापस माला_दो("hi");
-पूर्ण
+int main(void)
+{
+	return puts("hi");
+}

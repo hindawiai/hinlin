@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2020 Mauro Rossi <issor.oruam@gmail.com>
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -24,18 +23,18 @@
  *
  */
 
-#अगर_अघोषित __DAL_IRQ_SERVICE_DCE60_H__
-#घोषणा __DAL_IRQ_SERVICE_DCE60_H__
+#ifndef __DAL_IRQ_SERVICE_DCE60_H__
+#define __DAL_IRQ_SERVICE_DCE60_H__
 
-#समावेश "../irq_service.h"
+#include "../irq_service.h"
 
-क्रमागत dc_irq_source to_dal_irq_source_dce60(
-		काष्ठा irq_service *irq_service,
-		uपूर्णांक32_t src_id,
-		uपूर्णांक32_t ext_id);
+enum dc_irq_source to_dal_irq_source_dce60(
+		struct irq_service *irq_service,
+		uint32_t src_id,
+		uint32_t ext_id);
 
-काष्ठा irq_service *dal_irq_service_dce60_create(
-	काष्ठा irq_service_init_data *init_data);
+struct irq_service *dal_irq_service_dce60_create(
+	struct irq_service_init_data *init_data);
 
-#पूर्ण_अगर
+#endif
 

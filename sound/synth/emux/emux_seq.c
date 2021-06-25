@@ -1,26 +1,25 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- *  Midi Sequencer पूर्णांकerface routines.
+ *  Midi Sequencer interface routines.
  *
- *  Copyright (C) 1999 Steve Ratclअगरfe
+ *  Copyright (C) 1999 Steve Ratcliffe
  *  Copyright (c) 1999-2000 Takashi Iwai <tiwai@suse.de>
  */
 
-#समावेश "emux_voice.h"
-#समावेश <linux/slab.h>
-#समावेश <linux/module.h>
+#include "emux_voice.h"
+#include <linux/slab.h>
+#include <linux/module.h>
 
-/* Prototypes क्रम अटल functions */
-अटल व्योम मुक्त_port(व्योम *निजी);
-अटल व्योम snd_emux_init_port(काष्ठा snd_emux_port *p);
-अटल पूर्णांक snd_emux_use(व्योम *निजी_data, काष्ठा snd_seq_port_subscribe *info);
-अटल पूर्णांक snd_emux_unuse(व्योम *निजी_data, काष्ठा snd_seq_port_subscribe *info);
+/* Prototypes for static functions */
+static void free_port(void *private);
+static void snd_emux_init_port(struct snd_emux_port *p);
+static int snd_emux_use(void *private_data, struct snd_seq_port_subscribe *info);
+static int snd_emux_unuse(void *private_data, struct snd_seq_port_subscribe *info);
 
 /*
- * MIDI emulation चालकs
+ * MIDI emulation operators
  */
-अटल स्थिर काष्ठा snd_midi_op emux_ops = अणु
+static const struct snd_midi_op emux_ops = {
 	.note_on = snd_emux_note_on,
 	.note_off = snd_emux_note_off,
 	.key_press = snd_emux_key_press,
@@ -28,18 +27,18 @@
 	.control = snd_emux_control,
 	.nrpn = snd_emux_nrpn,
 	.sysex = snd_emux_sysex,
-पूर्ण;
+};
 
 
 /*
  * number of MIDI channels
  */
-#घोषणा MIDI_CHANNELS		16
+#define MIDI_CHANNELS		16
 
 /*
- * type flags क्रम MIDI sequencer port
+ * type flags for MIDI sequencer port
  */
-#घोषणा DEFAULT_MIDI_TYPE	(SNDRV_SEQ_PORT_TYPE_MIDI_GENERIC |\
+#define DEFAULT_MIDI_TYPE	(SNDRV_SEQ_PORT_TYPE_MIDI_GENERIC |\
 				 SNDRV_SEQ_PORT_TYPE_MIDI_GM |\
 				 SNDRV_SEQ_PORT_TYPE_MIDI_GS |\
 				 SNDRV_SEQ_PORT_TYPE_MIDI_XG |\
@@ -47,358 +46,358 @@
 				 SNDRV_SEQ_PORT_TYPE_SYNTHESIZER)
 
 /*
- * Initialise the EMUX Synth by creating a client and रेजिस्टरing
+ * Initialise the EMUX Synth by creating a client and registering
  * a series of ports.
  * Each of the ports will contain the 16 midi channels.  Applications
  * can connect to these ports to play midi data.
  */
-पूर्णांक
-snd_emux_init_seq(काष्ठा snd_emux *emu, काष्ठा snd_card *card, पूर्णांक index)
-अणु
-	पूर्णांक  i;
-	काष्ठा snd_seq_port_callback pinfo;
-	अक्षर क्षणिकe[64];
+int
+snd_emux_init_seq(struct snd_emux *emu, struct snd_card *card, int index)
+{
+	int  i;
+	struct snd_seq_port_callback pinfo;
+	char tmpname[64];
 
 	emu->client = snd_seq_create_kernel_client(card, index,
 						   "%s WaveTable", emu->name);
-	अगर (emu->client < 0) अणु
-		snd_prपूर्णांकk(KERN_ERR "can't create client\n");
-		वापस -ENODEV;
-	पूर्ण
+	if (emu->client < 0) {
+		snd_printk(KERN_ERR "can't create client\n");
+		return -ENODEV;
+	}
 
-	अगर (emu->num_ports < 0) अणु
-		snd_prपूर्णांकk(KERN_WARNING "seqports must be greater than zero\n");
+	if (emu->num_ports < 0) {
+		snd_printk(KERN_WARNING "seqports must be greater than zero\n");
 		emu->num_ports = 1;
-	पूर्ण अन्यथा अगर (emu->num_ports >= SNDRV_EMUX_MAX_PORTS) अणु
-		snd_prपूर्णांकk(KERN_WARNING "too many ports."
+	} else if (emu->num_ports >= SNDRV_EMUX_MAX_PORTS) {
+		snd_printk(KERN_WARNING "too many ports."
 			   "limited max. ports %d\n", SNDRV_EMUX_MAX_PORTS);
 		emu->num_ports = SNDRV_EMUX_MAX_PORTS;
-	पूर्ण
+	}
 
-	स_रखो(&pinfo, 0, माप(pinfo));
+	memset(&pinfo, 0, sizeof(pinfo));
 	pinfo.owner = THIS_MODULE;
 	pinfo.use = snd_emux_use;
 	pinfo.unuse = snd_emux_unuse;
 	pinfo.event_input = snd_emux_event_input;
 
-	क्रम (i = 0; i < emu->num_ports; i++) अणु
-		काष्ठा snd_emux_port *p;
+	for (i = 0; i < emu->num_ports; i++) {
+		struct snd_emux_port *p;
 
-		प्र_लिखो(क्षणिकe, "%s Port %d", emu->name, i);
-		p = snd_emux_create_port(emu, क्षणिकe, MIDI_CHANNELS,
+		sprintf(tmpname, "%s Port %d", emu->name, i);
+		p = snd_emux_create_port(emu, tmpname, MIDI_CHANNELS,
 					 0, &pinfo);
-		अगर (!p) अणु
-			snd_prपूर्णांकk(KERN_ERR "can't create port\n");
-			वापस -ENOMEM;
-		पूर्ण
+		if (!p) {
+			snd_printk(KERN_ERR "can't create port\n");
+			return -ENOMEM;
+		}
 
 		p->port_mode =  SNDRV_EMUX_PORT_MODE_MIDI;
 		snd_emux_init_port(p);
 		emu->ports[i] = p->chset.port;
 		emu->portptrs[i] = p;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
 /*
- * Detach from the ports that were set up क्रम this synthesizer and
+ * Detach from the ports that were set up for this synthesizer and
  * destroy the kernel client.
  */
-व्योम
-snd_emux_detach_seq(काष्ठा snd_emux *emu)
-अणु
-	अगर (emu->voices)
+void
+snd_emux_detach_seq(struct snd_emux *emu)
+{
+	if (emu->voices)
 		snd_emux_terminate_all(emu);
 		
-	अगर (emu->client >= 0) अणु
+	if (emu->client >= 0) {
 		snd_seq_delete_kernel_client(emu->client);
 		emu->client = -1;
-	पूर्ण
-पूर्ण
+	}
+}
 
 
 /*
  * create a sequencer port and channel_set
  */
 
-काष्ठा snd_emux_port *
-snd_emux_create_port(काष्ठा snd_emux *emu, अक्षर *name,
-		     पूर्णांक max_channels, पूर्णांक oss_port,
-		     काष्ठा snd_seq_port_callback *callback)
-अणु
-	काष्ठा snd_emux_port *p;
-	पूर्णांक i, type, cap;
+struct snd_emux_port *
+snd_emux_create_port(struct snd_emux *emu, char *name,
+		     int max_channels, int oss_port,
+		     struct snd_seq_port_callback *callback)
+{
+	struct snd_emux_port *p;
+	int i, type, cap;
 
-	/* Allocate काष्ठाures क्रम this channel */
-	p = kzalloc(माप(*p), GFP_KERNEL);
-	अगर (!p)
-		वापस शून्य;
+	/* Allocate structures for this channel */
+	p = kzalloc(sizeof(*p), GFP_KERNEL);
+	if (!p)
+		return NULL;
 
-	p->chset.channels = kसुस्मृति(max_channels, माप(*p->chset.channels),
+	p->chset.channels = kcalloc(max_channels, sizeof(*p->chset.channels),
 				    GFP_KERNEL);
-	अगर (!p->chset.channels) अणु
-		kमुक्त(p);
-		वापस शून्य;
-	पूर्ण
-	क्रम (i = 0; i < max_channels; i++)
+	if (!p->chset.channels) {
+		kfree(p);
+		return NULL;
+	}
+	for (i = 0; i < max_channels; i++)
 		p->chset.channels[i].number = i;
-	p->chset.निजी_data = p;
+	p->chset.private_data = p;
 	p->chset.max_channels = max_channels;
 	p->emu = emu;
 	p->chset.client = emu->client;
-#अगर_घोषित SNDRV_EMUX_USE_RAW_EFFECT
+#ifdef SNDRV_EMUX_USE_RAW_EFFECT
 	snd_emux_create_effect(p);
-#पूर्ण_अगर
-	callback->निजी_मुक्त = मुक्त_port;
-	callback->निजी_data = p;
+#endif
+	callback->private_free = free_port;
+	callback->private_data = p;
 
 	cap = SNDRV_SEQ_PORT_CAP_WRITE;
-	अगर (oss_port) अणु
+	if (oss_port) {
 		type = SNDRV_SEQ_PORT_TYPE_SPECIFIC;
-	पूर्ण अन्यथा अणु
+	} else {
 		type = DEFAULT_MIDI_TYPE;
 		cap |= SNDRV_SEQ_PORT_CAP_SUBS_WRITE;
-	पूर्ण
+	}
 
 	p->chset.port = snd_seq_event_port_attach(emu->client, callback,
 						  cap, type, max_channels,
 						  emu->max_voices, name);
 
-	वापस p;
-पूर्ण
+	return p;
+}
 
 
 /*
- * release memory block क्रम port
+ * release memory block for port
  */
-अटल व्योम
-मुक्त_port(व्योम *निजी_data)
-अणु
-	काष्ठा snd_emux_port *p;
+static void
+free_port(void *private_data)
+{
+	struct snd_emux_port *p;
 
-	p = निजी_data;
-	अगर (p) अणु
-#अगर_घोषित SNDRV_EMUX_USE_RAW_EFFECT
+	p = private_data;
+	if (p) {
+#ifdef SNDRV_EMUX_USE_RAW_EFFECT
 		snd_emux_delete_effect(p);
-#पूर्ण_अगर
-		kमुक्त(p->chset.channels);
-		kमुक्त(p);
-	पूर्ण
-पूर्ण
+#endif
+		kfree(p->chset.channels);
+		kfree(p);
+	}
+}
 
 
-#घोषणा DEFAULT_DRUM_FLAGS	(1<<9)
+#define DEFAULT_DRUM_FLAGS	(1<<9)
 
 /*
- * initialize the port specअगरic parameters
+ * initialize the port specific parameters
  */
-अटल व्योम
-snd_emux_init_port(काष्ठा snd_emux_port *p)
-अणु
+static void
+snd_emux_init_port(struct snd_emux_port *p)
+{
 	p->drum_flags = DEFAULT_DRUM_FLAGS;
 	p->volume_atten = 0;
 
 	snd_emux_reset_port(p);
-पूर्ण
+}
 
 
 /*
  * reset port
  */
-व्योम
-snd_emux_reset_port(काष्ठा snd_emux_port *port)
-अणु
-	पूर्णांक i;
+void
+snd_emux_reset_port(struct snd_emux_port *port)
+{
+	int i;
 
 	/* stop all sounds */
 	snd_emux_sounds_off_all(port);
 
 	snd_midi_channel_set_clear(&port->chset);
 
-#अगर_घोषित SNDRV_EMUX_USE_RAW_EFFECT
+#ifdef SNDRV_EMUX_USE_RAW_EFFECT
 	snd_emux_clear_effect(port);
-#पूर्ण_अगर
+#endif
 
-	/* set port specअगरic control parameters */
+	/* set port specific control parameters */
 	port->ctrls[EMUX_MD_DEF_BANK] = 0;
 	port->ctrls[EMUX_MD_DEF_DRUM] = 0;
 	port->ctrls[EMUX_MD_REALTIME_PAN] = 1;
 
-	क्रम (i = 0; i < port->chset.max_channels; i++) अणु
-		काष्ठा snd_midi_channel *chan = port->chset.channels + i;
+	for (i = 0; i < port->chset.max_channels; i++) {
+		struct snd_midi_channel *chan = port->chset.channels + i;
 		chan->drum_channel = ((port->drum_flags >> i) & 1) ? 1 : 0;
-	पूर्ण
-पूर्ण
+	}
+}
 
 
 /*
  * input sequencer event
  */
-पूर्णांक
-snd_emux_event_input(काष्ठा snd_seq_event *ev, पूर्णांक direct, व्योम *निजी_data,
-		     पूर्णांक atomic, पूर्णांक hop)
-अणु
-	काष्ठा snd_emux_port *port;
+int
+snd_emux_event_input(struct snd_seq_event *ev, int direct, void *private_data,
+		     int atomic, int hop)
+{
+	struct snd_emux_port *port;
 
-	port = निजी_data;
-	अगर (snd_BUG_ON(!port || !ev))
-		वापस -EINVAL;
+	port = private_data;
+	if (snd_BUG_ON(!port || !ev))
+		return -EINVAL;
 
 	snd_midi_process_event(&emux_ops, ev, &port->chset);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
 /*
  * increment usage count
  */
-अटल पूर्णांक
-__snd_emux_inc_count(काष्ठा snd_emux *emu)
-अणु
+static int
+__snd_emux_inc_count(struct snd_emux *emu)
+{
 	emu->used++;
-	अगर (!try_module_get(emu->ops.owner))
-		जाओ __error;
-	अगर (!try_module_get(emu->card->module)) अणु
+	if (!try_module_get(emu->ops.owner))
+		goto __error;
+	if (!try_module_get(emu->card->module)) {
 		module_put(emu->ops.owner);
 	      __error:
 		emu->used--;
-		वापस 0;
-	पूर्ण
-	वापस 1;
-पूर्ण
+		return 0;
+	}
+	return 1;
+}
 
-पूर्णांक snd_emux_inc_count(काष्ठा snd_emux *emu)
-अणु
-	पूर्णांक ret;
+int snd_emux_inc_count(struct snd_emux *emu)
+{
+	int ret;
 
-	mutex_lock(&emu->रेजिस्टर_mutex);
+	mutex_lock(&emu->register_mutex);
 	ret = __snd_emux_inc_count(emu);
-	mutex_unlock(&emu->रेजिस्टर_mutex);
-	वापस ret;
-पूर्ण
+	mutex_unlock(&emu->register_mutex);
+	return ret;
+}
 
 /*
  * decrease usage count
  */
-अटल व्योम
-__snd_emux_dec_count(काष्ठा snd_emux *emu)
-अणु
+static void
+__snd_emux_dec_count(struct snd_emux *emu)
+{
 	module_put(emu->card->module);
 	emu->used--;
-	अगर (emu->used <= 0)
+	if (emu->used <= 0)
 		snd_emux_terminate_all(emu);
 	module_put(emu->ops.owner);
-पूर्ण
+}
 
-व्योम snd_emux_dec_count(काष्ठा snd_emux *emu)
-अणु
-	mutex_lock(&emu->रेजिस्टर_mutex);
+void snd_emux_dec_count(struct snd_emux *emu)
+{
+	mutex_lock(&emu->register_mutex);
 	__snd_emux_dec_count(emu);
-	mutex_unlock(&emu->रेजिस्टर_mutex);
-पूर्ण
+	mutex_unlock(&emu->register_mutex);
+}
 
 /*
  * Routine that is called upon a first use of a particular port
  */
-अटल पूर्णांक
-snd_emux_use(व्योम *निजी_data, काष्ठा snd_seq_port_subscribe *info)
-अणु
-	काष्ठा snd_emux_port *p;
-	काष्ठा snd_emux *emu;
+static int
+snd_emux_use(void *private_data, struct snd_seq_port_subscribe *info)
+{
+	struct snd_emux_port *p;
+	struct snd_emux *emu;
 
-	p = निजी_data;
-	अगर (snd_BUG_ON(!p))
-		वापस -EINVAL;
+	p = private_data;
+	if (snd_BUG_ON(!p))
+		return -EINVAL;
 	emu = p->emu;
-	अगर (snd_BUG_ON(!emu))
-		वापस -EINVAL;
+	if (snd_BUG_ON(!emu))
+		return -EINVAL;
 
-	mutex_lock(&emu->रेजिस्टर_mutex);
+	mutex_lock(&emu->register_mutex);
 	snd_emux_init_port(p);
 	__snd_emux_inc_count(emu);
-	mutex_unlock(&emu->रेजिस्टर_mutex);
-	वापस 0;
-पूर्ण
+	mutex_unlock(&emu->register_mutex);
+	return 0;
+}
 
 /*
  * Routine that is called upon the last unuse() of a particular port.
  */
-अटल पूर्णांक
-snd_emux_unuse(व्योम *निजी_data, काष्ठा snd_seq_port_subscribe *info)
-अणु
-	काष्ठा snd_emux_port *p;
-	काष्ठा snd_emux *emu;
+static int
+snd_emux_unuse(void *private_data, struct snd_seq_port_subscribe *info)
+{
+	struct snd_emux_port *p;
+	struct snd_emux *emu;
 
-	p = निजी_data;
-	अगर (snd_BUG_ON(!p))
-		वापस -EINVAL;
+	p = private_data;
+	if (snd_BUG_ON(!p))
+		return -EINVAL;
 	emu = p->emu;
-	अगर (snd_BUG_ON(!emu))
-		वापस -EINVAL;
+	if (snd_BUG_ON(!emu))
+		return -EINVAL;
 
-	mutex_lock(&emu->रेजिस्टर_mutex);
+	mutex_lock(&emu->register_mutex);
 	snd_emux_sounds_off_all(p);
 	__snd_emux_dec_count(emu);
-	mutex_unlock(&emu->रेजिस्टर_mutex);
-	वापस 0;
-पूर्ण
+	mutex_unlock(&emu->register_mutex);
+	return 0;
+}
 
 
 /*
- * attach भव rawmidi devices
+ * attach virtual rawmidi devices
  */
-पूर्णांक snd_emux_init_virmidi(काष्ठा snd_emux *emu, काष्ठा snd_card *card)
-अणु
-	पूर्णांक i;
+int snd_emux_init_virmidi(struct snd_emux *emu, struct snd_card *card)
+{
+	int i;
 
-	emu->vmidi = शून्य;
-	अगर (emu->midi_ports <= 0)
-		वापस 0;
+	emu->vmidi = NULL;
+	if (emu->midi_ports <= 0)
+		return 0;
 
-	emu->vmidi = kसुस्मृति(emu->midi_ports, माप(*emu->vmidi), GFP_KERNEL);
-	अगर (!emu->vmidi)
-		वापस -ENOMEM;
+	emu->vmidi = kcalloc(emu->midi_ports, sizeof(*emu->vmidi), GFP_KERNEL);
+	if (!emu->vmidi)
+		return -ENOMEM;
 
-	क्रम (i = 0; i < emu->midi_ports; i++) अणु
-		काष्ठा snd_rawmidi *rmidi;
-		काष्ठा snd_virmidi_dev *rdev;
-		अगर (snd_virmidi_new(card, emu->midi_devidx + i, &rmidi) < 0)
-			जाओ __error;
-		rdev = rmidi->निजी_data;
-		प्र_लिखो(rmidi->name, "%s Synth MIDI", emu->name);
+	for (i = 0; i < emu->midi_ports; i++) {
+		struct snd_rawmidi *rmidi;
+		struct snd_virmidi_dev *rdev;
+		if (snd_virmidi_new(card, emu->midi_devidx + i, &rmidi) < 0)
+			goto __error;
+		rdev = rmidi->private_data;
+		sprintf(rmidi->name, "%s Synth MIDI", emu->name);
 		rdev->seq_mode = SNDRV_VIRMIDI_SEQ_ATTACH;
 		rdev->client = emu->client;
 		rdev->port = emu->ports[i];
-		अगर (snd_device_रेजिस्टर(card, rmidi) < 0) अणु
-			snd_device_मुक्त(card, rmidi);
-			जाओ __error;
-		पूर्ण
+		if (snd_device_register(card, rmidi) < 0) {
+			snd_device_free(card, rmidi);
+			goto __error;
+		}
 		emu->vmidi[i] = rmidi;
-		/* snd_prपूर्णांकk(KERN_DEBUG "virmidi %d ok\n", i); */
-	पूर्ण
-	वापस 0;
+		/* snd_printk(KERN_DEBUG "virmidi %d ok\n", i); */
+	}
+	return 0;
 
 __error:
-	/* snd_prपूर्णांकk(KERN_DEBUG "error init..\n"); */
+	/* snd_printk(KERN_DEBUG "error init..\n"); */
 	snd_emux_delete_virmidi(emu);
-	वापस -ENOMEM;
-पूर्ण
+	return -ENOMEM;
+}
 
-पूर्णांक snd_emux_delete_virmidi(काष्ठा snd_emux *emu)
-अणु
-	पूर्णांक i;
+int snd_emux_delete_virmidi(struct snd_emux *emu)
+{
+	int i;
 
-	अगर (!emu->vmidi)
-		वापस 0;
+	if (!emu->vmidi)
+		return 0;
 
-	क्रम (i = 0; i < emu->midi_ports; i++) अणु
-		अगर (emu->vmidi[i])
-			snd_device_मुक्त(emu->card, emu->vmidi[i]);
-	पूर्ण
-	kमुक्त(emu->vmidi);
-	emu->vmidi = शून्य;
-	वापस 0;
-पूर्ण
+	for (i = 0; i < emu->midi_ports; i++) {
+		if (emu->vmidi[i])
+			snd_device_free(emu->card, emu->vmidi[i]);
+	}
+	kfree(emu->vmidi);
+	emu->vmidi = NULL;
+	return 0;
+}

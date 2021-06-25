@@ -1,21 +1,20 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  *  linux/drivers/video/vt8500lcdfb.h
  *
- *  Copyright (C) 2010 Alexey Charkov <alअक्षरk@gmail.com>
+ *  Copyright (C) 2010 Alexey Charkov <alchark@gmail.com>
  */
 
-काष्ठा vt8500lcd_info अणु
-	काष्ठा fb_info		fb;
-	व्योम __iomem		*regbase;
-	व्योम __iomem		*palette_cpu;
+struct vt8500lcd_info {
+	struct fb_info		fb;
+	void __iomem		*regbase;
+	void __iomem		*palette_cpu;
 	dma_addr_t		palette_phys;
-	माप_प्रकार			palette_size;
-	रुको_queue_head_t	रुको;
-पूर्ण;
+	size_t			palette_size;
+	wait_queue_head_t	wait;
+};
 
-अटल पूर्णांक bpp_values[] = अणु
+static int bpp_values[] = {
 	1,
 	2,
 	4,
@@ -24,4 +23,4 @@
 	16,
 	18,
 	24,
-पूर्ण;
+};

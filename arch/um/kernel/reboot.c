@@ -1,61 +1,60 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /* 
- * Copyright (C) 2000 - 2007 Jeff Dike (jdike@अणुaddtoit,linux.पूर्णांकelपूर्ण.com)
+ * Copyright (C) 2000 - 2007 Jeff Dike (jdike@{addtoit,linux.intel}.com)
  */
 
-#समावेश <linux/sched/संकेत.स>
-#समावेश <linux/sched/task.h>
-#समावेश <linux/sched/mm.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/oom.h>
-#समावेश <kern_util.h>
-#समावेश <os.h>
-#समावेश <skas.h>
+#include <linux/sched/signal.h>
+#include <linux/sched/task.h>
+#include <linux/sched/mm.h>
+#include <linux/spinlock.h>
+#include <linux/slab.h>
+#include <linux/oom.h>
+#include <kern_util.h>
+#include <os.h>
+#include <skas.h>
 
-व्योम (*pm_घातer_off)(व्योम);
-EXPORT_SYMBOL(pm_घातer_off);
+void (*pm_power_off)(void);
+EXPORT_SYMBOL(pm_power_off);
 
-अटल व्योम समाप्त_off_processes(व्योम)
-अणु
-	काष्ठा task_काष्ठा *p;
-	पूर्णांक pid;
+static void kill_off_processes(void)
+{
+	struct task_struct *p;
+	int pid;
 
-	पढ़ो_lock(&tasklist_lock);
-	क्रम_each_process(p) अणु
-		काष्ठा task_काष्ठा *t;
+	read_lock(&tasklist_lock);
+	for_each_process(p) {
+		struct task_struct *t;
 
 		t = find_lock_task_mm(p);
-		अगर (!t)
-			जारी;
+		if (!t)
+			continue;
 		pid = t->mm->context.id.u.pid;
 		task_unlock(t);
-		os_समाप्त_ptraced_process(pid, 1);
-	पूर्ण
-	पढ़ो_unlock(&tasklist_lock);
-पूर्ण
+		os_kill_ptraced_process(pid, 1);
+	}
+	read_unlock(&tasklist_lock);
+}
 
-व्योम uml_cleanup(व्योम)
-अणु
-	kदो_स्मृति_ok = 0;
-	करो_uml_निकासcalls();
-	समाप्त_off_processes();
-पूर्ण
+void uml_cleanup(void)
+{
+	kmalloc_ok = 0;
+	do_uml_exitcalls();
+	kill_off_processes();
+}
 
-व्योम machine_restart(अक्षर * __unused)
-अणु
+void machine_restart(char * __unused)
+{
 	uml_cleanup();
 	reboot_skas();
-पूर्ण
+}
 
-व्योम machine_घातer_off(व्योम)
-अणु
+void machine_power_off(void)
+{
 	uml_cleanup();
 	halt_skas();
-पूर्ण
+}
 
-व्योम machine_halt(व्योम)
-अणु
-	machine_घातer_off();
-पूर्ण
+void machine_halt(void)
+{
+	machine_power_off();
+}

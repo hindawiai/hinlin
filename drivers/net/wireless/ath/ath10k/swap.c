@@ -1,114 +1,113 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: ISC
+// SPDX-License-Identifier: ISC
 /*
  * Copyright (c) 2015-2016 Qualcomm Atheros, Inc.
  */
 
-/* This file has implementation क्रम code swap logic. With code swap feature,
+/* This file has implementation for code swap logic. With code swap feature,
  * target can run the fw binary with even smaller IRAM size by using host
  * memory to store some of the code segments.
  */
 
-#समावेश "core.h"
-#समावेश "bmi.h"
-#समावेश "debug.h"
+#include "core.h"
+#include "bmi.h"
+#include "debug.h"
 
-अटल पूर्णांक ath10k_swap_code_seg_fill(काष्ठा ath10k *ar,
-				     काष्ठा ath10k_swap_code_seg_info *seg_info,
-				     स्थिर व्योम *data, माप_प्रकार data_len)
-अणु
+static int ath10k_swap_code_seg_fill(struct ath10k *ar,
+				     struct ath10k_swap_code_seg_info *seg_info,
+				     const void *data, size_t data_len)
+{
 	u8 *virt_addr = seg_info->virt_address[0];
-	u8 swap_magic[ATH10K_SWAP_CODE_SEG_MAGIC_BYTES_SZ] = अणुपूर्ण;
-	स्थिर u8 *fw_data = data;
-	जोड़ ath10k_swap_code_seg_item *swap_item;
+	u8 swap_magic[ATH10K_SWAP_CODE_SEG_MAGIC_BYTES_SZ] = {};
+	const u8 *fw_data = data;
+	union ath10k_swap_code_seg_item *swap_item;
 	u32 length = 0;
 	u32 payload_len;
 	u32 total_payload_len = 0;
 	u32 size_left = data_len;
 
 	/* Parse swap bin and copy the content to host allocated memory.
-	 * The क्रमmat is Address, length and value. The last 4-bytes is
-	 * target ग_लिखो address. Currently address field is not used.
+	 * The format is Address, length and value. The last 4-bytes is
+	 * target write address. Currently address field is not used.
 	 */
 	seg_info->target_addr = -1;
-	जबतक (size_left >= माप(*swap_item)) अणु
-		swap_item = (जोड़ ath10k_swap_code_seg_item *)fw_data;
+	while (size_left >= sizeof(*swap_item)) {
+		swap_item = (union ath10k_swap_code_seg_item *)fw_data;
 		payload_len = __le32_to_cpu(swap_item->tlv.length);
-		अगर ((payload_len > size_left) ||
+		if ((payload_len > size_left) ||
 		    (payload_len == 0 &&
-		     size_left != माप(काष्ठा ath10k_swap_code_seg_tail))) अणु
+		     size_left != sizeof(struct ath10k_swap_code_seg_tail))) {
 			ath10k_err(ar, "refusing to parse invalid tlv length %d\n",
 				   payload_len);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
-		अगर (payload_len == 0) अणु
-			अगर (स_भेद(swap_item->tail.magic_signature, swap_magic,
-				   ATH10K_SWAP_CODE_SEG_MAGIC_BYTES_SZ)) अणु
+		if (payload_len == 0) {
+			if (memcmp(swap_item->tail.magic_signature, swap_magic,
+				   ATH10K_SWAP_CODE_SEG_MAGIC_BYTES_SZ)) {
 				ath10k_err(ar, "refusing an invalid swap file\n");
-				वापस -EINVAL;
-			पूर्ण
+				return -EINVAL;
+			}
 			seg_info->target_addr =
-				__le32_to_cpu(swap_item->tail.bmi_ग_लिखो_addr);
-			अवरोध;
-		पूर्ण
+				__le32_to_cpu(swap_item->tail.bmi_write_addr);
+			break;
+		}
 
-		स_नकल(virt_addr, swap_item->tlv.data, payload_len);
+		memcpy(virt_addr, swap_item->tlv.data, payload_len);
 		virt_addr += payload_len;
-		length = payload_len +  माप(काष्ठा ath10k_swap_code_seg_tlv);
+		length = payload_len +  sizeof(struct ath10k_swap_code_seg_tlv);
 		size_left -= length;
 		fw_data += length;
 		total_payload_len += payload_len;
-	पूर्ण
+	}
 
-	अगर (seg_info->target_addr == -1) अणु
+	if (seg_info->target_addr == -1) {
 		ath10k_err(ar, "failed to parse invalid swap file\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	seg_info->seg_hw_info.swap_size = __cpu_to_le32(total_payload_len);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम
-ath10k_swap_code_seg_मुक्त(काष्ठा ath10k *ar,
-			  काष्ठा ath10k_swap_code_seg_info *seg_info)
-अणु
+static void
+ath10k_swap_code_seg_free(struct ath10k *ar,
+			  struct ath10k_swap_code_seg_info *seg_info)
+{
 	u32 seg_size;
 
-	अगर (!seg_info)
-		वापस;
+	if (!seg_info)
+		return;
 
-	अगर (!seg_info->virt_address[0])
-		वापस;
+	if (!seg_info->virt_address[0])
+		return;
 
 	seg_size = __le32_to_cpu(seg_info->seg_hw_info.size);
-	dma_मुक्त_coherent(ar->dev, seg_size, seg_info->virt_address[0],
+	dma_free_coherent(ar->dev, seg_size, seg_info->virt_address[0],
 			  seg_info->paddr[0]);
-पूर्ण
+}
 
-अटल काष्ठा ath10k_swap_code_seg_info *
-ath10k_swap_code_seg_alloc(काष्ठा ath10k *ar, माप_प्रकार swap_bin_len)
-अणु
-	काष्ठा ath10k_swap_code_seg_info *seg_info;
-	व्योम *virt_addr;
+static struct ath10k_swap_code_seg_info *
+ath10k_swap_code_seg_alloc(struct ath10k *ar, size_t swap_bin_len)
+{
+	struct ath10k_swap_code_seg_info *seg_info;
+	void *virt_addr;
 	dma_addr_t paddr;
 
 	swap_bin_len = roundup(swap_bin_len, 2);
-	अगर (swap_bin_len > ATH10K_SWAP_CODE_SEG_BIN_LEN_MAX) अणु
+	if (swap_bin_len > ATH10K_SWAP_CODE_SEG_BIN_LEN_MAX) {
 		ath10k_err(ar, "refusing code swap bin because it is too big %zu > %d\n",
 			   swap_bin_len, ATH10K_SWAP_CODE_SEG_BIN_LEN_MAX);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	seg_info = devm_kzalloc(ar->dev, माप(*seg_info), GFP_KERNEL);
-	अगर (!seg_info)
-		वापस शून्य;
+	seg_info = devm_kzalloc(ar->dev, sizeof(*seg_info), GFP_KERNEL);
+	if (!seg_info)
+		return NULL;
 
 	virt_addr = dma_alloc_coherent(ar->dev, swap_bin_len, &paddr,
 				       GFP_KERNEL);
-	अगर (!virt_addr)
-		वापस शून्य;
+	if (!virt_addr)
+		return NULL;
 
 	seg_info->seg_hw_info.bus_addr[0] = __cpu_to_le32(paddr);
 	seg_info->seg_hw_info.size = __cpu_to_le32(swap_bin_len);
@@ -119,78 +118,78 @@ ath10k_swap_code_seg_alloc(काष्ठा ath10k *ar, माप_प्रक
 	seg_info->virt_address[0] = virt_addr;
 	seg_info->paddr[0] = paddr;
 
-	वापस seg_info;
-पूर्ण
+	return seg_info;
+}
 
-पूर्णांक ath10k_swap_code_seg_configure(काष्ठा ath10k *ar,
-				   स्थिर काष्ठा ath10k_fw_file *fw_file)
-अणु
-	पूर्णांक ret;
-	काष्ठा ath10k_swap_code_seg_info *seg_info = शून्य;
+int ath10k_swap_code_seg_configure(struct ath10k *ar,
+				   const struct ath10k_fw_file *fw_file)
+{
+	int ret;
+	struct ath10k_swap_code_seg_info *seg_info = NULL;
 
-	अगर (!fw_file->firmware_swap_code_seg_info)
-		वापस 0;
+	if (!fw_file->firmware_swap_code_seg_info)
+		return 0;
 
 	ath10k_dbg(ar, ATH10K_DBG_BOOT, "boot found firmware code swap binary\n");
 
 	seg_info = fw_file->firmware_swap_code_seg_info;
 
-	ret = ath10k_bmi_ग_लिखो_memory(ar, seg_info->target_addr,
+	ret = ath10k_bmi_write_memory(ar, seg_info->target_addr,
 				      &seg_info->seg_hw_info,
-				      माप(seg_info->seg_hw_info));
-	अगर (ret) अणु
+				      sizeof(seg_info->seg_hw_info));
+	if (ret) {
 		ath10k_err(ar, "failed to write Code swap segment information (%d)\n",
 			   ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम ath10k_swap_code_seg_release(काष्ठा ath10k *ar,
-				  काष्ठा ath10k_fw_file *fw_file)
-अणु
-	ath10k_swap_code_seg_मुक्त(ar, fw_file->firmware_swap_code_seg_info);
+void ath10k_swap_code_seg_release(struct ath10k *ar,
+				  struct ath10k_fw_file *fw_file)
+{
+	ath10k_swap_code_seg_free(ar, fw_file->firmware_swap_code_seg_info);
 
 	/* FIXME: these two assignments look to bein wrong place! Shouldn't
-	 * they be in ath10k_core_मुक्त_firmware_files() like the rest?
+	 * they be in ath10k_core_free_firmware_files() like the rest?
 	 */
-	fw_file->codeswap_data = शून्य;
+	fw_file->codeswap_data = NULL;
 	fw_file->codeswap_len = 0;
 
-	fw_file->firmware_swap_code_seg_info = शून्य;
-पूर्ण
+	fw_file->firmware_swap_code_seg_info = NULL;
+}
 
-पूर्णांक ath10k_swap_code_seg_init(काष्ठा ath10k *ar, काष्ठा ath10k_fw_file *fw_file)
-अणु
-	पूर्णांक ret;
-	काष्ठा ath10k_swap_code_seg_info *seg_info;
-	स्थिर व्योम *codeswap_data;
-	माप_प्रकार codeswap_len;
+int ath10k_swap_code_seg_init(struct ath10k *ar, struct ath10k_fw_file *fw_file)
+{
+	int ret;
+	struct ath10k_swap_code_seg_info *seg_info;
+	const void *codeswap_data;
+	size_t codeswap_len;
 
 	codeswap_data = fw_file->codeswap_data;
 	codeswap_len = fw_file->codeswap_len;
 
-	अगर (!codeswap_len || !codeswap_data)
-		वापस 0;
+	if (!codeswap_len || !codeswap_data)
+		return 0;
 
 	seg_info = ath10k_swap_code_seg_alloc(ar, codeswap_len);
-	अगर (!seg_info) अणु
+	if (!seg_info) {
 		ath10k_err(ar, "failed to allocate fw code swap segment\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	ret = ath10k_swap_code_seg_fill(ar, seg_info,
 					codeswap_data, codeswap_len);
 
-	अगर (ret) अणु
+	if (ret) {
 		ath10k_warn(ar, "failed to initialize fw code swap segment: %d\n",
 			    ret);
-		ath10k_swap_code_seg_मुक्त(ar, seg_info);
-		वापस ret;
-	पूर्ण
+		ath10k_swap_code_seg_free(ar, seg_info);
+		return ret;
+	}
 
 	fw_file->firmware_swap_code_seg_info = seg_info;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

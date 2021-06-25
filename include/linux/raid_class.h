@@ -1,32 +1,31 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * raid_class.h - a generic raid visualisation class
  *
  * Copyright (c) 2005 - James Bottomley <James.Bottomley@steeleye.com>
  */
-#समावेश <linux/transport_class.h>
+#include <linux/transport_class.h>
 
-काष्ठा raid_ढाँचा अणु
-	काष्ठा transport_container raid_attrs;
-पूर्ण;
+struct raid_template {
+	struct transport_container raid_attrs;
+};
 
-काष्ठा raid_function_ढाँचा अणु
-	व्योम *cookie;
-	पूर्णांक (*is_raid)(काष्ठा device *);
-	व्योम (*get_resync)(काष्ठा device *);
-	व्योम (*get_state)(काष्ठा device *);
-पूर्ण;
+struct raid_function_template {
+	void *cookie;
+	int (*is_raid)(struct device *);
+	void (*get_resync)(struct device *);
+	void (*get_state)(struct device *);
+};
 
-क्रमागत raid_state अणु
+enum raid_state {
 	RAID_STATE_UNKNOWN = 0,
 	RAID_STATE_ACTIVE,
 	RAID_STATE_DEGRADED,
 	RAID_STATE_RESYNCING,
 	RAID_STATE_OFFLINE,
-पूर्ण;
+};
 
-क्रमागत raid_level अणु
+enum raid_level {
 	RAID_LEVEL_UNKNOWN = 0,
 	RAID_LEVEL_LINEAR,
 	RAID_LEVEL_0,
@@ -39,46 +38,46 @@
 	RAID_LEVEL_50,
 	RAID_LEVEL_6,
 	RAID_LEVEL_JBOD,
-पूर्ण;
+};
 
-काष्ठा raid_data अणु
-	काष्ठा list_head component_list;
-	पूर्णांक component_count;
-	क्रमागत raid_level level;
-	क्रमागत raid_state state;
-	पूर्णांक resync;
-पूर्ण;
+struct raid_data {
+	struct list_head component_list;
+	int component_count;
+	enum raid_level level;
+	enum raid_state state;
+	int resync;
+};
 
 /* resync complete goes from 0 to this */
-#घोषणा RAID_MAX_RESYNC		(10000)
+#define RAID_MAX_RESYNC		(10000)
 
-#घोषणा DEFINE_RAID_ATTRIBUTE(type, attr)				      \
-अटल अंतरभूत व्योम							      \
-raid_set_##attr(काष्ठा raid_ढाँचा *r, काष्ठा device *dev, type value) अणु    \
-	काष्ठा device *device =						      \
+#define DEFINE_RAID_ATTRIBUTE(type, attr)				      \
+static inline void							      \
+raid_set_##attr(struct raid_template *r, struct device *dev, type value) {    \
+	struct device *device =						      \
 		attribute_container_find_class_device(&r->raid_attrs.ac, dev);\
-	काष्ठा raid_data *rd;						      \
+	struct raid_data *rd;						      \
 	BUG_ON(!device);						      \
 	rd = dev_get_drvdata(device);					      \
 	rd->attr = value;						      \
-पूर्ण									      \
-अटल अंतरभूत type							      \
-raid_get_##attr(काष्ठा raid_ढाँचा *r, काष्ठा device *dev) अणु		      \
-	काष्ठा device *device =						      \
+}									      \
+static inline type							      \
+raid_get_##attr(struct raid_template *r, struct device *dev) {		      \
+	struct device *device =						      \
 		attribute_container_find_class_device(&r->raid_attrs.ac, dev);\
-	काष्ठा raid_data *rd;						      \
+	struct raid_data *rd;						      \
 	BUG_ON(!device);						      \
 	rd = dev_get_drvdata(device);					      \
-	वापस rd->attr;						      \
-पूर्ण
+	return rd->attr;						      \
+}
 
-DEFINE_RAID_ATTRIBUTE(क्रमागत raid_level, level)
-DEFINE_RAID_ATTRIBUTE(पूर्णांक, resync)
-DEFINE_RAID_ATTRIBUTE(क्रमागत raid_state, state)
+DEFINE_RAID_ATTRIBUTE(enum raid_level, level)
+DEFINE_RAID_ATTRIBUTE(int, resync)
+DEFINE_RAID_ATTRIBUTE(enum raid_state, state)
 	
-काष्ठा raid_ढाँचा *raid_class_attach(काष्ठा raid_function_ढाँचा *);
-व्योम raid_class_release(काष्ठा raid_ढाँचा *);
+struct raid_template *raid_class_attach(struct raid_function_template *);
+void raid_class_release(struct raid_template *);
 
-पूर्णांक __must_check raid_component_add(काष्ठा raid_ढाँचा *, काष्ठा device *,
-				    काष्ठा device *);
+int __must_check raid_component_add(struct raid_template *, struct device *,
+				    struct device *);
 

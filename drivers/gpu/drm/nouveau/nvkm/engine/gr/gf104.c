@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2013 Red Hat Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,99 +21,99 @@
  *
  * Authors: Ben Skeggs <bskeggs@redhat.com>
  */
-#समावेश "gf100.h"
-#समावेश "ctxgf100.h"
+#include "gf100.h"
+#include "ctxgf100.h"
 
-#समावेश <nvअगर/class.h>
+#include <nvif/class.h>
 
 /*******************************************************************************
- * PGRAPH रेजिस्टर lists
+ * PGRAPH register lists
  ******************************************************************************/
 
-स्थिर काष्ठा gf100_gr_init
-gf104_gr_init_ds_0[] = अणु
-	अणु 0x405844,   1, 0x04, 0x00ffffff पूर्ण,
-	अणु 0x405850,   1, 0x04, 0x00000000 पूर्ण,
-	अणु 0x405900,   1, 0x04, 0x00002834 पूर्ण,
-	अणु 0x405908,   1, 0x04, 0x00000000 पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+const struct gf100_gr_init
+gf104_gr_init_ds_0[] = {
+	{ 0x405844,   1, 0x04, 0x00ffffff },
+	{ 0x405850,   1, 0x04, 0x00000000 },
+	{ 0x405900,   1, 0x04, 0x00002834 },
+	{ 0x405908,   1, 0x04, 0x00000000 },
+	{}
+};
 
-स्थिर काष्ठा gf100_gr_init
-gf104_gr_init_tex_0[] = अणु
-	अणु 0x419ab0,   1, 0x04, 0x00000000 पूर्ण,
-	अणु 0x419ac8,   1, 0x04, 0x00000000 पूर्ण,
-	अणु 0x419ab8,   1, 0x04, 0x000000e7 पूर्ण,
-	अणु 0x419abc,   2, 0x04, 0x00000000 पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+const struct gf100_gr_init
+gf104_gr_init_tex_0[] = {
+	{ 0x419ab0,   1, 0x04, 0x00000000 },
+	{ 0x419ac8,   1, 0x04, 0x00000000 },
+	{ 0x419ab8,   1, 0x04, 0x000000e7 },
+	{ 0x419abc,   2, 0x04, 0x00000000 },
+	{}
+};
 
-अटल स्थिर काष्ठा gf100_gr_init
-gf104_gr_init_pe_0[] = अणु
-	अणु 0x41980c,   3, 0x04, 0x00000000 पूर्ण,
-	अणु 0x419844,   1, 0x04, 0x00000000 पूर्ण,
-	अणु 0x41984c,   1, 0x04, 0x00005bc5 पूर्ण,
-	अणु 0x419850,   4, 0x04, 0x00000000 पूर्ण,
-	अणु 0x419880,   1, 0x04, 0x00000002 पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct gf100_gr_init
+gf104_gr_init_pe_0[] = {
+	{ 0x41980c,   3, 0x04, 0x00000000 },
+	{ 0x419844,   1, 0x04, 0x00000000 },
+	{ 0x41984c,   1, 0x04, 0x00005bc5 },
+	{ 0x419850,   4, 0x04, 0x00000000 },
+	{ 0x419880,   1, 0x04, 0x00000002 },
+	{}
+};
 
-स्थिर काष्ठा gf100_gr_init
-gf104_gr_init_sm_0[] = अणु
-	अणु 0x419e00,   1, 0x04, 0x00000000 पूर्ण,
-	अणु 0x419ea0,   1, 0x04, 0x00000000 पूर्ण,
-	अणु 0x419ea4,   1, 0x04, 0x00000100 पूर्ण,
-	अणु 0x419ea8,   1, 0x04, 0x00001100 पूर्ण,
-	अणु 0x419eac,   1, 0x04, 0x11100702 पूर्ण,
-	अणु 0x419eb0,   1, 0x04, 0x00000003 पूर्ण,
-	अणु 0x419eb4,   4, 0x04, 0x00000000 पूर्ण,
-	अणु 0x419ec8,   1, 0x04, 0x0e063818 पूर्ण,
-	अणु 0x419ecc,   1, 0x04, 0x0e060e06 पूर्ण,
-	अणु 0x419ed0,   1, 0x04, 0x00003818 पूर्ण,
-	अणु 0x419ed4,   1, 0x04, 0x011104f1 पूर्ण,
-	अणु 0x419edc,   1, 0x04, 0x00000000 पूर्ण,
-	अणु 0x419f00,   1, 0x04, 0x00000000 पूर्ण,
-	अणु 0x419f2c,   1, 0x04, 0x00000000 पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+const struct gf100_gr_init
+gf104_gr_init_sm_0[] = {
+	{ 0x419e00,   1, 0x04, 0x00000000 },
+	{ 0x419ea0,   1, 0x04, 0x00000000 },
+	{ 0x419ea4,   1, 0x04, 0x00000100 },
+	{ 0x419ea8,   1, 0x04, 0x00001100 },
+	{ 0x419eac,   1, 0x04, 0x11100702 },
+	{ 0x419eb0,   1, 0x04, 0x00000003 },
+	{ 0x419eb4,   4, 0x04, 0x00000000 },
+	{ 0x419ec8,   1, 0x04, 0x0e063818 },
+	{ 0x419ecc,   1, 0x04, 0x0e060e06 },
+	{ 0x419ed0,   1, 0x04, 0x00003818 },
+	{ 0x419ed4,   1, 0x04, 0x011104f1 },
+	{ 0x419edc,   1, 0x04, 0x00000000 },
+	{ 0x419f00,   1, 0x04, 0x00000000 },
+	{ 0x419f2c,   1, 0x04, 0x00000000 },
+	{}
+};
 
-अटल स्थिर काष्ठा gf100_gr_pack
-gf104_gr_pack_mmio[] = अणु
-	अणु gf100_gr_init_मुख्य_0 पूर्ण,
-	अणु gf100_gr_init_fe_0 पूर्ण,
-	अणु gf100_gr_init_pri_0 पूर्ण,
-	अणु gf100_gr_init_rstr2d_0 पूर्ण,
-	अणु gf100_gr_init_pd_0 पूर्ण,
-	अणु gf104_gr_init_ds_0 पूर्ण,
-	अणु gf100_gr_init_scc_0 पूर्ण,
-	अणु gf100_gr_init_prop_0 पूर्ण,
-	अणु gf100_gr_init_gpc_unk_0 पूर्ण,
-	अणु gf100_gr_init_setup_0 पूर्ण,
-	अणु gf100_gr_init_crstr_0 पूर्ण,
-	अणु gf100_gr_init_setup_1 पूर्ण,
-	अणु gf100_gr_init_zcull_0 पूर्ण,
-	अणु gf100_gr_init_gpm_0 पूर्ण,
-	अणु gf100_gr_init_gpc_unk_1 पूर्ण,
-	अणु gf100_gr_init_gcc_0 पूर्ण,
-	अणु gf100_gr_init_tpccs_0 पूर्ण,
-	अणु gf104_gr_init_tex_0 पूर्ण,
-	अणु gf104_gr_init_pe_0 पूर्ण,
-	अणु gf100_gr_init_l1c_0 पूर्ण,
-	अणु gf100_gr_init_wwdx_0 पूर्ण,
-	अणु gf100_gr_init_tpccs_1 पूर्ण,
-	अणु gf100_gr_init_mpc_0 पूर्ण,
-	अणु gf104_gr_init_sm_0 पूर्ण,
-	अणु gf100_gr_init_be_0 पूर्ण,
-	अणु gf100_gr_init_fe_1 पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct gf100_gr_pack
+gf104_gr_pack_mmio[] = {
+	{ gf100_gr_init_main_0 },
+	{ gf100_gr_init_fe_0 },
+	{ gf100_gr_init_pri_0 },
+	{ gf100_gr_init_rstr2d_0 },
+	{ gf100_gr_init_pd_0 },
+	{ gf104_gr_init_ds_0 },
+	{ gf100_gr_init_scc_0 },
+	{ gf100_gr_init_prop_0 },
+	{ gf100_gr_init_gpc_unk_0 },
+	{ gf100_gr_init_setup_0 },
+	{ gf100_gr_init_crstr_0 },
+	{ gf100_gr_init_setup_1 },
+	{ gf100_gr_init_zcull_0 },
+	{ gf100_gr_init_gpm_0 },
+	{ gf100_gr_init_gpc_unk_1 },
+	{ gf100_gr_init_gcc_0 },
+	{ gf100_gr_init_tpccs_0 },
+	{ gf104_gr_init_tex_0 },
+	{ gf104_gr_init_pe_0 },
+	{ gf100_gr_init_l1c_0 },
+	{ gf100_gr_init_wwdx_0 },
+	{ gf100_gr_init_tpccs_1 },
+	{ gf100_gr_init_mpc_0 },
+	{ gf104_gr_init_sm_0 },
+	{ gf100_gr_init_be_0 },
+	{ gf100_gr_init_fe_1 },
+	{}
+};
 
 /*******************************************************************************
  * PGRAPH engine/subdev functions
  ******************************************************************************/
 
-अटल स्थिर काष्ठा gf100_gr_func
-gf104_gr = अणु
+static const struct gf100_gr_func
+gf104_gr = {
 	.oneinit_tiles = gf100_gr_oneinit_tiles,
 	.oneinit_sm_id = gf100_gr_oneinit_sm_id,
 	.init = gf100_gr_init,
@@ -136,24 +135,24 @@ gf104_gr = अणु
 	.rops = gf100_gr_rops,
 	.grctx = &gf104_grctx,
 	.zbc = &gf100_gr_zbc,
-	.sclass = अणु
-		अणु -1, -1, FERMI_TWOD_A पूर्ण,
-		अणु -1, -1, FERMI_MEMORY_TO_MEMORY_FORMAT_A पूर्ण,
-		अणु -1, -1, FERMI_A, &gf100_fermi पूर्ण,
-		अणु -1, -1, FERMI_COMPUTE_A पूर्ण,
-		अणुपूर्ण
-	पूर्ण
-पूर्ण;
+	.sclass = {
+		{ -1, -1, FERMI_TWOD_A },
+		{ -1, -1, FERMI_MEMORY_TO_MEMORY_FORMAT_A },
+		{ -1, -1, FERMI_A, &gf100_fermi },
+		{ -1, -1, FERMI_COMPUTE_A },
+		{}
+	}
+};
 
-अटल स्थिर काष्ठा gf100_gr_fwअगर
-gf104_gr_fwअगर[] = अणु
-	अणु -1, gf100_gr_load, &gf104_gr पूर्ण,
-	अणु -1, gf100_gr_nofw, &gf104_gr पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct gf100_gr_fwif
+gf104_gr_fwif[] = {
+	{ -1, gf100_gr_load, &gf104_gr },
+	{ -1, gf100_gr_nofw, &gf104_gr },
+	{}
+};
 
-पूर्णांक
-gf104_gr_new(काष्ठा nvkm_device *device, क्रमागत nvkm_subdev_type type, पूर्णांक inst, काष्ठा nvkm_gr **pgr)
-अणु
-	वापस gf100_gr_new_(gf104_gr_fwअगर, device, type, inst, pgr);
-पूर्ण
+int
+gf104_gr_new(struct nvkm_device *device, enum nvkm_subdev_type type, int inst, struct nvkm_gr **pgr)
+{
+	return gf100_gr_new_(gf104_gr_fwif, device, type, inst, pgr);
+}

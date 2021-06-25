@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
     Conexant cx22700 DVB OFDM demodulator driver
 
@@ -9,32 +8,32 @@
 
 */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/init.h>
-#समावेश <linux/module.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/slab.h>
-#समावेश <media/dvb_frontend.h>
-#समावेश "cx22700.h"
+#include <linux/kernel.h>
+#include <linux/init.h>
+#include <linux/module.h>
+#include <linux/string.h>
+#include <linux/slab.h>
+#include <media/dvb_frontend.h>
+#include "cx22700.h"
 
 
-काष्ठा cx22700_state अणु
+struct cx22700_state {
 
-	काष्ठा i2c_adapter* i2c;
+	struct i2c_adapter* i2c;
 
-	स्थिर काष्ठा cx22700_config* config;
+	const struct cx22700_config* config;
 
-	काष्ठा dvb_frontend frontend;
-पूर्ण;
+	struct dvb_frontend frontend;
+};
 
 
-अटल पूर्णांक debug;
-#घोषणा dprपूर्णांकk(args...) \
-	करो अणु \
-		अगर (debug) prपूर्णांकk(KERN_DEBUG "cx22700: " args); \
-	पूर्ण जबतक (0)
+static int debug;
+#define dprintk(args...) \
+	do { \
+		if (debug) printk(KERN_DEBUG "cx22700: " args); \
+	} while (0)
 
-अटल u8 init_tab [] = अणु
+static u8 init_tab [] = {
 	0x04, 0x10,
 	0x05, 0x09,
 	0x06, 0x00,
@@ -53,353 +52,353 @@
 	0x45, 0x08,
 	0x46, 0x02,
 	0x47, 0x05,
-पूर्ण;
+};
 
 
-अटल पूर्णांक cx22700_ग_लिखोreg (काष्ठा cx22700_state* state, u8 reg, u8 data)
-अणु
-	पूर्णांक ret;
-	u8 buf [] = अणु reg, data पूर्ण;
-	काष्ठा i2c_msg msg = अणु .addr = state->config->demod_address, .flags = 0, .buf = buf, .len = 2 पूर्ण;
+static int cx22700_writereg (struct cx22700_state* state, u8 reg, u8 data)
+{
+	int ret;
+	u8 buf [] = { reg, data };
+	struct i2c_msg msg = { .addr = state->config->demod_address, .flags = 0, .buf = buf, .len = 2 };
 
-	dprपूर्णांकk ("%s\n", __func__);
+	dprintk ("%s\n", __func__);
 
 	ret = i2c_transfer (state->i2c, &msg, 1);
 
-	अगर (ret != 1)
-		prपूर्णांकk("%s: writereg error (reg == 0x%02x, val == 0x%02x, ret == %i)\n",
+	if (ret != 1)
+		printk("%s: writereg error (reg == 0x%02x, val == 0x%02x, ret == %i)\n",
 			__func__, reg, data, ret);
 
-	वापस (ret != 1) ? -1 : 0;
-पूर्ण
+	return (ret != 1) ? -1 : 0;
+}
 
-अटल पूर्णांक cx22700_पढ़ोreg (काष्ठा cx22700_state* state, u8 reg)
-अणु
-	पूर्णांक ret;
-	u8 b0 [] = अणु reg पूर्ण;
-	u8 b1 [] = अणु 0 पूर्ण;
-	काष्ठा i2c_msg msg [] = अणु अणु .addr = state->config->demod_address, .flags = 0, .buf = b0, .len = 1 पूर्ण,
-			   अणु .addr = state->config->demod_address, .flags = I2C_M_RD, .buf = b1, .len = 1 पूर्ण पूर्ण;
+static int cx22700_readreg (struct cx22700_state* state, u8 reg)
+{
+	int ret;
+	u8 b0 [] = { reg };
+	u8 b1 [] = { 0 };
+	struct i2c_msg msg [] = { { .addr = state->config->demod_address, .flags = 0, .buf = b0, .len = 1 },
+			   { .addr = state->config->demod_address, .flags = I2C_M_RD, .buf = b1, .len = 1 } };
 
-	dprपूर्णांकk ("%s\n", __func__);
+	dprintk ("%s\n", __func__);
 
 	ret = i2c_transfer (state->i2c, msg, 2);
 
-	अगर (ret != 2) वापस -EIO;
+	if (ret != 2) return -EIO;
 
-	वापस b1[0];
-पूर्ण
+	return b1[0];
+}
 
-अटल पूर्णांक cx22700_set_inversion (काष्ठा cx22700_state* state, पूर्णांक inversion)
-अणु
+static int cx22700_set_inversion (struct cx22700_state* state, int inversion)
+{
 	u8 val;
 
-	dprपूर्णांकk ("%s\n", __func__);
+	dprintk ("%s\n", __func__);
 
-	चयन (inversion) अणु
-	हाल INVERSION_AUTO:
-		वापस -EOPNOTSUPP;
-	हाल INVERSION_ON:
-		val = cx22700_पढ़ोreg (state, 0x09);
-		वापस cx22700_ग_लिखोreg (state, 0x09, val | 0x01);
-	हाल INVERSION_OFF:
-		val = cx22700_पढ़ोreg (state, 0x09);
-		वापस cx22700_ग_लिखोreg (state, 0x09, val & 0xfe);
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-पूर्ण
+	switch (inversion) {
+	case INVERSION_AUTO:
+		return -EOPNOTSUPP;
+	case INVERSION_ON:
+		val = cx22700_readreg (state, 0x09);
+		return cx22700_writereg (state, 0x09, val | 0x01);
+	case INVERSION_OFF:
+		val = cx22700_readreg (state, 0x09);
+		return cx22700_writereg (state, 0x09, val & 0xfe);
+	default:
+		return -EINVAL;
+	}
+}
 
-अटल पूर्णांक cx22700_set_tps(काष्ठा cx22700_state *state,
-			   काष्ठा dtv_frontend_properties *p)
-अणु
-	अटल स्थिर u8 qam_tab [4] = अणु 0, 1, 0, 2 पूर्ण;
-	अटल स्थिर u8 fec_tab [6] = अणु 0, 1, 2, 0, 3, 4 पूर्ण;
+static int cx22700_set_tps(struct cx22700_state *state,
+			   struct dtv_frontend_properties *p)
+{
+	static const u8 qam_tab [4] = { 0, 1, 0, 2 };
+	static const u8 fec_tab [6] = { 0, 1, 2, 0, 3, 4 };
 	u8 val;
 
-	dprपूर्णांकk ("%s\n", __func__);
+	dprintk ("%s\n", __func__);
 
-	अगर (p->code_rate_HP < FEC_1_2 || p->code_rate_HP > FEC_7_8)
-		वापस -EINVAL;
+	if (p->code_rate_HP < FEC_1_2 || p->code_rate_HP > FEC_7_8)
+		return -EINVAL;
 
-	अगर (p->code_rate_LP < FEC_1_2 || p->code_rate_LP > FEC_7_8)
-		वापस -EINVAL;
+	if (p->code_rate_LP < FEC_1_2 || p->code_rate_LP > FEC_7_8)
+		return -EINVAL;
 
-	अगर (p->code_rate_HP == FEC_4_5 || p->code_rate_LP == FEC_4_5)
-		वापस -EINVAL;
+	if (p->code_rate_HP == FEC_4_5 || p->code_rate_LP == FEC_4_5)
+		return -EINVAL;
 
-	अगर ((पूर्णांक)p->guard_पूर्णांकerval < GUARD_INTERVAL_1_32 ||
-	    p->guard_पूर्णांकerval > GUARD_INTERVAL_1_4)
-		वापस -EINVAL;
+	if ((int)p->guard_interval < GUARD_INTERVAL_1_32 ||
+	    p->guard_interval > GUARD_INTERVAL_1_4)
+		return -EINVAL;
 
-	अगर (p->transmission_mode != TRANSMISSION_MODE_2K &&
+	if (p->transmission_mode != TRANSMISSION_MODE_2K &&
 	    p->transmission_mode != TRANSMISSION_MODE_8K)
-		वापस -EINVAL;
+		return -EINVAL;
 
-	अगर (p->modulation != QPSK &&
+	if (p->modulation != QPSK &&
 	    p->modulation != QAM_16 &&
 	    p->modulation != QAM_64)
-		वापस -EINVAL;
+		return -EINVAL;
 
-	अगर ((पूर्णांक)p->hierarchy < HIERARCHY_NONE ||
+	if ((int)p->hierarchy < HIERARCHY_NONE ||
 	    p->hierarchy > HIERARCHY_4)
-		वापस -EINVAL;
+		return -EINVAL;
 
-	अगर (p->bandwidth_hz > 8000000 || p->bandwidth_hz < 6000000)
-		वापस -EINVAL;
+	if (p->bandwidth_hz > 8000000 || p->bandwidth_hz < 6000000)
+		return -EINVAL;
 
-	अगर (p->bandwidth_hz == 7000000)
-		cx22700_ग_लिखोreg (state, 0x09, cx22700_पढ़ोreg (state, 0x09 | 0x10));
-	अन्यथा
-		cx22700_ग_लिखोreg (state, 0x09, cx22700_पढ़ोreg (state, 0x09 & ~0x10));
+	if (p->bandwidth_hz == 7000000)
+		cx22700_writereg (state, 0x09, cx22700_readreg (state, 0x09 | 0x10));
+	else
+		cx22700_writereg (state, 0x09, cx22700_readreg (state, 0x09 & ~0x10));
 
 	val = qam_tab[p->modulation - QPSK];
 	val |= p->hierarchy - HIERARCHY_NONE;
 
-	cx22700_ग_लिखोreg (state, 0x04, val);
+	cx22700_writereg (state, 0x04, val);
 
-	अगर (p->code_rate_HP - FEC_1_2 >= माप(fec_tab) ||
-	    p->code_rate_LP - FEC_1_2 >= माप(fec_tab))
-		वापस -EINVAL;
+	if (p->code_rate_HP - FEC_1_2 >= sizeof(fec_tab) ||
+	    p->code_rate_LP - FEC_1_2 >= sizeof(fec_tab))
+		return -EINVAL;
 	val = fec_tab[p->code_rate_HP - FEC_1_2] << 3;
 	val |= fec_tab[p->code_rate_LP - FEC_1_2];
 
-	cx22700_ग_लिखोreg (state, 0x05, val);
+	cx22700_writereg (state, 0x05, val);
 
-	val = (p->guard_पूर्णांकerval - GUARD_INTERVAL_1_32) << 2;
+	val = (p->guard_interval - GUARD_INTERVAL_1_32) << 2;
 	val |= p->transmission_mode - TRANSMISSION_MODE_2K;
 
-	cx22700_ग_लिखोreg (state, 0x06, val);
+	cx22700_writereg (state, 0x06, val);
 
-	cx22700_ग_लिखोreg (state, 0x08, 0x04 | 0x02);  /* use user tps parameters */
-	cx22700_ग_लिखोreg (state, 0x08, 0x04);         /* restart acquisition */
+	cx22700_writereg (state, 0x08, 0x04 | 0x02);  /* use user tps parameters */
+	cx22700_writereg (state, 0x08, 0x04);         /* restart acquisition */
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक cx22700_get_tps(काष्ठा cx22700_state *state,
-			   काष्ठा dtv_frontend_properties *p)
-अणु
-	अटल स्थिर क्रमागत fe_modulation qam_tab[3] = अणु QPSK, QAM_16, QAM_64 पूर्ण;
-	अटल स्थिर क्रमागत fe_code_rate fec_tab[5] = अणु
+static int cx22700_get_tps(struct cx22700_state *state,
+			   struct dtv_frontend_properties *p)
+{
+	static const enum fe_modulation qam_tab[3] = { QPSK, QAM_16, QAM_64 };
+	static const enum fe_code_rate fec_tab[5] = {
 		FEC_1_2, FEC_2_3, FEC_3_4, FEC_5_6, FEC_7_8
-	पूर्ण;
+	};
 	u8 val;
 
-	dprपूर्णांकk ("%s\n", __func__);
+	dprintk ("%s\n", __func__);
 
-	अगर (!(cx22700_पढ़ोreg(state, 0x07) & 0x20))  /*  tps valid? */
-		वापस -EAGAIN;
+	if (!(cx22700_readreg(state, 0x07) & 0x20))  /*  tps valid? */
+		return -EAGAIN;
 
-	val = cx22700_पढ़ोreg (state, 0x01);
+	val = cx22700_readreg (state, 0x01);
 
-	अगर ((val & 0x7) > 4)
+	if ((val & 0x7) > 4)
 		p->hierarchy = HIERARCHY_AUTO;
-	अन्यथा
+	else
 		p->hierarchy = HIERARCHY_NONE + (val & 0x7);
 
-	अगर (((val >> 3) & 0x3) > 2)
+	if (((val >> 3) & 0x3) > 2)
 		p->modulation = QAM_AUTO;
-	अन्यथा
+	else
 		p->modulation = qam_tab[(val >> 3) & 0x3];
 
-	val = cx22700_पढ़ोreg (state, 0x02);
+	val = cx22700_readreg (state, 0x02);
 
-	अगर (((val >> 3) & 0x07) > 4)
+	if (((val >> 3) & 0x07) > 4)
 		p->code_rate_HP = FEC_AUTO;
-	अन्यथा
+	else
 		p->code_rate_HP = fec_tab[(val >> 3) & 0x07];
 
-	अगर ((val & 0x07) > 4)
+	if ((val & 0x07) > 4)
 		p->code_rate_LP = FEC_AUTO;
-	अन्यथा
+	else
 		p->code_rate_LP = fec_tab[val & 0x07];
 
-	val = cx22700_पढ़ोreg (state, 0x03);
+	val = cx22700_readreg (state, 0x03);
 
-	p->guard_पूर्णांकerval = GUARD_INTERVAL_1_32 + ((val >> 6) & 0x3);
+	p->guard_interval = GUARD_INTERVAL_1_32 + ((val >> 6) & 0x3);
 	p->transmission_mode = TRANSMISSION_MODE_2K + ((val >> 5) & 0x1);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक cx22700_init (काष्ठा dvb_frontend* fe)
+static int cx22700_init (struct dvb_frontend* fe)
 
-अणु	काष्ठा cx22700_state* state = fe->demodulator_priv;
-	पूर्णांक i;
+{	struct cx22700_state* state = fe->demodulator_priv;
+	int i;
 
-	dprपूर्णांकk("cx22700_init: init chip\n");
+	dprintk("cx22700_init: init chip\n");
 
-	cx22700_ग_लिखोreg (state, 0x00, 0x02);   /*  soft reset */
-	cx22700_ग_लिखोreg (state, 0x00, 0x00);
+	cx22700_writereg (state, 0x00, 0x02);   /*  soft reset */
+	cx22700_writereg (state, 0x00, 0x00);
 
 	msleep(10);
 
-	क्रम (i=0; i<माप(init_tab); i+=2)
-		cx22700_ग_लिखोreg (state, init_tab[i], init_tab[i+1]);
+	for (i=0; i<sizeof(init_tab); i+=2)
+		cx22700_writereg (state, init_tab[i], init_tab[i+1]);
 
-	cx22700_ग_लिखोreg (state, 0x00, 0x01);
+	cx22700_writereg (state, 0x00, 0x01);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक cx22700_पढ़ो_status(काष्ठा dvb_frontend *fe, क्रमागत fe_status *status)
-अणु
-	काष्ठा cx22700_state* state = fe->demodulator_priv;
+static int cx22700_read_status(struct dvb_frontend *fe, enum fe_status *status)
+{
+	struct cx22700_state* state = fe->demodulator_priv;
 
-	u16 rs_ber = (cx22700_पढ़ोreg (state, 0x0d) << 9)
-		   | (cx22700_पढ़ोreg (state, 0x0e) << 1);
-	u8 sync = cx22700_पढ़ोreg (state, 0x07);
+	u16 rs_ber = (cx22700_readreg (state, 0x0d) << 9)
+		   | (cx22700_readreg (state, 0x0e) << 1);
+	u8 sync = cx22700_readreg (state, 0x07);
 
 	*status = 0;
 
-	अगर (rs_ber < 0xff00)
+	if (rs_ber < 0xff00)
 		*status |= FE_HAS_SIGNAL;
 
-	अगर (sync & 0x20)
+	if (sync & 0x20)
 		*status |= FE_HAS_CARRIER;
 
-	अगर (sync & 0x10)
+	if (sync & 0x10)
 		*status |= FE_HAS_VITERBI;
 
-	अगर (sync & 0x10)
+	if (sync & 0x10)
 		*status |= FE_HAS_SYNC;
 
-	अगर (*status == 0x0f)
+	if (*status == 0x0f)
 		*status |= FE_HAS_LOCK;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक cx22700_पढ़ो_ber(काष्ठा dvb_frontend* fe, u32* ber)
-अणु
-	काष्ठा cx22700_state* state = fe->demodulator_priv;
+static int cx22700_read_ber(struct dvb_frontend* fe, u32* ber)
+{
+	struct cx22700_state* state = fe->demodulator_priv;
 
-	*ber = cx22700_पढ़ोreg (state, 0x0c) & 0x7f;
-	cx22700_ग_लिखोreg (state, 0x0c, 0x00);
+	*ber = cx22700_readreg (state, 0x0c) & 0x7f;
+	cx22700_writereg (state, 0x0c, 0x00);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक cx22700_पढ़ो_संकेत_strength(काष्ठा dvb_frontend* fe, u16* संकेत_strength)
-अणु
-	काष्ठा cx22700_state* state = fe->demodulator_priv;
+static int cx22700_read_signal_strength(struct dvb_frontend* fe, u16* signal_strength)
+{
+	struct cx22700_state* state = fe->demodulator_priv;
 
-	u16 rs_ber = (cx22700_पढ़ोreg (state, 0x0d) << 9)
-		   | (cx22700_पढ़ोreg (state, 0x0e) << 1);
-	*संकेत_strength = ~rs_ber;
+	u16 rs_ber = (cx22700_readreg (state, 0x0d) << 9)
+		   | (cx22700_readreg (state, 0x0e) << 1);
+	*signal_strength = ~rs_ber;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक cx22700_पढ़ो_snr(काष्ठा dvb_frontend* fe, u16* snr)
-अणु
-	काष्ठा cx22700_state* state = fe->demodulator_priv;
+static int cx22700_read_snr(struct dvb_frontend* fe, u16* snr)
+{
+	struct cx22700_state* state = fe->demodulator_priv;
 
-	u16 rs_ber = (cx22700_पढ़ोreg (state, 0x0d) << 9)
-		   | (cx22700_पढ़ोreg (state, 0x0e) << 1);
+	u16 rs_ber = (cx22700_readreg (state, 0x0d) << 9)
+		   | (cx22700_readreg (state, 0x0e) << 1);
 	*snr = ~rs_ber;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक cx22700_पढ़ो_ucblocks(काष्ठा dvb_frontend* fe, u32* ucblocks)
-अणु
-	काष्ठा cx22700_state* state = fe->demodulator_priv;
+static int cx22700_read_ucblocks(struct dvb_frontend* fe, u32* ucblocks)
+{
+	struct cx22700_state* state = fe->demodulator_priv;
 
-	*ucblocks = cx22700_पढ़ोreg (state, 0x0f);
-	cx22700_ग_लिखोreg (state, 0x0f, 0x00);
+	*ucblocks = cx22700_readreg (state, 0x0f);
+	cx22700_writereg (state, 0x0f, 0x00);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक cx22700_set_frontend(काष्ठा dvb_frontend *fe)
-अणु
-	काष्ठा dtv_frontend_properties *c = &fe->dtv_property_cache;
-	काष्ठा cx22700_state* state = fe->demodulator_priv;
+static int cx22700_set_frontend(struct dvb_frontend *fe)
+{
+	struct dtv_frontend_properties *c = &fe->dtv_property_cache;
+	struct cx22700_state* state = fe->demodulator_priv;
 
-	cx22700_ग_लिखोreg (state, 0x00, 0x02); /* XXX CHECKME: soft reset*/
-	cx22700_ग_लिखोreg (state, 0x00, 0x00);
+	cx22700_writereg (state, 0x00, 0x02); /* XXX CHECKME: soft reset*/
+	cx22700_writereg (state, 0x00, 0x00);
 
-	अगर (fe->ops.tuner_ops.set_params) अणु
+	if (fe->ops.tuner_ops.set_params) {
 		fe->ops.tuner_ops.set_params(fe);
-		अगर (fe->ops.i2c_gate_ctrl) fe->ops.i2c_gate_ctrl(fe, 0);
-	पूर्ण
+		if (fe->ops.i2c_gate_ctrl) fe->ops.i2c_gate_ctrl(fe, 0);
+	}
 
 	cx22700_set_inversion(state, c->inversion);
 	cx22700_set_tps(state, c);
-	cx22700_ग_लिखोreg (state, 0x37, 0x01);  /* PAL loop filter off */
-	cx22700_ग_लिखोreg (state, 0x00, 0x01);  /* restart acquire */
+	cx22700_writereg (state, 0x37, 0x01);  /* PAL loop filter off */
+	cx22700_writereg (state, 0x00, 0x01);  /* restart acquire */
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक cx22700_get_frontend(काष्ठा dvb_frontend *fe,
-				काष्ठा dtv_frontend_properties *c)
-अणु
-	काष्ठा cx22700_state* state = fe->demodulator_priv;
-	u8 reg09 = cx22700_पढ़ोreg (state, 0x09);
+static int cx22700_get_frontend(struct dvb_frontend *fe,
+				struct dtv_frontend_properties *c)
+{
+	struct cx22700_state* state = fe->demodulator_priv;
+	u8 reg09 = cx22700_readreg (state, 0x09);
 
 	c->inversion = reg09 & 0x1 ? INVERSION_ON : INVERSION_OFF;
-	वापस cx22700_get_tps(state, c);
-पूर्ण
+	return cx22700_get_tps(state, c);
+}
 
-अटल पूर्णांक cx22700_i2c_gate_ctrl(काष्ठा dvb_frontend* fe, पूर्णांक enable)
-अणु
-	काष्ठा cx22700_state* state = fe->demodulator_priv;
+static int cx22700_i2c_gate_ctrl(struct dvb_frontend* fe, int enable)
+{
+	struct cx22700_state* state = fe->demodulator_priv;
 
-	अगर (enable) अणु
-		वापस cx22700_ग_लिखोreg(state, 0x0a, 0x00);
-	पूर्ण अन्यथा अणु
-		वापस cx22700_ग_लिखोreg(state, 0x0a, 0x01);
-	पूर्ण
-पूर्ण
+	if (enable) {
+		return cx22700_writereg(state, 0x0a, 0x00);
+	} else {
+		return cx22700_writereg(state, 0x0a, 0x01);
+	}
+}
 
-अटल पूर्णांक cx22700_get_tune_settings(काष्ठा dvb_frontend* fe, काष्ठा dvb_frontend_tune_settings* fesettings)
-अणु
+static int cx22700_get_tune_settings(struct dvb_frontend* fe, struct dvb_frontend_tune_settings* fesettings)
+{
 	fesettings->min_delay_ms = 150;
 	fesettings->step_size = 166667;
-	fesettings->max_drअगरt = 166667*2;
-	वापस 0;
-पूर्ण
+	fesettings->max_drift = 166667*2;
+	return 0;
+}
 
-अटल व्योम cx22700_release(काष्ठा dvb_frontend* fe)
-अणु
-	काष्ठा cx22700_state* state = fe->demodulator_priv;
-	kमुक्त(state);
-पूर्ण
+static void cx22700_release(struct dvb_frontend* fe)
+{
+	struct cx22700_state* state = fe->demodulator_priv;
+	kfree(state);
+}
 
-अटल स्थिर काष्ठा dvb_frontend_ops cx22700_ops;
+static const struct dvb_frontend_ops cx22700_ops;
 
-काष्ठा dvb_frontend* cx22700_attach(स्थिर काष्ठा cx22700_config* config,
-				    काष्ठा i2c_adapter* i2c)
-अणु
-	काष्ठा cx22700_state* state = शून्य;
+struct dvb_frontend* cx22700_attach(const struct cx22700_config* config,
+				    struct i2c_adapter* i2c)
+{
+	struct cx22700_state* state = NULL;
 
-	/* allocate memory क्रम the पूर्णांकernal state */
-	state = kzalloc(माप(काष्ठा cx22700_state), GFP_KERNEL);
-	अगर (state == शून्य) जाओ error;
+	/* allocate memory for the internal state */
+	state = kzalloc(sizeof(struct cx22700_state), GFP_KERNEL);
+	if (state == NULL) goto error;
 
 	/* setup the state */
 	state->config = config;
 	state->i2c = i2c;
 
-	/* check अगर the demod is there */
-	अगर (cx22700_पढ़ोreg(state, 0x07) < 0) जाओ error;
+	/* check if the demod is there */
+	if (cx22700_readreg(state, 0x07) < 0) goto error;
 
 	/* create dvb_frontend */
-	स_नकल(&state->frontend.ops, &cx22700_ops, माप(काष्ठा dvb_frontend_ops));
+	memcpy(&state->frontend.ops, &cx22700_ops, sizeof(struct dvb_frontend_ops));
 	state->frontend.demodulator_priv = state;
-	वापस &state->frontend;
+	return &state->frontend;
 
 error:
-	kमुक्त(state);
-	वापस शून्य;
-पूर्ण
+	kfree(state);
+	return NULL;
+}
 
-अटल स्थिर काष्ठा dvb_frontend_ops cx22700_ops = अणु
-	.delsys = अणु SYS_DVBT पूर्ण,
-	.info = अणु
+static const struct dvb_frontend_ops cx22700_ops = {
+	.delsys = { SYS_DVBT },
+	.info = {
 		.name			= "Conexant CX22700 DVB-T",
 		.frequency_min_hz	= 470 * MHz,
 		.frequency_max_hz	= 860 * MHz,
@@ -408,7 +407,7 @@ error:
 		      FE_CAN_FEC_5_6 | FE_CAN_FEC_7_8 | FE_CAN_FEC_AUTO |
 		      FE_CAN_QPSK | FE_CAN_QAM_16 | FE_CAN_QAM_64 |
 		      FE_CAN_RECOVER
-	पूर्ण,
+	},
 
 	.release = cx22700_release,
 
@@ -419,14 +418,14 @@ error:
 	.get_frontend = cx22700_get_frontend,
 	.get_tune_settings = cx22700_get_tune_settings,
 
-	.पढ़ो_status = cx22700_पढ़ो_status,
-	.पढ़ो_ber = cx22700_पढ़ो_ber,
-	.पढ़ो_संकेत_strength = cx22700_पढ़ो_संकेत_strength,
-	.पढ़ो_snr = cx22700_पढ़ो_snr,
-	.पढ़ो_ucblocks = cx22700_पढ़ो_ucblocks,
-पूर्ण;
+	.read_status = cx22700_read_status,
+	.read_ber = cx22700_read_ber,
+	.read_signal_strength = cx22700_read_signal_strength,
+	.read_snr = cx22700_read_snr,
+	.read_ucblocks = cx22700_read_ucblocks,
+};
 
-module_param(debug, पूर्णांक, 0644);
+module_param(debug, int, 0644);
 MODULE_PARM_DESC(debug, "Turn on/off frontend debugging (default:off).");
 
 MODULE_DESCRIPTION("Conexant CX22700 DVB-T Demodulator driver");

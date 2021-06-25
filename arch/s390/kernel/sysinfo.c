@@ -1,36 +1,35 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  *  Copyright IBM Corp. 2001, 2009
  *  Author(s): Ulrich Weigand <Ulrich.Weigand@de.ibm.com>,
  *	       Martin Schwidefsky <schwidefsky@de.ibm.com>,
  */
 
-#समावेश <linux/debugfs.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/proc_fs.h>
-#समावेश <linux/seq_file.h>
-#समावेश <linux/init.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/export.h>
-#समावेश <linux/slab.h>
-#समावेश <यंत्र/ebcdic.h>
-#समावेश <यंत्र/debug.h>
-#समावेश <यंत्र/sysinfo.h>
-#समावेश <यंत्र/cpcmd.h>
-#समावेश <यंत्र/topology.h>
-#समावेश <यंत्र/fpu/api.h>
+#include <linux/debugfs.h>
+#include <linux/kernel.h>
+#include <linux/mm.h>
+#include <linux/proc_fs.h>
+#include <linux/seq_file.h>
+#include <linux/init.h>
+#include <linux/delay.h>
+#include <linux/export.h>
+#include <linux/slab.h>
+#include <asm/ebcdic.h>
+#include <asm/debug.h>
+#include <asm/sysinfo.h>
+#include <asm/cpcmd.h>
+#include <asm/topology.h>
+#include <asm/fpu/api.h>
 
-पूर्णांक topology_max_mnest;
+int topology_max_mnest;
 
-अटल अंतरभूत पूर्णांक __stsi(व्योम *sysinfo, पूर्णांक fc, पूर्णांक sel1, पूर्णांक sel2, पूर्णांक *lvl)
-अणु
-	रेजिस्टर पूर्णांक r0 यंत्र("0") = (fc << 28) | sel1;
-	रेजिस्टर पूर्णांक r1 यंत्र("1") = sel2;
-	पूर्णांक rc = 0;
+static inline int __stsi(void *sysinfo, int fc, int sel1, int sel2, int *lvl)
+{
+	register int r0 asm("0") = (fc << 28) | sel1;
+	register int r1 asm("1") = sel2;
+	int rc = 0;
 
-	यंत्र अस्थिर(
+	asm volatile(
 		"	stsi	0(%3)\n"
 		"0:	jz	2f\n"
 		"1:	lhi	%1,%4\n"
@@ -39,402 +38,402 @@
 		: "+d" (r0), "+d" (rc)
 		: "d" (r1), "a" (sysinfo), "K" (-EOPNOTSUPP)
 		: "cc", "memory");
-	*lvl = ((अचिन्हित पूर्णांक) r0) >> 28;
-	वापस rc;
-पूर्ण
+	*lvl = ((unsigned int) r0) >> 28;
+	return rc;
+}
 
 /*
- * stsi - store प्रणाली inक्रमmation
+ * stsi - store system information
  *
- * Returns the current configuration level अगर function code 0 was specअगरied.
- * Otherwise वापसs 0 on success or a negative value on error.
+ * Returns the current configuration level if function code 0 was specified.
+ * Otherwise returns 0 on success or a negative value on error.
  */
-पूर्णांक stsi(व्योम *sysinfo, पूर्णांक fc, पूर्णांक sel1, पूर्णांक sel2)
-अणु
-	पूर्णांक lvl, rc;
+int stsi(void *sysinfo, int fc, int sel1, int sel2)
+{
+	int lvl, rc;
 
 	rc = __stsi(sysinfo, fc, sel1, sel2, &lvl);
-	अगर (rc)
-		वापस rc;
-	वापस fc ? 0 : lvl;
-पूर्ण
+	if (rc)
+		return rc;
+	return fc ? 0 : lvl;
+}
 EXPORT_SYMBOL(stsi);
 
-#अगर_घोषित CONFIG_PROC_FS
+#ifdef CONFIG_PROC_FS
 
-अटल bool convert_ext_name(अचिन्हित अक्षर encoding, अक्षर *name, माप_प्रकार len)
-अणु
-	चयन (encoding) अणु
-	हाल 1: /* EBCDIC */
+static bool convert_ext_name(unsigned char encoding, char *name, size_t len)
+{
+	switch (encoding) {
+	case 1: /* EBCDIC */
 		EBCASC(name, len);
-		अवरोध;
-	हाल 2:	/* UTF-8 */
-		अवरोध;
-	शेष:
-		वापस false;
-	पूर्ण
-	वापस true;
-पूर्ण
+		break;
+	case 2:	/* UTF-8 */
+		break;
+	default:
+		return false;
+	}
+	return true;
+}
 
-अटल व्योम stsi_1_1_1(काष्ठा seq_file *m, काष्ठा sysinfo_1_1_1 *info)
-अणु
-	पूर्णांक i;
+static void stsi_1_1_1(struct seq_file *m, struct sysinfo_1_1_1 *info)
+{
+	int i;
 
-	अगर (stsi(info, 1, 1, 1))
-		वापस;
-	EBCASC(info->manufacturer, माप(info->manufacturer));
-	EBCASC(info->type, माप(info->type));
-	EBCASC(info->model, माप(info->model));
-	EBCASC(info->sequence, माप(info->sequence));
-	EBCASC(info->plant, माप(info->plant));
-	EBCASC(info->model_capacity, माप(info->model_capacity));
-	EBCASC(info->model_perm_cap, माप(info->model_perm_cap));
-	EBCASC(info->model_temp_cap, माप(info->model_temp_cap));
-	seq_म_लिखो(m, "Manufacturer:         %-16.16s\n", info->manufacturer);
-	seq_म_लिखो(m, "Type:                 %-4.4s\n", info->type);
-	अगर (info->lic)
-		seq_म_लिखो(m, "LIC Identifier:       %016lx\n", info->lic);
+	if (stsi(info, 1, 1, 1))
+		return;
+	EBCASC(info->manufacturer, sizeof(info->manufacturer));
+	EBCASC(info->type, sizeof(info->type));
+	EBCASC(info->model, sizeof(info->model));
+	EBCASC(info->sequence, sizeof(info->sequence));
+	EBCASC(info->plant, sizeof(info->plant));
+	EBCASC(info->model_capacity, sizeof(info->model_capacity));
+	EBCASC(info->model_perm_cap, sizeof(info->model_perm_cap));
+	EBCASC(info->model_temp_cap, sizeof(info->model_temp_cap));
+	seq_printf(m, "Manufacturer:         %-16.16s\n", info->manufacturer);
+	seq_printf(m, "Type:                 %-4.4s\n", info->type);
+	if (info->lic)
+		seq_printf(m, "LIC Identifier:       %016lx\n", info->lic);
 	/*
-	 * Sigh: the model field has been नामd with System z9
+	 * Sigh: the model field has been renamed with System z9
 	 * to model_capacity and a new model field has been added
-	 * after the plant field. To aव्योम confusing older programs
-	 * the "Model:" prपूर्णांकs "model_capacity model" or just
-	 * "model_capacity" अगर the model string is empty .
+	 * after the plant field. To avoid confusing older programs
+	 * the "Model:" prints "model_capacity model" or just
+	 * "model_capacity" if the model string is empty .
 	 */
-	seq_म_लिखो(m, "Model:                %-16.16s", info->model_capacity);
-	अगर (info->model[0] != '\0')
-		seq_म_लिखो(m, " %-16.16s", info->model);
-	seq_अ_दो(m, '\n');
-	seq_म_लिखो(m, "Sequence Code:        %-16.16s\n", info->sequence);
-	seq_म_लिखो(m, "Plant:                %-4.4s\n", info->plant);
-	seq_म_लिखो(m, "Model Capacity:       %-16.16s %08u\n",
+	seq_printf(m, "Model:                %-16.16s", info->model_capacity);
+	if (info->model[0] != '\0')
+		seq_printf(m, " %-16.16s", info->model);
+	seq_putc(m, '\n');
+	seq_printf(m, "Sequence Code:        %-16.16s\n", info->sequence);
+	seq_printf(m, "Plant:                %-4.4s\n", info->plant);
+	seq_printf(m, "Model Capacity:       %-16.16s %08u\n",
 		   info->model_capacity, info->model_cap_rating);
-	अगर (info->model_perm_cap_rating)
-		seq_म_लिखो(m, "Model Perm. Capacity: %-16.16s %08u\n",
+	if (info->model_perm_cap_rating)
+		seq_printf(m, "Model Perm. Capacity: %-16.16s %08u\n",
 			   info->model_perm_cap,
 			   info->model_perm_cap_rating);
-	अगर (info->model_temp_cap_rating)
-		seq_म_लिखो(m, "Model Temp. Capacity: %-16.16s %08u\n",
+	if (info->model_temp_cap_rating)
+		seq_printf(m, "Model Temp. Capacity: %-16.16s %08u\n",
 			   info->model_temp_cap,
 			   info->model_temp_cap_rating);
-	अगर (info->ncr)
-		seq_म_लिखो(m, "Nominal Cap. Rating:  %08u\n", info->ncr);
-	अगर (info->npr)
-		seq_म_लिखो(m, "Nominal Perm. Rating: %08u\n", info->npr);
-	अगर (info->ntr)
-		seq_म_लिखो(m, "Nominal Temp. Rating: %08u\n", info->ntr);
-	अगर (info->cai) अणु
-		seq_म_लिखो(m, "Capacity Adj. Ind.:   %d\n", info->cai);
-		seq_म_लिखो(m, "Capacity Ch. Reason:  %d\n", info->ccr);
-		seq_म_लिखो(m, "Capacity Transient:   %d\n", info->t);
-	पूर्ण
-	अगर (info->p) अणु
-		क्रम (i = 1; i <= ARRAY_SIZE(info->typepct); i++) अणु
-			seq_म_लिखो(m, "Type %d Percentage:    %d\n",
+	if (info->ncr)
+		seq_printf(m, "Nominal Cap. Rating:  %08u\n", info->ncr);
+	if (info->npr)
+		seq_printf(m, "Nominal Perm. Rating: %08u\n", info->npr);
+	if (info->ntr)
+		seq_printf(m, "Nominal Temp. Rating: %08u\n", info->ntr);
+	if (info->cai) {
+		seq_printf(m, "Capacity Adj. Ind.:   %d\n", info->cai);
+		seq_printf(m, "Capacity Ch. Reason:  %d\n", info->ccr);
+		seq_printf(m, "Capacity Transient:   %d\n", info->t);
+	}
+	if (info->p) {
+		for (i = 1; i <= ARRAY_SIZE(info->typepct); i++) {
+			seq_printf(m, "Type %d Percentage:    %d\n",
 				   i, info->typepct[i - 1]);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल व्योम stsi_15_1_x(काष्ठा seq_file *m, काष्ठा sysinfo_15_1_x *info)
-अणु
-	पूर्णांक i;
+static void stsi_15_1_x(struct seq_file *m, struct sysinfo_15_1_x *info)
+{
+	int i;
 
-	seq_अ_दो(m, '\n');
-	अगर (!MACHINE_HAS_TOPOLOGY)
-		वापस;
-	अगर (stsi(info, 15, 1, topology_max_mnest))
-		वापस;
-	seq_म_लिखो(m, "CPU Topology HW:     ");
-	क्रम (i = 0; i < TOPOLOGY_NR_MAG; i++)
-		seq_म_लिखो(m, " %d", info->mag[i]);
-	seq_अ_दो(m, '\n');
-#अगर_घोषित CONFIG_SCHED_TOPOLOGY
+	seq_putc(m, '\n');
+	if (!MACHINE_HAS_TOPOLOGY)
+		return;
+	if (stsi(info, 15, 1, topology_max_mnest))
+		return;
+	seq_printf(m, "CPU Topology HW:     ");
+	for (i = 0; i < TOPOLOGY_NR_MAG; i++)
+		seq_printf(m, " %d", info->mag[i]);
+	seq_putc(m, '\n');
+#ifdef CONFIG_SCHED_TOPOLOGY
 	store_topology(info);
-	seq_म_लिखो(m, "CPU Topology SW:     ");
-	क्रम (i = 0; i < TOPOLOGY_NR_MAG; i++)
-		seq_म_लिखो(m, " %d", info->mag[i]);
-	seq_अ_दो(m, '\n');
-#पूर्ण_अगर
-पूर्ण
+	seq_printf(m, "CPU Topology SW:     ");
+	for (i = 0; i < TOPOLOGY_NR_MAG; i++)
+		seq_printf(m, " %d", info->mag[i]);
+	seq_putc(m, '\n');
+#endif
+}
 
-अटल व्योम stsi_1_2_2(काष्ठा seq_file *m, काष्ठा sysinfo_1_2_2 *info)
-अणु
-	काष्ठा sysinfo_1_2_2_extension *ext;
-	पूर्णांक i;
+static void stsi_1_2_2(struct seq_file *m, struct sysinfo_1_2_2 *info)
+{
+	struct sysinfo_1_2_2_extension *ext;
+	int i;
 
-	अगर (stsi(info, 1, 2, 2))
-		वापस;
-	ext = (काष्ठा sysinfo_1_2_2_extension *)
-		((अचिन्हित दीर्घ) info + info->acc_offset);
-	seq_म_लिखो(m, "CPUs Total:           %d\n", info->cpus_total);
-	seq_म_लिखो(m, "CPUs Configured:      %d\n", info->cpus_configured);
-	seq_म_लिखो(m, "CPUs Standby:         %d\n", info->cpus_standby);
-	seq_म_लिखो(m, "CPUs Reserved:        %d\n", info->cpus_reserved);
-	अगर (info->mt_installed) अणु
-		seq_म_लिखो(m, "CPUs G-MTID:          %d\n", info->mt_gtid);
-		seq_म_लिखो(m, "CPUs S-MTID:          %d\n", info->mt_stid);
-	पूर्ण
+	if (stsi(info, 1, 2, 2))
+		return;
+	ext = (struct sysinfo_1_2_2_extension *)
+		((unsigned long) info + info->acc_offset);
+	seq_printf(m, "CPUs Total:           %d\n", info->cpus_total);
+	seq_printf(m, "CPUs Configured:      %d\n", info->cpus_configured);
+	seq_printf(m, "CPUs Standby:         %d\n", info->cpus_standby);
+	seq_printf(m, "CPUs Reserved:        %d\n", info->cpus_reserved);
+	if (info->mt_installed) {
+		seq_printf(m, "CPUs G-MTID:          %d\n", info->mt_gtid);
+		seq_printf(m, "CPUs S-MTID:          %d\n", info->mt_stid);
+	}
 	/*
-	 * Sigh 2. According to the specअगरication the alternate
-	 * capability field is a 32 bit भग्नing poपूर्णांक number
-	 * अगर the higher order 8 bits are not zero. Prपूर्णांकing
-	 * a भग्नing poपूर्णांक number in the kernel is a no-no,
-	 * always prपूर्णांक the number as 32 bit अचिन्हित पूर्णांकeger.
+	 * Sigh 2. According to the specification the alternate
+	 * capability field is a 32 bit floating point number
+	 * if the higher order 8 bits are not zero. Printing
+	 * a floating point number in the kernel is a no-no,
+	 * always print the number as 32 bit unsigned integer.
 	 * The user-space needs to know about the strange
 	 * encoding of the alternate cpu capability.
 	 */
-	seq_म_लिखो(m, "Capability:           %u", info->capability);
-	अगर (info->क्रमmat == 1)
-		seq_म_लिखो(m, " %u", ext->alt_capability);
-	seq_अ_दो(m, '\n');
-	अगर (info->nominal_cap)
-		seq_म_लिखो(m, "Nominal Capability:   %d\n", info->nominal_cap);
-	अगर (info->secondary_cap)
-		seq_म_लिखो(m, "Secondary Capability: %d\n", info->secondary_cap);
-	क्रम (i = 2; i <= info->cpus_total; i++) अणु
-		seq_म_लिखो(m, "Adjustment %02d-way:    %u",
-			   i, info->adjusपंचांगent[i-2]);
-		अगर (info->क्रमmat == 1)
-			seq_म_लिखो(m, " %u", ext->alt_adjusपंचांगent[i-2]);
-		seq_अ_दो(m, '\n');
-	पूर्ण
-पूर्ण
+	seq_printf(m, "Capability:           %u", info->capability);
+	if (info->format == 1)
+		seq_printf(m, " %u", ext->alt_capability);
+	seq_putc(m, '\n');
+	if (info->nominal_cap)
+		seq_printf(m, "Nominal Capability:   %d\n", info->nominal_cap);
+	if (info->secondary_cap)
+		seq_printf(m, "Secondary Capability: %d\n", info->secondary_cap);
+	for (i = 2; i <= info->cpus_total; i++) {
+		seq_printf(m, "Adjustment %02d-way:    %u",
+			   i, info->adjustment[i-2]);
+		if (info->format == 1)
+			seq_printf(m, " %u", ext->alt_adjustment[i-2]);
+		seq_putc(m, '\n');
+	}
+}
 
-अटल व्योम stsi_2_2_2(काष्ठा seq_file *m, काष्ठा sysinfo_2_2_2 *info)
-अणु
-	अगर (stsi(info, 2, 2, 2))
-		वापस;
-	EBCASC(info->name, माप(info->name));
-	seq_अ_दो(m, '\n');
-	seq_म_लिखो(m, "LPAR Number:          %d\n", info->lpar_number);
-	seq_म_लिखो(m, "LPAR Characteristics: ");
-	अगर (info->अक्षरacteristics & LPAR_CHAR_DEDICATED)
-		seq_म_लिखो(m, "Dedicated ");
-	अगर (info->अक्षरacteristics & LPAR_CHAR_SHARED)
-		seq_म_लिखो(m, "Shared ");
-	अगर (info->अक्षरacteristics & LPAR_CHAR_LIMITED)
-		seq_म_लिखो(m, "Limited ");
-	seq_अ_दो(m, '\n');
-	seq_म_लिखो(m, "LPAR Name:            %-8.8s\n", info->name);
-	seq_म_लिखो(m, "LPAR Adjustment:      %d\n", info->caf);
-	seq_म_लिखो(m, "LPAR CPUs Total:      %d\n", info->cpus_total);
-	seq_म_लिखो(m, "LPAR CPUs Configured: %d\n", info->cpus_configured);
-	seq_म_लिखो(m, "LPAR CPUs Standby:    %d\n", info->cpus_standby);
-	seq_म_लिखो(m, "LPAR CPUs Reserved:   %d\n", info->cpus_reserved);
-	seq_म_लिखो(m, "LPAR CPUs Dedicated:  %d\n", info->cpus_dedicated);
-	seq_म_लिखो(m, "LPAR CPUs Shared:     %d\n", info->cpus_shared);
-	अगर (info->mt_installed) अणु
-		seq_म_लिखो(m, "LPAR CPUs G-MTID:     %d\n", info->mt_gtid);
-		seq_म_लिखो(m, "LPAR CPUs S-MTID:     %d\n", info->mt_stid);
-		seq_म_लिखो(m, "LPAR CPUs PS-MTID:    %d\n", info->mt_psmtid);
-	पूर्ण
-	अगर (convert_ext_name(info->vsne, info->ext_name, माप(info->ext_name))) अणु
-		seq_म_लिखो(m, "LPAR Extended Name:   %-.256s\n", info->ext_name);
-		seq_म_लिखो(m, "LPAR UUID:            %pUb\n", &info->uuid);
-	पूर्ण
-पूर्ण
+static void stsi_2_2_2(struct seq_file *m, struct sysinfo_2_2_2 *info)
+{
+	if (stsi(info, 2, 2, 2))
+		return;
+	EBCASC(info->name, sizeof(info->name));
+	seq_putc(m, '\n');
+	seq_printf(m, "LPAR Number:          %d\n", info->lpar_number);
+	seq_printf(m, "LPAR Characteristics: ");
+	if (info->characteristics & LPAR_CHAR_DEDICATED)
+		seq_printf(m, "Dedicated ");
+	if (info->characteristics & LPAR_CHAR_SHARED)
+		seq_printf(m, "Shared ");
+	if (info->characteristics & LPAR_CHAR_LIMITED)
+		seq_printf(m, "Limited ");
+	seq_putc(m, '\n');
+	seq_printf(m, "LPAR Name:            %-8.8s\n", info->name);
+	seq_printf(m, "LPAR Adjustment:      %d\n", info->caf);
+	seq_printf(m, "LPAR CPUs Total:      %d\n", info->cpus_total);
+	seq_printf(m, "LPAR CPUs Configured: %d\n", info->cpus_configured);
+	seq_printf(m, "LPAR CPUs Standby:    %d\n", info->cpus_standby);
+	seq_printf(m, "LPAR CPUs Reserved:   %d\n", info->cpus_reserved);
+	seq_printf(m, "LPAR CPUs Dedicated:  %d\n", info->cpus_dedicated);
+	seq_printf(m, "LPAR CPUs Shared:     %d\n", info->cpus_shared);
+	if (info->mt_installed) {
+		seq_printf(m, "LPAR CPUs G-MTID:     %d\n", info->mt_gtid);
+		seq_printf(m, "LPAR CPUs S-MTID:     %d\n", info->mt_stid);
+		seq_printf(m, "LPAR CPUs PS-MTID:    %d\n", info->mt_psmtid);
+	}
+	if (convert_ext_name(info->vsne, info->ext_name, sizeof(info->ext_name))) {
+		seq_printf(m, "LPAR Extended Name:   %-.256s\n", info->ext_name);
+		seq_printf(m, "LPAR UUID:            %pUb\n", &info->uuid);
+	}
+}
 
-अटल व्योम prपूर्णांक_ext_name(काष्ठा seq_file *m, पूर्णांक lvl,
-			   काष्ठा sysinfo_3_2_2 *info)
-अणु
-	माप_प्रकार len = माप(info->ext_names[lvl]);
+static void print_ext_name(struct seq_file *m, int lvl,
+			   struct sysinfo_3_2_2 *info)
+{
+	size_t len = sizeof(info->ext_names[lvl]);
 
-	अगर (!convert_ext_name(info->vm[lvl].evmne, info->ext_names[lvl], len))
-		वापस;
-	seq_म_लिखो(m, "VM%02d Extended Name:   %-.256s\n", lvl,
+	if (!convert_ext_name(info->vm[lvl].evmne, info->ext_names[lvl], len))
+		return;
+	seq_printf(m, "VM%02d Extended Name:   %-.256s\n", lvl,
 		   info->ext_names[lvl]);
-पूर्ण
+}
 
-अटल व्योम prपूर्णांक_uuid(काष्ठा seq_file *m, पूर्णांक i, काष्ठा sysinfo_3_2_2 *info)
-अणु
-	अगर (uuid_is_null(&info->vm[i].uuid))
-		वापस;
-	seq_म_लिखो(m, "VM%02d UUID:            %pUb\n", i, &info->vm[i].uuid);
-पूर्ण
+static void print_uuid(struct seq_file *m, int i, struct sysinfo_3_2_2 *info)
+{
+	if (uuid_is_null(&info->vm[i].uuid))
+		return;
+	seq_printf(m, "VM%02d UUID:            %pUb\n", i, &info->vm[i].uuid);
+}
 
-अटल व्योम stsi_3_2_2(काष्ठा seq_file *m, काष्ठा sysinfo_3_2_2 *info)
-अणु
-	पूर्णांक i;
+static void stsi_3_2_2(struct seq_file *m, struct sysinfo_3_2_2 *info)
+{
+	int i;
 
-	अगर (stsi(info, 3, 2, 2))
-		वापस;
-	क्रम (i = 0; i < info->count; i++) अणु
-		EBCASC(info->vm[i].name, माप(info->vm[i].name));
-		EBCASC(info->vm[i].cpi, माप(info->vm[i].cpi));
-		seq_अ_दो(m, '\n');
-		seq_म_लिखो(m, "VM%02d Name:            %-8.8s\n", i, info->vm[i].name);
-		seq_म_लिखो(m, "VM%02d Control Program: %-16.16s\n", i, info->vm[i].cpi);
-		seq_म_लिखो(m, "VM%02d Adjustment:      %d\n", i, info->vm[i].caf);
-		seq_म_लिखो(m, "VM%02d CPUs Total:      %d\n", i, info->vm[i].cpus_total);
-		seq_म_लिखो(m, "VM%02d CPUs Configured: %d\n", i, info->vm[i].cpus_configured);
-		seq_म_लिखो(m, "VM%02d CPUs Standby:    %d\n", i, info->vm[i].cpus_standby);
-		seq_म_लिखो(m, "VM%02d CPUs Reserved:   %d\n", i, info->vm[i].cpus_reserved);
-		prपूर्णांक_ext_name(m, i, info);
-		prपूर्णांक_uuid(m, i, info);
-	पूर्ण
-पूर्ण
+	if (stsi(info, 3, 2, 2))
+		return;
+	for (i = 0; i < info->count; i++) {
+		EBCASC(info->vm[i].name, sizeof(info->vm[i].name));
+		EBCASC(info->vm[i].cpi, sizeof(info->vm[i].cpi));
+		seq_putc(m, '\n');
+		seq_printf(m, "VM%02d Name:            %-8.8s\n", i, info->vm[i].name);
+		seq_printf(m, "VM%02d Control Program: %-16.16s\n", i, info->vm[i].cpi);
+		seq_printf(m, "VM%02d Adjustment:      %d\n", i, info->vm[i].caf);
+		seq_printf(m, "VM%02d CPUs Total:      %d\n", i, info->vm[i].cpus_total);
+		seq_printf(m, "VM%02d CPUs Configured: %d\n", i, info->vm[i].cpus_configured);
+		seq_printf(m, "VM%02d CPUs Standby:    %d\n", i, info->vm[i].cpus_standby);
+		seq_printf(m, "VM%02d CPUs Reserved:   %d\n", i, info->vm[i].cpus_reserved);
+		print_ext_name(m, i, info);
+		print_uuid(m, i, info);
+	}
+}
 
-अटल पूर्णांक sysinfo_show(काष्ठा seq_file *m, व्योम *v)
-अणु
-	व्योम *info = (व्योम *)get_zeroed_page(GFP_KERNEL);
-	पूर्णांक level;
+static int sysinfo_show(struct seq_file *m, void *v)
+{
+	void *info = (void *)get_zeroed_page(GFP_KERNEL);
+	int level;
 
-	अगर (!info)
-		वापस 0;
-	level = stsi(शून्य, 0, 0, 0);
-	अगर (level >= 1)
+	if (!info)
+		return 0;
+	level = stsi(NULL, 0, 0, 0);
+	if (level >= 1)
 		stsi_1_1_1(m, info);
-	अगर (level >= 1)
+	if (level >= 1)
 		stsi_15_1_x(m, info);
-	अगर (level >= 1)
+	if (level >= 1)
 		stsi_1_2_2(m, info);
-	अगर (level >= 2)
+	if (level >= 2)
 		stsi_2_2_2(m, info);
-	अगर (level >= 3)
+	if (level >= 3)
 		stsi_3_2_2(m, info);
-	मुक्त_page((अचिन्हित दीर्घ)info);
-	वापस 0;
-पूर्ण
+	free_page((unsigned long)info);
+	return 0;
+}
 
-अटल पूर्णांक __init sysinfo_create_proc(व्योम)
-अणु
-	proc_create_single("sysinfo", 0444, शून्य, sysinfo_show);
-	वापस 0;
-पूर्ण
+static int __init sysinfo_create_proc(void)
+{
+	proc_create_single("sysinfo", 0444, NULL, sysinfo_show);
+	return 0;
+}
 device_initcall(sysinfo_create_proc);
 
-#पूर्ण_अगर /* CONFIG_PROC_FS */
+#endif /* CONFIG_PROC_FS */
 
 /*
- * Service levels पूर्णांकerface.
+ * Service levels interface.
  */
 
-अटल DECLARE_RWSEM(service_level_sem);
-अटल LIST_HEAD(service_level_list);
+static DECLARE_RWSEM(service_level_sem);
+static LIST_HEAD(service_level_list);
 
-पूर्णांक रेजिस्टर_service_level(काष्ठा service_level *slr)
-अणु
-	काष्ठा service_level *ptr;
+int register_service_level(struct service_level *slr)
+{
+	struct service_level *ptr;
 
-	करोwn_ग_लिखो(&service_level_sem);
-	list_क्रम_each_entry(ptr, &service_level_list, list)
-		अगर (ptr == slr) अणु
-			up_ग_लिखो(&service_level_sem);
-			वापस -EEXIST;
-		पूर्ण
+	down_write(&service_level_sem);
+	list_for_each_entry(ptr, &service_level_list, list)
+		if (ptr == slr) {
+			up_write(&service_level_sem);
+			return -EEXIST;
+		}
 	list_add_tail(&slr->list, &service_level_list);
-	up_ग_लिखो(&service_level_sem);
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL(रेजिस्टर_service_level);
+	up_write(&service_level_sem);
+	return 0;
+}
+EXPORT_SYMBOL(register_service_level);
 
-पूर्णांक unरेजिस्टर_service_level(काष्ठा service_level *slr)
-अणु
-	काष्ठा service_level *ptr, *next;
-	पूर्णांक rc = -ENOENT;
+int unregister_service_level(struct service_level *slr)
+{
+	struct service_level *ptr, *next;
+	int rc = -ENOENT;
 
-	करोwn_ग_लिखो(&service_level_sem);
-	list_क्रम_each_entry_safe(ptr, next, &service_level_list, list) अणु
-		अगर (ptr != slr)
-			जारी;
+	down_write(&service_level_sem);
+	list_for_each_entry_safe(ptr, next, &service_level_list, list) {
+		if (ptr != slr)
+			continue;
 		list_del(&ptr->list);
 		rc = 0;
-		अवरोध;
-	पूर्ण
-	up_ग_लिखो(&service_level_sem);
-	वापस rc;
-पूर्ण
-EXPORT_SYMBOL(unरेजिस्टर_service_level);
+		break;
+	}
+	up_write(&service_level_sem);
+	return rc;
+}
+EXPORT_SYMBOL(unregister_service_level);
 
-अटल व्योम *service_level_start(काष्ठा seq_file *m, loff_t *pos)
-अणु
-	करोwn_पढ़ो(&service_level_sem);
-	वापस seq_list_start(&service_level_list, *pos);
-पूर्ण
+static void *service_level_start(struct seq_file *m, loff_t *pos)
+{
+	down_read(&service_level_sem);
+	return seq_list_start(&service_level_list, *pos);
+}
 
-अटल व्योम *service_level_next(काष्ठा seq_file *m, व्योम *p, loff_t *pos)
-अणु
-	वापस seq_list_next(p, &service_level_list, pos);
-पूर्ण
+static void *service_level_next(struct seq_file *m, void *p, loff_t *pos)
+{
+	return seq_list_next(p, &service_level_list, pos);
+}
 
-अटल व्योम service_level_stop(काष्ठा seq_file *m, व्योम *p)
-अणु
-	up_पढ़ो(&service_level_sem);
-पूर्ण
+static void service_level_stop(struct seq_file *m, void *p)
+{
+	up_read(&service_level_sem);
+}
 
-अटल पूर्णांक service_level_show(काष्ठा seq_file *m, व्योम *p)
-अणु
-	काष्ठा service_level *slr;
+static int service_level_show(struct seq_file *m, void *p)
+{
+	struct service_level *slr;
 
-	slr = list_entry(p, काष्ठा service_level, list);
-	slr->seq_prपूर्णांक(m, slr);
-	वापस 0;
-पूर्ण
+	slr = list_entry(p, struct service_level, list);
+	slr->seq_print(m, slr);
+	return 0;
+}
 
-अटल स्थिर काष्ठा seq_operations service_level_seq_ops = अणु
+static const struct seq_operations service_level_seq_ops = {
 	.start		= service_level_start,
 	.next		= service_level_next,
 	.stop		= service_level_stop,
 	.show		= service_level_show
-पूर्ण;
+};
 
-अटल व्योम service_level_vm_prपूर्णांक(काष्ठा seq_file *m,
-				   काष्ठा service_level *slr)
-अणु
-	अक्षर *query_buffer, *str;
+static void service_level_vm_print(struct seq_file *m,
+				   struct service_level *slr)
+{
+	char *query_buffer, *str;
 
-	query_buffer = kदो_स्मृति(1024, GFP_KERNEL | GFP_DMA);
-	अगर (!query_buffer)
-		वापस;
-	cpcmd("QUERY CPLEVEL", query_buffer, 1024, शून्य);
-	str = म_अक्षर(query_buffer, '\n');
-	अगर (str)
+	query_buffer = kmalloc(1024, GFP_KERNEL | GFP_DMA);
+	if (!query_buffer)
+		return;
+	cpcmd("QUERY CPLEVEL", query_buffer, 1024, NULL);
+	str = strchr(query_buffer, '\n');
+	if (str)
 		*str = 0;
-	seq_म_लिखो(m, "VM: %s\n", query_buffer);
-	kमुक्त(query_buffer);
-पूर्ण
+	seq_printf(m, "VM: %s\n", query_buffer);
+	kfree(query_buffer);
+}
 
-अटल काष्ठा service_level service_level_vm = अणु
-	.seq_prपूर्णांक = service_level_vm_prपूर्णांक
-पूर्ण;
+static struct service_level service_level_vm = {
+	.seq_print = service_level_vm_print
+};
 
-अटल __init पूर्णांक create_proc_service_level(व्योम)
-अणु
-	proc_create_seq("service_levels", 0, शून्य, &service_level_seq_ops);
-	अगर (MACHINE_IS_VM)
-		रेजिस्टर_service_level(&service_level_vm);
-	वापस 0;
-पूर्ण
+static __init int create_proc_service_level(void)
+{
+	proc_create_seq("service_levels", 0, NULL, &service_level_seq_ops);
+	if (MACHINE_IS_VM)
+		register_service_level(&service_level_vm);
+	return 0;
+}
 subsys_initcall(create_proc_service_level);
 
 /*
- * CPU capability might have changed. Thereक्रमe recalculate loops_per_jअगरfy.
+ * CPU capability might have changed. Therefore recalculate loops_per_jiffy.
  */
-व्योम s390_adjust_jअगरfies(व्योम)
-अणु
-	काष्ठा sysinfo_1_2_2 *info;
-	अचिन्हित दीर्घ capability;
-	काष्ठा kernel_fpu fpu;
+void s390_adjust_jiffies(void)
+{
+	struct sysinfo_1_2_2 *info;
+	unsigned long capability;
+	struct kernel_fpu fpu;
 
-	info = (व्योम *) get_zeroed_page(GFP_KERNEL);
-	अगर (!info)
-		वापस;
+	info = (void *) get_zeroed_page(GFP_KERNEL);
+	if (!info)
+		return;
 
-	अगर (stsi(info, 1, 2, 2) == 0) अणु
+	if (stsi(info, 1, 2, 2) == 0) {
 		/*
 		 * Major sigh. The cpu capability encoding is "special".
 		 * If the first 9 bits of info->capability are 0 then it
-		 * is a 32 bit अचिन्हित पूर्णांकeger in the range 0 .. 2^23.
-		 * If the first 9 bits are != 0 then it is a 32 bit भग्न.
+		 * is a 32 bit unsigned integer in the range 0 .. 2^23.
+		 * If the first 9 bits are != 0 then it is a 32 bit float.
 		 * In addition a lower value indicates a proportionally
 		 * higher cpu capacity. Bogomips are the other way round.
-		 * To get to a halfway suitable number we भागide 1e7
-		 * by the cpu capability number. Yes, that means a भग्नing
-		 * poपूर्णांक भागision ..
+		 * To get to a halfway suitable number we divide 1e7
+		 * by the cpu capability number. Yes, that means a floating
+		 * point division ..
 		 */
 		kernel_fpu_begin(&fpu, KERNEL_FPR);
-		यंत्र अस्थिर(
+		asm volatile(
 			"	sfpc	%3\n"
 			"	l	%0,%1\n"
 			"	tmlh	%0,0xff80\n"
@@ -450,118 +449,118 @@ subsys_initcall(create_proc_service_level);
 			: "cc"
 			);
 		kernel_fpu_end(&fpu, KERNEL_FPR);
-	पूर्ण अन्यथा
+	} else
 		/*
-		 * Really old machine without stsi block क्रम basic
-		 * cpu inक्रमmation. Report 42.0 bogomips.
+		 * Really old machine without stsi block for basic
+		 * cpu information. Report 42.0 bogomips.
 		 */
 		capability = 42;
-	loops_per_jअगरfy = capability * (500000/HZ);
-	मुक्त_page((अचिन्हित दीर्घ) info);
-पूर्ण
+	loops_per_jiffy = capability * (500000/HZ);
+	free_page((unsigned long) info);
+}
 
 /*
  * calibrate the delay loop
  */
-व्योम calibrate_delay(व्योम)
-अणु
-	s390_adjust_jअगरfies();
-	/* Prपूर्णांक the good old Bogomips line .. */
-	prपूर्णांकk(KERN_DEBUG "Calibrating delay loop (skipped)... "
-	       "%lu.%02lu BogoMIPS preset\n", loops_per_jअगरfy/(500000/HZ),
-	       (loops_per_jअगरfy/(5000/HZ)) % 100);
-पूर्ण
+void calibrate_delay(void)
+{
+	s390_adjust_jiffies();
+	/* Print the good old Bogomips line .. */
+	printk(KERN_DEBUG "Calibrating delay loop (skipped)... "
+	       "%lu.%02lu BogoMIPS preset\n", loops_per_jiffy/(500000/HZ),
+	       (loops_per_jiffy/(5000/HZ)) % 100);
+}
 
-#अगर_घोषित CONFIG_DEBUG_FS
+#ifdef CONFIG_DEBUG_FS
 
-#घोषणा STSI_खाता(fc, s1, s2)						       \
-अटल पूर्णांक stsi_खोलो_##fc##_##s1##_##s2(काष्ठा inode *inode, काष्ठा file *file)\
-अणु									       \
-	file->निजी_data = (व्योम *) get_zeroed_page(GFP_KERNEL);	       \
-	अगर (!file->निजी_data)					       \
-		वापस -ENOMEM;						       \
-	अगर (stsi(file->निजी_data, fc, s1, s2)) अणु			       \
-		मुक्त_page((अचिन्हित दीर्घ)file->निजी_data);		       \
-		file->निजी_data = शून्य;				       \
-		वापस -EACCES;						       \
-	पूर्ण								       \
-	वापस nonseekable_खोलो(inode, file);				       \
-पूर्ण									       \
+#define STSI_FILE(fc, s1, s2)						       \
+static int stsi_open_##fc##_##s1##_##s2(struct inode *inode, struct file *file)\
+{									       \
+	file->private_data = (void *) get_zeroed_page(GFP_KERNEL);	       \
+	if (!file->private_data)					       \
+		return -ENOMEM;						       \
+	if (stsi(file->private_data, fc, s1, s2)) {			       \
+		free_page((unsigned long)file->private_data);		       \
+		file->private_data = NULL;				       \
+		return -EACCES;						       \
+	}								       \
+	return nonseekable_open(inode, file);				       \
+}									       \
 									       \
-अटल स्थिर काष्ठा file_operations stsi_##fc##_##s1##_##s2##_fs_ops = अणु       \
-	.खोलो		= stsi_खोलो_##fc##_##s1##_##s2,			       \
+static const struct file_operations stsi_##fc##_##s1##_##s2##_fs_ops = {       \
+	.open		= stsi_open_##fc##_##s1##_##s2,			       \
 	.release	= stsi_release,					       \
-	.पढ़ो		= stsi_पढ़ो,					       \
+	.read		= stsi_read,					       \
 	.llseek		= no_llseek,					       \
-पूर्ण;
+};
 
-अटल पूर्णांक stsi_release(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	मुक्त_page((अचिन्हित दीर्घ)file->निजी_data);
-	वापस 0;
-पूर्ण
+static int stsi_release(struct inode *inode, struct file *file)
+{
+	free_page((unsigned long)file->private_data);
+	return 0;
+}
 
-अटल sमाप_प्रकार stsi_पढ़ो(काष्ठा file *file, अक्षर __user *buf, माप_प्रकार size, loff_t *ppos)
-अणु
-	वापस simple_पढ़ो_from_buffer(buf, size, ppos, file->निजी_data, PAGE_SIZE);
-पूर्ण
+static ssize_t stsi_read(struct file *file, char __user *buf, size_t size, loff_t *ppos)
+{
+	return simple_read_from_buffer(buf, size, ppos, file->private_data, PAGE_SIZE);
+}
 
-STSI_खाता( 1, 1, 1);
-STSI_खाता( 1, 2, 1);
-STSI_खाता( 1, 2, 2);
-STSI_खाता( 2, 2, 1);
-STSI_खाता( 2, 2, 2);
-STSI_खाता( 3, 2, 2);
-STSI_खाता(15, 1, 2);
-STSI_खाता(15, 1, 3);
-STSI_खाता(15, 1, 4);
-STSI_खाता(15, 1, 5);
-STSI_खाता(15, 1, 6);
+STSI_FILE( 1, 1, 1);
+STSI_FILE( 1, 2, 1);
+STSI_FILE( 1, 2, 2);
+STSI_FILE( 2, 2, 1);
+STSI_FILE( 2, 2, 2);
+STSI_FILE( 3, 2, 2);
+STSI_FILE(15, 1, 2);
+STSI_FILE(15, 1, 3);
+STSI_FILE(15, 1, 4);
+STSI_FILE(15, 1, 5);
+STSI_FILE(15, 1, 6);
 
-काष्ठा stsi_file अणु
-	स्थिर काष्ठा file_operations *fops;
-	अक्षर *name;
-पूर्ण;
+struct stsi_file {
+	const struct file_operations *fops;
+	char *name;
+};
 
-अटल काष्ठा stsi_file stsi_file[] __initdata = अणु
-	अणु.fops = &stsi_1_1_1_fs_ops,  .name =  "1_1_1"पूर्ण,
-	अणु.fops = &stsi_1_2_1_fs_ops,  .name =  "1_2_1"पूर्ण,
-	अणु.fops = &stsi_1_2_2_fs_ops,  .name =  "1_2_2"पूर्ण,
-	अणु.fops = &stsi_2_2_1_fs_ops,  .name =  "2_2_1"पूर्ण,
-	अणु.fops = &stsi_2_2_2_fs_ops,  .name =  "2_2_2"पूर्ण,
-	अणु.fops = &stsi_3_2_2_fs_ops,  .name =  "3_2_2"पूर्ण,
-	अणु.fops = &stsi_15_1_2_fs_ops, .name = "15_1_2"पूर्ण,
-	अणु.fops = &stsi_15_1_3_fs_ops, .name = "15_1_3"पूर्ण,
-	अणु.fops = &stsi_15_1_4_fs_ops, .name = "15_1_4"पूर्ण,
-	अणु.fops = &stsi_15_1_5_fs_ops, .name = "15_1_5"पूर्ण,
-	अणु.fops = &stsi_15_1_6_fs_ops, .name = "15_1_6"पूर्ण,
-पूर्ण;
+static struct stsi_file stsi_file[] __initdata = {
+	{.fops = &stsi_1_1_1_fs_ops,  .name =  "1_1_1"},
+	{.fops = &stsi_1_2_1_fs_ops,  .name =  "1_2_1"},
+	{.fops = &stsi_1_2_2_fs_ops,  .name =  "1_2_2"},
+	{.fops = &stsi_2_2_1_fs_ops,  .name =  "2_2_1"},
+	{.fops = &stsi_2_2_2_fs_ops,  .name =  "2_2_2"},
+	{.fops = &stsi_3_2_2_fs_ops,  .name =  "3_2_2"},
+	{.fops = &stsi_15_1_2_fs_ops, .name = "15_1_2"},
+	{.fops = &stsi_15_1_3_fs_ops, .name = "15_1_3"},
+	{.fops = &stsi_15_1_4_fs_ops, .name = "15_1_4"},
+	{.fops = &stsi_15_1_5_fs_ops, .name = "15_1_5"},
+	{.fops = &stsi_15_1_6_fs_ops, .name = "15_1_6"},
+};
 
-अटल u8 stsi_0_0_0;
+static u8 stsi_0_0_0;
 
-अटल __init पूर्णांक stsi_init_debugfs(व्योम)
-अणु
-	काष्ठा dentry *stsi_root;
-	काष्ठा stsi_file *sf;
-	पूर्णांक lvl, i;
+static __init int stsi_init_debugfs(void)
+{
+	struct dentry *stsi_root;
+	struct stsi_file *sf;
+	int lvl, i;
 
 	stsi_root = debugfs_create_dir("stsi", arch_debugfs_dir);
-	lvl = stsi(शून्य, 0, 0, 0);
-	अगर (lvl > 0)
+	lvl = stsi(NULL, 0, 0, 0);
+	if (lvl > 0)
 		stsi_0_0_0 = lvl;
 	debugfs_create_u8("0_0_0", 0400, stsi_root, &stsi_0_0_0);
-	क्रम (i = 0; i < ARRAY_SIZE(stsi_file); i++) अणु
+	for (i = 0; i < ARRAY_SIZE(stsi_file); i++) {
 		sf = &stsi_file[i];
-		debugfs_create_file(sf->name, 0400, stsi_root, शून्य, sf->fops);
-	पूर्ण
-	अगर (IS_ENABLED(CONFIG_SCHED_TOPOLOGY) && MACHINE_HAS_TOPOLOGY) अणु
-		अक्षर link_to[10];
+		debugfs_create_file(sf->name, 0400, stsi_root, NULL, sf->fops);
+	}
+	if (IS_ENABLED(CONFIG_SCHED_TOPOLOGY) && MACHINE_HAS_TOPOLOGY) {
+		char link_to[10];
 
-		प्र_लिखो(link_to, "15_1_%d", topology_mnest_limit());
+		sprintf(link_to, "15_1_%d", topology_mnest_limit());
 		debugfs_create_symlink("topology", stsi_root, link_to);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 device_initcall(stsi_init_debugfs);
 
-#पूर्ण_अगर /* CONFIG_DEBUG_FS */
+#endif /* CONFIG_DEBUG_FS */

@@ -1,26 +1,25 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * omap-abe-twl6040.c  --  SoC audio क्रम TI OMAP based boards with ABE and
+ * omap-abe-twl6040.c  --  SoC audio for TI OMAP based boards with ABE and
  *			   twl6040 codec
  *
  * Author: Misael Lopez Cruz <misael.lopez@ti.com>
  */
 
-#समावेश <linux/clk.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/mfd/twl6040.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
+#include <linux/clk.h>
+#include <linux/platform_device.h>
+#include <linux/mfd/twl6040.h>
+#include <linux/module.h>
+#include <linux/of.h>
 
-#समावेश <sound/core.h>
-#समावेश <sound/pcm.h>
-#समावेश <sound/soc.h>
-#समावेश <sound/jack.h>
+#include <sound/core.h>
+#include <sound/pcm.h>
+#include <sound/soc.h>
+#include <sound/jack.h>
 
-#समावेश "omap-dmic.h"
-#समावेश "omap-mcpdm.h"
-#समावेश "../codecs/twl6040.h"
+#include "omap-dmic.h"
+#include "omap-mcpdm.h"
+#include "../codecs/twl6040.h"
 
 SND_SOC_DAILINK_DEFS(link0,
 	DAILINK_COMP_ARRAY(COMP_EMPTY()),
@@ -34,144 +33,144 @@ SND_SOC_DAILINK_DEFS(link1,
 				      "dmic-hifi")),
 	DAILINK_COMP_ARRAY(COMP_EMPTY()));
 
-काष्ठा abe_twl6040 अणु
-	काष्ठा snd_soc_card card;
-	काष्ठा snd_soc_dai_link dai_links[2];
-	पूर्णांक	jack_detection;	/* board can detect jack events */
-	पूर्णांक	mclk_freq;	/* MCLK frequency speed क्रम twl6040 */
-पूर्ण;
+struct abe_twl6040 {
+	struct snd_soc_card card;
+	struct snd_soc_dai_link dai_links[2];
+	int	jack_detection;	/* board can detect jack events */
+	int	mclk_freq;	/* MCLK frequency speed for twl6040 */
+};
 
-अटल काष्ठा platक्रमm_device *dmic_codec_dev;
+static struct platform_device *dmic_codec_dev;
 
-अटल पूर्णांक omap_abe_hw_params(काष्ठा snd_pcm_substream *substream,
-	काष्ठा snd_pcm_hw_params *params)
-अणु
-	काष्ठा snd_soc_pcm_runसमय *rtd = asoc_substream_to_rtd(substream);
-	काष्ठा snd_soc_dai *codec_dai = asoc_rtd_to_codec(rtd, 0);
-	काष्ठा snd_soc_card *card = rtd->card;
-	काष्ठा abe_twl6040 *priv = snd_soc_card_get_drvdata(card);
-	पूर्णांक clk_id, freq;
-	पूर्णांक ret;
+static int omap_abe_hw_params(struct snd_pcm_substream *substream,
+	struct snd_pcm_hw_params *params)
+{
+	struct snd_soc_pcm_runtime *rtd = asoc_substream_to_rtd(substream);
+	struct snd_soc_dai *codec_dai = asoc_rtd_to_codec(rtd, 0);
+	struct snd_soc_card *card = rtd->card;
+	struct abe_twl6040 *priv = snd_soc_card_get_drvdata(card);
+	int clk_id, freq;
+	int ret;
 
 	clk_id = twl6040_get_clk_id(codec_dai->component);
-	अगर (clk_id == TWL6040_SYSCLK_SEL_HPPLL)
+	if (clk_id == TWL6040_SYSCLK_SEL_HPPLL)
 		freq = priv->mclk_freq;
-	अन्यथा अगर (clk_id == TWL6040_SYSCLK_SEL_LPPLL)
+	else if (clk_id == TWL6040_SYSCLK_SEL_LPPLL)
 		freq = 32768;
-	अन्यथा
-		वापस -EINVAL;
+	else
+		return -EINVAL;
 
 	/* set the codec mclk */
 	ret = snd_soc_dai_set_sysclk(codec_dai, clk_id, freq,
 				SND_SOC_CLOCK_IN);
-	अगर (ret) अणु
-		prपूर्णांकk(KERN_ERR "can't set codec system clock\n");
-		वापस ret;
-	पूर्ण
-	वापस ret;
-पूर्ण
+	if (ret) {
+		printk(KERN_ERR "can't set codec system clock\n");
+		return ret;
+	}
+	return ret;
+}
 
-अटल स्थिर काष्ठा snd_soc_ops omap_abe_ops = अणु
+static const struct snd_soc_ops omap_abe_ops = {
 	.hw_params = omap_abe_hw_params,
-पूर्ण;
+};
 
-अटल पूर्णांक omap_abe_dmic_hw_params(काष्ठा snd_pcm_substream *substream,
-	काष्ठा snd_pcm_hw_params *params)
-अणु
-	काष्ठा snd_soc_pcm_runसमय *rtd = asoc_substream_to_rtd(substream);
-	काष्ठा snd_soc_dai *cpu_dai = asoc_rtd_to_cpu(rtd, 0);
-	पूर्णांक ret = 0;
+static int omap_abe_dmic_hw_params(struct snd_pcm_substream *substream,
+	struct snd_pcm_hw_params *params)
+{
+	struct snd_soc_pcm_runtime *rtd = asoc_substream_to_rtd(substream);
+	struct snd_soc_dai *cpu_dai = asoc_rtd_to_cpu(rtd, 0);
+	int ret = 0;
 
 	ret = snd_soc_dai_set_sysclk(cpu_dai, OMAP_DMIC_SYSCLK_PAD_CLKS,
 				     19200000, SND_SOC_CLOCK_IN);
-	अगर (ret < 0) अणु
-		prपूर्णांकk(KERN_ERR "can't set DMIC cpu system clock\n");
-		वापस ret;
-	पूर्ण
+	if (ret < 0) {
+		printk(KERN_ERR "can't set DMIC cpu system clock\n");
+		return ret;
+	}
 	ret = snd_soc_dai_set_sysclk(cpu_dai, OMAP_DMIC_ABE_DMIC_CLK, 2400000,
 				     SND_SOC_CLOCK_OUT);
-	अगर (ret < 0) अणु
-		prपूर्णांकk(KERN_ERR "can't set DMIC output clock\n");
-		वापस ret;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	if (ret < 0) {
+		printk(KERN_ERR "can't set DMIC output clock\n");
+		return ret;
+	}
+	return 0;
+}
 
-अटल काष्ठा snd_soc_ops omap_abe_dmic_ops = अणु
+static struct snd_soc_ops omap_abe_dmic_ops = {
 	.hw_params = omap_abe_dmic_hw_params,
-पूर्ण;
+};
 
 /* Headset jack */
-अटल काष्ठा snd_soc_jack hs_jack;
+static struct snd_soc_jack hs_jack;
 
 /*Headset jack detection DAPM pins */
-अटल काष्ठा snd_soc_jack_pin hs_jack_pins[] = अणु
-	अणु
+static struct snd_soc_jack_pin hs_jack_pins[] = {
+	{
 		.pin = "Headset Mic",
 		.mask = SND_JACK_MICROPHONE,
-	पूर्ण,
-	अणु
+	},
+	{
 		.pin = "Headset Stereophone",
 		.mask = SND_JACK_HEADPHONE,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
 /* SDP4430 machine DAPM */
-अटल स्थिर काष्ठा snd_soc_dapm_widget twl6040_dapm_widमाला_लो[] = अणु
-	/* Outमाला_दो */
-	SND_SOC_DAPM_HP("Headset Stereophone", शून्य),
-	SND_SOC_DAPM_SPK("Earphone Spk", शून्य),
-	SND_SOC_DAPM_SPK("Ext Spk", शून्य),
-	SND_SOC_DAPM_LINE("Line Out", शून्य),
-	SND_SOC_DAPM_SPK("Vibrator", शून्य),
+static const struct snd_soc_dapm_widget twl6040_dapm_widgets[] = {
+	/* Outputs */
+	SND_SOC_DAPM_HP("Headset Stereophone", NULL),
+	SND_SOC_DAPM_SPK("Earphone Spk", NULL),
+	SND_SOC_DAPM_SPK("Ext Spk", NULL),
+	SND_SOC_DAPM_LINE("Line Out", NULL),
+	SND_SOC_DAPM_SPK("Vibrator", NULL),
 
-	/* Inमाला_दो */
-	SND_SOC_DAPM_MIC("Headset Mic", शून्य),
-	SND_SOC_DAPM_MIC("Main Handset Mic", शून्य),
-	SND_SOC_DAPM_MIC("Sub Handset Mic", शून्य),
-	SND_SOC_DAPM_LINE("Line In", शून्य),
+	/* Inputs */
+	SND_SOC_DAPM_MIC("Headset Mic", NULL),
+	SND_SOC_DAPM_MIC("Main Handset Mic", NULL),
+	SND_SOC_DAPM_MIC("Sub Handset Mic", NULL),
+	SND_SOC_DAPM_LINE("Line In", NULL),
 
 	/* Digital microphones */
-	SND_SOC_DAPM_MIC("Digital Mic", शून्य),
-पूर्ण;
+	SND_SOC_DAPM_MIC("Digital Mic", NULL),
+};
 
-अटल स्थिर काष्ठा snd_soc_dapm_route audio_map[] = अणु
-	/* Routings क्रम outमाला_दो */
-	अणु"Headset Stereophone", शून्य, "HSOL"पूर्ण,
-	अणु"Headset Stereophone", शून्य, "HSOR"पूर्ण,
+static const struct snd_soc_dapm_route audio_map[] = {
+	/* Routings for outputs */
+	{"Headset Stereophone", NULL, "HSOL"},
+	{"Headset Stereophone", NULL, "HSOR"},
 
-	अणु"Earphone Spk", शून्य, "EP"पूर्ण,
+	{"Earphone Spk", NULL, "EP"},
 
-	अणु"Ext Spk", शून्य, "HFL"पूर्ण,
-	अणु"Ext Spk", शून्य, "HFR"पूर्ण,
+	{"Ext Spk", NULL, "HFL"},
+	{"Ext Spk", NULL, "HFR"},
 
-	अणु"Line Out", शून्य, "AUXL"पूर्ण,
-	अणु"Line Out", शून्य, "AUXR"पूर्ण,
+	{"Line Out", NULL, "AUXL"},
+	{"Line Out", NULL, "AUXR"},
 
-	अणु"Vibrator", शून्य, "VIBRAL"पूर्ण,
-	अणु"Vibrator", शून्य, "VIBRAR"पूर्ण,
+	{"Vibrator", NULL, "VIBRAL"},
+	{"Vibrator", NULL, "VIBRAR"},
 
-	/* Routings क्रम inमाला_दो */
-	अणु"HSMIC", शून्य, "Headset Mic"पूर्ण,
-	अणु"Headset Mic", शून्य, "Headset Mic Bias"पूर्ण,
+	/* Routings for inputs */
+	{"HSMIC", NULL, "Headset Mic"},
+	{"Headset Mic", NULL, "Headset Mic Bias"},
 
-	अणु"MAINMIC", शून्य, "Main Handset Mic"पूर्ण,
-	अणु"Main Handset Mic", शून्य, "Main Mic Bias"पूर्ण,
+	{"MAINMIC", NULL, "Main Handset Mic"},
+	{"Main Handset Mic", NULL, "Main Mic Bias"},
 
-	अणु"SUBMIC", शून्य, "Sub Handset Mic"पूर्ण,
-	अणु"Sub Handset Mic", शून्य, "Main Mic Bias"पूर्ण,
+	{"SUBMIC", NULL, "Sub Handset Mic"},
+	{"Sub Handset Mic", NULL, "Main Mic Bias"},
 
-	अणु"AFML", शून्य, "Line In"पूर्ण,
-	अणु"AFMR", शून्य, "Line In"पूर्ण,
-पूर्ण;
+	{"AFML", NULL, "Line In"},
+	{"AFMR", NULL, "Line In"},
+};
 
-अटल पूर्णांक omap_abe_twl6040_init(काष्ठा snd_soc_pcm_runसमय *rtd)
-अणु
-	काष्ठा snd_soc_component *component = asoc_rtd_to_codec(rtd, 0)->component;
-	काष्ठा snd_soc_card *card = rtd->card;
-	काष्ठा abe_twl6040 *priv = snd_soc_card_get_drvdata(card);
-	पूर्णांक hs_trim;
-	पूर्णांक ret;
+static int omap_abe_twl6040_init(struct snd_soc_pcm_runtime *rtd)
+{
+	struct snd_soc_component *component = asoc_rtd_to_codec(rtd, 0)->component;
+	struct snd_soc_card *card = rtd->card;
+	struct abe_twl6040 *priv = snd_soc_card_get_drvdata(card);
+	int hs_trim;
+	int ret;
 
 	/*
 	 * Configure McPDM offset cancellation based on the HSOTRIM value from
@@ -181,178 +180,178 @@ SND_SOC_DAILINK_DEFS(link1,
 	omap_mcpdm_configure_dn_offsets(rtd, TWL6040_HSF_TRIM_LEFT(hs_trim),
 					TWL6040_HSF_TRIM_RIGHT(hs_trim));
 
-	/* Headset jack detection only अगर it is supported */
-	अगर (priv->jack_detection) अणु
+	/* Headset jack detection only if it is supported */
+	if (priv->jack_detection) {
 		ret = snd_soc_card_jack_new(rtd->card, "Headset Jack",
 					    SND_JACK_HEADSET, &hs_jack,
 					    hs_jack_pins,
 					    ARRAY_SIZE(hs_jack_pins));
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
 		twl6040_hs_jack_detect(component, &hs_jack, SND_JACK_HEADSET);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा snd_soc_dapm_route dmic_audio_map[] = अणु
-	अणु"DMic", शून्य, "Digital Mic"पूर्ण,
-	अणु"Digital Mic", शून्य, "Digital Mic1 Bias"पूर्ण,
-पूर्ण;
+static const struct snd_soc_dapm_route dmic_audio_map[] = {
+	{"DMic", NULL, "Digital Mic"},
+	{"Digital Mic", NULL, "Digital Mic1 Bias"},
+};
 
-अटल पूर्णांक omap_abe_dmic_init(काष्ठा snd_soc_pcm_runसमय *rtd)
-अणु
-	काष्ठा snd_soc_dapm_context *dapm = &rtd->card->dapm;
+static int omap_abe_dmic_init(struct snd_soc_pcm_runtime *rtd)
+{
+	struct snd_soc_dapm_context *dapm = &rtd->card->dapm;
 
-	वापस snd_soc_dapm_add_routes(dapm, dmic_audio_map,
+	return snd_soc_dapm_add_routes(dapm, dmic_audio_map,
 				ARRAY_SIZE(dmic_audio_map));
-पूर्ण
+}
 
-अटल पूर्णांक omap_abe_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device_node *node = pdev->dev.of_node;
-	काष्ठा snd_soc_card *card;
-	काष्ठा device_node *dai_node;
-	काष्ठा abe_twl6040 *priv;
-	पूर्णांक num_links = 0;
-	पूर्णांक ret = 0;
+static int omap_abe_probe(struct platform_device *pdev)
+{
+	struct device_node *node = pdev->dev.of_node;
+	struct snd_soc_card *card;
+	struct device_node *dai_node;
+	struct abe_twl6040 *priv;
+	int num_links = 0;
+	int ret = 0;
 
-	अगर (!node) अणु
+	if (!node) {
 		dev_err(&pdev->dev, "of node is missing.\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	priv = devm_kzalloc(&pdev->dev, माप(काष्ठा abe_twl6040), GFP_KERNEL);
-	अगर (priv == शून्य)
-		वापस -ENOMEM;
+	priv = devm_kzalloc(&pdev->dev, sizeof(struct abe_twl6040), GFP_KERNEL);
+	if (priv == NULL)
+		return -ENOMEM;
 
 	card = &priv->card;
 	card->dev = &pdev->dev;
 	card->owner = THIS_MODULE;
-	card->dapm_widमाला_लो = twl6040_dapm_widमाला_लो;
-	card->num_dapm_widमाला_लो = ARRAY_SIZE(twl6040_dapm_widमाला_लो);
+	card->dapm_widgets = twl6040_dapm_widgets;
+	card->num_dapm_widgets = ARRAY_SIZE(twl6040_dapm_widgets);
 	card->dapm_routes = audio_map;
 	card->num_dapm_routes = ARRAY_SIZE(audio_map);
 
-	अगर (snd_soc_of_parse_card_name(card, "ti,model")) अणु
+	if (snd_soc_of_parse_card_name(card, "ti,model")) {
 		dev_err(&pdev->dev, "Card name is not provided\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	ret = snd_soc_of_parse_audio_routing(card, "ti,audio-routing");
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&pdev->dev, "Error while parsing DAPM routing\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	dai_node = of_parse_phandle(node, "ti,mcpdm", 0);
-	अगर (!dai_node) अणु
+	if (!dai_node) {
 		dev_err(&pdev->dev, "McPDM node is not provided\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	priv->dai_links[0].name = "DMIC";
 	priv->dai_links[0].stream_name = "TWL6040";
 	priv->dai_links[0].cpus = link0_cpus;
 	priv->dai_links[0].num_cpus = 1;
 	priv->dai_links[0].cpus->of_node = dai_node;
-	priv->dai_links[0].platक्रमms = link0_platक्रमms;
-	priv->dai_links[0].num_platक्रमms = 1;
-	priv->dai_links[0].platक्रमms->of_node = dai_node;
+	priv->dai_links[0].platforms = link0_platforms;
+	priv->dai_links[0].num_platforms = 1;
+	priv->dai_links[0].platforms->of_node = dai_node;
 	priv->dai_links[0].codecs = link0_codecs;
 	priv->dai_links[0].num_codecs = 1;
 	priv->dai_links[0].init = omap_abe_twl6040_init;
 	priv->dai_links[0].ops = &omap_abe_ops;
 
 	dai_node = of_parse_phandle(node, "ti,dmic", 0);
-	अगर (dai_node) अणु
+	if (dai_node) {
 		num_links = 2;
 		priv->dai_links[1].name = "TWL6040";
 		priv->dai_links[1].stream_name = "DMIC Capture";
 		priv->dai_links[1].cpus = link1_cpus;
 		priv->dai_links[1].num_cpus = 1;
 		priv->dai_links[1].cpus->of_node = dai_node;
-		priv->dai_links[1].platक्रमms = link1_platक्रमms;
-		priv->dai_links[1].num_platक्रमms = 1;
-		priv->dai_links[1].platक्रमms->of_node = dai_node;
+		priv->dai_links[1].platforms = link1_platforms;
+		priv->dai_links[1].num_platforms = 1;
+		priv->dai_links[1].platforms->of_node = dai_node;
 		priv->dai_links[1].codecs = link1_codecs;
 		priv->dai_links[1].num_codecs = 1;
 		priv->dai_links[1].init = omap_abe_dmic_init;
 		priv->dai_links[1].ops = &omap_abe_dmic_ops;
-	पूर्ण अन्यथा अणु
+	} else {
 		num_links = 1;
-	पूर्ण
+	}
 
-	priv->jack_detection = of_property_पढ़ो_bool(node, "ti,jack-detection");
-	of_property_पढ़ो_u32(node, "ti,mclk-freq", &priv->mclk_freq);
-	अगर (!priv->mclk_freq) अणु
+	priv->jack_detection = of_property_read_bool(node, "ti,jack-detection");
+	of_property_read_u32(node, "ti,mclk-freq", &priv->mclk_freq);
+	if (!priv->mclk_freq) {
 		dev_err(&pdev->dev, "MCLK frequency not provided\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	card->fully_routed = 1;
 
-	अगर (!priv->mclk_freq) अणु
+	if (!priv->mclk_freq) {
 		dev_err(&pdev->dev, "MCLK frequency missing\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	card->dai_link = priv->dai_links;
 	card->num_links = num_links;
 
 	snd_soc_card_set_drvdata(card, priv);
 
-	ret = devm_snd_soc_रेजिस्टर_card(&pdev->dev, card);
-	अगर (ret)
+	ret = devm_snd_soc_register_card(&pdev->dev, card);
+	if (ret)
 		dev_err(&pdev->dev, "devm_snd_soc_register_card() failed: %d\n",
 			ret);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा of_device_id omap_abe_of_match[] = अणु
-	अणु.compatible = "ti,abe-twl6040", पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+static const struct of_device_id omap_abe_of_match[] = {
+	{.compatible = "ti,abe-twl6040", },
+	{ },
+};
 MODULE_DEVICE_TABLE(of, omap_abe_of_match);
 
-अटल काष्ठा platक्रमm_driver omap_abe_driver = अणु
-	.driver = अणु
+static struct platform_driver omap_abe_driver = {
+	.driver = {
 		.name = "omap-abe-twl6040",
 		.pm = &snd_soc_pm_ops,
 		.of_match_table = omap_abe_of_match,
-	पूर्ण,
+	},
 	.probe = omap_abe_probe,
-पूर्ण;
+};
 
-अटल पूर्णांक __init omap_abe_init(व्योम)
-अणु
-	पूर्णांक ret;
+static int __init omap_abe_init(void)
+{
+	int ret;
 
-	dmic_codec_dev = platक्रमm_device_रेजिस्टर_simple("dmic-codec", -1, शून्य,
+	dmic_codec_dev = platform_device_register_simple("dmic-codec", -1, NULL,
 							 0);
-	अगर (IS_ERR(dmic_codec_dev)) अणु
+	if (IS_ERR(dmic_codec_dev)) {
 		pr_err("%s: dmic-codec device registration failed\n", __func__);
-		वापस PTR_ERR(dmic_codec_dev);
-	पूर्ण
+		return PTR_ERR(dmic_codec_dev);
+	}
 
-	ret = platक्रमm_driver_रेजिस्टर(&omap_abe_driver);
-	अगर (ret) अणु
+	ret = platform_driver_register(&omap_abe_driver);
+	if (ret) {
 		pr_err("%s: platform driver registration failed\n", __func__);
-		platक्रमm_device_unरेजिस्टर(dmic_codec_dev);
-	पूर्ण
+		platform_device_unregister(dmic_codec_dev);
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 module_init(omap_abe_init);
 
-अटल व्योम __निकास omap_abe_निकास(व्योम)
-अणु
-	platक्रमm_driver_unरेजिस्टर(&omap_abe_driver);
-	platक्रमm_device_unरेजिस्टर(dmic_codec_dev);
-पूर्ण
-module_निकास(omap_abe_निकास);
+static void __exit omap_abe_exit(void)
+{
+	platform_driver_unregister(&omap_abe_driver);
+	platform_device_unregister(dmic_codec_dev);
+}
+module_exit(omap_abe_exit);
 
 MODULE_AUTHOR("Misael Lopez Cruz <misael.lopez@ti.com>");
 MODULE_DESCRIPTION("ALSA SoC for OMAP boards with ABE and twl6040 codec");

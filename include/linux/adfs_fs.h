@@ -1,25 +1,24 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _ADFS_FS_H
-#घोषणा _ADFS_FS_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _ADFS_FS_H
+#define _ADFS_FS_H
 
-#समावेश <uapi/linux/adfs_fs.h>
+#include <uapi/linux/adfs_fs.h>
 
 /*
  * Calculate the boot block checksum on an ADFS drive.  Note that this will
- * appear to be correct अगर the sector contains all zeros, so also check that
+ * appear to be correct if the sector contains all zeros, so also check that
  * the disk size is non-zero!!!
  */
-अटल अंतरभूत पूर्णांक adfs_checkbblk(अचिन्हित अक्षर *ptr)
-अणु
-	अचिन्हित पूर्णांक result = 0;
-	अचिन्हित अक्षर *p = ptr + 511;
+static inline int adfs_checkbblk(unsigned char *ptr)
+{
+	unsigned int result = 0;
+	unsigned char *p = ptr + 511;
 
-	करो अणु
+	do {
 	        result = (result & 0xff) + (result >> 8);
         	result = result + *--p;
-	पूर्ण जबतक (p != ptr);
+	} while (p != ptr);
 
-	वापस (result & 0xff) != ptr[511];
-पूर्ण
-#पूर्ण_अगर
+	return (result & 0xff) != ptr[511];
+}
+#endif

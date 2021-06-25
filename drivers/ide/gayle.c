@@ -1,189 +1,188 @@
-<शैली गुरु>
 /*
  *  Amiga Gayle IDE Driver
  *
  *     Created 9 Jul 1997 by Geert Uytterhoeven
  *
  *  This file is subject to the terms and conditions of the GNU General Public
- *  License.  See the file COPYING in the मुख्य directory of this archive क्रम
+ *  License.  See the file COPYING in the main directory of this archive for
  *  more details.
  */
 
-#समावेश <linux/types.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/blkdev.h>
-#समावेश <linux/ide.h>
-#समावेश <linux/init.h>
-#समावेश <linux/zorro.h>
-#समावेश <linux/module.h>
-#समावेश <linux/platक्रमm_device.h>
+#include <linux/types.h>
+#include <linux/mm.h>
+#include <linux/interrupt.h>
+#include <linux/blkdev.h>
+#include <linux/ide.h>
+#include <linux/init.h>
+#include <linux/zorro.h>
+#include <linux/module.h>
+#include <linux/platform_device.h>
 
-#समावेश <यंत्र/setup.h>
-#समावेश <यंत्र/amigahw.h>
-#समावेश <यंत्र/amigaपूर्णांकs.h>
-#समावेश <यंत्र/amigayle.h>
+#include <asm/setup.h>
+#include <asm/amigahw.h>
+#include <asm/amigaints.h>
+#include <asm/amigayle.h>
 
 
     /*
      *  Offsets from one of the above bases
      */
 
-#घोषणा GAYLE_CONTROL	0x101a
+#define GAYLE_CONTROL	0x101a
 
     /*
-     *  These are at dअगरferent offsets from the base
+     *  These are at different offsets from the base
      */
 
-#घोषणा GAYLE_IRQ_4000	0xdd3020	/* MSB = 1, Harddisk is source of */
-#घोषणा GAYLE_IRQ_1200	0xda9000	/* पूर्णांकerrupt */
+#define GAYLE_IRQ_4000	0xdd3020	/* MSB = 1, Harddisk is source of */
+#define GAYLE_IRQ_1200	0xda9000	/* interrupt */
 
 
     /*
-     *  Offset of the secondary port क्रम IDE द्विगुनrs
+     *  Offset of the secondary port for IDE doublers
      *  Note that GAYLE_CONTROL is NOT available then!
      */
 
-#घोषणा GAYLE_NEXT_PORT	0x1000
+#define GAYLE_NEXT_PORT	0x1000
 
-#घोषणा GAYLE_NUM_HWIFS		2
-#घोषणा GAYLE_NUM_PROBE_HWIFS	(ide_द्विगुनr ? GAYLE_NUM_HWIFS : \
+#define GAYLE_NUM_HWIFS		2
+#define GAYLE_NUM_PROBE_HWIFS	(ide_doubler ? GAYLE_NUM_HWIFS : \
 					       GAYLE_NUM_HWIFS-1)
-#घोषणा GAYLE_HAS_CONTROL_REG	(!ide_द्विगुनr)
+#define GAYLE_HAS_CONTROL_REG	(!ide_doubler)
 
-अटल bool ide_द्विगुनr;
-module_param_named(द्विगुनr, ide_द्विगुनr, bool, 0);
-MODULE_PARM_DESC(द्विगुनr, "enable support for IDE doublers");
+static bool ide_doubler;
+module_param_named(doubler, ide_doubler, bool, 0);
+MODULE_PARM_DESC(doubler, "enable support for IDE doublers");
 
     /*
-     *  Check and acknowledge the पूर्णांकerrupt status
+     *  Check and acknowledge the interrupt status
      */
 
-अटल पूर्णांक gayle_test_irq(ide_hwअगर_t *hwअगर)
-अणु
-	अचिन्हित अक्षर ch;
+static int gayle_test_irq(ide_hwif_t *hwif)
+{
+	unsigned char ch;
 
-	ch = z_पढ़ोb(hwअगर->io_ports.irq_addr);
-	अगर (!(ch & GAYLE_IRQ_IDE))
-		वापस 0;
-	वापस 1;
-पूर्ण
+	ch = z_readb(hwif->io_ports.irq_addr);
+	if (!(ch & GAYLE_IRQ_IDE))
+		return 0;
+	return 1;
+}
 
-अटल व्योम gayle_a1200_clear_irq(ide_drive_t *drive)
-अणु
-	ide_hwअगर_t *hwअगर = drive->hwअगर;
+static void gayle_a1200_clear_irq(ide_drive_t *drive)
+{
+	ide_hwif_t *hwif = drive->hwif;
 
-	(व्योम)z_पढ़ोb(hwअगर->io_ports.status_addr);
-	z_ग_लिखोb(0x7c, hwअगर->io_ports.irq_addr);
-पूर्ण
+	(void)z_readb(hwif->io_ports.status_addr);
+	z_writeb(0x7c, hwif->io_ports.irq_addr);
+}
 
-अटल व्योम __init gayle_setup_ports(काष्ठा ide_hw *hw, अचिन्हित दीर्घ base,
-				     अचिन्हित दीर्घ ctl, अचिन्हित दीर्घ irq_port)
-अणु
-	पूर्णांक i;
+static void __init gayle_setup_ports(struct ide_hw *hw, unsigned long base,
+				     unsigned long ctl, unsigned long irq_port)
+{
+	int i;
 
-	स_रखो(hw, 0, माप(*hw));
+	memset(hw, 0, sizeof(*hw));
 
 	hw->io_ports.data_addr = base;
 
-	क्रम (i = 1; i < 8; i++)
+	for (i = 1; i < 8; i++)
 		hw->io_ports_array[i] = base + 2 + i * 4;
 
 	hw->io_ports.ctl_addr = ctl;
 	hw->io_ports.irq_addr = irq_port;
 
 	hw->irq = IRQ_AMIGA_PORTS;
-पूर्ण
+}
 
-अटल स्थिर काष्ठा ide_port_ops gayle_a4000_port_ops = अणु
+static const struct ide_port_ops gayle_a4000_port_ops = {
 	.test_irq		= gayle_test_irq,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा ide_port_ops gayle_a1200_port_ops = अणु
+static const struct ide_port_ops gayle_a1200_port_ops = {
 	.clear_irq		= gayle_a1200_clear_irq,
 	.test_irq		= gayle_test_irq,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा ide_port_info gayle_port_info = अणु
+static const struct ide_port_info gayle_port_info = {
 	.host_flags		= IDE_HFLAG_MMIO | IDE_HFLAG_SERIALIZE |
 				  IDE_HFLAG_NO_DMA,
 	.irq_flags		= IRQF_SHARED,
 	.chipset		= ide_generic,
-पूर्ण;
+};
 
     /*
-     *  Probe क्रम a Gayle IDE पूर्णांकerface (and optionally क्रम an IDE द्विगुनr)
+     *  Probe for a Gayle IDE interface (and optionally for an IDE doubler)
      */
 
-अटल पूर्णांक __init amiga_gayle_ide_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा resource *res;
-	काष्ठा gayle_ide_platक्रमm_data *pdata;
-	अचिन्हित दीर्घ base, ctrlport, irqport;
-	अचिन्हित पूर्णांक i;
-	पूर्णांक error;
-	काष्ठा ide_hw hw[GAYLE_NUM_HWIFS], *hws[GAYLE_NUM_HWIFS];
-	काष्ठा ide_port_info d = gayle_port_info;
-	काष्ठा ide_host *host;
+static int __init amiga_gayle_ide_probe(struct platform_device *pdev)
+{
+	struct resource *res;
+	struct gayle_ide_platform_data *pdata;
+	unsigned long base, ctrlport, irqport;
+	unsigned int i;
+	int error;
+	struct ide_hw hw[GAYLE_NUM_HWIFS], *hws[GAYLE_NUM_HWIFS];
+	struct ide_port_info d = gayle_port_info;
+	struct ide_host *host;
 
-	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
-	अगर (!res)
-		वापस -ENODEV;
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	if (!res)
+		return -ENODEV;
 
-	अगर (!request_mem_region(res->start, resource_size(res), "IDE"))
-		वापस -EBUSY;
+	if (!request_mem_region(res->start, resource_size(res), "IDE"))
+		return -EBUSY;
 
 	pdata = dev_get_platdata(&pdev->dev);
 	pr_info("ide: Gayle IDE controller (A%u style%s)\n",
 		pdata->explicit_ack ? 1200 : 4000,
-		ide_द्विगुनr ? ", IDE doubler" : "");
+		ide_doubler ? ", IDE doubler" : "");
 
-	base = (अचिन्हित दीर्घ)ZTWO_VADDR(pdata->base);
+	base = (unsigned long)ZTWO_VADDR(pdata->base);
 	ctrlport = 0;
-	irqport = (अचिन्हित दीर्घ)ZTWO_VADDR(pdata->irqport);
-	अगर (pdata->explicit_ack)
+	irqport = (unsigned long)ZTWO_VADDR(pdata->irqport);
+	if (pdata->explicit_ack)
 		d.port_ops = &gayle_a1200_port_ops;
-	अन्यथा
+	else
 		d.port_ops = &gayle_a4000_port_ops;
 
-	क्रम (i = 0; i < GAYLE_NUM_PROBE_HWIFS; i++, base += GAYLE_NEXT_PORT) अणु
-		अगर (GAYLE_HAS_CONTROL_REG)
+	for (i = 0; i < GAYLE_NUM_PROBE_HWIFS; i++, base += GAYLE_NEXT_PORT) {
+		if (GAYLE_HAS_CONTROL_REG)
 			ctrlport = base + GAYLE_CONTROL;
 
 		gayle_setup_ports(&hw[i], base, ctrlport, irqport);
 		hws[i] = &hw[i];
-	पूर्ण
+	}
 
 	error = ide_host_add(&d, hws, i, &host);
-	अगर (error)
-		जाओ out;
+	if (error)
+		goto out;
 
-	platक्रमm_set_drvdata(pdev, host);
-	वापस 0;
+	platform_set_drvdata(pdev, host);
+	return 0;
 
 out:
 	release_mem_region(res->start, resource_size(res));
-	वापस error;
-पूर्ण
+	return error;
+}
 
-अटल पूर्णांक __निकास amiga_gayle_ide_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा ide_host *host = platक्रमm_get_drvdata(pdev);
-	काष्ठा resource *res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+static int __exit amiga_gayle_ide_remove(struct platform_device *pdev)
+{
+	struct ide_host *host = platform_get_drvdata(pdev);
+	struct resource *res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 
-	ide_host_हटाओ(host);
+	ide_host_remove(host);
 	release_mem_region(res->start, resource_size(res));
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver amiga_gayle_ide_driver = अणु
-	.हटाओ = __निकास_p(amiga_gayle_ide_हटाओ),
-	.driver   = अणु
+static struct platform_driver amiga_gayle_ide_driver = {
+	.remove = __exit_p(amiga_gayle_ide_remove),
+	.driver   = {
 		.name	= "amiga-gayle-ide",
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver_probe(amiga_gayle_ide_driver, amiga_gayle_ide_probe);
+module_platform_driver_probe(amiga_gayle_ide_driver, amiga_gayle_ide_probe);
 
 MODULE_LICENSE("GPL");
 MODULE_ALIAS("platform:amiga-gayle-ide");

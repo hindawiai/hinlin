@@ -1,21 +1,20 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * linux/include/यंत्र/समयx.h
+ * linux/include/asm/timex.h
  *
- * sparc64 architecture समयx specअगरications
+ * sparc64 architecture timex specifications
  */
-#अगर_अघोषित _ASMsparc64_TIMEX_H
-#घोषणा _ASMsparc64_TIMEX_H
+#ifndef _ASMsparc64_TIMEX_H
+#define _ASMsparc64_TIMEX_H
 
-#समावेश <यंत्र/समयr.h>
+#include <asm/timer.h>
 
-#घोषणा CLOCK_TICK_RATE	1193180 /* Underlying HZ */
+#define CLOCK_TICK_RATE	1193180 /* Underlying HZ */
 
 /* Getting on the cycle counter on sparc64. */
-प्रकार अचिन्हित दीर्घ cycles_t;
-#घोषणा get_cycles()	tick_ops->get_tick()
+typedef unsigned long cycles_t;
+#define get_cycles()	tick_ops->get_tick()
 
-#घोषणा ARCH_HAS_READ_CURRENT_TIMER
+#define ARCH_HAS_READ_CURRENT_TIMER
 
-#पूर्ण_अगर
+#endif

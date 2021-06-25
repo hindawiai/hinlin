@@ -1,261 +1,260 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Intel(R) Trace Hub Software Trace Hub support
  *
  * Copyright (C) 2014-2015 Intel Corporation.
  */
 
-#घोषणा pr_fmt(fmt)	KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt)	KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/types.h>
-#समावेश <linux/module.h>
-#समावेश <linux/device.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/mm.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/sपंचांग.h>
+#include <linux/types.h>
+#include <linux/module.h>
+#include <linux/device.h>
+#include <linux/io.h>
+#include <linux/mm.h>
+#include <linux/slab.h>
+#include <linux/stm.h>
 
-#समावेश "intel_th.h"
-#समावेश "sth.h"
+#include "intel_th.h"
+#include "sth.h"
 
-काष्ठा sth_device अणु
-	व्योम __iomem	*base;
-	व्योम __iomem	*channels;
+struct sth_device {
+	void __iomem	*base;
+	void __iomem	*channels;
 	phys_addr_t	channels_phys;
-	काष्ठा device	*dev;
-	काष्ठा sपंचांग_data	sपंचांग;
-	अचिन्हित पूर्णांक	sw_nmasters;
-पूर्ण;
+	struct device	*dev;
+	struct stm_data	stm;
+	unsigned int	sw_nmasters;
+};
 
-अटल काष्ठा पूर्णांकel_th_channel __iomem *
-sth_channel(काष्ठा sth_device *sth, अचिन्हित पूर्णांक master, अचिन्हित पूर्णांक channel)
-अणु
-	काष्ठा पूर्णांकel_th_channel __iomem *sw_map = sth->channels;
+static struct intel_th_channel __iomem *
+sth_channel(struct sth_device *sth, unsigned int master, unsigned int channel)
+{
+	struct intel_th_channel __iomem *sw_map = sth->channels;
 
-	वापस &sw_map[(master - sth->sपंचांग.sw_start) * sth->sपंचांग.sw_nchannels +
+	return &sw_map[(master - sth->stm.sw_start) * sth->stm.sw_nchannels +
 		       channel];
-पूर्ण
+}
 
-अटल व्योम sth_ioग_लिखो(व्योम __iomem *dest, स्थिर अचिन्हित अक्षर *payload,
-			अचिन्हित पूर्णांक size)
-अणु
-	चयन (size) अणु
-#अगर_घोषित CONFIG_64BIT
-	हाल 8:
-		ग_लिखोq_relaxed(*(u64 *)payload, dest);
-		अवरोध;
-#पूर्ण_अगर
-	हाल 4:
-		ग_लिखोl_relaxed(*(u32 *)payload, dest);
-		अवरोध;
-	हाल 2:
-		ग_लिखोw_relaxed(*(u16 *)payload, dest);
-		अवरोध;
-	हाल 1:
-		ग_लिखोb_relaxed(*(u8 *)payload, dest);
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-पूर्ण
+static void sth_iowrite(void __iomem *dest, const unsigned char *payload,
+			unsigned int size)
+{
+	switch (size) {
+#ifdef CONFIG_64BIT
+	case 8:
+		writeq_relaxed(*(u64 *)payload, dest);
+		break;
+#endif
+	case 4:
+		writel_relaxed(*(u32 *)payload, dest);
+		break;
+	case 2:
+		writew_relaxed(*(u16 *)payload, dest);
+		break;
+	case 1:
+		writeb_relaxed(*(u8 *)payload, dest);
+		break;
+	default:
+		break;
+	}
+}
 
-अटल sमाप_प्रकार notrace sth_sपंचांग_packet(काष्ठा sपंचांग_data *sपंचांग_data,
-				      अचिन्हित पूर्णांक master,
-				      अचिन्हित पूर्णांक channel,
-				      अचिन्हित पूर्णांक packet,
-				      अचिन्हित पूर्णांक flags,
-				      अचिन्हित पूर्णांक size,
-				      स्थिर अचिन्हित अक्षर *payload)
-अणु
-	काष्ठा sth_device *sth = container_of(sपंचांग_data, काष्ठा sth_device, sपंचांग);
-	काष्ठा पूर्णांकel_th_channel __iomem *out =
+static ssize_t notrace sth_stm_packet(struct stm_data *stm_data,
+				      unsigned int master,
+				      unsigned int channel,
+				      unsigned int packet,
+				      unsigned int flags,
+				      unsigned int size,
+				      const unsigned char *payload)
+{
+	struct sth_device *sth = container_of(stm_data, struct sth_device, stm);
+	struct intel_th_channel __iomem *out =
 		sth_channel(sth, master, channel);
 	u64 __iomem *outp = &out->Dn;
-	अचिन्हित दीर्घ reg = REG_STH_TRIG;
+	unsigned long reg = REG_STH_TRIG;
 
-#अगर_अघोषित CONFIG_64BIT
-	अगर (size > 4)
+#ifndef CONFIG_64BIT
+	if (size > 4)
 		size = 4;
-#पूर्ण_अगर
+#endif
 
-	size = roundकरोwn_घात_of_two(size);
+	size = rounddown_pow_of_two(size);
 
-	चयन (packet) अणु
-	/* Global packets (GERR, XSYNC, TRIG) are sent with रेजिस्टर ग_लिखोs */
-	हाल STP_PACKET_GERR:
+	switch (packet) {
+	/* Global packets (GERR, XSYNC, TRIG) are sent with register writes */
+	case STP_PACKET_GERR:
 		reg += 4;
 		fallthrough;
 
-	हाल STP_PACKET_XSYNC:
+	case STP_PACKET_XSYNC:
 		reg += 8;
 		fallthrough;
 
-	हाल STP_PACKET_TRIG:
-		अगर (flags & STP_PACKET_TIMESTAMPED)
+	case STP_PACKET_TRIG:
+		if (flags & STP_PACKET_TIMESTAMPED)
 			reg += 4;
-		ग_लिखोb_relaxed(*payload, sth->base + reg);
-		अवरोध;
+		writeb_relaxed(*payload, sth->base + reg);
+		break;
 
-	हाल STP_PACKET_MERR:
-		अगर (size > 4)
+	case STP_PACKET_MERR:
+		if (size > 4)
 			size = 4;
 
-		sth_ioग_लिखो(&out->MERR, payload, size);
-		अवरोध;
+		sth_iowrite(&out->MERR, payload, size);
+		break;
 
-	हाल STP_PACKET_FLAG:
-		अगर (flags & STP_PACKET_TIMESTAMPED)
+	case STP_PACKET_FLAG:
+		if (flags & STP_PACKET_TIMESTAMPED)
 			outp = (u64 __iomem *)&out->FLAG_TS;
-		अन्यथा
+		else
 			outp = (u64 __iomem *)&out->FLAG;
 
 		size = 0;
-		ग_लिखोb_relaxed(0, outp);
-		अवरोध;
+		writeb_relaxed(0, outp);
+		break;
 
-	हाल STP_PACKET_USER:
-		अगर (flags & STP_PACKET_TIMESTAMPED)
+	case STP_PACKET_USER:
+		if (flags & STP_PACKET_TIMESTAMPED)
 			outp = &out->USER_TS;
-		अन्यथा
+		else
 			outp = &out->USER;
-		sth_ioग_लिखो(outp, payload, size);
-		अवरोध;
+		sth_iowrite(outp, payload, size);
+		break;
 
-	हाल STP_PACKET_DATA:
+	case STP_PACKET_DATA:
 		outp = &out->Dn;
 
-		अगर (flags & STP_PACKET_TIMESTAMPED)
+		if (flags & STP_PACKET_TIMESTAMPED)
 			outp += 2;
-		अगर (flags & STP_PACKET_MARKED)
+		if (flags & STP_PACKET_MARKED)
 			outp++;
 
-		sth_ioग_लिखो(outp, payload, size);
-		अवरोध;
-	शेष:
-		वापस -ENOTSUPP;
-	पूर्ण
+		sth_iowrite(outp, payload, size);
+		break;
+	default:
+		return -ENOTSUPP;
+	}
 
-	वापस size;
-पूर्ण
+	return size;
+}
 
-अटल phys_addr_t
-sth_sपंचांग_mmio_addr(काष्ठा sपंचांग_data *sपंचांग_data, अचिन्हित पूर्णांक master,
-		  अचिन्हित पूर्णांक channel, अचिन्हित पूर्णांक nr_chans)
-अणु
-	काष्ठा sth_device *sth = container_of(sपंचांग_data, काष्ठा sth_device, sपंचांग);
+static phys_addr_t
+sth_stm_mmio_addr(struct stm_data *stm_data, unsigned int master,
+		  unsigned int channel, unsigned int nr_chans)
+{
+	struct sth_device *sth = container_of(stm_data, struct sth_device, stm);
 	phys_addr_t addr;
 
-	master -= sth->sपंचांग.sw_start;
-	addr = sth->channels_phys + (master * sth->sपंचांग.sw_nchannels + channel) *
-		माप(काष्ठा पूर्णांकel_th_channel);
+	master -= sth->stm.sw_start;
+	addr = sth->channels_phys + (master * sth->stm.sw_nchannels + channel) *
+		sizeof(struct intel_th_channel);
 
-	अगर (offset_in_page(addr) ||
-	    offset_in_page(nr_chans * माप(काष्ठा पूर्णांकel_th_channel)))
-		वापस 0;
+	if (offset_in_page(addr) ||
+	    offset_in_page(nr_chans * sizeof(struct intel_th_channel)))
+		return 0;
 
-	वापस addr;
-पूर्ण
+	return addr;
+}
 
-अटल पूर्णांक sth_sपंचांग_link(काष्ठा sपंचांग_data *sपंचांग_data, अचिन्हित पूर्णांक master,
-			 अचिन्हित पूर्णांक channel)
-अणु
-	काष्ठा sth_device *sth = container_of(sपंचांग_data, काष्ठा sth_device, sपंचांग);
+static int sth_stm_link(struct stm_data *stm_data, unsigned int master,
+			 unsigned int channel)
+{
+	struct sth_device *sth = container_of(stm_data, struct sth_device, stm);
 
-	वापस पूर्णांकel_th_set_output(to_पूर्णांकel_th_device(sth->dev), master);
-पूर्ण
+	return intel_th_set_output(to_intel_th_device(sth->dev), master);
+}
 
-अटल पूर्णांक पूर्णांकel_th_sw_init(काष्ठा sth_device *sth)
-अणु
+static int intel_th_sw_init(struct sth_device *sth)
+{
 	u32 reg;
 
-	reg = ioपढ़ो32(sth->base + REG_STH_STHCAP1);
-	sth->sपंचांग.sw_nchannels = reg & 0xff;
+	reg = ioread32(sth->base + REG_STH_STHCAP1);
+	sth->stm.sw_nchannels = reg & 0xff;
 
-	reg = ioपढ़ो32(sth->base + REG_STH_STHCAP0);
-	sth->sपंचांग.sw_start = reg & 0xffff;
-	sth->sपंचांग.sw_end = reg >> 16;
+	reg = ioread32(sth->base + REG_STH_STHCAP0);
+	sth->stm.sw_start = reg & 0xffff;
+	sth->stm.sw_end = reg >> 16;
 
-	sth->sw_nmasters = sth->sपंचांग.sw_end - sth->sपंचांग.sw_start;
+	sth->sw_nmasters = sth->stm.sw_end - sth->stm.sw_start;
 	dev_dbg(sth->dev, "sw_start: %x sw_end: %x masters: %x nchannels: %x\n",
-		sth->sपंचांग.sw_start, sth->sपंचांग.sw_end, sth->sw_nmasters,
-		sth->sपंचांग.sw_nchannels);
+		sth->stm.sw_start, sth->stm.sw_end, sth->sw_nmasters,
+		sth->stm.sw_nchannels);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक पूर्णांकel_th_sth_probe(काष्ठा पूर्णांकel_th_device *thdev)
-अणु
-	काष्ठा device *dev = &thdev->dev;
-	काष्ठा sth_device *sth;
-	काष्ठा resource *res;
-	व्योम __iomem *base, *channels;
-	पूर्णांक err;
+static int intel_th_sth_probe(struct intel_th_device *thdev)
+{
+	struct device *dev = &thdev->dev;
+	struct sth_device *sth;
+	struct resource *res;
+	void __iomem *base, *channels;
+	int err;
 
-	res = पूर्णांकel_th_device_get_resource(thdev, IORESOURCE_MEM, 0);
-	अगर (!res)
-		वापस -ENODEV;
+	res = intel_th_device_get_resource(thdev, IORESOURCE_MEM, 0);
+	if (!res)
+		return -ENODEV;
 
 	base = devm_ioremap(dev, res->start, resource_size(res));
-	अगर (!base)
-		वापस -ENOMEM;
+	if (!base)
+		return -ENOMEM;
 
-	res = पूर्णांकel_th_device_get_resource(thdev, IORESOURCE_MEM, 1);
-	अगर (!res)
-		वापस -ENODEV;
+	res = intel_th_device_get_resource(thdev, IORESOURCE_MEM, 1);
+	if (!res)
+		return -ENODEV;
 
 	channels = devm_ioremap(dev, res->start, resource_size(res));
-	अगर (!channels)
-		वापस -ENOMEM;
+	if (!channels)
+		return -ENOMEM;
 
-	sth = devm_kzalloc(dev, माप(*sth), GFP_KERNEL);
-	अगर (!sth)
-		वापस -ENOMEM;
+	sth = devm_kzalloc(dev, sizeof(*sth), GFP_KERNEL);
+	if (!sth)
+		return -ENOMEM;
 
 	sth->dev = dev;
 	sth->base = base;
 	sth->channels = channels;
 	sth->channels_phys = res->start;
-	sth->sपंचांग.name = dev_name(dev);
-	sth->sपंचांग.packet = sth_sपंचांग_packet;
-	sth->sपंचांग.mmio_addr = sth_sपंचांग_mmio_addr;
-	sth->sपंचांग.sw_mmiosz = माप(काष्ठा पूर्णांकel_th_channel);
-	sth->sपंचांग.link = sth_sपंचांग_link;
+	sth->stm.name = dev_name(dev);
+	sth->stm.packet = sth_stm_packet;
+	sth->stm.mmio_addr = sth_stm_mmio_addr;
+	sth->stm.sw_mmiosz = sizeof(struct intel_th_channel);
+	sth->stm.link = sth_stm_link;
 
-	err = पूर्णांकel_th_sw_init(sth);
-	अगर (err)
-		वापस err;
+	err = intel_th_sw_init(sth);
+	if (err)
+		return err;
 
-	err = sपंचांग_रेजिस्टर_device(dev, &sth->sपंचांग, THIS_MODULE);
-	अगर (err) अणु
+	err = stm_register_device(dev, &sth->stm, THIS_MODULE);
+	if (err) {
 		dev_err(dev, "stm_register_device failed\n");
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	dev_set_drvdata(dev, sth);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम पूर्णांकel_th_sth_हटाओ(काष्ठा पूर्णांकel_th_device *thdev)
-अणु
-	काष्ठा sth_device *sth = dev_get_drvdata(&thdev->dev);
+static void intel_th_sth_remove(struct intel_th_device *thdev)
+{
+	struct sth_device *sth = dev_get_drvdata(&thdev->dev);
 
-	sपंचांग_unरेजिस्टर_device(&sth->sपंचांग);
-पूर्ण
+	stm_unregister_device(&sth->stm);
+}
 
-अटल काष्ठा पूर्णांकel_th_driver पूर्णांकel_th_sth_driver = अणु
-	.probe	= पूर्णांकel_th_sth_probe,
-	.हटाओ	= पूर्णांकel_th_sth_हटाओ,
-	.driver	= अणु
+static struct intel_th_driver intel_th_sth_driver = {
+	.probe	= intel_th_sth_probe,
+	.remove	= intel_th_sth_remove,
+	.driver	= {
 		.name	= "sth",
 		.owner	= THIS_MODULE,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_driver(पूर्णांकel_th_sth_driver,
-	      पूर्णांकel_th_driver_रेजिस्टर,
-	      पूर्णांकel_th_driver_unरेजिस्टर);
+module_driver(intel_th_sth_driver,
+	      intel_th_driver_register,
+	      intel_th_driver_unregister);
 
 MODULE_LICENSE("GPL v2");
 MODULE_DESCRIPTION("Intel(R) Trace Hub Software Trace Hub driver");

@@ -1,359 +1,358 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
- * SPU file प्रणाली
+ * SPU file system
  *
  * (C) Copyright IBM Deutschland Entwicklung GmbH 2005
  *
  * Author: Arnd Bergmann <arndb@de.ibm.com>
  */
-#अगर_अघोषित SPUFS_H
-#घोषणा SPUFS_H
+#ifndef SPUFS_H
+#define SPUFS_H
 
-#समावेश <linux/kref.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/cpumask.h>
-#समावेश <linux/sched/संकेत.स>
+#include <linux/kref.h>
+#include <linux/mutex.h>
+#include <linux/spinlock.h>
+#include <linux/fs.h>
+#include <linux/cpumask.h>
+#include <linux/sched/signal.h>
 
-#समावेश <यंत्र/spu.h>
-#समावेश <यंत्र/spu_csa.h>
-#समावेश <यंत्र/spu_info.h>
+#include <asm/spu.h>
+#include <asm/spu_csa.h>
+#include <asm/spu_info.h>
 
-#घोषणा SPUFS_PS_MAP_SIZE	0x20000
-#घोषणा SPUFS_MFC_MAP_SIZE	0x1000
-#घोषणा SPUFS_CNTL_MAP_SIZE	0x1000
-#घोषणा SPUFS_SIGNAL_MAP_SIZE	PAGE_SIZE
-#घोषणा SPUFS_MSS_MAP_SIZE	0x1000
+#define SPUFS_PS_MAP_SIZE	0x20000
+#define SPUFS_MFC_MAP_SIZE	0x1000
+#define SPUFS_CNTL_MAP_SIZE	0x1000
+#define SPUFS_SIGNAL_MAP_SIZE	PAGE_SIZE
+#define SPUFS_MSS_MAP_SIZE	0x1000
 
-/* The magic number क्रम our file प्रणाली */
-क्रमागत अणु
+/* The magic number for our file system */
+enum {
 	SPUFS_MAGIC = 0x23c9b64e,
-पूर्ण;
+};
 
-काष्ठा spu_context_ops;
-काष्ठा spu_gang;
+struct spu_context_ops;
+struct spu_gang;
 
 /* ctx->sched_flags */
-क्रमागत अणु
+enum {
 	SPU_SCHED_NOTIFY_ACTIVE,
 	SPU_SCHED_WAS_ACTIVE,	/* was active upon spu_acquire_saved()  */
 	SPU_SCHED_SPU_RUN,	/* context is within spu_run */
-पूर्ण;
+};
 
-क्रमागत अणु
-	SWITCH_LOG_बफ_मानE = 4096,
-पूर्ण;
+enum {
+	SWITCH_LOG_BUFSIZE = 4096,
+};
 
-क्रमागत अणु
+enum {
 	SWITCH_LOG_START,
 	SWITCH_LOG_STOP,
 	SWITCH_LOG_EXIT,
-पूर्ण;
+};
 
-काष्ठा चयन_log अणु
-	रुको_queue_head_t	रुको;
-	अचिन्हित दीर्घ		head;
-	अचिन्हित दीर्घ		tail;
-	काष्ठा चयन_log_entry अणु
-		काष्ठा बारpec64 tstamp;
+struct switch_log {
+	wait_queue_head_t	wait;
+	unsigned long		head;
+	unsigned long		tail;
+	struct switch_log_entry {
+		struct timespec64 tstamp;
 		s32		spu_id;
 		u32		type;
 		u32		val;
-		u64		समयbase;
-	पूर्ण log[];
-पूर्ण;
+		u64		timebase;
+	} log[];
+};
 
-काष्ठा spu_context अणु
-	काष्ठा spu *spu;		  /* poपूर्णांकer to a physical SPU */
-	काष्ठा spu_state csa;		  /* SPU context save area. */
+struct spu_context {
+	struct spu *spu;		  /* pointer to a physical SPU */
+	struct spu_state csa;		  /* SPU context save area. */
 	spinlock_t mmio_lock;		  /* protects mmio access */
-	काष्ठा address_space *local_store; /* local store mapping.  */
-	काष्ठा address_space *mfc;	   /* 'mfc' area mappings. */
-	काष्ठा address_space *cntl;	   /* 'control' area mappings. */
-	काष्ठा address_space *संकेत1;	   /* 'signal1' area mappings. */
-	काष्ठा address_space *संकेत2;	   /* 'signal2' area mappings. */
-	काष्ठा address_space *mss;	   /* 'mss' area mappings. */
-	काष्ठा address_space *psmap;	   /* 'psmap' area mappings. */
-	काष्ठा mutex mapping_lock;
-	u64 object_id;		   /* user space poपूर्णांकer क्रम oprofile */
+	struct address_space *local_store; /* local store mapping.  */
+	struct address_space *mfc;	   /* 'mfc' area mappings. */
+	struct address_space *cntl;	   /* 'control' area mappings. */
+	struct address_space *signal1;	   /* 'signal1' area mappings. */
+	struct address_space *signal2;	   /* 'signal2' area mappings. */
+	struct address_space *mss;	   /* 'mss' area mappings. */
+	struct address_space *psmap;	   /* 'psmap' area mappings. */
+	struct mutex mapping_lock;
+	u64 object_id;		   /* user space pointer for oprofile */
 
-	क्रमागत अणु SPU_STATE_RUNNABLE, SPU_STATE_SAVED पूर्ण state;
-	काष्ठा mutex state_mutex;
-	काष्ठा mutex run_mutex;
+	enum { SPU_STATE_RUNNABLE, SPU_STATE_SAVED } state;
+	struct mutex state_mutex;
+	struct mutex run_mutex;
 
-	काष्ठा mm_काष्ठा *owner;
+	struct mm_struct *owner;
 
-	काष्ठा kref kref;
-	रुको_queue_head_t ibox_wq;
-	रुको_queue_head_t wbox_wq;
-	रुको_queue_head_t stop_wq;
-	रुको_queue_head_t mfc_wq;
-	रुको_queue_head_t run_wq;
-	u32 tagरुको;
-	काष्ठा spu_context_ops *ops;
-	काष्ठा work_काष्ठा reap_work;
-	अचिन्हित दीर्घ flags;
-	अचिन्हित दीर्घ event_वापस;
+	struct kref kref;
+	wait_queue_head_t ibox_wq;
+	wait_queue_head_t wbox_wq;
+	wait_queue_head_t stop_wq;
+	wait_queue_head_t mfc_wq;
+	wait_queue_head_t run_wq;
+	u32 tagwait;
+	struct spu_context_ops *ops;
+	struct work_struct reap_work;
+	unsigned long flags;
+	unsigned long event_return;
 
-	काष्ठा list_head gang_list;
-	काष्ठा spu_gang *gang;
-	काष्ठा kref *prof_priv_kref;
-	व्योम ( * prof_priv_release) (काष्ठा kref *kref);
+	struct list_head gang_list;
+	struct spu_gang *gang;
+	struct kref *prof_priv_kref;
+	void ( * prof_priv_release) (struct kref *kref);
 
-	/* owner thपढ़ो */
+	/* owner thread */
 	pid_t tid;
 
 	/* scheduler fields */
-	काष्ठा list_head rq;
-	अचिन्हित पूर्णांक समय_slice;
-	अचिन्हित दीर्घ sched_flags;
+	struct list_head rq;
+	unsigned int time_slice;
+	unsigned long sched_flags;
 	cpumask_t cpus_allowed;
-	पूर्णांक policy;
-	पूर्णांक prio;
-	पूर्णांक last_ran;
+	int policy;
+	int prio;
+	int last_ran;
 
 	/* statistics */
-	काष्ठा अणु
-		/* updates रक्षित by ctx->state_mutex */
-		क्रमागत spu_utilization_state util_state;
-		अचिन्हित दीर्घ दीर्घ tstamp;	/* समय of last state चयन */
-		अचिन्हित दीर्घ दीर्घ बार[SPU_UTIL_MAX];
-		अचिन्हित दीर्घ दीर्घ vol_ctx_चयन;
-		अचिन्हित दीर्घ दीर्घ invol_ctx_चयन;
-		अचिन्हित दीर्घ दीर्घ min_flt;
-		अचिन्हित दीर्घ दीर्घ maj_flt;
-		अचिन्हित दीर्घ दीर्घ hash_flt;
-		अचिन्हित दीर्घ दीर्घ slb_flt;
-		अचिन्हित दीर्घ दीर्घ slb_flt_base; /* # at last ctx चयन */
-		अचिन्हित दीर्घ दीर्घ class2_पूर्णांकr;
-		अचिन्हित दीर्घ दीर्घ class2_पूर्णांकr_base; /* # at last ctx चयन */
-		अचिन्हित दीर्घ दीर्घ libassist;
-	पूर्ण stats;
+	struct {
+		/* updates protected by ctx->state_mutex */
+		enum spu_utilization_state util_state;
+		unsigned long long tstamp;	/* time of last state switch */
+		unsigned long long times[SPU_UTIL_MAX];
+		unsigned long long vol_ctx_switch;
+		unsigned long long invol_ctx_switch;
+		unsigned long long min_flt;
+		unsigned long long maj_flt;
+		unsigned long long hash_flt;
+		unsigned long long slb_flt;
+		unsigned long long slb_flt_base; /* # at last ctx switch */
+		unsigned long long class2_intr;
+		unsigned long long class2_intr_base; /* # at last ctx switch */
+		unsigned long long libassist;
+	} stats;
 
-	/* context चयन log */
-	काष्ठा चयन_log *चयन_log;
+	/* context switch log */
+	struct switch_log *switch_log;
 
-	काष्ठा list_head aff_list;
-	पूर्णांक aff_head;
-	पूर्णांक aff_offset;
-पूर्ण;
+	struct list_head aff_list;
+	int aff_head;
+	int aff_offset;
+};
 
-काष्ठा spu_gang अणु
-	काष्ठा list_head list;
-	काष्ठा mutex mutex;
-	काष्ठा kref kref;
-	पूर्णांक contexts;
+struct spu_gang {
+	struct list_head list;
+	struct mutex mutex;
+	struct kref kref;
+	int contexts;
 
-	काष्ठा spu_context *aff_ref_ctx;
-	काष्ठा list_head aff_list_head;
-	काष्ठा mutex aff_mutex;
-	पूर्णांक aff_flags;
-	काष्ठा spu *aff_ref_spu;
+	struct spu_context *aff_ref_ctx;
+	struct list_head aff_list_head;
+	struct mutex aff_mutex;
+	int aff_flags;
+	struct spu *aff_ref_spu;
 	atomic_t aff_sched_count;
-पूर्ण;
+};
 
-/* Flag bits क्रम spu_gang aff_flags */
-#घोषणा AFF_OFFSETS_SET		1
-#घोषणा AFF_MERGED		2
+/* Flag bits for spu_gang aff_flags */
+#define AFF_OFFSETS_SET		1
+#define AFF_MERGED		2
 
-काष्ठा mfc_dma_command अणु
-	पूर्णांक32_t pad;	/* reserved */
-	uपूर्णांक32_t lsa;	/* local storage address */
-	uपूर्णांक64_t ea;	/* effective address */
-	uपूर्णांक16_t size;	/* transfer size */
-	uपूर्णांक16_t tag;	/* command tag */
-	uपूर्णांक16_t class;	/* class ID */
-	uपूर्णांक16_t cmd;	/* command opcode */
-पूर्ण;
+struct mfc_dma_command {
+	int32_t pad;	/* reserved */
+	uint32_t lsa;	/* local storage address */
+	uint64_t ea;	/* effective address */
+	uint16_t size;	/* transfer size */
+	uint16_t tag;	/* command tag */
+	uint16_t class;	/* class ID */
+	uint16_t cmd;	/* command opcode */
+};
 
 
 /* SPU context query/set operations. */
-काष्ठा spu_context_ops अणु
-	पूर्णांक (*mbox_पढ़ो) (काष्ठा spu_context * ctx, u32 * data);
-	 u32(*mbox_stat_पढ़ो) (काष्ठा spu_context * ctx);
-	__poll_t (*mbox_stat_poll)(काष्ठा spu_context *ctx, __poll_t events);
-	पूर्णांक (*ibox_पढ़ो) (काष्ठा spu_context * ctx, u32 * data);
-	पूर्णांक (*wbox_ग_लिखो) (काष्ठा spu_context * ctx, u32 data);
-	 u32(*संकेत1_पढ़ो) (काष्ठा spu_context * ctx);
-	व्योम (*संकेत1_ग_लिखो) (काष्ठा spu_context * ctx, u32 data);
-	 u32(*संकेत2_पढ़ो) (काष्ठा spu_context * ctx);
-	व्योम (*संकेत2_ग_लिखो) (काष्ठा spu_context * ctx, u32 data);
-	व्योम (*संकेत1_type_set) (काष्ठा spu_context * ctx, u64 val);
-	 u64(*संकेत1_type_get) (काष्ठा spu_context * ctx);
-	व्योम (*संकेत2_type_set) (काष्ठा spu_context * ctx, u64 val);
-	 u64(*संकेत2_type_get) (काष्ठा spu_context * ctx);
-	 u32(*npc_पढ़ो) (काष्ठा spu_context * ctx);
-	व्योम (*npc_ग_लिखो) (काष्ठा spu_context * ctx, u32 data);
-	 u32(*status_पढ़ो) (काष्ठा spu_context * ctx);
-	अक्षर*(*get_ls) (काष्ठा spu_context * ctx);
-	व्योम (*privcntl_ग_लिखो) (काष्ठा spu_context *ctx, u64 data);
-	 u32 (*runcntl_पढ़ो) (काष्ठा spu_context * ctx);
-	व्योम (*runcntl_ग_लिखो) (काष्ठा spu_context * ctx, u32 data);
-	व्योम (*runcntl_stop) (काष्ठा spu_context * ctx);
-	व्योम (*master_start) (काष्ठा spu_context * ctx);
-	व्योम (*master_stop) (काष्ठा spu_context * ctx);
-	पूर्णांक (*set_mfc_query)(काष्ठा spu_context * ctx, u32 mask, u32 mode);
-	u32 (*पढ़ो_mfc_tagstatus)(काष्ठा spu_context * ctx);
-	u32 (*get_mfc_मुक्त_elements)(काष्ठा spu_context *ctx);
-	पूर्णांक (*send_mfc_command)(काष्ठा spu_context * ctx,
-				काष्ठा mfc_dma_command * cmd);
-	व्योम (*dma_info_पढ़ो) (काष्ठा spu_context * ctx,
-			       काष्ठा spu_dma_info * info);
-	व्योम (*proxydma_info_पढ़ो) (काष्ठा spu_context * ctx,
-				    काष्ठा spu_proxydma_info * info);
-	व्योम (*restart_dma)(काष्ठा spu_context *ctx);
-पूर्ण;
+struct spu_context_ops {
+	int (*mbox_read) (struct spu_context * ctx, u32 * data);
+	 u32(*mbox_stat_read) (struct spu_context * ctx);
+	__poll_t (*mbox_stat_poll)(struct spu_context *ctx, __poll_t events);
+	int (*ibox_read) (struct spu_context * ctx, u32 * data);
+	int (*wbox_write) (struct spu_context * ctx, u32 data);
+	 u32(*signal1_read) (struct spu_context * ctx);
+	void (*signal1_write) (struct spu_context * ctx, u32 data);
+	 u32(*signal2_read) (struct spu_context * ctx);
+	void (*signal2_write) (struct spu_context * ctx, u32 data);
+	void (*signal1_type_set) (struct spu_context * ctx, u64 val);
+	 u64(*signal1_type_get) (struct spu_context * ctx);
+	void (*signal2_type_set) (struct spu_context * ctx, u64 val);
+	 u64(*signal2_type_get) (struct spu_context * ctx);
+	 u32(*npc_read) (struct spu_context * ctx);
+	void (*npc_write) (struct spu_context * ctx, u32 data);
+	 u32(*status_read) (struct spu_context * ctx);
+	char*(*get_ls) (struct spu_context * ctx);
+	void (*privcntl_write) (struct spu_context *ctx, u64 data);
+	 u32 (*runcntl_read) (struct spu_context * ctx);
+	void (*runcntl_write) (struct spu_context * ctx, u32 data);
+	void (*runcntl_stop) (struct spu_context * ctx);
+	void (*master_start) (struct spu_context * ctx);
+	void (*master_stop) (struct spu_context * ctx);
+	int (*set_mfc_query)(struct spu_context * ctx, u32 mask, u32 mode);
+	u32 (*read_mfc_tagstatus)(struct spu_context * ctx);
+	u32 (*get_mfc_free_elements)(struct spu_context *ctx);
+	int (*send_mfc_command)(struct spu_context * ctx,
+				struct mfc_dma_command * cmd);
+	void (*dma_info_read) (struct spu_context * ctx,
+			       struct spu_dma_info * info);
+	void (*proxydma_info_read) (struct spu_context * ctx,
+				    struct spu_proxydma_info * info);
+	void (*restart_dma)(struct spu_context *ctx);
+};
 
-बाह्य काष्ठा spu_context_ops spu_hw_ops;
-बाह्य काष्ठा spu_context_ops spu_backing_ops;
+extern struct spu_context_ops spu_hw_ops;
+extern struct spu_context_ops spu_backing_ops;
 
-काष्ठा spufs_inode_info अणु
-	काष्ठा spu_context *i_ctx;
-	काष्ठा spu_gang *i_gang;
-	काष्ठा inode vfs_inode;
-	पूर्णांक i_खोलोers;
-पूर्ण;
-#घोषणा SPUFS_I(inode) \
-	container_of(inode, काष्ठा spufs_inode_info, vfs_inode)
+struct spufs_inode_info {
+	struct spu_context *i_ctx;
+	struct spu_gang *i_gang;
+	struct inode vfs_inode;
+	int i_openers;
+};
+#define SPUFS_I(inode) \
+	container_of(inode, struct spufs_inode_info, vfs_inode)
 
-काष्ठा spufs_tree_descr अणु
-	स्थिर अक्षर *name;
-	स्थिर काष्ठा file_operations *ops;
+struct spufs_tree_descr {
+	const char *name;
+	const struct file_operations *ops;
 	umode_t mode;
-	माप_प्रकार size;
-पूर्ण;
+	size_t size;
+};
 
-बाह्य स्थिर काष्ठा spufs_tree_descr spufs_dir_contents[];
-बाह्य स्थिर काष्ठा spufs_tree_descr spufs_dir_nosched_contents[];
-बाह्य स्थिर काष्ठा spufs_tree_descr spufs_dir_debug_contents[];
+extern const struct spufs_tree_descr spufs_dir_contents[];
+extern const struct spufs_tree_descr spufs_dir_nosched_contents[];
+extern const struct spufs_tree_descr spufs_dir_debug_contents[];
 
-/* प्रणाली call implementation */
-बाह्य काष्ठा spufs_calls spufs_calls;
-काष्ठा coredump_params;
-दीर्घ spufs_run_spu(काष्ठा spu_context *ctx, u32 *npc, u32 *status);
-दीर्घ spufs_create(काष्ठा path *nd, काष्ठा dentry *dentry, अचिन्हित पूर्णांक flags,
-			umode_t mode, काष्ठा file *filp);
-/* ELF coredump callbacks क्रम writing SPU ELF notes */
-बाह्य पूर्णांक spufs_coredump_extra_notes_size(व्योम);
-बाह्य पूर्णांक spufs_coredump_extra_notes_ग_लिखो(काष्ठा coredump_params *cprm);
+/* system call implementation */
+extern struct spufs_calls spufs_calls;
+struct coredump_params;
+long spufs_run_spu(struct spu_context *ctx, u32 *npc, u32 *status);
+long spufs_create(struct path *nd, struct dentry *dentry, unsigned int flags,
+			umode_t mode, struct file *filp);
+/* ELF coredump callbacks for writing SPU ELF notes */
+extern int spufs_coredump_extra_notes_size(void);
+extern int spufs_coredump_extra_notes_write(struct coredump_params *cprm);
 
-बाह्य स्थिर काष्ठा file_operations spufs_context_fops;
+extern const struct file_operations spufs_context_fops;
 
 /* gang management */
-काष्ठा spu_gang *alloc_spu_gang(व्योम);
-काष्ठा spu_gang *get_spu_gang(काष्ठा spu_gang *gang);
-पूर्णांक put_spu_gang(काष्ठा spu_gang *gang);
-व्योम spu_gang_हटाओ_ctx(काष्ठा spu_gang *gang, काष्ठा spu_context *ctx);
-व्योम spu_gang_add_ctx(काष्ठा spu_gang *gang, काष्ठा spu_context *ctx);
+struct spu_gang *alloc_spu_gang(void);
+struct spu_gang *get_spu_gang(struct spu_gang *gang);
+int put_spu_gang(struct spu_gang *gang);
+void spu_gang_remove_ctx(struct spu_gang *gang, struct spu_context *ctx);
+void spu_gang_add_ctx(struct spu_gang *gang, struct spu_context *ctx);
 
 /* fault handling */
-पूर्णांक spufs_handle_class1(काष्ठा spu_context *ctx);
-पूर्णांक spufs_handle_class0(काष्ठा spu_context *ctx);
+int spufs_handle_class1(struct spu_context *ctx);
+int spufs_handle_class0(struct spu_context *ctx);
 
 /* affinity */
-काष्ठा spu *affinity_check(काष्ठा spu_context *ctx);
+struct spu *affinity_check(struct spu_context *ctx);
 
 /* context management */
-बाह्य atomic_t nr_spu_contexts;
-अटल अंतरभूत पूर्णांक __must_check spu_acquire(काष्ठा spu_context *ctx)
-अणु
-	वापस mutex_lock_पूर्णांकerruptible(&ctx->state_mutex);
-पूर्ण
+extern atomic_t nr_spu_contexts;
+static inline int __must_check spu_acquire(struct spu_context *ctx)
+{
+	return mutex_lock_interruptible(&ctx->state_mutex);
+}
 
-अटल अंतरभूत व्योम spu_release(काष्ठा spu_context *ctx)
-अणु
+static inline void spu_release(struct spu_context *ctx)
+{
 	mutex_unlock(&ctx->state_mutex);
-पूर्ण
+}
 
-काष्ठा spu_context * alloc_spu_context(काष्ठा spu_gang *gang);
-व्योम destroy_spu_context(काष्ठा kref *kref);
-काष्ठा spu_context * get_spu_context(काष्ठा spu_context *ctx);
-पूर्णांक put_spu_context(काष्ठा spu_context *ctx);
-व्योम spu_unmap_mappings(काष्ठा spu_context *ctx);
+struct spu_context * alloc_spu_context(struct spu_gang *gang);
+void destroy_spu_context(struct kref *kref);
+struct spu_context * get_spu_context(struct spu_context *ctx);
+int put_spu_context(struct spu_context *ctx);
+void spu_unmap_mappings(struct spu_context *ctx);
 
-व्योम spu_क्रमget(काष्ठा spu_context *ctx);
-पूर्णांक __must_check spu_acquire_saved(काष्ठा spu_context *ctx);
-व्योम spu_release_saved(काष्ठा spu_context *ctx);
+void spu_forget(struct spu_context *ctx);
+int __must_check spu_acquire_saved(struct spu_context *ctx);
+void spu_release_saved(struct spu_context *ctx);
 
-पूर्णांक spu_stopped(काष्ठा spu_context *ctx, u32 * stat);
-व्योम spu_del_from_rq(काष्ठा spu_context *ctx);
-पूर्णांक spu_activate(काष्ठा spu_context *ctx, अचिन्हित दीर्घ flags);
-व्योम spu_deactivate(काष्ठा spu_context *ctx);
-व्योम spu_yield(काष्ठा spu_context *ctx);
-व्योम spu_चयन_log_notअगरy(काष्ठा spu *spu, काष्ठा spu_context *ctx,
+int spu_stopped(struct spu_context *ctx, u32 * stat);
+void spu_del_from_rq(struct spu_context *ctx);
+int spu_activate(struct spu_context *ctx, unsigned long flags);
+void spu_deactivate(struct spu_context *ctx);
+void spu_yield(struct spu_context *ctx);
+void spu_switch_log_notify(struct spu *spu, struct spu_context *ctx,
 		u32 type, u32 val);
-व्योम spu_set_बारlice(काष्ठा spu_context *ctx);
-व्योम spu_update_sched_info(काष्ठा spu_context *ctx);
-व्योम __spu_update_sched_info(काष्ठा spu_context *ctx);
-पूर्णांक __init spu_sched_init(व्योम);
-व्योम spu_sched_निकास(व्योम);
+void spu_set_timeslice(struct spu_context *ctx);
+void spu_update_sched_info(struct spu_context *ctx);
+void __spu_update_sched_info(struct spu_context *ctx);
+int __init spu_sched_init(void);
+void spu_sched_exit(void);
 
-बाह्य अक्षर *isolated_loader;
+extern char *isolated_loader;
 
 /*
- * spufs_रुको
- *	Same as रुको_event_पूर्णांकerruptible(), except that here
- *	we need to call spu_release(ctx) beक्रमe sleeping, and
+ * spufs_wait
+ *	Same as wait_event_interruptible(), except that here
+ *	we need to call spu_release(ctx) before sleeping, and
  *	then spu_acquire(ctx) when awoken.
  *
  * 	Returns with state_mutex re-acquired when successful or
- * 	with -ERESTARTSYS and the state_mutex dropped when पूर्णांकerrupted.
+ * 	with -ERESTARTSYS and the state_mutex dropped when interrupted.
  */
 
-#घोषणा spufs_रुको(wq, condition)					\
-(अणु									\
-	पूर्णांक __ret = 0;							\
-	DEFINE_WAIT(__रुको);						\
-	क्रम (;;) अणु							\
-		prepare_to_रुको(&(wq), &__रुको, TASK_INTERRUPTIBLE);	\
-		अगर (condition)						\
-			अवरोध;						\
+#define spufs_wait(wq, condition)					\
+({									\
+	int __ret = 0;							\
+	DEFINE_WAIT(__wait);						\
+	for (;;) {							\
+		prepare_to_wait(&(wq), &__wait, TASK_INTERRUPTIBLE);	\
+		if (condition)						\
+			break;						\
 		spu_release(ctx);					\
-		अगर (संकेत_pending(current)) अणु				\
+		if (signal_pending(current)) {				\
 			__ret = -ERESTARTSYS;				\
-			अवरोध;						\
-		पूर्ण							\
+			break;						\
+		}							\
 		schedule();						\
 		__ret = spu_acquire(ctx);				\
-		अगर (__ret)						\
-			अवरोध;						\
-	पूर्ण								\
-	finish_रुको(&(wq), &__रुको);					\
+		if (__ret)						\
+			break;						\
+	}								\
+	finish_wait(&(wq), &__wait);					\
 	__ret;								\
-पूर्ण)
+})
 
-माप_प्रकार spu_wbox_ग_लिखो(काष्ठा spu_context *ctx, u32 data);
-माप_प्रकार spu_ibox_पढ़ो(काष्ठा spu_context *ctx, u32 *data);
+size_t spu_wbox_write(struct spu_context *ctx, u32 data);
+size_t spu_ibox_read(struct spu_context *ctx, u32 *data);
 
 /* irq callback funcs. */
-व्योम spufs_ibox_callback(काष्ठा spu *spu);
-व्योम spufs_wbox_callback(काष्ठा spu *spu);
-व्योम spufs_stop_callback(काष्ठा spu *spu, पूर्णांक irq);
-व्योम spufs_mfc_callback(काष्ठा spu *spu);
-व्योम spufs_dma_callback(काष्ठा spu *spu, पूर्णांक type);
+void spufs_ibox_callback(struct spu *spu);
+void spufs_wbox_callback(struct spu *spu);
+void spufs_stop_callback(struct spu *spu, int irq);
+void spufs_mfc_callback(struct spu *spu);
+void spufs_dma_callback(struct spu *spu, int type);
 
-बाह्य काष्ठा spu_coredump_calls spufs_coredump_calls;
-काष्ठा spufs_coredump_पढ़ोer अणु
-	अक्षर *name;
-	sमाप_प्रकार (*dump)(काष्ठा spu_context *ctx, काष्ठा coredump_params *cprm);
-	u64 (*get)(काष्ठा spu_context *ctx);
-	माप_प्रकार size;
-पूर्ण;
-बाह्य स्थिर काष्ठा spufs_coredump_पढ़ोer spufs_coredump_पढ़ो[];
-बाह्य पूर्णांक spufs_coredump_num_notes;
+extern struct spu_coredump_calls spufs_coredump_calls;
+struct spufs_coredump_reader {
+	char *name;
+	ssize_t (*dump)(struct spu_context *ctx, struct coredump_params *cprm);
+	u64 (*get)(struct spu_context *ctx);
+	size_t size;
+};
+extern const struct spufs_coredump_reader spufs_coredump_read[];
+extern int spufs_coredump_num_notes;
 
-बाह्य पूर्णांक spu_init_csa(काष्ठा spu_state *csa);
-बाह्य व्योम spu_fini_csa(काष्ठा spu_state *csa);
-बाह्य पूर्णांक spu_save(काष्ठा spu_state *prev, काष्ठा spu *spu);
-बाह्य पूर्णांक spu_restore(काष्ठा spu_state *new, काष्ठा spu *spu);
-बाह्य पूर्णांक spu_चयन(काष्ठा spu_state *prev, काष्ठा spu_state *new,
-		      काष्ठा spu *spu);
-बाह्य पूर्णांक spu_alloc_lscsa(काष्ठा spu_state *csa);
-बाह्य व्योम spu_मुक्त_lscsa(काष्ठा spu_state *csa);
+extern int spu_init_csa(struct spu_state *csa);
+extern void spu_fini_csa(struct spu_state *csa);
+extern int spu_save(struct spu_state *prev, struct spu *spu);
+extern int spu_restore(struct spu_state *new, struct spu *spu);
+extern int spu_switch(struct spu_state *prev, struct spu_state *new,
+		      struct spu *spu);
+extern int spu_alloc_lscsa(struct spu_state *csa);
+extern void spu_free_lscsa(struct spu_state *csa);
 
-बाह्य व्योम spuctx_चयन_state(काष्ठा spu_context *ctx,
-		क्रमागत spu_utilization_state new_state);
+extern void spuctx_switch_state(struct spu_context *ctx,
+		enum spu_utilization_state new_state);
 
-#पूर्ण_अगर
+#endif

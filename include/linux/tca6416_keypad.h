@@ -1,32 +1,31 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * tca6416 keypad platक्रमm support
+ * tca6416 keypad platform support
  *
  * Copyright (C) 2010 Texas Instruments
  *
  * Author: Sriramakrishnan <srk@ti.com>
  */
 
-#अगर_अघोषित _TCA6416_KEYS_H
-#घोषणा _TCA6416_KEYS_H
+#ifndef _TCA6416_KEYS_H
+#define _TCA6416_KEYS_H
 
-#समावेश <linux/types.h>
+#include <linux/types.h>
 
-काष्ठा tca6416_button अणु
+struct tca6416_button {
 	/* Configuration parameters */
-	पूर्णांक code;		/* input event code (KEY_*, SW_*) */
-	पूर्णांक active_low;
-	पूर्णांक type;		/* input event type (EV_KEY, EV_SW) */
-पूर्ण;
+	int code;		/* input event code (KEY_*, SW_*) */
+	int active_low;
+	int type;		/* input event type (EV_KEY, EV_SW) */
+};
 
-काष्ठा tca6416_keys_platक्रमm_data अणु
-	काष्ठा tca6416_button *buttons;
-	पूर्णांक nbuttons;
-	अचिन्हित पूर्णांक rep:1;	/* enable input subप्रणाली स्वतः repeat */
-	uपूर्णांक16_t pinmask;
-	uपूर्णांक16_t invert;
-	पूर्णांक irq_is_gpio;
-	पूर्णांक use_polling;	/* use polling अगर Interrupt is not connected*/
-पूर्ण;
-#पूर्ण_अगर
+struct tca6416_keys_platform_data {
+	struct tca6416_button *buttons;
+	int nbuttons;
+	unsigned int rep:1;	/* enable input subsystem auto repeat */
+	uint16_t pinmask;
+	uint16_t invert;
+	int irq_is_gpio;
+	int use_polling;	/* use polling if Interrupt is not connected*/
+};
+#endif

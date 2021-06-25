@@ -1,17 +1,16 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _ASM_POWERPC_VDSO_GETTIMखातापूर्णDAY_H
-#घोषणा _ASM_POWERPC_VDSO_GETTIMखातापूर्णDAY_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _ASM_POWERPC_VDSO_GETTIMEOFDAY_H
+#define _ASM_POWERPC_VDSO_GETTIMEOFDAY_H
 
-#समावेश <यंत्र/page.h>
+#include <asm/page.h>
 
-#अगर_घोषित __ASSEMBLY__
+#ifdef __ASSEMBLY__
 
-#समावेश <यंत्र/ppc_यंत्र.h>
+#include <asm/ppc_asm.h>
 
 /*
- * The macros sets two stack frames, one क्रम the caller and one क्रम the callee
- * because there are no requirement क्रम the caller to set a stack frame when
+ * The macros sets two stack frames, one for the caller and one for the callee
+ * because there are no requirement for the caller to set a stack frame when
  * calling VDSO so it may have omitted to set one, especially on PPC64
  */
 
@@ -19,19 +18,19 @@
   .cfi_startproc
 	PPC_STLU	r1, -PPC_MIN_STKFRM(r1)
 	mflr		r0
-  .cfi_रेजिस्टर lr, r0
+  .cfi_register lr, r0
 	PPC_STLU	r1, -PPC_MIN_STKFRM(r1)
 	PPC_STL		r0, PPC_MIN_STKFRM + PPC_LR_STKOFF(r1)
-#अगर_घोषित __घातerpc64__
+#ifdef __powerpc64__
 	PPC_STL		r2, PPC_MIN_STKFRM + STK_GOT(r1)
-#पूर्ण_अगर
+#endif
 	get_datapage	r5
 	addi		r5, r5, VDSO_DATA_OFFSET
-	bl		DOTSYM(\पunct)
+	bl		DOTSYM(\funct)
 	PPC_LL		r0, PPC_MIN_STKFRM + PPC_LR_STKOFF(r1)
-#अगर_घोषित __घातerpc64__
+#ifdef __powerpc64__
 	PPC_LL		r2, PPC_MIN_STKFRM + STK_GOT(r1)
-#पूर्ण_अगर
+#endif
 	cmpwi		r3, 0
 	mtlr		r0
   .cfi_restore lr
@@ -44,23 +43,23 @@
   .cfi_endproc
 .endm
 
-.macro cvdso_call_समय funct
+.macro cvdso_call_time funct
   .cfi_startproc
 	PPC_STLU	r1, -PPC_MIN_STKFRM(r1)
 	mflr		r0
-  .cfi_रेजिस्टर lr, r0
+  .cfi_register lr, r0
 	PPC_STLU	r1, -PPC_MIN_STKFRM(r1)
 	PPC_STL		r0, PPC_MIN_STKFRM + PPC_LR_STKOFF(r1)
-#अगर_घोषित __घातerpc64__
+#ifdef __powerpc64__
 	PPC_STL		r2, PPC_MIN_STKFRM + STK_GOT(r1)
-#पूर्ण_अगर
+#endif
 	get_datapage	r4
 	addi		r4, r4, VDSO_DATA_OFFSET
-	bl		DOTSYM(\पunct)
+	bl		DOTSYM(\funct)
 	PPC_LL		r0, PPC_MIN_STKFRM + PPC_LR_STKOFF(r1)
-#अगर_घोषित __घातerpc64__
+#ifdef __powerpc64__
 	PPC_LL		r2, PPC_MIN_STKFRM + STK_GOT(r1)
-#पूर्ण_अगर
+#endif
 	crclr		so
 	mtlr		r0
   .cfi_restore lr
@@ -69,26 +68,26 @@
   .cfi_endproc
 .endm
 
-#अन्यथा
+#else
 
-#समावेश <यंत्र/vdso/समयbase.h>
-#समावेश <यंत्र/barrier.h>
-#समावेश <यंत्र/unistd.h>
-#समावेश <uapi/linux/समय.स>
+#include <asm/vdso/timebase.h>
+#include <asm/barrier.h>
+#include <asm/unistd.h>
+#include <uapi/linux/time.h>
 
-#घोषणा VDSO_HAS_CLOCK_GETRES		1
+#define VDSO_HAS_CLOCK_GETRES		1
 
-#घोषणा VDSO_HAS_TIME			1
+#define VDSO_HAS_TIME			1
 
-अटल __always_अंतरभूत पूर्णांक करो_syscall_2(स्थिर अचिन्हित दीर्घ _r0, स्थिर अचिन्हित दीर्घ _r3,
-					स्थिर अचिन्हित दीर्घ _r4)
-अणु
-	रेजिस्टर दीर्घ r0 यंत्र("r0") = _r0;
-	रेजिस्टर अचिन्हित दीर्घ r3 यंत्र("r3") = _r3;
-	रेजिस्टर अचिन्हित दीर्घ r4 यंत्र("r4") = _r4;
-	रेजिस्टर पूर्णांक ret यंत्र ("r3");
+static __always_inline int do_syscall_2(const unsigned long _r0, const unsigned long _r3,
+					const unsigned long _r4)
+{
+	register long r0 asm("r0") = _r0;
+	register unsigned long r3 asm("r3") = _r3;
+	register unsigned long r4 asm("r4") = _r4;
+	register int ret asm ("r3");
 
-	यंत्र अस्थिर(
+	asm volatile(
 		"       sc\n"
 		"	bns+	1f\n"
 		"	neg	%0, %0\n"
@@ -97,130 +96,130 @@
 	: "r" (r3)
 	: "memory", "r5", "r6", "r7", "r8", "r9", "r10", "r11", "r12", "cr0", "ctr");
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल __always_अंतरभूत
-पूर्णांक समय_लोofday_fallback(काष्ठा __kernel_old_समयval *_tv, काष्ठा समयzone *_tz)
-अणु
-	वापस करो_syscall_2(__NR_समय_लोofday, (अचिन्हित दीर्घ)_tv, (अचिन्हित दीर्घ)_tz);
-पूर्ण
+static __always_inline
+int gettimeofday_fallback(struct __kernel_old_timeval *_tv, struct timezone *_tz)
+{
+	return do_syscall_2(__NR_gettimeofday, (unsigned long)_tv, (unsigned long)_tz);
+}
 
-#अगर_घोषित __घातerpc64__
+#ifdef __powerpc64__
 
-अटल __always_अंतरभूत
-पूर्णांक घड़ी_समय_लो_fallback(घड़ीid_t _clkid, काष्ठा __kernel_बारpec *_ts)
-अणु
-	वापस करो_syscall_2(__NR_घड़ी_समय_लो, _clkid, (अचिन्हित दीर्घ)_ts);
-पूर्ण
+static __always_inline
+int clock_gettime_fallback(clockid_t _clkid, struct __kernel_timespec *_ts)
+{
+	return do_syscall_2(__NR_clock_gettime, _clkid, (unsigned long)_ts);
+}
 
-अटल __always_अंतरभूत
-पूर्णांक घड़ी_getres_fallback(घड़ीid_t _clkid, काष्ठा __kernel_बारpec *_ts)
-अणु
-	वापस करो_syscall_2(__NR_घड़ी_getres, _clkid, (अचिन्हित दीर्घ)_ts);
-पूर्ण
+static __always_inline
+int clock_getres_fallback(clockid_t _clkid, struct __kernel_timespec *_ts)
+{
+	return do_syscall_2(__NR_clock_getres, _clkid, (unsigned long)_ts);
+}
 
-#अन्यथा
+#else
 
-#घोषणा BUILD_VDSO32		1
+#define BUILD_VDSO32		1
 
-अटल __always_अंतरभूत
-पूर्णांक घड़ी_समय_लो_fallback(घड़ीid_t _clkid, काष्ठा __kernel_बारpec *_ts)
-अणु
-	वापस करो_syscall_2(__NR_घड़ी_समय_लो64, _clkid, (अचिन्हित दीर्घ)_ts);
-पूर्ण
+static __always_inline
+int clock_gettime_fallback(clockid_t _clkid, struct __kernel_timespec *_ts)
+{
+	return do_syscall_2(__NR_clock_gettime64, _clkid, (unsigned long)_ts);
+}
 
-अटल __always_अंतरभूत
-पूर्णांक घड़ी_getres_fallback(घड़ीid_t _clkid, काष्ठा __kernel_बारpec *_ts)
-अणु
-	वापस करो_syscall_2(__NR_घड़ी_getres_समय64, _clkid, (अचिन्हित दीर्घ)_ts);
-पूर्ण
+static __always_inline
+int clock_getres_fallback(clockid_t _clkid, struct __kernel_timespec *_ts)
+{
+	return do_syscall_2(__NR_clock_getres_time64, _clkid, (unsigned long)_ts);
+}
 
-अटल __always_अंतरभूत
-पूर्णांक घड़ी_समय_लो32_fallback(घड़ीid_t _clkid, काष्ठा old_बारpec32 *_ts)
-अणु
-	वापस करो_syscall_2(__NR_घड़ी_समय_लो, _clkid, (अचिन्हित दीर्घ)_ts);
-पूर्ण
+static __always_inline
+int clock_gettime32_fallback(clockid_t _clkid, struct old_timespec32 *_ts)
+{
+	return do_syscall_2(__NR_clock_gettime, _clkid, (unsigned long)_ts);
+}
 
-अटल __always_अंतरभूत
-पूर्णांक घड़ी_getres32_fallback(घड़ीid_t _clkid, काष्ठा old_बारpec32 *_ts)
-अणु
-	वापस करो_syscall_2(__NR_घड़ी_getres, _clkid, (अचिन्हित दीर्घ)_ts);
-पूर्ण
-#पूर्ण_अगर
+static __always_inline
+int clock_getres32_fallback(clockid_t _clkid, struct old_timespec32 *_ts)
+{
+	return do_syscall_2(__NR_clock_getres, _clkid, (unsigned long)_ts);
+}
+#endif
 
-अटल __always_अंतरभूत u64 __arch_get_hw_counter(s32 घड़ी_mode,
-						 स्थिर काष्ठा vdso_data *vd)
-अणु
-	वापस get_tb();
-पूर्ण
+static __always_inline u64 __arch_get_hw_counter(s32 clock_mode,
+						 const struct vdso_data *vd)
+{
+	return get_tb();
+}
 
-स्थिर काष्ठा vdso_data *__arch_get_vdso_data(व्योम);
+const struct vdso_data *__arch_get_vdso_data(void);
 
-#अगर_घोषित CONFIG_TIME_NS
-अटल __always_अंतरभूत
-स्थिर काष्ठा vdso_data *__arch_get_समयns_vdso_data(स्थिर काष्ठा vdso_data *vd)
-अणु
-	वापस (व्योम *)vd + PAGE_SIZE;
-पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_TIME_NS
+static __always_inline
+const struct vdso_data *__arch_get_timens_vdso_data(const struct vdso_data *vd)
+{
+	return (void *)vd + PAGE_SIZE;
+}
+#endif
 
-अटल अंतरभूत bool vdso_घड़ीsource_ok(स्थिर काष्ठा vdso_data *vd)
-अणु
-	वापस true;
-पूर्ण
-#घोषणा vdso_घड़ीsource_ok vdso_घड़ीsource_ok
+static inline bool vdso_clocksource_ok(const struct vdso_data *vd)
+{
+	return true;
+}
+#define vdso_clocksource_ok vdso_clocksource_ok
 
 /*
- * घातerpc specअगरic delta calculation.
+ * powerpc specific delta calculation.
  *
- * This variant हटाओs the masking of the subtraction because the
- * घड़ीsource mask of all VDSO capable घड़ीsources on घातerpc is U64_MAX
- * which would result in a poपूर्णांकless operation. The compiler cannot
+ * This variant removes the masking of the subtraction because the
+ * clocksource mask of all VDSO capable clocksources on powerpc is U64_MAX
+ * which would result in a pointless operation. The compiler cannot
  * optimize it away as the mask comes from the vdso data and is not compile
- * समय स्थिरant.
+ * time constant.
  */
-अटल __always_अंतरभूत u64 vdso_calc_delta(u64 cycles, u64 last, u64 mask, u32 mult)
-अणु
-	वापस (cycles - last) * mult;
-पूर्ण
-#घोषणा vdso_calc_delta vdso_calc_delta
+static __always_inline u64 vdso_calc_delta(u64 cycles, u64 last, u64 mask, u32 mult)
+{
+	return (cycles - last) * mult;
+}
+#define vdso_calc_delta vdso_calc_delta
 
-#अगर_अघोषित __घातerpc64__
-अटल __always_अंतरभूत u64 vdso_shअगरt_ns(u64 ns, अचिन्हित दीर्घ shअगरt)
-अणु
+#ifndef __powerpc64__
+static __always_inline u64 vdso_shift_ns(u64 ns, unsigned long shift)
+{
 	u32 hi = ns >> 32;
 	u32 lo = ns;
 
-	lo >>= shअगरt;
-	lo |= hi << (32 - shअगरt);
-	hi >>= shअगरt;
+	lo >>= shift;
+	lo |= hi << (32 - shift);
+	hi >>= shift;
 
-	अगर (likely(hi == 0))
-		वापस lo;
+	if (likely(hi == 0))
+		return lo;
 
-	वापस ((u64)hi << 32) | lo;
-पूर्ण
-#घोषणा vdso_shअगरt_ns vdso_shअगरt_ns
-#पूर्ण_अगर
+	return ((u64)hi << 32) | lo;
+}
+#define vdso_shift_ns vdso_shift_ns
+#endif
 
-#अगर_घोषित __घातerpc64__
-पूर्णांक __c_kernel_घड़ी_समय_लो(घड़ीid_t घड़ी, काष्ठा __kernel_बारpec *ts,
-			     स्थिर काष्ठा vdso_data *vd);
-पूर्णांक __c_kernel_घड़ी_getres(घड़ीid_t घड़ी_id, काष्ठा __kernel_बारpec *res,
-			    स्थिर काष्ठा vdso_data *vd);
-#अन्यथा
-पूर्णांक __c_kernel_घड़ी_समय_लो(घड़ीid_t घड़ी, काष्ठा old_बारpec32 *ts,
-			     स्थिर काष्ठा vdso_data *vd);
-पूर्णांक __c_kernel_घड़ी_समय_लो64(घड़ीid_t घड़ी, काष्ठा __kernel_बारpec *ts,
-			       स्थिर काष्ठा vdso_data *vd);
-पूर्णांक __c_kernel_घड़ी_getres(घड़ीid_t घड़ी_id, काष्ठा old_बारpec32 *res,
-			    स्थिर काष्ठा vdso_data *vd);
-#पूर्ण_अगर
-पूर्णांक __c_kernel_समय_लोofday(काष्ठा __kernel_old_समयval *tv, काष्ठा समयzone *tz,
-			    स्थिर काष्ठा vdso_data *vd);
-__kernel_old_समय_प्रकार __c_kernel_समय(__kernel_old_समय_प्रकार *समय,
-				    स्थिर काष्ठा vdso_data *vd);
-#पूर्ण_अगर /* __ASSEMBLY__ */
+#ifdef __powerpc64__
+int __c_kernel_clock_gettime(clockid_t clock, struct __kernel_timespec *ts,
+			     const struct vdso_data *vd);
+int __c_kernel_clock_getres(clockid_t clock_id, struct __kernel_timespec *res,
+			    const struct vdso_data *vd);
+#else
+int __c_kernel_clock_gettime(clockid_t clock, struct old_timespec32 *ts,
+			     const struct vdso_data *vd);
+int __c_kernel_clock_gettime64(clockid_t clock, struct __kernel_timespec *ts,
+			       const struct vdso_data *vd);
+int __c_kernel_clock_getres(clockid_t clock_id, struct old_timespec32 *res,
+			    const struct vdso_data *vd);
+#endif
+int __c_kernel_gettimeofday(struct __kernel_old_timeval *tv, struct timezone *tz,
+			    const struct vdso_data *vd);
+__kernel_old_time_t __c_kernel_time(__kernel_old_time_t *time,
+				    const struct vdso_data *vd);
+#endif /* __ASSEMBLY__ */
 
-#पूर्ण_अगर /* _ASM_POWERPC_VDSO_GETTIMखातापूर्णDAY_H */
+#endif /* _ASM_POWERPC_VDSO_GETTIMEOFDAY_H */

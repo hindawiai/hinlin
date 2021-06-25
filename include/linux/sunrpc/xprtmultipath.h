@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * RPC client multipathing definitions
  *
@@ -7,69 +6,69 @@
  *
  * Trond Myklebust <trond.myklebust@primarydata.com>
  */
-#अगर_अघोषित _NET_SUNRPC_XPRTMULTIPATH_H
-#घोषणा _NET_SUNRPC_XPRTMULTIPATH_H
+#ifndef _NET_SUNRPC_XPRTMULTIPATH_H
+#define _NET_SUNRPC_XPRTMULTIPATH_H
 
-काष्ठा rpc_xprt_iter_ops;
-काष्ठा rpc_xprt_चयन अणु
+struct rpc_xprt_iter_ops;
+struct rpc_xprt_switch {
 	spinlock_t		xps_lock;
-	काष्ठा kref		xps_kref;
+	struct kref		xps_kref;
 
-	अचिन्हित पूर्णांक		xps_nxprts;
-	अचिन्हित पूर्णांक		xps_nactive;
-	atomic_दीर्घ_t		xps_queuelen;
-	काष्ठा list_head	xps_xprt_list;
+	unsigned int		xps_nxprts;
+	unsigned int		xps_nactive;
+	atomic_long_t		xps_queuelen;
+	struct list_head	xps_xprt_list;
 
-	काष्ठा net *		xps_net;
+	struct net *		xps_net;
 
-	स्थिर काष्ठा rpc_xprt_iter_ops *xps_iter_ops;
+	const struct rpc_xprt_iter_ops *xps_iter_ops;
 
-	काष्ठा rcu_head		xps_rcu;
-पूर्ण;
+	struct rcu_head		xps_rcu;
+};
 
-काष्ठा rpc_xprt_iter अणु
-	काष्ठा rpc_xprt_चयन __rcu *xpi_xpचयन;
-	काष्ठा rpc_xprt *	xpi_cursor;
+struct rpc_xprt_iter {
+	struct rpc_xprt_switch __rcu *xpi_xpswitch;
+	struct rpc_xprt *	xpi_cursor;
 
-	स्थिर काष्ठा rpc_xprt_iter_ops *xpi_ops;
-पूर्ण;
+	const struct rpc_xprt_iter_ops *xpi_ops;
+};
 
 
-काष्ठा rpc_xprt_iter_ops अणु
-	व्योम (*xpi_शुरुआत)(काष्ठा rpc_xprt_iter *);
-	काष्ठा rpc_xprt *(*xpi_xprt)(काष्ठा rpc_xprt_iter *);
-	काष्ठा rpc_xprt *(*xpi_next)(काष्ठा rpc_xprt_iter *);
-पूर्ण;
+struct rpc_xprt_iter_ops {
+	void (*xpi_rewind)(struct rpc_xprt_iter *);
+	struct rpc_xprt *(*xpi_xprt)(struct rpc_xprt_iter *);
+	struct rpc_xprt *(*xpi_next)(struct rpc_xprt_iter *);
+};
 
-बाह्य काष्ठा rpc_xprt_चयन *xprt_चयन_alloc(काष्ठा rpc_xprt *xprt,
+extern struct rpc_xprt_switch *xprt_switch_alloc(struct rpc_xprt *xprt,
 		gfp_t gfp_flags);
 
-बाह्य काष्ठा rpc_xprt_चयन *xprt_चयन_get(काष्ठा rpc_xprt_चयन *xps);
-बाह्य व्योम xprt_चयन_put(काष्ठा rpc_xprt_चयन *xps);
+extern struct rpc_xprt_switch *xprt_switch_get(struct rpc_xprt_switch *xps);
+extern void xprt_switch_put(struct rpc_xprt_switch *xps);
 
-बाह्य व्योम rpc_xprt_चयन_set_roundrobin(काष्ठा rpc_xprt_चयन *xps);
+extern void rpc_xprt_switch_set_roundrobin(struct rpc_xprt_switch *xps);
 
-बाह्य व्योम rpc_xprt_चयन_add_xprt(काष्ठा rpc_xprt_चयन *xps,
-		काष्ठा rpc_xprt *xprt);
-बाह्य व्योम rpc_xprt_चयन_हटाओ_xprt(काष्ठा rpc_xprt_चयन *xps,
-		काष्ठा rpc_xprt *xprt);
+extern void rpc_xprt_switch_add_xprt(struct rpc_xprt_switch *xps,
+		struct rpc_xprt *xprt);
+extern void rpc_xprt_switch_remove_xprt(struct rpc_xprt_switch *xps,
+		struct rpc_xprt *xprt);
 
-बाह्य व्योम xprt_iter_init(काष्ठा rpc_xprt_iter *xpi,
-		काष्ठा rpc_xprt_चयन *xps);
+extern void xprt_iter_init(struct rpc_xprt_iter *xpi,
+		struct rpc_xprt_switch *xps);
 
-बाह्य व्योम xprt_iter_init_listall(काष्ठा rpc_xprt_iter *xpi,
-		काष्ठा rpc_xprt_चयन *xps);
+extern void xprt_iter_init_listall(struct rpc_xprt_iter *xpi,
+		struct rpc_xprt_switch *xps);
 
-बाह्य व्योम xprt_iter_destroy(काष्ठा rpc_xprt_iter *xpi);
+extern void xprt_iter_destroy(struct rpc_xprt_iter *xpi);
 
-बाह्य काष्ठा rpc_xprt_चयन *xprt_iter_xchg_चयन(
-		काष्ठा rpc_xprt_iter *xpi,
-		काष्ठा rpc_xprt_चयन *newचयन);
+extern struct rpc_xprt_switch *xprt_iter_xchg_switch(
+		struct rpc_xprt_iter *xpi,
+		struct rpc_xprt_switch *newswitch);
 
-बाह्य काष्ठा rpc_xprt *xprt_iter_xprt(काष्ठा rpc_xprt_iter *xpi);
-बाह्य काष्ठा rpc_xprt *xprt_iter_get_xprt(काष्ठा rpc_xprt_iter *xpi);
-बाह्य काष्ठा rpc_xprt *xprt_iter_get_next(काष्ठा rpc_xprt_iter *xpi);
+extern struct rpc_xprt *xprt_iter_xprt(struct rpc_xprt_iter *xpi);
+extern struct rpc_xprt *xprt_iter_get_xprt(struct rpc_xprt_iter *xpi);
+extern struct rpc_xprt *xprt_iter_get_next(struct rpc_xprt_iter *xpi);
 
-बाह्य bool rpc_xprt_चयन_has_addr(काष्ठा rpc_xprt_चयन *xps,
-		स्थिर काष्ठा sockaddr *sap);
-#पूर्ण_अगर
+extern bool rpc_xprt_switch_has_addr(struct rpc_xprt_switch *xps,
+		const struct sockaddr *sap);
+#endif

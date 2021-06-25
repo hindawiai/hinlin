@@ -1,239 +1,238 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित BLK_INTERNAL_H
-#घोषणा BLK_INTERNAL_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef BLK_INTERNAL_H
+#define BLK_INTERNAL_H
 
-#समावेश <linux/idr.h>
-#समावेश <linux/blk-mq.h>
-#समावेश <linux/part_स्थिति.स>
-#समावेश <linux/blk-crypto.h>
-#समावेश <linux/memblock.h>	/* क्रम max_pfn/max_low_pfn */
-#समावेश <xen/xen.h>
-#समावेश "blk-crypto-internal.h"
-#समावेश "blk-mq.h"
-#समावेश "blk-mq-sched.h"
+#include <linux/idr.h>
+#include <linux/blk-mq.h>
+#include <linux/part_stat.h>
+#include <linux/blk-crypto.h>
+#include <linux/memblock.h>	/* for max_pfn/max_low_pfn */
+#include <xen/xen.h>
+#include "blk-crypto-internal.h"
+#include "blk-mq.h"
+#include "blk-mq-sched.h"
 
-/* Max future समयr expiry क्रम समयouts */
-#घोषणा BLK_MAX_TIMEOUT		(5 * HZ)
+/* Max future timer expiry for timeouts */
+#define BLK_MAX_TIMEOUT		(5 * HZ)
 
-बाह्य काष्ठा dentry *blk_debugfs_root;
+extern struct dentry *blk_debugfs_root;
 
-काष्ठा blk_flush_queue अणु
-	अचिन्हित पूर्णांक		flush_pending_idx:1;
-	अचिन्हित पूर्णांक		flush_running_idx:1;
+struct blk_flush_queue {
+	unsigned int		flush_pending_idx:1;
+	unsigned int		flush_running_idx:1;
 	blk_status_t 		rq_status;
-	अचिन्हित दीर्घ		flush_pending_since;
-	काष्ठा list_head	flush_queue[2];
-	काष्ठा list_head	flush_data_in_flight;
-	काष्ठा request		*flush_rq;
+	unsigned long		flush_pending_since;
+	struct list_head	flush_queue[2];
+	struct list_head	flush_data_in_flight;
+	struct request		*flush_rq;
 
 	spinlock_t		mq_flush_lock;
-पूर्ण;
+};
 
-बाह्य काष्ठा kmem_cache *blk_requestq_cachep;
-बाह्य काष्ठा kobj_type blk_queue_ktype;
-बाह्य काष्ठा ida blk_queue_ida;
+extern struct kmem_cache *blk_requestq_cachep;
+extern struct kobj_type blk_queue_ktype;
+extern struct ida blk_queue_ida;
 
-अटल अंतरभूत काष्ठा blk_flush_queue *
-blk_get_flush_queue(काष्ठा request_queue *q, काष्ठा blk_mq_ctx *ctx)
-अणु
-	वापस blk_mq_map_queue(q, REQ_OP_FLUSH, ctx)->fq;
-पूर्ण
+static inline struct blk_flush_queue *
+blk_get_flush_queue(struct request_queue *q, struct blk_mq_ctx *ctx)
+{
+	return blk_mq_map_queue(q, REQ_OP_FLUSH, ctx)->fq;
+}
 
-अटल अंतरभूत व्योम __blk_get_queue(काष्ठा request_queue *q)
-अणु
+static inline void __blk_get_queue(struct request_queue *q)
+{
 	kobject_get(&q->kobj);
-पूर्ण
+}
 
-अटल अंतरभूत bool
-is_flush_rq(काष्ठा request *req, काष्ठा blk_mq_hw_ctx *hctx)
-अणु
-	वापस hctx->fq->flush_rq == req;
-पूर्ण
+static inline bool
+is_flush_rq(struct request *req, struct blk_mq_hw_ctx *hctx)
+{
+	return hctx->fq->flush_rq == req;
+}
 
-काष्ठा blk_flush_queue *blk_alloc_flush_queue(पूर्णांक node, पूर्णांक cmd_size,
+struct blk_flush_queue *blk_alloc_flush_queue(int node, int cmd_size,
 					      gfp_t flags);
-व्योम blk_मुक्त_flush_queue(काष्ठा blk_flush_queue *q);
+void blk_free_flush_queue(struct blk_flush_queue *q);
 
-व्योम blk_मुक्तze_queue(काष्ठा request_queue *q);
+void blk_freeze_queue(struct request_queue *q);
 
-#घोषणा BIO_INLINE_VECS 4
-काष्ठा bio_vec *bvec_alloc(mempool_t *pool, अचिन्हित लघु *nr_vecs,
+#define BIO_INLINE_VECS 4
+struct bio_vec *bvec_alloc(mempool_t *pool, unsigned short *nr_vecs,
 		gfp_t gfp_mask);
-व्योम bvec_मुक्त(mempool_t *pool, काष्ठा bio_vec *bv, अचिन्हित लघु nr_vecs);
+void bvec_free(mempool_t *pool, struct bio_vec *bv, unsigned short nr_vecs);
 
-अटल अंतरभूत bool biovec_phys_mergeable(काष्ठा request_queue *q,
-		काष्ठा bio_vec *vec1, काष्ठा bio_vec *vec2)
-अणु
-	अचिन्हित दीर्घ mask = queue_segment_boundary(q);
+static inline bool biovec_phys_mergeable(struct request_queue *q,
+		struct bio_vec *vec1, struct bio_vec *vec2)
+{
+	unsigned long mask = queue_segment_boundary(q);
 	phys_addr_t addr1 = page_to_phys(vec1->bv_page) + vec1->bv_offset;
 	phys_addr_t addr2 = page_to_phys(vec2->bv_page) + vec2->bv_offset;
 
-	अगर (addr1 + vec1->bv_len != addr2)
-		वापस false;
-	अगर (xen_करोमुख्य() && !xen_biovec_phys_mergeable(vec1, vec2->bv_page))
-		वापस false;
-	अगर ((addr1 | mask) != ((addr2 + vec2->bv_len - 1) | mask))
-		वापस false;
-	वापस true;
-पूर्ण
+	if (addr1 + vec1->bv_len != addr2)
+		return false;
+	if (xen_domain() && !xen_biovec_phys_mergeable(vec1, vec2->bv_page))
+		return false;
+	if ((addr1 | mask) != ((addr2 + vec2->bv_len - 1) | mask))
+		return false;
+	return true;
+}
 
-अटल अंतरभूत bool __bvec_gap_to_prev(काष्ठा request_queue *q,
-		काष्ठा bio_vec *bprv, अचिन्हित पूर्णांक offset)
-अणु
-	वापस (offset & queue_virt_boundary(q)) ||
+static inline bool __bvec_gap_to_prev(struct request_queue *q,
+		struct bio_vec *bprv, unsigned int offset)
+{
+	return (offset & queue_virt_boundary(q)) ||
 		((bprv->bv_offset + bprv->bv_len) & queue_virt_boundary(q));
-पूर्ण
+}
 
 /*
- * Check अगर adding a bio_vec after bprv with offset would create a gap in
- * the SG list. Most drivers करोn't care about this, but some करो.
+ * Check if adding a bio_vec after bprv with offset would create a gap in
+ * the SG list. Most drivers don't care about this, but some do.
  */
-अटल अंतरभूत bool bvec_gap_to_prev(काष्ठा request_queue *q,
-		काष्ठा bio_vec *bprv, अचिन्हित पूर्णांक offset)
-अणु
-	अगर (!queue_virt_boundary(q))
-		वापस false;
-	वापस __bvec_gap_to_prev(q, bprv, offset);
-पूर्ण
+static inline bool bvec_gap_to_prev(struct request_queue *q,
+		struct bio_vec *bprv, unsigned int offset)
+{
+	if (!queue_virt_boundary(q))
+		return false;
+	return __bvec_gap_to_prev(q, bprv, offset);
+}
 
-#अगर_घोषित CONFIG_BLK_DEV_INTEGRITY
-व्योम blk_flush_पूर्णांकegrity(व्योम);
-bool __bio_पूर्णांकegrity_endio(काष्ठा bio *);
-व्योम bio_पूर्णांकegrity_मुक्त(काष्ठा bio *bio);
-अटल अंतरभूत bool bio_पूर्णांकegrity_endio(काष्ठा bio *bio)
-अणु
-	अगर (bio_पूर्णांकegrity(bio))
-		वापस __bio_पूर्णांकegrity_endio(bio);
-	वापस true;
-पूर्ण
+#ifdef CONFIG_BLK_DEV_INTEGRITY
+void blk_flush_integrity(void);
+bool __bio_integrity_endio(struct bio *);
+void bio_integrity_free(struct bio *bio);
+static inline bool bio_integrity_endio(struct bio *bio)
+{
+	if (bio_integrity(bio))
+		return __bio_integrity_endio(bio);
+	return true;
+}
 
-bool blk_पूर्णांकegrity_merge_rq(काष्ठा request_queue *, काष्ठा request *,
-		काष्ठा request *);
-bool blk_पूर्णांकegrity_merge_bio(काष्ठा request_queue *, काष्ठा request *,
-		काष्ठा bio *);
+bool blk_integrity_merge_rq(struct request_queue *, struct request *,
+		struct request *);
+bool blk_integrity_merge_bio(struct request_queue *, struct request *,
+		struct bio *);
 
-अटल अंतरभूत bool पूर्णांकegrity_req_gap_back_merge(काष्ठा request *req,
-		काष्ठा bio *next)
-अणु
-	काष्ठा bio_पूर्णांकegrity_payload *bip = bio_पूर्णांकegrity(req->bio);
-	काष्ठा bio_पूर्णांकegrity_payload *bip_next = bio_पूर्णांकegrity(next);
+static inline bool integrity_req_gap_back_merge(struct request *req,
+		struct bio *next)
+{
+	struct bio_integrity_payload *bip = bio_integrity(req->bio);
+	struct bio_integrity_payload *bip_next = bio_integrity(next);
 
-	वापस bvec_gap_to_prev(req->q, &bip->bip_vec[bip->bip_vcnt - 1],
+	return bvec_gap_to_prev(req->q, &bip->bip_vec[bip->bip_vcnt - 1],
 				bip_next->bip_vec[0].bv_offset);
-पूर्ण
+}
 
-अटल अंतरभूत bool पूर्णांकegrity_req_gap_front_merge(काष्ठा request *req,
-		काष्ठा bio *bio)
-अणु
-	काष्ठा bio_पूर्णांकegrity_payload *bip = bio_पूर्णांकegrity(bio);
-	काष्ठा bio_पूर्णांकegrity_payload *bip_next = bio_पूर्णांकegrity(req->bio);
+static inline bool integrity_req_gap_front_merge(struct request *req,
+		struct bio *bio)
+{
+	struct bio_integrity_payload *bip = bio_integrity(bio);
+	struct bio_integrity_payload *bip_next = bio_integrity(req->bio);
 
-	वापस bvec_gap_to_prev(req->q, &bip->bip_vec[bip->bip_vcnt - 1],
+	return bvec_gap_to_prev(req->q, &bip->bip_vec[bip->bip_vcnt - 1],
 				bip_next->bip_vec[0].bv_offset);
-पूर्ण
+}
 
-व्योम blk_पूर्णांकegrity_add(काष्ठा gendisk *);
-व्योम blk_पूर्णांकegrity_del(काष्ठा gendisk *);
-#अन्यथा /* CONFIG_BLK_DEV_INTEGRITY */
-अटल अंतरभूत bool blk_पूर्णांकegrity_merge_rq(काष्ठा request_queue *rq,
-		काष्ठा request *r1, काष्ठा request *r2)
-अणु
-	वापस true;
-पूर्ण
-अटल अंतरभूत bool blk_पूर्णांकegrity_merge_bio(काष्ठा request_queue *rq,
-		काष्ठा request *r, काष्ठा bio *b)
-अणु
-	वापस true;
-पूर्ण
-अटल अंतरभूत bool पूर्णांकegrity_req_gap_back_merge(काष्ठा request *req,
-		काष्ठा bio *next)
-अणु
-	वापस false;
-पूर्ण
-अटल अंतरभूत bool पूर्णांकegrity_req_gap_front_merge(काष्ठा request *req,
-		काष्ठा bio *bio)
-अणु
-	वापस false;
-पूर्ण
+void blk_integrity_add(struct gendisk *);
+void blk_integrity_del(struct gendisk *);
+#else /* CONFIG_BLK_DEV_INTEGRITY */
+static inline bool blk_integrity_merge_rq(struct request_queue *rq,
+		struct request *r1, struct request *r2)
+{
+	return true;
+}
+static inline bool blk_integrity_merge_bio(struct request_queue *rq,
+		struct request *r, struct bio *b)
+{
+	return true;
+}
+static inline bool integrity_req_gap_back_merge(struct request *req,
+		struct bio *next)
+{
+	return false;
+}
+static inline bool integrity_req_gap_front_merge(struct request *req,
+		struct bio *bio)
+{
+	return false;
+}
 
-अटल अंतरभूत व्योम blk_flush_पूर्णांकegrity(व्योम)
-अणु
-पूर्ण
-अटल अंतरभूत bool bio_पूर्णांकegrity_endio(काष्ठा bio *bio)
-अणु
-	वापस true;
-पूर्ण
-अटल अंतरभूत व्योम bio_पूर्णांकegrity_मुक्त(काष्ठा bio *bio)
-अणु
-पूर्ण
-अटल अंतरभूत व्योम blk_पूर्णांकegrity_add(काष्ठा gendisk *disk)
-अणु
-पूर्ण
-अटल अंतरभूत व्योम blk_पूर्णांकegrity_del(काष्ठा gendisk *disk)
-अणु
-पूर्ण
-#पूर्ण_अगर /* CONFIG_BLK_DEV_INTEGRITY */
+static inline void blk_flush_integrity(void)
+{
+}
+static inline bool bio_integrity_endio(struct bio *bio)
+{
+	return true;
+}
+static inline void bio_integrity_free(struct bio *bio)
+{
+}
+static inline void blk_integrity_add(struct gendisk *disk)
+{
+}
+static inline void blk_integrity_del(struct gendisk *disk)
+{
+}
+#endif /* CONFIG_BLK_DEV_INTEGRITY */
 
-अचिन्हित दीर्घ blk_rq_समयout(अचिन्हित दीर्घ समयout);
-व्योम blk_add_समयr(काष्ठा request *req);
+unsigned long blk_rq_timeout(unsigned long timeout);
+void blk_add_timer(struct request *req);
 
-bool blk_attempt_plug_merge(काष्ठा request_queue *q, काष्ठा bio *bio,
-		अचिन्हित पूर्णांक nr_segs, काष्ठा request **same_queue_rq);
-bool blk_bio_list_merge(काष्ठा request_queue *q, काष्ठा list_head *list,
-			काष्ठा bio *bio, अचिन्हित पूर्णांक nr_segs);
+bool blk_attempt_plug_merge(struct request_queue *q, struct bio *bio,
+		unsigned int nr_segs, struct request **same_queue_rq);
+bool blk_bio_list_merge(struct request_queue *q, struct list_head *list,
+			struct bio *bio, unsigned int nr_segs);
 
-व्योम blk_account_io_start(काष्ठा request *req);
-व्योम blk_account_io_करोne(काष्ठा request *req, u64 now);
+void blk_account_io_start(struct request *req);
+void blk_account_io_done(struct request *req, u64 now);
 
 /*
- * Internal elevator पूर्णांकerface
+ * Internal elevator interface
  */
-#घोषणा ELV_ON_HASH(rq) ((rq)->rq_flags & RQF_HASHED)
+#define ELV_ON_HASH(rq) ((rq)->rq_flags & RQF_HASHED)
 
-व्योम blk_insert_flush(काष्ठा request *rq);
+void blk_insert_flush(struct request *rq);
 
-व्योम elevator_init_mq(काष्ठा request_queue *q);
-पूर्णांक elevator_चयन_mq(काष्ठा request_queue *q,
-			      काष्ठा elevator_type *new_e);
-व्योम __elevator_निकास(काष्ठा request_queue *, काष्ठा elevator_queue *);
-पूर्णांक elv_रेजिस्टर_queue(काष्ठा request_queue *q, bool uevent);
-व्योम elv_unरेजिस्टर_queue(काष्ठा request_queue *q);
+void elevator_init_mq(struct request_queue *q);
+int elevator_switch_mq(struct request_queue *q,
+			      struct elevator_type *new_e);
+void __elevator_exit(struct request_queue *, struct elevator_queue *);
+int elv_register_queue(struct request_queue *q, bool uevent);
+void elv_unregister_queue(struct request_queue *q);
 
-अटल अंतरभूत व्योम elevator_निकास(काष्ठा request_queue *q,
-		काष्ठा elevator_queue *e)
-अणु
-	lockdep_निश्चित_held(&q->sysfs_lock);
+static inline void elevator_exit(struct request_queue *q,
+		struct elevator_queue *e)
+{
+	lockdep_assert_held(&q->sysfs_lock);
 
-	blk_mq_sched_मुक्त_requests(q);
-	__elevator_निकास(q, e);
-पूर्ण
+	blk_mq_sched_free_requests(q);
+	__elevator_exit(q, e);
+}
 
-sमाप_प्रकार part_size_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-		अक्षर *buf);
-sमाप_प्रकार part_stat_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-		अक्षर *buf);
-sमाप_प्रकार part_inflight_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-		अक्षर *buf);
-sमाप_प्रकार part_fail_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-		अक्षर *buf);
-sमाप_प्रकार part_fail_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
-		स्थिर अक्षर *buf, माप_प्रकार count);
-sमाप_प्रकार part_समयout_show(काष्ठा device *, काष्ठा device_attribute *, अक्षर *);
-sमाप_प्रकार part_समयout_store(काष्ठा device *, काष्ठा device_attribute *,
-				स्थिर अक्षर *, माप_प्रकार);
+ssize_t part_size_show(struct device *dev, struct device_attribute *attr,
+		char *buf);
+ssize_t part_stat_show(struct device *dev, struct device_attribute *attr,
+		char *buf);
+ssize_t part_inflight_show(struct device *dev, struct device_attribute *attr,
+		char *buf);
+ssize_t part_fail_show(struct device *dev, struct device_attribute *attr,
+		char *buf);
+ssize_t part_fail_store(struct device *dev, struct device_attribute *attr,
+		const char *buf, size_t count);
+ssize_t part_timeout_show(struct device *, struct device_attribute *, char *);
+ssize_t part_timeout_store(struct device *, struct device_attribute *,
+				const char *, size_t);
 
-व्योम __blk_queue_split(काष्ठा bio **bio, अचिन्हित पूर्णांक *nr_segs);
-पूर्णांक ll_back_merge_fn(काष्ठा request *req, काष्ठा bio *bio,
-		अचिन्हित पूर्णांक nr_segs);
-पूर्णांक blk_attempt_req_merge(काष्ठा request_queue *q, काष्ठा request *rq,
-				काष्ठा request *next);
-अचिन्हित पूर्णांक blk_recalc_rq_segments(काष्ठा request *rq);
-व्योम blk_rq_set_mixed_merge(काष्ठा request *rq);
-bool blk_rq_merge_ok(काष्ठा request *rq, काष्ठा bio *bio);
-क्रमागत elv_merge blk_try_merge(काष्ठा request *rq, काष्ठा bio *bio);
+void __blk_queue_split(struct bio **bio, unsigned int *nr_segs);
+int ll_back_merge_fn(struct request *req, struct bio *bio,
+		unsigned int nr_segs);
+int blk_attempt_req_merge(struct request_queue *q, struct request *rq,
+				struct request *next);
+unsigned int blk_recalc_rq_segments(struct request *rq);
+void blk_rq_set_mixed_merge(struct request *rq);
+bool blk_rq_merge_ok(struct request *rq, struct bio *bio);
+enum elv_merge blk_try_merge(struct request *rq, struct bio *bio);
 
-पूर्णांक blk_dev_init(व्योम);
+int blk_dev_init(void);
 
 /*
  * Contribute to IO statistics IFF:
@@ -241,123 +240,123 @@ bool blk_rq_merge_ok(काष्ठा request *rq, काष्ठा bio *bio
  *	a) it's attached to a gendisk, and
  *	b) the queue had IO stats enabled when this request was started
  */
-अटल अंतरभूत bool blk_करो_io_stat(काष्ठा request *rq)
-अणु
-	वापस rq->rq_disk && (rq->rq_flags & RQF_IO_STAT);
-पूर्ण
+static inline bool blk_do_io_stat(struct request *rq)
+{
+	return rq->rq_disk && (rq->rq_flags & RQF_IO_STAT);
+}
 
-अटल अंतरभूत व्योम req_set_nomerge(काष्ठा request_queue *q, काष्ठा request *req)
-अणु
+static inline void req_set_nomerge(struct request_queue *q, struct request *req)
+{
 	req->cmd_flags |= REQ_NOMERGE;
-	अगर (req == q->last_merge)
-		q->last_merge = शून्य;
-पूर्ण
+	if (req == q->last_merge)
+		q->last_merge = NULL;
+}
 
 /*
- * The max size one bio can handle is अच_पूर्णांक_उच्च becasue bvec_iter.bi_size
- * is defined as 'unsigned int', meanसमय it has to aligned to with logical
+ * The max size one bio can handle is UINT_MAX becasue bvec_iter.bi_size
+ * is defined as 'unsigned int', meantime it has to aligned to with logical
  * block size which is the minimum accepted unit by hardware.
  */
-अटल अंतरभूत अचिन्हित पूर्णांक bio_allowed_max_sectors(काष्ठा request_queue *q)
-अणु
-	वापस round_करोwn(अच_पूर्णांक_उच्च, queue_logical_block_size(q)) >> 9;
-पूर्ण
+static inline unsigned int bio_allowed_max_sectors(struct request_queue *q)
+{
+	return round_down(UINT_MAX, queue_logical_block_size(q)) >> 9;
+}
 
 /*
  * The max bio size which is aligned to q->limits.discard_granularity. This
- * is a hपूर्णांक to split large discard bio in generic block layer, then अगर device
- * driver needs to split the discard bio पूर्णांकo smaller ones, their bi_size can
+ * is a hint to split large discard bio in generic block layer, then if device
+ * driver needs to split the discard bio into smaller ones, their bi_size can
  * be very probably and easily aligned to discard_granularity of the device's
  * queue.
  */
-अटल अंतरभूत अचिन्हित पूर्णांक bio_aligned_discard_max_sectors(
-					काष्ठा request_queue *q)
-अणु
-	वापस round_करोwn(अच_पूर्णांक_उच्च, q->limits.discard_granularity) >>
+static inline unsigned int bio_aligned_discard_max_sectors(
+					struct request_queue *q)
+{
+	return round_down(UINT_MAX, q->limits.discard_granularity) >>
 			SECTOR_SHIFT;
-पूर्ण
+}
 
 /*
- * Internal io_context पूर्णांकerface
+ * Internal io_context interface
  */
-व्योम get_io_context(काष्ठा io_context *ioc);
-काष्ठा io_cq *ioc_lookup_icq(काष्ठा io_context *ioc, काष्ठा request_queue *q);
-काष्ठा io_cq *ioc_create_icq(काष्ठा io_context *ioc, काष्ठा request_queue *q,
+void get_io_context(struct io_context *ioc);
+struct io_cq *ioc_lookup_icq(struct io_context *ioc, struct request_queue *q);
+struct io_cq *ioc_create_icq(struct io_context *ioc, struct request_queue *q,
 			     gfp_t gfp_mask);
-व्योम ioc_clear_queue(काष्ठा request_queue *q);
+void ioc_clear_queue(struct request_queue *q);
 
-पूर्णांक create_task_io_context(काष्ठा task_काष्ठा *task, gfp_t gfp_mask, पूर्णांक node);
+int create_task_io_context(struct task_struct *task, gfp_t gfp_mask, int node);
 
 /*
- * Internal throttling पूर्णांकerface
+ * Internal throttling interface
  */
-#अगर_घोषित CONFIG_BLK_DEV_THROTTLING
-बाह्य पूर्णांक blk_throtl_init(काष्ठा request_queue *q);
-बाह्य व्योम blk_throtl_निकास(काष्ठा request_queue *q);
-बाह्य व्योम blk_throtl_रेजिस्टर_queue(काष्ठा request_queue *q);
-bool blk_throtl_bio(काष्ठा bio *bio);
-#अन्यथा /* CONFIG_BLK_DEV_THROTTLING */
-अटल अंतरभूत पूर्णांक blk_throtl_init(काष्ठा request_queue *q) अणु वापस 0; पूर्ण
-अटल अंतरभूत व्योम blk_throtl_निकास(काष्ठा request_queue *q) अणु पूर्ण
-अटल अंतरभूत व्योम blk_throtl_रेजिस्टर_queue(काष्ठा request_queue *q) अणु पूर्ण
-अटल अंतरभूत bool blk_throtl_bio(काष्ठा bio *bio) अणु वापस false; पूर्ण
-#पूर्ण_अगर /* CONFIG_BLK_DEV_THROTTLING */
-#अगर_घोषित CONFIG_BLK_DEV_THROTTLING_LOW
-बाह्य sमाप_प्रकार blk_throtl_sample_समय_show(काष्ठा request_queue *q, अक्षर *page);
-बाह्य sमाप_प्रकार blk_throtl_sample_समय_store(काष्ठा request_queue *q,
-	स्थिर अक्षर *page, माप_प्रकार count);
-बाह्य व्योम blk_throtl_bio_endio(काष्ठा bio *bio);
-बाह्य व्योम blk_throtl_stat_add(काष्ठा request *rq, u64 समय);
-#अन्यथा
-अटल अंतरभूत व्योम blk_throtl_bio_endio(काष्ठा bio *bio) अणु पूर्ण
-अटल अंतरभूत व्योम blk_throtl_stat_add(काष्ठा request *rq, u64 समय) अणु पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_BLK_DEV_THROTTLING
+extern int blk_throtl_init(struct request_queue *q);
+extern void blk_throtl_exit(struct request_queue *q);
+extern void blk_throtl_register_queue(struct request_queue *q);
+bool blk_throtl_bio(struct bio *bio);
+#else /* CONFIG_BLK_DEV_THROTTLING */
+static inline int blk_throtl_init(struct request_queue *q) { return 0; }
+static inline void blk_throtl_exit(struct request_queue *q) { }
+static inline void blk_throtl_register_queue(struct request_queue *q) { }
+static inline bool blk_throtl_bio(struct bio *bio) { return false; }
+#endif /* CONFIG_BLK_DEV_THROTTLING */
+#ifdef CONFIG_BLK_DEV_THROTTLING_LOW
+extern ssize_t blk_throtl_sample_time_show(struct request_queue *q, char *page);
+extern ssize_t blk_throtl_sample_time_store(struct request_queue *q,
+	const char *page, size_t count);
+extern void blk_throtl_bio_endio(struct bio *bio);
+extern void blk_throtl_stat_add(struct request *rq, u64 time);
+#else
+static inline void blk_throtl_bio_endio(struct bio *bio) { }
+static inline void blk_throtl_stat_add(struct request *rq, u64 time) { }
+#endif
 
-व्योम __blk_queue_bounce(काष्ठा request_queue *q, काष्ठा bio **bio);
+void __blk_queue_bounce(struct request_queue *q, struct bio **bio);
 
-अटल अंतरभूत bool blk_queue_may_bounce(काष्ठा request_queue *q)
-अणु
-	वापस IS_ENABLED(CONFIG_BOUNCE) &&
+static inline bool blk_queue_may_bounce(struct request_queue *q)
+{
+	return IS_ENABLED(CONFIG_BOUNCE) &&
 		q->limits.bounce == BLK_BOUNCE_HIGH &&
 		max_low_pfn >= max_pfn;
-पूर्ण
+}
 
-अटल अंतरभूत व्योम blk_queue_bounce(काष्ठा request_queue *q, काष्ठा bio **bio)
-अणु
-	अगर (unlikely(blk_queue_may_bounce(q) && bio_has_data(*bio)))
+static inline void blk_queue_bounce(struct request_queue *q, struct bio **bio)
+{
+	if (unlikely(blk_queue_may_bounce(q) && bio_has_data(*bio)))
 		__blk_queue_bounce(q, bio);	
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_BLK_CGROUP_IOLATENCY
-बाह्य पूर्णांक blk_iolatency_init(काष्ठा request_queue *q);
-#अन्यथा
-अटल अंतरभूत पूर्णांक blk_iolatency_init(काष्ठा request_queue *q) अणु वापस 0; पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_BLK_CGROUP_IOLATENCY
+extern int blk_iolatency_init(struct request_queue *q);
+#else
+static inline int blk_iolatency_init(struct request_queue *q) { return 0; }
+#endif
 
-काष्ठा bio *blk_next_bio(काष्ठा bio *bio, अचिन्हित पूर्णांक nr_pages, gfp_t gfp);
+struct bio *blk_next_bio(struct bio *bio, unsigned int nr_pages, gfp_t gfp);
 
-#अगर_घोषित CONFIG_BLK_DEV_ZONED
-व्योम blk_queue_मुक्त_zone_biपंचांगaps(काष्ठा request_queue *q);
-व्योम blk_queue_clear_zone_settings(काष्ठा request_queue *q);
-#अन्यथा
-अटल अंतरभूत व्योम blk_queue_मुक्त_zone_biपंचांगaps(काष्ठा request_queue *q) अणुपूर्ण
-अटल अंतरभूत व्योम blk_queue_clear_zone_settings(काष्ठा request_queue *q) अणुपूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_BLK_DEV_ZONED
+void blk_queue_free_zone_bitmaps(struct request_queue *q);
+void blk_queue_clear_zone_settings(struct request_queue *q);
+#else
+static inline void blk_queue_free_zone_bitmaps(struct request_queue *q) {}
+static inline void blk_queue_clear_zone_settings(struct request_queue *q) {}
+#endif
 
-पूर्णांक blk_alloc_devt(काष्ठा block_device *part, dev_t *devt);
-व्योम blk_मुक्त_devt(dev_t devt);
-अक्षर *disk_name(काष्ठा gendisk *hd, पूर्णांक partno, अक्षर *buf);
-#घोषणा ADDPART_FLAG_NONE	0
-#घोषणा ADDPART_FLAG_RAID	1
-#घोषणा ADDPART_FLAG_WHOLEDISK	2
-पूर्णांक bdev_add_partition(काष्ठा block_device *bdev, पूर्णांक partno,
+int blk_alloc_devt(struct block_device *part, dev_t *devt);
+void blk_free_devt(dev_t devt);
+char *disk_name(struct gendisk *hd, int partno, char *buf);
+#define ADDPART_FLAG_NONE	0
+#define ADDPART_FLAG_RAID	1
+#define ADDPART_FLAG_WHOLEDISK	2
+int bdev_add_partition(struct block_device *bdev, int partno,
 		sector_t start, sector_t length);
-पूर्णांक bdev_del_partition(काष्ठा block_device *bdev, पूर्णांक partno);
-पूर्णांक bdev_resize_partition(काष्ठा block_device *bdev, पूर्णांक partno,
+int bdev_del_partition(struct block_device *bdev, int partno);
+int bdev_resize_partition(struct block_device *bdev, int partno,
 		sector_t start, sector_t length);
 
-पूर्णांक bio_add_hw_page(काष्ठा request_queue *q, काष्ठा bio *bio,
-		काष्ठा page *page, अचिन्हित पूर्णांक len, अचिन्हित पूर्णांक offset,
-		अचिन्हित पूर्णांक max_sectors, bool *same_page);
+int bio_add_hw_page(struct request_queue *q, struct bio *bio,
+		struct page *page, unsigned int len, unsigned int offset,
+		unsigned int max_sectors, bool *same_page);
 
-#पूर्ण_अगर /* BLK_INTERNAL_H */
+#endif /* BLK_INTERNAL_H */

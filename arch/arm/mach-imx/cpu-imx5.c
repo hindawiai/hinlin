@@ -1,159 +1,158 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright 2008-2010 Freescale Semiconductor, Inc. All Rights Reserved.
  *
  * This file contains the CPU initialization code.
  */
 
-#समावेश <linux/types.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/init.h>
-#समावेश <linux/module.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/of.h>
-#समावेश <linux/of_address.h>
+#include <linux/types.h>
+#include <linux/kernel.h>
+#include <linux/init.h>
+#include <linux/module.h>
+#include <linux/io.h>
+#include <linux/of.h>
+#include <linux/of_address.h>
 
-#समावेश "hardware.h"
-#समावेश "common.h"
+#include "hardware.h"
+#include "common.h"
 
-अटल पूर्णांक mx5_cpu_rev = -1;
+static int mx5_cpu_rev = -1;
 
-#घोषणा IIM_SREV 0x24
+#define IIM_SREV 0x24
 
-अटल u32 imx5_पढ़ो_srev_reg(स्थिर अक्षर *compat)
-अणु
-	व्योम __iomem *iim_base;
-	काष्ठा device_node *np;
+static u32 imx5_read_srev_reg(const char *compat)
+{
+	void __iomem *iim_base;
+	struct device_node *np;
 	u32 srev;
 
-	np = of_find_compatible_node(शून्य, शून्य, compat);
+	np = of_find_compatible_node(NULL, NULL, compat);
 	iim_base = of_iomap(np, 0);
 	WARN_ON(!iim_base);
 
-	srev = पढ़ोl(iim_base + IIM_SREV) & 0xff;
+	srev = readl(iim_base + IIM_SREV) & 0xff;
 
 	iounmap(iim_base);
 
-	वापस srev;
-पूर्ण
+	return srev;
+}
 
-अटल पूर्णांक get_mx51_srev(व्योम)
-अणु
-	u32 rev = imx5_पढ़ो_srev_reg("fsl,imx51-iim");
+static int get_mx51_srev(void)
+{
+	u32 rev = imx5_read_srev_reg("fsl,imx51-iim");
 
-	चयन (rev) अणु
-	हाल 0x0:
-		वापस IMX_CHIP_REVISION_2_0;
-	हाल 0x10:
-		वापस IMX_CHIP_REVISION_3_0;
-	शेष:
-		वापस IMX_CHIP_REVISION_UNKNOWN;
-	पूर्ण
-पूर्ण
+	switch (rev) {
+	case 0x0:
+		return IMX_CHIP_REVISION_2_0;
+	case 0x10:
+		return IMX_CHIP_REVISION_3_0;
+	default:
+		return IMX_CHIP_REVISION_UNKNOWN;
+	}
+}
 
 /*
  * Returns:
  *	the silicon revision of the cpu
  */
-पूर्णांक mx51_revision(व्योम)
-अणु
-	अगर (mx5_cpu_rev == -1)
+int mx51_revision(void)
+{
+	if (mx5_cpu_rev == -1)
 		mx5_cpu_rev = get_mx51_srev();
 
-	वापस mx5_cpu_rev;
-पूर्ण
+	return mx5_cpu_rev;
+}
 EXPORT_SYMBOL(mx51_revision);
 
-#अगर_घोषित CONFIG_NEON
+#ifdef CONFIG_NEON
 
 /*
- * All versions of the silicon beक्रमe Rev. 3 have broken NEON implementations.
+ * All versions of the silicon before Rev. 3 have broken NEON implementations.
  * Dependent on link order - so the assumption is that vfp_init is called
- * beक्रमe us.
+ * before us.
  */
-पूर्णांक __init mx51_neon_fixup(व्योम)
-अणु
-	अगर (mx51_revision() < IMX_CHIP_REVISION_3_0 &&
-			(elf_hwcap & HWCAP_NEON)) अणु
+int __init mx51_neon_fixup(void)
+{
+	if (mx51_revision() < IMX_CHIP_REVISION_3_0 &&
+			(elf_hwcap & HWCAP_NEON)) {
 		elf_hwcap &= ~HWCAP_NEON;
 		pr_info("Turning off NEON support, detected broken NEON implementation\n");
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-#पूर्ण_अगर
+#endif
 
-अटल पूर्णांक get_mx53_srev(व्योम)
-अणु
-	u32 rev = imx5_पढ़ो_srev_reg("fsl,imx53-iim");
+static int get_mx53_srev(void)
+{
+	u32 rev = imx5_read_srev_reg("fsl,imx53-iim");
 
-	चयन (rev) अणु
-	हाल 0x0:
-		वापस IMX_CHIP_REVISION_1_0;
-	हाल 0x2:
-		वापस IMX_CHIP_REVISION_2_0;
-	हाल 0x3:
-		वापस IMX_CHIP_REVISION_2_1;
-	शेष:
-		वापस IMX_CHIP_REVISION_UNKNOWN;
-	पूर्ण
-पूर्ण
+	switch (rev) {
+	case 0x0:
+		return IMX_CHIP_REVISION_1_0;
+	case 0x2:
+		return IMX_CHIP_REVISION_2_0;
+	case 0x3:
+		return IMX_CHIP_REVISION_2_1;
+	default:
+		return IMX_CHIP_REVISION_UNKNOWN;
+	}
+}
 
 /*
  * Returns:
  *	the silicon revision of the cpu
  */
-पूर्णांक mx53_revision(व्योम)
-अणु
-	अगर (mx5_cpu_rev == -1)
+int mx53_revision(void)
+{
+	if (mx5_cpu_rev == -1)
 		mx5_cpu_rev = get_mx53_srev();
 
-	वापस mx5_cpu_rev;
-पूर्ण
+	return mx5_cpu_rev;
+}
 EXPORT_SYMBOL(mx53_revision);
 
-#घोषणा ARM_GPC		0x4
-#घोषणा DBGEN		BIT(16)
+#define ARM_GPC		0x4
+#define DBGEN		BIT(16)
 
 /*
- * This enables the DBGEN bit in ARM_GPC रेजिस्टर, which is
- * required क्रम accessing some perक्रमmance counter features.
- * Technically it is only required जबतक perf is used, but to
- * keep the source code simple we just enable it all the समय
+ * This enables the DBGEN bit in ARM_GPC register, which is
+ * required for accessing some performance counter features.
+ * Technically it is only required while perf is used, but to
+ * keep the source code simple we just enable it all the time
  * when the kernel configuration allows using the feature.
  */
-व्योम __init imx5_pmu_init(व्योम)
-अणु
-	व्योम __iomem *tigerp_base;
-	काष्ठा device_node *np;
+void __init imx5_pmu_init(void)
+{
+	void __iomem *tigerp_base;
+	struct device_node *np;
 	u32 gpc;
 
-	अगर (!IS_ENABLED(CONFIG_ARM_PMU))
-		वापस;
+	if (!IS_ENABLED(CONFIG_ARM_PMU))
+		return;
 
-	np = of_find_compatible_node(शून्य, शून्य, "arm,cortex-a8-pmu");
-	अगर (!np)
-		वापस;
+	np = of_find_compatible_node(NULL, NULL, "arm,cortex-a8-pmu");
+	if (!np)
+		return;
 
-	अगर (!of_property_पढ़ो_bool(np, "secure-reg-access"))
-		जाओ निकास;
+	if (!of_property_read_bool(np, "secure-reg-access"))
+		goto exit;
 
 	of_node_put(np);
 
-	np = of_find_compatible_node(शून्य, शून्य, "fsl,imx51-tigerp");
-	अगर (!np)
-		वापस;
+	np = of_find_compatible_node(NULL, NULL, "fsl,imx51-tigerp");
+	if (!np)
+		return;
 
 	tigerp_base = of_iomap(np, 0);
-	अगर (!tigerp_base)
-		जाओ निकास;
+	if (!tigerp_base)
+		goto exit;
 
-	gpc = पढ़ोl_relaxed(tigerp_base + ARM_GPC);
+	gpc = readl_relaxed(tigerp_base + ARM_GPC);
 	gpc |= DBGEN;
-	ग_लिखोl_relaxed(gpc, tigerp_base + ARM_GPC);
+	writel_relaxed(gpc, tigerp_base + ARM_GPC);
 	iounmap(tigerp_base);
-निकास:
+exit:
 	of_node_put(np);
 
-पूर्ण
+}

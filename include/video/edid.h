@@ -1,11 +1,10 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __linux_video_edid_h__
-#घोषणा __linux_video_edid_h__
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __linux_video_edid_h__
+#define __linux_video_edid_h__
 
-#समावेश <uapi/video/edid.h>
+#include <uapi/video/edid.h>
 
-#अगर_घोषित CONFIG_X86
-बाह्य काष्ठा edid_info edid_info;
-#पूर्ण_अगर
-#पूर्ण_अगर /* __linux_video_edid_h__ */
+#ifdef CONFIG_X86
+extern struct edid_info edid_info;
+#endif
+#endif /* __linux_video_edid_h__ */

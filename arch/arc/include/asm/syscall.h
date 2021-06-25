@@ -1,79 +1,78 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (C) 2004, 2007-2010, 2011-2012 Synopsys, Inc. (www.synopsys.com)
  */
 
-#अगर_अघोषित _ASM_ARC_SYSCALL_H
-#घोषणा _ASM_ARC_SYSCALL_H  1
+#ifndef _ASM_ARC_SYSCALL_H
+#define _ASM_ARC_SYSCALL_H  1
 
-#समावेश <uapi/linux/audit.h>
-#समावेश <linux/err.h>
-#समावेश <linux/sched.h>
-#समावेश <यंत्र/unistd.h>
-#समावेश <यंत्र/ptrace.h>		/* in_syscall() */
+#include <uapi/linux/audit.h>
+#include <linux/err.h>
+#include <linux/sched.h>
+#include <asm/unistd.h>
+#include <asm/ptrace.h>		/* in_syscall() */
 
-अटल अंतरभूत दीर्घ
-syscall_get_nr(काष्ठा task_काष्ठा *task, काष्ठा pt_regs *regs)
-अणु
-	अगर (user_mode(regs) && in_syscall(regs))
-		वापस regs->r8;
-	अन्यथा
-		वापस -1;
-पूर्ण
+static inline long
+syscall_get_nr(struct task_struct *task, struct pt_regs *regs)
+{
+	if (user_mode(regs) && in_syscall(regs))
+		return regs->r8;
+	else
+		return -1;
+}
 
-अटल अंतरभूत व्योम
-syscall_rollback(काष्ठा task_काष्ठा *task, काष्ठा pt_regs *regs)
-अणु
+static inline void
+syscall_rollback(struct task_struct *task, struct pt_regs *regs)
+{
 	regs->r0 = regs->orig_r0;
-पूर्ण
+}
 
-अटल अंतरभूत दीर्घ
-syscall_get_error(काष्ठा task_काष्ठा *task, काष्ठा pt_regs *regs)
-अणु
-	/* 0 अगर syscall succeeded, otherwise -Errorcode */
-	वापस IS_ERR_VALUE(regs->r0) ? regs->r0 : 0;
-पूर्ण
+static inline long
+syscall_get_error(struct task_struct *task, struct pt_regs *regs)
+{
+	/* 0 if syscall succeeded, otherwise -Errorcode */
+	return IS_ERR_VALUE(regs->r0) ? regs->r0 : 0;
+}
 
-अटल अंतरभूत दीर्घ
-syscall_get_वापस_value(काष्ठा task_काष्ठा *task, काष्ठा pt_regs *regs)
-अणु
-	वापस regs->r0;
-पूर्ण
+static inline long
+syscall_get_return_value(struct task_struct *task, struct pt_regs *regs)
+{
+	return regs->r0;
+}
 
-अटल अंतरभूत व्योम
-syscall_set_वापस_value(काष्ठा task_काष्ठा *task, काष्ठा pt_regs *regs,
-			 पूर्णांक error, दीर्घ val)
-अणु
-	regs->r0 = (दीर्घ) error ?: val;
-पूर्ण
+static inline void
+syscall_set_return_value(struct task_struct *task, struct pt_regs *regs,
+			 int error, long val)
+{
+	regs->r0 = (long) error ?: val;
+}
 
 /*
  * @i:      argument index [0,5]
  * @n:      number of arguments; n+i must be [1,6].
  */
-अटल अंतरभूत व्योम
-syscall_get_arguments(काष्ठा task_काष्ठा *task, काष्ठा pt_regs *regs,
-		      अचिन्हित दीर्घ *args)
-अणु
-	अचिन्हित दीर्घ *inside_ptregs = &(regs->r0);
-	अचिन्हित पूर्णांक n = 6;
-	अचिन्हित पूर्णांक i = 0;
+static inline void
+syscall_get_arguments(struct task_struct *task, struct pt_regs *regs,
+		      unsigned long *args)
+{
+	unsigned long *inside_ptregs = &(regs->r0);
+	unsigned int n = 6;
+	unsigned int i = 0;
 
-	जबतक (n--) अणु
+	while (n--) {
 		args[i++] = (*inside_ptregs);
 		inside_ptregs--;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल अंतरभूत पूर्णांक
-syscall_get_arch(काष्ठा task_काष्ठा *task)
-अणु
-	वापस IS_ENABLED(CONFIG_ISA_ARCOMPACT)
+static inline int
+syscall_get_arch(struct task_struct *task)
+{
+	return IS_ENABLED(CONFIG_ISA_ARCOMPACT)
 		? (IS_ENABLED(CONFIG_CPU_BIG_ENDIAN)
 			? AUDIT_ARCH_ARCOMPACTBE : AUDIT_ARCH_ARCOMPACT)
 		: (IS_ENABLED(CONFIG_CPU_BIG_ENDIAN)
 			? AUDIT_ARCH_ARCV2BE : AUDIT_ARCH_ARCV2);
-पूर्ण
+}
 
-#पूर्ण_अगर
+#endif

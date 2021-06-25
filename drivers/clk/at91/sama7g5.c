@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * SAMA7G5 PMC code.
  *
@@ -8,45 +7,45 @@
  * Author: Claudiu Beznea <claudiu.beznea@microchip.com>
  *
  */
-#समावेश <linux/clk.h>
-#समावेश <linux/clk-provider.h>
-#समावेश <linux/mfd/syscon.h>
-#समावेश <linux/slab.h>
+#include <linux/clk.h>
+#include <linux/clk-provider.h>
+#include <linux/mfd/syscon.h>
+#include <linux/slab.h>
 
-#समावेश <dt-bindings/घड़ी/at91.h>
+#include <dt-bindings/clock/at91.h>
 
-#समावेश "pmc.h"
+#include "pmc.h"
 
-#घोषणा SAMA7G5_INIT_TABLE(_table, _count)		\
-	करो अणु						\
+#define SAMA7G5_INIT_TABLE(_table, _count)		\
+	do {						\
 		u8 _i;					\
-		क्रम (_i = 0; _i < (_count); _i++)	\
+		for (_i = 0; _i < (_count); _i++)	\
 			(_table)[_i] = _i;		\
-	पूर्ण जबतक (0)
+	} while (0)
 
-#घोषणा SAMA7G5_FILL_TABLE(_to, _from, _count)		\
-	करो अणु						\
+#define SAMA7G5_FILL_TABLE(_to, _from, _count)		\
+	do {						\
 		u8 _i;					\
-		क्रम (_i = 0; _i < (_count); _i++) अणु	\
+		for (_i = 0; _i < (_count); _i++) {	\
 			(_to)[_i] = (_from)[_i];	\
-		पूर्ण					\
-	पूर्ण जबतक (0)
+		}					\
+	} while (0)
 
-अटल DEFINE_SPINLOCK(pmc_pll_lock);
-अटल DEFINE_SPINLOCK(pmc_mck0_lock);
-अटल DEFINE_SPINLOCK(pmc_mckX_lock);
+static DEFINE_SPINLOCK(pmc_pll_lock);
+static DEFINE_SPINLOCK(pmc_mck0_lock);
+static DEFINE_SPINLOCK(pmc_mckX_lock);
 
 /**
- * PLL घड़ीs identअगरiers
- * @PLL_ID_CPU:		CPU PLL identअगरier
- * @PLL_ID_SYS:		System PLL identअगरier
- * @PLL_ID_DDR:		DDR PLL identअगरier
- * @PLL_ID_IMG:		Image subप्रणाली PLL identअगरier
- * @PLL_ID_BAUD:	Baud PLL identअगरier
- * @PLL_ID_AUDIO:	Audio PLL identअगरier
- * @PLL_ID_ETH:		Ethernet PLL identअगरier
+ * PLL clocks identifiers
+ * @PLL_ID_CPU:		CPU PLL identifier
+ * @PLL_ID_SYS:		System PLL identifier
+ * @PLL_ID_DDR:		DDR PLL identifier
+ * @PLL_ID_IMG:		Image subsystem PLL identifier
+ * @PLL_ID_BAUD:	Baud PLL identifier
+ * @PLL_ID_AUDIO:	Audio PLL identifier
+ * @PLL_ID_ETH:		Ethernet PLL identifier
  */
-क्रमागत pll_ids अणु
+enum pll_ids {
 	PLL_ID_CPU,
 	PLL_ID_SYS,
 	PLL_ID_DDR,
@@ -55,962 +54,962 @@
 	PLL_ID_AUDIO,
 	PLL_ID_ETH,
 	PLL_ID_MAX,
-पूर्ण;
+};
 
 /**
- * PLL type identअगरiers
- * @PLL_TYPE_FRAC:	fractional PLL identअगरier
- * @PLL_TYPE_DIV:	भागider PLL identअगरier
+ * PLL type identifiers
+ * @PLL_TYPE_FRAC:	fractional PLL identifier
+ * @PLL_TYPE_DIV:	divider PLL identifier
  */
-क्रमागत pll_type अणु
+enum pll_type {
 	PLL_TYPE_FRAC,
 	PLL_TYPE_DIV,
-पूर्ण;
+};
 
-/* Layout क्रम fractional PLLs. */
-अटल स्थिर काष्ठा clk_pll_layout pll_layout_frac = अणु
+/* Layout for fractional PLLs. */
+static const struct clk_pll_layout pll_layout_frac = {
 	.mul_mask	= GENMASK(31, 24),
 	.frac_mask	= GENMASK(21, 0),
-	.mul_shअगरt	= 24,
-	.frac_shअगरt	= 0,
-पूर्ण;
+	.mul_shift	= 24,
+	.frac_shift	= 0,
+};
 
-/* Layout क्रम DIVPMC भागiders. */
-अटल स्थिर काष्ठा clk_pll_layout pll_layout_भागpmc = अणु
-	.भाग_mask	= GENMASK(7, 0),
-	.enभाग_mask	= BIT(29),
-	.भाग_shअगरt	= 0,
-	.enभाग_shअगरt	= 29,
-पूर्ण;
+/* Layout for DIVPMC dividers. */
+static const struct clk_pll_layout pll_layout_divpmc = {
+	.div_mask	= GENMASK(7, 0),
+	.endiv_mask	= BIT(29),
+	.div_shift	= 0,
+	.endiv_shift	= 29,
+};
 
-/* Layout क्रम DIVIO भागiders. */
-अटल स्थिर काष्ठा clk_pll_layout pll_layout_भागio = अणु
-	.भाग_mask	= GENMASK(19, 12),
-	.enभाग_mask	= BIT(30),
-	.भाग_shअगरt	= 12,
-	.enभाग_shअगरt	= 30,
-पूर्ण;
+/* Layout for DIVIO dividers. */
+static const struct clk_pll_layout pll_layout_divio = {
+	.div_mask	= GENMASK(19, 12),
+	.endiv_mask	= BIT(30),
+	.div_shift	= 12,
+	.endiv_shift	= 30,
+};
 
 /*
  * CPU PLL output range.
  * Notice: The upper limit has been setup to 1000000002 due to hardware
  * block which cannot output exactly 1GHz.
  */
-अटल स्थिर काष्ठा clk_range cpu_pll_outमाला_दो[] = अणु
-	अणु .min = 2343750, .max = 1000000002 पूर्ण,
-पूर्ण;
+static const struct clk_range cpu_pll_outputs[] = {
+	{ .min = 2343750, .max = 1000000002 },
+};
 
 /* PLL output range. */
-अटल स्थिर काष्ठा clk_range pll_outमाला_दो[] = अणु
-	अणु .min = 2343750, .max = 1200000000 पूर्ण,
-पूर्ण;
+static const struct clk_range pll_outputs[] = {
+	{ .min = 2343750, .max = 1200000000 },
+};
 
-/* CPU PLL अक्षरacteristics. */
-अटल स्थिर काष्ठा clk_pll_अक्षरacteristics cpu_pll_अक्षरacteristics = अणु
-	.input = अणु .min = 12000000, .max = 50000000 पूर्ण,
-	.num_output = ARRAY_SIZE(cpu_pll_outमाला_दो),
-	.output = cpu_pll_outमाला_दो,
-पूर्ण;
+/* CPU PLL characteristics. */
+static const struct clk_pll_characteristics cpu_pll_characteristics = {
+	.input = { .min = 12000000, .max = 50000000 },
+	.num_output = ARRAY_SIZE(cpu_pll_outputs),
+	.output = cpu_pll_outputs,
+};
 
-/* PLL अक्षरacteristics. */
-अटल स्थिर काष्ठा clk_pll_अक्षरacteristics pll_अक्षरacteristics = अणु
-	.input = अणु .min = 12000000, .max = 50000000 पूर्ण,
-	.num_output = ARRAY_SIZE(pll_outमाला_दो),
-	.output = pll_outमाला_दो,
-पूर्ण;
+/* PLL characteristics. */
+static const struct clk_pll_characteristics pll_characteristics = {
+	.input = { .min = 12000000, .max = 50000000 },
+	.num_output = ARRAY_SIZE(pll_outputs),
+	.output = pll_outputs,
+};
 
 /**
- * PLL घड़ीs description
- * @n:		घड़ी name
- * @p:		घड़ी parent
- * @l:		घड़ी layout
- * @c:		घड़ी अक्षरacteristics
- * @t:		घड़ी type
- * @f:		घड़ी flags
+ * PLL clocks description
+ * @n:		clock name
+ * @p:		clock parent
+ * @l:		clock layout
+ * @c:		clock characteristics
+ * @t:		clock type
+ * @f:		clock flags
  * @eid:	export index in sama7g5->chws[] array
  */
-अटल स्थिर काष्ठा अणु
-	स्थिर अक्षर *n;
-	स्थिर अक्षर *p;
-	स्थिर काष्ठा clk_pll_layout *l;
-	स्थिर काष्ठा clk_pll_अक्षरacteristics *c;
-	अचिन्हित दीर्घ f;
+static const struct {
+	const char *n;
+	const char *p;
+	const struct clk_pll_layout *l;
+	const struct clk_pll_characteristics *c;
+	unsigned long f;
 	u8 t;
 	u8 eid;
-पूर्ण sama7g5_plls[][PLL_ID_MAX] = अणु
-	[PLL_ID_CPU] = अणु
-		अणु .n = "cpupll_fracck",
+} sama7g5_plls[][PLL_ID_MAX] = {
+	[PLL_ID_CPU] = {
+		{ .n = "cpupll_fracck",
 		  .p = "mainck",
 		  .l = &pll_layout_frac,
-		  .c = &cpu_pll_अक्षरacteristics,
+		  .c = &cpu_pll_characteristics,
 		  .t = PLL_TYPE_FRAC,
 		   /*
-		    * This feeds cpupll_भागpmcck which feeds CPU. It should
+		    * This feeds cpupll_divpmcck which feeds CPU. It should
 		    * not be disabled.
 		    */
-		  .f = CLK_IS_CRITICAL, पूर्ण,
+		  .f = CLK_IS_CRITICAL, },
 
-		अणु .n = "cpupll_divpmcck",
+		{ .n = "cpupll_divpmcck",
 		  .p = "cpupll_fracck",
-		  .l = &pll_layout_भागpmc,
-		  .c = &cpu_pll_अक्षरacteristics,
+		  .l = &pll_layout_divpmc,
+		  .c = &cpu_pll_characteristics,
 		  .t = PLL_TYPE_DIV,
 		   /* This feeds CPU. It should not be disabled. */
 		  .f = CLK_IS_CRITICAL | CLK_SET_RATE_PARENT,
-		  .eid = PMC_CPUPLL, पूर्ण,
-	पूर्ण,
+		  .eid = PMC_CPUPLL, },
+	},
 
-	[PLL_ID_SYS] = अणु
-		अणु .n = "syspll_fracck",
+	[PLL_ID_SYS] = {
+		{ .n = "syspll_fracck",
 		  .p = "mainck",
 		  .l = &pll_layout_frac,
-		  .c = &pll_अक्षरacteristics,
+		  .c = &pll_characteristics,
 		  .t = PLL_TYPE_FRAC,
 		   /*
-		    * This feeds syspll_भागpmcck which may feed critical parts
-		    * of the प्रणालीs like समयrs. Thereक्रमe it should not be
+		    * This feeds syspll_divpmcck which may feed critical parts
+		    * of the systems like timers. Therefore it should not be
 		    * disabled.
 		    */
-		  .f = CLK_IS_CRITICAL | CLK_SET_RATE_GATE, पूर्ण,
+		  .f = CLK_IS_CRITICAL | CLK_SET_RATE_GATE, },
 
-		अणु .n = "syspll_divpmcck",
+		{ .n = "syspll_divpmcck",
 		  .p = "syspll_fracck",
-		  .l = &pll_layout_भागpmc,
-		  .c = &pll_अक्षरacteristics,
+		  .l = &pll_layout_divpmc,
+		  .c = &pll_characteristics,
 		  .t = PLL_TYPE_DIV,
 		   /*
-		    * This may feed critical parts of the प्रणालीs like समयrs.
-		    * Thereक्रमe it should not be disabled.
+		    * This may feed critical parts of the systems like timers.
+		    * Therefore it should not be disabled.
 		    */
 		  .f = CLK_IS_CRITICAL | CLK_SET_RATE_GATE,
-		  .eid = PMC_SYSPLL, पूर्ण,
-	पूर्ण,
+		  .eid = PMC_SYSPLL, },
+	},
 
-	[PLL_ID_DDR] = अणु
-		अणु .n = "ddrpll_fracck",
+	[PLL_ID_DDR] = {
+		{ .n = "ddrpll_fracck",
 		  .p = "mainck",
 		  .l = &pll_layout_frac,
-		  .c = &pll_अक्षरacteristics,
+		  .c = &pll_characteristics,
 		  .t = PLL_TYPE_FRAC,
 		   /*
-		    * This feeds ddrpll_भागpmcck which feeds DDR. It should not
+		    * This feeds ddrpll_divpmcck which feeds DDR. It should not
 		    * be disabled.
 		    */
-		  .f = CLK_IS_CRITICAL | CLK_SET_RATE_GATE, पूर्ण,
+		  .f = CLK_IS_CRITICAL | CLK_SET_RATE_GATE, },
 
-		अणु .n = "ddrpll_divpmcck",
+		{ .n = "ddrpll_divpmcck",
 		  .p = "ddrpll_fracck",
-		  .l = &pll_layout_भागpmc,
-		  .c = &pll_अक्षरacteristics,
+		  .l = &pll_layout_divpmc,
+		  .c = &pll_characteristics,
 		  .t = PLL_TYPE_DIV,
 		   /* This feeds DDR. It should not be disabled. */
-		  .f = CLK_IS_CRITICAL | CLK_SET_RATE_GATE, पूर्ण,
-	पूर्ण,
+		  .f = CLK_IS_CRITICAL | CLK_SET_RATE_GATE, },
+	},
 
-	[PLL_ID_IMG] = अणु
-		अणु .n = "imgpll_fracck",
+	[PLL_ID_IMG] = {
+		{ .n = "imgpll_fracck",
 		  .p = "mainck",
 		  .l = &pll_layout_frac,
-		  .c = &pll_अक्षरacteristics,
+		  .c = &pll_characteristics,
 		  .t = PLL_TYPE_FRAC,
-		  .f = CLK_SET_RATE_GATE, पूर्ण,
+		  .f = CLK_SET_RATE_GATE, },
 
-		अणु .n = "imgpll_divpmcck",
+		{ .n = "imgpll_divpmcck",
 		  .p = "imgpll_fracck",
-		  .l = &pll_layout_भागpmc,
-		  .c = &pll_अक्षरacteristics,
+		  .l = &pll_layout_divpmc,
+		  .c = &pll_characteristics,
 		  .t = PLL_TYPE_DIV,
 		  .f = CLK_SET_RATE_GATE | CLK_SET_PARENT_GATE |
-		       CLK_SET_RATE_PARENT, पूर्ण,
-	पूर्ण,
+		       CLK_SET_RATE_PARENT, },
+	},
 
-	[PLL_ID_BAUD] = अणु
-		अणु .n = "baudpll_fracck",
+	[PLL_ID_BAUD] = {
+		{ .n = "baudpll_fracck",
 		  .p = "mainck",
 		  .l = &pll_layout_frac,
-		  .c = &pll_अक्षरacteristics,
+		  .c = &pll_characteristics,
 		  .t = PLL_TYPE_FRAC,
-		  .f = CLK_SET_RATE_GATE, पूर्ण,
+		  .f = CLK_SET_RATE_GATE, },
 
-		अणु .n = "baudpll_divpmcck",
+		{ .n = "baudpll_divpmcck",
 		  .p = "baudpll_fracck",
-		  .l = &pll_layout_भागpmc,
-		  .c = &pll_अक्षरacteristics,
+		  .l = &pll_layout_divpmc,
+		  .c = &pll_characteristics,
 		  .t = PLL_TYPE_DIV,
 		  .f = CLK_SET_RATE_GATE | CLK_SET_PARENT_GATE |
-		       CLK_SET_RATE_PARENT, पूर्ण,
-	पूर्ण,
+		       CLK_SET_RATE_PARENT, },
+	},
 
-	[PLL_ID_AUDIO] = अणु
-		अणु .n = "audiopll_fracck",
+	[PLL_ID_AUDIO] = {
+		{ .n = "audiopll_fracck",
 		  .p = "main_xtal",
 		  .l = &pll_layout_frac,
-		  .c = &pll_अक्षरacteristics,
+		  .c = &pll_characteristics,
 		  .t = PLL_TYPE_FRAC,
-		  .f = CLK_SET_RATE_GATE, पूर्ण,
+		  .f = CLK_SET_RATE_GATE, },
 
-		अणु .n = "audiopll_divpmcck",
+		{ .n = "audiopll_divpmcck",
 		  .p = "audiopll_fracck",
-		  .l = &pll_layout_भागpmc,
-		  .c = &pll_अक्षरacteristics,
+		  .l = &pll_layout_divpmc,
+		  .c = &pll_characteristics,
 		  .t = PLL_TYPE_DIV,
 		  .f = CLK_SET_RATE_GATE | CLK_SET_PARENT_GATE |
 		       CLK_SET_RATE_PARENT,
-		  .eid = PMC_AUDIOPMCPLL, पूर्ण,
+		  .eid = PMC_AUDIOPMCPLL, },
 
-		अणु .n = "audiopll_diviock",
+		{ .n = "audiopll_diviock",
 		  .p = "audiopll_fracck",
-		  .l = &pll_layout_भागio,
-		  .c = &pll_अक्षरacteristics,
+		  .l = &pll_layout_divio,
+		  .c = &pll_characteristics,
 		  .t = PLL_TYPE_DIV,
 		  .f = CLK_SET_RATE_GATE | CLK_SET_PARENT_GATE |
 		       CLK_SET_RATE_PARENT,
-		  .eid = PMC_AUDIOIOPLL, पूर्ण,
-	पूर्ण,
+		  .eid = PMC_AUDIOIOPLL, },
+	},
 
-	[PLL_ID_ETH] = अणु
-		अणु .n = "ethpll_fracck",
+	[PLL_ID_ETH] = {
+		{ .n = "ethpll_fracck",
 		  .p = "main_xtal",
 		  .l = &pll_layout_frac,
-		  .c = &pll_अक्षरacteristics,
+		  .c = &pll_characteristics,
 		  .t = PLL_TYPE_FRAC,
-		  .f = CLK_SET_RATE_GATE, पूर्ण,
+		  .f = CLK_SET_RATE_GATE, },
 
-		अणु .n = "ethpll_divpmcck",
+		{ .n = "ethpll_divpmcck",
 		  .p = "ethpll_fracck",
-		  .l = &pll_layout_भागpmc,
-		  .c = &pll_अक्षरacteristics,
+		  .l = &pll_layout_divpmc,
+		  .c = &pll_characteristics,
 		  .t = PLL_TYPE_DIV,
 		  .f = CLK_SET_RATE_GATE | CLK_SET_PARENT_GATE |
-		       CLK_SET_RATE_PARENT, पूर्ण,
-	पूर्ण,
-पूर्ण;
+		       CLK_SET_RATE_PARENT, },
+	},
+};
 
 /**
- * Master घड़ी (MCK[1..4]) description
- * @n:			घड़ी name
+ * Master clock (MCK[1..4]) description
+ * @n:			clock name
  * @ep:			extra parents names array
- * @ep_chg_chg_id:	index in parents array that specअगरies the changeable
+ * @ep_chg_chg_id:	index in parents array that specifies the changeable
  *			parent
  * @ep_count:		extra parents count
- * @ep_mux_table:	mux table क्रम extra parents
- * @id:			घड़ी id
- * @c:			true अगर घड़ी is critical and cannot be disabled
+ * @ep_mux_table:	mux table for extra parents
+ * @id:			clock id
+ * @c:			true if clock is critical and cannot be disabled
  */
-अटल स्थिर काष्ठा अणु
-	स्थिर अक्षर *n;
-	स्थिर अक्षर *ep[4];
-	पूर्णांक ep_chg_id;
+static const struct {
+	const char *n;
+	const char *ep[4];
+	int ep_chg_id;
 	u8 ep_count;
 	u8 ep_mux_table[4];
 	u8 id;
 	u8 c;
-पूर्ण sama7g5_mckx[] = अणु
-	अणु .n = "mck1",
+} sama7g5_mckx[] = {
+	{ .n = "mck1",
 	  .id = 1,
-	  .ep = अणु "syspll_divpmcck", पूर्ण,
-	  .ep_mux_table = अणु 5, पूर्ण,
+	  .ep = { "syspll_divpmcck", },
+	  .ep_mux_table = { 5, },
 	  .ep_count = 1,
-	  .ep_chg_id = पूर्णांक_न्यून,
-	  .c = 1, पूर्ण,
+	  .ep_chg_id = INT_MIN,
+	  .c = 1, },
 
-	अणु .n = "mck2",
+	{ .n = "mck2",
 	  .id = 2,
-	  .ep = अणु "ddrpll_divpmcck", पूर्ण,
-	  .ep_mux_table = अणु 6, पूर्ण,
+	  .ep = { "ddrpll_divpmcck", },
+	  .ep_mux_table = { 6, },
 	  .ep_count = 1,
-	  .ep_chg_id = पूर्णांक_न्यून,
-	  .c = 1, पूर्ण,
+	  .ep_chg_id = INT_MIN,
+	  .c = 1, },
 
-	अणु .n = "mck3",
+	{ .n = "mck3",
 	  .id = 3,
-	  .ep = अणु "syspll_divpmcck", "ddrpll_divpmcck", "imgpll_divpmcck", पूर्ण,
-	  .ep_mux_table = अणु 5, 6, 7, पूर्ण,
+	  .ep = { "syspll_divpmcck", "ddrpll_divpmcck", "imgpll_divpmcck", },
+	  .ep_mux_table = { 5, 6, 7, },
 	  .ep_count = 3,
-	  .ep_chg_id = 5, पूर्ण,
+	  .ep_chg_id = 5, },
 
-	अणु .n = "mck4",
+	{ .n = "mck4",
 	  .id = 4,
-	  .ep = अणु "syspll_divpmcck", पूर्ण,
-	  .ep_mux_table = अणु 5, पूर्ण,
+	  .ep = { "syspll_divpmcck", },
+	  .ep_mux_table = { 5, },
 	  .ep_count = 1,
-	  .ep_chg_id = पूर्णांक_न्यून,
-	  .c = 1, पूर्ण,
-पूर्ण;
+	  .ep_chg_id = INT_MIN,
+	  .c = 1, },
+};
 
 /**
- * System घड़ी description
- * @n:	घड़ी name
- * @p:	घड़ी parent name
- * @id: घड़ी id
+ * System clock description
+ * @n:	clock name
+ * @p:	clock parent name
+ * @id: clock id
  */
-अटल स्थिर काष्ठा अणु
-	स्थिर अक्षर *n;
-	स्थिर अक्षर *p;
+static const struct {
+	const char *n;
+	const char *p;
 	u8 id;
-पूर्ण sama7g5_प्रणालीck[] = अणु
-	अणु .n = "pck0",		.p = "prog0", .id = 8, पूर्ण,
-	अणु .n = "pck1",		.p = "prog1", .id = 9, पूर्ण,
-	अणु .n = "pck2",		.p = "prog2", .id = 10, पूर्ण,
-	अणु .n = "pck3",		.p = "prog3", .id = 11, पूर्ण,
-	अणु .n = "pck4",		.p = "prog4", .id = 12, पूर्ण,
-	अणु .n = "pck5",		.p = "prog5", .id = 13, पूर्ण,
-	अणु .n = "pck6",		.p = "prog6", .id = 14, पूर्ण,
-	अणु .n = "pck7",		.p = "prog7", .id = 15, पूर्ण,
-पूर्ण;
+} sama7g5_systemck[] = {
+	{ .n = "pck0",		.p = "prog0", .id = 8, },
+	{ .n = "pck1",		.p = "prog1", .id = 9, },
+	{ .n = "pck2",		.p = "prog2", .id = 10, },
+	{ .n = "pck3",		.p = "prog3", .id = 11, },
+	{ .n = "pck4",		.p = "prog4", .id = 12, },
+	{ .n = "pck5",		.p = "prog5", .id = 13, },
+	{ .n = "pck6",		.p = "prog6", .id = 14, },
+	{ .n = "pck7",		.p = "prog7", .id = 15, },
+};
 
-/* Mux table क्रम programmable घड़ीs. */
-अटल u32 sama7g5_prog_mux_table[] = अणु 0, 1, 2, 5, 6, 7, 8, 9, 10, पूर्ण;
+/* Mux table for programmable clocks. */
+static u32 sama7g5_prog_mux_table[] = { 0, 1, 2, 5, 6, 7, 8, 9, 10, };
 
 /**
- * Peripheral घड़ी description
- * @n:		घड़ी name
- * @p:		घड़ी parent name
- * @r:		घड़ी range values
- * @id:		घड़ी id
+ * Peripheral clock description
+ * @n:		clock name
+ * @p:		clock parent name
+ * @r:		clock range values
+ * @id:		clock id
  * @chgp:	index in parent array of the changeable parent
  */
-अटल स्थिर काष्ठा अणु
-	स्थिर अक्षर *n;
-	स्थिर अक्षर *p;
-	काष्ठा clk_range r;
+static const struct {
+	const char *n;
+	const char *p;
+	struct clk_range r;
 	u8 chgp;
 	u8 id;
-पूर्ण sama7g5_periphck[] = अणु
-	अणु .n = "pioA_clk",	.p = "mck0", .id = 11, पूर्ण,
-	अणु .n = "sfr_clk",	.p = "mck1", .id = 19, पूर्ण,
-	अणु .n = "hsmc_clk",	.p = "mck1", .id = 21, पूर्ण,
-	अणु .n = "xdmac0_clk",	.p = "mck1", .id = 22, पूर्ण,
-	अणु .n = "xdmac1_clk",	.p = "mck1", .id = 23, पूर्ण,
-	अणु .n = "xdmac2_clk",	.p = "mck1", .id = 24, पूर्ण,
-	अणु .n = "acc_clk",	.p = "mck1", .id = 25, पूर्ण,
-	अणु .n = "aes_clk",	.p = "mck1", .id = 27, पूर्ण,
-	अणु .n = "tzaesbasc_clk",	.p = "mck1", .id = 28, पूर्ण,
-	अणु .n = "asrc_clk",	.p = "mck1", .id = 30, .r = अणु .max = 200000000, पूर्ण, पूर्ण,
-	अणु .n = "cpkcc_clk",	.p = "mck0", .id = 32, पूर्ण,
-	अणु .n = "csi_clk",	.p = "mck3", .id = 33, .r = अणु .max = 266000000, पूर्ण, .chgp = 1, पूर्ण,
-	अणु .n = "csi2dc_clk",	.p = "mck3", .id = 34, .r = अणु .max = 266000000, पूर्ण, .chgp = 1, पूर्ण,
-	अणु .n = "eic_clk",	.p = "mck1", .id = 37, पूर्ण,
-	अणु .n = "flex0_clk",	.p = "mck1", .id = 38, पूर्ण,
-	अणु .n = "flex1_clk",	.p = "mck1", .id = 39, पूर्ण,
-	अणु .n = "flex2_clk",	.p = "mck1", .id = 40, पूर्ण,
-	अणु .n = "flex3_clk",	.p = "mck1", .id = 41, पूर्ण,
-	अणु .n = "flex4_clk",	.p = "mck1", .id = 42, पूर्ण,
-	अणु .n = "flex5_clk",	.p = "mck1", .id = 43, पूर्ण,
-	अणु .n = "flex6_clk",	.p = "mck1", .id = 44, पूर्ण,
-	अणु .n = "flex7_clk",	.p = "mck1", .id = 45, पूर्ण,
-	अणु .n = "flex8_clk",	.p = "mck1", .id = 46, पूर्ण,
-	अणु .n = "flex9_clk",	.p = "mck1", .id = 47, पूर्ण,
-	अणु .n = "flex10_clk",	.p = "mck1", .id = 48, पूर्ण,
-	अणु .n = "flex11_clk",	.p = "mck1", .id = 49, पूर्ण,
-	अणु .n = "gmac0_clk",	.p = "mck1", .id = 51, पूर्ण,
-	अणु .n = "gmac1_clk",	.p = "mck1", .id = 52, पूर्ण,
-	अणु .n = "icm_clk",	.p = "mck1", .id = 55, पूर्ण,
-	अणु .n = "isc_clk",	.p = "mck3", .id = 56, .r = अणु .max = 266000000, पूर्ण, .chgp = 1, पूर्ण,
-	अणु .n = "i2smcc0_clk",	.p = "mck1", .id = 57, .r = अणु .max = 200000000, पूर्ण, पूर्ण,
-	अणु .n = "i2smcc1_clk",	.p = "mck1", .id = 58, .r = अणु .max = 200000000, पूर्ण, पूर्ण,
-	अणु .n = "matrix_clk",	.p = "mck1", .id = 60, पूर्ण,
-	अणु .n = "mcan0_clk",	.p = "mck1", .id = 61, .r = अणु .max = 200000000, पूर्ण, पूर्ण,
-	अणु .n = "mcan1_clk",	.p = "mck1", .id = 62, .r = अणु .max = 200000000, पूर्ण, पूर्ण,
-	अणु .n = "mcan2_clk",	.p = "mck1", .id = 63, .r = अणु .max = 200000000, पूर्ण, पूर्ण,
-	अणु .n = "mcan3_clk",	.p = "mck1", .id = 64, .r = अणु .max = 200000000, पूर्ण, पूर्ण,
-	अणु .n = "mcan4_clk",	.p = "mck1", .id = 65, .r = अणु .max = 200000000, पूर्ण, पूर्ण,
-	अणु .n = "mcan5_clk",	.p = "mck1", .id = 66, .r = अणु .max = 200000000, पूर्ण, पूर्ण,
-	अणु .n = "pdmc0_clk",	.p = "mck1", .id = 68, .r = अणु .max = 200000000, पूर्ण, पूर्ण,
-	अणु .n = "pdmc1_clk",	.p = "mck1", .id = 69, .r = अणु .max = 200000000, पूर्ण, पूर्ण,
-	अणु .n = "pit64b0_clk",	.p = "mck1", .id = 70, पूर्ण,
-	अणु .n = "pit64b1_clk",	.p = "mck1", .id = 71, पूर्ण,
-	अणु .n = "pit64b2_clk",	.p = "mck1", .id = 72, पूर्ण,
-	अणु .n = "pit64b3_clk",	.p = "mck1", .id = 73, पूर्ण,
-	अणु .n = "pit64b4_clk",	.p = "mck1", .id = 74, पूर्ण,
-	अणु .n = "pit64b5_clk",	.p = "mck1", .id = 75, पूर्ण,
-	अणु .n = "pwm_clk",	.p = "mck1", .id = 77, पूर्ण,
-	अणु .n = "qspi0_clk",	.p = "mck1", .id = 78, पूर्ण,
-	अणु .n = "qspi1_clk",	.p = "mck1", .id = 79, पूर्ण,
-	अणु .n = "sdmmc0_clk",	.p = "mck1", .id = 80, पूर्ण,
-	अणु .n = "sdmmc1_clk",	.p = "mck1", .id = 81, पूर्ण,
-	अणु .n = "sdmmc2_clk",	.p = "mck1", .id = 82, पूर्ण,
-	अणु .n = "sha_clk",	.p = "mck1", .id = 83, पूर्ण,
-	अणु .n = "spdifrx_clk",	.p = "mck1", .id = 84, .r = अणु .max = 200000000, पूर्ण, पूर्ण,
-	अणु .n = "spdiftx_clk",	.p = "mck1", .id = 85, .r = अणु .max = 200000000, पूर्ण, पूर्ण,
-	अणु .n = "ssc0_clk",	.p = "mck1", .id = 86, .r = अणु .max = 200000000, पूर्ण, पूर्ण,
-	अणु .n = "ssc1_clk",	.p = "mck1", .id = 87, .r = अणु .max = 200000000, पूर्ण, पूर्ण,
-	अणु .n = "tcb0_ch0_clk",	.p = "mck1", .id = 88, .r = अणु .max = 200000000, पूर्ण, पूर्ण,
-	अणु .n = "tcb0_ch1_clk",	.p = "mck1", .id = 89, .r = अणु .max = 200000000, पूर्ण, पूर्ण,
-	अणु .n = "tcb0_ch2_clk",	.p = "mck1", .id = 90, .r = अणु .max = 200000000, पूर्ण, पूर्ण,
-	अणु .n = "tcb1_ch0_clk",	.p = "mck1", .id = 91, .r = अणु .max = 200000000, पूर्ण, पूर्ण,
-	अणु .n = "tcb1_ch1_clk",	.p = "mck1", .id = 92, .r = अणु .max = 200000000, पूर्ण, पूर्ण,
-	अणु .n = "tcb1_ch2_clk",	.p = "mck1", .id = 93, .r = अणु .max = 200000000, पूर्ण, पूर्ण,
-	अणु .n = "tcpca_clk",	.p = "mck1", .id = 94, पूर्ण,
-	अणु .n = "tcpcb_clk",	.p = "mck1", .id = 95, पूर्ण,
-	अणु .n = "tdes_clk",	.p = "mck1", .id = 96, पूर्ण,
-	अणु .n = "trng_clk",	.p = "mck1", .id = 97, पूर्ण,
-	अणु .n = "udphsa_clk",	.p = "mck1", .id = 104, पूर्ण,
-	अणु .n = "udphsb_clk",	.p = "mck1", .id = 105, पूर्ण,
-	अणु .n = "uhphs_clk",	.p = "mck1", .id = 106, पूर्ण,
-पूर्ण;
+} sama7g5_periphck[] = {
+	{ .n = "pioA_clk",	.p = "mck0", .id = 11, },
+	{ .n = "sfr_clk",	.p = "mck1", .id = 19, },
+	{ .n = "hsmc_clk",	.p = "mck1", .id = 21, },
+	{ .n = "xdmac0_clk",	.p = "mck1", .id = 22, },
+	{ .n = "xdmac1_clk",	.p = "mck1", .id = 23, },
+	{ .n = "xdmac2_clk",	.p = "mck1", .id = 24, },
+	{ .n = "acc_clk",	.p = "mck1", .id = 25, },
+	{ .n = "aes_clk",	.p = "mck1", .id = 27, },
+	{ .n = "tzaesbasc_clk",	.p = "mck1", .id = 28, },
+	{ .n = "asrc_clk",	.p = "mck1", .id = 30, .r = { .max = 200000000, }, },
+	{ .n = "cpkcc_clk",	.p = "mck0", .id = 32, },
+	{ .n = "csi_clk",	.p = "mck3", .id = 33, .r = { .max = 266000000, }, .chgp = 1, },
+	{ .n = "csi2dc_clk",	.p = "mck3", .id = 34, .r = { .max = 266000000, }, .chgp = 1, },
+	{ .n = "eic_clk",	.p = "mck1", .id = 37, },
+	{ .n = "flex0_clk",	.p = "mck1", .id = 38, },
+	{ .n = "flex1_clk",	.p = "mck1", .id = 39, },
+	{ .n = "flex2_clk",	.p = "mck1", .id = 40, },
+	{ .n = "flex3_clk",	.p = "mck1", .id = 41, },
+	{ .n = "flex4_clk",	.p = "mck1", .id = 42, },
+	{ .n = "flex5_clk",	.p = "mck1", .id = 43, },
+	{ .n = "flex6_clk",	.p = "mck1", .id = 44, },
+	{ .n = "flex7_clk",	.p = "mck1", .id = 45, },
+	{ .n = "flex8_clk",	.p = "mck1", .id = 46, },
+	{ .n = "flex9_clk",	.p = "mck1", .id = 47, },
+	{ .n = "flex10_clk",	.p = "mck1", .id = 48, },
+	{ .n = "flex11_clk",	.p = "mck1", .id = 49, },
+	{ .n = "gmac0_clk",	.p = "mck1", .id = 51, },
+	{ .n = "gmac1_clk",	.p = "mck1", .id = 52, },
+	{ .n = "icm_clk",	.p = "mck1", .id = 55, },
+	{ .n = "isc_clk",	.p = "mck3", .id = 56, .r = { .max = 266000000, }, .chgp = 1, },
+	{ .n = "i2smcc0_clk",	.p = "mck1", .id = 57, .r = { .max = 200000000, }, },
+	{ .n = "i2smcc1_clk",	.p = "mck1", .id = 58, .r = { .max = 200000000, }, },
+	{ .n = "matrix_clk",	.p = "mck1", .id = 60, },
+	{ .n = "mcan0_clk",	.p = "mck1", .id = 61, .r = { .max = 200000000, }, },
+	{ .n = "mcan1_clk",	.p = "mck1", .id = 62, .r = { .max = 200000000, }, },
+	{ .n = "mcan2_clk",	.p = "mck1", .id = 63, .r = { .max = 200000000, }, },
+	{ .n = "mcan3_clk",	.p = "mck1", .id = 64, .r = { .max = 200000000, }, },
+	{ .n = "mcan4_clk",	.p = "mck1", .id = 65, .r = { .max = 200000000, }, },
+	{ .n = "mcan5_clk",	.p = "mck1", .id = 66, .r = { .max = 200000000, }, },
+	{ .n = "pdmc0_clk",	.p = "mck1", .id = 68, .r = { .max = 200000000, }, },
+	{ .n = "pdmc1_clk",	.p = "mck1", .id = 69, .r = { .max = 200000000, }, },
+	{ .n = "pit64b0_clk",	.p = "mck1", .id = 70, },
+	{ .n = "pit64b1_clk",	.p = "mck1", .id = 71, },
+	{ .n = "pit64b2_clk",	.p = "mck1", .id = 72, },
+	{ .n = "pit64b3_clk",	.p = "mck1", .id = 73, },
+	{ .n = "pit64b4_clk",	.p = "mck1", .id = 74, },
+	{ .n = "pit64b5_clk",	.p = "mck1", .id = 75, },
+	{ .n = "pwm_clk",	.p = "mck1", .id = 77, },
+	{ .n = "qspi0_clk",	.p = "mck1", .id = 78, },
+	{ .n = "qspi1_clk",	.p = "mck1", .id = 79, },
+	{ .n = "sdmmc0_clk",	.p = "mck1", .id = 80, },
+	{ .n = "sdmmc1_clk",	.p = "mck1", .id = 81, },
+	{ .n = "sdmmc2_clk",	.p = "mck1", .id = 82, },
+	{ .n = "sha_clk",	.p = "mck1", .id = 83, },
+	{ .n = "spdifrx_clk",	.p = "mck1", .id = 84, .r = { .max = 200000000, }, },
+	{ .n = "spdiftx_clk",	.p = "mck1", .id = 85, .r = { .max = 200000000, }, },
+	{ .n = "ssc0_clk",	.p = "mck1", .id = 86, .r = { .max = 200000000, }, },
+	{ .n = "ssc1_clk",	.p = "mck1", .id = 87, .r = { .max = 200000000, }, },
+	{ .n = "tcb0_ch0_clk",	.p = "mck1", .id = 88, .r = { .max = 200000000, }, },
+	{ .n = "tcb0_ch1_clk",	.p = "mck1", .id = 89, .r = { .max = 200000000, }, },
+	{ .n = "tcb0_ch2_clk",	.p = "mck1", .id = 90, .r = { .max = 200000000, }, },
+	{ .n = "tcb1_ch0_clk",	.p = "mck1", .id = 91, .r = { .max = 200000000, }, },
+	{ .n = "tcb1_ch1_clk",	.p = "mck1", .id = 92, .r = { .max = 200000000, }, },
+	{ .n = "tcb1_ch2_clk",	.p = "mck1", .id = 93, .r = { .max = 200000000, }, },
+	{ .n = "tcpca_clk",	.p = "mck1", .id = 94, },
+	{ .n = "tcpcb_clk",	.p = "mck1", .id = 95, },
+	{ .n = "tdes_clk",	.p = "mck1", .id = 96, },
+	{ .n = "trng_clk",	.p = "mck1", .id = 97, },
+	{ .n = "udphsa_clk",	.p = "mck1", .id = 104, },
+	{ .n = "udphsb_clk",	.p = "mck1", .id = 105, },
+	{ .n = "uhphs_clk",	.p = "mck1", .id = 106, },
+};
 
 /**
- * Generic घड़ी description
- * @n:			घड़ी name
+ * Generic clock description
+ * @n:			clock name
  * @pp:			PLL parents
  * @pp_mux_table:	PLL parents mux table
- * @r:			घड़ी output range
+ * @r:			clock output range
  * @pp_chg_id:		id in parent array of changeable PLL parent
  * @pp_count:		PLL parents count
- * @id:			घड़ी id
+ * @id:			clock id
  */
-अटल स्थिर काष्ठा अणु
-	स्थिर अक्षर *n;
-	स्थिर अक्षर *pp[8];
-	स्थिर अक्षर pp_mux_table[8];
-	काष्ठा clk_range r;
-	पूर्णांक pp_chg_id;
+static const struct {
+	const char *n;
+	const char *pp[8];
+	const char pp_mux_table[8];
+	struct clk_range r;
+	int pp_chg_id;
 	u8 pp_count;
 	u8 id;
-पूर्ण sama7g5_gck[] = अणु
-	अणु .n  = "adc_gclk",
+} sama7g5_gck[] = {
+	{ .n  = "adc_gclk",
 	  .id = 26,
-	  .r = अणु .max = 100000000, पूर्ण,
-	  .pp = अणु "syspll_divpmcck", "imgpll_divpmcck", "audiopll_divpmcck", पूर्ण,
-	  .pp_mux_table = अणु 5, 7, 9, पूर्ण,
+	  .r = { .max = 100000000, },
+	  .pp = { "syspll_divpmcck", "imgpll_divpmcck", "audiopll_divpmcck", },
+	  .pp_mux_table = { 5, 7, 9, },
 	  .pp_count = 3,
-	  .pp_chg_id = पूर्णांक_न्यून, पूर्ण,
+	  .pp_chg_id = INT_MIN, },
 
-	अणु .n  = "asrc_gclk",
+	{ .n  = "asrc_gclk",
 	  .id = 30,
-	  .r = अणु .max = 200000000 पूर्ण,
-	  .pp = अणु "audiopll_divpmcck", पूर्ण,
-	  .pp_mux_table = अणु 9, पूर्ण,
+	  .r = { .max = 200000000 },
+	  .pp = { "audiopll_divpmcck", },
+	  .pp_mux_table = { 9, },
 	  .pp_count = 1,
-	  .pp_chg_id = 3, पूर्ण,
+	  .pp_chg_id = 3, },
 
-	अणु .n  = "csi_gclk",
+	{ .n  = "csi_gclk",
 	  .id = 33,
-	  .r = अणु .max = 27000000  पूर्ण,
-	  .pp = अणु "ddrpll_divpmcck", "imgpll_divpmcck", पूर्ण,
-	  .pp_mux_table = अणु 6, 7, पूर्ण,
+	  .r = { .max = 27000000  },
+	  .pp = { "ddrpll_divpmcck", "imgpll_divpmcck", },
+	  .pp_mux_table = { 6, 7, },
 	  .pp_count = 2,
-	  .pp_chg_id = पूर्णांक_न्यून, पूर्ण,
+	  .pp_chg_id = INT_MIN, },
 
-	अणु .n  = "flex0_gclk",
+	{ .n  = "flex0_gclk",
 	  .id = 38,
-	  .r = अणु .max = 200000000 पूर्ण,
-	  .pp = अणु "syspll_divpmcck", "baudpll_divpmcck", पूर्ण,
-	  .pp_mux_table = अणु 5, 8, पूर्ण,
+	  .r = { .max = 200000000 },
+	  .pp = { "syspll_divpmcck", "baudpll_divpmcck", },
+	  .pp_mux_table = { 5, 8, },
 	  .pp_count = 2,
-	  .pp_chg_id = पूर्णांक_न्यून, पूर्ण,
+	  .pp_chg_id = INT_MIN, },
 
-	अणु .n  = "flex1_gclk",
+	{ .n  = "flex1_gclk",
 	  .id = 39,
-	  .r = अणु .max = 200000000 पूर्ण,
-	  .pp = अणु "syspll_divpmcck", "baudpll_divpmcck", पूर्ण,
-	  .pp_mux_table = अणु 5, 8, पूर्ण,
+	  .r = { .max = 200000000 },
+	  .pp = { "syspll_divpmcck", "baudpll_divpmcck", },
+	  .pp_mux_table = { 5, 8, },
 	  .pp_count = 2,
-	  .pp_chg_id = पूर्णांक_न्यून, पूर्ण,
+	  .pp_chg_id = INT_MIN, },
 
-	अणु .n  = "flex2_gclk",
+	{ .n  = "flex2_gclk",
 	  .id = 40,
-	  .r = अणु .max = 200000000 पूर्ण,
-	  .pp = अणु "syspll_divpmcck", "baudpll_divpmcck", पूर्ण,
-	  .pp_mux_table = अणु 5, 8, पूर्ण,
+	  .r = { .max = 200000000 },
+	  .pp = { "syspll_divpmcck", "baudpll_divpmcck", },
+	  .pp_mux_table = { 5, 8, },
 	  .pp_count = 2,
-	  .pp_chg_id = पूर्णांक_न्यून, पूर्ण,
+	  .pp_chg_id = INT_MIN, },
 
-	अणु .n  = "flex3_gclk",
+	{ .n  = "flex3_gclk",
 	  .id = 41,
-	  .r = अणु .max = 200000000 पूर्ण,
-	  .pp = अणु "syspll_divpmcck", "baudpll_divpmcck", पूर्ण,
-	  .pp_mux_table = अणु 5, 8, पूर्ण,
+	  .r = { .max = 200000000 },
+	  .pp = { "syspll_divpmcck", "baudpll_divpmcck", },
+	  .pp_mux_table = { 5, 8, },
 	  .pp_count = 2,
-	  .pp_chg_id = पूर्णांक_न्यून, पूर्ण,
+	  .pp_chg_id = INT_MIN, },
 
-	अणु .n  = "flex4_gclk",
+	{ .n  = "flex4_gclk",
 	  .id = 42,
-	  .r = अणु .max = 200000000 पूर्ण,
-	  .pp = अणु "syspll_divpmcck", "baudpll_divpmcck", पूर्ण,
-	  .pp_mux_table = अणु 5, 8, पूर्ण,
+	  .r = { .max = 200000000 },
+	  .pp = { "syspll_divpmcck", "baudpll_divpmcck", },
+	  .pp_mux_table = { 5, 8, },
 	  .pp_count = 2,
-	  .pp_chg_id = पूर्णांक_न्यून, पूर्ण,
+	  .pp_chg_id = INT_MIN, },
 
-	अणु .n  = "flex5_gclk",
+	{ .n  = "flex5_gclk",
 	  .id = 43,
-	  .r = अणु .max = 200000000 पूर्ण,
-	  .pp = अणु "syspll_divpmcck", "baudpll_divpmcck", पूर्ण,
-	  .pp_mux_table = अणु 5, 8, पूर्ण,
+	  .r = { .max = 200000000 },
+	  .pp = { "syspll_divpmcck", "baudpll_divpmcck", },
+	  .pp_mux_table = { 5, 8, },
 	  .pp_count = 2,
-	  .pp_chg_id = पूर्णांक_न्यून, पूर्ण,
+	  .pp_chg_id = INT_MIN, },
 
-	अणु .n  = "flex6_gclk",
+	{ .n  = "flex6_gclk",
 	  .id = 44,
-	  .r = अणु .max = 200000000 पूर्ण,
-	  .pp = अणु "syspll_divpmcck", "baudpll_divpmcck", पूर्ण,
-	  .pp_mux_table = अणु 5, 8, पूर्ण,
+	  .r = { .max = 200000000 },
+	  .pp = { "syspll_divpmcck", "baudpll_divpmcck", },
+	  .pp_mux_table = { 5, 8, },
 	  .pp_count = 2,
-	  .pp_chg_id = पूर्णांक_न्यून, पूर्ण,
+	  .pp_chg_id = INT_MIN, },
 
-	अणु .n  = "flex7_gclk",
+	{ .n  = "flex7_gclk",
 	  .id = 45,
-	  .r = अणु .max = 200000000 पूर्ण,
-	  .pp = अणु "syspll_divpmcck", "baudpll_divpmcck", पूर्ण,
-	  .pp_mux_table = अणु 5, 8, पूर्ण,
+	  .r = { .max = 200000000 },
+	  .pp = { "syspll_divpmcck", "baudpll_divpmcck", },
+	  .pp_mux_table = { 5, 8, },
 	  .pp_count = 2,
-	  .pp_chg_id = पूर्णांक_न्यून, पूर्ण,
+	  .pp_chg_id = INT_MIN, },
 
-	अणु .n  = "flex8_gclk",
+	{ .n  = "flex8_gclk",
 	  .id = 46,
-	  .r = अणु .max = 200000000 पूर्ण,
-	  .pp = अणु "syspll_divpmcck", "baudpll_divpmcck", पूर्ण,
-	  .pp_mux_table = अणु 5, 8, पूर्ण,
+	  .r = { .max = 200000000 },
+	  .pp = { "syspll_divpmcck", "baudpll_divpmcck", },
+	  .pp_mux_table = { 5, 8, },
 	  .pp_count = 2,
-	  .pp_chg_id = पूर्णांक_न्यून, पूर्ण,
+	  .pp_chg_id = INT_MIN, },
 
-	अणु .n  = "flex9_gclk",
+	{ .n  = "flex9_gclk",
 	  .id = 47,
-	  .r = अणु .max = 200000000 पूर्ण,
-	  .pp = अणु "syspll_divpmcck", "baudpll_divpmcck", पूर्ण,
-	  .pp_mux_table = अणु 5, 8, पूर्ण,
+	  .r = { .max = 200000000 },
+	  .pp = { "syspll_divpmcck", "baudpll_divpmcck", },
+	  .pp_mux_table = { 5, 8, },
 	  .pp_count = 2,
-	  .pp_chg_id = पूर्णांक_न्यून, पूर्ण,
+	  .pp_chg_id = INT_MIN, },
 
-	अणु .n  = "flex10_gclk",
+	{ .n  = "flex10_gclk",
 	  .id = 48,
-	  .r = अणु .max = 200000000 पूर्ण,
-	  .pp = अणु "syspll_divpmcck", "baudpll_divpmcck", पूर्ण,
-	  .pp_mux_table = अणु 5, 8, पूर्ण,
+	  .r = { .max = 200000000 },
+	  .pp = { "syspll_divpmcck", "baudpll_divpmcck", },
+	  .pp_mux_table = { 5, 8, },
 	  .pp_count = 2,
-	  .pp_chg_id = पूर्णांक_न्यून, पूर्ण,
+	  .pp_chg_id = INT_MIN, },
 
-	अणु .n  = "flex11_gclk",
+	{ .n  = "flex11_gclk",
 	  .id = 49,
-	  .r = अणु .max = 200000000 पूर्ण,
-	  .pp = अणु "syspll_divpmcck", "baudpll_divpmcck", पूर्ण,
-	  .pp_mux_table = अणु 5, 8, पूर्ण,
+	  .r = { .max = 200000000 },
+	  .pp = { "syspll_divpmcck", "baudpll_divpmcck", },
+	  .pp_mux_table = { 5, 8, },
 	  .pp_count = 2,
-	  .pp_chg_id = पूर्णांक_न्यून, पूर्ण,
+	  .pp_chg_id = INT_MIN, },
 
-	अणु .n  = "gmac0_gclk",
+	{ .n  = "gmac0_gclk",
 	  .id = 51,
-	  .r = अणु .max = 125000000 पूर्ण,
-	  .pp = अणु "ethpll_divpmcck", पूर्ण,
-	  .pp_mux_table = अणु 10, पूर्ण,
+	  .r = { .max = 125000000 },
+	  .pp = { "ethpll_divpmcck", },
+	  .pp_mux_table = { 10, },
 	  .pp_count = 1,
-	  .pp_chg_id = 3, पूर्ण,
+	  .pp_chg_id = 3, },
 
-	अणु .n  = "gmac1_gclk",
+	{ .n  = "gmac1_gclk",
 	  .id = 52,
-	  .r = अणु .max = 50000000  पूर्ण,
-	  .pp = अणु "ethpll_divpmcck", पूर्ण,
-	  .pp_mux_table = अणु 10, पूर्ण,
+	  .r = { .max = 50000000  },
+	  .pp = { "ethpll_divpmcck", },
+	  .pp_mux_table = { 10, },
 	  .pp_count = 1,
-	  .pp_chg_id = पूर्णांक_न्यून, पूर्ण,
+	  .pp_chg_id = INT_MIN, },
 
-	अणु .n  = "gmac0_tsu_gclk",
+	{ .n  = "gmac0_tsu_gclk",
 	  .id = 53,
-	  .r = अणु .max = 300000000 पूर्ण,
-	  .pp = अणु "audiopll_divpmcck", "ethpll_divpmcck", पूर्ण,
-	  .pp_mux_table = अणु 9, 10, पूर्ण,
+	  .r = { .max = 300000000 },
+	  .pp = { "audiopll_divpmcck", "ethpll_divpmcck", },
+	  .pp_mux_table = { 9, 10, },
 	  .pp_count = 2,
-	  .pp_chg_id = पूर्णांक_न्यून, पूर्ण,
+	  .pp_chg_id = INT_MIN, },
 
-	अणु .n  = "gmac1_tsu_gclk",
+	{ .n  = "gmac1_tsu_gclk",
 	  .id = 54,
-	  .r = अणु .max = 300000000 पूर्ण,
-	  .pp = अणु "audiopll_divpmcck", "ethpll_divpmcck", पूर्ण,
-	  .pp_mux_table = अणु 9, 10, पूर्ण,
+	  .r = { .max = 300000000 },
+	  .pp = { "audiopll_divpmcck", "ethpll_divpmcck", },
+	  .pp_mux_table = { 9, 10, },
 	  .pp_count = 2,
-	  .pp_chg_id = पूर्णांक_न्यून, पूर्ण,
+	  .pp_chg_id = INT_MIN, },
 
-	अणु .n  = "i2smcc0_gclk",
+	{ .n  = "i2smcc0_gclk",
 	  .id = 57,
-	  .r = अणु .max = 100000000 पूर्ण,
-	  .pp = अणु "syspll_divpmcck", "audiopll_divpmcck", पूर्ण,
-	  .pp_mux_table = अणु 5, 9, पूर्ण,
+	  .r = { .max = 100000000 },
+	  .pp = { "syspll_divpmcck", "audiopll_divpmcck", },
+	  .pp_mux_table = { 5, 9, },
 	  .pp_count = 2,
-	  .pp_chg_id = 4, पूर्ण,
+	  .pp_chg_id = 4, },
 
-	अणु .n  = "i2smcc1_gclk",
+	{ .n  = "i2smcc1_gclk",
 	  .id = 58,
-	  .r = अणु .max = 100000000 पूर्ण,
-	  .pp = अणु "syspll_divpmcck", "audiopll_divpmcck", पूर्ण,
-	  .pp_mux_table = अणु 5, 9, पूर्ण,
+	  .r = { .max = 100000000 },
+	  .pp = { "syspll_divpmcck", "audiopll_divpmcck", },
+	  .pp_mux_table = { 5, 9, },
 	  .pp_count = 2,
-	  .pp_chg_id = 4, पूर्ण,
+	  .pp_chg_id = 4, },
 
-	अणु .n  = "mcan0_gclk",
+	{ .n  = "mcan0_gclk",
 	  .id = 61,
-	  .r = अणु .max = 200000000 पूर्ण,
-	  .pp = अणु "syspll_divpmcck", "baudpll_divpmcck", पूर्ण,
-	  .pp_mux_table = अणु 5, 8, पूर्ण,
+	  .r = { .max = 200000000 },
+	  .pp = { "syspll_divpmcck", "baudpll_divpmcck", },
+	  .pp_mux_table = { 5, 8, },
 	  .pp_count = 2,
-	  .pp_chg_id = पूर्णांक_न्यून, पूर्ण,
+	  .pp_chg_id = INT_MIN, },
 
-	अणु .n  = "mcan1_gclk",
+	{ .n  = "mcan1_gclk",
 	  .id = 62,
-	  .r = अणु .max = 200000000 पूर्ण,
-	  .pp = अणु "syspll_divpmcck", "baudpll_divpmcck", पूर्ण,
-	  .pp_mux_table = अणु 5, 8, पूर्ण,
+	  .r = { .max = 200000000 },
+	  .pp = { "syspll_divpmcck", "baudpll_divpmcck", },
+	  .pp_mux_table = { 5, 8, },
 	  .pp_count = 2,
-	  .pp_chg_id = पूर्णांक_न्यून, पूर्ण,
+	  .pp_chg_id = INT_MIN, },
 
-	अणु .n  = "mcan2_gclk",
+	{ .n  = "mcan2_gclk",
 	  .id = 63,
-	  .r = अणु .max = 200000000 पूर्ण,
-	  .pp = अणु "syspll_divpmcck", "baudpll_divpmcck", पूर्ण,
-	  .pp_mux_table = अणु 5, 8, पूर्ण,
+	  .r = { .max = 200000000 },
+	  .pp = { "syspll_divpmcck", "baudpll_divpmcck", },
+	  .pp_mux_table = { 5, 8, },
 	  .pp_count = 2,
-	  .pp_chg_id = पूर्णांक_न्यून, पूर्ण,
+	  .pp_chg_id = INT_MIN, },
 
-	अणु .n  = "mcan3_gclk",
+	{ .n  = "mcan3_gclk",
 	  .id = 64,
-	  .r = अणु .max = 200000000 पूर्ण,
-	  .pp = अणु "syspll_divpmcck", "baudpll_divpmcck", पूर्ण,
-	  .pp_mux_table = अणु 5, 8, पूर्ण,
+	  .r = { .max = 200000000 },
+	  .pp = { "syspll_divpmcck", "baudpll_divpmcck", },
+	  .pp_mux_table = { 5, 8, },
 	  .pp_count = 2,
-	  .pp_chg_id = पूर्णांक_न्यून, पूर्ण,
+	  .pp_chg_id = INT_MIN, },
 
-	अणु .n  = "mcan4_gclk",
+	{ .n  = "mcan4_gclk",
 	  .id = 65,
-	  .r = अणु .max = 200000000 पूर्ण,
-	  .pp = अणु "syspll_divpmcck", "baudpll_divpmcck", पूर्ण,
-	  .pp_mux_table = अणु 5, 8, पूर्ण,
+	  .r = { .max = 200000000 },
+	  .pp = { "syspll_divpmcck", "baudpll_divpmcck", },
+	  .pp_mux_table = { 5, 8, },
 	  .pp_count = 2,
-	  .pp_chg_id = पूर्णांक_न्यून, पूर्ण,
+	  .pp_chg_id = INT_MIN, },
 
-	अणु .n  = "mcan5_gclk",
+	{ .n  = "mcan5_gclk",
 	  .id = 66,
-	  .r = अणु .max = 200000000 पूर्ण,
-	  .pp = अणु "syspll_divpmcck", "baudpll_divpmcck", पूर्ण,
-	  .pp_mux_table = अणु 5, 8, पूर्ण,
+	  .r = { .max = 200000000 },
+	  .pp = { "syspll_divpmcck", "baudpll_divpmcck", },
+	  .pp_mux_table = { 5, 8, },
 	  .pp_count = 2,
-	  .pp_chg_id = पूर्णांक_न्यून, पूर्ण,
+	  .pp_chg_id = INT_MIN, },
 
-	अणु .n  = "pdmc0_gclk",
+	{ .n  = "pdmc0_gclk",
 	  .id = 68,
-	  .r = अणु .max = 50000000  पूर्ण,
-	  .pp = अणु "syspll_divpmcck", "baudpll_divpmcck", पूर्ण,
-	  .pp_mux_table = अणु 5, 8, पूर्ण,
+	  .r = { .max = 50000000  },
+	  .pp = { "syspll_divpmcck", "baudpll_divpmcck", },
+	  .pp_mux_table = { 5, 8, },
 	  .pp_count = 2,
-	  .pp_chg_id = पूर्णांक_न्यून, पूर्ण,
+	  .pp_chg_id = INT_MIN, },
 
-	अणु .n  = "pdmc1_gclk",
+	{ .n  = "pdmc1_gclk",
 	  .id = 69,
-	  .r = अणु .max = 50000000, पूर्ण,
-	  .pp = अणु "syspll_divpmcck", "baudpll_divpmcck", पूर्ण,
-	  .pp_mux_table = अणु 5, 8, पूर्ण,
+	  .r = { .max = 50000000, },
+	  .pp = { "syspll_divpmcck", "baudpll_divpmcck", },
+	  .pp_mux_table = { 5, 8, },
 	  .pp_count = 2,
-	  .pp_chg_id = पूर्णांक_न्यून, पूर्ण,
+	  .pp_chg_id = INT_MIN, },
 
-	अणु .n  = "pit64b0_gclk",
+	{ .n  = "pit64b0_gclk",
 	  .id = 70,
-	  .r = अणु .max = 200000000 पूर्ण,
-	  .pp = अणु "syspll_divpmcck", "imgpll_divpmcck", "baudpll_divpmcck",
-		  "audiopll_divpmcck", "ethpll_divpmcck", पूर्ण,
-	  .pp_mux_table = अणु 5, 7, 8, 9, 10, पूर्ण,
+	  .r = { .max = 200000000 },
+	  .pp = { "syspll_divpmcck", "imgpll_divpmcck", "baudpll_divpmcck",
+		  "audiopll_divpmcck", "ethpll_divpmcck", },
+	  .pp_mux_table = { 5, 7, 8, 9, 10, },
 	  .pp_count = 5,
-	  .pp_chg_id = पूर्णांक_न्यून, पूर्ण,
+	  .pp_chg_id = INT_MIN, },
 
-	अणु .n  = "pit64b1_gclk",
+	{ .n  = "pit64b1_gclk",
 	  .id = 71,
-	  .r = अणु .max = 200000000 पूर्ण,
-	  .pp = अणु "syspll_divpmcck", "imgpll_divpmcck", "baudpll_divpmcck",
-		  "audiopll_divpmcck", "ethpll_divpmcck", पूर्ण,
-	  .pp_mux_table = अणु 5, 7, 8, 9, 10, पूर्ण,
+	  .r = { .max = 200000000 },
+	  .pp = { "syspll_divpmcck", "imgpll_divpmcck", "baudpll_divpmcck",
+		  "audiopll_divpmcck", "ethpll_divpmcck", },
+	  .pp_mux_table = { 5, 7, 8, 9, 10, },
 	  .pp_count = 5,
-	  .pp_chg_id = पूर्णांक_न्यून, पूर्ण,
+	  .pp_chg_id = INT_MIN, },
 
-	अणु .n  = "pit64b2_gclk",
+	{ .n  = "pit64b2_gclk",
 	  .id = 72,
-	  .r = अणु .max = 200000000 पूर्ण,
-	  .pp = अणु "syspll_divpmcck", "imgpll_divpmcck", "baudpll_divpmcck",
-		  "audiopll_divpmcck", "ethpll_divpmcck", पूर्ण,
-	  .pp_mux_table = अणु 5, 7, 8, 9, 10, पूर्ण,
+	  .r = { .max = 200000000 },
+	  .pp = { "syspll_divpmcck", "imgpll_divpmcck", "baudpll_divpmcck",
+		  "audiopll_divpmcck", "ethpll_divpmcck", },
+	  .pp_mux_table = { 5, 7, 8, 9, 10, },
 	  .pp_count = 5,
-	  .pp_chg_id = पूर्णांक_न्यून, पूर्ण,
+	  .pp_chg_id = INT_MIN, },
 
-	अणु .n  = "pit64b3_gclk",
+	{ .n  = "pit64b3_gclk",
 	  .id = 73,
-	  .r = अणु .max = 200000000 पूर्ण,
-	  .pp = अणु "syspll_divpmcck", "imgpll_divpmcck", "baudpll_divpmcck",
-		  "audiopll_divpmcck", "ethpll_divpmcck", पूर्ण,
-	  .pp_mux_table = अणु 5, 7, 8, 9, 10, पूर्ण,
+	  .r = { .max = 200000000 },
+	  .pp = { "syspll_divpmcck", "imgpll_divpmcck", "baudpll_divpmcck",
+		  "audiopll_divpmcck", "ethpll_divpmcck", },
+	  .pp_mux_table = { 5, 7, 8, 9, 10, },
 	  .pp_count = 5,
-	  .pp_chg_id = पूर्णांक_न्यून, पूर्ण,
+	  .pp_chg_id = INT_MIN, },
 
-	अणु .n  = "pit64b4_gclk",
+	{ .n  = "pit64b4_gclk",
 	  .id = 74,
-	  .r = अणु .max = 200000000 पूर्ण,
-	  .pp = अणु "syspll_divpmcck", "imgpll_divpmcck", "baudpll_divpmcck",
-		  "audiopll_divpmcck", "ethpll_divpmcck", पूर्ण,
-	  .pp_mux_table = अणु 5, 7, 8, 9, 10, पूर्ण,
+	  .r = { .max = 200000000 },
+	  .pp = { "syspll_divpmcck", "imgpll_divpmcck", "baudpll_divpmcck",
+		  "audiopll_divpmcck", "ethpll_divpmcck", },
+	  .pp_mux_table = { 5, 7, 8, 9, 10, },
 	  .pp_count = 5,
-	  .pp_chg_id = पूर्णांक_न्यून, पूर्ण,
+	  .pp_chg_id = INT_MIN, },
 
-	अणु .n  = "pit64b5_gclk",
+	{ .n  = "pit64b5_gclk",
 	  .id = 75,
-	  .r = अणु .max = 200000000 पूर्ण,
-	  .pp = अणु "syspll_divpmcck", "imgpll_divpmcck", "baudpll_divpmcck",
-		  "audiopll_divpmcck", "ethpll_divpmcck", पूर्ण,
-	  .pp_mux_table = अणु 5, 7, 8, 9, 10, पूर्ण,
+	  .r = { .max = 200000000 },
+	  .pp = { "syspll_divpmcck", "imgpll_divpmcck", "baudpll_divpmcck",
+		  "audiopll_divpmcck", "ethpll_divpmcck", },
+	  .pp_mux_table = { 5, 7, 8, 9, 10, },
 	  .pp_count = 5,
-	  .pp_chg_id = पूर्णांक_न्यून, पूर्ण,
+	  .pp_chg_id = INT_MIN, },
 
-	अणु .n  = "qspi0_gclk",
+	{ .n  = "qspi0_gclk",
 	  .id = 78,
-	  .r = अणु .max = 200000000 पूर्ण,
-	  .pp = अणु "syspll_divpmcck", "baudpll_divpmcck", पूर्ण,
-	  .pp_mux_table = अणु 5, 8, पूर्ण,
+	  .r = { .max = 200000000 },
+	  .pp = { "syspll_divpmcck", "baudpll_divpmcck", },
+	  .pp_mux_table = { 5, 8, },
 	  .pp_count = 2,
-	  .pp_chg_id = पूर्णांक_न्यून, पूर्ण,
+	  .pp_chg_id = INT_MIN, },
 
-	अणु .n  = "qspi1_gclk",
+	{ .n  = "qspi1_gclk",
 	  .id = 79,
-	  .r = अणु .max = 200000000 पूर्ण,
-	  .pp = अणु "syspll_divpmcck", "baudpll_divpmcck", पूर्ण,
-	  .pp_mux_table = अणु 5, 8, पूर्ण,
+	  .r = { .max = 200000000 },
+	  .pp = { "syspll_divpmcck", "baudpll_divpmcck", },
+	  .pp_mux_table = { 5, 8, },
 	  .pp_count = 2,
-	  .pp_chg_id = पूर्णांक_न्यून, पूर्ण,
+	  .pp_chg_id = INT_MIN, },
 
-	अणु .n  = "sdmmc0_gclk",
+	{ .n  = "sdmmc0_gclk",
 	  .id = 80,
-	  .r = अणु .max = 208000000 पूर्ण,
-	  .pp = अणु "syspll_divpmcck", "baudpll_divpmcck", पूर्ण,
-	  .pp_mux_table = अणु 5, 8, पूर्ण,
+	  .r = { .max = 208000000 },
+	  .pp = { "syspll_divpmcck", "baudpll_divpmcck", },
+	  .pp_mux_table = { 5, 8, },
 	  .pp_count = 2,
-	  .pp_chg_id = 4, पूर्ण,
+	  .pp_chg_id = 4, },
 
-	अणु .n  = "sdmmc1_gclk",
+	{ .n  = "sdmmc1_gclk",
 	  .id = 81,
-	  .r = अणु .max = 208000000 पूर्ण,
-	  .pp = अणु "syspll_divpmcck", "baudpll_divpmcck", पूर्ण,
-	  .pp_mux_table = अणु 5, 8, पूर्ण,
+	  .r = { .max = 208000000 },
+	  .pp = { "syspll_divpmcck", "baudpll_divpmcck", },
+	  .pp_mux_table = { 5, 8, },
 	  .pp_count = 2,
-	  .pp_chg_id = 4, पूर्ण,
+	  .pp_chg_id = 4, },
 
-	अणु .n  = "sdmmc2_gclk",
+	{ .n  = "sdmmc2_gclk",
 	  .id = 82,
-	  .r = अणु .max = 208000000 पूर्ण,
-	  .pp = अणु "syspll_divpmcck", "baudpll_divpmcck", पूर्ण,
-	  .pp_mux_table = अणु 5, 8, पूर्ण,
+	  .r = { .max = 208000000 },
+	  .pp = { "syspll_divpmcck", "baudpll_divpmcck", },
+	  .pp_mux_table = { 5, 8, },
 	  .pp_count = 2,
-	  .pp_chg_id = 4, पूर्ण,
+	  .pp_chg_id = 4, },
 
-	अणु .n  = "spdifrx_gclk",
+	{ .n  = "spdifrx_gclk",
 	  .id = 84,
-	  .r = अणु .max = 150000000 पूर्ण,
-	  .pp = अणु "syspll_divpmcck", "audiopll_divpmcck", पूर्ण,
-	  .pp_mux_table = अणु 5, 9, पूर्ण,
+	  .r = { .max = 150000000 },
+	  .pp = { "syspll_divpmcck", "audiopll_divpmcck", },
+	  .pp_mux_table = { 5, 9, },
 	  .pp_count = 2,
-	  .pp_chg_id = 4, पूर्ण,
+	  .pp_chg_id = 4, },
 
-	अणु .n = "spdiftx_gclk",
+	{ .n = "spdiftx_gclk",
 	  .id = 85,
-	  .r = अणु .max = 25000000  पूर्ण,
-	  .pp = अणु "syspll_divpmcck", "audiopll_divpmcck", पूर्ण,
-	  .pp_mux_table = अणु 5, 9, पूर्ण,
+	  .r = { .max = 25000000  },
+	  .pp = { "syspll_divpmcck", "audiopll_divpmcck", },
+	  .pp_mux_table = { 5, 9, },
 	  .pp_count = 2,
-	  .pp_chg_id = 4, पूर्ण,
+	  .pp_chg_id = 4, },
 
-	अणु .n  = "tcb0_ch0_gclk",
+	{ .n  = "tcb0_ch0_gclk",
 	  .id = 88,
-	  .r = अणु .max = 200000000 पूर्ण,
-	  .pp = अणु "syspll_divpmcck", "imgpll_divpmcck", "baudpll_divpmcck",
-		  "audiopll_divpmcck", "ethpll_divpmcck", पूर्ण,
-	  .pp_mux_table = अणु 5, 7, 8, 9, 10, पूर्ण,
+	  .r = { .max = 200000000 },
+	  .pp = { "syspll_divpmcck", "imgpll_divpmcck", "baudpll_divpmcck",
+		  "audiopll_divpmcck", "ethpll_divpmcck", },
+	  .pp_mux_table = { 5, 7, 8, 9, 10, },
 	  .pp_count = 5,
-	  .pp_chg_id = पूर्णांक_न्यून, पूर्ण,
+	  .pp_chg_id = INT_MIN, },
 
-	अणु .n  = "tcb1_ch0_gclk",
+	{ .n  = "tcb1_ch0_gclk",
 	  .id = 91,
-	  .r = अणु .max = 200000000 पूर्ण,
-	  .pp = अणु "syspll_divpmcck", "imgpll_divpmcck", "baudpll_divpmcck",
-		  "audiopll_divpmcck", "ethpll_divpmcck", पूर्ण,
-	  .pp_mux_table = अणु 5, 7, 8, 9, 10, पूर्ण,
+	  .r = { .max = 200000000 },
+	  .pp = { "syspll_divpmcck", "imgpll_divpmcck", "baudpll_divpmcck",
+		  "audiopll_divpmcck", "ethpll_divpmcck", },
+	  .pp_mux_table = { 5, 7, 8, 9, 10, },
 	  .pp_count = 5,
-	  .pp_chg_id = पूर्णांक_न्यून, पूर्ण,
+	  .pp_chg_id = INT_MIN, },
 
-	अणु .n  = "tcpca_gclk",
+	{ .n  = "tcpca_gclk",
 	  .id = 94,
-	  .r = अणु .max = 32768, पूर्ण,
-	  .pp_chg_id = पूर्णांक_न्यून, पूर्ण,
+	  .r = { .max = 32768, },
+	  .pp_chg_id = INT_MIN, },
 
-	अणु .n  = "tcpcb_gclk",
+	{ .n  = "tcpcb_gclk",
 	  .id = 95,
-	  .r = अणु .max = 32768, पूर्ण,
-	  .pp_chg_id = पूर्णांक_न्यून, पूर्ण,
-पूर्ण;
+	  .r = { .max = 32768, },
+	  .pp_chg_id = INT_MIN, },
+};
 
-/* MCK0 अक्षरacteristics. */
-अटल स्थिर काष्ठा clk_master_अक्षरacteristics mck0_अक्षरacteristics = अणु
-	.output = अणु .min = 50000000, .max = 200000000 पूर्ण,
-	.भागisors = अणु 1, 2, 4, 3, 5 पूर्ण,
-	.have_भाग3_pres = 1,
-पूर्ण;
+/* MCK0 characteristics. */
+static const struct clk_master_characteristics mck0_characteristics = {
+	.output = { .min = 50000000, .max = 200000000 },
+	.divisors = { 1, 2, 4, 3, 5 },
+	.have_div3_pres = 1,
+};
 
 /* MCK0 layout. */
-अटल स्थिर काष्ठा clk_master_layout mck0_layout = अणु
+static const struct clk_master_layout mck0_layout = {
 	.mask = 0x773,
-	.pres_shअगरt = 4,
+	.pres_shift = 4,
 	.offset = 0x28,
-पूर्ण;
+};
 
-/* Programmable घड़ी layout. */
-अटल स्थिर काष्ठा clk_programmable_layout programmable_layout = अणु
+/* Programmable clock layout. */
+static const struct clk_programmable_layout programmable_layout = {
 	.pres_mask = 0xff,
-	.pres_shअगरt = 8,
+	.pres_shift = 8,
 	.css_mask = 0x1f,
 	.have_slck_mck = 0,
 	.is_pres_direct = 1,
-पूर्ण;
+};
 
-/* Peripheral घड़ी layout. */
-अटल स्थिर काष्ठा clk_pcr_layout sama7g5_pcr_layout = अणु
+/* Peripheral clock layout. */
+static const struct clk_pcr_layout sama7g5_pcr_layout = {
 	.offset = 0x88,
 	.cmd = BIT(31),
 	.gckcss_mask = GENMASK(12, 8),
 	.pid_mask = GENMASK(6, 0),
-पूर्ण;
+};
 
-अटल व्योम __init sama7g5_pmc_setup(काष्ठा device_node *np)
-अणु
-	स्थिर अक्षर *td_slck_name, *md_slck_name, *मुख्यxtal_name;
-	काष्ठा pmc_data *sama7g5_pmc;
-	स्थिर अक्षर *parent_names[10];
-	व्योम **alloc_mem = शून्य;
-	पूर्णांक alloc_mem_size = 0;
-	काष्ठा regmap *regmap;
-	काष्ठा clk_hw *hw;
+static void __init sama7g5_pmc_setup(struct device_node *np)
+{
+	const char *td_slck_name, *md_slck_name, *mainxtal_name;
+	struct pmc_data *sama7g5_pmc;
+	const char *parent_names[10];
+	void **alloc_mem = NULL;
+	int alloc_mem_size = 0;
+	struct regmap *regmap;
+	struct clk_hw *hw;
 	bool bypass;
-	पूर्णांक i, j;
+	int i, j;
 
 	i = of_property_match_string(np, "clock-names", "td_slck");
-	अगर (i < 0)
-		वापस;
+	if (i < 0)
+		return;
 
 	td_slck_name = of_clk_get_parent_name(np, i);
 
 	i = of_property_match_string(np, "clock-names", "md_slck");
-	अगर (i < 0)
-		वापस;
+	if (i < 0)
+		return;
 
 	md_slck_name = of_clk_get_parent_name(np, i);
 
 	i = of_property_match_string(np, "clock-names", "main_xtal");
-	अगर (i < 0)
-		वापस;
+	if (i < 0)
+		return;
 
-	मुख्यxtal_name = of_clk_get_parent_name(np, i);
+	mainxtal_name = of_clk_get_parent_name(np, i);
 
 	regmap = device_node_to_regmap(np);
-	अगर (IS_ERR(regmap))
-		वापस;
+	if (IS_ERR(regmap))
+		return;
 
 	sama7g5_pmc = pmc_data_allocate(PMC_CPU + 1,
-					nck(sama7g5_प्रणालीck),
+					nck(sama7g5_systemck),
 					nck(sama7g5_periphck),
 					nck(sama7g5_gck), 8);
-	अगर (!sama7g5_pmc)
-		वापस;
+	if (!sama7g5_pmc)
+		return;
 
-	alloc_mem = kदो_स्मृति(माप(व्योम *) *
+	alloc_mem = kmalloc(sizeof(void *) *
 			    (ARRAY_SIZE(sama7g5_mckx) + ARRAY_SIZE(sama7g5_gck)),
 			    GFP_KERNEL);
-	अगर (!alloc_mem)
-		जाओ err_मुक्त;
+	if (!alloc_mem)
+		goto err_free;
 
-	hw = at91_clk_रेजिस्टर_मुख्य_rc_osc(regmap, "main_rc_osc", 12000000,
+	hw = at91_clk_register_main_rc_osc(regmap, "main_rc_osc", 12000000,
 					   50000000);
-	अगर (IS_ERR(hw))
-		जाओ err_मुक्त;
+	if (IS_ERR(hw))
+		goto err_free;
 
-	bypass = of_property_पढ़ो_bool(np, "atmel,osc-bypass");
+	bypass = of_property_read_bool(np, "atmel,osc-bypass");
 
-	hw = at91_clk_रेजिस्टर_मुख्य_osc(regmap, "main_osc", मुख्यxtal_name,
+	hw = at91_clk_register_main_osc(regmap, "main_osc", mainxtal_name,
 					bypass);
-	अगर (IS_ERR(hw))
-		जाओ err_मुक्त;
+	if (IS_ERR(hw))
+		goto err_free;
 
 	parent_names[0] = "main_rc_osc";
 	parent_names[1] = "main_osc";
-	hw = at91_clk_रेजिस्टर_sam9x5_मुख्य(regmap, "mainck", parent_names, 2);
-	अगर (IS_ERR(hw))
-		जाओ err_मुक्त;
+	hw = at91_clk_register_sam9x5_main(regmap, "mainck", parent_names, 2);
+	if (IS_ERR(hw))
+		goto err_free;
 
 	sama7g5_pmc->chws[PMC_MAIN] = hw;
 
-	क्रम (i = 0; i < PLL_ID_MAX; i++) अणु
-		क्रम (j = 0; j < 3; j++) अणु
-			काष्ठा clk_hw *parent_hw;
+	for (i = 0; i < PLL_ID_MAX; i++) {
+		for (j = 0; j < 3; j++) {
+			struct clk_hw *parent_hw;
 
-			अगर (!sama7g5_plls[i][j].n)
-				जारी;
+			if (!sama7g5_plls[i][j].n)
+				continue;
 
-			चयन (sama7g5_plls[i][j].t) अणु
-			हाल PLL_TYPE_FRAC:
-				अगर (!म_भेद(sama7g5_plls[i][j].p, "mainck"))
+			switch (sama7g5_plls[i][j].t) {
+			case PLL_TYPE_FRAC:
+				if (!strcmp(sama7g5_plls[i][j].p, "mainck"))
 					parent_hw = sama7g5_pmc->chws[PMC_MAIN];
-				अन्यथा
+				else
 					parent_hw = __clk_get_hw(of_clk_get_by_name(np,
 						sama7g5_plls[i][j].p));
 
-				hw = sam9x60_clk_रेजिस्टर_frac_pll(regmap,
+				hw = sam9x60_clk_register_frac_pll(regmap,
 					&pmc_pll_lock, sama7g5_plls[i][j].n,
 					sama7g5_plls[i][j].p, parent_hw, i,
 					sama7g5_plls[i][j].c,
 					sama7g5_plls[i][j].l,
 					sama7g5_plls[i][j].f);
-				अवरोध;
+				break;
 
-			हाल PLL_TYPE_DIV:
-				hw = sam9x60_clk_रेजिस्टर_भाग_pll(regmap,
+			case PLL_TYPE_DIV:
+				hw = sam9x60_clk_register_div_pll(regmap,
 					&pmc_pll_lock, sama7g5_plls[i][j].n,
 					sama7g5_plls[i][j].p, i,
 					sama7g5_plls[i][j].c,
 					sama7g5_plls[i][j].l,
 					sama7g5_plls[i][j].f);
-				अवरोध;
+				break;
 
-			शेष:
-				जारी;
-			पूर्ण
+			default:
+				continue;
+			}
 
-			अगर (IS_ERR(hw))
-				जाओ err_मुक्त;
+			if (IS_ERR(hw))
+				goto err_free;
 
-			अगर (sama7g5_plls[i][j].eid)
+			if (sama7g5_plls[i][j].eid)
 				sama7g5_pmc->chws[sama7g5_plls[i][j].eid] = hw;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	parent_names[0] = "cpupll_divpmcck";
-	hw = at91_clk_रेजिस्टर_master_pres(regmap, "cpuck", 1, parent_names,
-					   &mck0_layout, &mck0_अक्षरacteristics,
+	hw = at91_clk_register_master_pres(regmap, "cpuck", 1, parent_names,
+					   &mck0_layout, &mck0_characteristics,
 					   &pmc_mck0_lock,
 					   CLK_SET_RATE_PARENT, 0);
-	अगर (IS_ERR(hw))
-		जाओ err_मुक्त;
+	if (IS_ERR(hw))
+		goto err_free;
 
 	sama7g5_pmc->chws[PMC_CPU] = hw;
 
-	hw = at91_clk_रेजिस्टर_master_भाग(regmap, "mck0", "cpuck",
-					  &mck0_layout, &mck0_अक्षरacteristics,
+	hw = at91_clk_register_master_div(regmap, "mck0", "cpuck",
+					  &mck0_layout, &mck0_characteristics,
 					  &pmc_mck0_lock, 0);
-	अगर (IS_ERR(hw))
-		जाओ err_मुक्त;
+	if (IS_ERR(hw))
+		goto err_free;
 
 	sama7g5_pmc->chws[PMC_MCK] = hw;
 
 	parent_names[0] = md_slck_name;
 	parent_names[1] = td_slck_name;
 	parent_names[2] = "mainck";
-	क्रम (i = 0; i < ARRAY_SIZE(sama7g5_mckx); i++) अणु
+	for (i = 0; i < ARRAY_SIZE(sama7g5_mckx); i++) {
 		u8 num_parents = 3 + sama7g5_mckx[i].ep_count;
 		u32 *mux_table;
 
-		mux_table = kदो_स्मृति_array(num_parents, माप(*mux_table),
+		mux_table = kmalloc_array(num_parents, sizeof(*mux_table),
 					  GFP_KERNEL);
-		अगर (!mux_table)
-			जाओ err_मुक्त;
+		if (!mux_table)
+			goto err_free;
 
 		SAMA7G5_INIT_TABLE(mux_table, 3);
 		SAMA7G5_FILL_TABLE(&mux_table[3], sama7g5_mckx[i].ep_mux_table,
@@ -1018,20 +1017,20 @@
 		SAMA7G5_FILL_TABLE(&parent_names[3], sama7g5_mckx[i].ep,
 				   sama7g5_mckx[i].ep_count);
 
-		hw = at91_clk_sama7g5_रेजिस्टर_master(regmap, sama7g5_mckx[i].n,
+		hw = at91_clk_sama7g5_register_master(regmap, sama7g5_mckx[i].n,
 				   num_parents, parent_names, mux_table,
 				   &pmc_mckX_lock, sama7g5_mckx[i].id,
 				   sama7g5_mckx[i].c,
 				   sama7g5_mckx[i].ep_chg_id);
-		अगर (IS_ERR(hw))
-			जाओ err_मुक्त;
+		if (IS_ERR(hw))
+			goto err_free;
 
 		alloc_mem[alloc_mem_size++] = mux_table;
-	पूर्ण
+	}
 
-	hw = at91_clk_sama7g5_रेजिस्टर_uपंचांगi(regmap, "utmick", "main_xtal");
-	अगर (IS_ERR(hw))
-		जाओ err_मुक्त;
+	hw = at91_clk_sama7g5_register_utmi(regmap, "utmick", "main_xtal");
+	if (IS_ERR(hw))
+		goto err_free;
 
 	sama7g5_pmc->chws[PMC_UTMI] = hw;
 
@@ -1044,57 +1043,57 @@
 	parent_names[6] = "baudpll_divpmcck";
 	parent_names[7] = "audiopll_divpmcck";
 	parent_names[8] = "ethpll_divpmcck";
-	क्रम (i = 0; i < 8; i++) अणु
-		अक्षर name[6];
+	for (i = 0; i < 8; i++) {
+		char name[6];
 
-		snम_लिखो(name, माप(name), "prog%d", i);
+		snprintf(name, sizeof(name), "prog%d", i);
 
-		hw = at91_clk_रेजिस्टर_programmable(regmap, name, parent_names,
+		hw = at91_clk_register_programmable(regmap, name, parent_names,
 						    9, i,
 						    &programmable_layout,
 						    sama7g5_prog_mux_table);
-		अगर (IS_ERR(hw))
-			जाओ err_मुक्त;
+		if (IS_ERR(hw))
+			goto err_free;
 
 		sama7g5_pmc->pchws[i] = hw;
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < ARRAY_SIZE(sama7g5_प्रणालीck); i++) अणु
-		hw = at91_clk_रेजिस्टर_प्रणाली(regmap, sama7g5_प्रणालीck[i].n,
-					      sama7g5_प्रणालीck[i].p,
-					      sama7g5_प्रणालीck[i].id);
-		अगर (IS_ERR(hw))
-			जाओ err_मुक्त;
+	for (i = 0; i < ARRAY_SIZE(sama7g5_systemck); i++) {
+		hw = at91_clk_register_system(regmap, sama7g5_systemck[i].n,
+					      sama7g5_systemck[i].p,
+					      sama7g5_systemck[i].id);
+		if (IS_ERR(hw))
+			goto err_free;
 
-		sama7g5_pmc->shws[sama7g5_प्रणालीck[i].id] = hw;
-	पूर्ण
+		sama7g5_pmc->shws[sama7g5_systemck[i].id] = hw;
+	}
 
-	क्रम (i = 0; i < ARRAY_SIZE(sama7g5_periphck); i++) अणु
-		hw = at91_clk_रेजिस्टर_sam9x5_peripheral(regmap, &pmc_pcr_lock,
+	for (i = 0; i < ARRAY_SIZE(sama7g5_periphck); i++) {
+		hw = at91_clk_register_sam9x5_peripheral(regmap, &pmc_pcr_lock,
 						&sama7g5_pcr_layout,
 						sama7g5_periphck[i].n,
 						sama7g5_periphck[i].p,
 						sama7g5_periphck[i].id,
 						&sama7g5_periphck[i].r,
 						sama7g5_periphck[i].chgp ? 0 :
-						पूर्णांक_न्यून);
-		अगर (IS_ERR(hw))
-			जाओ err_मुक्त;
+						INT_MIN);
+		if (IS_ERR(hw))
+			goto err_free;
 
 		sama7g5_pmc->phws[sama7g5_periphck[i].id] = hw;
-	पूर्ण
+	}
 
 	parent_names[0] = md_slck_name;
 	parent_names[1] = td_slck_name;
 	parent_names[2] = "mainck";
-	क्रम (i = 0; i < ARRAY_SIZE(sama7g5_gck); i++) अणु
+	for (i = 0; i < ARRAY_SIZE(sama7g5_gck); i++) {
 		u8 num_parents = 3 + sama7g5_gck[i].pp_count;
 		u32 *mux_table;
 
-		mux_table = kदो_स्मृति_array(num_parents, माप(*mux_table),
+		mux_table = kmalloc_array(num_parents, sizeof(*mux_table),
 					  GFP_KERNEL);
-		अगर (!mux_table)
-			जाओ err_मुक्त;
+		if (!mux_table)
+			goto err_free;
 
 		SAMA7G5_INIT_TABLE(mux_table, 3);
 		SAMA7G5_FILL_TABLE(&mux_table[3], sama7g5_gck[i].pp_mux_table,
@@ -1102,7 +1101,7 @@
 		SAMA7G5_FILL_TABLE(&parent_names[3], sama7g5_gck[i].pp,
 				   sama7g5_gck[i].pp_count);
 
-		hw = at91_clk_रेजिस्टर_generated(regmap, &pmc_pcr_lock,
+		hw = at91_clk_register_generated(regmap, &pmc_pcr_lock,
 						 &sama7g5_pcr_layout,
 						 sama7g5_gck[i].n,
 						 parent_names, mux_table,
@@ -1110,26 +1109,26 @@
 						 sama7g5_gck[i].id,
 						 &sama7g5_gck[i].r,
 						 sama7g5_gck[i].pp_chg_id);
-		अगर (IS_ERR(hw))
-			जाओ err_मुक्त;
+		if (IS_ERR(hw))
+			goto err_free;
 
 		sama7g5_pmc->ghws[sama7g5_gck[i].id] = hw;
 		alloc_mem[alloc_mem_size++] = mux_table;
-	पूर्ण
+	}
 
 	of_clk_add_hw_provider(np, of_clk_hw_pmc_get, sama7g5_pmc);
 
-	वापस;
+	return;
 
-err_मुक्त:
-	अगर (alloc_mem) अणु
-		क्रम (i = 0; i < alloc_mem_size; i++)
-			kमुक्त(alloc_mem[i]);
-		kमुक्त(alloc_mem);
-	पूर्ण
+err_free:
+	if (alloc_mem) {
+		for (i = 0; i < alloc_mem_size; i++)
+			kfree(alloc_mem[i]);
+		kfree(alloc_mem);
+	}
 
-	kमुक्त(sama7g5_pmc);
-पूर्ण
+	kfree(sama7g5_pmc);
+}
 
-/* Some clks are used क्रम a घड़ीsource */
+/* Some clks are used for a clocksource */
 CLK_OF_DECLARE(sama7g5_pmc, "microchip,sama7g5-pmc", sama7g5_pmc_setup);

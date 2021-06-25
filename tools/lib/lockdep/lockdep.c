@@ -1,34 +1,33 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <linux/lockdep.h>
-#समावेश <मानककोष.स>
+// SPDX-License-Identifier: GPL-2.0
+#include <linux/lockdep.h>
+#include <stdlib.h>
 
-/* Trivial API wrappers, we करोn't (yet) have RCU in user-space: */
-#घोषणा hlist_क्रम_each_entry_rcu	hlist_क्रम_each_entry
-#घोषणा hlist_add_head_rcu		hlist_add_head
-#घोषणा hlist_del_rcu			hlist_del
-#घोषणा list_क्रम_each_entry_rcu		list_क्रम_each_entry
-#घोषणा list_add_tail_rcu		list_add_tail
+/* Trivial API wrappers, we don't (yet) have RCU in user-space: */
+#define hlist_for_each_entry_rcu	hlist_for_each_entry
+#define hlist_add_head_rcu		hlist_add_head
+#define hlist_del_rcu			hlist_del
+#define list_for_each_entry_rcu		list_for_each_entry
+#define list_add_tail_rcu		list_add_tail
 
-u32 pअक्रमom_u32(व्योम)
-अणु
+u32 prandom_u32(void)
+{
 	/* Used only by lock_pin_lock() which is dead code */
-	पात();
-पूर्ण
+	abort();
+}
 
-व्योम prपूर्णांक_irqtrace_events(काष्ठा task_काष्ठा *curr)
-अणु
-	पात();
-पूर्ण
+void print_irqtrace_events(struct task_struct *curr)
+{
+	abort();
+}
 
-अटल काष्ठा new_utsname *init_utsname(व्योम)
-अणु
-	अटल काष्ठा new_utsname n = (काष्ठा new_utsname) अणु
+static struct new_utsname *init_utsname(void)
+{
+	static struct new_utsname n = (struct new_utsname) {
 		.release = "liblockdep",
 		.version = LIBLOCKDEP_VERSION,
-	पूर्ण;
+	};
 
-	वापस &n;
-पूर्ण
+	return &n;
+}
 
-#समावेश "../../../kernel/locking/lockdep.c"
+#include "../../../kernel/locking/lockdep.c"

@@ -1,17 +1,16 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _LIVEPATCH_TRANSITION_H
-#घोषणा _LIVEPATCH_TRANSITION_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _LIVEPATCH_TRANSITION_H
+#define _LIVEPATCH_TRANSITION_H
 
-#समावेश <linux/livepatch.h>
+#include <linux/livepatch.h>
 
-बाह्य काष्ठा klp_patch *klp_transition_patch;
+extern struct klp_patch *klp_transition_patch;
 
-व्योम klp_init_transition(काष्ठा klp_patch *patch, पूर्णांक state);
-व्योम klp_cancel_transition(व्योम);
-व्योम klp_start_transition(व्योम);
-व्योम klp_try_complete_transition(व्योम);
-व्योम klp_reverse_transition(व्योम);
-व्योम klp_क्रमce_transition(व्योम);
+void klp_init_transition(struct klp_patch *patch, int state);
+void klp_cancel_transition(void);
+void klp_start_transition(void);
+void klp_try_complete_transition(void);
+void klp_reverse_transition(void);
+void klp_force_transition(void);
 
-#पूर्ण_अगर /* _LIVEPATCH_TRANSITION_H */
+#endif /* _LIVEPATCH_TRANSITION_H */

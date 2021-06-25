@@ -1,63 +1,62 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  *  Copyright (c) 2001 Vojtech Pavlik
  */
 
 /*
- * EMU10k1 - SB Live / Audigy - gameport driver क्रम Linux
+ * EMU10k1 - SB Live / Audigy - gameport driver for Linux
  */
 
 /*
  */
 
-#समावेश <यंत्र/पन.स>
+#include <asm/io.h>
 
-#समावेश <linux/module.h>
-#समावेश <linux/ioport.h>
-#समावेश <linux/gameport.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/pci.h>
+#include <linux/module.h>
+#include <linux/ioport.h>
+#include <linux/gameport.h>
+#include <linux/slab.h>
+#include <linux/pci.h>
 
 MODULE_AUTHOR("Vojtech Pavlik <vojtech@ucw.cz>");
 MODULE_DESCRIPTION("EMU10k1 gameport driver");
 MODULE_LICENSE("GPL");
 
-काष्ठा emu अणु
-	काष्ठा pci_dev *dev;
-	काष्ठा gameport *gameport;
-	पूर्णांक io;
-	पूर्णांक size;
-पूर्ण;
+struct emu {
+	struct pci_dev *dev;
+	struct gameport *gameport;
+	int io;
+	int size;
+};
 
-अटल स्थिर काष्ठा pci_device_id emu_tbl[] = अणु
+static const struct pci_device_id emu_tbl[] = {
 
-	अणु 0x1102, 0x7002, PCI_ANY_ID, PCI_ANY_ID पूर्ण, /* SB Live gameport */
-	अणु 0x1102, 0x7003, PCI_ANY_ID, PCI_ANY_ID पूर्ण, /* Audigy gameport */
-	अणु 0x1102, 0x7004, PCI_ANY_ID, PCI_ANY_ID पूर्ण, /* Dell SB Live */
-	अणु 0x1102, 0x7005, PCI_ANY_ID, PCI_ANY_ID पूर्ण, /* Audigy LS gameport */
-	अणु 0, पूर्ण
-पूर्ण;
+	{ 0x1102, 0x7002, PCI_ANY_ID, PCI_ANY_ID }, /* SB Live gameport */
+	{ 0x1102, 0x7003, PCI_ANY_ID, PCI_ANY_ID }, /* Audigy gameport */
+	{ 0x1102, 0x7004, PCI_ANY_ID, PCI_ANY_ID }, /* Dell SB Live */
+	{ 0x1102, 0x7005, PCI_ANY_ID, PCI_ANY_ID }, /* Audigy LS gameport */
+	{ 0, }
+};
 
 MODULE_DEVICE_TABLE(pci, emu_tbl);
 
-अटल पूर्णांक emu_probe(काष्ठा pci_dev *pdev, स्थिर काष्ठा pci_device_id *ent)
-अणु
-	काष्ठा emu *emu;
-	काष्ठा gameport *port;
-	पूर्णांक error;
+static int emu_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
+{
+	struct emu *emu;
+	struct gameport *port;
+	int error;
 
-	emu = kzalloc(माप(काष्ठा emu), GFP_KERNEL);
+	emu = kzalloc(sizeof(struct emu), GFP_KERNEL);
 	port = gameport_allocate_port();
-	अगर (!emu || !port) अणु
-		prपूर्णांकk(KERN_ERR "emu10k1-gp: Memory allocation failed\n");
+	if (!emu || !port) {
+		printk(KERN_ERR "emu10k1-gp: Memory allocation failed\n");
 		error = -ENOMEM;
-		जाओ err_out_मुक्त;
-	पूर्ण
+		goto err_out_free;
+	}
 
 	error = pci_enable_device(pdev);
-	अगर (error)
-		जाओ err_out_मुक्त;
+	if (error)
+		goto err_out_free;
 
 	emu->io = pci_resource_start(pdev, 0);
 	emu->size = pci_resource_len(pdev, 0);
@@ -70,43 +69,43 @@ MODULE_DEVICE_TABLE(pci, emu_tbl);
 	port->dev.parent = &pdev->dev;
 	port->io = emu->io;
 
-	अगर (!request_region(emu->io, emu->size, "emu10k1-gp")) अणु
-		prपूर्णांकk(KERN_ERR "emu10k1-gp: unable to grab region 0x%x-0x%x\n",
+	if (!request_region(emu->io, emu->size, "emu10k1-gp")) {
+		printk(KERN_ERR "emu10k1-gp: unable to grab region 0x%x-0x%x\n",
 			emu->io, emu->io + emu->size - 1);
 		error = -EBUSY;
-		जाओ err_out_disable_dev;
-	पूर्ण
+		goto err_out_disable_dev;
+	}
 
 	pci_set_drvdata(pdev, emu);
 
-	gameport_रेजिस्टर_port(port);
+	gameport_register_port(port);
 
-	वापस 0;
+	return 0;
 
  err_out_disable_dev:
 	pci_disable_device(pdev);
- err_out_मुक्त:
-	gameport_मुक्त_port(port);
-	kमुक्त(emu);
-	वापस error;
-पूर्ण
+ err_out_free:
+	gameport_free_port(port);
+	kfree(emu);
+	return error;
+}
 
-अटल व्योम emu_हटाओ(काष्ठा pci_dev *pdev)
-अणु
-	काष्ठा emu *emu = pci_get_drvdata(pdev);
+static void emu_remove(struct pci_dev *pdev)
+{
+	struct emu *emu = pci_get_drvdata(pdev);
 
-	gameport_unरेजिस्टर_port(emu->gameport);
+	gameport_unregister_port(emu->gameport);
 	release_region(emu->io, emu->size);
-	kमुक्त(emu);
+	kfree(emu);
 
 	pci_disable_device(pdev);
-पूर्ण
+}
 
-अटल काष्ठा pci_driver emu_driver = अणु
+static struct pci_driver emu_driver = {
         .name =         "Emu10k1_gameport",
         .id_table =     emu_tbl,
         .probe =        emu_probe,
-	.हटाओ =	emu_हटाओ,
-पूर्ण;
+	.remove =	emu_remove,
+};
 
 module_pci_driver(emu_driver);

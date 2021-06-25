@@ -1,17 +1,16 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /* Copyright (c) 2012 GCT Semiconductor, Inc. All rights reserved. */
 
-#अगर_अघोषित _NETLINK_K_H
-#घोषणा _NETLINK_K_H
+#ifndef _NETLINK_K_H
+#define _NETLINK_K_H
 
-#समावेश <linux/netdevice.h>
-#समावेश <net/sock.h>
+#include <linux/netdevice.h>
+#include <net/sock.h>
 
-काष्ठा sock *netlink_init(पूर्णांक unit,
-			  व्योम (*cb)(काष्ठा net_device *dev,
-				     u16 type, व्योम *msg, पूर्णांक len));
-पूर्णांक netlink_send(काष्ठा sock *sock, पूर्णांक group, u16 type, व्योम *msg, पूर्णांक len,
-		 काष्ठा net_device *dev);
+struct sock *netlink_init(int unit,
+			  void (*cb)(struct net_device *dev,
+				     u16 type, void *msg, int len));
+int netlink_send(struct sock *sock, int group, u16 type, void *msg, int len,
+		 struct net_device *dev);
 
-#पूर्ण_अगर /* _NETLINK_K_H_ */
+#endif /* _NETLINK_K_H_ */

@@ -1,58 +1,57 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
-/* X.509 certअगरicate parser पूर्णांकernal definitions
+/* SPDX-License-Identifier: GPL-2.0-or-later */
+/* X.509 certificate parser internal definitions
  *
  * Copyright (C) 2012 Red Hat, Inc. All Rights Reserved.
  * Written by David Howells (dhowells@redhat.com)
  */
 
-#समावेश <linux/समय.स>
-#समावेश <crypto/खुला_key.h>
-#समावेश <keys/asymmetric-type.h>
+#include <linux/time.h>
+#include <crypto/public_key.h>
+#include <keys/asymmetric-type.h>
 
-काष्ठा x509_certअगरicate अणु
-	काष्ठा x509_certअगरicate *next;
-	काष्ठा x509_certअगरicate *signer;	/* Certअगरicate that चिन्हित this one */
-	काष्ठा खुला_key *pub;			/* Public key details */
-	काष्ठा खुला_key_signature *sig;	/* Signature parameters */
-	अक्षर		*issuer;		/* Name of certअगरicate issuer */
-	अक्षर		*subject;		/* Name of certअगरicate subject */
-	काष्ठा asymmetric_key_id *id;		/* Issuer + Serial number */
-	काष्ठा asymmetric_key_id *skid;		/* Subject + subjectKeyId (optional) */
-	समय64_t	valid_from;
-	समय64_t	valid_to;
-	स्थिर व्योम	*tbs;			/* Signed data */
-	अचिन्हित	tbs_size;		/* Size of चिन्हित data */
-	अचिन्हित	raw_sig_size;		/* Size of sigature */
-	स्थिर व्योम	*raw_sig;		/* Signature data */
-	स्थिर व्योम	*raw_serial;		/* Raw serial number in ASN.1 */
-	अचिन्हित	raw_serial_size;
-	अचिन्हित	raw_issuer_size;
-	स्थिर व्योम	*raw_issuer;		/* Raw issuer name in ASN.1 */
-	स्थिर व्योम	*raw_subject;		/* Raw subject name in ASN.1 */
-	अचिन्हित	raw_subject_size;
-	अचिन्हित	raw_skid_size;
-	स्थिर व्योम	*raw_skid;		/* Raw subjectKeyId in ASN.1 */
-	अचिन्हित	index;
+struct x509_certificate {
+	struct x509_certificate *next;
+	struct x509_certificate *signer;	/* Certificate that signed this one */
+	struct public_key *pub;			/* Public key details */
+	struct public_key_signature *sig;	/* Signature parameters */
+	char		*issuer;		/* Name of certificate issuer */
+	char		*subject;		/* Name of certificate subject */
+	struct asymmetric_key_id *id;		/* Issuer + Serial number */
+	struct asymmetric_key_id *skid;		/* Subject + subjectKeyId (optional) */
+	time64_t	valid_from;
+	time64_t	valid_to;
+	const void	*tbs;			/* Signed data */
+	unsigned	tbs_size;		/* Size of signed data */
+	unsigned	raw_sig_size;		/* Size of sigature */
+	const void	*raw_sig;		/* Signature data */
+	const void	*raw_serial;		/* Raw serial number in ASN.1 */
+	unsigned	raw_serial_size;
+	unsigned	raw_issuer_size;
+	const void	*raw_issuer;		/* Raw issuer name in ASN.1 */
+	const void	*raw_subject;		/* Raw subject name in ASN.1 */
+	unsigned	raw_subject_size;
+	unsigned	raw_skid_size;
+	const void	*raw_skid;		/* Raw subjectKeyId in ASN.1 */
+	unsigned	index;
 	bool		seen;			/* Infinite recursion prevention */
-	bool		verअगरied;
-	bool		self_चिन्हित;		/* T अगर self-चिन्हित (check unsupported_sig too) */
-	bool		unsupported_key;	/* T अगर key uses unsupported crypto */
-	bool		unsupported_sig;	/* T अगर signature uses unsupported crypto */
+	bool		verified;
+	bool		self_signed;		/* T if self-signed (check unsupported_sig too) */
+	bool		unsupported_key;	/* T if key uses unsupported crypto */
+	bool		unsupported_sig;	/* T if signature uses unsupported crypto */
 	bool		blacklisted;
-पूर्ण;
+};
 
 /*
  * x509_cert_parser.c
  */
-बाह्य व्योम x509_मुक्त_certअगरicate(काष्ठा x509_certअगरicate *cert);
-बाह्य काष्ठा x509_certअगरicate *x509_cert_parse(स्थिर व्योम *data, माप_प्रकार datalen);
-बाह्य पूर्णांक x509_decode_समय(समय64_t *_t,  माप_प्रकार hdrlen,
-			    अचिन्हित अक्षर tag,
-			    स्थिर अचिन्हित अक्षर *value, माप_प्रकार vlen);
+extern void x509_free_certificate(struct x509_certificate *cert);
+extern struct x509_certificate *x509_cert_parse(const void *data, size_t datalen);
+extern int x509_decode_time(time64_t *_t,  size_t hdrlen,
+			    unsigned char tag,
+			    const unsigned char *value, size_t vlen);
 
 /*
- * x509_खुला_key.c
+ * x509_public_key.c
  */
-बाह्य पूर्णांक x509_get_sig_params(काष्ठा x509_certअगरicate *cert);
-बाह्य पूर्णांक x509_check_क्रम_self_चिन्हित(काष्ठा x509_certअगरicate *cert);
+extern int x509_get_sig_params(struct x509_certificate *cert);
+extern int x509_check_for_self_signed(struct x509_certificate *cert);

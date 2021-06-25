@@ -1,160 +1,159 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2014 Samsung Electronics Co., Ltd.
  * Author: Tomasz Figa <t.figa@samsung.com>
  *
- * Clock driver क्रम Exynos घड़ी output
+ * Clock driver for Exynos clock output
  */
 
-#समावेश <linux/slab.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/clk-provider.h>
-#समावेश <linux/module.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/of.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/pm.h>
+#include <linux/slab.h>
+#include <linux/clk.h>
+#include <linux/clk-provider.h>
+#include <linux/module.h>
+#include <linux/io.h>
+#include <linux/of.h>
+#include <linux/of_address.h>
+#include <linux/of_device.h>
+#include <linux/platform_device.h>
+#include <linux/pm.h>
 
-#घोषणा EXYNOS_CLKOUT_NR_CLKS		1
-#घोषणा EXYNOS_CLKOUT_PARENTS		32
+#define EXYNOS_CLKOUT_NR_CLKS		1
+#define EXYNOS_CLKOUT_PARENTS		32
 
-#घोषणा EXYNOS_PMU_DEBUG_REG		0xa00
-#घोषणा EXYNOS_CLKOUT_DISABLE_SHIFT	0
-#घोषणा EXYNOS_CLKOUT_MUX_SHIFT		8
-#घोषणा EXYNOS4_CLKOUT_MUX_MASK		0xf
-#घोषणा EXYNOS5_CLKOUT_MUX_MASK		0x1f
+#define EXYNOS_PMU_DEBUG_REG		0xa00
+#define EXYNOS_CLKOUT_DISABLE_SHIFT	0
+#define EXYNOS_CLKOUT_MUX_SHIFT		8
+#define EXYNOS4_CLKOUT_MUX_MASK		0xf
+#define EXYNOS5_CLKOUT_MUX_MASK		0x1f
 
-काष्ठा exynos_clkout अणु
-	काष्ठा clk_gate gate;
-	काष्ठा clk_mux mux;
+struct exynos_clkout {
+	struct clk_gate gate;
+	struct clk_mux mux;
 	spinlock_t slock;
-	व्योम __iomem *reg;
-	काष्ठा device_node *np;
+	void __iomem *reg;
+	struct device_node *np;
 	u32 pmu_debug_save;
-	काष्ठा clk_hw_onecell_data data;
-पूर्ण;
+	struct clk_hw_onecell_data data;
+};
 
-काष्ठा exynos_clkout_variant अणु
+struct exynos_clkout_variant {
 	u32 mux_mask;
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा exynos_clkout_variant exynos_clkout_exynos4 = अणु
+static const struct exynos_clkout_variant exynos_clkout_exynos4 = {
 	.mux_mask	= EXYNOS4_CLKOUT_MUX_MASK,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा exynos_clkout_variant exynos_clkout_exynos5 = अणु
+static const struct exynos_clkout_variant exynos_clkout_exynos5 = {
 	.mux_mask	= EXYNOS5_CLKOUT_MUX_MASK,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा of_device_id exynos_clkout_ids[] = अणु
-	अणु
+static const struct of_device_id exynos_clkout_ids[] = {
+	{
 		.compatible = "samsung,exynos3250-pmu",
 		.data = &exynos_clkout_exynos4,
-	पूर्ण, अणु
+	}, {
 		.compatible = "samsung,exynos4210-pmu",
 		.data = &exynos_clkout_exynos4,
-	पूर्ण, अणु
+	}, {
 		.compatible = "samsung,exynos4412-pmu",
 		.data = &exynos_clkout_exynos4,
-	पूर्ण, अणु
+	}, {
 		.compatible = "samsung,exynos5250-pmu",
 		.data = &exynos_clkout_exynos5,
-	पूर्ण, अणु
+	}, {
 		.compatible = "samsung,exynos5410-pmu",
 		.data = &exynos_clkout_exynos5,
-	पूर्ण, अणु
+	}, {
 		.compatible = "samsung,exynos5420-pmu",
 		.data = &exynos_clkout_exynos5,
-	पूर्ण, अणु
+	}, {
 		.compatible = "samsung,exynos5433-pmu",
 		.data = &exynos_clkout_exynos5,
-	पूर्ण, अणु पूर्ण
-पूर्ण;
+	}, { }
+};
 MODULE_DEVICE_TABLE(of, exynos_clkout_ids);
 
 /*
  * Device will be instantiated as child of PMU device without its own
- * device node.  Thereक्रमe match compatibles against parent.
+ * device node.  Therefore match compatibles against parent.
  */
-अटल पूर्णांक exynos_clkout_match_parent_dev(काष्ठा device *dev, u32 *mux_mask)
-अणु
-	स्थिर काष्ठा exynos_clkout_variant *variant;
-	स्थिर काष्ठा of_device_id *match;
+static int exynos_clkout_match_parent_dev(struct device *dev, u32 *mux_mask)
+{
+	const struct exynos_clkout_variant *variant;
+	const struct of_device_id *match;
 
-	अगर (!dev->parent) अणु
+	if (!dev->parent) {
 		dev_err(dev, "not instantiated from MFD\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	match = of_match_device(exynos_clkout_ids, dev->parent);
-	अगर (!match) अणु
+	if (!match) {
 		dev_err(dev, "cannot match parent device\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	variant = match->data;
 
 	*mux_mask = variant->mux_mask;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक exynos_clkout_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	स्थिर अक्षर *parent_names[EXYNOS_CLKOUT_PARENTS];
-	काष्ठा clk *parents[EXYNOS_CLKOUT_PARENTS];
-	काष्ठा exynos_clkout *clkout;
-	पूर्णांक parent_count, ret, i;
+static int exynos_clkout_probe(struct platform_device *pdev)
+{
+	const char *parent_names[EXYNOS_CLKOUT_PARENTS];
+	struct clk *parents[EXYNOS_CLKOUT_PARENTS];
+	struct exynos_clkout *clkout;
+	int parent_count, ret, i;
 	u32 mux_mask;
 
 	clkout = devm_kzalloc(&pdev->dev,
-			      काष्ठा_size(clkout, data.hws, EXYNOS_CLKOUT_NR_CLKS),
+			      struct_size(clkout, data.hws, EXYNOS_CLKOUT_NR_CLKS),
 			      GFP_KERNEL);
-	अगर (!clkout)
-		वापस -ENOMEM;
+	if (!clkout)
+		return -ENOMEM;
 
 	ret = exynos_clkout_match_parent_dev(&pdev->dev, &mux_mask);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	clkout->np = pdev->dev.of_node;
-	अगर (!clkout->np) अणु
+	if (!clkout->np) {
 		/*
 		 * pdev->dev.parent was checked by exynos_clkout_match_parent_dev()
-		 * so it is not शून्य.
+		 * so it is not NULL.
 		 */
 		clkout->np = pdev->dev.parent->of_node;
-	पूर्ण
+	}
 
-	platक्रमm_set_drvdata(pdev, clkout);
+	platform_set_drvdata(pdev, clkout);
 
 	spin_lock_init(&clkout->slock);
 
 	parent_count = 0;
-	क्रम (i = 0; i < EXYNOS_CLKOUT_PARENTS; ++i) अणु
-		अक्षर name[] = "clkoutXX";
+	for (i = 0; i < EXYNOS_CLKOUT_PARENTS; ++i) {
+		char name[] = "clkoutXX";
 
-		snम_लिखो(name, माप(name), "clkout%d", i);
+		snprintf(name, sizeof(name), "clkout%d", i);
 		parents[i] = of_clk_get_by_name(clkout->np, name);
-		अगर (IS_ERR(parents[i])) अणु
+		if (IS_ERR(parents[i])) {
 			parent_names[i] = "none";
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		parent_names[i] = __clk_get_name(parents[i]);
 		parent_count = i + 1;
-	पूर्ण
+	}
 
-	अगर (!parent_count)
-		वापस -EINVAL;
+	if (!parent_count)
+		return -EINVAL;
 
 	clkout->reg = of_iomap(clkout->np, 0);
-	अगर (!clkout->reg) अणु
+	if (!clkout->reg) {
 		ret = -ENODEV;
-		जाओ clks_put;
-	पूर्ण
+		goto clks_put;
+	}
 
 	clkout->gate.reg = clkout->reg + EXYNOS_PMU_DEBUG_REG;
 	clkout->gate.bit_idx = EXYNOS_CLKOUT_DISABLE_SHIFT;
@@ -163,82 +162,82 @@ MODULE_DEVICE_TABLE(of, exynos_clkout_ids);
 
 	clkout->mux.reg = clkout->reg + EXYNOS_PMU_DEBUG_REG;
 	clkout->mux.mask = mux_mask;
-	clkout->mux.shअगरt = EXYNOS_CLKOUT_MUX_SHIFT;
+	clkout->mux.shift = EXYNOS_CLKOUT_MUX_SHIFT;
 	clkout->mux.lock = &clkout->slock;
 
-	clkout->data.hws[0] = clk_hw_रेजिस्टर_composite(शून्य, "clkout",
+	clkout->data.hws[0] = clk_hw_register_composite(NULL, "clkout",
 				parent_names, parent_count, &clkout->mux.hw,
-				&clk_mux_ops, शून्य, शून्य, &clkout->gate.hw,
+				&clk_mux_ops, NULL, NULL, &clkout->gate.hw,
 				&clk_gate_ops, CLK_SET_RATE_PARENT
 				| CLK_SET_RATE_NO_REPARENT);
-	अगर (IS_ERR(clkout->data.hws[0])) अणु
+	if (IS_ERR(clkout->data.hws[0])) {
 		ret = PTR_ERR(clkout->data.hws[0]);
-		जाओ err_unmap;
-	पूर्ण
+		goto err_unmap;
+	}
 
 	clkout->data.num = EXYNOS_CLKOUT_NR_CLKS;
 	ret = of_clk_add_hw_provider(clkout->np, of_clk_hw_onecell_get, &clkout->data);
-	अगर (ret)
-		जाओ err_clk_unreg;
+	if (ret)
+		goto err_clk_unreg;
 
-	वापस 0;
+	return 0;
 
 err_clk_unreg:
-	clk_hw_unरेजिस्टर(clkout->data.hws[0]);
+	clk_hw_unregister(clkout->data.hws[0]);
 err_unmap:
 	iounmap(clkout->reg);
 clks_put:
-	क्रम (i = 0; i < EXYNOS_CLKOUT_PARENTS; ++i)
-		अगर (!IS_ERR(parents[i]))
+	for (i = 0; i < EXYNOS_CLKOUT_PARENTS; ++i)
+		if (!IS_ERR(parents[i]))
 			clk_put(parents[i]);
 
 	dev_err(&pdev->dev, "failed to register clkout clock\n");
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक exynos_clkout_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा exynos_clkout *clkout = platक्रमm_get_drvdata(pdev);
+static int exynos_clkout_remove(struct platform_device *pdev)
+{
+	struct exynos_clkout *clkout = platform_get_drvdata(pdev);
 
 	of_clk_del_provider(clkout->np);
-	clk_hw_unरेजिस्टर(clkout->data.hws[0]);
+	clk_hw_unregister(clkout->data.hws[0]);
 	iounmap(clkout->reg);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __maybe_unused exynos_clkout_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा exynos_clkout *clkout = dev_get_drvdata(dev);
+static int __maybe_unused exynos_clkout_suspend(struct device *dev)
+{
+	struct exynos_clkout *clkout = dev_get_drvdata(dev);
 
-	clkout->pmu_debug_save = पढ़ोl(clkout->reg + EXYNOS_PMU_DEBUG_REG);
+	clkout->pmu_debug_save = readl(clkout->reg + EXYNOS_PMU_DEBUG_REG);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __maybe_unused exynos_clkout_resume(काष्ठा device *dev)
-अणु
-	काष्ठा exynos_clkout *clkout = dev_get_drvdata(dev);
+static int __maybe_unused exynos_clkout_resume(struct device *dev)
+{
+	struct exynos_clkout *clkout = dev_get_drvdata(dev);
 
-	ग_लिखोl(clkout->pmu_debug_save, clkout->reg + EXYNOS_PMU_DEBUG_REG);
+	writel(clkout->pmu_debug_save, clkout->reg + EXYNOS_PMU_DEBUG_REG);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल SIMPLE_DEV_PM_OPS(exynos_clkout_pm_ops, exynos_clkout_suspend,
+static SIMPLE_DEV_PM_OPS(exynos_clkout_pm_ops, exynos_clkout_suspend,
 			 exynos_clkout_resume);
 
-अटल काष्ठा platक्रमm_driver exynos_clkout_driver = अणु
-	.driver = अणु
+static struct platform_driver exynos_clkout_driver = {
+	.driver = {
 		.name = "exynos-clkout",
 		.of_match_table = exynos_clkout_ids,
 		.pm = &exynos_clkout_pm_ops,
-	पूर्ण,
+	},
 	.probe = exynos_clkout_probe,
-	.हटाओ = exynos_clkout_हटाओ,
-पूर्ण;
-module_platक्रमm_driver(exynos_clkout_driver);
+	.remove = exynos_clkout_remove,
+};
+module_platform_driver(exynos_clkout_driver);
 
 MODULE_AUTHOR("Krzysztof Kozlowski <krzk@kernel.org>");
 MODULE_AUTHOR("Tomasz Figa <tomasz.figa@gmail.com>");

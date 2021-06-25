@@ -1,8 +1,7 @@
-<शैली गुरु>
 /*
  * Copyright 2014 Cisco Systems, Inc.  All rights reserved.
  *
- * This program is मुक्त software; you may redistribute it and/or modअगरy
+ * This program is free software; you may redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; version 2 of the License.
  *
@@ -16,96 +15,96 @@
  * SOFTWARE.
  */
 
-#अगर_अघोषित _VNIC_DEV_H_
-#घोषणा _VNIC_DEV_H_
+#ifndef _VNIC_DEV_H_
+#define _VNIC_DEV_H_
 
-#समावेश "vnic_resource.h"
-#समावेश "vnic_devcmd.h"
+#include "vnic_resource.h"
+#include "vnic_devcmd.h"
 
-#अगर_अघोषित VNIC_PADDR_TARGET
-#घोषणा VNIC_PADDR_TARGET	0x0000000000000000ULL
-#पूर्ण_अगर
+#ifndef VNIC_PADDR_TARGET
+#define VNIC_PADDR_TARGET	0x0000000000000000ULL
+#endif
 
-#अगर_अघोषित पढ़ोq
-अटल अंतरभूत u64 पढ़ोq(व्योम __iomem *reg)
-अणु
-	वापस ((u64)पढ़ोl(reg + 0x4UL) << 32) | (u64)पढ़ोl(reg);
-पूर्ण
+#ifndef readq
+static inline u64 readq(void __iomem *reg)
+{
+	return ((u64)readl(reg + 0x4UL) << 32) | (u64)readl(reg);
+}
 
-अटल अंतरभूत व्योम ग_लिखोq(u64 val, व्योम __iomem *reg)
-अणु
-	ग_लिखोl(lower_32_bits(val), reg);
-	ग_लिखोl(upper_32_bits(val), reg + 0x4UL);
-पूर्ण
-#पूर्ण_अगर
+static inline void writeq(u64 val, void __iomem *reg)
+{
+	writel(lower_32_bits(val), reg);
+	writel(upper_32_bits(val), reg + 0x4UL);
+}
+#endif
 
-क्रमागत vnic_dev_पूर्णांकr_mode अणु
+enum vnic_dev_intr_mode {
 	VNIC_DEV_INTR_MODE_UNKNOWN,
 	VNIC_DEV_INTR_MODE_INTX,
 	VNIC_DEV_INTR_MODE_MSI,
 	VNIC_DEV_INTR_MODE_MSIX,
-पूर्ण;
+};
 
-काष्ठा vnic_dev_bar अणु
-	व्योम __iomem *vaddr;
+struct vnic_dev_bar {
+	void __iomem *vaddr;
 	dma_addr_t bus_addr;
-	अचिन्हित दीर्घ len;
-पूर्ण;
+	unsigned long len;
+};
 
-काष्ठा vnic_dev_ring अणु
-	व्योम *descs;
-	माप_प्रकार size;
+struct vnic_dev_ring {
+	void *descs;
+	size_t size;
 	dma_addr_t base_addr;
-	माप_प्रकार base_align;
-	व्योम *descs_unaligned;
-	माप_प्रकार size_unaligned;
+	size_t base_align;
+	void *descs_unaligned;
+	size_t size_unaligned;
 	dma_addr_t base_addr_unaligned;
-	अचिन्हित पूर्णांक desc_size;
-	अचिन्हित पूर्णांक desc_count;
-	अचिन्हित पूर्णांक desc_avail;
-पूर्ण;
+	unsigned int desc_size;
+	unsigned int desc_count;
+	unsigned int desc_avail;
+};
 
-काष्ठा vnic_dev;
-काष्ठा vnic_stats;
+struct vnic_dev;
+struct vnic_stats;
 
-व्योम *svnic_dev_priv(काष्ठा vnic_dev *vdev);
-अचिन्हित पूर्णांक svnic_dev_get_res_count(काष्ठा vnic_dev *vdev,
-				    क्रमागत vnic_res_type type);
-व्योम __iomem *svnic_dev_get_res(काष्ठा vnic_dev *vdev, क्रमागत vnic_res_type type,
-			       अचिन्हित पूर्णांक index);
-अचिन्हित पूर्णांक svnic_dev_desc_ring_size(काष्ठा vnic_dev_ring *ring,
-				     अचिन्हित पूर्णांक desc_count,
-				     अचिन्हित पूर्णांक desc_size);
-व्योम svnic_dev_clear_desc_ring(काष्ठा vnic_dev_ring *ring);
-पूर्णांक svnic_dev_alloc_desc_ring(काष्ठा vnic_dev *vdev, काष्ठा vnic_dev_ring *ring,
-			     अचिन्हित पूर्णांक desc_count, अचिन्हित पूर्णांक desc_size);
-व्योम svnic_dev_मुक्त_desc_ring(काष्ठा vnic_dev *vdev,
-			     काष्ठा vnic_dev_ring *ring);
-पूर्णांक svnic_dev_cmd(काष्ठा vnic_dev *vdev, क्रमागत vnic_devcmd_cmd cmd,
-		 u64 *a0, u64 *a1, पूर्णांक रुको);
-पूर्णांक svnic_dev_fw_info(काष्ठा vnic_dev *vdev,
-		     काष्ठा vnic_devcmd_fw_info **fw_info);
-पूर्णांक svnic_dev_spec(काष्ठा vnic_dev *vdev, अचिन्हित पूर्णांक offset,
-		  अचिन्हित पूर्णांक size, व्योम *value);
-पूर्णांक svnic_dev_stats_clear(काष्ठा vnic_dev *vdev);
-पूर्णांक svnic_dev_stats_dump(काष्ठा vnic_dev *vdev, काष्ठा vnic_stats **stats);
-पूर्णांक svnic_dev_notअगरy_set(काष्ठा vnic_dev *vdev, u16 पूर्णांकr);
-व्योम svnic_dev_notअगरy_unset(काष्ठा vnic_dev *vdev);
-पूर्णांक svnic_dev_link_status(काष्ठा vnic_dev *vdev);
-u32 svnic_dev_link_करोwn_cnt(काष्ठा vnic_dev *vdev);
-पूर्णांक svnic_dev_बंद(काष्ठा vnic_dev *vdev);
-पूर्णांक svnic_dev_enable_रुको(काष्ठा vnic_dev *vdev);
-पूर्णांक svnic_dev_disable(काष्ठा vnic_dev *vdev);
-पूर्णांक svnic_dev_खोलो(काष्ठा vnic_dev *vdev, पूर्णांक arg);
-पूर्णांक svnic_dev_खोलो_करोne(काष्ठा vnic_dev *vdev, पूर्णांक *करोne);
-पूर्णांक svnic_dev_init(काष्ठा vnic_dev *vdev, पूर्णांक arg);
-काष्ठा vnic_dev *svnic_dev_alloc_discover(काष्ठा vnic_dev *vdev,
-					 व्योम *priv, काष्ठा pci_dev *pdev,
-					 काष्ठा vnic_dev_bar *bar,
-					 अचिन्हित पूर्णांक num_bars);
-व्योम svnic_dev_set_पूर्णांकr_mode(काष्ठा vnic_dev *vdev,
-			    क्रमागत vnic_dev_पूर्णांकr_mode पूर्णांकr_mode);
-क्रमागत vnic_dev_पूर्णांकr_mode svnic_dev_get_पूर्णांकr_mode(काष्ठा vnic_dev *vdev);
-व्योम svnic_dev_unरेजिस्टर(काष्ठा vnic_dev *vdev);
-पूर्णांक svnic_dev_cmd_init(काष्ठा vnic_dev *vdev, पूर्णांक fallback);
-#पूर्ण_अगर /* _VNIC_DEV_H_ */
+void *svnic_dev_priv(struct vnic_dev *vdev);
+unsigned int svnic_dev_get_res_count(struct vnic_dev *vdev,
+				    enum vnic_res_type type);
+void __iomem *svnic_dev_get_res(struct vnic_dev *vdev, enum vnic_res_type type,
+			       unsigned int index);
+unsigned int svnic_dev_desc_ring_size(struct vnic_dev_ring *ring,
+				     unsigned int desc_count,
+				     unsigned int desc_size);
+void svnic_dev_clear_desc_ring(struct vnic_dev_ring *ring);
+int svnic_dev_alloc_desc_ring(struct vnic_dev *vdev, struct vnic_dev_ring *ring,
+			     unsigned int desc_count, unsigned int desc_size);
+void svnic_dev_free_desc_ring(struct vnic_dev *vdev,
+			     struct vnic_dev_ring *ring);
+int svnic_dev_cmd(struct vnic_dev *vdev, enum vnic_devcmd_cmd cmd,
+		 u64 *a0, u64 *a1, int wait);
+int svnic_dev_fw_info(struct vnic_dev *vdev,
+		     struct vnic_devcmd_fw_info **fw_info);
+int svnic_dev_spec(struct vnic_dev *vdev, unsigned int offset,
+		  unsigned int size, void *value);
+int svnic_dev_stats_clear(struct vnic_dev *vdev);
+int svnic_dev_stats_dump(struct vnic_dev *vdev, struct vnic_stats **stats);
+int svnic_dev_notify_set(struct vnic_dev *vdev, u16 intr);
+void svnic_dev_notify_unset(struct vnic_dev *vdev);
+int svnic_dev_link_status(struct vnic_dev *vdev);
+u32 svnic_dev_link_down_cnt(struct vnic_dev *vdev);
+int svnic_dev_close(struct vnic_dev *vdev);
+int svnic_dev_enable_wait(struct vnic_dev *vdev);
+int svnic_dev_disable(struct vnic_dev *vdev);
+int svnic_dev_open(struct vnic_dev *vdev, int arg);
+int svnic_dev_open_done(struct vnic_dev *vdev, int *done);
+int svnic_dev_init(struct vnic_dev *vdev, int arg);
+struct vnic_dev *svnic_dev_alloc_discover(struct vnic_dev *vdev,
+					 void *priv, struct pci_dev *pdev,
+					 struct vnic_dev_bar *bar,
+					 unsigned int num_bars);
+void svnic_dev_set_intr_mode(struct vnic_dev *vdev,
+			    enum vnic_dev_intr_mode intr_mode);
+enum vnic_dev_intr_mode svnic_dev_get_intr_mode(struct vnic_dev *vdev);
+void svnic_dev_unregister(struct vnic_dev *vdev);
+int svnic_dev_cmd_init(struct vnic_dev *vdev, int fallback);
+#endif /* _VNIC_DEV_H_ */

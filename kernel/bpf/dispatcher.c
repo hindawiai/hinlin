@@ -1,15 +1,14 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /* Copyright(c) 2019 Intel Corporation. */
 
-#समावेश <linux/hash.h>
-#समावेश <linux/bpf.h>
-#समावेश <linux/filter.h>
+#include <linux/hash.h>
+#include <linux/bpf.h>
+#include <linux/filter.h>
 
 /* The BPF dispatcher is a multiway branch code generator. The
- * dispatcher is a mechanism to aव्योम the perक्रमmance penalty of an
+ * dispatcher is a mechanism to avoid the performance penalty of an
  * indirect call, which is expensive when retpolines are enabled. A
- * dispatch client रेजिस्टरs a BPF program पूर्णांकo the dispatcher, and अगर
+ * dispatch client registers a BPF program into the dispatcher, and if
  * there is available room in the dispatcher a direct call to the BPF
  * program will be generated. All calls to the BPF programs called via
  * the dispatcher will then be a direct call, instead of an
@@ -17,144 +16,144 @@
  * __fentry__ of the trampoline. The trampoline function has the
  * following signature:
  *
- * अचिन्हित पूर्णांक trampoline(स्थिर व्योम *ctx, स्थिर काष्ठा bpf_insn *insnsi,
- *                         अचिन्हित पूर्णांक (*bpf_func)(स्थिर व्योम *,
- *                                                  स्थिर काष्ठा bpf_insn *));
+ * unsigned int trampoline(const void *ctx, const struct bpf_insn *insnsi,
+ *                         unsigned int (*bpf_func)(const void *,
+ *                                                  const struct bpf_insn *));
  */
 
-अटल काष्ठा bpf_dispatcher_prog *bpf_dispatcher_find_prog(
-	काष्ठा bpf_dispatcher *d, काष्ठा bpf_prog *prog)
-अणु
-	पूर्णांक i;
+static struct bpf_dispatcher_prog *bpf_dispatcher_find_prog(
+	struct bpf_dispatcher *d, struct bpf_prog *prog)
+{
+	int i;
 
-	क्रम (i = 0; i < BPF_DISPATCHER_MAX; i++) अणु
-		अगर (prog == d->progs[i].prog)
-			वापस &d->progs[i];
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+	for (i = 0; i < BPF_DISPATCHER_MAX; i++) {
+		if (prog == d->progs[i].prog)
+			return &d->progs[i];
+	}
+	return NULL;
+}
 
-अटल काष्ठा bpf_dispatcher_prog *bpf_dispatcher_find_मुक्त(
-	काष्ठा bpf_dispatcher *d)
-अणु
-	वापस bpf_dispatcher_find_prog(d, शून्य);
-पूर्ण
+static struct bpf_dispatcher_prog *bpf_dispatcher_find_free(
+	struct bpf_dispatcher *d)
+{
+	return bpf_dispatcher_find_prog(d, NULL);
+}
 
-अटल bool bpf_dispatcher_add_prog(काष्ठा bpf_dispatcher *d,
-				    काष्ठा bpf_prog *prog)
-अणु
-	काष्ठा bpf_dispatcher_prog *entry;
+static bool bpf_dispatcher_add_prog(struct bpf_dispatcher *d,
+				    struct bpf_prog *prog)
+{
+	struct bpf_dispatcher_prog *entry;
 
-	अगर (!prog)
-		वापस false;
+	if (!prog)
+		return false;
 
 	entry = bpf_dispatcher_find_prog(d, prog);
-	अगर (entry) अणु
+	if (entry) {
 		refcount_inc(&entry->users);
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
-	entry = bpf_dispatcher_find_मुक्त(d);
-	अगर (!entry)
-		वापस false;
+	entry = bpf_dispatcher_find_free(d);
+	if (!entry)
+		return false;
 
 	bpf_prog_inc(prog);
 	entry->prog = prog;
 	refcount_set(&entry->users, 1);
 	d->num_progs++;
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल bool bpf_dispatcher_हटाओ_prog(काष्ठा bpf_dispatcher *d,
-				       काष्ठा bpf_prog *prog)
-अणु
-	काष्ठा bpf_dispatcher_prog *entry;
+static bool bpf_dispatcher_remove_prog(struct bpf_dispatcher *d,
+				       struct bpf_prog *prog)
+{
+	struct bpf_dispatcher_prog *entry;
 
-	अगर (!prog)
-		वापस false;
+	if (!prog)
+		return false;
 
 	entry = bpf_dispatcher_find_prog(d, prog);
-	अगर (!entry)
-		वापस false;
+	if (!entry)
+		return false;
 
-	अगर (refcount_dec_and_test(&entry->users)) अणु
-		entry->prog = शून्य;
+	if (refcount_dec_and_test(&entry->users)) {
+		entry->prog = NULL;
 		bpf_prog_put(prog);
 		d->num_progs--;
-		वापस true;
-	पूर्ण
-	वापस false;
-पूर्ण
+		return true;
+	}
+	return false;
+}
 
-पूर्णांक __weak arch_prepare_bpf_dispatcher(व्योम *image, s64 *funcs, पूर्णांक num_funcs)
-अणु
-	वापस -ENOTSUPP;
-पूर्ण
+int __weak arch_prepare_bpf_dispatcher(void *image, s64 *funcs, int num_funcs)
+{
+	return -ENOTSUPP;
+}
 
-अटल पूर्णांक bpf_dispatcher_prepare(काष्ठा bpf_dispatcher *d, व्योम *image)
-अणु
-	s64 ips[BPF_DISPATCHER_MAX] = अणुपूर्ण, *ipsp = &ips[0];
-	पूर्णांक i;
+static int bpf_dispatcher_prepare(struct bpf_dispatcher *d, void *image)
+{
+	s64 ips[BPF_DISPATCHER_MAX] = {}, *ipsp = &ips[0];
+	int i;
 
-	क्रम (i = 0; i < BPF_DISPATCHER_MAX; i++) अणु
-		अगर (d->progs[i].prog)
-			*ipsp++ = (s64)(uपूर्णांकptr_t)d->progs[i].prog->bpf_func;
-	पूर्ण
-	वापस arch_prepare_bpf_dispatcher(image, &ips[0], d->num_progs);
-पूर्ण
+	for (i = 0; i < BPF_DISPATCHER_MAX; i++) {
+		if (d->progs[i].prog)
+			*ipsp++ = (s64)(uintptr_t)d->progs[i].prog->bpf_func;
+	}
+	return arch_prepare_bpf_dispatcher(image, &ips[0], d->num_progs);
+}
 
-अटल व्योम bpf_dispatcher_update(काष्ठा bpf_dispatcher *d, पूर्णांक prev_num_progs)
-अणु
-	व्योम *old, *new;
+static void bpf_dispatcher_update(struct bpf_dispatcher *d, int prev_num_progs)
+{
+	void *old, *new;
 	u32 noff;
-	पूर्णांक err;
+	int err;
 
-	अगर (!prev_num_progs) अणु
-		old = शून्य;
+	if (!prev_num_progs) {
+		old = NULL;
 		noff = 0;
-	पूर्ण अन्यथा अणु
+	} else {
 		old = d->image + d->image_off;
 		noff = d->image_off ^ (PAGE_SIZE / 2);
-	पूर्ण
+	}
 
-	new = d->num_progs ? d->image + noff : शून्य;
-	अगर (new) अणु
-		अगर (bpf_dispatcher_prepare(d, new))
-			वापस;
-	पूर्ण
+	new = d->num_progs ? d->image + noff : NULL;
+	if (new) {
+		if (bpf_dispatcher_prepare(d, new))
+			return;
+	}
 
 	err = bpf_arch_text_poke(d->func, BPF_MOD_JUMP, old, new);
-	अगर (err || !new)
-		वापस;
+	if (err || !new)
+		return;
 
 	d->image_off = noff;
-पूर्ण
+}
 
-व्योम bpf_dispatcher_change_prog(काष्ठा bpf_dispatcher *d, काष्ठा bpf_prog *from,
-				काष्ठा bpf_prog *to)
-अणु
+void bpf_dispatcher_change_prog(struct bpf_dispatcher *d, struct bpf_prog *from,
+				struct bpf_prog *to)
+{
 	bool changed = false;
-	पूर्णांक prev_num_progs;
+	int prev_num_progs;
 
-	अगर (from == to)
-		वापस;
+	if (from == to)
+		return;
 
 	mutex_lock(&d->mutex);
-	अगर (!d->image) अणु
+	if (!d->image) {
 		d->image = bpf_jit_alloc_exec_page();
-		अगर (!d->image)
-			जाओ out;
+		if (!d->image)
+			goto out;
 		bpf_image_ksym_add(d->image, &d->ksym);
-	पूर्ण
+	}
 
 	prev_num_progs = d->num_progs;
-	changed |= bpf_dispatcher_हटाओ_prog(d, from);
+	changed |= bpf_dispatcher_remove_prog(d, from);
 	changed |= bpf_dispatcher_add_prog(d, to);
 
-	अगर (!changed)
-		जाओ out;
+	if (!changed)
+		goto out;
 
 	bpf_dispatcher_update(d, prev_num_progs);
 out:
 	mutex_unlock(&d->mutex);
-पूर्ण
+}

@@ -1,11 +1,10 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  *	Adaptec AAC series RAID controller driver
  *	(c) Copyright 2001 Red Hat Inc.
  *
  * based on the old aacraid driver that is..
- * Adaptec aacraid device driver क्रम Linux.
+ * Adaptec aacraid device driver for Linux.
  *
  * Copyright (c) 2000-2010 Adaptec, Inc.
  *               2010-2015 PMC-Sierra, Inc. (aacraid@pmc-sierra.com)
@@ -14,25 +13,25 @@
  * Module Name:
  *  commctrl.c
  *
- * Abstract: Contains all routines क्रम control of the AFA comm layer
+ * Abstract: Contains all routines for control of the AFA comm layer
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/init.h>
-#समावेश <linux/types.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/completion.h>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/blkdev.h>
-#समावेश <linux/compat.h>
-#समावेश <linux/delay.h> /* ssleep prototype */
-#समावेश <linux/kthपढ़ो.h>
-#समावेश <linux/uaccess.h>
-#समावेश <scsi/scsi_host.h>
+#include <linux/kernel.h>
+#include <linux/init.h>
+#include <linux/types.h>
+#include <linux/pci.h>
+#include <linux/spinlock.h>
+#include <linux/slab.h>
+#include <linux/completion.h>
+#include <linux/dma-mapping.h>
+#include <linux/blkdev.h>
+#include <linux/compat.h>
+#include <linux/delay.h> /* ssleep prototype */
+#include <linux/kthread.h>
+#include <linux/uaccess.h>
+#include <scsi/scsi_host.h>
 
-#समावेश "aacraid.h"
+#include "aacraid.h"
 
 # define AAC_DEBUG_PREAMBLE	KERN_INFO
 # define AAC_DEBUG_POSTAMBLE
@@ -44,337 +43,337 @@
  *	This routine sends a fib to the adapter on behalf of a user level
  *	program.
  */
-अटल पूर्णांक ioctl_send_fib(काष्ठा aac_dev * dev, व्योम __user *arg)
-अणु
-	काष्ठा hw_fib * kfib;
-	काष्ठा fib *fibptr;
-	काष्ठा hw_fib * hw_fib = (काष्ठा hw_fib *)0;
+static int ioctl_send_fib(struct aac_dev * dev, void __user *arg)
+{
+	struct hw_fib * kfib;
+	struct fib *fibptr;
+	struct hw_fib * hw_fib = (struct hw_fib *)0;
 	dma_addr_t hw_fib_pa = (dma_addr_t)0LL;
-	अचिन्हित पूर्णांक size, osize;
-	पूर्णांक retval;
+	unsigned int size, osize;
+	int retval;
 
-	अगर (dev->in_reset) अणु
-		वापस -EBUSY;
-	पूर्ण
+	if (dev->in_reset) {
+		return -EBUSY;
+	}
 	fibptr = aac_fib_alloc(dev);
-	अगर(fibptr == शून्य) अणु
-		वापस -ENOMEM;
-	पूर्ण
+	if(fibptr == NULL) {
+		return -ENOMEM;
+	}
 
 	kfib = fibptr->hw_fib_va;
 	/*
 	 *	First copy in the header so that we can check the size field.
 	 */
-	अगर (copy_from_user((व्योम *)kfib, arg, माप(काष्ठा aac_fibhdr))) अणु
-		aac_fib_मुक्त(fibptr);
-		वापस -EFAULT;
-	पूर्ण
+	if (copy_from_user((void *)kfib, arg, sizeof(struct aac_fibhdr))) {
+		aac_fib_free(fibptr);
+		return -EFAULT;
+	}
 	/*
 	 *	Since we copy based on the fib header size, make sure that we
 	 *	will not overrun the buffer when we copy the memory. Return
-	 *	an error अगर we would.
+	 *	an error if we would.
 	 */
 	osize = size = le16_to_cpu(kfib->header.Size) +
-		माप(काष्ठा aac_fibhdr);
-	अगर (size < le16_to_cpu(kfib->header.SenderSize))
+		sizeof(struct aac_fibhdr);
+	if (size < le16_to_cpu(kfib->header.SenderSize))
 		size = le16_to_cpu(kfib->header.SenderSize);
-	अगर (size > dev->max_fib_size) अणु
+	if (size > dev->max_fib_size) {
 		dma_addr_t daddr;
 
-		अगर (size > 2048) अणु
+		if (size > 2048) {
 			retval = -EINVAL;
-			जाओ cleanup;
-		पूर्ण
+			goto cleanup;
+		}
 
 		kfib = dma_alloc_coherent(&dev->pdev->dev, size, &daddr,
 					  GFP_KERNEL);
-		अगर (!kfib) अणु
+		if (!kfib) {
 			retval = -ENOMEM;
-			जाओ cleanup;
-		पूर्ण
+			goto cleanup;
+		}
 
 		/* Highjack the hw_fib */
 		hw_fib = fibptr->hw_fib_va;
 		hw_fib_pa = fibptr->hw_fib_pa;
 		fibptr->hw_fib_va = kfib;
 		fibptr->hw_fib_pa = daddr;
-		स_रखो(((अक्षर *)kfib) + dev->max_fib_size, 0, size - dev->max_fib_size);
-		स_नकल(kfib, hw_fib, dev->max_fib_size);
-	पूर्ण
+		memset(((char *)kfib) + dev->max_fib_size, 0, size - dev->max_fib_size);
+		memcpy(kfib, hw_fib, dev->max_fib_size);
+	}
 
-	अगर (copy_from_user(kfib, arg, size)) अणु
+	if (copy_from_user(kfib, arg, size)) {
 		retval = -EFAULT;
-		जाओ cleanup;
-	पूर्ण
+		goto cleanup;
+	}
 
 	/* Sanity check the second copy */
-	अगर ((osize != le16_to_cpu(kfib->header.Size) +
-		माप(काष्ठा aac_fibhdr))
-		|| (size < le16_to_cpu(kfib->header.SenderSize))) अणु
+	if ((osize != le16_to_cpu(kfib->header.Size) +
+		sizeof(struct aac_fibhdr))
+		|| (size < le16_to_cpu(kfib->header.SenderSize))) {
 		retval = -EINVAL;
-		जाओ cleanup;
-	पूर्ण
+		goto cleanup;
+	}
 
-	अगर (kfib->header.Command == cpu_to_le16(TakeABreakPt)) अणु
-		aac_adapter_पूर्णांकerrupt(dev);
+	if (kfib->header.Command == cpu_to_le16(TakeABreakPt)) {
+		aac_adapter_interrupt(dev);
 		/*
 		 * Since we didn't really send a fib, zero out the state to allow
-		 * cleanup code not to निश्चित.
+		 * cleanup code not to assert.
 		 */
 		kfib->header.XferState = 0;
-	पूर्ण अन्यथा अणु
+	} else {
 		retval = aac_fib_send(le16_to_cpu(kfib->header.Command), fibptr,
 				le16_to_cpu(kfib->header.Size) , FsaNormal,
-				1, 1, शून्य, शून्य);
-		अगर (retval) अणु
-			जाओ cleanup;
-		पूर्ण
-		अगर (aac_fib_complete(fibptr) != 0) अणु
+				1, 1, NULL, NULL);
+		if (retval) {
+			goto cleanup;
+		}
+		if (aac_fib_complete(fibptr) != 0) {
 			retval = -EINVAL;
-			जाओ cleanup;
-		पूर्ण
-	पूर्ण
+			goto cleanup;
+		}
+	}
 	/*
-	 *	Make sure that the size वापसed by the adapter (which includes
+	 *	Make sure that the size returned by the adapter (which includes
 	 *	the header) is less than or equal to the size of a fib, so we
-	 *	करोn't corrupt application data. Then copy that size to the user
-	 *	buffer. (Don't try to add the header inक्रमmation again, since it
-	 *	was alपढ़ोy included by the adapter.)
+	 *	don't corrupt application data. Then copy that size to the user
+	 *	buffer. (Don't try to add the header information again, since it
+	 *	was already included by the adapter.)
 	 */
 
 	retval = 0;
-	अगर (copy_to_user(arg, (व्योम *)kfib, size))
+	if (copy_to_user(arg, (void *)kfib, size))
 		retval = -EFAULT;
 cleanup:
-	अगर (hw_fib) अणु
-		dma_मुक्त_coherent(&dev->pdev->dev, size, kfib,
+	if (hw_fib) {
+		dma_free_coherent(&dev->pdev->dev, size, kfib,
 				  fibptr->hw_fib_pa);
 		fibptr->hw_fib_pa = hw_fib_pa;
 		fibptr->hw_fib_va = hw_fib;
-	पूर्ण
-	अगर (retval != -ERESTARTSYS)
-		aac_fib_मुक्त(fibptr);
-	वापस retval;
-पूर्ण
+	}
+	if (retval != -ERESTARTSYS)
+		aac_fib_free(fibptr);
+	return retval;
+}
 
 /**
- *	खोलो_getadapter_fib	-	Get the next fib
+ *	open_getadapter_fib	-	Get the next fib
  *	@dev:	adapter is being processed
- *	@arg:	arguments to the खोलो call
+ *	@arg:	arguments to the open call
  *
- *	This routine will get the next Fib, अगर available, from the AdapterFibContext
+ *	This routine will get the next Fib, if available, from the AdapterFibContext
  *	passed in from the user.
  */
-अटल पूर्णांक खोलो_getadapter_fib(काष्ठा aac_dev * dev, व्योम __user *arg)
-अणु
-	काष्ठा aac_fib_context * fibctx;
-	पूर्णांक status;
+static int open_getadapter_fib(struct aac_dev * dev, void __user *arg)
+{
+	struct aac_fib_context * fibctx;
+	int status;
 
-	fibctx = kदो_स्मृति(माप(काष्ठा aac_fib_context), GFP_KERNEL);
-	अगर (fibctx == शून्य) अणु
+	fibctx = kmalloc(sizeof(struct aac_fib_context), GFP_KERNEL);
+	if (fibctx == NULL) {
 		status = -ENOMEM;
-	पूर्ण अन्यथा अणु
-		अचिन्हित दीर्घ flags;
-		काष्ठा list_head * entry;
-		काष्ठा aac_fib_context * context;
+	} else {
+		unsigned long flags;
+		struct list_head * entry;
+		struct aac_fib_context * context;
 
 		fibctx->type = FSAFS_NTC_GET_ADAPTER_FIB_CONTEXT;
-		fibctx->size = माप(काष्ठा aac_fib_context);
+		fibctx->size = sizeof(struct aac_fib_context);
 		/*
 		 *	Yes yes, I know this could be an index, but we have a
-		 * better guarantee of uniqueness क्रम the locked loop below.
+		 * better guarantee of uniqueness for the locked loop below.
 		 * Without the aid of a persistent history, this also helps
 		 * reduce the chance that the opaque context would be reused.
 		 */
-		fibctx->unique = (u32)((uदीर्घ)fibctx & 0xFFFFFFFF);
+		fibctx->unique = (u32)((ulong)fibctx & 0xFFFFFFFF);
 		/*
-		 *	Initialize the mutex used to रुको क्रम the next AIF.
+		 *	Initialize the mutex used to wait for the next AIF.
 		 */
 		init_completion(&fibctx->completion);
-		fibctx->रुको = 0;
+		fibctx->wait = 0;
 		/*
 		 *	Initialize the fibs and set the count of fibs on
 		 *	the list to 0.
 		 */
 		fibctx->count = 0;
 		INIT_LIST_HEAD(&fibctx->fib_list);
-		fibctx->jअगरfies = jअगरfies/HZ;
+		fibctx->jiffies = jiffies/HZ;
 		/*
 		 *	Now add this context onto the adapter's
 		 *	AdapterFibContext list.
 		 */
 		spin_lock_irqsave(&dev->fib_lock, flags);
-		/* Ensure that we have a unique identअगरier */
+		/* Ensure that we have a unique identifier */
 		entry = dev->fib_list.next;
-		जबतक (entry != &dev->fib_list) अणु
-			context = list_entry(entry, काष्ठा aac_fib_context, next);
-			अगर (context->unique == fibctx->unique) अणु
+		while (entry != &dev->fib_list) {
+			context = list_entry(entry, struct aac_fib_context, next);
+			if (context->unique == fibctx->unique) {
 				/* Not unique (32 bits) */
 				fibctx->unique++;
 				entry = dev->fib_list.next;
-			पूर्ण अन्यथा अणु
+			} else {
 				entry = entry->next;
-			पूर्ण
-		पूर्ण
+			}
+		}
 		list_add_tail(&fibctx->next, &dev->fib_list);
 		spin_unlock_irqrestore(&dev->fib_lock, flags);
-		अगर (copy_to_user(arg, &fibctx->unique,
-						माप(fibctx->unique))) अणु
+		if (copy_to_user(arg, &fibctx->unique,
+						sizeof(fibctx->unique))) {
 			status = -EFAULT;
-		पूर्ण अन्यथा अणु
+		} else {
 			status = 0;
-		पूर्ण
-	पूर्ण
-	वापस status;
-पूर्ण
+		}
+	}
+	return status;
+}
 
-काष्ठा compat_fib_ioctl अणु
+struct compat_fib_ioctl {
 	u32	fibctx;
-	s32	रुको;
+	s32	wait;
 	compat_uptr_t fib;
-पूर्ण;
+};
 
 /**
  *	next_getadapter_fib	-	get the next fib
  *	@dev: adapter to use
  *	@arg: ioctl argument
  *
- *	This routine will get the next Fib, अगर available, from the AdapterFibContext
+ *	This routine will get the next Fib, if available, from the AdapterFibContext
  *	passed in from the user.
  */
-अटल पूर्णांक next_getadapter_fib(काष्ठा aac_dev * dev, व्योम __user *arg)
-अणु
-	काष्ठा fib_ioctl f;
-	काष्ठा fib *fib;
-	काष्ठा aac_fib_context *fibctx;
-	पूर्णांक status;
-	काष्ठा list_head * entry;
-	अचिन्हित दीर्घ flags;
+static int next_getadapter_fib(struct aac_dev * dev, void __user *arg)
+{
+	struct fib_ioctl f;
+	struct fib *fib;
+	struct aac_fib_context *fibctx;
+	int status;
+	struct list_head * entry;
+	unsigned long flags;
 
-	अगर (in_compat_syscall()) अणु
-		काष्ठा compat_fib_ioctl cf;
+	if (in_compat_syscall()) {
+		struct compat_fib_ioctl cf;
 
-		अगर (copy_from_user(&cf, arg, माप(काष्ठा compat_fib_ioctl)))
-			वापस -EFAULT;
+		if (copy_from_user(&cf, arg, sizeof(struct compat_fib_ioctl)))
+			return -EFAULT;
 
 		f.fibctx = cf.fibctx;
-		f.रुको = cf.रुको;
+		f.wait = cf.wait;
 		f.fib = compat_ptr(cf.fib);
-	पूर्ण अन्यथा अणु
-		अगर (copy_from_user(&f, arg, माप(काष्ठा fib_ioctl)))
-			वापस -EFAULT;
-	पूर्ण
+	} else {
+		if (copy_from_user(&f, arg, sizeof(struct fib_ioctl)))
+			return -EFAULT;
+	}
 	/*
-	 *	Verअगरy that the HANDLE passed in was a valid AdapterFibContext
+	 *	Verify that the HANDLE passed in was a valid AdapterFibContext
 	 *
 	 *	Search the list of AdapterFibContext addresses on the adapter
 	 *	to be sure this is a valid address
 	 */
 	spin_lock_irqsave(&dev->fib_lock, flags);
 	entry = dev->fib_list.next;
-	fibctx = शून्य;
+	fibctx = NULL;
 
-	जबतक (entry != &dev->fib_list) अणु
-		fibctx = list_entry(entry, काष्ठा aac_fib_context, next);
+	while (entry != &dev->fib_list) {
+		fibctx = list_entry(entry, struct aac_fib_context, next);
 		/*
 		 *	Extract the AdapterFibContext from the Input parameters.
 		 */
-		अगर (fibctx->unique == f.fibctx) अणु /* We found a winner */
-			अवरोध;
-		पूर्ण
+		if (fibctx->unique == f.fibctx) { /* We found a winner */
+			break;
+		}
 		entry = entry->next;
-		fibctx = शून्य;
-	पूर्ण
-	अगर (!fibctx) अणु
+		fibctx = NULL;
+	}
+	if (!fibctx) {
 		spin_unlock_irqrestore(&dev->fib_lock, flags);
-		dprपूर्णांकk ((KERN_INFO "Fib Context not found\n"));
-		वापस -EINVAL;
-	पूर्ण
+		dprintk ((KERN_INFO "Fib Context not found\n"));
+		return -EINVAL;
+	}
 
-	अगर((fibctx->type != FSAFS_NTC_GET_ADAPTER_FIB_CONTEXT) ||
-		 (fibctx->size != माप(काष्ठा aac_fib_context))) अणु
+	if((fibctx->type != FSAFS_NTC_GET_ADAPTER_FIB_CONTEXT) ||
+		 (fibctx->size != sizeof(struct aac_fib_context))) {
 		spin_unlock_irqrestore(&dev->fib_lock, flags);
-		dprपूर्णांकk ((KERN_INFO "Fib Context corrupt?\n"));
-		वापस -EINVAL;
-	पूर्ण
+		dprintk ((KERN_INFO "Fib Context corrupt?\n"));
+		return -EINVAL;
+	}
 	status = 0;
 	/*
-	 *	If there are no fibs to send back, then either रुको or वापस
+	 *	If there are no fibs to send back, then either wait or return
 	 *	-EAGAIN
 	 */
-वापस_fib:
-	अगर (!list_empty(&fibctx->fib_list)) अणु
+return_fib:
+	if (!list_empty(&fibctx->fib_list)) {
 		/*
 		 *	Pull the next fib from the fibs
 		 */
 		entry = fibctx->fib_list.next;
 		list_del(entry);
 
-		fib = list_entry(entry, काष्ठा fib, fiblink);
+		fib = list_entry(entry, struct fib, fiblink);
 		fibctx->count--;
 		spin_unlock_irqrestore(&dev->fib_lock, flags);
-		अगर (copy_to_user(f.fib, fib->hw_fib_va, माप(काष्ठा hw_fib))) अणु
-			kमुक्त(fib->hw_fib_va);
-			kमुक्त(fib);
-			वापस -EFAULT;
-		पूर्ण
+		if (copy_to_user(f.fib, fib->hw_fib_va, sizeof(struct hw_fib))) {
+			kfree(fib->hw_fib_va);
+			kfree(fib);
+			return -EFAULT;
+		}
 		/*
 		 *	Free the space occupied by this copy of the fib.
 		 */
-		kमुक्त(fib->hw_fib_va);
-		kमुक्त(fib);
+		kfree(fib->hw_fib_va);
+		kfree(fib);
 		status = 0;
-	पूर्ण अन्यथा अणु
+	} else {
 		spin_unlock_irqrestore(&dev->fib_lock, flags);
-		/* If someone समाप्तed the AIF aacraid thपढ़ो, restart it */
-		status = !dev->aअगर_thपढ़ो;
-		अगर (status && !dev->in_reset && dev->queues && dev->fsa_dev) अणु
+		/* If someone killed the AIF aacraid thread, restart it */
+		status = !dev->aif_thread;
+		if (status && !dev->in_reset && dev->queues && dev->fsa_dev) {
 			/* Be paranoid, be very paranoid! */
-			kthपढ़ो_stop(dev->thपढ़ो);
+			kthread_stop(dev->thread);
 			ssleep(1);
-			dev->aअगर_thपढ़ो = 0;
-			dev->thपढ़ो = kthपढ़ो_run(aac_command_thपढ़ो, dev,
+			dev->aif_thread = 0;
+			dev->thread = kthread_run(aac_command_thread, dev,
 						  "%s", dev->name);
 			ssleep(1);
-		पूर्ण
-		अगर (f.रुको) अणु
-			अगर (रुको_क्रम_completion_पूर्णांकerruptible(&fibctx->completion) < 0) अणु
+		}
+		if (f.wait) {
+			if (wait_for_completion_interruptible(&fibctx->completion) < 0) {
 				status = -ERESTARTSYS;
-			पूर्ण अन्यथा अणु
+			} else {
 				/* Lock again and retry */
 				spin_lock_irqsave(&dev->fib_lock, flags);
-				जाओ वापस_fib;
-			पूर्ण
-		पूर्ण अन्यथा अणु
+				goto return_fib;
+			}
+		} else {
 			status = -EAGAIN;
-		पूर्ण
-	पूर्ण
-	fibctx->jअगरfies = jअगरfies/HZ;
-	वापस status;
-पूर्ण
+		}
+	}
+	fibctx->jiffies = jiffies/HZ;
+	return status;
+}
 
-पूर्णांक aac_बंद_fib_context(काष्ठा aac_dev * dev, काष्ठा aac_fib_context * fibctx)
-अणु
-	काष्ठा fib *fib;
+int aac_close_fib_context(struct aac_dev * dev, struct aac_fib_context * fibctx)
+{
+	struct fib *fib;
 
 	/*
-	 *	First मुक्त any FIBs that have not been consumed.
+	 *	First free any FIBs that have not been consumed.
 	 */
-	जबतक (!list_empty(&fibctx->fib_list)) अणु
-		काष्ठा list_head * entry;
+	while (!list_empty(&fibctx->fib_list)) {
+		struct list_head * entry;
 		/*
 		 *	Pull the next fib from the fibs
 		 */
 		entry = fibctx->fib_list.next;
 		list_del(entry);
-		fib = list_entry(entry, काष्ठा fib, fiblink);
+		fib = list_entry(entry, struct fib, fiblink);
 		fibctx->count--;
 		/*
 		 *	Free the space occupied by this copy of the fib.
 		 */
-		kमुक्त(fib->hw_fib_va);
-		kमुक्त(fib);
-	पूर्ण
+		kfree(fib->hw_fib_va);
+		kfree(fib);
+	}
 	/*
 	 *	Remove the Context from the AdapterFibContext List
 	 */
@@ -386,90 +385,90 @@ cleanup:
 	/*
 	 *	Free the space occupied by the Context
 	 */
-	kमुक्त(fibctx);
-	वापस 0;
-पूर्ण
+	kfree(fibctx);
+	return 0;
+}
 
 /**
- *	बंद_getadapter_fib	-	बंद करोwn user fib context
+ *	close_getadapter_fib	-	close down user fib context
  *	@dev: adapter
  *	@arg: ioctl arguments
  *
- *	This routine will बंद करोwn the fibctx passed in from the user.
+ *	This routine will close down the fibctx passed in from the user.
  */
 
-अटल पूर्णांक बंद_getadapter_fib(काष्ठा aac_dev * dev, व्योम __user *arg)
-अणु
-	काष्ठा aac_fib_context *fibctx;
-	पूर्णांक status;
-	अचिन्हित दीर्घ flags;
-	काष्ठा list_head * entry;
+static int close_getadapter_fib(struct aac_dev * dev, void __user *arg)
+{
+	struct aac_fib_context *fibctx;
+	int status;
+	unsigned long flags;
+	struct list_head * entry;
 
 	/*
-	 *	Verअगरy that the HANDLE passed in was a valid AdapterFibContext
+	 *	Verify that the HANDLE passed in was a valid AdapterFibContext
 	 *
 	 *	Search the list of AdapterFibContext addresses on the adapter
 	 *	to be sure this is a valid address
 	 */
 
 	entry = dev->fib_list.next;
-	fibctx = शून्य;
+	fibctx = NULL;
 
-	जबतक(entry != &dev->fib_list) अणु
-		fibctx = list_entry(entry, काष्ठा aac_fib_context, next);
+	while(entry != &dev->fib_list) {
+		fibctx = list_entry(entry, struct aac_fib_context, next);
 		/*
 		 *	Extract the fibctx from the input parameters
 		 */
-		अगर (fibctx->unique == (u32)(uपूर्णांकptr_t)arg) /* We found a winner */
-			अवरोध;
+		if (fibctx->unique == (u32)(uintptr_t)arg) /* We found a winner */
+			break;
 		entry = entry->next;
-		fibctx = शून्य;
-	पूर्ण
+		fibctx = NULL;
+	}
 
-	अगर (!fibctx)
-		वापस 0; /* Alपढ़ोy gone */
+	if (!fibctx)
+		return 0; /* Already gone */
 
-	अगर((fibctx->type != FSAFS_NTC_GET_ADAPTER_FIB_CONTEXT) ||
-		 (fibctx->size != माप(काष्ठा aac_fib_context)))
-		वापस -EINVAL;
+	if((fibctx->type != FSAFS_NTC_GET_ADAPTER_FIB_CONTEXT) ||
+		 (fibctx->size != sizeof(struct aac_fib_context)))
+		return -EINVAL;
 	spin_lock_irqsave(&dev->fib_lock, flags);
-	status = aac_बंद_fib_context(dev, fibctx);
+	status = aac_close_fib_context(dev, fibctx);
 	spin_unlock_irqrestore(&dev->fib_lock, flags);
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /**
- *	check_revision	-	बंद करोwn user fib context
+ *	check_revision	-	close down user fib context
  *	@dev: adapter
  *	@arg: ioctl arguments
  *
- *	This routine वापसs the driver version.
+ *	This routine returns the driver version.
  *	Under Linux, there have been no version incompatibilities, so this is
  *	simple!
  */
 
-अटल पूर्णांक check_revision(काष्ठा aac_dev *dev, व्योम __user *arg)
-अणु
-	काष्ठा revision response;
-	अक्षर *driver_version = aac_driver_version;
+static int check_revision(struct aac_dev *dev, void __user *arg)
+{
+	struct revision response;
+	char *driver_version = aac_driver_version;
 	u32 version;
 
 	response.compat = 1;
-	version = (simple_म_से_दीर्घ(driver_version,
+	version = (simple_strtol(driver_version,
 				&driver_version, 10) << 24) | 0x00000400;
-	version += simple_म_से_दीर्घ(driver_version + 1, &driver_version, 10) << 16;
-	version += simple_म_से_दीर्घ(driver_version + 1, शून्य, 10);
+	version += simple_strtol(driver_version + 1, &driver_version, 10) << 16;
+	version += simple_strtol(driver_version + 1, NULL, 10);
 	response.version = cpu_to_le32(version);
-#	अगरdef AAC_DRIVER_BUILD
+#	ifdef AAC_DRIVER_BUILD
 		response.build = cpu_to_le32(AAC_DRIVER_BUILD);
-#	अन्यथा
+#	else
 		response.build = cpu_to_le32(9999);
-#	endअगर
+#	endif
 
-	अगर (copy_to_user(arg, &response, माप(response)))
-		वापस -EFAULT;
-	वापस 0;
-पूर्ण
+	if (copy_to_user(arg, &response, sizeof(response)))
+		return -EFAULT;
+	return 0;
+}
 
 
 /**
@@ -477,129 +476,129 @@ cleanup:
  *	@dev:	adapter is being processed
  *	@arg:	arguments to the send call
  */
-अटल पूर्णांक aac_send_raw_srb(काष्ठा aac_dev* dev, व्योम __user * arg)
-अणु
-	काष्ठा fib* srbfib;
-	पूर्णांक status;
-	काष्ठा aac_srb *srbcmd = शून्य;
-	काष्ठा aac_hba_cmd_req *hbacmd = शून्य;
-	काष्ठा user_aac_srb *user_srbcmd = शून्य;
-	काष्ठा user_aac_srb __user *user_srb = arg;
-	काष्ठा aac_srb_reply __user *user_reply;
+static int aac_send_raw_srb(struct aac_dev* dev, void __user * arg)
+{
+	struct fib* srbfib;
+	int status;
+	struct aac_srb *srbcmd = NULL;
+	struct aac_hba_cmd_req *hbacmd = NULL;
+	struct user_aac_srb *user_srbcmd = NULL;
+	struct user_aac_srb __user *user_srb = arg;
+	struct aac_srb_reply __user *user_reply;
 	u32 chn;
 	u32 fibsize = 0;
 	u32 flags = 0;
 	s32 rcode = 0;
 	u32 data_dir;
-	व्योम __user *sg_user[HBA_MAX_SG_EMBEDDED];
-	व्योम *sg_list[HBA_MAX_SG_EMBEDDED];
+	void __user *sg_user[HBA_MAX_SG_EMBEDDED];
+	void *sg_list[HBA_MAX_SG_EMBEDDED];
 	u32 sg_count[HBA_MAX_SG_EMBEDDED];
 	u32 sg_indx = 0;
 	u32 byte_count = 0;
 	u32 actual_fibsize64, actual_fibsize = 0;
-	पूर्णांक i;
-	पूर्णांक is_native_device;
+	int i;
+	int is_native_device;
 	u64 address;
 
 
-	अगर (dev->in_reset) अणु
-		dprपूर्णांकk((KERN_DEBUG"aacraid: send raw srb -EBUSY\n"));
-		वापस -EBUSY;
-	पूर्ण
-	अगर (!capable(CAP_SYS_ADMIN))अणु
-		dprपूर्णांकk((KERN_DEBUG"aacraid: No permission to send raw srb\n"));
-		वापस -EPERM;
-	पूर्ण
+	if (dev->in_reset) {
+		dprintk((KERN_DEBUG"aacraid: send raw srb -EBUSY\n"));
+		return -EBUSY;
+	}
+	if (!capable(CAP_SYS_ADMIN)){
+		dprintk((KERN_DEBUG"aacraid: No permission to send raw srb\n"));
+		return -EPERM;
+	}
 	/*
 	 *	Allocate and initialize a Fib then setup a SRB command
 	 */
-	अगर (!(srbfib = aac_fib_alloc(dev))) अणु
-		वापस -ENOMEM;
-	पूर्ण
+	if (!(srbfib = aac_fib_alloc(dev))) {
+		return -ENOMEM;
+	}
 
-	स_रखो(sg_list, 0, माप(sg_list)); /* cleanup may take issue */
-	अगर(copy_from_user(&fibsize, &user_srb->count,माप(u32)))अणु
-		dprपूर्णांकk((KERN_DEBUG"aacraid: Could not copy data size from user\n"));
+	memset(sg_list, 0, sizeof(sg_list)); /* cleanup may take issue */
+	if(copy_from_user(&fibsize, &user_srb->count,sizeof(u32))){
+		dprintk((KERN_DEBUG"aacraid: Could not copy data size from user\n"));
 		rcode = -EFAULT;
-		जाओ cleanup;
-	पूर्ण
+		goto cleanup;
+	}
 
-	अगर ((fibsize < (माप(काष्ठा user_aac_srb) - माप(काष्ठा user_sgentry))) ||
-	    (fibsize > (dev->max_fib_size - माप(काष्ठा aac_fibhdr)))) अणु
+	if ((fibsize < (sizeof(struct user_aac_srb) - sizeof(struct user_sgentry))) ||
+	    (fibsize > (dev->max_fib_size - sizeof(struct aac_fibhdr)))) {
 		rcode = -EINVAL;
-		जाओ cleanup;
-	पूर्ण
+		goto cleanup;
+	}
 
 	user_srbcmd = memdup_user(user_srb, fibsize);
-	अगर (IS_ERR(user_srbcmd)) अणु
+	if (IS_ERR(user_srbcmd)) {
 		rcode = PTR_ERR(user_srbcmd);
-		user_srbcmd = शून्य;
-		जाओ cleanup;
-	पूर्ण
+		user_srbcmd = NULL;
+		goto cleanup;
+	}
 
 	flags = user_srbcmd->flags; /* from user in cpu order */
-	चयन (flags & (SRB_DataIn | SRB_DataOut)) अणु
-	हाल SRB_DataOut:
+	switch (flags & (SRB_DataIn | SRB_DataOut)) {
+	case SRB_DataOut:
 		data_dir = DMA_TO_DEVICE;
-		अवरोध;
-	हाल (SRB_DataIn | SRB_DataOut):
-		data_dir = DMA_BIसूचीECTIONAL;
-		अवरोध;
-	हाल SRB_DataIn:
+		break;
+	case (SRB_DataIn | SRB_DataOut):
+		data_dir = DMA_BIDIRECTIONAL;
+		break;
+	case SRB_DataIn:
 		data_dir = DMA_FROM_DEVICE;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		data_dir = DMA_NONE;
-	पूर्ण
-	अगर (user_srbcmd->sg.count > ARRAY_SIZE(sg_list)) अणु
-		dprपूर्णांकk((KERN_DEBUG"aacraid: too many sg entries %d\n",
+	}
+	if (user_srbcmd->sg.count > ARRAY_SIZE(sg_list)) {
+		dprintk((KERN_DEBUG"aacraid: too many sg entries %d\n",
 			user_srbcmd->sg.count));
 		rcode = -EINVAL;
-		जाओ cleanup;
-	पूर्ण
-	अगर ((data_dir == DMA_NONE) && user_srbcmd->sg.count) अणु
-		dprपूर्णांकk((KERN_DEBUG"aacraid:SG with no direction specified\n"));
+		goto cleanup;
+	}
+	if ((data_dir == DMA_NONE) && user_srbcmd->sg.count) {
+		dprintk((KERN_DEBUG"aacraid:SG with no direction specified\n"));
 		rcode = -EINVAL;
-		जाओ cleanup;
-	पूर्ण
-	actual_fibsize = माप(काष्ठा aac_srb) - माप(काष्ठा sgentry) +
-		((user_srbcmd->sg.count & 0xff) * माप(काष्ठा sgentry));
+		goto cleanup;
+	}
+	actual_fibsize = sizeof(struct aac_srb) - sizeof(struct sgentry) +
+		((user_srbcmd->sg.count & 0xff) * sizeof(struct sgentry));
 	actual_fibsize64 = actual_fibsize + (user_srbcmd->sg.count & 0xff) *
-	  (माप(काष्ठा sgentry64) - माप(काष्ठा sgentry));
-	/* User made a mistake - should not जारी */
-	अगर ((actual_fibsize != fibsize) && (actual_fibsize64 != fibsize)) अणु
-		dprपूर्णांकk((KERN_DEBUG"aacraid: Bad Size specified in "
+	  (sizeof(struct sgentry64) - sizeof(struct sgentry));
+	/* User made a mistake - should not continue */
+	if ((actual_fibsize != fibsize) && (actual_fibsize64 != fibsize)) {
+		dprintk((KERN_DEBUG"aacraid: Bad Size specified in "
 		  "Raw SRB command calculated fibsize=%lu;%lu "
 		  "user_srbcmd->sg.count=%d aac_srb=%lu sgentry=%lu;%lu "
 		  "issued fibsize=%d\n",
 		  actual_fibsize, actual_fibsize64, user_srbcmd->sg.count,
-		  माप(काष्ठा aac_srb), माप(काष्ठा sgentry),
-		  माप(काष्ठा sgentry64), fibsize));
+		  sizeof(struct aac_srb), sizeof(struct sgentry),
+		  sizeof(struct sgentry64), fibsize));
 		rcode = -EINVAL;
-		जाओ cleanup;
-	पूर्ण
+		goto cleanup;
+	}
 
 	chn = user_srbcmd->channel;
-	अगर (chn < AAC_MAX_BUSES && user_srbcmd->id < AAC_MAX_TARGETS &&
+	if (chn < AAC_MAX_BUSES && user_srbcmd->id < AAC_MAX_TARGETS &&
 		dev->hba_map[chn][user_srbcmd->id].devtype ==
-		AAC_DEVTYPE_NATIVE_RAW) अणु
+		AAC_DEVTYPE_NATIVE_RAW) {
 		is_native_device = 1;
-		hbacmd = (काष्ठा aac_hba_cmd_req *)srbfib->hw_fib_va;
-		स_रखो(hbacmd, 0, 96);	/* माप(*hbacmd) is not necessary */
+		hbacmd = (struct aac_hba_cmd_req *)srbfib->hw_fib_va;
+		memset(hbacmd, 0, 96);	/* sizeof(*hbacmd) is not necessary */
 
 		/* iu_type is a parameter of aac_hba_send */
-		चयन (data_dir) अणु
-		हाल DMA_TO_DEVICE:
+		switch (data_dir) {
+		case DMA_TO_DEVICE:
 			hbacmd->byte1 = 2;
-			अवरोध;
-		हाल DMA_FROM_DEVICE:
-		हाल DMA_BIसूचीECTIONAL:
+			break;
+		case DMA_FROM_DEVICE:
+		case DMA_BIDIRECTIONAL:
 			hbacmd->byte1 = 1;
-			अवरोध;
-		हाल DMA_NONE:
-		शेष:
-			अवरोध;
-		पूर्ण
+			break;
+		case DMA_NONE:
+		default:
+			break;
+		}
 		hbacmd->lun[1] = cpu_to_le32(user_srbcmd->lun);
 		hbacmd->it_nexus = dev->hba_map[chn][user_srbcmd->id].rmw_nexus;
 
@@ -610,7 +609,7 @@ cleanup:
 		 * in sg list build
 		 */
 
-		स_नकल(hbacmd->cdb, user_srbcmd->cdb, माप(hbacmd->cdb));
+		memcpy(hbacmd->cdb, user_srbcmd->cdb, sizeof(hbacmd->cdb));
 
 		address = (u64)srbfib->hw_error_pa;
 		hbacmd->error_ptr_hi = cpu_to_le32((u32)(address >> 32));
@@ -619,9 +618,9 @@ cleanup:
 		hbacmd->emb_data_desc_count =
 					cpu_to_le32(user_srbcmd->sg.count);
 		srbfib->hbacmd_size = 64 +
-			user_srbcmd->sg.count * माप(काष्ठा aac_hba_sgl);
+			user_srbcmd->sg.count * sizeof(struct aac_hba_sgl);
 
-	पूर्ण अन्यथा अणु
+	} else {
 		is_native_device = 0;
 		aac_fib_init(srbfib);
 
@@ -629,66 +628,66 @@ cleanup:
 		srbfib->hw_fib_va->header.XferState &=
 			~cpu_to_le32(FastResponseCapable);
 
-		srbcmd = (काष्ठा aac_srb *) fib_data(srbfib);
+		srbcmd = (struct aac_srb *) fib_data(srbfib);
 
-		// Fix up srb क्रम endian and क्रमce some values
+		// Fix up srb for endian and force some values
 
 		srbcmd->function = cpu_to_le32(SRBF_ExecuteScsi); // Force this
 		srbcmd->channel	 = cpu_to_le32(user_srbcmd->channel);
 		srbcmd->id	 = cpu_to_le32(user_srbcmd->id);
 		srbcmd->lun	 = cpu_to_le32(user_srbcmd->lun);
-		srbcmd->समयout	 = cpu_to_le32(user_srbcmd->समयout);
+		srbcmd->timeout	 = cpu_to_le32(user_srbcmd->timeout);
 		srbcmd->flags	 = cpu_to_le32(flags);
 		srbcmd->retry_limit = 0; // Obsolete parameter
 		srbcmd->cdb_size = cpu_to_le32(user_srbcmd->cdb_size);
-		स_नकल(srbcmd->cdb, user_srbcmd->cdb, माप(srbcmd->cdb));
-	पूर्ण
+		memcpy(srbcmd->cdb, user_srbcmd->cdb, sizeof(srbcmd->cdb));
+	}
 
 	byte_count = 0;
-	अगर (is_native_device) अणु
-		काष्ठा user_sgmap *usg32 = &user_srbcmd->sg;
-		काष्ठा user_sgmap64 *usg64 =
-			(काष्ठा user_sgmap64 *)&user_srbcmd->sg;
+	if (is_native_device) {
+		struct user_sgmap *usg32 = &user_srbcmd->sg;
+		struct user_sgmap64 *usg64 =
+			(struct user_sgmap64 *)&user_srbcmd->sg;
 
-		क्रम (i = 0; i < usg32->count; i++) अणु
-			व्योम *p;
+		for (i = 0; i < usg32->count; i++) {
+			void *p;
 			u64 addr;
 
 			sg_count[i] = (actual_fibsize64 == fibsize) ?
 				usg64->sg[i].count : usg32->sg[i].count;
-			अगर (sg_count[i] >
-				(dev->scsi_host_ptr->max_sectors << 9)) अणु
+			if (sg_count[i] >
+				(dev->scsi_host_ptr->max_sectors << 9)) {
 				pr_err("aacraid: upsg->sg[%d].count=%u>%u\n",
 					i, sg_count[i],
 					dev->scsi_host_ptr->max_sectors << 9);
 				rcode = -EINVAL;
-				जाओ cleanup;
-			पूर्ण
+				goto cleanup;
+			}
 
-			p = kदो_स्मृति(sg_count[i], GFP_KERNEL);
-			अगर (!p) अणु
+			p = kmalloc(sg_count[i], GFP_KERNEL);
+			if (!p) {
 				rcode = -ENOMEM;
-				जाओ cleanup;
-			पूर्ण
+				goto cleanup;
+			}
 
-			अगर (actual_fibsize64 == fibsize) अणु
+			if (actual_fibsize64 == fibsize) {
 				addr = (u64)usg64->sg[i].addr[0];
 				addr += ((u64)usg64->sg[i].addr[1]) << 32;
-			पूर्ण अन्यथा अणु
+			} else {
 				addr = (u64)usg32->sg[i].addr;
-			पूर्ण
+			}
 
-			sg_user[i] = (व्योम __user *)(uपूर्णांकptr_t)addr;
+			sg_user[i] = (void __user *)(uintptr_t)addr;
 			sg_list[i] = p; // save so we can clean up later
 			sg_indx = i;
 
-			अगर (flags & SRB_DataOut) अणु
-				अगर (copy_from_user(p, sg_user[i],
-					sg_count[i])) अणु
+			if (flags & SRB_DataOut) {
+				if (copy_from_user(p, sg_user[i],
+					sg_count[i])) {
 					rcode = -EFAULT;
-					जाओ cleanup;
-				पूर्ण
-			पूर्ण
+					goto cleanup;
+				}
+			}
 			addr = dma_map_single(&dev->pdev->dev, p, sg_count[i],
 					      data_dir);
 			hbacmd->sge[i].addr_hi = cpu_to_le32((u32)(addr>>32));
@@ -697,60 +696,60 @@ cleanup:
 			hbacmd->sge[i].len = cpu_to_le32(sg_count[i]);
 			hbacmd->sge[i].flags = 0;
 			byte_count += sg_count[i];
-		पूर्ण
+		}
 
-		अगर (usg32->count > 0)	/* embedded sglist */
+		if (usg32->count > 0)	/* embedded sglist */
 			hbacmd->sge[usg32->count-1].flags =
 				cpu_to_le32(0x40000000);
 		hbacmd->data_length = cpu_to_le32(byte_count);
 
 		status = aac_hba_send(HBA_IU_TYPE_SCSI_CMD_REQ, srbfib,
-					शून्य, शून्य);
+					NULL, NULL);
 
-	पूर्ण अन्यथा अगर (dev->adapter_info.options & AAC_OPT_SGMAP_HOST64) अणु
-		काष्ठा user_sgmap64* upsg = (काष्ठा user_sgmap64*)&user_srbcmd->sg;
-		काष्ठा sgmap64* psg = (काष्ठा sgmap64*)&srbcmd->sg;
+	} else if (dev->adapter_info.options & AAC_OPT_SGMAP_HOST64) {
+		struct user_sgmap64* upsg = (struct user_sgmap64*)&user_srbcmd->sg;
+		struct sgmap64* psg = (struct sgmap64*)&srbcmd->sg;
 
 		/*
-		 * This should also catch अगर user used the 32 bit sgmap
+		 * This should also catch if user used the 32 bit sgmap
 		 */
-		अगर (actual_fibsize64 == fibsize) अणु
+		if (actual_fibsize64 == fibsize) {
 			actual_fibsize = actual_fibsize64;
-			क्रम (i = 0; i < upsg->count; i++) अणु
+			for (i = 0; i < upsg->count; i++) {
 				u64 addr;
-				व्योम* p;
+				void* p;
 
 				sg_count[i] = upsg->sg[i].count;
-				अगर (sg_count[i] >
+				if (sg_count[i] >
 				    ((dev->adapter_info.options &
 				     AAC_OPT_NEW_COMM) ?
 				      (dev->scsi_host_ptr->max_sectors << 9) :
-				      65536)) अणु
+				      65536)) {
 					rcode = -EINVAL;
-					जाओ cleanup;
-				पूर्ण
+					goto cleanup;
+				}
 
-				p = kदो_स्मृति(sg_count[i], GFP_KERNEL);
-				अगर(!p) अणु
-					dprपूर्णांकk((KERN_DEBUG"aacraid: Could not allocate SG buffer - size = %d buffer number %d of %d\n",
+				p = kmalloc(sg_count[i], GFP_KERNEL);
+				if(!p) {
+					dprintk((KERN_DEBUG"aacraid: Could not allocate SG buffer - size = %d buffer number %d of %d\n",
 					  sg_count[i], i, upsg->count));
 					rcode = -ENOMEM;
-					जाओ cleanup;
-				पूर्ण
+					goto cleanup;
+				}
 				addr = (u64)upsg->sg[i].addr[0];
 				addr += ((u64)upsg->sg[i].addr[1]) << 32;
-				sg_user[i] = (व्योम __user *)(uपूर्णांकptr_t)addr;
+				sg_user[i] = (void __user *)(uintptr_t)addr;
 				sg_list[i] = p; // save so we can clean up later
 				sg_indx = i;
 
-				अगर (flags & SRB_DataOut) अणु
-					अगर (copy_from_user(p, sg_user[i],
-						sg_count[i]))अणु
-						dprपूर्णांकk((KERN_DEBUG"aacraid: Could not copy sg data from user\n"));
+				if (flags & SRB_DataOut) {
+					if (copy_from_user(p, sg_user[i],
+						sg_count[i])){
+						dprintk((KERN_DEBUG"aacraid: Could not copy sg data from user\n"));
 						rcode = -EFAULT;
-						जाओ cleanup;
-					पूर्ण
-				पूर्ण
+						goto cleanup;
+					}
+				}
 				addr = dma_map_single(&dev->pdev->dev, p,
 						      sg_count[i], data_dir);
 
@@ -758,55 +757,55 @@ cleanup:
 				psg->sg[i].addr[1] = cpu_to_le32(addr>>32);
 				byte_count += sg_count[i];
 				psg->sg[i].count = cpu_to_le32(sg_count[i]);
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			काष्ठा user_sgmap* usg;
+			}
+		} else {
+			struct user_sgmap* usg;
 			usg = kmemdup(upsg,
-				      actual_fibsize - माप(काष्ठा aac_srb)
-				      + माप(काष्ठा sgmap), GFP_KERNEL);
-			अगर (!usg) अणु
-				dprपूर्णांकk((KERN_DEBUG"aacraid: Allocation error in Raw SRB command\n"));
+				      actual_fibsize - sizeof(struct aac_srb)
+				      + sizeof(struct sgmap), GFP_KERNEL);
+			if (!usg) {
+				dprintk((KERN_DEBUG"aacraid: Allocation error in Raw SRB command\n"));
 				rcode = -ENOMEM;
-				जाओ cleanup;
-			पूर्ण
+				goto cleanup;
+			}
 			actual_fibsize = actual_fibsize64;
 
-			क्रम (i = 0; i < usg->count; i++) अणु
+			for (i = 0; i < usg->count; i++) {
 				u64 addr;
-				व्योम* p;
+				void* p;
 
 				sg_count[i] = usg->sg[i].count;
-				अगर (sg_count[i] >
+				if (sg_count[i] >
 				    ((dev->adapter_info.options &
 				     AAC_OPT_NEW_COMM) ?
 				      (dev->scsi_host_ptr->max_sectors << 9) :
-				      65536)) अणु
-					kमुक्त(usg);
+				      65536)) {
+					kfree(usg);
 					rcode = -EINVAL;
-					जाओ cleanup;
-				पूर्ण
+					goto cleanup;
+				}
 
-				p = kदो_स्मृति(sg_count[i], GFP_KERNEL);
-				अगर(!p) अणु
-					dprपूर्णांकk((KERN_DEBUG "aacraid: Could not allocate SG buffer - size = %d buffer number %d of %d\n",
+				p = kmalloc(sg_count[i], GFP_KERNEL);
+				if(!p) {
+					dprintk((KERN_DEBUG "aacraid: Could not allocate SG buffer - size = %d buffer number %d of %d\n",
 						sg_count[i], i, usg->count));
-					kमुक्त(usg);
+					kfree(usg);
 					rcode = -ENOMEM;
-					जाओ cleanup;
-				पूर्ण
-				sg_user[i] = (व्योम __user *)(uपूर्णांकptr_t)usg->sg[i].addr;
+					goto cleanup;
+				}
+				sg_user[i] = (void __user *)(uintptr_t)usg->sg[i].addr;
 				sg_list[i] = p; // save so we can clean up later
 				sg_indx = i;
 
-				अगर (flags & SRB_DataOut) अणु
-					अगर (copy_from_user(p, sg_user[i],
-						sg_count[i])) अणु
-						kमुक्त (usg);
-						dprपूर्णांकk((KERN_DEBUG"aacraid: Could not copy sg data from user\n"));
+				if (flags & SRB_DataOut) {
+					if (copy_from_user(p, sg_user[i],
+						sg_count[i])) {
+						kfree (usg);
+						dprintk((KERN_DEBUG"aacraid: Could not copy sg data from user\n"));
 						rcode = -EFAULT;
-						जाओ cleanup;
-					पूर्ण
-				पूर्ण
+						goto cleanup;
+					}
+				}
 				addr = dma_map_single(&dev->pdev->dev, p,
 						      sg_count[i], data_dir);
 
@@ -814,55 +813,55 @@ cleanup:
 				psg->sg[i].addr[1] = cpu_to_le32(addr>>32);
 				byte_count += sg_count[i];
 				psg->sg[i].count = cpu_to_le32(sg_count[i]);
-			पूर्ण
-			kमुक्त (usg);
-		पूर्ण
+			}
+			kfree (usg);
+		}
 		srbcmd->count = cpu_to_le32(byte_count);
-		अगर (user_srbcmd->sg.count)
+		if (user_srbcmd->sg.count)
 			psg->count = cpu_to_le32(sg_indx+1);
-		अन्यथा
+		else
 			psg->count = 0;
-		status = aac_fib_send(ScsiPortCommand64, srbfib, actual_fibsize, FsaNormal, 1, 1,शून्य,शून्य);
-	पूर्ण अन्यथा अणु
-		काष्ठा user_sgmap* upsg = &user_srbcmd->sg;
-		काष्ठा sgmap* psg = &srbcmd->sg;
+		status = aac_fib_send(ScsiPortCommand64, srbfib, actual_fibsize, FsaNormal, 1, 1,NULL,NULL);
+	} else {
+		struct user_sgmap* upsg = &user_srbcmd->sg;
+		struct sgmap* psg = &srbcmd->sg;
 
-		अगर (actual_fibsize64 == fibsize) अणु
-			काष्ठा user_sgmap64* usg = (काष्ठा user_sgmap64 *)upsg;
-			क्रम (i = 0; i < upsg->count; i++) अणु
-				uपूर्णांकptr_t addr;
-				व्योम* p;
+		if (actual_fibsize64 == fibsize) {
+			struct user_sgmap64* usg = (struct user_sgmap64 *)upsg;
+			for (i = 0; i < upsg->count; i++) {
+				uintptr_t addr;
+				void* p;
 
 				sg_count[i] = usg->sg[i].count;
-				अगर (sg_count[i] >
+				if (sg_count[i] >
 				    ((dev->adapter_info.options &
 				     AAC_OPT_NEW_COMM) ?
 				      (dev->scsi_host_ptr->max_sectors << 9) :
-				      65536)) अणु
+				      65536)) {
 					rcode = -EINVAL;
-					जाओ cleanup;
-				पूर्ण
-				p = kदो_स्मृति(sg_count[i], GFP_KERNEL);
-				अगर (!p) अणु
-					dprपूर्णांकk((KERN_DEBUG"aacraid: Could not allocate SG buffer - size = %d buffer number %d of %d\n",
+					goto cleanup;
+				}
+				p = kmalloc(sg_count[i], GFP_KERNEL);
+				if (!p) {
+					dprintk((KERN_DEBUG"aacraid: Could not allocate SG buffer - size = %d buffer number %d of %d\n",
 						sg_count[i], i, usg->count));
 					rcode = -ENOMEM;
-					जाओ cleanup;
-				पूर्ण
+					goto cleanup;
+				}
 				addr = (u64)usg->sg[i].addr[0];
 				addr += ((u64)usg->sg[i].addr[1]) << 32;
-				sg_user[i] = (व्योम __user *)addr;
+				sg_user[i] = (void __user *)addr;
 				sg_list[i] = p; // save so we can clean up later
 				sg_indx = i;
 
-				अगर (flags & SRB_DataOut) अणु
-					अगर (copy_from_user(p, sg_user[i],
-						sg_count[i]))अणु
-						dprपूर्णांकk((KERN_DEBUG"aacraid: Could not copy sg data from user\n"));
+				if (flags & SRB_DataOut) {
+					if (copy_from_user(p, sg_user[i],
+						sg_count[i])){
+						dprintk((KERN_DEBUG"aacraid: Could not copy sg data from user\n"));
 						rcode = -EFAULT;
-						जाओ cleanup;
-					पूर्ण
-				पूर्ण
+						goto cleanup;
+					}
+				}
 				addr = dma_map_single(&dev->pdev->dev, p,
 						      usg->sg[i].count,
 						      data_dir);
@@ -870,253 +869,253 @@ cleanup:
 				psg->sg[i].addr = cpu_to_le32(addr & 0xffffffff);
 				byte_count += usg->sg[i].count;
 				psg->sg[i].count = cpu_to_le32(sg_count[i]);
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			क्रम (i = 0; i < upsg->count; i++) अणु
+			}
+		} else {
+			for (i = 0; i < upsg->count; i++) {
 				dma_addr_t addr;
-				व्योम* p;
+				void* p;
 
 				sg_count[i] = upsg->sg[i].count;
-				अगर (sg_count[i] >
+				if (sg_count[i] >
 				    ((dev->adapter_info.options &
 				     AAC_OPT_NEW_COMM) ?
 				      (dev->scsi_host_ptr->max_sectors << 9) :
-				      65536)) अणु
+				      65536)) {
 					rcode = -EINVAL;
-					जाओ cleanup;
-				पूर्ण
-				p = kदो_स्मृति(sg_count[i], GFP_KERNEL);
-				अगर (!p) अणु
-					dprपूर्णांकk((KERN_DEBUG"aacraid: Could not allocate SG buffer - size = %d buffer number %d of %d\n",
+					goto cleanup;
+				}
+				p = kmalloc(sg_count[i], GFP_KERNEL);
+				if (!p) {
+					dprintk((KERN_DEBUG"aacraid: Could not allocate SG buffer - size = %d buffer number %d of %d\n",
 					  sg_count[i], i, upsg->count));
 					rcode = -ENOMEM;
-					जाओ cleanup;
-				पूर्ण
-				sg_user[i] = (व्योम __user *)(uपूर्णांकptr_t)upsg->sg[i].addr;
+					goto cleanup;
+				}
+				sg_user[i] = (void __user *)(uintptr_t)upsg->sg[i].addr;
 				sg_list[i] = p; // save so we can clean up later
 				sg_indx = i;
 
-				अगर (flags & SRB_DataOut) अणु
-					अगर (copy_from_user(p, sg_user[i],
-						sg_count[i])) अणु
-						dprपूर्णांकk((KERN_DEBUG"aacraid: Could not copy sg data from user\n"));
+				if (flags & SRB_DataOut) {
+					if (copy_from_user(p, sg_user[i],
+						sg_count[i])) {
+						dprintk((KERN_DEBUG"aacraid: Could not copy sg data from user\n"));
 						rcode = -EFAULT;
-						जाओ cleanup;
-					पूर्ण
-				पूर्ण
+						goto cleanup;
+					}
+				}
 				addr = dma_map_single(&dev->pdev->dev, p,
 						      sg_count[i], data_dir);
 
 				psg->sg[i].addr = cpu_to_le32(addr);
 				byte_count += sg_count[i];
 				psg->sg[i].count = cpu_to_le32(sg_count[i]);
-			पूर्ण
-		पूर्ण
+			}
+		}
 		srbcmd->count = cpu_to_le32(byte_count);
-		अगर (user_srbcmd->sg.count)
+		if (user_srbcmd->sg.count)
 			psg->count = cpu_to_le32(sg_indx+1);
-		अन्यथा
+		else
 			psg->count = 0;
-		status = aac_fib_send(ScsiPortCommand, srbfib, actual_fibsize, FsaNormal, 1, 1, शून्य, शून्य);
-	पूर्ण
+		status = aac_fib_send(ScsiPortCommand, srbfib, actual_fibsize, FsaNormal, 1, 1, NULL, NULL);
+	}
 
-	अगर (status == -ERESTARTSYS) अणु
+	if (status == -ERESTARTSYS) {
 		rcode = -ERESTARTSYS;
-		जाओ cleanup;
-	पूर्ण
+		goto cleanup;
+	}
 
-	अगर (status != 0) अणु
-		dprपूर्णांकk((KERN_DEBUG"aacraid: Could not send raw srb fib to hba\n"));
+	if (status != 0) {
+		dprintk((KERN_DEBUG"aacraid: Could not send raw srb fib to hba\n"));
 		rcode = -ENXIO;
-		जाओ cleanup;
-	पूर्ण
+		goto cleanup;
+	}
 
-	अगर (flags & SRB_DataIn) अणु
-		क्रम(i = 0 ; i <= sg_indx; i++)अणु
-			अगर (copy_to_user(sg_user[i], sg_list[i], sg_count[i])) अणु
-				dprपूर्णांकk((KERN_DEBUG"aacraid: Could not copy sg data to user\n"));
+	if (flags & SRB_DataIn) {
+		for(i = 0 ; i <= sg_indx; i++){
+			if (copy_to_user(sg_user[i], sg_list[i], sg_count[i])) {
+				dprintk((KERN_DEBUG"aacraid: Could not copy sg data to user\n"));
 				rcode = -EFAULT;
-				जाओ cleanup;
+				goto cleanup;
 
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
 	user_reply = arg + fibsize;
-	अगर (is_native_device) अणु
-		काष्ठा aac_hba_resp *err =
-			&((काष्ठा aac_native_hba *)srbfib->hw_fib_va)->resp.err;
-		काष्ठा aac_srb_reply reply;
+	if (is_native_device) {
+		struct aac_hba_resp *err =
+			&((struct aac_native_hba *)srbfib->hw_fib_va)->resp.err;
+		struct aac_srb_reply reply;
 
-		स_रखो(&reply, 0, माप(reply));
+		memset(&reply, 0, sizeof(reply));
 		reply.status = ST_OK;
-		अगर (srbfib->flags & FIB_CONTEXT_FLAG_FASTRESP) अणु
+		if (srbfib->flags & FIB_CONTEXT_FLAG_FASTRESP) {
 			/* fast response */
 			reply.srb_status = SRB_STATUS_SUCCESS;
 			reply.scsi_status = 0;
 			reply.data_xfer_length = byte_count;
 			reply.sense_data_size = 0;
-			स_रखो(reply.sense_data, 0, AAC_SENSE_BUFFERSIZE);
-		पूर्ण अन्यथा अणु
+			memset(reply.sense_data, 0, AAC_SENSE_BUFFERSIZE);
+		} else {
 			reply.srb_status = err->service_response;
 			reply.scsi_status = err->status;
 			reply.data_xfer_length = byte_count -
 				le32_to_cpu(err->residual_count);
 			reply.sense_data_size = err->sense_response_data_len;
-			स_नकल(reply.sense_data, err->sense_response_buf,
+			memcpy(reply.sense_data, err->sense_response_buf,
 				AAC_SENSE_BUFFERSIZE);
-		पूर्ण
-		अगर (copy_to_user(user_reply, &reply,
-			माप(काष्ठा aac_srb_reply))) अणु
-			dprपूर्णांकk((KERN_DEBUG"aacraid: Copy to user failed\n"));
+		}
+		if (copy_to_user(user_reply, &reply,
+			sizeof(struct aac_srb_reply))) {
+			dprintk((KERN_DEBUG"aacraid: Copy to user failed\n"));
 			rcode = -EFAULT;
-			जाओ cleanup;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		काष्ठा aac_srb_reply *reply;
+			goto cleanup;
+		}
+	} else {
+		struct aac_srb_reply *reply;
 
-		reply = (काष्ठा aac_srb_reply *) fib_data(srbfib);
-		अगर (copy_to_user(user_reply, reply,
-			माप(काष्ठा aac_srb_reply))) अणु
-			dprपूर्णांकk((KERN_DEBUG"aacraid: Copy to user failed\n"));
+		reply = (struct aac_srb_reply *) fib_data(srbfib);
+		if (copy_to_user(user_reply, reply,
+			sizeof(struct aac_srb_reply))) {
+			dprintk((KERN_DEBUG"aacraid: Copy to user failed\n"));
 			rcode = -EFAULT;
-			जाओ cleanup;
-		पूर्ण
-	पूर्ण
+			goto cleanup;
+		}
+	}
 
 cleanup:
-	kमुक्त(user_srbcmd);
-	अगर (rcode != -ERESTARTSYS) अणु
-		क्रम (i = 0; i <= sg_indx; i++)
-			kमुक्त(sg_list[i]);
+	kfree(user_srbcmd);
+	if (rcode != -ERESTARTSYS) {
+		for (i = 0; i <= sg_indx; i++)
+			kfree(sg_list[i]);
 		aac_fib_complete(srbfib);
-		aac_fib_मुक्त(srbfib);
-	पूर्ण
+		aac_fib_free(srbfib);
+	}
 
-	वापस rcode;
-पूर्ण
+	return rcode;
+}
 
-काष्ठा aac_pci_info अणु
+struct aac_pci_info {
 	u32 bus;
 	u32 slot;
-पूर्ण;
+};
 
 
-अटल पूर्णांक aac_get_pci_info(काष्ठा aac_dev* dev, व्योम __user *arg)
-अणु
-	काष्ठा aac_pci_info pci_info;
+static int aac_get_pci_info(struct aac_dev* dev, void __user *arg)
+{
+	struct aac_pci_info pci_info;
 
 	pci_info.bus = dev->pdev->bus->number;
 	pci_info.slot = PCI_SLOT(dev->pdev->devfn);
 
-	अगर (copy_to_user(arg, &pci_info, माप(काष्ठा aac_pci_info))) अणु
-		dprपूर्णांकk((KERN_DEBUG "aacraid: Could not copy pci info\n"));
-		वापस -EFAULT;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	if (copy_to_user(arg, &pci_info, sizeof(struct aac_pci_info))) {
+		dprintk((KERN_DEBUG "aacraid: Could not copy pci info\n"));
+		return -EFAULT;
+	}
+	return 0;
+}
 
-अटल पूर्णांक aac_get_hba_info(काष्ठा aac_dev *dev, व्योम __user *arg)
-अणु
-	काष्ठा aac_hba_info hbainfo;
+static int aac_get_hba_info(struct aac_dev *dev, void __user *arg)
+{
+	struct aac_hba_info hbainfo;
 
-	स_रखो(&hbainfo, 0, माप(hbainfo));
+	memset(&hbainfo, 0, sizeof(hbainfo));
 	hbainfo.adapter_number		= (u8) dev->id;
-	hbainfo.प्रणाली_io_bus_number	= dev->pdev->bus->number;
+	hbainfo.system_io_bus_number	= dev->pdev->bus->number;
 	hbainfo.device_number		= (dev->pdev->devfn >> 3);
 	hbainfo.function_number		= (dev->pdev->devfn & 0x0007);
 
-	hbainfo.venकरोr_id		= dev->pdev->venकरोr;
+	hbainfo.vendor_id		= dev->pdev->vendor;
 	hbainfo.device_id		= dev->pdev->device;
-	hbainfo.sub_venकरोr_id		= dev->pdev->subप्रणाली_venकरोr;
-	hbainfo.sub_प्रणाली_id		= dev->pdev->subप्रणाली_device;
+	hbainfo.sub_vendor_id		= dev->pdev->subsystem_vendor;
+	hbainfo.sub_system_id		= dev->pdev->subsystem_device;
 
-	अगर (copy_to_user(arg, &hbainfo, माप(काष्ठा aac_hba_info))) अणु
-		dprपूर्णांकk((KERN_DEBUG "aacraid: Could not copy hba info\n"));
-		वापस -EFAULT;
-	पूर्ण
+	if (copy_to_user(arg, &hbainfo, sizeof(struct aac_hba_info))) {
+		dprintk((KERN_DEBUG "aacraid: Could not copy hba info\n"));
+		return -EFAULT;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-काष्ठा aac_reset_iop अणु
+struct aac_reset_iop {
 	u8	reset_type;
-पूर्ण;
+};
 
-अटल पूर्णांक aac_send_reset_adapter(काष्ठा aac_dev *dev, व्योम __user *arg)
-अणु
-	काष्ठा aac_reset_iop reset;
-	पूर्णांक retval;
+static int aac_send_reset_adapter(struct aac_dev *dev, void __user *arg)
+{
+	struct aac_reset_iop reset;
+	int retval;
 
-	अगर (copy_from_user((व्योम *)&reset, arg, माप(काष्ठा aac_reset_iop)))
-		वापस -EFAULT;
+	if (copy_from_user((void *)&reset, arg, sizeof(struct aac_reset_iop)))
+		return -EFAULT;
 
-	dev->adapter_shutकरोwn = 1;
+	dev->adapter_shutdown = 1;
 
 	mutex_unlock(&dev->ioctl_mutex);
 	retval = aac_reset_adapter(dev, 0, reset.reset_type);
 	mutex_lock(&dev->ioctl_mutex);
 
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-पूर्णांक aac_करो_ioctl(काष्ठा aac_dev *dev, अचिन्हित पूर्णांक cmd, व्योम __user *arg)
-अणु
-	पूर्णांक status;
+int aac_do_ioctl(struct aac_dev *dev, unsigned int cmd, void __user *arg)
+{
+	int status;
 
 	mutex_lock(&dev->ioctl_mutex);
 
-	अगर (dev->adapter_shutकरोwn) अणु
+	if (dev->adapter_shutdown) {
 		status = -EACCES;
-		जाओ cleanup;
-	पूर्ण
+		goto cleanup;
+	}
 
 	/*
-	 *	HBA माला_लो first crack
+	 *	HBA gets first crack
 	 */
 
 	status = aac_dev_ioctl(dev, cmd, arg);
-	अगर (status != -ENOTTY)
-		जाओ cleanup;
+	if (status != -ENOTTY)
+		goto cleanup;
 
-	चयन (cmd) अणु
-	हाल FSACTL_MINIPORT_REV_CHECK:
+	switch (cmd) {
+	case FSACTL_MINIPORT_REV_CHECK:
 		status = check_revision(dev, arg);
-		अवरोध;
-	हाल FSACTL_SEND_LARGE_FIB:
-	हाल FSACTL_SENDFIB:
+		break;
+	case FSACTL_SEND_LARGE_FIB:
+	case FSACTL_SENDFIB:
 		status = ioctl_send_fib(dev, arg);
-		अवरोध;
-	हाल FSACTL_OPEN_GET_ADAPTER_FIB:
-		status = खोलो_getadapter_fib(dev, arg);
-		अवरोध;
-	हाल FSACTL_GET_NEXT_ADAPTER_FIB:
+		break;
+	case FSACTL_OPEN_GET_ADAPTER_FIB:
+		status = open_getadapter_fib(dev, arg);
+		break;
+	case FSACTL_GET_NEXT_ADAPTER_FIB:
 		status = next_getadapter_fib(dev, arg);
-		अवरोध;
-	हाल FSACTL_CLOSE_GET_ADAPTER_FIB:
-		status = बंद_getadapter_fib(dev, arg);
-		अवरोध;
-	हाल FSACTL_SEND_RAW_SRB:
+		break;
+	case FSACTL_CLOSE_GET_ADAPTER_FIB:
+		status = close_getadapter_fib(dev, arg);
+		break;
+	case FSACTL_SEND_RAW_SRB:
 		status = aac_send_raw_srb(dev,arg);
-		अवरोध;
-	हाल FSACTL_GET_PCI_INFO:
+		break;
+	case FSACTL_GET_PCI_INFO:
 		status = aac_get_pci_info(dev,arg);
-		अवरोध;
-	हाल FSACTL_GET_HBA_INFO:
+		break;
+	case FSACTL_GET_HBA_INFO:
 		status = aac_get_hba_info(dev, arg);
-		अवरोध;
-	हाल FSACTL_RESET_IOP:
+		break;
+	case FSACTL_RESET_IOP:
 		status = aac_send_reset_adapter(dev, arg);
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		status = -ENOTTY;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 cleanup:
 	mutex_unlock(&dev->ioctl_mutex);
 
-	वापस status;
-पूर्ण
+	return status;
+}
 

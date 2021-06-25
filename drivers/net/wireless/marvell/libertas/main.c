@@ -1,398 +1,397 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * This file contains the major functions in WLAN
- * driver. It includes init, निकास, खोलो, बंद and मुख्य
- * thपढ़ो etc..
+ * driver. It includes init, exit, open, close and main
+ * thread etc..
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/module.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/etherdevice.h>
-#समावेश <linux/hardirq.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/अगर_arp.h>
-#समावेश <linux/kthपढ़ो.h>
-#समावेश <linux/kfअगरo.h>
-#समावेश <linux/slab.h>
-#समावेश <net/cfg80211.h>
+#include <linux/module.h>
+#include <linux/delay.h>
+#include <linux/etherdevice.h>
+#include <linux/hardirq.h>
+#include <linux/netdevice.h>
+#include <linux/if_arp.h>
+#include <linux/kthread.h>
+#include <linux/kfifo.h>
+#include <linux/slab.h>
+#include <net/cfg80211.h>
 
-#समावेश "host.h"
-#समावेश "decl.h"
-#समावेश "dev.h"
-#समावेश "cfg.h"
-#समावेश "debugfs.h"
-#समावेश "cmd.h"
-#समावेश "mesh.h"
+#include "host.h"
+#include "decl.h"
+#include "dev.h"
+#include "cfg.h"
+#include "debugfs.h"
+#include "cmd.h"
+#include "mesh.h"
 
-#घोषणा DRIVER_RELEASE_VERSION "323.p0"
-स्थिर अक्षर lbs_driver_version[] = "COMM-USB8388-" DRIVER_RELEASE_VERSION
-#अगर_घोषित  DEBUG
+#define DRIVER_RELEASE_VERSION "323.p0"
+const char lbs_driver_version[] = "COMM-USB8388-" DRIVER_RELEASE_VERSION
+#ifdef  DEBUG
     "-dbg"
-#पूर्ण_अगर
+#endif
     "";
 
 
 /* Module parameters */
-अचिन्हित पूर्णांक lbs_debug;
+unsigned int lbs_debug;
 EXPORT_SYMBOL_GPL(lbs_debug);
-module_param_named(libertas_debug, lbs_debug, पूर्णांक, 0644);
+module_param_named(libertas_debug, lbs_debug, int, 0644);
 
-अचिन्हित पूर्णांक lbs_disablemesh;
+unsigned int lbs_disablemesh;
 EXPORT_SYMBOL_GPL(lbs_disablemesh);
-module_param_named(libertas_disablemesh, lbs_disablemesh, पूर्णांक, 0644);
+module_param_named(libertas_disablemesh, lbs_disablemesh, int, 0644);
 
 
 /*
- * This global काष्ठाure is used to send the confirm_sleep command as
- * fast as possible करोwn to the firmware.
+ * This global structure is used to send the confirm_sleep command as
+ * fast as possible down to the firmware.
  */
-काष्ठा cmd_confirm_sleep confirm_sleep;
+struct cmd_confirm_sleep confirm_sleep;
 
 
 /*
  * the table to keep region code
  */
 u16 lbs_region_code_to_index[MRVDRV_MAX_REGION_CODE] =
-    अणु 0x10, 0x20, 0x30, 0x31, 0x32, 0x40 पूर्ण;
+    { 0x10, 0x20, 0x30, 0x31, 0x32, 0x40 };
 
 /*
  * FW rate table.  FW refers to rates by their index in this table, not by the
  * rate value itself.  Values of 0x00 are
  * reserved positions.
  */
-अटल u8 fw_data_rates[MAX_RATES] =
-    अणु 0x02, 0x04, 0x0B, 0x16, 0x00, 0x0C, 0x12,
+static u8 fw_data_rates[MAX_RATES] =
+    { 0x02, 0x04, 0x0B, 0x16, 0x00, 0x0C, 0x12,
       0x18, 0x24, 0x30, 0x48, 0x60, 0x6C, 0x00
-पूर्ण;
+};
 
 /**
  *  lbs_fw_index_to_data_rate - use index to get the data rate
  *
  *  @idx:	The index of data rate
- *  वापसs:	data rate or 0
+ *  returns:	data rate or 0
  */
 u32 lbs_fw_index_to_data_rate(u8 idx)
-अणु
-	अगर (idx >= माप(fw_data_rates))
+{
+	if (idx >= sizeof(fw_data_rates))
 		idx = 0;
-	वापस fw_data_rates[idx];
-पूर्ण
+	return fw_data_rates[idx];
+}
 
 /**
  *  lbs_data_rate_to_fw_index - use rate to get the index
  *
  *  @rate:	data rate
- *  वापसs:	index or 0
+ *  returns:	index or 0
  */
 u8 lbs_data_rate_to_fw_index(u32 rate)
-अणु
+{
 	u8 i;
 
-	अगर (!rate)
-		वापस 0;
+	if (!rate)
+		return 0;
 
-	क्रम (i = 0; i < माप(fw_data_rates); i++) अणु
-		अगर (rate == fw_data_rates[i])
-			वापस i;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	for (i = 0; i < sizeof(fw_data_rates); i++) {
+		if (rate == fw_data_rates[i])
+			return i;
+	}
+	return 0;
+}
 
-पूर्णांक lbs_set_अगरace_type(काष्ठा lbs_निजी *priv, क्रमागत nl80211_अगरtype type)
-अणु
-	पूर्णांक ret = 0;
+int lbs_set_iface_type(struct lbs_private *priv, enum nl80211_iftype type)
+{
+	int ret = 0;
 
-	चयन (type) अणु
-	हाल NL80211_IFTYPE_MONITOR:
+	switch (type) {
+	case NL80211_IFTYPE_MONITOR:
 		ret = lbs_set_monitor_mode(priv, 1);
-		अवरोध;
-	हाल NL80211_IFTYPE_STATION:
-		अगर (priv->wdev->अगरtype == NL80211_IFTYPE_MONITOR)
+		break;
+	case NL80211_IFTYPE_STATION:
+		if (priv->wdev->iftype == NL80211_IFTYPE_MONITOR)
 			ret = lbs_set_monitor_mode(priv, 0);
-		अगर (!ret)
+		if (!ret)
 			ret = lbs_set_snmp_mib(priv, SNMP_MIB_OID_BSS_TYPE, 1);
-		अवरोध;
-	हाल NL80211_IFTYPE_ADHOC:
-		अगर (priv->wdev->अगरtype == NL80211_IFTYPE_MONITOR)
+		break;
+	case NL80211_IFTYPE_ADHOC:
+		if (priv->wdev->iftype == NL80211_IFTYPE_MONITOR)
 			ret = lbs_set_monitor_mode(priv, 0);
-		अगर (!ret)
+		if (!ret)
 			ret = lbs_set_snmp_mib(priv, SNMP_MIB_OID_BSS_TYPE, 2);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		ret = -ENOTSUPP;
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 
-पूर्णांक lbs_start_अगरace(काष्ठा lbs_निजी *priv)
-अणु
-	काष्ठा cmd_ds_802_11_mac_address cmd;
-	पूर्णांक ret;
+int lbs_start_iface(struct lbs_private *priv)
+{
+	struct cmd_ds_802_11_mac_address cmd;
+	int ret;
 
-	अगर (priv->घातer_restore) अणु
-		ret = priv->घातer_restore(priv);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+	if (priv->power_restore) {
+		ret = priv->power_restore(priv);
+		if (ret)
+			return ret;
+	}
 
-	cmd.hdr.size = cpu_to_le16(माप(cmd));
+	cmd.hdr.size = cpu_to_le16(sizeof(cmd));
 	cmd.action = cpu_to_le16(CMD_ACT_SET);
-	स_नकल(cmd.macadd, priv->current_addr, ETH_ALEN);
+	memcpy(cmd.macadd, priv->current_addr, ETH_ALEN);
 
 	ret = lbs_cmd_with_response(priv, CMD_802_11_MAC_ADDRESS, &cmd);
-	अगर (ret) अणु
+	if (ret) {
 		lbs_deb_net("set MAC address failed\n");
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	ret = lbs_set_अगरace_type(priv, priv->wdev->अगरtype);
-	अगर (ret) अणु
+	ret = lbs_set_iface_type(priv, priv->wdev->iftype);
+	if (ret) {
 		lbs_deb_net("set iface type failed\n");
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	ret = lbs_set_11d_करोमुख्य_info(priv);
-	अगर (ret) अणु
+	ret = lbs_set_11d_domain_info(priv);
+	if (ret) {
 		lbs_deb_net("set 11d domain info failed\n");
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	lbs_update_channel(priv);
 
-	priv->अगरace_running = true;
-	वापस 0;
+	priv->iface_running = true;
+	return 0;
 
 err:
-	अगर (priv->घातer_save)
-		priv->घातer_save(priv);
-	वापस ret;
-पूर्ण
+	if (priv->power_save)
+		priv->power_save(priv);
+	return ret;
+}
 
 /**
- *  lbs_dev_खोलो - खोलो the ethX पूर्णांकerface
+ *  lbs_dev_open - open the ethX interface
  *
- *  @dev:	A poपूर्णांकer to &net_device काष्ठाure
- *  वापसs:	0 or -EBUSY अगर monitor mode active
+ *  @dev:	A pointer to &net_device structure
+ *  returns:	0 or -EBUSY if monitor mode active
  */
-अटल पूर्णांक lbs_dev_खोलो(काष्ठा net_device *dev)
-अणु
-	काष्ठा lbs_निजी *priv = dev->ml_priv;
-	पूर्णांक ret = 0;
+static int lbs_dev_open(struct net_device *dev)
+{
+	struct lbs_private *priv = dev->ml_priv;
+	int ret = 0;
 
-	अगर (!priv->अगरace_running) अणु
-		ret = lbs_start_अगरace(priv);
-		अगर (ret)
-			जाओ out;
-	पूर्ण
+	if (!priv->iface_running) {
+		ret = lbs_start_iface(priv);
+		if (ret)
+			goto out;
+	}
 
 	spin_lock_irq(&priv->driver_lock);
 
-	netअगर_carrier_off(dev);
+	netif_carrier_off(dev);
 
-	अगर (!priv->tx_pending_len)
-		netअगर_wake_queue(dev);
+	if (!priv->tx_pending_len)
+		netif_wake_queue(dev);
 
 	spin_unlock_irq(&priv->driver_lock);
 
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल bool lbs_command_queue_empty(काष्ठा lbs_निजी *priv)
-अणु
-	अचिन्हित दीर्घ flags;
+static bool lbs_command_queue_empty(struct lbs_private *priv)
+{
+	unsigned long flags;
 	bool ret;
 	spin_lock_irqsave(&priv->driver_lock, flags);
-	ret = priv->cur_cmd == शून्य && list_empty(&priv->cmdpendingq);
+	ret = priv->cur_cmd == NULL && list_empty(&priv->cmdpendingq);
 	spin_unlock_irqrestore(&priv->driver_lock, flags);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक lbs_stop_अगरace(काष्ठा lbs_निजी *priv)
-अणु
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret = 0;
+int lbs_stop_iface(struct lbs_private *priv)
+{
+	unsigned long flags;
+	int ret = 0;
 
 	spin_lock_irqsave(&priv->driver_lock, flags);
-	priv->अगरace_running = false;
-	kमुक्त_skb(priv->currenttxskb);
-	priv->currenttxskb = शून्य;
+	priv->iface_running = false;
+	kfree_skb(priv->currenttxskb);
+	priv->currenttxskb = NULL;
 	priv->tx_pending_len = 0;
 	spin_unlock_irqrestore(&priv->driver_lock, flags);
 
 	cancel_work_sync(&priv->mcast_work);
-	del_समयr_sync(&priv->tx_lockup_समयr);
+	del_timer_sync(&priv->tx_lockup_timer);
 
-	/* Disable command processing, and रुको क्रम all commands to complete */
-	lbs_deb_मुख्य("waiting for commands to complete\n");
-	रुको_event(priv->रुकोq, lbs_command_queue_empty(priv));
-	lbs_deb_मुख्य("all commands completed\n");
+	/* Disable command processing, and wait for all commands to complete */
+	lbs_deb_main("waiting for commands to complete\n");
+	wait_event(priv->waitq, lbs_command_queue_empty(priv));
+	lbs_deb_main("all commands completed\n");
 
-	अगर (priv->घातer_save)
-		ret = priv->घातer_save(priv);
+	if (priv->power_save)
+		ret = priv->power_save(priv);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- *  lbs_eth_stop - बंद the ethX पूर्णांकerface
+ *  lbs_eth_stop - close the ethX interface
  *
- *  @dev:	A poपूर्णांकer to &net_device काष्ठाure
- *  वापसs:	0
+ *  @dev:	A pointer to &net_device structure
+ *  returns:	0
  */
-अटल पूर्णांक lbs_eth_stop(काष्ठा net_device *dev)
-अणु
-	काष्ठा lbs_निजी *priv = dev->ml_priv;
+static int lbs_eth_stop(struct net_device *dev)
+{
+	struct lbs_private *priv = dev->ml_priv;
 
-	अगर (priv->connect_status == LBS_CONNECTED)
+	if (priv->connect_status == LBS_CONNECTED)
 		lbs_disconnect(priv, WLAN_REASON_DEAUTH_LEAVING);
 
 	spin_lock_irq(&priv->driver_lock);
-	netअगर_stop_queue(dev);
+	netif_stop_queue(dev);
 	spin_unlock_irq(&priv->driver_lock);
 
 	lbs_update_mcast(priv);
 	cancel_delayed_work_sync(&priv->scan_work);
-	अगर (priv->scan_req)
-		lbs_scan_करोne(priv);
+	if (priv->scan_req)
+		lbs_scan_done(priv);
 
-	netअगर_carrier_off(priv->dev);
+	netif_carrier_off(priv->dev);
 
-	अगर (!lbs_अगरace_active(priv))
-		lbs_stop_अगरace(priv);
+	if (!lbs_iface_active(priv))
+		lbs_stop_iface(priv);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम lbs_host_to_card_करोne(काष्ठा lbs_निजी *priv)
-अणु
-	अचिन्हित दीर्घ flags;
+void lbs_host_to_card_done(struct lbs_private *priv)
+{
+	unsigned long flags;
 
 	spin_lock_irqsave(&priv->driver_lock, flags);
-	del_समयr(&priv->tx_lockup_समयr);
+	del_timer(&priv->tx_lockup_timer);
 
 	priv->dnld_sent = DNLD_RES_RECEIVED;
 
-	/* Wake मुख्य thपढ़ो अगर commands are pending */
-	अगर (!priv->cur_cmd || priv->tx_pending_len > 0) अणु
-		अगर (!priv->wakeup_dev_required)
-			wake_up(&priv->रुकोq);
-	पूर्ण
+	/* Wake main thread if commands are pending */
+	if (!priv->cur_cmd || priv->tx_pending_len > 0) {
+		if (!priv->wakeup_dev_required)
+			wake_up(&priv->waitq);
+	}
 
 	spin_unlock_irqrestore(&priv->driver_lock, flags);
-पूर्ण
-EXPORT_SYMBOL_GPL(lbs_host_to_card_करोne);
+}
+EXPORT_SYMBOL_GPL(lbs_host_to_card_done);
 
-पूर्णांक lbs_set_mac_address(काष्ठा net_device *dev, व्योम *addr)
-अणु
-	पूर्णांक ret = 0;
-	काष्ठा lbs_निजी *priv = dev->ml_priv;
-	काष्ठा sockaddr *phwaddr = addr;
+int lbs_set_mac_address(struct net_device *dev, void *addr)
+{
+	int ret = 0;
+	struct lbs_private *priv = dev->ml_priv;
+	struct sockaddr *phwaddr = addr;
 
 	/*
-	 * Can only set MAC address when all पूर्णांकerfaces are करोwn, to be written
+	 * Can only set MAC address when all interfaces are down, to be written
 	 * to the hardware when one of them is brought up.
 	 */
-	अगर (lbs_अगरace_active(priv))
-		वापस -EBUSY;
+	if (lbs_iface_active(priv))
+		return -EBUSY;
 
-	/* In हाल it was called from the mesh device */
+	/* In case it was called from the mesh device */
 	dev = priv->dev;
 
-	स_नकल(priv->current_addr, phwaddr->sa_data, ETH_ALEN);
-	स_नकल(dev->dev_addr, phwaddr->sa_data, ETH_ALEN);
-	अगर (priv->mesh_dev)
-		स_नकल(priv->mesh_dev->dev_addr, phwaddr->sa_data, ETH_ALEN);
+	memcpy(priv->current_addr, phwaddr->sa_data, ETH_ALEN);
+	memcpy(dev->dev_addr, phwaddr->sa_data, ETH_ALEN);
+	if (priv->mesh_dev)
+		memcpy(priv->mesh_dev->dev_addr, phwaddr->sa_data, ETH_ALEN);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 
-अटल अंतरभूत पूर्णांक mac_in_list(अचिन्हित अक्षर *list, पूर्णांक list_len,
-			      अचिन्हित अक्षर *mac)
-अणु
-	जबतक (list_len) अणु
-		अगर (!स_भेद(list, mac, ETH_ALEN))
-			वापस 1;
+static inline int mac_in_list(unsigned char *list, int list_len,
+			      unsigned char *mac)
+{
+	while (list_len) {
+		if (!memcmp(list, mac, ETH_ALEN))
+			return 1;
 		list += ETH_ALEN;
 		list_len--;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
 
-अटल पूर्णांक lbs_add_mcast_addrs(काष्ठा cmd_ds_mac_multicast_adr *cmd,
-			       काष्ठा net_device *dev, पूर्णांक nr_addrs)
-अणु
-	पूर्णांक i = nr_addrs;
-	काष्ठा netdev_hw_addr *ha;
-	पूर्णांक cnt;
+static int lbs_add_mcast_addrs(struct cmd_ds_mac_multicast_adr *cmd,
+			       struct net_device *dev, int nr_addrs)
+{
+	int i = nr_addrs;
+	struct netdev_hw_addr *ha;
+	int cnt;
 
-	अगर ((dev->flags & (IFF_UP|IFF_MULTICAST)) != (IFF_UP|IFF_MULTICAST))
-		वापस nr_addrs;
+	if ((dev->flags & (IFF_UP|IFF_MULTICAST)) != (IFF_UP|IFF_MULTICAST))
+		return nr_addrs;
 
-	netअगर_addr_lock_bh(dev);
+	netif_addr_lock_bh(dev);
 	cnt = netdev_mc_count(dev);
-	netdev_क्रम_each_mc_addr(ha, dev) अणु
-		अगर (mac_in_list(cmd->maclist, nr_addrs, ha->addr)) अणु
+	netdev_for_each_mc_addr(ha, dev) {
+		if (mac_in_list(cmd->maclist, nr_addrs, ha->addr)) {
 			lbs_deb_net("mcast address %s:%pM skipped\n", dev->name,
 				    ha->addr);
 			cnt--;
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		अगर (i == MRVDRV_MAX_MULTICAST_LIST_SIZE)
-			अवरोध;
-		स_नकल(&cmd->maclist[6*i], ha->addr, ETH_ALEN);
+		if (i == MRVDRV_MAX_MULTICAST_LIST_SIZE)
+			break;
+		memcpy(&cmd->maclist[6*i], ha->addr, ETH_ALEN);
 		lbs_deb_net("mcast address %s:%pM added to filter\n", dev->name,
 			    ha->addr);
 		i++;
 		cnt--;
-	पूर्ण
-	netअगर_addr_unlock_bh(dev);
-	अगर (cnt)
-		वापस -EOVERFLOW;
+	}
+	netif_addr_unlock_bh(dev);
+	if (cnt)
+		return -EOVERFLOW;
 
-	वापस i;
-पूर्ण
+	return i;
+}
 
-व्योम lbs_update_mcast(काष्ठा lbs_निजी *priv)
-अणु
-	काष्ठा cmd_ds_mac_multicast_adr mcast_cmd;
-	पूर्णांक dev_flags = 0;
-	पूर्णांक nr_addrs;
-	पूर्णांक old_mac_control = priv->mac_control;
+void lbs_update_mcast(struct lbs_private *priv)
+{
+	struct cmd_ds_mac_multicast_adr mcast_cmd;
+	int dev_flags = 0;
+	int nr_addrs;
+	int old_mac_control = priv->mac_control;
 
-	अगर (netअगर_running(priv->dev))
+	if (netif_running(priv->dev))
 		dev_flags |= priv->dev->flags;
-	अगर (priv->mesh_dev && netअगर_running(priv->mesh_dev))
+	if (priv->mesh_dev && netif_running(priv->mesh_dev))
 		dev_flags |= priv->mesh_dev->flags;
 
-	अगर (dev_flags & IFF_PROMISC) अणु
+	if (dev_flags & IFF_PROMISC) {
 		priv->mac_control |= CMD_ACT_MAC_PROMISCUOUS_ENABLE;
 		priv->mac_control &= ~(CMD_ACT_MAC_ALL_MULTICAST_ENABLE |
 				       CMD_ACT_MAC_MULTICAST_ENABLE);
-		जाओ out_set_mac_control;
-	पूर्ण अन्यथा अगर (dev_flags & IFF_ALLMULTI) अणु
-	करो_allmulti:
+		goto out_set_mac_control;
+	} else if (dev_flags & IFF_ALLMULTI) {
+	do_allmulti:
 		priv->mac_control |= CMD_ACT_MAC_ALL_MULTICAST_ENABLE;
 		priv->mac_control &= ~(CMD_ACT_MAC_PROMISCUOUS_ENABLE |
 				       CMD_ACT_MAC_MULTICAST_ENABLE);
-		जाओ out_set_mac_control;
-	पूर्ण
+		goto out_set_mac_control;
+	}
 
-	/* Once क्रम priv->dev, again क्रम priv->mesh_dev अगर it exists */
+	/* Once for priv->dev, again for priv->mesh_dev if it exists */
 	nr_addrs = lbs_add_mcast_addrs(&mcast_cmd, priv->dev, 0);
-	अगर (nr_addrs >= 0 && priv->mesh_dev)
+	if (nr_addrs >= 0 && priv->mesh_dev)
 		nr_addrs = lbs_add_mcast_addrs(&mcast_cmd, priv->mesh_dev, nr_addrs);
-	अगर (nr_addrs < 0)
-		जाओ करो_allmulti;
+	if (nr_addrs < 0)
+		goto do_allmulti;
 
-	अगर (nr_addrs) अणु
-		पूर्णांक size = दुरत्व(काष्ठा cmd_ds_mac_multicast_adr,
+	if (nr_addrs) {
+		int size = offsetof(struct cmd_ds_mac_multicast_adr,
 				    maclist[6*nr_addrs]);
 
 		mcast_cmd.action = cpu_to_le16(CMD_ACT_SET);
@@ -402,431 +401,431 @@ EXPORT_SYMBOL_GPL(lbs_host_to_card_करोne);
 		lbs_cmd_async(priv, CMD_MAC_MULTICAST_ADR, &mcast_cmd.hdr, size);
 
 		priv->mac_control |= CMD_ACT_MAC_MULTICAST_ENABLE;
-	पूर्ण अन्यथा
+	} else
 		priv->mac_control &= ~CMD_ACT_MAC_MULTICAST_ENABLE;
 
 	priv->mac_control &= ~(CMD_ACT_MAC_PROMISCUOUS_ENABLE |
 			       CMD_ACT_MAC_ALL_MULTICAST_ENABLE);
  out_set_mac_control:
-	अगर (priv->mac_control != old_mac_control)
+	if (priv->mac_control != old_mac_control)
 		lbs_set_mac_control(priv);
-पूर्ण
+}
 
-अटल व्योम lbs_set_mcast_worker(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा lbs_निजी *priv = container_of(work, काष्ठा lbs_निजी, mcast_work);
+static void lbs_set_mcast_worker(struct work_struct *work)
+{
+	struct lbs_private *priv = container_of(work, struct lbs_private, mcast_work);
 	lbs_update_mcast(priv);
-पूर्ण
+}
 
-व्योम lbs_set_multicast_list(काष्ठा net_device *dev)
-अणु
-	काष्ठा lbs_निजी *priv = dev->ml_priv;
+void lbs_set_multicast_list(struct net_device *dev)
+{
+	struct lbs_private *priv = dev->ml_priv;
 
 	schedule_work(&priv->mcast_work);
-पूर्ण
+}
 
 /**
- *  lbs_thपढ़ो - handles the major jobs in the LBS driver.
+ *  lbs_thread - handles the major jobs in the LBS driver.
  *  It handles all events generated by firmware, RX data received
  *  from firmware and TX data sent from kernel.
  *
- *  @data:	A poपूर्णांकer to &lbs_thपढ़ो काष्ठाure
- *  वापसs:	0
+ *  @data:	A pointer to &lbs_thread structure
+ *  returns:	0
  */
-अटल पूर्णांक lbs_thपढ़ो(व्योम *data)
-अणु
-	काष्ठा net_device *dev = data;
-	काष्ठा lbs_निजी *priv = dev->ml_priv;
-	रुको_queue_entry_t रुको;
+static int lbs_thread(void *data)
+{
+	struct net_device *dev = data;
+	struct lbs_private *priv = dev->ml_priv;
+	wait_queue_entry_t wait;
 
-	init_रुकोqueue_entry(&रुको, current);
+	init_waitqueue_entry(&wait, current);
 
-	क्रम (;;) अणु
-		पूर्णांक shouldsleep;
+	for (;;) {
+		int shouldsleep;
 		u8 resp_idx;
 
-		lbs_deb_thपढ़ो("1: currenttxskb %p, dnld_sent %d\n",
+		lbs_deb_thread("1: currenttxskb %p, dnld_sent %d\n",
 				priv->currenttxskb, priv->dnld_sent);
 
-		add_रुको_queue(&priv->रुकोq, &रुको);
+		add_wait_queue(&priv->waitq, &wait);
 		set_current_state(TASK_INTERRUPTIBLE);
 		spin_lock_irq(&priv->driver_lock);
 
-		अगर (kthपढ़ो_should_stop())
+		if (kthread_should_stop())
 			shouldsleep = 0;	/* Bye */
-		अन्यथा अगर (priv->surpriseहटाओd)
-			shouldsleep = 1;	/* We need to रुको until we're _told_ to die */
-		अन्यथा अगर (priv->psstate == PS_STATE_SLEEP)
-			shouldsleep = 1;	/* Sleep mode. Nothing we can करो till it wakes */
-		अन्यथा अगर (priv->cmd_समयd_out)
-			shouldsleep = 0;	/* Command समयd out. Recover */
-		अन्यथा अगर (!priv->fw_पढ़ोy)
-			shouldsleep = 1;	/* Firmware not पढ़ोy. We're रुकोing क्रम it */
-		अन्यथा अगर (priv->dnld_sent)
-			shouldsleep = 1;	/* Something is en route to the device alपढ़ोy */
-		अन्यथा अगर (priv->tx_pending_len > 0)
+		else if (priv->surpriseremoved)
+			shouldsleep = 1;	/* We need to wait until we're _told_ to die */
+		else if (priv->psstate == PS_STATE_SLEEP)
+			shouldsleep = 1;	/* Sleep mode. Nothing we can do till it wakes */
+		else if (priv->cmd_timed_out)
+			shouldsleep = 0;	/* Command timed out. Recover */
+		else if (!priv->fw_ready)
+			shouldsleep = 1;	/* Firmware not ready. We're waiting for it */
+		else if (priv->dnld_sent)
+			shouldsleep = 1;	/* Something is en route to the device already */
+		else if (priv->tx_pending_len > 0)
 			shouldsleep = 0;	/* We've a packet to send */
-		अन्यथा अगर (priv->resp_len[priv->resp_idx])
+		else if (priv->resp_len[priv->resp_idx])
 			shouldsleep = 0;	/* We have a command response */
-		अन्यथा अगर (priv->cur_cmd)
-			shouldsleep = 1;	/* Can't send a command; one alपढ़ोy running */
-		अन्यथा अगर (!list_empty(&priv->cmdpendingq) &&
+		else if (priv->cur_cmd)
+			shouldsleep = 1;	/* Can't send a command; one already running */
+		else if (!list_empty(&priv->cmdpendingq) &&
 					!(priv->wakeup_dev_required))
 			shouldsleep = 0;	/* We have a command to send */
-		अन्यथा अगर (kfअगरo_len(&priv->event_fअगरo))
+		else if (kfifo_len(&priv->event_fifo))
 			shouldsleep = 0;	/* We have an event to process */
-		अन्यथा
+		else
 			shouldsleep = 1;	/* No command */
 
-		अगर (shouldsleep) अणु
-			lbs_deb_thपढ़ो("sleeping, connect_status %d, "
+		if (shouldsleep) {
+			lbs_deb_thread("sleeping, connect_status %d, "
 				"psmode %d, psstate %d\n",
 				priv->connect_status,
 				priv->psmode, priv->psstate);
 			spin_unlock_irq(&priv->driver_lock);
 			schedule();
-		पूर्ण अन्यथा
+		} else
 			spin_unlock_irq(&priv->driver_lock);
 
-		lbs_deb_thपढ़ो("2: currenttxskb %p, dnld_send %d\n",
+		lbs_deb_thread("2: currenttxskb %p, dnld_send %d\n",
 			       priv->currenttxskb, priv->dnld_sent);
 
 		set_current_state(TASK_RUNNING);
-		हटाओ_रुको_queue(&priv->रुकोq, &रुको);
+		remove_wait_queue(&priv->waitq, &wait);
 
-		lbs_deb_thपढ़ो("3: currenttxskb %p, dnld_sent %d\n",
+		lbs_deb_thread("3: currenttxskb %p, dnld_sent %d\n",
 			       priv->currenttxskb, priv->dnld_sent);
 
-		अगर (kthपढ़ो_should_stop()) अणु
-			lbs_deb_thपढ़ो("break from main thread\n");
-			अवरोध;
-		पूर्ण
+		if (kthread_should_stop()) {
+			lbs_deb_thread("break from main thread\n");
+			break;
+		}
 
-		अगर (priv->surpriseहटाओd) अणु
-			lbs_deb_thपढ़ो("adapter removed; waiting to die...\n");
-			जारी;
-		पूर्ण
+		if (priv->surpriseremoved) {
+			lbs_deb_thread("adapter removed; waiting to die...\n");
+			continue;
+		}
 
-		lbs_deb_thपढ़ो("4: currenttxskb %p, dnld_sent %d\n",
+		lbs_deb_thread("4: currenttxskb %p, dnld_sent %d\n",
 		       priv->currenttxskb, priv->dnld_sent);
 
 		/* Process any pending command response */
 		spin_lock_irq(&priv->driver_lock);
 		resp_idx = priv->resp_idx;
-		अगर (priv->resp_len[resp_idx]) अणु
+		if (priv->resp_len[resp_idx]) {
 			spin_unlock_irq(&priv->driver_lock);
 			lbs_process_command_response(priv,
 				priv->resp_buf[resp_idx],
 				priv->resp_len[resp_idx]);
 			spin_lock_irq(&priv->driver_lock);
 			priv->resp_len[resp_idx] = 0;
-		पूर्ण
+		}
 		spin_unlock_irq(&priv->driver_lock);
 
-		/* Process hardware events, e.g. card हटाओd, link lost */
+		/* Process hardware events, e.g. card removed, link lost */
 		spin_lock_irq(&priv->driver_lock);
-		जबतक (kfअगरo_len(&priv->event_fअगरo)) अणु
+		while (kfifo_len(&priv->event_fifo)) {
 			u32 event;
 
-			अगर (kfअगरo_out(&priv->event_fअगरo,
-				(अचिन्हित अक्षर *) &event, माप(event)) !=
-				माप(event))
-					अवरोध;
+			if (kfifo_out(&priv->event_fifo,
+				(unsigned char *) &event, sizeof(event)) !=
+				sizeof(event))
+					break;
 			spin_unlock_irq(&priv->driver_lock);
 			lbs_process_event(priv, event);
 			spin_lock_irq(&priv->driver_lock);
-		पूर्ण
+		}
 		spin_unlock_irq(&priv->driver_lock);
 
-		अगर (priv->wakeup_dev_required) अणु
-			lbs_deb_thपढ़ो("Waking up device...\n");
+		if (priv->wakeup_dev_required) {
+			lbs_deb_thread("Waking up device...\n");
 			/* Wake up device */
-			अगर (priv->निकास_deep_sleep(priv))
-				lbs_deb_thपढ़ो("Wakeup device failed\n");
-			जारी;
-		पूर्ण
+			if (priv->exit_deep_sleep(priv))
+				lbs_deb_thread("Wakeup device failed\n");
+			continue;
+		}
 
-		/* command समयout stuff */
-		अगर (priv->cmd_समयd_out && priv->cur_cmd) अणु
-			काष्ठा cmd_ctrl_node *cmdnode = priv->cur_cmd;
+		/* command timeout stuff */
+		if (priv->cmd_timed_out && priv->cur_cmd) {
+			struct cmd_ctrl_node *cmdnode = priv->cur_cmd;
 
 			netdev_info(dev, "Timeout submitting command 0x%04x\n",
 				    le16_to_cpu(cmdnode->cmdbuf->command));
 			lbs_complete_command(priv, cmdnode, -ETIMEDOUT);
 
 			/* Reset card, but only when it isn't in the process
-			 * of being shutकरोwn anyway. */
-			अगर (!dev->dismantle && priv->reset_card)
+			 * of being shutdown anyway. */
+			if (!dev->dismantle && priv->reset_card)
 				priv->reset_card(priv);
-		पूर्ण
-		priv->cmd_समयd_out = 0;
+		}
+		priv->cmd_timed_out = 0;
 
-		अगर (!priv->fw_पढ़ोy)
-			जारी;
+		if (!priv->fw_ready)
+			continue;
 
-		/* Check अगर we need to confirm Sleep Request received previously */
-		अगर (priv->psstate == PS_STATE_PRE_SLEEP &&
-		    !priv->dnld_sent && !priv->cur_cmd) अणु
-			अगर (priv->connect_status == LBS_CONNECTED) अणु
-				lbs_deb_thपढ़ो("pre-sleep, currenttxskb %p, "
+		/* Check if we need to confirm Sleep Request received previously */
+		if (priv->psstate == PS_STATE_PRE_SLEEP &&
+		    !priv->dnld_sent && !priv->cur_cmd) {
+			if (priv->connect_status == LBS_CONNECTED) {
+				lbs_deb_thread("pre-sleep, currenttxskb %p, "
 					"dnld_sent %d, cur_cmd %p\n",
 					priv->currenttxskb, priv->dnld_sent,
 					priv->cur_cmd);
 
 				lbs_ps_confirm_sleep(priv);
-			पूर्ण अन्यथा अणु
-				/* workaround क्रम firmware sending
+			} else {
+				/* workaround for firmware sending
 				 * deauth/linkloss event immediately
-				 * after sleep request; हटाओ this
+				 * after sleep request; remove this
 				 * after firmware fixes it
 				 */
 				priv->psstate = PS_STATE_AWAKE;
 				netdev_alert(dev,
 					     "ignore PS_SleepConfirm in non-connected state\n");
-			पूर्ण
-		पूर्ण
+			}
+		}
 
 		/* The PS state is changed during processing of Sleep Request
 		 * event above
 		 */
-		अगर ((priv->psstate == PS_STATE_SLEEP) ||
+		if ((priv->psstate == PS_STATE_SLEEP) ||
 		    (priv->psstate == PS_STATE_PRE_SLEEP))
-			जारी;
+			continue;
 
-		अगर (priv->is_deep_sleep)
-			जारी;
+		if (priv->is_deep_sleep)
+			continue;
 
 		/* Execute the next command */
-		अगर (!priv->dnld_sent && !priv->cur_cmd)
+		if (!priv->dnld_sent && !priv->cur_cmd)
 			lbs_execute_next_command(priv);
 
 		spin_lock_irq(&priv->driver_lock);
-		अगर (!priv->dnld_sent && priv->tx_pending_len > 0) अणु
-			पूर्णांक ret = priv->hw_host_to_card(priv, MVMS_DAT,
+		if (!priv->dnld_sent && priv->tx_pending_len > 0) {
+			int ret = priv->hw_host_to_card(priv, MVMS_DAT,
 							priv->tx_pending_buf,
 							priv->tx_pending_len);
-			अगर (ret) अणु
+			if (ret) {
 				lbs_deb_tx("host_to_card failed %d\n", ret);
 				priv->dnld_sent = DNLD_RES_RECEIVED;
-			पूर्ण अन्यथा अणु
-				mod_समयr(&priv->tx_lockup_समयr,
-					  jअगरfies + (HZ * 5));
-			पूर्ण
+			} else {
+				mod_timer(&priv->tx_lockup_timer,
+					  jiffies + (HZ * 5));
+			}
 			priv->tx_pending_len = 0;
-			अगर (!priv->currenttxskb) अणु
-				/* We can wake the queues immediately अगर we aren't
-				   रुकोing क्रम TX feedback */
-				अगर (priv->connect_status == LBS_CONNECTED)
-					netअगर_wake_queue(priv->dev);
-				अगर (priv->mesh_dev &&
-				    netअगर_running(priv->mesh_dev))
-					netअगर_wake_queue(priv->mesh_dev);
-			पूर्ण
-		पूर्ण
+			if (!priv->currenttxskb) {
+				/* We can wake the queues immediately if we aren't
+				   waiting for TX feedback */
+				if (priv->connect_status == LBS_CONNECTED)
+					netif_wake_queue(priv->dev);
+				if (priv->mesh_dev &&
+				    netif_running(priv->mesh_dev))
+					netif_wake_queue(priv->mesh_dev);
+			}
+		}
 		spin_unlock_irq(&priv->driver_lock);
-	पूर्ण
+	}
 
-	del_समयr(&priv->command_समयr);
-	del_समयr(&priv->tx_lockup_समयr);
-	del_समयr(&priv->स्वतः_deepsleep_समयr);
+	del_timer(&priv->command_timer);
+	del_timer(&priv->tx_lockup_timer);
+	del_timer(&priv->auto_deepsleep_timer);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * lbs_setup_firmware - माला_लो the HW spec from the firmware and sets
+ * lbs_setup_firmware - gets the HW spec from the firmware and sets
  *        some basic parameters
  *
- *  @priv:	A poपूर्णांकer to &काष्ठा lbs_निजी काष्ठाure
- *  वापसs:	0 or -1
+ *  @priv:	A pointer to &struct lbs_private structure
+ *  returns:	0 or -1
  */
-अटल पूर्णांक lbs_setup_firmware(काष्ठा lbs_निजी *priv)
-अणु
-	पूर्णांक ret = -1;
+static int lbs_setup_firmware(struct lbs_private *priv)
+{
+	int ret = -1;
 	s16 curlevel = 0, minlevel = 0, maxlevel = 0;
 
 	/* Read MAC address from firmware */
 	eth_broadcast_addr(priv->current_addr);
 	ret = lbs_update_hw_spec(priv);
-	अगर (ret)
-		जाओ करोne;
+	if (ret)
+		goto done;
 
-	/* Read घातer levels अगर available */
-	ret = lbs_get_tx_घातer(priv, &curlevel, &minlevel, &maxlevel);
-	अगर (ret == 0) अणु
-		priv->txघातer_cur = curlevel;
-		priv->txघातer_min = minlevel;
-		priv->txघातer_max = maxlevel;
-	पूर्ण
+	/* Read power levels if available */
+	ret = lbs_get_tx_power(priv, &curlevel, &minlevel, &maxlevel);
+	if (ret == 0) {
+		priv->txpower_cur = curlevel;
+		priv->txpower_min = minlevel;
+		priv->txpower_max = maxlevel;
+	}
 
 	/* Send cmd to FW to enable 11D function */
 	ret = lbs_set_snmp_mib(priv, SNMP_MIB_OID_11D_ENABLE, 1);
-	अगर (ret)
-		जाओ करोne;
+	if (ret)
+		goto done;
 
 	ret = lbs_set_mac_control_sync(priv);
-करोne:
-	वापस ret;
-पूर्ण
+done:
+	return ret;
+}
 
-पूर्णांक lbs_suspend(काष्ठा lbs_निजी *priv)
-अणु
-	पूर्णांक ret;
+int lbs_suspend(struct lbs_private *priv)
+{
+	int ret;
 
-	अगर (priv->is_deep_sleep) अणु
+	if (priv->is_deep_sleep) {
 		ret = lbs_set_deep_sleep(priv, 0);
-		अगर (ret) अणु
+		if (ret) {
 			netdev_err(priv->dev,
 				   "deep sleep cancellation failed: %d\n", ret);
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 		priv->deep_sleep_required = 1;
-	पूर्ण
+	}
 
 	ret = lbs_set_host_sleep(priv, 1);
 
-	netअगर_device_detach(priv->dev);
-	अगर (priv->mesh_dev)
-		netअगर_device_detach(priv->mesh_dev);
+	netif_device_detach(priv->dev);
+	if (priv->mesh_dev)
+		netif_device_detach(priv->mesh_dev);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(lbs_suspend);
 
-पूर्णांक lbs_resume(काष्ठा lbs_निजी *priv)
-अणु
-	पूर्णांक ret;
+int lbs_resume(struct lbs_private *priv)
+{
+	int ret;
 
 	ret = lbs_set_host_sleep(priv, 0);
 
-	netअगर_device_attach(priv->dev);
-	अगर (priv->mesh_dev)
-		netअगर_device_attach(priv->mesh_dev);
+	netif_device_attach(priv->dev);
+	if (priv->mesh_dev)
+		netif_device_attach(priv->mesh_dev);
 
-	अगर (priv->deep_sleep_required) अणु
+	if (priv->deep_sleep_required) {
 		priv->deep_sleep_required = 0;
 		ret = lbs_set_deep_sleep(priv, 1);
-		अगर (ret)
+		if (ret)
 			netdev_err(priv->dev,
 				   "deep sleep activation failed: %d\n", ret);
-	पूर्ण
+	}
 
-	अगर (priv->setup_fw_on_resume)
+	if (priv->setup_fw_on_resume)
 		ret = lbs_setup_firmware(priv);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(lbs_resume);
 
 /**
- * lbs_cmd_समयout_handler - handles the समयout of command sending.
+ * lbs_cmd_timeout_handler - handles the timeout of command sending.
  * It will re-send the same command again.
  *
- * @t: Context from which to retrieve a &काष्ठा lbs_निजी poपूर्णांकer
+ * @t: Context from which to retrieve a &struct lbs_private pointer
  */
-अटल व्योम lbs_cmd_समयout_handler(काष्ठा समयr_list *t)
-अणु
-	काष्ठा lbs_निजी *priv = from_समयr(priv, t, command_समयr);
-	अचिन्हित दीर्घ flags;
+static void lbs_cmd_timeout_handler(struct timer_list *t)
+{
+	struct lbs_private *priv = from_timer(priv, t, command_timer);
+	unsigned long flags;
 
 	spin_lock_irqsave(&priv->driver_lock, flags);
 
-	अगर (!priv->cur_cmd)
-		जाओ out;
+	if (!priv->cur_cmd)
+		goto out;
 
 	netdev_info(priv->dev, "command 0x%04x timed out\n",
 		    le16_to_cpu(priv->cur_cmd->cmdbuf->command));
 
-	priv->cmd_समयd_out = 1;
+	priv->cmd_timed_out = 1;
 
 	/*
 	 * If the device didn't even acknowledge the command, reset the state
-	 * so that we करोn't block all future commands due to this one समयout.
+	 * so that we don't block all future commands due to this one timeout.
 	 */
-	अगर (priv->dnld_sent == DNLD_CMD_SENT)
+	if (priv->dnld_sent == DNLD_CMD_SENT)
 		priv->dnld_sent = DNLD_RES_RECEIVED;
 
-	wake_up(&priv->रुकोq);
+	wake_up(&priv->waitq);
 out:
 	spin_unlock_irqrestore(&priv->driver_lock, flags);
-पूर्ण
+}
 
 /**
- * lbs_tx_lockup_handler - handles the समयout of the passing of TX frames
+ * lbs_tx_lockup_handler - handles the timeout of the passing of TX frames
  * to the hardware. This is known to frequently happen with SD8686 when
  * waking up after a Wake-on-WLAN-triggered resume.
  *
- * @t: Context from which to retrieve a &काष्ठा lbs_निजी poपूर्णांकer
+ * @t: Context from which to retrieve a &struct lbs_private pointer
  */
-अटल व्योम lbs_tx_lockup_handler(काष्ठा समयr_list *t)
-अणु
-	काष्ठा lbs_निजी *priv = from_समयr(priv, t, tx_lockup_समयr);
-	अचिन्हित दीर्घ flags;
+static void lbs_tx_lockup_handler(struct timer_list *t)
+{
+	struct lbs_private *priv = from_timer(priv, t, tx_lockup_timer);
+	unsigned long flags;
 
 	spin_lock_irqsave(&priv->driver_lock, flags);
 
 	netdev_info(priv->dev, "TX lockup detected\n");
-	अगर (priv->reset_card)
+	if (priv->reset_card)
 		priv->reset_card(priv);
 
 	priv->dnld_sent = DNLD_RES_RECEIVED;
-	wake_up_पूर्णांकerruptible(&priv->रुकोq);
+	wake_up_interruptible(&priv->waitq);
 
 	spin_unlock_irqrestore(&priv->driver_lock, flags);
-पूर्ण
+}
 
 /**
- * स्वतः_deepsleep_समयr_fn - put the device back to deep sleep mode when
- * समयr expires and no activity (command, event, data etc.) is detected.
- * @t: Context from which to retrieve a &काष्ठा lbs_निजी poपूर्णांकer
- * वापसs:	N/A
+ * auto_deepsleep_timer_fn - put the device back to deep sleep mode when
+ * timer expires and no activity (command, event, data etc.) is detected.
+ * @t: Context from which to retrieve a &struct lbs_private pointer
+ * returns:	N/A
  */
-अटल व्योम स्वतः_deepsleep_समयr_fn(काष्ठा समयr_list *t)
-अणु
-	काष्ठा lbs_निजी *priv = from_समयr(priv, t, स्वतः_deepsleep_समयr);
+static void auto_deepsleep_timer_fn(struct timer_list *t)
+{
+	struct lbs_private *priv = from_timer(priv, t, auto_deepsleep_timer);
 
-	अगर (priv->is_activity_detected) अणु
+	if (priv->is_activity_detected) {
 		priv->is_activity_detected = 0;
-	पूर्ण अन्यथा अणु
-		अगर (priv->is_स्वतः_deep_sleep_enabled &&
+	} else {
+		if (priv->is_auto_deep_sleep_enabled &&
 		    (!priv->wakeup_dev_required) &&
-		    (priv->connect_status != LBS_CONNECTED)) अणु
-			काष्ठा cmd_header cmd;
+		    (priv->connect_status != LBS_CONNECTED)) {
+			struct cmd_header cmd;
 
-			lbs_deb_मुख्य("Entering auto deep sleep mode...\n");
-			स_रखो(&cmd, 0, माप(cmd));
-			cmd.size = cpu_to_le16(माप(cmd));
+			lbs_deb_main("Entering auto deep sleep mode...\n");
+			memset(&cmd, 0, sizeof(cmd));
+			cmd.size = cpu_to_le16(sizeof(cmd));
 			lbs_cmd_async(priv, CMD_802_11_DEEP_SLEEP, &cmd,
-					माप(cmd));
-		पूर्ण
-	पूर्ण
-	mod_समयr(&priv->स्वतः_deepsleep_समयr , jअगरfies +
-				(priv->स्वतः_deep_sleep_समयout * HZ)/1000);
-पूर्ण
+					sizeof(cmd));
+		}
+	}
+	mod_timer(&priv->auto_deepsleep_timer , jiffies +
+				(priv->auto_deep_sleep_timeout * HZ)/1000);
+}
 
-पूर्णांक lbs_enter_स्वतः_deep_sleep(काष्ठा lbs_निजी *priv)
-अणु
-	priv->is_स्वतः_deep_sleep_enabled = 1;
-	अगर (priv->is_deep_sleep)
+int lbs_enter_auto_deep_sleep(struct lbs_private *priv)
+{
+	priv->is_auto_deep_sleep_enabled = 1;
+	if (priv->is_deep_sleep)
 		priv->wakeup_dev_required = 1;
-	mod_समयr(&priv->स्वतः_deepsleep_समयr ,
-			jअगरfies + (priv->स्वतः_deep_sleep_समयout * HZ)/1000);
+	mod_timer(&priv->auto_deepsleep_timer ,
+			jiffies + (priv->auto_deep_sleep_timeout * HZ)/1000);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक lbs_निकास_स्वतः_deep_sleep(काष्ठा lbs_निजी *priv)
-अणु
-	priv->is_स्वतः_deep_sleep_enabled = 0;
-	priv->स्वतः_deep_sleep_समयout = 0;
-	del_समयr(&priv->स्वतः_deepsleep_समयr);
+int lbs_exit_auto_deep_sleep(struct lbs_private *priv)
+{
+	priv->is_auto_deep_sleep_enabled = 0;
+	priv->auto_deep_sleep_timeout = 0;
+	del_timer(&priv->auto_deepsleep_timer);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक lbs_init_adapter(काष्ठा lbs_निजी *priv)
-अणु
-	पूर्णांक ret;
+static int lbs_init_adapter(struct lbs_private *priv)
+{
+	int ret;
 
 	eth_broadcast_addr(priv->current_addr);
 
@@ -837,104 +836,104 @@ out:
 	priv->psmode = LBS802_11POWERMODECAM;
 	priv->psstate = PS_STATE_FULL_POWER;
 	priv->is_deep_sleep = 0;
-	priv->is_स्वतः_deep_sleep_enabled = 0;
+	priv->is_auto_deep_sleep_enabled = 0;
 	priv->deep_sleep_required = 0;
 	priv->wakeup_dev_required = 0;
-	init_रुकोqueue_head(&priv->ds_awake_q);
-	init_रुकोqueue_head(&priv->scan_q);
-	priv->authtype_स्वतः = 1;
+	init_waitqueue_head(&priv->ds_awake_q);
+	init_waitqueue_head(&priv->scan_q);
+	priv->authtype_auto = 1;
 	priv->is_host_sleep_configured = 0;
 	priv->is_host_sleep_activated = 0;
-	init_रुकोqueue_head(&priv->host_sleep_q);
-	init_रुकोqueue_head(&priv->fw_रुकोq);
+	init_waitqueue_head(&priv->host_sleep_q);
+	init_waitqueue_head(&priv->fw_waitq);
 	mutex_init(&priv->lock);
 
-	समयr_setup(&priv->command_समयr, lbs_cmd_समयout_handler, 0);
-	समयr_setup(&priv->tx_lockup_समयr, lbs_tx_lockup_handler, 0);
-	समयr_setup(&priv->स्वतः_deepsleep_समयr, स्वतः_deepsleep_समयr_fn, 0);
+	timer_setup(&priv->command_timer, lbs_cmd_timeout_handler, 0);
+	timer_setup(&priv->tx_lockup_timer, lbs_tx_lockup_handler, 0);
+	timer_setup(&priv->auto_deepsleep_timer, auto_deepsleep_timer_fn, 0);
 
-	INIT_LIST_HEAD(&priv->cmdमुक्तq);
+	INIT_LIST_HEAD(&priv->cmdfreeq);
 	INIT_LIST_HEAD(&priv->cmdpendingq);
 
 	spin_lock_init(&priv->driver_lock);
 
 	/* Allocate the command buffers */
-	अगर (lbs_allocate_cmd_buffer(priv)) अणु
+	if (lbs_allocate_cmd_buffer(priv)) {
 		pr_err("Out of memory allocating command buffers\n");
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	priv->resp_idx = 0;
 	priv->resp_len[0] = priv->resp_len[1] = 0;
 
 	/* Create the event FIFO */
-	ret = kfअगरo_alloc(&priv->event_fअगरo, माप(u32) * 16, GFP_KERNEL);
-	अगर (ret) अणु
+	ret = kfifo_alloc(&priv->event_fifo, sizeof(u32) * 16, GFP_KERNEL);
+	if (ret) {
 		pr_err("Out of memory allocating event FIFO buffer\n");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम lbs_मुक्त_adapter(काष्ठा lbs_निजी *priv)
-अणु
-	lbs_मुक्त_cmd_buffer(priv);
-	kfअगरo_मुक्त(&priv->event_fअगरo);
-	del_समयr(&priv->command_समयr);
-	del_समयr(&priv->tx_lockup_समयr);
-	del_समयr(&priv->स्वतः_deepsleep_समयr);
-पूर्ण
+static void lbs_free_adapter(struct lbs_private *priv)
+{
+	lbs_free_cmd_buffer(priv);
+	kfifo_free(&priv->event_fifo);
+	del_timer(&priv->command_timer);
+	del_timer(&priv->tx_lockup_timer);
+	del_timer(&priv->auto_deepsleep_timer);
+}
 
-अटल स्थिर काष्ठा net_device_ops lbs_netdev_ops = अणु
-	.nकरो_खोलो 		= lbs_dev_खोलो,
-	.nकरो_stop		= lbs_eth_stop,
-	.nकरो_start_xmit		= lbs_hard_start_xmit,
-	.nकरो_set_mac_address	= lbs_set_mac_address,
-	.nकरो_set_rx_mode	= lbs_set_multicast_list,
-	.nकरो_validate_addr	= eth_validate_addr,
-पूर्ण;
+static const struct net_device_ops lbs_netdev_ops = {
+	.ndo_open 		= lbs_dev_open,
+	.ndo_stop		= lbs_eth_stop,
+	.ndo_start_xmit		= lbs_hard_start_xmit,
+	.ndo_set_mac_address	= lbs_set_mac_address,
+	.ndo_set_rx_mode	= lbs_set_multicast_list,
+	.ndo_validate_addr	= eth_validate_addr,
+};
 
 /**
  * lbs_add_card - adds the card. It will probe the
  * card, allocate the lbs_priv and initialize the device.
  *
- * @card:	A poपूर्णांकer to card
- * @dmdev:	A poपूर्णांकer to &काष्ठा device
- * वापसs:	A poपूर्णांकer to &काष्ठा lbs_निजी काष्ठाure
+ * @card:	A pointer to card
+ * @dmdev:	A pointer to &struct device
+ * returns:	A pointer to &struct lbs_private structure
  */
-काष्ठा lbs_निजी *lbs_add_card(व्योम *card, काष्ठा device *dmdev)
-अणु
-	काष्ठा net_device *dev;
-	काष्ठा wireless_dev *wdev;
-	काष्ठा lbs_निजी *priv = शून्य;
-	पूर्णांक err;
+struct lbs_private *lbs_add_card(void *card, struct device *dmdev)
+{
+	struct net_device *dev;
+	struct wireless_dev *wdev;
+	struct lbs_private *priv = NULL;
+	int err;
 
-	/* Allocate an Ethernet device and रेजिस्टर it */
+	/* Allocate an Ethernet device and register it */
 	wdev = lbs_cfg_alloc(dmdev);
-	अगर (IS_ERR(wdev)) अणु
+	if (IS_ERR(wdev)) {
 		err = PTR_ERR(wdev);
 		pr_err("cfg80211 init failed\n");
-		जाओ err_cfg;
-	पूर्ण
+		goto err_cfg;
+	}
 
-	wdev->अगरtype = NL80211_IFTYPE_STATION;
+	wdev->iftype = NL80211_IFTYPE_STATION;
 	priv = wdev_priv(wdev);
 	priv->wdev = wdev;
 
 	err = lbs_init_adapter(priv);
-	अगर (err) अणु
+	if (err) {
 		pr_err("failed to initialize adapter structure\n");
-		जाओ err_wdev;
-	पूर्ण
+		goto err_wdev;
+	}
 
 	dev = alloc_netdev(0, "wlan%d", NET_NAME_UNKNOWN, ether_setup);
-	अगर (!dev) अणु
+	if (!dev) {
 		err = -ENOMEM;
 		dev_err(dmdev, "no memory for network device instance\n");
-		जाओ err_adapter;
-	पूर्ण
+		goto err_adapter;
+	}
 
 	dev->ieee80211_ptr = wdev;
 	dev->ml_priv = priv;
@@ -943,129 +942,129 @@ out:
 	priv->dev = dev;
 
  	dev->netdev_ops = &lbs_netdev_ops;
-	dev->watchकरोg_समयo = 5 * HZ;
+	dev->watchdog_timeo = 5 * HZ;
 	dev->ethtool_ops = &lbs_ethtool_ops;
 	dev->flags |= IFF_BROADCAST | IFF_MULTICAST;
 
 	priv->card = card;
 
-	म_नकल(dev->name, "wlan%d");
+	strcpy(dev->name, "wlan%d");
 
-	lbs_deb_thपढ़ो("Starting main thread...\n");
-	init_रुकोqueue_head(&priv->रुकोq);
-	priv->मुख्य_thपढ़ो = kthपढ़ो_run(lbs_thपढ़ो, dev, "lbs_main");
-	अगर (IS_ERR(priv->मुख्य_thपढ़ो)) अणु
-		err = PTR_ERR(priv->मुख्य_thपढ़ो);
-		lbs_deb_thपढ़ो("Error creating main thread.\n");
-		जाओ err_ndev;
-	पूर्ण
+	lbs_deb_thread("Starting main thread...\n");
+	init_waitqueue_head(&priv->waitq);
+	priv->main_thread = kthread_run(lbs_thread, dev, "lbs_main");
+	if (IS_ERR(priv->main_thread)) {
+		err = PTR_ERR(priv->main_thread);
+		lbs_deb_thread("Error creating main thread.\n");
+		goto err_ndev;
+	}
 
-	priv->work_thपढ़ो = create_singlethपढ़ो_workqueue("lbs_worker");
+	priv->work_thread = create_singlethread_workqueue("lbs_worker");
 	INIT_WORK(&priv->mcast_work, lbs_set_mcast_worker);
 
 	priv->wol_criteria = EHS_REMOVE_WAKEUP;
 	priv->wol_gpio = 0xff;
 	priv->wol_gap = 20;
-	priv->ehs_हटाओ_supported = true;
+	priv->ehs_remove_supported = true;
 
-	वापस priv;
+	return priv;
 
  err_ndev:
-	मुक्त_netdev(dev);
+	free_netdev(dev);
 
  err_adapter:
-	lbs_मुक्त_adapter(priv);
+	lbs_free_adapter(priv);
 
  err_wdev:
-	lbs_cfg_मुक्त(priv);
+	lbs_cfg_free(priv);
 
  err_cfg:
-	वापस ERR_PTR(err);
-पूर्ण
+	return ERR_PTR(err);
+}
 EXPORT_SYMBOL_GPL(lbs_add_card);
 
 
-व्योम lbs_हटाओ_card(काष्ठा lbs_निजी *priv)
-अणु
-	काष्ठा net_device *dev = priv->dev;
+void lbs_remove_card(struct lbs_private *priv)
+{
+	struct net_device *dev = priv->dev;
 
-	lbs_हटाओ_mesh(priv);
+	lbs_remove_mesh(priv);
 
-	अगर (priv->wiphy_रेजिस्टरed)
+	if (priv->wiphy_registered)
 		lbs_scan_deinit(priv);
 
-	lbs_रुको_क्रम_firmware_load(priv);
+	lbs_wait_for_firmware_load(priv);
 
-	/* worker thपढ़ो deकाष्ठाion blocks on the in-flight command which
-	 * should have been cleared alपढ़ोy in lbs_stop_card().
+	/* worker thread destruction blocks on the in-flight command which
+	 * should have been cleared already in lbs_stop_card().
 	 */
-	lbs_deb_मुख्य("destroying worker thread\n");
-	destroy_workqueue(priv->work_thपढ़ो);
-	lbs_deb_मुख्य("done destroying worker thread\n");
+	lbs_deb_main("destroying worker thread\n");
+	destroy_workqueue(priv->work_thread);
+	lbs_deb_main("done destroying worker thread\n");
 
-	अगर (priv->psmode == LBS802_11POWERMODEMAX_PSP) अणु
+	if (priv->psmode == LBS802_11POWERMODEMAX_PSP) {
 		priv->psmode = LBS802_11POWERMODECAM;
-		/* no need to wakeup अगर alपढ़ोy woken up,
-		 * on suspend, this निकास ps command is not processed
+		/* no need to wakeup if already woken up,
+		 * on suspend, this exit ps command is not processed
 		 * the driver hangs
 		 */
-		अगर (priv->psstate != PS_STATE_FULL_POWER)
+		if (priv->psstate != PS_STATE_FULL_POWER)
 			lbs_set_ps_mode(priv, PS_MODE_ACTION_EXIT_PS, true);
-	पूर्ण
+	}
 
-	अगर (priv->is_deep_sleep) अणु
+	if (priv->is_deep_sleep) {
 		priv->is_deep_sleep = 0;
-		wake_up_पूर्णांकerruptible(&priv->ds_awake_q);
-	पूर्ण
+		wake_up_interruptible(&priv->ds_awake_q);
+	}
 
 	priv->is_host_sleep_configured = 0;
 	priv->is_host_sleep_activated = 0;
-	wake_up_पूर्णांकerruptible(&priv->host_sleep_q);
+	wake_up_interruptible(&priv->host_sleep_q);
 
-	/* Stop the thपढ़ो servicing the पूर्णांकerrupts */
-	priv->surpriseहटाओd = 1;
-	kthपढ़ो_stop(priv->मुख्य_thपढ़ो);
+	/* Stop the thread servicing the interrupts */
+	priv->surpriseremoved = 1;
+	kthread_stop(priv->main_thread);
 
-	lbs_मुक्त_adapter(priv);
-	lbs_cfg_मुक्त(priv);
-	मुक्त_netdev(dev);
-पूर्ण
-EXPORT_SYMBOL_GPL(lbs_हटाओ_card);
+	lbs_free_adapter(priv);
+	lbs_cfg_free(priv);
+	free_netdev(dev);
+}
+EXPORT_SYMBOL_GPL(lbs_remove_card);
 
 
-पूर्णांक lbs_rtap_supported(काष्ठा lbs_निजी *priv)
-अणु
-	अगर (MRVL_FW_MAJOR_REV(priv->fwrelease) == MRVL_FW_V5)
-		वापस 1;
+int lbs_rtap_supported(struct lbs_private *priv)
+{
+	if (MRVL_FW_MAJOR_REV(priv->fwrelease) == MRVL_FW_V5)
+		return 1;
 
 	/* newer firmware use a capability mask */
-	वापस ((MRVL_FW_MAJOR_REV(priv->fwrelease) >= MRVL_FW_V10) &&
+	return ((MRVL_FW_MAJOR_REV(priv->fwrelease) >= MRVL_FW_V10) &&
 		(priv->fwcapinfo & MESH_CAPINFO_ENABLE_MASK));
-पूर्ण
+}
 
 
-पूर्णांक lbs_start_card(काष्ठा lbs_निजी *priv)
-अणु
-	काष्ठा net_device *dev = priv->dev;
-	पूर्णांक ret;
+int lbs_start_card(struct lbs_private *priv)
+{
+	struct net_device *dev = priv->dev;
+	int ret;
 
 	/* poke the firmware */
 	ret = lbs_setup_firmware(priv);
-	अगर (ret)
-		जाओ करोne;
+	if (ret)
+		goto done;
 
-	अगर (!lbs_disablemesh)
+	if (!lbs_disablemesh)
 		lbs_init_mesh(priv);
-	अन्यथा
+	else
 		pr_info("%s: mesh disabled\n", dev->name);
 
-	ret = lbs_cfg_रेजिस्टर(priv);
-	अगर (ret) अणु
+	ret = lbs_cfg_register(priv);
+	if (ret) {
 		pr_err("cannot register device\n");
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	अगर (lbs_mesh_activated(priv))
+	if (lbs_mesh_activated(priv))
 		lbs_start_mesh(priv);
 
 	lbs_debugfs_init_one(priv, dev);
@@ -1074,83 +1073,83 @@ EXPORT_SYMBOL_GPL(lbs_हटाओ_card);
 
 	ret = 0;
 
-करोne:
-	वापस ret;
-पूर्ण
+done:
+	return ret;
+}
 EXPORT_SYMBOL_GPL(lbs_start_card);
 
 
-व्योम lbs_stop_card(काष्ठा lbs_निजी *priv)
-अणु
-	काष्ठा net_device *dev;
+void lbs_stop_card(struct lbs_private *priv)
+{
+	struct net_device *dev;
 
-	अगर (!priv)
-		वापस;
+	if (!priv)
+		return;
 	dev = priv->dev;
 
-	/* If the netdev isn't रेजिस्टरed, it means that lbs_start_card() was
-	 * never called so we have nothing to करो here. */
-	अगर (dev->reg_state != NETREG_REGISTERED)
-		वापस;
+	/* If the netdev isn't registered, it means that lbs_start_card() was
+	 * never called so we have nothing to do here. */
+	if (dev->reg_state != NETREG_REGISTERED)
+		return;
 
-	netअगर_stop_queue(dev);
-	netअगर_carrier_off(dev);
+	netif_stop_queue(dev);
+	netif_carrier_off(dev);
 
-	lbs_debugfs_हटाओ_one(priv);
+	lbs_debugfs_remove_one(priv);
 	lbs_deinit_mesh(priv);
-	unरेजिस्टर_netdev(dev);
-पूर्ण
+	unregister_netdev(dev);
+}
 EXPORT_SYMBOL_GPL(lbs_stop_card);
 
 
-व्योम lbs_queue_event(काष्ठा lbs_निजी *priv, u32 event)
-अणु
-	अचिन्हित दीर्घ flags;
+void lbs_queue_event(struct lbs_private *priv, u32 event)
+{
+	unsigned long flags;
 
 	spin_lock_irqsave(&priv->driver_lock, flags);
 
-	अगर (priv->psstate == PS_STATE_SLEEP)
+	if (priv->psstate == PS_STATE_SLEEP)
 		priv->psstate = PS_STATE_AWAKE;
 
-	kfअगरo_in(&priv->event_fअगरo, (अचिन्हित अक्षर *) &event, माप(u32));
+	kfifo_in(&priv->event_fifo, (unsigned char *) &event, sizeof(u32));
 
-	wake_up(&priv->रुकोq);
+	wake_up(&priv->waitq);
 
 	spin_unlock_irqrestore(&priv->driver_lock, flags);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(lbs_queue_event);
 
-व्योम lbs_notअगरy_command_response(काष्ठा lbs_निजी *priv, u8 resp_idx)
-अणु
-	अगर (priv->psstate == PS_STATE_SLEEP)
+void lbs_notify_command_response(struct lbs_private *priv, u8 resp_idx)
+{
+	if (priv->psstate == PS_STATE_SLEEP)
 		priv->psstate = PS_STATE_AWAKE;
 
 	/* Swap buffers by flipping the response index */
 	BUG_ON(resp_idx > 1);
 	priv->resp_idx = resp_idx;
 
-	wake_up(&priv->रुकोq);
-पूर्ण
-EXPORT_SYMBOL_GPL(lbs_notअगरy_command_response);
+	wake_up(&priv->waitq);
+}
+EXPORT_SYMBOL_GPL(lbs_notify_command_response);
 
-अटल पूर्णांक __init lbs_init_module(व्योम)
-अणु
-	स_रखो(&confirm_sleep, 0, माप(confirm_sleep));
+static int __init lbs_init_module(void)
+{
+	memset(&confirm_sleep, 0, sizeof(confirm_sleep));
 	confirm_sleep.hdr.command = cpu_to_le16(CMD_802_11_PS_MODE);
-	confirm_sleep.hdr.size = cpu_to_le16(माप(confirm_sleep));
+	confirm_sleep.hdr.size = cpu_to_le16(sizeof(confirm_sleep));
 	confirm_sleep.action = cpu_to_le16(PS_MODE_ACTION_SLEEP_CONFIRMED);
 	lbs_debugfs_init();
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम __निकास lbs_निकास_module(व्योम)
-अणु
-	lbs_debugfs_हटाओ();
-पूर्ण
+static void __exit lbs_exit_module(void)
+{
+	lbs_debugfs_remove();
+}
 
 module_init(lbs_init_module);
-module_निकास(lbs_निकास_module);
+module_exit(lbs_exit_module);
 
 MODULE_DESCRIPTION("Libertas WLAN Driver Library");
 MODULE_AUTHOR("Marvell International Ltd.");

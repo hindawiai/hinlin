@@ -1,40 +1,39 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- *  sst_ipc.c - Intel SST Driver क्रम audio engine
+ *  sst_ipc.c - Intel SST Driver for audio engine
  *
  *  Copyright (C) 2008-14 Intel Corporation
- *  Authors:	Vinod Koul <vinod.koul@पूर्णांकel.com>
- *		Harsha Priya <priya.harsha@पूर्णांकel.com>
- *		Dharageswari R <dharageswari.r@पूर्णांकel.com>
- *		KP Jeeja <jeeja.kp@पूर्णांकel.com>
+ *  Authors:	Vinod Koul <vinod.koul@intel.com>
+ *		Harsha Priya <priya.harsha@intel.com>
+ *		Dharageswari R <dharageswari.r@intel.com>
+ *		KP Jeeja <jeeja.kp@intel.com>
  *  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  *
  * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
-#समावेश <linux/pci.h>
-#समावेश <linux/firmware.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <sound/core.h>
-#समावेश <sound/pcm.h>
-#समावेश <sound/soc.h>
-#समावेश <sound/compress_driver.h>
-#समावेश <यंत्र/पूर्णांकel-mid.h>
-#समावेश <यंत्र/platक्रमm_sst_audपन.स>
-#समावेश "../sst-mfld-platform.h"
-#समावेश "sst.h"
+#include <linux/pci.h>
+#include <linux/firmware.h>
+#include <linux/sched.h>
+#include <linux/delay.h>
+#include <linux/pm_runtime.h>
+#include <sound/core.h>
+#include <sound/pcm.h>
+#include <sound/soc.h>
+#include <sound/compress_driver.h>
+#include <asm/intel-mid.h>
+#include <asm/platform_sst_audio.h>
+#include "../sst-mfld-platform.h"
+#include "sst.h"
 
-काष्ठा sst_block *sst_create_block(काष्ठा पूर्णांकel_sst_drv *ctx,
+struct sst_block *sst_create_block(struct intel_sst_drv *ctx,
 					u32 msg_id, u32 drv_id)
-अणु
-	काष्ठा sst_block *msg = शून्य;
+{
+	struct sst_block *msg = NULL;
 
 	dev_dbg(ctx->dev, "Enter\n");
-	msg = kzalloc(माप(*msg), GFP_KERNEL);
-	अगर (!msg)
-		वापस शून्य;
+	msg = kzalloc(sizeof(*msg), GFP_KERNEL);
+	if (!msg)
+		return NULL;
 	msg->condition = false;
 	msg->on = true;
 	msg->msg_id = msg_id;
@@ -43,166 +42,166 @@
 	list_add_tail(&msg->node, &ctx->block_list);
 	spin_unlock_bh(&ctx->block_lock);
 
-	वापस msg;
-पूर्ण
+	return msg;
+}
 
 /*
- * जबतक handling the पूर्णांकerrupts, we need to check क्रम message status and
- * then अगर we are blocking क्रम a message
+ * while handling the interrupts, we need to check for message status and
+ * then if we are blocking for a message
  *
  * here we are unblocking the blocked ones, this is based on id we have
- * passed and search that क्रम block thपढ़ोs.
- * We will not find block in two हालs
+ * passed and search that for block threads.
+ * We will not find block in two cases
  *  a) when its small message and block in not there, so silently ignore
  *  them
  *  b) when we are actually not able to find the block (bug perhaps)
  *
  *  Since we have bit of small messages we can spam kernel log with err
- *  prपूर्णांक on above so need to keep as debug prपूर्णांकs which should be enabled
- *  via dynamic debug जबतक debugging IPC issues
+ *  print on above so need to keep as debug prints which should be enabled
+ *  via dynamic debug while debugging IPC issues
  */
-पूर्णांक sst_wake_up_block(काष्ठा पूर्णांकel_sst_drv *ctx, पूर्णांक result,
-		u32 drv_id, u32 ipc, व्योम *data, u32 size)
-अणु
-	काष्ठा sst_block *block = शून्य;
+int sst_wake_up_block(struct intel_sst_drv *ctx, int result,
+		u32 drv_id, u32 ipc, void *data, u32 size)
+{
+	struct sst_block *block = NULL;
 
 	dev_dbg(ctx->dev, "Enter\n");
 
 	spin_lock_bh(&ctx->block_lock);
-	list_क्रम_each_entry(block, &ctx->block_list, node) अणु
+	list_for_each_entry(block, &ctx->block_list, node) {
 		dev_dbg(ctx->dev, "Block ipc %d, drv_id %d\n", block->msg_id,
 							block->drv_id);
-		अगर (block->msg_id == ipc && block->drv_id == drv_id) अणु
+		if (block->msg_id == ipc && block->drv_id == drv_id) {
 			dev_dbg(ctx->dev, "free up the block\n");
 			block->ret_code = result;
 			block->data = data;
 			block->size = size;
 			block->condition = true;
 			spin_unlock_bh(&ctx->block_lock);
-			wake_up(&ctx->रुको_queue);
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			wake_up(&ctx->wait_queue);
+			return 0;
+		}
+	}
 	spin_unlock_bh(&ctx->block_lock);
 	dev_dbg(ctx->dev,
 		"Block not found or a response received for a short msg for ipc %d, drv_id %d\n",
 		ipc, drv_id);
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-पूर्णांक sst_मुक्त_block(काष्ठा पूर्णांकel_sst_drv *ctx, काष्ठा sst_block *मुक्तd)
-अणु
-	काष्ठा sst_block *block = शून्य, *__block;
+int sst_free_block(struct intel_sst_drv *ctx, struct sst_block *freed)
+{
+	struct sst_block *block = NULL, *__block;
 
 	dev_dbg(ctx->dev, "Enter\n");
 	spin_lock_bh(&ctx->block_lock);
-	list_क्रम_each_entry_safe(block, __block, &ctx->block_list, node) अणु
-		अगर (block == मुक्तd) अणु
-			pr_debug("pvt_id freed --> %d\n", मुक्तd->drv_id);
+	list_for_each_entry_safe(block, __block, &ctx->block_list, node) {
+		if (block == freed) {
+			pr_debug("pvt_id freed --> %d\n", freed->drv_id);
 			/* toggle the index position of pvt_id */
-			list_del(&मुक्तd->node);
+			list_del(&freed->node);
 			spin_unlock_bh(&ctx->block_lock);
-			kमुक्त(मुक्तd->data);
-			मुक्तd->data = शून्य;
-			kमुक्त(मुक्तd);
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			kfree(freed->data);
+			freed->data = NULL;
+			kfree(freed);
+			return 0;
+		}
+	}
 	spin_unlock_bh(&ctx->block_lock);
 	dev_err(ctx->dev, "block is already freed!!!\n");
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-पूर्णांक sst_post_message_mrfld(काष्ठा पूर्णांकel_sst_drv *sst_drv_ctx,
-		काष्ठा ipc_post *ipc_msg, bool sync)
-अणु
-	काष्ठा ipc_post *msg = ipc_msg;
-	जोड़ ipc_header_mrfld header;
-	अचिन्हित पूर्णांक loop_count = 0;
-	पूर्णांक retval = 0;
-	अचिन्हित दीर्घ irq_flags;
+int sst_post_message_mrfld(struct intel_sst_drv *sst_drv_ctx,
+		struct ipc_post *ipc_msg, bool sync)
+{
+	struct ipc_post *msg = ipc_msg;
+	union ipc_header_mrfld header;
+	unsigned int loop_count = 0;
+	int retval = 0;
+	unsigned long irq_flags;
 
 	dev_dbg(sst_drv_ctx->dev, "Enter: sync: %d\n", sync);
 	spin_lock_irqsave(&sst_drv_ctx->ipc_spin_lock, irq_flags);
-	header.full = sst_shim_पढ़ो64(sst_drv_ctx->shim, SST_IPCX);
-	अगर (sync) अणु
-		जबतक (header.p.header_high.part.busy) अणु
-			अगर (loop_count > 25) अणु
+	header.full = sst_shim_read64(sst_drv_ctx->shim, SST_IPCX);
+	if (sync) {
+		while (header.p.header_high.part.busy) {
+			if (loop_count > 25) {
 				dev_err(sst_drv_ctx->dev,
 					"sst: Busy wait failed, cant send this msg\n");
 				retval = -EBUSY;
-				जाओ out;
-			पूर्ण
+				goto out;
+			}
 			cpu_relax();
 			loop_count++;
-			header.full = sst_shim_पढ़ो64(sst_drv_ctx->shim, SST_IPCX);
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		अगर (list_empty(&sst_drv_ctx->ipc_dispatch_list)) अणु
+			header.full = sst_shim_read64(sst_drv_ctx->shim, SST_IPCX);
+		}
+	} else {
+		if (list_empty(&sst_drv_ctx->ipc_dispatch_list)) {
 			/* queue is empty, nothing to send */
 			spin_unlock_irqrestore(&sst_drv_ctx->ipc_spin_lock, irq_flags);
 			dev_dbg(sst_drv_ctx->dev,
 					"Empty msg queue... NO Action\n");
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 
-		अगर (header.p.header_high.part.busy) अणु
+		if (header.p.header_high.part.busy) {
 			spin_unlock_irqrestore(&sst_drv_ctx->ipc_spin_lock, irq_flags);
 			dev_dbg(sst_drv_ctx->dev, "Busy not free... post later\n");
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 
 		/* copy msg from list */
 		msg = list_entry(sst_drv_ctx->ipc_dispatch_list.next,
-				काष्ठा ipc_post, node);
+				struct ipc_post, node);
 		list_del(&msg->node);
-	पूर्ण
+	}
 	dev_dbg(sst_drv_ctx->dev, "sst: Post message: header = %x\n",
 				msg->mrfld_header.p.header_high.full);
 	dev_dbg(sst_drv_ctx->dev, "sst: size = 0x%x\n",
 			msg->mrfld_header.p.header_low_payload);
 
-	अगर (msg->mrfld_header.p.header_high.part.large)
-		स_नकल_toio(sst_drv_ctx->mailbox + SST_MAILBOX_SEND,
+	if (msg->mrfld_header.p.header_high.part.large)
+		memcpy_toio(sst_drv_ctx->mailbox + SST_MAILBOX_SEND,
 			msg->mailbox_data,
 			msg->mrfld_header.p.header_low_payload);
 
-	sst_shim_ग_लिखो64(sst_drv_ctx->shim, SST_IPCX, msg->mrfld_header.full);
+	sst_shim_write64(sst_drv_ctx->shim, SST_IPCX, msg->mrfld_header.full);
 
 out:
 	spin_unlock_irqrestore(&sst_drv_ctx->ipc_spin_lock, irq_flags);
-	kमुक्त(msg->mailbox_data);
-	kमुक्त(msg);
-	वापस retval;
-पूर्ण
+	kfree(msg->mailbox_data);
+	kfree(msg);
+	return retval;
+}
 
-व्योम पूर्णांकel_sst_clear_पूर्णांकr_mrfld(काष्ठा पूर्णांकel_sst_drv *sst_drv_ctx)
-अणु
-	जोड़ पूर्णांकerrupt_reg_mrfld isr;
-	जोड़ पूर्णांकerrupt_reg_mrfld imr;
-	जोड़ ipc_header_mrfld clear_ipc;
-	अचिन्हित दीर्घ irq_flags;
+void intel_sst_clear_intr_mrfld(struct intel_sst_drv *sst_drv_ctx)
+{
+	union interrupt_reg_mrfld isr;
+	union interrupt_reg_mrfld imr;
+	union ipc_header_mrfld clear_ipc;
+	unsigned long irq_flags;
 
 	spin_lock_irqsave(&sst_drv_ctx->ipc_spin_lock, irq_flags);
-	imr.full = sst_shim_पढ़ो64(sst_drv_ctx->shim, SST_IMRX);
-	isr.full = sst_shim_पढ़ो64(sst_drv_ctx->shim, SST_ISRX);
+	imr.full = sst_shim_read64(sst_drv_ctx->shim, SST_IMRX);
+	isr.full = sst_shim_read64(sst_drv_ctx->shim, SST_ISRX);
 
-	/* ग_लिखो 1 to clear*/
-	isr.part.busy_पूर्णांकerrupt = 1;
-	sst_shim_ग_लिखो64(sst_drv_ctx->shim, SST_ISRX, isr.full);
+	/* write 1 to clear*/
+	isr.part.busy_interrupt = 1;
+	sst_shim_write64(sst_drv_ctx->shim, SST_ISRX, isr.full);
 
-	/* Set IA करोne bit */
-	clear_ipc.full = sst_shim_पढ़ो64(sst_drv_ctx->shim, SST_IPCD);
+	/* Set IA done bit */
+	clear_ipc.full = sst_shim_read64(sst_drv_ctx->shim, SST_IPCD);
 
 	clear_ipc.p.header_high.part.busy = 0;
-	clear_ipc.p.header_high.part.करोne = 1;
+	clear_ipc.p.header_high.part.done = 1;
 	clear_ipc.p.header_low_payload = IPC_ACK_SUCCESS;
-	sst_shim_ग_लिखो64(sst_drv_ctx->shim, SST_IPCD, clear_ipc.full);
-	/* un mask busy पूर्णांकerrupt */
-	imr.part.busy_पूर्णांकerrupt = 0;
-	sst_shim_ग_लिखो64(sst_drv_ctx->shim, SST_IMRX, imr.full);
+	sst_shim_write64(sst_drv_ctx->shim, SST_IPCD, clear_ipc.full);
+	/* un mask busy interrupt */
+	imr.part.busy_interrupt = 0;
+	sst_shim_write64(sst_drv_ctx->shim, SST_IMRX, imr.full);
 	spin_unlock_irqrestore(&sst_drv_ctx->ipc_spin_lock, irq_flags);
-पूर्ण
+}
 
 
 /*
@@ -211,30 +210,30 @@ out:
  * @msg: IPC message mailbox data from FW
  *
  * This function processes the FW init msg from FW
- * marks FW state and prपूर्णांकs debug info of loaded FW
+ * marks FW state and prints debug info of loaded FW
  */
-अटल व्योम process_fw_init(काष्ठा पूर्णांकel_sst_drv *sst_drv_ctx,
-			व्योम *msg)
-अणु
-	काष्ठा ipc_header_fw_init *init =
-		(काष्ठा ipc_header_fw_init *)msg;
-	पूर्णांक retval = 0;
+static void process_fw_init(struct intel_sst_drv *sst_drv_ctx,
+			void *msg)
+{
+	struct ipc_header_fw_init *init =
+		(struct ipc_header_fw_init *)msg;
+	int retval = 0;
 
 	dev_dbg(sst_drv_ctx->dev, "*** FW Init msg came***\n");
-	अगर (init->result) अणु
+	if (init->result) {
 		sst_set_fw_state_locked(sst_drv_ctx, SST_RESET);
 		dev_err(sst_drv_ctx->dev, "FW Init failed, Error %x\n",
 				init->result);
 		retval = init->result;
-		जाओ ret;
-	पूर्ण
-	अगर (स_भेद(&sst_drv_ctx->fw_version, &init->fw_version,
-		   माप(init->fw_version)))
+		goto ret;
+	}
+	if (memcmp(&sst_drv_ctx->fw_version, &init->fw_version,
+		   sizeof(init->fw_version)))
 		dev_info(sst_drv_ctx->dev, "FW Version %02x.%02x.%02x.%02x\n",
 			init->fw_version.type, init->fw_version.major,
 			init->fw_version.minor, init->fw_version.build);
 	dev_dbg(sst_drv_ctx->dev, "Build date %s Time %s\n",
-			init->build_info.date, init->build_info.समय);
+			init->build_info.date, init->build_info.time);
 
 	/* Save FW version */
 	sst_drv_ctx->fw_version.type = init->fw_version.type;
@@ -243,87 +242,87 @@ out:
 	sst_drv_ctx->fw_version.build = init->fw_version.build;
 
 ret:
-	sst_wake_up_block(sst_drv_ctx, retval, FW_DWNL_ID, 0 , शून्य, 0);
-पूर्ण
+	sst_wake_up_block(sst_drv_ctx, retval, FW_DWNL_ID, 0 , NULL, 0);
+}
 
-अटल व्योम process_fw_async_msg(काष्ठा पूर्णांकel_sst_drv *sst_drv_ctx,
-			काष्ठा ipc_post *msg)
-अणु
+static void process_fw_async_msg(struct intel_sst_drv *sst_drv_ctx,
+			struct ipc_post *msg)
+{
 	u32 msg_id;
-	पूर्णांक str_id;
+	int str_id;
 	u32 data_size, i;
-	व्योम *data_offset;
-	काष्ठा stream_info *stream;
+	void *data_offset;
+	struct stream_info *stream;
 	u32 msg_low, pipe_id;
 
 	msg_low = msg->mrfld_header.p.header_low_payload;
-	msg_id = ((काष्ठा ipc_dsp_hdr *)msg->mailbox_data)->cmd_id;
-	data_offset = (msg->mailbox_data + माप(काष्ठा ipc_dsp_hdr));
-	data_size =  msg_low - (माप(काष्ठा ipc_dsp_hdr));
+	msg_id = ((struct ipc_dsp_hdr *)msg->mailbox_data)->cmd_id;
+	data_offset = (msg->mailbox_data + sizeof(struct ipc_dsp_hdr));
+	data_size =  msg_low - (sizeof(struct ipc_dsp_hdr));
 
-	चयन (msg_id) अणु
-	हाल IPC_SST_PERIOD_ELAPSED_MRFLD:
-		pipe_id = ((काष्ठा ipc_dsp_hdr *)msg->mailbox_data)->pipe_id;
+	switch (msg_id) {
+	case IPC_SST_PERIOD_ELAPSED_MRFLD:
+		pipe_id = ((struct ipc_dsp_hdr *)msg->mailbox_data)->pipe_id;
 		str_id = get_stream_id_mrfld(sst_drv_ctx, pipe_id);
-		अगर (str_id > 0) अणु
+		if (str_id > 0) {
 			dev_dbg(sst_drv_ctx->dev,
 				"Period elapsed rcvd for pipe id 0x%x\n",
 				pipe_id);
 			stream = &sst_drv_ctx->streams[str_id];
 			/* If stream is dropped, skip processing this message*/
-			अगर (stream->status == STREAM_INIT)
-				अवरोध;
-			अगर (stream->period_elapsed)
+			if (stream->status == STREAM_INIT)
+				break;
+			if (stream->period_elapsed)
 				stream->period_elapsed(stream->pcm_substream);
-			अगर (stream->compr_cb)
+			if (stream->compr_cb)
 				stream->compr_cb(stream->compr_cb_param);
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	हाल IPC_IA_DRAIN_STREAM_MRFLD:
-		pipe_id = ((काष्ठा ipc_dsp_hdr *)msg->mailbox_data)->pipe_id;
+	case IPC_IA_DRAIN_STREAM_MRFLD:
+		pipe_id = ((struct ipc_dsp_hdr *)msg->mailbox_data)->pipe_id;
 		str_id = get_stream_id_mrfld(sst_drv_ctx, pipe_id);
-		अगर (str_id > 0) अणु
+		if (str_id > 0) {
 			stream = &sst_drv_ctx->streams[str_id];
-			अगर (stream->drain_notअगरy)
-				stream->drain_notअगरy(stream->drain_cb_param);
-		पूर्ण
-		अवरोध;
+			if (stream->drain_notify)
+				stream->drain_notify(stream->drain_cb_param);
+		}
+		break;
 
-	हाल IPC_IA_FW_ASYNC_ERR_MRFLD:
+	case IPC_IA_FW_ASYNC_ERR_MRFLD:
 		dev_err(sst_drv_ctx->dev, "FW sent async error msg:\n");
-		क्रम (i = 0; i < (data_size/4); i++)
-			prपूर्णांक_hex_dump(KERN_DEBUG, शून्य, DUMP_PREFIX_NONE,
+		for (i = 0; i < (data_size/4); i++)
+			print_hex_dump(KERN_DEBUG, NULL, DUMP_PREFIX_NONE,
 					16, 4, data_offset, data_size, false);
-		अवरोध;
+		break;
 
-	हाल IPC_IA_FW_INIT_CMPLT_MRFLD:
+	case IPC_IA_FW_INIT_CMPLT_MRFLD:
 		process_fw_init(sst_drv_ctx, data_offset);
-		अवरोध;
+		break;
 
-	हाल IPC_IA_BUF_UNDER_RUN_MRFLD:
-		pipe_id = ((काष्ठा ipc_dsp_hdr *)msg->mailbox_data)->pipe_id;
+	case IPC_IA_BUF_UNDER_RUN_MRFLD:
+		pipe_id = ((struct ipc_dsp_hdr *)msg->mailbox_data)->pipe_id;
 		str_id = get_stream_id_mrfld(sst_drv_ctx, pipe_id);
-		अगर (str_id > 0)
+		if (str_id > 0)
 			dev_err(sst_drv_ctx->dev,
 				"Buffer under-run for pipe:%#x str_id:%d\n",
 				pipe_id, str_id);
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		dev_err(sst_drv_ctx->dev,
 			"Unrecognized async msg from FW msg_id %#x\n", msg_id);
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम sst_process_reply_mrfld(काष्ठा पूर्णांकel_sst_drv *sst_drv_ctx,
-		काष्ठा ipc_post *msg)
-अणु
-	अचिन्हित पूर्णांक drv_id;
-	व्योम *data;
-	जोड़ ipc_header_high msg_high;
+void sst_process_reply_mrfld(struct intel_sst_drv *sst_drv_ctx,
+		struct ipc_post *msg)
+{
+	unsigned int drv_id;
+	void *data;
+	union ipc_header_high msg_high;
 	u32 msg_low;
-	काष्ठा ipc_dsp_hdr *dsp_hdr;
+	struct ipc_dsp_hdr *dsp_hdr;
 
 	msg_high = msg->mrfld_header.p.header_high;
 	msg_low = msg->mrfld_header.p.header_low_payload;
@@ -334,43 +333,43 @@ ret:
 
 	drv_id = msg_high.part.drv_id;
 
-	/* Check क्रम async messages first */
-	अगर (drv_id == SST_ASYNC_DRV_ID) अणु
+	/* Check for async messages first */
+	if (drv_id == SST_ASYNC_DRV_ID) {
 		/*FW sent async large message*/
 		process_fw_async_msg(sst_drv_ctx, msg);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	/* FW sent लघु error response क्रम an IPC */
-	अगर (msg_high.part.result && drv_id && !msg_high.part.large) अणु
+	/* FW sent short error response for an IPC */
+	if (msg_high.part.result && drv_id && !msg_high.part.large) {
 		/* 32-bit FW error code in msg_low */
 		dev_err(sst_drv_ctx->dev, "FW sent error response 0x%x", msg_low);
 		sst_wake_up_block(sst_drv_ctx, msg_high.part.result,
 			msg_high.part.drv_id,
-			msg_high.part.msg_id, शून्य, 0);
-		वापस;
-	पूर्ण
+			msg_high.part.msg_id, NULL, 0);
+		return;
+	}
 
 	/*
 	 * Process all valid responses
-	 * अगर it is a large message, the payload contains the size to
+	 * if it is a large message, the payload contains the size to
 	 * copy from mailbox
 	 **/
-	अगर (msg_high.part.large) अणु
-		data = kmemdup((व्योम *)msg->mailbox_data, msg_low, GFP_KERNEL);
-		अगर (!data)
-			वापस;
+	if (msg_high.part.large) {
+		data = kmemdup((void *)msg->mailbox_data, msg_low, GFP_KERNEL);
+		if (!data)
+			return;
 		/* Copy command id so that we can use to put sst to reset */
-		dsp_hdr = (काष्ठा ipc_dsp_hdr *)data;
+		dsp_hdr = (struct ipc_dsp_hdr *)data;
 		dev_dbg(sst_drv_ctx->dev, "cmd_id %d\n", dsp_hdr->cmd_id);
-		अगर (sst_wake_up_block(sst_drv_ctx, msg_high.part.result,
+		if (sst_wake_up_block(sst_drv_ctx, msg_high.part.result,
 				msg_high.part.drv_id,
 				msg_high.part.msg_id, data, msg_low))
-			kमुक्त(data);
-	पूर्ण अन्यथा अणु
+			kfree(data);
+	} else {
 		sst_wake_up_block(sst_drv_ctx, msg_high.part.result,
 				msg_high.part.drv_id,
-				msg_high.part.msg_id, शून्य, 0);
-	पूर्ण
+				msg_high.part.msg_id, NULL, 0);
+	}
 
-पूर्ण
+}

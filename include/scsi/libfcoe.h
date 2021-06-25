@@ -1,55 +1,54 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (c) 2008-2009 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007-2008 Intel Corporation.  All rights reserved.
  *
- * Maपूर्णांकained at www.Open-FCoE.org
+ * Maintained at www.Open-FCoE.org
  */
 
-#अगर_अघोषित _LIBFCOE_H
-#घोषणा _LIBFCOE_H
+#ifndef _LIBFCOE_H
+#define _LIBFCOE_H
 
-#समावेश <linux/etherdevice.h>
-#समावेश <linux/अगर_ether.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/workqueue.h>
-#समावेश <linux/अक्रमom.h>
-#समावेश <scsi/fc/fc_fcoe.h>
-#समावेश <scsi/libfc.h>
-#समावेश <scsi/fcoe_sysfs.h>
+#include <linux/etherdevice.h>
+#include <linux/if_ether.h>
+#include <linux/netdevice.h>
+#include <linux/skbuff.h>
+#include <linux/workqueue.h>
+#include <linux/random.h>
+#include <scsi/fc/fc_fcoe.h>
+#include <scsi/libfc.h>
+#include <scsi/fcoe_sysfs.h>
 
-#घोषणा FCOE_MAX_CMD_LEN	16	/* Supported CDB length */
+#define FCOE_MAX_CMD_LEN	16	/* Supported CDB length */
 
 /*
- * Max MTU क्रम FCoE: 14 (FCoE header) + 24 (FC header) + 2112 (max FC payload)
+ * Max MTU for FCoE: 14 (FCoE header) + 24 (FC header) + 2112 (max FC payload)
  * + 4 (FC CRC) + 4 (FCoE trailer) =  2158 bytes
  */
-#घोषणा FCOE_MTU	2158
+#define FCOE_MTU	2158
 
 /*
  * FIP tunable parameters.
  */
-#घोषणा FCOE_CTLR_START_DELAY	2000	/* mS after first adv. to choose FCF */
-#घोषणा FCOE_CTLR_SOL_TOV	2000	/* min. solicitation पूर्णांकerval (mS) */
-#घोषणा FCOE_CTLR_FCF_LIMIT	20	/* max. number of FCF entries */
-#घोषणा FCOE_CTLR_VN2VN_LOGIN_LIMIT 3	/* max. VN2VN rport login retries */
+#define FCOE_CTLR_START_DELAY	2000	/* mS after first adv. to choose FCF */
+#define FCOE_CTLR_SOL_TOV	2000	/* min. solicitation interval (mS) */
+#define FCOE_CTLR_FCF_LIMIT	20	/* max. number of FCF entries */
+#define FCOE_CTLR_VN2VN_LOGIN_LIMIT 3	/* max. VN2VN rport login retries */
 
 /**
- * क्रमागत fip_state - पूर्णांकernal state of FCoE controller.
+ * enum fip_state - internal state of FCoE controller.
  * @FIP_ST_DISABLED: 	controller has been disabled or not yet enabled.
- * @FIP_ST_LINK_WAIT:	the physical link is करोwn or unusable.
+ * @FIP_ST_LINK_WAIT:	the physical link is down or unusable.
  * @FIP_ST_AUTO:	determining whether to use FIP or non-FIP mode.
  * @FIP_ST_NON_FIP:	non-FIP mode selected.
  * @FIP_ST_ENABLED:	FIP mode selected.
- * @FIP_ST_VNMP_START:	VN2VN multipath mode start, रुको
+ * @FIP_ST_VNMP_START:	VN2VN multipath mode start, wait
  * @FIP_ST_VNMP_PROBE1:	VN2VN sent first probe, listening
  * @FIP_ST_VNMP_PROBE2:	VN2VN sent second probe, listening
- * @FIP_ST_VNMP_CLAIM:	VN2VN sent claim, रुकोing क्रम responses
+ * @FIP_ST_VNMP_CLAIM:	VN2VN sent claim, waiting for responses
  * @FIP_ST_VNMP_UP:	VN2VN multipath mode operation
  */
-क्रमागत fip_state अणु
+enum fip_state {
 	FIP_ST_DISABLED,
 	FIP_ST_LINK_WAIT,
 	FIP_ST_AUTO,
@@ -60,80 +59,80 @@
 	FIP_ST_VNMP_PROBE2,
 	FIP_ST_VNMP_CLAIM,
 	FIP_ST_VNMP_UP,
-पूर्ण;
+};
 
 /*
  * Modes:
  * The mode is the state that is to be entered after link up.
  * It must not change after fcoe_ctlr_init() sets it.
  */
-क्रमागत fip_mode अणु
+enum fip_mode {
 	FIP_MODE_AUTO,
 	FIP_MODE_NON_FIP,
 	FIP_MODE_FABRIC,
 	FIP_MODE_VN2VN,
-पूर्ण;
+};
 
 /**
- * काष्ठा fcoe_ctlr - FCoE Controller and FIP state
- * @state:	   पूर्णांकernal FIP state क्रम network link and FIP or non-FIP mode.
+ * struct fcoe_ctlr - FCoE Controller and FIP state
+ * @state:	   internal FIP state for network link and FIP or non-FIP mode.
  * @mode:	   LLD-selected mode.
  * @lp:		   &fc_lport: libfc local port.
- * @sel_fcf:	   currently selected FCF, or शून्य.
+ * @sel_fcf:	   currently selected FCF, or NULL.
  * @fcfs:	   list of discovered FCFs.
- * @cdev:          (Optional) poपूर्णांकer to sysfs fcoe_ctlr_device.
+ * @cdev:          (Optional) pointer to sysfs fcoe_ctlr_device.
  * @fcf_count:	   number of discovered FCF entries.
- * @sol_समय:	   समय when a multicast solicitation was last sent.
- * @sel_समय:	   समय after which to select an FCF.
- * @port_ka_समय:  समय of next port keep-alive.
- * @ctlr_ka_समय:  समय of next controller keep-alive.
- * @समयr:	   समयr काष्ठा used क्रम all delayed events.
- * @समयr_work:	   &work_काष्ठा क्रम करोing keep-alives and resets.
- * @recv_work:	   &work_काष्ठा क्रम receiving FIP frames.
+ * @sol_time:	   time when a multicast solicitation was last sent.
+ * @sel_time:	   time after which to select an FCF.
+ * @port_ka_time:  time of next port keep-alive.
+ * @ctlr_ka_time:  time of next controller keep-alive.
+ * @timer:	   timer struct used for all delayed events.
+ * @timer_work:	   &work_struct for doing keep-alives and resets.
+ * @recv_work:	   &work_struct for receiving FIP frames.
  * @fip_recv_list: list of received FIP frames.
  * @flogi_req:	   clone of FLOGI request sent
- * @rnd_state:	   state क्रम pseuकरो-अक्रमom number generator.
+ * @rnd_state:	   state for pseudo-random number generator.
  * @port_id:	   proposed or selected local-port ID.
  * @user_mfs:	   configured maximum FC frame size, including FC header.
  * @flogi_oxid:    exchange ID of most recent fabric login.
  * @flogi_req_send: send of FLOGI requested
  * @flogi_count:   number of FLOGI attempts in AUTO mode.
- * @map_dest:	   use the FC_MAP mode क्रम destination MAC addresses.
+ * @map_dest:	   use the FC_MAP mode for destination MAC addresses.
  * @fip_resp:	   start FIP VLAN discovery responder
  * @spma:	   supports SPMA server-provided MACs mode
  * @probe_tries:   number of FC_IDs probed
  * @priority:      DCBx FCoE APP priority
- * @dest_addr:	   MAC address of the selected FC क्रमwarder.
+ * @dest_addr:	   MAC address of the selected FC forwarder.
  * @ctl_src_addr:  the native MAC address of our local port.
  * @send:	   LLD-supplied function to handle sending FIP Ethernet frames
  * @update_mac:    LLD-supplied function to handle changes to MAC addresses.
  * @get_src_addr:  LLD-supplied function to supply a source MAC address.
- * @ctlr_mutex:	   lock protecting this काष्ठाure.
+ * @ctlr_mutex:	   lock protecting this structure.
  * @ctlr_lock:     spinlock covering flogi_req
  *
- * This काष्ठाure is used by all FCoE drivers.  It contains inक्रमmation
- * needed by all FCoE low-level drivers (LLDs) as well as पूर्णांकernal state
- * क्रम FIP, and fields shared with the LLDS.
+ * This structure is used by all FCoE drivers.  It contains information
+ * needed by all FCoE low-level drivers (LLDs) as well as internal state
+ * for FIP, and fields shared with the LLDS.
  */
-काष्ठा fcoe_ctlr अणु
-	क्रमागत fip_state state;
-	क्रमागत fip_mode mode;
-	काष्ठा fc_lport *lp;
-	काष्ठा fcoe_fcf *sel_fcf;
-	काष्ठा list_head fcfs;
-	काष्ठा fcoe_ctlr_device *cdev;
+struct fcoe_ctlr {
+	enum fip_state state;
+	enum fip_mode mode;
+	struct fc_lport *lp;
+	struct fcoe_fcf *sel_fcf;
+	struct list_head fcfs;
+	struct fcoe_ctlr_device *cdev;
 	u16 fcf_count;
-	अचिन्हित दीर्घ sol_समय;
-	अचिन्हित दीर्घ sel_समय;
-	अचिन्हित दीर्घ port_ka_समय;
-	अचिन्हित दीर्घ ctlr_ka_समय;
-	काष्ठा समयr_list समयr;
-	काष्ठा work_काष्ठा समयr_work;
-	काष्ठा work_काष्ठा recv_work;
-	काष्ठा sk_buff_head fip_recv_list;
-	काष्ठा sk_buff *flogi_req;
+	unsigned long sol_time;
+	unsigned long sel_time;
+	unsigned long port_ka_time;
+	unsigned long ctlr_ka_time;
+	struct timer_list timer;
+	struct work_struct timer_work;
+	struct work_struct recv_work;
+	struct sk_buff_head fip_recv_list;
+	struct sk_buff *flogi_req;
 
-	काष्ठा rnd_state rnd_state;
+	struct rnd_state rnd_state;
 	u32 port_id;
 
 	u16 user_mfs;
@@ -148,62 +147,62 @@
 	u8 dest_addr[ETH_ALEN];
 	u8 ctl_src_addr[ETH_ALEN];
 
-	व्योम (*send)(काष्ठा fcoe_ctlr *, काष्ठा sk_buff *);
-	व्योम (*update_mac)(काष्ठा fc_lport *, u8 *addr);
-	u8 * (*get_src_addr)(काष्ठा fc_lport *);
-	काष्ठा mutex ctlr_mutex;
+	void (*send)(struct fcoe_ctlr *, struct sk_buff *);
+	void (*update_mac)(struct fc_lport *, u8 *addr);
+	u8 * (*get_src_addr)(struct fc_lport *);
+	struct mutex ctlr_mutex;
 	spinlock_t ctlr_lock;
-पूर्ण;
+};
 
 /**
- * fcoe_ctlr_priv() - Return the निजी data from a fcoe_ctlr
- * @cltr: The fcoe_ctlr whose निजी data will be वापसed
+ * fcoe_ctlr_priv() - Return the private data from a fcoe_ctlr
+ * @cltr: The fcoe_ctlr whose private data will be returned
  */
-अटल अंतरभूत व्योम *fcoe_ctlr_priv(स्थिर काष्ठा fcoe_ctlr *ctlr)
-अणु
-	वापस (व्योम *)(ctlr + 1);
-पूर्ण
+static inline void *fcoe_ctlr_priv(const struct fcoe_ctlr *ctlr)
+{
+	return (void *)(ctlr + 1);
+}
 
 /*
  * This assumes that the fcoe_ctlr (x) is allocated with the fcoe_ctlr_device.
  */
-#घोषणा fcoe_ctlr_to_ctlr_dev(x)					\
+#define fcoe_ctlr_to_ctlr_dev(x)					\
 	(x)->cdev
 
 /**
- * काष्ठा fcoe_fcf - Fibre-Channel Forwarder
+ * struct fcoe_fcf - Fibre-Channel Forwarder
  * @list:	 list linkage
- * @event_work:  Work क्रम FC Transport actions queue
+ * @event_work:  Work for FC Transport actions queue
  * @event:       The event to be processed
  * @fip:         The controller that the FCF was discovered on
  * @fcf_dev:     The associated fcoe_fcf_device instance
- * @समय:	 प्रणाली समय (jअगरfies) when an advertisement was last received
- * @चयन_name: WWN of चयन from advertisement
+ * @time:	 system time (jiffies) when an advertisement was last received
+ * @switch_name: WWN of switch from advertisement
  * @fabric_name: WWN of fabric from advertisement
  * @fc_map:	 FC_MAP value from advertisement
- * @fcf_mac:	 Ethernet address of the FCF क्रम FIP traffic
- * @fcoe_mac:	 Ethernet address of the FCF क्रम FCoE traffic
- * @vfid:	 भव fabric ID
+ * @fcf_mac:	 Ethernet address of the FCF for FIP traffic
+ * @fcoe_mac:	 Ethernet address of the FCF for FCoE traffic
+ * @vfid:	 virtual fabric ID
  * @pri:	 selection priority, smaller values are better
  * @flogi_sent:	 current FLOGI sent to this FCF
  * @flags:	 flags received from advertisement
- * @fka_period:	 keep-alive period, in jअगरfies
+ * @fka_period:	 keep-alive period, in jiffies
  *
  * A Fibre-Channel Forwarder (FCF) is the entity on the Ethernet that
- * passes FCoE frames on to an FC fabric.  This काष्ठाure represents
+ * passes FCoE frames on to an FC fabric.  This structure represents
  * one FCF from which advertisements have been received.
  *
- * When looking up an FCF, @चयन_name, @fabric_name, @fc_map, @vfid, and
- * @fcf_mac together क्रमm the lookup key.
+ * When looking up an FCF, @switch_name, @fabric_name, @fc_map, @vfid, and
+ * @fcf_mac together form the lookup key.
  */
-काष्ठा fcoe_fcf अणु
-	काष्ठा list_head list;
-	काष्ठा work_काष्ठा event_work;
-	काष्ठा fcoe_ctlr *fip;
-	काष्ठा fcoe_fcf_device *fcf_dev;
-	अचिन्हित दीर्घ समय;
+struct fcoe_fcf {
+	struct list_head list;
+	struct work_struct event_work;
+	struct fcoe_ctlr *fip;
+	struct fcoe_fcf_device *fcf_dev;
+	unsigned long time;
 
-	u64 चयन_name;
+	u64 switch_name;
 	u64 fabric_name;
 	u32 fc_map;
 	u16 vfid;
@@ -215,191 +214,191 @@
 	u16 flags;
 	u32 fka_period;
 	u8 fd_flags:1;
-पूर्ण;
+};
 
-#घोषणा fcoe_fcf_to_fcf_dev(x)			\
+#define fcoe_fcf_to_fcf_dev(x)			\
 	((x)->fcf_dev)
 
 /**
- * काष्ठा fcoe_rport - VN2VN remote port
- * @समय:	समय of create or last beacon packet received from node
+ * struct fcoe_rport - VN2VN remote port
+ * @time:	time of create or last beacon packet received from node
  * @fcoe_len:	max FCoE frame size, not including VLAN or Ethernet headers
  * @flags:	flags from probe or claim
  * @login_count: number of unsuccessful rport logins to this port
  * @enode_mac:	E_Node control MAC address
- * @vn_mac:	VN_Node asचिन्हित MAC address क्रम data
+ * @vn_mac:	VN_Node assigned MAC address for data
  */
-काष्ठा fcoe_rport अणु
-	काष्ठा fc_rport_priv rdata;
-	अचिन्हित दीर्घ समय;
+struct fcoe_rport {
+	struct fc_rport_priv rdata;
+	unsigned long time;
 	u16 fcoe_len;
 	u16 flags;
 	u8 login_count;
 	u8 enode_mac[ETH_ALEN];
 	u8 vn_mac[ETH_ALEN];
-पूर्ण;
+};
 
 /* FIP API functions */
-व्योम fcoe_ctlr_init(काष्ठा fcoe_ctlr *, क्रमागत fip_mode);
-व्योम fcoe_ctlr_destroy(काष्ठा fcoe_ctlr *);
-व्योम fcoe_ctlr_link_up(काष्ठा fcoe_ctlr *);
-पूर्णांक fcoe_ctlr_link_करोwn(काष्ठा fcoe_ctlr *);
-पूर्णांक fcoe_ctlr_els_send(काष्ठा fcoe_ctlr *, काष्ठा fc_lport *, काष्ठा sk_buff *);
-व्योम fcoe_ctlr_recv(काष्ठा fcoe_ctlr *, काष्ठा sk_buff *);
-पूर्णांक fcoe_ctlr_recv_flogi(काष्ठा fcoe_ctlr *, काष्ठा fc_lport *,
-			 काष्ठा fc_frame *);
+void fcoe_ctlr_init(struct fcoe_ctlr *, enum fip_mode);
+void fcoe_ctlr_destroy(struct fcoe_ctlr *);
+void fcoe_ctlr_link_up(struct fcoe_ctlr *);
+int fcoe_ctlr_link_down(struct fcoe_ctlr *);
+int fcoe_ctlr_els_send(struct fcoe_ctlr *, struct fc_lport *, struct sk_buff *);
+void fcoe_ctlr_recv(struct fcoe_ctlr *, struct sk_buff *);
+int fcoe_ctlr_recv_flogi(struct fcoe_ctlr *, struct fc_lport *,
+			 struct fc_frame *);
 
 /* libfcoe funcs */
-u64 fcoe_wwn_from_mac(अचिन्हित अक्षर mac[MAX_ADDR_LEN], अचिन्हित पूर्णांक, अचिन्हित पूर्णांक);
-पूर्णांक fcoe_libfc_config(काष्ठा fc_lport *, काष्ठा fcoe_ctlr *,
-		      स्थिर काष्ठा libfc_function_ढाँचा *, पूर्णांक init_fcp);
-u32 fcoe_fc_crc(काष्ठा fc_frame *fp);
-पूर्णांक fcoe_start_io(काष्ठा sk_buff *skb);
-पूर्णांक fcoe_get_wwn(काष्ठा net_device *netdev, u64 *wwn, पूर्णांक type);
-व्योम __fcoe_get_lesb(काष्ठा fc_lport *lport, काष्ठा fc_els_lesb *fc_lesb,
-		     काष्ठा net_device *netdev);
-व्योम fcoe_wwn_to_str(u64 wwn, अक्षर *buf, पूर्णांक len);
-पूर्णांक fcoe_validate_vport_create(काष्ठा fc_vport *vport);
-पूर्णांक fcoe_link_speed_update(काष्ठा fc_lport *);
-व्योम fcoe_get_lesb(काष्ठा fc_lport *, काष्ठा fc_els_lesb *);
-व्योम fcoe_ctlr_get_lesb(काष्ठा fcoe_ctlr_device *ctlr_dev);
+u64 fcoe_wwn_from_mac(unsigned char mac[MAX_ADDR_LEN], unsigned int, unsigned int);
+int fcoe_libfc_config(struct fc_lport *, struct fcoe_ctlr *,
+		      const struct libfc_function_template *, int init_fcp);
+u32 fcoe_fc_crc(struct fc_frame *fp);
+int fcoe_start_io(struct sk_buff *skb);
+int fcoe_get_wwn(struct net_device *netdev, u64 *wwn, int type);
+void __fcoe_get_lesb(struct fc_lport *lport, struct fc_els_lesb *fc_lesb,
+		     struct net_device *netdev);
+void fcoe_wwn_to_str(u64 wwn, char *buf, int len);
+int fcoe_validate_vport_create(struct fc_vport *vport);
+int fcoe_link_speed_update(struct fc_lport *);
+void fcoe_get_lesb(struct fc_lport *, struct fc_els_lesb *);
+void fcoe_ctlr_get_lesb(struct fcoe_ctlr_device *ctlr_dev);
 
 /**
- * is_fip_mode() - वापसs true अगर FIP mode selected.
+ * is_fip_mode() - returns true if FIP mode selected.
  * @fip:	FCoE controller.
  */
-अटल अंतरभूत bool is_fip_mode(काष्ठा fcoe_ctlr *fip)
-अणु
-	वापस fip->state == FIP_ST_ENABLED;
-पूर्ण
+static inline bool is_fip_mode(struct fcoe_ctlr *fip)
+{
+	return fip->state == FIP_ST_ENABLED;
+}
 
-/* helper क्रम FCoE SW HBA drivers, can include subven and subdev अगर needed. The
- * modpost would use pci_device_id table to स्वतः-generate क्रमmatted module alias
- * पूर्णांकo the corresponding .mod.c file, but there may or may not be a pci device
- * id table क्रम FCoE drivers so we use the following helper क्रम build the fcoe
+/* helper for FCoE SW HBA drivers, can include subven and subdev if needed. The
+ * modpost would use pci_device_id table to auto-generate formatted module alias
+ * into the corresponding .mod.c file, but there may or may not be a pci device
+ * id table for FCoE drivers so we use the following helper for build the fcoe
  * driver module alias.
  */
-#घोषणा MODULE_ALIAS_FCOE_PCI(ven, dev) \
+#define MODULE_ALIAS_FCOE_PCI(ven, dev) \
 	MODULE_ALIAS("fcoe-pci:"	\
-		"v" __stringअगरy(ven)	\
-		"d" __stringअगरy(dev) "sv*sd*bc*sc*i*")
+		"v" __stringify(ven)	\
+		"d" __stringify(dev) "sv*sd*bc*sc*i*")
 
-/* the name of the शेष FCoE transport driver fcoe.ko */
-#घोषणा FCOE_TRANSPORT_DEFAULT	"fcoe"
+/* the name of the default FCoE transport driver fcoe.ko */
+#define FCOE_TRANSPORT_DEFAULT	"fcoe"
 
-/* काष्ठा fcoe_transport - The FCoE transport पूर्णांकerface
- * @name:	a venकरोr specअगरic name क्रम their FCoE transport driver
- * @attached:	whether this transport is alपढ़ोy attached
+/* struct fcoe_transport - The FCoE transport interface
+ * @name:	a vendor specific name for their FCoE transport driver
+ * @attached:	whether this transport is already attached
  * @list:	list linkage to all attached transports
  * @match:	handler to allow the transport driver to match up a given netdev
- * @alloc:      handler to allocate per-instance FCoE काष्ठाures
+ * @alloc:      handler to allocate per-instance FCoE structures
  *		(no discovery or login)
- * @create:	handler to sysfs entry of create क्रम FCoE instances
- * @destroy:    handler to delete per-instance FCoE काष्ठाures
- *		(मुक्तs all memory)
- * @enable:	handler to sysfs entry of enable क्रम FCoE instances
- * @disable:	handler to sysfs entry of disable क्रम FCoE instances
+ * @create:	handler to sysfs entry of create for FCoE instances
+ * @destroy:    handler to delete per-instance FCoE structures
+ *		(frees all memory)
+ * @enable:	handler to sysfs entry of enable for FCoE instances
+ * @disable:	handler to sysfs entry of disable for FCoE instances
  */
-काष्ठा fcoe_transport अणु
-	अक्षर name[IFNAMSIZ];
+struct fcoe_transport {
+	char name[IFNAMSIZ];
 	bool attached;
-	काष्ठा list_head list;
-	bool (*match) (काष्ठा net_device *device);
-	पूर्णांक (*alloc) (काष्ठा net_device *device);
-	पूर्णांक (*create) (काष्ठा net_device *device, क्रमागत fip_mode fip_mode);
-	पूर्णांक (*destroy) (काष्ठा net_device *device);
-	पूर्णांक (*enable) (काष्ठा net_device *device);
-	पूर्णांक (*disable) (काष्ठा net_device *device);
-पूर्ण;
+	struct list_head list;
+	bool (*match) (struct net_device *device);
+	int (*alloc) (struct net_device *device);
+	int (*create) (struct net_device *device, enum fip_mode fip_mode);
+	int (*destroy) (struct net_device *device);
+	int (*enable) (struct net_device *device);
+	int (*disable) (struct net_device *device);
+};
 
 /**
- * काष्ठा fcoe_percpu_s - The context क्रम FCoE receive thपढ़ो(s)
- * @kthपढ़ो:	    The thपढ़ो context (used by bnx2fc)
+ * struct fcoe_percpu_s - The context for FCoE receive thread(s)
+ * @kthread:	    The thread context (used by bnx2fc)
  * @work:	    The work item (used by fcoe)
  * @fcoe_rx_list:   The queue of pending packets to process
- * @page:	    The memory page क्रम calculating frame trailer CRCs
- * @crc_eof_offset: The offset पूर्णांकo the CRC page poपूर्णांकing to available
- *		    memory क्रम a new trailer
+ * @page:	    The memory page for calculating frame trailer CRCs
+ * @crc_eof_offset: The offset into the CRC page pointing to available
+ *		    memory for a new trailer
  */
-काष्ठा fcoe_percpu_s अणु
-	काष्ठा task_काष्ठा *kthपढ़ो;
-	काष्ठा work_काष्ठा work;
-	काष्ठा sk_buff_head fcoe_rx_list;
-	काष्ठा page *crc_eof_page;
-	पूर्णांक crc_eof_offset;
-पूर्ण;
+struct fcoe_percpu_s {
+	struct task_struct *kthread;
+	struct work_struct work;
+	struct sk_buff_head fcoe_rx_list;
+	struct page *crc_eof_page;
+	int crc_eof_offset;
+};
 
 /**
- * काष्ठा fcoe_port - The FCoE निजी काष्ठाure
- * @priv:		       The associated fcoe पूर्णांकerface. The काष्ठाure is
+ * struct fcoe_port - The FCoE private structure
+ * @priv:		       The associated fcoe interface. The structure is
  *			       defined by the low level driver
  * @lport:		       The associated local port
  * @fcoe_pending_queue:	       The pending Rx queue of skbs
- * @fcoe_pending_queue_active: Indicates अगर the pending queue is active
+ * @fcoe_pending_queue_active: Indicates if the pending queue is active
  * @max_queue_depth:	       Max queue depth of pending queue
  * @min_queue_depth:	       Min queue depth of pending queue
- * @समयr:		       The queue समयr
- * @destroy_work:	       Handle क्रम work context
+ * @timer:		       The queue timer
+ * @destroy_work:	       Handle for work context
  *			       (to prevent RTNL deadlocks)
- * @data_srt_addr:	       Source address क्रम data
+ * @data_srt_addr:	       Source address for data
  *
- * An instance of this काष्ठाure is to be allocated aदीर्घ with the
- * Scsi_Host and libfc fc_lport काष्ठाures.
+ * An instance of this structure is to be allocated along with the
+ * Scsi_Host and libfc fc_lport structures.
  */
-काष्ठा fcoe_port अणु
-	व्योम		      *priv;
-	काष्ठा fc_lport	      *lport;
-	काष्ठा sk_buff_head   fcoe_pending_queue;
+struct fcoe_port {
+	void		      *priv;
+	struct fc_lport	      *lport;
+	struct sk_buff_head   fcoe_pending_queue;
 	u8		      fcoe_pending_queue_active;
 	u32		      max_queue_depth;
 	u32		      min_queue_depth;
-	काष्ठा समयr_list     समयr;
-	काष्ठा work_काष्ठा    destroy_work;
+	struct timer_list     timer;
+	struct work_struct    destroy_work;
 	u8		      data_src_addr[ETH_ALEN];
-	काष्ठा net_device * (*get_netdev)(स्थिर काष्ठा fc_lport *lport);
-पूर्ण;
+	struct net_device * (*get_netdev)(const struct fc_lport *lport);
+};
 
 /**
  * fcoe_get_netdev() - Return the net device associated with a local port
  * @lport: The local port to get the net device from
  */
-अटल अंतरभूत काष्ठा net_device *fcoe_get_netdev(स्थिर काष्ठा fc_lport *lport)
-अणु
-	काष्ठा fcoe_port *port = ((काष्ठा fcoe_port *)lport_priv(lport));
+static inline struct net_device *fcoe_get_netdev(const struct fc_lport *lport)
+{
+	struct fcoe_port *port = ((struct fcoe_port *)lport_priv(lport));
 
-	वापस (port->get_netdev) ? port->get_netdev(lport) : शून्य;
-पूर्ण
+	return (port->get_netdev) ? port->get_netdev(lport) : NULL;
+}
 
-व्योम fcoe_clean_pending_queue(काष्ठा fc_lport *);
-व्योम fcoe_check_रुको_queue(काष्ठा fc_lport *lport, काष्ठा sk_buff *skb);
-व्योम fcoe_queue_समयr(काष्ठा समयr_list *t);
-पूर्णांक fcoe_get_paged_crc_eof(काष्ठा sk_buff *skb, पूर्णांक tlen,
-			   काष्ठा fcoe_percpu_s *fps);
+void fcoe_clean_pending_queue(struct fc_lport *);
+void fcoe_check_wait_queue(struct fc_lport *lport, struct sk_buff *skb);
+void fcoe_queue_timer(struct timer_list *t);
+int fcoe_get_paged_crc_eof(struct sk_buff *skb, int tlen,
+			   struct fcoe_percpu_s *fps);
 
 /* FCoE Sysfs helpers */
-व्योम fcoe_fcf_get_selected(काष्ठा fcoe_fcf_device *);
-व्योम fcoe_ctlr_set_fip_mode(काष्ठा fcoe_ctlr_device *);
+void fcoe_fcf_get_selected(struct fcoe_fcf_device *);
+void fcoe_ctlr_set_fip_mode(struct fcoe_ctlr_device *);
 
 /**
- * काष्ठा netdev_list
+ * struct netdev_list
  * A mapping from netdevice to fcoe_transport
  */
-काष्ठा fcoe_netdev_mapping अणु
-	काष्ठा list_head list;
-	काष्ठा net_device *netdev;
-	काष्ठा fcoe_transport *ft;
-पूर्ण;
+struct fcoe_netdev_mapping {
+	struct list_head list;
+	struct net_device *netdev;
+	struct fcoe_transport *ft;
+};
 
 /* fcoe transports registration and deregistration */
-पूर्णांक fcoe_transport_attach(काष्ठा fcoe_transport *ft);
-पूर्णांक fcoe_transport_detach(काष्ठा fcoe_transport *ft);
+int fcoe_transport_attach(struct fcoe_transport *ft);
+int fcoe_transport_detach(struct fcoe_transport *ft);
 
-/* sysfs store handler क्रम ctrl_control पूर्णांकerface */
-sमाप_प्रकार fcoe_ctlr_create_store(काष्ठा bus_type *bus,
-			       स्थिर अक्षर *buf, माप_प्रकार count);
-sमाप_प्रकार fcoe_ctlr_destroy_store(काष्ठा bus_type *bus,
-				स्थिर अक्षर *buf, माप_प्रकार count);
+/* sysfs store handler for ctrl_control interface */
+ssize_t fcoe_ctlr_create_store(struct bus_type *bus,
+			       const char *buf, size_t count);
+ssize_t fcoe_ctlr_destroy_store(struct bus_type *bus,
+				const char *buf, size_t count);
 
-#पूर्ण_अगर /* _LIBFCOE_H */
+#endif /* _LIBFCOE_H */
 
 

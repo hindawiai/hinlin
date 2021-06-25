@@ -1,26 +1,25 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <linux/माला.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/bitops.h>
-#समावेश <linux/ptrace.h>
-#समावेश <linux/adb.h>
-#समावेश <linux/pmu.h>
-#समावेश <linux/cuda.h>
-#समावेश <यंत्र/machdep.h>
-#समावेश <यंत्र/पन.स>
-#समावेश <यंत्र/page.h>
-#समावेश <यंत्र/xmon.h>
-#समावेश <यंत्र/prom.h>
-#समावेश <यंत्र/bootx.h>
-#समावेश <यंत्र/त्रुटिसं.स>
-#समावेश <यंत्र/pmac_feature.h>
-#समावेश <यंत्र/processor.h>
-#समावेश <यंत्र/delay.h>
-#समावेश <यंत्र/btext.h>
-#समावेश <यंत्र/समय.स>
-#समावेश <यंत्र/udbg.h>
+// SPDX-License-Identifier: GPL-2.0
+#include <linux/string.h>
+#include <linux/kernel.h>
+#include <linux/errno.h>
+#include <linux/bitops.h>
+#include <linux/ptrace.h>
+#include <linux/adb.h>
+#include <linux/pmu.h>
+#include <linux/cuda.h>
+#include <asm/machdep.h>
+#include <asm/io.h>
+#include <asm/page.h>
+#include <asm/xmon.h>
+#include <asm/prom.h>
+#include <asm/bootx.h>
+#include <asm/errno.h>
+#include <asm/pmac_feature.h>
+#include <asm/processor.h>
+#include <asm/delay.h>
+#include <asm/btext.h>
+#include <asm/time.h>
+#include <asm/udbg.h>
 
 /*
  * This implementation is "special", it can "patch" the current
@@ -28,36 +27,36 @@
  * initialized last
  */
 
-अटल व्योम (*udbg_adb_old_अ_दो)(अक्षर c);
-अटल पूर्णांक (*udbg_adb_old_अ_लो)(व्योम);
-अटल पूर्णांक (*udbg_adb_old_अ_लो_poll)(व्योम);
+static void (*udbg_adb_old_putc)(char c);
+static int (*udbg_adb_old_getc)(void);
+static int (*udbg_adb_old_getc_poll)(void);
 
-अटल क्रमागत अणु
+static enum {
 	input_adb_none,
 	input_adb_pmu,
 	input_adb_cuda,
-पूर्ण input_type = input_adb_none;
+} input_type = input_adb_none;
 
-पूर्णांक xmon_wants_key, xmon_adb_keycode;
+int xmon_wants_key, xmon_adb_keycode;
 
-अटल अंतरभूत व्योम udbg_adb_poll(व्योम)
-अणु
-#अगर_घोषित CONFIG_ADB_PMU
-	अगर (input_type == input_adb_pmu)
+static inline void udbg_adb_poll(void)
+{
+#ifdef CONFIG_ADB_PMU
+	if (input_type == input_adb_pmu)
 		pmu_poll_adb();
-#पूर्ण_अगर /* CONFIG_ADB_PMU */
-#अगर_घोषित CONFIG_ADB_CUDA
-	अगर (input_type == input_adb_cuda)
+#endif /* CONFIG_ADB_PMU */
+#ifdef CONFIG_ADB_CUDA
+	if (input_type == input_adb_cuda)
 		cuda_poll();
-#पूर्ण_अगर /* CONFIG_ADB_CUDA */
-पूर्ण
+#endif /* CONFIG_ADB_CUDA */
+}
 
-#अगर_घोषित CONFIG_BOOTX_TEXT
+#ifdef CONFIG_BOOTX_TEXT
 
-अटल पूर्णांक udbg_adb_use_btext;
-अटल पूर्णांक xmon_adb_shअगरtstate;
+static int udbg_adb_use_btext;
+static int xmon_adb_shiftstate;
 
-अटल अचिन्हित अक्षर xmon_keytab[128] =
+static unsigned char xmon_keytab[128] =
 	"asdfhgzxcv\000bqwer"				/* 0x00 - 0x0f */
 	"yt123465=97-80]o"				/* 0x10 - 0x1f */
 	"u[ip\rlj'k;\\,/nm."				/* 0x20 - 0x2f */
@@ -65,157 +64,157 @@
 	"\0.\0*\0+\0\0\0\0\0/\r\0-\0"			/* 0x40 - 0x4f */
 	"\0\0000123456789\0\0\0";			/* 0x50 - 0x5f */
 
-अटल अचिन्हित अक्षर xmon_shअगरt_keytab[128] =
+static unsigned char xmon_shift_keytab[128] =
 	"ASDFHGZXCV\000BQWER"				/* 0x00 - 0x0f */
-	"YT!@#$^%+(&_*)पूर्णO"				/* 0x10 - 0x1f */
+	"YT!@#$^%+(&_*)}O"				/* 0x10 - 0x1f */
 	"U{IP\rLJ\"K:|<?NM>"				/* 0x20 - 0x2f */
 	"\t ~\177\0\033\0\0\0\0\0\0\0\0\0\0"		/* 0x30 - 0x3f */
 	"\0.\0*\0+\0\0\0\0\0/\r\0-\0"			/* 0x40 - 0x4f */
 	"\0\0000123456789\0\0\0";			/* 0x50 - 0x5f */
 
-अटल पूर्णांक udbg_adb_local_अ_लो(व्योम)
-अणु
-	पूर्णांक k, t, on;
+static int udbg_adb_local_getc(void)
+{
+	int k, t, on;
 
 	xmon_wants_key = 1;
-	क्रम (;;) अणु
+	for (;;) {
 		xmon_adb_keycode = -1;
 		t = 0;
 		on = 0;
 		k = -1;
-		करो अणु
-			अगर (--t < 0) अणु
+		do {
+			if (--t < 0) {
 				on = 1 - on;
-				btext_drawअक्षर(on? 0xdb: 0x20);
-				btext_drawअक्षर('\b');
+				btext_drawchar(on? 0xdb: 0x20);
+				btext_drawchar('\b');
 				t = 200000;
-			पूर्ण
+			}
 			udbg_adb_poll();
-			अगर (udbg_adb_old_अ_लो_poll)
-				k = udbg_adb_old_अ_लो_poll();
-		पूर्ण जबतक (k == -1 && xmon_adb_keycode == -1);
-		अगर (on)
+			if (udbg_adb_old_getc_poll)
+				k = udbg_adb_old_getc_poll();
+		} while (k == -1 && xmon_adb_keycode == -1);
+		if (on)
 			btext_drawstring(" \b");
-		अगर (k != -1)
-			वापस k;
+		if (k != -1)
+			return k;
 		k = xmon_adb_keycode;
 
-		/* test क्रम shअगरt keys */
-		अगर ((k & 0x7f) == 0x38 || (k & 0x7f) == 0x7b) अणु
-			xmon_adb_shअगरtstate = (k & 0x80) == 0;
-			जारी;
-		पूर्ण
-		अगर (k >= 0x80)
-			जारी;	/* ignore up transitions */
-		k = (xmon_adb_shअगरtstate? xmon_shअगरt_keytab: xmon_keytab)[k];
-		अगर (k != 0)
-			अवरोध;
-	पूर्ण
+		/* test for shift keys */
+		if ((k & 0x7f) == 0x38 || (k & 0x7f) == 0x7b) {
+			xmon_adb_shiftstate = (k & 0x80) == 0;
+			continue;
+		}
+		if (k >= 0x80)
+			continue;	/* ignore up transitions */
+		k = (xmon_adb_shiftstate? xmon_shift_keytab: xmon_keytab)[k];
+		if (k != 0)
+			break;
+	}
 	xmon_wants_key = 0;
-	वापस k;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_BOOTX_TEXT */
+	return k;
+}
+#endif /* CONFIG_BOOTX_TEXT */
 
-अटल पूर्णांक udbg_adb_अ_लो(व्योम)
-अणु
-#अगर_घोषित CONFIG_BOOTX_TEXT
-	अगर (udbg_adb_use_btext && input_type != input_adb_none)
-		वापस udbg_adb_local_अ_लो();
-#पूर्ण_अगर
-	अगर (udbg_adb_old_अ_लो)
-		वापस udbg_adb_old_अ_लो();
-	वापस -1;
-पूर्ण
+static int udbg_adb_getc(void)
+{
+#ifdef CONFIG_BOOTX_TEXT
+	if (udbg_adb_use_btext && input_type != input_adb_none)
+		return udbg_adb_local_getc();
+#endif
+	if (udbg_adb_old_getc)
+		return udbg_adb_old_getc();
+	return -1;
+}
 
-/* अ_लो_poll() is not really used, unless you have the xmon-over modem
- * hack that करोesn't quite concern us here, thus we just poll the low level
+/* getc_poll() is not really used, unless you have the xmon-over modem
+ * hack that doesn't quite concern us here, thus we just poll the low level
  * ADB driver to prevent it from timing out and call back the original poll
  * routine.
  */
-अटल पूर्णांक udbg_adb_अ_लो_poll(व्योम)
-अणु
+static int udbg_adb_getc_poll(void)
+{
 	udbg_adb_poll();
 
-	अगर (udbg_adb_old_अ_लो_poll)
-		वापस udbg_adb_old_अ_लो_poll();
-	वापस -1;
-पूर्ण
+	if (udbg_adb_old_getc_poll)
+		return udbg_adb_old_getc_poll();
+	return -1;
+}
 
-अटल व्योम udbg_adb_अ_दो(अक्षर c)
-अणु
-#अगर_घोषित CONFIG_BOOTX_TEXT
-	अगर (udbg_adb_use_btext)
-		btext_drawअक्षर(c);
-#पूर्ण_अगर
-	अगर (udbg_adb_old_अ_दो)
-		वापस udbg_adb_old_अ_दो(c);
-पूर्ण
+static void udbg_adb_putc(char c)
+{
+#ifdef CONFIG_BOOTX_TEXT
+	if (udbg_adb_use_btext)
+		btext_drawchar(c);
+#endif
+	if (udbg_adb_old_putc)
+		return udbg_adb_old_putc(c);
+}
 
-व्योम __init udbg_adb_init_early(व्योम)
-अणु
-#अगर_घोषित CONFIG_BOOTX_TEXT
-	अगर (btext_find_display(1) == 0) अणु
+void __init udbg_adb_init_early(void)
+{
+#ifdef CONFIG_BOOTX_TEXT
+	if (btext_find_display(1) == 0) {
 		udbg_adb_use_btext = 1;
-		udbg_अ_दो = udbg_adb_अ_दो;
-	पूर्ण
-#पूर्ण_अगर
-पूर्ण
+		udbg_putc = udbg_adb_putc;
+	}
+#endif
+}
 
-पूर्णांक __init udbg_adb_init(पूर्णांक क्रमce_btext)
-अणु
-	काष्ठा device_node *np;
+int __init udbg_adb_init(int force_btext)
+{
+	struct device_node *np;
 
 	/* Capture existing callbacks */
-	udbg_adb_old_अ_दो = udbg_अ_दो;
-	udbg_adb_old_अ_लो = udbg_अ_लो;
-	udbg_adb_old_अ_लो_poll = udbg_अ_लो_poll;
+	udbg_adb_old_putc = udbg_putc;
+	udbg_adb_old_getc = udbg_getc;
+	udbg_adb_old_getc_poll = udbg_getc_poll;
 
-	/* Check अगर our early init was alपढ़ोy called */
-	अगर (udbg_adb_old_अ_दो == udbg_adb_अ_दो)
-		udbg_adb_old_अ_दो = शून्य;
-#अगर_घोषित CONFIG_BOOTX_TEXT
-	अगर (udbg_adb_old_अ_दो == btext_drawअक्षर)
-		udbg_adb_old_अ_दो = शून्य;
-#पूर्ण_अगर
+	/* Check if our early init was already called */
+	if (udbg_adb_old_putc == udbg_adb_putc)
+		udbg_adb_old_putc = NULL;
+#ifdef CONFIG_BOOTX_TEXT
+	if (udbg_adb_old_putc == btext_drawchar)
+		udbg_adb_old_putc = NULL;
+#endif
 
 	/* Set ours as output */
-	udbg_अ_दो = udbg_adb_अ_दो;
-	udbg_अ_लो = udbg_adb_अ_लो;
-	udbg_अ_लो_poll = udbg_adb_अ_लो_poll;
+	udbg_putc = udbg_adb_putc;
+	udbg_getc = udbg_adb_getc;
+	udbg_getc_poll = udbg_adb_getc_poll;
 
-#अगर_घोषित CONFIG_BOOTX_TEXT
-	/* Check अगर we should use btext output */
-	अगर (btext_find_display(क्रमce_btext) == 0)
+#ifdef CONFIG_BOOTX_TEXT
+	/* Check if we should use btext output */
+	if (btext_find_display(force_btext) == 0)
 		udbg_adb_use_btext = 1;
-#पूर्ण_अगर
+#endif
 
-	/* See अगर there is a keyboard in the device tree with a parent
-	 * of type "adb". If not, we वापस a failure, but we keep the
-	 * bext output set क्रम now
+	/* See if there is a keyboard in the device tree with a parent
+	 * of type "adb". If not, we return a failure, but we keep the
+	 * bext output set for now
 	 */
-	क्रम_each_node_by_name(np, "keyboard") अणु
-		काष्ठा device_node *parent = of_get_parent(np);
-		पूर्णांक found = of_node_is_type(parent, "adb");
+	for_each_node_by_name(np, "keyboard") {
+		struct device_node *parent = of_get_parent(np);
+		int found = of_node_is_type(parent, "adb");
 		of_node_put(parent);
-		अगर (found)
-			अवरोध;
-	पूर्ण
-	अगर (np == शून्य)
-		वापस -ENODEV;
+		if (found)
+			break;
+	}
+	if (np == NULL)
+		return -ENODEV;
 	of_node_put(np);
 
-#अगर_घोषित CONFIG_ADB_PMU
-	अगर (find_via_pmu())
+#ifdef CONFIG_ADB_PMU
+	if (find_via_pmu())
 		input_type = input_adb_pmu;
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_ADB_CUDA
-	अगर (find_via_cuda())
+#endif
+#ifdef CONFIG_ADB_CUDA
+	if (find_via_cuda())
 		input_type = input_adb_cuda;
-#पूर्ण_अगर
+#endif
 
-	/* Same as above: nothing found, keep btext set क्रम output */
-	अगर (input_type == input_adb_none)
-		वापस -ENODEV;
+	/* Same as above: nothing found, keep btext set for output */
+	if (input_type == input_adb_none)
+		return -ENODEV;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

@@ -1,32 +1,31 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
- * linux/drivers/media/platक्रमm/s5p-mfc/s5p_mfc_cmd.h
+ * linux/drivers/media/platform/s5p-mfc/s5p_mfc_cmd.h
  *
  * Copyright (C) 2012 Samsung Electronics Co., Ltd.
  *		http://www.samsung.com/
  */
 
-#अगर_अघोषित S5P_MFC_CMD_H_
-#घोषणा S5P_MFC_CMD_H_
+#ifndef S5P_MFC_CMD_H_
+#define S5P_MFC_CMD_H_
 
-#समावेश "s5p_mfc_common.h"
+#include "s5p_mfc_common.h"
 
-#घोषणा MAX_H2R_ARG	4
+#define MAX_H2R_ARG	4
 
-काष्ठा s5p_mfc_cmd_args अणु
-	अचिन्हित पूर्णांक	arg[MAX_H2R_ARG];
-पूर्ण;
+struct s5p_mfc_cmd_args {
+	unsigned int	arg[MAX_H2R_ARG];
+};
 
-काष्ठा s5p_mfc_hw_cmds अणु
-	पूर्णांक (*cmd_host2risc)(काष्ठा s5p_mfc_dev *dev, पूर्णांक cmd,
-				काष्ठा s5p_mfc_cmd_args *args);
-	पूर्णांक (*sys_init_cmd)(काष्ठा s5p_mfc_dev *dev);
-	पूर्णांक (*sleep_cmd)(काष्ठा s5p_mfc_dev *dev);
-	पूर्णांक (*wakeup_cmd)(काष्ठा s5p_mfc_dev *dev);
-	पूर्णांक (*खोलो_inst_cmd)(काष्ठा s5p_mfc_ctx *ctx);
-	पूर्णांक (*बंद_inst_cmd)(काष्ठा s5p_mfc_ctx *ctx);
-पूर्ण;
+struct s5p_mfc_hw_cmds {
+	int (*cmd_host2risc)(struct s5p_mfc_dev *dev, int cmd,
+				struct s5p_mfc_cmd_args *args);
+	int (*sys_init_cmd)(struct s5p_mfc_dev *dev);
+	int (*sleep_cmd)(struct s5p_mfc_dev *dev);
+	int (*wakeup_cmd)(struct s5p_mfc_dev *dev);
+	int (*open_inst_cmd)(struct s5p_mfc_ctx *ctx);
+	int (*close_inst_cmd)(struct s5p_mfc_ctx *ctx);
+};
 
-व्योम s5p_mfc_init_hw_cmds(काष्ठा s5p_mfc_dev *dev);
-#पूर्ण_अगर /* S5P_MFC_CMD_H_ */
+void s5p_mfc_init_hw_cmds(struct s5p_mfc_dev *dev);
+#endif /* S5P_MFC_CMD_H_ */

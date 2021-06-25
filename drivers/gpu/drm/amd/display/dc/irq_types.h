@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2012-15 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -24,22 +23,22 @@
  *
  */
 
-#अगर_अघोषित __DAL_IRQ_TYPES_H__
-#घोषणा __DAL_IRQ_TYPES_H__
+#ifndef __DAL_IRQ_TYPES_H__
+#define __DAL_IRQ_TYPES_H__
 
-#समावेश "os_types.h"
+#include "os_types.h"
 
-काष्ठा dc_context;
+struct dc_context;
 
-प्रकार व्योम (*पूर्णांकerrupt_handler)(व्योम *);
+typedef void (*interrupt_handler)(void *);
 
-प्रकार व्योम *irq_handler_idx;
-#घोषणा DAL_INVALID_IRQ_HANDLER_IDX शून्य
+typedef void *irq_handler_idx;
+#define DAL_INVALID_IRQ_HANDLER_IDX NULL
 
 /* The order of the IRQ sources is important and MUST match the one's
 of base driver */
-क्रमागत dc_irq_source अणु
-	/* Use as mask to specअगरy invalid irq source */
+enum dc_irq_source {
+	/* Use as mask to specify invalid irq source */
 	DC_IRQ_SOURCE_INVALID = 0,
 
 	DC_IRQ_SOURCE_HPD1,
@@ -155,59 +154,59 @@ of base driver */
 	DC_IRQ_SOURCE_DMCUB_OUTBOX0,
 
 	DAL_IRQ_SOURCES_NUMBER
-पूर्ण;
+};
 
-क्रमागत irq_type
-अणु
+enum irq_type
+{
 	IRQ_TYPE_PFLIP = DC_IRQ_SOURCE_PFLIP1,
 	IRQ_TYPE_VUPDATE = DC_IRQ_SOURCE_VUPDATE1,
 	IRQ_TYPE_VBLANK = DC_IRQ_SOURCE_VBLANK1,
 	IRQ_TYPE_VLINE0 = DC_IRQ_SOURCE_DC1_VLINE0,
-पूर्ण;
+};
 
-#घोषणा DAL_VALID_IRQ_SRC_NUM(src) \
+#define DAL_VALID_IRQ_SRC_NUM(src) \
 	((src) <= DAL_IRQ_SOURCES_NUMBER && (src) > DC_IRQ_SOURCE_INVALID)
 
 /* Number of Page Flip IRQ Sources. */
-#घोषणा DAL_PFLIP_IRQ_SRC_NUM \
+#define DAL_PFLIP_IRQ_SRC_NUM \
 	(DC_IRQ_SOURCE_PFLIP_LAST - DC_IRQ_SOURCE_PFLIP_FIRST + 1)
 
 /* the number of contexts may be expanded in the future based on needs */
-क्रमागत dc_पूर्णांकerrupt_context अणु
+enum dc_interrupt_context {
 	INTERRUPT_LOW_IRQ_CONTEXT = 0,
 	INTERRUPT_HIGH_IRQ_CONTEXT,
 	INTERRUPT_CONTEXT_NUMBER
-पूर्ण;
+};
 
-क्रमागत dc_पूर्णांकerrupt_porlarity अणु
+enum dc_interrupt_porlarity {
 	INTERRUPT_POLARITY_DEFAULT = 0,
 	INTERRUPT_POLARITY_LOW = INTERRUPT_POLARITY_DEFAULT,
 	INTERRUPT_POLARITY_HIGH,
 	INTERRUPT_POLARITY_BOTH
-पूर्ण;
+};
 
-#घोषणा DC_DECODE_INTERRUPT_POLARITY(पूर्णांक_polarity) \
-	(पूर्णांक_polarity == INTERRUPT_POLARITY_LOW) ? "Low" : \
-	(पूर्णांक_polarity == INTERRUPT_POLARITY_HIGH) ? "High" : \
-	(पूर्णांक_polarity == INTERRUPT_POLARITY_BOTH) ? "Both" : "Invalid"
+#define DC_DECODE_INTERRUPT_POLARITY(int_polarity) \
+	(int_polarity == INTERRUPT_POLARITY_LOW) ? "Low" : \
+	(int_polarity == INTERRUPT_POLARITY_HIGH) ? "High" : \
+	(int_polarity == INTERRUPT_POLARITY_BOTH) ? "Both" : "Invalid"
 
-काष्ठा dc_समयr_पूर्णांकerrupt_params अणु
-	uपूर्णांक32_t micro_sec_पूर्णांकerval;
-	क्रमागत dc_पूर्णांकerrupt_context पूर्णांक_context;
-पूर्ण;
+struct dc_timer_interrupt_params {
+	uint32_t micro_sec_interval;
+	enum dc_interrupt_context int_context;
+};
 
-काष्ठा dc_पूर्णांकerrupt_params अणु
-	/* The polarity *change* which will trigger an पूर्णांकerrupt.
+struct dc_interrupt_params {
+	/* The polarity *change* which will trigger an interrupt.
 	 * If 'requested_polarity == INTERRUPT_POLARITY_BOTH', then
 	 * 'current_polarity' must be initialised. */
-	क्रमागत dc_पूर्णांकerrupt_porlarity requested_polarity;
+	enum dc_interrupt_porlarity requested_polarity;
 	/* If 'requested_polarity == INTERRUPT_POLARITY_BOTH',
 	 * 'current_polarity' should contain the current state, which means
-	 * the पूर्णांकerrupt will be triggered when state changes from what is,
+	 * the interrupt will be triggered when state changes from what is,
 	 * in 'current_polarity'. */
-	क्रमागत dc_पूर्णांकerrupt_porlarity current_polarity;
-	क्रमागत dc_irq_source irq_source;
-	क्रमागत dc_पूर्णांकerrupt_context पूर्णांक_context;
-पूर्ण;
+	enum dc_interrupt_porlarity current_polarity;
+	enum dc_irq_source irq_source;
+	enum dc_interrupt_context int_context;
+};
 
-#पूर्ण_अगर
+#endif

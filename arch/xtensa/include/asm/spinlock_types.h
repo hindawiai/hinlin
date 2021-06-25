@@ -1,13 +1,12 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __ASM_SPINLOCK_TYPES_H
-#घोषणा __ASM_SPINLOCK_TYPES_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __ASM_SPINLOCK_TYPES_H
+#define __ASM_SPINLOCK_TYPES_H
 
-#अगर !defined(__LINUX_SPINLOCK_TYPES_H) && !defined(__ASM_SPINLOCK_H)
+#if !defined(__LINUX_SPINLOCK_TYPES_H) && !defined(__ASM_SPINLOCK_H)
 # error "please don't include this file directly"
-#पूर्ण_अगर
+#endif
 
-#समावेश <यंत्र-generic/qspinlock_types.h>
-#समावेश <यंत्र-generic/qrwlock_types.h>
+#include <asm-generic/qspinlock_types.h>
+#include <asm-generic/qrwlock_types.h>
 
-#पूर्ण_अगर
+#endif

@@ -1,4 +1,3 @@
-<शैली गुरु>
 /**********************************************************************
  * Author: Cavium, Inc.
  *
@@ -7,427 +6,427 @@
  *
  * Copyright (c) 2003-2016 Cavium, Inc.
  *
- * This file is मुक्त software; you can redistribute it and/or modअगरy
+ * This file is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, Version 2, as
  * published by the Free Software Foundation.
  *
  * This file is distributed in the hope that it will be useful, but
  * AS-IS and WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE, TITLE, or
- * NONINFRINGEMENT.  See the GNU General Public License क्रम more details.
+ * NONINFRINGEMENT.  See the GNU General Public License for more details.
  ***********************************************************************/
-#समावेश <linux/module.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/pci.h>
-#समावेश <net/vxlan.h>
-#समावेश "liquidio_common.h"
-#समावेश "octeon_droq.h"
-#समावेश "octeon_iq.h"
-#समावेश "response_manager.h"
-#समावेश "octeon_device.h"
-#समावेश "octeon_nic.h"
-#समावेश "octeon_main.h"
-#समावेश "octeon_network.h"
-#समावेश "cn23xx_vf_device.h"
+#include <linux/module.h>
+#include <linux/interrupt.h>
+#include <linux/pci.h>
+#include <net/vxlan.h>
+#include "liquidio_common.h"
+#include "octeon_droq.h"
+#include "octeon_iq.h"
+#include "response_manager.h"
+#include "octeon_device.h"
+#include "octeon_nic.h"
+#include "octeon_main.h"
+#include "octeon_network.h"
+#include "cn23xx_vf_device.h"
 
 MODULE_AUTHOR("Cavium Networks, <support@cavium.com>");
 MODULE_DESCRIPTION("Cavium LiquidIO Intelligent Server Adapter Virtual Function Driver");
 MODULE_LICENSE("GPL");
 
-अटल पूर्णांक debug = -1;
-module_param(debug, पूर्णांक, 0644);
+static int debug = -1;
+module_param(debug, int, 0644);
 MODULE_PARM_DESC(debug, "NETIF_MSG debug bits");
 
-#घोषणा DEFAULT_MSG_ENABLE (NETIF_MSG_DRV | NETIF_MSG_PROBE | NETIF_MSG_LINK)
+#define DEFAULT_MSG_ENABLE (NETIF_MSG_DRV | NETIF_MSG_PROBE | NETIF_MSG_LINK)
 
-काष्ठा oct_बारtamp_resp अणु
+struct oct_timestamp_resp {
 	u64 rh;
-	u64 बारtamp;
+	u64 timestamp;
 	u64 status;
-पूर्ण;
+};
 
-जोड़ tx_info अणु
+union tx_info {
 	u64 u64;
-	काष्ठा अणु
-#अगर_घोषित __BIG_ENDIAN_BITFIELD
+	struct {
+#ifdef __BIG_ENDIAN_BITFIELD
 		u16 gso_size;
 		u16 gso_segs;
 		u32 reserved;
-#अन्यथा
+#else
 		u32 reserved;
 		u16 gso_segs;
 		u16 gso_size;
-#पूर्ण_अगर
-	पूर्ण s;
-पूर्ण;
+#endif
+	} s;
+};
 
-#घोषणा OCTNIC_GSO_MAX_HEADER_SIZE 128
-#घोषणा OCTNIC_GSO_MAX_SIZE \
+#define OCTNIC_GSO_MAX_HEADER_SIZE 128
+#define OCTNIC_GSO_MAX_SIZE \
 		(CN23XX_DEFAULT_INPUT_JABBER - OCTNIC_GSO_MAX_HEADER_SIZE)
 
-अटल पूर्णांक
-liquidio_vf_probe(काष्ठा pci_dev *pdev, स्थिर काष्ठा pci_device_id *ent);
-अटल व्योम liquidio_vf_हटाओ(काष्ठा pci_dev *pdev);
-अटल पूर्णांक octeon_device_init(काष्ठा octeon_device *oct);
-अटल पूर्णांक liquidio_stop(काष्ठा net_device *netdev);
+static int
+liquidio_vf_probe(struct pci_dev *pdev, const struct pci_device_id *ent);
+static void liquidio_vf_remove(struct pci_dev *pdev);
+static int octeon_device_init(struct octeon_device *oct);
+static int liquidio_stop(struct net_device *netdev);
 
-अटल पूर्णांक lio_रुको_क्रम_oq_pkts(काष्ठा octeon_device *oct)
-अणु
-	काष्ठा octeon_device_priv *oct_priv =
-	    (काष्ठा octeon_device_priv *)oct->priv;
-	पूर्णांक retry = MAX_IO_PENDING_PKT_COUNT;
-	पूर्णांक pkt_cnt = 0, pending_pkts;
-	पूर्णांक i;
+static int lio_wait_for_oq_pkts(struct octeon_device *oct)
+{
+	struct octeon_device_priv *oct_priv =
+	    (struct octeon_device_priv *)oct->priv;
+	int retry = MAX_IO_PENDING_PKT_COUNT;
+	int pkt_cnt = 0, pending_pkts;
+	int i;
 
-	करो अणु
+	do {
 		pending_pkts = 0;
 
-		क्रम (i = 0; i < MAX_OCTEON_OUTPUT_QUEUES(oct); i++) अणु
-			अगर (!(oct->io_qmask.oq & BIT_ULL(i)))
-				जारी;
-			pkt_cnt += octeon_droq_check_hw_क्रम_pkts(oct->droq[i]);
-		पूर्ण
-		अगर (pkt_cnt > 0) अणु
+		for (i = 0; i < MAX_OCTEON_OUTPUT_QUEUES(oct); i++) {
+			if (!(oct->io_qmask.oq & BIT_ULL(i)))
+				continue;
+			pkt_cnt += octeon_droq_check_hw_for_pkts(oct->droq[i]);
+		}
+		if (pkt_cnt > 0) {
 			pending_pkts += pkt_cnt;
 			tasklet_schedule(&oct_priv->droq_tasklet);
-		पूर्ण
+		}
 		pkt_cnt = 0;
-		schedule_समयout_unपूर्णांकerruptible(1);
+		schedule_timeout_uninterruptible(1);
 
-	पूर्ण जबतक (retry-- && pending_pkts);
+	} while (retry-- && pending_pkts);
 
-	वापस pkt_cnt;
-पूर्ण
+	return pkt_cnt;
+}
 
 /**
- * pcierror_quiesce_device - Cause device to go quiet so it can be safely हटाओd/reset/etc
- * @oct: Poपूर्णांकer to Octeon device
+ * pcierror_quiesce_device - Cause device to go quiet so it can be safely removed/reset/etc
+ * @oct: Pointer to Octeon device
  */
-अटल व्योम pcierror_quiesce_device(काष्ठा octeon_device *oct)
-अणु
-	पूर्णांक i;
+static void pcierror_quiesce_device(struct octeon_device *oct)
+{
+	int i;
 
 	/* Disable the input and output queues now. No more packets will
-	 * arrive from Octeon, but we should रुको क्रम all packet processing
+	 * arrive from Octeon, but we should wait for all packet processing
 	 * to finish.
 	 */
 
-	/* To allow क्रम in-flight requests */
-	schedule_समयout_unपूर्णांकerruptible(100);
+	/* To allow for in-flight requests */
+	schedule_timeout_uninterruptible(100);
 
-	अगर (रुको_क्रम_pending_requests(oct))
+	if (wait_for_pending_requests(oct))
 		dev_err(&oct->pci_dev->dev, "There were pending requests\n");
 
-	/* Force all requests रुकोing to be fetched by OCTEON to complete. */
-	क्रम (i = 0; i < MAX_OCTEON_INSTR_QUEUES(oct); i++) अणु
-		काष्ठा octeon_instr_queue *iq;
+	/* Force all requests waiting to be fetched by OCTEON to complete. */
+	for (i = 0; i < MAX_OCTEON_INSTR_QUEUES(oct); i++) {
+		struct octeon_instr_queue *iq;
 
-		अगर (!(oct->io_qmask.iq & BIT_ULL(i)))
-			जारी;
+		if (!(oct->io_qmask.iq & BIT_ULL(i)))
+			continue;
 		iq = oct->instr_queue[i];
 
-		अगर (atomic_पढ़ो(&iq->instr_pending)) अणु
+		if (atomic_read(&iq->instr_pending)) {
 			spin_lock_bh(&iq->lock);
 			iq->fill_cnt = 0;
-			iq->octeon_पढ़ो_index = iq->host_ग_लिखो_index;
+			iq->octeon_read_index = iq->host_write_index;
 			iq->stats.instr_processed +=
-			    atomic_पढ़ो(&iq->instr_pending);
+			    atomic_read(&iq->instr_pending);
 			lio_process_iq_request_list(oct, iq, 0);
 			spin_unlock_bh(&iq->lock);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	/* Force all pending ordered list requests to समय out. */
+	/* Force all pending ordered list requests to time out. */
 	lio_process_ordered_list(oct, 1);
 
-	/* We करो not need to रुको क्रम output queue packets to be processed. */
-पूर्ण
+	/* We do not need to wait for output queue packets to be processed. */
+}
 
 /**
  * cleanup_aer_uncorrect_error_status - Cleanup PCI AER uncorrectable error status
- * @dev: Poपूर्णांकer to PCI device
+ * @dev: Pointer to PCI device
  */
-अटल व्योम cleanup_aer_uncorrect_error_status(काष्ठा pci_dev *dev)
-अणु
+static void cleanup_aer_uncorrect_error_status(struct pci_dev *dev)
+{
 	u32 status, mask;
-	पूर्णांक pos = 0x100;
+	int pos = 0x100;
 
 	pr_info("%s :\n", __func__);
 
-	pci_पढ़ो_config_dword(dev, pos + PCI_ERR_UNCOR_STATUS, &status);
-	pci_पढ़ो_config_dword(dev, pos + PCI_ERR_UNCOR_SEVER, &mask);
-	अगर (dev->error_state == pci_channel_io_normal)
+	pci_read_config_dword(dev, pos + PCI_ERR_UNCOR_STATUS, &status);
+	pci_read_config_dword(dev, pos + PCI_ERR_UNCOR_SEVER, &mask);
+	if (dev->error_state == pci_channel_io_normal)
 		status &= ~mask; /* Clear corresponding nonfatal bits */
-	अन्यथा
+	else
 		status &= mask; /* Clear corresponding fatal bits */
-	pci_ग_लिखो_config_dword(dev, pos + PCI_ERR_UNCOR_STATUS, status);
-पूर्ण
+	pci_write_config_dword(dev, pos + PCI_ERR_UNCOR_STATUS, status);
+}
 
 /**
  * stop_pci_io - Stop all PCI IO to a given device
- * @oct: Poपूर्णांकer to Octeon device
+ * @oct: Pointer to Octeon device
  */
-अटल व्योम stop_pci_io(काष्ठा octeon_device *oct)
-अणु
-	काष्ठा msix_entry *msix_entries;
-	पूर्णांक i;
+static void stop_pci_io(struct octeon_device *oct)
+{
+	struct msix_entry *msix_entries;
+	int i;
 
-	/* No more inकाष्ठाions will be क्रमwarded. */
+	/* No more instructions will be forwarded. */
 	atomic_set(&oct->status, OCT_DEV_IN_RESET);
 
-	क्रम (i = 0; i < oct->अगरcount; i++)
-		netअगर_device_detach(oct->props[i].netdev);
+	for (i = 0; i < oct->ifcount; i++)
+		netif_device_detach(oct->props[i].netdev);
 
-	/* Disable पूर्णांकerrupts  */
-	oct->fn_list.disable_पूर्णांकerrupt(oct, OCTEON_ALL_INTR);
+	/* Disable interrupts  */
+	oct->fn_list.disable_interrupt(oct, OCTEON_ALL_INTR);
 
 	pcierror_quiesce_device(oct);
-	अगर (oct->msix_on) अणु
-		msix_entries = (काष्ठा msix_entry *)oct->msix_entries;
-		क्रम (i = 0; i < oct->num_msix_irqs; i++) अणु
+	if (oct->msix_on) {
+		msix_entries = (struct msix_entry *)oct->msix_entries;
+		for (i = 0; i < oct->num_msix_irqs; i++) {
 			/* clear the affinity_cpumask */
-			irq_set_affinity_hपूर्णांक(msix_entries[i].vector,
-					      शून्य);
-			मुक्त_irq(msix_entries[i].vector,
+			irq_set_affinity_hint(msix_entries[i].vector,
+					      NULL);
+			free_irq(msix_entries[i].vector,
 				 &oct->ioq_vector[i]);
-		पूर्ण
+		}
 		pci_disable_msix(oct->pci_dev);
-		kमुक्त(oct->msix_entries);
-		oct->msix_entries = शून्य;
-		octeon_मुक्त_ioq_vector(oct);
-	पूर्ण
+		kfree(oct->msix_entries);
+		oct->msix_entries = NULL;
+		octeon_free_ioq_vector(oct);
+	}
 	dev_dbg(&oct->pci_dev->dev, "Device state is now %s\n",
 		lio_get_state_string(&oct->status));
 
-	/* making it a common function क्रम all OCTEON models */
+	/* making it a common function for all OCTEON models */
 	cleanup_aer_uncorrect_error_status(oct->pci_dev);
 
 	pci_disable_device(oct->pci_dev);
-पूर्ण
+}
 
 /**
  * liquidio_pcie_error_detected - called when PCI error is detected
- * @pdev: Poपूर्णांकer to PCI device
+ * @pdev: Pointer to PCI device
  * @state: The current pci connection state
  *
  * This function is called after a PCI bus error affecting
  * this device has been detected.
  */
-अटल pci_ers_result_t liquidio_pcie_error_detected(काष्ठा pci_dev *pdev,
+static pci_ers_result_t liquidio_pcie_error_detected(struct pci_dev *pdev,
 						     pci_channel_state_t state)
-अणु
-	काष्ठा octeon_device *oct = pci_get_drvdata(pdev);
+{
+	struct octeon_device *oct = pci_get_drvdata(pdev);
 
 	/* Non-correctable Non-fatal errors */
-	अगर (state == pci_channel_io_normal) अणु
+	if (state == pci_channel_io_normal) {
 		dev_err(&oct->pci_dev->dev, "Non-correctable non-fatal error reported:\n");
 		cleanup_aer_uncorrect_error_status(oct->pci_dev);
-		वापस PCI_ERS_RESULT_CAN_RECOVER;
-	पूर्ण
+		return PCI_ERS_RESULT_CAN_RECOVER;
+	}
 
 	/* Non-correctable Fatal errors */
 	dev_err(&oct->pci_dev->dev, "Non-correctable FATAL reported by PCI AER driver\n");
 	stop_pci_io(oct);
 
-	वापस PCI_ERS_RESULT_DISCONNECT;
-पूर्ण
+	return PCI_ERS_RESULT_DISCONNECT;
+}
 
 /* For PCI-E Advanced Error Recovery (AER) Interface */
-अटल स्थिर काष्ठा pci_error_handlers liquidio_vf_err_handler = अणु
+static const struct pci_error_handlers liquidio_vf_err_handler = {
 	.error_detected = liquidio_pcie_error_detected,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा pci_device_id liquidio_vf_pci_tbl[] = अणु
-	अणु
+static const struct pci_device_id liquidio_vf_pci_tbl[] = {
+	{
 		PCI_VENDOR_ID_CAVIUM, OCTEON_CN23XX_VF_VID,
 		PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0
-	पूर्ण,
-	अणु
+	},
+	{
 		0, 0, 0, 0, 0, 0, 0
-	पूर्ण
-पूर्ण;
+	}
+};
 MODULE_DEVICE_TABLE(pci, liquidio_vf_pci_tbl);
 
-अटल काष्ठा pci_driver liquidio_vf_pci_driver = अणु
+static struct pci_driver liquidio_vf_pci_driver = {
 	.name		= "LiquidIO_VF",
 	.id_table	= liquidio_vf_pci_tbl,
 	.probe		= liquidio_vf_probe,
-	.हटाओ		= liquidio_vf_हटाओ,
+	.remove		= liquidio_vf_remove,
 	.err_handler	= &liquidio_vf_err_handler,    /* For AER */
-पूर्ण;
+};
 
 /**
- * prपूर्णांक_link_info - Prपूर्णांक link inक्रमmation
+ * print_link_info - Print link information
  * @netdev: network device
  */
-अटल व्योम prपूर्णांक_link_info(काष्ठा net_device *netdev)
-अणु
-	काष्ठा lio *lio = GET_LIO(netdev);
+static void print_link_info(struct net_device *netdev)
+{
+	struct lio *lio = GET_LIO(netdev);
 
-	अगर (!अगरstate_check(lio, LIO_IFSTATE_RESETTING) &&
-	    अगरstate_check(lio, LIO_IFSTATE_REGISTERED)) अणु
-		काष्ठा oct_link_info *linfo = &lio->linfo;
+	if (!ifstate_check(lio, LIO_IFSTATE_RESETTING) &&
+	    ifstate_check(lio, LIO_IFSTATE_REGISTERED)) {
+		struct oct_link_info *linfo = &lio->linfo;
 
-		अगर (linfo->link.s.link_up) अणु
-			netअगर_info(lio, link, lio->netdev, "%d Mbps %s Duplex UP\n",
+		if (linfo->link.s.link_up) {
+			netif_info(lio, link, lio->netdev, "%d Mbps %s Duplex UP\n",
 				   linfo->link.s.speed,
 				   (linfo->link.s.duplex) ? "Full" : "Half");
-		पूर्ण अन्यथा अणु
-			netअगर_info(lio, link, lio->netdev, "Link Down\n");
-		पूर्ण
-	पूर्ण
-पूर्ण
+		} else {
+			netif_info(lio, link, lio->netdev, "Link Down\n");
+		}
+	}
+}
 
 /**
- * octnet_link_status_change - Routine to notअगरy MTU change
- * @work: work_काष्ठा data काष्ठाure
+ * octnet_link_status_change - Routine to notify MTU change
+ * @work: work_struct data structure
  */
-अटल व्योम octnet_link_status_change(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा cavium_wk *wk = (काष्ठा cavium_wk *)work;
-	काष्ठा lio *lio = (काष्ठा lio *)wk->ctxptr;
+static void octnet_link_status_change(struct work_struct *work)
+{
+	struct cavium_wk *wk = (struct cavium_wk *)work;
+	struct lio *lio = (struct lio *)wk->ctxptr;
 
-	/* lio->linfo.link.s.mtu always contains max MTU of the lio पूर्णांकerface.
-	 * this API is invoked only when new max-MTU of the पूर्णांकerface is
+	/* lio->linfo.link.s.mtu always contains max MTU of the lio interface.
+	 * this API is invoked only when new max-MTU of the interface is
 	 * less than current MTU.
 	 */
 	rtnl_lock();
 	dev_set_mtu(lio->netdev, lio->linfo.link.s.mtu);
 	rtnl_unlock();
-पूर्ण
+}
 
 /**
  * setup_link_status_change_wq - Sets up the mtu status change work
  * @netdev: network device
  */
-अटल पूर्णांक setup_link_status_change_wq(काष्ठा net_device *netdev)
-अणु
-	काष्ठा lio *lio = GET_LIO(netdev);
-	काष्ठा octeon_device *oct = lio->oct_dev;
+static int setup_link_status_change_wq(struct net_device *netdev)
+{
+	struct lio *lio = GET_LIO(netdev);
+	struct octeon_device *oct = lio->oct_dev;
 
 	lio->link_status_wq.wq = alloc_workqueue("link-status",
 						 WQ_MEM_RECLAIM, 0);
-	अगर (!lio->link_status_wq.wq) अणु
+	if (!lio->link_status_wq.wq) {
 		dev_err(&oct->pci_dev->dev, "unable to create cavium link status wq\n");
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 	INIT_DELAYED_WORK(&lio->link_status_wq.wk.work,
 			  octnet_link_status_change);
 	lio->link_status_wq.wk.ctxptr = lio;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम cleanup_link_status_change_wq(काष्ठा net_device *netdev)
-अणु
-	काष्ठा lio *lio = GET_LIO(netdev);
+static void cleanup_link_status_change_wq(struct net_device *netdev)
+{
+	struct lio *lio = GET_LIO(netdev);
 
-	अगर (lio->link_status_wq.wq) अणु
+	if (lio->link_status_wq.wq) {
 		cancel_delayed_work_sync(&lio->link_status_wq.wk.work);
 		destroy_workqueue(lio->link_status_wq.wq);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
  * update_link_status - Update link status
  * @netdev: network device
- * @ls: link status काष्ठाure
+ * @ls: link status structure
  *
  * Called on receipt of a link status response from the core application to
- * update each पूर्णांकerface's link status.
+ * update each interface's link status.
  */
-अटल व्योम update_link_status(काष्ठा net_device *netdev,
-			       जोड़ oct_link_status *ls)
-अणु
-	काष्ठा lio *lio = GET_LIO(netdev);
-	पूर्णांक current_max_mtu = lio->linfo.link.s.mtu;
-	काष्ठा octeon_device *oct = lio->oct_dev;
+static void update_link_status(struct net_device *netdev,
+			       union oct_link_status *ls)
+{
+	struct lio *lio = GET_LIO(netdev);
+	int current_max_mtu = lio->linfo.link.s.mtu;
+	struct octeon_device *oct = lio->oct_dev;
 
-	अगर ((lio->पूर्णांकf_खोलो) && (lio->linfo.link.u64 != ls->u64)) अणु
+	if ((lio->intf_open) && (lio->linfo.link.u64 != ls->u64)) {
 		lio->linfo.link.u64 = ls->u64;
 
-		prपूर्णांक_link_info(netdev);
+		print_link_info(netdev);
 		lio->link_changes++;
 
-		अगर (lio->linfo.link.s.link_up) अणु
-			netअगर_carrier_on(netdev);
+		if (lio->linfo.link.s.link_up) {
+			netif_carrier_on(netdev);
 			wake_txqs(netdev);
-		पूर्ण अन्यथा अणु
-			netअगर_carrier_off(netdev);
+		} else {
+			netif_carrier_off(netdev);
 			stop_txqs(netdev);
-		पूर्ण
+		}
 
-		अगर (lio->linfo.link.s.mtu != current_max_mtu) अणु
+		if (lio->linfo.link.s.mtu != current_max_mtu) {
 			dev_info(&oct->pci_dev->dev,
 				 "Max MTU Changed from %d to %d\n",
 				 current_max_mtu, lio->linfo.link.s.mtu);
 			netdev->max_mtu = lio->linfo.link.s.mtu;
-		पूर्ण
+		}
 
-		अगर (lio->linfo.link.s.mtu < netdev->mtu) अणु
+		if (lio->linfo.link.s.mtu < netdev->mtu) {
 			dev_warn(&oct->pci_dev->dev,
 				 "Current MTU is higher than new max MTU; Reducing the current mtu from %d to %d\n",
 				 netdev->mtu, lio->linfo.link.s.mtu);
 			queue_delayed_work(lio->link_status_wq.wq,
 					   &lio->link_status_wq.wk.work, 0);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
 /**
  * liquidio_vf_probe - PCI probe handler
- * @pdev: PCI device काष्ठाure
+ * @pdev: PCI device structure
  * @ent: unused
  */
-अटल पूर्णांक
-liquidio_vf_probe(काष्ठा pci_dev *pdev,
-		  स्थिर काष्ठा pci_device_id __maybe_unused *ent)
-अणु
-	काष्ठा octeon_device *oct_dev = शून्य;
+static int
+liquidio_vf_probe(struct pci_dev *pdev,
+		  const struct pci_device_id __maybe_unused *ent)
+{
+	struct octeon_device *oct_dev = NULL;
 
 	oct_dev = octeon_allocate_device(pdev->device,
-					 माप(काष्ठा octeon_device_priv));
+					 sizeof(struct octeon_device_priv));
 
-	अगर (!oct_dev) अणु
+	if (!oct_dev) {
 		dev_err(&pdev->dev, "Unable to allocate device\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 	oct_dev->msix_on = LIO_FLAG_MSIX_ENABLED;
 
 	dev_info(&pdev->dev, "Initializing device %x:%x.\n",
-		 (u32)pdev->venकरोr, (u32)pdev->device);
+		 (u32)pdev->vendor, (u32)pdev->device);
 
-	/* Assign octeon_device क्रम this device to the निजी data area. */
+	/* Assign octeon_device for this device to the private data area. */
 	pci_set_drvdata(pdev, oct_dev);
 
-	/* set linux specअगरic device poपूर्णांकer */
+	/* set linux specific device pointer */
 	oct_dev->pci_dev = pdev;
 
-	oct_dev->subप्रणाली_id = pdev->subप्रणाली_venकरोr |
-		(pdev->subप्रणाली_device << 16);
+	oct_dev->subsystem_id = pdev->subsystem_vendor |
+		(pdev->subsystem_device << 16);
 
-	अगर (octeon_device_init(oct_dev)) अणु
-		liquidio_vf_हटाओ(pdev);
-		वापस -ENOMEM;
-	पूर्ण
+	if (octeon_device_init(oct_dev)) {
+		liquidio_vf_remove(pdev);
+		return -ENOMEM;
+	}
 
 	dev_dbg(&oct_dev->pci_dev->dev, "Device is ready\n");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * octeon_pci_flr - PCI FLR क्रम each Octeon device.
+ * octeon_pci_flr - PCI FLR for each Octeon device.
  * @oct: octeon device
  */
-अटल व्योम octeon_pci_flr(काष्ठा octeon_device *oct)
-अणु
+static void octeon_pci_flr(struct octeon_device *oct)
+{
 	pci_save_state(oct->pci_dev);
 
 	pci_cfg_access_lock(oct->pci_dev);
 
 	/* Quiesce the device completely */
-	pci_ग_लिखो_config_word(oct->pci_dev, PCI_COMMAND,
+	pci_write_config_word(oct->pci_dev, PCI_COMMAND,
 			      PCI_COMMAND_INTX_DISABLE);
 
 	pcie_flr(oct->pci_dev);
@@ -435,187 +434,187 @@ liquidio_vf_probe(काष्ठा pci_dev *pdev,
 	pci_cfg_access_unlock(oct->pci_dev);
 
 	pci_restore_state(oct->pci_dev);
-पूर्ण
+}
 
 /**
  * octeon_destroy_resources - Destroy resources associated with octeon device
  * @oct: octeon device
  */
-अटल व्योम octeon_destroy_resources(काष्ठा octeon_device *oct)
-अणु
-	काष्ठा octeon_device_priv *oct_priv =
-		(काष्ठा octeon_device_priv *)oct->priv;
-	काष्ठा msix_entry *msix_entries;
-	पूर्णांक i;
+static void octeon_destroy_resources(struct octeon_device *oct)
+{
+	struct octeon_device_priv *oct_priv =
+		(struct octeon_device_priv *)oct->priv;
+	struct msix_entry *msix_entries;
+	int i;
 
-	चयन (atomic_पढ़ो(&oct->status)) अणु
-	हाल OCT_DEV_RUNNING:
-	हाल OCT_DEV_CORE_OK:
-		/* No more inकाष्ठाions will be क्रमwarded. */
+	switch (atomic_read(&oct->status)) {
+	case OCT_DEV_RUNNING:
+	case OCT_DEV_CORE_OK:
+		/* No more instructions will be forwarded. */
 		atomic_set(&oct->status, OCT_DEV_IN_RESET);
 
 		oct->app_mode = CVM_DRV_INVALID_APP;
 		dev_dbg(&oct->pci_dev->dev, "Device state is now %s\n",
 			lio_get_state_string(&oct->status));
 
-		schedule_समयout_unपूर्णांकerruptible(HZ / 10);
+		schedule_timeout_uninterruptible(HZ / 10);
 
 		fallthrough;
-	हाल OCT_DEV_HOST_OK:
-	हाल OCT_DEV_IO_QUEUES_DONE:
-		अगर (lio_रुको_क्रम_instr_fetch(oct))
+	case OCT_DEV_HOST_OK:
+	case OCT_DEV_IO_QUEUES_DONE:
+		if (lio_wait_for_instr_fetch(oct))
 			dev_err(&oct->pci_dev->dev, "IQ had pending instructions\n");
 
-		अगर (रुको_क्रम_pending_requests(oct))
+		if (wait_for_pending_requests(oct))
 			dev_err(&oct->pci_dev->dev, "There were pending requests\n");
 
 		/* Disable the input and output queues now. No more packets will
-		 * arrive from Octeon, but we should रुको क्रम all packet
+		 * arrive from Octeon, but we should wait for all packet
 		 * processing to finish.
 		 */
 		oct->fn_list.disable_io_queues(oct);
 
-		अगर (lio_रुको_क्रम_oq_pkts(oct))
+		if (lio_wait_for_oq_pkts(oct))
 			dev_err(&oct->pci_dev->dev, "OQ had pending packets\n");
 
-		/* Force all requests रुकोing to be fetched by OCTEON to
+		/* Force all requests waiting to be fetched by OCTEON to
 		 * complete.
 		 */
-		क्रम (i = 0; i < MAX_OCTEON_INSTR_QUEUES(oct); i++) अणु
-			काष्ठा octeon_instr_queue *iq;
+		for (i = 0; i < MAX_OCTEON_INSTR_QUEUES(oct); i++) {
+			struct octeon_instr_queue *iq;
 
-			अगर (!(oct->io_qmask.iq & BIT_ULL(i)))
-				जारी;
+			if (!(oct->io_qmask.iq & BIT_ULL(i)))
+				continue;
 			iq = oct->instr_queue[i];
 
-			अगर (atomic_पढ़ो(&iq->instr_pending)) अणु
+			if (atomic_read(&iq->instr_pending)) {
 				spin_lock_bh(&iq->lock);
 				iq->fill_cnt = 0;
-				iq->octeon_पढ़ो_index = iq->host_ग_लिखो_index;
+				iq->octeon_read_index = iq->host_write_index;
 				iq->stats.instr_processed +=
-					atomic_पढ़ो(&iq->instr_pending);
+					atomic_read(&iq->instr_pending);
 				lio_process_iq_request_list(oct, iq, 0);
 				spin_unlock_bh(&iq->lock);
-			पूर्ण
-		पूर्ण
+			}
+		}
 
 		lio_process_ordered_list(oct, 1);
-		octeon_मुक्त_sc_करोne_list(oct);
-		octeon_मुक्त_sc_zombie_list(oct);
+		octeon_free_sc_done_list(oct);
+		octeon_free_sc_zombie_list(oct);
 
 		fallthrough;
-	हाल OCT_DEV_INTR_SET_DONE:
-		/* Disable पूर्णांकerrupts  */
-		oct->fn_list.disable_पूर्णांकerrupt(oct, OCTEON_ALL_INTR);
+	case OCT_DEV_INTR_SET_DONE:
+		/* Disable interrupts  */
+		oct->fn_list.disable_interrupt(oct, OCTEON_ALL_INTR);
 
-		अगर (oct->msix_on) अणु
-			msix_entries = (काष्ठा msix_entry *)oct->msix_entries;
-			क्रम (i = 0; i < oct->num_msix_irqs; i++) अणु
-				अगर (oct->ioq_vector[i].vector) अणु
-					irq_set_affinity_hपूर्णांक(
+		if (oct->msix_on) {
+			msix_entries = (struct msix_entry *)oct->msix_entries;
+			for (i = 0; i < oct->num_msix_irqs; i++) {
+				if (oct->ioq_vector[i].vector) {
+					irq_set_affinity_hint(
 							msix_entries[i].vector,
-							शून्य);
-					मुक्त_irq(msix_entries[i].vector,
+							NULL);
+					free_irq(msix_entries[i].vector,
 						 &oct->ioq_vector[i]);
 					oct->ioq_vector[i].vector = 0;
-				पूर्ण
-			पूर्ण
+				}
+			}
 			pci_disable_msix(oct->pci_dev);
-			kमुक्त(oct->msix_entries);
-			oct->msix_entries = शून्य;
-			kमुक्त(oct->irq_name_storage);
-			oct->irq_name_storage = शून्य;
-		पूर्ण
-		/* Soft reset the octeon device beक्रमe निकासing */
-		अगर (oct->pci_dev->reset_fn)
+			kfree(oct->msix_entries);
+			oct->msix_entries = NULL;
+			kfree(oct->irq_name_storage);
+			oct->irq_name_storage = NULL;
+		}
+		/* Soft reset the octeon device before exiting */
+		if (oct->pci_dev->reset_fn)
 			octeon_pci_flr(oct);
-		अन्यथा
-			cn23xx_vf_ask_pf_to_करो_flr(oct);
+		else
+			cn23xx_vf_ask_pf_to_do_flr(oct);
 
 		fallthrough;
-	हाल OCT_DEV_MSIX_ALLOC_VECTOR_DONE:
-		octeon_मुक्त_ioq_vector(oct);
+	case OCT_DEV_MSIX_ALLOC_VECTOR_DONE:
+		octeon_free_ioq_vector(oct);
 
 		fallthrough;
-	हाल OCT_DEV_MBOX_SETUP_DONE:
-		oct->fn_list.मुक्त_mbox(oct);
+	case OCT_DEV_MBOX_SETUP_DONE:
+		oct->fn_list.free_mbox(oct);
 
 		fallthrough;
-	हाल OCT_DEV_IN_RESET:
-	हाल OCT_DEV_DROQ_INIT_DONE:
+	case OCT_DEV_IN_RESET:
+	case OCT_DEV_DROQ_INIT_DONE:
 		mdelay(100);
-		क्रम (i = 0; i < MAX_OCTEON_OUTPUT_QUEUES(oct); i++) अणु
-			अगर (!(oct->io_qmask.oq & BIT_ULL(i)))
-				जारी;
+		for (i = 0; i < MAX_OCTEON_OUTPUT_QUEUES(oct); i++) {
+			if (!(oct->io_qmask.oq & BIT_ULL(i)))
+				continue;
 			octeon_delete_droq(oct, i);
-		पूर्ण
+		}
 
 		fallthrough;
-	हाल OCT_DEV_RESP_LIST_INIT_DONE:
+	case OCT_DEV_RESP_LIST_INIT_DONE:
 		octeon_delete_response_list(oct);
 
 		fallthrough;
-	हाल OCT_DEV_INSTR_QUEUE_INIT_DONE:
-		क्रम (i = 0; i < MAX_OCTEON_INSTR_QUEUES(oct); i++) अणु
-			अगर (!(oct->io_qmask.iq & BIT_ULL(i)))
-				जारी;
+	case OCT_DEV_INSTR_QUEUE_INIT_DONE:
+		for (i = 0; i < MAX_OCTEON_INSTR_QUEUES(oct); i++) {
+			if (!(oct->io_qmask.iq & BIT_ULL(i)))
+				continue;
 			octeon_delete_instr_queue(oct, i);
-		पूर्ण
+		}
 
 		fallthrough;
-	हाल OCT_DEV_SC_BUFF_POOL_INIT_DONE:
-		octeon_मुक्त_sc_buffer_pool(oct);
+	case OCT_DEV_SC_BUFF_POOL_INIT_DONE:
+		octeon_free_sc_buffer_pool(oct);
 
 		fallthrough;
-	हाल OCT_DEV_DISPATCH_INIT_DONE:
+	case OCT_DEV_DISPATCH_INIT_DONE:
 		octeon_delete_dispatch_list(oct);
 		cancel_delayed_work_sync(&oct->nic_poll_work.work);
 
 		fallthrough;
-	हाल OCT_DEV_PCI_MAP_DONE:
+	case OCT_DEV_PCI_MAP_DONE:
 		octeon_unmap_pci_barx(oct, 0);
 		octeon_unmap_pci_barx(oct, 1);
 
 		fallthrough;
-	हाल OCT_DEV_PCI_ENABLE_DONE:
+	case OCT_DEV_PCI_ENABLE_DONE:
 		pci_clear_master(oct->pci_dev);
 		/* Disable the device, releasing the PCI INT */
 		pci_disable_device(oct->pci_dev);
 
 		fallthrough;
-	हाल OCT_DEV_BEGIN_STATE:
-		/* Nothing to be करोne here either */
-		अवरोध;
-	पूर्ण
+	case OCT_DEV_BEGIN_STATE:
+		/* Nothing to be done here either */
+		break;
+	}
 
-	tasklet_समाप्त(&oct_priv->droq_tasklet);
-पूर्ण
+	tasklet_kill(&oct_priv->droq_tasklet);
+}
 
 /**
  * send_rx_ctrl_cmd - Send Rx control command
- * @lio: per-network निजी data
+ * @lio: per-network private data
  * @start_stop: whether to start or stop
  */
-अटल पूर्णांक send_rx_ctrl_cmd(काष्ठा lio *lio, पूर्णांक start_stop)
-अणु
-	काष्ठा octeon_device *oct = (काष्ठा octeon_device *)lio->oct_dev;
-	काष्ठा octeon_soft_command *sc;
-	जोड़ octnet_cmd *ncmd;
-	पूर्णांक retval;
+static int send_rx_ctrl_cmd(struct lio *lio, int start_stop)
+{
+	struct octeon_device *oct = (struct octeon_device *)lio->oct_dev;
+	struct octeon_soft_command *sc;
+	union octnet_cmd *ncmd;
+	int retval;
 
-	अगर (oct->props[lio->अगरidx].rx_on == start_stop)
-		वापस 0;
+	if (oct->props[lio->ifidx].rx_on == start_stop)
+		return 0;
 
-	sc = (काष्ठा octeon_soft_command *)
+	sc = (struct octeon_soft_command *)
 		octeon_alloc_soft_command(oct, OCTNET_CMD_SIZE,
 					  16, 0);
-	अगर (!sc) अणु
-		netअगर_info(lio, rx_err, lio->netdev,
+	if (!sc) {
+		netif_info(lio, rx_err, lio->netdev,
 			   "Failed to allocate octeon_soft_command struct\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	ncmd = (जोड़ octnet_cmd *)sc->virtdptr;
+	ncmd = (union octnet_cmd *)sc->virtdptr;
 
 	ncmd->u64 = 0;
 	ncmd->s.cmd = OCTNET_CMD_RX_CTL;
@@ -632,70 +631,70 @@ liquidio_vf_probe(काष्ठा pci_dev *pdev,
 	sc->sc_status = OCTEON_REQUEST_PENDING;
 
 	retval = octeon_send_soft_command(oct, sc);
-	अगर (retval == IQ_SEND_FAILED) अणु
-		netअगर_info(lio, rx_err, lio->netdev, "Failed to send RX Control message\n");
-		octeon_मुक्त_soft_command(oct, sc);
-	पूर्ण अन्यथा अणु
-		/* Sleep on a रुको queue till the cond flag indicates that the
-		 * response arrived or समयd-out.
+	if (retval == IQ_SEND_FAILED) {
+		netif_info(lio, rx_err, lio->netdev, "Failed to send RX Control message\n");
+		octeon_free_soft_command(oct, sc);
+	} else {
+		/* Sleep on a wait queue till the cond flag indicates that the
+		 * response arrived or timed-out.
 		 */
-		retval = रुको_क्रम_sc_completion_समयout(oct, sc, 0);
-		अगर (retval)
-			वापस retval;
+		retval = wait_for_sc_completion_timeout(oct, sc, 0);
+		if (retval)
+			return retval;
 
-		oct->props[lio->अगरidx].rx_on = start_stop;
-		WRITE_ONCE(sc->caller_is_करोne, true);
-	पूर्ण
+		oct->props[lio->ifidx].rx_on = start_stop;
+		WRITE_ONCE(sc->caller_is_done, true);
+	}
 
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
 /**
- * liquidio_destroy_nic_device - Destroy NIC device पूर्णांकerface
+ * liquidio_destroy_nic_device - Destroy NIC device interface
  * @oct: octeon device
- * @अगरidx: which पूर्णांकerface to destroy
+ * @ifidx: which interface to destroy
  *
- * Cleanup associated with each पूर्णांकerface क्रम an Octeon device  when NIC
- * module is being unloaded or अगर initialization fails during load.
+ * Cleanup associated with each interface for an Octeon device  when NIC
+ * module is being unloaded or if initialization fails during load.
  */
-अटल व्योम liquidio_destroy_nic_device(काष्ठा octeon_device *oct, पूर्णांक अगरidx)
-अणु
-	काष्ठा net_device *netdev = oct->props[अगरidx].netdev;
-	काष्ठा octeon_device_priv *oct_priv =
-		(काष्ठा octeon_device_priv *)oct->priv;
-	काष्ठा napi_काष्ठा *napi, *n;
-	काष्ठा lio *lio;
+static void liquidio_destroy_nic_device(struct octeon_device *oct, int ifidx)
+{
+	struct net_device *netdev = oct->props[ifidx].netdev;
+	struct octeon_device_priv *oct_priv =
+		(struct octeon_device_priv *)oct->priv;
+	struct napi_struct *napi, *n;
+	struct lio *lio;
 
-	अगर (!netdev) अणु
+	if (!netdev) {
 		dev_err(&oct->pci_dev->dev, "%s No netdevice ptr for index %d\n",
-			__func__, अगरidx);
-		वापस;
-	पूर्ण
+			__func__, ifidx);
+		return;
+	}
 
 	lio = GET_LIO(netdev);
 
 	dev_dbg(&oct->pci_dev->dev, "NIC device cleanup\n");
 
-	अगर (atomic_पढ़ो(&lio->अगरstate) & LIO_IFSTATE_RUNNING)
+	if (atomic_read(&lio->ifstate) & LIO_IFSTATE_RUNNING)
 		liquidio_stop(netdev);
 
-	अगर (oct->props[lio->अगरidx].napi_enabled == 1) अणु
-		list_क्रम_each_entry_safe(napi, n, &netdev->napi_list, dev_list)
+	if (oct->props[lio->ifidx].napi_enabled == 1) {
+		list_for_each_entry_safe(napi, n, &netdev->napi_list, dev_list)
 			napi_disable(napi);
 
-		oct->props[lio->अगरidx].napi_enabled = 0;
+		oct->props[lio->ifidx].napi_enabled = 0;
 
 		oct->droq[0]->ops.poll_mode = 0;
-	पूर्ण
+	}
 
 	/* Delete NAPI */
-	list_क्रम_each_entry_safe(napi, n, &netdev->napi_list, dev_list)
-		netअगर_napi_del(napi);
+	list_for_each_entry_safe(napi, n, &netdev->napi_list, dev_list)
+		netif_napi_del(napi);
 
 	tasklet_enable(&oct_priv->droq_tasklet);
 
-	अगर (atomic_पढ़ो(&lio->अगरstate) & LIO_IFSTATE_REGISTERED)
-		unरेजिस्टर_netdev(netdev);
+	if (atomic_read(&lio->ifstate) & LIO_IFSTATE_REGISTERED)
+		unregister_netdev(netdev);
 
 	cleanup_rx_oom_poll_fn(netdev);
 
@@ -703,134 +702,134 @@ liquidio_vf_probe(काष्ठा pci_dev *pdev,
 
 	lio_delete_glists(lio);
 
-	मुक्त_netdev(netdev);
+	free_netdev(netdev);
 
-	oct->props[अगरidx].gmxport = -1;
+	oct->props[ifidx].gmxport = -1;
 
-	oct->props[अगरidx].netdev = शून्य;
-पूर्ण
+	oct->props[ifidx].netdev = NULL;
+}
 
 /**
  * liquidio_stop_nic_module - Stop complete NIC functionality
  * @oct: octeon device
  */
-अटल पूर्णांक liquidio_stop_nic_module(काष्ठा octeon_device *oct)
-अणु
-	काष्ठा lio *lio;
-	पूर्णांक i, j;
+static int liquidio_stop_nic_module(struct octeon_device *oct)
+{
+	struct lio *lio;
+	int i, j;
 
 	dev_dbg(&oct->pci_dev->dev, "Stopping network interfaces\n");
-	अगर (!oct->अगरcount) अणु
+	if (!oct->ifcount) {
 		dev_err(&oct->pci_dev->dev, "Init for Octeon was not completed\n");
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 
 	spin_lock_bh(&oct->cmd_resp_wqlock);
 	oct->cmd_resp_state = OCT_DRV_OFFLINE;
 	spin_unlock_bh(&oct->cmd_resp_wqlock);
 
-	क्रम (i = 0; i < oct->अगरcount; i++) अणु
+	for (i = 0; i < oct->ifcount; i++) {
 		lio = GET_LIO(oct->props[i].netdev);
-		क्रम (j = 0; j < oct->num_oqs; j++)
-			octeon_unरेजिस्टर_droq_ops(oct,
+		for (j = 0; j < oct->num_oqs; j++)
+			octeon_unregister_droq_ops(oct,
 						   lio->linfo.rxpciq[j].s.q_no);
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < oct->अगरcount; i++)
+	for (i = 0; i < oct->ifcount; i++)
 		liquidio_destroy_nic_device(oct, i);
 
 	dev_dbg(&oct->pci_dev->dev, "Network interfaces stopped\n");
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * liquidio_vf_हटाओ - Cleans up resources at unload समय
- * @pdev: PCI device काष्ठाure
+ * liquidio_vf_remove - Cleans up resources at unload time
+ * @pdev: PCI device structure
  */
-अटल व्योम liquidio_vf_हटाओ(काष्ठा pci_dev *pdev)
-अणु
-	काष्ठा octeon_device *oct_dev = pci_get_drvdata(pdev);
+static void liquidio_vf_remove(struct pci_dev *pdev)
+{
+	struct octeon_device *oct_dev = pci_get_drvdata(pdev);
 
 	dev_dbg(&oct_dev->pci_dev->dev, "Stopping device\n");
 
-	अगर (oct_dev->app_mode == CVM_DRV_NIC_APP)
+	if (oct_dev->app_mode == CVM_DRV_NIC_APP)
 		liquidio_stop_nic_module(oct_dev);
 
-	/* Reset the octeon device and cleanup all memory allocated क्रम
+	/* Reset the octeon device and cleanup all memory allocated for
 	 * the octeon device by driver.
 	 */
 	octeon_destroy_resources(oct_dev);
 
 	dev_info(&oct_dev->pci_dev->dev, "Device removed\n");
 
-	/* This octeon device has been हटाओd. Update the global
-	 * data काष्ठाure to reflect this. Free the device काष्ठाure.
+	/* This octeon device has been removed. Update the global
+	 * data structure to reflect this. Free the device structure.
 	 */
-	octeon_मुक्त_device_mem(oct_dev);
-पूर्ण
+	octeon_free_device_mem(oct_dev);
+}
 
 /**
- * octeon_pci_os_setup - PCI initialization क्रम each Octeon device.
+ * octeon_pci_os_setup - PCI initialization for each Octeon device.
  * @oct: octeon device
  */
-अटल पूर्णांक octeon_pci_os_setup(काष्ठा octeon_device *oct)
-अणु
-#अगर_घोषित CONFIG_PCI_IOV
+static int octeon_pci_os_setup(struct octeon_device *oct)
+{
+#ifdef CONFIG_PCI_IOV
 	/* setup PCI stuff first */
-	अगर (!oct->pci_dev->physfn)
+	if (!oct->pci_dev->physfn)
 		octeon_pci_flr(oct);
-#पूर्ण_अगर
+#endif
 
-	अगर (pci_enable_device(oct->pci_dev)) अणु
+	if (pci_enable_device(oct->pci_dev)) {
 		dev_err(&oct->pci_dev->dev, "pci_enable_device failed\n");
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 
-	अगर (dma_set_mask_and_coherent(&oct->pci_dev->dev, DMA_BIT_MASK(64))) अणु
+	if (dma_set_mask_and_coherent(&oct->pci_dev->dev, DMA_BIT_MASK(64))) {
 		dev_err(&oct->pci_dev->dev, "Unexpected DMA device capability\n");
 		pci_disable_device(oct->pci_dev);
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 
 	/* Enable PCI DMA Master. */
 	pci_set_master(oct->pci_dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * मुक्त_netbuf - Unmap and मुक्त network buffer
+ * free_netbuf - Unmap and free network buffer
  * @buf: buffer
  */
-अटल व्योम मुक्त_netbuf(व्योम *buf)
-अणु
-	काष्ठा octnet_buf_मुक्त_info *finfo;
-	काष्ठा sk_buff *skb;
-	काष्ठा lio *lio;
+static void free_netbuf(void *buf)
+{
+	struct octnet_buf_free_info *finfo;
+	struct sk_buff *skb;
+	struct lio *lio;
 
-	finfo = (काष्ठा octnet_buf_मुक्त_info *)buf;
+	finfo = (struct octnet_buf_free_info *)buf;
 	skb = finfo->skb;
 	lio = finfo->lio;
 
 	dma_unmap_single(&lio->oct_dev->pci_dev->dev, finfo->dptr, skb->len,
 			 DMA_TO_DEVICE);
 
-	tx_buffer_मुक्त(skb);
-पूर्ण
+	tx_buffer_free(skb);
+}
 
 /**
- * मुक्त_netsgbuf - Unmap and मुक्त gather buffer
+ * free_netsgbuf - Unmap and free gather buffer
  * @buf: buffer
  */
-अटल व्योम मुक्त_netsgbuf(व्योम *buf)
-अणु
-	काष्ठा octnet_buf_मुक्त_info *finfo;
-	काष्ठा octnic_gather *g;
-	काष्ठा sk_buff *skb;
-	पूर्णांक i, frags, iq;
-	काष्ठा lio *lio;
+static void free_netsgbuf(void *buf)
+{
+	struct octnet_buf_free_info *finfo;
+	struct octnic_gather *g;
+	struct sk_buff *skb;
+	int i, frags, iq;
+	struct lio *lio;
 
-	finfo = (काष्ठा octnet_buf_मुक्त_info *)buf;
+	finfo = (struct octnet_buf_free_info *)buf;
 	skb = finfo->skb;
 	lio = finfo->lio;
 	g = finfo->g;
@@ -841,14 +840,14 @@ liquidio_vf_probe(काष्ठा pci_dev *pdev,
 			 DMA_TO_DEVICE);
 
 	i = 1;
-	जबतक (frags--) अणु
+	while (frags--) {
 		skb_frag_t *frag = &skb_shinfo(skb)->frags[i - 1];
 
 		pci_unmap_page((lio->oct_dev)->pci_dev,
 			       g->sg[(i >> 2)].ptr[(i & 3)],
 			       skb_frag_size(frag), DMA_TO_DEVICE);
 		i++;
-	पूर्ण
+	}
 
 	iq = skb_iq(lio->oct_dev, skb);
 
@@ -856,25 +855,25 @@ liquidio_vf_probe(काष्ठा pci_dev *pdev,
 	list_add_tail(&g->list, &lio->glist[iq]);
 	spin_unlock(&lio->glist_lock[iq]);
 
-	tx_buffer_मुक्त(skb);
-पूर्ण
+	tx_buffer_free(skb);
+}
 
 /**
- * मुक्त_netsgbuf_with_resp - Unmap and मुक्त gather buffer with response
+ * free_netsgbuf_with_resp - Unmap and free gather buffer with response
  * @buf: buffer
  */
-अटल व्योम मुक्त_netsgbuf_with_resp(व्योम *buf)
-अणु
-	काष्ठा octnet_buf_मुक्त_info *finfo;
-	काष्ठा octeon_soft_command *sc;
-	काष्ठा octnic_gather *g;
-	काष्ठा sk_buff *skb;
-	पूर्णांक i, frags, iq;
-	काष्ठा lio *lio;
+static void free_netsgbuf_with_resp(void *buf)
+{
+	struct octnet_buf_free_info *finfo;
+	struct octeon_soft_command *sc;
+	struct octnic_gather *g;
+	struct sk_buff *skb;
+	int i, frags, iq;
+	struct lio *lio;
 
-	sc = (काष्ठा octeon_soft_command *)buf;
-	skb = (काष्ठा sk_buff *)sc->callback_arg;
-	finfo = (काष्ठा octnet_buf_मुक्त_info *)&skb->cb;
+	sc = (struct octeon_soft_command *)buf;
+	skb = (struct sk_buff *)sc->callback_arg;
+	finfo = (struct octnet_buf_free_info *)&skb->cb;
 
 	lio = finfo->lio;
 	g = finfo->g;
@@ -885,14 +884,14 @@ liquidio_vf_probe(काष्ठा pci_dev *pdev,
 			 DMA_TO_DEVICE);
 
 	i = 1;
-	जबतक (frags--) अणु
+	while (frags--) {
 		skb_frag_t *frag = &skb_shinfo(skb)->frags[i - 1];
 
 		pci_unmap_page((lio->oct_dev)->pci_dev,
 			       g->sg[(i >> 2)].ptr[(i & 3)],
 			       skb_frag_size(frag), DMA_TO_DEVICE);
 		i++;
-	पूर्ण
+	}
 
 	iq = skb_iq(lio->oct_dev, skb);
 
@@ -900,161 +899,161 @@ liquidio_vf_probe(काष्ठा pci_dev *pdev,
 	list_add_tail(&g->list, &lio->glist[iq]);
 	spin_unlock(&lio->glist_lock[iq]);
 
-	/* Don't मुक्त the skb yet */
-पूर्ण
+	/* Don't free the skb yet */
+}
 
 /**
- * liquidio_खोलो - Net device खोलो क्रम LiquidIO
+ * liquidio_open - Net device open for LiquidIO
  * @netdev: network device
  */
-अटल पूर्णांक liquidio_खोलो(काष्ठा net_device *netdev)
-अणु
-	काष्ठा lio *lio = GET_LIO(netdev);
-	काष्ठा octeon_device *oct = lio->oct_dev;
-	काष्ठा octeon_device_priv *oct_priv =
-		(काष्ठा octeon_device_priv *)oct->priv;
-	काष्ठा napi_काष्ठा *napi, *n;
-	पूर्णांक ret = 0;
+static int liquidio_open(struct net_device *netdev)
+{
+	struct lio *lio = GET_LIO(netdev);
+	struct octeon_device *oct = lio->oct_dev;
+	struct octeon_device_priv *oct_priv =
+		(struct octeon_device_priv *)oct->priv;
+	struct napi_struct *napi, *n;
+	int ret = 0;
 
-	अगर (!oct->props[lio->अगरidx].napi_enabled) अणु
+	if (!oct->props[lio->ifidx].napi_enabled) {
 		tasklet_disable(&oct_priv->droq_tasklet);
 
-		list_क्रम_each_entry_safe(napi, n, &netdev->napi_list, dev_list)
+		list_for_each_entry_safe(napi, n, &netdev->napi_list, dev_list)
 			napi_enable(napi);
 
-		oct->props[lio->अगरidx].napi_enabled = 1;
+		oct->props[lio->ifidx].napi_enabled = 1;
 
 		oct->droq[0]->ops.poll_mode = 1;
-	पूर्ण
+	}
 
-	अगरstate_set(lio, LIO_IFSTATE_RUNNING);
+	ifstate_set(lio, LIO_IFSTATE_RUNNING);
 
-	/* Ready क्रम link status updates */
-	lio->पूर्णांकf_खोलो = 1;
+	/* Ready for link status updates */
+	lio->intf_open = 1;
 
-	netअगर_info(lio, अगरup, lio->netdev, "Interface Open, ready for traffic\n");
+	netif_info(lio, ifup, lio->netdev, "Interface Open, ready for traffic\n");
 	start_txqs(netdev);
 
 	INIT_DELAYED_WORK(&lio->stats_wk.work, lio_fetch_stats);
 	lio->stats_wk.ctxptr = lio;
-	schedule_delayed_work(&lio->stats_wk.work, msecs_to_jअगरfies
+	schedule_delayed_work(&lio->stats_wk.work, msecs_to_jiffies
 					(LIQUIDIO_NDEV_STATS_POLL_TIME_MS));
 
-	/* tell Octeon to start क्रमwarding packets to host */
+	/* tell Octeon to start forwarding packets to host */
 	ret = send_rx_ctrl_cmd(lio, 1);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	dev_info(&oct->pci_dev->dev, "%s interface is opened\n", netdev->name);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * liquidio_stop - jNet device stop क्रम LiquidIO
+ * liquidio_stop - jNet device stop for LiquidIO
  * @netdev: network device
  */
-अटल पूर्णांक liquidio_stop(काष्ठा net_device *netdev)
-अणु
-	काष्ठा lio *lio = GET_LIO(netdev);
-	काष्ठा octeon_device *oct = lio->oct_dev;
-	काष्ठा octeon_device_priv *oct_priv =
-		(काष्ठा octeon_device_priv *)oct->priv;
-	काष्ठा napi_काष्ठा *napi, *n;
-	पूर्णांक ret = 0;
+static int liquidio_stop(struct net_device *netdev)
+{
+	struct lio *lio = GET_LIO(netdev);
+	struct octeon_device *oct = lio->oct_dev;
+	struct octeon_device_priv *oct_priv =
+		(struct octeon_device_priv *)oct->priv;
+	struct napi_struct *napi, *n;
+	int ret = 0;
 
-	/* tell Octeon to stop क्रमwarding packets to host */
+	/* tell Octeon to stop forwarding packets to host */
 	ret = send_rx_ctrl_cmd(lio, 0);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	netअगर_info(lio, अगरकरोwn, lio->netdev, "Stopping interface!\n");
-	/* Inक्रमm that netअगर carrier is करोwn */
-	lio->पूर्णांकf_खोलो = 0;
+	netif_info(lio, ifdown, lio->netdev, "Stopping interface!\n");
+	/* Inform that netif carrier is down */
+	lio->intf_open = 0;
 	lio->linfo.link.s.link_up = 0;
 
-	netअगर_carrier_off(netdev);
+	netif_carrier_off(netdev);
 	lio->link_changes++;
 
-	अगरstate_reset(lio, LIO_IFSTATE_RUNNING);
+	ifstate_reset(lio, LIO_IFSTATE_RUNNING);
 
 	stop_txqs(netdev);
 
-	/* Wait क्रम any pending Rx descriptors */
-	अगर (lio_रुको_क्रम_clean_oq(oct))
-		netअगर_info(lio, rx_err, lio->netdev,
+	/* Wait for any pending Rx descriptors */
+	if (lio_wait_for_clean_oq(oct))
+		netif_info(lio, rx_err, lio->netdev,
 			   "Proceeding with stop interface after partial RX desc processing\n");
 
-	अगर (oct->props[lio->अगरidx].napi_enabled == 1) अणु
-		list_क्रम_each_entry_safe(napi, n, &netdev->napi_list, dev_list)
+	if (oct->props[lio->ifidx].napi_enabled == 1) {
+		list_for_each_entry_safe(napi, n, &netdev->napi_list, dev_list)
 			napi_disable(napi);
 
-		oct->props[lio->अगरidx].napi_enabled = 0;
+		oct->props[lio->ifidx].napi_enabled = 0;
 
 		oct->droq[0]->ops.poll_mode = 0;
 
 		tasklet_enable(&oct_priv->droq_tasklet);
-	पूर्ण
+	}
 
 	cancel_delayed_work_sync(&lio->stats_wk.work);
 
 	dev_info(&oct->pci_dev->dev, "%s interface is stopped\n", netdev->name);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
  * get_new_flags - Converts a mask based on net device flags
  * @netdev: network device
  *
- * This routine generates a octnet_अगरflags mask from the net device flags
+ * This routine generates a octnet_ifflags mask from the net device flags
  * received from the OS.
  */
-अटल क्रमागत octnet_अगरflags get_new_flags(काष्ठा net_device *netdev)
-अणु
-	क्रमागत octnet_अगरflags f = OCTNET_IFFLAG_UNICAST;
+static enum octnet_ifflags get_new_flags(struct net_device *netdev)
+{
+	enum octnet_ifflags f = OCTNET_IFFLAG_UNICAST;
 
-	अगर (netdev->flags & IFF_PROMISC)
+	if (netdev->flags & IFF_PROMISC)
 		f |= OCTNET_IFFLAG_PROMISC;
 
-	अगर (netdev->flags & IFF_ALLMULTI)
+	if (netdev->flags & IFF_ALLMULTI)
 		f |= OCTNET_IFFLAG_ALLMULTI;
 
-	अगर (netdev->flags & IFF_MULTICAST) अणु
+	if (netdev->flags & IFF_MULTICAST) {
 		f |= OCTNET_IFFLAG_MULTICAST;
 
-		/* Accept all multicast addresses अगर there are more than we
+		/* Accept all multicast addresses if there are more than we
 		 * can handle
 		 */
-		अगर (netdev_mc_count(netdev) > MAX_OCTEON_MULTICAST_ADDR)
+		if (netdev_mc_count(netdev) > MAX_OCTEON_MULTICAST_ADDR)
 			f |= OCTNET_IFFLAG_ALLMULTI;
-	पूर्ण
+	}
 
-	अगर (netdev->flags & IFF_BROADCAST)
+	if (netdev->flags & IFF_BROADCAST)
 		f |= OCTNET_IFFLAG_BROADCAST;
 
-	वापस f;
-पूर्ण
+	return f;
+}
 
-अटल व्योम liquidio_set_uc_list(काष्ठा net_device *netdev)
-अणु
-	काष्ठा lio *lio = GET_LIO(netdev);
-	काष्ठा octeon_device *oct = lio->oct_dev;
-	काष्ठा octnic_ctrl_pkt nctrl;
-	काष्ठा netdev_hw_addr *ha;
+static void liquidio_set_uc_list(struct net_device *netdev)
+{
+	struct lio *lio = GET_LIO(netdev);
+	struct octeon_device *oct = lio->oct_dev;
+	struct octnic_ctrl_pkt nctrl;
+	struct netdev_hw_addr *ha;
 	u64 *mac;
 
-	अगर (lio->netdev_uc_count == netdev_uc_count(netdev))
-		वापस;
+	if (lio->netdev_uc_count == netdev_uc_count(netdev))
+		return;
 
-	अगर (netdev_uc_count(netdev) > MAX_NCTRL_UDD) अणु
+	if (netdev_uc_count(netdev) > MAX_NCTRL_UDD) {
 		dev_err(&oct->pci_dev->dev, "too many MAC addresses in netdev uc list\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	lio->netdev_uc_count = netdev_uc_count(netdev);
 
-	स_रखो(&nctrl, 0, माप(काष्ठा octnic_ctrl_pkt));
+	memset(&nctrl, 0, sizeof(struct octnic_ctrl_pkt));
 	nctrl.ncmd.s.cmd = OCTNET_CMD_SET_UC_LIST;
 	nctrl.ncmd.s.more = lio->netdev_uc_count;
 	nctrl.ncmd.s.param1 = oct->vf_num;
@@ -1062,31 +1061,31 @@ liquidio_vf_probe(काष्ठा pci_dev *pdev,
 	nctrl.netpndev = (u64)netdev;
 	nctrl.cb_fn = liquidio_link_ctrl_cmd_completion;
 
-	/* copy all the addresses पूर्णांकo the udd */
+	/* copy all the addresses into the udd */
 	mac = &nctrl.udd[0];
-	netdev_क्रम_each_uc_addr(ha, netdev) अणु
+	netdev_for_each_uc_addr(ha, netdev) {
 		ether_addr_copy(((u8 *)mac) + 2, ha->addr);
 		mac++;
-	पूर्ण
+	}
 
 	octnet_send_nic_ctrl_pkt(lio->oct_dev, &nctrl);
-पूर्ण
+}
 
 /**
  * liquidio_set_mcast_list - Net device set_multicast_list
  * @netdev: network device
  */
-अटल व्योम liquidio_set_mcast_list(काष्ठा net_device *netdev)
-अणु
-	पूर्णांक mc_count = min(netdev_mc_count(netdev), MAX_OCTEON_MULTICAST_ADDR);
-	काष्ठा lio *lio = GET_LIO(netdev);
-	काष्ठा octeon_device *oct = lio->oct_dev;
-	काष्ठा octnic_ctrl_pkt nctrl;
-	काष्ठा netdev_hw_addr *ha;
+static void liquidio_set_mcast_list(struct net_device *netdev)
+{
+	int mc_count = min(netdev_mc_count(netdev), MAX_OCTEON_MULTICAST_ADDR);
+	struct lio *lio = GET_LIO(netdev);
+	struct octeon_device *oct = lio->oct_dev;
+	struct octnic_ctrl_pkt nctrl;
+	struct netdev_hw_addr *ha;
 	u64 *mc;
-	पूर्णांक ret;
+	int ret;
 
-	स_रखो(&nctrl, 0, माप(काष्ठा octnic_ctrl_pkt));
+	memset(&nctrl, 0, sizeof(struct octnic_ctrl_pkt));
 
 	/* Create a ctrl pkt command to be sent to core app. */
 	nctrl.ncmd.u64 = 0;
@@ -1097,54 +1096,54 @@ liquidio_vf_probe(काष्ठा pci_dev *pdev,
 	nctrl.netpndev = (u64)netdev;
 	nctrl.cb_fn = liquidio_link_ctrl_cmd_completion;
 
-	/* copy all the addresses पूर्णांकo the udd */
+	/* copy all the addresses into the udd */
 	mc = &nctrl.udd[0];
-	netdev_क्रम_each_mc_addr(ha, netdev) अणु
+	netdev_for_each_mc_addr(ha, netdev) {
 		*mc = 0;
 		ether_addr_copy(((u8 *)mc) + 2, ha->addr);
 		/* no need to swap bytes */
-		अगर (++mc > &nctrl.udd[mc_count])
-			अवरोध;
-	पूर्ण
+		if (++mc > &nctrl.udd[mc_count])
+			break;
+	}
 
 	nctrl.iq_no = lio->linfo.txpciq[0].s.q_no;
 
 	/* Apparently, any activity in this call from the kernel has to
-	 * be atomic. So we won't रुको क्रम response.
+	 * be atomic. So we won't wait for response.
 	 */
 
 	ret = octnet_send_nic_ctrl_pkt(lio->oct_dev, &nctrl);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&oct->pci_dev->dev, "DEVFLAGS change failed in core (ret: 0x%x)\n",
 			ret);
-	पूर्ण
+	}
 
 	liquidio_set_uc_list(netdev);
-पूर्ण
+}
 
 /**
  * liquidio_set_mac - Net device set_mac_address
  * @netdev: network device
- * @p: opaque poपूर्णांकer to sockaddr
+ * @p: opaque pointer to sockaddr
  */
-अटल पूर्णांक liquidio_set_mac(काष्ठा net_device *netdev, व्योम *p)
-अणु
-	काष्ठा sockaddr *addr = (काष्ठा sockaddr *)p;
-	काष्ठा lio *lio = GET_LIO(netdev);
-	काष्ठा octeon_device *oct = lio->oct_dev;
-	काष्ठा octnic_ctrl_pkt nctrl;
-	पूर्णांक ret = 0;
+static int liquidio_set_mac(struct net_device *netdev, void *p)
+{
+	struct sockaddr *addr = (struct sockaddr *)p;
+	struct lio *lio = GET_LIO(netdev);
+	struct octeon_device *oct = lio->oct_dev;
+	struct octnic_ctrl_pkt nctrl;
+	int ret = 0;
 
-	अगर (!is_valid_ether_addr(addr->sa_data))
-		वापस -EADDRNOTAVAIL;
+	if (!is_valid_ether_addr(addr->sa_data))
+		return -EADDRNOTAVAIL;
 
-	अगर (ether_addr_equal(addr->sa_data, netdev->dev_addr))
-		वापस 0;
+	if (ether_addr_equal(addr->sa_data, netdev->dev_addr))
+		return 0;
 
-	अगर (lio->linfo.macaddr_is_admin_asgnd)
-		वापस -EPERM;
+	if (lio->linfo.macaddr_is_admin_asgnd)
+		return -EPERM;
 
-	स_रखो(&nctrl, 0, माप(काष्ठा octnic_ctrl_pkt));
+	memset(&nctrl, 0, sizeof(struct octnic_ctrl_pkt));
 
 	nctrl.ncmd.u64 = 0;
 	nctrl.ncmd.s.cmd = OCTNET_CMD_CHANGE_MACADDR;
@@ -1158,46 +1157,46 @@ liquidio_vf_probe(काष्ठा pci_dev *pdev,
 	ether_addr_copy((u8 *)&nctrl.udd[0] + 2, addr->sa_data);
 
 	ret = octnet_send_nic_ctrl_pkt(lio->oct_dev, &nctrl);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(&oct->pci_dev->dev, "MAC Address change failed\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	अगर (nctrl.sc_status ==
-	    FIRMWARE_STATUS_CODE(OCTEON_REQUEST_NO_PERMISSION)) अणु
+	if (nctrl.sc_status ==
+	    FIRMWARE_STATUS_CODE(OCTEON_REQUEST_NO_PERMISSION)) {
 		dev_err(&oct->pci_dev->dev, "MAC Address change failed: no permission\n");
-		वापस -EPERM;
-	पूर्ण
+		return -EPERM;
+	}
 
-	स_नकल(netdev->dev_addr, addr->sa_data, netdev->addr_len);
+	memcpy(netdev->dev_addr, addr->sa_data, netdev->addr_len);
 	ether_addr_copy(((u8 *)&lio->linfo.hw_addr) + 2, addr->sa_data);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम
-liquidio_get_stats64(काष्ठा net_device *netdev,
-		     काष्ठा rtnl_link_stats64 *lstats)
-अणु
-	काष्ठा lio *lio = GET_LIO(netdev);
-	काष्ठा octeon_device *oct;
+static void
+liquidio_get_stats64(struct net_device *netdev,
+		     struct rtnl_link_stats64 *lstats)
+{
+	struct lio *lio = GET_LIO(netdev);
+	struct octeon_device *oct;
 	u64 pkts = 0, drop = 0, bytes = 0;
-	काष्ठा oct_droq_stats *oq_stats;
-	काष्ठा oct_iq_stats *iq_stats;
-	पूर्णांक i, iq_no, oq_no;
+	struct oct_droq_stats *oq_stats;
+	struct oct_iq_stats *iq_stats;
+	int i, iq_no, oq_no;
 
 	oct = lio->oct_dev;
 
-	अगर (अगरstate_check(lio, LIO_IFSTATE_RESETTING))
-		वापस;
+	if (ifstate_check(lio, LIO_IFSTATE_RESETTING))
+		return;
 
-	क्रम (i = 0; i < oct->num_iqs; i++) अणु
+	for (i = 0; i < oct->num_iqs; i++) {
 		iq_no = lio->linfo.txpciq[i].s.q_no;
 		iq_stats = &oct->instr_queue[iq_no]->stats;
-		pkts += iq_stats->tx_करोne;
+		pkts += iq_stats->tx_done;
 		drop += iq_stats->tx_dropped;
 		bytes += iq_stats->tx_tot_bytes;
-	पूर्ण
+	}
 
 	lstats->tx_packets = pkts;
 	lstats->tx_bytes = bytes;
@@ -1207,7 +1206,7 @@ liquidio_get_stats64(काष्ठा net_device *netdev,
 	drop = 0;
 	bytes = 0;
 
-	क्रम (i = 0; i < oct->num_oqs; i++) अणु
+	for (i = 0; i < oct->num_oqs; i++) {
 		oq_no = lio->linfo.rxpciq[i].s.q_no;
 		oq_stats = &oct->droq[oq_no]->stats;
 		pkts += oq_stats->rx_pkts_received;
@@ -1216,7 +1215,7 @@ liquidio_get_stats64(काष्ठा net_device *netdev,
 			 oq_stats->dropped_toomany +
 			 oq_stats->dropped_nomem);
 		bytes += oq_stats->rx_bytes_received;
-	पूर्ण
+	}
 
 	lstats->rx_bytes = bytes;
 	lstats->rx_packets = pkts;
@@ -1235,200 +1234,200 @@ liquidio_get_stats64(काष्ठा net_device *netdev,
 			    lstats->rx_frame_errors;
 
 	/* detailed tx_errors */
-	lstats->tx_पातed_errors = oct->link_stats.fromhost.fw_err_pko;
+	lstats->tx_aborted_errors = oct->link_stats.fromhost.fw_err_pko;
 	lstats->tx_carrier_errors = oct->link_stats.fromhost.fw_err_link;
 
-	lstats->tx_errors = lstats->tx_पातed_errors +
+	lstats->tx_errors = lstats->tx_aborted_errors +
 		lstats->tx_carrier_errors;
-पूर्ण
+}
 
 /**
- * hwtstamp_ioctl - Handler क्रम SIOCSHWTSTAMP ioctl
+ * hwtstamp_ioctl - Handler for SIOCSHWTSTAMP ioctl
  * @netdev: network device
- * @अगरr: पूर्णांकerface request
+ * @ifr: interface request
  */
-अटल पूर्णांक hwtstamp_ioctl(काष्ठा net_device *netdev, काष्ठा अगरreq *अगरr)
-अणु
-	काष्ठा lio *lio = GET_LIO(netdev);
-	काष्ठा hwtstamp_config conf;
+static int hwtstamp_ioctl(struct net_device *netdev, struct ifreq *ifr)
+{
+	struct lio *lio = GET_LIO(netdev);
+	struct hwtstamp_config conf;
 
-	अगर (copy_from_user(&conf, अगरr->अगरr_data, माप(conf)))
-		वापस -EFAULT;
+	if (copy_from_user(&conf, ifr->ifr_data, sizeof(conf)))
+		return -EFAULT;
 
-	अगर (conf.flags)
-		वापस -EINVAL;
+	if (conf.flags)
+		return -EINVAL;
 
-	चयन (conf.tx_type) अणु
-	हाल HWTSTAMP_TX_ON:
-	हाल HWTSTAMP_TX_OFF:
-		अवरोध;
-	शेष:
-		वापस -दुस्फल;
-	पूर्ण
+	switch (conf.tx_type) {
+	case HWTSTAMP_TX_ON:
+	case HWTSTAMP_TX_OFF:
+		break;
+	default:
+		return -ERANGE;
+	}
 
-	चयन (conf.rx_filter) अणु
-	हाल HWTSTAMP_FILTER_NONE:
-		अवरोध;
-	हाल HWTSTAMP_FILTER_ALL:
-	हाल HWTSTAMP_FILTER_SOME:
-	हाल HWTSTAMP_FILTER_PTP_V1_L4_EVENT:
-	हाल HWTSTAMP_FILTER_PTP_V1_L4_SYNC:
-	हाल HWTSTAMP_FILTER_PTP_V1_L4_DELAY_REQ:
-	हाल HWTSTAMP_FILTER_PTP_V2_L4_EVENT:
-	हाल HWTSTAMP_FILTER_PTP_V2_L4_SYNC:
-	हाल HWTSTAMP_FILTER_PTP_V2_L4_DELAY_REQ:
-	हाल HWTSTAMP_FILTER_PTP_V2_L2_EVENT:
-	हाल HWTSTAMP_FILTER_PTP_V2_L2_SYNC:
-	हाल HWTSTAMP_FILTER_PTP_V2_L2_DELAY_REQ:
-	हाल HWTSTAMP_FILTER_PTP_V2_EVENT:
-	हाल HWTSTAMP_FILTER_PTP_V2_SYNC:
-	हाल HWTSTAMP_FILTER_PTP_V2_DELAY_REQ:
-	हाल HWTSTAMP_FILTER_NTP_ALL:
+	switch (conf.rx_filter) {
+	case HWTSTAMP_FILTER_NONE:
+		break;
+	case HWTSTAMP_FILTER_ALL:
+	case HWTSTAMP_FILTER_SOME:
+	case HWTSTAMP_FILTER_PTP_V1_L4_EVENT:
+	case HWTSTAMP_FILTER_PTP_V1_L4_SYNC:
+	case HWTSTAMP_FILTER_PTP_V1_L4_DELAY_REQ:
+	case HWTSTAMP_FILTER_PTP_V2_L4_EVENT:
+	case HWTSTAMP_FILTER_PTP_V2_L4_SYNC:
+	case HWTSTAMP_FILTER_PTP_V2_L4_DELAY_REQ:
+	case HWTSTAMP_FILTER_PTP_V2_L2_EVENT:
+	case HWTSTAMP_FILTER_PTP_V2_L2_SYNC:
+	case HWTSTAMP_FILTER_PTP_V2_L2_DELAY_REQ:
+	case HWTSTAMP_FILTER_PTP_V2_EVENT:
+	case HWTSTAMP_FILTER_PTP_V2_SYNC:
+	case HWTSTAMP_FILTER_PTP_V2_DELAY_REQ:
+	case HWTSTAMP_FILTER_NTP_ALL:
 		conf.rx_filter = HWTSTAMP_FILTER_ALL;
-		अवरोध;
-	शेष:
-		वापस -दुस्फल;
-	पूर्ण
+		break;
+	default:
+		return -ERANGE;
+	}
 
-	अगर (conf.rx_filter == HWTSTAMP_FILTER_ALL)
-		अगरstate_set(lio, LIO_IFSTATE_RX_TIMESTAMP_ENABLED);
+	if (conf.rx_filter == HWTSTAMP_FILTER_ALL)
+		ifstate_set(lio, LIO_IFSTATE_RX_TIMESTAMP_ENABLED);
 
-	अन्यथा
-		अगरstate_reset(lio, LIO_IFSTATE_RX_TIMESTAMP_ENABLED);
+	else
+		ifstate_reset(lio, LIO_IFSTATE_RX_TIMESTAMP_ENABLED);
 
-	वापस copy_to_user(अगरr->अगरr_data, &conf, माप(conf)) ? -EFAULT : 0;
-पूर्ण
+	return copy_to_user(ifr->ifr_data, &conf, sizeof(conf)) ? -EFAULT : 0;
+}
 
 /**
  * liquidio_ioctl - ioctl handler
  * @netdev: network device
- * @अगरr: पूर्णांकerface request
+ * @ifr: interface request
  * @cmd: command
  */
-अटल पूर्णांक liquidio_ioctl(काष्ठा net_device *netdev, काष्ठा अगरreq *अगरr, पूर्णांक cmd)
-अणु
-	चयन (cmd) अणु
-	हाल SIOCSHWTSTAMP:
-		वापस hwtstamp_ioctl(netdev, अगरr);
-	शेष:
-		वापस -EOPNOTSUPP;
-	पूर्ण
-पूर्ण
+static int liquidio_ioctl(struct net_device *netdev, struct ifreq *ifr, int cmd)
+{
+	switch (cmd) {
+	case SIOCSHWTSTAMP:
+		return hwtstamp_ioctl(netdev, ifr);
+	default:
+		return -EOPNOTSUPP;
+	}
+}
 
-अटल व्योम handle_बारtamp(काष्ठा octeon_device *oct, u32 status, व्योम *buf)
-अणु
-	काष्ठा sk_buff *skb = (काष्ठा sk_buff *)buf;
-	काष्ठा octnet_buf_मुक्त_info *finfo;
-	काष्ठा oct_बारtamp_resp *resp;
-	काष्ठा octeon_soft_command *sc;
-	काष्ठा lio *lio;
+static void handle_timestamp(struct octeon_device *oct, u32 status, void *buf)
+{
+	struct sk_buff *skb = (struct sk_buff *)buf;
+	struct octnet_buf_free_info *finfo;
+	struct oct_timestamp_resp *resp;
+	struct octeon_soft_command *sc;
+	struct lio *lio;
 
-	finfo = (काष्ठा octnet_buf_मुक्त_info *)skb->cb;
+	finfo = (struct octnet_buf_free_info *)skb->cb;
 	lio = finfo->lio;
 	sc = finfo->sc;
 	oct = lio->oct_dev;
-	resp = (काष्ठा oct_बारtamp_resp *)sc->virtrptr;
+	resp = (struct oct_timestamp_resp *)sc->virtrptr;
 
-	अगर (status != OCTEON_REQUEST_DONE) अणु
+	if (status != OCTEON_REQUEST_DONE) {
 		dev_err(&oct->pci_dev->dev, "Tx timestamp instruction failed. Status: %llx\n",
 			CVM_CAST64(status));
-		resp->बारtamp = 0;
-	पूर्ण
+		resp->timestamp = 0;
+	}
 
-	octeon_swap_8B_data(&resp->बारtamp, 1);
+	octeon_swap_8B_data(&resp->timestamp, 1);
 
-	अगर (unlikely(skb_shinfo(skb)->tx_flags & SKBTX_IN_PROGRESS)) अणु
-		काष्ठा skb_shared_hwtstamps ts;
-		u64 ns = resp->बारtamp;
+	if (unlikely(skb_shinfo(skb)->tx_flags & SKBTX_IN_PROGRESS)) {
+		struct skb_shared_hwtstamps ts;
+		u64 ns = resp->timestamp;
 
-		netअगर_info(lio, tx_करोne, lio->netdev,
+		netif_info(lio, tx_done, lio->netdev,
 			   "Got resulting SKBTX_HW_TSTAMP skb=%p ns=%016llu\n",
-			   skb, (अचिन्हित दीर्घ दीर्घ)ns);
-		ts.hwtstamp = ns_to_kसमय(ns + lio->ptp_adjust);
+			   skb, (unsigned long long)ns);
+		ts.hwtstamp = ns_to_ktime(ns + lio->ptp_adjust);
 		skb_tstamp_tx(skb, &ts);
-	पूर्ण
+	}
 
-	octeon_मुक्त_soft_command(oct, sc);
-	tx_buffer_मुक्त(skb);
-पूर्ण
+	octeon_free_soft_command(oct, sc);
+	tx_buffer_free(skb);
+}
 
-/* send_nic_बारtamp_pkt - Send a data packet that will be बारtamped
+/* send_nic_timestamp_pkt - Send a data packet that will be timestamped
  * @oct: octeon device
- * @ndata: poपूर्णांकer to network data
- * @finfo: poपूर्णांकer to निजी network data
+ * @ndata: pointer to network data
+ * @finfo: pointer to private network data
  */
-अटल पूर्णांक send_nic_बारtamp_pkt(काष्ठा octeon_device *oct,
-				  काष्ठा octnic_data_pkt *ndata,
-				  काष्ठा octnet_buf_मुक्त_info *finfo,
-				  पूर्णांक xmit_more)
-अणु
-	काष्ठा octeon_soft_command *sc;
-	पूर्णांक ring_करोorbell;
-	काष्ठा lio *lio;
-	पूर्णांक retval;
+static int send_nic_timestamp_pkt(struct octeon_device *oct,
+				  struct octnic_data_pkt *ndata,
+				  struct octnet_buf_free_info *finfo,
+				  int xmit_more)
+{
+	struct octeon_soft_command *sc;
+	int ring_doorbell;
+	struct lio *lio;
+	int retval;
 	u32 len;
 
 	lio = finfo->lio;
 
 	sc = octeon_alloc_soft_command_resp(oct, &ndata->cmd,
-					    माप(काष्ठा oct_बारtamp_resp));
+					    sizeof(struct oct_timestamp_resp));
 	finfo->sc = sc;
 
-	अगर (!sc) अणु
+	if (!sc) {
 		dev_err(&oct->pci_dev->dev, "No memory for timestamped data packet\n");
-		वापस IQ_SEND_FAILED;
-	पूर्ण
+		return IQ_SEND_FAILED;
+	}
 
-	अगर (ndata->reqtype == REQTYPE_NORESP_NET)
+	if (ndata->reqtype == REQTYPE_NORESP_NET)
 		ndata->reqtype = REQTYPE_RESP_NET;
-	अन्यथा अगर (ndata->reqtype == REQTYPE_NORESP_NET_SG)
+	else if (ndata->reqtype == REQTYPE_NORESP_NET_SG)
 		ndata->reqtype = REQTYPE_RESP_NET_SG;
 
-	sc->callback = handle_बारtamp;
+	sc->callback = handle_timestamp;
 	sc->callback_arg = finfo->skb;
 	sc->iq_no = ndata->q_no;
 
-	len = (u32)((काष्ठा octeon_instr_ih3 *)(&sc->cmd.cmd3.ih3))->dlengsz;
+	len = (u32)((struct octeon_instr_ih3 *)(&sc->cmd.cmd3.ih3))->dlengsz;
 
-	ring_करोorbell = !xmit_more;
+	ring_doorbell = !xmit_more;
 
-	retval = octeon_send_command(oct, sc->iq_no, ring_करोorbell, &sc->cmd,
+	retval = octeon_send_command(oct, sc->iq_no, ring_doorbell, &sc->cmd,
 				     sc, len, ndata->reqtype);
 
-	अगर (retval == IQ_SEND_FAILED) अणु
+	if (retval == IQ_SEND_FAILED) {
 		dev_err(&oct->pci_dev->dev, "timestamp data packet failed status: %x\n",
 			retval);
-		octeon_मुक्त_soft_command(oct, sc);
-	पूर्ण अन्यथा अणु
-		netअगर_info(lio, tx_queued, lio->netdev, "Queued timestamp packet\n");
-	पूर्ण
+		octeon_free_soft_command(oct, sc);
+	} else {
+		netif_info(lio, tx_queued, lio->netdev, "Queued timestamp packet\n");
+	}
 
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
 /**
- * liquidio_xmit - Transmit networks packets to the Octeon पूर्णांकerface
- * @skb: skbuff काष्ठा to be passed to network layer.
- * @netdev: poपूर्णांकer to network device
- * @वापसs whether the packet was transmitted to the device okay or not
+ * liquidio_xmit - Transmit networks packets to the Octeon interface
+ * @skb: skbuff struct to be passed to network layer.
+ * @netdev: pointer to network device
+ * @returns whether the packet was transmitted to the device okay or not
  *             (NETDEV_TX_OK or NETDEV_TX_BUSY)
  */
-अटल netdev_tx_t liquidio_xmit(काष्ठा sk_buff *skb, काष्ठा net_device *netdev)
-अणु
-	काष्ठा octnet_buf_मुक्त_info *finfo;
-	जोड़ octnic_cmd_setup cmdsetup;
-	काष्ठा octnic_data_pkt ndata;
-	काष्ठा octeon_instr_irh *irh;
-	काष्ठा oct_iq_stats *stats;
-	काष्ठा octeon_device *oct;
-	पूर्णांक q_idx = 0, iq_no = 0;
-	जोड़ tx_info *tx_info;
-	पूर्णांक xmit_more = 0;
-	काष्ठा lio *lio;
-	पूर्णांक status = 0;
+static netdev_tx_t liquidio_xmit(struct sk_buff *skb, struct net_device *netdev)
+{
+	struct octnet_buf_free_info *finfo;
+	union octnic_cmd_setup cmdsetup;
+	struct octnic_data_pkt ndata;
+	struct octeon_instr_irh *irh;
+	struct oct_iq_stats *stats;
+	struct octeon_device *oct;
+	int q_idx = 0, iq_no = 0;
+	union tx_info *tx_info;
+	int xmit_more = 0;
+	struct lio *lio;
+	int status = 0;
 	u64 dptr = 0;
 	u32 tag = 0;
-	पूर्णांक j;
+	int j;
 
 	lio = GET_LIO(netdev);
 	oct = lio->oct_dev;
@@ -1439,139 +1438,139 @@ liquidio_get_stats64(काष्ठा net_device *netdev,
 
 	stats = &oct->instr_queue[iq_no]->stats;
 
-	/* Check क्रम all conditions in which the current packet cannot be
+	/* Check for all conditions in which the current packet cannot be
 	 * transmitted.
 	 */
-	अगर (!(atomic_पढ़ो(&lio->अगरstate) & LIO_IFSTATE_RUNNING) ||
-	    (!lio->linfo.link.s.link_up) || (skb->len <= 0)) अणु
-		netअगर_info(lio, tx_err, lio->netdev, "Transmit failed link_status : %d\n",
+	if (!(atomic_read(&lio->ifstate) & LIO_IFSTATE_RUNNING) ||
+	    (!lio->linfo.link.s.link_up) || (skb->len <= 0)) {
+		netif_info(lio, tx_err, lio->netdev, "Transmit failed link_status : %d\n",
 			   lio->linfo.link.s.link_up);
-		जाओ lio_xmit_failed;
-	पूर्ण
+		goto lio_xmit_failed;
+	}
 
 	/* Use space in skb->cb to store info used to unmap and
-	 * मुक्त the buffers.
+	 * free the buffers.
 	 */
-	finfo = (काष्ठा octnet_buf_मुक्त_info *)skb->cb;
+	finfo = (struct octnet_buf_free_info *)skb->cb;
 	finfo->lio = lio;
 	finfo->skb = skb;
-	finfo->sc = शून्य;
+	finfo->sc = NULL;
 
-	/* Prepare the attributes क्रम the data to be passed to OSI. */
-	स_रखो(&ndata, 0, माप(काष्ठा octnic_data_pkt));
+	/* Prepare the attributes for the data to be passed to OSI. */
+	memset(&ndata, 0, sizeof(struct octnic_data_pkt));
 
 	ndata.buf = finfo;
 
 	ndata.q_no = iq_no;
 
-	अगर (octnet_iq_is_full(oct, ndata.q_no)) अणु
-		/* defer sending अगर queue is full */
-		netअगर_info(lio, tx_err, lio->netdev, "Transmit failed iq:%d full\n",
+	if (octnet_iq_is_full(oct, ndata.q_no)) {
+		/* defer sending if queue is full */
+		netif_info(lio, tx_err, lio->netdev, "Transmit failed iq:%d full\n",
 			   ndata.q_no);
 		stats->tx_iq_busy++;
-		वापस NETDEV_TX_BUSY;
-	पूर्ण
+		return NETDEV_TX_BUSY;
+	}
 
 	ndata.datasize = skb->len;
 
 	cmdsetup.u64 = 0;
 	cmdsetup.s.iq_no = iq_no;
 
-	अगर (skb->ip_summed == CHECKSUM_PARTIAL) अणु
-		अगर (skb->encapsulation) अणु
+	if (skb->ip_summed == CHECKSUM_PARTIAL) {
+		if (skb->encapsulation) {
 			cmdsetup.s.tnl_csum = 1;
 			stats->tx_vxlan++;
-		पूर्ण अन्यथा अणु
+		} else {
 			cmdsetup.s.transport_csum = 1;
-		पूर्ण
-	पूर्ण
-	अगर (unlikely(skb_shinfo(skb)->tx_flags & SKBTX_HW_TSTAMP)) अणु
+		}
+	}
+	if (unlikely(skb_shinfo(skb)->tx_flags & SKBTX_HW_TSTAMP)) {
 		skb_shinfo(skb)->tx_flags |= SKBTX_IN_PROGRESS;
-		cmdsetup.s.बारtamp = 1;
-	पूर्ण
+		cmdsetup.s.timestamp = 1;
+	}
 
-	अगर (!skb_shinfo(skb)->nr_frags) अणु
+	if (!skb_shinfo(skb)->nr_frags) {
 		cmdsetup.s.u.datasize = skb->len;
 		octnet_prepare_pci_cmd(oct, &ndata.cmd, &cmdsetup, tag);
-		/* Offload checksum calculation क्रम TCP/UDP packets */
+		/* Offload checksum calculation for TCP/UDP packets */
 		dptr = dma_map_single(&oct->pci_dev->dev,
 				      skb->data,
 				      skb->len,
 				      DMA_TO_DEVICE);
-		अगर (dma_mapping_error(&oct->pci_dev->dev, dptr)) अणु
+		if (dma_mapping_error(&oct->pci_dev->dev, dptr)) {
 			dev_err(&oct->pci_dev->dev, "%s DMA mapping error 1\n",
 				__func__);
-			वापस NETDEV_TX_BUSY;
-		पूर्ण
+			return NETDEV_TX_BUSY;
+		}
 
 		ndata.cmd.cmd3.dptr = dptr;
 		finfo->dptr = dptr;
 		ndata.reqtype = REQTYPE_NORESP_NET;
 
-	पूर्ण अन्यथा अणु
+	} else {
 		skb_frag_t *frag;
-		काष्ठा octnic_gather *g;
-		पूर्णांक i, frags;
+		struct octnic_gather *g;
+		int i, frags;
 
 		spin_lock(&lio->glist_lock[q_idx]);
-		g = (काष्ठा octnic_gather *)
+		g = (struct octnic_gather *)
 			lio_list_delete_head(&lio->glist[q_idx]);
 		spin_unlock(&lio->glist_lock[q_idx]);
 
-		अगर (!g) अणु
-			netअगर_info(lio, tx_err, lio->netdev,
+		if (!g) {
+			netif_info(lio, tx_err, lio->netdev,
 				   "Transmit scatter gather: glist null!\n");
-			जाओ lio_xmit_failed;
-		पूर्ण
+			goto lio_xmit_failed;
+		}
 
 		cmdsetup.s.gather = 1;
 		cmdsetup.s.u.gatherptrs = (skb_shinfo(skb)->nr_frags + 1);
 		octnet_prepare_pci_cmd(oct, &ndata.cmd, &cmdsetup, tag);
 
-		स_रखो(g->sg, 0, g->sg_size);
+		memset(g->sg, 0, g->sg_size);
 
 		g->sg[0].ptr[0] = dma_map_single(&oct->pci_dev->dev,
 						 skb->data,
 						 (skb->len - skb->data_len),
 						 DMA_TO_DEVICE);
-		अगर (dma_mapping_error(&oct->pci_dev->dev, g->sg[0].ptr[0])) अणु
+		if (dma_mapping_error(&oct->pci_dev->dev, g->sg[0].ptr[0])) {
 			dev_err(&oct->pci_dev->dev, "%s DMA mapping error 2\n",
 				__func__);
-			वापस NETDEV_TX_BUSY;
-		पूर्ण
+			return NETDEV_TX_BUSY;
+		}
 		add_sg_size(&g->sg[0], (skb->len - skb->data_len), 0);
 
 		frags = skb_shinfo(skb)->nr_frags;
 		i = 1;
-		जबतक (frags--) अणु
+		while (frags--) {
 			frag = &skb_shinfo(skb)->frags[i - 1];
 
 			g->sg[(i >> 2)].ptr[(i & 3)] =
 				skb_frag_dma_map(&oct->pci_dev->dev,
 						 frag, 0, skb_frag_size(frag),
 						 DMA_TO_DEVICE);
-			अगर (dma_mapping_error(&oct->pci_dev->dev,
-					      g->sg[i >> 2].ptr[i & 3])) अणु
+			if (dma_mapping_error(&oct->pci_dev->dev,
+					      g->sg[i >> 2].ptr[i & 3])) {
 				dma_unmap_single(&oct->pci_dev->dev,
 						 g->sg[0].ptr[0],
 						 skb->len - skb->data_len,
 						 DMA_TO_DEVICE);
-				क्रम (j = 1; j < i; j++) अणु
+				for (j = 1; j < i; j++) {
 					frag = &skb_shinfo(skb)->frags[j - 1];
 					dma_unmap_page(&oct->pci_dev->dev,
 						       g->sg[j >> 2].ptr[j & 3],
 						       skb_frag_size(frag),
 						       DMA_TO_DEVICE);
-				पूर्ण
+				}
 				dev_err(&oct->pci_dev->dev, "%s DMA mapping error 3\n",
 					__func__);
-				वापस NETDEV_TX_BUSY;
-			पूर्ण
+				return NETDEV_TX_BUSY;
+			}
 
 			add_sg_size(&g->sg[(i >> 2)], skb_frag_size(frag),
 				    (i & 3));
 			i++;
-		पूर्ण
+		}
 
 		dptr = g->sg_dma_ptr;
 
@@ -1580,91 +1579,91 @@ liquidio_get_stats64(काष्ठा net_device *netdev,
 		finfo->g = g;
 
 		ndata.reqtype = REQTYPE_NORESP_NET_SG;
-	पूर्ण
+	}
 
-	irh = (काष्ठा octeon_instr_irh *)&ndata.cmd.cmd3.irh;
-	tx_info = (जोड़ tx_info *)&ndata.cmd.cmd3.ossp[0];
+	irh = (struct octeon_instr_irh *)&ndata.cmd.cmd3.irh;
+	tx_info = (union tx_info *)&ndata.cmd.cmd3.ossp[0];
 
-	अगर (skb_shinfo(skb)->gso_size) अणु
+	if (skb_shinfo(skb)->gso_size) {
 		tx_info->s.gso_size = skb_shinfo(skb)->gso_size;
 		tx_info->s.gso_segs = skb_shinfo(skb)->gso_segs;
-	पूर्ण
+	}
 
 	/* HW insert VLAN tag */
-	अगर (skb_vlan_tag_present(skb)) अणु
+	if (skb_vlan_tag_present(skb)) {
 		irh->priority = skb_vlan_tag_get(skb) >> VLAN_PRIO_SHIFT;
 		irh->vlan = skb_vlan_tag_get(skb) & VLAN_VID_MASK;
-	पूर्ण
+	}
 
 	xmit_more = netdev_xmit_more();
 
-	अगर (unlikely(cmdsetup.s.बारtamp))
-		status = send_nic_बारtamp_pkt(oct, &ndata, finfo, xmit_more);
-	अन्यथा
+	if (unlikely(cmdsetup.s.timestamp))
+		status = send_nic_timestamp_pkt(oct, &ndata, finfo, xmit_more);
+	else
 		status = octnet_send_nic_data_pkt(oct, &ndata, xmit_more);
-	अगर (status == IQ_SEND_FAILED)
-		जाओ lio_xmit_failed;
+	if (status == IQ_SEND_FAILED)
+		goto lio_xmit_failed;
 
-	netअगर_info(lio, tx_queued, lio->netdev, "Transmit queued successfully\n");
+	netif_info(lio, tx_queued, lio->netdev, "Transmit queued successfully\n");
 
-	अगर (status == IQ_SEND_STOP) अणु
+	if (status == IQ_SEND_STOP) {
 		dev_err(&oct->pci_dev->dev, "Rcvd IQ_SEND_STOP signal; stopping IQ-%d\n",
 			iq_no);
-		netअगर_stop_subqueue(netdev, q_idx);
-	पूर्ण
+		netif_stop_subqueue(netdev, q_idx);
+	}
 
-	netअगर_trans_update(netdev);
+	netif_trans_update(netdev);
 
-	अगर (tx_info->s.gso_segs)
-		stats->tx_करोne += tx_info->s.gso_segs;
-	अन्यथा
-		stats->tx_करोne++;
+	if (tx_info->s.gso_segs)
+		stats->tx_done += tx_info->s.gso_segs;
+	else
+		stats->tx_done++;
 	stats->tx_tot_bytes += ndata.datasize;
 
-	वापस NETDEV_TX_OK;
+	return NETDEV_TX_OK;
 
 lio_xmit_failed:
 	stats->tx_dropped++;
-	netअगर_info(lio, tx_err, lio->netdev, "IQ%d Transmit dropped:%llu\n",
+	netif_info(lio, tx_err, lio->netdev, "IQ%d Transmit dropped:%llu\n",
 		   iq_no, stats->tx_dropped);
-	अगर (dptr)
+	if (dptr)
 		dma_unmap_single(&oct->pci_dev->dev, dptr,
 				 ndata.datasize, DMA_TO_DEVICE);
 
-	octeon_ring_करोorbell_locked(oct, iq_no);
+	octeon_ring_doorbell_locked(oct, iq_no);
 
-	tx_buffer_मुक्त(skb);
-	वापस NETDEV_TX_OK;
-पूर्ण
+	tx_buffer_free(skb);
+	return NETDEV_TX_OK;
+}
 
 /**
- * liquidio_tx_समयout - Network device Tx समयout
- * @netdev: poपूर्णांकer to network device
+ * liquidio_tx_timeout - Network device Tx timeout
+ * @netdev: pointer to network device
  * @txqueue: index of the hung transmit queue
  */
-अटल व्योम liquidio_tx_समयout(काष्ठा net_device *netdev, अचिन्हित पूर्णांक txqueue)
-अणु
-	काष्ठा lio *lio;
+static void liquidio_tx_timeout(struct net_device *netdev, unsigned int txqueue)
+{
+	struct lio *lio;
 
 	lio = GET_LIO(netdev);
 
-	netअगर_info(lio, tx_err, lio->netdev,
+	netif_info(lio, tx_err, lio->netdev,
 		   "Transmit timeout tx_dropped:%ld, waking up queues now!!\n",
 		   netdev->stats.tx_dropped);
-	netअगर_trans_update(netdev);
+	netif_trans_update(netdev);
 	wake_txqs(netdev);
-पूर्ण
+}
 
-अटल पूर्णांक
-liquidio_vlan_rx_add_vid(काष्ठा net_device *netdev,
+static int
+liquidio_vlan_rx_add_vid(struct net_device *netdev,
 			 __be16 proto __attribute__((unused)), u16 vid)
-अणु
-	काष्ठा lio *lio = GET_LIO(netdev);
-	काष्ठा octeon_device *oct = lio->oct_dev;
-	काष्ठा octnic_ctrl_pkt nctrl;
-	पूर्णांक ret = 0;
+{
+	struct lio *lio = GET_LIO(netdev);
+	struct octeon_device *oct = lio->oct_dev;
+	struct octnic_ctrl_pkt nctrl;
+	int ret = 0;
 
-	स_रखो(&nctrl, 0, माप(काष्ठा octnic_ctrl_pkt));
+	memset(&nctrl, 0, sizeof(struct octnic_ctrl_pkt));
 
 	nctrl.ncmd.u64 = 0;
 	nctrl.ncmd.s.cmd = OCTNET_CMD_ADD_VLAN_FILTER;
@@ -1674,25 +1673,25 @@ liquidio_vlan_rx_add_vid(काष्ठा net_device *netdev,
 	nctrl.cb_fn = liquidio_link_ctrl_cmd_completion;
 
 	ret = octnet_send_nic_ctrl_pkt(lio->oct_dev, &nctrl);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&oct->pci_dev->dev, "Add VLAN filter failed in core (ret: 0x%x)\n",
 			ret);
-		वापस -EPERM;
-	पूर्ण
+		return -EPERM;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-liquidio_vlan_rx_समाप्त_vid(काष्ठा net_device *netdev,
+static int
+liquidio_vlan_rx_kill_vid(struct net_device *netdev,
 			  __be16 proto __attribute__((unused)), u16 vid)
-अणु
-	काष्ठा lio *lio = GET_LIO(netdev);
-	काष्ठा octeon_device *oct = lio->oct_dev;
-	काष्ठा octnic_ctrl_pkt nctrl;
-	पूर्णांक ret = 0;
+{
+	struct lio *lio = GET_LIO(netdev);
+	struct octeon_device *oct = lio->oct_dev;
+	struct octnic_ctrl_pkt nctrl;
+	int ret = 0;
 
-	स_रखो(&nctrl, 0, माप(काष्ठा octnic_ctrl_pkt));
+	memset(&nctrl, 0, sizeof(struct octnic_ctrl_pkt));
 
 	nctrl.ncmd.u64 = 0;
 	nctrl.ncmd.s.cmd = OCTNET_CMD_DEL_VLAN_FILTER;
@@ -1702,31 +1701,31 @@ liquidio_vlan_rx_समाप्त_vid(काष्ठा net_device *netdev,
 	nctrl.cb_fn = liquidio_link_ctrl_cmd_completion;
 
 	ret = octnet_send_nic_ctrl_pkt(lio->oct_dev, &nctrl);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&oct->pci_dev->dev, "Del VLAN filter failed in core (ret: 0x%x)\n",
 			ret);
-		अगर (ret > 0)
+		if (ret > 0)
 			ret = -EIO;
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 
 /** Sending command to enable/disable RX checksum offload
- * @param netdev                poपूर्णांकer to network device
+ * @param netdev                pointer to network device
  * @param command               OCTNET_CMD_TNL_RX_CSUM_CTL
  * @param rx_cmd_bit            OCTNET_CMD_RXCSUM_ENABLE/
  *                              OCTNET_CMD_RXCSUM_DISABLE
- * @वापसs                     SUCCESS or FAILURE
+ * @returns                     SUCCESS or FAILURE
  */
-अटल पूर्णांक liquidio_set_rxcsum_command(काष्ठा net_device *netdev, पूर्णांक command,
+static int liquidio_set_rxcsum_command(struct net_device *netdev, int command,
 				       u8 rx_cmd)
-अणु
-	काष्ठा lio *lio = GET_LIO(netdev);
-	काष्ठा octeon_device *oct = lio->oct_dev;
-	काष्ठा octnic_ctrl_pkt nctrl;
-	पूर्णांक ret = 0;
+{
+	struct lio *lio = GET_LIO(netdev);
+	struct octeon_device *oct = lio->oct_dev;
+	struct octnic_ctrl_pkt nctrl;
+	int ret = 0;
 
-	स_रखो(&nctrl, 0, माप(काष्ठा octnic_ctrl_pkt));
+	memset(&nctrl, 0, sizeof(struct octnic_ctrl_pkt));
 
 	nctrl.ncmd.u64 = 0;
 	nctrl.ncmd.s.cmd = command;
@@ -1736,32 +1735,32 @@ liquidio_vlan_rx_समाप्त_vid(काष्ठा net_device *netdev,
 	nctrl.cb_fn = liquidio_link_ctrl_cmd_completion;
 
 	ret = octnet_send_nic_ctrl_pkt(lio->oct_dev, &nctrl);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&oct->pci_dev->dev, "DEVFLAGS RXCSUM change failed in core (ret:0x%x)\n",
 			ret);
-		अगर (ret > 0)
+		if (ret > 0)
 			ret = -EIO;
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 
 /** Sending command to add/delete VxLAN UDP port to firmware
- * @param netdev                poपूर्णांकer to network device
+ * @param netdev                pointer to network device
  * @param command               OCTNET_CMD_VXLAN_PORT_CONFIG
  * @param vxlan_port            VxLAN port to be added or deleted
  * @param vxlan_cmd_bit         OCTNET_CMD_VXLAN_PORT_ADD,
  *                              OCTNET_CMD_VXLAN_PORT_DEL
- * @वापसs                     SUCCESS or FAILURE
+ * @returns                     SUCCESS or FAILURE
  */
-अटल पूर्णांक liquidio_vxlan_port_command(काष्ठा net_device *netdev, पूर्णांक command,
+static int liquidio_vxlan_port_command(struct net_device *netdev, int command,
 				       u16 vxlan_port, u8 vxlan_cmd_bit)
-अणु
-	काष्ठा lio *lio = GET_LIO(netdev);
-	काष्ठा octeon_device *oct = lio->oct_dev;
-	काष्ठा octnic_ctrl_pkt nctrl;
-	पूर्णांक ret = 0;
+{
+	struct lio *lio = GET_LIO(netdev);
+	struct octeon_device *oct = lio->oct_dev;
+	struct octnic_ctrl_pkt nctrl;
+	int ret = 0;
 
-	स_रखो(&nctrl, 0, माप(काष्ठा octnic_ctrl_pkt));
+	memset(&nctrl, 0, sizeof(struct octnic_ctrl_pkt));
 
 	nctrl.ncmd.u64 = 0;
 	nctrl.ncmd.s.cmd = command;
@@ -1772,274 +1771,274 @@ liquidio_vlan_rx_समाप्त_vid(काष्ठा net_device *netdev,
 	nctrl.cb_fn = liquidio_link_ctrl_cmd_completion;
 
 	ret = octnet_send_nic_ctrl_pkt(lio->oct_dev, &nctrl);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&oct->pci_dev->dev,
 			"DEVFLAGS VxLAN port add/delete failed in core (ret : 0x%x)\n",
 			ret);
-		अगर (ret > 0)
+		if (ret > 0)
 			ret = -EIO;
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 
-अटल पूर्णांक liquidio_udp_tunnel_set_port(काष्ठा net_device *netdev,
-					अचिन्हित पूर्णांक table, अचिन्हित पूर्णांक entry,
-					काष्ठा udp_tunnel_info *ti)
-अणु
-	वापस liquidio_vxlan_port_command(netdev,
+static int liquidio_udp_tunnel_set_port(struct net_device *netdev,
+					unsigned int table, unsigned int entry,
+					struct udp_tunnel_info *ti)
+{
+	return liquidio_vxlan_port_command(netdev,
 					   OCTNET_CMD_VXLAN_PORT_CONFIG,
 					   htons(ti->port),
 					   OCTNET_CMD_VXLAN_PORT_ADD);
-पूर्ण
+}
 
-अटल पूर्णांक liquidio_udp_tunnel_unset_port(काष्ठा net_device *netdev,
-					  अचिन्हित पूर्णांक table,
-					  अचिन्हित पूर्णांक entry,
-					  काष्ठा udp_tunnel_info *ti)
-अणु
-	वापस liquidio_vxlan_port_command(netdev,
+static int liquidio_udp_tunnel_unset_port(struct net_device *netdev,
+					  unsigned int table,
+					  unsigned int entry,
+					  struct udp_tunnel_info *ti)
+{
+	return liquidio_vxlan_port_command(netdev,
 					   OCTNET_CMD_VXLAN_PORT_CONFIG,
 					   htons(ti->port),
 					   OCTNET_CMD_VXLAN_PORT_DEL);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा udp_tunnel_nic_info liquidio_udp_tunnels = अणु
+static const struct udp_tunnel_nic_info liquidio_udp_tunnels = {
 	.set_port	= liquidio_udp_tunnel_set_port,
 	.unset_port	= liquidio_udp_tunnel_unset_port,
-	.tables		= अणु
-		अणु .n_entries = 1024, .tunnel_types = UDP_TUNNEL_TYPE_VXLAN, पूर्ण,
-	पूर्ण,
-पूर्ण;
+	.tables		= {
+		{ .n_entries = 1024, .tunnel_types = UDP_TUNNEL_TYPE_VXLAN, },
+	},
+};
 
-/** \मrief Net device fix features
- * @param netdev  poपूर्णांकer to network device
+/** \brief Net device fix features
+ * @param netdev  pointer to network device
  * @param request features requested
- * @वापसs updated features list
+ * @returns updated features list
  */
-अटल netdev_features_t liquidio_fix_features(काष्ठा net_device *netdev,
+static netdev_features_t liquidio_fix_features(struct net_device *netdev,
 					       netdev_features_t request)
-अणु
-	काष्ठा lio *lio = netdev_priv(netdev);
+{
+	struct lio *lio = netdev_priv(netdev);
 
-	अगर ((request & NETIF_F_RXCSUM) &&
+	if ((request & NETIF_F_RXCSUM) &&
 	    !(lio->dev_capability & NETIF_F_RXCSUM))
 		request &= ~NETIF_F_RXCSUM;
 
-	अगर ((request & NETIF_F_HW_CSUM) &&
+	if ((request & NETIF_F_HW_CSUM) &&
 	    !(lio->dev_capability & NETIF_F_HW_CSUM))
 		request &= ~NETIF_F_HW_CSUM;
 
-	अगर ((request & NETIF_F_TSO) && !(lio->dev_capability & NETIF_F_TSO))
+	if ((request & NETIF_F_TSO) && !(lio->dev_capability & NETIF_F_TSO))
 		request &= ~NETIF_F_TSO;
 
-	अगर ((request & NETIF_F_TSO6) && !(lio->dev_capability & NETIF_F_TSO6))
+	if ((request & NETIF_F_TSO6) && !(lio->dev_capability & NETIF_F_TSO6))
 		request &= ~NETIF_F_TSO6;
 
-	अगर ((request & NETIF_F_LRO) && !(lio->dev_capability & NETIF_F_LRO))
+	if ((request & NETIF_F_LRO) && !(lio->dev_capability & NETIF_F_LRO))
 		request &= ~NETIF_F_LRO;
 
-	/* Disable LRO अगर RXCSUM is off */
-	अगर (!(request & NETIF_F_RXCSUM) && (netdev->features & NETIF_F_LRO) &&
+	/* Disable LRO if RXCSUM is off */
+	if (!(request & NETIF_F_RXCSUM) && (netdev->features & NETIF_F_LRO) &&
 	    (lio->dev_capability & NETIF_F_LRO))
 		request &= ~NETIF_F_LRO;
 
-	वापस request;
-पूर्ण
+	return request;
+}
 
-/** \मrief Net device set features
- * @param netdev  poपूर्णांकer to network device
+/** \brief Net device set features
+ * @param netdev  pointer to network device
  * @param features features to enable/disable
  */
-अटल पूर्णांक liquidio_set_features(काष्ठा net_device *netdev,
+static int liquidio_set_features(struct net_device *netdev,
 				 netdev_features_t features)
-अणु
-	काष्ठा lio *lio = netdev_priv(netdev);
+{
+	struct lio *lio = netdev_priv(netdev);
 
-	अगर (!((netdev->features ^ features) & NETIF_F_LRO))
-		वापस 0;
+	if (!((netdev->features ^ features) & NETIF_F_LRO))
+		return 0;
 
-	अगर ((features & NETIF_F_LRO) && (lio->dev_capability & NETIF_F_LRO))
+	if ((features & NETIF_F_LRO) && (lio->dev_capability & NETIF_F_LRO))
 		liquidio_set_feature(netdev, OCTNET_CMD_LRO_ENABLE,
 				     OCTNIC_LROIPV4 | OCTNIC_LROIPV6);
-	अन्यथा अगर (!(features & NETIF_F_LRO) &&
+	else if (!(features & NETIF_F_LRO) &&
 		 (lio->dev_capability & NETIF_F_LRO))
 		liquidio_set_feature(netdev, OCTNET_CMD_LRO_DISABLE,
 				     OCTNIC_LROIPV4 | OCTNIC_LROIPV6);
-	अगर (!(netdev->features & NETIF_F_RXCSUM) &&
+	if (!(netdev->features & NETIF_F_RXCSUM) &&
 	    (lio->enc_dev_capability & NETIF_F_RXCSUM) &&
 	    (features & NETIF_F_RXCSUM))
 		liquidio_set_rxcsum_command(netdev, OCTNET_CMD_TNL_RX_CSUM_CTL,
 					    OCTNET_CMD_RXCSUM_ENABLE);
-	अन्यथा अगर ((netdev->features & NETIF_F_RXCSUM) &&
+	else if ((netdev->features & NETIF_F_RXCSUM) &&
 		 (lio->enc_dev_capability & NETIF_F_RXCSUM) &&
 		 !(features & NETIF_F_RXCSUM))
 		liquidio_set_rxcsum_command(netdev, OCTNET_CMD_TNL_RX_CSUM_CTL,
 					    OCTNET_CMD_RXCSUM_DISABLE);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा net_device_ops lionetdevops = अणु
-	.nकरो_खोलो		= liquidio_खोलो,
-	.nकरो_stop		= liquidio_stop,
-	.nकरो_start_xmit		= liquidio_xmit,
-	.nकरो_get_stats64	= liquidio_get_stats64,
-	.nकरो_set_mac_address	= liquidio_set_mac,
-	.nकरो_set_rx_mode	= liquidio_set_mcast_list,
-	.nकरो_tx_समयout		= liquidio_tx_समयout,
-	.nकरो_vlan_rx_add_vid    = liquidio_vlan_rx_add_vid,
-	.nकरो_vlan_rx_समाप्त_vid   = liquidio_vlan_rx_समाप्त_vid,
-	.nकरो_change_mtu		= liquidio_change_mtu,
-	.nकरो_करो_ioctl		= liquidio_ioctl,
-	.nकरो_fix_features	= liquidio_fix_features,
-	.nकरो_set_features	= liquidio_set_features,
-पूर्ण;
+static const struct net_device_ops lionetdevops = {
+	.ndo_open		= liquidio_open,
+	.ndo_stop		= liquidio_stop,
+	.ndo_start_xmit		= liquidio_xmit,
+	.ndo_get_stats64	= liquidio_get_stats64,
+	.ndo_set_mac_address	= liquidio_set_mac,
+	.ndo_set_rx_mode	= liquidio_set_mcast_list,
+	.ndo_tx_timeout		= liquidio_tx_timeout,
+	.ndo_vlan_rx_add_vid    = liquidio_vlan_rx_add_vid,
+	.ndo_vlan_rx_kill_vid   = liquidio_vlan_rx_kill_vid,
+	.ndo_change_mtu		= liquidio_change_mtu,
+	.ndo_do_ioctl		= liquidio_ioctl,
+	.ndo_fix_features	= liquidio_fix_features,
+	.ndo_set_features	= liquidio_set_features,
+};
 
-अटल पूर्णांक lio_nic_info(काष्ठा octeon_recv_info *recv_info, व्योम *buf)
-अणु
-	काष्ठा octeon_device *oct = (काष्ठा octeon_device *)buf;
-	काष्ठा octeon_recv_pkt *recv_pkt = recv_info->recv_pkt;
-	जोड़ oct_link_status *ls;
-	पूर्णांक gmxport = 0;
-	पूर्णांक i;
+static int lio_nic_info(struct octeon_recv_info *recv_info, void *buf)
+{
+	struct octeon_device *oct = (struct octeon_device *)buf;
+	struct octeon_recv_pkt *recv_pkt = recv_info->recv_pkt;
+	union oct_link_status *ls;
+	int gmxport = 0;
+	int i;
 
-	अगर (recv_pkt->buffer_size[0] != (माप(*ls) + OCT_DROQ_INFO_SIZE)) अणु
+	if (recv_pkt->buffer_size[0] != (sizeof(*ls) + OCT_DROQ_INFO_SIZE)) {
 		dev_err(&oct->pci_dev->dev, "Malformed NIC_INFO, len=%d, ifidx=%d\n",
 			recv_pkt->buffer_size[0],
 			recv_pkt->rh.r_nic_info.gmxport);
-		जाओ nic_info_err;
-	पूर्ण
+		goto nic_info_err;
+	}
 
 	gmxport = recv_pkt->rh.r_nic_info.gmxport;
-	ls = (जोड़ oct_link_status *)(get_rbd(recv_pkt->buffer_ptr[0]) +
+	ls = (union oct_link_status *)(get_rbd(recv_pkt->buffer_ptr[0]) +
 		OCT_DROQ_INFO_SIZE);
 
-	octeon_swap_8B_data((u64 *)ls, (माप(जोड़ oct_link_status)) >> 3);
+	octeon_swap_8B_data((u64 *)ls, (sizeof(union oct_link_status)) >> 3);
 
-	क्रम (i = 0; i < oct->अगरcount; i++) अणु
-		अगर (oct->props[i].gmxport == gmxport) अणु
+	for (i = 0; i < oct->ifcount; i++) {
+		if (oct->props[i].gmxport == gmxport) {
 			update_link_status(oct->props[i].netdev, ls);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
 nic_info_err:
-	क्रम (i = 0; i < recv_pkt->buffer_count; i++)
-		recv_buffer_मुक्त(recv_pkt->buffer_ptr[i]);
-	octeon_मुक्त_recv_info(recv_info);
-	वापस 0;
-पूर्ण
+	for (i = 0; i < recv_pkt->buffer_count; i++)
+		recv_buffer_free(recv_pkt->buffer_ptr[i]);
+	octeon_free_recv_info(recv_info);
+	return 0;
+}
 
 /**
- * setup_nic_devices - Setup network पूर्णांकerfaces
+ * setup_nic_devices - Setup network interfaces
  * @octeon_dev:  octeon device
  *
- * Called during init समय क्रम each device. It assumes the NIC
- * is alपढ़ोy up and running.  The link inक्रमmation क्रम each
- * पूर्णांकerface is passed in link_info.
+ * Called during init time for each device. It assumes the NIC
+ * is already up and running.  The link information for each
+ * interface is passed in link_info.
  */
-अटल पूर्णांक setup_nic_devices(काष्ठा octeon_device *octeon_dev)
-अणु
-	पूर्णांक retval, num_iqueues, num_oqueues;
+static int setup_nic_devices(struct octeon_device *octeon_dev)
+{
+	int retval, num_iqueues, num_oqueues;
 	u32 resp_size, data_size;
-	काष्ठा liquidio_अगर_cfg_resp *resp;
-	काष्ठा octeon_soft_command *sc;
-	जोड़ oct_nic_अगर_cfg अगर_cfg;
-	काष्ठा octdev_props *props;
-	काष्ठा net_device *netdev;
-	काष्ठा lio_version *vdata;
-	काष्ठा lio *lio = शून्य;
+	struct liquidio_if_cfg_resp *resp;
+	struct octeon_soft_command *sc;
+	union oct_nic_if_cfg if_cfg;
+	struct octdev_props *props;
+	struct net_device *netdev;
+	struct lio_version *vdata;
+	struct lio *lio = NULL;
 	u8 mac[ETH_ALEN], i, j;
-	u32 अगरidx_or_pfnum;
+	u32 ifidx_or_pfnum;
 
-	अगरidx_or_pfnum = octeon_dev->pf_num;
+	ifidx_or_pfnum = octeon_dev->pf_num;
 
 	/* This is to handle link status changes */
-	octeon_रेजिस्टर_dispatch_fn(octeon_dev, OPCODE_NIC, OPCODE_NIC_INFO,
+	octeon_register_dispatch_fn(octeon_dev, OPCODE_NIC, OPCODE_NIC_INFO,
 				    lio_nic_info, octeon_dev);
 
-	/* REQTYPE_RESP_NET and REQTYPE_SOFT_COMMAND करो not have मुक्त functions.
+	/* REQTYPE_RESP_NET and REQTYPE_SOFT_COMMAND do not have free functions.
 	 * They are handled directly.
 	 */
-	octeon_रेजिस्टर_reqtype_मुक्त_fn(octeon_dev, REQTYPE_NORESP_NET,
-					मुक्त_netbuf);
+	octeon_register_reqtype_free_fn(octeon_dev, REQTYPE_NORESP_NET,
+					free_netbuf);
 
-	octeon_रेजिस्टर_reqtype_मुक्त_fn(octeon_dev, REQTYPE_NORESP_NET_SG,
-					मुक्त_netsgbuf);
+	octeon_register_reqtype_free_fn(octeon_dev, REQTYPE_NORESP_NET_SG,
+					free_netsgbuf);
 
-	octeon_रेजिस्टर_reqtype_मुक्त_fn(octeon_dev, REQTYPE_RESP_NET_SG,
-					मुक्त_netsgbuf_with_resp);
+	octeon_register_reqtype_free_fn(octeon_dev, REQTYPE_RESP_NET_SG,
+					free_netsgbuf_with_resp);
 
-	क्रम (i = 0; i < octeon_dev->अगरcount; i++) अणु
-		resp_size = माप(काष्ठा liquidio_अगर_cfg_resp);
-		data_size = माप(काष्ठा lio_version);
-		sc = (काष्ठा octeon_soft_command *)
+	for (i = 0; i < octeon_dev->ifcount; i++) {
+		resp_size = sizeof(struct liquidio_if_cfg_resp);
+		data_size = sizeof(struct lio_version);
+		sc = (struct octeon_soft_command *)
 			octeon_alloc_soft_command(octeon_dev, data_size,
 						  resp_size, 0);
-		resp = (काष्ठा liquidio_अगर_cfg_resp *)sc->virtrptr;
-		vdata = (काष्ठा lio_version *)sc->virtdptr;
+		resp = (struct liquidio_if_cfg_resp *)sc->virtrptr;
+		vdata = (struct lio_version *)sc->virtdptr;
 
 		*((u64 *)vdata) = 0;
 		vdata->major = cpu_to_be16(LIQUIDIO_BASE_MAJOR_VERSION);
 		vdata->minor = cpu_to_be16(LIQUIDIO_BASE_MINOR_VERSION);
 		vdata->micro = cpu_to_be16(LIQUIDIO_BASE_MICRO_VERSION);
 
-		अगर_cfg.u64 = 0;
+		if_cfg.u64 = 0;
 
-		अगर_cfg.s.num_iqueues = octeon_dev->sriov_info.rings_per_vf;
-		अगर_cfg.s.num_oqueues = octeon_dev->sriov_info.rings_per_vf;
-		अगर_cfg.s.base_queue = 0;
+		if_cfg.s.num_iqueues = octeon_dev->sriov_info.rings_per_vf;
+		if_cfg.s.num_oqueues = octeon_dev->sriov_info.rings_per_vf;
+		if_cfg.s.base_queue = 0;
 
 		sc->iq_no = 0;
 
 		octeon_prepare_soft_command(octeon_dev, sc, OPCODE_NIC,
-					    OPCODE_NIC_IF_CFG, 0, अगर_cfg.u64,
+					    OPCODE_NIC_IF_CFG, 0, if_cfg.u64,
 					    0);
 
 		init_completion(&sc->complete);
 		sc->sc_status = OCTEON_REQUEST_PENDING;
 
 		retval = octeon_send_soft_command(octeon_dev, sc);
-		अगर (retval == IQ_SEND_FAILED) अणु
+		if (retval == IQ_SEND_FAILED) {
 			dev_err(&octeon_dev->pci_dev->dev,
 				"iq/oq config failed status: %x\n", retval);
-			/* Soft instr is मुक्तd by driver in हाल of failure. */
-			octeon_मुक्त_soft_command(octeon_dev, sc);
-			वापस(-EIO);
-		पूर्ण
+			/* Soft instr is freed by driver in case of failure. */
+			octeon_free_soft_command(octeon_dev, sc);
+			return(-EIO);
+		}
 
-		/* Sleep on a रुको queue till the cond flag indicates that the
-		 * response arrived or समयd-out.
+		/* Sleep on a wait queue till the cond flag indicates that the
+		 * response arrived or timed-out.
 		 */
-		retval = रुको_क्रम_sc_completion_समयout(octeon_dev, sc, 0);
-		अगर (retval)
-			वापस retval;
+		retval = wait_for_sc_completion_timeout(octeon_dev, sc, 0);
+		if (retval)
+			return retval;
 
 		retval = resp->status;
-		अगर (retval) अणु
+		if (retval) {
 			dev_err(&octeon_dev->pci_dev->dev,
 				"iq/oq config failed, retval = %d\n", retval);
-			WRITE_ONCE(sc->caller_is_करोne, true);
-			वापस -EIO;
-		पूर्ण
+			WRITE_ONCE(sc->caller_is_done, true);
+			return -EIO;
+		}
 
-		snम_लिखो(octeon_dev->fw_info.liquidio_firmware_version,
+		snprintf(octeon_dev->fw_info.liquidio_firmware_version,
 			 32, "%s",
 			 resp->cfg_info.liquidio_firmware_version);
 
 		octeon_swap_8B_data((u64 *)(&resp->cfg_info),
-				    (माप(काष्ठा liquidio_अगर_cfg_info)) >> 3);
+				    (sizeof(struct liquidio_if_cfg_info)) >> 3);
 
 		num_iqueues = hweight64(resp->cfg_info.iqmask);
 		num_oqueues = hweight64(resp->cfg_info.oqmask);
 
-		अगर (!(num_iqueues) || !(num_oqueues)) अणु
+		if (!(num_iqueues) || !(num_oqueues)) {
 			dev_err(&octeon_dev->pci_dev->dev,
 				"Got bad iqueues (%016llx) or oqueues (%016llx) from firmware.\n",
 				resp->cfg_info.iqmask, resp->cfg_info.oqmask);
-			WRITE_ONCE(sc->caller_is_करोne, true);
-			जाओ setup_nic_dev_करोne;
-		पूर्ण
+			WRITE_ONCE(sc->caller_is_done, true);
+			goto setup_nic_dev_done;
+		}
 		dev_dbg(&octeon_dev->pci_dev->dev,
 			"interface %d, iqmask %016llx, oqmask %016llx, numiqueues %d, numoqueues %d\n",
 			i, resp->cfg_info.iqmask, resp->cfg_info.oqmask,
@@ -2047,24 +2046,24 @@ nic_info_err:
 
 		netdev = alloc_etherdev_mq(LIO_SIZE, num_iqueues);
 
-		अगर (!netdev) अणु
+		if (!netdev) {
 			dev_err(&octeon_dev->pci_dev->dev, "Device allocation failed\n");
-			WRITE_ONCE(sc->caller_is_करोne, true);
-			जाओ setup_nic_dev_करोne;
-		पूर्ण
+			WRITE_ONCE(sc->caller_is_done, true);
+			goto setup_nic_dev_done;
+		}
 
 		SET_NETDEV_DEV(netdev, &octeon_dev->pci_dev->dev);
 
-		/* Associate the routines that will handle dअगरferent
+		/* Associate the routines that will handle different
 		 * netdev tasks.
 		 */
 		netdev->netdev_ops = &lionetdevops;
 
 		lio = GET_LIO(netdev);
 
-		स_रखो(lio, 0, माप(काष्ठा lio));
+		memset(lio, 0, sizeof(struct lio));
 
-		lio->अगरidx = अगरidx_or_pfnum;
+		lio->ifidx = ifidx_or_pfnum;
 
 		props = &octeon_dev->props[i];
 		props->gmxport = resp->cfg_info.linfo.gmxport;
@@ -2073,14 +2072,14 @@ nic_info_err:
 		lio->linfo.num_rxpciq = num_oqueues;
 		lio->linfo.num_txpciq = num_iqueues;
 
-		क्रम (j = 0; j < num_oqueues; j++) अणु
+		for (j = 0; j < num_oqueues; j++) {
 			lio->linfo.rxpciq[j].u64 =
 			    resp->cfg_info.linfo.rxpciq[j].u64;
-		पूर्ण
-		क्रम (j = 0; j < num_iqueues; j++) अणु
+		}
+		for (j = 0; j < num_iqueues; j++) {
 			lio->linfo.txpciq[j].u64 =
 			    resp->cfg_info.linfo.txpciq[j].u64;
-		पूर्ण
+		}
 
 		lio->linfo.hw_addr = resp->cfg_info.linfo.hw_addr;
 		lio->linfo.gmxport = resp->cfg_info.linfo.gmxport;
@@ -2090,7 +2089,7 @@ nic_info_err:
 		lio->linfo.macaddr_spoofchk =
 			resp->cfg_info.linfo.macaddr_spoofchk;
 
-		lio->msg_enable = netअगर_msg_init(debug, DEFAULT_MSG_ENABLE);
+		lio->msg_enable = netif_msg_init(debug, DEFAULT_MSG_ENABLE);
 
 		lio->dev_capability = NETIF_F_HIGHDMA
 				      | NETIF_F_IP_CSUM | NETIF_F_IPV6_CSUM
@@ -2098,10 +2097,10 @@ nic_info_err:
 				      | NETIF_F_TSO | NETIF_F_TSO6
 				      | NETIF_F_GRO
 				      | NETIF_F_LRO;
-		netअगर_set_gso_max_size(netdev, OCTNIC_GSO_MAX_SIZE);
+		netif_set_gso_max_size(netdev, OCTNIC_GSO_MAX_SIZE);
 
 		/* Copy of transmit encapsulation capabilities:
-		 * TSO, TSO6, Checksums क्रम this device
+		 * TSO, TSO6, Checksums for this device
 		 */
 		lio->enc_dev_capability = NETIF_F_IP_CSUM
 					  | NETIF_F_IPV6_CSUM
@@ -2130,10 +2129,10 @@ nic_info_err:
 		netdev->min_mtu = LIO_MIN_MTU_SIZE;
 		netdev->max_mtu = LIO_MAX_MTU_SIZE;
 
-		WRITE_ONCE(sc->caller_is_करोne, true);
+		WRITE_ONCE(sc->caller_is_done, true);
 
-		/* Poपूर्णांक to the  properties क्रम octeon device to which this
-		 * पूर्णांकerface beदीर्घs.
+		/* Point to the  properties for octeon device to which this
+		 * interface belongs.
 		 */
 		lio->oct_dev = octeon_dev;
 		lio->octprops = props;
@@ -2145,28 +2144,28 @@ nic_info_err:
 
 		/* 64-bit swap required on LE machines */
 		octeon_swap_8B_data(&lio->linfo.hw_addr, 1);
-		क्रम (j = 0; j < ETH_ALEN; j++)
+		for (j = 0; j < ETH_ALEN; j++)
 			mac[j] = *((u8 *)(((u8 *)&lio->linfo.hw_addr) + 2 + j));
 
-		/* Copy MAC Address to OS network device काष्ठाure */
+		/* Copy MAC Address to OS network device structure */
 		ether_addr_copy(netdev->dev_addr, mac);
 
-		अगर (liquidio_setup_io_queues(octeon_dev, i,
+		if (liquidio_setup_io_queues(octeon_dev, i,
 					     lio->linfo.num_txpciq,
-					     lio->linfo.num_rxpciq)) अणु
+					     lio->linfo.num_rxpciq)) {
 			dev_err(&octeon_dev->pci_dev->dev, "I/O queues creation failed\n");
-			जाओ setup_nic_dev_मुक्त;
-		पूर्ण
+			goto setup_nic_dev_free;
+		}
 
-		अगरstate_set(lio, LIO_IFSTATE_DROQ_OPS);
+		ifstate_set(lio, LIO_IFSTATE_DROQ_OPS);
 
-		/* For VFs, enable Octeon device पूर्णांकerrupts here,
+		/* For VFs, enable Octeon device interrupts here,
 		 * as this is contingent upon IO queue setup
 		 */
-		octeon_dev->fn_list.enable_पूर्णांकerrupt(octeon_dev,
+		octeon_dev->fn_list.enable_interrupt(octeon_dev,
 						     OCTEON_ALL_INTR);
 
-		/* By शेष all पूर्णांकerfaces on a single Octeon uses the same
+		/* By default all interfaces on a single Octeon uses the same
 		 * tx and rx queues
 		 */
 		lio->txq = lio->linfo.txpciq[0].s.q_no;
@@ -2175,45 +2174,45 @@ nic_info_err:
 		lio->tx_qsize = octeon_get_tx_qsize(octeon_dev, lio->txq);
 		lio->rx_qsize = octeon_get_rx_qsize(octeon_dev, lio->rxq);
 
-		अगर (lio_setup_glists(octeon_dev, lio, num_iqueues)) अणु
+		if (lio_setup_glists(octeon_dev, lio, num_iqueues)) {
 			dev_err(&octeon_dev->pci_dev->dev,
 				"Gather list allocation failed\n");
-			जाओ setup_nic_dev_मुक्त;
-		पूर्ण
+			goto setup_nic_dev_free;
+		}
 
 		/* Register ethtool support */
 		liquidio_set_ethtool_ops(netdev);
-		अगर (lio->oct_dev->chip_id == OCTEON_CN23XX_VF_VID)
+		if (lio->oct_dev->chip_id == OCTEON_CN23XX_VF_VID)
 			octeon_dev->priv_flags = OCT_PRIV_FLAG_DEFAULT;
-		अन्यथा
+		else
 			octeon_dev->priv_flags = 0x0;
 
-		अगर (netdev->features & NETIF_F_LRO)
+		if (netdev->features & NETIF_F_LRO)
 			liquidio_set_feature(netdev, OCTNET_CMD_LRO_ENABLE,
 					     OCTNIC_LROIPV4 | OCTNIC_LROIPV6);
 
-		अगर (setup_link_status_change_wq(netdev))
-			जाओ setup_nic_dev_मुक्त;
+		if (setup_link_status_change_wq(netdev))
+			goto setup_nic_dev_free;
 
-		अगर (setup_rx_oom_poll_fn(netdev))
-			जाओ setup_nic_dev_मुक्त;
+		if (setup_rx_oom_poll_fn(netdev))
+			goto setup_nic_dev_free;
 
 		/* Register the network device with the OS */
-		अगर (रेजिस्टर_netdev(netdev)) अणु
+		if (register_netdev(netdev)) {
 			dev_err(&octeon_dev->pci_dev->dev, "Device registration failed\n");
-			जाओ setup_nic_dev_मुक्त;
-		पूर्ण
+			goto setup_nic_dev_free;
+		}
 
 		dev_dbg(&octeon_dev->pci_dev->dev,
 			"Setup NIC ifidx:%d mac:%02x%02x%02x%02x%02x%02x\n",
 			i, mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
-		netअगर_carrier_off(netdev);
+		netif_carrier_off(netdev);
 		lio->link_changes++;
 
-		अगरstate_set(lio, LIO_IFSTATE_REGISTERED);
+		ifstate_set(lio, LIO_IFSTATE_REGISTERED);
 
 		/* Sending command to firmware to enable Rx checksum offload
-		 * by शेष at the समय of setup of Liquidio driver क्रम
+		 * by default at the time of setup of Liquidio driver for
 		 * this device
 		 */
 		liquidio_set_rxcsum_command(netdev, OCTNET_CMD_TNL_RX_CSUM_CTL,
@@ -2225,22 +2224,22 @@ nic_info_err:
 			"NIC ifidx:%d Setup successful\n", i);
 
 		octeon_dev->no_speed_setting = 1;
-	पूर्ण
+	}
 
-	वापस 0;
+	return 0;
 
-setup_nic_dev_मुक्त:
+setup_nic_dev_free:
 
-	जबतक (i--) अणु
+	while (i--) {
 		dev_err(&octeon_dev->pci_dev->dev,
 			"NIC ifidx:%d Setup failed\n", i);
 		liquidio_destroy_nic_device(octeon_dev, i);
-	पूर्ण
+	}
 
-setup_nic_dev_करोne:
+setup_nic_dev_done:
 
-	वापस -ENODEV;
-पूर्ण
+	return -ENODEV;
+}
 
 /**
  * liquidio_init_nic_module - initialize the NIC
@@ -2249,64 +2248,64 @@ setup_nic_dev_करोne:
  * This initialization routine is called once the Octeon device application is
  * up and running
  */
-अटल पूर्णांक liquidio_init_nic_module(काष्ठा octeon_device *oct)
-अणु
-	पूर्णांक num_nic_ports = 1;
-	पूर्णांक i, retval = 0;
+static int liquidio_init_nic_module(struct octeon_device *oct)
+{
+	int num_nic_ports = 1;
+	int i, retval = 0;
 
 	dev_dbg(&oct->pci_dev->dev, "Initializing network interfaces\n");
 
-	/* only शेष iq and oq were initialized
-	 * initialize the rest as well run port_config command क्रम each port
+	/* only default iq and oq were initialized
+	 * initialize the rest as well run port_config command for each port
 	 */
-	oct->अगरcount = num_nic_ports;
-	स_रखो(oct->props, 0,
-	       माप(काष्ठा octdev_props) * num_nic_ports);
+	oct->ifcount = num_nic_ports;
+	memset(oct->props, 0,
+	       sizeof(struct octdev_props) * num_nic_ports);
 
-	क्रम (i = 0; i < MAX_OCTEON_LINKS; i++)
+	for (i = 0; i < MAX_OCTEON_LINKS; i++)
 		oct->props[i].gmxport = -1;
 
 	retval = setup_nic_devices(oct);
-	अगर (retval) अणु
+	if (retval) {
 		dev_err(&oct->pci_dev->dev, "Setup NIC devices failed\n");
-		जाओ octnet_init_failure;
-	पूर्ण
+		goto octnet_init_failure;
+	}
 
 	dev_dbg(&oct->pci_dev->dev, "Network interfaces ready\n");
 
-	वापस retval;
+	return retval;
 
 octnet_init_failure:
 
-	oct->अगरcount = 0;
+	oct->ifcount = 0;
 
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
 /**
- * octeon_device_init - Device initialization क्रम each Octeon device that is probed
+ * octeon_device_init - Device initialization for each Octeon device that is probed
  * @oct:  octeon device
  */
-अटल पूर्णांक octeon_device_init(काष्ठा octeon_device *oct)
-अणु
+static int octeon_device_init(struct octeon_device *oct)
+{
 	u32 rev_id;
-	पूर्णांक j;
+	int j;
 
 	atomic_set(&oct->status, OCT_DEV_BEGIN_STATE);
 
 	/* Enable access to the octeon device and make its DMA capability
 	 * known to the OS.
 	 */
-	अगर (octeon_pci_os_setup(oct))
-		वापस 1;
+	if (octeon_pci_os_setup(oct))
+		return 1;
 	atomic_set(&oct->status, OCT_DEV_PCI_ENABLE_DONE);
 
 	oct->chip_id = OCTEON_CN23XX_VF_VID;
-	pci_पढ़ो_config_dword(oct->pci_dev, 8, &rev_id);
+	pci_read_config_dword(oct->pci_dev, 8, &rev_id);
 	oct->rev_id = rev_id & 0xff;
 
-	अगर (cn23xx_setup_octeon_vf_device(oct))
-		वापस 1;
+	if (cn23xx_setup_octeon_vf_device(oct))
+		return 1;
 
 	atomic_set(&oct->status, OCT_DEV_PCI_MAP_DONE);
 
@@ -2315,132 +2314,132 @@ octnet_init_failure:
 	/* Initialize the dispatch mechanism used to push packets arriving on
 	 * Octeon Output queues.
 	 */
-	अगर (octeon_init_dispatch_list(oct))
-		वापस 1;
+	if (octeon_init_dispatch_list(oct))
+		return 1;
 
 	atomic_set(&oct->status, OCT_DEV_DISPATCH_INIT_DONE);
 
-	अगर (octeon_set_io_queues_off(oct)) अणु
+	if (octeon_set_io_queues_off(oct)) {
 		dev_err(&oct->pci_dev->dev, "setting io queues off failed\n");
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 
-	अगर (oct->fn_list.setup_device_regs(oct)) अणु
+	if (oct->fn_list.setup_device_regs(oct)) {
 		dev_err(&oct->pci_dev->dev, "device registers configuration failed\n");
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 
 	/* Initialize soft command buffer pool */
-	अगर (octeon_setup_sc_buffer_pool(oct)) अणु
+	if (octeon_setup_sc_buffer_pool(oct)) {
 		dev_err(&oct->pci_dev->dev, "sc buffer pool allocation failed\n");
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 	atomic_set(&oct->status, OCT_DEV_SC_BUFF_POOL_INIT_DONE);
 
-	/* Setup the data काष्ठाures that manage this Octeon's Input queues. */
-	अगर (octeon_setup_instr_queues(oct)) अणु
+	/* Setup the data structures that manage this Octeon's Input queues. */
+	if (octeon_setup_instr_queues(oct)) {
 		dev_err(&oct->pci_dev->dev, "instruction queue initialization failed\n");
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 	atomic_set(&oct->status, OCT_DEV_INSTR_QUEUE_INIT_DONE);
 
-	/* Initialize lists to manage the requests of dअगरferent types that
-	 * arrive from user & kernel applications क्रम this octeon device.
+	/* Initialize lists to manage the requests of different types that
+	 * arrive from user & kernel applications for this octeon device.
 	 */
-	अगर (octeon_setup_response_list(oct)) अणु
+	if (octeon_setup_response_list(oct)) {
 		dev_err(&oct->pci_dev->dev, "Response list allocation failed\n");
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 	atomic_set(&oct->status, OCT_DEV_RESP_LIST_INIT_DONE);
 
-	अगर (octeon_setup_output_queues(oct)) अणु
+	if (octeon_setup_output_queues(oct)) {
 		dev_err(&oct->pci_dev->dev, "Output queue initialization failed\n");
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 	atomic_set(&oct->status, OCT_DEV_DROQ_INIT_DONE);
 
-	अगर (oct->fn_list.setup_mbox(oct)) अणु
+	if (oct->fn_list.setup_mbox(oct)) {
 		dev_err(&oct->pci_dev->dev, "Mailbox setup failed\n");
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 	atomic_set(&oct->status, OCT_DEV_MBOX_SETUP_DONE);
 
-	अगर (octeon_allocate_ioq_vector(oct, oct->sriov_info.rings_per_vf)) अणु
+	if (octeon_allocate_ioq_vector(oct, oct->sriov_info.rings_per_vf)) {
 		dev_err(&oct->pci_dev->dev, "ioq vector allocation failed\n");
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 	atomic_set(&oct->status, OCT_DEV_MSIX_ALLOC_VECTOR_DONE);
 
 	dev_info(&oct->pci_dev->dev, "OCTEON_CN23XX VF: %d ioqs\n",
 		 oct->sriov_info.rings_per_vf);
 
-	/* Setup the पूर्णांकerrupt handler and record the INT SUM रेजिस्टर address*/
-	अगर (octeon_setup_पूर्णांकerrupt(oct, oct->sriov_info.rings_per_vf))
-		वापस 1;
+	/* Setup the interrupt handler and record the INT SUM register address*/
+	if (octeon_setup_interrupt(oct, oct->sriov_info.rings_per_vf))
+		return 1;
 
 	atomic_set(&oct->status, OCT_DEV_INTR_SET_DONE);
 
 	/* ***************************************************************
-	 * The पूर्णांकerrupts need to be enabled क्रम the PF<-->VF handshake.
+	 * The interrupts need to be enabled for the PF<-->VF handshake.
 	 * They are [re]-enabled after the PF<-->VF handshake so that the
 	 * correct OQ tick value is used (i.e. the value retrieved from
 	 * the PF as part of the handshake).
 	 */
 
-	/* Enable Octeon device पूर्णांकerrupts */
-	oct->fn_list.enable_पूर्णांकerrupt(oct, OCTEON_ALL_INTR);
+	/* Enable Octeon device interrupts */
+	oct->fn_list.enable_interrupt(oct, OCTEON_ALL_INTR);
 
-	अगर (cn23xx_octeon_pfvf_handshake(oct))
-		वापस 1;
+	if (cn23xx_octeon_pfvf_handshake(oct))
+		return 1;
 
-	/* Here we [re]-enable the पूर्णांकerrupts so that the correct OQ tick value
+	/* Here we [re]-enable the interrupts so that the correct OQ tick value
 	 * is used (i.e. the value that was retrieved during the handshake)
 	 */
 
-	/* Enable Octeon device पूर्णांकerrupts */
-	oct->fn_list.enable_पूर्णांकerrupt(oct, OCTEON_ALL_INTR);
+	/* Enable Octeon device interrupts */
+	oct->fn_list.enable_interrupt(oct, OCTEON_ALL_INTR);
 	/* *************************************************************** */
 
-	/* Enable the input and output queues क्रम this Octeon device */
-	अगर (oct->fn_list.enable_io_queues(oct)) अणु
+	/* Enable the input and output queues for this Octeon device */
+	if (oct->fn_list.enable_io_queues(oct)) {
 		dev_err(&oct->pci_dev->dev, "enabling io queues failed\n");
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 
 	atomic_set(&oct->status, OCT_DEV_IO_QUEUES_DONE);
 
 	atomic_set(&oct->status, OCT_DEV_HOST_OK);
 
-	/* Send Credit क्रम Octeon Output queues. Credits are always sent after
+	/* Send Credit for Octeon Output queues. Credits are always sent after
 	 * the output queue is enabled.
 	 */
-	क्रम (j = 0; j < oct->num_oqs; j++)
-		ग_लिखोl(oct->droq[j]->max_count, oct->droq[j]->pkts_credit_reg);
+	for (j = 0; j < oct->num_oqs; j++)
+		writel(oct->droq[j]->max_count, oct->droq[j]->pkts_credit_reg);
 
-	/* Packets can start arriving on the output queues from this poपूर्णांक. */
+	/* Packets can start arriving on the output queues from this point. */
 
 	atomic_set(&oct->status, OCT_DEV_CORE_OK);
 
 	atomic_set(&oct->status, OCT_DEV_RUNNING);
 
-	अगर (liquidio_init_nic_module(oct))
-		वापस 1;
+	if (liquidio_init_nic_module(oct))
+		return 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __init liquidio_vf_init(व्योम)
-अणु
+static int __init liquidio_vf_init(void)
+{
 	octeon_init_device_list(0);
-	वापस pci_रेजिस्टर_driver(&liquidio_vf_pci_driver);
-पूर्ण
+	return pci_register_driver(&liquidio_vf_pci_driver);
+}
 
-अटल व्योम __निकास liquidio_vf_निकास(व्योम)
-अणु
-	pci_unरेजिस्टर_driver(&liquidio_vf_pci_driver);
+static void __exit liquidio_vf_exit(void)
+{
+	pci_unregister_driver(&liquidio_vf_pci_driver);
 
 	pr_info("LiquidIO_VF network module is now unloaded\n");
-पूर्ण
+}
 
 module_init(liquidio_vf_init);
-module_निकास(liquidio_vf_निकास);
+module_exit(liquidio_vf_exit);

@@ -1,17 +1,16 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: MIT */
+/* SPDX-License-Identifier: MIT */
 /*
- * Copyright तऊ 2019 Intel Corporation
+ * Copyright © 2019 Intel Corporation
  */
 
-#अगर_अघोषित __INTEL_REGION_LMEM_H
-#घोषणा __INTEL_REGION_LMEM_H
+#ifndef __INTEL_REGION_LMEM_H
+#define __INTEL_REGION_LMEM_H
 
-काष्ठा पूर्णांकel_gt;
+struct intel_gt;
 
-काष्ठा पूर्णांकel_memory_region *पूर्णांकel_gt_setup_lmem(काष्ठा पूर्णांकel_gt *gt);
+struct intel_memory_region *intel_gt_setup_lmem(struct intel_gt *gt);
 
-काष्ठा पूर्णांकel_memory_region *
-पूर्णांकel_gt_setup_fake_lmem(काष्ठा पूर्णांकel_gt *gt);
+struct intel_memory_region *
+intel_gt_setup_fake_lmem(struct intel_gt *gt);
 
-#पूर्ण_अगर /* !__INTEL_REGION_LMEM_H */
+#endif /* !__INTEL_REGION_LMEM_H */

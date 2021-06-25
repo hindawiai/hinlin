@@ -1,33 +1,32 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: MIT */
-#अगर_अघोषित __NVKM_TOP_H__
-#घोषणा __NVKM_TOP_H__
-#समावेश <core/subdev.h>
+/* SPDX-License-Identifier: MIT */
+#ifndef __NVKM_TOP_H__
+#define __NVKM_TOP_H__
+#include <core/subdev.h>
 
-काष्ठा nvkm_top अणु
-	स्थिर काष्ठा nvkm_top_func *func;
-	काष्ठा nvkm_subdev subdev;
-	काष्ठा list_head device;
-पूर्ण;
+struct nvkm_top {
+	const struct nvkm_top_func *func;
+	struct nvkm_subdev subdev;
+	struct list_head device;
+};
 
-काष्ठा nvkm_top_device अणु
-	क्रमागत nvkm_subdev_type type;
-	पूर्णांक inst;
+struct nvkm_top_device {
+	enum nvkm_subdev_type type;
+	int inst;
 	u32 addr;
-	पूर्णांक fault;
-	पूर्णांक engine;
-	पूर्णांक runlist;
-	पूर्णांक reset;
-	पूर्णांक पूर्णांकr;
-	काष्ठा list_head head;
-पूर्ण;
+	int fault;
+	int engine;
+	int runlist;
+	int reset;
+	int intr;
+	struct list_head head;
+};
 
-u32 nvkm_top_addr(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक);
-u32 nvkm_top_reset(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक);
-u32 nvkm_top_पूर्णांकr_mask(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक);
-पूर्णांक nvkm_top_fault_id(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक);
-काष्ठा nvkm_subdev *nvkm_top_fault(काष्ठा nvkm_device *, पूर्णांक fault);
+u32 nvkm_top_addr(struct nvkm_device *, enum nvkm_subdev_type, int);
+u32 nvkm_top_reset(struct nvkm_device *, enum nvkm_subdev_type, int);
+u32 nvkm_top_intr_mask(struct nvkm_device *, enum nvkm_subdev_type, int);
+int nvkm_top_fault_id(struct nvkm_device *, enum nvkm_subdev_type, int);
+struct nvkm_subdev *nvkm_top_fault(struct nvkm_device *, int fault);
 
-पूर्णांक gk104_top_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक inst, काष्ठा nvkm_top **);
-पूर्णांक ga100_top_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक inst, काष्ठा nvkm_top **);
-#पूर्ण_अगर
+int gk104_top_new(struct nvkm_device *, enum nvkm_subdev_type, int inst, struct nvkm_top **);
+int ga100_top_new(struct nvkm_device *, enum nvkm_subdev_type, int inst, struct nvkm_top **);
+#endif

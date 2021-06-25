@@ -1,36 +1,35 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * tools/testing/selftests/kvm/lib/io.c
  *
  * Copyright (C) 2018, Google LLC.
  */
 
-#समावेश "test_util.h"
+#include "test_util.h"
 
 /* Test Write
  *
- * A wrapper क्रम ग_लिखो(2), that स्वतःmatically handles the following
+ * A wrapper for write(2), that automatically handles the following
  * special conditions:
  *
- *   + Interrupted प्रणाली call (EINTR)
+ *   + Interrupted system call (EINTR)
  *   + Write of less than requested amount
- *   + Non-block वापस (EAGAIN)
+ *   + Non-block return (EAGAIN)
  *
- * For each of the above, an additional ग_लिखो is perक्रमmed to स्वतःmatically
- * जारी writing the requested data.
- * There are also many हालs where ग_लिखो(2) can वापस an unexpected
+ * For each of the above, an additional write is performed to automatically
+ * continue writing the requested data.
+ * There are also many cases where write(2) can return an unexpected
  * error (e.g. EIO).  Such errors cause a TEST_ASSERT failure.
  *
- * Note, क्रम function signature compatibility with ग_लिखो(2), this function
- * वापसs the number of bytes written, but that value will always be equal
+ * Note, for function signature compatibility with write(2), this function
+ * returns the number of bytes written, but that value will always be equal
  * to the number of requested bytes.  All other conditions in this and
- * future enhancements to this function either स्वतःmatically issue another
- * ग_लिखो(2) or cause a TEST_ASSERT failure.
+ * future enhancements to this function either automatically issue another
+ * write(2) or cause a TEST_ASSERT failure.
  *
  * Args:
  *  fd    - Opened file descriptor to file to be written.
- *  count - Number of bytes to ग_लिखो.
+ *  count - Number of bytes to write.
  *
  * Output:
  *  buf   - Starting address of data to be written.
@@ -39,120 +38,120 @@
  *  On success, number of bytes written.
  *  On failure, a TEST_ASSERT failure is caused.
  */
-sमाप_प्रकार test_ग_लिखो(पूर्णांक fd, स्थिर व्योम *buf, माप_प्रकार count)
-अणु
-	sमाप_प्रकार rc;
-	sमाप_प्रकार num_written = 0;
-	माप_प्रकार num_left = count;
-	स्थिर अक्षर *ptr = buf;
+ssize_t test_write(int fd, const void *buf, size_t count)
+{
+	ssize_t rc;
+	ssize_t num_written = 0;
+	size_t num_left = count;
+	const char *ptr = buf;
 
 	/* Note: Count of zero is allowed (see "RETURN VALUE" portion of
-	 * ग_लिखो(2) manpage क्रम details.
+	 * write(2) manpage for details.
 	 */
 	TEST_ASSERT(count >= 0, "Unexpected count, count: %li", count);
 
-	करो अणु
-		rc = ग_लिखो(fd, ptr, num_left);
+	do {
+		rc = write(fd, ptr, num_left);
 
-		चयन (rc) अणु
-		हाल -1:
-			TEST_ASSERT(त्रुटि_सं == EAGAIN || त्रुटि_सं == EINTR,
+		switch (rc) {
+		case -1:
+			TEST_ASSERT(errno == EAGAIN || errno == EINTR,
 				    "Unexpected write failure,\n"
-				    "  rc: %zi errno: %i", rc, त्रुटि_सं);
-			जारी;
+				    "  rc: %zi errno: %i", rc, errno);
+			continue;
 
-		हाल 0:
+		case 0:
 			TEST_FAIL("Unexpected EOF,\n"
 				  "  rc: %zi num_written: %zi num_left: %zu",
 				  rc, num_written, num_left);
-			अवरोध;
+			break;
 
-		शेष:
+		default:
 			TEST_ASSERT(rc >= 0, "Unexpected ret from write,\n"
-				"  rc: %zi errno: %i", rc, त्रुटि_सं);
+				"  rc: %zi errno: %i", rc, errno);
 			num_written += rc;
 			num_left -= rc;
 			ptr += rc;
-			अवरोध;
-		पूर्ण
-	पूर्ण जबतक (num_written < count);
+			break;
+		}
+	} while (num_written < count);
 
-	वापस num_written;
-पूर्ण
+	return num_written;
+}
 
 /* Test Read
  *
- * A wrapper क्रम पढ़ो(2), that स्वतःmatically handles the following
+ * A wrapper for read(2), that automatically handles the following
  * special conditions:
  *
- *   + Interrupted प्रणाली call (EINTR)
+ *   + Interrupted system call (EINTR)
  *   + Read of less than requested amount
- *   + Non-block वापस (EAGAIN)
+ *   + Non-block return (EAGAIN)
  *
- * For each of the above, an additional पढ़ो is perक्रमmed to स्वतःmatically
- * जारी पढ़ोing the requested data.
- * There are also many हालs where पढ़ो(2) can वापस an unexpected
+ * For each of the above, an additional read is performed to automatically
+ * continue reading the requested data.
+ * There are also many cases where read(2) can return an unexpected
  * error (e.g. EIO).  Such errors cause a TEST_ASSERT failure.  Note,
- * it is expected that the file खोलोed by fd at the current file position
- * contains at least the number of requested bytes to be पढ़ो.  A TEST_ASSERT
- * failure is produced अगर an End-Of-File condition occurs, beक्रमe all the
- * data is पढ़ो.  It is the callers responsibility to assure that sufficient
+ * it is expected that the file opened by fd at the current file position
+ * contains at least the number of requested bytes to be read.  A TEST_ASSERT
+ * failure is produced if an End-Of-File condition occurs, before all the
+ * data is read.  It is the callers responsibility to assure that sufficient
  * data exists.
  *
- * Note, क्रम function signature compatibility with पढ़ो(2), this function
- * वापसs the number of bytes पढ़ो, but that value will always be equal
+ * Note, for function signature compatibility with read(2), this function
+ * returns the number of bytes read, but that value will always be equal
  * to the number of requested bytes.  All other conditions in this and
- * future enhancements to this function either स्वतःmatically issue another
- * पढ़ो(2) or cause a TEST_ASSERT failure.
+ * future enhancements to this function either automatically issue another
+ * read(2) or cause a TEST_ASSERT failure.
  *
  * Args:
- *  fd    - Opened file descriptor to file to be पढ़ो.
- *  count - Number of bytes to पढ़ो.
+ *  fd    - Opened file descriptor to file to be read.
+ *  count - Number of bytes to read.
  *
  * Output:
- *  buf   - Starting address of where to ग_लिखो the bytes पढ़ो.
+ *  buf   - Starting address of where to write the bytes read.
  *
  * Return:
- *  On success, number of bytes पढ़ो.
+ *  On success, number of bytes read.
  *  On failure, a TEST_ASSERT failure is caused.
  */
-sमाप_प्रकार test_पढ़ो(पूर्णांक fd, व्योम *buf, माप_प्रकार count)
-अणु
-	sमाप_प्रकार rc;
-	sमाप_प्रकार num_पढ़ो = 0;
-	माप_प्रकार num_left = count;
-	अक्षर *ptr = buf;
+ssize_t test_read(int fd, void *buf, size_t count)
+{
+	ssize_t rc;
+	ssize_t num_read = 0;
+	size_t num_left = count;
+	char *ptr = buf;
 
 	/* Note: Count of zero is allowed (see "If count is zero" portion of
-	 * पढ़ो(2) manpage क्रम details.
+	 * read(2) manpage for details.
 	 */
 	TEST_ASSERT(count >= 0, "Unexpected count, count: %li", count);
 
-	करो अणु
-		rc = पढ़ो(fd, ptr, num_left);
+	do {
+		rc = read(fd, ptr, num_left);
 
-		चयन (rc) अणु
-		हाल -1:
-			TEST_ASSERT(त्रुटि_सं == EAGAIN || त्रुटि_सं == EINTR,
+		switch (rc) {
+		case -1:
+			TEST_ASSERT(errno == EAGAIN || errno == EINTR,
 				    "Unexpected read failure,\n"
-				    "  rc: %zi errno: %i", rc, त्रुटि_सं);
-			अवरोध;
+				    "  rc: %zi errno: %i", rc, errno);
+			break;
 
-		हाल 0:
+		case 0:
 			TEST_FAIL("Unexpected EOF,\n"
 				  "   rc: %zi num_read: %zi num_left: %zu",
-				  rc, num_पढ़ो, num_left);
-			अवरोध;
+				  rc, num_read, num_left);
+			break;
 
-		शेष:
+		default:
 			TEST_ASSERT(rc > 0, "Unexpected ret from read,\n"
-				    "  rc: %zi errno: %i", rc, त्रुटि_सं);
-			num_पढ़ो += rc;
+				    "  rc: %zi errno: %i", rc, errno);
+			num_read += rc;
 			num_left -= rc;
 			ptr += rc;
-			अवरोध;
-		पूर्ण
-	पूर्ण जबतक (num_पढ़ो < count);
+			break;
+		}
+	} while (num_read < count);
 
-	वापस num_पढ़ो;
-पूर्ण
+	return num_read;
+}

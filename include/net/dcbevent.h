@@ -1,38 +1,37 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (c) 2010, Intel Corporation.
  *
- * Author: John Fastabend <john.r.fastabend@पूर्णांकel.com>
+ * Author: John Fastabend <john.r.fastabend@intel.com>
  */
 
-#अगर_अघोषित _DCB_EVENT_H
-#घोषणा _DCB_EVENT_H
+#ifndef _DCB_EVENT_H
+#define _DCB_EVENT_H
 
-क्रमागत dcbevent_notअगर_type अणु
+enum dcbevent_notif_type {
 	DCB_APP_EVENT = 1,
-पूर्ण;
+};
 
-#अगर_घोषित CONFIG_DCB
-पूर्णांक रेजिस्टर_dcbevent_notअगरier(काष्ठा notअगरier_block *nb);
-पूर्णांक unरेजिस्टर_dcbevent_notअगरier(काष्ठा notअगरier_block *nb);
-पूर्णांक call_dcbevent_notअगरiers(अचिन्हित दीर्घ val, व्योम *v);
-#अन्यथा
-अटल अंतरभूत पूर्णांक
-रेजिस्टर_dcbevent_notअगरier(काष्ठा notअगरier_block *nb)
-अणु
-	वापस 0;
-पूर्ण
+#ifdef CONFIG_DCB
+int register_dcbevent_notifier(struct notifier_block *nb);
+int unregister_dcbevent_notifier(struct notifier_block *nb);
+int call_dcbevent_notifiers(unsigned long val, void *v);
+#else
+static inline int
+register_dcbevent_notifier(struct notifier_block *nb)
+{
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक unरेजिस्टर_dcbevent_notअगरier(काष्ठा notअगरier_block *nb)
-अणु
-	वापस 0;
-पूर्ण
+static inline int unregister_dcbevent_notifier(struct notifier_block *nb)
+{
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक call_dcbevent_notअगरiers(अचिन्हित दीर्घ val, व्योम *v)
-अणु
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_DCB */
+static inline int call_dcbevent_notifiers(unsigned long val, void *v)
+{
+	return 0;
+}
+#endif /* CONFIG_DCB */
 
-#पूर्ण_अगर
+#endif

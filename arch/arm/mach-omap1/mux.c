@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * linux/arch/arm/mach-omap1/mux.c
  *
@@ -9,21 +8,21 @@
  *
  * Written by Tony Lindgren
  */
-#समावेश <linux/module.h>
-#समावेश <linux/init.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/spinlock.h>
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/io.h>
+#include <linux/spinlock.h>
 
-#समावेश <mach/hardware.h>
+#include <mach/hardware.h>
 
-#समावेश <mach/mux.h>
+#include <mach/mux.h>
 
-#अगर_घोषित CONFIG_OMAP_MUX
+#ifdef CONFIG_OMAP_MUX
 
-अटल काष्ठा omap_mux_cfg arch_mux_cfg;
+static struct omap_mux_cfg arch_mux_cfg;
 
-#अगर defined(CONFIG_ARCH_OMAP730) || defined(CONFIG_ARCH_OMAP850)
-अटल काष्ठा pin_config omap7xx_pins[] = अणु
+#if defined(CONFIG_ARCH_OMAP730) || defined(CONFIG_ARCH_OMAP850)
+static struct pin_config omap7xx_pins[] = {
 MUX_CFG_7XX("E2_7XX_KBR0",        12,   21,    0,   20,   1, 0)
 MUX_CFG_7XX("J7_7XX_KBR1",        12,   25,    0,   24,   1, 0)
 MUX_CFG_7XX("E1_7XX_KBR2",        12,   29,    0,   28,   1, 0)
@@ -46,7 +45,7 @@ MUX_CFG_7XX("MMC_7XX_CMD",         2,    9,    0,    8,   1, 0)
 MUX_CFG_7XX("MMC_7XX_CLK",         2,   13,    0,   12,   1, 0)
 MUX_CFG_7XX("MMC_7XX_DAT0",        2,   17,    0,   16,   1, 0)
 
-/* I2C पूर्णांकerface */
+/* I2C interface */
 MUX_CFG_7XX("I2C_7XX_SCL",         5,    1,    0,    0,   1, 0)
 MUX_CFG_7XX("I2C_7XX_SDA",         5,    5,    0,    0,   1, 0)
 
@@ -61,15 +60,15 @@ MUX_CFG_7XX("SPI_7XX_6",           9,    5,    0,    4,   0, 0)
 /* UART pins */
 MUX_CFG_7XX("UART_7XX_1",          3,   21,    0,   20,   0, 0)
 MUX_CFG_7XX("UART_7XX_2",          8,    1,    6,    0,   0, 0)
-पूर्ण;
-#घोषणा OMAP7XX_PINS_SZ		ARRAY_SIZE(omap7xx_pins)
-#अन्यथा
-#घोषणा omap7xx_pins		शून्य
-#घोषणा OMAP7XX_PINS_SZ		0
-#पूर्ण_अगर	/* CONFIG_ARCH_OMAP730 || CONFIG_ARCH_OMAP850 */
+};
+#define OMAP7XX_PINS_SZ		ARRAY_SIZE(omap7xx_pins)
+#else
+#define omap7xx_pins		NULL
+#define OMAP7XX_PINS_SZ		0
+#endif	/* CONFIG_ARCH_OMAP730 || CONFIG_ARCH_OMAP850 */
 
-#अगर defined(CONFIG_ARCH_OMAP15XX) || defined(CONFIG_ARCH_OMAP16XX)
-अटल काष्ठा pin_config omap1xxx_pins[] = अणु
+#if defined(CONFIG_ARCH_OMAP15XX) || defined(CONFIG_ARCH_OMAP16XX)
+static struct pin_config omap1xxx_pins[] = {
 /*
  *	 description		mux  mode   mux	 pull pull  pull  pu_pd	 pu  dbg
  *				reg  offset mode reg  bit   ena	  reg
@@ -96,10 +95,10 @@ MUX_CFG("Y15_1610_UART3_RTS",	 A,    0,    1,	  2,   6,   0,	 NA,	 0,  0)
 MUX_CFG("PWT",			 6,    0,    2,	  0,  30,   0,	 NA,	 0,  0)
 MUX_CFG("PWL",			 6,    3,    1,	  0,  31,   1,	 NA,	 0,  0)
 
-/* USB पूर्णांकernal master generic */
+/* USB internal master generic */
 MUX_CFG("R18_USB_VBUS",		 7,    9,    2,	  1,  11,   0,	 NA,	 0,  1)
 MUX_CFG("R18_1510_USB_GPIO0",	 7,    9,    0,	  1,  11,   1,	 NA,	 0,  1)
-/* works around erratum:  W4_USB_PUEN and W4_USB_PUDIS are चयनed! */
+/* works around erratum:  W4_USB_PUEN and W4_USB_PUDIS are switched! */
 MUX_CFG("W4_USB_PUEN",		 D,    3,    3,	  3,   5,   1,	 NA,	 0,  1)
 MUX_CFG("W4_USB_CLKO",		 D,    3,    1,	  3,   5,   0,	 NA,	 0,  1)
 MUX_CFG("W4_USB_HIGHZ",		 D,    3,    4,	  3,   5,   0,	  3,	 0,  1)
@@ -166,7 +165,7 @@ MUX_CFG("MCBSP2_DX",		 C,   15,    0,	  2,  31,   1,	 NA,	 0,  1)
 MUX_CFG("MCBSP2_FSR",		 C,   12,    0,	  2,  30,   1,	 NA,	 0,  1)
 MUX_CFG("MCBSP2_FSX",		 C,    3,    0,	  2,  27,   1,	 NA,	 0,  1)
 
-/* MCBSP3 NOTE: Mode must 1 क्रम घड़ी */
+/* MCBSP3 NOTE: Mode must 1 for clock */
 MUX_CFG("MCBSP3_CLKX",		 9,    3,    1,	  1,  29,   0,	 NA,	 0,  1)
 
 /* Misc ballouts */
@@ -231,7 +230,7 @@ MUX_CFG("P15_1610_SPIF_CS3",	 8,    12,   3,	  1,  22,   0,	  1,	 1,  1)
 MUX_CFG("L3_1610_FLASH_CS2B_OE",10,    6,    1,	 NA,   0,   0,	 NA,	 0,  1)
 MUX_CFG("M8_1610_FLASH_CS2B_WE",10,    3,    1,	 NA,   0,   0,	 NA,	 0,  1)
 
-/* First MMC पूर्णांकerface, same on 1510, 1610 and 1710 */
+/* First MMC interface, same on 1510, 1610 and 1710 */
 MUX_CFG("MMC_CMD",		 A,   27,    0,	  2,  15,   1,	  2,	 1,  1)
 MUX_CFG("MMC_DAT1",		 A,   24,    0,	  2,  14,   1,	  2,	 1,  1)
 MUX_CFG("MMC_DAT2",		 A,   18,    0,	  2,  12,   1,	  2,	 1,  1)
@@ -252,7 +251,7 @@ MUX_CFG("W5_USB0_SE0",		 C,  24,     5,	  3,   2,   0,	  3,	 0,  1)
 MUX_CFG("V9_USB0_SPEED",	 B,  12,     5,	  2,  20,   0,	  2,	 0,  1)
 MUX_CFG("Y10_USB0_SUSP",	 B,   3,     5,	  2,  17,   0,	  2,	 0,  1)
 
-/* USB2 पूर्णांकerface */
+/* USB2 interface */
 MUX_CFG("W9_USB2_TXEN",		 B,   9,     1,	 NA,   0,   0,	 NA,	 0,  1)
 MUX_CFG("AA9_USB2_VP",		 B,   6,     1,	 NA,   0,   0,	 NA,	 0,  1)
 MUX_CFG("Y5_USB2_RCV",		 C,  21,     1,	 NA,   0,   0,	 NA,	 0,  1)
@@ -268,7 +267,7 @@ MUX_CFG("AA15_1610_UART1_RTS",	 9,  12,     1,	  2,   0,   0,	  2,	 0,  1)
 MUX_CFG("R9_16XX_UART2_RX",	 C,  18,     0,   3,   0,   0,    3,     0,  1)
 MUX_CFG("L14_16XX_UART3_RX",	 6,   3,     0,   0,  31,   0,    0,    31,  1)
 
-/* I2C पूर्णांकerface */
+/* I2C interface */
 MUX_CFG("I2C_SCL",		 7,  24,     0,	 NA,   0,   0,	 NA,	 0,  0)
 MUX_CFG("I2C_SDA",		 7,  27,     0,	 NA,   0,   0,	 NA,	 0,  0)
 
@@ -318,195 +317,195 @@ MUX_CFG("Y15_1610_CAM_OUTCLK",	 A,    0,    6,   2,   6,   0,    2,     0,  0)
 
 /* serial camera */
 MUX_CFG("H19_1610_CAM_EXCLK",	 4,   21,    0,   0,  17,   0,    0,     0,  0)
-	/* REVISIT 5912 spec sez CCP_* can't pullup or pullकरोwn ... ? */
+	/* REVISIT 5912 spec sez CCP_* can't pullup or pulldown ... ? */
 MUX_CFG("Y12_1610_CCP_CLKP",	 8,   18,    6,   1,  24,   1,    1,     0,  0)
 MUX_CFG("W13_1610_CCP_CLKM",	 9,    0,    6,   1,  28,   1,    1,     0,  0)
 MUX_CFG("W14_1610_CCP_DATAP",	 9,   24,    6,   2,   4,   1,    2,     0,  0)
 MUX_CFG("Y14_1610_CCP_DATAM",	 9,   21,    6,   2,   3,   1,    2,     0,  0)
-पूर्ण;
-#घोषणा OMAP1XXX_PINS_SZ	ARRAY_SIZE(omap1xxx_pins)
-#अन्यथा
-#घोषणा omap1xxx_pins		शून्य
-#घोषणा OMAP1XXX_PINS_SZ	0
-#पूर्ण_अगर	/* CONFIG_ARCH_OMAP15XX || CONFIG_ARCH_OMAP16XX */
+};
+#define OMAP1XXX_PINS_SZ	ARRAY_SIZE(omap1xxx_pins)
+#else
+#define omap1xxx_pins		NULL
+#define OMAP1XXX_PINS_SZ	0
+#endif	/* CONFIG_ARCH_OMAP15XX || CONFIG_ARCH_OMAP16XX */
 
-अटल पूर्णांक omap1_cfg_reg(स्थिर काष्ठा pin_config *cfg)
-अणु
-	अटल DEFINE_SPINLOCK(mux_spin_lock);
-	अचिन्हित दीर्घ flags;
-	अचिन्हित पूर्णांक reg_orig = 0, reg = 0, pu_pd_orig = 0, pu_pd = 0,
+static int omap1_cfg_reg(const struct pin_config *cfg)
+{
+	static DEFINE_SPINLOCK(mux_spin_lock);
+	unsigned long flags;
+	unsigned int reg_orig = 0, reg = 0, pu_pd_orig = 0, pu_pd = 0,
 		pull_orig = 0, pull = 0;
-	अचिन्हित पूर्णांक mask, warn = 0;
+	unsigned int mask, warn = 0;
 
-	/* Check the mux रेजिस्टर in question */
-	अगर (cfg->mux_reg) अणु
-		अचिन्हित	पंचांगp1, पंचांगp2;
+	/* Check the mux register in question */
+	if (cfg->mux_reg) {
+		unsigned	tmp1, tmp2;
 
 		spin_lock_irqsave(&mux_spin_lock, flags);
-		reg_orig = omap_पढ़ोl(cfg->mux_reg);
+		reg_orig = omap_readl(cfg->mux_reg);
 
-		/* The mux रेजिस्टरs always seem to be 3 bits दीर्घ */
+		/* The mux registers always seem to be 3 bits long */
 		mask = (0x7 << cfg->mask_offset);
-		पंचांगp1 = reg_orig & mask;
+		tmp1 = reg_orig & mask;
 		reg = reg_orig & ~mask;
 
-		पंचांगp2 = (cfg->mask << cfg->mask_offset);
-		reg |= पंचांगp2;
+		tmp2 = (cfg->mask << cfg->mask_offset);
+		reg |= tmp2;
 
-		अगर (पंचांगp1 != पंचांगp2)
+		if (tmp1 != tmp2)
 			warn = 1;
 
-		omap_ग_लिखोl(reg, cfg->mux_reg);
+		omap_writel(reg, cfg->mux_reg);
 		spin_unlock_irqrestore(&mux_spin_lock, flags);
-	पूर्ण
+	}
 
-	/* Check क्रम pull up or pull करोwn selection on 1610 */
-	अगर (!cpu_is_omap15xx()) अणु
-		अगर (cfg->pu_pd_reg && cfg->pull_val) अणु
+	/* Check for pull up or pull down selection on 1610 */
+	if (!cpu_is_omap15xx()) {
+		if (cfg->pu_pd_reg && cfg->pull_val) {
 			spin_lock_irqsave(&mux_spin_lock, flags);
-			pu_pd_orig = omap_पढ़ोl(cfg->pu_pd_reg);
+			pu_pd_orig = omap_readl(cfg->pu_pd_reg);
 			mask = 1 << cfg->pull_bit;
 
-			अगर (cfg->pu_pd_val) अणु
-				अगर (!(pu_pd_orig & mask))
+			if (cfg->pu_pd_val) {
+				if (!(pu_pd_orig & mask))
 					warn = 1;
 				/* Use pull up */
 				pu_pd = pu_pd_orig | mask;
-			पूर्ण अन्यथा अणु
-				अगर (pu_pd_orig & mask)
+			} else {
+				if (pu_pd_orig & mask)
 					warn = 1;
-				/* Use pull करोwn */
+				/* Use pull down */
 				pu_pd = pu_pd_orig & ~mask;
-			पूर्ण
-			omap_ग_लिखोl(pu_pd, cfg->pu_pd_reg);
+			}
+			omap_writel(pu_pd, cfg->pu_pd_reg);
 			spin_unlock_irqrestore(&mux_spin_lock, flags);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	/* Check क्रम an associated pull करोwn रेजिस्टर */
-	अगर (cfg->pull_reg) अणु
+	/* Check for an associated pull down register */
+	if (cfg->pull_reg) {
 		spin_lock_irqsave(&mux_spin_lock, flags);
-		pull_orig = omap_पढ़ोl(cfg->pull_reg);
+		pull_orig = omap_readl(cfg->pull_reg);
 		mask = 1 << cfg->pull_bit;
 
-		अगर (cfg->pull_val) अणु
-			अगर (pull_orig & mask)
+		if (cfg->pull_val) {
+			if (pull_orig & mask)
 				warn = 1;
 			/* Low bit = pull enabled */
 			pull = pull_orig & ~mask;
-		पूर्ण अन्यथा अणु
-			अगर (!(pull_orig & mask))
+		} else {
+			if (!(pull_orig & mask))
 				warn = 1;
 			/* High bit = pull disabled */
 			pull = pull_orig | mask;
-		पूर्ण
+		}
 
-		omap_ग_लिखोl(pull, cfg->pull_reg);
+		omap_writel(pull, cfg->pull_reg);
 		spin_unlock_irqrestore(&mux_spin_lock, flags);
-	पूर्ण
+	}
 
-	अगर (warn) अणु
-#अगर_घोषित CONFIG_OMAP_MUX_WARNINGS
-		prपूर्णांकk(KERN_WARNING "MUX: initialized %s\n", cfg->name);
-#पूर्ण_अगर
-	पूर्ण
+	if (warn) {
+#ifdef CONFIG_OMAP_MUX_WARNINGS
+		printk(KERN_WARNING "MUX: initialized %s\n", cfg->name);
+#endif
+	}
 
-#अगर_घोषित CONFIG_OMAP_MUX_DEBUG
-	अगर (cfg->debug || warn) अणु
-		prपूर्णांकk("MUX: Setting register %s\n", cfg->name);
-		prपूर्णांकk("      %s (0x%08x) = 0x%08x -> 0x%08x\n",
+#ifdef CONFIG_OMAP_MUX_DEBUG
+	if (cfg->debug || warn) {
+		printk("MUX: Setting register %s\n", cfg->name);
+		printk("      %s (0x%08x) = 0x%08x -> 0x%08x\n",
 		       cfg->mux_reg_name, cfg->mux_reg, reg_orig, reg);
 
-		अगर (!cpu_is_omap15xx()) अणु
-			अगर (cfg->pu_pd_reg && cfg->pull_val) अणु
-				prपूर्णांकk("      %s (0x%08x) = 0x%08x -> 0x%08x\n",
+		if (!cpu_is_omap15xx()) {
+			if (cfg->pu_pd_reg && cfg->pull_val) {
+				printk("      %s (0x%08x) = 0x%08x -> 0x%08x\n",
 				       cfg->pu_pd_name, cfg->pu_pd_reg,
 				       pu_pd_orig, pu_pd);
-			पूर्ण
-		पूर्ण
+			}
+		}
 
-		अगर (cfg->pull_reg)
-			prपूर्णांकk("      %s (0x%08x) = 0x%08x -> 0x%08x\n",
+		if (cfg->pull_reg)
+			printk("      %s (0x%08x) = 0x%08x -> 0x%08x\n",
 			       cfg->pull_name, cfg->pull_reg, pull_orig, pull);
-	पूर्ण
-#पूर्ण_अगर
+	}
+#endif
 
-#अगर_घोषित CONFIG_OMAP_MUX_WARNINGS
-	वापस warn ? -ETXTBSY : 0;
-#अन्यथा
-	वापस 0;
-#पूर्ण_अगर
-पूर्ण
+#ifdef CONFIG_OMAP_MUX_WARNINGS
+	return warn ? -ETXTBSY : 0;
+#else
+	return 0;
+#endif
+}
 
-अटल काष्ठा omap_mux_cfg *mux_cfg;
+static struct omap_mux_cfg *mux_cfg;
 
-पूर्णांक __init omap_mux_रेजिस्टर(काष्ठा omap_mux_cfg *arch_mux_cfg)
-अणु
-	अगर (!arch_mux_cfg || !arch_mux_cfg->pins || arch_mux_cfg->size == 0
-			|| !arch_mux_cfg->cfg_reg) अणु
-		prपूर्णांकk(KERN_ERR "Invalid pin table\n");
-		वापस -EINVAL;
-	पूर्ण
+int __init omap_mux_register(struct omap_mux_cfg *arch_mux_cfg)
+{
+	if (!arch_mux_cfg || !arch_mux_cfg->pins || arch_mux_cfg->size == 0
+			|| !arch_mux_cfg->cfg_reg) {
+		printk(KERN_ERR "Invalid pin table\n");
+		return -EINVAL;
+	}
 
 	mux_cfg = arch_mux_cfg;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Sets the Omap MUX and PULL_DWN रेजिस्टरs based on the table
+ * Sets the Omap MUX and PULL_DWN registers based on the table
  */
-पूर्णांक omap_cfg_reg(स्थिर अचिन्हित दीर्घ index)
-अणु
-	काष्ठा pin_config *reg;
+int omap_cfg_reg(const unsigned long index)
+{
+	struct pin_config *reg;
 
-	अगर (!cpu_class_is_omap1()) अणु
-		prपूर्णांकk(KERN_ERR "mux: Broken omap_cfg_reg(%lu) entry\n",
+	if (!cpu_class_is_omap1()) {
+		printk(KERN_ERR "mux: Broken omap_cfg_reg(%lu) entry\n",
 				index);
 		WARN_ON(1);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (mux_cfg == शून्य) अणु
-		prपूर्णांकk(KERN_ERR "Pin mux table not initialized\n");
-		वापस -ENODEV;
-	पूर्ण
+	if (mux_cfg == NULL) {
+		printk(KERN_ERR "Pin mux table not initialized\n");
+		return -ENODEV;
+	}
 
-	अगर (index >= mux_cfg->size) अणु
-		prपूर्णांकk(KERN_ERR "Invalid pin mux index: %lu (%lu)\n",
+	if (index >= mux_cfg->size) {
+		printk(KERN_ERR "Invalid pin mux index: %lu (%lu)\n",
 		       index, mux_cfg->size);
 		dump_stack();
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	reg = &mux_cfg->pins[index];
 
-	अगर (!mux_cfg->cfg_reg)
-		वापस -ENODEV;
+	if (!mux_cfg->cfg_reg)
+		return -ENODEV;
 
-	वापस mux_cfg->cfg_reg(reg);
-पूर्ण
+	return mux_cfg->cfg_reg(reg);
+}
 EXPORT_SYMBOL(omap_cfg_reg);
 
-पूर्णांक __init omap1_mux_init(व्योम)
-अणु
-	अगर (cpu_is_omap7xx()) अणु
+int __init omap1_mux_init(void)
+{
+	if (cpu_is_omap7xx()) {
 		arch_mux_cfg.pins	= omap7xx_pins;
 		arch_mux_cfg.size	= OMAP7XX_PINS_SZ;
 		arch_mux_cfg.cfg_reg	= omap1_cfg_reg;
-	पूर्ण
+	}
 
-	अगर (cpu_is_omap15xx() || cpu_is_omap16xx()) अणु
+	if (cpu_is_omap15xx() || cpu_is_omap16xx()) {
 		arch_mux_cfg.pins	= omap1xxx_pins;
 		arch_mux_cfg.size	= OMAP1XXX_PINS_SZ;
 		arch_mux_cfg.cfg_reg	= omap1_cfg_reg;
-	पूर्ण
+	}
 
-	वापस omap_mux_रेजिस्टर(&arch_mux_cfg);
-पूर्ण
+	return omap_mux_register(&arch_mux_cfg);
+}
 
-#अन्यथा
-#घोषणा omap_mux_init() करो अणुपूर्ण जबतक(0)
-#घोषणा omap_cfg_reg(x)	करो अणुपूर्ण जबतक(0)
-#पूर्ण_अगर	/* CONFIG_OMAP_MUX */
+#else
+#define omap_mux_init() do {} while(0)
+#define omap_cfg_reg(x)	do {} while(0)
+#endif	/* CONFIG_OMAP_MUX */
 

@@ -1,331 +1,330 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
-/* पूर्णांकernal AFS stuff
+/* SPDX-License-Identifier: GPL-2.0-or-later */
+/* internal AFS stuff
  *
  * Copyright (C) 2002, 2007 Red Hat, Inc. All Rights Reserved.
  * Written by David Howells (dhowells@redhat.com)
  */
 
-#समावेश <linux/compiler.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/kसमय.स>
-#समावेश <linux/fs.h>
-#समावेश <linux/pagemap.h>
-#समावेश <linux/rxrpc.h>
-#समावेश <linux/key.h>
-#समावेश <linux/workqueue.h>
-#समावेश <linux/sched.h>
-#घोषणा FSCACHE_USE_NEW_IO_API
-#समावेश <linux/fscache.h>
-#समावेश <linux/backing-dev.h>
-#समावेश <linux/uuid.h>
-#समावेश <linux/mm_types.h>
-#समावेश <linux/dns_resolver.h>
-#समावेश <net/net_namespace.h>
-#समावेश <net/netns/generic.h>
-#समावेश <net/sock.h>
-#समावेश <net/af_rxrpc.h>
+#include <linux/compiler.h>
+#include <linux/kernel.h>
+#include <linux/ktime.h>
+#include <linux/fs.h>
+#include <linux/pagemap.h>
+#include <linux/rxrpc.h>
+#include <linux/key.h>
+#include <linux/workqueue.h>
+#include <linux/sched.h>
+#define FSCACHE_USE_NEW_IO_API
+#include <linux/fscache.h>
+#include <linux/backing-dev.h>
+#include <linux/uuid.h>
+#include <linux/mm_types.h>
+#include <linux/dns_resolver.h>
+#include <net/net_namespace.h>
+#include <net/netns/generic.h>
+#include <net/sock.h>
+#include <net/af_rxrpc.h>
 
-#समावेश "afs.h"
-#समावेश "afs_vl.h"
+#include "afs.h"
+#include "afs_vl.h"
 
-#घोषणा AFS_CELL_MAX_ADDRS 15
+#define AFS_CELL_MAX_ADDRS 15
 
-काष्ठा pagevec;
-काष्ठा afs_call;
-काष्ठा afs_vnode;
+struct pagevec;
+struct afs_call;
+struct afs_vnode;
 
 /*
  * Partial file-locking emulation mode.  (The problem being that AFS3 only
- * allows whole-file locks and no upgrading/करोwngrading).
+ * allows whole-file locks and no upgrading/downgrading).
  */
-क्रमागत afs_flock_mode अणु
+enum afs_flock_mode {
 	afs_flock_mode_unset,
 	afs_flock_mode_local,	/* Local locking only */
-	afs_flock_mode_खोलोafs,	/* Don't get server lock क्रम a partial lock */
-	afs_flock_mode_strict,	/* Always get a server lock क्रम a partial lock */
-	afs_flock_mode_ग_लिखो,	/* Get an exclusive server lock क्रम a partial lock */
-पूर्ण;
+	afs_flock_mode_openafs,	/* Don't get server lock for a partial lock */
+	afs_flock_mode_strict,	/* Always get a server lock for a partial lock */
+	afs_flock_mode_write,	/* Get an exclusive server lock for a partial lock */
+};
 
-काष्ठा afs_fs_context अणु
-	bool			क्रमce;		/* T to क्रमce cell type */
-	bool			स्वतःcell;	/* T अगर set स्वतः mount operation */
-	bool			dyn_root;	/* T अगर dynamic root */
-	bool			no_cell;	/* T अगर the source is "none" (क्रम dynroot) */
-	क्रमागत afs_flock_mode	flock_mode;	/* Partial file-locking emulation mode */
+struct afs_fs_context {
+	bool			force;		/* T to force cell type */
+	bool			autocell;	/* T if set auto mount operation */
+	bool			dyn_root;	/* T if dynamic root */
+	bool			no_cell;	/* T if the source is "none" (for dynroot) */
+	enum afs_flock_mode	flock_mode;	/* Partial file-locking emulation mode */
 	afs_voltype_t		type;		/* type of volume requested */
-	अचिन्हित पूर्णांक		volnamesz;	/* size of volume name */
-	स्थिर अक्षर		*volname;	/* name of volume to mount */
-	काष्ठा afs_net		*net;		/* the AFS net namespace stuff */
-	काष्ठा afs_cell		*cell;		/* cell in which to find volume */
-	काष्ठा afs_volume	*volume;	/* volume record */
-	काष्ठा key		*key;		/* key to use क्रम secure mounting */
-पूर्ण;
+	unsigned int		volnamesz;	/* size of volume name */
+	const char		*volname;	/* name of volume to mount */
+	struct afs_net		*net;		/* the AFS net namespace stuff */
+	struct afs_cell		*cell;		/* cell in which to find volume */
+	struct afs_volume	*volume;	/* volume record */
+	struct key		*key;		/* key to use for secure mounting */
+};
 
-क्रमागत afs_call_state अणु
+enum afs_call_state {
 	AFS_CALL_CL_REQUESTING,		/* Client: Request is being sent */
-	AFS_CALL_CL_AWAIT_REPLY,	/* Client: Aरुकोing reply */
+	AFS_CALL_CL_AWAIT_REPLY,	/* Client: Awaiting reply */
 	AFS_CALL_CL_PROC_REPLY,		/* Client: rxrpc call complete; processing reply */
-	AFS_CALL_SV_AWAIT_OP_ID,	/* Server: Aरुकोing op ID */
-	AFS_CALL_SV_AWAIT_REQUEST,	/* Server: Aरुकोing request data */
+	AFS_CALL_SV_AWAIT_OP_ID,	/* Server: Awaiting op ID */
+	AFS_CALL_SV_AWAIT_REQUEST,	/* Server: Awaiting request data */
 	AFS_CALL_SV_REPLYING,		/* Server: Replying */
-	AFS_CALL_SV_AWAIT_ACK,		/* Server: Aरुकोing final ACK */
+	AFS_CALL_SV_AWAIT_ACK,		/* Server: Awaiting final ACK */
 	AFS_CALL_COMPLETE,		/* Completed or failed */
-पूर्ण;
+};
 
 /*
  * List of server addresses.
  */
-काष्ठा afs_addr_list अणु
-	काष्ठा rcu_head		rcu;
+struct afs_addr_list {
+	struct rcu_head		rcu;
 	refcount_t		usage;
 	u32			version;	/* Version */
-	अचिन्हित अक्षर		max_addrs;
-	अचिन्हित अक्षर		nr_addrs;
-	अचिन्हित अक्षर		preferred;	/* Preferred address */
-	अचिन्हित अक्षर		nr_ipv4;	/* Number of IPv4 addresses */
-	क्रमागत dns_record_source	source:8;
-	क्रमागत dns_lookup_status	status:8;
-	अचिन्हित दीर्घ		failed;		/* Mask of addrs that failed locally/ICMP */
-	अचिन्हित दीर्घ		responded;	/* Mask of addrs that responded */
-	काष्ठा sockaddr_rxrpc	addrs[];
-#घोषणा AFS_MAX_ADDRESSES ((अचिन्हित पूर्णांक)(माप(अचिन्हित दीर्घ) * 8))
-पूर्ण;
+	unsigned char		max_addrs;
+	unsigned char		nr_addrs;
+	unsigned char		preferred;	/* Preferred address */
+	unsigned char		nr_ipv4;	/* Number of IPv4 addresses */
+	enum dns_record_source	source:8;
+	enum dns_lookup_status	status:8;
+	unsigned long		failed;		/* Mask of addrs that failed locally/ICMP */
+	unsigned long		responded;	/* Mask of addrs that responded */
+	struct sockaddr_rxrpc	addrs[];
+#define AFS_MAX_ADDRESSES ((unsigned int)(sizeof(unsigned long) * 8))
+};
 
 /*
  * a record of an in-progress RxRPC call
  */
-काष्ठा afs_call अणु
-	स्थिर काष्ठा afs_call_type *type;	/* type of call */
-	काष्ठा afs_addr_list	*alist;		/* Address is alist[addr_ix] */
-	रुको_queue_head_t	रुकोq;		/* processes aरुकोing completion */
-	काष्ठा work_काष्ठा	async_work;	/* async I/O processor */
-	काष्ठा work_काष्ठा	work;		/* actual work processor */
-	काष्ठा rxrpc_call	*rxcall;	/* RxRPC call handle */
-	काष्ठा key		*key;		/* security क्रम this call */
-	काष्ठा afs_net		*net;		/* The network namespace */
-	काष्ठा afs_server	*server;	/* The fileserver record अगर fs op (pins ref) */
-	काष्ठा afs_vlserver	*vlserver;	/* The vlserver record अगर vl op */
-	व्योम			*request;	/* request data (first part) */
-	माप_प्रकार			iov_len;	/* Size of *iter to be used */
-	काष्ठा iov_iter		def_iter;	/* Default buffer/data iterator */
-	काष्ठा iov_iter		*ग_लिखो_iter;	/* Iterator defining ग_लिखो to be made */
-	काष्ठा iov_iter		*iter;		/* Iterator currently in use */
-	जोड़ अणु	/* Convenience क्रम ->def_iter */
-		काष्ठा kvec	kvec[1];
-		काष्ठा bio_vec	bvec[1];
-	पूर्ण;
-	व्योम			*buffer;	/* reply receive buffer */
-	जोड़ अणु
-		दीर्घ			ret0;	/* Value to reply with instead of 0 */
-		काष्ठा afs_addr_list	*ret_alist;
-		काष्ठा afs_vldb_entry	*ret_vldb;
-		अक्षर			*ret_str;
-	पूर्ण;
-	काष्ठा afs_operation	*op;
-	अचिन्हित पूर्णांक		server_index;
+struct afs_call {
+	const struct afs_call_type *type;	/* type of call */
+	struct afs_addr_list	*alist;		/* Address is alist[addr_ix] */
+	wait_queue_head_t	waitq;		/* processes awaiting completion */
+	struct work_struct	async_work;	/* async I/O processor */
+	struct work_struct	work;		/* actual work processor */
+	struct rxrpc_call	*rxcall;	/* RxRPC call handle */
+	struct key		*key;		/* security for this call */
+	struct afs_net		*net;		/* The network namespace */
+	struct afs_server	*server;	/* The fileserver record if fs op (pins ref) */
+	struct afs_vlserver	*vlserver;	/* The vlserver record if vl op */
+	void			*request;	/* request data (first part) */
+	size_t			iov_len;	/* Size of *iter to be used */
+	struct iov_iter		def_iter;	/* Default buffer/data iterator */
+	struct iov_iter		*write_iter;	/* Iterator defining write to be made */
+	struct iov_iter		*iter;		/* Iterator currently in use */
+	union {	/* Convenience for ->def_iter */
+		struct kvec	kvec[1];
+		struct bio_vec	bvec[1];
+	};
+	void			*buffer;	/* reply receive buffer */
+	union {
+		long			ret0;	/* Value to reply with instead of 0 */
+		struct afs_addr_list	*ret_alist;
+		struct afs_vldb_entry	*ret_vldb;
+		char			*ret_str;
+	};
+	struct afs_operation	*op;
+	unsigned int		server_index;
 	atomic_t		usage;
-	क्रमागत afs_call_state	state;
+	enum afs_call_state	state;
 	spinlock_t		state_lock;
-	पूर्णांक			error;		/* error code */
-	u32			पात_code;	/* Remote पात ID or 0 */
-	अचिन्हित पूर्णांक		max_lअगरespan;	/* Maximum lअगरespan to set अगर not 0 */
-	अचिन्हित		request_size;	/* size of request data */
-	अचिन्हित		reply_max;	/* maximum size of reply */
-	अचिन्हित		count2;		/* count used in unmarshalling */
-	अचिन्हित अक्षर		unmarshall;	/* unmarshalling phase */
-	अचिन्हित अक्षर		addr_ix;	/* Address in ->alist */
-	bool			drop_ref;	/* T अगर need to drop ref क्रम incoming call */
-	bool			need_attention;	/* T अगर RxRPC poked us */
-	bool			async;		/* T अगर asynchronous */
+	int			error;		/* error code */
+	u32			abort_code;	/* Remote abort ID or 0 */
+	unsigned int		max_lifespan;	/* Maximum lifespan to set if not 0 */
+	unsigned		request_size;	/* size of request data */
+	unsigned		reply_max;	/* maximum size of reply */
+	unsigned		count2;		/* count used in unmarshalling */
+	unsigned char		unmarshall;	/* unmarshalling phase */
+	unsigned char		addr_ix;	/* Address in ->alist */
+	bool			drop_ref;	/* T if need to drop ref for incoming call */
+	bool			need_attention;	/* T if RxRPC poked us */
+	bool			async;		/* T if asynchronous */
 	bool			upgrade;	/* T to request service upgrade */
-	bool			have_reply_समय; /* T अगर have got reply_समय */
-	bool			पूर्णांकr;		/* T अगर पूर्णांकerruptible */
-	bool			unmarshalling_error; /* T अगर an unmarshalling error occurred */
+	bool			have_reply_time; /* T if have got reply_time */
+	bool			intr;		/* T if interruptible */
+	bool			unmarshalling_error; /* T if an unmarshalling error occurred */
 	u16			service_id;	/* Actual service ID (after upgrade) */
-	अचिन्हित पूर्णांक		debug_id;	/* Trace ID */
-	u32			operation_ID;	/* operation ID क्रम an incoming call */
-	u32			count;		/* count क्रम use in unmarshalling */
-	जोड़ अणु					/* place to extract temporary data */
-		काष्ठा अणु
-			__be32	पंचांगp_u;
-			__be32	पंचांगp;
-		पूर्ण __attribute__((packed));
-		__be64		पंचांगp64;
-	पूर्ण;
-	kसमय_प्रकार			reply_समय;	/* Time of first reply packet */
-पूर्ण;
+	unsigned int		debug_id;	/* Trace ID */
+	u32			operation_ID;	/* operation ID for an incoming call */
+	u32			count;		/* count for use in unmarshalling */
+	union {					/* place to extract temporary data */
+		struct {
+			__be32	tmp_u;
+			__be32	tmp;
+		} __attribute__((packed));
+		__be64		tmp64;
+	};
+	ktime_t			reply_time;	/* Time of first reply packet */
+};
 
-काष्ठा afs_call_type अणु
-	स्थिर अक्षर *name;
-	अचिन्हित पूर्णांक op; /* Really क्रमागत afs_fs_operation */
+struct afs_call_type {
+	const char *name;
+	unsigned int op; /* Really enum afs_fs_operation */
 
 	/* deliver request or reply data to an call
-	 * - वापसing an error will cause the call to be पातed
+	 * - returning an error will cause the call to be aborted
 	 */
-	पूर्णांक (*deliver)(काष्ठा afs_call *call);
+	int (*deliver)(struct afs_call *call);
 
 	/* clean up a call */
-	व्योम (*deकाष्ठाor)(काष्ठा afs_call *call);
+	void (*destructor)(struct afs_call *call);
 
 	/* Work function */
-	व्योम (*work)(काष्ठा work_काष्ठा *work);
+	void (*work)(struct work_struct *work);
 
-	/* Call करोne function (माला_लो called immediately on success or failure) */
-	व्योम (*करोne)(काष्ठा afs_call *call);
-पूर्ण;
+	/* Call done function (gets called immediately on success or failure) */
+	void (*done)(struct afs_call *call);
+};
 
 /*
- * Key available क्रम ग_लिखोback on a file.
+ * Key available for writeback on a file.
  */
-काष्ठा afs_wb_key अणु
+struct afs_wb_key {
 	refcount_t		usage;
-	काष्ठा key		*key;
-	काष्ठा list_head	vnode_link;	/* Link in vnode->wb_keys */
-पूर्ण;
+	struct key		*key;
+	struct list_head	vnode_link;	/* Link in vnode->wb_keys */
+};
 
 /*
- * AFS खोलो file inक्रमmation record.  Poपूर्णांकed to by file->निजी_data.
+ * AFS open file information record.  Pointed to by file->private_data.
  */
-काष्ठा afs_file अणु
-	काष्ठा key		*key;		/* The key this file was खोलोed with */
-	काष्ठा afs_wb_key	*wb;		/* Writeback key record क्रम this file */
-पूर्ण;
+struct afs_file {
+	struct key		*key;		/* The key this file was opened with */
+	struct afs_wb_key	*wb;		/* Writeback key record for this file */
+};
 
-अटल अंतरभूत काष्ठा key *afs_file_key(काष्ठा file *file)
-अणु
-	काष्ठा afs_file *af = file->निजी_data;
+static inline struct key *afs_file_key(struct file *file)
+{
+	struct afs_file *af = file->private_data;
 
-	वापस af->key;
-पूर्ण
+	return af->key;
+}
 
 /*
- * Record of an outstanding पढ़ो operation on a vnode.
+ * Record of an outstanding read operation on a vnode.
  */
-काष्ठा afs_पढ़ो अणु
-	loff_t			pos;		/* Where to start पढ़ोing */
-	loff_t			len;		/* How much we're asking क्रम */
+struct afs_read {
+	loff_t			pos;		/* Where to start reading */
+	loff_t			len;		/* How much we're asking for */
 	loff_t			actual_len;	/* How much we're actually getting */
-	loff_t			file_size;	/* File size वापसed by server */
-	काष्ठा key		*key;		/* The key to use to reissue the पढ़ो */
-	काष्ठा afs_vnode	*vnode;		/* The file being पढ़ो पूर्णांकo. */
-	काष्ठा netfs_पढ़ो_subrequest *subreq;	/* Fscache helper पढ़ो request this beदीर्घs to */
-	afs_dataversion_t	data_version;	/* Version number वापसed by server */
+	loff_t			file_size;	/* File size returned by server */
+	struct key		*key;		/* The key to use to reissue the read */
+	struct afs_vnode	*vnode;		/* The file being read into. */
+	struct netfs_read_subrequest *subreq;	/* Fscache helper read request this belongs to */
+	afs_dataversion_t	data_version;	/* Version number returned by server */
 	refcount_t		usage;
-	अचिन्हित पूर्णांक		call_debug_id;
-	अचिन्हित पूर्णांक		nr_pages;
-	पूर्णांक			error;
-	व्योम (*करोne)(काष्ठा afs_पढ़ो *);
-	व्योम (*cleanup)(काष्ठा afs_पढ़ो *);
-	काष्ठा iov_iter		*iter;		/* Iterator representing the buffer */
-	काष्ठा iov_iter		def_iter;	/* Default iterator */
-पूर्ण;
+	unsigned int		call_debug_id;
+	unsigned int		nr_pages;
+	int			error;
+	void (*done)(struct afs_read *);
+	void (*cleanup)(struct afs_read *);
+	struct iov_iter		*iter;		/* Iterator representing the buffer */
+	struct iov_iter		def_iter;	/* Default iterator */
+};
 
 /*
- * AFS superblock निजी data
+ * AFS superblock private data
  * - there's one superblock per volume
  */
-काष्ठा afs_super_info अणु
-	काष्ठा net		*net_ns;	/* Network namespace */
-	काष्ठा afs_cell		*cell;		/* The cell in which the volume resides */
-	काष्ठा afs_volume	*volume;	/* volume record */
-	क्रमागत afs_flock_mode	flock_mode:8;	/* File locking emulation mode */
-	bool			dyn_root;	/* True अगर dynamic root */
-पूर्ण;
+struct afs_super_info {
+	struct net		*net_ns;	/* Network namespace */
+	struct afs_cell		*cell;		/* The cell in which the volume resides */
+	struct afs_volume	*volume;	/* volume record */
+	enum afs_flock_mode	flock_mode:8;	/* File locking emulation mode */
+	bool			dyn_root;	/* True if dynamic root */
+};
 
-अटल अंतरभूत काष्ठा afs_super_info *AFS_FS_S(काष्ठा super_block *sb)
-अणु
-	वापस sb->s_fs_info;
-पूर्ण
+static inline struct afs_super_info *AFS_FS_S(struct super_block *sb)
+{
+	return sb->s_fs_info;
+}
 
-बाह्य काष्ठा file_प्रणाली_type afs_fs_type;
+extern struct file_system_type afs_fs_type;
 
 /*
- * Set of substitutes क्रम @sys.
+ * Set of substitutes for @sys.
  */
-काष्ठा afs_sysnames अणु
-#घोषणा AFS_NR_SYSNAME 16
-	अक्षर			*subs[AFS_NR_SYSNAME];
+struct afs_sysnames {
+#define AFS_NR_SYSNAME 16
+	char			*subs[AFS_NR_SYSNAME];
 	refcount_t		usage;
-	अचिन्हित लघु		nr;
-	अक्षर			blank[1];
-पूर्ण;
+	unsigned short		nr;
+	char			blank[1];
+};
 
 /*
  * AFS network namespace record.
  */
-काष्ठा afs_net अणु
-	काष्ठा net		*net;		/* Backpoपूर्णांकer to the owning net namespace */
-	काष्ठा afs_uuid		uuid;
-	bool			live;		/* F अगर this namespace is being हटाओd */
+struct afs_net {
+	struct net		*net;		/* Backpointer to the owning net namespace */
+	struct afs_uuid		uuid;
+	bool			live;		/* F if this namespace is being removed */
 
 	/* AF_RXRPC I/O stuff */
-	काष्ठा socket		*socket;
-	काष्ठा afs_call		*spare_incoming_call;
-	काष्ठा work_काष्ठा	अक्षरge_pपुनः_स्मृतिation_work;
-	काष्ठा mutex		socket_mutex;
+	struct socket		*socket;
+	struct afs_call		*spare_incoming_call;
+	struct work_struct	charge_preallocation_work;
+	struct mutex		socket_mutex;
 	atomic_t		nr_outstanding_calls;
 	atomic_t		nr_superblocks;
 
 	/* Cell database */
-	काष्ठा rb_root		cells;
-	काष्ठा afs_cell		*ws_cell;
-	काष्ठा work_काष्ठा	cells_manager;
-	काष्ठा समयr_list	cells_समयr;
+	struct rb_root		cells;
+	struct afs_cell		*ws_cell;
+	struct work_struct	cells_manager;
+	struct timer_list	cells_timer;
 	atomic_t		cells_outstanding;
-	काष्ठा rw_semaphore	cells_lock;
-	काष्ठा mutex		cells_alias_lock;
+	struct rw_semaphore	cells_lock;
+	struct mutex		cells_alias_lock;
 
-	काष्ठा mutex		proc_cells_lock;
-	काष्ठा hlist_head	proc_cells;
+	struct mutex		proc_cells_lock;
+	struct hlist_head	proc_cells;
 
 	/* Known servers.  Theoretically each fileserver can only be in one
 	 * cell, but in practice, people create aliases and subsets and there's
 	 * no easy way to distinguish them.
 	 */
 	seqlock_t		fs_lock;	/* For fs_servers, fs_probe_*, fs_proc */
-	काष्ठा rb_root		fs_servers;	/* afs_server (by server UUID or address) */
-	काष्ठा list_head	fs_probe_fast;	/* List of afs_server to probe at 30s पूर्णांकervals */
-	काष्ठा list_head	fs_probe_slow;	/* List of afs_server to probe at 5m पूर्णांकervals */
-	काष्ठा hlist_head	fs_proc;	/* procfs servers list */
+	struct rb_root		fs_servers;	/* afs_server (by server UUID or address) */
+	struct list_head	fs_probe_fast;	/* List of afs_server to probe at 30s intervals */
+	struct list_head	fs_probe_slow;	/* List of afs_server to probe at 5m intervals */
+	struct hlist_head	fs_proc;	/* procfs servers list */
 
-	काष्ठा hlist_head	fs_addresses4;	/* afs_server (by lowest IPv4 addr) */
-	काष्ठा hlist_head	fs_addresses6;	/* afs_server (by lowest IPv6 addr) */
+	struct hlist_head	fs_addresses4;	/* afs_server (by lowest IPv4 addr) */
+	struct hlist_head	fs_addresses6;	/* afs_server (by lowest IPv6 addr) */
 	seqlock_t		fs_addr_lock;	/* For fs_addresses[46] */
 
-	काष्ठा work_काष्ठा	fs_manager;
-	काष्ठा समयr_list	fs_समयr;
+	struct work_struct	fs_manager;
+	struct timer_list	fs_timer;
 
-	काष्ठा work_काष्ठा	fs_prober;
-	काष्ठा समयr_list	fs_probe_समयr;
+	struct work_struct	fs_prober;
+	struct timer_list	fs_probe_timer;
 	atomic_t		servers_outstanding;
 
 	/* File locking renewal management */
-	काष्ठा mutex		lock_manager_mutex;
+	struct mutex		lock_manager_mutex;
 
 	/* Misc */
-	काष्ठा super_block	*dynroot_sb;	/* Dynamic root mount superblock */
-	काष्ठा proc_dir_entry	*proc_afs;	/* /proc/net/afs directory */
-	काष्ठा afs_sysnames	*sysnames;
+	struct super_block	*dynroot_sb;	/* Dynamic root mount superblock */
+	struct proc_dir_entry	*proc_afs;	/* /proc/net/afs directory */
+	struct afs_sysnames	*sysnames;
 	rwlock_t		sysnames_lock;
 
 	/* Statistics counters */
-	atomic_t		n_lookup;	/* Number of lookups करोne */
+	atomic_t		n_lookup;	/* Number of lookups done */
 	atomic_t		n_reval;	/* Number of dentries needing revalidation */
 	atomic_t		n_inval;	/* Number of invalidations by the server */
 	atomic_t		n_relpg;	/* Number of invalidations by releasepage */
-	atomic_t		n_पढ़ो_dir;	/* Number of directory pages पढ़ो */
+	atomic_t		n_read_dir;	/* Number of directory pages read */
 	atomic_t		n_dir_cr;	/* Number of directory entry creation edits */
 	atomic_t		n_dir_rm;	/* Number of directory entry removal edits */
 	atomic_t		n_stores;	/* Number of store ops */
-	atomic_दीर्घ_t		n_store_bytes;	/* Number of bytes stored */
-	atomic_दीर्घ_t		n_fetch_bytes;	/* Number of bytes fetched */
+	atomic_long_t		n_store_bytes;	/* Number of bytes stored */
+	atomic_long_t		n_fetch_bytes;	/* Number of bytes fetched */
 	atomic_t		n_fetches;	/* Number of data fetch ops */
-पूर्ण;
+};
 
-बाह्य स्थिर अक्षर afs_init_sysname[];
+extern const char afs_init_sysname[];
 
-क्रमागत afs_cell_state अणु
+enum afs_cell_state {
 	AFS_CELL_UNSET,
 	AFS_CELL_ACTIVATING,
 	AFS_CELL_ACTIVE,
@@ -333,1415 +332,1415 @@
 	AFS_CELL_INACTIVE,
 	AFS_CELL_FAILED,
 	AFS_CELL_REMOVED,
-पूर्ण;
+};
 
 /*
  * AFS cell record.
  *
  * This is a tricky concept to get right as it is possible to create aliases
- * simply by poपूर्णांकing AFSDB/SRV records क्रम two names at the same set of VL
- * servers; it is also possible to करो things like setting up two sets of VL
+ * simply by pointing AFSDB/SRV records for two names at the same set of VL
+ * servers; it is also possible to do things like setting up two sets of VL
  * servers, one of which provides a superset of the volumes provided by the
- * other (क्रम पूर्णांकernal/बाह्यal भागision, क्रम example).
+ * other (for internal/external division, for example).
  *
  * Cells only exist in the sense that (a) a cell's name maps to a set of VL
  * servers and (b) a cell's name is used by the client to select the key to use
- * क्रम authentication and encryption.  The cell name is not typically used in
+ * for authentication and encryption.  The cell name is not typically used in
  * the protocol.
  *
- * Two cells are determined to be aliases अगर they have an explicit alias (YFS
+ * Two cells are determined to be aliases if they have an explicit alias (YFS
  * only), share any VL servers in common or have at least one volume in common.
  * "In common" means that the address list of the VL servers or the fileservers
- * share at least one endpoपूर्णांक.
+ * share at least one endpoint.
  */
-काष्ठा afs_cell अणु
-	जोड़ अणु
-		काष्ठा rcu_head	rcu;
-		काष्ठा rb_node	net_node;	/* Node in net->cells */
-	पूर्ण;
-	काष्ठा afs_net		*net;
-	काष्ठा afs_cell		*alias_of;	/* The cell this is an alias of */
-	काष्ठा afs_volume	*root_volume;	/* The root.cell volume अगर there is one */
-	काष्ठा key		*anonymous_key;	/* anonymous user key क्रम this cell */
-	काष्ठा work_काष्ठा	manager;	/* Manager क्रम init/deinit/dns */
-	काष्ठा hlist_node	proc_link;	/* /proc cell list link */
-#अगर_घोषित CONFIG_AFS_FSCACHE
-	काष्ठा fscache_cookie	*cache;		/* caching cookie */
-#पूर्ण_अगर
-	समय64_t		dns_expiry;	/* Time AFSDB/SRV record expires */
-	समय64_t		last_inactive;	/* Time of last drop of usage count */
+struct afs_cell {
+	union {
+		struct rcu_head	rcu;
+		struct rb_node	net_node;	/* Node in net->cells */
+	};
+	struct afs_net		*net;
+	struct afs_cell		*alias_of;	/* The cell this is an alias of */
+	struct afs_volume	*root_volume;	/* The root.cell volume if there is one */
+	struct key		*anonymous_key;	/* anonymous user key for this cell */
+	struct work_struct	manager;	/* Manager for init/deinit/dns */
+	struct hlist_node	proc_link;	/* /proc cell list link */
+#ifdef CONFIG_AFS_FSCACHE
+	struct fscache_cookie	*cache;		/* caching cookie */
+#endif
+	time64_t		dns_expiry;	/* Time AFSDB/SRV record expires */
+	time64_t		last_inactive;	/* Time of last drop of usage count */
 	atomic_t		ref;		/* Struct refcount */
 	atomic_t		active;		/* Active usage counter */
-	अचिन्हित दीर्घ		flags;
-#घोषणा AFS_CELL_FL_NO_GC	0		/* The cell was added manually, करोn't स्वतः-gc */
-#घोषणा AFS_CELL_FL_DO_LOOKUP	1		/* DNS lookup requested */
-#घोषणा AFS_CELL_FL_CHECK_ALIAS	2		/* Need to check क्रम aliases */
-	क्रमागत afs_cell_state	state;
-	लघु			error;
-	क्रमागत dns_record_source	dns_source:8;	/* Latest source of data from lookup */
-	क्रमागत dns_lookup_status	dns_status:8;	/* Latest status of data from lookup */
-	अचिन्हित पूर्णांक		dns_lookup_count; /* Counter of DNS lookups */
-	अचिन्हित पूर्णांक		debug_id;
+	unsigned long		flags;
+#define AFS_CELL_FL_NO_GC	0		/* The cell was added manually, don't auto-gc */
+#define AFS_CELL_FL_DO_LOOKUP	1		/* DNS lookup requested */
+#define AFS_CELL_FL_CHECK_ALIAS	2		/* Need to check for aliases */
+	enum afs_cell_state	state;
+	short			error;
+	enum dns_record_source	dns_source:8;	/* Latest source of data from lookup */
+	enum dns_lookup_status	dns_status:8;	/* Latest status of data from lookup */
+	unsigned int		dns_lookup_count; /* Counter of DNS lookups */
+	unsigned int		debug_id;
 
-	/* The volumes beदीर्घing to this cell */
-	काष्ठा rb_root		volumes;	/* Tree of volumes on this server */
-	काष्ठा hlist_head	proc_volumes;	/* procfs volume list */
+	/* The volumes belonging to this cell */
+	struct rb_root		volumes;	/* Tree of volumes on this server */
+	struct hlist_head	proc_volumes;	/* procfs volume list */
 	seqlock_t		volume_lock;	/* For volumes */
 
-	/* Active fileserver पूर्णांकeraction state. */
-	काष्ठा rb_root		fs_servers;	/* afs_server (by server UUID) */
+	/* Active fileserver interaction state. */
+	struct rb_root		fs_servers;	/* afs_server (by server UUID) */
 	seqlock_t		fs_lock;	/* For fs_servers  */
 
 	/* VL server list. */
 	rwlock_t		vl_servers_lock; /* Lock on vl_servers */
-	काष्ठा afs_vlserver_list __rcu *vl_servers;
+	struct afs_vlserver_list __rcu *vl_servers;
 
 	u8			name_len;	/* Length of name */
-	अक्षर			*name;		/* Cell name, हाल-flattened and NUL-padded */
-पूर्ण;
+	char			*name;		/* Cell name, case-flattened and NUL-padded */
+};
 
 /*
  * Volume Location server record.
  */
-काष्ठा afs_vlserver अणु
-	काष्ठा rcu_head		rcu;
-	काष्ठा afs_addr_list	__rcu *addresses; /* List of addresses क्रम this VL server */
-	अचिन्हित दीर्घ		flags;
-#घोषणा AFS_VLSERVER_FL_PROBED	0		/* The VL server has been probed */
-#घोषणा AFS_VLSERVER_FL_PROBING	1		/* VL server is being probed */
-#घोषणा AFS_VLSERVER_FL_IS_YFS	2		/* Server is YFS not AFS */
-#घोषणा AFS_VLSERVER_FL_RESPONDING 3		/* VL server is responding */
+struct afs_vlserver {
+	struct rcu_head		rcu;
+	struct afs_addr_list	__rcu *addresses; /* List of addresses for this VL server */
+	unsigned long		flags;
+#define AFS_VLSERVER_FL_PROBED	0		/* The VL server has been probed */
+#define AFS_VLSERVER_FL_PROBING	1		/* VL server is being probed */
+#define AFS_VLSERVER_FL_IS_YFS	2		/* Server is YFS not AFS */
+#define AFS_VLSERVER_FL_RESPONDING 3		/* VL server is responding */
 	rwlock_t		lock;		/* Lock on addresses */
 	atomic_t		usage;
-	अचिन्हित पूर्णांक		rtt;		/* Server's current RTT in uS */
+	unsigned int		rtt;		/* Server's current RTT in uS */
 
 	/* Probe state */
-	रुको_queue_head_t	probe_wq;
+	wait_queue_head_t	probe_wq;
 	atomic_t		probe_outstanding;
 	spinlock_t		probe_lock;
-	काष्ठा अणु
-		अचिन्हित पूर्णांक	rtt;		/* RTT in uS */
-		u32		पात_code;
-		लघु		error;
-		अचिन्हित लघु	flags;
-#घोषणा AFS_VLSERVER_PROBE_RESPONDED		0x01 /* At least once response (may be पात) */
-#घोषणा AFS_VLSERVER_PROBE_IS_YFS		0x02 /* The peer appears to be YFS */
-#घोषणा AFS_VLSERVER_PROBE_NOT_YFS		0x04 /* The peer appears not to be YFS */
-#घोषणा AFS_VLSERVER_PROBE_LOCAL_FAILURE	0x08 /* A local failure prevented a probe */
-	पूर्ण probe;
+	struct {
+		unsigned int	rtt;		/* RTT in uS */
+		u32		abort_code;
+		short		error;
+		unsigned short	flags;
+#define AFS_VLSERVER_PROBE_RESPONDED		0x01 /* At least once response (may be abort) */
+#define AFS_VLSERVER_PROBE_IS_YFS		0x02 /* The peer appears to be YFS */
+#define AFS_VLSERVER_PROBE_NOT_YFS		0x04 /* The peer appears not to be YFS */
+#define AFS_VLSERVER_PROBE_LOCAL_FAILURE	0x08 /* A local failure prevented a probe */
+	} probe;
 
 	u16			port;
 	u16			name_len;	/* Length of name */
-	अक्षर			name[];		/* Server name, हाल-flattened */
-पूर्ण;
+	char			name[];		/* Server name, case-flattened */
+};
 
 /*
  * Weighted list of Volume Location servers.
  */
-काष्ठा afs_vlserver_entry अणु
+struct afs_vlserver_entry {
 	u16			priority;	/* Preference (as SRV) */
 	u16			weight;		/* Weight (as SRV) */
-	क्रमागत dns_record_source	source:8;
-	क्रमागत dns_lookup_status	status:8;
-	काष्ठा afs_vlserver	*server;
-पूर्ण;
+	enum dns_record_source	source:8;
+	enum dns_lookup_status	status:8;
+	struct afs_vlserver	*server;
+};
 
-काष्ठा afs_vlserver_list अणु
-	काष्ठा rcu_head		rcu;
+struct afs_vlserver_list {
+	struct rcu_head		rcu;
 	atomic_t		usage;
 	u8			nr_servers;
 	u8			index;		/* Server currently in use */
 	u8			preferred;	/* Preferred server */
-	क्रमागत dns_record_source	source:8;
-	क्रमागत dns_lookup_status	status:8;
+	enum dns_record_source	source:8;
+	enum dns_lookup_status	status:8;
 	rwlock_t		lock;
-	काष्ठा afs_vlserver_entry servers[];
-पूर्ण;
+	struct afs_vlserver_entry servers[];
+};
 
 /*
  * Cached VLDB entry.
  *
- * This is poपूर्णांकed to by cell->vldb_entries, indexed by name.
+ * This is pointed to by cell->vldb_entries, indexed by name.
  */
-काष्ठा afs_vldb_entry अणु
-	afs_volid_t		vid[3];		/* Volume IDs क्रम R/W, R/O and Bak volumes */
+struct afs_vldb_entry {
+	afs_volid_t		vid[3];		/* Volume IDs for R/W, R/O and Bak volumes */
 
-	अचिन्हित दीर्घ		flags;
-#घोषणा AFS_VLDB_HAS_RW		0		/* - R/W volume exists */
-#घोषणा AFS_VLDB_HAS_RO		1		/* - R/O volume exists */
-#घोषणा AFS_VLDB_HAS_BAK	2		/* - Backup volume exists */
-#घोषणा AFS_VLDB_QUERY_VALID	3		/* - Record is valid */
-#घोषणा AFS_VLDB_QUERY_ERROR	4		/* - VL server वापसed error */
+	unsigned long		flags;
+#define AFS_VLDB_HAS_RW		0		/* - R/W volume exists */
+#define AFS_VLDB_HAS_RO		1		/* - R/O volume exists */
+#define AFS_VLDB_HAS_BAK	2		/* - Backup volume exists */
+#define AFS_VLDB_QUERY_VALID	3		/* - Record is valid */
+#define AFS_VLDB_QUERY_ERROR	4		/* - VL server returned error */
 
 	uuid_t			fs_server[AFS_NMAXNSERVERS];
 	u32			addr_version[AFS_NMAXNSERVERS]; /* Registration change counters */
 	u8			fs_mask[AFS_NMAXNSERVERS];
-#घोषणा AFS_VOL_VTM_RW	0x01 /* R/W version of the volume is available (on this server) */
-#घोषणा AFS_VOL_VTM_RO	0x02 /* R/O version of the volume is available (on this server) */
-#घोषणा AFS_VOL_VTM_BAK	0x04 /* backup version of the volume is available (on this server) */
-	लघु			error;
+#define AFS_VOL_VTM_RW	0x01 /* R/W version of the volume is available (on this server) */
+#define AFS_VOL_VTM_RO	0x02 /* R/O version of the volume is available (on this server) */
+#define AFS_VOL_VTM_BAK	0x04 /* backup version of the volume is available (on this server) */
+	short			error;
 	u8			nr_servers;	/* Number of server records */
 	u8			name_len;
 	u8			name[AFS_MAXVOLNAME + 1]; /* NUL-padded volume name */
-पूर्ण;
+};
 
 /*
  * Record of fileserver with which we're actively communicating.
  */
-काष्ठा afs_server अणु
-	काष्ठा rcu_head		rcu;
-	जोड़ अणु
+struct afs_server {
+	struct rcu_head		rcu;
+	union {
 		uuid_t		uuid;		/* Server ID */
-		काष्ठा afs_uuid	_uuid;
-	पूर्ण;
+		struct afs_uuid	_uuid;
+	};
 
-	काष्ठा afs_addr_list	__rcu *addresses;
-	काष्ठा afs_cell		*cell;		/* Cell to which beदीर्घs (pins ref) */
-	काष्ठा rb_node		uuid_rb;	/* Link in net->fs_servers */
-	काष्ठा afs_server __rcu	*uuid_next;	/* Next server with same UUID */
-	काष्ठा afs_server	*uuid_prev;	/* Previous server with same UUID */
-	काष्ठा list_head	probe_link;	/* Link in net->fs_probe_list */
-	काष्ठा hlist_node	addr4_link;	/* Link in net->fs_addresses4 */
-	काष्ठा hlist_node	addr6_link;	/* Link in net->fs_addresses6 */
-	काष्ठा hlist_node	proc_link;	/* Link in net->fs_proc */
-	काष्ठा afs_server	*gc_next;	/* Next server in manager's list */
-	समय64_t		unuse_समय;	/* Time at which last unused */
-	अचिन्हित दीर्घ		flags;
-#घोषणा AFS_SERVER_FL_RESPONDING 0		/* The server is responding */
-#घोषणा AFS_SERVER_FL_UPDATING	1
-#घोषणा AFS_SERVER_FL_NEEDS_UPDATE 2		/* Fileserver address list is out of date */
-#घोषणा AFS_SERVER_FL_NOT_READY	4		/* The record is not पढ़ोy क्रम use */
-#घोषणा AFS_SERVER_FL_NOT_FOUND	5		/* VL server says no such server */
-#घोषणा AFS_SERVER_FL_VL_FAIL	6		/* Failed to access VL server */
-#घोषणा AFS_SERVER_FL_MAY_HAVE_CB 8		/* May have callbacks on this fileserver */
-#घोषणा AFS_SERVER_FL_IS_YFS	16		/* Server is YFS not AFS */
-#घोषणा AFS_SERVER_FL_NO_IBULK	17		/* Fileserver करोesn't support FS.InlineBulkStatus */
-#घोषणा AFS_SERVER_FL_NO_RM2	18		/* Fileserver करोesn't support YFS.RemoveFile2 */
+	struct afs_addr_list	__rcu *addresses;
+	struct afs_cell		*cell;		/* Cell to which belongs (pins ref) */
+	struct rb_node		uuid_rb;	/* Link in net->fs_servers */
+	struct afs_server __rcu	*uuid_next;	/* Next server with same UUID */
+	struct afs_server	*uuid_prev;	/* Previous server with same UUID */
+	struct list_head	probe_link;	/* Link in net->fs_probe_list */
+	struct hlist_node	addr4_link;	/* Link in net->fs_addresses4 */
+	struct hlist_node	addr6_link;	/* Link in net->fs_addresses6 */
+	struct hlist_node	proc_link;	/* Link in net->fs_proc */
+	struct afs_server	*gc_next;	/* Next server in manager's list */
+	time64_t		unuse_time;	/* Time at which last unused */
+	unsigned long		flags;
+#define AFS_SERVER_FL_RESPONDING 0		/* The server is responding */
+#define AFS_SERVER_FL_UPDATING	1
+#define AFS_SERVER_FL_NEEDS_UPDATE 2		/* Fileserver address list is out of date */
+#define AFS_SERVER_FL_NOT_READY	4		/* The record is not ready for use */
+#define AFS_SERVER_FL_NOT_FOUND	5		/* VL server says no such server */
+#define AFS_SERVER_FL_VL_FAIL	6		/* Failed to access VL server */
+#define AFS_SERVER_FL_MAY_HAVE_CB 8		/* May have callbacks on this fileserver */
+#define AFS_SERVER_FL_IS_YFS	16		/* Server is YFS not AFS */
+#define AFS_SERVER_FL_NO_IBULK	17		/* Fileserver doesn't support FS.InlineBulkStatus */
+#define AFS_SERVER_FL_NO_RM2	18		/* Fileserver doesn't support YFS.RemoveFile2 */
 	atomic_t		ref;		/* Object refcount */
 	atomic_t		active;		/* Active user count */
 	u32			addr_version;	/* Address list version */
-	अचिन्हित पूर्णांक		rtt;		/* Server's current RTT in uS */
-	अचिन्हित पूर्णांक		debug_id;	/* Debugging ID क्रम traces */
+	unsigned int		rtt;		/* Server's current RTT in uS */
+	unsigned int		debug_id;	/* Debugging ID for traces */
 
 	/* file service access */
 	rwlock_t		fs_lock;	/* access lock */
 
 	/* callback promise management */
-	अचिन्हित		cb_s_अवरोध;	/* Break-everything counter. */
+	unsigned		cb_s_break;	/* Break-everything counter. */
 
 	/* Probe state */
-	अचिन्हित दीर्घ		probed_at;	/* Time last probe was dispatched (jअगरfies) */
-	रुको_queue_head_t	probe_wq;
+	unsigned long		probed_at;	/* Time last probe was dispatched (jiffies) */
+	wait_queue_head_t	probe_wq;
 	atomic_t		probe_outstanding;
 	spinlock_t		probe_lock;
-	काष्ठा अणु
-		अचिन्हित पूर्णांक	rtt;		/* RTT in uS */
-		u32		पात_code;
-		लघु		error;
+	struct {
+		unsigned int	rtt;		/* RTT in uS */
+		u32		abort_code;
+		short		error;
 		bool		responded:1;
 		bool		is_yfs:1;
 		bool		not_yfs:1;
 		bool		local_failure:1;
-	पूर्ण probe;
-पूर्ण;
+	} probe;
+};
 
 /*
  * Replaceable volume server list.
  */
-काष्ठा afs_server_entry अणु
-	काष्ठा afs_server	*server;
-पूर्ण;
+struct afs_server_entry {
+	struct afs_server	*server;
+};
 
-काष्ठा afs_server_list अणु
+struct afs_server_list {
 	afs_volid_t		vids[AFS_MAXTYPES]; /* Volume IDs */
 	refcount_t		usage;
-	अचिन्हित अक्षर		nr_servers;
-	अचिन्हित अक्षर		preferred;	/* Preferred server */
-	अचिन्हित लघु		vnovol_mask;	/* Servers to be skipped due to VNOVOL */
-	अचिन्हित पूर्णांक		seq;		/* Set to ->servers_seq when installed */
+	unsigned char		nr_servers;
+	unsigned char		preferred;	/* Preferred server */
+	unsigned short		vnovol_mask;	/* Servers to be skipped due to VNOVOL */
+	unsigned int		seq;		/* Set to ->servers_seq when installed */
 	rwlock_t		lock;
-	काष्ठा afs_server_entry	servers[];
-पूर्ण;
+	struct afs_server_entry	servers[];
+};
 
 /*
  * Live AFS volume management.
  */
-काष्ठा afs_volume अणु
-	जोड़ अणु
-		काष्ठा rcu_head	rcu;
+struct afs_volume {
+	union {
+		struct rcu_head	rcu;
 		afs_volid_t	vid;		/* volume ID */
-	पूर्ण;
+	};
 	atomic_t		usage;
-	समय64_t		update_at;	/* Time at which to next update */
-	काष्ठा afs_cell		*cell;		/* Cell to which beदीर्घs (pins ref) */
-	काष्ठा rb_node		cell_node;	/* Link in cell->volumes */
-	काष्ठा hlist_node	proc_link;	/* Link in cell->proc_volumes */
-	काष्ठा super_block __rcu *sb;		/* Superblock on which inodes reside */
-	अचिन्हित दीर्घ		flags;
-#घोषणा AFS_VOLUME_NEEDS_UPDATE	0	/* - T अगर an update needs perक्रमming */
-#घोषणा AFS_VOLUME_UPDATING	1	/* - T अगर an update is in progress */
-#घोषणा AFS_VOLUME_WAIT		2	/* - T अगर users must रुको क्रम update */
-#घोषणा AFS_VOLUME_DELETED	3	/* - T अगर volume appears deleted */
-#घोषणा AFS_VOLUME_OFFLINE	4	/* - T अगर volume offline notice given */
-#घोषणा AFS_VOLUME_BUSY		5	/* - T अगर volume busy notice given */
-#घोषणा AFS_VOLUME_MAYBE_NO_IBULK 6	/* - T अगर some servers करोn't have InlineBulkStatus */
-#अगर_घोषित CONFIG_AFS_FSCACHE
-	काष्ठा fscache_cookie	*cache;		/* caching cookie */
-#पूर्ण_अगर
-	काष्ठा afs_server_list __rcu *servers;	/* List of servers on which volume resides */
-	rwlock_t		servers_lock;	/* Lock क्रम ->servers */
-	अचिन्हित पूर्णांक		servers_seq;	/* Incremented each समय ->servers changes */
+	time64_t		update_at;	/* Time at which to next update */
+	struct afs_cell		*cell;		/* Cell to which belongs (pins ref) */
+	struct rb_node		cell_node;	/* Link in cell->volumes */
+	struct hlist_node	proc_link;	/* Link in cell->proc_volumes */
+	struct super_block __rcu *sb;		/* Superblock on which inodes reside */
+	unsigned long		flags;
+#define AFS_VOLUME_NEEDS_UPDATE	0	/* - T if an update needs performing */
+#define AFS_VOLUME_UPDATING	1	/* - T if an update is in progress */
+#define AFS_VOLUME_WAIT		2	/* - T if users must wait for update */
+#define AFS_VOLUME_DELETED	3	/* - T if volume appears deleted */
+#define AFS_VOLUME_OFFLINE	4	/* - T if volume offline notice given */
+#define AFS_VOLUME_BUSY		5	/* - T if volume busy notice given */
+#define AFS_VOLUME_MAYBE_NO_IBULK 6	/* - T if some servers don't have InlineBulkStatus */
+#ifdef CONFIG_AFS_FSCACHE
+	struct fscache_cookie	*cache;		/* caching cookie */
+#endif
+	struct afs_server_list __rcu *servers;	/* List of servers on which volume resides */
+	rwlock_t		servers_lock;	/* Lock for ->servers */
+	unsigned int		servers_seq;	/* Incremented each time ->servers changes */
 
-	अचिन्हित		cb_v_अवरोध;	/* Break-everything counter. */
-	rwlock_t		cb_v_अवरोध_lock;
+	unsigned		cb_v_break;	/* Break-everything counter. */
+	rwlock_t		cb_v_break_lock;
 
 	afs_voltype_t		type;		/* type of volume */
-	अक्षर			type_क्रमce;	/* क्रमce volume type (suppress R/O -> R/W) */
+	char			type_force;	/* force volume type (suppress R/O -> R/W) */
 	u8			name_len;
 	u8			name[AFS_MAXVOLNAME + 1]; /* NUL-padded volume name */
-पूर्ण;
+};
 
-क्रमागत afs_lock_state अणु
+enum afs_lock_state {
 	AFS_VNODE_LOCK_NONE,		/* The vnode has no lock on the server */
-	AFS_VNODE_LOCK_WAITING_FOR_CB,	/* We're रुकोing क्रम the server to अवरोध the callback */
-	AFS_VNODE_LOCK_SETTING,		/* We're asking the server क्रम a lock */
+	AFS_VNODE_LOCK_WAITING_FOR_CB,	/* We're waiting for the server to break the callback */
+	AFS_VNODE_LOCK_SETTING,		/* We're asking the server for a lock */
 	AFS_VNODE_LOCK_GRANTED,		/* We have a lock on the server */
 	AFS_VNODE_LOCK_EXTENDING,	/* We're extending a lock on the server */
 	AFS_VNODE_LOCK_NEED_UNLOCK,	/* We need to unlock on the server */
 	AFS_VNODE_LOCK_UNLOCKING,	/* We're telling the server to unlock */
 	AFS_VNODE_LOCK_DELETED,		/* The vnode has been deleted whilst we have a lock */
-पूर्ण;
+};
 
 /*
- * AFS inode निजी data.
+ * AFS inode private data.
  *
  * Note that afs_alloc_inode() *must* reset anything that could incorrectly
  * leak from one inode to another.
  */
-काष्ठा afs_vnode अणु
-	काष्ठा inode		vfs_inode;	/* the VFS's inode record */
+struct afs_vnode {
+	struct inode		vfs_inode;	/* the VFS's inode record */
 
-	काष्ठा afs_volume	*volume;	/* volume on which vnode resides */
-	काष्ठा afs_fid		fid;		/* the file identअगरier क्रम this inode */
-	काष्ठा afs_file_status	status;		/* AFS status info क्रम this file */
-	afs_dataversion_t	invalid_beक्रमe;	/* Child dentries are invalid beक्रमe this */
-#अगर_घोषित CONFIG_AFS_FSCACHE
-	काष्ठा fscache_cookie	*cache;		/* caching cookie */
-#पूर्ण_अगर
-	काष्ठा afs_permits __rcu *permit_cache;	/* cache of permits so far obtained */
-	काष्ठा mutex		io_lock;	/* Lock क्रम serialising I/O on this mutex */
-	काष्ठा rw_semaphore	validate_lock;	/* lock क्रम validating this vnode */
-	काष्ठा rw_semaphore	सूची_हटाओ_lock;	/* Lock क्रम सूची_हटाओ vs sillyनाम */
-	काष्ठा key		*silly_key;	/* Silly नाम key */
-	spinlock_t		wb_lock;	/* lock क्रम wb_keys */
-	spinlock_t		lock;		/* रुकोqueue/flags lock */
-	अचिन्हित दीर्घ		flags;
-#घोषणा AFS_VNODE_CB_PROMISED	0		/* Set अगर vnode has a callback promise */
-#घोषणा AFS_VNODE_UNSET		1		/* set अगर vnode attributes not yet set */
-#घोषणा AFS_VNODE_सूची_VALID	2		/* Set अगर dir contents are valid */
-#घोषणा AFS_VNODE_ZAP_DATA	3		/* set अगर vnode's data should be invalidated */
-#घोषणा AFS_VNODE_DELETED	4		/* set अगर vnode deleted on server */
-#घोषणा AFS_VNODE_MOUNTPOINT	5		/* set अगर vnode is a mountpoपूर्णांक symlink */
-#घोषणा AFS_VNODE_AUTOCELL	6		/* set अगर Vnode is an स्वतः mount poपूर्णांक */
-#घोषणा AFS_VNODE_PSEUDOसूची	7 		/* set अगर Vnode is a pseuकरो directory */
-#घोषणा AFS_VNODE_NEW_CONTENT	8		/* Set अगर file has new content (create/trunc-0) */
-#घोषणा AFS_VNODE_SILLY_DELETED	9		/* Set अगर file has been silly-deleted */
-#घोषणा AFS_VNODE_MODIFYING	10		/* Set अगर we're perक्रमming a modअगरication op */
+	struct afs_volume	*volume;	/* volume on which vnode resides */
+	struct afs_fid		fid;		/* the file identifier for this inode */
+	struct afs_file_status	status;		/* AFS status info for this file */
+	afs_dataversion_t	invalid_before;	/* Child dentries are invalid before this */
+#ifdef CONFIG_AFS_FSCACHE
+	struct fscache_cookie	*cache;		/* caching cookie */
+#endif
+	struct afs_permits __rcu *permit_cache;	/* cache of permits so far obtained */
+	struct mutex		io_lock;	/* Lock for serialising I/O on this mutex */
+	struct rw_semaphore	validate_lock;	/* lock for validating this vnode */
+	struct rw_semaphore	rmdir_lock;	/* Lock for rmdir vs sillyrename */
+	struct key		*silly_key;	/* Silly rename key */
+	spinlock_t		wb_lock;	/* lock for wb_keys */
+	spinlock_t		lock;		/* waitqueue/flags lock */
+	unsigned long		flags;
+#define AFS_VNODE_CB_PROMISED	0		/* Set if vnode has a callback promise */
+#define AFS_VNODE_UNSET		1		/* set if vnode attributes not yet set */
+#define AFS_VNODE_DIR_VALID	2		/* Set if dir contents are valid */
+#define AFS_VNODE_ZAP_DATA	3		/* set if vnode's data should be invalidated */
+#define AFS_VNODE_DELETED	4		/* set if vnode deleted on server */
+#define AFS_VNODE_MOUNTPOINT	5		/* set if vnode is a mountpoint symlink */
+#define AFS_VNODE_AUTOCELL	6		/* set if Vnode is an auto mount point */
+#define AFS_VNODE_PSEUDODIR	7 		/* set if Vnode is a pseudo directory */
+#define AFS_VNODE_NEW_CONTENT	8		/* Set if file has new content (create/trunc-0) */
+#define AFS_VNODE_SILLY_DELETED	9		/* Set if file has been silly-deleted */
+#define AFS_VNODE_MODIFYING	10		/* Set if we're performing a modification op */
 
-	काष्ठा list_head	wb_keys;	/* List of keys available क्रम ग_लिखोback */
-	काष्ठा list_head	pending_locks;	/* locks रुकोing to be granted */
-	काष्ठा list_head	granted_locks;	/* locks granted on this file */
-	काष्ठा delayed_work	lock_work;	/* work to be करोne in locking */
-	काष्ठा key		*lock_key;	/* Key to be used in lock ops */
-	kसमय_प्रकार			locked_at;	/* Time at which lock obtained */
-	क्रमागत afs_lock_state	lock_state : 8;
+	struct list_head	wb_keys;	/* List of keys available for writeback */
+	struct list_head	pending_locks;	/* locks waiting to be granted */
+	struct list_head	granted_locks;	/* locks granted on this file */
+	struct delayed_work	lock_work;	/* work to be done in locking */
+	struct key		*lock_key;	/* Key to be used in lock ops */
+	ktime_t			locked_at;	/* Time at which lock obtained */
+	enum afs_lock_state	lock_state : 8;
 	afs_lock_type_t		lock_type : 8;
 
-	/* outstanding callback notअगरication on this file */
-	व्योम			*cb_server;	/* Server with callback/filelock */
-	अचिन्हित पूर्णांक		cb_s_अवरोध;	/* Mass अवरोध counter on ->server */
-	अचिन्हित पूर्णांक		cb_v_अवरोध;	/* Mass अवरोध counter on ->volume */
-	अचिन्हित पूर्णांक		cb_अवरोध;	/* Break counter on vnode */
-	seqlock_t		cb_lock;	/* Lock क्रम ->cb_server, ->status, ->cb_*अवरोध */
+	/* outstanding callback notification on this file */
+	void			*cb_server;	/* Server with callback/filelock */
+	unsigned int		cb_s_break;	/* Mass break counter on ->server */
+	unsigned int		cb_v_break;	/* Mass break counter on ->volume */
+	unsigned int		cb_break;	/* Break counter on vnode */
+	seqlock_t		cb_lock;	/* Lock for ->cb_server, ->status, ->cb_*break */
 
-	समय64_t		cb_expires_at;	/* समय at which callback expires */
-पूर्ण;
+	time64_t		cb_expires_at;	/* time at which callback expires */
+};
 
-अटल अंतरभूत काष्ठा fscache_cookie *afs_vnode_cache(काष्ठा afs_vnode *vnode)
-अणु
-#अगर_घोषित CONFIG_AFS_FSCACHE
-	वापस vnode->cache;
-#अन्यथा
-	वापस शून्य;
-#पूर्ण_अगर
-पूर्ण
+static inline struct fscache_cookie *afs_vnode_cache(struct afs_vnode *vnode)
+{
+#ifdef CONFIG_AFS_FSCACHE
+	return vnode->cache;
+#else
+	return NULL;
+#endif
+}
 
 /*
- * cached security record क्रम one user's attempt to access a vnode
+ * cached security record for one user's attempt to access a vnode
  */
-काष्ठा afs_permit अणु
-	काष्ठा key		*key;		/* RxRPC ticket holding a security context */
-	afs_access_t		access;		/* CallerAccess value क्रम this key */
-पूर्ण;
+struct afs_permit {
+	struct key		*key;		/* RxRPC ticket holding a security context */
+	afs_access_t		access;		/* CallerAccess value for this key */
+};
 
 /*
  * Immutable cache of CallerAccess records from attempts to access vnodes.
  * These may be shared between multiple vnodes.
  */
-काष्ठा afs_permits अणु
-	काष्ठा rcu_head		rcu;
-	काष्ठा hlist_node	hash_node;	/* Link in hash */
-	अचिन्हित दीर्घ		h;		/* Hash value क्रम this permit list */
+struct afs_permits {
+	struct rcu_head		rcu;
+	struct hlist_node	hash_node;	/* Link in hash */
+	unsigned long		h;		/* Hash value for this permit list */
 	refcount_t		usage;
-	अचिन्हित लघु		nr_permits;	/* Number of records */
+	unsigned short		nr_permits;	/* Number of records */
 	bool			invalidated;	/* Invalidated due to key change */
-	काष्ठा afs_permit	permits[];	/* List of permits sorted by key poपूर्णांकer */
-पूर्ण;
+	struct afs_permit	permits[];	/* List of permits sorted by key pointer */
+};
 
 /*
  * Error prioritisation and accumulation.
  */
-काष्ठा afs_error अणु
-	लघु	error;			/* Accumulated error */
-	bool	responded;		/* T अगर server responded */
-पूर्ण;
+struct afs_error {
+	short	error;			/* Accumulated error */
+	bool	responded;		/* T if server responded */
+};
 
 /*
- * Cursor क्रम iterating over a server's address list.
+ * Cursor for iterating over a server's address list.
  */
-काष्ठा afs_addr_cursor अणु
-	काष्ठा afs_addr_list	*alist;		/* Current address list (pins ref) */
-	अचिन्हित दीर्घ		tried;		/* Tried addresses */
-	चिन्हित अक्षर		index;		/* Current address */
-	bool			responded;	/* T अगर the current address responded */
-	अचिन्हित लघु		nr_iterations;	/* Number of address iterations */
-	लघु			error;
-	u32			पात_code;
-पूर्ण;
+struct afs_addr_cursor {
+	struct afs_addr_list	*alist;		/* Current address list (pins ref) */
+	unsigned long		tried;		/* Tried addresses */
+	signed char		index;		/* Current address */
+	bool			responded;	/* T if the current address responded */
+	unsigned short		nr_iterations;	/* Number of address iterations */
+	short			error;
+	u32			abort_code;
+};
 
 /*
- * Cursor क्रम iterating over a set of volume location servers.
+ * Cursor for iterating over a set of volume location servers.
  */
-काष्ठा afs_vl_cursor अणु
-	काष्ठा afs_addr_cursor	ac;
-	काष्ठा afs_cell		*cell;		/* The cell we're querying */
-	काष्ठा afs_vlserver_list *server_list;	/* Current server list (pins ref) */
-	काष्ठा afs_vlserver	*server;	/* Server on which this resides */
-	काष्ठा key		*key;		/* Key क्रम the server */
-	अचिन्हित दीर्घ		untried;	/* Biपंचांगask of untried servers */
-	लघु			index;		/* Current server */
-	लघु			error;
-	अचिन्हित लघु		flags;
-#घोषणा AFS_VL_CURSOR_STOP	0x0001		/* Set to cease iteration */
-#घोषणा AFS_VL_CURSOR_RETRY	0x0002		/* Set to करो a retry */
-#घोषणा AFS_VL_CURSOR_RETRIED	0x0004		/* Set अगर started a retry */
-	अचिन्हित लघु		nr_iterations;	/* Number of server iterations */
-पूर्ण;
+struct afs_vl_cursor {
+	struct afs_addr_cursor	ac;
+	struct afs_cell		*cell;		/* The cell we're querying */
+	struct afs_vlserver_list *server_list;	/* Current server list (pins ref) */
+	struct afs_vlserver	*server;	/* Server on which this resides */
+	struct key		*key;		/* Key for the server */
+	unsigned long		untried;	/* Bitmask of untried servers */
+	short			index;		/* Current server */
+	short			error;
+	unsigned short		flags;
+#define AFS_VL_CURSOR_STOP	0x0001		/* Set to cease iteration */
+#define AFS_VL_CURSOR_RETRY	0x0002		/* Set to do a retry */
+#define AFS_VL_CURSOR_RETRIED	0x0004		/* Set if started a retry */
+	unsigned short		nr_iterations;	/* Number of server iterations */
+};
 
 /*
  * Fileserver operation methods.
  */
-काष्ठा afs_operation_ops अणु
-	व्योम (*issue_afs_rpc)(काष्ठा afs_operation *op);
-	व्योम (*issue_yfs_rpc)(काष्ठा afs_operation *op);
-	व्योम (*success)(काष्ठा afs_operation *op);
-	व्योम (*पातed)(काष्ठा afs_operation *op);
-	व्योम (*failed)(काष्ठा afs_operation *op);
-	व्योम (*edit_dir)(काष्ठा afs_operation *op);
-	व्योम (*put)(काष्ठा afs_operation *op);
-पूर्ण;
+struct afs_operation_ops {
+	void (*issue_afs_rpc)(struct afs_operation *op);
+	void (*issue_yfs_rpc)(struct afs_operation *op);
+	void (*success)(struct afs_operation *op);
+	void (*aborted)(struct afs_operation *op);
+	void (*failed)(struct afs_operation *op);
+	void (*edit_dir)(struct afs_operation *op);
+	void (*put)(struct afs_operation *op);
+};
 
-काष्ठा afs_vnode_param अणु
-	काष्ठा afs_vnode	*vnode;
-	काष्ठा afs_fid		fid;		/* Fid to access */
-	काष्ठा afs_status_cb	scb;		/* Returned status and callback promise */
-	afs_dataversion_t	dv_beक्रमe;	/* Data version beक्रमe the call */
-	अचिन्हित पूर्णांक		cb_अवरोध_beक्रमe; /* cb_अवरोध + cb_s_अवरोध beक्रमe the call */
+struct afs_vnode_param {
+	struct afs_vnode	*vnode;
+	struct afs_fid		fid;		/* Fid to access */
+	struct afs_status_cb	scb;		/* Returned status and callback promise */
+	afs_dataversion_t	dv_before;	/* Data version before the call */
+	unsigned int		cb_break_before; /* cb_break + cb_s_break before the call */
 	u8			dv_delta;	/* Expected change in data version */
-	bool			put_vnode:1;	/* T अगर we have a ref on the vnode */
-	bool			need_io_lock:1;	/* T अगर we need the I/O lock on this */
-	bool			update_स_समय:1;	/* Need to update the स_समय */
+	bool			put_vnode:1;	/* T if we have a ref on the vnode */
+	bool			need_io_lock:1;	/* T if we need the I/O lock on this */
+	bool			update_ctime:1;	/* Need to update the ctime */
 	bool			set_size:1;	/* Must update i_size */
-	bool			op_unlinked:1;	/* True अगर file was unlinked by op */
-	bool			speculative:1;	/* T अगर speculative status fetch (no vnode lock) */
-	bool			modअगरication:1;	/* Set अगर the content माला_लो modअगरied */
-पूर्ण;
+	bool			op_unlinked:1;	/* True if file was unlinked by op */
+	bool			speculative:1;	/* T if speculative status fetch (no vnode lock) */
+	bool			modification:1;	/* Set if the content gets modified */
+};
 
 /*
  * Fileserver operation wrapper, handling server and address rotation
  * asynchronously.  May make simultaneous calls to multiple servers.
  */
-काष्ठा afs_operation अणु
-	काष्ठा afs_net		*net;		/* Network namespace */
-	काष्ठा key		*key;		/* Key क्रम the cell */
-	स्थिर काष्ठा afs_call_type *type;	/* Type of call करोne */
-	स्थिर काष्ठा afs_operation_ops *ops;
+struct afs_operation {
+	struct afs_net		*net;		/* Network namespace */
+	struct key		*key;		/* Key for the cell */
+	const struct afs_call_type *type;	/* Type of call done */
+	const struct afs_operation_ops *ops;
 
-	/* Parameters/results क्रम the operation */
-	काष्ठा afs_volume	*volume;	/* Volume being accessed */
-	काष्ठा afs_vnode_param	file[2];
-	काष्ठा afs_vnode_param	*more_files;
-	काष्ठा afs_volsync	volsync;
-	काष्ठा dentry		*dentry;	/* Dentry to be altered */
-	काष्ठा dentry		*dentry_2;	/* Second dentry to be altered */
-	काष्ठा बारpec64	mसमय;		/* Modअगरication समय to record */
-	काष्ठा बारpec64	स_समय;		/* Change समय to set */
-	लघु			nr_files;	/* Number of entries in file[], more_files */
-	लघु			error;
-	अचिन्हित पूर्णांक		debug_id;
+	/* Parameters/results for the operation */
+	struct afs_volume	*volume;	/* Volume being accessed */
+	struct afs_vnode_param	file[2];
+	struct afs_vnode_param	*more_files;
+	struct afs_volsync	volsync;
+	struct dentry		*dentry;	/* Dentry to be altered */
+	struct dentry		*dentry_2;	/* Second dentry to be altered */
+	struct timespec64	mtime;		/* Modification time to record */
+	struct timespec64	ctime;		/* Change time to set */
+	short			nr_files;	/* Number of entries in file[], more_files */
+	short			error;
+	unsigned int		debug_id;
 
-	अचिन्हित पूर्णांक		cb_v_अवरोध;	/* Volume अवरोध counter beक्रमe op */
-	अचिन्हित पूर्णांक		cb_s_अवरोध;	/* Server अवरोध counter beक्रमe op */
+	unsigned int		cb_v_break;	/* Volume break counter before op */
+	unsigned int		cb_s_break;	/* Server break counter before op */
 
-	जोड़ अणु
-		काष्ठा अणु
-			पूर्णांक	which;		/* Which ->file[] to fetch क्रम */
-		पूर्ण fetch_status;
-		काष्ठा अणु
-			पूर्णांक	reason;		/* क्रमागत afs_edit_dir_reason */
+	union {
+		struct {
+			int	which;		/* Which ->file[] to fetch for */
+		} fetch_status;
+		struct {
+			int	reason;		/* enum afs_edit_dir_reason */
 			mode_t	mode;
-			स्थिर अक्षर *symlink;
-		पूर्ण create;
-		काष्ठा अणु
+			const char *symlink;
+		} create;
+		struct {
 			bool	need_rehash;
-		पूर्ण unlink;
-		काष्ठा अणु
-			काष्ठा dentry *rehash;
-			काष्ठा dentry *पंचांगp;
+		} unlink;
+		struct {
+			struct dentry *rehash;
+			struct dentry *tmp;
 			bool	new_negative;
-		पूर्ण नाम;
-		काष्ठा अणु
-			काष्ठा afs_पढ़ो *req;
-		पूर्ण fetch;
-		काष्ठा अणु
+		} rename;
+		struct {
+			struct afs_read *req;
+		} fetch;
+		struct {
 			afs_lock_type_t type;
-		पूर्ण lock;
-		काष्ठा अणु
-			काष्ठा iov_iter	*ग_लिखो_iter;
+		} lock;
+		struct {
+			struct iov_iter	*write_iter;
 			loff_t	pos;
 			loff_t	size;
 			loff_t	i_size;
-			bool	laundering;	/* Laundering page, PG_ग_लिखोback not set */
-		पूर्ण store;
-		काष्ठा अणु
-			काष्ठा iattr	*attr;
+			bool	laundering;	/* Laundering page, PG_writeback not set */
+		} store;
+		struct {
+			struct iattr	*attr;
 			loff_t		old_i_size;
-		पूर्ण setattr;
-		काष्ठा afs_acl	*acl;
-		काष्ठा yfs_acl	*yacl;
-		काष्ठा अणु
-			काष्ठा afs_volume_status vs;
-			काष्ठा kstatfs		*buf;
-		पूर्ण volstatus;
-	पूर्ण;
+		} setattr;
+		struct afs_acl	*acl;
+		struct yfs_acl	*yacl;
+		struct {
+			struct afs_volume_status vs;
+			struct kstatfs		*buf;
+		} volstatus;
+	};
 
 	/* Fileserver iteration state */
-	काष्ठा afs_addr_cursor	ac;
-	काष्ठा afs_server_list	*server_list;	/* Current server list (pins ref) */
-	काष्ठा afs_server	*server;	/* Server we're using (ref pinned by server_list) */
-	काष्ठा afs_call		*call;
-	अचिन्हित दीर्घ		untried;	/* Biपंचांगask of untried servers */
-	लघु			index;		/* Current server */
-	अचिन्हित लघु		nr_iterations;	/* Number of server iterations */
+	struct afs_addr_cursor	ac;
+	struct afs_server_list	*server_list;	/* Current server list (pins ref) */
+	struct afs_server	*server;	/* Server we're using (ref pinned by server_list) */
+	struct afs_call		*call;
+	unsigned long		untried;	/* Bitmask of untried servers */
+	short			index;		/* Current server */
+	unsigned short		nr_iterations;	/* Number of server iterations */
 
-	अचिन्हित पूर्णांक		flags;
-#घोषणा AFS_OPERATION_STOP		0x0001	/* Set to cease iteration */
-#घोषणा AFS_OPERATION_VBUSY		0x0002	/* Set अगर seen VBUSY */
-#घोषणा AFS_OPERATION_VMOVED		0x0004	/* Set अगर seen VMOVED */
-#घोषणा AFS_OPERATION_VNOVOL		0x0008	/* Set अगर seen VNOVOL */
-#घोषणा AFS_OPERATION_CUR_ONLY		0x0010	/* Set अगर current server only (file lock held) */
-#घोषणा AFS_OPERATION_NO_VSLEEP		0x0020	/* Set to prevent sleep on VBUSY, VOFFLINE, ... */
-#घोषणा AFS_OPERATION_UNINTR		0x0040	/* Set अगर op is unपूर्णांकerruptible */
-#घोषणा AFS_OPERATION_DOWNGRADE		0x0080	/* Set to retry with करोwngraded opcode */
-#घोषणा AFS_OPERATION_LOCK_0		0x0100	/* Set अगर have io_lock on file[0] */
-#घोषणा AFS_OPERATION_LOCK_1		0x0200	/* Set अगर have io_lock on file[1] */
-#घोषणा AFS_OPERATION_TRIED_ALL		0x0400	/* Set अगर we've tried all the fileservers */
-#घोषणा AFS_OPERATION_RETRY_SERVER	0x0800	/* Set अगर we should retry the current server */
-#घोषणा AFS_OPERATION_सूची_CONFLICT	0x1000	/* Set अगर we detected a 3rd-party dir change */
-पूर्ण;
+	unsigned int		flags;
+#define AFS_OPERATION_STOP		0x0001	/* Set to cease iteration */
+#define AFS_OPERATION_VBUSY		0x0002	/* Set if seen VBUSY */
+#define AFS_OPERATION_VMOVED		0x0004	/* Set if seen VMOVED */
+#define AFS_OPERATION_VNOVOL		0x0008	/* Set if seen VNOVOL */
+#define AFS_OPERATION_CUR_ONLY		0x0010	/* Set if current server only (file lock held) */
+#define AFS_OPERATION_NO_VSLEEP		0x0020	/* Set to prevent sleep on VBUSY, VOFFLINE, ... */
+#define AFS_OPERATION_UNINTR		0x0040	/* Set if op is uninterruptible */
+#define AFS_OPERATION_DOWNGRADE		0x0080	/* Set to retry with downgraded opcode */
+#define AFS_OPERATION_LOCK_0		0x0100	/* Set if have io_lock on file[0] */
+#define AFS_OPERATION_LOCK_1		0x0200	/* Set if have io_lock on file[1] */
+#define AFS_OPERATION_TRIED_ALL		0x0400	/* Set if we've tried all the fileservers */
+#define AFS_OPERATION_RETRY_SERVER	0x0800	/* Set if we should retry the current server */
+#define AFS_OPERATION_DIR_CONFLICT	0x1000	/* Set if we detected a 3rd-party dir change */
+};
 
 /*
  * Cache auxiliary data.
  */
-काष्ठा afs_vnode_cache_aux अणु
+struct afs_vnode_cache_aux {
 	u64			data_version;
-पूर्ण __packed;
+} __packed;
 
 /*
- * We use page->निजी to hold the amount of the page that we've written to,
- * splitting the field पूर्णांकo two parts.  However, we need to represent a range
- * 0...PAGE_SIZE, so we reduce the resolution अगर the size of the page
+ * We use page->private to hold the amount of the page that we've written to,
+ * splitting the field into two parts.  However, we need to represent a range
+ * 0...PAGE_SIZE, so we reduce the resolution if the size of the page
  * exceeds what we can encode.
  */
-#अगर_घोषित CONFIG_64BIT
-#घोषणा __AFS_PAGE_PRIV_MASK	0x7fffffffUL
-#घोषणा __AFS_PAGE_PRIV_SHIFT	32
-#घोषणा __AFS_PAGE_PRIV_MMAPPED	0x80000000UL
-#अन्यथा
-#घोषणा __AFS_PAGE_PRIV_MASK	0x7fffUL
-#घोषणा __AFS_PAGE_PRIV_SHIFT	16
-#घोषणा __AFS_PAGE_PRIV_MMAPPED	0x8000UL
-#पूर्ण_अगर
+#ifdef CONFIG_64BIT
+#define __AFS_PAGE_PRIV_MASK	0x7fffffffUL
+#define __AFS_PAGE_PRIV_SHIFT	32
+#define __AFS_PAGE_PRIV_MMAPPED	0x80000000UL
+#else
+#define __AFS_PAGE_PRIV_MASK	0x7fffUL
+#define __AFS_PAGE_PRIV_SHIFT	16
+#define __AFS_PAGE_PRIV_MMAPPED	0x8000UL
+#endif
 
-अटल अंतरभूत अचिन्हित पूर्णांक afs_page_dirty_resolution(काष्ठा page *page)
-अणु
-	पूर्णांक shअगरt = thp_order(page) + PAGE_SHIFT - (__AFS_PAGE_PRIV_SHIFT - 1);
-	वापस (shअगरt > 0) ? shअगरt : 0;
-पूर्ण
+static inline unsigned int afs_page_dirty_resolution(struct page *page)
+{
+	int shift = thp_order(page) + PAGE_SHIFT - (__AFS_PAGE_PRIV_SHIFT - 1);
+	return (shift > 0) ? shift : 0;
+}
 
-अटल अंतरभूत माप_प्रकार afs_page_dirty_from(काष्ठा page *page, अचिन्हित दीर्घ priv)
-अणु
-	अचिन्हित दीर्घ x = priv & __AFS_PAGE_PRIV_MASK;
+static inline size_t afs_page_dirty_from(struct page *page, unsigned long priv)
+{
+	unsigned long x = priv & __AFS_PAGE_PRIV_MASK;
 
 	/* The lower bound is inclusive */
-	वापस x << afs_page_dirty_resolution(page);
-पूर्ण
+	return x << afs_page_dirty_resolution(page);
+}
 
-अटल अंतरभूत माप_प्रकार afs_page_dirty_to(काष्ठा page *page, अचिन्हित दीर्घ priv)
-अणु
-	अचिन्हित दीर्घ x = (priv >> __AFS_PAGE_PRIV_SHIFT) & __AFS_PAGE_PRIV_MASK;
+static inline size_t afs_page_dirty_to(struct page *page, unsigned long priv)
+{
+	unsigned long x = (priv >> __AFS_PAGE_PRIV_SHIFT) & __AFS_PAGE_PRIV_MASK;
 
 	/* The upper bound is immediately beyond the region */
-	वापस (x + 1) << afs_page_dirty_resolution(page);
-पूर्ण
+	return (x + 1) << afs_page_dirty_resolution(page);
+}
 
-अटल अंतरभूत अचिन्हित दीर्घ afs_page_dirty(काष्ठा page *page, माप_प्रकार from, माप_प्रकार to)
-अणु
-	अचिन्हित पूर्णांक res = afs_page_dirty_resolution(page);
+static inline unsigned long afs_page_dirty(struct page *page, size_t from, size_t to)
+{
+	unsigned int res = afs_page_dirty_resolution(page);
 	from >>= res;
 	to = (to - 1) >> res;
-	वापस (to << __AFS_PAGE_PRIV_SHIFT) | from;
-पूर्ण
+	return (to << __AFS_PAGE_PRIV_SHIFT) | from;
+}
 
-अटल अंतरभूत अचिन्हित दीर्घ afs_page_dirty_mmapped(अचिन्हित दीर्घ priv)
-अणु
-	वापस priv | __AFS_PAGE_PRIV_MMAPPED;
-पूर्ण
+static inline unsigned long afs_page_dirty_mmapped(unsigned long priv)
+{
+	return priv | __AFS_PAGE_PRIV_MMAPPED;
+}
 
-अटल अंतरभूत bool afs_is_page_dirty_mmapped(अचिन्हित दीर्घ priv)
-अणु
-	वापस priv & __AFS_PAGE_PRIV_MMAPPED;
-पूर्ण
+static inline bool afs_is_page_dirty_mmapped(unsigned long priv)
+{
+	return priv & __AFS_PAGE_PRIV_MMAPPED;
+}
 
-#समावेश <trace/events/afs.h>
+#include <trace/events/afs.h>
 
 /*****************************************************************************/
 /*
  * addr_list.c
  */
-अटल अंतरभूत काष्ठा afs_addr_list *afs_get_addrlist(काष्ठा afs_addr_list *alist)
-अणु
-	अगर (alist)
+static inline struct afs_addr_list *afs_get_addrlist(struct afs_addr_list *alist)
+{
+	if (alist)
 		refcount_inc(&alist->usage);
-	वापस alist;
-पूर्ण
-बाह्य काष्ठा afs_addr_list *afs_alloc_addrlist(अचिन्हित पूर्णांक,
-						अचिन्हित लघु,
-						अचिन्हित लघु);
-बाह्य व्योम afs_put_addrlist(काष्ठा afs_addr_list *);
-बाह्य काष्ठा afs_vlserver_list *afs_parse_text_addrs(काष्ठा afs_net *,
-						      स्थिर अक्षर *, माप_प्रकार, अक्षर,
-						      अचिन्हित लघु, अचिन्हित लघु);
-बाह्य काष्ठा afs_vlserver_list *afs_dns_query(काष्ठा afs_cell *, समय64_t *);
-बाह्य bool afs_iterate_addresses(काष्ठा afs_addr_cursor *);
-बाह्य पूर्णांक afs_end_cursor(काष्ठा afs_addr_cursor *);
+	return alist;
+}
+extern struct afs_addr_list *afs_alloc_addrlist(unsigned int,
+						unsigned short,
+						unsigned short);
+extern void afs_put_addrlist(struct afs_addr_list *);
+extern struct afs_vlserver_list *afs_parse_text_addrs(struct afs_net *,
+						      const char *, size_t, char,
+						      unsigned short, unsigned short);
+extern struct afs_vlserver_list *afs_dns_query(struct afs_cell *, time64_t *);
+extern bool afs_iterate_addresses(struct afs_addr_cursor *);
+extern int afs_end_cursor(struct afs_addr_cursor *);
 
-बाह्य व्योम afs_merge_fs_addr4(काष्ठा afs_addr_list *, __be32, u16);
-बाह्य व्योम afs_merge_fs_addr6(काष्ठा afs_addr_list *, __be32 *, u16);
+extern void afs_merge_fs_addr4(struct afs_addr_list *, __be32, u16);
+extern void afs_merge_fs_addr6(struct afs_addr_list *, __be32 *, u16);
 
 /*
  * cache.c
  */
-#अगर_घोषित CONFIG_AFS_FSCACHE
-बाह्य काष्ठा fscache_netfs afs_cache_netfs;
-बाह्य काष्ठा fscache_cookie_def afs_cell_cache_index_def;
-बाह्य काष्ठा fscache_cookie_def afs_volume_cache_index_def;
-बाह्य काष्ठा fscache_cookie_def afs_vnode_cache_index_def;
-#अन्यथा
-#घोषणा afs_cell_cache_index_def	(*(काष्ठा fscache_cookie_def *) शून्य)
-#घोषणा afs_volume_cache_index_def	(*(काष्ठा fscache_cookie_def *) शून्य)
-#घोषणा afs_vnode_cache_index_def	(*(काष्ठा fscache_cookie_def *) शून्य)
-#पूर्ण_अगर
+#ifdef CONFIG_AFS_FSCACHE
+extern struct fscache_netfs afs_cache_netfs;
+extern struct fscache_cookie_def afs_cell_cache_index_def;
+extern struct fscache_cookie_def afs_volume_cache_index_def;
+extern struct fscache_cookie_def afs_vnode_cache_index_def;
+#else
+#define afs_cell_cache_index_def	(*(struct fscache_cookie_def *) NULL)
+#define afs_volume_cache_index_def	(*(struct fscache_cookie_def *) NULL)
+#define afs_vnode_cache_index_def	(*(struct fscache_cookie_def *) NULL)
+#endif
 
 /*
  * callback.c
  */
-बाह्य व्योम afs_init_callback_state(काष्ठा afs_server *);
-बाह्य व्योम __afs_अवरोध_callback(काष्ठा afs_vnode *, क्रमागत afs_cb_अवरोध_reason);
-बाह्य व्योम afs_अवरोध_callback(काष्ठा afs_vnode *, क्रमागत afs_cb_अवरोध_reason);
-बाह्य व्योम afs_अवरोध_callbacks(काष्ठा afs_server *, माप_प्रकार, काष्ठा afs_callback_अवरोध *);
+extern void afs_init_callback_state(struct afs_server *);
+extern void __afs_break_callback(struct afs_vnode *, enum afs_cb_break_reason);
+extern void afs_break_callback(struct afs_vnode *, enum afs_cb_break_reason);
+extern void afs_break_callbacks(struct afs_server *, size_t, struct afs_callback_break *);
 
-अटल अंतरभूत अचिन्हित पूर्णांक afs_calc_vnode_cb_अवरोध(काष्ठा afs_vnode *vnode)
-अणु
-	वापस vnode->cb_अवरोध + vnode->cb_v_अवरोध;
-पूर्ण
+static inline unsigned int afs_calc_vnode_cb_break(struct afs_vnode *vnode)
+{
+	return vnode->cb_break + vnode->cb_v_break;
+}
 
-अटल अंतरभूत bool afs_cb_is_broken(अचिन्हित पूर्णांक cb_अवरोध,
-				    स्थिर काष्ठा afs_vnode *vnode)
-अणु
-	वापस cb_अवरोध != (vnode->cb_अवरोध + vnode->volume->cb_v_अवरोध);
-पूर्ण
+static inline bool afs_cb_is_broken(unsigned int cb_break,
+				    const struct afs_vnode *vnode)
+{
+	return cb_break != (vnode->cb_break + vnode->volume->cb_v_break);
+}
 
 /*
  * cell.c
  */
-बाह्य पूर्णांक afs_cell_init(काष्ठा afs_net *, स्थिर अक्षर *);
-बाह्य काष्ठा afs_cell *afs_find_cell(काष्ठा afs_net *, स्थिर अक्षर *, अचिन्हित,
-				      क्रमागत afs_cell_trace);
-बाह्य काष्ठा afs_cell *afs_lookup_cell(काष्ठा afs_net *, स्थिर अक्षर *, अचिन्हित,
-					स्थिर अक्षर *, bool);
-बाह्य काष्ठा afs_cell *afs_use_cell(काष्ठा afs_cell *, क्रमागत afs_cell_trace);
-बाह्य व्योम afs_unuse_cell(काष्ठा afs_net *, काष्ठा afs_cell *, क्रमागत afs_cell_trace);
-बाह्य काष्ठा afs_cell *afs_get_cell(काष्ठा afs_cell *, क्रमागत afs_cell_trace);
-बाह्य व्योम afs_see_cell(काष्ठा afs_cell *, क्रमागत afs_cell_trace);
-बाह्य व्योम afs_put_cell(काष्ठा afs_cell *, क्रमागत afs_cell_trace);
-बाह्य व्योम afs_queue_cell(काष्ठा afs_cell *, क्रमागत afs_cell_trace);
-बाह्य व्योम afs_manage_cells(काष्ठा work_काष्ठा *);
-बाह्य व्योम afs_cells_समयr(काष्ठा समयr_list *);
-बाह्य व्योम __net_निकास afs_cell_purge(काष्ठा afs_net *);
+extern int afs_cell_init(struct afs_net *, const char *);
+extern struct afs_cell *afs_find_cell(struct afs_net *, const char *, unsigned,
+				      enum afs_cell_trace);
+extern struct afs_cell *afs_lookup_cell(struct afs_net *, const char *, unsigned,
+					const char *, bool);
+extern struct afs_cell *afs_use_cell(struct afs_cell *, enum afs_cell_trace);
+extern void afs_unuse_cell(struct afs_net *, struct afs_cell *, enum afs_cell_trace);
+extern struct afs_cell *afs_get_cell(struct afs_cell *, enum afs_cell_trace);
+extern void afs_see_cell(struct afs_cell *, enum afs_cell_trace);
+extern void afs_put_cell(struct afs_cell *, enum afs_cell_trace);
+extern void afs_queue_cell(struct afs_cell *, enum afs_cell_trace);
+extern void afs_manage_cells(struct work_struct *);
+extern void afs_cells_timer(struct timer_list *);
+extern void __net_exit afs_cell_purge(struct afs_net *);
 
 /*
  * cmservice.c
  */
-बाह्य bool afs_cm_incoming_call(काष्ठा afs_call *);
+extern bool afs_cm_incoming_call(struct afs_call *);
 
 /*
  * dir.c
  */
-बाह्य स्थिर काष्ठा file_operations afs_dir_file_operations;
-बाह्य स्थिर काष्ठा inode_operations afs_dir_inode_operations;
-बाह्य स्थिर काष्ठा address_space_operations afs_dir_aops;
-बाह्य स्थिर काष्ठा dentry_operations afs_fs_dentry_operations;
+extern const struct file_operations afs_dir_file_operations;
+extern const struct inode_operations afs_dir_inode_operations;
+extern const struct address_space_operations afs_dir_aops;
+extern const struct dentry_operations afs_fs_dentry_operations;
 
-बाह्य व्योम afs_d_release(काष्ठा dentry *);
-बाह्य व्योम afs_check_क्रम_remote_deletion(काष्ठा afs_operation *);
+extern void afs_d_release(struct dentry *);
+extern void afs_check_for_remote_deletion(struct afs_operation *);
 
 /*
  * dir_edit.c
  */
-बाह्य व्योम afs_edit_dir_add(काष्ठा afs_vnode *, काष्ठा qstr *, काष्ठा afs_fid *,
-			     क्रमागत afs_edit_dir_reason);
-बाह्य व्योम afs_edit_dir_हटाओ(काष्ठा afs_vnode *, काष्ठा qstr *, क्रमागत afs_edit_dir_reason);
+extern void afs_edit_dir_add(struct afs_vnode *, struct qstr *, struct afs_fid *,
+			     enum afs_edit_dir_reason);
+extern void afs_edit_dir_remove(struct afs_vnode *, struct qstr *, enum afs_edit_dir_reason);
 
 /*
  * dir_silly.c
  */
-बाह्य पूर्णांक afs_sillyनाम(काष्ठा afs_vnode *, काष्ठा afs_vnode *,
-			   काष्ठा dentry *, काष्ठा key *);
-बाह्य पूर्णांक afs_silly_iput(काष्ठा dentry *, काष्ठा inode *);
+extern int afs_sillyrename(struct afs_vnode *, struct afs_vnode *,
+			   struct dentry *, struct key *);
+extern int afs_silly_iput(struct dentry *, struct inode *);
 
 /*
  * dynroot.c
  */
-बाह्य स्थिर काष्ठा inode_operations afs_dynroot_inode_operations;
-बाह्य स्थिर काष्ठा dentry_operations afs_dynroot_dentry_operations;
+extern const struct inode_operations afs_dynroot_inode_operations;
+extern const struct dentry_operations afs_dynroot_dentry_operations;
 
-बाह्य काष्ठा inode *afs_try_स्वतः_mntpt(काष्ठा dentry *, काष्ठा inode *);
-बाह्य पूर्णांक afs_dynroot_सूची_गढ़ो(काष्ठा afs_net *, काष्ठा afs_cell *);
-बाह्य व्योम afs_dynroot_सूची_हटाओ(काष्ठा afs_net *, काष्ठा afs_cell *);
-बाह्य पूर्णांक afs_dynroot_populate(काष्ठा super_block *);
-बाह्य व्योम afs_dynroot_depopulate(काष्ठा super_block *);
+extern struct inode *afs_try_auto_mntpt(struct dentry *, struct inode *);
+extern int afs_dynroot_mkdir(struct afs_net *, struct afs_cell *);
+extern void afs_dynroot_rmdir(struct afs_net *, struct afs_cell *);
+extern int afs_dynroot_populate(struct super_block *);
+extern void afs_dynroot_depopulate(struct super_block *);
 
 /*
  * file.c
  */
-बाह्य स्थिर काष्ठा address_space_operations afs_fs_aops;
-बाह्य स्थिर काष्ठा inode_operations afs_file_inode_operations;
-बाह्य स्थिर काष्ठा file_operations afs_file_operations;
-बाह्य स्थिर काष्ठा netfs_पढ़ो_request_ops afs_req_ops;
+extern const struct address_space_operations afs_fs_aops;
+extern const struct inode_operations afs_file_inode_operations;
+extern const struct file_operations afs_file_operations;
+extern const struct netfs_read_request_ops afs_req_ops;
 
-बाह्य पूर्णांक afs_cache_wb_key(काष्ठा afs_vnode *, काष्ठा afs_file *);
-बाह्य व्योम afs_put_wb_key(काष्ठा afs_wb_key *);
-बाह्य पूर्णांक afs_खोलो(काष्ठा inode *, काष्ठा file *);
-बाह्य पूर्णांक afs_release(काष्ठा inode *, काष्ठा file *);
-बाह्य पूर्णांक afs_fetch_data(काष्ठा afs_vnode *, काष्ठा afs_पढ़ो *);
-बाह्य काष्ठा afs_पढ़ो *afs_alloc_पढ़ो(gfp_t);
-बाह्य व्योम afs_put_पढ़ो(काष्ठा afs_पढ़ो *);
+extern int afs_cache_wb_key(struct afs_vnode *, struct afs_file *);
+extern void afs_put_wb_key(struct afs_wb_key *);
+extern int afs_open(struct inode *, struct file *);
+extern int afs_release(struct inode *, struct file *);
+extern int afs_fetch_data(struct afs_vnode *, struct afs_read *);
+extern struct afs_read *afs_alloc_read(gfp_t);
+extern void afs_put_read(struct afs_read *);
 
-अटल अंतरभूत काष्ठा afs_पढ़ो *afs_get_पढ़ो(काष्ठा afs_पढ़ो *req)
-अणु
+static inline struct afs_read *afs_get_read(struct afs_read *req)
+{
 	refcount_inc(&req->usage);
-	वापस req;
-पूर्ण
+	return req;
+}
 
 /*
  * flock.c
  */
-बाह्य काष्ठा workqueue_काष्ठा *afs_lock_manager;
+extern struct workqueue_struct *afs_lock_manager;
 
-बाह्य व्योम afs_lock_op_करोne(काष्ठा afs_call *);
-बाह्य व्योम afs_lock_work(काष्ठा work_काष्ठा *);
-बाह्य व्योम afs_lock_may_be_available(काष्ठा afs_vnode *);
-बाह्य पूर्णांक afs_lock(काष्ठा file *, पूर्णांक, काष्ठा file_lock *);
-बाह्य पूर्णांक afs_flock(काष्ठा file *, पूर्णांक, काष्ठा file_lock *);
+extern void afs_lock_op_done(struct afs_call *);
+extern void afs_lock_work(struct work_struct *);
+extern void afs_lock_may_be_available(struct afs_vnode *);
+extern int afs_lock(struct file *, int, struct file_lock *);
+extern int afs_flock(struct file *, int, struct file_lock *);
 
 /*
  * fsclient.c
  */
-बाह्य व्योम afs_fs_fetch_status(काष्ठा afs_operation *);
-बाह्य व्योम afs_fs_fetch_data(काष्ठा afs_operation *);
-बाह्य व्योम afs_fs_create_file(काष्ठा afs_operation *);
-बाह्य व्योम afs_fs_make_dir(काष्ठा afs_operation *);
-बाह्य व्योम afs_fs_हटाओ_file(काष्ठा afs_operation *);
-बाह्य व्योम afs_fs_हटाओ_dir(काष्ठा afs_operation *);
-बाह्य व्योम afs_fs_link(काष्ठा afs_operation *);
-बाह्य व्योम afs_fs_symlink(काष्ठा afs_operation *);
-बाह्य व्योम afs_fs_नाम(काष्ठा afs_operation *);
-बाह्य व्योम afs_fs_store_data(काष्ठा afs_operation *);
-बाह्य व्योम afs_fs_setattr(काष्ठा afs_operation *);
-बाह्य व्योम afs_fs_get_volume_status(काष्ठा afs_operation *);
-बाह्य व्योम afs_fs_set_lock(काष्ठा afs_operation *);
-बाह्य व्योम afs_fs_extend_lock(काष्ठा afs_operation *);
-बाह्य व्योम afs_fs_release_lock(काष्ठा afs_operation *);
-बाह्य पूर्णांक afs_fs_give_up_all_callbacks(काष्ठा afs_net *, काष्ठा afs_server *,
-					काष्ठा afs_addr_cursor *, काष्ठा key *);
-बाह्य bool afs_fs_get_capabilities(काष्ठा afs_net *, काष्ठा afs_server *,
-				    काष्ठा afs_addr_cursor *, काष्ठा key *);
-बाह्य व्योम afs_fs_अंतरभूत_bulk_status(काष्ठा afs_operation *);
+extern void afs_fs_fetch_status(struct afs_operation *);
+extern void afs_fs_fetch_data(struct afs_operation *);
+extern void afs_fs_create_file(struct afs_operation *);
+extern void afs_fs_make_dir(struct afs_operation *);
+extern void afs_fs_remove_file(struct afs_operation *);
+extern void afs_fs_remove_dir(struct afs_operation *);
+extern void afs_fs_link(struct afs_operation *);
+extern void afs_fs_symlink(struct afs_operation *);
+extern void afs_fs_rename(struct afs_operation *);
+extern void afs_fs_store_data(struct afs_operation *);
+extern void afs_fs_setattr(struct afs_operation *);
+extern void afs_fs_get_volume_status(struct afs_operation *);
+extern void afs_fs_set_lock(struct afs_operation *);
+extern void afs_fs_extend_lock(struct afs_operation *);
+extern void afs_fs_release_lock(struct afs_operation *);
+extern int afs_fs_give_up_all_callbacks(struct afs_net *, struct afs_server *,
+					struct afs_addr_cursor *, struct key *);
+extern bool afs_fs_get_capabilities(struct afs_net *, struct afs_server *,
+				    struct afs_addr_cursor *, struct key *);
+extern void afs_fs_inline_bulk_status(struct afs_operation *);
 
-काष्ठा afs_acl अणु
+struct afs_acl {
 	u32	size;
 	u8	data[];
-पूर्ण;
+};
 
-बाह्य व्योम afs_fs_fetch_acl(काष्ठा afs_operation *);
-बाह्य व्योम afs_fs_store_acl(काष्ठा afs_operation *);
+extern void afs_fs_fetch_acl(struct afs_operation *);
+extern void afs_fs_store_acl(struct afs_operation *);
 
 /*
  * fs_operation.c
  */
-बाह्य काष्ठा afs_operation *afs_alloc_operation(काष्ठा key *, काष्ठा afs_volume *);
-बाह्य पूर्णांक afs_put_operation(काष्ठा afs_operation *);
-बाह्य bool afs_begin_vnode_operation(काष्ठा afs_operation *);
-बाह्य व्योम afs_रुको_क्रम_operation(काष्ठा afs_operation *);
-बाह्य पूर्णांक afs_करो_sync_operation(काष्ठा afs_operation *);
+extern struct afs_operation *afs_alloc_operation(struct key *, struct afs_volume *);
+extern int afs_put_operation(struct afs_operation *);
+extern bool afs_begin_vnode_operation(struct afs_operation *);
+extern void afs_wait_for_operation(struct afs_operation *);
+extern int afs_do_sync_operation(struct afs_operation *);
 
-अटल अंतरभूत व्योम afs_op_nomem(काष्ठा afs_operation *op)
-अणु
+static inline void afs_op_nomem(struct afs_operation *op)
+{
 	op->error = -ENOMEM;
-पूर्ण
+}
 
-अटल अंतरभूत व्योम afs_op_set_vnode(काष्ठा afs_operation *op, अचिन्हित पूर्णांक n,
-				    काष्ठा afs_vnode *vnode)
-अणु
+static inline void afs_op_set_vnode(struct afs_operation *op, unsigned int n,
+				    struct afs_vnode *vnode)
+{
 	op->file[n].vnode = vnode;
 	op->file[n].need_io_lock = true;
-पूर्ण
+}
 
-अटल अंतरभूत व्योम afs_op_set_fid(काष्ठा afs_operation *op, अचिन्हित पूर्णांक n,
-				  स्थिर काष्ठा afs_fid *fid)
-अणु
+static inline void afs_op_set_fid(struct afs_operation *op, unsigned int n,
+				  const struct afs_fid *fid)
+{
 	op->file[n].fid = *fid;
-पूर्ण
+}
 
 /*
  * fs_probe.c
  */
-बाह्य व्योम afs_fileserver_probe_result(काष्ठा afs_call *);
-बाह्य व्योम afs_fs_probe_fileserver(काष्ठा afs_net *, काष्ठा afs_server *, काष्ठा key *, bool);
-बाह्य पूर्णांक afs_रुको_क्रम_fs_probes(काष्ठा afs_server_list *, अचिन्हित दीर्घ);
-बाह्य व्योम afs_probe_fileserver(काष्ठा afs_net *, काष्ठा afs_server *);
-बाह्य व्योम afs_fs_probe_dispatcher(काष्ठा work_काष्ठा *);
-बाह्य पूर्णांक afs_रुको_क्रम_one_fs_probe(काष्ठा afs_server *, bool);
-बाह्य व्योम afs_fs_probe_cleanup(काष्ठा afs_net *);
+extern void afs_fileserver_probe_result(struct afs_call *);
+extern void afs_fs_probe_fileserver(struct afs_net *, struct afs_server *, struct key *, bool);
+extern int afs_wait_for_fs_probes(struct afs_server_list *, unsigned long);
+extern void afs_probe_fileserver(struct afs_net *, struct afs_server *);
+extern void afs_fs_probe_dispatcher(struct work_struct *);
+extern int afs_wait_for_one_fs_probe(struct afs_server *, bool);
+extern void afs_fs_probe_cleanup(struct afs_net *);
 
 /*
  * inode.c
  */
-बाह्य स्थिर काष्ठा afs_operation_ops afs_fetch_status_operation;
+extern const struct afs_operation_ops afs_fetch_status_operation;
 
-बाह्य व्योम afs_vnode_commit_status(काष्ठा afs_operation *, काष्ठा afs_vnode_param *);
-बाह्य पूर्णांक afs_fetch_status(काष्ठा afs_vnode *, काष्ठा key *, bool, afs_access_t *);
-बाह्य पूर्णांक afs_ilookup5_test_by_fid(काष्ठा inode *, व्योम *);
-बाह्य काष्ठा inode *afs_iget_pseuकरो_dir(काष्ठा super_block *, bool);
-बाह्य काष्ठा inode *afs_iget(काष्ठा afs_operation *, काष्ठा afs_vnode_param *);
-बाह्य काष्ठा inode *afs_root_iget(काष्ठा super_block *, काष्ठा key *);
-बाह्य bool afs_check_validity(काष्ठा afs_vnode *);
-बाह्य पूर्णांक afs_validate(काष्ठा afs_vnode *, काष्ठा key *);
-बाह्य पूर्णांक afs_getattr(काष्ठा user_namespace *mnt_userns, स्थिर काष्ठा path *,
-		       काष्ठा kstat *, u32, अचिन्हित पूर्णांक);
-बाह्य पूर्णांक afs_setattr(काष्ठा user_namespace *mnt_userns, काष्ठा dentry *, काष्ठा iattr *);
-बाह्य व्योम afs_evict_inode(काष्ठा inode *);
-बाह्य पूर्णांक afs_drop_inode(काष्ठा inode *);
+extern void afs_vnode_commit_status(struct afs_operation *, struct afs_vnode_param *);
+extern int afs_fetch_status(struct afs_vnode *, struct key *, bool, afs_access_t *);
+extern int afs_ilookup5_test_by_fid(struct inode *, void *);
+extern struct inode *afs_iget_pseudo_dir(struct super_block *, bool);
+extern struct inode *afs_iget(struct afs_operation *, struct afs_vnode_param *);
+extern struct inode *afs_root_iget(struct super_block *, struct key *);
+extern bool afs_check_validity(struct afs_vnode *);
+extern int afs_validate(struct afs_vnode *, struct key *);
+extern int afs_getattr(struct user_namespace *mnt_userns, const struct path *,
+		       struct kstat *, u32, unsigned int);
+extern int afs_setattr(struct user_namespace *mnt_userns, struct dentry *, struct iattr *);
+extern void afs_evict_inode(struct inode *);
+extern int afs_drop_inode(struct inode *);
 
 /*
- * मुख्य.c
+ * main.c
  */
-बाह्य काष्ठा workqueue_काष्ठा *afs_wq;
-बाह्य पूर्णांक afs_net_id;
+extern struct workqueue_struct *afs_wq;
+extern int afs_net_id;
 
-अटल अंतरभूत काष्ठा afs_net *afs_net(काष्ठा net *net)
-अणु
-	वापस net_generic(net, afs_net_id);
-पूर्ण
+static inline struct afs_net *afs_net(struct net *net)
+{
+	return net_generic(net, afs_net_id);
+}
 
-अटल अंतरभूत काष्ठा afs_net *afs_sb2net(काष्ठा super_block *sb)
-अणु
-	वापस afs_net(AFS_FS_S(sb)->net_ns);
-पूर्ण
+static inline struct afs_net *afs_sb2net(struct super_block *sb)
+{
+	return afs_net(AFS_FS_S(sb)->net_ns);
+}
 
-अटल अंतरभूत काष्ठा afs_net *afs_d2net(काष्ठा dentry *dentry)
-अणु
-	वापस afs_sb2net(dentry->d_sb);
-पूर्ण
+static inline struct afs_net *afs_d2net(struct dentry *dentry)
+{
+	return afs_sb2net(dentry->d_sb);
+}
 
-अटल अंतरभूत काष्ठा afs_net *afs_i2net(काष्ठा inode *inode)
-अणु
-	वापस afs_sb2net(inode->i_sb);
-पूर्ण
+static inline struct afs_net *afs_i2net(struct inode *inode)
+{
+	return afs_sb2net(inode->i_sb);
+}
 
-अटल अंतरभूत काष्ठा afs_net *afs_v2net(काष्ठा afs_vnode *vnode)
-अणु
-	वापस afs_i2net(&vnode->vfs_inode);
-पूर्ण
+static inline struct afs_net *afs_v2net(struct afs_vnode *vnode)
+{
+	return afs_i2net(&vnode->vfs_inode);
+}
 
-अटल अंतरभूत काष्ठा afs_net *afs_sock2net(काष्ठा sock *sk)
-अणु
-	वापस net_generic(sock_net(sk), afs_net_id);
-पूर्ण
+static inline struct afs_net *afs_sock2net(struct sock *sk)
+{
+	return net_generic(sock_net(sk), afs_net_id);
+}
 
-अटल अंतरभूत व्योम __afs_stat(atomic_t *s)
-अणु
+static inline void __afs_stat(atomic_t *s)
+{
 	atomic_inc(s);
-पूर्ण
+}
 
-#घोषणा afs_stat_v(vnode, n) __afs_stat(&afs_v2net(vnode)->n)
+#define afs_stat_v(vnode, n) __afs_stat(&afs_v2net(vnode)->n)
 
 /*
  * misc.c
  */
-बाह्य पूर्णांक afs_पात_to_error(u32);
-बाह्य व्योम afs_prioritise_error(काष्ठा afs_error *, पूर्णांक, u32);
+extern int afs_abort_to_error(u32);
+extern void afs_prioritise_error(struct afs_error *, int, u32);
 
 /*
  * mntpt.c
  */
-बाह्य स्थिर काष्ठा inode_operations afs_mntpt_inode_operations;
-बाह्य स्थिर काष्ठा inode_operations afs_स्वतःcell_inode_operations;
-बाह्य स्थिर काष्ठा file_operations afs_mntpt_file_operations;
+extern const struct inode_operations afs_mntpt_inode_operations;
+extern const struct inode_operations afs_autocell_inode_operations;
+extern const struct file_operations afs_mntpt_file_operations;
 
-बाह्य काष्ठा vfsmount *afs_d_स्वतःmount(काष्ठा path *);
-बाह्य व्योम afs_mntpt_समाप्त_समयr(व्योम);
+extern struct vfsmount *afs_d_automount(struct path *);
+extern void afs_mntpt_kill_timer(void);
 
 /*
  * proc.c
  */
-#अगर_घोषित CONFIG_PROC_FS
-बाह्य पूर्णांक __net_init afs_proc_init(काष्ठा afs_net *);
-बाह्य व्योम __net_निकास afs_proc_cleanup(काष्ठा afs_net *);
-बाह्य पूर्णांक afs_proc_cell_setup(काष्ठा afs_cell *);
-बाह्य व्योम afs_proc_cell_हटाओ(काष्ठा afs_cell *);
-बाह्य व्योम afs_put_sysnames(काष्ठा afs_sysnames *);
-#अन्यथा
-अटल अंतरभूत पूर्णांक afs_proc_init(काष्ठा afs_net *net) अणु वापस 0; पूर्ण
-अटल अंतरभूत व्योम afs_proc_cleanup(काष्ठा afs_net *net) अणुपूर्ण
-अटल अंतरभूत पूर्णांक afs_proc_cell_setup(काष्ठा afs_cell *cell) अणु वापस 0; पूर्ण
-अटल अंतरभूत व्योम afs_proc_cell_हटाओ(काष्ठा afs_cell *cell) अणुपूर्ण
-अटल अंतरभूत व्योम afs_put_sysnames(काष्ठा afs_sysnames *sysnames) अणुपूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_PROC_FS
+extern int __net_init afs_proc_init(struct afs_net *);
+extern void __net_exit afs_proc_cleanup(struct afs_net *);
+extern int afs_proc_cell_setup(struct afs_cell *);
+extern void afs_proc_cell_remove(struct afs_cell *);
+extern void afs_put_sysnames(struct afs_sysnames *);
+#else
+static inline int afs_proc_init(struct afs_net *net) { return 0; }
+static inline void afs_proc_cleanup(struct afs_net *net) {}
+static inline int afs_proc_cell_setup(struct afs_cell *cell) { return 0; }
+static inline void afs_proc_cell_remove(struct afs_cell *cell) {}
+static inline void afs_put_sysnames(struct afs_sysnames *sysnames) {}
+#endif
 
 /*
  * rotate.c
  */
-बाह्य bool afs_select_fileserver(काष्ठा afs_operation *);
-बाह्य व्योम afs_dump_edestaddrreq(स्थिर काष्ठा afs_operation *);
+extern bool afs_select_fileserver(struct afs_operation *);
+extern void afs_dump_edestaddrreq(const struct afs_operation *);
 
 /*
  * rxrpc.c
  */
-बाह्य काष्ठा workqueue_काष्ठा *afs_async_calls;
+extern struct workqueue_struct *afs_async_calls;
 
-बाह्य पूर्णांक __net_init afs_खोलो_socket(काष्ठा afs_net *);
-बाह्य व्योम __net_निकास afs_बंद_socket(काष्ठा afs_net *);
-बाह्य व्योम afs_अक्षरge_pपुनः_स्मृतिation(काष्ठा work_काष्ठा *);
-बाह्य व्योम afs_put_call(काष्ठा afs_call *);
-बाह्य व्योम afs_make_call(काष्ठा afs_addr_cursor *, काष्ठा afs_call *, gfp_t);
-बाह्य दीर्घ afs_रुको_क्रम_call_to_complete(काष्ठा afs_call *, काष्ठा afs_addr_cursor *);
-बाह्य काष्ठा afs_call *afs_alloc_flat_call(काष्ठा afs_net *,
-					    स्थिर काष्ठा afs_call_type *,
-					    माप_प्रकार, माप_प्रकार);
-बाह्य व्योम afs_flat_call_deकाष्ठाor(काष्ठा afs_call *);
-बाह्य व्योम afs_send_empty_reply(काष्ठा afs_call *);
-बाह्य व्योम afs_send_simple_reply(काष्ठा afs_call *, स्थिर व्योम *, माप_प्रकार);
-बाह्य पूर्णांक afs_extract_data(काष्ठा afs_call *, bool);
-बाह्य पूर्णांक afs_protocol_error(काष्ठा afs_call *, क्रमागत afs_eproto_cause);
+extern int __net_init afs_open_socket(struct afs_net *);
+extern void __net_exit afs_close_socket(struct afs_net *);
+extern void afs_charge_preallocation(struct work_struct *);
+extern void afs_put_call(struct afs_call *);
+extern void afs_make_call(struct afs_addr_cursor *, struct afs_call *, gfp_t);
+extern long afs_wait_for_call_to_complete(struct afs_call *, struct afs_addr_cursor *);
+extern struct afs_call *afs_alloc_flat_call(struct afs_net *,
+					    const struct afs_call_type *,
+					    size_t, size_t);
+extern void afs_flat_call_destructor(struct afs_call *);
+extern void afs_send_empty_reply(struct afs_call *);
+extern void afs_send_simple_reply(struct afs_call *, const void *, size_t);
+extern int afs_extract_data(struct afs_call *, bool);
+extern int afs_protocol_error(struct afs_call *, enum afs_eproto_cause);
 
-अटल अंतरभूत व्योम afs_make_op_call(काष्ठा afs_operation *op, काष्ठा afs_call *call,
+static inline void afs_make_op_call(struct afs_operation *op, struct afs_call *call,
 				    gfp_t gfp)
-अणु
+{
 	op->call = call;
 	op->type = call->type;
 	call->op = op;
 	call->key = op->key;
-	call->पूर्णांकr = !(op->flags & AFS_OPERATION_UNINTR);
+	call->intr = !(op->flags & AFS_OPERATION_UNINTR);
 	afs_make_call(&op->ac, call, gfp);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम afs_extract_begin(काष्ठा afs_call *call, व्योम *buf, माप_प्रकार size)
-अणु
+static inline void afs_extract_begin(struct afs_call *call, void *buf, size_t size)
+{
 	call->iov_len = size;
 	call->kvec[0].iov_base = buf;
 	call->kvec[0].iov_len = size;
 	iov_iter_kvec(&call->def_iter, READ, call->kvec, 1, size);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम afs_extract_to_पंचांगp(काष्ठा afs_call *call)
-अणु
-	call->iov_len = माप(call->पंचांगp);
-	afs_extract_begin(call, &call->पंचांगp, माप(call->पंचांगp));
-पूर्ण
+static inline void afs_extract_to_tmp(struct afs_call *call)
+{
+	call->iov_len = sizeof(call->tmp);
+	afs_extract_begin(call, &call->tmp, sizeof(call->tmp));
+}
 
-अटल अंतरभूत व्योम afs_extract_to_पंचांगp64(काष्ठा afs_call *call)
-अणु
-	call->iov_len = माप(call->पंचांगp64);
-	afs_extract_begin(call, &call->पंचांगp64, माप(call->पंचांगp64));
-पूर्ण
+static inline void afs_extract_to_tmp64(struct afs_call *call)
+{
+	call->iov_len = sizeof(call->tmp64);
+	afs_extract_begin(call, &call->tmp64, sizeof(call->tmp64));
+}
 
-अटल अंतरभूत व्योम afs_extract_discard(काष्ठा afs_call *call, माप_प्रकार size)
-अणु
+static inline void afs_extract_discard(struct afs_call *call, size_t size)
+{
 	call->iov_len = size;
 	iov_iter_discard(&call->def_iter, READ, size);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम afs_extract_to_buf(काष्ठा afs_call *call, माप_प्रकार size)
-अणु
+static inline void afs_extract_to_buf(struct afs_call *call, size_t size)
+{
 	call->iov_len = size;
 	afs_extract_begin(call, call->buffer, size);
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक afs_transfer_reply(काष्ठा afs_call *call)
-अणु
-	वापस afs_extract_data(call, false);
-पूर्ण
+static inline int afs_transfer_reply(struct afs_call *call)
+{
+	return afs_extract_data(call, false);
+}
 
-अटल अंतरभूत bool afs_check_call_state(काष्ठा afs_call *call,
-					क्रमागत afs_call_state state)
-अणु
-	वापस READ_ONCE(call->state) == state;
-पूर्ण
+static inline bool afs_check_call_state(struct afs_call *call,
+					enum afs_call_state state)
+{
+	return READ_ONCE(call->state) == state;
+}
 
-अटल अंतरभूत bool afs_set_call_state(काष्ठा afs_call *call,
-				      क्रमागत afs_call_state from,
-				      क्रमागत afs_call_state to)
-अणु
+static inline bool afs_set_call_state(struct afs_call *call,
+				      enum afs_call_state from,
+				      enum afs_call_state to)
+{
 	bool ok = false;
 
 	spin_lock_bh(&call->state_lock);
-	अगर (call->state == from) अणु
+	if (call->state == from) {
 		call->state = to;
 		trace_afs_call_state(call, from, to, 0, 0);
 		ok = true;
-	पूर्ण
+	}
 	spin_unlock_bh(&call->state_lock);
-	वापस ok;
-पूर्ण
+	return ok;
+}
 
-अटल अंतरभूत व्योम afs_set_call_complete(काष्ठा afs_call *call,
-					 पूर्णांक error, u32 remote_पात)
-अणु
-	क्रमागत afs_call_state state;
+static inline void afs_set_call_complete(struct afs_call *call,
+					 int error, u32 remote_abort)
+{
+	enum afs_call_state state;
 	bool ok = false;
 
 	spin_lock_bh(&call->state_lock);
 	state = call->state;
-	अगर (state != AFS_CALL_COMPLETE) अणु
-		call->पात_code = remote_पात;
+	if (state != AFS_CALL_COMPLETE) {
+		call->abort_code = remote_abort;
 		call->error = error;
 		call->state = AFS_CALL_COMPLETE;
 		trace_afs_call_state(call, state, AFS_CALL_COMPLETE,
-				     error, remote_पात);
+				     error, remote_abort);
 		ok = true;
-	पूर्ण
+	}
 	spin_unlock_bh(&call->state_lock);
-	अगर (ok) अणु
-		trace_afs_call_करोne(call);
+	if (ok) {
+		trace_afs_call_done(call);
 
 		/* Asynchronous calls have two refs to release - one from the alloc and
 		 * one queued with the work item - and we can't just deallocate the
 		 * call because the work item may be queued again.
 		 */
-		अगर (call->drop_ref)
+		if (call->drop_ref)
 			afs_put_call(call);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
  * security.c
  */
-बाह्य व्योम afs_put_permits(काष्ठा afs_permits *);
-बाह्य व्योम afs_clear_permits(काष्ठा afs_vnode *);
-बाह्य व्योम afs_cache_permit(काष्ठा afs_vnode *, काष्ठा key *, अचिन्हित पूर्णांक,
-			     काष्ठा afs_status_cb *);
-बाह्य व्योम afs_zap_permits(काष्ठा rcu_head *);
-बाह्य काष्ठा key *afs_request_key(काष्ठा afs_cell *);
-बाह्य काष्ठा key *afs_request_key_rcu(काष्ठा afs_cell *);
-बाह्य पूर्णांक afs_check_permit(काष्ठा afs_vnode *, काष्ठा key *, afs_access_t *);
-बाह्य पूर्णांक afs_permission(काष्ठा user_namespace *, काष्ठा inode *, पूर्णांक);
-बाह्य व्योम __निकास afs_clean_up_permit_cache(व्योम);
+extern void afs_put_permits(struct afs_permits *);
+extern void afs_clear_permits(struct afs_vnode *);
+extern void afs_cache_permit(struct afs_vnode *, struct key *, unsigned int,
+			     struct afs_status_cb *);
+extern void afs_zap_permits(struct rcu_head *);
+extern struct key *afs_request_key(struct afs_cell *);
+extern struct key *afs_request_key_rcu(struct afs_cell *);
+extern int afs_check_permit(struct afs_vnode *, struct key *, afs_access_t *);
+extern int afs_permission(struct user_namespace *, struct inode *, int);
+extern void __exit afs_clean_up_permit_cache(void);
 
 /*
  * server.c
  */
-बाह्य spinlock_t afs_server_peer_lock;
+extern spinlock_t afs_server_peer_lock;
 
-बाह्य काष्ठा afs_server *afs_find_server(काष्ठा afs_net *,
-					  स्थिर काष्ठा sockaddr_rxrpc *);
-बाह्य काष्ठा afs_server *afs_find_server_by_uuid(काष्ठा afs_net *, स्थिर uuid_t *);
-बाह्य काष्ठा afs_server *afs_lookup_server(काष्ठा afs_cell *, काष्ठा key *, स्थिर uuid_t *, u32);
-बाह्य काष्ठा afs_server *afs_get_server(काष्ठा afs_server *, क्रमागत afs_server_trace);
-बाह्य काष्ठा afs_server *afs_use_server(काष्ठा afs_server *, क्रमागत afs_server_trace);
-बाह्य व्योम afs_unuse_server(काष्ठा afs_net *, काष्ठा afs_server *, क्रमागत afs_server_trace);
-बाह्य व्योम afs_unuse_server_noसमय(काष्ठा afs_net *, काष्ठा afs_server *, क्रमागत afs_server_trace);
-बाह्य व्योम afs_put_server(काष्ठा afs_net *, काष्ठा afs_server *, क्रमागत afs_server_trace);
-बाह्य व्योम afs_manage_servers(काष्ठा work_काष्ठा *);
-बाह्य व्योम afs_servers_समयr(काष्ठा समयr_list *);
-बाह्य व्योम afs_fs_probe_समयr(काष्ठा समयr_list *);
-बाह्य व्योम __net_निकास afs_purge_servers(काष्ठा afs_net *);
-बाह्य bool afs_check_server_record(काष्ठा afs_operation *, काष्ठा afs_server *);
+extern struct afs_server *afs_find_server(struct afs_net *,
+					  const struct sockaddr_rxrpc *);
+extern struct afs_server *afs_find_server_by_uuid(struct afs_net *, const uuid_t *);
+extern struct afs_server *afs_lookup_server(struct afs_cell *, struct key *, const uuid_t *, u32);
+extern struct afs_server *afs_get_server(struct afs_server *, enum afs_server_trace);
+extern struct afs_server *afs_use_server(struct afs_server *, enum afs_server_trace);
+extern void afs_unuse_server(struct afs_net *, struct afs_server *, enum afs_server_trace);
+extern void afs_unuse_server_notime(struct afs_net *, struct afs_server *, enum afs_server_trace);
+extern void afs_put_server(struct afs_net *, struct afs_server *, enum afs_server_trace);
+extern void afs_manage_servers(struct work_struct *);
+extern void afs_servers_timer(struct timer_list *);
+extern void afs_fs_probe_timer(struct timer_list *);
+extern void __net_exit afs_purge_servers(struct afs_net *);
+extern bool afs_check_server_record(struct afs_operation *, struct afs_server *);
 
-अटल अंतरभूत व्योम afs_inc_servers_outstanding(काष्ठा afs_net *net)
-अणु
+static inline void afs_inc_servers_outstanding(struct afs_net *net)
+{
 	atomic_inc(&net->servers_outstanding);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम afs_dec_servers_outstanding(काष्ठा afs_net *net)
-अणु
-	अगर (atomic_dec_and_test(&net->servers_outstanding))
+static inline void afs_dec_servers_outstanding(struct afs_net *net)
+{
+	if (atomic_dec_and_test(&net->servers_outstanding))
 		wake_up_var(&net->servers_outstanding);
-पूर्ण
+}
 
-अटल अंतरभूत bool afs_is_probing_server(काष्ठा afs_server *server)
-अणु
-	वापस list_empty(&server->probe_link);
-पूर्ण
+static inline bool afs_is_probing_server(struct afs_server *server)
+{
+	return list_empty(&server->probe_link);
+}
 
 /*
  * server_list.c
  */
-अटल अंतरभूत काष्ठा afs_server_list *afs_get_serverlist(काष्ठा afs_server_list *slist)
-अणु
+static inline struct afs_server_list *afs_get_serverlist(struct afs_server_list *slist)
+{
 	refcount_inc(&slist->usage);
-	वापस slist;
-पूर्ण
+	return slist;
+}
 
-बाह्य व्योम afs_put_serverlist(काष्ठा afs_net *, काष्ठा afs_server_list *);
-बाह्य काष्ठा afs_server_list *afs_alloc_server_list(काष्ठा afs_cell *, काष्ठा key *,
-						     काष्ठा afs_vldb_entry *,
+extern void afs_put_serverlist(struct afs_net *, struct afs_server_list *);
+extern struct afs_server_list *afs_alloc_server_list(struct afs_cell *, struct key *,
+						     struct afs_vldb_entry *,
 						     u8);
-बाह्य bool afs_annotate_server_list(काष्ठा afs_server_list *, काष्ठा afs_server_list *);
+extern bool afs_annotate_server_list(struct afs_server_list *, struct afs_server_list *);
 
 /*
  * super.c
  */
-बाह्य पूर्णांक __init afs_fs_init(व्योम);
-बाह्य व्योम afs_fs_निकास(व्योम);
+extern int __init afs_fs_init(void);
+extern void afs_fs_exit(void);
 
 /*
  * vlclient.c
  */
-बाह्य काष्ठा afs_vldb_entry *afs_vl_get_entry_by_name_u(काष्ठा afs_vl_cursor *,
-							 स्थिर अक्षर *, पूर्णांक);
-बाह्य काष्ठा afs_addr_list *afs_vl_get_addrs_u(काष्ठा afs_vl_cursor *, स्थिर uuid_t *);
-बाह्य काष्ठा afs_call *afs_vl_get_capabilities(काष्ठा afs_net *, काष्ठा afs_addr_cursor *,
-						काष्ठा key *, काष्ठा afs_vlserver *, अचिन्हित पूर्णांक);
-बाह्य काष्ठा afs_addr_list *afs_yfsvl_get_endpoपूर्णांकs(काष्ठा afs_vl_cursor *, स्थिर uuid_t *);
-बाह्य अक्षर *afs_yfsvl_get_cell_name(काष्ठा afs_vl_cursor *);
+extern struct afs_vldb_entry *afs_vl_get_entry_by_name_u(struct afs_vl_cursor *,
+							 const char *, int);
+extern struct afs_addr_list *afs_vl_get_addrs_u(struct afs_vl_cursor *, const uuid_t *);
+extern struct afs_call *afs_vl_get_capabilities(struct afs_net *, struct afs_addr_cursor *,
+						struct key *, struct afs_vlserver *, unsigned int);
+extern struct afs_addr_list *afs_yfsvl_get_endpoints(struct afs_vl_cursor *, const uuid_t *);
+extern char *afs_yfsvl_get_cell_name(struct afs_vl_cursor *);
 
 /*
  * vl_alias.c
  */
-बाह्य पूर्णांक afs_cell_detect_alias(काष्ठा afs_cell *, काष्ठा key *);
+extern int afs_cell_detect_alias(struct afs_cell *, struct key *);
 
 /*
  * vl_probe.c
  */
-बाह्य व्योम afs_vlserver_probe_result(काष्ठा afs_call *);
-बाह्य पूर्णांक afs_send_vl_probes(काष्ठा afs_net *, काष्ठा key *, काष्ठा afs_vlserver_list *);
-बाह्य पूर्णांक afs_रुको_क्रम_vl_probes(काष्ठा afs_vlserver_list *, अचिन्हित दीर्घ);
+extern void afs_vlserver_probe_result(struct afs_call *);
+extern int afs_send_vl_probes(struct afs_net *, struct key *, struct afs_vlserver_list *);
+extern int afs_wait_for_vl_probes(struct afs_vlserver_list *, unsigned long);
 
 /*
  * vl_rotate.c
  */
-बाह्य bool afs_begin_vlserver_operation(काष्ठा afs_vl_cursor *,
-					 काष्ठा afs_cell *, काष्ठा key *);
-बाह्य bool afs_select_vlserver(काष्ठा afs_vl_cursor *);
-बाह्य bool afs_select_current_vlserver(काष्ठा afs_vl_cursor *);
-बाह्य पूर्णांक afs_end_vlserver_operation(काष्ठा afs_vl_cursor *);
+extern bool afs_begin_vlserver_operation(struct afs_vl_cursor *,
+					 struct afs_cell *, struct key *);
+extern bool afs_select_vlserver(struct afs_vl_cursor *);
+extern bool afs_select_current_vlserver(struct afs_vl_cursor *);
+extern int afs_end_vlserver_operation(struct afs_vl_cursor *);
 
 /*
  * vlserver_list.c
  */
-अटल अंतरभूत काष्ठा afs_vlserver *afs_get_vlserver(काष्ठा afs_vlserver *vlserver)
-अणु
+static inline struct afs_vlserver *afs_get_vlserver(struct afs_vlserver *vlserver)
+{
 	atomic_inc(&vlserver->usage);
-	वापस vlserver;
-पूर्ण
+	return vlserver;
+}
 
-अटल अंतरभूत काष्ठा afs_vlserver_list *afs_get_vlserverlist(काष्ठा afs_vlserver_list *vllist)
-अणु
-	अगर (vllist)
+static inline struct afs_vlserver_list *afs_get_vlserverlist(struct afs_vlserver_list *vllist)
+{
+	if (vllist)
 		atomic_inc(&vllist->usage);
-	वापस vllist;
-पूर्ण
+	return vllist;
+}
 
-बाह्य काष्ठा afs_vlserver *afs_alloc_vlserver(स्थिर अक्षर *, माप_प्रकार, अचिन्हित लघु);
-बाह्य व्योम afs_put_vlserver(काष्ठा afs_net *, काष्ठा afs_vlserver *);
-बाह्य काष्ठा afs_vlserver_list *afs_alloc_vlserver_list(अचिन्हित पूर्णांक);
-बाह्य व्योम afs_put_vlserverlist(काष्ठा afs_net *, काष्ठा afs_vlserver_list *);
-बाह्य काष्ठा afs_vlserver_list *afs_extract_vlserver_list(काष्ठा afs_cell *,
-							   स्थिर व्योम *, माप_प्रकार);
+extern struct afs_vlserver *afs_alloc_vlserver(const char *, size_t, unsigned short);
+extern void afs_put_vlserver(struct afs_net *, struct afs_vlserver *);
+extern struct afs_vlserver_list *afs_alloc_vlserver_list(unsigned int);
+extern void afs_put_vlserverlist(struct afs_net *, struct afs_vlserver_list *);
+extern struct afs_vlserver_list *afs_extract_vlserver_list(struct afs_cell *,
+							   const void *, size_t);
 
 /*
  * volume.c
  */
-बाह्य काष्ठा afs_volume *afs_create_volume(काष्ठा afs_fs_context *);
-बाह्य व्योम afs_activate_volume(काष्ठा afs_volume *);
-बाह्य व्योम afs_deactivate_volume(काष्ठा afs_volume *);
-बाह्य काष्ठा afs_volume *afs_get_volume(काष्ठा afs_volume *, क्रमागत afs_volume_trace);
-बाह्य व्योम afs_put_volume(काष्ठा afs_net *, काष्ठा afs_volume *, क्रमागत afs_volume_trace);
-बाह्य पूर्णांक afs_check_volume_status(काष्ठा afs_volume *, काष्ठा afs_operation *);
+extern struct afs_volume *afs_create_volume(struct afs_fs_context *);
+extern void afs_activate_volume(struct afs_volume *);
+extern void afs_deactivate_volume(struct afs_volume *);
+extern struct afs_volume *afs_get_volume(struct afs_volume *, enum afs_volume_trace);
+extern void afs_put_volume(struct afs_net *, struct afs_volume *, enum afs_volume_trace);
+extern int afs_check_volume_status(struct afs_volume *, struct afs_operation *);
 
 /*
- * ग_लिखो.c
+ * write.c
  */
-बाह्य पूर्णांक afs_set_page_dirty(काष्ठा page *);
-बाह्य पूर्णांक afs_ग_लिखो_begin(काष्ठा file *file, काष्ठा address_space *mapping,
-			loff_t pos, अचिन्हित len, अचिन्हित flags,
-			काष्ठा page **pagep, व्योम **fsdata);
-बाह्य पूर्णांक afs_ग_लिखो_end(काष्ठा file *file, काष्ठा address_space *mapping,
-			loff_t pos, अचिन्हित len, अचिन्हित copied,
-			काष्ठा page *page, व्योम *fsdata);
-बाह्य पूर्णांक afs_ग_लिखोpage(काष्ठा page *, काष्ठा ग_लिखोback_control *);
-बाह्य पूर्णांक afs_ग_लिखोpages(काष्ठा address_space *, काष्ठा ग_लिखोback_control *);
-बाह्य sमाप_प्रकार afs_file_ग_लिखो(काष्ठा kiocb *, काष्ठा iov_iter *);
-बाह्य पूर्णांक afs_fsync(काष्ठा file *, loff_t, loff_t, पूर्णांक);
-बाह्य vm_fault_t afs_page_mkग_लिखो(काष्ठा vm_fault *vmf);
-बाह्य व्योम afs_prune_wb_keys(काष्ठा afs_vnode *);
-बाह्य पूर्णांक afs_launder_page(काष्ठा page *);
+extern int afs_set_page_dirty(struct page *);
+extern int afs_write_begin(struct file *file, struct address_space *mapping,
+			loff_t pos, unsigned len, unsigned flags,
+			struct page **pagep, void **fsdata);
+extern int afs_write_end(struct file *file, struct address_space *mapping,
+			loff_t pos, unsigned len, unsigned copied,
+			struct page *page, void *fsdata);
+extern int afs_writepage(struct page *, struct writeback_control *);
+extern int afs_writepages(struct address_space *, struct writeback_control *);
+extern ssize_t afs_file_write(struct kiocb *, struct iov_iter *);
+extern int afs_fsync(struct file *, loff_t, loff_t, int);
+extern vm_fault_t afs_page_mkwrite(struct vm_fault *vmf);
+extern void afs_prune_wb_keys(struct afs_vnode *);
+extern int afs_launder_page(struct page *);
 
 /*
  * xattr.c
  */
-बाह्य स्थिर काष्ठा xattr_handler *afs_xattr_handlers[];
+extern const struct xattr_handler *afs_xattr_handlers[];
 
 /*
  * yfsclient.c
  */
-बाह्य व्योम yfs_fs_fetch_data(काष्ठा afs_operation *);
-बाह्य व्योम yfs_fs_create_file(काष्ठा afs_operation *);
-बाह्य व्योम yfs_fs_make_dir(काष्ठा afs_operation *);
-बाह्य व्योम yfs_fs_हटाओ_file2(काष्ठा afs_operation *);
-बाह्य व्योम yfs_fs_हटाओ_file(काष्ठा afs_operation *);
-बाह्य व्योम yfs_fs_हटाओ_dir(काष्ठा afs_operation *);
-बाह्य व्योम yfs_fs_link(काष्ठा afs_operation *);
-बाह्य व्योम yfs_fs_symlink(काष्ठा afs_operation *);
-बाह्य व्योम yfs_fs_नाम(काष्ठा afs_operation *);
-बाह्य व्योम yfs_fs_store_data(काष्ठा afs_operation *);
-बाह्य व्योम yfs_fs_setattr(काष्ठा afs_operation *);
-बाह्य व्योम yfs_fs_get_volume_status(काष्ठा afs_operation *);
-बाह्य व्योम yfs_fs_set_lock(काष्ठा afs_operation *);
-बाह्य व्योम yfs_fs_extend_lock(काष्ठा afs_operation *);
-बाह्य व्योम yfs_fs_release_lock(काष्ठा afs_operation *);
-बाह्य व्योम yfs_fs_fetch_status(काष्ठा afs_operation *);
-बाह्य व्योम yfs_fs_अंतरभूत_bulk_status(काष्ठा afs_operation *);
+extern void yfs_fs_fetch_data(struct afs_operation *);
+extern void yfs_fs_create_file(struct afs_operation *);
+extern void yfs_fs_make_dir(struct afs_operation *);
+extern void yfs_fs_remove_file2(struct afs_operation *);
+extern void yfs_fs_remove_file(struct afs_operation *);
+extern void yfs_fs_remove_dir(struct afs_operation *);
+extern void yfs_fs_link(struct afs_operation *);
+extern void yfs_fs_symlink(struct afs_operation *);
+extern void yfs_fs_rename(struct afs_operation *);
+extern void yfs_fs_store_data(struct afs_operation *);
+extern void yfs_fs_setattr(struct afs_operation *);
+extern void yfs_fs_get_volume_status(struct afs_operation *);
+extern void yfs_fs_set_lock(struct afs_operation *);
+extern void yfs_fs_extend_lock(struct afs_operation *);
+extern void yfs_fs_release_lock(struct afs_operation *);
+extern void yfs_fs_fetch_status(struct afs_operation *);
+extern void yfs_fs_inline_bulk_status(struct afs_operation *);
 
-काष्ठा yfs_acl अणु
-	काष्ठा afs_acl	*acl;		/* Dir/file/symlink ACL */
-	काष्ठा afs_acl	*vol_acl;	/* Whole volume ACL */
-	u32		inherit_flag;	/* True अगर ACL is inherited from parent dir */
-	u32		num_cleaned;	/* Number of ACEs हटाओd due to subject removal */
-	अचिन्हित पूर्णांक	flags;
-#घोषणा YFS_ACL_WANT_ACL	0x01	/* Set अगर caller wants ->acl */
-#घोषणा YFS_ACL_WANT_VOL_ACL	0x02	/* Set अगर caller wants ->vol_acl */
-पूर्ण;
+struct yfs_acl {
+	struct afs_acl	*acl;		/* Dir/file/symlink ACL */
+	struct afs_acl	*vol_acl;	/* Whole volume ACL */
+	u32		inherit_flag;	/* True if ACL is inherited from parent dir */
+	u32		num_cleaned;	/* Number of ACEs removed due to subject removal */
+	unsigned int	flags;
+#define YFS_ACL_WANT_ACL	0x01	/* Set if caller wants ->acl */
+#define YFS_ACL_WANT_VOL_ACL	0x02	/* Set if caller wants ->vol_acl */
+};
 
-बाह्य व्योम yfs_मुक्त_opaque_acl(काष्ठा yfs_acl *);
-बाह्य व्योम yfs_fs_fetch_opaque_acl(काष्ठा afs_operation *);
-बाह्य व्योम yfs_fs_store_opaque_acl2(काष्ठा afs_operation *);
+extern void yfs_free_opaque_acl(struct yfs_acl *);
+extern void yfs_fs_fetch_opaque_acl(struct afs_operation *);
+extern void yfs_fs_store_opaque_acl2(struct afs_operation *);
 
 /*
- * Miscellaneous अंतरभूत functions.
+ * Miscellaneous inline functions.
  */
-अटल अंतरभूत काष्ठा afs_vnode *AFS_FS_I(काष्ठा inode *inode)
-अणु
-	वापस container_of(inode, काष्ठा afs_vnode, vfs_inode);
-पूर्ण
+static inline struct afs_vnode *AFS_FS_I(struct inode *inode)
+{
+	return container_of(inode, struct afs_vnode, vfs_inode);
+}
 
-अटल अंतरभूत काष्ठा inode *AFS_VNODE_TO_I(काष्ठा afs_vnode *vnode)
-अणु
-	वापस &vnode->vfs_inode;
-पूर्ण
+static inline struct inode *AFS_VNODE_TO_I(struct afs_vnode *vnode)
+{
+	return &vnode->vfs_inode;
+}
 
 /*
  * Note that a dentry got changed.  We need to set d_fsdata to the data version
- * number derived from the result of the operation.  It करोesn't matter अगर
+ * number derived from the result of the operation.  It doesn't matter if
  * d_fsdata goes backwards as we'll just revalidate.
  */
-अटल अंतरभूत व्योम afs_update_dentry_version(काष्ठा afs_operation *op,
-					     काष्ठा afs_vnode_param *dir_vp,
-					     काष्ठा dentry *dentry)
-अणु
-	अगर (!op->error)
+static inline void afs_update_dentry_version(struct afs_operation *op,
+					     struct afs_vnode_param *dir_vp,
+					     struct dentry *dentry)
+{
+	if (!op->error)
 		dentry->d_fsdata =
-			(व्योम *)(अचिन्हित दीर्घ)dir_vp->scb.status.data_version;
-पूर्ण
+			(void *)(unsigned long)dir_vp->scb.status.data_version;
+}
 
 /*
- * Check क्रम a conflicting operation on a directory that we just unlinked from.
+ * Check for a conflicting operation on a directory that we just unlinked from.
  * If someone managed to sneak a link or an unlink in on the file we just
  * unlinked, we won't be able to trust nlink on an AFS file (but not YFS).
  */
-अटल अंतरभूत व्योम afs_check_dir_conflict(काष्ठा afs_operation *op,
-					  काष्ठा afs_vnode_param *dvp)
-अणु
-	अगर (dvp->dv_beक्रमe + dvp->dv_delta != dvp->scb.status.data_version)
-		op->flags |= AFS_OPERATION_सूची_CONFLICT;
-पूर्ण
+static inline void afs_check_dir_conflict(struct afs_operation *op,
+					  struct afs_vnode_param *dvp)
+{
+	if (dvp->dv_before + dvp->dv_delta != dvp->scb.status.data_version)
+		op->flags |= AFS_OPERATION_DIR_CONFLICT;
+}
 
-अटल अंतरभूत पूर्णांक afs_io_error(काष्ठा afs_call *call, क्रमागत afs_io_error where)
-अणु
+static inline int afs_io_error(struct afs_call *call, enum afs_io_error where)
+{
 	trace_afs_io_error(call->debug_id, -EIO, where);
-	वापस -EIO;
-पूर्ण
+	return -EIO;
+}
 
-अटल अंतरभूत पूर्णांक afs_bad(काष्ठा afs_vnode *vnode, क्रमागत afs_file_error where)
-अणु
+static inline int afs_bad(struct afs_vnode *vnode, enum afs_file_error where)
+{
 	trace_afs_file_error(vnode, -EIO, where);
-	वापस -EIO;
-पूर्ण
+	return -EIO;
+}
 
 /*****************************************************************************/
 /*
  * debug tracing
  */
-बाह्य अचिन्हित afs_debug;
+extern unsigned afs_debug;
 
-#घोषणा dbgprपूर्णांकk(FMT,...) \
-	prपूर्णांकk("[%-6.6s] "FMT"\n", current->comm ,##__VA_ARGS__)
+#define dbgprintk(FMT,...) \
+	printk("[%-6.6s] "FMT"\n", current->comm ,##__VA_ARGS__)
 
-#घोषणा kenter(FMT,...)	dbgprपूर्णांकk("==> %s("FMT")",__func__ ,##__VA_ARGS__)
-#घोषणा kleave(FMT,...)	dbgprपूर्णांकk("<== %s()"FMT"",__func__ ,##__VA_ARGS__)
-#घोषणा kdebug(FMT,...)	dbgprपूर्णांकk("    "FMT ,##__VA_ARGS__)
+#define kenter(FMT,...)	dbgprintk("==> %s("FMT")",__func__ ,##__VA_ARGS__)
+#define kleave(FMT,...)	dbgprintk("<== %s()"FMT"",__func__ ,##__VA_ARGS__)
+#define kdebug(FMT,...)	dbgprintk("    "FMT ,##__VA_ARGS__)
 
 
-#अगर defined(__KDEBUG)
-#घोषणा _enter(FMT,...)	kenter(FMT,##__VA_ARGS__)
-#घोषणा _leave(FMT,...)	kleave(FMT,##__VA_ARGS__)
-#घोषणा _debug(FMT,...)	kdebug(FMT,##__VA_ARGS__)
+#if defined(__KDEBUG)
+#define _enter(FMT,...)	kenter(FMT,##__VA_ARGS__)
+#define _leave(FMT,...)	kleave(FMT,##__VA_ARGS__)
+#define _debug(FMT,...)	kdebug(FMT,##__VA_ARGS__)
 
-#या_अगर defined(CONFIG_AFS_DEBUG)
-#घोषणा AFS_DEBUG_KENTER	0x01
-#घोषणा AFS_DEBUG_KLEAVE	0x02
-#घोषणा AFS_DEBUG_KDEBUG	0x04
+#elif defined(CONFIG_AFS_DEBUG)
+#define AFS_DEBUG_KENTER	0x01
+#define AFS_DEBUG_KLEAVE	0x02
+#define AFS_DEBUG_KDEBUG	0x04
 
-#घोषणा _enter(FMT,...)					\
-करो अणु							\
-	अगर (unlikely(afs_debug & AFS_DEBUG_KENTER))	\
+#define _enter(FMT,...)					\
+do {							\
+	if (unlikely(afs_debug & AFS_DEBUG_KENTER))	\
 		kenter(FMT,##__VA_ARGS__);		\
-पूर्ण जबतक (0)
+} while (0)
 
-#घोषणा _leave(FMT,...)					\
-करो अणु							\
-	अगर (unlikely(afs_debug & AFS_DEBUG_KLEAVE))	\
+#define _leave(FMT,...)					\
+do {							\
+	if (unlikely(afs_debug & AFS_DEBUG_KLEAVE))	\
 		kleave(FMT,##__VA_ARGS__);		\
-पूर्ण जबतक (0)
+} while (0)
 
-#घोषणा _debug(FMT,...)					\
-करो अणु							\
-	अगर (unlikely(afs_debug & AFS_DEBUG_KDEBUG))	\
+#define _debug(FMT,...)					\
+do {							\
+	if (unlikely(afs_debug & AFS_DEBUG_KDEBUG))	\
 		kdebug(FMT,##__VA_ARGS__);		\
-पूर्ण जबतक (0)
+} while (0)
 
-#अन्यथा
-#घोषणा _enter(FMT,...)	no_prपूर्णांकk("==> %s("FMT")",__func__ ,##__VA_ARGS__)
-#घोषणा _leave(FMT,...)	no_prपूर्णांकk("<== %s()"FMT"",__func__ ,##__VA_ARGS__)
-#घोषणा _debug(FMT,...)	no_prपूर्णांकk("    "FMT ,##__VA_ARGS__)
-#पूर्ण_अगर
+#else
+#define _enter(FMT,...)	no_printk("==> %s("FMT")",__func__ ,##__VA_ARGS__)
+#define _leave(FMT,...)	no_printk("<== %s()"FMT"",__func__ ,##__VA_ARGS__)
+#define _debug(FMT,...)	no_printk("    "FMT ,##__VA_ARGS__)
+#endif
 
 /*
- * debug निश्चितion checking
+ * debug assertion checking
  */
-#अगर 1 // defined(__KDEBUGALL)
+#if 1 // defined(__KDEBUGALL)
 
-#घोषणा ASSERT(X)						\
-करो अणु								\
-	अगर (unlikely(!(X))) अणु					\
-		prपूर्णांकk(KERN_ERR "\n");				\
-		prपूर्णांकk(KERN_ERR "AFS: Assertion failed\n");	\
+#define ASSERT(X)						\
+do {								\
+	if (unlikely(!(X))) {					\
+		printk(KERN_ERR "\n");				\
+		printk(KERN_ERR "AFS: Assertion failed\n");	\
 		BUG();						\
-	पूर्ण							\
-पूर्ण जबतक(0)
+	}							\
+} while(0)
 
-#घोषणा ASSERTCMP(X, OP, Y)						\
-करो अणु									\
-	अगर (unlikely(!((X) OP (Y)))) अणु					\
-		prपूर्णांकk(KERN_ERR "\n");					\
-		prपूर्णांकk(KERN_ERR "AFS: Assertion failed\n");		\
-		prपूर्णांकk(KERN_ERR "%lu " #OP " %lu is false\n",		\
-		       (अचिन्हित दीर्घ)(X), (अचिन्हित दीर्घ)(Y));		\
-		prपूर्णांकk(KERN_ERR "0x%lx " #OP " 0x%lx is false\n",	\
-		       (अचिन्हित दीर्घ)(X), (अचिन्हित दीर्घ)(Y));		\
+#define ASSERTCMP(X, OP, Y)						\
+do {									\
+	if (unlikely(!((X) OP (Y)))) {					\
+		printk(KERN_ERR "\n");					\
+		printk(KERN_ERR "AFS: Assertion failed\n");		\
+		printk(KERN_ERR "%lu " #OP " %lu is false\n",		\
+		       (unsigned long)(X), (unsigned long)(Y));		\
+		printk(KERN_ERR "0x%lx " #OP " 0x%lx is false\n",	\
+		       (unsigned long)(X), (unsigned long)(Y));		\
 		BUG();							\
-	पूर्ण								\
-पूर्ण जबतक(0)
+	}								\
+} while(0)
 
-#घोषणा ASSERTRANGE(L, OP1, N, OP2, H)					\
-करो अणु									\
-	अगर (unlikely(!((L) OP1 (N)) || !((N) OP2 (H)))) अणु		\
-		prपूर्णांकk(KERN_ERR "\n");					\
-		prपूर्णांकk(KERN_ERR "AFS: Assertion failed\n");		\
-		prपूर्णांकk(KERN_ERR "%lu "#OP1" %lu "#OP2" %lu is false\n",	\
-		       (अचिन्हित दीर्घ)(L), (अचिन्हित दीर्घ)(N),		\
-		       (अचिन्हित दीर्घ)(H));				\
-		prपूर्णांकk(KERN_ERR "0x%lx "#OP1" 0x%lx "#OP2" 0x%lx is false\n", \
-		       (अचिन्हित दीर्घ)(L), (अचिन्हित दीर्घ)(N),		\
-		       (अचिन्हित दीर्घ)(H));				\
+#define ASSERTRANGE(L, OP1, N, OP2, H)					\
+do {									\
+	if (unlikely(!((L) OP1 (N)) || !((N) OP2 (H)))) {		\
+		printk(KERN_ERR "\n");					\
+		printk(KERN_ERR "AFS: Assertion failed\n");		\
+		printk(KERN_ERR "%lu "#OP1" %lu "#OP2" %lu is false\n",	\
+		       (unsigned long)(L), (unsigned long)(N),		\
+		       (unsigned long)(H));				\
+		printk(KERN_ERR "0x%lx "#OP1" 0x%lx "#OP2" 0x%lx is false\n", \
+		       (unsigned long)(L), (unsigned long)(N),		\
+		       (unsigned long)(H));				\
 		BUG();							\
-	पूर्ण								\
-पूर्ण जबतक(0)
+	}								\
+} while(0)
 
-#घोषणा ASSERTIF(C, X)						\
-करो अणु								\
-	अगर (unlikely((C) && !(X))) अणु				\
-		prपूर्णांकk(KERN_ERR "\n");				\
-		prपूर्णांकk(KERN_ERR "AFS: Assertion failed\n");	\
+#define ASSERTIF(C, X)						\
+do {								\
+	if (unlikely((C) && !(X))) {				\
+		printk(KERN_ERR "\n");				\
+		printk(KERN_ERR "AFS: Assertion failed\n");	\
 		BUG();						\
-	पूर्ण							\
-पूर्ण जबतक(0)
+	}							\
+} while(0)
 
-#घोषणा ASSERTIFCMP(C, X, OP, Y)					\
-करो अणु									\
-	अगर (unlikely((C) && !((X) OP (Y)))) अणु				\
-		prपूर्णांकk(KERN_ERR "\n");					\
-		prपूर्णांकk(KERN_ERR "AFS: Assertion failed\n");		\
-		prपूर्णांकk(KERN_ERR "%lu " #OP " %lu is false\n",		\
-		       (अचिन्हित दीर्घ)(X), (अचिन्हित दीर्घ)(Y));		\
-		prपूर्णांकk(KERN_ERR "0x%lx " #OP " 0x%lx is false\n",	\
-		       (अचिन्हित दीर्घ)(X), (अचिन्हित दीर्घ)(Y));		\
+#define ASSERTIFCMP(C, X, OP, Y)					\
+do {									\
+	if (unlikely((C) && !((X) OP (Y)))) {				\
+		printk(KERN_ERR "\n");					\
+		printk(KERN_ERR "AFS: Assertion failed\n");		\
+		printk(KERN_ERR "%lu " #OP " %lu is false\n",		\
+		       (unsigned long)(X), (unsigned long)(Y));		\
+		printk(KERN_ERR "0x%lx " #OP " 0x%lx is false\n",	\
+		       (unsigned long)(X), (unsigned long)(Y));		\
 		BUG();							\
-	पूर्ण								\
-पूर्ण जबतक(0)
+	}								\
+} while(0)
 
-#अन्यथा
+#else
 
-#घोषणा ASSERT(X)				\
-करो अणु						\
-पूर्ण जबतक(0)
+#define ASSERT(X)				\
+do {						\
+} while(0)
 
-#घोषणा ASSERTCMP(X, OP, Y)			\
-करो अणु						\
-पूर्ण जबतक(0)
+#define ASSERTCMP(X, OP, Y)			\
+do {						\
+} while(0)
 
-#घोषणा ASSERTRANGE(L, OP1, N, OP2, H)		\
-करो अणु						\
-पूर्ण जबतक(0)
+#define ASSERTRANGE(L, OP1, N, OP2, H)		\
+do {						\
+} while(0)
 
-#घोषणा ASSERTIF(C, X)				\
-करो अणु						\
-पूर्ण जबतक(0)
+#define ASSERTIF(C, X)				\
+do {						\
+} while(0)
 
-#घोषणा ASSERTIFCMP(C, X, OP, Y)		\
-करो अणु						\
-पूर्ण जबतक(0)
+#define ASSERTIFCMP(C, X, OP, Y)		\
+do {						\
+} while(0)
 
-#पूर्ण_अगर /* __KDEBUGALL */
+#endif /* __KDEBUGALL */

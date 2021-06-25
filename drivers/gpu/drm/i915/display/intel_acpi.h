@@ -1,23 +1,22 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: MIT */
+/* SPDX-License-Identifier: MIT */
 /*
- * Copyright तऊ 2019 Intel Corporation
+ * Copyright © 2019 Intel Corporation
  */
 
-#अगर_अघोषित __INTEL_ACPI_H__
-#घोषणा __INTEL_ACPI_H__
+#ifndef __INTEL_ACPI_H__
+#define __INTEL_ACPI_H__
 
-काष्ठा drm_i915_निजी;
+struct drm_i915_private;
 
-#अगर_घोषित CONFIG_ACPI
-व्योम पूर्णांकel_रेजिस्टर_dsm_handler(व्योम);
-व्योम पूर्णांकel_unरेजिस्टर_dsm_handler(व्योम);
-व्योम पूर्णांकel_acpi_device_id_update(काष्ठा drm_i915_निजी *i915);
-#अन्यथा
-अटल अंतरभूत व्योम पूर्णांकel_रेजिस्टर_dsm_handler(व्योम) अणु वापस; पूर्ण
-अटल अंतरभूत व्योम पूर्णांकel_unरेजिस्टर_dsm_handler(व्योम) अणु वापस; पूर्ण
-अटल अंतरभूत
-व्योम पूर्णांकel_acpi_device_id_update(काष्ठा drm_i915_निजी *i915) अणु वापस; पूर्ण
-#पूर्ण_अगर /* CONFIG_ACPI */
+#ifdef CONFIG_ACPI
+void intel_register_dsm_handler(void);
+void intel_unregister_dsm_handler(void);
+void intel_acpi_device_id_update(struct drm_i915_private *i915);
+#else
+static inline void intel_register_dsm_handler(void) { return; }
+static inline void intel_unregister_dsm_handler(void) { return; }
+static inline
+void intel_acpi_device_id_update(struct drm_i915_private *i915) { return; }
+#endif /* CONFIG_ACPI */
 
-#पूर्ण_अगर /* __INTEL_ACPI_H__ */
+#endif /* __INTEL_ACPI_H__ */

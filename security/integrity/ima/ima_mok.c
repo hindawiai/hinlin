@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (C) 2015 Juniper Networks, Inc.
  *
@@ -7,29 +6,29 @@
  * Petko Manolov <petko.manolov@konsulko.com>
  */
 
-#समावेश <linux/export.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/cred.h>
-#समावेश <linux/err.h>
-#समावेश <linux/init.h>
-#समावेश <linux/slab.h>
-#समावेश <keys/प्रणाली_keyring.h>
+#include <linux/export.h>
+#include <linux/kernel.h>
+#include <linux/sched.h>
+#include <linux/cred.h>
+#include <linux/err.h>
+#include <linux/init.h>
+#include <linux/slab.h>
+#include <keys/system_keyring.h>
 
 
-काष्ठा key *ima_blacklist_keyring;
+struct key *ima_blacklist_keyring;
 
 /*
  * Allocate the IMA blacklist keyring
  */
-__init पूर्णांक ima_mok_init(व्योम)
-अणु
-	काष्ठा key_restriction *restriction;
+__init int ima_mok_init(void)
+{
+	struct key_restriction *restriction;
 
 	pr_notice("Allocating IMA blacklist keyring.\n");
 
-	restriction = kzalloc(माप(काष्ठा key_restriction), GFP_KERNEL);
-	अगर (!restriction)
+	restriction = kzalloc(sizeof(struct key_restriction), GFP_KERNEL);
+	if (!restriction)
 		panic("Can't allocate IMA blacklist restriction.");
 
 	restriction->check = restrict_link_by_builtin_trusted;
@@ -41,10 +40,10 @@ __init पूर्णांक ima_mok_init(व्योम)
 				KEY_USR_WRITE | KEY_USR_SEARCH,
 				KEY_ALLOC_NOT_IN_QUOTA |
 				KEY_ALLOC_SET_KEEP,
-				restriction, शून्य);
+				restriction, NULL);
 
-	अगर (IS_ERR(ima_blacklist_keyring))
+	if (IS_ERR(ima_blacklist_keyring))
 		panic("Can't allocate IMA blacklist keyring.");
-	वापस 0;
-पूर्ण
+	return 0;
+}
 device_initcall(ima_mok_init);

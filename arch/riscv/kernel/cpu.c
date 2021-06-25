@@ -1,49 +1,48 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (C) 2012 Regents of the University of Calअगरornia
+ * Copyright (C) 2012 Regents of the University of California
  */
 
-#समावेश <linux/init.h>
-#समावेश <linux/seq_file.h>
-#समावेश <linux/of.h>
-#समावेश <यंत्र/smp.h>
+#include <linux/init.h>
+#include <linux/seq_file.h>
+#include <linux/of.h>
+#include <asm/smp.h>
 
 /*
- * Returns the hart ID of the given device tree node, or -ENODEV अगर the node
+ * Returns the hart ID of the given device tree node, or -ENODEV if the node
  * isn't an enabled and valid RISC-V hart node.
  */
-पूर्णांक riscv_of_processor_hartid(काष्ठा device_node *node)
-अणु
-	स्थिर अक्षर *isa;
+int riscv_of_processor_hartid(struct device_node *node)
+{
+	const char *isa;
 	u32 hart;
 
-	अगर (!of_device_is_compatible(node, "riscv")) अणु
+	if (!of_device_is_compatible(node, "riscv")) {
 		pr_warn("Found incompatible CPU\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	अगर (of_property_पढ़ो_u32(node, "reg", &hart)) अणु
+	if (of_property_read_u32(node, "reg", &hart)) {
 		pr_warn("Found CPU without hart ID\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	अगर (!of_device_is_available(node)) अणु
+	if (!of_device_is_available(node)) {
 		pr_info("CPU with hartid=%d is not available\n", hart);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	अगर (of_property_पढ़ो_string(node, "riscv,isa", &isa)) अणु
+	if (of_property_read_string(node, "riscv,isa", &isa)) {
 		pr_warn("CPU with hartid=%d has no \"riscv,isa\" property\n", hart);
-		वापस -ENODEV;
-	पूर्ण
-	अगर (isa[0] != 'r' || isa[1] != 'v') अणु
+		return -ENODEV;
+	}
+	if (isa[0] != 'r' || isa[1] != 'v') {
 		pr_warn("CPU with hartid=%d has an invalid ISA of \"%s\"\n", hart, isa);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	वापस hart;
-पूर्ण
+	return hart;
+}
 
 /*
  * Find hart ID of the CPU DT node under which given DT node falls.
@@ -51,84 +50,84 @@
  * To achieve this, we walk up the DT tree until we find an active
  * RISC-V core (HART) node and extract the cpuid from it.
  */
-पूर्णांक riscv_of_parent_hartid(काष्ठा device_node *node)
-अणु
-	क्रम (; node; node = node->parent) अणु
-		अगर (of_device_is_compatible(node, "riscv"))
-			वापस riscv_of_processor_hartid(node);
-	पूर्ण
+int riscv_of_parent_hartid(struct device_node *node)
+{
+	for (; node; node = node->parent) {
+		if (of_device_is_compatible(node, "riscv"))
+			return riscv_of_processor_hartid(node);
+	}
 
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
-#अगर_घोषित CONFIG_PROC_FS
+#ifdef CONFIG_PROC_FS
 
-अटल व्योम prपूर्णांक_isa(काष्ठा seq_file *f, स्थिर अक्षर *isa)
-अणु
-	/* Prपूर्णांक the entire ISA as it is */
-	seq_माला_दो(f, "isa\t\t: ");
-	seq_ग_लिखो(f, isa, म_माप(isa));
-	seq_माला_दो(f, "\n");
-पूर्ण
+static void print_isa(struct seq_file *f, const char *isa)
+{
+	/* Print the entire ISA as it is */
+	seq_puts(f, "isa\t\t: ");
+	seq_write(f, isa, strlen(isa));
+	seq_puts(f, "\n");
+}
 
-अटल व्योम prपूर्णांक_mmu(काष्ठा seq_file *f, स्थिर अक्षर *mmu_type)
-अणु
-#अगर defined(CONFIG_32BIT)
-	अगर (म_भेद(mmu_type, "riscv,sv32") != 0)
-		वापस;
-#या_अगर defined(CONFIG_64BIT)
-	अगर (म_भेद(mmu_type, "riscv,sv39") != 0 &&
-	    म_भेद(mmu_type, "riscv,sv48") != 0)
-		वापस;
-#पूर्ण_अगर
+static void print_mmu(struct seq_file *f, const char *mmu_type)
+{
+#if defined(CONFIG_32BIT)
+	if (strcmp(mmu_type, "riscv,sv32") != 0)
+		return;
+#elif defined(CONFIG_64BIT)
+	if (strcmp(mmu_type, "riscv,sv39") != 0 &&
+	    strcmp(mmu_type, "riscv,sv48") != 0)
+		return;
+#endif
 
-	seq_म_लिखो(f, "mmu\t\t: %s\n", mmu_type+6);
-पूर्ण
+	seq_printf(f, "mmu\t\t: %s\n", mmu_type+6);
+}
 
-अटल व्योम *c_start(काष्ठा seq_file *m, loff_t *pos)
-अणु
+static void *c_start(struct seq_file *m, loff_t *pos)
+{
 	*pos = cpumask_next(*pos - 1, cpu_online_mask);
-	अगर ((*pos) < nr_cpu_ids)
-		वापस (व्योम *)(uपूर्णांकptr_t)(1 + *pos);
-	वापस शून्य;
-पूर्ण
+	if ((*pos) < nr_cpu_ids)
+		return (void *)(uintptr_t)(1 + *pos);
+	return NULL;
+}
 
-अटल व्योम *c_next(काष्ठा seq_file *m, व्योम *v, loff_t *pos)
-अणु
+static void *c_next(struct seq_file *m, void *v, loff_t *pos)
+{
 	(*pos)++;
-	वापस c_start(m, pos);
-पूर्ण
+	return c_start(m, pos);
+}
 
-अटल व्योम c_stop(काष्ठा seq_file *m, व्योम *v)
-अणु
-पूर्ण
+static void c_stop(struct seq_file *m, void *v)
+{
+}
 
-अटल पूर्णांक c_show(काष्ठा seq_file *m, व्योम *v)
-अणु
-	अचिन्हित दीर्घ cpu_id = (अचिन्हित दीर्घ)v - 1;
-	काष्ठा device_node *node = of_get_cpu_node(cpu_id, शून्य);
-	स्थिर अक्षर *compat, *isa, *mmu;
+static int c_show(struct seq_file *m, void *v)
+{
+	unsigned long cpu_id = (unsigned long)v - 1;
+	struct device_node *node = of_get_cpu_node(cpu_id, NULL);
+	const char *compat, *isa, *mmu;
 
-	seq_म_लिखो(m, "processor\t: %lu\n", cpu_id);
-	seq_म_लिखो(m, "hart\t\t: %lu\n", cpuid_to_hartid_map(cpu_id));
-	अगर (!of_property_पढ़ो_string(node, "riscv,isa", &isa))
-		prपूर्णांक_isa(m, isa);
-	अगर (!of_property_पढ़ो_string(node, "mmu-type", &mmu))
-		prपूर्णांक_mmu(m, mmu);
-	अगर (!of_property_पढ़ो_string(node, "compatible", &compat)
-	    && म_भेद(compat, "riscv"))
-		seq_म_लिखो(m, "uarch\t\t: %s\n", compat);
-	seq_माला_दो(m, "\n");
+	seq_printf(m, "processor\t: %lu\n", cpu_id);
+	seq_printf(m, "hart\t\t: %lu\n", cpuid_to_hartid_map(cpu_id));
+	if (!of_property_read_string(node, "riscv,isa", &isa))
+		print_isa(m, isa);
+	if (!of_property_read_string(node, "mmu-type", &mmu))
+		print_mmu(m, mmu);
+	if (!of_property_read_string(node, "compatible", &compat)
+	    && strcmp(compat, "riscv"))
+		seq_printf(m, "uarch\t\t: %s\n", compat);
+	seq_puts(m, "\n");
 	of_node_put(node);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-स्थिर काष्ठा seq_operations cpuinfo_op = अणु
+const struct seq_operations cpuinfo_op = {
 	.start	= c_start,
 	.next	= c_next,
 	.stop	= c_stop,
 	.show	= c_show
-पूर्ण;
+};
 
-#पूर्ण_अगर /* CONFIG_PROC_FS */
+#endif /* CONFIG_PROC_FS */

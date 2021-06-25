@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * FSI core driver
  *
@@ -11,494 +10,494 @@
  *  - s/cfam/chip (cfam_id -> chip_id etc...)
  */
 
-#समावेश <linux/crc4.h>
-#समावेश <linux/device.h>
-#समावेश <linux/fsi.h>
-#समावेश <linux/idr.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/bitops.h>
-#समावेश <linux/cdev.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/uaccess.h>
+#include <linux/crc4.h>
+#include <linux/device.h>
+#include <linux/fsi.h>
+#include <linux/idr.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/slab.h>
+#include <linux/bitops.h>
+#include <linux/cdev.h>
+#include <linux/fs.h>
+#include <linux/uaccess.h>
 
-#समावेश "fsi-master.h"
+#include "fsi-master.h"
 
-#घोषणा CREATE_TRACE_POINTS
-#समावेश <trace/events/fsi.h>
+#define CREATE_TRACE_POINTS
+#include <trace/events/fsi.h>
 
-#घोषणा FSI_SLAVE_CONF_NEXT_MASK	GENMASK(31, 31)
-#घोषणा FSI_SLAVE_CONF_SLOTS_MASK	GENMASK(23, 16)
-#घोषणा FSI_SLAVE_CONF_SLOTS_SHIFT	16
-#घोषणा FSI_SLAVE_CONF_VERSION_MASK	GENMASK(15, 12)
-#घोषणा FSI_SLAVE_CONF_VERSION_SHIFT	12
-#घोषणा FSI_SLAVE_CONF_TYPE_MASK	GENMASK(11, 4)
-#घोषणा FSI_SLAVE_CONF_TYPE_SHIFT	4
-#घोषणा FSI_SLAVE_CONF_CRC_SHIFT	4
-#घोषणा FSI_SLAVE_CONF_CRC_MASK		GENMASK(3, 0)
-#घोषणा FSI_SLAVE_CONF_DATA_BITS	28
+#define FSI_SLAVE_CONF_NEXT_MASK	GENMASK(31, 31)
+#define FSI_SLAVE_CONF_SLOTS_MASK	GENMASK(23, 16)
+#define FSI_SLAVE_CONF_SLOTS_SHIFT	16
+#define FSI_SLAVE_CONF_VERSION_MASK	GENMASK(15, 12)
+#define FSI_SLAVE_CONF_VERSION_SHIFT	12
+#define FSI_SLAVE_CONF_TYPE_MASK	GENMASK(11, 4)
+#define FSI_SLAVE_CONF_TYPE_SHIFT	4
+#define FSI_SLAVE_CONF_CRC_SHIFT	4
+#define FSI_SLAVE_CONF_CRC_MASK		GENMASK(3, 0)
+#define FSI_SLAVE_CONF_DATA_BITS	28
 
-#घोषणा FSI_PEEK_BASE			0x410
+#define FSI_PEEK_BASE			0x410
 
-अटल स्थिर पूर्णांक engine_page_size = 0x400;
+static const int engine_page_size = 0x400;
 
-#घोषणा FSI_SLAVE_BASE			0x800
+#define FSI_SLAVE_BASE			0x800
 
 /*
- * FSI slave engine control रेजिस्टर offsets
+ * FSI slave engine control register offsets
  */
-#घोषणा FSI_SMODE		0x0	/* R/W: Mode रेजिस्टर */
-#घोषणा FSI_SISC		0x8	/* R/W: Interrupt condition */
-#घोषणा FSI_SSTAT		0x14	/* R  : Slave status */
-#घोषणा FSI_SLBUS		0x30	/* W  : LBUS Ownership */
-#घोषणा FSI_LLMODE		0x100	/* R/W: Link layer mode रेजिस्टर */
+#define FSI_SMODE		0x0	/* R/W: Mode register */
+#define FSI_SISC		0x8	/* R/W: Interrupt condition */
+#define FSI_SSTAT		0x14	/* R  : Slave status */
+#define FSI_SLBUS		0x30	/* W  : LBUS Ownership */
+#define FSI_LLMODE		0x100	/* R/W: Link layer mode register */
 
 /*
  * SMODE fields
  */
-#घोषणा FSI_SMODE_WSC		0x80000000	/* Warm start करोne */
-#घोषणा FSI_SMODE_ECRC		0x20000000	/* Hw CRC check */
-#घोषणा FSI_SMODE_SID_SHIFT	24		/* ID shअगरt */
-#घोषणा FSI_SMODE_SID_MASK	3		/* ID Mask */
-#घोषणा FSI_SMODE_ED_SHIFT	20		/* Echo delay shअगरt */
-#घोषणा FSI_SMODE_ED_MASK	0xf		/* Echo delay mask */
-#घोषणा FSI_SMODE_SD_SHIFT	16		/* Send delay shअगरt */
-#घोषणा FSI_SMODE_SD_MASK	0xf		/* Send delay mask */
-#घोषणा FSI_SMODE_LBCRR_SHIFT	8		/* Clk ratio shअगरt */
-#घोषणा FSI_SMODE_LBCRR_MASK	0xf		/* Clk ratio mask */
+#define FSI_SMODE_WSC		0x80000000	/* Warm start done */
+#define FSI_SMODE_ECRC		0x20000000	/* Hw CRC check */
+#define FSI_SMODE_SID_SHIFT	24		/* ID shift */
+#define FSI_SMODE_SID_MASK	3		/* ID Mask */
+#define FSI_SMODE_ED_SHIFT	20		/* Echo delay shift */
+#define FSI_SMODE_ED_MASK	0xf		/* Echo delay mask */
+#define FSI_SMODE_SD_SHIFT	16		/* Send delay shift */
+#define FSI_SMODE_SD_MASK	0xf		/* Send delay mask */
+#define FSI_SMODE_LBCRR_SHIFT	8		/* Clk ratio shift */
+#define FSI_SMODE_LBCRR_MASK	0xf		/* Clk ratio mask */
 
 /*
  * SLBUS fields
  */
-#घोषणा FSI_SLBUS_FORCE		0x80000000	/* Force LBUS ownership */
+#define FSI_SLBUS_FORCE		0x80000000	/* Force LBUS ownership */
 
 /*
  * LLMODE fields
  */
-#घोषणा FSI_LLMODE_ASYNC	0x1
+#define FSI_LLMODE_ASYNC	0x1
 
-#घोषणा FSI_SLAVE_SIZE_23b		0x800000
+#define FSI_SLAVE_SIZE_23b		0x800000
 
-अटल DEFINE_IDA(master_ida);
+static DEFINE_IDA(master_ida);
 
-काष्ठा fsi_slave अणु
-	काष्ठा device		dev;
-	काष्ठा fsi_master	*master;
-	काष्ठा cdev		cdev;
-	पूर्णांक			cdev_idx;
-	पूर्णांक			id;	/* FSI address */
-	पूर्णांक			link;	/* FSI link# */
+struct fsi_slave {
+	struct device		dev;
+	struct fsi_master	*master;
+	struct cdev		cdev;
+	int			cdev_idx;
+	int			id;	/* FSI address */
+	int			link;	/* FSI link# */
 	u32			cfam_id;
-	पूर्णांक			chip_id;
-	uपूर्णांक32_t		size;	/* size of slave address space */
+	int			chip_id;
+	uint32_t		size;	/* size of slave address space */
 	u8			t_send_delay;
 	u8			t_echo_delay;
-पूर्ण;
+};
 
-#घोषणा to_fsi_master(d) container_of(d, काष्ठा fsi_master, dev)
-#घोषणा to_fsi_slave(d) container_of(d, काष्ठा fsi_slave, dev)
+#define to_fsi_master(d) container_of(d, struct fsi_master, dev)
+#define to_fsi_slave(d) container_of(d, struct fsi_slave, dev)
 
-अटल स्थिर पूर्णांक slave_retries = 2;
-अटल पूर्णांक discard_errors;
+static const int slave_retries = 2;
+static int discard_errors;
 
-अटल dev_t fsi_base_dev;
-अटल DEFINE_IDA(fsi_minor_ida);
-#घोषणा FSI_अक्षर_उच्च_DEVICES	0x1000
+static dev_t fsi_base_dev;
+static DEFINE_IDA(fsi_minor_ida);
+#define FSI_CHAR_MAX_DEVICES	0x1000
 
 /* Legacy /dev numbering: 4 devices per chip, 16 chips */
-#घोषणा FSI_CHAR_LEGACY_TOP	64
+#define FSI_CHAR_LEGACY_TOP	64
 
-अटल पूर्णांक fsi_master_पढ़ो(काष्ठा fsi_master *master, पूर्णांक link,
-		uपूर्णांक8_t slave_id, uपूर्णांक32_t addr, व्योम *val, माप_प्रकार size);
-अटल पूर्णांक fsi_master_ग_लिखो(काष्ठा fsi_master *master, पूर्णांक link,
-		uपूर्णांक8_t slave_id, uपूर्णांक32_t addr, स्थिर व्योम *val, माप_प्रकार size);
-अटल पूर्णांक fsi_master_अवरोध(काष्ठा fsi_master *master, पूर्णांक link);
+static int fsi_master_read(struct fsi_master *master, int link,
+		uint8_t slave_id, uint32_t addr, void *val, size_t size);
+static int fsi_master_write(struct fsi_master *master, int link,
+		uint8_t slave_id, uint32_t addr, const void *val, size_t size);
+static int fsi_master_break(struct fsi_master *master, int link);
 
 /*
- * fsi_device_पढ़ो() / fsi_device_ग_लिखो() / fsi_device_peek()
+ * fsi_device_read() / fsi_device_write() / fsi_device_peek()
  *
- * FSI endpoपूर्णांक-device support
+ * FSI endpoint-device support
  *
- * Read / ग_लिखो / peek accessors क्रम a client
+ * Read / write / peek accessors for a client
  *
  * Parameters:
  * dev:  Structure passed to FSI client device drivers on probe().
  * addr: FSI address of given device.  Client should pass in its base address
- *       plus desired offset to access its रेजिस्टर space.
- * val:  For पढ़ो/peek this is the value पढ़ो at the specअगरied address. For
- *       ग_लिखो this is value to ग_लिखो to the specअगरied address.
+ *       plus desired offset to access its register space.
+ * val:  For read/peek this is the value read at the specified address. For
+ *       write this is value to write to the specified address.
  *       The data in val must be FSI bus endian (big endian).
  * size: Size in bytes of the operation.  Sizes supported are 1, 2 and 4 bytes.
  *       Addresses must be aligned on size boundaries or an error will result.
  */
-पूर्णांक fsi_device_पढ़ो(काष्ठा fsi_device *dev, uपूर्णांक32_t addr, व्योम *val,
-		माप_प्रकार size)
-अणु
-	अगर (addr > dev->size || size > dev->size || addr > dev->size - size)
-		वापस -EINVAL;
+int fsi_device_read(struct fsi_device *dev, uint32_t addr, void *val,
+		size_t size)
+{
+	if (addr > dev->size || size > dev->size || addr > dev->size - size)
+		return -EINVAL;
 
-	वापस fsi_slave_पढ़ो(dev->slave, dev->addr + addr, val, size);
-पूर्ण
-EXPORT_SYMBOL_GPL(fsi_device_पढ़ो);
+	return fsi_slave_read(dev->slave, dev->addr + addr, val, size);
+}
+EXPORT_SYMBOL_GPL(fsi_device_read);
 
-पूर्णांक fsi_device_ग_लिखो(काष्ठा fsi_device *dev, uपूर्णांक32_t addr, स्थिर व्योम *val,
-		माप_प्रकार size)
-अणु
-	अगर (addr > dev->size || size > dev->size || addr > dev->size - size)
-		वापस -EINVAL;
+int fsi_device_write(struct fsi_device *dev, uint32_t addr, const void *val,
+		size_t size)
+{
+	if (addr > dev->size || size > dev->size || addr > dev->size - size)
+		return -EINVAL;
 
-	वापस fsi_slave_ग_लिखो(dev->slave, dev->addr + addr, val, size);
-पूर्ण
-EXPORT_SYMBOL_GPL(fsi_device_ग_लिखो);
+	return fsi_slave_write(dev->slave, dev->addr + addr, val, size);
+}
+EXPORT_SYMBOL_GPL(fsi_device_write);
 
-पूर्णांक fsi_device_peek(काष्ठा fsi_device *dev, व्योम *val)
-अणु
-	uपूर्णांक32_t addr = FSI_PEEK_BASE + ((dev->unit - 2) * माप(uपूर्णांक32_t));
+int fsi_device_peek(struct fsi_device *dev, void *val)
+{
+	uint32_t addr = FSI_PEEK_BASE + ((dev->unit - 2) * sizeof(uint32_t));
 
-	वापस fsi_slave_पढ़ो(dev->slave, addr, val, माप(uपूर्णांक32_t));
-पूर्ण
+	return fsi_slave_read(dev->slave, addr, val, sizeof(uint32_t));
+}
 
-अटल व्योम fsi_device_release(काष्ठा device *_device)
-अणु
-	काष्ठा fsi_device *device = to_fsi_dev(_device);
+static void fsi_device_release(struct device *_device)
+{
+	struct fsi_device *device = to_fsi_dev(_device);
 
 	of_node_put(device->dev.of_node);
-	kमुक्त(device);
-पूर्ण
+	kfree(device);
+}
 
-अटल काष्ठा fsi_device *fsi_create_device(काष्ठा fsi_slave *slave)
-अणु
-	काष्ठा fsi_device *dev;
+static struct fsi_device *fsi_create_device(struct fsi_slave *slave)
+{
+	struct fsi_device *dev;
 
-	dev = kzalloc(माप(*dev), GFP_KERNEL);
-	अगर (!dev)
-		वापस शून्य;
+	dev = kzalloc(sizeof(*dev), GFP_KERNEL);
+	if (!dev)
+		return NULL;
 
 	dev->dev.parent = &slave->dev;
 	dev->dev.bus = &fsi_bus_type;
 	dev->dev.release = fsi_device_release;
 
-	वापस dev;
-पूर्ण
+	return dev;
+}
 
 /* FSI slave support */
-अटल पूर्णांक fsi_slave_calc_addr(काष्ठा fsi_slave *slave, uपूर्णांक32_t *addrp,
-		uपूर्णांक8_t *idp)
-अणु
-	uपूर्णांक32_t addr = *addrp;
-	uपूर्णांक8_t id = *idp;
+static int fsi_slave_calc_addr(struct fsi_slave *slave, uint32_t *addrp,
+		uint8_t *idp)
+{
+	uint32_t addr = *addrp;
+	uint8_t id = *idp;
 
-	अगर (addr > slave->size)
-		वापस -EINVAL;
+	if (addr > slave->size)
+		return -EINVAL;
 
 	/* For 23 bit addressing, we encode the extra two bits in the slave
 	 * id (and the slave's actual ID needs to be 0).
 	 */
-	अगर (addr > 0x1fffff) अणु
-		अगर (slave->id != 0)
-			वापस -EINVAL;
+	if (addr > 0x1fffff) {
+		if (slave->id != 0)
+			return -EINVAL;
 		id = (addr >> 21) & 0x3;
 		addr &= 0x1fffff;
-	पूर्ण
+	}
 
 	*addrp = addr;
 	*idp = id;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक fsi_slave_report_and_clear_errors(काष्ठा fsi_slave *slave)
-अणु
-	काष्ठा fsi_master *master = slave->master;
+static int fsi_slave_report_and_clear_errors(struct fsi_slave *slave)
+{
+	struct fsi_master *master = slave->master;
 	__be32 irq, stat;
-	पूर्णांक rc, link;
-	uपूर्णांक8_t id;
+	int rc, link;
+	uint8_t id;
 
 	link = slave->link;
 	id = slave->id;
 
-	rc = fsi_master_पढ़ो(master, link, id, FSI_SLAVE_BASE + FSI_SISC,
-			&irq, माप(irq));
-	अगर (rc)
-		वापस rc;
+	rc = fsi_master_read(master, link, id, FSI_SLAVE_BASE + FSI_SISC,
+			&irq, sizeof(irq));
+	if (rc)
+		return rc;
 
-	rc =  fsi_master_पढ़ो(master, link, id, FSI_SLAVE_BASE + FSI_SSTAT,
-			&stat, माप(stat));
-	अगर (rc)
-		वापस rc;
+	rc =  fsi_master_read(master, link, id, FSI_SLAVE_BASE + FSI_SSTAT,
+			&stat, sizeof(stat));
+	if (rc)
+		return rc;
 
 	dev_dbg(&slave->dev, "status: 0x%08x, sisc: 0x%08x\n",
 			be32_to_cpu(stat), be32_to_cpu(irq));
 
-	/* clear पूर्णांकerrupts */
-	वापस fsi_master_ग_लिखो(master, link, id, FSI_SLAVE_BASE + FSI_SISC,
-			&irq, माप(irq));
-पूर्ण
+	/* clear interrupts */
+	return fsi_master_write(master, link, id, FSI_SLAVE_BASE + FSI_SISC,
+			&irq, sizeof(irq));
+}
 
 /* Encode slave local bus echo delay */
-अटल अंतरभूत uपूर्णांक32_t fsi_smode_echodly(पूर्णांक x)
-अणु
-	वापस (x & FSI_SMODE_ED_MASK) << FSI_SMODE_ED_SHIFT;
-पूर्ण
+static inline uint32_t fsi_smode_echodly(int x)
+{
+	return (x & FSI_SMODE_ED_MASK) << FSI_SMODE_ED_SHIFT;
+}
 
 /* Encode slave local bus send delay */
-अटल अंतरभूत uपूर्णांक32_t fsi_smode_senddly(पूर्णांक x)
-अणु
-	वापस (x & FSI_SMODE_SD_MASK) << FSI_SMODE_SD_SHIFT;
-पूर्ण
+static inline uint32_t fsi_smode_senddly(int x)
+{
+	return (x & FSI_SMODE_SD_MASK) << FSI_SMODE_SD_SHIFT;
+}
 
-/* Encode slave local bus घड़ी rate ratio */
-अटल अंतरभूत uपूर्णांक32_t fsi_smode_lbcrr(पूर्णांक x)
-अणु
-	वापस (x & FSI_SMODE_LBCRR_MASK) << FSI_SMODE_LBCRR_SHIFT;
-पूर्ण
+/* Encode slave local bus clock rate ratio */
+static inline uint32_t fsi_smode_lbcrr(int x)
+{
+	return (x & FSI_SMODE_LBCRR_MASK) << FSI_SMODE_LBCRR_SHIFT;
+}
 
 /* Encode slave ID */
-अटल अंतरभूत uपूर्णांक32_t fsi_smode_sid(पूर्णांक x)
-अणु
-	वापस (x & FSI_SMODE_SID_MASK) << FSI_SMODE_SID_SHIFT;
-पूर्ण
+static inline uint32_t fsi_smode_sid(int x)
+{
+	return (x & FSI_SMODE_SID_MASK) << FSI_SMODE_SID_SHIFT;
+}
 
-अटल uपूर्णांक32_t fsi_slave_smode(पूर्णांक id, u8 t_senddly, u8 t_echodly)
-अणु
-	वापस FSI_SMODE_WSC | FSI_SMODE_ECRC
+static uint32_t fsi_slave_smode(int id, u8 t_senddly, u8 t_echodly)
+{
+	return FSI_SMODE_WSC | FSI_SMODE_ECRC
 		| fsi_smode_sid(id)
 		| fsi_smode_echodly(t_echodly - 1) | fsi_smode_senddly(t_senddly - 1)
 		| fsi_smode_lbcrr(0x8);
-पूर्ण
+}
 
-अटल पूर्णांक fsi_slave_set_smode(काष्ठा fsi_slave *slave)
-अणु
-	uपूर्णांक32_t smode;
+static int fsi_slave_set_smode(struct fsi_slave *slave)
+{
+	uint32_t smode;
 	__be32 data;
 
-	/* set our smode रेजिस्टर with the slave ID field to 0; this enables
+	/* set our smode register with the slave ID field to 0; this enables
 	 * extended slave addressing
 	 */
 	smode = fsi_slave_smode(slave->id, slave->t_send_delay, slave->t_echo_delay);
 	data = cpu_to_be32(smode);
 
-	वापस fsi_master_ग_लिखो(slave->master, slave->link, slave->id,
+	return fsi_master_write(slave->master, slave->link, slave->id,
 				FSI_SLAVE_BASE + FSI_SMODE,
-				&data, माप(data));
-पूर्ण
+				&data, sizeof(data));
+}
 
-अटल पूर्णांक fsi_slave_handle_error(काष्ठा fsi_slave *slave, bool ग_लिखो,
-				  uपूर्णांक32_t addr, माप_प्रकार size)
-अणु
-	काष्ठा fsi_master *master = slave->master;
-	पूर्णांक rc, link;
-	uपूर्णांक32_t reg;
-	uपूर्णांक8_t id, send_delay, echo_delay;
+static int fsi_slave_handle_error(struct fsi_slave *slave, bool write,
+				  uint32_t addr, size_t size)
+{
+	struct fsi_master *master = slave->master;
+	int rc, link;
+	uint32_t reg;
+	uint8_t id, send_delay, echo_delay;
 
-	अगर (discard_errors)
-		वापस -1;
+	if (discard_errors)
+		return -1;
 
 	link = slave->link;
 	id = slave->id;
 
 	dev_dbg(&slave->dev, "handling error on %s to 0x%08x[%zd]",
-			ग_लिखो ? "write" : "read", addr, size);
+			write ? "write" : "read", addr, size);
 
-	/* try a simple clear of error conditions, which may fail अगर we've lost
+	/* try a simple clear of error conditions, which may fail if we've lost
 	 * communication with the slave
 	 */
 	rc = fsi_slave_report_and_clear_errors(slave);
-	अगर (!rc)
-		वापस 0;
+	if (!rc)
+		return 0;
 
 	/* send a TERM and retry */
-	अगर (master->term) अणु
+	if (master->term) {
 		rc = master->term(master, link, id);
-		अगर (!rc) अणु
-			rc = fsi_master_पढ़ो(master, link, id, 0,
-					&reg, माप(reg));
-			अगर (!rc)
+		if (!rc) {
+			rc = fsi_master_read(master, link, id, 0,
+					&reg, sizeof(reg));
+			if (!rc)
 				rc = fsi_slave_report_and_clear_errors(slave);
-			अगर (!rc)
-				वापस 0;
-		पूर्ण
-	पूर्ण
+			if (!rc)
+				return 0;
+		}
+	}
 
 	send_delay = slave->t_send_delay;
 	echo_delay = slave->t_echo_delay;
 
 	/* getting serious, reset the slave via BREAK */
-	rc = fsi_master_अवरोध(master, link);
-	अगर (rc)
-		वापस rc;
+	rc = fsi_master_break(master, link);
+	if (rc)
+		return rc;
 
 	slave->t_send_delay = send_delay;
 	slave->t_echo_delay = echo_delay;
 
 	rc = fsi_slave_set_smode(slave);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
-	अगर (master->link_config)
+	if (master->link_config)
 		master->link_config(master, link,
 				    slave->t_send_delay,
 				    slave->t_echo_delay);
 
-	वापस fsi_slave_report_and_clear_errors(slave);
-पूर्ण
+	return fsi_slave_report_and_clear_errors(slave);
+}
 
-पूर्णांक fsi_slave_पढ़ो(काष्ठा fsi_slave *slave, uपूर्णांक32_t addr,
-			व्योम *val, माप_प्रकार size)
-अणु
-	uपूर्णांक8_t id = slave->id;
-	पूर्णांक rc, err_rc, i;
+int fsi_slave_read(struct fsi_slave *slave, uint32_t addr,
+			void *val, size_t size)
+{
+	uint8_t id = slave->id;
+	int rc, err_rc, i;
 
 	rc = fsi_slave_calc_addr(slave, &addr, &id);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
-	क्रम (i = 0; i < slave_retries; i++) अणु
-		rc = fsi_master_पढ़ो(slave->master, slave->link,
+	for (i = 0; i < slave_retries; i++) {
+		rc = fsi_master_read(slave->master, slave->link,
 				id, addr, val, size);
-		अगर (!rc)
-			अवरोध;
+		if (!rc)
+			break;
 
 		err_rc = fsi_slave_handle_error(slave, false, addr, size);
-		अगर (err_rc)
-			अवरोध;
-	पूर्ण
+		if (err_rc)
+			break;
+	}
 
-	वापस rc;
-पूर्ण
-EXPORT_SYMBOL_GPL(fsi_slave_पढ़ो);
+	return rc;
+}
+EXPORT_SYMBOL_GPL(fsi_slave_read);
 
-पूर्णांक fsi_slave_ग_लिखो(काष्ठा fsi_slave *slave, uपूर्णांक32_t addr,
-			स्थिर व्योम *val, माप_प्रकार size)
-अणु
-	uपूर्णांक8_t id = slave->id;
-	पूर्णांक rc, err_rc, i;
+int fsi_slave_write(struct fsi_slave *slave, uint32_t addr,
+			const void *val, size_t size)
+{
+	uint8_t id = slave->id;
+	int rc, err_rc, i;
 
 	rc = fsi_slave_calc_addr(slave, &addr, &id);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
-	क्रम (i = 0; i < slave_retries; i++) अणु
-		rc = fsi_master_ग_लिखो(slave->master, slave->link,
+	for (i = 0; i < slave_retries; i++) {
+		rc = fsi_master_write(slave->master, slave->link,
 				id, addr, val, size);
-		अगर (!rc)
-			अवरोध;
+		if (!rc)
+			break;
 
 		err_rc = fsi_slave_handle_error(slave, true, addr, size);
-		अगर (err_rc)
-			अवरोध;
-	पूर्ण
+		if (err_rc)
+			break;
+	}
 
-	वापस rc;
-पूर्ण
-EXPORT_SYMBOL_GPL(fsi_slave_ग_लिखो);
+	return rc;
+}
+EXPORT_SYMBOL_GPL(fsi_slave_write);
 
-बाह्य पूर्णांक fsi_slave_claim_range(काष्ठा fsi_slave *slave,
-		uपूर्णांक32_t addr, uपूर्णांक32_t size)
-अणु
-	अगर (addr + size < addr)
-		वापस -EINVAL;
+extern int fsi_slave_claim_range(struct fsi_slave *slave,
+		uint32_t addr, uint32_t size)
+{
+	if (addr + size < addr)
+		return -EINVAL;
 
-	अगर (addr + size > slave->size)
-		वापस -EINVAL;
+	if (addr + size > slave->size)
+		return -EINVAL;
 
-	/* toकरो: check क्रम overlapping claims */
-	वापस 0;
-पूर्ण
+	/* todo: check for overlapping claims */
+	return 0;
+}
 EXPORT_SYMBOL_GPL(fsi_slave_claim_range);
 
-बाह्य व्योम fsi_slave_release_range(काष्ठा fsi_slave *slave,
-		uपूर्णांक32_t addr, uपूर्णांक32_t size)
-अणु
-पूर्ण
+extern void fsi_slave_release_range(struct fsi_slave *slave,
+		uint32_t addr, uint32_t size)
+{
+}
 EXPORT_SYMBOL_GPL(fsi_slave_release_range);
 
-अटल bool fsi_device_node_matches(काष्ठा device *dev, काष्ठा device_node *np,
-		uपूर्णांक32_t addr, uपूर्णांक32_t size)
-अणु
-	अचिन्हित पूर्णांक len, na, ns;
-	स्थिर __be32 *prop;
-	uपूर्णांक32_t psize;
+static bool fsi_device_node_matches(struct device *dev, struct device_node *np,
+		uint32_t addr, uint32_t size)
+{
+	unsigned int len, na, ns;
+	const __be32 *prop;
+	uint32_t psize;
 
 	na = of_n_addr_cells(np);
 	ns = of_n_size_cells(np);
 
-	अगर (na != 1 || ns != 1)
-		वापस false;
+	if (na != 1 || ns != 1)
+		return false;
 
 	prop = of_get_property(np, "reg", &len);
-	अगर (!prop || len != 8)
-		वापस false;
+	if (!prop || len != 8)
+		return false;
 
-	अगर (of_पढ़ो_number(prop, 1) != addr)
-		वापस false;
+	if (of_read_number(prop, 1) != addr)
+		return false;
 
-	psize = of_पढ़ो_number(prop + 1, 1);
-	अगर (psize != size) अणु
+	psize = of_read_number(prop + 1, 1);
+	if (psize != size) {
 		dev_warn(dev,
 			"node %s matches probed address, but not size (got 0x%x, expected 0x%x)",
 			of_node_full_name(np), psize, size);
-	पूर्ण
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-/* Find a matching node क्रम the slave engine at @address, using @size bytes
- * of space. Returns शून्य अगर not found, or a matching node with refcount
- * alपढ़ोy incremented.
+/* Find a matching node for the slave engine at @address, using @size bytes
+ * of space. Returns NULL if not found, or a matching node with refcount
+ * already incremented.
  */
-अटल काष्ठा device_node *fsi_device_find_of_node(काष्ठा fsi_device *dev)
-अणु
-	काष्ठा device_node *parent, *np;
+static struct device_node *fsi_device_find_of_node(struct fsi_device *dev)
+{
+	struct device_node *parent, *np;
 
 	parent = dev_of_node(&dev->slave->dev);
-	अगर (!parent)
-		वापस शून्य;
+	if (!parent)
+		return NULL;
 
-	क्रम_each_child_of_node(parent, np) अणु
-		अगर (fsi_device_node_matches(&dev->dev, np,
+	for_each_child_of_node(parent, np) {
+		if (fsi_device_node_matches(&dev->dev, np,
 					dev->addr, dev->size))
-			वापस np;
-	पूर्ण
+			return np;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल पूर्णांक fsi_slave_scan(काष्ठा fsi_slave *slave)
-अणु
-	uपूर्णांक32_t engine_addr;
-	पूर्णांक rc, i;
+static int fsi_slave_scan(struct fsi_slave *slave)
+{
+	uint32_t engine_addr;
+	int rc, i;
 
 	/*
 	 * scan engines
 	 *
-	 * We keep the peek mode and slave engines क्रम the core; so start
+	 * We keep the peek mode and slave engines for the core; so start
 	 * at the third slot in the configuration table. We also need to
 	 * skip the chip ID entry at the start of the address space.
 	 */
 	engine_addr = engine_page_size * 3;
-	क्रम (i = 2; i < engine_page_size / माप(uपूर्णांक32_t); i++) अणु
-		uपूर्णांक8_t slots, version, type, crc;
-		काष्ठा fsi_device *dev;
-		uपूर्णांक32_t conf;
+	for (i = 2; i < engine_page_size / sizeof(uint32_t); i++) {
+		uint8_t slots, version, type, crc;
+		struct fsi_device *dev;
+		uint32_t conf;
 		__be32 data;
 
-		rc = fsi_slave_पढ़ो(slave, (i + 1) * माप(data),
-				&data, माप(data));
-		अगर (rc) अणु
+		rc = fsi_slave_read(slave, (i + 1) * sizeof(data),
+				&data, sizeof(data));
+		if (rc) {
 			dev_warn(&slave->dev,
 				"error reading slave registers\n");
-			वापस -1;
-		पूर्ण
+			return -1;
+		}
 		conf = be32_to_cpu(data);
 
 		crc = crc4(0, conf, 32);
-		अगर (crc) अणु
+		if (crc) {
 			dev_warn(&slave->dev,
 				"crc error in slave register at 0x%04x\n",
 				i);
-			वापस -1;
-		पूर्ण
+			return -1;
+		}
 
 		slots = (conf & FSI_SLAVE_CONF_SLOTS_MASK)
 			>> FSI_SLAVE_CONF_SLOTS_SHIFT;
@@ -511,12 +510,12 @@ EXPORT_SYMBOL_GPL(fsi_slave_release_range);
 		 * Unused address areas are marked by a zero type value; this
 		 * skips the defined address areas
 		 */
-		अगर (type != 0 && slots != 0) अणु
+		if (type != 0 && slots != 0) {
 
 			/* create device */
 			dev = fsi_create_device(slave);
-			अगर (!dev)
-				वापस -ENOMEM;
+			if (!dev)
+				return -ENOMEM;
 
 			dev->slave = slave;
 			dev->engine_type = type;
@@ -535,506 +534,506 @@ EXPORT_SYMBOL_GPL(fsi_slave_release_range);
 					slave->id, i - 2);
 			dev->dev.of_node = fsi_device_find_of_node(dev);
 
-			rc = device_रेजिस्टर(&dev->dev);
-			अगर (rc) अणु
+			rc = device_register(&dev->dev);
+			if (rc) {
 				dev_warn(&slave->dev, "add failed: %d\n", rc);
 				put_device(&dev->dev);
-			पूर्ण
-		पूर्ण
+			}
+		}
 
 		engine_addr += slots * engine_page_size;
 
-		अगर (!(conf & FSI_SLAVE_CONF_NEXT_MASK))
-			अवरोध;
-	पूर्ण
+		if (!(conf & FSI_SLAVE_CONF_NEXT_MASK))
+			break;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अचिन्हित दीर्घ aligned_access_size(माप_प्रकार offset, माप_प्रकार count)
-अणु
-	अचिन्हित दीर्घ offset_unit, count_unit;
+static unsigned long aligned_access_size(size_t offset, size_t count)
+{
+	unsigned long offset_unit, count_unit;
 
 	/* Criteria:
 	 *
 	 * 1. Access size must be less than or equal to the maximum access
-	 *    width or the highest घातer-of-two factor of offset
-	 * 2. Access size must be less than or equal to the amount specअगरied by
+	 *    width or the highest power-of-two factor of offset
+	 * 2. Access size must be less than or equal to the amount specified by
 	 *    count
 	 *
-	 * The access width is optimal अगर we can calculate 1 to be strictly
-	 * equal जबतक still satisfying 2.
+	 * The access width is optimal if we can calculate 1 to be strictly
+	 * equal while still satisfying 2.
 	 */
 
 	/* Find 1 by the bottom bit of offset (with a 4 byte access cap) */
 	offset_unit = BIT(__builtin_ctzl(offset | 4));
 
 	/* Find 2 by the top bit of count */
-	count_unit = BIT(8 * माप(अचिन्हित दीर्घ) - 1 - __builtin_clzl(count));
+	count_unit = BIT(8 * sizeof(unsigned long) - 1 - __builtin_clzl(count));
 
 	/* Constrain the maximum access width to the minimum of both criteria */
-	वापस BIT(__builtin_ctzl(offset_unit | count_unit));
-पूर्ण
+	return BIT(__builtin_ctzl(offset_unit | count_unit));
+}
 
-अटल sमाप_प्रकार fsi_slave_sysfs_raw_पढ़ो(काष्ठा file *file,
-		काष्ठा kobject *kobj, काष्ठा bin_attribute *attr, अक्षर *buf,
-		loff_t off, माप_प्रकार count)
-अणु
-	काष्ठा fsi_slave *slave = to_fsi_slave(kobj_to_dev(kobj));
-	माप_प्रकार total_len, पढ़ो_len;
-	पूर्णांक rc;
+static ssize_t fsi_slave_sysfs_raw_read(struct file *file,
+		struct kobject *kobj, struct bin_attribute *attr, char *buf,
+		loff_t off, size_t count)
+{
+	struct fsi_slave *slave = to_fsi_slave(kobj_to_dev(kobj));
+	size_t total_len, read_len;
+	int rc;
 
-	अगर (off < 0)
-		वापस -EINVAL;
+	if (off < 0)
+		return -EINVAL;
 
-	अगर (off > 0xffffffff || count > 0xffffffff || off + count > 0xffffffff)
-		वापस -EINVAL;
+	if (off > 0xffffffff || count > 0xffffffff || off + count > 0xffffffff)
+		return -EINVAL;
 
-	क्रम (total_len = 0; total_len < count; total_len += पढ़ो_len) अणु
-		पढ़ो_len = aligned_access_size(off, count - total_len);
+	for (total_len = 0; total_len < count; total_len += read_len) {
+		read_len = aligned_access_size(off, count - total_len);
 
-		rc = fsi_slave_पढ़ो(slave, off, buf + total_len, पढ़ो_len);
-		अगर (rc)
-			वापस rc;
+		rc = fsi_slave_read(slave, off, buf + total_len, read_len);
+		if (rc)
+			return rc;
 
-		off += पढ़ो_len;
-	पूर्ण
+		off += read_len;
+	}
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल sमाप_प्रकार fsi_slave_sysfs_raw_ग_लिखो(काष्ठा file *file,
-		काष्ठा kobject *kobj, काष्ठा bin_attribute *attr,
-		अक्षर *buf, loff_t off, माप_प्रकार count)
-अणु
-	काष्ठा fsi_slave *slave = to_fsi_slave(kobj_to_dev(kobj));
-	माप_प्रकार total_len, ग_लिखो_len;
-	पूर्णांक rc;
+static ssize_t fsi_slave_sysfs_raw_write(struct file *file,
+		struct kobject *kobj, struct bin_attribute *attr,
+		char *buf, loff_t off, size_t count)
+{
+	struct fsi_slave *slave = to_fsi_slave(kobj_to_dev(kobj));
+	size_t total_len, write_len;
+	int rc;
 
-	अगर (off < 0)
-		वापस -EINVAL;
+	if (off < 0)
+		return -EINVAL;
 
-	अगर (off > 0xffffffff || count > 0xffffffff || off + count > 0xffffffff)
-		वापस -EINVAL;
+	if (off > 0xffffffff || count > 0xffffffff || off + count > 0xffffffff)
+		return -EINVAL;
 
-	क्रम (total_len = 0; total_len < count; total_len += ग_लिखो_len) अणु
-		ग_लिखो_len = aligned_access_size(off, count - total_len);
+	for (total_len = 0; total_len < count; total_len += write_len) {
+		write_len = aligned_access_size(off, count - total_len);
 
-		rc = fsi_slave_ग_लिखो(slave, off, buf + total_len, ग_लिखो_len);
-		अगर (rc)
-			वापस rc;
+		rc = fsi_slave_write(slave, off, buf + total_len, write_len);
+		if (rc)
+			return rc;
 
-		off += ग_लिखो_len;
-	पूर्ण
+		off += write_len;
+	}
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल स्थिर काष्ठा bin_attribute fsi_slave_raw_attr = अणु
-	.attr = अणु
+static const struct bin_attribute fsi_slave_raw_attr = {
+	.attr = {
 		.name = "raw",
 		.mode = 0600,
-	पूर्ण,
+	},
 	.size = 0,
-	.पढ़ो = fsi_slave_sysfs_raw_पढ़ो,
-	.ग_लिखो = fsi_slave_sysfs_raw_ग_लिखो,
-पूर्ण;
+	.read = fsi_slave_sysfs_raw_read,
+	.write = fsi_slave_sysfs_raw_write,
+};
 
-अटल व्योम fsi_slave_release(काष्ठा device *dev)
-अणु
-	काष्ठा fsi_slave *slave = to_fsi_slave(dev);
+static void fsi_slave_release(struct device *dev)
+{
+	struct fsi_slave *slave = to_fsi_slave(dev);
 
-	fsi_मुक्त_minor(slave->dev.devt);
+	fsi_free_minor(slave->dev.devt);
 	of_node_put(dev->of_node);
-	kमुक्त(slave);
-पूर्ण
+	kfree(slave);
+}
 
-अटल bool fsi_slave_node_matches(काष्ठा device_node *np,
-		पूर्णांक link, uपूर्णांक8_t id)
-अणु
-	अचिन्हित पूर्णांक len, na, ns;
-	स्थिर __be32 *prop;
+static bool fsi_slave_node_matches(struct device_node *np,
+		int link, uint8_t id)
+{
+	unsigned int len, na, ns;
+	const __be32 *prop;
 
 	na = of_n_addr_cells(np);
 	ns = of_n_size_cells(np);
 
-	/* Ensure we have the correct क्रमmat क्रम addresses and sizes in
+	/* Ensure we have the correct format for addresses and sizes in
 	 * reg properties
 	 */
-	अगर (na != 2 || ns != 0)
-		वापस false;
+	if (na != 2 || ns != 0)
+		return false;
 
 	prop = of_get_property(np, "reg", &len);
-	अगर (!prop || len != 8)
-		वापस false;
+	if (!prop || len != 8)
+		return false;
 
-	वापस (of_पढ़ो_number(prop, 1) == link) &&
-		(of_पढ़ो_number(prop + 1, 1) == id);
-पूर्ण
+	return (of_read_number(prop, 1) == link) &&
+		(of_read_number(prop + 1, 1) == id);
+}
 
-/* Find a matching node क्रम the slave at (link, id). Returns शून्य अगर none
- * found, or a matching node with refcount alपढ़ोy incremented.
+/* Find a matching node for the slave at (link, id). Returns NULL if none
+ * found, or a matching node with refcount already incremented.
  */
-अटल काष्ठा device_node *fsi_slave_find_of_node(काष्ठा fsi_master *master,
-		पूर्णांक link, uपूर्णांक8_t id)
-अणु
-	काष्ठा device_node *parent, *np;
+static struct device_node *fsi_slave_find_of_node(struct fsi_master *master,
+		int link, uint8_t id)
+{
+	struct device_node *parent, *np;
 
 	parent = dev_of_node(&master->dev);
-	अगर (!parent)
-		वापस शून्य;
+	if (!parent)
+		return NULL;
 
-	क्रम_each_child_of_node(parent, np) अणु
-		अगर (fsi_slave_node_matches(np, link, id))
-			वापस np;
-	पूर्ण
+	for_each_child_of_node(parent, np) {
+		if (fsi_slave_node_matches(np, link, id))
+			return np;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल sमाप_प्रकार cfam_पढ़ो(काष्ठा file *filep, अक्षर __user *buf, माप_प्रकार count,
+static ssize_t cfam_read(struct file *filep, char __user *buf, size_t count,
 			 loff_t *offset)
-अणु
-	काष्ठा fsi_slave *slave = filep->निजी_data;
-	माप_प्रकार total_len, पढ़ो_len;
+{
+	struct fsi_slave *slave = filep->private_data;
+	size_t total_len, read_len;
 	loff_t off = *offset;
-	sमाप_प्रकार rc;
+	ssize_t rc;
 
-	अगर (off < 0)
-		वापस -EINVAL;
+	if (off < 0)
+		return -EINVAL;
 
-	अगर (off > 0xffffffff || count > 0xffffffff || off + count > 0xffffffff)
-		वापस -EINVAL;
+	if (off > 0xffffffff || count > 0xffffffff || off + count > 0xffffffff)
+		return -EINVAL;
 
-	क्रम (total_len = 0; total_len < count; total_len += पढ़ो_len) अणु
+	for (total_len = 0; total_len < count; total_len += read_len) {
 		__be32 data;
 
-		पढ़ो_len = min_t(माप_प्रकार, count, 4);
-		पढ़ो_len -= off & 0x3;
+		read_len = min_t(size_t, count, 4);
+		read_len -= off & 0x3;
 
-		rc = fsi_slave_पढ़ो(slave, off, &data, पढ़ो_len);
-		अगर (rc)
-			जाओ fail;
-		rc = copy_to_user(buf + total_len, &data, पढ़ो_len);
-		अगर (rc) अणु
+		rc = fsi_slave_read(slave, off, &data, read_len);
+		if (rc)
+			goto fail;
+		rc = copy_to_user(buf + total_len, &data, read_len);
+		if (rc) {
 			rc = -EFAULT;
-			जाओ fail;
-		पूर्ण
-		off += पढ़ो_len;
-	पूर्ण
+			goto fail;
+		}
+		off += read_len;
+	}
 	rc = count;
  fail:
 	*offset = off;
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल sमाप_प्रकार cfam_ग_लिखो(काष्ठा file *filep, स्थिर अक्षर __user *buf,
-			  माप_प्रकार count, loff_t *offset)
-अणु
-	काष्ठा fsi_slave *slave = filep->निजी_data;
-	माप_प्रकार total_len, ग_लिखो_len;
+static ssize_t cfam_write(struct file *filep, const char __user *buf,
+			  size_t count, loff_t *offset)
+{
+	struct fsi_slave *slave = filep->private_data;
+	size_t total_len, write_len;
 	loff_t off = *offset;
-	sमाप_प्रकार rc;
+	ssize_t rc;
 
 
-	अगर (off < 0)
-		वापस -EINVAL;
+	if (off < 0)
+		return -EINVAL;
 
-	अगर (off > 0xffffffff || count > 0xffffffff || off + count > 0xffffffff)
-		वापस -EINVAL;
+	if (off > 0xffffffff || count > 0xffffffff || off + count > 0xffffffff)
+		return -EINVAL;
 
-	क्रम (total_len = 0; total_len < count; total_len += ग_लिखो_len) अणु
+	for (total_len = 0; total_len < count; total_len += write_len) {
 		__be32 data;
 
-		ग_लिखो_len = min_t(माप_प्रकार, count, 4);
-		ग_लिखो_len -= off & 0x3;
+		write_len = min_t(size_t, count, 4);
+		write_len -= off & 0x3;
 
-		rc = copy_from_user(&data, buf + total_len, ग_लिखो_len);
-		अगर (rc) अणु
+		rc = copy_from_user(&data, buf + total_len, write_len);
+		if (rc) {
 			rc = -EFAULT;
-			जाओ fail;
-		पूर्ण
-		rc = fsi_slave_ग_लिखो(slave, off, &data, ग_लिखो_len);
-		अगर (rc)
-			जाओ fail;
-		off += ग_लिखो_len;
-	पूर्ण
+			goto fail;
+		}
+		rc = fsi_slave_write(slave, off, &data, write_len);
+		if (rc)
+			goto fail;
+		off += write_len;
+	}
 	rc = count;
  fail:
 	*offset = off;
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल loff_t cfam_llseek(काष्ठा file *file, loff_t offset, पूर्णांक whence)
-अणु
-	चयन (whence) अणु
-	हाल प्रस्तुत_से:
-		अवरोध;
-	हाल शुरू_से:
+static loff_t cfam_llseek(struct file *file, loff_t offset, int whence)
+{
+	switch (whence) {
+	case SEEK_CUR:
+		break;
+	case SEEK_SET:
 		file->f_pos = offset;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	वापस offset;
-पूर्ण
+	return offset;
+}
 
-अटल पूर्णांक cfam_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा fsi_slave *slave = container_of(inode->i_cdev, काष्ठा fsi_slave, cdev);
+static int cfam_open(struct inode *inode, struct file *file)
+{
+	struct fsi_slave *slave = container_of(inode->i_cdev, struct fsi_slave, cdev);
 
-	file->निजी_data = slave;
+	file->private_data = slave;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा file_operations cfam_fops = अणु
+static const struct file_operations cfam_fops = {
 	.owner		= THIS_MODULE,
-	.खोलो		= cfam_खोलो,
+	.open		= cfam_open,
 	.llseek		= cfam_llseek,
-	.पढ़ो		= cfam_पढ़ो,
-	.ग_लिखो		= cfam_ग_लिखो,
-पूर्ण;
+	.read		= cfam_read,
+	.write		= cfam_write,
+};
 
-अटल sमाप_प्रकार send_term_store(काष्ठा device *dev,
-			       काष्ठा device_attribute *attr,
-			       स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा fsi_slave *slave = to_fsi_slave(dev);
-	काष्ठा fsi_master *master = slave->master;
+static ssize_t send_term_store(struct device *dev,
+			       struct device_attribute *attr,
+			       const char *buf, size_t count)
+{
+	struct fsi_slave *slave = to_fsi_slave(dev);
+	struct fsi_master *master = slave->master;
 
-	अगर (!master->term)
-		वापस -ENODEV;
+	if (!master->term)
+		return -ENODEV;
 
 	master->term(master, slave->link, slave->id);
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल DEVICE_ATTR_WO(send_term);
+static DEVICE_ATTR_WO(send_term);
 
-अटल sमाप_प्रकार slave_send_echo_show(काष्ठा device *dev,
-				    काष्ठा device_attribute *attr,
-				    अक्षर *buf)
-अणु
-	काष्ठा fsi_slave *slave = to_fsi_slave(dev);
+static ssize_t slave_send_echo_show(struct device *dev,
+				    struct device_attribute *attr,
+				    char *buf)
+{
+	struct fsi_slave *slave = to_fsi_slave(dev);
 
-	वापस प्र_लिखो(buf, "%u\n", slave->t_send_delay);
-पूर्ण
+	return sprintf(buf, "%u\n", slave->t_send_delay);
+}
 
-अटल sमाप_प्रकार slave_send_echo_store(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा fsi_slave *slave = to_fsi_slave(dev);
-	काष्ठा fsi_master *master = slave->master;
-	अचिन्हित दीर्घ val;
-	पूर्णांक rc;
+static ssize_t slave_send_echo_store(struct device *dev,
+		struct device_attribute *attr, const char *buf, size_t count)
+{
+	struct fsi_slave *slave = to_fsi_slave(dev);
+	struct fsi_master *master = slave->master;
+	unsigned long val;
+	int rc;
 
-	अगर (kम_से_अदीर्घ(buf, 0, &val) < 0)
-		वापस -EINVAL;
+	if (kstrtoul(buf, 0, &val) < 0)
+		return -EINVAL;
 
-	अगर (val < 1 || val > 16)
-		वापस -EINVAL;
+	if (val < 1 || val > 16)
+		return -EINVAL;
 
-	अगर (!master->link_config)
-		वापस -ENXIO;
+	if (!master->link_config)
+		return -ENXIO;
 
 	/* Current HW mandates that send and echo delay are identical */
 	slave->t_send_delay = val;
 	slave->t_echo_delay = val;
 
 	rc = fsi_slave_set_smode(slave);
-	अगर (rc < 0)
-		वापस rc;
-	अगर (master->link_config)
+	if (rc < 0)
+		return rc;
+	if (master->link_config)
 		master->link_config(master, slave->link,
 				    slave->t_send_delay,
 				    slave->t_echo_delay);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल DEVICE_ATTR(send_echo_delays, 0600,
+static DEVICE_ATTR(send_echo_delays, 0600,
 		   slave_send_echo_show, slave_send_echo_store);
 
-अटल sमाप_प्रकार chip_id_show(काष्ठा device *dev,
-			    काष्ठा device_attribute *attr,
-			    अक्षर *buf)
-अणु
-	काष्ठा fsi_slave *slave = to_fsi_slave(dev);
+static ssize_t chip_id_show(struct device *dev,
+			    struct device_attribute *attr,
+			    char *buf)
+{
+	struct fsi_slave *slave = to_fsi_slave(dev);
 
-	वापस प्र_लिखो(buf, "%d\n", slave->chip_id);
-पूर्ण
+	return sprintf(buf, "%d\n", slave->chip_id);
+}
 
-अटल DEVICE_ATTR_RO(chip_id);
+static DEVICE_ATTR_RO(chip_id);
 
-अटल sमाप_प्रकार cfam_id_show(काष्ठा device *dev,
-			    काष्ठा device_attribute *attr,
-			    अक्षर *buf)
-अणु
-	काष्ठा fsi_slave *slave = to_fsi_slave(dev);
+static ssize_t cfam_id_show(struct device *dev,
+			    struct device_attribute *attr,
+			    char *buf)
+{
+	struct fsi_slave *slave = to_fsi_slave(dev);
 
-	वापस प्र_लिखो(buf, "0x%x\n", slave->cfam_id);
-पूर्ण
+	return sprintf(buf, "0x%x\n", slave->cfam_id);
+}
 
-अटल DEVICE_ATTR_RO(cfam_id);
+static DEVICE_ATTR_RO(cfam_id);
 
-अटल काष्ठा attribute *cfam_attr[] = अणु
+static struct attribute *cfam_attr[] = {
 	&dev_attr_send_echo_delays.attr,
 	&dev_attr_chip_id.attr,
 	&dev_attr_cfam_id.attr,
 	&dev_attr_send_term.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल स्थिर काष्ठा attribute_group cfam_attr_group = अणु
+static const struct attribute_group cfam_attr_group = {
 	.attrs = cfam_attr,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा attribute_group *cfam_attr_groups[] = अणु
+static const struct attribute_group *cfam_attr_groups[] = {
 	&cfam_attr_group,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल अक्षर *cfam_devnode(काष्ठा device *dev, umode_t *mode,
+static char *cfam_devnode(struct device *dev, umode_t *mode,
 			  kuid_t *uid, kgid_t *gid)
-अणु
-	काष्ठा fsi_slave *slave = to_fsi_slave(dev);
+{
+	struct fsi_slave *slave = to_fsi_slave(dev);
 
-#अगर_घोषित CONFIG_FSI_NEW_DEV_NODE
-	वापस kaप्र_लिखो(GFP_KERNEL, "fsi/cfam%d", slave->cdev_idx);
-#अन्यथा
-	वापस kaप्र_लिखो(GFP_KERNEL, "cfam%d", slave->cdev_idx);
-#पूर्ण_अगर
-पूर्ण
+#ifdef CONFIG_FSI_NEW_DEV_NODE
+	return kasprintf(GFP_KERNEL, "fsi/cfam%d", slave->cdev_idx);
+#else
+	return kasprintf(GFP_KERNEL, "cfam%d", slave->cdev_idx);
+#endif
+}
 
-अटल स्थिर काष्ठा device_type cfam_type = अणु
+static const struct device_type cfam_type = {
 	.name = "cfam",
 	.devnode = cfam_devnode,
 	.groups = cfam_attr_groups
-पूर्ण;
+};
 
-अटल अक्षर *fsi_cdev_devnode(काष्ठा device *dev, umode_t *mode,
+static char *fsi_cdev_devnode(struct device *dev, umode_t *mode,
 			      kuid_t *uid, kgid_t *gid)
-अणु
-#अगर_घोषित CONFIG_FSI_NEW_DEV_NODE
-	वापस kaप्र_लिखो(GFP_KERNEL, "fsi/%s", dev_name(dev));
-#अन्यथा
-	वापस kaप्र_लिखो(GFP_KERNEL, "%s", dev_name(dev));
-#पूर्ण_अगर
-पूर्ण
+{
+#ifdef CONFIG_FSI_NEW_DEV_NODE
+	return kasprintf(GFP_KERNEL, "fsi/%s", dev_name(dev));
+#else
+	return kasprintf(GFP_KERNEL, "%s", dev_name(dev));
+#endif
+}
 
-स्थिर काष्ठा device_type fsi_cdev_type = अणु
+const struct device_type fsi_cdev_type = {
 	.name = "fsi-cdev",
 	.devnode = fsi_cdev_devnode,
-पूर्ण;
+};
 EXPORT_SYMBOL_GPL(fsi_cdev_type);
 
 /* Backward compatible /dev/ numbering in "old style" mode */
-अटल पूर्णांक fsi_adjust_index(पूर्णांक index)
-अणु
-#अगर_घोषित CONFIG_FSI_NEW_DEV_NODE
-	वापस index;
-#अन्यथा
-	वापस index + 1;
-#पूर्ण_अगर
-पूर्ण
+static int fsi_adjust_index(int index)
+{
+#ifdef CONFIG_FSI_NEW_DEV_NODE
+	return index;
+#else
+	return index + 1;
+#endif
+}
 
-अटल पूर्णांक __fsi_get_new_minor(काष्ठा fsi_slave *slave, क्रमागत fsi_dev_type type,
-			       dev_t *out_dev, पूर्णांक *out_index)
-अणु
-	पूर्णांक cid = slave->chip_id;
-	पूर्णांक id;
+static int __fsi_get_new_minor(struct fsi_slave *slave, enum fsi_dev_type type,
+			       dev_t *out_dev, int *out_index)
+{
+	int cid = slave->chip_id;
+	int id;
 
-	/* Check अगर we qualअगरy क्रम legacy numbering */
-	अगर (cid >= 0 && cid < 16 && type < 4) अणु
+	/* Check if we qualify for legacy numbering */
+	if (cid >= 0 && cid < 16 && type < 4) {
 		/* Try reserving the legacy number */
 		id = (cid << 4) | type;
 		id = ida_simple_get(&fsi_minor_ida, id, id + 1, GFP_KERNEL);
-		अगर (id >= 0) अणु
+		if (id >= 0) {
 			*out_index = fsi_adjust_index(cid);
 			*out_dev = fsi_base_dev + id;
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 		/* Other failure */
-		अगर (id != -ENOSPC)
-			वापस id;
+		if (id != -ENOSPC)
+			return id;
 		/* Fallback to non-legacy allocation */
-	पूर्ण
+	}
 	id = ida_simple_get(&fsi_minor_ida, FSI_CHAR_LEGACY_TOP,
-			    FSI_अक्षर_उच्च_DEVICES, GFP_KERNEL);
-	अगर (id < 0)
-		वापस id;
+			    FSI_CHAR_MAX_DEVICES, GFP_KERNEL);
+	if (id < 0)
+		return id;
 	*out_index = fsi_adjust_index(id);
 	*out_dev = fsi_base_dev + id;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक fsi_get_new_minor(काष्ठा fsi_device *fdev, क्रमागत fsi_dev_type type,
-		      dev_t *out_dev, पूर्णांक *out_index)
-अणु
-	वापस __fsi_get_new_minor(fdev->slave, type, out_dev, out_index);
-पूर्ण
+int fsi_get_new_minor(struct fsi_device *fdev, enum fsi_dev_type type,
+		      dev_t *out_dev, int *out_index)
+{
+	return __fsi_get_new_minor(fdev->slave, type, out_dev, out_index);
+}
 EXPORT_SYMBOL_GPL(fsi_get_new_minor);
 
-व्योम fsi_मुक्त_minor(dev_t dev)
-अणु
-	ida_simple_हटाओ(&fsi_minor_ida, MINOR(dev));
-पूर्ण
-EXPORT_SYMBOL_GPL(fsi_मुक्त_minor);
+void fsi_free_minor(dev_t dev)
+{
+	ida_simple_remove(&fsi_minor_ida, MINOR(dev));
+}
+EXPORT_SYMBOL_GPL(fsi_free_minor);
 
-अटल पूर्णांक fsi_slave_init(काष्ठा fsi_master *master, पूर्णांक link, uपूर्णांक8_t id)
-अणु
-	uपूर्णांक32_t cfam_id;
-	काष्ठा fsi_slave *slave;
-	uपूर्णांक8_t crc;
+static int fsi_slave_init(struct fsi_master *master, int link, uint8_t id)
+{
+	uint32_t cfam_id;
+	struct fsi_slave *slave;
+	uint8_t crc;
 	__be32 data, llmode, slbus;
-	पूर्णांक rc;
+	int rc;
 
 	/* Currently, we only support single slaves on a link, and use the
 	 * full 23-bit address range
 	 */
-	अगर (id != 0)
-		वापस -EINVAL;
+	if (id != 0)
+		return -EINVAL;
 
-	rc = fsi_master_पढ़ो(master, link, id, 0, &data, माप(data));
-	अगर (rc) अणु
+	rc = fsi_master_read(master, link, id, 0, &data, sizeof(data));
+	if (rc) {
 		dev_dbg(&master->dev, "can't read slave %02x:%02x %d\n",
 				link, id, rc);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 	cfam_id = be32_to_cpu(data);
 
 	crc = crc4(0, cfam_id, 32);
-	अगर (crc) अणु
+	if (crc) {
 		dev_warn(&master->dev, "slave %02x:%02x invalid cfam id CRC!\n",
 				link, id);
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
 	dev_dbg(&master->dev, "fsi: found chip %08x at %02x:%02x:%02x\n",
 			cfam_id, master->idx, link, id);
 
 	/* If we're behind a master that doesn't provide a self-running bus
-	 * घड़ी, put the slave पूर्णांकo async mode
+	 * clock, put the slave into async mode
 	 */
-	अगर (master->flags & FSI_MASTER_FLAG_SWCLOCK) अणु
+	if (master->flags & FSI_MASTER_FLAG_SWCLOCK) {
 		llmode = cpu_to_be32(FSI_LLMODE_ASYNC);
-		rc = fsi_master_ग_लिखो(master, link, id,
+		rc = fsi_master_write(master, link, id,
 				FSI_SLAVE_BASE + FSI_LLMODE,
-				&llmode, माप(llmode));
-		अगर (rc)
+				&llmode, sizeof(llmode));
+		if (rc)
 			dev_warn(&master->dev,
 				"can't set llmode on slave:%02x:%02x %d\n",
 				link, id, rc);
-	पूर्ण
+	}
 
 	/* We can communicate with a slave; create the slave device and
-	 * रेजिस्टर.
+	 * register.
 	 */
-	slave = kzalloc(माप(*slave), GFP_KERNEL);
-	अगर (!slave)
-		वापस -ENOMEM;
+	slave = kzalloc(sizeof(*slave), GFP_KERNEL);
+	if (!slave)
+		return -ENOMEM;
 
 	dev_set_name(&slave->dev, "slave@%02x:%02x", link, id);
 	slave->dev.type = &cfam_type;
@@ -1050,378 +1049,378 @@ EXPORT_SYMBOL_GPL(fsi_मुक्त_minor);
 	slave->t_send_delay = 16;
 	slave->t_echo_delay = 16;
 
-	/* Get chip ID अगर any */
+	/* Get chip ID if any */
 	slave->chip_id = -1;
-	अगर (slave->dev.of_node) अणु
-		uपूर्णांक32_t prop;
-		अगर (!of_property_पढ़ो_u32(slave->dev.of_node, "chip-id", &prop))
+	if (slave->dev.of_node) {
+		uint32_t prop;
+		if (!of_property_read_u32(slave->dev.of_node, "chip-id", &prop))
 			slave->chip_id = prop;
 
-	पूर्ण
+	}
 
 	slbus = cpu_to_be32(FSI_SLBUS_FORCE);
-	rc = fsi_master_ग_लिखो(master, link, id, FSI_SLAVE_BASE + FSI_SLBUS,
-			      &slbus, माप(slbus));
-	अगर (rc)
+	rc = fsi_master_write(master, link, id, FSI_SLAVE_BASE + FSI_SLBUS,
+			      &slbus, sizeof(slbus));
+	if (rc)
 		dev_warn(&master->dev,
 			 "can't set slbus on slave:%02x:%02x %d\n", link, id,
 			 rc);
 
 	rc = fsi_slave_set_smode(slave);
-	अगर (rc) अणु
+	if (rc) {
 		dev_warn(&master->dev,
 				"can't set smode on slave:%02x:%02x %d\n",
 				link, id, rc);
-		जाओ err_मुक्त;
-	पूर्ण
+		goto err_free;
+	}
 
 	/* Allocate a minor in the FSI space */
 	rc = __fsi_get_new_minor(slave, fsi_dev_cfam, &slave->dev.devt,
 				 &slave->cdev_idx);
-	अगर (rc)
-		जाओ err_मुक्त;
+	if (rc)
+		goto err_free;
 
-	/* Create अक्षरdev क्रम userspace access */
+	/* Create chardev for userspace access */
 	cdev_init(&slave->cdev, &cfam_fops);
 	rc = cdev_device_add(&slave->cdev, &slave->dev);
-	अगर (rc) अणु
+	if (rc) {
 		dev_err(&slave->dev, "Error %d creating slave device\n", rc);
-		जाओ err_मुक्त_ida;
-	पूर्ण
+		goto err_free_ida;
+	}
 
-	/* Now that we have the cdev रेजिस्टरed with the core, any fatal
-	 * failures beyond this poपूर्णांक will need to clean up through
+	/* Now that we have the cdev registered with the core, any fatal
+	 * failures beyond this point will need to clean up through
 	 * cdev_device_del(). Fortunately though, nothing past here is fatal.
 	 */
 
-	अगर (master->link_config)
+	if (master->link_config)
 		master->link_config(master, link,
 				    slave->t_send_delay,
 				    slave->t_echo_delay);
 
-	/* Legacy raw file -> to be हटाओd */
+	/* Legacy raw file -> to be removed */
 	rc = device_create_bin_file(&slave->dev, &fsi_slave_raw_attr);
-	अगर (rc)
+	if (rc)
 		dev_warn(&slave->dev, "failed to create raw attr: %d\n", rc);
 
 
 	rc = fsi_slave_scan(slave);
-	अगर (rc)
+	if (rc)
 		dev_dbg(&master->dev, "failed during slave scan with: %d\n",
 				rc);
 
-	वापस 0;
+	return 0;
 
-err_मुक्त_ida:
-	fsi_मुक्त_minor(slave->dev.devt);
-err_मुक्त:
+err_free_ida:
+	fsi_free_minor(slave->dev.devt);
+err_free:
 	of_node_put(slave->dev.of_node);
-	kमुक्त(slave);
-	वापस rc;
-पूर्ण
+	kfree(slave);
+	return rc;
+}
 
 /* FSI master support */
-अटल पूर्णांक fsi_check_access(uपूर्णांक32_t addr, माप_प्रकार size)
-अणु
-	अगर (size == 4) अणु
-		अगर (addr & 0x3)
-			वापस -EINVAL;
-	पूर्ण अन्यथा अगर (size == 2) अणु
-		अगर (addr & 0x1)
-			वापस -EINVAL;
-	पूर्ण अन्यथा अगर (size != 1)
-		वापस -EINVAL;
+static int fsi_check_access(uint32_t addr, size_t size)
+{
+	if (size == 4) {
+		if (addr & 0x3)
+			return -EINVAL;
+	} else if (size == 2) {
+		if (addr & 0x1)
+			return -EINVAL;
+	} else if (size != 1)
+		return -EINVAL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक fsi_master_पढ़ो(काष्ठा fsi_master *master, पूर्णांक link,
-		uपूर्णांक8_t slave_id, uपूर्णांक32_t addr, व्योम *val, माप_प्रकार size)
-अणु
-	पूर्णांक rc;
+static int fsi_master_read(struct fsi_master *master, int link,
+		uint8_t slave_id, uint32_t addr, void *val, size_t size)
+{
+	int rc;
 
-	trace_fsi_master_पढ़ो(master, link, slave_id, addr, size);
+	trace_fsi_master_read(master, link, slave_id, addr, size);
 
 	rc = fsi_check_access(addr, size);
-	अगर (!rc)
-		rc = master->पढ़ो(master, link, slave_id, addr, val, size);
+	if (!rc)
+		rc = master->read(master, link, slave_id, addr, val, size);
 
 	trace_fsi_master_rw_result(master, link, slave_id, addr, size,
 			false, val, rc);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक fsi_master_ग_लिखो(काष्ठा fsi_master *master, पूर्णांक link,
-		uपूर्णांक8_t slave_id, uपूर्णांक32_t addr, स्थिर व्योम *val, माप_प्रकार size)
-अणु
-	पूर्णांक rc;
+static int fsi_master_write(struct fsi_master *master, int link,
+		uint8_t slave_id, uint32_t addr, const void *val, size_t size)
+{
+	int rc;
 
-	trace_fsi_master_ग_लिखो(master, link, slave_id, addr, size, val);
+	trace_fsi_master_write(master, link, slave_id, addr, size, val);
 
 	rc = fsi_check_access(addr, size);
-	अगर (!rc)
-		rc = master->ग_लिखो(master, link, slave_id, addr, val, size);
+	if (!rc)
+		rc = master->write(master, link, slave_id, addr, val, size);
 
 	trace_fsi_master_rw_result(master, link, slave_id, addr, size,
 			true, val, rc);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक fsi_master_link_disable(काष्ठा fsi_master *master, पूर्णांक link)
-अणु
-	अगर (master->link_enable)
-		वापस master->link_enable(master, link, false);
+static int fsi_master_link_disable(struct fsi_master *master, int link)
+{
+	if (master->link_enable)
+		return master->link_enable(master, link, false);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक fsi_master_link_enable(काष्ठा fsi_master *master, पूर्णांक link)
-अणु
-	अगर (master->link_enable)
-		वापस master->link_enable(master, link, true);
+static int fsi_master_link_enable(struct fsi_master *master, int link)
+{
+	if (master->link_enable)
+		return master->link_enable(master, link, true);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Issue a अवरोध command on this link
+ * Issue a break command on this link
  */
-अटल पूर्णांक fsi_master_अवरोध(काष्ठा fsi_master *master, पूर्णांक link)
-अणु
-	पूर्णांक rc = 0;
+static int fsi_master_break(struct fsi_master *master, int link)
+{
+	int rc = 0;
 
-	trace_fsi_master_अवरोध(master, link);
+	trace_fsi_master_break(master, link);
 
-	अगर (master->send_अवरोध)
-		rc = master->send_अवरोध(master, link);
-	अगर (master->link_config)
+	if (master->send_break)
+		rc = master->send_break(master, link);
+	if (master->link_config)
 		master->link_config(master, link, 16, 16);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक fsi_master_scan(काष्ठा fsi_master *master)
-अणु
-	पूर्णांक link, rc;
+static int fsi_master_scan(struct fsi_master *master)
+{
+	int link, rc;
 
-	क्रम (link = 0; link < master->n_links; link++) अणु
+	for (link = 0; link < master->n_links; link++) {
 		rc = fsi_master_link_enable(master, link);
-		अगर (rc) अणु
+		if (rc) {
 			dev_dbg(&master->dev,
 				"enable link %d failed: %d\n", link, rc);
-			जारी;
-		पूर्ण
-		rc = fsi_master_अवरोध(master, link);
-		अगर (rc) अणु
+			continue;
+		}
+		rc = fsi_master_break(master, link);
+		if (rc) {
 			fsi_master_link_disable(master, link);
 			dev_dbg(&master->dev,
 				"break to link %d failed: %d\n", link, rc);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		rc = fsi_slave_init(master, link, 0);
-		अगर (rc)
+		if (rc)
 			fsi_master_link_disable(master, link);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक fsi_slave_हटाओ_device(काष्ठा device *dev, व्योम *arg)
-अणु
-	device_unरेजिस्टर(dev);
-	वापस 0;
-पूर्ण
+static int fsi_slave_remove_device(struct device *dev, void *arg)
+{
+	device_unregister(dev);
+	return 0;
+}
 
-अटल पूर्णांक fsi_master_हटाओ_slave(काष्ठा device *dev, व्योम *arg)
-अणु
-	काष्ठा fsi_slave *slave = to_fsi_slave(dev);
+static int fsi_master_remove_slave(struct device *dev, void *arg)
+{
+	struct fsi_slave *slave = to_fsi_slave(dev);
 
-	device_क्रम_each_child(dev, शून्य, fsi_slave_हटाओ_device);
+	device_for_each_child(dev, NULL, fsi_slave_remove_device);
 	cdev_device_del(&slave->cdev, &slave->dev);
 	put_device(dev);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम fsi_master_unscan(काष्ठा fsi_master *master)
-अणु
-	device_क्रम_each_child(&master->dev, शून्य, fsi_master_हटाओ_slave);
-पूर्ण
+static void fsi_master_unscan(struct fsi_master *master)
+{
+	device_for_each_child(&master->dev, NULL, fsi_master_remove_slave);
+}
 
-पूर्णांक fsi_master_rescan(काष्ठा fsi_master *master)
-अणु
-	पूर्णांक rc;
+int fsi_master_rescan(struct fsi_master *master)
+{
+	int rc;
 
 	mutex_lock(&master->scan_lock);
 	fsi_master_unscan(master);
 	rc = fsi_master_scan(master);
 	mutex_unlock(&master->scan_lock);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 EXPORT_SYMBOL_GPL(fsi_master_rescan);
 
-अटल sमाप_प्रकार master_rescan_store(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा fsi_master *master = to_fsi_master(dev);
-	पूर्णांक rc;
+static ssize_t master_rescan_store(struct device *dev,
+		struct device_attribute *attr, const char *buf, size_t count)
+{
+	struct fsi_master *master = to_fsi_master(dev);
+	int rc;
 
 	rc = fsi_master_rescan(master);
-	अगर (rc < 0)
-		वापस rc;
+	if (rc < 0)
+		return rc;
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल DEVICE_ATTR(rescan, 0200, शून्य, master_rescan_store);
+static DEVICE_ATTR(rescan, 0200, NULL, master_rescan_store);
 
-अटल sमाप_प्रकार master_अवरोध_store(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा fsi_master *master = to_fsi_master(dev);
+static ssize_t master_break_store(struct device *dev,
+		struct device_attribute *attr, const char *buf, size_t count)
+{
+	struct fsi_master *master = to_fsi_master(dev);
 
-	fsi_master_अवरोध(master, 0);
+	fsi_master_break(master, 0);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल DEVICE_ATTR(अवरोध, 0200, शून्य, master_अवरोध_store);
+static DEVICE_ATTR(break, 0200, NULL, master_break_store);
 
-अटल काष्ठा attribute *master_attrs[] = अणु
-	&dev_attr_अवरोध.attr,
+static struct attribute *master_attrs[] = {
+	&dev_attr_break.attr,
 	&dev_attr_rescan.attr,
-	शून्य
-पूर्ण;
+	NULL
+};
 
 ATTRIBUTE_GROUPS(master);
 
-अटल काष्ठा class fsi_master_class = अणु
+static struct class fsi_master_class = {
 	.name = "fsi-master",
 	.dev_groups = master_groups,
-पूर्ण;
+};
 
-पूर्णांक fsi_master_रेजिस्टर(काष्ठा fsi_master *master)
-अणु
-	पूर्णांक rc;
-	काष्ठा device_node *np;
+int fsi_master_register(struct fsi_master *master)
+{
+	int rc;
+	struct device_node *np;
 
 	mutex_init(&master->scan_lock);
-	master->idx = ida_simple_get(&master_ida, 0, पूर्णांक_उच्च, GFP_KERNEL);
+	master->idx = ida_simple_get(&master_ida, 0, INT_MAX, GFP_KERNEL);
 	dev_set_name(&master->dev, "fsi%d", master->idx);
 	master->dev.class = &fsi_master_class;
 
-	rc = device_रेजिस्टर(&master->dev);
-	अगर (rc) अणु
-		ida_simple_हटाओ(&master_ida, master->idx);
-		वापस rc;
-	पूर्ण
+	rc = device_register(&master->dev);
+	if (rc) {
+		ida_simple_remove(&master_ida, master->idx);
+		return rc;
+	}
 
 	np = dev_of_node(&master->dev);
-	अगर (!of_property_पढ़ो_bool(np, "no-scan-on-init")) अणु
+	if (!of_property_read_bool(np, "no-scan-on-init")) {
 		mutex_lock(&master->scan_lock);
 		fsi_master_scan(master);
 		mutex_unlock(&master->scan_lock);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(fsi_master_रेजिस्टर);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(fsi_master_register);
 
-व्योम fsi_master_unरेजिस्टर(काष्ठा fsi_master *master)
-अणु
-	अगर (master->idx >= 0) अणु
-		ida_simple_हटाओ(&master_ida, master->idx);
+void fsi_master_unregister(struct fsi_master *master)
+{
+	if (master->idx >= 0) {
+		ida_simple_remove(&master_ida, master->idx);
 		master->idx = -1;
-	पूर्ण
+	}
 
 	mutex_lock(&master->scan_lock);
 	fsi_master_unscan(master);
 	mutex_unlock(&master->scan_lock);
-	device_unरेजिस्टर(&master->dev);
-पूर्ण
-EXPORT_SYMBOL_GPL(fsi_master_unरेजिस्टर);
+	device_unregister(&master->dev);
+}
+EXPORT_SYMBOL_GPL(fsi_master_unregister);
 
 /* FSI core & Linux bus type definitions */
 
-अटल पूर्णांक fsi_bus_match(काष्ठा device *dev, काष्ठा device_driver *drv)
-अणु
-	काष्ठा fsi_device *fsi_dev = to_fsi_dev(dev);
-	काष्ठा fsi_driver *fsi_drv = to_fsi_drv(drv);
-	स्थिर काष्ठा fsi_device_id *id;
+static int fsi_bus_match(struct device *dev, struct device_driver *drv)
+{
+	struct fsi_device *fsi_dev = to_fsi_dev(dev);
+	struct fsi_driver *fsi_drv = to_fsi_drv(drv);
+	const struct fsi_device_id *id;
 
-	अगर (!fsi_drv->id_table)
-		वापस 0;
+	if (!fsi_drv->id_table)
+		return 0;
 
-	क्रम (id = fsi_drv->id_table; id->engine_type; id++) अणु
-		अगर (id->engine_type != fsi_dev->engine_type)
-			जारी;
-		अगर (id->version == FSI_VERSION_ANY ||
+	for (id = fsi_drv->id_table; id->engine_type; id++) {
+		if (id->engine_type != fsi_dev->engine_type)
+			continue;
+		if (id->version == FSI_VERSION_ANY ||
 				id->version == fsi_dev->version)
-			वापस 1;
-	पूर्ण
+			return 1;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक fsi_driver_रेजिस्टर(काष्ठा fsi_driver *fsi_drv)
-अणु
-	अगर (!fsi_drv)
-		वापस -EINVAL;
-	अगर (!fsi_drv->id_table)
-		वापस -EINVAL;
+int fsi_driver_register(struct fsi_driver *fsi_drv)
+{
+	if (!fsi_drv)
+		return -EINVAL;
+	if (!fsi_drv->id_table)
+		return -EINVAL;
 
-	वापस driver_रेजिस्टर(&fsi_drv->drv);
-पूर्ण
-EXPORT_SYMBOL_GPL(fsi_driver_रेजिस्टर);
+	return driver_register(&fsi_drv->drv);
+}
+EXPORT_SYMBOL_GPL(fsi_driver_register);
 
-व्योम fsi_driver_unरेजिस्टर(काष्ठा fsi_driver *fsi_drv)
-अणु
-	driver_unरेजिस्टर(&fsi_drv->drv);
-पूर्ण
-EXPORT_SYMBOL_GPL(fsi_driver_unरेजिस्टर);
+void fsi_driver_unregister(struct fsi_driver *fsi_drv)
+{
+	driver_unregister(&fsi_drv->drv);
+}
+EXPORT_SYMBOL_GPL(fsi_driver_unregister);
 
-काष्ठा bus_type fsi_bus_type = अणु
+struct bus_type fsi_bus_type = {
 	.name		= "fsi",
 	.match		= fsi_bus_match,
-पूर्ण;
+};
 EXPORT_SYMBOL_GPL(fsi_bus_type);
 
-अटल पूर्णांक __init fsi_init(व्योम)
-अणु
-	पूर्णांक rc;
+static int __init fsi_init(void)
+{
+	int rc;
 
-	rc = alloc_chrdev_region(&fsi_base_dev, 0, FSI_अक्षर_उच्च_DEVICES, "fsi");
-	अगर (rc)
-		वापस rc;
-	rc = bus_रेजिस्टर(&fsi_bus_type);
-	अगर (rc)
-		जाओ fail_bus;
+	rc = alloc_chrdev_region(&fsi_base_dev, 0, FSI_CHAR_MAX_DEVICES, "fsi");
+	if (rc)
+		return rc;
+	rc = bus_register(&fsi_bus_type);
+	if (rc)
+		goto fail_bus;
 
-	rc = class_रेजिस्टर(&fsi_master_class);
-	अगर (rc)
-		जाओ fail_class;
+	rc = class_register(&fsi_master_class);
+	if (rc)
+		goto fail_class;
 
-	वापस 0;
+	return 0;
 
  fail_class:
-	bus_unरेजिस्टर(&fsi_bus_type);
+	bus_unregister(&fsi_bus_type);
  fail_bus:
-	unरेजिस्टर_chrdev_region(fsi_base_dev, FSI_अक्षर_उच्च_DEVICES);
-	वापस rc;
-पूर्ण
+	unregister_chrdev_region(fsi_base_dev, FSI_CHAR_MAX_DEVICES);
+	return rc;
+}
 postcore_initcall(fsi_init);
 
-अटल व्योम fsi_निकास(व्योम)
-अणु
-	class_unरेजिस्टर(&fsi_master_class);
-	bus_unरेजिस्टर(&fsi_bus_type);
-	unरेजिस्टर_chrdev_region(fsi_base_dev, FSI_अक्षर_उच्च_DEVICES);
+static void fsi_exit(void)
+{
+	class_unregister(&fsi_master_class);
+	bus_unregister(&fsi_bus_type);
+	unregister_chrdev_region(fsi_base_dev, FSI_CHAR_MAX_DEVICES);
 	ida_destroy(&fsi_minor_ida);
-पूर्ण
-module_निकास(fsi_निकास);
-module_param(discard_errors, पूर्णांक, 0664);
+}
+module_exit(fsi_exit);
+module_param(discard_errors, int, 0664);
 MODULE_LICENSE("GPL");
 MODULE_PARM_DESC(discard_errors, "Don't invoke error handling on bus accesses");

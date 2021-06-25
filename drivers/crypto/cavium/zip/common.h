@@ -1,4 +1,3 @@
-<शैली गुरु>
 /***********************license start************************************
  * Copyright (c) 2003-2017 Cavium, Inc.
  * All rights reserved.
@@ -8,23 +7,23 @@
  * This file is provided under the terms of the Cavium License (see below)
  * or under the terms of GNU General Public License, Version 2, as
  * published by the Free Software Foundation. When using or redistributing
- * this file, you may करो so under either license.
+ * this file, you may do so under either license.
  *
- * Cavium License:  Redistribution and use in source and binary क्रमms, with
- * or without modअगरication, are permitted provided that the following
+ * Cavium License:  Redistribution and use in source and binary forms, with
+ * or without modification, are permitted provided that the following
  * conditions are met:
  *
  *  * Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
  *
- *  * Redistributions in binary क्रमm must reproduce the above
+ *  * Redistributions in binary form must reproduce the above
  *    copyright notice, this list of conditions and the following
- *    disclaimer in the करोcumentation and/or other materials provided
+ *    disclaimer in the documentation and/or other materials provided
  *    with the distribution.
  *
  *  * Neither the name of Cavium Inc. nor the names of its contributors may be
- *    used to enकरोrse or promote products derived from this software without
- *    specअगरic prior written permission.
+ *    used to endorse or promote products derived from this software without
+ *    specific prior written permission.
  *
  * This Software, including technical data, may be subject to U.S. export
  * control laws, including the U.S. Export Administration Act and its
@@ -44,82 +43,82 @@
  * WITH YOU.
  ***********************license end**************************************/
 
-#अगर_अघोषित __COMMON_H__
-#घोषणा __COMMON_H__
+#ifndef __COMMON_H__
+#define __COMMON_H__
 
-#समावेश <linux/delay.h>
-#समावेश <linux/init.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/seq_file.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/types.h>
+#include <linux/delay.h>
+#include <linux/init.h>
+#include <linux/interrupt.h>
+#include <linux/io.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/pci.h>
+#include <linux/seq_file.h>
+#include <linux/string.h>
+#include <linux/types.h>
 
-/* Device specअगरic zlib function definitions */
-#समावेश "zip_device.h"
+/* Device specific zlib function definitions */
+#include "zip_device.h"
 
 /* ZIP device definitions */
-#समावेश "zip_main.h"
+#include "zip_main.h"
 
 /* ZIP memory allocation/deallocation related definitions */
-#समावेश "zip_mem.h"
+#include "zip_mem.h"
 
-/* Device specअगरic काष्ठाure definitions */
-#समावेश "zip_regs.h"
+/* Device specific structure definitions */
+#include "zip_regs.h"
 
-#घोषणा ZIP_ERROR    -1
+#define ZIP_ERROR    -1
 
-#घोषणा ZIP_FLUSH_FINISH  4
+#define ZIP_FLUSH_FINISH  4
 
-#घोषणा RAW_FORMAT		0  /* क्रम rawpipe */
-#घोषणा ZLIB_FORMAT		1  /* क्रम zpipe */
-#घोषणा GZIP_FORMAT		2  /* क्रम gzpipe */
-#घोषणा LZS_FORMAT		3  /* क्रम lzspipe */
+#define RAW_FORMAT		0  /* for rawpipe */
+#define ZLIB_FORMAT		1  /* for zpipe */
+#define GZIP_FORMAT		2  /* for gzpipe */
+#define LZS_FORMAT		3  /* for lzspipe */
 
 /* Max number of ZIP devices supported */
-#घोषणा MAX_ZIP_DEVICES		2
+#define MAX_ZIP_DEVICES		2
 
 /* Configures the number of zip queues to be used */
-#घोषणा ZIP_NUM_QUEUES		2
+#define ZIP_NUM_QUEUES		2
 
-#घोषणा DYNAMIC_STOP_EXCESS	1024
+#define DYNAMIC_STOP_EXCESS	1024
 
 /* Maximum buffer sizes in direct mode */
-#घोषणा MAX_INPUT_BUFFER_SIZE   (64 * 1024)
-#घोषणा MAX_OUTPUT_BUFFER_SIZE  (64 * 1024)
+#define MAX_INPUT_BUFFER_SIZE   (64 * 1024)
+#define MAX_OUTPUT_BUFFER_SIZE  (64 * 1024)
 
 /**
- * काष्ठा zip_operation - common data काष्ठाure क्रम comp and decomp operations
- * @input:               Next input byte is पढ़ो from here
+ * struct zip_operation - common data structure for comp and decomp operations
+ * @input:               Next input byte is read from here
  * @output:              Next output byte written here
  * @ctx_addr:            Inflate context buffer address
- * @history:             Poपूर्णांकer to the history buffer
+ * @history:             Pointer to the history buffer
  * @input_len:           Number of bytes available at next_in
- * @input_total_len:     Total number of input bytes पढ़ो
- * @output_len:          Reमुख्यing मुक्त space at next_out
+ * @input_total_len:     Total number of input bytes read
+ * @output_len:          Remaining free space at next_out
  * @output_total_len:    Total number of bytes output so far
  * @csum:                Checksum value of the uncompressed data
  * @flush:               Flush flag
- * @क्रमmat:              Format (depends on stream's wrap)
+ * @format:              Format (depends on stream's wrap)
  * @speed:               Speed depends on stream's level
  * @ccode:               Compression code ( stream's strategy)
- * @lzs_flag:            Flag क्रम LZS support
- * @begin_file:          Beginning of file indication क्रम inflate
+ * @lzs_flag:            Flag for LZS support
+ * @begin_file:          Beginning of file indication for inflate
  * @history_len:         Size of the history data
- * @end_file:            Ending of the file indication क्रम inflate
+ * @end_file:            Ending of the file indication for inflate
  * @compcode:            Completion status of the ZIP invocation
- * @bytes_पढ़ो:          Input bytes पढ़ो in current inकाष्ठाion
- * @bits_processed:      Total bits processed क्रम entire file
- * @मापptr:           To distinguish between ILP32 and LP64
- * @मापzops:          Optional just क्रम padding
+ * @bytes_read:          Input bytes read in current instruction
+ * @bits_processed:      Total bits processed for entire file
+ * @sizeofptr:           To distinguish between ILP32 and LP64
+ * @sizeofzops:          Optional just for padding
  *
- * This काष्ठाure is used to मुख्यtain the required meta data क्रम the
+ * This structure is used to maintain the required meta data for the
  * comp and decomp operations.
  */
-काष्ठा zip_operation अणु
+struct zip_operation {
 	u8    *input;
 	u8    *output;
 	u64   ctx_addr;
@@ -134,7 +133,7 @@
 	u32   csum;
 	u32   flush;
 
-	u32   क्रमmat;
+	u32   format;
 	u32   speed;
 	u32   ccode;
 	u32   lzs_flag;
@@ -144,80 +143,80 @@
 
 	u32   end_file;
 	u32   compcode;
-	u32   bytes_पढ़ो;
+	u32   bytes_read;
 	u32   bits_processed;
 
-	u32   मापptr;
-	u32   मापzops;
-पूर्ण;
+	u32   sizeofptr;
+	u32   sizeofzops;
+};
 
-अटल अंतरभूत पूर्णांक zip_poll_result(जोड़ zip_zres_s *result)
-अणु
-	पूर्णांक retries = 1000;
+static inline int zip_poll_result(union zip_zres_s *result)
+{
+	int retries = 1000;
 
-	जबतक (!result->s.compcode) अणु
-		अगर (!--retries) अणु
+	while (!result->s.compcode) {
+		if (!--retries) {
 			pr_err("ZIP ERR: request timed out");
-			वापस -ETIMEDOUT;
-		पूर्ण
+			return -ETIMEDOUT;
+		}
 		udelay(10);
 		/*
-		 * Force re-पढ़ोing of compcode which is updated
+		 * Force re-reading of compcode which is updated
 		 * by the ZIP coprocessor.
 		 */
 		rmb();
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
 /* error messages */
-#घोषणा zip_err(fmt, args...) pr_err("ZIP ERR:%s():%d: " \
+#define zip_err(fmt, args...) pr_err("ZIP ERR:%s():%d: " \
 			      fmt "\n", __func__, __LINE__, ## args)
 
-#अगर_घोषित MSG_ENABLE
+#ifdef MSG_ENABLE
 /* Enable all messages */
-#घोषणा zip_msg(fmt, args...) pr_info("ZIP_MSG:" fmt "\n", ## args)
-#अन्यथा
-#घोषणा zip_msg(fmt, args...)
-#पूर्ण_अगर
+#define zip_msg(fmt, args...) pr_info("ZIP_MSG:" fmt "\n", ## args)
+#else
+#define zip_msg(fmt, args...)
+#endif
 
-#अगर defined(ZIP_DEBUG_ENABLE) && defined(MSG_ENABLE)
+#if defined(ZIP_DEBUG_ENABLE) && defined(MSG_ENABLE)
 
-#अगर_घोषित DEBUG_LEVEL
+#ifdef DEBUG_LEVEL
 
-#घोषणा खाता_NAME (म_खोजप(__खाता__, '/') ? strrchr(__FILE__, '/') + 1 : \
-	म_खोजप(__खाता__, '\\') ? strrchr(__FILE__, '\\') + 1 : __खाता__)
+#define FILE_NAME (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : \
+	strrchr(__FILE__, '\\') ? strrchr(__FILE__, '\\') + 1 : __FILE__)
 
-#अगर DEBUG_LEVEL >= 4
+#if DEBUG_LEVEL >= 4
 
-#घोषणा zip_dbg(fmt, args...) pr_info("ZIP DBG: %s: %s() : %d: " \
-			      fmt "\n", खाता_NAME, __func__, __LINE__, ## args)
+#define zip_dbg(fmt, args...) pr_info("ZIP DBG: %s: %s() : %d: " \
+			      fmt "\n", FILE_NAME, __func__, __LINE__, ## args)
 
-#या_अगर DEBUG_LEVEL >= 3
+#elif DEBUG_LEVEL >= 3
 
-#घोषणा zip_dbg(fmt, args...) pr_info("ZIP DBG: %s: %s() : %d: " \
-			      fmt "\n", खाता_NAME, __func__, __LINE__, ## args)
+#define zip_dbg(fmt, args...) pr_info("ZIP DBG: %s: %s() : %d: " \
+			      fmt "\n", FILE_NAME, __func__, __LINE__, ## args)
 
-#या_अगर DEBUG_LEVEL >= 2
+#elif DEBUG_LEVEL >= 2
 
-#घोषणा zip_dbg(fmt, args...) pr_info("ZIP DBG: %s() : %d: " \
+#define zip_dbg(fmt, args...) pr_info("ZIP DBG: %s() : %d: " \
 			      fmt "\n", __func__, __LINE__, ## args)
 
-#अन्यथा
+#else
 
-#घोषणा zip_dbg(fmt, args...) pr_info("ZIP DBG:" fmt "\n", ## args)
+#define zip_dbg(fmt, args...) pr_info("ZIP DBG:" fmt "\n", ## args)
 
-#पूर्ण_अगर /* DEBUG LEVEL >=4 */
+#endif /* DEBUG LEVEL >=4 */
 
-#अन्यथा
+#else
 
-#घोषणा zip_dbg(fmt, args...) pr_info("ZIP DBG:" fmt "\n", ## args)
+#define zip_dbg(fmt, args...) pr_info("ZIP DBG:" fmt "\n", ## args)
 
-#पूर्ण_अगर /* DEBUG_LEVEL */
-#अन्यथा
+#endif /* DEBUG_LEVEL */
+#else
 
-#घोषणा zip_dbg(fmt, args...)
+#define zip_dbg(fmt, args...)
 
-#पूर्ण_अगर /* ZIP_DEBUG_ENABLE && MSG_ENABLE*/
+#endif /* ZIP_DEBUG_ENABLE && MSG_ENABLE*/
 
-#पूर्ण_अगर
+#endif

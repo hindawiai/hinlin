@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * dvb_ca.c: generic DVB functions क्रम EN50221 CAM पूर्णांकerfaces
+ * dvb_ca.c: generic DVB functions for EN50221 CAM interfaces
  *
  * Copyright (C) 2004 Andrew de Quincey
  *
@@ -12,183 +11,183 @@
  * based on code:
  *
  * Copyright (C) 1999-2002 Ralph  Metzler
- *                       & Marcus Metzler क्रम convergence पूर्णांकegrated media GmbH
+ *                       & Marcus Metzler for convergence integrated media GmbH
  */
 
-#घोषणा pr_fmt(fmt) "dvb_ca_en50221: " fmt
+#define pr_fmt(fmt) "dvb_ca_en50221: " fmt
 
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/slab.h>
-#समावेश <linux/list.h>
-#समावेश <linux/module.h>
-#समावेश <linux/nospec.h>
-#समावेश <linux/vदो_स्मृति.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/sched/संकेत.स>
-#समावेश <linux/kthपढ़ो.h>
+#include <linux/errno.h>
+#include <linux/slab.h>
+#include <linux/list.h>
+#include <linux/module.h>
+#include <linux/nospec.h>
+#include <linux/vmalloc.h>
+#include <linux/delay.h>
+#include <linux/spinlock.h>
+#include <linux/sched/signal.h>
+#include <linux/kthread.h>
 
-#समावेश <media/dvb_ca_en50221.h>
-#समावेश <media/dvb_ringbuffer.h>
+#include <media/dvb_ca_en50221.h>
+#include <media/dvb_ringbuffer.h>
 
-अटल पूर्णांक dvb_ca_en50221_debug;
+static int dvb_ca_en50221_debug;
 
-module_param_named(cam_debug, dvb_ca_en50221_debug, पूर्णांक, 0644);
+module_param_named(cam_debug, dvb_ca_en50221_debug, int, 0644);
 MODULE_PARM_DESC(cam_debug, "enable verbose debug messages");
 
-#घोषणा dprपूर्णांकk(fmt, arg...) करो अणु					\
-	अगर (dvb_ca_en50221_debug)					\
-		prपूर्णांकk(KERN_DEBUG pr_fmt("%s: " fmt), __func__, ##arg);\
-पूर्ण जबतक (0)
+#define dprintk(fmt, arg...) do {					\
+	if (dvb_ca_en50221_debug)					\
+		printk(KERN_DEBUG pr_fmt("%s: " fmt), __func__, ##arg);\
+} while (0)
 
-#घोषणा INIT_TIMEOUT_SECS 10
+#define INIT_TIMEOUT_SECS 10
 
-#घोषणा HOST_LINK_BUF_SIZE 0x200
+#define HOST_LINK_BUF_SIZE 0x200
 
-#घोषणा RX_BUFFER_SIZE 65535
+#define RX_BUFFER_SIZE 65535
 
-#घोषणा MAX_RX_PACKETS_PER_ITERATION 10
+#define MAX_RX_PACKETS_PER_ITERATION 10
 
-#घोषणा CTRLIF_DATA      0
-#घोषणा CTRLIF_COMMAND   1
-#घोषणा CTRLIF_STATUS    1
-#घोषणा CTRLIF_SIZE_LOW  2
-#घोषणा CTRLIF_SIZE_HIGH 3
+#define CTRLIF_DATA      0
+#define CTRLIF_COMMAND   1
+#define CTRLIF_STATUS    1
+#define CTRLIF_SIZE_LOW  2
+#define CTRLIF_SIZE_HIGH 3
 
-#घोषणा CMDREG_HC        1	/* Host control */
-#घोषणा CMDREG_SW        2	/* Size ग_लिखो */
-#घोषणा CMDREG_SR        4	/* Size पढ़ो */
-#घोषणा CMDREG_RS        8	/* Reset पूर्णांकerface */
-#घोषणा CMDREG_FRIE   0x40	/* Enable FR पूर्णांकerrupt */
-#घोषणा CMDREG_DAIE   0x80	/* Enable DA पूर्णांकerrupt */
-#घोषणा IRQEN (CMDREG_DAIE)
+#define CMDREG_HC        1	/* Host control */
+#define CMDREG_SW        2	/* Size write */
+#define CMDREG_SR        4	/* Size read */
+#define CMDREG_RS        8	/* Reset interface */
+#define CMDREG_FRIE   0x40	/* Enable FR interrupt */
+#define CMDREG_DAIE   0x80	/* Enable DA interrupt */
+#define IRQEN (CMDREG_DAIE)
 
-#घोषणा STATUSREG_RE     1	/* पढ़ो error */
-#घोषणा STATUSREG_WE     2	/* ग_लिखो error */
-#घोषणा STATUSREG_FR  0x40	/* module मुक्त */
-#घोषणा STATUSREG_DA  0x80	/* data available */
+#define STATUSREG_RE     1	/* read error */
+#define STATUSREG_WE     2	/* write error */
+#define STATUSREG_FR  0x40	/* module free */
+#define STATUSREG_DA  0x80	/* data available */
 
-#घोषणा DVB_CA_SLOTSTATE_NONE           0
-#घोषणा DVB_CA_SLOTSTATE_UNINITIALISED  1
-#घोषणा DVB_CA_SLOTSTATE_RUNNING        2
-#घोषणा DVB_CA_SLOTSTATE_INVALID        3
-#घोषणा DVB_CA_SLOTSTATE_WAITREADY      4
-#घोषणा DVB_CA_SLOTSTATE_VALIDATE       5
-#घोषणा DVB_CA_SLOTSTATE_WAITFR         6
-#घोषणा DVB_CA_SLOTSTATE_LINKINIT       7
+#define DVB_CA_SLOTSTATE_NONE           0
+#define DVB_CA_SLOTSTATE_UNINITIALISED  1
+#define DVB_CA_SLOTSTATE_RUNNING        2
+#define DVB_CA_SLOTSTATE_INVALID        3
+#define DVB_CA_SLOTSTATE_WAITREADY      4
+#define DVB_CA_SLOTSTATE_VALIDATE       5
+#define DVB_CA_SLOTSTATE_WAITFR         6
+#define DVB_CA_SLOTSTATE_LINKINIT       7
 
-/* Inक्रमmation on a CA slot */
-काष्ठा dvb_ca_slot अणु
+/* Information on a CA slot */
+struct dvb_ca_slot {
 	/* current state of the CAM */
-	पूर्णांक slot_state;
+	int slot_state;
 
-	/* mutex used क्रम serializing access to one CI slot */
-	काष्ठा mutex slot_lock;
+	/* mutex used for serializing access to one CI slot */
+	struct mutex slot_lock;
 
 	/* Number of CAMCHANGES that have occurred since last processing */
 	atomic_t camchange_count;
 
 	/* Type of last CAMCHANGE */
-	पूर्णांक camchange_type;
+	int camchange_type;
 
 	/* base address of CAM config */
 	u32 config_base;
 
-	/* value to ग_लिखो पूर्णांकo Config Control रेजिस्टर */
+	/* value to write into Config Control register */
 	u8 config_option;
 
-	/* अगर 1, the CAM supports DA IRQs */
+	/* if 1, the CAM supports DA IRQs */
 	u8 da_irq_supported:1;
 
 	/* size of the buffer to use when talking to the CAM */
-	पूर्णांक link_buf_size;
+	int link_buf_size;
 
-	/* buffer क्रम incoming packets */
-	काष्ठा dvb_ringbuffer rx_buffer;
+	/* buffer for incoming packets */
+	struct dvb_ringbuffer rx_buffer;
 
-	/* समयr used during various states of the slot */
-	अचिन्हित दीर्घ समयout;
-पूर्ण;
+	/* timer used during various states of the slot */
+	unsigned long timeout;
+};
 
-/* Private CA-पूर्णांकerface inक्रमmation */
-काष्ठा dvb_ca_निजी अणु
-	काष्ठा kref refcount;
+/* Private CA-interface information */
+struct dvb_ca_private {
+	struct kref refcount;
 
-	/* poपूर्णांकer back to the खुला data काष्ठाure */
-	काष्ठा dvb_ca_en50221 *pub;
+	/* pointer back to the public data structure */
+	struct dvb_ca_en50221 *pub;
 
 	/* the DVB device */
-	काष्ठा dvb_device *dvbdev;
+	struct dvb_device *dvbdev;
 
-	/* Flags describing the पूर्णांकerface (DVB_CA_FLAG_*) */
+	/* Flags describing the interface (DVB_CA_FLAG_*) */
 	u32 flags;
 
-	/* number of slots supported by this CA पूर्णांकerface */
-	अचिन्हित पूर्णांक slot_count;
+	/* number of slots supported by this CA interface */
+	unsigned int slot_count;
 
-	/* inक्रमmation on each slot */
-	काष्ठा dvb_ca_slot *slot_info;
+	/* information on each slot */
+	struct dvb_ca_slot *slot_info;
 
-	/* रुको queues क्रम पढ़ो() and ग_लिखो() operations */
-	रुको_queue_head_t रुको_queue;
+	/* wait queues for read() and write() operations */
+	wait_queue_head_t wait_queue;
 
-	/* PID of the monitoring thपढ़ो */
-	काष्ठा task_काष्ठा *thपढ़ो;
+	/* PID of the monitoring thread */
+	struct task_struct *thread;
 
-	/* Flag indicating अगर the CA device is खोलो */
-	अचिन्हित पूर्णांक खोलो:1;
+	/* Flag indicating if the CA device is open */
+	unsigned int open:1;
 
-	/* Flag indicating the thपढ़ो should wake up now */
-	अचिन्हित पूर्णांक wakeup:1;
+	/* Flag indicating the thread should wake up now */
+	unsigned int wakeup:1;
 
-	/* Delay the मुख्य thपढ़ो should use */
-	अचिन्हित दीर्घ delay;
+	/* Delay the main thread should use */
+	unsigned long delay;
 
 	/*
-	 * Slot to start looking क्रम data to पढ़ो from in the next user-space
-	 * पढ़ो operation
+	 * Slot to start looking for data to read from in the next user-space
+	 * read operation
 	 */
-	पूर्णांक next_पढ़ो_slot;
+	int next_read_slot;
 
 	/* mutex serializing ioctls */
-	काष्ठा mutex ioctl_mutex;
-पूर्ण;
+	struct mutex ioctl_mutex;
+};
 
-अटल व्योम dvb_ca_निजी_मुक्त(काष्ठा dvb_ca_निजी *ca)
-अणु
-	अचिन्हित पूर्णांक i;
+static void dvb_ca_private_free(struct dvb_ca_private *ca)
+{
+	unsigned int i;
 
-	dvb_मुक्त_device(ca->dvbdev);
-	क्रम (i = 0; i < ca->slot_count; i++)
-		vमुक्त(ca->slot_info[i].rx_buffer.data);
+	dvb_free_device(ca->dvbdev);
+	for (i = 0; i < ca->slot_count; i++)
+		vfree(ca->slot_info[i].rx_buffer.data);
 
-	kमुक्त(ca->slot_info);
-	kमुक्त(ca);
-पूर्ण
+	kfree(ca->slot_info);
+	kfree(ca);
+}
 
-अटल व्योम dvb_ca_निजी_release(काष्ठा kref *ref)
-अणु
-	काष्ठा dvb_ca_निजी *ca;
+static void dvb_ca_private_release(struct kref *ref)
+{
+	struct dvb_ca_private *ca;
 
-	ca = container_of(ref, काष्ठा dvb_ca_निजी, refcount);
-	dvb_ca_निजी_मुक्त(ca);
-पूर्ण
+	ca = container_of(ref, struct dvb_ca_private, refcount);
+	dvb_ca_private_free(ca);
+}
 
-अटल व्योम dvb_ca_निजी_get(काष्ठा dvb_ca_निजी *ca)
-अणु
+static void dvb_ca_private_get(struct dvb_ca_private *ca)
+{
 	kref_get(&ca->refcount);
-पूर्ण
+}
 
-अटल व्योम dvb_ca_निजी_put(काष्ठा dvb_ca_निजी *ca)
-अणु
-	kref_put(&ca->refcount, dvb_ca_निजी_release);
-पूर्ण
+static void dvb_ca_private_put(struct dvb_ca_private *ca)
+{
+	kref_put(&ca->refcount, dvb_ca_private_release);
+}
 
-अटल व्योम dvb_ca_en50221_thपढ़ो_wakeup(काष्ठा dvb_ca_निजी *ca);
-अटल पूर्णांक dvb_ca_en50221_पढ़ो_data(काष्ठा dvb_ca_निजी *ca, पूर्णांक slot,
-				    u8 *ebuf, पूर्णांक ecount);
-अटल पूर्णांक dvb_ca_en50221_ग_लिखो_data(काष्ठा dvb_ca_निजी *ca, पूर्णांक slot,
-				     u8 *ebuf, पूर्णांक ecount);
+static void dvb_ca_en50221_thread_wakeup(struct dvb_ca_private *ca);
+static int dvb_ca_en50221_read_data(struct dvb_ca_private *ca, int slot,
+				    u8 *ebuf, int ecount);
+static int dvb_ca_en50221_write_data(struct dvb_ca_private *ca, int slot,
+				     u8 *ebuf, int ecount);
 
 /**
  * findstr - Safely find needle in haystack.
@@ -197,118 +196,118 @@ MODULE_PARM_DESC(cam_debug, "enable verbose debug messages");
  * @hlen: Number of bytes in haystack.
  * @needle: Buffer to find.
  * @nlen: Number of bytes in needle.
- * वापस: Poपूर्णांकer पूर्णांकo haystack needle was found at, or शून्य अगर not found.
+ * return: Pointer into haystack needle was found at, or NULL if not found.
  */
-अटल अक्षर *findstr(अक्षर *haystack, पूर्णांक hlen, अक्षर *needle, पूर्णांक nlen)
-अणु
-	पूर्णांक i;
+static char *findstr(char *haystack, int hlen, char *needle, int nlen)
+{
+	int i;
 
-	अगर (hlen < nlen)
-		वापस शून्य;
+	if (hlen < nlen)
+		return NULL;
 
-	क्रम (i = 0; i <= hlen - nlen; i++) अणु
-		अगर (!म_भेदन(haystack + i, needle, nlen))
-			वापस haystack + i;
-	पूर्ण
+	for (i = 0; i <= hlen - nlen; i++) {
+		if (!strncmp(haystack + i, needle, nlen))
+			return haystack + i;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
 /* ************************************************************************** */
-/* EN50221 physical पूर्णांकerface functions */
+/* EN50221 physical interface functions */
 
 /*
  * dvb_ca_en50221_check_camstatus - Check CAM status.
  */
-अटल पूर्णांक dvb_ca_en50221_check_camstatus(काष्ठा dvb_ca_निजी *ca, पूर्णांक slot)
-अणु
-	काष्ठा dvb_ca_slot *sl = &ca->slot_info[slot];
-	पूर्णांक slot_status;
-	पूर्णांक cam_present_now;
-	पूर्णांक cam_changed;
+static int dvb_ca_en50221_check_camstatus(struct dvb_ca_private *ca, int slot)
+{
+	struct dvb_ca_slot *sl = &ca->slot_info[slot];
+	int slot_status;
+	int cam_present_now;
+	int cam_changed;
 
 	/* IRQ mode */
-	अगर (ca->flags & DVB_CA_EN50221_FLAG_IRQ_CAMCHANGE)
-		वापस (atomic_पढ़ो(&sl->camchange_count) != 0);
+	if (ca->flags & DVB_CA_EN50221_FLAG_IRQ_CAMCHANGE)
+		return (atomic_read(&sl->camchange_count) != 0);
 
 	/* poll mode */
-	slot_status = ca->pub->poll_slot_status(ca->pub, slot, ca->खोलो);
+	slot_status = ca->pub->poll_slot_status(ca->pub, slot, ca->open);
 
 	cam_present_now = (slot_status & DVB_CA_EN50221_POLL_CAM_PRESENT) ? 1 : 0;
 	cam_changed = (slot_status & DVB_CA_EN50221_POLL_CAM_CHANGED) ? 1 : 0;
-	अगर (!cam_changed) अणु
-		पूर्णांक cam_present_old = (sl->slot_state != DVB_CA_SLOTSTATE_NONE);
+	if (!cam_changed) {
+		int cam_present_old = (sl->slot_state != DVB_CA_SLOTSTATE_NONE);
 
 		cam_changed = (cam_present_now != cam_present_old);
-	पूर्ण
+	}
 
-	अगर (cam_changed) अणु
-		अगर (!cam_present_now)
+	if (cam_changed) {
+		if (!cam_present_now)
 			sl->camchange_type = DVB_CA_EN50221_CAMCHANGE_REMOVED;
-		अन्यथा
+		else
 			sl->camchange_type = DVB_CA_EN50221_CAMCHANGE_INSERTED;
 		atomic_set(&sl->camchange_count, 1);
-	पूर्ण अन्यथा अणु
-		अगर ((sl->slot_state == DVB_CA_SLOTSTATE_WAITREADY) &&
-		    (slot_status & DVB_CA_EN50221_POLL_CAM_READY)) अणु
-			/* move to validate state अगर reset is completed */
+	} else {
+		if ((sl->slot_state == DVB_CA_SLOTSTATE_WAITREADY) &&
+		    (slot_status & DVB_CA_EN50221_POLL_CAM_READY)) {
+			/* move to validate state if reset is completed */
 			sl->slot_state = DVB_CA_SLOTSTATE_VALIDATE;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस cam_changed;
-पूर्ण
+	return cam_changed;
+}
 
 /**
- * dvb_ca_en50221_रुको_अगर_status - Wait क्रम flags to become set on the STATUS
- *	 रेजिस्टर on a CAM पूर्णांकerface, checking क्रम errors and समयout.
+ * dvb_ca_en50221_wait_if_status - Wait for flags to become set on the STATUS
+ *	 register on a CAM interface, checking for errors and timeout.
  *
  * @ca: CA instance.
- * @slot: Slot on पूर्णांकerface.
- * @रुकोक्रम: Flags to रुको क्रम.
- * @समयout_hz: Timeout in milliseconds.
+ * @slot: Slot on interface.
+ * @waitfor: Flags to wait for.
+ * @timeout_hz: Timeout in milliseconds.
  *
- * वापस: 0 on success, nonzero on error.
+ * return: 0 on success, nonzero on error.
  */
-अटल पूर्णांक dvb_ca_en50221_रुको_अगर_status(काष्ठा dvb_ca_निजी *ca, पूर्णांक slot,
-					 u8 रुकोक्रम, पूर्णांक समयout_hz)
-अणु
-	अचिन्हित दीर्घ समयout;
-	अचिन्हित दीर्घ start;
+static int dvb_ca_en50221_wait_if_status(struct dvb_ca_private *ca, int slot,
+					 u8 waitfor, int timeout_hz)
+{
+	unsigned long timeout;
+	unsigned long start;
 
-	dprपूर्णांकk("%s\n", __func__);
+	dprintk("%s\n", __func__);
 
-	/* loop until समयout elapsed */
-	start = jअगरfies;
-	समयout = jअगरfies + समयout_hz;
-	जबतक (1) अणु
-		पूर्णांक res;
+	/* loop until timeout elapsed */
+	start = jiffies;
+	timeout = jiffies + timeout_hz;
+	while (1) {
+		int res;
 
-		/* पढ़ो the status and check क्रम error */
-		res = ca->pub->पढ़ो_cam_control(ca->pub, slot, CTRLIF_STATUS);
-		अगर (res < 0)
-			वापस -EIO;
+		/* read the status and check for error */
+		res = ca->pub->read_cam_control(ca->pub, slot, CTRLIF_STATUS);
+		if (res < 0)
+			return -EIO;
 
-		/* अगर we got the flags, it was successful! */
-		अगर (res & रुकोक्रम) अणु
-			dprपूर्णांकk("%s succeeded timeout:%lu\n",
-				__func__, jअगरfies - start);
-			वापस 0;
-		पूर्ण
+		/* if we got the flags, it was successful! */
+		if (res & waitfor) {
+			dprintk("%s succeeded timeout:%lu\n",
+				__func__, jiffies - start);
+			return 0;
+		}
 
-		/* check क्रम समयout */
-		अगर (समय_after(jअगरfies, समयout))
-			अवरोध;
+		/* check for timeout */
+		if (time_after(jiffies, timeout))
+			break;
 
-		/* रुको क्रम a bit */
+		/* wait for a bit */
 		usleep_range(1000, 1100);
-	पूर्ण
+	}
 
-	dprपूर्णांकk("%s failed timeout:%lu\n", __func__, jअगरfies - start);
+	dprintk("%s failed timeout:%lu\n", __func__, jiffies - start);
 
-	/* अगर we get here, we've समयd out */
-	वापस -ETIMEDOUT;
-पूर्ण
+	/* if we get here, we've timed out */
+	return -ETIMEDOUT;
+}
 
 /**
  * dvb_ca_en50221_link_init - Initialise the link layer connection to a CAM.
@@ -316,16 +315,16 @@ MODULE_PARM_DESC(cam_debug, "enable verbose debug messages");
  * @ca: CA instance.
  * @slot: Slot id.
  *
- * वापस: 0 on success, nonzero on failure.
+ * return: 0 on success, nonzero on failure.
  */
-अटल पूर्णांक dvb_ca_en50221_link_init(काष्ठा dvb_ca_निजी *ca, पूर्णांक slot)
-अणु
-	काष्ठा dvb_ca_slot *sl = &ca->slot_info[slot];
-	पूर्णांक ret;
-	पूर्णांक buf_size;
+static int dvb_ca_en50221_link_init(struct dvb_ca_private *ca, int slot)
+{
+	struct dvb_ca_slot *sl = &ca->slot_info[slot];
+	int ret;
+	int buf_size;
 	u8 buf[2];
 
-	dprपूर्णांकk("%s\n", __func__);
+	dprintk("%s\n", __func__);
 
 	/* we'll be determining these during this function */
 	sl->da_irq_supported = 0;
@@ -336,256 +335,256 @@ MODULE_PARM_DESC(cam_debug, "enable verbose debug messages");
 	 */
 	sl->link_buf_size = 2;
 
-	/* पढ़ो the buffer size from the CAM */
-	ret = ca->pub->ग_लिखो_cam_control(ca->pub, slot, CTRLIF_COMMAND,
+	/* read the buffer size from the CAM */
+	ret = ca->pub->write_cam_control(ca->pub, slot, CTRLIF_COMMAND,
 					 IRQEN | CMDREG_SR);
-	अगर (ret)
-		वापस ret;
-	ret = dvb_ca_en50221_रुको_अगर_status(ca, slot, STATUSREG_DA, HZ);
-	अगर (ret)
-		वापस ret;
-	ret = dvb_ca_en50221_पढ़ो_data(ca, slot, buf, 2);
-	अगर (ret != 2)
-		वापस -EIO;
-	ret = ca->pub->ग_लिखो_cam_control(ca->pub, slot, CTRLIF_COMMAND, IRQEN);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
+	ret = dvb_ca_en50221_wait_if_status(ca, slot, STATUSREG_DA, HZ);
+	if (ret)
+		return ret;
+	ret = dvb_ca_en50221_read_data(ca, slot, buf, 2);
+	if (ret != 2)
+		return -EIO;
+	ret = ca->pub->write_cam_control(ca->pub, slot, CTRLIF_COMMAND, IRQEN);
+	if (ret)
+		return ret;
 
 	/*
 	 * store it, and choose the minimum of our buffer and the CAM's buffer
 	 * size
 	 */
 	buf_size = (buf[0] << 8) | buf[1];
-	अगर (buf_size > HOST_LINK_BUF_SIZE)
+	if (buf_size > HOST_LINK_BUF_SIZE)
 		buf_size = HOST_LINK_BUF_SIZE;
 	sl->link_buf_size = buf_size;
 	buf[0] = buf_size >> 8;
 	buf[1] = buf_size & 0xff;
-	dprपूर्णांकk("Chosen link buffer size of %i\n", buf_size);
+	dprintk("Chosen link buffer size of %i\n", buf_size);
 
-	/* ग_लिखो the buffer size to the CAM */
-	ret = ca->pub->ग_लिखो_cam_control(ca->pub, slot, CTRLIF_COMMAND,
+	/* write the buffer size to the CAM */
+	ret = ca->pub->write_cam_control(ca->pub, slot, CTRLIF_COMMAND,
 					 IRQEN | CMDREG_SW);
-	अगर (ret)
-		वापस ret;
-	ret = dvb_ca_en50221_रुको_अगर_status(ca, slot, STATUSREG_FR, HZ / 10);
-	अगर (ret)
-		वापस ret;
-	ret = dvb_ca_en50221_ग_लिखो_data(ca, slot, buf, 2);
-	अगर (ret != 2)
-		वापस -EIO;
-	ret = ca->pub->ग_लिखो_cam_control(ca->pub, slot, CTRLIF_COMMAND, IRQEN);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
+	ret = dvb_ca_en50221_wait_if_status(ca, slot, STATUSREG_FR, HZ / 10);
+	if (ret)
+		return ret;
+	ret = dvb_ca_en50221_write_data(ca, slot, buf, 2);
+	if (ret != 2)
+		return -EIO;
+	ret = ca->pub->write_cam_control(ca->pub, slot, CTRLIF_COMMAND, IRQEN);
+	if (ret)
+		return ret;
 
 	/* success */
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * dvb_ca_en50221_पढ़ो_tuple - Read a tuple from attribute memory.
+ * dvb_ca_en50221_read_tuple - Read a tuple from attribute memory.
  *
  * @ca: CA instance.
  * @slot: Slot id.
- * @address: Address to पढ़ो from. Updated.
+ * @address: Address to read from. Updated.
  * @tuple_type: Tuple id byte. Updated.
  * @tuple_length: Tuple length. Updated.
- * @tuple: Dest buffer क्रम tuple (must be 256 bytes). Updated.
+ * @tuple: Dest buffer for tuple (must be 256 bytes). Updated.
  *
- * वापस: 0 on success, nonzero on error.
+ * return: 0 on success, nonzero on error.
  */
-अटल पूर्णांक dvb_ca_en50221_पढ़ो_tuple(काष्ठा dvb_ca_निजी *ca, पूर्णांक slot,
-				     पूर्णांक *address, पूर्णांक *tuple_type,
-				     पूर्णांक *tuple_length, u8 *tuple)
-अणु
-	पूर्णांक i;
-	पूर्णांक _tuple_type;
-	पूर्णांक _tuple_length;
-	पूर्णांक _address = *address;
+static int dvb_ca_en50221_read_tuple(struct dvb_ca_private *ca, int slot,
+				     int *address, int *tuple_type,
+				     int *tuple_length, u8 *tuple)
+{
+	int i;
+	int _tuple_type;
+	int _tuple_length;
+	int _address = *address;
 
 	/* grab the next tuple length and type */
-	_tuple_type = ca->pub->पढ़ो_attribute_mem(ca->pub, slot, _address);
-	अगर (_tuple_type < 0)
-		वापस _tuple_type;
-	अगर (_tuple_type == 0xff) अणु
-		dprपूर्णांकk("END OF CHAIN TUPLE type:0x%x\n", _tuple_type);
+	_tuple_type = ca->pub->read_attribute_mem(ca->pub, slot, _address);
+	if (_tuple_type < 0)
+		return _tuple_type;
+	if (_tuple_type == 0xff) {
+		dprintk("END OF CHAIN TUPLE type:0x%x\n", _tuple_type);
 		*address += 2;
 		*tuple_type = _tuple_type;
 		*tuple_length = 0;
-		वापस 0;
-	पूर्ण
-	_tuple_length = ca->pub->पढ़ो_attribute_mem(ca->pub, slot,
+		return 0;
+	}
+	_tuple_length = ca->pub->read_attribute_mem(ca->pub, slot,
 						    _address + 2);
-	अगर (_tuple_length < 0)
-		वापस _tuple_length;
+	if (_tuple_length < 0)
+		return _tuple_length;
 	_address += 4;
 
-	dprपूर्णांकk("TUPLE type:0x%x length:%i\n", _tuple_type, _tuple_length);
+	dprintk("TUPLE type:0x%x length:%i\n", _tuple_type, _tuple_length);
 
-	/* पढ़ो in the whole tuple */
-	क्रम (i = 0; i < _tuple_length; i++) अणु
-		tuple[i] = ca->pub->पढ़ो_attribute_mem(ca->pub, slot,
+	/* read in the whole tuple */
+	for (i = 0; i < _tuple_length; i++) {
+		tuple[i] = ca->pub->read_attribute_mem(ca->pub, slot,
 						       _address + (i * 2));
-		dprपूर्णांकk("  0x%02x: 0x%02x %c\n",
+		dprintk("  0x%02x: 0x%02x %c\n",
 			i, tuple[i] & 0xff,
 			((tuple[i] > 31) && (tuple[i] < 127)) ? tuple[i] : '.');
-	पूर्ण
+	}
 	_address += (_tuple_length * 2);
 
 	/* success */
 	*tuple_type = _tuple_type;
 	*tuple_length = _tuple_length;
 	*address = _address;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * dvb_ca_en50221_parse_attributes - Parse attribute memory of a CAM module,
- *	extracting Config रेजिस्टर, and checking it is a DVB CAM module.
+ *	extracting Config register, and checking it is a DVB CAM module.
  *
  * @ca: CA instance.
  * @slot: Slot id.
  *
- * वापस: 0 on success, <0 on failure.
+ * return: 0 on success, <0 on failure.
  */
-अटल पूर्णांक dvb_ca_en50221_parse_attributes(काष्ठा dvb_ca_निजी *ca, पूर्णांक slot)
-अणु
-	काष्ठा dvb_ca_slot *sl;
-	पूर्णांक address = 0;
-	पूर्णांक tuple_length;
-	पूर्णांक tuple_type;
+static int dvb_ca_en50221_parse_attributes(struct dvb_ca_private *ca, int slot)
+{
+	struct dvb_ca_slot *sl;
+	int address = 0;
+	int tuple_length;
+	int tuple_type;
 	u8 tuple[257];
-	अक्षर *dvb_str;
-	पूर्णांक rasz;
-	पूर्णांक status;
-	पूर्णांक got_cftableentry = 0;
-	पूर्णांक end_chain = 0;
-	पूर्णांक i;
+	char *dvb_str;
+	int rasz;
+	int status;
+	int got_cftableentry = 0;
+	int end_chain = 0;
+	int i;
 	u16 manfid = 0;
 	u16 devid = 0;
 
 	/* CISTPL_DEVICE_0A */
-	status = dvb_ca_en50221_पढ़ो_tuple(ca, slot, &address, &tuple_type,
+	status = dvb_ca_en50221_read_tuple(ca, slot, &address, &tuple_type,
 					   &tuple_length, tuple);
-	अगर (status < 0)
-		वापस status;
-	अगर (tuple_type != 0x1D)
-		वापस -EINVAL;
+	if (status < 0)
+		return status;
+	if (tuple_type != 0x1D)
+		return -EINVAL;
 
 	/* CISTPL_DEVICE_0C */
-	status = dvb_ca_en50221_पढ़ो_tuple(ca, slot, &address, &tuple_type,
+	status = dvb_ca_en50221_read_tuple(ca, slot, &address, &tuple_type,
 					   &tuple_length, tuple);
-	अगर (status < 0)
-		वापस status;
-	अगर (tuple_type != 0x1C)
-		वापस -EINVAL;
+	if (status < 0)
+		return status;
+	if (tuple_type != 0x1C)
+		return -EINVAL;
 
 	/* CISTPL_VERS_1 */
-	status = dvb_ca_en50221_पढ़ो_tuple(ca, slot, &address, &tuple_type,
+	status = dvb_ca_en50221_read_tuple(ca, slot, &address, &tuple_type,
 					   &tuple_length, tuple);
-	अगर (status < 0)
-		वापस status;
-	अगर (tuple_type != 0x15)
-		वापस -EINVAL;
+	if (status < 0)
+		return status;
+	if (tuple_type != 0x15)
+		return -EINVAL;
 
 	/* CISTPL_MANFID */
-	status = dvb_ca_en50221_पढ़ो_tuple(ca, slot, &address, &tuple_type,
+	status = dvb_ca_en50221_read_tuple(ca, slot, &address, &tuple_type,
 					   &tuple_length, tuple);
-	अगर (status < 0)
-		वापस status;
-	अगर (tuple_type != 0x20)
-		वापस -EINVAL;
-	अगर (tuple_length != 4)
-		वापस -EINVAL;
+	if (status < 0)
+		return status;
+	if (tuple_type != 0x20)
+		return -EINVAL;
+	if (tuple_length != 4)
+		return -EINVAL;
 	manfid = (tuple[1] << 8) | tuple[0];
 	devid = (tuple[3] << 8) | tuple[2];
 
 	/* CISTPL_CONFIG */
-	status = dvb_ca_en50221_पढ़ो_tuple(ca, slot, &address, &tuple_type,
+	status = dvb_ca_en50221_read_tuple(ca, slot, &address, &tuple_type,
 					   &tuple_length, tuple);
-	अगर (status < 0)
-		वापस status;
-	अगर (tuple_type != 0x1A)
-		वापस -EINVAL;
-	अगर (tuple_length < 3)
-		वापस -EINVAL;
+	if (status < 0)
+		return status;
+	if (tuple_type != 0x1A)
+		return -EINVAL;
+	if (tuple_length < 3)
+		return -EINVAL;
 
 	/* extract the configbase */
 	rasz = tuple[0] & 3;
-	अगर (tuple_length < (3 + rasz + 14))
-		वापस -EINVAL;
+	if (tuple_length < (3 + rasz + 14))
+		return -EINVAL;
 	sl = &ca->slot_info[slot];
 	sl->config_base = 0;
-	क्रम (i = 0; i < rasz + 1; i++)
+	for (i = 0; i < rasz + 1; i++)
 		sl->config_base |= (tuple[2 + i] << (8 * i));
 
 	/* check it contains the correct DVB string */
-	dvb_str = findstr((अक्षर *)tuple, tuple_length, "DVB_CI_V", 8);
-	अगर (!dvb_str)
-		वापस -EINVAL;
-	अगर (tuple_length < ((dvb_str - (अक्षर *)tuple) + 12))
-		वापस -EINVAL;
+	dvb_str = findstr((char *)tuple, tuple_length, "DVB_CI_V", 8);
+	if (!dvb_str)
+		return -EINVAL;
+	if (tuple_length < ((dvb_str - (char *)tuple) + 12))
+		return -EINVAL;
 
 	/* is it a version we support? */
-	अगर (म_भेदन(dvb_str + 8, "1.00", 4)) अणु
+	if (strncmp(dvb_str + 8, "1.00", 4)) {
 		pr_err("dvb_ca adapter %d: Unsupported DVB CAM module version %c%c%c%c\n",
 		       ca->dvbdev->adapter->num, dvb_str[8], dvb_str[9],
 		       dvb_str[10], dvb_str[11]);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/* process the CFTABLE_ENTRY tuples, and any after those */
-	जबतक ((!end_chain) && (address < 0x1000)) अणु
-		status = dvb_ca_en50221_पढ़ो_tuple(ca, slot, &address,
+	while ((!end_chain) && (address < 0x1000)) {
+		status = dvb_ca_en50221_read_tuple(ca, slot, &address,
 						   &tuple_type, &tuple_length,
 						   tuple);
-		अगर (status < 0)
-			वापस status;
-		चयन (tuple_type) अणु
-		हाल 0x1B:	/* CISTPL_CFTABLE_ENTRY */
-			अगर (tuple_length < (2 + 11 + 17))
-				अवरोध;
+		if (status < 0)
+			return status;
+		switch (tuple_type) {
+		case 0x1B:	/* CISTPL_CFTABLE_ENTRY */
+			if (tuple_length < (2 + 11 + 17))
+				break;
 
-			/* अगर we've alपढ़ोy parsed one, just use it */
-			अगर (got_cftableentry)
-				अवरोध;
+			/* if we've already parsed one, just use it */
+			if (got_cftableentry)
+				break;
 
 			/* get the config option */
 			sl->config_option = tuple[0] & 0x3f;
 
 			/* OK, check it contains the correct strings */
-			अगर (!findstr((अक्षर *)tuple, tuple_length,
+			if (!findstr((char *)tuple, tuple_length,
 				     "DVB_HOST", 8) ||
-			    !findstr((अक्षर *)tuple, tuple_length,
+			    !findstr((char *)tuple, tuple_length,
 				     "DVB_CI_MODULE", 13))
-				अवरोध;
+				break;
 
 			got_cftableentry = 1;
-			अवरोध;
+			break;
 
-		हाल 0x14:	/* CISTPL_NO_LINK */
-			अवरोध;
+		case 0x14:	/* CISTPL_NO_LINK */
+			break;
 
-		हाल 0xFF:	/* CISTPL_END */
+		case 0xFF:	/* CISTPL_END */
 			end_chain = 1;
-			अवरोध;
+			break;
 
-		शेष:	/* Unknown tuple type - just skip this tuple */
-			dprपूर्णांकk("dvb_ca: Skipping unknown tuple type:0x%x length:0x%x\n",
+		default:	/* Unknown tuple type - just skip this tuple */
+			dprintk("dvb_ca: Skipping unknown tuple type:0x%x length:0x%x\n",
 				tuple_type, tuple_length);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	अगर ((address > 0x1000) || (!got_cftableentry))
-		वापस -EINVAL;
+	if ((address > 0x1000) || (!got_cftableentry))
+		return -EINVAL;
 
-	dprपूर्णांकk("Valid DVB CAM detected MANID:%x DEVID:%x CONFIGBASE:0x%x CONFIGOPTION:0x%x\n",
+	dprintk("Valid DVB CAM detected MANID:%x DEVID:%x CONFIGBASE:0x%x CONFIGOPTION:0x%x\n",
 		manfid, devid, sl->config_base, sl->config_option);
 
 	/* success! */
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * dvb_ca_en50221_set_configoption - Set CAM's configoption correctly.
@@ -593,334 +592,334 @@ MODULE_PARM_DESC(cam_debug, "enable verbose debug messages");
  * @ca: CA instance.
  * @slot: Slot containing the CAM.
  */
-अटल पूर्णांक dvb_ca_en50221_set_configoption(काष्ठा dvb_ca_निजी *ca, पूर्णांक slot)
-अणु
-	काष्ठा dvb_ca_slot *sl = &ca->slot_info[slot];
-	पूर्णांक configoption;
+static int dvb_ca_en50221_set_configoption(struct dvb_ca_private *ca, int slot)
+{
+	struct dvb_ca_slot *sl = &ca->slot_info[slot];
+	int configoption;
 
-	dprपूर्णांकk("%s\n", __func__);
+	dprintk("%s\n", __func__);
 
 	/* set the config option */
-	ca->pub->ग_लिखो_attribute_mem(ca->pub, slot, sl->config_base,
+	ca->pub->write_attribute_mem(ca->pub, slot, sl->config_base,
 				     sl->config_option);
 
 	/* check it */
-	configoption = ca->pub->पढ़ो_attribute_mem(ca->pub, slot,
+	configoption = ca->pub->read_attribute_mem(ca->pub, slot,
 						   sl->config_base);
-	dprपूर्णांकk("Set configoption 0x%x, read configoption 0x%x\n",
+	dprintk("Set configoption 0x%x, read configoption 0x%x\n",
 		sl->config_option, configoption & 0x3f);
 
 	/* fine! */
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * dvb_ca_en50221_पढ़ो_data - This function talks to an EN50221 CAM control
- *	पूर्णांकerface. It पढ़ोs a buffer of data from the CAM. The data can either
- *	be stored in a supplied buffer, or स्वतःmatically be added to the slot's
+ * dvb_ca_en50221_read_data - This function talks to an EN50221 CAM control
+ *	interface. It reads a buffer of data from the CAM. The data can either
+ *	be stored in a supplied buffer, or automatically be added to the slot's
  *	rx_buffer.
  *
  * @ca: CA instance.
- * @slot: Slot to पढ़ो from.
- * @ebuf: If non-शून्य, the data will be written to this buffer. If शून्य,
- *	  the data will be added पूर्णांकo the buffering प्रणाली as a normal
+ * @slot: Slot to read from.
+ * @ebuf: If non-NULL, the data will be written to this buffer. If NULL,
+ *	  the data will be added into the buffering system as a normal
  *	  fragment.
- * @ecount: Size of ebuf. Ignored अगर ebuf is शून्य.
+ * @ecount: Size of ebuf. Ignored if ebuf is NULL.
  *
- * वापस: Number of bytes पढ़ो, or < 0 on error
+ * return: Number of bytes read, or < 0 on error
  */
-अटल पूर्णांक dvb_ca_en50221_पढ़ो_data(काष्ठा dvb_ca_निजी *ca, पूर्णांक slot,
-				    u8 *ebuf, पूर्णांक ecount)
-अणु
-	काष्ठा dvb_ca_slot *sl = &ca->slot_info[slot];
-	पूर्णांक bytes_पढ़ो;
-	पूर्णांक status;
+static int dvb_ca_en50221_read_data(struct dvb_ca_private *ca, int slot,
+				    u8 *ebuf, int ecount)
+{
+	struct dvb_ca_slot *sl = &ca->slot_info[slot];
+	int bytes_read;
+	int status;
 	u8 buf[HOST_LINK_BUF_SIZE];
-	पूर्णांक i;
+	int i;
 
-	dprपूर्णांकk("%s\n", __func__);
+	dprintk("%s\n", __func__);
 
-	/* check अगर we have space क्रम a link buf in the rx_buffer */
-	अगर (!ebuf) अणु
-		पूर्णांक buf_मुक्त;
+	/* check if we have space for a link buf in the rx_buffer */
+	if (!ebuf) {
+		int buf_free;
 
-		अगर (!sl->rx_buffer.data) अणु
+		if (!sl->rx_buffer.data) {
 			status = -EIO;
-			जाओ निकास;
-		पूर्ण
-		buf_मुक्त = dvb_ringbuffer_मुक्त(&sl->rx_buffer);
+			goto exit;
+		}
+		buf_free = dvb_ringbuffer_free(&sl->rx_buffer);
 
-		अगर (buf_मुक्त < (sl->link_buf_size +
-				DVB_RINGBUFFER_PKTHDRSIZE)) अणु
+		if (buf_free < (sl->link_buf_size +
+				DVB_RINGBUFFER_PKTHDRSIZE)) {
 			status = -EAGAIN;
-			जाओ निकास;
-		पूर्ण
-	पूर्ण
+			goto exit;
+		}
+	}
 
-	अगर (ca->pub->पढ़ो_data &&
-	    (sl->slot_state != DVB_CA_SLOTSTATE_LINKINIT)) अणु
-		अगर (!ebuf)
-			status = ca->pub->पढ़ो_data(ca->pub, slot, buf,
-						    माप(buf));
-		अन्यथा
-			status = ca->pub->पढ़ो_data(ca->pub, slot, buf, ecount);
-		अगर (status < 0)
-			वापस status;
-		bytes_पढ़ो =  status;
-		अगर (status == 0)
-			जाओ निकास;
-	पूर्ण अन्यथा अणु
-		/* check अगर there is data available */
-		status = ca->pub->पढ़ो_cam_control(ca->pub, slot,
+	if (ca->pub->read_data &&
+	    (sl->slot_state != DVB_CA_SLOTSTATE_LINKINIT)) {
+		if (!ebuf)
+			status = ca->pub->read_data(ca->pub, slot, buf,
+						    sizeof(buf));
+		else
+			status = ca->pub->read_data(ca->pub, slot, buf, ecount);
+		if (status < 0)
+			return status;
+		bytes_read =  status;
+		if (status == 0)
+			goto exit;
+	} else {
+		/* check if there is data available */
+		status = ca->pub->read_cam_control(ca->pub, slot,
 						   CTRLIF_STATUS);
-		अगर (status < 0)
-			जाओ निकास;
-		अगर (!(status & STATUSREG_DA)) अणु
+		if (status < 0)
+			goto exit;
+		if (!(status & STATUSREG_DA)) {
 			/* no data */
 			status = 0;
-			जाओ निकास;
-		पूर्ण
+			goto exit;
+		}
 
-		/* पढ़ो the amount of data */
-		status = ca->pub->पढ़ो_cam_control(ca->pub, slot,
+		/* read the amount of data */
+		status = ca->pub->read_cam_control(ca->pub, slot,
 						   CTRLIF_SIZE_HIGH);
-		अगर (status < 0)
-			जाओ निकास;
-		bytes_पढ़ो = status << 8;
-		status = ca->pub->पढ़ो_cam_control(ca->pub, slot,
+		if (status < 0)
+			goto exit;
+		bytes_read = status << 8;
+		status = ca->pub->read_cam_control(ca->pub, slot,
 						   CTRLIF_SIZE_LOW);
-		अगर (status < 0)
-			जाओ निकास;
-		bytes_पढ़ो |= status;
+		if (status < 0)
+			goto exit;
+		bytes_read |= status;
 
 		/* check it will fit */
-		अगर (!ebuf) अणु
-			अगर (bytes_पढ़ो > sl->link_buf_size) अणु
+		if (!ebuf) {
+			if (bytes_read > sl->link_buf_size) {
 				pr_err("dvb_ca adapter %d: CAM tried to send a buffer larger than the link buffer size (%i > %i)!\n",
-				       ca->dvbdev->adapter->num, bytes_पढ़ो,
+				       ca->dvbdev->adapter->num, bytes_read,
 				       sl->link_buf_size);
 				sl->slot_state = DVB_CA_SLOTSTATE_LINKINIT;
 				status = -EIO;
-				जाओ निकास;
-			पूर्ण
-			अगर (bytes_पढ़ो < 2) अणु
+				goto exit;
+			}
+			if (bytes_read < 2) {
 				pr_err("dvb_ca adapter %d: CAM sent a buffer that was less than 2 bytes!\n",
 				       ca->dvbdev->adapter->num);
 				sl->slot_state = DVB_CA_SLOTSTATE_LINKINIT;
 				status = -EIO;
-				जाओ निकास;
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			अगर (bytes_पढ़ो > ecount) अणु
+				goto exit;
+			}
+		} else {
+			if (bytes_read > ecount) {
 				pr_err("dvb_ca adapter %d: CAM tried to send a buffer larger than the ecount size!\n",
 				       ca->dvbdev->adapter->num);
 				status = -EIO;
-				जाओ निकास;
-			पूर्ण
-		पूर्ण
+				goto exit;
+			}
+		}
 
 		/* fill the buffer */
-		क्रम (i = 0; i < bytes_पढ़ो; i++) अणु
-			/* पढ़ो byte and check */
-			status = ca->pub->पढ़ो_cam_control(ca->pub, slot,
+		for (i = 0; i < bytes_read; i++) {
+			/* read byte and check */
+			status = ca->pub->read_cam_control(ca->pub, slot,
 							   CTRLIF_DATA);
-			अगर (status < 0)
-				जाओ निकास;
+			if (status < 0)
+				goto exit;
 
 			/* OK, store it in the buffer */
 			buf[i] = status;
-		पूर्ण
+		}
 
-		/* check क्रम पढ़ो error (RE should now be 0) */
-		status = ca->pub->पढ़ो_cam_control(ca->pub, slot,
+		/* check for read error (RE should now be 0) */
+		status = ca->pub->read_cam_control(ca->pub, slot,
 						   CTRLIF_STATUS);
-		अगर (status < 0)
-			जाओ निकास;
-		अगर (status & STATUSREG_RE) अणु
+		if (status < 0)
+			goto exit;
+		if (status & STATUSREG_RE) {
 			sl->slot_state = DVB_CA_SLOTSTATE_LINKINIT;
 			status = -EIO;
-			जाओ निकास;
-		पूर्ण
-	पूर्ण
+			goto exit;
+		}
+	}
 
 	/*
-	 * OK, add it to the receive buffer, or copy पूर्णांकo बाह्यal buffer अगर
+	 * OK, add it to the receive buffer, or copy into external buffer if
 	 * supplied
 	 */
-	अगर (!ebuf) अणु
-		अगर (!sl->rx_buffer.data) अणु
+	if (!ebuf) {
+		if (!sl->rx_buffer.data) {
 			status = -EIO;
-			जाओ निकास;
-		पूर्ण
-		dvb_ringbuffer_pkt_ग_लिखो(&sl->rx_buffer, buf, bytes_पढ़ो);
-	पूर्ण अन्यथा अणु
-		स_नकल(ebuf, buf, bytes_पढ़ो);
-	पूर्ण
+			goto exit;
+		}
+		dvb_ringbuffer_pkt_write(&sl->rx_buffer, buf, bytes_read);
+	} else {
+		memcpy(ebuf, buf, bytes_read);
+	}
 
-	dprपूर्णांकk("Received CA packet for slot %i connection id 0x%x last_frag:%i size:0x%x\n", slot,
-		buf[0], (buf[1] & 0x80) == 0, bytes_पढ़ो);
+	dprintk("Received CA packet for slot %i connection id 0x%x last_frag:%i size:0x%x\n", slot,
+		buf[0], (buf[1] & 0x80) == 0, bytes_read);
 
-	/* wake up पढ़ोers when a last_fragment is received */
-	अगर ((buf[1] & 0x80) == 0x00)
-		wake_up_पूर्णांकerruptible(&ca->रुको_queue);
+	/* wake up readers when a last_fragment is received */
+	if ((buf[1] & 0x80) == 0x00)
+		wake_up_interruptible(&ca->wait_queue);
 
-	status = bytes_पढ़ो;
+	status = bytes_read;
 
-निकास:
-	वापस status;
-पूर्ण
+exit:
+	return status;
+}
 
 /**
- * dvb_ca_en50221_ग_लिखो_data - This function talks to an EN50221 CAM control
- *				पूर्णांकerface. It ग_लिखोs a buffer of data to a CAM.
+ * dvb_ca_en50221_write_data - This function talks to an EN50221 CAM control
+ *				interface. It writes a buffer of data to a CAM.
  *
  * @ca: CA instance.
- * @slot: Slot to ग_लिखो to.
+ * @slot: Slot to write to.
  * @buf: The data in this buffer is treated as a complete link-level packet to
  *	 be written.
- * @bytes_ग_लिखो: Size of ebuf.
+ * @bytes_write: Size of ebuf.
  *
- * वापस: Number of bytes written, or < 0 on error.
+ * return: Number of bytes written, or < 0 on error.
  */
-अटल पूर्णांक dvb_ca_en50221_ग_लिखो_data(काष्ठा dvb_ca_निजी *ca, पूर्णांक slot,
-				     u8 *buf, पूर्णांक bytes_ग_लिखो)
-अणु
-	काष्ठा dvb_ca_slot *sl = &ca->slot_info[slot];
-	पूर्णांक status;
-	पूर्णांक i;
+static int dvb_ca_en50221_write_data(struct dvb_ca_private *ca, int slot,
+				     u8 *buf, int bytes_write)
+{
+	struct dvb_ca_slot *sl = &ca->slot_info[slot];
+	int status;
+	int i;
 
-	dprपूर्णांकk("%s\n", __func__);
+	dprintk("%s\n", __func__);
 
 	/* sanity check */
-	अगर (bytes_ग_लिखो > sl->link_buf_size)
-		वापस -EINVAL;
+	if (bytes_write > sl->link_buf_size)
+		return -EINVAL;
 
-	अगर (ca->pub->ग_लिखो_data &&
+	if (ca->pub->write_data &&
 	    (sl->slot_state != DVB_CA_SLOTSTATE_LINKINIT))
-		वापस ca->pub->ग_लिखो_data(ca->pub, slot, buf, bytes_ग_लिखो);
+		return ca->pub->write_data(ca->pub, slot, buf, bytes_write);
 
 	/*
 	 * it is possible we are dealing with a single buffer implementation,
-	 * thus अगर there is data available क्रम पढ़ो or अगर there is even a पढ़ो
-	 * alपढ़ोy in progress, we करो nothing but awake the kernel thपढ़ो to
-	 * process the data अगर necessary.
+	 * thus if there is data available for read or if there is even a read
+	 * already in progress, we do nothing but awake the kernel thread to
+	 * process the data if necessary.
 	 */
-	status = ca->pub->पढ़ो_cam_control(ca->pub, slot, CTRLIF_STATUS);
-	अगर (status < 0)
-		जाओ निकासnoग_लिखो;
-	अगर (status & (STATUSREG_DA | STATUSREG_RE)) अणु
-		अगर (status & STATUSREG_DA)
-			dvb_ca_en50221_thपढ़ो_wakeup(ca);
+	status = ca->pub->read_cam_control(ca->pub, slot, CTRLIF_STATUS);
+	if (status < 0)
+		goto exitnowrite;
+	if (status & (STATUSREG_DA | STATUSREG_RE)) {
+		if (status & STATUSREG_DA)
+			dvb_ca_en50221_thread_wakeup(ca);
 
 		status = -EAGAIN;
-		जाओ निकासnoग_लिखो;
-	पूर्ण
+		goto exitnowrite;
+	}
 
 	/* OK, set HC bit */
-	status = ca->pub->ग_लिखो_cam_control(ca->pub, slot, CTRLIF_COMMAND,
+	status = ca->pub->write_cam_control(ca->pub, slot, CTRLIF_COMMAND,
 					    IRQEN | CMDREG_HC);
-	अगर (status)
-		जाओ निकास;
+	if (status)
+		goto exit;
 
-	/* check अगर पूर्णांकerface is still मुक्त */
-	status = ca->pub->पढ़ो_cam_control(ca->pub, slot, CTRLIF_STATUS);
-	अगर (status < 0)
-		जाओ निकास;
-	अगर (!(status & STATUSREG_FR)) अणु
-		/* it wasn't मुक्त => try again later */
+	/* check if interface is still free */
+	status = ca->pub->read_cam_control(ca->pub, slot, CTRLIF_STATUS);
+	if (status < 0)
+		goto exit;
+	if (!(status & STATUSREG_FR)) {
+		/* it wasn't free => try again later */
 		status = -EAGAIN;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
 	/*
-	 * It may need some समय क्रम the CAM to settle करोwn, or there might
+	 * It may need some time for the CAM to settle down, or there might
 	 * be a race condition between the CAM, writing HC and our last
-	 * check क्रम DA. This happens, अगर the CAM निश्चितs DA, just after
-	 * checking DA beक्रमe we are setting HC. In this हाल it might be
+	 * check for DA. This happens, if the CAM asserts DA, just after
+	 * checking DA before we are setting HC. In this case it might be
 	 * a bug in the CAM to keep the FR bit, the lower layer/HW
-	 * communication requires a दीर्घer समयout or the CAM needs more
-	 * समय पूर्णांकernally. But this happens in reality!
-	 * We need to पढ़ो the status from the HW again and करो the same
-	 * we did क्रम the previous check क्रम DA
+	 * communication requires a longer timeout or the CAM needs more
+	 * time internally. But this happens in reality!
+	 * We need to read the status from the HW again and do the same
+	 * we did for the previous check for DA
 	 */
-	status = ca->pub->पढ़ो_cam_control(ca->pub, slot, CTRLIF_STATUS);
-	अगर (status < 0)
-		जाओ निकास;
+	status = ca->pub->read_cam_control(ca->pub, slot, CTRLIF_STATUS);
+	if (status < 0)
+		goto exit;
 
-	अगर (status & (STATUSREG_DA | STATUSREG_RE)) अणु
-		अगर (status & STATUSREG_DA)
-			dvb_ca_en50221_thपढ़ो_wakeup(ca);
+	if (status & (STATUSREG_DA | STATUSREG_RE)) {
+		if (status & STATUSREG_DA)
+			dvb_ca_en50221_thread_wakeup(ca);
 
 		status = -EAGAIN;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
 	/* send the amount of data */
-	status = ca->pub->ग_लिखो_cam_control(ca->pub, slot, CTRLIF_SIZE_HIGH,
-					    bytes_ग_लिखो >> 8);
-	अगर (status)
-		जाओ निकास;
-	status = ca->pub->ग_लिखो_cam_control(ca->pub, slot, CTRLIF_SIZE_LOW,
-					    bytes_ग_लिखो & 0xff);
-	अगर (status)
-		जाओ निकास;
+	status = ca->pub->write_cam_control(ca->pub, slot, CTRLIF_SIZE_HIGH,
+					    bytes_write >> 8);
+	if (status)
+		goto exit;
+	status = ca->pub->write_cam_control(ca->pub, slot, CTRLIF_SIZE_LOW,
+					    bytes_write & 0xff);
+	if (status)
+		goto exit;
 
 	/* send the buffer */
-	क्रम (i = 0; i < bytes_ग_लिखो; i++) अणु
-		status = ca->pub->ग_लिखो_cam_control(ca->pub, slot, CTRLIF_DATA,
+	for (i = 0; i < bytes_write; i++) {
+		status = ca->pub->write_cam_control(ca->pub, slot, CTRLIF_DATA,
 						    buf[i]);
-		अगर (status)
-			जाओ निकास;
-	पूर्ण
+		if (status)
+			goto exit;
+	}
 
-	/* check क्रम ग_लिखो error (WE should now be 0) */
-	status = ca->pub->पढ़ो_cam_control(ca->pub, slot, CTRLIF_STATUS);
-	अगर (status < 0)
-		जाओ निकास;
-	अगर (status & STATUSREG_WE) अणु
+	/* check for write error (WE should now be 0) */
+	status = ca->pub->read_cam_control(ca->pub, slot, CTRLIF_STATUS);
+	if (status < 0)
+		goto exit;
+	if (status & STATUSREG_WE) {
 		sl->slot_state = DVB_CA_SLOTSTATE_LINKINIT;
 		status = -EIO;
-		जाओ निकास;
-	पूर्ण
-	status = bytes_ग_लिखो;
+		goto exit;
+	}
+	status = bytes_write;
 
-	dprपूर्णांकk("Wrote CA packet for slot %i, connection id 0x%x last_frag:%i size:0x%x\n", slot,
-		buf[0], (buf[1] & 0x80) == 0, bytes_ग_लिखो);
+	dprintk("Wrote CA packet for slot %i, connection id 0x%x last_frag:%i size:0x%x\n", slot,
+		buf[0], (buf[1] & 0x80) == 0, bytes_write);
 
-निकास:
-	ca->pub->ग_लिखो_cam_control(ca->pub, slot, CTRLIF_COMMAND, IRQEN);
+exit:
+	ca->pub->write_cam_control(ca->pub, slot, CTRLIF_COMMAND, IRQEN);
 
-निकासnoग_लिखो:
-	वापस status;
-पूर्ण
+exitnowrite:
+	return status;
+}
 
 /* ************************************************************************** */
 /* EN50221 higher level functions */
 
 /**
- * dvb_ca_en50221_slot_shutकरोwn - A CAM has been हटाओd => shut it करोwn.
+ * dvb_ca_en50221_slot_shutdown - A CAM has been removed => shut it down.
  *
  * @ca: CA instance.
- * @slot: Slot to shut करोwn.
+ * @slot: Slot to shut down.
  */
-अटल पूर्णांक dvb_ca_en50221_slot_shutकरोwn(काष्ठा dvb_ca_निजी *ca, पूर्णांक slot)
-अणु
-	dprपूर्णांकk("%s\n", __func__);
+static int dvb_ca_en50221_slot_shutdown(struct dvb_ca_private *ca, int slot)
+{
+	dprintk("%s\n", __func__);
 
-	ca->pub->slot_shutकरोwn(ca->pub, slot);
+	ca->pub->slot_shutdown(ca->pub, slot);
 	ca->slot_info[slot].slot_state = DVB_CA_SLOTSTATE_NONE;
 
 	/*
-	 * need to wake up all processes to check अगर they're now trying to
-	 * ग_लिखो to a defunct CAM
+	 * need to wake up all processes to check if they're now trying to
+	 * write to a defunct CAM
 	 */
-	wake_up_पूर्णांकerruptible(&ca->रुको_queue);
+	wake_up_interruptible(&ca->wait_queue);
 
-	dprपूर्णांकk("Slot %i shutdown\n", slot);
+	dprintk("Slot %i shutdown\n", slot);
 
 	/* success */
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * dvb_ca_en50221_camchange_irq - A CAMCHANGE IRQ has occurred.
@@ -929,48 +928,48 @@ MODULE_PARM_DESC(cam_debug, "enable verbose debug messages");
  * @slot: Slot concerned.
  * @change_type: One of the DVB_CA_CAMCHANGE_* values.
  */
-व्योम dvb_ca_en50221_camchange_irq(काष्ठा dvb_ca_en50221 *pubca, पूर्णांक slot,
-				  पूर्णांक change_type)
-अणु
-	काष्ठा dvb_ca_निजी *ca = pubca->निजी;
-	काष्ठा dvb_ca_slot *sl = &ca->slot_info[slot];
+void dvb_ca_en50221_camchange_irq(struct dvb_ca_en50221 *pubca, int slot,
+				  int change_type)
+{
+	struct dvb_ca_private *ca = pubca->private;
+	struct dvb_ca_slot *sl = &ca->slot_info[slot];
 
-	dprपूर्णांकk("CAMCHANGE IRQ slot:%i change_type:%i\n", slot, change_type);
+	dprintk("CAMCHANGE IRQ slot:%i change_type:%i\n", slot, change_type);
 
-	चयन (change_type) अणु
-	हाल DVB_CA_EN50221_CAMCHANGE_REMOVED:
-	हाल DVB_CA_EN50221_CAMCHANGE_INSERTED:
-		अवरोध;
+	switch (change_type) {
+	case DVB_CA_EN50221_CAMCHANGE_REMOVED:
+	case DVB_CA_EN50221_CAMCHANGE_INSERTED:
+		break;
 
-	शेष:
-		वापस;
-	पूर्ण
+	default:
+		return;
+	}
 
 	sl->camchange_type = change_type;
 	atomic_inc(&sl->camchange_count);
-	dvb_ca_en50221_thपढ़ो_wakeup(ca);
-पूर्ण
+	dvb_ca_en50221_thread_wakeup(ca);
+}
 EXPORT_SYMBOL(dvb_ca_en50221_camchange_irq);
 
 /**
- * dvb_ca_en50221_camपढ़ोy_irq - A CAMREADY IRQ has occurred.
+ * dvb_ca_en50221_camready_irq - A CAMREADY IRQ has occurred.
  *
  * @pubca: CA instance.
  * @slot: Slot concerned.
  */
-व्योम dvb_ca_en50221_camपढ़ोy_irq(काष्ठा dvb_ca_en50221 *pubca, पूर्णांक slot)
-अणु
-	काष्ठा dvb_ca_निजी *ca = pubca->निजी;
-	काष्ठा dvb_ca_slot *sl = &ca->slot_info[slot];
+void dvb_ca_en50221_camready_irq(struct dvb_ca_en50221 *pubca, int slot)
+{
+	struct dvb_ca_private *ca = pubca->private;
+	struct dvb_ca_slot *sl = &ca->slot_info[slot];
 
-	dprपूर्णांकk("CAMREADY IRQ slot:%i\n", slot);
+	dprintk("CAMREADY IRQ slot:%i\n", slot);
 
-	अगर (sl->slot_state == DVB_CA_SLOTSTATE_WAITREADY) अणु
+	if (sl->slot_state == DVB_CA_SLOTSTATE_WAITREADY) {
 		sl->slot_state = DVB_CA_SLOTSTATE_VALIDATE;
-		dvb_ca_en50221_thपढ़ो_wakeup(ca);
-	पूर्ण
-पूर्ण
-EXPORT_SYMBOL(dvb_ca_en50221_camपढ़ोy_irq);
+		dvb_ca_en50221_thread_wakeup(ca);
+	}
+}
+EXPORT_SYMBOL(dvb_ca_en50221_camready_irq);
 
 /**
  * dvb_ca_en50221_frda_irq - An FR or DA IRQ has occurred.
@@ -978,355 +977,355 @@ EXPORT_SYMBOL(dvb_ca_en50221_camपढ़ोy_irq);
  * @pubca: CA instance.
  * @slot: Slot concerned.
  */
-व्योम dvb_ca_en50221_frda_irq(काष्ठा dvb_ca_en50221 *pubca, पूर्णांक slot)
-अणु
-	काष्ठा dvb_ca_निजी *ca = pubca->निजी;
-	काष्ठा dvb_ca_slot *sl = &ca->slot_info[slot];
-	पूर्णांक flags;
+void dvb_ca_en50221_frda_irq(struct dvb_ca_en50221 *pubca, int slot)
+{
+	struct dvb_ca_private *ca = pubca->private;
+	struct dvb_ca_slot *sl = &ca->slot_info[slot];
+	int flags;
 
-	dprपूर्णांकk("FR/DA IRQ slot:%i\n", slot);
+	dprintk("FR/DA IRQ slot:%i\n", slot);
 
-	चयन (sl->slot_state) अणु
-	हाल DVB_CA_SLOTSTATE_LINKINIT:
-		flags = ca->pub->पढ़ो_cam_control(pubca, slot, CTRLIF_STATUS);
-		अगर (flags & STATUSREG_DA) अणु
-			dprपूर्णांकk("CAM supports DA IRQ\n");
+	switch (sl->slot_state) {
+	case DVB_CA_SLOTSTATE_LINKINIT:
+		flags = ca->pub->read_cam_control(pubca, slot, CTRLIF_STATUS);
+		if (flags & STATUSREG_DA) {
+			dprintk("CAM supports DA IRQ\n");
 			sl->da_irq_supported = 1;
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	हाल DVB_CA_SLOTSTATE_RUNNING:
-		अगर (ca->खोलो)
-			dvb_ca_en50221_thपढ़ो_wakeup(ca);
-		अवरोध;
-	पूर्ण
-पूर्ण
+	case DVB_CA_SLOTSTATE_RUNNING:
+		if (ca->open)
+			dvb_ca_en50221_thread_wakeup(ca);
+		break;
+	}
+}
 EXPORT_SYMBOL(dvb_ca_en50221_frda_irq);
 
 /* ************************************************************************** */
-/* EN50221 thपढ़ो functions */
+/* EN50221 thread functions */
 
 /**
- * dvb_ca_en50221_thपढ़ो_wakeup - Wake up the DVB CA thपढ़ो
+ * dvb_ca_en50221_thread_wakeup - Wake up the DVB CA thread
  *
  * @ca: CA instance.
  */
-अटल व्योम dvb_ca_en50221_thपढ़ो_wakeup(काष्ठा dvb_ca_निजी *ca)
-अणु
-	dprपूर्णांकk("%s\n", __func__);
+static void dvb_ca_en50221_thread_wakeup(struct dvb_ca_private *ca)
+{
+	dprintk("%s\n", __func__);
 
 	ca->wakeup = 1;
 	mb();
-	wake_up_process(ca->thपढ़ो);
-पूर्ण
+	wake_up_process(ca->thread);
+}
 
 /**
- * dvb_ca_en50221_thपढ़ो_update_delay - Update the delay used by the thपढ़ो.
+ * dvb_ca_en50221_thread_update_delay - Update the delay used by the thread.
  *
  * @ca: CA instance.
  */
-अटल व्योम dvb_ca_en50221_thपढ़ो_update_delay(काष्ठा dvb_ca_निजी *ca)
-अणु
-	पूर्णांक delay;
-	पूर्णांक curdelay = 100000000;
-	पूर्णांक slot;
+static void dvb_ca_en50221_thread_update_delay(struct dvb_ca_private *ca)
+{
+	int delay;
+	int curdelay = 100000000;
+	int slot;
 
 	/*
 	 * Beware of too high polling frequency, because one polling
-	 * call might take several hundred milliseconds until समयout!
+	 * call might take several hundred milliseconds until timeout!
 	 */
-	क्रम (slot = 0; slot < ca->slot_count; slot++) अणु
-		काष्ठा dvb_ca_slot *sl = &ca->slot_info[slot];
+	for (slot = 0; slot < ca->slot_count; slot++) {
+		struct dvb_ca_slot *sl = &ca->slot_info[slot];
 
-		चयन (sl->slot_state) अणु
-		शेष:
-		हाल DVB_CA_SLOTSTATE_NONE:
+		switch (sl->slot_state) {
+		default:
+		case DVB_CA_SLOTSTATE_NONE:
 			delay = HZ * 60;  /* 60s */
-			अगर (!(ca->flags & DVB_CA_EN50221_FLAG_IRQ_CAMCHANGE))
+			if (!(ca->flags & DVB_CA_EN50221_FLAG_IRQ_CAMCHANGE))
 				delay = HZ * 5;  /* 5s */
-			अवरोध;
-		हाल DVB_CA_SLOTSTATE_INVALID:
+			break;
+		case DVB_CA_SLOTSTATE_INVALID:
 			delay = HZ * 60;  /* 60s */
-			अगर (!(ca->flags & DVB_CA_EN50221_FLAG_IRQ_CAMCHANGE))
+			if (!(ca->flags & DVB_CA_EN50221_FLAG_IRQ_CAMCHANGE))
 				delay = HZ / 10;  /* 100ms */
-			अवरोध;
+			break;
 
-		हाल DVB_CA_SLOTSTATE_UNINITIALISED:
-		हाल DVB_CA_SLOTSTATE_WAITREADY:
-		हाल DVB_CA_SLOTSTATE_VALIDATE:
-		हाल DVB_CA_SLOTSTATE_WAITFR:
-		हाल DVB_CA_SLOTSTATE_LINKINIT:
+		case DVB_CA_SLOTSTATE_UNINITIALISED:
+		case DVB_CA_SLOTSTATE_WAITREADY:
+		case DVB_CA_SLOTSTATE_VALIDATE:
+		case DVB_CA_SLOTSTATE_WAITFR:
+		case DVB_CA_SLOTSTATE_LINKINIT:
 			delay = HZ / 10;  /* 100ms */
-			अवरोध;
+			break;
 
-		हाल DVB_CA_SLOTSTATE_RUNNING:
+		case DVB_CA_SLOTSTATE_RUNNING:
 			delay = HZ * 60;  /* 60s */
-			अगर (!(ca->flags & DVB_CA_EN50221_FLAG_IRQ_CAMCHANGE))
+			if (!(ca->flags & DVB_CA_EN50221_FLAG_IRQ_CAMCHANGE))
 				delay = HZ / 10;  /* 100ms */
-			अगर (ca->खोलो) अणु
-				अगर ((!sl->da_irq_supported) ||
+			if (ca->open) {
+				if ((!sl->da_irq_supported) ||
 				    (!(ca->flags & DVB_CA_EN50221_FLAG_IRQ_DA)))
 					delay = HZ / 10;  /* 100ms */
-			पूर्ण
-			अवरोध;
-		पूर्ण
+			}
+			break;
+		}
 
-		अगर (delay < curdelay)
+		if (delay < curdelay)
 			curdelay = delay;
-	पूर्ण
+	}
 
 	ca->delay = curdelay;
-पूर्ण
+}
 
 /**
- * dvb_ca_en50221_poll_cam_gone - Poll अगर the CAM is gone.
+ * dvb_ca_en50221_poll_cam_gone - Poll if the CAM is gone.
  *
  * @ca: CA instance.
  * @slot: Slot to process.
- * वापस:: 0 .. no change
+ * return:: 0 .. no change
  *          1 .. CAM state changed
  */
 
-अटल पूर्णांक dvb_ca_en50221_poll_cam_gone(काष्ठा dvb_ca_निजी *ca, पूर्णांक slot)
-अणु
-	पूर्णांक changed = 0;
-	पूर्णांक status;
+static int dvb_ca_en50221_poll_cam_gone(struct dvb_ca_private *ca, int slot)
+{
+	int changed = 0;
+	int status;
 
 	/*
-	 * we need this extra check क्रम annoying पूर्णांकerfaces like the
+	 * we need this extra check for annoying interfaces like the
 	 * budget-av
 	 */
-	अगर ((!(ca->flags & DVB_CA_EN50221_FLAG_IRQ_CAMCHANGE)) &&
-	    (ca->pub->poll_slot_status)) अणु
+	if ((!(ca->flags & DVB_CA_EN50221_FLAG_IRQ_CAMCHANGE)) &&
+	    (ca->pub->poll_slot_status)) {
 		status = ca->pub->poll_slot_status(ca->pub, slot, 0);
-		अगर (!(status &
-			DVB_CA_EN50221_POLL_CAM_PRESENT)) अणु
+		if (!(status &
+			DVB_CA_EN50221_POLL_CAM_PRESENT)) {
 			ca->slot_info[slot].slot_state = DVB_CA_SLOTSTATE_NONE;
-			dvb_ca_en50221_thपढ़ो_update_delay(ca);
+			dvb_ca_en50221_thread_update_delay(ca);
 			changed = 1;
-		पूर्ण
-	पूर्ण
-	वापस changed;
-पूर्ण
+		}
+	}
+	return changed;
+}
 
 /**
- * dvb_ca_en50221_thपढ़ो_state_machine - Thपढ़ो state machine क्रम one CA slot
- *	to perक्रमm the data transfer.
+ * dvb_ca_en50221_thread_state_machine - Thread state machine for one CA slot
+ *	to perform the data transfer.
  *
  * @ca: CA instance.
  * @slot: Slot to process.
  */
-अटल व्योम dvb_ca_en50221_thपढ़ो_state_machine(काष्ठा dvb_ca_निजी *ca,
-						पूर्णांक slot)
-अणु
-	काष्ठा dvb_ca_slot *sl = &ca->slot_info[slot];
-	पूर्णांक flags;
-	पूर्णांक pktcount;
-	व्योम *rxbuf;
+static void dvb_ca_en50221_thread_state_machine(struct dvb_ca_private *ca,
+						int slot)
+{
+	struct dvb_ca_slot *sl = &ca->slot_info[slot];
+	int flags;
+	int pktcount;
+	void *rxbuf;
 
 	mutex_lock(&sl->slot_lock);
 
 	/* check the cam status + deal with CAMCHANGEs */
-	जबतक (dvb_ca_en50221_check_camstatus(ca, slot)) अणु
-		/* clear करोwn an old CI slot अगर necessary */
-		अगर (sl->slot_state != DVB_CA_SLOTSTATE_NONE)
-			dvb_ca_en50221_slot_shutकरोwn(ca, slot);
+	while (dvb_ca_en50221_check_camstatus(ca, slot)) {
+		/* clear down an old CI slot if necessary */
+		if (sl->slot_state != DVB_CA_SLOTSTATE_NONE)
+			dvb_ca_en50221_slot_shutdown(ca, slot);
 
-		/* अगर a CAM is NOW present, initialise it */
-		अगर (sl->camchange_type == DVB_CA_EN50221_CAMCHANGE_INSERTED)
+		/* if a CAM is NOW present, initialise it */
+		if (sl->camchange_type == DVB_CA_EN50221_CAMCHANGE_INSERTED)
 			sl->slot_state = DVB_CA_SLOTSTATE_UNINITIALISED;
 
 		/* we've handled one CAMCHANGE */
-		dvb_ca_en50221_thपढ़ो_update_delay(ca);
+		dvb_ca_en50221_thread_update_delay(ca);
 		atomic_dec(&sl->camchange_count);
-	पूर्ण
+	}
 
 	/* CAM state machine */
-	चयन (sl->slot_state) अणु
-	हाल DVB_CA_SLOTSTATE_NONE:
-	हाल DVB_CA_SLOTSTATE_INVALID:
+	switch (sl->slot_state) {
+	case DVB_CA_SLOTSTATE_NONE:
+	case DVB_CA_SLOTSTATE_INVALID:
 		/* no action needed */
-		अवरोध;
+		break;
 
-	हाल DVB_CA_SLOTSTATE_UNINITIALISED:
+	case DVB_CA_SLOTSTATE_UNINITIALISED:
 		sl->slot_state = DVB_CA_SLOTSTATE_WAITREADY;
 		ca->pub->slot_reset(ca->pub, slot);
-		sl->समयout = jअगरfies + (INIT_TIMEOUT_SECS * HZ);
-		अवरोध;
+		sl->timeout = jiffies + (INIT_TIMEOUT_SECS * HZ);
+		break;
 
-	हाल DVB_CA_SLOTSTATE_WAITREADY:
-		अगर (समय_after(jअगरfies, sl->समयout)) अणु
+	case DVB_CA_SLOTSTATE_WAITREADY:
+		if (time_after(jiffies, sl->timeout)) {
 			pr_err("dvb_ca adaptor %d: PC card did not respond :(\n",
 			       ca->dvbdev->adapter->num);
 			sl->slot_state = DVB_CA_SLOTSTATE_INVALID;
-			dvb_ca_en50221_thपढ़ो_update_delay(ca);
-			अवरोध;
-		पूर्ण
+			dvb_ca_en50221_thread_update_delay(ca);
+			break;
+		}
 		/*
-		 * no other action needed; will स्वतःmatically change state when
-		 * पढ़ोy
+		 * no other action needed; will automatically change state when
+		 * ready
 		 */
-		अवरोध;
+		break;
 
-	हाल DVB_CA_SLOTSTATE_VALIDATE:
-		अगर (dvb_ca_en50221_parse_attributes(ca, slot) != 0) अणु
-			अगर (dvb_ca_en50221_poll_cam_gone(ca, slot))
-				अवरोध;
+	case DVB_CA_SLOTSTATE_VALIDATE:
+		if (dvb_ca_en50221_parse_attributes(ca, slot) != 0) {
+			if (dvb_ca_en50221_poll_cam_gone(ca, slot))
+				break;
 
 			pr_err("dvb_ca adapter %d: Invalid PC card inserted :(\n",
 			       ca->dvbdev->adapter->num);
 			sl->slot_state = DVB_CA_SLOTSTATE_INVALID;
-			dvb_ca_en50221_thपढ़ो_update_delay(ca);
-			अवरोध;
-		पूर्ण
-		अगर (dvb_ca_en50221_set_configoption(ca, slot) != 0) अणु
+			dvb_ca_en50221_thread_update_delay(ca);
+			break;
+		}
+		if (dvb_ca_en50221_set_configoption(ca, slot) != 0) {
 			pr_err("dvb_ca adapter %d: Unable to initialise CAM :(\n",
 			       ca->dvbdev->adapter->num);
 			sl->slot_state = DVB_CA_SLOTSTATE_INVALID;
-			dvb_ca_en50221_thपढ़ो_update_delay(ca);
-			अवरोध;
-		पूर्ण
-		अगर (ca->pub->ग_लिखो_cam_control(ca->pub, slot,
+			dvb_ca_en50221_thread_update_delay(ca);
+			break;
+		}
+		if (ca->pub->write_cam_control(ca->pub, slot,
 					       CTRLIF_COMMAND,
-					       CMDREG_RS) != 0) अणु
+					       CMDREG_RS) != 0) {
 			pr_err("dvb_ca adapter %d: Unable to reset CAM IF\n",
 			       ca->dvbdev->adapter->num);
 			sl->slot_state = DVB_CA_SLOTSTATE_INVALID;
-			dvb_ca_en50221_thपढ़ो_update_delay(ca);
-			अवरोध;
-		पूर्ण
-		dprपूर्णांकk("DVB CAM validated successfully\n");
+			dvb_ca_en50221_thread_update_delay(ca);
+			break;
+		}
+		dprintk("DVB CAM validated successfully\n");
 
-		sl->समयout = jअगरfies + (INIT_TIMEOUT_SECS * HZ);
+		sl->timeout = jiffies + (INIT_TIMEOUT_SECS * HZ);
 		sl->slot_state = DVB_CA_SLOTSTATE_WAITFR;
 		ca->wakeup = 1;
-		अवरोध;
+		break;
 
-	हाल DVB_CA_SLOTSTATE_WAITFR:
-		अगर (समय_after(jअगरfies, sl->समयout)) अणु
+	case DVB_CA_SLOTSTATE_WAITFR:
+		if (time_after(jiffies, sl->timeout)) {
 			pr_err("dvb_ca adapter %d: DVB CAM did not respond :(\n",
 			       ca->dvbdev->adapter->num);
 			sl->slot_state = DVB_CA_SLOTSTATE_INVALID;
-			dvb_ca_en50221_thपढ़ो_update_delay(ca);
-			अवरोध;
-		पूर्ण
+			dvb_ca_en50221_thread_update_delay(ca);
+			break;
+		}
 
-		flags = ca->pub->पढ़ो_cam_control(ca->pub, slot, CTRLIF_STATUS);
-		अगर (flags & STATUSREG_FR) अणु
+		flags = ca->pub->read_cam_control(ca->pub, slot, CTRLIF_STATUS);
+		if (flags & STATUSREG_FR) {
 			sl->slot_state = DVB_CA_SLOTSTATE_LINKINIT;
 			ca->wakeup = 1;
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	हाल DVB_CA_SLOTSTATE_LINKINIT:
-		अगर (dvb_ca_en50221_link_init(ca, slot) != 0) अणु
-			अगर (dvb_ca_en50221_poll_cam_gone(ca, slot))
-				अवरोध;
+	case DVB_CA_SLOTSTATE_LINKINIT:
+		if (dvb_ca_en50221_link_init(ca, slot) != 0) {
+			if (dvb_ca_en50221_poll_cam_gone(ca, slot))
+				break;
 
 			pr_err("dvb_ca adapter %d: DVB CAM link initialisation failed :(\n",
 			       ca->dvbdev->adapter->num);
 			sl->slot_state = DVB_CA_SLOTSTATE_UNINITIALISED;
-			dvb_ca_en50221_thपढ़ो_update_delay(ca);
-			अवरोध;
-		पूर्ण
+			dvb_ca_en50221_thread_update_delay(ca);
+			break;
+		}
 
-		अगर (!sl->rx_buffer.data) अणु
-			rxbuf = vदो_स्मृति(RX_BUFFER_SIZE);
-			अगर (!rxbuf) अणु
+		if (!sl->rx_buffer.data) {
+			rxbuf = vmalloc(RX_BUFFER_SIZE);
+			if (!rxbuf) {
 				pr_err("dvb_ca adapter %d: Unable to allocate CAM rx buffer :(\n",
 				       ca->dvbdev->adapter->num);
 				sl->slot_state = DVB_CA_SLOTSTATE_INVALID;
-				dvb_ca_en50221_thपढ़ो_update_delay(ca);
-				अवरोध;
-			पूर्ण
+				dvb_ca_en50221_thread_update_delay(ca);
+				break;
+			}
 			dvb_ringbuffer_init(&sl->rx_buffer, rxbuf,
 					    RX_BUFFER_SIZE);
-		पूर्ण
+		}
 
 		ca->pub->slot_ts_enable(ca->pub, slot);
 		sl->slot_state = DVB_CA_SLOTSTATE_RUNNING;
-		dvb_ca_en50221_thपढ़ो_update_delay(ca);
+		dvb_ca_en50221_thread_update_delay(ca);
 		pr_info("dvb_ca adapter %d: DVB CAM detected and initialised successfully\n",
 			ca->dvbdev->adapter->num);
-		अवरोध;
+		break;
 
-	हाल DVB_CA_SLOTSTATE_RUNNING:
-		अगर (!ca->खोलो)
-			अवरोध;
+	case DVB_CA_SLOTSTATE_RUNNING:
+		if (!ca->open)
+			break;
 
-		/* poll slots क्रम data */
+		/* poll slots for data */
 		pktcount = 0;
-		जबतक (dvb_ca_en50221_पढ़ो_data(ca, slot, शून्य, 0) > 0) अणु
-			अगर (!ca->खोलो)
-				अवरोध;
+		while (dvb_ca_en50221_read_data(ca, slot, NULL, 0) > 0) {
+			if (!ca->open)
+				break;
 
 			/*
-			 * अगर a CAMCHANGE occurred at some poपूर्णांक, करो not करो any
+			 * if a CAMCHANGE occurred at some point, do not do any
 			 * more processing of this slot
 			 */
-			अगर (dvb_ca_en50221_check_camstatus(ca, slot)) अणु
+			if (dvb_ca_en50221_check_camstatus(ca, slot)) {
 				/*
-				 * we करोn't want to sleep on the next iteration
+				 * we don't want to sleep on the next iteration
 				 * so we can handle the cam change
 				 */
 				ca->wakeup = 1;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 
-			/* check अगर we've hit our limit this समय */
-			अगर (++pktcount >= MAX_RX_PACKETS_PER_ITERATION) अणु
+			/* check if we've hit our limit this time */
+			if (++pktcount >= MAX_RX_PACKETS_PER_ITERATION) {
 				/*
-				 * करोn't sleep; there is likely to be more data
-				 * to पढ़ो
+				 * don't sleep; there is likely to be more data
+				 * to read
 				 */
 				ca->wakeup = 1;
-				अवरोध;
-			पूर्ण
-		पूर्ण
-		अवरोध;
-	पूर्ण
+				break;
+			}
+		}
+		break;
+	}
 
 	mutex_unlock(&sl->slot_lock);
-पूर्ण
+}
 
 /*
- * Kernel thपढ़ो which monitors CA slots क्रम CAM changes, and perक्रमms data
+ * Kernel thread which monitors CA slots for CAM changes, and performs data
  * transfers.
  */
-अटल पूर्णांक dvb_ca_en50221_thपढ़ो(व्योम *data)
-अणु
-	काष्ठा dvb_ca_निजी *ca = data;
-	पूर्णांक slot;
+static int dvb_ca_en50221_thread(void *data)
+{
+	struct dvb_ca_private *ca = data;
+	int slot;
 
-	dprपूर्णांकk("%s\n", __func__);
+	dprintk("%s\n", __func__);
 
 	/* choose the correct initial delay */
-	dvb_ca_en50221_thपढ़ो_update_delay(ca);
+	dvb_ca_en50221_thread_update_delay(ca);
 
-	/* मुख्य loop */
-	जबतक (!kthपढ़ो_should_stop()) अणु
-		/* sleep क्रम a bit */
-		अगर (!ca->wakeup) अणु
+	/* main loop */
+	while (!kthread_should_stop()) {
+		/* sleep for a bit */
+		if (!ca->wakeup) {
 			set_current_state(TASK_INTERRUPTIBLE);
-			schedule_समयout(ca->delay);
-			अगर (kthपढ़ो_should_stop())
-				वापस 0;
-		पूर्ण
+			schedule_timeout(ca->delay);
+			if (kthread_should_stop())
+				return 0;
+		}
 		ca->wakeup = 0;
 
 		/* go through all the slots processing them */
-		क्रम (slot = 0; slot < ca->slot_count; slot++)
-			dvb_ca_en50221_thपढ़ो_state_machine(ca, slot);
-	पूर्ण
+		for (slot = 0; slot < ca->slot_count; slot++)
+			dvb_ca_en50221_thread_state_machine(ca, slot);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* ************************************************************************** */
-/* EN50221 IO पूर्णांकerface functions */
+/* EN50221 IO interface functions */
 
 /**
- * dvb_ca_en50221_io_करो_ioctl - Real ioctl implementation.
+ * dvb_ca_en50221_io_do_ioctl - Real ioctl implementation.
  *
  * @file: File concerned.
  * @cmd: IOCTL command.
@@ -1334,613 +1333,613 @@ EXPORT_SYMBOL(dvb_ca_en50221_frda_irq);
  *
  * NOTE: CA_SEND_MSG/CA_GET_MSG ioctls have userspace buffers passed to them.
  *
- * वापस: 0 on success, <0 on error.
+ * return: 0 on success, <0 on error.
  */
-अटल पूर्णांक dvb_ca_en50221_io_करो_ioctl(काष्ठा file *file,
-				      अचिन्हित पूर्णांक cmd, व्योम *parg)
-अणु
-	काष्ठा dvb_device *dvbdev = file->निजी_data;
-	काष्ठा dvb_ca_निजी *ca = dvbdev->priv;
-	पूर्णांक err = 0;
-	पूर्णांक slot;
+static int dvb_ca_en50221_io_do_ioctl(struct file *file,
+				      unsigned int cmd, void *parg)
+{
+	struct dvb_device *dvbdev = file->private_data;
+	struct dvb_ca_private *ca = dvbdev->priv;
+	int err = 0;
+	int slot;
 
-	dprपूर्णांकk("%s\n", __func__);
+	dprintk("%s\n", __func__);
 
-	अगर (mutex_lock_पूर्णांकerruptible(&ca->ioctl_mutex))
-		वापस -ERESTARTSYS;
+	if (mutex_lock_interruptible(&ca->ioctl_mutex))
+		return -ERESTARTSYS;
 
-	चयन (cmd) अणु
-	हाल CA_RESET:
-		क्रम (slot = 0; slot < ca->slot_count; slot++) अणु
-			काष्ठा dvb_ca_slot *sl = &ca->slot_info[slot];
+	switch (cmd) {
+	case CA_RESET:
+		for (slot = 0; slot < ca->slot_count; slot++) {
+			struct dvb_ca_slot *sl = &ca->slot_info[slot];
 
 			mutex_lock(&sl->slot_lock);
-			अगर (sl->slot_state != DVB_CA_SLOTSTATE_NONE) अणु
-				dvb_ca_en50221_slot_shutकरोwn(ca, slot);
-				अगर (ca->flags & DVB_CA_EN50221_FLAG_IRQ_CAMCHANGE)
+			if (sl->slot_state != DVB_CA_SLOTSTATE_NONE) {
+				dvb_ca_en50221_slot_shutdown(ca, slot);
+				if (ca->flags & DVB_CA_EN50221_FLAG_IRQ_CAMCHANGE)
 					dvb_ca_en50221_camchange_irq(ca->pub,
 								     slot,
 								     DVB_CA_EN50221_CAMCHANGE_INSERTED);
-			पूर्ण
+			}
 			mutex_unlock(&sl->slot_lock);
-		पूर्ण
-		ca->next_पढ़ो_slot = 0;
-		dvb_ca_en50221_thपढ़ो_wakeup(ca);
-		अवरोध;
+		}
+		ca->next_read_slot = 0;
+		dvb_ca_en50221_thread_wakeup(ca);
+		break;
 
-	हाल CA_GET_CAP: अणु
-		काष्ठा ca_caps *caps = parg;
+	case CA_GET_CAP: {
+		struct ca_caps *caps = parg;
 
 		caps->slot_num = ca->slot_count;
 		caps->slot_type = CA_CI_LINK;
 		caps->descr_num = 0;
 		caps->descr_type = 0;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	हाल CA_GET_SLOT_INFO: अणु
-		काष्ठा ca_slot_info *info = parg;
-		काष्ठा dvb_ca_slot *sl;
+	case CA_GET_SLOT_INFO: {
+		struct ca_slot_info *info = parg;
+		struct dvb_ca_slot *sl;
 
 		slot = info->num;
-		अगर ((slot >= ca->slot_count) || (slot < 0)) अणु
+		if ((slot >= ca->slot_count) || (slot < 0)) {
 			err = -EINVAL;
-			जाओ out_unlock;
-		पूर्ण
+			goto out_unlock;
+		}
 
 		info->type = CA_CI_LINK;
 		info->flags = 0;
 		sl = &ca->slot_info[slot];
-		अगर ((sl->slot_state != DVB_CA_SLOTSTATE_NONE) &&
-		    (sl->slot_state != DVB_CA_SLOTSTATE_INVALID)) अणु
+		if ((sl->slot_state != DVB_CA_SLOTSTATE_NONE) &&
+		    (sl->slot_state != DVB_CA_SLOTSTATE_INVALID)) {
 			info->flags = CA_CI_MODULE_PRESENT;
-		पूर्ण
-		अगर (sl->slot_state == DVB_CA_SLOTSTATE_RUNNING)
+		}
+		if (sl->slot_state == DVB_CA_SLOTSTATE_RUNNING)
 			info->flags |= CA_CI_MODULE_READY;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	शेष:
+	default:
 		err = -EINVAL;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 out_unlock:
 	mutex_unlock(&ca->ioctl_mutex);
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /**
- * dvb_ca_en50221_io_ioctl - Wrapper क्रम ioctl implementation.
+ * dvb_ca_en50221_io_ioctl - Wrapper for ioctl implementation.
  *
  * @file: File concerned.
  * @cmd: IOCTL command.
  * @arg: Associated argument.
  *
- * वापस: 0 on success, <0 on error.
+ * return: 0 on success, <0 on error.
  */
-अटल दीर्घ dvb_ca_en50221_io_ioctl(काष्ठा file *file,
-				    अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
-अणु
-	वापस dvb_usercopy(file, cmd, arg, dvb_ca_en50221_io_करो_ioctl);
-पूर्ण
+static long dvb_ca_en50221_io_ioctl(struct file *file,
+				    unsigned int cmd, unsigned long arg)
+{
+	return dvb_usercopy(file, cmd, arg, dvb_ca_en50221_io_do_ioctl);
+}
 
 /**
- * dvb_ca_en50221_io_ग_लिखो - Implementation of ग_लिखो() syscall.
+ * dvb_ca_en50221_io_write - Implementation of write() syscall.
  *
- * @file: File काष्ठाure.
+ * @file: File structure.
  * @buf: Source buffer.
  * @count: Size of source buffer.
  * @ppos: Position in file (ignored).
  *
- * वापस: Number of bytes पढ़ो, or <0 on error.
+ * return: Number of bytes read, or <0 on error.
  */
-अटल sमाप_प्रकार dvb_ca_en50221_io_ग_लिखो(काष्ठा file *file,
-				       स्थिर अक्षर __user *buf, माप_प्रकार count,
+static ssize_t dvb_ca_en50221_io_write(struct file *file,
+				       const char __user *buf, size_t count,
 				       loff_t *ppos)
-अणु
-	काष्ठा dvb_device *dvbdev = file->निजी_data;
-	काष्ठा dvb_ca_निजी *ca = dvbdev->priv;
-	काष्ठा dvb_ca_slot *sl;
+{
+	struct dvb_device *dvbdev = file->private_data;
+	struct dvb_ca_private *ca = dvbdev->priv;
+	struct dvb_ca_slot *sl;
 	u8 slot, connection_id;
-	पूर्णांक status;
+	int status;
 	u8 fragbuf[HOST_LINK_BUF_SIZE];
-	पूर्णांक fragpos = 0;
-	पूर्णांक fraglen;
-	अचिन्हित दीर्घ समयout;
-	पूर्णांक written;
+	int fragpos = 0;
+	int fraglen;
+	unsigned long timeout;
+	int written;
 
-	dprपूर्णांकk("%s\n", __func__);
+	dprintk("%s\n", __func__);
 
 	/*
 	 * Incoming packet has a 2 byte header.
 	 * hdr[0] = slot_id, hdr[1] = connection_id
 	 */
-	अगर (count < 2)
-		वापस -EINVAL;
+	if (count < 2)
+		return -EINVAL;
 
 	/* extract slot & connection id */
-	अगर (copy_from_user(&slot, buf, 1))
-		वापस -EFAULT;
-	अगर (copy_from_user(&connection_id, buf + 1, 1))
-		वापस -EFAULT;
+	if (copy_from_user(&slot, buf, 1))
+		return -EFAULT;
+	if (copy_from_user(&connection_id, buf + 1, 1))
+		return -EFAULT;
 	buf += 2;
 	count -= 2;
 
-	अगर (slot >= ca->slot_count)
-		वापस -EINVAL;
+	if (slot >= ca->slot_count)
+		return -EINVAL;
 	slot = array_index_nospec(slot, ca->slot_count);
 	sl = &ca->slot_info[slot];
 
-	/* check अगर the slot is actually running */
-	अगर (sl->slot_state != DVB_CA_SLOTSTATE_RUNNING)
-		वापस -EINVAL;
+	/* check if the slot is actually running */
+	if (sl->slot_state != DVB_CA_SLOTSTATE_RUNNING)
+		return -EINVAL;
 
 	/* fragment the packets & store in the buffer */
-	जबतक (fragpos < count) अणु
+	while (fragpos < count) {
 		fraglen = sl->link_buf_size - 2;
-		अगर (fraglen < 0)
-			अवरोध;
-		अगर (fraglen > HOST_LINK_BUF_SIZE - 2)
+		if (fraglen < 0)
+			break;
+		if (fraglen > HOST_LINK_BUF_SIZE - 2)
 			fraglen = HOST_LINK_BUF_SIZE - 2;
-		अगर ((count - fragpos) < fraglen)
+		if ((count - fragpos) < fraglen)
 			fraglen = count - fragpos;
 
 		fragbuf[0] = connection_id;
 		fragbuf[1] = ((fragpos + fraglen) < count) ? 0x80 : 0x00;
 		status = copy_from_user(fragbuf + 2, buf + fragpos, fraglen);
-		अगर (status) अणु
+		if (status) {
 			status = -EFAULT;
-			जाओ निकास;
-		पूर्ण
+			goto exit;
+		}
 
-		समयout = jअगरfies + HZ / 2;
+		timeout = jiffies + HZ / 2;
 		written = 0;
-		जबतक (!समय_after(jअगरfies, समयout)) अणु
+		while (!time_after(jiffies, timeout)) {
 			/*
-			 * check the CAM hasn't been हटाओd/reset in the
-			 * meanसमय
+			 * check the CAM hasn't been removed/reset in the
+			 * meantime
 			 */
-			अगर (sl->slot_state != DVB_CA_SLOTSTATE_RUNNING) अणु
+			if (sl->slot_state != DVB_CA_SLOTSTATE_RUNNING) {
 				status = -EIO;
-				जाओ निकास;
-			पूर्ण
+				goto exit;
+			}
 
 			mutex_lock(&sl->slot_lock);
-			status = dvb_ca_en50221_ग_लिखो_data(ca, slot, fragbuf,
+			status = dvb_ca_en50221_write_data(ca, slot, fragbuf,
 							   fraglen + 2);
 			mutex_unlock(&sl->slot_lock);
-			अगर (status == (fraglen + 2)) अणु
+			if (status == (fraglen + 2)) {
 				written = 1;
-				अवरोध;
-			पूर्ण
-			अगर (status != -EAGAIN)
-				जाओ निकास;
+				break;
+			}
+			if (status != -EAGAIN)
+				goto exit;
 
 			usleep_range(1000, 1100);
-		पूर्ण
-		अगर (!written) अणु
+		}
+		if (!written) {
 			status = -EIO;
-			जाओ निकास;
-		पूर्ण
+			goto exit;
+		}
 
 		fragpos += fraglen;
-	पूर्ण
+	}
 	status = count + 2;
 
-निकास:
-	वापस status;
-पूर्ण
+exit:
+	return status;
+}
 
 /*
- * Condition क्रम waking up in dvb_ca_en50221_io_पढ़ो_condition
+ * Condition for waking up in dvb_ca_en50221_io_read_condition
  */
-अटल पूर्णांक dvb_ca_en50221_io_पढ़ो_condition(काष्ठा dvb_ca_निजी *ca,
-					    पूर्णांक *result, पूर्णांक *_slot)
-अणु
-	पूर्णांक slot;
-	पूर्णांक slot_count = 0;
-	पूर्णांक idx;
-	माप_प्रकार fraglen;
-	पूर्णांक connection_id = -1;
-	पूर्णांक found = 0;
+static int dvb_ca_en50221_io_read_condition(struct dvb_ca_private *ca,
+					    int *result, int *_slot)
+{
+	int slot;
+	int slot_count = 0;
+	int idx;
+	size_t fraglen;
+	int connection_id = -1;
+	int found = 0;
 	u8 hdr[2];
 
-	slot = ca->next_पढ़ो_slot;
-	जबतक ((slot_count < ca->slot_count) && (!found)) अणु
-		काष्ठा dvb_ca_slot *sl = &ca->slot_info[slot];
+	slot = ca->next_read_slot;
+	while ((slot_count < ca->slot_count) && (!found)) {
+		struct dvb_ca_slot *sl = &ca->slot_info[slot];
 
-		अगर (sl->slot_state != DVB_CA_SLOTSTATE_RUNNING)
-			जाओ nextslot;
+		if (sl->slot_state != DVB_CA_SLOTSTATE_RUNNING)
+			goto nextslot;
 
-		अगर (!sl->rx_buffer.data)
-			वापस 0;
+		if (!sl->rx_buffer.data)
+			return 0;
 
 		idx = dvb_ringbuffer_pkt_next(&sl->rx_buffer, -1, &fraglen);
-		जबतक (idx != -1) अणु
-			dvb_ringbuffer_pkt_पढ़ो(&sl->rx_buffer, idx, 0, hdr, 2);
-			अगर (connection_id == -1)
+		while (idx != -1) {
+			dvb_ringbuffer_pkt_read(&sl->rx_buffer, idx, 0, hdr, 2);
+			if (connection_id == -1)
 				connection_id = hdr[0];
-			अगर ((hdr[0] == connection_id) &&
-			    ((hdr[1] & 0x80) == 0)) अणु
+			if ((hdr[0] == connection_id) &&
+			    ((hdr[1] & 0x80) == 0)) {
 				*_slot = slot;
 				found = 1;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 
 			idx = dvb_ringbuffer_pkt_next(&sl->rx_buffer, idx,
 						      &fraglen);
-		पूर्ण
+		}
 
 nextslot:
 		slot = (slot + 1) % ca->slot_count;
 		slot_count++;
-	पूर्ण
+	}
 
-	ca->next_पढ़ो_slot = slot;
-	वापस found;
-पूर्ण
+	ca->next_read_slot = slot;
+	return found;
+}
 
 /**
- * dvb_ca_en50221_io_पढ़ो - Implementation of पढ़ो() syscall.
+ * dvb_ca_en50221_io_read - Implementation of read() syscall.
  *
- * @file: File काष्ठाure.
+ * @file: File structure.
  * @buf: Destination buffer.
  * @count: Size of destination buffer.
  * @ppos: Position in file (ignored).
  *
- * वापस: Number of bytes पढ़ो, or <0 on error.
+ * return: Number of bytes read, or <0 on error.
  */
-अटल sमाप_प्रकार dvb_ca_en50221_io_पढ़ो(काष्ठा file *file, अक्षर __user *buf,
-				      माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा dvb_device *dvbdev = file->निजी_data;
-	काष्ठा dvb_ca_निजी *ca = dvbdev->priv;
-	काष्ठा dvb_ca_slot *sl;
-	पूर्णांक status;
-	पूर्णांक result = 0;
+static ssize_t dvb_ca_en50221_io_read(struct file *file, char __user *buf,
+				      size_t count, loff_t *ppos)
+{
+	struct dvb_device *dvbdev = file->private_data;
+	struct dvb_ca_private *ca = dvbdev->priv;
+	struct dvb_ca_slot *sl;
+	int status;
+	int result = 0;
 	u8 hdr[2];
-	पूर्णांक slot;
-	पूर्णांक connection_id = -1;
-	माप_प्रकार idx, idx2;
-	पूर्णांक last_fragment = 0;
-	माप_प्रकार fraglen;
-	पूर्णांक pktlen;
-	पूर्णांक dispose = 0;
+	int slot;
+	int connection_id = -1;
+	size_t idx, idx2;
+	int last_fragment = 0;
+	size_t fraglen;
+	int pktlen;
+	int dispose = 0;
 
-	dprपूर्णांकk("%s\n", __func__);
+	dprintk("%s\n", __func__);
 
 	/*
 	 * Outgoing packet has a 2 byte header.
 	 * hdr[0] = slot_id, hdr[1] = connection_id
 	 */
-	अगर (count < 2)
-		वापस -EINVAL;
+	if (count < 2)
+		return -EINVAL;
 
-	/* रुको क्रम some data */
-	status = dvb_ca_en50221_io_पढ़ो_condition(ca, &result, &slot);
-	अगर (status == 0) अणु
-		/* अगर we're in nonblocking mode, निकास immediately */
-		अगर (file->f_flags & O_NONBLOCK)
-			वापस -EWOULDBLOCK;
+	/* wait for some data */
+	status = dvb_ca_en50221_io_read_condition(ca, &result, &slot);
+	if (status == 0) {
+		/* if we're in nonblocking mode, exit immediately */
+		if (file->f_flags & O_NONBLOCK)
+			return -EWOULDBLOCK;
 
-		/* रुको क्रम some data */
-		status = रुको_event_पूर्णांकerruptible(ca->रुको_queue,
-						  dvb_ca_en50221_io_पढ़ो_condition
+		/* wait for some data */
+		status = wait_event_interruptible(ca->wait_queue,
+						  dvb_ca_en50221_io_read_condition
 						  (ca, &result, &slot));
-	पूर्ण
-	अगर ((status < 0) || (result < 0)) अणु
-		अगर (result)
-			वापस result;
-		वापस status;
-	पूर्ण
+	}
+	if ((status < 0) || (result < 0)) {
+		if (result)
+			return result;
+		return status;
+	}
 
 	sl = &ca->slot_info[slot];
 	idx = dvb_ringbuffer_pkt_next(&sl->rx_buffer, -1, &fraglen);
 	pktlen = 2;
-	करो अणु
-		अगर (idx == -1) अणु
+	do {
+		if (idx == -1) {
 			pr_err("dvb_ca adapter %d: BUG: read packet ended before last_fragment encountered\n",
 			       ca->dvbdev->adapter->num);
 			status = -EIO;
-			जाओ निकास;
-		पूर्ण
+			goto exit;
+		}
 
-		dvb_ringbuffer_pkt_पढ़ो(&sl->rx_buffer, idx, 0, hdr, 2);
-		अगर (connection_id == -1)
+		dvb_ringbuffer_pkt_read(&sl->rx_buffer, idx, 0, hdr, 2);
+		if (connection_id == -1)
 			connection_id = hdr[0];
-		अगर (hdr[0] == connection_id) अणु
-			अगर (pktlen < count) अणु
-				अगर ((pktlen + fraglen - 2) > count)
+		if (hdr[0] == connection_id) {
+			if (pktlen < count) {
+				if ((pktlen + fraglen - 2) > count)
 					fraglen = count - pktlen;
-				अन्यथा
+				else
 					fraglen -= 2;
 
 				status =
-				   dvb_ringbuffer_pkt_पढ़ो_user(&sl->rx_buffer,
+				   dvb_ringbuffer_pkt_read_user(&sl->rx_buffer,
 								idx, 2,
 								buf + pktlen,
 								fraglen);
-				अगर (status < 0)
-					जाओ निकास;
+				if (status < 0)
+					goto exit;
 
 				pktlen += fraglen;
-			पूर्ण
+			}
 
-			अगर ((hdr[1] & 0x80) == 0)
+			if ((hdr[1] & 0x80) == 0)
 				last_fragment = 1;
 			dispose = 1;
-		पूर्ण
+		}
 
 		idx2 = dvb_ringbuffer_pkt_next(&sl->rx_buffer, idx, &fraglen);
-		अगर (dispose)
+		if (dispose)
 			dvb_ringbuffer_pkt_dispose(&sl->rx_buffer, idx);
 		idx = idx2;
 		dispose = 0;
-	पूर्ण जबतक (!last_fragment);
+	} while (!last_fragment);
 
 	hdr[0] = slot;
 	hdr[1] = connection_id;
 	status = copy_to_user(buf, hdr, 2);
-	अगर (status) अणु
+	if (status) {
 		status = -EFAULT;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 	status = pktlen;
 
-निकास:
-	वापस status;
-पूर्ण
+exit:
+	return status;
+}
 
 /**
- * dvb_ca_en50221_io_खोलो - Implementation of file खोलो syscall.
+ * dvb_ca_en50221_io_open - Implementation of file open syscall.
  *
  * @inode: Inode concerned.
  * @file: File concerned.
  *
- * वापस: 0 on success, <0 on failure.
+ * return: 0 on success, <0 on failure.
  */
-अटल पूर्णांक dvb_ca_en50221_io_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा dvb_device *dvbdev = file->निजी_data;
-	काष्ठा dvb_ca_निजी *ca = dvbdev->priv;
-	पूर्णांक err;
-	पूर्णांक i;
+static int dvb_ca_en50221_io_open(struct inode *inode, struct file *file)
+{
+	struct dvb_device *dvbdev = file->private_data;
+	struct dvb_ca_private *ca = dvbdev->priv;
+	int err;
+	int i;
 
-	dprपूर्णांकk("%s\n", __func__);
+	dprintk("%s\n", __func__);
 
-	अगर (!try_module_get(ca->pub->owner))
-		वापस -EIO;
+	if (!try_module_get(ca->pub->owner))
+		return -EIO;
 
-	err = dvb_generic_खोलो(inode, file);
-	अगर (err < 0) अणु
+	err = dvb_generic_open(inode, file);
+	if (err < 0) {
 		module_put(ca->pub->owner);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	क्रम (i = 0; i < ca->slot_count; i++) अणु
-		काष्ठा dvb_ca_slot *sl = &ca->slot_info[i];
+	for (i = 0; i < ca->slot_count; i++) {
+		struct dvb_ca_slot *sl = &ca->slot_info[i];
 
-		अगर (sl->slot_state == DVB_CA_SLOTSTATE_RUNNING) अणु
-			अगर (!sl->rx_buffer.data) अणु
+		if (sl->slot_state == DVB_CA_SLOTSTATE_RUNNING) {
+			if (!sl->rx_buffer.data) {
 				/*
 				 * it is safe to call this here without locks
-				 * because ca->खोलो == 0. Data is not पढ़ो in
-				 * this हाल
+				 * because ca->open == 0. Data is not read in
+				 * this case
 				 */
 				dvb_ringbuffer_flush(&sl->rx_buffer);
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
-	ca->खोलो = 1;
-	dvb_ca_en50221_thपढ़ो_update_delay(ca);
-	dvb_ca_en50221_thपढ़ो_wakeup(ca);
+	ca->open = 1;
+	dvb_ca_en50221_thread_update_delay(ca);
+	dvb_ca_en50221_thread_wakeup(ca);
 
-	dvb_ca_निजी_get(ca);
+	dvb_ca_private_get(ca);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * dvb_ca_en50221_io_release - Implementation of file बंद syscall.
+ * dvb_ca_en50221_io_release - Implementation of file close syscall.
  *
  * @inode: Inode concerned.
  * @file: File concerned.
  *
- * वापस: 0 on success, <0 on failure.
+ * return: 0 on success, <0 on failure.
  */
-अटल पूर्णांक dvb_ca_en50221_io_release(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा dvb_device *dvbdev = file->निजी_data;
-	काष्ठा dvb_ca_निजी *ca = dvbdev->priv;
-	पूर्णांक err;
+static int dvb_ca_en50221_io_release(struct inode *inode, struct file *file)
+{
+	struct dvb_device *dvbdev = file->private_data;
+	struct dvb_ca_private *ca = dvbdev->priv;
+	int err;
 
-	dprपूर्णांकk("%s\n", __func__);
+	dprintk("%s\n", __func__);
 
-	/* mark the CA device as बंदd */
-	ca->खोलो = 0;
-	dvb_ca_en50221_thपढ़ो_update_delay(ca);
+	/* mark the CA device as closed */
+	ca->open = 0;
+	dvb_ca_en50221_thread_update_delay(ca);
 
 	err = dvb_generic_release(inode, file);
 
 	module_put(ca->pub->owner);
 
-	dvb_ca_निजी_put(ca);
+	dvb_ca_private_put(ca);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /**
  * dvb_ca_en50221_io_poll - Implementation of poll() syscall.
  *
  * @file: File concerned.
- * @रुको: poll रुको table.
+ * @wait: poll wait table.
  *
- * वापस: Standard poll mask.
+ * return: Standard poll mask.
  */
-अटल __poll_t dvb_ca_en50221_io_poll(काष्ठा file *file, poll_table *रुको)
-अणु
-	काष्ठा dvb_device *dvbdev = file->निजी_data;
-	काष्ठा dvb_ca_निजी *ca = dvbdev->priv;
+static __poll_t dvb_ca_en50221_io_poll(struct file *file, poll_table *wait)
+{
+	struct dvb_device *dvbdev = file->private_data;
+	struct dvb_ca_private *ca = dvbdev->priv;
 	__poll_t mask = 0;
-	पूर्णांक slot;
-	पूर्णांक result = 0;
+	int slot;
+	int result = 0;
 
-	dprपूर्णांकk("%s\n", __func__);
+	dprintk("%s\n", __func__);
 
-	poll_रुको(file, &ca->रुको_queue, रुको);
+	poll_wait(file, &ca->wait_queue, wait);
 
-	अगर (dvb_ca_en50221_io_पढ़ो_condition(ca, &result, &slot) == 1)
+	if (dvb_ca_en50221_io_read_condition(ca, &result, &slot) == 1)
 		mask |= EPOLLIN;
 
-	/* अगर there is something, वापस now */
-	अगर (mask)
-		वापस mask;
+	/* if there is something, return now */
+	if (mask)
+		return mask;
 
-	अगर (dvb_ca_en50221_io_पढ़ो_condition(ca, &result, &slot) == 1)
+	if (dvb_ca_en50221_io_read_condition(ca, &result, &slot) == 1)
 		mask |= EPOLLIN;
 
-	वापस mask;
-पूर्ण
+	return mask;
+}
 
-अटल स्थिर काष्ठा file_operations dvb_ca_fops = अणु
+static const struct file_operations dvb_ca_fops = {
 	.owner = THIS_MODULE,
-	.पढ़ो = dvb_ca_en50221_io_पढ़ो,
-	.ग_लिखो = dvb_ca_en50221_io_ग_लिखो,
+	.read = dvb_ca_en50221_io_read,
+	.write = dvb_ca_en50221_io_write,
 	.unlocked_ioctl = dvb_ca_en50221_io_ioctl,
-	.खोलो = dvb_ca_en50221_io_खोलो,
+	.open = dvb_ca_en50221_io_open,
 	.release = dvb_ca_en50221_io_release,
 	.poll = dvb_ca_en50221_io_poll,
 	.llseek = noop_llseek,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा dvb_device dvbdev_ca = अणु
-	.priv = शून्य,
+static const struct dvb_device dvbdev_ca = {
+	.priv = NULL,
 	.users = 1,
-	.पढ़ोers = 1,
-	.ग_लिखोrs = 1,
-#अगर defined(CONFIG_MEDIA_CONTROLLER_DVB)
+	.readers = 1,
+	.writers = 1,
+#if defined(CONFIG_MEDIA_CONTROLLER_DVB)
 	.name = "dvb-ca-en50221",
-#पूर्ण_अगर
+#endif
 	.fops = &dvb_ca_fops,
-पूर्ण;
+};
 
 /* ************************************************************************** */
-/* Initialisation/shutकरोwn functions */
+/* Initialisation/shutdown functions */
 
 /**
- * dvb_ca_en50221_init - Initialise a new DVB CA EN50221 पूर्णांकerface device.
+ * dvb_ca_en50221_init - Initialise a new DVB CA EN50221 interface device.
  *
  * @dvb_adapter: DVB adapter to attach the new CA device to.
  * @pubca: The dvb_ca instance.
  * @flags: Flags describing the CA device (DVB_CA_FLAG_*).
  * @slot_count: Number of slots supported.
  *
- * वापस: 0 on success, nonzero on failure
+ * return: 0 on success, nonzero on failure
  */
-पूर्णांक dvb_ca_en50221_init(काष्ठा dvb_adapter *dvb_adapter,
-			काष्ठा dvb_ca_en50221 *pubca, पूर्णांक flags, पूर्णांक slot_count)
-अणु
-	पूर्णांक ret;
-	काष्ठा dvb_ca_निजी *ca = शून्य;
-	पूर्णांक i;
+int dvb_ca_en50221_init(struct dvb_adapter *dvb_adapter,
+			struct dvb_ca_en50221 *pubca, int flags, int slot_count)
+{
+	int ret;
+	struct dvb_ca_private *ca = NULL;
+	int i;
 
-	dprपूर्णांकk("%s\n", __func__);
+	dprintk("%s\n", __func__);
 
-	अगर (slot_count < 1)
-		वापस -EINVAL;
+	if (slot_count < 1)
+		return -EINVAL;
 
-	/* initialise the प्रणाली data */
-	ca = kzalloc(माप(*ca), GFP_KERNEL);
-	अगर (!ca) अणु
+	/* initialise the system data */
+	ca = kzalloc(sizeof(*ca), GFP_KERNEL);
+	if (!ca) {
 		ret = -ENOMEM;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 	kref_init(&ca->refcount);
 	ca->pub = pubca;
 	ca->flags = flags;
 	ca->slot_count = slot_count;
-	ca->slot_info = kसुस्मृति(slot_count, माप(काष्ठा dvb_ca_slot),
+	ca->slot_info = kcalloc(slot_count, sizeof(struct dvb_ca_slot),
 				GFP_KERNEL);
-	अगर (!ca->slot_info) अणु
+	if (!ca->slot_info) {
 		ret = -ENOMEM;
-		जाओ मुक्त_ca;
-	पूर्ण
-	init_रुकोqueue_head(&ca->रुको_queue);
-	ca->खोलो = 0;
+		goto free_ca;
+	}
+	init_waitqueue_head(&ca->wait_queue);
+	ca->open = 0;
 	ca->wakeup = 0;
-	ca->next_पढ़ो_slot = 0;
-	pubca->निजी = ca;
+	ca->next_read_slot = 0;
+	pubca->private = ca;
 
-	/* रेजिस्टर the DVB device */
-	ret = dvb_रेजिस्टर_device(dvb_adapter, &ca->dvbdev, &dvbdev_ca, ca,
+	/* register the DVB device */
+	ret = dvb_register_device(dvb_adapter, &ca->dvbdev, &dvbdev_ca, ca,
 				  DVB_DEVICE_CA, 0);
-	अगर (ret)
-		जाओ मुक्त_slot_info;
+	if (ret)
+		goto free_slot_info;
 
 	/* now initialise each slot */
-	क्रम (i = 0; i < slot_count; i++) अणु
-		काष्ठा dvb_ca_slot *sl = &ca->slot_info[i];
+	for (i = 0; i < slot_count; i++) {
+		struct dvb_ca_slot *sl = &ca->slot_info[i];
 
-		स_रखो(sl, 0, माप(काष्ठा dvb_ca_slot));
+		memset(sl, 0, sizeof(struct dvb_ca_slot));
 		sl->slot_state = DVB_CA_SLOTSTATE_NONE;
 		atomic_set(&sl->camchange_count, 0);
 		sl->camchange_type = DVB_CA_EN50221_CAMCHANGE_REMOVED;
 		mutex_init(&sl->slot_lock);
-	पूर्ण
+	}
 
 	mutex_init(&ca->ioctl_mutex);
 
-	अगर (संकेत_pending(current)) अणु
+	if (signal_pending(current)) {
 		ret = -EINTR;
-		जाओ unरेजिस्टर_device;
-	पूर्ण
+		goto unregister_device;
+	}
 	mb();
 
-	/* create a kthपढ़ो क्रम monitoring this CA device */
-	ca->thपढ़ो = kthपढ़ो_run(dvb_ca_en50221_thपढ़ो, ca, "kdvb-ca-%i:%i",
+	/* create a kthread for monitoring this CA device */
+	ca->thread = kthread_run(dvb_ca_en50221_thread, ca, "kdvb-ca-%i:%i",
 				 ca->dvbdev->adapter->num, ca->dvbdev->id);
-	अगर (IS_ERR(ca->thपढ़ो)) अणु
-		ret = PTR_ERR(ca->thपढ़ो);
+	if (IS_ERR(ca->thread)) {
+		ret = PTR_ERR(ca->thread);
 		pr_err("dvb_ca_init: failed to start kernel_thread (%d)\n",
 		       ret);
-		जाओ unरेजिस्टर_device;
-	पूर्ण
-	वापस 0;
+		goto unregister_device;
+	}
+	return 0;
 
-unरेजिस्टर_device:
-	dvb_unरेजिस्टर_device(ca->dvbdev);
-मुक्त_slot_info:
-	kमुक्त(ca->slot_info);
-मुक्त_ca:
-	kमुक्त(ca);
-निकास:
-	pubca->निजी = शून्य;
-	वापस ret;
-पूर्ण
+unregister_device:
+	dvb_unregister_device(ca->dvbdev);
+free_slot_info:
+	kfree(ca->slot_info);
+free_ca:
+	kfree(ca);
+exit:
+	pubca->private = NULL;
+	return ret;
+}
 EXPORT_SYMBOL(dvb_ca_en50221_init);
 
 /**
- * dvb_ca_en50221_release - Release a DVB CA EN50221 पूर्णांकerface device.
+ * dvb_ca_en50221_release - Release a DVB CA EN50221 interface device.
  *
  * @pubca: The associated dvb_ca instance.
  */
-व्योम dvb_ca_en50221_release(काष्ठा dvb_ca_en50221 *pubca)
-अणु
-	काष्ठा dvb_ca_निजी *ca = pubca->निजी;
-	पूर्णांक i;
+void dvb_ca_en50221_release(struct dvb_ca_en50221 *pubca)
+{
+	struct dvb_ca_private *ca = pubca->private;
+	int i;
 
-	dprपूर्णांकk("%s\n", __func__);
+	dprintk("%s\n", __func__);
 
-	/* shutकरोwn the thपढ़ो अगर there was one */
-	kthपढ़ो_stop(ca->thपढ़ो);
+	/* shutdown the thread if there was one */
+	kthread_stop(ca->thread);
 
-	क्रम (i = 0; i < ca->slot_count; i++)
-		dvb_ca_en50221_slot_shutकरोwn(ca, i);
+	for (i = 0; i < ca->slot_count; i++)
+		dvb_ca_en50221_slot_shutdown(ca, i);
 
-	dvb_हटाओ_device(ca->dvbdev);
-	dvb_ca_निजी_put(ca);
-	pubca->निजी = शून्य;
-पूर्ण
+	dvb_remove_device(ca->dvbdev);
+	dvb_ca_private_put(ca);
+	pubca->private = NULL;
+}
 EXPORT_SYMBOL(dvb_ca_en50221_release);

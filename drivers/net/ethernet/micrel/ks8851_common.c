@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /* drivers/net/ethernet/micrel/ks8851.c
  *
  * Copyright 2009 Simtec Electronics
@@ -7,305 +6,305 @@
  *	Ben Dooks <ben@simtec.co.uk>
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/etherdevice.h>
-#समावेश <linux/ethtool.h>
-#समावेश <linux/cache.h>
-#समावेश <linux/crc32.h>
-#समावेश <linux/mii.h>
-#समावेश <linux/regulator/consumer.h>
+#include <linux/interrupt.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/netdevice.h>
+#include <linux/etherdevice.h>
+#include <linux/ethtool.h>
+#include <linux/cache.h>
+#include <linux/crc32.h>
+#include <linux/mii.h>
+#include <linux/regulator/consumer.h>
 
-#समावेश <linux/gpपन.स>
-#समावेश <linux/of_gpपन.स>
-#समावेश <linux/of_mdपन.स>
-#समावेश <linux/of_net.h>
+#include <linux/gpio.h>
+#include <linux/of_gpio.h>
+#include <linux/of_mdio.h>
+#include <linux/of_net.h>
 
-#समावेश "ks8851.h"
+#include "ks8851.h"
 
 /**
- * ks8851_lock - रेजिस्टर access lock
+ * ks8851_lock - register access lock
  * @ks: The chip state
  * @flags: Spinlock flags
  *
- * Claim chip रेजिस्टर access lock
+ * Claim chip register access lock
  */
-अटल व्योम ks8851_lock(काष्ठा ks8851_net *ks, अचिन्हित दीर्घ *flags)
-अणु
+static void ks8851_lock(struct ks8851_net *ks, unsigned long *flags)
+{
 	ks->lock(ks, flags);
-पूर्ण
+}
 
 /**
- * ks8851_unlock - रेजिस्टर access unlock
+ * ks8851_unlock - register access unlock
  * @ks: The chip state
  * @flags: Spinlock flags
  *
- * Release chip रेजिस्टर access lock
+ * Release chip register access lock
  */
-अटल व्योम ks8851_unlock(काष्ठा ks8851_net *ks, अचिन्हित दीर्घ *flags)
-अणु
+static void ks8851_unlock(struct ks8851_net *ks, unsigned long *flags)
+{
 	ks->unlock(ks, flags);
-पूर्ण
+}
 
 /**
- * ks8851_wrreg16 - ग_लिखो 16bit रेजिस्टर value to chip
+ * ks8851_wrreg16 - write 16bit register value to chip
  * @ks: The chip state
- * @reg: The रेजिस्टर address
- * @val: The value to ग_लिखो
+ * @reg: The register address
+ * @val: The value to write
  *
- * Issue a ग_लिखो to put the value @val पूर्णांकo the रेजिस्टर specअगरied in @reg.
+ * Issue a write to put the value @val into the register specified in @reg.
  */
-अटल व्योम ks8851_wrreg16(काष्ठा ks8851_net *ks, अचिन्हित पूर्णांक reg,
-			   अचिन्हित पूर्णांक val)
-अणु
+static void ks8851_wrreg16(struct ks8851_net *ks, unsigned int reg,
+			   unsigned int val)
+{
 	ks->wrreg16(ks, reg, val);
-पूर्ण
+}
 
 /**
- * ks8851_rdreg16 - पढ़ो 16 bit रेजिस्टर from device
- * @ks: The chip inक्रमmation
- * @reg: The रेजिस्टर address
+ * ks8851_rdreg16 - read 16 bit register from device
+ * @ks: The chip information
+ * @reg: The register address
  *
- * Read a 16bit रेजिस्टर from the chip, वापसing the result
+ * Read a 16bit register from the chip, returning the result
  */
-अटल अचिन्हित पूर्णांक ks8851_rdreg16(काष्ठा ks8851_net *ks,
-				   अचिन्हित पूर्णांक reg)
-अणु
-	वापस ks->rdreg16(ks, reg);
-पूर्ण
+static unsigned int ks8851_rdreg16(struct ks8851_net *ks,
+				   unsigned int reg)
+{
+	return ks->rdreg16(ks, reg);
+}
 
 /**
  * ks8851_soft_reset - issue one of the soft reset to the device
  * @ks: The device state.
  * @op: The bit(s) to set in the GRR
  *
- * Issue the relevant soft-reset command to the device's GRR रेजिस्टर
- * specअगरied by @op.
+ * Issue the relevant soft-reset command to the device's GRR register
+ * specified by @op.
  *
  * Note, the delays are in there as a caution to ensure that the reset
- * has समय to take effect and then complete. Since the datasheet करोes
- * not currently specअगरy the exact sequence, we have chosen something
+ * has time to take effect and then complete. Since the datasheet does
+ * not currently specify the exact sequence, we have chosen something
  * that seems to work with our device.
  */
-अटल व्योम ks8851_soft_reset(काष्ठा ks8851_net *ks, अचिन्हित op)
-अणु
+static void ks8851_soft_reset(struct ks8851_net *ks, unsigned op)
+{
 	ks8851_wrreg16(ks, KS_GRR, op);
-	mdelay(1);	/* रुको a लघु समय to effect reset */
+	mdelay(1);	/* wait a short time to effect reset */
 	ks8851_wrreg16(ks, KS_GRR, 0);
-	mdelay(1);	/* रुको क्रम condition to clear */
-पूर्ण
+	mdelay(1);	/* wait for condition to clear */
+}
 
 /**
- * ks8851_set_घातermode - set घातer mode of the device
+ * ks8851_set_powermode - set power mode of the device
  * @ks: The device state
- * @pwrmode: The घातer mode value to ग_लिखो to KS_PMECR.
+ * @pwrmode: The power mode value to write to KS_PMECR.
  *
- * Change the घातer mode of the chip.
+ * Change the power mode of the chip.
  */
-अटल व्योम ks8851_set_घातermode(काष्ठा ks8851_net *ks, अचिन्हित pwrmode)
-अणु
-	अचिन्हित pmecr;
+static void ks8851_set_powermode(struct ks8851_net *ks, unsigned pwrmode)
+{
+	unsigned pmecr;
 
-	netअगर_dbg(ks, hw, ks->netdev, "setting power mode %d\n", pwrmode);
+	netif_dbg(ks, hw, ks->netdev, "setting power mode %d\n", pwrmode);
 
 	pmecr = ks8851_rdreg16(ks, KS_PMECR);
 	pmecr &= ~PMECR_PM_MASK;
 	pmecr |= pwrmode;
 
 	ks8851_wrreg16(ks, KS_PMECR, pmecr);
-पूर्ण
+}
 
 /**
- * ks8851_ग_लिखो_mac_addr - ग_लिखो mac address to device रेजिस्टरs
+ * ks8851_write_mac_addr - write mac address to device registers
  * @dev: The network device
  *
- * Update the KS8851 MAC address रेजिस्टरs from the address in @dev.
+ * Update the KS8851 MAC address registers from the address in @dev.
  *
  * This call assumes that the chip is not running, so there is no need to
- * shutकरोwn the RXQ process whilst setting this.
+ * shutdown the RXQ process whilst setting this.
 */
-अटल पूर्णांक ks8851_ग_लिखो_mac_addr(काष्ठा net_device *dev)
-अणु
-	काष्ठा ks8851_net *ks = netdev_priv(dev);
-	अचिन्हित दीर्घ flags;
+static int ks8851_write_mac_addr(struct net_device *dev)
+{
+	struct ks8851_net *ks = netdev_priv(dev);
+	unsigned long flags;
 	u16 val;
-	पूर्णांक i;
+	int i;
 
 	ks8851_lock(ks, &flags);
 
 	/*
-	 * Wake up chip in हाल it was घातered off when stopped; otherwise,
-	 * the first ग_लिखो to the MAC address करोes not take effect.
+	 * Wake up chip in case it was powered off when stopped; otherwise,
+	 * the first write to the MAC address does not take effect.
 	 */
-	ks8851_set_घातermode(ks, PMECR_PM_NORMAL);
+	ks8851_set_powermode(ks, PMECR_PM_NORMAL);
 
-	क्रम (i = 0; i < ETH_ALEN; i += 2) अणु
+	for (i = 0; i < ETH_ALEN; i += 2) {
 		val = (dev->dev_addr[i] << 8) | dev->dev_addr[i + 1];
 		ks8851_wrreg16(ks, KS_MAR(i), val);
-	पूर्ण
+	}
 
-	अगर (!netअगर_running(dev))
-		ks8851_set_घातermode(ks, PMECR_PM_SOFTDOWN);
+	if (!netif_running(dev))
+		ks8851_set_powermode(ks, PMECR_PM_SOFTDOWN);
 
 	ks8851_unlock(ks, &flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * ks8851_पढ़ो_mac_addr - पढ़ो mac address from device रेजिस्टरs
+ * ks8851_read_mac_addr - read mac address from device registers
  * @dev: The network device
  *
- * Update our copy of the KS8851 MAC address from the रेजिस्टरs of @dev.
+ * Update our copy of the KS8851 MAC address from the registers of @dev.
 */
-अटल व्योम ks8851_पढ़ो_mac_addr(काष्ठा net_device *dev)
-अणु
-	काष्ठा ks8851_net *ks = netdev_priv(dev);
-	अचिन्हित दीर्घ flags;
+static void ks8851_read_mac_addr(struct net_device *dev)
+{
+	struct ks8851_net *ks = netdev_priv(dev);
+	unsigned long flags;
 	u16 reg;
-	पूर्णांक i;
+	int i;
 
 	ks8851_lock(ks, &flags);
 
-	क्रम (i = 0; i < ETH_ALEN; i += 2) अणु
+	for (i = 0; i < ETH_ALEN; i += 2) {
 		reg = ks8851_rdreg16(ks, KS_MAR(i));
 		dev->dev_addr[i] = reg >> 8;
 		dev->dev_addr[i + 1] = reg & 0xff;
-	पूर्ण
+	}
 
 	ks8851_unlock(ks, &flags);
-पूर्ण
+}
 
 /**
  * ks8851_init_mac - initialise the mac address
- * @ks: The device काष्ठाure
- * @np: The device node poपूर्णांकer
+ * @ks: The device structure
+ * @np: The device node pointer
  *
- * Get or create the initial mac address क्रम the device and then set that
- * पूर्णांकo the station address रेजिस्टर. A mac address supplied in the device
- * tree takes precedence. Otherwise, अगर there is an EEPROM present, then
- * we try that. If no valid mac address is found we use eth_अक्रमom_addr()
+ * Get or create the initial mac address for the device and then set that
+ * into the station address register. A mac address supplied in the device
+ * tree takes precedence. Otherwise, if there is an EEPROM present, then
+ * we try that. If no valid mac address is found we use eth_random_addr()
  * to create a new one.
  */
-अटल व्योम ks8851_init_mac(काष्ठा ks8851_net *ks, काष्ठा device_node *np)
-अणु
-	काष्ठा net_device *dev = ks->netdev;
-	पूर्णांक ret;
+static void ks8851_init_mac(struct ks8851_net *ks, struct device_node *np)
+{
+	struct net_device *dev = ks->netdev;
+	int ret;
 
 	ret = of_get_mac_address(np, dev->dev_addr);
-	अगर (!ret) अणु
-		ks8851_ग_लिखो_mac_addr(dev);
-		वापस;
-	पूर्ण
+	if (!ret) {
+		ks8851_write_mac_addr(dev);
+		return;
+	}
 
-	अगर (ks->rc_ccr & CCR_EEPROM) अणु
-		ks8851_पढ़ो_mac_addr(dev);
-		अगर (is_valid_ether_addr(dev->dev_addr))
-			वापस;
+	if (ks->rc_ccr & CCR_EEPROM) {
+		ks8851_read_mac_addr(dev);
+		if (is_valid_ether_addr(dev->dev_addr))
+			return;
 
 		netdev_err(ks->netdev, "invalid mac address read %pM\n",
 				dev->dev_addr);
-	पूर्ण
+	}
 
-	eth_hw_addr_अक्रमom(dev);
-	ks8851_ग_लिखो_mac_addr(dev);
-पूर्ण
+	eth_hw_addr_random(dev);
+	ks8851_write_mac_addr(dev);
+}
 
 /**
  * ks8851_dbg_dumpkkt - dump initial packet contents to debug
  * @ks: The device state
- * @rxpkt: The data क्रम the received packet
+ * @rxpkt: The data for the received packet
  *
  * Dump the initial data from the packet to dev_dbg().
  */
-अटल व्योम ks8851_dbg_dumpkkt(काष्ठा ks8851_net *ks, u8 *rxpkt)
-अणु
+static void ks8851_dbg_dumpkkt(struct ks8851_net *ks, u8 *rxpkt)
+{
 	netdev_dbg(ks->netdev,
 		   "pkt %02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x%02x\n",
 		   rxpkt[4], rxpkt[5], rxpkt[6], rxpkt[7],
 		   rxpkt[8], rxpkt[9], rxpkt[10], rxpkt[11],
 		   rxpkt[12], rxpkt[13], rxpkt[14], rxpkt[15]);
-पूर्ण
+}
 
 /**
  * ks8851_rx_skb - receive skbuff
  * @ks: The device state.
  * @skb: The skbuff
  */
-अटल व्योम ks8851_rx_skb(काष्ठा ks8851_net *ks, काष्ठा sk_buff *skb)
-अणु
+static void ks8851_rx_skb(struct ks8851_net *ks, struct sk_buff *skb)
+{
 	ks->rx_skb(ks, skb);
-पूर्ण
+}
 
 /**
  * ks8851_rx_pkts - receive packets from the host
- * @ks: The device inक्रमmation.
+ * @ks: The device information.
  *
- * This is called from the IRQ work queue when the प्रणाली detects that there
+ * This is called from the IRQ work queue when the system detects that there
  * are packets in the receive queue. Find out how many packets there are and
- * पढ़ो them from the FIFO.
+ * read them from the FIFO.
  */
-अटल व्योम ks8851_rx_pkts(काष्ठा ks8851_net *ks)
-अणु
-	काष्ठा sk_buff *skb;
-	अचिन्हित rxfc;
-	अचिन्हित rxlen;
-	अचिन्हित rxstat;
+static void ks8851_rx_pkts(struct ks8851_net *ks)
+{
+	struct sk_buff *skb;
+	unsigned rxfc;
+	unsigned rxlen;
+	unsigned rxstat;
 	u8 *rxpkt;
 
 	rxfc = (ks8851_rdreg16(ks, KS_RXFCTR) >> 8) & 0xff;
 
-	netअगर_dbg(ks, rx_status, ks->netdev,
+	netif_dbg(ks, rx_status, ks->netdev,
 		  "%s: %d packets\n", __func__, rxfc);
 
-	/* Currently we're issuing a पढ़ो per packet, but we could possibly
-	 * improve the code by issuing a single पढ़ो, getting the receive
-	 * header, allocating the packet and then पढ़ोing the packet data
+	/* Currently we're issuing a read per packet, but we could possibly
+	 * improve the code by issuing a single read, getting the receive
+	 * header, allocating the packet and then reading the packet data
 	 * out in one go.
 	 *
-	 * This क्रमm of operation would require us to hold the SPI bus'
-	 * chipselect low during the entie transaction to aव्योम any
+	 * This form of operation would require us to hold the SPI bus'
+	 * chipselect low during the entie transaction to avoid any
 	 * reset to the data stream coming from the chip.
 	 */
 
-	क्रम (; rxfc != 0; rxfc--) अणु
+	for (; rxfc != 0; rxfc--) {
 		rxstat = ks8851_rdreg16(ks, KS_RXFHSR);
 		rxlen = ks8851_rdreg16(ks, KS_RXFHBCR) & RXFHBCR_CNT_MASK;
 
-		netअगर_dbg(ks, rx_status, ks->netdev,
+		netif_dbg(ks, rx_status, ks->netdev,
 			  "rx: stat 0x%04x, len 0x%04x\n", rxstat, rxlen);
 
 		/* the length of the packet includes the 32bit CRC */
 
-		/* set dma पढ़ो address */
+		/* set dma read address */
 		ks8851_wrreg16(ks, KS_RXFDPR, RXFDPR_RXFPAI | 0x00);
 
 		/* start DMA access */
 		ks8851_wrreg16(ks, KS_RXQCR, ks->rc_rxqcr | RXQCR_SDA);
 
-		अगर (rxlen > 4) अणु
-			अचिन्हित पूर्णांक rxalign;
+		if (rxlen > 4) {
+			unsigned int rxalign;
 
 			rxlen -= 4;
 			rxalign = ALIGN(rxlen, 4);
 			skb = netdev_alloc_skb_ip_align(ks->netdev, rxalign);
-			अगर (skb) अणु
+			if (skb) {
 
 				/* 4 bytes of status header + 4 bytes of
-				 * garbage: we put them beक्रमe ethernet
+				 * garbage: we put them before ethernet
 				 * header, so that they are copied,
 				 * but ignored.
 				 */
 
 				rxpkt = skb_put(skb, rxlen) - 8;
 
-				ks->rdfअगरo(ks, rxpkt, rxalign + 8);
+				ks->rdfifo(ks, rxpkt, rxalign + 8);
 
-				अगर (netअगर_msg_pktdata(ks))
+				if (netif_msg_pktdata(ks))
 					ks8851_dbg_dumpkkt(ks, rxpkt);
 
 				skb->protocol = eth_type_trans(skb, ks->netdev);
@@ -313,91 +312,91 @@
 
 				ks->netdev->stats.rx_packets++;
 				ks->netdev->stats.rx_bytes += rxlen;
-			पूर्ण
-		पूर्ण
+			}
+		}
 
 		/* end DMA access and dequeue packet */
 		ks8851_wrreg16(ks, KS_RXQCR, ks->rc_rxqcr | RXQCR_RRXEF);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
- * ks8851_irq - IRQ handler क्रम dealing with पूर्णांकerrupt requests
+ * ks8851_irq - IRQ handler for dealing with interrupt requests
  * @irq: IRQ number
  * @_ks: cookie
  *
- * This handler is invoked when the IRQ line निश्चितs to find out what happened.
- * As we cannot allow ourselves to sleep in HARसूचीQ context, this handler runs
- * in thपढ़ो context.
+ * This handler is invoked when the IRQ line asserts to find out what happened.
+ * As we cannot allow ourselves to sleep in HARDIRQ context, this handler runs
+ * in thread context.
  *
- * Read the पूर्णांकerrupt status, work out what needs to be करोne and then clear
- * any of the पूर्णांकerrupts that are not needed.
+ * Read the interrupt status, work out what needs to be done and then clear
+ * any of the interrupts that are not needed.
  */
-अटल irqवापस_t ks8851_irq(पूर्णांक irq, व्योम *_ks)
-अणु
-	काष्ठा ks8851_net *ks = _ks;
-	अचिन्हित handled = 0;
-	अचिन्हित दीर्घ flags;
-	अचिन्हित पूर्णांक status;
+static irqreturn_t ks8851_irq(int irq, void *_ks)
+{
+	struct ks8851_net *ks = _ks;
+	unsigned handled = 0;
+	unsigned long flags;
+	unsigned int status;
 
 	ks8851_lock(ks, &flags);
 
 	status = ks8851_rdreg16(ks, KS_ISR);
 
-	netअगर_dbg(ks, पूर्णांकr, ks->netdev,
+	netif_dbg(ks, intr, ks->netdev,
 		  "%s: status 0x%04x\n", __func__, status);
 
-	अगर (status & IRQ_LCI)
+	if (status & IRQ_LCI)
 		handled |= IRQ_LCI;
 
-	अगर (status & IRQ_LDI) अणु
+	if (status & IRQ_LDI) {
 		u16 pmecr = ks8851_rdreg16(ks, KS_PMECR);
 		pmecr &= ~PMECR_WKEVT_MASK;
 		ks8851_wrreg16(ks, KS_PMECR, pmecr | PMECR_WKEVT_LINK);
 
 		handled |= IRQ_LDI;
-	पूर्ण
+	}
 
-	अगर (status & IRQ_RXPSI)
+	if (status & IRQ_RXPSI)
 		handled |= IRQ_RXPSI;
 
-	अगर (status & IRQ_TXI) अणु
+	if (status & IRQ_TXI) {
 		handled |= IRQ_TXI;
 
 		/* no lock here, tx queue should have been stopped */
 
 		/* update our idea of how much tx space is available to the
-		 * प्रणाली */
+		 * system */
 		ks->tx_space = ks8851_rdreg16(ks, KS_TXMIR);
 
-		netअगर_dbg(ks, पूर्णांकr, ks->netdev,
+		netif_dbg(ks, intr, ks->netdev,
 			  "%s: txspace %d\n", __func__, ks->tx_space);
-	पूर्ण
+	}
 
-	अगर (status & IRQ_RXI)
+	if (status & IRQ_RXI)
 		handled |= IRQ_RXI;
 
-	अगर (status & IRQ_SPIBEI) अणु
+	if (status & IRQ_SPIBEI) {
 		netdev_err(ks->netdev, "%s: spi bus error\n", __func__);
 		handled |= IRQ_SPIBEI;
-	पूर्ण
+	}
 
 	ks8851_wrreg16(ks, KS_ISR, handled);
 
-	अगर (status & IRQ_RXI) अणु
-		/* the datasheet says to disable the rx पूर्णांकerrupt during
-		 * packet पढ़ो-out, however we're masking the पूर्णांकerrupt
-		 * from the device so करो not bother masking just the RX
+	if (status & IRQ_RXI) {
+		/* the datasheet says to disable the rx interrupt during
+		 * packet read-out, however we're masking the interrupt
+		 * from the device so do not bother masking just the RX
 		 * from the device. */
 
 		ks8851_rx_pkts(ks);
-	पूर्ण
+	}
 
-	/* अगर something stopped the rx process, probably due to wanting
-	 * to change the rx settings, then करो something about restarting
+	/* if something stopped the rx process, probably due to wanting
+	 * to change the rx settings, then do something about restarting
 	 * it. */
-	अगर (status & IRQ_RXPSI) अणु
-		काष्ठा ks8851_rxctrl *rxc = &ks->rxctrl;
+	if (status & IRQ_RXPSI) {
+		struct ks8851_rxctrl *rxc = &ks->rxctrl;
 
 		/* update the multicast hash table */
 		ks8851_wrreg16(ks, KS_MAHTR0, rxc->mchash[0]);
@@ -407,60 +406,60 @@
 
 		ks8851_wrreg16(ks, KS_RXCR2, rxc->rxcr2);
 		ks8851_wrreg16(ks, KS_RXCR1, rxc->rxcr1);
-	पूर्ण
+	}
 
 	ks8851_unlock(ks, &flags);
 
-	अगर (status & IRQ_LCI)
+	if (status & IRQ_LCI)
 		mii_check_link(&ks->mii);
 
-	अगर (status & IRQ_TXI)
-		netअगर_wake_queue(ks->netdev);
+	if (status & IRQ_TXI)
+		netif_wake_queue(ks->netdev);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
 /**
  * ks8851_flush_tx_work - flush outstanding TX work
  * @ks: The device state
  */
-अटल व्योम ks8851_flush_tx_work(काष्ठा ks8851_net *ks)
-अणु
-	अगर (ks->flush_tx_work)
+static void ks8851_flush_tx_work(struct ks8851_net *ks)
+{
+	if (ks->flush_tx_work)
 		ks->flush_tx_work(ks);
-पूर्ण
+}
 
 /**
- * ks8851_net_खोलो - खोलो network device
- * @dev: The network device being खोलोed.
+ * ks8851_net_open - open network device
+ * @dev: The network device being opened.
  *
  * Called when the network device is marked active, such as a user executing
  * 'ifconfig up' on the device.
  */
-अटल पूर्णांक ks8851_net_खोलो(काष्ठा net_device *dev)
-अणु
-	काष्ठा ks8851_net *ks = netdev_priv(dev);
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret;
+static int ks8851_net_open(struct net_device *dev)
+{
+	struct ks8851_net *ks = netdev_priv(dev);
+	unsigned long flags;
+	int ret;
 
-	ret = request_thपढ़ोed_irq(dev->irq, शून्य, ks8851_irq,
+	ret = request_threaded_irq(dev->irq, NULL, ks8851_irq,
 				   IRQF_TRIGGER_LOW | IRQF_ONESHOT,
 				   dev->name, ks);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		netdev_err(dev, "failed to get irq\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	/* lock the card, even अगर we may not actually be करोing anything
-	 * अन्यथा at the moment */
+	/* lock the card, even if we may not actually be doing anything
+	 * else at the moment */
 	ks8851_lock(ks, &flags);
 
-	netअगर_dbg(ks, अगरup, ks->netdev, "opening\n");
+	netif_dbg(ks, ifup, ks->netdev, "opening\n");
 
-	/* bring chip out of any घातer saving mode it was in */
-	ks8851_set_घातermode(ks, PMECR_PM_NORMAL);
+	/* bring chip out of any power saving mode it was in */
+	ks8851_set_powermode(ks, PMECR_PM_NORMAL);
 
-	/* issue a soft reset to the RX/TX QMU to put it पूर्णांकo a known
+	/* issue a soft reset to the RX/TX QMU to put it into a known
 	 * state. */
 	ks8851_soft_reset(ks, GRR_QMU);
 
@@ -471,7 +470,7 @@
 				     TXCR_TXCRC | /* add CRC */
 				     TXCR_TXFCE)); /* enable flow control */
 
-	/* स्वतः-increment tx data, reset tx poपूर्णांकer */
+	/* auto-increment tx data, reset tx pointer */
 	ks8851_wrreg16(ks, KS_TXFDPR, TXFDPR_TXFPAI);
 
 	/* setup receiver control */
@@ -485,46 +484,46 @@
 	/* transfer entire frames out in one go */
 	ks8851_wrreg16(ks, KS_RXCR2, RXCR2_SRDBL_FRAME);
 
-	/* set receive counter समयouts */
+	/* set receive counter timeouts */
 	ks8851_wrreg16(ks, KS_RXDTTR, 1000); /* 1ms after first frame to IRQ */
 	ks8851_wrreg16(ks, KS_RXDBCTR, 4096); /* >4Kbytes in buffer to IRQ */
 	ks8851_wrreg16(ks, KS_RXFCTR, 10);  /* 10 frames to IRQ */
 
 	ks->rc_rxqcr = (RXQCR_RXFCTE |  /* IRQ on frame count exceeded */
 			RXQCR_RXDBCTE | /* IRQ on byte count exceeded */
-			RXQCR_RXDTTE);  /* IRQ on समय exceeded */
+			RXQCR_RXDTTE);  /* IRQ on time exceeded */
 
 	ks8851_wrreg16(ks, KS_RXQCR, ks->rc_rxqcr);
 
-	/* clear then enable पूर्णांकerrupts */
+	/* clear then enable interrupts */
 	ks8851_wrreg16(ks, KS_ISR, ks->rc_ier);
 	ks8851_wrreg16(ks, KS_IER, ks->rc_ier);
 
-	netअगर_start_queue(ks->netdev);
+	netif_start_queue(ks->netdev);
 
-	netअगर_dbg(ks, अगरup, ks->netdev, "network device up\n");
+	netif_dbg(ks, ifup, ks->netdev, "network device up\n");
 
 	ks8851_unlock(ks, &flags);
 	mii_check_link(&ks->mii);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * ks8851_net_stop - बंद network device
- * @dev: The device being बंदd.
+ * ks8851_net_stop - close network device
+ * @dev: The device being closed.
  *
- * Called to बंद करोwn a network device which has been active. Cancell any
- * work, shutकरोwn the RX and TX process and then place the chip पूर्णांकo a low
- * घातer state whilst it is not being used.
+ * Called to close down a network device which has been active. Cancell any
+ * work, shutdown the RX and TX process and then place the chip into a low
+ * power state whilst it is not being used.
  */
-अटल पूर्णांक ks8851_net_stop(काष्ठा net_device *dev)
-अणु
-	काष्ठा ks8851_net *ks = netdev_priv(dev);
-	अचिन्हित दीर्घ flags;
+static int ks8851_net_stop(struct net_device *dev)
+{
+	struct ks8851_net *ks = netdev_priv(dev);
+	unsigned long flags;
 
-	netअगर_info(ks, अगरकरोwn, dev, "shutting down\n");
+	netif_info(ks, ifdown, dev, "shutting down\n");
 
-	netअगर_stop_queue(dev);
+	netif_stop_queue(dev);
 
 	ks8851_lock(ks, &flags);
 	/* turn off the IRQs and ack any outstanding */
@@ -537,112 +536,112 @@
 	flush_work(&ks->rxctrl_work);
 
 	ks8851_lock(ks, &flags);
-	/* shutकरोwn RX process */
+	/* shutdown RX process */
 	ks8851_wrreg16(ks, KS_RXCR1, 0x0000);
 
-	/* shutकरोwn TX process */
+	/* shutdown TX process */
 	ks8851_wrreg16(ks, KS_TXCR, 0x0000);
 
-	/* set घातermode to soft घातer करोwn to save घातer */
-	ks8851_set_घातermode(ks, PMECR_PM_SOFTDOWN);
+	/* set powermode to soft power down to save power */
+	ks8851_set_powermode(ks, PMECR_PM_SOFTDOWN);
 	ks8851_unlock(ks, &flags);
 
 	/* ensure any queued tx buffers are dumped */
-	जबतक (!skb_queue_empty(&ks->txq)) अणु
-		काष्ठा sk_buff *txb = skb_dequeue(&ks->txq);
+	while (!skb_queue_empty(&ks->txq)) {
+		struct sk_buff *txb = skb_dequeue(&ks->txq);
 
-		netअगर_dbg(ks, अगरकरोwn, ks->netdev,
+		netif_dbg(ks, ifdown, ks->netdev,
 			  "%s: freeing txb %p\n", __func__, txb);
 
-		dev_kमुक्त_skb(txb);
-	पूर्ण
+		dev_kfree_skb(txb);
+	}
 
-	मुक्त_irq(dev->irq, ks);
+	free_irq(dev->irq, ks);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * ks8851_start_xmit - transmit packet
  * @skb: The buffer to transmit
  * @dev: The device used to transmit the packet.
  *
- * Called by the network layer to transmit the @skb. Queue the packet क्रम
+ * Called by the network layer to transmit the @skb. Queue the packet for
  * the device and schedule the necessary work to transmit the packet when
- * it is मुक्त.
+ * it is free.
  *
- * We करो this to firstly aव्योम sleeping with the network device locked,
+ * We do this to firstly avoid sleeping with the network device locked,
  * and secondly so we can round up more than one packet to transmit which
- * means we can try and aव्योम generating too many transmit करोne पूर्णांकerrupts.
+ * means we can try and avoid generating too many transmit done interrupts.
  */
-अटल netdev_tx_t ks8851_start_xmit(काष्ठा sk_buff *skb,
-				     काष्ठा net_device *dev)
-अणु
-	काष्ठा ks8851_net *ks = netdev_priv(dev);
+static netdev_tx_t ks8851_start_xmit(struct sk_buff *skb,
+				     struct net_device *dev)
+{
+	struct ks8851_net *ks = netdev_priv(dev);
 
-	वापस ks->start_xmit(skb, dev);
-पूर्ण
+	return ks->start_xmit(skb, dev);
+}
 
 /**
  * ks8851_rxctrl_work - work handler to change rx mode
- * @work: The work काष्ठाure this beदीर्घs to.
+ * @work: The work structure this belongs to.
  *
  * Lock the device and issue the necessary changes to the receive mode from
- * the network device layer. This is करोne so that we can करो this without
+ * the network device layer. This is done so that we can do this without
  * having to sleep whilst holding the network device lock.
  *
- * Since the recommendation from Micrel is that the RXQ is shutकरोwn whilst the
- * receive parameters are programmed, we issue a ग_लिखो to disable the RXQ and
- * then रुको क्रम the पूर्णांकerrupt handler to be triggered once the RXQ shutकरोwn is
- * complete. The पूर्णांकerrupt handler then ग_लिखोs the new values पूर्णांकo the chip.
+ * Since the recommendation from Micrel is that the RXQ is shutdown whilst the
+ * receive parameters are programmed, we issue a write to disable the RXQ and
+ * then wait for the interrupt handler to be triggered once the RXQ shutdown is
+ * complete. The interrupt handler then writes the new values into the chip.
  */
-अटल व्योम ks8851_rxctrl_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा ks8851_net *ks = container_of(work, काष्ठा ks8851_net, rxctrl_work);
-	अचिन्हित दीर्घ flags;
+static void ks8851_rxctrl_work(struct work_struct *work)
+{
+	struct ks8851_net *ks = container_of(work, struct ks8851_net, rxctrl_work);
+	unsigned long flags;
 
 	ks8851_lock(ks, &flags);
 
-	/* need to shutकरोwn RXQ beक्रमe modअगरying filter parameters */
+	/* need to shutdown RXQ before modifying filter parameters */
 	ks8851_wrreg16(ks, KS_RXCR1, 0x00);
 
 	ks8851_unlock(ks, &flags);
-पूर्ण
+}
 
-अटल व्योम ks8851_set_rx_mode(काष्ठा net_device *dev)
-अणु
-	काष्ठा ks8851_net *ks = netdev_priv(dev);
-	काष्ठा ks8851_rxctrl rxctrl;
+static void ks8851_set_rx_mode(struct net_device *dev)
+{
+	struct ks8851_net *ks = netdev_priv(dev);
+	struct ks8851_rxctrl rxctrl;
 
-	स_रखो(&rxctrl, 0, माप(rxctrl));
+	memset(&rxctrl, 0, sizeof(rxctrl));
 
-	अगर (dev->flags & IFF_PROMISC) अणु
-		/* पूर्णांकerface to receive everything */
+	if (dev->flags & IFF_PROMISC) {
+		/* interface to receive everything */
 
 		rxctrl.rxcr1 = RXCR1_RXAE | RXCR1_RXINVF;
-	पूर्ण अन्यथा अगर (dev->flags & IFF_ALLMULTI) अणु
+	} else if (dev->flags & IFF_ALLMULTI) {
 		/* accept all multicast packets */
 
 		rxctrl.rxcr1 = (RXCR1_RXME | RXCR1_RXAE |
 				RXCR1_RXPAFMA | RXCR1_RXMAFMA);
-	पूर्ण अन्यथा अगर (dev->flags & IFF_MULTICAST && !netdev_mc_empty(dev)) अणु
-		काष्ठा netdev_hw_addr *ha;
+	} else if (dev->flags & IFF_MULTICAST && !netdev_mc_empty(dev)) {
+		struct netdev_hw_addr *ha;
 		u32 crc;
 
 		/* accept some multicast */
 
-		netdev_क्रम_each_mc_addr(ha, dev) अणु
+		netdev_for_each_mc_addr(ha, dev) {
 			crc = ether_crc(ETH_ALEN, ha->addr);
 			crc >>= (32 - 6);  /* get top six bits */
 
 			rxctrl.mchash[crc >> 4] |= (1 << (crc & 0xf));
-		पूर्ण
+		}
 
 		rxctrl.rxcr1 = RXCR1_RXME | RXCR1_RXPAFMA;
-	पूर्ण अन्यथा अणु
+	} else {
 		/* just accept broadcast / unicast */
 		rxctrl.rxcr1 = RXCR1_RXPAFMA;
-	पूर्ण
+	}
 
 	rxctrl.rxcr1 |= (RXCR1_RXUE | /* unicast enable */
 			 RXCR1_RXBE | /* broadcast enable */
@@ -651,181 +650,181 @@
 
 	rxctrl.rxcr2 |= RXCR2_SRDBL_FRAME;
 
-	/* schedule work to करो the actual set of the data अगर needed */
+	/* schedule work to do the actual set of the data if needed */
 
 	spin_lock(&ks->statelock);
 
-	अगर (स_भेद(&rxctrl, &ks->rxctrl, माप(rxctrl)) != 0) अणु
-		स_नकल(&ks->rxctrl, &rxctrl, माप(ks->rxctrl));
+	if (memcmp(&rxctrl, &ks->rxctrl, sizeof(rxctrl)) != 0) {
+		memcpy(&ks->rxctrl, &rxctrl, sizeof(ks->rxctrl));
 		schedule_work(&ks->rxctrl_work);
-	पूर्ण
+	}
 
 	spin_unlock(&ks->statelock);
-पूर्ण
+}
 
-अटल पूर्णांक ks8851_set_mac_address(काष्ठा net_device *dev, व्योम *addr)
-अणु
-	काष्ठा sockaddr *sa = addr;
+static int ks8851_set_mac_address(struct net_device *dev, void *addr)
+{
+	struct sockaddr *sa = addr;
 
-	अगर (netअगर_running(dev))
-		वापस -EBUSY;
+	if (netif_running(dev))
+		return -EBUSY;
 
-	अगर (!is_valid_ether_addr(sa->sa_data))
-		वापस -EADDRNOTAVAIL;
+	if (!is_valid_ether_addr(sa->sa_data))
+		return -EADDRNOTAVAIL;
 
-	स_नकल(dev->dev_addr, sa->sa_data, ETH_ALEN);
-	वापस ks8851_ग_लिखो_mac_addr(dev);
-पूर्ण
+	memcpy(dev->dev_addr, sa->sa_data, ETH_ALEN);
+	return ks8851_write_mac_addr(dev);
+}
 
-अटल पूर्णांक ks8851_net_ioctl(काष्ठा net_device *dev, काष्ठा अगरreq *req, पूर्णांक cmd)
-अणु
-	काष्ठा ks8851_net *ks = netdev_priv(dev);
+static int ks8851_net_ioctl(struct net_device *dev, struct ifreq *req, int cmd)
+{
+	struct ks8851_net *ks = netdev_priv(dev);
 
-	अगर (!netअगर_running(dev))
-		वापस -EINVAL;
+	if (!netif_running(dev))
+		return -EINVAL;
 
-	वापस generic_mii_ioctl(&ks->mii, अगर_mii(req), cmd, शून्य);
-पूर्ण
+	return generic_mii_ioctl(&ks->mii, if_mii(req), cmd, NULL);
+}
 
-अटल स्थिर काष्ठा net_device_ops ks8851_netdev_ops = अणु
-	.nकरो_खोलो		= ks8851_net_खोलो,
-	.nकरो_stop		= ks8851_net_stop,
-	.nकरो_करो_ioctl		= ks8851_net_ioctl,
-	.nकरो_start_xmit		= ks8851_start_xmit,
-	.nकरो_set_mac_address	= ks8851_set_mac_address,
-	.nकरो_set_rx_mode	= ks8851_set_rx_mode,
-	.nकरो_validate_addr	= eth_validate_addr,
-पूर्ण;
+static const struct net_device_ops ks8851_netdev_ops = {
+	.ndo_open		= ks8851_net_open,
+	.ndo_stop		= ks8851_net_stop,
+	.ndo_do_ioctl		= ks8851_net_ioctl,
+	.ndo_start_xmit		= ks8851_start_xmit,
+	.ndo_set_mac_address	= ks8851_set_mac_address,
+	.ndo_set_rx_mode	= ks8851_set_rx_mode,
+	.ndo_validate_addr	= eth_validate_addr,
+};
 
 /* ethtool support */
 
-अटल व्योम ks8851_get_drvinfo(काष्ठा net_device *dev,
-			       काष्ठा ethtool_drvinfo *di)
-अणु
-	strlcpy(di->driver, "KS8851", माप(di->driver));
-	strlcpy(di->version, "1.00", माप(di->version));
-	strlcpy(di->bus_info, dev_name(dev->dev.parent), माप(di->bus_info));
-पूर्ण
+static void ks8851_get_drvinfo(struct net_device *dev,
+			       struct ethtool_drvinfo *di)
+{
+	strlcpy(di->driver, "KS8851", sizeof(di->driver));
+	strlcpy(di->version, "1.00", sizeof(di->version));
+	strlcpy(di->bus_info, dev_name(dev->dev.parent), sizeof(di->bus_info));
+}
 
-अटल u32 ks8851_get_msglevel(काष्ठा net_device *dev)
-अणु
-	काष्ठा ks8851_net *ks = netdev_priv(dev);
-	वापस ks->msg_enable;
-पूर्ण
+static u32 ks8851_get_msglevel(struct net_device *dev)
+{
+	struct ks8851_net *ks = netdev_priv(dev);
+	return ks->msg_enable;
+}
 
-अटल व्योम ks8851_set_msglevel(काष्ठा net_device *dev, u32 to)
-अणु
-	काष्ठा ks8851_net *ks = netdev_priv(dev);
+static void ks8851_set_msglevel(struct net_device *dev, u32 to)
+{
+	struct ks8851_net *ks = netdev_priv(dev);
 	ks->msg_enable = to;
-पूर्ण
+}
 
-अटल पूर्णांक ks8851_get_link_ksettings(काष्ठा net_device *dev,
-				     काष्ठा ethtool_link_ksettings *cmd)
-अणु
-	काष्ठा ks8851_net *ks = netdev_priv(dev);
+static int ks8851_get_link_ksettings(struct net_device *dev,
+				     struct ethtool_link_ksettings *cmd)
+{
+	struct ks8851_net *ks = netdev_priv(dev);
 
 	mii_ethtool_get_link_ksettings(&ks->mii, cmd);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ks8851_set_link_ksettings(काष्ठा net_device *dev,
-				     स्थिर काष्ठा ethtool_link_ksettings *cmd)
-अणु
-	काष्ठा ks8851_net *ks = netdev_priv(dev);
-	वापस mii_ethtool_set_link_ksettings(&ks->mii, cmd);
-पूर्ण
+static int ks8851_set_link_ksettings(struct net_device *dev,
+				     const struct ethtool_link_ksettings *cmd)
+{
+	struct ks8851_net *ks = netdev_priv(dev);
+	return mii_ethtool_set_link_ksettings(&ks->mii, cmd);
+}
 
-अटल u32 ks8851_get_link(काष्ठा net_device *dev)
-अणु
-	काष्ठा ks8851_net *ks = netdev_priv(dev);
-	वापस mii_link_ok(&ks->mii);
-पूर्ण
+static u32 ks8851_get_link(struct net_device *dev)
+{
+	struct ks8851_net *ks = netdev_priv(dev);
+	return mii_link_ok(&ks->mii);
+}
 
-अटल पूर्णांक ks8851_nway_reset(काष्ठा net_device *dev)
-अणु
-	काष्ठा ks8851_net *ks = netdev_priv(dev);
-	वापस mii_nway_restart(&ks->mii);
-पूर्ण
+static int ks8851_nway_reset(struct net_device *dev)
+{
+	struct ks8851_net *ks = netdev_priv(dev);
+	return mii_nway_restart(&ks->mii);
+}
 
 /* EEPROM support */
 
-अटल व्योम ks8851_eeprom_regपढ़ो(काष्ठा eeprom_93cx6 *ee)
-अणु
-	काष्ठा ks8851_net *ks = ee->data;
-	अचिन्हित val;
+static void ks8851_eeprom_regread(struct eeprom_93cx6 *ee)
+{
+	struct ks8851_net *ks = ee->data;
+	unsigned val;
 
 	val = ks8851_rdreg16(ks, KS_EEPCR);
 
 	ee->reg_data_out = (val & EEPCR_EESB) ? 1 : 0;
-	ee->reg_data_घड़ी = (val & EEPCR_EESCK) ? 1 : 0;
+	ee->reg_data_clock = (val & EEPCR_EESCK) ? 1 : 0;
 	ee->reg_chip_select = (val & EEPCR_EECS) ? 1 : 0;
-पूर्ण
+}
 
-अटल व्योम ks8851_eeprom_regग_लिखो(काष्ठा eeprom_93cx6 *ee)
-अणु
-	काष्ठा ks8851_net *ks = ee->data;
-	अचिन्हित val = EEPCR_EESA;	/* शेष - eeprom access on */
+static void ks8851_eeprom_regwrite(struct eeprom_93cx6 *ee)
+{
+	struct ks8851_net *ks = ee->data;
+	unsigned val = EEPCR_EESA;	/* default - eeprom access on */
 
-	अगर (ee->drive_data)
+	if (ee->drive_data)
 		val |= EEPCR_EESRWA;
-	अगर (ee->reg_data_in)
+	if (ee->reg_data_in)
 		val |= EEPCR_EEDO;
-	अगर (ee->reg_data_घड़ी)
+	if (ee->reg_data_clock)
 		val |= EEPCR_EESCK;
-	अगर (ee->reg_chip_select)
+	if (ee->reg_chip_select)
 		val |= EEPCR_EECS;
 
 	ks8851_wrreg16(ks, KS_EEPCR, val);
-पूर्ण
+}
 
 /**
- * ks8851_eeprom_claim - claim device EEPROM and activate the पूर्णांकerface
+ * ks8851_eeprom_claim - claim device EEPROM and activate the interface
  * @ks: The network device state.
  *
- * Check क्रम the presence of an EEPROM, and then activate software access
+ * Check for the presence of an EEPROM, and then activate software access
  * to the device.
  */
-अटल पूर्णांक ks8851_eeprom_claim(काष्ठा ks8851_net *ks)
-अणु
-	/* start with घड़ी low, cs high */
+static int ks8851_eeprom_claim(struct ks8851_net *ks)
+{
+	/* start with clock low, cs high */
 	ks8851_wrreg16(ks, KS_EEPCR, EEPCR_EESA | EEPCR_EECS);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * ks8851_eeprom_release - release the EEPROM पूर्णांकerface
+ * ks8851_eeprom_release - release the EEPROM interface
  * @ks: The device state
  *
  * Release the software access to the device EEPROM
  */
-अटल व्योम ks8851_eeprom_release(काष्ठा ks8851_net *ks)
-अणु
-	अचिन्हित val = ks8851_rdreg16(ks, KS_EEPCR);
+static void ks8851_eeprom_release(struct ks8851_net *ks)
+{
+	unsigned val = ks8851_rdreg16(ks, KS_EEPCR);
 
 	ks8851_wrreg16(ks, KS_EEPCR, val & ~EEPCR_EESA);
-पूर्ण
+}
 
-#घोषणा KS_EEPROM_MAGIC (0x00008851)
+#define KS_EEPROM_MAGIC (0x00008851)
 
-अटल पूर्णांक ks8851_set_eeprom(काष्ठा net_device *dev,
-			     काष्ठा ethtool_eeprom *ee, u8 *data)
-अणु
-	काष्ठा ks8851_net *ks = netdev_priv(dev);
-	पूर्णांक offset = ee->offset;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक len = ee->len;
-	u16 पंचांगp;
+static int ks8851_set_eeprom(struct net_device *dev,
+			     struct ethtool_eeprom *ee, u8 *data)
+{
+	struct ks8851_net *ks = netdev_priv(dev);
+	int offset = ee->offset;
+	unsigned long flags;
+	int len = ee->len;
+	u16 tmp;
 
 	/* currently only support byte writing */
-	अगर (len != 1)
-		वापस -EINVAL;
+	if (len != 1)
+		return -EINVAL;
 
-	अगर (ee->magic != KS_EEPROM_MAGIC)
-		वापस -EINVAL;
+	if (ee->magic != KS_EEPROM_MAGIC)
+		return -EINVAL;
 
-	अगर (!(ks->rc_ccr & CCR_EEPROM))
-		वापस -ENOENT;
+	if (!(ks->rc_ccr & CCR_EEPROM))
+		return -ENOENT;
 
 	ks8851_lock(ks, &flags);
 
@@ -834,41 +833,41 @@
 	eeprom_93cx6_wren(&ks->eeprom, true);
 
 	/* ethtool currently only supports writing bytes, which means
-	 * we have to पढ़ो/modअगरy/ग_लिखो our 16bit EEPROMs */
+	 * we have to read/modify/write our 16bit EEPROMs */
 
-	eeprom_93cx6_पढ़ो(&ks->eeprom, offset/2, &पंचांगp);
+	eeprom_93cx6_read(&ks->eeprom, offset/2, &tmp);
 
-	अगर (offset & 1) अणु
-		पंचांगp &= 0xff;
-		पंचांगp |= *data << 8;
-	पूर्ण अन्यथा अणु
-		पंचांगp &= 0xff00;
-		पंचांगp |= *data;
-	पूर्ण
+	if (offset & 1) {
+		tmp &= 0xff;
+		tmp |= *data << 8;
+	} else {
+		tmp &= 0xff00;
+		tmp |= *data;
+	}
 
-	eeprom_93cx6_ग_लिखो(&ks->eeprom, offset/2, पंचांगp);
+	eeprom_93cx6_write(&ks->eeprom, offset/2, tmp);
 	eeprom_93cx6_wren(&ks->eeprom, false);
 
 	ks8851_eeprom_release(ks);
 	ks8851_unlock(ks, &flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ks8851_get_eeprom(काष्ठा net_device *dev,
-			     काष्ठा ethtool_eeprom *ee, u8 *data)
-अणु
-	काष्ठा ks8851_net *ks = netdev_priv(dev);
-	पूर्णांक offset = ee->offset;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक len = ee->len;
+static int ks8851_get_eeprom(struct net_device *dev,
+			     struct ethtool_eeprom *ee, u8 *data)
+{
+	struct ks8851_net *ks = netdev_priv(dev);
+	int offset = ee->offset;
+	unsigned long flags;
+	int len = ee->len;
 
 	/* must be 2 byte aligned */
-	अगर (len & 1 || offset & 1)
-		वापस -EINVAL;
+	if (len & 1 || offset & 1)
+		return -EINVAL;
 
-	अगर (!(ks->rc_ccr & CCR_EEPROM))
-		वापस -ENOENT;
+	if (!(ks->rc_ccr & CCR_EEPROM))
+		return -ENOENT;
 
 	ks8851_lock(ks, &flags);
 
@@ -876,22 +875,22 @@
 
 	ee->magic = KS_EEPROM_MAGIC;
 
-	eeprom_93cx6_multiपढ़ो(&ks->eeprom, offset/2, (__le16 *)data, len/2);
+	eeprom_93cx6_multiread(&ks->eeprom, offset/2, (__le16 *)data, len/2);
 	ks8851_eeprom_release(ks);
 	ks8851_unlock(ks, &flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ks8851_get_eeprom_len(काष्ठा net_device *dev)
-अणु
-	काष्ठा ks8851_net *ks = netdev_priv(dev);
+static int ks8851_get_eeprom_len(struct net_device *dev)
+{
+	struct ks8851_net *ks = netdev_priv(dev);
 
-	/* currently, we assume it is an 93C46 attached, so वापस 128 */
-	वापस ks->rc_ccr & CCR_EEPROM ? 128 : 0;
-पूर्ण
+	/* currently, we assume it is an 93C46 attached, so return 128 */
+	return ks->rc_ccr & CCR_EEPROM ? 128 : 0;
+}
 
-अटल स्थिर काष्ठा ethtool_ops ks8851_ethtool_ops = अणु
+static const struct ethtool_ops ks8851_ethtool_ops = {
 	.get_drvinfo	= ks8851_get_drvinfo,
 	.get_msglevel	= ks8851_get_msglevel,
 	.set_msglevel	= ks8851_set_msglevel,
@@ -902,273 +901,273 @@
 	.set_eeprom	= ks8851_set_eeprom,
 	.get_link_ksettings = ks8851_get_link_ksettings,
 	.set_link_ksettings = ks8851_set_link_ksettings,
-पूर्ण;
+};
 
-/* MII पूर्णांकerface controls */
+/* MII interface controls */
 
 /**
- * ks8851_phy_reg - convert MII रेजिस्टर पूर्णांकo a KS8851 रेजिस्टर
- * @reg: MII रेजिस्टर number.
+ * ks8851_phy_reg - convert MII register into a KS8851 register
+ * @reg: MII register number.
  *
- * Return the KS8851 रेजिस्टर number क्रम the corresponding MII PHY रेजिस्टर
- * अगर possible. Return zero अगर the MII रेजिस्टर has no direct mapping to the
- * KS8851 रेजिस्टर set.
+ * Return the KS8851 register number for the corresponding MII PHY register
+ * if possible. Return zero if the MII register has no direct mapping to the
+ * KS8851 register set.
  */
-अटल पूर्णांक ks8851_phy_reg(पूर्णांक reg)
-अणु
-	चयन (reg) अणु
-	हाल MII_BMCR:
-		वापस KS_P1MBCR;
-	हाल MII_BMSR:
-		वापस KS_P1MBSR;
-	हाल MII_PHYSID1:
-		वापस KS_PHY1ILR;
-	हाल MII_PHYSID2:
-		वापस KS_PHY1IHR;
-	हाल MII_ADVERTISE:
-		वापस KS_P1ANAR;
-	हाल MII_LPA:
-		वापस KS_P1ANLPR;
-	पूर्ण
+static int ks8851_phy_reg(int reg)
+{
+	switch (reg) {
+	case MII_BMCR:
+		return KS_P1MBCR;
+	case MII_BMSR:
+		return KS_P1MBSR;
+	case MII_PHYSID1:
+		return KS_PHY1ILR;
+	case MII_PHYSID2:
+		return KS_PHY1IHR;
+	case MII_ADVERTISE:
+		return KS_P1ANAR;
+	case MII_LPA:
+		return KS_P1ANLPR;
+	}
 
-	वापस -EOPNOTSUPP;
-पूर्ण
+	return -EOPNOTSUPP;
+}
 
-अटल पूर्णांक ks8851_phy_पढ़ो_common(काष्ठा net_device *dev, पूर्णांक phy_addr, पूर्णांक reg)
-अणु
-	काष्ठा ks8851_net *ks = netdev_priv(dev);
-	अचिन्हित दीर्घ flags;
-	पूर्णांक result;
-	पूर्णांक ksreg;
+static int ks8851_phy_read_common(struct net_device *dev, int phy_addr, int reg)
+{
+	struct ks8851_net *ks = netdev_priv(dev);
+	unsigned long flags;
+	int result;
+	int ksreg;
 
 	ksreg = ks8851_phy_reg(reg);
-	अगर (ksreg < 0)
-		वापस ksreg;
+	if (ksreg < 0)
+		return ksreg;
 
 	ks8851_lock(ks, &flags);
 	result = ks8851_rdreg16(ks, ksreg);
 	ks8851_unlock(ks, &flags);
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
 /**
- * ks8851_phy_पढ़ो - MII पूर्णांकerface PHY रेजिस्टर पढ़ो.
+ * ks8851_phy_read - MII interface PHY register read.
  * @dev: The network device the PHY is on.
  * @phy_addr: Address of PHY (ignored as we only have one)
- * @reg: The रेजिस्टर to पढ़ो.
+ * @reg: The register to read.
  *
- * This call पढ़ोs data from the PHY रेजिस्टर specअगरied in @reg. Since the
- * device करोes not support all the MII रेजिस्टरs, the non-existent values
- * are always वापसed as zero.
+ * This call reads data from the PHY register specified in @reg. Since the
+ * device does not support all the MII registers, the non-existent values
+ * are always returned as zero.
  *
- * We वापस zero क्रम unsupported रेजिस्टरs as the MII code करोes not check
- * the value वापसed क्रम any error status, and simply वापसs it to the
+ * We return zero for unsupported registers as the MII code does not check
+ * the value returned for any error status, and simply returns it to the
  * caller. The mii-tool that the driver was tested with takes any -ve error
  * as real PHY capabilities, thus displaying incorrect data to the user.
  */
-अटल पूर्णांक ks8851_phy_पढ़ो(काष्ठा net_device *dev, पूर्णांक phy_addr, पूर्णांक reg)
-अणु
-	पूर्णांक ret;
+static int ks8851_phy_read(struct net_device *dev, int phy_addr, int reg)
+{
+	int ret;
 
-	ret = ks8851_phy_पढ़ो_common(dev, phy_addr, reg);
-	अगर (ret < 0)
-		वापस 0x0;	/* no error वापस allowed, so use zero */
+	ret = ks8851_phy_read_common(dev, phy_addr, reg);
+	if (ret < 0)
+		return 0x0;	/* no error return allowed, so use zero */
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम ks8851_phy_ग_लिखो(काष्ठा net_device *dev,
-			     पूर्णांक phy, पूर्णांक reg, पूर्णांक value)
-अणु
-	काष्ठा ks8851_net *ks = netdev_priv(dev);
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ksreg;
+static void ks8851_phy_write(struct net_device *dev,
+			     int phy, int reg, int value)
+{
+	struct ks8851_net *ks = netdev_priv(dev);
+	unsigned long flags;
+	int ksreg;
 
 	ksreg = ks8851_phy_reg(reg);
-	अगर (ksreg >= 0) अणु
+	if (ksreg >= 0) {
 		ks8851_lock(ks, &flags);
 		ks8851_wrreg16(ks, ksreg, value);
 		ks8851_unlock(ks, &flags);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक ks8851_mdio_पढ़ो(काष्ठा mii_bus *bus, पूर्णांक phy_id, पूर्णांक reg)
-अणु
-	काष्ठा ks8851_net *ks = bus->priv;
+static int ks8851_mdio_read(struct mii_bus *bus, int phy_id, int reg)
+{
+	struct ks8851_net *ks = bus->priv;
 
-	अगर (phy_id != 0)
-		वापस -EOPNOTSUPP;
+	if (phy_id != 0)
+		return -EOPNOTSUPP;
 
-	/* KS8851 PHY ID रेजिस्टरs are swapped in HW, swap them back. */
-	अगर (reg == MII_PHYSID1)
+	/* KS8851 PHY ID registers are swapped in HW, swap them back. */
+	if (reg == MII_PHYSID1)
 		reg = MII_PHYSID2;
-	अन्यथा अगर (reg == MII_PHYSID2)
+	else if (reg == MII_PHYSID2)
 		reg = MII_PHYSID1;
 
-	वापस ks8851_phy_पढ़ो_common(ks->netdev, phy_id, reg);
-पूर्ण
+	return ks8851_phy_read_common(ks->netdev, phy_id, reg);
+}
 
-अटल पूर्णांक ks8851_mdio_ग_लिखो(काष्ठा mii_bus *bus, पूर्णांक phy_id, पूर्णांक reg, u16 val)
-अणु
-	काष्ठा ks8851_net *ks = bus->priv;
+static int ks8851_mdio_write(struct mii_bus *bus, int phy_id, int reg, u16 val)
+{
+	struct ks8851_net *ks = bus->priv;
 
-	ks8851_phy_ग_लिखो(ks->netdev, phy_id, reg, val);
-	वापस 0;
-पूर्ण
+	ks8851_phy_write(ks->netdev, phy_id, reg, val);
+	return 0;
+}
 
 /**
- * ks8851_पढ़ो_selftest - पढ़ो the selftest memory info.
+ * ks8851_read_selftest - read the selftest memory info.
  * @ks: The device state
  *
- * Read and check the TX/RX memory selftest inक्रमmation.
+ * Read and check the TX/RX memory selftest information.
  */
-अटल पूर्णांक ks8851_पढ़ो_selftest(काष्ठा ks8851_net *ks)
-अणु
-	अचिन्हित both_करोne = MBIR_TXMBF | MBIR_RXMBF;
-	पूर्णांक ret = 0;
-	अचिन्हित rd;
+static int ks8851_read_selftest(struct ks8851_net *ks)
+{
+	unsigned both_done = MBIR_TXMBF | MBIR_RXMBF;
+	int ret = 0;
+	unsigned rd;
 
 	rd = ks8851_rdreg16(ks, KS_MBIR);
 
-	अगर ((rd & both_करोne) != both_करोne) अणु
+	if ((rd & both_done) != both_done) {
 		netdev_warn(ks->netdev, "Memory selftest not finished\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (rd & MBIR_TXMBFA) अणु
+	if (rd & MBIR_TXMBFA) {
 		netdev_err(ks->netdev, "TX memory selftest fail\n");
 		ret |= 1;
-	पूर्ण
+	}
 
-	अगर (rd & MBIR_RXMBFA) अणु
+	if (rd & MBIR_RXMBFA) {
 		netdev_err(ks->netdev, "RX memory selftest fail\n");
 		ret |= 2;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* driver bus management functions */
 
-#अगर_घोषित CONFIG_PM_SLEEP
+#ifdef CONFIG_PM_SLEEP
 
-पूर्णांक ks8851_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा ks8851_net *ks = dev_get_drvdata(dev);
-	काष्ठा net_device *netdev = ks->netdev;
+int ks8851_suspend(struct device *dev)
+{
+	struct ks8851_net *ks = dev_get_drvdata(dev);
+	struct net_device *netdev = ks->netdev;
 
-	अगर (netअगर_running(netdev)) अणु
-		netअगर_device_detach(netdev);
+	if (netif_running(netdev)) {
+		netif_device_detach(netdev);
 		ks8851_net_stop(netdev);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक ks8851_resume(काष्ठा device *dev)
-अणु
-	काष्ठा ks8851_net *ks = dev_get_drvdata(dev);
-	काष्ठा net_device *netdev = ks->netdev;
+int ks8851_resume(struct device *dev)
+{
+	struct ks8851_net *ks = dev_get_drvdata(dev);
+	struct net_device *netdev = ks->netdev;
 
-	अगर (netअगर_running(netdev)) अणु
-		ks8851_net_खोलो(netdev);
-		netअगर_device_attach(netdev);
-	पूर्ण
+	if (netif_running(netdev)) {
+		ks8851_net_open(netdev);
+		netif_device_attach(netdev);
+	}
 
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+	return 0;
+}
+#endif
 
-अटल पूर्णांक ks8851_रेजिस्टर_mdiobus(काष्ठा ks8851_net *ks, काष्ठा device *dev)
-अणु
-	काष्ठा mii_bus *mii_bus;
-	पूर्णांक ret;
+static int ks8851_register_mdiobus(struct ks8851_net *ks, struct device *dev)
+{
+	struct mii_bus *mii_bus;
+	int ret;
 
 	mii_bus = mdiobus_alloc();
-	अगर (!mii_bus)
-		वापस -ENOMEM;
+	if (!mii_bus)
+		return -ENOMEM;
 
 	mii_bus->name = "ks8851_eth_mii";
-	mii_bus->पढ़ो = ks8851_mdio_पढ़ो;
-	mii_bus->ग_लिखो = ks8851_mdio_ग_लिखो;
+	mii_bus->read = ks8851_mdio_read;
+	mii_bus->write = ks8851_mdio_write;
 	mii_bus->priv = ks;
 	mii_bus->parent = dev;
 	mii_bus->phy_mask = ~((u32)BIT(0));
-	snम_लिखो(mii_bus->id, MII_BUS_ID_SIZE, "%s", dev_name(dev));
+	snprintf(mii_bus->id, MII_BUS_ID_SIZE, "%s", dev_name(dev));
 
-	ret = mdiobus_रेजिस्टर(mii_bus);
-	अगर (ret)
-		जाओ err_mdiobus_रेजिस्टर;
+	ret = mdiobus_register(mii_bus);
+	if (ret)
+		goto err_mdiobus_register;
 
 	ks->mii_bus = mii_bus;
 
-	वापस 0;
+	return 0;
 
-err_mdiobus_रेजिस्टर:
-	mdiobus_मुक्त(mii_bus);
-	वापस ret;
-पूर्ण
+err_mdiobus_register:
+	mdiobus_free(mii_bus);
+	return ret;
+}
 
-अटल व्योम ks8851_unरेजिस्टर_mdiobus(काष्ठा ks8851_net *ks)
-अणु
-	mdiobus_unरेजिस्टर(ks->mii_bus);
-	mdiobus_मुक्त(ks->mii_bus);
-पूर्ण
+static void ks8851_unregister_mdiobus(struct ks8851_net *ks)
+{
+	mdiobus_unregister(ks->mii_bus);
+	mdiobus_free(ks->mii_bus);
+}
 
-पूर्णांक ks8851_probe_common(काष्ठा net_device *netdev, काष्ठा device *dev,
-			पूर्णांक msg_en)
-अणु
-	काष्ठा ks8851_net *ks = netdev_priv(netdev);
-	अचिन्हित cider;
-	पूर्णांक gpio;
-	पूर्णांक ret;
+int ks8851_probe_common(struct net_device *netdev, struct device *dev,
+			int msg_en)
+{
+	struct ks8851_net *ks = netdev_priv(netdev);
+	unsigned cider;
+	int gpio;
+	int ret;
 
 	ks->netdev = netdev;
 	ks->tx_space = 6144;
 
-	gpio = of_get_named_gpio_flags(dev->of_node, "reset-gpios", 0, शून्य);
-	अगर (gpio == -EPROBE_DEFER)
-		वापस gpio;
+	gpio = of_get_named_gpio_flags(dev->of_node, "reset-gpios", 0, NULL);
+	if (gpio == -EPROBE_DEFER)
+		return gpio;
 
 	ks->gpio = gpio;
-	अगर (gpio_is_valid(gpio)) अणु
+	if (gpio_is_valid(gpio)) {
 		ret = devm_gpio_request_one(dev, gpio,
 					    GPIOF_OUT_INIT_LOW, "ks8851_rst_n");
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(dev, "reset gpio request failed\n");
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
 	ks->vdd_io = devm_regulator_get(dev, "vdd-io");
-	अगर (IS_ERR(ks->vdd_io)) अणु
+	if (IS_ERR(ks->vdd_io)) {
 		ret = PTR_ERR(ks->vdd_io);
-		जाओ err_reg_io;
-	पूर्ण
+		goto err_reg_io;
+	}
 
 	ret = regulator_enable(ks->vdd_io);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "regulator vdd_io enable fail: %d\n", ret);
-		जाओ err_reg_io;
-	पूर्ण
+		goto err_reg_io;
+	}
 
 	ks->vdd_reg = devm_regulator_get(dev, "vdd");
-	अगर (IS_ERR(ks->vdd_reg)) अणु
+	if (IS_ERR(ks->vdd_reg)) {
 		ret = PTR_ERR(ks->vdd_reg);
-		जाओ err_reg;
-	पूर्ण
+		goto err_reg;
+	}
 
 	ret = regulator_enable(ks->vdd_reg);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "regulator vdd enable fail: %d\n", ret);
-		जाओ err_reg;
-	पूर्ण
+		goto err_reg;
+	}
 
-	अगर (gpio_is_valid(gpio)) अणु
+	if (gpio_is_valid(gpio)) {
 		usleep_range(10000, 11000);
 		gpio_set_value(gpio, 1);
-	पूर्ण
+	}
 
 	spin_lock_init(&ks->statelock);
 
@@ -1179,25 +1178,25 @@ err_mdiobus_रेजिस्टर:
 	/* setup EEPROM state */
 	ks->eeprom.data = ks;
 	ks->eeprom.width = PCI_EEPROM_WIDTH_93C46;
-	ks->eeprom.रेजिस्टर_पढ़ो = ks8851_eeprom_regपढ़ो;
-	ks->eeprom.रेजिस्टर_ग_लिखो = ks8851_eeprom_regग_लिखो;
+	ks->eeprom.register_read = ks8851_eeprom_regread;
+	ks->eeprom.register_write = ks8851_eeprom_regwrite;
 
 	/* setup mii state */
 	ks->mii.dev		= netdev;
 	ks->mii.phy_id		= 1;
 	ks->mii.phy_id_mask	= 1;
 	ks->mii.reg_num_mask	= 0xf;
-	ks->mii.mdio_पढ़ो	= ks8851_phy_पढ़ो;
-	ks->mii.mdio_ग_लिखो	= ks8851_phy_ग_लिखो;
+	ks->mii.mdio_read	= ks8851_phy_read;
+	ks->mii.mdio_write	= ks8851_phy_write;
 
 	dev_info(dev, "message enable is %d\n", msg_en);
 
-	ret = ks8851_रेजिस्टर_mdiobus(ks, dev);
-	अगर (ret)
-		जाओ err_mdio;
+	ret = ks8851_register_mdiobus(ks, dev);
+	if (ret)
+		goto err_mdio;
 
-	/* set the शेष message enable */
-	ks->msg_enable = netअगर_msg_init(msg_en, NETIF_MSG_DRV |
+	/* set the default message enable */
+	ks->msg_enable = netif_msg_init(msg_en, NETIF_MSG_DRV |
 						NETIF_MSG_PROBE |
 						NETIF_MSG_LINK);
 
@@ -1207,65 +1206,65 @@ err_mdiobus_रेजिस्टर:
 
 	dev_set_drvdata(dev, ks);
 
-	netअगर_carrier_off(ks->netdev);
-	netdev->अगर_port = IF_PORT_100BASET;
+	netif_carrier_off(ks->netdev);
+	netdev->if_port = IF_PORT_100BASET;
 	netdev->netdev_ops = &ks8851_netdev_ops;
 
 	/* issue a global soft reset to reset the device. */
 	ks8851_soft_reset(ks, GRR_GSR);
 
-	/* simple check क्रम a valid chip being connected to the bus */
+	/* simple check for a valid chip being connected to the bus */
 	cider = ks8851_rdreg16(ks, KS_CIDER);
-	अगर ((cider & ~CIDER_REV_MASK) != CIDER_ID) अणु
+	if ((cider & ~CIDER_REV_MASK) != CIDER_ID) {
 		dev_err(dev, "failed to read device ID\n");
 		ret = -ENODEV;
-		जाओ err_id;
-	पूर्ण
+		goto err_id;
+	}
 
-	/* cache the contents of the CCR रेजिस्टर क्रम EEPROM, etc. */
+	/* cache the contents of the CCR register for EEPROM, etc. */
 	ks->rc_ccr = ks8851_rdreg16(ks, KS_CCR);
 
-	ks8851_पढ़ो_selftest(ks);
+	ks8851_read_selftest(ks);
 	ks8851_init_mac(ks, dev->of_node);
 
-	ret = रेजिस्टर_netdev(netdev);
-	अगर (ret) अणु
+	ret = register_netdev(netdev);
+	if (ret) {
 		dev_err(dev, "failed to register network device\n");
-		जाओ err_id;
-	पूर्ण
+		goto err_id;
+	}
 
 	netdev_info(netdev, "revision %d, MAC %pM, IRQ %d, %s EEPROM\n",
 		    CIDER_REV_GET(cider), netdev->dev_addr, netdev->irq,
 		    ks->rc_ccr & CCR_EEPROM ? "has" : "no");
 
-	वापस 0;
+	return 0;
 
 err_id:
-	ks8851_unरेजिस्टर_mdiobus(ks);
+	ks8851_unregister_mdiobus(ks);
 err_mdio:
-	अगर (gpio_is_valid(gpio))
+	if (gpio_is_valid(gpio))
 		gpio_set_value(gpio, 0);
 	regulator_disable(ks->vdd_reg);
 err_reg:
 	regulator_disable(ks->vdd_io);
 err_reg_io:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक ks8851_हटाओ_common(काष्ठा device *dev)
-अणु
-	काष्ठा ks8851_net *priv = dev_get_drvdata(dev);
+int ks8851_remove_common(struct device *dev)
+{
+	struct ks8851_net *priv = dev_get_drvdata(dev);
 
-	ks8851_unरेजिस्टर_mdiobus(priv);
+	ks8851_unregister_mdiobus(priv);
 
-	अगर (netअगर_msg_drv(priv))
+	if (netif_msg_drv(priv))
 		dev_info(dev, "remove\n");
 
-	unरेजिस्टर_netdev(priv->netdev);
-	अगर (gpio_is_valid(priv->gpio))
+	unregister_netdev(priv->netdev);
+	if (gpio_is_valid(priv->gpio))
 		gpio_set_value(priv->gpio, 0);
 	regulator_disable(priv->vdd_reg);
 	regulator_disable(priv->vdd_io);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

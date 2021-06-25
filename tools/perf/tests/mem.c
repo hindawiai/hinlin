@@ -1,35 +1,34 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश "util/map_symbol.h"
-#समावेश "util/mem-events.h"
-#समावेश "util/symbol.h"
-#समावेश "linux/perf_event.h"
-#समावेश "util/debug.h"
-#समावेश "tests.h"
-#समावेश <माला.स>
+// SPDX-License-Identifier: GPL-2.0
+#include "util/map_symbol.h"
+#include "util/mem-events.h"
+#include "util/symbol.h"
+#include "linux/perf_event.h"
+#include "util/debug.h"
+#include "tests.h"
+#include <string.h>
 
-अटल पूर्णांक check(जोड़ perf_mem_data_src data_src,
-		  स्थिर अक्षर *string)
-अणु
-	अक्षर out[100];
-	अक्षर failure[100];
-	काष्ठा mem_info mi = अणु .data_src = data_src पूर्ण;
+static int check(union perf_mem_data_src data_src,
+		  const char *string)
+{
+	char out[100];
+	char failure[100];
+	struct mem_info mi = { .data_src = data_src };
 
-	पूर्णांक n;
+	int n;
 
-	n = perf_mem__snp_scnम_लिखो(out, माप out, &mi);
-	n += perf_mem__lvl_scnम_लिखो(out + n, माप out - n, &mi);
-	scnम_लिखो(failure, माप failure, "unexpected %s", out);
-	TEST_ASSERT_VAL(failure, !म_भेद(string, out));
-	वापस 0;
-पूर्ण
+	n = perf_mem__snp_scnprintf(out, sizeof out, &mi);
+	n += perf_mem__lvl_scnprintf(out + n, sizeof out - n, &mi);
+	scnprintf(failure, sizeof failure, "unexpected %s", out);
+	TEST_ASSERT_VAL(failure, !strcmp(string, out));
+	return 0;
+}
 
-पूर्णांक test__mem(काष्ठा test *text __maybe_unused, पूर्णांक subtest __maybe_unused)
-अणु
-	पूर्णांक ret = 0;
-	जोड़ perf_mem_data_src src;
+int test__mem(struct test *text __maybe_unused, int subtest __maybe_unused)
+{
+	int ret = 0;
+	union perf_mem_data_src src;
 
-	स_रखो(&src, 0, माप(src));
+	memset(&src, 0, sizeof(src));
 
 	src.mem_lvl = PERF_MEM_LVL_HIT;
 	src.mem_lvl_num = 4;
@@ -55,5 +54,5 @@
 
 	ret |= check(src , "FwdRemote RAM miss");
 
-	वापस ret;
-पूर्ण
+	return ret;
+}

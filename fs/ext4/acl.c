@@ -1,303 +1,302 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * linux/fs/ext4/acl.c
  *
  * Copyright (C) 2001-2003 Andreas Gruenbacher, <agruen@suse.de>
  */
 
-#समावेश <linux/quotaops.h>
-#समावेश "ext4_jbd2.h"
-#समावेश "ext4.h"
-#समावेश "xattr.h"
-#समावेश "acl.h"
+#include <linux/quotaops.h>
+#include "ext4_jbd2.h"
+#include "ext4.h"
+#include "xattr.h"
+#include "acl.h"
 
 /*
- * Convert from fileप्रणाली to in-memory representation.
+ * Convert from filesystem to in-memory representation.
  */
-अटल काष्ठा posix_acl *
-ext4_acl_from_disk(स्थिर व्योम *value, माप_प्रकार size)
-अणु
-	स्थिर अक्षर *end = (अक्षर *)value + size;
-	पूर्णांक n, count;
-	काष्ठा posix_acl *acl;
+static struct posix_acl *
+ext4_acl_from_disk(const void *value, size_t size)
+{
+	const char *end = (char *)value + size;
+	int n, count;
+	struct posix_acl *acl;
 
-	अगर (!value)
-		वापस शून्य;
-	अगर (size < माप(ext4_acl_header))
-		 वापस ERR_PTR(-EINVAL);
-	अगर (((ext4_acl_header *)value)->a_version !=
+	if (!value)
+		return NULL;
+	if (size < sizeof(ext4_acl_header))
+		 return ERR_PTR(-EINVAL);
+	if (((ext4_acl_header *)value)->a_version !=
 	    cpu_to_le32(EXT4_ACL_VERSION))
-		वापस ERR_PTR(-EINVAL);
-	value = (अक्षर *)value + माप(ext4_acl_header);
+		return ERR_PTR(-EINVAL);
+	value = (char *)value + sizeof(ext4_acl_header);
 	count = ext4_acl_count(size);
-	अगर (count < 0)
-		वापस ERR_PTR(-EINVAL);
-	अगर (count == 0)
-		वापस शून्य;
+	if (count < 0)
+		return ERR_PTR(-EINVAL);
+	if (count == 0)
+		return NULL;
 	acl = posix_acl_alloc(count, GFP_NOFS);
-	अगर (!acl)
-		वापस ERR_PTR(-ENOMEM);
-	क्रम (n = 0; n < count; n++) अणु
+	if (!acl)
+		return ERR_PTR(-ENOMEM);
+	for (n = 0; n < count; n++) {
 		ext4_acl_entry *entry =
 			(ext4_acl_entry *)value;
-		अगर ((अक्षर *)value + माप(ext4_acl_entry_लघु) > end)
-			जाओ fail;
+		if ((char *)value + sizeof(ext4_acl_entry_short) > end)
+			goto fail;
 		acl->a_entries[n].e_tag  = le16_to_cpu(entry->e_tag);
 		acl->a_entries[n].e_perm = le16_to_cpu(entry->e_perm);
 
-		चयन (acl->a_entries[n].e_tag) अणु
-		हाल ACL_USER_OBJ:
-		हाल ACL_GROUP_OBJ:
-		हाल ACL_MASK:
-		हाल ACL_OTHER:
-			value = (अक्षर *)value +
-				माप(ext4_acl_entry_लघु);
-			अवरोध;
+		switch (acl->a_entries[n].e_tag) {
+		case ACL_USER_OBJ:
+		case ACL_GROUP_OBJ:
+		case ACL_MASK:
+		case ACL_OTHER:
+			value = (char *)value +
+				sizeof(ext4_acl_entry_short);
+			break;
 
-		हाल ACL_USER:
-			value = (अक्षर *)value + माप(ext4_acl_entry);
-			अगर ((अक्षर *)value > end)
-				जाओ fail;
+		case ACL_USER:
+			value = (char *)value + sizeof(ext4_acl_entry);
+			if ((char *)value > end)
+				goto fail;
 			acl->a_entries[n].e_uid =
 				make_kuid(&init_user_ns,
 					  le32_to_cpu(entry->e_id));
-			अवरोध;
-		हाल ACL_GROUP:
-			value = (अक्षर *)value + माप(ext4_acl_entry);
-			अगर ((अक्षर *)value > end)
-				जाओ fail;
+			break;
+		case ACL_GROUP:
+			value = (char *)value + sizeof(ext4_acl_entry);
+			if ((char *)value > end)
+				goto fail;
 			acl->a_entries[n].e_gid =
 				make_kgid(&init_user_ns,
 					  le32_to_cpu(entry->e_id));
-			अवरोध;
+			break;
 
-		शेष:
-			जाओ fail;
-		पूर्ण
-	पूर्ण
-	अगर (value != end)
-		जाओ fail;
-	वापस acl;
+		default:
+			goto fail;
+		}
+	}
+	if (value != end)
+		goto fail;
+	return acl;
 
 fail:
 	posix_acl_release(acl);
-	वापस ERR_PTR(-EINVAL);
-पूर्ण
+	return ERR_PTR(-EINVAL);
+}
 
 /*
- * Convert from in-memory to fileप्रणाली representation.
+ * Convert from in-memory to filesystem representation.
  */
-अटल व्योम *
-ext4_acl_to_disk(स्थिर काष्ठा posix_acl *acl, माप_प्रकार *size)
-अणु
+static void *
+ext4_acl_to_disk(const struct posix_acl *acl, size_t *size)
+{
 	ext4_acl_header *ext_acl;
-	अक्षर *e;
-	माप_प्रकार n;
+	char *e;
+	size_t n;
 
 	*size = ext4_acl_size(acl->a_count);
-	ext_acl = kदो_स्मृति(माप(ext4_acl_header) + acl->a_count *
-			माप(ext4_acl_entry), GFP_NOFS);
-	अगर (!ext_acl)
-		वापस ERR_PTR(-ENOMEM);
+	ext_acl = kmalloc(sizeof(ext4_acl_header) + acl->a_count *
+			sizeof(ext4_acl_entry), GFP_NOFS);
+	if (!ext_acl)
+		return ERR_PTR(-ENOMEM);
 	ext_acl->a_version = cpu_to_le32(EXT4_ACL_VERSION);
-	e = (अक्षर *)ext_acl + माप(ext4_acl_header);
-	क्रम (n = 0; n < acl->a_count; n++) अणु
-		स्थिर काष्ठा posix_acl_entry *acl_e = &acl->a_entries[n];
+	e = (char *)ext_acl + sizeof(ext4_acl_header);
+	for (n = 0; n < acl->a_count; n++) {
+		const struct posix_acl_entry *acl_e = &acl->a_entries[n];
 		ext4_acl_entry *entry = (ext4_acl_entry *)e;
 		entry->e_tag  = cpu_to_le16(acl_e->e_tag);
 		entry->e_perm = cpu_to_le16(acl_e->e_perm);
-		चयन (acl_e->e_tag) अणु
-		हाल ACL_USER:
+		switch (acl_e->e_tag) {
+		case ACL_USER:
 			entry->e_id = cpu_to_le32(
 				from_kuid(&init_user_ns, acl_e->e_uid));
-			e += माप(ext4_acl_entry);
-			अवरोध;
-		हाल ACL_GROUP:
+			e += sizeof(ext4_acl_entry);
+			break;
+		case ACL_GROUP:
 			entry->e_id = cpu_to_le32(
 				from_kgid(&init_user_ns, acl_e->e_gid));
-			e += माप(ext4_acl_entry);
-			अवरोध;
+			e += sizeof(ext4_acl_entry);
+			break;
 
-		हाल ACL_USER_OBJ:
-		हाल ACL_GROUP_OBJ:
-		हाल ACL_MASK:
-		हाल ACL_OTHER:
-			e += माप(ext4_acl_entry_लघु);
-			अवरोध;
+		case ACL_USER_OBJ:
+		case ACL_GROUP_OBJ:
+		case ACL_MASK:
+		case ACL_OTHER:
+			e += sizeof(ext4_acl_entry_short);
+			break;
 
-		शेष:
-			जाओ fail;
-		पूर्ण
-	पूर्ण
-	वापस (अक्षर *)ext_acl;
+		default:
+			goto fail;
+		}
+	}
+	return (char *)ext_acl;
 
 fail:
-	kमुक्त(ext_acl);
-	वापस ERR_PTR(-EINVAL);
-पूर्ण
+	kfree(ext_acl);
+	return ERR_PTR(-EINVAL);
+}
 
 /*
  * Inode operation get_posix_acl().
  *
- * inode->i_mutex: करोn't care
+ * inode->i_mutex: don't care
  */
-काष्ठा posix_acl *
-ext4_get_acl(काष्ठा inode *inode, पूर्णांक type)
-अणु
-	पूर्णांक name_index;
-	अक्षर *value = शून्य;
-	काष्ठा posix_acl *acl;
-	पूर्णांक retval;
+struct posix_acl *
+ext4_get_acl(struct inode *inode, int type)
+{
+	int name_index;
+	char *value = NULL;
+	struct posix_acl *acl;
+	int retval;
 
-	चयन (type) अणु
-	हाल ACL_TYPE_ACCESS:
+	switch (type) {
+	case ACL_TYPE_ACCESS:
 		name_index = EXT4_XATTR_INDEX_POSIX_ACL_ACCESS;
-		अवरोध;
-	हाल ACL_TYPE_DEFAULT:
+		break;
+	case ACL_TYPE_DEFAULT:
 		name_index = EXT4_XATTR_INDEX_POSIX_ACL_DEFAULT;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		BUG();
-	पूर्ण
-	retval = ext4_xattr_get(inode, name_index, "", शून्य, 0);
-	अगर (retval > 0) अणु
-		value = kदो_स्मृति(retval, GFP_NOFS);
-		अगर (!value)
-			वापस ERR_PTR(-ENOMEM);
+	}
+	retval = ext4_xattr_get(inode, name_index, "", NULL, 0);
+	if (retval > 0) {
+		value = kmalloc(retval, GFP_NOFS);
+		if (!value)
+			return ERR_PTR(-ENOMEM);
 		retval = ext4_xattr_get(inode, name_index, "", value, retval);
-	पूर्ण
-	अगर (retval > 0)
+	}
+	if (retval > 0)
 		acl = ext4_acl_from_disk(value, retval);
-	अन्यथा अगर (retval == -ENODATA || retval == -ENOSYS)
-		acl = शून्य;
-	अन्यथा
+	else if (retval == -ENODATA || retval == -ENOSYS)
+		acl = NULL;
+	else
 		acl = ERR_PTR(retval);
-	kमुक्त(value);
+	kfree(value);
 
-	वापस acl;
-पूर्ण
+	return acl;
+}
 
 /*
- * Set the access or शेष ACL of an inode.
+ * Set the access or default ACL of an inode.
  *
- * inode->i_mutex: करोwn unless called from ext4_new_inode
+ * inode->i_mutex: down unless called from ext4_new_inode
  */
-अटल पूर्णांक
-__ext4_set_acl(handle_t *handle, काष्ठा inode *inode, पूर्णांक type,
-	     काष्ठा posix_acl *acl, पूर्णांक xattr_flags)
-अणु
-	पूर्णांक name_index;
-	व्योम *value = शून्य;
-	माप_प्रकार size = 0;
-	पूर्णांक error;
+static int
+__ext4_set_acl(handle_t *handle, struct inode *inode, int type,
+	     struct posix_acl *acl, int xattr_flags)
+{
+	int name_index;
+	void *value = NULL;
+	size_t size = 0;
+	int error;
 
-	चयन (type) अणु
-	हाल ACL_TYPE_ACCESS:
+	switch (type) {
+	case ACL_TYPE_ACCESS:
 		name_index = EXT4_XATTR_INDEX_POSIX_ACL_ACCESS;
-		अवरोध;
+		break;
 
-	हाल ACL_TYPE_DEFAULT:
+	case ACL_TYPE_DEFAULT:
 		name_index = EXT4_XATTR_INDEX_POSIX_ACL_DEFAULT;
-		अगर (!S_ISसूची(inode->i_mode))
-			वापस acl ? -EACCES : 0;
-		अवरोध;
+		if (!S_ISDIR(inode->i_mode))
+			return acl ? -EACCES : 0;
+		break;
 
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-	अगर (acl) अणु
+	default:
+		return -EINVAL;
+	}
+	if (acl) {
 		value = ext4_acl_to_disk(acl, &size);
-		अगर (IS_ERR(value))
-			वापस (पूर्णांक)PTR_ERR(value);
-	पूर्ण
+		if (IS_ERR(value))
+			return (int)PTR_ERR(value);
+	}
 
 	error = ext4_xattr_set_handle(handle, inode, name_index, "",
 				      value, size, xattr_flags);
 
-	kमुक्त(value);
-	अगर (!error)
+	kfree(value);
+	if (!error)
 		set_cached_acl(inode, type, acl);
 
-	वापस error;
-पूर्ण
+	return error;
+}
 
-पूर्णांक
-ext4_set_acl(काष्ठा user_namespace *mnt_userns, काष्ठा inode *inode,
-	     काष्ठा posix_acl *acl, पूर्णांक type)
-अणु
+int
+ext4_set_acl(struct user_namespace *mnt_userns, struct inode *inode,
+	     struct posix_acl *acl, int type)
+{
 	handle_t *handle;
-	पूर्णांक error, credits, retries = 0;
-	माप_प्रकार acl_size = acl ? ext4_acl_size(acl->a_count) : 0;
+	int error, credits, retries = 0;
+	size_t acl_size = acl ? ext4_acl_size(acl->a_count) : 0;
 	umode_t mode = inode->i_mode;
-	पूर्णांक update_mode = 0;
+	int update_mode = 0;
 
 	error = dquot_initialize(inode);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 retry:
 	error = ext4_xattr_set_credits(inode, acl_size, false /* is_create */,
 				       &credits);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
 	handle = ext4_journal_start(inode, EXT4_HT_XATTR, credits);
-	अगर (IS_ERR(handle))
-		वापस PTR_ERR(handle);
+	if (IS_ERR(handle))
+		return PTR_ERR(handle);
 	ext4_fc_start_update(inode);
 
-	अगर ((type == ACL_TYPE_ACCESS) && acl) अणु
+	if ((type == ACL_TYPE_ACCESS) && acl) {
 		error = posix_acl_update_mode(mnt_userns, inode, &mode, &acl);
-		अगर (error)
-			जाओ out_stop;
-		अगर (mode != inode->i_mode)
+		if (error)
+			goto out_stop;
+		if (mode != inode->i_mode)
 			update_mode = 1;
-	पूर्ण
+	}
 
 	error = __ext4_set_acl(handle, inode, type, acl, 0 /* xattr_flags */);
-	अगर (!error && update_mode) अणु
+	if (!error && update_mode) {
 		inode->i_mode = mode;
-		inode->i_स_समय = current_समय(inode);
+		inode->i_ctime = current_time(inode);
 		error = ext4_mark_inode_dirty(handle, inode);
-	पूर्ण
+	}
 out_stop:
 	ext4_journal_stop(handle);
 	ext4_fc_stop_update(inode);
-	अगर (error == -ENOSPC && ext4_should_retry_alloc(inode->i_sb, &retries))
-		जाओ retry;
-	वापस error;
-पूर्ण
+	if (error == -ENOSPC && ext4_should_retry_alloc(inode->i_sb, &retries))
+		goto retry;
+	return error;
+}
 
 /*
  * Initialize the ACLs of a new inode. Called from ext4_new_inode.
  *
- * dir->i_mutex: करोwn
+ * dir->i_mutex: down
  * inode->i_mutex: up (access to inode is still exclusive)
  */
-पूर्णांक
-ext4_init_acl(handle_t *handle, काष्ठा inode *inode, काष्ठा inode *dir)
-अणु
-	काष्ठा posix_acl *शेष_acl, *acl;
-	पूर्णांक error;
+int
+ext4_init_acl(handle_t *handle, struct inode *inode, struct inode *dir)
+{
+	struct posix_acl *default_acl, *acl;
+	int error;
 
-	error = posix_acl_create(dir, &inode->i_mode, &शेष_acl, &acl);
-	अगर (error)
-		वापस error;
+	error = posix_acl_create(dir, &inode->i_mode, &default_acl, &acl);
+	if (error)
+		return error;
 
-	अगर (शेष_acl) अणु
+	if (default_acl) {
 		error = __ext4_set_acl(handle, inode, ACL_TYPE_DEFAULT,
-				       शेष_acl, XATTR_CREATE);
-		posix_acl_release(शेष_acl);
-	पूर्ण अन्यथा अणु
-		inode->i_शेष_acl = शून्य;
-	पूर्ण
-	अगर (acl) अणु
-		अगर (!error)
+				       default_acl, XATTR_CREATE);
+		posix_acl_release(default_acl);
+	} else {
+		inode->i_default_acl = NULL;
+	}
+	if (acl) {
+		if (!error)
 			error = __ext4_set_acl(handle, inode, ACL_TYPE_ACCESS,
 					       acl, XATTR_CREATE);
 		posix_acl_release(acl);
-	पूर्ण अन्यथा अणु
-		inode->i_acl = शून्य;
-	पूर्ण
-	वापस error;
-पूर्ण
+	} else {
+		inode->i_acl = NULL;
+	}
+	return error;
+}

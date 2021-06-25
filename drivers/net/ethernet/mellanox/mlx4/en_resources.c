@@ -1,24 +1,23 @@
-<शैली गुरु>
 /*
  * Copyright (c) 2007 Mellanox Technologies. All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the मुख्य directory of this source tree, or the
+ * COPYING in the main directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary क्रमms, with or
- *     without modअगरication, are permitted provided that the following
+ *     Redistribution and use in source and binary forms, with or
+ *     without modification, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary क्रमm must reproduce the above
+ *      - Redistributions in binary form must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the करोcumentation and/or other materials
+ *        disclaimer in the documentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -32,85 +31,85 @@
  *
  */
 
-#समावेश <linux/slab.h>
-#समावेश <linux/vदो_स्मृति.h>
-#समावेश <linux/mlx4/qp.h>
+#include <linux/slab.h>
+#include <linux/vmalloc.h>
+#include <linux/mlx4/qp.h>
 
-#समावेश "mlx4_en.h"
+#include "mlx4_en.h"
 
-व्योम mlx4_en_fill_qp_context(काष्ठा mlx4_en_priv *priv, पूर्णांक size, पूर्णांक stride,
-			     पूर्णांक is_tx, पूर्णांक rss, पूर्णांक qpn, पूर्णांक cqn,
-			     पूर्णांक user_prio, काष्ठा mlx4_qp_context *context)
-अणु
-	काष्ठा mlx4_en_dev *mdev = priv->mdev;
-	काष्ठा net_device *dev = priv->dev;
+void mlx4_en_fill_qp_context(struct mlx4_en_priv *priv, int size, int stride,
+			     int is_tx, int rss, int qpn, int cqn,
+			     int user_prio, struct mlx4_qp_context *context)
+{
+	struct mlx4_en_dev *mdev = priv->mdev;
+	struct net_device *dev = priv->dev;
 
-	स_रखो(context, 0, माप(*context));
+	memset(context, 0, sizeof(*context));
 	context->flags = cpu_to_be32(7 << 16 | rss << MLX4_RSS_QPC_FLAG_OFFSET);
 	context->pd = cpu_to_be32(mdev->priv_pdn);
 	context->mtu_msgmax = 0xff;
-	अगर (!is_tx && !rss)
+	if (!is_tx && !rss)
 		context->rq_size_stride = ilog2(size) << 3 | (ilog2(stride) - 4);
-	अगर (is_tx) अणु
+	if (is_tx) {
 		context->sq_size_stride = ilog2(size) << 3 | (ilog2(stride) - 4);
-		अगर (mdev->dev->caps.flags2 & MLX4_DEV_CAP_FLAG2_PORT_REMAP)
+		if (mdev->dev->caps.flags2 & MLX4_DEV_CAP_FLAG2_PORT_REMAP)
 			context->params2 |= cpu_to_be32(MLX4_QP_BIT_FPP);
 
-	पूर्ण अन्यथा अणु
+	} else {
 		context->sq_size_stride = ilog2(TXBB_SIZE) - 4;
-	पूर्ण
+	}
 	context->usr_page = cpu_to_be32(mlx4_to_hw_uar_index(mdev->dev,
 					mdev->priv_uar.index));
 	context->local_qpn = cpu_to_be32(qpn);
 	context->pri_path.ackto = 1 & 0x07;
 	context->pri_path.sched_queue = 0x83 | (priv->port - 1) << 6;
-	/* क्रमce user priority per tx ring */
-	अगर (user_prio >= 0 && priv->prof->num_up == MLX4_EN_NUM_UP_HIGH) अणु
+	/* force user priority per tx ring */
+	if (user_prio >= 0 && priv->prof->num_up == MLX4_EN_NUM_UP_HIGH) {
 		context->pri_path.sched_queue |= user_prio << 3;
 		context->pri_path.feup = MLX4_FEUP_FORCE_ETH_UP;
-	पूर्ण
+	}
 	context->pri_path.counter_index = priv->counter_index;
 	context->cqn_send = cpu_to_be32(cqn);
 	context->cqn_recv = cpu_to_be32(cqn);
-	अगर (!rss &&
+	if (!rss &&
 	    (mdev->dev->caps.flags2 & MLX4_DEV_CAP_FLAG2_LB_SRC_CHK) &&
 	    context->pri_path.counter_index !=
-			    MLX4_SINK_COUNTER_INDEX(mdev->dev)) अणु
+			    MLX4_SINK_COUNTER_INDEX(mdev->dev)) {
 		/* disable multicast loopback to qp with same counter */
-		अगर (!(dev->features & NETIF_F_LOOPBACK))
+		if (!(dev->features & NETIF_F_LOOPBACK))
 			context->pri_path.fl |= MLX4_FL_ETH_SRC_CHECK_MC_LB;
 		context->pri_path.control |= MLX4_CTRL_ETH_SRC_CHECK_IF_COUNTER;
-	पूर्ण
+	}
 	context->db_rec_addr = cpu_to_be64(priv->res.db.dma << 2);
-	अगर (!(dev->features & NETIF_F_HW_VLAN_CTAG_RX))
+	if (!(dev->features & NETIF_F_HW_VLAN_CTAG_RX))
 		context->param3 |= cpu_to_be32(1 << 30);
 
-	अगर (!is_tx && !rss &&
-	    (mdev->dev->caps.tunnel_offload_mode ==  MLX4_TUNNEL_OFFLOAD_MODE_VXLAN)) अणु
+	if (!is_tx && !rss &&
+	    (mdev->dev->caps.tunnel_offload_mode ==  MLX4_TUNNEL_OFFLOAD_MODE_VXLAN)) {
 		en_dbg(HW, priv, "Setting RX qp %x tunnel mode to RX tunneled & non-tunneled\n", qpn);
 		context->srqn = cpu_to_be32(7 << 28); /* this fills bits 30:28 */
-	पूर्ण
-पूर्ण
+	}
+}
 
-पूर्णांक mlx4_en_change_mcast_lb(काष्ठा mlx4_en_priv *priv, काष्ठा mlx4_qp *qp,
-			    पूर्णांक loopback)
-अणु
-	पूर्णांक ret;
-	काष्ठा mlx4_update_qp_params qp_params;
+int mlx4_en_change_mcast_lb(struct mlx4_en_priv *priv, struct mlx4_qp *qp,
+			    int loopback)
+{
+	int ret;
+	struct mlx4_update_qp_params qp_params;
 
-	स_रखो(&qp_params, 0, माप(qp_params));
-	अगर (!loopback)
+	memset(&qp_params, 0, sizeof(qp_params));
+	if (!loopback)
 		qp_params.flags = MLX4_UPDATE_QP_PARAMS_FLAGS_ETH_CHECK_MC_LB;
 
 	ret = mlx4_update_qp(priv->mdev->dev, qp->qpn,
 			     MLX4_UPDATE_QP_ETH_SRC_CHECK_MC_LB,
 			     &qp_params);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम mlx4_en_sqp_event(काष्ठा mlx4_qp *qp, क्रमागत mlx4_event event)
-अणु
-    वापस;
-पूर्ण
+void mlx4_en_sqp_event(struct mlx4_qp *qp, enum mlx4_event event)
+{
+    return;
+}
 

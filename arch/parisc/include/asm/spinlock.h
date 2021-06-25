@@ -1,63 +1,62 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __ASM_SPINLOCK_H
-#घोषणा __ASM_SPINLOCK_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __ASM_SPINLOCK_H
+#define __ASM_SPINLOCK_H
 
-#समावेश <यंत्र/barrier.h>
-#समावेश <यंत्र/ldcw.h>
-#समावेश <यंत्र/processor.h>
-#समावेश <यंत्र/spinlock_types.h>
+#include <asm/barrier.h>
+#include <asm/ldcw.h>
+#include <asm/processor.h>
+#include <asm/spinlock_types.h>
 
-अटल अंतरभूत पूर्णांक arch_spin_is_locked(arch_spinlock_t *x)
-अणु
-	अस्थिर अचिन्हित पूर्णांक *a = __ldcw_align(x);
-	वापस READ_ONCE(*a) == 0;
-पूर्ण
+static inline int arch_spin_is_locked(arch_spinlock_t *x)
+{
+	volatile unsigned int *a = __ldcw_align(x);
+	return READ_ONCE(*a) == 0;
+}
 
-अटल अंतरभूत व्योम arch_spin_lock(arch_spinlock_t *x)
-अणु
-	अस्थिर अचिन्हित पूर्णांक *a;
-
-	a = __ldcw_align(x);
-	जबतक (__ldcw(a) == 0)
-		जबतक (*a == 0)
-			जारी;
-पूर्ण
-
-अटल अंतरभूत व्योम arch_spin_lock_flags(arch_spinlock_t *x,
-					अचिन्हित दीर्घ flags)
-अणु
-	अस्थिर अचिन्हित पूर्णांक *a;
+static inline void arch_spin_lock(arch_spinlock_t *x)
+{
+	volatile unsigned int *a;
 
 	a = __ldcw_align(x);
-	जबतक (__ldcw(a) == 0)
-		जबतक (*a == 0)
-			अगर (flags & PSW_SM_I) अणु
+	while (__ldcw(a) == 0)
+		while (*a == 0)
+			continue;
+}
+
+static inline void arch_spin_lock_flags(arch_spinlock_t *x,
+					unsigned long flags)
+{
+	volatile unsigned int *a;
+
+	a = __ldcw_align(x);
+	while (__ldcw(a) == 0)
+		while (*a == 0)
+			if (flags & PSW_SM_I) {
 				local_irq_enable();
 				local_irq_disable();
-			पूर्ण
-पूर्ण
-#घोषणा arch_spin_lock_flags arch_spin_lock_flags
+			}
+}
+#define arch_spin_lock_flags arch_spin_lock_flags
 
-अटल अंतरभूत व्योम arch_spin_unlock(arch_spinlock_t *x)
-अणु
-	अस्थिर अचिन्हित पूर्णांक *a;
+static inline void arch_spin_unlock(arch_spinlock_t *x)
+{
+	volatile unsigned int *a;
 
 	a = __ldcw_align(x);
 	/* Release with ordered store. */
-	__यंत्र__ __अस्थिर__("stw,ma %0,0(%1)" : : "r"(1), "r"(a) : "memory");
-पूर्ण
+	__asm__ __volatile__("stw,ma %0,0(%1)" : : "r"(1), "r"(a) : "memory");
+}
 
-अटल अंतरभूत पूर्णांक arch_spin_trylock(arch_spinlock_t *x)
-अणु
-	अस्थिर अचिन्हित पूर्णांक *a;
+static inline int arch_spin_trylock(arch_spinlock_t *x)
+{
+	volatile unsigned int *a;
 
 	a = __ldcw_align(x);
-	वापस __ldcw(a) != 0;
-पूर्ण
+	return __ldcw(a) != 0;
+}
 
 /*
- * Read-ग_लिखो spinlocks, allowing multiple पढ़ोers but only one ग_लिखोr.
+ * Read-write spinlocks, allowing multiple readers but only one writer.
  * Unfair locking as Writers could be starved indefinitely by Reader(s)
  *
  * The spinlock itself is contained in @counter and access to it is
@@ -65,86 +64,86 @@
  */
 
 /* 1 - lock taken successfully */
-अटल अंतरभूत पूर्णांक arch_पढ़ो_trylock(arch_rwlock_t *rw)
-अणु
-	पूर्णांक ret = 0;
-	अचिन्हित दीर्घ flags;
+static inline int arch_read_trylock(arch_rwlock_t *rw)
+{
+	int ret = 0;
+	unsigned long flags;
 
 	local_irq_save(flags);
 	arch_spin_lock(&(rw->lock_mutex));
 
 	/*
-	 * zero means ग_लिखोr holds the lock exclusively, deny Reader.
-	 * Otherwise grant lock to first/subseq पढ़ोer
+	 * zero means writer holds the lock exclusively, deny Reader.
+	 * Otherwise grant lock to first/subseq reader
 	 */
-	अगर (rw->counter > 0) अणु
+	if (rw->counter > 0) {
 		rw->counter--;
 		ret = 1;
-	पूर्ण
+	}
 
 	arch_spin_unlock(&(rw->lock_mutex));
 	local_irq_restore(flags);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /* 1 - lock taken successfully */
-अटल अंतरभूत पूर्णांक arch_ग_लिखो_trylock(arch_rwlock_t *rw)
-अणु
-	पूर्णांक ret = 0;
-	अचिन्हित दीर्घ flags;
+static inline int arch_write_trylock(arch_rwlock_t *rw)
+{
+	int ret = 0;
+	unsigned long flags;
 
 	local_irq_save(flags);
 	arch_spin_lock(&(rw->lock_mutex));
 
 	/*
-	 * If पढ़ोer(s) hold lock (lock < __ARCH_RW_LOCK_UNLOCKED__),
-	 * deny ग_लिखोr. Otherwise अगर unlocked grant to ग_लिखोr
-	 * Hence the claim that Linux rwlocks are unfair to ग_लिखोrs.
-	 * (can be starved क्रम an indefinite समय by पढ़ोers).
+	 * If reader(s) hold lock (lock < __ARCH_RW_LOCK_UNLOCKED__),
+	 * deny writer. Otherwise if unlocked grant to writer
+	 * Hence the claim that Linux rwlocks are unfair to writers.
+	 * (can be starved for an indefinite time by readers).
 	 */
-	अगर (rw->counter == __ARCH_RW_LOCK_UNLOCKED__) अणु
+	if (rw->counter == __ARCH_RW_LOCK_UNLOCKED__) {
 		rw->counter = 0;
 		ret = 1;
-	पूर्ण
+	}
 	arch_spin_unlock(&(rw->lock_mutex));
 	local_irq_restore(flags);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल अंतरभूत व्योम arch_पढ़ो_lock(arch_rwlock_t *rw)
-अणु
-	जबतक (!arch_पढ़ो_trylock(rw))
+static inline void arch_read_lock(arch_rwlock_t *rw)
+{
+	while (!arch_read_trylock(rw))
 		cpu_relax();
-पूर्ण
+}
 
-अटल अंतरभूत व्योम arch_ग_लिखो_lock(arch_rwlock_t *rw)
-अणु
-	जबतक (!arch_ग_लिखो_trylock(rw))
+static inline void arch_write_lock(arch_rwlock_t *rw)
+{
+	while (!arch_write_trylock(rw))
 		cpu_relax();
-पूर्ण
+}
 
-अटल अंतरभूत व्योम arch_पढ़ो_unlock(arch_rwlock_t *rw)
-अणु
-	अचिन्हित दीर्घ flags;
+static inline void arch_read_unlock(arch_rwlock_t *rw)
+{
+	unsigned long flags;
 
 	local_irq_save(flags);
 	arch_spin_lock(&(rw->lock_mutex));
 	rw->counter++;
 	arch_spin_unlock(&(rw->lock_mutex));
 	local_irq_restore(flags);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम arch_ग_लिखो_unlock(arch_rwlock_t *rw)
-अणु
-	अचिन्हित दीर्घ flags;
+static inline void arch_write_unlock(arch_rwlock_t *rw)
+{
+	unsigned long flags;
 
 	local_irq_save(flags);
 	arch_spin_lock(&(rw->lock_mutex));
 	rw->counter = __ARCH_RW_LOCK_UNLOCKED__;
 	arch_spin_unlock(&(rw->lock_mutex));
 	local_irq_restore(flags);
-पूर्ण
+}
 
-#पूर्ण_अगर /* __ASM_SPINLOCK_H */
+#endif /* __ASM_SPINLOCK_H */

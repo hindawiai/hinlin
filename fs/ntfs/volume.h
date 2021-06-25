@@ -1,47 +1,46 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
- * volume.h - Defines क्रम volume काष्ठाures in NTFS Linux kernel driver. Part
+ * volume.h - Defines for volume structures in NTFS Linux kernel driver. Part
  *	      of the Linux-NTFS project.
  *
  * Copyright (c) 2001-2006 Anton Altaparmakov
- * Copyright (c) 2002 Riअक्षरd Russon
+ * Copyright (c) 2002 Richard Russon
  */
 
-#अगर_अघोषित _LINUX_NTFS_VOLUME_H
-#घोषणा _LINUX_NTFS_VOLUME_H
+#ifndef _LINUX_NTFS_VOLUME_H
+#define _LINUX_NTFS_VOLUME_H
 
-#समावेश <linux/rwsem.h>
-#समावेश <linux/uidgid.h>
+#include <linux/rwsem.h>
+#include <linux/uidgid.h>
 
-#समावेश "types.h"
-#समावेश "layout.h"
+#include "types.h"
+#include "layout.h"
 
 /*
- * The NTFS in memory super block काष्ठाure.
+ * The NTFS in memory super block structure.
  */
-प्रकार काष्ठा अणु
+typedef struct {
 	/*
 	 * FIXME: Reorder to have commonly used together element within the
-	 * same cache line, aiming at a cache line size of 32 bytes. Aim क्रम
-	 * 64 bytes क्रम less commonly used together elements. Put most commonly
-	 * used elements to front of काष्ठाure. Obviously करो this only when the
-	 * काष्ठाure has stabilized... (AIA)
+	 * same cache line, aiming at a cache line size of 32 bytes. Aim for
+	 * 64 bytes for less commonly used together elements. Put most commonly
+	 * used elements to front of structure. Obviously do this only when the
+	 * structure has stabilized... (AIA)
 	 */
-	/* Device specअगरics. */
-	काष्ठा super_block *sb;		/* Poपूर्णांकer back to the super_block. */
+	/* Device specifics. */
+	struct super_block *sb;		/* Pointer back to the super_block. */
 	LCN nr_blocks;			/* Number of sb->s_blocksize bytes
 					   sized blocks on the device. */
-	/* Configuration provided by user at mount समय. */
-	अचिन्हित दीर्घ flags;		/* Miscellaneous flags, see below. */
+	/* Configuration provided by user at mount time. */
+	unsigned long flags;		/* Miscellaneous flags, see below. */
 	kuid_t uid;			/* uid that files will be mounted as. */
 	kgid_t gid;			/* gid that files will be mounted as. */
-	umode_t fmask;			/* The mask क्रम file permissions. */
-	umode_t dmask;			/* The mask क्रम directory
+	umode_t fmask;			/* The mask for file permissions. */
+	umode_t dmask;			/* The mask for directory
 					   permissions. */
 	u8 mft_zone_multiplier;		/* Initial mft zone multiplier. */
-	u8 on_errors;			/* What to करो on fileप्रणाली errors. */
-	/* NTFS bootsector provided inक्रमmation. */
+	u8 on_errors;			/* What to do on filesystem errors. */
+	/* NTFS bootsector provided information. */
 	u16 sector_size;		/* in bytes */
 	u8 sector_size_bits;		/* log2(sector_size) */
 	u32 cluster_size;		/* in bytes */
@@ -54,20 +53,20 @@
 	u32 index_record_size_mask;	/* index_record_size - 1 */
 	u8 index_record_size_bits;	/* log2(index_record_size) */
 	LCN nr_clusters;		/* Volume size in clusters == number of
-					   bits in lcn biपंचांगap. */
+					   bits in lcn bitmap. */
 	LCN mft_lcn;			/* Cluster location of mft data. */
-	LCN mfपंचांगirr_lcn;		/* Cluster location of copy of mft. */
+	LCN mftmirr_lcn;		/* Cluster location of copy of mft. */
 	u64 serial_no;			/* The volume serial number. */
-	/* Mount specअगरic NTFS inक्रमmation. */
-	u32 upहाल_len;			/* Number of entries in upहाल[]. */
-	ntfsअक्षर *upहाल;		/* The upहाल table. */
+	/* Mount specific NTFS information. */
+	u32 upcase_len;			/* Number of entries in upcase[]. */
+	ntfschar *upcase;		/* The upcase table. */
 
 	s32 attrdef_size;		/* Size of the attribute definition
 					   table in bytes. */
 	ATTR_DEF *attrdef;		/* Table of attribute definitions.
-					   Obtained from खाता_AttrDef. */
+					   Obtained from FILE_AttrDef. */
 
-#अगर_घोषित NTFS_RW
+#ifdef NTFS_RW
 	/* Variables used by the cluster and mft allocators. */
 	s64 mft_data_pos;		/* Mft record number at which to
 					   allocate the next mft record. */
@@ -78,80 +77,80 @@
 					   zone. */
 	LCN data2_zone_pos;		/* Current position in the second data
 					   zone. */
-#पूर्ण_अगर /* NTFS_RW */
+#endif /* NTFS_RW */
 
-	काष्ठा inode *mft_ino;		/* The VFS inode of $MFT. */
+	struct inode *mft_ino;		/* The VFS inode of $MFT. */
 
-	काष्ठा inode *mftbmp_ino;	/* Attribute inode क्रम $MFT/$BITMAP. */
-	काष्ठा rw_semaphore mftbmp_lock; /* Lock क्रम serializing accesses to the
-					    mft record biपंचांगap ($MFT/$BITMAP). */
-#अगर_घोषित NTFS_RW
-	काष्ठा inode *mfपंचांगirr_ino;	/* The VFS inode of $MFTMirr. */
-	पूर्णांक mfपंचांगirr_size;		/* Size of mft mirror in mft records. */
+	struct inode *mftbmp_ino;	/* Attribute inode for $MFT/$BITMAP. */
+	struct rw_semaphore mftbmp_lock; /* Lock for serializing accesses to the
+					    mft record bitmap ($MFT/$BITMAP). */
+#ifdef NTFS_RW
+	struct inode *mftmirr_ino;	/* The VFS inode of $MFTMirr. */
+	int mftmirr_size;		/* Size of mft mirror in mft records. */
 
-	काष्ठा inode *logfile_ino;	/* The VFS inode of $LogFile. */
-#पूर्ण_अगर /* NTFS_RW */
+	struct inode *logfile_ino;	/* The VFS inode of $LogFile. */
+#endif /* NTFS_RW */
 
-	काष्ठा inode *lcnbmp_ino;	/* The VFS inode of $Biपंचांगap. */
-	काष्ठा rw_semaphore lcnbmp_lock; /* Lock क्रम serializing accesses to the
-					    cluster biपंचांगap ($Biपंचांगap/$DATA). */
+	struct inode *lcnbmp_ino;	/* The VFS inode of $Bitmap. */
+	struct rw_semaphore lcnbmp_lock; /* Lock for serializing accesses to the
+					    cluster bitmap ($Bitmap/$DATA). */
 
-	काष्ठा inode *vol_ino;		/* The VFS inode of $Volume. */
+	struct inode *vol_ino;		/* The VFS inode of $Volume. */
 	VOLUME_FLAGS vol_flags;		/* Volume flags. */
 	u8 major_ver;			/* Ntfs major version of volume. */
 	u8 minor_ver;			/* Ntfs minor version of volume. */
 
-	काष्ठा inode *root_ino;		/* The VFS inode of the root
+	struct inode *root_ino;		/* The VFS inode of the root
 					   directory. */
-	काष्ठा inode *secure_ino;	/* The VFS inode of $Secure (NTFS3.0+
-					   only, otherwise शून्य). */
-	काष्ठा inode *extend_ino;	/* The VFS inode of $Extend (NTFS3.0+
-					   only, otherwise शून्य). */
-#अगर_घोषित NTFS_RW
-	/* $Quota stuff is NTFS3.0+ specअगरic.  Unused/शून्य otherwise. */
-	काष्ठा inode *quota_ino;	/* The VFS inode of $Quota. */
-	काष्ठा inode *quota_q_ino;	/* Attribute inode क्रम $Quota/$Q. */
-	/* $UsnJrnl stuff is NTFS3.0+ specअगरic.  Unused/शून्य otherwise. */
-	काष्ठा inode *usnjrnl_ino;	/* The VFS inode of $UsnJrnl. */
-	काष्ठा inode *usnjrnl_max_ino;	/* Attribute inode क्रम $UsnJrnl/$Max. */
-	काष्ठा inode *usnjrnl_j_ino;	/* Attribute inode क्रम $UsnJrnl/$J. */
-#पूर्ण_अगर /* NTFS_RW */
-	काष्ठा nls_table *nls_map;
-पूर्ण ntfs_volume;
+	struct inode *secure_ino;	/* The VFS inode of $Secure (NTFS3.0+
+					   only, otherwise NULL). */
+	struct inode *extend_ino;	/* The VFS inode of $Extend (NTFS3.0+
+					   only, otherwise NULL). */
+#ifdef NTFS_RW
+	/* $Quota stuff is NTFS3.0+ specific.  Unused/NULL otherwise. */
+	struct inode *quota_ino;	/* The VFS inode of $Quota. */
+	struct inode *quota_q_ino;	/* Attribute inode for $Quota/$Q. */
+	/* $UsnJrnl stuff is NTFS3.0+ specific.  Unused/NULL otherwise. */
+	struct inode *usnjrnl_ino;	/* The VFS inode of $UsnJrnl. */
+	struct inode *usnjrnl_max_ino;	/* Attribute inode for $UsnJrnl/$Max. */
+	struct inode *usnjrnl_j_ino;	/* Attribute inode for $UsnJrnl/$J. */
+#endif /* NTFS_RW */
+	struct nls_table *nls_map;
+} ntfs_volume;
 
 /*
- * Defined bits क्रम the flags field in the ntfs_volume काष्ठाure.
+ * Defined bits for the flags field in the ntfs_volume structure.
  */
-प्रकार क्रमागत अणु
+typedef enum {
 	NV_Errors,		/* 1: Volume has errors, prevent remount rw. */
-	NV_ShowSystemFiles,	/* 1: Return प्रणाली files in ntfs_सूची_पढ़ो(). */
-	NV_CaseSensitive,	/* 1: Treat file names as हाल sensitive and
+	NV_ShowSystemFiles,	/* 1: Return system files in ntfs_readdir(). */
+	NV_CaseSensitive,	/* 1: Treat file names as case sensitive and
 				      create filenames in the POSIX namespace.
-				      Otherwise be हाल insensitive but still
+				      Otherwise be case insensitive but still
 				      create file names in POSIX namespace. */
 	NV_LogFileEmpty,	/* 1: $LogFile journal is empty. */
 	NV_QuotaOutOfDate,	/* 1: $Quota is out of date. */
 	NV_UsnJrnlStamped,	/* 1: $UsnJrnl has been stamped. */
 	NV_SparseEnabled,	/* 1: May create sparse files. */
-पूर्ण ntfs_volume_flags;
+} ntfs_volume_flags;
 
 /*
  * Macro tricks to expand the NVolFoo(), NVolSetFoo(), and NVolClearFoo()
  * functions.
  */
-#घोषणा DEFINE_NVOL_BIT_OPS(flag)					\
-अटल अंतरभूत पूर्णांक NVol##flag(ntfs_volume *vol)		\
-अणु							\
-	वापस test_bit(NV_##flag, &(vol)->flags);	\
-पूर्ण							\
-अटल अंतरभूत व्योम NVolSet##flag(ntfs_volume *vol)	\
-अणु							\
+#define DEFINE_NVOL_BIT_OPS(flag)					\
+static inline int NVol##flag(ntfs_volume *vol)		\
+{							\
+	return test_bit(NV_##flag, &(vol)->flags);	\
+}							\
+static inline void NVolSet##flag(ntfs_volume *vol)	\
+{							\
 	set_bit(NV_##flag, &(vol)->flags);		\
-पूर्ण							\
-अटल अंतरभूत व्योम NVolClear##flag(ntfs_volume *vol)	\
-अणु							\
+}							\
+static inline void NVolClear##flag(ntfs_volume *vol)	\
+{							\
 	clear_bit(NV_##flag, &(vol)->flags);		\
-पूर्ण
+}
 
 /* Emit the ntfs volume bitops functions. */
 DEFINE_NVOL_BIT_OPS(Errors)
@@ -162,4 +161,4 @@ DEFINE_NVOL_BIT_OPS(QuotaOutOfDate)
 DEFINE_NVOL_BIT_OPS(UsnJrnlStamped)
 DEFINE_NVOL_BIT_OPS(SparseEnabled)
 
-#पूर्ण_अगर /* _LINUX_NTFS_VOLUME_H */
+#endif /* _LINUX_NTFS_VOLUME_H */

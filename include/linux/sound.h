@@ -1,21 +1,20 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _LINUX_SOUND_H
-#घोषणा _LINUX_SOUND_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _LINUX_SOUND_H
+#define _LINUX_SOUND_H
 
-#समावेश <uapi/linux/sound.h>
+#include <uapi/linux/sound.h>
 
 /*
- *	Sound core पूर्णांकerface functions
+ *	Sound core interface functions
  */
  
-काष्ठा device;
-बाह्य पूर्णांक रेजिस्टर_sound_special(स्थिर काष्ठा file_operations *fops, पूर्णांक unit);
-बाह्य पूर्णांक रेजिस्टर_sound_special_device(स्थिर काष्ठा file_operations *fops, पूर्णांक unit, काष्ठा device *dev);
-बाह्य पूर्णांक रेजिस्टर_sound_mixer(स्थिर काष्ठा file_operations *fops, पूर्णांक dev);
-बाह्य पूर्णांक रेजिस्टर_sound_dsp(स्थिर काष्ठा file_operations *fops, पूर्णांक dev);
+struct device;
+extern int register_sound_special(const struct file_operations *fops, int unit);
+extern int register_sound_special_device(const struct file_operations *fops, int unit, struct device *dev);
+extern int register_sound_mixer(const struct file_operations *fops, int dev);
+extern int register_sound_dsp(const struct file_operations *fops, int dev);
 
-बाह्य व्योम unरेजिस्टर_sound_special(पूर्णांक unit);
-बाह्य व्योम unरेजिस्टर_sound_mixer(पूर्णांक unit);
-बाह्य व्योम unरेजिस्टर_sound_dsp(पूर्णांक unit);
-#पूर्ण_अगर /* _LINUX_SOUND_H */
+extern void unregister_sound_special(int unit);
+extern void unregister_sound_mixer(int unit);
+extern void unregister_sound_dsp(int unit);
+#endif /* _LINUX_SOUND_H */

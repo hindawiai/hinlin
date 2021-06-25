@@ -1,290 +1,289 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0
+// SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
 /*******************************************************************************
  *
- * Module Name: uterror - Various पूर्णांकernal error/warning output functions
+ * Module Name: uterror - Various internal error/warning output functions
  *
  ******************************************************************************/
 
-#समावेश <acpi/acpi.h>
-#समावेश "accommon.h"
-#समावेश "acnamesp.h"
+#include <acpi/acpi.h>
+#include "accommon.h"
+#include "acnamesp.h"
 
-#घोषणा _COMPONENT          ACPI_UTILITIES
+#define _COMPONENT          ACPI_UTILITIES
 ACPI_MODULE_NAME("uterror")
 
 /*
- * This module contains पूर्णांकernal error functions that may
+ * This module contains internal error functions that may
  * be configured out.
  */
-#अगर !defined (ACPI_NO_ERROR_MESSAGES)
+#if !defined (ACPI_NO_ERROR_MESSAGES)
 /*******************************************************************************
  *
  * FUNCTION:    acpi_ut_predefined_warning
  *
- * PARAMETERS:  module_name     - Caller's module name (क्रम error output)
- *              line_number     - Caller's line number (क्रम error output)
+ * PARAMETERS:  module_name     - Caller's module name (for error output)
+ *              line_number     - Caller's line number (for error output)
  *              pathname        - Full pathname to the node
- *              node_flags      - From Namespace node क्रम the method/object
- *              क्रमmat          - Prपूर्णांकf क्रमmat string + additional args
+ *              node_flags      - From Namespace node for the method/object
+ *              format          - Printf format string + additional args
  *
  * RETURN:      None
  *
- * DESCRIPTION: Warnings क्रम the predefined validation module. Messages are
- *              only emitted the first समय a problem with a particular
+ * DESCRIPTION: Warnings for the predefined validation module. Messages are
+ *              only emitted the first time a problem with a particular
  *              method/object is detected. This prevents a flood of error
- *              messages क्रम methods that are repeatedly evaluated.
+ *              messages for methods that are repeatedly evaluated.
  *
  ******************************************************************************/
-व्योम ACPI_INTERNAL_VAR_XFACE
-acpi_ut_predefined_warning(स्थिर अक्षर *module_name,
+void ACPI_INTERNAL_VAR_XFACE
+acpi_ut_predefined_warning(const char *module_name,
 			   u32 line_number,
-			   अक्षर *pathname,
-			   u16 node_flags, स्थिर अक्षर *क्रमmat, ...)
-अणु
-	बहु_सूची arg_list;
+			   char *pathname,
+			   u16 node_flags, const char *format, ...)
+{
+	va_list arg_list;
 
 	/*
-	 * Warning messages क्रम this method/object will be disabled after the
-	 * first समय a validation fails or an object is successfully repaired.
+	 * Warning messages for this method/object will be disabled after the
+	 * first time a validation fails or an object is successfully repaired.
 	 */
-	अगर (node_flags & ANOBJ_EVALUATED) अणु
-		वापस;
-	पूर्ण
+	if (node_flags & ANOBJ_EVALUATED) {
+		return;
+	}
 
-	acpi_os_म_लिखो(ACPI_MSG_WARNING "%s: ", pathname);
+	acpi_os_printf(ACPI_MSG_WARNING "%s: ", pathname);
 
-	बहु_शुरू(arg_list, क्रमmat);
-	acpi_os_भ_लिखो(क्रमmat, arg_list);
+	va_start(arg_list, format);
+	acpi_os_vprintf(format, arg_list);
 	ACPI_MSG_SUFFIX;
-	बहु_पूर्ण(arg_list);
-पूर्ण
+	va_end(arg_list);
+}
 
 /*******************************************************************************
  *
  * FUNCTION:    acpi_ut_predefined_info
  *
- * PARAMETERS:  module_name     - Caller's module name (क्रम error output)
- *              line_number     - Caller's line number (क्रम error output)
+ * PARAMETERS:  module_name     - Caller's module name (for error output)
+ *              line_number     - Caller's line number (for error output)
  *              pathname        - Full pathname to the node
- *              node_flags      - From Namespace node क्रम the method/object
- *              क्रमmat          - Prपूर्णांकf क्रमmat string + additional args
+ *              node_flags      - From Namespace node for the method/object
+ *              format          - Printf format string + additional args
  *
  * RETURN:      None
  *
- * DESCRIPTION: Info messages क्रम the predefined validation module. Messages
- *              are only emitted the first समय a problem with a particular
+ * DESCRIPTION: Info messages for the predefined validation module. Messages
+ *              are only emitted the first time a problem with a particular
  *              method/object is detected. This prevents a flood of
- *              messages क्रम methods that are repeatedly evaluated.
+ *              messages for methods that are repeatedly evaluated.
  *
  ******************************************************************************/
 
-व्योम ACPI_INTERNAL_VAR_XFACE
-acpi_ut_predefined_info(स्थिर अक्षर *module_name,
+void ACPI_INTERNAL_VAR_XFACE
+acpi_ut_predefined_info(const char *module_name,
 			u32 line_number,
-			अक्षर *pathname, u16 node_flags, स्थिर अक्षर *क्रमmat, ...)
-अणु
-	बहु_सूची arg_list;
+			char *pathname, u16 node_flags, const char *format, ...)
+{
+	va_list arg_list;
 
 	/*
-	 * Warning messages क्रम this method/object will be disabled after the
-	 * first समय a validation fails or an object is successfully repaired.
+	 * Warning messages for this method/object will be disabled after the
+	 * first time a validation fails or an object is successfully repaired.
 	 */
-	अगर (node_flags & ANOBJ_EVALUATED) अणु
-		वापस;
-	पूर्ण
+	if (node_flags & ANOBJ_EVALUATED) {
+		return;
+	}
 
-	acpi_os_म_लिखो(ACPI_MSG_INFO "%s: ", pathname);
+	acpi_os_printf(ACPI_MSG_INFO "%s: ", pathname);
 
-	बहु_शुरू(arg_list, क्रमmat);
-	acpi_os_भ_लिखो(क्रमmat, arg_list);
+	va_start(arg_list, format);
+	acpi_os_vprintf(format, arg_list);
 	ACPI_MSG_SUFFIX;
-	बहु_पूर्ण(arg_list);
-पूर्ण
+	va_end(arg_list);
+}
 
 /*******************************************************************************
  *
  * FUNCTION:    acpi_ut_predefined_bios_error
  *
- * PARAMETERS:  module_name     - Caller's module name (क्रम error output)
- *              line_number     - Caller's line number (क्रम error output)
+ * PARAMETERS:  module_name     - Caller's module name (for error output)
+ *              line_number     - Caller's line number (for error output)
  *              pathname        - Full pathname to the node
- *              node_flags      - From Namespace node क्रम the method/object
- *              क्रमmat          - Prपूर्णांकf क्रमmat string + additional args
+ *              node_flags      - From Namespace node for the method/object
+ *              format          - Printf format string + additional args
  *
  * RETURN:      None
  *
- * DESCRIPTION: BIOS error message क्रम predefined names. Messages
- *              are only emitted the first समय a problem with a particular
+ * DESCRIPTION: BIOS error message for predefined names. Messages
+ *              are only emitted the first time a problem with a particular
  *              method/object is detected. This prevents a flood of
- *              messages क्रम methods that are repeatedly evaluated.
+ *              messages for methods that are repeatedly evaluated.
  *
  ******************************************************************************/
 
-व्योम ACPI_INTERNAL_VAR_XFACE
-acpi_ut_predefined_bios_error(स्थिर अक्षर *module_name,
+void ACPI_INTERNAL_VAR_XFACE
+acpi_ut_predefined_bios_error(const char *module_name,
 			      u32 line_number,
-			      अक्षर *pathname,
-			      u16 node_flags, स्थिर अक्षर *क्रमmat, ...)
-अणु
-	बहु_सूची arg_list;
+			      char *pathname,
+			      u16 node_flags, const char *format, ...)
+{
+	va_list arg_list;
 
 	/*
-	 * Warning messages क्रम this method/object will be disabled after the
-	 * first समय a validation fails or an object is successfully repaired.
+	 * Warning messages for this method/object will be disabled after the
+	 * first time a validation fails or an object is successfully repaired.
 	 */
-	अगर (node_flags & ANOBJ_EVALUATED) अणु
-		वापस;
-	पूर्ण
+	if (node_flags & ANOBJ_EVALUATED) {
+		return;
+	}
 
-	acpi_os_म_लिखो(ACPI_MSG_BIOS_ERROR "%s: ", pathname);
+	acpi_os_printf(ACPI_MSG_BIOS_ERROR "%s: ", pathname);
 
-	बहु_शुरू(arg_list, क्रमmat);
-	acpi_os_भ_लिखो(क्रमmat, arg_list);
+	va_start(arg_list, format);
+	acpi_os_vprintf(format, arg_list);
 	ACPI_MSG_SUFFIX;
-	बहु_पूर्ण(arg_list);
-पूर्ण
+	va_end(arg_list);
+}
 
 /*******************************************************************************
  *
  * FUNCTION:    acpi_ut_prefixed_namespace_error
  *
- * PARAMETERS:  module_name         - Caller's module name (क्रम error output)
- *              line_number         - Caller's line number (क्रम error output)
- *              prefix_scope        - Scope/Path that prefixes the पूर्णांकernal path
- *              पूर्णांकernal_path       - Name or path of the namespace node
+ * PARAMETERS:  module_name         - Caller's module name (for error output)
+ *              line_number         - Caller's line number (for error output)
+ *              prefix_scope        - Scope/Path that prefixes the internal path
+ *              internal_path       - Name or path of the namespace node
  *              lookup_status       - Exception code from NS lookup
  *
  * RETURN:      None
  *
- * DESCRIPTION: Prपूर्णांक error message with the full pathname स्थिरructed this way:
+ * DESCRIPTION: Print error message with the full pathname constructed this way:
  *
- *                  prefix_scope_node_full_path.बाह्यalized_पूर्णांकernal_path
+ *                  prefix_scope_node_full_path.externalized_internal_path
  *
  * NOTE:        10/2017: Treat the major ns_lookup errors as firmware errors
  *
  ******************************************************************************/
 
-व्योम
-acpi_ut_prefixed_namespace_error(स्थिर अक्षर *module_name,
+void
+acpi_ut_prefixed_namespace_error(const char *module_name,
 				 u32 line_number,
-				 जोड़ acpi_generic_state *prefix_scope,
-				 स्थिर अक्षर *पूर्णांकernal_path,
+				 union acpi_generic_state *prefix_scope,
+				 const char *internal_path,
 				 acpi_status lookup_status)
-अणु
-	अक्षर *full_path;
-	स्थिर अक्षर *message;
+{
+	char *full_path;
+	const char *message;
 
 	/*
-	 * Main हालs:
-	 * 1) Object creation, object must not alपढ़ोy exist
+	 * Main cases:
+	 * 1) Object creation, object must not already exist
 	 * 2) Object lookup, object must exist
 	 */
-	चयन (lookup_status) अणु
-	हाल AE_ALREADY_EXISTS:
+	switch (lookup_status) {
+	case AE_ALREADY_EXISTS:
 
-		acpi_os_म_लिखो(ACPI_MSG_BIOS_ERROR);
+		acpi_os_printf(ACPI_MSG_BIOS_ERROR);
 		message = "Failure creating named object";
-		अवरोध;
+		break;
 
-	हाल AE_NOT_FOUND:
+	case AE_NOT_FOUND:
 
-		acpi_os_म_लिखो(ACPI_MSG_BIOS_ERROR);
+		acpi_os_printf(ACPI_MSG_BIOS_ERROR);
 		message = "Could not resolve symbol";
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 
-		acpi_os_म_लिखो(ACPI_MSG_ERROR);
+		acpi_os_printf(ACPI_MSG_ERROR);
 		message = "Failure resolving symbol";
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	/* Concatenate the prefix path and the पूर्णांकernal path */
+	/* Concatenate the prefix path and the internal path */
 
 	full_path =
-	    acpi_ns_build_prefixed_pathname(prefix_scope, पूर्णांकernal_path);
+	    acpi_ns_build_prefixed_pathname(prefix_scope, internal_path);
 
-	acpi_os_म_लिखो("%s [%s], %s", message,
+	acpi_os_printf("%s [%s], %s", message,
 		       full_path ? full_path : "Could not get pathname",
-		       acpi_क्रमmat_exception(lookup_status));
+		       acpi_format_exception(lookup_status));
 
-	अगर (full_path) अणु
+	if (full_path) {
 		ACPI_FREE(full_path);
-	पूर्ण
+	}
 
 	ACPI_MSG_SUFFIX;
-पूर्ण
+}
 
-#अगर_घोषित __OBSOLETE_FUNCTION
+#ifdef __OBSOLETE_FUNCTION
 /*******************************************************************************
  *
  * FUNCTION:    acpi_ut_namespace_error
  *
- * PARAMETERS:  module_name         - Caller's module name (क्रम error output)
- *              line_number         - Caller's line number (क्रम error output)
- *              पूर्णांकernal_name       - Name or path of the namespace node
+ * PARAMETERS:  module_name         - Caller's module name (for error output)
+ *              line_number         - Caller's line number (for error output)
+ *              internal_name       - Name or path of the namespace node
  *              lookup_status       - Exception code from NS lookup
  *
  * RETURN:      None
  *
- * DESCRIPTION: Prपूर्णांक error message with the full pathname क्रम the NS node.
+ * DESCRIPTION: Print error message with the full pathname for the NS node.
  *
  ******************************************************************************/
 
-व्योम
-acpi_ut_namespace_error(स्थिर अक्षर *module_name,
+void
+acpi_ut_namespace_error(const char *module_name,
 			u32 line_number,
-			स्थिर अक्षर *पूर्णांकernal_name, acpi_status lookup_status)
-अणु
+			const char *internal_name, acpi_status lookup_status)
+{
 	acpi_status status;
 	u32 bad_name;
-	अक्षर *name = शून्य;
+	char *name = NULL;
 
-	ACPI_MSG_REसूचीECT_BEGIN;
-	acpi_os_म_लिखो(ACPI_MSG_ERROR);
+	ACPI_MSG_REDIRECT_BEGIN;
+	acpi_os_printf(ACPI_MSG_ERROR);
 
-	अगर (lookup_status == AE_BAD_CHARACTER) अणु
+	if (lookup_status == AE_BAD_CHARACTER) {
 
-		/* There is a non-ascii अक्षरacter in the name */
+		/* There is a non-ascii character in the name */
 
 		ACPI_MOVE_32_TO_32(&bad_name,
-				   ACPI_CAST_PTR(u32, पूर्णांकernal_name));
-		acpi_os_म_लिखो("[0x%.8X] (NON-ASCII)", bad_name);
-	पूर्ण अन्यथा अणु
-		/* Convert path to बाह्यal क्रमmat */
+				   ACPI_CAST_PTR(u32, internal_name));
+		acpi_os_printf("[0x%.8X] (NON-ASCII)", bad_name);
+	} else {
+		/* Convert path to external format */
 
 		status =
-		    acpi_ns_बाह्यalize_name(ACPI_UINT32_MAX, पूर्णांकernal_name,
-					     शून्य, &name);
+		    acpi_ns_externalize_name(ACPI_UINT32_MAX, internal_name,
+					     NULL, &name);
 
-		/* Prपूर्णांक target name */
+		/* Print target name */
 
-		अगर (ACPI_SUCCESS(status)) अणु
-			acpi_os_म_लिखो("[%s]", name);
-		पूर्ण अन्यथा अणु
-			acpi_os_म_लिखो("[COULD NOT EXTERNALIZE NAME]");
-		पूर्ण
+		if (ACPI_SUCCESS(status)) {
+			acpi_os_printf("[%s]", name);
+		} else {
+			acpi_os_printf("[COULD NOT EXTERNALIZE NAME]");
+		}
 
-		अगर (name) अणु
+		if (name) {
 			ACPI_FREE(name);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	acpi_os_म_लिखो(" Namespace lookup failure, %s",
-		       acpi_क्रमmat_exception(lookup_status));
+	acpi_os_printf(" Namespace lookup failure, %s",
+		       acpi_format_exception(lookup_status));
 
 	ACPI_MSG_SUFFIX;
-	ACPI_MSG_REसूचीECT_END;
-पूर्ण
-#पूर्ण_अगर
+	ACPI_MSG_REDIRECT_END;
+}
+#endif
 
 /*******************************************************************************
  *
  * FUNCTION:    acpi_ut_method_error
  *
- * PARAMETERS:  module_name         - Caller's module name (क्रम error output)
- *              line_number         - Caller's line number (क्रम error output)
+ * PARAMETERS:  module_name         - Caller's module name (for error output)
+ *              line_number         - Caller's line number (for error output)
  *              message             - Error message to use on failure
  *              prefix_node         - Prefix relative to the path
  *              path                - Path to the node (optional)
@@ -292,37 +291,37 @@ acpi_ut_namespace_error(स्थिर अक्षर *module_name,
  *
  * RETURN:      None
  *
- * DESCRIPTION: Prपूर्णांक error message with the full pathname क्रम the method.
+ * DESCRIPTION: Print error message with the full pathname for the method.
  *
  ******************************************************************************/
 
-व्योम
-acpi_ut_method_error(स्थिर अक्षर *module_name,
+void
+acpi_ut_method_error(const char *module_name,
 		     u32 line_number,
-		     स्थिर अक्षर *message,
-		     काष्ठा acpi_namespace_node *prefix_node,
-		     स्थिर अक्षर *path, acpi_status method_status)
-अणु
+		     const char *message,
+		     struct acpi_namespace_node *prefix_node,
+		     const char *path, acpi_status method_status)
+{
 	acpi_status status;
-	काष्ठा acpi_namespace_node *node = prefix_node;
+	struct acpi_namespace_node *node = prefix_node;
 
-	ACPI_MSG_REसूचीECT_BEGIN;
-	acpi_os_म_लिखो(ACPI_MSG_ERROR);
+	ACPI_MSG_REDIRECT_BEGIN;
+	acpi_os_printf(ACPI_MSG_ERROR);
 
-	अगर (path) अणु
+	if (path) {
 		status = acpi_ns_get_node(prefix_node, path,
 					  ACPI_NS_NO_UPSEARCH, &node);
-		अगर (ACPI_FAILURE(status)) अणु
-			acpi_os_म_लिखो("[Could not get node by pathname]");
-		पूर्ण
-	पूर्ण
+		if (ACPI_FAILURE(status)) {
+			acpi_os_printf("[Could not get node by pathname]");
+		}
+	}
 
-	acpi_ns_prपूर्णांक_node_pathname(node, message);
-	acpi_os_म_लिखो(" due to previous error (%s)",
-		       acpi_क्रमmat_exception(method_status));
+	acpi_ns_print_node_pathname(node, message);
+	acpi_os_printf(" due to previous error (%s)",
+		       acpi_format_exception(method_status));
 
 	ACPI_MSG_SUFFIX;
-	ACPI_MSG_REसूचीECT_END;
-पूर्ण
+	ACPI_MSG_REDIRECT_END;
+}
 
-#पूर्ण_अगर				/* ACPI_NO_ERROR_MESSAGES */
+#endif				/* ACPI_NO_ERROR_MESSAGES */

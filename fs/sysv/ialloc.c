@@ -1,12 +1,11 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  *  linux/fs/sysv/ialloc.c
  *
- *  minix/biपंचांगap.c
+ *  minix/bitmap.c
  *  Copyright (C) 1991, 1992  Linus Torvalds
  *
- *  ext/मुक्तlists.c
+ *  ext/freelists.c
  *  Copyright (C) 1992  Remy Card (card@masi.ibp.fr)
  *
  *  xenix/alloc.c
@@ -18,219 +17,219 @@
  *  sysv/ialloc.c
  *  Copyright (C) 1993  Bruno Haible
  *
- *  This file contains code क्रम allocating/मुक्तing inodes.
+ *  This file contains code for allocating/freeing inodes.
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/मानकघोष.स>
-#समावेश <linux/sched.h>
-#समावेश <linux/स्थिति.स>
-#समावेश <linux/माला.स>
-#समावेश <linux/buffer_head.h>
-#समावेश <linux/ग_लिखोback.h>
-#समावेश "sysv.h"
+#include <linux/kernel.h>
+#include <linux/stddef.h>
+#include <linux/sched.h>
+#include <linux/stat.h>
+#include <linux/string.h>
+#include <linux/buffer_head.h>
+#include <linux/writeback.h>
+#include "sysv.h"
 
-/* We करोn't trust the value of
-   sb->sv_sbd2->s_tinode = *sb->sv_sb_total_मुक्त_inodes
+/* We don't trust the value of
+   sb->sv_sbd2->s_tinode = *sb->sv_sb_total_free_inodes
    but we nevertheless keep it up to date. */
 
-/* An inode on disk is considered मुक्त अगर both i_mode == 0 and i_nlink == 0. */
+/* An inode on disk is considered free if both i_mode == 0 and i_nlink == 0. */
 
-/* वापस &sb->sv_sb_fic_inodes[i] = &sbd->s_inode[i]; */
-अटल अंतरभूत sysv_ino_t *
-sv_sb_fic_inode(काष्ठा super_block * sb, अचिन्हित पूर्णांक i)
-अणु
-	काष्ठा sysv_sb_info *sbi = SYSV_SB(sb);
+/* return &sb->sv_sb_fic_inodes[i] = &sbd->s_inode[i]; */
+static inline sysv_ino_t *
+sv_sb_fic_inode(struct super_block * sb, unsigned int i)
+{
+	struct sysv_sb_info *sbi = SYSV_SB(sb);
 
-	अगर (sbi->s_bh1 == sbi->s_bh2)
-		वापस &sbi->s_sb_fic_inodes[i];
-	अन्यथा अणु
+	if (sbi->s_bh1 == sbi->s_bh2)
+		return &sbi->s_sb_fic_inodes[i];
+	else {
 		/* 512 byte Xenix FS */
-		अचिन्हित पूर्णांक offset = दुरत्व(काष्ठा xenix_super_block, s_inode[i]);
-		अगर (offset < 512)
-			वापस (sysv_ino_t*)(sbi->s_sbd1 + offset);
-		अन्यथा
-			वापस (sysv_ino_t*)(sbi->s_sbd2 + offset);
-	पूर्ण
-पूर्ण
+		unsigned int offset = offsetof(struct xenix_super_block, s_inode[i]);
+		if (offset < 512)
+			return (sysv_ino_t*)(sbi->s_sbd1 + offset);
+		else
+			return (sysv_ino_t*)(sbi->s_sbd2 + offset);
+	}
+}
 
-काष्ठा sysv_inode *
-sysv_raw_inode(काष्ठा super_block *sb, अचिन्हित ino, काष्ठा buffer_head **bh)
-अणु
-	काष्ठा sysv_sb_info *sbi = SYSV_SB(sb);
-	काष्ठा sysv_inode *res;
-	पूर्णांक block = sbi->s_firstinodezone + sbi->s_block_base;
+struct sysv_inode *
+sysv_raw_inode(struct super_block *sb, unsigned ino, struct buffer_head **bh)
+{
+	struct sysv_sb_info *sbi = SYSV_SB(sb);
+	struct sysv_inode *res;
+	int block = sbi->s_firstinodezone + sbi->s_block_base;
 
 	block += (ino-1) >> sbi->s_inodes_per_block_bits;
-	*bh = sb_bपढ़ो(sb, block);
-	अगर (!*bh)
-		वापस शून्य;
-	res = (काष्ठा sysv_inode *)(*bh)->b_data;
-	वापस res + ((ino-1) & sbi->s_inodes_per_block_1);
-पूर्ण
+	*bh = sb_bread(sb, block);
+	if (!*bh)
+		return NULL;
+	res = (struct sysv_inode *)(*bh)->b_data;
+	return res + ((ino-1) & sbi->s_inodes_per_block_1);
+}
 
-अटल पूर्णांक refill_मुक्त_cache(काष्ठा super_block *sb)
-अणु
-	काष्ठा sysv_sb_info *sbi = SYSV_SB(sb);
-	काष्ठा buffer_head * bh;
-	काष्ठा sysv_inode * raw_inode;
-	पूर्णांक i = 0, ino;
+static int refill_free_cache(struct super_block *sb)
+{
+	struct sysv_sb_info *sbi = SYSV_SB(sb);
+	struct buffer_head * bh;
+	struct sysv_inode * raw_inode;
+	int i = 0, ino;
 
 	ino = SYSV_ROOT_INO+1;
 	raw_inode = sysv_raw_inode(sb, ino, &bh);
-	अगर (!raw_inode)
-		जाओ out;
-	जबतक (ino <= sbi->s_ninodes) अणु
-		अगर (raw_inode->i_mode == 0 && raw_inode->i_nlink == 0) अणु
+	if (!raw_inode)
+		goto out;
+	while (ino <= sbi->s_ninodes) {
+		if (raw_inode->i_mode == 0 && raw_inode->i_nlink == 0) {
 			*sv_sb_fic_inode(sb,i++) = cpu_to_fs16(SYSV_SB(sb), ino);
-			अगर (i == sbi->s_fic_size)
-				अवरोध;
-		पूर्ण
-		अगर ((ino++ & sbi->s_inodes_per_block_1) == 0) अणु
-			brअन्यथा(bh);
+			if (i == sbi->s_fic_size)
+				break;
+		}
+		if ((ino++ & sbi->s_inodes_per_block_1) == 0) {
+			brelse(bh);
 			raw_inode = sysv_raw_inode(sb, ino, &bh);
-			अगर (!raw_inode)
-				जाओ out;
-		पूर्ण अन्यथा
+			if (!raw_inode)
+				goto out;
+		} else
 			raw_inode++;
-	पूर्ण
-	brअन्यथा(bh);
+	}
+	brelse(bh);
 out:
-	वापस i;
-पूर्ण
+	return i;
+}
 
-व्योम sysv_मुक्त_inode(काष्ठा inode * inode)
-अणु
-	काष्ठा super_block *sb = inode->i_sb;
-	काष्ठा sysv_sb_info *sbi = SYSV_SB(sb);
-	अचिन्हित पूर्णांक ino;
-	काष्ठा buffer_head * bh;
-	काष्ठा sysv_inode * raw_inode;
-	अचिन्हित count;
+void sysv_free_inode(struct inode * inode)
+{
+	struct super_block *sb = inode->i_sb;
+	struct sysv_sb_info *sbi = SYSV_SB(sb);
+	unsigned int ino;
+	struct buffer_head * bh;
+	struct sysv_inode * raw_inode;
+	unsigned count;
 
 	sb = inode->i_sb;
 	ino = inode->i_ino;
-	अगर (ino <= SYSV_ROOT_INO || ino > sbi->s_ninodes) अणु
-		prपूर्णांकk("sysv_free_inode: inode 0,1,2 or nonexistent inode\n");
-		वापस;
-	पूर्ण
+	if (ino <= SYSV_ROOT_INO || ino > sbi->s_ninodes) {
+		printk("sysv_free_inode: inode 0,1,2 or nonexistent inode\n");
+		return;
+	}
 	raw_inode = sysv_raw_inode(sb, ino, &bh);
-	अगर (!raw_inode) अणु
-		prपूर्णांकk("sysv_free_inode: unable to read inode block on device "
+	if (!raw_inode) {
+		printk("sysv_free_inode: unable to read inode block on device "
 		       "%s\n", inode->i_sb->s_id);
-		वापस;
-	पूर्ण
+		return;
+	}
 	mutex_lock(&sbi->s_lock);
 	count = fs16_to_cpu(sbi, *sbi->s_sb_fic_count);
-	अगर (count < sbi->s_fic_size) अणु
+	if (count < sbi->s_fic_size) {
 		*sv_sb_fic_inode(sb,count++) = cpu_to_fs16(sbi, ino);
 		*sbi->s_sb_fic_count = cpu_to_fs16(sbi, count);
-	पूर्ण
-	fs16_add(sbi, sbi->s_sb_total_मुक्त_inodes, 1);
+	}
+	fs16_add(sbi, sbi->s_sb_total_free_inodes, 1);
 	dirty_sb(sb);
-	स_रखो(raw_inode, 0, माप(काष्ठा sysv_inode));
+	memset(raw_inode, 0, sizeof(struct sysv_inode));
 	mark_buffer_dirty(bh);
 	mutex_unlock(&sbi->s_lock);
-	brअन्यथा(bh);
-पूर्ण
+	brelse(bh);
+}
 
-काष्ठा inode * sysv_new_inode(स्थिर काष्ठा inode * dir, umode_t mode)
-अणु
-	काष्ठा super_block *sb = dir->i_sb;
-	काष्ठा sysv_sb_info *sbi = SYSV_SB(sb);
-	काष्ठा inode *inode;
+struct inode * sysv_new_inode(const struct inode * dir, umode_t mode)
+{
+	struct super_block *sb = dir->i_sb;
+	struct sysv_sb_info *sbi = SYSV_SB(sb);
+	struct inode *inode;
 	sysv_ino_t ino;
-	अचिन्हित count;
-	काष्ठा ग_लिखोback_control wbc = अणु
+	unsigned count;
+	struct writeback_control wbc = {
 		.sync_mode = WB_SYNC_NONE
-	पूर्ण;
+	};
 
 	inode = new_inode(sb);
-	अगर (!inode)
-		वापस ERR_PTR(-ENOMEM);
+	if (!inode)
+		return ERR_PTR(-ENOMEM);
 
 	mutex_lock(&sbi->s_lock);
 	count = fs16_to_cpu(sbi, *sbi->s_sb_fic_count);
-	अगर (count == 0 || (*sv_sb_fic_inode(sb,count-1) == 0)) अणु
-		count = refill_मुक्त_cache(sb);
-		अगर (count == 0) अणु
+	if (count == 0 || (*sv_sb_fic_inode(sb,count-1) == 0)) {
+		count = refill_free_cache(sb);
+		if (count == 0) {
 			iput(inode);
 			mutex_unlock(&sbi->s_lock);
-			वापस ERR_PTR(-ENOSPC);
-		पूर्ण
-	पूर्ण
+			return ERR_PTR(-ENOSPC);
+		}
+	}
 	/* Now count > 0. */
 	ino = *sv_sb_fic_inode(sb,--count);
 	*sbi->s_sb_fic_count = cpu_to_fs16(sbi, count);
-	fs16_add(sbi, sbi->s_sb_total_मुक्त_inodes, -1);
+	fs16_add(sbi, sbi->s_sb_total_free_inodes, -1);
 	dirty_sb(sb);
 	inode_init_owner(&init_user_ns, inode, dir, mode);
 	inode->i_ino = fs16_to_cpu(sbi, ino);
-	inode->i_mसमय = inode->i_aसमय = inode->i_स_समय = current_समय(inode);
+	inode->i_mtime = inode->i_atime = inode->i_ctime = current_time(inode);
 	inode->i_blocks = 0;
-	स_रखो(SYSV_I(inode)->i_data, 0, माप(SYSV_I(inode)->i_data));
+	memset(SYSV_I(inode)->i_data, 0, sizeof(SYSV_I(inode)->i_data));
 	SYSV_I(inode)->i_dir_start_lookup = 0;
 	insert_inode_hash(inode);
 	mark_inode_dirty(inode);
 
-	sysv_ग_लिखो_inode(inode, &wbc);	/* ensure inode not allocated again */
-	mark_inode_dirty(inode);	/* cleared by sysv_ग_लिखो_inode() */
+	sysv_write_inode(inode, &wbc);	/* ensure inode not allocated again */
+	mark_inode_dirty(inode);	/* cleared by sysv_write_inode() */
 	/* That's it. */
 	mutex_unlock(&sbi->s_lock);
-	वापस inode;
-पूर्ण
+	return inode;
+}
 
-अचिन्हित दीर्घ sysv_count_मुक्त_inodes(काष्ठा super_block * sb)
-अणु
-	काष्ठा sysv_sb_info *sbi = SYSV_SB(sb);
-	काष्ठा buffer_head * bh;
-	काष्ठा sysv_inode * raw_inode;
-	पूर्णांक ino, count, sb_count;
+unsigned long sysv_count_free_inodes(struct super_block * sb)
+{
+	struct sysv_sb_info *sbi = SYSV_SB(sb);
+	struct buffer_head * bh;
+	struct sysv_inode * raw_inode;
+	int ino, count, sb_count;
 
 	mutex_lock(&sbi->s_lock);
 
-	sb_count = fs16_to_cpu(sbi, *sbi->s_sb_total_मुक्त_inodes);
+	sb_count = fs16_to_cpu(sbi, *sbi->s_sb_total_free_inodes);
 
-	अगर (0)
-		जाओ trust_sb;
+	if (0)
+		goto trust_sb;
 
 	/* this causes a lot of disk traffic ... */
 	count = 0;
 	ino = SYSV_ROOT_INO+1;
 	raw_inode = sysv_raw_inode(sb, ino, &bh);
-	अगर (!raw_inode)
-		जाओ Eio;
-	जबतक (ino <= sbi->s_ninodes) अणु
-		अगर (raw_inode->i_mode == 0 && raw_inode->i_nlink == 0)
+	if (!raw_inode)
+		goto Eio;
+	while (ino <= sbi->s_ninodes) {
+		if (raw_inode->i_mode == 0 && raw_inode->i_nlink == 0)
 			count++;
-		अगर ((ino++ & sbi->s_inodes_per_block_1) == 0) अणु
-			brअन्यथा(bh);
+		if ((ino++ & sbi->s_inodes_per_block_1) == 0) {
+			brelse(bh);
 			raw_inode = sysv_raw_inode(sb, ino, &bh);
-			अगर (!raw_inode)
-				जाओ Eio;
-		पूर्ण अन्यथा
+			if (!raw_inode)
+				goto Eio;
+		} else
 			raw_inode++;
-	पूर्ण
-	brअन्यथा(bh);
-	अगर (count != sb_count)
-		जाओ Einval;
+	}
+	brelse(bh);
+	if (count != sb_count)
+		goto Einval;
 out:
 	mutex_unlock(&sbi->s_lock);
-	वापस count;
+	return count;
 
 Einval:
-	prपूर्णांकk("sysv_count_free_inodes: "
+	printk("sysv_count_free_inodes: "
 		"free inode count was %d, correcting to %d\n",
 		sb_count, count);
-	अगर (!sb_rकरोnly(sb)) अणु
-		*sbi->s_sb_total_मुक्त_inodes = cpu_to_fs16(SYSV_SB(sb), count);
+	if (!sb_rdonly(sb)) {
+		*sbi->s_sb_total_free_inodes = cpu_to_fs16(SYSV_SB(sb), count);
 		dirty_sb(sb);
-	पूर्ण
-	जाओ out;
+	}
+	goto out;
 
 Eio:
-	prपूर्णांकk("sysv_count_free_inodes: unable to read inode table\n");
+	printk("sysv_count_free_inodes: unable to read inode table\n");
 trust_sb:
 	count = sb_count;
-	जाओ out;
-पूर्ण
+	goto out;
+}

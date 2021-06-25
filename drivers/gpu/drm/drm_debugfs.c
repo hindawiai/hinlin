@@ -1,15 +1,14 @@
-<शैली गुरु>
 /*
  * Created: Sun Dec 21 13:08:50 2008 by bgamari@gmail.com
  *
  * Copyright 2008 Ben Gamari <bgamari@gmail.com>
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -24,61 +23,61 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#समावेश <linux/debugfs.h>
-#समावेश <linux/export.h>
-#समावेश <linux/seq_file.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/uaccess.h>
+#include <linux/debugfs.h>
+#include <linux/export.h>
+#include <linux/seq_file.h>
+#include <linux/slab.h>
+#include <linux/uaccess.h>
 
-#समावेश <drm/drm_atomic.h>
-#समावेश <drm/drm_auth.h>
-#समावेश <drm/drm_client.h>
-#समावेश <drm/drm_debugfs.h>
-#समावेश <drm/drm_device.h>
-#समावेश <drm/drm_drv.h>
-#समावेश <drm/drm_edid.h>
-#समावेश <drm/drm_file.h>
-#समावेश <drm/drm_gem.h>
+#include <drm/drm_atomic.h>
+#include <drm/drm_auth.h>
+#include <drm/drm_client.h>
+#include <drm/drm_debugfs.h>
+#include <drm/drm_device.h>
+#include <drm/drm_drv.h>
+#include <drm/drm_edid.h>
+#include <drm/drm_file.h>
+#include <drm/drm_gem.h>
 
-#समावेश "drm_crtc_internal.h"
-#समावेश "drm_internal.h"
+#include "drm_crtc_internal.h"
+#include "drm_internal.h"
 
-#अगर defined(CONFIG_DEBUG_FS)
+#if defined(CONFIG_DEBUG_FS)
 
 /***************************************************
  * Initialization, etc.
  **************************************************/
 
-अटल पूर्णांक drm_name_info(काष्ठा seq_file *m, व्योम *data)
-अणु
-	काष्ठा drm_info_node *node = (काष्ठा drm_info_node *) m->निजी;
-	काष्ठा drm_minor *minor = node->minor;
-	काष्ठा drm_device *dev = minor->dev;
-	काष्ठा drm_master *master;
+static int drm_name_info(struct seq_file *m, void *data)
+{
+	struct drm_info_node *node = (struct drm_info_node *) m->private;
+	struct drm_minor *minor = node->minor;
+	struct drm_device *dev = minor->dev;
+	struct drm_master *master;
 
 	mutex_lock(&dev->master_mutex);
 	master = dev->master;
-	seq_म_लिखो(m, "%s", dev->driver->name);
-	अगर (dev->dev)
-		seq_म_लिखो(m, " dev=%s", dev_name(dev->dev));
-	अगर (master && master->unique)
-		seq_म_लिखो(m, " master=%s", master->unique);
-	अगर (dev->unique)
-		seq_म_लिखो(m, " unique=%s", dev->unique);
-	seq_म_लिखो(m, "\n");
+	seq_printf(m, "%s", dev->driver->name);
+	if (dev->dev)
+		seq_printf(m, " dev=%s", dev_name(dev->dev));
+	if (master && master->unique)
+		seq_printf(m, " master=%s", master->unique);
+	if (dev->unique)
+		seq_printf(m, " unique=%s", dev->unique);
+	seq_printf(m, "\n");
 	mutex_unlock(&dev->master_mutex);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक drm_clients_info(काष्ठा seq_file *m, व्योम *data)
-अणु
-	काष्ठा drm_info_node *node = (काष्ठा drm_info_node *) m->निजी;
-	काष्ठा drm_device *dev = node->minor->dev;
-	काष्ठा drm_file *priv;
+static int drm_clients_info(struct seq_file *m, void *data)
+{
+	struct drm_info_node *node = (struct drm_info_node *) m->private;
+	struct drm_device *dev = node->minor->dev;
+	struct drm_file *priv;
 	kuid_t uid;
 
-	seq_म_लिखो(m,
+	seq_printf(m,
 		   "%20s %5s %3s master a %5s %10s\n",
 		   "command",
 		   "pid",
@@ -90,13 +89,13 @@
 	 * oldest first (i.e. kernel, servers, clients), so walk backwardss.
 	 */
 	mutex_lock(&dev->filelist_mutex);
-	list_क्रम_each_entry_reverse(priv, &dev->filelist, lhead) अणु
-		काष्ठा task_काष्ठा *task;
+	list_for_each_entry_reverse(priv, &dev->filelist, lhead) {
+		struct task_struct *task;
 
-		rcu_पढ़ो_lock(); /* locks pid_task()->comm */
+		rcu_read_lock(); /* locks pid_task()->comm */
 		task = pid_task(priv->pid, PIDTYPE_PID);
 		uid = task ? __task_cred(task)->euid : GLOBAL_ROOT_UID;
-		seq_म_लिखो(m, "%20s %5d %3d   %c    %c %5d %10u\n",
+		seq_printf(m, "%20s %5d %3d   %c    %c %5d %10u\n",
 			   task ? task->comm : "<unknown>",
 			   pid_vnr(priv->pid),
 			   priv->minor->index,
@@ -104,65 +103,65 @@
 			   priv->authenticated ? 'y' : 'n',
 			   from_kuid_munged(seq_user_ns(m), uid),
 			   priv->magic);
-		rcu_पढ़ो_unlock();
-	पूर्ण
+		rcu_read_unlock();
+	}
 	mutex_unlock(&dev->filelist_mutex);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक drm_gem_one_name_info(पूर्णांक id, व्योम *ptr, व्योम *data)
-अणु
-	काष्ठा drm_gem_object *obj = ptr;
-	काष्ठा seq_file *m = data;
+static int drm_gem_one_name_info(int id, void *ptr, void *data)
+{
+	struct drm_gem_object *obj = ptr;
+	struct seq_file *m = data;
 
-	seq_म_लिखो(m, "%6d %8zd %7d %8d\n",
+	seq_printf(m, "%6d %8zd %7d %8d\n",
 		   obj->name, obj->size,
 		   obj->handle_count,
-		   kref_पढ़ो(&obj->refcount));
-	वापस 0;
-पूर्ण
+		   kref_read(&obj->refcount));
+	return 0;
+}
 
-अटल पूर्णांक drm_gem_name_info(काष्ठा seq_file *m, व्योम *data)
-अणु
-	काष्ठा drm_info_node *node = (काष्ठा drm_info_node *) m->निजी;
-	काष्ठा drm_device *dev = node->minor->dev;
+static int drm_gem_name_info(struct seq_file *m, void *data)
+{
+	struct drm_info_node *node = (struct drm_info_node *) m->private;
+	struct drm_device *dev = node->minor->dev;
 
-	seq_म_लिखो(m, "  name     size handles refcount\n");
+	seq_printf(m, "  name     size handles refcount\n");
 
 	mutex_lock(&dev->object_name_lock);
-	idr_क्रम_each(&dev->object_name_idr, drm_gem_one_name_info, m);
+	idr_for_each(&dev->object_name_idr, drm_gem_one_name_info, m);
 	mutex_unlock(&dev->object_name_lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा drm_info_list drm_debugfs_list[] = अणु
-	अणु"name", drm_name_info, 0पूर्ण,
-	अणु"clients", drm_clients_info, 0पूर्ण,
-	अणु"gem_names", drm_gem_name_info, DRIVER_GEMपूर्ण,
-पूर्ण;
-#घोषणा DRM_DEBUGFS_ENTRIES ARRAY_SIZE(drm_debugfs_list)
-
-
-अटल पूर्णांक drm_debugfs_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा drm_info_node *node = inode->i_निजी;
-
-	वापस single_खोलो(file, node->info_ent->show, node);
-पूर्ण
+static const struct drm_info_list drm_debugfs_list[] = {
+	{"name", drm_name_info, 0},
+	{"clients", drm_clients_info, 0},
+	{"gem_names", drm_gem_name_info, DRIVER_GEM},
+};
+#define DRM_DEBUGFS_ENTRIES ARRAY_SIZE(drm_debugfs_list)
 
 
-अटल स्थिर काष्ठा file_operations drm_debugfs_fops = अणु
+static int drm_debugfs_open(struct inode *inode, struct file *file)
+{
+	struct drm_info_node *node = inode->i_private;
+
+	return single_open(file, node->info_ent->show, node);
+}
+
+
+static const struct file_operations drm_debugfs_fops = {
 	.owner = THIS_MODULE,
-	.खोलो = drm_debugfs_खोलो,
-	.पढ़ो = seq_पढ़ो,
+	.open = drm_debugfs_open,
+	.read = seq_read,
 	.llseek = seq_lseek,
 	.release = single_release,
-पूर्ण;
+};
 
 
 /**
- * drm_debugfs_create_files - Initialize a given set of debugfs files क्रम DRM
+ * drm_debugfs_create_files - Initialize a given set of debugfs files for DRM
  * 			minor
  * @files: The array of files to create
  * @count: The number of files given
@@ -170,262 +169,262 @@
  * @minor: device minor number
  *
  * Create a given set of debugfs files represented by an array of
- * &काष्ठा drm_info_list in the given root directory. These files will be हटाओd
- * स्वतःmatically on drm_debugfs_cleanup().
+ * &struct drm_info_list in the given root directory. These files will be removed
+ * automatically on drm_debugfs_cleanup().
  */
-व्योम drm_debugfs_create_files(स्थिर काष्ठा drm_info_list *files, पूर्णांक count,
-			      काष्ठा dentry *root, काष्ठा drm_minor *minor)
-अणु
-	काष्ठा drm_device *dev = minor->dev;
-	काष्ठा drm_info_node *पंचांगp;
-	पूर्णांक i;
+void drm_debugfs_create_files(const struct drm_info_list *files, int count,
+			      struct dentry *root, struct drm_minor *minor)
+{
+	struct drm_device *dev = minor->dev;
+	struct drm_info_node *tmp;
+	int i;
 
-	क्रम (i = 0; i < count; i++) अणु
+	for (i = 0; i < count; i++) {
 		u32 features = files[i].driver_features;
 
-		अगर (features && !drm_core_check_all_features(dev, features))
-			जारी;
+		if (features && !drm_core_check_all_features(dev, features))
+			continue;
 
-		पंचांगp = kदो_स्मृति(माप(काष्ठा drm_info_node), GFP_KERNEL);
-		अगर (पंचांगp == शून्य)
-			जारी;
+		tmp = kmalloc(sizeof(struct drm_info_node), GFP_KERNEL);
+		if (tmp == NULL)
+			continue;
 
-		पंचांगp->minor = minor;
-		पंचांगp->dent = debugfs_create_file(files[i].name,
-						S_IFREG | S_IRUGO, root, पंचांगp,
+		tmp->minor = minor;
+		tmp->dent = debugfs_create_file(files[i].name,
+						S_IFREG | S_IRUGO, root, tmp,
 						&drm_debugfs_fops);
-		पंचांगp->info_ent = &files[i];
+		tmp->info_ent = &files[i];
 
 		mutex_lock(&minor->debugfs_lock);
-		list_add(&पंचांगp->list, &minor->debugfs_list);
+		list_add(&tmp->list, &minor->debugfs_list);
 		mutex_unlock(&minor->debugfs_lock);
-	पूर्ण
-पूर्ण
+	}
+}
 EXPORT_SYMBOL(drm_debugfs_create_files);
 
-पूर्णांक drm_debugfs_init(काष्ठा drm_minor *minor, पूर्णांक minor_id,
-		     काष्ठा dentry *root)
-अणु
-	काष्ठा drm_device *dev = minor->dev;
-	अक्षर name[64];
+int drm_debugfs_init(struct drm_minor *minor, int minor_id,
+		     struct dentry *root)
+{
+	struct drm_device *dev = minor->dev;
+	char name[64];
 
 	INIT_LIST_HEAD(&minor->debugfs_list);
 	mutex_init(&minor->debugfs_lock);
-	प्र_लिखो(name, "%d", minor_id);
+	sprintf(name, "%d", minor_id);
 	minor->debugfs_root = debugfs_create_dir(name, root);
 
 	drm_debugfs_create_files(drm_debugfs_list, DRM_DEBUGFS_ENTRIES,
 				 minor->debugfs_root, minor);
 
-	अगर (drm_drv_uses_atomic_modeset(dev)) अणु
+	if (drm_drv_uses_atomic_modeset(dev)) {
 		drm_atomic_debugfs_init(minor);
-	पूर्ण
+	}
 
-	अगर (drm_core_check_feature(dev, DRIVER_MODESET)) अणु
+	if (drm_core_check_feature(dev, DRIVER_MODESET)) {
 		drm_framebuffer_debugfs_init(minor);
 
 		drm_client_debugfs_init(minor);
-	पूर्ण
+	}
 
-	अगर (dev->driver->debugfs_init)
+	if (dev->driver->debugfs_init)
 		dev->driver->debugfs_init(minor);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-पूर्णांक drm_debugfs_हटाओ_files(स्थिर काष्ठा drm_info_list *files, पूर्णांक count,
-			     काष्ठा drm_minor *minor)
-अणु
-	काष्ठा list_head *pos, *q;
-	काष्ठा drm_info_node *पंचांगp;
-	पूर्णांक i;
+int drm_debugfs_remove_files(const struct drm_info_list *files, int count,
+			     struct drm_minor *minor)
+{
+	struct list_head *pos, *q;
+	struct drm_info_node *tmp;
+	int i;
 
 	mutex_lock(&minor->debugfs_lock);
-	क्रम (i = 0; i < count; i++) अणु
-		list_क्रम_each_safe(pos, q, &minor->debugfs_list) अणु
-			पंचांगp = list_entry(pos, काष्ठा drm_info_node, list);
-			अगर (पंचांगp->info_ent == &files[i]) अणु
-				debugfs_हटाओ(पंचांगp->dent);
+	for (i = 0; i < count; i++) {
+		list_for_each_safe(pos, q, &minor->debugfs_list) {
+			tmp = list_entry(pos, struct drm_info_node, list);
+			if (tmp->info_ent == &files[i]) {
+				debugfs_remove(tmp->dent);
 				list_del(pos);
-				kमुक्त(पंचांगp);
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				kfree(tmp);
+			}
+		}
+	}
 	mutex_unlock(&minor->debugfs_lock);
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL(drm_debugfs_हटाओ_files);
+	return 0;
+}
+EXPORT_SYMBOL(drm_debugfs_remove_files);
 
-अटल व्योम drm_debugfs_हटाओ_all_files(काष्ठा drm_minor *minor)
-अणु
-	काष्ठा drm_info_node *node, *पंचांगp;
+static void drm_debugfs_remove_all_files(struct drm_minor *minor)
+{
+	struct drm_info_node *node, *tmp;
 
 	mutex_lock(&minor->debugfs_lock);
-	list_क्रम_each_entry_safe(node, पंचांगp, &minor->debugfs_list, list) अणु
-		debugfs_हटाओ(node->dent);
+	list_for_each_entry_safe(node, tmp, &minor->debugfs_list, list) {
+		debugfs_remove(node->dent);
 		list_del(&node->list);
-		kमुक्त(node);
-	पूर्ण
+		kfree(node);
+	}
 	mutex_unlock(&minor->debugfs_lock);
-पूर्ण
+}
 
-व्योम drm_debugfs_cleanup(काष्ठा drm_minor *minor)
-अणु
-	अगर (!minor->debugfs_root)
-		वापस;
+void drm_debugfs_cleanup(struct drm_minor *minor)
+{
+	if (!minor->debugfs_root)
+		return;
 
-	drm_debugfs_हटाओ_all_files(minor);
+	drm_debugfs_remove_all_files(minor);
 
-	debugfs_हटाओ_recursive(minor->debugfs_root);
-	minor->debugfs_root = शून्य;
-पूर्ण
+	debugfs_remove_recursive(minor->debugfs_root);
+	minor->debugfs_root = NULL;
+}
 
-अटल पूर्णांक connector_show(काष्ठा seq_file *m, व्योम *data)
-अणु
-	काष्ठा drm_connector *connector = m->निजी;
+static int connector_show(struct seq_file *m, void *data)
+{
+	struct drm_connector *connector = m->private;
 
-	seq_म_लिखो(m, "%s\n", drm_get_connector_क्रमce_name(connector->क्रमce));
+	seq_printf(m, "%s\n", drm_get_connector_force_name(connector->force));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक connector_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा drm_connector *dev = inode->i_निजी;
+static int connector_open(struct inode *inode, struct file *file)
+{
+	struct drm_connector *dev = inode->i_private;
 
-	वापस single_खोलो(file, connector_show, dev);
-पूर्ण
+	return single_open(file, connector_show, dev);
+}
 
-अटल sमाप_प्रकार connector_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *ubuf,
-			       माप_प्रकार len, loff_t *offp)
-अणु
-	काष्ठा seq_file *m = file->निजी_data;
-	काष्ठा drm_connector *connector = m->निजी;
-	अक्षर buf[12];
+static ssize_t connector_write(struct file *file, const char __user *ubuf,
+			       size_t len, loff_t *offp)
+{
+	struct seq_file *m = file->private_data;
+	struct drm_connector *connector = m->private;
+	char buf[12];
 
-	अगर (len > माप(buf) - 1)
-		वापस -EINVAL;
+	if (len > sizeof(buf) - 1)
+		return -EINVAL;
 
-	अगर (copy_from_user(buf, ubuf, len))
-		वापस -EFAULT;
+	if (copy_from_user(buf, ubuf, len))
+		return -EFAULT;
 
 	buf[len] = '\0';
 
-	अगर (sysfs_streq(buf, "on"))
-		connector->क्रमce = DRM_FORCE_ON;
-	अन्यथा अगर (sysfs_streq(buf, "digital"))
-		connector->क्रमce = DRM_FORCE_ON_DIGITAL;
-	अन्यथा अगर (sysfs_streq(buf, "off"))
-		connector->क्रमce = DRM_FORCE_OFF;
-	अन्यथा अगर (sysfs_streq(buf, "unspecified"))
-		connector->क्रमce = DRM_FORCE_UNSPECIFIED;
-	अन्यथा
-		वापस -EINVAL;
+	if (sysfs_streq(buf, "on"))
+		connector->force = DRM_FORCE_ON;
+	else if (sysfs_streq(buf, "digital"))
+		connector->force = DRM_FORCE_ON_DIGITAL;
+	else if (sysfs_streq(buf, "off"))
+		connector->force = DRM_FORCE_OFF;
+	else if (sysfs_streq(buf, "unspecified"))
+		connector->force = DRM_FORCE_UNSPECIFIED;
+	else
+		return -EINVAL;
 
-	वापस len;
-पूर्ण
+	return len;
+}
 
-अटल पूर्णांक edid_show(काष्ठा seq_file *m, व्योम *data)
-अणु
-	काष्ठा drm_connector *connector = m->निजी;
-	काष्ठा drm_property_blob *edid = connector->edid_blob_ptr;
+static int edid_show(struct seq_file *m, void *data)
+{
+	struct drm_connector *connector = m->private;
+	struct drm_property_blob *edid = connector->edid_blob_ptr;
 
-	अगर (connector->override_edid && edid)
-		seq_ग_लिखो(m, edid->data, edid->length);
+	if (connector->override_edid && edid)
+		seq_write(m, edid->data, edid->length);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक edid_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा drm_connector *dev = inode->i_निजी;
+static int edid_open(struct inode *inode, struct file *file)
+{
+	struct drm_connector *dev = inode->i_private;
 
-	वापस single_खोलो(file, edid_show, dev);
-पूर्ण
+	return single_open(file, edid_show, dev);
+}
 
-अटल sमाप_प्रकार edid_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *ubuf,
-			  माप_प्रकार len, loff_t *offp)
-अणु
-	काष्ठा seq_file *m = file->निजी_data;
-	काष्ठा drm_connector *connector = m->निजी;
-	अक्षर *buf;
-	काष्ठा edid *edid;
-	पूर्णांक ret;
+static ssize_t edid_write(struct file *file, const char __user *ubuf,
+			  size_t len, loff_t *offp)
+{
+	struct seq_file *m = file->private_data;
+	struct drm_connector *connector = m->private;
+	char *buf;
+	struct edid *edid;
+	int ret;
 
 	buf = memdup_user(ubuf, len);
-	अगर (IS_ERR(buf))
-		वापस PTR_ERR(buf);
+	if (IS_ERR(buf))
+		return PTR_ERR(buf);
 
-	edid = (काष्ठा edid *) buf;
+	edid = (struct edid *) buf;
 
-	अगर (len == 5 && !म_भेदन(buf, "reset", 5)) अणु
+	if (len == 5 && !strncmp(buf, "reset", 5)) {
 		connector->override_edid = false;
-		ret = drm_connector_update_edid_property(connector, शून्य);
-	पूर्ण अन्यथा अगर (len < EDID_LENGTH ||
+		ret = drm_connector_update_edid_property(connector, NULL);
+	} else if (len < EDID_LENGTH ||
 		   EDID_LENGTH * (1 + edid->extensions) > len)
 		ret = -EINVAL;
-	अन्यथा अणु
+	else {
 		connector->override_edid = false;
 		ret = drm_connector_update_edid_property(connector, edid);
-		अगर (!ret)
+		if (!ret)
 			connector->override_edid = true;
-	पूर्ण
+	}
 
-	kमुक्त(buf);
+	kfree(buf);
 
-	वापस (ret) ? ret : len;
-पूर्ण
+	return (ret) ? ret : len;
+}
 
 /*
  * Returns the min and max vrr vfreq through the connector's debugfs file.
  * Example usage: cat /sys/kernel/debug/dri/0/DP-1/vrr_range
  */
-अटल पूर्णांक vrr_range_show(काष्ठा seq_file *m, व्योम *data)
-अणु
-	काष्ठा drm_connector *connector = m->निजी;
+static int vrr_range_show(struct seq_file *m, void *data)
+{
+	struct drm_connector *connector = m->private;
 
-	अगर (connector->status != connector_status_connected)
-		वापस -ENODEV;
+	if (connector->status != connector_status_connected)
+		return -ENODEV;
 
-	seq_म_लिखो(m, "Min: %u\n", (u8)connector->display_info.monitor_range.min_vfreq);
-	seq_म_लिखो(m, "Max: %u\n", (u8)connector->display_info.monitor_range.max_vfreq);
+	seq_printf(m, "Min: %u\n", (u8)connector->display_info.monitor_range.min_vfreq);
+	seq_printf(m, "Max: %u\n", (u8)connector->display_info.monitor_range.max_vfreq);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 DEFINE_SHOW_ATTRIBUTE(vrr_range);
 
-अटल स्थिर काष्ठा file_operations drm_edid_fops = अणु
+static const struct file_operations drm_edid_fops = {
 	.owner = THIS_MODULE,
-	.खोलो = edid_खोलो,
-	.पढ़ो = seq_पढ़ो,
+	.open = edid_open,
+	.read = seq_read,
 	.llseek = seq_lseek,
 	.release = single_release,
-	.ग_लिखो = edid_ग_लिखो
-पूर्ण;
+	.write = edid_write
+};
 
 
-अटल स्थिर काष्ठा file_operations drm_connector_fops = अणु
+static const struct file_operations drm_connector_fops = {
 	.owner = THIS_MODULE,
-	.खोलो = connector_खोलो,
-	.पढ़ो = seq_पढ़ो,
+	.open = connector_open,
+	.read = seq_read,
 	.llseek = seq_lseek,
 	.release = single_release,
-	.ग_लिखो = connector_ग_लिखो
-पूर्ण;
+	.write = connector_write
+};
 
-व्योम drm_debugfs_connector_add(काष्ठा drm_connector *connector)
-अणु
-	काष्ठा drm_minor *minor = connector->dev->primary;
-	काष्ठा dentry *root;
+void drm_debugfs_connector_add(struct drm_connector *connector)
+{
+	struct drm_minor *minor = connector->dev->primary;
+	struct dentry *root;
 
-	अगर (!minor->debugfs_root)
-		वापस;
+	if (!minor->debugfs_root)
+		return;
 
 	root = debugfs_create_dir(connector->name, minor->debugfs_root);
 	connector->debugfs_entry = root;
 
-	/* क्रमce */
+	/* force */
 	debugfs_create_file("force", S_IRUGO | S_IWUSR, root, connector,
 			    &drm_connector_fops);
 
@@ -436,40 +435,40 @@ DEFINE_SHOW_ATTRIBUTE(vrr_range);
 	/* vrr range */
 	debugfs_create_file("vrr_range", S_IRUGO, root, connector,
 			    &vrr_range_fops);
-पूर्ण
+}
 
-व्योम drm_debugfs_connector_हटाओ(काष्ठा drm_connector *connector)
-अणु
-	अगर (!connector->debugfs_entry)
-		वापस;
+void drm_debugfs_connector_remove(struct drm_connector *connector)
+{
+	if (!connector->debugfs_entry)
+		return;
 
-	debugfs_हटाओ_recursive(connector->debugfs_entry);
+	debugfs_remove_recursive(connector->debugfs_entry);
 
-	connector->debugfs_entry = शून्य;
-पूर्ण
+	connector->debugfs_entry = NULL;
+}
 
-व्योम drm_debugfs_crtc_add(काष्ठा drm_crtc *crtc)
-अणु
-	काष्ठा drm_minor *minor = crtc->dev->primary;
-	काष्ठा dentry *root;
-	अक्षर *name;
+void drm_debugfs_crtc_add(struct drm_crtc *crtc)
+{
+	struct drm_minor *minor = crtc->dev->primary;
+	struct dentry *root;
+	char *name;
 
-	name = kaप्र_लिखो(GFP_KERNEL, "crtc-%d", crtc->index);
-	अगर (!name)
-		वापस;
+	name = kasprintf(GFP_KERNEL, "crtc-%d", crtc->index);
+	if (!name)
+		return;
 
 	root = debugfs_create_dir(name, minor->debugfs_root);
-	kमुक्त(name);
+	kfree(name);
 
 	crtc->debugfs_entry = root;
 
 	drm_debugfs_crtc_crc_add(crtc);
-पूर्ण
+}
 
-व्योम drm_debugfs_crtc_हटाओ(काष्ठा drm_crtc *crtc)
-अणु
-	debugfs_हटाओ_recursive(crtc->debugfs_entry);
-	crtc->debugfs_entry = शून्य;
-पूर्ण
+void drm_debugfs_crtc_remove(struct drm_crtc *crtc)
+{
+	debugfs_remove_recursive(crtc->debugfs_entry);
+	crtc->debugfs_entry = NULL;
+}
 
-#पूर्ण_अगर /* CONFIG_DEBUG_FS */
+#endif /* CONFIG_DEBUG_FS */

@@ -1,62 +1,61 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Intel Smart Sound Technology (SST) Core
  *
  * Copyright (C) 2013, Intel Corporation. All rights reserved.
  */
 
-#अगर_अघोषित __SOUND_SOC_SST_DSP_H
-#घोषणा __SOUND_SOC_SST_DSP_H
+#ifndef __SOUND_SOC_SST_DSP_H
+#define __SOUND_SOC_SST_DSP_H
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/types.h>
-#समावेश <linux/पूर्णांकerrupt.h>
+#include <linux/kernel.h>
+#include <linux/types.h>
+#include <linux/interrupt.h>
 
-काष्ठा sst_dsp;
+struct sst_dsp;
 
 /*
  * SST Device.
  *
- * This काष्ठाure is populated by the SST core driver.
+ * This structure is populated by the SST core driver.
  */
-काष्ठा sst_dsp_device अणु
+struct sst_dsp_device {
 	/* Mandatory fields */
-	काष्ठा sst_ops *ops;
-	irqवापस_t (*thपढ़ो)(पूर्णांक irq, व्योम *context);
-	व्योम *thपढ़ो_context;
-पूर्ण;
+	struct sst_ops *ops;
+	irqreturn_t (*thread)(int irq, void *context);
+	void *thread_context;
+};
 
 /* SHIM Read / Write */
-व्योम sst_dsp_shim_ग_लिखो(काष्ठा sst_dsp *sst, u32 offset, u32 value);
-u32 sst_dsp_shim_पढ़ो(काष्ठा sst_dsp *sst, u32 offset);
-पूर्णांक sst_dsp_shim_update_bits(काष्ठा sst_dsp *sst, u32 offset,
+void sst_dsp_shim_write(struct sst_dsp *sst, u32 offset, u32 value);
+u32 sst_dsp_shim_read(struct sst_dsp *sst, u32 offset);
+int sst_dsp_shim_update_bits(struct sst_dsp *sst, u32 offset,
 				u32 mask, u32 value);
-व्योम sst_dsp_shim_update_bits_क्रमced(काष्ठा sst_dsp *sst, u32 offset,
+void sst_dsp_shim_update_bits_forced(struct sst_dsp *sst, u32 offset,
 				u32 mask, u32 value);
 
-/* SHIM Read / Write Unlocked क्रम callers alपढ़ोy holding sst lock */
-व्योम sst_dsp_shim_ग_लिखो_unlocked(काष्ठा sst_dsp *sst, u32 offset, u32 value);
-u32 sst_dsp_shim_पढ़ो_unlocked(काष्ठा sst_dsp *sst, u32 offset);
-पूर्णांक sst_dsp_shim_update_bits_unlocked(काष्ठा sst_dsp *sst, u32 offset,
+/* SHIM Read / Write Unlocked for callers already holding sst lock */
+void sst_dsp_shim_write_unlocked(struct sst_dsp *sst, u32 offset, u32 value);
+u32 sst_dsp_shim_read_unlocked(struct sst_dsp *sst, u32 offset);
+int sst_dsp_shim_update_bits_unlocked(struct sst_dsp *sst, u32 offset,
 				u32 mask, u32 value);
-व्योम sst_dsp_shim_update_bits_क्रमced_unlocked(काष्ठा sst_dsp *sst, u32 offset,
+void sst_dsp_shim_update_bits_forced_unlocked(struct sst_dsp *sst, u32 offset,
 				u32 mask, u32 value);
 
 /* Internal generic low-level SST IO functions - can be overidden */
-व्योम sst_shim32_ग_लिखो(व्योम __iomem *addr, u32 offset, u32 value);
-u32 sst_shim32_पढ़ो(व्योम __iomem *addr, u32 offset);
-व्योम sst_shim32_ग_लिखो64(व्योम __iomem *addr, u32 offset, u64 value);
-u64 sst_shim32_पढ़ो64(व्योम __iomem *addr, u32 offset);
+void sst_shim32_write(void __iomem *addr, u32 offset, u32 value);
+u32 sst_shim32_read(void __iomem *addr, u32 offset);
+void sst_shim32_write64(void __iomem *addr, u32 offset, u64 value);
+u64 sst_shim32_read64(void __iomem *addr, u32 offset);
 
 /* Mailbox management */
-पूर्णांक sst_dsp_mailbox_init(काष्ठा sst_dsp *sst, u32 inbox_offset,
-	माप_प्रकार inbox_size, u32 outbox_offset, माप_प्रकार outbox_size);
-व्योम sst_dsp_inbox_ग_लिखो(काष्ठा sst_dsp *sst, व्योम *message, माप_प्रकार bytes);
-व्योम sst_dsp_inbox_पढ़ो(काष्ठा sst_dsp *sst, व्योम *message, माप_प्रकार bytes);
-व्योम sst_dsp_outbox_ग_लिखो(काष्ठा sst_dsp *sst, व्योम *message, माप_प्रकार bytes);
-व्योम sst_dsp_outbox_पढ़ो(काष्ठा sst_dsp *sst, व्योम *message, माप_प्रकार bytes);
-पूर्णांक sst_dsp_रेजिस्टर_poll(काष्ठा sst_dsp  *ctx, u32 offset, u32 mask,
-		 u32 target, u32 समय, अक्षर *operation);
+int sst_dsp_mailbox_init(struct sst_dsp *sst, u32 inbox_offset,
+	size_t inbox_size, u32 outbox_offset, size_t outbox_size);
+void sst_dsp_inbox_write(struct sst_dsp *sst, void *message, size_t bytes);
+void sst_dsp_inbox_read(struct sst_dsp *sst, void *message, size_t bytes);
+void sst_dsp_outbox_write(struct sst_dsp *sst, void *message, size_t bytes);
+void sst_dsp_outbox_read(struct sst_dsp *sst, void *message, size_t bytes);
+int sst_dsp_register_poll(struct sst_dsp  *ctx, u32 offset, u32 mask,
+		 u32 target, u32 time, char *operation);
 
-#पूर्ण_अगर
+#endif

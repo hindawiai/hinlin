@@ -1,331 +1,330 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /***************************************************************************
  *   Copyright (C) 2010-2012 Hans de Goede <hdegoede@redhat.com>           *
  *                                                                         *
  ***************************************************************************/
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/module.h>
-#समावेश <linux/init.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/jअगरfies.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/hwmon.h>
-#समावेश <linux/err.h>
-#समावेश <linux/mutex.h>
-#समावेश "sch56xx-common.h"
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/slab.h>
+#include <linux/jiffies.h>
+#include <linux/platform_device.h>
+#include <linux/hwmon.h>
+#include <linux/err.h>
+#include <linux/mutex.h>
+#include "sch56xx-common.h"
 
-#घोषणा DRVNAME "sch5627"
-#घोषणा DEVNAME DRVNAME /* We only support one model */
+#define DRVNAME "sch5627"
+#define DEVNAME DRVNAME /* We only support one model */
 
-#घोषणा SCH5627_HWMON_ID		0xa5
-#घोषणा SCH5627_COMPANY_ID		0x5c
-#घोषणा SCH5627_PRIMARY_ID		0xa0
+#define SCH5627_HWMON_ID		0xa5
+#define SCH5627_COMPANY_ID		0x5c
+#define SCH5627_PRIMARY_ID		0xa0
 
-#घोषणा SCH5627_REG_BUILD_CODE		0x39
-#घोषणा SCH5627_REG_BUILD_ID		0x3a
-#घोषणा SCH5627_REG_HWMON_ID		0x3c
-#घोषणा SCH5627_REG_HWMON_REV		0x3d
-#घोषणा SCH5627_REG_COMPANY_ID		0x3e
-#घोषणा SCH5627_REG_PRIMARY_ID		0x3f
-#घोषणा SCH5627_REG_CTRL		0x40
+#define SCH5627_REG_BUILD_CODE		0x39
+#define SCH5627_REG_BUILD_ID		0x3a
+#define SCH5627_REG_HWMON_ID		0x3c
+#define SCH5627_REG_HWMON_REV		0x3d
+#define SCH5627_REG_COMPANY_ID		0x3e
+#define SCH5627_REG_PRIMARY_ID		0x3f
+#define SCH5627_REG_CTRL		0x40
 
-#घोषणा SCH5627_NO_TEMPS		8
-#घोषणा SCH5627_NO_FANS			4
-#घोषणा SCH5627_NO_IN			5
+#define SCH5627_NO_TEMPS		8
+#define SCH5627_NO_FANS			4
+#define SCH5627_NO_IN			5
 
-अटल स्थिर u16 SCH5627_REG_TEMP_MSB[SCH5627_NO_TEMPS] = अणु
-	0x2B, 0x26, 0x27, 0x28, 0x29, 0x2A, 0x180, 0x181 पूर्ण;
-अटल स्थिर u16 SCH5627_REG_TEMP_LSN[SCH5627_NO_TEMPS] = अणु
-	0xE2, 0xE1, 0xE1, 0xE5, 0xE5, 0xE6, 0x182, 0x182 पूर्ण;
-अटल स्थिर u16 SCH5627_REG_TEMP_HIGH_NIBBLE[SCH5627_NO_TEMPS] = अणु
-	0, 0, 1, 1, 0, 0, 0, 1 पूर्ण;
-अटल स्थिर u16 SCH5627_REG_TEMP_HIGH[SCH5627_NO_TEMPS] = अणु
-	0x61, 0x57, 0x59, 0x5B, 0x5D, 0x5F, 0x184, 0x186 पूर्ण;
-अटल स्थिर u16 SCH5627_REG_TEMP_ABS[SCH5627_NO_TEMPS] = अणु
-	0x9B, 0x96, 0x97, 0x98, 0x99, 0x9A, 0x1A8, 0x1A9 पूर्ण;
+static const u16 SCH5627_REG_TEMP_MSB[SCH5627_NO_TEMPS] = {
+	0x2B, 0x26, 0x27, 0x28, 0x29, 0x2A, 0x180, 0x181 };
+static const u16 SCH5627_REG_TEMP_LSN[SCH5627_NO_TEMPS] = {
+	0xE2, 0xE1, 0xE1, 0xE5, 0xE5, 0xE6, 0x182, 0x182 };
+static const u16 SCH5627_REG_TEMP_HIGH_NIBBLE[SCH5627_NO_TEMPS] = {
+	0, 0, 1, 1, 0, 0, 0, 1 };
+static const u16 SCH5627_REG_TEMP_HIGH[SCH5627_NO_TEMPS] = {
+	0x61, 0x57, 0x59, 0x5B, 0x5D, 0x5F, 0x184, 0x186 };
+static const u16 SCH5627_REG_TEMP_ABS[SCH5627_NO_TEMPS] = {
+	0x9B, 0x96, 0x97, 0x98, 0x99, 0x9A, 0x1A8, 0x1A9 };
 
-अटल स्थिर u16 SCH5627_REG_FAN[SCH5627_NO_FANS] = अणु
-	0x2C, 0x2E, 0x30, 0x32 पूर्ण;
-अटल स्थिर u16 SCH5627_REG_FAN_MIN[SCH5627_NO_FANS] = अणु
-	0x62, 0x64, 0x66, 0x68 पूर्ण;
+static const u16 SCH5627_REG_FAN[SCH5627_NO_FANS] = {
+	0x2C, 0x2E, 0x30, 0x32 };
+static const u16 SCH5627_REG_FAN_MIN[SCH5627_NO_FANS] = {
+	0x62, 0x64, 0x66, 0x68 };
 
-अटल स्थिर u16 SCH5627_REG_IN_MSB[SCH5627_NO_IN] = अणु
-	0x22, 0x23, 0x24, 0x25, 0x189 पूर्ण;
-अटल स्थिर u16 SCH5627_REG_IN_LSN[SCH5627_NO_IN] = अणु
-	0xE4, 0xE4, 0xE3, 0xE3, 0x18A पूर्ण;
-अटल स्थिर u16 SCH5627_REG_IN_HIGH_NIBBLE[SCH5627_NO_IN] = अणु
-	1, 0, 1, 0, 1 पूर्ण;
-अटल स्थिर u16 SCH5627_REG_IN_FACTOR[SCH5627_NO_IN] = अणु
-	10745, 3660, 9765, 10745, 3660 पूर्ण;
-अटल स्थिर अक्षर * स्थिर SCH5627_IN_LABELS[SCH5627_NO_IN] = अणु
-	"VCC", "VTT", "VBAT", "VTR", "V_IN" पूर्ण;
+static const u16 SCH5627_REG_IN_MSB[SCH5627_NO_IN] = {
+	0x22, 0x23, 0x24, 0x25, 0x189 };
+static const u16 SCH5627_REG_IN_LSN[SCH5627_NO_IN] = {
+	0xE4, 0xE4, 0xE3, 0xE3, 0x18A };
+static const u16 SCH5627_REG_IN_HIGH_NIBBLE[SCH5627_NO_IN] = {
+	1, 0, 1, 0, 1 };
+static const u16 SCH5627_REG_IN_FACTOR[SCH5627_NO_IN] = {
+	10745, 3660, 9765, 10745, 3660 };
+static const char * const SCH5627_IN_LABELS[SCH5627_NO_IN] = {
+	"VCC", "VTT", "VBAT", "VTR", "V_IN" };
 
-काष्ठा sch5627_data अणु
-	अचिन्हित लघु addr;
-	काष्ठा sch56xx_watchकरोg_data *watchकरोg;
+struct sch5627_data {
+	unsigned short addr;
+	struct sch56xx_watchdog_data *watchdog;
 	u8 control;
 	u8 temp_max[SCH5627_NO_TEMPS];
 	u8 temp_crit[SCH5627_NO_TEMPS];
 	u16 fan_min[SCH5627_NO_FANS];
 
-	काष्ठा mutex update_lock;
-	अचिन्हित दीर्घ last_battery;	/* In jअगरfies */
-	अक्षर temp_valid;		/* !=0 अगर following fields are valid */
-	अक्षर fan_valid;
-	अक्षर in_valid;
-	अचिन्हित दीर्घ temp_last_updated;	/* In jअगरfies */
-	अचिन्हित दीर्घ fan_last_updated;
-	अचिन्हित दीर्घ in_last_updated;
+	struct mutex update_lock;
+	unsigned long last_battery;	/* In jiffies */
+	char temp_valid;		/* !=0 if following fields are valid */
+	char fan_valid;
+	char in_valid;
+	unsigned long temp_last_updated;	/* In jiffies */
+	unsigned long fan_last_updated;
+	unsigned long in_last_updated;
 	u16 temp[SCH5627_NO_TEMPS];
 	u16 fan[SCH5627_NO_FANS];
 	u16 in[SCH5627_NO_IN];
-पूर्ण;
+};
 
-अटल पूर्णांक sch5627_update_temp(काष्ठा sch5627_data *data)
-अणु
-	पूर्णांक ret = 0;
-	पूर्णांक i, val;
+static int sch5627_update_temp(struct sch5627_data *data)
+{
+	int ret = 0;
+	int i, val;
 
 	mutex_lock(&data->update_lock);
 
-	/* Cache the values क्रम 1 second */
-	अगर (समय_after(jअगरfies, data->temp_last_updated + HZ) || !data->temp_valid) अणु
-		क्रम (i = 0; i < SCH5627_NO_TEMPS; i++) अणु
-			val = sch56xx_पढ़ो_भव_reg12(data->addr, SCH5627_REG_TEMP_MSB[i],
+	/* Cache the values for 1 second */
+	if (time_after(jiffies, data->temp_last_updated + HZ) || !data->temp_valid) {
+		for (i = 0; i < SCH5627_NO_TEMPS; i++) {
+			val = sch56xx_read_virtual_reg12(data->addr, SCH5627_REG_TEMP_MSB[i],
 							 SCH5627_REG_TEMP_LSN[i],
 							 SCH5627_REG_TEMP_HIGH_NIBBLE[i]);
-			अगर (unlikely(val < 0)) अणु
+			if (unlikely(val < 0)) {
 				ret = val;
-				जाओ पात;
-			पूर्ण
+				goto abort;
+			}
 			data->temp[i] = val;
-		पूर्ण
-		data->temp_last_updated = jअगरfies;
+		}
+		data->temp_last_updated = jiffies;
 		data->temp_valid = 1;
-	पूर्ण
-पात:
+	}
+abort:
 	mutex_unlock(&data->update_lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक sch5627_update_fan(काष्ठा sch5627_data *data)
-अणु
-	पूर्णांक ret = 0;
-	पूर्णांक i, val;
+static int sch5627_update_fan(struct sch5627_data *data)
+{
+	int ret = 0;
+	int i, val;
 
 	mutex_lock(&data->update_lock);
 
-	/* Cache the values क्रम 1 second */
-	अगर (समय_after(jअगरfies, data->fan_last_updated + HZ) || !data->fan_valid) अणु
-		क्रम (i = 0; i < SCH5627_NO_FANS; i++) अणु
-			val = sch56xx_पढ़ो_भव_reg16(data->addr, SCH5627_REG_FAN[i]);
-			अगर (unlikely(val < 0)) अणु
+	/* Cache the values for 1 second */
+	if (time_after(jiffies, data->fan_last_updated + HZ) || !data->fan_valid) {
+		for (i = 0; i < SCH5627_NO_FANS; i++) {
+			val = sch56xx_read_virtual_reg16(data->addr, SCH5627_REG_FAN[i]);
+			if (unlikely(val < 0)) {
 				ret = val;
-				जाओ पात;
-			पूर्ण
+				goto abort;
+			}
 			data->fan[i] = val;
-		पूर्ण
-		data->fan_last_updated = jअगरfies;
+		}
+		data->fan_last_updated = jiffies;
 		data->fan_valid = 1;
-	पूर्ण
-पात:
+	}
+abort:
 	mutex_unlock(&data->update_lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक sch5627_update_in(काष्ठा sch5627_data *data)
-अणु
-	पूर्णांक ret = 0;
-	पूर्णांक i, val;
+static int sch5627_update_in(struct sch5627_data *data)
+{
+	int ret = 0;
+	int i, val;
 
 	mutex_lock(&data->update_lock);
 
 	/* Trigger a Vbat voltage measurement every 5 minutes */
-	अगर (समय_after(jअगरfies, data->last_battery + 300 * HZ)) अणु
-		sch56xx_ग_लिखो_भव_reg(data->addr, SCH5627_REG_CTRL, data->control | 0x10);
-		data->last_battery = jअगरfies;
-	पूर्ण
+	if (time_after(jiffies, data->last_battery + 300 * HZ)) {
+		sch56xx_write_virtual_reg(data->addr, SCH5627_REG_CTRL, data->control | 0x10);
+		data->last_battery = jiffies;
+	}
 
-	/* Cache the values क्रम 1 second */
-	अगर (समय_after(jअगरfies, data->in_last_updated + HZ) || !data->in_valid) अणु
-		क्रम (i = 0; i < SCH5627_NO_IN; i++) अणु
-			val = sch56xx_पढ़ो_भव_reg12(data->addr, SCH5627_REG_IN_MSB[i],
+	/* Cache the values for 1 second */
+	if (time_after(jiffies, data->in_last_updated + HZ) || !data->in_valid) {
+		for (i = 0; i < SCH5627_NO_IN; i++) {
+			val = sch56xx_read_virtual_reg12(data->addr, SCH5627_REG_IN_MSB[i],
 							 SCH5627_REG_IN_LSN[i],
 							 SCH5627_REG_IN_HIGH_NIBBLE[i]);
-			अगर (unlikely(val < 0)) अणु
+			if (unlikely(val < 0)) {
 				ret = val;
-				जाओ पात;
-			पूर्ण
+				goto abort;
+			}
 			data->in[i] = val;
-		पूर्ण
-		data->in_last_updated = jअगरfies;
+		}
+		data->in_last_updated = jiffies;
 		data->in_valid = 1;
-	पूर्ण
-पात:
+	}
+abort:
 	mutex_unlock(&data->update_lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक sch5627_पढ़ो_limits(काष्ठा sch5627_data *data)
-अणु
-	पूर्णांक i, val;
+static int sch5627_read_limits(struct sch5627_data *data)
+{
+	int i, val;
 
-	क्रम (i = 0; i < SCH5627_NO_TEMPS; i++) अणु
+	for (i = 0; i < SCH5627_NO_TEMPS; i++) {
 		/*
 		 * Note what SMSC calls ABS, is what lm_sensors calls max
 		 * (aka high), and HIGH is what lm_sensors calls crit.
 		 */
-		val = sch56xx_पढ़ो_भव_reg(data->addr,
+		val = sch56xx_read_virtual_reg(data->addr,
 					       SCH5627_REG_TEMP_ABS[i]);
-		अगर (val < 0)
-			वापस val;
+		if (val < 0)
+			return val;
 		data->temp_max[i] = val;
 
-		val = sch56xx_पढ़ो_भव_reg(data->addr,
+		val = sch56xx_read_virtual_reg(data->addr,
 					       SCH5627_REG_TEMP_HIGH[i]);
-		अगर (val < 0)
-			वापस val;
+		if (val < 0)
+			return val;
 		data->temp_crit[i] = val;
-	पूर्ण
-	क्रम (i = 0; i < SCH5627_NO_FANS; i++) अणु
-		val = sch56xx_पढ़ो_भव_reg16(data->addr,
+	}
+	for (i = 0; i < SCH5627_NO_FANS; i++) {
+		val = sch56xx_read_virtual_reg16(data->addr,
 						 SCH5627_REG_FAN_MIN[i]);
-		अगर (val < 0)
-			वापस val;
+		if (val < 0)
+			return val;
 		data->fan_min[i] = val;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक reg_to_temp(u16 reg)
-अणु
-	वापस (reg * 625) / 10 - 64000;
-पूर्ण
+static int reg_to_temp(u16 reg)
+{
+	return (reg * 625) / 10 - 64000;
+}
 
-अटल पूर्णांक reg_to_temp_limit(u8 reg)
-अणु
-	वापस (reg - 64) * 1000;
-पूर्ण
+static int reg_to_temp_limit(u8 reg)
+{
+	return (reg - 64) * 1000;
+}
 
-अटल पूर्णांक reg_to_rpm(u16 reg)
-अणु
-	अगर (reg == 0)
-		वापस -EIO;
-	अगर (reg == 0xffff)
-		वापस 0;
+static int reg_to_rpm(u16 reg)
+{
+	if (reg == 0)
+		return -EIO;
+	if (reg == 0xffff)
+		return 0;
 
-	वापस 5400540 / reg;
-पूर्ण
+	return 5400540 / reg;
+}
 
-अटल umode_t sch5627_is_visible(स्थिर व्योम *drvdata, क्रमागत hwmon_sensor_types type, u32 attr,
-				  पूर्णांक channel)
-अणु
-	वापस 0444;
-पूर्ण
+static umode_t sch5627_is_visible(const void *drvdata, enum hwmon_sensor_types type, u32 attr,
+				  int channel)
+{
+	return 0444;
+}
 
-अटल पूर्णांक sch5627_पढ़ो(काष्ठा device *dev, क्रमागत hwmon_sensor_types type, u32 attr, पूर्णांक channel,
-			दीर्घ *val)
-अणु
-	काष्ठा sch5627_data *data = dev_get_drvdata(dev);
-	पूर्णांक ret;
+static int sch5627_read(struct device *dev, enum hwmon_sensor_types type, u32 attr, int channel,
+			long *val)
+{
+	struct sch5627_data *data = dev_get_drvdata(dev);
+	int ret;
 
-	चयन (type) अणु
-	हाल hwmon_temp:
+	switch (type) {
+	case hwmon_temp:
 		ret = sch5627_update_temp(data);
-		अगर (ret < 0)
-			वापस ret;
-		चयन (attr) अणु
-		हाल hwmon_temp_input:
+		if (ret < 0)
+			return ret;
+		switch (attr) {
+		case hwmon_temp_input:
 			*val = reg_to_temp(data->temp[channel]);
-			वापस 0;
-		हाल hwmon_temp_max:
+			return 0;
+		case hwmon_temp_max:
 			*val = reg_to_temp_limit(data->temp_max[channel]);
-			वापस 0;
-		हाल hwmon_temp_crit:
+			return 0;
+		case hwmon_temp_crit:
 			*val = reg_to_temp_limit(data->temp_crit[channel]);
-			वापस 0;
-		हाल hwmon_temp_fault:
+			return 0;
+		case hwmon_temp_fault:
 			*val = (data->temp[channel] == 0);
-			वापस 0;
-		शेष:
-			अवरोध;
-		पूर्ण
-		अवरोध;
-	हाल hwmon_fan:
+			return 0;
+		default:
+			break;
+		}
+		break;
+	case hwmon_fan:
 		ret = sch5627_update_fan(data);
-		अगर (ret < 0)
-			वापस ret;
-		चयन (attr) अणु
-		हाल hwmon_fan_input:
+		if (ret < 0)
+			return ret;
+		switch (attr) {
+		case hwmon_fan_input:
 			ret = reg_to_rpm(data->fan[channel]);
-			अगर (ret < 0)
-				वापस ret;
+			if (ret < 0)
+				return ret;
 			*val = ret;
-			वापस 0;
-		हाल hwmon_fan_min:
+			return 0;
+		case hwmon_fan_min:
 			ret = reg_to_rpm(data->fan_min[channel]);
-			अगर (ret < 0)
-				वापस ret;
+			if (ret < 0)
+				return ret;
 			*val = ret;
-			वापस 0;
-		हाल hwmon_fan_fault:
+			return 0;
+		case hwmon_fan_fault:
 			*val = (data->fan[channel] == 0xffff);
-			वापस 0;
-		शेष:
-			अवरोध;
-		पूर्ण
-		अवरोध;
-	हाल hwmon_in:
+			return 0;
+		default:
+			break;
+		}
+		break;
+	case hwmon_in:
 		ret = sch5627_update_in(data);
-		अगर (ret < 0)
-			वापस ret;
-		चयन (attr) अणु
-		हाल hwmon_in_input:
+		if (ret < 0)
+			return ret;
+		switch (attr) {
+		case hwmon_in_input:
 			*val = DIV_ROUND_CLOSEST(data->in[channel] * SCH5627_REG_IN_FACTOR[channel],
 						 10000);
-			वापस 0;
-		शेष:
-			अवरोध;
-		पूर्ण
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+			return 0;
+		default:
+			break;
+		}
+		break;
+	default:
+		break;
+	}
 
-	वापस -EOPNOTSUPP;
-पूर्ण
+	return -EOPNOTSUPP;
+}
 
-अटल पूर्णांक sch5627_पढ़ो_string(काष्ठा device *dev, क्रमागत hwmon_sensor_types type, u32 attr,
-			       पूर्णांक channel, स्थिर अक्षर **str)
-अणु
-	चयन (type) अणु
-	हाल hwmon_in:
-		चयन (attr) अणु
-		हाल hwmon_in_label:
+static int sch5627_read_string(struct device *dev, enum hwmon_sensor_types type, u32 attr,
+			       int channel, const char **str)
+{
+	switch (type) {
+	case hwmon_in:
+		switch (attr) {
+		case hwmon_in_label:
 			*str = SCH5627_IN_LABELS[channel];
-			वापस 0;
-		शेष:
-			अवरोध;
-		पूर्ण
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+			return 0;
+		default:
+			break;
+		}
+		break;
+	default:
+		break;
+	}
 
-	वापस -EOPNOTSUPP;
-पूर्ण
+	return -EOPNOTSUPP;
+}
 
-अटल स्थिर काष्ठा hwmon_ops sch5627_ops = अणु
+static const struct hwmon_ops sch5627_ops = {
 	.is_visible = sch5627_is_visible,
-	.पढ़ो = sch5627_पढ़ो,
-	.पढ़ो_string = sch5627_पढ़ो_string,
-पूर्ण;
+	.read = sch5627_read,
+	.read_string = sch5627_read_string,
+};
 
-अटल स्थिर काष्ठा hwmon_channel_info *sch5627_info[] = अणु
+static const struct hwmon_channel_info *sch5627_info[] = {
 	HWMON_CHANNEL_INFO(chip, HWMON_C_REGISTER_TZ),
 	HWMON_CHANNEL_INFO(temp,
 			   HWMON_T_INPUT | HWMON_T_MAX | HWMON_T_CRIT | HWMON_T_FAULT,
@@ -350,133 +349,133 @@
 			   HWMON_I_INPUT | HWMON_I_LABEL,
 			   HWMON_I_INPUT
 			   ),
-	शून्य
-पूर्ण;
+	NULL
+};
 
-अटल स्थिर काष्ठा hwmon_chip_info sch5627_chip_info = अणु
+static const struct hwmon_chip_info sch5627_chip_info = {
 	.ops = &sch5627_ops,
 	.info = sch5627_info,
-पूर्ण;
+};
 
-अटल पूर्णांक sch5627_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा sch5627_data *data = platक्रमm_get_drvdata(pdev);
+static int sch5627_remove(struct platform_device *pdev)
+{
+	struct sch5627_data *data = platform_get_drvdata(pdev);
 
-	अगर (data->watchकरोg)
-		sch56xx_watchकरोg_unरेजिस्टर(data->watchकरोg);
+	if (data->watchdog)
+		sch56xx_watchdog_unregister(data->watchdog);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sch5627_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा sch5627_data *data;
-	काष्ठा device *hwmon_dev;
-	पूर्णांक err, build_code, build_id, hwmon_rev, val;
+static int sch5627_probe(struct platform_device *pdev)
+{
+	struct sch5627_data *data;
+	struct device *hwmon_dev;
+	int err, build_code, build_id, hwmon_rev, val;
 
-	data = devm_kzalloc(&pdev->dev, माप(काष्ठा sch5627_data),
+	data = devm_kzalloc(&pdev->dev, sizeof(struct sch5627_data),
 			    GFP_KERNEL);
-	अगर (!data)
-		वापस -ENOMEM;
+	if (!data)
+		return -ENOMEM;
 
-	data->addr = platक्रमm_get_resource(pdev, IORESOURCE_IO, 0)->start;
+	data->addr = platform_get_resource(pdev, IORESOURCE_IO, 0)->start;
 	mutex_init(&data->update_lock);
-	platक्रमm_set_drvdata(pdev, data);
+	platform_set_drvdata(pdev, data);
 
-	val = sch56xx_पढ़ो_भव_reg(data->addr, SCH5627_REG_HWMON_ID);
-	अगर (val < 0)
-		वापस val;
+	val = sch56xx_read_virtual_reg(data->addr, SCH5627_REG_HWMON_ID);
+	if (val < 0)
+		return val;
 
-	अगर (val != SCH5627_HWMON_ID) अणु
+	if (val != SCH5627_HWMON_ID) {
 		pr_err("invalid %s id: 0x%02X (expected 0x%02X)\n", "hwmon",
 		       val, SCH5627_HWMON_ID);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	val = sch56xx_पढ़ो_भव_reg(data->addr, SCH5627_REG_COMPANY_ID);
-	अगर (val < 0)
-		वापस val;
+	val = sch56xx_read_virtual_reg(data->addr, SCH5627_REG_COMPANY_ID);
+	if (val < 0)
+		return val;
 
-	अगर (val != SCH5627_COMPANY_ID) अणु
+	if (val != SCH5627_COMPANY_ID) {
 		pr_err("invalid %s id: 0x%02X (expected 0x%02X)\n", "company",
 		       val, SCH5627_COMPANY_ID);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	val = sch56xx_पढ़ो_भव_reg(data->addr, SCH5627_REG_PRIMARY_ID);
-	अगर (val < 0)
-		वापस val;
+	val = sch56xx_read_virtual_reg(data->addr, SCH5627_REG_PRIMARY_ID);
+	if (val < 0)
+		return val;
 
-	अगर (val != SCH5627_PRIMARY_ID) अणु
+	if (val != SCH5627_PRIMARY_ID) {
 		pr_err("invalid %s id: 0x%02X (expected 0x%02X)\n", "primary",
 		       val, SCH5627_PRIMARY_ID);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	build_code = sch56xx_पढ़ो_भव_reg(data->addr,
+	build_code = sch56xx_read_virtual_reg(data->addr,
 					      SCH5627_REG_BUILD_CODE);
-	अगर (build_code < 0)
-		वापस build_code;
+	if (build_code < 0)
+		return build_code;
 
-	build_id = sch56xx_पढ़ो_भव_reg16(data->addr,
+	build_id = sch56xx_read_virtual_reg16(data->addr,
 					      SCH5627_REG_BUILD_ID);
-	अगर (build_id < 0)
-		वापस build_id;
+	if (build_id < 0)
+		return build_id;
 
-	hwmon_rev = sch56xx_पढ़ो_भव_reg(data->addr,
+	hwmon_rev = sch56xx_read_virtual_reg(data->addr,
 					     SCH5627_REG_HWMON_REV);
-	अगर (hwmon_rev < 0)
-		वापस hwmon_rev;
+	if (hwmon_rev < 0)
+		return hwmon_rev;
 
-	val = sch56xx_पढ़ो_भव_reg(data->addr, SCH5627_REG_CTRL);
-	अगर (val < 0)
-		वापस val;
+	val = sch56xx_read_virtual_reg(data->addr, SCH5627_REG_CTRL);
+	if (val < 0)
+		return val;
 
 	data->control = val;
-	अगर (!(data->control & 0x01)) अणु
+	if (!(data->control & 0x01)) {
 		pr_err("hardware monitoring not enabled\n");
-		वापस -ENODEV;
-	पूर्ण
-	/* Trigger a Vbat voltage measurement, so that we get a valid पढ़ोing
-	   the first समय we पढ़ो Vbat */
-	sch56xx_ग_लिखो_भव_reg(data->addr, SCH5627_REG_CTRL,
+		return -ENODEV;
+	}
+	/* Trigger a Vbat voltage measurement, so that we get a valid reading
+	   the first time we read Vbat */
+	sch56xx_write_virtual_reg(data->addr, SCH5627_REG_CTRL,
 				  data->control | 0x10);
-	data->last_battery = jअगरfies;
+	data->last_battery = jiffies;
 
 	/*
-	 * Read limits, we करो this only once as पढ़ोing a रेजिस्टर on
-	 * the sch5627 is quite expensive (and they करोn't change).
+	 * Read limits, we do this only once as reading a register on
+	 * the sch5627 is quite expensive (and they don't change).
 	 */
-	err = sch5627_पढ़ो_limits(data);
-	अगर (err)
-		वापस err;
+	err = sch5627_read_limits(data);
+	if (err)
+		return err;
 
 	pr_info("found %s chip at %#hx\n", DEVNAME, data->addr);
 	pr_info("firmware build: code 0x%02X, id 0x%04X, hwmon: rev 0x%02X\n",
 		build_code, build_id, hwmon_rev);
 
-	hwmon_dev = devm_hwmon_device_रेजिस्टर_with_info(&pdev->dev, DEVNAME, data,
-							 &sch5627_chip_info, शून्य);
-	अगर (IS_ERR(hwmon_dev))
-		वापस PTR_ERR(hwmon_dev);
+	hwmon_dev = devm_hwmon_device_register_with_info(&pdev->dev, DEVNAME, data,
+							 &sch5627_chip_info, NULL);
+	if (IS_ERR(hwmon_dev))
+		return PTR_ERR(hwmon_dev);
 
-	/* Note failing to रेजिस्टर the watchकरोg is not a fatal error */
-	data->watchकरोg = sch56xx_watchकरोg_रेजिस्टर(&pdev->dev, data->addr,
+	/* Note failing to register the watchdog is not a fatal error */
+	data->watchdog = sch56xx_watchdog_register(&pdev->dev, data->addr,
 			(build_code << 24) | (build_id << 8) | hwmon_rev,
 			&data->update_lock, 1);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver sch5627_driver = अणु
-	.driver = अणु
+static struct platform_driver sch5627_driver = {
+	.driver = {
 		.name	= DRVNAME,
-	पूर्ण,
+	},
 	.probe		= sch5627_probe,
-	.हटाओ		= sch5627_हटाओ,
-पूर्ण;
+	.remove		= sch5627_remove,
+};
 
-module_platक्रमm_driver(sch5627_driver);
+module_platform_driver(sch5627_driver);
 
 MODULE_DESCRIPTION("SMSC SCH5627 Hardware Monitoring Driver");
 MODULE_AUTHOR("Hans de Goede <hdegoede@redhat.com>");

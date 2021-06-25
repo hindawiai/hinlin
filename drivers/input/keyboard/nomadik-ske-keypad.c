@@ -1,109 +1,108 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (C) ST-Ericsson SA 2010
  *
- * Author: Naveen Kumar G <naveen.gaddipati@stericsson.com> क्रम ST-Ericsson
- * Author: Sundar Iyer <sundar.iyer@stericsson.com> क्रम ST-Ericsson
+ * Author: Naveen Kumar G <naveen.gaddipati@stericsson.com> for ST-Ericsson
+ * Author: Sundar Iyer <sundar.iyer@stericsson.com> for ST-Ericsson
  *
- * Keypad controller driver क्रम the SKE (Scroll Key Encoder) module used in
- * the Nomadik 8815 and Ux500 platक्रमms.
+ * Keypad controller driver for the SKE (Scroll Key Encoder) module used in
+ * the Nomadik 8815 and Ux500 platforms.
  */
 
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/delay.h>
-#समावेश <linux/input.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/module.h>
+#include <linux/platform_device.h>
+#include <linux/interrupt.h>
+#include <linux/spinlock.h>
+#include <linux/io.h>
+#include <linux/delay.h>
+#include <linux/input.h>
+#include <linux/slab.h>
+#include <linux/clk.h>
+#include <linux/module.h>
 
-#समावेश <linux/platक्रमm_data/keypad-nomadik-ske.h>
+#include <linux/platform_data/keypad-nomadik-ske.h>
 
 /* SKE_CR bits */
-#घोषणा SKE_KPMLT	(0x1 << 6)
-#घोषणा SKE_KPCN	(0x7 << 3)
-#घोषणा SKE_KPASEN	(0x1 << 2)
-#घोषणा SKE_KPASON	(0x1 << 7)
+#define SKE_KPMLT	(0x1 << 6)
+#define SKE_KPCN	(0x7 << 3)
+#define SKE_KPASEN	(0x1 << 2)
+#define SKE_KPASON	(0x1 << 7)
 
 /* SKE_IMSC bits */
-#घोषणा SKE_KPIMA	(0x1 << 2)
+#define SKE_KPIMA	(0x1 << 2)
 
 /* SKE_ICR bits */
-#घोषणा SKE_KPICS	(0x1 << 3)
-#घोषणा SKE_KPICA	(0x1 << 2)
+#define SKE_KPICS	(0x1 << 3)
+#define SKE_KPICA	(0x1 << 2)
 
 /* SKE_RIS bits */
-#घोषणा SKE_KPRISA	(0x1 << 2)
+#define SKE_KPRISA	(0x1 << 2)
 
-#घोषणा SKE_KEYPAD_ROW_SHIFT	3
-#घोषणा SKE_KPD_NUM_ROWS	8
-#घोषणा SKE_KPD_NUM_COLS	8
+#define SKE_KEYPAD_ROW_SHIFT	3
+#define SKE_KPD_NUM_ROWS	8
+#define SKE_KPD_NUM_COLS	8
 
-/* keypad स्वतः scan रेजिस्टरs */
-#घोषणा SKE_ASR0	0x20
-#घोषणा SKE_ASR1	0x24
-#घोषणा SKE_ASR2	0x28
-#घोषणा SKE_ASR3	0x2C
+/* keypad auto scan registers */
+#define SKE_ASR0	0x20
+#define SKE_ASR1	0x24
+#define SKE_ASR2	0x28
+#define SKE_ASR3	0x2C
 
-#घोषणा SKE_NUM_ASRX_REGISTERS	(4)
-#घोषणा	KEY_PRESSED_DELAY	10
+#define SKE_NUM_ASRX_REGISTERS	(4)
+#define	KEY_PRESSED_DELAY	10
 
 /**
- * काष्ठा ske_keypad  - data काष्ठाure used by keypad driver
+ * struct ske_keypad  - data structure used by keypad driver
  * @irq:	irq no
- * @reg_base:	ske रेजिस्टरs base address
- * @input:	poपूर्णांकer to input device object
- * @board:	keypad platक्रमm device
- * @keymap:	matrix scan code table क्रम keycodes
- * @clk:	घड़ी काष्ठाure poपूर्णांकer
- * @pclk:	घड़ी काष्ठाure poपूर्णांकer
- * @ske_keypad_lock: spinlock protecting the keypad पढ़ो/ग_लिखोs
+ * @reg_base:	ske registers base address
+ * @input:	pointer to input device object
+ * @board:	keypad platform device
+ * @keymap:	matrix scan code table for keycodes
+ * @clk:	clock structure pointer
+ * @pclk:	clock structure pointer
+ * @ske_keypad_lock: spinlock protecting the keypad read/writes
  */
-काष्ठा ske_keypad अणु
-	पूर्णांक irq;
-	व्योम __iomem *reg_base;
-	काष्ठा input_dev *input;
-	स्थिर काष्ठा ske_keypad_platक्रमm_data *board;
-	अचिन्हित लघु keymap[SKE_KPD_NUM_ROWS * SKE_KPD_NUM_COLS];
-	काष्ठा clk *clk;
-	काष्ठा clk *pclk;
+struct ske_keypad {
+	int irq;
+	void __iomem *reg_base;
+	struct input_dev *input;
+	const struct ske_keypad_platform_data *board;
+	unsigned short keymap[SKE_KPD_NUM_ROWS * SKE_KPD_NUM_COLS];
+	struct clk *clk;
+	struct clk *pclk;
 	spinlock_t ske_keypad_lock;
-पूर्ण;
+};
 
-अटल व्योम ske_keypad_set_bits(काष्ठा ske_keypad *keypad, u16 addr,
+static void ske_keypad_set_bits(struct ske_keypad *keypad, u16 addr,
 		u8 mask, u8 data)
-अणु
+{
 	u32 ret;
 
 	spin_lock(&keypad->ske_keypad_lock);
 
-	ret = पढ़ोl(keypad->reg_base + addr);
+	ret = readl(keypad->reg_base + addr);
 	ret &= ~mask;
 	ret |= data;
-	ग_लिखोl(ret, keypad->reg_base + addr);
+	writel(ret, keypad->reg_base + addr);
 
 	spin_unlock(&keypad->ske_keypad_lock);
-पूर्ण
+}
 
 /*
  * ske_keypad_chip_init: init keypad controller configuration
  *
- * Enable Multi key press detection, स्वतः scan mode
+ * Enable Multi key press detection, auto scan mode
  */
-अटल पूर्णांक __init ske_keypad_chip_init(काष्ठा ske_keypad *keypad)
-अणु
+static int __init ske_keypad_chip_init(struct ske_keypad *keypad)
+{
 	u32 value;
-	पूर्णांक समयout = keypad->board->debounce_ms;
+	int timeout = keypad->board->debounce_ms;
 
 	/* check SKE_RIS to be 0 */
-	जबतक ((पढ़ोl(keypad->reg_base + SKE_RIS) != 0x00000000) && समयout--)
+	while ((readl(keypad->reg_base + SKE_RIS) != 0x00000000) && timeout--)
 		cpu_relax();
 
-	अगर (समयout == -1)
-		वापस -EINVAL;
+	if (timeout == -1)
+		return -EINVAL;
 
 	/*
 	 * set debounce value
@@ -111,10 +110,10 @@
 	 * dbounce value in steps of 32/32.768 ms
 	 */
 	spin_lock(&keypad->ske_keypad_lock);
-	value = पढ़ोl(keypad->reg_base + SKE_DBCR);
+	value = readl(keypad->reg_base + SKE_DBCR);
 	value = value & 0xff;
 	value |= ((keypad->board->debounce_ms * 32000)/32768) << 8;
-	ग_लिखोl(value, keypad->reg_base + SKE_DBCR);
+	writel(value, keypad->reg_base + SKE_DBCR);
 	spin_unlock(&keypad->ske_keypad_lock);
 
 	/* enable multi key detection */
@@ -122,233 +121,233 @@
 
 	/*
 	 * set up the number of columns
-	 * KPCN[5:3] defines no. of keypad columns to be स्वतः scanned
+	 * KPCN[5:3] defines no. of keypad columns to be auto scanned
 	 */
 	value = (keypad->board->kcol - 1) << 3;
 	ske_keypad_set_bits(keypad, SKE_CR, SKE_KPCN, value);
 
-	/* clear keypad पूर्णांकerrupt क्रम स्वतः(and pending SW) scans */
+	/* clear keypad interrupt for auto(and pending SW) scans */
 	ske_keypad_set_bits(keypad, SKE_ICR, 0x0, SKE_KPICA | SKE_KPICS);
 
-	/* un-mask keypad पूर्णांकerrupts */
+	/* un-mask keypad interrupts */
 	ske_keypad_set_bits(keypad, SKE_IMSC, 0x0, SKE_KPIMA);
 
-	/* enable स्वतःmatic scan */
+	/* enable automatic scan */
 	ske_keypad_set_bits(keypad, SKE_CR, 0x0, SKE_KPASEN);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ske_keypad_report(काष्ठा ske_keypad *keypad, u8 status, पूर्णांक col)
-अणु
-	पूर्णांक row = 0, code, pos;
-	काष्ठा input_dev *input = keypad->input;
+static void ske_keypad_report(struct ske_keypad *keypad, u8 status, int col)
+{
+	int row = 0, code, pos;
+	struct input_dev *input = keypad->input;
 	u32 ske_ris;
-	पूर्णांक key_pressed;
-	पूर्णांक num_of_rows;
+	int key_pressed;
+	int num_of_rows;
 
 	/* find out the row */
 	num_of_rows = hweight8(status);
-	करो अणु
+	do {
 		pos = __ffs(status);
 		row = pos;
 		status &= ~(1 << pos);
 
 		code = MATRIX_SCAN_CODE(row, col, SKE_KEYPAD_ROW_SHIFT);
-		ske_ris = पढ़ोl(keypad->reg_base + SKE_RIS);
+		ske_ris = readl(keypad->reg_base + SKE_RIS);
 		key_pressed = ske_ris & SKE_KPRISA;
 
 		input_event(input, EV_MSC, MSC_SCAN, code);
 		input_report_key(input, keypad->keymap[code], key_pressed);
 		input_sync(input);
 		num_of_rows--;
-	पूर्ण जबतक (num_of_rows);
-पूर्ण
+	} while (num_of_rows);
+}
 
-अटल व्योम ske_keypad_पढ़ो_data(काष्ठा ske_keypad *keypad)
-अणु
+static void ske_keypad_read_data(struct ske_keypad *keypad)
+{
 	u8 status;
-	पूर्णांक col = 0;
-	पूर्णांक ske_asr, i;
+	int col = 0;
+	int ske_asr, i;
 
 	/*
-	 * Read the स्वतः scan रेजिस्टरs
+	 * Read the auto scan registers
 	 *
 	 * Each SKE_ASRx (x=0 to x=3) contains two row values.
-	 * lower byte contains row value क्रम column 2*x,
-	 * upper byte contains row value क्रम column 2*x + 1
+	 * lower byte contains row value for column 2*x,
+	 * upper byte contains row value for column 2*x + 1
 	 */
-	क्रम (i = 0; i < SKE_NUM_ASRX_REGISTERS; i++) अणु
-		ske_asr = पढ़ोl(keypad->reg_base + SKE_ASR0 + (4 * i));
-		अगर (!ske_asr)
-			जारी;
+	for (i = 0; i < SKE_NUM_ASRX_REGISTERS; i++) {
+		ske_asr = readl(keypad->reg_base + SKE_ASR0 + (4 * i));
+		if (!ske_asr)
+			continue;
 
 		/* now that ASRx is zero, find out the coloumn x and row y */
 		status = ske_asr & 0xff;
-		अगर (status) अणु
+		if (status) {
 			col = i * 2;
 			ske_keypad_report(keypad, status, col);
-		पूर्ण
+		}
 		status = (ske_asr & 0xff00) >> 8;
-		अगर (status) अणु
+		if (status) {
 			col = (i * 2) + 1;
 			ske_keypad_report(keypad, status, col);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल irqवापस_t ske_keypad_irq(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा ske_keypad *keypad = dev_id;
-	पूर्णांक समयout = keypad->board->debounce_ms;
+static irqreturn_t ske_keypad_irq(int irq, void *dev_id)
+{
+	struct ske_keypad *keypad = dev_id;
+	int timeout = keypad->board->debounce_ms;
 
-	/* disable स्वतः scan पूर्णांकerrupt; mask the पूर्णांकerrupt generated */
+	/* disable auto scan interrupt; mask the interrupt generated */
 	ske_keypad_set_bits(keypad, SKE_IMSC, ~SKE_KPIMA, 0x0);
 	ske_keypad_set_bits(keypad, SKE_ICR, 0x0, SKE_KPICA);
 
-	जबतक ((पढ़ोl(keypad->reg_base + SKE_CR) & SKE_KPASON) && --समयout)
+	while ((readl(keypad->reg_base + SKE_CR) & SKE_KPASON) && --timeout)
 		cpu_relax();
 
-	/* SKEx रेजिस्टरs are stable and can be पढ़ो */
-	ske_keypad_पढ़ो_data(keypad);
+	/* SKEx registers are stable and can be read */
+	ske_keypad_read_data(keypad);
 
-	/* रुको until raw पूर्णांकerrupt is clear */
-	जबतक ((पढ़ोl(keypad->reg_base + SKE_RIS)) && --समयout)
+	/* wait until raw interrupt is clear */
+	while ((readl(keypad->reg_base + SKE_RIS)) && --timeout)
 		msleep(KEY_PRESSED_DELAY);
 
-	/* enable स्वतः scan पूर्णांकerrupts */
+	/* enable auto scan interrupts */
 	ske_keypad_set_bits(keypad, SKE_IMSC, 0x0, SKE_KPIMA);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक __init ske_keypad_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	स्थिर काष्ठा ske_keypad_platक्रमm_data *plat =
+static int __init ske_keypad_probe(struct platform_device *pdev)
+{
+	const struct ske_keypad_platform_data *plat =
 			dev_get_platdata(&pdev->dev);
-	काष्ठा ske_keypad *keypad;
-	काष्ठा input_dev *input;
-	काष्ठा resource *res;
-	पूर्णांक irq;
-	पूर्णांक error;
+	struct ske_keypad *keypad;
+	struct input_dev *input;
+	struct resource *res;
+	int irq;
+	int error;
 
-	अगर (!plat) अणु
+	if (!plat) {
 		dev_err(&pdev->dev, "invalid keypad platform data\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	irq = platक्रमm_get_irq(pdev, 0);
-	अगर (irq < 0)
-		वापस -EINVAL;
+	irq = platform_get_irq(pdev, 0);
+	if (irq < 0)
+		return -EINVAL;
 
-	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
-	अगर (!res) अणु
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	if (!res) {
 		dev_err(&pdev->dev, "missing platform resources\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	keypad = kzalloc(माप(काष्ठा ske_keypad), GFP_KERNEL);
+	keypad = kzalloc(sizeof(struct ske_keypad), GFP_KERNEL);
 	input = input_allocate_device();
-	अगर (!keypad || !input) अणु
+	if (!keypad || !input) {
 		dev_err(&pdev->dev, "failed to allocate keypad memory\n");
 		error = -ENOMEM;
-		जाओ err_मुक्त_mem;
-	पूर्ण
+		goto err_free_mem;
+	}
 
 	keypad->irq = irq;
 	keypad->board = plat;
 	keypad->input = input;
 	spin_lock_init(&keypad->ske_keypad_lock);
 
-	अगर (!request_mem_region(res->start, resource_size(res), pdev->name)) अणु
+	if (!request_mem_region(res->start, resource_size(res), pdev->name)) {
 		dev_err(&pdev->dev, "failed to request I/O memory\n");
 		error = -EBUSY;
-		जाओ err_मुक्त_mem;
-	पूर्ण
+		goto err_free_mem;
+	}
 
 	keypad->reg_base = ioremap(res->start, resource_size(res));
-	अगर (!keypad->reg_base) अणु
+	if (!keypad->reg_base) {
 		dev_err(&pdev->dev, "failed to remap I/O memory\n");
 		error = -ENXIO;
-		जाओ err_मुक्त_mem_region;
-	पूर्ण
+		goto err_free_mem_region;
+	}
 
 	keypad->pclk = clk_get(&pdev->dev, "apb_pclk");
-	अगर (IS_ERR(keypad->pclk)) अणु
+	if (IS_ERR(keypad->pclk)) {
 		dev_err(&pdev->dev, "failed to get pclk\n");
 		error = PTR_ERR(keypad->pclk);
-		जाओ err_iounmap;
-	पूर्ण
+		goto err_iounmap;
+	}
 
-	keypad->clk = clk_get(&pdev->dev, शून्य);
-	अगर (IS_ERR(keypad->clk)) अणु
+	keypad->clk = clk_get(&pdev->dev, NULL);
+	if (IS_ERR(keypad->clk)) {
 		dev_err(&pdev->dev, "failed to get clk\n");
 		error = PTR_ERR(keypad->clk);
-		जाओ err_pclk;
-	पूर्ण
+		goto err_pclk;
+	}
 
 	input->id.bustype = BUS_HOST;
 	input->name = "ux500-ske-keypad";
 	input->dev.parent = &pdev->dev;
 
-	error = matrix_keypad_build_keymap(plat->keymap_data, शून्य,
+	error = matrix_keypad_build_keymap(plat->keymap_data, NULL,
 					   SKE_KPD_NUM_ROWS, SKE_KPD_NUM_COLS,
 					   keypad->keymap, input);
-	अगर (error) अणु
+	if (error) {
 		dev_err(&pdev->dev, "Failed to build keymap\n");
-		जाओ err_clk;
-	पूर्ण
+		goto err_clk;
+	}
 
 	input_set_capability(input, EV_MSC, MSC_SCAN);
-	अगर (!plat->no_स्वतःrepeat)
+	if (!plat->no_autorepeat)
 		__set_bit(EV_REP, input->evbit);
 
 	error = clk_prepare_enable(keypad->pclk);
-	अगर (error) अणु
+	if (error) {
 		dev_err(&pdev->dev, "Failed to prepare/enable pclk\n");
-		जाओ err_clk;
-	पूर्ण
+		goto err_clk;
+	}
 
 	error = clk_prepare_enable(keypad->clk);
-	अगर (error) अणु
+	if (error) {
 		dev_err(&pdev->dev, "Failed to prepare/enable clk\n");
-		जाओ err_pclk_disable;
-	पूर्ण
+		goto err_pclk_disable;
+	}
 
 
 	/* go through board initialization helpers */
-	अगर (keypad->board->init)
+	if (keypad->board->init)
 		keypad->board->init();
 
 	error = ske_keypad_chip_init(keypad);
-	अगर (error) अणु
+	if (error) {
 		dev_err(&pdev->dev, "unable to init keypad hardware\n");
-		जाओ err_clk_disable;
-	पूर्ण
+		goto err_clk_disable;
+	}
 
-	error = request_thपढ़ोed_irq(keypad->irq, शून्य, ske_keypad_irq,
+	error = request_threaded_irq(keypad->irq, NULL, ske_keypad_irq,
 				     IRQF_ONESHOT, "ske-keypad", keypad);
-	अगर (error) अणु
+	if (error) {
 		dev_err(&pdev->dev, "allocate irq %d failed\n", keypad->irq);
-		जाओ err_clk_disable;
-	पूर्ण
+		goto err_clk_disable;
+	}
 
-	error = input_रेजिस्टर_device(input);
-	अगर (error) अणु
+	error = input_register_device(input);
+	if (error) {
 		dev_err(&pdev->dev,
 				"unable to register input device: %d\n", error);
-		जाओ err_मुक्त_irq;
-	पूर्ण
+		goto err_free_irq;
+	}
 
-	अगर (plat->wakeup_enable)
+	if (plat->wakeup_enable)
 		device_init_wakeup(&pdev->dev, true);
 
-	platक्रमm_set_drvdata(pdev, keypad);
+	platform_set_drvdata(pdev, keypad);
 
-	वापस 0;
+	return 0;
 
-err_मुक्त_irq:
-	मुक्त_irq(keypad->irq, keypad);
+err_free_irq:
+	free_irq(keypad->irq, keypad);
 err_clk_disable:
 	clk_disable_unprepare(keypad->clk);
 err_pclk_disable:
@@ -359,78 +358,78 @@ err_pclk:
 	clk_put(keypad->pclk);
 err_iounmap:
 	iounmap(keypad->reg_base);
-err_मुक्त_mem_region:
+err_free_mem_region:
 	release_mem_region(res->start, resource_size(res));
-err_मुक्त_mem:
-	input_मुक्त_device(input);
-	kमुक्त(keypad);
-	वापस error;
-पूर्ण
+err_free_mem:
+	input_free_device(input);
+	kfree(keypad);
+	return error;
+}
 
-अटल पूर्णांक ske_keypad_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा ske_keypad *keypad = platक्रमm_get_drvdata(pdev);
-	काष्ठा resource *res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+static int ske_keypad_remove(struct platform_device *pdev)
+{
+	struct ske_keypad *keypad = platform_get_drvdata(pdev);
+	struct resource *res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 
-	मुक्त_irq(keypad->irq, keypad);
+	free_irq(keypad->irq, keypad);
 
-	input_unरेजिस्टर_device(keypad->input);
+	input_unregister_device(keypad->input);
 
 	clk_disable_unprepare(keypad->clk);
 	clk_put(keypad->clk);
 
-	अगर (keypad->board->निकास)
-		keypad->board->निकास();
+	if (keypad->board->exit)
+		keypad->board->exit();
 
 	iounmap(keypad->reg_base);
 	release_mem_region(res->start, resource_size(res));
-	kमुक्त(keypad);
+	kfree(keypad);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_PM_SLEEP
-अटल पूर्णांक ske_keypad_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(dev);
-	काष्ठा ske_keypad *keypad = platक्रमm_get_drvdata(pdev);
-	पूर्णांक irq = platक्रमm_get_irq(pdev, 0);
+#ifdef CONFIG_PM_SLEEP
+static int ske_keypad_suspend(struct device *dev)
+{
+	struct platform_device *pdev = to_platform_device(dev);
+	struct ske_keypad *keypad = platform_get_drvdata(pdev);
+	int irq = platform_get_irq(pdev, 0);
 
-	अगर (device_may_wakeup(dev))
+	if (device_may_wakeup(dev))
 		enable_irq_wake(irq);
-	अन्यथा
+	else
 		ske_keypad_set_bits(keypad, SKE_IMSC, ~SKE_KPIMA, 0x0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ske_keypad_resume(काष्ठा device *dev)
-अणु
-	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(dev);
-	काष्ठा ske_keypad *keypad = platक्रमm_get_drvdata(pdev);
-	पूर्णांक irq = platक्रमm_get_irq(pdev, 0);
+static int ske_keypad_resume(struct device *dev)
+{
+	struct platform_device *pdev = to_platform_device(dev);
+	struct ske_keypad *keypad = platform_get_drvdata(pdev);
+	int irq = platform_get_irq(pdev, 0);
 
-	अगर (device_may_wakeup(dev))
+	if (device_may_wakeup(dev))
 		disable_irq_wake(irq);
-	अन्यथा
+	else
 		ske_keypad_set_bits(keypad, SKE_IMSC, 0x0, SKE_KPIMA);
 
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+	return 0;
+}
+#endif
 
-अटल SIMPLE_DEV_PM_OPS(ske_keypad_dev_pm_ops,
+static SIMPLE_DEV_PM_OPS(ske_keypad_dev_pm_ops,
 			 ske_keypad_suspend, ske_keypad_resume);
 
-अटल काष्ठा platक्रमm_driver ske_keypad_driver = अणु
-	.driver = अणु
+static struct platform_driver ske_keypad_driver = {
+	.driver = {
 		.name = "nmk-ske-keypad",
 		.pm = &ske_keypad_dev_pm_ops,
-	पूर्ण,
-	.हटाओ = ske_keypad_हटाओ,
-पूर्ण;
+	},
+	.remove = ske_keypad_remove,
+};
 
-module_platक्रमm_driver_probe(ske_keypad_driver, ske_keypad_probe);
+module_platform_driver_probe(ske_keypad_driver, ske_keypad_probe);
 
 MODULE_LICENSE("GPL v2");
 MODULE_AUTHOR("Naveen Kumar <naveen.gaddipati@stericsson.com> / Sundar Iyer <sundar.iyer@stericsson.com>");

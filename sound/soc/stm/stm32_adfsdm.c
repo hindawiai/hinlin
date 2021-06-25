@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * This file is part of STM32 DFSDM ASoC DAI driver
  *
@@ -8,45 +7,45 @@
  *          Olivier Moysan <olivier.moysan@st.com>
  */
 
-#समावेश <linux/clk.h>
-#समावेश <linux/module.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/slab.h>
+#include <linux/clk.h>
+#include <linux/module.h>
+#include <linux/mutex.h>
+#include <linux/platform_device.h>
+#include <linux/slab.h>
 
-#समावेश <linux/iio/iपन.स>
-#समावेश <linux/iio/consumer.h>
-#समावेश <linux/iio/adc/sपंचांग32-dfsdm-adc.h>
+#include <linux/iio/iio.h>
+#include <linux/iio/consumer.h>
+#include <linux/iio/adc/stm32-dfsdm-adc.h>
 
-#समावेश <sound/pcm.h>
-#समावेश <sound/soc.h>
+#include <sound/pcm.h>
+#include <sound/soc.h>
 
-#घोषणा STM32_ADFSDM_DRV_NAME "stm32-adfsdm"
+#define STM32_ADFSDM_DRV_NAME "stm32-adfsdm"
 
-#घोषणा DFSDM_MAX_PERIOD_SIZE	(PAGE_SIZE / 2)
-#घोषणा DFSDM_MAX_PERIODS	6
+#define DFSDM_MAX_PERIOD_SIZE	(PAGE_SIZE / 2)
+#define DFSDM_MAX_PERIODS	6
 
-काष्ठा sपंचांग32_adfsdm_priv अणु
-	काष्ठा snd_soc_dai_driver dai_drv;
-	काष्ठा snd_pcm_substream *substream;
-	काष्ठा device *dev;
+struct stm32_adfsdm_priv {
+	struct snd_soc_dai_driver dai_drv;
+	struct snd_pcm_substream *substream;
+	struct device *dev;
 
 	/* IIO */
-	काष्ठा iio_channel *iio_ch;
-	काष्ठा iio_cb_buffer *iio_cb;
+	struct iio_channel *iio_ch;
+	struct iio_cb_buffer *iio_cb;
 	bool iio_active;
 
 	/* PCM buffer */
-	अचिन्हित अक्षर *pcm_buff;
-	अचिन्हित पूर्णांक pos;
+	unsigned char *pcm_buff;
+	unsigned int pos;
 
-	काष्ठा mutex lock; /* protect against race condition on iio state */
-पूर्ण;
+	struct mutex lock; /* protect against race condition on iio state */
+};
 
-अटल स्थिर काष्ठा snd_pcm_hardware sपंचांग32_adfsdm_pcm_hw = अणु
+static const struct snd_pcm_hardware stm32_adfsdm_pcm_hw = {
 	.info = SNDRV_PCM_INFO_INTERLEAVED | SNDRV_PCM_INFO_BLOCK_TRANSFER |
 		SNDRV_PCM_INFO_MMAP | SNDRV_PCM_INFO_PAUSE,
-	.क्रमmats = SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S32_LE,
+	.formats = SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S32_LE,
 
 	.channels_min = 1,
 	.channels_max = 1,
@@ -56,338 +55,338 @@
 
 	.period_bytes_max = DFSDM_MAX_PERIOD_SIZE,
 	.buffer_bytes_max = DFSDM_MAX_PERIODS * DFSDM_MAX_PERIOD_SIZE
-पूर्ण;
+};
 
-अटल व्योम sपंचांग32_adfsdm_shutकरोwn(काष्ठा snd_pcm_substream *substream,
-				  काष्ठा snd_soc_dai *dai)
-अणु
-	काष्ठा sपंचांग32_adfsdm_priv *priv = snd_soc_dai_get_drvdata(dai);
+static void stm32_adfsdm_shutdown(struct snd_pcm_substream *substream,
+				  struct snd_soc_dai *dai)
+{
+	struct stm32_adfsdm_priv *priv = snd_soc_dai_get_drvdata(dai);
 
 	mutex_lock(&priv->lock);
-	अगर (priv->iio_active) अणु
+	if (priv->iio_active) {
 		iio_channel_stop_all_cb(priv->iio_cb);
 		priv->iio_active = false;
-	पूर्ण
+	}
 	mutex_unlock(&priv->lock);
-पूर्ण
+}
 
-अटल पूर्णांक sपंचांग32_adfsdm_dai_prepare(काष्ठा snd_pcm_substream *substream,
-				    काष्ठा snd_soc_dai *dai)
-अणु
-	काष्ठा sपंचांग32_adfsdm_priv *priv = snd_soc_dai_get_drvdata(dai);
-	पूर्णांक ret;
+static int stm32_adfsdm_dai_prepare(struct snd_pcm_substream *substream,
+				    struct snd_soc_dai *dai)
+{
+	struct stm32_adfsdm_priv *priv = snd_soc_dai_get_drvdata(dai);
+	int ret;
 
 	mutex_lock(&priv->lock);
-	अगर (priv->iio_active) अणु
+	if (priv->iio_active) {
 		iio_channel_stop_all_cb(priv->iio_cb);
 		priv->iio_active = false;
-	पूर्ण
+	}
 
-	ret = iio_ग_लिखो_channel_attribute(priv->iio_ch,
-					  substream->runसमय->rate, 0,
+	ret = iio_write_channel_attribute(priv->iio_ch,
+					  substream->runtime->rate, 0,
 					  IIO_CHAN_INFO_SAMP_FREQ);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(dai->dev, "%s: Failed to set %d sampling rate\n",
-			__func__, substream->runसमय->rate);
-		जाओ out;
-	पूर्ण
+			__func__, substream->runtime->rate);
+		goto out;
+	}
 
-	अगर (!priv->iio_active) अणु
+	if (!priv->iio_active) {
 		ret = iio_channel_start_all_cb(priv->iio_cb);
-		अगर (!ret)
+		if (!ret)
 			priv->iio_active = true;
-		अन्यथा
+		else
 			dev_err(dai->dev, "%s: IIO channel start failed (%d)\n",
 				__func__, ret);
-	पूर्ण
+	}
 
 out:
 	mutex_unlock(&priv->lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक sपंचांग32_adfsdm_set_sysclk(काष्ठा snd_soc_dai *dai, पूर्णांक clk_id,
-				   अचिन्हित पूर्णांक freq, पूर्णांक dir)
-अणु
-	काष्ठा sपंचांग32_adfsdm_priv *priv = snd_soc_dai_get_drvdata(dai);
-	sमाप_प्रकार size;
-	अक्षर str_freq[10];
+static int stm32_adfsdm_set_sysclk(struct snd_soc_dai *dai, int clk_id,
+				   unsigned int freq, int dir)
+{
+	struct stm32_adfsdm_priv *priv = snd_soc_dai_get_drvdata(dai);
+	ssize_t size;
+	char str_freq[10];
 
 	dev_dbg(dai->dev, "%s: Enter for freq %d\n", __func__, freq);
 
-	/* Set IIO frequency अगर CODEC is master as घड़ी comes from SPI_IN */
+	/* Set IIO frequency if CODEC is master as clock comes from SPI_IN */
 
-	snम_लिखो(str_freq, माप(str_freq), "%u\n", freq);
-	size = iio_ग_लिखो_channel_ext_info(priv->iio_ch, "spi_clk_freq",
-					  str_freq, माप(str_freq));
-	अगर (size != माप(str_freq)) अणु
+	snprintf(str_freq, sizeof(str_freq), "%u\n", freq);
+	size = iio_write_channel_ext_info(priv->iio_ch, "spi_clk_freq",
+					  str_freq, sizeof(str_freq));
+	if (size != sizeof(str_freq)) {
 		dev_err(dai->dev, "%s: Failed to set SPI clock\n",
 			__func__);
-		वापस -EINVAL;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return -EINVAL;
+	}
+	return 0;
+}
 
-अटल स्थिर काष्ठा snd_soc_dai_ops sपंचांग32_adfsdm_dai_ops = अणु
-	.shutकरोwn = sपंचांग32_adfsdm_shutकरोwn,
-	.prepare = sपंचांग32_adfsdm_dai_prepare,
-	.set_sysclk = sपंचांग32_adfsdm_set_sysclk,
-पूर्ण;
+static const struct snd_soc_dai_ops stm32_adfsdm_dai_ops = {
+	.shutdown = stm32_adfsdm_shutdown,
+	.prepare = stm32_adfsdm_dai_prepare,
+	.set_sysclk = stm32_adfsdm_set_sysclk,
+};
 
-अटल स्थिर काष्ठा snd_soc_dai_driver sपंचांग32_adfsdm_dai = अणु
-	.capture = अणु
+static const struct snd_soc_dai_driver stm32_adfsdm_dai = {
+	.capture = {
 		    .channels_min = 1,
 		    .channels_max = 1,
-		    .क्रमmats = SNDRV_PCM_FMTBIT_S16_LE |
+		    .formats = SNDRV_PCM_FMTBIT_S16_LE |
 			       SNDRV_PCM_FMTBIT_S32_LE,
 		    .rates = SNDRV_PCM_RATE_CONTINUOUS,
 		    .rate_min = 8000,
 		    .rate_max = 48000,
-		    पूर्ण,
-	.ops = &sपंचांग32_adfsdm_dai_ops,
-पूर्ण;
+		    },
+	.ops = &stm32_adfsdm_dai_ops,
+};
 
-अटल स्थिर काष्ठा snd_soc_component_driver sपंचांग32_adfsdm_dai_component = अणु
+static const struct snd_soc_component_driver stm32_adfsdm_dai_component = {
 	.name = "stm32_dfsdm_audio",
-पूर्ण;
+};
 
-अटल व्योम sपंचांग32_स_नकल_32to16(व्योम *dest, स्थिर व्योम *src, माप_प्रकार n)
-अणु
-	अचिन्हित पूर्णांक i = 0;
+static void stm32_memcpy_32to16(void *dest, const void *src, size_t n)
+{
+	unsigned int i = 0;
 	u16 *d = (u16 *)dest, *s = (u16 *)src;
 
 	s++;
-	क्रम (i = n >> 1; i > 0; i--) अणु
+	for (i = n >> 1; i > 0; i--) {
 		*d++ = *s++;
 		s++;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक sपंचांग32_afsdm_pcm_cb(स्थिर व्योम *data, माप_प्रकार size, व्योम *निजी)
-अणु
-	काष्ठा sपंचांग32_adfsdm_priv *priv = निजी;
-	काष्ठा snd_soc_pcm_runसमय *rtd = asoc_substream_to_rtd(priv->substream);
+static int stm32_afsdm_pcm_cb(const void *data, size_t size, void *private)
+{
+	struct stm32_adfsdm_priv *priv = private;
+	struct snd_soc_pcm_runtime *rtd = asoc_substream_to_rtd(priv->substream);
 	u8 *pcm_buff = priv->pcm_buff;
 	u8 *src_buff = (u8 *)data;
-	अचिन्हित पूर्णांक old_pos = priv->pos;
-	माप_प्रकार buff_size = snd_pcm_lib_buffer_bytes(priv->substream);
-	माप_प्रकार period_size = snd_pcm_lib_period_bytes(priv->substream);
-	माप_प्रकार cur_size, src_size = size;
-	snd_pcm_क्रमmat_t क्रमmat = priv->substream->runसमय->क्रमmat;
+	unsigned int old_pos = priv->pos;
+	size_t buff_size = snd_pcm_lib_buffer_bytes(priv->substream);
+	size_t period_size = snd_pcm_lib_period_bytes(priv->substream);
+	size_t cur_size, src_size = size;
+	snd_pcm_format_t format = priv->substream->runtime->format;
 
-	अगर (क्रमmat == SNDRV_PCM_FORMAT_S16_LE)
+	if (format == SNDRV_PCM_FORMAT_S16_LE)
 		src_size >>= 1;
 	cur_size = src_size;
 
 	dev_dbg(rtd->dev, "%s: buff_add :%pK, pos = %d, size = %zu\n",
 		__func__, &pcm_buff[priv->pos], priv->pos, src_size);
 
-	अगर ((priv->pos + src_size) > buff_size) अणु
-		अगर (क्रमmat == SNDRV_PCM_FORMAT_S16_LE)
-			sपंचांग32_स_नकल_32to16(&pcm_buff[priv->pos], src_buff,
+	if ((priv->pos + src_size) > buff_size) {
+		if (format == SNDRV_PCM_FORMAT_S16_LE)
+			stm32_memcpy_32to16(&pcm_buff[priv->pos], src_buff,
 					    buff_size - priv->pos);
-		अन्यथा
-			स_नकल(&pcm_buff[priv->pos], src_buff,
+		else
+			memcpy(&pcm_buff[priv->pos], src_buff,
 			       buff_size - priv->pos);
 		cur_size -= buff_size - priv->pos;
 		priv->pos = 0;
-	पूर्ण
+	}
 
-	अगर (क्रमmat == SNDRV_PCM_FORMAT_S16_LE)
-		sपंचांग32_स_नकल_32to16(&pcm_buff[priv->pos],
+	if (format == SNDRV_PCM_FORMAT_S16_LE)
+		stm32_memcpy_32to16(&pcm_buff[priv->pos],
 				    &src_buff[src_size - cur_size], cur_size);
-	अन्यथा
-		स_नकल(&pcm_buff[priv->pos], &src_buff[src_size - cur_size],
+	else
+		memcpy(&pcm_buff[priv->pos], &src_buff[src_size - cur_size],
 		       cur_size);
 
 	priv->pos = (priv->pos + cur_size) % buff_size;
 
-	अगर (cur_size != src_size || (old_pos && (old_pos % period_size < size)))
+	if (cur_size != src_size || (old_pos && (old_pos % period_size < size)))
 		snd_pcm_period_elapsed(priv->substream);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sपंचांग32_adfsdm_trigger(काष्ठा snd_soc_component *component,
-				काष्ठा snd_pcm_substream *substream, पूर्णांक cmd)
-अणु
-	काष्ठा snd_soc_pcm_runसमय *rtd = asoc_substream_to_rtd(substream);
-	काष्ठा sपंचांग32_adfsdm_priv *priv =
+static int stm32_adfsdm_trigger(struct snd_soc_component *component,
+				struct snd_pcm_substream *substream, int cmd)
+{
+	struct snd_soc_pcm_runtime *rtd = asoc_substream_to_rtd(substream);
+	struct stm32_adfsdm_priv *priv =
 		snd_soc_dai_get_drvdata(asoc_rtd_to_cpu(rtd, 0));
 
-	चयन (cmd) अणु
-	हाल SNDRV_PCM_TRIGGER_START:
-	हाल SNDRV_PCM_TRIGGER_RESUME:
+	switch (cmd) {
+	case SNDRV_PCM_TRIGGER_START:
+	case SNDRV_PCM_TRIGGER_RESUME:
 		priv->pos = 0;
-		वापस sपंचांग32_dfsdm_get_buff_cb(priv->iio_ch->indio_dev,
-					       sपंचांग32_afsdm_pcm_cb, priv);
-	हाल SNDRV_PCM_TRIGGER_SUSPEND:
-	हाल SNDRV_PCM_TRIGGER_STOP:
-		वापस sपंचांग32_dfsdm_release_buff_cb(priv->iio_ch->indio_dev);
-	पूर्ण
+		return stm32_dfsdm_get_buff_cb(priv->iio_ch->indio_dev,
+					       stm32_afsdm_pcm_cb, priv);
+	case SNDRV_PCM_TRIGGER_SUSPEND:
+	case SNDRV_PCM_TRIGGER_STOP:
+		return stm32_dfsdm_release_buff_cb(priv->iio_ch->indio_dev);
+	}
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल पूर्णांक sपंचांग32_adfsdm_pcm_खोलो(काष्ठा snd_soc_component *component,
-				 काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा snd_soc_pcm_runसमय *rtd = asoc_substream_to_rtd(substream);
-	काष्ठा sपंचांग32_adfsdm_priv *priv = snd_soc_dai_get_drvdata(asoc_rtd_to_cpu(rtd, 0));
-	पूर्णांक ret;
+static int stm32_adfsdm_pcm_open(struct snd_soc_component *component,
+				 struct snd_pcm_substream *substream)
+{
+	struct snd_soc_pcm_runtime *rtd = asoc_substream_to_rtd(substream);
+	struct stm32_adfsdm_priv *priv = snd_soc_dai_get_drvdata(asoc_rtd_to_cpu(rtd, 0));
+	int ret;
 
-	ret =  snd_soc_set_runसमय_hwparams(substream, &sपंचांग32_adfsdm_pcm_hw);
-	अगर (!ret)
+	ret =  snd_soc_set_runtime_hwparams(substream, &stm32_adfsdm_pcm_hw);
+	if (!ret)
 		priv->substream = substream;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक sपंचांग32_adfsdm_pcm_बंद(काष्ठा snd_soc_component *component,
-				  काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा snd_soc_pcm_runसमय *rtd = asoc_substream_to_rtd(substream);
-	काष्ठा sपंचांग32_adfsdm_priv *priv =
+static int stm32_adfsdm_pcm_close(struct snd_soc_component *component,
+				  struct snd_pcm_substream *substream)
+{
+	struct snd_soc_pcm_runtime *rtd = asoc_substream_to_rtd(substream);
+	struct stm32_adfsdm_priv *priv =
 		snd_soc_dai_get_drvdata(asoc_rtd_to_cpu(rtd, 0));
 
-	priv->substream = शून्य;
+	priv->substream = NULL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल snd_pcm_uframes_t sपंचांग32_adfsdm_pcm_poपूर्णांकer(
-					    काष्ठा snd_soc_component *component,
-					    काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा snd_soc_pcm_runसमय *rtd = asoc_substream_to_rtd(substream);
-	काष्ठा sपंचांग32_adfsdm_priv *priv =
+static snd_pcm_uframes_t stm32_adfsdm_pcm_pointer(
+					    struct snd_soc_component *component,
+					    struct snd_pcm_substream *substream)
+{
+	struct snd_soc_pcm_runtime *rtd = asoc_substream_to_rtd(substream);
+	struct stm32_adfsdm_priv *priv =
 		snd_soc_dai_get_drvdata(asoc_rtd_to_cpu(rtd, 0));
 
-	वापस bytes_to_frames(substream->runसमय, priv->pos);
-पूर्ण
+	return bytes_to_frames(substream->runtime, priv->pos);
+}
 
-अटल पूर्णांक sपंचांग32_adfsdm_pcm_hw_params(काष्ठा snd_soc_component *component,
-				      काष्ठा snd_pcm_substream *substream,
-				      काष्ठा snd_pcm_hw_params *params)
-अणु
-	काष्ठा snd_soc_pcm_runसमय *rtd = asoc_substream_to_rtd(substream);
-	काष्ठा sपंचांग32_adfsdm_priv *priv =
+static int stm32_adfsdm_pcm_hw_params(struct snd_soc_component *component,
+				      struct snd_pcm_substream *substream,
+				      struct snd_pcm_hw_params *params)
+{
+	struct snd_soc_pcm_runtime *rtd = asoc_substream_to_rtd(substream);
+	struct stm32_adfsdm_priv *priv =
 		snd_soc_dai_get_drvdata(asoc_rtd_to_cpu(rtd, 0));
 
-	priv->pcm_buff = substream->runसमय->dma_area;
+	priv->pcm_buff = substream->runtime->dma_area;
 
-	वापस iio_channel_cb_set_buffer_watermark(priv->iio_cb,
+	return iio_channel_cb_set_buffer_watermark(priv->iio_cb,
 						   params_period_size(params));
-पूर्ण
+}
 
-अटल पूर्णांक sपंचांग32_adfsdm_pcm_new(काष्ठा snd_soc_component *component,
-				काष्ठा snd_soc_pcm_runसमय *rtd)
-अणु
-	काष्ठा snd_pcm *pcm = rtd->pcm;
-	काष्ठा sपंचांग32_adfsdm_priv *priv =
+static int stm32_adfsdm_pcm_new(struct snd_soc_component *component,
+				struct snd_soc_pcm_runtime *rtd)
+{
+	struct snd_pcm *pcm = rtd->pcm;
+	struct stm32_adfsdm_priv *priv =
 		snd_soc_dai_get_drvdata(asoc_rtd_to_cpu(rtd, 0));
-	अचिन्हित पूर्णांक size = DFSDM_MAX_PERIODS * DFSDM_MAX_PERIOD_SIZE;
+	unsigned int size = DFSDM_MAX_PERIODS * DFSDM_MAX_PERIOD_SIZE;
 
 	snd_pcm_set_managed_buffer_all(pcm, SNDRV_DMA_TYPE_DEV,
 				       priv->dev, size, size);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sपंचांग32_adfsdm_dummy_cb(स्थिर व्योम *data, व्योम *निजी)
-अणु
+static int stm32_adfsdm_dummy_cb(const void *data, void *private)
+{
 	/*
 	 * This dummmy callback is requested by iio_channel_get_all_cb() API,
-	 * but the sपंचांग32_dfsdm_get_buff_cb() API is used instead, to optimize
+	 * but the stm32_dfsdm_get_buff_cb() API is used instead, to optimize
 	 * DMA transfers.
 	 */
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा snd_soc_component_driver sपंचांग32_adfsdm_soc_platक्रमm = अणु
-	.खोलो		= sपंचांग32_adfsdm_pcm_खोलो,
-	.बंद		= sपंचांग32_adfsdm_pcm_बंद,
-	.hw_params	= sपंचांग32_adfsdm_pcm_hw_params,
-	.trigger	= sपंचांग32_adfsdm_trigger,
-	.poपूर्णांकer	= sपंचांग32_adfsdm_pcm_poपूर्णांकer,
-	.pcm_स्थिरruct	= sपंचांग32_adfsdm_pcm_new,
-पूर्ण;
+static struct snd_soc_component_driver stm32_adfsdm_soc_platform = {
+	.open		= stm32_adfsdm_pcm_open,
+	.close		= stm32_adfsdm_pcm_close,
+	.hw_params	= stm32_adfsdm_pcm_hw_params,
+	.trigger	= stm32_adfsdm_trigger,
+	.pointer	= stm32_adfsdm_pcm_pointer,
+	.pcm_construct	= stm32_adfsdm_pcm_new,
+};
 
-अटल स्थिर काष्ठा of_device_id sपंचांग32_adfsdm_of_match[] = अणु
-	अणु.compatible = "st,stm32h7-dfsdm-dai"पूर्ण,
-	अणुपूर्ण
-पूर्ण;
-MODULE_DEVICE_TABLE(of, sपंचांग32_adfsdm_of_match);
+static const struct of_device_id stm32_adfsdm_of_match[] = {
+	{.compatible = "st,stm32h7-dfsdm-dai"},
+	{}
+};
+MODULE_DEVICE_TABLE(of, stm32_adfsdm_of_match);
 
-अटल पूर्णांक sपंचांग32_adfsdm_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा sपंचांग32_adfsdm_priv *priv;
-	काष्ठा snd_soc_component *component;
-	पूर्णांक ret;
+static int stm32_adfsdm_probe(struct platform_device *pdev)
+{
+	struct stm32_adfsdm_priv *priv;
+	struct snd_soc_component *component;
+	int ret;
 
-	priv = devm_kzalloc(&pdev->dev, माप(*priv), GFP_KERNEL);
-	अगर (!priv)
-		वापस -ENOMEM;
+	priv = devm_kzalloc(&pdev->dev, sizeof(*priv), GFP_KERNEL);
+	if (!priv)
+		return -ENOMEM;
 
 	priv->dev = &pdev->dev;
-	priv->dai_drv = sपंचांग32_adfsdm_dai;
+	priv->dai_drv = stm32_adfsdm_dai;
 	mutex_init(&priv->lock);
 
 	dev_set_drvdata(&pdev->dev, priv);
 
-	ret = devm_snd_soc_रेजिस्टर_component(&pdev->dev,
-					      &sपंचांग32_adfsdm_dai_component,
+	ret = devm_snd_soc_register_component(&pdev->dev,
+					      &stm32_adfsdm_dai_component,
 					      &priv->dai_drv, 1);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	/* Associate iio channel */
 	priv->iio_ch  = devm_iio_channel_get_all(&pdev->dev);
-	अगर (IS_ERR(priv->iio_ch))
-		वापस PTR_ERR(priv->iio_ch);
+	if (IS_ERR(priv->iio_ch))
+		return PTR_ERR(priv->iio_ch);
 
-	priv->iio_cb = iio_channel_get_all_cb(&pdev->dev, &sपंचांग32_adfsdm_dummy_cb, शून्य);
-	अगर (IS_ERR(priv->iio_cb))
-		वापस PTR_ERR(priv->iio_cb);
+	priv->iio_cb = iio_channel_get_all_cb(&pdev->dev, &stm32_adfsdm_dummy_cb, NULL);
+	if (IS_ERR(priv->iio_cb))
+		return PTR_ERR(priv->iio_cb);
 
-	component = devm_kzalloc(&pdev->dev, माप(*component), GFP_KERNEL);
-	अगर (!component)
-		वापस -ENOMEM;
+	component = devm_kzalloc(&pdev->dev, sizeof(*component), GFP_KERNEL);
+	if (!component)
+		return -ENOMEM;
 
 	ret = snd_soc_component_initialize(component,
-					   &sपंचांग32_adfsdm_soc_platक्रमm,
+					   &stm32_adfsdm_soc_platform,
 					   &pdev->dev);
-	अगर (ret < 0)
-		वापस ret;
-#अगर_घोषित CONFIG_DEBUG_FS
+	if (ret < 0)
+		return ret;
+#ifdef CONFIG_DEBUG_FS
 	component->debugfs_prefix = "pcm";
-#पूर्ण_अगर
+#endif
 
-	ret = snd_soc_add_component(component, शून्य, 0);
-	अगर (ret < 0)
+	ret = snd_soc_add_component(component, NULL, 0);
+	if (ret < 0)
 		dev_err(&pdev->dev, "%s: Failed to register PCM platform\n",
 			__func__);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक sपंचांग32_adfsdm_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	snd_soc_unरेजिस्टर_component(&pdev->dev);
+static int stm32_adfsdm_remove(struct platform_device *pdev)
+{
+	snd_soc_unregister_component(&pdev->dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver sपंचांग32_adfsdm_driver = अणु
-	.driver = अणु
+static struct platform_driver stm32_adfsdm_driver = {
+	.driver = {
 		   .name = STM32_ADFSDM_DRV_NAME,
-		   .of_match_table = sपंचांग32_adfsdm_of_match,
-		   पूर्ण,
-	.probe = sपंचांग32_adfsdm_probe,
-	.हटाओ = sपंचांग32_adfsdm_हटाओ,
-पूर्ण;
+		   .of_match_table = stm32_adfsdm_of_match,
+		   },
+	.probe = stm32_adfsdm_probe,
+	.remove = stm32_adfsdm_remove,
+};
 
-module_platक्रमm_driver(sपंचांग32_adfsdm_driver);
+module_platform_driver(stm32_adfsdm_driver);
 
 MODULE_DESCRIPTION("stm32 DFSDM DAI driver");
 MODULE_AUTHOR("Arnaud Pouliquen <arnaud.pouliquen@st.com>");

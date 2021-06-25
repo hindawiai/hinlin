@@ -1,24 +1,23 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright 2014, Michael Ellerman, IBM Corp.
  */
 
-#समावेश <मानकपन.स>
-#समावेश <मानककोष.स>
-#समावेश <समलाँघ.स>
-#समावेश <संकेत.स>
+#include <stdio.h>
+#include <stdlib.h>
+#include <setjmp.h>
+#include <signal.h>
 
-#समावेश "ebb.h"
+#include "ebb.h"
 
 
-/* Test that things work sanely अगर we have no handler */
+/* Test that things work sanely if we have no handler */
 
-अटल पूर्णांक no_handler_test(व्योम)
-अणु
-	काष्ठा event event;
+static int no_handler_test(void)
+{
+	struct event event;
 	u64 val;
-	पूर्णांक i;
+	int i;
 
 	SKIP_IF(!ebb_is_supported());
 
@@ -29,7 +28,7 @@
 	event.attr.exclude_hv = 1;
 	event.attr.exclude_idle = 1;
 
-	FAIL_IF(event_खोलो(&event));
+	FAIL_IF(event_open(&event));
 	FAIL_IF(ebb_event_enable(&event));
 
 	val = mfspr(SPRN_EBBHR);
@@ -39,8 +38,8 @@
 	sample_period = 1000;
 	mtspr(SPRN_PMC1, pmc_sample_period(sample_period));
 
-	/* Spin to make sure the event has समय to overflow */
-	क्रम (i = 0; i < 1000; i++)
+	/* Spin to make sure the event has time to overflow */
+	for (i = 0; i < 1000; i++)
 		mb();
 
 	dump_ebb_state();
@@ -49,16 +48,16 @@
 	val = mfspr(SPRN_MMCR0);
 	FAIL_IF(val != 0x0000000080000080);
 
-	event_बंद(&event);
+	event_close(&event);
 
 	dump_ebb_state();
 
 	/* The real test is that we never took an EBB at 0x0 */
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक मुख्य(व्योम)
-अणु
-	वापस test_harness(no_handler_test,"no_handler_test");
-पूर्ण
+int main(void)
+{
+	return test_harness(no_handler_test,"no_handler_test");
+}

@@ -1,282 +1,281 @@
-<शैली गुरु>
 
 /*
 ===============================================================================
 
-This C header file is part of the SoftFloat IEC/IEEE Floating-poपूर्णांक
+This C header file is part of the SoftFloat IEC/IEEE Floating-point
 Arithmetic Package, Release 2.
 
 Written by John R. Hauser.  This work was made possible in part by the
 International Computer Science Institute, located at Suite 600, 1947 Center
-Street, Berkeley, Calअगरornia 94704.  Funding was partially provided by the
+Street, Berkeley, California 94704.  Funding was partially provided by the
 National Science Foundation under grant MIP-9311980.  The original version
-of this code was written as part of a project to build a fixed-poपूर्णांक vector
-processor in collaboration with the University of Calअगरornia at Berkeley,
-overseen by Profs. Nelson Morgan and John Wawrzynek.  More inक्रमmation
+of this code was written as part of a project to build a fixed-point vector
+processor in collaboration with the University of California at Berkeley,
+overseen by Profs. Nelson Morgan and John Wawrzynek.  More information
 is available through the Web page
 http://www.jhauser.us/arithmetic/SoftFloat-2b/SoftFloat-source.txt
 
-THIS SOFTWARE IS DISTRIBUTED AS IS, FOR FREE.  Although reasonable efक्रमt
-has been made to aव्योम it, THIS SOFTWARE MAY CONTAIN FAULTS THAT WILL AT
+THIS SOFTWARE IS DISTRIBUTED AS IS, FOR FREE.  Although reasonable effort
+has been made to avoid it, THIS SOFTWARE MAY CONTAIN FAULTS THAT WILL AT
 TIMES RESULT IN INCORRECT BEHAVIOR.  USE OF THIS SOFTWARE IS RESTRICTED TO
 PERSONS AND ORGANIZATIONS WHO CAN AND WILL TAKE FULL RESPONSIBILITY FOR ANY
 AND ALL LOSSES, COSTS, OR OTHER PROBLEMS ARISING FROM ITS USE.
 
-Derivative works are acceptable, even क्रम commercial purposes, so दीर्घ as
+Derivative works are acceptable, even for commercial purposes, so long as
 (1) they include prominent notice that the work is derivative, and (2) they
-include prominent notice akin to these three paragraphs क्रम those parts of
+include prominent notice akin to these three paragraphs for those parts of
 this code that are retained.
 
 ===============================================================================
 */
 
-#अगर_अघोषित __SOFTFLOAT_H__
-#घोषणा __SOFTFLOAT_H__
+#ifndef __SOFTFLOAT_H__
+#define __SOFTFLOAT_H__
 
 
 /*
 -------------------------------------------------------------------------------
-The macro `FLOATX80' must be defined to enable the extended द्विगुन-precision
-भग्नing-poपूर्णांक क्रमmat `भग्नx80'.  If this macro is not defined, the
-`भग्नx80' type will not be defined, and none of the functions that either
-input or output the `भग्नx80' type will be defined.
+The macro `FLOATX80' must be defined to enable the extended double-precision
+floating-point format `floatx80'.  If this macro is not defined, the
+`floatx80' type will not be defined, and none of the functions that either
+input or output the `floatx80' type will be defined.
 -------------------------------------------------------------------------------
 */
-#अगर_घोषित CONFIG_FPE_NWFPE_XP
-#घोषणा FLOATX80
-#पूर्ण_अगर
+#ifdef CONFIG_FPE_NWFPE_XP
+#define FLOATX80
+#endif
 
 /*
 -------------------------------------------------------------------------------
-Software IEC/IEEE भग्नing-poपूर्णांक types.
+Software IEC/IEEE floating-point types.
 -------------------------------------------------------------------------------
 */
-प्रकार u32 भग्न32;
-प्रकार u64 भग्न64;
-प्रकार काष्ठा अणु
-#अगर_घोषित __ARMEB__
+typedef u32 float32;
+typedef u64 float64;
+typedef struct {
+#ifdef __ARMEB__
     u16 __padding;
     u16 high;
-#अन्यथा
+#else
     u16 high;
     u16 __padding;
-#पूर्ण_अगर
+#endif
     u64 low;
-पूर्ण  __attribute__ ((packed,aligned(4))) भग्नx80;
+}  __attribute__ ((packed,aligned(4))) floatx80;
 
 /*
 -------------------------------------------------------------------------------
-Software IEC/IEEE भग्नing-poपूर्णांक underflow tininess-detection mode.
+Software IEC/IEEE floating-point underflow tininess-detection mode.
 -------------------------------------------------------------------------------
 */
-बाह्य चिन्हित अक्षर भग्न_detect_tininess;
-क्रमागत अणु
-    भग्न_tininess_after_rounding  = 0,
-    भग्न_tininess_beक्रमe_rounding = 1
-पूर्ण;
+extern signed char float_detect_tininess;
+enum {
+    float_tininess_after_rounding  = 0,
+    float_tininess_before_rounding = 1
+};
 
 /*
 -------------------------------------------------------------------------------
-Software IEC/IEEE भग्नing-poपूर्णांक rounding mode.
+Software IEC/IEEE floating-point rounding mode.
 -------------------------------------------------------------------------------
 */
-//बाह्य पूर्णांक8 भग्न_rounding_mode;
-क्रमागत अणु
-    भग्न_round_nearest_even = 0,
-    भग्न_round_to_zero      = 1,
-    भग्न_round_करोwn         = 2,
-    भग्न_round_up           = 3
-पूर्ण;
+//extern int8 float_rounding_mode;
+enum {
+    float_round_nearest_even = 0,
+    float_round_to_zero      = 1,
+    float_round_down         = 2,
+    float_round_up           = 3
+};
 
 /*
 -------------------------------------------------------------------------------
-Software IEC/IEEE भग्नing-poपूर्णांक exception flags.
+Software IEC/IEEE floating-point exception flags.
 -------------------------------------------------------------------------------
-क्रमागत अणु
-    भग्न_flag_inexact   =  1,
-    भग्न_flag_underflow =  2,
-    भग्न_flag_overflow  =  4,
-    भग्न_flag_भागbyzero =  8,
-    भग्न_flag_invalid   = 16
-पूर्ण;
+enum {
+    float_flag_inexact   =  1,
+    float_flag_underflow =  2,
+    float_flag_overflow  =  4,
+    float_flag_divbyzero =  8,
+    float_flag_invalid   = 16
+};
 
 ScottB: November 4, 1998
-Changed the क्रमागतeration to match the bit order in the FPA11.
+Changed the enumeration to match the bit order in the FPA11.
 */
 
-क्रमागत अणु
-    भग्न_flag_invalid   =  1,
-    भग्न_flag_भागbyzero =  2,
-    भग्न_flag_overflow  =  4,
-    भग्न_flag_underflow =  8,
-    भग्न_flag_inexact   = 16
-पूर्ण;
+enum {
+    float_flag_invalid   =  1,
+    float_flag_divbyzero =  2,
+    float_flag_overflow  =  4,
+    float_flag_underflow =  8,
+    float_flag_inexact   = 16
+};
 
 /*
 -------------------------------------------------------------------------------
-Routine to उठाओ any or all of the software IEC/IEEE भग्नing-poपूर्णांक
+Routine to raise any or all of the software IEC/IEEE floating-point
 exception flags.
 -------------------------------------------------------------------------------
 */
-व्योम भग्न_उठाओ( चिन्हित अक्षर );
+void float_raise( signed char );
 
 /*
 -------------------------------------------------------------------------------
-Software IEC/IEEE पूर्णांकeger-to-भग्नing-poपूर्णांक conversion routines.
+Software IEC/IEEE integer-to-floating-point conversion routines.
 -------------------------------------------------------------------------------
 */
-भग्न32 पूर्णांक32_to_भग्न32( काष्ठा roundingData *, चिन्हित पूर्णांक );
-भग्न64 पूर्णांक32_to_भग्न64( चिन्हित पूर्णांक );
-#अगर_घोषित FLOATX80
-भग्नx80 पूर्णांक32_to_भग्नx80( चिन्हित पूर्णांक );
-#पूर्ण_अगर
+float32 int32_to_float32( struct roundingData *, signed int );
+float64 int32_to_float64( signed int );
+#ifdef FLOATX80
+floatx80 int32_to_floatx80( signed int );
+#endif
 
 /*
 -------------------------------------------------------------------------------
 Software IEC/IEEE single-precision conversion routines.
 -------------------------------------------------------------------------------
 */
-चिन्हित पूर्णांक भग्न32_to_पूर्णांक32( काष्ठा roundingData *, भग्न32 );
-चिन्हित पूर्णांक भग्न32_to_पूर्णांक32_round_to_zero( भग्न32 );
-भग्न64 भग्न32_to_भग्न64( भग्न32 );
-#अगर_घोषित FLOATX80
-भग्नx80 भग्न32_to_भग्नx80( भग्न32 );
-#पूर्ण_अगर
+signed int float32_to_int32( struct roundingData *, float32 );
+signed int float32_to_int32_round_to_zero( float32 );
+float64 float32_to_float64( float32 );
+#ifdef FLOATX80
+floatx80 float32_to_floatx80( float32 );
+#endif
 
 /*
 -------------------------------------------------------------------------------
 Software IEC/IEEE single-precision operations.
 -------------------------------------------------------------------------------
 */
-भग्न32 भग्न32_round_to_पूर्णांक( काष्ठा roundingData*, भग्न32 );
-भग्न32 भग्न32_add( काष्ठा roundingData *, भग्न32, भग्न32 );
-भग्न32 भग्न32_sub( काष्ठा roundingData *, भग्न32, भग्न32 );
-भग्न32 भग्न32_mul( काष्ठा roundingData *, भग्न32, भग्न32 );
-भग्न32 भग्न32_भाग( काष्ठा roundingData *, भग्न32, भग्न32 );
-भग्न32 भग्न32_rem( काष्ठा roundingData *, भग्न32, भग्न32 );
-भग्न32 भग्न32_वर्ग_मूल( काष्ठा roundingData*, भग्न32 );
-अक्षर भग्न32_eq( भग्न32, भग्न32 );
-अक्षर भग्न32_le( भग्न32, भग्न32 );
-अक्षर भग्न32_lt( भग्न32, भग्न32 );
-अक्षर भग्न32_eq_संकेतing( भग्न32, भग्न32 );
-अक्षर भग्न32_le_quiet( भग्न32, भग्न32 );
-अक्षर भग्न32_lt_quiet( भग्न32, भग्न32 );
-अक्षर भग्न32_is_संकेतing_nan( भग्न32 );
+float32 float32_round_to_int( struct roundingData*, float32 );
+float32 float32_add( struct roundingData *, float32, float32 );
+float32 float32_sub( struct roundingData *, float32, float32 );
+float32 float32_mul( struct roundingData *, float32, float32 );
+float32 float32_div( struct roundingData *, float32, float32 );
+float32 float32_rem( struct roundingData *, float32, float32 );
+float32 float32_sqrt( struct roundingData*, float32 );
+char float32_eq( float32, float32 );
+char float32_le( float32, float32 );
+char float32_lt( float32, float32 );
+char float32_eq_signaling( float32, float32 );
+char float32_le_quiet( float32, float32 );
+char float32_lt_quiet( float32, float32 );
+char float32_is_signaling_nan( float32 );
 
 /*
 -------------------------------------------------------------------------------
-Software IEC/IEEE द्विगुन-precision conversion routines.
+Software IEC/IEEE double-precision conversion routines.
 -------------------------------------------------------------------------------
 */
-चिन्हित पूर्णांक भग्न64_to_पूर्णांक32( काष्ठा roundingData *, भग्न64 );
-चिन्हित पूर्णांक भग्न64_to_पूर्णांक32_round_to_zero( भग्न64 );
-भग्न32 भग्न64_to_भग्न32( काष्ठा roundingData *, भग्न64 );
-#अगर_घोषित FLOATX80
-भग्नx80 भग्न64_to_भग्नx80( भग्न64 );
-#पूर्ण_अगर
+signed int float64_to_int32( struct roundingData *, float64 );
+signed int float64_to_int32_round_to_zero( float64 );
+float32 float64_to_float32( struct roundingData *, float64 );
+#ifdef FLOATX80
+floatx80 float64_to_floatx80( float64 );
+#endif
 
 /*
 -------------------------------------------------------------------------------
-Software IEC/IEEE द्विगुन-precision operations.
+Software IEC/IEEE double-precision operations.
 -------------------------------------------------------------------------------
 */
-भग्न64 भग्न64_round_to_पूर्णांक( काष्ठा roundingData *, भग्न64 );
-भग्न64 भग्न64_add( काष्ठा roundingData *, भग्न64, भग्न64 );
-भग्न64 भग्न64_sub( काष्ठा roundingData *, भग्न64, भग्न64 );
-भग्न64 भग्न64_mul( काष्ठा roundingData *, भग्न64, भग्न64 );
-भग्न64 भग्न64_भाग( काष्ठा roundingData *, भग्न64, भग्न64 );
-भग्न64 भग्न64_rem( काष्ठा roundingData *, भग्न64, भग्न64 );
-भग्न64 भग्न64_वर्ग_मूल( काष्ठा roundingData *, भग्न64 );
-अक्षर भग्न64_eq( भग्न64, भग्न64 );
-अक्षर भग्न64_le( भग्न64, भग्न64 );
-अक्षर भग्न64_lt( भग्न64, भग्न64 );
-अक्षर भग्न64_eq_संकेतing( भग्न64, भग्न64 );
-अक्षर भग्न64_le_quiet( भग्न64, भग्न64 );
-अक्षर भग्न64_lt_quiet( भग्न64, भग्न64 );
-अक्षर भग्न64_is_संकेतing_nan( भग्न64 );
+float64 float64_round_to_int( struct roundingData *, float64 );
+float64 float64_add( struct roundingData *, float64, float64 );
+float64 float64_sub( struct roundingData *, float64, float64 );
+float64 float64_mul( struct roundingData *, float64, float64 );
+float64 float64_div( struct roundingData *, float64, float64 );
+float64 float64_rem( struct roundingData *, float64, float64 );
+float64 float64_sqrt( struct roundingData *, float64 );
+char float64_eq( float64, float64 );
+char float64_le( float64, float64 );
+char float64_lt( float64, float64 );
+char float64_eq_signaling( float64, float64 );
+char float64_le_quiet( float64, float64 );
+char float64_lt_quiet( float64, float64 );
+char float64_is_signaling_nan( float64 );
 
-#अगर_घोषित FLOATX80
+#ifdef FLOATX80
 
 /*
 -------------------------------------------------------------------------------
-Software IEC/IEEE extended द्विगुन-precision conversion routines.
+Software IEC/IEEE extended double-precision conversion routines.
 -------------------------------------------------------------------------------
 */
-चिन्हित पूर्णांक भग्नx80_to_पूर्णांक32( काष्ठा roundingData *, भग्नx80 );
-चिन्हित पूर्णांक भग्नx80_to_पूर्णांक32_round_to_zero( भग्नx80 );
-भग्न32 भग्नx80_to_भग्न32( काष्ठा roundingData *, भग्नx80 );
-भग्न64 भग्नx80_to_भग्न64( काष्ठा roundingData *, भग्नx80 );
+signed int floatx80_to_int32( struct roundingData *, floatx80 );
+signed int floatx80_to_int32_round_to_zero( floatx80 );
+float32 floatx80_to_float32( struct roundingData *, floatx80 );
+float64 floatx80_to_float64( struct roundingData *, floatx80 );
 
 /*
 -------------------------------------------------------------------------------
-Software IEC/IEEE extended द्विगुन-precision operations.
+Software IEC/IEEE extended double-precision operations.
 -------------------------------------------------------------------------------
 */
-भग्नx80 भग्नx80_round_to_पूर्णांक( काष्ठा roundingData *, भग्नx80 );
-भग्नx80 भग्नx80_add( काष्ठा roundingData *, भग्नx80, भग्नx80 );
-भग्नx80 भग्नx80_sub( काष्ठा roundingData *, भग्नx80, भग्नx80 );
-भग्नx80 भग्नx80_mul( काष्ठा roundingData *, भग्नx80, भग्नx80 );
-भग्नx80 भग्नx80_भाग( काष्ठा roundingData *, भग्नx80, भग्नx80 );
-भग्नx80 भग्नx80_rem( काष्ठा roundingData *, भग्नx80, भग्नx80 );
-भग्नx80 भग्नx80_वर्ग_मूल( काष्ठा roundingData *, भग्नx80 );
-अक्षर भग्नx80_eq( भग्नx80, भग्नx80 );
-अक्षर भग्नx80_le( भग्नx80, भग्नx80 );
-अक्षर भग्नx80_lt( भग्नx80, भग्नx80 );
-अक्षर भग्नx80_eq_संकेतing( भग्नx80, भग्नx80 );
-अक्षर भग्नx80_le_quiet( भग्नx80, भग्नx80 );
-अक्षर भग्नx80_lt_quiet( भग्नx80, भग्नx80 );
-अक्षर भग्नx80_is_संकेतing_nan( भग्नx80 );
+floatx80 floatx80_round_to_int( struct roundingData *, floatx80 );
+floatx80 floatx80_add( struct roundingData *, floatx80, floatx80 );
+floatx80 floatx80_sub( struct roundingData *, floatx80, floatx80 );
+floatx80 floatx80_mul( struct roundingData *, floatx80, floatx80 );
+floatx80 floatx80_div( struct roundingData *, floatx80, floatx80 );
+floatx80 floatx80_rem( struct roundingData *, floatx80, floatx80 );
+floatx80 floatx80_sqrt( struct roundingData *, floatx80 );
+char floatx80_eq( floatx80, floatx80 );
+char floatx80_le( floatx80, floatx80 );
+char floatx80_lt( floatx80, floatx80 );
+char floatx80_eq_signaling( floatx80, floatx80 );
+char floatx80_le_quiet( floatx80, floatx80 );
+char floatx80_lt_quiet( floatx80, floatx80 );
+char floatx80_is_signaling_nan( floatx80 );
 
-बाह्य flag भग्नx80_is_nan(भग्नx80);
+extern flag floatx80_is_nan(floatx80);
 
-#पूर्ण_अगर
+#endif
 
-अटल अंतरभूत flag extractFloat32Sign(भग्न32 a)
-अणु
-	वापस a >> 31;
-पूर्ण
+static inline flag extractFloat32Sign(float32 a)
+{
+	return a >> 31;
+}
 
-अटल अंतरभूत flag भग्न32_eq_nocheck(भग्न32 a, भग्न32 b)
-अणु
-	वापस (a == b) || ((bits32) ((a | b) << 1) == 0);
-पूर्ण
+static inline flag float32_eq_nocheck(float32 a, float32 b)
+{
+	return (a == b) || ((bits32) ((a | b) << 1) == 0);
+}
 
-अटल अंतरभूत flag भग्न32_lt_nocheck(भग्न32 a, भग्न32 b)
-अणु
+static inline flag float32_lt_nocheck(float32 a, float32 b)
+{
 	flag aSign, bSign;
 
 	aSign = extractFloat32Sign(a);
 	bSign = extractFloat32Sign(b);
-	अगर (aSign != bSign)
-		वापस aSign && ((bits32) ((a | b) << 1) != 0);
-	वापस (a != b) && (aSign ^ (a < b));
-पूर्ण
+	if (aSign != bSign)
+		return aSign && ((bits32) ((a | b) << 1) != 0);
+	return (a != b) && (aSign ^ (a < b));
+}
 
-अटल अंतरभूत flag extractFloat64Sign(भग्न64 a)
-अणु
-	वापस a >> 63;
-पूर्ण
+static inline flag extractFloat64Sign(float64 a)
+{
+	return a >> 63;
+}
 
-अटल अंतरभूत flag भग्न64_eq_nocheck(भग्न64 a, भग्न64 b)
-अणु
-	वापस (a == b) || ((bits64) ((a | b) << 1) == 0);
-पूर्ण
+static inline flag float64_eq_nocheck(float64 a, float64 b)
+{
+	return (a == b) || ((bits64) ((a | b) << 1) == 0);
+}
 
-अटल अंतरभूत flag भग्न64_lt_nocheck(भग्न64 a, भग्न64 b)
-अणु
+static inline flag float64_lt_nocheck(float64 a, float64 b)
+{
 	flag aSign, bSign;
 
 	aSign = extractFloat64Sign(a);
 	bSign = extractFloat64Sign(b);
-	अगर (aSign != bSign)
-		वापस aSign && ((bits64) ((a | b) << 1) != 0);
-	वापस (a != b) && (aSign ^ (a < b));
-पूर्ण
+	if (aSign != bSign)
+		return aSign && ((bits64) ((a | b) << 1) != 0);
+	return (a != b) && (aSign ^ (a < b));
+}
 
-बाह्य flag भग्न32_is_nan( भग्न32 a );
-बाह्य flag भग्न64_is_nan( भग्न64 a );
+extern flag float32_is_nan( float32 a );
+extern flag float64_is_nan( float64 a );
 
-बाह्य पूर्णांक32 भग्न64_to_uपूर्णांक32( काष्ठा roundingData *roundData, भग्न64 a );
-बाह्य पूर्णांक32 भग्न64_to_uपूर्णांक32_round_to_zero( भग्न64 a );
+extern int32 float64_to_uint32( struct roundingData *roundData, float64 a );
+extern int32 float64_to_uint32_round_to_zero( float64 a );
 
-#पूर्ण_अगर
+#endif

@@ -1,88 +1,87 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 //
 // Analog Devices ADAU7118 8 channel PDM-to-I2S/TDM Converter driver over I2C
 //
 // Copyright 2019 Analog Devices Inc.
 
-#समावेश <linux/i2c.h>
-#समावेश <linux/module.h>
-#समावेश <linux/regmap.h>
+#include <linux/i2c.h>
+#include <linux/module.h>
+#include <linux/regmap.h>
 
-#समावेश "adau7118.h"
+#include "adau7118.h"
 
-अटल स्थिर काष्ठा reg_शेष adau7118_reg_शेषs[] = अणु
-	अणु ADAU7118_REG_VENDOR_ID, 0x41 पूर्ण,
-	अणु ADAU7118_REG_DEVICE_ID1, 0x71 पूर्ण,
-	अणु ADAU7118_REG_DEVICE_ID2, 0x18 पूर्ण,
-	अणु ADAU7118_REG_REVISION_ID, 0x00 पूर्ण,
-	अणु ADAU7118_REG_ENABLES, 0x3F पूर्ण,
-	अणु ADAU7118_REG_DEC_RATIO_CLK_MAP, 0xC0 पूर्ण,
-	अणु ADAU7118_REG_HPF_CONTROL, 0xD0 पूर्ण,
-	अणु ADAU7118_REG_SPT_CTRL1, 0x41 पूर्ण,
-	अणु ADAU7118_REG_SPT_CTRL2, 0x00 पूर्ण,
-	अणु ADAU7118_REG_SPT_CX(0), 0x01 पूर्ण,
-	अणु ADAU7118_REG_SPT_CX(1), 0x11 पूर्ण,
-	अणु ADAU7118_REG_SPT_CX(2), 0x21 पूर्ण,
-	अणु ADAU7118_REG_SPT_CX(3), 0x31 पूर्ण,
-	अणु ADAU7118_REG_SPT_CX(4), 0x41 पूर्ण,
-	अणु ADAU7118_REG_SPT_CX(5), 0x51 पूर्ण,
-	अणु ADAU7118_REG_SPT_CX(6), 0x61 पूर्ण,
-	अणु ADAU7118_REG_SPT_CX(7), 0x71 पूर्ण,
-	अणु ADAU7118_REG_DRIVE_STRENGTH, 0x2a पूर्ण,
-	अणु ADAU7118_REG_RESET, 0x00 पूर्ण,
-पूर्ण;
+static const struct reg_default adau7118_reg_defaults[] = {
+	{ ADAU7118_REG_VENDOR_ID, 0x41 },
+	{ ADAU7118_REG_DEVICE_ID1, 0x71 },
+	{ ADAU7118_REG_DEVICE_ID2, 0x18 },
+	{ ADAU7118_REG_REVISION_ID, 0x00 },
+	{ ADAU7118_REG_ENABLES, 0x3F },
+	{ ADAU7118_REG_DEC_RATIO_CLK_MAP, 0xC0 },
+	{ ADAU7118_REG_HPF_CONTROL, 0xD0 },
+	{ ADAU7118_REG_SPT_CTRL1, 0x41 },
+	{ ADAU7118_REG_SPT_CTRL2, 0x00 },
+	{ ADAU7118_REG_SPT_CX(0), 0x01 },
+	{ ADAU7118_REG_SPT_CX(1), 0x11 },
+	{ ADAU7118_REG_SPT_CX(2), 0x21 },
+	{ ADAU7118_REG_SPT_CX(3), 0x31 },
+	{ ADAU7118_REG_SPT_CX(4), 0x41 },
+	{ ADAU7118_REG_SPT_CX(5), 0x51 },
+	{ ADAU7118_REG_SPT_CX(6), 0x61 },
+	{ ADAU7118_REG_SPT_CX(7), 0x71 },
+	{ ADAU7118_REG_DRIVE_STRENGTH, 0x2a },
+	{ ADAU7118_REG_RESET, 0x00 },
+};
 
-अटल bool adau7118_अस्थिर(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
-अणु
-	वापस (reg == ADAU7118_REG_RESET);
-पूर्ण
+static bool adau7118_volatile(struct device *dev, unsigned int reg)
+{
+	return (reg == ADAU7118_REG_RESET);
+}
 
 
-अटल स्थिर काष्ठा regmap_config adau7118_regmap_config = अणु
+static const struct regmap_config adau7118_regmap_config = {
 	.reg_bits = 8,
 	.val_bits = 8,
-	.reg_शेषs = adau7118_reg_शेषs,
-	.num_reg_शेषs = ARRAY_SIZE(adau7118_reg_शेषs),
+	.reg_defaults = adau7118_reg_defaults,
+	.num_reg_defaults = ARRAY_SIZE(adau7118_reg_defaults),
 	.cache_type = REGCACHE_RBTREE,
-	.max_रेजिस्टर = ADAU7118_REG_RESET,
-	.अस्थिर_reg = adau7118_अस्थिर,
-पूर्ण;
+	.max_register = ADAU7118_REG_RESET,
+	.volatile_reg = adau7118_volatile,
+};
 
-अटल पूर्णांक adau7118_probe_i2c(काष्ठा i2c_client *i2c,
-			      स्थिर काष्ठा i2c_device_id *id)
-अणु
-	काष्ठा regmap *map;
+static int adau7118_probe_i2c(struct i2c_client *i2c,
+			      const struct i2c_device_id *id)
+{
+	struct regmap *map;
 
 	map = devm_regmap_init_i2c(i2c, &adau7118_regmap_config);
-	अगर (IS_ERR(map)) अणु
+	if (IS_ERR(map)) {
 		dev_err(&i2c->dev, "Failed to init regmap %ld\n", PTR_ERR(map));
-		वापस PTR_ERR(map);
-	पूर्ण
+		return PTR_ERR(map);
+	}
 
-	वापस adau7118_probe(&i2c->dev, map, false);
-पूर्ण
+	return adau7118_probe(&i2c->dev, map, false);
+}
 
-अटल स्थिर काष्ठा of_device_id adau7118_of_match[] = अणु
-	अणु .compatible = "adi,adau7118" पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct of_device_id adau7118_of_match[] = {
+	{ .compatible = "adi,adau7118" },
+	{}
+};
 MODULE_DEVICE_TABLE(of, adau7118_of_match);
 
-अटल स्थिर काष्ठा i2c_device_id adau7118_id[] = अणु
-	अणु"adau7118", 0पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct i2c_device_id adau7118_id[] = {
+	{"adau7118", 0},
+	{}
+};
 MODULE_DEVICE_TABLE(i2c, adau7118_id);
 
-अटल काष्ठा i2c_driver adau7118_driver = अणु
-	.driver = अणु
+static struct i2c_driver adau7118_driver = {
+	.driver = {
 		.name = "adau7118",
 		.of_match_table = adau7118_of_match,
-	पूर्ण,
+	},
 	.probe = adau7118_probe_i2c,
 	.id_table = adau7118_id,
-पूर्ण;
+};
 module_i2c_driver(adau7118_driver);
 
 MODULE_AUTHOR("Nuno Sa <nuno.sa@analog.com>");

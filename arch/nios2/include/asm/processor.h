@@ -1,4 +1,3 @@
-<शैली गुरु>
 /*
  * Copyright (C) 2013 Altera Corporation
  * Copyright (C) 2010 Tobias Klauser <tklauser@distanz.ch>
@@ -6,81 +5,81 @@
  * Copyright (C) 2001 Ken Hill (khill@microtronix.com)
  *                    Vic Phillips (vic@microtronix.com)
  *
- * based on SPARC यंत्र/processor_32.h which is:
+ * based on SPARC asm/processor_32.h which is:
  *
  * Copyright (C) 1994 David S. Miller
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the मुख्य directory of this archive
- * क्रम more details.
+ * License.  See the file "COPYING" in the main directory of this archive
+ * for more details.
  */
 
-#अगर_अघोषित _ASM_NIOS2_PROCESSOR_H
-#घोषणा _ASM_NIOS2_PROCESSOR_H
+#ifndef _ASM_NIOS2_PROCESSOR_H
+#define _ASM_NIOS2_PROCESSOR_H
 
-#समावेश <यंत्र/ptrace.h>
-#समावेश <यंत्र/रेजिस्टरs.h>
-#समावेश <यंत्र/page.h>
+#include <asm/ptrace.h>
+#include <asm/registers.h>
+#include <asm/page.h>
 
-#घोषणा NIOS2_FLAG_KTHREAD	0x00000001	/* task is a kernel thपढ़ो */
+#define NIOS2_FLAG_KTHREAD	0x00000001	/* task is a kernel thread */
 
-#घोषणा NIOS2_OP_NOP		0x1883a
-#घोषणा NIOS2_OP_BREAK		0x3da03a
+#define NIOS2_OP_NOP		0x1883a
+#define NIOS2_OP_BREAK		0x3da03a
 
-#अगर_घोषित __KERNEL__
+#ifdef __KERNEL__
 
-#घोषणा STACK_TOP	TASK_SIZE
-#घोषणा STACK_TOP_MAX	STACK_TOP
+#define STACK_TOP	TASK_SIZE
+#define STACK_TOP_MAX	STACK_TOP
 
-#पूर्ण_अगर /* __KERNEL__ */
+#endif /* __KERNEL__ */
 
 /* Kuser helpers is mapped to this user space address */
-#घोषणा KUSER_BASE		0x1000
-#घोषणा KUSER_SIZE		(PAGE_SIZE)
-#अगर_अघोषित __ASSEMBLY__
+#define KUSER_BASE		0x1000
+#define KUSER_SIZE		(PAGE_SIZE)
+#ifndef __ASSEMBLY__
 
 # define TASK_SIZE		0x7FFF0000UL
 # define TASK_UNMAPPED_BASE	(PAGE_ALIGN(TASK_SIZE / 3))
 
-/* The Nios processor specअगरic thपढ़ो काष्ठा. */
-काष्ठा thपढ़ो_काष्ठा अणु
-	काष्ठा pt_regs *kregs;
+/* The Nios processor specific thread struct. */
+struct thread_struct {
+	struct pt_regs *kregs;
 
-	/* Context चयन saved kernel state. */
-	अचिन्हित दीर्घ ksp;
-	अचिन्हित दीर्घ kpsr;
-पूर्ण;
+	/* Context switch saved kernel state. */
+	unsigned long ksp;
+	unsigned long kpsr;
+};
 
-#घोषणा INIT_MMAP \
-	अणु &init_mm, (0), (0), __pgprot(0x0), VM_READ | VM_WRITE | VM_EXEC पूर्ण
+#define INIT_MMAP \
+	{ &init_mm, (0), (0), __pgprot(0x0), VM_READ | VM_WRITE | VM_EXEC }
 
-# define INIT_THREAD अणु			\
-	.kregs	= शून्य,			\
+# define INIT_THREAD {			\
+	.kregs	= NULL,			\
 	.ksp	= 0,			\
 	.kpsr	= 0,			\
-पूर्ण
+}
 
-बाह्य व्योम start_thपढ़ो(काष्ठा pt_regs *regs, अचिन्हित दीर्घ pc,
-			अचिन्हित दीर्घ sp);
+extern void start_thread(struct pt_regs *regs, unsigned long pc,
+			unsigned long sp);
 
-काष्ठा task_काष्ठा;
+struct task_struct;
 
-/* Free all resources held by a thपढ़ो. */
-अटल अंतरभूत व्योम release_thपढ़ो(काष्ठा task_काष्ठा *dead_task)
-अणु
-पूर्ण
+/* Free all resources held by a thread. */
+static inline void release_thread(struct task_struct *dead_task)
+{
+}
 
-बाह्य अचिन्हित दीर्घ get_wchan(काष्ठा task_काष्ठा *p);
+extern unsigned long get_wchan(struct task_struct *p);
 
-#घोषणा task_pt_regs(p) \
-	((काष्ठा pt_regs *)(THREAD_SIZE + task_stack_page(p)) - 1)
+#define task_pt_regs(p) \
+	((struct pt_regs *)(THREAD_SIZE + task_stack_page(p)) - 1)
 
 /* Used by procfs */
-#घोषणा KSTK_EIP(tsk)	((tsk)->thपढ़ो.kregs->ea)
-#घोषणा KSTK_ESP(tsk)	((tsk)->thपढ़ो.kregs->sp)
+#define KSTK_EIP(tsk)	((tsk)->thread.kregs->ea)
+#define KSTK_ESP(tsk)	((tsk)->thread.kregs->sp)
 
-#घोषणा cpu_relax()	barrier()
+#define cpu_relax()	barrier()
 
-#पूर्ण_अगर /* __ASSEMBLY__ */
+#endif /* __ASSEMBLY__ */
 
-#पूर्ण_अगर /* _ASM_NIOS2_PROCESSOR_H */
+#endif /* _ASM_NIOS2_PROCESSOR_H */

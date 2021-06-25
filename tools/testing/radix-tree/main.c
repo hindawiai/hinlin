@@ -1,308 +1,307 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <मानकपन.स>
-#समावेश <मानककोष.स>
-#समावेश <unistd.h>
-#समावेश <समय.स>
-#समावेश <निश्चित.स>
-#समावेश <सीमा.स>
+// SPDX-License-Identifier: GPL-2.0
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <time.h>
+#include <assert.h>
+#include <limits.h>
 
-#समावेश <linux/slab.h>
-#समावेश <linux/radix-tree.h>
+#include <linux/slab.h>
+#include <linux/radix-tree.h>
 
-#समावेश "test.h"
-#समावेश "regression.h"
+#include "test.h"
+#include "regression.h"
 
-व्योम __gang_check(अचिन्हित दीर्घ middle, दीर्घ करोwn, दीर्घ up, पूर्णांक chunk, पूर्णांक hop)
-अणु
-	दीर्घ idx;
+void __gang_check(unsigned long middle, long down, long up, int chunk, int hop)
+{
+	long idx;
 	RADIX_TREE(tree, GFP_KERNEL);
 
 	middle = 1 << 30;
 
-	क्रम (idx = -करोwn; idx < up; idx++)
+	for (idx = -down; idx < up; idx++)
 		item_insert(&tree, middle + idx);
 
-	item_check_असलent(&tree, middle - करोwn - 1);
-	क्रम (idx = -करोwn; idx < up; idx++)
+	item_check_absent(&tree, middle - down - 1);
+	for (idx = -down; idx < up; idx++)
 		item_check_present(&tree, middle + idx);
-	item_check_असलent(&tree, middle + up);
+	item_check_absent(&tree, middle + up);
 
-	अगर (chunk > 0) अणु
-		item_gang_check_present(&tree, middle - करोwn, up + करोwn,
+	if (chunk > 0) {
+		item_gang_check_present(&tree, middle - down, up + down,
 				chunk, hop);
-		item_full_scan(&tree, middle - करोwn, करोwn + up, chunk);
-	पूर्ण
-	item_समाप्त_tree(&tree);
-पूर्ण
+		item_full_scan(&tree, middle - down, down + up, chunk);
+	}
+	item_kill_tree(&tree);
+}
 
-व्योम gang_check(व्योम)
-अणु
+void gang_check(void)
+{
 	__gang_check(1UL << 30, 128, 128, 35, 2);
 	__gang_check(1UL << 31, 128, 128, 32, 32);
 	__gang_check(1UL << 31, 128, 128, 32, 100);
 	__gang_check(1UL << 31, 128, 128, 17, 7);
 	__gang_check(0xffff0000UL, 0, 65536, 17, 7);
 	__gang_check(0xfffffffeUL, 1, 1, 17, 7);
-पूर्ण
+}
 
-व्योम __big_gang_check(व्योम)
-अणु
-	अचिन्हित दीर्घ start;
-	पूर्णांक wrapped = 0;
+void __big_gang_check(void)
+{
+	unsigned long start;
+	int wrapped = 0;
 
 	start = 0;
-	करो अणु
-		अचिन्हित दीर्घ old_start;
+	do {
+		unsigned long old_start;
 
-//		म_लिखो("0x%08lx\n", start);
-		__gang_check(start, अक्रम() % 113 + 1, अक्रम() % 71,
-				अक्रम() % 157, अक्रम() % 91 + 1);
+//		printf("0x%08lx\n", start);
+		__gang_check(start, rand() % 113 + 1, rand() % 71,
+				rand() % 157, rand() % 91 + 1);
 		old_start = start;
-		start += अक्रम() % 1000000;
+		start += rand() % 1000000;
 		start %= 1ULL << 33;
-		अगर (start < old_start)
+		if (start < old_start)
 			wrapped = 1;
-	पूर्ण जबतक (!wrapped);
-पूर्ण
+	} while (!wrapped);
+}
 
-व्योम big_gang_check(bool दीर्घ_run)
-अणु
-	पूर्णांक i;
+void big_gang_check(bool long_run)
+{
+	int i;
 
-	क्रम (i = 0; i < (दीर्घ_run ? 1000 : 3); i++) अणु
+	for (i = 0; i < (long_run ? 1000 : 3); i++) {
 		__big_gang_check();
-		prपूर्णांकv(2, "%d ", i);
-		ख_साफ(मानक_निकास);
-	पूर्ण
-पूर्ण
+		printv(2, "%d ", i);
+		fflush(stdout);
+	}
+}
 
-व्योम add_and_check(व्योम)
-अणु
+void add_and_check(void)
+{
 	RADIX_TREE(tree, GFP_KERNEL);
 
 	item_insert(&tree, 44);
 	item_check_present(&tree, 44);
-	item_check_असलent(&tree, 43);
-	item_समाप्त_tree(&tree);
-पूर्ण
+	item_check_absent(&tree, 43);
+	item_kill_tree(&tree);
+}
 
-व्योम dynamic_height_check(व्योम)
-अणु
-	पूर्णांक i;
+void dynamic_height_check(void)
+{
+	int i;
 	RADIX_TREE(tree, GFP_KERNEL);
-	tree_verअगरy_min_height(&tree, 0);
+	tree_verify_min_height(&tree, 0);
 
 	item_insert(&tree, 42);
-	tree_verअगरy_min_height(&tree, 42);
+	tree_verify_min_height(&tree, 42);
 
 	item_insert(&tree, 1000000);
-	tree_verअगरy_min_height(&tree, 1000000);
+	tree_verify_min_height(&tree, 1000000);
 
-	निश्चित(item_delete(&tree, 1000000));
-	tree_verअगरy_min_height(&tree, 42);
+	assert(item_delete(&tree, 1000000));
+	tree_verify_min_height(&tree, 42);
 
-	निश्चित(item_delete(&tree, 42));
-	tree_verअगरy_min_height(&tree, 0);
+	assert(item_delete(&tree, 42));
+	tree_verify_min_height(&tree, 0);
 
-	क्रम (i = 0; i < 1000; i++) अणु
+	for (i = 0; i < 1000; i++) {
 		item_insert(&tree, i);
-		tree_verअगरy_min_height(&tree, i);
-	पूर्ण
+		tree_verify_min_height(&tree, i);
+	}
 
 	i--;
-	क्रम (;;) अणु
-		निश्चित(item_delete(&tree, i));
-		अगर (i == 0) अणु
-			tree_verअगरy_min_height(&tree, 0);
-			अवरोध;
-		पूर्ण
+	for (;;) {
+		assert(item_delete(&tree, i));
+		if (i == 0) {
+			tree_verify_min_height(&tree, 0);
+			break;
+		}
 		i--;
-		tree_verअगरy_min_height(&tree, i);
-	पूर्ण
+		tree_verify_min_height(&tree, i);
+	}
 
-	item_समाप्त_tree(&tree);
-पूर्ण
+	item_kill_tree(&tree);
+}
 
-व्योम check_copied_tags(काष्ठा radix_tree_root *tree, अचिन्हित दीर्घ start, अचिन्हित दीर्घ end, अचिन्हित दीर्घ *idx, पूर्णांक count, पूर्णांक fromtag, पूर्णांक totag)
-अणु
-	पूर्णांक i;
+void check_copied_tags(struct radix_tree_root *tree, unsigned long start, unsigned long end, unsigned long *idx, int count, int fromtag, int totag)
+{
+	int i;
 
-	क्रम (i = 0; i < count; i++) अणु
-/*		अगर (i % 1000 == 0)
-			अक्षर_दो('.'); */
-		अगर (idx[i] < start || idx[i] > end) अणु
-			अगर (item_tag_get(tree, idx[i], totag)) अणु
-				prपूर्णांकv(2, "%lu-%lu: %lu, tags %d-%d\n", start,
+	for (i = 0; i < count; i++) {
+/*		if (i % 1000 == 0)
+			putchar('.'); */
+		if (idx[i] < start || idx[i] > end) {
+			if (item_tag_get(tree, idx[i], totag)) {
+				printv(2, "%lu-%lu: %lu, tags %d-%d\n", start,
 				       end, idx[i], item_tag_get(tree, idx[i],
 								 fromtag),
 				       item_tag_get(tree, idx[i], totag));
-			पूर्ण
-			निश्चित(!item_tag_get(tree, idx[i], totag));
-			जारी;
-		पूर्ण
-		अगर (item_tag_get(tree, idx[i], fromtag) ^
-			item_tag_get(tree, idx[i], totag)) अणु
-			prपूर्णांकv(2, "%lu-%lu: %lu, tags %d-%d\n", start, end,
+			}
+			assert(!item_tag_get(tree, idx[i], totag));
+			continue;
+		}
+		if (item_tag_get(tree, idx[i], fromtag) ^
+			item_tag_get(tree, idx[i], totag)) {
+			printv(2, "%lu-%lu: %lu, tags %d-%d\n", start, end,
 			       idx[i], item_tag_get(tree, idx[i], fromtag),
 			       item_tag_get(tree, idx[i], totag));
-		पूर्ण
-		निश्चित(!(item_tag_get(tree, idx[i], fromtag) ^
+		}
+		assert(!(item_tag_get(tree, idx[i], fromtag) ^
 			 item_tag_get(tree, idx[i], totag)));
-	पूर्ण
-पूर्ण
+	}
+}
 
-#घोषणा ITEMS 50000
+#define ITEMS 50000
 
-व्योम copy_tag_check(व्योम)
-अणु
+void copy_tag_check(void)
+{
 	RADIX_TREE(tree, GFP_KERNEL);
-	अचिन्हित दीर्घ idx[ITEMS];
-	अचिन्हित दीर्घ start, end, count = 0, tagged, cur, पंचांगp;
-	पूर्णांक i;
+	unsigned long idx[ITEMS];
+	unsigned long start, end, count = 0, tagged, cur, tmp;
+	int i;
 
-//	म_लिखो("generating radix tree indices...\n");
-	start = अक्रम();
-	end = अक्रम();
-	अगर (start > end && (अक्रम() % 10)) अणु
+//	printf("generating radix tree indices...\n");
+	start = rand();
+	end = rand();
+	if (start > end && (rand() % 10)) {
 		cur = start;
 		start = end;
 		end = cur;
-	पूर्ण
-	/* Specअगरically create items around the start and the end of the range
-	 * with high probability to check क्रम off by one errors */
-	cur = अक्रम();
-	अगर (cur & 1) अणु
+	}
+	/* Specifically create items around the start and the end of the range
+	 * with high probability to check for off by one errors */
+	cur = rand();
+	if (cur & 1) {
 		item_insert(&tree, start);
-		अगर (cur & 2) अणु
-			अगर (start <= end)
+		if (cur & 2) {
+			if (start <= end)
 				count++;
 			item_tag_set(&tree, start, 0);
-		पूर्ण
-	पूर्ण
-	अगर (cur & 4) अणु
+		}
+	}
+	if (cur & 4) {
 		item_insert(&tree, start-1);
-		अगर (cur & 8)
+		if (cur & 8)
 			item_tag_set(&tree, start-1, 0);
-	पूर्ण
-	अगर (cur & 16) अणु
+	}
+	if (cur & 16) {
 		item_insert(&tree, end);
-		अगर (cur & 32) अणु
-			अगर (start <= end)
+		if (cur & 32) {
+			if (start <= end)
 				count++;
 			item_tag_set(&tree, end, 0);
-		पूर्ण
-	पूर्ण
-	अगर (cur & 64) अणु
+		}
+	}
+	if (cur & 64) {
 		item_insert(&tree, end+1);
-		अगर (cur & 128)
+		if (cur & 128)
 			item_tag_set(&tree, end+1, 0);
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < ITEMS; i++) अणु
-		करो अणु
-			idx[i] = अक्रम();
-		पूर्ण जबतक (item_lookup(&tree, idx[i]));
+	for (i = 0; i < ITEMS; i++) {
+		do {
+			idx[i] = rand();
+		} while (item_lookup(&tree, idx[i]));
 
 		item_insert(&tree, idx[i]);
-		अगर (अक्रम() & 1) अणु
+		if (rand() & 1) {
 			item_tag_set(&tree, idx[i], 0);
-			अगर (idx[i] >= start && idx[i] <= end)
+			if (idx[i] >= start && idx[i] <= end)
 				count++;
-		पूर्ण
-/*		अगर (i % 1000 == 0)
-			अक्षर_दो('.'); */
-	पूर्ण
+		}
+/*		if (i % 1000 == 0)
+			putchar('.'); */
+	}
 
-//	म_लिखो("\ncopying tags...\n");
+//	printf("\ncopying tags...\n");
 	tagged = tag_tagged_items(&tree, start, end, ITEMS, XA_MARK_0, XA_MARK_1);
 
-//	म_लिखो("checking copied tags\n");
-	निश्चित(tagged == count);
+//	printf("checking copied tags\n");
+	assert(tagged == count);
 	check_copied_tags(&tree, start, end, idx, ITEMS, 0, 1);
 
 	/* Copy tags in several rounds */
-//	म_लिखो("\ncopying tags...\n");
-	पंचांगp = अक्रम() % (count / 10 + 2);
-	tagged = tag_tagged_items(&tree, start, end, पंचांगp, XA_MARK_0, XA_MARK_2);
-	निश्चित(tagged == count);
+//	printf("\ncopying tags...\n");
+	tmp = rand() % (count / 10 + 2);
+	tagged = tag_tagged_items(&tree, start, end, tmp, XA_MARK_0, XA_MARK_2);
+	assert(tagged == count);
 
-//	म_लिखो("%lu %lu %lu\n", tagged, पंचांगp, count);
-//	म_लिखो("checking copied tags\n");
+//	printf("%lu %lu %lu\n", tagged, tmp, count);
+//	printf("checking copied tags\n");
 	check_copied_tags(&tree, start, end, idx, ITEMS, 0, 2);
-	verअगरy_tag_consistency(&tree, 0);
-	verअगरy_tag_consistency(&tree, 1);
-	verअगरy_tag_consistency(&tree, 2);
-//	म_लिखो("\n");
-	item_समाप्त_tree(&tree);
-पूर्ण
+	verify_tag_consistency(&tree, 0);
+	verify_tag_consistency(&tree, 1);
+	verify_tag_consistency(&tree, 2);
+//	printf("\n");
+	item_kill_tree(&tree);
+}
 
-अटल व्योम single_thपढ़ो_tests(bool दीर्घ_run)
-अणु
-	पूर्णांक i;
+static void single_thread_tests(bool long_run)
+{
+	int i;
 
-	prपूर्णांकv(1, "starting single_thread_tests: %d allocated, preempt %d\n",
+	printv(1, "starting single_thread_tests: %d allocated, preempt %d\n",
 		nr_allocated, preempt_count);
 	multiorder_checks();
 	rcu_barrier();
-	prपूर्णांकv(2, "after multiorder_check: %d allocated, preempt %d\n",
+	printv(2, "after multiorder_check: %d allocated, preempt %d\n",
 		nr_allocated, preempt_count);
 	tag_check();
 	rcu_barrier();
-	prपूर्णांकv(2, "after tag_check: %d allocated, preempt %d\n",
+	printv(2, "after tag_check: %d allocated, preempt %d\n",
 		nr_allocated, preempt_count);
 	gang_check();
 	rcu_barrier();
-	prपूर्णांकv(2, "after gang_check: %d allocated, preempt %d\n",
+	printv(2, "after gang_check: %d allocated, preempt %d\n",
 		nr_allocated, preempt_count);
 	add_and_check();
 	rcu_barrier();
-	prपूर्णांकv(2, "after add_and_check: %d allocated, preempt %d\n",
+	printv(2, "after add_and_check: %d allocated, preempt %d\n",
 		nr_allocated, preempt_count);
 	dynamic_height_check();
 	rcu_barrier();
-	prपूर्णांकv(2, "after dynamic_height_check: %d allocated, preempt %d\n",
+	printv(2, "after dynamic_height_check: %d allocated, preempt %d\n",
 		nr_allocated, preempt_count);
 	idr_checks();
 	ida_tests();
 	rcu_barrier();
-	prपूर्णांकv(2, "after idr_checks: %d allocated, preempt %d\n",
+	printv(2, "after idr_checks: %d allocated, preempt %d\n",
 		nr_allocated, preempt_count);
-	big_gang_check(दीर्घ_run);
+	big_gang_check(long_run);
 	rcu_barrier();
-	prपूर्णांकv(2, "after big_gang_check: %d allocated, preempt %d\n",
+	printv(2, "after big_gang_check: %d allocated, preempt %d\n",
 		nr_allocated, preempt_count);
-	क्रम (i = 0; i < (दीर्घ_run ? 2000 : 3); i++) अणु
+	for (i = 0; i < (long_run ? 2000 : 3); i++) {
 		copy_tag_check();
-		prपूर्णांकv(2, "%d ", i);
-		ख_साफ(मानक_निकास);
-	पूर्ण
+		printv(2, "%d ", i);
+		fflush(stdout);
+	}
 	rcu_barrier();
-	prपूर्णांकv(2, "after copy_tag_check: %d allocated, preempt %d\n",
+	printv(2, "after copy_tag_check: %d allocated, preempt %d\n",
 		nr_allocated, preempt_count);
-पूर्ण
+}
 
-पूर्णांक मुख्य(पूर्णांक argc, अक्षर **argv)
-अणु
-	bool दीर्घ_run = false;
-	पूर्णांक opt;
-	अचिन्हित पूर्णांक seed = समय(शून्य);
+int main(int argc, char **argv)
+{
+	bool long_run = false;
+	int opt;
+	unsigned int seed = time(NULL);
 
-	जबतक ((opt = getopt(argc, argv, "ls:v")) != -1) अणु
-		अगर (opt == 'l')
-			दीर्घ_run = true;
-		अन्यथा अगर (opt == 's')
-			seed = म_से_अदीर्घ(optarg, शून्य, 0);
-		अन्यथा अगर (opt == 'v')
+	while ((opt = getopt(argc, argv, "ls:v")) != -1) {
+		if (opt == 'l')
+			long_run = true;
+		else if (opt == 's')
+			seed = strtoul(optarg, NULL, 0);
+		else if (opt == 'v')
 			test_verbose++;
-	पूर्ण
+	}
 
-	म_लिखो("random seed %u\n", seed);
-	बेक्रम(seed);
+	printf("random seed %u\n", seed);
+	srand(seed);
 
-	म_लिखो("running tests\n");
+	printf("running tests\n");
 
-	rcu_रेजिस्टर_thपढ़ो();
+	rcu_register_thread();
 	radix_tree_init();
 
 	xarray_tests();
@@ -310,22 +309,22 @@
 	regression2_test();
 	regression3_test();
 	regression4_test();
-	iteration_test(0, 10 + 90 * दीर्घ_run);
-	iteration_test(7, 10 + 90 * दीर्घ_run);
-	iteration_test2(10 + 90 * दीर्घ_run);
-	single_thपढ़ो_tests(दीर्घ_run);
+	iteration_test(0, 10 + 90 * long_run);
+	iteration_test(7, 10 + 90 * long_run);
+	iteration_test2(10 + 90 * long_run);
+	single_thread_tests(long_run);
 
-	/* Free any reमुख्यing pपुनः_स्मृतिated nodes */
+	/* Free any remaining preallocated nodes */
 	radix_tree_cpu_dead(0);
 
 	benchmark();
 
 	rcu_barrier();
-	prपूर्णांकv(2, "after rcu_barrier: %d allocated, preempt %d\n",
+	printv(2, "after rcu_barrier: %d allocated, preempt %d\n",
 		nr_allocated, preempt_count);
-	rcu_unरेजिस्टर_thपढ़ो();
+	rcu_unregister_thread();
 
-	म_लिखो("tests completed\n");
+	printf("tests completed\n");
 
-	निकास(0);
-पूर्ण
+	exit(0);
+}

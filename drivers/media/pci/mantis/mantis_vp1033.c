@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
 	Mantis VP-1033 driver
 
@@ -7,24 +6,24 @@
 
 */
 
-#समावेश <linux/संकेत.स>
-#समावेश <linux/sched.h>
-#समावेश <linux/पूर्णांकerrupt.h>
+#include <linux/signal.h>
+#include <linux/sched.h>
+#include <linux/interrupt.h>
 
-#समावेश <media/dmxdev.h>
-#समावेश <media/dvbdev.h>
-#समावेश <media/dvb_demux.h>
-#समावेश <media/dvb_frontend.h>
-#समावेश <media/dvb_net.h>
+#include <media/dmxdev.h>
+#include <media/dvbdev.h>
+#include <media/dvb_demux.h>
+#include <media/dvb_frontend.h>
+#include <media/dvb_net.h>
 
-#समावेश "stv0299.h"
-#समावेश "mantis_common.h"
-#समावेश "mantis_ioc.h"
-#समावेश "mantis_dvb.h"
-#समावेश "mantis_vp1033.h"
-#समावेश "mantis_reg.h"
+#include "stv0299.h"
+#include "mantis_common.h"
+#include "mantis_ioc.h"
+#include "mantis_dvb.h"
+#include "mantis_vp1033.h"
+#include "mantis_reg.h"
 
-अटल u8 lgtdqcs001f_inittab[] = अणु
+static u8 lgtdqcs001f_inittab[] = {
 	0x01, 0x15,
 	0x02, 0x30,
 	0x03, 0x00,
@@ -67,79 +66,79 @@
 	0x33, 0xfc,
 	0x34, 0x13,
 	0xff, 0xff,
-पूर्ण;
+};
 
-#घोषणा MANTIS_MODEL_NAME	"VP-1033"
-#घोषणा MANTIS_DEV_TYPE		"DVB-S/DSS"
+#define MANTIS_MODEL_NAME	"VP-1033"
+#define MANTIS_DEV_TYPE		"DVB-S/DSS"
 
-अटल पूर्णांक lgtdqcs001f_tuner_set(काष्ठा dvb_frontend *fe)
-अणु
-	काष्ठा dtv_frontend_properties *p = &fe->dtv_property_cache;
-	काष्ठा mantis_pci *mantis	= fe->dvb->priv;
-	काष्ठा i2c_adapter *adapter	= &mantis->adapter;
+static int lgtdqcs001f_tuner_set(struct dvb_frontend *fe)
+{
+	struct dtv_frontend_properties *p = &fe->dtv_property_cache;
+	struct mantis_pci *mantis	= fe->dvb->priv;
+	struct i2c_adapter *adapter	= &mantis->adapter;
 
 	u8 buf[4];
-	u32 भाग;
+	u32 div;
 
 
-	काष्ठा i2c_msg msg = अणु.addr = 0x61, .flags = 0, .buf = buf, .len = माप(buf)पूर्ण;
+	struct i2c_msg msg = {.addr = 0x61, .flags = 0, .buf = buf, .len = sizeof(buf)};
 
-	भाग = p->frequency / 250;
+	div = p->frequency / 250;
 
-	buf[0] = (भाग >> 8) & 0x7f;
-	buf[1] =  भाग & 0xff;
+	buf[0] = (div >> 8) & 0x7f;
+	buf[1] =  div & 0xff;
 	buf[2] =  0x83;
 	buf[3] =  0xc0;
 
-	अगर (p->frequency < 1531000)
+	if (p->frequency < 1531000)
 		buf[3] |= 0x04;
-	अन्यथा
+	else
 		buf[3] &= ~0x04;
-	अगर (i2c_transfer(adapter, &msg, 1) < 0) अणु
-		dprपूर्णांकk(MANTIS_ERROR, 1, "Write: I2C Transfer failed");
-		वापस -EIO;
-	पूर्ण
-	msleep_पूर्णांकerruptible(100);
+	if (i2c_transfer(adapter, &msg, 1) < 0) {
+		dprintk(MANTIS_ERROR, 1, "Write: I2C Transfer failed");
+		return -EIO;
+	}
+	msleep_interruptible(100);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक lgtdqcs001f_set_symbol_rate(काष्ठा dvb_frontend *fe,
+static int lgtdqcs001f_set_symbol_rate(struct dvb_frontend *fe,
 				       u32 srate, u32 ratio)
-अणु
+{
 	u8 aclk = 0;
 	u8 bclk = 0;
 
-	अगर (srate < 1500000) अणु
+	if (srate < 1500000) {
 		aclk = 0xb7;
 		bclk = 0x47;
-	पूर्ण अन्यथा अगर (srate < 3000000) अणु
+	} else if (srate < 3000000) {
 		aclk = 0xb7;
 		bclk = 0x4b;
-	पूर्ण अन्यथा अगर (srate < 7000000) अणु
+	} else if (srate < 7000000) {
 		aclk = 0xb7;
 		bclk = 0x4f;
-	पूर्ण अन्यथा अगर (srate < 14000000) अणु
+	} else if (srate < 14000000) {
 		aclk = 0xb7;
 		bclk = 0x53;
-	पूर्ण अन्यथा अगर (srate < 30000000) अणु
+	} else if (srate < 30000000) {
 		aclk = 0xb6;
 		bclk = 0x53;
-	पूर्ण अन्यथा अगर (srate < 45000000) अणु
+	} else if (srate < 45000000) {
 		aclk = 0xb4;
 		bclk = 0x51;
-	पूर्ण
-	stv0299_ग_लिखोreg(fe, 0x13, aclk);
-	stv0299_ग_लिखोreg(fe, 0x14, bclk);
+	}
+	stv0299_writereg(fe, 0x13, aclk);
+	stv0299_writereg(fe, 0x14, bclk);
 
-	stv0299_ग_लिखोreg(fe, 0x1f, (ratio >> 16) & 0xff);
-	stv0299_ग_लिखोreg(fe, 0x20, (ratio >>  8) & 0xff);
-	stv0299_ग_लिखोreg(fe, 0x21,  ratio & 0xf0);
+	stv0299_writereg(fe, 0x1f, (ratio >> 16) & 0xff);
+	stv0299_writereg(fe, 0x20, (ratio >>  8) & 0xff);
+	stv0299_writereg(fe, 0x21,  ratio & 0xf0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा stv0299_config lgtdqcs001f_config = अणु
+static struct stv0299_config lgtdqcs001f_config = {
 	.demod_address		= 0x68,
 	.inittab		= lgtdqcs001f_inittab,
 	.mclk			= 88000000UL,
@@ -148,45 +147,45 @@
 	.volt13_op0_op1		= STV0299_VOLT13_OP0,
 	.min_delay_ms		= 100,
 	.set_symbol_rate	= lgtdqcs001f_set_symbol_rate,
-पूर्ण;
+};
 
-अटल पूर्णांक vp1033_frontend_init(काष्ठा mantis_pci *mantis, काष्ठा dvb_frontend *fe)
-अणु
-	काष्ठा i2c_adapter *adapter	= &mantis->adapter;
+static int vp1033_frontend_init(struct mantis_pci *mantis, struct dvb_frontend *fe)
+{
+	struct i2c_adapter *adapter	= &mantis->adapter;
 
-	पूर्णांक err = 0;
+	int err = 0;
 
-	err = mantis_frontend_घातer(mantis, POWER_ON);
-	अगर (err == 0) अणु
+	err = mantis_frontend_power(mantis, POWER_ON);
+	if (err == 0) {
 		mantis_frontend_soft_reset(mantis);
 		msleep(250);
 
-		dprपूर्णांकk(MANTIS_ERROR, 1, "Probing for STV0299 (DVB-S)");
+		dprintk(MANTIS_ERROR, 1, "Probing for STV0299 (DVB-S)");
 		fe = dvb_attach(stv0299_attach, &lgtdqcs001f_config, adapter);
 
-		अगर (fe) अणु
+		if (fe) {
 			fe->ops.tuner_ops.set_params = lgtdqcs001f_tuner_set;
-			dprपूर्णांकk(MANTIS_ERROR, 1, "found STV0299 DVB-S frontend @ 0x%02x",
+			dprintk(MANTIS_ERROR, 1, "found STV0299 DVB-S frontend @ 0x%02x",
 				lgtdqcs001f_config.demod_address);
 
-			dprपूर्णांकk(MANTIS_ERROR, 1, "Mantis DVB-S STV0299 frontend attach success");
-		पूर्ण अन्यथा अणु
-			वापस -1;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		dprपूर्णांकk(MANTIS_ERROR, 1, "Frontend on <%s> POWER ON failed! <%d>",
+			dprintk(MANTIS_ERROR, 1, "Mantis DVB-S STV0299 frontend attach success");
+		} else {
+			return -1;
+		}
+	} else {
+		dprintk(MANTIS_ERROR, 1, "Frontend on <%s> POWER ON failed! <%d>",
 			adapter->name,
 			err);
 
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 	mantis->fe = fe;
-	dprपूर्णांकk(MANTIS_ERROR, 1, "Done!");
+	dprintk(MANTIS_ERROR, 1, "Done!");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-काष्ठा mantis_hwconfig vp1033_config = अणु
+struct mantis_hwconfig vp1033_config = {
 	.model_name		= MANTIS_MODEL_NAME,
 	.dev_type		= MANTIS_DEV_TYPE,
 	.ts_size		= MANTIS_TS_204,
@@ -196,6 +195,6 @@
 	.bytes			= 0,
 
 	.frontend_init		= vp1033_frontend_init,
-	.घातer			= GPIF_A12,
+	.power			= GPIF_A12,
 	.reset			= GPIF_A13,
-पूर्ण;
+};

@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 //
 // soc-ops.c  --  Generic ASoC operations
 //
@@ -10,933 +9,933 @@
 //
 // Author: Liam Girdwood <lrg@slimlogic.co.uk>
 //         with code, comments and ideas from :-
-//         Riअक्षरd Purdie <riअक्षरd@खोलोedhand.com>
+//         Richard Purdie <richard@openedhand.com>
 
-#समावेश <linux/module.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/init.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/pm.h>
-#समावेश <linux/bitops.h>
-#समावेश <linux/प्रकार.स>
-#समावेश <linux/slab.h>
-#समावेश <sound/core.h>
-#समावेश <sound/jack.h>
-#समावेश <sound/pcm.h>
-#समावेश <sound/pcm_params.h>
-#समावेश <sound/soc.h>
-#समावेश <sound/soc-dpcm.h>
-#समावेश <sound/initval.h>
+#include <linux/module.h>
+#include <linux/moduleparam.h>
+#include <linux/init.h>
+#include <linux/delay.h>
+#include <linux/pm.h>
+#include <linux/bitops.h>
+#include <linux/ctype.h>
+#include <linux/slab.h>
+#include <sound/core.h>
+#include <sound/jack.h>
+#include <sound/pcm.h>
+#include <sound/pcm_params.h>
+#include <sound/soc.h>
+#include <sound/soc-dpcm.h>
+#include <sound/initval.h>
 
 /**
- * snd_soc_info_क्रमागत_द्विगुन - क्रमागतerated द्विगुन mixer info callback
+ * snd_soc_info_enum_double - enumerated double mixer info callback
  * @kcontrol: mixer control
- * @uinfo: control element inक्रमmation
+ * @uinfo: control element information
  *
- * Callback to provide inक्रमmation about a द्विगुन क्रमागतerated
+ * Callback to provide information about a double enumerated
  * mixer control.
  *
- * Returns 0 क्रम success.
+ * Returns 0 for success.
  */
-पूर्णांक snd_soc_info_क्रमागत_द्विगुन(काष्ठा snd_kcontrol *kcontrol,
-	काष्ठा snd_ctl_elem_info *uinfo)
-अणु
-	काष्ठा soc_क्रमागत *e = (काष्ठा soc_क्रमागत *)kcontrol->निजी_value;
+int snd_soc_info_enum_double(struct snd_kcontrol *kcontrol,
+	struct snd_ctl_elem_info *uinfo)
+{
+	struct soc_enum *e = (struct soc_enum *)kcontrol->private_value;
 
-	वापस snd_ctl_क्रमागत_info(uinfo, e->shअगरt_l == e->shअगरt_r ? 1 : 2,
+	return snd_ctl_enum_info(uinfo, e->shift_l == e->shift_r ? 1 : 2,
 				 e->items, e->texts);
-पूर्ण
-EXPORT_SYMBOL_GPL(snd_soc_info_क्रमागत_द्विगुन);
+}
+EXPORT_SYMBOL_GPL(snd_soc_info_enum_double);
 
 /**
- * snd_soc_get_क्रमागत_द्विगुन - क्रमागतerated द्विगुन mixer get callback
+ * snd_soc_get_enum_double - enumerated double mixer get callback
  * @kcontrol: mixer control
- * @ucontrol: control element inक्रमmation
+ * @ucontrol: control element information
  *
- * Callback to get the value of a द्विगुन क्रमागतerated mixer.
+ * Callback to get the value of a double enumerated mixer.
  *
- * Returns 0 क्रम success.
+ * Returns 0 for success.
  */
-पूर्णांक snd_soc_get_क्रमागत_द्विगुन(काष्ठा snd_kcontrol *kcontrol,
-	काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_soc_component *component = snd_kcontrol_chip(kcontrol);
-	काष्ठा soc_क्रमागत *e = (काष्ठा soc_क्रमागत *)kcontrol->निजी_value;
-	अचिन्हित पूर्णांक val, item;
-	अचिन्हित पूर्णांक reg_val;
+int snd_soc_get_enum_double(struct snd_kcontrol *kcontrol,
+	struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_component *component = snd_kcontrol_chip(kcontrol);
+	struct soc_enum *e = (struct soc_enum *)kcontrol->private_value;
+	unsigned int val, item;
+	unsigned int reg_val;
 
-	reg_val = snd_soc_component_पढ़ो(component, e->reg);
-	val = (reg_val >> e->shअगरt_l) & e->mask;
-	item = snd_soc_क्रमागत_val_to_item(e, val);
-	ucontrol->value.क्रमागतerated.item[0] = item;
-	अगर (e->shअगरt_l != e->shअगरt_r) अणु
-		val = (reg_val >> e->shअगरt_r) & e->mask;
-		item = snd_soc_क्रमागत_val_to_item(e, val);
-		ucontrol->value.क्रमागतerated.item[1] = item;
-	पूर्ण
+	reg_val = snd_soc_component_read(component, e->reg);
+	val = (reg_val >> e->shift_l) & e->mask;
+	item = snd_soc_enum_val_to_item(e, val);
+	ucontrol->value.enumerated.item[0] = item;
+	if (e->shift_l != e->shift_r) {
+		val = (reg_val >> e->shift_r) & e->mask;
+		item = snd_soc_enum_val_to_item(e, val);
+		ucontrol->value.enumerated.item[1] = item;
+	}
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(snd_soc_get_क्रमागत_द्विगुन);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(snd_soc_get_enum_double);
 
 /**
- * snd_soc_put_क्रमागत_द्विगुन - क्रमागतerated द्विगुन mixer put callback
+ * snd_soc_put_enum_double - enumerated double mixer put callback
  * @kcontrol: mixer control
- * @ucontrol: control element inक्रमmation
+ * @ucontrol: control element information
  *
- * Callback to set the value of a द्विगुन क्रमागतerated mixer.
+ * Callback to set the value of a double enumerated mixer.
  *
- * Returns 0 क्रम success.
+ * Returns 0 for success.
  */
-पूर्णांक snd_soc_put_क्रमागत_द्विगुन(काष्ठा snd_kcontrol *kcontrol,
-	काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_soc_component *component = snd_kcontrol_chip(kcontrol);
-	काष्ठा soc_क्रमागत *e = (काष्ठा soc_क्रमागत *)kcontrol->निजी_value;
-	अचिन्हित पूर्णांक *item = ucontrol->value.क्रमागतerated.item;
-	अचिन्हित पूर्णांक val;
-	अचिन्हित पूर्णांक mask;
+int snd_soc_put_enum_double(struct snd_kcontrol *kcontrol,
+	struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_component *component = snd_kcontrol_chip(kcontrol);
+	struct soc_enum *e = (struct soc_enum *)kcontrol->private_value;
+	unsigned int *item = ucontrol->value.enumerated.item;
+	unsigned int val;
+	unsigned int mask;
 
-	अगर (item[0] >= e->items)
-		वापस -EINVAL;
-	val = snd_soc_क्रमागत_item_to_val(e, item[0]) << e->shअगरt_l;
-	mask = e->mask << e->shअगरt_l;
-	अगर (e->shअगरt_l != e->shअगरt_r) अणु
-		अगर (item[1] >= e->items)
-			वापस -EINVAL;
-		val |= snd_soc_क्रमागत_item_to_val(e, item[1]) << e->shअगरt_r;
-		mask |= e->mask << e->shअगरt_r;
-	पूर्ण
+	if (item[0] >= e->items)
+		return -EINVAL;
+	val = snd_soc_enum_item_to_val(e, item[0]) << e->shift_l;
+	mask = e->mask << e->shift_l;
+	if (e->shift_l != e->shift_r) {
+		if (item[1] >= e->items)
+			return -EINVAL;
+		val |= snd_soc_enum_item_to_val(e, item[1]) << e->shift_r;
+		mask |= e->mask << e->shift_r;
+	}
 
-	वापस snd_soc_component_update_bits(component, e->reg, mask, val);
-पूर्ण
-EXPORT_SYMBOL_GPL(snd_soc_put_क्रमागत_द्विगुन);
+	return snd_soc_component_update_bits(component, e->reg, mask, val);
+}
+EXPORT_SYMBOL_GPL(snd_soc_put_enum_double);
 
 /**
- * snd_soc_पढ़ो_चिन्हित - Read a codec रेजिस्टर and पूर्णांकerpret as चिन्हित value
+ * snd_soc_read_signed - Read a codec register and interpret as signed value
  * @component: component
- * @reg: Register to पढ़ो
- * @mask: Mask to use after shअगरting the रेजिस्टर value
- * @shअगरt: Right shअगरt of रेजिस्टर value
- * @sign_bit: Bit that describes अगर a number is negative or not.
- * @चिन्हित_val: Poपूर्णांकer to where the पढ़ो value should be stored
+ * @reg: Register to read
+ * @mask: Mask to use after shifting the register value
+ * @shift: Right shift of register value
+ * @sign_bit: Bit that describes if a number is negative or not.
+ * @signed_val: Pointer to where the read value should be stored
  *
- * This functions पढ़ोs a codec रेजिस्टर. The रेजिस्टर value is shअगरted right
+ * This functions reads a codec register. The register value is shifted right
  * by 'shift' bits and masked with the given 'mask'. Afterwards it translates
- * the given रेजिस्टरvalue पूर्णांकo a चिन्हित पूर्णांकeger अगर sign_bit is non-zero.
+ * the given registervalue into a signed integer if sign_bit is non-zero.
  *
  * Returns 0 on sucess, otherwise an error value
  */
-अटल पूर्णांक snd_soc_पढ़ो_चिन्हित(काष्ठा snd_soc_component *component,
-	अचिन्हित पूर्णांक reg, अचिन्हित पूर्णांक mask, अचिन्हित पूर्णांक shअगरt,
-	अचिन्हित पूर्णांक sign_bit, पूर्णांक *चिन्हित_val)
-अणु
-	पूर्णांक ret;
-	अचिन्हित पूर्णांक val;
+static int snd_soc_read_signed(struct snd_soc_component *component,
+	unsigned int reg, unsigned int mask, unsigned int shift,
+	unsigned int sign_bit, int *signed_val)
+{
+	int ret;
+	unsigned int val;
 
-	val = snd_soc_component_पढ़ो(component, reg);
-	val = (val >> shअगरt) & mask;
+	val = snd_soc_component_read(component, reg);
+	val = (val >> shift) & mask;
 
-	अगर (!sign_bit) अणु
-		*चिन्हित_val = val;
-		वापस 0;
-	पूर्ण
+	if (!sign_bit) {
+		*signed_val = val;
+		return 0;
+	}
 
 	/* non-negative number */
-	अगर (!(val & BIT(sign_bit))) अणु
-		*चिन्हित_val = val;
-		वापस 0;
-	पूर्ण
+	if (!(val & BIT(sign_bit))) {
+		*signed_val = val;
+		return 0;
+	}
 
 	ret = val;
 
 	/*
-	 * The रेजिस्टर most probably करोes not contain a full-sized पूर्णांक.
-	 * Instead we have an arbitrary number of bits in a चिन्हित
-	 * representation which has to be translated पूर्णांकo a full-sized पूर्णांक.
-	 * This is करोne by filling up all bits above the sign-bit.
+	 * The register most probably does not contain a full-sized int.
+	 * Instead we have an arbitrary number of bits in a signed
+	 * representation which has to be translated into a full-sized int.
+	 * This is done by filling up all bits above the sign-bit.
 	 */
-	ret |= ~((पूर्णांक)(BIT(sign_bit) - 1));
+	ret |= ~((int)(BIT(sign_bit) - 1));
 
-	*चिन्हित_val = ret;
+	*signed_val = ret;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * snd_soc_info_volsw - single mixer info callback
  * @kcontrol: mixer control
- * @uinfo: control element inक्रमmation
+ * @uinfo: control element information
  *
- * Callback to provide inक्रमmation about a single mixer control, or a द्विगुन
- * mixer control that spans 2 रेजिस्टरs.
+ * Callback to provide information about a single mixer control, or a double
+ * mixer control that spans 2 registers.
  *
- * Returns 0 क्रम success.
+ * Returns 0 for success.
  */
-पूर्णांक snd_soc_info_volsw(काष्ठा snd_kcontrol *kcontrol,
-	काष्ठा snd_ctl_elem_info *uinfo)
-अणु
-	काष्ठा soc_mixer_control *mc =
-		(काष्ठा soc_mixer_control *)kcontrol->निजी_value;
-	पूर्णांक platक्रमm_max;
+int snd_soc_info_volsw(struct snd_kcontrol *kcontrol,
+	struct snd_ctl_elem_info *uinfo)
+{
+	struct soc_mixer_control *mc =
+		(struct soc_mixer_control *)kcontrol->private_value;
+	int platform_max;
 
-	अगर (!mc->platक्रमm_max)
-		mc->platक्रमm_max = mc->max;
-	platक्रमm_max = mc->platक्रमm_max;
+	if (!mc->platform_max)
+		mc->platform_max = mc->max;
+	platform_max = mc->platform_max;
 
-	अगर (platक्रमm_max == 1 && !म_माला(kcontrol->id.name, " Volume"))
+	if (platform_max == 1 && !strstr(kcontrol->id.name, " Volume"))
 		uinfo->type = SNDRV_CTL_ELEM_TYPE_BOOLEAN;
-	अन्यथा
+	else
 		uinfo->type = SNDRV_CTL_ELEM_TYPE_INTEGER;
 
 	uinfo->count = snd_soc_volsw_is_stereo(mc) ? 2 : 1;
-	uinfo->value.पूर्णांकeger.min = 0;
-	uinfo->value.पूर्णांकeger.max = platक्रमm_max - mc->min;
-	वापस 0;
-पूर्ण
+	uinfo->value.integer.min = 0;
+	uinfo->value.integer.max = platform_max - mc->min;
+	return 0;
+}
 EXPORT_SYMBOL_GPL(snd_soc_info_volsw);
 
 /**
- * snd_soc_info_volsw_sx - Mixer info callback क्रम SX TLV controls
+ * snd_soc_info_volsw_sx - Mixer info callback for SX TLV controls
  * @kcontrol: mixer control
- * @uinfo: control element inक्रमmation
+ * @uinfo: control element information
  *
- * Callback to provide inक्रमmation about a single mixer control, or a द्विगुन
- * mixer control that spans 2 रेजिस्टरs of the SX TLV type. SX TLV controls
+ * Callback to provide information about a single mixer control, or a double
+ * mixer control that spans 2 registers of the SX TLV type. SX TLV controls
  * have a range that represents both positive and negative values either side
  * of zero but without a sign bit.
  *
- * Returns 0 क्रम success.
+ * Returns 0 for success.
  */
-पूर्णांक snd_soc_info_volsw_sx(काष्ठा snd_kcontrol *kcontrol,
-			  काष्ठा snd_ctl_elem_info *uinfo)
-अणु
-	काष्ठा soc_mixer_control *mc =
-		(काष्ठा soc_mixer_control *)kcontrol->निजी_value;
+int snd_soc_info_volsw_sx(struct snd_kcontrol *kcontrol,
+			  struct snd_ctl_elem_info *uinfo)
+{
+	struct soc_mixer_control *mc =
+		(struct soc_mixer_control *)kcontrol->private_value;
 
 	snd_soc_info_volsw(kcontrol, uinfo);
 	/* Max represents the number of levels in an SX control not the
 	 * maximum value, so add the minimum value back on
 	 */
-	uinfo->value.पूर्णांकeger.max += mc->min;
+	uinfo->value.integer.max += mc->min;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(snd_soc_info_volsw_sx);
 
 /**
  * snd_soc_get_volsw - single mixer get callback
  * @kcontrol: mixer control
- * @ucontrol: control element inक्रमmation
+ * @ucontrol: control element information
  *
- * Callback to get the value of a single mixer control, or a द्विगुन mixer
- * control that spans 2 रेजिस्टरs.
+ * Callback to get the value of a single mixer control, or a double mixer
+ * control that spans 2 registers.
  *
- * Returns 0 क्रम success.
+ * Returns 0 for success.
  */
-पूर्णांक snd_soc_get_volsw(काष्ठा snd_kcontrol *kcontrol,
-	काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_soc_component *component = snd_kcontrol_chip(kcontrol);
-	काष्ठा soc_mixer_control *mc =
-		(काष्ठा soc_mixer_control *)kcontrol->निजी_value;
-	अचिन्हित पूर्णांक reg = mc->reg;
-	अचिन्हित पूर्णांक reg2 = mc->rreg;
-	अचिन्हित पूर्णांक shअगरt = mc->shअगरt;
-	अचिन्हित पूर्णांक rshअगरt = mc->rshअगरt;
-	पूर्णांक max = mc->max;
-	पूर्णांक min = mc->min;
-	पूर्णांक sign_bit = mc->sign_bit;
-	अचिन्हित पूर्णांक mask = (1 << fls(max)) - 1;
-	अचिन्हित पूर्णांक invert = mc->invert;
-	पूर्णांक val;
-	पूर्णांक ret;
+int snd_soc_get_volsw(struct snd_kcontrol *kcontrol,
+	struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_component *component = snd_kcontrol_chip(kcontrol);
+	struct soc_mixer_control *mc =
+		(struct soc_mixer_control *)kcontrol->private_value;
+	unsigned int reg = mc->reg;
+	unsigned int reg2 = mc->rreg;
+	unsigned int shift = mc->shift;
+	unsigned int rshift = mc->rshift;
+	int max = mc->max;
+	int min = mc->min;
+	int sign_bit = mc->sign_bit;
+	unsigned int mask = (1 << fls(max)) - 1;
+	unsigned int invert = mc->invert;
+	int val;
+	int ret;
 
-	अगर (sign_bit)
+	if (sign_bit)
 		mask = BIT(sign_bit + 1) - 1;
 
-	ret = snd_soc_पढ़ो_चिन्हित(component, reg, mask, shअगरt, sign_bit, &val);
-	अगर (ret)
-		वापस ret;
+	ret = snd_soc_read_signed(component, reg, mask, shift, sign_bit, &val);
+	if (ret)
+		return ret;
 
-	ucontrol->value.पूर्णांकeger.value[0] = val - min;
-	अगर (invert)
-		ucontrol->value.पूर्णांकeger.value[0] =
-			max - ucontrol->value.पूर्णांकeger.value[0];
+	ucontrol->value.integer.value[0] = val - min;
+	if (invert)
+		ucontrol->value.integer.value[0] =
+			max - ucontrol->value.integer.value[0];
 
-	अगर (snd_soc_volsw_is_stereo(mc)) अणु
-		अगर (reg == reg2)
-			ret = snd_soc_पढ़ो_चिन्हित(component, reg, mask, rshअगरt,
+	if (snd_soc_volsw_is_stereo(mc)) {
+		if (reg == reg2)
+			ret = snd_soc_read_signed(component, reg, mask, rshift,
 				sign_bit, &val);
-		अन्यथा
-			ret = snd_soc_पढ़ो_चिन्हित(component, reg2, mask, shअगरt,
+		else
+			ret = snd_soc_read_signed(component, reg2, mask, shift,
 				sign_bit, &val);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
-		ucontrol->value.पूर्णांकeger.value[1] = val - min;
-		अगर (invert)
-			ucontrol->value.पूर्णांकeger.value[1] =
-				max - ucontrol->value.पूर्णांकeger.value[1];
-	पूर्ण
+		ucontrol->value.integer.value[1] = val - min;
+		if (invert)
+			ucontrol->value.integer.value[1] =
+				max - ucontrol->value.integer.value[1];
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(snd_soc_get_volsw);
 
 /**
  * snd_soc_put_volsw - single mixer put callback
  * @kcontrol: mixer control
- * @ucontrol: control element inक्रमmation
+ * @ucontrol: control element information
  *
- * Callback to set the value of a single mixer control, or a द्विगुन mixer
- * control that spans 2 रेजिस्टरs.
+ * Callback to set the value of a single mixer control, or a double mixer
+ * control that spans 2 registers.
  *
- * Returns 0 क्रम success.
+ * Returns 0 for success.
  */
-पूर्णांक snd_soc_put_volsw(काष्ठा snd_kcontrol *kcontrol,
-	काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_soc_component *component = snd_kcontrol_chip(kcontrol);
-	काष्ठा soc_mixer_control *mc =
-		(काष्ठा soc_mixer_control *)kcontrol->निजी_value;
-	अचिन्हित पूर्णांक reg = mc->reg;
-	अचिन्हित पूर्णांक reg2 = mc->rreg;
-	अचिन्हित पूर्णांक shअगरt = mc->shअगरt;
-	अचिन्हित पूर्णांक rshअगरt = mc->rshअगरt;
-	पूर्णांक max = mc->max;
-	पूर्णांक min = mc->min;
-	अचिन्हित पूर्णांक sign_bit = mc->sign_bit;
-	अचिन्हित पूर्णांक mask = (1 << fls(max)) - 1;
-	अचिन्हित पूर्णांक invert = mc->invert;
-	पूर्णांक err;
+int snd_soc_put_volsw(struct snd_kcontrol *kcontrol,
+	struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_component *component = snd_kcontrol_chip(kcontrol);
+	struct soc_mixer_control *mc =
+		(struct soc_mixer_control *)kcontrol->private_value;
+	unsigned int reg = mc->reg;
+	unsigned int reg2 = mc->rreg;
+	unsigned int shift = mc->shift;
+	unsigned int rshift = mc->rshift;
+	int max = mc->max;
+	int min = mc->min;
+	unsigned int sign_bit = mc->sign_bit;
+	unsigned int mask = (1 << fls(max)) - 1;
+	unsigned int invert = mc->invert;
+	int err;
 	bool type_2r = false;
-	अचिन्हित पूर्णांक val2 = 0;
-	अचिन्हित पूर्णांक val, val_mask;
+	unsigned int val2 = 0;
+	unsigned int val, val_mask;
 
-	अगर (sign_bit)
+	if (sign_bit)
 		mask = BIT(sign_bit + 1) - 1;
 
-	val = ((ucontrol->value.पूर्णांकeger.value[0] + min) & mask);
-	अगर (invert)
+	val = ((ucontrol->value.integer.value[0] + min) & mask);
+	if (invert)
 		val = max - val;
-	val_mask = mask << shअगरt;
-	val = val << shअगरt;
-	अगर (snd_soc_volsw_is_stereo(mc)) अणु
-		val2 = ((ucontrol->value.पूर्णांकeger.value[1] + min) & mask);
-		अगर (invert)
+	val_mask = mask << shift;
+	val = val << shift;
+	if (snd_soc_volsw_is_stereo(mc)) {
+		val2 = ((ucontrol->value.integer.value[1] + min) & mask);
+		if (invert)
 			val2 = max - val2;
-		अगर (reg == reg2) अणु
-			val_mask |= mask << rshअगरt;
-			val |= val2 << rshअगरt;
-		पूर्ण अन्यथा अणु
-			val2 = val2 << shअगरt;
+		if (reg == reg2) {
+			val_mask |= mask << rshift;
+			val |= val2 << rshift;
+		} else {
+			val2 = val2 << shift;
 			type_2r = true;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	err = snd_soc_component_update_bits(component, reg, val_mask, val);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
-	अगर (type_2r)
+	if (type_2r)
 		err = snd_soc_component_update_bits(component, reg2, val_mask,
 			val2);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 EXPORT_SYMBOL_GPL(snd_soc_put_volsw);
 
 /**
  * snd_soc_get_volsw_sx - single mixer get callback
  * @kcontrol: mixer control
- * @ucontrol: control element inक्रमmation
+ * @ucontrol: control element information
  *
- * Callback to get the value of a single mixer control, or a द्विगुन mixer
- * control that spans 2 रेजिस्टरs.
+ * Callback to get the value of a single mixer control, or a double mixer
+ * control that spans 2 registers.
  *
- * Returns 0 क्रम success.
+ * Returns 0 for success.
  */
-पूर्णांक snd_soc_get_volsw_sx(काष्ठा snd_kcontrol *kcontrol,
-		      काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_soc_component *component = snd_kcontrol_chip(kcontrol);
-	काष्ठा soc_mixer_control *mc =
-	    (काष्ठा soc_mixer_control *)kcontrol->निजी_value;
-	अचिन्हित पूर्णांक reg = mc->reg;
-	अचिन्हित पूर्णांक reg2 = mc->rreg;
-	अचिन्हित पूर्णांक shअगरt = mc->shअगरt;
-	अचिन्हित पूर्णांक rshअगरt = mc->rshअगरt;
-	पूर्णांक max = mc->max;
-	पूर्णांक min = mc->min;
-	अचिन्हित पूर्णांक mask = (1U << (fls(min + max) - 1)) - 1;
-	अचिन्हित पूर्णांक val;
+int snd_soc_get_volsw_sx(struct snd_kcontrol *kcontrol,
+		      struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_component *component = snd_kcontrol_chip(kcontrol);
+	struct soc_mixer_control *mc =
+	    (struct soc_mixer_control *)kcontrol->private_value;
+	unsigned int reg = mc->reg;
+	unsigned int reg2 = mc->rreg;
+	unsigned int shift = mc->shift;
+	unsigned int rshift = mc->rshift;
+	int max = mc->max;
+	int min = mc->min;
+	unsigned int mask = (1U << (fls(min + max) - 1)) - 1;
+	unsigned int val;
 
-	val = snd_soc_component_पढ़ो(component, reg);
-	ucontrol->value.पूर्णांकeger.value[0] = ((val >> shअगरt) - min) & mask;
+	val = snd_soc_component_read(component, reg);
+	ucontrol->value.integer.value[0] = ((val >> shift) - min) & mask;
 
-	अगर (snd_soc_volsw_is_stereo(mc)) अणु
-		val = snd_soc_component_पढ़ो(component, reg2);
-		val = ((val >> rshअगरt) - min) & mask;
-		ucontrol->value.पूर्णांकeger.value[1] = val;
-	पूर्ण
+	if (snd_soc_volsw_is_stereo(mc)) {
+		val = snd_soc_component_read(component, reg2);
+		val = ((val >> rshift) - min) & mask;
+		ucontrol->value.integer.value[1] = val;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(snd_soc_get_volsw_sx);
 
 /**
- * snd_soc_put_volsw_sx - द्विगुन mixer set callback
+ * snd_soc_put_volsw_sx - double mixer set callback
  * @kcontrol: mixer control
- * @ucontrol: control element inक्रमmation
+ * @ucontrol: control element information
  *
- * Callback to set the value of a द्विगुन mixer control that spans 2 रेजिस्टरs.
+ * Callback to set the value of a double mixer control that spans 2 registers.
  *
- * Returns 0 क्रम success.
+ * Returns 0 for success.
  */
-पूर्णांक snd_soc_put_volsw_sx(काष्ठा snd_kcontrol *kcontrol,
-			 काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_soc_component *component = snd_kcontrol_chip(kcontrol);
-	काष्ठा soc_mixer_control *mc =
-	    (काष्ठा soc_mixer_control *)kcontrol->निजी_value;
+int snd_soc_put_volsw_sx(struct snd_kcontrol *kcontrol,
+			 struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_component *component = snd_kcontrol_chip(kcontrol);
+	struct soc_mixer_control *mc =
+	    (struct soc_mixer_control *)kcontrol->private_value;
 
-	अचिन्हित पूर्णांक reg = mc->reg;
-	अचिन्हित पूर्णांक reg2 = mc->rreg;
-	अचिन्हित पूर्णांक shअगरt = mc->shअगरt;
-	अचिन्हित पूर्णांक rshअगरt = mc->rshअगरt;
-	पूर्णांक max = mc->max;
-	पूर्णांक min = mc->min;
-	अचिन्हित पूर्णांक mask = (1U << (fls(min + max) - 1)) - 1;
-	पूर्णांक err = 0;
-	अचिन्हित पूर्णांक val, val_mask, val2;
+	unsigned int reg = mc->reg;
+	unsigned int reg2 = mc->rreg;
+	unsigned int shift = mc->shift;
+	unsigned int rshift = mc->rshift;
+	int max = mc->max;
+	int min = mc->min;
+	unsigned int mask = (1U << (fls(min + max) - 1)) - 1;
+	int err = 0;
+	unsigned int val, val_mask, val2;
 
-	val_mask = mask << shअगरt;
-	val = (ucontrol->value.पूर्णांकeger.value[0] + min) & mask;
-	val = val << shअगरt;
+	val_mask = mask << shift;
+	val = (ucontrol->value.integer.value[0] + min) & mask;
+	val = val << shift;
 
 	err = snd_soc_component_update_bits(component, reg, val_mask, val);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
-	अगर (snd_soc_volsw_is_stereo(mc)) अणु
-		val_mask = mask << rshअगरt;
-		val2 = (ucontrol->value.पूर्णांकeger.value[1] + min) & mask;
-		val2 = val2 << rshअगरt;
+	if (snd_soc_volsw_is_stereo(mc)) {
+		val_mask = mask << rshift;
+		val2 = (ucontrol->value.integer.value[1] + min) & mask;
+		val2 = val2 << rshift;
 
 		err = snd_soc_component_update_bits(component, reg2, val_mask,
 			val2);
-	पूर्ण
-	वापस err;
-पूर्ण
+	}
+	return err;
+}
 EXPORT_SYMBOL_GPL(snd_soc_put_volsw_sx);
 
 /**
  * snd_soc_info_volsw_range - single mixer info callback with range.
  * @kcontrol: mixer control
- * @uinfo: control element inक्रमmation
+ * @uinfo: control element information
  *
- * Callback to provide inक्रमmation, within a range, about a single
+ * Callback to provide information, within a range, about a single
  * mixer control.
  *
- * वापसs 0 क्रम success.
+ * returns 0 for success.
  */
-पूर्णांक snd_soc_info_volsw_range(काष्ठा snd_kcontrol *kcontrol,
-	काष्ठा snd_ctl_elem_info *uinfo)
-अणु
-	काष्ठा soc_mixer_control *mc =
-		(काष्ठा soc_mixer_control *)kcontrol->निजी_value;
-	पूर्णांक platक्रमm_max;
-	पूर्णांक min = mc->min;
+int snd_soc_info_volsw_range(struct snd_kcontrol *kcontrol,
+	struct snd_ctl_elem_info *uinfo)
+{
+	struct soc_mixer_control *mc =
+		(struct soc_mixer_control *)kcontrol->private_value;
+	int platform_max;
+	int min = mc->min;
 
-	अगर (!mc->platक्रमm_max)
-		mc->platक्रमm_max = mc->max;
-	platक्रमm_max = mc->platक्रमm_max;
+	if (!mc->platform_max)
+		mc->platform_max = mc->max;
+	platform_max = mc->platform_max;
 
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_INTEGER;
 	uinfo->count = snd_soc_volsw_is_stereo(mc) ? 2 : 1;
-	uinfo->value.पूर्णांकeger.min = 0;
-	uinfo->value.पूर्णांकeger.max = platक्रमm_max - min;
+	uinfo->value.integer.min = 0;
+	uinfo->value.integer.max = platform_max - min;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(snd_soc_info_volsw_range);
 
 /**
  * snd_soc_put_volsw_range - single mixer put value callback with range.
  * @kcontrol: mixer control
- * @ucontrol: control element inक्रमmation
+ * @ucontrol: control element information
  *
- * Callback to set the value, within a range, क्रम a single mixer control.
+ * Callback to set the value, within a range, for a single mixer control.
  *
- * Returns 0 क्रम success.
+ * Returns 0 for success.
  */
-पूर्णांक snd_soc_put_volsw_range(काष्ठा snd_kcontrol *kcontrol,
-	काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा soc_mixer_control *mc =
-		(काष्ठा soc_mixer_control *)kcontrol->निजी_value;
-	काष्ठा snd_soc_component *component = snd_kcontrol_chip(kcontrol);
-	अचिन्हित पूर्णांक reg = mc->reg;
-	अचिन्हित पूर्णांक rreg = mc->rreg;
-	अचिन्हित पूर्णांक shअगरt = mc->shअगरt;
-	पूर्णांक min = mc->min;
-	पूर्णांक max = mc->max;
-	अचिन्हित पूर्णांक mask = (1 << fls(max)) - 1;
-	अचिन्हित पूर्णांक invert = mc->invert;
-	अचिन्हित पूर्णांक val, val_mask;
-	पूर्णांक ret;
+int snd_soc_put_volsw_range(struct snd_kcontrol *kcontrol,
+	struct snd_ctl_elem_value *ucontrol)
+{
+	struct soc_mixer_control *mc =
+		(struct soc_mixer_control *)kcontrol->private_value;
+	struct snd_soc_component *component = snd_kcontrol_chip(kcontrol);
+	unsigned int reg = mc->reg;
+	unsigned int rreg = mc->rreg;
+	unsigned int shift = mc->shift;
+	int min = mc->min;
+	int max = mc->max;
+	unsigned int mask = (1 << fls(max)) - 1;
+	unsigned int invert = mc->invert;
+	unsigned int val, val_mask;
+	int ret;
 
-	अगर (invert)
-		val = (max - ucontrol->value.पूर्णांकeger.value[0]) & mask;
-	अन्यथा
-		val = ((ucontrol->value.पूर्णांकeger.value[0] + min) & mask);
-	val_mask = mask << shअगरt;
-	val = val << shअगरt;
+	if (invert)
+		val = (max - ucontrol->value.integer.value[0]) & mask;
+	else
+		val = ((ucontrol->value.integer.value[0] + min) & mask);
+	val_mask = mask << shift;
+	val = val << shift;
 
 	ret = snd_soc_component_update_bits(component, reg, val_mask, val);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	अगर (snd_soc_volsw_is_stereo(mc)) अणु
-		अगर (invert)
-			val = (max - ucontrol->value.पूर्णांकeger.value[1]) & mask;
-		अन्यथा
-			val = ((ucontrol->value.पूर्णांकeger.value[1] + min) & mask);
-		val_mask = mask << shअगरt;
-		val = val << shअगरt;
+	if (snd_soc_volsw_is_stereo(mc)) {
+		if (invert)
+			val = (max - ucontrol->value.integer.value[1]) & mask;
+		else
+			val = ((ucontrol->value.integer.value[1] + min) & mask);
+		val_mask = mask << shift;
+		val = val << shift;
 
 		ret = snd_soc_component_update_bits(component, rreg, val_mask,
 			val);
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(snd_soc_put_volsw_range);
 
 /**
  * snd_soc_get_volsw_range - single mixer get callback with range
  * @kcontrol: mixer control
- * @ucontrol: control element inक्रमmation
+ * @ucontrol: control element information
  *
  * Callback to get the value, within a range, of a single mixer control.
  *
- * Returns 0 क्रम success.
+ * Returns 0 for success.
  */
-पूर्णांक snd_soc_get_volsw_range(काष्ठा snd_kcontrol *kcontrol,
-	काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_soc_component *component = snd_kcontrol_chip(kcontrol);
-	काष्ठा soc_mixer_control *mc =
-		(काष्ठा soc_mixer_control *)kcontrol->निजी_value;
-	अचिन्हित पूर्णांक reg = mc->reg;
-	अचिन्हित पूर्णांक rreg = mc->rreg;
-	अचिन्हित पूर्णांक shअगरt = mc->shअगरt;
-	पूर्णांक min = mc->min;
-	पूर्णांक max = mc->max;
-	अचिन्हित पूर्णांक mask = (1 << fls(max)) - 1;
-	अचिन्हित पूर्णांक invert = mc->invert;
-	अचिन्हित पूर्णांक val;
+int snd_soc_get_volsw_range(struct snd_kcontrol *kcontrol,
+	struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_component *component = snd_kcontrol_chip(kcontrol);
+	struct soc_mixer_control *mc =
+		(struct soc_mixer_control *)kcontrol->private_value;
+	unsigned int reg = mc->reg;
+	unsigned int rreg = mc->rreg;
+	unsigned int shift = mc->shift;
+	int min = mc->min;
+	int max = mc->max;
+	unsigned int mask = (1 << fls(max)) - 1;
+	unsigned int invert = mc->invert;
+	unsigned int val;
 
-	val = snd_soc_component_पढ़ो(component, reg);
-	ucontrol->value.पूर्णांकeger.value[0] = (val >> shअगरt) & mask;
-	अगर (invert)
-		ucontrol->value.पूर्णांकeger.value[0] =
-			max - ucontrol->value.पूर्णांकeger.value[0];
-	अन्यथा
-		ucontrol->value.पूर्णांकeger.value[0] =
-			ucontrol->value.पूर्णांकeger.value[0] - min;
+	val = snd_soc_component_read(component, reg);
+	ucontrol->value.integer.value[0] = (val >> shift) & mask;
+	if (invert)
+		ucontrol->value.integer.value[0] =
+			max - ucontrol->value.integer.value[0];
+	else
+		ucontrol->value.integer.value[0] =
+			ucontrol->value.integer.value[0] - min;
 
-	अगर (snd_soc_volsw_is_stereo(mc)) अणु
-		val = snd_soc_component_पढ़ो(component, rreg);
-		ucontrol->value.पूर्णांकeger.value[1] = (val >> shअगरt) & mask;
-		अगर (invert)
-			ucontrol->value.पूर्णांकeger.value[1] =
-				max - ucontrol->value.पूर्णांकeger.value[1];
-		अन्यथा
-			ucontrol->value.पूर्णांकeger.value[1] =
-				ucontrol->value.पूर्णांकeger.value[1] - min;
-	पूर्ण
+	if (snd_soc_volsw_is_stereo(mc)) {
+		val = snd_soc_component_read(component, rreg);
+		ucontrol->value.integer.value[1] = (val >> shift) & mask;
+		if (invert)
+			ucontrol->value.integer.value[1] =
+				max - ucontrol->value.integer.value[1];
+		else
+			ucontrol->value.integer.value[1] =
+				ucontrol->value.integer.value[1] - min;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(snd_soc_get_volsw_range);
 
 /**
  * snd_soc_limit_volume - Set new limit to an existing volume control.
  *
- * @card: where to look क्रम the control
+ * @card: where to look for the control
  * @name: Name of the control
  * @max: new maximum limit
  *
- * Return 0 क्रम success, अन्यथा error.
+ * Return 0 for success, else error.
  */
-पूर्णांक snd_soc_limit_volume(काष्ठा snd_soc_card *card,
-	स्थिर अक्षर *name, पूर्णांक max)
-अणु
-	काष्ठा snd_kcontrol *kctl;
-	काष्ठा soc_mixer_control *mc;
-	पूर्णांक ret = -EINVAL;
+int snd_soc_limit_volume(struct snd_soc_card *card,
+	const char *name, int max)
+{
+	struct snd_kcontrol *kctl;
+	struct soc_mixer_control *mc;
+	int ret = -EINVAL;
 
-	/* Sanity check क्रम name and max */
-	अगर (unlikely(!name || max <= 0))
-		वापस -EINVAL;
+	/* Sanity check for name and max */
+	if (unlikely(!name || max <= 0))
+		return -EINVAL;
 
 	kctl = snd_soc_card_get_kcontrol(card, name);
-	अगर (kctl) अणु
-		mc = (काष्ठा soc_mixer_control *)kctl->निजी_value;
-		अगर (max <= mc->max) अणु
-			mc->platक्रमm_max = max;
+	if (kctl) {
+		mc = (struct soc_mixer_control *)kctl->private_value;
+		if (max <= mc->max) {
+			mc->platform_max = max;
 			ret = 0;
-		पूर्ण
-	पूर्ण
-	वापस ret;
-पूर्ण
+		}
+	}
+	return ret;
+}
 EXPORT_SYMBOL_GPL(snd_soc_limit_volume);
 
-पूर्णांक snd_soc_bytes_info(काष्ठा snd_kcontrol *kcontrol,
-		       काष्ठा snd_ctl_elem_info *uinfo)
-अणु
-	काष्ठा snd_soc_component *component = snd_kcontrol_chip(kcontrol);
-	काष्ठा soc_bytes *params = (व्योम *)kcontrol->निजी_value;
+int snd_soc_bytes_info(struct snd_kcontrol *kcontrol,
+		       struct snd_ctl_elem_info *uinfo)
+{
+	struct snd_soc_component *component = snd_kcontrol_chip(kcontrol);
+	struct soc_bytes *params = (void *)kcontrol->private_value;
 
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_BYTES;
 	uinfo->count = params->num_regs * component->val_bytes;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(snd_soc_bytes_info);
 
-पूर्णांक snd_soc_bytes_get(काष्ठा snd_kcontrol *kcontrol,
-		      काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_soc_component *component = snd_kcontrol_chip(kcontrol);
-	काष्ठा soc_bytes *params = (व्योम *)kcontrol->निजी_value;
-	पूर्णांक ret;
+int snd_soc_bytes_get(struct snd_kcontrol *kcontrol,
+		      struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_component *component = snd_kcontrol_chip(kcontrol);
+	struct soc_bytes *params = (void *)kcontrol->private_value;
+	int ret;
 
-	अगर (component->regmap)
-		ret = regmap_raw_पढ़ो(component->regmap, params->base,
+	if (component->regmap)
+		ret = regmap_raw_read(component->regmap, params->base,
 				      ucontrol->value.bytes.data,
 				      params->num_regs * component->val_bytes);
-	अन्यथा
+	else
 		ret = -EINVAL;
 
 	/* Hide any masked bytes to ensure consistent data reporting */
-	अगर (ret == 0 && params->mask) अणु
-		चयन (component->val_bytes) अणु
-		हाल 1:
+	if (ret == 0 && params->mask) {
+		switch (component->val_bytes) {
+		case 1:
 			ucontrol->value.bytes.data[0] &= ~params->mask;
-			अवरोध;
-		हाल 2:
+			break;
+		case 2:
 			((u16 *)(&ucontrol->value.bytes.data))[0]
 				&= cpu_to_be16(~params->mask);
-			अवरोध;
-		हाल 4:
+			break;
+		case 4:
 			((u32 *)(&ucontrol->value.bytes.data))[0]
 				&= cpu_to_be32(~params->mask);
-			अवरोध;
-		शेष:
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			break;
+		default:
+			return -EINVAL;
+		}
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(snd_soc_bytes_get);
 
-पूर्णांक snd_soc_bytes_put(काष्ठा snd_kcontrol *kcontrol,
-		      काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_soc_component *component = snd_kcontrol_chip(kcontrol);
-	काष्ठा soc_bytes *params = (व्योम *)kcontrol->निजी_value;
-	पूर्णांक ret, len;
-	अचिन्हित पूर्णांक val, mask;
-	व्योम *data;
+int snd_soc_bytes_put(struct snd_kcontrol *kcontrol,
+		      struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_component *component = snd_kcontrol_chip(kcontrol);
+	struct soc_bytes *params = (void *)kcontrol->private_value;
+	int ret, len;
+	unsigned int val, mask;
+	void *data;
 
-	अगर (!component->regmap || !params->num_regs)
-		वापस -EINVAL;
+	if (!component->regmap || !params->num_regs)
+		return -EINVAL;
 
 	len = params->num_regs * component->val_bytes;
 
 	data = kmemdup(ucontrol->value.bytes.data, len, GFP_KERNEL | GFP_DMA);
-	अगर (!data)
-		वापस -ENOMEM;
+	if (!data)
+		return -ENOMEM;
 
 	/*
-	 * If we've got a mask then we need to preserve the रेजिस्टर
-	 * bits.  We shouldn't modअगरy the incoming data so take a
+	 * If we've got a mask then we need to preserve the register
+	 * bits.  We shouldn't modify the incoming data so take a
 	 * copy.
 	 */
-	अगर (params->mask) अणु
-		ret = regmap_पढ़ो(component->regmap, params->base, &val);
-		अगर (ret != 0)
-			जाओ out;
+	if (params->mask) {
+		ret = regmap_read(component->regmap, params->base, &val);
+		if (ret != 0)
+			goto out;
 
 		val &= params->mask;
 
-		चयन (component->val_bytes) अणु
-		हाल 1:
+		switch (component->val_bytes) {
+		case 1:
 			((u8 *)data)[0] &= ~params->mask;
 			((u8 *)data)[0] |= val;
-			अवरोध;
-		हाल 2:
+			break;
+		case 2:
 			mask = ~params->mask;
 			ret = regmap_parse_val(component->regmap,
 							&mask, &mask);
-			अगर (ret != 0)
-				जाओ out;
+			if (ret != 0)
+				goto out;
 
 			((u16 *)data)[0] &= mask;
 
 			ret = regmap_parse_val(component->regmap,
 							&val, &val);
-			अगर (ret != 0)
-				जाओ out;
+			if (ret != 0)
+				goto out;
 
 			((u16 *)data)[0] |= val;
-			अवरोध;
-		हाल 4:
+			break;
+		case 4:
 			mask = ~params->mask;
 			ret = regmap_parse_val(component->regmap,
 							&mask, &mask);
-			अगर (ret != 0)
-				जाओ out;
+			if (ret != 0)
+				goto out;
 
 			((u32 *)data)[0] &= mask;
 
 			ret = regmap_parse_val(component->regmap,
 							&val, &val);
-			अगर (ret != 0)
-				जाओ out;
+			if (ret != 0)
+				goto out;
 
 			((u32 *)data)[0] |= val;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			ret = -EINVAL;
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 
-	ret = regmap_raw_ग_लिखो(component->regmap, params->base,
+	ret = regmap_raw_write(component->regmap, params->base,
 			       data, len);
 
 out:
-	kमुक्त(data);
+	kfree(data);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(snd_soc_bytes_put);
 
-पूर्णांक snd_soc_bytes_info_ext(काष्ठा snd_kcontrol *kcontrol,
-			काष्ठा snd_ctl_elem_info *ucontrol)
-अणु
-	काष्ठा soc_bytes_ext *params = (व्योम *)kcontrol->निजी_value;
+int snd_soc_bytes_info_ext(struct snd_kcontrol *kcontrol,
+			struct snd_ctl_elem_info *ucontrol)
+{
+	struct soc_bytes_ext *params = (void *)kcontrol->private_value;
 
 	ucontrol->type = SNDRV_CTL_ELEM_TYPE_BYTES;
 	ucontrol->count = params->max;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(snd_soc_bytes_info_ext);
 
-पूर्णांक snd_soc_bytes_tlv_callback(काष्ठा snd_kcontrol *kcontrol, पूर्णांक op_flag,
-				अचिन्हित पूर्णांक size, अचिन्हित पूर्णांक __user *tlv)
-अणु
-	काष्ठा soc_bytes_ext *params = (व्योम *)kcontrol->निजी_value;
-	अचिन्हित पूर्णांक count = size < params->max ? size : params->max;
-	पूर्णांक ret = -ENXIO;
+int snd_soc_bytes_tlv_callback(struct snd_kcontrol *kcontrol, int op_flag,
+				unsigned int size, unsigned int __user *tlv)
+{
+	struct soc_bytes_ext *params = (void *)kcontrol->private_value;
+	unsigned int count = size < params->max ? size : params->max;
+	int ret = -ENXIO;
 
-	चयन (op_flag) अणु
-	हाल SNDRV_CTL_TLV_OP_READ:
-		अगर (params->get)
+	switch (op_flag) {
+	case SNDRV_CTL_TLV_OP_READ:
+		if (params->get)
 			ret = params->get(kcontrol, tlv, count);
-		अवरोध;
-	हाल SNDRV_CTL_TLV_OP_WRITE:
-		अगर (params->put)
+		break;
+	case SNDRV_CTL_TLV_OP_WRITE:
+		if (params->put)
 			ret = params->put(kcontrol, tlv, count);
-		अवरोध;
-	पूर्ण
-	वापस ret;
-पूर्ण
+		break;
+	}
+	return ret;
+}
 EXPORT_SYMBOL_GPL(snd_soc_bytes_tlv_callback);
 
 /**
- * snd_soc_info_xr_sx - चिन्हित multi रेजिस्टर info callback
+ * snd_soc_info_xr_sx - signed multi register info callback
  * @kcontrol: mreg control
- * @uinfo: control element inक्रमmation
+ * @uinfo: control element information
  *
- * Callback to provide inक्रमmation of a control that can
- * span multiple codec रेजिस्टरs which together
- * क्रमms a single चिन्हित value in a MSB/LSB manner.
+ * Callback to provide information of a control that can
+ * span multiple codec registers which together
+ * forms a single signed value in a MSB/LSB manner.
  *
- * Returns 0 क्रम success.
+ * Returns 0 for success.
  */
-पूर्णांक snd_soc_info_xr_sx(काष्ठा snd_kcontrol *kcontrol,
-	काष्ठा snd_ctl_elem_info *uinfo)
-अणु
-	काष्ठा soc_mreg_control *mc =
-		(काष्ठा soc_mreg_control *)kcontrol->निजी_value;
+int snd_soc_info_xr_sx(struct snd_kcontrol *kcontrol,
+	struct snd_ctl_elem_info *uinfo)
+{
+	struct soc_mreg_control *mc =
+		(struct soc_mreg_control *)kcontrol->private_value;
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_INTEGER;
 	uinfo->count = 1;
-	uinfo->value.पूर्णांकeger.min = mc->min;
-	uinfo->value.पूर्णांकeger.max = mc->max;
+	uinfo->value.integer.min = mc->min;
+	uinfo->value.integer.max = mc->max;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(snd_soc_info_xr_sx);
 
 /**
- * snd_soc_get_xr_sx - चिन्हित multi रेजिस्टर get callback
+ * snd_soc_get_xr_sx - signed multi register get callback
  * @kcontrol: mreg control
- * @ucontrol: control element inक्रमmation
+ * @ucontrol: control element information
  *
  * Callback to get the value of a control that can span
- * multiple codec रेजिस्टरs which together क्रमms a single
- * चिन्हित value in a MSB/LSB manner. The control supports
- * specअगरying total no of bits used to allow क्रम bitfields
- * across the multiple codec रेजिस्टरs.
+ * multiple codec registers which together forms a single
+ * signed value in a MSB/LSB manner. The control supports
+ * specifying total no of bits used to allow for bitfields
+ * across the multiple codec registers.
  *
- * Returns 0 क्रम success.
+ * Returns 0 for success.
  */
-पूर्णांक snd_soc_get_xr_sx(काष्ठा snd_kcontrol *kcontrol,
-	काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_soc_component *component = snd_kcontrol_chip(kcontrol);
-	काष्ठा soc_mreg_control *mc =
-		(काष्ठा soc_mreg_control *)kcontrol->निजी_value;
-	अचिन्हित पूर्णांक regbase = mc->regbase;
-	अचिन्हित पूर्णांक regcount = mc->regcount;
-	अचिन्हित पूर्णांक regwshअगरt = component->val_bytes * BITS_PER_BYTE;
-	अचिन्हित पूर्णांक regwmask = (1UL<<regwshअगरt)-1;
-	अचिन्हित पूर्णांक invert = mc->invert;
-	अचिन्हित दीर्घ mask = (1UL<<mc->nbits)-1;
-	दीर्घ min = mc->min;
-	दीर्घ max = mc->max;
-	दीर्घ val = 0;
-	अचिन्हित पूर्णांक regval;
-	अचिन्हित पूर्णांक i;
+int snd_soc_get_xr_sx(struct snd_kcontrol *kcontrol,
+	struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_component *component = snd_kcontrol_chip(kcontrol);
+	struct soc_mreg_control *mc =
+		(struct soc_mreg_control *)kcontrol->private_value;
+	unsigned int regbase = mc->regbase;
+	unsigned int regcount = mc->regcount;
+	unsigned int regwshift = component->val_bytes * BITS_PER_BYTE;
+	unsigned int regwmask = (1UL<<regwshift)-1;
+	unsigned int invert = mc->invert;
+	unsigned long mask = (1UL<<mc->nbits)-1;
+	long min = mc->min;
+	long max = mc->max;
+	long val = 0;
+	unsigned int regval;
+	unsigned int i;
 
-	क्रम (i = 0; i < regcount; i++) अणु
-		regval = snd_soc_component_पढ़ो(component, regbase+i);
-		val |= (regval & regwmask) << (regwshअगरt*(regcount-i-1));
-	पूर्ण
+	for (i = 0; i < regcount; i++) {
+		regval = snd_soc_component_read(component, regbase+i);
+		val |= (regval & regwmask) << (regwshift*(regcount-i-1));
+	}
 	val &= mask;
-	अगर (min < 0 && val > max)
+	if (min < 0 && val > max)
 		val |= ~mask;
-	अगर (invert)
+	if (invert)
 		val = max - val;
-	ucontrol->value.पूर्णांकeger.value[0] = val;
+	ucontrol->value.integer.value[0] = val;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(snd_soc_get_xr_sx);
 
 /**
- * snd_soc_put_xr_sx - चिन्हित multi रेजिस्टर get callback
+ * snd_soc_put_xr_sx - signed multi register get callback
  * @kcontrol: mreg control
- * @ucontrol: control element inक्रमmation
+ * @ucontrol: control element information
  *
  * Callback to set the value of a control that can span
- * multiple codec रेजिस्टरs which together क्रमms a single
- * चिन्हित value in a MSB/LSB manner. The control supports
- * specअगरying total no of bits used to allow क्रम bitfields
- * across the multiple codec रेजिस्टरs.
+ * multiple codec registers which together forms a single
+ * signed value in a MSB/LSB manner. The control supports
+ * specifying total no of bits used to allow for bitfields
+ * across the multiple codec registers.
  *
- * Returns 0 क्रम success.
+ * Returns 0 for success.
  */
-पूर्णांक snd_soc_put_xr_sx(काष्ठा snd_kcontrol *kcontrol,
-	काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_soc_component *component = snd_kcontrol_chip(kcontrol);
-	काष्ठा soc_mreg_control *mc =
-		(काष्ठा soc_mreg_control *)kcontrol->निजी_value;
-	अचिन्हित पूर्णांक regbase = mc->regbase;
-	अचिन्हित पूर्णांक regcount = mc->regcount;
-	अचिन्हित पूर्णांक regwshअगरt = component->val_bytes * BITS_PER_BYTE;
-	अचिन्हित पूर्णांक regwmask = (1UL<<regwshअगरt)-1;
-	अचिन्हित पूर्णांक invert = mc->invert;
-	अचिन्हित दीर्घ mask = (1UL<<mc->nbits)-1;
-	दीर्घ max = mc->max;
-	दीर्घ val = ucontrol->value.पूर्णांकeger.value[0];
-	अचिन्हित पूर्णांक i, regval, regmask;
-	पूर्णांक err;
+int snd_soc_put_xr_sx(struct snd_kcontrol *kcontrol,
+	struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_component *component = snd_kcontrol_chip(kcontrol);
+	struct soc_mreg_control *mc =
+		(struct soc_mreg_control *)kcontrol->private_value;
+	unsigned int regbase = mc->regbase;
+	unsigned int regcount = mc->regcount;
+	unsigned int regwshift = component->val_bytes * BITS_PER_BYTE;
+	unsigned int regwmask = (1UL<<regwshift)-1;
+	unsigned int invert = mc->invert;
+	unsigned long mask = (1UL<<mc->nbits)-1;
+	long max = mc->max;
+	long val = ucontrol->value.integer.value[0];
+	unsigned int i, regval, regmask;
+	int err;
 
-	अगर (invert)
+	if (invert)
 		val = max - val;
 	val &= mask;
-	क्रम (i = 0; i < regcount; i++) अणु
-		regval = (val >> (regwshअगरt*(regcount-i-1))) & regwmask;
-		regmask = (mask >> (regwshअगरt*(regcount-i-1))) & regwmask;
+	for (i = 0; i < regcount; i++) {
+		regval = (val >> (regwshift*(regcount-i-1))) & regwmask;
+		regmask = (mask >> (regwshift*(regcount-i-1))) & regwmask;
 		err = snd_soc_component_update_bits(component, regbase+i,
 				regmask, regval);
-		अगर (err < 0)
-			वापस err;
-	पूर्ण
+		if (err < 0)
+			return err;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(snd_soc_put_xr_sx);
 
 /**
  * snd_soc_get_strobe - strobe get callback
  * @kcontrol: mixer control
- * @ucontrol: control element inक्रमmation
+ * @ucontrol: control element information
  *
  * Callback get the value of a strobe mixer control.
  *
- * Returns 0 क्रम success.
+ * Returns 0 for success.
  */
-पूर्णांक snd_soc_get_strobe(काष्ठा snd_kcontrol *kcontrol,
-	काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_soc_component *component = snd_kcontrol_chip(kcontrol);
-	काष्ठा soc_mixer_control *mc =
-		(काष्ठा soc_mixer_control *)kcontrol->निजी_value;
-	अचिन्हित पूर्णांक reg = mc->reg;
-	अचिन्हित पूर्णांक shअगरt = mc->shअगरt;
-	अचिन्हित पूर्णांक mask = 1 << shअगरt;
-	अचिन्हित पूर्णांक invert = mc->invert != 0;
-	अचिन्हित पूर्णांक val;
+int snd_soc_get_strobe(struct snd_kcontrol *kcontrol,
+	struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_component *component = snd_kcontrol_chip(kcontrol);
+	struct soc_mixer_control *mc =
+		(struct soc_mixer_control *)kcontrol->private_value;
+	unsigned int reg = mc->reg;
+	unsigned int shift = mc->shift;
+	unsigned int mask = 1 << shift;
+	unsigned int invert = mc->invert != 0;
+	unsigned int val;
 
-	val = snd_soc_component_पढ़ो(component, reg);
+	val = snd_soc_component_read(component, reg);
 	val &= mask;
 
-	अगर (shअगरt != 0 && val != 0)
-		val = val >> shअगरt;
-	ucontrol->value.क्रमागतerated.item[0] = val ^ invert;
+	if (shift != 0 && val != 0)
+		val = val >> shift;
+	ucontrol->value.enumerated.item[0] = val ^ invert;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(snd_soc_get_strobe);
 
 /**
  * snd_soc_put_strobe - strobe put callback
  * @kcontrol: mixer control
- * @ucontrol: control element inक्रमmation
+ * @ucontrol: control element information
  *
- * Callback strobe a रेजिस्टर bit to high then low (or the inverse)
- * in one pass of a single mixer क्रमागत control.
+ * Callback strobe a register bit to high then low (or the inverse)
+ * in one pass of a single mixer enum control.
  *
- * Returns 1 क्रम success.
+ * Returns 1 for success.
  */
-पूर्णांक snd_soc_put_strobe(काष्ठा snd_kcontrol *kcontrol,
-	काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_soc_component *component = snd_kcontrol_chip(kcontrol);
-	काष्ठा soc_mixer_control *mc =
-		(काष्ठा soc_mixer_control *)kcontrol->निजी_value;
-	अचिन्हित पूर्णांक reg = mc->reg;
-	अचिन्हित पूर्णांक shअगरt = mc->shअगरt;
-	अचिन्हित पूर्णांक mask = 1 << shअगरt;
-	अचिन्हित पूर्णांक invert = mc->invert != 0;
-	अचिन्हित पूर्णांक strobe = ucontrol->value.क्रमागतerated.item[0] != 0;
-	अचिन्हित पूर्णांक val1 = (strobe ^ invert) ? mask : 0;
-	अचिन्हित पूर्णांक val2 = (strobe ^ invert) ? 0 : mask;
-	पूर्णांक err;
+int snd_soc_put_strobe(struct snd_kcontrol *kcontrol,
+	struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_component *component = snd_kcontrol_chip(kcontrol);
+	struct soc_mixer_control *mc =
+		(struct soc_mixer_control *)kcontrol->private_value;
+	unsigned int reg = mc->reg;
+	unsigned int shift = mc->shift;
+	unsigned int mask = 1 << shift;
+	unsigned int invert = mc->invert != 0;
+	unsigned int strobe = ucontrol->value.enumerated.item[0] != 0;
+	unsigned int val1 = (strobe ^ invert) ? mask : 0;
+	unsigned int val2 = (strobe ^ invert) ? 0 : mask;
+	int err;
 
 	err = snd_soc_component_update_bits(component, reg, mask, val1);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
-	वापस snd_soc_component_update_bits(component, reg, mask, val2);
-पूर्ण
+	return snd_soc_component_update_bits(component, reg, mask, val2);
+}
 EXPORT_SYMBOL_GPL(snd_soc_put_strobe);

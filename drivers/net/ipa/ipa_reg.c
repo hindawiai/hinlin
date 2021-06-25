@@ -1,39 +1,38 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 
 /* Copyright (c) 2012-2018, The Linux Foundation. All rights reserved.
  * Copyright (C) 2019-2020 Linaro Ltd.
  */
 
-#समावेश <linux/पन.स>
+#include <linux/io.h>
 
-#समावेश "ipa.h"
-#समावेश "ipa_reg.h"
+#include "ipa.h"
+#include "ipa_reg.h"
 
-पूर्णांक ipa_reg_init(काष्ठा ipa *ipa)
-अणु
-	काष्ठा device *dev = &ipa->pdev->dev;
-	काष्ठा resource *res;
+int ipa_reg_init(struct ipa *ipa)
+{
+	struct device *dev = &ipa->pdev->dev;
+	struct resource *res;
 
-	/* Setup IPA रेजिस्टर memory  */
-	res = platक्रमm_get_resource_byname(ipa->pdev, IORESOURCE_MEM,
+	/* Setup IPA register memory  */
+	res = platform_get_resource_byname(ipa->pdev, IORESOURCE_MEM,
 					   "ipa-reg");
-	अगर (!res) अणु
+	if (!res) {
 		dev_err(dev, "DT error getting \"ipa-reg\" memory property\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	ipa->reg_virt = ioremap(res->start, resource_size(res));
-	अगर (!ipa->reg_virt) अणु
+	if (!ipa->reg_virt) {
 		dev_err(dev, "unable to remap \"ipa-reg\" memory\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 	ipa->reg_addr = res->start;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम ipa_reg_निकास(काष्ठा ipa *ipa)
-अणु
+void ipa_reg_exit(struct ipa *ipa)
+{
 	iounmap(ipa->reg_virt);
-पूर्ण
+}

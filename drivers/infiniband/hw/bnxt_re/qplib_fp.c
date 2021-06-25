@@ -1,4 +1,3 @@
-<शैली गुरु>
 /*
  * Broadcom NetXtreme-E RoCE driver.
  *
@@ -8,25 +7,25 @@
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the मुख्य directory of this source tree, or the
+ * COPYING in the main directory of this source tree, or the
  * BSD license below:
  *
- * Redistribution and use in source and binary क्रमms, with or without
- * modअगरication, are permitted provided that the following conditions
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary क्रमm must reproduce the above copyright
+ * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
- *    the करोcumentation and/or other materials provided with the
+ *    the documentation and/or other materials provided with the
  *    distribution.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS''
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
  * THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
  * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS
- * BE LIABLE FOR ANY सूचीECT, INसूचीECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
  * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
  * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
  * BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
@@ -37,527 +36,527 @@
  * Description: Fast Path Operators
  */
 
-#घोषणा dev_fmt(fmt) "QPLIB: " fmt
+#define dev_fmt(fmt) "QPLIB: " fmt
 
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/prefetch.h>
-#समावेश <linux/अगर_ether.h>
+#include <linux/interrupt.h>
+#include <linux/spinlock.h>
+#include <linux/sched.h>
+#include <linux/slab.h>
+#include <linux/pci.h>
+#include <linux/delay.h>
+#include <linux/prefetch.h>
+#include <linux/if_ether.h>
 
-#समावेश "roce_hsi.h"
+#include "roce_hsi.h"
 
-#समावेश "qplib_res.h"
-#समावेश "qplib_rcfw.h"
-#समावेश "qplib_sp.h"
-#समावेश "qplib_fp.h"
+#include "qplib_res.h"
+#include "qplib_rcfw.h"
+#include "qplib_sp.h"
+#include "qplib_fp.h"
 
-अटल व्योम __clean_cq(काष्ठा bnxt_qplib_cq *cq, u64 qp);
+static void __clean_cq(struct bnxt_qplib_cq *cq, u64 qp);
 
-अटल व्योम bnxt_qplib_cancel_phantom_processing(काष्ठा bnxt_qplib_qp *qp)
-अणु
+static void bnxt_qplib_cancel_phantom_processing(struct bnxt_qplib_qp *qp)
+{
 	qp->sq.condition = false;
 	qp->sq.send_phantom = false;
 	qp->sq.single = false;
-पूर्ण
+}
 
 /* Flush list */
-अटल व्योम __bnxt_qplib_add_flush_qp(काष्ठा bnxt_qplib_qp *qp)
-अणु
-	काष्ठा bnxt_qplib_cq *scq, *rcq;
+static void __bnxt_qplib_add_flush_qp(struct bnxt_qplib_qp *qp)
+{
+	struct bnxt_qplib_cq *scq, *rcq;
 
 	scq = qp->scq;
 	rcq = qp->rcq;
 
-	अगर (!qp->sq.flushed) अणु
+	if (!qp->sq.flushed) {
 		dev_dbg(&scq->hwq.pdev->dev,
 			"FP: Adding to SQ Flush list = %p\n", qp);
 		bnxt_qplib_cancel_phantom_processing(qp);
 		list_add_tail(&qp->sq_flush, &scq->sqf_head);
 		qp->sq.flushed = true;
-	पूर्ण
-	अगर (!qp->srq) अणु
-		अगर (!qp->rq.flushed) अणु
+	}
+	if (!qp->srq) {
+		if (!qp->rq.flushed) {
 			dev_dbg(&rcq->hwq.pdev->dev,
 				"FP: Adding to RQ Flush list = %p\n", qp);
 			list_add_tail(&qp->rq_flush, &rcq->rqf_head);
 			qp->rq.flushed = true;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल व्योम bnxt_qplib_acquire_cq_flush_locks(काष्ठा bnxt_qplib_qp *qp,
-				       अचिन्हित दीर्घ *flags)
+static void bnxt_qplib_acquire_cq_flush_locks(struct bnxt_qplib_qp *qp,
+				       unsigned long *flags)
 	__acquires(&qp->scq->flush_lock) __acquires(&qp->rcq->flush_lock)
-अणु
+{
 	spin_lock_irqsave(&qp->scq->flush_lock, *flags);
-	अगर (qp->scq == qp->rcq)
+	if (qp->scq == qp->rcq)
 		__acquire(&qp->rcq->flush_lock);
-	अन्यथा
+	else
 		spin_lock(&qp->rcq->flush_lock);
-पूर्ण
+}
 
-अटल व्योम bnxt_qplib_release_cq_flush_locks(काष्ठा bnxt_qplib_qp *qp,
-				       अचिन्हित दीर्घ *flags)
+static void bnxt_qplib_release_cq_flush_locks(struct bnxt_qplib_qp *qp,
+				       unsigned long *flags)
 	__releases(&qp->scq->flush_lock) __releases(&qp->rcq->flush_lock)
-अणु
-	अगर (qp->scq == qp->rcq)
+{
+	if (qp->scq == qp->rcq)
 		__release(&qp->rcq->flush_lock);
-	अन्यथा
+	else
 		spin_unlock(&qp->rcq->flush_lock);
 	spin_unlock_irqrestore(&qp->scq->flush_lock, *flags);
-पूर्ण
+}
 
-व्योम bnxt_qplib_add_flush_qp(काष्ठा bnxt_qplib_qp *qp)
-अणु
-	अचिन्हित दीर्घ flags;
+void bnxt_qplib_add_flush_qp(struct bnxt_qplib_qp *qp)
+{
+	unsigned long flags;
 
 	bnxt_qplib_acquire_cq_flush_locks(qp, &flags);
 	__bnxt_qplib_add_flush_qp(qp);
 	bnxt_qplib_release_cq_flush_locks(qp, &flags);
-पूर्ण
+}
 
-अटल व्योम __bnxt_qplib_del_flush_qp(काष्ठा bnxt_qplib_qp *qp)
-अणु
-	अगर (qp->sq.flushed) अणु
+static void __bnxt_qplib_del_flush_qp(struct bnxt_qplib_qp *qp)
+{
+	if (qp->sq.flushed) {
 		qp->sq.flushed = false;
 		list_del(&qp->sq_flush);
-	पूर्ण
-	अगर (!qp->srq) अणु
-		अगर (qp->rq.flushed) अणु
+	}
+	if (!qp->srq) {
+		if (qp->rq.flushed) {
 			qp->rq.flushed = false;
 			list_del(&qp->rq_flush);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-व्योम bnxt_qplib_clean_qp(काष्ठा bnxt_qplib_qp *qp)
-अणु
-	अचिन्हित दीर्घ flags;
+void bnxt_qplib_clean_qp(struct bnxt_qplib_qp *qp)
+{
+	unsigned long flags;
 
 	bnxt_qplib_acquire_cq_flush_locks(qp, &flags);
-	__clean_cq(qp->scq, (u64)(अचिन्हित दीर्घ)qp);
+	__clean_cq(qp->scq, (u64)(unsigned long)qp);
 	qp->sq.hwq.prod = 0;
 	qp->sq.hwq.cons = 0;
-	__clean_cq(qp->rcq, (u64)(अचिन्हित दीर्घ)qp);
+	__clean_cq(qp->rcq, (u64)(unsigned long)qp);
 	qp->rq.hwq.prod = 0;
 	qp->rq.hwq.cons = 0;
 
 	__bnxt_qplib_del_flush_qp(qp);
 	bnxt_qplib_release_cq_flush_locks(qp, &flags);
-पूर्ण
+}
 
-अटल व्योम bnxt_qpn_cqn_sched_task(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा bnxt_qplib_nq_work *nq_work =
-			container_of(work, काष्ठा bnxt_qplib_nq_work, work);
+static void bnxt_qpn_cqn_sched_task(struct work_struct *work)
+{
+	struct bnxt_qplib_nq_work *nq_work =
+			container_of(work, struct bnxt_qplib_nq_work, work);
 
-	काष्ठा bnxt_qplib_cq *cq = nq_work->cq;
-	काष्ठा bnxt_qplib_nq *nq = nq_work->nq;
+	struct bnxt_qplib_cq *cq = nq_work->cq;
+	struct bnxt_qplib_nq *nq = nq_work->nq;
 
-	अगर (cq && nq) अणु
+	if (cq && nq) {
 		spin_lock_bh(&cq->compl_lock);
-		अगर (atomic_पढ़ो(&cq->arm_state) && nq->cqn_handler) अणु
+		if (atomic_read(&cq->arm_state) && nq->cqn_handler) {
 			dev_dbg(&nq->pdev->dev,
 				"%s:Trigger cq  = %p event nq = %p\n",
 				__func__, cq, nq);
 			nq->cqn_handler(nq, cq);
-		पूर्ण
+		}
 		spin_unlock_bh(&cq->compl_lock);
-	पूर्ण
-	kमुक्त(nq_work);
-पूर्ण
+	}
+	kfree(nq_work);
+}
 
-अटल व्योम bnxt_qplib_मुक्त_qp_hdr_buf(काष्ठा bnxt_qplib_res *res,
-				       काष्ठा bnxt_qplib_qp *qp)
-अणु
-	काष्ठा bnxt_qplib_q *rq = &qp->rq;
-	काष्ठा bnxt_qplib_q *sq = &qp->sq;
+static void bnxt_qplib_free_qp_hdr_buf(struct bnxt_qplib_res *res,
+				       struct bnxt_qplib_qp *qp)
+{
+	struct bnxt_qplib_q *rq = &qp->rq;
+	struct bnxt_qplib_q *sq = &qp->sq;
 
-	अगर (qp->rq_hdr_buf)
-		dma_मुक्त_coherent(&res->pdev->dev,
+	if (qp->rq_hdr_buf)
+		dma_free_coherent(&res->pdev->dev,
 				  rq->max_wqe * qp->rq_hdr_buf_size,
 				  qp->rq_hdr_buf, qp->rq_hdr_buf_map);
-	अगर (qp->sq_hdr_buf)
-		dma_मुक्त_coherent(&res->pdev->dev,
+	if (qp->sq_hdr_buf)
+		dma_free_coherent(&res->pdev->dev,
 				  sq->max_wqe * qp->sq_hdr_buf_size,
 				  qp->sq_hdr_buf, qp->sq_hdr_buf_map);
-	qp->rq_hdr_buf = शून्य;
-	qp->sq_hdr_buf = शून्य;
+	qp->rq_hdr_buf = NULL;
+	qp->sq_hdr_buf = NULL;
 	qp->rq_hdr_buf_map = 0;
 	qp->sq_hdr_buf_map = 0;
 	qp->sq_hdr_buf_size = 0;
 	qp->rq_hdr_buf_size = 0;
-पूर्ण
+}
 
-अटल पूर्णांक bnxt_qplib_alloc_qp_hdr_buf(काष्ठा bnxt_qplib_res *res,
-				       काष्ठा bnxt_qplib_qp *qp)
-अणु
-	काष्ठा bnxt_qplib_q *rq = &qp->rq;
-	काष्ठा bnxt_qplib_q *sq = &qp->sq;
-	पूर्णांक rc = 0;
+static int bnxt_qplib_alloc_qp_hdr_buf(struct bnxt_qplib_res *res,
+				       struct bnxt_qplib_qp *qp)
+{
+	struct bnxt_qplib_q *rq = &qp->rq;
+	struct bnxt_qplib_q *sq = &qp->sq;
+	int rc = 0;
 
-	अगर (qp->sq_hdr_buf_size && sq->max_wqe) अणु
+	if (qp->sq_hdr_buf_size && sq->max_wqe) {
 		qp->sq_hdr_buf = dma_alloc_coherent(&res->pdev->dev,
 					sq->max_wqe * qp->sq_hdr_buf_size,
 					&qp->sq_hdr_buf_map, GFP_KERNEL);
-		अगर (!qp->sq_hdr_buf) अणु
+		if (!qp->sq_hdr_buf) {
 			rc = -ENOMEM;
 			dev_err(&res->pdev->dev,
 				"Failed to create sq_hdr_buf\n");
-			जाओ fail;
-		पूर्ण
-	पूर्ण
+			goto fail;
+		}
+	}
 
-	अगर (qp->rq_hdr_buf_size && rq->max_wqe) अणु
+	if (qp->rq_hdr_buf_size && rq->max_wqe) {
 		qp->rq_hdr_buf = dma_alloc_coherent(&res->pdev->dev,
 						    rq->max_wqe *
 						    qp->rq_hdr_buf_size,
 						    &qp->rq_hdr_buf_map,
 						    GFP_KERNEL);
-		अगर (!qp->rq_hdr_buf) अणु
+		if (!qp->rq_hdr_buf) {
 			rc = -ENOMEM;
 			dev_err(&res->pdev->dev,
 				"Failed to create rq_hdr_buf\n");
-			जाओ fail;
-		पूर्ण
-	पूर्ण
-	वापस 0;
+			goto fail;
+		}
+	}
+	return 0;
 
 fail:
-	bnxt_qplib_मुक्त_qp_hdr_buf(res, qp);
-	वापस rc;
-पूर्ण
+	bnxt_qplib_free_qp_hdr_buf(res, qp);
+	return rc;
+}
 
-अटल व्योम clean_nq(काष्ठा bnxt_qplib_nq *nq, काष्ठा bnxt_qplib_cq *cq)
-अणु
-	काष्ठा bnxt_qplib_hwq *hwq = &nq->hwq;
-	काष्ठा nq_base *nqe, **nq_ptr;
-	पूर्णांक budget = nq->budget;
+static void clean_nq(struct bnxt_qplib_nq *nq, struct bnxt_qplib_cq *cq)
+{
+	struct bnxt_qplib_hwq *hwq = &nq->hwq;
+	struct nq_base *nqe, **nq_ptr;
+	int budget = nq->budget;
 	u32 sw_cons, raw_cons;
-	uपूर्णांकptr_t q_handle;
+	uintptr_t q_handle;
 	u16 type;
 
 	spin_lock_bh(&hwq->lock);
 	/* Service the NQ until empty */
 	raw_cons = hwq->cons;
-	जबतक (budget--) अणु
+	while (budget--) {
 		sw_cons = HWQ_CMP(raw_cons, hwq);
-		nq_ptr = (काष्ठा nq_base **)hwq->pbl_ptr;
+		nq_ptr = (struct nq_base **)hwq->pbl_ptr;
 		nqe = &nq_ptr[NQE_PG(sw_cons)][NQE_IDX(sw_cons)];
-		अगर (!NQE_CMP_VALID(nqe, raw_cons, hwq->max_elements))
-			अवरोध;
+		if (!NQE_CMP_VALID(nqe, raw_cons, hwq->max_elements))
+			break;
 
 		/*
-		 * The valid test of the entry must be करोne first beक्रमe
-		 * पढ़ोing any further.
+		 * The valid test of the entry must be done first before
+		 * reading any further.
 		 */
 		dma_rmb();
 
 		type = le16_to_cpu(nqe->info10_type) & NQ_BASE_TYPE_MASK;
-		चयन (type) अणु
-		हाल NQ_BASE_TYPE_CQ_NOTIFICATION:
-		अणु
-			काष्ठा nq_cn *nqcne = (काष्ठा nq_cn *)nqe;
+		switch (type) {
+		case NQ_BASE_TYPE_CQ_NOTIFICATION:
+		{
+			struct nq_cn *nqcne = (struct nq_cn *)nqe;
 
 			q_handle = le32_to_cpu(nqcne->cq_handle_low);
 			q_handle |= (u64)le32_to_cpu(nqcne->cq_handle_high)
 						     << 32;
-			अगर ((अचिन्हित दीर्घ)cq == q_handle) अणु
+			if ((unsigned long)cq == q_handle) {
 				nqcne->cq_handle_low = 0;
 				nqcne->cq_handle_high = 0;
 				cq->cnq_events++;
-			पूर्ण
-			अवरोध;
-		पूर्ण
-		शेष:
-			अवरोध;
-		पूर्ण
+			}
+			break;
+		}
+		default:
+			break;
+		}
 		raw_cons++;
-	पूर्ण
+	}
 	spin_unlock_bh(&hwq->lock);
-पूर्ण
+}
 
-/* Wait क्रम receiving all NQEs क्रम this CQ and clean the NQEs associated with
+/* Wait for receiving all NQEs for this CQ and clean the NQEs associated with
  * this CQ.
  */
-अटल व्योम __रुको_क्रम_all_nqes(काष्ठा bnxt_qplib_cq *cq, u16 cnq_events)
-अणु
+static void __wait_for_all_nqes(struct bnxt_qplib_cq *cq, u16 cnq_events)
+{
 	u32 retry_cnt = 100;
 
-	जबतक (retry_cnt--) अणु
-		अगर (cnq_events == cq->cnq_events)
-			वापस;
+	while (retry_cnt--) {
+		if (cnq_events == cq->cnq_events)
+			return;
 		usleep_range(50, 100);
 		clean_nq(cq->nq, cq);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम bnxt_qplib_service_nq(काष्ठा tasklet_काष्ठा *t)
-अणु
-	काष्ठा bnxt_qplib_nq *nq = from_tasklet(nq, t, nq_tasklet);
-	काष्ठा bnxt_qplib_hwq *hwq = &nq->hwq;
-	पूर्णांक num_srqne_processed = 0;
-	पूर्णांक num_cqne_processed = 0;
-	काष्ठा bnxt_qplib_cq *cq;
-	पूर्णांक budget = nq->budget;
+static void bnxt_qplib_service_nq(struct tasklet_struct *t)
+{
+	struct bnxt_qplib_nq *nq = from_tasklet(nq, t, nq_tasklet);
+	struct bnxt_qplib_hwq *hwq = &nq->hwq;
+	int num_srqne_processed = 0;
+	int num_cqne_processed = 0;
+	struct bnxt_qplib_cq *cq;
+	int budget = nq->budget;
 	u32 sw_cons, raw_cons;
-	काष्ठा nq_base *nqe;
-	uपूर्णांकptr_t q_handle;
+	struct nq_base *nqe;
+	uintptr_t q_handle;
 	u16 type;
 
 	spin_lock_bh(&hwq->lock);
 	/* Service the NQ until empty */
 	raw_cons = hwq->cons;
-	जबतक (budget--) अणु
+	while (budget--) {
 		sw_cons = HWQ_CMP(raw_cons, hwq);
-		nqe = bnxt_qplib_get_qe(hwq, sw_cons, शून्य);
-		अगर (!NQE_CMP_VALID(nqe, raw_cons, hwq->max_elements))
-			अवरोध;
+		nqe = bnxt_qplib_get_qe(hwq, sw_cons, NULL);
+		if (!NQE_CMP_VALID(nqe, raw_cons, hwq->max_elements))
+			break;
 
 		/*
-		 * The valid test of the entry must be करोne first beक्रमe
-		 * पढ़ोing any further.
+		 * The valid test of the entry must be done first before
+		 * reading any further.
 		 */
 		dma_rmb();
 
 		type = le16_to_cpu(nqe->info10_type) & NQ_BASE_TYPE_MASK;
-		चयन (type) अणु
-		हाल NQ_BASE_TYPE_CQ_NOTIFICATION:
-		अणु
-			काष्ठा nq_cn *nqcne = (काष्ठा nq_cn *)nqe;
+		switch (type) {
+		case NQ_BASE_TYPE_CQ_NOTIFICATION:
+		{
+			struct nq_cn *nqcne = (struct nq_cn *)nqe;
 
 			q_handle = le32_to_cpu(nqcne->cq_handle_low);
 			q_handle |= (u64)le32_to_cpu(nqcne->cq_handle_high)
 						     << 32;
-			cq = (काष्ठा bnxt_qplib_cq *)(अचिन्हित दीर्घ)q_handle;
-			अगर (!cq)
-				अवरोध;
+			cq = (struct bnxt_qplib_cq *)(unsigned long)q_handle;
+			if (!cq)
+				break;
 			bnxt_qplib_armen_db(&cq->dbinfo,
 					    DBC_DBC_TYPE_CQ_ARMENA);
 			spin_lock_bh(&cq->compl_lock);
 			atomic_set(&cq->arm_state, 0);
-			अगर (!nq->cqn_handler(nq, (cq)))
+			if (!nq->cqn_handler(nq, (cq)))
 				num_cqne_processed++;
-			अन्यथा
+			else
 				dev_warn(&nq->pdev->dev,
 					 "cqn - type 0x%x not handled\n", type);
 			cq->cnq_events++;
 			spin_unlock_bh(&cq->compl_lock);
-			अवरोध;
-		पूर्ण
-		हाल NQ_BASE_TYPE_SRQ_EVENT:
-		अणु
-			काष्ठा bnxt_qplib_srq *srq;
-			काष्ठा nq_srq_event *nqsrqe =
-						(काष्ठा nq_srq_event *)nqe;
+			break;
+		}
+		case NQ_BASE_TYPE_SRQ_EVENT:
+		{
+			struct bnxt_qplib_srq *srq;
+			struct nq_srq_event *nqsrqe =
+						(struct nq_srq_event *)nqe;
 
 			q_handle = le32_to_cpu(nqsrqe->srq_handle_low);
 			q_handle |= (u64)le32_to_cpu(nqsrqe->srq_handle_high)
 				     << 32;
-			srq = (काष्ठा bnxt_qplib_srq *)q_handle;
+			srq = (struct bnxt_qplib_srq *)q_handle;
 			bnxt_qplib_armen_db(&srq->dbinfo,
 					    DBC_DBC_TYPE_SRQ_ARMENA);
-			अगर (!nq->srqn_handler(nq,
-					      (काष्ठा bnxt_qplib_srq *)q_handle,
+			if (!nq->srqn_handler(nq,
+					      (struct bnxt_qplib_srq *)q_handle,
 					      nqsrqe->event))
 				num_srqne_processed++;
-			अन्यथा
+			else
 				dev_warn(&nq->pdev->dev,
 					 "SRQ event 0x%x not handled\n",
 					 nqsrqe->event);
-			अवरोध;
-		पूर्ण
-		हाल NQ_BASE_TYPE_DBQ_EVENT:
-			अवरोध;
-		शेष:
+			break;
+		}
+		case NQ_BASE_TYPE_DBQ_EVENT:
+			break;
+		default:
 			dev_warn(&nq->pdev->dev,
 				 "nqe with type = 0x%x not handled\n", type);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		raw_cons++;
-	पूर्ण
-	अगर (hwq->cons != raw_cons) अणु
+	}
+	if (hwq->cons != raw_cons) {
 		hwq->cons = raw_cons;
 		bnxt_qplib_ring_nq_db(&nq->nq_db.dbinfo, nq->res->cctx, true);
-	पूर्ण
+	}
 	spin_unlock_bh(&hwq->lock);
-पूर्ण
+}
 
-अटल irqवापस_t bnxt_qplib_nq_irq(पूर्णांक irq, व्योम *dev_instance)
-अणु
-	काष्ठा bnxt_qplib_nq *nq = dev_instance;
-	काष्ठा bnxt_qplib_hwq *hwq = &nq->hwq;
+static irqreturn_t bnxt_qplib_nq_irq(int irq, void *dev_instance)
+{
+	struct bnxt_qplib_nq *nq = dev_instance;
+	struct bnxt_qplib_hwq *hwq = &nq->hwq;
 	u32 sw_cons;
 
 	/* Prefetch the NQ element */
 	sw_cons = HWQ_CMP(hwq->cons, hwq);
-	prefetch(bnxt_qplib_get_qe(hwq, sw_cons, शून्य));
+	prefetch(bnxt_qplib_get_qe(hwq, sw_cons, NULL));
 
-	/* Fan out to CPU affinitized kthपढ़ोs? */
+	/* Fan out to CPU affinitized kthreads? */
 	tasklet_schedule(&nq->nq_tasklet);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-व्योम bnxt_qplib_nq_stop_irq(काष्ठा bnxt_qplib_nq *nq, bool समाप्त)
-अणु
+void bnxt_qplib_nq_stop_irq(struct bnxt_qplib_nq *nq, bool kill)
+{
 	tasklet_disable(&nq->nq_tasklet);
-	/* Mask h/w पूर्णांकerrupt */
+	/* Mask h/w interrupt */
 	bnxt_qplib_ring_nq_db(&nq->nq_db.dbinfo, nq->res->cctx, false);
 	/* Sync with last running IRQ handler */
 	synchronize_irq(nq->msix_vec);
-	अगर (समाप्त)
-		tasklet_समाप्त(&nq->nq_tasklet);
-	अगर (nq->requested) अणु
-		irq_set_affinity_hपूर्णांक(nq->msix_vec, शून्य);
-		मुक्त_irq(nq->msix_vec, nq);
+	if (kill)
+		tasklet_kill(&nq->nq_tasklet);
+	if (nq->requested) {
+		irq_set_affinity_hint(nq->msix_vec, NULL);
+		free_irq(nq->msix_vec, nq);
 		nq->requested = false;
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम bnxt_qplib_disable_nq(काष्ठा bnxt_qplib_nq *nq)
-अणु
-	अगर (nq->cqn_wq) अणु
+void bnxt_qplib_disable_nq(struct bnxt_qplib_nq *nq)
+{
+	if (nq->cqn_wq) {
 		destroy_workqueue(nq->cqn_wq);
-		nq->cqn_wq = शून्य;
-	पूर्ण
+		nq->cqn_wq = NULL;
+	}
 
 	/* Make sure the HW is stopped! */
 	bnxt_qplib_nq_stop_irq(nq, true);
 
-	अगर (nq->nq_db.reg.bar_reg) अणु
+	if (nq->nq_db.reg.bar_reg) {
 		iounmap(nq->nq_db.reg.bar_reg);
-		nq->nq_db.reg.bar_reg = शून्य;
-	पूर्ण
+		nq->nq_db.reg.bar_reg = NULL;
+	}
 
-	nq->cqn_handler = शून्य;
-	nq->srqn_handler = शून्य;
+	nq->cqn_handler = NULL;
+	nq->srqn_handler = NULL;
 	nq->msix_vec = 0;
-पूर्ण
+}
 
-पूर्णांक bnxt_qplib_nq_start_irq(काष्ठा bnxt_qplib_nq *nq, पूर्णांक nq_indx,
-			    पूर्णांक msix_vector, bool need_init)
-अणु
-	पूर्णांक rc;
+int bnxt_qplib_nq_start_irq(struct bnxt_qplib_nq *nq, int nq_indx,
+			    int msix_vector, bool need_init)
+{
+	int rc;
 
-	अगर (nq->requested)
-		वापस -EFAULT;
+	if (nq->requested)
+		return -EFAULT;
 
 	nq->msix_vec = msix_vector;
-	अगर (need_init)
+	if (need_init)
 		tasklet_setup(&nq->nq_tasklet, bnxt_qplib_service_nq);
-	अन्यथा
+	else
 		tasklet_enable(&nq->nq_tasklet);
 
-	snम_लिखो(nq->name, माप(nq->name), "bnxt_qplib_nq-%d", nq_indx);
+	snprintf(nq->name, sizeof(nq->name), "bnxt_qplib_nq-%d", nq_indx);
 	rc = request_irq(nq->msix_vec, bnxt_qplib_nq_irq, 0, nq->name, nq);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
 	cpumask_clear(&nq->mask);
 	cpumask_set_cpu(nq_indx, &nq->mask);
-	rc = irq_set_affinity_hपूर्णांक(nq->msix_vec, &nq->mask);
-	अगर (rc) अणु
+	rc = irq_set_affinity_hint(nq->msix_vec, &nq->mask);
+	if (rc) {
 		dev_warn(&nq->pdev->dev,
 			 "set affinity failed; vector: %d nq_idx: %d\n",
 			 nq->msix_vec, nq_indx);
-	पूर्ण
+	}
 	nq->requested = true;
 	bnxt_qplib_ring_nq_db(&nq->nq_db.dbinfo, nq->res->cctx, true);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक bnxt_qplib_map_nq_db(काष्ठा bnxt_qplib_nq *nq,  u32 reg_offt)
-अणु
-	resource_माप_प्रकार reg_base;
-	काष्ठा bnxt_qplib_nq_db *nq_db;
-	काष्ठा pci_dev *pdev;
-	पूर्णांक rc = 0;
+static int bnxt_qplib_map_nq_db(struct bnxt_qplib_nq *nq,  u32 reg_offt)
+{
+	resource_size_t reg_base;
+	struct bnxt_qplib_nq_db *nq_db;
+	struct pci_dev *pdev;
+	int rc = 0;
 
 	pdev = nq->pdev;
 	nq_db = &nq->nq_db;
 
 	nq_db->reg.bar_id = NQ_CONS_PCI_BAR_REGION;
 	nq_db->reg.bar_base = pci_resource_start(pdev, nq_db->reg.bar_id);
-	अगर (!nq_db->reg.bar_base) अणु
+	if (!nq_db->reg.bar_base) {
 		dev_err(&pdev->dev, "QPLIB: NQ BAR region %d resc start is 0!",
 			nq_db->reg.bar_id);
 		rc = -ENOMEM;
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
 	reg_base = nq_db->reg.bar_base + reg_offt;
 	/* Unconditionally map 8 bytes to support 57500 series */
 	nq_db->reg.len = 8;
 	nq_db->reg.bar_reg = ioremap(reg_base, nq_db->reg.len);
-	अगर (!nq_db->reg.bar_reg) अणु
+	if (!nq_db->reg.bar_reg) {
 		dev_err(&pdev->dev, "QPLIB: NQ BAR region %d mapping failed",
 			nq_db->reg.bar_id);
 		rc = -ENOMEM;
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
 	nq_db->dbinfo.db = nq_db->reg.bar_reg;
 	nq_db->dbinfo.hwq = &nq->hwq;
 	nq_db->dbinfo.xid = nq->ring_id;
 fail:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-पूर्णांक bnxt_qplib_enable_nq(काष्ठा pci_dev *pdev, काष्ठा bnxt_qplib_nq *nq,
-			 पूर्णांक nq_idx, पूर्णांक msix_vector, पूर्णांक bar_reg_offset,
+int bnxt_qplib_enable_nq(struct pci_dev *pdev, struct bnxt_qplib_nq *nq,
+			 int nq_idx, int msix_vector, int bar_reg_offset,
 			 cqn_handler_t cqn_handler,
 			 srqn_handler_t srqn_handler)
-अणु
-	पूर्णांक rc = -1;
+{
+	int rc = -1;
 
 	nq->pdev = pdev;
 	nq->cqn_handler = cqn_handler;
 	nq->srqn_handler = srqn_handler;
 
-	/* Have a task to schedule CQ notअगरiers in post send हाल */
-	nq->cqn_wq  = create_singlethपढ़ो_workqueue("bnxt_qplib_nq");
-	अगर (!nq->cqn_wq)
-		वापस -ENOMEM;
+	/* Have a task to schedule CQ notifiers in post send case */
+	nq->cqn_wq  = create_singlethread_workqueue("bnxt_qplib_nq");
+	if (!nq->cqn_wq)
+		return -ENOMEM;
 
 	rc = bnxt_qplib_map_nq_db(nq, bar_reg_offset);
-	अगर (rc)
-		जाओ fail;
+	if (rc)
+		goto fail;
 
 	rc = bnxt_qplib_nq_start_irq(nq, nq_idx, msix_vector, true);
-	अगर (rc) अणु
+	if (rc) {
 		dev_err(&nq->pdev->dev,
 			"Failed to request irq for nq-idx %d\n", nq_idx);
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
-	वापस 0;
+	return 0;
 fail:
 	bnxt_qplib_disable_nq(nq);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-व्योम bnxt_qplib_मुक्त_nq(काष्ठा bnxt_qplib_nq *nq)
-अणु
-	अगर (nq->hwq.max_elements) अणु
-		bnxt_qplib_मुक्त_hwq(nq->res, &nq->hwq);
+void bnxt_qplib_free_nq(struct bnxt_qplib_nq *nq)
+{
+	if (nq->hwq.max_elements) {
+		bnxt_qplib_free_hwq(nq->res, &nq->hwq);
 		nq->hwq.max_elements = 0;
-	पूर्ण
-पूर्ण
+	}
+}
 
-पूर्णांक bnxt_qplib_alloc_nq(काष्ठा bnxt_qplib_res *res, काष्ठा bnxt_qplib_nq *nq)
-अणु
-	काष्ठा bnxt_qplib_hwq_attr hwq_attr = अणुपूर्ण;
-	काष्ठा bnxt_qplib_sg_info sginfo = अणुपूर्ण;
+int bnxt_qplib_alloc_nq(struct bnxt_qplib_res *res, struct bnxt_qplib_nq *nq)
+{
+	struct bnxt_qplib_hwq_attr hwq_attr = {};
+	struct bnxt_qplib_sg_info sginfo = {};
 
 	nq->pdev = res->pdev;
 	nq->res = res;
-	अगर (!nq->hwq.max_elements ||
+	if (!nq->hwq.max_elements ||
 	    nq->hwq.max_elements > BNXT_QPLIB_NQE_MAX_CNT)
 		nq->hwq.max_elements = BNXT_QPLIB_NQE_MAX_CNT;
 
@@ -566,50 +565,50 @@ fail:
 	hwq_attr.res = res;
 	hwq_attr.sginfo = &sginfo;
 	hwq_attr.depth = nq->hwq.max_elements;
-	hwq_attr.stride = माप(काष्ठा nq_base);
+	hwq_attr.stride = sizeof(struct nq_base);
 	hwq_attr.type = bnxt_qplib_get_hwq_type(nq->res);
-	अगर (bnxt_qplib_alloc_init_hwq(&nq->hwq, &hwq_attr)) अणु
+	if (bnxt_qplib_alloc_init_hwq(&nq->hwq, &hwq_attr)) {
 		dev_err(&nq->pdev->dev, "FP NQ allocation failed");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 	nq->budget = 8;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* SRQ */
-व्योम bnxt_qplib_destroy_srq(काष्ठा bnxt_qplib_res *res,
-			   काष्ठा bnxt_qplib_srq *srq)
-अणु
-	काष्ठा bnxt_qplib_rcfw *rcfw = res->rcfw;
-	काष्ठा cmdq_destroy_srq req;
-	काष्ठा creq_destroy_srq_resp resp;
+void bnxt_qplib_destroy_srq(struct bnxt_qplib_res *res,
+			   struct bnxt_qplib_srq *srq)
+{
+	struct bnxt_qplib_rcfw *rcfw = res->rcfw;
+	struct cmdq_destroy_srq req;
+	struct creq_destroy_srq_resp resp;
 	u16 cmd_flags = 0;
-	पूर्णांक rc;
+	int rc;
 
 	RCFW_CMD_PREP(req, DESTROY_SRQ, cmd_flags);
 
 	/* Configure the request */
 	req.srq_cid = cpu_to_le32(srq->id);
 
-	rc = bnxt_qplib_rcfw_send_message(rcfw, (काष्ठा cmdq_base *)&req,
-					  (काष्ठा creq_base *)&resp, शून्य, 0);
-	kमुक्त(srq->swq);
-	अगर (rc)
-		वापस;
-	bnxt_qplib_मुक्त_hwq(res, &srq->hwq);
-पूर्ण
+	rc = bnxt_qplib_rcfw_send_message(rcfw, (struct cmdq_base *)&req,
+					  (struct creq_base *)&resp, NULL, 0);
+	kfree(srq->swq);
+	if (rc)
+		return;
+	bnxt_qplib_free_hwq(res, &srq->hwq);
+}
 
-पूर्णांक bnxt_qplib_create_srq(काष्ठा bnxt_qplib_res *res,
-			  काष्ठा bnxt_qplib_srq *srq)
-अणु
-	काष्ठा bnxt_qplib_rcfw *rcfw = res->rcfw;
-	काष्ठा bnxt_qplib_hwq_attr hwq_attr = अणुपूर्ण;
-	काष्ठा creq_create_srq_resp resp;
-	काष्ठा cmdq_create_srq req;
-	काष्ठा bnxt_qplib_pbl *pbl;
+int bnxt_qplib_create_srq(struct bnxt_qplib_res *res,
+			  struct bnxt_qplib_srq *srq)
+{
+	struct bnxt_qplib_rcfw *rcfw = res->rcfw;
+	struct bnxt_qplib_hwq_attr hwq_attr = {};
+	struct creq_create_srq_resp resp;
+	struct cmdq_create_srq req;
+	struct bnxt_qplib_pbl *pbl;
 	u16 cmd_flags = 0;
 	u16 pg_sz_lvl;
-	पूर्णांक rc, idx;
+	int rc, idx;
 
 	hwq_attr.res = res;
 	hwq_attr.sginfo = &srq->sg_info;
@@ -617,21 +616,21 @@ fail:
 	hwq_attr.stride = srq->wqe_size;
 	hwq_attr.type = HWQ_TYPE_QUEUE;
 	rc = bnxt_qplib_alloc_init_hwq(&srq->hwq, &hwq_attr);
-	अगर (rc)
-		जाओ निकास;
+	if (rc)
+		goto exit;
 
-	srq->swq = kसुस्मृति(srq->hwq.max_elements, माप(*srq->swq),
+	srq->swq = kcalloc(srq->hwq.max_elements, sizeof(*srq->swq),
 			   GFP_KERNEL);
-	अगर (!srq->swq) अणु
+	if (!srq->swq) {
 		rc = -ENOMEM;
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
 	RCFW_CMD_PREP(req, CREATE_SRQ, cmd_flags);
 
 	/* Configure the request */
 	req.dpi = cpu_to_le32(srq->dpi->dpi);
-	req.srq_handle = cpu_to_le64((uपूर्णांकptr_t)srq);
+	req.srq_handle = cpu_to_le64((uintptr_t)srq);
 
 	req.srq_size = cpu_to_le16((u16)srq->hwq.max_elements);
 	pbl = &srq->hwq.pbl[PBL_LVL_0];
@@ -644,15 +643,15 @@ fail:
 	req.pd_id = cpu_to_le32(srq->pd->id);
 	req.eventq_id = cpu_to_le16(srq->eventq_hw_ring_id);
 
-	rc = bnxt_qplib_rcfw_send_message(rcfw, (व्योम *)&req,
-					  (व्योम *)&resp, शून्य, 0);
-	अगर (rc)
-		जाओ fail;
+	rc = bnxt_qplib_rcfw_send_message(rcfw, (void *)&req,
+					  (void *)&resp, NULL, 0);
+	if (rc)
+		goto fail;
 
 	spin_lock_init(&srq->lock);
 	srq->start_idx = 0;
 	srq->last_idx = srq->hwq.max_elements - 1;
-	क्रम (idx = 0; idx < srq->hwq.max_elements; idx++)
+	for (idx = 0; idx < srq->hwq.max_elements; idx++)
 		srq->swq[idx].next_idx = idx + 1;
 	srq->swq[srq->last_idx].next_idx = -1;
 
@@ -662,22 +661,22 @@ fail:
 	srq->dbinfo.db = srq->dpi->dbr;
 	srq->dbinfo.max_slot = 1;
 	srq->dbinfo.priv_db = res->dpi_tbl.dbr_bar_reg_iomem;
-	अगर (srq->threshold)
+	if (srq->threshold)
 		bnxt_qplib_armen_db(&srq->dbinfo, DBC_DBC_TYPE_SRQ_ARMENA);
 	srq->arm_req = false;
 
-	वापस 0;
+	return 0;
 fail:
-	bnxt_qplib_मुक्त_hwq(res, &srq->hwq);
-	kमुक्त(srq->swq);
-निकास:
-	वापस rc;
-पूर्ण
+	bnxt_qplib_free_hwq(res, &srq->hwq);
+	kfree(srq->swq);
+exit:
+	return rc;
+}
 
-पूर्णांक bnxt_qplib_modअगरy_srq(काष्ठा bnxt_qplib_res *res,
-			  काष्ठा bnxt_qplib_srq *srq)
-अणु
-	काष्ठा bnxt_qplib_hwq *srq_hwq = &srq->hwq;
+int bnxt_qplib_modify_srq(struct bnxt_qplib_res *res,
+			  struct bnxt_qplib_srq *srq)
+{
+	struct bnxt_qplib_hwq *srq_hwq = &srq->hwq;
 	u32 sw_prod, sw_cons, count = 0;
 
 	sw_prod = HWQ_CMP(srq_hwq->prod, srq_hwq);
@@ -685,79 +684,79 @@ fail:
 
 	count = sw_prod > sw_cons ? sw_prod - sw_cons :
 				    srq_hwq->max_elements - sw_cons + sw_prod;
-	अगर (count > srq->threshold) अणु
+	if (count > srq->threshold) {
 		srq->arm_req = false;
 		bnxt_qplib_srq_arm_db(&srq->dbinfo, srq->threshold);
-	पूर्ण अन्यथा अणु
+	} else {
 		/* Deferred arming */
 		srq->arm_req = true;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक bnxt_qplib_query_srq(काष्ठा bnxt_qplib_res *res,
-			 काष्ठा bnxt_qplib_srq *srq)
-अणु
-	काष्ठा bnxt_qplib_rcfw *rcfw = res->rcfw;
-	काष्ठा cmdq_query_srq req;
-	काष्ठा creq_query_srq_resp resp;
-	काष्ठा bnxt_qplib_rcfw_sbuf *sbuf;
-	काष्ठा creq_query_srq_resp_sb *sb;
+int bnxt_qplib_query_srq(struct bnxt_qplib_res *res,
+			 struct bnxt_qplib_srq *srq)
+{
+	struct bnxt_qplib_rcfw *rcfw = res->rcfw;
+	struct cmdq_query_srq req;
+	struct creq_query_srq_resp resp;
+	struct bnxt_qplib_rcfw_sbuf *sbuf;
+	struct creq_query_srq_resp_sb *sb;
 	u16 cmd_flags = 0;
-	पूर्णांक rc = 0;
+	int rc = 0;
 
 	RCFW_CMD_PREP(req, QUERY_SRQ, cmd_flags);
 	req.srq_cid = cpu_to_le32(srq->id);
 
 	/* Configure the request */
-	sbuf = bnxt_qplib_rcfw_alloc_sbuf(rcfw, माप(*sb));
-	अगर (!sbuf)
-		वापस -ENOMEM;
+	sbuf = bnxt_qplib_rcfw_alloc_sbuf(rcfw, sizeof(*sb));
+	if (!sbuf)
+		return -ENOMEM;
 	sb = sbuf->sb;
-	rc = bnxt_qplib_rcfw_send_message(rcfw, (व्योम *)&req, (व्योम *)&resp,
-					  (व्योम *)sbuf, 0);
+	rc = bnxt_qplib_rcfw_send_message(rcfw, (void *)&req, (void *)&resp,
+					  (void *)sbuf, 0);
 	srq->threshold = le16_to_cpu(sb->srq_limit);
-	bnxt_qplib_rcfw_मुक्त_sbuf(rcfw, sbuf);
+	bnxt_qplib_rcfw_free_sbuf(rcfw, sbuf);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-पूर्णांक bnxt_qplib_post_srq_recv(काष्ठा bnxt_qplib_srq *srq,
-			     काष्ठा bnxt_qplib_swqe *wqe)
-अणु
-	काष्ठा bnxt_qplib_hwq *srq_hwq = &srq->hwq;
-	काष्ठा rq_wqe *srqe;
-	काष्ठा sq_sge *hw_sge;
+int bnxt_qplib_post_srq_recv(struct bnxt_qplib_srq *srq,
+			     struct bnxt_qplib_swqe *wqe)
+{
+	struct bnxt_qplib_hwq *srq_hwq = &srq->hwq;
+	struct rq_wqe *srqe;
+	struct sq_sge *hw_sge;
 	u32 sw_prod, sw_cons, count = 0;
-	पूर्णांक i, rc = 0, next;
+	int i, rc = 0, next;
 
 	spin_lock(&srq_hwq->lock);
-	अगर (srq->start_idx == srq->last_idx) अणु
+	if (srq->start_idx == srq->last_idx) {
 		dev_err(&srq_hwq->pdev->dev,
 			"FP: SRQ (0x%x) is full!\n", srq->id);
 		rc = -EINVAL;
 		spin_unlock(&srq_hwq->lock);
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 	next = srq->start_idx;
 	srq->start_idx = srq->swq[next].next_idx;
 	spin_unlock(&srq_hwq->lock);
 
 	sw_prod = HWQ_CMP(srq_hwq->prod, srq_hwq);
-	srqe = bnxt_qplib_get_qe(srq_hwq, sw_prod, शून्य);
-	स_रखो(srqe, 0, srq->wqe_size);
+	srqe = bnxt_qplib_get_qe(srq_hwq, sw_prod, NULL);
+	memset(srqe, 0, srq->wqe_size);
 	/* Calculate wqe_size16 and data_len */
-	क्रम (i = 0, hw_sge = (काष्ठा sq_sge *)srqe->data;
-	     i < wqe->num_sge; i++, hw_sge++) अणु
+	for (i = 0, hw_sge = (struct sq_sge *)srqe->data;
+	     i < wqe->num_sge; i++, hw_sge++) {
 		hw_sge->va_or_pa = cpu_to_le64(wqe->sg_list[i].addr);
 		hw_sge->l_key = cpu_to_le32(wqe->sg_list[i].lkey);
 		hw_sge->size = cpu_to_le32(wqe->sg_list[i].size);
-	पूर्ण
+	}
 	srqe->wqe_type = wqe->type;
 	srqe->flags = wqe->flags;
 	srqe->wqe_size = wqe->num_sge +
-			((दुरत्व(typeof(*srqe), data) + 15) >> 4);
+			((offsetof(typeof(*srqe), data) + 15) >> 4);
 	srqe->wr_id[0] = cpu_to_le32((u32)next);
 	srq->swq[next].wr_id = wqe->wr_id;
 
@@ -765,9 +764,9 @@ fail:
 
 	spin_lock(&srq_hwq->lock);
 	sw_prod = HWQ_CMP(srq_hwq->prod, srq_hwq);
-	/* retaining srq_hwq->cons क्रम this logic
+	/* retaining srq_hwq->cons for this logic
 	 * actually the lock is only required to
-	 * पढ़ो srq_hwq->cons.
+	 * read srq_hwq->cons.
 	 */
 	sw_cons = HWQ_CMP(srq_hwq->cons, srq_hwq);
 	count = sw_prod > sw_cons ? sw_prod - sw_cons :
@@ -775,51 +774,51 @@ fail:
 	spin_unlock(&srq_hwq->lock);
 	/* Ring DB */
 	bnxt_qplib_ring_prod_db(&srq->dbinfo, DBC_DBC_TYPE_SRQ);
-	अगर (srq->arm_req == true && count > srq->threshold) अणु
+	if (srq->arm_req == true && count > srq->threshold) {
 		srq->arm_req = false;
 		bnxt_qplib_srq_arm_db(&srq->dbinfo, srq->threshold);
-	पूर्ण
-करोne:
-	वापस rc;
-पूर्ण
+	}
+done:
+	return rc;
+}
 
 /* QP */
 
-अटल पूर्णांक bnxt_qplib_alloc_init_swq(काष्ठा bnxt_qplib_q *que)
-अणु
-	पूर्णांक rc = 0;
-	पूर्णांक indx;
+static int bnxt_qplib_alloc_init_swq(struct bnxt_qplib_q *que)
+{
+	int rc = 0;
+	int indx;
 
-	que->swq = kसुस्मृति(que->max_wqe, माप(*que->swq), GFP_KERNEL);
-	अगर (!que->swq) अणु
+	que->swq = kcalloc(que->max_wqe, sizeof(*que->swq), GFP_KERNEL);
+	if (!que->swq) {
 		rc = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	que->swq_start = 0;
 	que->swq_last = que->max_wqe - 1;
-	क्रम (indx = 0; indx < que->max_wqe; indx++)
+	for (indx = 0; indx < que->max_wqe; indx++)
 		que->swq[indx].next_idx = indx + 1;
 	que->swq[que->swq_last].next_idx = 0; /* Make it circular */
 	que->swq_last = 0;
 out:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-पूर्णांक bnxt_qplib_create_qp1(काष्ठा bnxt_qplib_res *res, काष्ठा bnxt_qplib_qp *qp)
-अणु
-	काष्ठा bnxt_qplib_hwq_attr hwq_attr = अणुपूर्ण;
-	काष्ठा bnxt_qplib_rcfw *rcfw = res->rcfw;
-	काष्ठा bnxt_qplib_q *sq = &qp->sq;
-	काष्ठा bnxt_qplib_q *rq = &qp->rq;
-	काष्ठा creq_create_qp1_resp resp;
-	काष्ठा cmdq_create_qp1 req;
-	काष्ठा bnxt_qplib_pbl *pbl;
+int bnxt_qplib_create_qp1(struct bnxt_qplib_res *res, struct bnxt_qplib_qp *qp)
+{
+	struct bnxt_qplib_hwq_attr hwq_attr = {};
+	struct bnxt_qplib_rcfw *rcfw = res->rcfw;
+	struct bnxt_qplib_q *sq = &qp->sq;
+	struct bnxt_qplib_q *rq = &qp->rq;
+	struct creq_create_qp1_resp resp;
+	struct cmdq_create_qp1 req;
+	struct bnxt_qplib_pbl *pbl;
 	u16 cmd_flags = 0;
 	u32 qp_flags = 0;
 	u8 pg_sz_lvl;
 	u32 tbl_indx;
-	पूर्णांक rc;
+	int rc;
 
 	RCFW_CMD_PREP(req, CREATE_QP1, cmd_flags);
 
@@ -831,16 +830,16 @@ out:
 	/* SQ */
 	hwq_attr.res = res;
 	hwq_attr.sginfo = &sq->sg_info;
-	hwq_attr.stride = माप(काष्ठा sq_sge);
+	hwq_attr.stride = sizeof(struct sq_sge);
 	hwq_attr.depth = bnxt_qplib_get_depth(sq);
 	hwq_attr.type = HWQ_TYPE_QUEUE;
 	rc = bnxt_qplib_alloc_init_hwq(&sq->hwq, &hwq_attr);
-	अगर (rc)
-		जाओ निकास;
+	if (rc)
+		goto exit;
 
 	rc = bnxt_qplib_alloc_init_swq(sq);
-	अगर (rc)
-		जाओ fail_sq;
+	if (rc)
+		goto fail_sq;
 
 	req.sq_size = cpu_to_le32(bnxt_qplib_set_sq_size(sq, qp->wqe_mode));
 	pbl = &sq->hwq.pbl[PBL_LVL_0];
@@ -855,18 +854,18 @@ out:
 	req.scq_cid = cpu_to_le32(qp->scq->id);
 
 	/* RQ */
-	अगर (rq->max_wqe) अणु
+	if (rq->max_wqe) {
 		hwq_attr.res = res;
 		hwq_attr.sginfo = &rq->sg_info;
-		hwq_attr.stride = माप(काष्ठा sq_sge);
+		hwq_attr.stride = sizeof(struct sq_sge);
 		hwq_attr.depth = bnxt_qplib_get_depth(rq);
 		hwq_attr.type = HWQ_TYPE_QUEUE;
 		rc = bnxt_qplib_alloc_init_hwq(&rq->hwq, &hwq_attr);
-		अगर (rc)
-			जाओ sq_swq;
+		if (rc)
+			goto sq_swq;
 		rc = bnxt_qplib_alloc_init_swq(rq);
-		अगर (rc)
-			जाओ fail_rq;
+		if (rc)
+			goto fail_rq;
 		req.rq_size = cpu_to_le32(rq->max_wqe);
 		pbl = &rq->hwq.pbl[PBL_LVL_0];
 		req.rq_pbl = cpu_to_le64(pbl->pg_map_arr[0]);
@@ -878,22 +877,22 @@ out:
 			cpu_to_le16((rq->max_sge &
 				     CMDQ_CREATE_QP1_RQ_SGE_MASK) <<
 				    CMDQ_CREATE_QP1_RQ_SGE_SFT);
-	पूर्ण
+	}
 	req.rcq_cid = cpu_to_le32(qp->rcq->id);
 	/* Header buffer - allow hdr_buf pass in */
 	rc = bnxt_qplib_alloc_qp_hdr_buf(res, qp);
-	अगर (rc) अणु
+	if (rc) {
 		rc = -ENOMEM;
-		जाओ rq_rwq;
-	पूर्ण
+		goto rq_rwq;
+	}
 	qp_flags |= CMDQ_CREATE_QP1_QP_FLAGS_RESERVED_LKEY_ENABLE;
 	req.qp_flags = cpu_to_le32(qp_flags);
 	req.pd_id = cpu_to_le32(qp->pd->id);
 
-	rc = bnxt_qplib_rcfw_send_message(rcfw, (व्योम *)&req,
-					  (व्योम *)&resp, शून्य, 0);
-	अगर (rc)
-		जाओ fail;
+	rc = bnxt_qplib_rcfw_send_message(rcfw, (void *)&req,
+					  (void *)&resp, NULL, 0);
+	if (rc)
+		goto fail;
 
 	qp->id = le32_to_cpu(resp.xid);
 	qp->cur_qp_state = CMDQ_MODIFY_QP_NEW_STATE_RESET;
@@ -902,36 +901,36 @@ out:
 	sq->dbinfo.xid = qp->id;
 	sq->dbinfo.db = qp->dpi->dbr;
 	sq->dbinfo.max_slot = bnxt_qplib_set_sq_max_slot(qp->wqe_mode);
-	अगर (rq->max_wqe) अणु
+	if (rq->max_wqe) {
 		rq->dbinfo.hwq = &rq->hwq;
 		rq->dbinfo.xid = qp->id;
 		rq->dbinfo.db = qp->dpi->dbr;
 		rq->dbinfo.max_slot = bnxt_qplib_set_rq_max_slot(rq->wqe_size);
-	पूर्ण
+	}
 	tbl_indx = map_qp_id_to_tbl_indx(qp->id, rcfw);
 	rcfw->qp_tbl[tbl_indx].qp_id = qp->id;
-	rcfw->qp_tbl[tbl_indx].qp_handle = (व्योम *)qp;
+	rcfw->qp_tbl[tbl_indx].qp_handle = (void *)qp;
 
-	वापस 0;
+	return 0;
 
 fail:
-	bnxt_qplib_मुक्त_qp_hdr_buf(res, qp);
+	bnxt_qplib_free_qp_hdr_buf(res, qp);
 rq_rwq:
-	kमुक्त(rq->swq);
+	kfree(rq->swq);
 fail_rq:
-	bnxt_qplib_मुक्त_hwq(res, &rq->hwq);
+	bnxt_qplib_free_hwq(res, &rq->hwq);
 sq_swq:
-	kमुक्त(sq->swq);
+	kfree(sq->swq);
 fail_sq:
-	bnxt_qplib_मुक्त_hwq(res, &sq->hwq);
-निकास:
-	वापस rc;
-पूर्ण
+	bnxt_qplib_free_hwq(res, &sq->hwq);
+exit:
+	return rc;
+}
 
-अटल व्योम bnxt_qplib_init_psn_ptr(काष्ठा bnxt_qplib_qp *qp, पूर्णांक size)
-अणु
-	काष्ठा bnxt_qplib_hwq *hwq;
-	काष्ठा bnxt_qplib_q *sq;
+static void bnxt_qplib_init_psn_ptr(struct bnxt_qplib_qp *qp, int size)
+{
+	struct bnxt_qplib_hwq *hwq;
+	struct bnxt_qplib_q *sq;
 	u64 fpsne, psn_pg;
 	u16 indx_pad = 0;
 
@@ -939,25 +938,25 @@ fail_sq:
 	hwq = &sq->hwq;
 	/* First psn entry */
 	fpsne = (u64)bnxt_qplib_get_qe(hwq, hwq->depth, &psn_pg);
-	अगर (!IS_ALIGNED(fpsne, PAGE_SIZE))
+	if (!IS_ALIGNED(fpsne, PAGE_SIZE))
 		indx_pad = (fpsne & ~PAGE_MASK) / size;
 	hwq->pad_pgofft = indx_pad;
 	hwq->pad_pg = (u64 *)psn_pg;
 	hwq->pad_stride = size;
-पूर्ण
+}
 
-पूर्णांक bnxt_qplib_create_qp(काष्ठा bnxt_qplib_res *res, काष्ठा bnxt_qplib_qp *qp)
-अणु
-	काष्ठा bnxt_qplib_rcfw *rcfw = res->rcfw;
-	काष्ठा bnxt_qplib_hwq_attr hwq_attr = अणुपूर्ण;
-	काष्ठा bnxt_qplib_sg_info sginfo = अणुपूर्ण;
-	काष्ठा bnxt_qplib_q *sq = &qp->sq;
-	काष्ठा bnxt_qplib_q *rq = &qp->rq;
-	काष्ठा creq_create_qp_resp resp;
-	पूर्णांक rc, req_size, psn_sz = 0;
-	काष्ठा bnxt_qplib_hwq *xrrq;
-	काष्ठा bnxt_qplib_pbl *pbl;
-	काष्ठा cmdq_create_qp req;
+int bnxt_qplib_create_qp(struct bnxt_qplib_res *res, struct bnxt_qplib_qp *qp)
+{
+	struct bnxt_qplib_rcfw *rcfw = res->rcfw;
+	struct bnxt_qplib_hwq_attr hwq_attr = {};
+	struct bnxt_qplib_sg_info sginfo = {};
+	struct bnxt_qplib_q *sq = &qp->sq;
+	struct bnxt_qplib_q *rq = &qp->rq;
+	struct creq_create_qp_resp resp;
+	int rc, req_size, psn_sz = 0;
+	struct bnxt_qplib_hwq *xrrq;
+	struct bnxt_qplib_pbl *pbl;
+	struct cmdq_create_qp req;
 	u16 cmd_flags = 0;
 	u32 qp_flags = 0;
 	u8 pg_sz_lvl;
@@ -972,28 +971,28 @@ fail_sq:
 	req.qp_handle = cpu_to_le64(qp->qp_handle);
 
 	/* SQ */
-	अगर (qp->type == CMDQ_CREATE_QP_TYPE_RC) अणु
+	if (qp->type == CMDQ_CREATE_QP_TYPE_RC) {
 		psn_sz = bnxt_qplib_is_chip_gen_p5(res->cctx) ?
-			 माप(काष्ठा sq_psn_search_ext) :
-			 माप(काष्ठा sq_psn_search);
-	पूर्ण
+			 sizeof(struct sq_psn_search_ext) :
+			 sizeof(struct sq_psn_search);
+	}
 
 	hwq_attr.res = res;
 	hwq_attr.sginfo = &sq->sg_info;
-	hwq_attr.stride = माप(काष्ठा sq_sge);
+	hwq_attr.stride = sizeof(struct sq_sge);
 	hwq_attr.depth = bnxt_qplib_get_depth(sq);
 	hwq_attr.aux_stride = psn_sz;
 	hwq_attr.aux_depth = bnxt_qplib_set_sq_size(sq, qp->wqe_mode);
 	hwq_attr.type = HWQ_TYPE_QUEUE;
 	rc = bnxt_qplib_alloc_init_hwq(&sq->hwq, &hwq_attr);
-	अगर (rc)
-		जाओ निकास;
+	if (rc)
+		goto exit;
 
 	rc = bnxt_qplib_alloc_init_swq(sq);
-	अगर (rc)
-		जाओ fail_sq;
+	if (rc)
+		goto fail_sq;
 
-	अगर (psn_sz)
+	if (psn_sz)
 		bnxt_qplib_init_psn_ptr(qp, psn_sz);
 
 	req.sq_size = cpu_to_le32(bnxt_qplib_set_sq_size(sq, qp->wqe_mode));
@@ -1009,20 +1008,20 @@ fail_sq:
 	req.scq_cid = cpu_to_le32(qp->scq->id);
 
 	/* RQ */
-	अगर (!qp->srq) अणु
+	if (!qp->srq) {
 		hwq_attr.res = res;
 		hwq_attr.sginfo = &rq->sg_info;
-		hwq_attr.stride = माप(काष्ठा sq_sge);
+		hwq_attr.stride = sizeof(struct sq_sge);
 		hwq_attr.depth = bnxt_qplib_get_depth(rq);
 		hwq_attr.aux_stride = 0;
 		hwq_attr.aux_depth = 0;
 		hwq_attr.type = HWQ_TYPE_QUEUE;
 		rc = bnxt_qplib_alloc_init_hwq(&rq->hwq, &hwq_attr);
-		अगर (rc)
-			जाओ sq_swq;
+		if (rc)
+			goto sq_swq;
 		rc = bnxt_qplib_alloc_init_swq(rq);
-		अगर (rc)
-			जाओ fail_rq;
+		if (rc)
+			goto fail_rq;
 
 		req.rq_size = cpu_to_le32(rq->max_wqe);
 		pbl = &rq->hwq.pbl[PBL_LVL_0];
@@ -1037,23 +1036,23 @@ fail_sq:
 			cpu_to_le16(((nsge &
 				      CMDQ_CREATE_QP_RQ_SGE_MASK) <<
 				     CMDQ_CREATE_QP_RQ_SGE_SFT) | 0);
-	पूर्ण अन्यथा अणु
+	} else {
 		/* SRQ */
 		qp_flags |= CMDQ_CREATE_QP_QP_FLAGS_SRQ_USED;
 		req.srq_cid = cpu_to_le32(qp->srq->id);
-	पूर्ण
+	}
 	req.rcq_cid = cpu_to_le32(qp->rcq->id);
 
 	qp_flags |= CMDQ_CREATE_QP_QP_FLAGS_RESERVED_LKEY_ENABLE;
 	qp_flags |= CMDQ_CREATE_QP_QP_FLAGS_FR_PMR_ENABLED;
-	अगर (qp->sig_type)
+	if (qp->sig_type)
 		qp_flags |= CMDQ_CREATE_QP_QP_FLAGS_FORCE_COMPLETION;
-	अगर (qp->wqe_mode == BNXT_QPLIB_WQE_MODE_VARIABLE)
+	if (qp->wqe_mode == BNXT_QPLIB_WQE_MODE_VARIABLE)
 		qp_flags |= CMDQ_CREATE_QP_QP_FLAGS_VARIABLE_SIZED_WQE_ENABLED;
 	req.qp_flags = cpu_to_le32(qp_flags);
 
 	/* ORRQ and IRRQ */
-	अगर (psn_sz) अणु
+	if (psn_sz) {
 		xrrq = &qp->orrq;
 		xrrq->max_elements =
 			ORD_LIMIT_TO_ORRQ_SLOTS(qp->max_rd_atomic);
@@ -1071,8 +1070,8 @@ fail_sq:
 		hwq_attr.aux_depth = 0;
 		hwq_attr.type = HWQ_TYPE_CTX;
 		rc = bnxt_qplib_alloc_init_hwq(xrrq, &hwq_attr);
-		अगर (rc)
-			जाओ rq_swq;
+		if (rc)
+			goto rq_swq;
 		pbl = &xrrq->pbl[PBL_LVL_0];
 		req.orrq_addr = cpu_to_le64(pbl->pg_map_arr[0]);
 
@@ -1086,18 +1085,18 @@ fail_sq:
 		hwq_attr.depth =  xrrq->max_elements;
 		hwq_attr.stride = BNXT_QPLIB_MAX_IRRQE_ENTRY_SIZE;
 		rc = bnxt_qplib_alloc_init_hwq(xrrq, &hwq_attr);
-		अगर (rc)
-			जाओ fail_orrq;
+		if (rc)
+			goto fail_orrq;
 
 		pbl = &xrrq->pbl[PBL_LVL_0];
 		req.irrq_addr = cpu_to_le64(pbl->pg_map_arr[0]);
-	पूर्ण
+	}
 	req.pd_id = cpu_to_le32(qp->pd->id);
 
-	rc = bnxt_qplib_rcfw_send_message(rcfw, (व्योम *)&req,
-					  (व्योम *)&resp, शून्य, 0);
-	अगर (rc)
-		जाओ fail;
+	rc = bnxt_qplib_rcfw_send_message(rcfw, (void *)&req,
+					  (void *)&resp, NULL, 0);
+	if (rc)
+		goto fail;
 
 	qp->id = le32_to_cpu(resp.xid);
 	qp->cur_qp_state = CMDQ_MODIFY_QP_NEW_STATE_RESET;
@@ -1108,80 +1107,80 @@ fail_sq:
 	sq->dbinfo.xid = qp->id;
 	sq->dbinfo.db = qp->dpi->dbr;
 	sq->dbinfo.max_slot = bnxt_qplib_set_sq_max_slot(qp->wqe_mode);
-	अगर (rq->max_wqe) अणु
+	if (rq->max_wqe) {
 		rq->dbinfo.hwq = &rq->hwq;
 		rq->dbinfo.xid = qp->id;
 		rq->dbinfo.db = qp->dpi->dbr;
 		rq->dbinfo.max_slot = bnxt_qplib_set_rq_max_slot(rq->wqe_size);
-	पूर्ण
+	}
 	tbl_indx = map_qp_id_to_tbl_indx(qp->id, rcfw);
 	rcfw->qp_tbl[tbl_indx].qp_id = qp->id;
-	rcfw->qp_tbl[tbl_indx].qp_handle = (व्योम *)qp;
+	rcfw->qp_tbl[tbl_indx].qp_handle = (void *)qp;
 
-	वापस 0;
+	return 0;
 fail:
-	bnxt_qplib_मुक्त_hwq(res, &qp->irrq);
+	bnxt_qplib_free_hwq(res, &qp->irrq);
 fail_orrq:
-	bnxt_qplib_मुक्त_hwq(res, &qp->orrq);
+	bnxt_qplib_free_hwq(res, &qp->orrq);
 rq_swq:
-	kमुक्त(rq->swq);
+	kfree(rq->swq);
 fail_rq:
-	bnxt_qplib_मुक्त_hwq(res, &rq->hwq);
+	bnxt_qplib_free_hwq(res, &rq->hwq);
 sq_swq:
-	kमुक्त(sq->swq);
+	kfree(sq->swq);
 fail_sq:
-	bnxt_qplib_मुक्त_hwq(res, &sq->hwq);
-निकास:
-	वापस rc;
-पूर्ण
+	bnxt_qplib_free_hwq(res, &sq->hwq);
+exit:
+	return rc;
+}
 
-अटल व्योम __modअगरy_flags_from_init_state(काष्ठा bnxt_qplib_qp *qp)
-अणु
-	चयन (qp->state) अणु
-	हाल CMDQ_MODIFY_QP_NEW_STATE_RTR:
-		/* INIT->RTR, configure the path_mtu to the शेष
-		 * 2048 अगर not being requested
+static void __modify_flags_from_init_state(struct bnxt_qplib_qp *qp)
+{
+	switch (qp->state) {
+	case CMDQ_MODIFY_QP_NEW_STATE_RTR:
+		/* INIT->RTR, configure the path_mtu to the default
+		 * 2048 if not being requested
 		 */
-		अगर (!(qp->modअगरy_flags &
-		    CMDQ_MODIFY_QP_MODIFY_MASK_PATH_MTU)) अणु
-			qp->modअगरy_flags |=
+		if (!(qp->modify_flags &
+		    CMDQ_MODIFY_QP_MODIFY_MASK_PATH_MTU)) {
+			qp->modify_flags |=
 				CMDQ_MODIFY_QP_MODIFY_MASK_PATH_MTU;
 			qp->path_mtu =
 				CMDQ_MODIFY_QP_PATH_MTU_MTU_2048;
-		पूर्ण
-		qp->modअगरy_flags &=
+		}
+		qp->modify_flags &=
 			~CMDQ_MODIFY_QP_MODIFY_MASK_VLAN_ID;
 		/* Bono FW require the max_dest_rd_atomic to be >= 1 */
-		अगर (qp->max_dest_rd_atomic < 1)
+		if (qp->max_dest_rd_atomic < 1)
 			qp->max_dest_rd_atomic = 1;
-		qp->modअगरy_flags &= ~CMDQ_MODIFY_QP_MODIFY_MASK_SRC_MAC;
+		qp->modify_flags &= ~CMDQ_MODIFY_QP_MODIFY_MASK_SRC_MAC;
 		/* Bono FW 20.6.5 requires SGID_INDEX configuration */
-		अगर (!(qp->modअगरy_flags &
-		    CMDQ_MODIFY_QP_MODIFY_MASK_SGID_INDEX)) अणु
-			qp->modअगरy_flags |=
+		if (!(qp->modify_flags &
+		    CMDQ_MODIFY_QP_MODIFY_MASK_SGID_INDEX)) {
+			qp->modify_flags |=
 				CMDQ_MODIFY_QP_MODIFY_MASK_SGID_INDEX;
 			qp->ah.sgid_index = 0;
-		पूर्ण
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-पूर्ण
+		}
+		break;
+	default:
+		break;
+	}
+}
 
-अटल व्योम __modअगरy_flags_from_rtr_state(काष्ठा bnxt_qplib_qp *qp)
-अणु
-	चयन (qp->state) अणु
-	हाल CMDQ_MODIFY_QP_NEW_STATE_RTS:
+static void __modify_flags_from_rtr_state(struct bnxt_qplib_qp *qp)
+{
+	switch (qp->state) {
+	case CMDQ_MODIFY_QP_NEW_STATE_RTS:
 		/* Bono FW requires the max_rd_atomic to be >= 1 */
-		अगर (qp->max_rd_atomic < 1)
+		if (qp->max_rd_atomic < 1)
 			qp->max_rd_atomic = 1;
-		/* Bono FW करोes not allow PKEY_INDEX,
+		/* Bono FW does not allow PKEY_INDEX,
 		 * DGID, FLOW_LABEL, SGID_INDEX, HOP_LIMIT,
 		 * TRAFFIC_CLASS, DEST_MAC, PATH_MTU, RQ_PSN,
 		 * MIN_RNR_TIMER, MAX_DEST_RD_ATOMIC, DEST_QP_ID
-		 * modअगरication
+		 * modification
 		 */
-		qp->modअगरy_flags &=
+		qp->modify_flags &=
 			~(CMDQ_MODIFY_QP_MODIFY_MASK_PKEY |
 			  CMDQ_MODIFY_QP_MODIFY_MASK_DGID |
 			  CMDQ_MODIFY_QP_MODIFY_MASK_FLOW_LABEL |
@@ -1194,121 +1193,121 @@ fail_sq:
 			  CMDQ_MODIFY_QP_MODIFY_MASK_MIN_RNR_TIMER |
 			  CMDQ_MODIFY_QP_MODIFY_MASK_MAX_DEST_RD_ATOMIC |
 			  CMDQ_MODIFY_QP_MODIFY_MASK_DEST_QP_ID);
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	default:
+		break;
+	}
+}
 
-अटल व्योम __filter_modअगरy_flags(काष्ठा bnxt_qplib_qp *qp)
-अणु
-	चयन (qp->cur_qp_state) अणु
-	हाल CMDQ_MODIFY_QP_NEW_STATE_RESET:
-		अवरोध;
-	हाल CMDQ_MODIFY_QP_NEW_STATE_INIT:
-		__modअगरy_flags_from_init_state(qp);
-		अवरोध;
-	हाल CMDQ_MODIFY_QP_NEW_STATE_RTR:
-		__modअगरy_flags_from_rtr_state(qp);
-		अवरोध;
-	हाल CMDQ_MODIFY_QP_NEW_STATE_RTS:
-		अवरोध;
-	हाल CMDQ_MODIFY_QP_NEW_STATE_SQD:
-		अवरोध;
-	हाल CMDQ_MODIFY_QP_NEW_STATE_SQE:
-		अवरोध;
-	हाल CMDQ_MODIFY_QP_NEW_STATE_ERR:
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-पूर्ण
+static void __filter_modify_flags(struct bnxt_qplib_qp *qp)
+{
+	switch (qp->cur_qp_state) {
+	case CMDQ_MODIFY_QP_NEW_STATE_RESET:
+		break;
+	case CMDQ_MODIFY_QP_NEW_STATE_INIT:
+		__modify_flags_from_init_state(qp);
+		break;
+	case CMDQ_MODIFY_QP_NEW_STATE_RTR:
+		__modify_flags_from_rtr_state(qp);
+		break;
+	case CMDQ_MODIFY_QP_NEW_STATE_RTS:
+		break;
+	case CMDQ_MODIFY_QP_NEW_STATE_SQD:
+		break;
+	case CMDQ_MODIFY_QP_NEW_STATE_SQE:
+		break;
+	case CMDQ_MODIFY_QP_NEW_STATE_ERR:
+		break;
+	default:
+		break;
+	}
+}
 
-पूर्णांक bnxt_qplib_modअगरy_qp(काष्ठा bnxt_qplib_res *res, काष्ठा bnxt_qplib_qp *qp)
-अणु
-	काष्ठा bnxt_qplib_rcfw *rcfw = res->rcfw;
-	काष्ठा cmdq_modअगरy_qp req;
-	काष्ठा creq_modअगरy_qp_resp resp;
+int bnxt_qplib_modify_qp(struct bnxt_qplib_res *res, struct bnxt_qplib_qp *qp)
+{
+	struct bnxt_qplib_rcfw *rcfw = res->rcfw;
+	struct cmdq_modify_qp req;
+	struct creq_modify_qp_resp resp;
 	u16 cmd_flags = 0, pkey;
 	u32 temp32[4];
 	u32 bmask;
-	पूर्णांक rc;
+	int rc;
 
 	RCFW_CMD_PREP(req, MODIFY_QP, cmd_flags);
 
 	/* Filter out the qp_attr_mask based on the state->new transition */
-	__filter_modअगरy_flags(qp);
-	bmask = qp->modअगरy_flags;
-	req.modअगरy_mask = cpu_to_le32(qp->modअगरy_flags);
+	__filter_modify_flags(qp);
+	bmask = qp->modify_flags;
+	req.modify_mask = cpu_to_le32(qp->modify_flags);
 	req.qp_cid = cpu_to_le32(qp->id);
-	अगर (bmask & CMDQ_MODIFY_QP_MODIFY_MASK_STATE) अणु
-		req.network_type_en_sqd_async_notअगरy_new_state =
+	if (bmask & CMDQ_MODIFY_QP_MODIFY_MASK_STATE) {
+		req.network_type_en_sqd_async_notify_new_state =
 				(qp->state & CMDQ_MODIFY_QP_NEW_STATE_MASK) |
-				(qp->en_sqd_async_notअगरy ?
+				(qp->en_sqd_async_notify ?
 					CMDQ_MODIFY_QP_EN_SQD_ASYNC_NOTIFY : 0);
-	पूर्ण
-	req.network_type_en_sqd_async_notअगरy_new_state |= qp->nw_type;
+	}
+	req.network_type_en_sqd_async_notify_new_state |= qp->nw_type;
 
-	अगर (bmask & CMDQ_MODIFY_QP_MODIFY_MASK_ACCESS)
+	if (bmask & CMDQ_MODIFY_QP_MODIFY_MASK_ACCESS)
 		req.access = qp->access;
 
-	अगर (bmask & CMDQ_MODIFY_QP_MODIFY_MASK_PKEY) अणु
-		अगर (!bnxt_qplib_get_pkey(res, &res->pkey_tbl,
+	if (bmask & CMDQ_MODIFY_QP_MODIFY_MASK_PKEY) {
+		if (!bnxt_qplib_get_pkey(res, &res->pkey_tbl,
 					 qp->pkey_index, &pkey))
 			req.pkey = cpu_to_le16(pkey);
-	पूर्ण
-	अगर (bmask & CMDQ_MODIFY_QP_MODIFY_MASK_QKEY)
+	}
+	if (bmask & CMDQ_MODIFY_QP_MODIFY_MASK_QKEY)
 		req.qkey = cpu_to_le32(qp->qkey);
 
-	अगर (bmask & CMDQ_MODIFY_QP_MODIFY_MASK_DGID) अणु
-		स_नकल(temp32, qp->ah.dgid.data, माप(काष्ठा bnxt_qplib_gid));
+	if (bmask & CMDQ_MODIFY_QP_MODIFY_MASK_DGID) {
+		memcpy(temp32, qp->ah.dgid.data, sizeof(struct bnxt_qplib_gid));
 		req.dgid[0] = cpu_to_le32(temp32[0]);
 		req.dgid[1] = cpu_to_le32(temp32[1]);
 		req.dgid[2] = cpu_to_le32(temp32[2]);
 		req.dgid[3] = cpu_to_le32(temp32[3]);
-	पूर्ण
-	अगर (bmask & CMDQ_MODIFY_QP_MODIFY_MASK_FLOW_LABEL)
+	}
+	if (bmask & CMDQ_MODIFY_QP_MODIFY_MASK_FLOW_LABEL)
 		req.flow_label = cpu_to_le32(qp->ah.flow_label);
 
-	अगर (bmask & CMDQ_MODIFY_QP_MODIFY_MASK_SGID_INDEX)
+	if (bmask & CMDQ_MODIFY_QP_MODIFY_MASK_SGID_INDEX)
 		req.sgid_index = cpu_to_le16(res->sgid_tbl.hw_id
 					     [qp->ah.sgid_index]);
 
-	अगर (bmask & CMDQ_MODIFY_QP_MODIFY_MASK_HOP_LIMIT)
+	if (bmask & CMDQ_MODIFY_QP_MODIFY_MASK_HOP_LIMIT)
 		req.hop_limit = qp->ah.hop_limit;
 
-	अगर (bmask & CMDQ_MODIFY_QP_MODIFY_MASK_TRAFFIC_CLASS)
+	if (bmask & CMDQ_MODIFY_QP_MODIFY_MASK_TRAFFIC_CLASS)
 		req.traffic_class = qp->ah.traffic_class;
 
-	अगर (bmask & CMDQ_MODIFY_QP_MODIFY_MASK_DEST_MAC)
-		स_नकल(req.dest_mac, qp->ah.dmac, 6);
+	if (bmask & CMDQ_MODIFY_QP_MODIFY_MASK_DEST_MAC)
+		memcpy(req.dest_mac, qp->ah.dmac, 6);
 
-	अगर (bmask & CMDQ_MODIFY_QP_MODIFY_MASK_PATH_MTU)
+	if (bmask & CMDQ_MODIFY_QP_MODIFY_MASK_PATH_MTU)
 		req.path_mtu = qp->path_mtu;
 
-	अगर (bmask & CMDQ_MODIFY_QP_MODIFY_MASK_TIMEOUT)
-		req.समयout = qp->समयout;
+	if (bmask & CMDQ_MODIFY_QP_MODIFY_MASK_TIMEOUT)
+		req.timeout = qp->timeout;
 
-	अगर (bmask & CMDQ_MODIFY_QP_MODIFY_MASK_RETRY_CNT)
+	if (bmask & CMDQ_MODIFY_QP_MODIFY_MASK_RETRY_CNT)
 		req.retry_cnt = qp->retry_cnt;
 
-	अगर (bmask & CMDQ_MODIFY_QP_MODIFY_MASK_RNR_RETRY)
+	if (bmask & CMDQ_MODIFY_QP_MODIFY_MASK_RNR_RETRY)
 		req.rnr_retry = qp->rnr_retry;
 
-	अगर (bmask & CMDQ_MODIFY_QP_MODIFY_MASK_MIN_RNR_TIMER)
-		req.min_rnr_समयr = qp->min_rnr_समयr;
+	if (bmask & CMDQ_MODIFY_QP_MODIFY_MASK_MIN_RNR_TIMER)
+		req.min_rnr_timer = qp->min_rnr_timer;
 
-	अगर (bmask & CMDQ_MODIFY_QP_MODIFY_MASK_RQ_PSN)
+	if (bmask & CMDQ_MODIFY_QP_MODIFY_MASK_RQ_PSN)
 		req.rq_psn = cpu_to_le32(qp->rq.psn);
 
-	अगर (bmask & CMDQ_MODIFY_QP_MODIFY_MASK_SQ_PSN)
+	if (bmask & CMDQ_MODIFY_QP_MODIFY_MASK_SQ_PSN)
 		req.sq_psn = cpu_to_le32(qp->sq.psn);
 
-	अगर (bmask & CMDQ_MODIFY_QP_MODIFY_MASK_MAX_RD_ATOMIC)
+	if (bmask & CMDQ_MODIFY_QP_MODIFY_MASK_MAX_RD_ATOMIC)
 		req.max_rd_atomic =
 			ORD_LIMIT_TO_ORRQ_SLOTS(qp->max_rd_atomic);
 
-	अगर (bmask & CMDQ_MODIFY_QP_MODIFY_MASK_MAX_DEST_RD_ATOMIC)
+	if (bmask & CMDQ_MODIFY_QP_MODIFY_MASK_MAX_DEST_RD_ATOMIC)
 		req.max_dest_rd_atomic =
 			IRD_LIMIT_TO_IRRQ_SLOTS(qp->max_dest_rd_atomic);
 
@@ -1316,48 +1315,48 @@ fail_sq:
 	req.rq_size = cpu_to_le32(qp->rq.hwq.max_elements);
 	req.sq_sge = cpu_to_le16(qp->sq.max_sge);
 	req.rq_sge = cpu_to_le16(qp->rq.max_sge);
-	req.max_अंतरभूत_data = cpu_to_le32(qp->max_अंतरभूत_data);
-	अगर (bmask & CMDQ_MODIFY_QP_MODIFY_MASK_DEST_QP_ID)
+	req.max_inline_data = cpu_to_le32(qp->max_inline_data);
+	if (bmask & CMDQ_MODIFY_QP_MODIFY_MASK_DEST_QP_ID)
 		req.dest_qp_id = cpu_to_le32(qp->dest_qpn);
 
 	req.vlan_pcp_vlan_dei_vlan_id = cpu_to_le16(qp->vlan_id);
 
-	rc = bnxt_qplib_rcfw_send_message(rcfw, (व्योम *)&req,
-					  (व्योम *)&resp, शून्य, 0);
-	अगर (rc)
-		वापस rc;
+	rc = bnxt_qplib_rcfw_send_message(rcfw, (void *)&req,
+					  (void *)&resp, NULL, 0);
+	if (rc)
+		return rc;
 	qp->cur_qp_state = qp->state;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक bnxt_qplib_query_qp(काष्ठा bnxt_qplib_res *res, काष्ठा bnxt_qplib_qp *qp)
-अणु
-	काष्ठा bnxt_qplib_rcfw *rcfw = res->rcfw;
-	काष्ठा cmdq_query_qp req;
-	काष्ठा creq_query_qp_resp resp;
-	काष्ठा bnxt_qplib_rcfw_sbuf *sbuf;
-	काष्ठा creq_query_qp_resp_sb *sb;
+int bnxt_qplib_query_qp(struct bnxt_qplib_res *res, struct bnxt_qplib_qp *qp)
+{
+	struct bnxt_qplib_rcfw *rcfw = res->rcfw;
+	struct cmdq_query_qp req;
+	struct creq_query_qp_resp resp;
+	struct bnxt_qplib_rcfw_sbuf *sbuf;
+	struct creq_query_qp_resp_sb *sb;
 	u16 cmd_flags = 0;
 	u32 temp32[4];
-	पूर्णांक i, rc = 0;
+	int i, rc = 0;
 
 	RCFW_CMD_PREP(req, QUERY_QP, cmd_flags);
 
-	sbuf = bnxt_qplib_rcfw_alloc_sbuf(rcfw, माप(*sb));
-	अगर (!sbuf)
-		वापस -ENOMEM;
+	sbuf = bnxt_qplib_rcfw_alloc_sbuf(rcfw, sizeof(*sb));
+	if (!sbuf)
+		return -ENOMEM;
 	sb = sbuf->sb;
 
 	req.qp_cid = cpu_to_le32(qp->id);
-	req.resp_size = माप(*sb) / BNXT_QPLIB_CMDQE_UNITS;
-	rc = bnxt_qplib_rcfw_send_message(rcfw, (व्योम *)&req, (व्योम *)&resp,
-					  (व्योम *)sbuf, 0);
-	अगर (rc)
-		जाओ bail;
+	req.resp_size = sizeof(*sb) / BNXT_QPLIB_CMDQE_UNITS;
+	rc = bnxt_qplib_rcfw_send_message(rcfw, (void *)&req, (void *)&resp,
+					  (void *)sbuf, 0);
+	if (rc)
+		goto bail;
 	/* Extract the context from the side buffer */
-	qp->state = sb->en_sqd_async_notअगरy_state &
+	qp->state = sb->en_sqd_async_notify_state &
 			CREQ_QUERY_QP_RESP_SB_STATE_MASK;
-	qp->en_sqd_async_notअगरy = sb->en_sqd_async_notअगरy_state &
+	qp->en_sqd_async_notify = sb->en_sqd_async_notify_state &
 				  CREQ_QUERY_QP_RESP_SB_EN_SQD_ASYNC_NOTIFY ?
 				  true : false;
 	qp->access = sb->access;
@@ -1368,33 +1367,33 @@ fail_sq:
 	temp32[1] = le32_to_cpu(sb->dgid[1]);
 	temp32[2] = le32_to_cpu(sb->dgid[2]);
 	temp32[3] = le32_to_cpu(sb->dgid[3]);
-	स_नकल(qp->ah.dgid.data, temp32, माप(qp->ah.dgid.data));
+	memcpy(qp->ah.dgid.data, temp32, sizeof(qp->ah.dgid.data));
 
 	qp->ah.flow_label = le32_to_cpu(sb->flow_label);
 
 	qp->ah.sgid_index = 0;
-	क्रम (i = 0; i < res->sgid_tbl.max; i++) अणु
-		अगर (res->sgid_tbl.hw_id[i] == le16_to_cpu(sb->sgid_index)) अणु
+	for (i = 0; i < res->sgid_tbl.max; i++) {
+		if (res->sgid_tbl.hw_id[i] == le16_to_cpu(sb->sgid_index)) {
 			qp->ah.sgid_index = i;
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	अगर (i == res->sgid_tbl.max)
+			break;
+		}
+	}
+	if (i == res->sgid_tbl.max)
 		dev_warn(&res->pdev->dev, "SGID not found??\n");
 
 	qp->ah.hop_limit = sb->hop_limit;
 	qp->ah.traffic_class = sb->traffic_class;
-	स_नकल(qp->ah.dmac, sb->dest_mac, 6);
+	memcpy(qp->ah.dmac, sb->dest_mac, 6);
 	qp->ah.vlan_id = (le16_to_cpu(sb->path_mtu_dest_vlan_id) &
 				CREQ_QUERY_QP_RESP_SB_VLAN_ID_MASK) >>
 				CREQ_QUERY_QP_RESP_SB_VLAN_ID_SFT;
 	qp->path_mtu = (le16_to_cpu(sb->path_mtu_dest_vlan_id) &
 				    CREQ_QUERY_QP_RESP_SB_PATH_MTU_MASK) >>
 				    CREQ_QUERY_QP_RESP_SB_PATH_MTU_SFT;
-	qp->समयout = sb->समयout;
+	qp->timeout = sb->timeout;
 	qp->retry_cnt = sb->retry_cnt;
 	qp->rnr_retry = sb->rnr_retry;
-	qp->min_rnr_समयr = sb->min_rnr_समयr;
+	qp->min_rnr_timer = sb->min_rnr_timer;
 	qp->rq.psn = le32_to_cpu(sb->rq_psn);
 	qp->max_rd_atomic = ORRQ_SLOTS_TO_ORD_LIMIT(sb->max_rd_atomic);
 	qp->sq.psn = le32_to_cpu(sb->sq_psn);
@@ -1404,162 +1403,162 @@ fail_sq:
 	qp->rq.max_wqe = qp->rq.hwq.max_elements;
 	qp->sq.max_sge = le16_to_cpu(sb->sq_sge);
 	qp->rq.max_sge = le16_to_cpu(sb->rq_sge);
-	qp->max_अंतरभूत_data = le32_to_cpu(sb->max_अंतरभूत_data);
+	qp->max_inline_data = le32_to_cpu(sb->max_inline_data);
 	qp->dest_qpn = le32_to_cpu(sb->dest_qp_id);
-	स_नकल(qp->smac, sb->src_mac, 6);
+	memcpy(qp->smac, sb->src_mac, 6);
 	qp->vlan_id = le16_to_cpu(sb->vlan_pcp_vlan_dei_vlan_id);
 bail:
-	bnxt_qplib_rcfw_मुक्त_sbuf(rcfw, sbuf);
-	वापस rc;
-पूर्ण
+	bnxt_qplib_rcfw_free_sbuf(rcfw, sbuf);
+	return rc;
+}
 
-अटल व्योम __clean_cq(काष्ठा bnxt_qplib_cq *cq, u64 qp)
-अणु
-	काष्ठा bnxt_qplib_hwq *cq_hwq = &cq->hwq;
-	काष्ठा cq_base *hw_cqe;
-	पूर्णांक i;
+static void __clean_cq(struct bnxt_qplib_cq *cq, u64 qp)
+{
+	struct bnxt_qplib_hwq *cq_hwq = &cq->hwq;
+	struct cq_base *hw_cqe;
+	int i;
 
-	क्रम (i = 0; i < cq_hwq->max_elements; i++) अणु
-		hw_cqe = bnxt_qplib_get_qe(cq_hwq, i, शून्य);
-		अगर (!CQE_CMP_VALID(hw_cqe, i, cq_hwq->max_elements))
-			जारी;
+	for (i = 0; i < cq_hwq->max_elements; i++) {
+		hw_cqe = bnxt_qplib_get_qe(cq_hwq, i, NULL);
+		if (!CQE_CMP_VALID(hw_cqe, i, cq_hwq->max_elements))
+			continue;
 		/*
-		 * The valid test of the entry must be करोne first beक्रमe
-		 * पढ़ोing any further.
+		 * The valid test of the entry must be done first before
+		 * reading any further.
 		 */
 		dma_rmb();
-		चयन (hw_cqe->cqe_type_toggle & CQ_BASE_CQE_TYPE_MASK) अणु
-		हाल CQ_BASE_CQE_TYPE_REQ:
-		हाल CQ_BASE_CQE_TYPE_TERMINAL:
-		अणु
-			काष्ठा cq_req *cqe = (काष्ठा cq_req *)hw_cqe;
+		switch (hw_cqe->cqe_type_toggle & CQ_BASE_CQE_TYPE_MASK) {
+		case CQ_BASE_CQE_TYPE_REQ:
+		case CQ_BASE_CQE_TYPE_TERMINAL:
+		{
+			struct cq_req *cqe = (struct cq_req *)hw_cqe;
 
-			अगर (qp == le64_to_cpu(cqe->qp_handle))
+			if (qp == le64_to_cpu(cqe->qp_handle))
 				cqe->qp_handle = 0;
-			अवरोध;
-		पूर्ण
-		हाल CQ_BASE_CQE_TYPE_RES_RC:
-		हाल CQ_BASE_CQE_TYPE_RES_UD:
-		हाल CQ_BASE_CQE_TYPE_RES_RAWETH_QP1:
-		अणु
-			काष्ठा cq_res_rc *cqe = (काष्ठा cq_res_rc *)hw_cqe;
+			break;
+		}
+		case CQ_BASE_CQE_TYPE_RES_RC:
+		case CQ_BASE_CQE_TYPE_RES_UD:
+		case CQ_BASE_CQE_TYPE_RES_RAWETH_QP1:
+		{
+			struct cq_res_rc *cqe = (struct cq_res_rc *)hw_cqe;
 
-			अगर (qp == le64_to_cpu(cqe->qp_handle))
+			if (qp == le64_to_cpu(cqe->qp_handle))
 				cqe->qp_handle = 0;
-			अवरोध;
-		पूर्ण
-		शेष:
-			अवरोध;
-		पूर्ण
-	पूर्ण
-पूर्ण
+			break;
+		}
+		default:
+			break;
+		}
+	}
+}
 
-पूर्णांक bnxt_qplib_destroy_qp(काष्ठा bnxt_qplib_res *res,
-			  काष्ठा bnxt_qplib_qp *qp)
-अणु
-	काष्ठा bnxt_qplib_rcfw *rcfw = res->rcfw;
-	काष्ठा cmdq_destroy_qp req;
-	काष्ठा creq_destroy_qp_resp resp;
+int bnxt_qplib_destroy_qp(struct bnxt_qplib_res *res,
+			  struct bnxt_qplib_qp *qp)
+{
+	struct bnxt_qplib_rcfw *rcfw = res->rcfw;
+	struct cmdq_destroy_qp req;
+	struct creq_destroy_qp_resp resp;
 	u16 cmd_flags = 0;
 	u32 tbl_indx;
-	पूर्णांक rc;
+	int rc;
 
 	tbl_indx = map_qp_id_to_tbl_indx(qp->id, rcfw);
 	rcfw->qp_tbl[tbl_indx].qp_id = BNXT_QPLIB_QP_ID_INVALID;
-	rcfw->qp_tbl[tbl_indx].qp_handle = शून्य;
+	rcfw->qp_tbl[tbl_indx].qp_handle = NULL;
 
 	RCFW_CMD_PREP(req, DESTROY_QP, cmd_flags);
 
 	req.qp_cid = cpu_to_le32(qp->id);
-	rc = bnxt_qplib_rcfw_send_message(rcfw, (व्योम *)&req,
-					  (व्योम *)&resp, शून्य, 0);
-	अगर (rc) अणु
+	rc = bnxt_qplib_rcfw_send_message(rcfw, (void *)&req,
+					  (void *)&resp, NULL, 0);
+	if (rc) {
 		rcfw->qp_tbl[tbl_indx].qp_id = qp->id;
 		rcfw->qp_tbl[tbl_indx].qp_handle = qp;
-		वापस rc;
-	पूर्ण
+		return rc;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम bnxt_qplib_मुक्त_qp_res(काष्ठा bnxt_qplib_res *res,
-			    काष्ठा bnxt_qplib_qp *qp)
-अणु
-	bnxt_qplib_मुक्त_qp_hdr_buf(res, qp);
-	bnxt_qplib_मुक्त_hwq(res, &qp->sq.hwq);
-	kमुक्त(qp->sq.swq);
+void bnxt_qplib_free_qp_res(struct bnxt_qplib_res *res,
+			    struct bnxt_qplib_qp *qp)
+{
+	bnxt_qplib_free_qp_hdr_buf(res, qp);
+	bnxt_qplib_free_hwq(res, &qp->sq.hwq);
+	kfree(qp->sq.swq);
 
-	bnxt_qplib_मुक्त_hwq(res, &qp->rq.hwq);
-	kमुक्त(qp->rq.swq);
+	bnxt_qplib_free_hwq(res, &qp->rq.hwq);
+	kfree(qp->rq.swq);
 
-	अगर (qp->irrq.max_elements)
-		bnxt_qplib_मुक्त_hwq(res, &qp->irrq);
-	अगर (qp->orrq.max_elements)
-		bnxt_qplib_मुक्त_hwq(res, &qp->orrq);
+	if (qp->irrq.max_elements)
+		bnxt_qplib_free_hwq(res, &qp->irrq);
+	if (qp->orrq.max_elements)
+		bnxt_qplib_free_hwq(res, &qp->orrq);
 
-पूर्ण
+}
 
-व्योम *bnxt_qplib_get_qp1_sq_buf(काष्ठा bnxt_qplib_qp *qp,
-				काष्ठा bnxt_qplib_sge *sge)
-अणु
-	काष्ठा bnxt_qplib_q *sq = &qp->sq;
+void *bnxt_qplib_get_qp1_sq_buf(struct bnxt_qplib_qp *qp,
+				struct bnxt_qplib_sge *sge)
+{
+	struct bnxt_qplib_q *sq = &qp->sq;
 	u32 sw_prod;
 
-	स_रखो(sge, 0, माप(*sge));
+	memset(sge, 0, sizeof(*sge));
 
-	अगर (qp->sq_hdr_buf) अणु
+	if (qp->sq_hdr_buf) {
 		sw_prod = sq->swq_start;
 		sge->addr = (dma_addr_t)(qp->sq_hdr_buf_map +
 					 sw_prod * qp->sq_hdr_buf_size);
 		sge->lkey = 0xFFFFFFFF;
 		sge->size = qp->sq_hdr_buf_size;
-		वापस qp->sq_hdr_buf + sw_prod * sge->size;
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+		return qp->sq_hdr_buf + sw_prod * sge->size;
+	}
+	return NULL;
+}
 
-u32 bnxt_qplib_get_rq_prod_index(काष्ठा bnxt_qplib_qp *qp)
-अणु
-	काष्ठा bnxt_qplib_q *rq = &qp->rq;
+u32 bnxt_qplib_get_rq_prod_index(struct bnxt_qplib_qp *qp)
+{
+	struct bnxt_qplib_q *rq = &qp->rq;
 
-	वापस rq->swq_start;
-पूर्ण
+	return rq->swq_start;
+}
 
-dma_addr_t bnxt_qplib_get_qp_buf_from_index(काष्ठा bnxt_qplib_qp *qp, u32 index)
-अणु
-	वापस (qp->rq_hdr_buf_map + index * qp->rq_hdr_buf_size);
-पूर्ण
+dma_addr_t bnxt_qplib_get_qp_buf_from_index(struct bnxt_qplib_qp *qp, u32 index)
+{
+	return (qp->rq_hdr_buf_map + index * qp->rq_hdr_buf_size);
+}
 
-व्योम *bnxt_qplib_get_qp1_rq_buf(काष्ठा bnxt_qplib_qp *qp,
-				काष्ठा bnxt_qplib_sge *sge)
-अणु
-	काष्ठा bnxt_qplib_q *rq = &qp->rq;
+void *bnxt_qplib_get_qp1_rq_buf(struct bnxt_qplib_qp *qp,
+				struct bnxt_qplib_sge *sge)
+{
+	struct bnxt_qplib_q *rq = &qp->rq;
 	u32 sw_prod;
 
-	स_रखो(sge, 0, माप(*sge));
+	memset(sge, 0, sizeof(*sge));
 
-	अगर (qp->rq_hdr_buf) अणु
+	if (qp->rq_hdr_buf) {
 		sw_prod = rq->swq_start;
 		sge->addr = (dma_addr_t)(qp->rq_hdr_buf_map +
 					 sw_prod * qp->rq_hdr_buf_size);
 		sge->lkey = 0xFFFFFFFF;
 		sge->size = qp->rq_hdr_buf_size;
-		वापस qp->rq_hdr_buf + sw_prod * sge->size;
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+		return qp->rq_hdr_buf + sw_prod * sge->size;
+	}
+	return NULL;
+}
 
-अटल व्योम bnxt_qplib_fill_psn_search(काष्ठा bnxt_qplib_qp *qp,
-				       काष्ठा bnxt_qplib_swqe *wqe,
-				       काष्ठा bnxt_qplib_swq *swq)
-अणु
-	काष्ठा sq_psn_search_ext *psns_ext;
-	काष्ठा sq_psn_search *psns;
+static void bnxt_qplib_fill_psn_search(struct bnxt_qplib_qp *qp,
+				       struct bnxt_qplib_swqe *wqe,
+				       struct bnxt_qplib_swq *swq)
+{
+	struct sq_psn_search_ext *psns_ext;
+	struct sq_psn_search *psns;
 	u32 flg_npsn;
 	u32 op_spsn;
 
-	अगर (!swq->psn_search)
-		वापस;
+	if (!swq->psn_search)
+		return;
 	psns = swq->psn_search;
 	psns_ext = swq->psn_ext;
 
@@ -1570,167 +1569,167 @@ dma_addr_t bnxt_qplib_get_qp_buf_from_index(काष्ठा bnxt_qplib_qp *qp
 	flg_npsn = ((swq->next_psn << SQ_PSN_SEARCH_NEXT_PSN_SFT) &
 		     SQ_PSN_SEARCH_NEXT_PSN_MASK);
 
-	अगर (bnxt_qplib_is_chip_gen_p5(qp->cctx)) अणु
+	if (bnxt_qplib_is_chip_gen_p5(qp->cctx)) {
 		psns_ext->opcode_start_psn = cpu_to_le32(op_spsn);
 		psns_ext->flags_next_psn = cpu_to_le32(flg_npsn);
 		psns_ext->start_slot_idx = cpu_to_le16(swq->slot_idx);
-	पूर्ण अन्यथा अणु
+	} else {
 		psns->opcode_start_psn = cpu_to_le32(op_spsn);
 		psns->flags_next_psn = cpu_to_le32(flg_npsn);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक bnxt_qplib_put_अंतरभूत(काष्ठा bnxt_qplib_qp *qp,
-				 काष्ठा bnxt_qplib_swqe *wqe,
+static int bnxt_qplib_put_inline(struct bnxt_qplib_qp *qp,
+				 struct bnxt_qplib_swqe *wqe,
 				 u16 *idx)
-अणु
-	काष्ठा bnxt_qplib_hwq *hwq;
-	पूर्णांक len, t_len, offt;
+{
+	struct bnxt_qplib_hwq *hwq;
+	int len, t_len, offt;
 	bool pull_dst = true;
-	व्योम *il_dst = शून्य;
-	व्योम *il_src = शून्य;
-	पूर्णांक t_cplen, cplen;
-	पूर्णांक indx;
+	void *il_dst = NULL;
+	void *il_src = NULL;
+	int t_cplen, cplen;
+	int indx;
 
 	hwq = &qp->sq.hwq;
 	t_len = 0;
-	क्रम (indx = 0; indx < wqe->num_sge; indx++) अणु
+	for (indx = 0; indx < wqe->num_sge; indx++) {
 		len = wqe->sg_list[indx].size;
-		il_src = (व्योम *)wqe->sg_list[indx].addr;
+		il_src = (void *)wqe->sg_list[indx].addr;
 		t_len += len;
-		अगर (t_len > qp->max_अंतरभूत_data)
-			जाओ bad;
-		जबतक (len) अणु
-			अगर (pull_dst) अणु
+		if (t_len > qp->max_inline_data)
+			goto bad;
+		while (len) {
+			if (pull_dst) {
 				pull_dst = false;
 				il_dst = bnxt_qplib_get_prod_qe(hwq, *idx);
 				(*idx)++;
 				t_cplen = 0;
 				offt = 0;
-			पूर्ण
-			cplen = min_t(पूर्णांक, len, माप(काष्ठा sq_sge));
-			cplen = min_t(पूर्णांक, cplen,
-					(माप(काष्ठा sq_sge) - offt));
-			स_नकल(il_dst, il_src, cplen);
+			}
+			cplen = min_t(int, len, sizeof(struct sq_sge));
+			cplen = min_t(int, cplen,
+					(sizeof(struct sq_sge) - offt));
+			memcpy(il_dst, il_src, cplen);
 			t_cplen += cplen;
 			il_src += cplen;
 			il_dst += cplen;
 			offt += cplen;
 			len -= cplen;
-			अगर (t_cplen == माप(काष्ठा sq_sge))
+			if (t_cplen == sizeof(struct sq_sge))
 				pull_dst = true;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस t_len;
+	return t_len;
 bad:
-	वापस -ENOMEM;
-पूर्ण
+	return -ENOMEM;
+}
 
-अटल u32 bnxt_qplib_put_sges(काष्ठा bnxt_qplib_hwq *hwq,
-			       काष्ठा bnxt_qplib_sge *ssge,
+static u32 bnxt_qplib_put_sges(struct bnxt_qplib_hwq *hwq,
+			       struct bnxt_qplib_sge *ssge,
 			       u16 nsge, u16 *idx)
-अणु
-	काष्ठा sq_sge *dsge;
-	पूर्णांक indx, len = 0;
+{
+	struct sq_sge *dsge;
+	int indx, len = 0;
 
-	क्रम (indx = 0; indx < nsge; indx++, (*idx)++) अणु
+	for (indx = 0; indx < nsge; indx++, (*idx)++) {
 		dsge = bnxt_qplib_get_prod_qe(hwq, *idx);
 		dsge->va_or_pa = cpu_to_le64(ssge[indx].addr);
 		dsge->l_key = cpu_to_le32(ssge[indx].lkey);
 		dsge->size = cpu_to_le32(ssge[indx].size);
 		len += ssge[indx].size;
-	पूर्ण
+	}
 
-	वापस len;
-पूर्ण
+	return len;
+}
 
-अटल u16 bnxt_qplib_required_slots(काष्ठा bnxt_qplib_qp *qp,
-				     काष्ठा bnxt_qplib_swqe *wqe,
+static u16 bnxt_qplib_required_slots(struct bnxt_qplib_qp *qp,
+				     struct bnxt_qplib_swqe *wqe,
 				     u16 *wqe_sz, u16 *qdf, u8 mode)
-अणु
+{
 	u32 ilsize, bytes;
 	u16 nsge;
 	u16 slot;
 
 	nsge = wqe->num_sge;
-	/* Adding sq_send_hdr is a misnomer, क्रम rq also hdr size is same. */
-	bytes = माप(काष्ठा sq_send_hdr) + nsge * माप(काष्ठा sq_sge);
-	अगर (wqe->flags & BNXT_QPLIB_SWQE_FLAGS_INLINE) अणु
-		ilsize = bnxt_qplib_calc_ilsize(wqe, qp->max_अंतरभूत_data);
-		bytes = ALIGN(ilsize, माप(काष्ठा sq_sge));
-		bytes += माप(काष्ठा sq_send_hdr);
-	पूर्ण
+	/* Adding sq_send_hdr is a misnomer, for rq also hdr size is same. */
+	bytes = sizeof(struct sq_send_hdr) + nsge * sizeof(struct sq_sge);
+	if (wqe->flags & BNXT_QPLIB_SWQE_FLAGS_INLINE) {
+		ilsize = bnxt_qplib_calc_ilsize(wqe, qp->max_inline_data);
+		bytes = ALIGN(ilsize, sizeof(struct sq_sge));
+		bytes += sizeof(struct sq_send_hdr);
+	}
 
 	*qdf =  __xlate_qfd(qp->sq.q_full_delta, bytes);
 	slot = bytes >> 4;
 	*wqe_sz = slot;
-	अगर (mode == BNXT_QPLIB_WQE_MODE_STATIC)
+	if (mode == BNXT_QPLIB_WQE_MODE_STATIC)
 		slot = 8;
-	वापस slot;
-पूर्ण
+	return slot;
+}
 
-अटल व्योम bnxt_qplib_pull_psn_buff(काष्ठा bnxt_qplib_q *sq,
-				     काष्ठा bnxt_qplib_swq *swq)
-अणु
-	काष्ठा bnxt_qplib_hwq *hwq;
+static void bnxt_qplib_pull_psn_buff(struct bnxt_qplib_q *sq,
+				     struct bnxt_qplib_swq *swq)
+{
+	struct bnxt_qplib_hwq *hwq;
 	u32 pg_num, pg_indx;
-	व्योम *buff;
+	void *buff;
 	u32 tail;
 
 	hwq = &sq->hwq;
-	अगर (!hwq->pad_pg)
-		वापस;
+	if (!hwq->pad_pg)
+		return;
 	tail = swq->slot_idx / sq->dbinfo.max_slot;
 	pg_num = (tail + hwq->pad_pgofft) / (PAGE_SIZE / hwq->pad_stride);
 	pg_indx = (tail + hwq->pad_pgofft) % (PAGE_SIZE / hwq->pad_stride);
-	buff = (व्योम *)(hwq->pad_pg[pg_num] + pg_indx * hwq->pad_stride);
+	buff = (void *)(hwq->pad_pg[pg_num] + pg_indx * hwq->pad_stride);
 	swq->psn_ext = buff;
 	swq->psn_search = buff;
-पूर्ण
+}
 
-व्योम bnxt_qplib_post_send_db(काष्ठा bnxt_qplib_qp *qp)
-अणु
-	काष्ठा bnxt_qplib_q *sq = &qp->sq;
+void bnxt_qplib_post_send_db(struct bnxt_qplib_qp *qp)
+{
+	struct bnxt_qplib_q *sq = &qp->sq;
 
 	bnxt_qplib_ring_prod_db(&sq->dbinfo, DBC_DBC_TYPE_SQ);
-पूर्ण
+}
 
-पूर्णांक bnxt_qplib_post_send(काष्ठा bnxt_qplib_qp *qp,
-			 काष्ठा bnxt_qplib_swqe *wqe)
-अणु
-	काष्ठा bnxt_qplib_nq_work *nq_work = शून्य;
-	पूर्णांक i, rc = 0, data_len = 0, pkt_num = 0;
-	काष्ठा bnxt_qplib_q *sq = &qp->sq;
-	काष्ठा bnxt_qplib_hwq *hwq;
-	काष्ठा bnxt_qplib_swq *swq;
+int bnxt_qplib_post_send(struct bnxt_qplib_qp *qp,
+			 struct bnxt_qplib_swqe *wqe)
+{
+	struct bnxt_qplib_nq_work *nq_work = NULL;
+	int i, rc = 0, data_len = 0, pkt_num = 0;
+	struct bnxt_qplib_q *sq = &qp->sq;
+	struct bnxt_qplib_hwq *hwq;
+	struct bnxt_qplib_swq *swq;
 	bool sch_handler = false;
 	u16 wqe_sz, qdf = 0;
-	व्योम *base_hdr;
-	व्योम *ext_hdr;
+	void *base_hdr;
+	void *ext_hdr;
 	__le32 temp32;
 	u32 wqe_idx;
 	u32 slots;
 	u16 idx;
 
 	hwq = &sq->hwq;
-	अगर (qp->state != CMDQ_MODIFY_QP_NEW_STATE_RTS &&
-	    qp->state != CMDQ_MODIFY_QP_NEW_STATE_ERR) अणु
+	if (qp->state != CMDQ_MODIFY_QP_NEW_STATE_RTS &&
+	    qp->state != CMDQ_MODIFY_QP_NEW_STATE_ERR) {
 		dev_err(&hwq->pdev->dev,
 			"QPLIB: FP: QP (0x%x) is in the 0x%x state",
 			qp->id, qp->state);
 		rc = -EINVAL;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
 	slots = bnxt_qplib_required_slots(qp, wqe, &wqe_sz, &qdf, qp->wqe_mode);
-	अगर (bnxt_qplib_queue_full(sq, slots + qdf)) अणु
+	if (bnxt_qplib_queue_full(sq, slots + qdf)) {
 		dev_err(&hwq->pdev->dev,
 			"prod = %#x cons = %#x qdepth = %#x delta = %#x\n",
 			hwq->prod, hwq->cons, hwq->depth, sq->q_full_delta);
 		rc = -ENOMEM;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
 	swq = bnxt_qplib_get_swqe(sq, &wqe_idx);
 	bnxt_qplib_pull_psn_buff(sq, swq);
@@ -1742,36 +1741,36 @@ bad:
 	swq->type = wqe->type;
 	swq->flags = wqe->flags;
 	swq->start_psn = sq->psn & BTH_PSN_MASK;
-	अगर (qp->sig_type)
+	if (qp->sig_type)
 		swq->flags |= SQ_SEND_FLAGS_SIGNAL_COMP;
 
-	अगर (qp->state == CMDQ_MODIFY_QP_NEW_STATE_ERR) अणु
+	if (qp->state == CMDQ_MODIFY_QP_NEW_STATE_ERR) {
 		sch_handler = true;
 		dev_dbg(&hwq->pdev->dev,
 			"%s Error QP. Scheduling for poll_cq\n", __func__);
-		जाओ queue_err;
-	पूर्ण
+		goto queue_err;
+	}
 
 	base_hdr = bnxt_qplib_get_prod_qe(hwq, idx++);
 	ext_hdr = bnxt_qplib_get_prod_qe(hwq, idx++);
-	स_रखो(base_hdr, 0, माप(काष्ठा sq_sge));
-	स_रखो(ext_hdr, 0, माप(काष्ठा sq_sge));
+	memset(base_hdr, 0, sizeof(struct sq_sge));
+	memset(ext_hdr, 0, sizeof(struct sq_sge));
 
-	अगर (wqe->flags & BNXT_QPLIB_SWQE_FLAGS_INLINE)
-		/* Copy the अंतरभूत data */
-		data_len = bnxt_qplib_put_अंतरभूत(qp, wqe, &idx);
-	अन्यथा
+	if (wqe->flags & BNXT_QPLIB_SWQE_FLAGS_INLINE)
+		/* Copy the inline data */
+		data_len = bnxt_qplib_put_inline(qp, wqe, &idx);
+	else
 		data_len = bnxt_qplib_put_sges(hwq, wqe->sg_list, wqe->num_sge,
 					       &idx);
-	अगर (data_len < 0)
-		जाओ queue_err;
-	/* Specअगरics */
-	चयन (wqe->type) अणु
-	हाल BNXT_QPLIB_SWQE_TYPE_SEND:
-		अगर (qp->type == CMDQ_CREATE_QP1_TYPE_GSI) अणु
-			काष्ठा sq_send_raweth_qp1_hdr *sqe = base_hdr;
-			काष्ठा sq_raw_ext_hdr *ext_sqe = ext_hdr;
-			/* Assemble info क्रम Raw Ethertype QPs */
+	if (data_len < 0)
+		goto queue_err;
+	/* Specifics */
+	switch (wqe->type) {
+	case BNXT_QPLIB_SWQE_TYPE_SEND:
+		if (qp->type == CMDQ_CREATE_QP1_TYPE_GSI) {
+			struct sq_send_raweth_qp1_hdr *sqe = base_hdr;
+			struct sq_raw_ext_hdr *ext_sqe = ext_hdr;
+			/* Assemble info for Raw Ethertype QPs */
 
 			sqe->wqe_type = wqe->type;
 			sqe->flags = wqe->flags;
@@ -1783,21 +1782,21 @@ bad:
 				SQ_SEND_RAWETH_QP1_CFA_META_VLAN_VID_MASK) <<
 				SQ_SEND_RAWETH_QP1_CFA_META_VLAN_VID_SFT);
 
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		fallthrough;
-	हाल BNXT_QPLIB_SWQE_TYPE_SEND_WITH_IMM:
-	हाल BNXT_QPLIB_SWQE_TYPE_SEND_WITH_INV:
-	अणु
-		काष्ठा sq_ud_ext_hdr *ext_sqe = ext_hdr;
-		काष्ठा sq_send_hdr *sqe = base_hdr;
+	case BNXT_QPLIB_SWQE_TYPE_SEND_WITH_IMM:
+	case BNXT_QPLIB_SWQE_TYPE_SEND_WITH_INV:
+	{
+		struct sq_ud_ext_hdr *ext_sqe = ext_hdr;
+		struct sq_send_hdr *sqe = base_hdr;
 
 		sqe->wqe_type = wqe->type;
 		sqe->flags = wqe->flags;
 		sqe->wqe_size = wqe_sz;
 		sqe->inv_key_or_imm_data = cpu_to_le32(wqe->send.inv_key);
-		अगर (qp->type == CMDQ_CREATE_QP_TYPE_UD ||
-		    qp->type == CMDQ_CREATE_QP_TYPE_GSI) अणु
+		if (qp->type == CMDQ_CREATE_QP_TYPE_UD ||
+		    qp->type == CMDQ_CREATE_QP_TYPE_GSI) {
 			sqe->q_key = cpu_to_le32(wqe->send.q_key);
 			sqe->length = cpu_to_le32(data_len);
 			sq->psn = (sq->psn + 1) & BTH_PSN_MASK;
@@ -1805,22 +1804,22 @@ bad:
 						      SQ_SEND_DST_QP_MASK);
 			ext_sqe->avid = cpu_to_le32(wqe->send.avid &
 						    SQ_SEND_AVID_MASK);
-		पूर्ण अन्यथा अणु
+		} else {
 			sqe->length = cpu_to_le32(data_len);
-			अगर (qp->mtu)
+			if (qp->mtu)
 				pkt_num = (data_len + qp->mtu - 1) / qp->mtu;
-			अगर (!pkt_num)
+			if (!pkt_num)
 				pkt_num = 1;
 			sq->psn = (sq->psn + pkt_num) & BTH_PSN_MASK;
-		पूर्ण
-		अवरोध;
-	पूर्ण
-	हाल BNXT_QPLIB_SWQE_TYPE_RDMA_WRITE:
-	हाल BNXT_QPLIB_SWQE_TYPE_RDMA_WRITE_WITH_IMM:
-	हाल BNXT_QPLIB_SWQE_TYPE_RDMA_READ:
-	अणु
-		काष्ठा sq_rdma_ext_hdr *ext_sqe = ext_hdr;
-		काष्ठा sq_rdma_hdr *sqe = base_hdr;
+		}
+		break;
+	}
+	case BNXT_QPLIB_SWQE_TYPE_RDMA_WRITE:
+	case BNXT_QPLIB_SWQE_TYPE_RDMA_WRITE_WITH_IMM:
+	case BNXT_QPLIB_SWQE_TYPE_RDMA_READ:
+	{
+		struct sq_rdma_ext_hdr *ext_sqe = ext_hdr;
+		struct sq_rdma_hdr *sqe = base_hdr;
 
 		sqe->wqe_type = wqe->type;
 		sqe->flags = wqe->flags;
@@ -1829,18 +1828,18 @@ bad:
 		sqe->length = cpu_to_le32((u32)data_len);
 		ext_sqe->remote_va = cpu_to_le64(wqe->rdma.remote_va);
 		ext_sqe->remote_key = cpu_to_le32(wqe->rdma.r_key);
-		अगर (qp->mtu)
+		if (qp->mtu)
 			pkt_num = (data_len + qp->mtu - 1) / qp->mtu;
-		अगर (!pkt_num)
+		if (!pkt_num)
 			pkt_num = 1;
 		sq->psn = (sq->psn + pkt_num) & BTH_PSN_MASK;
-		अवरोध;
-	पूर्ण
-	हाल BNXT_QPLIB_SWQE_TYPE_ATOMIC_CMP_AND_SWP:
-	हाल BNXT_QPLIB_SWQE_TYPE_ATOMIC_FETCH_AND_ADD:
-	अणु
-		काष्ठा sq_atomic_ext_hdr *ext_sqe = ext_hdr;
-		काष्ठा sq_atomic_hdr *sqe = base_hdr;
+		break;
+	}
+	case BNXT_QPLIB_SWQE_TYPE_ATOMIC_CMP_AND_SWP:
+	case BNXT_QPLIB_SWQE_TYPE_ATOMIC_FETCH_AND_ADD:
+	{
+		struct sq_atomic_ext_hdr *ext_sqe = ext_hdr;
+		struct sq_atomic_hdr *sqe = base_hdr;
 
 		sqe->wqe_type = wqe->type;
 		sqe->flags = wqe->flags;
@@ -1848,27 +1847,27 @@ bad:
 		sqe->remote_va = cpu_to_le64(wqe->atomic.remote_va);
 		ext_sqe->swap_data = cpu_to_le64(wqe->atomic.swap_data);
 		ext_sqe->cmp_data = cpu_to_le64(wqe->atomic.cmp_data);
-		अगर (qp->mtu)
+		if (qp->mtu)
 			pkt_num = (data_len + qp->mtu - 1) / qp->mtu;
-		अगर (!pkt_num)
+		if (!pkt_num)
 			pkt_num = 1;
 		sq->psn = (sq->psn + pkt_num) & BTH_PSN_MASK;
-		अवरोध;
-	पूर्ण
-	हाल BNXT_QPLIB_SWQE_TYPE_LOCAL_INV:
-	अणु
-		काष्ठा sq_localinvalidate *sqe = base_hdr;
+		break;
+	}
+	case BNXT_QPLIB_SWQE_TYPE_LOCAL_INV:
+	{
+		struct sq_localinvalidate *sqe = base_hdr;
 
 		sqe->wqe_type = wqe->type;
 		sqe->flags = wqe->flags;
 		sqe->inv_l_key = cpu_to_le32(wqe->local_inv.inv_l_key);
 
-		अवरोध;
-	पूर्ण
-	हाल BNXT_QPLIB_SWQE_TYPE_FAST_REG_MR:
-	अणु
-		काष्ठा sq_fr_pmr_ext_hdr *ext_sqe = ext_hdr;
-		काष्ठा sq_fr_pmr_hdr *sqe = base_hdr;
+		break;
+	}
+	case BNXT_QPLIB_SWQE_TYPE_FAST_REG_MR:
+	{
+		struct sq_fr_pmr_ext_hdr *ext_sqe = ext_hdr;
+		struct sq_fr_pmr_hdr *sqe = base_hdr;
 
 		sqe->wqe_type = wqe->type;
 		sqe->flags = wqe->flags;
@@ -1880,7 +1879,7 @@ bad:
 			(wqe->frmr.zero_based ? SQ_FR_PMR_ZERO_BASED : 0);
 		sqe->l_key = cpu_to_le32(wqe->frmr.l_key);
 		temp32 = cpu_to_le32(wqe->frmr.length);
-		स_नकल(sqe->length, &temp32, माप(wqe->frmr.length));
+		memcpy(sqe->length, &temp32, sizeof(wqe->frmr.length));
 		sqe->numlevels_pbl_page_size_log =
 			((wqe->frmr.pbl_pg_sz_log <<
 					SQ_FR_PMR_PBL_PAGE_SIZE_LOG_SFT) &
@@ -1888,19 +1887,19 @@ bad:
 			((wqe->frmr.levels << SQ_FR_PMR_NUMLEVELS_SFT) &
 					SQ_FR_PMR_NUMLEVELS_MASK);
 
-		क्रम (i = 0; i < wqe->frmr.page_list_len; i++)
+		for (i = 0; i < wqe->frmr.page_list_len; i++)
 			wqe->frmr.pbl_ptr[i] = cpu_to_le64(
 						wqe->frmr.page_list[i] |
 						PTU_PTE_VALID);
 		ext_sqe->pblptr = cpu_to_le64(wqe->frmr.pbl_dma_ptr);
 		ext_sqe->va = cpu_to_le64(wqe->frmr.va);
 
-		अवरोध;
-	पूर्ण
-	हाल BNXT_QPLIB_SWQE_TYPE_BIND_MW:
-	अणु
-		काष्ठा sq_bind_ext_hdr *ext_sqe = ext_hdr;
-		काष्ठा sq_bind_hdr *sqe = base_hdr;
+		break;
+	}
+	case BNXT_QPLIB_SWQE_TYPE_BIND_MW:
+	{
+		struct sq_bind_ext_hdr *ext_sqe = ext_hdr;
+		struct sq_bind_hdr *sqe = base_hdr;
 
 		sqe->wqe_type = wqe->type;
 		sqe->flags = wqe->flags;
@@ -1911,99 +1910,99 @@ bad:
 		sqe->l_key = cpu_to_le32(wqe->bind.r_key);
 		ext_sqe->va = cpu_to_le64(wqe->bind.va);
 		ext_sqe->length_lo = cpu_to_le32(wqe->bind.length);
-		अवरोध;
-	पूर्ण
-	शेष:
-		/* Bad wqe, वापस error */
+		break;
+	}
+	default:
+		/* Bad wqe, return error */
 		rc = -EINVAL;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 	swq->next_psn = sq->psn & BTH_PSN_MASK;
 	bnxt_qplib_fill_psn_search(qp, wqe, swq);
 queue_err:
 	bnxt_qplib_swq_mod_start(sq, wqe_idx);
 	bnxt_qplib_hwq_incr_prod(hwq, swq->slots);
 	qp->wqe_cnt++;
-करोne:
-	अगर (sch_handler) अणु
-		nq_work = kzalloc(माप(*nq_work), GFP_ATOMIC);
-		अगर (nq_work) अणु
+done:
+	if (sch_handler) {
+		nq_work = kzalloc(sizeof(*nq_work), GFP_ATOMIC);
+		if (nq_work) {
 			nq_work->cq = qp->scq;
 			nq_work->nq = qp->scq->nq;
 			INIT_WORK(&nq_work->work, bnxt_qpn_cqn_sched_task);
 			queue_work(qp->scq->nq->cqn_wq, &nq_work->work);
-		पूर्ण अन्यथा अणु
+		} else {
 			dev_err(&hwq->pdev->dev,
 				"FP: Failed to allocate SQ nq_work!\n");
 			rc = -ENOMEM;
-		पूर्ण
-	पूर्ण
-	वापस rc;
-पूर्ण
+		}
+	}
+	return rc;
+}
 
-व्योम bnxt_qplib_post_recv_db(काष्ठा bnxt_qplib_qp *qp)
-अणु
-	काष्ठा bnxt_qplib_q *rq = &qp->rq;
+void bnxt_qplib_post_recv_db(struct bnxt_qplib_qp *qp)
+{
+	struct bnxt_qplib_q *rq = &qp->rq;
 
 	bnxt_qplib_ring_prod_db(&rq->dbinfo, DBC_DBC_TYPE_RQ);
-पूर्ण
+}
 
-पूर्णांक bnxt_qplib_post_recv(काष्ठा bnxt_qplib_qp *qp,
-			 काष्ठा bnxt_qplib_swqe *wqe)
-अणु
-	काष्ठा bnxt_qplib_nq_work *nq_work = शून्य;
-	काष्ठा bnxt_qplib_q *rq = &qp->rq;
-	काष्ठा rq_wqe_hdr *base_hdr;
-	काष्ठा rq_ext_hdr *ext_hdr;
-	काष्ठा bnxt_qplib_hwq *hwq;
-	काष्ठा bnxt_qplib_swq *swq;
+int bnxt_qplib_post_recv(struct bnxt_qplib_qp *qp,
+			 struct bnxt_qplib_swqe *wqe)
+{
+	struct bnxt_qplib_nq_work *nq_work = NULL;
+	struct bnxt_qplib_q *rq = &qp->rq;
+	struct rq_wqe_hdr *base_hdr;
+	struct rq_ext_hdr *ext_hdr;
+	struct bnxt_qplib_hwq *hwq;
+	struct bnxt_qplib_swq *swq;
 	bool sch_handler = false;
 	u16 wqe_sz, idx;
 	u32 wqe_idx;
-	पूर्णांक rc = 0;
+	int rc = 0;
 
 	hwq = &rq->hwq;
-	अगर (qp->state == CMDQ_MODIFY_QP_NEW_STATE_RESET) अणु
+	if (qp->state == CMDQ_MODIFY_QP_NEW_STATE_RESET) {
 		dev_err(&hwq->pdev->dev,
 			"QPLIB: FP: QP (0x%x) is in the 0x%x state",
 			qp->id, qp->state);
 		rc = -EINVAL;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	अगर (bnxt_qplib_queue_full(rq, rq->dbinfo.max_slot)) अणु
+	if (bnxt_qplib_queue_full(rq, rq->dbinfo.max_slot)) {
 		dev_err(&hwq->pdev->dev,
 			"FP: QP (0x%x) RQ is full!\n", qp->id);
 		rc = -EINVAL;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
 	swq = bnxt_qplib_get_swqe(rq, &wqe_idx);
 	swq->wr_id = wqe->wr_id;
 	swq->slots = rq->dbinfo.max_slot;
 
-	अगर (qp->state == CMDQ_MODIFY_QP_NEW_STATE_ERR) अणु
+	if (qp->state == CMDQ_MODIFY_QP_NEW_STATE_ERR) {
 		sch_handler = true;
 		dev_dbg(&hwq->pdev->dev,
 			"%s: Error QP. Scheduling for poll_cq\n", __func__);
-		जाओ queue_err;
-	पूर्ण
+		goto queue_err;
+	}
 
 	idx = 0;
 	base_hdr = bnxt_qplib_get_prod_qe(hwq, idx++);
 	ext_hdr = bnxt_qplib_get_prod_qe(hwq, idx++);
-	स_रखो(base_hdr, 0, माप(काष्ठा sq_sge));
-	स_रखो(ext_hdr, 0, माप(काष्ठा sq_sge));
-	wqe_sz = (माप(काष्ठा rq_wqe_hdr) +
-	wqe->num_sge * माप(काष्ठा sq_sge)) >> 4;
+	memset(base_hdr, 0, sizeof(struct sq_sge));
+	memset(ext_hdr, 0, sizeof(struct sq_sge));
+	wqe_sz = (sizeof(struct rq_wqe_hdr) +
+	wqe->num_sge * sizeof(struct sq_sge)) >> 4;
 	bnxt_qplib_put_sges(hwq, wqe->sg_list, wqe->num_sge, &idx);
-	अगर (!wqe->num_sge) अणु
-		काष्ठा sq_sge *sge;
+	if (!wqe->num_sge) {
+		struct sq_sge *sge;
 
 		sge = bnxt_qplib_get_prod_qe(hwq, idx++);
 		sge->size = 0;
 		wqe_sz++;
-	पूर्ण
+	}
 	base_hdr->wqe_type = wqe->type;
 	base_hdr->flags = wqe->flags;
 	base_hdr->wqe_size = wqe_sz;
@@ -2011,52 +2010,52 @@ queue_err:
 queue_err:
 	bnxt_qplib_swq_mod_start(rq, wqe_idx);
 	bnxt_qplib_hwq_incr_prod(hwq, swq->slots);
-करोne:
-	अगर (sch_handler) अणु
-		nq_work = kzalloc(माप(*nq_work), GFP_ATOMIC);
-		अगर (nq_work) अणु
+done:
+	if (sch_handler) {
+		nq_work = kzalloc(sizeof(*nq_work), GFP_ATOMIC);
+		if (nq_work) {
 			nq_work->cq = qp->rcq;
 			nq_work->nq = qp->rcq->nq;
 			INIT_WORK(&nq_work->work, bnxt_qpn_cqn_sched_task);
 			queue_work(qp->rcq->nq->cqn_wq, &nq_work->work);
-		पूर्ण अन्यथा अणु
+		} else {
 			dev_err(&hwq->pdev->dev,
 				"FP: Failed to allocate RQ nq_work!\n");
 			rc = -ENOMEM;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /* CQ */
-पूर्णांक bnxt_qplib_create_cq(काष्ठा bnxt_qplib_res *res, काष्ठा bnxt_qplib_cq *cq)
-अणु
-	काष्ठा bnxt_qplib_rcfw *rcfw = res->rcfw;
-	काष्ठा bnxt_qplib_hwq_attr hwq_attr = अणुपूर्ण;
-	काष्ठा creq_create_cq_resp resp;
-	काष्ठा bnxt_qplib_pbl *pbl;
-	काष्ठा cmdq_create_cq req;
+int bnxt_qplib_create_cq(struct bnxt_qplib_res *res, struct bnxt_qplib_cq *cq)
+{
+	struct bnxt_qplib_rcfw *rcfw = res->rcfw;
+	struct bnxt_qplib_hwq_attr hwq_attr = {};
+	struct creq_create_cq_resp resp;
+	struct bnxt_qplib_pbl *pbl;
+	struct cmdq_create_cq req;
 	u16 cmd_flags = 0;
 	u32 pg_sz_lvl;
-	पूर्णांक rc;
+	int rc;
 
 	hwq_attr.res = res;
 	hwq_attr.depth = cq->max_wqe;
-	hwq_attr.stride = माप(काष्ठा cq_base);
+	hwq_attr.stride = sizeof(struct cq_base);
 	hwq_attr.type = HWQ_TYPE_QUEUE;
 	hwq_attr.sginfo = &cq->sg_info;
 	rc = bnxt_qplib_alloc_init_hwq(&cq->hwq, &hwq_attr);
-	अगर (rc)
-		जाओ निकास;
+	if (rc)
+		goto exit;
 
 	RCFW_CMD_PREP(req, CREATE_CQ, cmd_flags);
 
-	अगर (!cq->dpi) अणु
+	if (!cq->dpi) {
 		dev_err(&rcfw->pdev->dev,
 			"FP: CREATE_CQ failed due to NULL DPI\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	req.dpi = cpu_to_le32(cq->dpi->dpi);
 	req.cq_handle = cpu_to_le64(cq->cq_handle);
 	req.cq_size = cpu_to_le32(cq->hwq.max_elements);
@@ -2070,14 +2069,14 @@ queue_err:
 			(cq->cnq_hw_ring_id & CMDQ_CREATE_CQ_CNQ_ID_MASK) <<
 			 CMDQ_CREATE_CQ_CNQ_ID_SFT);
 
-	rc = bnxt_qplib_rcfw_send_message(rcfw, (व्योम *)&req,
-					  (व्योम *)&resp, शून्य, 0);
-	अगर (rc)
-		जाओ fail;
+	rc = bnxt_qplib_rcfw_send_message(rcfw, (void *)&req,
+					  (void *)&resp, NULL, 0);
+	if (rc)
+		goto fail;
 
 	cq->id = le32_to_cpu(resp.xid);
 	cq->period = BNXT_QPLIB_QUEUE_START_PERIOD;
-	init_रुकोqueue_head(&cq->रुकोq);
+	init_waitqueue_head(&cq->waitq);
 	INIT_LIST_HEAD(&cq->sqf_head);
 	INIT_LIST_HEAD(&cq->rqf_head);
 	spin_lock_init(&cq->compl_lock);
@@ -2090,59 +2089,59 @@ queue_err:
 
 	bnxt_qplib_armen_db(&cq->dbinfo, DBC_DBC_TYPE_CQ_ARMENA);
 
-	वापस 0;
+	return 0;
 
 fail:
-	bnxt_qplib_मुक्त_hwq(res, &cq->hwq);
-निकास:
-	वापस rc;
-पूर्ण
+	bnxt_qplib_free_hwq(res, &cq->hwq);
+exit:
+	return rc;
+}
 
-पूर्णांक bnxt_qplib_destroy_cq(काष्ठा bnxt_qplib_res *res, काष्ठा bnxt_qplib_cq *cq)
-अणु
-	काष्ठा bnxt_qplib_rcfw *rcfw = res->rcfw;
-	काष्ठा cmdq_destroy_cq req;
-	काष्ठा creq_destroy_cq_resp resp;
+int bnxt_qplib_destroy_cq(struct bnxt_qplib_res *res, struct bnxt_qplib_cq *cq)
+{
+	struct bnxt_qplib_rcfw *rcfw = res->rcfw;
+	struct cmdq_destroy_cq req;
+	struct creq_destroy_cq_resp resp;
 	u16 total_cnq_events;
 	u16 cmd_flags = 0;
-	पूर्णांक rc;
+	int rc;
 
 	RCFW_CMD_PREP(req, DESTROY_CQ, cmd_flags);
 
 	req.cq_cid = cpu_to_le32(cq->id);
-	rc = bnxt_qplib_rcfw_send_message(rcfw, (व्योम *)&req,
-					  (व्योम *)&resp, शून्य, 0);
-	अगर (rc)
-		वापस rc;
+	rc = bnxt_qplib_rcfw_send_message(rcfw, (void *)&req,
+					  (void *)&resp, NULL, 0);
+	if (rc)
+		return rc;
 	total_cnq_events = le16_to_cpu(resp.total_cnq_events);
-	__रुको_क्रम_all_nqes(cq, total_cnq_events);
-	bnxt_qplib_मुक्त_hwq(res, &cq->hwq);
-	वापस 0;
-पूर्ण
+	__wait_for_all_nqes(cq, total_cnq_events);
+	bnxt_qplib_free_hwq(res, &cq->hwq);
+	return 0;
+}
 
-अटल पूर्णांक __flush_sq(काष्ठा bnxt_qplib_q *sq, काष्ठा bnxt_qplib_qp *qp,
-		      काष्ठा bnxt_qplib_cqe **pcqe, पूर्णांक *budget)
-अणु
-	काष्ठा bnxt_qplib_cqe *cqe;
+static int __flush_sq(struct bnxt_qplib_q *sq, struct bnxt_qplib_qp *qp,
+		      struct bnxt_qplib_cqe **pcqe, int *budget)
+{
+	struct bnxt_qplib_cqe *cqe;
 	u32 start, last;
-	पूर्णांक rc = 0;
+	int rc = 0;
 
 	/* Now complete all outstanding SQEs with FLUSHED_ERR */
 	start = sq->swq_start;
 	cqe = *pcqe;
-	जबतक (*budget) अणु
+	while (*budget) {
 		last = sq->swq_last;
-		अगर (start == last)
-			अवरोध;
+		if (start == last)
+			break;
 		/* Skip the FENCE WQE completions */
-		अगर (sq->swq[last].wr_id == BNXT_QPLIB_FENCE_WRID) अणु
+		if (sq->swq[last].wr_id == BNXT_QPLIB_FENCE_WRID) {
 			bnxt_qplib_cancel_phantom_processing(qp);
-			जाओ skip_compl;
-		पूर्ण
-		स_रखो(cqe, 0, माप(*cqe));
+			goto skip_compl;
+		}
+		memset(cqe, 0, sizeof(*cqe));
 		cqe->status = CQ_REQ_STATUS_WORK_REQUEST_FLUSHED_ERR;
 		cqe->opcode = CQ_BASE_CQE_TYPE_REQ;
-		cqe->qp_handle = (u64)(अचिन्हित दीर्घ)qp;
+		cqe->qp_handle = (u64)(unsigned long)qp;
 		cqe->wr_id = sq->swq[last].wr_id;
 		cqe->src_qp = qp->id;
 		cqe->type = sq->swq[last].type;
@@ -2151,94 +2150,94 @@ fail:
 skip_compl:
 		bnxt_qplib_hwq_incr_cons(&sq->hwq, sq->swq[last].slots);
 		sq->swq_last = sq->swq[last].next_idx;
-	पूर्ण
+	}
 	*pcqe = cqe;
-	अगर (!(*budget) && sq->swq_last != start)
+	if (!(*budget) && sq->swq_last != start)
 		/* Out of budget */
 		rc = -EAGAIN;
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक __flush_rq(काष्ठा bnxt_qplib_q *rq, काष्ठा bnxt_qplib_qp *qp,
-		      काष्ठा bnxt_qplib_cqe **pcqe, पूर्णांक *budget)
-अणु
-	काष्ठा bnxt_qplib_cqe *cqe;
+static int __flush_rq(struct bnxt_qplib_q *rq, struct bnxt_qplib_qp *qp,
+		      struct bnxt_qplib_cqe **pcqe, int *budget)
+{
+	struct bnxt_qplib_cqe *cqe;
 	u32 start, last;
-	पूर्णांक opcode = 0;
-	पूर्णांक rc = 0;
+	int opcode = 0;
+	int rc = 0;
 
-	चयन (qp->type) अणु
-	हाल CMDQ_CREATE_QP1_TYPE_GSI:
+	switch (qp->type) {
+	case CMDQ_CREATE_QP1_TYPE_GSI:
 		opcode = CQ_BASE_CQE_TYPE_RES_RAWETH_QP1;
-		अवरोध;
-	हाल CMDQ_CREATE_QP_TYPE_RC:
+		break;
+	case CMDQ_CREATE_QP_TYPE_RC:
 		opcode = CQ_BASE_CQE_TYPE_RES_RC;
-		अवरोध;
-	हाल CMDQ_CREATE_QP_TYPE_UD:
-	हाल CMDQ_CREATE_QP_TYPE_GSI:
+		break;
+	case CMDQ_CREATE_QP_TYPE_UD:
+	case CMDQ_CREATE_QP_TYPE_GSI:
 		opcode = CQ_BASE_CQE_TYPE_RES_UD;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	/* Flush the rest of the RQ */
 	start = rq->swq_start;
 	cqe = *pcqe;
-	जबतक (*budget) अणु
+	while (*budget) {
 		last = rq->swq_last;
-		अगर (last == start)
-			अवरोध;
-		स_रखो(cqe, 0, माप(*cqe));
+		if (last == start)
+			break;
+		memset(cqe, 0, sizeof(*cqe));
 		cqe->status =
 		    CQ_RES_RC_STATUS_WORK_REQUEST_FLUSHED_ERR;
 		cqe->opcode = opcode;
-		cqe->qp_handle = (अचिन्हित दीर्घ)qp;
+		cqe->qp_handle = (unsigned long)qp;
 		cqe->wr_id = rq->swq[last].wr_id;
 		cqe++;
 		(*budget)--;
 		bnxt_qplib_hwq_incr_cons(&rq->hwq, rq->swq[last].slots);
 		rq->swq_last = rq->swq[last].next_idx;
-	पूर्ण
+	}
 	*pcqe = cqe;
-	अगर (!*budget && rq->swq_last != start)
+	if (!*budget && rq->swq_last != start)
 		/* Out of budget */
 		rc = -EAGAIN;
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-व्योम bnxt_qplib_mark_qp_error(व्योम *qp_handle)
-अणु
-	काष्ठा bnxt_qplib_qp *qp = qp_handle;
+void bnxt_qplib_mark_qp_error(void *qp_handle)
+{
+	struct bnxt_qplib_qp *qp = qp_handle;
 
-	अगर (!qp)
-		वापस;
+	if (!qp)
+		return;
 
 	/* Must block new posting of SQ and RQ */
 	qp->state = CMDQ_MODIFY_QP_NEW_STATE_ERR;
 	bnxt_qplib_cancel_phantom_processing(qp);
-पूर्ण
+}
 
 /* Note: SQE is valid from sw_sq_cons up to cqe_sq_cons (exclusive)
- *       CQE is track from sw_cq_cons to max_element but valid only अगर VALID=1
+ *       CQE is track from sw_cq_cons to max_element but valid only if VALID=1
  */
-अटल पूर्णांक करो_wa9060(काष्ठा bnxt_qplib_qp *qp, काष्ठा bnxt_qplib_cq *cq,
+static int do_wa9060(struct bnxt_qplib_qp *qp, struct bnxt_qplib_cq *cq,
 		     u32 cq_cons, u32 swq_last, u32 cqe_sq_cons)
-अणु
+{
 	u32 peek_sw_cq_cons, peek_raw_cq_cons, peek_sq_cons_idx;
-	काष्ठा bnxt_qplib_q *sq = &qp->sq;
-	काष्ठा cq_req *peek_req_hwcqe;
-	काष्ठा bnxt_qplib_qp *peek_qp;
-	काष्ठा bnxt_qplib_q *peek_sq;
-	काष्ठा bnxt_qplib_swq *swq;
-	काष्ठा cq_base *peek_hwcqe;
-	पूर्णांक i, rc = 0;
+	struct bnxt_qplib_q *sq = &qp->sq;
+	struct cq_req *peek_req_hwcqe;
+	struct bnxt_qplib_qp *peek_qp;
+	struct bnxt_qplib_q *peek_sq;
+	struct bnxt_qplib_swq *swq;
+	struct cq_base *peek_hwcqe;
+	int i, rc = 0;
 
 	/* Normal mode */
-	/* Check क्रम the psn_search marking beक्रमe completing */
+	/* Check for the psn_search marking before completing */
 	swq = &sq->swq[swq_last];
-	अगर (swq->psn_search &&
-	    le32_to_cpu(swq->psn_search->flags_next_psn) & 0x80000000) अणु
+	if (swq->psn_search &&
+	    le32_to_cpu(swq->psn_search->flags_next_psn) & 0x80000000) {
 		/* Unmark */
 		swq->psn_search->flags_next_psn = cpu_to_le32
 			(le32_to_cpu(swq->psn_search->flags_next_psn)
@@ -2249,36 +2248,36 @@ skip_compl:
 		sq->condition = true;
 		sq->send_phantom = true;
 
-		/* TODO: Only ARM अगर the previous SQE is ARMALL */
+		/* TODO: Only ARM if the previous SQE is ARMALL */
 		bnxt_qplib_ring_db(&cq->dbinfo, DBC_DBC_TYPE_CQ_ARMALL);
 		rc = -EAGAIN;
-		जाओ out;
-	पूर्ण
-	अगर (sq->condition) अणु
+		goto out;
+	}
+	if (sq->condition) {
 		/* Peek at the completions */
 		peek_raw_cq_cons = cq->hwq.cons;
 		peek_sw_cq_cons = cq_cons;
 		i = cq->hwq.max_elements;
-		जबतक (i--) अणु
+		while (i--) {
 			peek_sw_cq_cons = HWQ_CMP((peek_sw_cq_cons), &cq->hwq);
 			peek_hwcqe = bnxt_qplib_get_qe(&cq->hwq,
-						       peek_sw_cq_cons, शून्य);
+						       peek_sw_cq_cons, NULL);
 			/* If the next hwcqe is VALID */
-			अगर (CQE_CMP_VALID(peek_hwcqe, peek_raw_cq_cons,
-					  cq->hwq.max_elements)) अणु
+			if (CQE_CMP_VALID(peek_hwcqe, peek_raw_cq_cons,
+					  cq->hwq.max_elements)) {
 			/*
-			 * The valid test of the entry must be करोne first beक्रमe
-			 * पढ़ोing any further.
+			 * The valid test of the entry must be done first before
+			 * reading any further.
 			 */
 				dma_rmb();
 				/* If the next hwcqe is a REQ */
-				अगर ((peek_hwcqe->cqe_type_toggle &
+				if ((peek_hwcqe->cqe_type_toggle &
 				    CQ_BASE_CQE_TYPE_MASK) ==
-				    CQ_BASE_CQE_TYPE_REQ) अणु
-					peek_req_hwcqe = (काष्ठा cq_req *)
+				    CQ_BASE_CQE_TYPE_REQ) {
+					peek_req_hwcqe = (struct cq_req *)
 							 peek_hwcqe;
-					peek_qp = (काष्ठा bnxt_qplib_qp *)
-						((अचिन्हित दीर्घ)
+					peek_qp = (struct bnxt_qplib_qp *)
+						((unsigned long)
 						 le64_to_cpu
 						 (peek_req_hwcqe->qp_handle));
 					peek_sq = &peek_qp->sq;
@@ -2287,11 +2286,11 @@ skip_compl:
 						  peek_req_hwcqe->sq_cons_idx)
 						  - 1) % sq->max_wqe);
 					/* If the hwcqe's sq's wr_id matches */
-					अगर (peek_sq == sq &&
+					if (peek_sq == sq &&
 					    sq->swq[peek_sq_cons_idx].wr_id ==
-					    BNXT_QPLIB_FENCE_WRID) अणु
+					    BNXT_QPLIB_FENCE_WRID) {
 						/*
-						 *  Unअवरोध only अगर the phantom
+						 *  Unbreak only if the phantom
 						 *  comes back
 						 */
 						dev_dbg(&cq->hwq.pdev->dev,
@@ -2299,80 +2298,80 @@ skip_compl:
 						sq->condition = false;
 						sq->single = true;
 						rc = 0;
-						जाओ out;
-					पूर्ण
-				पूर्ण
+						goto out;
+					}
+				}
 				/* Valid but not the phantom, so keep looping */
-			पूर्ण अन्यथा अणु
-				/* Not valid yet, just निकास and रुको */
+			} else {
+				/* Not valid yet, just exit and wait */
 				rc = -EINVAL;
-				जाओ out;
-			पूर्ण
+				goto out;
+			}
 			peek_sw_cq_cons++;
 			peek_raw_cq_cons++;
-		पूर्ण
+		}
 		dev_err(&cq->hwq.pdev->dev,
 			"Should not have come here! cq_cons=0x%x qp=0x%x sq cons sw=0x%x hw=0x%x\n",
 			cq_cons, qp->id, swq_last, cqe_sq_cons);
 		rc = -EINVAL;
-	पूर्ण
+	}
 out:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक bnxt_qplib_cq_process_req(काष्ठा bnxt_qplib_cq *cq,
-				     काष्ठा cq_req *hwcqe,
-				     काष्ठा bnxt_qplib_cqe **pcqe, पूर्णांक *budget,
-				     u32 cq_cons, काष्ठा bnxt_qplib_qp **lib_qp)
-अणु
-	काष्ठा bnxt_qplib_swq *swq;
-	काष्ठा bnxt_qplib_cqe *cqe;
-	काष्ठा bnxt_qplib_qp *qp;
-	काष्ठा bnxt_qplib_q *sq;
+static int bnxt_qplib_cq_process_req(struct bnxt_qplib_cq *cq,
+				     struct cq_req *hwcqe,
+				     struct bnxt_qplib_cqe **pcqe, int *budget,
+				     u32 cq_cons, struct bnxt_qplib_qp **lib_qp)
+{
+	struct bnxt_qplib_swq *swq;
+	struct bnxt_qplib_cqe *cqe;
+	struct bnxt_qplib_qp *qp;
+	struct bnxt_qplib_q *sq;
 	u32 cqe_sq_cons;
-	पूर्णांक rc = 0;
+	int rc = 0;
 
-	qp = (काष्ठा bnxt_qplib_qp *)((अचिन्हित दीर्घ)
+	qp = (struct bnxt_qplib_qp *)((unsigned long)
 				      le64_to_cpu(hwcqe->qp_handle));
-	अगर (!qp) अणु
+	if (!qp) {
 		dev_err(&cq->hwq.pdev->dev,
 			"FP: Process Req qp is NULL\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	sq = &qp->sq;
 
 	cqe_sq_cons = le16_to_cpu(hwcqe->sq_cons_idx) % sq->max_wqe;
-	अगर (qp->sq.flushed) अणु
+	if (qp->sq.flushed) {
 		dev_dbg(&cq->hwq.pdev->dev,
 			"%s: QP in Flush QP = %p\n", __func__, qp);
-		जाओ करोne;
-	पूर्ण
-	/* Require to walk the sq's swq to fabricate CQEs क्रम all previously
-	 * संकेतed SWQEs due to CQE aggregation from the current sq cons
+		goto done;
+	}
+	/* Require to walk the sq's swq to fabricate CQEs for all previously
+	 * signaled SWQEs due to CQE aggregation from the current sq cons
 	 * to the cqe_sq_cons
 	 */
 	cqe = *pcqe;
-	जबतक (*budget) अणु
-		अगर (sq->swq_last == cqe_sq_cons)
+	while (*budget) {
+		if (sq->swq_last == cqe_sq_cons)
 			/* Done */
-			अवरोध;
+			break;
 
 		swq = &sq->swq[sq->swq_last];
-		स_रखो(cqe, 0, माप(*cqe));
+		memset(cqe, 0, sizeof(*cqe));
 		cqe->opcode = CQ_BASE_CQE_TYPE_REQ;
-		cqe->qp_handle = (u64)(अचिन्हित दीर्घ)qp;
+		cqe->qp_handle = (u64)(unsigned long)qp;
 		cqe->src_qp = qp->id;
 		cqe->wr_id = swq->wr_id;
-		अगर (cqe->wr_id == BNXT_QPLIB_FENCE_WRID)
-			जाओ skip;
+		if (cqe->wr_id == BNXT_QPLIB_FENCE_WRID)
+			goto skip;
 		cqe->type = swq->type;
 
-		/* For the last CQE, check क्रम status.  For errors, regardless
-		 * of the request being संकेतed or not, it must complete with
+		/* For the last CQE, check for status.  For errors, regardless
+		 * of the request being signaled or not, it must complete with
 		 * the hwcqe error status
 		 */
-		अगर (swq->next_idx == cqe_sq_cons &&
-		    hwcqe->status != CQ_REQ_STATUS_OK) अणु
+		if (swq->next_idx == cqe_sq_cons &&
+		    hwcqe->status != CQ_REQ_STATUS_OK) {
 			cqe->status = hwcqe->status;
 			dev_err(&cq->hwq.pdev->dev,
 				"FP: CQ Processed Req wr_id[%d] = 0x%llx with status 0x%x\n",
@@ -2382,74 +2381,74 @@ out:
 			bnxt_qplib_mark_qp_error(qp);
 			/* Add qp to flush list of the CQ */
 			bnxt_qplib_add_flush_qp(qp);
-		पूर्ण अन्यथा अणु
-			/* Beक्रमe we complete, करो WA 9060 */
-			अगर (करो_wa9060(qp, cq, cq_cons, sq->swq_last,
-				      cqe_sq_cons)) अणु
+		} else {
+			/* Before we complete, do WA 9060 */
+			if (do_wa9060(qp, cq, cq_cons, sq->swq_last,
+				      cqe_sq_cons)) {
 				*lib_qp = qp;
-				जाओ out;
-			पूर्ण
-			अगर (swq->flags & SQ_SEND_FLAGS_SIGNAL_COMP) अणु
+				goto out;
+			}
+			if (swq->flags & SQ_SEND_FLAGS_SIGNAL_COMP) {
 				cqe->status = CQ_REQ_STATUS_OK;
 				cqe++;
 				(*budget)--;
-			पूर्ण
-		पूर्ण
+			}
+		}
 skip:
 		bnxt_qplib_hwq_incr_cons(&sq->hwq, swq->slots);
 		sq->swq_last = swq->next_idx;
-		अगर (sq->single)
-			अवरोध;
-	पूर्ण
+		if (sq->single)
+			break;
+	}
 out:
 	*pcqe = cqe;
-	अगर (sq->swq_last != cqe_sq_cons) अणु
+	if (sq->swq_last != cqe_sq_cons) {
 		/* Out of budget */
 		rc = -EAGAIN;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 	/*
 	 * Back to normal completion mode only after it has completed all of
-	 * the WC क्रम this CQE
+	 * the WC for this CQE
 	 */
 	sq->single = false;
-करोne:
-	वापस rc;
-पूर्ण
+done:
+	return rc;
+}
 
-अटल व्योम bnxt_qplib_release_srqe(काष्ठा bnxt_qplib_srq *srq, u32 tag)
-अणु
+static void bnxt_qplib_release_srqe(struct bnxt_qplib_srq *srq, u32 tag)
+{
 	spin_lock(&srq->hwq.lock);
-	srq->swq[srq->last_idx].next_idx = (पूर्णांक)tag;
-	srq->last_idx = (पूर्णांक)tag;
+	srq->swq[srq->last_idx].next_idx = (int)tag;
+	srq->last_idx = (int)tag;
 	srq->swq[srq->last_idx].next_idx = -1;
-	srq->hwq.cons++; /* Support क्रम SRQE counter */
+	srq->hwq.cons++; /* Support for SRQE counter */
 	spin_unlock(&srq->hwq.lock);
-पूर्ण
+}
 
-अटल पूर्णांक bnxt_qplib_cq_process_res_rc(काष्ठा bnxt_qplib_cq *cq,
-					काष्ठा cq_res_rc *hwcqe,
-					काष्ठा bnxt_qplib_cqe **pcqe,
-					पूर्णांक *budget)
-अणु
-	काष्ठा bnxt_qplib_srq *srq;
-	काष्ठा bnxt_qplib_cqe *cqe;
-	काष्ठा bnxt_qplib_qp *qp;
-	काष्ठा bnxt_qplib_q *rq;
+static int bnxt_qplib_cq_process_res_rc(struct bnxt_qplib_cq *cq,
+					struct cq_res_rc *hwcqe,
+					struct bnxt_qplib_cqe **pcqe,
+					int *budget)
+{
+	struct bnxt_qplib_srq *srq;
+	struct bnxt_qplib_cqe *cqe;
+	struct bnxt_qplib_qp *qp;
+	struct bnxt_qplib_q *rq;
 	u32 wr_id_idx;
-	पूर्णांक rc = 0;
+	int rc = 0;
 
-	qp = (काष्ठा bnxt_qplib_qp *)((अचिन्हित दीर्घ)
+	qp = (struct bnxt_qplib_qp *)((unsigned long)
 				      le64_to_cpu(hwcqe->qp_handle));
-	अगर (!qp) अणु
+	if (!qp) {
 		dev_err(&cq->hwq.pdev->dev, "process_cq RC qp is NULL\n");
-		वापस -EINVAL;
-	पूर्ण
-	अगर (qp->rq.flushed) अणु
+		return -EINVAL;
+	}
+	if (qp->rq.flushed) {
 		dev_dbg(&cq->hwq.pdev->dev,
 			"%s: QP in Flush QP = %p\n", __func__, qp);
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
 	cqe = *pcqe;
 	cqe->opcode = hwcqe->cqe_type_toggle & CQ_BASE_CQE_TYPE_MASK;
@@ -2458,37 +2457,37 @@ out:
 	cqe->mr_handle = le64_to_cpu(hwcqe->mr_handle);
 	cqe->flags = le16_to_cpu(hwcqe->flags);
 	cqe->status = hwcqe->status;
-	cqe->qp_handle = (u64)(अचिन्हित दीर्घ)qp;
+	cqe->qp_handle = (u64)(unsigned long)qp;
 
 	wr_id_idx = le32_to_cpu(hwcqe->srq_or_rq_wr_id) &
 				CQ_RES_RC_SRQ_OR_RQ_WR_ID_MASK;
-	अगर (cqe->flags & CQ_RES_RC_FLAGS_SRQ_SRQ) अणु
+	if (cqe->flags & CQ_RES_RC_FLAGS_SRQ_SRQ) {
 		srq = qp->srq;
-		अगर (!srq)
-			वापस -EINVAL;
-		अगर (wr_id_idx >= srq->hwq.max_elements) अणु
+		if (!srq)
+			return -EINVAL;
+		if (wr_id_idx >= srq->hwq.max_elements) {
 			dev_err(&cq->hwq.pdev->dev,
 				"FP: CQ Process RC wr_id idx 0x%x exceeded SRQ max 0x%x\n",
 				wr_id_idx, srq->hwq.max_elements);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 		cqe->wr_id = srq->swq[wr_id_idx].wr_id;
 		bnxt_qplib_release_srqe(srq, wr_id_idx);
 		cqe++;
 		(*budget)--;
 		*pcqe = cqe;
-	पूर्ण अन्यथा अणु
-		काष्ठा bnxt_qplib_swq *swq;
+	} else {
+		struct bnxt_qplib_swq *swq;
 
 		rq = &qp->rq;
-		अगर (wr_id_idx > (rq->max_wqe - 1)) अणु
+		if (wr_id_idx > (rq->max_wqe - 1)) {
 			dev_err(&cq->hwq.pdev->dev,
 				"FP: CQ Process RC wr_id idx 0x%x exceeded RQ max 0x%x\n",
 				wr_id_idx, rq->max_wqe);
-			वापस -EINVAL;
-		पूर्ण
-		अगर (wr_id_idx != rq->swq_last)
-			वापस -EINVAL;
+			return -EINVAL;
+		}
+		if (wr_id_idx != rq->swq_last)
+			return -EINVAL;
 		swq = &rq->swq[rq->swq_last];
 		cqe->wr_id = swq->wr_id;
 		cqe++;
@@ -2497,40 +2496,40 @@ out:
 		rq->swq_last = swq->next_idx;
 		*pcqe = cqe;
 
-		अगर (hwcqe->status != CQ_RES_RC_STATUS_OK) अणु
+		if (hwcqe->status != CQ_RES_RC_STATUS_OK) {
 			qp->state = CMDQ_MODIFY_QP_NEW_STATE_ERR;
 			/* Add qp to flush list of the CQ */
 			bnxt_qplib_add_flush_qp(qp);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-करोne:
-	वापस rc;
-पूर्ण
+done:
+	return rc;
+}
 
-अटल पूर्णांक bnxt_qplib_cq_process_res_ud(काष्ठा bnxt_qplib_cq *cq,
-					काष्ठा cq_res_ud *hwcqe,
-					काष्ठा bnxt_qplib_cqe **pcqe,
-					पूर्णांक *budget)
-अणु
-	काष्ठा bnxt_qplib_srq *srq;
-	काष्ठा bnxt_qplib_cqe *cqe;
-	काष्ठा bnxt_qplib_qp *qp;
-	काष्ठा bnxt_qplib_q *rq;
+static int bnxt_qplib_cq_process_res_ud(struct bnxt_qplib_cq *cq,
+					struct cq_res_ud *hwcqe,
+					struct bnxt_qplib_cqe **pcqe,
+					int *budget)
+{
+	struct bnxt_qplib_srq *srq;
+	struct bnxt_qplib_cqe *cqe;
+	struct bnxt_qplib_qp *qp;
+	struct bnxt_qplib_q *rq;
 	u32 wr_id_idx;
-	पूर्णांक rc = 0;
+	int rc = 0;
 
-	qp = (काष्ठा bnxt_qplib_qp *)((अचिन्हित दीर्घ)
+	qp = (struct bnxt_qplib_qp *)((unsigned long)
 				      le64_to_cpu(hwcqe->qp_handle));
-	अगर (!qp) अणु
+	if (!qp) {
 		dev_err(&cq->hwq.pdev->dev, "process_cq UD qp is NULL\n");
-		वापस -EINVAL;
-	पूर्ण
-	अगर (qp->rq.flushed) अणु
+		return -EINVAL;
+	}
+	if (qp->rq.flushed) {
 		dev_dbg(&cq->hwq.pdev->dev,
 			"%s: QP in Flush QP = %p\n", __func__, qp);
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 	cqe = *pcqe;
 	cqe->opcode = hwcqe->cqe_type_toggle & CQ_BASE_CQE_TYPE_MASK;
 	cqe->length = le16_to_cpu(hwcqe->length) & CQ_RES_UD_LENGTH_MASK;
@@ -2538,9 +2537,9 @@ out:
 	cqe->invrkey = le32_to_cpu(hwcqe->imm_data);
 	cqe->flags = le16_to_cpu(hwcqe->flags);
 	cqe->status = hwcqe->status;
-	cqe->qp_handle = (u64)(अचिन्हित दीर्घ)qp;
-	/*FIXME: Endianness fix needed क्रम smace */
-	स_नकल(cqe->smac, hwcqe->src_mac, ETH_ALEN);
+	cqe->qp_handle = (u64)(unsigned long)qp;
+	/*FIXME: Endianness fix needed for smace */
+	memcpy(cqe->smac, hwcqe->src_mac, ETH_ALEN);
 	wr_id_idx = le32_to_cpu(hwcqe->src_qp_high_srq_or_rq_wr_id)
 				& CQ_RES_UD_SRQ_OR_RQ_WR_ID_MASK;
 	cqe->src_qp = le16_to_cpu(hwcqe->src_qp_low) |
@@ -2548,35 +2547,35 @@ out:
 				  hwcqe->src_qp_high_srq_or_rq_wr_id) &
 				 CQ_RES_UD_SRC_QP_HIGH_MASK) >> 8);
 
-	अगर (cqe->flags & CQ_RES_RC_FLAGS_SRQ_SRQ) अणु
+	if (cqe->flags & CQ_RES_RC_FLAGS_SRQ_SRQ) {
 		srq = qp->srq;
-		अगर (!srq)
-			वापस -EINVAL;
+		if (!srq)
+			return -EINVAL;
 
-		अगर (wr_id_idx >= srq->hwq.max_elements) अणु
+		if (wr_id_idx >= srq->hwq.max_elements) {
 			dev_err(&cq->hwq.pdev->dev,
 				"FP: CQ Process UD wr_id idx 0x%x exceeded SRQ max 0x%x\n",
 				wr_id_idx, srq->hwq.max_elements);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 		cqe->wr_id = srq->swq[wr_id_idx].wr_id;
 		bnxt_qplib_release_srqe(srq, wr_id_idx);
 		cqe++;
 		(*budget)--;
 		*pcqe = cqe;
-	पूर्ण अन्यथा अणु
-		काष्ठा bnxt_qplib_swq *swq;
+	} else {
+		struct bnxt_qplib_swq *swq;
 
 		rq = &qp->rq;
-		अगर (wr_id_idx > (rq->max_wqe - 1)) अणु
+		if (wr_id_idx > (rq->max_wqe - 1)) {
 			dev_err(&cq->hwq.pdev->dev,
 				"FP: CQ Process UD wr_id idx 0x%x exceeded RQ max 0x%x\n",
 				wr_id_idx, rq->max_wqe);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
-		अगर (rq->swq_last != wr_id_idx)
-			वापस -EINVAL;
+		if (rq->swq_last != wr_id_idx)
+			return -EINVAL;
 		swq = &rq->swq[rq->swq_last];
 		cqe->wr_id = swq->wr_id;
 		cqe++;
@@ -2585,105 +2584,105 @@ out:
 		rq->swq_last = swq->next_idx;
 		*pcqe = cqe;
 
-		अगर (hwcqe->status != CQ_RES_RC_STATUS_OK) अणु
+		if (hwcqe->status != CQ_RES_RC_STATUS_OK) {
 			qp->state = CMDQ_MODIFY_QP_NEW_STATE_ERR;
 			/* Add qp to flush list of the CQ */
 			bnxt_qplib_add_flush_qp(qp);
-		पूर्ण
-	पूर्ण
-करोne:
-	वापस rc;
-पूर्ण
+		}
+	}
+done:
+	return rc;
+}
 
-bool bnxt_qplib_is_cq_empty(काष्ठा bnxt_qplib_cq *cq)
-अणु
-	काष्ठा cq_base *hw_cqe;
+bool bnxt_qplib_is_cq_empty(struct bnxt_qplib_cq *cq)
+{
+	struct cq_base *hw_cqe;
 	u32 sw_cons, raw_cons;
 	bool rc = true;
 
 	raw_cons = cq->hwq.cons;
 	sw_cons = HWQ_CMP(raw_cons, &cq->hwq);
-	hw_cqe = bnxt_qplib_get_qe(&cq->hwq, sw_cons, शून्य);
-	 /* Check क्रम Valid bit. If the CQE is valid, वापस false */
+	hw_cqe = bnxt_qplib_get_qe(&cq->hwq, sw_cons, NULL);
+	 /* Check for Valid bit. If the CQE is valid, return false */
 	rc = !CQE_CMP_VALID(hw_cqe, raw_cons, cq->hwq.max_elements);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक bnxt_qplib_cq_process_res_raweth_qp1(काष्ठा bnxt_qplib_cq *cq,
-						काष्ठा cq_res_raweth_qp1 *hwcqe,
-						काष्ठा bnxt_qplib_cqe **pcqe,
-						पूर्णांक *budget)
-अणु
-	काष्ठा bnxt_qplib_qp *qp;
-	काष्ठा bnxt_qplib_q *rq;
-	काष्ठा bnxt_qplib_srq *srq;
-	काष्ठा bnxt_qplib_cqe *cqe;
+static int bnxt_qplib_cq_process_res_raweth_qp1(struct bnxt_qplib_cq *cq,
+						struct cq_res_raweth_qp1 *hwcqe,
+						struct bnxt_qplib_cqe **pcqe,
+						int *budget)
+{
+	struct bnxt_qplib_qp *qp;
+	struct bnxt_qplib_q *rq;
+	struct bnxt_qplib_srq *srq;
+	struct bnxt_qplib_cqe *cqe;
 	u32 wr_id_idx;
-	पूर्णांक rc = 0;
+	int rc = 0;
 
-	qp = (काष्ठा bnxt_qplib_qp *)((अचिन्हित दीर्घ)
+	qp = (struct bnxt_qplib_qp *)((unsigned long)
 				      le64_to_cpu(hwcqe->qp_handle));
-	अगर (!qp) अणु
+	if (!qp) {
 		dev_err(&cq->hwq.pdev->dev, "process_cq Raw/QP1 qp is NULL\n");
-		वापस -EINVAL;
-	पूर्ण
-	अगर (qp->rq.flushed) अणु
+		return -EINVAL;
+	}
+	if (qp->rq.flushed) {
 		dev_dbg(&cq->hwq.pdev->dev,
 			"%s: QP in Flush QP = %p\n", __func__, qp);
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 	cqe = *pcqe;
 	cqe->opcode = hwcqe->cqe_type_toggle & CQ_BASE_CQE_TYPE_MASK;
 	cqe->flags = le16_to_cpu(hwcqe->flags);
-	cqe->qp_handle = (u64)(अचिन्हित दीर्घ)qp;
+	cqe->qp_handle = (u64)(unsigned long)qp;
 
 	wr_id_idx =
 		le32_to_cpu(hwcqe->raweth_qp1_payload_offset_srq_or_rq_wr_id)
 				& CQ_RES_RAWETH_QP1_SRQ_OR_RQ_WR_ID_MASK;
 	cqe->src_qp = qp->id;
-	अगर (qp->id == 1 && !cqe->length) अणु
-		/* Add workaround क्रम the length misdetection */
+	if (qp->id == 1 && !cqe->length) {
+		/* Add workaround for the length misdetection */
 		cqe->length = 296;
-	पूर्ण अन्यथा अणु
+	} else {
 		cqe->length = le16_to_cpu(hwcqe->length);
-	पूर्ण
+	}
 	cqe->pkey_index = qp->pkey_index;
-	स_नकल(cqe->smac, qp->smac, 6);
+	memcpy(cqe->smac, qp->smac, 6);
 
 	cqe->raweth_qp1_flags = le16_to_cpu(hwcqe->raweth_qp1_flags);
 	cqe->raweth_qp1_flags2 = le32_to_cpu(hwcqe->raweth_qp1_flags2);
 	cqe->raweth_qp1_metadata = le32_to_cpu(hwcqe->raweth_qp1_metadata);
 
-	अगर (cqe->flags & CQ_RES_RAWETH_QP1_FLAGS_SRQ_SRQ) अणु
+	if (cqe->flags & CQ_RES_RAWETH_QP1_FLAGS_SRQ_SRQ) {
 		srq = qp->srq;
-		अगर (!srq) अणु
+		if (!srq) {
 			dev_err(&cq->hwq.pdev->dev,
 				"FP: SRQ used but not defined??\n");
-			वापस -EINVAL;
-		पूर्ण
-		अगर (wr_id_idx >= srq->hwq.max_elements) अणु
+			return -EINVAL;
+		}
+		if (wr_id_idx >= srq->hwq.max_elements) {
 			dev_err(&cq->hwq.pdev->dev,
 				"FP: CQ Process Raw/QP1 wr_id idx 0x%x exceeded SRQ max 0x%x\n",
 				wr_id_idx, srq->hwq.max_elements);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 		cqe->wr_id = srq->swq[wr_id_idx].wr_id;
 		bnxt_qplib_release_srqe(srq, wr_id_idx);
 		cqe++;
 		(*budget)--;
 		*pcqe = cqe;
-	पूर्ण अन्यथा अणु
-		काष्ठा bnxt_qplib_swq *swq;
+	} else {
+		struct bnxt_qplib_swq *swq;
 
 		rq = &qp->rq;
-		अगर (wr_id_idx > (rq->max_wqe - 1)) अणु
+		if (wr_id_idx > (rq->max_wqe - 1)) {
 			dev_err(&cq->hwq.pdev->dev,
 				"FP: CQ Process Raw/QP1 RQ wr_id idx 0x%x exceeded RQ max 0x%x\n",
 				wr_id_idx, rq->max_wqe);
-			वापस -EINVAL;
-		पूर्ण
-		अगर (rq->swq_last != wr_id_idx)
-			वापस -EINVAL;
+			return -EINVAL;
+		}
+		if (rq->swq_last != wr_id_idx)
+			return -EINVAL;
 		swq = &rq->swq[rq->swq_last];
 		cqe->wr_id = swq->wr_id;
 		cqe++;
@@ -2692,41 +2691,41 @@ bool bnxt_qplib_is_cq_empty(काष्ठा bnxt_qplib_cq *cq)
 		rq->swq_last = swq->next_idx;
 		*pcqe = cqe;
 
-		अगर (hwcqe->status != CQ_RES_RC_STATUS_OK) अणु
+		if (hwcqe->status != CQ_RES_RC_STATUS_OK) {
 			qp->state = CMDQ_MODIFY_QP_NEW_STATE_ERR;
 			/* Add qp to flush list of the CQ */
 			bnxt_qplib_add_flush_qp(qp);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-करोne:
-	वापस rc;
-पूर्ण
+done:
+	return rc;
+}
 
-अटल पूर्णांक bnxt_qplib_cq_process_terminal(काष्ठा bnxt_qplib_cq *cq,
-					  काष्ठा cq_terminal *hwcqe,
-					  काष्ठा bnxt_qplib_cqe **pcqe,
-					  पूर्णांक *budget)
-अणु
-	काष्ठा bnxt_qplib_qp *qp;
-	काष्ठा bnxt_qplib_q *sq, *rq;
-	काष्ठा bnxt_qplib_cqe *cqe;
+static int bnxt_qplib_cq_process_terminal(struct bnxt_qplib_cq *cq,
+					  struct cq_terminal *hwcqe,
+					  struct bnxt_qplib_cqe **pcqe,
+					  int *budget)
+{
+	struct bnxt_qplib_qp *qp;
+	struct bnxt_qplib_q *sq, *rq;
+	struct bnxt_qplib_cqe *cqe;
 	u32 swq_last = 0, cqe_cons;
-	पूर्णांक rc = 0;
+	int rc = 0;
 
 	/* Check the Status */
-	अगर (hwcqe->status != CQ_TERMINAL_STATUS_OK)
+	if (hwcqe->status != CQ_TERMINAL_STATUS_OK)
 		dev_warn(&cq->hwq.pdev->dev,
 			 "FP: CQ Process Terminal Error status = 0x%x\n",
 			 hwcqe->status);
 
-	qp = (काष्ठा bnxt_qplib_qp *)((अचिन्हित दीर्घ)
+	qp = (struct bnxt_qplib_qp *)((unsigned long)
 				      le64_to_cpu(hwcqe->qp_handle));
-	अगर (!qp) अणु
+	if (!qp) {
 		dev_err(&cq->hwq.pdev->dev,
 			"FP: CQ Process terminal qp is NULL\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/* Must block new posting of SQ and RQ */
 	qp->state = CMDQ_MODIFY_QP_NEW_STATE_ERR;
@@ -2735,66 +2734,66 @@ bool bnxt_qplib_is_cq_empty(काष्ठा bnxt_qplib_cq *cq)
 	rq = &qp->rq;
 
 	cqe_cons = le16_to_cpu(hwcqe->sq_cons_idx);
-	अगर (cqe_cons == 0xFFFF)
-		जाओ करो_rq;
+	if (cqe_cons == 0xFFFF)
+		goto do_rq;
 	cqe_cons %= sq->max_wqe;
 
-	अगर (qp->sq.flushed) अणु
+	if (qp->sq.flushed) {
 		dev_dbg(&cq->hwq.pdev->dev,
 			"%s: QP in Flush QP = %p\n", __func__, qp);
-		जाओ sq_करोne;
-	पूर्ण
+		goto sq_done;
+	}
 
 	/* Terminal CQE can also include aggregated successful CQEs prior.
 	 * So we must complete all CQEs from the current sq's cons to the
 	 * cq_cons with status OK
 	 */
 	cqe = *pcqe;
-	जबतक (*budget) अणु
+	while (*budget) {
 		swq_last = sq->swq_last;
-		अगर (swq_last == cqe_cons)
-			अवरोध;
-		अगर (sq->swq[swq_last].flags & SQ_SEND_FLAGS_SIGNAL_COMP) अणु
-			स_रखो(cqe, 0, माप(*cqe));
+		if (swq_last == cqe_cons)
+			break;
+		if (sq->swq[swq_last].flags & SQ_SEND_FLAGS_SIGNAL_COMP) {
+			memset(cqe, 0, sizeof(*cqe));
 			cqe->status = CQ_REQ_STATUS_OK;
 			cqe->opcode = CQ_BASE_CQE_TYPE_REQ;
-			cqe->qp_handle = (u64)(अचिन्हित दीर्घ)qp;
+			cqe->qp_handle = (u64)(unsigned long)qp;
 			cqe->src_qp = qp->id;
 			cqe->wr_id = sq->swq[swq_last].wr_id;
 			cqe->type = sq->swq[swq_last].type;
 			cqe++;
 			(*budget)--;
-		पूर्ण
+		}
 		bnxt_qplib_hwq_incr_cons(&sq->hwq, sq->swq[swq_last].slots);
 		sq->swq_last = sq->swq[swq_last].next_idx;
-	पूर्ण
+	}
 	*pcqe = cqe;
-	अगर (!(*budget) && swq_last != cqe_cons) अणु
+	if (!(*budget) && swq_last != cqe_cons) {
 		/* Out of budget */
 		rc = -EAGAIN;
-		जाओ sq_करोne;
-	पूर्ण
-sq_करोne:
-	अगर (rc)
-		वापस rc;
-करो_rq:
+		goto sq_done;
+	}
+sq_done:
+	if (rc)
+		return rc;
+do_rq:
 	cqe_cons = le16_to_cpu(hwcqe->rq_cons_idx);
-	अगर (cqe_cons == 0xFFFF) अणु
-		जाओ करोne;
-	पूर्ण अन्यथा अगर (cqe_cons > rq->max_wqe - 1) अणु
+	if (cqe_cons == 0xFFFF) {
+		goto done;
+	} else if (cqe_cons > rq->max_wqe - 1) {
 		dev_err(&cq->hwq.pdev->dev,
 			"FP: CQ Processed terminal reported rq_cons_idx 0x%x exceeds max 0x%x\n",
 			cqe_cons, rq->max_wqe);
 		rc = -EINVAL;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	अगर (qp->rq.flushed) अणु
+	if (qp->rq.flushed) {
 		dev_dbg(&cq->hwq.pdev->dev,
 			"%s: QP in Flush QP = %p\n", __func__, qp);
 		rc = 0;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
 	/* Terminal CQE requires all posted RQEs to complete with FLUSHED_ERR
 	 * from the current rq->cons to the rq->prod regardless what the
@@ -2803,144 +2802,144 @@ sq_करोne:
 
 	/* Add qp to flush list of the CQ */
 	bnxt_qplib_add_flush_qp(qp);
-करोne:
-	वापस rc;
-पूर्ण
+done:
+	return rc;
+}
 
-अटल पूर्णांक bnxt_qplib_cq_process_cutoff(काष्ठा bnxt_qplib_cq *cq,
-					काष्ठा cq_cutoff *hwcqe)
-अणु
+static int bnxt_qplib_cq_process_cutoff(struct bnxt_qplib_cq *cq,
+					struct cq_cutoff *hwcqe)
+{
 	/* Check the Status */
-	अगर (hwcqe->status != CQ_CUTOFF_STATUS_OK) अणु
+	if (hwcqe->status != CQ_CUTOFF_STATUS_OK) {
 		dev_err(&cq->hwq.pdev->dev,
 			"FP: CQ Process Cutoff Error status = 0x%x\n",
 			hwcqe->status);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	clear_bit(CQ_FLAGS_RESIZE_IN_PROG, &cq->flags);
-	wake_up_पूर्णांकerruptible(&cq->रुकोq);
+	wake_up_interruptible(&cq->waitq);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक bnxt_qplib_process_flush_list(काष्ठा bnxt_qplib_cq *cq,
-				  काष्ठा bnxt_qplib_cqe *cqe,
-				  पूर्णांक num_cqes)
-अणु
-	काष्ठा bnxt_qplib_qp *qp = शून्य;
+int bnxt_qplib_process_flush_list(struct bnxt_qplib_cq *cq,
+				  struct bnxt_qplib_cqe *cqe,
+				  int num_cqes)
+{
+	struct bnxt_qplib_qp *qp = NULL;
 	u32 budget = num_cqes;
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 
 	spin_lock_irqsave(&cq->flush_lock, flags);
-	list_क्रम_each_entry(qp, &cq->sqf_head, sq_flush) अणु
+	list_for_each_entry(qp, &cq->sqf_head, sq_flush) {
 		dev_dbg(&cq->hwq.pdev->dev, "FP: Flushing SQ QP= %p\n", qp);
 		__flush_sq(&qp->sq, qp, &cqe, &budget);
-	पूर्ण
+	}
 
-	list_क्रम_each_entry(qp, &cq->rqf_head, rq_flush) अणु
+	list_for_each_entry(qp, &cq->rqf_head, rq_flush) {
 		dev_dbg(&cq->hwq.pdev->dev, "FP: Flushing RQ QP= %p\n", qp);
 		__flush_rq(&qp->rq, qp, &cqe, &budget);
-	पूर्ण
+	}
 	spin_unlock_irqrestore(&cq->flush_lock, flags);
 
-	वापस num_cqes - budget;
-पूर्ण
+	return num_cqes - budget;
+}
 
-पूर्णांक bnxt_qplib_poll_cq(काष्ठा bnxt_qplib_cq *cq, काष्ठा bnxt_qplib_cqe *cqe,
-		       पूर्णांक num_cqes, काष्ठा bnxt_qplib_qp **lib_qp)
-अणु
-	काष्ठा cq_base *hw_cqe;
+int bnxt_qplib_poll_cq(struct bnxt_qplib_cq *cq, struct bnxt_qplib_cqe *cqe,
+		       int num_cqes, struct bnxt_qplib_qp **lib_qp)
+{
+	struct cq_base *hw_cqe;
 	u32 sw_cons, raw_cons;
-	पूर्णांक budget, rc = 0;
+	int budget, rc = 0;
 
 	raw_cons = cq->hwq.cons;
 	budget = num_cqes;
 
-	जबतक (budget) अणु
+	while (budget) {
 		sw_cons = HWQ_CMP(raw_cons, &cq->hwq);
-		hw_cqe = bnxt_qplib_get_qe(&cq->hwq, sw_cons, शून्य);
+		hw_cqe = bnxt_qplib_get_qe(&cq->hwq, sw_cons, NULL);
 
-		/* Check क्रम Valid bit */
-		अगर (!CQE_CMP_VALID(hw_cqe, raw_cons, cq->hwq.max_elements))
-			अवरोध;
+		/* Check for Valid bit */
+		if (!CQE_CMP_VALID(hw_cqe, raw_cons, cq->hwq.max_elements))
+			break;
 
 		/*
-		 * The valid test of the entry must be करोne first beक्रमe
-		 * पढ़ोing any further.
+		 * The valid test of the entry must be done first before
+		 * reading any further.
 		 */
 		dma_rmb();
-		/* From the device's respective CQE क्रमmat to qplib_wc*/
-		चयन (hw_cqe->cqe_type_toggle & CQ_BASE_CQE_TYPE_MASK) अणु
-		हाल CQ_BASE_CQE_TYPE_REQ:
+		/* From the device's respective CQE format to qplib_wc*/
+		switch (hw_cqe->cqe_type_toggle & CQ_BASE_CQE_TYPE_MASK) {
+		case CQ_BASE_CQE_TYPE_REQ:
 			rc = bnxt_qplib_cq_process_req(cq,
-						       (काष्ठा cq_req *)hw_cqe,
+						       (struct cq_req *)hw_cqe,
 						       &cqe, &budget,
 						       sw_cons, lib_qp);
-			अवरोध;
-		हाल CQ_BASE_CQE_TYPE_RES_RC:
+			break;
+		case CQ_BASE_CQE_TYPE_RES_RC:
 			rc = bnxt_qplib_cq_process_res_rc(cq,
-							  (काष्ठा cq_res_rc *)
+							  (struct cq_res_rc *)
 							  hw_cqe, &cqe,
 							  &budget);
-			अवरोध;
-		हाल CQ_BASE_CQE_TYPE_RES_UD:
+			break;
+		case CQ_BASE_CQE_TYPE_RES_UD:
 			rc = bnxt_qplib_cq_process_res_ud
-					(cq, (काष्ठा cq_res_ud *)hw_cqe, &cqe,
+					(cq, (struct cq_res_ud *)hw_cqe, &cqe,
 					 &budget);
-			अवरोध;
-		हाल CQ_BASE_CQE_TYPE_RES_RAWETH_QP1:
+			break;
+		case CQ_BASE_CQE_TYPE_RES_RAWETH_QP1:
 			rc = bnxt_qplib_cq_process_res_raweth_qp1
-					(cq, (काष्ठा cq_res_raweth_qp1 *)
+					(cq, (struct cq_res_raweth_qp1 *)
 					 hw_cqe, &cqe, &budget);
-			अवरोध;
-		हाल CQ_BASE_CQE_TYPE_TERMINAL:
+			break;
+		case CQ_BASE_CQE_TYPE_TERMINAL:
 			rc = bnxt_qplib_cq_process_terminal
-					(cq, (काष्ठा cq_terminal *)hw_cqe,
+					(cq, (struct cq_terminal *)hw_cqe,
 					 &cqe, &budget);
-			अवरोध;
-		हाल CQ_BASE_CQE_TYPE_CUT_OFF:
+			break;
+		case CQ_BASE_CQE_TYPE_CUT_OFF:
 			bnxt_qplib_cq_process_cutoff
-					(cq, (काष्ठा cq_cutoff *)hw_cqe);
+					(cq, (struct cq_cutoff *)hw_cqe);
 			/* Done processing this CQ */
-			जाओ निकास;
-		शेष:
+			goto exit;
+		default:
 			dev_err(&cq->hwq.pdev->dev,
 				"process_cq unknown type 0x%lx\n",
 				hw_cqe->cqe_type_toggle &
 				CQ_BASE_CQE_TYPE_MASK);
 			rc = -EINVAL;
-			अवरोध;
-		पूर्ण
-		अगर (rc < 0) अणु
-			अगर (rc == -EAGAIN)
-				अवरोध;
-			/* Error जबतक processing the CQE, just skip to the
+			break;
+		}
+		if (rc < 0) {
+			if (rc == -EAGAIN)
+				break;
+			/* Error while processing the CQE, just skip to the
 			 * next one
 			 */
 			dev_err(&cq->hwq.pdev->dev,
 				"process_cqe error rc = 0x%x\n", rc);
-		पूर्ण
+		}
 		raw_cons++;
-	पूर्ण
-	अगर (cq->hwq.cons != raw_cons) अणु
+	}
+	if (cq->hwq.cons != raw_cons) {
 		cq->hwq.cons = raw_cons;
 		bnxt_qplib_ring_db(&cq->dbinfo, DBC_DBC_TYPE_CQ);
-	पूर्ण
-निकास:
-	वापस num_cqes - budget;
-पूर्ण
+	}
+exit:
+	return num_cqes - budget;
+}
 
-व्योम bnxt_qplib_req_notअगरy_cq(काष्ठा bnxt_qplib_cq *cq, u32 arm_type)
-अणु
-	अगर (arm_type)
+void bnxt_qplib_req_notify_cq(struct bnxt_qplib_cq *cq, u32 arm_type)
+{
+	if (arm_type)
 		bnxt_qplib_ring_db(&cq->dbinfo, arm_type);
 	/* Using cq->arm_state variable to track whether to issue cq handler */
 	atomic_set(&cq->arm_state, 1);
-पूर्ण
+}
 
-व्योम bnxt_qplib_flush_cqn_wq(काष्ठा bnxt_qplib_qp *qp)
-अणु
+void bnxt_qplib_flush_cqn_wq(struct bnxt_qplib_qp *qp)
+{
 	flush_workqueue(qp->scq->nq->cqn_wq);
-	अगर (qp->scq != qp->rcq)
+	if (qp->scq != qp->rcq)
 		flush_workqueue(qp->rcq->nq->cqn_wq);
-पूर्ण
+}

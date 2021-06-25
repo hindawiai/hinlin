@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2018 Red Hat Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -20,173 +19,173 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-#समावेश "nouveau_dmem.h"
-#समावेश "nouveau_drv.h"
-#समावेश "nouveau_chan.h"
-#समावेश "nouveau_dma.h"
-#समावेश "nouveau_mem.h"
-#समावेश "nouveau_bo.h"
-#समावेश "nouveau_svm.h"
+#include "nouveau_dmem.h"
+#include "nouveau_drv.h"
+#include "nouveau_chan.h"
+#include "nouveau_dma.h"
+#include "nouveau_mem.h"
+#include "nouveau_bo.h"
+#include "nouveau_svm.h"
 
-#समावेश <nvअगर/class.h>
-#समावेश <nvअगर/object.h>
-#समावेश <nvअगर/push906f.h>
-#समावेश <nvअगर/अगर000c.h>
-#समावेश <nvअगर/अगर500b.h>
-#समावेश <nvअगर/अगर900b.h>
-#समावेश <nvअगर/अगर000c.h>
+#include <nvif/class.h>
+#include <nvif/object.h>
+#include <nvif/push906f.h>
+#include <nvif/if000c.h>
+#include <nvif/if500b.h>
+#include <nvif/if900b.h>
+#include <nvif/if000c.h>
 
-#समावेश <nvhw/class/cla0b5.h>
+#include <nvhw/class/cla0b5.h>
 
-#समावेश <linux/sched/mm.h>
-#समावेश <linux/hmm.h>
+#include <linux/sched/mm.h>
+#include <linux/hmm.h>
 
 /*
  * FIXME: this is ugly right now we are using TTM to allocate vram and we pin
- * it in vram जबतक in use. We likely want to overhaul memory management क्रम
- * nouveau to be more page like (not necessarily with प्रणाली page size but a
+ * it in vram while in use. We likely want to overhaul memory management for
+ * nouveau to be more page like (not necessarily with system page size but a
  * bigger page size) at lowest level and have some shim layer on top that would
  * provide the same functionality as TTM.
  */
-#घोषणा DMEM_CHUNK_SIZE (2UL << 20)
-#घोषणा DMEM_CHUNK_NPAGES (DMEM_CHUNK_SIZE >> PAGE_SHIFT)
+#define DMEM_CHUNK_SIZE (2UL << 20)
+#define DMEM_CHUNK_NPAGES (DMEM_CHUNK_SIZE >> PAGE_SHIFT)
 
-क्रमागत nouveau_aper अणु
+enum nouveau_aper {
 	NOUVEAU_APER_VIRT,
 	NOUVEAU_APER_VRAM,
 	NOUVEAU_APER_HOST,
-पूर्ण;
+};
 
-प्रकार पूर्णांक (*nouveau_migrate_copy_t)(काष्ठा nouveau_drm *drm, u64 npages,
-				      क्रमागत nouveau_aper, u64 dst_addr,
-				      क्रमागत nouveau_aper, u64 src_addr);
-प्रकार पूर्णांक (*nouveau_clear_page_t)(काष्ठा nouveau_drm *drm, u32 length,
-				      क्रमागत nouveau_aper, u64 dst_addr);
+typedef int (*nouveau_migrate_copy_t)(struct nouveau_drm *drm, u64 npages,
+				      enum nouveau_aper, u64 dst_addr,
+				      enum nouveau_aper, u64 src_addr);
+typedef int (*nouveau_clear_page_t)(struct nouveau_drm *drm, u32 length,
+				      enum nouveau_aper, u64 dst_addr);
 
-काष्ठा nouveau_dmem_chunk अणु
-	काष्ठा list_head list;
-	काष्ठा nouveau_bo *bo;
-	काष्ठा nouveau_drm *drm;
-	अचिन्हित दीर्घ सुस्मृतिated;
-	काष्ठा dev_pagemap pagemap;
-पूर्ण;
+struct nouveau_dmem_chunk {
+	struct list_head list;
+	struct nouveau_bo *bo;
+	struct nouveau_drm *drm;
+	unsigned long callocated;
+	struct dev_pagemap pagemap;
+};
 
-काष्ठा nouveau_dmem_migrate अणु
+struct nouveau_dmem_migrate {
 	nouveau_migrate_copy_t copy_func;
 	nouveau_clear_page_t clear_func;
-	काष्ठा nouveau_channel *chan;
-पूर्ण;
+	struct nouveau_channel *chan;
+};
 
-काष्ठा nouveau_dmem अणु
-	काष्ठा nouveau_drm *drm;
-	काष्ठा nouveau_dmem_migrate migrate;
-	काष्ठा list_head chunks;
-	काष्ठा mutex mutex;
-	काष्ठा page *मुक्त_pages;
+struct nouveau_dmem {
+	struct nouveau_drm *drm;
+	struct nouveau_dmem_migrate migrate;
+	struct list_head chunks;
+	struct mutex mutex;
+	struct page *free_pages;
 	spinlock_t lock;
-पूर्ण;
+};
 
-अटल काष्ठा nouveau_dmem_chunk *nouveau_page_to_chunk(काष्ठा page *page)
-अणु
-	वापस container_of(page->pgmap, काष्ठा nouveau_dmem_chunk, pagemap);
-पूर्ण
+static struct nouveau_dmem_chunk *nouveau_page_to_chunk(struct page *page)
+{
+	return container_of(page->pgmap, struct nouveau_dmem_chunk, pagemap);
+}
 
-अटल काष्ठा nouveau_drm *page_to_drm(काष्ठा page *page)
-अणु
-	काष्ठा nouveau_dmem_chunk *chunk = nouveau_page_to_chunk(page);
+static struct nouveau_drm *page_to_drm(struct page *page)
+{
+	struct nouveau_dmem_chunk *chunk = nouveau_page_to_chunk(page);
 
-	वापस chunk->drm;
-पूर्ण
+	return chunk->drm;
+}
 
-अचिन्हित दीर्घ nouveau_dmem_page_addr(काष्ठा page *page)
-अणु
-	काष्ठा nouveau_dmem_chunk *chunk = nouveau_page_to_chunk(page);
-	अचिन्हित दीर्घ off = (page_to_pfn(page) << PAGE_SHIFT) -
+unsigned long nouveau_dmem_page_addr(struct page *page)
+{
+	struct nouveau_dmem_chunk *chunk = nouveau_page_to_chunk(page);
+	unsigned long off = (page_to_pfn(page) << PAGE_SHIFT) -
 				chunk->pagemap.range.start;
 
-	वापस chunk->bo->offset + off;
-पूर्ण
+	return chunk->bo->offset + off;
+}
 
-अटल व्योम nouveau_dmem_page_मुक्त(काष्ठा page *page)
-अणु
-	काष्ठा nouveau_dmem_chunk *chunk = nouveau_page_to_chunk(page);
-	काष्ठा nouveau_dmem *dmem = chunk->drm->dmem;
+static void nouveau_dmem_page_free(struct page *page)
+{
+	struct nouveau_dmem_chunk *chunk = nouveau_page_to_chunk(page);
+	struct nouveau_dmem *dmem = chunk->drm->dmem;
 
 	spin_lock(&dmem->lock);
-	page->zone_device_data = dmem->मुक्त_pages;
-	dmem->मुक्त_pages = page;
+	page->zone_device_data = dmem->free_pages;
+	dmem->free_pages = page;
 
-	WARN_ON(!chunk->सुस्मृतिated);
-	chunk->सुस्मृतिated--;
+	WARN_ON(!chunk->callocated);
+	chunk->callocated--;
 	/*
-	 * FIXME when chunk->सुस्मृतिated reach 0 we should add the chunk to
-	 * a reclaim list so that it can be मुक्तd in हाल of memory pressure.
+	 * FIXME when chunk->callocated reach 0 we should add the chunk to
+	 * a reclaim list so that it can be freed in case of memory pressure.
 	 */
 	spin_unlock(&dmem->lock);
-पूर्ण
+}
 
-अटल व्योम nouveau_dmem_fence_करोne(काष्ठा nouveau_fence **fence)
-अणु
-	अगर (fence) अणु
-		nouveau_fence_रुको(*fence, true, false);
+static void nouveau_dmem_fence_done(struct nouveau_fence **fence)
+{
+	if (fence) {
+		nouveau_fence_wait(*fence, true, false);
 		nouveau_fence_unref(fence);
-	पूर्ण अन्यथा अणु
+	} else {
 		/*
-		 * FIXME रुको क्रम channel to be IDLE beक्रमe calling finalizing
+		 * FIXME wait for channel to be IDLE before calling finalizing
 		 * the hmem object.
 		 */
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल vm_fault_t nouveau_dmem_fault_copy_one(काष्ठा nouveau_drm *drm,
-		काष्ठा vm_fault *vmf, काष्ठा migrate_vma *args,
+static vm_fault_t nouveau_dmem_fault_copy_one(struct nouveau_drm *drm,
+		struct vm_fault *vmf, struct migrate_vma *args,
 		dma_addr_t *dma_addr)
-अणु
-	काष्ठा device *dev = drm->dev->dev;
-	काष्ठा page *dpage, *spage;
-	काष्ठा nouveau_svmm *svmm;
+{
+	struct device *dev = drm->dev->dev;
+	struct page *dpage, *spage;
+	struct nouveau_svmm *svmm;
 
 	spage = migrate_pfn_to_page(args->src[0]);
-	अगर (!spage || !(args->src[0] & MIGRATE_PFN_MIGRATE))
-		वापस 0;
+	if (!spage || !(args->src[0] & MIGRATE_PFN_MIGRATE))
+		return 0;
 
 	dpage = alloc_page_vma(GFP_HIGHUSER, vmf->vma, vmf->address);
-	अगर (!dpage)
-		वापस VM_FAULT_SIGBUS;
+	if (!dpage)
+		return VM_FAULT_SIGBUS;
 	lock_page(dpage);
 
-	*dma_addr = dma_map_page(dev, dpage, 0, PAGE_SIZE, DMA_BIसूचीECTIONAL);
-	अगर (dma_mapping_error(dev, *dma_addr))
-		जाओ error_मुक्त_page;
+	*dma_addr = dma_map_page(dev, dpage, 0, PAGE_SIZE, DMA_BIDIRECTIONAL);
+	if (dma_mapping_error(dev, *dma_addr))
+		goto error_free_page;
 
 	svmm = spage->zone_device_data;
 	mutex_lock(&svmm->mutex);
 	nouveau_svmm_invalidate(svmm, args->start, args->end);
-	अगर (drm->dmem->migrate.copy_func(drm, 1, NOUVEAU_APER_HOST, *dma_addr,
+	if (drm->dmem->migrate.copy_func(drm, 1, NOUVEAU_APER_HOST, *dma_addr,
 			NOUVEAU_APER_VRAM, nouveau_dmem_page_addr(spage)))
-		जाओ error_dma_unmap;
+		goto error_dma_unmap;
 	mutex_unlock(&svmm->mutex);
 
 	args->dst[0] = migrate_pfn(page_to_pfn(dpage)) | MIGRATE_PFN_LOCKED;
-	वापस 0;
+	return 0;
 
 error_dma_unmap:
 	mutex_unlock(&svmm->mutex);
-	dma_unmap_page(dev, *dma_addr, PAGE_SIZE, DMA_BIसूचीECTIONAL);
-error_मुक्त_page:
-	__मुक्त_page(dpage);
-	वापस VM_FAULT_SIGBUS;
-पूर्ण
+	dma_unmap_page(dev, *dma_addr, PAGE_SIZE, DMA_BIDIRECTIONAL);
+error_free_page:
+	__free_page(dpage);
+	return VM_FAULT_SIGBUS;
+}
 
-अटल vm_fault_t nouveau_dmem_migrate_to_ram(काष्ठा vm_fault *vmf)
-अणु
-	काष्ठा nouveau_drm *drm = page_to_drm(vmf->page);
-	काष्ठा nouveau_dmem *dmem = drm->dmem;
-	काष्ठा nouveau_fence *fence;
-	अचिन्हित दीर्घ src = 0, dst = 0;
+static vm_fault_t nouveau_dmem_migrate_to_ram(struct vm_fault *vmf)
+{
+	struct nouveau_drm *drm = page_to_drm(vmf->page);
+	struct nouveau_dmem *dmem = drm->dmem;
+	struct nouveau_fence *fence;
+	unsigned long src = 0, dst = 0;
 	dma_addr_t dma_addr = 0;
 	vm_fault_t ret;
-	काष्ठा migrate_vma args = अणु
+	struct migrate_vma args = {
 		.vma		= vmf->vma,
 		.start		= vmf->address,
 		.end		= vmf->address + PAGE_SIZE,
@@ -194,59 +193,59 @@ error_मुक्त_page:
 		.dst		= &dst,
 		.pgmap_owner	= drm->dev,
 		.flags		= MIGRATE_VMA_SELECT_DEVICE_PRIVATE,
-	पूर्ण;
+	};
 
 	/*
 	 * FIXME what we really want is to find some heuristic to migrate more
 	 * than just one page on CPU fault. When such fault happens it is very
 	 * likely that more surrounding page will CPU fault too.
 	 */
-	अगर (migrate_vma_setup(&args) < 0)
-		वापस VM_FAULT_SIGBUS;
-	अगर (!args.cpages)
-		वापस 0;
+	if (migrate_vma_setup(&args) < 0)
+		return VM_FAULT_SIGBUS;
+	if (!args.cpages)
+		return 0;
 
 	ret = nouveau_dmem_fault_copy_one(drm, vmf, &args, &dma_addr);
-	अगर (ret || dst == 0)
-		जाओ करोne;
+	if (ret || dst == 0)
+		goto done;
 
 	nouveau_fence_new(dmem->migrate.chan, false, &fence);
 	migrate_vma_pages(&args);
-	nouveau_dmem_fence_करोne(&fence);
-	dma_unmap_page(drm->dev->dev, dma_addr, PAGE_SIZE, DMA_BIसूचीECTIONAL);
-करोne:
+	nouveau_dmem_fence_done(&fence);
+	dma_unmap_page(drm->dev->dev, dma_addr, PAGE_SIZE, DMA_BIDIRECTIONAL);
+done:
 	migrate_vma_finalize(&args);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा dev_pagemap_ops nouveau_dmem_pagemap_ops = अणु
-	.page_मुक्त		= nouveau_dmem_page_मुक्त,
+static const struct dev_pagemap_ops nouveau_dmem_pagemap_ops = {
+	.page_free		= nouveau_dmem_page_free,
 	.migrate_to_ram		= nouveau_dmem_migrate_to_ram,
-पूर्ण;
+};
 
-अटल पूर्णांक
-nouveau_dmem_chunk_alloc(काष्ठा nouveau_drm *drm, काष्ठा page **ppage)
-अणु
-	काष्ठा nouveau_dmem_chunk *chunk;
-	काष्ठा resource *res;
-	काष्ठा page *page;
-	व्योम *ptr;
-	अचिन्हित दीर्घ i, pfn_first;
-	पूर्णांक ret;
+static int
+nouveau_dmem_chunk_alloc(struct nouveau_drm *drm, struct page **ppage)
+{
+	struct nouveau_dmem_chunk *chunk;
+	struct resource *res;
+	struct page *page;
+	void *ptr;
+	unsigned long i, pfn_first;
+	int ret;
 
-	chunk = kzalloc(माप(*chunk), GFP_KERNEL);
-	अगर (chunk == शून्य) अणु
+	chunk = kzalloc(sizeof(*chunk), GFP_KERNEL);
+	if (chunk == NULL) {
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	/* Allocate unused physical address space क्रम device निजी pages. */
-	res = request_मुक्त_mem_region(&iomem_resource, DMEM_CHUNK_SIZE,
+	/* Allocate unused physical address space for device private pages. */
+	res = request_free_mem_region(&iomem_resource, DMEM_CHUNK_SIZE,
 				      "nouveau_dmem");
-	अगर (IS_ERR(res)) अणु
+	if (IS_ERR(res)) {
 		ret = PTR_ERR(res);
-		जाओ out_मुक्त;
-	पूर्ण
+		goto out_free;
+	}
 
 	chunk->drm = drm;
 	chunk->pagemap.type = MEMORY_DEVICE_PRIVATE;
@@ -257,20 +256,20 @@ nouveau_dmem_chunk_alloc(काष्ठा nouveau_drm *drm, काष्ठा
 	chunk->pagemap.owner = drm->dev;
 
 	ret = nouveau_bo_new(&drm->client, DMEM_CHUNK_SIZE, 0,
-			     NOUVEAU_GEM_DOMAIN_VRAM, 0, 0, शून्य, शून्य,
+			     NOUVEAU_GEM_DOMAIN_VRAM, 0, 0, NULL, NULL,
 			     &chunk->bo);
-	अगर (ret)
-		जाओ out_release;
+	if (ret)
+		goto out_release;
 
 	ret = nouveau_bo_pin(chunk->bo, NOUVEAU_GEM_DOMAIN_VRAM, false);
-	अगर (ret)
-		जाओ out_bo_मुक्त;
+	if (ret)
+		goto out_bo_free;
 
 	ptr = memremap_pages(&chunk->pagemap, numa_node_id());
-	अगर (IS_ERR(ptr)) अणु
+	if (IS_ERR(ptr)) {
 		ret = PTR_ERR(ptr);
-		जाओ out_bo_unpin;
-	पूर्ण
+		goto out_bo_unpin;
+	}
 
 	mutex_lock(&drm->dmem->mutex);
 	list_add(&chunk->list, &drm->dmem->chunks);
@@ -279,165 +278,165 @@ nouveau_dmem_chunk_alloc(काष्ठा nouveau_drm *drm, काष्ठा
 	pfn_first = chunk->pagemap.range.start >> PAGE_SHIFT;
 	page = pfn_to_page(pfn_first);
 	spin_lock(&drm->dmem->lock);
-	क्रम (i = 0; i < DMEM_CHUNK_NPAGES - 1; ++i, ++page) अणु
-		page->zone_device_data = drm->dmem->मुक्त_pages;
-		drm->dmem->मुक्त_pages = page;
-	पूर्ण
+	for (i = 0; i < DMEM_CHUNK_NPAGES - 1; ++i, ++page) {
+		page->zone_device_data = drm->dmem->free_pages;
+		drm->dmem->free_pages = page;
+	}
 	*ppage = page;
-	chunk->सुस्मृतिated++;
+	chunk->callocated++;
 	spin_unlock(&drm->dmem->lock);
 
 	NV_INFO(drm, "DMEM: registered %ldMB of device memory\n",
 		DMEM_CHUNK_SIZE >> 20);
 
-	वापस 0;
+	return 0;
 
 out_bo_unpin:
 	nouveau_bo_unpin(chunk->bo);
-out_bo_मुक्त:
-	nouveau_bo_ref(शून्य, &chunk->bo);
+out_bo_free:
+	nouveau_bo_ref(NULL, &chunk->bo);
 out_release:
 	release_mem_region(chunk->pagemap.range.start, range_len(&chunk->pagemap.range));
-out_मुक्त:
-	kमुक्त(chunk);
+out_free:
+	kfree(chunk);
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल काष्ठा page *
-nouveau_dmem_page_alloc_locked(काष्ठा nouveau_drm *drm)
-अणु
-	काष्ठा nouveau_dmem_chunk *chunk;
-	काष्ठा page *page = शून्य;
-	पूर्णांक ret;
+static struct page *
+nouveau_dmem_page_alloc_locked(struct nouveau_drm *drm)
+{
+	struct nouveau_dmem_chunk *chunk;
+	struct page *page = NULL;
+	int ret;
 
 	spin_lock(&drm->dmem->lock);
-	अगर (drm->dmem->मुक्त_pages) अणु
-		page = drm->dmem->मुक्त_pages;
-		drm->dmem->मुक्त_pages = page->zone_device_data;
+	if (drm->dmem->free_pages) {
+		page = drm->dmem->free_pages;
+		drm->dmem->free_pages = page->zone_device_data;
 		chunk = nouveau_page_to_chunk(page);
-		chunk->सुस्मृतिated++;
+		chunk->callocated++;
 		spin_unlock(&drm->dmem->lock);
-	पूर्ण अन्यथा अणु
+	} else {
 		spin_unlock(&drm->dmem->lock);
 		ret = nouveau_dmem_chunk_alloc(drm, &page);
-		अगर (ret)
-			वापस शून्य;
-	पूर्ण
+		if (ret)
+			return NULL;
+	}
 
 	get_page(page);
 	lock_page(page);
-	वापस page;
-पूर्ण
+	return page;
+}
 
-अटल व्योम
-nouveau_dmem_page_मुक्त_locked(काष्ठा nouveau_drm *drm, काष्ठा page *page)
-अणु
+static void
+nouveau_dmem_page_free_locked(struct nouveau_drm *drm, struct page *page)
+{
 	unlock_page(page);
 	put_page(page);
-पूर्ण
+}
 
-व्योम
-nouveau_dmem_resume(काष्ठा nouveau_drm *drm)
-अणु
-	काष्ठा nouveau_dmem_chunk *chunk;
-	पूर्णांक ret;
+void
+nouveau_dmem_resume(struct nouveau_drm *drm)
+{
+	struct nouveau_dmem_chunk *chunk;
+	int ret;
 
-	अगर (drm->dmem == शून्य)
-		वापस;
+	if (drm->dmem == NULL)
+		return;
 
 	mutex_lock(&drm->dmem->mutex);
-	list_क्रम_each_entry(chunk, &drm->dmem->chunks, list) अणु
+	list_for_each_entry(chunk, &drm->dmem->chunks, list) {
 		ret = nouveau_bo_pin(chunk->bo, NOUVEAU_GEM_DOMAIN_VRAM, false);
 		/* FIXME handle pin failure */
 		WARN_ON(ret);
-	पूर्ण
+	}
 	mutex_unlock(&drm->dmem->mutex);
-पूर्ण
+}
 
-व्योम
-nouveau_dmem_suspend(काष्ठा nouveau_drm *drm)
-अणु
-	काष्ठा nouveau_dmem_chunk *chunk;
+void
+nouveau_dmem_suspend(struct nouveau_drm *drm)
+{
+	struct nouveau_dmem_chunk *chunk;
 
-	अगर (drm->dmem == शून्य)
-		वापस;
+	if (drm->dmem == NULL)
+		return;
 
 	mutex_lock(&drm->dmem->mutex);
-	list_क्रम_each_entry(chunk, &drm->dmem->chunks, list)
+	list_for_each_entry(chunk, &drm->dmem->chunks, list)
 		nouveau_bo_unpin(chunk->bo);
 	mutex_unlock(&drm->dmem->mutex);
-पूर्ण
+}
 
-व्योम
-nouveau_dmem_fini(काष्ठा nouveau_drm *drm)
-अणु
-	काष्ठा nouveau_dmem_chunk *chunk, *पंचांगp;
+void
+nouveau_dmem_fini(struct nouveau_drm *drm)
+{
+	struct nouveau_dmem_chunk *chunk, *tmp;
 
-	अगर (drm->dmem == शून्य)
-		वापस;
+	if (drm->dmem == NULL)
+		return;
 
 	mutex_lock(&drm->dmem->mutex);
 
-	list_क्रम_each_entry_safe(chunk, पंचांगp, &drm->dmem->chunks, list) अणु
+	list_for_each_entry_safe(chunk, tmp, &drm->dmem->chunks, list) {
 		nouveau_bo_unpin(chunk->bo);
-		nouveau_bo_ref(शून्य, &chunk->bo);
+		nouveau_bo_ref(NULL, &chunk->bo);
 		list_del(&chunk->list);
 		memunmap_pages(&chunk->pagemap);
 		release_mem_region(chunk->pagemap.range.start,
 				   range_len(&chunk->pagemap.range));
-		kमुक्त(chunk);
-	पूर्ण
+		kfree(chunk);
+	}
 
 	mutex_unlock(&drm->dmem->mutex);
-पूर्ण
+}
 
-अटल पूर्णांक
-nvc0b5_migrate_copy(काष्ठा nouveau_drm *drm, u64 npages,
-		    क्रमागत nouveau_aper dst_aper, u64 dst_addr,
-		    क्रमागत nouveau_aper src_aper, u64 src_addr)
-अणु
-	काष्ठा nvअगर_push *push = drm->dmem->migrate.chan->chan.push;
+static int
+nvc0b5_migrate_copy(struct nouveau_drm *drm, u64 npages,
+		    enum nouveau_aper dst_aper, u64 dst_addr,
+		    enum nouveau_aper src_aper, u64 src_addr)
+{
+	struct nvif_push *push = drm->dmem->migrate.chan->chan.push;
 	u32 launch_dma = 0;
-	पूर्णांक ret;
+	int ret;
 
 	ret = PUSH_WAIT(push, 13);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (src_aper != NOUVEAU_APER_VIRT) अणु
-		चयन (src_aper) अणु
-		हाल NOUVEAU_APER_VRAM:
+	if (src_aper != NOUVEAU_APER_VIRT) {
+		switch (src_aper) {
+		case NOUVEAU_APER_VRAM:
 			PUSH_IMMD(push, NVA0B5, SET_SRC_PHYS_MODE,
 				  NVDEF(NVA0B5, SET_SRC_PHYS_MODE, TARGET, LOCAL_FB));
-			अवरोध;
-		हाल NOUVEAU_APER_HOST:
+			break;
+		case NOUVEAU_APER_HOST:
 			PUSH_IMMD(push, NVA0B5, SET_SRC_PHYS_MODE,
 				  NVDEF(NVA0B5, SET_SRC_PHYS_MODE, TARGET, COHERENT_SYSMEM));
-			अवरोध;
-		शेष:
-			वापस -EINVAL;
-		पूर्ण
+			break;
+		default:
+			return -EINVAL;
+		}
 
 		launch_dma |= NVDEF(NVA0B5, LAUNCH_DMA, SRC_TYPE, PHYSICAL);
-	पूर्ण
+	}
 
-	अगर (dst_aper != NOUVEAU_APER_VIRT) अणु
-		चयन (dst_aper) अणु
-		हाल NOUVEAU_APER_VRAM:
+	if (dst_aper != NOUVEAU_APER_VIRT) {
+		switch (dst_aper) {
+		case NOUVEAU_APER_VRAM:
 			PUSH_IMMD(push, NVA0B5, SET_DST_PHYS_MODE,
 				  NVDEF(NVA0B5, SET_DST_PHYS_MODE, TARGET, LOCAL_FB));
-			अवरोध;
-		हाल NOUVEAU_APER_HOST:
+			break;
+		case NOUVEAU_APER_HOST:
 			PUSH_IMMD(push, NVA0B5, SET_DST_PHYS_MODE,
 				  NVDEF(NVA0B5, SET_DST_PHYS_MODE, TARGET, COHERENT_SYSMEM));
-			अवरोध;
-		शेष:
-			वापस -EINVAL;
-		पूर्ण
+			break;
+		default:
+			return -EINVAL;
+		}
 
 		launch_dma |= NVDEF(NVA0B5, LAUNCH_DMA, DST_TYPE, PHYSICAL);
-	पूर्ण
+	}
 
 	PUSH_MTHD(push, NVA0B5, OFFSET_IN_UPPER,
 		  NVVAL(NVA0B5, OFFSET_IN_UPPER, UPPER, upper_32_bits(src_addr)),
@@ -463,33 +462,33 @@ nvc0b5_migrate_copy(काष्ठा nouveau_drm *drm, u64 npages,
 		  NVDEF(NVA0B5, LAUNCH_DMA, MULTI_LINE_ENABLE, TRUE) |
 		  NVDEF(NVA0B5, LAUNCH_DMA, REMAP_ENABLE, FALSE) |
 		  NVDEF(NVA0B5, LAUNCH_DMA, BYPASS_L2, USE_PTE_SETTING));
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-nvc0b5_migrate_clear(काष्ठा nouveau_drm *drm, u32 length,
-		     क्रमागत nouveau_aper dst_aper, u64 dst_addr)
-अणु
-	काष्ठा nvअगर_push *push = drm->dmem->migrate.chan->chan.push;
+static int
+nvc0b5_migrate_clear(struct nouveau_drm *drm, u32 length,
+		     enum nouveau_aper dst_aper, u64 dst_addr)
+{
+	struct nvif_push *push = drm->dmem->migrate.chan->chan.push;
 	u32 launch_dma = 0;
-	पूर्णांक ret;
+	int ret;
 
 	ret = PUSH_WAIT(push, 12);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	चयन (dst_aper) अणु
-	हाल NOUVEAU_APER_VRAM:
+	switch (dst_aper) {
+	case NOUVEAU_APER_VRAM:
 		PUSH_IMMD(push, NVA0B5, SET_DST_PHYS_MODE,
 			  NVDEF(NVA0B5, SET_DST_PHYS_MODE, TARGET, LOCAL_FB));
-		अवरोध;
-	हाल NOUVEAU_APER_HOST:
+		break;
+	case NOUVEAU_APER_HOST:
 		PUSH_IMMD(push, NVA0B5, SET_DST_PHYS_MODE,
 			  NVDEF(NVA0B5, SET_DST_PHYS_MODE, TARGET, COHERENT_SYSMEM));
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
 	launch_dma |= NVDEF(NVA0B5, LAUNCH_DMA, DST_TYPE, PHYSICAL);
 
@@ -519,38 +518,38 @@ nvc0b5_migrate_clear(काष्ठा nouveau_drm *drm, u32 length,
 		  NVDEF(NVA0B5, LAUNCH_DMA, MULTI_LINE_ENABLE, FALSE) |
 		  NVDEF(NVA0B5, LAUNCH_DMA, REMAP_ENABLE, TRUE) |
 		  NVDEF(NVA0B5, LAUNCH_DMA, BYPASS_L2, USE_PTE_SETTING));
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-nouveau_dmem_migrate_init(काष्ठा nouveau_drm *drm)
-अणु
-	चयन (drm->tपंचांग.copy.oclass) अणु
-	हाल PASCAL_DMA_COPY_A:
-	हाल PASCAL_DMA_COPY_B:
-	हाल  VOLTA_DMA_COPY_A:
-	हाल TURING_DMA_COPY_A:
+static int
+nouveau_dmem_migrate_init(struct nouveau_drm *drm)
+{
+	switch (drm->ttm.copy.oclass) {
+	case PASCAL_DMA_COPY_A:
+	case PASCAL_DMA_COPY_B:
+	case  VOLTA_DMA_COPY_A:
+	case TURING_DMA_COPY_A:
 		drm->dmem->migrate.copy_func = nvc0b5_migrate_copy;
 		drm->dmem->migrate.clear_func = nvc0b5_migrate_clear;
-		drm->dmem->migrate.chan = drm->tपंचांग.chan;
-		वापस 0;
-	शेष:
-		अवरोध;
-	पूर्ण
-	वापस -ENODEV;
-पूर्ण
+		drm->dmem->migrate.chan = drm->ttm.chan;
+		return 0;
+	default:
+		break;
+	}
+	return -ENODEV;
+}
 
-व्योम
-nouveau_dmem_init(काष्ठा nouveau_drm *drm)
-अणु
-	पूर्णांक ret;
+void
+nouveau_dmem_init(struct nouveau_drm *drm)
+{
+	int ret;
 
 	/* This only make sense on PASCAL or newer */
-	अगर (drm->client.device.info.family < NV_DEVICE_INFO_V0_PASCAL)
-		वापस;
+	if (drm->client.device.info.family < NV_DEVICE_INFO_V0_PASCAL)
+		return;
 
-	अगर (!(drm->dmem = kzalloc(माप(*drm->dmem), GFP_KERNEL)))
-		वापस;
+	if (!(drm->dmem = kzalloc(sizeof(*drm->dmem), GFP_KERNEL)))
+		return;
 
 	drm->dmem->drm = drm;
 	mutex_init(&drm->dmem->mutex);
@@ -558,148 +557,148 @@ nouveau_dmem_init(काष्ठा nouveau_drm *drm)
 	mutex_init(&drm->dmem->mutex);
 	spin_lock_init(&drm->dmem->lock);
 
-	/* Initialize migration dma helpers beक्रमe रेजिस्टरing memory */
+	/* Initialize migration dma helpers before registering memory */
 	ret = nouveau_dmem_migrate_init(drm);
-	अगर (ret) अणु
-		kमुक्त(drm->dmem);
-		drm->dmem = शून्य;
-	पूर्ण
-पूर्ण
+	if (ret) {
+		kfree(drm->dmem);
+		drm->dmem = NULL;
+	}
+}
 
-अटल अचिन्हित दीर्घ nouveau_dmem_migrate_copy_one(काष्ठा nouveau_drm *drm,
-		काष्ठा nouveau_svmm *svmm, अचिन्हित दीर्घ src,
+static unsigned long nouveau_dmem_migrate_copy_one(struct nouveau_drm *drm,
+		struct nouveau_svmm *svmm, unsigned long src,
 		dma_addr_t *dma_addr, u64 *pfn)
-अणु
-	काष्ठा device *dev = drm->dev->dev;
-	काष्ठा page *dpage, *spage;
-	अचिन्हित दीर्घ paddr;
+{
+	struct device *dev = drm->dev->dev;
+	struct page *dpage, *spage;
+	unsigned long paddr;
 
 	spage = migrate_pfn_to_page(src);
-	अगर (!(src & MIGRATE_PFN_MIGRATE))
-		जाओ out;
+	if (!(src & MIGRATE_PFN_MIGRATE))
+		goto out;
 
 	dpage = nouveau_dmem_page_alloc_locked(drm);
-	अगर (!dpage)
-		जाओ out;
+	if (!dpage)
+		goto out;
 
 	paddr = nouveau_dmem_page_addr(dpage);
-	अगर (spage) अणु
+	if (spage) {
 		*dma_addr = dma_map_page(dev, spage, 0, page_size(spage),
-					 DMA_BIसूचीECTIONAL);
-		अगर (dma_mapping_error(dev, *dma_addr))
-			जाओ out_मुक्त_page;
-		अगर (drm->dmem->migrate.copy_func(drm, 1,
+					 DMA_BIDIRECTIONAL);
+		if (dma_mapping_error(dev, *dma_addr))
+			goto out_free_page;
+		if (drm->dmem->migrate.copy_func(drm, 1,
 			NOUVEAU_APER_VRAM, paddr, NOUVEAU_APER_HOST, *dma_addr))
-			जाओ out_dma_unmap;
-	पूर्ण अन्यथा अणु
+			goto out_dma_unmap;
+	} else {
 		*dma_addr = DMA_MAPPING_ERROR;
-		अगर (drm->dmem->migrate.clear_func(drm, page_size(dpage),
+		if (drm->dmem->migrate.clear_func(drm, page_size(dpage),
 			NOUVEAU_APER_VRAM, paddr))
-			जाओ out_मुक्त_page;
-	पूर्ण
+			goto out_free_page;
+	}
 
 	dpage->zone_device_data = svmm;
 	*pfn = NVIF_VMM_PFNMAP_V0_V | NVIF_VMM_PFNMAP_V0_VRAM |
 		((paddr >> PAGE_SHIFT) << NVIF_VMM_PFNMAP_V0_ADDR_SHIFT);
-	अगर (src & MIGRATE_PFN_WRITE)
+	if (src & MIGRATE_PFN_WRITE)
 		*pfn |= NVIF_VMM_PFNMAP_V0_W;
-	वापस migrate_pfn(page_to_pfn(dpage)) | MIGRATE_PFN_LOCKED;
+	return migrate_pfn(page_to_pfn(dpage)) | MIGRATE_PFN_LOCKED;
 
 out_dma_unmap:
-	dma_unmap_page(dev, *dma_addr, PAGE_SIZE, DMA_BIसूचीECTIONAL);
-out_मुक्त_page:
-	nouveau_dmem_page_मुक्त_locked(drm, dpage);
+	dma_unmap_page(dev, *dma_addr, PAGE_SIZE, DMA_BIDIRECTIONAL);
+out_free_page:
+	nouveau_dmem_page_free_locked(drm, dpage);
 out:
 	*pfn = NVIF_VMM_PFNMAP_V0_NONE;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम nouveau_dmem_migrate_chunk(काष्ठा nouveau_drm *drm,
-		काष्ठा nouveau_svmm *svmm, काष्ठा migrate_vma *args,
+static void nouveau_dmem_migrate_chunk(struct nouveau_drm *drm,
+		struct nouveau_svmm *svmm, struct migrate_vma *args,
 		dma_addr_t *dma_addrs, u64 *pfns)
-अणु
-	काष्ठा nouveau_fence *fence;
-	अचिन्हित दीर्घ addr = args->start, nr_dma = 0, i;
+{
+	struct nouveau_fence *fence;
+	unsigned long addr = args->start, nr_dma = 0, i;
 
-	क्रम (i = 0; addr < args->end; i++) अणु
+	for (i = 0; addr < args->end; i++) {
 		args->dst[i] = nouveau_dmem_migrate_copy_one(drm, svmm,
 				args->src[i], dma_addrs + nr_dma, pfns + i);
-		अगर (!dma_mapping_error(drm->dev->dev, dma_addrs[nr_dma]))
+		if (!dma_mapping_error(drm->dev->dev, dma_addrs[nr_dma]))
 			nr_dma++;
 		addr += PAGE_SIZE;
-	पूर्ण
+	}
 
 	nouveau_fence_new(drm->dmem->migrate.chan, false, &fence);
 	migrate_vma_pages(args);
-	nouveau_dmem_fence_करोne(&fence);
+	nouveau_dmem_fence_done(&fence);
 	nouveau_pfns_map(svmm, args->vma->vm_mm, args->start, pfns, i);
 
-	जबतक (nr_dma--) अणु
+	while (nr_dma--) {
 		dma_unmap_page(drm->dev->dev, dma_addrs[nr_dma], PAGE_SIZE,
-				DMA_BIसूचीECTIONAL);
-	पूर्ण
+				DMA_BIDIRECTIONAL);
+	}
 	migrate_vma_finalize(args);
-पूर्ण
+}
 
-पूर्णांक
-nouveau_dmem_migrate_vma(काष्ठा nouveau_drm *drm,
-			 काष्ठा nouveau_svmm *svmm,
-			 काष्ठा vm_area_काष्ठा *vma,
-			 अचिन्हित दीर्घ start,
-			 अचिन्हित दीर्घ end)
-अणु
-	अचिन्हित दीर्घ npages = (end - start) >> PAGE_SHIFT;
-	अचिन्हित दीर्घ max = min(SG_MAX_SINGLE_ALLOC, npages);
+int
+nouveau_dmem_migrate_vma(struct nouveau_drm *drm,
+			 struct nouveau_svmm *svmm,
+			 struct vm_area_struct *vma,
+			 unsigned long start,
+			 unsigned long end)
+{
+	unsigned long npages = (end - start) >> PAGE_SHIFT;
+	unsigned long max = min(SG_MAX_SINGLE_ALLOC, npages);
 	dma_addr_t *dma_addrs;
-	काष्ठा migrate_vma args = अणु
+	struct migrate_vma args = {
 		.vma		= vma,
 		.start		= start,
 		.pgmap_owner	= drm->dev,
 		.flags		= MIGRATE_VMA_SELECT_SYSTEM,
-	पूर्ण;
-	अचिन्हित दीर्घ i;
+	};
+	unsigned long i;
 	u64 *pfns;
-	पूर्णांक ret = -ENOMEM;
+	int ret = -ENOMEM;
 
-	अगर (drm->dmem == शून्य)
-		वापस -ENODEV;
+	if (drm->dmem == NULL)
+		return -ENODEV;
 
-	args.src = kसुस्मृति(max, माप(*args.src), GFP_KERNEL);
-	अगर (!args.src)
-		जाओ out;
-	args.dst = kसुस्मृति(max, माप(*args.dst), GFP_KERNEL);
-	अगर (!args.dst)
-		जाओ out_मुक्त_src;
+	args.src = kcalloc(max, sizeof(*args.src), GFP_KERNEL);
+	if (!args.src)
+		goto out;
+	args.dst = kcalloc(max, sizeof(*args.dst), GFP_KERNEL);
+	if (!args.dst)
+		goto out_free_src;
 
-	dma_addrs = kदो_स्मृति_array(max, माप(*dma_addrs), GFP_KERNEL);
-	अगर (!dma_addrs)
-		जाओ out_मुक्त_dst;
+	dma_addrs = kmalloc_array(max, sizeof(*dma_addrs), GFP_KERNEL);
+	if (!dma_addrs)
+		goto out_free_dst;
 
 	pfns = nouveau_pfns_alloc(max);
-	अगर (!pfns)
-		जाओ out_मुक्त_dma;
+	if (!pfns)
+		goto out_free_dma;
 
-	क्रम (i = 0; i < npages; i += max) अणु
+	for (i = 0; i < npages; i += max) {
 		args.end = start + (max << PAGE_SHIFT);
 		ret = migrate_vma_setup(&args);
-		अगर (ret)
-			जाओ out_मुक्त_pfns;
+		if (ret)
+			goto out_free_pfns;
 
-		अगर (args.cpages)
+		if (args.cpages)
 			nouveau_dmem_migrate_chunk(drm, svmm, &args, dma_addrs,
 						   pfns);
 		args.start = args.end;
-	पूर्ण
+	}
 
 	ret = 0;
-out_मुक्त_pfns:
-	nouveau_pfns_मुक्त(pfns);
-out_मुक्त_dma:
-	kमुक्त(dma_addrs);
-out_मुक्त_dst:
-	kमुक्त(args.dst);
-out_मुक्त_src:
-	kमुक्त(args.src);
+out_free_pfns:
+	nouveau_pfns_free(pfns);
+out_free_dma:
+	kfree(dma_addrs);
+out_free_dst:
+	kfree(args.dst);
+out_free_src:
+	kfree(args.src);
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}

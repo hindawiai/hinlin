@@ -1,30 +1,29 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0+ */
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
- * Common/core components क्रम the Surface System Aggregator Module (SSAM) HID
- * transport driver. Provides support क्रम पूर्णांकegrated HID devices on Microsoft
+ * Common/core components for the Surface System Aggregator Module (SSAM) HID
+ * transport driver. Provides support for integrated HID devices on Microsoft
  * Surface models.
  *
  * Copyright (C) 2019-2021 Maximilian Luz <luzmaximilian@gmail.com>
  */
 
-#अगर_अघोषित SURFACE_HID_CORE_H
-#घोषणा SURFACE_HID_CORE_H
+#ifndef SURFACE_HID_CORE_H
+#define SURFACE_HID_CORE_H
 
-#समावेश <linux/hid.h>
-#समावेश <linux/pm.h>
-#समावेश <linux/types.h>
+#include <linux/hid.h>
+#include <linux/pm.h>
+#include <linux/types.h>
 
-#समावेश <linux/surface_aggregator/controller.h>
-#समावेश <linux/surface_aggregator/device.h>
+#include <linux/surface_aggregator/controller.h>
+#include <linux/surface_aggregator/device.h>
 
-क्रमागत surface_hid_descriptor_entry अणु
+enum surface_hid_descriptor_entry {
 	SURFACE_HID_DESC_HID    = 0,
 	SURFACE_HID_DESC_REPORT = 1,
 	SURFACE_HID_DESC_ATTRS  = 2,
-पूर्ण;
+};
 
-काष्ठा surface_hid_descriptor अणु
+struct surface_hid_descriptor {
 	__u8 desc_len;			/* = 9 */
 	__u8 desc_type;			/* = HID_DT_HID */
 	__le16 hid_version;
@@ -33,46 +32,46 @@
 
 	__u8 report_desc_type;		/* = HID_DT_REPORT */
 	__le16 report_desc_len;
-पूर्ण __packed;
+} __packed;
 
-अटल_निश्चित(माप(काष्ठा surface_hid_descriptor) == 9);
+static_assert(sizeof(struct surface_hid_descriptor) == 9);
 
-काष्ठा surface_hid_attributes अणु
+struct surface_hid_attributes {
 	__le32 length;
-	__le16 venकरोr;
+	__le16 vendor;
 	__le16 product;
 	__le16 version;
 	__u8 _unknown[22];
-पूर्ण __packed;
+} __packed;
 
-अटल_निश्चित(माप(काष्ठा surface_hid_attributes) == 32);
+static_assert(sizeof(struct surface_hid_attributes) == 32);
 
-काष्ठा surface_hid_device;
+struct surface_hid_device;
 
-काष्ठा surface_hid_device_ops अणु
-	पूर्णांक (*get_descriptor)(काष्ठा surface_hid_device *shid, u8 entry, u8 *buf, माप_प्रकार len);
-	पूर्णांक (*output_report)(काष्ठा surface_hid_device *shid, u8 rprt_id, u8 *buf, माप_प्रकार len);
-	पूर्णांक (*get_feature_report)(काष्ठा surface_hid_device *shid, u8 rprt_id, u8 *buf, माप_प्रकार len);
-	पूर्णांक (*set_feature_report)(काष्ठा surface_hid_device *shid, u8 rprt_id, u8 *buf, माप_प्रकार len);
-पूर्ण;
+struct surface_hid_device_ops {
+	int (*get_descriptor)(struct surface_hid_device *shid, u8 entry, u8 *buf, size_t len);
+	int (*output_report)(struct surface_hid_device *shid, u8 rprt_id, u8 *buf, size_t len);
+	int (*get_feature_report)(struct surface_hid_device *shid, u8 rprt_id, u8 *buf, size_t len);
+	int (*set_feature_report)(struct surface_hid_device *shid, u8 rprt_id, u8 *buf, size_t len);
+};
 
-काष्ठा surface_hid_device अणु
-	काष्ठा device *dev;
-	काष्ठा ssam_controller *ctrl;
-	काष्ठा ssam_device_uid uid;
+struct surface_hid_device {
+	struct device *dev;
+	struct ssam_controller *ctrl;
+	struct ssam_device_uid uid;
 
-	काष्ठा surface_hid_descriptor hid_desc;
-	काष्ठा surface_hid_attributes attrs;
+	struct surface_hid_descriptor hid_desc;
+	struct surface_hid_attributes attrs;
 
-	काष्ठा ssam_event_notअगरier notअगर;
-	काष्ठा hid_device *hid;
+	struct ssam_event_notifier notif;
+	struct hid_device *hid;
 
-	काष्ठा surface_hid_device_ops ops;
-पूर्ण;
+	struct surface_hid_device_ops ops;
+};
 
-पूर्णांक surface_hid_device_add(काष्ठा surface_hid_device *shid);
-व्योम surface_hid_device_destroy(काष्ठा surface_hid_device *shid);
+int surface_hid_device_add(struct surface_hid_device *shid);
+void surface_hid_device_destroy(struct surface_hid_device *shid);
 
-बाह्य स्थिर काष्ठा dev_pm_ops surface_hid_pm_ops;
+extern const struct dev_pm_ops surface_hid_pm_ops;
 
-#पूर्ण_अगर /* SURFACE_HID_CORE_H */
+#endif /* SURFACE_HID_CORE_H */

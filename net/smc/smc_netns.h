@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /* Shared Memory Communications
  *
  * Network namespace definitions.
@@ -7,16 +6,16 @@
  * Copyright IBM Corp. 2018
  */
 
-#अगर_अघोषित SMC_NETNS_H
-#घोषणा SMC_NETNS_H
+#ifndef SMC_NETNS_H
+#define SMC_NETNS_H
 
-#समावेश "smc_pnet.h"
+#include "smc_pnet.h"
 
-बाह्य अचिन्हित पूर्णांक smc_net_id;
+extern unsigned int smc_net_id;
 
-/* per-network namespace निजी data */
-काष्ठा smc_net अणु
-	काष्ठा smc_pnettable pnettable;
-	काष्ठा smc_pnetids_ndev pnetids_ndev;
-पूर्ण;
-#पूर्ण_अगर
+/* per-network namespace private data */
+struct smc_net {
+	struct smc_pnettable pnettable;
+	struct smc_pnetids_ndev pnetids_ndev;
+};
+#endif

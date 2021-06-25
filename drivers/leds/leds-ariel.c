@@ -1,133 +1,132 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: BSD-2-Clause OR GPL-2.0-or-later
+// SPDX-License-Identifier: BSD-2-Clause OR GPL-2.0-or-later
 /*
  * Dell Wyse 3020 a.k.a. "Ariel" Embedded Controller LED Driver
  *
- * Copyright (C) 2020 Lubomir Rपूर्णांकel
+ * Copyright (C) 2020 Lubomir Rintel
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/leds.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/of_platक्रमm.h>
+#include <linux/module.h>
+#include <linux/leds.h>
+#include <linux/regmap.h>
+#include <linux/of_platform.h>
 
-क्रमागत ec_index अणु
+enum ec_index {
 	EC_BLUE_LED	= 0x01,
 	EC_AMBER_LED	= 0x02,
 	EC_GREEN_LED	= 0x03,
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	EC_LED_OFF	= 0x00,
 	EC_LED_STILL	= 0x01,
 	EC_LED_FADE	= 0x02,
 	EC_LED_BLINK	= 0x03,
-पूर्ण;
+};
 
-काष्ठा ariel_led अणु
-	काष्ठा regmap *ec_ram;
-	क्रमागत ec_index ec_index;
-	काष्ठा led_classdev led_cdev;
-पूर्ण;
+struct ariel_led {
+	struct regmap *ec_ram;
+	enum ec_index ec_index;
+	struct led_classdev led_cdev;
+};
 
-#घोषणा led_cdev_to_ariel_led(c) container_of(c, काष्ठा ariel_led, led_cdev)
+#define led_cdev_to_ariel_led(c) container_of(c, struct ariel_led, led_cdev)
 
-अटल क्रमागत led_brightness ariel_led_get(काष्ठा led_classdev *led_cdev)
-अणु
-	काष्ठा ariel_led *led = led_cdev_to_ariel_led(led_cdev);
-	अचिन्हित पूर्णांक led_status = 0;
+static enum led_brightness ariel_led_get(struct led_classdev *led_cdev)
+{
+	struct ariel_led *led = led_cdev_to_ariel_led(led_cdev);
+	unsigned int led_status = 0;
 
-	अगर (regmap_पढ़ो(led->ec_ram, led->ec_index, &led_status))
-		वापस LED_OFF;
+	if (regmap_read(led->ec_ram, led->ec_index, &led_status))
+		return LED_OFF;
 
-	अगर (led_status == EC_LED_STILL)
-		वापस LED_FULL;
-	अन्यथा
-		वापस LED_OFF;
-पूर्ण
+	if (led_status == EC_LED_STILL)
+		return LED_FULL;
+	else
+		return LED_OFF;
+}
 
-अटल व्योम ariel_led_set(काष्ठा led_classdev *led_cdev,
-			  क्रमागत led_brightness brightness)
-अणु
-	काष्ठा ariel_led *led = led_cdev_to_ariel_led(led_cdev);
+static void ariel_led_set(struct led_classdev *led_cdev,
+			  enum led_brightness brightness)
+{
+	struct ariel_led *led = led_cdev_to_ariel_led(led_cdev);
 
-	अगर (brightness == LED_OFF)
-		regmap_ग_लिखो(led->ec_ram, led->ec_index, EC_LED_OFF);
-	अन्यथा
-		regmap_ग_लिखो(led->ec_ram, led->ec_index, EC_LED_STILL);
-पूर्ण
+	if (brightness == LED_OFF)
+		regmap_write(led->ec_ram, led->ec_index, EC_LED_OFF);
+	else
+		regmap_write(led->ec_ram, led->ec_index, EC_LED_STILL);
+}
 
-अटल पूर्णांक ariel_blink_set(काष्ठा led_classdev *led_cdev,
-			   अचिन्हित दीर्घ *delay_on, अचिन्हित दीर्घ *delay_off)
-अणु
-	काष्ठा ariel_led *led = led_cdev_to_ariel_led(led_cdev);
+static int ariel_blink_set(struct led_classdev *led_cdev,
+			   unsigned long *delay_on, unsigned long *delay_off)
+{
+	struct ariel_led *led = led_cdev_to_ariel_led(led_cdev);
 
-	अगर (*delay_on == 0 && *delay_off == 0)
-		वापस -EINVAL;
+	if (*delay_on == 0 && *delay_off == 0)
+		return -EINVAL;
 
-	अगर (*delay_on == 0) अणु
-		regmap_ग_लिखो(led->ec_ram, led->ec_index, EC_LED_OFF);
-	पूर्ण अन्यथा अगर (*delay_off == 0) अणु
-		regmap_ग_लिखो(led->ec_ram, led->ec_index, EC_LED_STILL);
-	पूर्ण अन्यथा अणु
+	if (*delay_on == 0) {
+		regmap_write(led->ec_ram, led->ec_index, EC_LED_OFF);
+	} else if (*delay_off == 0) {
+		regmap_write(led->ec_ram, led->ec_index, EC_LED_STILL);
+	} else {
 		*delay_on = 500;
 		*delay_off = 500;
-		regmap_ग_लिखो(led->ec_ram, led->ec_index, EC_LED_BLINK);
-	पूर्ण
+		regmap_write(led->ec_ram, led->ec_index, EC_LED_BLINK);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#घोषणा NLEDS 3
+#define NLEDS 3
 
-अटल पूर्णांक ariel_led_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा ariel_led *leds;
-	काष्ठा regmap *ec_ram;
-	पूर्णांक ret;
-	पूर्णांक i;
+static int ariel_led_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	struct ariel_led *leds;
+	struct regmap *ec_ram;
+	int ret;
+	int i;
 
 	ec_ram = dev_get_regmap(dev->parent, "ec_ram");
-	अगर (!ec_ram)
-		वापस -ENODEV;
+	if (!ec_ram)
+		return -ENODEV;
 
-	leds = devm_kसुस्मृति(dev, NLEDS, माप(*leds), GFP_KERNEL);
-	अगर (!leds)
-		वापस -ENOMEM;
+	leds = devm_kcalloc(dev, NLEDS, sizeof(*leds), GFP_KERNEL);
+	if (!leds)
+		return -ENOMEM;
 
 	leds[0].ec_index = EC_BLUE_LED;
 	leds[0].led_cdev.name = "blue:power";
-	leds[0].led_cdev.शेष_trigger = "default-on";
+	leds[0].led_cdev.default_trigger = "default-on";
 
 	leds[1].ec_index = EC_AMBER_LED;
 	leds[1].led_cdev.name = "amber:status";
 
 	leds[2].ec_index = EC_GREEN_LED;
 	leds[2].led_cdev.name = "green:status";
-	leds[2].led_cdev.शेष_trigger = "default-on";
+	leds[2].led_cdev.default_trigger = "default-on";
 
-	क्रम (i = 0; i < NLEDS; i++) अणु
+	for (i = 0; i < NLEDS; i++) {
 		leds[i].ec_ram = ec_ram;
 		leds[i].led_cdev.brightness_get = ariel_led_get;
 		leds[i].led_cdev.brightness_set = ariel_led_set;
 		leds[i].led_cdev.blink_set = ariel_blink_set;
 
-		ret = devm_led_classdev_रेजिस्टर(dev, &leds[i].led_cdev);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		ret = devm_led_classdev_register(dev, &leds[i].led_cdev);
+		if (ret)
+			return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver ariel_led_driver = अणु
+static struct platform_driver ariel_led_driver = {
 	.probe = ariel_led_probe,
-	.driver = अणु
+	.driver = {
 		.name = "dell-wyse-ariel-led",
-	पूर्ण,
-पूर्ण;
-module_platक्रमm_driver(ariel_led_driver);
+	},
+};
+module_platform_driver(ariel_led_driver);
 
 MODULE_AUTHOR("Lubomir Rintel <lkundrak@v3.sk>");
 MODULE_DESCRIPTION("Dell Wyse 3020 Status LEDs Driver");

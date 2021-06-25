@@ -1,804 +1,803 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * PCI Message Signaled Interrupt (MSI)
  *
  * Copyright (C) 2003-2004 Intel
- * Copyright (C) Tom Long Nguyen (tom.l.nguyen@पूर्णांकel.com)
+ * Copyright (C) Tom Long Nguyen (tom.l.nguyen@intel.com)
  * Copyright (C) 2016 Christoph Hellwig.
  */
 
-#समावेश <linux/err.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/export.h>
-#समावेश <linux/ioport.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/proc_fs.h>
-#समावेश <linux/msi.h>
-#समावेश <linux/smp.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/पन.स>
-#समावेश <linux/acpi_iort.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/irqकरोमुख्य.h>
-#समावेश <linux/of_irq.h>
+#include <linux/err.h>
+#include <linux/mm.h>
+#include <linux/irq.h>
+#include <linux/interrupt.h>
+#include <linux/export.h>
+#include <linux/ioport.h>
+#include <linux/pci.h>
+#include <linux/proc_fs.h>
+#include <linux/msi.h>
+#include <linux/smp.h>
+#include <linux/errno.h>
+#include <linux/io.h>
+#include <linux/acpi_iort.h>
+#include <linux/slab.h>
+#include <linux/irqdomain.h>
+#include <linux/of_irq.h>
 
-#समावेश "pci.h"
+#include "pci.h"
 
-#अगर_घोषित CONFIG_PCI_MSI
+#ifdef CONFIG_PCI_MSI
 
-अटल पूर्णांक pci_msi_enable = 1;
-पूर्णांक pci_msi_ignore_mask;
+static int pci_msi_enable = 1;
+int pci_msi_ignore_mask;
 
-#घोषणा msix_table_size(flags)	((flags & PCI_MSIX_FLAGS_QSIZE) + 1)
+#define msix_table_size(flags)	((flags & PCI_MSIX_FLAGS_QSIZE) + 1)
 
-#अगर_घोषित CONFIG_PCI_MSI_IRQ_DOMAIN
-अटल पूर्णांक pci_msi_setup_msi_irqs(काष्ठा pci_dev *dev, पूर्णांक nvec, पूर्णांक type)
-अणु
-	काष्ठा irq_करोमुख्य *करोमुख्य;
+#ifdef CONFIG_PCI_MSI_IRQ_DOMAIN
+static int pci_msi_setup_msi_irqs(struct pci_dev *dev, int nvec, int type)
+{
+	struct irq_domain *domain;
 
-	करोमुख्य = dev_get_msi_करोमुख्य(&dev->dev);
-	अगर (करोमुख्य && irq_करोमुख्य_is_hierarchy(करोमुख्य))
-		वापस msi_करोमुख्य_alloc_irqs(करोमुख्य, &dev->dev, nvec);
+	domain = dev_get_msi_domain(&dev->dev);
+	if (domain && irq_domain_is_hierarchy(domain))
+		return msi_domain_alloc_irqs(domain, &dev->dev, nvec);
 
-	वापस arch_setup_msi_irqs(dev, nvec, type);
-पूर्ण
+	return arch_setup_msi_irqs(dev, nvec, type);
+}
 
-अटल व्योम pci_msi_tearकरोwn_msi_irqs(काष्ठा pci_dev *dev)
-अणु
-	काष्ठा irq_करोमुख्य *करोमुख्य;
+static void pci_msi_teardown_msi_irqs(struct pci_dev *dev)
+{
+	struct irq_domain *domain;
 
-	करोमुख्य = dev_get_msi_करोमुख्य(&dev->dev);
-	अगर (करोमुख्य && irq_करोमुख्य_is_hierarchy(करोमुख्य))
-		msi_करोमुख्य_मुक्त_irqs(करोमुख्य, &dev->dev);
-	अन्यथा
-		arch_tearकरोwn_msi_irqs(dev);
-पूर्ण
-#अन्यथा
-#घोषणा pci_msi_setup_msi_irqs		arch_setup_msi_irqs
-#घोषणा pci_msi_tearकरोwn_msi_irqs	arch_tearकरोwn_msi_irqs
-#पूर्ण_अगर
+	domain = dev_get_msi_domain(&dev->dev);
+	if (domain && irq_domain_is_hierarchy(domain))
+		msi_domain_free_irqs(domain, &dev->dev);
+	else
+		arch_teardown_msi_irqs(dev);
+}
+#else
+#define pci_msi_setup_msi_irqs		arch_setup_msi_irqs
+#define pci_msi_teardown_msi_irqs	arch_teardown_msi_irqs
+#endif
 
-#अगर_घोषित CONFIG_PCI_MSI_ARCH_FALLBACKS
+#ifdef CONFIG_PCI_MSI_ARCH_FALLBACKS
 /* Arch hooks */
-पूर्णांक __weak arch_setup_msi_irq(काष्ठा pci_dev *dev, काष्ठा msi_desc *desc)
-अणु
-	वापस -EINVAL;
-पूर्ण
+int __weak arch_setup_msi_irq(struct pci_dev *dev, struct msi_desc *desc)
+{
+	return -EINVAL;
+}
 
-व्योम __weak arch_tearकरोwn_msi_irq(अचिन्हित पूर्णांक irq)
-अणु
-पूर्ण
+void __weak arch_teardown_msi_irq(unsigned int irq)
+{
+}
 
-पूर्णांक __weak arch_setup_msi_irqs(काष्ठा pci_dev *dev, पूर्णांक nvec, पूर्णांक type)
-अणु
-	काष्ठा msi_desc *entry;
-	पूर्णांक ret;
+int __weak arch_setup_msi_irqs(struct pci_dev *dev, int nvec, int type)
+{
+	struct msi_desc *entry;
+	int ret;
 
 	/*
 	 * If an architecture wants to support multiple MSI, it needs to
 	 * override arch_setup_msi_irqs()
 	 */
-	अगर (type == PCI_CAP_ID_MSI && nvec > 1)
-		वापस 1;
+	if (type == PCI_CAP_ID_MSI && nvec > 1)
+		return 1;
 
-	क्रम_each_pci_msi_entry(entry, dev) अणु
+	for_each_pci_msi_entry(entry, dev) {
 		ret = arch_setup_msi_irq(dev, entry);
-		अगर (ret < 0)
-			वापस ret;
-		अगर (ret > 0)
-			वापस -ENOSPC;
-	पूर्ण
+		if (ret < 0)
+			return ret;
+		if (ret > 0)
+			return -ENOSPC;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम __weak arch_tearकरोwn_msi_irqs(काष्ठा pci_dev *dev)
-अणु
-	पूर्णांक i;
-	काष्ठा msi_desc *entry;
+void __weak arch_teardown_msi_irqs(struct pci_dev *dev)
+{
+	int i;
+	struct msi_desc *entry;
 
-	क्रम_each_pci_msi_entry(entry, dev)
-		अगर (entry->irq)
-			क्रम (i = 0; i < entry->nvec_used; i++)
-				arch_tearकरोwn_msi_irq(entry->irq + i);
-पूर्ण
-#पूर्ण_अगर /* CONFIG_PCI_MSI_ARCH_FALLBACKS */
+	for_each_pci_msi_entry(entry, dev)
+		if (entry->irq)
+			for (i = 0; i < entry->nvec_used; i++)
+				arch_teardown_msi_irq(entry->irq + i);
+}
+#endif /* CONFIG_PCI_MSI_ARCH_FALLBACKS */
 
-अटल व्योम शेष_restore_msi_irq(काष्ठा pci_dev *dev, पूर्णांक irq)
-अणु
-	काष्ठा msi_desc *entry;
+static void default_restore_msi_irq(struct pci_dev *dev, int irq)
+{
+	struct msi_desc *entry;
 
-	entry = शून्य;
-	अगर (dev->msix_enabled) अणु
-		क्रम_each_pci_msi_entry(entry, dev) अणु
-			अगर (irq == entry->irq)
-				अवरोध;
-		पूर्ण
-	पूर्ण अन्यथा अगर (dev->msi_enabled)  अणु
+	entry = NULL;
+	if (dev->msix_enabled) {
+		for_each_pci_msi_entry(entry, dev) {
+			if (irq == entry->irq)
+				break;
+		}
+	} else if (dev->msi_enabled)  {
 		entry = irq_get_msi_desc(irq);
-	पूर्ण
+	}
 
-	अगर (entry)
-		__pci_ग_लिखो_msi_msg(entry, &entry->msg);
-पूर्ण
+	if (entry)
+		__pci_write_msi_msg(entry, &entry->msg);
+}
 
-व्योम __weak arch_restore_msi_irqs(काष्ठा pci_dev *dev)
-अणु
-	वापस शेष_restore_msi_irqs(dev);
-पूर्ण
+void __weak arch_restore_msi_irqs(struct pci_dev *dev)
+{
+	return default_restore_msi_irqs(dev);
+}
 
-अटल अंतरभूत __attribute_स्थिर__ u32 msi_mask(अचिन्हित x)
-अणु
-	/* Don't shअगरt by >= width of type */
-	अगर (x >= 5)
-		वापस 0xffffffff;
-	वापस (1 << (1 << x)) - 1;
-पूर्ण
+static inline __attribute_const__ u32 msi_mask(unsigned x)
+{
+	/* Don't shift by >= width of type */
+	if (x >= 5)
+		return 0xffffffff;
+	return (1 << (1 << x)) - 1;
+}
 
 /*
- * PCI 2.3 करोes not specअगरy mask bits क्रम each MSI पूर्णांकerrupt.  Attempting to
- * mask all MSI पूर्णांकerrupts by clearing the MSI enable bit करोes not work
+ * PCI 2.3 does not specify mask bits for each MSI interrupt.  Attempting to
+ * mask all MSI interrupts by clearing the MSI enable bit does not work
  * reliably as devices without an INTx disable bit will then generate a
  * level IRQ which will never be cleared.
  */
-u32 __pci_msi_desc_mask_irq(काष्ठा msi_desc *desc, u32 mask, u32 flag)
-अणु
+u32 __pci_msi_desc_mask_irq(struct msi_desc *desc, u32 mask, u32 flag)
+{
 	u32 mask_bits = desc->masked;
 
-	अगर (pci_msi_ignore_mask || !desc->msi_attrib.maskbit)
-		वापस 0;
+	if (pci_msi_ignore_mask || !desc->msi_attrib.maskbit)
+		return 0;
 
 	mask_bits &= ~mask;
 	mask_bits |= flag;
-	pci_ग_लिखो_config_dword(msi_desc_to_pci_dev(desc), desc->mask_pos,
+	pci_write_config_dword(msi_desc_to_pci_dev(desc), desc->mask_pos,
 			       mask_bits);
 
-	वापस mask_bits;
-पूर्ण
+	return mask_bits;
+}
 
-अटल व्योम msi_mask_irq(काष्ठा msi_desc *desc, u32 mask, u32 flag)
-अणु
+static void msi_mask_irq(struct msi_desc *desc, u32 mask, u32 flag)
+{
 	desc->masked = __pci_msi_desc_mask_irq(desc, mask, flag);
-पूर्ण
+}
 
-अटल व्योम __iomem *pci_msix_desc_addr(काष्ठा msi_desc *desc)
-अणु
-	अगर (desc->msi_attrib.is_भव)
-		वापस शून्य;
+static void __iomem *pci_msix_desc_addr(struct msi_desc *desc)
+{
+	if (desc->msi_attrib.is_virtual)
+		return NULL;
 
-	वापस desc->mask_base +
+	return desc->mask_base +
 		desc->msi_attrib.entry_nr * PCI_MSIX_ENTRY_SIZE;
-पूर्ण
+}
 
 /*
- * This पूर्णांकernal function करोes not flush PCI ग_लिखोs to the device.
- * All users must ensure that they पढ़ो from the device beक्रमe either
- * assuming that the device state is up to date, or वापसing out of this
+ * This internal function does not flush PCI writes to the device.
+ * All users must ensure that they read from the device before either
+ * assuming that the device state is up to date, or returning out of this
  * file.  This saves a few milliseconds when initialising devices with lots
- * of MSI-X पूर्णांकerrupts.
+ * of MSI-X interrupts.
  */
-u32 __pci_msix_desc_mask_irq(काष्ठा msi_desc *desc, u32 flag)
-अणु
+u32 __pci_msix_desc_mask_irq(struct msi_desc *desc, u32 flag)
+{
 	u32 mask_bits = desc->masked;
-	व्योम __iomem *desc_addr;
+	void __iomem *desc_addr;
 
-	अगर (pci_msi_ignore_mask)
-		वापस 0;
+	if (pci_msi_ignore_mask)
+		return 0;
 
 	desc_addr = pci_msix_desc_addr(desc);
-	अगर (!desc_addr)
-		वापस 0;
+	if (!desc_addr)
+		return 0;
 
 	mask_bits &= ~PCI_MSIX_ENTRY_CTRL_MASKBIT;
-	अगर (flag & PCI_MSIX_ENTRY_CTRL_MASKBIT)
+	if (flag & PCI_MSIX_ENTRY_CTRL_MASKBIT)
 		mask_bits |= PCI_MSIX_ENTRY_CTRL_MASKBIT;
 
-	ग_लिखोl(mask_bits, desc_addr + PCI_MSIX_ENTRY_VECTOR_CTRL);
+	writel(mask_bits, desc_addr + PCI_MSIX_ENTRY_VECTOR_CTRL);
 
-	वापस mask_bits;
-पूर्ण
+	return mask_bits;
+}
 
-अटल व्योम msix_mask_irq(काष्ठा msi_desc *desc, u32 flag)
-अणु
+static void msix_mask_irq(struct msi_desc *desc, u32 flag)
+{
 	desc->masked = __pci_msix_desc_mask_irq(desc, flag);
-पूर्ण
+}
 
-अटल व्योम msi_set_mask_bit(काष्ठा irq_data *data, u32 flag)
-अणु
-	काष्ठा msi_desc *desc = irq_data_get_msi_desc(data);
+static void msi_set_mask_bit(struct irq_data *data, u32 flag)
+{
+	struct msi_desc *desc = irq_data_get_msi_desc(data);
 
-	अगर (desc->msi_attrib.is_msix) अणु
+	if (desc->msi_attrib.is_msix) {
 		msix_mask_irq(desc, flag);
-		पढ़ोl(desc->mask_base);		/* Flush ग_लिखो to device */
-	पूर्ण अन्यथा अणु
-		अचिन्हित offset = data->irq - desc->irq;
+		readl(desc->mask_base);		/* Flush write to device */
+	} else {
+		unsigned offset = data->irq - desc->irq;
 		msi_mask_irq(desc, 1 << offset, flag << offset);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
- * pci_msi_mask_irq - Generic IRQ chip callback to mask PCI/MSI पूर्णांकerrupts
- * @data:	poपूर्णांकer to irqdata associated to that पूर्णांकerrupt
+ * pci_msi_mask_irq - Generic IRQ chip callback to mask PCI/MSI interrupts
+ * @data:	pointer to irqdata associated to that interrupt
  */
-व्योम pci_msi_mask_irq(काष्ठा irq_data *data)
-अणु
+void pci_msi_mask_irq(struct irq_data *data)
+{
 	msi_set_mask_bit(data, 1);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(pci_msi_mask_irq);
 
 /**
- * pci_msi_unmask_irq - Generic IRQ chip callback to unmask PCI/MSI पूर्णांकerrupts
- * @data:	poपूर्णांकer to irqdata associated to that पूर्णांकerrupt
+ * pci_msi_unmask_irq - Generic IRQ chip callback to unmask PCI/MSI interrupts
+ * @data:	pointer to irqdata associated to that interrupt
  */
-व्योम pci_msi_unmask_irq(काष्ठा irq_data *data)
-अणु
+void pci_msi_unmask_irq(struct irq_data *data)
+{
 	msi_set_mask_bit(data, 0);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(pci_msi_unmask_irq);
 
-व्योम शेष_restore_msi_irqs(काष्ठा pci_dev *dev)
-अणु
-	काष्ठा msi_desc *entry;
+void default_restore_msi_irqs(struct pci_dev *dev)
+{
+	struct msi_desc *entry;
 
-	क्रम_each_pci_msi_entry(entry, dev)
-		शेष_restore_msi_irq(dev, entry->irq);
-पूर्ण
+	for_each_pci_msi_entry(entry, dev)
+		default_restore_msi_irq(dev, entry->irq);
+}
 
-व्योम __pci_पढ़ो_msi_msg(काष्ठा msi_desc *entry, काष्ठा msi_msg *msg)
-अणु
-	काष्ठा pci_dev *dev = msi_desc_to_pci_dev(entry);
+void __pci_read_msi_msg(struct msi_desc *entry, struct msi_msg *msg)
+{
+	struct pci_dev *dev = msi_desc_to_pci_dev(entry);
 
 	BUG_ON(dev->current_state != PCI_D0);
 
-	अगर (entry->msi_attrib.is_msix) अणु
-		व्योम __iomem *base = pci_msix_desc_addr(entry);
+	if (entry->msi_attrib.is_msix) {
+		void __iomem *base = pci_msix_desc_addr(entry);
 
-		अगर (!base) अणु
+		if (!base) {
 			WARN_ON(1);
-			वापस;
-		पूर्ण
+			return;
+		}
 
-		msg->address_lo = पढ़ोl(base + PCI_MSIX_ENTRY_LOWER_ADDR);
-		msg->address_hi = पढ़ोl(base + PCI_MSIX_ENTRY_UPPER_ADDR);
-		msg->data = पढ़ोl(base + PCI_MSIX_ENTRY_DATA);
-	पूर्ण अन्यथा अणु
-		पूर्णांक pos = dev->msi_cap;
+		msg->address_lo = readl(base + PCI_MSIX_ENTRY_LOWER_ADDR);
+		msg->address_hi = readl(base + PCI_MSIX_ENTRY_UPPER_ADDR);
+		msg->data = readl(base + PCI_MSIX_ENTRY_DATA);
+	} else {
+		int pos = dev->msi_cap;
 		u16 data;
 
-		pci_पढ़ो_config_dword(dev, pos + PCI_MSI_ADDRESS_LO,
+		pci_read_config_dword(dev, pos + PCI_MSI_ADDRESS_LO,
 				      &msg->address_lo);
-		अगर (entry->msi_attrib.is_64) अणु
-			pci_पढ़ो_config_dword(dev, pos + PCI_MSI_ADDRESS_HI,
+		if (entry->msi_attrib.is_64) {
+			pci_read_config_dword(dev, pos + PCI_MSI_ADDRESS_HI,
 					      &msg->address_hi);
-			pci_पढ़ो_config_word(dev, pos + PCI_MSI_DATA_64, &data);
-		पूर्ण अन्यथा अणु
+			pci_read_config_word(dev, pos + PCI_MSI_DATA_64, &data);
+		} else {
 			msg->address_hi = 0;
-			pci_पढ़ो_config_word(dev, pos + PCI_MSI_DATA_32, &data);
-		पूर्ण
+			pci_read_config_word(dev, pos + PCI_MSI_DATA_32, &data);
+		}
 		msg->data = data;
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम __pci_ग_लिखो_msi_msg(काष्ठा msi_desc *entry, काष्ठा msi_msg *msg)
-अणु
-	काष्ठा pci_dev *dev = msi_desc_to_pci_dev(entry);
+void __pci_write_msi_msg(struct msi_desc *entry, struct msi_msg *msg)
+{
+	struct pci_dev *dev = msi_desc_to_pci_dev(entry);
 
-	अगर (dev->current_state != PCI_D0 || pci_dev_is_disconnected(dev)) अणु
+	if (dev->current_state != PCI_D0 || pci_dev_is_disconnected(dev)) {
 		/* Don't touch the hardware now */
-	पूर्ण अन्यथा अगर (entry->msi_attrib.is_msix) अणु
-		व्योम __iomem *base = pci_msix_desc_addr(entry);
+	} else if (entry->msi_attrib.is_msix) {
+		void __iomem *base = pci_msix_desc_addr(entry);
 
-		अगर (!base)
-			जाओ skip;
+		if (!base)
+			goto skip;
 
-		ग_लिखोl(msg->address_lo, base + PCI_MSIX_ENTRY_LOWER_ADDR);
-		ग_लिखोl(msg->address_hi, base + PCI_MSIX_ENTRY_UPPER_ADDR);
-		ग_लिखोl(msg->data, base + PCI_MSIX_ENTRY_DATA);
-	पूर्ण अन्यथा अणु
-		पूर्णांक pos = dev->msi_cap;
+		writel(msg->address_lo, base + PCI_MSIX_ENTRY_LOWER_ADDR);
+		writel(msg->address_hi, base + PCI_MSIX_ENTRY_UPPER_ADDR);
+		writel(msg->data, base + PCI_MSIX_ENTRY_DATA);
+	} else {
+		int pos = dev->msi_cap;
 		u16 msgctl;
 
-		pci_पढ़ो_config_word(dev, pos + PCI_MSI_FLAGS, &msgctl);
+		pci_read_config_word(dev, pos + PCI_MSI_FLAGS, &msgctl);
 		msgctl &= ~PCI_MSI_FLAGS_QSIZE;
 		msgctl |= entry->msi_attrib.multiple << 4;
-		pci_ग_लिखो_config_word(dev, pos + PCI_MSI_FLAGS, msgctl);
+		pci_write_config_word(dev, pos + PCI_MSI_FLAGS, msgctl);
 
-		pci_ग_लिखो_config_dword(dev, pos + PCI_MSI_ADDRESS_LO,
+		pci_write_config_dword(dev, pos + PCI_MSI_ADDRESS_LO,
 				       msg->address_lo);
-		अगर (entry->msi_attrib.is_64) अणु
-			pci_ग_लिखो_config_dword(dev, pos + PCI_MSI_ADDRESS_HI,
+		if (entry->msi_attrib.is_64) {
+			pci_write_config_dword(dev, pos + PCI_MSI_ADDRESS_HI,
 					       msg->address_hi);
-			pci_ग_लिखो_config_word(dev, pos + PCI_MSI_DATA_64,
+			pci_write_config_word(dev, pos + PCI_MSI_DATA_64,
 					      msg->data);
-		पूर्ण अन्यथा अणु
-			pci_ग_लिखो_config_word(dev, pos + PCI_MSI_DATA_32,
+		} else {
+			pci_write_config_word(dev, pos + PCI_MSI_DATA_32,
 					      msg->data);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 skip:
 	entry->msg = *msg;
 
-	अगर (entry->ग_लिखो_msi_msg)
-		entry->ग_लिखो_msi_msg(entry, entry->ग_लिखो_msi_msg_data);
+	if (entry->write_msi_msg)
+		entry->write_msi_msg(entry, entry->write_msi_msg_data);
 
-पूर्ण
+}
 
-व्योम pci_ग_लिखो_msi_msg(अचिन्हित पूर्णांक irq, काष्ठा msi_msg *msg)
-अणु
-	काष्ठा msi_desc *entry = irq_get_msi_desc(irq);
+void pci_write_msi_msg(unsigned int irq, struct msi_msg *msg)
+{
+	struct msi_desc *entry = irq_get_msi_desc(irq);
 
-	__pci_ग_लिखो_msi_msg(entry, msg);
-पूर्ण
-EXPORT_SYMBOL_GPL(pci_ग_लिखो_msi_msg);
+	__pci_write_msi_msg(entry, msg);
+}
+EXPORT_SYMBOL_GPL(pci_write_msi_msg);
 
-अटल व्योम मुक्त_msi_irqs(काष्ठा pci_dev *dev)
-अणु
-	काष्ठा list_head *msi_list = dev_to_msi_list(&dev->dev);
-	काष्ठा msi_desc *entry, *पंचांगp;
-	काष्ठा attribute **msi_attrs;
-	काष्ठा device_attribute *dev_attr;
-	पूर्णांक i, count = 0;
+static void free_msi_irqs(struct pci_dev *dev)
+{
+	struct list_head *msi_list = dev_to_msi_list(&dev->dev);
+	struct msi_desc *entry, *tmp;
+	struct attribute **msi_attrs;
+	struct device_attribute *dev_attr;
+	int i, count = 0;
 
-	क्रम_each_pci_msi_entry(entry, dev)
-		अगर (entry->irq)
-			क्रम (i = 0; i < entry->nvec_used; i++)
+	for_each_pci_msi_entry(entry, dev)
+		if (entry->irq)
+			for (i = 0; i < entry->nvec_used; i++)
 				BUG_ON(irq_has_action(entry->irq + i));
 
-	pci_msi_tearकरोwn_msi_irqs(dev);
+	pci_msi_teardown_msi_irqs(dev);
 
-	list_क्रम_each_entry_safe(entry, पंचांगp, msi_list, list) अणु
-		अगर (entry->msi_attrib.is_msix) अणु
-			अगर (list_is_last(&entry->list, msi_list))
+	list_for_each_entry_safe(entry, tmp, msi_list, list) {
+		if (entry->msi_attrib.is_msix) {
+			if (list_is_last(&entry->list, msi_list))
 				iounmap(entry->mask_base);
-		पूर्ण
+		}
 
 		list_del(&entry->list);
-		मुक्त_msi_entry(entry);
-	पूर्ण
+		free_msi_entry(entry);
+	}
 
-	अगर (dev->msi_irq_groups) अणु
-		sysfs_हटाओ_groups(&dev->dev.kobj, dev->msi_irq_groups);
+	if (dev->msi_irq_groups) {
+		sysfs_remove_groups(&dev->dev.kobj, dev->msi_irq_groups);
 		msi_attrs = dev->msi_irq_groups[0]->attrs;
-		जबतक (msi_attrs[count]) अणु
+		while (msi_attrs[count]) {
 			dev_attr = container_of(msi_attrs[count],
-						काष्ठा device_attribute, attr);
-			kमुक्त(dev_attr->attr.name);
-			kमुक्त(dev_attr);
+						struct device_attribute, attr);
+			kfree(dev_attr->attr.name);
+			kfree(dev_attr);
 			++count;
-		पूर्ण
-		kमुक्त(msi_attrs);
-		kमुक्त(dev->msi_irq_groups[0]);
-		kमुक्त(dev->msi_irq_groups);
-		dev->msi_irq_groups = शून्य;
-	पूर्ण
-पूर्ण
+		}
+		kfree(msi_attrs);
+		kfree(dev->msi_irq_groups[0]);
+		kfree(dev->msi_irq_groups);
+		dev->msi_irq_groups = NULL;
+	}
+}
 
-अटल व्योम pci_पूर्णांकx_क्रम_msi(काष्ठा pci_dev *dev, पूर्णांक enable)
-अणु
-	अगर (!(dev->dev_flags & PCI_DEV_FLAGS_MSI_INTX_DISABLE_BUG))
-		pci_पूर्णांकx(dev, enable);
-पूर्ण
+static void pci_intx_for_msi(struct pci_dev *dev, int enable)
+{
+	if (!(dev->dev_flags & PCI_DEV_FLAGS_MSI_INTX_DISABLE_BUG))
+		pci_intx(dev, enable);
+}
 
-अटल व्योम pci_msi_set_enable(काष्ठा pci_dev *dev, पूर्णांक enable)
-अणु
+static void pci_msi_set_enable(struct pci_dev *dev, int enable)
+{
 	u16 control;
 
-	pci_पढ़ो_config_word(dev, dev->msi_cap + PCI_MSI_FLAGS, &control);
+	pci_read_config_word(dev, dev->msi_cap + PCI_MSI_FLAGS, &control);
 	control &= ~PCI_MSI_FLAGS_ENABLE;
-	अगर (enable)
+	if (enable)
 		control |= PCI_MSI_FLAGS_ENABLE;
-	pci_ग_लिखो_config_word(dev, dev->msi_cap + PCI_MSI_FLAGS, control);
-पूर्ण
+	pci_write_config_word(dev, dev->msi_cap + PCI_MSI_FLAGS, control);
+}
 
-अटल व्योम __pci_restore_msi_state(काष्ठा pci_dev *dev)
-अणु
+static void __pci_restore_msi_state(struct pci_dev *dev)
+{
 	u16 control;
-	काष्ठा msi_desc *entry;
+	struct msi_desc *entry;
 
-	अगर (!dev->msi_enabled)
-		वापस;
+	if (!dev->msi_enabled)
+		return;
 
 	entry = irq_get_msi_desc(dev->irq);
 
-	pci_पूर्णांकx_क्रम_msi(dev, 0);
+	pci_intx_for_msi(dev, 0);
 	pci_msi_set_enable(dev, 0);
 	arch_restore_msi_irqs(dev);
 
-	pci_पढ़ो_config_word(dev, dev->msi_cap + PCI_MSI_FLAGS, &control);
+	pci_read_config_word(dev, dev->msi_cap + PCI_MSI_FLAGS, &control);
 	msi_mask_irq(entry, msi_mask(entry->msi_attrib.multi_cap),
 		     entry->masked);
 	control &= ~PCI_MSI_FLAGS_QSIZE;
 	control |= (entry->msi_attrib.multiple << 4) | PCI_MSI_FLAGS_ENABLE;
-	pci_ग_लिखो_config_word(dev, dev->msi_cap + PCI_MSI_FLAGS, control);
-पूर्ण
+	pci_write_config_word(dev, dev->msi_cap + PCI_MSI_FLAGS, control);
+}
 
-अटल व्योम pci_msix_clear_and_set_ctrl(काष्ठा pci_dev *dev, u16 clear, u16 set)
-अणु
+static void pci_msix_clear_and_set_ctrl(struct pci_dev *dev, u16 clear, u16 set)
+{
 	u16 ctrl;
 
-	pci_पढ़ो_config_word(dev, dev->msix_cap + PCI_MSIX_FLAGS, &ctrl);
+	pci_read_config_word(dev, dev->msix_cap + PCI_MSIX_FLAGS, &ctrl);
 	ctrl &= ~clear;
 	ctrl |= set;
-	pci_ग_लिखो_config_word(dev, dev->msix_cap + PCI_MSIX_FLAGS, ctrl);
-पूर्ण
+	pci_write_config_word(dev, dev->msix_cap + PCI_MSIX_FLAGS, ctrl);
+}
 
-अटल व्योम __pci_restore_msix_state(काष्ठा pci_dev *dev)
-अणु
-	काष्ठा msi_desc *entry;
+static void __pci_restore_msix_state(struct pci_dev *dev)
+{
+	struct msi_desc *entry;
 
-	अगर (!dev->msix_enabled)
-		वापस;
+	if (!dev->msix_enabled)
+		return;
 	BUG_ON(list_empty(dev_to_msi_list(&dev->dev)));
 
 	/* route the table */
-	pci_पूर्णांकx_क्रम_msi(dev, 0);
+	pci_intx_for_msi(dev, 0);
 	pci_msix_clear_and_set_ctrl(dev, 0,
 				PCI_MSIX_FLAGS_ENABLE | PCI_MSIX_FLAGS_MASKALL);
 
 	arch_restore_msi_irqs(dev);
-	क्रम_each_pci_msi_entry(entry, dev)
+	for_each_pci_msi_entry(entry, dev)
 		msix_mask_irq(entry, entry->masked);
 
 	pci_msix_clear_and_set_ctrl(dev, PCI_MSIX_FLAGS_MASKALL, 0);
-पूर्ण
+}
 
-व्योम pci_restore_msi_state(काष्ठा pci_dev *dev)
-अणु
+void pci_restore_msi_state(struct pci_dev *dev)
+{
 	__pci_restore_msi_state(dev);
 	__pci_restore_msix_state(dev);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(pci_restore_msi_state);
 
-अटल sमाप_प्रकार msi_mode_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			     अक्षर *buf)
-अणु
-	काष्ठा msi_desc *entry;
-	अचिन्हित दीर्घ irq;
-	पूर्णांक retval;
+static ssize_t msi_mode_show(struct device *dev, struct device_attribute *attr,
+			     char *buf)
+{
+	struct msi_desc *entry;
+	unsigned long irq;
+	int retval;
 
-	retval = kम_से_अदीर्घ(attr->attr.name, 10, &irq);
-	अगर (retval)
-		वापस retval;
+	retval = kstrtoul(attr->attr.name, 10, &irq);
+	if (retval)
+		return retval;
 
 	entry = irq_get_msi_desc(irq);
-	अगर (entry)
-		वापस प्र_लिखो(buf, "%s\n",
+	if (entry)
+		return sprintf(buf, "%s\n",
 				entry->msi_attrib.is_msix ? "msix" : "msi");
 
-	वापस -ENODEV;
-पूर्ण
+	return -ENODEV;
+}
 
-अटल पूर्णांक populate_msi_sysfs(काष्ठा pci_dev *pdev)
-अणु
-	काष्ठा attribute **msi_attrs;
-	काष्ठा attribute *msi_attr;
-	काष्ठा device_attribute *msi_dev_attr;
-	काष्ठा attribute_group *msi_irq_group;
-	स्थिर काष्ठा attribute_group **msi_irq_groups;
-	काष्ठा msi_desc *entry;
-	पूर्णांक ret = -ENOMEM;
-	पूर्णांक num_msi = 0;
-	पूर्णांक count = 0;
-	पूर्णांक i;
+static int populate_msi_sysfs(struct pci_dev *pdev)
+{
+	struct attribute **msi_attrs;
+	struct attribute *msi_attr;
+	struct device_attribute *msi_dev_attr;
+	struct attribute_group *msi_irq_group;
+	const struct attribute_group **msi_irq_groups;
+	struct msi_desc *entry;
+	int ret = -ENOMEM;
+	int num_msi = 0;
+	int count = 0;
+	int i;
 
 	/* Determine how many msi entries we have */
-	क्रम_each_pci_msi_entry(entry, pdev)
+	for_each_pci_msi_entry(entry, pdev)
 		num_msi += entry->nvec_used;
-	अगर (!num_msi)
-		वापस 0;
+	if (!num_msi)
+		return 0;
 
-	/* Dynamically create the MSI attributes क्रम the PCI device */
-	msi_attrs = kसुस्मृति(num_msi + 1, माप(व्योम *), GFP_KERNEL);
-	अगर (!msi_attrs)
-		वापस -ENOMEM;
-	क्रम_each_pci_msi_entry(entry, pdev) अणु
-		क्रम (i = 0; i < entry->nvec_used; i++) अणु
-			msi_dev_attr = kzalloc(माप(*msi_dev_attr), GFP_KERNEL);
-			अगर (!msi_dev_attr)
-				जाओ error_attrs;
+	/* Dynamically create the MSI attributes for the PCI device */
+	msi_attrs = kcalloc(num_msi + 1, sizeof(void *), GFP_KERNEL);
+	if (!msi_attrs)
+		return -ENOMEM;
+	for_each_pci_msi_entry(entry, pdev) {
+		for (i = 0; i < entry->nvec_used; i++) {
+			msi_dev_attr = kzalloc(sizeof(*msi_dev_attr), GFP_KERNEL);
+			if (!msi_dev_attr)
+				goto error_attrs;
 			msi_attrs[count] = &msi_dev_attr->attr;
 
 			sysfs_attr_init(&msi_dev_attr->attr);
-			msi_dev_attr->attr.name = kaप्र_लिखो(GFP_KERNEL, "%d",
+			msi_dev_attr->attr.name = kasprintf(GFP_KERNEL, "%d",
 							    entry->irq + i);
-			अगर (!msi_dev_attr->attr.name)
-				जाओ error_attrs;
+			if (!msi_dev_attr->attr.name)
+				goto error_attrs;
 			msi_dev_attr->attr.mode = S_IRUGO;
 			msi_dev_attr->show = msi_mode_show;
 			++count;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	msi_irq_group = kzalloc(माप(*msi_irq_group), GFP_KERNEL);
-	अगर (!msi_irq_group)
-		जाओ error_attrs;
+	msi_irq_group = kzalloc(sizeof(*msi_irq_group), GFP_KERNEL);
+	if (!msi_irq_group)
+		goto error_attrs;
 	msi_irq_group->name = "msi_irqs";
 	msi_irq_group->attrs = msi_attrs;
 
-	msi_irq_groups = kसुस्मृति(2, माप(व्योम *), GFP_KERNEL);
-	अगर (!msi_irq_groups)
-		जाओ error_irq_group;
+	msi_irq_groups = kcalloc(2, sizeof(void *), GFP_KERNEL);
+	if (!msi_irq_groups)
+		goto error_irq_group;
 	msi_irq_groups[0] = msi_irq_group;
 
 	ret = sysfs_create_groups(&pdev->dev.kobj, msi_irq_groups);
-	अगर (ret)
-		जाओ error_irq_groups;
+	if (ret)
+		goto error_irq_groups;
 	pdev->msi_irq_groups = msi_irq_groups;
 
-	वापस 0;
+	return 0;
 
 error_irq_groups:
-	kमुक्त(msi_irq_groups);
+	kfree(msi_irq_groups);
 error_irq_group:
-	kमुक्त(msi_irq_group);
+	kfree(msi_irq_group);
 error_attrs:
 	count = 0;
 	msi_attr = msi_attrs[count];
-	जबतक (msi_attr) अणु
-		msi_dev_attr = container_of(msi_attr, काष्ठा device_attribute, attr);
-		kमुक्त(msi_attr->name);
-		kमुक्त(msi_dev_attr);
+	while (msi_attr) {
+		msi_dev_attr = container_of(msi_attr, struct device_attribute, attr);
+		kfree(msi_attr->name);
+		kfree(msi_dev_attr);
 		++count;
 		msi_attr = msi_attrs[count];
-	पूर्ण
-	kमुक्त(msi_attrs);
-	वापस ret;
-पूर्ण
+	}
+	kfree(msi_attrs);
+	return ret;
+}
 
-अटल काष्ठा msi_desc *
-msi_setup_entry(काष्ठा pci_dev *dev, पूर्णांक nvec, काष्ठा irq_affinity *affd)
-अणु
-	काष्ठा irq_affinity_desc *masks = शून्य;
-	काष्ठा msi_desc *entry;
+static struct msi_desc *
+msi_setup_entry(struct pci_dev *dev, int nvec, struct irq_affinity *affd)
+{
+	struct irq_affinity_desc *masks = NULL;
+	struct msi_desc *entry;
 	u16 control;
 
-	अगर (affd)
+	if (affd)
 		masks = irq_create_affinity_masks(nvec, affd);
 
 	/* MSI Entry Initialization */
 	entry = alloc_msi_entry(&dev->dev, nvec, masks);
-	अगर (!entry)
-		जाओ out;
+	if (!entry)
+		goto out;
 
-	pci_पढ़ो_config_word(dev, dev->msi_cap + PCI_MSI_FLAGS, &control);
+	pci_read_config_word(dev, dev->msi_cap + PCI_MSI_FLAGS, &control);
 
 	entry->msi_attrib.is_msix	= 0;
 	entry->msi_attrib.is_64		= !!(control & PCI_MSI_FLAGS_64BIT);
-	entry->msi_attrib.is_भव    = 0;
+	entry->msi_attrib.is_virtual    = 0;
 	entry->msi_attrib.entry_nr	= 0;
 	entry->msi_attrib.maskbit	= !!(control & PCI_MSI_FLAGS_MASKBIT);
-	entry->msi_attrib.शेष_irq	= dev->irq;	/* Save IOAPIC IRQ */
+	entry->msi_attrib.default_irq	= dev->irq;	/* Save IOAPIC IRQ */
 	entry->msi_attrib.multi_cap	= (control & PCI_MSI_FLAGS_QMASK) >> 1;
-	entry->msi_attrib.multiple	= ilog2(__roundup_घात_of_two(nvec));
+	entry->msi_attrib.multiple	= ilog2(__roundup_pow_of_two(nvec));
 
-	अगर (control & PCI_MSI_FLAGS_64BIT)
+	if (control & PCI_MSI_FLAGS_64BIT)
 		entry->mask_pos = dev->msi_cap + PCI_MSI_MASK_64;
-	अन्यथा
+	else
 		entry->mask_pos = dev->msi_cap + PCI_MSI_MASK_32;
 
 	/* Save the initial mask status */
-	अगर (entry->msi_attrib.maskbit)
-		pci_पढ़ो_config_dword(dev, entry->mask_pos, &entry->masked);
+	if (entry->msi_attrib.maskbit)
+		pci_read_config_dword(dev, entry->mask_pos, &entry->masked);
 
 out:
-	kमुक्त(masks);
-	वापस entry;
-पूर्ण
+	kfree(masks);
+	return entry;
+}
 
-अटल पूर्णांक msi_verअगरy_entries(काष्ठा pci_dev *dev)
-अणु
-	काष्ठा msi_desc *entry;
+static int msi_verify_entries(struct pci_dev *dev)
+{
+	struct msi_desc *entry;
 
-	क्रम_each_pci_msi_entry(entry, dev) अणु
-		अगर (entry->msg.address_hi && dev->no_64bit_msi) अणु
+	for_each_pci_msi_entry(entry, dev) {
+		if (entry->msg.address_hi && dev->no_64bit_msi) {
 			pci_err(dev, "arch assigned 64-bit MSI address %#x%08x but device only supports 32 bits\n",
 				entry->msg.address_hi, entry->msg.address_lo);
-			वापस -EIO;
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+			return -EIO;
+		}
+	}
+	return 0;
+}
 
 /**
- * msi_capability_init - configure device's MSI capability काष्ठाure
- * @dev: poपूर्णांकer to the pci_dev data काष्ठाure of MSI device function
- * @nvec: number of पूर्णांकerrupts to allocate
- * @affd: description of स्वतःmatic IRQ affinity assignments (may be %शून्य)
+ * msi_capability_init - configure device's MSI capability structure
+ * @dev: pointer to the pci_dev data structure of MSI device function
+ * @nvec: number of interrupts to allocate
+ * @affd: description of automatic IRQ affinity assignments (may be %NULL)
  *
- * Setup the MSI capability काष्ठाure of the device with the requested
- * number of पूर्णांकerrupts.  A वापस value of zero indicates the successful
- * setup of an entry with the new MSI IRQ.  A negative वापस value indicates
- * an error, and a positive वापस value indicates the number of पूर्णांकerrupts
+ * Setup the MSI capability structure of the device with the requested
+ * number of interrupts.  A return value of zero indicates the successful
+ * setup of an entry with the new MSI IRQ.  A negative return value indicates
+ * an error, and a positive return value indicates the number of interrupts
  * which could have been allocated.
  */
-अटल पूर्णांक msi_capability_init(काष्ठा pci_dev *dev, पूर्णांक nvec,
-			       काष्ठा irq_affinity *affd)
-अणु
-	काष्ठा msi_desc *entry;
-	पूर्णांक ret;
-	अचिन्हित mask;
+static int msi_capability_init(struct pci_dev *dev, int nvec,
+			       struct irq_affinity *affd)
+{
+	struct msi_desc *entry;
+	int ret;
+	unsigned mask;
 
 	pci_msi_set_enable(dev, 0);	/* Disable MSI during set up */
 
 	entry = msi_setup_entry(dev, nvec, affd);
-	अगर (!entry)
-		वापस -ENOMEM;
+	if (!entry)
+		return -ENOMEM;
 
-	/* All MSIs are unmasked by शेष; mask them all */
+	/* All MSIs are unmasked by default; mask them all */
 	mask = msi_mask(entry->msi_attrib.multi_cap);
 	msi_mask_irq(entry, mask, mask);
 
 	list_add_tail(&entry->list, dev_to_msi_list(&dev->dev));
 
-	/* Configure MSI capability काष्ठाure */
+	/* Configure MSI capability structure */
 	ret = pci_msi_setup_msi_irqs(dev, nvec, PCI_CAP_ID_MSI);
-	अगर (ret) अणु
+	if (ret) {
 		msi_mask_irq(entry, mask, ~mask);
-		मुक्त_msi_irqs(dev);
-		वापस ret;
-	पूर्ण
+		free_msi_irqs(dev);
+		return ret;
+	}
 
-	ret = msi_verअगरy_entries(dev);
-	अगर (ret) अणु
+	ret = msi_verify_entries(dev);
+	if (ret) {
 		msi_mask_irq(entry, mask, ~mask);
-		मुक्त_msi_irqs(dev);
-		वापस ret;
-	पूर्ण
+		free_msi_irqs(dev);
+		return ret;
+	}
 
 	ret = populate_msi_sysfs(dev);
-	अगर (ret) अणु
+	if (ret) {
 		msi_mask_irq(entry, mask, ~mask);
-		मुक्त_msi_irqs(dev);
-		वापस ret;
-	पूर्ण
+		free_msi_irqs(dev);
+		return ret;
+	}
 
 	/* Set MSI enabled bits	*/
-	pci_पूर्णांकx_क्रम_msi(dev, 0);
+	pci_intx_for_msi(dev, 0);
 	pci_msi_set_enable(dev, 1);
 	dev->msi_enabled = 1;
 
-	pcibios_मुक्त_irq(dev);
+	pcibios_free_irq(dev);
 	dev->irq = entry->irq;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम __iomem *msix_map_region(काष्ठा pci_dev *dev, अचिन्हित nr_entries)
-अणु
-	resource_माप_प्रकार phys_addr;
+static void __iomem *msix_map_region(struct pci_dev *dev, unsigned nr_entries)
+{
+	resource_size_t phys_addr;
 	u32 table_offset;
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 	u8 bir;
 
-	pci_पढ़ो_config_dword(dev, dev->msix_cap + PCI_MSIX_TABLE,
+	pci_read_config_dword(dev, dev->msix_cap + PCI_MSIX_TABLE,
 			      &table_offset);
 	bir = (u8)(table_offset & PCI_MSIX_TABLE_BIR);
 	flags = pci_resource_flags(dev, bir);
-	अगर (!flags || (flags & IORESOURCE_UNSET))
-		वापस शून्य;
+	if (!flags || (flags & IORESOURCE_UNSET))
+		return NULL;
 
 	table_offset &= PCI_MSIX_TABLE_OFFSET;
 	phys_addr = pci_resource_start(dev, bir) + table_offset;
 
-	वापस ioremap(phys_addr, nr_entries * PCI_MSIX_ENTRY_SIZE);
-पूर्ण
+	return ioremap(phys_addr, nr_entries * PCI_MSIX_ENTRY_SIZE);
+}
 
-अटल पूर्णांक msix_setup_entries(काष्ठा pci_dev *dev, व्योम __iomem *base,
-			      काष्ठा msix_entry *entries, पूर्णांक nvec,
-			      काष्ठा irq_affinity *affd)
-अणु
-	काष्ठा irq_affinity_desc *curmsk, *masks = शून्य;
-	काष्ठा msi_desc *entry;
-	पूर्णांक ret, i;
-	पूर्णांक vec_count = pci_msix_vec_count(dev);
+static int msix_setup_entries(struct pci_dev *dev, void __iomem *base,
+			      struct msix_entry *entries, int nvec,
+			      struct irq_affinity *affd)
+{
+	struct irq_affinity_desc *curmsk, *masks = NULL;
+	struct msi_desc *entry;
+	int ret, i;
+	int vec_count = pci_msix_vec_count(dev);
 
-	अगर (affd)
+	if (affd)
 		masks = irq_create_affinity_masks(nvec, affd);
 
-	क्रम (i = 0, curmsk = masks; i < nvec; i++) अणु
+	for (i = 0, curmsk = masks; i < nvec; i++) {
 		entry = alloc_msi_entry(&dev->dev, 1, curmsk);
-		अगर (!entry) अणु
-			अगर (!i)
+		if (!entry) {
+			if (!i)
 				iounmap(base);
-			अन्यथा
-				मुक्त_msi_irqs(dev);
+			else
+				free_msi_irqs(dev);
 			/* No enough memory. Don't try again */
 			ret = -ENOMEM;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		entry->msi_attrib.is_msix	= 1;
 		entry->msi_attrib.is_64		= 1;
-		अगर (entries)
+		if (entries)
 			entry->msi_attrib.entry_nr = entries[i].entry;
-		अन्यथा
+		else
 			entry->msi_attrib.entry_nr = i;
 
-		entry->msi_attrib.is_भव =
+		entry->msi_attrib.is_virtual =
 			entry->msi_attrib.entry_nr >= vec_count;
 
-		entry->msi_attrib.शेष_irq	= dev->irq;
+		entry->msi_attrib.default_irq	= dev->irq;
 		entry->mask_base		= base;
 
 		list_add_tail(&entry->list, dev_to_msi_list(&dev->dev));
-		अगर (masks)
+		if (masks)
 			curmsk++;
-	पूर्ण
+	}
 	ret = 0;
 out:
-	kमुक्त(masks);
-	वापस ret;
-पूर्ण
+	kfree(masks);
+	return ret;
+}
 
-अटल व्योम msix_program_entries(काष्ठा pci_dev *dev,
-				 काष्ठा msix_entry *entries)
-अणु
-	काष्ठा msi_desc *entry;
-	पूर्णांक i = 0;
-	व्योम __iomem *desc_addr;
+static void msix_program_entries(struct pci_dev *dev,
+				 struct msix_entry *entries)
+{
+	struct msi_desc *entry;
+	int i = 0;
+	void __iomem *desc_addr;
 
-	क्रम_each_pci_msi_entry(entry, dev) अणु
-		अगर (entries)
+	for_each_pci_msi_entry(entry, dev) {
+		if (entries)
 			entries[i++].vector = entry->irq;
 
 		desc_addr = pci_msix_desc_addr(entry);
-		अगर (desc_addr)
-			entry->masked = पढ़ोl(desc_addr +
+		if (desc_addr)
+			entry->masked = readl(desc_addr +
 					      PCI_MSIX_ENTRY_VECTOR_CTRL);
-		अन्यथा
+		else
 			entry->masked = 0;
 
 		msix_mask_irq(entry, 1);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
  * msix_capability_init - configure device's MSI-X capability
- * @dev: poपूर्णांकer to the pci_dev data काष्ठाure of MSI-X device function
- * @entries: poपूर्णांकer to an array of काष्ठा msix_entry entries
+ * @dev: pointer to the pci_dev data structure of MSI-X device function
+ * @entries: pointer to an array of struct msix_entry entries
  * @nvec: number of @entries
- * @affd: Optional poपूर्णांकer to enable स्वतःmatic affinity assignment
+ * @affd: Optional pointer to enable automatic affinity assignment
  *
- * Setup the MSI-X capability काष्ठाure of device function with a
- * single MSI-X IRQ. A वापस of zero indicates the successful setup of
- * requested MSI-X entries with allocated IRQs or non-zero क्रम otherwise.
+ * Setup the MSI-X capability structure of device function with a
+ * single MSI-X IRQ. A return of zero indicates the successful setup of
+ * requested MSI-X entries with allocated IRQs or non-zero for otherwise.
  **/
-अटल पूर्णांक msix_capability_init(काष्ठा pci_dev *dev, काष्ठा msix_entry *entries,
-				पूर्णांक nvec, काष्ठा irq_affinity *affd)
-अणु
-	पूर्णांक ret;
+static int msix_capability_init(struct pci_dev *dev, struct msix_entry *entries,
+				int nvec, struct irq_affinity *affd)
+{
+	int ret;
 	u16 control;
-	व्योम __iomem *base;
+	void __iomem *base;
 
-	/* Ensure MSI-X is disabled जबतक it is set up */
+	/* Ensure MSI-X is disabled while it is set up */
 	pci_msix_clear_and_set_ctrl(dev, PCI_MSIX_FLAGS_ENABLE, 0);
 
-	pci_पढ़ो_config_word(dev, dev->msix_cap + PCI_MSIX_FLAGS, &control);
+	pci_read_config_word(dev, dev->msix_cap + PCI_MSIX_FLAGS, &control);
 	/* Request & Map MSI-X table region */
 	base = msix_map_region(dev, msix_table_size(control));
-	अगर (!base)
-		वापस -ENOMEM;
+	if (!base)
+		return -ENOMEM;
 
 	ret = msix_setup_entries(dev, base, entries, nvec, affd);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = pci_msi_setup_msi_irqs(dev, nvec, PCI_CAP_ID_MSIX);
-	अगर (ret)
-		जाओ out_avail;
+	if (ret)
+		goto out_avail;
 
-	/* Check अगर all MSI entries honor device restrictions */
-	ret = msi_verअगरy_entries(dev);
-	अगर (ret)
-		जाओ out_मुक्त;
+	/* Check if all MSI entries honor device restrictions */
+	ret = msi_verify_entries(dev);
+	if (ret)
+		goto out_free;
 
 	/*
-	 * Some devices require MSI-X to be enabled beक्रमe we can touch the
-	 * MSI-X रेजिस्टरs.  We need to mask all the vectors to prevent
-	 * पूर्णांकerrupts coming in beक्रमe they're fully set up.
+	 * Some devices require MSI-X to be enabled before we can touch the
+	 * MSI-X registers.  We need to mask all the vectors to prevent
+	 * interrupts coming in before they're fully set up.
 	 */
 	pci_msix_clear_and_set_ctrl(dev, 0,
 				PCI_MSIX_FLAGS_MASKALL | PCI_MSIX_FLAGS_ENABLE);
@@ -806,127 +805,127 @@ out:
 	msix_program_entries(dev, entries);
 
 	ret = populate_msi_sysfs(dev);
-	अगर (ret)
-		जाओ out_मुक्त;
+	if (ret)
+		goto out_free;
 
 	/* Set MSI-X enabled bits and unmask the function */
-	pci_पूर्णांकx_क्रम_msi(dev, 0);
+	pci_intx_for_msi(dev, 0);
 	dev->msix_enabled = 1;
 	pci_msix_clear_and_set_ctrl(dev, PCI_MSIX_FLAGS_MASKALL, 0);
 
-	pcibios_मुक्त_irq(dev);
-	वापस 0;
+	pcibios_free_irq(dev);
+	return 0;
 
 out_avail:
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		/*
 		 * If we had some success, report the number of IRQs
 		 * we succeeded in setting up.
 		 */
-		काष्ठा msi_desc *entry;
-		पूर्णांक avail = 0;
+		struct msi_desc *entry;
+		int avail = 0;
 
-		क्रम_each_pci_msi_entry(entry, dev) अणु
-			अगर (entry->irq != 0)
+		for_each_pci_msi_entry(entry, dev) {
+			if (entry->irq != 0)
 				avail++;
-		पूर्ण
-		अगर (avail != 0)
+		}
+		if (avail != 0)
 			ret = avail;
-	पूर्ण
+	}
 
-out_मुक्त:
-	मुक्त_msi_irqs(dev);
+out_free:
+	free_msi_irqs(dev);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
  * pci_msi_supported - check whether MSI may be enabled on a device
- * @dev: poपूर्णांकer to the pci_dev data काष्ठाure of MSI device function
+ * @dev: pointer to the pci_dev data structure of MSI device function
  * @nvec: how many MSIs have been requested?
  *
  * Look at global flags, the device itself, and its parent buses
- * to determine अगर MSI/-X are supported क्रम the device. If MSI/-X is
- * supported वापस 1, अन्यथा वापस 0.
+ * to determine if MSI/-X are supported for the device. If MSI/-X is
+ * supported return 1, else return 0.
  **/
-अटल पूर्णांक pci_msi_supported(काष्ठा pci_dev *dev, पूर्णांक nvec)
-अणु
-	काष्ठा pci_bus *bus;
+static int pci_msi_supported(struct pci_dev *dev, int nvec)
+{
+	struct pci_bus *bus;
 
 	/* MSI must be globally enabled and supported by the device */
-	अगर (!pci_msi_enable)
-		वापस 0;
+	if (!pci_msi_enable)
+		return 0;
 
-	अगर (!dev || dev->no_msi)
-		वापस 0;
+	if (!dev || dev->no_msi)
+		return 0;
 
 	/*
 	 * You can't ask to have 0 or less MSIs configured.
 	 *  a) it's stupid ..
 	 *  b) the list manipulation code assumes nvec >= 1.
 	 */
-	अगर (nvec < 1)
-		वापस 0;
+	if (nvec < 1)
+		return 0;
 
 	/*
-	 * Any bridge which करोes NOT route MSI transactions from its
+	 * Any bridge which does NOT route MSI transactions from its
 	 * secondary bus to its primary bus must set NO_MSI flag on
 	 * the secondary pci_bus.
 	 *
 	 * The NO_MSI flag can either be set directly by:
-	 * - arch-specअगरic PCI host bus controller drivers (deprecated)
-	 * - quirks क्रम specअगरic PCI bridges
+	 * - arch-specific PCI host bus controller drivers (deprecated)
+	 * - quirks for specific PCI bridges
 	 *
-	 * or indirectly by platक्रमm-specअगरic PCI host bridge drivers by
+	 * or indirectly by platform-specific PCI host bridge drivers by
 	 * advertising the 'msi_domain' property, which results in
-	 * the NO_MSI flag when no MSI करोमुख्य is found क्रम this bridge
-	 * at probe समय.
+	 * the NO_MSI flag when no MSI domain is found for this bridge
+	 * at probe time.
 	 */
-	क्रम (bus = dev->bus; bus; bus = bus->parent)
-		अगर (bus->bus_flags & PCI_BUS_FLAGS_NO_MSI)
-			वापस 0;
+	for (bus = dev->bus; bus; bus = bus->parent)
+		if (bus->bus_flags & PCI_BUS_FLAGS_NO_MSI)
+			return 0;
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
 /**
  * pci_msi_vec_count - Return the number of MSI vectors a device can send
  * @dev: device to report about
  *
- * This function वापसs the number of MSI vectors a device requested via
- * Multiple Message Capable रेजिस्टर. It वापसs a negative त्रुटि_सं अगर the
- * device is not capable sending MSI पूर्णांकerrupts. Otherwise, the call succeeds
- * and वापसs a घातer of two, up to a maximum of 2^5 (32), according to the
- * MSI specअगरication.
+ * This function returns the number of MSI vectors a device requested via
+ * Multiple Message Capable register. It returns a negative errno if the
+ * device is not capable sending MSI interrupts. Otherwise, the call succeeds
+ * and returns a power of two, up to a maximum of 2^5 (32), according to the
+ * MSI specification.
  **/
-पूर्णांक pci_msi_vec_count(काष्ठा pci_dev *dev)
-अणु
-	पूर्णांक ret;
+int pci_msi_vec_count(struct pci_dev *dev)
+{
+	int ret;
 	u16 msgctl;
 
-	अगर (!dev->msi_cap)
-		वापस -EINVAL;
+	if (!dev->msi_cap)
+		return -EINVAL;
 
-	pci_पढ़ो_config_word(dev, dev->msi_cap + PCI_MSI_FLAGS, &msgctl);
+	pci_read_config_word(dev, dev->msi_cap + PCI_MSI_FLAGS, &msgctl);
 	ret = 1 << ((msgctl & PCI_MSI_FLAGS_QMASK) >> 1);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL(pci_msi_vec_count);
 
-अटल व्योम pci_msi_shutकरोwn(काष्ठा pci_dev *dev)
-अणु
-	काष्ठा msi_desc *desc;
+static void pci_msi_shutdown(struct pci_dev *dev)
+{
+	struct msi_desc *desc;
 	u32 mask;
 
-	अगर (!pci_msi_enable || !dev || !dev->msi_enabled)
-		वापस;
+	if (!pci_msi_enable || !dev || !dev->msi_enabled)
+		return;
 
 	BUG_ON(list_empty(dev_to_msi_list(&dev->dev)));
 	desc = first_pci_msi_entry(dev);
 
 	pci_msi_set_enable(dev, 0);
-	pci_पूर्णांकx_क्रम_msi(dev, 1);
+	pci_intx_for_msi(dev, 1);
 	dev->msi_enabled = 0;
 
 	/* Return the device with MSI unmasked as initial states */
@@ -934,684 +933,684 @@ EXPORT_SYMBOL(pci_msi_vec_count);
 	/* Keep cached state to be restored */
 	__pci_msi_desc_mask_irq(desc, mask, ~mask);
 
-	/* Restore dev->irq to its शेष pin-निश्चितion IRQ */
-	dev->irq = desc->msi_attrib.शेष_irq;
+	/* Restore dev->irq to its default pin-assertion IRQ */
+	dev->irq = desc->msi_attrib.default_irq;
 	pcibios_alloc_irq(dev);
-पूर्ण
+}
 
-व्योम pci_disable_msi(काष्ठा pci_dev *dev)
-अणु
-	अगर (!pci_msi_enable || !dev || !dev->msi_enabled)
-		वापस;
+void pci_disable_msi(struct pci_dev *dev)
+{
+	if (!pci_msi_enable || !dev || !dev->msi_enabled)
+		return;
 
-	pci_msi_shutकरोwn(dev);
-	मुक्त_msi_irqs(dev);
-पूर्ण
+	pci_msi_shutdown(dev);
+	free_msi_irqs(dev);
+}
 EXPORT_SYMBOL(pci_disable_msi);
 
 /**
- * pci_msix_vec_count - वापस the number of device's MSI-X table entries
- * @dev: poपूर्णांकer to the pci_dev data काष्ठाure of MSI-X device function
- * This function वापसs the number of device's MSI-X table entries and
- * thereक्रमe the number of MSI-X vectors device is capable of sending.
- * It वापसs a negative त्रुटि_सं अगर the device is not capable of sending MSI-X
- * पूर्णांकerrupts.
+ * pci_msix_vec_count - return the number of device's MSI-X table entries
+ * @dev: pointer to the pci_dev data structure of MSI-X device function
+ * This function returns the number of device's MSI-X table entries and
+ * therefore the number of MSI-X vectors device is capable of sending.
+ * It returns a negative errno if the device is not capable of sending MSI-X
+ * interrupts.
  **/
-पूर्णांक pci_msix_vec_count(काष्ठा pci_dev *dev)
-अणु
+int pci_msix_vec_count(struct pci_dev *dev)
+{
 	u16 control;
 
-	अगर (!dev->msix_cap)
-		वापस -EINVAL;
+	if (!dev->msix_cap)
+		return -EINVAL;
 
-	pci_पढ़ो_config_word(dev, dev->msix_cap + PCI_MSIX_FLAGS, &control);
-	वापस msix_table_size(control);
-पूर्ण
+	pci_read_config_word(dev, dev->msix_cap + PCI_MSIX_FLAGS, &control);
+	return msix_table_size(control);
+}
 EXPORT_SYMBOL(pci_msix_vec_count);
 
-अटल पूर्णांक __pci_enable_msix(काष्ठा pci_dev *dev, काष्ठा msix_entry *entries,
-			     पूर्णांक nvec, काष्ठा irq_affinity *affd, पूर्णांक flags)
-अणु
-	पूर्णांक nr_entries;
-	पूर्णांक i, j;
+static int __pci_enable_msix(struct pci_dev *dev, struct msix_entry *entries,
+			     int nvec, struct irq_affinity *affd, int flags)
+{
+	int nr_entries;
+	int i, j;
 
-	अगर (!pci_msi_supported(dev, nvec) || dev->current_state != PCI_D0)
-		वापस -EINVAL;
+	if (!pci_msi_supported(dev, nvec) || dev->current_state != PCI_D0)
+		return -EINVAL;
 
 	nr_entries = pci_msix_vec_count(dev);
-	अगर (nr_entries < 0)
-		वापस nr_entries;
-	अगर (nvec > nr_entries && !(flags & PCI_IRQ_VIRTUAL))
-		वापस nr_entries;
+	if (nr_entries < 0)
+		return nr_entries;
+	if (nvec > nr_entries && !(flags & PCI_IRQ_VIRTUAL))
+		return nr_entries;
 
-	अगर (entries) अणु
-		/* Check क्रम any invalid entries */
-		क्रम (i = 0; i < nvec; i++) अणु
-			अगर (entries[i].entry >= nr_entries)
-				वापस -EINVAL;		/* invalid entry */
-			क्रम (j = i + 1; j < nvec; j++) अणु
-				अगर (entries[i].entry == entries[j].entry)
-					वापस -EINVAL;	/* duplicate entry */
-			पूर्ण
-		पूर्ण
-	पूर्ण
+	if (entries) {
+		/* Check for any invalid entries */
+		for (i = 0; i < nvec; i++) {
+			if (entries[i].entry >= nr_entries)
+				return -EINVAL;		/* invalid entry */
+			for (j = i + 1; j < nvec; j++) {
+				if (entries[i].entry == entries[j].entry)
+					return -EINVAL;	/* duplicate entry */
+			}
+		}
+	}
 
-	/* Check whether driver alपढ़ोy requested क्रम MSI IRQ */
-	अगर (dev->msi_enabled) अणु
+	/* Check whether driver already requested for MSI IRQ */
+	if (dev->msi_enabled) {
 		pci_info(dev, "can't enable MSI-X (MSI IRQ already assigned)\n");
-		वापस -EINVAL;
-	पूर्ण
-	वापस msix_capability_init(dev, entries, nvec, affd);
-पूर्ण
+		return -EINVAL;
+	}
+	return msix_capability_init(dev, entries, nvec, affd);
+}
 
-अटल व्योम pci_msix_shutकरोwn(काष्ठा pci_dev *dev)
-अणु
-	काष्ठा msi_desc *entry;
+static void pci_msix_shutdown(struct pci_dev *dev)
+{
+	struct msi_desc *entry;
 
-	अगर (!pci_msi_enable || !dev || !dev->msix_enabled)
-		वापस;
+	if (!pci_msi_enable || !dev || !dev->msix_enabled)
+		return;
 
-	अगर (pci_dev_is_disconnected(dev)) अणु
+	if (pci_dev_is_disconnected(dev)) {
 		dev->msix_enabled = 0;
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/* Return the device with MSI-X masked as initial states */
-	क्रम_each_pci_msi_entry(entry, dev) अणु
+	for_each_pci_msi_entry(entry, dev) {
 		/* Keep cached states to be restored */
 		__pci_msix_desc_mask_irq(entry, 1);
-	पूर्ण
+	}
 
 	pci_msix_clear_and_set_ctrl(dev, PCI_MSIX_FLAGS_ENABLE, 0);
-	pci_पूर्णांकx_क्रम_msi(dev, 1);
+	pci_intx_for_msi(dev, 1);
 	dev->msix_enabled = 0;
 	pcibios_alloc_irq(dev);
-पूर्ण
+}
 
-व्योम pci_disable_msix(काष्ठा pci_dev *dev)
-अणु
-	अगर (!pci_msi_enable || !dev || !dev->msix_enabled)
-		वापस;
+void pci_disable_msix(struct pci_dev *dev)
+{
+	if (!pci_msi_enable || !dev || !dev->msix_enabled)
+		return;
 
-	pci_msix_shutकरोwn(dev);
-	मुक्त_msi_irqs(dev);
-पूर्ण
+	pci_msix_shutdown(dev);
+	free_msi_irqs(dev);
+}
 EXPORT_SYMBOL(pci_disable_msix);
 
-व्योम pci_no_msi(व्योम)
-अणु
+void pci_no_msi(void)
+{
 	pci_msi_enable = 0;
-पूर्ण
+}
 
 /**
  * pci_msi_enabled - is MSI enabled?
  *
- * Returns true अगर MSI has not been disabled by the command-line option
+ * Returns true if MSI has not been disabled by the command-line option
  * pci=nomsi.
  **/
-पूर्णांक pci_msi_enabled(व्योम)
-अणु
-	वापस pci_msi_enable;
-पूर्ण
+int pci_msi_enabled(void)
+{
+	return pci_msi_enable;
+}
 EXPORT_SYMBOL(pci_msi_enabled);
 
-अटल पूर्णांक __pci_enable_msi_range(काष्ठा pci_dev *dev, पूर्णांक minvec, पूर्णांक maxvec,
-				  काष्ठा irq_affinity *affd)
-अणु
-	पूर्णांक nvec;
-	पूर्णांक rc;
+static int __pci_enable_msi_range(struct pci_dev *dev, int minvec, int maxvec,
+				  struct irq_affinity *affd)
+{
+	int nvec;
+	int rc;
 
-	अगर (!pci_msi_supported(dev, minvec) || dev->current_state != PCI_D0)
-		वापस -EINVAL;
+	if (!pci_msi_supported(dev, minvec) || dev->current_state != PCI_D0)
+		return -EINVAL;
 
-	/* Check whether driver alपढ़ोy requested MSI-X IRQs */
-	अगर (dev->msix_enabled) अणु
+	/* Check whether driver already requested MSI-X IRQs */
+	if (dev->msix_enabled) {
 		pci_info(dev, "can't enable MSI (MSI-X already enabled)\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (maxvec < minvec)
-		वापस -दुस्फल;
+	if (maxvec < minvec)
+		return -ERANGE;
 
-	अगर (WARN_ON_ONCE(dev->msi_enabled))
-		वापस -EINVAL;
+	if (WARN_ON_ONCE(dev->msi_enabled))
+		return -EINVAL;
 
 	nvec = pci_msi_vec_count(dev);
-	अगर (nvec < 0)
-		वापस nvec;
-	अगर (nvec < minvec)
-		वापस -ENOSPC;
+	if (nvec < 0)
+		return nvec;
+	if (nvec < minvec)
+		return -ENOSPC;
 
-	अगर (nvec > maxvec)
+	if (nvec > maxvec)
 		nvec = maxvec;
 
-	क्रम (;;) अणु
-		अगर (affd) अणु
+	for (;;) {
+		if (affd) {
 			nvec = irq_calc_affinity_vectors(minvec, nvec, affd);
-			अगर (nvec < minvec)
-				वापस -ENOSPC;
-		पूर्ण
+			if (nvec < minvec)
+				return -ENOSPC;
+		}
 
 		rc = msi_capability_init(dev, nvec, affd);
-		अगर (rc == 0)
-			वापस nvec;
+		if (rc == 0)
+			return nvec;
 
-		अगर (rc < 0)
-			वापस rc;
-		अगर (rc < minvec)
-			वापस -ENOSPC;
+		if (rc < 0)
+			return rc;
+		if (rc < minvec)
+			return -ENOSPC;
 
 		nvec = rc;
-	पूर्ण
-पूर्ण
+	}
+}
 
-/* deprecated, करोn't use */
-पूर्णांक pci_enable_msi(काष्ठा pci_dev *dev)
-अणु
-	पूर्णांक rc = __pci_enable_msi_range(dev, 1, 1, शून्य);
-	अगर (rc < 0)
-		वापस rc;
-	वापस 0;
-पूर्ण
+/* deprecated, don't use */
+int pci_enable_msi(struct pci_dev *dev)
+{
+	int rc = __pci_enable_msi_range(dev, 1, 1, NULL);
+	if (rc < 0)
+		return rc;
+	return 0;
+}
 EXPORT_SYMBOL(pci_enable_msi);
 
-अटल पूर्णांक __pci_enable_msix_range(काष्ठा pci_dev *dev,
-				   काष्ठा msix_entry *entries, पूर्णांक minvec,
-				   पूर्णांक maxvec, काष्ठा irq_affinity *affd,
-				   पूर्णांक flags)
-अणु
-	पूर्णांक rc, nvec = maxvec;
+static int __pci_enable_msix_range(struct pci_dev *dev,
+				   struct msix_entry *entries, int minvec,
+				   int maxvec, struct irq_affinity *affd,
+				   int flags)
+{
+	int rc, nvec = maxvec;
 
-	अगर (maxvec < minvec)
-		वापस -दुस्फल;
+	if (maxvec < minvec)
+		return -ERANGE;
 
-	अगर (WARN_ON_ONCE(dev->msix_enabled))
-		वापस -EINVAL;
+	if (WARN_ON_ONCE(dev->msix_enabled))
+		return -EINVAL;
 
-	क्रम (;;) अणु
-		अगर (affd) अणु
+	for (;;) {
+		if (affd) {
 			nvec = irq_calc_affinity_vectors(minvec, nvec, affd);
-			अगर (nvec < minvec)
-				वापस -ENOSPC;
-		पूर्ण
+			if (nvec < minvec)
+				return -ENOSPC;
+		}
 
 		rc = __pci_enable_msix(dev, entries, nvec, affd, flags);
-		अगर (rc == 0)
-			वापस nvec;
+		if (rc == 0)
+			return nvec;
 
-		अगर (rc < 0)
-			वापस rc;
-		अगर (rc < minvec)
-			वापस -ENOSPC;
+		if (rc < 0)
+			return rc;
+		if (rc < minvec)
+			return -ENOSPC;
 
 		nvec = rc;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
- * pci_enable_msix_range - configure device's MSI-X capability काष्ठाure
- * @dev: poपूर्णांकer to the pci_dev data काष्ठाure of MSI-X device function
- * @entries: poपूर्णांकer to an array of MSI-X entries
+ * pci_enable_msix_range - configure device's MSI-X capability structure
+ * @dev: pointer to the pci_dev data structure of MSI-X device function
+ * @entries: pointer to an array of MSI-X entries
  * @minvec: minimum number of MSI-X IRQs requested
  * @maxvec: maximum number of MSI-X IRQs requested
  *
- * Setup the MSI-X capability काष्ठाure of device function with a maximum
- * possible number of पूर्णांकerrupts in the range between @minvec and @maxvec
- * upon its software driver call to request क्रम MSI-X mode enabled on its
- * hardware device function. It वापसs a negative त्रुटि_सं अगर an error occurs.
- * If it succeeds, it वापसs the actual number of पूर्णांकerrupts allocated and
- * indicates the successful configuration of MSI-X capability काष्ठाure
- * with new allocated MSI-X पूर्णांकerrupts.
+ * Setup the MSI-X capability structure of device function with a maximum
+ * possible number of interrupts in the range between @minvec and @maxvec
+ * upon its software driver call to request for MSI-X mode enabled on its
+ * hardware device function. It returns a negative errno if an error occurs.
+ * If it succeeds, it returns the actual number of interrupts allocated and
+ * indicates the successful configuration of MSI-X capability structure
+ * with new allocated MSI-X interrupts.
  **/
-पूर्णांक pci_enable_msix_range(काष्ठा pci_dev *dev, काष्ठा msix_entry *entries,
-		पूर्णांक minvec, पूर्णांक maxvec)
-अणु
-	वापस __pci_enable_msix_range(dev, entries, minvec, maxvec, शून्य, 0);
-पूर्ण
+int pci_enable_msix_range(struct pci_dev *dev, struct msix_entry *entries,
+		int minvec, int maxvec)
+{
+	return __pci_enable_msix_range(dev, entries, minvec, maxvec, NULL, 0);
+}
 EXPORT_SYMBOL(pci_enable_msix_range);
 
 /**
- * pci_alloc_irq_vectors_affinity - allocate multiple IRQs क्रम a device
+ * pci_alloc_irq_vectors_affinity - allocate multiple IRQs for a device
  * @dev:		PCI device to operate on
  * @min_vecs:		minimum number of vectors required (must be >= 1)
  * @max_vecs:		maximum (desired) number of vectors
- * @flags:		flags or quirks क्रम the allocation
+ * @flags:		flags or quirks for the allocation
  * @affd:		optional description of the affinity requirements
  *
- * Allocate up to @max_vecs पूर्णांकerrupt vectors क्रम @dev, using MSI-X or MSI
- * vectors अगर available, and fall back to a single legacy vector
- * अगर neither is available.  Return the number of vectors allocated,
- * (which might be smaller than @max_vecs) अगर successful, or a negative
- * error code on error. If less than @min_vecs पूर्णांकerrupt vectors are
- * available क्रम @dev the function will fail with -ENOSPC.
+ * Allocate up to @max_vecs interrupt vectors for @dev, using MSI-X or MSI
+ * vectors if available, and fall back to a single legacy vector
+ * if neither is available.  Return the number of vectors allocated,
+ * (which might be smaller than @max_vecs) if successful, or a negative
+ * error code on error. If less than @min_vecs interrupt vectors are
+ * available for @dev the function will fail with -ENOSPC.
  *
- * To get the Linux IRQ number used क्रम a vector that can be passed to
+ * To get the Linux IRQ number used for a vector that can be passed to
  * request_irq() use the pci_irq_vector() helper.
  */
-पूर्णांक pci_alloc_irq_vectors_affinity(काष्ठा pci_dev *dev, अचिन्हित पूर्णांक min_vecs,
-				   अचिन्हित पूर्णांक max_vecs, अचिन्हित पूर्णांक flags,
-				   काष्ठा irq_affinity *affd)
-अणु
-	काष्ठा irq_affinity msi_शेष_affd = अणु0पूर्ण;
-	पूर्णांक nvecs = -ENOSPC;
+int pci_alloc_irq_vectors_affinity(struct pci_dev *dev, unsigned int min_vecs,
+				   unsigned int max_vecs, unsigned int flags,
+				   struct irq_affinity *affd)
+{
+	struct irq_affinity msi_default_affd = {0};
+	int nvecs = -ENOSPC;
 
-	अगर (flags & PCI_IRQ_AFFINITY) अणु
-		अगर (!affd)
-			affd = &msi_शेष_affd;
-	पूर्ण अन्यथा अणु
-		अगर (WARN_ON(affd))
-			affd = शून्य;
-	पूर्ण
+	if (flags & PCI_IRQ_AFFINITY) {
+		if (!affd)
+			affd = &msi_default_affd;
+	} else {
+		if (WARN_ON(affd))
+			affd = NULL;
+	}
 
-	अगर (flags & PCI_IRQ_MSIX) अणु
-		nvecs = __pci_enable_msix_range(dev, शून्य, min_vecs, max_vecs,
+	if (flags & PCI_IRQ_MSIX) {
+		nvecs = __pci_enable_msix_range(dev, NULL, min_vecs, max_vecs,
 						affd, flags);
-		अगर (nvecs > 0)
-			वापस nvecs;
-	पूर्ण
+		if (nvecs > 0)
+			return nvecs;
+	}
 
-	अगर (flags & PCI_IRQ_MSI) अणु
+	if (flags & PCI_IRQ_MSI) {
 		nvecs = __pci_enable_msi_range(dev, min_vecs, max_vecs, affd);
-		अगर (nvecs > 0)
-			वापस nvecs;
-	पूर्ण
+		if (nvecs > 0)
+			return nvecs;
+	}
 
-	/* use legacy IRQ अगर allowed */
-	अगर (flags & PCI_IRQ_LEGACY) अणु
-		अगर (min_vecs == 1 && dev->irq) अणु
+	/* use legacy IRQ if allowed */
+	if (flags & PCI_IRQ_LEGACY) {
+		if (min_vecs == 1 && dev->irq) {
 			/*
-			 * Invoke the affinity spपढ़ोing logic to ensure that
+			 * Invoke the affinity spreading logic to ensure that
 			 * the device driver can adjust queue configuration
-			 * क्रम the single पूर्णांकerrupt हाल.
+			 * for the single interrupt case.
 			 */
-			अगर (affd)
+			if (affd)
 				irq_create_affinity_masks(1, affd);
-			pci_पूर्णांकx(dev, 1);
-			वापस 1;
-		पूर्ण
-	पूर्ण
+			pci_intx(dev, 1);
+			return 1;
+		}
+	}
 
-	वापस nvecs;
-पूर्ण
+	return nvecs;
+}
 EXPORT_SYMBOL(pci_alloc_irq_vectors_affinity);
 
 /**
- * pci_मुक्त_irq_vectors - मुक्त previously allocated IRQs क्रम a device
+ * pci_free_irq_vectors - free previously allocated IRQs for a device
  * @dev:		PCI device to operate on
  *
- * Unकरोes the allocations and enabling in pci_alloc_irq_vectors().
+ * Undoes the allocations and enabling in pci_alloc_irq_vectors().
  */
-व्योम pci_मुक्त_irq_vectors(काष्ठा pci_dev *dev)
-अणु
+void pci_free_irq_vectors(struct pci_dev *dev)
+{
 	pci_disable_msix(dev);
 	pci_disable_msi(dev);
-पूर्ण
-EXPORT_SYMBOL(pci_मुक्त_irq_vectors);
+}
+EXPORT_SYMBOL(pci_free_irq_vectors);
 
 /**
- * pci_irq_vector - वापस Linux IRQ number of a device vector
+ * pci_irq_vector - return Linux IRQ number of a device vector
  * @dev: PCI device to operate on
- * @nr: device-relative पूर्णांकerrupt vector index (0-based).
+ * @nr: device-relative interrupt vector index (0-based).
  */
-पूर्णांक pci_irq_vector(काष्ठा pci_dev *dev, अचिन्हित पूर्णांक nr)
-अणु
-	अगर (dev->msix_enabled) अणु
-		काष्ठा msi_desc *entry;
-		पूर्णांक i = 0;
+int pci_irq_vector(struct pci_dev *dev, unsigned int nr)
+{
+	if (dev->msix_enabled) {
+		struct msi_desc *entry;
+		int i = 0;
 
-		क्रम_each_pci_msi_entry(entry, dev) अणु
-			अगर (i == nr)
-				वापस entry->irq;
+		for_each_pci_msi_entry(entry, dev) {
+			if (i == nr)
+				return entry->irq;
 			i++;
-		पूर्ण
+		}
 		WARN_ON_ONCE(1);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (dev->msi_enabled) अणु
-		काष्ठा msi_desc *entry = first_pci_msi_entry(dev);
+	if (dev->msi_enabled) {
+		struct msi_desc *entry = first_pci_msi_entry(dev);
 
-		अगर (WARN_ON_ONCE(nr >= entry->nvec_used))
-			वापस -EINVAL;
-	पूर्ण अन्यथा अणु
-		अगर (WARN_ON_ONCE(nr > 0))
-			वापस -EINVAL;
-	पूर्ण
+		if (WARN_ON_ONCE(nr >= entry->nvec_used))
+			return -EINVAL;
+	} else {
+		if (WARN_ON_ONCE(nr > 0))
+			return -EINVAL;
+	}
 
-	वापस dev->irq + nr;
-पूर्ण
+	return dev->irq + nr;
+}
 EXPORT_SYMBOL(pci_irq_vector);
 
 /**
- * pci_irq_get_affinity - वापस the affinity of a particular MSI vector
+ * pci_irq_get_affinity - return the affinity of a particular MSI vector
  * @dev:	PCI device to operate on
- * @nr:		device-relative पूर्णांकerrupt vector index (0-based).
+ * @nr:		device-relative interrupt vector index (0-based).
  */
-स्थिर काष्ठा cpumask *pci_irq_get_affinity(काष्ठा pci_dev *dev, पूर्णांक nr)
-अणु
-	अगर (dev->msix_enabled) अणु
-		काष्ठा msi_desc *entry;
-		पूर्णांक i = 0;
+const struct cpumask *pci_irq_get_affinity(struct pci_dev *dev, int nr)
+{
+	if (dev->msix_enabled) {
+		struct msi_desc *entry;
+		int i = 0;
 
-		क्रम_each_pci_msi_entry(entry, dev) अणु
-			अगर (i == nr)
-				वापस &entry->affinity->mask;
+		for_each_pci_msi_entry(entry, dev) {
+			if (i == nr)
+				return &entry->affinity->mask;
 			i++;
-		पूर्ण
+		}
 		WARN_ON_ONCE(1);
-		वापस शून्य;
-	पूर्ण अन्यथा अगर (dev->msi_enabled) अणु
-		काष्ठा msi_desc *entry = first_pci_msi_entry(dev);
+		return NULL;
+	} else if (dev->msi_enabled) {
+		struct msi_desc *entry = first_pci_msi_entry(dev);
 
-		अगर (WARN_ON_ONCE(!entry || !entry->affinity ||
+		if (WARN_ON_ONCE(!entry || !entry->affinity ||
 				 nr >= entry->nvec_used))
-			वापस शून्य;
+			return NULL;
 
-		वापस &entry->affinity[nr].mask;
-	पूर्ण अन्यथा अणु
-		वापस cpu_possible_mask;
-	पूर्ण
-पूर्ण
+		return &entry->affinity[nr].mask;
+	} else {
+		return cpu_possible_mask;
+	}
+}
 EXPORT_SYMBOL(pci_irq_get_affinity);
 
-काष्ठा pci_dev *msi_desc_to_pci_dev(काष्ठा msi_desc *desc)
-अणु
-	वापस to_pci_dev(desc->dev);
-पूर्ण
+struct pci_dev *msi_desc_to_pci_dev(struct msi_desc *desc)
+{
+	return to_pci_dev(desc->dev);
+}
 EXPORT_SYMBOL(msi_desc_to_pci_dev);
 
-व्योम *msi_desc_to_pci_sysdata(काष्ठा msi_desc *desc)
-अणु
-	काष्ठा pci_dev *dev = msi_desc_to_pci_dev(desc);
+void *msi_desc_to_pci_sysdata(struct msi_desc *desc)
+{
+	struct pci_dev *dev = msi_desc_to_pci_dev(desc);
 
-	वापस dev->bus->sysdata;
-पूर्ण
+	return dev->bus->sysdata;
+}
 EXPORT_SYMBOL_GPL(msi_desc_to_pci_sysdata);
 
-#अगर_घोषित CONFIG_PCI_MSI_IRQ_DOMAIN
+#ifdef CONFIG_PCI_MSI_IRQ_DOMAIN
 /**
- * pci_msi_करोमुख्य_ग_लिखो_msg - Helper to ग_लिखो MSI message to PCI config space
- * @irq_data:	Poपूर्णांकer to पूर्णांकerrupt data of the MSI पूर्णांकerrupt
- * @msg:	Poपूर्णांकer to the message
+ * pci_msi_domain_write_msg - Helper to write MSI message to PCI config space
+ * @irq_data:	Pointer to interrupt data of the MSI interrupt
+ * @msg:	Pointer to the message
  */
-व्योम pci_msi_करोमुख्य_ग_लिखो_msg(काष्ठा irq_data *irq_data, काष्ठा msi_msg *msg)
-अणु
-	काष्ठा msi_desc *desc = irq_data_get_msi_desc(irq_data);
+void pci_msi_domain_write_msg(struct irq_data *irq_data, struct msi_msg *msg)
+{
+	struct msi_desc *desc = irq_data_get_msi_desc(irq_data);
 
 	/*
 	 * For MSI-X desc->irq is always equal to irq_data->irq. For
-	 * MSI only the first पूर्णांकerrupt of MULTI MSI passes the test.
+	 * MSI only the first interrupt of MULTI MSI passes the test.
 	 */
-	अगर (desc->irq == irq_data->irq)
-		__pci_ग_लिखो_msi_msg(desc, msg);
-पूर्ण
+	if (desc->irq == irq_data->irq)
+		__pci_write_msi_msg(desc, msg);
+}
 
 /**
- * pci_msi_करोमुख्य_calc_hwirq - Generate a unique ID क्रम an MSI source
- * @desc:	Poपूर्णांकer to the MSI descriptor
+ * pci_msi_domain_calc_hwirq - Generate a unique ID for an MSI source
+ * @desc:	Pointer to the MSI descriptor
  *
- * The ID number is only used within the irqकरोमुख्य.
+ * The ID number is only used within the irqdomain.
  */
-अटल irq_hw_number_t pci_msi_करोमुख्य_calc_hwirq(काष्ठा msi_desc *desc)
-अणु
-	काष्ठा pci_dev *dev = msi_desc_to_pci_dev(desc);
+static irq_hw_number_t pci_msi_domain_calc_hwirq(struct msi_desc *desc)
+{
+	struct pci_dev *dev = msi_desc_to_pci_dev(desc);
 
-	वापस (irq_hw_number_t)desc->msi_attrib.entry_nr |
+	return (irq_hw_number_t)desc->msi_attrib.entry_nr |
 		pci_dev_id(dev) << 11 |
-		(pci_करोमुख्य_nr(dev->bus) & 0xFFFFFFFF) << 27;
-पूर्ण
+		(pci_domain_nr(dev->bus) & 0xFFFFFFFF) << 27;
+}
 
-अटल अंतरभूत bool pci_msi_desc_is_multi_msi(काष्ठा msi_desc *desc)
-अणु
-	वापस !desc->msi_attrib.is_msix && desc->nvec_used > 1;
-पूर्ण
+static inline bool pci_msi_desc_is_multi_msi(struct msi_desc *desc)
+{
+	return !desc->msi_attrib.is_msix && desc->nvec_used > 1;
+}
 
 /**
- * pci_msi_करोमुख्य_check_cap - Verअगरy that @करोमुख्य supports the capabilities
- * 			      क्रम @dev
- * @करोमुख्य:	The पूर्णांकerrupt करोमुख्य to check
- * @info:	The करोमुख्य info क्रम verअगरication
+ * pci_msi_domain_check_cap - Verify that @domain supports the capabilities
+ * 			      for @dev
+ * @domain:	The interrupt domain to check
+ * @info:	The domain info for verification
  * @dev:	The device to check
  *
  * Returns:
- *  0 अगर the functionality is supported
- *  1 अगर Multi MSI is requested, but the करोमुख्य करोes not support it
+ *  0 if the functionality is supported
+ *  1 if Multi MSI is requested, but the domain does not support it
  *  -ENOTSUPP otherwise
  */
-पूर्णांक pci_msi_करोमुख्य_check_cap(काष्ठा irq_करोमुख्य *करोमुख्य,
-			     काष्ठा msi_करोमुख्य_info *info, काष्ठा device *dev)
-अणु
-	काष्ठा msi_desc *desc = first_pci_msi_entry(to_pci_dev(dev));
+int pci_msi_domain_check_cap(struct irq_domain *domain,
+			     struct msi_domain_info *info, struct device *dev)
+{
+	struct msi_desc *desc = first_pci_msi_entry(to_pci_dev(dev));
 
 	/* Special handling to support __pci_enable_msi_range() */
-	अगर (pci_msi_desc_is_multi_msi(desc) &&
+	if (pci_msi_desc_is_multi_msi(desc) &&
 	    !(info->flags & MSI_FLAG_MULTI_PCI_MSI))
-		वापस 1;
-	अन्यथा अगर (desc->msi_attrib.is_msix && !(info->flags & MSI_FLAG_PCI_MSIX))
-		वापस -ENOTSUPP;
+		return 1;
+	else if (desc->msi_attrib.is_msix && !(info->flags & MSI_FLAG_PCI_MSIX))
+		return -ENOTSUPP;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक pci_msi_करोमुख्य_handle_error(काष्ठा irq_करोमुख्य *करोमुख्य,
-				       काष्ठा msi_desc *desc, पूर्णांक error)
-अणु
+static int pci_msi_domain_handle_error(struct irq_domain *domain,
+				       struct msi_desc *desc, int error)
+{
 	/* Special handling to support __pci_enable_msi_range() */
-	अगर (pci_msi_desc_is_multi_msi(desc) && error == -ENOSPC)
-		वापस 1;
+	if (pci_msi_desc_is_multi_msi(desc) && error == -ENOSPC)
+		return 1;
 
-	वापस error;
-पूर्ण
+	return error;
+}
 
-अटल व्योम pci_msi_करोमुख्य_set_desc(msi_alloc_info_t *arg,
-				    काष्ठा msi_desc *desc)
-अणु
+static void pci_msi_domain_set_desc(msi_alloc_info_t *arg,
+				    struct msi_desc *desc)
+{
 	arg->desc = desc;
-	arg->hwirq = pci_msi_करोमुख्य_calc_hwirq(desc);
-पूर्ण
+	arg->hwirq = pci_msi_domain_calc_hwirq(desc);
+}
 
-अटल काष्ठा msi_करोमुख्य_ops pci_msi_करोमुख्य_ops_शेष = अणु
-	.set_desc	= pci_msi_करोमुख्य_set_desc,
-	.msi_check	= pci_msi_करोमुख्य_check_cap,
-	.handle_error	= pci_msi_करोमुख्य_handle_error,
-पूर्ण;
+static struct msi_domain_ops pci_msi_domain_ops_default = {
+	.set_desc	= pci_msi_domain_set_desc,
+	.msi_check	= pci_msi_domain_check_cap,
+	.handle_error	= pci_msi_domain_handle_error,
+};
 
-अटल व्योम pci_msi_करोमुख्य_update_करोm_ops(काष्ठा msi_करोमुख्य_info *info)
-अणु
-	काष्ठा msi_करोमुख्य_ops *ops = info->ops;
+static void pci_msi_domain_update_dom_ops(struct msi_domain_info *info)
+{
+	struct msi_domain_ops *ops = info->ops;
 
-	अगर (ops == शून्य) अणु
-		info->ops = &pci_msi_करोमुख्य_ops_शेष;
-	पूर्ण अन्यथा अणु
-		अगर (ops->set_desc == शून्य)
-			ops->set_desc = pci_msi_करोमुख्य_set_desc;
-		अगर (ops->msi_check == शून्य)
-			ops->msi_check = pci_msi_करोमुख्य_check_cap;
-		अगर (ops->handle_error == शून्य)
-			ops->handle_error = pci_msi_करोमुख्य_handle_error;
-	पूर्ण
-पूर्ण
+	if (ops == NULL) {
+		info->ops = &pci_msi_domain_ops_default;
+	} else {
+		if (ops->set_desc == NULL)
+			ops->set_desc = pci_msi_domain_set_desc;
+		if (ops->msi_check == NULL)
+			ops->msi_check = pci_msi_domain_check_cap;
+		if (ops->handle_error == NULL)
+			ops->handle_error = pci_msi_domain_handle_error;
+	}
+}
 
-अटल व्योम pci_msi_करोमुख्य_update_chip_ops(काष्ठा msi_करोमुख्य_info *info)
-अणु
-	काष्ठा irq_chip *chip = info->chip;
+static void pci_msi_domain_update_chip_ops(struct msi_domain_info *info)
+{
+	struct irq_chip *chip = info->chip;
 
 	BUG_ON(!chip);
-	अगर (!chip->irq_ग_लिखो_msi_msg)
-		chip->irq_ग_लिखो_msi_msg = pci_msi_करोमुख्य_ग_लिखो_msg;
-	अगर (!chip->irq_mask)
+	if (!chip->irq_write_msi_msg)
+		chip->irq_write_msi_msg = pci_msi_domain_write_msg;
+	if (!chip->irq_mask)
 		chip->irq_mask = pci_msi_mask_irq;
-	अगर (!chip->irq_unmask)
+	if (!chip->irq_unmask)
 		chip->irq_unmask = pci_msi_unmask_irq;
-पूर्ण
+}
 
 /**
- * pci_msi_create_irq_करोमुख्य - Create a MSI पूर्णांकerrupt करोमुख्य
- * @fwnode:	Optional fwnode of the पूर्णांकerrupt controller
- * @info:	MSI करोमुख्य info
- * @parent:	Parent irq करोमुख्य
+ * pci_msi_create_irq_domain - Create a MSI interrupt domain
+ * @fwnode:	Optional fwnode of the interrupt controller
+ * @info:	MSI domain info
+ * @parent:	Parent irq domain
  *
- * Updates the करोमुख्य and chip ops and creates a MSI पूर्णांकerrupt करोमुख्य.
+ * Updates the domain and chip ops and creates a MSI interrupt domain.
  *
  * Returns:
- * A करोमुख्य poपूर्णांकer or शून्य in हाल of failure.
+ * A domain pointer or NULL in case of failure.
  */
-काष्ठा irq_करोमुख्य *pci_msi_create_irq_करोमुख्य(काष्ठा fwnode_handle *fwnode,
-					     काष्ठा msi_करोमुख्य_info *info,
-					     काष्ठा irq_करोमुख्य *parent)
-अणु
-	काष्ठा irq_करोमुख्य *करोमुख्य;
+struct irq_domain *pci_msi_create_irq_domain(struct fwnode_handle *fwnode,
+					     struct msi_domain_info *info,
+					     struct irq_domain *parent)
+{
+	struct irq_domain *domain;
 
-	अगर (WARN_ON(info->flags & MSI_FLAG_LEVEL_CAPABLE))
+	if (WARN_ON(info->flags & MSI_FLAG_LEVEL_CAPABLE))
 		info->flags &= ~MSI_FLAG_LEVEL_CAPABLE;
 
-	अगर (info->flags & MSI_FLAG_USE_DEF_DOM_OPS)
-		pci_msi_करोमुख्य_update_करोm_ops(info);
-	अगर (info->flags & MSI_FLAG_USE_DEF_CHIP_OPS)
-		pci_msi_करोमुख्य_update_chip_ops(info);
+	if (info->flags & MSI_FLAG_USE_DEF_DOM_OPS)
+		pci_msi_domain_update_dom_ops(info);
+	if (info->flags & MSI_FLAG_USE_DEF_CHIP_OPS)
+		pci_msi_domain_update_chip_ops(info);
 
 	info->flags |= MSI_FLAG_ACTIVATE_EARLY;
-	अगर (IS_ENABLED(CONFIG_GENERIC_IRQ_RESERVATION_MODE))
+	if (IS_ENABLED(CONFIG_GENERIC_IRQ_RESERVATION_MODE))
 		info->flags |= MSI_FLAG_MUST_REACTIVATE;
 
 	/* PCI-MSI is oneshot-safe */
 	info->chip->flags |= IRQCHIP_ONESHOT_SAFE;
 
-	करोमुख्य = msi_create_irq_करोमुख्य(fwnode, info, parent);
-	अगर (!करोमुख्य)
-		वापस शून्य;
+	domain = msi_create_irq_domain(fwnode, info, parent);
+	if (!domain)
+		return NULL;
 
-	irq_करोमुख्य_update_bus_token(करोमुख्य, DOMAIN_BUS_PCI_MSI);
-	वापस करोमुख्य;
-पूर्ण
-EXPORT_SYMBOL_GPL(pci_msi_create_irq_करोमुख्य);
+	irq_domain_update_bus_token(domain, DOMAIN_BUS_PCI_MSI);
+	return domain;
+}
+EXPORT_SYMBOL_GPL(pci_msi_create_irq_domain);
 
 /*
- * Users of the generic MSI infraकाष्ठाure expect a device to have a single ID,
+ * Users of the generic MSI infrastructure expect a device to have a single ID,
  * so with DMA aliases we have to pick the least-worst compromise. Devices with
  * DMA phantom functions tend to still emit MSIs from the real function number,
  * so we ignore those and only consider topological aliases where either the
- * alias device or RID appears on a dअगरferent bus number. We also make the
+ * alias device or RID appears on a different bus number. We also make the
  * reasonable assumption that bridges are walked in an upstream direction (so
  * the last one seen wins), and the much braver assumption that the most likely
- * हाल is that of PCI->PCIe so we should always use the alias RID. This echoes
- * the logic from पूर्णांकel_irq_remapping's set_msi_sid(), which presumably works
+ * case is that of PCI->PCIe so we should always use the alias RID. This echoes
+ * the logic from intel_irq_remapping's set_msi_sid(), which presumably works
  * well enough in practice; in the face of the horrible PCIe<->PCI-X conditions
- * क्रम taking ownership all we can really करो is बंद our eyes and hope...
+ * for taking ownership all we can really do is close our eyes and hope...
  */
-अटल पूर्णांक get_msi_id_cb(काष्ठा pci_dev *pdev, u16 alias, व्योम *data)
-अणु
+static int get_msi_id_cb(struct pci_dev *pdev, u16 alias, void *data)
+{
 	u32 *pa = data;
 	u8 bus = PCI_BUS_NUM(*pa);
 
-	अगर (pdev->bus->number != bus || PCI_BUS_NUM(alias) != bus)
+	if (pdev->bus->number != bus || PCI_BUS_NUM(alias) != bus)
 		*pa = alias;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * pci_msi_करोमुख्य_get_msi_rid - Get the MSI requester id (RID)
- * @करोमुख्य:	The पूर्णांकerrupt करोमुख्य
+ * pci_msi_domain_get_msi_rid - Get the MSI requester id (RID)
+ * @domain:	The interrupt domain
  * @pdev:	The PCI device.
  *
- * The RID क्रम a device is क्रमmed from the alias, with a firmware
+ * The RID for a device is formed from the alias, with a firmware
  * supplied mapping applied
  *
  * Returns: The RID.
  */
-u32 pci_msi_करोमुख्य_get_msi_rid(काष्ठा irq_करोमुख्य *करोमुख्य, काष्ठा pci_dev *pdev)
-अणु
-	काष्ठा device_node *of_node;
+u32 pci_msi_domain_get_msi_rid(struct irq_domain *domain, struct pci_dev *pdev)
+{
+	struct device_node *of_node;
 	u32 rid = pci_dev_id(pdev);
 
-	pci_क्रम_each_dma_alias(pdev, get_msi_id_cb, &rid);
+	pci_for_each_dma_alias(pdev, get_msi_id_cb, &rid);
 
-	of_node = irq_करोमुख्य_get_of_node(करोमुख्य);
+	of_node = irq_domain_get_of_node(domain);
 	rid = of_node ? of_msi_map_id(&pdev->dev, of_node, rid) :
 			iort_msi_map_id(&pdev->dev, rid);
 
-	वापस rid;
-पूर्ण
+	return rid;
+}
 
 /**
- * pci_msi_get_device_करोमुख्य - Get the MSI करोमुख्य क्रम a given PCI device
+ * pci_msi_get_device_domain - Get the MSI domain for a given PCI device
  * @pdev:	The PCI device
  *
- * Use the firmware data to find a device-specअगरic MSI करोमुख्य
- * (i.e. not one that is set as a शेष).
+ * Use the firmware data to find a device-specific MSI domain
+ * (i.e. not one that is set as a default).
  *
- * Returns: The corresponding MSI करोमुख्य or शून्य अगर none has been found.
+ * Returns: The corresponding MSI domain or NULL if none has been found.
  */
-काष्ठा irq_करोमुख्य *pci_msi_get_device_करोमुख्य(काष्ठा pci_dev *pdev)
-अणु
-	काष्ठा irq_करोमुख्य *करोm;
+struct irq_domain *pci_msi_get_device_domain(struct pci_dev *pdev)
+{
+	struct irq_domain *dom;
 	u32 rid = pci_dev_id(pdev);
 
-	pci_क्रम_each_dma_alias(pdev, get_msi_id_cb, &rid);
-	करोm = of_msi_map_get_device_करोमुख्य(&pdev->dev, rid, DOMAIN_BUS_PCI_MSI);
-	अगर (!करोm)
-		करोm = iort_get_device_करोमुख्य(&pdev->dev, rid,
+	pci_for_each_dma_alias(pdev, get_msi_id_cb, &rid);
+	dom = of_msi_map_get_device_domain(&pdev->dev, rid, DOMAIN_BUS_PCI_MSI);
+	if (!dom)
+		dom = iort_get_device_domain(&pdev->dev, rid,
 					     DOMAIN_BUS_PCI_MSI);
-	वापस करोm;
-पूर्ण
+	return dom;
+}
 
 /**
- * pci_dev_has_special_msi_करोमुख्य - Check whether the device is handled by
- *				    a non-standard PCI-MSI करोमुख्य
+ * pci_dev_has_special_msi_domain - Check whether the device is handled by
+ *				    a non-standard PCI-MSI domain
  * @pdev:	The PCI device to check.
  *
- * Returns: True अगर the device irqकरोमुख्य or the bus irqकरोमुख्य is
+ * Returns: True if the device irqdomain or the bus irqdomain is
  * non-standard PCI/MSI.
  */
-bool pci_dev_has_special_msi_करोमुख्य(काष्ठा pci_dev *pdev)
-अणु
-	काष्ठा irq_करोमुख्य *करोm = dev_get_msi_करोमुख्य(&pdev->dev);
+bool pci_dev_has_special_msi_domain(struct pci_dev *pdev)
+{
+	struct irq_domain *dom = dev_get_msi_domain(&pdev->dev);
 
-	अगर (!करोm)
-		करोm = dev_get_msi_करोमुख्य(&pdev->bus->dev);
+	if (!dom)
+		dom = dev_get_msi_domain(&pdev->bus->dev);
 
-	अगर (!करोm)
-		वापस true;
+	if (!dom)
+		return true;
 
-	वापस करोm->bus_token != DOMAIN_BUS_PCI_MSI;
-पूर्ण
+	return dom->bus_token != DOMAIN_BUS_PCI_MSI;
+}
 
-#पूर्ण_अगर /* CONFIG_PCI_MSI_IRQ_DOMAIN */
-#पूर्ण_अगर /* CONFIG_PCI_MSI */
+#endif /* CONFIG_PCI_MSI_IRQ_DOMAIN */
+#endif /* CONFIG_PCI_MSI */
 
-व्योम pci_msi_init(काष्ठा pci_dev *dev)
-अणु
+void pci_msi_init(struct pci_dev *dev)
+{
 	u16 ctrl;
 
 	/*
-	 * Disable the MSI hardware to aव्योम screaming पूर्णांकerrupts
-	 * during boot.  This is the घातer on reset शेष so
+	 * Disable the MSI hardware to avoid screaming interrupts
+	 * during boot.  This is the power on reset default so
 	 * usually this should be a noop.
 	 */
 	dev->msi_cap = pci_find_capability(dev, PCI_CAP_ID_MSI);
-	अगर (!dev->msi_cap)
-		वापस;
+	if (!dev->msi_cap)
+		return;
 
-	pci_पढ़ो_config_word(dev, dev->msi_cap + PCI_MSI_FLAGS, &ctrl);
-	अगर (ctrl & PCI_MSI_FLAGS_ENABLE)
-		pci_ग_लिखो_config_word(dev, dev->msi_cap + PCI_MSI_FLAGS,
+	pci_read_config_word(dev, dev->msi_cap + PCI_MSI_FLAGS, &ctrl);
+	if (ctrl & PCI_MSI_FLAGS_ENABLE)
+		pci_write_config_word(dev, dev->msi_cap + PCI_MSI_FLAGS,
 				      ctrl & ~PCI_MSI_FLAGS_ENABLE);
 
-	अगर (!(ctrl & PCI_MSI_FLAGS_64BIT))
+	if (!(ctrl & PCI_MSI_FLAGS_64BIT))
 		dev->no_64bit_msi = 1;
-पूर्ण
+}
 
-व्योम pci_msix_init(काष्ठा pci_dev *dev)
-अणु
+void pci_msix_init(struct pci_dev *dev)
+{
 	u16 ctrl;
 
 	dev->msix_cap = pci_find_capability(dev, PCI_CAP_ID_MSIX);
-	अगर (!dev->msix_cap)
-		वापस;
+	if (!dev->msix_cap)
+		return;
 
-	pci_पढ़ो_config_word(dev, dev->msix_cap + PCI_MSIX_FLAGS, &ctrl);
-	अगर (ctrl & PCI_MSIX_FLAGS_ENABLE)
-		pci_ग_लिखो_config_word(dev, dev->msix_cap + PCI_MSIX_FLAGS,
+	pci_read_config_word(dev, dev->msix_cap + PCI_MSIX_FLAGS, &ctrl);
+	if (ctrl & PCI_MSIX_FLAGS_ENABLE)
+		pci_write_config_word(dev, dev->msix_cap + PCI_MSIX_FLAGS,
 				      ctrl & ~PCI_MSIX_FLAGS_ENABLE);
-पूर्ण
+}

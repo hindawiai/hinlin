@@ -1,15 +1,14 @@
-<शैली गुरु>
 
-#समावेश <linux/ceph/types.h>
-#समावेश <linux/module.h>
+#include <linux/ceph/types.h>
+#include <linux/module.h>
 
 /*
  * Robert Jenkin's hash function.
- * https://burtleburtle.net/bob/hash/evahash.hपंचांगl
- * This is in the खुला करोमुख्य.
+ * https://burtleburtle.net/bob/hash/evahash.html
+ * This is in the public domain.
  */
-#घोषणा mix(a, b, c)						\
-	करो अणु							\
+#define mix(a, b, c)						\
+	do {							\
 		a = a - b;  a = a - c;  a = a ^ (c >> 13);	\
 		b = b - c;  b = b - a;  b = b ^ (a << 8);	\
 		c = c - a;  c = c - b;  c = c ^ (b >> 13);	\
@@ -19,22 +18,22 @@
 		a = a - b;  a = a - c;  a = a ^ (c >> 3);	\
 		b = b - c;  b = b - a;  b = b ^ (a << 10);	\
 		c = c - a;  c = c - b;  c = c ^ (b >> 15);	\
-	पूर्ण जबतक (0)
+	} while (0)
 
-अचिन्हित पूर्णांक ceph_str_hash_rjenkins(स्थिर अक्षर *str, अचिन्हित पूर्णांक length)
-अणु
-	स्थिर अचिन्हित अक्षर *k = (स्थिर अचिन्हित अक्षर *)str;
-	__u32 a, b, c;  /* the पूर्णांकernal state */
+unsigned int ceph_str_hash_rjenkins(const char *str, unsigned int length)
+{
+	const unsigned char *k = (const unsigned char *)str;
+	__u32 a, b, c;  /* the internal state */
 	__u32 len;      /* how many key bytes still need mixing */
 
-	/* Set up the पूर्णांकernal state */
+	/* Set up the internal state */
 	len = length;
 	a = 0x9e3779b9;      /* the golden ratio; an arbitrary value */
 	b = a;
-	c = 0;               /* variable initialization of पूर्णांकernal state */
+	c = 0;               /* variable initialization of internal state */
 
 	/* handle most of the key */
-	जबतक (len >= 12) अणु
+	while (len >= 12) {
 		a = a + (k[0] + ((__u32)k[1] << 8) + ((__u32)k[2] << 16) +
 			 ((__u32)k[3] << 24));
 		b = b + (k[4] + ((__u32)k[5] << 8) + ((__u32)k[6] << 16) +
@@ -44,89 +43,89 @@
 		mix(a, b, c);
 		k = k + 12;
 		len = len - 12;
-	पूर्ण
+	}
 
 	/* handle the last 11 bytes */
 	c = c + length;
-	चयन (len) अणु
-	हाल 11:
+	switch (len) {
+	case 11:
 		c = c + ((__u32)k[10] << 24);
 		fallthrough;
-	हाल 10:
+	case 10:
 		c = c + ((__u32)k[9] << 16);
 		fallthrough;
-	हाल 9:
+	case 9:
 		c = c + ((__u32)k[8] << 8);
-		/* the first byte of c is reserved क्रम the length */
+		/* the first byte of c is reserved for the length */
 		fallthrough;
-	हाल 8:
+	case 8:
 		b = b + ((__u32)k[7] << 24);
 		fallthrough;
-	हाल 7:
+	case 7:
 		b = b + ((__u32)k[6] << 16);
 		fallthrough;
-	हाल 6:
+	case 6:
 		b = b + ((__u32)k[5] << 8);
 		fallthrough;
-	हाल 5:
+	case 5:
 		b = b + k[4];
 		fallthrough;
-	हाल 4:
+	case 4:
 		a = a + ((__u32)k[3] << 24);
 		fallthrough;
-	हाल 3:
+	case 3:
 		a = a + ((__u32)k[2] << 16);
 		fallthrough;
-	हाल 2:
+	case 2:
 		a = a + ((__u32)k[1] << 8);
 		fallthrough;
-	हाल 1:
+	case 1:
 		a = a + k[0];
-		/* हाल 0: nothing left to add */
-	पूर्ण
+		/* case 0: nothing left to add */
+	}
 	mix(a, b, c);
 
-	वापस c;
-पूर्ण
+	return c;
+}
 
 /*
  * linux dcache hash
  */
-अचिन्हित पूर्णांक ceph_str_hash_linux(स्थिर अक्षर *str, अचिन्हित पूर्णांक length)
-अणु
-	अचिन्हित दीर्घ hash = 0;
-	अचिन्हित अक्षर c;
+unsigned int ceph_str_hash_linux(const char *str, unsigned int length)
+{
+	unsigned long hash = 0;
+	unsigned char c;
 
-	जबतक (length--) अणु
+	while (length--) {
 		c = *str++;
 		hash = (hash + (c << 4) + (c >> 4)) * 11;
-	पूर्ण
-	वापस hash;
-पूर्ण
+	}
+	return hash;
+}
 
 
-अचिन्हित पूर्णांक ceph_str_hash(पूर्णांक type, स्थिर अक्षर *s, अचिन्हित पूर्णांक len)
-अणु
-	चयन (type) अणु
-	हाल CEPH_STR_HASH_LINUX:
-		वापस ceph_str_hash_linux(s, len);
-	हाल CEPH_STR_HASH_RJENKINS:
-		वापस ceph_str_hash_rjenkins(s, len);
-	शेष:
-		वापस -1;
-	पूर्ण
-पूर्ण
+unsigned int ceph_str_hash(int type, const char *s, unsigned int len)
+{
+	switch (type) {
+	case CEPH_STR_HASH_LINUX:
+		return ceph_str_hash_linux(s, len);
+	case CEPH_STR_HASH_RJENKINS:
+		return ceph_str_hash_rjenkins(s, len);
+	default:
+		return -1;
+	}
+}
 EXPORT_SYMBOL(ceph_str_hash);
 
-स्थिर अक्षर *ceph_str_hash_name(पूर्णांक type)
-अणु
-	चयन (type) अणु
-	हाल CEPH_STR_HASH_LINUX:
-		वापस "linux";
-	हाल CEPH_STR_HASH_RJENKINS:
-		वापस "rjenkins";
-	शेष:
-		वापस "unknown";
-	पूर्ण
-पूर्ण
+const char *ceph_str_hash_name(int type)
+{
+	switch (type) {
+	case CEPH_STR_HASH_LINUX:
+		return "linux";
+	case CEPH_STR_HASH_RJENKINS:
+		return "rjenkins";
+	default:
+		return "unknown";
+	}
+}
 EXPORT_SYMBOL(ceph_str_hash_name);

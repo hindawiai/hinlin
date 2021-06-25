@@ -1,364 +1,363 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <त्रुटिसं.स>
-#समावेश <unistd.h>
-#समावेश <मानकपन.स>
-#समावेश <माला.स>
-#समावेश <sys/types.h>
-#समावेश <sys/स्थिति.स>
-#समावेश <fcntl.h>
-#समावेश <मानककोष.स>
-#समावेश <linux/kernel.h>
+// SPDX-License-Identifier: GPL-2.0
+#include <errno.h>
+#include <unistd.h>
+#include <stdio.h>
+#include <string.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <stdlib.h>
+#include <linux/kernel.h>
 
-#समावेश "vdso.h"
-#समावेश "dso.h"
-#समावेश <पूर्णांकernal/lib.h>
-#समावेश "map.h"
-#समावेश "symbol.h"
-#समावेश "machine.h"
-#समावेश "thread.h"
-#समावेश "linux/string.h"
-#समावेश <linux/zभाग.स>
-#समावेश "debug.h"
+#include "vdso.h"
+#include "dso.h"
+#include <internal/lib.h>
+#include "map.h"
+#include "symbol.h"
+#include "machine.h"
+#include "thread.h"
+#include "linux/string.h"
+#include <linux/zalloc.h>
+#include "debug.h"
 
 /*
- * Include definition of find_map() also used in perf-पढ़ो-vdso.c क्रम
- * building perf-पढ़ो-vdso32 and perf-पढ़ो-vdsox32.
+ * Include definition of find_map() also used in perf-read-vdso.c for
+ * building perf-read-vdso32 and perf-read-vdsox32.
  */
-#समावेश "find-map.c"
+#include "find-map.c"
 
-#घोषणा VDSO__TEMP_खाता_NAME "/tmp/perf-vdso.so-XXXXXX"
+#define VDSO__TEMP_FILE_NAME "/tmp/perf-vdso.so-XXXXXX"
 
-काष्ठा vdso_file अणु
+struct vdso_file {
 	bool found;
 	bool error;
-	अक्षर temp_file_name[माप(VDSO__TEMP_खाता_NAME)];
-	स्थिर अक्षर *dso_name;
-	स्थिर अक्षर *पढ़ो_prog;
-पूर्ण;
+	char temp_file_name[sizeof(VDSO__TEMP_FILE_NAME)];
+	const char *dso_name;
+	const char *read_prog;
+};
 
-काष्ठा vdso_info अणु
-	काष्ठा vdso_file vdso;
-#अगर BITS_PER_LONG == 64
-	काष्ठा vdso_file vdso32;
-	काष्ठा vdso_file vdsox32;
-#पूर्ण_अगर
-पूर्ण;
+struct vdso_info {
+	struct vdso_file vdso;
+#if BITS_PER_LONG == 64
+	struct vdso_file vdso32;
+	struct vdso_file vdsox32;
+#endif
+};
 
-अटल काष्ठा vdso_info *vdso_info__new(व्योम)
-अणु
-	अटल स्थिर काष्ठा vdso_info vdso_info_init = अणु
-		.vdso    = अणु
-			.temp_file_name = VDSO__TEMP_खाता_NAME,
+static struct vdso_info *vdso_info__new(void)
+{
+	static const struct vdso_info vdso_info_init = {
+		.vdso    = {
+			.temp_file_name = VDSO__TEMP_FILE_NAME,
 			.dso_name = DSO__NAME_VDSO,
-		पूर्ण,
-#अगर BITS_PER_LONG == 64
-		.vdso32  = अणु
-			.temp_file_name = VDSO__TEMP_खाता_NAME,
+		},
+#if BITS_PER_LONG == 64
+		.vdso32  = {
+			.temp_file_name = VDSO__TEMP_FILE_NAME,
 			.dso_name = DSO__NAME_VDSO32,
-			.पढ़ो_prog = "perf-read-vdso32",
-		पूर्ण,
-		.vdsox32  = अणु
-			.temp_file_name = VDSO__TEMP_खाता_NAME,
+			.read_prog = "perf-read-vdso32",
+		},
+		.vdsox32  = {
+			.temp_file_name = VDSO__TEMP_FILE_NAME,
 			.dso_name = DSO__NAME_VDSOX32,
-			.पढ़ो_prog = "perf-read-vdsox32",
-		पूर्ण,
-#पूर्ण_अगर
-	पूर्ण;
+			.read_prog = "perf-read-vdsox32",
+		},
+#endif
+	};
 
-	वापस memdup(&vdso_info_init, माप(vdso_info_init));
-पूर्ण
+	return memdup(&vdso_info_init, sizeof(vdso_info_init));
+}
 
-अटल अक्षर *get_file(काष्ठा vdso_file *vdso_file)
-अणु
-	अक्षर *vdso = शून्य;
-	अक्षर *buf = शून्य;
-	व्योम *start, *end;
-	माप_प्रकार size;
-	पूर्णांक fd;
+static char *get_file(struct vdso_file *vdso_file)
+{
+	char *vdso = NULL;
+	char *buf = NULL;
+	void *start, *end;
+	size_t size;
+	int fd;
 
-	अगर (vdso_file->found)
-		वापस vdso_file->temp_file_name;
+	if (vdso_file->found)
+		return vdso_file->temp_file_name;
 
-	अगर (vdso_file->error || find_map(&start, &end, VDSO__MAP_NAME))
-		वापस शून्य;
+	if (vdso_file->error || find_map(&start, &end, VDSO__MAP_NAME))
+		return NULL;
 
 	size = end - start;
 
 	buf = memdup(start, size);
-	अगर (!buf)
-		वापस शून्य;
+	if (!buf)
+		return NULL;
 
 	fd = mkstemp(vdso_file->temp_file_name);
-	अगर (fd < 0)
-		जाओ out;
+	if (fd < 0)
+		goto out;
 
-	अगर (size == (माप_प्रकार) ग_लिखो(fd, buf, size))
+	if (size == (size_t) write(fd, buf, size))
 		vdso = vdso_file->temp_file_name;
 
-	बंद(fd);
+	close(fd);
 
  out:
-	मुक्त(buf);
+	free(buf);
 
-	vdso_file->found = (vdso != शून्य);
+	vdso_file->found = (vdso != NULL);
 	vdso_file->error = !vdso_file->found;
-	वापस vdso;
-पूर्ण
+	return vdso;
+}
 
-व्योम machine__निकास_vdso(काष्ठा machine *machine)
-अणु
-	काष्ठा vdso_info *vdso_info = machine->vdso_info;
+void machine__exit_vdso(struct machine *machine)
+{
+	struct vdso_info *vdso_info = machine->vdso_info;
 
-	अगर (!vdso_info)
-		वापस;
+	if (!vdso_info)
+		return;
 
-	अगर (vdso_info->vdso.found)
+	if (vdso_info->vdso.found)
 		unlink(vdso_info->vdso.temp_file_name);
-#अगर BITS_PER_LONG == 64
-	अगर (vdso_info->vdso32.found)
+#if BITS_PER_LONG == 64
+	if (vdso_info->vdso32.found)
 		unlink(vdso_info->vdso32.temp_file_name);
-	अगर (vdso_info->vdsox32.found)
+	if (vdso_info->vdsox32.found)
 		unlink(vdso_info->vdsox32.temp_file_name);
-#पूर्ण_अगर
+#endif
 
-	zमुक्त(&machine->vdso_info);
-पूर्ण
+	zfree(&machine->vdso_info);
+}
 
-अटल काष्ठा dso *__machine__addnew_vdso(काष्ठा machine *machine, स्थिर अक्षर *लघु_name,
-					  स्थिर अक्षर *दीर्घ_name)
-अणु
-	काष्ठा dso *dso;
+static struct dso *__machine__addnew_vdso(struct machine *machine, const char *short_name,
+					  const char *long_name)
+{
+	struct dso *dso;
 
-	dso = dso__new(लघु_name);
-	अगर (dso != शून्य) अणु
+	dso = dso__new(short_name);
+	if (dso != NULL) {
 		__dsos__add(&machine->dsos, dso);
-		dso__set_दीर्घ_name(dso, दीर्घ_name, false);
-		/* Put dso here because __dsos_add alपढ़ोy got it */
+		dso__set_long_name(dso, long_name, false);
+		/* Put dso here because __dsos_add already got it */
 		dso__put(dso);
-	पूर्ण
+	}
 
-	वापस dso;
-पूर्ण
+	return dso;
+}
 
-अटल क्रमागत dso_type machine__thपढ़ो_dso_type(काष्ठा machine *machine,
-					      काष्ठा thपढ़ो *thपढ़ो)
-अणु
-	क्रमागत dso_type dso_type = DSO__TYPE_UNKNOWN;
-	काष्ठा map *map;
+static enum dso_type machine__thread_dso_type(struct machine *machine,
+					      struct thread *thread)
+{
+	enum dso_type dso_type = DSO__TYPE_UNKNOWN;
+	struct map *map;
 
-	maps__क्रम_each_entry(thपढ़ो->maps, map) अणु
-		काष्ठा dso *dso = map->dso;
-		अगर (!dso || dso->दीर्घ_name[0] != '/')
-			जारी;
+	maps__for_each_entry(thread->maps, map) {
+		struct dso *dso = map->dso;
+		if (!dso || dso->long_name[0] != '/')
+			continue;
 		dso_type = dso__type(dso, machine);
-		अगर (dso_type != DSO__TYPE_UNKNOWN)
-			अवरोध;
-	पूर्ण
+		if (dso_type != DSO__TYPE_UNKNOWN)
+			break;
+	}
 
-	वापस dso_type;
-पूर्ण
+	return dso_type;
+}
 
-#अगर BITS_PER_LONG == 64
+#if BITS_PER_LONG == 64
 
-अटल पूर्णांक vdso__करो_copy_compat(खाता *f, पूर्णांक fd)
-अणु
-	अक्षर buf[4096];
-	माप_प्रकार count;
+static int vdso__do_copy_compat(FILE *f, int fd)
+{
+	char buf[4096];
+	size_t count;
 
-	जबतक (1) अणु
-		count = ख_पढ़ो(buf, 1, माप(buf), f);
-		अगर (ख_त्रुटि(f))
-			वापस -त्रुटि_सं;
-		अगर (ख_पूर्ण(f))
-			अवरोध;
-		अगर (count && ग_लिखोn(fd, buf, count) != (sमाप_प्रकार)count)
-			वापस -त्रुटि_सं;
-	पूर्ण
+	while (1) {
+		count = fread(buf, 1, sizeof(buf), f);
+		if (ferror(f))
+			return -errno;
+		if (feof(f))
+			break;
+		if (count && writen(fd, buf, count) != (ssize_t)count)
+			return -errno;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक vdso__copy_compat(स्थिर अक्षर *prog, पूर्णांक fd)
-अणु
-	खाता *f;
-	पूर्णांक err;
+static int vdso__copy_compat(const char *prog, int fd)
+{
+	FILE *f;
+	int err;
 
-	f = pखोलो(prog, "r");
-	अगर (!f)
-		वापस -त्रुटि_सं;
+	f = popen(prog, "r");
+	if (!f)
+		return -errno;
 
-	err = vdso__करो_copy_compat(f, fd);
+	err = vdso__do_copy_compat(f, fd);
 
-	अगर (pबंद(f) == -1)
-		वापस -त्रुटि_सं;
+	if (pclose(f) == -1)
+		return -errno;
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक vdso__create_compat_file(स्थिर अक्षर *prog, अक्षर *temp_name)
-अणु
-	पूर्णांक fd, err;
+static int vdso__create_compat_file(const char *prog, char *temp_name)
+{
+	int fd, err;
 
 	fd = mkstemp(temp_name);
-	अगर (fd < 0)
-		वापस -त्रुटि_सं;
+	if (fd < 0)
+		return -errno;
 
 	err = vdso__copy_compat(prog, fd);
 
-	अगर (बंद(fd) == -1)
-		वापस -त्रुटि_सं;
+	if (close(fd) == -1)
+		return -errno;
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल स्थिर अक्षर *vdso__get_compat_file(काष्ठा vdso_file *vdso_file)
-अणु
-	पूर्णांक err;
+static const char *vdso__get_compat_file(struct vdso_file *vdso_file)
+{
+	int err;
 
-	अगर (vdso_file->found)
-		वापस vdso_file->temp_file_name;
+	if (vdso_file->found)
+		return vdso_file->temp_file_name;
 
-	अगर (vdso_file->error)
-		वापस शून्य;
+	if (vdso_file->error)
+		return NULL;
 
-	err = vdso__create_compat_file(vdso_file->पढ़ो_prog,
+	err = vdso__create_compat_file(vdso_file->read_prog,
 				       vdso_file->temp_file_name);
-	अगर (err) अणु
-		pr_err("%s failed, error %d\n", vdso_file->पढ़ो_prog, err);
+	if (err) {
+		pr_err("%s failed, error %d\n", vdso_file->read_prog, err);
 		vdso_file->error = true;
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
 	vdso_file->found = true;
 
-	वापस vdso_file->temp_file_name;
-पूर्ण
+	return vdso_file->temp_file_name;
+}
 
-अटल काष्ठा dso *__machine__findnew_compat(काष्ठा machine *machine,
-					     काष्ठा vdso_file *vdso_file)
-अणु
-	स्थिर अक्षर *file_name;
-	काष्ठा dso *dso;
+static struct dso *__machine__findnew_compat(struct machine *machine,
+					     struct vdso_file *vdso_file)
+{
+	const char *file_name;
+	struct dso *dso;
 
 	dso = __dsos__find(&machine->dsos, vdso_file->dso_name, true);
-	अगर (dso)
-		जाओ out;
+	if (dso)
+		goto out;
 
 	file_name = vdso__get_compat_file(vdso_file);
-	अगर (!file_name)
-		जाओ out;
+	if (!file_name)
+		goto out;
 
 	dso = __machine__addnew_vdso(machine, vdso_file->dso_name, file_name);
 out:
-	वापस dso;
-पूर्ण
+	return dso;
+}
 
-अटल पूर्णांक __machine__findnew_vdso_compat(काष्ठा machine *machine,
-					  काष्ठा thपढ़ो *thपढ़ो,
-					  काष्ठा vdso_info *vdso_info,
-					  काष्ठा dso **dso)
-अणु
-	क्रमागत dso_type dso_type;
+static int __machine__findnew_vdso_compat(struct machine *machine,
+					  struct thread *thread,
+					  struct vdso_info *vdso_info,
+					  struct dso **dso)
+{
+	enum dso_type dso_type;
 
-	dso_type = machine__thपढ़ो_dso_type(machine, thपढ़ो);
+	dso_type = machine__thread_dso_type(machine, thread);
 
-#अगर_अघोषित HAVE_PERF_READ_VDSO32
-	अगर (dso_type == DSO__TYPE_32BIT)
-		वापस 0;
-#पूर्ण_अगर
-#अगर_अघोषित HAVE_PERF_READ_VDSOX32
-	अगर (dso_type == DSO__TYPE_X32BIT)
-		वापस 0;
-#पूर्ण_अगर
+#ifndef HAVE_PERF_READ_VDSO32
+	if (dso_type == DSO__TYPE_32BIT)
+		return 0;
+#endif
+#ifndef HAVE_PERF_READ_VDSOX32
+	if (dso_type == DSO__TYPE_X32BIT)
+		return 0;
+#endif
 
-	चयन (dso_type) अणु
-	हाल DSO__TYPE_32BIT:
+	switch (dso_type) {
+	case DSO__TYPE_32BIT:
 		*dso = __machine__findnew_compat(machine, &vdso_info->vdso32);
-		वापस 1;
-	हाल DSO__TYPE_X32BIT:
+		return 1;
+	case DSO__TYPE_X32BIT:
 		*dso = __machine__findnew_compat(machine, &vdso_info->vdsox32);
-		वापस 1;
-	हाल DSO__TYPE_UNKNOWN:
-	हाल DSO__TYPE_64BIT:
-	शेष:
-		वापस 0;
-	पूर्ण
-पूर्ण
+		return 1;
+	case DSO__TYPE_UNKNOWN:
+	case DSO__TYPE_64BIT:
+	default:
+		return 0;
+	}
+}
 
-#पूर्ण_अगर
+#endif
 
-अटल काष्ठा dso *machine__find_vdso(काष्ठा machine *machine,
-				      काष्ठा thपढ़ो *thपढ़ो)
-अणु
-	काष्ठा dso *dso = शून्य;
-	क्रमागत dso_type dso_type;
+static struct dso *machine__find_vdso(struct machine *machine,
+				      struct thread *thread)
+{
+	struct dso *dso = NULL;
+	enum dso_type dso_type;
 
-	dso_type = machine__thपढ़ो_dso_type(machine, thपढ़ो);
-	चयन (dso_type) अणु
-	हाल DSO__TYPE_32BIT:
+	dso_type = machine__thread_dso_type(machine, thread);
+	switch (dso_type) {
+	case DSO__TYPE_32BIT:
 		dso = __dsos__find(&machine->dsos, DSO__NAME_VDSO32, true);
-		अगर (!dso) अणु
+		if (!dso) {
 			dso = __dsos__find(&machine->dsos, DSO__NAME_VDSO,
 					   true);
-			अगर (dso && dso_type != dso__type(dso, machine))
-				dso = शून्य;
-		पूर्ण
-		अवरोध;
-	हाल DSO__TYPE_X32BIT:
+			if (dso && dso_type != dso__type(dso, machine))
+				dso = NULL;
+		}
+		break;
+	case DSO__TYPE_X32BIT:
 		dso = __dsos__find(&machine->dsos, DSO__NAME_VDSOX32, true);
-		अवरोध;
-	हाल DSO__TYPE_64BIT:
-	हाल DSO__TYPE_UNKNOWN:
-	शेष:
+		break;
+	case DSO__TYPE_64BIT:
+	case DSO__TYPE_UNKNOWN:
+	default:
 		dso = __dsos__find(&machine->dsos, DSO__NAME_VDSO, true);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस dso;
-पूर्ण
+	return dso;
+}
 
-काष्ठा dso *machine__findnew_vdso(काष्ठा machine *machine,
-				  काष्ठा thपढ़ो *thपढ़ो)
-अणु
-	काष्ठा vdso_info *vdso_info;
-	काष्ठा dso *dso = शून्य;
+struct dso *machine__findnew_vdso(struct machine *machine,
+				  struct thread *thread)
+{
+	struct vdso_info *vdso_info;
+	struct dso *dso = NULL;
 
-	करोwn_ग_लिखो(&machine->dsos.lock);
-	अगर (!machine->vdso_info)
+	down_write(&machine->dsos.lock);
+	if (!machine->vdso_info)
 		machine->vdso_info = vdso_info__new();
 
 	vdso_info = machine->vdso_info;
-	अगर (!vdso_info)
-		जाओ out_unlock;
+	if (!vdso_info)
+		goto out_unlock;
 
-	dso = machine__find_vdso(machine, thपढ़ो);
-	अगर (dso)
-		जाओ out_unlock;
+	dso = machine__find_vdso(machine, thread);
+	if (dso)
+		goto out_unlock;
 
-#अगर BITS_PER_LONG == 64
-	अगर (__machine__findnew_vdso_compat(machine, thपढ़ो, vdso_info, &dso))
-		जाओ out_unlock;
-#पूर्ण_अगर
+#if BITS_PER_LONG == 64
+	if (__machine__findnew_vdso_compat(machine, thread, vdso_info, &dso))
+		goto out_unlock;
+#endif
 
 	dso = __dsos__find(&machine->dsos, DSO__NAME_VDSO, true);
-	अगर (!dso) अणु
-		अक्षर *file;
+	if (!dso) {
+		char *file;
 
 		file = get_file(&vdso_info->vdso);
-		अगर (file)
+		if (file)
 			dso = __machine__addnew_vdso(machine, DSO__NAME_VDSO, file);
-	पूर्ण
+	}
 
 out_unlock:
 	dso__get(dso);
-	up_ग_लिखो(&machine->dsos.lock);
-	वापस dso;
-पूर्ण
+	up_write(&machine->dsos.lock);
+	return dso;
+}
 
-bool dso__is_vdso(काष्ठा dso *dso)
-अणु
-	वापस !म_भेद(dso->लघु_name, DSO__NAME_VDSO) ||
-	       !म_भेद(dso->लघु_name, DSO__NAME_VDSO32) ||
-	       !म_भेद(dso->लघु_name, DSO__NAME_VDSOX32);
-पूर्ण
+bool dso__is_vdso(struct dso *dso)
+{
+	return !strcmp(dso->short_name, DSO__NAME_VDSO) ||
+	       !strcmp(dso->short_name, DSO__NAME_VDSO32) ||
+	       !strcmp(dso->short_name, DSO__NAME_VDSOX32);
+}

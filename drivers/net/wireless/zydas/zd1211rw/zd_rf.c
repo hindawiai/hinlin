@@ -1,20 +1,19 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
-/* ZD1211 USB-WLAN driver क्रम Linux
+// SPDX-License-Identifier: GPL-2.0-or-later
+/* ZD1211 USB-WLAN driver for Linux
  *
  * Copyright (C) 2005-2007 Ulrich Kunitz <kune@deine-taler.de>
  * Copyright (C) 2006-2007 Daniel Drake <dsd@gentoo.org>
  */
 
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/माला.स>
+#include <linux/errno.h>
+#include <linux/string.h>
 
-#समावेश "zd_def.h"
-#समावेश "zd_rf.h"
-#समावेश "zd_mac.h"
-#समावेश "zd_chip.h"
+#include "zd_def.h"
+#include "zd_rf.h"
+#include "zd_mac.h"
+#include "zd_chip.h"
 
-अटल स्थिर अक्षर * स्थिर rfs[] = अणु
+static const char * const rfs[] = {
 	[0]		= "unknown RF0",
 	[1]		= "unknown RF1",
 	[UW2451_RF]	= "UW2451_RF",
@@ -31,140 +30,140 @@
 	[RF2959_RF]	= "RF2959_RF",
 	[MAXIM_NEW2_RF]	= "MAXIM_NEW2_RF",
 	[PHILIPS_RF]	= "PHILIPS_RF",
-पूर्ण;
+};
 
-स्थिर अक्षर *zd_rf_name(u8 type)
-अणु
-	अगर (type & 0xf0)
+const char *zd_rf_name(u8 type)
+{
+	if (type & 0xf0)
 		type = 0;
-	वापस rfs[type];
-पूर्ण
+	return rfs[type];
+}
 
-व्योम zd_rf_init(काष्ठा zd_rf *rf)
-अणु
-	स_रखो(rf, 0, माप(*rf));
+void zd_rf_init(struct zd_rf *rf)
+{
+	memset(rf, 0, sizeof(*rf));
 
-	/* शेष to update channel पूर्णांकegration, as almost all RF's करो want
+	/* default to update channel integration, as almost all RF's do want
 	 * this */
-	rf->update_channel_पूर्णांक = 1;
-पूर्ण
+	rf->update_channel_int = 1;
+}
 
-व्योम zd_rf_clear(काष्ठा zd_rf *rf)
-अणु
-	अगर (rf->clear)
+void zd_rf_clear(struct zd_rf *rf)
+{
+	if (rf->clear)
 		rf->clear(rf);
-	ZD_MEMCLEAR(rf, माप(*rf));
-पूर्ण
+	ZD_MEMCLEAR(rf, sizeof(*rf));
+}
 
-पूर्णांक zd_rf_init_hw(काष्ठा zd_rf *rf, u8 type)
-अणु
-	पूर्णांक r = 0;
-	पूर्णांक t;
-	काष्ठा zd_chip *chip = zd_rf_to_chip(rf);
+int zd_rf_init_hw(struct zd_rf *rf, u8 type)
+{
+	int r = 0;
+	int t;
+	struct zd_chip *chip = zd_rf_to_chip(rf);
 
 	ZD_ASSERT(mutex_is_locked(&chip->mutex));
-	चयन (type) अणु
-	हाल RF2959_RF:
+	switch (type) {
+	case RF2959_RF:
 		r = zd_rf_init_rf2959(rf);
-		अवरोध;
-	हाल AL2230_RF:
-	हाल AL2230S_RF:
+		break;
+	case AL2230_RF:
+	case AL2230S_RF:
 		r = zd_rf_init_al2230(rf);
-		अवरोध;
-	हाल AL7230B_RF:
+		break;
+	case AL7230B_RF:
 		r = zd_rf_init_al7230b(rf);
-		अवरोध;
-	हाल MAXIM_NEW_RF:
-	हाल UW2453_RF:
+		break;
+	case MAXIM_NEW_RF:
+	case UW2453_RF:
 		r = zd_rf_init_uw2453(rf);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		dev_err(zd_chip_dev(chip),
 			"RF %s %#x is not supported\n", zd_rf_name(type), type);
 		rf->type = 0;
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	अगर (r)
-		वापस r;
+	if (r)
+		return r;
 
 	rf->type = type;
 
 	r = zd_chip_lock_phy_regs(chip);
-	अगर (r)
-		वापस r;
+	if (r)
+		return r;
 	t = rf->init_hw(rf);
 	r = zd_chip_unlock_phy_regs(chip);
-	अगर (t)
+	if (t)
 		r = t;
-	वापस r;
-पूर्ण
+	return r;
+}
 
-पूर्णांक zd_rf_scnprपूर्णांक_id(काष्ठा zd_rf *rf, अक्षर *buffer, माप_प्रकार size)
-अणु
-	वापस scnम_लिखो(buffer, size, "%s", zd_rf_name(rf->type));
-पूर्ण
+int zd_rf_scnprint_id(struct zd_rf *rf, char *buffer, size_t size)
+{
+	return scnprintf(buffer, size, "%s", zd_rf_name(rf->type));
+}
 
-पूर्णांक zd_rf_set_channel(काष्ठा zd_rf *rf, u8 channel)
-अणु
-	पूर्णांक r;
+int zd_rf_set_channel(struct zd_rf *rf, u8 channel)
+{
+	int r;
 
 	ZD_ASSERT(mutex_is_locked(&zd_rf_to_chip(rf)->mutex));
-	अगर (channel < MIN_CHANNEL24)
-		वापस -EINVAL;
-	अगर (channel > MAX_CHANNEL24)
-		वापस -EINVAL;
+	if (channel < MIN_CHANNEL24)
+		return -EINVAL;
+	if (channel > MAX_CHANNEL24)
+		return -EINVAL;
 	dev_dbg_f(zd_chip_dev(zd_rf_to_chip(rf)), "channel: %d\n", channel);
 
 	r = rf->set_channel(rf, channel);
-	अगर (r >= 0)
+	if (r >= 0)
 		rf->channel = channel;
-	वापस r;
-पूर्ण
+	return r;
+}
 
-पूर्णांक zd_चयन_radio_on(काष्ठा zd_rf *rf)
-अणु
-	पूर्णांक r, t;
-	काष्ठा zd_chip *chip = zd_rf_to_chip(rf);
+int zd_switch_radio_on(struct zd_rf *rf)
+{
+	int r, t;
+	struct zd_chip *chip = zd_rf_to_chip(rf);
 
 	ZD_ASSERT(mutex_is_locked(&chip->mutex));
 	r = zd_chip_lock_phy_regs(chip);
-	अगर (r)
-		वापस r;
-	t = rf->चयन_radio_on(rf);
+	if (r)
+		return r;
+	t = rf->switch_radio_on(rf);
 	r = zd_chip_unlock_phy_regs(chip);
-	अगर (t)
+	if (t)
 		r = t;
-	वापस r;
-पूर्ण
+	return r;
+}
 
-पूर्णांक zd_चयन_radio_off(काष्ठा zd_rf *rf)
-अणु
-	पूर्णांक r, t;
-	काष्ठा zd_chip *chip = zd_rf_to_chip(rf);
+int zd_switch_radio_off(struct zd_rf *rf)
+{
+	int r, t;
+	struct zd_chip *chip = zd_rf_to_chip(rf);
 
 	/* TODO: move phy regs handling to zd_chip */
 	ZD_ASSERT(mutex_is_locked(&chip->mutex));
 	r = zd_chip_lock_phy_regs(chip);
-	अगर (r)
-		वापस r;
-	t = rf->चयन_radio_off(rf);
+	if (r)
+		return r;
+	t = rf->switch_radio_off(rf);
 	r = zd_chip_unlock_phy_regs(chip);
-	अगर (t)
+	if (t)
 		r = t;
-	वापस r;
-पूर्ण
+	return r;
+}
 
-पूर्णांक zd_rf_patch_6m_band_edge(काष्ठा zd_rf *rf, u8 channel)
-अणु
-	अगर (!rf->patch_6m_band_edge)
-		वापस 0;
+int zd_rf_patch_6m_band_edge(struct zd_rf *rf, u8 channel)
+{
+	if (!rf->patch_6m_band_edge)
+		return 0;
 
-	वापस rf->patch_6m_band_edge(rf, channel);
-पूर्ण
+	return rf->patch_6m_band_edge(rf, channel);
+}
 
-पूर्णांक zd_rf_generic_patch_6m(काष्ठा zd_rf *rf, u8 channel)
-अणु
-	वापस zd_chip_generic_patch_6m_band(zd_rf_to_chip(rf), channel);
-पूर्ण
+int zd_rf_generic_patch_6m(struct zd_rf *rf, u8 channel)
+{
+	return zd_chip_generic_patch_6m_band(zd_rf_to_chip(rf), channel);
+}
 

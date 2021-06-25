@@ -1,30 +1,29 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
- * linux/drivers/media/platक्रमm/s5p-mfc/s5p_mfc_ctrl.h
+ * linux/drivers/media/platform/s5p-mfc/s5p_mfc_ctrl.h
  *
  * Copyright (c) 2010 Samsung Electronics Co., Ltd.
  *		http://www.samsung.com/
  */
 
-#अगर_अघोषित S5P_MFC_CTRL_H
-#घोषणा S5P_MFC_CTRL_H
+#ifndef S5P_MFC_CTRL_H
+#define S5P_MFC_CTRL_H
 
-#समावेश "s5p_mfc_common.h"
+#include "s5p_mfc_common.h"
 
-पूर्णांक s5p_mfc_release_firmware(काष्ठा s5p_mfc_dev *dev);
-पूर्णांक s5p_mfc_alloc_firmware(काष्ठा s5p_mfc_dev *dev);
-पूर्णांक s5p_mfc_load_firmware(काष्ठा s5p_mfc_dev *dev);
+int s5p_mfc_release_firmware(struct s5p_mfc_dev *dev);
+int s5p_mfc_alloc_firmware(struct s5p_mfc_dev *dev);
+int s5p_mfc_load_firmware(struct s5p_mfc_dev *dev);
 
-पूर्णांक s5p_mfc_init_hw(काष्ठा s5p_mfc_dev *dev);
-व्योम s5p_mfc_deinit_hw(काष्ठा s5p_mfc_dev *dev);
+int s5p_mfc_init_hw(struct s5p_mfc_dev *dev);
+void s5p_mfc_deinit_hw(struct s5p_mfc_dev *dev);
 
-पूर्णांक s5p_mfc_sleep(काष्ठा s5p_mfc_dev *dev);
-पूर्णांक s5p_mfc_wakeup(काष्ठा s5p_mfc_dev *dev);
+int s5p_mfc_sleep(struct s5p_mfc_dev *dev);
+int s5p_mfc_wakeup(struct s5p_mfc_dev *dev);
 
-पूर्णांक s5p_mfc_reset(काष्ठा s5p_mfc_dev *dev);
+int s5p_mfc_reset(struct s5p_mfc_dev *dev);
 
-पूर्णांक s5p_mfc_खोलो_mfc_inst(काष्ठा s5p_mfc_dev *dev, काष्ठा s5p_mfc_ctx *ctx);
-व्योम s5p_mfc_बंद_mfc_inst(काष्ठा s5p_mfc_dev *dev, काष्ठा s5p_mfc_ctx *ctx);
+int s5p_mfc_open_mfc_inst(struct s5p_mfc_dev *dev, struct s5p_mfc_ctx *ctx);
+void s5p_mfc_close_mfc_inst(struct s5p_mfc_dev *dev, struct s5p_mfc_ctx *ctx);
 
-#पूर्ण_अगर /* S5P_MFC_CTRL_H */
+#endif /* S5P_MFC_CTRL_H */

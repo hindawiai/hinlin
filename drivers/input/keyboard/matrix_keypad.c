@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  *  GPIO driven matrix keyboard driver
  *
@@ -8,158 +7,158 @@
  *  Based on corgikbd.c
  */
 
-#समावेश <linux/types.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/input.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/jअगरfies.h>
-#समावेश <linux/module.h>
-#समावेश <linux/gpपन.स>
-#समावेश <linux/input/matrix_keypad.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_gpपन.स>
-#समावेश <linux/of_platक्रमm.h>
+#include <linux/types.h>
+#include <linux/delay.h>
+#include <linux/platform_device.h>
+#include <linux/input.h>
+#include <linux/irq.h>
+#include <linux/interrupt.h>
+#include <linux/jiffies.h>
+#include <linux/module.h>
+#include <linux/gpio.h>
+#include <linux/input/matrix_keypad.h>
+#include <linux/slab.h>
+#include <linux/of.h>
+#include <linux/of_gpio.h>
+#include <linux/of_platform.h>
 
-काष्ठा matrix_keypad अणु
-	स्थिर काष्ठा matrix_keypad_platक्रमm_data *pdata;
-	काष्ठा input_dev *input_dev;
-	अचिन्हित पूर्णांक row_shअगरt;
+struct matrix_keypad {
+	const struct matrix_keypad_platform_data *pdata;
+	struct input_dev *input_dev;
+	unsigned int row_shift;
 
 	DECLARE_BITMAP(disabled_gpios, MATRIX_MAX_ROWS);
 
-	uपूर्णांक32_t last_key_state[MATRIX_MAX_COLS];
-	काष्ठा delayed_work work;
+	uint32_t last_key_state[MATRIX_MAX_COLS];
+	struct delayed_work work;
 	spinlock_t lock;
 	bool scan_pending;
 	bool stopped;
 	bool gpio_all_disabled;
-पूर्ण;
+};
 
 /*
- * NOTE: If drive_inactive_cols is false, then the GPIO has to be put पूर्णांकo
+ * NOTE: If drive_inactive_cols is false, then the GPIO has to be put into
  * HiZ when de-activated to cause minmal side effect when scanning other
- * columns. In that हाल it is configured here to be input, otherwise it is
+ * columns. In that case it is configured here to be input, otherwise it is
  * driven with the inactive value.
  */
-अटल व्योम __activate_col(स्थिर काष्ठा matrix_keypad_platक्रमm_data *pdata,
-			   पूर्णांक col, bool on)
-अणु
+static void __activate_col(const struct matrix_keypad_platform_data *pdata,
+			   int col, bool on)
+{
 	bool level_on = !pdata->active_low;
 
-	अगर (on) अणु
+	if (on) {
 		gpio_direction_output(pdata->col_gpios[col], level_on);
-	पूर्ण अन्यथा अणु
+	} else {
 		gpio_set_value_cansleep(pdata->col_gpios[col], !level_on);
-		अगर (!pdata->drive_inactive_cols)
+		if (!pdata->drive_inactive_cols)
 			gpio_direction_input(pdata->col_gpios[col]);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम activate_col(स्थिर काष्ठा matrix_keypad_platक्रमm_data *pdata,
-			 पूर्णांक col, bool on)
-अणु
+static void activate_col(const struct matrix_keypad_platform_data *pdata,
+			 int col, bool on)
+{
 	__activate_col(pdata, col, on);
 
-	अगर (on && pdata->col_scan_delay_us)
+	if (on && pdata->col_scan_delay_us)
 		udelay(pdata->col_scan_delay_us);
-पूर्ण
+}
 
-अटल व्योम activate_all_cols(स्थिर काष्ठा matrix_keypad_platक्रमm_data *pdata,
+static void activate_all_cols(const struct matrix_keypad_platform_data *pdata,
 			      bool on)
-अणु
-	पूर्णांक col;
+{
+	int col;
 
-	क्रम (col = 0; col < pdata->num_col_gpios; col++)
+	for (col = 0; col < pdata->num_col_gpios; col++)
 		__activate_col(pdata, col, on);
-पूर्ण
+}
 
-अटल bool row_निश्चितed(स्थिर काष्ठा matrix_keypad_platक्रमm_data *pdata,
-			 पूर्णांक row)
-अणु
-	वापस gpio_get_value_cansleep(pdata->row_gpios[row]) ?
+static bool row_asserted(const struct matrix_keypad_platform_data *pdata,
+			 int row)
+{
+	return gpio_get_value_cansleep(pdata->row_gpios[row]) ?
 			!pdata->active_low : pdata->active_low;
-पूर्ण
+}
 
-अटल व्योम enable_row_irqs(काष्ठा matrix_keypad *keypad)
-अणु
-	स्थिर काष्ठा matrix_keypad_platक्रमm_data *pdata = keypad->pdata;
-	पूर्णांक i;
+static void enable_row_irqs(struct matrix_keypad *keypad)
+{
+	const struct matrix_keypad_platform_data *pdata = keypad->pdata;
+	int i;
 
-	अगर (pdata->clustered_irq > 0)
+	if (pdata->clustered_irq > 0)
 		enable_irq(pdata->clustered_irq);
-	अन्यथा अणु
-		क्रम (i = 0; i < pdata->num_row_gpios; i++)
+	else {
+		for (i = 0; i < pdata->num_row_gpios; i++)
 			enable_irq(gpio_to_irq(pdata->row_gpios[i]));
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम disable_row_irqs(काष्ठा matrix_keypad *keypad)
-अणु
-	स्थिर काष्ठा matrix_keypad_platक्रमm_data *pdata = keypad->pdata;
-	पूर्णांक i;
+static void disable_row_irqs(struct matrix_keypad *keypad)
+{
+	const struct matrix_keypad_platform_data *pdata = keypad->pdata;
+	int i;
 
-	अगर (pdata->clustered_irq > 0)
+	if (pdata->clustered_irq > 0)
 		disable_irq_nosync(pdata->clustered_irq);
-	अन्यथा अणु
-		क्रम (i = 0; i < pdata->num_row_gpios; i++)
+	else {
+		for (i = 0; i < pdata->num_row_gpios; i++)
 			disable_irq_nosync(gpio_to_irq(pdata->row_gpios[i]));
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
- * This माला_लो the keys from keyboard and reports it to input subप्रणाली
+ * This gets the keys from keyboard and reports it to input subsystem
  */
-अटल व्योम matrix_keypad_scan(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा matrix_keypad *keypad =
-		container_of(work, काष्ठा matrix_keypad, work.work);
-	काष्ठा input_dev *input_dev = keypad->input_dev;
-	स्थिर अचिन्हित लघु *keycodes = input_dev->keycode;
-	स्थिर काष्ठा matrix_keypad_platक्रमm_data *pdata = keypad->pdata;
-	uपूर्णांक32_t new_state[MATRIX_MAX_COLS];
-	पूर्णांक row, col, code;
+static void matrix_keypad_scan(struct work_struct *work)
+{
+	struct matrix_keypad *keypad =
+		container_of(work, struct matrix_keypad, work.work);
+	struct input_dev *input_dev = keypad->input_dev;
+	const unsigned short *keycodes = input_dev->keycode;
+	const struct matrix_keypad_platform_data *pdata = keypad->pdata;
+	uint32_t new_state[MATRIX_MAX_COLS];
+	int row, col, code;
 
-	/* de-activate all columns क्रम scanning */
+	/* de-activate all columns for scanning */
 	activate_all_cols(pdata, false);
 
-	स_रखो(new_state, 0, माप(new_state));
+	memset(new_state, 0, sizeof(new_state));
 
-	/* निश्चित each column and पढ़ो the row status out */
-	क्रम (col = 0; col < pdata->num_col_gpios; col++) अणु
+	/* assert each column and read the row status out */
+	for (col = 0; col < pdata->num_col_gpios; col++) {
 
 		activate_col(pdata, col, true);
 
-		क्रम (row = 0; row < pdata->num_row_gpios; row++)
+		for (row = 0; row < pdata->num_row_gpios; row++)
 			new_state[col] |=
-				row_निश्चितed(pdata, row) ? (1 << row) : 0;
+				row_asserted(pdata, row) ? (1 << row) : 0;
 
 		activate_col(pdata, col, false);
-	पूर्ण
+	}
 
-	क्रम (col = 0; col < pdata->num_col_gpios; col++) अणु
-		uपूर्णांक32_t bits_changed;
+	for (col = 0; col < pdata->num_col_gpios; col++) {
+		uint32_t bits_changed;
 
 		bits_changed = keypad->last_key_state[col] ^ new_state[col];
-		अगर (bits_changed == 0)
-			जारी;
+		if (bits_changed == 0)
+			continue;
 
-		क्रम (row = 0; row < pdata->num_row_gpios; row++) अणु
-			अगर ((bits_changed & (1 << row)) == 0)
-				जारी;
+		for (row = 0; row < pdata->num_row_gpios; row++) {
+			if ((bits_changed & (1 << row)) == 0)
+				continue;
 
-			code = MATRIX_SCAN_CODE(row, col, keypad->row_shअगरt);
+			code = MATRIX_SCAN_CODE(row, col, keypad->row_shift);
 			input_event(input_dev, EV_MSC, MSC_SCAN, code);
 			input_report_key(input_dev,
 					 keycodes[code],
 					 new_state[col] & (1 << row));
-		पूर्ण
-	पूर्ण
+		}
+	}
 	input_sync(input_dev);
 
-	स_नकल(keypad->last_key_state, new_state, माप(new_state));
+	memcpy(keypad->last_key_state, new_state, sizeof(new_state));
 
 	activate_all_cols(pdata, true);
 
@@ -168,36 +167,36 @@
 	keypad->scan_pending = false;
 	enable_row_irqs(keypad);
 	spin_unlock_irq(&keypad->lock);
-पूर्ण
+}
 
-अटल irqवापस_t matrix_keypad_पूर्णांकerrupt(पूर्णांक irq, व्योम *id)
-अणु
-	काष्ठा matrix_keypad *keypad = id;
-	अचिन्हित दीर्घ flags;
+static irqreturn_t matrix_keypad_interrupt(int irq, void *id)
+{
+	struct matrix_keypad *keypad = id;
+	unsigned long flags;
 
 	spin_lock_irqsave(&keypad->lock, flags);
 
 	/*
-	 * See अगर another IRQ beaten us to it and scheduled the
-	 * scan alपढ़ोy. In that हाल we should not try to
+	 * See if another IRQ beaten us to it and scheduled the
+	 * scan already. In that case we should not try to
 	 * disable IRQs again.
 	 */
-	अगर (unlikely(keypad->scan_pending || keypad->stopped))
-		जाओ out;
+	if (unlikely(keypad->scan_pending || keypad->stopped))
+		goto out;
 
 	disable_row_irqs(keypad);
 	keypad->scan_pending = true;
 	schedule_delayed_work(&keypad->work,
-		msecs_to_jअगरfies(keypad->pdata->debounce_ms));
+		msecs_to_jiffies(keypad->pdata->debounce_ms));
 
 out:
 	spin_unlock_irqrestore(&keypad->lock, flags);
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक matrix_keypad_start(काष्ठा input_dev *dev)
-अणु
-	काष्ठा matrix_keypad *keypad = input_get_drvdata(dev);
+static int matrix_keypad_start(struct input_dev *dev)
+{
+	struct matrix_keypad *keypad = input_get_drvdata(dev);
 
 	keypad->stopped = false;
 	mb();
@@ -208,12 +207,12 @@ out:
 	 */
 	schedule_delayed_work(&keypad->work, 0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम matrix_keypad_stop(काष्ठा input_dev *dev)
-अणु
-	काष्ठा matrix_keypad *keypad = input_get_drvdata(dev);
+static void matrix_keypad_stop(struct input_dev *dev)
+{
+	struct matrix_keypad *keypad = input_get_drvdata(dev);
 
 	spin_lock_irq(&keypad->lock);
 	keypad->stopped = true;
@@ -225,286 +224,286 @@ out:
 	 * we should disable them now.
 	 */
 	disable_row_irqs(keypad);
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_PM_SLEEP
-अटल व्योम matrix_keypad_enable_wakeup(काष्ठा matrix_keypad *keypad)
-अणु
-	स्थिर काष्ठा matrix_keypad_platक्रमm_data *pdata = keypad->pdata;
-	अचिन्हित पूर्णांक gpio;
-	पूर्णांक i;
+#ifdef CONFIG_PM_SLEEP
+static void matrix_keypad_enable_wakeup(struct matrix_keypad *keypad)
+{
+	const struct matrix_keypad_platform_data *pdata = keypad->pdata;
+	unsigned int gpio;
+	int i;
 
-	अगर (pdata->clustered_irq > 0) अणु
-		अगर (enable_irq_wake(pdata->clustered_irq) == 0)
+	if (pdata->clustered_irq > 0) {
+		if (enable_irq_wake(pdata->clustered_irq) == 0)
 			keypad->gpio_all_disabled = true;
-	पूर्ण अन्यथा अणु
+	} else {
 
-		क्रम (i = 0; i < pdata->num_row_gpios; i++) अणु
-			अगर (!test_bit(i, keypad->disabled_gpios)) अणु
+		for (i = 0; i < pdata->num_row_gpios; i++) {
+			if (!test_bit(i, keypad->disabled_gpios)) {
 				gpio = pdata->row_gpios[i];
 
-				अगर (enable_irq_wake(gpio_to_irq(gpio)) == 0)
+				if (enable_irq_wake(gpio_to_irq(gpio)) == 0)
 					__set_bit(i, keypad->disabled_gpios);
-			पूर्ण
-		पूर्ण
-	पूर्ण
-पूर्ण
+			}
+		}
+	}
+}
 
-अटल व्योम matrix_keypad_disable_wakeup(काष्ठा matrix_keypad *keypad)
-अणु
-	स्थिर काष्ठा matrix_keypad_platक्रमm_data *pdata = keypad->pdata;
-	अचिन्हित पूर्णांक gpio;
-	पूर्णांक i;
+static void matrix_keypad_disable_wakeup(struct matrix_keypad *keypad)
+{
+	const struct matrix_keypad_platform_data *pdata = keypad->pdata;
+	unsigned int gpio;
+	int i;
 
-	अगर (pdata->clustered_irq > 0) अणु
-		अगर (keypad->gpio_all_disabled) अणु
+	if (pdata->clustered_irq > 0) {
+		if (keypad->gpio_all_disabled) {
 			disable_irq_wake(pdata->clustered_irq);
 			keypad->gpio_all_disabled = false;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		क्रम (i = 0; i < pdata->num_row_gpios; i++) अणु
-			अगर (test_and_clear_bit(i, keypad->disabled_gpios)) अणु
+		}
+	} else {
+		for (i = 0; i < pdata->num_row_gpios; i++) {
+			if (test_and_clear_bit(i, keypad->disabled_gpios)) {
 				gpio = pdata->row_gpios[i];
 				disable_irq_wake(gpio_to_irq(gpio));
-			पूर्ण
-		पूर्ण
-	पूर्ण
-पूर्ण
+			}
+		}
+	}
+}
 
-अटल पूर्णांक matrix_keypad_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(dev);
-	काष्ठा matrix_keypad *keypad = platक्रमm_get_drvdata(pdev);
+static int matrix_keypad_suspend(struct device *dev)
+{
+	struct platform_device *pdev = to_platform_device(dev);
+	struct matrix_keypad *keypad = platform_get_drvdata(pdev);
 
 	matrix_keypad_stop(keypad->input_dev);
 
-	अगर (device_may_wakeup(&pdev->dev))
+	if (device_may_wakeup(&pdev->dev))
 		matrix_keypad_enable_wakeup(keypad);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक matrix_keypad_resume(काष्ठा device *dev)
-अणु
-	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(dev);
-	काष्ठा matrix_keypad *keypad = platक्रमm_get_drvdata(pdev);
+static int matrix_keypad_resume(struct device *dev)
+{
+	struct platform_device *pdev = to_platform_device(dev);
+	struct matrix_keypad *keypad = platform_get_drvdata(pdev);
 
-	अगर (device_may_wakeup(&pdev->dev))
+	if (device_may_wakeup(&pdev->dev))
 		matrix_keypad_disable_wakeup(keypad);
 
 	matrix_keypad_start(keypad->input_dev);
 
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+	return 0;
+}
+#endif
 
-अटल SIMPLE_DEV_PM_OPS(matrix_keypad_pm_ops,
+static SIMPLE_DEV_PM_OPS(matrix_keypad_pm_ops,
 			 matrix_keypad_suspend, matrix_keypad_resume);
 
-अटल पूर्णांक matrix_keypad_init_gpio(काष्ठा platक्रमm_device *pdev,
-				   काष्ठा matrix_keypad *keypad)
-अणु
-	स्थिर काष्ठा matrix_keypad_platक्रमm_data *pdata = keypad->pdata;
-	पूर्णांक i, err;
+static int matrix_keypad_init_gpio(struct platform_device *pdev,
+				   struct matrix_keypad *keypad)
+{
+	const struct matrix_keypad_platform_data *pdata = keypad->pdata;
+	int i, err;
 
-	/* initialized strobe lines as outमाला_दो, activated */
-	क्रम (i = 0; i < pdata->num_col_gpios; i++) अणु
+	/* initialized strobe lines as outputs, activated */
+	for (i = 0; i < pdata->num_col_gpios; i++) {
 		err = gpio_request(pdata->col_gpios[i], "matrix_kbd_col");
-		अगर (err) अणु
+		if (err) {
 			dev_err(&pdev->dev,
 				"failed to request GPIO%d for COL%d\n",
 				pdata->col_gpios[i], i);
-			जाओ err_मुक्त_cols;
-		पूर्ण
+			goto err_free_cols;
+		}
 
 		gpio_direction_output(pdata->col_gpios[i], !pdata->active_low);
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < pdata->num_row_gpios; i++) अणु
+	for (i = 0; i < pdata->num_row_gpios; i++) {
 		err = gpio_request(pdata->row_gpios[i], "matrix_kbd_row");
-		अगर (err) अणु
+		if (err) {
 			dev_err(&pdev->dev,
 				"failed to request GPIO%d for ROW%d\n",
 				pdata->row_gpios[i], i);
-			जाओ err_मुक्त_rows;
-		पूर्ण
+			goto err_free_rows;
+		}
 
 		gpio_direction_input(pdata->row_gpios[i]);
-	पूर्ण
+	}
 
-	अगर (pdata->clustered_irq > 0) अणु
+	if (pdata->clustered_irq > 0) {
 		err = request_any_context_irq(pdata->clustered_irq,
-				matrix_keypad_पूर्णांकerrupt,
+				matrix_keypad_interrupt,
 				pdata->clustered_irq_flags,
 				"matrix-keypad", keypad);
-		अगर (err < 0) अणु
+		if (err < 0) {
 			dev_err(&pdev->dev,
 				"Unable to acquire clustered interrupt\n");
-			जाओ err_मुक्त_rows;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		क्रम (i = 0; i < pdata->num_row_gpios; i++) अणु
+			goto err_free_rows;
+		}
+	} else {
+		for (i = 0; i < pdata->num_row_gpios; i++) {
 			err = request_any_context_irq(
 					gpio_to_irq(pdata->row_gpios[i]),
-					matrix_keypad_पूर्णांकerrupt,
+					matrix_keypad_interrupt,
 					IRQF_TRIGGER_RISING |
 					IRQF_TRIGGER_FALLING,
 					"matrix-keypad", keypad);
-			अगर (err < 0) अणु
+			if (err < 0) {
 				dev_err(&pdev->dev,
 					"Unable to acquire interrupt for GPIO line %i\n",
 					pdata->row_gpios[i]);
-				जाओ err_मुक्त_irqs;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				goto err_free_irqs;
+			}
+		}
+	}
 
-	/* initialized as disabled - enabled by input->खोलो */
+	/* initialized as disabled - enabled by input->open */
 	disable_row_irqs(keypad);
-	वापस 0;
+	return 0;
 
-err_मुक्त_irqs:
-	जबतक (--i >= 0)
-		मुक्त_irq(gpio_to_irq(pdata->row_gpios[i]), keypad);
+err_free_irqs:
+	while (--i >= 0)
+		free_irq(gpio_to_irq(pdata->row_gpios[i]), keypad);
 	i = pdata->num_row_gpios;
-err_मुक्त_rows:
-	जबतक (--i >= 0)
-		gpio_मुक्त(pdata->row_gpios[i]);
+err_free_rows:
+	while (--i >= 0)
+		gpio_free(pdata->row_gpios[i]);
 	i = pdata->num_col_gpios;
-err_मुक्त_cols:
-	जबतक (--i >= 0)
-		gpio_मुक्त(pdata->col_gpios[i]);
+err_free_cols:
+	while (--i >= 0)
+		gpio_free(pdata->col_gpios[i]);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम matrix_keypad_मुक्त_gpio(काष्ठा matrix_keypad *keypad)
-अणु
-	स्थिर काष्ठा matrix_keypad_platक्रमm_data *pdata = keypad->pdata;
-	पूर्णांक i;
+static void matrix_keypad_free_gpio(struct matrix_keypad *keypad)
+{
+	const struct matrix_keypad_platform_data *pdata = keypad->pdata;
+	int i;
 
-	अगर (pdata->clustered_irq > 0) अणु
-		मुक्त_irq(pdata->clustered_irq, keypad);
-	पूर्ण अन्यथा अणु
-		क्रम (i = 0; i < pdata->num_row_gpios; i++)
-			मुक्त_irq(gpio_to_irq(pdata->row_gpios[i]), keypad);
-	पूर्ण
+	if (pdata->clustered_irq > 0) {
+		free_irq(pdata->clustered_irq, keypad);
+	} else {
+		for (i = 0; i < pdata->num_row_gpios; i++)
+			free_irq(gpio_to_irq(pdata->row_gpios[i]), keypad);
+	}
 
-	क्रम (i = 0; i < pdata->num_row_gpios; i++)
-		gpio_मुक्त(pdata->row_gpios[i]);
+	for (i = 0; i < pdata->num_row_gpios; i++)
+		gpio_free(pdata->row_gpios[i]);
 
-	क्रम (i = 0; i < pdata->num_col_gpios; i++)
-		gpio_मुक्त(pdata->col_gpios[i]);
-पूर्ण
+	for (i = 0; i < pdata->num_col_gpios; i++)
+		gpio_free(pdata->col_gpios[i]);
+}
 
-#अगर_घोषित CONFIG_OF
-अटल काष्ठा matrix_keypad_platक्रमm_data *
-matrix_keypad_parse_dt(काष्ठा device *dev)
-अणु
-	काष्ठा matrix_keypad_platक्रमm_data *pdata;
-	काष्ठा device_node *np = dev->of_node;
-	अचिन्हित पूर्णांक *gpios;
-	पूर्णांक ret, i, nrow, ncol;
+#ifdef CONFIG_OF
+static struct matrix_keypad_platform_data *
+matrix_keypad_parse_dt(struct device *dev)
+{
+	struct matrix_keypad_platform_data *pdata;
+	struct device_node *np = dev->of_node;
+	unsigned int *gpios;
+	int ret, i, nrow, ncol;
 
-	अगर (!np) अणु
+	if (!np) {
 		dev_err(dev, "device lacks DT data\n");
-		वापस ERR_PTR(-ENODEV);
-	पूर्ण
+		return ERR_PTR(-ENODEV);
+	}
 
-	pdata = devm_kzalloc(dev, माप(*pdata), GFP_KERNEL);
-	अगर (!pdata) अणु
+	pdata = devm_kzalloc(dev, sizeof(*pdata), GFP_KERNEL);
+	if (!pdata) {
 		dev_err(dev, "could not allocate memory for platform data\n");
-		वापस ERR_PTR(-ENOMEM);
-	पूर्ण
+		return ERR_PTR(-ENOMEM);
+	}
 
 	pdata->num_row_gpios = nrow = of_gpio_named_count(np, "row-gpios");
 	pdata->num_col_gpios = ncol = of_gpio_named_count(np, "col-gpios");
-	अगर (nrow <= 0 || ncol <= 0) अणु
+	if (nrow <= 0 || ncol <= 0) {
 		dev_err(dev, "number of keypad rows/columns not specified\n");
-		वापस ERR_PTR(-EINVAL);
-	पूर्ण
+		return ERR_PTR(-EINVAL);
+	}
 
-	अगर (of_get_property(np, "linux,no-autorepeat", शून्य))
-		pdata->no_स्वतःrepeat = true;
+	if (of_get_property(np, "linux,no-autorepeat", NULL))
+		pdata->no_autorepeat = true;
 
-	pdata->wakeup = of_property_पढ़ो_bool(np, "wakeup-source") ||
-			of_property_पढ़ो_bool(np, "linux,wakeup"); /* legacy */
+	pdata->wakeup = of_property_read_bool(np, "wakeup-source") ||
+			of_property_read_bool(np, "linux,wakeup"); /* legacy */
 
-	अगर (of_get_property(np, "gpio-activelow", शून्य))
+	if (of_get_property(np, "gpio-activelow", NULL))
 		pdata->active_low = true;
 
 	pdata->drive_inactive_cols =
-		of_property_पढ़ो_bool(np, "drive-inactive-cols");
+		of_property_read_bool(np, "drive-inactive-cols");
 
-	of_property_पढ़ो_u32(np, "debounce-delay-ms", &pdata->debounce_ms);
-	of_property_पढ़ो_u32(np, "col-scan-delay-us",
+	of_property_read_u32(np, "debounce-delay-ms", &pdata->debounce_ms);
+	of_property_read_u32(np, "col-scan-delay-us",
 						&pdata->col_scan_delay_us);
 
-	gpios = devm_kसुस्मृति(dev,
+	gpios = devm_kcalloc(dev,
 			     pdata->num_row_gpios + pdata->num_col_gpios,
-			     माप(अचिन्हित पूर्णांक),
+			     sizeof(unsigned int),
 			     GFP_KERNEL);
-	अगर (!gpios) अणु
+	if (!gpios) {
 		dev_err(dev, "could not allocate memory for gpios\n");
-		वापस ERR_PTR(-ENOMEM);
-	पूर्ण
+		return ERR_PTR(-ENOMEM);
+	}
 
-	क्रम (i = 0; i < nrow; i++) अणु
+	for (i = 0; i < nrow; i++) {
 		ret = of_get_named_gpio(np, "row-gpios", i);
-		अगर (ret < 0)
-			वापस ERR_PTR(ret);
+		if (ret < 0)
+			return ERR_PTR(ret);
 		gpios[i] = ret;
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < ncol; i++) अणु
+	for (i = 0; i < ncol; i++) {
 		ret = of_get_named_gpio(np, "col-gpios", i);
-		अगर (ret < 0)
-			वापस ERR_PTR(ret);
+		if (ret < 0)
+			return ERR_PTR(ret);
 		gpios[nrow + i] = ret;
-	पूर्ण
+	}
 
 	pdata->row_gpios = gpios;
 	pdata->col_gpios = &gpios[pdata->num_row_gpios];
 
-	वापस pdata;
-पूर्ण
-#अन्यथा
-अटल अंतरभूत काष्ठा matrix_keypad_platक्रमm_data *
-matrix_keypad_parse_dt(काष्ठा device *dev)
-अणु
+	return pdata;
+}
+#else
+static inline struct matrix_keypad_platform_data *
+matrix_keypad_parse_dt(struct device *dev)
+{
 	dev_err(dev, "no platform data defined\n");
 
-	वापस ERR_PTR(-EINVAL);
-पूर्ण
-#पूर्ण_अगर
+	return ERR_PTR(-EINVAL);
+}
+#endif
 
-अटल पूर्णांक matrix_keypad_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	स्थिर काष्ठा matrix_keypad_platक्रमm_data *pdata;
-	काष्ठा matrix_keypad *keypad;
-	काष्ठा input_dev *input_dev;
-	पूर्णांक err;
+static int matrix_keypad_probe(struct platform_device *pdev)
+{
+	const struct matrix_keypad_platform_data *pdata;
+	struct matrix_keypad *keypad;
+	struct input_dev *input_dev;
+	int err;
 
 	pdata = dev_get_platdata(&pdev->dev);
-	अगर (!pdata) अणु
+	if (!pdata) {
 		pdata = matrix_keypad_parse_dt(&pdev->dev);
-		अगर (IS_ERR(pdata))
-			वापस PTR_ERR(pdata);
-	पूर्ण अन्यथा अगर (!pdata->keymap_data) अणु
+		if (IS_ERR(pdata))
+			return PTR_ERR(pdata);
+	} else if (!pdata->keymap_data) {
 		dev_err(&pdev->dev, "no keymap data defined\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	keypad = kzalloc(माप(काष्ठा matrix_keypad), GFP_KERNEL);
+	keypad = kzalloc(sizeof(struct matrix_keypad), GFP_KERNEL);
 	input_dev = input_allocate_device();
-	अगर (!keypad || !input_dev) अणु
+	if (!keypad || !input_dev) {
 		err = -ENOMEM;
-		जाओ err_मुक्त_mem;
-	पूर्ण
+		goto err_free_mem;
+	}
 
 	keypad->input_dev = input_dev;
 	keypad->pdata = pdata;
-	keypad->row_shअगरt = get_count_order(pdata->num_col_gpios);
+	keypad->row_shift = get_count_order(pdata->num_col_gpios);
 	keypad->stopped = true;
 	INIT_DELAYED_WORK(&keypad->work, matrix_keypad_scan);
 	spin_lock_init(&keypad->lock);
@@ -512,73 +511,73 @@ matrix_keypad_parse_dt(काष्ठा device *dev)
 	input_dev->name		= pdev->name;
 	input_dev->id.bustype	= BUS_HOST;
 	input_dev->dev.parent	= &pdev->dev;
-	input_dev->खोलो		= matrix_keypad_start;
-	input_dev->बंद	= matrix_keypad_stop;
+	input_dev->open		= matrix_keypad_start;
+	input_dev->close	= matrix_keypad_stop;
 
-	err = matrix_keypad_build_keymap(pdata->keymap_data, शून्य,
+	err = matrix_keypad_build_keymap(pdata->keymap_data, NULL,
 					 pdata->num_row_gpios,
 					 pdata->num_col_gpios,
-					 शून्य, input_dev);
-	अगर (err) अणु
+					 NULL, input_dev);
+	if (err) {
 		dev_err(&pdev->dev, "failed to build keymap\n");
-		जाओ err_मुक्त_mem;
-	पूर्ण
+		goto err_free_mem;
+	}
 
-	अगर (!pdata->no_स्वतःrepeat)
+	if (!pdata->no_autorepeat)
 		__set_bit(EV_REP, input_dev->evbit);
 	input_set_capability(input_dev, EV_MSC, MSC_SCAN);
 	input_set_drvdata(input_dev, keypad);
 
 	err = matrix_keypad_init_gpio(pdev, keypad);
-	अगर (err)
-		जाओ err_मुक्त_mem;
+	if (err)
+		goto err_free_mem;
 
-	err = input_रेजिस्टर_device(keypad->input_dev);
-	अगर (err)
-		जाओ err_मुक्त_gpio;
+	err = input_register_device(keypad->input_dev);
+	if (err)
+		goto err_free_gpio;
 
 	device_init_wakeup(&pdev->dev, pdata->wakeup);
-	platक्रमm_set_drvdata(pdev, keypad);
+	platform_set_drvdata(pdev, keypad);
 
-	वापस 0;
+	return 0;
 
-err_मुक्त_gpio:
-	matrix_keypad_मुक्त_gpio(keypad);
-err_मुक्त_mem:
-	input_मुक्त_device(input_dev);
-	kमुक्त(keypad);
-	वापस err;
-पूर्ण
+err_free_gpio:
+	matrix_keypad_free_gpio(keypad);
+err_free_mem:
+	input_free_device(input_dev);
+	kfree(keypad);
+	return err;
+}
 
-अटल पूर्णांक matrix_keypad_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा matrix_keypad *keypad = platक्रमm_get_drvdata(pdev);
+static int matrix_keypad_remove(struct platform_device *pdev)
+{
+	struct matrix_keypad *keypad = platform_get_drvdata(pdev);
 
-	matrix_keypad_मुक्त_gpio(keypad);
-	input_unरेजिस्टर_device(keypad->input_dev);
-	kमुक्त(keypad);
+	matrix_keypad_free_gpio(keypad);
+	input_unregister_device(keypad->input_dev);
+	kfree(keypad);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_OF
-अटल स्थिर काष्ठा of_device_id matrix_keypad_dt_match[] = अणु
-	अणु .compatible = "gpio-matrix-keypad" पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+#ifdef CONFIG_OF
+static const struct of_device_id matrix_keypad_dt_match[] = {
+	{ .compatible = "gpio-matrix-keypad" },
+	{ }
+};
 MODULE_DEVICE_TABLE(of, matrix_keypad_dt_match);
-#पूर्ण_अगर
+#endif
 
-अटल काष्ठा platक्रमm_driver matrix_keypad_driver = अणु
+static struct platform_driver matrix_keypad_driver = {
 	.probe		= matrix_keypad_probe,
-	.हटाओ		= matrix_keypad_हटाओ,
-	.driver		= अणु
+	.remove		= matrix_keypad_remove,
+	.driver		= {
 		.name	= "matrix-keypad",
 		.pm	= &matrix_keypad_pm_ops,
 		.of_match_table = of_match_ptr(matrix_keypad_dt_match),
-	पूर्ण,
-पूर्ण;
-module_platक्रमm_driver(matrix_keypad_driver);
+	},
+};
+module_platform_driver(matrix_keypad_driver);
 
 MODULE_AUTHOR("Marek Vasut <marek.vasut@gmail.com>");
 MODULE_DESCRIPTION("GPIO Driven Matrix Keypad Driver");

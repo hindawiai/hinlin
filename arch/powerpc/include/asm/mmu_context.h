@@ -1,163 +1,162 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __ASM_POWERPC_MMU_CONTEXT_H
-#घोषणा __ASM_POWERPC_MMU_CONTEXT_H
-#अगर_घोषित __KERNEL__
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __ASM_POWERPC_MMU_CONTEXT_H
+#define __ASM_POWERPC_MMU_CONTEXT_H
+#ifdef __KERNEL__
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/spinlock.h>
-#समावेश <यंत्र/mmu.h>	
-#समावेश <यंत्र/cputable.h>
-#समावेश <यंत्र/cputhपढ़ोs.h>
+#include <linux/kernel.h>
+#include <linux/mm.h>
+#include <linux/sched.h>
+#include <linux/spinlock.h>
+#include <asm/mmu.h>	
+#include <asm/cputable.h>
+#include <asm/cputhreads.h>
 
 /*
- * Most अगर the context management is out of line
+ * Most if the context management is out of line
  */
-#घोषणा init_new_context init_new_context
-बाह्य पूर्णांक init_new_context(काष्ठा task_काष्ठा *tsk, काष्ठा mm_काष्ठा *mm);
-#घोषणा destroy_context destroy_context
-बाह्य व्योम destroy_context(काष्ठा mm_काष्ठा *mm);
-#अगर_घोषित CONFIG_SPAPR_TCE_IOMMU
-काष्ठा mm_iommu_table_group_mem_t;
+#define init_new_context init_new_context
+extern int init_new_context(struct task_struct *tsk, struct mm_struct *mm);
+#define destroy_context destroy_context
+extern void destroy_context(struct mm_struct *mm);
+#ifdef CONFIG_SPAPR_TCE_IOMMU
+struct mm_iommu_table_group_mem_t;
 
-बाह्य पूर्णांक isolate_lru_page(काष्ठा page *page);	/* from पूर्णांकernal.h */
-बाह्य bool mm_iommu_preरेजिस्टरed(काष्ठा mm_काष्ठा *mm);
-बाह्य दीर्घ mm_iommu_new(काष्ठा mm_काष्ठा *mm,
-		अचिन्हित दीर्घ ua, अचिन्हित दीर्घ entries,
-		काष्ठा mm_iommu_table_group_mem_t **pmem);
-बाह्य दीर्घ mm_iommu_newdev(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ ua,
-		अचिन्हित दीर्घ entries, अचिन्हित दीर्घ dev_hpa,
-		काष्ठा mm_iommu_table_group_mem_t **pmem);
-बाह्य दीर्घ mm_iommu_put(काष्ठा mm_काष्ठा *mm,
-		काष्ठा mm_iommu_table_group_mem_t *mem);
-बाह्य व्योम mm_iommu_init(काष्ठा mm_काष्ठा *mm);
-बाह्य व्योम mm_iommu_cleanup(काष्ठा mm_काष्ठा *mm);
-बाह्य काष्ठा mm_iommu_table_group_mem_t *mm_iommu_lookup(काष्ठा mm_काष्ठा *mm,
-		अचिन्हित दीर्घ ua, अचिन्हित दीर्घ size);
-बाह्य काष्ठा mm_iommu_table_group_mem_t *mm_iommu_lookup_rm(
-		काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ ua, अचिन्हित दीर्घ size);
-बाह्य काष्ठा mm_iommu_table_group_mem_t *mm_iommu_get(काष्ठा mm_काष्ठा *mm,
-		अचिन्हित दीर्घ ua, अचिन्हित दीर्घ entries);
-बाह्य दीर्घ mm_iommu_ua_to_hpa(काष्ठा mm_iommu_table_group_mem_t *mem,
-		अचिन्हित दीर्घ ua, अचिन्हित पूर्णांक pageshअगरt, अचिन्हित दीर्घ *hpa);
-बाह्य दीर्घ mm_iommu_ua_to_hpa_rm(काष्ठा mm_iommu_table_group_mem_t *mem,
-		अचिन्हित दीर्घ ua, अचिन्हित पूर्णांक pageshअगरt, अचिन्हित दीर्घ *hpa);
-बाह्य व्योम mm_iommu_ua_mark_dirty_rm(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ ua);
-बाह्य bool mm_iommu_is_devmem(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ hpa,
-		अचिन्हित पूर्णांक pageshअगरt, अचिन्हित दीर्घ *size);
-बाह्य दीर्घ mm_iommu_mapped_inc(काष्ठा mm_iommu_table_group_mem_t *mem);
-बाह्य व्योम mm_iommu_mapped_dec(काष्ठा mm_iommu_table_group_mem_t *mem);
-#अन्यथा
-अटल अंतरभूत bool mm_iommu_is_devmem(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ hpa,
-		अचिन्हित पूर्णांक pageshअगरt, अचिन्हित दीर्घ *size)
-अणु
-	वापस false;
-पूर्ण
-अटल अंतरभूत व्योम mm_iommu_init(काष्ठा mm_काष्ठा *mm) अणु पूर्ण
-#पूर्ण_अगर
-बाह्य व्योम चयन_slb(काष्ठा task_काष्ठा *tsk, काष्ठा mm_काष्ठा *mm);
-बाह्य व्योम set_context(अचिन्हित दीर्घ id, pgd_t *pgd);
+extern int isolate_lru_page(struct page *page);	/* from internal.h */
+extern bool mm_iommu_preregistered(struct mm_struct *mm);
+extern long mm_iommu_new(struct mm_struct *mm,
+		unsigned long ua, unsigned long entries,
+		struct mm_iommu_table_group_mem_t **pmem);
+extern long mm_iommu_newdev(struct mm_struct *mm, unsigned long ua,
+		unsigned long entries, unsigned long dev_hpa,
+		struct mm_iommu_table_group_mem_t **pmem);
+extern long mm_iommu_put(struct mm_struct *mm,
+		struct mm_iommu_table_group_mem_t *mem);
+extern void mm_iommu_init(struct mm_struct *mm);
+extern void mm_iommu_cleanup(struct mm_struct *mm);
+extern struct mm_iommu_table_group_mem_t *mm_iommu_lookup(struct mm_struct *mm,
+		unsigned long ua, unsigned long size);
+extern struct mm_iommu_table_group_mem_t *mm_iommu_lookup_rm(
+		struct mm_struct *mm, unsigned long ua, unsigned long size);
+extern struct mm_iommu_table_group_mem_t *mm_iommu_get(struct mm_struct *mm,
+		unsigned long ua, unsigned long entries);
+extern long mm_iommu_ua_to_hpa(struct mm_iommu_table_group_mem_t *mem,
+		unsigned long ua, unsigned int pageshift, unsigned long *hpa);
+extern long mm_iommu_ua_to_hpa_rm(struct mm_iommu_table_group_mem_t *mem,
+		unsigned long ua, unsigned int pageshift, unsigned long *hpa);
+extern void mm_iommu_ua_mark_dirty_rm(struct mm_struct *mm, unsigned long ua);
+extern bool mm_iommu_is_devmem(struct mm_struct *mm, unsigned long hpa,
+		unsigned int pageshift, unsigned long *size);
+extern long mm_iommu_mapped_inc(struct mm_iommu_table_group_mem_t *mem);
+extern void mm_iommu_mapped_dec(struct mm_iommu_table_group_mem_t *mem);
+#else
+static inline bool mm_iommu_is_devmem(struct mm_struct *mm, unsigned long hpa,
+		unsigned int pageshift, unsigned long *size)
+{
+	return false;
+}
+static inline void mm_iommu_init(struct mm_struct *mm) { }
+#endif
+extern void switch_slb(struct task_struct *tsk, struct mm_struct *mm);
+extern void set_context(unsigned long id, pgd_t *pgd);
 
-#अगर_घोषित CONFIG_PPC_BOOK3S_64
-बाह्य व्योम radix__चयन_mmu_context(काष्ठा mm_काष्ठा *prev,
-				      काष्ठा mm_काष्ठा *next);
-अटल अंतरभूत व्योम चयन_mmu_context(काष्ठा mm_काष्ठा *prev,
-				      काष्ठा mm_काष्ठा *next,
-				      काष्ठा task_काष्ठा *tsk)
-अणु
-	अगर (radix_enabled())
-		वापस radix__चयन_mmu_context(prev, next);
-	वापस चयन_slb(tsk, next);
-पूर्ण
+#ifdef CONFIG_PPC_BOOK3S_64
+extern void radix__switch_mmu_context(struct mm_struct *prev,
+				      struct mm_struct *next);
+static inline void switch_mmu_context(struct mm_struct *prev,
+				      struct mm_struct *next,
+				      struct task_struct *tsk)
+{
+	if (radix_enabled())
+		return radix__switch_mmu_context(prev, next);
+	return switch_slb(tsk, next);
+}
 
-बाह्य पूर्णांक hash__alloc_context_id(व्योम);
-बाह्य व्योम hash__reserve_context_id(पूर्णांक id);
-बाह्य व्योम __destroy_context(पूर्णांक context_id);
-अटल अंतरभूत व्योम mmu_context_init(व्योम) अणु पूर्ण
+extern int hash__alloc_context_id(void);
+extern void hash__reserve_context_id(int id);
+extern void __destroy_context(int context_id);
+static inline void mmu_context_init(void) { }
 
-अटल अंतरभूत पूर्णांक alloc_extended_context(काष्ठा mm_काष्ठा *mm,
-					 अचिन्हित दीर्घ ea)
-अणु
-	पूर्णांक context_id;
+static inline int alloc_extended_context(struct mm_struct *mm,
+					 unsigned long ea)
+{
+	int context_id;
 
-	पूर्णांक index = ea >> MAX_EA_BITS_PER_CONTEXT;
+	int index = ea >> MAX_EA_BITS_PER_CONTEXT;
 
 	context_id = hash__alloc_context_id();
-	अगर (context_id < 0)
-		वापस context_id;
+	if (context_id < 0)
+		return context_id;
 
 	VM_WARN_ON(mm->context.extended_id[index]);
 	mm->context.extended_id[index] = context_id;
-	वापस context_id;
-पूर्ण
+	return context_id;
+}
 
-अटल अंतरभूत bool need_extra_context(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ ea)
-अणु
-	पूर्णांक context_id;
+static inline bool need_extra_context(struct mm_struct *mm, unsigned long ea)
+{
+	int context_id;
 
 	context_id = get_user_context(&mm->context, ea);
-	अगर (!context_id)
-		वापस true;
-	वापस false;
-पूर्ण
+	if (!context_id)
+		return true;
+	return false;
+}
 
-#अन्यथा
-बाह्य व्योम चयन_mmu_context(काष्ठा mm_काष्ठा *prev, काष्ठा mm_काष्ठा *next,
-			       काष्ठा task_काष्ठा *tsk);
-बाह्य अचिन्हित दीर्घ __init_new_context(व्योम);
-बाह्य व्योम __destroy_context(अचिन्हित दीर्घ context_id);
-बाह्य व्योम mmu_context_init(व्योम);
-अटल अंतरभूत पूर्णांक alloc_extended_context(काष्ठा mm_काष्ठा *mm,
-					 अचिन्हित दीर्घ ea)
-अणु
+#else
+extern void switch_mmu_context(struct mm_struct *prev, struct mm_struct *next,
+			       struct task_struct *tsk);
+extern unsigned long __init_new_context(void);
+extern void __destroy_context(unsigned long context_id);
+extern void mmu_context_init(void);
+static inline int alloc_extended_context(struct mm_struct *mm,
+					 unsigned long ea)
+{
 	/* non book3s_64 should never find this called */
 	WARN_ON(1);
-	वापस -ENOMEM;
-पूर्ण
+	return -ENOMEM;
+}
 
-अटल अंतरभूत bool need_extra_context(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ ea)
-अणु
-	वापस false;
-पूर्ण
-#पूर्ण_अगर
+static inline bool need_extra_context(struct mm_struct *mm, unsigned long ea)
+{
+	return false;
+}
+#endif
 
-#अगर defined(CONFIG_KVM_BOOK3S_HV_POSSIBLE) && defined(CONFIG_PPC_RADIX_MMU)
-बाह्य व्योम radix_kvm_prefetch_workaround(काष्ठा mm_काष्ठा *mm);
-#अन्यथा
-अटल अंतरभूत व्योम radix_kvm_prefetch_workaround(काष्ठा mm_काष्ठा *mm) अणु पूर्ण
-#पूर्ण_अगर
+#if defined(CONFIG_KVM_BOOK3S_HV_POSSIBLE) && defined(CONFIG_PPC_RADIX_MMU)
+extern void radix_kvm_prefetch_workaround(struct mm_struct *mm);
+#else
+static inline void radix_kvm_prefetch_workaround(struct mm_struct *mm) { }
+#endif
 
-बाह्य व्योम चयन_cop(काष्ठा mm_काष्ठा *next);
-बाह्य पूर्णांक use_cop(अचिन्हित दीर्घ acop, काष्ठा mm_काष्ठा *mm);
-बाह्य व्योम drop_cop(अचिन्हित दीर्घ acop, काष्ठा mm_काष्ठा *mm);
+extern void switch_cop(struct mm_struct *next);
+extern int use_cop(unsigned long acop, struct mm_struct *mm);
+extern void drop_cop(unsigned long acop, struct mm_struct *mm);
 
-#अगर_घोषित CONFIG_PPC_BOOK3S_64
-अटल अंतरभूत व्योम inc_mm_active_cpus(काष्ठा mm_काष्ठा *mm)
-अणु
+#ifdef CONFIG_PPC_BOOK3S_64
+static inline void inc_mm_active_cpus(struct mm_struct *mm)
+{
 	atomic_inc(&mm->context.active_cpus);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम dec_mm_active_cpus(काष्ठा mm_काष्ठा *mm)
-अणु
+static inline void dec_mm_active_cpus(struct mm_struct *mm)
+{
 	atomic_dec(&mm->context.active_cpus);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम mm_context_add_copro(काष्ठा mm_काष्ठा *mm)
-अणु
+static inline void mm_context_add_copro(struct mm_struct *mm)
+{
 	/*
 	 * If any copro is in use, increment the active CPU count
-	 * in order to क्रमce TLB invalidations to be global as to
+	 * in order to force TLB invalidations to be global as to
 	 * propagate to the Nest MMU.
 	 */
-	अगर (atomic_inc_वापस(&mm->context.copros) == 1)
+	if (atomic_inc_return(&mm->context.copros) == 1)
 		inc_mm_active_cpus(mm);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम mm_context_हटाओ_copro(काष्ठा mm_काष्ठा *mm)
-अणु
-	पूर्णांक c;
+static inline void mm_context_remove_copro(struct mm_struct *mm)
+{
+	int c;
 
 	/*
 	 * When removing the last copro, we need to broadcast a global
@@ -166,140 +165,140 @@
 	 *
 	 * Both the 'copros' and 'active_cpus' counts are looked at in
 	 * flush_all_mm() to determine the scope (local/global) of the
-	 * TLBIs, so we need to flush first beक्रमe decrementing
-	 * 'copros'. If this API is used by several callers क्रम the
+	 * TLBIs, so we need to flush first before decrementing
+	 * 'copros'. If this API is used by several callers for the
 	 * same context, it can lead to over-flushing. It's hopefully
 	 * not common enough to be a problem.
 	 *
-	 * Skip on hash, as we करोn't know how to करो the proper flush
-	 * क्रम the समय being. Invalidations will reमुख्य global अगर
+	 * Skip on hash, as we don't know how to do the proper flush
+	 * for the time being. Invalidations will remain global if
 	 * used on hash. Note that we can't drop 'copros' either, as
 	 * it could make some invalidations local with no flush
 	 * in-between.
 	 */
-	अगर (radix_enabled()) अणु
+	if (radix_enabled()) {
 		flush_all_mm(mm);
 
-		c = atomic_dec_अगर_positive(&mm->context.copros);
-		/* Detect imbalance between add and हटाओ */
+		c = atomic_dec_if_positive(&mm->context.copros);
+		/* Detect imbalance between add and remove */
 		WARN_ON(c < 0);
 
-		अगर (c == 0)
+		if (c == 0)
 			dec_mm_active_cpus(mm);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
- * vas_winकरोws counter shows number of खोलो winकरोws in the mm
- * context. During context चयन, use this counter to clear the
- * क्रमeign real address mapping (CP_ABORT) क्रम the thपढ़ो / process
- * that पूर्णांकend to use COPY/PASTE. When a process बंदs all winकरोws,
+ * vas_windows counter shows number of open windows in the mm
+ * context. During context switch, use this counter to clear the
+ * foreign real address mapping (CP_ABORT) for the thread / process
+ * that intend to use COPY/PASTE. When a process closes all windows,
  * disable CP_ABORT which is expensive to run.
  *
- * For user context, रेजिस्टर a copro so that TLBIs are seen by the
- * nest MMU. mm_context_add/हटाओ_vas_winकरोw() are used only क्रम user
- * space winकरोws.
+ * For user context, register a copro so that TLBIs are seen by the
+ * nest MMU. mm_context_add/remove_vas_window() are used only for user
+ * space windows.
  */
-अटल अंतरभूत व्योम mm_context_add_vas_winकरोw(काष्ठा mm_काष्ठा *mm)
-अणु
-	atomic_inc(&mm->context.vas_winकरोws);
+static inline void mm_context_add_vas_window(struct mm_struct *mm)
+{
+	atomic_inc(&mm->context.vas_windows);
 	mm_context_add_copro(mm);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम mm_context_हटाओ_vas_winकरोw(काष्ठा mm_काष्ठा *mm)
-अणु
-	पूर्णांक v;
+static inline void mm_context_remove_vas_window(struct mm_struct *mm)
+{
+	int v;
 
-	mm_context_हटाओ_copro(mm);
-	v = atomic_dec_अगर_positive(&mm->context.vas_winकरोws);
+	mm_context_remove_copro(mm);
+	v = atomic_dec_if_positive(&mm->context.vas_windows);
 
-	/* Detect imbalance between add and हटाओ */
+	/* Detect imbalance between add and remove */
 	WARN_ON(v < 0);
-पूर्ण
-#अन्यथा
-अटल अंतरभूत व्योम inc_mm_active_cpus(काष्ठा mm_काष्ठा *mm) अणु पूर्ण
-अटल अंतरभूत व्योम dec_mm_active_cpus(काष्ठा mm_काष्ठा *mm) अणु पूर्ण
-अटल अंतरभूत व्योम mm_context_add_copro(काष्ठा mm_काष्ठा *mm) अणु पूर्ण
-अटल अंतरभूत व्योम mm_context_हटाओ_copro(काष्ठा mm_काष्ठा *mm) अणु पूर्ण
-#पूर्ण_अगर
+}
+#else
+static inline void inc_mm_active_cpus(struct mm_struct *mm) { }
+static inline void dec_mm_active_cpus(struct mm_struct *mm) { }
+static inline void mm_context_add_copro(struct mm_struct *mm) { }
+static inline void mm_context_remove_copro(struct mm_struct *mm) { }
+#endif
 
 
-बाह्य व्योम चयन_mm_irqs_off(काष्ठा mm_काष्ठा *prev, काष्ठा mm_काष्ठा *next,
-			       काष्ठा task_काष्ठा *tsk);
+extern void switch_mm_irqs_off(struct mm_struct *prev, struct mm_struct *next,
+			       struct task_struct *tsk);
 
-अटल अंतरभूत व्योम चयन_mm(काष्ठा mm_काष्ठा *prev, काष्ठा mm_काष्ठा *next,
-			     काष्ठा task_काष्ठा *tsk)
-अणु
-	अचिन्हित दीर्घ flags;
+static inline void switch_mm(struct mm_struct *prev, struct mm_struct *next,
+			     struct task_struct *tsk)
+{
+	unsigned long flags;
 
 	local_irq_save(flags);
-	चयन_mm_irqs_off(prev, next, tsk);
+	switch_mm_irqs_off(prev, next, tsk);
 	local_irq_restore(flags);
-पूर्ण
-#घोषणा चयन_mm_irqs_off चयन_mm_irqs_off
+}
+#define switch_mm_irqs_off switch_mm_irqs_off
 
 /*
  * After we have set current->mm to a new value, this activates
- * the context क्रम the new mm so we see the new mappings.
+ * the context for the new mm so we see the new mappings.
  */
-#घोषणा activate_mm activate_mm
-अटल अंतरभूत व्योम activate_mm(काष्ठा mm_काष्ठा *prev, काष्ठा mm_काष्ठा *next)
-अणु
-	चयन_mm_irqs_off(prev, next, current);
-पूर्ण
+#define activate_mm activate_mm
+static inline void activate_mm(struct mm_struct *prev, struct mm_struct *next)
+{
+	switch_mm_irqs_off(prev, next, current);
+}
 
-/* We करोn't currently use enter_lazy_tlb() क्रम anything */
-#अगर_घोषित CONFIG_PPC_BOOK3E_64
-#घोषणा enter_lazy_tlb enter_lazy_tlb
-अटल अंतरभूत व्योम enter_lazy_tlb(काष्ठा mm_काष्ठा *mm,
-				  काष्ठा task_काष्ठा *tsk)
-अणु
+/* We don't currently use enter_lazy_tlb() for anything */
+#ifdef CONFIG_PPC_BOOK3E_64
+#define enter_lazy_tlb enter_lazy_tlb
+static inline void enter_lazy_tlb(struct mm_struct *mm,
+				  struct task_struct *tsk)
+{
 	/* 64-bit Book3E keeps track of current PGD in the PACA */
-	get_paca()->pgd = शून्य;
-पूर्ण
-#पूर्ण_अगर
+	get_paca()->pgd = NULL;
+}
+#endif
 
-बाह्य व्योम arch_निकास_mmap(काष्ठा mm_काष्ठा *mm);
+extern void arch_exit_mmap(struct mm_struct *mm);
 
-अटल अंतरभूत व्योम arch_unmap(काष्ठा mm_काष्ठा *mm,
-			      अचिन्हित दीर्घ start, अचिन्हित दीर्घ end)
-अणु
-	अचिन्हित दीर्घ vdso_base = (अचिन्हित दीर्घ)mm->context.vdso;
+static inline void arch_unmap(struct mm_struct *mm,
+			      unsigned long start, unsigned long end)
+{
+	unsigned long vdso_base = (unsigned long)mm->context.vdso;
 
-	अगर (start <= vdso_base && vdso_base < end)
-		mm->context.vdso = शून्य;
-पूर्ण
+	if (start <= vdso_base && vdso_base < end)
+		mm->context.vdso = NULL;
+}
 
-#अगर_घोषित CONFIG_PPC_MEM_KEYS
-bool arch_vma_access_permitted(काष्ठा vm_area_काष्ठा *vma, bool ग_लिखो,
-			       bool execute, bool क्रमeign);
-व्योम arch_dup_pkeys(काष्ठा mm_काष्ठा *oldmm, काष्ठा mm_काष्ठा *mm);
-#अन्यथा /* CONFIG_PPC_MEM_KEYS */
-अटल अंतरभूत bool arch_vma_access_permitted(काष्ठा vm_area_काष्ठा *vma,
-		bool ग_लिखो, bool execute, bool क्रमeign)
-अणु
-	/* by शेष, allow everything */
-	वापस true;
-पूर्ण
+#ifdef CONFIG_PPC_MEM_KEYS
+bool arch_vma_access_permitted(struct vm_area_struct *vma, bool write,
+			       bool execute, bool foreign);
+void arch_dup_pkeys(struct mm_struct *oldmm, struct mm_struct *mm);
+#else /* CONFIG_PPC_MEM_KEYS */
+static inline bool arch_vma_access_permitted(struct vm_area_struct *vma,
+		bool write, bool execute, bool foreign)
+{
+	/* by default, allow everything */
+	return true;
+}
 
-#घोषणा pkey_mm_init(mm)
-#घोषणा arch_dup_pkeys(oldmm, mm)
+#define pkey_mm_init(mm)
+#define arch_dup_pkeys(oldmm, mm)
 
-अटल अंतरभूत u64 pte_to_hpte_pkey_bits(u64 pteflags, अचिन्हित दीर्घ flags)
-अणु
-	वापस 0x0UL;
-पूर्ण
+static inline u64 pte_to_hpte_pkey_bits(u64 pteflags, unsigned long flags)
+{
+	return 0x0UL;
+}
 
-#पूर्ण_अगर /* CONFIG_PPC_MEM_KEYS */
+#endif /* CONFIG_PPC_MEM_KEYS */
 
-अटल अंतरभूत पूर्णांक arch_dup_mmap(काष्ठा mm_काष्ठा *oldmm,
-				काष्ठा mm_काष्ठा *mm)
-अणु
+static inline int arch_dup_mmap(struct mm_struct *oldmm,
+				struct mm_struct *mm)
+{
 	arch_dup_pkeys(oldmm, mm);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#समावेश <यंत्र-generic/mmu_context.h>
+#include <asm-generic/mmu_context.h>
 
-#पूर्ण_अगर /* __KERNEL__ */
-#पूर्ण_अगर /* __ASM_POWERPC_MMU_CONTEXT_H */
+#endif /* __KERNEL__ */
+#endif /* __ASM_POWERPC_MMU_CONTEXT_H */

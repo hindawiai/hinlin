@@ -1,35 +1,34 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _PERF_UI_PROGRESS_H_
-#घोषणा _PERF_UI_PROGRESS_H_ 1
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _PERF_UI_PROGRESS_H_
+#define _PERF_UI_PROGRESS_H_ 1
 
-#समावेश <linux/types.h>
+#include <linux/types.h>
 
-व्योम ui_progress__finish(व्योम);
+void ui_progress__finish(void);
 
-काष्ठा ui_progress अणु
-	स्थिर अक्षर *title;
+struct ui_progress {
+	const char *title;
 	u64 curr, next, step, total;
 	bool size;
-पूर्ण;
+};
 
-व्योम __ui_progress__init(काष्ठा ui_progress *p, u64 total,
-			 स्थिर अक्षर *title, bool size);
+void __ui_progress__init(struct ui_progress *p, u64 total,
+			 const char *title, bool size);
 
-#घोषणा ui_progress__init(p, total, title) \
+#define ui_progress__init(p, total, title) \
 	__ui_progress__init(p, total, title, false)
 
-#घोषणा ui_progress__init_size(p, total, title) \
+#define ui_progress__init_size(p, total, title) \
 	__ui_progress__init(p, total, title, true)
 
-व्योम ui_progress__update(काष्ठा ui_progress *p, u64 adv);
+void ui_progress__update(struct ui_progress *p, u64 adv);
 
-काष्ठा ui_progress_ops अणु
-	व्योम (*init)(काष्ठा ui_progress *p);
-	व्योम (*update)(काष्ठा ui_progress *p);
-	व्योम (*finish)(व्योम);
-पूर्ण;
+struct ui_progress_ops {
+	void (*init)(struct ui_progress *p);
+	void (*update)(struct ui_progress *p);
+	void (*finish)(void);
+};
 
-बाह्य काष्ठा ui_progress_ops *ui_progress__ops;
+extern struct ui_progress_ops *ui_progress__ops;
 
-#पूर्ण_अगर
+#endif

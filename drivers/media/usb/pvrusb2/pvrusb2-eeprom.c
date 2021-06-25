@@ -1,63 +1,62 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  *
  *  Copyright (C) 2005 Mike Isely <isely@pobox.com>
- *  Copyright (C) 2004 Aurelien Alleaume <slts@मुक्त.fr>
+ *  Copyright (C) 2004 Aurelien Alleaume <slts@free.fr>
  */
 
-#समावेश <linux/slab.h>
-#समावेश "pvrusb2-eeprom.h"
-#समावेश "pvrusb2-hdw-internal.h"
-#समावेश "pvrusb2-debug.h"
+#include <linux/slab.h>
+#include "pvrusb2-eeprom.h"
+#include "pvrusb2-hdw-internal.h"
+#include "pvrusb2-debug.h"
 
-#घोषणा trace_eeprom(...) pvr2_trace(PVR2_TRACE_EEPROM,__VA_ARGS__)
+#define trace_eeprom(...) pvr2_trace(PVR2_TRACE_EEPROM,__VA_ARGS__)
 
 
 
 /*
 
    Read and analyze data in the eeprom.  Use tveeprom to figure out
-   the packet काष्ठाure, since this is another Hauppauge device and
-   पूर्णांकernally it has a family resemblance to ivtv-type devices
+   the packet structure, since this is another Hauppauge device and
+   internally it has a family resemblance to ivtv-type devices
 
 */
 
-#समावेश <media/tveeprom.h>
+#include <media/tveeprom.h>
 
-/* We seem to only be पूर्णांकerested in the last 128 bytes of the EEPROM */
-#घोषणा EEPROM_SIZE 128
+/* We seem to only be interested in the last 128 bytes of the EEPROM */
+#define EEPROM_SIZE 128
 
-/* Grab EEPROM contents, needed क्रम direct method. */
-अटल u8 *pvr2_eeprom_fetch(काष्ठा pvr2_hdw *hdw)
-अणु
-	काष्ठा i2c_msg msg[2];
+/* Grab EEPROM contents, needed for direct method. */
+static u8 *pvr2_eeprom_fetch(struct pvr2_hdw *hdw)
+{
+	struct i2c_msg msg[2];
 	u8 *eeprom;
 	u8 iadd[2];
 	u8 addr;
 	u16 eepromSize;
-	अचिन्हित पूर्णांक offs;
-	पूर्णांक ret;
-	पूर्णांक mode16 = 0;
-	अचिन्हित pcnt,tcnt;
+	unsigned int offs;
+	int ret;
+	int mode16 = 0;
+	unsigned pcnt,tcnt;
 	eeprom = kzalloc(EEPROM_SIZE, GFP_KERNEL);
-	अगर (!eeprom) अणु
+	if (!eeprom) {
 		pvr2_trace(PVR2_TRACE_ERROR_LEGS,
 			   "Failed to allocate memory required to read eeprom");
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
 	trace_eeprom("Value for eeprom addr from controller was 0x%x",
 		     hdw->eeprom_addr);
 	addr = hdw->eeprom_addr;
-	/* Seems that अगर the high bit is set, then the *real* eeprom
-	   address is shअगरted right now bit position (noticed this in
+	/* Seems that if the high bit is set, then the *real* eeprom
+	   address is shifted right now bit position (noticed this in
 	   newer PVR USB2 hardware) */
-	अगर (addr & 0x80) addr >>= 1;
+	if (addr & 0x80) addr >>= 1;
 
-	/* FX2 करोcumentation states that a 16bit-addressed eeprom is
-	   expected अगर the I2C address is an odd number (yeah, this is
-	   strange but it's what they करो) */
+	/* FX2 documentation states that a 16bit-addressed eeprom is
+	   expected if the I2C address is an odd number (yeah, this is
+	   strange but it's what they do) */
 	mode16 = (addr & 1);
 	eepromSize = (mode16 ? 4096 : 256);
 	trace_eeprom("Examining %d byte eeprom at location 0x%x using %d bit addressing",
@@ -71,45 +70,45 @@
 	msg[1].addr = addr;
 	msg[1].flags = I2C_M_RD;
 
-	/* We have to करो the actual eeprom data fetch ourselves, because
-	   (1) we're only fetching part of the eeprom, and (2) अगर we were
+	/* We have to do the actual eeprom data fetch ourselves, because
+	   (1) we're only fetching part of the eeprom, and (2) if we were
 	   getting the whole thing our I2C driver can't grab it in one
 	   pass - which is what tveeprom is otherwise going to attempt */
-	क्रम (tcnt = 0; tcnt < EEPROM_SIZE; tcnt += pcnt) अणु
+	for (tcnt = 0; tcnt < EEPROM_SIZE; tcnt += pcnt) {
 		pcnt = 16;
-		अगर (pcnt + tcnt > EEPROM_SIZE) pcnt = EEPROM_SIZE-tcnt;
+		if (pcnt + tcnt > EEPROM_SIZE) pcnt = EEPROM_SIZE-tcnt;
 		offs = tcnt + (eepromSize - EEPROM_SIZE);
-		अगर (mode16) अणु
+		if (mode16) {
 			iadd[0] = offs >> 8;
 			iadd[1] = offs;
-		पूर्ण अन्यथा अणु
+		} else {
 			iadd[0] = offs;
-		पूर्ण
+		}
 		msg[1].len = pcnt;
 		msg[1].buf = eeprom+tcnt;
-		अगर ((ret = i2c_transfer(&hdw->i2c_adap,
-					msg,ARRAY_SIZE(msg))) != 2) अणु
+		if ((ret = i2c_transfer(&hdw->i2c_adap,
+					msg,ARRAY_SIZE(msg))) != 2) {
 			pvr2_trace(PVR2_TRACE_ERROR_LEGS,
 				   "eeprom fetch set offs err=%d",ret);
-			kमुक्त(eeprom);
-			वापस शून्य;
-		पूर्ण
-	पूर्ण
-	वापस eeprom;
-पूर्ण
+			kfree(eeprom);
+			return NULL;
+		}
+	}
+	return eeprom;
+}
 
 
 /* Directly call eeprom analysis function within tveeprom. */
-पूर्णांक pvr2_eeprom_analyze(काष्ठा pvr2_hdw *hdw)
-अणु
+int pvr2_eeprom_analyze(struct pvr2_hdw *hdw)
+{
 	u8 *eeprom;
-	काष्ठा tveeprom tvdata;
+	struct tveeprom tvdata;
 
-	स_रखो(&tvdata,0,माप(tvdata));
+	memset(&tvdata,0,sizeof(tvdata));
 
 	eeprom = pvr2_eeprom_fetch(hdw);
-	अगर (!eeprom)
-		वापस -EINVAL;
+	if (!eeprom)
+		return -EINVAL;
 
 	tveeprom_hauppauge_analog(&tvdata, eeprom);
 
@@ -117,7 +116,7 @@
 	trace_eeprom("eeprom direct call results:");
 	trace_eeprom("has_radio=%d",tvdata.has_radio);
 	trace_eeprom("tuner_type=%d",tvdata.tuner_type);
-	trace_eeprom("tuner_formats=0x%x",tvdata.tuner_क्रमmats);
+	trace_eeprom("tuner_formats=0x%x",tvdata.tuner_formats);
 	trace_eeprom("audio_processor=%d",tvdata.audio_processor);
 	trace_eeprom("model=%d",tvdata.model);
 	trace_eeprom("revision=%d",tvdata.revision);
@@ -126,9 +125,9 @@
 	hdw->tuner_type = tvdata.tuner_type;
 	hdw->tuner_updated = !0;
 	hdw->serial_number = tvdata.serial_number;
-	hdw->std_mask_eeprom = tvdata.tuner_क्रमmats;
+	hdw->std_mask_eeprom = tvdata.tuner_formats;
 
-	kमुक्त(eeprom);
+	kfree(eeprom);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

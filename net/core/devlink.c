@@ -1,599 +1,598 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * net/core/devlink.c - Network physical/parent device Netlink पूर्णांकerface
+ * net/core/devlink.c - Network physical/parent device Netlink interface
  *
  * Heavily inspired by net/wireless/
  * Copyright (c) 2016 Mellanox Technologies. All rights reserved.
  * Copyright (c) 2016 Jiri Pirko <jiri@mellanox.com>
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/types.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/gfp.h>
-#समावेश <linux/device.h>
-#समावेश <linux/list.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/refcount.h>
-#समावेश <linux/workqueue.h>
-#समावेश <linux/u64_stats_sync.h>
-#समावेश <linux/समयkeeping.h>
-#समावेश <rdma/ib_verbs.h>
-#समावेश <net/netlink.h>
-#समावेश <net/genetlink.h>
-#समावेश <net/rtnetlink.h>
-#समावेश <net/net_namespace.h>
-#समावेश <net/sock.h>
-#समावेश <net/devlink.h>
-#घोषणा CREATE_TRACE_POINTS
-#समावेश <trace/events/devlink.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/types.h>
+#include <linux/slab.h>
+#include <linux/gfp.h>
+#include <linux/device.h>
+#include <linux/list.h>
+#include <linux/netdevice.h>
+#include <linux/spinlock.h>
+#include <linux/refcount.h>
+#include <linux/workqueue.h>
+#include <linux/u64_stats_sync.h>
+#include <linux/timekeeping.h>
+#include <rdma/ib_verbs.h>
+#include <net/netlink.h>
+#include <net/genetlink.h>
+#include <net/rtnetlink.h>
+#include <net/net_namespace.h>
+#include <net/sock.h>
+#include <net/devlink.h>
+#define CREATE_TRACE_POINTS
+#include <trace/events/devlink.h>
 
-अटल काष्ठा devlink_dpipe_field devlink_dpipe_fields_ethernet[] = अणु
-	अणु
+static struct devlink_dpipe_field devlink_dpipe_fields_ethernet[] = {
+	{
 		.name = "destination mac",
 		.id = DEVLINK_DPIPE_FIELD_ETHERNET_DST_MAC,
 		.bitwidth = 48,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-काष्ठा devlink_dpipe_header devlink_dpipe_header_ethernet = अणु
+struct devlink_dpipe_header devlink_dpipe_header_ethernet = {
 	.name = "ethernet",
 	.id = DEVLINK_DPIPE_HEADER_ETHERNET,
 	.fields = devlink_dpipe_fields_ethernet,
 	.fields_count = ARRAY_SIZE(devlink_dpipe_fields_ethernet),
 	.global = true,
-पूर्ण;
+};
 EXPORT_SYMBOL(devlink_dpipe_header_ethernet);
 
-अटल काष्ठा devlink_dpipe_field devlink_dpipe_fields_ipv4[] = अणु
-	अणु
+static struct devlink_dpipe_field devlink_dpipe_fields_ipv4[] = {
+	{
 		.name = "destination ip",
 		.id = DEVLINK_DPIPE_FIELD_IPV4_DST_IP,
 		.bitwidth = 32,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-काष्ठा devlink_dpipe_header devlink_dpipe_header_ipv4 = अणु
+struct devlink_dpipe_header devlink_dpipe_header_ipv4 = {
 	.name = "ipv4",
 	.id = DEVLINK_DPIPE_HEADER_IPV4,
 	.fields = devlink_dpipe_fields_ipv4,
 	.fields_count = ARRAY_SIZE(devlink_dpipe_fields_ipv4),
 	.global = true,
-पूर्ण;
+};
 EXPORT_SYMBOL(devlink_dpipe_header_ipv4);
 
-अटल काष्ठा devlink_dpipe_field devlink_dpipe_fields_ipv6[] = अणु
-	अणु
+static struct devlink_dpipe_field devlink_dpipe_fields_ipv6[] = {
+	{
 		.name = "destination ip",
 		.id = DEVLINK_DPIPE_FIELD_IPV6_DST_IP,
 		.bitwidth = 128,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-काष्ठा devlink_dpipe_header devlink_dpipe_header_ipv6 = अणु
+struct devlink_dpipe_header devlink_dpipe_header_ipv6 = {
 	.name = "ipv6",
 	.id = DEVLINK_DPIPE_HEADER_IPV6,
 	.fields = devlink_dpipe_fields_ipv6,
 	.fields_count = ARRAY_SIZE(devlink_dpipe_fields_ipv6),
 	.global = true,
-पूर्ण;
+};
 EXPORT_SYMBOL(devlink_dpipe_header_ipv6);
 
 EXPORT_TRACEPOINT_SYMBOL_GPL(devlink_hwmsg);
 EXPORT_TRACEPOINT_SYMBOL_GPL(devlink_hwerr);
 EXPORT_TRACEPOINT_SYMBOL_GPL(devlink_trap_report);
 
-अटल स्थिर काष्ठा nla_policy devlink_function_nl_policy[DEVLINK_PORT_FUNCTION_ATTR_MAX + 1] = अणु
-	[DEVLINK_PORT_FUNCTION_ATTR_HW_ADDR] = अणु .type = NLA_BINARY पूर्ण,
+static const struct nla_policy devlink_function_nl_policy[DEVLINK_PORT_FUNCTION_ATTR_MAX + 1] = {
+	[DEVLINK_PORT_FUNCTION_ATTR_HW_ADDR] = { .type = NLA_BINARY },
 	[DEVLINK_PORT_FN_ATTR_STATE] =
 		NLA_POLICY_RANGE(NLA_U8, DEVLINK_PORT_FN_STATE_INACTIVE,
 				 DEVLINK_PORT_FN_STATE_ACTIVE),
-पूर्ण;
+};
 
-अटल LIST_HEAD(devlink_list);
+static LIST_HEAD(devlink_list);
 
 /* devlink_mutex
  *
  * An overall lock guarding every operation coming from userspace.
  * It also guards devlink devices list and it is taken when
- * driver रेजिस्टरs/unरेजिस्टरs it.
+ * driver registers/unregisters it.
  */
-अटल DEFINE_MUTEX(devlink_mutex);
+static DEFINE_MUTEX(devlink_mutex);
 
-काष्ठा net *devlink_net(स्थिर काष्ठा devlink *devlink)
-अणु
-	वापस पढ़ो_pnet(&devlink->_net);
-पूर्ण
+struct net *devlink_net(const struct devlink *devlink)
+{
+	return read_pnet(&devlink->_net);
+}
 EXPORT_SYMBOL_GPL(devlink_net);
 
-अटल व्योम __devlink_net_set(काष्ठा devlink *devlink, काष्ठा net *net)
-अणु
-	ग_लिखो_pnet(&devlink->_net, net);
-पूर्ण
+static void __devlink_net_set(struct devlink *devlink, struct net *net)
+{
+	write_pnet(&devlink->_net, net);
+}
 
-व्योम devlink_net_set(काष्ठा devlink *devlink, काष्ठा net *net)
-अणु
-	अगर (WARN_ON(devlink->रेजिस्टरed))
-		वापस;
+void devlink_net_set(struct devlink *devlink, struct net *net)
+{
+	if (WARN_ON(devlink->registered))
+		return;
 	__devlink_net_set(devlink, net);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(devlink_net_set);
 
-अटल काष्ठा devlink *devlink_get_from_attrs(काष्ठा net *net,
-					      काष्ठा nlattr **attrs)
-अणु
-	काष्ठा devlink *devlink;
-	अक्षर *busname;
-	अक्षर *devname;
+static struct devlink *devlink_get_from_attrs(struct net *net,
+					      struct nlattr **attrs)
+{
+	struct devlink *devlink;
+	char *busname;
+	char *devname;
 
-	अगर (!attrs[DEVLINK_ATTR_BUS_NAME] || !attrs[DEVLINK_ATTR_DEV_NAME])
-		वापस ERR_PTR(-EINVAL);
+	if (!attrs[DEVLINK_ATTR_BUS_NAME] || !attrs[DEVLINK_ATTR_DEV_NAME])
+		return ERR_PTR(-EINVAL);
 
 	busname = nla_data(attrs[DEVLINK_ATTR_BUS_NAME]);
 	devname = nla_data(attrs[DEVLINK_ATTR_DEV_NAME]);
 
-	lockdep_निश्चित_held(&devlink_mutex);
+	lockdep_assert_held(&devlink_mutex);
 
-	list_क्रम_each_entry(devlink, &devlink_list, list) अणु
-		अगर (म_भेद(devlink->dev->bus->name, busname) == 0 &&
-		    म_भेद(dev_name(devlink->dev), devname) == 0 &&
+	list_for_each_entry(devlink, &devlink_list, list) {
+		if (strcmp(devlink->dev->bus->name, busname) == 0 &&
+		    strcmp(dev_name(devlink->dev), devname) == 0 &&
 		    net_eq(devlink_net(devlink), net))
-			वापस devlink;
-	पूर्ण
+			return devlink;
+	}
 
-	वापस ERR_PTR(-ENODEV);
-पूर्ण
+	return ERR_PTR(-ENODEV);
+}
 
-अटल काष्ठा devlink *devlink_get_from_info(काष्ठा genl_info *info)
-अणु
-	वापस devlink_get_from_attrs(genl_info_net(info), info->attrs);
-पूर्ण
+static struct devlink *devlink_get_from_info(struct genl_info *info)
+{
+	return devlink_get_from_attrs(genl_info_net(info), info->attrs);
+}
 
-अटल काष्ठा devlink_port *devlink_port_get_by_index(काष्ठा devlink *devlink,
-						      अचिन्हित पूर्णांक port_index)
-अणु
-	काष्ठा devlink_port *devlink_port;
+static struct devlink_port *devlink_port_get_by_index(struct devlink *devlink,
+						      unsigned int port_index)
+{
+	struct devlink_port *devlink_port;
 
-	list_क्रम_each_entry(devlink_port, &devlink->port_list, list) अणु
-		अगर (devlink_port->index == port_index)
-			वापस devlink_port;
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+	list_for_each_entry(devlink_port, &devlink->port_list, list) {
+		if (devlink_port->index == port_index)
+			return devlink_port;
+	}
+	return NULL;
+}
 
-अटल bool devlink_port_index_exists(काष्ठा devlink *devlink,
-				      अचिन्हित पूर्णांक port_index)
-अणु
-	वापस devlink_port_get_by_index(devlink, port_index);
-पूर्ण
+static bool devlink_port_index_exists(struct devlink *devlink,
+				      unsigned int port_index)
+{
+	return devlink_port_get_by_index(devlink, port_index);
+}
 
-अटल काष्ठा devlink_port *devlink_port_get_from_attrs(काष्ठा devlink *devlink,
-							काष्ठा nlattr **attrs)
-अणु
-	अगर (attrs[DEVLINK_ATTR_PORT_INDEX]) अणु
+static struct devlink_port *devlink_port_get_from_attrs(struct devlink *devlink,
+							struct nlattr **attrs)
+{
+	if (attrs[DEVLINK_ATTR_PORT_INDEX]) {
 		u32 port_index = nla_get_u32(attrs[DEVLINK_ATTR_PORT_INDEX]);
-		काष्ठा devlink_port *devlink_port;
+		struct devlink_port *devlink_port;
 
 		devlink_port = devlink_port_get_by_index(devlink, port_index);
-		अगर (!devlink_port)
-			वापस ERR_PTR(-ENODEV);
-		वापस devlink_port;
-	पूर्ण
-	वापस ERR_PTR(-EINVAL);
-पूर्ण
+		if (!devlink_port)
+			return ERR_PTR(-ENODEV);
+		return devlink_port;
+	}
+	return ERR_PTR(-EINVAL);
+}
 
-अटल काष्ठा devlink_port *devlink_port_get_from_info(काष्ठा devlink *devlink,
-						       काष्ठा genl_info *info)
-अणु
-	वापस devlink_port_get_from_attrs(devlink, info->attrs);
-पूर्ण
+static struct devlink_port *devlink_port_get_from_info(struct devlink *devlink,
+						       struct genl_info *info)
+{
+	return devlink_port_get_from_attrs(devlink, info->attrs);
+}
 
-काष्ठा devlink_sb अणु
-	काष्ठा list_head list;
-	अचिन्हित पूर्णांक index;
+struct devlink_sb {
+	struct list_head list;
+	unsigned int index;
 	u32 size;
 	u16 ingress_pools_count;
 	u16 egress_pools_count;
 	u16 ingress_tc_count;
 	u16 egress_tc_count;
-पूर्ण;
+};
 
-अटल u16 devlink_sb_pool_count(काष्ठा devlink_sb *devlink_sb)
-अणु
-	वापस devlink_sb->ingress_pools_count + devlink_sb->egress_pools_count;
-पूर्ण
+static u16 devlink_sb_pool_count(struct devlink_sb *devlink_sb)
+{
+	return devlink_sb->ingress_pools_count + devlink_sb->egress_pools_count;
+}
 
-अटल काष्ठा devlink_sb *devlink_sb_get_by_index(काष्ठा devlink *devlink,
-						  अचिन्हित पूर्णांक sb_index)
-अणु
-	काष्ठा devlink_sb *devlink_sb;
+static struct devlink_sb *devlink_sb_get_by_index(struct devlink *devlink,
+						  unsigned int sb_index)
+{
+	struct devlink_sb *devlink_sb;
 
-	list_क्रम_each_entry(devlink_sb, &devlink->sb_list, list) अणु
-		अगर (devlink_sb->index == sb_index)
-			वापस devlink_sb;
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+	list_for_each_entry(devlink_sb, &devlink->sb_list, list) {
+		if (devlink_sb->index == sb_index)
+			return devlink_sb;
+	}
+	return NULL;
+}
 
-अटल bool devlink_sb_index_exists(काष्ठा devlink *devlink,
-				    अचिन्हित पूर्णांक sb_index)
-अणु
-	वापस devlink_sb_get_by_index(devlink, sb_index);
-पूर्ण
+static bool devlink_sb_index_exists(struct devlink *devlink,
+				    unsigned int sb_index)
+{
+	return devlink_sb_get_by_index(devlink, sb_index);
+}
 
-अटल काष्ठा devlink_sb *devlink_sb_get_from_attrs(काष्ठा devlink *devlink,
-						    काष्ठा nlattr **attrs)
-अणु
-	अगर (attrs[DEVLINK_ATTR_SB_INDEX]) अणु
+static struct devlink_sb *devlink_sb_get_from_attrs(struct devlink *devlink,
+						    struct nlattr **attrs)
+{
+	if (attrs[DEVLINK_ATTR_SB_INDEX]) {
 		u32 sb_index = nla_get_u32(attrs[DEVLINK_ATTR_SB_INDEX]);
-		काष्ठा devlink_sb *devlink_sb;
+		struct devlink_sb *devlink_sb;
 
 		devlink_sb = devlink_sb_get_by_index(devlink, sb_index);
-		अगर (!devlink_sb)
-			वापस ERR_PTR(-ENODEV);
-		वापस devlink_sb;
-	पूर्ण
-	वापस ERR_PTR(-EINVAL);
-पूर्ण
+		if (!devlink_sb)
+			return ERR_PTR(-ENODEV);
+		return devlink_sb;
+	}
+	return ERR_PTR(-EINVAL);
+}
 
-अटल काष्ठा devlink_sb *devlink_sb_get_from_info(काष्ठा devlink *devlink,
-						   काष्ठा genl_info *info)
-अणु
-	वापस devlink_sb_get_from_attrs(devlink, info->attrs);
-पूर्ण
+static struct devlink_sb *devlink_sb_get_from_info(struct devlink *devlink,
+						   struct genl_info *info)
+{
+	return devlink_sb_get_from_attrs(devlink, info->attrs);
+}
 
-अटल पूर्णांक devlink_sb_pool_index_get_from_attrs(काष्ठा devlink_sb *devlink_sb,
-						काष्ठा nlattr **attrs,
+static int devlink_sb_pool_index_get_from_attrs(struct devlink_sb *devlink_sb,
+						struct nlattr **attrs,
 						u16 *p_pool_index)
-अणु
+{
 	u16 val;
 
-	अगर (!attrs[DEVLINK_ATTR_SB_POOL_INDEX])
-		वापस -EINVAL;
+	if (!attrs[DEVLINK_ATTR_SB_POOL_INDEX])
+		return -EINVAL;
 
 	val = nla_get_u16(attrs[DEVLINK_ATTR_SB_POOL_INDEX]);
-	अगर (val >= devlink_sb_pool_count(devlink_sb))
-		वापस -EINVAL;
+	if (val >= devlink_sb_pool_count(devlink_sb))
+		return -EINVAL;
 	*p_pool_index = val;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक devlink_sb_pool_index_get_from_info(काष्ठा devlink_sb *devlink_sb,
-					       काष्ठा genl_info *info,
+static int devlink_sb_pool_index_get_from_info(struct devlink_sb *devlink_sb,
+					       struct genl_info *info,
 					       u16 *p_pool_index)
-अणु
-	वापस devlink_sb_pool_index_get_from_attrs(devlink_sb, info->attrs,
+{
+	return devlink_sb_pool_index_get_from_attrs(devlink_sb, info->attrs,
 						    p_pool_index);
-पूर्ण
+}
 
-अटल पूर्णांक
-devlink_sb_pool_type_get_from_attrs(काष्ठा nlattr **attrs,
-				    क्रमागत devlink_sb_pool_type *p_pool_type)
-अणु
+static int
+devlink_sb_pool_type_get_from_attrs(struct nlattr **attrs,
+				    enum devlink_sb_pool_type *p_pool_type)
+{
 	u8 val;
 
-	अगर (!attrs[DEVLINK_ATTR_SB_POOL_TYPE])
-		वापस -EINVAL;
+	if (!attrs[DEVLINK_ATTR_SB_POOL_TYPE])
+		return -EINVAL;
 
 	val = nla_get_u8(attrs[DEVLINK_ATTR_SB_POOL_TYPE]);
-	अगर (val != DEVLINK_SB_POOL_TYPE_INGRESS &&
+	if (val != DEVLINK_SB_POOL_TYPE_INGRESS &&
 	    val != DEVLINK_SB_POOL_TYPE_EGRESS)
-		वापस -EINVAL;
+		return -EINVAL;
 	*p_pool_type = val;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-devlink_sb_pool_type_get_from_info(काष्ठा genl_info *info,
-				   क्रमागत devlink_sb_pool_type *p_pool_type)
-अणु
-	वापस devlink_sb_pool_type_get_from_attrs(info->attrs, p_pool_type);
-पूर्ण
+static int
+devlink_sb_pool_type_get_from_info(struct genl_info *info,
+				   enum devlink_sb_pool_type *p_pool_type)
+{
+	return devlink_sb_pool_type_get_from_attrs(info->attrs, p_pool_type);
+}
 
-अटल पूर्णांक
-devlink_sb_th_type_get_from_attrs(काष्ठा nlattr **attrs,
-				  क्रमागत devlink_sb_threshold_type *p_th_type)
-अणु
+static int
+devlink_sb_th_type_get_from_attrs(struct nlattr **attrs,
+				  enum devlink_sb_threshold_type *p_th_type)
+{
 	u8 val;
 
-	अगर (!attrs[DEVLINK_ATTR_SB_POOL_THRESHOLD_TYPE])
-		वापस -EINVAL;
+	if (!attrs[DEVLINK_ATTR_SB_POOL_THRESHOLD_TYPE])
+		return -EINVAL;
 
 	val = nla_get_u8(attrs[DEVLINK_ATTR_SB_POOL_THRESHOLD_TYPE]);
-	अगर (val != DEVLINK_SB_THRESHOLD_TYPE_STATIC &&
+	if (val != DEVLINK_SB_THRESHOLD_TYPE_STATIC &&
 	    val != DEVLINK_SB_THRESHOLD_TYPE_DYNAMIC)
-		वापस -EINVAL;
+		return -EINVAL;
 	*p_th_type = val;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-devlink_sb_th_type_get_from_info(काष्ठा genl_info *info,
-				 क्रमागत devlink_sb_threshold_type *p_th_type)
-अणु
-	वापस devlink_sb_th_type_get_from_attrs(info->attrs, p_th_type);
-पूर्ण
+static int
+devlink_sb_th_type_get_from_info(struct genl_info *info,
+				 enum devlink_sb_threshold_type *p_th_type)
+{
+	return devlink_sb_th_type_get_from_attrs(info->attrs, p_th_type);
+}
 
-अटल पूर्णांक
-devlink_sb_tc_index_get_from_attrs(काष्ठा devlink_sb *devlink_sb,
-				   काष्ठा nlattr **attrs,
-				   क्रमागत devlink_sb_pool_type pool_type,
+static int
+devlink_sb_tc_index_get_from_attrs(struct devlink_sb *devlink_sb,
+				   struct nlattr **attrs,
+				   enum devlink_sb_pool_type pool_type,
 				   u16 *p_tc_index)
-अणु
+{
 	u16 val;
 
-	अगर (!attrs[DEVLINK_ATTR_SB_TC_INDEX])
-		वापस -EINVAL;
+	if (!attrs[DEVLINK_ATTR_SB_TC_INDEX])
+		return -EINVAL;
 
 	val = nla_get_u16(attrs[DEVLINK_ATTR_SB_TC_INDEX]);
-	अगर (pool_type == DEVLINK_SB_POOL_TYPE_INGRESS &&
+	if (pool_type == DEVLINK_SB_POOL_TYPE_INGRESS &&
 	    val >= devlink_sb->ingress_tc_count)
-		वापस -EINVAL;
-	अगर (pool_type == DEVLINK_SB_POOL_TYPE_EGRESS &&
+		return -EINVAL;
+	if (pool_type == DEVLINK_SB_POOL_TYPE_EGRESS &&
 	    val >= devlink_sb->egress_tc_count)
-		वापस -EINVAL;
+		return -EINVAL;
 	*p_tc_index = val;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-devlink_sb_tc_index_get_from_info(काष्ठा devlink_sb *devlink_sb,
-				  काष्ठा genl_info *info,
-				  क्रमागत devlink_sb_pool_type pool_type,
+static int
+devlink_sb_tc_index_get_from_info(struct devlink_sb *devlink_sb,
+				  struct genl_info *info,
+				  enum devlink_sb_pool_type pool_type,
 				  u16 *p_tc_index)
-अणु
-	वापस devlink_sb_tc_index_get_from_attrs(devlink_sb, info->attrs,
+{
+	return devlink_sb_tc_index_get_from_attrs(devlink_sb, info->attrs,
 						  pool_type, p_tc_index);
-पूर्ण
+}
 
-काष्ठा devlink_region अणु
-	काष्ठा devlink *devlink;
-	काष्ठा devlink_port *port;
-	काष्ठा list_head list;
-	जोड़ अणु
-		स्थिर काष्ठा devlink_region_ops *ops;
-		स्थिर काष्ठा devlink_port_region_ops *port_ops;
-	पूर्ण;
-	काष्ठा list_head snapshot_list;
+struct devlink_region {
+	struct devlink *devlink;
+	struct devlink_port *port;
+	struct list_head list;
+	union {
+		const struct devlink_region_ops *ops;
+		const struct devlink_port_region_ops *port_ops;
+	};
+	struct list_head snapshot_list;
 	u32 max_snapshots;
 	u32 cur_snapshots;
 	u64 size;
-पूर्ण;
+};
 
-काष्ठा devlink_snapshot अणु
-	काष्ठा list_head list;
-	काष्ठा devlink_region *region;
+struct devlink_snapshot {
+	struct list_head list;
+	struct devlink_region *region;
 	u8 *data;
 	u32 id;
-पूर्ण;
+};
 
-अटल काष्ठा devlink_region *
-devlink_region_get_by_name(काष्ठा devlink *devlink, स्थिर अक्षर *region_name)
-अणु
-	काष्ठा devlink_region *region;
+static struct devlink_region *
+devlink_region_get_by_name(struct devlink *devlink, const char *region_name)
+{
+	struct devlink_region *region;
 
-	list_क्रम_each_entry(region, &devlink->region_list, list)
-		अगर (!म_भेद(region->ops->name, region_name))
-			वापस region;
+	list_for_each_entry(region, &devlink->region_list, list)
+		if (!strcmp(region->ops->name, region_name))
+			return region;
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल काष्ठा devlink_region *
-devlink_port_region_get_by_name(काष्ठा devlink_port *port,
-				स्थिर अक्षर *region_name)
-अणु
-	काष्ठा devlink_region *region;
+static struct devlink_region *
+devlink_port_region_get_by_name(struct devlink_port *port,
+				const char *region_name)
+{
+	struct devlink_region *region;
 
-	list_क्रम_each_entry(region, &port->region_list, list)
-		अगर (!म_भेद(region->ops->name, region_name))
-			वापस region;
+	list_for_each_entry(region, &port->region_list, list)
+		if (!strcmp(region->ops->name, region_name))
+			return region;
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल काष्ठा devlink_snapshot *
-devlink_region_snapshot_get_by_id(काष्ठा devlink_region *region, u32 id)
-अणु
-	काष्ठा devlink_snapshot *snapshot;
+static struct devlink_snapshot *
+devlink_region_snapshot_get_by_id(struct devlink_region *region, u32 id)
+{
+	struct devlink_snapshot *snapshot;
 
-	list_क्रम_each_entry(snapshot, &region->snapshot_list, list)
-		अगर (snapshot->id == id)
-			वापस snapshot;
+	list_for_each_entry(snapshot, &region->snapshot_list, list)
+		if (snapshot->id == id)
+			return snapshot;
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-#घोषणा DEVLINK_NL_FLAG_NEED_PORT		BIT(0)
-#घोषणा DEVLINK_NL_FLAG_NEED_DEVLINK_OR_PORT	BIT(1)
+#define DEVLINK_NL_FLAG_NEED_PORT		BIT(0)
+#define DEVLINK_NL_FLAG_NEED_DEVLINK_OR_PORT	BIT(1)
 
-/* The per devlink instance lock is taken by शेष in the pre-करोit
- * operation, yet several commands करो not require this. The global
+/* The per devlink instance lock is taken by default in the pre-doit
+ * operation, yet several commands do not require this. The global
  * devlink lock is taken and protects from disruption by user-calls.
  */
-#घोषणा DEVLINK_NL_FLAG_NO_LOCK			BIT(2)
+#define DEVLINK_NL_FLAG_NO_LOCK			BIT(2)
 
-अटल पूर्णांक devlink_nl_pre_करोit(स्थिर काष्ठा genl_ops *ops,
-			       काष्ठा sk_buff *skb, काष्ठा genl_info *info)
-अणु
-	काष्ठा devlink_port *devlink_port;
-	काष्ठा devlink *devlink;
-	पूर्णांक err;
+static int devlink_nl_pre_doit(const struct genl_ops *ops,
+			       struct sk_buff *skb, struct genl_info *info)
+{
+	struct devlink_port *devlink_port;
+	struct devlink *devlink;
+	int err;
 
 	mutex_lock(&devlink_mutex);
 	devlink = devlink_get_from_info(info);
-	अगर (IS_ERR(devlink)) अणु
+	if (IS_ERR(devlink)) {
 		mutex_unlock(&devlink_mutex);
-		वापस PTR_ERR(devlink);
-	पूर्ण
-	अगर (~ops->पूर्णांकernal_flags & DEVLINK_NL_FLAG_NO_LOCK)
+		return PTR_ERR(devlink);
+	}
+	if (~ops->internal_flags & DEVLINK_NL_FLAG_NO_LOCK)
 		mutex_lock(&devlink->lock);
 	info->user_ptr[0] = devlink;
-	अगर (ops->पूर्णांकernal_flags & DEVLINK_NL_FLAG_NEED_PORT) अणु
+	if (ops->internal_flags & DEVLINK_NL_FLAG_NEED_PORT) {
 		devlink_port = devlink_port_get_from_info(devlink, info);
-		अगर (IS_ERR(devlink_port)) अणु
+		if (IS_ERR(devlink_port)) {
 			err = PTR_ERR(devlink_port);
-			जाओ unlock;
-		पूर्ण
+			goto unlock;
+		}
 		info->user_ptr[1] = devlink_port;
-	पूर्ण अन्यथा अगर (ops->पूर्णांकernal_flags & DEVLINK_NL_FLAG_NEED_DEVLINK_OR_PORT) अणु
+	} else if (ops->internal_flags & DEVLINK_NL_FLAG_NEED_DEVLINK_OR_PORT) {
 		devlink_port = devlink_port_get_from_info(devlink, info);
-		अगर (!IS_ERR(devlink_port))
+		if (!IS_ERR(devlink_port))
 			info->user_ptr[1] = devlink_port;
-	पूर्ण
-	वापस 0;
+	}
+	return 0;
 
 unlock:
-	अगर (~ops->पूर्णांकernal_flags & DEVLINK_NL_FLAG_NO_LOCK)
+	if (~ops->internal_flags & DEVLINK_NL_FLAG_NO_LOCK)
 		mutex_unlock(&devlink->lock);
 	mutex_unlock(&devlink_mutex);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम devlink_nl_post_करोit(स्थिर काष्ठा genl_ops *ops,
-				 काष्ठा sk_buff *skb, काष्ठा genl_info *info)
-अणु
-	काष्ठा devlink *devlink;
+static void devlink_nl_post_doit(const struct genl_ops *ops,
+				 struct sk_buff *skb, struct genl_info *info)
+{
+	struct devlink *devlink;
 
 	devlink = info->user_ptr[0];
-	अगर (~ops->पूर्णांकernal_flags & DEVLINK_NL_FLAG_NO_LOCK)
+	if (~ops->internal_flags & DEVLINK_NL_FLAG_NO_LOCK)
 		mutex_unlock(&devlink->lock);
 	mutex_unlock(&devlink_mutex);
-पूर्ण
+}
 
-अटल काष्ठा genl_family devlink_nl_family;
+static struct genl_family devlink_nl_family;
 
-क्रमागत devlink_multicast_groups अणु
+enum devlink_multicast_groups {
 	DEVLINK_MCGRP_CONFIG,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा genl_multicast_group devlink_nl_mcgrps[] = अणु
-	[DEVLINK_MCGRP_CONFIG] = अणु .name = DEVLINK_GENL_MCGRP_CONFIG_NAME पूर्ण,
-पूर्ण;
+static const struct genl_multicast_group devlink_nl_mcgrps[] = {
+	[DEVLINK_MCGRP_CONFIG] = { .name = DEVLINK_GENL_MCGRP_CONFIG_NAME },
+};
 
-अटल पूर्णांक devlink_nl_put_handle(काष्ठा sk_buff *msg, काष्ठा devlink *devlink)
-अणु
-	अगर (nla_put_string(msg, DEVLINK_ATTR_BUS_NAME, devlink->dev->bus->name))
-		वापस -EMSGSIZE;
-	अगर (nla_put_string(msg, DEVLINK_ATTR_DEV_NAME, dev_name(devlink->dev)))
-		वापस -EMSGSIZE;
-	वापस 0;
-पूर्ण
+static int devlink_nl_put_handle(struct sk_buff *msg, struct devlink *devlink)
+{
+	if (nla_put_string(msg, DEVLINK_ATTR_BUS_NAME, devlink->dev->bus->name))
+		return -EMSGSIZE;
+	if (nla_put_string(msg, DEVLINK_ATTR_DEV_NAME, dev_name(devlink->dev)))
+		return -EMSGSIZE;
+	return 0;
+}
 
-काष्ठा devlink_reload_combination अणु
-	क्रमागत devlink_reload_action action;
-	क्रमागत devlink_reload_limit limit;
-पूर्ण;
+struct devlink_reload_combination {
+	enum devlink_reload_action action;
+	enum devlink_reload_limit limit;
+};
 
-अटल स्थिर काष्ठा devlink_reload_combination devlink_reload_invalid_combinations[] = अणु
-	अणु
-		/* can't reinitialize driver with no करोwn समय */
+static const struct devlink_reload_combination devlink_reload_invalid_combinations[] = {
+	{
+		/* can't reinitialize driver with no down time */
 		.action = DEVLINK_RELOAD_ACTION_DRIVER_REINIT,
 		.limit = DEVLINK_RELOAD_LIMIT_NO_RESET,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल bool
-devlink_reload_combination_is_invalid(क्रमागत devlink_reload_action action,
-				      क्रमागत devlink_reload_limit limit)
-अणु
-	पूर्णांक i;
+static bool
+devlink_reload_combination_is_invalid(enum devlink_reload_action action,
+				      enum devlink_reload_limit limit)
+{
+	int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(devlink_reload_invalid_combinations); i++)
-		अगर (devlink_reload_invalid_combinations[i].action == action &&
+	for (i = 0; i < ARRAY_SIZE(devlink_reload_invalid_combinations); i++)
+		if (devlink_reload_invalid_combinations[i].action == action &&
 		    devlink_reload_invalid_combinations[i].limit == limit)
-			वापस true;
-	वापस false;
-पूर्ण
+			return true;
+	return false;
+}
 
-अटल bool
-devlink_reload_action_is_supported(काष्ठा devlink *devlink, क्रमागत devlink_reload_action action)
-अणु
-	वापस test_bit(action, &devlink->ops->reload_actions);
-पूर्ण
+static bool
+devlink_reload_action_is_supported(struct devlink *devlink, enum devlink_reload_action action)
+{
+	return test_bit(action, &devlink->ops->reload_actions);
+}
 
-अटल bool
-devlink_reload_limit_is_supported(काष्ठा devlink *devlink, क्रमागत devlink_reload_limit limit)
-अणु
-	वापस test_bit(limit, &devlink->ops->reload_limits);
-पूर्ण
+static bool
+devlink_reload_limit_is_supported(struct devlink *devlink, enum devlink_reload_limit limit)
+{
+	return test_bit(limit, &devlink->ops->reload_limits);
+}
 
-अटल पूर्णांक devlink_reload_stat_put(काष्ठा sk_buff *msg,
-				   क्रमागत devlink_reload_limit limit, u32 value)
-अणु
-	काष्ठा nlattr *reload_stats_entry;
+static int devlink_reload_stat_put(struct sk_buff *msg,
+				   enum devlink_reload_limit limit, u32 value)
+{
+	struct nlattr *reload_stats_entry;
 
 	reload_stats_entry = nla_nest_start(msg, DEVLINK_ATTR_RELOAD_STATS_ENTRY);
-	अगर (!reload_stats_entry)
-		वापस -EMSGSIZE;
+	if (!reload_stats_entry)
+		return -EMSGSIZE;
 
-	अगर (nla_put_u8(msg, DEVLINK_ATTR_RELOAD_STATS_LIMIT, limit) ||
+	if (nla_put_u8(msg, DEVLINK_ATTR_RELOAD_STATS_LIMIT, limit) ||
 	    nla_put_u32(msg, DEVLINK_ATTR_RELOAD_STATS_VALUE, value))
-		जाओ nla_put_failure;
+		goto nla_put_failure;
 	nla_nest_end(msg, reload_stats_entry);
-	वापस 0;
+	return 0;
 
 nla_put_failure:
 	nla_nest_cancel(msg, reload_stats_entry);
-	वापस -EMSGSIZE;
-पूर्ण
+	return -EMSGSIZE;
+}
 
-अटल पूर्णांक devlink_reload_stats_put(काष्ठा sk_buff *msg, काष्ठा devlink *devlink, bool is_remote)
-अणु
-	काष्ठा nlattr *reload_stats_attr, *act_info, *act_stats;
-	पूर्णांक i, j, stat_idx;
+static int devlink_reload_stats_put(struct sk_buff *msg, struct devlink *devlink, bool is_remote)
+{
+	struct nlattr *reload_stats_attr, *act_info, *act_stats;
+	int i, j, stat_idx;
 	u32 value;
 
-	अगर (!is_remote)
+	if (!is_remote)
 		reload_stats_attr = nla_nest_start(msg, DEVLINK_ATTR_RELOAD_STATS);
-	अन्यथा
+	else
 		reload_stats_attr = nla_nest_start(msg, DEVLINK_ATTR_REMOTE_RELOAD_STATS);
 
-	अगर (!reload_stats_attr)
-		वापस -EMSGSIZE;
+	if (!reload_stats_attr)
+		return -EMSGSIZE;
 
-	क्रम (i = 0; i <= DEVLINK_RELOAD_ACTION_MAX; i++) अणु
-		अगर ((!is_remote &&
+	for (i = 0; i <= DEVLINK_RELOAD_ACTION_MAX; i++) {
+		if ((!is_remote &&
 		     !devlink_reload_action_is_supported(devlink, i)) ||
 		    i == DEVLINK_RELOAD_ACTION_UNSPEC)
-			जारी;
+			continue;
 		act_info = nla_nest_start(msg, DEVLINK_ATTR_RELOAD_ACTION_INFO);
-		अगर (!act_info)
-			जाओ nla_put_failure;
+		if (!act_info)
+			goto nla_put_failure;
 
-		अगर (nla_put_u8(msg, DEVLINK_ATTR_RELOAD_ACTION, i))
-			जाओ action_info_nest_cancel;
+		if (nla_put_u8(msg, DEVLINK_ATTR_RELOAD_ACTION, i))
+			goto action_info_nest_cancel;
 		act_stats = nla_nest_start(msg, DEVLINK_ATTR_RELOAD_ACTION_STATS);
-		अगर (!act_stats)
-			जाओ action_info_nest_cancel;
+		if (!act_stats)
+			goto action_info_nest_cancel;
 
-		क्रम (j = 0; j <= DEVLINK_RELOAD_LIMIT_MAX; j++) अणु
-			/* Remote stats are shown even अगर not locally supported.
-			 * Stats of actions with unspecअगरied limit are shown
-			 * though drivers करोn't need to रेजिस्टर unspecअगरied
+		for (j = 0; j <= DEVLINK_RELOAD_LIMIT_MAX; j++) {
+			/* Remote stats are shown even if not locally supported.
+			 * Stats of actions with unspecified limit are shown
+			 * though drivers don't need to register unspecified
 			 * limit.
 			 */
-			अगर ((!is_remote && j != DEVLINK_RELOAD_LIMIT_UNSPEC &&
+			if ((!is_remote && j != DEVLINK_RELOAD_LIMIT_UNSPEC &&
 			     !devlink_reload_limit_is_supported(devlink, j)) ||
 			    devlink_reload_combination_is_invalid(i, j))
-				जारी;
+				continue;
 
 			stat_idx = j * __DEVLINK_RELOAD_ACTION_MAX + i;
-			अगर (!is_remote)
+			if (!is_remote)
 				value = devlink->stats.reload_stats[stat_idx];
-			अन्यथा
+			else
 				value = devlink->stats.remote_reload_stats[stat_idx];
-			अगर (devlink_reload_stat_put(msg, j, value))
-				जाओ action_stats_nest_cancel;
-		पूर्ण
+			if (devlink_reload_stat_put(msg, j, value))
+				goto action_stats_nest_cancel;
+		}
 		nla_nest_end(msg, act_stats);
 		nla_nest_end(msg, act_info);
-	पूर्ण
+	}
 	nla_nest_end(msg, reload_stats_attr);
-	वापस 0;
+	return 0;
 
 action_stats_nest_cancel:
 	nla_nest_cancel(msg, act_stats);
@@ -601,1152 +600,1152 @@ action_info_nest_cancel:
 	nla_nest_cancel(msg, act_info);
 nla_put_failure:
 	nla_nest_cancel(msg, reload_stats_attr);
-	वापस -EMSGSIZE;
-पूर्ण
+	return -EMSGSIZE;
+}
 
-अटल पूर्णांक devlink_nl_fill(काष्ठा sk_buff *msg, काष्ठा devlink *devlink,
-			   क्रमागत devlink_command cmd, u32 portid,
-			   u32 seq, पूर्णांक flags)
-अणु
-	काष्ठा nlattr *dev_stats;
-	व्योम *hdr;
+static int devlink_nl_fill(struct sk_buff *msg, struct devlink *devlink,
+			   enum devlink_command cmd, u32 portid,
+			   u32 seq, int flags)
+{
+	struct nlattr *dev_stats;
+	void *hdr;
 
 	hdr = genlmsg_put(msg, portid, seq, &devlink_nl_family, flags, cmd);
-	अगर (!hdr)
-		वापस -EMSGSIZE;
+	if (!hdr)
+		return -EMSGSIZE;
 
-	अगर (devlink_nl_put_handle(msg, devlink))
-		जाओ nla_put_failure;
-	अगर (nla_put_u8(msg, DEVLINK_ATTR_RELOAD_FAILED, devlink->reload_failed))
-		जाओ nla_put_failure;
+	if (devlink_nl_put_handle(msg, devlink))
+		goto nla_put_failure;
+	if (nla_put_u8(msg, DEVLINK_ATTR_RELOAD_FAILED, devlink->reload_failed))
+		goto nla_put_failure;
 
 	dev_stats = nla_nest_start(msg, DEVLINK_ATTR_DEV_STATS);
-	अगर (!dev_stats)
-		जाओ nla_put_failure;
+	if (!dev_stats)
+		goto nla_put_failure;
 
-	अगर (devlink_reload_stats_put(msg, devlink, false))
-		जाओ dev_stats_nest_cancel;
-	अगर (devlink_reload_stats_put(msg, devlink, true))
-		जाओ dev_stats_nest_cancel;
+	if (devlink_reload_stats_put(msg, devlink, false))
+		goto dev_stats_nest_cancel;
+	if (devlink_reload_stats_put(msg, devlink, true))
+		goto dev_stats_nest_cancel;
 
 	nla_nest_end(msg, dev_stats);
 	genlmsg_end(msg, hdr);
-	वापस 0;
+	return 0;
 
 dev_stats_nest_cancel:
 	nla_nest_cancel(msg, dev_stats);
 nla_put_failure:
 	genlmsg_cancel(msg, hdr);
-	वापस -EMSGSIZE;
-पूर्ण
+	return -EMSGSIZE;
+}
 
-अटल व्योम devlink_notअगरy(काष्ठा devlink *devlink, क्रमागत devlink_command cmd)
-अणु
-	काष्ठा sk_buff *msg;
-	पूर्णांक err;
+static void devlink_notify(struct devlink *devlink, enum devlink_command cmd)
+{
+	struct sk_buff *msg;
+	int err;
 
 	WARN_ON(cmd != DEVLINK_CMD_NEW && cmd != DEVLINK_CMD_DEL);
 
 	msg = nlmsg_new(NLMSG_DEFAULT_SIZE, GFP_KERNEL);
-	अगर (!msg)
-		वापस;
+	if (!msg)
+		return;
 
 	err = devlink_nl_fill(msg, devlink, cmd, 0, 0, 0);
-	अगर (err) अणु
-		nlmsg_मुक्त(msg);
-		वापस;
-	पूर्ण
+	if (err) {
+		nlmsg_free(msg);
+		return;
+	}
 
 	genlmsg_multicast_netns(&devlink_nl_family, devlink_net(devlink),
 				msg, 0, DEVLINK_MCGRP_CONFIG, GFP_KERNEL);
-पूर्ण
+}
 
-अटल पूर्णांक devlink_nl_port_attrs_put(काष्ठा sk_buff *msg,
-				     काष्ठा devlink_port *devlink_port)
-अणु
-	काष्ठा devlink_port_attrs *attrs = &devlink_port->attrs;
+static int devlink_nl_port_attrs_put(struct sk_buff *msg,
+				     struct devlink_port *devlink_port)
+{
+	struct devlink_port_attrs *attrs = &devlink_port->attrs;
 
-	अगर (!devlink_port->attrs_set)
-		वापस 0;
-	अगर (attrs->lanes) अणु
-		अगर (nla_put_u32(msg, DEVLINK_ATTR_PORT_LANES, attrs->lanes))
-			वापस -EMSGSIZE;
-	पूर्ण
-	अगर (nla_put_u8(msg, DEVLINK_ATTR_PORT_SPLITTABLE, attrs->splittable))
-		वापस -EMSGSIZE;
-	अगर (nla_put_u16(msg, DEVLINK_ATTR_PORT_FLAVOUR, attrs->flavour))
-		वापस -EMSGSIZE;
-	चयन (devlink_port->attrs.flavour) अणु
-	हाल DEVLINK_PORT_FLAVOUR_PCI_PF:
-		अगर (nla_put_u32(msg, DEVLINK_ATTR_PORT_CONTROLLER_NUMBER,
+	if (!devlink_port->attrs_set)
+		return 0;
+	if (attrs->lanes) {
+		if (nla_put_u32(msg, DEVLINK_ATTR_PORT_LANES, attrs->lanes))
+			return -EMSGSIZE;
+	}
+	if (nla_put_u8(msg, DEVLINK_ATTR_PORT_SPLITTABLE, attrs->splittable))
+		return -EMSGSIZE;
+	if (nla_put_u16(msg, DEVLINK_ATTR_PORT_FLAVOUR, attrs->flavour))
+		return -EMSGSIZE;
+	switch (devlink_port->attrs.flavour) {
+	case DEVLINK_PORT_FLAVOUR_PCI_PF:
+		if (nla_put_u32(msg, DEVLINK_ATTR_PORT_CONTROLLER_NUMBER,
 				attrs->pci_pf.controller) ||
 		    nla_put_u16(msg, DEVLINK_ATTR_PORT_PCI_PF_NUMBER, attrs->pci_pf.pf))
-			वापस -EMSGSIZE;
-		अगर (nla_put_u8(msg, DEVLINK_ATTR_PORT_EXTERNAL, attrs->pci_pf.बाह्यal))
-			वापस -EMSGSIZE;
-		अवरोध;
-	हाल DEVLINK_PORT_FLAVOUR_PCI_VF:
-		अगर (nla_put_u32(msg, DEVLINK_ATTR_PORT_CONTROLLER_NUMBER,
+			return -EMSGSIZE;
+		if (nla_put_u8(msg, DEVLINK_ATTR_PORT_EXTERNAL, attrs->pci_pf.external))
+			return -EMSGSIZE;
+		break;
+	case DEVLINK_PORT_FLAVOUR_PCI_VF:
+		if (nla_put_u32(msg, DEVLINK_ATTR_PORT_CONTROLLER_NUMBER,
 				attrs->pci_vf.controller) ||
 		    nla_put_u16(msg, DEVLINK_ATTR_PORT_PCI_PF_NUMBER, attrs->pci_vf.pf) ||
 		    nla_put_u16(msg, DEVLINK_ATTR_PORT_PCI_VF_NUMBER, attrs->pci_vf.vf))
-			वापस -EMSGSIZE;
-		अगर (nla_put_u8(msg, DEVLINK_ATTR_PORT_EXTERNAL, attrs->pci_vf.बाह्यal))
-			वापस -EMSGSIZE;
-		अवरोध;
-	हाल DEVLINK_PORT_FLAVOUR_PCI_SF:
-		अगर (nla_put_u32(msg, DEVLINK_ATTR_PORT_CONTROLLER_NUMBER,
+			return -EMSGSIZE;
+		if (nla_put_u8(msg, DEVLINK_ATTR_PORT_EXTERNAL, attrs->pci_vf.external))
+			return -EMSGSIZE;
+		break;
+	case DEVLINK_PORT_FLAVOUR_PCI_SF:
+		if (nla_put_u32(msg, DEVLINK_ATTR_PORT_CONTROLLER_NUMBER,
 				attrs->pci_sf.controller) ||
 		    nla_put_u16(msg, DEVLINK_ATTR_PORT_PCI_PF_NUMBER,
 				attrs->pci_sf.pf) ||
 		    nla_put_u32(msg, DEVLINK_ATTR_PORT_PCI_SF_NUMBER,
 				attrs->pci_sf.sf))
-			वापस -EMSGSIZE;
-		अवरोध;
-	हाल DEVLINK_PORT_FLAVOUR_PHYSICAL:
-	हाल DEVLINK_PORT_FLAVOUR_CPU:
-	हाल DEVLINK_PORT_FLAVOUR_DSA:
-		अगर (nla_put_u32(msg, DEVLINK_ATTR_PORT_NUMBER,
+			return -EMSGSIZE;
+		break;
+	case DEVLINK_PORT_FLAVOUR_PHYSICAL:
+	case DEVLINK_PORT_FLAVOUR_CPU:
+	case DEVLINK_PORT_FLAVOUR_DSA:
+		if (nla_put_u32(msg, DEVLINK_ATTR_PORT_NUMBER,
 				attrs->phys.port_number))
-			वापस -EMSGSIZE;
-		अगर (!attrs->split)
-			वापस 0;
-		अगर (nla_put_u32(msg, DEVLINK_ATTR_PORT_SPLIT_GROUP,
+			return -EMSGSIZE;
+		if (!attrs->split)
+			return 0;
+		if (nla_put_u32(msg, DEVLINK_ATTR_PORT_SPLIT_GROUP,
 				attrs->phys.port_number))
-			वापस -EMSGSIZE;
-		अगर (nla_put_u32(msg, DEVLINK_ATTR_PORT_SPLIT_SUBPORT_NUMBER,
+			return -EMSGSIZE;
+		if (nla_put_u32(msg, DEVLINK_ATTR_PORT_SPLIT_SUBPORT_NUMBER,
 				attrs->phys.split_subport_number))
-			वापस -EMSGSIZE;
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-	वापस 0;
-पूर्ण
+			return -EMSGSIZE;
+		break;
+	default:
+		break;
+	}
+	return 0;
+}
 
-अटल पूर्णांक
-devlink_port_fn_hw_addr_fill(काष्ठा devlink *devlink, स्थिर काष्ठा devlink_ops *ops,
-			     काष्ठा devlink_port *port, काष्ठा sk_buff *msg,
-			     काष्ठा netlink_ext_ack *extack, bool *msg_updated)
-अणु
+static int
+devlink_port_fn_hw_addr_fill(struct devlink *devlink, const struct devlink_ops *ops,
+			     struct devlink_port *port, struct sk_buff *msg,
+			     struct netlink_ext_ack *extack, bool *msg_updated)
+{
 	u8 hw_addr[MAX_ADDR_LEN];
-	पूर्णांक hw_addr_len;
-	पूर्णांक err;
+	int hw_addr_len;
+	int err;
 
-	अगर (!ops->port_function_hw_addr_get)
-		वापस 0;
+	if (!ops->port_function_hw_addr_get)
+		return 0;
 
 	err = ops->port_function_hw_addr_get(devlink, port, hw_addr, &hw_addr_len, extack);
-	अगर (err) अणु
-		अगर (err == -EOPNOTSUPP)
-			वापस 0;
-		वापस err;
-	पूर्ण
+	if (err) {
+		if (err == -EOPNOTSUPP)
+			return 0;
+		return err;
+	}
 	err = nla_put(msg, DEVLINK_PORT_FUNCTION_ATTR_HW_ADDR, hw_addr_len, hw_addr);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 	*msg_updated = true;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल bool
-devlink_port_fn_state_valid(क्रमागत devlink_port_fn_state state)
-अणु
-	वापस state == DEVLINK_PORT_FN_STATE_INACTIVE ||
+static bool
+devlink_port_fn_state_valid(enum devlink_port_fn_state state)
+{
+	return state == DEVLINK_PORT_FN_STATE_INACTIVE ||
 	       state == DEVLINK_PORT_FN_STATE_ACTIVE;
-पूर्ण
+}
 
-अटल bool
-devlink_port_fn_opstate_valid(क्रमागत devlink_port_fn_opstate opstate)
-अणु
-	वापस opstate == DEVLINK_PORT_FN_OPSTATE_DETACHED ||
+static bool
+devlink_port_fn_opstate_valid(enum devlink_port_fn_opstate opstate)
+{
+	return opstate == DEVLINK_PORT_FN_OPSTATE_DETACHED ||
 	       opstate == DEVLINK_PORT_FN_OPSTATE_ATTACHED;
-पूर्ण
+}
 
-अटल पूर्णांक
-devlink_port_fn_state_fill(काष्ठा devlink *devlink,
-			   स्थिर काष्ठा devlink_ops *ops,
-			   काष्ठा devlink_port *port, काष्ठा sk_buff *msg,
-			   काष्ठा netlink_ext_ack *extack,
+static int
+devlink_port_fn_state_fill(struct devlink *devlink,
+			   const struct devlink_ops *ops,
+			   struct devlink_port *port, struct sk_buff *msg,
+			   struct netlink_ext_ack *extack,
 			   bool *msg_updated)
-अणु
-	क्रमागत devlink_port_fn_opstate opstate;
-	क्रमागत devlink_port_fn_state state;
-	पूर्णांक err;
+{
+	enum devlink_port_fn_opstate opstate;
+	enum devlink_port_fn_state state;
+	int err;
 
-	अगर (!ops->port_fn_state_get)
-		वापस 0;
+	if (!ops->port_fn_state_get)
+		return 0;
 
 	err = ops->port_fn_state_get(devlink, port, &state, &opstate, extack);
-	अगर (err) अणु
-		अगर (err == -EOPNOTSUPP)
-			वापस 0;
-		वापस err;
-	पूर्ण
-	अगर (!devlink_port_fn_state_valid(state)) अणु
+	if (err) {
+		if (err == -EOPNOTSUPP)
+			return 0;
+		return err;
+	}
+	if (!devlink_port_fn_state_valid(state)) {
 		WARN_ON_ONCE(1);
 		NL_SET_ERR_MSG_MOD(extack, "Invalid state read from driver");
-		वापस -EINVAL;
-	पूर्ण
-	अगर (!devlink_port_fn_opstate_valid(opstate)) अणु
+		return -EINVAL;
+	}
+	if (!devlink_port_fn_opstate_valid(opstate)) {
 		WARN_ON_ONCE(1);
 		NL_SET_ERR_MSG_MOD(extack,
 				   "Invalid operational state read from driver");
-		वापस -EINVAL;
-	पूर्ण
-	अगर (nla_put_u8(msg, DEVLINK_PORT_FN_ATTR_STATE, state) ||
+		return -EINVAL;
+	}
+	if (nla_put_u8(msg, DEVLINK_PORT_FN_ATTR_STATE, state) ||
 	    nla_put_u8(msg, DEVLINK_PORT_FN_ATTR_OPSTATE, opstate))
-		वापस -EMSGSIZE;
+		return -EMSGSIZE;
 	*msg_updated = true;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-devlink_nl_port_function_attrs_put(काष्ठा sk_buff *msg, काष्ठा devlink_port *port,
-				   काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा devlink *devlink = port->devlink;
-	स्थिर काष्ठा devlink_ops *ops;
-	काष्ठा nlattr *function_attr;
+static int
+devlink_nl_port_function_attrs_put(struct sk_buff *msg, struct devlink_port *port,
+				   struct netlink_ext_ack *extack)
+{
+	struct devlink *devlink = port->devlink;
+	const struct devlink_ops *ops;
+	struct nlattr *function_attr;
 	bool msg_updated = false;
-	पूर्णांक err;
+	int err;
 
 	function_attr = nla_nest_start_noflag(msg, DEVLINK_ATTR_PORT_FUNCTION);
-	अगर (!function_attr)
-		वापस -EMSGSIZE;
+	if (!function_attr)
+		return -EMSGSIZE;
 
 	ops = devlink->ops;
 	err = devlink_port_fn_hw_addr_fill(devlink, ops, port, msg,
 					   extack, &msg_updated);
-	अगर (err)
-		जाओ out;
+	if (err)
+		goto out;
 	err = devlink_port_fn_state_fill(devlink, ops, port, msg, extack,
 					 &msg_updated);
 out:
-	अगर (err || !msg_updated)
+	if (err || !msg_updated)
 		nla_nest_cancel(msg, function_attr);
-	अन्यथा
+	else
 		nla_nest_end(msg, function_attr);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक devlink_nl_port_fill(काष्ठा sk_buff *msg, काष्ठा devlink *devlink,
-				काष्ठा devlink_port *devlink_port,
-				क्रमागत devlink_command cmd, u32 portid,
-				u32 seq, पूर्णांक flags,
-				काष्ठा netlink_ext_ack *extack)
-अणु
-	व्योम *hdr;
+static int devlink_nl_port_fill(struct sk_buff *msg, struct devlink *devlink,
+				struct devlink_port *devlink_port,
+				enum devlink_command cmd, u32 portid,
+				u32 seq, int flags,
+				struct netlink_ext_ack *extack)
+{
+	void *hdr;
 
 	hdr = genlmsg_put(msg, portid, seq, &devlink_nl_family, flags, cmd);
-	अगर (!hdr)
-		वापस -EMSGSIZE;
+	if (!hdr)
+		return -EMSGSIZE;
 
-	अगर (devlink_nl_put_handle(msg, devlink))
-		जाओ nla_put_failure;
-	अगर (nla_put_u32(msg, DEVLINK_ATTR_PORT_INDEX, devlink_port->index))
-		जाओ nla_put_failure;
+	if (devlink_nl_put_handle(msg, devlink))
+		goto nla_put_failure;
+	if (nla_put_u32(msg, DEVLINK_ATTR_PORT_INDEX, devlink_port->index))
+		goto nla_put_failure;
 
-	/* Hold rtnl lock जबतक accessing port's netdev attributes. */
+	/* Hold rtnl lock while accessing port's netdev attributes. */
 	rtnl_lock();
 	spin_lock_bh(&devlink_port->type_lock);
-	अगर (nla_put_u16(msg, DEVLINK_ATTR_PORT_TYPE, devlink_port->type))
-		जाओ nla_put_failure_type_locked;
-	अगर (devlink_port->desired_type != DEVLINK_PORT_TYPE_NOTSET &&
+	if (nla_put_u16(msg, DEVLINK_ATTR_PORT_TYPE, devlink_port->type))
+		goto nla_put_failure_type_locked;
+	if (devlink_port->desired_type != DEVLINK_PORT_TYPE_NOTSET &&
 	    nla_put_u16(msg, DEVLINK_ATTR_PORT_DESIRED_TYPE,
 			devlink_port->desired_type))
-		जाओ nla_put_failure_type_locked;
-	अगर (devlink_port->type == DEVLINK_PORT_TYPE_ETH) अणु
-		काष्ठा net *net = devlink_net(devlink_port->devlink);
-		काष्ठा net_device *netdev = devlink_port->type_dev;
+		goto nla_put_failure_type_locked;
+	if (devlink_port->type == DEVLINK_PORT_TYPE_ETH) {
+		struct net *net = devlink_net(devlink_port->devlink);
+		struct net_device *netdev = devlink_port->type_dev;
 
-		अगर (netdev && net_eq(net, dev_net(netdev)) &&
+		if (netdev && net_eq(net, dev_net(netdev)) &&
 		    (nla_put_u32(msg, DEVLINK_ATTR_PORT_NETDEV_IFINDEX,
-				 netdev->अगरindex) ||
+				 netdev->ifindex) ||
 		     nla_put_string(msg, DEVLINK_ATTR_PORT_NETDEV_NAME,
 				    netdev->name)))
-			जाओ nla_put_failure_type_locked;
-	पूर्ण
-	अगर (devlink_port->type == DEVLINK_PORT_TYPE_IB) अणु
-		काष्ठा ib_device *ibdev = devlink_port->type_dev;
+			goto nla_put_failure_type_locked;
+	}
+	if (devlink_port->type == DEVLINK_PORT_TYPE_IB) {
+		struct ib_device *ibdev = devlink_port->type_dev;
 
-		अगर (ibdev &&
+		if (ibdev &&
 		    nla_put_string(msg, DEVLINK_ATTR_PORT_IBDEV_NAME,
 				   ibdev->name))
-			जाओ nla_put_failure_type_locked;
-	पूर्ण
+			goto nla_put_failure_type_locked;
+	}
 	spin_unlock_bh(&devlink_port->type_lock);
 	rtnl_unlock();
-	अगर (devlink_nl_port_attrs_put(msg, devlink_port))
-		जाओ nla_put_failure;
-	अगर (devlink_nl_port_function_attrs_put(msg, devlink_port, extack))
-		जाओ nla_put_failure;
+	if (devlink_nl_port_attrs_put(msg, devlink_port))
+		goto nla_put_failure;
+	if (devlink_nl_port_function_attrs_put(msg, devlink_port, extack))
+		goto nla_put_failure;
 
 	genlmsg_end(msg, hdr);
-	वापस 0;
+	return 0;
 
 nla_put_failure_type_locked:
 	spin_unlock_bh(&devlink_port->type_lock);
 	rtnl_unlock();
 nla_put_failure:
 	genlmsg_cancel(msg, hdr);
-	वापस -EMSGSIZE;
-पूर्ण
+	return -EMSGSIZE;
+}
 
-अटल व्योम devlink_port_notअगरy(काष्ठा devlink_port *devlink_port,
-				क्रमागत devlink_command cmd)
-अणु
-	काष्ठा devlink *devlink = devlink_port->devlink;
-	काष्ठा sk_buff *msg;
-	पूर्णांक err;
+static void devlink_port_notify(struct devlink_port *devlink_port,
+				enum devlink_command cmd)
+{
+	struct devlink *devlink = devlink_port->devlink;
+	struct sk_buff *msg;
+	int err;
 
-	अगर (!devlink_port->रेजिस्टरed)
-		वापस;
+	if (!devlink_port->registered)
+		return;
 
 	WARN_ON(cmd != DEVLINK_CMD_PORT_NEW && cmd != DEVLINK_CMD_PORT_DEL);
 
 	msg = nlmsg_new(NLMSG_DEFAULT_SIZE, GFP_KERNEL);
-	अगर (!msg)
-		वापस;
+	if (!msg)
+		return;
 
 	err = devlink_nl_port_fill(msg, devlink, devlink_port, cmd, 0, 0, 0,
-				   शून्य);
-	अगर (err) अणु
-		nlmsg_मुक्त(msg);
-		वापस;
-	पूर्ण
+				   NULL);
+	if (err) {
+		nlmsg_free(msg);
+		return;
+	}
 
 	genlmsg_multicast_netns(&devlink_nl_family, devlink_net(devlink),
 				msg, 0, DEVLINK_MCGRP_CONFIG, GFP_KERNEL);
-पूर्ण
+}
 
-अटल पूर्णांक devlink_nl_cmd_get_करोit(काष्ठा sk_buff *skb, काष्ठा genl_info *info)
-अणु
-	काष्ठा devlink *devlink = info->user_ptr[0];
-	काष्ठा sk_buff *msg;
-	पूर्णांक err;
+static int devlink_nl_cmd_get_doit(struct sk_buff *skb, struct genl_info *info)
+{
+	struct devlink *devlink = info->user_ptr[0];
+	struct sk_buff *msg;
+	int err;
 
 	msg = nlmsg_new(NLMSG_DEFAULT_SIZE, GFP_KERNEL);
-	अगर (!msg)
-		वापस -ENOMEM;
+	if (!msg)
+		return -ENOMEM;
 
 	err = devlink_nl_fill(msg, devlink, DEVLINK_CMD_NEW,
 			      info->snd_portid, info->snd_seq, 0);
-	अगर (err) अणु
-		nlmsg_मुक्त(msg);
-		वापस err;
-	पूर्ण
+	if (err) {
+		nlmsg_free(msg);
+		return err;
+	}
 
-	वापस genlmsg_reply(msg, info);
-पूर्ण
+	return genlmsg_reply(msg, info);
+}
 
-अटल पूर्णांक devlink_nl_cmd_get_dumpit(काष्ठा sk_buff *msg,
-				     काष्ठा netlink_callback *cb)
-अणु
-	काष्ठा devlink *devlink;
-	पूर्णांक start = cb->args[0];
-	पूर्णांक idx = 0;
-	पूर्णांक err;
+static int devlink_nl_cmd_get_dumpit(struct sk_buff *msg,
+				     struct netlink_callback *cb)
+{
+	struct devlink *devlink;
+	int start = cb->args[0];
+	int idx = 0;
+	int err;
 
 	mutex_lock(&devlink_mutex);
-	list_क्रम_each_entry(devlink, &devlink_list, list) अणु
-		अगर (!net_eq(devlink_net(devlink), sock_net(msg->sk)))
-			जारी;
-		अगर (idx < start) अणु
+	list_for_each_entry(devlink, &devlink_list, list) {
+		if (!net_eq(devlink_net(devlink), sock_net(msg->sk)))
+			continue;
+		if (idx < start) {
 			idx++;
-			जारी;
-		पूर्ण
+			continue;
+		}
 		err = devlink_nl_fill(msg, devlink, DEVLINK_CMD_NEW,
 				      NETLINK_CB(cb->skb).portid,
 				      cb->nlh->nlmsg_seq, NLM_F_MULTI);
-		अगर (err)
-			जाओ out;
+		if (err)
+			goto out;
 		idx++;
-	पूर्ण
+	}
 out:
 	mutex_unlock(&devlink_mutex);
 
 	cb->args[0] = idx;
-	वापस msg->len;
-पूर्ण
+	return msg->len;
+}
 
-अटल पूर्णांक devlink_nl_cmd_port_get_करोit(काष्ठा sk_buff *skb,
-					काष्ठा genl_info *info)
-अणु
-	काष्ठा devlink_port *devlink_port = info->user_ptr[1];
-	काष्ठा devlink *devlink = devlink_port->devlink;
-	काष्ठा sk_buff *msg;
-	पूर्णांक err;
+static int devlink_nl_cmd_port_get_doit(struct sk_buff *skb,
+					struct genl_info *info)
+{
+	struct devlink_port *devlink_port = info->user_ptr[1];
+	struct devlink *devlink = devlink_port->devlink;
+	struct sk_buff *msg;
+	int err;
 
 	msg = nlmsg_new(NLMSG_DEFAULT_SIZE, GFP_KERNEL);
-	अगर (!msg)
-		वापस -ENOMEM;
+	if (!msg)
+		return -ENOMEM;
 
 	err = devlink_nl_port_fill(msg, devlink, devlink_port,
 				   DEVLINK_CMD_PORT_NEW,
 				   info->snd_portid, info->snd_seq, 0,
 				   info->extack);
-	अगर (err) अणु
-		nlmsg_मुक्त(msg);
-		वापस err;
-	पूर्ण
+	if (err) {
+		nlmsg_free(msg);
+		return err;
+	}
 
-	वापस genlmsg_reply(msg, info);
-पूर्ण
+	return genlmsg_reply(msg, info);
+}
 
-अटल पूर्णांक devlink_nl_cmd_port_get_dumpit(काष्ठा sk_buff *msg,
-					  काष्ठा netlink_callback *cb)
-अणु
-	काष्ठा devlink *devlink;
-	काष्ठा devlink_port *devlink_port;
-	पूर्णांक start = cb->args[0];
-	पूर्णांक idx = 0;
-	पूर्णांक err;
+static int devlink_nl_cmd_port_get_dumpit(struct sk_buff *msg,
+					  struct netlink_callback *cb)
+{
+	struct devlink *devlink;
+	struct devlink_port *devlink_port;
+	int start = cb->args[0];
+	int idx = 0;
+	int err;
 
 	mutex_lock(&devlink_mutex);
-	list_क्रम_each_entry(devlink, &devlink_list, list) अणु
-		अगर (!net_eq(devlink_net(devlink), sock_net(msg->sk)))
-			जारी;
+	list_for_each_entry(devlink, &devlink_list, list) {
+		if (!net_eq(devlink_net(devlink), sock_net(msg->sk)))
+			continue;
 		mutex_lock(&devlink->lock);
-		list_क्रम_each_entry(devlink_port, &devlink->port_list, list) अणु
-			अगर (idx < start) अणु
+		list_for_each_entry(devlink_port, &devlink->port_list, list) {
+			if (idx < start) {
 				idx++;
-				जारी;
-			पूर्ण
+				continue;
+			}
 			err = devlink_nl_port_fill(msg, devlink, devlink_port,
 						   DEVLINK_CMD_NEW,
 						   NETLINK_CB(cb->skb).portid,
 						   cb->nlh->nlmsg_seq,
 						   NLM_F_MULTI,
 						   cb->extack);
-			अगर (err) अणु
+			if (err) {
 				mutex_unlock(&devlink->lock);
-				जाओ out;
-			पूर्ण
+				goto out;
+			}
 			idx++;
-		पूर्ण
+		}
 		mutex_unlock(&devlink->lock);
-	पूर्ण
+	}
 out:
 	mutex_unlock(&devlink_mutex);
 
 	cb->args[0] = idx;
-	वापस msg->len;
-पूर्ण
+	return msg->len;
+}
 
-अटल पूर्णांक devlink_port_type_set(काष्ठा devlink *devlink,
-				 काष्ठा devlink_port *devlink_port,
-				 क्रमागत devlink_port_type port_type)
+static int devlink_port_type_set(struct devlink *devlink,
+				 struct devlink_port *devlink_port,
+				 enum devlink_port_type port_type)
 
-अणु
-	पूर्णांक err;
+{
+	int err;
 
-	अगर (devlink->ops->port_type_set) अणु
-		अगर (port_type == devlink_port->type)
-			वापस 0;
+	if (devlink->ops->port_type_set) {
+		if (port_type == devlink_port->type)
+			return 0;
 		err = devlink->ops->port_type_set(devlink_port, port_type);
-		अगर (err)
-			वापस err;
+		if (err)
+			return err;
 		devlink_port->desired_type = port_type;
-		devlink_port_notअगरy(devlink_port, DEVLINK_CMD_PORT_NEW);
-		वापस 0;
-	पूर्ण
-	वापस -EOPNOTSUPP;
-पूर्ण
+		devlink_port_notify(devlink_port, DEVLINK_CMD_PORT_NEW);
+		return 0;
+	}
+	return -EOPNOTSUPP;
+}
 
-अटल पूर्णांक
-devlink_port_function_hw_addr_set(काष्ठा devlink *devlink, काष्ठा devlink_port *port,
-				  स्थिर काष्ठा nlattr *attr, काष्ठा netlink_ext_ack *extack)
-अणु
-	स्थिर काष्ठा devlink_ops *ops;
-	स्थिर u8 *hw_addr;
-	पूर्णांक hw_addr_len;
+static int
+devlink_port_function_hw_addr_set(struct devlink *devlink, struct devlink_port *port,
+				  const struct nlattr *attr, struct netlink_ext_ack *extack)
+{
+	const struct devlink_ops *ops;
+	const u8 *hw_addr;
+	int hw_addr_len;
 
 	hw_addr = nla_data(attr);
 	hw_addr_len = nla_len(attr);
-	अगर (hw_addr_len > MAX_ADDR_LEN) अणु
+	if (hw_addr_len > MAX_ADDR_LEN) {
 		NL_SET_ERR_MSG_MOD(extack, "Port function hardware address too long");
-		वापस -EINVAL;
-	पूर्ण
-	अगर (port->type == DEVLINK_PORT_TYPE_ETH) अणु
-		अगर (hw_addr_len != ETH_ALEN) अणु
+		return -EINVAL;
+	}
+	if (port->type == DEVLINK_PORT_TYPE_ETH) {
+		if (hw_addr_len != ETH_ALEN) {
 			NL_SET_ERR_MSG_MOD(extack, "Address must be 6 bytes for Ethernet device");
-			वापस -EINVAL;
-		पूर्ण
-		अगर (!is_unicast_ether_addr(hw_addr)) अणु
+			return -EINVAL;
+		}
+		if (!is_unicast_ether_addr(hw_addr)) {
 			NL_SET_ERR_MSG_MOD(extack, "Non-unicast hardware address unsupported");
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 
 	ops = devlink->ops;
-	अगर (!ops->port_function_hw_addr_set) अणु
+	if (!ops->port_function_hw_addr_set) {
 		NL_SET_ERR_MSG_MOD(extack, "Port doesn't support function attributes");
-		वापस -EOPNOTSUPP;
-	पूर्ण
+		return -EOPNOTSUPP;
+	}
 
-	वापस ops->port_function_hw_addr_set(devlink, port, hw_addr, hw_addr_len, extack);
-पूर्ण
+	return ops->port_function_hw_addr_set(devlink, port, hw_addr, hw_addr_len, extack);
+}
 
-अटल पूर्णांक devlink_port_fn_state_set(काष्ठा devlink *devlink,
-				     काष्ठा devlink_port *port,
-				     स्थिर काष्ठा nlattr *attr,
-				     काष्ठा netlink_ext_ack *extack)
-अणु
-	क्रमागत devlink_port_fn_state state;
-	स्थिर काष्ठा devlink_ops *ops;
+static int devlink_port_fn_state_set(struct devlink *devlink,
+				     struct devlink_port *port,
+				     const struct nlattr *attr,
+				     struct netlink_ext_ack *extack)
+{
+	enum devlink_port_fn_state state;
+	const struct devlink_ops *ops;
 
 	state = nla_get_u8(attr);
 	ops = devlink->ops;
-	अगर (!ops->port_fn_state_set) अणु
+	if (!ops->port_fn_state_set) {
 		NL_SET_ERR_MSG_MOD(extack,
 				   "Function does not support state setting");
-		वापस -EOPNOTSUPP;
-	पूर्ण
-	वापस ops->port_fn_state_set(devlink, port, state, extack);
-पूर्ण
+		return -EOPNOTSUPP;
+	}
+	return ops->port_fn_state_set(devlink, port, state, extack);
+}
 
-अटल पूर्णांक
-devlink_port_function_set(काष्ठा devlink *devlink, काष्ठा devlink_port *port,
-			  स्थिर काष्ठा nlattr *attr, काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा nlattr *tb[DEVLINK_PORT_FUNCTION_ATTR_MAX + 1];
-	पूर्णांक err;
+static int
+devlink_port_function_set(struct devlink *devlink, struct devlink_port *port,
+			  const struct nlattr *attr, struct netlink_ext_ack *extack)
+{
+	struct nlattr *tb[DEVLINK_PORT_FUNCTION_ATTR_MAX + 1];
+	int err;
 
 	err = nla_parse_nested(tb, DEVLINK_PORT_FUNCTION_ATTR_MAX, attr,
 			       devlink_function_nl_policy, extack);
-	अगर (err < 0) अणु
+	if (err < 0) {
 		NL_SET_ERR_MSG_MOD(extack, "Fail to parse port function attributes");
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	attr = tb[DEVLINK_PORT_FUNCTION_ATTR_HW_ADDR];
-	अगर (attr) अणु
+	if (attr) {
 		err = devlink_port_function_hw_addr_set(devlink, port, attr, extack);
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 	/* Keep this as the last function attribute set, so that when
-	 * multiple port function attributes are set aदीर्घ with state,
-	 * Those can be applied first beक्रमe activating the state.
+	 * multiple port function attributes are set along with state,
+	 * Those can be applied first before activating the state.
 	 */
 	attr = tb[DEVLINK_PORT_FN_ATTR_STATE];
-	अगर (attr)
+	if (attr)
 		err = devlink_port_fn_state_set(devlink, port, attr, extack);
 
-	अगर (!err)
-		devlink_port_notअगरy(port, DEVLINK_CMD_PORT_NEW);
-	वापस err;
-पूर्ण
+	if (!err)
+		devlink_port_notify(port, DEVLINK_CMD_PORT_NEW);
+	return err;
+}
 
-अटल पूर्णांक devlink_nl_cmd_port_set_करोit(काष्ठा sk_buff *skb,
-					काष्ठा genl_info *info)
-अणु
-	काष्ठा devlink_port *devlink_port = info->user_ptr[1];
-	काष्ठा devlink *devlink = devlink_port->devlink;
-	पूर्णांक err;
+static int devlink_nl_cmd_port_set_doit(struct sk_buff *skb,
+					struct genl_info *info)
+{
+	struct devlink_port *devlink_port = info->user_ptr[1];
+	struct devlink *devlink = devlink_port->devlink;
+	int err;
 
-	अगर (info->attrs[DEVLINK_ATTR_PORT_TYPE]) अणु
-		क्रमागत devlink_port_type port_type;
+	if (info->attrs[DEVLINK_ATTR_PORT_TYPE]) {
+		enum devlink_port_type port_type;
 
 		port_type = nla_get_u16(info->attrs[DEVLINK_ATTR_PORT_TYPE]);
 		err = devlink_port_type_set(devlink, devlink_port, port_type);
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 
-	अगर (info->attrs[DEVLINK_ATTR_PORT_FUNCTION]) अणु
-		काष्ठा nlattr *attr = info->attrs[DEVLINK_ATTR_PORT_FUNCTION];
-		काष्ठा netlink_ext_ack *extack = info->extack;
+	if (info->attrs[DEVLINK_ATTR_PORT_FUNCTION]) {
+		struct nlattr *attr = info->attrs[DEVLINK_ATTR_PORT_FUNCTION];
+		struct netlink_ext_ack *extack = info->extack;
 
 		err = devlink_port_function_set(devlink, devlink_port, attr, extack);
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक devlink_port_split(काष्ठा devlink *devlink, u32 port_index,
-			      u32 count, काष्ठा netlink_ext_ack *extack)
+static int devlink_port_split(struct devlink *devlink, u32 port_index,
+			      u32 count, struct netlink_ext_ack *extack)
 
-अणु
-	अगर (devlink->ops->port_split)
-		वापस devlink->ops->port_split(devlink, port_index, count,
+{
+	if (devlink->ops->port_split)
+		return devlink->ops->port_split(devlink, port_index, count,
 						extack);
-	वापस -EOPNOTSUPP;
-पूर्ण
+	return -EOPNOTSUPP;
+}
 
-अटल पूर्णांक devlink_nl_cmd_port_split_करोit(काष्ठा sk_buff *skb,
-					  काष्ठा genl_info *info)
-अणु
-	काष्ठा devlink *devlink = info->user_ptr[0];
-	काष्ठा devlink_port *devlink_port;
+static int devlink_nl_cmd_port_split_doit(struct sk_buff *skb,
+					  struct genl_info *info)
+{
+	struct devlink *devlink = info->user_ptr[0];
+	struct devlink_port *devlink_port;
 	u32 port_index;
 	u32 count;
 
-	अगर (!info->attrs[DEVLINK_ATTR_PORT_INDEX] ||
+	if (!info->attrs[DEVLINK_ATTR_PORT_INDEX] ||
 	    !info->attrs[DEVLINK_ATTR_PORT_SPLIT_COUNT])
-		वापस -EINVAL;
+		return -EINVAL;
 
 	devlink_port = devlink_port_get_from_info(devlink, info);
 	port_index = nla_get_u32(info->attrs[DEVLINK_ATTR_PORT_INDEX]);
 	count = nla_get_u32(info->attrs[DEVLINK_ATTR_PORT_SPLIT_COUNT]);
 
-	अगर (IS_ERR(devlink_port))
-		वापस -EINVAL;
+	if (IS_ERR(devlink_port))
+		return -EINVAL;
 
-	अगर (!devlink_port->attrs.splittable) अणु
+	if (!devlink_port->attrs.splittable) {
 		/* Split ports cannot be split. */
-		अगर (devlink_port->attrs.split)
+		if (devlink_port->attrs.split)
 			NL_SET_ERR_MSG_MOD(info->extack, "Port cannot be split further");
-		अन्यथा
+		else
 			NL_SET_ERR_MSG_MOD(info->extack, "Port cannot be split");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (count < 2 || !is_घातer_of_2(count) || count > devlink_port->attrs.lanes) अणु
+	if (count < 2 || !is_power_of_2(count) || count > devlink_port->attrs.lanes) {
 		NL_SET_ERR_MSG_MOD(info->extack, "Invalid split count");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस devlink_port_split(devlink, port_index, count, info->extack);
-पूर्ण
+	return devlink_port_split(devlink, port_index, count, info->extack);
+}
 
-अटल पूर्णांक devlink_port_unsplit(काष्ठा devlink *devlink, u32 port_index,
-				काष्ठा netlink_ext_ack *extack)
+static int devlink_port_unsplit(struct devlink *devlink, u32 port_index,
+				struct netlink_ext_ack *extack)
 
-अणु
-	अगर (devlink->ops->port_unsplit)
-		वापस devlink->ops->port_unsplit(devlink, port_index, extack);
-	वापस -EOPNOTSUPP;
-पूर्ण
+{
+	if (devlink->ops->port_unsplit)
+		return devlink->ops->port_unsplit(devlink, port_index, extack);
+	return -EOPNOTSUPP;
+}
 
-अटल पूर्णांक devlink_nl_cmd_port_unsplit_करोit(काष्ठा sk_buff *skb,
-					    काष्ठा genl_info *info)
-अणु
-	काष्ठा devlink *devlink = info->user_ptr[0];
+static int devlink_nl_cmd_port_unsplit_doit(struct sk_buff *skb,
+					    struct genl_info *info)
+{
+	struct devlink *devlink = info->user_ptr[0];
 	u32 port_index;
 
-	अगर (!info->attrs[DEVLINK_ATTR_PORT_INDEX])
-		वापस -EINVAL;
+	if (!info->attrs[DEVLINK_ATTR_PORT_INDEX])
+		return -EINVAL;
 
 	port_index = nla_get_u32(info->attrs[DEVLINK_ATTR_PORT_INDEX]);
-	वापस devlink_port_unsplit(devlink, port_index, info->extack);
-पूर्ण
+	return devlink_port_unsplit(devlink, port_index, info->extack);
+}
 
-अटल पूर्णांक devlink_port_new_notअगरiy(काष्ठा devlink *devlink,
-				    अचिन्हित पूर्णांक port_index,
-				    काष्ठा genl_info *info)
-अणु
-	काष्ठा devlink_port *devlink_port;
-	काष्ठा sk_buff *msg;
-	पूर्णांक err;
+static int devlink_port_new_notifiy(struct devlink *devlink,
+				    unsigned int port_index,
+				    struct genl_info *info)
+{
+	struct devlink_port *devlink_port;
+	struct sk_buff *msg;
+	int err;
 
 	msg = nlmsg_new(NLMSG_DEFAULT_SIZE, GFP_KERNEL);
-	अगर (!msg)
-		वापस -ENOMEM;
+	if (!msg)
+		return -ENOMEM;
 
 	mutex_lock(&devlink->lock);
 	devlink_port = devlink_port_get_by_index(devlink, port_index);
-	अगर (!devlink_port) अणु
+	if (!devlink_port) {
 		err = -ENODEV;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	err = devlink_nl_port_fill(msg, devlink, devlink_port,
 				   DEVLINK_CMD_NEW, info->snd_portid,
-				   info->snd_seq, 0, शून्य);
-	अगर (err)
-		जाओ out;
+				   info->snd_seq, 0, NULL);
+	if (err)
+		goto out;
 
 	err = genlmsg_reply(msg, info);
 	mutex_unlock(&devlink->lock);
-	वापस err;
+	return err;
 
 out:
 	mutex_unlock(&devlink->lock);
-	nlmsg_मुक्त(msg);
-	वापस err;
-पूर्ण
+	nlmsg_free(msg);
+	return err;
+}
 
-अटल पूर्णांक devlink_nl_cmd_port_new_करोit(काष्ठा sk_buff *skb,
-					काष्ठा genl_info *info)
-अणु
-	काष्ठा netlink_ext_ack *extack = info->extack;
-	काष्ठा devlink_port_new_attrs new_attrs = अणुपूर्ण;
-	काष्ठा devlink *devlink = info->user_ptr[0];
-	अचिन्हित पूर्णांक new_port_index;
-	पूर्णांक err;
+static int devlink_nl_cmd_port_new_doit(struct sk_buff *skb,
+					struct genl_info *info)
+{
+	struct netlink_ext_ack *extack = info->extack;
+	struct devlink_port_new_attrs new_attrs = {};
+	struct devlink *devlink = info->user_ptr[0];
+	unsigned int new_port_index;
+	int err;
 
-	अगर (!devlink->ops->port_new || !devlink->ops->port_del)
-		वापस -EOPNOTSUPP;
+	if (!devlink->ops->port_new || !devlink->ops->port_del)
+		return -EOPNOTSUPP;
 
-	अगर (!info->attrs[DEVLINK_ATTR_PORT_FLAVOUR] ||
-	    !info->attrs[DEVLINK_ATTR_PORT_PCI_PF_NUMBER]) अणु
+	if (!info->attrs[DEVLINK_ATTR_PORT_FLAVOUR] ||
+	    !info->attrs[DEVLINK_ATTR_PORT_PCI_PF_NUMBER]) {
 		NL_SET_ERR_MSG_MOD(extack, "Port flavour or PCI PF are not specified");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	new_attrs.flavour = nla_get_u16(info->attrs[DEVLINK_ATTR_PORT_FLAVOUR]);
 	new_attrs.pfnum =
 		nla_get_u16(info->attrs[DEVLINK_ATTR_PORT_PCI_PF_NUMBER]);
 
-	अगर (info->attrs[DEVLINK_ATTR_PORT_INDEX]) अणु
+	if (info->attrs[DEVLINK_ATTR_PORT_INDEX]) {
 		/* Port index of the new port being created by driver. */
 		new_attrs.port_index =
 			nla_get_u32(info->attrs[DEVLINK_ATTR_PORT_INDEX]);
 		new_attrs.port_index_valid = true;
-	पूर्ण
-	अगर (info->attrs[DEVLINK_ATTR_PORT_CONTROLLER_NUMBER]) अणु
+	}
+	if (info->attrs[DEVLINK_ATTR_PORT_CONTROLLER_NUMBER]) {
 		new_attrs.controller =
 			nla_get_u16(info->attrs[DEVLINK_ATTR_PORT_CONTROLLER_NUMBER]);
 		new_attrs.controller_valid = true;
-	पूर्ण
-	अगर (new_attrs.flavour == DEVLINK_PORT_FLAVOUR_PCI_SF &&
-	    info->attrs[DEVLINK_ATTR_PORT_PCI_SF_NUMBER]) अणु
+	}
+	if (new_attrs.flavour == DEVLINK_PORT_FLAVOUR_PCI_SF &&
+	    info->attrs[DEVLINK_ATTR_PORT_PCI_SF_NUMBER]) {
 		new_attrs.sfnum = nla_get_u32(info->attrs[DEVLINK_ATTR_PORT_PCI_SF_NUMBER]);
 		new_attrs.sfnum_valid = true;
-	पूर्ण
+	}
 
 	err = devlink->ops->port_new(devlink, &new_attrs, extack,
 				     &new_port_index);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	err = devlink_port_new_notअगरiy(devlink, new_port_index, info);
-	अगर (err && err != -ENODEV) अणु
+	err = devlink_port_new_notifiy(devlink, new_port_index, info);
+	if (err && err != -ENODEV) {
 		/* Fail to send the response; destroy newly created port. */
 		devlink->ops->port_del(devlink, new_port_index, extack);
-	पूर्ण
-	वापस err;
-पूर्ण
+	}
+	return err;
+}
 
-अटल पूर्णांक devlink_nl_cmd_port_del_करोit(काष्ठा sk_buff *skb,
-					काष्ठा genl_info *info)
-अणु
-	काष्ठा netlink_ext_ack *extack = info->extack;
-	काष्ठा devlink *devlink = info->user_ptr[0];
-	अचिन्हित पूर्णांक port_index;
+static int devlink_nl_cmd_port_del_doit(struct sk_buff *skb,
+					struct genl_info *info)
+{
+	struct netlink_ext_ack *extack = info->extack;
+	struct devlink *devlink = info->user_ptr[0];
+	unsigned int port_index;
 
-	अगर (!devlink->ops->port_del)
-		वापस -EOPNOTSUPP;
+	if (!devlink->ops->port_del)
+		return -EOPNOTSUPP;
 
-	अगर (!info->attrs[DEVLINK_ATTR_PORT_INDEX]) अणु
+	if (!info->attrs[DEVLINK_ATTR_PORT_INDEX]) {
 		NL_SET_ERR_MSG_MOD(extack, "Port index is not specified");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	port_index = nla_get_u32(info->attrs[DEVLINK_ATTR_PORT_INDEX]);
 
-	वापस devlink->ops->port_del(devlink, port_index, extack);
-पूर्ण
+	return devlink->ops->port_del(devlink, port_index, extack);
+}
 
-अटल पूर्णांक devlink_nl_sb_fill(काष्ठा sk_buff *msg, काष्ठा devlink *devlink,
-			      काष्ठा devlink_sb *devlink_sb,
-			      क्रमागत devlink_command cmd, u32 portid,
-			      u32 seq, पूर्णांक flags)
-अणु
-	व्योम *hdr;
+static int devlink_nl_sb_fill(struct sk_buff *msg, struct devlink *devlink,
+			      struct devlink_sb *devlink_sb,
+			      enum devlink_command cmd, u32 portid,
+			      u32 seq, int flags)
+{
+	void *hdr;
 
 	hdr = genlmsg_put(msg, portid, seq, &devlink_nl_family, flags, cmd);
-	अगर (!hdr)
-		वापस -EMSGSIZE;
+	if (!hdr)
+		return -EMSGSIZE;
 
-	अगर (devlink_nl_put_handle(msg, devlink))
-		जाओ nla_put_failure;
-	अगर (nla_put_u32(msg, DEVLINK_ATTR_SB_INDEX, devlink_sb->index))
-		जाओ nla_put_failure;
-	अगर (nla_put_u32(msg, DEVLINK_ATTR_SB_SIZE, devlink_sb->size))
-		जाओ nla_put_failure;
-	अगर (nla_put_u16(msg, DEVLINK_ATTR_SB_INGRESS_POOL_COUNT,
+	if (devlink_nl_put_handle(msg, devlink))
+		goto nla_put_failure;
+	if (nla_put_u32(msg, DEVLINK_ATTR_SB_INDEX, devlink_sb->index))
+		goto nla_put_failure;
+	if (nla_put_u32(msg, DEVLINK_ATTR_SB_SIZE, devlink_sb->size))
+		goto nla_put_failure;
+	if (nla_put_u16(msg, DEVLINK_ATTR_SB_INGRESS_POOL_COUNT,
 			devlink_sb->ingress_pools_count))
-		जाओ nla_put_failure;
-	अगर (nla_put_u16(msg, DEVLINK_ATTR_SB_EGRESS_POOL_COUNT,
+		goto nla_put_failure;
+	if (nla_put_u16(msg, DEVLINK_ATTR_SB_EGRESS_POOL_COUNT,
 			devlink_sb->egress_pools_count))
-		जाओ nla_put_failure;
-	अगर (nla_put_u16(msg, DEVLINK_ATTR_SB_INGRESS_TC_COUNT,
+		goto nla_put_failure;
+	if (nla_put_u16(msg, DEVLINK_ATTR_SB_INGRESS_TC_COUNT,
 			devlink_sb->ingress_tc_count))
-		जाओ nla_put_failure;
-	अगर (nla_put_u16(msg, DEVLINK_ATTR_SB_EGRESS_TC_COUNT,
+		goto nla_put_failure;
+	if (nla_put_u16(msg, DEVLINK_ATTR_SB_EGRESS_TC_COUNT,
 			devlink_sb->egress_tc_count))
-		जाओ nla_put_failure;
+		goto nla_put_failure;
 
 	genlmsg_end(msg, hdr);
-	वापस 0;
+	return 0;
 
 nla_put_failure:
 	genlmsg_cancel(msg, hdr);
-	वापस -EMSGSIZE;
-पूर्ण
+	return -EMSGSIZE;
+}
 
-अटल पूर्णांक devlink_nl_cmd_sb_get_करोit(काष्ठा sk_buff *skb,
-				      काष्ठा genl_info *info)
-अणु
-	काष्ठा devlink *devlink = info->user_ptr[0];
-	काष्ठा devlink_sb *devlink_sb;
-	काष्ठा sk_buff *msg;
-	पूर्णांक err;
+static int devlink_nl_cmd_sb_get_doit(struct sk_buff *skb,
+				      struct genl_info *info)
+{
+	struct devlink *devlink = info->user_ptr[0];
+	struct devlink_sb *devlink_sb;
+	struct sk_buff *msg;
+	int err;
 
 	devlink_sb = devlink_sb_get_from_info(devlink, info);
-	अगर (IS_ERR(devlink_sb))
-		वापस PTR_ERR(devlink_sb);
+	if (IS_ERR(devlink_sb))
+		return PTR_ERR(devlink_sb);
 
 	msg = nlmsg_new(NLMSG_DEFAULT_SIZE, GFP_KERNEL);
-	अगर (!msg)
-		वापस -ENOMEM;
+	if (!msg)
+		return -ENOMEM;
 
 	err = devlink_nl_sb_fill(msg, devlink, devlink_sb,
 				 DEVLINK_CMD_SB_NEW,
 				 info->snd_portid, info->snd_seq, 0);
-	अगर (err) अणु
-		nlmsg_मुक्त(msg);
-		वापस err;
-	पूर्ण
+	if (err) {
+		nlmsg_free(msg);
+		return err;
+	}
 
-	वापस genlmsg_reply(msg, info);
-पूर्ण
+	return genlmsg_reply(msg, info);
+}
 
-अटल पूर्णांक devlink_nl_cmd_sb_get_dumpit(काष्ठा sk_buff *msg,
-					काष्ठा netlink_callback *cb)
-अणु
-	काष्ठा devlink *devlink;
-	काष्ठा devlink_sb *devlink_sb;
-	पूर्णांक start = cb->args[0];
-	पूर्णांक idx = 0;
-	पूर्णांक err;
+static int devlink_nl_cmd_sb_get_dumpit(struct sk_buff *msg,
+					struct netlink_callback *cb)
+{
+	struct devlink *devlink;
+	struct devlink_sb *devlink_sb;
+	int start = cb->args[0];
+	int idx = 0;
+	int err;
 
 	mutex_lock(&devlink_mutex);
-	list_क्रम_each_entry(devlink, &devlink_list, list) अणु
-		अगर (!net_eq(devlink_net(devlink), sock_net(msg->sk)))
-			जारी;
+	list_for_each_entry(devlink, &devlink_list, list) {
+		if (!net_eq(devlink_net(devlink), sock_net(msg->sk)))
+			continue;
 		mutex_lock(&devlink->lock);
-		list_क्रम_each_entry(devlink_sb, &devlink->sb_list, list) अणु
-			अगर (idx < start) अणु
+		list_for_each_entry(devlink_sb, &devlink->sb_list, list) {
+			if (idx < start) {
 				idx++;
-				जारी;
-			पूर्ण
+				continue;
+			}
 			err = devlink_nl_sb_fill(msg, devlink, devlink_sb,
 						 DEVLINK_CMD_SB_NEW,
 						 NETLINK_CB(cb->skb).portid,
 						 cb->nlh->nlmsg_seq,
 						 NLM_F_MULTI);
-			अगर (err) अणु
+			if (err) {
 				mutex_unlock(&devlink->lock);
-				जाओ out;
-			पूर्ण
+				goto out;
+			}
 			idx++;
-		पूर्ण
+		}
 		mutex_unlock(&devlink->lock);
-	पूर्ण
+	}
 out:
 	mutex_unlock(&devlink_mutex);
 
 	cb->args[0] = idx;
-	वापस msg->len;
-पूर्ण
+	return msg->len;
+}
 
-अटल पूर्णांक devlink_nl_sb_pool_fill(काष्ठा sk_buff *msg, काष्ठा devlink *devlink,
-				   काष्ठा devlink_sb *devlink_sb,
-				   u16 pool_index, क्रमागत devlink_command cmd,
-				   u32 portid, u32 seq, पूर्णांक flags)
-अणु
-	काष्ठा devlink_sb_pool_info pool_info;
-	व्योम *hdr;
-	पूर्णांक err;
+static int devlink_nl_sb_pool_fill(struct sk_buff *msg, struct devlink *devlink,
+				   struct devlink_sb *devlink_sb,
+				   u16 pool_index, enum devlink_command cmd,
+				   u32 portid, u32 seq, int flags)
+{
+	struct devlink_sb_pool_info pool_info;
+	void *hdr;
+	int err;
 
 	err = devlink->ops->sb_pool_get(devlink, devlink_sb->index,
 					pool_index, &pool_info);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	hdr = genlmsg_put(msg, portid, seq, &devlink_nl_family, flags, cmd);
-	अगर (!hdr)
-		वापस -EMSGSIZE;
+	if (!hdr)
+		return -EMSGSIZE;
 
-	अगर (devlink_nl_put_handle(msg, devlink))
-		जाओ nla_put_failure;
-	अगर (nla_put_u32(msg, DEVLINK_ATTR_SB_INDEX, devlink_sb->index))
-		जाओ nla_put_failure;
-	अगर (nla_put_u16(msg, DEVLINK_ATTR_SB_POOL_INDEX, pool_index))
-		जाओ nla_put_failure;
-	अगर (nla_put_u8(msg, DEVLINK_ATTR_SB_POOL_TYPE, pool_info.pool_type))
-		जाओ nla_put_failure;
-	अगर (nla_put_u32(msg, DEVLINK_ATTR_SB_POOL_SIZE, pool_info.size))
-		जाओ nla_put_failure;
-	अगर (nla_put_u8(msg, DEVLINK_ATTR_SB_POOL_THRESHOLD_TYPE,
+	if (devlink_nl_put_handle(msg, devlink))
+		goto nla_put_failure;
+	if (nla_put_u32(msg, DEVLINK_ATTR_SB_INDEX, devlink_sb->index))
+		goto nla_put_failure;
+	if (nla_put_u16(msg, DEVLINK_ATTR_SB_POOL_INDEX, pool_index))
+		goto nla_put_failure;
+	if (nla_put_u8(msg, DEVLINK_ATTR_SB_POOL_TYPE, pool_info.pool_type))
+		goto nla_put_failure;
+	if (nla_put_u32(msg, DEVLINK_ATTR_SB_POOL_SIZE, pool_info.size))
+		goto nla_put_failure;
+	if (nla_put_u8(msg, DEVLINK_ATTR_SB_POOL_THRESHOLD_TYPE,
 		       pool_info.threshold_type))
-		जाओ nla_put_failure;
-	अगर (nla_put_u32(msg, DEVLINK_ATTR_SB_POOL_CELL_SIZE,
+		goto nla_put_failure;
+	if (nla_put_u32(msg, DEVLINK_ATTR_SB_POOL_CELL_SIZE,
 			pool_info.cell_size))
-		जाओ nla_put_failure;
+		goto nla_put_failure;
 
 	genlmsg_end(msg, hdr);
-	वापस 0;
+	return 0;
 
 nla_put_failure:
 	genlmsg_cancel(msg, hdr);
-	वापस -EMSGSIZE;
-पूर्ण
+	return -EMSGSIZE;
+}
 
-अटल पूर्णांक devlink_nl_cmd_sb_pool_get_करोit(काष्ठा sk_buff *skb,
-					   काष्ठा genl_info *info)
-अणु
-	काष्ठा devlink *devlink = info->user_ptr[0];
-	काष्ठा devlink_sb *devlink_sb;
-	काष्ठा sk_buff *msg;
+static int devlink_nl_cmd_sb_pool_get_doit(struct sk_buff *skb,
+					   struct genl_info *info)
+{
+	struct devlink *devlink = info->user_ptr[0];
+	struct devlink_sb *devlink_sb;
+	struct sk_buff *msg;
 	u16 pool_index;
-	पूर्णांक err;
+	int err;
 
 	devlink_sb = devlink_sb_get_from_info(devlink, info);
-	अगर (IS_ERR(devlink_sb))
-		वापस PTR_ERR(devlink_sb);
+	if (IS_ERR(devlink_sb))
+		return PTR_ERR(devlink_sb);
 
 	err = devlink_sb_pool_index_get_from_info(devlink_sb, info,
 						  &pool_index);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	अगर (!devlink->ops->sb_pool_get)
-		वापस -EOPNOTSUPP;
+	if (!devlink->ops->sb_pool_get)
+		return -EOPNOTSUPP;
 
 	msg = nlmsg_new(NLMSG_DEFAULT_SIZE, GFP_KERNEL);
-	अगर (!msg)
-		वापस -ENOMEM;
+	if (!msg)
+		return -ENOMEM;
 
 	err = devlink_nl_sb_pool_fill(msg, devlink, devlink_sb, pool_index,
 				      DEVLINK_CMD_SB_POOL_NEW,
 				      info->snd_portid, info->snd_seq, 0);
-	अगर (err) अणु
-		nlmsg_मुक्त(msg);
-		वापस err;
-	पूर्ण
+	if (err) {
+		nlmsg_free(msg);
+		return err;
+	}
 
-	वापस genlmsg_reply(msg, info);
-पूर्ण
+	return genlmsg_reply(msg, info);
+}
 
-अटल पूर्णांक __sb_pool_get_dumpit(काष्ठा sk_buff *msg, पूर्णांक start, पूर्णांक *p_idx,
-				काष्ठा devlink *devlink,
-				काष्ठा devlink_sb *devlink_sb,
+static int __sb_pool_get_dumpit(struct sk_buff *msg, int start, int *p_idx,
+				struct devlink *devlink,
+				struct devlink_sb *devlink_sb,
 				u32 portid, u32 seq)
-अणु
+{
 	u16 pool_count = devlink_sb_pool_count(devlink_sb);
 	u16 pool_index;
-	पूर्णांक err;
+	int err;
 
-	क्रम (pool_index = 0; pool_index < pool_count; pool_index++) अणु
-		अगर (*p_idx < start) अणु
+	for (pool_index = 0; pool_index < pool_count; pool_index++) {
+		if (*p_idx < start) {
 			(*p_idx)++;
-			जारी;
-		पूर्ण
+			continue;
+		}
 		err = devlink_nl_sb_pool_fill(msg, devlink,
 					      devlink_sb,
 					      pool_index,
 					      DEVLINK_CMD_SB_POOL_NEW,
 					      portid, seq, NLM_F_MULTI);
-		अगर (err)
-			वापस err;
+		if (err)
+			return err;
 		(*p_idx)++;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल पूर्णांक devlink_nl_cmd_sb_pool_get_dumpit(काष्ठा sk_buff *msg,
-					     काष्ठा netlink_callback *cb)
-अणु
-	काष्ठा devlink *devlink;
-	काष्ठा devlink_sb *devlink_sb;
-	पूर्णांक start = cb->args[0];
-	पूर्णांक idx = 0;
-	पूर्णांक err = 0;
+static int devlink_nl_cmd_sb_pool_get_dumpit(struct sk_buff *msg,
+					     struct netlink_callback *cb)
+{
+	struct devlink *devlink;
+	struct devlink_sb *devlink_sb;
+	int start = cb->args[0];
+	int idx = 0;
+	int err = 0;
 
 	mutex_lock(&devlink_mutex);
-	list_क्रम_each_entry(devlink, &devlink_list, list) अणु
-		अगर (!net_eq(devlink_net(devlink), sock_net(msg->sk)) ||
+	list_for_each_entry(devlink, &devlink_list, list) {
+		if (!net_eq(devlink_net(devlink), sock_net(msg->sk)) ||
 		    !devlink->ops->sb_pool_get)
-			जारी;
+			continue;
 		mutex_lock(&devlink->lock);
-		list_क्रम_each_entry(devlink_sb, &devlink->sb_list, list) अणु
+		list_for_each_entry(devlink_sb, &devlink->sb_list, list) {
 			err = __sb_pool_get_dumpit(msg, start, &idx, devlink,
 						   devlink_sb,
 						   NETLINK_CB(cb->skb).portid,
 						   cb->nlh->nlmsg_seq);
-			अगर (err == -EOPNOTSUPP) अणु
+			if (err == -EOPNOTSUPP) {
 				err = 0;
-			पूर्ण अन्यथा अगर (err) अणु
+			} else if (err) {
 				mutex_unlock(&devlink->lock);
-				जाओ out;
-			पूर्ण
-		पूर्ण
+				goto out;
+			}
+		}
 		mutex_unlock(&devlink->lock);
-	पूर्ण
+	}
 out:
 	mutex_unlock(&devlink_mutex);
 
-	अगर (err != -EMSGSIZE)
-		वापस err;
+	if (err != -EMSGSIZE)
+		return err;
 
 	cb->args[0] = idx;
-	वापस msg->len;
-पूर्ण
+	return msg->len;
+}
 
-अटल पूर्णांक devlink_sb_pool_set(काष्ठा devlink *devlink, अचिन्हित पूर्णांक sb_index,
+static int devlink_sb_pool_set(struct devlink *devlink, unsigned int sb_index,
 			       u16 pool_index, u32 size,
-			       क्रमागत devlink_sb_threshold_type threshold_type,
-			       काष्ठा netlink_ext_ack *extack)
+			       enum devlink_sb_threshold_type threshold_type,
+			       struct netlink_ext_ack *extack)
 
-अणु
-	स्थिर काष्ठा devlink_ops *ops = devlink->ops;
+{
+	const struct devlink_ops *ops = devlink->ops;
 
-	अगर (ops->sb_pool_set)
-		वापस ops->sb_pool_set(devlink, sb_index, pool_index,
+	if (ops->sb_pool_set)
+		return ops->sb_pool_set(devlink, sb_index, pool_index,
 					size, threshold_type, extack);
-	वापस -EOPNOTSUPP;
-पूर्ण
+	return -EOPNOTSUPP;
+}
 
-अटल पूर्णांक devlink_nl_cmd_sb_pool_set_करोit(काष्ठा sk_buff *skb,
-					   काष्ठा genl_info *info)
-अणु
-	काष्ठा devlink *devlink = info->user_ptr[0];
-	क्रमागत devlink_sb_threshold_type threshold_type;
-	काष्ठा devlink_sb *devlink_sb;
+static int devlink_nl_cmd_sb_pool_set_doit(struct sk_buff *skb,
+					   struct genl_info *info)
+{
+	struct devlink *devlink = info->user_ptr[0];
+	enum devlink_sb_threshold_type threshold_type;
+	struct devlink_sb *devlink_sb;
 	u16 pool_index;
 	u32 size;
-	पूर्णांक err;
+	int err;
 
 	devlink_sb = devlink_sb_get_from_info(devlink, info);
-	अगर (IS_ERR(devlink_sb))
-		वापस PTR_ERR(devlink_sb);
+	if (IS_ERR(devlink_sb))
+		return PTR_ERR(devlink_sb);
 
 	err = devlink_sb_pool_index_get_from_info(devlink_sb, info,
 						  &pool_index);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	err = devlink_sb_th_type_get_from_info(info, &threshold_type);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	अगर (!info->attrs[DEVLINK_ATTR_SB_POOL_SIZE])
-		वापस -EINVAL;
+	if (!info->attrs[DEVLINK_ATTR_SB_POOL_SIZE])
+		return -EINVAL;
 
 	size = nla_get_u32(info->attrs[DEVLINK_ATTR_SB_POOL_SIZE]);
-	वापस devlink_sb_pool_set(devlink, devlink_sb->index,
+	return devlink_sb_pool_set(devlink, devlink_sb->index,
 				   pool_index, size, threshold_type,
 				   info->extack);
-पूर्ण
+}
 
-अटल पूर्णांक devlink_nl_sb_port_pool_fill(काष्ठा sk_buff *msg,
-					काष्ठा devlink *devlink,
-					काष्ठा devlink_port *devlink_port,
-					काष्ठा devlink_sb *devlink_sb,
+static int devlink_nl_sb_port_pool_fill(struct sk_buff *msg,
+					struct devlink *devlink,
+					struct devlink_port *devlink_port,
+					struct devlink_sb *devlink_sb,
 					u16 pool_index,
-					क्रमागत devlink_command cmd,
-					u32 portid, u32 seq, पूर्णांक flags)
-अणु
-	स्थिर काष्ठा devlink_ops *ops = devlink->ops;
+					enum devlink_command cmd,
+					u32 portid, u32 seq, int flags)
+{
+	const struct devlink_ops *ops = devlink->ops;
 	u32 threshold;
-	व्योम *hdr;
-	पूर्णांक err;
+	void *hdr;
+	int err;
 
 	err = ops->sb_port_pool_get(devlink_port, devlink_sb->index,
 				    pool_index, &threshold);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	hdr = genlmsg_put(msg, portid, seq, &devlink_nl_family, flags, cmd);
-	अगर (!hdr)
-		वापस -EMSGSIZE;
+	if (!hdr)
+		return -EMSGSIZE;
 
-	अगर (devlink_nl_put_handle(msg, devlink))
-		जाओ nla_put_failure;
-	अगर (nla_put_u32(msg, DEVLINK_ATTR_PORT_INDEX, devlink_port->index))
-		जाओ nla_put_failure;
-	अगर (nla_put_u32(msg, DEVLINK_ATTR_SB_INDEX, devlink_sb->index))
-		जाओ nla_put_failure;
-	अगर (nla_put_u16(msg, DEVLINK_ATTR_SB_POOL_INDEX, pool_index))
-		जाओ nla_put_failure;
-	अगर (nla_put_u32(msg, DEVLINK_ATTR_SB_THRESHOLD, threshold))
-		जाओ nla_put_failure;
+	if (devlink_nl_put_handle(msg, devlink))
+		goto nla_put_failure;
+	if (nla_put_u32(msg, DEVLINK_ATTR_PORT_INDEX, devlink_port->index))
+		goto nla_put_failure;
+	if (nla_put_u32(msg, DEVLINK_ATTR_SB_INDEX, devlink_sb->index))
+		goto nla_put_failure;
+	if (nla_put_u16(msg, DEVLINK_ATTR_SB_POOL_INDEX, pool_index))
+		goto nla_put_failure;
+	if (nla_put_u32(msg, DEVLINK_ATTR_SB_THRESHOLD, threshold))
+		goto nla_put_failure;
 
-	अगर (ops->sb_occ_port_pool_get) अणु
+	if (ops->sb_occ_port_pool_get) {
 		u32 cur;
 		u32 max;
 
 		err = ops->sb_occ_port_pool_get(devlink_port, devlink_sb->index,
 						pool_index, &cur, &max);
-		अगर (err && err != -EOPNOTSUPP)
-			जाओ sb_occ_get_failure;
-		अगर (!err) अणु
-			अगर (nla_put_u32(msg, DEVLINK_ATTR_SB_OCC_CUR, cur))
-				जाओ nla_put_failure;
-			अगर (nla_put_u32(msg, DEVLINK_ATTR_SB_OCC_MAX, max))
-				जाओ nla_put_failure;
-		पूर्ण
-	पूर्ण
+		if (err && err != -EOPNOTSUPP)
+			goto sb_occ_get_failure;
+		if (!err) {
+			if (nla_put_u32(msg, DEVLINK_ATTR_SB_OCC_CUR, cur))
+				goto nla_put_failure;
+			if (nla_put_u32(msg, DEVLINK_ATTR_SB_OCC_MAX, max))
+				goto nla_put_failure;
+		}
+	}
 
 	genlmsg_end(msg, hdr);
-	वापस 0;
+	return 0;
 
 nla_put_failure:
 	err = -EMSGSIZE;
 sb_occ_get_failure:
 	genlmsg_cancel(msg, hdr);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक devlink_nl_cmd_sb_port_pool_get_करोit(काष्ठा sk_buff *skb,
-						काष्ठा genl_info *info)
-अणु
-	काष्ठा devlink_port *devlink_port = info->user_ptr[1];
-	काष्ठा devlink *devlink = devlink_port->devlink;
-	काष्ठा devlink_sb *devlink_sb;
-	काष्ठा sk_buff *msg;
+static int devlink_nl_cmd_sb_port_pool_get_doit(struct sk_buff *skb,
+						struct genl_info *info)
+{
+	struct devlink_port *devlink_port = info->user_ptr[1];
+	struct devlink *devlink = devlink_port->devlink;
+	struct devlink_sb *devlink_sb;
+	struct sk_buff *msg;
 	u16 pool_index;
-	पूर्णांक err;
+	int err;
 
 	devlink_sb = devlink_sb_get_from_info(devlink, info);
-	अगर (IS_ERR(devlink_sb))
-		वापस PTR_ERR(devlink_sb);
+	if (IS_ERR(devlink_sb))
+		return PTR_ERR(devlink_sb);
 
 	err = devlink_sb_pool_index_get_from_info(devlink_sb, info,
 						  &pool_index);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	अगर (!devlink->ops->sb_port_pool_get)
-		वापस -EOPNOTSUPP;
+	if (!devlink->ops->sb_port_pool_get)
+		return -EOPNOTSUPP;
 
 	msg = nlmsg_new(NLMSG_DEFAULT_SIZE, GFP_KERNEL);
-	अगर (!msg)
-		वापस -ENOMEM;
+	if (!msg)
+		return -ENOMEM;
 
 	err = devlink_nl_sb_port_pool_fill(msg, devlink, devlink_port,
 					   devlink_sb, pool_index,
 					   DEVLINK_CMD_SB_PORT_POOL_NEW,
 					   info->snd_portid, info->snd_seq, 0);
-	अगर (err) अणु
-		nlmsg_मुक्त(msg);
-		वापस err;
-	पूर्ण
+	if (err) {
+		nlmsg_free(msg);
+		return err;
+	}
 
-	वापस genlmsg_reply(msg, info);
-पूर्ण
+	return genlmsg_reply(msg, info);
+}
 
-अटल पूर्णांक __sb_port_pool_get_dumpit(काष्ठा sk_buff *msg, पूर्णांक start, पूर्णांक *p_idx,
-				     काष्ठा devlink *devlink,
-				     काष्ठा devlink_sb *devlink_sb,
+static int __sb_port_pool_get_dumpit(struct sk_buff *msg, int start, int *p_idx,
+				     struct devlink *devlink,
+				     struct devlink_sb *devlink_sb,
 				     u32 portid, u32 seq)
-अणु
-	काष्ठा devlink_port *devlink_port;
+{
+	struct devlink_port *devlink_port;
 	u16 pool_count = devlink_sb_pool_count(devlink_sb);
 	u16 pool_index;
-	पूर्णांक err;
+	int err;
 
-	list_क्रम_each_entry(devlink_port, &devlink->port_list, list) अणु
-		क्रम (pool_index = 0; pool_index < pool_count; pool_index++) अणु
-			अगर (*p_idx < start) अणु
+	list_for_each_entry(devlink_port, &devlink->port_list, list) {
+		for (pool_index = 0; pool_index < pool_count; pool_index++) {
+			if (*p_idx < start) {
 				(*p_idx)++;
-				जारी;
-			पूर्ण
+				continue;
+			}
 			err = devlink_nl_sb_port_pool_fill(msg, devlink,
 							   devlink_port,
 							   devlink_sb,
@@ -1754,134 +1753,134 @@ sb_occ_get_failure:
 							   DEVLINK_CMD_SB_PORT_POOL_NEW,
 							   portid, seq,
 							   NLM_F_MULTI);
-			अगर (err)
-				वापस err;
+			if (err)
+				return err;
 			(*p_idx)++;
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+		}
+	}
+	return 0;
+}
 
-अटल पूर्णांक devlink_nl_cmd_sb_port_pool_get_dumpit(काष्ठा sk_buff *msg,
-						  काष्ठा netlink_callback *cb)
-अणु
-	काष्ठा devlink *devlink;
-	काष्ठा devlink_sb *devlink_sb;
-	पूर्णांक start = cb->args[0];
-	पूर्णांक idx = 0;
-	पूर्णांक err = 0;
+static int devlink_nl_cmd_sb_port_pool_get_dumpit(struct sk_buff *msg,
+						  struct netlink_callback *cb)
+{
+	struct devlink *devlink;
+	struct devlink_sb *devlink_sb;
+	int start = cb->args[0];
+	int idx = 0;
+	int err = 0;
 
 	mutex_lock(&devlink_mutex);
-	list_क्रम_each_entry(devlink, &devlink_list, list) अणु
-		अगर (!net_eq(devlink_net(devlink), sock_net(msg->sk)) ||
+	list_for_each_entry(devlink, &devlink_list, list) {
+		if (!net_eq(devlink_net(devlink), sock_net(msg->sk)) ||
 		    !devlink->ops->sb_port_pool_get)
-			जारी;
+			continue;
 		mutex_lock(&devlink->lock);
-		list_क्रम_each_entry(devlink_sb, &devlink->sb_list, list) अणु
+		list_for_each_entry(devlink_sb, &devlink->sb_list, list) {
 			err = __sb_port_pool_get_dumpit(msg, start, &idx,
 							devlink, devlink_sb,
 							NETLINK_CB(cb->skb).portid,
 							cb->nlh->nlmsg_seq);
-			अगर (err == -EOPNOTSUPP) अणु
+			if (err == -EOPNOTSUPP) {
 				err = 0;
-			पूर्ण अन्यथा अगर (err) अणु
+			} else if (err) {
 				mutex_unlock(&devlink->lock);
-				जाओ out;
-			पूर्ण
-		पूर्ण
+				goto out;
+			}
+		}
 		mutex_unlock(&devlink->lock);
-	पूर्ण
+	}
 out:
 	mutex_unlock(&devlink_mutex);
 
-	अगर (err != -EMSGSIZE)
-		वापस err;
+	if (err != -EMSGSIZE)
+		return err;
 
 	cb->args[0] = idx;
-	वापस msg->len;
-पूर्ण
+	return msg->len;
+}
 
-अटल पूर्णांक devlink_sb_port_pool_set(काष्ठा devlink_port *devlink_port,
-				    अचिन्हित पूर्णांक sb_index, u16 pool_index,
+static int devlink_sb_port_pool_set(struct devlink_port *devlink_port,
+				    unsigned int sb_index, u16 pool_index,
 				    u32 threshold,
-				    काष्ठा netlink_ext_ack *extack)
+				    struct netlink_ext_ack *extack)
 
-अणु
-	स्थिर काष्ठा devlink_ops *ops = devlink_port->devlink->ops;
+{
+	const struct devlink_ops *ops = devlink_port->devlink->ops;
 
-	अगर (ops->sb_port_pool_set)
-		वापस ops->sb_port_pool_set(devlink_port, sb_index,
+	if (ops->sb_port_pool_set)
+		return ops->sb_port_pool_set(devlink_port, sb_index,
 					     pool_index, threshold, extack);
-	वापस -EOPNOTSUPP;
-पूर्ण
+	return -EOPNOTSUPP;
+}
 
-अटल पूर्णांक devlink_nl_cmd_sb_port_pool_set_करोit(काष्ठा sk_buff *skb,
-						काष्ठा genl_info *info)
-अणु
-	काष्ठा devlink_port *devlink_port = info->user_ptr[1];
-	काष्ठा devlink *devlink = info->user_ptr[0];
-	काष्ठा devlink_sb *devlink_sb;
+static int devlink_nl_cmd_sb_port_pool_set_doit(struct sk_buff *skb,
+						struct genl_info *info)
+{
+	struct devlink_port *devlink_port = info->user_ptr[1];
+	struct devlink *devlink = info->user_ptr[0];
+	struct devlink_sb *devlink_sb;
 	u16 pool_index;
 	u32 threshold;
-	पूर्णांक err;
+	int err;
 
 	devlink_sb = devlink_sb_get_from_info(devlink, info);
-	अगर (IS_ERR(devlink_sb))
-		वापस PTR_ERR(devlink_sb);
+	if (IS_ERR(devlink_sb))
+		return PTR_ERR(devlink_sb);
 
 	err = devlink_sb_pool_index_get_from_info(devlink_sb, info,
 						  &pool_index);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	अगर (!info->attrs[DEVLINK_ATTR_SB_THRESHOLD])
-		वापस -EINVAL;
+	if (!info->attrs[DEVLINK_ATTR_SB_THRESHOLD])
+		return -EINVAL;
 
 	threshold = nla_get_u32(info->attrs[DEVLINK_ATTR_SB_THRESHOLD]);
-	वापस devlink_sb_port_pool_set(devlink_port, devlink_sb->index,
+	return devlink_sb_port_pool_set(devlink_port, devlink_sb->index,
 					pool_index, threshold, info->extack);
-पूर्ण
+}
 
-अटल पूर्णांक
-devlink_nl_sb_tc_pool_bind_fill(काष्ठा sk_buff *msg, काष्ठा devlink *devlink,
-				काष्ठा devlink_port *devlink_port,
-				काष्ठा devlink_sb *devlink_sb, u16 tc_index,
-				क्रमागत devlink_sb_pool_type pool_type,
-				क्रमागत devlink_command cmd,
-				u32 portid, u32 seq, पूर्णांक flags)
-अणु
-	स्थिर काष्ठा devlink_ops *ops = devlink->ops;
+static int
+devlink_nl_sb_tc_pool_bind_fill(struct sk_buff *msg, struct devlink *devlink,
+				struct devlink_port *devlink_port,
+				struct devlink_sb *devlink_sb, u16 tc_index,
+				enum devlink_sb_pool_type pool_type,
+				enum devlink_command cmd,
+				u32 portid, u32 seq, int flags)
+{
+	const struct devlink_ops *ops = devlink->ops;
 	u16 pool_index;
 	u32 threshold;
-	व्योम *hdr;
-	पूर्णांक err;
+	void *hdr;
+	int err;
 
 	err = ops->sb_tc_pool_bind_get(devlink_port, devlink_sb->index,
 				       tc_index, pool_type,
 				       &pool_index, &threshold);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	hdr = genlmsg_put(msg, portid, seq, &devlink_nl_family, flags, cmd);
-	अगर (!hdr)
-		वापस -EMSGSIZE;
+	if (!hdr)
+		return -EMSGSIZE;
 
-	अगर (devlink_nl_put_handle(msg, devlink))
-		जाओ nla_put_failure;
-	अगर (nla_put_u32(msg, DEVLINK_ATTR_PORT_INDEX, devlink_port->index))
-		जाओ nla_put_failure;
-	अगर (nla_put_u32(msg, DEVLINK_ATTR_SB_INDEX, devlink_sb->index))
-		जाओ nla_put_failure;
-	अगर (nla_put_u16(msg, DEVLINK_ATTR_SB_TC_INDEX, tc_index))
-		जाओ nla_put_failure;
-	अगर (nla_put_u8(msg, DEVLINK_ATTR_SB_POOL_TYPE, pool_type))
-		जाओ nla_put_failure;
-	अगर (nla_put_u16(msg, DEVLINK_ATTR_SB_POOL_INDEX, pool_index))
-		जाओ nla_put_failure;
-	अगर (nla_put_u32(msg, DEVLINK_ATTR_SB_THRESHOLD, threshold))
-		जाओ nla_put_failure;
+	if (devlink_nl_put_handle(msg, devlink))
+		goto nla_put_failure;
+	if (nla_put_u32(msg, DEVLINK_ATTR_PORT_INDEX, devlink_port->index))
+		goto nla_put_failure;
+	if (nla_put_u32(msg, DEVLINK_ATTR_SB_INDEX, devlink_sb->index))
+		goto nla_put_failure;
+	if (nla_put_u16(msg, DEVLINK_ATTR_SB_TC_INDEX, tc_index))
+		goto nla_put_failure;
+	if (nla_put_u8(msg, DEVLINK_ATTR_SB_POOL_TYPE, pool_type))
+		goto nla_put_failure;
+	if (nla_put_u16(msg, DEVLINK_ATTR_SB_POOL_INDEX, pool_index))
+		goto nla_put_failure;
+	if (nla_put_u32(msg, DEVLINK_ATTR_SB_THRESHOLD, threshold))
+		goto nla_put_failure;
 
-	अगर (ops->sb_occ_tc_port_bind_get) अणु
+	if (ops->sb_occ_tc_port_bind_get) {
 		u32 cur;
 		u32 max;
 
@@ -1889,85 +1888,85 @@ devlink_nl_sb_tc_pool_bind_fill(काष्ठा sk_buff *msg, काष्ठ
 						   devlink_sb->index,
 						   tc_index, pool_type,
 						   &cur, &max);
-		अगर (err && err != -EOPNOTSUPP)
-			वापस err;
-		अगर (!err) अणु
-			अगर (nla_put_u32(msg, DEVLINK_ATTR_SB_OCC_CUR, cur))
-				जाओ nla_put_failure;
-			अगर (nla_put_u32(msg, DEVLINK_ATTR_SB_OCC_MAX, max))
-				जाओ nla_put_failure;
-		पूर्ण
-	पूर्ण
+		if (err && err != -EOPNOTSUPP)
+			return err;
+		if (!err) {
+			if (nla_put_u32(msg, DEVLINK_ATTR_SB_OCC_CUR, cur))
+				goto nla_put_failure;
+			if (nla_put_u32(msg, DEVLINK_ATTR_SB_OCC_MAX, max))
+				goto nla_put_failure;
+		}
+	}
 
 	genlmsg_end(msg, hdr);
-	वापस 0;
+	return 0;
 
 nla_put_failure:
 	genlmsg_cancel(msg, hdr);
-	वापस -EMSGSIZE;
-पूर्ण
+	return -EMSGSIZE;
+}
 
-अटल पूर्णांक devlink_nl_cmd_sb_tc_pool_bind_get_करोit(काष्ठा sk_buff *skb,
-						   काष्ठा genl_info *info)
-अणु
-	काष्ठा devlink_port *devlink_port = info->user_ptr[1];
-	काष्ठा devlink *devlink = devlink_port->devlink;
-	काष्ठा devlink_sb *devlink_sb;
-	काष्ठा sk_buff *msg;
-	क्रमागत devlink_sb_pool_type pool_type;
+static int devlink_nl_cmd_sb_tc_pool_bind_get_doit(struct sk_buff *skb,
+						   struct genl_info *info)
+{
+	struct devlink_port *devlink_port = info->user_ptr[1];
+	struct devlink *devlink = devlink_port->devlink;
+	struct devlink_sb *devlink_sb;
+	struct sk_buff *msg;
+	enum devlink_sb_pool_type pool_type;
 	u16 tc_index;
-	पूर्णांक err;
+	int err;
 
 	devlink_sb = devlink_sb_get_from_info(devlink, info);
-	अगर (IS_ERR(devlink_sb))
-		वापस PTR_ERR(devlink_sb);
+	if (IS_ERR(devlink_sb))
+		return PTR_ERR(devlink_sb);
 
 	err = devlink_sb_pool_type_get_from_info(info, &pool_type);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	err = devlink_sb_tc_index_get_from_info(devlink_sb, info,
 						pool_type, &tc_index);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	अगर (!devlink->ops->sb_tc_pool_bind_get)
-		वापस -EOPNOTSUPP;
+	if (!devlink->ops->sb_tc_pool_bind_get)
+		return -EOPNOTSUPP;
 
 	msg = nlmsg_new(NLMSG_DEFAULT_SIZE, GFP_KERNEL);
-	अगर (!msg)
-		वापस -ENOMEM;
+	if (!msg)
+		return -ENOMEM;
 
 	err = devlink_nl_sb_tc_pool_bind_fill(msg, devlink, devlink_port,
 					      devlink_sb, tc_index, pool_type,
 					      DEVLINK_CMD_SB_TC_POOL_BIND_NEW,
 					      info->snd_portid,
 					      info->snd_seq, 0);
-	अगर (err) अणु
-		nlmsg_मुक्त(msg);
-		वापस err;
-	पूर्ण
+	if (err) {
+		nlmsg_free(msg);
+		return err;
+	}
 
-	वापस genlmsg_reply(msg, info);
-पूर्ण
+	return genlmsg_reply(msg, info);
+}
 
-अटल पूर्णांक __sb_tc_pool_bind_get_dumpit(काष्ठा sk_buff *msg,
-					पूर्णांक start, पूर्णांक *p_idx,
-					काष्ठा devlink *devlink,
-					काष्ठा devlink_sb *devlink_sb,
+static int __sb_tc_pool_bind_get_dumpit(struct sk_buff *msg,
+					int start, int *p_idx,
+					struct devlink *devlink,
+					struct devlink_sb *devlink_sb,
 					u32 portid, u32 seq)
-अणु
-	काष्ठा devlink_port *devlink_port;
+{
+	struct devlink_port *devlink_port;
 	u16 tc_index;
-	पूर्णांक err;
+	int err;
 
-	list_क्रम_each_entry(devlink_port, &devlink->port_list, list) अणु
-		क्रम (tc_index = 0;
-		     tc_index < devlink_sb->ingress_tc_count; tc_index++) अणु
-			अगर (*p_idx < start) अणु
+	list_for_each_entry(devlink_port, &devlink->port_list, list) {
+		for (tc_index = 0;
+		     tc_index < devlink_sb->ingress_tc_count; tc_index++) {
+			if (*p_idx < start) {
 				(*p_idx)++;
-				जारी;
-			पूर्ण
+				continue;
+			}
 			err = devlink_nl_sb_tc_pool_bind_fill(msg, devlink,
 							      devlink_port,
 							      devlink_sb,
@@ -1976,16 +1975,16 @@ nla_put_failure:
 							      DEVLINK_CMD_SB_TC_POOL_BIND_NEW,
 							      portid, seq,
 							      NLM_F_MULTI);
-			अगर (err)
-				वापस err;
+			if (err)
+				return err;
 			(*p_idx)++;
-		पूर्ण
-		क्रम (tc_index = 0;
-		     tc_index < devlink_sb->egress_tc_count; tc_index++) अणु
-			अगर (*p_idx < start) अणु
+		}
+		for (tc_index = 0;
+		     tc_index < devlink_sb->egress_tc_count; tc_index++) {
+			if (*p_idx < start) {
 				(*p_idx)++;
-				जारी;
-			पूर्ण
+				continue;
+			}
 			err = devlink_nl_sb_tc_pool_bind_fill(msg, devlink,
 							      devlink_port,
 							      devlink_sb,
@@ -1994,2006 +1993,2006 @@ nla_put_failure:
 							      DEVLINK_CMD_SB_TC_POOL_BIND_NEW,
 							      portid, seq,
 							      NLM_F_MULTI);
-			अगर (err)
-				वापस err;
+			if (err)
+				return err;
 			(*p_idx)++;
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+		}
+	}
+	return 0;
+}
 
-अटल पूर्णांक
-devlink_nl_cmd_sb_tc_pool_bind_get_dumpit(काष्ठा sk_buff *msg,
-					  काष्ठा netlink_callback *cb)
-अणु
-	काष्ठा devlink *devlink;
-	काष्ठा devlink_sb *devlink_sb;
-	पूर्णांक start = cb->args[0];
-	पूर्णांक idx = 0;
-	पूर्णांक err = 0;
+static int
+devlink_nl_cmd_sb_tc_pool_bind_get_dumpit(struct sk_buff *msg,
+					  struct netlink_callback *cb)
+{
+	struct devlink *devlink;
+	struct devlink_sb *devlink_sb;
+	int start = cb->args[0];
+	int idx = 0;
+	int err = 0;
 
 	mutex_lock(&devlink_mutex);
-	list_क्रम_each_entry(devlink, &devlink_list, list) अणु
-		अगर (!net_eq(devlink_net(devlink), sock_net(msg->sk)) ||
+	list_for_each_entry(devlink, &devlink_list, list) {
+		if (!net_eq(devlink_net(devlink), sock_net(msg->sk)) ||
 		    !devlink->ops->sb_tc_pool_bind_get)
-			जारी;
+			continue;
 
 		mutex_lock(&devlink->lock);
-		list_क्रम_each_entry(devlink_sb, &devlink->sb_list, list) अणु
+		list_for_each_entry(devlink_sb, &devlink->sb_list, list) {
 			err = __sb_tc_pool_bind_get_dumpit(msg, start, &idx,
 							   devlink,
 							   devlink_sb,
 							   NETLINK_CB(cb->skb).portid,
 							   cb->nlh->nlmsg_seq);
-			अगर (err == -EOPNOTSUPP) अणु
+			if (err == -EOPNOTSUPP) {
 				err = 0;
-			पूर्ण अन्यथा अगर (err) अणु
+			} else if (err) {
 				mutex_unlock(&devlink->lock);
-				जाओ out;
-			पूर्ण
-		पूर्ण
+				goto out;
+			}
+		}
 		mutex_unlock(&devlink->lock);
-	पूर्ण
+	}
 out:
 	mutex_unlock(&devlink_mutex);
 
-	अगर (err != -EMSGSIZE)
-		वापस err;
+	if (err != -EMSGSIZE)
+		return err;
 
 	cb->args[0] = idx;
-	वापस msg->len;
-पूर्ण
+	return msg->len;
+}
 
-अटल पूर्णांक devlink_sb_tc_pool_bind_set(काष्ठा devlink_port *devlink_port,
-				       अचिन्हित पूर्णांक sb_index, u16 tc_index,
-				       क्रमागत devlink_sb_pool_type pool_type,
+static int devlink_sb_tc_pool_bind_set(struct devlink_port *devlink_port,
+				       unsigned int sb_index, u16 tc_index,
+				       enum devlink_sb_pool_type pool_type,
 				       u16 pool_index, u32 threshold,
-				       काष्ठा netlink_ext_ack *extack)
+				       struct netlink_ext_ack *extack)
 
-अणु
-	स्थिर काष्ठा devlink_ops *ops = devlink_port->devlink->ops;
+{
+	const struct devlink_ops *ops = devlink_port->devlink->ops;
 
-	अगर (ops->sb_tc_pool_bind_set)
-		वापस ops->sb_tc_pool_bind_set(devlink_port, sb_index,
+	if (ops->sb_tc_pool_bind_set)
+		return ops->sb_tc_pool_bind_set(devlink_port, sb_index,
 						tc_index, pool_type,
 						pool_index, threshold, extack);
-	वापस -EOPNOTSUPP;
-पूर्ण
+	return -EOPNOTSUPP;
+}
 
-अटल पूर्णांक devlink_nl_cmd_sb_tc_pool_bind_set_करोit(काष्ठा sk_buff *skb,
-						   काष्ठा genl_info *info)
-अणु
-	काष्ठा devlink_port *devlink_port = info->user_ptr[1];
-	काष्ठा devlink *devlink = info->user_ptr[0];
-	क्रमागत devlink_sb_pool_type pool_type;
-	काष्ठा devlink_sb *devlink_sb;
+static int devlink_nl_cmd_sb_tc_pool_bind_set_doit(struct sk_buff *skb,
+						   struct genl_info *info)
+{
+	struct devlink_port *devlink_port = info->user_ptr[1];
+	struct devlink *devlink = info->user_ptr[0];
+	enum devlink_sb_pool_type pool_type;
+	struct devlink_sb *devlink_sb;
 	u16 tc_index;
 	u16 pool_index;
 	u32 threshold;
-	पूर्णांक err;
+	int err;
 
 	devlink_sb = devlink_sb_get_from_info(devlink, info);
-	अगर (IS_ERR(devlink_sb))
-		वापस PTR_ERR(devlink_sb);
+	if (IS_ERR(devlink_sb))
+		return PTR_ERR(devlink_sb);
 
 	err = devlink_sb_pool_type_get_from_info(info, &pool_type);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	err = devlink_sb_tc_index_get_from_info(devlink_sb, info,
 						pool_type, &tc_index);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	err = devlink_sb_pool_index_get_from_info(devlink_sb, info,
 						  &pool_index);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	अगर (!info->attrs[DEVLINK_ATTR_SB_THRESHOLD])
-		वापस -EINVAL;
+	if (!info->attrs[DEVLINK_ATTR_SB_THRESHOLD])
+		return -EINVAL;
 
 	threshold = nla_get_u32(info->attrs[DEVLINK_ATTR_SB_THRESHOLD]);
-	वापस devlink_sb_tc_pool_bind_set(devlink_port, devlink_sb->index,
+	return devlink_sb_tc_pool_bind_set(devlink_port, devlink_sb->index,
 					   tc_index, pool_type,
 					   pool_index, threshold, info->extack);
-पूर्ण
+}
 
-अटल पूर्णांक devlink_nl_cmd_sb_occ_snapshot_करोit(काष्ठा sk_buff *skb,
-					       काष्ठा genl_info *info)
-अणु
-	काष्ठा devlink *devlink = info->user_ptr[0];
-	स्थिर काष्ठा devlink_ops *ops = devlink->ops;
-	काष्ठा devlink_sb *devlink_sb;
-
-	devlink_sb = devlink_sb_get_from_info(devlink, info);
-	अगर (IS_ERR(devlink_sb))
-		वापस PTR_ERR(devlink_sb);
-
-	अगर (ops->sb_occ_snapshot)
-		वापस ops->sb_occ_snapshot(devlink, devlink_sb->index);
-	वापस -EOPNOTSUPP;
-पूर्ण
-
-अटल पूर्णांक devlink_nl_cmd_sb_occ_max_clear_करोit(काष्ठा sk_buff *skb,
-						काष्ठा genl_info *info)
-अणु
-	काष्ठा devlink *devlink = info->user_ptr[0];
-	स्थिर काष्ठा devlink_ops *ops = devlink->ops;
-	काष्ठा devlink_sb *devlink_sb;
+static int devlink_nl_cmd_sb_occ_snapshot_doit(struct sk_buff *skb,
+					       struct genl_info *info)
+{
+	struct devlink *devlink = info->user_ptr[0];
+	const struct devlink_ops *ops = devlink->ops;
+	struct devlink_sb *devlink_sb;
 
 	devlink_sb = devlink_sb_get_from_info(devlink, info);
-	अगर (IS_ERR(devlink_sb))
-		वापस PTR_ERR(devlink_sb);
+	if (IS_ERR(devlink_sb))
+		return PTR_ERR(devlink_sb);
 
-	अगर (ops->sb_occ_max_clear)
-		वापस ops->sb_occ_max_clear(devlink, devlink_sb->index);
-	वापस -EOPNOTSUPP;
-पूर्ण
+	if (ops->sb_occ_snapshot)
+		return ops->sb_occ_snapshot(devlink, devlink_sb->index);
+	return -EOPNOTSUPP;
+}
 
-अटल पूर्णांक devlink_nl_eचयन_fill(काष्ठा sk_buff *msg, काष्ठा devlink *devlink,
-				   क्रमागत devlink_command cmd, u32 portid,
-				   u32 seq, पूर्णांक flags)
-अणु
-	स्थिर काष्ठा devlink_ops *ops = devlink->ops;
-	क्रमागत devlink_eचयन_encap_mode encap_mode;
-	u8 अंतरभूत_mode;
-	व्योम *hdr;
-	पूर्णांक err = 0;
+static int devlink_nl_cmd_sb_occ_max_clear_doit(struct sk_buff *skb,
+						struct genl_info *info)
+{
+	struct devlink *devlink = info->user_ptr[0];
+	const struct devlink_ops *ops = devlink->ops;
+	struct devlink_sb *devlink_sb;
+
+	devlink_sb = devlink_sb_get_from_info(devlink, info);
+	if (IS_ERR(devlink_sb))
+		return PTR_ERR(devlink_sb);
+
+	if (ops->sb_occ_max_clear)
+		return ops->sb_occ_max_clear(devlink, devlink_sb->index);
+	return -EOPNOTSUPP;
+}
+
+static int devlink_nl_eswitch_fill(struct sk_buff *msg, struct devlink *devlink,
+				   enum devlink_command cmd, u32 portid,
+				   u32 seq, int flags)
+{
+	const struct devlink_ops *ops = devlink->ops;
+	enum devlink_eswitch_encap_mode encap_mode;
+	u8 inline_mode;
+	void *hdr;
+	int err = 0;
 	u16 mode;
 
 	hdr = genlmsg_put(msg, portid, seq, &devlink_nl_family, flags, cmd);
-	अगर (!hdr)
-		वापस -EMSGSIZE;
+	if (!hdr)
+		return -EMSGSIZE;
 
 	err = devlink_nl_put_handle(msg, devlink);
-	अगर (err)
-		जाओ nla_put_failure;
+	if (err)
+		goto nla_put_failure;
 
-	अगर (ops->eचयन_mode_get) अणु
-		err = ops->eचयन_mode_get(devlink, &mode);
-		अगर (err)
-			जाओ nla_put_failure;
+	if (ops->eswitch_mode_get) {
+		err = ops->eswitch_mode_get(devlink, &mode);
+		if (err)
+			goto nla_put_failure;
 		err = nla_put_u16(msg, DEVLINK_ATTR_ESWITCH_MODE, mode);
-		अगर (err)
-			जाओ nla_put_failure;
-	पूर्ण
+		if (err)
+			goto nla_put_failure;
+	}
 
-	अगर (ops->eचयन_अंतरभूत_mode_get) अणु
-		err = ops->eचयन_अंतरभूत_mode_get(devlink, &अंतरभूत_mode);
-		अगर (err)
-			जाओ nla_put_failure;
+	if (ops->eswitch_inline_mode_get) {
+		err = ops->eswitch_inline_mode_get(devlink, &inline_mode);
+		if (err)
+			goto nla_put_failure;
 		err = nla_put_u8(msg, DEVLINK_ATTR_ESWITCH_INLINE_MODE,
-				 अंतरभूत_mode);
-		अगर (err)
-			जाओ nla_put_failure;
-	पूर्ण
+				 inline_mode);
+		if (err)
+			goto nla_put_failure;
+	}
 
-	अगर (ops->eचयन_encap_mode_get) अणु
-		err = ops->eचयन_encap_mode_get(devlink, &encap_mode);
-		अगर (err)
-			जाओ nla_put_failure;
+	if (ops->eswitch_encap_mode_get) {
+		err = ops->eswitch_encap_mode_get(devlink, &encap_mode);
+		if (err)
+			goto nla_put_failure;
 		err = nla_put_u8(msg, DEVLINK_ATTR_ESWITCH_ENCAP_MODE, encap_mode);
-		अगर (err)
-			जाओ nla_put_failure;
-	पूर्ण
+		if (err)
+			goto nla_put_failure;
+	}
 
 	genlmsg_end(msg, hdr);
-	वापस 0;
+	return 0;
 
 nla_put_failure:
 	genlmsg_cancel(msg, hdr);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक devlink_nl_cmd_eचयन_get_करोit(काष्ठा sk_buff *skb,
-					   काष्ठा genl_info *info)
-अणु
-	काष्ठा devlink *devlink = info->user_ptr[0];
-	काष्ठा sk_buff *msg;
-	पूर्णांक err;
+static int devlink_nl_cmd_eswitch_get_doit(struct sk_buff *skb,
+					   struct genl_info *info)
+{
+	struct devlink *devlink = info->user_ptr[0];
+	struct sk_buff *msg;
+	int err;
 
 	msg = nlmsg_new(NLMSG_DEFAULT_SIZE, GFP_KERNEL);
-	अगर (!msg)
-		वापस -ENOMEM;
+	if (!msg)
+		return -ENOMEM;
 
-	err = devlink_nl_eचयन_fill(msg, devlink, DEVLINK_CMD_ESWITCH_GET,
+	err = devlink_nl_eswitch_fill(msg, devlink, DEVLINK_CMD_ESWITCH_GET,
 				      info->snd_portid, info->snd_seq, 0);
 
-	अगर (err) अणु
-		nlmsg_मुक्त(msg);
-		वापस err;
-	पूर्ण
+	if (err) {
+		nlmsg_free(msg);
+		return err;
+	}
 
-	वापस genlmsg_reply(msg, info);
-पूर्ण
+	return genlmsg_reply(msg, info);
+}
 
-अटल पूर्णांक devlink_nl_cmd_eचयन_set_करोit(काष्ठा sk_buff *skb,
-					   काष्ठा genl_info *info)
-अणु
-	काष्ठा devlink *devlink = info->user_ptr[0];
-	स्थिर काष्ठा devlink_ops *ops = devlink->ops;
-	क्रमागत devlink_eचयन_encap_mode encap_mode;
-	u8 अंतरभूत_mode;
-	पूर्णांक err = 0;
+static int devlink_nl_cmd_eswitch_set_doit(struct sk_buff *skb,
+					   struct genl_info *info)
+{
+	struct devlink *devlink = info->user_ptr[0];
+	const struct devlink_ops *ops = devlink->ops;
+	enum devlink_eswitch_encap_mode encap_mode;
+	u8 inline_mode;
+	int err = 0;
 	u16 mode;
 
-	अगर (info->attrs[DEVLINK_ATTR_ESWITCH_MODE]) अणु
-		अगर (!ops->eचयन_mode_set)
-			वापस -EOPNOTSUPP;
+	if (info->attrs[DEVLINK_ATTR_ESWITCH_MODE]) {
+		if (!ops->eswitch_mode_set)
+			return -EOPNOTSUPP;
 		mode = nla_get_u16(info->attrs[DEVLINK_ATTR_ESWITCH_MODE]);
-		err = ops->eचयन_mode_set(devlink, mode, info->extack);
-		अगर (err)
-			वापस err;
-	पूर्ण
+		err = ops->eswitch_mode_set(devlink, mode, info->extack);
+		if (err)
+			return err;
+	}
 
-	अगर (info->attrs[DEVLINK_ATTR_ESWITCH_INLINE_MODE]) अणु
-		अगर (!ops->eचयन_अंतरभूत_mode_set)
-			वापस -EOPNOTSUPP;
-		अंतरभूत_mode = nla_get_u8(
+	if (info->attrs[DEVLINK_ATTR_ESWITCH_INLINE_MODE]) {
+		if (!ops->eswitch_inline_mode_set)
+			return -EOPNOTSUPP;
+		inline_mode = nla_get_u8(
 				info->attrs[DEVLINK_ATTR_ESWITCH_INLINE_MODE]);
-		err = ops->eचयन_अंतरभूत_mode_set(devlink, अंतरभूत_mode,
+		err = ops->eswitch_inline_mode_set(devlink, inline_mode,
 						   info->extack);
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 
-	अगर (info->attrs[DEVLINK_ATTR_ESWITCH_ENCAP_MODE]) अणु
-		अगर (!ops->eचयन_encap_mode_set)
-			वापस -EOPNOTSUPP;
+	if (info->attrs[DEVLINK_ATTR_ESWITCH_ENCAP_MODE]) {
+		if (!ops->eswitch_encap_mode_set)
+			return -EOPNOTSUPP;
 		encap_mode = nla_get_u8(info->attrs[DEVLINK_ATTR_ESWITCH_ENCAP_MODE]);
-		err = ops->eचयन_encap_mode_set(devlink, encap_mode,
+		err = ops->eswitch_encap_mode_set(devlink, encap_mode,
 						  info->extack);
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक devlink_dpipe_match_put(काष्ठा sk_buff *skb,
-			    काष्ठा devlink_dpipe_match *match)
-अणु
-	काष्ठा devlink_dpipe_header *header = match->header;
-	काष्ठा devlink_dpipe_field *field = &header->fields[match->field_id];
-	काष्ठा nlattr *match_attr;
+int devlink_dpipe_match_put(struct sk_buff *skb,
+			    struct devlink_dpipe_match *match)
+{
+	struct devlink_dpipe_header *header = match->header;
+	struct devlink_dpipe_field *field = &header->fields[match->field_id];
+	struct nlattr *match_attr;
 
 	match_attr = nla_nest_start_noflag(skb, DEVLINK_ATTR_DPIPE_MATCH);
-	अगर (!match_attr)
-		वापस -EMSGSIZE;
+	if (!match_attr)
+		return -EMSGSIZE;
 
-	अगर (nla_put_u32(skb, DEVLINK_ATTR_DPIPE_MATCH_TYPE, match->type) ||
+	if (nla_put_u32(skb, DEVLINK_ATTR_DPIPE_MATCH_TYPE, match->type) ||
 	    nla_put_u32(skb, DEVLINK_ATTR_DPIPE_HEADER_INDEX, match->header_index) ||
 	    nla_put_u32(skb, DEVLINK_ATTR_DPIPE_HEADER_ID, header->id) ||
 	    nla_put_u32(skb, DEVLINK_ATTR_DPIPE_FIELD_ID, field->id) ||
 	    nla_put_u8(skb, DEVLINK_ATTR_DPIPE_HEADER_GLOBAL, header->global))
-		जाओ nla_put_failure;
+		goto nla_put_failure;
 
 	nla_nest_end(skb, match_attr);
-	वापस 0;
+	return 0;
 
 nla_put_failure:
 	nla_nest_cancel(skb, match_attr);
-	वापस -EMSGSIZE;
-पूर्ण
+	return -EMSGSIZE;
+}
 EXPORT_SYMBOL_GPL(devlink_dpipe_match_put);
 
-अटल पूर्णांक devlink_dpipe_matches_put(काष्ठा devlink_dpipe_table *table,
-				     काष्ठा sk_buff *skb)
-अणु
-	काष्ठा nlattr *matches_attr;
+static int devlink_dpipe_matches_put(struct devlink_dpipe_table *table,
+				     struct sk_buff *skb)
+{
+	struct nlattr *matches_attr;
 
 	matches_attr = nla_nest_start_noflag(skb,
 					     DEVLINK_ATTR_DPIPE_TABLE_MATCHES);
-	अगर (!matches_attr)
-		वापस -EMSGSIZE;
+	if (!matches_attr)
+		return -EMSGSIZE;
 
-	अगर (table->table_ops->matches_dump(table->priv, skb))
-		जाओ nla_put_failure;
+	if (table->table_ops->matches_dump(table->priv, skb))
+		goto nla_put_failure;
 
 	nla_nest_end(skb, matches_attr);
-	वापस 0;
+	return 0;
 
 nla_put_failure:
 	nla_nest_cancel(skb, matches_attr);
-	वापस -EMSGSIZE;
-पूर्ण
+	return -EMSGSIZE;
+}
 
-पूर्णांक devlink_dpipe_action_put(काष्ठा sk_buff *skb,
-			     काष्ठा devlink_dpipe_action *action)
-अणु
-	काष्ठा devlink_dpipe_header *header = action->header;
-	काष्ठा devlink_dpipe_field *field = &header->fields[action->field_id];
-	काष्ठा nlattr *action_attr;
+int devlink_dpipe_action_put(struct sk_buff *skb,
+			     struct devlink_dpipe_action *action)
+{
+	struct devlink_dpipe_header *header = action->header;
+	struct devlink_dpipe_field *field = &header->fields[action->field_id];
+	struct nlattr *action_attr;
 
 	action_attr = nla_nest_start_noflag(skb, DEVLINK_ATTR_DPIPE_ACTION);
-	अगर (!action_attr)
-		वापस -EMSGSIZE;
+	if (!action_attr)
+		return -EMSGSIZE;
 
-	अगर (nla_put_u32(skb, DEVLINK_ATTR_DPIPE_ACTION_TYPE, action->type) ||
+	if (nla_put_u32(skb, DEVLINK_ATTR_DPIPE_ACTION_TYPE, action->type) ||
 	    nla_put_u32(skb, DEVLINK_ATTR_DPIPE_HEADER_INDEX, action->header_index) ||
 	    nla_put_u32(skb, DEVLINK_ATTR_DPIPE_HEADER_ID, header->id) ||
 	    nla_put_u32(skb, DEVLINK_ATTR_DPIPE_FIELD_ID, field->id) ||
 	    nla_put_u8(skb, DEVLINK_ATTR_DPIPE_HEADER_GLOBAL, header->global))
-		जाओ nla_put_failure;
+		goto nla_put_failure;
 
 	nla_nest_end(skb, action_attr);
-	वापस 0;
+	return 0;
 
 nla_put_failure:
 	nla_nest_cancel(skb, action_attr);
-	वापस -EMSGSIZE;
-पूर्ण
+	return -EMSGSIZE;
+}
 EXPORT_SYMBOL_GPL(devlink_dpipe_action_put);
 
-अटल पूर्णांक devlink_dpipe_actions_put(काष्ठा devlink_dpipe_table *table,
-				     काष्ठा sk_buff *skb)
-अणु
-	काष्ठा nlattr *actions_attr;
+static int devlink_dpipe_actions_put(struct devlink_dpipe_table *table,
+				     struct sk_buff *skb)
+{
+	struct nlattr *actions_attr;
 
 	actions_attr = nla_nest_start_noflag(skb,
 					     DEVLINK_ATTR_DPIPE_TABLE_ACTIONS);
-	अगर (!actions_attr)
-		वापस -EMSGSIZE;
+	if (!actions_attr)
+		return -EMSGSIZE;
 
-	अगर (table->table_ops->actions_dump(table->priv, skb))
-		जाओ nla_put_failure;
+	if (table->table_ops->actions_dump(table->priv, skb))
+		goto nla_put_failure;
 
 	nla_nest_end(skb, actions_attr);
-	वापस 0;
+	return 0;
 
 nla_put_failure:
 	nla_nest_cancel(skb, actions_attr);
-	वापस -EMSGSIZE;
-पूर्ण
+	return -EMSGSIZE;
+}
 
-अटल पूर्णांक devlink_dpipe_table_put(काष्ठा sk_buff *skb,
-				   काष्ठा devlink_dpipe_table *table)
-अणु
-	काष्ठा nlattr *table_attr;
+static int devlink_dpipe_table_put(struct sk_buff *skb,
+				   struct devlink_dpipe_table *table)
+{
+	struct nlattr *table_attr;
 	u64 table_size;
 
 	table_size = table->table_ops->size_get(table->priv);
 	table_attr = nla_nest_start_noflag(skb, DEVLINK_ATTR_DPIPE_TABLE);
-	अगर (!table_attr)
-		वापस -EMSGSIZE;
+	if (!table_attr)
+		return -EMSGSIZE;
 
-	अगर (nla_put_string(skb, DEVLINK_ATTR_DPIPE_TABLE_NAME, table->name) ||
+	if (nla_put_string(skb, DEVLINK_ATTR_DPIPE_TABLE_NAME, table->name) ||
 	    nla_put_u64_64bit(skb, DEVLINK_ATTR_DPIPE_TABLE_SIZE, table_size,
 			      DEVLINK_ATTR_PAD))
-		जाओ nla_put_failure;
-	अगर (nla_put_u8(skb, DEVLINK_ATTR_DPIPE_TABLE_COUNTERS_ENABLED,
+		goto nla_put_failure;
+	if (nla_put_u8(skb, DEVLINK_ATTR_DPIPE_TABLE_COUNTERS_ENABLED,
 		       table->counters_enabled))
-		जाओ nla_put_failure;
+		goto nla_put_failure;
 
-	अगर (table->resource_valid) अणु
-		अगर (nla_put_u64_64bit(skb, DEVLINK_ATTR_DPIPE_TABLE_RESOURCE_ID,
+	if (table->resource_valid) {
+		if (nla_put_u64_64bit(skb, DEVLINK_ATTR_DPIPE_TABLE_RESOURCE_ID,
 				      table->resource_id, DEVLINK_ATTR_PAD) ||
 		    nla_put_u64_64bit(skb, DEVLINK_ATTR_DPIPE_TABLE_RESOURCE_UNITS,
 				      table->resource_units, DEVLINK_ATTR_PAD))
-			जाओ nla_put_failure;
-	पूर्ण
-	अगर (devlink_dpipe_matches_put(table, skb))
-		जाओ nla_put_failure;
+			goto nla_put_failure;
+	}
+	if (devlink_dpipe_matches_put(table, skb))
+		goto nla_put_failure;
 
-	अगर (devlink_dpipe_actions_put(table, skb))
-		जाओ nla_put_failure;
+	if (devlink_dpipe_actions_put(table, skb))
+		goto nla_put_failure;
 
 	nla_nest_end(skb, table_attr);
-	वापस 0;
+	return 0;
 
 nla_put_failure:
 	nla_nest_cancel(skb, table_attr);
-	वापस -EMSGSIZE;
-पूर्ण
+	return -EMSGSIZE;
+}
 
-अटल पूर्णांक devlink_dpipe_send_and_alloc_skb(काष्ठा sk_buff **pskb,
-					    काष्ठा genl_info *info)
-अणु
-	पूर्णांक err;
+static int devlink_dpipe_send_and_alloc_skb(struct sk_buff **pskb,
+					    struct genl_info *info)
+{
+	int err;
 
-	अगर (*pskb) अणु
+	if (*pskb) {
 		err = genlmsg_reply(*pskb, info);
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 	*pskb = genlmsg_new(GENLMSG_DEFAULT_SIZE, GFP_KERNEL);
-	अगर (!*pskb)
-		वापस -ENOMEM;
-	वापस 0;
-पूर्ण
+	if (!*pskb)
+		return -ENOMEM;
+	return 0;
+}
 
-अटल पूर्णांक devlink_dpipe_tables_fill(काष्ठा genl_info *info,
-				     क्रमागत devlink_command cmd, पूर्णांक flags,
-				     काष्ठा list_head *dpipe_tables,
-				     स्थिर अक्षर *table_name)
-अणु
-	काष्ठा devlink *devlink = info->user_ptr[0];
-	काष्ठा devlink_dpipe_table *table;
-	काष्ठा nlattr *tables_attr;
-	काष्ठा sk_buff *skb = शून्य;
-	काष्ठा nlmsghdr *nlh;
+static int devlink_dpipe_tables_fill(struct genl_info *info,
+				     enum devlink_command cmd, int flags,
+				     struct list_head *dpipe_tables,
+				     const char *table_name)
+{
+	struct devlink *devlink = info->user_ptr[0];
+	struct devlink_dpipe_table *table;
+	struct nlattr *tables_attr;
+	struct sk_buff *skb = NULL;
+	struct nlmsghdr *nlh;
 	bool incomplete;
-	व्योम *hdr;
-	पूर्णांक i;
-	पूर्णांक err;
+	void *hdr;
+	int i;
+	int err;
 
 	table = list_first_entry(dpipe_tables,
-				 काष्ठा devlink_dpipe_table, list);
+				 struct devlink_dpipe_table, list);
 start_again:
 	err = devlink_dpipe_send_and_alloc_skb(&skb, info);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	hdr = genlmsg_put(skb, info->snd_portid, info->snd_seq,
 			  &devlink_nl_family, NLM_F_MULTI, cmd);
-	अगर (!hdr) अणु
-		nlmsg_मुक्त(skb);
-		वापस -EMSGSIZE;
-	पूर्ण
+	if (!hdr) {
+		nlmsg_free(skb);
+		return -EMSGSIZE;
+	}
 
-	अगर (devlink_nl_put_handle(skb, devlink))
-		जाओ nla_put_failure;
+	if (devlink_nl_put_handle(skb, devlink))
+		goto nla_put_failure;
 	tables_attr = nla_nest_start_noflag(skb, DEVLINK_ATTR_DPIPE_TABLES);
-	अगर (!tables_attr)
-		जाओ nla_put_failure;
+	if (!tables_attr)
+		goto nla_put_failure;
 
 	i = 0;
 	incomplete = false;
-	list_क्रम_each_entry_from(table, dpipe_tables, list) अणु
-		अगर (!table_name) अणु
+	list_for_each_entry_from(table, dpipe_tables, list) {
+		if (!table_name) {
 			err = devlink_dpipe_table_put(skb, table);
-			अगर (err) अणु
-				अगर (!i)
-					जाओ err_table_put;
+			if (err) {
+				if (!i)
+					goto err_table_put;
 				incomplete = true;
-				अवरोध;
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			अगर (!म_भेद(table->name, table_name)) अणु
+				break;
+			}
+		} else {
+			if (!strcmp(table->name, table_name)) {
 				err = devlink_dpipe_table_put(skb, table);
-				अगर (err)
-					अवरोध;
-			पूर्ण
-		पूर्ण
+				if (err)
+					break;
+			}
+		}
 		i++;
-	पूर्ण
+	}
 
 	nla_nest_end(skb, tables_attr);
 	genlmsg_end(skb, hdr);
-	अगर (incomplete)
-		जाओ start_again;
+	if (incomplete)
+		goto start_again;
 
-send_करोne:
+send_done:
 	nlh = nlmsg_put(skb, info->snd_portid, info->snd_seq,
 			NLMSG_DONE, 0, flags | NLM_F_MULTI);
-	अगर (!nlh) अणु
+	if (!nlh) {
 		err = devlink_dpipe_send_and_alloc_skb(&skb, info);
-		अगर (err)
-			वापस err;
-		जाओ send_करोne;
-	पूर्ण
+		if (err)
+			return err;
+		goto send_done;
+	}
 
-	वापस genlmsg_reply(skb, info);
+	return genlmsg_reply(skb, info);
 
 nla_put_failure:
 	err = -EMSGSIZE;
 err_table_put:
-	nlmsg_मुक्त(skb);
-	वापस err;
-पूर्ण
+	nlmsg_free(skb);
+	return err;
+}
 
-अटल पूर्णांक devlink_nl_cmd_dpipe_table_get(काष्ठा sk_buff *skb,
-					  काष्ठा genl_info *info)
-अणु
-	काष्ठा devlink *devlink = info->user_ptr[0];
-	स्थिर अक्षर *table_name =  शून्य;
+static int devlink_nl_cmd_dpipe_table_get(struct sk_buff *skb,
+					  struct genl_info *info)
+{
+	struct devlink *devlink = info->user_ptr[0];
+	const char *table_name =  NULL;
 
-	अगर (info->attrs[DEVLINK_ATTR_DPIPE_TABLE_NAME])
+	if (info->attrs[DEVLINK_ATTR_DPIPE_TABLE_NAME])
 		table_name = nla_data(info->attrs[DEVLINK_ATTR_DPIPE_TABLE_NAME]);
 
-	वापस devlink_dpipe_tables_fill(info, DEVLINK_CMD_DPIPE_TABLE_GET, 0,
+	return devlink_dpipe_tables_fill(info, DEVLINK_CMD_DPIPE_TABLE_GET, 0,
 					 &devlink->dpipe_table_list,
 					 table_name);
-पूर्ण
+}
 
-अटल पूर्णांक devlink_dpipe_value_put(काष्ठा sk_buff *skb,
-				   काष्ठा devlink_dpipe_value *value)
-अणु
-	अगर (nla_put(skb, DEVLINK_ATTR_DPIPE_VALUE,
+static int devlink_dpipe_value_put(struct sk_buff *skb,
+				   struct devlink_dpipe_value *value)
+{
+	if (nla_put(skb, DEVLINK_ATTR_DPIPE_VALUE,
 		    value->value_size, value->value))
-		वापस -EMSGSIZE;
-	अगर (value->mask)
-		अगर (nla_put(skb, DEVLINK_ATTR_DPIPE_VALUE_MASK,
+		return -EMSGSIZE;
+	if (value->mask)
+		if (nla_put(skb, DEVLINK_ATTR_DPIPE_VALUE_MASK,
 			    value->value_size, value->mask))
-			वापस -EMSGSIZE;
-	अगर (value->mapping_valid)
-		अगर (nla_put_u32(skb, DEVLINK_ATTR_DPIPE_VALUE_MAPPING,
+			return -EMSGSIZE;
+	if (value->mapping_valid)
+		if (nla_put_u32(skb, DEVLINK_ATTR_DPIPE_VALUE_MAPPING,
 				value->mapping_value))
-			वापस -EMSGSIZE;
-	वापस 0;
-पूर्ण
+			return -EMSGSIZE;
+	return 0;
+}
 
-अटल पूर्णांक devlink_dpipe_action_value_put(काष्ठा sk_buff *skb,
-					  काष्ठा devlink_dpipe_value *value)
-अणु
-	अगर (!value->action)
-		वापस -EINVAL;
-	अगर (devlink_dpipe_action_put(skb, value->action))
-		वापस -EMSGSIZE;
-	अगर (devlink_dpipe_value_put(skb, value))
-		वापस -EMSGSIZE;
-	वापस 0;
-पूर्ण
+static int devlink_dpipe_action_value_put(struct sk_buff *skb,
+					  struct devlink_dpipe_value *value)
+{
+	if (!value->action)
+		return -EINVAL;
+	if (devlink_dpipe_action_put(skb, value->action))
+		return -EMSGSIZE;
+	if (devlink_dpipe_value_put(skb, value))
+		return -EMSGSIZE;
+	return 0;
+}
 
-अटल पूर्णांक devlink_dpipe_action_values_put(काष्ठा sk_buff *skb,
-					   काष्ठा devlink_dpipe_value *values,
-					   अचिन्हित पूर्णांक values_count)
-अणु
-	काष्ठा nlattr *action_attr;
-	पूर्णांक i;
-	पूर्णांक err;
+static int devlink_dpipe_action_values_put(struct sk_buff *skb,
+					   struct devlink_dpipe_value *values,
+					   unsigned int values_count)
+{
+	struct nlattr *action_attr;
+	int i;
+	int err;
 
-	क्रम (i = 0; i < values_count; i++) अणु
+	for (i = 0; i < values_count; i++) {
 		action_attr = nla_nest_start_noflag(skb,
 						    DEVLINK_ATTR_DPIPE_ACTION_VALUE);
-		अगर (!action_attr)
-			वापस -EMSGSIZE;
+		if (!action_attr)
+			return -EMSGSIZE;
 		err = devlink_dpipe_action_value_put(skb, &values[i]);
-		अगर (err)
-			जाओ err_action_value_put;
+		if (err)
+			goto err_action_value_put;
 		nla_nest_end(skb, action_attr);
-	पूर्ण
-	वापस 0;
+	}
+	return 0;
 
 err_action_value_put:
 	nla_nest_cancel(skb, action_attr);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक devlink_dpipe_match_value_put(काष्ठा sk_buff *skb,
-					 काष्ठा devlink_dpipe_value *value)
-अणु
-	अगर (!value->match)
-		वापस -EINVAL;
-	अगर (devlink_dpipe_match_put(skb, value->match))
-		वापस -EMSGSIZE;
-	अगर (devlink_dpipe_value_put(skb, value))
-		वापस -EMSGSIZE;
-	वापस 0;
-पूर्ण
+static int devlink_dpipe_match_value_put(struct sk_buff *skb,
+					 struct devlink_dpipe_value *value)
+{
+	if (!value->match)
+		return -EINVAL;
+	if (devlink_dpipe_match_put(skb, value->match))
+		return -EMSGSIZE;
+	if (devlink_dpipe_value_put(skb, value))
+		return -EMSGSIZE;
+	return 0;
+}
 
-अटल पूर्णांक devlink_dpipe_match_values_put(काष्ठा sk_buff *skb,
-					  काष्ठा devlink_dpipe_value *values,
-					  अचिन्हित पूर्णांक values_count)
-अणु
-	काष्ठा nlattr *match_attr;
-	पूर्णांक i;
-	पूर्णांक err;
+static int devlink_dpipe_match_values_put(struct sk_buff *skb,
+					  struct devlink_dpipe_value *values,
+					  unsigned int values_count)
+{
+	struct nlattr *match_attr;
+	int i;
+	int err;
 
-	क्रम (i = 0; i < values_count; i++) अणु
+	for (i = 0; i < values_count; i++) {
 		match_attr = nla_nest_start_noflag(skb,
 						   DEVLINK_ATTR_DPIPE_MATCH_VALUE);
-		अगर (!match_attr)
-			वापस -EMSGSIZE;
+		if (!match_attr)
+			return -EMSGSIZE;
 		err = devlink_dpipe_match_value_put(skb, &values[i]);
-		अगर (err)
-			जाओ err_match_value_put;
+		if (err)
+			goto err_match_value_put;
 		nla_nest_end(skb, match_attr);
-	पूर्ण
-	वापस 0;
+	}
+	return 0;
 
 err_match_value_put:
 	nla_nest_cancel(skb, match_attr);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक devlink_dpipe_entry_put(काष्ठा sk_buff *skb,
-				   काष्ठा devlink_dpipe_entry *entry)
-अणु
-	काष्ठा nlattr *entry_attr, *matches_attr, *actions_attr;
-	पूर्णांक err;
+static int devlink_dpipe_entry_put(struct sk_buff *skb,
+				   struct devlink_dpipe_entry *entry)
+{
+	struct nlattr *entry_attr, *matches_attr, *actions_attr;
+	int err;
 
 	entry_attr = nla_nest_start_noflag(skb, DEVLINK_ATTR_DPIPE_ENTRY);
-	अगर (!entry_attr)
-		वापस  -EMSGSIZE;
+	if (!entry_attr)
+		return  -EMSGSIZE;
 
-	अगर (nla_put_u64_64bit(skb, DEVLINK_ATTR_DPIPE_ENTRY_INDEX, entry->index,
+	if (nla_put_u64_64bit(skb, DEVLINK_ATTR_DPIPE_ENTRY_INDEX, entry->index,
 			      DEVLINK_ATTR_PAD))
-		जाओ nla_put_failure;
-	अगर (entry->counter_valid)
-		अगर (nla_put_u64_64bit(skb, DEVLINK_ATTR_DPIPE_ENTRY_COUNTER,
+		goto nla_put_failure;
+	if (entry->counter_valid)
+		if (nla_put_u64_64bit(skb, DEVLINK_ATTR_DPIPE_ENTRY_COUNTER,
 				      entry->counter, DEVLINK_ATTR_PAD))
-			जाओ nla_put_failure;
+			goto nla_put_failure;
 
 	matches_attr = nla_nest_start_noflag(skb,
 					     DEVLINK_ATTR_DPIPE_ENTRY_MATCH_VALUES);
-	अगर (!matches_attr)
-		जाओ nla_put_failure;
+	if (!matches_attr)
+		goto nla_put_failure;
 
 	err = devlink_dpipe_match_values_put(skb, entry->match_values,
 					     entry->match_values_count);
-	अगर (err) अणु
+	if (err) {
 		nla_nest_cancel(skb, matches_attr);
-		जाओ err_match_values_put;
-	पूर्ण
+		goto err_match_values_put;
+	}
 	nla_nest_end(skb, matches_attr);
 
 	actions_attr = nla_nest_start_noflag(skb,
 					     DEVLINK_ATTR_DPIPE_ENTRY_ACTION_VALUES);
-	अगर (!actions_attr)
-		जाओ nla_put_failure;
+	if (!actions_attr)
+		goto nla_put_failure;
 
 	err = devlink_dpipe_action_values_put(skb, entry->action_values,
 					      entry->action_values_count);
-	अगर (err) अणु
+	if (err) {
 		nla_nest_cancel(skb, actions_attr);
-		जाओ err_action_values_put;
-	पूर्ण
+		goto err_action_values_put;
+	}
 	nla_nest_end(skb, actions_attr);
 
 	nla_nest_end(skb, entry_attr);
-	वापस 0;
+	return 0;
 
 nla_put_failure:
 	err = -EMSGSIZE;
 err_match_values_put:
 err_action_values_put:
 	nla_nest_cancel(skb, entry_attr);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल काष्ठा devlink_dpipe_table *
-devlink_dpipe_table_find(काष्ठा list_head *dpipe_tables,
-			 स्थिर अक्षर *table_name, काष्ठा devlink *devlink)
-अणु
-	काष्ठा devlink_dpipe_table *table;
-	list_क्रम_each_entry_rcu(table, dpipe_tables, list,
-				lockdep_is_held(&devlink->lock)) अणु
-		अगर (!म_भेद(table->name, table_name))
-			वापस table;
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+static struct devlink_dpipe_table *
+devlink_dpipe_table_find(struct list_head *dpipe_tables,
+			 const char *table_name, struct devlink *devlink)
+{
+	struct devlink_dpipe_table *table;
+	list_for_each_entry_rcu(table, dpipe_tables, list,
+				lockdep_is_held(&devlink->lock)) {
+		if (!strcmp(table->name, table_name))
+			return table;
+	}
+	return NULL;
+}
 
-पूर्णांक devlink_dpipe_entry_ctx_prepare(काष्ठा devlink_dpipe_dump_ctx *dump_ctx)
-अणु
-	काष्ठा devlink *devlink;
-	पूर्णांक err;
+int devlink_dpipe_entry_ctx_prepare(struct devlink_dpipe_dump_ctx *dump_ctx)
+{
+	struct devlink *devlink;
+	int err;
 
 	err = devlink_dpipe_send_and_alloc_skb(&dump_ctx->skb,
 					       dump_ctx->info);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	dump_ctx->hdr = genlmsg_put(dump_ctx->skb,
 				    dump_ctx->info->snd_portid,
 				    dump_ctx->info->snd_seq,
 				    &devlink_nl_family, NLM_F_MULTI,
 				    dump_ctx->cmd);
-	अगर (!dump_ctx->hdr)
-		जाओ nla_put_failure;
+	if (!dump_ctx->hdr)
+		goto nla_put_failure;
 
 	devlink = dump_ctx->info->user_ptr[0];
-	अगर (devlink_nl_put_handle(dump_ctx->skb, devlink))
-		जाओ nla_put_failure;
+	if (devlink_nl_put_handle(dump_ctx->skb, devlink))
+		goto nla_put_failure;
 	dump_ctx->nest = nla_nest_start_noflag(dump_ctx->skb,
 					       DEVLINK_ATTR_DPIPE_ENTRIES);
-	अगर (!dump_ctx->nest)
-		जाओ nla_put_failure;
-	वापस 0;
+	if (!dump_ctx->nest)
+		goto nla_put_failure;
+	return 0;
 
 nla_put_failure:
-	nlmsg_मुक्त(dump_ctx->skb);
-	वापस -EMSGSIZE;
-पूर्ण
+	nlmsg_free(dump_ctx->skb);
+	return -EMSGSIZE;
+}
 EXPORT_SYMBOL_GPL(devlink_dpipe_entry_ctx_prepare);
 
-पूर्णांक devlink_dpipe_entry_ctx_append(काष्ठा devlink_dpipe_dump_ctx *dump_ctx,
-				   काष्ठा devlink_dpipe_entry *entry)
-अणु
-	वापस devlink_dpipe_entry_put(dump_ctx->skb, entry);
-पूर्ण
+int devlink_dpipe_entry_ctx_append(struct devlink_dpipe_dump_ctx *dump_ctx,
+				   struct devlink_dpipe_entry *entry)
+{
+	return devlink_dpipe_entry_put(dump_ctx->skb, entry);
+}
 EXPORT_SYMBOL_GPL(devlink_dpipe_entry_ctx_append);
 
-पूर्णांक devlink_dpipe_entry_ctx_बंद(काष्ठा devlink_dpipe_dump_ctx *dump_ctx)
-अणु
+int devlink_dpipe_entry_ctx_close(struct devlink_dpipe_dump_ctx *dump_ctx)
+{
 	nla_nest_end(dump_ctx->skb, dump_ctx->nest);
 	genlmsg_end(dump_ctx->skb, dump_ctx->hdr);
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(devlink_dpipe_entry_ctx_बंद);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(devlink_dpipe_entry_ctx_close);
 
-व्योम devlink_dpipe_entry_clear(काष्ठा devlink_dpipe_entry *entry)
+void devlink_dpipe_entry_clear(struct devlink_dpipe_entry *entry)
 
-अणु
-	अचिन्हित पूर्णांक value_count, value_index;
-	काष्ठा devlink_dpipe_value *value;
+{
+	unsigned int value_count, value_index;
+	struct devlink_dpipe_value *value;
 
 	value = entry->action_values;
 	value_count = entry->action_values_count;
-	क्रम (value_index = 0; value_index < value_count; value_index++) अणु
-		kमुक्त(value[value_index].value);
-		kमुक्त(value[value_index].mask);
-	पूर्ण
+	for (value_index = 0; value_index < value_count; value_index++) {
+		kfree(value[value_index].value);
+		kfree(value[value_index].mask);
+	}
 
 	value = entry->match_values;
 	value_count = entry->match_values_count;
-	क्रम (value_index = 0; value_index < value_count; value_index++) अणु
-		kमुक्त(value[value_index].value);
-		kमुक्त(value[value_index].mask);
-	पूर्ण
-पूर्ण
+	for (value_index = 0; value_index < value_count; value_index++) {
+		kfree(value[value_index].value);
+		kfree(value[value_index].mask);
+	}
+}
 EXPORT_SYMBOL(devlink_dpipe_entry_clear);
 
-अटल पूर्णांक devlink_dpipe_entries_fill(काष्ठा genl_info *info,
-				      क्रमागत devlink_command cmd, पूर्णांक flags,
-				      काष्ठा devlink_dpipe_table *table)
-अणु
-	काष्ठा devlink_dpipe_dump_ctx dump_ctx;
-	काष्ठा nlmsghdr *nlh;
-	पूर्णांक err;
+static int devlink_dpipe_entries_fill(struct genl_info *info,
+				      enum devlink_command cmd, int flags,
+				      struct devlink_dpipe_table *table)
+{
+	struct devlink_dpipe_dump_ctx dump_ctx;
+	struct nlmsghdr *nlh;
+	int err;
 
-	dump_ctx.skb = शून्य;
+	dump_ctx.skb = NULL;
 	dump_ctx.cmd = cmd;
 	dump_ctx.info = info;
 
 	err = table->table_ops->entries_dump(table->priv,
 					     table->counters_enabled,
 					     &dump_ctx);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-send_करोne:
+send_done:
 	nlh = nlmsg_put(dump_ctx.skb, info->snd_portid, info->snd_seq,
 			NLMSG_DONE, 0, flags | NLM_F_MULTI);
-	अगर (!nlh) अणु
+	if (!nlh) {
 		err = devlink_dpipe_send_and_alloc_skb(&dump_ctx.skb, info);
-		अगर (err)
-			वापस err;
-		जाओ send_करोne;
-	पूर्ण
-	वापस genlmsg_reply(dump_ctx.skb, info);
-पूर्ण
+		if (err)
+			return err;
+		goto send_done;
+	}
+	return genlmsg_reply(dump_ctx.skb, info);
+}
 
-अटल पूर्णांक devlink_nl_cmd_dpipe_entries_get(काष्ठा sk_buff *skb,
-					    काष्ठा genl_info *info)
-अणु
-	काष्ठा devlink *devlink = info->user_ptr[0];
-	काष्ठा devlink_dpipe_table *table;
-	स्थिर अक्षर *table_name;
+static int devlink_nl_cmd_dpipe_entries_get(struct sk_buff *skb,
+					    struct genl_info *info)
+{
+	struct devlink *devlink = info->user_ptr[0];
+	struct devlink_dpipe_table *table;
+	const char *table_name;
 
-	अगर (!info->attrs[DEVLINK_ATTR_DPIPE_TABLE_NAME])
-		वापस -EINVAL;
+	if (!info->attrs[DEVLINK_ATTR_DPIPE_TABLE_NAME])
+		return -EINVAL;
 
 	table_name = nla_data(info->attrs[DEVLINK_ATTR_DPIPE_TABLE_NAME]);
 	table = devlink_dpipe_table_find(&devlink->dpipe_table_list,
 					 table_name, devlink);
-	अगर (!table)
-		वापस -EINVAL;
+	if (!table)
+		return -EINVAL;
 
-	अगर (!table->table_ops->entries_dump)
-		वापस -EINVAL;
+	if (!table->table_ops->entries_dump)
+		return -EINVAL;
 
-	वापस devlink_dpipe_entries_fill(info, DEVLINK_CMD_DPIPE_ENTRIES_GET,
+	return devlink_dpipe_entries_fill(info, DEVLINK_CMD_DPIPE_ENTRIES_GET,
 					  0, table);
-पूर्ण
+}
 
-अटल पूर्णांक devlink_dpipe_fields_put(काष्ठा sk_buff *skb,
-				    स्थिर काष्ठा devlink_dpipe_header *header)
-अणु
-	काष्ठा devlink_dpipe_field *field;
-	काष्ठा nlattr *field_attr;
-	पूर्णांक i;
+static int devlink_dpipe_fields_put(struct sk_buff *skb,
+				    const struct devlink_dpipe_header *header)
+{
+	struct devlink_dpipe_field *field;
+	struct nlattr *field_attr;
+	int i;
 
-	क्रम (i = 0; i < header->fields_count; i++) अणु
+	for (i = 0; i < header->fields_count; i++) {
 		field = &header->fields[i];
 		field_attr = nla_nest_start_noflag(skb,
 						   DEVLINK_ATTR_DPIPE_FIELD);
-		अगर (!field_attr)
-			वापस -EMSGSIZE;
-		अगर (nla_put_string(skb, DEVLINK_ATTR_DPIPE_FIELD_NAME, field->name) ||
+		if (!field_attr)
+			return -EMSGSIZE;
+		if (nla_put_string(skb, DEVLINK_ATTR_DPIPE_FIELD_NAME, field->name) ||
 		    nla_put_u32(skb, DEVLINK_ATTR_DPIPE_FIELD_ID, field->id) ||
 		    nla_put_u32(skb, DEVLINK_ATTR_DPIPE_FIELD_BITWIDTH, field->bitwidth) ||
 		    nla_put_u32(skb, DEVLINK_ATTR_DPIPE_FIELD_MAPPING_TYPE, field->mapping_type))
-			जाओ nla_put_failure;
+			goto nla_put_failure;
 		nla_nest_end(skb, field_attr);
-	पूर्ण
-	वापस 0;
+	}
+	return 0;
 
 nla_put_failure:
 	nla_nest_cancel(skb, field_attr);
-	वापस -EMSGSIZE;
-पूर्ण
+	return -EMSGSIZE;
+}
 
-अटल पूर्णांक devlink_dpipe_header_put(काष्ठा sk_buff *skb,
-				    काष्ठा devlink_dpipe_header *header)
-अणु
-	काष्ठा nlattr *fields_attr, *header_attr;
-	पूर्णांक err;
+static int devlink_dpipe_header_put(struct sk_buff *skb,
+				    struct devlink_dpipe_header *header)
+{
+	struct nlattr *fields_attr, *header_attr;
+	int err;
 
 	header_attr = nla_nest_start_noflag(skb, DEVLINK_ATTR_DPIPE_HEADER);
-	अगर (!header_attr)
-		वापस -EMSGSIZE;
+	if (!header_attr)
+		return -EMSGSIZE;
 
-	अगर (nla_put_string(skb, DEVLINK_ATTR_DPIPE_HEADER_NAME, header->name) ||
+	if (nla_put_string(skb, DEVLINK_ATTR_DPIPE_HEADER_NAME, header->name) ||
 	    nla_put_u32(skb, DEVLINK_ATTR_DPIPE_HEADER_ID, header->id) ||
 	    nla_put_u8(skb, DEVLINK_ATTR_DPIPE_HEADER_GLOBAL, header->global))
-		जाओ nla_put_failure;
+		goto nla_put_failure;
 
 	fields_attr = nla_nest_start_noflag(skb,
 					    DEVLINK_ATTR_DPIPE_HEADER_FIELDS);
-	अगर (!fields_attr)
-		जाओ nla_put_failure;
+	if (!fields_attr)
+		goto nla_put_failure;
 
 	err = devlink_dpipe_fields_put(skb, header);
-	अगर (err) अणु
+	if (err) {
 		nla_nest_cancel(skb, fields_attr);
-		जाओ nla_put_failure;
-	पूर्ण
+		goto nla_put_failure;
+	}
 	nla_nest_end(skb, fields_attr);
 	nla_nest_end(skb, header_attr);
-	वापस 0;
+	return 0;
 
 nla_put_failure:
 	err = -EMSGSIZE;
 	nla_nest_cancel(skb, header_attr);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक devlink_dpipe_headers_fill(काष्ठा genl_info *info,
-				      क्रमागत devlink_command cmd, पूर्णांक flags,
-				      काष्ठा devlink_dpipe_headers *
+static int devlink_dpipe_headers_fill(struct genl_info *info,
+				      enum devlink_command cmd, int flags,
+				      struct devlink_dpipe_headers *
 				      dpipe_headers)
-अणु
-	काष्ठा devlink *devlink = info->user_ptr[0];
-	काष्ठा nlattr *headers_attr;
-	काष्ठा sk_buff *skb = शून्य;
-	काष्ठा nlmsghdr *nlh;
-	व्योम *hdr;
-	पूर्णांक i, j;
-	पूर्णांक err;
+{
+	struct devlink *devlink = info->user_ptr[0];
+	struct nlattr *headers_attr;
+	struct sk_buff *skb = NULL;
+	struct nlmsghdr *nlh;
+	void *hdr;
+	int i, j;
+	int err;
 
 	i = 0;
 start_again:
 	err = devlink_dpipe_send_and_alloc_skb(&skb, info);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	hdr = genlmsg_put(skb, info->snd_portid, info->snd_seq,
 			  &devlink_nl_family, NLM_F_MULTI, cmd);
-	अगर (!hdr) अणु
-		nlmsg_मुक्त(skb);
-		वापस -EMSGSIZE;
-	पूर्ण
+	if (!hdr) {
+		nlmsg_free(skb);
+		return -EMSGSIZE;
+	}
 
-	अगर (devlink_nl_put_handle(skb, devlink))
-		जाओ nla_put_failure;
+	if (devlink_nl_put_handle(skb, devlink))
+		goto nla_put_failure;
 	headers_attr = nla_nest_start_noflag(skb, DEVLINK_ATTR_DPIPE_HEADERS);
-	अगर (!headers_attr)
-		जाओ nla_put_failure;
+	if (!headers_attr)
+		goto nla_put_failure;
 
 	j = 0;
-	क्रम (; i < dpipe_headers->headers_count; i++) अणु
+	for (; i < dpipe_headers->headers_count; i++) {
 		err = devlink_dpipe_header_put(skb, dpipe_headers->headers[i]);
-		अगर (err) अणु
-			अगर (!j)
-				जाओ err_table_put;
-			अवरोध;
-		पूर्ण
+		if (err) {
+			if (!j)
+				goto err_table_put;
+			break;
+		}
 		j++;
-	पूर्ण
+	}
 	nla_nest_end(skb, headers_attr);
 	genlmsg_end(skb, hdr);
-	अगर (i != dpipe_headers->headers_count)
-		जाओ start_again;
+	if (i != dpipe_headers->headers_count)
+		goto start_again;
 
-send_करोne:
+send_done:
 	nlh = nlmsg_put(skb, info->snd_portid, info->snd_seq,
 			NLMSG_DONE, 0, flags | NLM_F_MULTI);
-	अगर (!nlh) अणु
+	if (!nlh) {
 		err = devlink_dpipe_send_and_alloc_skb(&skb, info);
-		अगर (err)
-			वापस err;
-		जाओ send_करोne;
-	पूर्ण
-	वापस genlmsg_reply(skb, info);
+		if (err)
+			return err;
+		goto send_done;
+	}
+	return genlmsg_reply(skb, info);
 
 nla_put_failure:
 	err = -EMSGSIZE;
 err_table_put:
-	nlmsg_मुक्त(skb);
-	वापस err;
-पूर्ण
+	nlmsg_free(skb);
+	return err;
+}
 
-अटल पूर्णांक devlink_nl_cmd_dpipe_headers_get(काष्ठा sk_buff *skb,
-					    काष्ठा genl_info *info)
-अणु
-	काष्ठा devlink *devlink = info->user_ptr[0];
+static int devlink_nl_cmd_dpipe_headers_get(struct sk_buff *skb,
+					    struct genl_info *info)
+{
+	struct devlink *devlink = info->user_ptr[0];
 
-	अगर (!devlink->dpipe_headers)
-		वापस -EOPNOTSUPP;
-	वापस devlink_dpipe_headers_fill(info, DEVLINK_CMD_DPIPE_HEADERS_GET,
+	if (!devlink->dpipe_headers)
+		return -EOPNOTSUPP;
+	return devlink_dpipe_headers_fill(info, DEVLINK_CMD_DPIPE_HEADERS_GET,
 					  0, devlink->dpipe_headers);
-पूर्ण
+}
 
-अटल पूर्णांक devlink_dpipe_table_counters_set(काष्ठा devlink *devlink,
-					    स्थिर अक्षर *table_name,
+static int devlink_dpipe_table_counters_set(struct devlink *devlink,
+					    const char *table_name,
 					    bool enable)
-अणु
-	काष्ठा devlink_dpipe_table *table;
+{
+	struct devlink_dpipe_table *table;
 
 	table = devlink_dpipe_table_find(&devlink->dpipe_table_list,
 					 table_name, devlink);
-	अगर (!table)
-		वापस -EINVAL;
+	if (!table)
+		return -EINVAL;
 
-	अगर (table->counter_control_बाह्य)
-		वापस -EOPNOTSUPP;
+	if (table->counter_control_extern)
+		return -EOPNOTSUPP;
 
-	अगर (!(table->counters_enabled ^ enable))
-		वापस 0;
+	if (!(table->counters_enabled ^ enable))
+		return 0;
 
 	table->counters_enabled = enable;
-	अगर (table->table_ops->counters_set_update)
+	if (table->table_ops->counters_set_update)
 		table->table_ops->counters_set_update(table->priv, enable);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक devlink_nl_cmd_dpipe_table_counters_set(काष्ठा sk_buff *skb,
-						   काष्ठा genl_info *info)
-अणु
-	काष्ठा devlink *devlink = info->user_ptr[0];
-	स्थिर अक्षर *table_name;
+static int devlink_nl_cmd_dpipe_table_counters_set(struct sk_buff *skb,
+						   struct genl_info *info)
+{
+	struct devlink *devlink = info->user_ptr[0];
+	const char *table_name;
 	bool counters_enable;
 
-	अगर (!info->attrs[DEVLINK_ATTR_DPIPE_TABLE_NAME] ||
+	if (!info->attrs[DEVLINK_ATTR_DPIPE_TABLE_NAME] ||
 	    !info->attrs[DEVLINK_ATTR_DPIPE_TABLE_COUNTERS_ENABLED])
-		वापस -EINVAL;
+		return -EINVAL;
 
 	table_name = nla_data(info->attrs[DEVLINK_ATTR_DPIPE_TABLE_NAME]);
 	counters_enable = !!nla_get_u8(info->attrs[DEVLINK_ATTR_DPIPE_TABLE_COUNTERS_ENABLED]);
 
-	वापस devlink_dpipe_table_counters_set(devlink, table_name,
+	return devlink_dpipe_table_counters_set(devlink, table_name,
 						counters_enable);
-पूर्ण
+}
 
-अटल काष्ठा devlink_resource *
-devlink_resource_find(काष्ठा devlink *devlink,
-		      काष्ठा devlink_resource *resource, u64 resource_id)
-अणु
-	काष्ठा list_head *resource_list;
+static struct devlink_resource *
+devlink_resource_find(struct devlink *devlink,
+		      struct devlink_resource *resource, u64 resource_id)
+{
+	struct list_head *resource_list;
 
-	अगर (resource)
+	if (resource)
 		resource_list = &resource->resource_list;
-	अन्यथा
+	else
 		resource_list = &devlink->resource_list;
 
-	list_क्रम_each_entry(resource, resource_list, list) अणु
-		काष्ठा devlink_resource *child_resource;
+	list_for_each_entry(resource, resource_list, list) {
+		struct devlink_resource *child_resource;
 
-		अगर (resource->id == resource_id)
-			वापस resource;
+		if (resource->id == resource_id)
+			return resource;
 
 		child_resource = devlink_resource_find(devlink, resource,
 						       resource_id);
-		अगर (child_resource)
-			वापस child_resource;
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+		if (child_resource)
+			return child_resource;
+	}
+	return NULL;
+}
 
-अटल व्योम
-devlink_resource_validate_children(काष्ठा devlink_resource *resource)
-अणु
-	काष्ठा devlink_resource *child_resource;
+static void
+devlink_resource_validate_children(struct devlink_resource *resource)
+{
+	struct devlink_resource *child_resource;
 	bool size_valid = true;
 	u64 parts_size = 0;
 
-	अगर (list_empty(&resource->resource_list))
-		जाओ out;
+	if (list_empty(&resource->resource_list))
+		goto out;
 
-	list_क्रम_each_entry(child_resource, &resource->resource_list, list)
+	list_for_each_entry(child_resource, &resource->resource_list, list)
 		parts_size += child_resource->size_new;
 
-	अगर (parts_size > resource->size_new)
+	if (parts_size > resource->size_new)
 		size_valid = false;
 out:
 	resource->size_valid = size_valid;
-पूर्ण
+}
 
-अटल पूर्णांक
-devlink_resource_validate_size(काष्ठा devlink_resource *resource, u64 size,
-			       काष्ठा netlink_ext_ack *extack)
-अणु
+static int
+devlink_resource_validate_size(struct devlink_resource *resource, u64 size,
+			       struct netlink_ext_ack *extack)
+{
 	u64 reminder;
-	पूर्णांक err = 0;
+	int err = 0;
 
-	अगर (size > resource->size_params.size_max) अणु
+	if (size > resource->size_params.size_max) {
 		NL_SET_ERR_MSG_MOD(extack, "Size larger than maximum");
 		err = -EINVAL;
-	पूर्ण
+	}
 
-	अगर (size < resource->size_params.size_min) अणु
+	if (size < resource->size_params.size_min) {
 		NL_SET_ERR_MSG_MOD(extack, "Size smaller than minimum");
 		err = -EINVAL;
-	पूर्ण
+	}
 
-	भाग64_u64_rem(size, resource->size_params.size_granularity, &reminder);
-	अगर (reminder) अणु
+	div64_u64_rem(size, resource->size_params.size_granularity, &reminder);
+	if (reminder) {
 		NL_SET_ERR_MSG_MOD(extack, "Wrong granularity");
 		err = -EINVAL;
-	पूर्ण
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक devlink_nl_cmd_resource_set(काष्ठा sk_buff *skb,
-				       काष्ठा genl_info *info)
-अणु
-	काष्ठा devlink *devlink = info->user_ptr[0];
-	काष्ठा devlink_resource *resource;
+static int devlink_nl_cmd_resource_set(struct sk_buff *skb,
+				       struct genl_info *info)
+{
+	struct devlink *devlink = info->user_ptr[0];
+	struct devlink_resource *resource;
 	u64 resource_id;
 	u64 size;
-	पूर्णांक err;
+	int err;
 
-	अगर (!info->attrs[DEVLINK_ATTR_RESOURCE_ID] ||
+	if (!info->attrs[DEVLINK_ATTR_RESOURCE_ID] ||
 	    !info->attrs[DEVLINK_ATTR_RESOURCE_SIZE])
-		वापस -EINVAL;
+		return -EINVAL;
 	resource_id = nla_get_u64(info->attrs[DEVLINK_ATTR_RESOURCE_ID]);
 
-	resource = devlink_resource_find(devlink, शून्य, resource_id);
-	अगर (!resource)
-		वापस -EINVAL;
+	resource = devlink_resource_find(devlink, NULL, resource_id);
+	if (!resource)
+		return -EINVAL;
 
 	size = nla_get_u64(info->attrs[DEVLINK_ATTR_RESOURCE_SIZE]);
 	err = devlink_resource_validate_size(resource, size, info->extack);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	resource->size_new = size;
 	devlink_resource_validate_children(resource);
-	अगर (resource->parent)
+	if (resource->parent)
 		devlink_resource_validate_children(resource->parent);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-devlink_resource_size_params_put(काष्ठा devlink_resource *resource,
-				 काष्ठा sk_buff *skb)
-अणु
-	काष्ठा devlink_resource_size_params *size_params;
+static int
+devlink_resource_size_params_put(struct devlink_resource *resource,
+				 struct sk_buff *skb)
+{
+	struct devlink_resource_size_params *size_params;
 
 	size_params = &resource->size_params;
-	अगर (nla_put_u64_64bit(skb, DEVLINK_ATTR_RESOURCE_SIZE_GRAN,
+	if (nla_put_u64_64bit(skb, DEVLINK_ATTR_RESOURCE_SIZE_GRAN,
 			      size_params->size_granularity, DEVLINK_ATTR_PAD) ||
 	    nla_put_u64_64bit(skb, DEVLINK_ATTR_RESOURCE_SIZE_MAX,
 			      size_params->size_max, DEVLINK_ATTR_PAD) ||
 	    nla_put_u64_64bit(skb, DEVLINK_ATTR_RESOURCE_SIZE_MIN,
 			      size_params->size_min, DEVLINK_ATTR_PAD) ||
 	    nla_put_u8(skb, DEVLINK_ATTR_RESOURCE_UNIT, size_params->unit))
-		वापस -EMSGSIZE;
-	वापस 0;
-पूर्ण
+		return -EMSGSIZE;
+	return 0;
+}
 
-अटल पूर्णांक devlink_resource_occ_put(काष्ठा devlink_resource *resource,
-				    काष्ठा sk_buff *skb)
-अणु
-	अगर (!resource->occ_get)
-		वापस 0;
-	वापस nla_put_u64_64bit(skb, DEVLINK_ATTR_RESOURCE_OCC,
+static int devlink_resource_occ_put(struct devlink_resource *resource,
+				    struct sk_buff *skb)
+{
+	if (!resource->occ_get)
+		return 0;
+	return nla_put_u64_64bit(skb, DEVLINK_ATTR_RESOURCE_OCC,
 				 resource->occ_get(resource->occ_get_priv),
 				 DEVLINK_ATTR_PAD);
-पूर्ण
+}
 
-अटल पूर्णांक devlink_resource_put(काष्ठा devlink *devlink, काष्ठा sk_buff *skb,
-				काष्ठा devlink_resource *resource)
-अणु
-	काष्ठा devlink_resource *child_resource;
-	काष्ठा nlattr *child_resource_attr;
-	काष्ठा nlattr *resource_attr;
+static int devlink_resource_put(struct devlink *devlink, struct sk_buff *skb,
+				struct devlink_resource *resource)
+{
+	struct devlink_resource *child_resource;
+	struct nlattr *child_resource_attr;
+	struct nlattr *resource_attr;
 
 	resource_attr = nla_nest_start_noflag(skb, DEVLINK_ATTR_RESOURCE);
-	अगर (!resource_attr)
-		वापस -EMSGSIZE;
+	if (!resource_attr)
+		return -EMSGSIZE;
 
-	अगर (nla_put_string(skb, DEVLINK_ATTR_RESOURCE_NAME, resource->name) ||
+	if (nla_put_string(skb, DEVLINK_ATTR_RESOURCE_NAME, resource->name) ||
 	    nla_put_u64_64bit(skb, DEVLINK_ATTR_RESOURCE_SIZE, resource->size,
 			      DEVLINK_ATTR_PAD) ||
 	    nla_put_u64_64bit(skb, DEVLINK_ATTR_RESOURCE_ID, resource->id,
 			      DEVLINK_ATTR_PAD))
-		जाओ nla_put_failure;
-	अगर (resource->size != resource->size_new)
+		goto nla_put_failure;
+	if (resource->size != resource->size_new)
 		nla_put_u64_64bit(skb, DEVLINK_ATTR_RESOURCE_SIZE_NEW,
 				  resource->size_new, DEVLINK_ATTR_PAD);
-	अगर (devlink_resource_occ_put(resource, skb))
-		जाओ nla_put_failure;
-	अगर (devlink_resource_size_params_put(resource, skb))
-		जाओ nla_put_failure;
-	अगर (list_empty(&resource->resource_list))
-		जाओ out;
+	if (devlink_resource_occ_put(resource, skb))
+		goto nla_put_failure;
+	if (devlink_resource_size_params_put(resource, skb))
+		goto nla_put_failure;
+	if (list_empty(&resource->resource_list))
+		goto out;
 
-	अगर (nla_put_u8(skb, DEVLINK_ATTR_RESOURCE_SIZE_VALID,
+	if (nla_put_u8(skb, DEVLINK_ATTR_RESOURCE_SIZE_VALID,
 		       resource->size_valid))
-		जाओ nla_put_failure;
+		goto nla_put_failure;
 
 	child_resource_attr = nla_nest_start_noflag(skb,
 						    DEVLINK_ATTR_RESOURCE_LIST);
-	अगर (!child_resource_attr)
-		जाओ nla_put_failure;
+	if (!child_resource_attr)
+		goto nla_put_failure;
 
-	list_क्रम_each_entry(child_resource, &resource->resource_list, list) अणु
-		अगर (devlink_resource_put(devlink, skb, child_resource))
-			जाओ resource_put_failure;
-	पूर्ण
+	list_for_each_entry(child_resource, &resource->resource_list, list) {
+		if (devlink_resource_put(devlink, skb, child_resource))
+			goto resource_put_failure;
+	}
 
 	nla_nest_end(skb, child_resource_attr);
 out:
 	nla_nest_end(skb, resource_attr);
-	वापस 0;
+	return 0;
 
 resource_put_failure:
 	nla_nest_cancel(skb, child_resource_attr);
 nla_put_failure:
 	nla_nest_cancel(skb, resource_attr);
-	वापस -EMSGSIZE;
-पूर्ण
+	return -EMSGSIZE;
+}
 
-अटल पूर्णांक devlink_resource_fill(काष्ठा genl_info *info,
-				 क्रमागत devlink_command cmd, पूर्णांक flags)
-अणु
-	काष्ठा devlink *devlink = info->user_ptr[0];
-	काष्ठा devlink_resource *resource;
-	काष्ठा nlattr *resources_attr;
-	काष्ठा sk_buff *skb = शून्य;
-	काष्ठा nlmsghdr *nlh;
+static int devlink_resource_fill(struct genl_info *info,
+				 enum devlink_command cmd, int flags)
+{
+	struct devlink *devlink = info->user_ptr[0];
+	struct devlink_resource *resource;
+	struct nlattr *resources_attr;
+	struct sk_buff *skb = NULL;
+	struct nlmsghdr *nlh;
 	bool incomplete;
-	व्योम *hdr;
-	पूर्णांक i;
-	पूर्णांक err;
+	void *hdr;
+	int i;
+	int err;
 
 	resource = list_first_entry(&devlink->resource_list,
-				    काष्ठा devlink_resource, list);
+				    struct devlink_resource, list);
 start_again:
 	err = devlink_dpipe_send_and_alloc_skb(&skb, info);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	hdr = genlmsg_put(skb, info->snd_portid, info->snd_seq,
 			  &devlink_nl_family, NLM_F_MULTI, cmd);
-	अगर (!hdr) अणु
-		nlmsg_मुक्त(skb);
-		वापस -EMSGSIZE;
-	पूर्ण
+	if (!hdr) {
+		nlmsg_free(skb);
+		return -EMSGSIZE;
+	}
 
-	अगर (devlink_nl_put_handle(skb, devlink))
-		जाओ nla_put_failure;
+	if (devlink_nl_put_handle(skb, devlink))
+		goto nla_put_failure;
 
 	resources_attr = nla_nest_start_noflag(skb,
 					       DEVLINK_ATTR_RESOURCE_LIST);
-	अगर (!resources_attr)
-		जाओ nla_put_failure;
+	if (!resources_attr)
+		goto nla_put_failure;
 
 	incomplete = false;
 	i = 0;
-	list_क्रम_each_entry_from(resource, &devlink->resource_list, list) अणु
+	list_for_each_entry_from(resource, &devlink->resource_list, list) {
 		err = devlink_resource_put(devlink, skb, resource);
-		अगर (err) अणु
-			अगर (!i)
-				जाओ err_resource_put;
+		if (err) {
+			if (!i)
+				goto err_resource_put;
 			incomplete = true;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		i++;
-	पूर्ण
+	}
 	nla_nest_end(skb, resources_attr);
 	genlmsg_end(skb, hdr);
-	अगर (incomplete)
-		जाओ start_again;
-send_करोne:
+	if (incomplete)
+		goto start_again;
+send_done:
 	nlh = nlmsg_put(skb, info->snd_portid, info->snd_seq,
 			NLMSG_DONE, 0, flags | NLM_F_MULTI);
-	अगर (!nlh) अणु
+	if (!nlh) {
 		err = devlink_dpipe_send_and_alloc_skb(&skb, info);
-		अगर (err)
-			वापस err;
-		जाओ send_करोne;
-	पूर्ण
-	वापस genlmsg_reply(skb, info);
+		if (err)
+			return err;
+		goto send_done;
+	}
+	return genlmsg_reply(skb, info);
 
 nla_put_failure:
 	err = -EMSGSIZE;
 err_resource_put:
-	nlmsg_मुक्त(skb);
-	वापस err;
-पूर्ण
+	nlmsg_free(skb);
+	return err;
+}
 
-अटल पूर्णांक devlink_nl_cmd_resource_dump(काष्ठा sk_buff *skb,
-					काष्ठा genl_info *info)
-अणु
-	काष्ठा devlink *devlink = info->user_ptr[0];
+static int devlink_nl_cmd_resource_dump(struct sk_buff *skb,
+					struct genl_info *info)
+{
+	struct devlink *devlink = info->user_ptr[0];
 
-	अगर (list_empty(&devlink->resource_list))
-		वापस -EOPNOTSUPP;
+	if (list_empty(&devlink->resource_list))
+		return -EOPNOTSUPP;
 
-	वापस devlink_resource_fill(info, DEVLINK_CMD_RESOURCE_DUMP, 0);
-पूर्ण
+	return devlink_resource_fill(info, DEVLINK_CMD_RESOURCE_DUMP, 0);
+}
 
-अटल पूर्णांक
-devlink_resources_validate(काष्ठा devlink *devlink,
-			   काष्ठा devlink_resource *resource,
-			   काष्ठा genl_info *info)
-अणु
-	काष्ठा list_head *resource_list;
-	पूर्णांक err = 0;
+static int
+devlink_resources_validate(struct devlink *devlink,
+			   struct devlink_resource *resource,
+			   struct genl_info *info)
+{
+	struct list_head *resource_list;
+	int err = 0;
 
-	अगर (resource)
+	if (resource)
 		resource_list = &resource->resource_list;
-	अन्यथा
+	else
 		resource_list = &devlink->resource_list;
 
-	list_क्रम_each_entry(resource, resource_list, list) अणु
-		अगर (!resource->size_valid)
-			वापस -EINVAL;
+	list_for_each_entry(resource, resource_list, list) {
+		if (!resource->size_valid)
+			return -EINVAL;
 		err = devlink_resources_validate(devlink, resource, info);
-		अगर (err)
-			वापस err;
-	पूर्ण
-	वापस err;
-पूर्ण
+		if (err)
+			return err;
+	}
+	return err;
+}
 
-अटल काष्ठा net *devlink_netns_get(काष्ठा sk_buff *skb,
-				     काष्ठा genl_info *info)
-अणु
-	काष्ठा nlattr *netns_pid_attr = info->attrs[DEVLINK_ATTR_NETNS_PID];
-	काष्ठा nlattr *netns_fd_attr = info->attrs[DEVLINK_ATTR_NETNS_FD];
-	काष्ठा nlattr *netns_id_attr = info->attrs[DEVLINK_ATTR_NETNS_ID];
-	काष्ठा net *net;
+static struct net *devlink_netns_get(struct sk_buff *skb,
+				     struct genl_info *info)
+{
+	struct nlattr *netns_pid_attr = info->attrs[DEVLINK_ATTR_NETNS_PID];
+	struct nlattr *netns_fd_attr = info->attrs[DEVLINK_ATTR_NETNS_FD];
+	struct nlattr *netns_id_attr = info->attrs[DEVLINK_ATTR_NETNS_ID];
+	struct net *net;
 
-	अगर (!!netns_pid_attr + !!netns_fd_attr + !!netns_id_attr > 1) अणु
+	if (!!netns_pid_attr + !!netns_fd_attr + !!netns_id_attr > 1) {
 		NL_SET_ERR_MSG_MOD(info->extack, "multiple netns identifying attributes specified");
-		वापस ERR_PTR(-EINVAL);
-	पूर्ण
+		return ERR_PTR(-EINVAL);
+	}
 
-	अगर (netns_pid_attr) अणु
+	if (netns_pid_attr) {
 		net = get_net_ns_by_pid(nla_get_u32(netns_pid_attr));
-	पूर्ण अन्यथा अगर (netns_fd_attr) अणु
+	} else if (netns_fd_attr) {
 		net = get_net_ns_by_fd(nla_get_u32(netns_fd_attr));
-	पूर्ण अन्यथा अगर (netns_id_attr) अणु
+	} else if (netns_id_attr) {
 		net = get_net_ns_by_id(sock_net(skb->sk),
 				       nla_get_u32(netns_id_attr));
-		अगर (!net)
+		if (!net)
 			net = ERR_PTR(-EINVAL);
-	पूर्ण अन्यथा अणु
+	} else {
 		WARN_ON(1);
 		net = ERR_PTR(-EINVAL);
-	पूर्ण
-	अगर (IS_ERR(net)) अणु
+	}
+	if (IS_ERR(net)) {
 		NL_SET_ERR_MSG_MOD(info->extack, "Unknown network namespace");
-		वापस ERR_PTR(-EINVAL);
-	पूर्ण
-	अगर (!netlink_ns_capable(skb, net->user_ns, CAP_NET_ADMIN)) अणु
+		return ERR_PTR(-EINVAL);
+	}
+	if (!netlink_ns_capable(skb, net->user_ns, CAP_NET_ADMIN)) {
 		put_net(net);
-		वापस ERR_PTR(-EPERM);
-	पूर्ण
-	वापस net;
-पूर्ण
+		return ERR_PTR(-EPERM);
+	}
+	return net;
+}
 
-अटल व्योम devlink_param_notअगरy(काष्ठा devlink *devlink,
-				 अचिन्हित पूर्णांक port_index,
-				 काष्ठा devlink_param_item *param_item,
-				 क्रमागत devlink_command cmd);
+static void devlink_param_notify(struct devlink *devlink,
+				 unsigned int port_index,
+				 struct devlink_param_item *param_item,
+				 enum devlink_command cmd);
 
-अटल व्योम devlink_reload_netns_change(काष्ठा devlink *devlink,
-					काष्ठा net *dest_net)
-अणु
-	काष्ठा devlink_param_item *param_item;
+static void devlink_reload_netns_change(struct devlink *devlink,
+					struct net *dest_net)
+{
+	struct devlink_param_item *param_item;
 
-	/* Userspace needs to be notअगरied about devlink objects
-	 * हटाओd from original and entering new network namespace.
+	/* Userspace needs to be notified about devlink objects
+	 * removed from original and entering new network namespace.
 	 * The rest of the devlink objects are re-created during
-	 * reload process so the notअगरications are generated separatelly.
+	 * reload process so the notifications are generated separatelly.
 	 */
 
-	list_क्रम_each_entry(param_item, &devlink->param_list, list)
-		devlink_param_notअगरy(devlink, 0, param_item,
+	list_for_each_entry(param_item, &devlink->param_list, list)
+		devlink_param_notify(devlink, 0, param_item,
 				     DEVLINK_CMD_PARAM_DEL);
-	devlink_notअगरy(devlink, DEVLINK_CMD_DEL);
+	devlink_notify(devlink, DEVLINK_CMD_DEL);
 
 	__devlink_net_set(devlink, dest_net);
 
-	devlink_notअगरy(devlink, DEVLINK_CMD_NEW);
-	list_क्रम_each_entry(param_item, &devlink->param_list, list)
-		devlink_param_notअगरy(devlink, 0, param_item,
+	devlink_notify(devlink, DEVLINK_CMD_NEW);
+	list_for_each_entry(param_item, &devlink->param_list, list)
+		devlink_param_notify(devlink, 0, param_item,
 				     DEVLINK_CMD_PARAM_NEW);
-पूर्ण
+}
 
-अटल bool devlink_reload_supported(स्थिर काष्ठा devlink_ops *ops)
-अणु
-	वापस ops->reload_करोwn && ops->reload_up;
-पूर्ण
+static bool devlink_reload_supported(const struct devlink_ops *ops)
+{
+	return ops->reload_down && ops->reload_up;
+}
 
-अटल व्योम devlink_reload_failed_set(काष्ठा devlink *devlink,
+static void devlink_reload_failed_set(struct devlink *devlink,
 				      bool reload_failed)
-अणु
-	अगर (devlink->reload_failed == reload_failed)
-		वापस;
+{
+	if (devlink->reload_failed == reload_failed)
+		return;
 	devlink->reload_failed = reload_failed;
-	devlink_notअगरy(devlink, DEVLINK_CMD_NEW);
-पूर्ण
+	devlink_notify(devlink, DEVLINK_CMD_NEW);
+}
 
-bool devlink_is_reload_failed(स्थिर काष्ठा devlink *devlink)
-अणु
-	वापस devlink->reload_failed;
-पूर्ण
+bool devlink_is_reload_failed(const struct devlink *devlink)
+{
+	return devlink->reload_failed;
+}
 EXPORT_SYMBOL_GPL(devlink_is_reload_failed);
 
-अटल व्योम
-__devlink_reload_stats_update(काष्ठा devlink *devlink, u32 *reload_stats,
-			      क्रमागत devlink_reload_limit limit, u32 actions_perक्रमmed)
-अणु
-	अचिन्हित दीर्घ actions = actions_perक्रमmed;
-	पूर्णांक stat_idx;
-	पूर्णांक action;
+static void
+__devlink_reload_stats_update(struct devlink *devlink, u32 *reload_stats,
+			      enum devlink_reload_limit limit, u32 actions_performed)
+{
+	unsigned long actions = actions_performed;
+	int stat_idx;
+	int action;
 
-	क्रम_each_set_bit(action, &actions, __DEVLINK_RELOAD_ACTION_MAX) अणु
+	for_each_set_bit(action, &actions, __DEVLINK_RELOAD_ACTION_MAX) {
 		stat_idx = limit * __DEVLINK_RELOAD_ACTION_MAX + action;
 		reload_stats[stat_idx]++;
-	पूर्ण
-	devlink_notअगरy(devlink, DEVLINK_CMD_NEW);
-पूर्ण
+	}
+	devlink_notify(devlink, DEVLINK_CMD_NEW);
+}
 
-अटल व्योम
-devlink_reload_stats_update(काष्ठा devlink *devlink, क्रमागत devlink_reload_limit limit,
-			    u32 actions_perक्रमmed)
-अणु
+static void
+devlink_reload_stats_update(struct devlink *devlink, enum devlink_reload_limit limit,
+			    u32 actions_performed)
+{
 	__devlink_reload_stats_update(devlink, devlink->stats.reload_stats, limit,
-				      actions_perक्रमmed);
-पूर्ण
+				      actions_performed);
+}
 
 /**
- *	devlink_remote_reload_actions_perक्रमmed - Update devlink on reload actions
- *	  perक्रमmed which are not a direct result of devlink reload call.
+ *	devlink_remote_reload_actions_performed - Update devlink on reload actions
+ *	  performed which are not a direct result of devlink reload call.
  *
- *	This should be called by a driver after perक्रमming reload actions in हाल it was not
- *	a result of devlink reload call. For example fw_activate was perक्रमmed as a result
+ *	This should be called by a driver after performing reload actions in case it was not
+ *	a result of devlink reload call. For example fw_activate was performed as a result
  *	of devlink reload triggered fw_activate on another host.
- *	The motivation क्रम this function is to keep data on reload actions perक्रमmed on this
- *	function whether it was करोne due to direct devlink reload call or not.
+ *	The motivation for this function is to keep data on reload actions performed on this
+ *	function whether it was done due to direct devlink reload call or not.
  *
  *	@devlink: devlink
  *	@limit: reload limit
- *	@actions_perक्रमmed: biपंचांगask of actions perक्रमmed
+ *	@actions_performed: bitmask of actions performed
  */
-व्योम devlink_remote_reload_actions_perक्रमmed(काष्ठा devlink *devlink,
-					     क्रमागत devlink_reload_limit limit,
-					     u32 actions_perक्रमmed)
-अणु
-	अगर (WARN_ON(!actions_perक्रमmed ||
-		    actions_perक्रमmed & BIT(DEVLINK_RELOAD_ACTION_UNSPEC) ||
-		    actions_perक्रमmed >= BIT(__DEVLINK_RELOAD_ACTION_MAX) ||
+void devlink_remote_reload_actions_performed(struct devlink *devlink,
+					     enum devlink_reload_limit limit,
+					     u32 actions_performed)
+{
+	if (WARN_ON(!actions_performed ||
+		    actions_performed & BIT(DEVLINK_RELOAD_ACTION_UNSPEC) ||
+		    actions_performed >= BIT(__DEVLINK_RELOAD_ACTION_MAX) ||
 		    limit > DEVLINK_RELOAD_LIMIT_MAX))
-		वापस;
+		return;
 
 	__devlink_reload_stats_update(devlink, devlink->stats.remote_reload_stats, limit,
-				      actions_perक्रमmed);
-पूर्ण
-EXPORT_SYMBOL_GPL(devlink_remote_reload_actions_perक्रमmed);
+				      actions_performed);
+}
+EXPORT_SYMBOL_GPL(devlink_remote_reload_actions_performed);
 
-अटल पूर्णांक devlink_reload(काष्ठा devlink *devlink, काष्ठा net *dest_net,
-			  क्रमागत devlink_reload_action action, क्रमागत devlink_reload_limit limit,
-			  u32 *actions_perक्रमmed, काष्ठा netlink_ext_ack *extack)
-अणु
+static int devlink_reload(struct devlink *devlink, struct net *dest_net,
+			  enum devlink_reload_action action, enum devlink_reload_limit limit,
+			  u32 *actions_performed, struct netlink_ext_ack *extack)
+{
 	u32 remote_reload_stats[DEVLINK_RELOAD_STATS_ARRAY_SIZE];
-	पूर्णांक err;
+	int err;
 
-	अगर (!devlink->reload_enabled)
-		वापस -EOPNOTSUPP;
+	if (!devlink->reload_enabled)
+		return -EOPNOTSUPP;
 
-	स_नकल(remote_reload_stats, devlink->stats.remote_reload_stats,
-	       माप(remote_reload_stats));
-	err = devlink->ops->reload_करोwn(devlink, !!dest_net, action, limit, extack);
-	अगर (err)
-		वापस err;
+	memcpy(remote_reload_stats, devlink->stats.remote_reload_stats,
+	       sizeof(remote_reload_stats));
+	err = devlink->ops->reload_down(devlink, !!dest_net, action, limit, extack);
+	if (err)
+		return err;
 
-	अगर (dest_net && !net_eq(dest_net, devlink_net(devlink)))
+	if (dest_net && !net_eq(dest_net, devlink_net(devlink)))
 		devlink_reload_netns_change(devlink, dest_net);
 
-	err = devlink->ops->reload_up(devlink, action, limit, actions_perक्रमmed, extack);
+	err = devlink->ops->reload_up(devlink, action, limit, actions_performed, extack);
 	devlink_reload_failed_set(devlink, !!err);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	WARN_ON(!(*actions_perक्रमmed & BIT(action)));
+	WARN_ON(!(*actions_performed & BIT(action)));
 	/* Catch driver on updating the remote action within devlink reload */
-	WARN_ON(स_भेद(remote_reload_stats, devlink->stats.remote_reload_stats,
-		       माप(remote_reload_stats)));
-	devlink_reload_stats_update(devlink, limit, *actions_perक्रमmed);
-	वापस 0;
-पूर्ण
+	WARN_ON(memcmp(remote_reload_stats, devlink->stats.remote_reload_stats,
+		       sizeof(remote_reload_stats)));
+	devlink_reload_stats_update(devlink, limit, *actions_performed);
+	return 0;
+}
 
-अटल पूर्णांक
-devlink_nl_reload_actions_perक्रमmed_snd(काष्ठा devlink *devlink, u32 actions_perक्रमmed,
-					क्रमागत devlink_command cmd, काष्ठा genl_info *info)
-अणु
-	काष्ठा sk_buff *msg;
-	व्योम *hdr;
+static int
+devlink_nl_reload_actions_performed_snd(struct devlink *devlink, u32 actions_performed,
+					enum devlink_command cmd, struct genl_info *info)
+{
+	struct sk_buff *msg;
+	void *hdr;
 
 	msg = nlmsg_new(NLMSG_DEFAULT_SIZE, GFP_KERNEL);
-	अगर (!msg)
-		वापस -ENOMEM;
+	if (!msg)
+		return -ENOMEM;
 
 	hdr = genlmsg_put(msg, info->snd_portid, info->snd_seq, &devlink_nl_family, 0, cmd);
-	अगर (!hdr)
-		जाओ मुक्त_msg;
+	if (!hdr)
+		goto free_msg;
 
-	अगर (devlink_nl_put_handle(msg, devlink))
-		जाओ nla_put_failure;
+	if (devlink_nl_put_handle(msg, devlink))
+		goto nla_put_failure;
 
-	अगर (nla_put_bitfield32(msg, DEVLINK_ATTR_RELOAD_ACTIONS_PERFORMED, actions_perक्रमmed,
-			       actions_perक्रमmed))
-		जाओ nla_put_failure;
+	if (nla_put_bitfield32(msg, DEVLINK_ATTR_RELOAD_ACTIONS_PERFORMED, actions_performed,
+			       actions_performed))
+		goto nla_put_failure;
 	genlmsg_end(msg, hdr);
 
-	वापस genlmsg_reply(msg, info);
+	return genlmsg_reply(msg, info);
 
 nla_put_failure:
 	genlmsg_cancel(msg, hdr);
-मुक्त_msg:
-	nlmsg_मुक्त(msg);
-	वापस -EMSGSIZE;
-पूर्ण
+free_msg:
+	nlmsg_free(msg);
+	return -EMSGSIZE;
+}
 
-अटल पूर्णांक devlink_nl_cmd_reload(काष्ठा sk_buff *skb, काष्ठा genl_info *info)
-अणु
-	काष्ठा devlink *devlink = info->user_ptr[0];
-	क्रमागत devlink_reload_action action;
-	क्रमागत devlink_reload_limit limit;
-	काष्ठा net *dest_net = शून्य;
-	u32 actions_perक्रमmed;
-	पूर्णांक err;
+static int devlink_nl_cmd_reload(struct sk_buff *skb, struct genl_info *info)
+{
+	struct devlink *devlink = info->user_ptr[0];
+	enum devlink_reload_action action;
+	enum devlink_reload_limit limit;
+	struct net *dest_net = NULL;
+	u32 actions_performed;
+	int err;
 
-	अगर (!devlink_reload_supported(devlink->ops))
-		वापस -EOPNOTSUPP;
+	if (!devlink_reload_supported(devlink->ops))
+		return -EOPNOTSUPP;
 
-	err = devlink_resources_validate(devlink, शून्य, info);
-	अगर (err) अणु
+	err = devlink_resources_validate(devlink, NULL, info);
+	if (err) {
 		NL_SET_ERR_MSG_MOD(info->extack, "resources size validation failed");
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	अगर (info->attrs[DEVLINK_ATTR_NETNS_PID] ||
+	if (info->attrs[DEVLINK_ATTR_NETNS_PID] ||
 	    info->attrs[DEVLINK_ATTR_NETNS_FD] ||
-	    info->attrs[DEVLINK_ATTR_NETNS_ID]) अणु
+	    info->attrs[DEVLINK_ATTR_NETNS_ID]) {
 		dest_net = devlink_netns_get(skb, info);
-		अगर (IS_ERR(dest_net))
-			वापस PTR_ERR(dest_net);
-	पूर्ण
+		if (IS_ERR(dest_net))
+			return PTR_ERR(dest_net);
+	}
 
-	अगर (info->attrs[DEVLINK_ATTR_RELOAD_ACTION])
+	if (info->attrs[DEVLINK_ATTR_RELOAD_ACTION])
 		action = nla_get_u8(info->attrs[DEVLINK_ATTR_RELOAD_ACTION]);
-	अन्यथा
+	else
 		action = DEVLINK_RELOAD_ACTION_DRIVER_REINIT;
 
-	अगर (!devlink_reload_action_is_supported(devlink, action)) अणु
+	if (!devlink_reload_action_is_supported(devlink, action)) {
 		NL_SET_ERR_MSG_MOD(info->extack,
 				   "Requested reload action is not supported by the driver");
-		वापस -EOPNOTSUPP;
-	पूर्ण
+		return -EOPNOTSUPP;
+	}
 
 	limit = DEVLINK_RELOAD_LIMIT_UNSPEC;
-	अगर (info->attrs[DEVLINK_ATTR_RELOAD_LIMITS]) अणु
-		काष्ठा nla_bitfield32 limits;
+	if (info->attrs[DEVLINK_ATTR_RELOAD_LIMITS]) {
+		struct nla_bitfield32 limits;
 		u32 limits_selected;
 
 		limits = nla_get_bitfield32(info->attrs[DEVLINK_ATTR_RELOAD_LIMITS]);
 		limits_selected = limits.value & limits.selector;
-		अगर (!limits_selected) अणु
+		if (!limits_selected) {
 			NL_SET_ERR_MSG_MOD(info->extack, "Invalid limit selected");
-			वापस -EINVAL;
-		पूर्ण
-		क्रम (limit = 0 ; limit <= DEVLINK_RELOAD_LIMIT_MAX ; limit++)
-			अगर (limits_selected & BIT(limit))
-				अवरोध;
+			return -EINVAL;
+		}
+		for (limit = 0 ; limit <= DEVLINK_RELOAD_LIMIT_MAX ; limit++)
+			if (limits_selected & BIT(limit))
+				break;
 		/* UAPI enables multiselection, but currently it is not used */
-		अगर (limits_selected != BIT(limit)) अणु
+		if (limits_selected != BIT(limit)) {
 			NL_SET_ERR_MSG_MOD(info->extack,
 					   "Multiselection of limit is not supported");
-			वापस -EOPNOTSUPP;
-		पूर्ण
-		अगर (!devlink_reload_limit_is_supported(devlink, limit)) अणु
+			return -EOPNOTSUPP;
+		}
+		if (!devlink_reload_limit_is_supported(devlink, limit)) {
 			NL_SET_ERR_MSG_MOD(info->extack,
 					   "Requested limit is not supported by the driver");
-			वापस -EOPNOTSUPP;
-		पूर्ण
-		अगर (devlink_reload_combination_is_invalid(action, limit)) अणु
+			return -EOPNOTSUPP;
+		}
+		if (devlink_reload_combination_is_invalid(action, limit)) {
 			NL_SET_ERR_MSG_MOD(info->extack,
 					   "Requested limit is invalid for this action");
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
-	err = devlink_reload(devlink, dest_net, action, limit, &actions_perक्रमmed, info->extack);
+			return -EINVAL;
+		}
+	}
+	err = devlink_reload(devlink, dest_net, action, limit, &actions_performed, info->extack);
 
-	अगर (dest_net)
+	if (dest_net)
 		put_net(dest_net);
 
-	अगर (err)
-		वापस err;
-	/* For backward compatibility generate reply only अगर attributes used by user */
-	अगर (!info->attrs[DEVLINK_ATTR_RELOAD_ACTION] && !info->attrs[DEVLINK_ATTR_RELOAD_LIMITS])
-		वापस 0;
+	if (err)
+		return err;
+	/* For backward compatibility generate reply only if attributes used by user */
+	if (!info->attrs[DEVLINK_ATTR_RELOAD_ACTION] && !info->attrs[DEVLINK_ATTR_RELOAD_LIMITS])
+		return 0;
 
-	वापस devlink_nl_reload_actions_perक्रमmed_snd(devlink, actions_perक्रमmed,
+	return devlink_nl_reload_actions_performed_snd(devlink, actions_performed,
 						       DEVLINK_CMD_RELOAD, info);
-पूर्ण
+}
 
-अटल पूर्णांक devlink_nl_flash_update_fill(काष्ठा sk_buff *msg,
-					काष्ठा devlink *devlink,
-					क्रमागत devlink_command cmd,
-					काष्ठा devlink_flash_notअगरy *params)
-अणु
-	व्योम *hdr;
+static int devlink_nl_flash_update_fill(struct sk_buff *msg,
+					struct devlink *devlink,
+					enum devlink_command cmd,
+					struct devlink_flash_notify *params)
+{
+	void *hdr;
 
 	hdr = genlmsg_put(msg, 0, 0, &devlink_nl_family, 0, cmd);
-	अगर (!hdr)
-		वापस -EMSGSIZE;
+	if (!hdr)
+		return -EMSGSIZE;
 
-	अगर (devlink_nl_put_handle(msg, devlink))
-		जाओ nla_put_failure;
+	if (devlink_nl_put_handle(msg, devlink))
+		goto nla_put_failure;
 
-	अगर (cmd != DEVLINK_CMD_FLASH_UPDATE_STATUS)
-		जाओ out;
+	if (cmd != DEVLINK_CMD_FLASH_UPDATE_STATUS)
+		goto out;
 
-	अगर (params->status_msg &&
+	if (params->status_msg &&
 	    nla_put_string(msg, DEVLINK_ATTR_FLASH_UPDATE_STATUS_MSG,
 			   params->status_msg))
-		जाओ nla_put_failure;
-	अगर (params->component &&
+		goto nla_put_failure;
+	if (params->component &&
 	    nla_put_string(msg, DEVLINK_ATTR_FLASH_UPDATE_COMPONENT,
 			   params->component))
-		जाओ nla_put_failure;
-	अगर (nla_put_u64_64bit(msg, DEVLINK_ATTR_FLASH_UPDATE_STATUS_DONE,
-			      params->करोne, DEVLINK_ATTR_PAD))
-		जाओ nla_put_failure;
-	अगर (nla_put_u64_64bit(msg, DEVLINK_ATTR_FLASH_UPDATE_STATUS_TOTAL,
+		goto nla_put_failure;
+	if (nla_put_u64_64bit(msg, DEVLINK_ATTR_FLASH_UPDATE_STATUS_DONE,
+			      params->done, DEVLINK_ATTR_PAD))
+		goto nla_put_failure;
+	if (nla_put_u64_64bit(msg, DEVLINK_ATTR_FLASH_UPDATE_STATUS_TOTAL,
 			      params->total, DEVLINK_ATTR_PAD))
-		जाओ nla_put_failure;
-	अगर (nla_put_u64_64bit(msg, DEVLINK_ATTR_FLASH_UPDATE_STATUS_TIMEOUT,
-			      params->समयout, DEVLINK_ATTR_PAD))
-		जाओ nla_put_failure;
+		goto nla_put_failure;
+	if (nla_put_u64_64bit(msg, DEVLINK_ATTR_FLASH_UPDATE_STATUS_TIMEOUT,
+			      params->timeout, DEVLINK_ATTR_PAD))
+		goto nla_put_failure;
 
 out:
 	genlmsg_end(msg, hdr);
-	वापस 0;
+	return 0;
 
 nla_put_failure:
 	genlmsg_cancel(msg, hdr);
-	वापस -EMSGSIZE;
-पूर्ण
+	return -EMSGSIZE;
+}
 
-अटल व्योम __devlink_flash_update_notअगरy(काष्ठा devlink *devlink,
-					  क्रमागत devlink_command cmd,
-					  काष्ठा devlink_flash_notअगरy *params)
-अणु
-	काष्ठा sk_buff *msg;
-	पूर्णांक err;
+static void __devlink_flash_update_notify(struct devlink *devlink,
+					  enum devlink_command cmd,
+					  struct devlink_flash_notify *params)
+{
+	struct sk_buff *msg;
+	int err;
 
 	WARN_ON(cmd != DEVLINK_CMD_FLASH_UPDATE &&
 		cmd != DEVLINK_CMD_FLASH_UPDATE_END &&
 		cmd != DEVLINK_CMD_FLASH_UPDATE_STATUS);
 
 	msg = nlmsg_new(NLMSG_DEFAULT_SIZE, GFP_KERNEL);
-	अगर (!msg)
-		वापस;
+	if (!msg)
+		return;
 
 	err = devlink_nl_flash_update_fill(msg, devlink, cmd, params);
-	अगर (err)
-		जाओ out_मुक्त_msg;
+	if (err)
+		goto out_free_msg;
 
 	genlmsg_multicast_netns(&devlink_nl_family, devlink_net(devlink),
 				msg, 0, DEVLINK_MCGRP_CONFIG, GFP_KERNEL);
-	वापस;
+	return;
 
-out_मुक्त_msg:
-	nlmsg_मुक्त(msg);
-पूर्ण
+out_free_msg:
+	nlmsg_free(msg);
+}
 
-अटल व्योम devlink_flash_update_begin_notअगरy(काष्ठा devlink *devlink)
-अणु
-	काष्ठा devlink_flash_notअगरy params = अणु 0 पूर्ण;
+static void devlink_flash_update_begin_notify(struct devlink *devlink)
+{
+	struct devlink_flash_notify params = { 0 };
 
-	__devlink_flash_update_notअगरy(devlink,
+	__devlink_flash_update_notify(devlink,
 				      DEVLINK_CMD_FLASH_UPDATE,
 				      &params);
-पूर्ण
+}
 
-अटल व्योम devlink_flash_update_end_notअगरy(काष्ठा devlink *devlink)
-अणु
-	काष्ठा devlink_flash_notअगरy params = अणु 0 पूर्ण;
+static void devlink_flash_update_end_notify(struct devlink *devlink)
+{
+	struct devlink_flash_notify params = { 0 };
 
-	__devlink_flash_update_notअगरy(devlink,
+	__devlink_flash_update_notify(devlink,
 				      DEVLINK_CMD_FLASH_UPDATE_END,
 				      &params);
-पूर्ण
+}
 
-व्योम devlink_flash_update_status_notअगरy(काष्ठा devlink *devlink,
-					स्थिर अक्षर *status_msg,
-					स्थिर अक्षर *component,
-					अचिन्हित दीर्घ करोne,
-					अचिन्हित दीर्घ total)
-अणु
-	काष्ठा devlink_flash_notअगरy params = अणु
+void devlink_flash_update_status_notify(struct devlink *devlink,
+					const char *status_msg,
+					const char *component,
+					unsigned long done,
+					unsigned long total)
+{
+	struct devlink_flash_notify params = {
 		.status_msg = status_msg,
 		.component = component,
-		.करोne = करोne,
+		.done = done,
 		.total = total,
-	पूर्ण;
+	};
 
-	__devlink_flash_update_notअगरy(devlink,
+	__devlink_flash_update_notify(devlink,
 				      DEVLINK_CMD_FLASH_UPDATE_STATUS,
 				      &params);
-पूर्ण
-EXPORT_SYMBOL_GPL(devlink_flash_update_status_notअगरy);
+}
+EXPORT_SYMBOL_GPL(devlink_flash_update_status_notify);
 
-व्योम devlink_flash_update_समयout_notअगरy(काष्ठा devlink *devlink,
-					 स्थिर अक्षर *status_msg,
-					 स्थिर अक्षर *component,
-					 अचिन्हित दीर्घ समयout)
-अणु
-	काष्ठा devlink_flash_notअगरy params = अणु
+void devlink_flash_update_timeout_notify(struct devlink *devlink,
+					 const char *status_msg,
+					 const char *component,
+					 unsigned long timeout)
+{
+	struct devlink_flash_notify params = {
 		.status_msg = status_msg,
 		.component = component,
-		.समयout = समयout,
-	पूर्ण;
+		.timeout = timeout,
+	};
 
-	__devlink_flash_update_notअगरy(devlink,
+	__devlink_flash_update_notify(devlink,
 				      DEVLINK_CMD_FLASH_UPDATE_STATUS,
 				      &params);
-पूर्ण
-EXPORT_SYMBOL_GPL(devlink_flash_update_समयout_notअगरy);
+}
+EXPORT_SYMBOL_GPL(devlink_flash_update_timeout_notify);
 
-अटल पूर्णांक devlink_nl_cmd_flash_update(काष्ठा sk_buff *skb,
-				       काष्ठा genl_info *info)
-अणु
-	काष्ठा nlattr *nla_component, *nla_overग_लिखो_mask, *nla_file_name;
-	काष्ठा devlink_flash_update_params params = अणुपूर्ण;
-	काष्ठा devlink *devlink = info->user_ptr[0];
-	स्थिर अक्षर *file_name;
+static int devlink_nl_cmd_flash_update(struct sk_buff *skb,
+				       struct genl_info *info)
+{
+	struct nlattr *nla_component, *nla_overwrite_mask, *nla_file_name;
+	struct devlink_flash_update_params params = {};
+	struct devlink *devlink = info->user_ptr[0];
+	const char *file_name;
 	u32 supported_params;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (!devlink->ops->flash_update)
-		वापस -EOPNOTSUPP;
+	if (!devlink->ops->flash_update)
+		return -EOPNOTSUPP;
 
-	अगर (!info->attrs[DEVLINK_ATTR_FLASH_UPDATE_खाता_NAME])
-		वापस -EINVAL;
+	if (!info->attrs[DEVLINK_ATTR_FLASH_UPDATE_FILE_NAME])
+		return -EINVAL;
 
 	supported_params = devlink->ops->supported_flash_update_params;
 
 	nla_component = info->attrs[DEVLINK_ATTR_FLASH_UPDATE_COMPONENT];
-	अगर (nla_component) अणु
-		अगर (!(supported_params & DEVLINK_SUPPORT_FLASH_UPDATE_COMPONENT)) अणु
+	if (nla_component) {
+		if (!(supported_params & DEVLINK_SUPPORT_FLASH_UPDATE_COMPONENT)) {
 			NL_SET_ERR_MSG_ATTR(info->extack, nla_component,
 					    "component update is not supported by this device");
-			वापस -EOPNOTSUPP;
-		पूर्ण
+			return -EOPNOTSUPP;
+		}
 		params.component = nla_data(nla_component);
-	पूर्ण
+	}
 
-	nla_overग_लिखो_mask = info->attrs[DEVLINK_ATTR_FLASH_UPDATE_OVERWRITE_MASK];
-	अगर (nla_overग_लिखो_mask) अणु
-		काष्ठा nla_bitfield32 sections;
+	nla_overwrite_mask = info->attrs[DEVLINK_ATTR_FLASH_UPDATE_OVERWRITE_MASK];
+	if (nla_overwrite_mask) {
+		struct nla_bitfield32 sections;
 
-		अगर (!(supported_params & DEVLINK_SUPPORT_FLASH_UPDATE_OVERWRITE_MASK)) अणु
-			NL_SET_ERR_MSG_ATTR(info->extack, nla_overग_लिखो_mask,
+		if (!(supported_params & DEVLINK_SUPPORT_FLASH_UPDATE_OVERWRITE_MASK)) {
+			NL_SET_ERR_MSG_ATTR(info->extack, nla_overwrite_mask,
 					    "overwrite settings are not supported by this device");
-			वापस -EOPNOTSUPP;
-		पूर्ण
-		sections = nla_get_bitfield32(nla_overग_लिखो_mask);
-		params.overग_लिखो_mask = sections.value & sections.selector;
-	पूर्ण
+			return -EOPNOTSUPP;
+		}
+		sections = nla_get_bitfield32(nla_overwrite_mask);
+		params.overwrite_mask = sections.value & sections.selector;
+	}
 
-	nla_file_name = info->attrs[DEVLINK_ATTR_FLASH_UPDATE_खाता_NAME];
+	nla_file_name = info->attrs[DEVLINK_ATTR_FLASH_UPDATE_FILE_NAME];
 	file_name = nla_data(nla_file_name);
 	ret = request_firmware(&params.fw, file_name, devlink->dev);
-	अगर (ret) अणु
+	if (ret) {
 		NL_SET_ERR_MSG_ATTR(info->extack, nla_file_name, "failed to locate the requested firmware file");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	devlink_flash_update_begin_notअगरy(devlink);
+	devlink_flash_update_begin_notify(devlink);
 	ret = devlink->ops->flash_update(devlink, &params, info->extack);
-	devlink_flash_update_end_notअगरy(devlink);
+	devlink_flash_update_end_notify(devlink);
 
 	release_firmware(params.fw);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा devlink_param devlink_param_generic[] = अणु
-	अणु
+static const struct devlink_param devlink_param_generic[] = {
+	{
 		.id = DEVLINK_PARAM_GENERIC_ID_INT_ERR_RESET,
 		.name = DEVLINK_PARAM_GENERIC_INT_ERR_RESET_NAME,
 		.type = DEVLINK_PARAM_GENERIC_INT_ERR_RESET_TYPE,
-	पूर्ण,
-	अणु
+	},
+	{
 		.id = DEVLINK_PARAM_GENERIC_ID_MAX_MACS,
 		.name = DEVLINK_PARAM_GENERIC_MAX_MACS_NAME,
 		.type = DEVLINK_PARAM_GENERIC_MAX_MACS_TYPE,
-	पूर्ण,
-	अणु
+	},
+	{
 		.id = DEVLINK_PARAM_GENERIC_ID_ENABLE_SRIOV,
 		.name = DEVLINK_PARAM_GENERIC_ENABLE_SRIOV_NAME,
 		.type = DEVLINK_PARAM_GENERIC_ENABLE_SRIOV_TYPE,
-	पूर्ण,
-	अणु
+	},
+	{
 		.id = DEVLINK_PARAM_GENERIC_ID_REGION_SNAPSHOT,
 		.name = DEVLINK_PARAM_GENERIC_REGION_SNAPSHOT_NAME,
 		.type = DEVLINK_PARAM_GENERIC_REGION_SNAPSHOT_TYPE,
-	पूर्ण,
-	अणु
+	},
+	{
 		.id = DEVLINK_PARAM_GENERIC_ID_IGNORE_ARI,
 		.name = DEVLINK_PARAM_GENERIC_IGNORE_ARI_NAME,
 		.type = DEVLINK_PARAM_GENERIC_IGNORE_ARI_TYPE,
-	पूर्ण,
-	अणु
+	},
+	{
 		.id = DEVLINK_PARAM_GENERIC_ID_MSIX_VEC_PER_PF_MAX,
 		.name = DEVLINK_PARAM_GENERIC_MSIX_VEC_PER_PF_MAX_NAME,
 		.type = DEVLINK_PARAM_GENERIC_MSIX_VEC_PER_PF_MAX_TYPE,
-	पूर्ण,
-	अणु
+	},
+	{
 		.id = DEVLINK_PARAM_GENERIC_ID_MSIX_VEC_PER_PF_MIN,
 		.name = DEVLINK_PARAM_GENERIC_MSIX_VEC_PER_PF_MIN_NAME,
 		.type = DEVLINK_PARAM_GENERIC_MSIX_VEC_PER_PF_MIN_TYPE,
-	पूर्ण,
-	अणु
+	},
+	{
 		.id = DEVLINK_PARAM_GENERIC_ID_FW_LOAD_POLICY,
 		.name = DEVLINK_PARAM_GENERIC_FW_LOAD_POLICY_NAME,
 		.type = DEVLINK_PARAM_GENERIC_FW_LOAD_POLICY_TYPE,
-	पूर्ण,
-	अणु
+	},
+	{
 		.id = DEVLINK_PARAM_GENERIC_ID_RESET_DEV_ON_DRV_PROBE,
 		.name = DEVLINK_PARAM_GENERIC_RESET_DEV_ON_DRV_PROBE_NAME,
 		.type = DEVLINK_PARAM_GENERIC_RESET_DEV_ON_DRV_PROBE_TYPE,
-	पूर्ण,
-	अणु
+	},
+	{
 		.id = DEVLINK_PARAM_GENERIC_ID_ENABLE_ROCE,
 		.name = DEVLINK_PARAM_GENERIC_ENABLE_ROCE_NAME,
 		.type = DEVLINK_PARAM_GENERIC_ENABLE_ROCE_TYPE,
-	पूर्ण,
-	अणु
+	},
+	{
 		.id = DEVLINK_PARAM_GENERIC_ID_ENABLE_REMOTE_DEV_RESET,
 		.name = DEVLINK_PARAM_GENERIC_ENABLE_REMOTE_DEV_RESET_NAME,
 		.type = DEVLINK_PARAM_GENERIC_ENABLE_REMOTE_DEV_RESET_TYPE,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक devlink_param_generic_verअगरy(स्थिर काष्ठा devlink_param *param)
-अणु
-	/* verअगरy it match generic parameter by id and name */
-	अगर (param->id > DEVLINK_PARAM_GENERIC_ID_MAX)
-		वापस -EINVAL;
-	अगर (म_भेद(param->name, devlink_param_generic[param->id].name))
-		वापस -ENOENT;
+static int devlink_param_generic_verify(const struct devlink_param *param)
+{
+	/* verify it match generic parameter by id and name */
+	if (param->id > DEVLINK_PARAM_GENERIC_ID_MAX)
+		return -EINVAL;
+	if (strcmp(param->name, devlink_param_generic[param->id].name))
+		return -ENOENT;
 
 	WARN_ON(param->type != devlink_param_generic[param->id].type);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक devlink_param_driver_verअगरy(स्थिर काष्ठा devlink_param *param)
-अणु
-	पूर्णांक i;
+static int devlink_param_driver_verify(const struct devlink_param *param)
+{
+	int i;
 
-	अगर (param->id <= DEVLINK_PARAM_GENERIC_ID_MAX)
-		वापस -EINVAL;
-	/* verअगरy no such name in generic params */
-	क्रम (i = 0; i <= DEVLINK_PARAM_GENERIC_ID_MAX; i++)
-		अगर (!म_भेद(param->name, devlink_param_generic[i].name))
-			वापस -EEXIST;
+	if (param->id <= DEVLINK_PARAM_GENERIC_ID_MAX)
+		return -EINVAL;
+	/* verify no such name in generic params */
+	for (i = 0; i <= DEVLINK_PARAM_GENERIC_ID_MAX; i++)
+		if (!strcmp(param->name, devlink_param_generic[i].name))
+			return -EEXIST;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा devlink_param_item *
-devlink_param_find_by_name(काष्ठा list_head *param_list,
-			   स्थिर अक्षर *param_name)
-अणु
-	काष्ठा devlink_param_item *param_item;
+static struct devlink_param_item *
+devlink_param_find_by_name(struct list_head *param_list,
+			   const char *param_name)
+{
+	struct devlink_param_item *param_item;
 
-	list_क्रम_each_entry(param_item, param_list, list)
-		अगर (!म_भेद(param_item->param->name, param_name))
-			वापस param_item;
-	वापस शून्य;
-पूर्ण
+	list_for_each_entry(param_item, param_list, list)
+		if (!strcmp(param_item->param->name, param_name))
+			return param_item;
+	return NULL;
+}
 
-अटल काष्ठा devlink_param_item *
-devlink_param_find_by_id(काष्ठा list_head *param_list, u32 param_id)
-अणु
-	काष्ठा devlink_param_item *param_item;
+static struct devlink_param_item *
+devlink_param_find_by_id(struct list_head *param_list, u32 param_id)
+{
+	struct devlink_param_item *param_item;
 
-	list_क्रम_each_entry(param_item, param_list, list)
-		अगर (param_item->param->id == param_id)
-			वापस param_item;
-	वापस शून्य;
-पूर्ण
+	list_for_each_entry(param_item, param_list, list)
+		if (param_item->param->id == param_id)
+			return param_item;
+	return NULL;
+}
 
-अटल bool
-devlink_param_cmode_is_supported(स्थिर काष्ठा devlink_param *param,
-				 क्रमागत devlink_param_cmode cmode)
-अणु
-	वापस test_bit(cmode, &param->supported_cmodes);
-पूर्ण
+static bool
+devlink_param_cmode_is_supported(const struct devlink_param *param,
+				 enum devlink_param_cmode cmode)
+{
+	return test_bit(cmode, &param->supported_cmodes);
+}
 
-अटल पूर्णांक devlink_param_get(काष्ठा devlink *devlink,
-			     स्थिर काष्ठा devlink_param *param,
-			     काष्ठा devlink_param_gset_ctx *ctx)
-अणु
-	अगर (!param->get)
-		वापस -EOPNOTSUPP;
-	वापस param->get(devlink, param->id, ctx);
-पूर्ण
+static int devlink_param_get(struct devlink *devlink,
+			     const struct devlink_param *param,
+			     struct devlink_param_gset_ctx *ctx)
+{
+	if (!param->get)
+		return -EOPNOTSUPP;
+	return param->get(devlink, param->id, ctx);
+}
 
-अटल पूर्णांक devlink_param_set(काष्ठा devlink *devlink,
-			     स्थिर काष्ठा devlink_param *param,
-			     काष्ठा devlink_param_gset_ctx *ctx)
-अणु
-	अगर (!param->set)
-		वापस -EOPNOTSUPP;
-	वापस param->set(devlink, param->id, ctx);
-पूर्ण
+static int devlink_param_set(struct devlink *devlink,
+			     const struct devlink_param *param,
+			     struct devlink_param_gset_ctx *ctx)
+{
+	if (!param->set)
+		return -EOPNOTSUPP;
+	return param->set(devlink, param->id, ctx);
+}
 
-अटल पूर्णांक
-devlink_param_type_to_nla_type(क्रमागत devlink_param_type param_type)
-अणु
-	चयन (param_type) अणु
-	हाल DEVLINK_PARAM_TYPE_U8:
-		वापस NLA_U8;
-	हाल DEVLINK_PARAM_TYPE_U16:
-		वापस NLA_U16;
-	हाल DEVLINK_PARAM_TYPE_U32:
-		वापस NLA_U32;
-	हाल DEVLINK_PARAM_TYPE_STRING:
-		वापस NLA_STRING;
-	हाल DEVLINK_PARAM_TYPE_BOOL:
-		वापस NLA_FLAG;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-पूर्ण
+static int
+devlink_param_type_to_nla_type(enum devlink_param_type param_type)
+{
+	switch (param_type) {
+	case DEVLINK_PARAM_TYPE_U8:
+		return NLA_U8;
+	case DEVLINK_PARAM_TYPE_U16:
+		return NLA_U16;
+	case DEVLINK_PARAM_TYPE_U32:
+		return NLA_U32;
+	case DEVLINK_PARAM_TYPE_STRING:
+		return NLA_STRING;
+	case DEVLINK_PARAM_TYPE_BOOL:
+		return NLA_FLAG;
+	default:
+		return -EINVAL;
+	}
+}
 
-अटल पूर्णांक
-devlink_nl_param_value_fill_one(काष्ठा sk_buff *msg,
-				क्रमागत devlink_param_type type,
-				क्रमागत devlink_param_cmode cmode,
-				जोड़ devlink_param_value val)
-अणु
-	काष्ठा nlattr *param_value_attr;
+static int
+devlink_nl_param_value_fill_one(struct sk_buff *msg,
+				enum devlink_param_type type,
+				enum devlink_param_cmode cmode,
+				union devlink_param_value val)
+{
+	struct nlattr *param_value_attr;
 
 	param_value_attr = nla_nest_start_noflag(msg,
 						 DEVLINK_ATTR_PARAM_VALUE);
-	अगर (!param_value_attr)
-		जाओ nla_put_failure;
+	if (!param_value_attr)
+		goto nla_put_failure;
 
-	अगर (nla_put_u8(msg, DEVLINK_ATTR_PARAM_VALUE_CMODE, cmode))
-		जाओ value_nest_cancel;
+	if (nla_put_u8(msg, DEVLINK_ATTR_PARAM_VALUE_CMODE, cmode))
+		goto value_nest_cancel;
 
-	चयन (type) अणु
-	हाल DEVLINK_PARAM_TYPE_U8:
-		अगर (nla_put_u8(msg, DEVLINK_ATTR_PARAM_VALUE_DATA, val.vu8))
-			जाओ value_nest_cancel;
-		अवरोध;
-	हाल DEVLINK_PARAM_TYPE_U16:
-		अगर (nla_put_u16(msg, DEVLINK_ATTR_PARAM_VALUE_DATA, val.vu16))
-			जाओ value_nest_cancel;
-		अवरोध;
-	हाल DEVLINK_PARAM_TYPE_U32:
-		अगर (nla_put_u32(msg, DEVLINK_ATTR_PARAM_VALUE_DATA, val.vu32))
-			जाओ value_nest_cancel;
-		अवरोध;
-	हाल DEVLINK_PARAM_TYPE_STRING:
-		अगर (nla_put_string(msg, DEVLINK_ATTR_PARAM_VALUE_DATA,
+	switch (type) {
+	case DEVLINK_PARAM_TYPE_U8:
+		if (nla_put_u8(msg, DEVLINK_ATTR_PARAM_VALUE_DATA, val.vu8))
+			goto value_nest_cancel;
+		break;
+	case DEVLINK_PARAM_TYPE_U16:
+		if (nla_put_u16(msg, DEVLINK_ATTR_PARAM_VALUE_DATA, val.vu16))
+			goto value_nest_cancel;
+		break;
+	case DEVLINK_PARAM_TYPE_U32:
+		if (nla_put_u32(msg, DEVLINK_ATTR_PARAM_VALUE_DATA, val.vu32))
+			goto value_nest_cancel;
+		break;
+	case DEVLINK_PARAM_TYPE_STRING:
+		if (nla_put_string(msg, DEVLINK_ATTR_PARAM_VALUE_DATA,
 				   val.vstr))
-			जाओ value_nest_cancel;
-		अवरोध;
-	हाल DEVLINK_PARAM_TYPE_BOOL:
-		अगर (val.vbool &&
+			goto value_nest_cancel;
+		break;
+	case DEVLINK_PARAM_TYPE_BOOL:
+		if (val.vbool &&
 		    nla_put_flag(msg, DEVLINK_ATTR_PARAM_VALUE_DATA))
-			जाओ value_nest_cancel;
-		अवरोध;
-	पूर्ण
+			goto value_nest_cancel;
+		break;
+	}
 
 	nla_nest_end(msg, param_value_attr);
-	वापस 0;
+	return 0;
 
 value_nest_cancel:
 	nla_nest_cancel(msg, param_value_attr);
 nla_put_failure:
-	वापस -EMSGSIZE;
-पूर्ण
+	return -EMSGSIZE;
+}
 
-अटल पूर्णांक devlink_nl_param_fill(काष्ठा sk_buff *msg, काष्ठा devlink *devlink,
-				 अचिन्हित पूर्णांक port_index,
-				 काष्ठा devlink_param_item *param_item,
-				 क्रमागत devlink_command cmd,
-				 u32 portid, u32 seq, पूर्णांक flags)
-अणु
-	जोड़ devlink_param_value param_value[DEVLINK_PARAM_CMODE_MAX + 1];
-	bool param_value_set[DEVLINK_PARAM_CMODE_MAX + 1] = अणुपूर्ण;
-	स्थिर काष्ठा devlink_param *param = param_item->param;
-	काष्ठा devlink_param_gset_ctx ctx;
-	काष्ठा nlattr *param_values_list;
-	काष्ठा nlattr *param_attr;
-	पूर्णांक nla_type;
-	व्योम *hdr;
-	पूर्णांक err;
-	पूर्णांक i;
+static int devlink_nl_param_fill(struct sk_buff *msg, struct devlink *devlink,
+				 unsigned int port_index,
+				 struct devlink_param_item *param_item,
+				 enum devlink_command cmd,
+				 u32 portid, u32 seq, int flags)
+{
+	union devlink_param_value param_value[DEVLINK_PARAM_CMODE_MAX + 1];
+	bool param_value_set[DEVLINK_PARAM_CMODE_MAX + 1] = {};
+	const struct devlink_param *param = param_item->param;
+	struct devlink_param_gset_ctx ctx;
+	struct nlattr *param_values_list;
+	struct nlattr *param_attr;
+	int nla_type;
+	void *hdr;
+	int err;
+	int i;
 
 	/* Get value from driver part to driverinit configuration mode */
-	क्रम (i = 0; i <= DEVLINK_PARAM_CMODE_MAX; i++) अणु
-		अगर (!devlink_param_cmode_is_supported(param, i))
-			जारी;
-		अगर (i == DEVLINK_PARAM_CMODE_DRIVERINIT) अणु
-			अगर (!param_item->driverinit_value_valid)
-				वापस -EOPNOTSUPP;
+	for (i = 0; i <= DEVLINK_PARAM_CMODE_MAX; i++) {
+		if (!devlink_param_cmode_is_supported(param, i))
+			continue;
+		if (i == DEVLINK_PARAM_CMODE_DRIVERINIT) {
+			if (!param_item->driverinit_value_valid)
+				return -EOPNOTSUPP;
 			param_value[i] = param_item->driverinit_value;
-		पूर्ण अन्यथा अणु
-			अगर (!param_item->published)
-				जारी;
+		} else {
+			if (!param_item->published)
+				continue;
 			ctx.cmode = i;
 			err = devlink_param_get(devlink, param, &ctx);
-			अगर (err)
-				वापस err;
+			if (err)
+				return err;
 			param_value[i] = ctx.val;
-		पूर्ण
+		}
 		param_value_set[i] = true;
-	पूर्ण
+	}
 
 	hdr = genlmsg_put(msg, portid, seq, &devlink_nl_family, flags, cmd);
-	अगर (!hdr)
-		वापस -EMSGSIZE;
+	if (!hdr)
+		return -EMSGSIZE;
 
-	अगर (devlink_nl_put_handle(msg, devlink))
-		जाओ genlmsg_cancel;
+	if (devlink_nl_put_handle(msg, devlink))
+		goto genlmsg_cancel;
 
-	अगर (cmd == DEVLINK_CMD_PORT_PARAM_GET ||
+	if (cmd == DEVLINK_CMD_PORT_PARAM_GET ||
 	    cmd == DEVLINK_CMD_PORT_PARAM_NEW ||
 	    cmd == DEVLINK_CMD_PORT_PARAM_DEL)
-		अगर (nla_put_u32(msg, DEVLINK_ATTR_PORT_INDEX, port_index))
-			जाओ genlmsg_cancel;
+		if (nla_put_u32(msg, DEVLINK_ATTR_PORT_INDEX, port_index))
+			goto genlmsg_cancel;
 
 	param_attr = nla_nest_start_noflag(msg, DEVLINK_ATTR_PARAM);
-	अगर (!param_attr)
-		जाओ genlmsg_cancel;
-	अगर (nla_put_string(msg, DEVLINK_ATTR_PARAM_NAME, param->name))
-		जाओ param_nest_cancel;
-	अगर (param->generic && nla_put_flag(msg, DEVLINK_ATTR_PARAM_GENERIC))
-		जाओ param_nest_cancel;
+	if (!param_attr)
+		goto genlmsg_cancel;
+	if (nla_put_string(msg, DEVLINK_ATTR_PARAM_NAME, param->name))
+		goto param_nest_cancel;
+	if (param->generic && nla_put_flag(msg, DEVLINK_ATTR_PARAM_GENERIC))
+		goto param_nest_cancel;
 
 	nla_type = devlink_param_type_to_nla_type(param->type);
-	अगर (nla_type < 0)
-		जाओ param_nest_cancel;
-	अगर (nla_put_u8(msg, DEVLINK_ATTR_PARAM_TYPE, nla_type))
-		जाओ param_nest_cancel;
+	if (nla_type < 0)
+		goto param_nest_cancel;
+	if (nla_put_u8(msg, DEVLINK_ATTR_PARAM_TYPE, nla_type))
+		goto param_nest_cancel;
 
 	param_values_list = nla_nest_start_noflag(msg,
 						  DEVLINK_ATTR_PARAM_VALUES_LIST);
-	अगर (!param_values_list)
-		जाओ param_nest_cancel;
+	if (!param_values_list)
+		goto param_nest_cancel;
 
-	क्रम (i = 0; i <= DEVLINK_PARAM_CMODE_MAX; i++) अणु
-		अगर (!param_value_set[i])
-			जारी;
+	for (i = 0; i <= DEVLINK_PARAM_CMODE_MAX; i++) {
+		if (!param_value_set[i])
+			continue;
 		err = devlink_nl_param_value_fill_one(msg, param->type,
 						      i, param_value[i]);
-		अगर (err)
-			जाओ values_list_nest_cancel;
-	पूर्ण
+		if (err)
+			goto values_list_nest_cancel;
+	}
 
 	nla_nest_end(msg, param_values_list);
 	nla_nest_end(msg, param_attr);
 	genlmsg_end(msg, hdr);
-	वापस 0;
+	return 0;
 
 values_list_nest_cancel:
 	nla_nest_end(msg, param_values_list);
@@ -4001,324 +4000,324 @@ param_nest_cancel:
 	nla_nest_cancel(msg, param_attr);
 genlmsg_cancel:
 	genlmsg_cancel(msg, hdr);
-	वापस -EMSGSIZE;
-पूर्ण
+	return -EMSGSIZE;
+}
 
-अटल व्योम devlink_param_notअगरy(काष्ठा devlink *devlink,
-				 अचिन्हित पूर्णांक port_index,
-				 काष्ठा devlink_param_item *param_item,
-				 क्रमागत devlink_command cmd)
-अणु
-	काष्ठा sk_buff *msg;
-	पूर्णांक err;
+static void devlink_param_notify(struct devlink *devlink,
+				 unsigned int port_index,
+				 struct devlink_param_item *param_item,
+				 enum devlink_command cmd)
+{
+	struct sk_buff *msg;
+	int err;
 
 	WARN_ON(cmd != DEVLINK_CMD_PARAM_NEW && cmd != DEVLINK_CMD_PARAM_DEL &&
 		cmd != DEVLINK_CMD_PORT_PARAM_NEW &&
 		cmd != DEVLINK_CMD_PORT_PARAM_DEL);
 
 	msg = nlmsg_new(NLMSG_DEFAULT_SIZE, GFP_KERNEL);
-	अगर (!msg)
-		वापस;
+	if (!msg)
+		return;
 	err = devlink_nl_param_fill(msg, devlink, port_index, param_item, cmd,
 				    0, 0, 0);
-	अगर (err) अणु
-		nlmsg_मुक्त(msg);
-		वापस;
-	पूर्ण
+	if (err) {
+		nlmsg_free(msg);
+		return;
+	}
 
 	genlmsg_multicast_netns(&devlink_nl_family, devlink_net(devlink),
 				msg, 0, DEVLINK_MCGRP_CONFIG, GFP_KERNEL);
-पूर्ण
+}
 
-अटल पूर्णांक devlink_nl_cmd_param_get_dumpit(काष्ठा sk_buff *msg,
-					   काष्ठा netlink_callback *cb)
-अणु
-	काष्ठा devlink_param_item *param_item;
-	काष्ठा devlink *devlink;
-	पूर्णांक start = cb->args[0];
-	पूर्णांक idx = 0;
-	पूर्णांक err = 0;
+static int devlink_nl_cmd_param_get_dumpit(struct sk_buff *msg,
+					   struct netlink_callback *cb)
+{
+	struct devlink_param_item *param_item;
+	struct devlink *devlink;
+	int start = cb->args[0];
+	int idx = 0;
+	int err = 0;
 
 	mutex_lock(&devlink_mutex);
-	list_क्रम_each_entry(devlink, &devlink_list, list) अणु
-		अगर (!net_eq(devlink_net(devlink), sock_net(msg->sk)))
-			जारी;
+	list_for_each_entry(devlink, &devlink_list, list) {
+		if (!net_eq(devlink_net(devlink), sock_net(msg->sk)))
+			continue;
 		mutex_lock(&devlink->lock);
-		list_क्रम_each_entry(param_item, &devlink->param_list, list) अणु
-			अगर (idx < start) अणु
+		list_for_each_entry(param_item, &devlink->param_list, list) {
+			if (idx < start) {
 				idx++;
-				जारी;
-			पूर्ण
+				continue;
+			}
 			err = devlink_nl_param_fill(msg, devlink, 0, param_item,
 						    DEVLINK_CMD_PARAM_GET,
 						    NETLINK_CB(cb->skb).portid,
 						    cb->nlh->nlmsg_seq,
 						    NLM_F_MULTI);
-			अगर (err == -EOPNOTSUPP) अणु
+			if (err == -EOPNOTSUPP) {
 				err = 0;
-			पूर्ण अन्यथा अगर (err) अणु
+			} else if (err) {
 				mutex_unlock(&devlink->lock);
-				जाओ out;
-			पूर्ण
+				goto out;
+			}
 			idx++;
-		पूर्ण
+		}
 		mutex_unlock(&devlink->lock);
-	पूर्ण
+	}
 out:
 	mutex_unlock(&devlink_mutex);
 
-	अगर (err != -EMSGSIZE)
-		वापस err;
+	if (err != -EMSGSIZE)
+		return err;
 
 	cb->args[0] = idx;
-	वापस msg->len;
-पूर्ण
+	return msg->len;
+}
 
-अटल पूर्णांक
-devlink_param_type_get_from_info(काष्ठा genl_info *info,
-				 क्रमागत devlink_param_type *param_type)
-अणु
-	अगर (!info->attrs[DEVLINK_ATTR_PARAM_TYPE])
-		वापस -EINVAL;
+static int
+devlink_param_type_get_from_info(struct genl_info *info,
+				 enum devlink_param_type *param_type)
+{
+	if (!info->attrs[DEVLINK_ATTR_PARAM_TYPE])
+		return -EINVAL;
 
-	चयन (nla_get_u8(info->attrs[DEVLINK_ATTR_PARAM_TYPE])) अणु
-	हाल NLA_U8:
+	switch (nla_get_u8(info->attrs[DEVLINK_ATTR_PARAM_TYPE])) {
+	case NLA_U8:
 		*param_type = DEVLINK_PARAM_TYPE_U8;
-		अवरोध;
-	हाल NLA_U16:
+		break;
+	case NLA_U16:
 		*param_type = DEVLINK_PARAM_TYPE_U16;
-		अवरोध;
-	हाल NLA_U32:
+		break;
+	case NLA_U32:
 		*param_type = DEVLINK_PARAM_TYPE_U32;
-		अवरोध;
-	हाल NLA_STRING:
+		break;
+	case NLA_STRING:
 		*param_type = DEVLINK_PARAM_TYPE_STRING;
-		अवरोध;
-	हाल NLA_FLAG:
+		break;
+	case NLA_FLAG:
 		*param_type = DEVLINK_PARAM_TYPE_BOOL;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-devlink_param_value_get_from_info(स्थिर काष्ठा devlink_param *param,
-				  काष्ठा genl_info *info,
-				  जोड़ devlink_param_value *value)
-अणु
-	काष्ठा nlattr *param_data;
-	पूर्णांक len;
+static int
+devlink_param_value_get_from_info(const struct devlink_param *param,
+				  struct genl_info *info,
+				  union devlink_param_value *value)
+{
+	struct nlattr *param_data;
+	int len;
 
 	param_data = info->attrs[DEVLINK_ATTR_PARAM_VALUE_DATA];
 
-	अगर (param->type != DEVLINK_PARAM_TYPE_BOOL && !param_data)
-		वापस -EINVAL;
+	if (param->type != DEVLINK_PARAM_TYPE_BOOL && !param_data)
+		return -EINVAL;
 
-	चयन (param->type) अणु
-	हाल DEVLINK_PARAM_TYPE_U8:
-		अगर (nla_len(param_data) != माप(u8))
-			वापस -EINVAL;
+	switch (param->type) {
+	case DEVLINK_PARAM_TYPE_U8:
+		if (nla_len(param_data) != sizeof(u8))
+			return -EINVAL;
 		value->vu8 = nla_get_u8(param_data);
-		अवरोध;
-	हाल DEVLINK_PARAM_TYPE_U16:
-		अगर (nla_len(param_data) != माप(u16))
-			वापस -EINVAL;
+		break;
+	case DEVLINK_PARAM_TYPE_U16:
+		if (nla_len(param_data) != sizeof(u16))
+			return -EINVAL;
 		value->vu16 = nla_get_u16(param_data);
-		अवरोध;
-	हाल DEVLINK_PARAM_TYPE_U32:
-		अगर (nla_len(param_data) != माप(u32))
-			वापस -EINVAL;
+		break;
+	case DEVLINK_PARAM_TYPE_U32:
+		if (nla_len(param_data) != sizeof(u32))
+			return -EINVAL;
 		value->vu32 = nla_get_u32(param_data);
-		अवरोध;
-	हाल DEVLINK_PARAM_TYPE_STRING:
+		break;
+	case DEVLINK_PARAM_TYPE_STRING:
 		len = strnlen(nla_data(param_data), nla_len(param_data));
-		अगर (len == nla_len(param_data) ||
+		if (len == nla_len(param_data) ||
 		    len >= __DEVLINK_PARAM_MAX_STRING_VALUE)
-			वापस -EINVAL;
-		म_नकल(value->vstr, nla_data(param_data));
-		अवरोध;
-	हाल DEVLINK_PARAM_TYPE_BOOL:
-		अगर (param_data && nla_len(param_data))
-			वापस -EINVAL;
+			return -EINVAL;
+		strcpy(value->vstr, nla_data(param_data));
+		break;
+	case DEVLINK_PARAM_TYPE_BOOL:
+		if (param_data && nla_len(param_data))
+			return -EINVAL;
 		value->vbool = nla_get_flag(param_data);
-		अवरोध;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		break;
+	}
+	return 0;
+}
 
-अटल काष्ठा devlink_param_item *
-devlink_param_get_from_info(काष्ठा list_head *param_list,
-			    काष्ठा genl_info *info)
-अणु
-	अक्षर *param_name;
+static struct devlink_param_item *
+devlink_param_get_from_info(struct list_head *param_list,
+			    struct genl_info *info)
+{
+	char *param_name;
 
-	अगर (!info->attrs[DEVLINK_ATTR_PARAM_NAME])
-		वापस शून्य;
+	if (!info->attrs[DEVLINK_ATTR_PARAM_NAME])
+		return NULL;
 
 	param_name = nla_data(info->attrs[DEVLINK_ATTR_PARAM_NAME]);
-	वापस devlink_param_find_by_name(param_list, param_name);
-पूर्ण
+	return devlink_param_find_by_name(param_list, param_name);
+}
 
-अटल पूर्णांक devlink_nl_cmd_param_get_करोit(काष्ठा sk_buff *skb,
-					 काष्ठा genl_info *info)
-अणु
-	काष्ठा devlink *devlink = info->user_ptr[0];
-	काष्ठा devlink_param_item *param_item;
-	काष्ठा sk_buff *msg;
-	पूर्णांक err;
+static int devlink_nl_cmd_param_get_doit(struct sk_buff *skb,
+					 struct genl_info *info)
+{
+	struct devlink *devlink = info->user_ptr[0];
+	struct devlink_param_item *param_item;
+	struct sk_buff *msg;
+	int err;
 
 	param_item = devlink_param_get_from_info(&devlink->param_list, info);
-	अगर (!param_item)
-		वापस -EINVAL;
+	if (!param_item)
+		return -EINVAL;
 
 	msg = nlmsg_new(NLMSG_DEFAULT_SIZE, GFP_KERNEL);
-	अगर (!msg)
-		वापस -ENOMEM;
+	if (!msg)
+		return -ENOMEM;
 
 	err = devlink_nl_param_fill(msg, devlink, 0, param_item,
 				    DEVLINK_CMD_PARAM_GET,
 				    info->snd_portid, info->snd_seq, 0);
-	अगर (err) अणु
-		nlmsg_मुक्त(msg);
-		वापस err;
-	पूर्ण
+	if (err) {
+		nlmsg_free(msg);
+		return err;
+	}
 
-	वापस genlmsg_reply(msg, info);
-पूर्ण
+	return genlmsg_reply(msg, info);
+}
 
-अटल पूर्णांक __devlink_nl_cmd_param_set_करोit(काष्ठा devlink *devlink,
-					   अचिन्हित पूर्णांक port_index,
-					   काष्ठा list_head *param_list,
-					   काष्ठा genl_info *info,
-					   क्रमागत devlink_command cmd)
-अणु
-	क्रमागत devlink_param_type param_type;
-	काष्ठा devlink_param_gset_ctx ctx;
-	क्रमागत devlink_param_cmode cmode;
-	काष्ठा devlink_param_item *param_item;
-	स्थिर काष्ठा devlink_param *param;
-	जोड़ devlink_param_value value;
-	पूर्णांक err = 0;
+static int __devlink_nl_cmd_param_set_doit(struct devlink *devlink,
+					   unsigned int port_index,
+					   struct list_head *param_list,
+					   struct genl_info *info,
+					   enum devlink_command cmd)
+{
+	enum devlink_param_type param_type;
+	struct devlink_param_gset_ctx ctx;
+	enum devlink_param_cmode cmode;
+	struct devlink_param_item *param_item;
+	const struct devlink_param *param;
+	union devlink_param_value value;
+	int err = 0;
 
 	param_item = devlink_param_get_from_info(param_list, info);
-	अगर (!param_item)
-		वापस -EINVAL;
+	if (!param_item)
+		return -EINVAL;
 	param = param_item->param;
 	err = devlink_param_type_get_from_info(info, &param_type);
-	अगर (err)
-		वापस err;
-	अगर (param_type != param->type)
-		वापस -EINVAL;
+	if (err)
+		return err;
+	if (param_type != param->type)
+		return -EINVAL;
 	err = devlink_param_value_get_from_info(param, info, &value);
-	अगर (err)
-		वापस err;
-	अगर (param->validate) अणु
+	if (err)
+		return err;
+	if (param->validate) {
 		err = param->validate(devlink, param->id, value, info->extack);
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 
-	अगर (!info->attrs[DEVLINK_ATTR_PARAM_VALUE_CMODE])
-		वापस -EINVAL;
+	if (!info->attrs[DEVLINK_ATTR_PARAM_VALUE_CMODE])
+		return -EINVAL;
 	cmode = nla_get_u8(info->attrs[DEVLINK_ATTR_PARAM_VALUE_CMODE]);
-	अगर (!devlink_param_cmode_is_supported(param, cmode))
-		वापस -EOPNOTSUPP;
+	if (!devlink_param_cmode_is_supported(param, cmode))
+		return -EOPNOTSUPP;
 
-	अगर (cmode == DEVLINK_PARAM_CMODE_DRIVERINIT) अणु
-		अगर (param->type == DEVLINK_PARAM_TYPE_STRING)
-			म_नकल(param_item->driverinit_value.vstr, value.vstr);
-		अन्यथा
+	if (cmode == DEVLINK_PARAM_CMODE_DRIVERINIT) {
+		if (param->type == DEVLINK_PARAM_TYPE_STRING)
+			strcpy(param_item->driverinit_value.vstr, value.vstr);
+		else
 			param_item->driverinit_value = value;
 		param_item->driverinit_value_valid = true;
-	पूर्ण अन्यथा अणु
-		अगर (!param->set)
-			वापस -EOPNOTSUPP;
+	} else {
+		if (!param->set)
+			return -EOPNOTSUPP;
 		ctx.val = value;
 		ctx.cmode = cmode;
 		err = devlink_param_set(devlink, param, &ctx);
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 
-	devlink_param_notअगरy(devlink, port_index, param_item, cmd);
-	वापस 0;
-पूर्ण
+	devlink_param_notify(devlink, port_index, param_item, cmd);
+	return 0;
+}
 
-अटल पूर्णांक devlink_nl_cmd_param_set_करोit(काष्ठा sk_buff *skb,
-					 काष्ठा genl_info *info)
-अणु
-	काष्ठा devlink *devlink = info->user_ptr[0];
+static int devlink_nl_cmd_param_set_doit(struct sk_buff *skb,
+					 struct genl_info *info)
+{
+	struct devlink *devlink = info->user_ptr[0];
 
-	वापस __devlink_nl_cmd_param_set_करोit(devlink, 0, &devlink->param_list,
+	return __devlink_nl_cmd_param_set_doit(devlink, 0, &devlink->param_list,
 					       info, DEVLINK_CMD_PARAM_NEW);
-पूर्ण
+}
 
-अटल पूर्णांक devlink_param_रेजिस्टर_one(काष्ठा devlink *devlink,
-				      अचिन्हित पूर्णांक port_index,
-				      काष्ठा list_head *param_list,
-				      स्थिर काष्ठा devlink_param *param,
-				      क्रमागत devlink_command cmd)
-अणु
-	काष्ठा devlink_param_item *param_item;
+static int devlink_param_register_one(struct devlink *devlink,
+				      unsigned int port_index,
+				      struct list_head *param_list,
+				      const struct devlink_param *param,
+				      enum devlink_command cmd)
+{
+	struct devlink_param_item *param_item;
 
-	अगर (devlink_param_find_by_name(param_list, param->name))
-		वापस -EEXIST;
+	if (devlink_param_find_by_name(param_list, param->name))
+		return -EEXIST;
 
-	अगर (param->supported_cmodes == BIT(DEVLINK_PARAM_CMODE_DRIVERINIT))
+	if (param->supported_cmodes == BIT(DEVLINK_PARAM_CMODE_DRIVERINIT))
 		WARN_ON(param->get || param->set);
-	अन्यथा
+	else
 		WARN_ON(!param->get || !param->set);
 
-	param_item = kzalloc(माप(*param_item), GFP_KERNEL);
-	अगर (!param_item)
-		वापस -ENOMEM;
+	param_item = kzalloc(sizeof(*param_item), GFP_KERNEL);
+	if (!param_item)
+		return -ENOMEM;
 	param_item->param = param;
 
 	list_add_tail(&param_item->list, param_list);
-	devlink_param_notअगरy(devlink, port_index, param_item, cmd);
-	वापस 0;
-पूर्ण
+	devlink_param_notify(devlink, port_index, param_item, cmd);
+	return 0;
+}
 
-अटल व्योम devlink_param_unरेजिस्टर_one(काष्ठा devlink *devlink,
-					 अचिन्हित पूर्णांक port_index,
-					 काष्ठा list_head *param_list,
-					 स्थिर काष्ठा devlink_param *param,
-					 क्रमागत devlink_command cmd)
-अणु
-	काष्ठा devlink_param_item *param_item;
+static void devlink_param_unregister_one(struct devlink *devlink,
+					 unsigned int port_index,
+					 struct list_head *param_list,
+					 const struct devlink_param *param,
+					 enum devlink_command cmd)
+{
+	struct devlink_param_item *param_item;
 
 	param_item = devlink_param_find_by_name(param_list, param->name);
 	WARN_ON(!param_item);
-	devlink_param_notअगरy(devlink, port_index, param_item, cmd);
+	devlink_param_notify(devlink, port_index, param_item, cmd);
 	list_del(&param_item->list);
-	kमुक्त(param_item);
-पूर्ण
+	kfree(param_item);
+}
 
-अटल पूर्णांक devlink_nl_cmd_port_param_get_dumpit(काष्ठा sk_buff *msg,
-						काष्ठा netlink_callback *cb)
-अणु
-	काष्ठा devlink_param_item *param_item;
-	काष्ठा devlink_port *devlink_port;
-	काष्ठा devlink *devlink;
-	पूर्णांक start = cb->args[0];
-	पूर्णांक idx = 0;
-	पूर्णांक err = 0;
+static int devlink_nl_cmd_port_param_get_dumpit(struct sk_buff *msg,
+						struct netlink_callback *cb)
+{
+	struct devlink_param_item *param_item;
+	struct devlink_port *devlink_port;
+	struct devlink *devlink;
+	int start = cb->args[0];
+	int idx = 0;
+	int err = 0;
 
 	mutex_lock(&devlink_mutex);
-	list_क्रम_each_entry(devlink, &devlink_list, list) अणु
-		अगर (!net_eq(devlink_net(devlink), sock_net(msg->sk)))
-			जारी;
+	list_for_each_entry(devlink, &devlink_list, list) {
+		if (!net_eq(devlink_net(devlink), sock_net(msg->sk)))
+			continue;
 		mutex_lock(&devlink->lock);
-		list_क्रम_each_entry(devlink_port, &devlink->port_list, list) अणु
-			list_क्रम_each_entry(param_item,
-					    &devlink_port->param_list, list) अणु
-				अगर (idx < start) अणु
+		list_for_each_entry(devlink_port, &devlink->port_list, list) {
+			list_for_each_entry(param_item,
+					    &devlink_port->param_list, list) {
+				if (idx < start) {
 					idx++;
-					जारी;
-				पूर्ण
+					continue;
+				}
 				err = devlink_nl_param_fill(msg,
 						devlink_port->devlink,
 						devlink_port->index, param_item,
@@ -4326,244 +4325,244 @@ devlink_param_get_from_info(काष्ठा list_head *param_list,
 						NETLINK_CB(cb->skb).portid,
 						cb->nlh->nlmsg_seq,
 						NLM_F_MULTI);
-				अगर (err == -EOPNOTSUPP) अणु
+				if (err == -EOPNOTSUPP) {
 					err = 0;
-				पूर्ण अन्यथा अगर (err) अणु
+				} else if (err) {
 					mutex_unlock(&devlink->lock);
-					जाओ out;
-				पूर्ण
+					goto out;
+				}
 				idx++;
-			पूर्ण
-		पूर्ण
+			}
+		}
 		mutex_unlock(&devlink->lock);
-	पूर्ण
+	}
 out:
 	mutex_unlock(&devlink_mutex);
 
-	अगर (err != -EMSGSIZE)
-		वापस err;
+	if (err != -EMSGSIZE)
+		return err;
 
 	cb->args[0] = idx;
-	वापस msg->len;
-पूर्ण
+	return msg->len;
+}
 
-अटल पूर्णांक devlink_nl_cmd_port_param_get_करोit(काष्ठा sk_buff *skb,
-					      काष्ठा genl_info *info)
-अणु
-	काष्ठा devlink_port *devlink_port = info->user_ptr[1];
-	काष्ठा devlink_param_item *param_item;
-	काष्ठा sk_buff *msg;
-	पूर्णांक err;
+static int devlink_nl_cmd_port_param_get_doit(struct sk_buff *skb,
+					      struct genl_info *info)
+{
+	struct devlink_port *devlink_port = info->user_ptr[1];
+	struct devlink_param_item *param_item;
+	struct sk_buff *msg;
+	int err;
 
 	param_item = devlink_param_get_from_info(&devlink_port->param_list,
 						 info);
-	अगर (!param_item)
-		वापस -EINVAL;
+	if (!param_item)
+		return -EINVAL;
 
 	msg = nlmsg_new(NLMSG_DEFAULT_SIZE, GFP_KERNEL);
-	अगर (!msg)
-		वापस -ENOMEM;
+	if (!msg)
+		return -ENOMEM;
 
 	err = devlink_nl_param_fill(msg, devlink_port->devlink,
 				    devlink_port->index, param_item,
 				    DEVLINK_CMD_PORT_PARAM_GET,
 				    info->snd_portid, info->snd_seq, 0);
-	अगर (err) अणु
-		nlmsg_मुक्त(msg);
-		वापस err;
-	पूर्ण
+	if (err) {
+		nlmsg_free(msg);
+		return err;
+	}
 
-	वापस genlmsg_reply(msg, info);
-पूर्ण
+	return genlmsg_reply(msg, info);
+}
 
-अटल पूर्णांक devlink_nl_cmd_port_param_set_करोit(काष्ठा sk_buff *skb,
-					      काष्ठा genl_info *info)
-अणु
-	काष्ठा devlink_port *devlink_port = info->user_ptr[1];
+static int devlink_nl_cmd_port_param_set_doit(struct sk_buff *skb,
+					      struct genl_info *info)
+{
+	struct devlink_port *devlink_port = info->user_ptr[1];
 
-	वापस __devlink_nl_cmd_param_set_करोit(devlink_port->devlink,
+	return __devlink_nl_cmd_param_set_doit(devlink_port->devlink,
 					       devlink_port->index,
 					       &devlink_port->param_list, info,
 					       DEVLINK_CMD_PORT_PARAM_NEW);
-पूर्ण
+}
 
-अटल पूर्णांक devlink_nl_region_snapshot_id_put(काष्ठा sk_buff *msg,
-					     काष्ठा devlink *devlink,
-					     काष्ठा devlink_snapshot *snapshot)
-अणु
-	काष्ठा nlattr *snap_attr;
-	पूर्णांक err;
+static int devlink_nl_region_snapshot_id_put(struct sk_buff *msg,
+					     struct devlink *devlink,
+					     struct devlink_snapshot *snapshot)
+{
+	struct nlattr *snap_attr;
+	int err;
 
 	snap_attr = nla_nest_start_noflag(msg, DEVLINK_ATTR_REGION_SNAPSHOT);
-	अगर (!snap_attr)
-		वापस -EINVAL;
+	if (!snap_attr)
+		return -EINVAL;
 
 	err = nla_put_u32(msg, DEVLINK_ATTR_REGION_SNAPSHOT_ID, snapshot->id);
-	अगर (err)
-		जाओ nla_put_failure;
+	if (err)
+		goto nla_put_failure;
 
 	nla_nest_end(msg, snap_attr);
-	वापस 0;
+	return 0;
 
 nla_put_failure:
 	nla_nest_cancel(msg, snap_attr);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक devlink_nl_region_snapshots_id_put(काष्ठा sk_buff *msg,
-					      काष्ठा devlink *devlink,
-					      काष्ठा devlink_region *region)
-अणु
-	काष्ठा devlink_snapshot *snapshot;
-	काष्ठा nlattr *snapshots_attr;
-	पूर्णांक err;
+static int devlink_nl_region_snapshots_id_put(struct sk_buff *msg,
+					      struct devlink *devlink,
+					      struct devlink_region *region)
+{
+	struct devlink_snapshot *snapshot;
+	struct nlattr *snapshots_attr;
+	int err;
 
 	snapshots_attr = nla_nest_start_noflag(msg,
 					       DEVLINK_ATTR_REGION_SNAPSHOTS);
-	अगर (!snapshots_attr)
-		वापस -EINVAL;
+	if (!snapshots_attr)
+		return -EINVAL;
 
-	list_क्रम_each_entry(snapshot, &region->snapshot_list, list) अणु
+	list_for_each_entry(snapshot, &region->snapshot_list, list) {
 		err = devlink_nl_region_snapshot_id_put(msg, devlink, snapshot);
-		अगर (err)
-			जाओ nla_put_failure;
-	पूर्ण
+		if (err)
+			goto nla_put_failure;
+	}
 
 	nla_nest_end(msg, snapshots_attr);
-	वापस 0;
+	return 0;
 
 nla_put_failure:
 	nla_nest_cancel(msg, snapshots_attr);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक devlink_nl_region_fill(काष्ठा sk_buff *msg, काष्ठा devlink *devlink,
-				  क्रमागत devlink_command cmd, u32 portid,
-				  u32 seq, पूर्णांक flags,
-				  काष्ठा devlink_region *region)
-अणु
-	व्योम *hdr;
-	पूर्णांक err;
+static int devlink_nl_region_fill(struct sk_buff *msg, struct devlink *devlink,
+				  enum devlink_command cmd, u32 portid,
+				  u32 seq, int flags,
+				  struct devlink_region *region)
+{
+	void *hdr;
+	int err;
 
 	hdr = genlmsg_put(msg, portid, seq, &devlink_nl_family, flags, cmd);
-	अगर (!hdr)
-		वापस -EMSGSIZE;
+	if (!hdr)
+		return -EMSGSIZE;
 
 	err = devlink_nl_put_handle(msg, devlink);
-	अगर (err)
-		जाओ nla_put_failure;
+	if (err)
+		goto nla_put_failure;
 
-	अगर (region->port) अणु
+	if (region->port) {
 		err = nla_put_u32(msg, DEVLINK_ATTR_PORT_INDEX,
 				  region->port->index);
-		अगर (err)
-			जाओ nla_put_failure;
-	पूर्ण
+		if (err)
+			goto nla_put_failure;
+	}
 
 	err = nla_put_string(msg, DEVLINK_ATTR_REGION_NAME, region->ops->name);
-	अगर (err)
-		जाओ nla_put_failure;
+	if (err)
+		goto nla_put_failure;
 
 	err = nla_put_u64_64bit(msg, DEVLINK_ATTR_REGION_SIZE,
 				region->size,
 				DEVLINK_ATTR_PAD);
-	अगर (err)
-		जाओ nla_put_failure;
+	if (err)
+		goto nla_put_failure;
 
 	err = devlink_nl_region_snapshots_id_put(msg, devlink, region);
-	अगर (err)
-		जाओ nla_put_failure;
+	if (err)
+		goto nla_put_failure;
 
 	genlmsg_end(msg, hdr);
-	वापस 0;
+	return 0;
 
 nla_put_failure:
 	genlmsg_cancel(msg, hdr);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल काष्ठा sk_buff *
-devlink_nl_region_notअगरy_build(काष्ठा devlink_region *region,
-			       काष्ठा devlink_snapshot *snapshot,
-			       क्रमागत devlink_command cmd, u32 portid, u32 seq)
-अणु
-	काष्ठा devlink *devlink = region->devlink;
-	काष्ठा sk_buff *msg;
-	व्योम *hdr;
-	पूर्णांक err;
+static struct sk_buff *
+devlink_nl_region_notify_build(struct devlink_region *region,
+			       struct devlink_snapshot *snapshot,
+			       enum devlink_command cmd, u32 portid, u32 seq)
+{
+	struct devlink *devlink = region->devlink;
+	struct sk_buff *msg;
+	void *hdr;
+	int err;
 
 
 	msg = nlmsg_new(NLMSG_DEFAULT_SIZE, GFP_KERNEL);
-	अगर (!msg)
-		वापस ERR_PTR(-ENOMEM);
+	if (!msg)
+		return ERR_PTR(-ENOMEM);
 
 	hdr = genlmsg_put(msg, portid, seq, &devlink_nl_family, 0, cmd);
-	अगर (!hdr) अणु
+	if (!hdr) {
 		err = -EMSGSIZE;
-		जाओ out_मुक्त_msg;
-	पूर्ण
+		goto out_free_msg;
+	}
 
 	err = devlink_nl_put_handle(msg, devlink);
-	अगर (err)
-		जाओ out_cancel_msg;
+	if (err)
+		goto out_cancel_msg;
 
-	अगर (region->port) अणु
+	if (region->port) {
 		err = nla_put_u32(msg, DEVLINK_ATTR_PORT_INDEX,
 				  region->port->index);
-		अगर (err)
-			जाओ out_cancel_msg;
-	पूर्ण
+		if (err)
+			goto out_cancel_msg;
+	}
 
 	err = nla_put_string(msg, DEVLINK_ATTR_REGION_NAME,
 			     region->ops->name);
-	अगर (err)
-		जाओ out_cancel_msg;
+	if (err)
+		goto out_cancel_msg;
 
-	अगर (snapshot) अणु
+	if (snapshot) {
 		err = nla_put_u32(msg, DEVLINK_ATTR_REGION_SNAPSHOT_ID,
 				  snapshot->id);
-		अगर (err)
-			जाओ out_cancel_msg;
-	पूर्ण अन्यथा अणु
+		if (err)
+			goto out_cancel_msg;
+	} else {
 		err = nla_put_u64_64bit(msg, DEVLINK_ATTR_REGION_SIZE,
 					region->size, DEVLINK_ATTR_PAD);
-		अगर (err)
-			जाओ out_cancel_msg;
-	पूर्ण
+		if (err)
+			goto out_cancel_msg;
+	}
 	genlmsg_end(msg, hdr);
 
-	वापस msg;
+	return msg;
 
 out_cancel_msg:
 	genlmsg_cancel(msg, hdr);
-out_मुक्त_msg:
-	nlmsg_मुक्त(msg);
-	वापस ERR_PTR(err);
-पूर्ण
+out_free_msg:
+	nlmsg_free(msg);
+	return ERR_PTR(err);
+}
 
-अटल व्योम devlink_nl_region_notअगरy(काष्ठा devlink_region *region,
-				     काष्ठा devlink_snapshot *snapshot,
-				     क्रमागत devlink_command cmd)
-अणु
-	काष्ठा devlink *devlink = region->devlink;
-	काष्ठा sk_buff *msg;
+static void devlink_nl_region_notify(struct devlink_region *region,
+				     struct devlink_snapshot *snapshot,
+				     enum devlink_command cmd)
+{
+	struct devlink *devlink = region->devlink;
+	struct sk_buff *msg;
 
 	WARN_ON(cmd != DEVLINK_CMD_REGION_NEW && cmd != DEVLINK_CMD_REGION_DEL);
 
-	msg = devlink_nl_region_notअगरy_build(region, snapshot, cmd, 0, 0);
-	अगर (IS_ERR(msg))
-		वापस;
+	msg = devlink_nl_region_notify_build(region, snapshot, cmd, 0, 0);
+	if (IS_ERR(msg))
+		return;
 
 	genlmsg_multicast_netns(&devlink_nl_family, devlink_net(devlink),
 				msg, 0, DEVLINK_MCGRP_CONFIG, GFP_KERNEL);
-पूर्ण
+}
 
 /**
  * __devlink_snapshot_id_increment - Increment number of snapshots using an id
  *	@devlink: devlink instance
  *	@id: the snapshot id
  *
- *	Track when a new snapshot begins using an id. Load the count क्रम the
+ *	Track when a new snapshot begins using an id. Load the count for the
  *	given id from the snapshot xarray, increment it, and store it back.
  *
  *	Called when a new snapshot is created with the given id.
@@ -4573,26 +4572,26 @@ out_मुक्त_msg:
  *
  *	Returns 0 on success, or an error on failure.
  */
-अटल पूर्णांक __devlink_snapshot_id_increment(काष्ठा devlink *devlink, u32 id)
-अणु
-	अचिन्हित दीर्घ count;
-	व्योम *p;
+static int __devlink_snapshot_id_increment(struct devlink *devlink, u32 id)
+{
+	unsigned long count;
+	void *p;
 
-	lockdep_निश्चित_held(&devlink->lock);
+	lockdep_assert_held(&devlink->lock);
 
 	p = xa_load(&devlink->snapshot_ids, id);
-	अगर (WARN_ON(!p))
-		वापस -EINVAL;
+	if (WARN_ON(!p))
+		return -EINVAL;
 
-	अगर (WARN_ON(!xa_is_value(p)))
-		वापस -EINVAL;
+	if (WARN_ON(!xa_is_value(p)))
+		return -EINVAL;
 
 	count = xa_to_value(p);
 	count++;
 
-	वापस xa_err(xa_store(&devlink->snapshot_ids, id, xa_mk_value(count),
+	return xa_err(xa_store(&devlink->snapshot_ids, id, xa_mk_value(count),
 			       GFP_KERNEL));
-पूर्ण
+}
 
 /**
  * __devlink_snapshot_id_decrement - Decrease number of snapshots using an id
@@ -4600,130 +4599,130 @@ out_मुक्त_msg:
  *	@id: the snapshot id
  *
  *	Track when a snapshot is deleted and stops using an id. Load the count
- *	क्रम the given id from the snapshot xarray, decrement it, and store it
+ *	for the given id from the snapshot xarray, decrement it, and store it
  *	back.
  *
- *	If the count reaches zero, erase this id from the xarray, मुक्तing it
- *	up क्रम future re-use by devlink_region_snapshot_id_get().
+ *	If the count reaches zero, erase this id from the xarray, freeing it
+ *	up for future re-use by devlink_region_snapshot_id_get().
  *
  *	Called when a snapshot using the given id is deleted, and when the
  *	initial allocator of the id is finished using it.
  */
-अटल व्योम __devlink_snapshot_id_decrement(काष्ठा devlink *devlink, u32 id)
-अणु
-	अचिन्हित दीर्घ count;
-	व्योम *p;
+static void __devlink_snapshot_id_decrement(struct devlink *devlink, u32 id)
+{
+	unsigned long count;
+	void *p;
 
-	lockdep_निश्चित_held(&devlink->lock);
+	lockdep_assert_held(&devlink->lock);
 
 	p = xa_load(&devlink->snapshot_ids, id);
-	अगर (WARN_ON(!p))
-		वापस;
+	if (WARN_ON(!p))
+		return;
 
-	अगर (WARN_ON(!xa_is_value(p)))
-		वापस;
+	if (WARN_ON(!xa_is_value(p)))
+		return;
 
 	count = xa_to_value(p);
 
-	अगर (count > 1) अणु
+	if (count > 1) {
 		count--;
 		xa_store(&devlink->snapshot_ids, id, xa_mk_value(count),
 			 GFP_KERNEL);
-	पूर्ण अन्यथा अणु
+	} else {
 		/* If this was the last user, we can erase this id */
 		xa_erase(&devlink->snapshot_ids, id);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
- *	__devlink_snapshot_id_insert - Insert a specअगरic snapshot ID
+ *	__devlink_snapshot_id_insert - Insert a specific snapshot ID
  *	@devlink: devlink instance
  *	@id: the snapshot id
  *
- *	Mark the given snapshot id as used by inserting a zero value पूर्णांकo the
+ *	Mark the given snapshot id as used by inserting a zero value into the
  *	snapshot xarray.
  *
- *	This must be called जबतक holding the devlink instance lock. Unlike
+ *	This must be called while holding the devlink instance lock. Unlike
  *	devlink_snapshot_id_get, the initial reference count is zero, not one.
- *	It is expected that the id will immediately be used beक्रमe
+ *	It is expected that the id will immediately be used before
  *	releasing the devlink instance lock.
  *
- *	Returns zero on success, or an error code अगर the snapshot id could not
+ *	Returns zero on success, or an error code if the snapshot id could not
  *	be inserted.
  */
-अटल पूर्णांक __devlink_snapshot_id_insert(काष्ठा devlink *devlink, u32 id)
-अणु
-	lockdep_निश्चित_held(&devlink->lock);
+static int __devlink_snapshot_id_insert(struct devlink *devlink, u32 id)
+{
+	lockdep_assert_held(&devlink->lock);
 
-	अगर (xa_load(&devlink->snapshot_ids, id))
-		वापस -EEXIST;
+	if (xa_load(&devlink->snapshot_ids, id))
+		return -EEXIST;
 
-	वापस xa_err(xa_store(&devlink->snapshot_ids, id, xa_mk_value(0),
+	return xa_err(xa_store(&devlink->snapshot_ids, id, xa_mk_value(0),
 			       GFP_KERNEL));
-पूर्ण
+}
 
 /**
  *	__devlink_region_snapshot_id_get - get snapshot ID
  *	@devlink: devlink instance
- *	@id: storage to वापस snapshot id
+ *	@id: storage to return snapshot id
  *
  *	Allocates a new snapshot id. Returns zero on success, or a negative
- *	error on failure. Must be called जबतक holding the devlink instance
+ *	error on failure. Must be called while holding the devlink instance
  *	lock.
  *
  *	Snapshot IDs are tracked using an xarray which stores the number of
  *	users of the snapshot id.
  *
  *	Note that the caller of this function counts as a 'user', in order to
- *	aव्योम race conditions. The caller must release its hold on the
+ *	avoid race conditions. The caller must release its hold on the
  *	snapshot by using devlink_region_snapshot_id_put.
  */
-अटल पूर्णांक __devlink_region_snapshot_id_get(काष्ठा devlink *devlink, u32 *id)
-अणु
-	lockdep_निश्चित_held(&devlink->lock);
+static int __devlink_region_snapshot_id_get(struct devlink *devlink, u32 *id)
+{
+	lockdep_assert_held(&devlink->lock);
 
-	वापस xa_alloc(&devlink->snapshot_ids, id, xa_mk_value(1),
+	return xa_alloc(&devlink->snapshot_ids, id, xa_mk_value(1),
 			xa_limit_32b, GFP_KERNEL);
-पूर्ण
+}
 
 /**
  *	__devlink_region_snapshot_create - create a new snapshot
  *	This will add a new snapshot of a region. The snapshot
- *	will be stored on the region काष्ठा and can be accessed
- *	from devlink. This is useful क्रम future analyses of snapshots.
+ *	will be stored on the region struct and can be accessed
+ *	from devlink. This is useful for future analyses of snapshots.
  *	Multiple snapshots can be created on a region.
  *	The @snapshot_id should be obtained using the getter function.
  *
- *	Must be called only जबतक holding the devlink instance lock.
+ *	Must be called only while holding the devlink instance lock.
  *
  *	@region: devlink region of the snapshot
  *	@data: snapshot data
  *	@snapshot_id: snapshot id to be created
  */
-अटल पूर्णांक
-__devlink_region_snapshot_create(काष्ठा devlink_region *region,
+static int
+__devlink_region_snapshot_create(struct devlink_region *region,
 				 u8 *data, u32 snapshot_id)
-अणु
-	काष्ठा devlink *devlink = region->devlink;
-	काष्ठा devlink_snapshot *snapshot;
-	पूर्णांक err;
+{
+	struct devlink *devlink = region->devlink;
+	struct devlink_snapshot *snapshot;
+	int err;
 
-	lockdep_निश्चित_held(&devlink->lock);
+	lockdep_assert_held(&devlink->lock);
 
-	/* check अगर region can hold one more snapshot */
-	अगर (region->cur_snapshots == region->max_snapshots)
-		वापस -ENOSPC;
+	/* check if region can hold one more snapshot */
+	if (region->cur_snapshots == region->max_snapshots)
+		return -ENOSPC;
 
-	अगर (devlink_region_snapshot_get_by_id(region, snapshot_id))
-		वापस -EEXIST;
+	if (devlink_region_snapshot_get_by_id(region, snapshot_id))
+		return -EEXIST;
 
-	snapshot = kzalloc(माप(*snapshot), GFP_KERNEL);
-	अगर (!snapshot)
-		वापस -ENOMEM;
+	snapshot = kzalloc(sizeof(*snapshot), GFP_KERNEL);
+	if (!snapshot)
+		return -ENOMEM;
 
 	err = __devlink_snapshot_id_increment(devlink, snapshot_id);
-	अगर (err)
-		जाओ err_snapshot_id_increment;
+	if (err)
+		goto err_snapshot_id_increment;
 
 	snapshot->id = snapshot_id;
 	snapshot->region = region;
@@ -4733,511 +4732,511 @@ __devlink_region_snapshot_create(काष्ठा devlink_region *region,
 
 	region->cur_snapshots++;
 
-	devlink_nl_region_notअगरy(region, snapshot, DEVLINK_CMD_REGION_NEW);
-	वापस 0;
+	devlink_nl_region_notify(region, snapshot, DEVLINK_CMD_REGION_NEW);
+	return 0;
 
 err_snapshot_id_increment:
-	kमुक्त(snapshot);
-	वापस err;
-पूर्ण
+	kfree(snapshot);
+	return err;
+}
 
-अटल व्योम devlink_region_snapshot_del(काष्ठा devlink_region *region,
-					काष्ठा devlink_snapshot *snapshot)
-अणु
-	काष्ठा devlink *devlink = region->devlink;
+static void devlink_region_snapshot_del(struct devlink_region *region,
+					struct devlink_snapshot *snapshot)
+{
+	struct devlink *devlink = region->devlink;
 
-	lockdep_निश्चित_held(&devlink->lock);
+	lockdep_assert_held(&devlink->lock);
 
-	devlink_nl_region_notअगरy(region, snapshot, DEVLINK_CMD_REGION_DEL);
+	devlink_nl_region_notify(region, snapshot, DEVLINK_CMD_REGION_DEL);
 	region->cur_snapshots--;
 	list_del(&snapshot->list);
-	region->ops->deकाष्ठाor(snapshot->data);
+	region->ops->destructor(snapshot->data);
 	__devlink_snapshot_id_decrement(devlink, snapshot->id);
-	kमुक्त(snapshot);
-पूर्ण
+	kfree(snapshot);
+}
 
-अटल पूर्णांक devlink_nl_cmd_region_get_करोit(काष्ठा sk_buff *skb,
-					  काष्ठा genl_info *info)
-अणु
-	काष्ठा devlink *devlink = info->user_ptr[0];
-	काष्ठा devlink_port *port = शून्य;
-	काष्ठा devlink_region *region;
-	स्थिर अक्षर *region_name;
-	काष्ठा sk_buff *msg;
-	अचिन्हित पूर्णांक index;
-	पूर्णांक err;
+static int devlink_nl_cmd_region_get_doit(struct sk_buff *skb,
+					  struct genl_info *info)
+{
+	struct devlink *devlink = info->user_ptr[0];
+	struct devlink_port *port = NULL;
+	struct devlink_region *region;
+	const char *region_name;
+	struct sk_buff *msg;
+	unsigned int index;
+	int err;
 
-	अगर (!info->attrs[DEVLINK_ATTR_REGION_NAME])
-		वापस -EINVAL;
+	if (!info->attrs[DEVLINK_ATTR_REGION_NAME])
+		return -EINVAL;
 
-	अगर (info->attrs[DEVLINK_ATTR_PORT_INDEX]) अणु
+	if (info->attrs[DEVLINK_ATTR_PORT_INDEX]) {
 		index = nla_get_u32(info->attrs[DEVLINK_ATTR_PORT_INDEX]);
 
 		port = devlink_port_get_by_index(devlink, index);
-		अगर (!port)
-			वापस -ENODEV;
-	पूर्ण
+		if (!port)
+			return -ENODEV;
+	}
 
 	region_name = nla_data(info->attrs[DEVLINK_ATTR_REGION_NAME]);
-	अगर (port)
+	if (port)
 		region = devlink_port_region_get_by_name(port, region_name);
-	अन्यथा
+	else
 		region = devlink_region_get_by_name(devlink, region_name);
 
-	अगर (!region)
-		वापस -EINVAL;
+	if (!region)
+		return -EINVAL;
 
 	msg = nlmsg_new(NLMSG_DEFAULT_SIZE, GFP_KERNEL);
-	अगर (!msg)
-		वापस -ENOMEM;
+	if (!msg)
+		return -ENOMEM;
 
 	err = devlink_nl_region_fill(msg, devlink, DEVLINK_CMD_REGION_GET,
 				     info->snd_portid, info->snd_seq, 0,
 				     region);
-	अगर (err) अणु
-		nlmsg_मुक्त(msg);
-		वापस err;
-	पूर्ण
+	if (err) {
+		nlmsg_free(msg);
+		return err;
+	}
 
-	वापस genlmsg_reply(msg, info);
-पूर्ण
+	return genlmsg_reply(msg, info);
+}
 
-अटल पूर्णांक devlink_nl_cmd_region_get_port_dumpit(काष्ठा sk_buff *msg,
-						 काष्ठा netlink_callback *cb,
-						 काष्ठा devlink_port *port,
-						 पूर्णांक *idx,
-						 पूर्णांक start)
-अणु
-	काष्ठा devlink_region *region;
-	पूर्णांक err = 0;
+static int devlink_nl_cmd_region_get_port_dumpit(struct sk_buff *msg,
+						 struct netlink_callback *cb,
+						 struct devlink_port *port,
+						 int *idx,
+						 int start)
+{
+	struct devlink_region *region;
+	int err = 0;
 
-	list_क्रम_each_entry(region, &port->region_list, list) अणु
-		अगर (*idx < start) अणु
+	list_for_each_entry(region, &port->region_list, list) {
+		if (*idx < start) {
 			(*idx)++;
-			जारी;
-		पूर्ण
+			continue;
+		}
 		err = devlink_nl_region_fill(msg, port->devlink,
 					     DEVLINK_CMD_REGION_GET,
 					     NETLINK_CB(cb->skb).portid,
 					     cb->nlh->nlmsg_seq,
 					     NLM_F_MULTI, region);
-		अगर (err)
-			जाओ out;
+		if (err)
+			goto out;
 		(*idx)++;
-	पूर्ण
+	}
 
 out:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक devlink_nl_cmd_region_get_devlink_dumpit(काष्ठा sk_buff *msg,
-						    काष्ठा netlink_callback *cb,
-						    काष्ठा devlink *devlink,
-						    पूर्णांक *idx,
-						    पूर्णांक start)
-अणु
-	काष्ठा devlink_region *region;
-	काष्ठा devlink_port *port;
-	पूर्णांक err = 0;
+static int devlink_nl_cmd_region_get_devlink_dumpit(struct sk_buff *msg,
+						    struct netlink_callback *cb,
+						    struct devlink *devlink,
+						    int *idx,
+						    int start)
+{
+	struct devlink_region *region;
+	struct devlink_port *port;
+	int err = 0;
 
 	mutex_lock(&devlink->lock);
-	list_क्रम_each_entry(region, &devlink->region_list, list) अणु
-		अगर (*idx < start) अणु
+	list_for_each_entry(region, &devlink->region_list, list) {
+		if (*idx < start) {
 			(*idx)++;
-			जारी;
-		पूर्ण
+			continue;
+		}
 		err = devlink_nl_region_fill(msg, devlink,
 					     DEVLINK_CMD_REGION_GET,
 					     NETLINK_CB(cb->skb).portid,
 					     cb->nlh->nlmsg_seq,
 					     NLM_F_MULTI, region);
-		अगर (err)
-			जाओ out;
+		if (err)
+			goto out;
 		(*idx)++;
-	पूर्ण
+	}
 
-	list_क्रम_each_entry(port, &devlink->port_list, list) अणु
+	list_for_each_entry(port, &devlink->port_list, list) {
 		err = devlink_nl_cmd_region_get_port_dumpit(msg, cb, port, idx,
 							    start);
-		अगर (err)
-			जाओ out;
-	पूर्ण
+		if (err)
+			goto out;
+	}
 
 out:
 	mutex_unlock(&devlink->lock);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक devlink_nl_cmd_region_get_dumpit(काष्ठा sk_buff *msg,
-					    काष्ठा netlink_callback *cb)
-अणु
-	काष्ठा devlink *devlink;
-	पूर्णांक start = cb->args[0];
-	पूर्णांक idx = 0;
-	पूर्णांक err;
+static int devlink_nl_cmd_region_get_dumpit(struct sk_buff *msg,
+					    struct netlink_callback *cb)
+{
+	struct devlink *devlink;
+	int start = cb->args[0];
+	int idx = 0;
+	int err;
 
 	mutex_lock(&devlink_mutex);
-	list_क्रम_each_entry(devlink, &devlink_list, list) अणु
-		अगर (!net_eq(devlink_net(devlink), sock_net(msg->sk)))
-			जारी;
+	list_for_each_entry(devlink, &devlink_list, list) {
+		if (!net_eq(devlink_net(devlink), sock_net(msg->sk)))
+			continue;
 		err = devlink_nl_cmd_region_get_devlink_dumpit(msg, cb, devlink,
 							       &idx, start);
-		अगर (err)
-			जाओ out;
-	पूर्ण
+		if (err)
+			goto out;
+	}
 out:
 	mutex_unlock(&devlink_mutex);
 	cb->args[0] = idx;
-	वापस msg->len;
-पूर्ण
+	return msg->len;
+}
 
-अटल पूर्णांक devlink_nl_cmd_region_del(काष्ठा sk_buff *skb,
-				     काष्ठा genl_info *info)
-अणु
-	काष्ठा devlink *devlink = info->user_ptr[0];
-	काष्ठा devlink_snapshot *snapshot;
-	काष्ठा devlink_port *port = शून्य;
-	काष्ठा devlink_region *region;
-	स्थिर अक्षर *region_name;
-	अचिन्हित पूर्णांक index;
+static int devlink_nl_cmd_region_del(struct sk_buff *skb,
+				     struct genl_info *info)
+{
+	struct devlink *devlink = info->user_ptr[0];
+	struct devlink_snapshot *snapshot;
+	struct devlink_port *port = NULL;
+	struct devlink_region *region;
+	const char *region_name;
+	unsigned int index;
 	u32 snapshot_id;
 
-	अगर (!info->attrs[DEVLINK_ATTR_REGION_NAME] ||
+	if (!info->attrs[DEVLINK_ATTR_REGION_NAME] ||
 	    !info->attrs[DEVLINK_ATTR_REGION_SNAPSHOT_ID])
-		वापस -EINVAL;
+		return -EINVAL;
 
 	region_name = nla_data(info->attrs[DEVLINK_ATTR_REGION_NAME]);
 	snapshot_id = nla_get_u32(info->attrs[DEVLINK_ATTR_REGION_SNAPSHOT_ID]);
 
-	अगर (info->attrs[DEVLINK_ATTR_PORT_INDEX]) अणु
+	if (info->attrs[DEVLINK_ATTR_PORT_INDEX]) {
 		index = nla_get_u32(info->attrs[DEVLINK_ATTR_PORT_INDEX]);
 
 		port = devlink_port_get_by_index(devlink, index);
-		अगर (!port)
-			वापस -ENODEV;
-	पूर्ण
+		if (!port)
+			return -ENODEV;
+	}
 
-	अगर (port)
+	if (port)
 		region = devlink_port_region_get_by_name(port, region_name);
-	अन्यथा
+	else
 		region = devlink_region_get_by_name(devlink, region_name);
 
-	अगर (!region)
-		वापस -EINVAL;
+	if (!region)
+		return -EINVAL;
 
 	snapshot = devlink_region_snapshot_get_by_id(region, snapshot_id);
-	अगर (!snapshot)
-		वापस -EINVAL;
+	if (!snapshot)
+		return -EINVAL;
 
 	devlink_region_snapshot_del(region, snapshot);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-devlink_nl_cmd_region_new(काष्ठा sk_buff *skb, काष्ठा genl_info *info)
-अणु
-	काष्ठा devlink *devlink = info->user_ptr[0];
-	काष्ठा devlink_snapshot *snapshot;
-	काष्ठा devlink_port *port = शून्य;
-	काष्ठा nlattr *snapshot_id_attr;
-	काष्ठा devlink_region *region;
-	स्थिर अक्षर *region_name;
-	अचिन्हित पूर्णांक index;
+static int
+devlink_nl_cmd_region_new(struct sk_buff *skb, struct genl_info *info)
+{
+	struct devlink *devlink = info->user_ptr[0];
+	struct devlink_snapshot *snapshot;
+	struct devlink_port *port = NULL;
+	struct nlattr *snapshot_id_attr;
+	struct devlink_region *region;
+	const char *region_name;
+	unsigned int index;
 	u32 snapshot_id;
 	u8 *data;
-	पूर्णांक err;
+	int err;
 
-	अगर (!info->attrs[DEVLINK_ATTR_REGION_NAME]) अणु
+	if (!info->attrs[DEVLINK_ATTR_REGION_NAME]) {
 		NL_SET_ERR_MSG_MOD(info->extack, "No region name provided");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	region_name = nla_data(info->attrs[DEVLINK_ATTR_REGION_NAME]);
 
-	अगर (info->attrs[DEVLINK_ATTR_PORT_INDEX]) अणु
+	if (info->attrs[DEVLINK_ATTR_PORT_INDEX]) {
 		index = nla_get_u32(info->attrs[DEVLINK_ATTR_PORT_INDEX]);
 
 		port = devlink_port_get_by_index(devlink, index);
-		अगर (!port)
-			वापस -ENODEV;
-	पूर्ण
+		if (!port)
+			return -ENODEV;
+	}
 
-	अगर (port)
+	if (port)
 		region = devlink_port_region_get_by_name(port, region_name);
-	अन्यथा
+	else
 		region = devlink_region_get_by_name(devlink, region_name);
 
-	अगर (!region) अणु
+	if (!region) {
 		NL_SET_ERR_MSG_MOD(info->extack, "The requested region does not exist");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (!region->ops->snapshot) अणु
+	if (!region->ops->snapshot) {
 		NL_SET_ERR_MSG_MOD(info->extack, "The requested region does not support taking an immediate snapshot");
-		वापस -EOPNOTSUPP;
-	पूर्ण
+		return -EOPNOTSUPP;
+	}
 
-	अगर (region->cur_snapshots == region->max_snapshots) अणु
+	if (region->cur_snapshots == region->max_snapshots) {
 		NL_SET_ERR_MSG_MOD(info->extack, "The region has reached the maximum number of stored snapshots");
-		वापस -ENOSPC;
-	पूर्ण
+		return -ENOSPC;
+	}
 
 	snapshot_id_attr = info->attrs[DEVLINK_ATTR_REGION_SNAPSHOT_ID];
-	अगर (snapshot_id_attr) अणु
+	if (snapshot_id_attr) {
 		snapshot_id = nla_get_u32(snapshot_id_attr);
 
-		अगर (devlink_region_snapshot_get_by_id(region, snapshot_id)) अणु
+		if (devlink_region_snapshot_get_by_id(region, snapshot_id)) {
 			NL_SET_ERR_MSG_MOD(info->extack, "The requested snapshot id is already in use");
-			वापस -EEXIST;
-		पूर्ण
+			return -EEXIST;
+		}
 
 		err = __devlink_snapshot_id_insert(devlink, snapshot_id);
-		अगर (err)
-			वापस err;
-	पूर्ण अन्यथा अणु
+		if (err)
+			return err;
+	} else {
 		err = __devlink_region_snapshot_id_get(devlink, &snapshot_id);
-		अगर (err) अणु
+		if (err) {
 			NL_SET_ERR_MSG_MOD(info->extack, "Failed to allocate a new snapshot id");
-			वापस err;
-		पूर्ण
-	पूर्ण
+			return err;
+		}
+	}
 
-	अगर (port)
+	if (port)
 		err = region->port_ops->snapshot(port, region->port_ops,
 						 info->extack, &data);
-	अन्यथा
+	else
 		err = region->ops->snapshot(devlink, region->ops,
 					    info->extack, &data);
-	अगर (err)
-		जाओ err_snapshot_capture;
+	if (err)
+		goto err_snapshot_capture;
 
 	err = __devlink_region_snapshot_create(region, data, snapshot_id);
-	अगर (err)
-		जाओ err_snapshot_create;
+	if (err)
+		goto err_snapshot_create;
 
-	अगर (!snapshot_id_attr) अणु
-		काष्ठा sk_buff *msg;
+	if (!snapshot_id_attr) {
+		struct sk_buff *msg;
 
 		snapshot = devlink_region_snapshot_get_by_id(region,
 							     snapshot_id);
-		अगर (WARN_ON(!snapshot))
-			वापस -EINVAL;
+		if (WARN_ON(!snapshot))
+			return -EINVAL;
 
-		msg = devlink_nl_region_notअगरy_build(region, snapshot,
+		msg = devlink_nl_region_notify_build(region, snapshot,
 						     DEVLINK_CMD_REGION_NEW,
 						     info->snd_portid,
 						     info->snd_seq);
 		err = PTR_ERR_OR_ZERO(msg);
-		अगर (err)
-			जाओ err_notअगरy;
+		if (err)
+			goto err_notify;
 
 		err = genlmsg_reply(msg, info);
-		अगर (err)
-			जाओ err_notअगरy;
-	पूर्ण
+		if (err)
+			goto err_notify;
+	}
 
-	वापस 0;
+	return 0;
 
 err_snapshot_create:
-	region->ops->deकाष्ठाor(data);
+	region->ops->destructor(data);
 err_snapshot_capture:
 	__devlink_snapshot_id_decrement(devlink, snapshot_id);
-	वापस err;
+	return err;
 
-err_notअगरy:
+err_notify:
 	devlink_region_snapshot_del(region, snapshot);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक devlink_nl_cmd_region_पढ़ो_chunk_fill(काष्ठा sk_buff *msg,
-						 काष्ठा devlink *devlink,
+static int devlink_nl_cmd_region_read_chunk_fill(struct sk_buff *msg,
+						 struct devlink *devlink,
 						 u8 *chunk, u32 chunk_size,
 						 u64 addr)
-अणु
-	काष्ठा nlattr *chunk_attr;
-	पूर्णांक err;
+{
+	struct nlattr *chunk_attr;
+	int err;
 
 	chunk_attr = nla_nest_start_noflag(msg, DEVLINK_ATTR_REGION_CHUNK);
-	अगर (!chunk_attr)
-		वापस -EINVAL;
+	if (!chunk_attr)
+		return -EINVAL;
 
 	err = nla_put(msg, DEVLINK_ATTR_REGION_CHUNK_DATA, chunk_size, chunk);
-	अगर (err)
-		जाओ nla_put_failure;
+	if (err)
+		goto nla_put_failure;
 
 	err = nla_put_u64_64bit(msg, DEVLINK_ATTR_REGION_CHUNK_ADDR, addr,
 				DEVLINK_ATTR_PAD);
-	अगर (err)
-		जाओ nla_put_failure;
+	if (err)
+		goto nla_put_failure;
 
 	nla_nest_end(msg, chunk_attr);
-	वापस 0;
+	return 0;
 
 nla_put_failure:
 	nla_nest_cancel(msg, chunk_attr);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-#घोषणा DEVLINK_REGION_READ_CHUNK_SIZE 256
+#define DEVLINK_REGION_READ_CHUNK_SIZE 256
 
-अटल पूर्णांक devlink_nl_region_पढ़ो_snapshot_fill(काष्ठा sk_buff *skb,
-						काष्ठा devlink *devlink,
-						काष्ठा devlink_region *region,
-						काष्ठा nlattr **attrs,
+static int devlink_nl_region_read_snapshot_fill(struct sk_buff *skb,
+						struct devlink *devlink,
+						struct devlink_region *region,
+						struct nlattr **attrs,
 						u64 start_offset,
 						u64 end_offset,
 						u64 *new_offset)
-अणु
-	काष्ठा devlink_snapshot *snapshot;
+{
+	struct devlink_snapshot *snapshot;
 	u64 curr_offset = start_offset;
 	u32 snapshot_id;
-	पूर्णांक err = 0;
+	int err = 0;
 
 	*new_offset = start_offset;
 
 	snapshot_id = nla_get_u32(attrs[DEVLINK_ATTR_REGION_SNAPSHOT_ID]);
 	snapshot = devlink_region_snapshot_get_by_id(region, snapshot_id);
-	अगर (!snapshot)
-		वापस -EINVAL;
+	if (!snapshot)
+		return -EINVAL;
 
-	जबतक (curr_offset < end_offset) अणु
+	while (curr_offset < end_offset) {
 		u32 data_size;
 		u8 *data;
 
-		अगर (end_offset - curr_offset < DEVLINK_REGION_READ_CHUNK_SIZE)
+		if (end_offset - curr_offset < DEVLINK_REGION_READ_CHUNK_SIZE)
 			data_size = end_offset - curr_offset;
-		अन्यथा
+		else
 			data_size = DEVLINK_REGION_READ_CHUNK_SIZE;
 
 		data = &snapshot->data[curr_offset];
-		err = devlink_nl_cmd_region_पढ़ो_chunk_fill(skb, devlink,
+		err = devlink_nl_cmd_region_read_chunk_fill(skb, devlink,
 							    data, data_size,
 							    curr_offset);
-		अगर (err)
-			अवरोध;
+		if (err)
+			break;
 
 		curr_offset += data_size;
-	पूर्ण
+	}
 	*new_offset = curr_offset;
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक devlink_nl_cmd_region_पढ़ो_dumpit(काष्ठा sk_buff *skb,
-					     काष्ठा netlink_callback *cb)
-अणु
-	स्थिर काष्ठा genl_dumpit_info *info = genl_dumpit_info(cb);
+static int devlink_nl_cmd_region_read_dumpit(struct sk_buff *skb,
+					     struct netlink_callback *cb)
+{
+	const struct genl_dumpit_info *info = genl_dumpit_info(cb);
 	u64 ret_offset, start_offset, end_offset = U64_MAX;
-	काष्ठा nlattr **attrs = info->attrs;
-	काष्ठा devlink_port *port = शून्य;
-	काष्ठा devlink_region *region;
-	काष्ठा nlattr *chunks_attr;
-	स्थिर अक्षर *region_name;
-	काष्ठा devlink *devlink;
-	अचिन्हित पूर्णांक index;
-	व्योम *hdr;
-	पूर्णांक err;
+	struct nlattr **attrs = info->attrs;
+	struct devlink_port *port = NULL;
+	struct devlink_region *region;
+	struct nlattr *chunks_attr;
+	const char *region_name;
+	struct devlink *devlink;
+	unsigned int index;
+	void *hdr;
+	int err;
 
 	start_offset = *((u64 *)&cb->args[0]);
 
 	mutex_lock(&devlink_mutex);
 	devlink = devlink_get_from_attrs(sock_net(cb->skb->sk), attrs);
-	अगर (IS_ERR(devlink)) अणु
+	if (IS_ERR(devlink)) {
 		err = PTR_ERR(devlink);
-		जाओ out_dev;
-	पूर्ण
+		goto out_dev;
+	}
 
 	mutex_lock(&devlink->lock);
 
-	अगर (!attrs[DEVLINK_ATTR_REGION_NAME] ||
-	    !attrs[DEVLINK_ATTR_REGION_SNAPSHOT_ID]) अणु
+	if (!attrs[DEVLINK_ATTR_REGION_NAME] ||
+	    !attrs[DEVLINK_ATTR_REGION_SNAPSHOT_ID]) {
 		err = -EINVAL;
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 
-	अगर (info->attrs[DEVLINK_ATTR_PORT_INDEX]) अणु
+	if (info->attrs[DEVLINK_ATTR_PORT_INDEX]) {
 		index = nla_get_u32(info->attrs[DEVLINK_ATTR_PORT_INDEX]);
 
 		port = devlink_port_get_by_index(devlink, index);
-		अगर (!port) अणु
+		if (!port) {
 			err = -ENODEV;
-			जाओ out_unlock;
-		पूर्ण
-	पूर्ण
+			goto out_unlock;
+		}
+	}
 
 	region_name = nla_data(attrs[DEVLINK_ATTR_REGION_NAME]);
 
-	अगर (port)
+	if (port)
 		region = devlink_port_region_get_by_name(port, region_name);
-	अन्यथा
+	else
 		region = devlink_region_get_by_name(devlink, region_name);
 
-	अगर (!region) अणु
+	if (!region) {
 		err = -EINVAL;
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 
-	अगर (attrs[DEVLINK_ATTR_REGION_CHUNK_ADDR] &&
-	    attrs[DEVLINK_ATTR_REGION_CHUNK_LEN]) अणु
-		अगर (!start_offset)
+	if (attrs[DEVLINK_ATTR_REGION_CHUNK_ADDR] &&
+	    attrs[DEVLINK_ATTR_REGION_CHUNK_LEN]) {
+		if (!start_offset)
 			start_offset =
 				nla_get_u64(attrs[DEVLINK_ATTR_REGION_CHUNK_ADDR]);
 
 		end_offset = nla_get_u64(attrs[DEVLINK_ATTR_REGION_CHUNK_ADDR]);
 		end_offset += nla_get_u64(attrs[DEVLINK_ATTR_REGION_CHUNK_LEN]);
-	पूर्ण
+	}
 
-	अगर (end_offset > region->size)
+	if (end_offset > region->size)
 		end_offset = region->size;
 
-	/* वापस 0 अगर there is no further data to पढ़ो */
-	अगर (start_offset == end_offset) अणु
+	/* return 0 if there is no further data to read */
+	if (start_offset == end_offset) {
 		err = 0;
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 
 	hdr = genlmsg_put(skb, NETLINK_CB(cb->skb).portid, cb->nlh->nlmsg_seq,
 			  &devlink_nl_family, NLM_F_ACK | NLM_F_MULTI,
 			  DEVLINK_CMD_REGION_READ);
-	अगर (!hdr) अणु
+	if (!hdr) {
 		err = -EMSGSIZE;
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 
 	err = devlink_nl_put_handle(skb, devlink);
-	अगर (err)
-		जाओ nla_put_failure;
+	if (err)
+		goto nla_put_failure;
 
-	अगर (region->port) अणु
+	if (region->port) {
 		err = nla_put_u32(skb, DEVLINK_ATTR_PORT_INDEX,
 				  region->port->index);
-		अगर (err)
-			जाओ nla_put_failure;
-	पूर्ण
+		if (err)
+			goto nla_put_failure;
+	}
 
 	err = nla_put_string(skb, DEVLINK_ATTR_REGION_NAME, region_name);
-	अगर (err)
-		जाओ nla_put_failure;
+	if (err)
+		goto nla_put_failure;
 
 	chunks_attr = nla_nest_start_noflag(skb, DEVLINK_ATTR_REGION_CHUNKS);
-	अगर (!chunks_attr) अणु
+	if (!chunks_attr) {
 		err = -EMSGSIZE;
-		जाओ nla_put_failure;
-	पूर्ण
+		goto nla_put_failure;
+	}
 
-	err = devlink_nl_region_पढ़ो_snapshot_fill(skb, devlink,
+	err = devlink_nl_region_read_snapshot_fill(skb, devlink,
 						   region, attrs,
 						   start_offset,
 						   end_offset, &ret_offset);
 
-	अगर (err && err != -EMSGSIZE)
-		जाओ nla_put_failure;
+	if (err && err != -EMSGSIZE)
+		goto nla_put_failure;
 
-	/* Check अगर there was any progress करोne to prevent infinite loop */
-	अगर (ret_offset == start_offset) अणु
+	/* Check if there was any progress done to prevent infinite loop */
+	if (ret_offset == start_offset) {
 		err = -EINVAL;
-		जाओ nla_put_failure;
-	पूर्ण
+		goto nla_put_failure;
+	}
 
 	*((u64 *)&cb->args[0]) = ret_offset;
 
@@ -5246,7 +5245,7 @@ nla_put_failure:
 	mutex_unlock(&devlink->lock);
 	mutex_unlock(&devlink_mutex);
 
-	वापस skb->len;
+	return skb->len;
 
 nla_put_failure:
 	genlmsg_cancel(skb, hdr);
@@ -5254,166 +5253,166 @@ out_unlock:
 	mutex_unlock(&devlink->lock);
 out_dev:
 	mutex_unlock(&devlink_mutex);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-काष्ठा devlink_info_req अणु
-	काष्ठा sk_buff *msg;
-पूर्ण;
+struct devlink_info_req {
+	struct sk_buff *msg;
+};
 
-पूर्णांक devlink_info_driver_name_put(काष्ठा devlink_info_req *req, स्थिर अक्षर *name)
-अणु
-	वापस nla_put_string(req->msg, DEVLINK_ATTR_INFO_DRIVER_NAME, name);
-पूर्ण
+int devlink_info_driver_name_put(struct devlink_info_req *req, const char *name)
+{
+	return nla_put_string(req->msg, DEVLINK_ATTR_INFO_DRIVER_NAME, name);
+}
 EXPORT_SYMBOL_GPL(devlink_info_driver_name_put);
 
-पूर्णांक devlink_info_serial_number_put(काष्ठा devlink_info_req *req, स्थिर अक्षर *sn)
-अणु
-	वापस nla_put_string(req->msg, DEVLINK_ATTR_INFO_SERIAL_NUMBER, sn);
-पूर्ण
+int devlink_info_serial_number_put(struct devlink_info_req *req, const char *sn)
+{
+	return nla_put_string(req->msg, DEVLINK_ATTR_INFO_SERIAL_NUMBER, sn);
+}
 EXPORT_SYMBOL_GPL(devlink_info_serial_number_put);
 
-पूर्णांक devlink_info_board_serial_number_put(काष्ठा devlink_info_req *req,
-					 स्थिर अक्षर *bsn)
-अणु
-	वापस nla_put_string(req->msg, DEVLINK_ATTR_INFO_BOARD_SERIAL_NUMBER,
+int devlink_info_board_serial_number_put(struct devlink_info_req *req,
+					 const char *bsn)
+{
+	return nla_put_string(req->msg, DEVLINK_ATTR_INFO_BOARD_SERIAL_NUMBER,
 			      bsn);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(devlink_info_board_serial_number_put);
 
-अटल पूर्णांक devlink_info_version_put(काष्ठा devlink_info_req *req, पूर्णांक attr,
-				    स्थिर अक्षर *version_name,
-				    स्थिर अक्षर *version_value)
-अणु
-	काष्ठा nlattr *nest;
-	पूर्णांक err;
+static int devlink_info_version_put(struct devlink_info_req *req, int attr,
+				    const char *version_name,
+				    const char *version_value)
+{
+	struct nlattr *nest;
+	int err;
 
 	nest = nla_nest_start_noflag(req->msg, attr);
-	अगर (!nest)
-		वापस -EMSGSIZE;
+	if (!nest)
+		return -EMSGSIZE;
 
 	err = nla_put_string(req->msg, DEVLINK_ATTR_INFO_VERSION_NAME,
 			     version_name);
-	अगर (err)
-		जाओ nla_put_failure;
+	if (err)
+		goto nla_put_failure;
 
 	err = nla_put_string(req->msg, DEVLINK_ATTR_INFO_VERSION_VALUE,
 			     version_value);
-	अगर (err)
-		जाओ nla_put_failure;
+	if (err)
+		goto nla_put_failure;
 
 	nla_nest_end(req->msg, nest);
 
-	वापस 0;
+	return 0;
 
 nla_put_failure:
 	nla_nest_cancel(req->msg, nest);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक devlink_info_version_fixed_put(काष्ठा devlink_info_req *req,
-				   स्थिर अक्षर *version_name,
-				   स्थिर अक्षर *version_value)
-अणु
-	वापस devlink_info_version_put(req, DEVLINK_ATTR_INFO_VERSION_FIXED,
+int devlink_info_version_fixed_put(struct devlink_info_req *req,
+				   const char *version_name,
+				   const char *version_value)
+{
+	return devlink_info_version_put(req, DEVLINK_ATTR_INFO_VERSION_FIXED,
 					version_name, version_value);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(devlink_info_version_fixed_put);
 
-पूर्णांक devlink_info_version_stored_put(काष्ठा devlink_info_req *req,
-				    स्थिर अक्षर *version_name,
-				    स्थिर अक्षर *version_value)
-अणु
-	वापस devlink_info_version_put(req, DEVLINK_ATTR_INFO_VERSION_STORED,
+int devlink_info_version_stored_put(struct devlink_info_req *req,
+				    const char *version_name,
+				    const char *version_value)
+{
+	return devlink_info_version_put(req, DEVLINK_ATTR_INFO_VERSION_STORED,
 					version_name, version_value);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(devlink_info_version_stored_put);
 
-पूर्णांक devlink_info_version_running_put(काष्ठा devlink_info_req *req,
-				     स्थिर अक्षर *version_name,
-				     स्थिर अक्षर *version_value)
-अणु
-	वापस devlink_info_version_put(req, DEVLINK_ATTR_INFO_VERSION_RUNNING,
+int devlink_info_version_running_put(struct devlink_info_req *req,
+				     const char *version_name,
+				     const char *version_value)
+{
+	return devlink_info_version_put(req, DEVLINK_ATTR_INFO_VERSION_RUNNING,
 					version_name, version_value);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(devlink_info_version_running_put);
 
-अटल पूर्णांक
-devlink_nl_info_fill(काष्ठा sk_buff *msg, काष्ठा devlink *devlink,
-		     क्रमागत devlink_command cmd, u32 portid,
-		     u32 seq, पूर्णांक flags, काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा devlink_info_req req;
-	व्योम *hdr;
-	पूर्णांक err;
+static int
+devlink_nl_info_fill(struct sk_buff *msg, struct devlink *devlink,
+		     enum devlink_command cmd, u32 portid,
+		     u32 seq, int flags, struct netlink_ext_ack *extack)
+{
+	struct devlink_info_req req;
+	void *hdr;
+	int err;
 
 	hdr = genlmsg_put(msg, portid, seq, &devlink_nl_family, flags, cmd);
-	अगर (!hdr)
-		वापस -EMSGSIZE;
+	if (!hdr)
+		return -EMSGSIZE;
 
 	err = -EMSGSIZE;
-	अगर (devlink_nl_put_handle(msg, devlink))
-		जाओ err_cancel_msg;
+	if (devlink_nl_put_handle(msg, devlink))
+		goto err_cancel_msg;
 
 	req.msg = msg;
 	err = devlink->ops->info_get(devlink, &req, extack);
-	अगर (err)
-		जाओ err_cancel_msg;
+	if (err)
+		goto err_cancel_msg;
 
 	genlmsg_end(msg, hdr);
-	वापस 0;
+	return 0;
 
 err_cancel_msg:
 	genlmsg_cancel(msg, hdr);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक devlink_nl_cmd_info_get_करोit(काष्ठा sk_buff *skb,
-					काष्ठा genl_info *info)
-अणु
-	काष्ठा devlink *devlink = info->user_ptr[0];
-	काष्ठा sk_buff *msg;
-	पूर्णांक err;
+static int devlink_nl_cmd_info_get_doit(struct sk_buff *skb,
+					struct genl_info *info)
+{
+	struct devlink *devlink = info->user_ptr[0];
+	struct sk_buff *msg;
+	int err;
 
-	अगर (!devlink->ops->info_get)
-		वापस -EOPNOTSUPP;
+	if (!devlink->ops->info_get)
+		return -EOPNOTSUPP;
 
 	msg = nlmsg_new(NLMSG_DEFAULT_SIZE, GFP_KERNEL);
-	अगर (!msg)
-		वापस -ENOMEM;
+	if (!msg)
+		return -ENOMEM;
 
 	err = devlink_nl_info_fill(msg, devlink, DEVLINK_CMD_INFO_GET,
 				   info->snd_portid, info->snd_seq, 0,
 				   info->extack);
-	अगर (err) अणु
-		nlmsg_मुक्त(msg);
-		वापस err;
-	पूर्ण
+	if (err) {
+		nlmsg_free(msg);
+		return err;
+	}
 
-	वापस genlmsg_reply(msg, info);
-पूर्ण
+	return genlmsg_reply(msg, info);
+}
 
-अटल पूर्णांक devlink_nl_cmd_info_get_dumpit(काष्ठा sk_buff *msg,
-					  काष्ठा netlink_callback *cb)
-अणु
-	काष्ठा devlink *devlink;
-	पूर्णांक start = cb->args[0];
-	पूर्णांक idx = 0;
-	पूर्णांक err = 0;
+static int devlink_nl_cmd_info_get_dumpit(struct sk_buff *msg,
+					  struct netlink_callback *cb)
+{
+	struct devlink *devlink;
+	int start = cb->args[0];
+	int idx = 0;
+	int err = 0;
 
 	mutex_lock(&devlink_mutex);
-	list_क्रम_each_entry(devlink, &devlink_list, list) अणु
-		अगर (!net_eq(devlink_net(devlink), sock_net(msg->sk)))
-			जारी;
-		अगर (idx < start) अणु
+	list_for_each_entry(devlink, &devlink_list, list) {
+		if (!net_eq(devlink_net(devlink), sock_net(msg->sk)))
+			continue;
+		if (idx < start) {
 			idx++;
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		अगर (!devlink->ops->info_get) अणु
+		if (!devlink->ops->info_get) {
 			idx++;
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		mutex_lock(&devlink->lock);
 		err = devlink_nl_info_fill(msg, devlink, DEVLINK_CMD_INFO_GET,
@@ -5421,625 +5420,625 @@ err_cancel_msg:
 					   cb->nlh->nlmsg_seq, NLM_F_MULTI,
 					   cb->extack);
 		mutex_unlock(&devlink->lock);
-		अगर (err == -EOPNOTSUPP)
+		if (err == -EOPNOTSUPP)
 			err = 0;
-		अन्यथा अगर (err)
-			अवरोध;
+		else if (err)
+			break;
 		idx++;
-	पूर्ण
+	}
 	mutex_unlock(&devlink_mutex);
 
-	अगर (err != -EMSGSIZE)
-		वापस err;
+	if (err != -EMSGSIZE)
+		return err;
 
 	cb->args[0] = idx;
-	वापस msg->len;
-पूर्ण
+	return msg->len;
+}
 
-काष्ठा devlink_fmsg_item अणु
-	काष्ठा list_head list;
-	पूर्णांक attrtype;
+struct devlink_fmsg_item {
+	struct list_head list;
+	int attrtype;
 	u8 nla_type;
 	u16 len;
-	पूर्णांक value[];
-पूर्ण;
+	int value[];
+};
 
-काष्ठा devlink_fmsg अणु
-	काष्ठा list_head item_list;
-	bool putting_binary; /* This flag क्रमces enclosing of binary data
-			      * in an array brackets. It क्रमces using
+struct devlink_fmsg {
+	struct list_head item_list;
+	bool putting_binary; /* This flag forces enclosing of binary data
+			      * in an array brackets. It forces using
 			      * of designated API:
 			      * devlink_fmsg_binary_pair_nest_start()
 			      * devlink_fmsg_binary_pair_nest_end()
 			      */
-पूर्ण;
+};
 
-अटल काष्ठा devlink_fmsg *devlink_fmsg_alloc(व्योम)
-अणु
-	काष्ठा devlink_fmsg *fmsg;
+static struct devlink_fmsg *devlink_fmsg_alloc(void)
+{
+	struct devlink_fmsg *fmsg;
 
-	fmsg = kzalloc(माप(*fmsg), GFP_KERNEL);
-	अगर (!fmsg)
-		वापस शून्य;
+	fmsg = kzalloc(sizeof(*fmsg), GFP_KERNEL);
+	if (!fmsg)
+		return NULL;
 
 	INIT_LIST_HEAD(&fmsg->item_list);
 
-	वापस fmsg;
-पूर्ण
+	return fmsg;
+}
 
-अटल व्योम devlink_fmsg_मुक्त(काष्ठा devlink_fmsg *fmsg)
-अणु
-	काष्ठा devlink_fmsg_item *item, *पंचांगp;
+static void devlink_fmsg_free(struct devlink_fmsg *fmsg)
+{
+	struct devlink_fmsg_item *item, *tmp;
 
-	list_क्रम_each_entry_safe(item, पंचांगp, &fmsg->item_list, list) अणु
+	list_for_each_entry_safe(item, tmp, &fmsg->item_list, list) {
 		list_del(&item->list);
-		kमुक्त(item);
-	पूर्ण
-	kमुक्त(fmsg);
-पूर्ण
+		kfree(item);
+	}
+	kfree(fmsg);
+}
 
-अटल पूर्णांक devlink_fmsg_nest_common(काष्ठा devlink_fmsg *fmsg,
-				    पूर्णांक attrtype)
-अणु
-	काष्ठा devlink_fmsg_item *item;
+static int devlink_fmsg_nest_common(struct devlink_fmsg *fmsg,
+				    int attrtype)
+{
+	struct devlink_fmsg_item *item;
 
-	item = kzalloc(माप(*item), GFP_KERNEL);
-	अगर (!item)
-		वापस -ENOMEM;
+	item = kzalloc(sizeof(*item), GFP_KERNEL);
+	if (!item)
+		return -ENOMEM;
 
 	item->attrtype = attrtype;
 	list_add_tail(&item->list, &fmsg->item_list);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक devlink_fmsg_obj_nest_start(काष्ठा devlink_fmsg *fmsg)
-अणु
-	अगर (fmsg->putting_binary)
-		वापस -EINVAL;
+int devlink_fmsg_obj_nest_start(struct devlink_fmsg *fmsg)
+{
+	if (fmsg->putting_binary)
+		return -EINVAL;
 
-	वापस devlink_fmsg_nest_common(fmsg, DEVLINK_ATTR_FMSG_OBJ_NEST_START);
-पूर्ण
+	return devlink_fmsg_nest_common(fmsg, DEVLINK_ATTR_FMSG_OBJ_NEST_START);
+}
 EXPORT_SYMBOL_GPL(devlink_fmsg_obj_nest_start);
 
-अटल पूर्णांक devlink_fmsg_nest_end(काष्ठा devlink_fmsg *fmsg)
-अणु
-	अगर (fmsg->putting_binary)
-		वापस -EINVAL;
+static int devlink_fmsg_nest_end(struct devlink_fmsg *fmsg)
+{
+	if (fmsg->putting_binary)
+		return -EINVAL;
 
-	वापस devlink_fmsg_nest_common(fmsg, DEVLINK_ATTR_FMSG_NEST_END);
-पूर्ण
+	return devlink_fmsg_nest_common(fmsg, DEVLINK_ATTR_FMSG_NEST_END);
+}
 
-पूर्णांक devlink_fmsg_obj_nest_end(काष्ठा devlink_fmsg *fmsg)
-अणु
-	अगर (fmsg->putting_binary)
-		वापस -EINVAL;
+int devlink_fmsg_obj_nest_end(struct devlink_fmsg *fmsg)
+{
+	if (fmsg->putting_binary)
+		return -EINVAL;
 
-	वापस devlink_fmsg_nest_end(fmsg);
-पूर्ण
+	return devlink_fmsg_nest_end(fmsg);
+}
 EXPORT_SYMBOL_GPL(devlink_fmsg_obj_nest_end);
 
-#घोषणा DEVLINK_FMSG_MAX_SIZE (GENLMSG_DEFAULT_SIZE - GENL_HDRLEN - NLA_HDRLEN)
+#define DEVLINK_FMSG_MAX_SIZE (GENLMSG_DEFAULT_SIZE - GENL_HDRLEN - NLA_HDRLEN)
 
-अटल पूर्णांक devlink_fmsg_put_name(काष्ठा devlink_fmsg *fmsg, स्थिर अक्षर *name)
-अणु
-	काष्ठा devlink_fmsg_item *item;
+static int devlink_fmsg_put_name(struct devlink_fmsg *fmsg, const char *name)
+{
+	struct devlink_fmsg_item *item;
 
-	अगर (fmsg->putting_binary)
-		वापस -EINVAL;
+	if (fmsg->putting_binary)
+		return -EINVAL;
 
-	अगर (म_माप(name) + 1 > DEVLINK_FMSG_MAX_SIZE)
-		वापस -EMSGSIZE;
+	if (strlen(name) + 1 > DEVLINK_FMSG_MAX_SIZE)
+		return -EMSGSIZE;
 
-	item = kzalloc(माप(*item) + म_माप(name) + 1, GFP_KERNEL);
-	अगर (!item)
-		वापस -ENOMEM;
+	item = kzalloc(sizeof(*item) + strlen(name) + 1, GFP_KERNEL);
+	if (!item)
+		return -ENOMEM;
 
 	item->nla_type = NLA_NUL_STRING;
-	item->len = म_माप(name) + 1;
+	item->len = strlen(name) + 1;
 	item->attrtype = DEVLINK_ATTR_FMSG_OBJ_NAME;
-	स_नकल(&item->value, name, item->len);
+	memcpy(&item->value, name, item->len);
 	list_add_tail(&item->list, &fmsg->item_list);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक devlink_fmsg_pair_nest_start(काष्ठा devlink_fmsg *fmsg, स्थिर अक्षर *name)
-अणु
-	पूर्णांक err;
+int devlink_fmsg_pair_nest_start(struct devlink_fmsg *fmsg, const char *name)
+{
+	int err;
 
-	अगर (fmsg->putting_binary)
-		वापस -EINVAL;
+	if (fmsg->putting_binary)
+		return -EINVAL;
 
 	err = devlink_fmsg_nest_common(fmsg, DEVLINK_ATTR_FMSG_PAIR_NEST_START);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	err = devlink_fmsg_put_name(fmsg, name);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(devlink_fmsg_pair_nest_start);
 
-पूर्णांक devlink_fmsg_pair_nest_end(काष्ठा devlink_fmsg *fmsg)
-अणु
-	अगर (fmsg->putting_binary)
-		वापस -EINVAL;
+int devlink_fmsg_pair_nest_end(struct devlink_fmsg *fmsg)
+{
+	if (fmsg->putting_binary)
+		return -EINVAL;
 
-	वापस devlink_fmsg_nest_end(fmsg);
-पूर्ण
+	return devlink_fmsg_nest_end(fmsg);
+}
 EXPORT_SYMBOL_GPL(devlink_fmsg_pair_nest_end);
 
-पूर्णांक devlink_fmsg_arr_pair_nest_start(काष्ठा devlink_fmsg *fmsg,
-				     स्थिर अक्षर *name)
-अणु
-	पूर्णांक err;
+int devlink_fmsg_arr_pair_nest_start(struct devlink_fmsg *fmsg,
+				     const char *name)
+{
+	int err;
 
-	अगर (fmsg->putting_binary)
-		वापस -EINVAL;
+	if (fmsg->putting_binary)
+		return -EINVAL;
 
 	err = devlink_fmsg_pair_nest_start(fmsg, name);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	err = devlink_fmsg_nest_common(fmsg, DEVLINK_ATTR_FMSG_ARR_NEST_START);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(devlink_fmsg_arr_pair_nest_start);
 
-पूर्णांक devlink_fmsg_arr_pair_nest_end(काष्ठा devlink_fmsg *fmsg)
-अणु
-	पूर्णांक err;
+int devlink_fmsg_arr_pair_nest_end(struct devlink_fmsg *fmsg)
+{
+	int err;
 
-	अगर (fmsg->putting_binary)
-		वापस -EINVAL;
-
-	err = devlink_fmsg_nest_end(fmsg);
-	अगर (err)
-		वापस err;
+	if (fmsg->putting_binary)
+		return -EINVAL;
 
 	err = devlink_fmsg_nest_end(fmsg);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	वापस 0;
-पूर्ण
+	err = devlink_fmsg_nest_end(fmsg);
+	if (err)
+		return err;
+
+	return 0;
+}
 EXPORT_SYMBOL_GPL(devlink_fmsg_arr_pair_nest_end);
 
-पूर्णांक devlink_fmsg_binary_pair_nest_start(काष्ठा devlink_fmsg *fmsg,
-					स्थिर अक्षर *name)
-अणु
-	पूर्णांक err;
+int devlink_fmsg_binary_pair_nest_start(struct devlink_fmsg *fmsg,
+					const char *name)
+{
+	int err;
 
 	err = devlink_fmsg_arr_pair_nest_start(fmsg, name);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	fmsg->putting_binary = true;
-	वापस err;
-पूर्ण
+	return err;
+}
 EXPORT_SYMBOL_GPL(devlink_fmsg_binary_pair_nest_start);
 
-पूर्णांक devlink_fmsg_binary_pair_nest_end(काष्ठा devlink_fmsg *fmsg)
-अणु
-	अगर (!fmsg->putting_binary)
-		वापस -EINVAL;
+int devlink_fmsg_binary_pair_nest_end(struct devlink_fmsg *fmsg)
+{
+	if (!fmsg->putting_binary)
+		return -EINVAL;
 
 	fmsg->putting_binary = false;
-	वापस devlink_fmsg_arr_pair_nest_end(fmsg);
-पूर्ण
+	return devlink_fmsg_arr_pair_nest_end(fmsg);
+}
 EXPORT_SYMBOL_GPL(devlink_fmsg_binary_pair_nest_end);
 
-अटल पूर्णांक devlink_fmsg_put_value(काष्ठा devlink_fmsg *fmsg,
-				  स्थिर व्योम *value, u16 value_len,
+static int devlink_fmsg_put_value(struct devlink_fmsg *fmsg,
+				  const void *value, u16 value_len,
 				  u8 value_nla_type)
-अणु
-	काष्ठा devlink_fmsg_item *item;
+{
+	struct devlink_fmsg_item *item;
 
-	अगर (value_len > DEVLINK_FMSG_MAX_SIZE)
-		वापस -EMSGSIZE;
+	if (value_len > DEVLINK_FMSG_MAX_SIZE)
+		return -EMSGSIZE;
 
-	item = kzalloc(माप(*item) + value_len, GFP_KERNEL);
-	अगर (!item)
-		वापस -ENOMEM;
+	item = kzalloc(sizeof(*item) + value_len, GFP_KERNEL);
+	if (!item)
+		return -ENOMEM;
 
 	item->nla_type = value_nla_type;
 	item->len = value_len;
 	item->attrtype = DEVLINK_ATTR_FMSG_OBJ_VALUE_DATA;
-	स_नकल(&item->value, value, item->len);
+	memcpy(&item->value, value, item->len);
 	list_add_tail(&item->list, &fmsg->item_list);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक devlink_fmsg_bool_put(काष्ठा devlink_fmsg *fmsg, bool value)
-अणु
-	अगर (fmsg->putting_binary)
-		वापस -EINVAL;
+int devlink_fmsg_bool_put(struct devlink_fmsg *fmsg, bool value)
+{
+	if (fmsg->putting_binary)
+		return -EINVAL;
 
-	वापस devlink_fmsg_put_value(fmsg, &value, माप(value), NLA_FLAG);
-पूर्ण
+	return devlink_fmsg_put_value(fmsg, &value, sizeof(value), NLA_FLAG);
+}
 EXPORT_SYMBOL_GPL(devlink_fmsg_bool_put);
 
-पूर्णांक devlink_fmsg_u8_put(काष्ठा devlink_fmsg *fmsg, u8 value)
-अणु
-	अगर (fmsg->putting_binary)
-		वापस -EINVAL;
+int devlink_fmsg_u8_put(struct devlink_fmsg *fmsg, u8 value)
+{
+	if (fmsg->putting_binary)
+		return -EINVAL;
 
-	वापस devlink_fmsg_put_value(fmsg, &value, माप(value), NLA_U8);
-पूर्ण
+	return devlink_fmsg_put_value(fmsg, &value, sizeof(value), NLA_U8);
+}
 EXPORT_SYMBOL_GPL(devlink_fmsg_u8_put);
 
-पूर्णांक devlink_fmsg_u32_put(काष्ठा devlink_fmsg *fmsg, u32 value)
-अणु
-	अगर (fmsg->putting_binary)
-		वापस -EINVAL;
+int devlink_fmsg_u32_put(struct devlink_fmsg *fmsg, u32 value)
+{
+	if (fmsg->putting_binary)
+		return -EINVAL;
 
-	वापस devlink_fmsg_put_value(fmsg, &value, माप(value), NLA_U32);
-पूर्ण
+	return devlink_fmsg_put_value(fmsg, &value, sizeof(value), NLA_U32);
+}
 EXPORT_SYMBOL_GPL(devlink_fmsg_u32_put);
 
-पूर्णांक devlink_fmsg_u64_put(काष्ठा devlink_fmsg *fmsg, u64 value)
-अणु
-	अगर (fmsg->putting_binary)
-		वापस -EINVAL;
+int devlink_fmsg_u64_put(struct devlink_fmsg *fmsg, u64 value)
+{
+	if (fmsg->putting_binary)
+		return -EINVAL;
 
-	वापस devlink_fmsg_put_value(fmsg, &value, माप(value), NLA_U64);
-पूर्ण
+	return devlink_fmsg_put_value(fmsg, &value, sizeof(value), NLA_U64);
+}
 EXPORT_SYMBOL_GPL(devlink_fmsg_u64_put);
 
-पूर्णांक devlink_fmsg_string_put(काष्ठा devlink_fmsg *fmsg, स्थिर अक्षर *value)
-अणु
-	अगर (fmsg->putting_binary)
-		वापस -EINVAL;
+int devlink_fmsg_string_put(struct devlink_fmsg *fmsg, const char *value)
+{
+	if (fmsg->putting_binary)
+		return -EINVAL;
 
-	वापस devlink_fmsg_put_value(fmsg, value, म_माप(value) + 1,
+	return devlink_fmsg_put_value(fmsg, value, strlen(value) + 1,
 				      NLA_NUL_STRING);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(devlink_fmsg_string_put);
 
-पूर्णांक devlink_fmsg_binary_put(काष्ठा devlink_fmsg *fmsg, स्थिर व्योम *value,
+int devlink_fmsg_binary_put(struct devlink_fmsg *fmsg, const void *value,
 			    u16 value_len)
-अणु
-	अगर (!fmsg->putting_binary)
-		वापस -EINVAL;
+{
+	if (!fmsg->putting_binary)
+		return -EINVAL;
 
-	वापस devlink_fmsg_put_value(fmsg, value, value_len, NLA_BINARY);
-पूर्ण
+	return devlink_fmsg_put_value(fmsg, value, value_len, NLA_BINARY);
+}
 EXPORT_SYMBOL_GPL(devlink_fmsg_binary_put);
 
-पूर्णांक devlink_fmsg_bool_pair_put(काष्ठा devlink_fmsg *fmsg, स्थिर अक्षर *name,
+int devlink_fmsg_bool_pair_put(struct devlink_fmsg *fmsg, const char *name,
 			       bool value)
-अणु
-	पूर्णांक err;
+{
+	int err;
 
 	err = devlink_fmsg_pair_nest_start(fmsg, name);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	err = devlink_fmsg_bool_put(fmsg, value);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	err = devlink_fmsg_pair_nest_end(fmsg);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(devlink_fmsg_bool_pair_put);
 
-पूर्णांक devlink_fmsg_u8_pair_put(काष्ठा devlink_fmsg *fmsg, स्थिर अक्षर *name,
+int devlink_fmsg_u8_pair_put(struct devlink_fmsg *fmsg, const char *name,
 			     u8 value)
-अणु
-	पूर्णांक err;
+{
+	int err;
 
 	err = devlink_fmsg_pair_nest_start(fmsg, name);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	err = devlink_fmsg_u8_put(fmsg, value);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	err = devlink_fmsg_pair_nest_end(fmsg);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(devlink_fmsg_u8_pair_put);
 
-पूर्णांक devlink_fmsg_u32_pair_put(काष्ठा devlink_fmsg *fmsg, स्थिर अक्षर *name,
+int devlink_fmsg_u32_pair_put(struct devlink_fmsg *fmsg, const char *name,
 			      u32 value)
-अणु
-	पूर्णांक err;
+{
+	int err;
 
 	err = devlink_fmsg_pair_nest_start(fmsg, name);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	err = devlink_fmsg_u32_put(fmsg, value);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	err = devlink_fmsg_pair_nest_end(fmsg);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(devlink_fmsg_u32_pair_put);
 
-पूर्णांक devlink_fmsg_u64_pair_put(काष्ठा devlink_fmsg *fmsg, स्थिर अक्षर *name,
+int devlink_fmsg_u64_pair_put(struct devlink_fmsg *fmsg, const char *name,
 			      u64 value)
-अणु
-	पूर्णांक err;
+{
+	int err;
 
 	err = devlink_fmsg_pair_nest_start(fmsg, name);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	err = devlink_fmsg_u64_put(fmsg, value);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	err = devlink_fmsg_pair_nest_end(fmsg);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(devlink_fmsg_u64_pair_put);
 
-पूर्णांक devlink_fmsg_string_pair_put(काष्ठा devlink_fmsg *fmsg, स्थिर अक्षर *name,
-				 स्थिर अक्षर *value)
-अणु
-	पूर्णांक err;
+int devlink_fmsg_string_pair_put(struct devlink_fmsg *fmsg, const char *name,
+				 const char *value)
+{
+	int err;
 
 	err = devlink_fmsg_pair_nest_start(fmsg, name);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	err = devlink_fmsg_string_put(fmsg, value);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	err = devlink_fmsg_pair_nest_end(fmsg);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(devlink_fmsg_string_pair_put);
 
-पूर्णांक devlink_fmsg_binary_pair_put(काष्ठा devlink_fmsg *fmsg, स्थिर अक्षर *name,
-				 स्थिर व्योम *value, u32 value_len)
-अणु
+int devlink_fmsg_binary_pair_put(struct devlink_fmsg *fmsg, const char *name,
+				 const void *value, u32 value_len)
+{
 	u32 data_size;
-	पूर्णांक end_err;
+	int end_err;
 	u32 offset;
-	पूर्णांक err;
+	int err;
 
 	err = devlink_fmsg_binary_pair_nest_start(fmsg, name);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	क्रम (offset = 0; offset < value_len; offset += data_size) अणु
+	for (offset = 0; offset < value_len; offset += data_size) {
 		data_size = value_len - offset;
-		अगर (data_size > DEVLINK_FMSG_MAX_SIZE)
+		if (data_size > DEVLINK_FMSG_MAX_SIZE)
 			data_size = DEVLINK_FMSG_MAX_SIZE;
 		err = devlink_fmsg_binary_put(fmsg, value + offset, data_size);
-		अगर (err)
-			अवरोध;
-		/* Exit from loop with a अवरोध (instead of
-		 * वापस) to make sure putting_binary is turned off in
+		if (err)
+			break;
+		/* Exit from loop with a break (instead of
+		 * return) to make sure putting_binary is turned off in
 		 * devlink_fmsg_binary_pair_nest_end
 		 */
-	पूर्ण
+	}
 
 	end_err = devlink_fmsg_binary_pair_nest_end(fmsg);
-	अगर (end_err)
+	if (end_err)
 		err = end_err;
 
-	वापस err;
-पूर्ण
+	return err;
+}
 EXPORT_SYMBOL_GPL(devlink_fmsg_binary_pair_put);
 
-अटल पूर्णांक
-devlink_fmsg_item_fill_type(काष्ठा devlink_fmsg_item *msg, काष्ठा sk_buff *skb)
-अणु
-	चयन (msg->nla_type) अणु
-	हाल NLA_FLAG:
-	हाल NLA_U8:
-	हाल NLA_U32:
-	हाल NLA_U64:
-	हाल NLA_NUL_STRING:
-	हाल NLA_BINARY:
-		वापस nla_put_u8(skb, DEVLINK_ATTR_FMSG_OBJ_VALUE_TYPE,
+static int
+devlink_fmsg_item_fill_type(struct devlink_fmsg_item *msg, struct sk_buff *skb)
+{
+	switch (msg->nla_type) {
+	case NLA_FLAG:
+	case NLA_U8:
+	case NLA_U32:
+	case NLA_U64:
+	case NLA_NUL_STRING:
+	case NLA_BINARY:
+		return nla_put_u8(skb, DEVLINK_ATTR_FMSG_OBJ_VALUE_TYPE,
 				  msg->nla_type);
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-पूर्ण
+	default:
+		return -EINVAL;
+	}
+}
 
-अटल पूर्णांक
-devlink_fmsg_item_fill_data(काष्ठा devlink_fmsg_item *msg, काष्ठा sk_buff *skb)
-अणु
-	पूर्णांक attrtype = DEVLINK_ATTR_FMSG_OBJ_VALUE_DATA;
-	u8 पंचांगp;
+static int
+devlink_fmsg_item_fill_data(struct devlink_fmsg_item *msg, struct sk_buff *skb)
+{
+	int attrtype = DEVLINK_ATTR_FMSG_OBJ_VALUE_DATA;
+	u8 tmp;
 
-	चयन (msg->nla_type) अणु
-	हाल NLA_FLAG:
+	switch (msg->nla_type) {
+	case NLA_FLAG:
 		/* Always provide flag data, regardless of its value */
-		पंचांगp = *(bool *) msg->value;
+		tmp = *(bool *) msg->value;
 
-		वापस nla_put_u8(skb, attrtype, पंचांगp);
-	हाल NLA_U8:
-		वापस nla_put_u8(skb, attrtype, *(u8 *) msg->value);
-	हाल NLA_U32:
-		वापस nla_put_u32(skb, attrtype, *(u32 *) msg->value);
-	हाल NLA_U64:
-		वापस nla_put_u64_64bit(skb, attrtype, *(u64 *) msg->value,
+		return nla_put_u8(skb, attrtype, tmp);
+	case NLA_U8:
+		return nla_put_u8(skb, attrtype, *(u8 *) msg->value);
+	case NLA_U32:
+		return nla_put_u32(skb, attrtype, *(u32 *) msg->value);
+	case NLA_U64:
+		return nla_put_u64_64bit(skb, attrtype, *(u64 *) msg->value,
 					 DEVLINK_ATTR_PAD);
-	हाल NLA_NUL_STRING:
-		वापस nla_put_string(skb, attrtype, (अक्षर *) &msg->value);
-	हाल NLA_BINARY:
-		वापस nla_put(skb, attrtype, msg->len, (व्योम *) &msg->value);
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-पूर्ण
+	case NLA_NUL_STRING:
+		return nla_put_string(skb, attrtype, (char *) &msg->value);
+	case NLA_BINARY:
+		return nla_put(skb, attrtype, msg->len, (void *) &msg->value);
+	default:
+		return -EINVAL;
+	}
+}
 
-अटल पूर्णांक
-devlink_fmsg_prepare_skb(काष्ठा devlink_fmsg *fmsg, काष्ठा sk_buff *skb,
-			 पूर्णांक *start)
-अणु
-	काष्ठा devlink_fmsg_item *item;
-	काष्ठा nlattr *fmsg_nlattr;
-	पूर्णांक i = 0;
-	पूर्णांक err;
+static int
+devlink_fmsg_prepare_skb(struct devlink_fmsg *fmsg, struct sk_buff *skb,
+			 int *start)
+{
+	struct devlink_fmsg_item *item;
+	struct nlattr *fmsg_nlattr;
+	int i = 0;
+	int err;
 
 	fmsg_nlattr = nla_nest_start_noflag(skb, DEVLINK_ATTR_FMSG);
-	अगर (!fmsg_nlattr)
-		वापस -EMSGSIZE;
+	if (!fmsg_nlattr)
+		return -EMSGSIZE;
 
-	list_क्रम_each_entry(item, &fmsg->item_list, list) अणु
-		अगर (i < *start) अणु
+	list_for_each_entry(item, &fmsg->item_list, list) {
+		if (i < *start) {
 			i++;
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		चयन (item->attrtype) अणु
-		हाल DEVLINK_ATTR_FMSG_OBJ_NEST_START:
-		हाल DEVLINK_ATTR_FMSG_PAIR_NEST_START:
-		हाल DEVLINK_ATTR_FMSG_ARR_NEST_START:
-		हाल DEVLINK_ATTR_FMSG_NEST_END:
+		switch (item->attrtype) {
+		case DEVLINK_ATTR_FMSG_OBJ_NEST_START:
+		case DEVLINK_ATTR_FMSG_PAIR_NEST_START:
+		case DEVLINK_ATTR_FMSG_ARR_NEST_START:
+		case DEVLINK_ATTR_FMSG_NEST_END:
 			err = nla_put_flag(skb, item->attrtype);
-			अवरोध;
-		हाल DEVLINK_ATTR_FMSG_OBJ_VALUE_DATA:
+			break;
+		case DEVLINK_ATTR_FMSG_OBJ_VALUE_DATA:
 			err = devlink_fmsg_item_fill_type(item, skb);
-			अगर (err)
-				अवरोध;
+			if (err)
+				break;
 			err = devlink_fmsg_item_fill_data(item, skb);
-			अवरोध;
-		हाल DEVLINK_ATTR_FMSG_OBJ_NAME:
+			break;
+		case DEVLINK_ATTR_FMSG_OBJ_NAME:
 			err = nla_put_string(skb, item->attrtype,
-					     (अक्षर *) &item->value);
-			अवरोध;
-		शेष:
+					     (char *) &item->value);
+			break;
+		default:
 			err = -EINVAL;
-			अवरोध;
-		पूर्ण
-		अगर (!err)
+			break;
+		}
+		if (!err)
 			*start = ++i;
-		अन्यथा
-			अवरोध;
-	पूर्ण
+		else
+			break;
+	}
 
 	nla_nest_end(skb, fmsg_nlattr);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक devlink_fmsg_snd(काष्ठा devlink_fmsg *fmsg,
-			    काष्ठा genl_info *info,
-			    क्रमागत devlink_command cmd, पूर्णांक flags)
-अणु
-	काष्ठा nlmsghdr *nlh;
-	काष्ठा sk_buff *skb;
+static int devlink_fmsg_snd(struct devlink_fmsg *fmsg,
+			    struct genl_info *info,
+			    enum devlink_command cmd, int flags)
+{
+	struct nlmsghdr *nlh;
+	struct sk_buff *skb;
 	bool last = false;
-	पूर्णांक index = 0;
-	व्योम *hdr;
-	पूर्णांक err;
+	int index = 0;
+	void *hdr;
+	int err;
 
-	जबतक (!last) अणु
-		पूर्णांक पंचांगp_index = index;
+	while (!last) {
+		int tmp_index = index;
 
 		skb = genlmsg_new(GENLMSG_DEFAULT_SIZE, GFP_KERNEL);
-		अगर (!skb)
-			वापस -ENOMEM;
+		if (!skb)
+			return -ENOMEM;
 
 		hdr = genlmsg_put(skb, info->snd_portid, info->snd_seq,
 				  &devlink_nl_family, flags | NLM_F_MULTI, cmd);
-		अगर (!hdr) अणु
+		if (!hdr) {
 			err = -EMSGSIZE;
-			जाओ nla_put_failure;
-		पूर्ण
+			goto nla_put_failure;
+		}
 
 		err = devlink_fmsg_prepare_skb(fmsg, skb, &index);
-		अगर (!err)
+		if (!err)
 			last = true;
-		अन्यथा अगर (err != -EMSGSIZE || पंचांगp_index == index)
-			जाओ nla_put_failure;
+		else if (err != -EMSGSIZE || tmp_index == index)
+			goto nla_put_failure;
 
 		genlmsg_end(skb, hdr);
 		err = genlmsg_reply(skb, info);
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 
 	skb = genlmsg_new(GENLMSG_DEFAULT_SIZE, GFP_KERNEL);
-	अगर (!skb)
-		वापस -ENOMEM;
+	if (!skb)
+		return -ENOMEM;
 	nlh = nlmsg_put(skb, info->snd_portid, info->snd_seq,
 			NLMSG_DONE, 0, flags | NLM_F_MULTI);
-	अगर (!nlh) अणु
+	if (!nlh) {
 		err = -EMSGSIZE;
-		जाओ nla_put_failure;
-	पूर्ण
+		goto nla_put_failure;
+	}
 
-	वापस genlmsg_reply(skb, info);
+	return genlmsg_reply(skb, info);
 
 nla_put_failure:
-	nlmsg_मुक्त(skb);
-	वापस err;
-पूर्ण
+	nlmsg_free(skb);
+	return err;
+}
 
-अटल पूर्णांक devlink_fmsg_dumpit(काष्ठा devlink_fmsg *fmsg, काष्ठा sk_buff *skb,
-			       काष्ठा netlink_callback *cb,
-			       क्रमागत devlink_command cmd)
-अणु
-	पूर्णांक index = cb->args[0];
-	पूर्णांक पंचांगp_index = index;
-	व्योम *hdr;
-	पूर्णांक err;
+static int devlink_fmsg_dumpit(struct devlink_fmsg *fmsg, struct sk_buff *skb,
+			       struct netlink_callback *cb,
+			       enum devlink_command cmd)
+{
+	int index = cb->args[0];
+	int tmp_index = index;
+	void *hdr;
+	int err;
 
 	hdr = genlmsg_put(skb, NETLINK_CB(cb->skb).portid, cb->nlh->nlmsg_seq,
 			  &devlink_nl_family, NLM_F_ACK | NLM_F_MULTI, cmd);
-	अगर (!hdr) अणु
+	if (!hdr) {
 		err = -EMSGSIZE;
-		जाओ nla_put_failure;
-	पूर्ण
+		goto nla_put_failure;
+	}
 
 	err = devlink_fmsg_prepare_skb(fmsg, skb, &index);
-	अगर ((err && err != -EMSGSIZE) || पंचांगp_index == index)
-		जाओ nla_put_failure;
+	if ((err && err != -EMSGSIZE) || tmp_index == index)
+		goto nla_put_failure;
 
 	cb->args[0] = index;
 	genlmsg_end(skb, hdr);
-	वापस skb->len;
+	return skb->len;
 
 nla_put_failure:
 	genlmsg_cancel(skb, hdr);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-काष्ठा devlink_health_reporter अणु
-	काष्ठा list_head list;
-	व्योम *priv;
-	स्थिर काष्ठा devlink_health_reporter_ops *ops;
-	काष्ठा devlink *devlink;
-	काष्ठा devlink_port *devlink_port;
-	काष्ठा devlink_fmsg *dump_fmsg;
-	काष्ठा mutex dump_lock; /* lock parallel पढ़ो/ग_लिखो from dump buffers */
+struct devlink_health_reporter {
+	struct list_head list;
+	void *priv;
+	const struct devlink_health_reporter_ops *ops;
+	struct devlink *devlink;
+	struct devlink_port *devlink_port;
+	struct devlink_fmsg *dump_fmsg;
+	struct mutex dump_lock; /* lock parallel read/write from dump buffers */
 	u64 graceful_period;
-	bool स्वतः_recover;
-	bool स्वतः_dump;
+	bool auto_recover;
+	bool auto_dump;
 	u8 health_state;
 	u64 dump_ts;
 	u64 dump_real_ts;
@@ -6047,106 +6046,106 @@ nla_put_failure:
 	u64 recovery_count;
 	u64 last_recovery_ts;
 	refcount_t refcount;
-पूर्ण;
+};
 
-व्योम *
-devlink_health_reporter_priv(काष्ठा devlink_health_reporter *reporter)
-अणु
-	वापस reporter->priv;
-पूर्ण
+void *
+devlink_health_reporter_priv(struct devlink_health_reporter *reporter)
+{
+	return reporter->priv;
+}
 EXPORT_SYMBOL_GPL(devlink_health_reporter_priv);
 
-अटल काष्ठा devlink_health_reporter *
-__devlink_health_reporter_find_by_name(काष्ठा list_head *reporter_list,
-				       काष्ठा mutex *list_lock,
-				       स्थिर अक्षर *reporter_name)
-अणु
-	काष्ठा devlink_health_reporter *reporter;
+static struct devlink_health_reporter *
+__devlink_health_reporter_find_by_name(struct list_head *reporter_list,
+				       struct mutex *list_lock,
+				       const char *reporter_name)
+{
+	struct devlink_health_reporter *reporter;
 
-	lockdep_निश्चित_held(list_lock);
-	list_क्रम_each_entry(reporter, reporter_list, list)
-		अगर (!म_भेद(reporter->ops->name, reporter_name))
-			वापस reporter;
-	वापस शून्य;
-पूर्ण
+	lockdep_assert_held(list_lock);
+	list_for_each_entry(reporter, reporter_list, list)
+		if (!strcmp(reporter->ops->name, reporter_name))
+			return reporter;
+	return NULL;
+}
 
-अटल काष्ठा devlink_health_reporter *
-devlink_health_reporter_find_by_name(काष्ठा devlink *devlink,
-				     स्थिर अक्षर *reporter_name)
-अणु
-	वापस __devlink_health_reporter_find_by_name(&devlink->reporter_list,
+static struct devlink_health_reporter *
+devlink_health_reporter_find_by_name(struct devlink *devlink,
+				     const char *reporter_name)
+{
+	return __devlink_health_reporter_find_by_name(&devlink->reporter_list,
 						      &devlink->reporters_lock,
 						      reporter_name);
-पूर्ण
+}
 
-अटल काष्ठा devlink_health_reporter *
-devlink_port_health_reporter_find_by_name(काष्ठा devlink_port *devlink_port,
-					  स्थिर अक्षर *reporter_name)
-अणु
-	वापस __devlink_health_reporter_find_by_name(&devlink_port->reporter_list,
+static struct devlink_health_reporter *
+devlink_port_health_reporter_find_by_name(struct devlink_port *devlink_port,
+					  const char *reporter_name)
+{
+	return __devlink_health_reporter_find_by_name(&devlink_port->reporter_list,
 						      &devlink_port->reporters_lock,
 						      reporter_name);
-पूर्ण
+}
 
-अटल काष्ठा devlink_health_reporter *
-__devlink_health_reporter_create(काष्ठा devlink *devlink,
-				 स्थिर काष्ठा devlink_health_reporter_ops *ops,
-				 u64 graceful_period, व्योम *priv)
-अणु
-	काष्ठा devlink_health_reporter *reporter;
+static struct devlink_health_reporter *
+__devlink_health_reporter_create(struct devlink *devlink,
+				 const struct devlink_health_reporter_ops *ops,
+				 u64 graceful_period, void *priv)
+{
+	struct devlink_health_reporter *reporter;
 
-	अगर (WARN_ON(graceful_period && !ops->recover))
-		वापस ERR_PTR(-EINVAL);
+	if (WARN_ON(graceful_period && !ops->recover))
+		return ERR_PTR(-EINVAL);
 
-	reporter = kzalloc(माप(*reporter), GFP_KERNEL);
-	अगर (!reporter)
-		वापस ERR_PTR(-ENOMEM);
+	reporter = kzalloc(sizeof(*reporter), GFP_KERNEL);
+	if (!reporter)
+		return ERR_PTR(-ENOMEM);
 
 	reporter->priv = priv;
 	reporter->ops = ops;
 	reporter->devlink = devlink;
 	reporter->graceful_period = graceful_period;
-	reporter->स्वतः_recover = !!ops->recover;
-	reporter->स्वतः_dump = !!ops->dump;
+	reporter->auto_recover = !!ops->recover;
+	reporter->auto_dump = !!ops->dump;
 	mutex_init(&reporter->dump_lock);
 	refcount_set(&reporter->refcount, 1);
-	वापस reporter;
-पूर्ण
+	return reporter;
+}
 
 /**
- *	devlink_port_health_reporter_create - create devlink health reporter क्रम
- *	                                      specअगरied port instance
+ *	devlink_port_health_reporter_create - create devlink health reporter for
+ *	                                      specified port instance
  *
  *	@port: devlink_port which should contain the new reporter
  *	@ops: ops
- *	@graceful_period: to aव्योम recovery loops, in msecs
+ *	@graceful_period: to avoid recovery loops, in msecs
  *	@priv: priv
  */
-काष्ठा devlink_health_reporter *
-devlink_port_health_reporter_create(काष्ठा devlink_port *port,
-				    स्थिर काष्ठा devlink_health_reporter_ops *ops,
-				    u64 graceful_period, व्योम *priv)
-अणु
-	काष्ठा devlink_health_reporter *reporter;
+struct devlink_health_reporter *
+devlink_port_health_reporter_create(struct devlink_port *port,
+				    const struct devlink_health_reporter_ops *ops,
+				    u64 graceful_period, void *priv)
+{
+	struct devlink_health_reporter *reporter;
 
 	mutex_lock(&port->reporters_lock);
-	अगर (__devlink_health_reporter_find_by_name(&port->reporter_list,
-						   &port->reporters_lock, ops->name)) अणु
+	if (__devlink_health_reporter_find_by_name(&port->reporter_list,
+						   &port->reporters_lock, ops->name)) {
 		reporter = ERR_PTR(-EEXIST);
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
 	reporter = __devlink_health_reporter_create(port->devlink, ops,
 						    graceful_period, priv);
-	अगर (IS_ERR(reporter))
-		जाओ unlock;
+	if (IS_ERR(reporter))
+		goto unlock;
 
 	reporter->devlink_port = port;
 	list_add_tail(&reporter->list, &port->reporter_list);
 unlock:
 	mutex_unlock(&port->reporters_lock);
-	वापस reporter;
-पूर्ण
+	return reporter;
+}
 EXPORT_SYMBOL_GPL(devlink_port_health_reporter_create);
 
 /**
@@ -6154,71 +6153,71 @@ EXPORT_SYMBOL_GPL(devlink_port_health_reporter_create);
  *
  *	@devlink: devlink
  *	@ops: ops
- *	@graceful_period: to aव्योम recovery loops, in msecs
+ *	@graceful_period: to avoid recovery loops, in msecs
  *	@priv: priv
  */
-काष्ठा devlink_health_reporter *
-devlink_health_reporter_create(काष्ठा devlink *devlink,
-			       स्थिर काष्ठा devlink_health_reporter_ops *ops,
-			       u64 graceful_period, व्योम *priv)
-अणु
-	काष्ठा devlink_health_reporter *reporter;
+struct devlink_health_reporter *
+devlink_health_reporter_create(struct devlink *devlink,
+			       const struct devlink_health_reporter_ops *ops,
+			       u64 graceful_period, void *priv)
+{
+	struct devlink_health_reporter *reporter;
 
 	mutex_lock(&devlink->reporters_lock);
-	अगर (devlink_health_reporter_find_by_name(devlink, ops->name)) अणु
+	if (devlink_health_reporter_find_by_name(devlink, ops->name)) {
 		reporter = ERR_PTR(-EEXIST);
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
 	reporter = __devlink_health_reporter_create(devlink, ops,
 						    graceful_period, priv);
-	अगर (IS_ERR(reporter))
-		जाओ unlock;
+	if (IS_ERR(reporter))
+		goto unlock;
 
 	list_add_tail(&reporter->list, &devlink->reporter_list);
 unlock:
 	mutex_unlock(&devlink->reporters_lock);
-	वापस reporter;
-पूर्ण
+	return reporter;
+}
 EXPORT_SYMBOL_GPL(devlink_health_reporter_create);
 
-अटल व्योम
-devlink_health_reporter_मुक्त(काष्ठा devlink_health_reporter *reporter)
-अणु
+static void
+devlink_health_reporter_free(struct devlink_health_reporter *reporter)
+{
 	mutex_destroy(&reporter->dump_lock);
-	अगर (reporter->dump_fmsg)
-		devlink_fmsg_मुक्त(reporter->dump_fmsg);
-	kमुक्त(reporter);
-पूर्ण
+	if (reporter->dump_fmsg)
+		devlink_fmsg_free(reporter->dump_fmsg);
+	kfree(reporter);
+}
 
-अटल व्योम
-devlink_health_reporter_put(काष्ठा devlink_health_reporter *reporter)
-अणु
-	अगर (refcount_dec_and_test(&reporter->refcount))
-		devlink_health_reporter_मुक्त(reporter);
-पूर्ण
+static void
+devlink_health_reporter_put(struct devlink_health_reporter *reporter)
+{
+	if (refcount_dec_and_test(&reporter->refcount))
+		devlink_health_reporter_free(reporter);
+}
 
-अटल व्योम
-__devlink_health_reporter_destroy(काष्ठा devlink_health_reporter *reporter)
-अणु
+static void
+__devlink_health_reporter_destroy(struct devlink_health_reporter *reporter)
+{
 	list_del(&reporter->list);
 	devlink_health_reporter_put(reporter);
-पूर्ण
+}
 
 /**
  *	devlink_health_reporter_destroy - destroy devlink health reporter
  *
  *	@reporter: devlink health reporter to destroy
  */
-व्योम
-devlink_health_reporter_destroy(काष्ठा devlink_health_reporter *reporter)
-अणु
-	काष्ठा mutex *lock = &reporter->devlink->reporters_lock;
+void
+devlink_health_reporter_destroy(struct devlink_health_reporter *reporter)
+{
+	struct mutex *lock = &reporter->devlink->reporters_lock;
 
 	mutex_lock(lock);
 	__devlink_health_reporter_destroy(reporter);
 	mutex_unlock(lock);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(devlink_health_reporter_destroy);
 
 /**
@@ -6226,552 +6225,552 @@ EXPORT_SYMBOL_GPL(devlink_health_reporter_destroy);
  *
  *	@reporter: devlink health reporter to destroy
  */
-व्योम
-devlink_port_health_reporter_destroy(काष्ठा devlink_health_reporter *reporter)
-अणु
-	काष्ठा mutex *lock = &reporter->devlink_port->reporters_lock;
+void
+devlink_port_health_reporter_destroy(struct devlink_health_reporter *reporter)
+{
+	struct mutex *lock = &reporter->devlink_port->reporters_lock;
 
 	mutex_lock(lock);
 	__devlink_health_reporter_destroy(reporter);
 	mutex_unlock(lock);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(devlink_port_health_reporter_destroy);
 
-अटल पूर्णांक
-devlink_nl_health_reporter_fill(काष्ठा sk_buff *msg,
-				काष्ठा devlink *devlink,
-				काष्ठा devlink_health_reporter *reporter,
-				क्रमागत devlink_command cmd, u32 portid,
-				u32 seq, पूर्णांक flags)
-अणु
-	काष्ठा nlattr *reporter_attr;
-	व्योम *hdr;
+static int
+devlink_nl_health_reporter_fill(struct sk_buff *msg,
+				struct devlink *devlink,
+				struct devlink_health_reporter *reporter,
+				enum devlink_command cmd, u32 portid,
+				u32 seq, int flags)
+{
+	struct nlattr *reporter_attr;
+	void *hdr;
 
 	hdr = genlmsg_put(msg, portid, seq, &devlink_nl_family, flags, cmd);
-	अगर (!hdr)
-		वापस -EMSGSIZE;
+	if (!hdr)
+		return -EMSGSIZE;
 
-	अगर (devlink_nl_put_handle(msg, devlink))
-		जाओ genlmsg_cancel;
+	if (devlink_nl_put_handle(msg, devlink))
+		goto genlmsg_cancel;
 
-	अगर (reporter->devlink_port) अणु
-		अगर (nla_put_u32(msg, DEVLINK_ATTR_PORT_INDEX, reporter->devlink_port->index))
-			जाओ genlmsg_cancel;
-	पूर्ण
+	if (reporter->devlink_port) {
+		if (nla_put_u32(msg, DEVLINK_ATTR_PORT_INDEX, reporter->devlink_port->index))
+			goto genlmsg_cancel;
+	}
 	reporter_attr = nla_nest_start_noflag(msg,
 					      DEVLINK_ATTR_HEALTH_REPORTER);
-	अगर (!reporter_attr)
-		जाओ genlmsg_cancel;
-	अगर (nla_put_string(msg, DEVLINK_ATTR_HEALTH_REPORTER_NAME,
+	if (!reporter_attr)
+		goto genlmsg_cancel;
+	if (nla_put_string(msg, DEVLINK_ATTR_HEALTH_REPORTER_NAME,
 			   reporter->ops->name))
-		जाओ reporter_nest_cancel;
-	अगर (nla_put_u8(msg, DEVLINK_ATTR_HEALTH_REPORTER_STATE,
+		goto reporter_nest_cancel;
+	if (nla_put_u8(msg, DEVLINK_ATTR_HEALTH_REPORTER_STATE,
 		       reporter->health_state))
-		जाओ reporter_nest_cancel;
-	अगर (nla_put_u64_64bit(msg, DEVLINK_ATTR_HEALTH_REPORTER_ERR_COUNT,
+		goto reporter_nest_cancel;
+	if (nla_put_u64_64bit(msg, DEVLINK_ATTR_HEALTH_REPORTER_ERR_COUNT,
 			      reporter->error_count, DEVLINK_ATTR_PAD))
-		जाओ reporter_nest_cancel;
-	अगर (nla_put_u64_64bit(msg, DEVLINK_ATTR_HEALTH_REPORTER_RECOVER_COUNT,
+		goto reporter_nest_cancel;
+	if (nla_put_u64_64bit(msg, DEVLINK_ATTR_HEALTH_REPORTER_RECOVER_COUNT,
 			      reporter->recovery_count, DEVLINK_ATTR_PAD))
-		जाओ reporter_nest_cancel;
-	अगर (reporter->ops->recover &&
+		goto reporter_nest_cancel;
+	if (reporter->ops->recover &&
 	    nla_put_u64_64bit(msg, DEVLINK_ATTR_HEALTH_REPORTER_GRACEFUL_PERIOD,
 			      reporter->graceful_period,
 			      DEVLINK_ATTR_PAD))
-		जाओ reporter_nest_cancel;
-	अगर (reporter->ops->recover &&
+		goto reporter_nest_cancel;
+	if (reporter->ops->recover &&
 	    nla_put_u8(msg, DEVLINK_ATTR_HEALTH_REPORTER_AUTO_RECOVER,
-		       reporter->स्वतः_recover))
-		जाओ reporter_nest_cancel;
-	अगर (reporter->dump_fmsg &&
+		       reporter->auto_recover))
+		goto reporter_nest_cancel;
+	if (reporter->dump_fmsg &&
 	    nla_put_u64_64bit(msg, DEVLINK_ATTR_HEALTH_REPORTER_DUMP_TS,
-			      jअगरfies_to_msecs(reporter->dump_ts),
+			      jiffies_to_msecs(reporter->dump_ts),
 			      DEVLINK_ATTR_PAD))
-		जाओ reporter_nest_cancel;
-	अगर (reporter->dump_fmsg &&
+		goto reporter_nest_cancel;
+	if (reporter->dump_fmsg &&
 	    nla_put_u64_64bit(msg, DEVLINK_ATTR_HEALTH_REPORTER_DUMP_TS_NS,
 			      reporter->dump_real_ts, DEVLINK_ATTR_PAD))
-		जाओ reporter_nest_cancel;
-	अगर (reporter->ops->dump &&
+		goto reporter_nest_cancel;
+	if (reporter->ops->dump &&
 	    nla_put_u8(msg, DEVLINK_ATTR_HEALTH_REPORTER_AUTO_DUMP,
-		       reporter->स्वतः_dump))
-		जाओ reporter_nest_cancel;
+		       reporter->auto_dump))
+		goto reporter_nest_cancel;
 
 	nla_nest_end(msg, reporter_attr);
 	genlmsg_end(msg, hdr);
-	वापस 0;
+	return 0;
 
 reporter_nest_cancel:
 	nla_nest_end(msg, reporter_attr);
 genlmsg_cancel:
 	genlmsg_cancel(msg, hdr);
-	वापस -EMSGSIZE;
-पूर्ण
+	return -EMSGSIZE;
+}
 
-अटल व्योम devlink_recover_notअगरy(काष्ठा devlink_health_reporter *reporter,
-				   क्रमागत devlink_command cmd)
-अणु
-	काष्ठा sk_buff *msg;
-	पूर्णांक err;
+static void devlink_recover_notify(struct devlink_health_reporter *reporter,
+				   enum devlink_command cmd)
+{
+	struct sk_buff *msg;
+	int err;
 
 	WARN_ON(cmd != DEVLINK_CMD_HEALTH_REPORTER_RECOVER);
 
 	msg = nlmsg_new(NLMSG_DEFAULT_SIZE, GFP_KERNEL);
-	अगर (!msg)
-		वापस;
+	if (!msg)
+		return;
 
 	err = devlink_nl_health_reporter_fill(msg, reporter->devlink,
 					      reporter, cmd, 0, 0, 0);
-	अगर (err) अणु
-		nlmsg_मुक्त(msg);
-		वापस;
-	पूर्ण
+	if (err) {
+		nlmsg_free(msg);
+		return;
+	}
 
 	genlmsg_multicast_netns(&devlink_nl_family,
 				devlink_net(reporter->devlink),
 				msg, 0, DEVLINK_MCGRP_CONFIG, GFP_KERNEL);
-पूर्ण
+}
 
-व्योम
-devlink_health_reporter_recovery_करोne(काष्ठा devlink_health_reporter *reporter)
-अणु
+void
+devlink_health_reporter_recovery_done(struct devlink_health_reporter *reporter)
+{
 	reporter->recovery_count++;
-	reporter->last_recovery_ts = jअगरfies;
-पूर्ण
-EXPORT_SYMBOL_GPL(devlink_health_reporter_recovery_करोne);
+	reporter->last_recovery_ts = jiffies;
+}
+EXPORT_SYMBOL_GPL(devlink_health_reporter_recovery_done);
 
-अटल पूर्णांक
-devlink_health_reporter_recover(काष्ठा devlink_health_reporter *reporter,
-				व्योम *priv_ctx, काष्ठा netlink_ext_ack *extack)
-अणु
-	पूर्णांक err;
+static int
+devlink_health_reporter_recover(struct devlink_health_reporter *reporter,
+				void *priv_ctx, struct netlink_ext_ack *extack)
+{
+	int err;
 
-	अगर (reporter->health_state == DEVLINK_HEALTH_REPORTER_STATE_HEALTHY)
-		वापस 0;
+	if (reporter->health_state == DEVLINK_HEALTH_REPORTER_STATE_HEALTHY)
+		return 0;
 
-	अगर (!reporter->ops->recover)
-		वापस -EOPNOTSUPP;
+	if (!reporter->ops->recover)
+		return -EOPNOTSUPP;
 
 	err = reporter->ops->recover(reporter, priv_ctx, extack);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	devlink_health_reporter_recovery_करोne(reporter);
+	devlink_health_reporter_recovery_done(reporter);
 	reporter->health_state = DEVLINK_HEALTH_REPORTER_STATE_HEALTHY;
-	devlink_recover_notअगरy(reporter, DEVLINK_CMD_HEALTH_REPORTER_RECOVER);
+	devlink_recover_notify(reporter, DEVLINK_CMD_HEALTH_REPORTER_RECOVER);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम
-devlink_health_dump_clear(काष्ठा devlink_health_reporter *reporter)
-अणु
-	अगर (!reporter->dump_fmsg)
-		वापस;
-	devlink_fmsg_मुक्त(reporter->dump_fmsg);
-	reporter->dump_fmsg = शून्य;
-पूर्ण
+static void
+devlink_health_dump_clear(struct devlink_health_reporter *reporter)
+{
+	if (!reporter->dump_fmsg)
+		return;
+	devlink_fmsg_free(reporter->dump_fmsg);
+	reporter->dump_fmsg = NULL;
+}
 
-अटल पूर्णांक devlink_health_करो_dump(काष्ठा devlink_health_reporter *reporter,
-				  व्योम *priv_ctx,
-				  काष्ठा netlink_ext_ack *extack)
-अणु
-	पूर्णांक err;
+static int devlink_health_do_dump(struct devlink_health_reporter *reporter,
+				  void *priv_ctx,
+				  struct netlink_ext_ack *extack)
+{
+	int err;
 
-	अगर (!reporter->ops->dump)
-		वापस 0;
+	if (!reporter->ops->dump)
+		return 0;
 
-	अगर (reporter->dump_fmsg)
-		वापस 0;
+	if (reporter->dump_fmsg)
+		return 0;
 
 	reporter->dump_fmsg = devlink_fmsg_alloc();
-	अगर (!reporter->dump_fmsg) अणु
+	if (!reporter->dump_fmsg) {
 		err = -ENOMEM;
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	err = devlink_fmsg_obj_nest_start(reporter->dump_fmsg);
-	अगर (err)
-		जाओ dump_err;
+	if (err)
+		goto dump_err;
 
 	err = reporter->ops->dump(reporter, reporter->dump_fmsg,
 				  priv_ctx, extack);
-	अगर (err)
-		जाओ dump_err;
+	if (err)
+		goto dump_err;
 
 	err = devlink_fmsg_obj_nest_end(reporter->dump_fmsg);
-	अगर (err)
-		जाओ dump_err;
+	if (err)
+		goto dump_err;
 
-	reporter->dump_ts = jअगरfies;
-	reporter->dump_real_ts = kसमय_get_real_ns();
+	reporter->dump_ts = jiffies;
+	reporter->dump_real_ts = ktime_get_real_ns();
 
-	वापस 0;
+	return 0;
 
 dump_err:
 	devlink_health_dump_clear(reporter);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक devlink_health_report(काष्ठा devlink_health_reporter *reporter,
-			  स्थिर अक्षर *msg, व्योम *priv_ctx)
-अणु
-	क्रमागत devlink_health_reporter_state prev_health_state;
-	काष्ठा devlink *devlink = reporter->devlink;
-	अचिन्हित दीर्घ recover_ts_threshold;
+int devlink_health_report(struct devlink_health_reporter *reporter,
+			  const char *msg, void *priv_ctx)
+{
+	enum devlink_health_reporter_state prev_health_state;
+	struct devlink *devlink = reporter->devlink;
+	unsigned long recover_ts_threshold;
 
-	/* ग_लिखो a log message of the current error */
+	/* write a log message of the current error */
 	WARN_ON(!msg);
 	trace_devlink_health_report(devlink, reporter->ops->name, msg);
 	reporter->error_count++;
 	prev_health_state = reporter->health_state;
 	reporter->health_state = DEVLINK_HEALTH_REPORTER_STATE_ERROR;
-	devlink_recover_notअगरy(reporter, DEVLINK_CMD_HEALTH_REPORTER_RECOVER);
+	devlink_recover_notify(reporter, DEVLINK_CMD_HEALTH_REPORTER_RECOVER);
 
-	/* पात अगर the previous error wasn't recovered */
+	/* abort if the previous error wasn't recovered */
 	recover_ts_threshold = reporter->last_recovery_ts +
-			       msecs_to_jअगरfies(reporter->graceful_period);
-	अगर (reporter->स्वतः_recover &&
+			       msecs_to_jiffies(reporter->graceful_period);
+	if (reporter->auto_recover &&
 	    (prev_health_state != DEVLINK_HEALTH_REPORTER_STATE_HEALTHY ||
 	     (reporter->last_recovery_ts && reporter->recovery_count &&
-	      समय_is_after_jअगरfies(recover_ts_threshold)))) अणु
-		trace_devlink_health_recover_पातed(devlink,
+	      time_is_after_jiffies(recover_ts_threshold)))) {
+		trace_devlink_health_recover_aborted(devlink,
 						     reporter->ops->name,
 						     reporter->health_state,
-						     jअगरfies -
+						     jiffies -
 						     reporter->last_recovery_ts);
-		वापस -ECANCELED;
-	पूर्ण
+		return -ECANCELED;
+	}
 
 	reporter->health_state = DEVLINK_HEALTH_REPORTER_STATE_ERROR;
 
-	अगर (reporter->स्वतः_dump) अणु
+	if (reporter->auto_dump) {
 		mutex_lock(&reporter->dump_lock);
-		/* store current dump of current error, क्रम later analysis */
-		devlink_health_करो_dump(reporter, priv_ctx, शून्य);
+		/* store current dump of current error, for later analysis */
+		devlink_health_do_dump(reporter, priv_ctx, NULL);
 		mutex_unlock(&reporter->dump_lock);
-	पूर्ण
+	}
 
-	अगर (reporter->स्वतः_recover)
-		वापस devlink_health_reporter_recover(reporter,
-						       priv_ctx, शून्य);
+	if (reporter->auto_recover)
+		return devlink_health_reporter_recover(reporter,
+						       priv_ctx, NULL);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(devlink_health_report);
 
-अटल काष्ठा devlink_health_reporter *
-devlink_health_reporter_get_from_attrs(काष्ठा devlink *devlink,
-				       काष्ठा nlattr **attrs)
-अणु
-	काष्ठा devlink_health_reporter *reporter;
-	काष्ठा devlink_port *devlink_port;
-	अक्षर *reporter_name;
+static struct devlink_health_reporter *
+devlink_health_reporter_get_from_attrs(struct devlink *devlink,
+				       struct nlattr **attrs)
+{
+	struct devlink_health_reporter *reporter;
+	struct devlink_port *devlink_port;
+	char *reporter_name;
 
-	अगर (!attrs[DEVLINK_ATTR_HEALTH_REPORTER_NAME])
-		वापस शून्य;
+	if (!attrs[DEVLINK_ATTR_HEALTH_REPORTER_NAME])
+		return NULL;
 
 	reporter_name = nla_data(attrs[DEVLINK_ATTR_HEALTH_REPORTER_NAME]);
 	devlink_port = devlink_port_get_from_attrs(devlink, attrs);
-	अगर (IS_ERR(devlink_port)) अणु
+	if (IS_ERR(devlink_port)) {
 		mutex_lock(&devlink->reporters_lock);
 		reporter = devlink_health_reporter_find_by_name(devlink, reporter_name);
-		अगर (reporter)
+		if (reporter)
 			refcount_inc(&reporter->refcount);
 		mutex_unlock(&devlink->reporters_lock);
-	पूर्ण अन्यथा अणु
+	} else {
 		mutex_lock(&devlink_port->reporters_lock);
 		reporter = devlink_port_health_reporter_find_by_name(devlink_port, reporter_name);
-		अगर (reporter)
+		if (reporter)
 			refcount_inc(&reporter->refcount);
 		mutex_unlock(&devlink_port->reporters_lock);
-	पूर्ण
+	}
 
-	वापस reporter;
-पूर्ण
+	return reporter;
+}
 
-अटल काष्ठा devlink_health_reporter *
-devlink_health_reporter_get_from_info(काष्ठा devlink *devlink,
-				      काष्ठा genl_info *info)
-अणु
-	वापस devlink_health_reporter_get_from_attrs(devlink, info->attrs);
-पूर्ण
+static struct devlink_health_reporter *
+devlink_health_reporter_get_from_info(struct devlink *devlink,
+				      struct genl_info *info)
+{
+	return devlink_health_reporter_get_from_attrs(devlink, info->attrs);
+}
 
-अटल काष्ठा devlink_health_reporter *
-devlink_health_reporter_get_from_cb(काष्ठा netlink_callback *cb)
-अणु
-	स्थिर काष्ठा genl_dumpit_info *info = genl_dumpit_info(cb);
-	काष्ठा devlink_health_reporter *reporter;
-	काष्ठा nlattr **attrs = info->attrs;
-	काष्ठा devlink *devlink;
+static struct devlink_health_reporter *
+devlink_health_reporter_get_from_cb(struct netlink_callback *cb)
+{
+	const struct genl_dumpit_info *info = genl_dumpit_info(cb);
+	struct devlink_health_reporter *reporter;
+	struct nlattr **attrs = info->attrs;
+	struct devlink *devlink;
 
 	mutex_lock(&devlink_mutex);
 	devlink = devlink_get_from_attrs(sock_net(cb->skb->sk), attrs);
-	अगर (IS_ERR(devlink))
-		जाओ unlock;
+	if (IS_ERR(devlink))
+		goto unlock;
 
 	reporter = devlink_health_reporter_get_from_attrs(devlink, attrs);
 	mutex_unlock(&devlink_mutex);
-	वापस reporter;
+	return reporter;
 unlock:
 	mutex_unlock(&devlink_mutex);
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-व्योम
-devlink_health_reporter_state_update(काष्ठा devlink_health_reporter *reporter,
-				     क्रमागत devlink_health_reporter_state state)
-अणु
-	अगर (WARN_ON(state != DEVLINK_HEALTH_REPORTER_STATE_HEALTHY &&
+void
+devlink_health_reporter_state_update(struct devlink_health_reporter *reporter,
+				     enum devlink_health_reporter_state state)
+{
+	if (WARN_ON(state != DEVLINK_HEALTH_REPORTER_STATE_HEALTHY &&
 		    state != DEVLINK_HEALTH_REPORTER_STATE_ERROR))
-		वापस;
+		return;
 
-	अगर (reporter->health_state == state)
-		वापस;
+	if (reporter->health_state == state)
+		return;
 
 	reporter->health_state = state;
 	trace_devlink_health_reporter_state_update(reporter->devlink,
 						   reporter->ops->name, state);
-	devlink_recover_notअगरy(reporter, DEVLINK_CMD_HEALTH_REPORTER_RECOVER);
-पूर्ण
+	devlink_recover_notify(reporter, DEVLINK_CMD_HEALTH_REPORTER_RECOVER);
+}
 EXPORT_SYMBOL_GPL(devlink_health_reporter_state_update);
 
-अटल पूर्णांक devlink_nl_cmd_health_reporter_get_करोit(काष्ठा sk_buff *skb,
-						   काष्ठा genl_info *info)
-अणु
-	काष्ठा devlink *devlink = info->user_ptr[0];
-	काष्ठा devlink_health_reporter *reporter;
-	काष्ठा sk_buff *msg;
-	पूर्णांक err;
+static int devlink_nl_cmd_health_reporter_get_doit(struct sk_buff *skb,
+						   struct genl_info *info)
+{
+	struct devlink *devlink = info->user_ptr[0];
+	struct devlink_health_reporter *reporter;
+	struct sk_buff *msg;
+	int err;
 
 	reporter = devlink_health_reporter_get_from_info(devlink, info);
-	अगर (!reporter)
-		वापस -EINVAL;
+	if (!reporter)
+		return -EINVAL;
 
 	msg = nlmsg_new(NLMSG_DEFAULT_SIZE, GFP_KERNEL);
-	अगर (!msg) अणु
+	if (!msg) {
 		err = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	err = devlink_nl_health_reporter_fill(msg, devlink, reporter,
 					      DEVLINK_CMD_HEALTH_REPORTER_GET,
 					      info->snd_portid, info->snd_seq,
 					      0);
-	अगर (err) अणु
-		nlmsg_मुक्त(msg);
-		जाओ out;
-	पूर्ण
+	if (err) {
+		nlmsg_free(msg);
+		goto out;
+	}
 
 	err = genlmsg_reply(msg, info);
 out:
 	devlink_health_reporter_put(reporter);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक
-devlink_nl_cmd_health_reporter_get_dumpit(काष्ठा sk_buff *msg,
-					  काष्ठा netlink_callback *cb)
-अणु
-	काष्ठा devlink_health_reporter *reporter;
-	काष्ठा devlink_port *port;
-	काष्ठा devlink *devlink;
-	पूर्णांक start = cb->args[0];
-	पूर्णांक idx = 0;
-	पूर्णांक err;
+static int
+devlink_nl_cmd_health_reporter_get_dumpit(struct sk_buff *msg,
+					  struct netlink_callback *cb)
+{
+	struct devlink_health_reporter *reporter;
+	struct devlink_port *port;
+	struct devlink *devlink;
+	int start = cb->args[0];
+	int idx = 0;
+	int err;
 
 	mutex_lock(&devlink_mutex);
-	list_क्रम_each_entry(devlink, &devlink_list, list) अणु
-		अगर (!net_eq(devlink_net(devlink), sock_net(msg->sk)))
-			जारी;
+	list_for_each_entry(devlink, &devlink_list, list) {
+		if (!net_eq(devlink_net(devlink), sock_net(msg->sk)))
+			continue;
 		mutex_lock(&devlink->reporters_lock);
-		list_क्रम_each_entry(reporter, &devlink->reporter_list,
-				    list) अणु
-			अगर (idx < start) अणु
+		list_for_each_entry(reporter, &devlink->reporter_list,
+				    list) {
+			if (idx < start) {
 				idx++;
-				जारी;
-			पूर्ण
+				continue;
+			}
 			err = devlink_nl_health_reporter_fill(msg, devlink,
 							      reporter,
 							      DEVLINK_CMD_HEALTH_REPORTER_GET,
 							      NETLINK_CB(cb->skb).portid,
 							      cb->nlh->nlmsg_seq,
 							      NLM_F_MULTI);
-			अगर (err) अणु
+			if (err) {
 				mutex_unlock(&devlink->reporters_lock);
-				जाओ out;
-			पूर्ण
+				goto out;
+			}
 			idx++;
-		पूर्ण
+		}
 		mutex_unlock(&devlink->reporters_lock);
-	पूर्ण
+	}
 
-	list_क्रम_each_entry(devlink, &devlink_list, list) अणु
-		अगर (!net_eq(devlink_net(devlink), sock_net(msg->sk)))
-			जारी;
+	list_for_each_entry(devlink, &devlink_list, list) {
+		if (!net_eq(devlink_net(devlink), sock_net(msg->sk)))
+			continue;
 		mutex_lock(&devlink->lock);
-		list_क्रम_each_entry(port, &devlink->port_list, list) अणु
+		list_for_each_entry(port, &devlink->port_list, list) {
 			mutex_lock(&port->reporters_lock);
-			list_क्रम_each_entry(reporter, &port->reporter_list, list) अणु
-				अगर (idx < start) अणु
+			list_for_each_entry(reporter, &port->reporter_list, list) {
+				if (idx < start) {
 					idx++;
-					जारी;
-				पूर्ण
+					continue;
+				}
 				err = devlink_nl_health_reporter_fill(msg, devlink, reporter,
 								      DEVLINK_CMD_HEALTH_REPORTER_GET,
 								      NETLINK_CB(cb->skb).portid,
 								      cb->nlh->nlmsg_seq,
 								      NLM_F_MULTI);
-				अगर (err) अणु
+				if (err) {
 					mutex_unlock(&port->reporters_lock);
 					mutex_unlock(&devlink->lock);
-					जाओ out;
-				पूर्ण
+					goto out;
+				}
 				idx++;
-			पूर्ण
+			}
 			mutex_unlock(&port->reporters_lock);
-		पूर्ण
+		}
 		mutex_unlock(&devlink->lock);
-	पूर्ण
+	}
 out:
 	mutex_unlock(&devlink_mutex);
 
 	cb->args[0] = idx;
-	वापस msg->len;
-पूर्ण
+	return msg->len;
+}
 
-अटल पूर्णांक
-devlink_nl_cmd_health_reporter_set_करोit(काष्ठा sk_buff *skb,
-					काष्ठा genl_info *info)
-अणु
-	काष्ठा devlink *devlink = info->user_ptr[0];
-	काष्ठा devlink_health_reporter *reporter;
-	पूर्णांक err;
+static int
+devlink_nl_cmd_health_reporter_set_doit(struct sk_buff *skb,
+					struct genl_info *info)
+{
+	struct devlink *devlink = info->user_ptr[0];
+	struct devlink_health_reporter *reporter;
+	int err;
 
 	reporter = devlink_health_reporter_get_from_info(devlink, info);
-	अगर (!reporter)
-		वापस -EINVAL;
+	if (!reporter)
+		return -EINVAL;
 
-	अगर (!reporter->ops->recover &&
+	if (!reporter->ops->recover &&
 	    (info->attrs[DEVLINK_ATTR_HEALTH_REPORTER_GRACEFUL_PERIOD] ||
-	     info->attrs[DEVLINK_ATTR_HEALTH_REPORTER_AUTO_RECOVER])) अणु
+	     info->attrs[DEVLINK_ATTR_HEALTH_REPORTER_AUTO_RECOVER])) {
 		err = -EOPNOTSUPP;
-		जाओ out;
-	पूर्ण
-	अगर (!reporter->ops->dump &&
-	    info->attrs[DEVLINK_ATTR_HEALTH_REPORTER_AUTO_DUMP]) अणु
+		goto out;
+	}
+	if (!reporter->ops->dump &&
+	    info->attrs[DEVLINK_ATTR_HEALTH_REPORTER_AUTO_DUMP]) {
 		err = -EOPNOTSUPP;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (info->attrs[DEVLINK_ATTR_HEALTH_REPORTER_GRACEFUL_PERIOD])
+	if (info->attrs[DEVLINK_ATTR_HEALTH_REPORTER_GRACEFUL_PERIOD])
 		reporter->graceful_period =
 			nla_get_u64(info->attrs[DEVLINK_ATTR_HEALTH_REPORTER_GRACEFUL_PERIOD]);
 
-	अगर (info->attrs[DEVLINK_ATTR_HEALTH_REPORTER_AUTO_RECOVER])
-		reporter->स्वतः_recover =
+	if (info->attrs[DEVLINK_ATTR_HEALTH_REPORTER_AUTO_RECOVER])
+		reporter->auto_recover =
 			nla_get_u8(info->attrs[DEVLINK_ATTR_HEALTH_REPORTER_AUTO_RECOVER]);
 
-	अगर (info->attrs[DEVLINK_ATTR_HEALTH_REPORTER_AUTO_DUMP])
-		reporter->स्वतः_dump =
+	if (info->attrs[DEVLINK_ATTR_HEALTH_REPORTER_AUTO_DUMP])
+		reporter->auto_dump =
 		nla_get_u8(info->attrs[DEVLINK_ATTR_HEALTH_REPORTER_AUTO_DUMP]);
 
 	devlink_health_reporter_put(reporter);
-	वापस 0;
+	return 0;
 out:
 	devlink_health_reporter_put(reporter);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक devlink_nl_cmd_health_reporter_recover_करोit(काष्ठा sk_buff *skb,
-						       काष्ठा genl_info *info)
-अणु
-	काष्ठा devlink *devlink = info->user_ptr[0];
-	काष्ठा devlink_health_reporter *reporter;
-	पूर्णांक err;
+static int devlink_nl_cmd_health_reporter_recover_doit(struct sk_buff *skb,
+						       struct genl_info *info)
+{
+	struct devlink *devlink = info->user_ptr[0];
+	struct devlink_health_reporter *reporter;
+	int err;
 
 	reporter = devlink_health_reporter_get_from_info(devlink, info);
-	अगर (!reporter)
-		वापस -EINVAL;
+	if (!reporter)
+		return -EINVAL;
 
-	err = devlink_health_reporter_recover(reporter, शून्य, info->extack);
+	err = devlink_health_reporter_recover(reporter, NULL, info->extack);
 
 	devlink_health_reporter_put(reporter);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक devlink_nl_cmd_health_reporter_diagnose_करोit(काष्ठा sk_buff *skb,
-							काष्ठा genl_info *info)
-अणु
-	काष्ठा devlink *devlink = info->user_ptr[0];
-	काष्ठा devlink_health_reporter *reporter;
-	काष्ठा devlink_fmsg *fmsg;
-	पूर्णांक err;
+static int devlink_nl_cmd_health_reporter_diagnose_doit(struct sk_buff *skb,
+							struct genl_info *info)
+{
+	struct devlink *devlink = info->user_ptr[0];
+	struct devlink_health_reporter *reporter;
+	struct devlink_fmsg *fmsg;
+	int err;
 
 	reporter = devlink_health_reporter_get_from_info(devlink, info);
-	अगर (!reporter)
-		वापस -EINVAL;
+	if (!reporter)
+		return -EINVAL;
 
-	अगर (!reporter->ops->diagnose) अणु
+	if (!reporter->ops->diagnose) {
 		devlink_health_reporter_put(reporter);
-		वापस -EOPNOTSUPP;
-	पूर्ण
+		return -EOPNOTSUPP;
+	}
 
 	fmsg = devlink_fmsg_alloc();
-	अगर (!fmsg) अणु
+	if (!fmsg) {
 		devlink_health_reporter_put(reporter);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	err = devlink_fmsg_obj_nest_start(fmsg);
-	अगर (err)
-		जाओ out;
+	if (err)
+		goto out;
 
 	err = reporter->ops->diagnose(reporter, fmsg, info->extack);
-	अगर (err)
-		जाओ out;
+	if (err)
+		goto out;
 
 	err = devlink_fmsg_obj_nest_end(fmsg);
-	अगर (err)
-		जाओ out;
+	if (err)
+		goto out;
 
 	err = devlink_fmsg_snd(fmsg, info,
 			       DEVLINK_CMD_HEALTH_REPORTER_DIAGNOSE, 0);
 
 out:
-	devlink_fmsg_मुक्त(fmsg);
+	devlink_fmsg_free(fmsg);
 	devlink_health_reporter_put(reporter);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक
-devlink_nl_cmd_health_reporter_dump_get_dumpit(काष्ठा sk_buff *skb,
-					       काष्ठा netlink_callback *cb)
-अणु
-	काष्ठा devlink_health_reporter *reporter;
+static int
+devlink_nl_cmd_health_reporter_dump_get_dumpit(struct sk_buff *skb,
+					       struct netlink_callback *cb)
+{
+	struct devlink_health_reporter *reporter;
 	u64 start = cb->args[0];
-	पूर्णांक err;
+	int err;
 
 	reporter = devlink_health_reporter_get_from_cb(cb);
-	अगर (!reporter)
-		वापस -EINVAL;
+	if (!reporter)
+		return -EINVAL;
 
-	अगर (!reporter->ops->dump) अणु
+	if (!reporter->ops->dump) {
 		err = -EOPNOTSUPP;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	mutex_lock(&reporter->dump_lock);
-	अगर (!start) अणु
-		err = devlink_health_करो_dump(reporter, शून्य, cb->extack);
-		अगर (err)
-			जाओ unlock;
+	if (!start) {
+		err = devlink_health_do_dump(reporter, NULL, cb->extack);
+		if (err)
+			goto unlock;
 		cb->args[1] = reporter->dump_ts;
-	पूर्ण
-	अगर (!reporter->dump_fmsg || cb->args[1] != reporter->dump_ts) अणु
+	}
+	if (!reporter->dump_fmsg || cb->args[1] != reporter->dump_ts) {
 		NL_SET_ERR_MSG_MOD(cb->extack, "Dump trampled, please retry");
 		err = -EAGAIN;
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
 	err = devlink_fmsg_dumpit(reporter->dump_fmsg, skb, cb,
 				  DEVLINK_CMD_HEALTH_REPORTER_DUMP_GET);
@@ -6779,62 +6778,62 @@ unlock:
 	mutex_unlock(&reporter->dump_lock);
 out:
 	devlink_health_reporter_put(reporter);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक
-devlink_nl_cmd_health_reporter_dump_clear_करोit(काष्ठा sk_buff *skb,
-					       काष्ठा genl_info *info)
-अणु
-	काष्ठा devlink *devlink = info->user_ptr[0];
-	काष्ठा devlink_health_reporter *reporter;
+static int
+devlink_nl_cmd_health_reporter_dump_clear_doit(struct sk_buff *skb,
+					       struct genl_info *info)
+{
+	struct devlink *devlink = info->user_ptr[0];
+	struct devlink_health_reporter *reporter;
 
 	reporter = devlink_health_reporter_get_from_info(devlink, info);
-	अगर (!reporter)
-		वापस -EINVAL;
+	if (!reporter)
+		return -EINVAL;
 
-	अगर (!reporter->ops->dump) अणु
+	if (!reporter->ops->dump) {
 		devlink_health_reporter_put(reporter);
-		वापस -EOPNOTSUPP;
-	पूर्ण
+		return -EOPNOTSUPP;
+	}
 
 	mutex_lock(&reporter->dump_lock);
 	devlink_health_dump_clear(reporter);
 	mutex_unlock(&reporter->dump_lock);
 	devlink_health_reporter_put(reporter);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक devlink_nl_cmd_health_reporter_test_करोit(काष्ठा sk_buff *skb,
-						    काष्ठा genl_info *info)
-अणु
-	काष्ठा devlink *devlink = info->user_ptr[0];
-	काष्ठा devlink_health_reporter *reporter;
-	पूर्णांक err;
+static int devlink_nl_cmd_health_reporter_test_doit(struct sk_buff *skb,
+						    struct genl_info *info)
+{
+	struct devlink *devlink = info->user_ptr[0];
+	struct devlink_health_reporter *reporter;
+	int err;
 
 	reporter = devlink_health_reporter_get_from_info(devlink, info);
-	अगर (!reporter)
-		वापस -EINVAL;
+	if (!reporter)
+		return -EINVAL;
 
-	अगर (!reporter->ops->test) अणु
+	if (!reporter->ops->test) {
 		devlink_health_reporter_put(reporter);
-		वापस -EOPNOTSUPP;
-	पूर्ण
+		return -EOPNOTSUPP;
+	}
 
 	err = reporter->ops->test(reporter, info->extack);
 
 	devlink_health_reporter_put(reporter);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-काष्ठा devlink_stats अणु
+struct devlink_stats {
 	u64 rx_bytes;
 	u64 rx_packets;
-	काष्ठा u64_stats_sync syncp;
-पूर्ण;
+	struct u64_stats_sync syncp;
+};
 
 /**
- * काष्ठा devlink_trap_policer_item - Packet trap policer attributes.
+ * struct devlink_trap_policer_item - Packet trap policer attributes.
  * @policer: Immutable packet trap policer attributes.
  * @rate: Rate in packets / sec.
  * @burst: Burst size in packets.
@@ -6843,1361 +6842,1361 @@ devlink_nl_cmd_health_reporter_dump_clear_करोit(काष्ठा sk_buff
  * Describes packet trap policer attributes. Created by devlink during trap
  * policer registration.
  */
-काष्ठा devlink_trap_policer_item अणु
-	स्थिर काष्ठा devlink_trap_policer *policer;
+struct devlink_trap_policer_item {
+	const struct devlink_trap_policer *policer;
 	u64 rate;
 	u64 burst;
-	काष्ठा list_head list;
-पूर्ण;
+	struct list_head list;
+};
 
 /**
- * काष्ठा devlink_trap_group_item - Packet trap group attributes.
+ * struct devlink_trap_group_item - Packet trap group attributes.
  * @group: Immutable packet trap group attributes.
- * @policer_item: Associated policer item. Can be शून्य.
+ * @policer_item: Associated policer item. Can be NULL.
  * @list: trap_group_list member.
  * @stats: Trap group statistics.
  *
  * Describes packet trap group attributes. Created by devlink during trap
  * group registration.
  */
-काष्ठा devlink_trap_group_item अणु
-	स्थिर काष्ठा devlink_trap_group *group;
-	काष्ठा devlink_trap_policer_item *policer_item;
-	काष्ठा list_head list;
-	काष्ठा devlink_stats __percpu *stats;
-पूर्ण;
+struct devlink_trap_group_item {
+	const struct devlink_trap_group *group;
+	struct devlink_trap_policer_item *policer_item;
+	struct list_head list;
+	struct devlink_stats __percpu *stats;
+};
 
 /**
- * काष्ठा devlink_trap_item - Packet trap attributes.
+ * struct devlink_trap_item - Packet trap attributes.
  * @trap: Immutable packet trap attributes.
  * @group_item: Associated group item.
  * @list: trap_list member.
  * @action: Trap action.
  * @stats: Trap statistics.
- * @priv: Driver निजी inक्रमmation.
+ * @priv: Driver private information.
  *
  * Describes both mutable and immutable packet trap attributes. Created by
- * devlink during trap registration and used क्रम all trap related operations.
+ * devlink during trap registration and used for all trap related operations.
  */
-काष्ठा devlink_trap_item अणु
-	स्थिर काष्ठा devlink_trap *trap;
-	काष्ठा devlink_trap_group_item *group_item;
-	काष्ठा list_head list;
-	क्रमागत devlink_trap_action action;
-	काष्ठा devlink_stats __percpu *stats;
-	व्योम *priv;
-पूर्ण;
+struct devlink_trap_item {
+	const struct devlink_trap *trap;
+	struct devlink_trap_group_item *group_item;
+	struct list_head list;
+	enum devlink_trap_action action;
+	struct devlink_stats __percpu *stats;
+	void *priv;
+};
 
-अटल काष्ठा devlink_trap_policer_item *
-devlink_trap_policer_item_lookup(काष्ठा devlink *devlink, u32 id)
-अणु
-	काष्ठा devlink_trap_policer_item *policer_item;
+static struct devlink_trap_policer_item *
+devlink_trap_policer_item_lookup(struct devlink *devlink, u32 id)
+{
+	struct devlink_trap_policer_item *policer_item;
 
-	list_क्रम_each_entry(policer_item, &devlink->trap_policer_list, list) अणु
-		अगर (policer_item->policer->id == id)
-			वापस policer_item;
-	पूर्ण
+	list_for_each_entry(policer_item, &devlink->trap_policer_list, list) {
+		if (policer_item->policer->id == id)
+			return policer_item;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल काष्ठा devlink_trap_item *
-devlink_trap_item_lookup(काष्ठा devlink *devlink, स्थिर अक्षर *name)
-अणु
-	काष्ठा devlink_trap_item *trap_item;
+static struct devlink_trap_item *
+devlink_trap_item_lookup(struct devlink *devlink, const char *name)
+{
+	struct devlink_trap_item *trap_item;
 
-	list_क्रम_each_entry(trap_item, &devlink->trap_list, list) अणु
-		अगर (!म_भेद(trap_item->trap->name, name))
-			वापस trap_item;
-	पूर्ण
+	list_for_each_entry(trap_item, &devlink->trap_list, list) {
+		if (!strcmp(trap_item->trap->name, name))
+			return trap_item;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल काष्ठा devlink_trap_item *
-devlink_trap_item_get_from_info(काष्ठा devlink *devlink,
-				काष्ठा genl_info *info)
-अणु
-	काष्ठा nlattr *attr;
+static struct devlink_trap_item *
+devlink_trap_item_get_from_info(struct devlink *devlink,
+				struct genl_info *info)
+{
+	struct nlattr *attr;
 
-	अगर (!info->attrs[DEVLINK_ATTR_TRAP_NAME])
-		वापस शून्य;
+	if (!info->attrs[DEVLINK_ATTR_TRAP_NAME])
+		return NULL;
 	attr = info->attrs[DEVLINK_ATTR_TRAP_NAME];
 
-	वापस devlink_trap_item_lookup(devlink, nla_data(attr));
-पूर्ण
+	return devlink_trap_item_lookup(devlink, nla_data(attr));
+}
 
-अटल पूर्णांक
-devlink_trap_action_get_from_info(काष्ठा genl_info *info,
-				  क्रमागत devlink_trap_action *p_trap_action)
-अणु
+static int
+devlink_trap_action_get_from_info(struct genl_info *info,
+				  enum devlink_trap_action *p_trap_action)
+{
 	u8 val;
 
 	val = nla_get_u8(info->attrs[DEVLINK_ATTR_TRAP_ACTION]);
-	चयन (val) अणु
-	हाल DEVLINK_TRAP_ACTION_DROP:
-	हाल DEVLINK_TRAP_ACTION_TRAP:
-	हाल DEVLINK_TRAP_ACTION_MIRROR:
+	switch (val) {
+	case DEVLINK_TRAP_ACTION_DROP:
+	case DEVLINK_TRAP_ACTION_TRAP:
+	case DEVLINK_TRAP_ACTION_MIRROR:
 		*p_trap_action = val;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक devlink_trap_metadata_put(काष्ठा sk_buff *msg,
-				     स्थिर काष्ठा devlink_trap *trap)
-अणु
-	काष्ठा nlattr *attr;
+static int devlink_trap_metadata_put(struct sk_buff *msg,
+				     const struct devlink_trap *trap)
+{
+	struct nlattr *attr;
 
 	attr = nla_nest_start(msg, DEVLINK_ATTR_TRAP_METADATA);
-	अगर (!attr)
-		वापस -EMSGSIZE;
+	if (!attr)
+		return -EMSGSIZE;
 
-	अगर ((trap->metadata_cap & DEVLINK_TRAP_METADATA_TYPE_F_IN_PORT) &&
+	if ((trap->metadata_cap & DEVLINK_TRAP_METADATA_TYPE_F_IN_PORT) &&
 	    nla_put_flag(msg, DEVLINK_ATTR_TRAP_METADATA_TYPE_IN_PORT))
-		जाओ nla_put_failure;
-	अगर ((trap->metadata_cap & DEVLINK_TRAP_METADATA_TYPE_F_FA_COOKIE) &&
+		goto nla_put_failure;
+	if ((trap->metadata_cap & DEVLINK_TRAP_METADATA_TYPE_F_FA_COOKIE) &&
 	    nla_put_flag(msg, DEVLINK_ATTR_TRAP_METADATA_TYPE_FA_COOKIE))
-		जाओ nla_put_failure;
+		goto nla_put_failure;
 
 	nla_nest_end(msg, attr);
 
-	वापस 0;
+	return 0;
 
 nla_put_failure:
 	nla_nest_cancel(msg, attr);
-	वापस -EMSGSIZE;
-पूर्ण
+	return -EMSGSIZE;
+}
 
-अटल व्योम devlink_trap_stats_पढ़ो(काष्ठा devlink_stats __percpu *trap_stats,
-				    काष्ठा devlink_stats *stats)
-अणु
-	पूर्णांक i;
+static void devlink_trap_stats_read(struct devlink_stats __percpu *trap_stats,
+				    struct devlink_stats *stats)
+{
+	int i;
 
-	स_रखो(stats, 0, माप(*stats));
-	क्रम_each_possible_cpu(i) अणु
-		काष्ठा devlink_stats *cpu_stats;
+	memset(stats, 0, sizeof(*stats));
+	for_each_possible_cpu(i) {
+		struct devlink_stats *cpu_stats;
 		u64 rx_packets, rx_bytes;
-		अचिन्हित पूर्णांक start;
+		unsigned int start;
 
 		cpu_stats = per_cpu_ptr(trap_stats, i);
-		करो अणु
+		do {
 			start = u64_stats_fetch_begin_irq(&cpu_stats->syncp);
 			rx_packets = cpu_stats->rx_packets;
 			rx_bytes = cpu_stats->rx_bytes;
-		पूर्ण जबतक (u64_stats_fetch_retry_irq(&cpu_stats->syncp, start));
+		} while (u64_stats_fetch_retry_irq(&cpu_stats->syncp, start));
 
 		stats->rx_packets += rx_packets;
 		stats->rx_bytes += rx_bytes;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक devlink_trap_stats_put(काष्ठा sk_buff *msg,
-				  काष्ठा devlink_stats __percpu *trap_stats)
-अणु
-	काष्ठा devlink_stats stats;
-	काष्ठा nlattr *attr;
+static int devlink_trap_stats_put(struct sk_buff *msg,
+				  struct devlink_stats __percpu *trap_stats)
+{
+	struct devlink_stats stats;
+	struct nlattr *attr;
 
-	devlink_trap_stats_पढ़ो(trap_stats, &stats);
+	devlink_trap_stats_read(trap_stats, &stats);
 
 	attr = nla_nest_start(msg, DEVLINK_ATTR_STATS);
-	अगर (!attr)
-		वापस -EMSGSIZE;
+	if (!attr)
+		return -EMSGSIZE;
 
-	अगर (nla_put_u64_64bit(msg, DEVLINK_ATTR_STATS_RX_PACKETS,
+	if (nla_put_u64_64bit(msg, DEVLINK_ATTR_STATS_RX_PACKETS,
 			      stats.rx_packets, DEVLINK_ATTR_PAD))
-		जाओ nla_put_failure;
+		goto nla_put_failure;
 
-	अगर (nla_put_u64_64bit(msg, DEVLINK_ATTR_STATS_RX_BYTES,
+	if (nla_put_u64_64bit(msg, DEVLINK_ATTR_STATS_RX_BYTES,
 			      stats.rx_bytes, DEVLINK_ATTR_PAD))
-		जाओ nla_put_failure;
+		goto nla_put_failure;
 
 	nla_nest_end(msg, attr);
 
-	वापस 0;
+	return 0;
 
 nla_put_failure:
 	nla_nest_cancel(msg, attr);
-	वापस -EMSGSIZE;
-पूर्ण
+	return -EMSGSIZE;
+}
 
-अटल पूर्णांक devlink_nl_trap_fill(काष्ठा sk_buff *msg, काष्ठा devlink *devlink,
-				स्थिर काष्ठा devlink_trap_item *trap_item,
-				क्रमागत devlink_command cmd, u32 portid, u32 seq,
-				पूर्णांक flags)
-अणु
-	काष्ठा devlink_trap_group_item *group_item = trap_item->group_item;
-	व्योम *hdr;
-	पूर्णांक err;
+static int devlink_nl_trap_fill(struct sk_buff *msg, struct devlink *devlink,
+				const struct devlink_trap_item *trap_item,
+				enum devlink_command cmd, u32 portid, u32 seq,
+				int flags)
+{
+	struct devlink_trap_group_item *group_item = trap_item->group_item;
+	void *hdr;
+	int err;
 
 	hdr = genlmsg_put(msg, portid, seq, &devlink_nl_family, flags, cmd);
-	अगर (!hdr)
-		वापस -EMSGSIZE;
+	if (!hdr)
+		return -EMSGSIZE;
 
-	अगर (devlink_nl_put_handle(msg, devlink))
-		जाओ nla_put_failure;
+	if (devlink_nl_put_handle(msg, devlink))
+		goto nla_put_failure;
 
-	अगर (nla_put_string(msg, DEVLINK_ATTR_TRAP_GROUP_NAME,
+	if (nla_put_string(msg, DEVLINK_ATTR_TRAP_GROUP_NAME,
 			   group_item->group->name))
-		जाओ nla_put_failure;
+		goto nla_put_failure;
 
-	अगर (nla_put_string(msg, DEVLINK_ATTR_TRAP_NAME, trap_item->trap->name))
-		जाओ nla_put_failure;
+	if (nla_put_string(msg, DEVLINK_ATTR_TRAP_NAME, trap_item->trap->name))
+		goto nla_put_failure;
 
-	अगर (nla_put_u8(msg, DEVLINK_ATTR_TRAP_TYPE, trap_item->trap->type))
-		जाओ nla_put_failure;
+	if (nla_put_u8(msg, DEVLINK_ATTR_TRAP_TYPE, trap_item->trap->type))
+		goto nla_put_failure;
 
-	अगर (trap_item->trap->generic &&
+	if (trap_item->trap->generic &&
 	    nla_put_flag(msg, DEVLINK_ATTR_TRAP_GENERIC))
-		जाओ nla_put_failure;
+		goto nla_put_failure;
 
-	अगर (nla_put_u8(msg, DEVLINK_ATTR_TRAP_ACTION, trap_item->action))
-		जाओ nla_put_failure;
+	if (nla_put_u8(msg, DEVLINK_ATTR_TRAP_ACTION, trap_item->action))
+		goto nla_put_failure;
 
 	err = devlink_trap_metadata_put(msg, trap_item->trap);
-	अगर (err)
-		जाओ nla_put_failure;
+	if (err)
+		goto nla_put_failure;
 
 	err = devlink_trap_stats_put(msg, trap_item->stats);
-	अगर (err)
-		जाओ nla_put_failure;
+	if (err)
+		goto nla_put_failure;
 
 	genlmsg_end(msg, hdr);
 
-	वापस 0;
+	return 0;
 
 nla_put_failure:
 	genlmsg_cancel(msg, hdr);
-	वापस -EMSGSIZE;
-पूर्ण
+	return -EMSGSIZE;
+}
 
-अटल पूर्णांक devlink_nl_cmd_trap_get_करोit(काष्ठा sk_buff *skb,
-					काष्ठा genl_info *info)
-अणु
-	काष्ठा netlink_ext_ack *extack = info->extack;
-	काष्ठा devlink *devlink = info->user_ptr[0];
-	काष्ठा devlink_trap_item *trap_item;
-	काष्ठा sk_buff *msg;
-	पूर्णांक err;
+static int devlink_nl_cmd_trap_get_doit(struct sk_buff *skb,
+					struct genl_info *info)
+{
+	struct netlink_ext_ack *extack = info->extack;
+	struct devlink *devlink = info->user_ptr[0];
+	struct devlink_trap_item *trap_item;
+	struct sk_buff *msg;
+	int err;
 
-	अगर (list_empty(&devlink->trap_list))
-		वापस -EOPNOTSUPP;
+	if (list_empty(&devlink->trap_list))
+		return -EOPNOTSUPP;
 
 	trap_item = devlink_trap_item_get_from_info(devlink, info);
-	अगर (!trap_item) अणु
+	if (!trap_item) {
 		NL_SET_ERR_MSG_MOD(extack, "Device did not register this trap");
-		वापस -ENOENT;
-	पूर्ण
+		return -ENOENT;
+	}
 
 	msg = nlmsg_new(NLMSG_DEFAULT_SIZE, GFP_KERNEL);
-	अगर (!msg)
-		वापस -ENOMEM;
+	if (!msg)
+		return -ENOMEM;
 
 	err = devlink_nl_trap_fill(msg, devlink, trap_item,
 				   DEVLINK_CMD_TRAP_NEW, info->snd_portid,
 				   info->snd_seq, 0);
-	अगर (err)
-		जाओ err_trap_fill;
+	if (err)
+		goto err_trap_fill;
 
-	वापस genlmsg_reply(msg, info);
+	return genlmsg_reply(msg, info);
 
 err_trap_fill:
-	nlmsg_मुक्त(msg);
-	वापस err;
-पूर्ण
+	nlmsg_free(msg);
+	return err;
+}
 
-अटल पूर्णांक devlink_nl_cmd_trap_get_dumpit(काष्ठा sk_buff *msg,
-					  काष्ठा netlink_callback *cb)
-अणु
-	काष्ठा devlink_trap_item *trap_item;
-	काष्ठा devlink *devlink;
-	पूर्णांक start = cb->args[0];
-	पूर्णांक idx = 0;
-	पूर्णांक err;
+static int devlink_nl_cmd_trap_get_dumpit(struct sk_buff *msg,
+					  struct netlink_callback *cb)
+{
+	struct devlink_trap_item *trap_item;
+	struct devlink *devlink;
+	int start = cb->args[0];
+	int idx = 0;
+	int err;
 
 	mutex_lock(&devlink_mutex);
-	list_क्रम_each_entry(devlink, &devlink_list, list) अणु
-		अगर (!net_eq(devlink_net(devlink), sock_net(msg->sk)))
-			जारी;
+	list_for_each_entry(devlink, &devlink_list, list) {
+		if (!net_eq(devlink_net(devlink), sock_net(msg->sk)))
+			continue;
 		mutex_lock(&devlink->lock);
-		list_क्रम_each_entry(trap_item, &devlink->trap_list, list) अणु
-			अगर (idx < start) अणु
+		list_for_each_entry(trap_item, &devlink->trap_list, list) {
+			if (idx < start) {
 				idx++;
-				जारी;
-			पूर्ण
+				continue;
+			}
 			err = devlink_nl_trap_fill(msg, devlink, trap_item,
 						   DEVLINK_CMD_TRAP_NEW,
 						   NETLINK_CB(cb->skb).portid,
 						   cb->nlh->nlmsg_seq,
 						   NLM_F_MULTI);
-			अगर (err) अणु
+			if (err) {
 				mutex_unlock(&devlink->lock);
-				जाओ out;
-			पूर्ण
+				goto out;
+			}
 			idx++;
-		पूर्ण
+		}
 		mutex_unlock(&devlink->lock);
-	पूर्ण
+	}
 out:
 	mutex_unlock(&devlink_mutex);
 
 	cb->args[0] = idx;
-	वापस msg->len;
-पूर्ण
+	return msg->len;
+}
 
-अटल पूर्णांक __devlink_trap_action_set(काष्ठा devlink *devlink,
-				     काष्ठा devlink_trap_item *trap_item,
-				     क्रमागत devlink_trap_action trap_action,
-				     काष्ठा netlink_ext_ack *extack)
-अणु
-	पूर्णांक err;
+static int __devlink_trap_action_set(struct devlink *devlink,
+				     struct devlink_trap_item *trap_item,
+				     enum devlink_trap_action trap_action,
+				     struct netlink_ext_ack *extack)
+{
+	int err;
 
-	अगर (trap_item->action != trap_action &&
-	    trap_item->trap->type != DEVLINK_TRAP_TYPE_DROP) अणु
+	if (trap_item->action != trap_action &&
+	    trap_item->trap->type != DEVLINK_TRAP_TYPE_DROP) {
 		NL_SET_ERR_MSG_MOD(extack, "Cannot change action of non-drop traps. Skipping");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	err = devlink->ops->trap_action_set(devlink, trap_item->trap,
 					    trap_action, extack);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	trap_item->action = trap_action;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक devlink_trap_action_set(काष्ठा devlink *devlink,
-				   काष्ठा devlink_trap_item *trap_item,
-				   काष्ठा genl_info *info)
-अणु
-	क्रमागत devlink_trap_action trap_action;
-	पूर्णांक err;
+static int devlink_trap_action_set(struct devlink *devlink,
+				   struct devlink_trap_item *trap_item,
+				   struct genl_info *info)
+{
+	enum devlink_trap_action trap_action;
+	int err;
 
-	अगर (!info->attrs[DEVLINK_ATTR_TRAP_ACTION])
-		वापस 0;
+	if (!info->attrs[DEVLINK_ATTR_TRAP_ACTION])
+		return 0;
 
 	err = devlink_trap_action_get_from_info(info, &trap_action);
-	अगर (err) अणु
+	if (err) {
 		NL_SET_ERR_MSG_MOD(info->extack, "Invalid trap action");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस __devlink_trap_action_set(devlink, trap_item, trap_action,
+	return __devlink_trap_action_set(devlink, trap_item, trap_action,
 					 info->extack);
-पूर्ण
+}
 
-अटल पूर्णांक devlink_nl_cmd_trap_set_करोit(काष्ठा sk_buff *skb,
-					काष्ठा genl_info *info)
-अणु
-	काष्ठा netlink_ext_ack *extack = info->extack;
-	काष्ठा devlink *devlink = info->user_ptr[0];
-	काष्ठा devlink_trap_item *trap_item;
+static int devlink_nl_cmd_trap_set_doit(struct sk_buff *skb,
+					struct genl_info *info)
+{
+	struct netlink_ext_ack *extack = info->extack;
+	struct devlink *devlink = info->user_ptr[0];
+	struct devlink_trap_item *trap_item;
 
-	अगर (list_empty(&devlink->trap_list))
-		वापस -EOPNOTSUPP;
+	if (list_empty(&devlink->trap_list))
+		return -EOPNOTSUPP;
 
 	trap_item = devlink_trap_item_get_from_info(devlink, info);
-	अगर (!trap_item) अणु
+	if (!trap_item) {
 		NL_SET_ERR_MSG_MOD(extack, "Device did not register this trap");
-		वापस -ENOENT;
-	पूर्ण
+		return -ENOENT;
+	}
 
-	वापस devlink_trap_action_set(devlink, trap_item, info);
-पूर्ण
+	return devlink_trap_action_set(devlink, trap_item, info);
+}
 
-अटल काष्ठा devlink_trap_group_item *
-devlink_trap_group_item_lookup(काष्ठा devlink *devlink, स्थिर अक्षर *name)
-अणु
-	काष्ठा devlink_trap_group_item *group_item;
+static struct devlink_trap_group_item *
+devlink_trap_group_item_lookup(struct devlink *devlink, const char *name)
+{
+	struct devlink_trap_group_item *group_item;
 
-	list_क्रम_each_entry(group_item, &devlink->trap_group_list, list) अणु
-		अगर (!म_भेद(group_item->group->name, name))
-			वापस group_item;
-	पूर्ण
+	list_for_each_entry(group_item, &devlink->trap_group_list, list) {
+		if (!strcmp(group_item->group->name, name))
+			return group_item;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल काष्ठा devlink_trap_group_item *
-devlink_trap_group_item_lookup_by_id(काष्ठा devlink *devlink, u16 id)
-अणु
-	काष्ठा devlink_trap_group_item *group_item;
+static struct devlink_trap_group_item *
+devlink_trap_group_item_lookup_by_id(struct devlink *devlink, u16 id)
+{
+	struct devlink_trap_group_item *group_item;
 
-	list_क्रम_each_entry(group_item, &devlink->trap_group_list, list) अणु
-		अगर (group_item->group->id == id)
-			वापस group_item;
-	पूर्ण
+	list_for_each_entry(group_item, &devlink->trap_group_list, list) {
+		if (group_item->group->id == id)
+			return group_item;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल काष्ठा devlink_trap_group_item *
-devlink_trap_group_item_get_from_info(काष्ठा devlink *devlink,
-				      काष्ठा genl_info *info)
-अणु
-	अक्षर *name;
+static struct devlink_trap_group_item *
+devlink_trap_group_item_get_from_info(struct devlink *devlink,
+				      struct genl_info *info)
+{
+	char *name;
 
-	अगर (!info->attrs[DEVLINK_ATTR_TRAP_GROUP_NAME])
-		वापस शून्य;
+	if (!info->attrs[DEVLINK_ATTR_TRAP_GROUP_NAME])
+		return NULL;
 	name = nla_data(info->attrs[DEVLINK_ATTR_TRAP_GROUP_NAME]);
 
-	वापस devlink_trap_group_item_lookup(devlink, name);
-पूर्ण
+	return devlink_trap_group_item_lookup(devlink, name);
+}
 
-अटल पूर्णांक
-devlink_nl_trap_group_fill(काष्ठा sk_buff *msg, काष्ठा devlink *devlink,
-			   स्थिर काष्ठा devlink_trap_group_item *group_item,
-			   क्रमागत devlink_command cmd, u32 portid, u32 seq,
-			   पूर्णांक flags)
-अणु
-	व्योम *hdr;
-	पूर्णांक err;
+static int
+devlink_nl_trap_group_fill(struct sk_buff *msg, struct devlink *devlink,
+			   const struct devlink_trap_group_item *group_item,
+			   enum devlink_command cmd, u32 portid, u32 seq,
+			   int flags)
+{
+	void *hdr;
+	int err;
 
 	hdr = genlmsg_put(msg, portid, seq, &devlink_nl_family, flags, cmd);
-	अगर (!hdr)
-		वापस -EMSGSIZE;
+	if (!hdr)
+		return -EMSGSIZE;
 
-	अगर (devlink_nl_put_handle(msg, devlink))
-		जाओ nla_put_failure;
+	if (devlink_nl_put_handle(msg, devlink))
+		goto nla_put_failure;
 
-	अगर (nla_put_string(msg, DEVLINK_ATTR_TRAP_GROUP_NAME,
+	if (nla_put_string(msg, DEVLINK_ATTR_TRAP_GROUP_NAME,
 			   group_item->group->name))
-		जाओ nla_put_failure;
+		goto nla_put_failure;
 
-	अगर (group_item->group->generic &&
+	if (group_item->group->generic &&
 	    nla_put_flag(msg, DEVLINK_ATTR_TRAP_GENERIC))
-		जाओ nla_put_failure;
+		goto nla_put_failure;
 
-	अगर (group_item->policer_item &&
+	if (group_item->policer_item &&
 	    nla_put_u32(msg, DEVLINK_ATTR_TRAP_POLICER_ID,
 			group_item->policer_item->policer->id))
-		जाओ nla_put_failure;
+		goto nla_put_failure;
 
 	err = devlink_trap_stats_put(msg, group_item->stats);
-	अगर (err)
-		जाओ nla_put_failure;
+	if (err)
+		goto nla_put_failure;
 
 	genlmsg_end(msg, hdr);
 
-	वापस 0;
+	return 0;
 
 nla_put_failure:
 	genlmsg_cancel(msg, hdr);
-	वापस -EMSGSIZE;
-पूर्ण
+	return -EMSGSIZE;
+}
 
-अटल पूर्णांक devlink_nl_cmd_trap_group_get_करोit(काष्ठा sk_buff *skb,
-					      काष्ठा genl_info *info)
-अणु
-	काष्ठा netlink_ext_ack *extack = info->extack;
-	काष्ठा devlink *devlink = info->user_ptr[0];
-	काष्ठा devlink_trap_group_item *group_item;
-	काष्ठा sk_buff *msg;
-	पूर्णांक err;
+static int devlink_nl_cmd_trap_group_get_doit(struct sk_buff *skb,
+					      struct genl_info *info)
+{
+	struct netlink_ext_ack *extack = info->extack;
+	struct devlink *devlink = info->user_ptr[0];
+	struct devlink_trap_group_item *group_item;
+	struct sk_buff *msg;
+	int err;
 
-	अगर (list_empty(&devlink->trap_group_list))
-		वापस -EOPNOTSUPP;
+	if (list_empty(&devlink->trap_group_list))
+		return -EOPNOTSUPP;
 
 	group_item = devlink_trap_group_item_get_from_info(devlink, info);
-	अगर (!group_item) अणु
+	if (!group_item) {
 		NL_SET_ERR_MSG_MOD(extack, "Device did not register this trap group");
-		वापस -ENOENT;
-	पूर्ण
+		return -ENOENT;
+	}
 
 	msg = nlmsg_new(NLMSG_DEFAULT_SIZE, GFP_KERNEL);
-	अगर (!msg)
-		वापस -ENOMEM;
+	if (!msg)
+		return -ENOMEM;
 
 	err = devlink_nl_trap_group_fill(msg, devlink, group_item,
 					 DEVLINK_CMD_TRAP_GROUP_NEW,
 					 info->snd_portid, info->snd_seq, 0);
-	अगर (err)
-		जाओ err_trap_group_fill;
+	if (err)
+		goto err_trap_group_fill;
 
-	वापस genlmsg_reply(msg, info);
+	return genlmsg_reply(msg, info);
 
 err_trap_group_fill:
-	nlmsg_मुक्त(msg);
-	वापस err;
-पूर्ण
+	nlmsg_free(msg);
+	return err;
+}
 
-अटल पूर्णांक devlink_nl_cmd_trap_group_get_dumpit(काष्ठा sk_buff *msg,
-						काष्ठा netlink_callback *cb)
-अणु
-	क्रमागत devlink_command cmd = DEVLINK_CMD_TRAP_GROUP_NEW;
-	काष्ठा devlink_trap_group_item *group_item;
+static int devlink_nl_cmd_trap_group_get_dumpit(struct sk_buff *msg,
+						struct netlink_callback *cb)
+{
+	enum devlink_command cmd = DEVLINK_CMD_TRAP_GROUP_NEW;
+	struct devlink_trap_group_item *group_item;
 	u32 portid = NETLINK_CB(cb->skb).portid;
-	काष्ठा devlink *devlink;
-	पूर्णांक start = cb->args[0];
-	पूर्णांक idx = 0;
-	पूर्णांक err;
+	struct devlink *devlink;
+	int start = cb->args[0];
+	int idx = 0;
+	int err;
 
 	mutex_lock(&devlink_mutex);
-	list_क्रम_each_entry(devlink, &devlink_list, list) अणु
-		अगर (!net_eq(devlink_net(devlink), sock_net(msg->sk)))
-			जारी;
+	list_for_each_entry(devlink, &devlink_list, list) {
+		if (!net_eq(devlink_net(devlink), sock_net(msg->sk)))
+			continue;
 		mutex_lock(&devlink->lock);
-		list_क्रम_each_entry(group_item, &devlink->trap_group_list,
-				    list) अणु
-			अगर (idx < start) अणु
+		list_for_each_entry(group_item, &devlink->trap_group_list,
+				    list) {
+			if (idx < start) {
 				idx++;
-				जारी;
-			पूर्ण
+				continue;
+			}
 			err = devlink_nl_trap_group_fill(msg, devlink,
 							 group_item, cmd,
 							 portid,
 							 cb->nlh->nlmsg_seq,
 							 NLM_F_MULTI);
-			अगर (err) अणु
+			if (err) {
 				mutex_unlock(&devlink->lock);
-				जाओ out;
-			पूर्ण
+				goto out;
+			}
 			idx++;
-		पूर्ण
+		}
 		mutex_unlock(&devlink->lock);
-	पूर्ण
+	}
 out:
 	mutex_unlock(&devlink_mutex);
 
 	cb->args[0] = idx;
-	वापस msg->len;
-पूर्ण
+	return msg->len;
+}
 
-अटल पूर्णांक
-__devlink_trap_group_action_set(काष्ठा devlink *devlink,
-				काष्ठा devlink_trap_group_item *group_item,
-				क्रमागत devlink_trap_action trap_action,
-				काष्ठा netlink_ext_ack *extack)
-अणु
-	स्थिर अक्षर *group_name = group_item->group->name;
-	काष्ठा devlink_trap_item *trap_item;
-	पूर्णांक err;
+static int
+__devlink_trap_group_action_set(struct devlink *devlink,
+				struct devlink_trap_group_item *group_item,
+				enum devlink_trap_action trap_action,
+				struct netlink_ext_ack *extack)
+{
+	const char *group_name = group_item->group->name;
+	struct devlink_trap_item *trap_item;
+	int err;
 
-	अगर (devlink->ops->trap_group_action_set) अणु
+	if (devlink->ops->trap_group_action_set) {
 		err = devlink->ops->trap_group_action_set(devlink, group_item->group,
 							  trap_action, extack);
-		अगर (err)
-			वापस err;
+		if (err)
+			return err;
 
-		list_क्रम_each_entry(trap_item, &devlink->trap_list, list) अणु
-			अगर (म_भेद(trap_item->group_item->group->name, group_name))
-				जारी;
-			अगर (trap_item->action != trap_action &&
+		list_for_each_entry(trap_item, &devlink->trap_list, list) {
+			if (strcmp(trap_item->group_item->group->name, group_name))
+				continue;
+			if (trap_item->action != trap_action &&
 			    trap_item->trap->type != DEVLINK_TRAP_TYPE_DROP)
-				जारी;
+				continue;
 			trap_item->action = trap_action;
-		पूर्ण
+		}
 
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	list_क्रम_each_entry(trap_item, &devlink->trap_list, list) अणु
-		अगर (म_भेद(trap_item->group_item->group->name, group_name))
-			जारी;
+	list_for_each_entry(trap_item, &devlink->trap_list, list) {
+		if (strcmp(trap_item->group_item->group->name, group_name))
+			continue;
 		err = __devlink_trap_action_set(devlink, trap_item,
 						trap_action, extack);
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-devlink_trap_group_action_set(काष्ठा devlink *devlink,
-			      काष्ठा devlink_trap_group_item *group_item,
-			      काष्ठा genl_info *info, bool *p_modअगरied)
-अणु
-	क्रमागत devlink_trap_action trap_action;
-	पूर्णांक err;
+static int
+devlink_trap_group_action_set(struct devlink *devlink,
+			      struct devlink_trap_group_item *group_item,
+			      struct genl_info *info, bool *p_modified)
+{
+	enum devlink_trap_action trap_action;
+	int err;
 
-	अगर (!info->attrs[DEVLINK_ATTR_TRAP_ACTION])
-		वापस 0;
+	if (!info->attrs[DEVLINK_ATTR_TRAP_ACTION])
+		return 0;
 
 	err = devlink_trap_action_get_from_info(info, &trap_action);
-	अगर (err) अणु
+	if (err) {
 		NL_SET_ERR_MSG_MOD(info->extack, "Invalid trap action");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	err = __devlink_trap_group_action_set(devlink, group_item, trap_action,
 					      info->extack);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	*p_modअगरied = true;
+	*p_modified = true;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक devlink_trap_group_set(काष्ठा devlink *devlink,
-				  काष्ठा devlink_trap_group_item *group_item,
-				  काष्ठा genl_info *info)
-अणु
-	काष्ठा devlink_trap_policer_item *policer_item;
-	काष्ठा netlink_ext_ack *extack = info->extack;
-	स्थिर काष्ठा devlink_trap_policer *policer;
-	काष्ठा nlattr **attrs = info->attrs;
-	पूर्णांक err;
+static int devlink_trap_group_set(struct devlink *devlink,
+				  struct devlink_trap_group_item *group_item,
+				  struct genl_info *info)
+{
+	struct devlink_trap_policer_item *policer_item;
+	struct netlink_ext_ack *extack = info->extack;
+	const struct devlink_trap_policer *policer;
+	struct nlattr **attrs = info->attrs;
+	int err;
 
-	अगर (!attrs[DEVLINK_ATTR_TRAP_POLICER_ID])
-		वापस 0;
+	if (!attrs[DEVLINK_ATTR_TRAP_POLICER_ID])
+		return 0;
 
-	अगर (!devlink->ops->trap_group_set)
-		वापस -EOPNOTSUPP;
+	if (!devlink->ops->trap_group_set)
+		return -EOPNOTSUPP;
 
 	policer_item = group_item->policer_item;
-	अगर (attrs[DEVLINK_ATTR_TRAP_POLICER_ID]) अणु
+	if (attrs[DEVLINK_ATTR_TRAP_POLICER_ID]) {
 		u32 policer_id;
 
 		policer_id = nla_get_u32(attrs[DEVLINK_ATTR_TRAP_POLICER_ID]);
 		policer_item = devlink_trap_policer_item_lookup(devlink,
 								policer_id);
-		अगर (policer_id && !policer_item) अणु
+		if (policer_id && !policer_item) {
 			NL_SET_ERR_MSG_MOD(extack, "Device did not register this trap policer");
-			वापस -ENOENT;
-		पूर्ण
-	पूर्ण
-	policer = policer_item ? policer_item->policer : शून्य;
+			return -ENOENT;
+		}
+	}
+	policer = policer_item ? policer_item->policer : NULL;
 
 	err = devlink->ops->trap_group_set(devlink, group_item->group, policer,
 					   extack);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	group_item->policer_item = policer_item;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक devlink_nl_cmd_trap_group_set_करोit(काष्ठा sk_buff *skb,
-					      काष्ठा genl_info *info)
-अणु
-	काष्ठा netlink_ext_ack *extack = info->extack;
-	काष्ठा devlink *devlink = info->user_ptr[0];
-	काष्ठा devlink_trap_group_item *group_item;
-	bool modअगरied = false;
-	पूर्णांक err;
+static int devlink_nl_cmd_trap_group_set_doit(struct sk_buff *skb,
+					      struct genl_info *info)
+{
+	struct netlink_ext_ack *extack = info->extack;
+	struct devlink *devlink = info->user_ptr[0];
+	struct devlink_trap_group_item *group_item;
+	bool modified = false;
+	int err;
 
-	अगर (list_empty(&devlink->trap_group_list))
-		वापस -EOPNOTSUPP;
+	if (list_empty(&devlink->trap_group_list))
+		return -EOPNOTSUPP;
 
 	group_item = devlink_trap_group_item_get_from_info(devlink, info);
-	अगर (!group_item) अणु
+	if (!group_item) {
 		NL_SET_ERR_MSG_MOD(extack, "Device did not register this trap group");
-		वापस -ENOENT;
-	पूर्ण
+		return -ENOENT;
+	}
 
 	err = devlink_trap_group_action_set(devlink, group_item, info,
-					    &modअगरied);
-	अगर (err)
-		वापस err;
+					    &modified);
+	if (err)
+		return err;
 
 	err = devlink_trap_group_set(devlink, group_item, info);
-	अगर (err)
-		जाओ err_trap_group_set;
+	if (err)
+		goto err_trap_group_set;
 
-	वापस 0;
+	return 0;
 
 err_trap_group_set:
-	अगर (modअगरied)
+	if (modified)
 		NL_SET_ERR_MSG_MOD(extack, "Trap group set failed, but some changes were committed already");
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल काष्ठा devlink_trap_policer_item *
-devlink_trap_policer_item_get_from_info(काष्ठा devlink *devlink,
-					काष्ठा genl_info *info)
-अणु
+static struct devlink_trap_policer_item *
+devlink_trap_policer_item_get_from_info(struct devlink *devlink,
+					struct genl_info *info)
+{
 	u32 id;
 
-	अगर (!info->attrs[DEVLINK_ATTR_TRAP_POLICER_ID])
-		वापस शून्य;
+	if (!info->attrs[DEVLINK_ATTR_TRAP_POLICER_ID])
+		return NULL;
 	id = nla_get_u32(info->attrs[DEVLINK_ATTR_TRAP_POLICER_ID]);
 
-	वापस devlink_trap_policer_item_lookup(devlink, id);
-पूर्ण
+	return devlink_trap_policer_item_lookup(devlink, id);
+}
 
-अटल पूर्णांक
-devlink_trap_policer_stats_put(काष्ठा sk_buff *msg, काष्ठा devlink *devlink,
-			       स्थिर काष्ठा devlink_trap_policer *policer)
-अणु
-	काष्ठा nlattr *attr;
+static int
+devlink_trap_policer_stats_put(struct sk_buff *msg, struct devlink *devlink,
+			       const struct devlink_trap_policer *policer)
+{
+	struct nlattr *attr;
 	u64 drops;
-	पूर्णांक err;
+	int err;
 
-	अगर (!devlink->ops->trap_policer_counter_get)
-		वापस 0;
+	if (!devlink->ops->trap_policer_counter_get)
+		return 0;
 
 	err = devlink->ops->trap_policer_counter_get(devlink, policer, &drops);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	attr = nla_nest_start(msg, DEVLINK_ATTR_STATS);
-	अगर (!attr)
-		वापस -EMSGSIZE;
+	if (!attr)
+		return -EMSGSIZE;
 
-	अगर (nla_put_u64_64bit(msg, DEVLINK_ATTR_STATS_RX_DROPPED, drops,
+	if (nla_put_u64_64bit(msg, DEVLINK_ATTR_STATS_RX_DROPPED, drops,
 			      DEVLINK_ATTR_PAD))
-		जाओ nla_put_failure;
+		goto nla_put_failure;
 
 	nla_nest_end(msg, attr);
 
-	वापस 0;
+	return 0;
 
 nla_put_failure:
 	nla_nest_cancel(msg, attr);
-	वापस -EMSGSIZE;
-पूर्ण
+	return -EMSGSIZE;
+}
 
-अटल पूर्णांक
-devlink_nl_trap_policer_fill(काष्ठा sk_buff *msg, काष्ठा devlink *devlink,
-			     स्थिर काष्ठा devlink_trap_policer_item *policer_item,
-			     क्रमागत devlink_command cmd, u32 portid, u32 seq,
-			     पूर्णांक flags)
-अणु
-	व्योम *hdr;
-	पूर्णांक err;
+static int
+devlink_nl_trap_policer_fill(struct sk_buff *msg, struct devlink *devlink,
+			     const struct devlink_trap_policer_item *policer_item,
+			     enum devlink_command cmd, u32 portid, u32 seq,
+			     int flags)
+{
+	void *hdr;
+	int err;
 
 	hdr = genlmsg_put(msg, portid, seq, &devlink_nl_family, flags, cmd);
-	अगर (!hdr)
-		वापस -EMSGSIZE;
+	if (!hdr)
+		return -EMSGSIZE;
 
-	अगर (devlink_nl_put_handle(msg, devlink))
-		जाओ nla_put_failure;
+	if (devlink_nl_put_handle(msg, devlink))
+		goto nla_put_failure;
 
-	अगर (nla_put_u32(msg, DEVLINK_ATTR_TRAP_POLICER_ID,
+	if (nla_put_u32(msg, DEVLINK_ATTR_TRAP_POLICER_ID,
 			policer_item->policer->id))
-		जाओ nla_put_failure;
+		goto nla_put_failure;
 
-	अगर (nla_put_u64_64bit(msg, DEVLINK_ATTR_TRAP_POLICER_RATE,
+	if (nla_put_u64_64bit(msg, DEVLINK_ATTR_TRAP_POLICER_RATE,
 			      policer_item->rate, DEVLINK_ATTR_PAD))
-		जाओ nla_put_failure;
+		goto nla_put_failure;
 
-	अगर (nla_put_u64_64bit(msg, DEVLINK_ATTR_TRAP_POLICER_BURST,
+	if (nla_put_u64_64bit(msg, DEVLINK_ATTR_TRAP_POLICER_BURST,
 			      policer_item->burst, DEVLINK_ATTR_PAD))
-		जाओ nla_put_failure;
+		goto nla_put_failure;
 
 	err = devlink_trap_policer_stats_put(msg, devlink,
 					     policer_item->policer);
-	अगर (err)
-		जाओ nla_put_failure;
+	if (err)
+		goto nla_put_failure;
 
 	genlmsg_end(msg, hdr);
 
-	वापस 0;
+	return 0;
 
 nla_put_failure:
 	genlmsg_cancel(msg, hdr);
-	वापस -EMSGSIZE;
-पूर्ण
+	return -EMSGSIZE;
+}
 
-अटल पूर्णांक devlink_nl_cmd_trap_policer_get_करोit(काष्ठा sk_buff *skb,
-						काष्ठा genl_info *info)
-अणु
-	काष्ठा devlink_trap_policer_item *policer_item;
-	काष्ठा netlink_ext_ack *extack = info->extack;
-	काष्ठा devlink *devlink = info->user_ptr[0];
-	काष्ठा sk_buff *msg;
-	पूर्णांक err;
+static int devlink_nl_cmd_trap_policer_get_doit(struct sk_buff *skb,
+						struct genl_info *info)
+{
+	struct devlink_trap_policer_item *policer_item;
+	struct netlink_ext_ack *extack = info->extack;
+	struct devlink *devlink = info->user_ptr[0];
+	struct sk_buff *msg;
+	int err;
 
-	अगर (list_empty(&devlink->trap_policer_list))
-		वापस -EOPNOTSUPP;
+	if (list_empty(&devlink->trap_policer_list))
+		return -EOPNOTSUPP;
 
 	policer_item = devlink_trap_policer_item_get_from_info(devlink, info);
-	अगर (!policer_item) अणु
+	if (!policer_item) {
 		NL_SET_ERR_MSG_MOD(extack, "Device did not register this trap policer");
-		वापस -ENOENT;
-	पूर्ण
+		return -ENOENT;
+	}
 
 	msg = nlmsg_new(NLMSG_DEFAULT_SIZE, GFP_KERNEL);
-	अगर (!msg)
-		वापस -ENOMEM;
+	if (!msg)
+		return -ENOMEM;
 
 	err = devlink_nl_trap_policer_fill(msg, devlink, policer_item,
 					   DEVLINK_CMD_TRAP_POLICER_NEW,
 					   info->snd_portid, info->snd_seq, 0);
-	अगर (err)
-		जाओ err_trap_policer_fill;
+	if (err)
+		goto err_trap_policer_fill;
 
-	वापस genlmsg_reply(msg, info);
+	return genlmsg_reply(msg, info);
 
 err_trap_policer_fill:
-	nlmsg_मुक्त(msg);
-	वापस err;
-पूर्ण
+	nlmsg_free(msg);
+	return err;
+}
 
-अटल पूर्णांक devlink_nl_cmd_trap_policer_get_dumpit(काष्ठा sk_buff *msg,
-						  काष्ठा netlink_callback *cb)
-अणु
-	क्रमागत devlink_command cmd = DEVLINK_CMD_TRAP_POLICER_NEW;
-	काष्ठा devlink_trap_policer_item *policer_item;
+static int devlink_nl_cmd_trap_policer_get_dumpit(struct sk_buff *msg,
+						  struct netlink_callback *cb)
+{
+	enum devlink_command cmd = DEVLINK_CMD_TRAP_POLICER_NEW;
+	struct devlink_trap_policer_item *policer_item;
 	u32 portid = NETLINK_CB(cb->skb).portid;
-	काष्ठा devlink *devlink;
-	पूर्णांक start = cb->args[0];
-	पूर्णांक idx = 0;
-	पूर्णांक err;
+	struct devlink *devlink;
+	int start = cb->args[0];
+	int idx = 0;
+	int err;
 
 	mutex_lock(&devlink_mutex);
-	list_क्रम_each_entry(devlink, &devlink_list, list) अणु
-		अगर (!net_eq(devlink_net(devlink), sock_net(msg->sk)))
-			जारी;
+	list_for_each_entry(devlink, &devlink_list, list) {
+		if (!net_eq(devlink_net(devlink), sock_net(msg->sk)))
+			continue;
 		mutex_lock(&devlink->lock);
-		list_क्रम_each_entry(policer_item, &devlink->trap_policer_list,
-				    list) अणु
-			अगर (idx < start) अणु
+		list_for_each_entry(policer_item, &devlink->trap_policer_list,
+				    list) {
+			if (idx < start) {
 				idx++;
-				जारी;
-			पूर्ण
+				continue;
+			}
 			err = devlink_nl_trap_policer_fill(msg, devlink,
 							   policer_item, cmd,
 							   portid,
 							   cb->nlh->nlmsg_seq,
 							   NLM_F_MULTI);
-			अगर (err) अणु
+			if (err) {
 				mutex_unlock(&devlink->lock);
-				जाओ out;
-			पूर्ण
+				goto out;
+			}
 			idx++;
-		पूर्ण
+		}
 		mutex_unlock(&devlink->lock);
-	पूर्ण
+	}
 out:
 	mutex_unlock(&devlink_mutex);
 
 	cb->args[0] = idx;
-	वापस msg->len;
-पूर्ण
+	return msg->len;
+}
 
-अटल पूर्णांक
-devlink_trap_policer_set(काष्ठा devlink *devlink,
-			 काष्ठा devlink_trap_policer_item *policer_item,
-			 काष्ठा genl_info *info)
-अणु
-	काष्ठा netlink_ext_ack *extack = info->extack;
-	काष्ठा nlattr **attrs = info->attrs;
+static int
+devlink_trap_policer_set(struct devlink *devlink,
+			 struct devlink_trap_policer_item *policer_item,
+			 struct genl_info *info)
+{
+	struct netlink_ext_ack *extack = info->extack;
+	struct nlattr **attrs = info->attrs;
 	u64 rate, burst;
-	पूर्णांक err;
+	int err;
 
 	rate = policer_item->rate;
 	burst = policer_item->burst;
 
-	अगर (attrs[DEVLINK_ATTR_TRAP_POLICER_RATE])
+	if (attrs[DEVLINK_ATTR_TRAP_POLICER_RATE])
 		rate = nla_get_u64(attrs[DEVLINK_ATTR_TRAP_POLICER_RATE]);
 
-	अगर (attrs[DEVLINK_ATTR_TRAP_POLICER_BURST])
+	if (attrs[DEVLINK_ATTR_TRAP_POLICER_BURST])
 		burst = nla_get_u64(attrs[DEVLINK_ATTR_TRAP_POLICER_BURST]);
 
-	अगर (rate < policer_item->policer->min_rate) अणु
+	if (rate < policer_item->policer->min_rate) {
 		NL_SET_ERR_MSG_MOD(extack, "Policer rate lower than limit");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (rate > policer_item->policer->max_rate) अणु
+	if (rate > policer_item->policer->max_rate) {
 		NL_SET_ERR_MSG_MOD(extack, "Policer rate higher than limit");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (burst < policer_item->policer->min_burst) अणु
+	if (burst < policer_item->policer->min_burst) {
 		NL_SET_ERR_MSG_MOD(extack, "Policer burst size lower than limit");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (burst > policer_item->policer->max_burst) अणु
+	if (burst > policer_item->policer->max_burst) {
 		NL_SET_ERR_MSG_MOD(extack, "Policer burst size higher than limit");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	err = devlink->ops->trap_policer_set(devlink, policer_item->policer,
 					     rate, burst, info->extack);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	policer_item->rate = rate;
 	policer_item->burst = burst;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक devlink_nl_cmd_trap_policer_set_करोit(काष्ठा sk_buff *skb,
-						काष्ठा genl_info *info)
-अणु
-	काष्ठा devlink_trap_policer_item *policer_item;
-	काष्ठा netlink_ext_ack *extack = info->extack;
-	काष्ठा devlink *devlink = info->user_ptr[0];
+static int devlink_nl_cmd_trap_policer_set_doit(struct sk_buff *skb,
+						struct genl_info *info)
+{
+	struct devlink_trap_policer_item *policer_item;
+	struct netlink_ext_ack *extack = info->extack;
+	struct devlink *devlink = info->user_ptr[0];
 
-	अगर (list_empty(&devlink->trap_policer_list))
-		वापस -EOPNOTSUPP;
+	if (list_empty(&devlink->trap_policer_list))
+		return -EOPNOTSUPP;
 
-	अगर (!devlink->ops->trap_policer_set)
-		वापस -EOPNOTSUPP;
+	if (!devlink->ops->trap_policer_set)
+		return -EOPNOTSUPP;
 
 	policer_item = devlink_trap_policer_item_get_from_info(devlink, info);
-	अगर (!policer_item) अणु
+	if (!policer_item) {
 		NL_SET_ERR_MSG_MOD(extack, "Device did not register this trap policer");
-		वापस -ENOENT;
-	पूर्ण
+		return -ENOENT;
+	}
 
-	वापस devlink_trap_policer_set(devlink, policer_item, info);
-पूर्ण
+	return devlink_trap_policer_set(devlink, policer_item, info);
+}
 
-अटल स्थिर काष्ठा nla_policy devlink_nl_policy[DEVLINK_ATTR_MAX + 1] = अणु
-	[DEVLINK_ATTR_UNSPEC] = अणु .strict_start_type =
-		DEVLINK_ATTR_TRAP_POLICER_ID पूर्ण,
-	[DEVLINK_ATTR_BUS_NAME] = अणु .type = NLA_NUL_STRING पूर्ण,
-	[DEVLINK_ATTR_DEV_NAME] = अणु .type = NLA_NUL_STRING पूर्ण,
-	[DEVLINK_ATTR_PORT_INDEX] = अणु .type = NLA_U32 पूर्ण,
+static const struct nla_policy devlink_nl_policy[DEVLINK_ATTR_MAX + 1] = {
+	[DEVLINK_ATTR_UNSPEC] = { .strict_start_type =
+		DEVLINK_ATTR_TRAP_POLICER_ID },
+	[DEVLINK_ATTR_BUS_NAME] = { .type = NLA_NUL_STRING },
+	[DEVLINK_ATTR_DEV_NAME] = { .type = NLA_NUL_STRING },
+	[DEVLINK_ATTR_PORT_INDEX] = { .type = NLA_U32 },
 	[DEVLINK_ATTR_PORT_TYPE] = NLA_POLICY_RANGE(NLA_U16, DEVLINK_PORT_TYPE_AUTO,
 						    DEVLINK_PORT_TYPE_IB),
-	[DEVLINK_ATTR_PORT_SPLIT_COUNT] = अणु .type = NLA_U32 पूर्ण,
-	[DEVLINK_ATTR_SB_INDEX] = अणु .type = NLA_U32 पूर्ण,
-	[DEVLINK_ATTR_SB_POOL_INDEX] = अणु .type = NLA_U16 पूर्ण,
-	[DEVLINK_ATTR_SB_POOL_TYPE] = अणु .type = NLA_U8 पूर्ण,
-	[DEVLINK_ATTR_SB_POOL_SIZE] = अणु .type = NLA_U32 पूर्ण,
-	[DEVLINK_ATTR_SB_POOL_THRESHOLD_TYPE] = अणु .type = NLA_U8 पूर्ण,
-	[DEVLINK_ATTR_SB_THRESHOLD] = अणु .type = NLA_U32 पूर्ण,
-	[DEVLINK_ATTR_SB_TC_INDEX] = अणु .type = NLA_U16 पूर्ण,
+	[DEVLINK_ATTR_PORT_SPLIT_COUNT] = { .type = NLA_U32 },
+	[DEVLINK_ATTR_SB_INDEX] = { .type = NLA_U32 },
+	[DEVLINK_ATTR_SB_POOL_INDEX] = { .type = NLA_U16 },
+	[DEVLINK_ATTR_SB_POOL_TYPE] = { .type = NLA_U8 },
+	[DEVLINK_ATTR_SB_POOL_SIZE] = { .type = NLA_U32 },
+	[DEVLINK_ATTR_SB_POOL_THRESHOLD_TYPE] = { .type = NLA_U8 },
+	[DEVLINK_ATTR_SB_THRESHOLD] = { .type = NLA_U32 },
+	[DEVLINK_ATTR_SB_TC_INDEX] = { .type = NLA_U16 },
 	[DEVLINK_ATTR_ESWITCH_MODE] = NLA_POLICY_RANGE(NLA_U16, DEVLINK_ESWITCH_MODE_LEGACY,
 						       DEVLINK_ESWITCH_MODE_SWITCHDEV),
-	[DEVLINK_ATTR_ESWITCH_INLINE_MODE] = अणु .type = NLA_U8 पूर्ण,
-	[DEVLINK_ATTR_ESWITCH_ENCAP_MODE] = अणु .type = NLA_U8 पूर्ण,
-	[DEVLINK_ATTR_DPIPE_TABLE_NAME] = अणु .type = NLA_NUL_STRING पूर्ण,
-	[DEVLINK_ATTR_DPIPE_TABLE_COUNTERS_ENABLED] = अणु .type = NLA_U8 पूर्ण,
-	[DEVLINK_ATTR_RESOURCE_ID] = अणु .type = NLA_U64पूर्ण,
-	[DEVLINK_ATTR_RESOURCE_SIZE] = अणु .type = NLA_U64पूर्ण,
-	[DEVLINK_ATTR_PARAM_NAME] = अणु .type = NLA_NUL_STRING पूर्ण,
-	[DEVLINK_ATTR_PARAM_TYPE] = अणु .type = NLA_U8 पूर्ण,
-	[DEVLINK_ATTR_PARAM_VALUE_CMODE] = अणु .type = NLA_U8 पूर्ण,
-	[DEVLINK_ATTR_REGION_NAME] = अणु .type = NLA_NUL_STRING पूर्ण,
-	[DEVLINK_ATTR_REGION_SNAPSHOT_ID] = अणु .type = NLA_U32 पूर्ण,
-	[DEVLINK_ATTR_REGION_CHUNK_ADDR] = अणु .type = NLA_U64 पूर्ण,
-	[DEVLINK_ATTR_REGION_CHUNK_LEN] = अणु .type = NLA_U64 पूर्ण,
-	[DEVLINK_ATTR_HEALTH_REPORTER_NAME] = अणु .type = NLA_NUL_STRING पूर्ण,
-	[DEVLINK_ATTR_HEALTH_REPORTER_GRACEFUL_PERIOD] = अणु .type = NLA_U64 पूर्ण,
-	[DEVLINK_ATTR_HEALTH_REPORTER_AUTO_RECOVER] = अणु .type = NLA_U8 पूर्ण,
-	[DEVLINK_ATTR_FLASH_UPDATE_खाता_NAME] = अणु .type = NLA_NUL_STRING पूर्ण,
-	[DEVLINK_ATTR_FLASH_UPDATE_COMPONENT] = अणु .type = NLA_NUL_STRING पूर्ण,
+	[DEVLINK_ATTR_ESWITCH_INLINE_MODE] = { .type = NLA_U8 },
+	[DEVLINK_ATTR_ESWITCH_ENCAP_MODE] = { .type = NLA_U8 },
+	[DEVLINK_ATTR_DPIPE_TABLE_NAME] = { .type = NLA_NUL_STRING },
+	[DEVLINK_ATTR_DPIPE_TABLE_COUNTERS_ENABLED] = { .type = NLA_U8 },
+	[DEVLINK_ATTR_RESOURCE_ID] = { .type = NLA_U64},
+	[DEVLINK_ATTR_RESOURCE_SIZE] = { .type = NLA_U64},
+	[DEVLINK_ATTR_PARAM_NAME] = { .type = NLA_NUL_STRING },
+	[DEVLINK_ATTR_PARAM_TYPE] = { .type = NLA_U8 },
+	[DEVLINK_ATTR_PARAM_VALUE_CMODE] = { .type = NLA_U8 },
+	[DEVLINK_ATTR_REGION_NAME] = { .type = NLA_NUL_STRING },
+	[DEVLINK_ATTR_REGION_SNAPSHOT_ID] = { .type = NLA_U32 },
+	[DEVLINK_ATTR_REGION_CHUNK_ADDR] = { .type = NLA_U64 },
+	[DEVLINK_ATTR_REGION_CHUNK_LEN] = { .type = NLA_U64 },
+	[DEVLINK_ATTR_HEALTH_REPORTER_NAME] = { .type = NLA_NUL_STRING },
+	[DEVLINK_ATTR_HEALTH_REPORTER_GRACEFUL_PERIOD] = { .type = NLA_U64 },
+	[DEVLINK_ATTR_HEALTH_REPORTER_AUTO_RECOVER] = { .type = NLA_U8 },
+	[DEVLINK_ATTR_FLASH_UPDATE_FILE_NAME] = { .type = NLA_NUL_STRING },
+	[DEVLINK_ATTR_FLASH_UPDATE_COMPONENT] = { .type = NLA_NUL_STRING },
 	[DEVLINK_ATTR_FLASH_UPDATE_OVERWRITE_MASK] =
 		NLA_POLICY_BITFIELD32(DEVLINK_SUPPORTED_FLASH_OVERWRITE_SECTIONS),
-	[DEVLINK_ATTR_TRAP_NAME] = अणु .type = NLA_NUL_STRING पूर्ण,
-	[DEVLINK_ATTR_TRAP_ACTION] = अणु .type = NLA_U8 पूर्ण,
-	[DEVLINK_ATTR_TRAP_GROUP_NAME] = अणु .type = NLA_NUL_STRING पूर्ण,
-	[DEVLINK_ATTR_NETNS_PID] = अणु .type = NLA_U32 पूर्ण,
-	[DEVLINK_ATTR_NETNS_FD] = अणु .type = NLA_U32 पूर्ण,
-	[DEVLINK_ATTR_NETNS_ID] = अणु .type = NLA_U32 पूर्ण,
-	[DEVLINK_ATTR_HEALTH_REPORTER_AUTO_DUMP] = अणु .type = NLA_U8 पूर्ण,
-	[DEVLINK_ATTR_TRAP_POLICER_ID] = अणु .type = NLA_U32 पूर्ण,
-	[DEVLINK_ATTR_TRAP_POLICER_RATE] = अणु .type = NLA_U64 पूर्ण,
-	[DEVLINK_ATTR_TRAP_POLICER_BURST] = अणु .type = NLA_U64 पूर्ण,
-	[DEVLINK_ATTR_PORT_FUNCTION] = अणु .type = NLA_NESTED पूर्ण,
+	[DEVLINK_ATTR_TRAP_NAME] = { .type = NLA_NUL_STRING },
+	[DEVLINK_ATTR_TRAP_ACTION] = { .type = NLA_U8 },
+	[DEVLINK_ATTR_TRAP_GROUP_NAME] = { .type = NLA_NUL_STRING },
+	[DEVLINK_ATTR_NETNS_PID] = { .type = NLA_U32 },
+	[DEVLINK_ATTR_NETNS_FD] = { .type = NLA_U32 },
+	[DEVLINK_ATTR_NETNS_ID] = { .type = NLA_U32 },
+	[DEVLINK_ATTR_HEALTH_REPORTER_AUTO_DUMP] = { .type = NLA_U8 },
+	[DEVLINK_ATTR_TRAP_POLICER_ID] = { .type = NLA_U32 },
+	[DEVLINK_ATTR_TRAP_POLICER_RATE] = { .type = NLA_U64 },
+	[DEVLINK_ATTR_TRAP_POLICER_BURST] = { .type = NLA_U64 },
+	[DEVLINK_ATTR_PORT_FUNCTION] = { .type = NLA_NESTED },
 	[DEVLINK_ATTR_RELOAD_ACTION] = NLA_POLICY_RANGE(NLA_U8, DEVLINK_RELOAD_ACTION_DRIVER_REINIT,
 							DEVLINK_RELOAD_ACTION_MAX),
 	[DEVLINK_ATTR_RELOAD_LIMITS] = NLA_POLICY_BITFIELD32(DEVLINK_RELOAD_LIMITS_VALID_MASK),
-	[DEVLINK_ATTR_PORT_FLAVOUR] = अणु .type = NLA_U16 पूर्ण,
-	[DEVLINK_ATTR_PORT_PCI_PF_NUMBER] = अणु .type = NLA_U16 पूर्ण,
-	[DEVLINK_ATTR_PORT_PCI_SF_NUMBER] = अणु .type = NLA_U32 पूर्ण,
-	[DEVLINK_ATTR_PORT_CONTROLLER_NUMBER] = अणु .type = NLA_U32 पूर्ण,
-पूर्ण;
+	[DEVLINK_ATTR_PORT_FLAVOUR] = { .type = NLA_U16 },
+	[DEVLINK_ATTR_PORT_PCI_PF_NUMBER] = { .type = NLA_U16 },
+	[DEVLINK_ATTR_PORT_PCI_SF_NUMBER] = { .type = NLA_U32 },
+	[DEVLINK_ATTR_PORT_CONTROLLER_NUMBER] = { .type = NLA_U32 },
+};
 
-अटल स्थिर काष्ठा genl_small_ops devlink_nl_ops[] = अणु
-	अणु
+static const struct genl_small_ops devlink_nl_ops[] = {
+	{
 		.cmd = DEVLINK_CMD_GET,
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
-		.करोit = devlink_nl_cmd_get_करोit,
+		.doit = devlink_nl_cmd_get_doit,
 		.dumpit = devlink_nl_cmd_get_dumpit,
 		/* can be retrieved by unprivileged users */
-	पूर्ण,
-	अणु
+	},
+	{
 		.cmd = DEVLINK_CMD_PORT_GET,
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
-		.करोit = devlink_nl_cmd_port_get_करोit,
+		.doit = devlink_nl_cmd_port_get_doit,
 		.dumpit = devlink_nl_cmd_port_get_dumpit,
-		.पूर्णांकernal_flags = DEVLINK_NL_FLAG_NEED_PORT,
+		.internal_flags = DEVLINK_NL_FLAG_NEED_PORT,
 		/* can be retrieved by unprivileged users */
-	पूर्ण,
-	अणु
+	},
+	{
 		.cmd = DEVLINK_CMD_PORT_SET,
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
-		.करोit = devlink_nl_cmd_port_set_करोit,
+		.doit = devlink_nl_cmd_port_set_doit,
 		.flags = GENL_ADMIN_PERM,
-		.पूर्णांकernal_flags = DEVLINK_NL_FLAG_NEED_PORT,
-	पूर्ण,
-	अणु
+		.internal_flags = DEVLINK_NL_FLAG_NEED_PORT,
+	},
+	{
 		.cmd = DEVLINK_CMD_PORT_SPLIT,
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
-		.करोit = devlink_nl_cmd_port_split_करोit,
+		.doit = devlink_nl_cmd_port_split_doit,
 		.flags = GENL_ADMIN_PERM,
-		.पूर्णांकernal_flags = DEVLINK_NL_FLAG_NO_LOCK,
-	पूर्ण,
-	अणु
+		.internal_flags = DEVLINK_NL_FLAG_NO_LOCK,
+	},
+	{
 		.cmd = DEVLINK_CMD_PORT_UNSPLIT,
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
-		.करोit = devlink_nl_cmd_port_unsplit_करोit,
+		.doit = devlink_nl_cmd_port_unsplit_doit,
 		.flags = GENL_ADMIN_PERM,
-		.पूर्णांकernal_flags = DEVLINK_NL_FLAG_NO_LOCK,
-	पूर्ण,
-	अणु
+		.internal_flags = DEVLINK_NL_FLAG_NO_LOCK,
+	},
+	{
 		.cmd = DEVLINK_CMD_PORT_NEW,
-		.करोit = devlink_nl_cmd_port_new_करोit,
+		.doit = devlink_nl_cmd_port_new_doit,
 		.flags = GENL_ADMIN_PERM,
-		.पूर्णांकernal_flags = DEVLINK_NL_FLAG_NO_LOCK,
-	पूर्ण,
-	अणु
+		.internal_flags = DEVLINK_NL_FLAG_NO_LOCK,
+	},
+	{
 		.cmd = DEVLINK_CMD_PORT_DEL,
-		.करोit = devlink_nl_cmd_port_del_करोit,
+		.doit = devlink_nl_cmd_port_del_doit,
 		.flags = GENL_ADMIN_PERM,
-		.पूर्णांकernal_flags = DEVLINK_NL_FLAG_NO_LOCK,
-	पूर्ण,
-	अणु
+		.internal_flags = DEVLINK_NL_FLAG_NO_LOCK,
+	},
+	{
 		.cmd = DEVLINK_CMD_SB_GET,
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
-		.करोit = devlink_nl_cmd_sb_get_करोit,
+		.doit = devlink_nl_cmd_sb_get_doit,
 		.dumpit = devlink_nl_cmd_sb_get_dumpit,
 		/* can be retrieved by unprivileged users */
-	पूर्ण,
-	अणु
+	},
+	{
 		.cmd = DEVLINK_CMD_SB_POOL_GET,
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
-		.करोit = devlink_nl_cmd_sb_pool_get_करोit,
+		.doit = devlink_nl_cmd_sb_pool_get_doit,
 		.dumpit = devlink_nl_cmd_sb_pool_get_dumpit,
 		/* can be retrieved by unprivileged users */
-	पूर्ण,
-	अणु
+	},
+	{
 		.cmd = DEVLINK_CMD_SB_POOL_SET,
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
-		.करोit = devlink_nl_cmd_sb_pool_set_करोit,
+		.doit = devlink_nl_cmd_sb_pool_set_doit,
 		.flags = GENL_ADMIN_PERM,
-	पूर्ण,
-	अणु
+	},
+	{
 		.cmd = DEVLINK_CMD_SB_PORT_POOL_GET,
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
-		.करोit = devlink_nl_cmd_sb_port_pool_get_करोit,
+		.doit = devlink_nl_cmd_sb_port_pool_get_doit,
 		.dumpit = devlink_nl_cmd_sb_port_pool_get_dumpit,
-		.पूर्णांकernal_flags = DEVLINK_NL_FLAG_NEED_PORT,
+		.internal_flags = DEVLINK_NL_FLAG_NEED_PORT,
 		/* can be retrieved by unprivileged users */
-	पूर्ण,
-	अणु
+	},
+	{
 		.cmd = DEVLINK_CMD_SB_PORT_POOL_SET,
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
-		.करोit = devlink_nl_cmd_sb_port_pool_set_करोit,
+		.doit = devlink_nl_cmd_sb_port_pool_set_doit,
 		.flags = GENL_ADMIN_PERM,
-		.पूर्णांकernal_flags = DEVLINK_NL_FLAG_NEED_PORT,
-	पूर्ण,
-	अणु
+		.internal_flags = DEVLINK_NL_FLAG_NEED_PORT,
+	},
+	{
 		.cmd = DEVLINK_CMD_SB_TC_POOL_BIND_GET,
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
-		.करोit = devlink_nl_cmd_sb_tc_pool_bind_get_करोit,
+		.doit = devlink_nl_cmd_sb_tc_pool_bind_get_doit,
 		.dumpit = devlink_nl_cmd_sb_tc_pool_bind_get_dumpit,
-		.पूर्णांकernal_flags = DEVLINK_NL_FLAG_NEED_PORT,
+		.internal_flags = DEVLINK_NL_FLAG_NEED_PORT,
 		/* can be retrieved by unprivileged users */
-	पूर्ण,
-	अणु
+	},
+	{
 		.cmd = DEVLINK_CMD_SB_TC_POOL_BIND_SET,
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
-		.करोit = devlink_nl_cmd_sb_tc_pool_bind_set_करोit,
+		.doit = devlink_nl_cmd_sb_tc_pool_bind_set_doit,
 		.flags = GENL_ADMIN_PERM,
-		.पूर्णांकernal_flags = DEVLINK_NL_FLAG_NEED_PORT,
-	पूर्ण,
-	अणु
+		.internal_flags = DEVLINK_NL_FLAG_NEED_PORT,
+	},
+	{
 		.cmd = DEVLINK_CMD_SB_OCC_SNAPSHOT,
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
-		.करोit = devlink_nl_cmd_sb_occ_snapshot_करोit,
+		.doit = devlink_nl_cmd_sb_occ_snapshot_doit,
 		.flags = GENL_ADMIN_PERM,
-	पूर्ण,
-	अणु
+	},
+	{
 		.cmd = DEVLINK_CMD_SB_OCC_MAX_CLEAR,
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
-		.करोit = devlink_nl_cmd_sb_occ_max_clear_करोit,
+		.doit = devlink_nl_cmd_sb_occ_max_clear_doit,
 		.flags = GENL_ADMIN_PERM,
-	पूर्ण,
-	अणु
+	},
+	{
 		.cmd = DEVLINK_CMD_ESWITCH_GET,
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
-		.करोit = devlink_nl_cmd_eचयन_get_करोit,
+		.doit = devlink_nl_cmd_eswitch_get_doit,
 		.flags = GENL_ADMIN_PERM,
-		.पूर्णांकernal_flags = DEVLINK_NL_FLAG_NO_LOCK,
-	पूर्ण,
-	अणु
+		.internal_flags = DEVLINK_NL_FLAG_NO_LOCK,
+	},
+	{
 		.cmd = DEVLINK_CMD_ESWITCH_SET,
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
-		.करोit = devlink_nl_cmd_eचयन_set_करोit,
+		.doit = devlink_nl_cmd_eswitch_set_doit,
 		.flags = GENL_ADMIN_PERM,
-		.पूर्णांकernal_flags = DEVLINK_NL_FLAG_NO_LOCK,
-	पूर्ण,
-	अणु
+		.internal_flags = DEVLINK_NL_FLAG_NO_LOCK,
+	},
+	{
 		.cmd = DEVLINK_CMD_DPIPE_TABLE_GET,
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
-		.करोit = devlink_nl_cmd_dpipe_table_get,
+		.doit = devlink_nl_cmd_dpipe_table_get,
 		/* can be retrieved by unprivileged users */
-	पूर्ण,
-	अणु
+	},
+	{
 		.cmd = DEVLINK_CMD_DPIPE_ENTRIES_GET,
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
-		.करोit = devlink_nl_cmd_dpipe_entries_get,
+		.doit = devlink_nl_cmd_dpipe_entries_get,
 		/* can be retrieved by unprivileged users */
-	पूर्ण,
-	अणु
+	},
+	{
 		.cmd = DEVLINK_CMD_DPIPE_HEADERS_GET,
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
-		.करोit = devlink_nl_cmd_dpipe_headers_get,
+		.doit = devlink_nl_cmd_dpipe_headers_get,
 		/* can be retrieved by unprivileged users */
-	पूर्ण,
-	अणु
+	},
+	{
 		.cmd = DEVLINK_CMD_DPIPE_TABLE_COUNTERS_SET,
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
-		.करोit = devlink_nl_cmd_dpipe_table_counters_set,
+		.doit = devlink_nl_cmd_dpipe_table_counters_set,
 		.flags = GENL_ADMIN_PERM,
-	पूर्ण,
-	अणु
+	},
+	{
 		.cmd = DEVLINK_CMD_RESOURCE_SET,
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
-		.करोit = devlink_nl_cmd_resource_set,
+		.doit = devlink_nl_cmd_resource_set,
 		.flags = GENL_ADMIN_PERM,
-	पूर्ण,
-	अणु
+	},
+	{
 		.cmd = DEVLINK_CMD_RESOURCE_DUMP,
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
-		.करोit = devlink_nl_cmd_resource_dump,
+		.doit = devlink_nl_cmd_resource_dump,
 		/* can be retrieved by unprivileged users */
-	पूर्ण,
-	अणु
+	},
+	{
 		.cmd = DEVLINK_CMD_RELOAD,
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
-		.करोit = devlink_nl_cmd_reload,
+		.doit = devlink_nl_cmd_reload,
 		.flags = GENL_ADMIN_PERM,
-		.पूर्णांकernal_flags = DEVLINK_NL_FLAG_NO_LOCK,
-	पूर्ण,
-	अणु
+		.internal_flags = DEVLINK_NL_FLAG_NO_LOCK,
+	},
+	{
 		.cmd = DEVLINK_CMD_PARAM_GET,
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
-		.करोit = devlink_nl_cmd_param_get_करोit,
+		.doit = devlink_nl_cmd_param_get_doit,
 		.dumpit = devlink_nl_cmd_param_get_dumpit,
 		/* can be retrieved by unprivileged users */
-	पूर्ण,
-	अणु
+	},
+	{
 		.cmd = DEVLINK_CMD_PARAM_SET,
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
-		.करोit = devlink_nl_cmd_param_set_करोit,
+		.doit = devlink_nl_cmd_param_set_doit,
 		.flags = GENL_ADMIN_PERM,
-	पूर्ण,
-	अणु
+	},
+	{
 		.cmd = DEVLINK_CMD_PORT_PARAM_GET,
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
-		.करोit = devlink_nl_cmd_port_param_get_करोit,
+		.doit = devlink_nl_cmd_port_param_get_doit,
 		.dumpit = devlink_nl_cmd_port_param_get_dumpit,
-		.पूर्णांकernal_flags = DEVLINK_NL_FLAG_NEED_PORT,
+		.internal_flags = DEVLINK_NL_FLAG_NEED_PORT,
 		/* can be retrieved by unprivileged users */
-	पूर्ण,
-	अणु
+	},
+	{
 		.cmd = DEVLINK_CMD_PORT_PARAM_SET,
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
-		.करोit = devlink_nl_cmd_port_param_set_करोit,
+		.doit = devlink_nl_cmd_port_param_set_doit,
 		.flags = GENL_ADMIN_PERM,
-		.पूर्णांकernal_flags = DEVLINK_NL_FLAG_NEED_PORT,
-	पूर्ण,
-	अणु
+		.internal_flags = DEVLINK_NL_FLAG_NEED_PORT,
+	},
+	{
 		.cmd = DEVLINK_CMD_REGION_GET,
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
-		.करोit = devlink_nl_cmd_region_get_करोit,
+		.doit = devlink_nl_cmd_region_get_doit,
 		.dumpit = devlink_nl_cmd_region_get_dumpit,
 		.flags = GENL_ADMIN_PERM,
-	पूर्ण,
-	अणु
+	},
+	{
 		.cmd = DEVLINK_CMD_REGION_NEW,
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
-		.करोit = devlink_nl_cmd_region_new,
+		.doit = devlink_nl_cmd_region_new,
 		.flags = GENL_ADMIN_PERM,
-	पूर्ण,
-	अणु
+	},
+	{
 		.cmd = DEVLINK_CMD_REGION_DEL,
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
-		.करोit = devlink_nl_cmd_region_del,
+		.doit = devlink_nl_cmd_region_del,
 		.flags = GENL_ADMIN_PERM,
-	पूर्ण,
-	अणु
+	},
+	{
 		.cmd = DEVLINK_CMD_REGION_READ,
 		.validate = GENL_DONT_VALIDATE_STRICT |
 			    GENL_DONT_VALIDATE_DUMP_STRICT,
-		.dumpit = devlink_nl_cmd_region_पढ़ो_dumpit,
+		.dumpit = devlink_nl_cmd_region_read_dumpit,
 		.flags = GENL_ADMIN_PERM,
-	पूर्ण,
-	अणु
+	},
+	{
 		.cmd = DEVLINK_CMD_INFO_GET,
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
-		.करोit = devlink_nl_cmd_info_get_करोit,
+		.doit = devlink_nl_cmd_info_get_doit,
 		.dumpit = devlink_nl_cmd_info_get_dumpit,
 		/* can be retrieved by unprivileged users */
-	पूर्ण,
-	अणु
+	},
+	{
 		.cmd = DEVLINK_CMD_HEALTH_REPORTER_GET,
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
-		.करोit = devlink_nl_cmd_health_reporter_get_करोit,
+		.doit = devlink_nl_cmd_health_reporter_get_doit,
 		.dumpit = devlink_nl_cmd_health_reporter_get_dumpit,
-		.पूर्णांकernal_flags = DEVLINK_NL_FLAG_NEED_DEVLINK_OR_PORT |
+		.internal_flags = DEVLINK_NL_FLAG_NEED_DEVLINK_OR_PORT |
 				  DEVLINK_NL_FLAG_NO_LOCK,
 		/* can be retrieved by unprivileged users */
-	पूर्ण,
-	अणु
+	},
+	{
 		.cmd = DEVLINK_CMD_HEALTH_REPORTER_SET,
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
-		.करोit = devlink_nl_cmd_health_reporter_set_करोit,
+		.doit = devlink_nl_cmd_health_reporter_set_doit,
 		.flags = GENL_ADMIN_PERM,
-		.पूर्णांकernal_flags = DEVLINK_NL_FLAG_NEED_DEVLINK_OR_PORT |
+		.internal_flags = DEVLINK_NL_FLAG_NEED_DEVLINK_OR_PORT |
 				  DEVLINK_NL_FLAG_NO_LOCK,
-	पूर्ण,
-	अणु
+	},
+	{
 		.cmd = DEVLINK_CMD_HEALTH_REPORTER_RECOVER,
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
-		.करोit = devlink_nl_cmd_health_reporter_recover_करोit,
+		.doit = devlink_nl_cmd_health_reporter_recover_doit,
 		.flags = GENL_ADMIN_PERM,
-		.पूर्णांकernal_flags = DEVLINK_NL_FLAG_NEED_DEVLINK_OR_PORT |
+		.internal_flags = DEVLINK_NL_FLAG_NEED_DEVLINK_OR_PORT |
 				  DEVLINK_NL_FLAG_NO_LOCK,
-	पूर्ण,
-	अणु
+	},
+	{
 		.cmd = DEVLINK_CMD_HEALTH_REPORTER_DIAGNOSE,
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
-		.करोit = devlink_nl_cmd_health_reporter_diagnose_करोit,
+		.doit = devlink_nl_cmd_health_reporter_diagnose_doit,
 		.flags = GENL_ADMIN_PERM,
-		.पूर्णांकernal_flags = DEVLINK_NL_FLAG_NEED_DEVLINK_OR_PORT |
+		.internal_flags = DEVLINK_NL_FLAG_NEED_DEVLINK_OR_PORT |
 				  DEVLINK_NL_FLAG_NO_LOCK,
-	पूर्ण,
-	अणु
+	},
+	{
 		.cmd = DEVLINK_CMD_HEALTH_REPORTER_DUMP_GET,
 		.validate = GENL_DONT_VALIDATE_STRICT |
 			    GENL_DONT_VALIDATE_DUMP_STRICT,
 		.dumpit = devlink_nl_cmd_health_reporter_dump_get_dumpit,
 		.flags = GENL_ADMIN_PERM,
-		.पूर्णांकernal_flags = DEVLINK_NL_FLAG_NEED_DEVLINK_OR_PORT |
+		.internal_flags = DEVLINK_NL_FLAG_NEED_DEVLINK_OR_PORT |
 				  DEVLINK_NL_FLAG_NO_LOCK,
-	पूर्ण,
-	अणु
+	},
+	{
 		.cmd = DEVLINK_CMD_HEALTH_REPORTER_DUMP_CLEAR,
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
-		.करोit = devlink_nl_cmd_health_reporter_dump_clear_करोit,
+		.doit = devlink_nl_cmd_health_reporter_dump_clear_doit,
 		.flags = GENL_ADMIN_PERM,
-		.पूर्णांकernal_flags = DEVLINK_NL_FLAG_NEED_DEVLINK_OR_PORT |
+		.internal_flags = DEVLINK_NL_FLAG_NEED_DEVLINK_OR_PORT |
 				  DEVLINK_NL_FLAG_NO_LOCK,
-	पूर्ण,
-	अणु
+	},
+	{
 		.cmd = DEVLINK_CMD_HEALTH_REPORTER_TEST,
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
-		.करोit = devlink_nl_cmd_health_reporter_test_करोit,
+		.doit = devlink_nl_cmd_health_reporter_test_doit,
 		.flags = GENL_ADMIN_PERM,
-		.पूर्णांकernal_flags = DEVLINK_NL_FLAG_NEED_DEVLINK_OR_PORT |
+		.internal_flags = DEVLINK_NL_FLAG_NEED_DEVLINK_OR_PORT |
 				  DEVLINK_NL_FLAG_NO_LOCK,
-	पूर्ण,
-	अणु
+	},
+	{
 		.cmd = DEVLINK_CMD_FLASH_UPDATE,
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
-		.करोit = devlink_nl_cmd_flash_update,
+		.doit = devlink_nl_cmd_flash_update,
 		.flags = GENL_ADMIN_PERM,
-	पूर्ण,
-	अणु
+	},
+	{
 		.cmd = DEVLINK_CMD_TRAP_GET,
-		.करोit = devlink_nl_cmd_trap_get_करोit,
+		.doit = devlink_nl_cmd_trap_get_doit,
 		.dumpit = devlink_nl_cmd_trap_get_dumpit,
 		/* can be retrieved by unprivileged users */
-	पूर्ण,
-	अणु
+	},
+	{
 		.cmd = DEVLINK_CMD_TRAP_SET,
-		.करोit = devlink_nl_cmd_trap_set_करोit,
+		.doit = devlink_nl_cmd_trap_set_doit,
 		.flags = GENL_ADMIN_PERM,
-	पूर्ण,
-	अणु
+	},
+	{
 		.cmd = DEVLINK_CMD_TRAP_GROUP_GET,
-		.करोit = devlink_nl_cmd_trap_group_get_करोit,
+		.doit = devlink_nl_cmd_trap_group_get_doit,
 		.dumpit = devlink_nl_cmd_trap_group_get_dumpit,
 		/* can be retrieved by unprivileged users */
-	पूर्ण,
-	अणु
+	},
+	{
 		.cmd = DEVLINK_CMD_TRAP_GROUP_SET,
-		.करोit = devlink_nl_cmd_trap_group_set_करोit,
+		.doit = devlink_nl_cmd_trap_group_set_doit,
 		.flags = GENL_ADMIN_PERM,
-	पूर्ण,
-	अणु
+	},
+	{
 		.cmd = DEVLINK_CMD_TRAP_POLICER_GET,
-		.करोit = devlink_nl_cmd_trap_policer_get_करोit,
+		.doit = devlink_nl_cmd_trap_policer_get_doit,
 		.dumpit = devlink_nl_cmd_trap_policer_get_dumpit,
 		/* can be retrieved by unprivileged users */
-	पूर्ण,
-	अणु
+	},
+	{
 		.cmd = DEVLINK_CMD_TRAP_POLICER_SET,
-		.करोit = devlink_nl_cmd_trap_policer_set_करोit,
+		.doit = devlink_nl_cmd_trap_policer_set_doit,
 		.flags = GENL_ADMIN_PERM,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल काष्ठा genl_family devlink_nl_family __ro_after_init = अणु
+static struct genl_family devlink_nl_family __ro_after_init = {
 	.name		= DEVLINK_GENL_NAME,
 	.version	= DEVLINK_GENL_VERSION,
 	.maxattr	= DEVLINK_ATTR_MAX,
 	.policy = devlink_nl_policy,
 	.netnsok	= true,
-	.pre_करोit	= devlink_nl_pre_करोit,
-	.post_करोit	= devlink_nl_post_करोit,
+	.pre_doit	= devlink_nl_pre_doit,
+	.post_doit	= devlink_nl_post_doit,
 	.module		= THIS_MODULE,
 	.small_ops	= devlink_nl_ops,
 	.n_small_ops	= ARRAY_SIZE(devlink_nl_ops),
 	.mcgrps		= devlink_nl_mcgrps,
 	.n_mcgrps	= ARRAY_SIZE(devlink_nl_mcgrps),
-पूर्ण;
+};
 
-अटल bool devlink_reload_actions_valid(स्थिर काष्ठा devlink_ops *ops)
-अणु
-	स्थिर काष्ठा devlink_reload_combination *comb;
-	पूर्णांक i;
+static bool devlink_reload_actions_valid(const struct devlink_ops *ops)
+{
+	const struct devlink_reload_combination *comb;
+	int i;
 
-	अगर (!devlink_reload_supported(ops)) अणु
-		अगर (WARN_ON(ops->reload_actions))
-			वापस false;
-		वापस true;
-	पूर्ण
+	if (!devlink_reload_supported(ops)) {
+		if (WARN_ON(ops->reload_actions))
+			return false;
+		return true;
+	}
 
-	अगर (WARN_ON(!ops->reload_actions ||
+	if (WARN_ON(!ops->reload_actions ||
 		    ops->reload_actions & BIT(DEVLINK_RELOAD_ACTION_UNSPEC) ||
 		    ops->reload_actions >= BIT(__DEVLINK_RELOAD_ACTION_MAX)))
-		वापस false;
+		return false;
 
-	अगर (WARN_ON(ops->reload_limits & BIT(DEVLINK_RELOAD_LIMIT_UNSPEC) ||
+	if (WARN_ON(ops->reload_limits & BIT(DEVLINK_RELOAD_LIMIT_UNSPEC) ||
 		    ops->reload_limits >= BIT(__DEVLINK_RELOAD_LIMIT_MAX)))
-		वापस false;
+		return false;
 
-	क्रम (i = 0; i < ARRAY_SIZE(devlink_reload_invalid_combinations); i++)  अणु
+	for (i = 0; i < ARRAY_SIZE(devlink_reload_invalid_combinations); i++)  {
 		comb = &devlink_reload_invalid_combinations[i];
-		अगर (ops->reload_actions == BIT(comb->action) &&
+		if (ops->reload_actions == BIT(comb->action) &&
 		    ops->reload_limits == BIT(comb->limit))
-			वापस false;
-	पूर्ण
-	वापस true;
-पूर्ण
+			return false;
+	}
+	return true;
+}
 
 /**
  *	devlink_alloc - Allocate new devlink instance resources
  *
  *	@ops: ops
- *	@priv_size: size of user निजी data
+ *	@priv_size: size of user private data
  *
  *	Allocate new devlink instance resources, including devlink index
  *	and name.
  */
-काष्ठा devlink *devlink_alloc(स्थिर काष्ठा devlink_ops *ops, माप_प्रकार priv_size)
-अणु
-	काष्ठा devlink *devlink;
+struct devlink *devlink_alloc(const struct devlink_ops *ops, size_t priv_size)
+{
+	struct devlink *devlink;
 
-	अगर (WARN_ON(!ops))
-		वापस शून्य;
+	if (WARN_ON(!ops))
+		return NULL;
 
-	अगर (!devlink_reload_actions_valid(ops))
-		वापस शून्य;
+	if (!devlink_reload_actions_valid(ops))
+		return NULL;
 
-	devlink = kzalloc(माप(*devlink) + priv_size, GFP_KERNEL);
-	अगर (!devlink)
-		वापस शून्य;
+	devlink = kzalloc(sizeof(*devlink) + priv_size, GFP_KERNEL);
+	if (!devlink)
+		return NULL;
 	devlink->ops = ops;
 	xa_init_flags(&devlink->snapshot_ids, XA_FLAGS_ALLOC);
 	__devlink_net_set(devlink, &init_net);
@@ -8213,43 +8212,43 @@ devlink_trap_policer_set(काष्ठा devlink *devlink,
 	INIT_LIST_HEAD(&devlink->trap_policer_list);
 	mutex_init(&devlink->lock);
 	mutex_init(&devlink->reporters_lock);
-	वापस devlink;
-पूर्ण
+	return devlink;
+}
 EXPORT_SYMBOL_GPL(devlink_alloc);
 
 /**
- *	devlink_रेजिस्टर - Register devlink instance
+ *	devlink_register - Register devlink instance
  *
  *	@devlink: devlink
  *	@dev: parent device
  */
-पूर्णांक devlink_रेजिस्टर(काष्ठा devlink *devlink, काष्ठा device *dev)
-अणु
+int devlink_register(struct devlink *devlink, struct device *dev)
+{
 	devlink->dev = dev;
-	devlink->रेजिस्टरed = true;
+	devlink->registered = true;
 	mutex_lock(&devlink_mutex);
 	list_add_tail(&devlink->list, &devlink_list);
-	devlink_notअगरy(devlink, DEVLINK_CMD_NEW);
+	devlink_notify(devlink, DEVLINK_CMD_NEW);
 	mutex_unlock(&devlink_mutex);
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(devlink_रेजिस्टर);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(devlink_register);
 
 /**
- *	devlink_unरेजिस्टर - Unरेजिस्टर devlink instance
+ *	devlink_unregister - Unregister devlink instance
  *
  *	@devlink: devlink
  */
-व्योम devlink_unरेजिस्टर(काष्ठा devlink *devlink)
-अणु
+void devlink_unregister(struct devlink *devlink)
+{
 	mutex_lock(&devlink_mutex);
 	WARN_ON(devlink_reload_supported(devlink->ops) &&
 		devlink->reload_enabled);
-	devlink_notअगरy(devlink, DEVLINK_CMD_DEL);
+	devlink_notify(devlink, DEVLINK_CMD_DEL);
 	list_del(&devlink->list);
 	mutex_unlock(&devlink_mutex);
-पूर्ण
-EXPORT_SYMBOL_GPL(devlink_unरेजिस्टर);
+}
+EXPORT_SYMBOL_GPL(devlink_unregister);
 
 /**
  *	devlink_reload_enable - Enable reload of devlink instance
@@ -8259,12 +8258,12 @@ EXPORT_SYMBOL_GPL(devlink_unरेजिस्टर);
  *	Should be called at end of device initialization
  *	process when reload operation is supported.
  */
-व्योम devlink_reload_enable(काष्ठा devlink *devlink)
-अणु
+void devlink_reload_enable(struct devlink *devlink)
+{
 	mutex_lock(&devlink_mutex);
 	devlink->reload_enabled = true;
 	mutex_unlock(&devlink_mutex);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(devlink_reload_enable);
 
 /**
@@ -8275,24 +8274,24 @@ EXPORT_SYMBOL_GPL(devlink_reload_enable);
  *	Should be called at the beginning of device cleanup
  *	process when reload operation is supported.
  */
-व्योम devlink_reload_disable(काष्ठा devlink *devlink)
-अणु
+void devlink_reload_disable(struct devlink *devlink)
+{
 	mutex_lock(&devlink_mutex);
 	/* Mutex is taken which ensures that no reload operation is in
-	 * progress जबतक setting up क्रमbidded flag.
+	 * progress while setting up forbidded flag.
 	 */
 	devlink->reload_enabled = false;
 	mutex_unlock(&devlink_mutex);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(devlink_reload_disable);
 
 /**
- *	devlink_मुक्त - Free devlink instance resources
+ *	devlink_free - Free devlink instance resources
  *
  *	@devlink: devlink
  */
-व्योम devlink_मुक्त(काष्ठा devlink *devlink)
-अणु
+void devlink_free(struct devlink *devlink)
+{
 	mutex_destroy(&devlink->reporters_lock);
 	mutex_destroy(&devlink->lock);
 	WARN_ON(!list_empty(&devlink->trap_policer_list));
@@ -8308,68 +8307,68 @@ EXPORT_SYMBOL_GPL(devlink_reload_disable);
 
 	xa_destroy(&devlink->snapshot_ids);
 
-	kमुक्त(devlink);
-पूर्ण
-EXPORT_SYMBOL_GPL(devlink_मुक्त);
+	kfree(devlink);
+}
+EXPORT_SYMBOL_GPL(devlink_free);
 
-अटल व्योम devlink_port_type_warn(काष्ठा work_काष्ठा *work)
-अणु
+static void devlink_port_type_warn(struct work_struct *work)
+{
 	WARN(true, "Type was not set for devlink port.");
-पूर्ण
+}
 
-अटल bool devlink_port_type_should_warn(काष्ठा devlink_port *devlink_port)
-अणु
+static bool devlink_port_type_should_warn(struct devlink_port *devlink_port)
+{
 	/* Ignore CPU and DSA flavours. */
-	वापस devlink_port->attrs.flavour != DEVLINK_PORT_FLAVOUR_CPU &&
+	return devlink_port->attrs.flavour != DEVLINK_PORT_FLAVOUR_CPU &&
 	       devlink_port->attrs.flavour != DEVLINK_PORT_FLAVOUR_DSA &&
 	       devlink_port->attrs.flavour != DEVLINK_PORT_FLAVOUR_UNUSED;
-पूर्ण
+}
 
-#घोषणा DEVLINK_PORT_TYPE_WARN_TIMEOUT (HZ * 3600)
+#define DEVLINK_PORT_TYPE_WARN_TIMEOUT (HZ * 3600)
 
-अटल व्योम devlink_port_type_warn_schedule(काष्ठा devlink_port *devlink_port)
-अणु
-	अगर (!devlink_port_type_should_warn(devlink_port))
-		वापस;
-	/* Schedule a work to WARN in हाल driver करोes not set port
-	 * type within समयout.
+static void devlink_port_type_warn_schedule(struct devlink_port *devlink_port)
+{
+	if (!devlink_port_type_should_warn(devlink_port))
+		return;
+	/* Schedule a work to WARN in case driver does not set port
+	 * type within timeout.
 	 */
 	schedule_delayed_work(&devlink_port->type_warn_dw,
 			      DEVLINK_PORT_TYPE_WARN_TIMEOUT);
-पूर्ण
+}
 
-अटल व्योम devlink_port_type_warn_cancel(काष्ठा devlink_port *devlink_port)
-अणु
-	अगर (!devlink_port_type_should_warn(devlink_port))
-		वापस;
+static void devlink_port_type_warn_cancel(struct devlink_port *devlink_port)
+{
+	if (!devlink_port_type_should_warn(devlink_port))
+		return;
 	cancel_delayed_work_sync(&devlink_port->type_warn_dw);
-पूर्ण
+}
 
 /**
- *	devlink_port_रेजिस्टर - Register devlink port
+ *	devlink_port_register - Register devlink port
  *
  *	@devlink: devlink
  *	@devlink_port: devlink port
- *	@port_index: driver-specअगरic numerical identअगरier of the port
+ *	@port_index: driver-specific numerical identifier of the port
  *
  *	Register devlink port with provided port index. User can use
- *	any indexing, even hw-related one. devlink_port काष्ठाure
- *	is convenient to be embedded inside user driver निजी काष्ठाure.
+ *	any indexing, even hw-related one. devlink_port structure
+ *	is convenient to be embedded inside user driver private structure.
  *	Note that the caller should take care of zeroing the devlink_port
- *	काष्ठाure.
+ *	structure.
  */
-पूर्णांक devlink_port_रेजिस्टर(काष्ठा devlink *devlink,
-			  काष्ठा devlink_port *devlink_port,
-			  अचिन्हित पूर्णांक port_index)
-अणु
+int devlink_port_register(struct devlink *devlink,
+			  struct devlink_port *devlink_port,
+			  unsigned int port_index)
+{
 	mutex_lock(&devlink->lock);
-	अगर (devlink_port_index_exists(devlink, port_index)) अणु
+	if (devlink_port_index_exists(devlink, port_index)) {
 		mutex_unlock(&devlink->lock);
-		वापस -EEXIST;
-	पूर्ण
+		return -EEXIST;
+	}
 	devlink_port->devlink = devlink;
 	devlink_port->index = port_index;
-	devlink_port->रेजिस्टरed = true;
+	devlink_port->registered = true;
 	spin_lock_init(&devlink_port->type_lock);
 	INIT_LIST_HEAD(&devlink_port->reporter_list);
 	mutex_init(&devlink_port->reporters_lock);
@@ -8379,81 +8378,81 @@ EXPORT_SYMBOL_GPL(devlink_मुक्त);
 	mutex_unlock(&devlink->lock);
 	INIT_DELAYED_WORK(&devlink_port->type_warn_dw, &devlink_port_type_warn);
 	devlink_port_type_warn_schedule(devlink_port);
-	devlink_port_notअगरy(devlink_port, DEVLINK_CMD_PORT_NEW);
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(devlink_port_रेजिस्टर);
+	devlink_port_notify(devlink_port, DEVLINK_CMD_PORT_NEW);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(devlink_port_register);
 
 /**
- *	devlink_port_unरेजिस्टर - Unरेजिस्टर devlink port
+ *	devlink_port_unregister - Unregister devlink port
  *
  *	@devlink_port: devlink port
  */
-व्योम devlink_port_unरेजिस्टर(काष्ठा devlink_port *devlink_port)
-अणु
-	काष्ठा devlink *devlink = devlink_port->devlink;
+void devlink_port_unregister(struct devlink_port *devlink_port)
+{
+	struct devlink *devlink = devlink_port->devlink;
 
 	devlink_port_type_warn_cancel(devlink_port);
-	devlink_port_notअगरy(devlink_port, DEVLINK_CMD_PORT_DEL);
+	devlink_port_notify(devlink_port, DEVLINK_CMD_PORT_DEL);
 	mutex_lock(&devlink->lock);
 	list_del(&devlink_port->list);
 	mutex_unlock(&devlink->lock);
 	WARN_ON(!list_empty(&devlink_port->reporter_list));
 	WARN_ON(!list_empty(&devlink_port->region_list));
 	mutex_destroy(&devlink_port->reporters_lock);
-पूर्ण
-EXPORT_SYMBOL_GPL(devlink_port_unरेजिस्टर);
+}
+EXPORT_SYMBOL_GPL(devlink_port_unregister);
 
-अटल व्योम __devlink_port_type_set(काष्ठा devlink_port *devlink_port,
-				    क्रमागत devlink_port_type type,
-				    व्योम *type_dev)
-अणु
-	अगर (WARN_ON(!devlink_port->रेजिस्टरed))
-		वापस;
+static void __devlink_port_type_set(struct devlink_port *devlink_port,
+				    enum devlink_port_type type,
+				    void *type_dev)
+{
+	if (WARN_ON(!devlink_port->registered))
+		return;
 	devlink_port_type_warn_cancel(devlink_port);
 	spin_lock_bh(&devlink_port->type_lock);
 	devlink_port->type = type;
 	devlink_port->type_dev = type_dev;
 	spin_unlock_bh(&devlink_port->type_lock);
-	devlink_port_notअगरy(devlink_port, DEVLINK_CMD_PORT_NEW);
-पूर्ण
+	devlink_port_notify(devlink_port, DEVLINK_CMD_PORT_NEW);
+}
 
-अटल व्योम devlink_port_type_netdev_checks(काष्ठा devlink_port *devlink_port,
-					    काष्ठा net_device *netdev)
-अणु
-	स्थिर काष्ठा net_device_ops *ops = netdev->netdev_ops;
+static void devlink_port_type_netdev_checks(struct devlink_port *devlink_port,
+					    struct net_device *netdev)
+{
+	const struct net_device_ops *ops = netdev->netdev_ops;
 
-	/* If driver रेजिस्टरs devlink port, it should set devlink port
+	/* If driver registers devlink port, it should set devlink port
 	 * attributes accordingly so the compat functions are called
 	 * and the original ops are not used.
 	 */
-	अगर (ops->nकरो_get_phys_port_name) अणु
-		/* Some drivers use the same set of nकरोs क्रम netdevs
-		 * that have devlink_port रेजिस्टरed and also क्रम
-		 * those who करोn't. Make sure that nकरो_get_phys_port_name
-		 * वापसs -EOPNOTSUPP here in हाल it is defined.
-		 * Warn अगर not.
+	if (ops->ndo_get_phys_port_name) {
+		/* Some drivers use the same set of ndos for netdevs
+		 * that have devlink_port registered and also for
+		 * those who don't. Make sure that ndo_get_phys_port_name
+		 * returns -EOPNOTSUPP here in case it is defined.
+		 * Warn if not.
 		 */
-		अक्षर name[IFNAMSIZ];
-		पूर्णांक err;
+		char name[IFNAMSIZ];
+		int err;
 
-		err = ops->nकरो_get_phys_port_name(netdev, name, माप(name));
+		err = ops->ndo_get_phys_port_name(netdev, name, sizeof(name));
 		WARN_ON(err != -EOPNOTSUPP);
-	पूर्ण
-	अगर (ops->nकरो_get_port_parent_id) अणु
-		/* Some drivers use the same set of nकरोs क्रम netdevs
-		 * that have devlink_port रेजिस्टरed and also क्रम
-		 * those who करोn't. Make sure that nकरो_get_port_parent_id
-		 * वापसs -EOPNOTSUPP here in हाल it is defined.
-		 * Warn अगर not.
+	}
+	if (ops->ndo_get_port_parent_id) {
+		/* Some drivers use the same set of ndos for netdevs
+		 * that have devlink_port registered and also for
+		 * those who don't. Make sure that ndo_get_port_parent_id
+		 * returns -EOPNOTSUPP here in case it is defined.
+		 * Warn if not.
 		 */
-		काष्ठा netdev_phys_item_id ppid;
-		पूर्णांक err;
+		struct netdev_phys_item_id ppid;
+		int err;
 
-		err = ops->nकरो_get_port_parent_id(netdev, &ppid);
+		err = ops->ndo_get_port_parent_id(netdev, &ppid);
 		WARN_ON(err != -EOPNOTSUPP);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
  *	devlink_port_type_eth_set - Set port type to Ethernet
@@ -8461,18 +8460,18 @@ EXPORT_SYMBOL_GPL(devlink_port_unरेजिस्टर);
  *	@devlink_port: devlink port
  *	@netdev: related netdevice
  */
-व्योम devlink_port_type_eth_set(काष्ठा devlink_port *devlink_port,
-			       काष्ठा net_device *netdev)
-अणु
-	अगर (netdev)
+void devlink_port_type_eth_set(struct devlink_port *devlink_port,
+			       struct net_device *netdev)
+{
+	if (netdev)
 		devlink_port_type_netdev_checks(devlink_port, netdev);
-	अन्यथा
+	else
 		dev_warn(devlink_port->devlink->dev,
 			 "devlink port type for port %d set to Ethernet without a software interface reference, device type not supported by the kernel?\n",
 			 devlink_port->index);
 
 	__devlink_port_type_set(devlink_port, DEVLINK_PORT_TYPE_ETH, netdev);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(devlink_port_type_eth_set);
 
 /**
@@ -8481,11 +8480,11 @@ EXPORT_SYMBOL_GPL(devlink_port_type_eth_set);
  *	@devlink_port: devlink port
  *	@ibdev: related IB device
  */
-व्योम devlink_port_type_ib_set(काष्ठा devlink_port *devlink_port,
-			      काष्ठा ib_device *ibdev)
-अणु
+void devlink_port_type_ib_set(struct devlink_port *devlink_port,
+			      struct ib_device *ibdev)
+{
 	__devlink_port_type_set(devlink_port, DEVLINK_PORT_TYPE_IB, ibdev);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(devlink_port_type_ib_set);
 
 /**
@@ -8493,29 +8492,29 @@ EXPORT_SYMBOL_GPL(devlink_port_type_ib_set);
  *
  *	@devlink_port: devlink port
  */
-व्योम devlink_port_type_clear(काष्ठा devlink_port *devlink_port)
-अणु
-	__devlink_port_type_set(devlink_port, DEVLINK_PORT_TYPE_NOTSET, शून्य);
+void devlink_port_type_clear(struct devlink_port *devlink_port)
+{
+	__devlink_port_type_set(devlink_port, DEVLINK_PORT_TYPE_NOTSET, NULL);
 	devlink_port_type_warn_schedule(devlink_port);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(devlink_port_type_clear);
 
-अटल पूर्णांक __devlink_port_attrs_set(काष्ठा devlink_port *devlink_port,
-				    क्रमागत devlink_port_flavour flavour)
-अणु
-	काष्ठा devlink_port_attrs *attrs = &devlink_port->attrs;
+static int __devlink_port_attrs_set(struct devlink_port *devlink_port,
+				    enum devlink_port_flavour flavour)
+{
+	struct devlink_port_attrs *attrs = &devlink_port->attrs;
 
 	devlink_port->attrs_set = true;
 	attrs->flavour = flavour;
-	अगर (attrs->चयन_id.id_len) अणु
-		devlink_port->चयन_port = true;
-		अगर (WARN_ON(attrs->चयन_id.id_len > MAX_PHYS_ITEM_ID_LEN))
-			attrs->चयन_id.id_len = MAX_PHYS_ITEM_ID_LEN;
-	पूर्ण अन्यथा अणु
-		devlink_port->चयन_port = false;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	if (attrs->switch_id.id_len) {
+		devlink_port->switch_port = true;
+		if (WARN_ON(attrs->switch_id.id_len > MAX_PHYS_ITEM_ID_LEN))
+			attrs->switch_id.id_len = MAX_PHYS_ITEM_ID_LEN;
+	} else {
+		devlink_port->switch_port = false;
+	}
+	return 0;
+}
 
 /**
  *	devlink_port_attrs_set - Set port attributes
@@ -8523,190 +8522,190 @@ EXPORT_SYMBOL_GPL(devlink_port_type_clear);
  *	@devlink_port: devlink port
  *	@attrs: devlink port attrs
  */
-व्योम devlink_port_attrs_set(काष्ठा devlink_port *devlink_port,
-			    काष्ठा devlink_port_attrs *attrs)
-अणु
-	पूर्णांक ret;
+void devlink_port_attrs_set(struct devlink_port *devlink_port,
+			    struct devlink_port_attrs *attrs)
+{
+	int ret;
 
-	अगर (WARN_ON(devlink_port->रेजिस्टरed))
-		वापस;
+	if (WARN_ON(devlink_port->registered))
+		return;
 	devlink_port->attrs = *attrs;
 	ret = __devlink_port_attrs_set(devlink_port, attrs->flavour);
-	अगर (ret)
-		वापस;
+	if (ret)
+		return;
 	WARN_ON(attrs->splittable && attrs->split);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(devlink_port_attrs_set);
 
 /**
  *	devlink_port_attrs_pci_pf_set - Set PCI PF port attributes
  *
  *	@devlink_port: devlink port
- *	@controller: associated controller number क्रम the devlink port instance
- *	@pf: associated PF क्रम the devlink port instance
- *	@बाह्यal: indicates अगर the port is क्रम an बाह्यal controller
+ *	@controller: associated controller number for the devlink port instance
+ *	@pf: associated PF for the devlink port instance
+ *	@external: indicates if the port is for an external controller
  */
-व्योम devlink_port_attrs_pci_pf_set(काष्ठा devlink_port *devlink_port, u32 controller,
-				   u16 pf, bool बाह्यal)
-अणु
-	काष्ठा devlink_port_attrs *attrs = &devlink_port->attrs;
-	पूर्णांक ret;
+void devlink_port_attrs_pci_pf_set(struct devlink_port *devlink_port, u32 controller,
+				   u16 pf, bool external)
+{
+	struct devlink_port_attrs *attrs = &devlink_port->attrs;
+	int ret;
 
-	अगर (WARN_ON(devlink_port->रेजिस्टरed))
-		वापस;
+	if (WARN_ON(devlink_port->registered))
+		return;
 	ret = __devlink_port_attrs_set(devlink_port,
 				       DEVLINK_PORT_FLAVOUR_PCI_PF);
-	अगर (ret)
-		वापस;
+	if (ret)
+		return;
 	attrs->pci_pf.controller = controller;
 	attrs->pci_pf.pf = pf;
-	attrs->pci_pf.बाह्यal = बाह्यal;
-पूर्ण
+	attrs->pci_pf.external = external;
+}
 EXPORT_SYMBOL_GPL(devlink_port_attrs_pci_pf_set);
 
 /**
  *	devlink_port_attrs_pci_vf_set - Set PCI VF port attributes
  *
  *	@devlink_port: devlink port
- *	@controller: associated controller number क्रम the devlink port instance
- *	@pf: associated PF क्रम the devlink port instance
- *	@vf: associated VF of a PF क्रम the devlink port instance
- *	@बाह्यal: indicates अगर the port is क्रम an बाह्यal controller
+ *	@controller: associated controller number for the devlink port instance
+ *	@pf: associated PF for the devlink port instance
+ *	@vf: associated VF of a PF for the devlink port instance
+ *	@external: indicates if the port is for an external controller
  */
-व्योम devlink_port_attrs_pci_vf_set(काष्ठा devlink_port *devlink_port, u32 controller,
-				   u16 pf, u16 vf, bool बाह्यal)
-अणु
-	काष्ठा devlink_port_attrs *attrs = &devlink_port->attrs;
-	पूर्णांक ret;
+void devlink_port_attrs_pci_vf_set(struct devlink_port *devlink_port, u32 controller,
+				   u16 pf, u16 vf, bool external)
+{
+	struct devlink_port_attrs *attrs = &devlink_port->attrs;
+	int ret;
 
-	अगर (WARN_ON(devlink_port->रेजिस्टरed))
-		वापस;
+	if (WARN_ON(devlink_port->registered))
+		return;
 	ret = __devlink_port_attrs_set(devlink_port,
 				       DEVLINK_PORT_FLAVOUR_PCI_VF);
-	अगर (ret)
-		वापस;
+	if (ret)
+		return;
 	attrs->pci_vf.controller = controller;
 	attrs->pci_vf.pf = pf;
 	attrs->pci_vf.vf = vf;
-	attrs->pci_vf.बाह्यal = बाह्यal;
-पूर्ण
+	attrs->pci_vf.external = external;
+}
 EXPORT_SYMBOL_GPL(devlink_port_attrs_pci_vf_set);
 
 /**
  *	devlink_port_attrs_pci_sf_set - Set PCI SF port attributes
  *
  *	@devlink_port: devlink port
- *	@controller: associated controller number क्रम the devlink port instance
- *	@pf: associated PF क्रम the devlink port instance
- *	@sf: associated SF of a PF क्रम the devlink port instance
- *	@बाह्यal: indicates अगर the port is क्रम an बाह्यal controller
+ *	@controller: associated controller number for the devlink port instance
+ *	@pf: associated PF for the devlink port instance
+ *	@sf: associated SF of a PF for the devlink port instance
+ *	@external: indicates if the port is for an external controller
  */
-व्योम devlink_port_attrs_pci_sf_set(काष्ठा devlink_port *devlink_port, u32 controller,
-				   u16 pf, u32 sf, bool बाह्यal)
-अणु
-	काष्ठा devlink_port_attrs *attrs = &devlink_port->attrs;
-	पूर्णांक ret;
+void devlink_port_attrs_pci_sf_set(struct devlink_port *devlink_port, u32 controller,
+				   u16 pf, u32 sf, bool external)
+{
+	struct devlink_port_attrs *attrs = &devlink_port->attrs;
+	int ret;
 
-	अगर (WARN_ON(devlink_port->रेजिस्टरed))
-		वापस;
+	if (WARN_ON(devlink_port->registered))
+		return;
 	ret = __devlink_port_attrs_set(devlink_port,
 				       DEVLINK_PORT_FLAVOUR_PCI_SF);
-	अगर (ret)
-		वापस;
+	if (ret)
+		return;
 	attrs->pci_sf.controller = controller;
 	attrs->pci_sf.pf = pf;
 	attrs->pci_sf.sf = sf;
-	attrs->pci_sf.बाह्यal = बाह्यal;
-पूर्ण
+	attrs->pci_sf.external = external;
+}
 EXPORT_SYMBOL_GPL(devlink_port_attrs_pci_sf_set);
 
-अटल पूर्णांक __devlink_port_phys_port_name_get(काष्ठा devlink_port *devlink_port,
-					     अक्षर *name, माप_प्रकार len)
-अणु
-	काष्ठा devlink_port_attrs *attrs = &devlink_port->attrs;
-	पूर्णांक n = 0;
+static int __devlink_port_phys_port_name_get(struct devlink_port *devlink_port,
+					     char *name, size_t len)
+{
+	struct devlink_port_attrs *attrs = &devlink_port->attrs;
+	int n = 0;
 
-	अगर (!devlink_port->attrs_set)
-		वापस -EOPNOTSUPP;
+	if (!devlink_port->attrs_set)
+		return -EOPNOTSUPP;
 
-	चयन (attrs->flavour) अणु
-	हाल DEVLINK_PORT_FLAVOUR_PHYSICAL:
-		अगर (!attrs->split)
-			n = snम_लिखो(name, len, "p%u", attrs->phys.port_number);
-		अन्यथा
-			n = snम_लिखो(name, len, "p%us%u",
+	switch (attrs->flavour) {
+	case DEVLINK_PORT_FLAVOUR_PHYSICAL:
+		if (!attrs->split)
+			n = snprintf(name, len, "p%u", attrs->phys.port_number);
+		else
+			n = snprintf(name, len, "p%us%u",
 				     attrs->phys.port_number,
 				     attrs->phys.split_subport_number);
-		अवरोध;
-	हाल DEVLINK_PORT_FLAVOUR_CPU:
-	हाल DEVLINK_PORT_FLAVOUR_DSA:
-	हाल DEVLINK_PORT_FLAVOUR_UNUSED:
-		/* As CPU and DSA ports करो not have a netdevice associated
-		 * हाल should not ever happen.
+		break;
+	case DEVLINK_PORT_FLAVOUR_CPU:
+	case DEVLINK_PORT_FLAVOUR_DSA:
+	case DEVLINK_PORT_FLAVOUR_UNUSED:
+		/* As CPU and DSA ports do not have a netdevice associated
+		 * case should not ever happen.
 		 */
 		WARN_ON(1);
-		वापस -EINVAL;
-	हाल DEVLINK_PORT_FLAVOUR_PCI_PF:
-		अगर (attrs->pci_pf.बाह्यal) अणु
-			n = snम_लिखो(name, len, "c%u", attrs->pci_pf.controller);
-			अगर (n >= len)
-				वापस -EINVAL;
+		return -EINVAL;
+	case DEVLINK_PORT_FLAVOUR_PCI_PF:
+		if (attrs->pci_pf.external) {
+			n = snprintf(name, len, "c%u", attrs->pci_pf.controller);
+			if (n >= len)
+				return -EINVAL;
 			len -= n;
 			name += n;
-		पूर्ण
-		n = snम_लिखो(name, len, "pf%u", attrs->pci_pf.pf);
-		अवरोध;
-	हाल DEVLINK_PORT_FLAVOUR_PCI_VF:
-		अगर (attrs->pci_vf.बाह्यal) अणु
-			n = snम_लिखो(name, len, "c%u", attrs->pci_vf.controller);
-			अगर (n >= len)
-				वापस -EINVAL;
+		}
+		n = snprintf(name, len, "pf%u", attrs->pci_pf.pf);
+		break;
+	case DEVLINK_PORT_FLAVOUR_PCI_VF:
+		if (attrs->pci_vf.external) {
+			n = snprintf(name, len, "c%u", attrs->pci_vf.controller);
+			if (n >= len)
+				return -EINVAL;
 			len -= n;
 			name += n;
-		पूर्ण
-		n = snम_लिखो(name, len, "pf%uvf%u",
+		}
+		n = snprintf(name, len, "pf%uvf%u",
 			     attrs->pci_vf.pf, attrs->pci_vf.vf);
-		अवरोध;
-	हाल DEVLINK_PORT_FLAVOUR_PCI_SF:
-		अगर (attrs->pci_sf.बाह्यal) अणु
-			n = snम_लिखो(name, len, "c%u", attrs->pci_sf.controller);
-			अगर (n >= len)
-				वापस -EINVAL;
+		break;
+	case DEVLINK_PORT_FLAVOUR_PCI_SF:
+		if (attrs->pci_sf.external) {
+			n = snprintf(name, len, "c%u", attrs->pci_sf.controller);
+			if (n >= len)
+				return -EINVAL;
 			len -= n;
 			name += n;
-		पूर्ण
-		n = snम_लिखो(name, len, "pf%usf%u", attrs->pci_sf.pf,
+		}
+		n = snprintf(name, len, "pf%usf%u", attrs->pci_sf.pf,
 			     attrs->pci_sf.sf);
-		अवरोध;
-	हाल DEVLINK_PORT_FLAVOUR_VIRTUAL:
-		वापस -EOPNOTSUPP;
-	पूर्ण
+		break;
+	case DEVLINK_PORT_FLAVOUR_VIRTUAL:
+		return -EOPNOTSUPP;
+	}
 
-	अगर (n >= len)
-		वापस -EINVAL;
+	if (n >= len)
+		return -EINVAL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक devlink_sb_रेजिस्टर(काष्ठा devlink *devlink, अचिन्हित पूर्णांक sb_index,
+int devlink_sb_register(struct devlink *devlink, unsigned int sb_index,
 			u32 size, u16 ingress_pools_count,
 			u16 egress_pools_count, u16 ingress_tc_count,
 			u16 egress_tc_count)
-अणु
-	काष्ठा devlink_sb *devlink_sb;
-	पूर्णांक err = 0;
+{
+	struct devlink_sb *devlink_sb;
+	int err = 0;
 
 	mutex_lock(&devlink->lock);
-	अगर (devlink_sb_index_exists(devlink, sb_index)) अणु
+	if (devlink_sb_index_exists(devlink, sb_index)) {
 		err = -EEXIST;
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
-	devlink_sb = kzalloc(माप(*devlink_sb), GFP_KERNEL);
-	अगर (!devlink_sb) अणु
+	devlink_sb = kzalloc(sizeof(*devlink_sb), GFP_KERNEL);
+	if (!devlink_sb) {
 		err = -ENOMEM;
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 	devlink_sb->index = sb_index;
 	devlink_sb->size = size;
 	devlink_sb->ingress_pools_count = ingress_pools_count;
@@ -8716,160 +8715,160 @@ EXPORT_SYMBOL_GPL(devlink_port_attrs_pci_sf_set);
 	list_add_tail(&devlink_sb->list, &devlink->sb_list);
 unlock:
 	mutex_unlock(&devlink->lock);
-	वापस err;
-पूर्ण
-EXPORT_SYMBOL_GPL(devlink_sb_रेजिस्टर);
+	return err;
+}
+EXPORT_SYMBOL_GPL(devlink_sb_register);
 
-व्योम devlink_sb_unरेजिस्टर(काष्ठा devlink *devlink, अचिन्हित पूर्णांक sb_index)
-अणु
-	काष्ठा devlink_sb *devlink_sb;
+void devlink_sb_unregister(struct devlink *devlink, unsigned int sb_index)
+{
+	struct devlink_sb *devlink_sb;
 
 	mutex_lock(&devlink->lock);
 	devlink_sb = devlink_sb_get_by_index(devlink, sb_index);
 	WARN_ON(!devlink_sb);
 	list_del(&devlink_sb->list);
 	mutex_unlock(&devlink->lock);
-	kमुक्त(devlink_sb);
-पूर्ण
-EXPORT_SYMBOL_GPL(devlink_sb_unरेजिस्टर);
+	kfree(devlink_sb);
+}
+EXPORT_SYMBOL_GPL(devlink_sb_unregister);
 
 /**
- *	devlink_dpipe_headers_रेजिस्टर - रेजिस्टर dpipe headers
+ *	devlink_dpipe_headers_register - register dpipe headers
  *
  *	@devlink: devlink
  *	@dpipe_headers: dpipe header array
  *
  *	Register the headers supported by hardware.
  */
-पूर्णांक devlink_dpipe_headers_रेजिस्टर(काष्ठा devlink *devlink,
-				   काष्ठा devlink_dpipe_headers *dpipe_headers)
-अणु
+int devlink_dpipe_headers_register(struct devlink *devlink,
+				   struct devlink_dpipe_headers *dpipe_headers)
+{
 	mutex_lock(&devlink->lock);
 	devlink->dpipe_headers = dpipe_headers;
 	mutex_unlock(&devlink->lock);
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(devlink_dpipe_headers_रेजिस्टर);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(devlink_dpipe_headers_register);
 
 /**
- *	devlink_dpipe_headers_unरेजिस्टर - unरेजिस्टर dpipe headers
+ *	devlink_dpipe_headers_unregister - unregister dpipe headers
  *
  *	@devlink: devlink
  *
- *	Unरेजिस्टर the headers supported by hardware.
+ *	Unregister the headers supported by hardware.
  */
-व्योम devlink_dpipe_headers_unरेजिस्टर(काष्ठा devlink *devlink)
-अणु
+void devlink_dpipe_headers_unregister(struct devlink *devlink)
+{
 	mutex_lock(&devlink->lock);
-	devlink->dpipe_headers = शून्य;
+	devlink->dpipe_headers = NULL;
 	mutex_unlock(&devlink->lock);
-पूर्ण
-EXPORT_SYMBOL_GPL(devlink_dpipe_headers_unरेजिस्टर);
+}
+EXPORT_SYMBOL_GPL(devlink_dpipe_headers_unregister);
 
 /**
- *	devlink_dpipe_table_counter_enabled - check अगर counter allocation
+ *	devlink_dpipe_table_counter_enabled - check if counter allocation
  *					      required
  *	@devlink: devlink
  *	@table_name: tables name
  *
- *	Used by driver to check अगर counter allocation is required.
+ *	Used by driver to check if counter allocation is required.
  *	After counter allocation is turned on the table entries
  *	are updated to include counter statistics.
  *
- *	After that poपूर्णांक on the driver must respect the counter
+ *	After that point on the driver must respect the counter
  *	state so that each entry added to the table is added
  *	with a counter.
  */
-bool devlink_dpipe_table_counter_enabled(काष्ठा devlink *devlink,
-					 स्थिर अक्षर *table_name)
-अणु
-	काष्ठा devlink_dpipe_table *table;
+bool devlink_dpipe_table_counter_enabled(struct devlink *devlink,
+					 const char *table_name)
+{
+	struct devlink_dpipe_table *table;
 	bool enabled;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	table = devlink_dpipe_table_find(&devlink->dpipe_table_list,
 					 table_name, devlink);
 	enabled = false;
-	अगर (table)
+	if (table)
 		enabled = table->counters_enabled;
-	rcu_पढ़ो_unlock();
-	वापस enabled;
-पूर्ण
+	rcu_read_unlock();
+	return enabled;
+}
 EXPORT_SYMBOL_GPL(devlink_dpipe_table_counter_enabled);
 
 /**
- *	devlink_dpipe_table_रेजिस्टर - रेजिस्टर dpipe table
+ *	devlink_dpipe_table_register - register dpipe table
  *
  *	@devlink: devlink
  *	@table_name: table name
  *	@table_ops: table ops
  *	@priv: priv
- *	@counter_control_बाह्य: बाह्यal control क्रम counters
+ *	@counter_control_extern: external control for counters
  */
-पूर्णांक devlink_dpipe_table_रेजिस्टर(काष्ठा devlink *devlink,
-				 स्थिर अक्षर *table_name,
-				 काष्ठा devlink_dpipe_table_ops *table_ops,
-				 व्योम *priv, bool counter_control_बाह्य)
-अणु
-	काष्ठा devlink_dpipe_table *table;
-	पूर्णांक err = 0;
+int devlink_dpipe_table_register(struct devlink *devlink,
+				 const char *table_name,
+				 struct devlink_dpipe_table_ops *table_ops,
+				 void *priv, bool counter_control_extern)
+{
+	struct devlink_dpipe_table *table;
+	int err = 0;
 
-	अगर (WARN_ON(!table_ops->size_get))
-		वापस -EINVAL;
+	if (WARN_ON(!table_ops->size_get))
+		return -EINVAL;
 
 	mutex_lock(&devlink->lock);
 
-	अगर (devlink_dpipe_table_find(&devlink->dpipe_table_list, table_name,
-				     devlink)) अणु
+	if (devlink_dpipe_table_find(&devlink->dpipe_table_list, table_name,
+				     devlink)) {
 		err = -EEXIST;
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
-	table = kzalloc(माप(*table), GFP_KERNEL);
-	अगर (!table) अणु
+	table = kzalloc(sizeof(*table), GFP_KERNEL);
+	if (!table) {
 		err = -ENOMEM;
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
 	table->name = table_name;
 	table->table_ops = table_ops;
 	table->priv = priv;
-	table->counter_control_बाह्य = counter_control_बाह्य;
+	table->counter_control_extern = counter_control_extern;
 
 	list_add_tail_rcu(&table->list, &devlink->dpipe_table_list);
 unlock:
 	mutex_unlock(&devlink->lock);
-	वापस err;
-पूर्ण
-EXPORT_SYMBOL_GPL(devlink_dpipe_table_रेजिस्टर);
+	return err;
+}
+EXPORT_SYMBOL_GPL(devlink_dpipe_table_register);
 
 /**
- *	devlink_dpipe_table_unरेजिस्टर - unरेजिस्टर dpipe table
+ *	devlink_dpipe_table_unregister - unregister dpipe table
  *
  *	@devlink: devlink
  *	@table_name: table name
  */
-व्योम devlink_dpipe_table_unरेजिस्टर(काष्ठा devlink *devlink,
-				    स्थिर अक्षर *table_name)
-अणु
-	काष्ठा devlink_dpipe_table *table;
+void devlink_dpipe_table_unregister(struct devlink *devlink,
+				    const char *table_name)
+{
+	struct devlink_dpipe_table *table;
 
 	mutex_lock(&devlink->lock);
 	table = devlink_dpipe_table_find(&devlink->dpipe_table_list,
 					 table_name, devlink);
-	अगर (!table)
-		जाओ unlock;
+	if (!table)
+		goto unlock;
 	list_del_rcu(&table->list);
 	mutex_unlock(&devlink->lock);
-	kमुक्त_rcu(table, rcu);
-	वापस;
+	kfree_rcu(table, rcu);
+	return;
 unlock:
 	mutex_unlock(&devlink->lock);
-पूर्ण
-EXPORT_SYMBOL_GPL(devlink_dpipe_table_unरेजिस्टर);
+}
+EXPORT_SYMBOL_GPL(devlink_dpipe_table_unregister);
 
 /**
- *	devlink_resource_रेजिस्टर - devlink resource रेजिस्टर
+ *	devlink_resource_register - devlink resource register
  *
  *	@devlink: devlink
  *	@resource_name: resource's name
@@ -8882,95 +8881,95 @@ EXPORT_SYMBOL_GPL(devlink_dpipe_table_unरेजिस्टर);
  *	Please see the generic resources list at:
  *	Documentation/networking/devlink/devlink-resource.rst
  */
-पूर्णांक devlink_resource_रेजिस्टर(काष्ठा devlink *devlink,
-			      स्थिर अक्षर *resource_name,
+int devlink_resource_register(struct devlink *devlink,
+			      const char *resource_name,
 			      u64 resource_size,
 			      u64 resource_id,
 			      u64 parent_resource_id,
-			      स्थिर काष्ठा devlink_resource_size_params *size_params)
-अणु
-	काष्ठा devlink_resource *resource;
-	काष्ठा list_head *resource_list;
+			      const struct devlink_resource_size_params *size_params)
+{
+	struct devlink_resource *resource;
+	struct list_head *resource_list;
 	bool top_hierarchy;
-	पूर्णांक err = 0;
+	int err = 0;
 
 	top_hierarchy = parent_resource_id == DEVLINK_RESOURCE_ID_PARENT_TOP;
 
 	mutex_lock(&devlink->lock);
-	resource = devlink_resource_find(devlink, शून्य, resource_id);
-	अगर (resource) अणु
+	resource = devlink_resource_find(devlink, NULL, resource_id);
+	if (resource) {
 		err = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	resource = kzalloc(माप(*resource), GFP_KERNEL);
-	अगर (!resource) अणु
+	resource = kzalloc(sizeof(*resource), GFP_KERNEL);
+	if (!resource) {
 		err = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (top_hierarchy) अणु
+	if (top_hierarchy) {
 		resource_list = &devlink->resource_list;
-	पूर्ण अन्यथा अणु
-		काष्ठा devlink_resource *parent_resource;
+	} else {
+		struct devlink_resource *parent_resource;
 
-		parent_resource = devlink_resource_find(devlink, शून्य,
+		parent_resource = devlink_resource_find(devlink, NULL,
 							parent_resource_id);
-		अगर (parent_resource) अणु
+		if (parent_resource) {
 			resource_list = &parent_resource->resource_list;
 			resource->parent = parent_resource;
-		पूर्ण अन्यथा अणु
-			kमुक्त(resource);
+		} else {
+			kfree(resource);
 			err = -EINVAL;
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 
 	resource->name = resource_name;
 	resource->size = resource_size;
 	resource->size_new = resource_size;
 	resource->id = resource_id;
 	resource->size_valid = true;
-	स_नकल(&resource->size_params, size_params,
-	       माप(resource->size_params));
+	memcpy(&resource->size_params, size_params,
+	       sizeof(resource->size_params));
 	INIT_LIST_HEAD(&resource->resource_list);
 	list_add_tail(&resource->list, resource_list);
 out:
 	mutex_unlock(&devlink->lock);
-	वापस err;
-पूर्ण
-EXPORT_SYMBOL_GPL(devlink_resource_रेजिस्टर);
+	return err;
+}
+EXPORT_SYMBOL_GPL(devlink_resource_register);
 
 /**
- *	devlink_resources_unरेजिस्टर - मुक्त all resources
+ *	devlink_resources_unregister - free all resources
  *
  *	@devlink: devlink
  *	@resource: resource
  */
-व्योम devlink_resources_unरेजिस्टर(काष्ठा devlink *devlink,
-				  काष्ठा devlink_resource *resource)
-अणु
-	काष्ठा devlink_resource *पंचांगp, *child_resource;
-	काष्ठा list_head *resource_list;
+void devlink_resources_unregister(struct devlink *devlink,
+				  struct devlink_resource *resource)
+{
+	struct devlink_resource *tmp, *child_resource;
+	struct list_head *resource_list;
 
-	अगर (resource)
+	if (resource)
 		resource_list = &resource->resource_list;
-	अन्यथा
+	else
 		resource_list = &devlink->resource_list;
 
-	अगर (!resource)
+	if (!resource)
 		mutex_lock(&devlink->lock);
 
-	list_क्रम_each_entry_safe(child_resource, पंचांगp, resource_list, list) अणु
-		devlink_resources_unरेजिस्टर(devlink, child_resource);
+	list_for_each_entry_safe(child_resource, tmp, resource_list, list) {
+		devlink_resources_unregister(devlink, child_resource);
 		list_del(&child_resource->list);
-		kमुक्त(child_resource);
-	पूर्ण
+		kfree(child_resource);
+	}
 
-	अगर (!resource)
+	if (!resource)
 		mutex_unlock(&devlink->lock);
-पूर्ण
-EXPORT_SYMBOL_GPL(devlink_resources_unरेजिस्टर);
+}
+EXPORT_SYMBOL_GPL(devlink_resources_unregister);
 
 /**
  *	devlink_resource_size_get - get and update size
@@ -8979,25 +8978,25 @@ EXPORT_SYMBOL_GPL(devlink_resources_unरेजिस्टर);
  *	@resource_id: the requested resource id
  *	@p_resource_size: ptr to update
  */
-पूर्णांक devlink_resource_size_get(काष्ठा devlink *devlink,
+int devlink_resource_size_get(struct devlink *devlink,
 			      u64 resource_id,
 			      u64 *p_resource_size)
-अणु
-	काष्ठा devlink_resource *resource;
-	पूर्णांक err = 0;
+{
+	struct devlink_resource *resource;
+	int err = 0;
 
 	mutex_lock(&devlink->lock);
-	resource = devlink_resource_find(devlink, शून्य, resource_id);
-	अगर (!resource) अणु
+	resource = devlink_resource_find(devlink, NULL, resource_id);
+	if (!resource) {
 		err = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	*p_resource_size = resource->size_new;
 	resource->size = resource->size_new;
 out:
 	mutex_unlock(&devlink->lock);
-	वापस err;
-पूर्ण
+	return err;
+}
 EXPORT_SYMBOL_GPL(devlink_resource_size_get);
 
 /**
@@ -9008,148 +9007,148 @@ EXPORT_SYMBOL_GPL(devlink_resource_size_get);
  *	@resource_id: resource id
  *	@resource_units: number of resource's units consumed per table's entry
  */
-पूर्णांक devlink_dpipe_table_resource_set(काष्ठा devlink *devlink,
-				     स्थिर अक्षर *table_name, u64 resource_id,
+int devlink_dpipe_table_resource_set(struct devlink *devlink,
+				     const char *table_name, u64 resource_id,
 				     u64 resource_units)
-अणु
-	काष्ठा devlink_dpipe_table *table;
-	पूर्णांक err = 0;
+{
+	struct devlink_dpipe_table *table;
+	int err = 0;
 
 	mutex_lock(&devlink->lock);
 	table = devlink_dpipe_table_find(&devlink->dpipe_table_list,
 					 table_name, devlink);
-	अगर (!table) अणु
+	if (!table) {
 		err = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	table->resource_id = resource_id;
 	table->resource_units = resource_units;
 	table->resource_valid = true;
 out:
 	mutex_unlock(&devlink->lock);
-	वापस err;
-पूर्ण
+	return err;
+}
 EXPORT_SYMBOL_GPL(devlink_dpipe_table_resource_set);
 
 /**
- *	devlink_resource_occ_get_रेजिस्टर - रेजिस्टर occupancy getter
+ *	devlink_resource_occ_get_register - register occupancy getter
  *
  *	@devlink: devlink
  *	@resource_id: resource id
  *	@occ_get: occupancy getter callback
  *	@occ_get_priv: occupancy getter callback priv
  */
-व्योम devlink_resource_occ_get_रेजिस्टर(काष्ठा devlink *devlink,
+void devlink_resource_occ_get_register(struct devlink *devlink,
 				       u64 resource_id,
 				       devlink_resource_occ_get_t *occ_get,
-				       व्योम *occ_get_priv)
-अणु
-	काष्ठा devlink_resource *resource;
+				       void *occ_get_priv)
+{
+	struct devlink_resource *resource;
 
 	mutex_lock(&devlink->lock);
-	resource = devlink_resource_find(devlink, शून्य, resource_id);
-	अगर (WARN_ON(!resource))
-		जाओ out;
+	resource = devlink_resource_find(devlink, NULL, resource_id);
+	if (WARN_ON(!resource))
+		goto out;
 	WARN_ON(resource->occ_get);
 
 	resource->occ_get = occ_get;
 	resource->occ_get_priv = occ_get_priv;
 out:
 	mutex_unlock(&devlink->lock);
-पूर्ण
-EXPORT_SYMBOL_GPL(devlink_resource_occ_get_रेजिस्टर);
+}
+EXPORT_SYMBOL_GPL(devlink_resource_occ_get_register);
 
 /**
- *	devlink_resource_occ_get_unरेजिस्टर - unरेजिस्टर occupancy getter
+ *	devlink_resource_occ_get_unregister - unregister occupancy getter
  *
  *	@devlink: devlink
  *	@resource_id: resource id
  */
-व्योम devlink_resource_occ_get_unरेजिस्टर(काष्ठा devlink *devlink,
+void devlink_resource_occ_get_unregister(struct devlink *devlink,
 					 u64 resource_id)
-अणु
-	काष्ठा devlink_resource *resource;
+{
+	struct devlink_resource *resource;
 
 	mutex_lock(&devlink->lock);
-	resource = devlink_resource_find(devlink, शून्य, resource_id);
-	अगर (WARN_ON(!resource))
-		जाओ out;
+	resource = devlink_resource_find(devlink, NULL, resource_id);
+	if (WARN_ON(!resource))
+		goto out;
 	WARN_ON(!resource->occ_get);
 
-	resource->occ_get = शून्य;
-	resource->occ_get_priv = शून्य;
+	resource->occ_get = NULL;
+	resource->occ_get_priv = NULL;
 out:
 	mutex_unlock(&devlink->lock);
-पूर्ण
-EXPORT_SYMBOL_GPL(devlink_resource_occ_get_unरेजिस्टर);
+}
+EXPORT_SYMBOL_GPL(devlink_resource_occ_get_unregister);
 
-अटल पूर्णांक devlink_param_verअगरy(स्थिर काष्ठा devlink_param *param)
-अणु
-	अगर (!param || !param->name || !param->supported_cmodes)
-		वापस -EINVAL;
-	अगर (param->generic)
-		वापस devlink_param_generic_verअगरy(param);
-	अन्यथा
-		वापस devlink_param_driver_verअगरy(param);
-पूर्ण
+static int devlink_param_verify(const struct devlink_param *param)
+{
+	if (!param || !param->name || !param->supported_cmodes)
+		return -EINVAL;
+	if (param->generic)
+		return devlink_param_generic_verify(param);
+	else
+		return devlink_param_driver_verify(param);
+}
 
-अटल पूर्णांक __devlink_params_रेजिस्टर(काष्ठा devlink *devlink,
-				     अचिन्हित पूर्णांक port_index,
-				     काष्ठा list_head *param_list,
-				     स्थिर काष्ठा devlink_param *params,
-				     माप_प्रकार params_count,
-				     क्रमागत devlink_command reg_cmd,
-				     क्रमागत devlink_command unreg_cmd)
-अणु
-	स्थिर काष्ठा devlink_param *param = params;
-	पूर्णांक i;
-	पूर्णांक err;
+static int __devlink_params_register(struct devlink *devlink,
+				     unsigned int port_index,
+				     struct list_head *param_list,
+				     const struct devlink_param *params,
+				     size_t params_count,
+				     enum devlink_command reg_cmd,
+				     enum devlink_command unreg_cmd)
+{
+	const struct devlink_param *param = params;
+	int i;
+	int err;
 
 	mutex_lock(&devlink->lock);
-	क्रम (i = 0; i < params_count; i++, param++) अणु
-		err = devlink_param_verअगरy(param);
-		अगर (err)
-			जाओ rollback;
+	for (i = 0; i < params_count; i++, param++) {
+		err = devlink_param_verify(param);
+		if (err)
+			goto rollback;
 
-		err = devlink_param_रेजिस्टर_one(devlink, port_index,
+		err = devlink_param_register_one(devlink, port_index,
 						 param_list, param, reg_cmd);
-		अगर (err)
-			जाओ rollback;
-	पूर्ण
+		if (err)
+			goto rollback;
+	}
 
 	mutex_unlock(&devlink->lock);
-	वापस 0;
+	return 0;
 
 rollback:
-	अगर (!i)
-		जाओ unlock;
-	क्रम (param--; i > 0; i--, param--)
-		devlink_param_unरेजिस्टर_one(devlink, port_index, param_list,
+	if (!i)
+		goto unlock;
+	for (param--; i > 0; i--, param--)
+		devlink_param_unregister_one(devlink, port_index, param_list,
 					     param, unreg_cmd);
 unlock:
 	mutex_unlock(&devlink->lock);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम __devlink_params_unरेजिस्टर(काष्ठा devlink *devlink,
-					अचिन्हित पूर्णांक port_index,
-					काष्ठा list_head *param_list,
-					स्थिर काष्ठा devlink_param *params,
-					माप_प्रकार params_count,
-					क्रमागत devlink_command cmd)
-अणु
-	स्थिर काष्ठा devlink_param *param = params;
-	पूर्णांक i;
+static void __devlink_params_unregister(struct devlink *devlink,
+					unsigned int port_index,
+					struct list_head *param_list,
+					const struct devlink_param *params,
+					size_t params_count,
+					enum devlink_command cmd)
+{
+	const struct devlink_param *param = params;
+	int i;
 
 	mutex_lock(&devlink->lock);
-	क्रम (i = 0; i < params_count; i++, param++)
-		devlink_param_unरेजिस्टर_one(devlink, 0, param_list, param,
+	for (i = 0; i < params_count; i++, param++)
+		devlink_param_unregister_one(devlink, 0, param_list, param,
 					     cmd);
 	mutex_unlock(&devlink->lock);
-पूर्ण
+}
 
 /**
- *	devlink_params_रेजिस्टर - रेजिस्टर configuration parameters
+ *	devlink_params_register - register configuration parameters
  *
  *	@devlink: devlink
  *	@params: configuration parameters array
@@ -9157,52 +9156,52 @@ unlock:
  *
  *	Register the configuration parameters supported by the driver.
  */
-पूर्णांक devlink_params_रेजिस्टर(काष्ठा devlink *devlink,
-			    स्थिर काष्ठा devlink_param *params,
-			    माप_प्रकार params_count)
-अणु
-	वापस __devlink_params_रेजिस्टर(devlink, 0, &devlink->param_list,
+int devlink_params_register(struct devlink *devlink,
+			    const struct devlink_param *params,
+			    size_t params_count)
+{
+	return __devlink_params_register(devlink, 0, &devlink->param_list,
 					 params, params_count,
 					 DEVLINK_CMD_PARAM_NEW,
 					 DEVLINK_CMD_PARAM_DEL);
-पूर्ण
-EXPORT_SYMBOL_GPL(devlink_params_रेजिस्टर);
+}
+EXPORT_SYMBOL_GPL(devlink_params_register);
 
 /**
- *	devlink_params_unरेजिस्टर - unरेजिस्टर configuration parameters
+ *	devlink_params_unregister - unregister configuration parameters
  *	@devlink: devlink
- *	@params: configuration parameters to unरेजिस्टर
+ *	@params: configuration parameters to unregister
  *	@params_count: number of parameters provided
  */
-व्योम devlink_params_unरेजिस्टर(काष्ठा devlink *devlink,
-			       स्थिर काष्ठा devlink_param *params,
-			       माप_प्रकार params_count)
-अणु
-	वापस __devlink_params_unरेजिस्टर(devlink, 0, &devlink->param_list,
+void devlink_params_unregister(struct devlink *devlink,
+			       const struct devlink_param *params,
+			       size_t params_count)
+{
+	return __devlink_params_unregister(devlink, 0, &devlink->param_list,
 					   params, params_count,
 					   DEVLINK_CMD_PARAM_DEL);
-पूर्ण
-EXPORT_SYMBOL_GPL(devlink_params_unरेजिस्टर);
+}
+EXPORT_SYMBOL_GPL(devlink_params_unregister);
 
 /**
  *	devlink_params_publish - publish configuration parameters
  *
  *	@devlink: devlink
  *
- *	Publish previously रेजिस्टरed configuration parameters.
+ *	Publish previously registered configuration parameters.
  */
-व्योम devlink_params_publish(काष्ठा devlink *devlink)
-अणु
-	काष्ठा devlink_param_item *param_item;
+void devlink_params_publish(struct devlink *devlink)
+{
+	struct devlink_param_item *param_item;
 
-	list_क्रम_each_entry(param_item, &devlink->param_list, list) अणु
-		अगर (param_item->published)
-			जारी;
+	list_for_each_entry(param_item, &devlink->param_list, list) {
+		if (param_item->published)
+			continue;
 		param_item->published = true;
-		devlink_param_notअगरy(devlink, 0, param_item,
+		devlink_param_notify(devlink, 0, param_item,
 				     DEVLINK_CMD_PARAM_NEW);
-	पूर्ण
-पूर्ण
+	}
+}
 EXPORT_SYMBOL_GPL(devlink_params_publish);
 
 /**
@@ -9210,24 +9209,24 @@ EXPORT_SYMBOL_GPL(devlink_params_publish);
  *
  *	@devlink: devlink
  *
- *	Unpublish previously रेजिस्टरed configuration parameters.
+ *	Unpublish previously registered configuration parameters.
  */
-व्योम devlink_params_unpublish(काष्ठा devlink *devlink)
-अणु
-	काष्ठा devlink_param_item *param_item;
+void devlink_params_unpublish(struct devlink *devlink)
+{
+	struct devlink_param_item *param_item;
 
-	list_क्रम_each_entry(param_item, &devlink->param_list, list) अणु
-		अगर (!param_item->published)
-			जारी;
+	list_for_each_entry(param_item, &devlink->param_list, list) {
+		if (!param_item->published)
+			continue;
 		param_item->published = false;
-		devlink_param_notअगरy(devlink, 0, param_item,
+		devlink_param_notify(devlink, 0, param_item,
 				     DEVLINK_CMD_PARAM_DEL);
-	पूर्ण
-पूर्ण
+	}
+}
 EXPORT_SYMBOL_GPL(devlink_params_unpublish);
 
 /**
- *	devlink_port_params_रेजिस्टर - रेजिस्टर port configuration parameters
+ *	devlink_port_params_register - register port configuration parameters
  *
  *	@devlink_port: devlink port
  *	@params: configuration parameters array
@@ -9235,247 +9234,247 @@ EXPORT_SYMBOL_GPL(devlink_params_unpublish);
  *
  *	Register the configuration parameters supported by the port.
  */
-पूर्णांक devlink_port_params_रेजिस्टर(काष्ठा devlink_port *devlink_port,
-				 स्थिर काष्ठा devlink_param *params,
-				 माप_प्रकार params_count)
-अणु
-	वापस __devlink_params_रेजिस्टर(devlink_port->devlink,
+int devlink_port_params_register(struct devlink_port *devlink_port,
+				 const struct devlink_param *params,
+				 size_t params_count)
+{
+	return __devlink_params_register(devlink_port->devlink,
 					 devlink_port->index,
 					 &devlink_port->param_list, params,
 					 params_count,
 					 DEVLINK_CMD_PORT_PARAM_NEW,
 					 DEVLINK_CMD_PORT_PARAM_DEL);
-पूर्ण
-EXPORT_SYMBOL_GPL(devlink_port_params_रेजिस्टर);
+}
+EXPORT_SYMBOL_GPL(devlink_port_params_register);
 
 /**
- *	devlink_port_params_unरेजिस्टर - unरेजिस्टर port configuration
+ *	devlink_port_params_unregister - unregister port configuration
  *	parameters
  *
  *	@devlink_port: devlink port
  *	@params: configuration parameters array
  *	@params_count: number of parameters provided
  */
-व्योम devlink_port_params_unरेजिस्टर(काष्ठा devlink_port *devlink_port,
-				    स्थिर काष्ठा devlink_param *params,
-				    माप_प्रकार params_count)
-अणु
-	वापस __devlink_params_unरेजिस्टर(devlink_port->devlink,
+void devlink_port_params_unregister(struct devlink_port *devlink_port,
+				    const struct devlink_param *params,
+				    size_t params_count)
+{
+	return __devlink_params_unregister(devlink_port->devlink,
 					   devlink_port->index,
 					   &devlink_port->param_list,
 					   params, params_count,
 					   DEVLINK_CMD_PORT_PARAM_DEL);
-पूर्ण
-EXPORT_SYMBOL_GPL(devlink_port_params_unरेजिस्टर);
+}
+EXPORT_SYMBOL_GPL(devlink_port_params_unregister);
 
-अटल पूर्णांक
-__devlink_param_driverinit_value_get(काष्ठा list_head *param_list, u32 param_id,
-				     जोड़ devlink_param_value *init_val)
-अणु
-	काष्ठा devlink_param_item *param_item;
+static int
+__devlink_param_driverinit_value_get(struct list_head *param_list, u32 param_id,
+				     union devlink_param_value *init_val)
+{
+	struct devlink_param_item *param_item;
 
 	param_item = devlink_param_find_by_id(param_list, param_id);
-	अगर (!param_item)
-		वापस -EINVAL;
+	if (!param_item)
+		return -EINVAL;
 
-	अगर (!param_item->driverinit_value_valid ||
+	if (!param_item->driverinit_value_valid ||
 	    !devlink_param_cmode_is_supported(param_item->param,
 					      DEVLINK_PARAM_CMODE_DRIVERINIT))
-		वापस -EOPNOTSUPP;
+		return -EOPNOTSUPP;
 
-	अगर (param_item->param->type == DEVLINK_PARAM_TYPE_STRING)
-		म_नकल(init_val->vstr, param_item->driverinit_value.vstr);
-	अन्यथा
+	if (param_item->param->type == DEVLINK_PARAM_TYPE_STRING)
+		strcpy(init_val->vstr, param_item->driverinit_value.vstr);
+	else
 		*init_val = param_item->driverinit_value;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-__devlink_param_driverinit_value_set(काष्ठा devlink *devlink,
-				     अचिन्हित पूर्णांक port_index,
-				     काष्ठा list_head *param_list, u32 param_id,
-				     जोड़ devlink_param_value init_val,
-				     क्रमागत devlink_command cmd)
-अणु
-	काष्ठा devlink_param_item *param_item;
+static int
+__devlink_param_driverinit_value_set(struct devlink *devlink,
+				     unsigned int port_index,
+				     struct list_head *param_list, u32 param_id,
+				     union devlink_param_value init_val,
+				     enum devlink_command cmd)
+{
+	struct devlink_param_item *param_item;
 
 	param_item = devlink_param_find_by_id(param_list, param_id);
-	अगर (!param_item)
-		वापस -EINVAL;
+	if (!param_item)
+		return -EINVAL;
 
-	अगर (!devlink_param_cmode_is_supported(param_item->param,
+	if (!devlink_param_cmode_is_supported(param_item->param,
 					      DEVLINK_PARAM_CMODE_DRIVERINIT))
-		वापस -EOPNOTSUPP;
+		return -EOPNOTSUPP;
 
-	अगर (param_item->param->type == DEVLINK_PARAM_TYPE_STRING)
-		म_नकल(param_item->driverinit_value.vstr, init_val.vstr);
-	अन्यथा
+	if (param_item->param->type == DEVLINK_PARAM_TYPE_STRING)
+		strcpy(param_item->driverinit_value.vstr, init_val.vstr);
+	else
 		param_item->driverinit_value = init_val;
 	param_item->driverinit_value_valid = true;
 
-	devlink_param_notअगरy(devlink, port_index, param_item, cmd);
-	वापस 0;
-पूर्ण
+	devlink_param_notify(devlink, port_index, param_item, cmd);
+	return 0;
+}
 
 /**
  *	devlink_param_driverinit_value_get - get configuration parameter
- *					     value क्रम driver initializing
+ *					     value for driver initializing
  *
  *	@devlink: devlink
  *	@param_id: parameter ID
  *	@init_val: value of parameter in driverinit configuration mode
  *
  *	This function should be used by the driver to get driverinit
- *	configuration क्रम initialization after reload command.
+ *	configuration for initialization after reload command.
  */
-पूर्णांक devlink_param_driverinit_value_get(काष्ठा devlink *devlink, u32 param_id,
-				       जोड़ devlink_param_value *init_val)
-अणु
-	अगर (!devlink_reload_supported(devlink->ops))
-		वापस -EOPNOTSUPP;
+int devlink_param_driverinit_value_get(struct devlink *devlink, u32 param_id,
+				       union devlink_param_value *init_val)
+{
+	if (!devlink_reload_supported(devlink->ops))
+		return -EOPNOTSUPP;
 
-	वापस __devlink_param_driverinit_value_get(&devlink->param_list,
+	return __devlink_param_driverinit_value_get(&devlink->param_list,
 						    param_id, init_val);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(devlink_param_driverinit_value_get);
 
 /**
  *	devlink_param_driverinit_value_set - set value of configuration
- *					     parameter क्रम driverinit
+ *					     parameter for driverinit
  *					     configuration mode
  *
  *	@devlink: devlink
  *	@param_id: parameter ID
- *	@init_val: value of parameter to set क्रम driverinit configuration mode
+ *	@init_val: value of parameter to set for driverinit configuration mode
  *
  *	This function should be used by the driver to set driverinit
- *	configuration mode शेष value.
+ *	configuration mode default value.
  */
-पूर्णांक devlink_param_driverinit_value_set(काष्ठा devlink *devlink, u32 param_id,
-				       जोड़ devlink_param_value init_val)
-अणु
-	वापस __devlink_param_driverinit_value_set(devlink, 0,
+int devlink_param_driverinit_value_set(struct devlink *devlink, u32 param_id,
+				       union devlink_param_value init_val)
+{
+	return __devlink_param_driverinit_value_set(devlink, 0,
 						    &devlink->param_list,
 						    param_id, init_val,
 						    DEVLINK_CMD_PARAM_NEW);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(devlink_param_driverinit_value_set);
 
 /**
  *	devlink_port_param_driverinit_value_get - get configuration parameter
- *						value क्रम driver initializing
+ *						value for driver initializing
  *
  *	@devlink_port: devlink_port
  *	@param_id: parameter ID
  *	@init_val: value of parameter in driverinit configuration mode
  *
  *	This function should be used by the driver to get driverinit
- *	configuration क्रम initialization after reload command.
+ *	configuration for initialization after reload command.
  */
-पूर्णांक devlink_port_param_driverinit_value_get(काष्ठा devlink_port *devlink_port,
+int devlink_port_param_driverinit_value_get(struct devlink_port *devlink_port,
 					    u32 param_id,
-					    जोड़ devlink_param_value *init_val)
-अणु
-	काष्ठा devlink *devlink = devlink_port->devlink;
+					    union devlink_param_value *init_val)
+{
+	struct devlink *devlink = devlink_port->devlink;
 
-	अगर (!devlink_reload_supported(devlink->ops))
-		वापस -EOPNOTSUPP;
+	if (!devlink_reload_supported(devlink->ops))
+		return -EOPNOTSUPP;
 
-	वापस __devlink_param_driverinit_value_get(&devlink_port->param_list,
+	return __devlink_param_driverinit_value_get(&devlink_port->param_list,
 						    param_id, init_val);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(devlink_port_param_driverinit_value_get);
 
 /**
  *     devlink_port_param_driverinit_value_set - set value of configuration
- *                                               parameter क्रम driverinit
+ *                                               parameter for driverinit
  *                                               configuration mode
  *
  *     @devlink_port: devlink_port
  *     @param_id: parameter ID
- *     @init_val: value of parameter to set क्रम driverinit configuration mode
+ *     @init_val: value of parameter to set for driverinit configuration mode
  *
  *     This function should be used by the driver to set driverinit
- *     configuration mode शेष value.
+ *     configuration mode default value.
  */
-पूर्णांक devlink_port_param_driverinit_value_set(काष्ठा devlink_port *devlink_port,
+int devlink_port_param_driverinit_value_set(struct devlink_port *devlink_port,
 					    u32 param_id,
-					    जोड़ devlink_param_value init_val)
-अणु
-	वापस __devlink_param_driverinit_value_set(devlink_port->devlink,
+					    union devlink_param_value init_val)
+{
+	return __devlink_param_driverinit_value_set(devlink_port->devlink,
 						    devlink_port->index,
 						    &devlink_port->param_list,
 						    param_id, init_val,
 						    DEVLINK_CMD_PORT_PARAM_NEW);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(devlink_port_param_driverinit_value_set);
 
 /**
- *	devlink_param_value_changed - notअगरy devlink on a parameter's value
+ *	devlink_param_value_changed - notify devlink on a parameter's value
  *				      change. Should be called by the driver
  *				      right after the change.
  *
  *	@devlink: devlink
  *	@param_id: parameter ID
  *
- *	This function should be used by the driver to notअगरy devlink on value
+ *	This function should be used by the driver to notify devlink on value
  *	change, excluding driverinit configuration mode.
  *	For driverinit configuration mode driver should use the function
  */
-व्योम devlink_param_value_changed(काष्ठा devlink *devlink, u32 param_id)
-अणु
-	काष्ठा devlink_param_item *param_item;
+void devlink_param_value_changed(struct devlink *devlink, u32 param_id)
+{
+	struct devlink_param_item *param_item;
 
 	param_item = devlink_param_find_by_id(&devlink->param_list, param_id);
 	WARN_ON(!param_item);
 
-	devlink_param_notअगरy(devlink, 0, param_item, DEVLINK_CMD_PARAM_NEW);
-पूर्ण
+	devlink_param_notify(devlink, 0, param_item, DEVLINK_CMD_PARAM_NEW);
+}
 EXPORT_SYMBOL_GPL(devlink_param_value_changed);
 
 /**
- *     devlink_port_param_value_changed - notअगरy devlink on a parameter's value
+ *     devlink_port_param_value_changed - notify devlink on a parameter's value
  *                                      change. Should be called by the driver
  *                                      right after the change.
  *
  *     @devlink_port: devlink_port
  *     @param_id: parameter ID
  *
- *     This function should be used by the driver to notअगरy devlink on value
+ *     This function should be used by the driver to notify devlink on value
  *     change, excluding driverinit configuration mode.
  *     For driverinit configuration mode driver should use the function
  *     devlink_port_param_driverinit_value_set() instead.
  */
-व्योम devlink_port_param_value_changed(काष्ठा devlink_port *devlink_port,
+void devlink_port_param_value_changed(struct devlink_port *devlink_port,
 				      u32 param_id)
-अणु
-	काष्ठा devlink_param_item *param_item;
+{
+	struct devlink_param_item *param_item;
 
 	param_item = devlink_param_find_by_id(&devlink_port->param_list,
 					      param_id);
 	WARN_ON(!param_item);
 
-	devlink_param_notअगरy(devlink_port->devlink, devlink_port->index,
+	devlink_param_notify(devlink_port->devlink, devlink_port->index,
 			     param_item, DEVLINK_CMD_PORT_PARAM_NEW);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(devlink_port_param_value_changed);
 
 /**
  *	devlink_param_value_str_fill - Safely fill-up the string preventing
- *				       from overflow of the pपुनः_स्मृतिated buffer
+ *				       from overflow of the preallocated buffer
  *
  *	@dst_val: destination devlink_param_value
  *	@src: source buffer
  */
-व्योम devlink_param_value_str_fill(जोड़ devlink_param_value *dst_val,
-				  स्थिर अक्षर *src)
-अणु
-	माप_प्रकार len;
+void devlink_param_value_str_fill(union devlink_param_value *dst_val,
+				  const char *src)
+{
+	size_t len;
 
 	len = strlcpy(dst_val->vstr, src, __DEVLINK_PARAM_MAX_STRING_VALUE);
 	WARN_ON(len >= __DEVLINK_PARAM_MAX_STRING_VALUE);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(devlink_param_value_str_fill);
 
 /**
@@ -9483,32 +9482,32 @@ EXPORT_SYMBOL_GPL(devlink_param_value_str_fill);
  *
  *	@devlink: devlink
  *	@ops: region operations and name
- *	@region_max_snapshots: Maximum supported number of snapshots क्रम region
+ *	@region_max_snapshots: Maximum supported number of snapshots for region
  *	@region_size: size of region
  */
-काष्ठा devlink_region *
-devlink_region_create(काष्ठा devlink *devlink,
-		      स्थिर काष्ठा devlink_region_ops *ops,
+struct devlink_region *
+devlink_region_create(struct devlink *devlink,
+		      const struct devlink_region_ops *ops,
 		      u32 region_max_snapshots, u64 region_size)
-अणु
-	काष्ठा devlink_region *region;
-	पूर्णांक err = 0;
+{
+	struct devlink_region *region;
+	int err = 0;
 
-	अगर (WARN_ON(!ops) || WARN_ON(!ops->deकाष्ठाor))
-		वापस ERR_PTR(-EINVAL);
+	if (WARN_ON(!ops) || WARN_ON(!ops->destructor))
+		return ERR_PTR(-EINVAL);
 
 	mutex_lock(&devlink->lock);
 
-	अगर (devlink_region_get_by_name(devlink, ops->name)) अणु
+	if (devlink_region_get_by_name(devlink, ops->name)) {
 		err = -EEXIST;
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
-	region = kzalloc(माप(*region), GFP_KERNEL);
-	अगर (!region) अणु
+	region = kzalloc(sizeof(*region), GFP_KERNEL);
+	if (!region) {
 		err = -ENOMEM;
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
 	region->devlink = devlink;
 	region->max_snapshots = region_max_snapshots;
@@ -9516,49 +9515,49 @@ devlink_region_create(काष्ठा devlink *devlink,
 	region->size = region_size;
 	INIT_LIST_HEAD(&region->snapshot_list);
 	list_add_tail(&region->list, &devlink->region_list);
-	devlink_nl_region_notअगरy(region, शून्य, DEVLINK_CMD_REGION_NEW);
+	devlink_nl_region_notify(region, NULL, DEVLINK_CMD_REGION_NEW);
 
 	mutex_unlock(&devlink->lock);
-	वापस region;
+	return region;
 
 unlock:
 	mutex_unlock(&devlink->lock);
-	वापस ERR_PTR(err);
-पूर्ण
+	return ERR_PTR(err);
+}
 EXPORT_SYMBOL_GPL(devlink_region_create);
 
 /**
- *	devlink_port_region_create - create a new address region क्रम a port
+ *	devlink_port_region_create - create a new address region for a port
  *
  *	@port: devlink port
  *	@ops: region operations and name
- *	@region_max_snapshots: Maximum supported number of snapshots क्रम region
+ *	@region_max_snapshots: Maximum supported number of snapshots for region
  *	@region_size: size of region
  */
-काष्ठा devlink_region *
-devlink_port_region_create(काष्ठा devlink_port *port,
-			   स्थिर काष्ठा devlink_port_region_ops *ops,
+struct devlink_region *
+devlink_port_region_create(struct devlink_port *port,
+			   const struct devlink_port_region_ops *ops,
 			   u32 region_max_snapshots, u64 region_size)
-अणु
-	काष्ठा devlink *devlink = port->devlink;
-	काष्ठा devlink_region *region;
-	पूर्णांक err = 0;
+{
+	struct devlink *devlink = port->devlink;
+	struct devlink_region *region;
+	int err = 0;
 
-	अगर (WARN_ON(!ops) || WARN_ON(!ops->deकाष्ठाor))
-		वापस ERR_PTR(-EINVAL);
+	if (WARN_ON(!ops) || WARN_ON(!ops->destructor))
+		return ERR_PTR(-EINVAL);
 
 	mutex_lock(&devlink->lock);
 
-	अगर (devlink_port_region_get_by_name(port, ops->name)) अणु
+	if (devlink_port_region_get_by_name(port, ops->name)) {
 		err = -EEXIST;
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
-	region = kzalloc(माप(*region), GFP_KERNEL);
-	अगर (!region) अणु
+	region = kzalloc(sizeof(*region), GFP_KERNEL);
+	if (!region) {
 		err = -ENOMEM;
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
 	region->devlink = devlink;
 	region->port = port;
@@ -9567,15 +9566,15 @@ devlink_port_region_create(काष्ठा devlink_port *port,
 	region->size = region_size;
 	INIT_LIST_HEAD(&region->snapshot_list);
 	list_add_tail(&region->list, &port->region_list);
-	devlink_nl_region_notअगरy(region, शून्य, DEVLINK_CMD_REGION_NEW);
+	devlink_nl_region_notify(region, NULL, DEVLINK_CMD_REGION_NEW);
 
 	mutex_unlock(&devlink->lock);
-	वापस region;
+	return region;
 
 unlock:
 	mutex_unlock(&devlink->lock);
-	वापस ERR_PTR(err);
-पूर्ण
+	return ERR_PTR(err);
+}
 EXPORT_SYMBOL_GPL(devlink_port_region_create);
 
 /**
@@ -9583,31 +9582,31 @@ EXPORT_SYMBOL_GPL(devlink_port_region_create);
  *
  *	@region: devlink region to destroy
  */
-व्योम devlink_region_destroy(काष्ठा devlink_region *region)
-अणु
-	काष्ठा devlink *devlink = region->devlink;
-	काष्ठा devlink_snapshot *snapshot, *ts;
+void devlink_region_destroy(struct devlink_region *region)
+{
+	struct devlink *devlink = region->devlink;
+	struct devlink_snapshot *snapshot, *ts;
 
 	mutex_lock(&devlink->lock);
 
 	/* Free all snapshots of region */
-	list_क्रम_each_entry_safe(snapshot, ts, &region->snapshot_list, list)
+	list_for_each_entry_safe(snapshot, ts, &region->snapshot_list, list)
 		devlink_region_snapshot_del(region, snapshot);
 
 	list_del(&region->list);
 
-	devlink_nl_region_notअगरy(region, शून्य, DEVLINK_CMD_REGION_DEL);
+	devlink_nl_region_notify(region, NULL, DEVLINK_CMD_REGION_DEL);
 	mutex_unlock(&devlink->lock);
-	kमुक्त(region);
-पूर्ण
+	kfree(region);
+}
 EXPORT_SYMBOL_GPL(devlink_region_destroy);
 
 /**
  *	devlink_region_snapshot_id_get - get snapshot ID
  *
  *	This callback should be called when adding a new snapshot,
- *	Driver should use the same id क्रम multiple snapshots taken
- *	on multiple regions at the same समय/by the same trigger.
+ *	Driver should use the same id for multiple snapshots taken
+ *	on multiple regions at the same time/by the same trigger.
  *
  *	The caller of this function must use devlink_region_snapshot_id_put
  *	when finished creating regions using this id.
@@ -9615,18 +9614,18 @@ EXPORT_SYMBOL_GPL(devlink_region_destroy);
  *	Returns zero on success, or a negative error code on failure.
  *
  *	@devlink: devlink
- *	@id: storage to वापस id
+ *	@id: storage to return id
  */
-पूर्णांक devlink_region_snapshot_id_get(काष्ठा devlink *devlink, u32 *id)
-अणु
-	पूर्णांक err;
+int devlink_region_snapshot_id_get(struct devlink *devlink, u32 *id)
+{
+	int err;
 
 	mutex_lock(&devlink->lock);
 	err = __devlink_region_snapshot_id_get(devlink, id);
 	mutex_unlock(&devlink->lock);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 EXPORT_SYMBOL_GPL(devlink_region_snapshot_id_get);
 
 /**
@@ -9639,19 +9638,19 @@ EXPORT_SYMBOL_GPL(devlink_region_snapshot_id_get);
  *	@devlink: devlink
  *	@id: id to release reference on
  */
-व्योम devlink_region_snapshot_id_put(काष्ठा devlink *devlink, u32 id)
-अणु
+void devlink_region_snapshot_id_put(struct devlink *devlink, u32 id)
+{
 	mutex_lock(&devlink->lock);
 	__devlink_snapshot_id_decrement(devlink, id);
 	mutex_unlock(&devlink->lock);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(devlink_region_snapshot_id_put);
 
 /**
  *	devlink_region_snapshot_create - create a new snapshot
  *	This will add a new snapshot of a region. The snapshot
- *	will be stored on the region काष्ठा and can be accessed
- *	from devlink. This is useful क्रम future analyses of snapshots.
+ *	will be stored on the region struct and can be accessed
+ *	from devlink. This is useful for future analyses of snapshots.
  *	Multiple snapshots can be created on a region.
  *	The @snapshot_id should be obtained using the getter function.
  *
@@ -9659,28 +9658,28 @@ EXPORT_SYMBOL_GPL(devlink_region_snapshot_id_put);
  *	@data: snapshot data
  *	@snapshot_id: snapshot id to be created
  */
-पूर्णांक devlink_region_snapshot_create(काष्ठा devlink_region *region,
+int devlink_region_snapshot_create(struct devlink_region *region,
 				   u8 *data, u32 snapshot_id)
-अणु
-	काष्ठा devlink *devlink = region->devlink;
-	पूर्णांक err;
+{
+	struct devlink *devlink = region->devlink;
+	int err;
 
 	mutex_lock(&devlink->lock);
 	err = __devlink_region_snapshot_create(region, data, snapshot_id);
 	mutex_unlock(&devlink->lock);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 EXPORT_SYMBOL_GPL(devlink_region_snapshot_create);
 
-#घोषणा DEVLINK_TRAP(_id, _type)					      \
-	अणु								      \
+#define DEVLINK_TRAP(_id, _type)					      \
+	{								      \
 		.type = DEVLINK_TRAP_TYPE_##_type,			      \
 		.id = DEVLINK_TRAP_GENERIC_ID_##_id,			      \
 		.name = DEVLINK_TRAP_GENERIC_NAME_##_id,		      \
-	पूर्ण
+	}
 
-अटल स्थिर काष्ठा devlink_trap devlink_trap_generic[] = अणु
+static const struct devlink_trap devlink_trap_generic[] = {
 	DEVLINK_TRAP(SMAC_MC, DROP),
 	DEVLINK_TRAP(VLAN_TAG_MISMATCH, DROP),
 	DEVLINK_TRAP(INGRESS_VLAN_FILTER, DROP),
@@ -9747,7 +9746,7 @@ EXPORT_SYMBOL_GPL(devlink_region_snapshot_create);
 	DEVLINK_TRAP(IPV6_DIP_ALL_ROUTERS, CONTROL),
 	DEVLINK_TRAP(IPV6_ROUTER_SOLICIT, CONTROL),
 	DEVLINK_TRAP(IPV6_ROUTER_ADVERT, CONTROL),
-	DEVLINK_TRAP(IPV6_REसूचीECT, CONTROL),
+	DEVLINK_TRAP(IPV6_REDIRECT, CONTROL),
 	DEVLINK_TRAP(IPV4_ROUTER_ALERT, CONTROL),
 	DEVLINK_TRAP(IPV6_ROUTER_ALERT, CONTROL),
 	DEVLINK_TRAP(PTP_EVENT, CONTROL),
@@ -9773,15 +9772,15 @@ EXPORT_SYMBOL_GPL(devlink_region_snapshot_create);
 	DEVLINK_TRAP(ESP_PARSING, DROP),
 	DEVLINK_TRAP(BLACKHOLE_NEXTHOP, DROP),
 	DEVLINK_TRAP(DMAC_FILTER, DROP),
-पूर्ण;
+};
 
-#घोषणा DEVLINK_TRAP_GROUP(_id)						      \
-	अणु								      \
+#define DEVLINK_TRAP_GROUP(_id)						      \
+	{								      \
 		.id = DEVLINK_TRAP_GROUP_GENERIC_ID_##_id,		      \
 		.name = DEVLINK_TRAP_GROUP_GENERIC_NAME_##_id,		      \
-	पूर्ण
+	}
 
-अटल स्थिर काष्ठा devlink_trap_group devlink_trap_group_generic[] = अणु
+static const struct devlink_trap_group devlink_trap_group_generic[] = {
 	DEVLINK_TRAP_GROUP(L2_DROPS),
 	DEVLINK_TRAP_GROUP(L3_DROPS),
 	DEVLINK_TRAP_GROUP(L3_EXCEPTIONS),
@@ -9808,323 +9807,323 @@ EXPORT_SYMBOL_GPL(devlink_region_snapshot_create);
 	DEVLINK_TRAP_GROUP(ACL_SAMPLE),
 	DEVLINK_TRAP_GROUP(ACL_TRAP),
 	DEVLINK_TRAP_GROUP(PARSER_ERROR_DROPS),
-पूर्ण;
+};
 
-अटल पूर्णांक devlink_trap_generic_verअगरy(स्थिर काष्ठा devlink_trap *trap)
-अणु
-	अगर (trap->id > DEVLINK_TRAP_GENERIC_ID_MAX)
-		वापस -EINVAL;
+static int devlink_trap_generic_verify(const struct devlink_trap *trap)
+{
+	if (trap->id > DEVLINK_TRAP_GENERIC_ID_MAX)
+		return -EINVAL;
 
-	अगर (म_भेद(trap->name, devlink_trap_generic[trap->id].name))
-		वापस -EINVAL;
+	if (strcmp(trap->name, devlink_trap_generic[trap->id].name))
+		return -EINVAL;
 
-	अगर (trap->type != devlink_trap_generic[trap->id].type)
-		वापस -EINVAL;
+	if (trap->type != devlink_trap_generic[trap->id].type)
+		return -EINVAL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक devlink_trap_driver_verअगरy(स्थिर काष्ठा devlink_trap *trap)
-अणु
-	पूर्णांक i;
+static int devlink_trap_driver_verify(const struct devlink_trap *trap)
+{
+	int i;
 
-	अगर (trap->id <= DEVLINK_TRAP_GENERIC_ID_MAX)
-		वापस -EINVAL;
+	if (trap->id <= DEVLINK_TRAP_GENERIC_ID_MAX)
+		return -EINVAL;
 
-	क्रम (i = 0; i < ARRAY_SIZE(devlink_trap_generic); i++) अणु
-		अगर (!म_भेद(trap->name, devlink_trap_generic[i].name))
-			वापस -EEXIST;
-	पूर्ण
+	for (i = 0; i < ARRAY_SIZE(devlink_trap_generic); i++) {
+		if (!strcmp(trap->name, devlink_trap_generic[i].name))
+			return -EEXIST;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक devlink_trap_verअगरy(स्थिर काष्ठा devlink_trap *trap)
-अणु
-	अगर (!trap || !trap->name)
-		वापस -EINVAL;
+static int devlink_trap_verify(const struct devlink_trap *trap)
+{
+	if (!trap || !trap->name)
+		return -EINVAL;
 
-	अगर (trap->generic)
-		वापस devlink_trap_generic_verअगरy(trap);
-	अन्यथा
-		वापस devlink_trap_driver_verअगरy(trap);
-पूर्ण
+	if (trap->generic)
+		return devlink_trap_generic_verify(trap);
+	else
+		return devlink_trap_driver_verify(trap);
+}
 
-अटल पूर्णांक
-devlink_trap_group_generic_verअगरy(स्थिर काष्ठा devlink_trap_group *group)
-अणु
-	अगर (group->id > DEVLINK_TRAP_GROUP_GENERIC_ID_MAX)
-		वापस -EINVAL;
+static int
+devlink_trap_group_generic_verify(const struct devlink_trap_group *group)
+{
+	if (group->id > DEVLINK_TRAP_GROUP_GENERIC_ID_MAX)
+		return -EINVAL;
 
-	अगर (म_भेद(group->name, devlink_trap_group_generic[group->id].name))
-		वापस -EINVAL;
+	if (strcmp(group->name, devlink_trap_group_generic[group->id].name))
+		return -EINVAL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-devlink_trap_group_driver_verअगरy(स्थिर काष्ठा devlink_trap_group *group)
-अणु
-	पूर्णांक i;
+static int
+devlink_trap_group_driver_verify(const struct devlink_trap_group *group)
+{
+	int i;
 
-	अगर (group->id <= DEVLINK_TRAP_GROUP_GENERIC_ID_MAX)
-		वापस -EINVAL;
+	if (group->id <= DEVLINK_TRAP_GROUP_GENERIC_ID_MAX)
+		return -EINVAL;
 
-	क्रम (i = 0; i < ARRAY_SIZE(devlink_trap_group_generic); i++) अणु
-		अगर (!म_भेद(group->name, devlink_trap_group_generic[i].name))
-			वापस -EEXIST;
-	पूर्ण
+	for (i = 0; i < ARRAY_SIZE(devlink_trap_group_generic); i++) {
+		if (!strcmp(group->name, devlink_trap_group_generic[i].name))
+			return -EEXIST;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक devlink_trap_group_verअगरy(स्थिर काष्ठा devlink_trap_group *group)
-अणु
-	अगर (group->generic)
-		वापस devlink_trap_group_generic_verअगरy(group);
-	अन्यथा
-		वापस devlink_trap_group_driver_verअगरy(group);
-पूर्ण
+static int devlink_trap_group_verify(const struct devlink_trap_group *group)
+{
+	if (group->generic)
+		return devlink_trap_group_generic_verify(group);
+	else
+		return devlink_trap_group_driver_verify(group);
+}
 
-अटल व्योम
-devlink_trap_group_notअगरy(काष्ठा devlink *devlink,
-			  स्थिर काष्ठा devlink_trap_group_item *group_item,
-			  क्रमागत devlink_command cmd)
-अणु
-	काष्ठा sk_buff *msg;
-	पूर्णांक err;
+static void
+devlink_trap_group_notify(struct devlink *devlink,
+			  const struct devlink_trap_group_item *group_item,
+			  enum devlink_command cmd)
+{
+	struct sk_buff *msg;
+	int err;
 
 	WARN_ON_ONCE(cmd != DEVLINK_CMD_TRAP_GROUP_NEW &&
 		     cmd != DEVLINK_CMD_TRAP_GROUP_DEL);
 
 	msg = nlmsg_new(NLMSG_DEFAULT_SIZE, GFP_KERNEL);
-	अगर (!msg)
-		वापस;
+	if (!msg)
+		return;
 
 	err = devlink_nl_trap_group_fill(msg, devlink, group_item, cmd, 0, 0,
 					 0);
-	अगर (err) अणु
-		nlmsg_मुक्त(msg);
-		वापस;
-	पूर्ण
+	if (err) {
+		nlmsg_free(msg);
+		return;
+	}
 
 	genlmsg_multicast_netns(&devlink_nl_family, devlink_net(devlink),
 				msg, 0, DEVLINK_MCGRP_CONFIG, GFP_KERNEL);
-पूर्ण
+}
 
-अटल पूर्णांक
-devlink_trap_item_group_link(काष्ठा devlink *devlink,
-			     काष्ठा devlink_trap_item *trap_item)
-अणु
+static int
+devlink_trap_item_group_link(struct devlink *devlink,
+			     struct devlink_trap_item *trap_item)
+{
 	u16 group_id = trap_item->trap->init_group_id;
-	काष्ठा devlink_trap_group_item *group_item;
+	struct devlink_trap_group_item *group_item;
 
 	group_item = devlink_trap_group_item_lookup_by_id(devlink, group_id);
-	अगर (WARN_ON_ONCE(!group_item))
-		वापस -EINVAL;
+	if (WARN_ON_ONCE(!group_item))
+		return -EINVAL;
 
 	trap_item->group_item = group_item;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम devlink_trap_notअगरy(काष्ठा devlink *devlink,
-				स्थिर काष्ठा devlink_trap_item *trap_item,
-				क्रमागत devlink_command cmd)
-अणु
-	काष्ठा sk_buff *msg;
-	पूर्णांक err;
+static void devlink_trap_notify(struct devlink *devlink,
+				const struct devlink_trap_item *trap_item,
+				enum devlink_command cmd)
+{
+	struct sk_buff *msg;
+	int err;
 
 	WARN_ON_ONCE(cmd != DEVLINK_CMD_TRAP_NEW &&
 		     cmd != DEVLINK_CMD_TRAP_DEL);
 
 	msg = nlmsg_new(NLMSG_DEFAULT_SIZE, GFP_KERNEL);
-	अगर (!msg)
-		वापस;
+	if (!msg)
+		return;
 
 	err = devlink_nl_trap_fill(msg, devlink, trap_item, cmd, 0, 0, 0);
-	अगर (err) अणु
-		nlmsg_मुक्त(msg);
-		वापस;
-	पूर्ण
+	if (err) {
+		nlmsg_free(msg);
+		return;
+	}
 
 	genlmsg_multicast_netns(&devlink_nl_family, devlink_net(devlink),
 				msg, 0, DEVLINK_MCGRP_CONFIG, GFP_KERNEL);
-पूर्ण
+}
 
-अटल पूर्णांक
-devlink_trap_रेजिस्टर(काष्ठा devlink *devlink,
-		      स्थिर काष्ठा devlink_trap *trap, व्योम *priv)
-अणु
-	काष्ठा devlink_trap_item *trap_item;
-	पूर्णांक err;
+static int
+devlink_trap_register(struct devlink *devlink,
+		      const struct devlink_trap *trap, void *priv)
+{
+	struct devlink_trap_item *trap_item;
+	int err;
 
-	अगर (devlink_trap_item_lookup(devlink, trap->name))
-		वापस -EEXIST;
+	if (devlink_trap_item_lookup(devlink, trap->name))
+		return -EEXIST;
 
-	trap_item = kzalloc(माप(*trap_item), GFP_KERNEL);
-	अगर (!trap_item)
-		वापस -ENOMEM;
+	trap_item = kzalloc(sizeof(*trap_item), GFP_KERNEL);
+	if (!trap_item)
+		return -ENOMEM;
 
-	trap_item->stats = netdev_alloc_pcpu_stats(काष्ठा devlink_stats);
-	अगर (!trap_item->stats) अणु
+	trap_item->stats = netdev_alloc_pcpu_stats(struct devlink_stats);
+	if (!trap_item->stats) {
 		err = -ENOMEM;
-		जाओ err_stats_alloc;
-	पूर्ण
+		goto err_stats_alloc;
+	}
 
 	trap_item->trap = trap;
 	trap_item->action = trap->init_action;
 	trap_item->priv = priv;
 
 	err = devlink_trap_item_group_link(devlink, trap_item);
-	अगर (err)
-		जाओ err_group_link;
+	if (err)
+		goto err_group_link;
 
 	err = devlink->ops->trap_init(devlink, trap, trap_item);
-	अगर (err)
-		जाओ err_trap_init;
+	if (err)
+		goto err_trap_init;
 
 	list_add_tail(&trap_item->list, &devlink->trap_list);
-	devlink_trap_notअगरy(devlink, trap_item, DEVLINK_CMD_TRAP_NEW);
+	devlink_trap_notify(devlink, trap_item, DEVLINK_CMD_TRAP_NEW);
 
-	वापस 0;
+	return 0;
 
 err_trap_init:
 err_group_link:
-	मुक्त_percpu(trap_item->stats);
+	free_percpu(trap_item->stats);
 err_stats_alloc:
-	kमुक्त(trap_item);
-	वापस err;
-पूर्ण
+	kfree(trap_item);
+	return err;
+}
 
-अटल व्योम devlink_trap_unरेजिस्टर(काष्ठा devlink *devlink,
-				    स्थिर काष्ठा devlink_trap *trap)
-अणु
-	काष्ठा devlink_trap_item *trap_item;
+static void devlink_trap_unregister(struct devlink *devlink,
+				    const struct devlink_trap *trap)
+{
+	struct devlink_trap_item *trap_item;
 
 	trap_item = devlink_trap_item_lookup(devlink, trap->name);
-	अगर (WARN_ON_ONCE(!trap_item))
-		वापस;
+	if (WARN_ON_ONCE(!trap_item))
+		return;
 
-	devlink_trap_notअगरy(devlink, trap_item, DEVLINK_CMD_TRAP_DEL);
+	devlink_trap_notify(devlink, trap_item, DEVLINK_CMD_TRAP_DEL);
 	list_del(&trap_item->list);
-	अगर (devlink->ops->trap_fini)
+	if (devlink->ops->trap_fini)
 		devlink->ops->trap_fini(devlink, trap, trap_item);
-	मुक्त_percpu(trap_item->stats);
-	kमुक्त(trap_item);
-पूर्ण
+	free_percpu(trap_item->stats);
+	kfree(trap_item);
+}
 
-अटल व्योम devlink_trap_disable(काष्ठा devlink *devlink,
-				 स्थिर काष्ठा devlink_trap *trap)
-अणु
-	काष्ठा devlink_trap_item *trap_item;
+static void devlink_trap_disable(struct devlink *devlink,
+				 const struct devlink_trap *trap)
+{
+	struct devlink_trap_item *trap_item;
 
 	trap_item = devlink_trap_item_lookup(devlink, trap->name);
-	अगर (WARN_ON_ONCE(!trap_item))
-		वापस;
+	if (WARN_ON_ONCE(!trap_item))
+		return;
 
 	devlink->ops->trap_action_set(devlink, trap, DEVLINK_TRAP_ACTION_DROP,
-				      शून्य);
+				      NULL);
 	trap_item->action = DEVLINK_TRAP_ACTION_DROP;
-पूर्ण
+}
 
 /**
- * devlink_traps_रेजिस्टर - Register packet traps with devlink.
+ * devlink_traps_register - Register packet traps with devlink.
  * @devlink: devlink.
  * @traps: Packet traps.
  * @traps_count: Count of provided packet traps.
- * @priv: Driver निजी inक्रमmation.
+ * @priv: Driver private information.
  *
  * Return: Non-zero value on failure.
  */
-पूर्णांक devlink_traps_रेजिस्टर(काष्ठा devlink *devlink,
-			   स्थिर काष्ठा devlink_trap *traps,
-			   माप_प्रकार traps_count, व्योम *priv)
-अणु
-	पूर्णांक i, err;
+int devlink_traps_register(struct devlink *devlink,
+			   const struct devlink_trap *traps,
+			   size_t traps_count, void *priv)
+{
+	int i, err;
 
-	अगर (!devlink->ops->trap_init || !devlink->ops->trap_action_set)
-		वापस -EINVAL;
+	if (!devlink->ops->trap_init || !devlink->ops->trap_action_set)
+		return -EINVAL;
 
 	mutex_lock(&devlink->lock);
-	क्रम (i = 0; i < traps_count; i++) अणु
-		स्थिर काष्ठा devlink_trap *trap = &traps[i];
+	for (i = 0; i < traps_count; i++) {
+		const struct devlink_trap *trap = &traps[i];
 
-		err = devlink_trap_verअगरy(trap);
-		अगर (err)
-			जाओ err_trap_verअगरy;
+		err = devlink_trap_verify(trap);
+		if (err)
+			goto err_trap_verify;
 
-		err = devlink_trap_रेजिस्टर(devlink, trap, priv);
-		अगर (err)
-			जाओ err_trap_रेजिस्टर;
-	पूर्ण
+		err = devlink_trap_register(devlink, trap, priv);
+		if (err)
+			goto err_trap_register;
+	}
 	mutex_unlock(&devlink->lock);
 
-	वापस 0;
+	return 0;
 
-err_trap_रेजिस्टर:
-err_trap_verअगरy:
-	क्रम (i--; i >= 0; i--)
-		devlink_trap_unरेजिस्टर(devlink, &traps[i]);
+err_trap_register:
+err_trap_verify:
+	for (i--; i >= 0; i--)
+		devlink_trap_unregister(devlink, &traps[i]);
 	mutex_unlock(&devlink->lock);
-	वापस err;
-पूर्ण
-EXPORT_SYMBOL_GPL(devlink_traps_रेजिस्टर);
+	return err;
+}
+EXPORT_SYMBOL_GPL(devlink_traps_register);
 
 /**
- * devlink_traps_unरेजिस्टर - Unरेजिस्टर packet traps from devlink.
+ * devlink_traps_unregister - Unregister packet traps from devlink.
  * @devlink: devlink.
  * @traps: Packet traps.
  * @traps_count: Count of provided packet traps.
  */
-व्योम devlink_traps_unरेजिस्टर(काष्ठा devlink *devlink,
-			      स्थिर काष्ठा devlink_trap *traps,
-			      माप_प्रकार traps_count)
-अणु
-	पूर्णांक i;
+void devlink_traps_unregister(struct devlink *devlink,
+			      const struct devlink_trap *traps,
+			      size_t traps_count)
+{
+	int i;
 
 	mutex_lock(&devlink->lock);
-	/* Make sure we करो not have any packets in-flight जबतक unरेजिस्टरing
-	 * traps by disabling all of them and रुकोing क्रम a grace period.
+	/* Make sure we do not have any packets in-flight while unregistering
+	 * traps by disabling all of them and waiting for a grace period.
 	 */
-	क्रम (i = traps_count - 1; i >= 0; i--)
+	for (i = traps_count - 1; i >= 0; i--)
 		devlink_trap_disable(devlink, &traps[i]);
 	synchronize_rcu();
-	क्रम (i = traps_count - 1; i >= 0; i--)
-		devlink_trap_unरेजिस्टर(devlink, &traps[i]);
+	for (i = traps_count - 1; i >= 0; i--)
+		devlink_trap_unregister(devlink, &traps[i]);
 	mutex_unlock(&devlink->lock);
-पूर्ण
-EXPORT_SYMBOL_GPL(devlink_traps_unरेजिस्टर);
+}
+EXPORT_SYMBOL_GPL(devlink_traps_unregister);
 
-अटल व्योम
-devlink_trap_stats_update(काष्ठा devlink_stats __percpu *trap_stats,
-			  माप_प्रकार skb_len)
-अणु
-	काष्ठा devlink_stats *stats;
+static void
+devlink_trap_stats_update(struct devlink_stats __percpu *trap_stats,
+			  size_t skb_len)
+{
+	struct devlink_stats *stats;
 
 	stats = this_cpu_ptr(trap_stats);
 	u64_stats_update_begin(&stats->syncp);
 	stats->rx_bytes += skb_len;
 	stats->rx_packets++;
 	u64_stats_update_end(&stats->syncp);
-पूर्ण
+}
 
-अटल व्योम
-devlink_trap_report_metadata_set(काष्ठा devlink_trap_metadata *metadata,
-				 स्थिर काष्ठा devlink_trap_item *trap_item,
-				 काष्ठा devlink_port *in_devlink_port,
-				 स्थिर काष्ठा flow_action_cookie *fa_cookie)
-अणु
+static void
+devlink_trap_report_metadata_set(struct devlink_trap_metadata *metadata,
+				 const struct devlink_trap_item *trap_item,
+				 struct devlink_port *in_devlink_port,
+				 const struct flow_action_cookie *fa_cookie)
+{
 	metadata->trap_name = trap_item->trap->name;
 	metadata->trap_group_name = trap_item->group_item->group->name;
 	metadata->fa_cookie = fa_cookie;
 	metadata->trap_type = trap_item->trap->type;
 
 	spin_lock(&in_devlink_port->type_lock);
-	अगर (in_devlink_port->type == DEVLINK_PORT_TYPE_ETH)
+	if (in_devlink_port->type == DEVLINK_PORT_TYPE_ETH)
 		metadata->input_dev = in_devlink_port->type_dev;
 	spin_unlock(&in_devlink_port->type_lock);
-पूर्ण
+}
 
 /**
  * devlink_trap_report - Report trapped packet to drop monitor.
@@ -10132,371 +10131,371 @@ devlink_trap_report_metadata_set(काष्ठा devlink_trap_metadata *metad
  * @skb: Trapped packet.
  * @trap_ctx: Trap context.
  * @in_devlink_port: Input devlink port.
- * @fa_cookie: Flow action cookie. Could be शून्य.
+ * @fa_cookie: Flow action cookie. Could be NULL.
  */
-व्योम devlink_trap_report(काष्ठा devlink *devlink, काष्ठा sk_buff *skb,
-			 व्योम *trap_ctx, काष्ठा devlink_port *in_devlink_port,
-			 स्थिर काष्ठा flow_action_cookie *fa_cookie)
+void devlink_trap_report(struct devlink *devlink, struct sk_buff *skb,
+			 void *trap_ctx, struct devlink_port *in_devlink_port,
+			 const struct flow_action_cookie *fa_cookie)
 
-अणु
-	काष्ठा devlink_trap_item *trap_item = trap_ctx;
+{
+	struct devlink_trap_item *trap_item = trap_ctx;
 
 	devlink_trap_stats_update(trap_item->stats, skb->len);
 	devlink_trap_stats_update(trap_item->group_item->stats, skb->len);
 
-	अगर (trace_devlink_trap_report_enabled()) अणु
-		काष्ठा devlink_trap_metadata metadata = अणुपूर्ण;
+	if (trace_devlink_trap_report_enabled()) {
+		struct devlink_trap_metadata metadata = {};
 
 		devlink_trap_report_metadata_set(&metadata, trap_item,
 						 in_devlink_port, fa_cookie);
 		trace_devlink_trap_report(devlink, skb, &metadata);
-	पूर्ण
-पूर्ण
+	}
+}
 EXPORT_SYMBOL_GPL(devlink_trap_report);
 
 /**
- * devlink_trap_ctx_priv - Trap context to driver निजी inक्रमmation.
+ * devlink_trap_ctx_priv - Trap context to driver private information.
  * @trap_ctx: Trap context.
  *
- * Return: Driver निजी inक्रमmation passed during registration.
+ * Return: Driver private information passed during registration.
  */
-व्योम *devlink_trap_ctx_priv(व्योम *trap_ctx)
-अणु
-	काष्ठा devlink_trap_item *trap_item = trap_ctx;
+void *devlink_trap_ctx_priv(void *trap_ctx)
+{
+	struct devlink_trap_item *trap_item = trap_ctx;
 
-	वापस trap_item->priv;
-पूर्ण
+	return trap_item->priv;
+}
 EXPORT_SYMBOL_GPL(devlink_trap_ctx_priv);
 
-अटल पूर्णांक
-devlink_trap_group_item_policer_link(काष्ठा devlink *devlink,
-				     काष्ठा devlink_trap_group_item *group_item)
-अणु
+static int
+devlink_trap_group_item_policer_link(struct devlink *devlink,
+				     struct devlink_trap_group_item *group_item)
+{
 	u32 policer_id = group_item->group->init_policer_id;
-	काष्ठा devlink_trap_policer_item *policer_item;
+	struct devlink_trap_policer_item *policer_item;
 
-	अगर (policer_id == 0)
-		वापस 0;
+	if (policer_id == 0)
+		return 0;
 
 	policer_item = devlink_trap_policer_item_lookup(devlink, policer_id);
-	अगर (WARN_ON_ONCE(!policer_item))
-		वापस -EINVAL;
+	if (WARN_ON_ONCE(!policer_item))
+		return -EINVAL;
 
 	group_item->policer_item = policer_item;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-devlink_trap_group_रेजिस्टर(काष्ठा devlink *devlink,
-			    स्थिर काष्ठा devlink_trap_group *group)
-अणु
-	काष्ठा devlink_trap_group_item *group_item;
-	पूर्णांक err;
+static int
+devlink_trap_group_register(struct devlink *devlink,
+			    const struct devlink_trap_group *group)
+{
+	struct devlink_trap_group_item *group_item;
+	int err;
 
-	अगर (devlink_trap_group_item_lookup(devlink, group->name))
-		वापस -EEXIST;
+	if (devlink_trap_group_item_lookup(devlink, group->name))
+		return -EEXIST;
 
-	group_item = kzalloc(माप(*group_item), GFP_KERNEL);
-	अगर (!group_item)
-		वापस -ENOMEM;
+	group_item = kzalloc(sizeof(*group_item), GFP_KERNEL);
+	if (!group_item)
+		return -ENOMEM;
 
-	group_item->stats = netdev_alloc_pcpu_stats(काष्ठा devlink_stats);
-	अगर (!group_item->stats) अणु
+	group_item->stats = netdev_alloc_pcpu_stats(struct devlink_stats);
+	if (!group_item->stats) {
 		err = -ENOMEM;
-		जाओ err_stats_alloc;
-	पूर्ण
+		goto err_stats_alloc;
+	}
 
 	group_item->group = group;
 
 	err = devlink_trap_group_item_policer_link(devlink, group_item);
-	अगर (err)
-		जाओ err_policer_link;
+	if (err)
+		goto err_policer_link;
 
-	अगर (devlink->ops->trap_group_init) अणु
+	if (devlink->ops->trap_group_init) {
 		err = devlink->ops->trap_group_init(devlink, group);
-		अगर (err)
-			जाओ err_group_init;
-	पूर्ण
+		if (err)
+			goto err_group_init;
+	}
 
 	list_add_tail(&group_item->list, &devlink->trap_group_list);
-	devlink_trap_group_notअगरy(devlink, group_item,
+	devlink_trap_group_notify(devlink, group_item,
 				  DEVLINK_CMD_TRAP_GROUP_NEW);
 
-	वापस 0;
+	return 0;
 
 err_group_init:
 err_policer_link:
-	मुक्त_percpu(group_item->stats);
+	free_percpu(group_item->stats);
 err_stats_alloc:
-	kमुक्त(group_item);
-	वापस err;
-पूर्ण
+	kfree(group_item);
+	return err;
+}
 
-अटल व्योम
-devlink_trap_group_unरेजिस्टर(काष्ठा devlink *devlink,
-			      स्थिर काष्ठा devlink_trap_group *group)
-अणु
-	काष्ठा devlink_trap_group_item *group_item;
+static void
+devlink_trap_group_unregister(struct devlink *devlink,
+			      const struct devlink_trap_group *group)
+{
+	struct devlink_trap_group_item *group_item;
 
 	group_item = devlink_trap_group_item_lookup(devlink, group->name);
-	अगर (WARN_ON_ONCE(!group_item))
-		वापस;
+	if (WARN_ON_ONCE(!group_item))
+		return;
 
-	devlink_trap_group_notअगरy(devlink, group_item,
+	devlink_trap_group_notify(devlink, group_item,
 				  DEVLINK_CMD_TRAP_GROUP_DEL);
 	list_del(&group_item->list);
-	मुक्त_percpu(group_item->stats);
-	kमुक्त(group_item);
-पूर्ण
+	free_percpu(group_item->stats);
+	kfree(group_item);
+}
 
 /**
- * devlink_trap_groups_रेजिस्टर - Register packet trap groups with devlink.
+ * devlink_trap_groups_register - Register packet trap groups with devlink.
  * @devlink: devlink.
  * @groups: Packet trap groups.
  * @groups_count: Count of provided packet trap groups.
  *
  * Return: Non-zero value on failure.
  */
-पूर्णांक devlink_trap_groups_रेजिस्टर(काष्ठा devlink *devlink,
-				 स्थिर काष्ठा devlink_trap_group *groups,
-				 माप_प्रकार groups_count)
-अणु
-	पूर्णांक i, err;
+int devlink_trap_groups_register(struct devlink *devlink,
+				 const struct devlink_trap_group *groups,
+				 size_t groups_count)
+{
+	int i, err;
 
 	mutex_lock(&devlink->lock);
-	क्रम (i = 0; i < groups_count; i++) अणु
-		स्थिर काष्ठा devlink_trap_group *group = &groups[i];
+	for (i = 0; i < groups_count; i++) {
+		const struct devlink_trap_group *group = &groups[i];
 
-		err = devlink_trap_group_verअगरy(group);
-		अगर (err)
-			जाओ err_trap_group_verअगरy;
+		err = devlink_trap_group_verify(group);
+		if (err)
+			goto err_trap_group_verify;
 
-		err = devlink_trap_group_रेजिस्टर(devlink, group);
-		अगर (err)
-			जाओ err_trap_group_रेजिस्टर;
-	पूर्ण
+		err = devlink_trap_group_register(devlink, group);
+		if (err)
+			goto err_trap_group_register;
+	}
 	mutex_unlock(&devlink->lock);
 
-	वापस 0;
+	return 0;
 
-err_trap_group_रेजिस्टर:
-err_trap_group_verअगरy:
-	क्रम (i--; i >= 0; i--)
-		devlink_trap_group_unरेजिस्टर(devlink, &groups[i]);
+err_trap_group_register:
+err_trap_group_verify:
+	for (i--; i >= 0; i--)
+		devlink_trap_group_unregister(devlink, &groups[i]);
 	mutex_unlock(&devlink->lock);
-	वापस err;
-पूर्ण
-EXPORT_SYMBOL_GPL(devlink_trap_groups_रेजिस्टर);
+	return err;
+}
+EXPORT_SYMBOL_GPL(devlink_trap_groups_register);
 
 /**
- * devlink_trap_groups_unरेजिस्टर - Unरेजिस्टर packet trap groups from devlink.
+ * devlink_trap_groups_unregister - Unregister packet trap groups from devlink.
  * @devlink: devlink.
  * @groups: Packet trap groups.
  * @groups_count: Count of provided packet trap groups.
  */
-व्योम devlink_trap_groups_unरेजिस्टर(काष्ठा devlink *devlink,
-				    स्थिर काष्ठा devlink_trap_group *groups,
-				    माप_प्रकार groups_count)
-अणु
-	पूर्णांक i;
+void devlink_trap_groups_unregister(struct devlink *devlink,
+				    const struct devlink_trap_group *groups,
+				    size_t groups_count)
+{
+	int i;
 
 	mutex_lock(&devlink->lock);
-	क्रम (i = groups_count - 1; i >= 0; i--)
-		devlink_trap_group_unरेजिस्टर(devlink, &groups[i]);
+	for (i = groups_count - 1; i >= 0; i--)
+		devlink_trap_group_unregister(devlink, &groups[i]);
 	mutex_unlock(&devlink->lock);
-पूर्ण
-EXPORT_SYMBOL_GPL(devlink_trap_groups_unरेजिस्टर);
+}
+EXPORT_SYMBOL_GPL(devlink_trap_groups_unregister);
 
-अटल व्योम
-devlink_trap_policer_notअगरy(काष्ठा devlink *devlink,
-			    स्थिर काष्ठा devlink_trap_policer_item *policer_item,
-			    क्रमागत devlink_command cmd)
-अणु
-	काष्ठा sk_buff *msg;
-	पूर्णांक err;
+static void
+devlink_trap_policer_notify(struct devlink *devlink,
+			    const struct devlink_trap_policer_item *policer_item,
+			    enum devlink_command cmd)
+{
+	struct sk_buff *msg;
+	int err;
 
 	WARN_ON_ONCE(cmd != DEVLINK_CMD_TRAP_POLICER_NEW &&
 		     cmd != DEVLINK_CMD_TRAP_POLICER_DEL);
 
 	msg = nlmsg_new(NLMSG_DEFAULT_SIZE, GFP_KERNEL);
-	अगर (!msg)
-		वापस;
+	if (!msg)
+		return;
 
 	err = devlink_nl_trap_policer_fill(msg, devlink, policer_item, cmd, 0,
 					   0, 0);
-	अगर (err) अणु
-		nlmsg_मुक्त(msg);
-		वापस;
-	पूर्ण
+	if (err) {
+		nlmsg_free(msg);
+		return;
+	}
 
 	genlmsg_multicast_netns(&devlink_nl_family, devlink_net(devlink),
 				msg, 0, DEVLINK_MCGRP_CONFIG, GFP_KERNEL);
-पूर्ण
+}
 
-अटल पूर्णांक
-devlink_trap_policer_रेजिस्टर(काष्ठा devlink *devlink,
-			      स्थिर काष्ठा devlink_trap_policer *policer)
-अणु
-	काष्ठा devlink_trap_policer_item *policer_item;
-	पूर्णांक err;
+static int
+devlink_trap_policer_register(struct devlink *devlink,
+			      const struct devlink_trap_policer *policer)
+{
+	struct devlink_trap_policer_item *policer_item;
+	int err;
 
-	अगर (devlink_trap_policer_item_lookup(devlink, policer->id))
-		वापस -EEXIST;
+	if (devlink_trap_policer_item_lookup(devlink, policer->id))
+		return -EEXIST;
 
-	policer_item = kzalloc(माप(*policer_item), GFP_KERNEL);
-	अगर (!policer_item)
-		वापस -ENOMEM;
+	policer_item = kzalloc(sizeof(*policer_item), GFP_KERNEL);
+	if (!policer_item)
+		return -ENOMEM;
 
 	policer_item->policer = policer;
 	policer_item->rate = policer->init_rate;
 	policer_item->burst = policer->init_burst;
 
-	अगर (devlink->ops->trap_policer_init) अणु
+	if (devlink->ops->trap_policer_init) {
 		err = devlink->ops->trap_policer_init(devlink, policer);
-		अगर (err)
-			जाओ err_policer_init;
-	पूर्ण
+		if (err)
+			goto err_policer_init;
+	}
 
 	list_add_tail(&policer_item->list, &devlink->trap_policer_list);
-	devlink_trap_policer_notअगरy(devlink, policer_item,
+	devlink_trap_policer_notify(devlink, policer_item,
 				    DEVLINK_CMD_TRAP_POLICER_NEW);
 
-	वापस 0;
+	return 0;
 
 err_policer_init:
-	kमुक्त(policer_item);
-	वापस err;
-पूर्ण
+	kfree(policer_item);
+	return err;
+}
 
-अटल व्योम
-devlink_trap_policer_unरेजिस्टर(काष्ठा devlink *devlink,
-				स्थिर काष्ठा devlink_trap_policer *policer)
-अणु
-	काष्ठा devlink_trap_policer_item *policer_item;
+static void
+devlink_trap_policer_unregister(struct devlink *devlink,
+				const struct devlink_trap_policer *policer)
+{
+	struct devlink_trap_policer_item *policer_item;
 
 	policer_item = devlink_trap_policer_item_lookup(devlink, policer->id);
-	अगर (WARN_ON_ONCE(!policer_item))
-		वापस;
+	if (WARN_ON_ONCE(!policer_item))
+		return;
 
-	devlink_trap_policer_notअगरy(devlink, policer_item,
+	devlink_trap_policer_notify(devlink, policer_item,
 				    DEVLINK_CMD_TRAP_POLICER_DEL);
 	list_del(&policer_item->list);
-	अगर (devlink->ops->trap_policer_fini)
+	if (devlink->ops->trap_policer_fini)
 		devlink->ops->trap_policer_fini(devlink, policer);
-	kमुक्त(policer_item);
-पूर्ण
+	kfree(policer_item);
+}
 
 /**
- * devlink_trap_policers_रेजिस्टर - Register packet trap policers with devlink.
+ * devlink_trap_policers_register - Register packet trap policers with devlink.
  * @devlink: devlink.
  * @policers: Packet trap policers.
  * @policers_count: Count of provided packet trap policers.
  *
  * Return: Non-zero value on failure.
  */
-पूर्णांक
-devlink_trap_policers_रेजिस्टर(काष्ठा devlink *devlink,
-			       स्थिर काष्ठा devlink_trap_policer *policers,
-			       माप_प्रकार policers_count)
-अणु
-	पूर्णांक i, err;
+int
+devlink_trap_policers_register(struct devlink *devlink,
+			       const struct devlink_trap_policer *policers,
+			       size_t policers_count)
+{
+	int i, err;
 
 	mutex_lock(&devlink->lock);
-	क्रम (i = 0; i < policers_count; i++) अणु
-		स्थिर काष्ठा devlink_trap_policer *policer = &policers[i];
+	for (i = 0; i < policers_count; i++) {
+		const struct devlink_trap_policer *policer = &policers[i];
 
-		अगर (WARN_ON(policer->id == 0 ||
+		if (WARN_ON(policer->id == 0 ||
 			    policer->max_rate < policer->min_rate ||
-			    policer->max_burst < policer->min_burst)) अणु
+			    policer->max_burst < policer->min_burst)) {
 			err = -EINVAL;
-			जाओ err_trap_policer_verअगरy;
-		पूर्ण
+			goto err_trap_policer_verify;
+		}
 
-		err = devlink_trap_policer_रेजिस्टर(devlink, policer);
-		अगर (err)
-			जाओ err_trap_policer_रेजिस्टर;
-	पूर्ण
+		err = devlink_trap_policer_register(devlink, policer);
+		if (err)
+			goto err_trap_policer_register;
+	}
 	mutex_unlock(&devlink->lock);
 
-	वापस 0;
+	return 0;
 
-err_trap_policer_रेजिस्टर:
-err_trap_policer_verअगरy:
-	क्रम (i--; i >= 0; i--)
-		devlink_trap_policer_unरेजिस्टर(devlink, &policers[i]);
+err_trap_policer_register:
+err_trap_policer_verify:
+	for (i--; i >= 0; i--)
+		devlink_trap_policer_unregister(devlink, &policers[i]);
 	mutex_unlock(&devlink->lock);
-	वापस err;
-पूर्ण
-EXPORT_SYMBOL_GPL(devlink_trap_policers_रेजिस्टर);
+	return err;
+}
+EXPORT_SYMBOL_GPL(devlink_trap_policers_register);
 
 /**
- * devlink_trap_policers_unरेजिस्टर - Unरेजिस्टर packet trap policers from devlink.
+ * devlink_trap_policers_unregister - Unregister packet trap policers from devlink.
  * @devlink: devlink.
  * @policers: Packet trap policers.
  * @policers_count: Count of provided packet trap policers.
  */
-व्योम
-devlink_trap_policers_unरेजिस्टर(काष्ठा devlink *devlink,
-				 स्थिर काष्ठा devlink_trap_policer *policers,
-				 माप_प्रकार policers_count)
-अणु
-	पूर्णांक i;
+void
+devlink_trap_policers_unregister(struct devlink *devlink,
+				 const struct devlink_trap_policer *policers,
+				 size_t policers_count)
+{
+	int i;
 
 	mutex_lock(&devlink->lock);
-	क्रम (i = policers_count - 1; i >= 0; i--)
-		devlink_trap_policer_unरेजिस्टर(devlink, &policers[i]);
+	for (i = policers_count - 1; i >= 0; i--)
+		devlink_trap_policer_unregister(devlink, &policers[i]);
 	mutex_unlock(&devlink->lock);
-पूर्ण
-EXPORT_SYMBOL_GPL(devlink_trap_policers_unरेजिस्टर);
+}
+EXPORT_SYMBOL_GPL(devlink_trap_policers_unregister);
 
-अटल व्योम __devlink_compat_running_version(काष्ठा devlink *devlink,
-					     अक्षर *buf, माप_प्रकार len)
-अणु
-	स्थिर काष्ठा nlattr *nlattr;
-	काष्ठा devlink_info_req req;
-	काष्ठा sk_buff *msg;
-	पूर्णांक rem, err;
+static void __devlink_compat_running_version(struct devlink *devlink,
+					     char *buf, size_t len)
+{
+	const struct nlattr *nlattr;
+	struct devlink_info_req req;
+	struct sk_buff *msg;
+	int rem, err;
 
 	msg = nlmsg_new(NLMSG_DEFAULT_SIZE, GFP_KERNEL);
-	अगर (!msg)
-		वापस;
+	if (!msg)
+		return;
 
 	req.msg = msg;
-	err = devlink->ops->info_get(devlink, &req, शून्य);
-	अगर (err)
-		जाओ मुक्त_msg;
+	err = devlink->ops->info_get(devlink, &req, NULL);
+	if (err)
+		goto free_msg;
 
-	nla_क्रम_each_attr(nlattr, (व्योम *)msg->data, msg->len, rem) अणु
-		स्थिर काष्ठा nlattr *kv;
-		पूर्णांक rem_kv;
+	nla_for_each_attr(nlattr, (void *)msg->data, msg->len, rem) {
+		const struct nlattr *kv;
+		int rem_kv;
 
-		अगर (nla_type(nlattr) != DEVLINK_ATTR_INFO_VERSION_RUNNING)
-			जारी;
+		if (nla_type(nlattr) != DEVLINK_ATTR_INFO_VERSION_RUNNING)
+			continue;
 
-		nla_क्रम_each_nested(kv, nlattr, rem_kv) अणु
-			अगर (nla_type(kv) != DEVLINK_ATTR_INFO_VERSION_VALUE)
-				जारी;
+		nla_for_each_nested(kv, nlattr, rem_kv) {
+			if (nla_type(kv) != DEVLINK_ATTR_INFO_VERSION_VALUE)
+				continue;
 
 			strlcat(buf, nla_data(kv), len);
 			strlcat(buf, " ", len);
-		पूर्ण
-	पूर्ण
-मुक्त_msg:
-	nlmsg_मुक्त(msg);
-पूर्ण
+		}
+	}
+free_msg:
+	nlmsg_free(msg);
+}
 
-व्योम devlink_compat_running_version(काष्ठा net_device *dev,
-				    अक्षर *buf, माप_प्रकार len)
-अणु
-	काष्ठा devlink *devlink;
+void devlink_compat_running_version(struct net_device *dev,
+				    char *buf, size_t len)
+{
+	struct devlink *devlink;
 
 	dev_hold(dev);
 	rtnl_unlock();
 
 	devlink = netdev_to_devlink(dev);
-	अगर (!devlink || !devlink->ops->info_get)
-		जाओ out;
+	if (!devlink || !devlink->ops->info_get)
+		goto out;
 
 	mutex_lock(&devlink->lock);
 	__devlink_compat_running_version(devlink, buf, len);
@@ -10505,31 +10504,31 @@ EXPORT_SYMBOL_GPL(devlink_trap_policers_unरेजिस्टर);
 out:
 	rtnl_lock();
 	dev_put(dev);
-पूर्ण
+}
 
-पूर्णांक devlink_compat_flash_update(काष्ठा net_device *dev, स्थिर अक्षर *file_name)
-अणु
-	काष्ठा devlink_flash_update_params params = अणुपूर्ण;
-	काष्ठा devlink *devlink;
-	पूर्णांक ret;
+int devlink_compat_flash_update(struct net_device *dev, const char *file_name)
+{
+	struct devlink_flash_update_params params = {};
+	struct devlink *devlink;
+	int ret;
 
 	dev_hold(dev);
 	rtnl_unlock();
 
 	devlink = netdev_to_devlink(dev);
-	अगर (!devlink || !devlink->ops->flash_update) अणु
+	if (!devlink || !devlink->ops->flash_update) {
 		ret = -EOPNOTSUPP;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	ret = request_firmware(&params.fw, file_name, devlink->dev);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
 	mutex_lock(&devlink->lock);
-	devlink_flash_update_begin_notअगरy(devlink);
-	ret = devlink->ops->flash_update(devlink, &params, शून्य);
-	devlink_flash_update_end_notअगरy(devlink);
+	devlink_flash_update_begin_notify(devlink);
+	ret = devlink->ops->flash_update(devlink, &params, NULL);
+	devlink_flash_update_end_notify(devlink);
 	mutex_unlock(&devlink->lock);
 
 	release_firmware(params.fw);
@@ -10538,13 +10537,13 @@ out:
 	rtnl_lock();
 	dev_put(dev);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक devlink_compat_phys_port_name_get(काष्ठा net_device *dev,
-				      अक्षर *name, माप_प्रकार len)
-अणु
-	काष्ठा devlink_port *devlink_port;
+int devlink_compat_phys_port_name_get(struct net_device *dev,
+				      char *name, size_t len)
+{
+	struct devlink_port *devlink_port;
 
 	/* RTNL mutex is held here which ensures that devlink_port
 	 * instance cannot disappear in the middle. No need to take
@@ -10553,71 +10552,71 @@ out:
 	ASSERT_RTNL();
 
 	devlink_port = netdev_to_devlink_port(dev);
-	अगर (!devlink_port)
-		वापस -EOPNOTSUPP;
+	if (!devlink_port)
+		return -EOPNOTSUPP;
 
-	वापस __devlink_port_phys_port_name_get(devlink_port, name, len);
-पूर्ण
+	return __devlink_port_phys_port_name_get(devlink_port, name, len);
+}
 
-पूर्णांक devlink_compat_चयन_id_get(काष्ठा net_device *dev,
-				 काष्ठा netdev_phys_item_id *ppid)
-अणु
-	काष्ठा devlink_port *devlink_port;
+int devlink_compat_switch_id_get(struct net_device *dev,
+				 struct netdev_phys_item_id *ppid)
+{
+	struct devlink_port *devlink_port;
 
 	/* Caller must hold RTNL mutex or reference to dev, which ensures that
 	 * devlink_port instance cannot disappear in the middle. No need to take
 	 * any devlink lock as only permanent values are accessed.
 	 */
 	devlink_port = netdev_to_devlink_port(dev);
-	अगर (!devlink_port || !devlink_port->चयन_port)
-		वापस -EOPNOTSUPP;
+	if (!devlink_port || !devlink_port->switch_port)
+		return -EOPNOTSUPP;
 
-	स_नकल(ppid, &devlink_port->attrs.चयन_id, माप(*ppid));
+	memcpy(ppid, &devlink_port->attrs.switch_id, sizeof(*ppid));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम __net_निकास devlink_pernet_pre_निकास(काष्ठा net *net)
-अणु
-	काष्ठा devlink *devlink;
-	u32 actions_perक्रमmed;
-	पूर्णांक err;
+static void __net_exit devlink_pernet_pre_exit(struct net *net)
+{
+	struct devlink *devlink;
+	u32 actions_performed;
+	int err;
 
-	/* In हाल network namespace is getting destroyed, reload
-	 * all devlink instances from this namespace पूर्णांकo init_net.
+	/* In case network namespace is getting destroyed, reload
+	 * all devlink instances from this namespace into init_net.
 	 */
 	mutex_lock(&devlink_mutex);
-	list_क्रम_each_entry(devlink, &devlink_list, list) अणु
-		अगर (net_eq(devlink_net(devlink), net)) अणु
-			अगर (WARN_ON(!devlink_reload_supported(devlink->ops)))
-				जारी;
+	list_for_each_entry(devlink, &devlink_list, list) {
+		if (net_eq(devlink_net(devlink), net)) {
+			if (WARN_ON(!devlink_reload_supported(devlink->ops)))
+				continue;
 			err = devlink_reload(devlink, &init_net,
 					     DEVLINK_RELOAD_ACTION_DRIVER_REINIT,
 					     DEVLINK_RELOAD_LIMIT_UNSPEC,
-					     &actions_perक्रमmed, शून्य);
-			अगर (err && err != -EOPNOTSUPP)
+					     &actions_performed, NULL);
+			if (err && err != -EOPNOTSUPP)
 				pr_warn("Failed to reload devlink instance into init_net\n");
-		पूर्ण
-	पूर्ण
+		}
+	}
 	mutex_unlock(&devlink_mutex);
-पूर्ण
+}
 
-अटल काष्ठा pernet_operations devlink_pernet_ops __net_initdata = अणु
-	.pre_निकास = devlink_pernet_pre_निकास,
-पूर्ण;
+static struct pernet_operations devlink_pernet_ops __net_initdata = {
+	.pre_exit = devlink_pernet_pre_exit,
+};
 
-अटल पूर्णांक __init devlink_init(व्योम)
-अणु
-	पूर्णांक err;
+static int __init devlink_init(void)
+{
+	int err;
 
-	err = genl_रेजिस्टर_family(&devlink_nl_family);
-	अगर (err)
-		जाओ out;
-	err = रेजिस्टर_pernet_subsys(&devlink_pernet_ops);
+	err = genl_register_family(&devlink_nl_family);
+	if (err)
+		goto out;
+	err = register_pernet_subsys(&devlink_pernet_ops);
 
 out:
 	WARN_ON(err);
-	वापस err;
-पूर्ण
+	return err;
+}
 
 subsys_initcall(devlink_init);

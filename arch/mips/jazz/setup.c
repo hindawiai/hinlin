@@ -1,61 +1,60 @@
-<शैली गुरु>
 /*
- * Setup poपूर्णांकers to hardware-dependent routines.
+ * Setup pointers to hardware-dependent routines.
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the मुख्य directory of this archive
- * क्रम more details.
+ * License.  See the file "COPYING" in the main directory of this archive
+ * for more details.
  *
  * Copyright (C) 1996, 1997, 1998, 2001, 07, 08 by Ralf Baechle
  * Copyright (C) 2001 MIPS Technologies, Inc.
- * Copyright (C) 2007 by Thomas Bogenकरोerfer
+ * Copyright (C) 2007 by Thomas Bogendoerfer
  */
-#समावेश <linux/eisa.h>
-#समावेश <linux/init.h>
-#समावेश <linux/ioport.h>
-#समावेश <linux/console.h>
-#समावेश <linux/screen_info.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/serial_8250.h>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/pgtable.h>
+#include <linux/eisa.h>
+#include <linux/init.h>
+#include <linux/ioport.h>
+#include <linux/console.h>
+#include <linux/screen_info.h>
+#include <linux/platform_device.h>
+#include <linux/serial_8250.h>
+#include <linux/dma-mapping.h>
+#include <linux/pgtable.h>
 
-#समावेश <यंत्र/jazz.h>
-#समावेश <यंत्र/jazzdma.h>
-#समावेश <यंत्र/reboot.h>
-#समावेश <यंत्र/tlbmisc.h>
+#include <asm/jazz.h>
+#include <asm/jazzdma.h>
+#include <asm/reboot.h>
+#include <asm/tlbmisc.h>
 
-बाह्य यंत्रlinkage व्योम jazz_handle_पूर्णांक(व्योम);
+extern asmlinkage void jazz_handle_int(void);
 
-बाह्य व्योम jazz_machine_restart(अक्षर *command);
+extern void jazz_machine_restart(char *command);
 
-अटल काष्ठा resource jazz_io_resources[] = अणु
-	अणु
+static struct resource jazz_io_resources[] = {
+	{
 		.start	= 0x00,
 		.end	= 0x1f,
 		.name	= "dma1",
 		.flags	= IORESOURCE_IO | IORESOURCE_BUSY
-	पूर्ण, अणु
+	}, {
 		.start	= 0x40,
 		.end	= 0x5f,
 		.name	= "timer",
 		.flags	= IORESOURCE_IO | IORESOURCE_BUSY
-	पूर्ण, अणु
+	}, {
 		.start	= 0x80,
 		.end	= 0x8f,
 		.name	= "dma page reg",
 		.flags	= IORESOURCE_IO | IORESOURCE_BUSY
-	पूर्ण, अणु
+	}, {
 		.start	= 0xc0,
 		.end	= 0xdf,
 		.name	= "dma2",
 		.flags	= IORESOURCE_IO | IORESOURCE_BUSY
-	पूर्ण
-पूर्ण;
+	}
+};
 
-व्योम __init plat_mem_setup(व्योम)
-अणु
-	पूर्णांक i;
+void __init plat_mem_setup(void)
+{
+	int i;
 
 	/* Map 0xe0000000 -> 0x0:800005C0, 0xe0010000 -> 0x1:30000580 */
 	add_wired_entry(0x02000017, 0x03c00017, 0xe0000000, PM_64K);
@@ -65,149 +64,149 @@
 	add_wired_entry(0x01800017, 0x01000017, 0xe4000000, PM_4M);
 
 	set_io_port_base(JAZZ_PORT_BASE);
-#अगर_घोषित CONFIG_EISA
+#ifdef CONFIG_EISA
 	EISA_bus = 1;
-#पूर्ण_अगर
+#endif
 
-	/* request I/O space क्रम devices used on all i[345]86 PCs */
-	क्रम (i = 0; i < ARRAY_SIZE(jazz_io_resources); i++)
+	/* request I/O space for devices used on all i[345]86 PCs */
+	for (i = 0; i < ARRAY_SIZE(jazz_io_resources); i++)
 		request_resource(&ioport_resource, jazz_io_resources + i);
 
 	/* The RTC is outside the port address space */
 
 	_machine_restart = jazz_machine_restart;
 
-#अगर_घोषित CONFIG_VT
-	screen_info = (काष्ठा screen_info) अणु
+#ifdef CONFIG_VT
+	screen_info = (struct screen_info) {
 		.orig_video_cols	= 160,
 		.orig_video_lines	= 64,
-		.orig_video_poपूर्णांकs	= 16,
-	पूर्ण;
-#पूर्ण_अगर
+		.orig_video_points	= 16,
+	};
+#endif
 
 	add_preferred_console("ttyS", 0, "9600");
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_OLIVETTI_M700
-#घोषणा UART_CLK  1843200
-#अन्यथा
-/* Some Jazz machines seem to have an 8MHz crystal घड़ी but I करोn't know
+#ifdef CONFIG_OLIVETTI_M700
+#define UART_CLK  1843200
+#else
+/* Some Jazz machines seem to have an 8MHz crystal clock but I don't know
    exactly which ones ... XXX */
-#घोषणा UART_CLK (8000000 / 16) /* ( 3072000 / 16) */
-#पूर्ण_अगर
+#define UART_CLK (8000000 / 16) /* ( 3072000 / 16) */
+#endif
 
-#घोषणा MEMPORT(_base, _irq)				\
-	अणु						\
+#define MEMPORT(_base, _irq)				\
+	{						\
 		.mapbase	= (_base),		\
-		.membase	= (व्योम *)(_base),	\
+		.membase	= (void *)(_base),	\
 		.irq		= (_irq),		\
 		.uartclk	= UART_CLK,		\
 		.iotype		= UPIO_MEM,		\
 		.flags		= UPF_BOOT_AUTOCONF,	\
-	पूर्ण
+	}
 
-अटल काष्ठा plat_serial8250_port jazz_serial_data[] = अणु
+static struct plat_serial8250_port jazz_serial_data[] = {
 	MEMPORT(JAZZ_SERIAL1_BASE, JAZZ_SERIAL1_IRQ),
 	MEMPORT(JAZZ_SERIAL2_BASE, JAZZ_SERIAL2_IRQ),
-	अणु पूर्ण,
-पूर्ण;
+	{ },
+};
 
-अटल काष्ठा platक्रमm_device jazz_serial8250_device = अणु
+static struct platform_device jazz_serial8250_device = {
 	.name			= "serial8250",
 	.id			= PLAT8250_DEV_PLATFORM,
-	.dev			= अणु
-		.platक्रमm_data	= jazz_serial_data,
-	पूर्ण,
-पूर्ण;
+	.dev			= {
+		.platform_data	= jazz_serial_data,
+	},
+};
 
-अटल काष्ठा resource jazz_esp_rsrc[] = अणु
-	अणु
+static struct resource jazz_esp_rsrc[] = {
+	{
 		.start = JAZZ_SCSI_BASE,
 		.end   = JAZZ_SCSI_BASE + 31,
 		.flags = IORESOURCE_MEM
-	पूर्ण,
-	अणु
+	},
+	{
 		.start = JAZZ_SCSI_DMA,
 		.end   = JAZZ_SCSI_DMA,
 		.flags = IORESOURCE_MEM
-	पूर्ण,
-	अणु
+	},
+	{
 		.start = JAZZ_SCSI_IRQ,
 		.end   = JAZZ_SCSI_IRQ,
 		.flags = IORESOURCE_IRQ
-	पूर्ण
-पूर्ण;
+	}
+};
 
-अटल u64 jazz_esp_dma_mask = DMA_BIT_MASK(32);
+static u64 jazz_esp_dma_mask = DMA_BIT_MASK(32);
 
-अटल काष्ठा platक्रमm_device jazz_esp_pdev = अणु
+static struct platform_device jazz_esp_pdev = {
 	.name		= "jazz_esp",
 	.num_resources	= ARRAY_SIZE(jazz_esp_rsrc),
 	.resource	= jazz_esp_rsrc,
-	.dev = अणु
+	.dev = {
 		.dma_mask	   = &jazz_esp_dma_mask,
 		.coherent_dma_mask = DMA_BIT_MASK(32),
-	पूर्ण
-पूर्ण;
+	}
+};
 
-अटल काष्ठा resource jazz_sonic_rsrc[] = अणु
-	अणु
+static struct resource jazz_sonic_rsrc[] = {
+	{
 		.start = JAZZ_ETHERNET_BASE,
 		.end   = JAZZ_ETHERNET_BASE + 0xff,
 		.flags = IORESOURCE_MEM
-	पूर्ण,
-	अणु
+	},
+	{
 		.start = JAZZ_ETHERNET_IRQ,
 		.end   = JAZZ_ETHERNET_IRQ,
 		.flags = IORESOURCE_IRQ
-	पूर्ण
-पूर्ण;
+	}
+};
 
-अटल u64 jazz_sonic_dma_mask = DMA_BIT_MASK(32);
+static u64 jazz_sonic_dma_mask = DMA_BIT_MASK(32);
 
-अटल काष्ठा platक्रमm_device jazz_sonic_pdev = अणु
+static struct platform_device jazz_sonic_pdev = {
 	.name		= "jazzsonic",
 	.num_resources	= ARRAY_SIZE(jazz_sonic_rsrc),
 	.resource	= jazz_sonic_rsrc,
-	.dev = अणु
+	.dev = {
 		.dma_mask	   = &jazz_sonic_dma_mask,
 		.coherent_dma_mask = DMA_BIT_MASK(32),
-	पूर्ण
-पूर्ण;
+	}
+};
 
-अटल काष्ठा resource jazz_cmos_rsrc[] = अणु
-	अणु
+static struct resource jazz_cmos_rsrc[] = {
+	{
 		.start = 0x70,
 		.end   = 0x71,
 		.flags = IORESOURCE_IO
-	पूर्ण,
-	अणु
+	},
+	{
 		.start = 8,
 		.end   = 8,
 		.flags = IORESOURCE_IRQ
-	पूर्ण
-पूर्ण;
+	}
+};
 
-अटल काष्ठा platक्रमm_device jazz_cmos_pdev = अणु
+static struct platform_device jazz_cmos_pdev = {
 	.name		= "rtc_cmos",
 	.num_resources	= ARRAY_SIZE(jazz_cmos_rsrc),
 	.resource	= jazz_cmos_rsrc
-पूर्ण;
+};
 
-अटल काष्ठा platक्रमm_device pcspeaker_pdev = अणु
+static struct platform_device pcspeaker_pdev = {
 	.name		= "pcspkr",
 	.id		= -1,
-पूर्ण;
+};
 
-अटल पूर्णांक __init jazz_setup_devinit(व्योम)
-अणु
-	platक्रमm_device_रेजिस्टर(&jazz_serial8250_device);
-	platक्रमm_device_रेजिस्टर(&jazz_esp_pdev);
-	platक्रमm_device_रेजिस्टर(&jazz_sonic_pdev);
-	platक्रमm_device_रेजिस्टर(&jazz_cmos_pdev);
-	platक्रमm_device_रेजिस्टर(&pcspeaker_pdev);
+static int __init jazz_setup_devinit(void)
+{
+	platform_device_register(&jazz_serial8250_device);
+	platform_device_register(&jazz_esp_pdev);
+	platform_device_register(&jazz_sonic_pdev);
+	platform_device_register(&jazz_cmos_pdev);
+	platform_device_register(&pcspeaker_pdev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 device_initcall(jazz_setup_devinit);

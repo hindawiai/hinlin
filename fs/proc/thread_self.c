@@ -1,74 +1,73 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <linux/cache.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/pid_namespace.h>
-#समावेश "internal.h"
+// SPDX-License-Identifier: GPL-2.0
+#include <linux/cache.h>
+#include <linux/sched.h>
+#include <linux/slab.h>
+#include <linux/pid_namespace.h>
+#include "internal.h"
 
 /*
- * /proc/thपढ़ो_self:
+ * /proc/thread_self:
  */
-अटल स्थिर अक्षर *proc_thपढ़ो_self_get_link(काष्ठा dentry *dentry,
-					     काष्ठा inode *inode,
-					     काष्ठा delayed_call *करोne)
-अणु
-	काष्ठा pid_namespace *ns = proc_pid_ns(inode->i_sb);
+static const char *proc_thread_self_get_link(struct dentry *dentry,
+					     struct inode *inode,
+					     struct delayed_call *done)
+{
+	struct pid_namespace *ns = proc_pid_ns(inode->i_sb);
 	pid_t tgid = task_tgid_nr_ns(current, ns);
 	pid_t pid = task_pid_nr_ns(current, ns);
-	अक्षर *name;
+	char *name;
 
-	अगर (!pid)
-		वापस ERR_PTR(-ENOENT);
-	name = kदो_स्मृति(10 + 6 + 10 + 1, dentry ? GFP_KERNEL : GFP_ATOMIC);
-	अगर (unlikely(!name))
-		वापस dentry ? ERR_PTR(-ENOMEM) : ERR_PTR(-ECHILD);
-	प्र_लिखो(name, "%u/task/%u", tgid, pid);
-	set_delayed_call(करोne, kमुक्त_link, name);
-	वापस name;
-पूर्ण
+	if (!pid)
+		return ERR_PTR(-ENOENT);
+	name = kmalloc(10 + 6 + 10 + 1, dentry ? GFP_KERNEL : GFP_ATOMIC);
+	if (unlikely(!name))
+		return dentry ? ERR_PTR(-ENOMEM) : ERR_PTR(-ECHILD);
+	sprintf(name, "%u/task/%u", tgid, pid);
+	set_delayed_call(done, kfree_link, name);
+	return name;
+}
 
-अटल स्थिर काष्ठा inode_operations proc_thपढ़ो_self_inode_operations = अणु
-	.get_link	= proc_thपढ़ो_self_get_link,
-पूर्ण;
+static const struct inode_operations proc_thread_self_inode_operations = {
+	.get_link	= proc_thread_self_get_link,
+};
 
-अटल अचिन्हित thपढ़ो_self_inum __ro_after_init;
+static unsigned thread_self_inum __ro_after_init;
 
-पूर्णांक proc_setup_thपढ़ो_self(काष्ठा super_block *s)
-अणु
-	काष्ठा inode *root_inode = d_inode(s->s_root);
-	काष्ठा proc_fs_info *fs_info = proc_sb_info(s);
-	काष्ठा dentry *thपढ़ो_self;
-	पूर्णांक ret = -ENOMEM;
+int proc_setup_thread_self(struct super_block *s)
+{
+	struct inode *root_inode = d_inode(s->s_root);
+	struct proc_fs_info *fs_info = proc_sb_info(s);
+	struct dentry *thread_self;
+	int ret = -ENOMEM;
 
 	inode_lock(root_inode);
-	thपढ़ो_self = d_alloc_name(s->s_root, "thread-self");
-	अगर (thपढ़ो_self) अणु
-		काष्ठा inode *inode = new_inode(s);
-		अगर (inode) अणु
-			inode->i_ino = thपढ़ो_self_inum;
-			inode->i_mसमय = inode->i_aसमय = inode->i_स_समय = current_समय(inode);
+	thread_self = d_alloc_name(s->s_root, "thread-self");
+	if (thread_self) {
+		struct inode *inode = new_inode(s);
+		if (inode) {
+			inode->i_ino = thread_self_inum;
+			inode->i_mtime = inode->i_atime = inode->i_ctime = current_time(inode);
 			inode->i_mode = S_IFLNK | S_IRWXUGO;
 			inode->i_uid = GLOBAL_ROOT_UID;
 			inode->i_gid = GLOBAL_ROOT_GID;
-			inode->i_op = &proc_thपढ़ो_self_inode_operations;
-			d_add(thपढ़ो_self, inode);
+			inode->i_op = &proc_thread_self_inode_operations;
+			d_add(thread_self, inode);
 			ret = 0;
-		पूर्ण अन्यथा अणु
-			dput(thपढ़ो_self);
-		पूर्ण
-	पूर्ण
+		} else {
+			dput(thread_self);
+		}
+	}
 	inode_unlock(root_inode);
 
-	अगर (ret)
+	if (ret)
 		pr_err("proc_fill_super: can't allocate /proc/thread-self\n");
-	अन्यथा
-		fs_info->proc_thपढ़ो_self = thपढ़ो_self;
+	else
+		fs_info->proc_thread_self = thread_self;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम __init proc_thपढ़ो_self_init(व्योम)
-अणु
-	proc_alloc_inum(&thपढ़ो_self_inum);
-पूर्ण
+void __init proc_thread_self_init(void)
+{
+	proc_alloc_inum(&thread_self_inum);
+}

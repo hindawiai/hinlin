@@ -1,157 +1,156 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
-/* drivers/video/backlight/platक्रमm_lcd.c
+// SPDX-License-Identifier: GPL-2.0-only
+/* drivers/video/backlight/platform_lcd.c
  *
  * Copyright 2008 Simtec Electronics
  *	Ben Dooks <ben@simtec.co.uk>
  *
- * Generic platक्रमm-device LCD घातer control पूर्णांकerface.
+ * Generic platform-device LCD power control interface.
 */
 
-#समावेश <linux/module.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/fb.h>
-#समावेश <linux/backlight.h>
-#समावेश <linux/lcd.h>
-#समावेश <linux/of.h>
-#समावेश <linux/slab.h>
+#include <linux/module.h>
+#include <linux/platform_device.h>
+#include <linux/fb.h>
+#include <linux/backlight.h>
+#include <linux/lcd.h>
+#include <linux/of.h>
+#include <linux/slab.h>
 
-#समावेश <video/platक्रमm_lcd.h>
+#include <video/platform_lcd.h>
 
-काष्ठा platक्रमm_lcd अणु
-	काष्ठा device		*us;
-	काष्ठा lcd_device	*lcd;
-	काष्ठा plat_lcd_data	*pdata;
+struct platform_lcd {
+	struct device		*us;
+	struct lcd_device	*lcd;
+	struct plat_lcd_data	*pdata;
 
-	अचिन्हित पूर्णांक		 घातer;
-	अचिन्हित पूर्णांक		 suspended:1;
-पूर्ण;
+	unsigned int		 power;
+	unsigned int		 suspended:1;
+};
 
-अटल अंतरभूत काष्ठा platक्रमm_lcd *to_our_lcd(काष्ठा lcd_device *lcd)
-अणु
-	वापस lcd_get_data(lcd);
-पूर्ण
+static inline struct platform_lcd *to_our_lcd(struct lcd_device *lcd)
+{
+	return lcd_get_data(lcd);
+}
 
-अटल पूर्णांक platक्रमm_lcd_get_घातer(काष्ठा lcd_device *lcd)
-अणु
-	काष्ठा platक्रमm_lcd *plcd = to_our_lcd(lcd);
+static int platform_lcd_get_power(struct lcd_device *lcd)
+{
+	struct platform_lcd *plcd = to_our_lcd(lcd);
 
-	वापस plcd->घातer;
-पूर्ण
+	return plcd->power;
+}
 
-अटल पूर्णांक platक्रमm_lcd_set_घातer(काष्ठा lcd_device *lcd, पूर्णांक घातer)
-अणु
-	काष्ठा platक्रमm_lcd *plcd = to_our_lcd(lcd);
-	पूर्णांक lcd_घातer = 1;
+static int platform_lcd_set_power(struct lcd_device *lcd, int power)
+{
+	struct platform_lcd *plcd = to_our_lcd(lcd);
+	int lcd_power = 1;
 
-	अगर (घातer == FB_BLANK_POWERDOWN || plcd->suspended)
-		lcd_घातer = 0;
+	if (power == FB_BLANK_POWERDOWN || plcd->suspended)
+		lcd_power = 0;
 
-	plcd->pdata->set_घातer(plcd->pdata, lcd_घातer);
-	plcd->घातer = घातer;
+	plcd->pdata->set_power(plcd->pdata, lcd_power);
+	plcd->power = power;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक platक्रमm_lcd_match(काष्ठा lcd_device *lcd, काष्ठा fb_info *info)
-अणु
-	काष्ठा platक्रमm_lcd *plcd = to_our_lcd(lcd);
-	काष्ठा plat_lcd_data *pdata = plcd->pdata;
+static int platform_lcd_match(struct lcd_device *lcd, struct fb_info *info)
+{
+	struct platform_lcd *plcd = to_our_lcd(lcd);
+	struct plat_lcd_data *pdata = plcd->pdata;
 
-	अगर (pdata->match_fb)
-		वापस pdata->match_fb(pdata, info);
+	if (pdata->match_fb)
+		return pdata->match_fb(pdata, info);
 
-	वापस plcd->us->parent == info->device;
-पूर्ण
+	return plcd->us->parent == info->device;
+}
 
-अटल काष्ठा lcd_ops platक्रमm_lcd_ops = अणु
-	.get_घातer	= platक्रमm_lcd_get_घातer,
-	.set_घातer	= platक्रमm_lcd_set_घातer,
-	.check_fb	= platक्रमm_lcd_match,
-पूर्ण;
+static struct lcd_ops platform_lcd_ops = {
+	.get_power	= platform_lcd_get_power,
+	.set_power	= platform_lcd_set_power,
+	.check_fb	= platform_lcd_match,
+};
 
-अटल पूर्णांक platक्रमm_lcd_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा plat_lcd_data *pdata;
-	काष्ठा platक्रमm_lcd *plcd;
-	काष्ठा device *dev = &pdev->dev;
-	पूर्णांक err;
+static int platform_lcd_probe(struct platform_device *pdev)
+{
+	struct plat_lcd_data *pdata;
+	struct platform_lcd *plcd;
+	struct device *dev = &pdev->dev;
+	int err;
 
 	pdata = dev_get_platdata(&pdev->dev);
-	अगर (!pdata) अणु
+	if (!pdata) {
 		dev_err(dev, "no platform data supplied\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (pdata->probe) अणु
+	if (pdata->probe) {
 		err = pdata->probe(pdata);
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 
-	plcd = devm_kzalloc(&pdev->dev, माप(काष्ठा platक्रमm_lcd),
+	plcd = devm_kzalloc(&pdev->dev, sizeof(struct platform_lcd),
 			    GFP_KERNEL);
-	अगर (!plcd)
-		वापस -ENOMEM;
+	if (!plcd)
+		return -ENOMEM;
 
 	plcd->us = dev;
 	plcd->pdata = pdata;
-	plcd->lcd = devm_lcd_device_रेजिस्टर(&pdev->dev, dev_name(dev), dev,
-						plcd, &platक्रमm_lcd_ops);
-	अगर (IS_ERR(plcd->lcd)) अणु
+	plcd->lcd = devm_lcd_device_register(&pdev->dev, dev_name(dev), dev,
+						plcd, &platform_lcd_ops);
+	if (IS_ERR(plcd->lcd)) {
 		dev_err(dev, "cannot register lcd device\n");
-		वापस PTR_ERR(plcd->lcd);
-	पूर्ण
+		return PTR_ERR(plcd->lcd);
+	}
 
-	platक्रमm_set_drvdata(pdev, plcd);
-	platक्रमm_lcd_set_घातer(plcd->lcd, FB_BLANK_NORMAL);
+	platform_set_drvdata(pdev, plcd);
+	platform_lcd_set_power(plcd->lcd, FB_BLANK_NORMAL);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_PM_SLEEP
-अटल पूर्णांक platक्रमm_lcd_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा platक्रमm_lcd *plcd = dev_get_drvdata(dev);
+#ifdef CONFIG_PM_SLEEP
+static int platform_lcd_suspend(struct device *dev)
+{
+	struct platform_lcd *plcd = dev_get_drvdata(dev);
 
 	plcd->suspended = 1;
-	platक्रमm_lcd_set_घातer(plcd->lcd, plcd->घातer);
+	platform_lcd_set_power(plcd->lcd, plcd->power);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक platक्रमm_lcd_resume(काष्ठा device *dev)
-अणु
-	काष्ठा platक्रमm_lcd *plcd = dev_get_drvdata(dev);
+static int platform_lcd_resume(struct device *dev)
+{
+	struct platform_lcd *plcd = dev_get_drvdata(dev);
 
 	plcd->suspended = 0;
-	platक्रमm_lcd_set_घातer(plcd->lcd, plcd->घातer);
+	platform_lcd_set_power(plcd->lcd, plcd->power);
 
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+	return 0;
+}
+#endif
 
-अटल SIMPLE_DEV_PM_OPS(platक्रमm_lcd_pm_ops, platक्रमm_lcd_suspend,
-			platक्रमm_lcd_resume);
+static SIMPLE_DEV_PM_OPS(platform_lcd_pm_ops, platform_lcd_suspend,
+			platform_lcd_resume);
 
-#अगर_घोषित CONFIG_OF
-अटल स्थिर काष्ठा of_device_id platक्रमm_lcd_of_match[] = अणु
-	अणु .compatible = "platform-lcd" पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
-MODULE_DEVICE_TABLE(of, platक्रमm_lcd_of_match);
-#पूर्ण_अगर
+#ifdef CONFIG_OF
+static const struct of_device_id platform_lcd_of_match[] = {
+	{ .compatible = "platform-lcd" },
+	{},
+};
+MODULE_DEVICE_TABLE(of, platform_lcd_of_match);
+#endif
 
-अटल काष्ठा platक्रमm_driver platक्रमm_lcd_driver = अणु
-	.driver		= अणु
+static struct platform_driver platform_lcd_driver = {
+	.driver		= {
 		.name	= "platform-lcd",
-		.pm	= &platक्रमm_lcd_pm_ops,
-		.of_match_table = of_match_ptr(platक्रमm_lcd_of_match),
-	पूर्ण,
-	.probe		= platक्रमm_lcd_probe,
-पूर्ण;
+		.pm	= &platform_lcd_pm_ops,
+		.of_match_table = of_match_ptr(platform_lcd_of_match),
+	},
+	.probe		= platform_lcd_probe,
+};
 
-module_platक्रमm_driver(platक्रमm_lcd_driver);
+module_platform_driver(platform_lcd_driver);
 
 MODULE_AUTHOR("Ben Dooks <ben-linux@fluff.org>");
 MODULE_LICENSE("GPL v2");

@@ -1,156 +1,155 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2019-2020 Intel Corporation
  *
- * Please see Documentation/driver-api/auxiliary_bus.rst क्रम more inक्रमmation.
+ * Please see Documentation/driver-api/auxiliary_bus.rst for more information.
  */
 
-#घोषणा pr_fmt(fmt) "%s:%s: " fmt, KBUILD_MODNAME, __func__
+#define pr_fmt(fmt) "%s:%s: " fmt, KBUILD_MODNAME, __func__
 
-#समावेश <linux/device.h>
-#समावेश <linux/init.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/module.h>
-#समावेश <linux/pm_करोमुख्य.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <linux/माला.स>
-#समावेश <linux/auxiliary_bus.h>
-#समावेश "base.h"
+#include <linux/device.h>
+#include <linux/init.h>
+#include <linux/slab.h>
+#include <linux/module.h>
+#include <linux/pm_domain.h>
+#include <linux/pm_runtime.h>
+#include <linux/string.h>
+#include <linux/auxiliary_bus.h>
+#include "base.h"
 
-अटल स्थिर काष्ठा auxiliary_device_id *auxiliary_match_id(स्थिर काष्ठा auxiliary_device_id *id,
-							    स्थिर काष्ठा auxiliary_device *auxdev)
-अणु
-	क्रम (; id->name[0]; id++) अणु
-		स्थिर अक्षर *p = म_खोजप(dev_name(&auxdev->dev), '.');
-		पूर्णांक match_size;
+static const struct auxiliary_device_id *auxiliary_match_id(const struct auxiliary_device_id *id,
+							    const struct auxiliary_device *auxdev)
+{
+	for (; id->name[0]; id++) {
+		const char *p = strrchr(dev_name(&auxdev->dev), '.');
+		int match_size;
 
-		अगर (!p)
-			जारी;
+		if (!p)
+			continue;
 		match_size = p - dev_name(&auxdev->dev);
 
-		/* use dev_name(&auxdev->dev) prefix beक्रमe last '.' अक्षर to match to */
-		अगर (म_माप(id->name) == match_size &&
-		    !म_भेदन(dev_name(&auxdev->dev), id->name, match_size))
-			वापस id;
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+		/* use dev_name(&auxdev->dev) prefix before last '.' char to match to */
+		if (strlen(id->name) == match_size &&
+		    !strncmp(dev_name(&auxdev->dev), id->name, match_size))
+			return id;
+	}
+	return NULL;
+}
 
-अटल पूर्णांक auxiliary_match(काष्ठा device *dev, काष्ठा device_driver *drv)
-अणु
-	काष्ठा auxiliary_device *auxdev = to_auxiliary_dev(dev);
-	काष्ठा auxiliary_driver *auxdrv = to_auxiliary_drv(drv);
+static int auxiliary_match(struct device *dev, struct device_driver *drv)
+{
+	struct auxiliary_device *auxdev = to_auxiliary_dev(dev);
+	struct auxiliary_driver *auxdrv = to_auxiliary_drv(drv);
 
-	वापस !!auxiliary_match_id(auxdrv->id_table, auxdev);
-पूर्ण
+	return !!auxiliary_match_id(auxdrv->id_table, auxdev);
+}
 
-अटल पूर्णांक auxiliary_uevent(काष्ठा device *dev, काष्ठा kobj_uevent_env *env)
-अणु
-	स्थिर अक्षर *name, *p;
+static int auxiliary_uevent(struct device *dev, struct kobj_uevent_env *env)
+{
+	const char *name, *p;
 
 	name = dev_name(dev);
-	p = म_खोजप(name, '.');
+	p = strrchr(name, '.');
 
-	वापस add_uevent_var(env, "MODALIAS=%s%.*s", AUXILIARY_MODULE_PREFIX,
-			      (पूर्णांक)(p - name), name);
-पूर्ण
+	return add_uevent_var(env, "MODALIAS=%s%.*s", AUXILIARY_MODULE_PREFIX,
+			      (int)(p - name), name);
+}
 
-अटल स्थिर काष्ठा dev_pm_ops auxiliary_dev_pm_ops = अणु
-	SET_RUNTIME_PM_OPS(pm_generic_runसमय_suspend, pm_generic_runसमय_resume, शून्य)
+static const struct dev_pm_ops auxiliary_dev_pm_ops = {
+	SET_RUNTIME_PM_OPS(pm_generic_runtime_suspend, pm_generic_runtime_resume, NULL)
 	SET_SYSTEM_SLEEP_PM_OPS(pm_generic_suspend, pm_generic_resume)
-पूर्ण;
+};
 
-अटल पूर्णांक auxiliary_bus_probe(काष्ठा device *dev)
-अणु
-	काष्ठा auxiliary_driver *auxdrv = to_auxiliary_drv(dev->driver);
-	काष्ठा auxiliary_device *auxdev = to_auxiliary_dev(dev);
-	पूर्णांक ret;
+static int auxiliary_bus_probe(struct device *dev)
+{
+	struct auxiliary_driver *auxdrv = to_auxiliary_drv(dev->driver);
+	struct auxiliary_device *auxdev = to_auxiliary_dev(dev);
+	int ret;
 
-	ret = dev_pm_करोमुख्य_attach(dev, true);
-	अगर (ret) अणु
+	ret = dev_pm_domain_attach(dev, true);
+	if (ret) {
 		dev_warn(dev, "Failed to attach to PM Domain : %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	ret = auxdrv->probe(auxdev, auxiliary_match_id(auxdrv->id_table, auxdev));
-	अगर (ret)
-		dev_pm_करोमुख्य_detach(dev, true);
+	if (ret)
+		dev_pm_domain_detach(dev, true);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक auxiliary_bus_हटाओ(काष्ठा device *dev)
-अणु
-	काष्ठा auxiliary_driver *auxdrv = to_auxiliary_drv(dev->driver);
-	काष्ठा auxiliary_device *auxdev = to_auxiliary_dev(dev);
+static int auxiliary_bus_remove(struct device *dev)
+{
+	struct auxiliary_driver *auxdrv = to_auxiliary_drv(dev->driver);
+	struct auxiliary_device *auxdev = to_auxiliary_dev(dev);
 
-	अगर (auxdrv->हटाओ)
-		auxdrv->हटाओ(auxdev);
-	dev_pm_करोमुख्य_detach(dev, true);
+	if (auxdrv->remove)
+		auxdrv->remove(auxdev);
+	dev_pm_domain_detach(dev, true);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम auxiliary_bus_shutकरोwn(काष्ठा device *dev)
-अणु
-	काष्ठा auxiliary_driver *auxdrv = शून्य;
-	काष्ठा auxiliary_device *auxdev;
+static void auxiliary_bus_shutdown(struct device *dev)
+{
+	struct auxiliary_driver *auxdrv = NULL;
+	struct auxiliary_device *auxdev;
 
-	अगर (dev->driver) अणु
+	if (dev->driver) {
 		auxdrv = to_auxiliary_drv(dev->driver);
 		auxdev = to_auxiliary_dev(dev);
-	पूर्ण
+	}
 
-	अगर (auxdrv && auxdrv->shutकरोwn)
-		auxdrv->shutकरोwn(auxdev);
-पूर्ण
+	if (auxdrv && auxdrv->shutdown)
+		auxdrv->shutdown(auxdev);
+}
 
-अटल काष्ठा bus_type auxiliary_bus_type = अणु
+static struct bus_type auxiliary_bus_type = {
 	.name = "auxiliary",
 	.probe = auxiliary_bus_probe,
-	.हटाओ = auxiliary_bus_हटाओ,
-	.shutकरोwn = auxiliary_bus_shutकरोwn,
+	.remove = auxiliary_bus_remove,
+	.shutdown = auxiliary_bus_shutdown,
 	.match = auxiliary_match,
 	.uevent = auxiliary_uevent,
 	.pm = &auxiliary_dev_pm_ops,
-पूर्ण;
+};
 
 /**
  * auxiliary_device_init - check auxiliary_device and initialize
- * @auxdev: auxiliary device काष्ठा
+ * @auxdev: auxiliary device struct
  *
- * This is the first step in the two-step process to रेजिस्टर an
+ * This is the first step in the two-step process to register an
  * auxiliary_device.
  *
- * When this function वापसs an error code, then the device_initialize will
- * *not* have been perक्रमmed, and the caller will be responsible to मुक्त any
- * memory allocated क्रम the auxiliary_device in the error path directly.
+ * When this function returns an error code, then the device_initialize will
+ * *not* have been performed, and the caller will be responsible to free any
+ * memory allocated for the auxiliary_device in the error path directly.
  *
- * It वापसs 0 on success.  On success, the device_initialize has been
- * perक्रमmed.  After this poपूर्णांक any error unwinding will need to include a call
+ * It returns 0 on success.  On success, the device_initialize has been
+ * performed.  After this point any error unwinding will need to include a call
  * to auxiliary_device_uninit().  In this post-initialize error scenario, a call
  * to the device's .release callback will be triggered, and all memory clean-up
  * is expected to be handled there.
  */
-पूर्णांक auxiliary_device_init(काष्ठा auxiliary_device *auxdev)
-अणु
-	काष्ठा device *dev = &auxdev->dev;
+int auxiliary_device_init(struct auxiliary_device *auxdev)
+{
+	struct device *dev = &auxdev->dev;
 
-	अगर (!dev->parent) अणु
+	if (!dev->parent) {
 		pr_err("auxiliary_device has a NULL dev->parent\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (!auxdev->name) अणु
+	if (!auxdev->name) {
 		pr_err("auxiliary_device has a NULL name\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	dev->bus = &auxiliary_bus_type;
 	device_initialize(&auxdev->dev);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(auxiliary_device_init);
 
 /**
@@ -158,111 +157,111 @@ EXPORT_SYMBOL_GPL(auxiliary_device_init);
  * @auxdev: auxiliary bus device to add to the bus
  * @modname: name of the parent device's driver module
  *
- * This is the second step in the two-step process to रेजिस्टर an
+ * This is the second step in the two-step process to register an
  * auxiliary_device.
  *
  * This function must be called after a successful call to
- * auxiliary_device_init(), which will perक्रमm the device_initialize.  This
- * means that अगर this वापसs an error code, then a call to
- * auxiliary_device_uninit() must be perक्रमmed so that the .release callback
- * will be triggered to मुक्त the memory associated with the auxiliary_device.
+ * auxiliary_device_init(), which will perform the device_initialize.  This
+ * means that if this returns an error code, then a call to
+ * auxiliary_device_uninit() must be performed so that the .release callback
+ * will be triggered to free the memory associated with the auxiliary_device.
  *
  * The expectation is that users will call the "auxiliary_device_add" macro so
- * that the caller's KBUILD_MODNAME is स्वतःmatically inserted क्रम the modname
- * parameter.  Only अगर a user requires a custom name would this version be
+ * that the caller's KBUILD_MODNAME is automatically inserted for the modname
+ * parameter.  Only if a user requires a custom name would this version be
  * called directly.
  */
-पूर्णांक __auxiliary_device_add(काष्ठा auxiliary_device *auxdev, स्थिर अक्षर *modname)
-अणु
-	काष्ठा device *dev = &auxdev->dev;
-	पूर्णांक ret;
+int __auxiliary_device_add(struct auxiliary_device *auxdev, const char *modname)
+{
+	struct device *dev = &auxdev->dev;
+	int ret;
 
-	अगर (!modname) अणु
+	if (!modname) {
 		dev_err(dev, "auxiliary device modname is NULL\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	ret = dev_set_name(dev, "%s.%s.%d", modname, auxdev->name, auxdev->id);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "auxiliary device dev_set_name failed: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	ret = device_add(dev);
-	अगर (ret)
+	if (ret)
 		dev_err(dev, "adding auxiliary device failed!: %d\n", ret);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(__auxiliary_device_add);
 
 /**
- * auxiliary_find_device - auxiliary device iterator क्रम locating a particular device.
+ * auxiliary_find_device - auxiliary device iterator for locating a particular device.
  * @start: Device to begin with
  * @data: Data to pass to match function
  * @match: Callback function to check device
  *
- * This function वापसs a reference to a device that is 'found'
- * क्रम later use, as determined by the @match callback.
+ * This function returns a reference to a device that is 'found'
+ * for later use, as determined by the @match callback.
  *
- * The callback should वापस 0 अगर the device करोesn't match and non-zero
- * अगर it करोes.  If the callback वापसs non-zero, this function will
- * वापस to the caller and not iterate over any more devices.
+ * The callback should return 0 if the device doesn't match and non-zero
+ * if it does.  If the callback returns non-zero, this function will
+ * return to the caller and not iterate over any more devices.
  */
-काष्ठा auxiliary_device *auxiliary_find_device(काष्ठा device *start,
-					       स्थिर व्योम *data,
-					       पूर्णांक (*match)(काष्ठा device *dev, स्थिर व्योम *data))
-अणु
-	काष्ठा device *dev;
+struct auxiliary_device *auxiliary_find_device(struct device *start,
+					       const void *data,
+					       int (*match)(struct device *dev, const void *data))
+{
+	struct device *dev;
 
 	dev = bus_find_device(&auxiliary_bus_type, start, data, match);
-	अगर (!dev)
-		वापस शून्य;
+	if (!dev)
+		return NULL;
 
-	वापस to_auxiliary_dev(dev);
-पूर्ण
+	return to_auxiliary_dev(dev);
+}
 EXPORT_SYMBOL_GPL(auxiliary_find_device);
 
 /**
- * __auxiliary_driver_रेजिस्टर - रेजिस्टर a driver क्रम auxiliary bus devices
- * @auxdrv: auxiliary_driver काष्ठाure
+ * __auxiliary_driver_register - register a driver for auxiliary bus devices
+ * @auxdrv: auxiliary_driver structure
  * @owner: owning module/driver
- * @modname: KBUILD_MODNAME क्रम parent driver
+ * @modname: KBUILD_MODNAME for parent driver
  */
-पूर्णांक __auxiliary_driver_रेजिस्टर(काष्ठा auxiliary_driver *auxdrv,
-				काष्ठा module *owner, स्थिर अक्षर *modname)
-अणु
-	अगर (WARN_ON(!auxdrv->probe) || WARN_ON(!auxdrv->id_table))
-		वापस -EINVAL;
+int __auxiliary_driver_register(struct auxiliary_driver *auxdrv,
+				struct module *owner, const char *modname)
+{
+	if (WARN_ON(!auxdrv->probe) || WARN_ON(!auxdrv->id_table))
+		return -EINVAL;
 
-	अगर (auxdrv->name)
-		auxdrv->driver.name = kaप्र_लिखो(GFP_KERNEL, "%s.%s", modname,
+	if (auxdrv->name)
+		auxdrv->driver.name = kasprintf(GFP_KERNEL, "%s.%s", modname,
 						auxdrv->name);
-	अन्यथा
-		auxdrv->driver.name = kaप्र_लिखो(GFP_KERNEL, "%s", modname);
-	अगर (!auxdrv->driver.name)
-		वापस -ENOMEM;
+	else
+		auxdrv->driver.name = kasprintf(GFP_KERNEL, "%s", modname);
+	if (!auxdrv->driver.name)
+		return -ENOMEM;
 
 	auxdrv->driver.owner = owner;
 	auxdrv->driver.bus = &auxiliary_bus_type;
 	auxdrv->driver.mod_name = modname;
 
-	वापस driver_रेजिस्टर(&auxdrv->driver);
-पूर्ण
-EXPORT_SYMBOL_GPL(__auxiliary_driver_रेजिस्टर);
+	return driver_register(&auxdrv->driver);
+}
+EXPORT_SYMBOL_GPL(__auxiliary_driver_register);
 
 /**
- * auxiliary_driver_unरेजिस्टर - unरेजिस्टर a driver
- * @auxdrv: auxiliary_driver काष्ठाure
+ * auxiliary_driver_unregister - unregister a driver
+ * @auxdrv: auxiliary_driver structure
  */
-व्योम auxiliary_driver_unरेजिस्टर(काष्ठा auxiliary_driver *auxdrv)
-अणु
-	driver_unरेजिस्टर(&auxdrv->driver);
-	kमुक्त(auxdrv->driver.name);
-पूर्ण
-EXPORT_SYMBOL_GPL(auxiliary_driver_unरेजिस्टर);
+void auxiliary_driver_unregister(struct auxiliary_driver *auxdrv)
+{
+	driver_unregister(&auxdrv->driver);
+	kfree(auxdrv->driver.name);
+}
+EXPORT_SYMBOL_GPL(auxiliary_driver_unregister);
 
-व्योम __init auxiliary_bus_init(व्योम)
-अणु
-	WARN_ON(bus_रेजिस्टर(&auxiliary_bus_type));
-पूर्ण
+void __init auxiliary_bus_init(void)
+{
+	WARN_ON(bus_register(&auxiliary_bus_type));
+}

@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * drivers/extcon/devres.c - EXTCON device's resource management
  *
@@ -7,262 +6,262 @@
  * Author: Chanwoo Choi <cw00.choi@samsung.com>
  */
 
-#समावेश "extcon.h"
+#include "extcon.h"
 
-अटल पूर्णांक devm_extcon_dev_match(काष्ठा device *dev, व्योम *res, व्योम *data)
-अणु
-	काष्ठा extcon_dev **r = res;
+static int devm_extcon_dev_match(struct device *dev, void *res, void *data)
+{
+	struct extcon_dev **r = res;
 
-	अगर (WARN_ON(!r || !*r))
-		वापस 0;
+	if (WARN_ON(!r || !*r))
+		return 0;
 
-	वापस *r == data;
-पूर्ण
+	return *r == data;
+}
 
-अटल व्योम devm_extcon_dev_release(काष्ठा device *dev, व्योम *res)
-अणु
-	extcon_dev_मुक्त(*(काष्ठा extcon_dev **)res);
-पूर्ण
+static void devm_extcon_dev_release(struct device *dev, void *res)
+{
+	extcon_dev_free(*(struct extcon_dev **)res);
+}
 
 
-अटल व्योम devm_extcon_dev_unreg(काष्ठा device *dev, व्योम *res)
-अणु
-	extcon_dev_unरेजिस्टर(*(काष्ठा extcon_dev **)res);
-पूर्ण
+static void devm_extcon_dev_unreg(struct device *dev, void *res)
+{
+	extcon_dev_unregister(*(struct extcon_dev **)res);
+}
 
-काष्ठा extcon_dev_notअगरier_devres अणु
-	काष्ठा extcon_dev *edev;
-	अचिन्हित पूर्णांक id;
-	काष्ठा notअगरier_block *nb;
-पूर्ण;
+struct extcon_dev_notifier_devres {
+	struct extcon_dev *edev;
+	unsigned int id;
+	struct notifier_block *nb;
+};
 
-अटल व्योम devm_extcon_dev_notअगरier_unreg(काष्ठा device *dev, व्योम *res)
-अणु
-	काष्ठा extcon_dev_notअगरier_devres *this = res;
+static void devm_extcon_dev_notifier_unreg(struct device *dev, void *res)
+{
+	struct extcon_dev_notifier_devres *this = res;
 
-	extcon_unरेजिस्टर_notअगरier(this->edev, this->id, this->nb);
-पूर्ण
+	extcon_unregister_notifier(this->edev, this->id, this->nb);
+}
 
-अटल व्योम devm_extcon_dev_notअगरier_all_unreg(काष्ठा device *dev, व्योम *res)
-अणु
-	काष्ठा extcon_dev_notअगरier_devres *this = res;
+static void devm_extcon_dev_notifier_all_unreg(struct device *dev, void *res)
+{
+	struct extcon_dev_notifier_devres *this = res;
 
-	extcon_unरेजिस्टर_notअगरier_all(this->edev, this->nb);
-पूर्ण
+	extcon_unregister_notifier_all(this->edev, this->nb);
+}
 
 /**
  * devm_extcon_dev_allocate - Allocate managed extcon device
  * @dev:		the device owning the extcon device being created
- * @supported_cable:	the array of the supported बाह्यal connectors
+ * @supported_cable:	the array of the supported external connectors
  *			ending with EXTCON_NONE.
  *
- * This function manages स्वतःmatically the memory of extcon device using device
- * resource management and simplअगरy the control of मुक्तing the memory of extcon
+ * This function manages automatically the memory of extcon device using device
+ * resource management and simplify the control of freeing the memory of extcon
  * device.
  *
- * Returns the poपूर्णांकer memory of allocated extcon_dev अगर success
- * or ERR_PTR(err) अगर fail
+ * Returns the pointer memory of allocated extcon_dev if success
+ * or ERR_PTR(err) if fail
  */
-काष्ठा extcon_dev *devm_extcon_dev_allocate(काष्ठा device *dev,
-					स्थिर अचिन्हित पूर्णांक *supported_cable)
-अणु
-	काष्ठा extcon_dev **ptr, *edev;
+struct extcon_dev *devm_extcon_dev_allocate(struct device *dev,
+					const unsigned int *supported_cable)
+{
+	struct extcon_dev **ptr, *edev;
 
-	ptr = devres_alloc(devm_extcon_dev_release, माप(*ptr), GFP_KERNEL);
-	अगर (!ptr)
-		वापस ERR_PTR(-ENOMEM);
+	ptr = devres_alloc(devm_extcon_dev_release, sizeof(*ptr), GFP_KERNEL);
+	if (!ptr)
+		return ERR_PTR(-ENOMEM);
 
 	edev = extcon_dev_allocate(supported_cable);
-	अगर (IS_ERR(edev)) अणु
-		devres_मुक्त(ptr);
-		वापस edev;
-	पूर्ण
+	if (IS_ERR(edev)) {
+		devres_free(ptr);
+		return edev;
+	}
 
 	edev->dev.parent = dev;
 
 	*ptr = edev;
 	devres_add(dev, ptr);
 
-	वापस edev;
-पूर्ण
+	return edev;
+}
 EXPORT_SYMBOL_GPL(devm_extcon_dev_allocate);
 
 /**
- * devm_extcon_dev_मुक्त() - Resource-managed extcon_dev_unरेजिस्टर()
+ * devm_extcon_dev_free() - Resource-managed extcon_dev_unregister()
  * @dev:	the device owning the extcon device being created
- * @edev:	the extcon device to be मुक्तd
+ * @edev:	the extcon device to be freed
  *
  * Free the memory that is allocated with devm_extcon_dev_allocate()
  * function.
  */
-व्योम devm_extcon_dev_मुक्त(काष्ठा device *dev, काष्ठा extcon_dev *edev)
-अणु
+void devm_extcon_dev_free(struct device *dev, struct extcon_dev *edev)
+{
 	WARN_ON(devres_release(dev, devm_extcon_dev_release,
 			       devm_extcon_dev_match, edev));
-पूर्ण
-EXPORT_SYMBOL_GPL(devm_extcon_dev_मुक्त);
+}
+EXPORT_SYMBOL_GPL(devm_extcon_dev_free);
 
 /**
- * devm_extcon_dev_रेजिस्टर() - Resource-managed extcon_dev_रेजिस्टर()
+ * devm_extcon_dev_register() - Resource-managed extcon_dev_register()
  * @dev:	the device owning the extcon device being created
- * @edev:	the extcon device to be रेजिस्टरed
+ * @edev:	the extcon device to be registered
  *
- * this function, that extcon device is स्वतःmatically unरेजिस्टरed on driver
- * detach. Internally this function calls extcon_dev_रेजिस्टर() function.
- * To get more inक्रमmation, refer that function.
+ * this function, that extcon device is automatically unregistered on driver
+ * detach. Internally this function calls extcon_dev_register() function.
+ * To get more information, refer that function.
  *
- * If extcon device is रेजिस्टरed with this function and the device needs to be
- * unरेजिस्टरed separately, devm_extcon_dev_unरेजिस्टर() should be used.
+ * If extcon device is registered with this function and the device needs to be
+ * unregistered separately, devm_extcon_dev_unregister() should be used.
  *
- * Returns 0 अगर success or negaive error number अगर failure.
+ * Returns 0 if success or negaive error number if failure.
  */
-पूर्णांक devm_extcon_dev_रेजिस्टर(काष्ठा device *dev, काष्ठा extcon_dev *edev)
-अणु
-	काष्ठा extcon_dev **ptr;
-	पूर्णांक ret;
+int devm_extcon_dev_register(struct device *dev, struct extcon_dev *edev)
+{
+	struct extcon_dev **ptr;
+	int ret;
 
-	ptr = devres_alloc(devm_extcon_dev_unreg, माप(*ptr), GFP_KERNEL);
-	अगर (!ptr)
-		वापस -ENOMEM;
+	ptr = devres_alloc(devm_extcon_dev_unreg, sizeof(*ptr), GFP_KERNEL);
+	if (!ptr)
+		return -ENOMEM;
 
-	ret = extcon_dev_रेजिस्टर(edev);
-	अगर (ret) अणु
-		devres_मुक्त(ptr);
-		वापस ret;
-	पूर्ण
+	ret = extcon_dev_register(edev);
+	if (ret) {
+		devres_free(ptr);
+		return ret;
+	}
 
 	*ptr = edev;
 	devres_add(dev, ptr);
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(devm_extcon_dev_रेजिस्टर);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(devm_extcon_dev_register);
 
 /**
- * devm_extcon_dev_unरेजिस्टर() - Resource-managed extcon_dev_unरेजिस्टर()
+ * devm_extcon_dev_unregister() - Resource-managed extcon_dev_unregister()
  * @dev:	the device owning the extcon device being created
- * @edev:	the extcon device to unरेजिस्टरed
+ * @edev:	the extcon device to unregistered
  *
- * Unरेजिस्टर extcon device that is रेजिस्टरed with devm_extcon_dev_रेजिस्टर()
+ * Unregister extcon device that is registered with devm_extcon_dev_register()
  * function.
  */
-व्योम devm_extcon_dev_unरेजिस्टर(काष्ठा device *dev, काष्ठा extcon_dev *edev)
-अणु
+void devm_extcon_dev_unregister(struct device *dev, struct extcon_dev *edev)
+{
 	WARN_ON(devres_release(dev, devm_extcon_dev_unreg,
 			       devm_extcon_dev_match, edev));
-पूर्ण
-EXPORT_SYMBOL_GPL(devm_extcon_dev_unरेजिस्टर);
+}
+EXPORT_SYMBOL_GPL(devm_extcon_dev_unregister);
 
 /**
- * devm_extcon_रेजिस्टर_notअगरier() - Resource-managed extcon_रेजिस्टर_notअगरier()
+ * devm_extcon_register_notifier() - Resource-managed extcon_register_notifier()
  * @dev:	the device owning the extcon device being created
  * @edev:	the extcon device
- * @id:		the unique id among the extcon क्रमागतeration
- * @nb:		a notअगरier block to be रेजिस्टरed
+ * @id:		the unique id among the extcon enumeration
+ * @nb:		a notifier block to be registered
  *
- * This function manages स्वतःmatically the notअगरier of extcon device using
- * device resource management and simplअगरy the control of unरेजिस्टरing
- * the notअगरier of extcon device.
+ * This function manages automatically the notifier of extcon device using
+ * device resource management and simplify the control of unregistering
+ * the notifier of extcon device.
  *
  * Note that the second parameter given to the callback of nb (val) is
  * "old_state", not the current state. The current state can be retrieved
- * by looking at the third pameter (edev poपूर्णांकer)'s state value.
+ * by looking at the third pameter (edev pointer)'s state value.
  *
- * Returns 0 अगर success or negaive error number अगर failure.
+ * Returns 0 if success or negaive error number if failure.
  */
-पूर्णांक devm_extcon_रेजिस्टर_notअगरier(काष्ठा device *dev, काष्ठा extcon_dev *edev,
-				अचिन्हित पूर्णांक id, काष्ठा notअगरier_block *nb)
-अणु
-	काष्ठा extcon_dev_notअगरier_devres *ptr;
-	पूर्णांक ret;
+int devm_extcon_register_notifier(struct device *dev, struct extcon_dev *edev,
+				unsigned int id, struct notifier_block *nb)
+{
+	struct extcon_dev_notifier_devres *ptr;
+	int ret;
 
-	ptr = devres_alloc(devm_extcon_dev_notअगरier_unreg, माप(*ptr),
+	ptr = devres_alloc(devm_extcon_dev_notifier_unreg, sizeof(*ptr),
 				GFP_KERNEL);
-	अगर (!ptr)
-		वापस -ENOMEM;
+	if (!ptr)
+		return -ENOMEM;
 
-	ret = extcon_रेजिस्टर_notअगरier(edev, id, nb);
-	अगर (ret) अणु
-		devres_मुक्त(ptr);
-		वापस ret;
-	पूर्ण
+	ret = extcon_register_notifier(edev, id, nb);
+	if (ret) {
+		devres_free(ptr);
+		return ret;
+	}
 
 	ptr->edev = edev;
 	ptr->id = id;
 	ptr->nb = nb;
 	devres_add(dev, ptr);
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL(devm_extcon_रेजिस्टर_notअगरier);
+	return 0;
+}
+EXPORT_SYMBOL(devm_extcon_register_notifier);
 
 /**
- * devm_extcon_unरेजिस्टर_notअगरier()
- *			- Resource-managed extcon_unरेजिस्टर_notअगरier()
+ * devm_extcon_unregister_notifier()
+ *			- Resource-managed extcon_unregister_notifier()
  * @dev:	the device owning the extcon device being created
  * @edev:	the extcon device
- * @id:		the unique id among the extcon क्रमागतeration
- * @nb:		a notअगरier block to be रेजिस्टरed
+ * @id:		the unique id among the extcon enumeration
+ * @nb:		a notifier block to be registered
  */
-व्योम devm_extcon_unरेजिस्टर_notअगरier(काष्ठा device *dev,
-				काष्ठा extcon_dev *edev, अचिन्हित पूर्णांक id,
-				काष्ठा notअगरier_block *nb)
-अणु
-	WARN_ON(devres_release(dev, devm_extcon_dev_notअगरier_unreg,
+void devm_extcon_unregister_notifier(struct device *dev,
+				struct extcon_dev *edev, unsigned int id,
+				struct notifier_block *nb)
+{
+	WARN_ON(devres_release(dev, devm_extcon_dev_notifier_unreg,
 			       devm_extcon_dev_match, edev));
-पूर्ण
-EXPORT_SYMBOL(devm_extcon_unरेजिस्टर_notअगरier);
+}
+EXPORT_SYMBOL(devm_extcon_unregister_notifier);
 
 /**
- * devm_extcon_रेजिस्टर_notअगरier_all()
- *		- Resource-managed extcon_रेजिस्टर_notअगरier_all()
+ * devm_extcon_register_notifier_all()
+ *		- Resource-managed extcon_register_notifier_all()
  * @dev:	the device owning the extcon device being created
  * @edev:	the extcon device
- * @nb:		a notअगरier block to be रेजिस्टरed
+ * @nb:		a notifier block to be registered
  *
- * This function manages स्वतःmatically the notअगरier of extcon device using
- * device resource management and simplअगरy the control of unरेजिस्टरing
- * the notअगरier of extcon device. To get more inक्रमmation, refer that function.
+ * This function manages automatically the notifier of extcon device using
+ * device resource management and simplify the control of unregistering
+ * the notifier of extcon device. To get more information, refer that function.
  *
- * Returns 0 अगर success or negaive error number अगर failure.
+ * Returns 0 if success or negaive error number if failure.
  */
-पूर्णांक devm_extcon_रेजिस्टर_notअगरier_all(काष्ठा device *dev, काष्ठा extcon_dev *edev,
-				काष्ठा notअगरier_block *nb)
-अणु
-	काष्ठा extcon_dev_notअगरier_devres *ptr;
-	पूर्णांक ret;
+int devm_extcon_register_notifier_all(struct device *dev, struct extcon_dev *edev,
+				struct notifier_block *nb)
+{
+	struct extcon_dev_notifier_devres *ptr;
+	int ret;
 
-	ptr = devres_alloc(devm_extcon_dev_notअगरier_all_unreg, माप(*ptr),
+	ptr = devres_alloc(devm_extcon_dev_notifier_all_unreg, sizeof(*ptr),
 				GFP_KERNEL);
-	अगर (!ptr)
-		वापस -ENOMEM;
+	if (!ptr)
+		return -ENOMEM;
 
-	ret = extcon_रेजिस्टर_notअगरier_all(edev, nb);
-	अगर (ret) अणु
-		devres_मुक्त(ptr);
-		वापस ret;
-	पूर्ण
+	ret = extcon_register_notifier_all(edev, nb);
+	if (ret) {
+		devres_free(ptr);
+		return ret;
+	}
 
 	ptr->edev = edev;
 	ptr->nb = nb;
 	devres_add(dev, ptr);
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL(devm_extcon_रेजिस्टर_notअगरier_all);
+	return 0;
+}
+EXPORT_SYMBOL(devm_extcon_register_notifier_all);
 
 /**
- * devm_extcon_unरेजिस्टर_notअगरier_all()
- *		- Resource-managed extcon_unरेजिस्टर_notअगरier_all()
+ * devm_extcon_unregister_notifier_all()
+ *		- Resource-managed extcon_unregister_notifier_all()
  * @dev:	the device owning the extcon device being created
  * @edev:	the extcon device
- * @nb:		a notअगरier block to be रेजिस्टरed
+ * @nb:		a notifier block to be registered
  */
-व्योम devm_extcon_unरेजिस्टर_notअगरier_all(काष्ठा device *dev,
-				काष्ठा extcon_dev *edev,
-				काष्ठा notअगरier_block *nb)
-अणु
-	WARN_ON(devres_release(dev, devm_extcon_dev_notअगरier_all_unreg,
+void devm_extcon_unregister_notifier_all(struct device *dev,
+				struct extcon_dev *edev,
+				struct notifier_block *nb)
+{
+	WARN_ON(devres_release(dev, devm_extcon_dev_notifier_all_unreg,
 			       devm_extcon_dev_match, edev));
-पूर्ण
-EXPORT_SYMBOL(devm_extcon_unरेजिस्टर_notअगरier_all);
+}
+EXPORT_SYMBOL(devm_extcon_unregister_notifier_all);

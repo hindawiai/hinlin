@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Marvell 88E6xxx Switch Global 2 Registers support
  *
@@ -9,232 +8,232 @@
  *	Vivien Didelot <vivien.didelot@savoirfairelinux.com>
  *
  * Copyright (c) 2017 National Instruments
- *	Bअक्रमon Streअगरf <bअक्रमon.streअगरf@ni.com>
+ *	Brandon Streiff <brandon.streiff@ni.com>
  */
 
-#समावेश <linux/bitfield.h>
+#include <linux/bitfield.h>
 
-#समावेश "global2.h"
+#include "global2.h"
 
 /* Offset 0x16: AVB Command Register
  * Offset 0x17: AVB Data Register
  *
- * There are two dअगरferent versions of this रेजिस्टर पूर्णांकerface:
+ * There are two different versions of this register interface:
  *    "6352": 3-bit "op" field, 4-bit "port" field.
  *    "6390": 2-bit "op" field, 5-bit "port" field.
  *
- * The "op" codes are dअगरferent between the two, as well as the special
- * port fields क्रम global PTP and TAI configuration.
+ * The "op" codes are different between the two, as well as the special
+ * port fields for global PTP and TAI configuration.
  */
 
-/* mv88e6xxx_g2_avb_पढ़ो -- Read one or multiple 16-bit words.
- * The hardware supports snapshotting up to four contiguous रेजिस्टरs.
+/* mv88e6xxx_g2_avb_read -- Read one or multiple 16-bit words.
+ * The hardware supports snapshotting up to four contiguous registers.
  */
-अटल पूर्णांक mv88e6xxx_g2_avb_रुको(काष्ठा mv88e6xxx_chip *chip)
-अणु
-	पूर्णांक bit = __bf_shf(MV88E6352_G2_AVB_CMD_BUSY);
+static int mv88e6xxx_g2_avb_wait(struct mv88e6xxx_chip *chip)
+{
+	int bit = __bf_shf(MV88E6352_G2_AVB_CMD_BUSY);
 
-	वापस mv88e6xxx_g2_रुको_bit(chip, MV88E6352_G2_AVB_CMD, bit, 0);
-पूर्ण
+	return mv88e6xxx_g2_wait_bit(chip, MV88E6352_G2_AVB_CMD, bit, 0);
+}
 
-अटल पूर्णांक mv88e6xxx_g2_avb_पढ़ो(काष्ठा mv88e6xxx_chip *chip, u16 पढ़ोop,
-				 u16 *data, पूर्णांक len)
-अणु
-	पूर्णांक err;
-	पूर्णांक i;
+static int mv88e6xxx_g2_avb_read(struct mv88e6xxx_chip *chip, u16 readop,
+				 u16 *data, int len)
+{
+	int err;
+	int i;
 
-	err = mv88e6xxx_g2_avb_रुको(chip);
-	अगर (err)
-		वापस err;
+	err = mv88e6xxx_g2_avb_wait(chip);
+	if (err)
+		return err;
 
 	/* Hardware can only snapshot four words. */
-	अगर (len > 4)
-		वापस -E2BIG;
+	if (len > 4)
+		return -E2BIG;
 
-	err = mv88e6xxx_g2_ग_लिखो(chip, MV88E6352_G2_AVB_CMD,
-				 MV88E6352_G2_AVB_CMD_BUSY | पढ़ोop);
-	अगर (err)
-		वापस err;
+	err = mv88e6xxx_g2_write(chip, MV88E6352_G2_AVB_CMD,
+				 MV88E6352_G2_AVB_CMD_BUSY | readop);
+	if (err)
+		return err;
 
-	err = mv88e6xxx_g2_avb_रुको(chip);
-	अगर (err)
-		वापस err;
+	err = mv88e6xxx_g2_avb_wait(chip);
+	if (err)
+		return err;
 
-	क्रम (i = 0; i < len; ++i) अणु
-		err = mv88e6xxx_g2_पढ़ो(chip, MV88E6352_G2_AVB_DATA,
+	for (i = 0; i < len; ++i) {
+		err = mv88e6xxx_g2_read(chip, MV88E6352_G2_AVB_DATA,
 					&data[i]);
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* mv88e6xxx_g2_avb_ग_लिखो -- Write one 16-bit word. */
-अटल पूर्णांक mv88e6xxx_g2_avb_ग_लिखो(काष्ठा mv88e6xxx_chip *chip, u16 ग_लिखोop,
+/* mv88e6xxx_g2_avb_write -- Write one 16-bit word. */
+static int mv88e6xxx_g2_avb_write(struct mv88e6xxx_chip *chip, u16 writeop,
 				  u16 data)
-अणु
-	पूर्णांक err;
+{
+	int err;
 
-	err = mv88e6xxx_g2_avb_रुको(chip);
-	अगर (err)
-		वापस err;
+	err = mv88e6xxx_g2_avb_wait(chip);
+	if (err)
+		return err;
 
-	err = mv88e6xxx_g2_ग_लिखो(chip, MV88E6352_G2_AVB_DATA, data);
-	अगर (err)
-		वापस err;
+	err = mv88e6xxx_g2_write(chip, MV88E6352_G2_AVB_DATA, data);
+	if (err)
+		return err;
 
-	err = mv88e6xxx_g2_ग_लिखो(chip, MV88E6352_G2_AVB_CMD,
-				 MV88E6352_G2_AVB_CMD_BUSY | ग_लिखोop);
+	err = mv88e6xxx_g2_write(chip, MV88E6352_G2_AVB_CMD,
+				 MV88E6352_G2_AVB_CMD_BUSY | writeop);
 
-	वापस mv88e6xxx_g2_avb_रुको(chip);
-पूर्ण
+	return mv88e6xxx_g2_avb_wait(chip);
+}
 
-अटल पूर्णांक mv88e6352_g2_avb_port_ptp_पढ़ो(काष्ठा mv88e6xxx_chip *chip,
-					  पूर्णांक port, पूर्णांक addr, u16 *data,
-					  पूर्णांक len)
-अणु
-	u16 पढ़ोop = (len == 1 ? MV88E6352_G2_AVB_CMD_OP_READ :
+static int mv88e6352_g2_avb_port_ptp_read(struct mv88e6xxx_chip *chip,
+					  int port, int addr, u16 *data,
+					  int len)
+{
+	u16 readop = (len == 1 ? MV88E6352_G2_AVB_CMD_OP_READ :
 				 MV88E6352_G2_AVB_CMD_OP_READ_INCR) |
 		     (port << 8) | (MV88E6352_G2_AVB_CMD_BLOCK_PTP << 5) |
 		     addr;
 
-	वापस mv88e6xxx_g2_avb_पढ़ो(chip, पढ़ोop, data, len);
-पूर्ण
+	return mv88e6xxx_g2_avb_read(chip, readop, data, len);
+}
 
-अटल पूर्णांक mv88e6352_g2_avb_port_ptp_ग_लिखो(काष्ठा mv88e6xxx_chip *chip,
-					   पूर्णांक port, पूर्णांक addr, u16 data)
-अणु
-	u16 ग_लिखोop = MV88E6352_G2_AVB_CMD_OP_WRITE | (port << 8) |
+static int mv88e6352_g2_avb_port_ptp_write(struct mv88e6xxx_chip *chip,
+					   int port, int addr, u16 data)
+{
+	u16 writeop = MV88E6352_G2_AVB_CMD_OP_WRITE | (port << 8) |
 		      (MV88E6352_G2_AVB_CMD_BLOCK_PTP << 5) | addr;
 
-	वापस mv88e6xxx_g2_avb_ग_लिखो(chip, ग_लिखोop, data);
-पूर्ण
+	return mv88e6xxx_g2_avb_write(chip, writeop, data);
+}
 
-अटल पूर्णांक mv88e6352_g2_avb_ptp_पढ़ो(काष्ठा mv88e6xxx_chip *chip, पूर्णांक addr,
-				     u16 *data, पूर्णांक len)
-अणु
-	वापस mv88e6352_g2_avb_port_ptp_पढ़ो(chip,
+static int mv88e6352_g2_avb_ptp_read(struct mv88e6xxx_chip *chip, int addr,
+				     u16 *data, int len)
+{
+	return mv88e6352_g2_avb_port_ptp_read(chip,
 					MV88E6352_G2_AVB_CMD_PORT_PTPGLOBAL,
 					addr, data, len);
-पूर्ण
+}
 
-अटल पूर्णांक mv88e6352_g2_avb_ptp_ग_लिखो(काष्ठा mv88e6xxx_chip *chip, पूर्णांक addr,
+static int mv88e6352_g2_avb_ptp_write(struct mv88e6xxx_chip *chip, int addr,
 				      u16 data)
-अणु
-	वापस mv88e6352_g2_avb_port_ptp_ग_लिखो(chip,
+{
+	return mv88e6352_g2_avb_port_ptp_write(chip,
 					MV88E6352_G2_AVB_CMD_PORT_PTPGLOBAL,
 					addr, data);
-पूर्ण
+}
 
-अटल पूर्णांक mv88e6352_g2_avb_tai_पढ़ो(काष्ठा mv88e6xxx_chip *chip, पूर्णांक addr,
-				     u16 *data, पूर्णांक len)
-अणु
-	वापस mv88e6352_g2_avb_port_ptp_पढ़ो(chip,
+static int mv88e6352_g2_avb_tai_read(struct mv88e6xxx_chip *chip, int addr,
+				     u16 *data, int len)
+{
+	return mv88e6352_g2_avb_port_ptp_read(chip,
 					MV88E6352_G2_AVB_CMD_PORT_TAIGLOBAL,
 					addr, data, len);
-पूर्ण
+}
 
-अटल पूर्णांक mv88e6352_g2_avb_tai_ग_लिखो(काष्ठा mv88e6xxx_chip *chip, पूर्णांक addr,
+static int mv88e6352_g2_avb_tai_write(struct mv88e6xxx_chip *chip, int addr,
 				      u16 data)
-अणु
-	वापस mv88e6352_g2_avb_port_ptp_ग_लिखो(chip,
+{
+	return mv88e6352_g2_avb_port_ptp_write(chip,
 					MV88E6352_G2_AVB_CMD_PORT_TAIGLOBAL,
 					addr, data);
-पूर्ण
+}
 
-स्थिर काष्ठा mv88e6xxx_avb_ops mv88e6352_avb_ops = अणु
-	.port_ptp_पढ़ो		= mv88e6352_g2_avb_port_ptp_पढ़ो,
-	.port_ptp_ग_लिखो		= mv88e6352_g2_avb_port_ptp_ग_लिखो,
-	.ptp_पढ़ो		= mv88e6352_g2_avb_ptp_पढ़ो,
-	.ptp_ग_लिखो		= mv88e6352_g2_avb_ptp_ग_लिखो,
-	.tai_पढ़ो		= mv88e6352_g2_avb_tai_पढ़ो,
-	.tai_ग_लिखो		= mv88e6352_g2_avb_tai_ग_लिखो,
-पूर्ण;
+const struct mv88e6xxx_avb_ops mv88e6352_avb_ops = {
+	.port_ptp_read		= mv88e6352_g2_avb_port_ptp_read,
+	.port_ptp_write		= mv88e6352_g2_avb_port_ptp_write,
+	.ptp_read		= mv88e6352_g2_avb_ptp_read,
+	.ptp_write		= mv88e6352_g2_avb_ptp_write,
+	.tai_read		= mv88e6352_g2_avb_tai_read,
+	.tai_write		= mv88e6352_g2_avb_tai_write,
+};
 
-अटल पूर्णांक mv88e6165_g2_avb_tai_पढ़ो(काष्ठा mv88e6xxx_chip *chip, पूर्णांक addr,
-				     u16 *data, पूर्णांक len)
-अणु
-	वापस mv88e6352_g2_avb_port_ptp_पढ़ो(chip,
+static int mv88e6165_g2_avb_tai_read(struct mv88e6xxx_chip *chip, int addr,
+				     u16 *data, int len)
+{
+	return mv88e6352_g2_avb_port_ptp_read(chip,
 					MV88E6165_G2_AVB_CMD_PORT_PTPGLOBAL,
 					addr, data, len);
-पूर्ण
+}
 
-अटल पूर्णांक mv88e6165_g2_avb_tai_ग_लिखो(काष्ठा mv88e6xxx_chip *chip, पूर्णांक addr,
+static int mv88e6165_g2_avb_tai_write(struct mv88e6xxx_chip *chip, int addr,
 				      u16 data)
-अणु
-	वापस mv88e6352_g2_avb_port_ptp_ग_लिखो(chip,
+{
+	return mv88e6352_g2_avb_port_ptp_write(chip,
 					MV88E6165_G2_AVB_CMD_PORT_PTPGLOBAL,
 					addr, data);
-पूर्ण
+}
 
-स्थिर काष्ठा mv88e6xxx_avb_ops mv88e6165_avb_ops = अणु
-	.port_ptp_पढ़ो		= mv88e6352_g2_avb_port_ptp_पढ़ो,
-	.port_ptp_ग_लिखो		= mv88e6352_g2_avb_port_ptp_ग_लिखो,
-	.ptp_पढ़ो		= mv88e6352_g2_avb_ptp_पढ़ो,
-	.ptp_ग_लिखो		= mv88e6352_g2_avb_ptp_ग_लिखो,
-	.tai_पढ़ो		= mv88e6165_g2_avb_tai_पढ़ो,
-	.tai_ग_लिखो		= mv88e6165_g2_avb_tai_ग_लिखो,
-पूर्ण;
+const struct mv88e6xxx_avb_ops mv88e6165_avb_ops = {
+	.port_ptp_read		= mv88e6352_g2_avb_port_ptp_read,
+	.port_ptp_write		= mv88e6352_g2_avb_port_ptp_write,
+	.ptp_read		= mv88e6352_g2_avb_ptp_read,
+	.ptp_write		= mv88e6352_g2_avb_ptp_write,
+	.tai_read		= mv88e6165_g2_avb_tai_read,
+	.tai_write		= mv88e6165_g2_avb_tai_write,
+};
 
-अटल पूर्णांक mv88e6390_g2_avb_port_ptp_पढ़ो(काष्ठा mv88e6xxx_chip *chip,
-					  पूर्णांक port, पूर्णांक addr, u16 *data,
-					  पूर्णांक len)
-अणु
-	u16 पढ़ोop = (len == 1 ? MV88E6390_G2_AVB_CMD_OP_READ :
+static int mv88e6390_g2_avb_port_ptp_read(struct mv88e6xxx_chip *chip,
+					  int port, int addr, u16 *data,
+					  int len)
+{
+	u16 readop = (len == 1 ? MV88E6390_G2_AVB_CMD_OP_READ :
 				 MV88E6390_G2_AVB_CMD_OP_READ_INCR) |
 		     (port << 8) | (MV88E6352_G2_AVB_CMD_BLOCK_PTP << 5) |
 		     addr;
 
-	वापस mv88e6xxx_g2_avb_पढ़ो(chip, पढ़ोop, data, len);
-पूर्ण
+	return mv88e6xxx_g2_avb_read(chip, readop, data, len);
+}
 
-अटल पूर्णांक mv88e6390_g2_avb_port_ptp_ग_लिखो(काष्ठा mv88e6xxx_chip *chip,
-					   पूर्णांक port, पूर्णांक addr, u16 data)
-अणु
-	u16 ग_लिखोop = MV88E6390_G2_AVB_CMD_OP_WRITE | (port << 8) |
+static int mv88e6390_g2_avb_port_ptp_write(struct mv88e6xxx_chip *chip,
+					   int port, int addr, u16 data)
+{
+	u16 writeop = MV88E6390_G2_AVB_CMD_OP_WRITE | (port << 8) |
 		      (MV88E6352_G2_AVB_CMD_BLOCK_PTP << 5) | addr;
 
-	वापस mv88e6xxx_g2_avb_ग_लिखो(chip, ग_लिखोop, data);
-पूर्ण
+	return mv88e6xxx_g2_avb_write(chip, writeop, data);
+}
 
-अटल पूर्णांक mv88e6390_g2_avb_ptp_पढ़ो(काष्ठा mv88e6xxx_chip *chip, पूर्णांक addr,
-				     u16 *data, पूर्णांक len)
-अणु
-	वापस mv88e6390_g2_avb_port_ptp_पढ़ो(chip,
+static int mv88e6390_g2_avb_ptp_read(struct mv88e6xxx_chip *chip, int addr,
+				     u16 *data, int len)
+{
+	return mv88e6390_g2_avb_port_ptp_read(chip,
 					MV88E6390_G2_AVB_CMD_PORT_PTPGLOBAL,
 					addr, data, len);
-पूर्ण
+}
 
-अटल पूर्णांक mv88e6390_g2_avb_ptp_ग_लिखो(काष्ठा mv88e6xxx_chip *chip, पूर्णांक addr,
+static int mv88e6390_g2_avb_ptp_write(struct mv88e6xxx_chip *chip, int addr,
 				      u16 data)
-अणु
-	वापस mv88e6390_g2_avb_port_ptp_ग_लिखो(chip,
+{
+	return mv88e6390_g2_avb_port_ptp_write(chip,
 					MV88E6390_G2_AVB_CMD_PORT_PTPGLOBAL,
 					addr, data);
-पूर्ण
+}
 
-अटल पूर्णांक mv88e6390_g2_avb_tai_पढ़ो(काष्ठा mv88e6xxx_chip *chip, पूर्णांक addr,
-				     u16 *data, पूर्णांक len)
-अणु
-	वापस mv88e6390_g2_avb_port_ptp_पढ़ो(chip,
+static int mv88e6390_g2_avb_tai_read(struct mv88e6xxx_chip *chip, int addr,
+				     u16 *data, int len)
+{
+	return mv88e6390_g2_avb_port_ptp_read(chip,
 					MV88E6390_G2_AVB_CMD_PORT_TAIGLOBAL,
 					addr, data, len);
-पूर्ण
+}
 
-अटल पूर्णांक mv88e6390_g2_avb_tai_ग_लिखो(काष्ठा mv88e6xxx_chip *chip, पूर्णांक addr,
+static int mv88e6390_g2_avb_tai_write(struct mv88e6xxx_chip *chip, int addr,
 				      u16 data)
-अणु
-	वापस mv88e6390_g2_avb_port_ptp_ग_लिखो(chip,
+{
+	return mv88e6390_g2_avb_port_ptp_write(chip,
 					MV88E6390_G2_AVB_CMD_PORT_TAIGLOBAL,
 					addr, data);
-पूर्ण
+}
 
-स्थिर काष्ठा mv88e6xxx_avb_ops mv88e6390_avb_ops = अणु
-	.port_ptp_पढ़ो		= mv88e6390_g2_avb_port_ptp_पढ़ो,
-	.port_ptp_ग_लिखो		= mv88e6390_g2_avb_port_ptp_ग_लिखो,
-	.ptp_पढ़ो		= mv88e6390_g2_avb_ptp_पढ़ो,
-	.ptp_ग_लिखो		= mv88e6390_g2_avb_ptp_ग_लिखो,
-	.tai_पढ़ो		= mv88e6390_g2_avb_tai_पढ़ो,
-	.tai_ग_लिखो		= mv88e6390_g2_avb_tai_ग_लिखो,
-पूर्ण;
+const struct mv88e6xxx_avb_ops mv88e6390_avb_ops = {
+	.port_ptp_read		= mv88e6390_g2_avb_port_ptp_read,
+	.port_ptp_write		= mv88e6390_g2_avb_port_ptp_write,
+	.ptp_read		= mv88e6390_g2_avb_ptp_read,
+	.ptp_write		= mv88e6390_g2_avb_ptp_write,
+	.tai_read		= mv88e6390_g2_avb_tai_read,
+	.tai_write		= mv88e6390_g2_avb_tai_write,
+};

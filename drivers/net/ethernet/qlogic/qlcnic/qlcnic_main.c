@@ -1,108 +1,107 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * QLogic qlcnic NIC Driver
  * Copyright (c) 2009-2013 QLogic Corporation
  */
 
-#समावेश <linux/vदो_स्मृति.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/swab.h>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/अगर_vlan.h>
-#समावेश <net/ip.h>
-#समावेश <linux/ipv6.h>
-#समावेश <linux/inetdevice.h>
-#समावेश <linux/aer.h>
-#समावेश <linux/log2.h>
-#समावेश <linux/pci.h>
-#समावेश <net/vxlan.h>
+#include <linux/vmalloc.h>
+#include <linux/interrupt.h>
+#include <linux/swab.h>
+#include <linux/dma-mapping.h>
+#include <linux/if_vlan.h>
+#include <net/ip.h>
+#include <linux/ipv6.h>
+#include <linux/inetdevice.h>
+#include <linux/aer.h>
+#include <linux/log2.h>
+#include <linux/pci.h>
+#include <net/vxlan.h>
 
-#समावेश "qlcnic.h"
-#समावेश "qlcnic_sriov.h"
-#समावेश "qlcnic_hw.h"
+#include "qlcnic.h"
+#include "qlcnic_sriov.h"
+#include "qlcnic_hw.h"
 
 MODULE_DESCRIPTION("QLogic 1/10 GbE Converged/Intelligent Ethernet Driver");
 MODULE_LICENSE("GPL");
 MODULE_VERSION(QLCNIC_LINUX_VERSIONID);
 MODULE_FIRMWARE(QLCNIC_UNIFIED_ROMIMAGE_NAME);
 
-अक्षर qlcnic_driver_name[] = "qlcnic";
-अटल स्थिर अक्षर qlcnic_driver_string[] = "QLogic 1/10 GbE "
+char qlcnic_driver_name[] = "qlcnic";
+static const char qlcnic_driver_string[] = "QLogic 1/10 GbE "
 	"Converged/Intelligent Ethernet Driver v" QLCNIC_LINUX_VERSIONID;
 
-अटल पूर्णांक qlcnic_mac_learn;
-module_param(qlcnic_mac_learn, पूर्णांक, 0444);
+static int qlcnic_mac_learn;
+module_param(qlcnic_mac_learn, int, 0444);
 MODULE_PARM_DESC(qlcnic_mac_learn,
 		 "Mac Filter (0=learning is disabled, 1=Driver learning is enabled, 2=FDB learning is enabled)");
 
-पूर्णांक qlcnic_use_msi = 1;
+int qlcnic_use_msi = 1;
 MODULE_PARM_DESC(use_msi, "MSI interrupt (0=disabled, 1=enabled)");
-module_param_named(use_msi, qlcnic_use_msi, पूर्णांक, 0444);
+module_param_named(use_msi, qlcnic_use_msi, int, 0444);
 
-पूर्णांक qlcnic_use_msi_x = 1;
+int qlcnic_use_msi_x = 1;
 MODULE_PARM_DESC(use_msi_x, "MSI-X interrupt (0=disabled, 1=enabled)");
-module_param_named(use_msi_x, qlcnic_use_msi_x, पूर्णांक, 0444);
+module_param_named(use_msi_x, qlcnic_use_msi_x, int, 0444);
 
-पूर्णांक qlcnic_स्वतः_fw_reset = 1;
-MODULE_PARM_DESC(स्वतः_fw_reset, "Auto firmware reset (0=disabled, 1=enabled)");
-module_param_named(स्वतः_fw_reset, qlcnic_स्वतः_fw_reset, पूर्णांक, 0644);
+int qlcnic_auto_fw_reset = 1;
+MODULE_PARM_DESC(auto_fw_reset, "Auto firmware reset (0=disabled, 1=enabled)");
+module_param_named(auto_fw_reset, qlcnic_auto_fw_reset, int, 0644);
 
-पूर्णांक qlcnic_load_fw_file;
+int qlcnic_load_fw_file;
 MODULE_PARM_DESC(load_fw_file, "Load firmware from (0=flash, 1=file, 2=POST in fast mode, 3= POST in medium mode, 4=POST in slow mode)");
-module_param_named(load_fw_file, qlcnic_load_fw_file, पूर्णांक, 0444);
+module_param_named(load_fw_file, qlcnic_load_fw_file, int, 0444);
 
-अटल पूर्णांक qlcnic_probe(काष्ठा pci_dev *pdev, स्थिर काष्ठा pci_device_id *ent);
-अटल व्योम qlcnic_हटाओ(काष्ठा pci_dev *pdev);
-अटल पूर्णांक qlcnic_खोलो(काष्ठा net_device *netdev);
-अटल पूर्णांक qlcnic_बंद(काष्ठा net_device *netdev);
-अटल व्योम qlcnic_tx_समयout(काष्ठा net_device *netdev, अचिन्हित पूर्णांक txqueue);
-अटल व्योम qlcnic_attach_work(काष्ठा work_काष्ठा *work);
-अटल व्योम qlcnic_fwinit_work(काष्ठा work_काष्ठा *work);
+static int qlcnic_probe(struct pci_dev *pdev, const struct pci_device_id *ent);
+static void qlcnic_remove(struct pci_dev *pdev);
+static int qlcnic_open(struct net_device *netdev);
+static int qlcnic_close(struct net_device *netdev);
+static void qlcnic_tx_timeout(struct net_device *netdev, unsigned int txqueue);
+static void qlcnic_attach_work(struct work_struct *work);
+static void qlcnic_fwinit_work(struct work_struct *work);
 
-अटल व्योम qlcnic_idc_debug_info(काष्ठा qlcnic_adapter *adapter, u8 encoding);
-अटल पूर्णांक qlcnic_can_start_firmware(काष्ठा qlcnic_adapter *adapter);
+static void qlcnic_idc_debug_info(struct qlcnic_adapter *adapter, u8 encoding);
+static int qlcnic_can_start_firmware(struct qlcnic_adapter *adapter);
 
-अटल irqवापस_t qlcnic_पंचांगp_पूर्णांकr(पूर्णांक irq, व्योम *data);
-अटल irqवापस_t qlcnic_पूर्णांकr(पूर्णांक irq, व्योम *data);
-अटल irqवापस_t qlcnic_msi_पूर्णांकr(पूर्णांक irq, व्योम *data);
-अटल irqवापस_t qlcnic_msix_पूर्णांकr(पूर्णांक irq, व्योम *data);
-अटल irqवापस_t qlcnic_msix_tx_पूर्णांकr(पूर्णांक irq, व्योम *data);
+static irqreturn_t qlcnic_tmp_intr(int irq, void *data);
+static irqreturn_t qlcnic_intr(int irq, void *data);
+static irqreturn_t qlcnic_msi_intr(int irq, void *data);
+static irqreturn_t qlcnic_msix_intr(int irq, void *data);
+static irqreturn_t qlcnic_msix_tx_intr(int irq, void *data);
 
-अटल काष्ठा net_device_stats *qlcnic_get_stats(काष्ठा net_device *netdev);
-अटल पूर्णांक qlcnic_start_firmware(काष्ठा qlcnic_adapter *);
+static struct net_device_stats *qlcnic_get_stats(struct net_device *netdev);
+static int qlcnic_start_firmware(struct qlcnic_adapter *);
 
-अटल व्योम qlcnic_मुक्त_lb_filters_mem(काष्ठा qlcnic_adapter *adapter);
-अटल व्योम qlcnic_dev_set_npar_पढ़ोy(काष्ठा qlcnic_adapter *);
-अटल पूर्णांक qlcnicvf_start_firmware(काष्ठा qlcnic_adapter *);
-अटल पूर्णांक qlcnic_vlan_rx_add(काष्ठा net_device *, __be16, u16);
-अटल पूर्णांक qlcnic_vlan_rx_del(काष्ठा net_device *, __be16, u16);
+static void qlcnic_free_lb_filters_mem(struct qlcnic_adapter *adapter);
+static void qlcnic_dev_set_npar_ready(struct qlcnic_adapter *);
+static int qlcnicvf_start_firmware(struct qlcnic_adapter *);
+static int qlcnic_vlan_rx_add(struct net_device *, __be16, u16);
+static int qlcnic_vlan_rx_del(struct net_device *, __be16, u16);
 
-अटल पूर्णांक qlcnic_82xx_setup_पूर्णांकr(काष्ठा qlcnic_adapter *);
-अटल व्योम qlcnic_82xx_dev_request_reset(काष्ठा qlcnic_adapter *, u32);
-अटल irqवापस_t qlcnic_82xx_clear_legacy_पूर्णांकr(काष्ठा qlcnic_adapter *);
-अटल pci_ers_result_t qlcnic_82xx_io_slot_reset(काष्ठा pci_dev *);
-अटल पूर्णांक qlcnic_82xx_start_firmware(काष्ठा qlcnic_adapter *);
-अटल व्योम qlcnic_82xx_io_resume(काष्ठा pci_dev *);
-अटल व्योम qlcnic_82xx_set_mac_filter_count(काष्ठा qlcnic_adapter *);
-अटल pci_ers_result_t qlcnic_82xx_io_error_detected(काष्ठा pci_dev *,
+static int qlcnic_82xx_setup_intr(struct qlcnic_adapter *);
+static void qlcnic_82xx_dev_request_reset(struct qlcnic_adapter *, u32);
+static irqreturn_t qlcnic_82xx_clear_legacy_intr(struct qlcnic_adapter *);
+static pci_ers_result_t qlcnic_82xx_io_slot_reset(struct pci_dev *);
+static int qlcnic_82xx_start_firmware(struct qlcnic_adapter *);
+static void qlcnic_82xx_io_resume(struct pci_dev *);
+static void qlcnic_82xx_set_mac_filter_count(struct qlcnic_adapter *);
+static pci_ers_result_t qlcnic_82xx_io_error_detected(struct pci_dev *,
 						      pci_channel_state_t);
-अटल u32 qlcnic_vlan_tx_check(काष्ठा qlcnic_adapter *adapter)
-अणु
-	काष्ठा qlcnic_hardware_context *ahw = adapter->ahw;
+static u32 qlcnic_vlan_tx_check(struct qlcnic_adapter *adapter)
+{
+	struct qlcnic_hardware_context *ahw = adapter->ahw;
 
-	अगर (adapter->pdev->device == PCI_DEVICE_ID_QLOGIC_QLE824X)
-		वापस ahw->capabilities & QLCNIC_FW_CAPABILITY_FVLANTX;
-	अन्यथा
-		वापस 1;
-पूर्ण
+	if (adapter->pdev->device == PCI_DEVICE_ID_QLOGIC_QLE824X)
+		return ahw->capabilities & QLCNIC_FW_CAPABILITY_FVLANTX;
+	else
+		return 1;
+}
 
 /*  PCI Device ID Table  */
-#घोषणा ENTRY(device) \
-	अणुPCI_DEVICE(PCI_VENDOR_ID_QLOGIC, (device)), \
-	.class = PCI_CLASS_NETWORK_ETHERNET << 8, .class_mask = ~0पूर्ण
+#define ENTRY(device) \
+	{PCI_DEVICE(PCI_VENDOR_ID_QLOGIC, (device)), \
+	.class = PCI_CLASS_NETWORK_ETHERNET << 8, .class_mask = ~0}
 
-अटल स्थिर काष्ठा pci_device_id qlcnic_pci_tbl[] = अणु
+static const struct pci_device_id qlcnic_pci_tbl[] = {
 	ENTRY(PCI_DEVICE_ID_QLOGIC_QLE824X),
 	ENTRY(PCI_DEVICE_ID_QLOGIC_QLE834X),
 	ENTRY(PCI_DEVICE_ID_QLOGIC_VF_QLE834X),
@@ -110,25 +109,25 @@ module_param_named(load_fw_file, qlcnic_load_fw_file, पूर्णांक, 
 	ENTRY(PCI_DEVICE_ID_QLOGIC_VF_QLE8C30),
 	ENTRY(PCI_DEVICE_ID_QLOGIC_QLE844X),
 	ENTRY(PCI_DEVICE_ID_QLOGIC_VF_QLE844X),
-	अणु0,पूर्ण
-पूर्ण;
+	{0,}
+};
 
 MODULE_DEVICE_TABLE(pci, qlcnic_pci_tbl);
 
 
-अंतरभूत व्योम qlcnic_update_cmd_producer(काष्ठा qlcnic_host_tx_ring *tx_ring)
-अणु
-	ग_लिखोl(tx_ring->producer, tx_ring->crb_cmd_producer);
-पूर्ण
+inline void qlcnic_update_cmd_producer(struct qlcnic_host_tx_ring *tx_ring)
+{
+	writel(tx_ring->producer, tx_ring->crb_cmd_producer);
+}
 
-अटल स्थिर u32 msi_tgt_status[8] = अणु
+static const u32 msi_tgt_status[8] = {
 	ISR_INT_TARGET_STATUS, ISR_INT_TARGET_STATUS_F1,
 	ISR_INT_TARGET_STATUS_F2, ISR_INT_TARGET_STATUS_F3,
 	ISR_INT_TARGET_STATUS_F4, ISR_INT_TARGET_STATUS_F5,
 	ISR_INT_TARGET_STATUS_F6, ISR_INT_TARGET_STATUS_F7
-पूर्ण;
+};
 
-अटल स्थिर u32 qlcnic_reg_tbl[] = अणु
+static const u32 qlcnic_reg_tbl[] = {
 	0x1B20A8,	/* PEG_HALT_STAT1 */
 	0x1B20AC,	/* PEG_HALT_STAT2 */
 	0x1B20B0,	/* FW_HEARTBEAT */
@@ -152,390 +151,390 @@ MODULE_DEVICE_TABLE(pci, qlcnic_pci_tbl);
 	0x1B2170,	/* drv op mode */
 	0x13C010,	/* flash lock */
 	0x13C014,	/* flash unlock */
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qlcnic_board_info qlcnic_boards[] = अणु
-	अणु PCI_VENDOR_ID_QLOGIC,
+static const struct qlcnic_board_info qlcnic_boards[] = {
+	{ PCI_VENDOR_ID_QLOGIC,
 	  PCI_DEVICE_ID_QLOGIC_QLE844X,
 	  0x0,
 	  0x0,
-	  "8400 series 10GbE Converged Network Adapter (TCP/IP Networking)" पूर्ण,
-	अणु PCI_VENDOR_ID_QLOGIC,
+	  "8400 series 10GbE Converged Network Adapter (TCP/IP Networking)" },
+	{ PCI_VENDOR_ID_QLOGIC,
 	  PCI_DEVICE_ID_QLOGIC_QLE834X,
 	  PCI_VENDOR_ID_QLOGIC,
 	  0x24e,
 	  "8300 Series Dual Port 10GbE Converged Network Adapter "
-	  "(TCP/IP Networking)" पूर्ण,
-	अणु PCI_VENDOR_ID_QLOGIC,
+	  "(TCP/IP Networking)" },
+	{ PCI_VENDOR_ID_QLOGIC,
 	  PCI_DEVICE_ID_QLOGIC_QLE834X,
 	  PCI_VENDOR_ID_QLOGIC,
 	  0x243,
 	  "8300 Series Single Port 10GbE Converged Network Adapter "
-	  "(TCP/IP Networking)" पूर्ण,
-	अणु PCI_VENDOR_ID_QLOGIC,
+	  "(TCP/IP Networking)" },
+	{ PCI_VENDOR_ID_QLOGIC,
 	  PCI_DEVICE_ID_QLOGIC_QLE834X,
 	  PCI_VENDOR_ID_QLOGIC,
 	  0x24a,
 	  "8300 Series Dual Port 10GbE Converged Network Adapter "
-	  "(TCP/IP Networking)" पूर्ण,
-	अणु PCI_VENDOR_ID_QLOGIC,
+	  "(TCP/IP Networking)" },
+	{ PCI_VENDOR_ID_QLOGIC,
 	  PCI_DEVICE_ID_QLOGIC_QLE834X,
 	  PCI_VENDOR_ID_QLOGIC,
 	  0x246,
 	  "8300 Series Dual Port 10GbE Converged Network Adapter "
-	  "(TCP/IP Networking)" पूर्ण,
-	अणु PCI_VENDOR_ID_QLOGIC,
+	  "(TCP/IP Networking)" },
+	{ PCI_VENDOR_ID_QLOGIC,
 	  PCI_DEVICE_ID_QLOGIC_QLE834X,
 	  PCI_VENDOR_ID_QLOGIC,
 	  0x252,
 	  "8300 Series Dual Port 10GbE Converged Network Adapter "
-	  "(TCP/IP Networking)" पूर्ण,
-	अणु PCI_VENDOR_ID_QLOGIC,
+	  "(TCP/IP Networking)" },
+	{ PCI_VENDOR_ID_QLOGIC,
 	  PCI_DEVICE_ID_QLOGIC_QLE834X,
 	  PCI_VENDOR_ID_QLOGIC,
 	  0x26e,
 	  "8300 Series Dual Port 10GbE Converged Network Adapter "
-	  "(TCP/IP Networking)" पूर्ण,
-	अणु PCI_VENDOR_ID_QLOGIC,
+	  "(TCP/IP Networking)" },
+	{ PCI_VENDOR_ID_QLOGIC,
 	  PCI_DEVICE_ID_QLOGIC_QLE834X,
 	  PCI_VENDOR_ID_QLOGIC,
 	  0x260,
 	  "8300 Series Dual Port 10GbE Converged Network Adapter "
-	  "(TCP/IP Networking)" पूर्ण,
-	अणु PCI_VENDOR_ID_QLOGIC,
+	  "(TCP/IP Networking)" },
+	{ PCI_VENDOR_ID_QLOGIC,
 	  PCI_DEVICE_ID_QLOGIC_QLE834X,
 	  PCI_VENDOR_ID_QLOGIC,
 	  0x266,
 	  "8300 Series Single Port 10GbE Converged Network Adapter "
-	  "(TCP/IP Networking)" पूर्ण,
-	अणु PCI_VENDOR_ID_QLOGIC,
+	  "(TCP/IP Networking)" },
+	{ PCI_VENDOR_ID_QLOGIC,
 	  PCI_DEVICE_ID_QLOGIC_QLE834X,
 	  PCI_VENDOR_ID_QLOGIC,
 	  0x269,
 	  "8300 Series Dual Port 10GbE Converged Network Adapter "
-	  "(TCP/IP Networking)" पूर्ण,
-	अणु PCI_VENDOR_ID_QLOGIC,
+	  "(TCP/IP Networking)" },
+	{ PCI_VENDOR_ID_QLOGIC,
 	  PCI_DEVICE_ID_QLOGIC_QLE834X,
 	  PCI_VENDOR_ID_QLOGIC,
 	  0x271,
 	  "8300 Series Dual Port 10GbE Converged Network Adapter "
-	  "(TCP/IP Networking)" पूर्ण,
-	अणु PCI_VENDOR_ID_QLOGIC,
+	  "(TCP/IP Networking)" },
+	{ PCI_VENDOR_ID_QLOGIC,
 	  PCI_DEVICE_ID_QLOGIC_QLE834X,
-	  0x0, 0x0, "8300 Series 1/10GbE Controller" पूर्ण,
-	अणु PCI_VENDOR_ID_QLOGIC,
+	  0x0, 0x0, "8300 Series 1/10GbE Controller" },
+	{ PCI_VENDOR_ID_QLOGIC,
 	  PCI_DEVICE_ID_QLOGIC_QLE8830,
 	  0x0,
 	  0x0,
-	  "8830 Series 1/10GbE Controller" पूर्ण,
-	अणु PCI_VENDOR_ID_QLOGIC,
+	  "8830 Series 1/10GbE Controller" },
+	{ PCI_VENDOR_ID_QLOGIC,
 	  PCI_DEVICE_ID_QLOGIC_QLE824X,
 	  PCI_VENDOR_ID_QLOGIC,
 	  0x203,
 	  "8200 Series Single Port 10GbE Converged Network Adapter"
-	  "(TCP/IP Networking)" पूर्ण,
-	अणु PCI_VENDOR_ID_QLOGIC,
+	  "(TCP/IP Networking)" },
+	{ PCI_VENDOR_ID_QLOGIC,
 	  PCI_DEVICE_ID_QLOGIC_QLE824X,
 	  PCI_VENDOR_ID_QLOGIC,
 	  0x207,
 	  "8200 Series Dual Port 10GbE Converged Network Adapter"
-	  "(TCP/IP Networking)" पूर्ण,
-	अणु PCI_VENDOR_ID_QLOGIC,
+	  "(TCP/IP Networking)" },
+	{ PCI_VENDOR_ID_QLOGIC,
 	  PCI_DEVICE_ID_QLOGIC_QLE824X,
 	  PCI_VENDOR_ID_QLOGIC,
 	  0x20b,
-	  "3200 Series Dual Port 10Gb Intelligent Ethernet Adapter" पूर्ण,
-	अणु PCI_VENDOR_ID_QLOGIC,
+	  "3200 Series Dual Port 10Gb Intelligent Ethernet Adapter" },
+	{ PCI_VENDOR_ID_QLOGIC,
 	  PCI_DEVICE_ID_QLOGIC_QLE824X,
 	  PCI_VENDOR_ID_QLOGIC,
 	  0x20c,
-	  "3200 Series Quad Port 1Gb Intelligent Ethernet Adapter" पूर्ण,
-	अणु PCI_VENDOR_ID_QLOGIC,
+	  "3200 Series Quad Port 1Gb Intelligent Ethernet Adapter" },
+	{ PCI_VENDOR_ID_QLOGIC,
 	  PCI_DEVICE_ID_QLOGIC_QLE824X,
 	  PCI_VENDOR_ID_QLOGIC,
 	  0x20f,
-	  "3200 Series Single Port 10Gb Intelligent Ethernet Adapter" पूर्ण,
-	अणु PCI_VENDOR_ID_QLOGIC,
+	  "3200 Series Single Port 10Gb Intelligent Ethernet Adapter" },
+	{ PCI_VENDOR_ID_QLOGIC,
 	  PCI_DEVICE_ID_QLOGIC_QLE824X,
 	  0x103c, 0x3733,
-	  "NC523SFP 10Gb 2-port Server Adapter" पूर्ण,
-	अणु PCI_VENDOR_ID_QLOGIC,
+	  "NC523SFP 10Gb 2-port Server Adapter" },
+	{ PCI_VENDOR_ID_QLOGIC,
 	  PCI_DEVICE_ID_QLOGIC_QLE824X,
 	  0x103c, 0x3346,
-	  "CN1000Q Dual Port Converged Network Adapter" पूर्ण,
-	अणु PCI_VENDOR_ID_QLOGIC,
+	  "CN1000Q Dual Port Converged Network Adapter" },
+	{ PCI_VENDOR_ID_QLOGIC,
 	  PCI_DEVICE_ID_QLOGIC_QLE824X,
 	  PCI_VENDOR_ID_QLOGIC,
 	  0x210,
-	  "QME8242-k 10GbE Dual Port Mezzanine Card" पूर्ण,
-	अणु PCI_VENDOR_ID_QLOGIC,
+	  "QME8242-k 10GbE Dual Port Mezzanine Card" },
+	{ PCI_VENDOR_ID_QLOGIC,
 	  PCI_DEVICE_ID_QLOGIC_QLE824X,
-	  0x0, 0x0, "cLOM8214 1/10GbE Controller" पूर्ण,
-पूर्ण;
+	  0x0, 0x0, "cLOM8214 1/10GbE Controller" },
+};
 
-#घोषणा NUM_SUPPORTED_BOARDS ARRAY_SIZE(qlcnic_boards)
+#define NUM_SUPPORTED_BOARDS ARRAY_SIZE(qlcnic_boards)
 
-अटल स्थिर
-काष्ठा qlcnic_legacy_पूर्णांकr_set legacy_पूर्णांकr[] = QLCNIC_LEGACY_INTR_CONFIG;
+static const
+struct qlcnic_legacy_intr_set legacy_intr[] = QLCNIC_LEGACY_INTR_CONFIG;
 
-पूर्णांक qlcnic_alloc_sds_rings(काष्ठा qlcnic_recv_context *recv_ctx, पूर्णांक count)
-अणु
-	पूर्णांक size = माप(काष्ठा qlcnic_host_sds_ring) * count;
+int qlcnic_alloc_sds_rings(struct qlcnic_recv_context *recv_ctx, int count)
+{
+	int size = sizeof(struct qlcnic_host_sds_ring) * count;
 
 	recv_ctx->sds_rings = kzalloc(size, GFP_KERNEL);
 
-	वापस recv_ctx->sds_rings == शून्य;
-पूर्ण
+	return recv_ctx->sds_rings == NULL;
+}
 
-व्योम qlcnic_मुक्त_sds_rings(काष्ठा qlcnic_recv_context *recv_ctx)
-अणु
-	kमुक्त(recv_ctx->sds_rings);
-	recv_ctx->sds_rings = शून्य;
-पूर्ण
+void qlcnic_free_sds_rings(struct qlcnic_recv_context *recv_ctx)
+{
+	kfree(recv_ctx->sds_rings);
+	recv_ctx->sds_rings = NULL;
+}
 
-पूर्णांक qlcnic_पढ़ो_mac_addr(काष्ठा qlcnic_adapter *adapter)
-अणु
-	काष्ठा net_device *netdev = adapter->netdev;
-	काष्ठा pci_dev *pdev = adapter->pdev;
+int qlcnic_read_mac_addr(struct qlcnic_adapter *adapter)
+{
+	struct net_device *netdev = adapter->netdev;
+	struct pci_dev *pdev = adapter->pdev;
 	u8 mac_addr[ETH_ALEN];
-	पूर्णांक ret;
+	int ret;
 
 	ret = qlcnic_get_mac_address(adapter, mac_addr,
 				     adapter->ahw->pci_func);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	स_नकल(netdev->dev_addr, mac_addr, ETH_ALEN);
-	स_नकल(adapter->mac_addr, netdev->dev_addr, netdev->addr_len);
+	memcpy(netdev->dev_addr, mac_addr, ETH_ALEN);
+	memcpy(adapter->mac_addr, netdev->dev_addr, netdev->addr_len);
 
 	/* set station address */
 
-	अगर (!is_valid_ether_addr(netdev->dev_addr))
+	if (!is_valid_ether_addr(netdev->dev_addr))
 		dev_warn(&pdev->dev, "Bad MAC address %pM.\n",
 					netdev->dev_addr);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम qlcnic_delete_adapter_mac(काष्ठा qlcnic_adapter *adapter)
-अणु
-	काष्ठा qlcnic_mac_vlan_list *cur;
-	काष्ठा list_head *head;
+static void qlcnic_delete_adapter_mac(struct qlcnic_adapter *adapter)
+{
+	struct qlcnic_mac_vlan_list *cur;
+	struct list_head *head;
 
-	list_क्रम_each(head, &adapter->mac_list) अणु
-		cur = list_entry(head, काष्ठा qlcnic_mac_vlan_list, list);
-		अगर (ether_addr_equal_unaligned(adapter->mac_addr, cur->mac_addr)) अणु
+	list_for_each(head, &adapter->mac_list) {
+		cur = list_entry(head, struct qlcnic_mac_vlan_list, list);
+		if (ether_addr_equal_unaligned(adapter->mac_addr, cur->mac_addr)) {
 			qlcnic_sre_macaddr_change(adapter, cur->mac_addr,
 						  0, QLCNIC_MAC_DEL);
 			list_del(&cur->list);
-			kमुक्त(cur);
-			वापस;
-		पूर्ण
-	पूर्ण
-पूर्ण
+			kfree(cur);
+			return;
+		}
+	}
+}
 
-अटल पूर्णांक qlcnic_set_mac(काष्ठा net_device *netdev, व्योम *p)
-अणु
-	काष्ठा qlcnic_adapter *adapter = netdev_priv(netdev);
-	काष्ठा sockaddr *addr = p;
+static int qlcnic_set_mac(struct net_device *netdev, void *p)
+{
+	struct qlcnic_adapter *adapter = netdev_priv(netdev);
+	struct sockaddr *addr = p;
 
-	अगर (qlcnic_sriov_vf_check(adapter))
-		वापस -EINVAL;
+	if (qlcnic_sriov_vf_check(adapter))
+		return -EINVAL;
 
-	अगर ((adapter->flags & QLCNIC_MAC_OVERRIDE_DISABLED))
-		वापस -EOPNOTSUPP;
+	if ((adapter->flags & QLCNIC_MAC_OVERRIDE_DISABLED))
+		return -EOPNOTSUPP;
 
-	अगर (!is_valid_ether_addr(addr->sa_data))
-		वापस -EINVAL;
+	if (!is_valid_ether_addr(addr->sa_data))
+		return -EINVAL;
 
-	अगर (ether_addr_equal_unaligned(adapter->mac_addr, addr->sa_data) &&
+	if (ether_addr_equal_unaligned(adapter->mac_addr, addr->sa_data) &&
 	    ether_addr_equal_unaligned(netdev->dev_addr, addr->sa_data))
-		वापस 0;
+		return 0;
 
-	अगर (test_bit(__QLCNIC_DEV_UP, &adapter->state)) अणु
-		netअगर_device_detach(netdev);
+	if (test_bit(__QLCNIC_DEV_UP, &adapter->state)) {
+		netif_device_detach(netdev);
 		qlcnic_napi_disable(adapter);
-	पूर्ण
+	}
 
 	qlcnic_delete_adapter_mac(adapter);
-	स_नकल(adapter->mac_addr, addr->sa_data, netdev->addr_len);
-	स_नकल(netdev->dev_addr, addr->sa_data, netdev->addr_len);
+	memcpy(adapter->mac_addr, addr->sa_data, netdev->addr_len);
+	memcpy(netdev->dev_addr, addr->sa_data, netdev->addr_len);
 	qlcnic_set_multi(adapter->netdev);
 
-	अगर (test_bit(__QLCNIC_DEV_UP, &adapter->state)) अणु
-		netअगर_device_attach(netdev);
+	if (test_bit(__QLCNIC_DEV_UP, &adapter->state)) {
+		netif_device_attach(netdev);
 		qlcnic_napi_enable(adapter);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल पूर्णांक qlcnic_fdb_del(काष्ठा ndmsg *ndm, काष्ठा nlattr *tb[],
-			काष्ठा net_device *netdev,
-			स्थिर अचिन्हित अक्षर *addr, u16 vid)
-अणु
-	काष्ठा qlcnic_adapter *adapter = netdev_priv(netdev);
-	पूर्णांक err = -EOPNOTSUPP;
+static int qlcnic_fdb_del(struct ndmsg *ndm, struct nlattr *tb[],
+			struct net_device *netdev,
+			const unsigned char *addr, u16 vid)
+{
+	struct qlcnic_adapter *adapter = netdev_priv(netdev);
+	int err = -EOPNOTSUPP;
 
-	अगर (!adapter->fdb_mac_learn)
-		वापस nकरो_dflt_fdb_del(ndm, tb, netdev, addr, vid);
+	if (!adapter->fdb_mac_learn)
+		return ndo_dflt_fdb_del(ndm, tb, netdev, addr, vid);
 
-	अगर ((adapter->flags & QLCNIC_ESWITCH_ENABLED) ||
-	    qlcnic_sriov_check(adapter)) अणु
-		अगर (is_unicast_ether_addr(addr)) अणु
+	if ((adapter->flags & QLCNIC_ESWITCH_ENABLED) ||
+	    qlcnic_sriov_check(adapter)) {
+		if (is_unicast_ether_addr(addr)) {
 			err = dev_uc_del(netdev, addr);
-			अगर (!err)
+			if (!err)
 				err = qlcnic_nic_del_mac(adapter, addr);
-		पूर्ण अन्यथा अगर (is_multicast_ether_addr(addr)) अणु
+		} else if (is_multicast_ether_addr(addr)) {
 			err = dev_mc_del(netdev, addr);
-		पूर्ण अन्यथा अणु
+		} else {
 			err =  -EINVAL;
-		पूर्ण
-	पूर्ण
-	वापस err;
-पूर्ण
+		}
+	}
+	return err;
+}
 
-अटल पूर्णांक qlcnic_fdb_add(काष्ठा ndmsg *ndm, काष्ठा nlattr *tb[],
-			काष्ठा net_device *netdev,
-			स्थिर अचिन्हित अक्षर *addr, u16 vid, u16 flags,
-			काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा qlcnic_adapter *adapter = netdev_priv(netdev);
-	पूर्णांक err = 0;
+static int qlcnic_fdb_add(struct ndmsg *ndm, struct nlattr *tb[],
+			struct net_device *netdev,
+			const unsigned char *addr, u16 vid, u16 flags,
+			struct netlink_ext_ack *extack)
+{
+	struct qlcnic_adapter *adapter = netdev_priv(netdev);
+	int err = 0;
 
-	अगर (!adapter->fdb_mac_learn)
-		वापस nकरो_dflt_fdb_add(ndm, tb, netdev, addr, vid, flags);
+	if (!adapter->fdb_mac_learn)
+		return ndo_dflt_fdb_add(ndm, tb, netdev, addr, vid, flags);
 
-	अगर (!(adapter->flags & QLCNIC_ESWITCH_ENABLED) &&
-	    !qlcnic_sriov_check(adapter)) अणु
+	if (!(adapter->flags & QLCNIC_ESWITCH_ENABLED) &&
+	    !qlcnic_sriov_check(adapter)) {
 		pr_info("%s: FDB e-switch is not enabled\n", __func__);
-		वापस -EOPNOTSUPP;
-	पूर्ण
+		return -EOPNOTSUPP;
+	}
 
-	अगर (ether_addr_equal(addr, adapter->mac_addr))
-		वापस err;
+	if (ether_addr_equal(addr, adapter->mac_addr))
+		return err;
 
-	अगर (is_unicast_ether_addr(addr)) अणु
-		अगर (netdev_uc_count(netdev) < adapter->ahw->max_uc_count)
+	if (is_unicast_ether_addr(addr)) {
+		if (netdev_uc_count(netdev) < adapter->ahw->max_uc_count)
 			err = dev_uc_add_excl(netdev, addr);
-		अन्यथा
+		else
 			err = -ENOMEM;
-	पूर्ण अन्यथा अगर (is_multicast_ether_addr(addr)) अणु
+	} else if (is_multicast_ether_addr(addr)) {
 		err = dev_mc_add_excl(netdev, addr);
-	पूर्ण अन्यथा अणु
+	} else {
 		err = -EINVAL;
-	पूर्ण
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक qlcnic_fdb_dump(काष्ठा sk_buff *skb, काष्ठा netlink_callback *ncb,
-			काष्ठा net_device *netdev,
-			काष्ठा net_device *filter_dev, पूर्णांक *idx)
-अणु
-	काष्ठा qlcnic_adapter *adapter = netdev_priv(netdev);
-	पूर्णांक err = 0;
+static int qlcnic_fdb_dump(struct sk_buff *skb, struct netlink_callback *ncb,
+			struct net_device *netdev,
+			struct net_device *filter_dev, int *idx)
+{
+	struct qlcnic_adapter *adapter = netdev_priv(netdev);
+	int err = 0;
 
-	अगर (!adapter->fdb_mac_learn)
-		वापस nकरो_dflt_fdb_dump(skb, ncb, netdev, filter_dev, idx);
+	if (!adapter->fdb_mac_learn)
+		return ndo_dflt_fdb_dump(skb, ncb, netdev, filter_dev, idx);
 
-	अगर ((adapter->flags & QLCNIC_ESWITCH_ENABLED) ||
+	if ((adapter->flags & QLCNIC_ESWITCH_ENABLED) ||
 	    qlcnic_sriov_check(adapter))
-		err = nकरो_dflt_fdb_dump(skb, ncb, netdev, filter_dev, idx);
+		err = ndo_dflt_fdb_dump(skb, ncb, netdev, filter_dev, idx);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम qlcnic_82xx_cancel_idc_work(काष्ठा qlcnic_adapter *adapter)
-अणु
-	जबतक (test_and_set_bit(__QLCNIC_RESETTING, &adapter->state))
+static void qlcnic_82xx_cancel_idc_work(struct qlcnic_adapter *adapter)
+{
+	while (test_and_set_bit(__QLCNIC_RESETTING, &adapter->state))
 		usleep_range(10000, 11000);
 
-	अगर (!adapter->fw_work.work.func)
-		वापस;
+	if (!adapter->fw_work.work.func)
+		return;
 
 	cancel_delayed_work_sync(&adapter->fw_work);
-पूर्ण
+}
 
-अटल पूर्णांक qlcnic_get_phys_port_id(काष्ठा net_device *netdev,
-				   काष्ठा netdev_phys_item_id *ppid)
-अणु
-	काष्ठा qlcnic_adapter *adapter = netdev_priv(netdev);
-	काष्ठा qlcnic_hardware_context *ahw = adapter->ahw;
+static int qlcnic_get_phys_port_id(struct net_device *netdev,
+				   struct netdev_phys_item_id *ppid)
+{
+	struct qlcnic_adapter *adapter = netdev_priv(netdev);
+	struct qlcnic_hardware_context *ahw = adapter->ahw;
 
-	अगर (!(adapter->flags & QLCNIC_HAS_PHYS_PORT_ID))
-		वापस -EOPNOTSUPP;
+	if (!(adapter->flags & QLCNIC_HAS_PHYS_PORT_ID))
+		return -EOPNOTSUPP;
 
-	ppid->id_len = माप(ahw->phys_port_id);
-	स_नकल(ppid->id, ahw->phys_port_id, ppid->id_len);
+	ppid->id_len = sizeof(ahw->phys_port_id);
+	memcpy(ppid->id, ahw->phys_port_id, ppid->id_len);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक qlcnic_udp_tunnel_sync(काष्ठा net_device *dev, अचिन्हित पूर्णांक table)
-अणु
-	काष्ठा qlcnic_adapter *adapter = netdev_priv(dev);
-	काष्ठा udp_tunnel_info ti;
-	पूर्णांक err;
+static int qlcnic_udp_tunnel_sync(struct net_device *dev, unsigned int table)
+{
+	struct qlcnic_adapter *adapter = netdev_priv(dev);
+	struct udp_tunnel_info ti;
+	int err;
 
 	udp_tunnel_nic_get_port(dev, table, 0, &ti);
-	अगर (ti.port) अणु
+	if (ti.port) {
 		err = qlcnic_set_vxlan_port(adapter, ntohs(ti.port));
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 
-	वापस qlcnic_set_vxlan_parsing(adapter, ntohs(ti.port));
-पूर्ण
+	return qlcnic_set_vxlan_parsing(adapter, ntohs(ti.port));
+}
 
-अटल स्थिर काष्ठा udp_tunnel_nic_info qlcnic_udp_tunnels = अणु
+static const struct udp_tunnel_nic_info qlcnic_udp_tunnels = {
 	.sync_table	= qlcnic_udp_tunnel_sync,
 	.flags		= UDP_TUNNEL_NIC_INFO_MAY_SLEEP,
-	.tables		= अणु
-		अणु .n_entries = 1, .tunnel_types = UDP_TUNNEL_TYPE_VXLAN, पूर्ण,
-	पूर्ण,
-पूर्ण;
+	.tables		= {
+		{ .n_entries = 1, .tunnel_types = UDP_TUNNEL_TYPE_VXLAN, },
+	},
+};
 
-अटल netdev_features_t qlcnic_features_check(काष्ठा sk_buff *skb,
-					       काष्ठा net_device *dev,
+static netdev_features_t qlcnic_features_check(struct sk_buff *skb,
+					       struct net_device *dev,
 					       netdev_features_t features)
-अणु
+{
 	features = vlan_features_check(skb, features);
-	वापस vxlan_features_check(skb, features);
-पूर्ण
+	return vxlan_features_check(skb, features);
+}
 
-अटल स्थिर काष्ठा net_device_ops qlcnic_netdev_ops = अणु
-	.nकरो_खोलो	   = qlcnic_खोलो,
-	.nकरो_stop	   = qlcnic_बंद,
-	.nकरो_start_xmit    = qlcnic_xmit_frame,
-	.nकरो_get_stats	   = qlcnic_get_stats,
-	.nकरो_validate_addr = eth_validate_addr,
-	.nकरो_set_rx_mode   = qlcnic_set_multi,
-	.nकरो_set_mac_address    = qlcnic_set_mac,
-	.nकरो_change_mtu	   = qlcnic_change_mtu,
-	.nकरो_fix_features  = qlcnic_fix_features,
-	.nकरो_set_features  = qlcnic_set_features,
-	.nकरो_tx_समयout	   = qlcnic_tx_समयout,
-	.nकरो_vlan_rx_add_vid	= qlcnic_vlan_rx_add,
-	.nकरो_vlan_rx_समाप्त_vid	= qlcnic_vlan_rx_del,
-	.nकरो_fdb_add		= qlcnic_fdb_add,
-	.nकरो_fdb_del		= qlcnic_fdb_del,
-	.nकरो_fdb_dump		= qlcnic_fdb_dump,
-	.nकरो_get_phys_port_id	= qlcnic_get_phys_port_id,
-	.nकरो_features_check	= qlcnic_features_check,
-#अगर_घोषित CONFIG_QLCNIC_SRIOV
-	.nकरो_set_vf_mac		= qlcnic_sriov_set_vf_mac,
-	.nकरो_set_vf_rate	= qlcnic_sriov_set_vf_tx_rate,
-	.nकरो_get_vf_config	= qlcnic_sriov_get_vf_config,
-	.nकरो_set_vf_vlan	= qlcnic_sriov_set_vf_vlan,
-	.nकरो_set_vf_spoofchk	= qlcnic_sriov_set_vf_spoofchk,
-#पूर्ण_अगर
-पूर्ण;
+static const struct net_device_ops qlcnic_netdev_ops = {
+	.ndo_open	   = qlcnic_open,
+	.ndo_stop	   = qlcnic_close,
+	.ndo_start_xmit    = qlcnic_xmit_frame,
+	.ndo_get_stats	   = qlcnic_get_stats,
+	.ndo_validate_addr = eth_validate_addr,
+	.ndo_set_rx_mode   = qlcnic_set_multi,
+	.ndo_set_mac_address    = qlcnic_set_mac,
+	.ndo_change_mtu	   = qlcnic_change_mtu,
+	.ndo_fix_features  = qlcnic_fix_features,
+	.ndo_set_features  = qlcnic_set_features,
+	.ndo_tx_timeout	   = qlcnic_tx_timeout,
+	.ndo_vlan_rx_add_vid	= qlcnic_vlan_rx_add,
+	.ndo_vlan_rx_kill_vid	= qlcnic_vlan_rx_del,
+	.ndo_fdb_add		= qlcnic_fdb_add,
+	.ndo_fdb_del		= qlcnic_fdb_del,
+	.ndo_fdb_dump		= qlcnic_fdb_dump,
+	.ndo_get_phys_port_id	= qlcnic_get_phys_port_id,
+	.ndo_features_check	= qlcnic_features_check,
+#ifdef CONFIG_QLCNIC_SRIOV
+	.ndo_set_vf_mac		= qlcnic_sriov_set_vf_mac,
+	.ndo_set_vf_rate	= qlcnic_sriov_set_vf_tx_rate,
+	.ndo_get_vf_config	= qlcnic_sriov_get_vf_config,
+	.ndo_set_vf_vlan	= qlcnic_sriov_set_vf_vlan,
+	.ndo_set_vf_spoofchk	= qlcnic_sriov_set_vf_spoofchk,
+#endif
+};
 
-अटल स्थिर काष्ठा net_device_ops qlcnic_netdev_failed_ops = अणु
-	.nकरो_खोलो	   = qlcnic_खोलो,
-पूर्ण;
+static const struct net_device_ops qlcnic_netdev_failed_ops = {
+	.ndo_open	   = qlcnic_open,
+};
 
-अटल काष्ठा qlcnic_nic_ढाँचा qlcnic_ops = अणु
+static struct qlcnic_nic_template qlcnic_ops = {
 	.config_bridged_mode	= qlcnic_config_bridged_mode,
 	.config_led		= qlcnic_82xx_config_led,
 	.start_firmware		= qlcnic_82xx_start_firmware,
@@ -544,31 +543,31 @@ MODULE_DEVICE_TABLE(pci, qlcnic_pci_tbl);
 	.napi_add		= qlcnic_82xx_napi_add,
 	.napi_del		= qlcnic_82xx_napi_del,
 	.config_ipaddr		= qlcnic_82xx_config_ipaddr,
-	.shutकरोwn		= qlcnic_82xx_shutकरोwn,
+	.shutdown		= qlcnic_82xx_shutdown,
 	.resume			= qlcnic_82xx_resume,
-	.clear_legacy_पूर्णांकr	= qlcnic_82xx_clear_legacy_पूर्णांकr,
-पूर्ण;
+	.clear_legacy_intr	= qlcnic_82xx_clear_legacy_intr,
+};
 
-काष्ठा qlcnic_nic_ढाँचा qlcnic_vf_ops = अणु
+struct qlcnic_nic_template qlcnic_vf_ops = {
 	.config_bridged_mode	= qlcnicvf_config_bridged_mode,
 	.config_led		= qlcnicvf_config_led,
 	.start_firmware		= qlcnicvf_start_firmware
-पूर्ण;
+};
 
-अटल काष्ठा qlcnic_hardware_ops qlcnic_hw_ops = अणु
-	.पढ़ो_crb			= qlcnic_82xx_पढ़ो_crb,
-	.ग_लिखो_crb			= qlcnic_82xx_ग_लिखो_crb,
-	.पढ़ो_reg			= qlcnic_82xx_hw_पढ़ो_wx_2M,
-	.ग_लिखो_reg			= qlcnic_82xx_hw_ग_लिखो_wx_2M,
+static struct qlcnic_hardware_ops qlcnic_hw_ops = {
+	.read_crb			= qlcnic_82xx_read_crb,
+	.write_crb			= qlcnic_82xx_write_crb,
+	.read_reg			= qlcnic_82xx_hw_read_wx_2M,
+	.write_reg			= qlcnic_82xx_hw_write_wx_2M,
 	.get_mac_address		= qlcnic_82xx_get_mac_address,
-	.setup_पूर्णांकr			= qlcnic_82xx_setup_पूर्णांकr,
+	.setup_intr			= qlcnic_82xx_setup_intr,
 	.alloc_mbx_args			= qlcnic_82xx_alloc_mbx_args,
 	.mbx_cmd			= qlcnic_82xx_issue_cmd,
 	.get_func_no			= qlcnic_82xx_get_func_no,
 	.api_lock			= qlcnic_82xx_api_lock,
 	.api_unlock			= qlcnic_82xx_api_unlock,
 	.add_sysfs			= qlcnic_82xx_add_sysfs,
-	.हटाओ_sysfs			= qlcnic_82xx_हटाओ_sysfs,
+	.remove_sysfs			= qlcnic_82xx_remove_sysfs,
 	.process_lb_rcv_ring_diag	= qlcnic_82xx_process_rcv_ring_diag,
 	.create_rx_ctx			= qlcnic_82xx_fw_cmd_create_rx_ctx,
 	.create_tx_ctx			= qlcnic_82xx_fw_cmd_create_tx_ctx,
@@ -581,7 +580,7 @@ MODULE_DEVICE_TABLE(pci, qlcnic_pci_tbl);
 	.change_macvlan			= qlcnic_82xx_sre_macaddr_change,
 	.napi_enable			= qlcnic_82xx_napi_enable,
 	.napi_disable			= qlcnic_82xx_napi_disable,
-	.config_पूर्णांकr_coal		= qlcnic_82xx_config_पूर्णांकr_coalesce,
+	.config_intr_coal		= qlcnic_82xx_config_intr_coalesce,
 	.config_rss			= qlcnic_82xx_config_rss,
 	.config_hw_lro			= qlcnic_82xx_config_hw_lro,
 	.config_loopback		= qlcnic_82xx_set_lb_mode,
@@ -590,114 +589,114 @@ MODULE_DEVICE_TABLE(pci, qlcnic_pci_tbl);
 	.change_l2_filter		= qlcnic_82xx_change_filter,
 	.get_board_info			= qlcnic_82xx_get_board_info,
 	.set_mac_filter_count		= qlcnic_82xx_set_mac_filter_count,
-	.मुक्त_mac_list			= qlcnic_82xx_मुक्त_mac_list,
-	.पढ़ो_phys_port_id		= qlcnic_82xx_पढ़ो_phys_port_id,
+	.free_mac_list			= qlcnic_82xx_free_mac_list,
+	.read_phys_port_id		= qlcnic_82xx_read_phys_port_id,
 	.io_error_detected		= qlcnic_82xx_io_error_detected,
 	.io_slot_reset			= qlcnic_82xx_io_slot_reset,
 	.io_resume			= qlcnic_82xx_io_resume,
 	.get_beacon_state		= qlcnic_82xx_get_beacon_state,
-	.enable_sds_पूर्णांकr		= qlcnic_82xx_enable_sds_पूर्णांकr,
-	.disable_sds_पूर्णांकr		= qlcnic_82xx_disable_sds_पूर्णांकr,
-	.enable_tx_पूर्णांकr			= qlcnic_82xx_enable_tx_पूर्णांकr,
-	.disable_tx_पूर्णांकr		= qlcnic_82xx_disable_tx_पूर्णांकr,
+	.enable_sds_intr		= qlcnic_82xx_enable_sds_intr,
+	.disable_sds_intr		= qlcnic_82xx_disable_sds_intr,
+	.enable_tx_intr			= qlcnic_82xx_enable_tx_intr,
+	.disable_tx_intr		= qlcnic_82xx_disable_tx_intr,
 	.get_saved_state		= qlcnic_82xx_get_saved_state,
 	.set_saved_state		= qlcnic_82xx_set_saved_state,
-	.cache_पंचांगpl_hdr_values		= qlcnic_82xx_cache_पंचांगpl_hdr_values,
+	.cache_tmpl_hdr_values		= qlcnic_82xx_cache_tmpl_hdr_values,
 	.get_cap_size			= qlcnic_82xx_get_cap_size,
 	.set_sys_info			= qlcnic_82xx_set_sys_info,
 	.store_cap_mask			= qlcnic_82xx_store_cap_mask,
 	.encap_rx_offload               = qlcnic_82xx_encap_rx_offload,
 	.encap_tx_offload               = qlcnic_82xx_encap_tx_offload,
-पूर्ण;
+};
 
-अटल पूर्णांक qlcnic_check_multi_tx_capability(काष्ठा qlcnic_adapter *adapter)
-अणु
-	काष्ठा qlcnic_hardware_context *ahw = adapter->ahw;
+static int qlcnic_check_multi_tx_capability(struct qlcnic_adapter *adapter)
+{
+	struct qlcnic_hardware_context *ahw = adapter->ahw;
 
-	अगर (qlcnic_82xx_check(adapter) &&
-	    (ahw->extra_capability[0] & QLCNIC_FW_CAPABILITY_2_MULTI_TX)) अणु
+	if (qlcnic_82xx_check(adapter) &&
+	    (ahw->extra_capability[0] & QLCNIC_FW_CAPABILITY_2_MULTI_TX)) {
 		test_and_set_bit(__QLCNIC_MULTI_TX_UNIQUE, &adapter->state);
-		वापस 0;
-	पूर्ण अन्यथा अणु
-		वापस 1;
-	पूर्ण
-पूर्ण
+		return 0;
+	} else {
+		return 1;
+	}
+}
 
-अटल पूर्णांक qlcnic_max_rings(काष्ठा qlcnic_adapter *adapter, u8 ring_cnt,
-			    पूर्णांक queue_type)
-अणु
-	पूर्णांक num_rings, max_rings = QLCNIC_MAX_SDS_RINGS;
+static int qlcnic_max_rings(struct qlcnic_adapter *adapter, u8 ring_cnt,
+			    int queue_type)
+{
+	int num_rings, max_rings = QLCNIC_MAX_SDS_RINGS;
 
-	अगर (queue_type == QLCNIC_RX_QUEUE)
+	if (queue_type == QLCNIC_RX_QUEUE)
 		max_rings = adapter->max_sds_rings;
-	अन्यथा अगर (queue_type == QLCNIC_TX_QUEUE)
+	else if (queue_type == QLCNIC_TX_QUEUE)
 		max_rings = adapter->max_tx_rings;
 
-	num_rings = roundकरोwn_घात_of_two(min_t(पूर्णांक, num_online_cpus(),
+	num_rings = rounddown_pow_of_two(min_t(int, num_online_cpus(),
 					      max_rings));
 
-	अगर (ring_cnt > num_rings)
-		वापस num_rings;
-	अन्यथा
-		वापस ring_cnt;
-पूर्ण
+	if (ring_cnt > num_rings)
+		return num_rings;
+	else
+		return ring_cnt;
+}
 
-व्योम qlcnic_set_tx_ring_count(काष्ठा qlcnic_adapter *adapter, u8 tx_cnt)
-अणु
-	/* 83xx adapter करोes not have max_tx_rings पूर्णांकialized in probe */
-	अगर (adapter->max_tx_rings)
+void qlcnic_set_tx_ring_count(struct qlcnic_adapter *adapter, u8 tx_cnt)
+{
+	/* 83xx adapter does not have max_tx_rings intialized in probe */
+	if (adapter->max_tx_rings)
 		adapter->drv_tx_rings = qlcnic_max_rings(adapter, tx_cnt,
 							 QLCNIC_TX_QUEUE);
-	अन्यथा
+	else
 		adapter->drv_tx_rings = tx_cnt;
-पूर्ण
+}
 
-व्योम qlcnic_set_sds_ring_count(काष्ठा qlcnic_adapter *adapter, u8 rx_cnt)
-अणु
-	/* 83xx adapter करोes not have max_sds_rings पूर्णांकialized in probe */
-	अगर (adapter->max_sds_rings)
+void qlcnic_set_sds_ring_count(struct qlcnic_adapter *adapter, u8 rx_cnt)
+{
+	/* 83xx adapter does not have max_sds_rings intialized in probe */
+	if (adapter->max_sds_rings)
 		adapter->drv_sds_rings = qlcnic_max_rings(adapter, rx_cnt,
 							  QLCNIC_RX_QUEUE);
-	अन्यथा
+	else
 		adapter->drv_sds_rings = rx_cnt;
-पूर्ण
+}
 
-पूर्णांक qlcnic_setup_tss_rss_पूर्णांकr(काष्ठा qlcnic_adapter *adapter)
-अणु
-	काष्ठा pci_dev *pdev = adapter->pdev;
-	पूर्णांक num_msix = 0, err = 0, vector;
+int qlcnic_setup_tss_rss_intr(struct qlcnic_adapter *adapter)
+{
+	struct pci_dev *pdev = adapter->pdev;
+	int num_msix = 0, err = 0, vector;
 
 	adapter->flags &= ~QLCNIC_TSS_RSS;
 
-	अगर (adapter->drv_tss_rings > 0)
+	if (adapter->drv_tss_rings > 0)
 		num_msix += adapter->drv_tss_rings;
-	अन्यथा
+	else
 		num_msix += adapter->drv_tx_rings;
 
-	अगर (adapter->drv_rss_rings > 0)
+	if (adapter->drv_rss_rings > 0)
 		num_msix += adapter->drv_rss_rings;
-	अन्यथा
+	else
 		num_msix += adapter->drv_sds_rings;
 
-	अगर (qlcnic_83xx_check(adapter))
+	if (qlcnic_83xx_check(adapter))
 		num_msix += 1;
 
-	अगर (!adapter->msix_entries) अणु
-		adapter->msix_entries = kसुस्मृति(num_msix,
-						माप(काष्ठा msix_entry),
+	if (!adapter->msix_entries) {
+		adapter->msix_entries = kcalloc(num_msix,
+						sizeof(struct msix_entry),
 						GFP_KERNEL);
-		अगर (!adapter->msix_entries)
-			वापस -ENOMEM;
-	पूर्ण
+		if (!adapter->msix_entries)
+			return -ENOMEM;
+	}
 
-	क्रम (vector = 0; vector < num_msix; vector++)
+	for (vector = 0; vector < num_msix; vector++)
 		adapter->msix_entries[vector].entry = vector;
 
 restore:
 	err = pci_enable_msix_exact(pdev, adapter->msix_entries, num_msix);
-	अगर (err == -ENOSPC) अणु
-		अगर (!adapter->drv_tss_rings && !adapter->drv_rss_rings)
-			वापस err;
+	if (err == -ENOSPC) {
+		if (!adapter->drv_tss_rings && !adapter->drv_rss_rings)
+			return err;
 
 		netdev_info(adapter->netdev,
 			    "Unable to allocate %d MSI-X vectors, Available vectors %d\n",
@@ -709,7 +708,7 @@ restore:
 		adapter->drv_tss_rings = 0;
 		adapter->drv_rss_rings = 0;
 
-		अगर (qlcnic_83xx_check(adapter))
+		if (qlcnic_83xx_check(adapter))
 			num_msix += 1;
 
 		netdev_info(adapter->netdev,
@@ -717,374 +716,374 @@ restore:
 			    adapter->drv_tx_rings, adapter->drv_sds_rings,
 			    num_msix);
 
-		जाओ restore;
-	पूर्ण अन्यथा अगर (err < 0) अणु
-		वापस err;
-	पूर्ण
+		goto restore;
+	} else if (err < 0) {
+		return err;
+	}
 
 	adapter->ahw->num_msix = num_msix;
-	अगर (adapter->drv_tss_rings > 0)
+	if (adapter->drv_tss_rings > 0)
 		adapter->drv_tx_rings = adapter->drv_tss_rings;
 
-	अगर (adapter->drv_rss_rings > 0)
+	if (adapter->drv_rss_rings > 0)
 		adapter->drv_sds_rings = adapter->drv_rss_rings;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक qlcnic_enable_msix(काष्ठा qlcnic_adapter *adapter, u32 num_msix)
-अणु
-	काष्ठा pci_dev *pdev = adapter->pdev;
-	पूर्णांक err, vector;
+int qlcnic_enable_msix(struct qlcnic_adapter *adapter, u32 num_msix)
+{
+	struct pci_dev *pdev = adapter->pdev;
+	int err, vector;
 
-	अगर (!adapter->msix_entries) अणु
-		adapter->msix_entries = kसुस्मृति(num_msix,
-						माप(काष्ठा msix_entry),
+	if (!adapter->msix_entries) {
+		adapter->msix_entries = kcalloc(num_msix,
+						sizeof(struct msix_entry),
 						GFP_KERNEL);
-		अगर (!adapter->msix_entries)
-			वापस -ENOMEM;
-	पूर्ण
+		if (!adapter->msix_entries)
+			return -ENOMEM;
+	}
 
 	adapter->flags &= ~(QLCNIC_MSI_ENABLED | QLCNIC_MSIX_ENABLED);
 
-	अगर (adapter->ahw->msix_supported) अणु
+	if (adapter->ahw->msix_supported) {
 enable_msix:
-		क्रम (vector = 0; vector < num_msix; vector++)
+		for (vector = 0; vector < num_msix; vector++)
 			adapter->msix_entries[vector].entry = vector;
 
 		err = pci_enable_msix_range(pdev,
 					    adapter->msix_entries, 1, num_msix);
 
-		अगर (err == num_msix) अणु
+		if (err == num_msix) {
 			adapter->flags |= QLCNIC_MSIX_ENABLED;
 			adapter->ahw->num_msix = num_msix;
 			dev_info(&pdev->dev, "using msi-x interrupts\n");
-			वापस 0;
-		पूर्ण अन्यथा अगर (err > 0) अणु
+			return 0;
+		} else if (err > 0) {
 			pci_disable_msix(pdev);
 
 			dev_info(&pdev->dev,
 				 "Unable to allocate %d MSI-X vectors, Available vectors %d\n",
 				 num_msix, err);
 
-			अगर (qlcnic_82xx_check(adapter)) अणु
-				num_msix = roundकरोwn_घात_of_two(err);
-				अगर (err < QLCNIC_82XX_MINIMUM_VECTOR)
-					वापस -ENOSPC;
-			पूर्ण अन्यथा अणु
-				num_msix = roundकरोwn_घात_of_two(err - 1);
+			if (qlcnic_82xx_check(adapter)) {
+				num_msix = rounddown_pow_of_two(err);
+				if (err < QLCNIC_82XX_MINIMUM_VECTOR)
+					return -ENOSPC;
+			} else {
+				num_msix = rounddown_pow_of_two(err - 1);
 				num_msix += 1;
-				अगर (err < QLCNIC_83XX_MINIMUM_VECTOR)
-					वापस -ENOSPC;
-			पूर्ण
+				if (err < QLCNIC_83XX_MINIMUM_VECTOR)
+					return -ENOSPC;
+			}
 
-			अगर (qlcnic_82xx_check(adapter) &&
-			    !qlcnic_check_multi_tx(adapter)) अणु
+			if (qlcnic_82xx_check(adapter) &&
+			    !qlcnic_check_multi_tx(adapter)) {
 				adapter->drv_sds_rings = num_msix;
 				adapter->drv_tx_rings = QLCNIC_SINGLE_RING;
-			पूर्ण अन्यथा अणु
+			} else {
 				/* Distribute vectors equally */
 				adapter->drv_tx_rings = num_msix / 2;
 				adapter->drv_sds_rings = adapter->drv_tx_rings;
-			पूर्ण
+			}
 
-			अगर (num_msix) अणु
+			if (num_msix) {
 				dev_info(&pdev->dev,
 					 "Trying to allocate %d MSI-X interrupt vectors\n",
 					 num_msix);
-				जाओ enable_msix;
-			पूर्ण
-		पूर्ण अन्यथा अणु
+				goto enable_msix;
+			}
+		} else {
 			dev_info(&pdev->dev,
 				 "Unable to allocate %d MSI-X vectors, err=%d\n",
 				 num_msix, err);
-			वापस err;
-		पूर्ण
-	पूर्ण
+			return err;
+		}
+	}
 
-	वापस -EIO;
-पूर्ण
+	return -EIO;
+}
 
-अटल पूर्णांक qlcnic_82xx_calculate_msix_vector(काष्ठा qlcnic_adapter *adapter)
-अणु
-	पूर्णांक num_msix;
+static int qlcnic_82xx_calculate_msix_vector(struct qlcnic_adapter *adapter)
+{
+	int num_msix;
 
 	num_msix = adapter->drv_sds_rings;
 
-	अगर (qlcnic_check_multi_tx(adapter))
+	if (qlcnic_check_multi_tx(adapter))
 		num_msix += adapter->drv_tx_rings;
-	अन्यथा
+	else
 		num_msix += QLCNIC_SINGLE_RING;
 
-	वापस num_msix;
-पूर्ण
+	return num_msix;
+}
 
-अटल पूर्णांक qlcnic_enable_msi_legacy(काष्ठा qlcnic_adapter *adapter)
-अणु
-	पूर्णांक err = 0;
+static int qlcnic_enable_msi_legacy(struct qlcnic_adapter *adapter)
+{
+	int err = 0;
 	u32 offset, mask_reg;
-	स्थिर काष्ठा qlcnic_legacy_पूर्णांकr_set *legacy_पूर्णांकrp;
-	काष्ठा qlcnic_hardware_context *ahw = adapter->ahw;
-	काष्ठा pci_dev *pdev = adapter->pdev;
+	const struct qlcnic_legacy_intr_set *legacy_intrp;
+	struct qlcnic_hardware_context *ahw = adapter->ahw;
+	struct pci_dev *pdev = adapter->pdev;
 
-	अगर (qlcnic_use_msi && !pci_enable_msi(pdev)) अणु
+	if (qlcnic_use_msi && !pci_enable_msi(pdev)) {
 		adapter->flags |= QLCNIC_MSI_ENABLED;
 		offset = msi_tgt_status[adapter->ahw->pci_func];
 		adapter->tgt_status_reg = qlcnic_get_ioaddr(adapter->ahw,
 							    offset);
 		dev_info(&pdev->dev, "using msi interrupts\n");
 		adapter->msix_entries[0].vector = pdev->irq;
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	अगर (qlcnic_use_msi || qlcnic_use_msi_x)
-		वापस -EOPNOTSUPP;
+	if (qlcnic_use_msi || qlcnic_use_msi_x)
+		return -EOPNOTSUPP;
 
-	legacy_पूर्णांकrp = &legacy_पूर्णांकr[adapter->ahw->pci_func];
-	adapter->ahw->पूर्णांक_vec_bit = legacy_पूर्णांकrp->पूर्णांक_vec_bit;
-	offset = legacy_पूर्णांकrp->tgt_status_reg;
+	legacy_intrp = &legacy_intr[adapter->ahw->pci_func];
+	adapter->ahw->int_vec_bit = legacy_intrp->int_vec_bit;
+	offset = legacy_intrp->tgt_status_reg;
 	adapter->tgt_status_reg = qlcnic_get_ioaddr(ahw, offset);
-	mask_reg = legacy_पूर्णांकrp->tgt_mask_reg;
+	mask_reg = legacy_intrp->tgt_mask_reg;
 	adapter->tgt_mask_reg = qlcnic_get_ioaddr(ahw, mask_reg);
-	adapter->isr_पूर्णांक_vec = qlcnic_get_ioaddr(ahw, ISR_INT_VECTOR);
-	adapter->crb_पूर्णांक_state_reg = qlcnic_get_ioaddr(ahw, ISR_INT_STATE_REG);
+	adapter->isr_int_vec = qlcnic_get_ioaddr(ahw, ISR_INT_VECTOR);
+	adapter->crb_int_state_reg = qlcnic_get_ioaddr(ahw, ISR_INT_STATE_REG);
 	dev_info(&pdev->dev, "using legacy interrupts\n");
 	adapter->msix_entries[0].vector = pdev->irq;
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक qlcnic_82xx_setup_पूर्णांकr(काष्ठा qlcnic_adapter *adapter)
-अणु
-	पूर्णांक num_msix, err = 0;
+static int qlcnic_82xx_setup_intr(struct qlcnic_adapter *adapter)
+{
+	int num_msix, err = 0;
 
-	अगर (adapter->flags & QLCNIC_TSS_RSS) अणु
-		err = qlcnic_setup_tss_rss_पूर्णांकr(adapter);
-		अगर (err < 0)
-			वापस err;
+	if (adapter->flags & QLCNIC_TSS_RSS) {
+		err = qlcnic_setup_tss_rss_intr(adapter);
+		if (err < 0)
+			return err;
 		num_msix = adapter->ahw->num_msix;
-	पूर्ण अन्यथा अणु
+	} else {
 		num_msix = qlcnic_82xx_calculate_msix_vector(adapter);
 
 		err = qlcnic_enable_msix(adapter, num_msix);
-		अगर (err == -ENOMEM)
-			वापस err;
+		if (err == -ENOMEM)
+			return err;
 
-		अगर (!(adapter->flags & QLCNIC_MSIX_ENABLED)) अणु
+		if (!(adapter->flags & QLCNIC_MSIX_ENABLED)) {
 			qlcnic_disable_multi_tx(adapter);
 			adapter->drv_sds_rings = QLCNIC_SINGLE_RING;
 
 			err = qlcnic_enable_msi_legacy(adapter);
-			अगर (err)
-				वापस err;
-		पूर्ण
-	पूर्ण
+			if (err)
+				return err;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक qlcnic_82xx_mq_पूर्णांकrpt(काष्ठा qlcnic_adapter *adapter, पूर्णांक op_type)
-अणु
-	काष्ठा qlcnic_hardware_context *ahw = adapter->ahw;
-	पूर्णांक err, i;
+int qlcnic_82xx_mq_intrpt(struct qlcnic_adapter *adapter, int op_type)
+{
+	struct qlcnic_hardware_context *ahw = adapter->ahw;
+	int err, i;
 
-	अगर (qlcnic_check_multi_tx(adapter) &&
+	if (qlcnic_check_multi_tx(adapter) &&
 	    !ahw->diag_test &&
-	    (adapter->flags & QLCNIC_MSIX_ENABLED)) अणु
-		ahw->पूर्णांकr_tbl =
-			vzalloc(array_size(माप(काष्ठा qlcnic_पूर्णांकrpt_config),
+	    (adapter->flags & QLCNIC_MSIX_ENABLED)) {
+		ahw->intr_tbl =
+			vzalloc(array_size(sizeof(struct qlcnic_intrpt_config),
 					   ahw->num_msix));
-		अगर (!ahw->पूर्णांकr_tbl)
-			वापस -ENOMEM;
+		if (!ahw->intr_tbl)
+			return -ENOMEM;
 
-		क्रम (i = 0; i < ahw->num_msix; i++) अणु
-			ahw->पूर्णांकr_tbl[i].type = QLCNIC_INTRPT_MSIX;
-			ahw->पूर्णांकr_tbl[i].id = i;
-			ahw->पूर्णांकr_tbl[i].src = 0;
-		पूर्ण
+		for (i = 0; i < ahw->num_msix; i++) {
+			ahw->intr_tbl[i].type = QLCNIC_INTRPT_MSIX;
+			ahw->intr_tbl[i].id = i;
+			ahw->intr_tbl[i].src = 0;
+		}
 
-		err = qlcnic_82xx_config_पूर्णांकrpt(adapter, 1);
-		अगर (err)
+		err = qlcnic_82xx_config_intrpt(adapter, 1);
+		if (err)
 			dev_err(&adapter->pdev->dev,
 				"Failed to configure Interrupt for %d vector\n",
 				ahw->num_msix);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम qlcnic_tearकरोwn_पूर्णांकr(काष्ठा qlcnic_adapter *adapter)
-अणु
-	अगर (adapter->flags & QLCNIC_MSIX_ENABLED)
+void qlcnic_teardown_intr(struct qlcnic_adapter *adapter)
+{
+	if (adapter->flags & QLCNIC_MSIX_ENABLED)
 		pci_disable_msix(adapter->pdev);
-	अगर (adapter->flags & QLCNIC_MSI_ENABLED)
+	if (adapter->flags & QLCNIC_MSI_ENABLED)
 		pci_disable_msi(adapter->pdev);
 
-	kमुक्त(adapter->msix_entries);
-	adapter->msix_entries = शून्य;
+	kfree(adapter->msix_entries);
+	adapter->msix_entries = NULL;
 
-	अगर (adapter->ahw->पूर्णांकr_tbl) अणु
-		vमुक्त(adapter->ahw->पूर्णांकr_tbl);
-		adapter->ahw->पूर्णांकr_tbl = शून्य;
-	पूर्ण
-पूर्ण
+	if (adapter->ahw->intr_tbl) {
+		vfree(adapter->ahw->intr_tbl);
+		adapter->ahw->intr_tbl = NULL;
+	}
+}
 
-अटल व्योम qlcnic_cleanup_pci_map(काष्ठा qlcnic_hardware_context *ahw)
-अणु
-	अगर (ahw->pci_base0 != शून्य)
+static void qlcnic_cleanup_pci_map(struct qlcnic_hardware_context *ahw)
+{
+	if (ahw->pci_base0 != NULL)
 		iounmap(ahw->pci_base0);
-पूर्ण
+}
 
-अटल पूर्णांक qlcnic_get_act_pci_func(काष्ठा qlcnic_adapter *adapter)
-अणु
-	काष्ठा qlcnic_hardware_context *ahw = adapter->ahw;
-	काष्ठा qlcnic_pci_info *pci_info;
-	पूर्णांक ret;
+static int qlcnic_get_act_pci_func(struct qlcnic_adapter *adapter)
+{
+	struct qlcnic_hardware_context *ahw = adapter->ahw;
+	struct qlcnic_pci_info *pci_info;
+	int ret;
 
-	अगर (!(adapter->flags & QLCNIC_ESWITCH_ENABLED)) अणु
-		चयन (ahw->port_type) अणु
-		हाल QLCNIC_GBE:
+	if (!(adapter->flags & QLCNIC_ESWITCH_ENABLED)) {
+		switch (ahw->port_type) {
+		case QLCNIC_GBE:
 			ahw->total_nic_func = QLCNIC_NIU_MAX_GBE_PORTS;
-			अवरोध;
-		हाल QLCNIC_XGBE:
+			break;
+		case QLCNIC_XGBE:
 			ahw->total_nic_func = QLCNIC_NIU_MAX_XG_PORTS;
-			अवरोध;
-		पूर्ण
-		वापस 0;
-	पूर्ण
+			break;
+		}
+		return 0;
+	}
 
-	अगर (ahw->op_mode == QLCNIC_MGMT_FUNC)
-		वापस 0;
+	if (ahw->op_mode == QLCNIC_MGMT_FUNC)
+		return 0;
 
-	pci_info = kसुस्मृति(ahw->max_vnic_func, माप(*pci_info), GFP_KERNEL);
-	अगर (!pci_info)
-		वापस -ENOMEM;
+	pci_info = kcalloc(ahw->max_vnic_func, sizeof(*pci_info), GFP_KERNEL);
+	if (!pci_info)
+		return -ENOMEM;
 
 	ret = qlcnic_get_pci_info(adapter, pci_info);
-	kमुक्त(pci_info);
-	वापस ret;
-पूर्ण
+	kfree(pci_info);
+	return ret;
+}
 
-अटल bool qlcnic_port_eचयन_cfg_capability(काष्ठा qlcnic_adapter *adapter)
-अणु
+static bool qlcnic_port_eswitch_cfg_capability(struct qlcnic_adapter *adapter)
+{
 	bool ret = false;
 
-	अगर (qlcnic_84xx_check(adapter)) अणु
+	if (qlcnic_84xx_check(adapter)) {
 		ret = true;
-	पूर्ण अन्यथा अगर (qlcnic_83xx_check(adapter)) अणु
-		अगर (adapter->ahw->extra_capability[0] &
+	} else if (qlcnic_83xx_check(adapter)) {
+		if (adapter->ahw->extra_capability[0] &
 		    QLCNIC_FW_CAPABILITY_2_PER_PORT_ESWITCH_CFG)
 			ret = true;
-		अन्यथा
+		else
 			ret = false;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक qlcnic_init_pci_info(काष्ठा qlcnic_adapter *adapter)
-अणु
-	काष्ठा qlcnic_hardware_context *ahw = adapter->ahw;
-	काष्ठा qlcnic_pci_info *pci_info;
-	पूर्णांक i, id = 0, ret = 0, j = 0;
+int qlcnic_init_pci_info(struct qlcnic_adapter *adapter)
+{
+	struct qlcnic_hardware_context *ahw = adapter->ahw;
+	struct qlcnic_pci_info *pci_info;
+	int i, id = 0, ret = 0, j = 0;
 	u16 act_pci_func;
 	u8 pfn;
 
-	pci_info = kसुस्मृति(ahw->max_vnic_func, माप(*pci_info), GFP_KERNEL);
-	अगर (!pci_info)
-		वापस -ENOMEM;
+	pci_info = kcalloc(ahw->max_vnic_func, sizeof(*pci_info), GFP_KERNEL);
+	if (!pci_info)
+		return -ENOMEM;
 
 	ret = qlcnic_get_pci_info(adapter, pci_info);
-	अगर (ret)
-		जाओ err_pci_info;
+	if (ret)
+		goto err_pci_info;
 
 	act_pci_func = ahw->total_nic_func;
 
-	adapter->npars = kसुस्मृति(act_pci_func,
-				 माप(काष्ठा qlcnic_npar_info),
+	adapter->npars = kcalloc(act_pci_func,
+				 sizeof(struct qlcnic_npar_info),
 				 GFP_KERNEL);
-	अगर (!adapter->npars) अणु
+	if (!adapter->npars) {
 		ret = -ENOMEM;
-		जाओ err_pci_info;
-	पूर्ण
+		goto err_pci_info;
+	}
 
-	adapter->eचयन = kसुस्मृति(QLCNIC_NIU_MAX_XG_PORTS,
-				   माप(काष्ठा qlcnic_eचयन),
+	adapter->eswitch = kcalloc(QLCNIC_NIU_MAX_XG_PORTS,
+				   sizeof(struct qlcnic_eswitch),
 				   GFP_KERNEL);
-	अगर (!adapter->eचयन) अणु
+	if (!adapter->eswitch) {
 		ret = -ENOMEM;
-		जाओ err_npars;
-	पूर्ण
+		goto err_npars;
+	}
 
-	क्रम (i = 0; i < ahw->max_vnic_func; i++) अणु
+	for (i = 0; i < ahw->max_vnic_func; i++) {
 		pfn = pci_info[i].id;
 
-		अगर (pfn >= ahw->max_vnic_func) अणु
+		if (pfn >= ahw->max_vnic_func) {
 			ret = -EINVAL;
 			dev_err(&adapter->pdev->dev, "%s: Invalid function 0x%x, max 0x%x\n",
 				__func__, pfn, ahw->max_vnic_func);
-			जाओ err_eचयन;
-		पूर्ण
+			goto err_eswitch;
+		}
 
-		अगर (!pci_info[i].active ||
+		if (!pci_info[i].active ||
 		    (pci_info[i].type != QLCNIC_TYPE_NIC))
-			जारी;
+			continue;
 
-		अगर (qlcnic_port_eचयन_cfg_capability(adapter)) अणु
-			अगर (!qlcnic_83xx_set_port_eचयन_status(adapter, pfn,
+		if (qlcnic_port_eswitch_cfg_capability(adapter)) {
+			if (!qlcnic_83xx_set_port_eswitch_status(adapter, pfn,
 								 &id))
-				adapter->npars[j].eचयन_status = true;
-			अन्यथा
-				जारी;
-		पूर्ण अन्यथा अणु
-			adapter->npars[j].eचयन_status = true;
-		पूर्ण
+				adapter->npars[j].eswitch_status = true;
+			else
+				continue;
+		} else {
+			adapter->npars[j].eswitch_status = true;
+		}
 
 		adapter->npars[j].pci_func = pfn;
 		adapter->npars[j].active = (u8)pci_info[i].active;
 		adapter->npars[j].type = (u8)pci_info[i].type;
-		adapter->npars[j].phy_port = (u8)pci_info[i].शेष_port;
+		adapter->npars[j].phy_port = (u8)pci_info[i].default_port;
 		adapter->npars[j].min_bw = pci_info[i].tx_min_bw;
 		adapter->npars[j].max_bw = pci_info[i].tx_max_bw;
 
-		स_नकल(&adapter->npars[j].mac, &pci_info[i].mac, ETH_ALEN);
+		memcpy(&adapter->npars[j].mac, &pci_info[i].mac, ETH_ALEN);
 		j++;
-	पूर्ण
+	}
 
-	/* Update eSwitch status क्रम adapters without per port eSwitch
+	/* Update eSwitch status for adapters without per port eSwitch
 	 * configuration capability
 	 */
-	अगर (!qlcnic_port_eचयन_cfg_capability(adapter)) अणु
-		क्रम (i = 0; i < QLCNIC_NIU_MAX_XG_PORTS; i++)
-			adapter->eचयन[i].flags |= QLCNIC_SWITCH_ENABLE;
-	पूर्ण
+	if (!qlcnic_port_eswitch_cfg_capability(adapter)) {
+		for (i = 0; i < QLCNIC_NIU_MAX_XG_PORTS; i++)
+			adapter->eswitch[i].flags |= QLCNIC_SWITCH_ENABLE;
+	}
 
-	kमुक्त(pci_info);
-	वापस 0;
+	kfree(pci_info);
+	return 0;
 
-err_eचयन:
-	kमुक्त(adapter->eचयन);
-	adapter->eचयन = शून्य;
+err_eswitch:
+	kfree(adapter->eswitch);
+	adapter->eswitch = NULL;
 err_npars:
-	kमुक्त(adapter->npars);
-	adapter->npars = शून्य;
+	kfree(adapter->npars);
+	adapter->npars = NULL;
 err_pci_info:
-	kमुक्त(pci_info);
+	kfree(pci_info);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक
-qlcnic_set_function_modes(काष्ठा qlcnic_adapter *adapter)
-अणु
+static int
+qlcnic_set_function_modes(struct qlcnic_adapter *adapter)
+{
 	u8 id;
-	पूर्णांक ret;
+	int ret;
 	u32 data = QLCNIC_MGMT_FUNC;
-	काष्ठा qlcnic_hardware_context *ahw = adapter->ahw;
+	struct qlcnic_hardware_context *ahw = adapter->ahw;
 
 	ret = qlcnic_api_lock(adapter);
-	अगर (ret)
-		जाओ err_lock;
+	if (ret)
+		goto err_lock;
 
 	id = ahw->pci_func;
 	data = QLC_SHARED_REG_RD32(adapter, QLCNIC_DRV_OP_MODE);
@@ -1093,12 +1092,12 @@ qlcnic_set_function_modes(काष्ठा qlcnic_adapter *adapter)
 	QLC_SHARED_REG_WR32(adapter, QLCNIC_DRV_OP_MODE, data);
 	qlcnic_api_unlock(adapter);
 err_lock:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम qlcnic_check_vf(काष्ठा qlcnic_adapter *adapter,
-			    स्थिर काष्ठा pci_device_id *ent)
-अणु
+static void qlcnic_check_vf(struct qlcnic_adapter *adapter,
+			    const struct pci_device_id *ent)
+{
 	u32 op_mode, priv_level;
 
 	/* Determine FW API version */
@@ -1110,125 +1109,125 @@ err_lock:
 
 	/* Determine function privilege level */
 	op_mode = QLC_SHARED_REG_RD32(adapter, QLCNIC_DRV_OP_MODE);
-	अगर (op_mode == QLC_DEV_DRV_DEFAULT)
+	if (op_mode == QLC_DEV_DRV_DEFAULT)
 		priv_level = QLCNIC_MGMT_FUNC;
-	अन्यथा
+	else
 		priv_level = QLC_DEV_GET_DRV(op_mode, adapter->ahw->pci_func);
 
-	अगर (priv_level == QLCNIC_NON_PRIV_FUNC) अणु
+	if (priv_level == QLCNIC_NON_PRIV_FUNC) {
 		adapter->ahw->op_mode = QLCNIC_NON_PRIV_FUNC;
 		dev_info(&adapter->pdev->dev,
 			"HAL Version: %d Non Privileged function\n",
 			 adapter->ahw->fw_hal_version);
 		adapter->nic_ops = &qlcnic_vf_ops;
-	पूर्ण अन्यथा
+	} else
 		adapter->nic_ops = &qlcnic_ops;
-पूर्ण
+}
 
-#घोषणा QLCNIC_82XX_BAR0_LENGTH 0x00200000UL
-#घोषणा QLCNIC_83XX_BAR0_LENGTH 0x4000
-अटल व्योम qlcnic_get_bar_length(u32 dev_id, uदीर्घ *bar)
-अणु
-	चयन (dev_id) अणु
-	हाल PCI_DEVICE_ID_QLOGIC_QLE824X:
+#define QLCNIC_82XX_BAR0_LENGTH 0x00200000UL
+#define QLCNIC_83XX_BAR0_LENGTH 0x4000
+static void qlcnic_get_bar_length(u32 dev_id, ulong *bar)
+{
+	switch (dev_id) {
+	case PCI_DEVICE_ID_QLOGIC_QLE824X:
 		*bar = QLCNIC_82XX_BAR0_LENGTH;
-		अवरोध;
-	हाल PCI_DEVICE_ID_QLOGIC_QLE834X:
-	हाल PCI_DEVICE_ID_QLOGIC_QLE8830:
-	हाल PCI_DEVICE_ID_QLOGIC_QLE844X:
-	हाल PCI_DEVICE_ID_QLOGIC_VF_QLE834X:
-	हाल PCI_DEVICE_ID_QLOGIC_VF_QLE844X:
-	हाल PCI_DEVICE_ID_QLOGIC_VF_QLE8C30:
+		break;
+	case PCI_DEVICE_ID_QLOGIC_QLE834X:
+	case PCI_DEVICE_ID_QLOGIC_QLE8830:
+	case PCI_DEVICE_ID_QLOGIC_QLE844X:
+	case PCI_DEVICE_ID_QLOGIC_VF_QLE834X:
+	case PCI_DEVICE_ID_QLOGIC_VF_QLE844X:
+	case PCI_DEVICE_ID_QLOGIC_VF_QLE8C30:
 		*bar = QLCNIC_83XX_BAR0_LENGTH;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		*bar = 0;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक qlcnic_setup_pci_map(काष्ठा pci_dev *pdev,
-				काष्ठा qlcnic_hardware_context *ahw)
-अणु
+static int qlcnic_setup_pci_map(struct pci_dev *pdev,
+				struct qlcnic_hardware_context *ahw)
+{
 	u32 offset;
-	व्योम __iomem *mem_ptr0 = शून्य;
-	अचिन्हित दीर्घ mem_len, pci_len0 = 0, bar0_len;
+	void __iomem *mem_ptr0 = NULL;
+	unsigned long mem_len, pci_len0 = 0, bar0_len;
 
 	/* remap phys address */
 	mem_len = pci_resource_len(pdev, 0);
 
 	qlcnic_get_bar_length(pdev->device, &bar0_len);
-	अगर (mem_len >= bar0_len) अणु
+	if (mem_len >= bar0_len) {
 
 		mem_ptr0 = pci_ioremap_bar(pdev, 0);
-		अगर (mem_ptr0 == शून्य) अणु
+		if (mem_ptr0 == NULL) {
 			dev_err(&pdev->dev, "failed to map PCI bar 0\n");
-			वापस -EIO;
-		पूर्ण
+			return -EIO;
+		}
 		pci_len0 = mem_len;
-	पूर्ण अन्यथा अणु
-		वापस -EIO;
-	पूर्ण
+	} else {
+		return -EIO;
+	}
 
-	dev_info(&pdev->dev, "%dKB memory map\n", (पूर्णांक)(mem_len >> 10));
+	dev_info(&pdev->dev, "%dKB memory map\n", (int)(mem_len >> 10));
 
 	ahw->pci_base0 = mem_ptr0;
 	ahw->pci_len0 = pci_len0;
 	offset = QLCNIC_PCIX_PS_REG(PCIX_OCM_WINDOW_REG(ahw->pci_func));
 	qlcnic_get_ioaddr(ahw, offset);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल bool qlcnic_validate_subप्रणाली_id(काष्ठा qlcnic_adapter *adapter,
-					 पूर्णांक index)
-अणु
-	काष्ठा pci_dev *pdev = adapter->pdev;
-	अचिन्हित लघु subप्रणाली_venकरोr;
+static bool qlcnic_validate_subsystem_id(struct qlcnic_adapter *adapter,
+					 int index)
+{
+	struct pci_dev *pdev = adapter->pdev;
+	unsigned short subsystem_vendor;
 	bool ret = true;
 
-	subप्रणाली_venकरोr = pdev->subप्रणाली_venकरोr;
+	subsystem_vendor = pdev->subsystem_vendor;
 
-	अगर (pdev->device == PCI_DEVICE_ID_QLOGIC_QLE824X ||
-	    pdev->device == PCI_DEVICE_ID_QLOGIC_QLE834X) अणु
-		अगर (qlcnic_boards[index].sub_venकरोr == subप्रणाली_venकरोr &&
-		    qlcnic_boards[index].sub_device == pdev->subप्रणाली_device)
+	if (pdev->device == PCI_DEVICE_ID_QLOGIC_QLE824X ||
+	    pdev->device == PCI_DEVICE_ID_QLOGIC_QLE834X) {
+		if (qlcnic_boards[index].sub_vendor == subsystem_vendor &&
+		    qlcnic_boards[index].sub_device == pdev->subsystem_device)
 			ret = true;
-		अन्यथा
+		else
 			ret = false;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम qlcnic_get_board_name(काष्ठा qlcnic_adapter *adapter, अक्षर *name)
-अणु
-	काष्ठा pci_dev *pdev = adapter->pdev;
-	पूर्णांक i, found = 0;
+static void qlcnic_get_board_name(struct qlcnic_adapter *adapter, char *name)
+{
+	struct pci_dev *pdev = adapter->pdev;
+	int i, found = 0;
 
-	क्रम (i = 0; i < NUM_SUPPORTED_BOARDS; ++i) अणु
-		अगर (qlcnic_boards[i].venकरोr == pdev->venकरोr &&
+	for (i = 0; i < NUM_SUPPORTED_BOARDS; ++i) {
+		if (qlcnic_boards[i].vendor == pdev->vendor &&
 		    qlcnic_boards[i].device == pdev->device &&
-		    qlcnic_validate_subप्रणाली_id(adapter, i)) अणु
+		    qlcnic_validate_subsystem_id(adapter, i)) {
 			found = 1;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	अगर (!found)
-		प्र_लिखो(name, "%pM Gigabit Ethernet", adapter->mac_addr);
-	अन्यथा
-		प्र_लिखो(name, "%pM: %s" , adapter->mac_addr,
-			qlcnic_boards[i].लघु_name);
-पूर्ण
+	if (!found)
+		sprintf(name, "%pM Gigabit Ethernet", adapter->mac_addr);
+	else
+		sprintf(name, "%pM: %s" , adapter->mac_addr,
+			qlcnic_boards[i].short_name);
+}
 
-अटल व्योम
-qlcnic_check_options(काष्ठा qlcnic_adapter *adapter)
-अणु
-	पूर्णांक err;
+static void
+qlcnic_check_options(struct qlcnic_adapter *adapter)
+{
+	int err;
 	u32 fw_major, fw_minor, fw_build, prev_fw_version;
-	काष्ठा pci_dev *pdev = adapter->pdev;
-	काष्ठा qlcnic_hardware_context *ahw = adapter->ahw;
-	काष्ठा qlcnic_fw_dump *fw_dump = &ahw->fw_dump;
+	struct pci_dev *pdev = adapter->pdev;
+	struct qlcnic_hardware_context *ahw = adapter->ahw;
+	struct qlcnic_fw_dump *fw_dump = &ahw->fw_dump;
 
 	prev_fw_version = adapter->fw_version;
 
@@ -1239,272 +1238,272 @@ qlcnic_check_options(काष्ठा qlcnic_adapter *adapter)
 	adapter->fw_version = QLCNIC_VERSION_CODE(fw_major, fw_minor, fw_build);
 
 	err = qlcnic_get_board_info(adapter);
-	अगर (err) अणु
+	if (err) {
 		dev_err(&pdev->dev, "Error getting board config info.\n");
-		वापस;
-	पूर्ण
-	अगर (ahw->op_mode != QLCNIC_NON_PRIV_FUNC) अणु
-		अगर (fw_dump->पंचांगpl_hdr == शून्य ||
-				adapter->fw_version > prev_fw_version) अणु
-			vमुक्त(fw_dump->पंचांगpl_hdr);
-			अगर (!qlcnic_fw_cmd_get_minidump_temp(adapter))
+		return;
+	}
+	if (ahw->op_mode != QLCNIC_NON_PRIV_FUNC) {
+		if (fw_dump->tmpl_hdr == NULL ||
+				adapter->fw_version > prev_fw_version) {
+			vfree(fw_dump->tmpl_hdr);
+			if (!qlcnic_fw_cmd_get_minidump_temp(adapter))
 				dev_info(&pdev->dev,
 					"Supports FW dump capability\n");
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	dev_info(&pdev->dev, "Driver v%s, firmware v%d.%d.%d\n",
 		 QLCNIC_LINUX_VERSIONID, fw_major, fw_minor, fw_build);
 
-	अगर (adapter->ahw->port_type == QLCNIC_XGBE) अणु
-		अगर (adapter->flags & QLCNIC_ESWITCH_ENABLED) अणु
+	if (adapter->ahw->port_type == QLCNIC_XGBE) {
+		if (adapter->flags & QLCNIC_ESWITCH_ENABLED) {
 			adapter->num_rxd = DEFAULT_RCV_DESCRIPTORS_VF;
 			adapter->max_rxd = MAX_RCV_DESCRIPTORS_VF;
-		पूर्ण अन्यथा अणु
+		} else {
 			adapter->num_rxd = DEFAULT_RCV_DESCRIPTORS_10G;
 			adapter->max_rxd = MAX_RCV_DESCRIPTORS_10G;
-		पूर्ण
+		}
 
 		adapter->num_jumbo_rxd = MAX_JUMBO_RCV_DESCRIPTORS_10G;
 		adapter->max_jumbo_rxd = MAX_JUMBO_RCV_DESCRIPTORS_10G;
 
-	पूर्ण अन्यथा अगर (adapter->ahw->port_type == QLCNIC_GBE) अणु
+	} else if (adapter->ahw->port_type == QLCNIC_GBE) {
 		adapter->num_rxd = DEFAULT_RCV_DESCRIPTORS_1G;
 		adapter->num_jumbo_rxd = MAX_JUMBO_RCV_DESCRIPTORS_1G;
 		adapter->max_jumbo_rxd = MAX_JUMBO_RCV_DESCRIPTORS_1G;
 		adapter->max_rxd = MAX_RCV_DESCRIPTORS_1G;
-	पूर्ण
+	}
 
 	adapter->ahw->msix_supported = !!qlcnic_use_msi_x;
 
 	adapter->num_txd = MAX_CMD_DESCRIPTORS;
 
 	adapter->max_rds_rings = MAX_RDS_RINGS;
-पूर्ण
+}
 
-अटल पूर्णांक
-qlcnic_initialize_nic(काष्ठा qlcnic_adapter *adapter)
-अणु
-	काष्ठा qlcnic_info nic_info;
-	पूर्णांक err = 0;
+static int
+qlcnic_initialize_nic(struct qlcnic_adapter *adapter)
+{
+	struct qlcnic_info nic_info;
+	int err = 0;
 
-	स_रखो(&nic_info, 0, माप(काष्ठा qlcnic_info));
+	memset(&nic_info, 0, sizeof(struct qlcnic_info));
 	err = qlcnic_get_nic_info(adapter, &nic_info, adapter->ahw->pci_func);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	adapter->ahw->physical_port = (u8)nic_info.phys_port;
-	adapter->ahw->चयन_mode = nic_info.चयन_mode;
+	adapter->ahw->switch_mode = nic_info.switch_mode;
 	adapter->ahw->max_tx_ques = nic_info.max_tx_ques;
 	adapter->ahw->max_rx_ques = nic_info.max_rx_ques;
 	adapter->ahw->capabilities = nic_info.capabilities;
 
-	अगर (adapter->ahw->capabilities & QLCNIC_FW_CAPABILITY_MORE_CAPS) अणु
+	if (adapter->ahw->capabilities & QLCNIC_FW_CAPABILITY_MORE_CAPS) {
 		u32 temp;
 		temp = QLCRD32(adapter, CRB_FW_CAPABILITIES_2, &err);
-		अगर (err == -EIO)
-			वापस err;
+		if (err == -EIO)
+			return err;
 		adapter->ahw->extra_capability[0] = temp;
-	पूर्ण अन्यथा अणु
+	} else {
 		adapter->ahw->extra_capability[0] = 0;
-	पूर्ण
+	}
 
 	adapter->ahw->max_mac_filters = nic_info.max_mac_filters;
 	adapter->ahw->max_mtu = nic_info.max_mtu;
 
-	अगर (adapter->ahw->capabilities & BIT_6) अणु
+	if (adapter->ahw->capabilities & BIT_6) {
 		adapter->flags |= QLCNIC_ESWITCH_ENABLED;
 		adapter->ahw->nic_mode = QLCNIC_VNIC_MODE;
 		adapter->max_tx_rings = QLCNIC_MAX_HW_VNIC_TX_RINGS;
 		adapter->max_sds_rings = QLCNIC_MAX_VNIC_SDS_RINGS;
 
 		dev_info(&adapter->pdev->dev, "vNIC mode enabled.\n");
-	पूर्ण अन्यथा अणु
+	} else {
 		adapter->ahw->nic_mode = QLCNIC_DEFAULT_MODE;
 		adapter->max_tx_rings = QLCNIC_MAX_HW_TX_RINGS;
 		adapter->max_sds_rings = QLCNIC_MAX_SDS_RINGS;
 		adapter->flags &= ~QLCNIC_ESWITCH_ENABLED;
-	पूर्ण
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-व्योम qlcnic_set_vlan_config(काष्ठा qlcnic_adapter *adapter,
-			    काष्ठा qlcnic_esw_func_cfg *esw_cfg)
-अणु
-	अगर (esw_cfg->discard_tagged)
+void qlcnic_set_vlan_config(struct qlcnic_adapter *adapter,
+			    struct qlcnic_esw_func_cfg *esw_cfg)
+{
+	if (esw_cfg->discard_tagged)
 		adapter->flags &= ~QLCNIC_TAGGING_ENABLED;
-	अन्यथा
+	else
 		adapter->flags |= QLCNIC_TAGGING_ENABLED;
 
-	अगर (esw_cfg->vlan_id) अणु
+	if (esw_cfg->vlan_id) {
 		adapter->rx_pvid = esw_cfg->vlan_id;
 		adapter->tx_pvid = esw_cfg->vlan_id;
-	पूर्ण अन्यथा अणु
+	} else {
 		adapter->rx_pvid = 0;
 		adapter->tx_pvid = 0;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक
-qlcnic_vlan_rx_add(काष्ठा net_device *netdev, __be16 proto, u16 vid)
-अणु
-	काष्ठा qlcnic_adapter *adapter = netdev_priv(netdev);
-	पूर्णांक err;
+static int
+qlcnic_vlan_rx_add(struct net_device *netdev, __be16 proto, u16 vid)
+{
+	struct qlcnic_adapter *adapter = netdev_priv(netdev);
+	int err;
 
-	अगर (qlcnic_sriov_vf_check(adapter)) अणु
+	if (qlcnic_sriov_vf_check(adapter)) {
 		err = qlcnic_sriov_cfg_vf_guest_vlan(adapter, vid, 1);
-		अगर (err) अणु
+		if (err) {
 			netdev_err(netdev,
 				   "Cannot add VLAN filter for VLAN id %d, err=%d",
 				   vid, err);
-			वापस err;
-		पूर्ण
-	पूर्ण
+			return err;
+		}
+	}
 
 	set_bit(vid, adapter->vlans);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-qlcnic_vlan_rx_del(काष्ठा net_device *netdev, __be16 proto, u16 vid)
-अणु
-	काष्ठा qlcnic_adapter *adapter = netdev_priv(netdev);
-	पूर्णांक err;
+static int
+qlcnic_vlan_rx_del(struct net_device *netdev, __be16 proto, u16 vid)
+{
+	struct qlcnic_adapter *adapter = netdev_priv(netdev);
+	int err;
 
-	अगर (qlcnic_sriov_vf_check(adapter)) अणु
+	if (qlcnic_sriov_vf_check(adapter)) {
 		err = qlcnic_sriov_cfg_vf_guest_vlan(adapter, vid, 0);
-		अगर (err) अणु
+		if (err) {
 			netdev_err(netdev,
 				   "Cannot delete VLAN filter for VLAN id %d, err=%d",
 				   vid, err);
-			वापस err;
-		पूर्ण
-	पूर्ण
+			return err;
+		}
+	}
 
 	qlcnic_restore_indev_addr(netdev, NETDEV_DOWN);
 	clear_bit(vid, adapter->vlans);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम qlcnic_set_eचयन_port_features(काष्ठा qlcnic_adapter *adapter,
-				      काष्ठा qlcnic_esw_func_cfg *esw_cfg)
-अणु
+void qlcnic_set_eswitch_port_features(struct qlcnic_adapter *adapter,
+				      struct qlcnic_esw_func_cfg *esw_cfg)
+{
 	adapter->flags &= ~(QLCNIC_MACSPOOF | QLCNIC_MAC_OVERRIDE_DISABLED |
 				QLCNIC_PROMISC_DISABLED);
 
-	अगर (esw_cfg->mac_anti_spoof)
+	if (esw_cfg->mac_anti_spoof)
 		adapter->flags |= QLCNIC_MACSPOOF;
 
-	अगर (!esw_cfg->mac_override)
+	if (!esw_cfg->mac_override)
 		adapter->flags |= QLCNIC_MAC_OVERRIDE_DISABLED;
 
-	अगर (!esw_cfg->promisc_mode)
+	if (!esw_cfg->promisc_mode)
 		adapter->flags |= QLCNIC_PROMISC_DISABLED;
-पूर्ण
+}
 
-पूर्णांक qlcnic_set_eचयन_port_config(काष्ठा qlcnic_adapter *adapter)
-अणु
-	काष्ठा qlcnic_esw_func_cfg esw_cfg;
+int qlcnic_set_eswitch_port_config(struct qlcnic_adapter *adapter)
+{
+	struct qlcnic_esw_func_cfg esw_cfg;
 
-	अगर (!(adapter->flags & QLCNIC_ESWITCH_ENABLED))
-		वापस 0;
+	if (!(adapter->flags & QLCNIC_ESWITCH_ENABLED))
+		return 0;
 
 	esw_cfg.pci_func = adapter->ahw->pci_func;
-	अगर (qlcnic_get_eचयन_port_config(adapter, &esw_cfg))
-			वापस -EIO;
+	if (qlcnic_get_eswitch_port_config(adapter, &esw_cfg))
+			return -EIO;
 	qlcnic_set_vlan_config(adapter, &esw_cfg);
-	qlcnic_set_eचयन_port_features(adapter, &esw_cfg);
+	qlcnic_set_eswitch_port_features(adapter, &esw_cfg);
 	qlcnic_set_netdev_features(adapter, &esw_cfg);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम qlcnic_set_netdev_features(काष्ठा qlcnic_adapter *adapter,
-				काष्ठा qlcnic_esw_func_cfg *esw_cfg)
-अणु
-	काष्ठा net_device *netdev = adapter->netdev;
+void qlcnic_set_netdev_features(struct qlcnic_adapter *adapter,
+				struct qlcnic_esw_func_cfg *esw_cfg)
+{
+	struct net_device *netdev = adapter->netdev;
 
-	अगर (qlcnic_83xx_check(adapter))
-		वापस;
+	if (qlcnic_83xx_check(adapter))
+		return;
 
 	adapter->offload_flags = esw_cfg->offload_flags;
 	adapter->flags |= QLCNIC_APP_CHANGED_FLAGS;
 	netdev_update_features(netdev);
 	adapter->flags &= ~QLCNIC_APP_CHANGED_FLAGS;
-पूर्ण
+}
 
-अटल पूर्णांक
-qlcnic_check_eचयन_mode(काष्ठा qlcnic_adapter *adapter)
-अणु
+static int
+qlcnic_check_eswitch_mode(struct qlcnic_adapter *adapter)
+{
 	u32 op_mode, priv_level;
-	पूर्णांक err = 0;
+	int err = 0;
 
 	err = qlcnic_initialize_nic(adapter);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	अगर (adapter->flags & QLCNIC_ADAPTER_INITIALIZED)
-		वापस 0;
+	if (adapter->flags & QLCNIC_ADAPTER_INITIALIZED)
+		return 0;
 
 	op_mode = QLC_SHARED_REG_RD32(adapter, QLCNIC_DRV_OP_MODE);
 	priv_level = QLC_DEV_GET_DRV(op_mode, adapter->ahw->pci_func);
 
-	अगर (op_mode == QLC_DEV_DRV_DEFAULT)
+	if (op_mode == QLC_DEV_DRV_DEFAULT)
 		priv_level = QLCNIC_MGMT_FUNC;
-	अन्यथा
+	else
 		priv_level = QLC_DEV_GET_DRV(op_mode, adapter->ahw->pci_func);
 
-	अगर (adapter->flags & QLCNIC_ESWITCH_ENABLED) अणु
-		अगर (priv_level == QLCNIC_MGMT_FUNC) अणु
+	if (adapter->flags & QLCNIC_ESWITCH_ENABLED) {
+		if (priv_level == QLCNIC_MGMT_FUNC) {
 			adapter->ahw->op_mode = QLCNIC_MGMT_FUNC;
 			err = qlcnic_init_pci_info(adapter);
-			अगर (err)
-				वापस err;
-			/* Set privilege level क्रम other functions */
+			if (err)
+				return err;
+			/* Set privilege level for other functions */
 			qlcnic_set_function_modes(adapter);
 			dev_info(&adapter->pdev->dev,
 				"HAL Version: %d, Management function\n",
 				 adapter->ahw->fw_hal_version);
-		पूर्ण अन्यथा अगर (priv_level == QLCNIC_PRIV_FUNC) अणु
+		} else if (priv_level == QLCNIC_PRIV_FUNC) {
 			adapter->ahw->op_mode = QLCNIC_PRIV_FUNC;
 			dev_info(&adapter->pdev->dev,
 				"HAL Version: %d, Privileged function\n",
 				 adapter->ahw->fw_hal_version);
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		adapter->ahw->nic_mode = QLCNIC_DEFAULT_MODE;
-	पूर्ण
+	}
 
 	adapter->flags |= QLCNIC_ADAPTER_INITIALIZED;
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक qlcnic_set_शेष_offload_settings(काष्ठा qlcnic_adapter *adapter)
-अणु
-	काष्ठा qlcnic_esw_func_cfg esw_cfg;
-	काष्ठा qlcnic_npar_info *npar;
+int qlcnic_set_default_offload_settings(struct qlcnic_adapter *adapter)
+{
+	struct qlcnic_esw_func_cfg esw_cfg;
+	struct qlcnic_npar_info *npar;
 	u8 i;
 
-	अगर (adapter->need_fw_reset)
-		वापस 0;
+	if (adapter->need_fw_reset)
+		return 0;
 
-	क्रम (i = 0; i < adapter->ahw->total_nic_func; i++) अणु
-		अगर (!adapter->npars[i].eचयन_status)
-			जारी;
+	for (i = 0; i < adapter->ahw->total_nic_func; i++) {
+		if (!adapter->npars[i].eswitch_status)
+			continue;
 
-		स_रखो(&esw_cfg, 0, माप(काष्ठा qlcnic_esw_func_cfg));
+		memset(&esw_cfg, 0, sizeof(struct qlcnic_esw_func_cfg));
 		esw_cfg.pci_func = adapter->npars[i].pci_func;
 		esw_cfg.mac_override = BIT_0;
 		esw_cfg.promisc_mode = BIT_0;
-		अगर (qlcnic_82xx_check(adapter)) अणु
+		if (qlcnic_82xx_check(adapter)) {
 			esw_cfg.offload_flags = BIT_0;
-			अगर (QLCNIC_IS_TSO_CAPABLE(adapter))
+			if (QLCNIC_IS_TSO_CAPABLE(adapter))
 				esw_cfg.offload_flags |= (BIT_1 | BIT_2);
-		पूर्ण
-		अगर (qlcnic_config_चयन_port(adapter, &esw_cfg))
-			वापस -EIO;
+		}
+		if (qlcnic_config_switch_port(adapter, &esw_cfg))
+			return -EIO;
 		npar = &adapter->npars[i];
 		npar->pvid = esw_cfg.vlan_id;
 		npar->mac_override = esw_cfg.mac_override;
@@ -1512,17 +1511,17 @@ qlcnic_check_eचयन_mode(काष्ठा qlcnic_adapter *adapter)
 		npar->discard_tagged = esw_cfg.discard_tagged;
 		npar->promisc_mode = esw_cfg.promisc_mode;
 		npar->offload_flags = esw_cfg.offload_flags;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-अटल पूर्णांक
-qlcnic_reset_eचयन_config(काष्ठा qlcnic_adapter *adapter,
-			काष्ठा qlcnic_npar_info *npar, पूर्णांक pci_func)
-अणु
-	काष्ठा qlcnic_esw_func_cfg esw_cfg;
+static int
+qlcnic_reset_eswitch_config(struct qlcnic_adapter *adapter,
+			struct qlcnic_npar_info *npar, int pci_func)
+{
+	struct qlcnic_esw_func_cfg esw_cfg;
 	esw_cfg.op_mode = QLCNIC_PORT_DEFAULTS;
 	esw_cfg.pci_func = pci_func;
 	esw_cfg.vlan_id = npar->pvid;
@@ -1531,366 +1530,366 @@ qlcnic_reset_eचयन_config(काष्ठा qlcnic_adapter *adapter,
 	esw_cfg.mac_anti_spoof = npar->mac_anti_spoof;
 	esw_cfg.offload_flags = npar->offload_flags;
 	esw_cfg.promisc_mode = npar->promisc_mode;
-	अगर (qlcnic_config_चयन_port(adapter, &esw_cfg))
-		वापस -EIO;
+	if (qlcnic_config_switch_port(adapter, &esw_cfg))
+		return -EIO;
 
 	esw_cfg.op_mode = QLCNIC_ADD_VLAN;
-	अगर (qlcnic_config_चयन_port(adapter, &esw_cfg))
-		वापस -EIO;
+	if (qlcnic_config_switch_port(adapter, &esw_cfg))
+		return -EIO;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक qlcnic_reset_npar_config(काष्ठा qlcnic_adapter *adapter)
-अणु
-	पूर्णांक i, err;
-	काष्ठा qlcnic_npar_info *npar;
-	काष्ठा qlcnic_info nic_info;
+int qlcnic_reset_npar_config(struct qlcnic_adapter *adapter)
+{
+	int i, err;
+	struct qlcnic_npar_info *npar;
+	struct qlcnic_info nic_info;
 	u8 pci_func;
 
-	अगर (qlcnic_82xx_check(adapter))
-		अगर (!adapter->need_fw_reset)
-			वापस 0;
+	if (qlcnic_82xx_check(adapter))
+		if (!adapter->need_fw_reset)
+			return 0;
 
 	/* Set the NPAR config data after FW reset */
-	क्रम (i = 0; i < adapter->ahw->total_nic_func; i++) अणु
+	for (i = 0; i < adapter->ahw->total_nic_func; i++) {
 		npar = &adapter->npars[i];
 		pci_func = npar->pci_func;
-		अगर (!adapter->npars[i].eचयन_status)
-			जारी;
+		if (!adapter->npars[i].eswitch_status)
+			continue;
 
-		स_रखो(&nic_info, 0, माप(काष्ठा qlcnic_info));
+		memset(&nic_info, 0, sizeof(struct qlcnic_info));
 		err = qlcnic_get_nic_info(adapter, &nic_info, pci_func);
-		अगर (err)
-			वापस err;
+		if (err)
+			return err;
 		nic_info.min_tx_bw = npar->min_bw;
 		nic_info.max_tx_bw = npar->max_bw;
 		err = qlcnic_set_nic_info(adapter, &nic_info);
-		अगर (err)
-			वापस err;
+		if (err)
+			return err;
 
-		अगर (npar->enable_pm) अणु
+		if (npar->enable_pm) {
 			err = qlcnic_config_port_mirroring(adapter,
 							   npar->dest_npar, 1,
 							   pci_func);
-			अगर (err)
-				वापस err;
-		पूर्ण
-		err = qlcnic_reset_eचयन_config(adapter, npar, pci_func);
-		अगर (err)
-			वापस err;
-	पूर्ण
-	वापस 0;
-पूर्ण
+			if (err)
+				return err;
+		}
+		err = qlcnic_reset_eswitch_config(adapter, npar, pci_func);
+		if (err)
+			return err;
+	}
+	return 0;
+}
 
-अटल पूर्णांक qlcnic_check_npar_opertional(काष्ठा qlcnic_adapter *adapter)
-अणु
-	u8 npar_opt_समयo = QLCNIC_DEV_NPAR_OPER_TIMEO;
+static int qlcnic_check_npar_opertional(struct qlcnic_adapter *adapter)
+{
+	u8 npar_opt_timeo = QLCNIC_DEV_NPAR_OPER_TIMEO;
 	u32 npar_state;
 
-	अगर (adapter->ahw->op_mode == QLCNIC_MGMT_FUNC)
-		वापस 0;
+	if (adapter->ahw->op_mode == QLCNIC_MGMT_FUNC)
+		return 0;
 
 	npar_state = QLC_SHARED_REG_RD32(adapter,
 					 QLCNIC_CRB_DEV_NPAR_STATE);
-	जबतक (npar_state != QLCNIC_DEV_NPAR_OPER && --npar_opt_समयo) अणु
+	while (npar_state != QLCNIC_DEV_NPAR_OPER && --npar_opt_timeo) {
 		msleep(1000);
 		npar_state = QLC_SHARED_REG_RD32(adapter,
 						 QLCNIC_CRB_DEV_NPAR_STATE);
-	पूर्ण
-	अगर (!npar_opt_समयo) अणु
+	}
+	if (!npar_opt_timeo) {
 		dev_err(&adapter->pdev->dev,
 			"Waiting for NPAR state to operational timeout\n");
-		वापस -EIO;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return -EIO;
+	}
+	return 0;
+}
 
-अटल पूर्णांक
-qlcnic_set_mgmt_operations(काष्ठा qlcnic_adapter *adapter)
-अणु
-	पूर्णांक err;
+static int
+qlcnic_set_mgmt_operations(struct qlcnic_adapter *adapter)
+{
+	int err;
 
-	अगर (!(adapter->flags & QLCNIC_ESWITCH_ENABLED) ||
+	if (!(adapter->flags & QLCNIC_ESWITCH_ENABLED) ||
 	    adapter->ahw->op_mode != QLCNIC_MGMT_FUNC)
-		वापस 0;
+		return 0;
 
-	err = qlcnic_set_शेष_offload_settings(adapter);
-	अगर (err)
-		वापस err;
+	err = qlcnic_set_default_offload_settings(adapter);
+	if (err)
+		return err;
 
 	err = qlcnic_reset_npar_config(adapter);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	qlcnic_dev_set_npar_पढ़ोy(adapter);
+	qlcnic_dev_set_npar_ready(adapter);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक qlcnic_82xx_start_firmware(काष्ठा qlcnic_adapter *adapter)
-अणु
-	पूर्णांक err;
+static int qlcnic_82xx_start_firmware(struct qlcnic_adapter *adapter)
+{
+	int err;
 
 	err = qlcnic_can_start_firmware(adapter);
-	अगर (err < 0)
-		वापस err;
-	अन्यथा अगर (!err)
-		जाओ check_fw_status;
+	if (err < 0)
+		return err;
+	else if (!err)
+		goto check_fw_status;
 
-	अगर (qlcnic_load_fw_file)
+	if (qlcnic_load_fw_file)
 		qlcnic_request_firmware(adapter);
-	अन्यथा अणु
+	else {
 		err = qlcnic_check_flash_fw_ver(adapter);
-		अगर (err)
-			जाओ err_out;
+		if (err)
+			goto err_out;
 
 		adapter->ahw->fw_type = QLCNIC_FLASH_ROMIMAGE;
-	पूर्ण
+	}
 
 	err = qlcnic_need_fw_reset(adapter);
-	अगर (err == 0)
-		जाओ check_fw_status;
+	if (err == 0)
+		goto check_fw_status;
 
 	err = qlcnic_pinit_from_rom(adapter);
-	अगर (err)
-		जाओ err_out;
+	if (err)
+		goto err_out;
 
 	err = qlcnic_load_firmware(adapter);
-	अगर (err)
-		जाओ err_out;
+	if (err)
+		goto err_out;
 
 	qlcnic_release_firmware(adapter);
 	QLCWR32(adapter, CRB_DRIVER_VERSION, QLCNIC_DRIVER_VERSION);
 
 check_fw_status:
 	err = qlcnic_check_fw_status(adapter);
-	अगर (err)
-		जाओ err_out;
+	if (err)
+		goto err_out;
 
 	QLC_SHARED_REG_WR32(adapter, QLCNIC_CRB_DEV_STATE, QLCNIC_DEV_READY);
 	qlcnic_idc_debug_info(adapter, 1);
-	err = qlcnic_check_eचयन_mode(adapter);
-	अगर (err) अणु
+	err = qlcnic_check_eswitch_mode(adapter);
+	if (err) {
 		dev_err(&adapter->pdev->dev,
 			"Memory allocation failed for eswitch\n");
-		जाओ err_out;
-	पूर्ण
+		goto err_out;
+	}
 	err = qlcnic_set_mgmt_operations(adapter);
-	अगर (err)
-		जाओ err_out;
+	if (err)
+		goto err_out;
 
 	qlcnic_check_options(adapter);
 	adapter->need_fw_reset = 0;
 
 	qlcnic_release_firmware(adapter);
-	वापस 0;
+	return 0;
 
 err_out:
 	QLC_SHARED_REG_WR32(adapter, QLCNIC_CRB_DEV_STATE, QLCNIC_DEV_FAILED);
 	dev_err(&adapter->pdev->dev, "Device state set to failed\n");
 
 	qlcnic_release_firmware(adapter);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक
-qlcnic_request_irq(काष्ठा qlcnic_adapter *adapter)
-अणु
+static int
+qlcnic_request_irq(struct qlcnic_adapter *adapter)
+{
 	irq_handler_t handler;
-	काष्ठा qlcnic_host_sds_ring *sds_ring;
-	काष्ठा qlcnic_host_tx_ring *tx_ring;
-	पूर्णांक err, ring, num_sds_rings;
+	struct qlcnic_host_sds_ring *sds_ring;
+	struct qlcnic_host_tx_ring *tx_ring;
+	int err, ring, num_sds_rings;
 
-	अचिन्हित दीर्घ flags = 0;
-	काष्ठा net_device *netdev = adapter->netdev;
-	काष्ठा qlcnic_recv_context *recv_ctx = adapter->recv_ctx;
+	unsigned long flags = 0;
+	struct net_device *netdev = adapter->netdev;
+	struct qlcnic_recv_context *recv_ctx = adapter->recv_ctx;
 
-	अगर (adapter->ahw->diag_test == QLCNIC_INTERRUPT_TEST) अणु
-		अगर (qlcnic_82xx_check(adapter))
-			handler = qlcnic_पंचांगp_पूर्णांकr;
-		अन्यथा
-			handler = qlcnic_83xx_पंचांगp_पूर्णांकr;
-		अगर (!QLCNIC_IS_MSI_FAMILY(adapter))
+	if (adapter->ahw->diag_test == QLCNIC_INTERRUPT_TEST) {
+		if (qlcnic_82xx_check(adapter))
+			handler = qlcnic_tmp_intr;
+		else
+			handler = qlcnic_83xx_tmp_intr;
+		if (!QLCNIC_IS_MSI_FAMILY(adapter))
 			flags |= IRQF_SHARED;
 
-	पूर्ण अन्यथा अणु
-		अगर (adapter->flags & QLCNIC_MSIX_ENABLED)
-			handler = qlcnic_msix_पूर्णांकr;
-		अन्यथा अगर (adapter->flags & QLCNIC_MSI_ENABLED)
-			handler = qlcnic_msi_पूर्णांकr;
-		अन्यथा अणु
+	} else {
+		if (adapter->flags & QLCNIC_MSIX_ENABLED)
+			handler = qlcnic_msix_intr;
+		else if (adapter->flags & QLCNIC_MSI_ENABLED)
+			handler = qlcnic_msi_intr;
+		else {
 			flags |= IRQF_SHARED;
-			अगर (qlcnic_82xx_check(adapter))
-				handler = qlcnic_पूर्णांकr;
-			अन्यथा
-				handler = qlcnic_83xx_पूर्णांकr;
-		पूर्ण
-	पूर्ण
+			if (qlcnic_82xx_check(adapter))
+				handler = qlcnic_intr;
+			else
+				handler = qlcnic_83xx_intr;
+		}
+	}
 	adapter->irq = netdev->irq;
 
-	अगर (adapter->ahw->diag_test != QLCNIC_LOOPBACK_TEST) अणु
-		अगर (qlcnic_82xx_check(adapter) ||
+	if (adapter->ahw->diag_test != QLCNIC_LOOPBACK_TEST) {
+		if (qlcnic_82xx_check(adapter) ||
 		    (qlcnic_83xx_check(adapter) &&
-		     (adapter->flags & QLCNIC_MSIX_ENABLED))) अणु
+		     (adapter->flags & QLCNIC_MSIX_ENABLED))) {
 			num_sds_rings = adapter->drv_sds_rings;
-			क्रम (ring = 0; ring < num_sds_rings; ring++) अणु
+			for (ring = 0; ring < num_sds_rings; ring++) {
 				sds_ring = &recv_ctx->sds_rings[ring];
-				अगर (qlcnic_82xx_check(adapter) &&
+				if (qlcnic_82xx_check(adapter) &&
 				    !qlcnic_check_multi_tx(adapter) &&
-				    (ring == (num_sds_rings - 1))) अणु
-					अगर (!(adapter->flags &
+				    (ring == (num_sds_rings - 1))) {
+					if (!(adapter->flags &
 					      QLCNIC_MSIX_ENABLED))
-						snम_लिखो(sds_ring->name,
-							 माप(sds_ring->name),
+						snprintf(sds_ring->name,
+							 sizeof(sds_ring->name),
 							 "qlcnic");
-					अन्यथा
-						snम_लिखो(sds_ring->name,
-							 माप(sds_ring->name),
+					else
+						snprintf(sds_ring->name,
+							 sizeof(sds_ring->name),
 							 "%s-tx-0-rx-%d",
 							 netdev->name, ring);
-				पूर्ण अन्यथा अणु
-					snम_लिखो(sds_ring->name,
-						 माप(sds_ring->name),
+				} else {
+					snprintf(sds_ring->name,
+						 sizeof(sds_ring->name),
 						 "%s-rx-%d",
 						 netdev->name, ring);
-				पूर्ण
+				}
 				err = request_irq(sds_ring->irq, handler, flags,
 						  sds_ring->name, sds_ring);
-				अगर (err)
-					वापस err;
-			पूर्ण
-		पूर्ण
-		अगर ((qlcnic_82xx_check(adapter) &&
+				if (err)
+					return err;
+			}
+		}
+		if ((qlcnic_82xx_check(adapter) &&
 		     qlcnic_check_multi_tx(adapter)) ||
 		    (qlcnic_83xx_check(adapter) &&
 		     (adapter->flags & QLCNIC_MSIX_ENABLED) &&
-		     !(adapter->flags & QLCNIC_TX_INTR_SHARED))) अणु
-			handler = qlcnic_msix_tx_पूर्णांकr;
-			क्रम (ring = 0; ring < adapter->drv_tx_rings;
-			     ring++) अणु
+		     !(adapter->flags & QLCNIC_TX_INTR_SHARED))) {
+			handler = qlcnic_msix_tx_intr;
+			for (ring = 0; ring < adapter->drv_tx_rings;
+			     ring++) {
 				tx_ring = &adapter->tx_ring[ring];
-				snम_लिखो(tx_ring->name, माप(tx_ring->name),
+				snprintf(tx_ring->name, sizeof(tx_ring->name),
 					 "%s-tx-%d", netdev->name, ring);
 				err = request_irq(tx_ring->irq, handler, flags,
 						  tx_ring->name, tx_ring);
-				अगर (err)
-					वापस err;
-			पूर्ण
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+				if (err)
+					return err;
+			}
+		}
+	}
+	return 0;
+}
 
-अटल व्योम
-qlcnic_मुक्त_irq(काष्ठा qlcnic_adapter *adapter)
-अणु
-	पूर्णांक ring;
-	काष्ठा qlcnic_host_sds_ring *sds_ring;
-	काष्ठा qlcnic_host_tx_ring *tx_ring;
+static void
+qlcnic_free_irq(struct qlcnic_adapter *adapter)
+{
+	int ring;
+	struct qlcnic_host_sds_ring *sds_ring;
+	struct qlcnic_host_tx_ring *tx_ring;
 
-	काष्ठा qlcnic_recv_context *recv_ctx = adapter->recv_ctx;
+	struct qlcnic_recv_context *recv_ctx = adapter->recv_ctx;
 
-	अगर (adapter->ahw->diag_test != QLCNIC_LOOPBACK_TEST) अणु
-		अगर (qlcnic_82xx_check(adapter) ||
+	if (adapter->ahw->diag_test != QLCNIC_LOOPBACK_TEST) {
+		if (qlcnic_82xx_check(adapter) ||
 		    (qlcnic_83xx_check(adapter) &&
-		     (adapter->flags & QLCNIC_MSIX_ENABLED))) अणु
-			क्रम (ring = 0; ring < adapter->drv_sds_rings; ring++) अणु
+		     (adapter->flags & QLCNIC_MSIX_ENABLED))) {
+			for (ring = 0; ring < adapter->drv_sds_rings; ring++) {
 				sds_ring = &recv_ctx->sds_rings[ring];
-				मुक्त_irq(sds_ring->irq, sds_ring);
-			पूर्ण
-		पूर्ण
-		अगर ((qlcnic_83xx_check(adapter) &&
+				free_irq(sds_ring->irq, sds_ring);
+			}
+		}
+		if ((qlcnic_83xx_check(adapter) &&
 		     !(adapter->flags & QLCNIC_TX_INTR_SHARED)) ||
 		    (qlcnic_82xx_check(adapter) &&
-		     qlcnic_check_multi_tx(adapter))) अणु
-			क्रम (ring = 0; ring < adapter->drv_tx_rings;
-			     ring++) अणु
+		     qlcnic_check_multi_tx(adapter))) {
+			for (ring = 0; ring < adapter->drv_tx_rings;
+			     ring++) {
 				tx_ring = &adapter->tx_ring[ring];
-				अगर (tx_ring->irq)
-					मुक्त_irq(tx_ring->irq, tx_ring);
-			पूर्ण
-		पूर्ण
-	पूर्ण
-पूर्ण
+				if (tx_ring->irq)
+					free_irq(tx_ring->irq, tx_ring);
+			}
+		}
+	}
+}
 
-अटल व्योम qlcnic_get_lro_mss_capability(काष्ठा qlcnic_adapter *adapter)
-अणु
+static void qlcnic_get_lro_mss_capability(struct qlcnic_adapter *adapter)
+{
 	u32 capab = 0;
 
-	अगर (qlcnic_82xx_check(adapter)) अणु
-		अगर (adapter->ahw->extra_capability[0] &
+	if (qlcnic_82xx_check(adapter)) {
+		if (adapter->ahw->extra_capability[0] &
 		    QLCNIC_FW_CAPABILITY_2_LRO_MAX_TCP_SEG)
 			adapter->flags |= QLCNIC_FW_LRO_MSS_CAP;
-	पूर्ण अन्यथा अणु
+	} else {
 		capab = adapter->ahw->capabilities;
-		अगर (QLC_83XX_GET_FW_LRO_MSS_CAPABILITY(capab))
+		if (QLC_83XX_GET_FW_LRO_MSS_CAPABILITY(capab))
 			adapter->flags |= QLCNIC_FW_LRO_MSS_CAP;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक qlcnic_config_def_पूर्णांकr_coalesce(काष्ठा qlcnic_adapter *adapter)
-अणु
-	काष्ठा qlcnic_hardware_context *ahw = adapter->ahw;
-	पूर्णांक err;
+static int qlcnic_config_def_intr_coalesce(struct qlcnic_adapter *adapter)
+{
+	struct qlcnic_hardware_context *ahw = adapter->ahw;
+	int err;
 
-	/* Initialize पूर्णांकerrupt coalesce parameters */
+	/* Initialize interrupt coalesce parameters */
 	ahw->coal.flag = QLCNIC_INTR_DEFAULT;
 
-	अगर (qlcnic_83xx_check(adapter)) अणु
+	if (qlcnic_83xx_check(adapter)) {
 		ahw->coal.type = QLCNIC_INTR_COAL_TYPE_RX_TX;
-		ahw->coal.tx_समय_us = QLCNIC_DEF_INTR_COALESCE_TX_TIME_US;
+		ahw->coal.tx_time_us = QLCNIC_DEF_INTR_COALESCE_TX_TIME_US;
 		ahw->coal.tx_packets = QLCNIC_DEF_INTR_COALESCE_TX_PACKETS;
-		ahw->coal.rx_समय_us = QLCNIC_DEF_INTR_COALESCE_RX_TIME_US;
+		ahw->coal.rx_time_us = QLCNIC_DEF_INTR_COALESCE_RX_TIME_US;
 		ahw->coal.rx_packets = QLCNIC_DEF_INTR_COALESCE_RX_PACKETS;
 
-		err = qlcnic_83xx_set_rx_tx_पूर्णांकr_coal(adapter);
-	पूर्ण अन्यथा अणु
+		err = qlcnic_83xx_set_rx_tx_intr_coal(adapter);
+	} else {
 		ahw->coal.type = QLCNIC_INTR_COAL_TYPE_RX;
-		ahw->coal.rx_समय_us = QLCNIC_DEF_INTR_COALESCE_RX_TIME_US;
+		ahw->coal.rx_time_us = QLCNIC_DEF_INTR_COALESCE_RX_TIME_US;
 		ahw->coal.rx_packets = QLCNIC_DEF_INTR_COALESCE_RX_PACKETS;
 
 		err = qlcnic_82xx_set_rx_coalesce(adapter);
-	पूर्ण
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक __qlcnic_up(काष्ठा qlcnic_adapter *adapter, काष्ठा net_device *netdev)
-अणु
-	पूर्णांक ring;
-	काष्ठा qlcnic_host_rds_ring *rds_ring;
+int __qlcnic_up(struct qlcnic_adapter *adapter, struct net_device *netdev)
+{
+	int ring;
+	struct qlcnic_host_rds_ring *rds_ring;
 
-	अगर (adapter->is_up != QLCNIC_ADAPTER_UP_MAGIC)
-		वापस -EIO;
+	if (adapter->is_up != QLCNIC_ADAPTER_UP_MAGIC)
+		return -EIO;
 
-	अगर (test_bit(__QLCNIC_DEV_UP, &adapter->state))
-		वापस 0;
+	if (test_bit(__QLCNIC_DEV_UP, &adapter->state))
+		return 0;
 
-	अगर (qlcnic_set_eचयन_port_config(adapter))
-		वापस -EIO;
+	if (qlcnic_set_eswitch_port_config(adapter))
+		return -EIO;
 
 	qlcnic_get_lro_mss_capability(adapter);
 
-	अगर (qlcnic_fw_create_ctx(adapter))
-		वापस -EIO;
+	if (qlcnic_fw_create_ctx(adapter))
+		return -EIO;
 
-	क्रम (ring = 0; ring < adapter->max_rds_rings; ring++) अणु
+	for (ring = 0; ring < adapter->max_rds_rings; ring++) {
 		rds_ring = &adapter->recv_ctx->rds_rings[ring];
 		qlcnic_post_rx_buffers(adapter, rds_ring, ring);
-	पूर्ण
+	}
 
 	qlcnic_set_multi(netdev);
 	qlcnic_fw_cmd_set_mtu(adapter, netdev->mtu);
 
 	adapter->ahw->linkup = 0;
 
-	अगर (adapter->drv_sds_rings > 1)
+	if (adapter->drv_sds_rings > 1)
 		qlcnic_config_rss(adapter, 1);
 
-	qlcnic_config_def_पूर्णांकr_coalesce(adapter);
+	qlcnic_config_def_intr_coalesce(adapter);
 
-	अगर (netdev->features & NETIF_F_LRO)
+	if (netdev->features & NETIF_F_LRO)
 		qlcnic_config_hw_lro(adapter, QLCNIC_LRO_ENABLED);
 
 	set_bit(__QLCNIC_DEV_UP, &adapter->state);
@@ -1899,44 +1898,44 @@ qlcnic_मुक्त_irq(काष्ठा qlcnic_adapter *adapter)
 	qlcnic_linkevent_request(adapter, 1);
 
 	adapter->ahw->reset_context = 0;
-	netअगर_tx_start_all_queues(netdev);
-	वापस 0;
-पूर्ण
+	netif_tx_start_all_queues(netdev);
+	return 0;
+}
 
-पूर्णांक qlcnic_up(काष्ठा qlcnic_adapter *adapter, काष्ठा net_device *netdev)
-अणु
-	पूर्णांक err = 0;
+int qlcnic_up(struct qlcnic_adapter *adapter, struct net_device *netdev)
+{
+	int err = 0;
 
 	rtnl_lock();
-	अगर (netअगर_running(netdev))
+	if (netif_running(netdev))
 		err = __qlcnic_up(adapter, netdev);
 	rtnl_unlock();
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-व्योम __qlcnic_करोwn(काष्ठा qlcnic_adapter *adapter, काष्ठा net_device *netdev)
-अणु
-	पूर्णांक ring;
+void __qlcnic_down(struct qlcnic_adapter *adapter, struct net_device *netdev)
+{
+	int ring;
 
-	अगर (adapter->is_up != QLCNIC_ADAPTER_UP_MAGIC)
-		वापस;
+	if (adapter->is_up != QLCNIC_ADAPTER_UP_MAGIC)
+		return;
 
-	अगर (!test_and_clear_bit(__QLCNIC_DEV_UP, &adapter->state))
-		वापस;
+	if (!test_and_clear_bit(__QLCNIC_DEV_UP, &adapter->state))
+		return;
 
 	smp_mb();
-	netअगर_carrier_off(netdev);
+	netif_carrier_off(netdev);
 	adapter->ahw->linkup = 0;
-	netअगर_tx_disable(netdev);
+	netif_tx_disable(netdev);
 
-	qlcnic_मुक्त_mac_list(adapter);
+	qlcnic_free_mac_list(adapter);
 
-	अगर (adapter->fhash.fnum)
+	if (adapter->fhash.fnum)
 		qlcnic_delete_lb_filters(adapter);
 
 	qlcnic_nic_set_promisc(adapter, QLCNIC_NIU_NON_PROMISC_MODE);
-	अगर (qlcnic_sriov_vf_check(adapter))
+	if (qlcnic_sriov_vf_check(adapter))
 		qlcnic_sriov_cleanup_async_list(&adapter->ahw->sriov->bc);
 
 	qlcnic_napi_disable(adapter);
@@ -1946,100 +1945,100 @@ qlcnic_मुक्त_irq(काष्ठा qlcnic_adapter *adapter)
 
 	qlcnic_reset_rx_buffers_list(adapter);
 
-	क्रम (ring = 0; ring < adapter->drv_tx_rings; ring++)
+	for (ring = 0; ring < adapter->drv_tx_rings; ring++)
 		qlcnic_release_tx_buffers(adapter, &adapter->tx_ring[ring]);
-पूर्ण
+}
 
 /* Usage: During suspend and firmware recovery module */
 
-व्योम qlcnic_करोwn(काष्ठा qlcnic_adapter *adapter, काष्ठा net_device *netdev)
-अणु
+void qlcnic_down(struct qlcnic_adapter *adapter, struct net_device *netdev)
+{
 	rtnl_lock();
-	अगर (netअगर_running(netdev))
-		__qlcnic_करोwn(adapter, netdev);
+	if (netif_running(netdev))
+		__qlcnic_down(adapter, netdev);
 	rtnl_unlock();
 
-पूर्ण
+}
 
-पूर्णांक
-qlcnic_attach(काष्ठा qlcnic_adapter *adapter)
-अणु
-	काष्ठा net_device *netdev = adapter->netdev;
-	काष्ठा pci_dev *pdev = adapter->pdev;
-	पूर्णांक err;
+int
+qlcnic_attach(struct qlcnic_adapter *adapter)
+{
+	struct net_device *netdev = adapter->netdev;
+	struct pci_dev *pdev = adapter->pdev;
+	int err;
 
-	अगर (adapter->is_up == QLCNIC_ADAPTER_UP_MAGIC)
-		वापस 0;
+	if (adapter->is_up == QLCNIC_ADAPTER_UP_MAGIC)
+		return 0;
 
 	err = qlcnic_napi_add(adapter, netdev);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	err = qlcnic_alloc_sw_resources(adapter);
-	अगर (err) अणु
+	if (err) {
 		dev_err(&pdev->dev, "Error in setting sw resources\n");
-		जाओ err_out_napi_del;
-	पूर्ण
+		goto err_out_napi_del;
+	}
 
 	err = qlcnic_alloc_hw_resources(adapter);
-	अगर (err) अणु
+	if (err) {
 		dev_err(&pdev->dev, "Error in setting hw resources\n");
-		जाओ err_out_मुक्त_sw;
-	पूर्ण
+		goto err_out_free_sw;
+	}
 
 	err = qlcnic_request_irq(adapter);
-	अगर (err) अणु
+	if (err) {
 		dev_err(&pdev->dev, "failed to setup interrupt\n");
-		जाओ err_out_मुक्त_hw;
-	पूर्ण
+		goto err_out_free_hw;
+	}
 
 	qlcnic_create_sysfs_entries(adapter);
 
-	अगर (qlcnic_encap_rx_offload(adapter))
+	if (qlcnic_encap_rx_offload(adapter))
 		udp_tunnel_nic_reset_ntf(netdev);
 
 	adapter->is_up = QLCNIC_ADAPTER_UP_MAGIC;
-	वापस 0;
+	return 0;
 
-err_out_मुक्त_hw:
-	qlcnic_मुक्त_hw_resources(adapter);
-err_out_मुक्त_sw:
-	qlcnic_मुक्त_sw_resources(adapter);
+err_out_free_hw:
+	qlcnic_free_hw_resources(adapter);
+err_out_free_sw:
+	qlcnic_free_sw_resources(adapter);
 err_out_napi_del:
 	qlcnic_napi_del(adapter);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-व्योम qlcnic_detach(काष्ठा qlcnic_adapter *adapter)
-अणु
-	अगर (adapter->is_up != QLCNIC_ADAPTER_UP_MAGIC)
-		वापस;
+void qlcnic_detach(struct qlcnic_adapter *adapter)
+{
+	if (adapter->is_up != QLCNIC_ADAPTER_UP_MAGIC)
+		return;
 
-	qlcnic_हटाओ_sysfs_entries(adapter);
+	qlcnic_remove_sysfs_entries(adapter);
 
-	qlcnic_मुक्त_hw_resources(adapter);
+	qlcnic_free_hw_resources(adapter);
 	qlcnic_release_rx_buffers(adapter);
-	qlcnic_मुक्त_irq(adapter);
+	qlcnic_free_irq(adapter);
 	qlcnic_napi_del(adapter);
-	qlcnic_मुक्त_sw_resources(adapter);
+	qlcnic_free_sw_resources(adapter);
 
 	adapter->is_up = 0;
-पूर्ण
+}
 
-व्योम qlcnic_diag_मुक्त_res(काष्ठा net_device *netdev, पूर्णांक drv_sds_rings)
-अणु
-	काष्ठा qlcnic_adapter *adapter = netdev_priv(netdev);
-	काष्ठा qlcnic_host_sds_ring *sds_ring;
-	पूर्णांक drv_tx_rings = adapter->drv_tx_rings;
-	पूर्णांक ring;
+void qlcnic_diag_free_res(struct net_device *netdev, int drv_sds_rings)
+{
+	struct qlcnic_adapter *adapter = netdev_priv(netdev);
+	struct qlcnic_host_sds_ring *sds_ring;
+	int drv_tx_rings = adapter->drv_tx_rings;
+	int ring;
 
 	clear_bit(__QLCNIC_DEV_UP, &adapter->state);
-	अगर (adapter->ahw->diag_test == QLCNIC_INTERRUPT_TEST) अणु
-		क्रम (ring = 0; ring < adapter->drv_sds_rings; ring++) अणु
+	if (adapter->ahw->diag_test == QLCNIC_INTERRUPT_TEST) {
+		for (ring = 0; ring < adapter->drv_sds_rings; ring++) {
 			sds_ring = &adapter->recv_ctx->sds_rings[ring];
-			qlcnic_disable_sds_पूर्णांकr(adapter, sds_ring);
-		पूर्ण
-	पूर्ण
+			qlcnic_disable_sds_intr(adapter, sds_ring);
+		}
+	}
 
 	qlcnic_fw_destroy_ctx(adapter);
 
@@ -2049,79 +2048,79 @@ err_out_napi_del:
 	adapter->drv_sds_rings = drv_sds_rings;
 	adapter->drv_tx_rings = drv_tx_rings;
 
-	अगर (qlcnic_attach(adapter))
-		जाओ out;
+	if (qlcnic_attach(adapter))
+		goto out;
 
-	अगर (netअगर_running(netdev))
+	if (netif_running(netdev))
 		__qlcnic_up(adapter, netdev);
 out:
-	netअगर_device_attach(netdev);
-पूर्ण
+	netif_device_attach(netdev);
+}
 
-अटल पूर्णांक qlcnic_alloc_adapter_resources(काष्ठा qlcnic_adapter *adapter)
-अणु
-	काष्ठा qlcnic_hardware_context *ahw = adapter->ahw;
-	पूर्णांक err = 0;
+static int qlcnic_alloc_adapter_resources(struct qlcnic_adapter *adapter)
+{
+	struct qlcnic_hardware_context *ahw = adapter->ahw;
+	int err = 0;
 
-	adapter->recv_ctx = kzalloc(माप(काष्ठा qlcnic_recv_context),
+	adapter->recv_ctx = kzalloc(sizeof(struct qlcnic_recv_context),
 				GFP_KERNEL);
-	अगर (!adapter->recv_ctx) अणु
+	if (!adapter->recv_ctx) {
 		err = -ENOMEM;
-		जाओ err_out;
-	पूर्ण
+		goto err_out;
+	}
 
-	अगर (qlcnic_83xx_check(adapter)) अणु
+	if (qlcnic_83xx_check(adapter)) {
 		ahw->coal.type = QLCNIC_INTR_COAL_TYPE_RX_TX;
-		ahw->coal.tx_समय_us = QLCNIC_DEF_INTR_COALESCE_TX_TIME_US;
+		ahw->coal.tx_time_us = QLCNIC_DEF_INTR_COALESCE_TX_TIME_US;
 		ahw->coal.tx_packets = QLCNIC_DEF_INTR_COALESCE_TX_PACKETS;
-		ahw->coal.rx_समय_us = QLCNIC_DEF_INTR_COALESCE_RX_TIME_US;
+		ahw->coal.rx_time_us = QLCNIC_DEF_INTR_COALESCE_RX_TIME_US;
 		ahw->coal.rx_packets = QLCNIC_DEF_INTR_COALESCE_RX_PACKETS;
-	पूर्ण अन्यथा अणु
+	} else {
 		ahw->coal.type = QLCNIC_INTR_COAL_TYPE_RX;
-		ahw->coal.rx_समय_us = QLCNIC_DEF_INTR_COALESCE_RX_TIME_US;
+		ahw->coal.rx_time_us = QLCNIC_DEF_INTR_COALESCE_RX_TIME_US;
 		ahw->coal.rx_packets = QLCNIC_DEF_INTR_COALESCE_RX_PACKETS;
-	पूर्ण
+	}
 
 	/* clear stats */
-	स_रखो(&adapter->stats, 0, माप(adapter->stats));
+	memset(&adapter->stats, 0, sizeof(adapter->stats));
 err_out:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम qlcnic_मुक्त_adapter_resources(काष्ठा qlcnic_adapter *adapter)
-अणु
-	काष्ठा qlcnic_fw_dump *fw_dump = &adapter->ahw->fw_dump;
+static void qlcnic_free_adapter_resources(struct qlcnic_adapter *adapter)
+{
+	struct qlcnic_fw_dump *fw_dump = &adapter->ahw->fw_dump;
 
-	kमुक्त(adapter->recv_ctx);
-	adapter->recv_ctx = शून्य;
+	kfree(adapter->recv_ctx);
+	adapter->recv_ctx = NULL;
 
-	अगर (fw_dump->पंचांगpl_hdr) अणु
-		vमुक्त(fw_dump->पंचांगpl_hdr);
-		fw_dump->पंचांगpl_hdr = शून्य;
-	पूर्ण
+	if (fw_dump->tmpl_hdr) {
+		vfree(fw_dump->tmpl_hdr);
+		fw_dump->tmpl_hdr = NULL;
+	}
 
-	अगर (fw_dump->dma_buffer) अणु
-		dma_मुक्त_coherent(&adapter->pdev->dev, QLC_PEX_DMA_READ_SIZE,
+	if (fw_dump->dma_buffer) {
+		dma_free_coherent(&adapter->pdev->dev, QLC_PEX_DMA_READ_SIZE,
 				  fw_dump->dma_buffer, fw_dump->phys_addr);
-		fw_dump->dma_buffer = शून्य;
-	पूर्ण
+		fw_dump->dma_buffer = NULL;
+	}
 
-	kमुक्त(adapter->ahw->reset.buff);
-	adapter->ahw->fw_dump.पंचांगpl_hdr = शून्य;
-पूर्ण
+	kfree(adapter->ahw->reset.buff);
+	adapter->ahw->fw_dump.tmpl_hdr = NULL;
+}
 
-पूर्णांक qlcnic_diag_alloc_res(काष्ठा net_device *netdev, पूर्णांक test)
-अणु
-	काष्ठा qlcnic_adapter *adapter = netdev_priv(netdev);
-	काष्ठा qlcnic_host_sds_ring *sds_ring;
-	काष्ठा qlcnic_host_rds_ring *rds_ring;
-	पूर्णांक ring;
-	पूर्णांक ret;
+int qlcnic_diag_alloc_res(struct net_device *netdev, int test)
+{
+	struct qlcnic_adapter *adapter = netdev_priv(netdev);
+	struct qlcnic_host_sds_ring *sds_ring;
+	struct qlcnic_host_rds_ring *rds_ring;
+	int ring;
+	int ret;
 
-	netअगर_device_detach(netdev);
+	netif_device_detach(netdev);
 
-	अगर (netअगर_running(netdev))
-		__qlcnic_करोwn(adapter, netdev);
+	if (netif_running(netdev))
+		__qlcnic_down(adapter, netdev);
 
 	qlcnic_detach(adapter);
 
@@ -2130,149 +2129,149 @@ err_out:
 	adapter->ahw->linkup = 0;
 
 	ret = qlcnic_attach(adapter);
-	अगर (ret) अणु
-		netअगर_device_attach(netdev);
-		वापस ret;
-	पूर्ण
+	if (ret) {
+		netif_device_attach(netdev);
+		return ret;
+	}
 
 	ret = qlcnic_fw_create_ctx(adapter);
-	अगर (ret) अणु
+	if (ret) {
 		qlcnic_detach(adapter);
-		netअगर_device_attach(netdev);
-		वापस ret;
-	पूर्ण
+		netif_device_attach(netdev);
+		return ret;
+	}
 
-	क्रम (ring = 0; ring < adapter->max_rds_rings; ring++) अणु
+	for (ring = 0; ring < adapter->max_rds_rings; ring++) {
 		rds_ring = &adapter->recv_ctx->rds_rings[ring];
 		qlcnic_post_rx_buffers(adapter, rds_ring, ring);
-	पूर्ण
+	}
 
-	अगर (adapter->ahw->diag_test == QLCNIC_INTERRUPT_TEST) अणु
-		क्रम (ring = 0; ring < adapter->drv_sds_rings; ring++) अणु
+	if (adapter->ahw->diag_test == QLCNIC_INTERRUPT_TEST) {
+		for (ring = 0; ring < adapter->drv_sds_rings; ring++) {
 			sds_ring = &adapter->recv_ctx->sds_rings[ring];
-			qlcnic_enable_sds_पूर्णांकr(adapter, sds_ring);
-		पूर्ण
-	पूर्ण
+			qlcnic_enable_sds_intr(adapter, sds_ring);
+		}
+	}
 
-	अगर (adapter->ahw->diag_test == QLCNIC_LOOPBACK_TEST) अणु
+	if (adapter->ahw->diag_test == QLCNIC_LOOPBACK_TEST) {
 		adapter->ahw->loopback_state = 0;
 		qlcnic_linkevent_request(adapter, 1);
-	पूर्ण
+	}
 
 	set_bit(__QLCNIC_DEV_UP, &adapter->state);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* Reset context in hardware only */
-अटल पूर्णांक
-qlcnic_reset_hw_context(काष्ठा qlcnic_adapter *adapter)
-अणु
-	काष्ठा net_device *netdev = adapter->netdev;
+static int
+qlcnic_reset_hw_context(struct qlcnic_adapter *adapter)
+{
+	struct net_device *netdev = adapter->netdev;
 
-	अगर (test_and_set_bit(__QLCNIC_RESETTING, &adapter->state))
-		वापस -EBUSY;
+	if (test_and_set_bit(__QLCNIC_RESETTING, &adapter->state))
+		return -EBUSY;
 
-	netअगर_device_detach(netdev);
+	netif_device_detach(netdev);
 
-	qlcnic_करोwn(adapter, netdev);
+	qlcnic_down(adapter, netdev);
 
 	qlcnic_up(adapter, netdev);
 
-	netअगर_device_attach(netdev);
+	netif_device_attach(netdev);
 
 	clear_bit(__QLCNIC_RESETTING, &adapter->state);
 	netdev_info(adapter->netdev, "%s: soft reset complete\n", __func__);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक
-qlcnic_reset_context(काष्ठा qlcnic_adapter *adapter)
-अणु
-	पूर्णांक err = 0;
-	काष्ठा net_device *netdev = adapter->netdev;
+int
+qlcnic_reset_context(struct qlcnic_adapter *adapter)
+{
+	int err = 0;
+	struct net_device *netdev = adapter->netdev;
 
-	अगर (test_and_set_bit(__QLCNIC_RESETTING, &adapter->state))
-		वापस -EBUSY;
+	if (test_and_set_bit(__QLCNIC_RESETTING, &adapter->state))
+		return -EBUSY;
 
-	अगर (adapter->is_up == QLCNIC_ADAPTER_UP_MAGIC) अणु
+	if (adapter->is_up == QLCNIC_ADAPTER_UP_MAGIC) {
 
-		netअगर_device_detach(netdev);
+		netif_device_detach(netdev);
 
-		अगर (netअगर_running(netdev))
-			__qlcnic_करोwn(adapter, netdev);
+		if (netif_running(netdev))
+			__qlcnic_down(adapter, netdev);
 
 		qlcnic_detach(adapter);
 
-		अगर (netअगर_running(netdev)) अणु
+		if (netif_running(netdev)) {
 			err = qlcnic_attach(adapter);
-			अगर (!err) अणु
+			if (!err) {
 				__qlcnic_up(adapter, netdev);
 				qlcnic_restore_indev_addr(netdev, NETDEV_UP);
-			पूर्ण
-		पूर्ण
+			}
+		}
 
-		netअगर_device_attach(netdev);
-	पूर्ण
+		netif_device_attach(netdev);
+	}
 
 	clear_bit(__QLCNIC_RESETTING, &adapter->state);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम qlcnic_82xx_set_mac_filter_count(काष्ठा qlcnic_adapter *adapter)
-अणु
-	काष्ठा qlcnic_hardware_context *ahw = adapter->ahw;
+static void qlcnic_82xx_set_mac_filter_count(struct qlcnic_adapter *adapter)
+{
+	struct qlcnic_hardware_context *ahw = adapter->ahw;
 	u16 act_pci_fn = ahw->total_nic_func;
 	u16 count;
 
 	ahw->max_mc_count = QLCNIC_MAX_MC_COUNT;
-	अगर (act_pci_fn <= 2)
+	if (act_pci_fn <= 2)
 		count = (QLCNIC_MAX_UC_COUNT - QLCNIC_MAX_MC_COUNT) /
 			 act_pci_fn;
-	अन्यथा
+	else
 		count = (QLCNIC_LB_MAX_FILTERS - QLCNIC_MAX_MC_COUNT) /
 			 act_pci_fn;
 	ahw->max_uc_count = count;
-पूर्ण
+}
 
-अटल पूर्णांक qlcnic_set_real_num_queues(काष्ठा qlcnic_adapter *adapter,
+static int qlcnic_set_real_num_queues(struct qlcnic_adapter *adapter,
 				      u8 tx_queues, u8 rx_queues)
-अणु
-	काष्ठा net_device *netdev = adapter->netdev;
-	पूर्णांक err = 0;
+{
+	struct net_device *netdev = adapter->netdev;
+	int err = 0;
 
-	अगर (tx_queues) अणु
-		err = netअगर_set_real_num_tx_queues(netdev, tx_queues);
-		अगर (err) अणु
+	if (tx_queues) {
+		err = netif_set_real_num_tx_queues(netdev, tx_queues);
+		if (err) {
 			netdev_err(netdev, "failed to set %d Tx queues\n",
 				   tx_queues);
-			वापस err;
-		पूर्ण
-	पूर्ण
+			return err;
+		}
+	}
 
-	अगर (rx_queues) अणु
-		err = netअगर_set_real_num_rx_queues(netdev, rx_queues);
-		अगर (err)
+	if (rx_queues) {
+		err = netif_set_real_num_rx_queues(netdev, rx_queues);
+		if (err)
 			netdev_err(netdev, "failed to set %d Rx queues\n",
 				   rx_queues);
-	पूर्ण
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक
-qlcnic_setup_netdev(काष्ठा qlcnic_adapter *adapter, काष्ठा net_device *netdev,
-		    पूर्णांक pci_using_dac)
-अणु
-	पूर्णांक err;
-	काष्ठा pci_dev *pdev = adapter->pdev;
+int
+qlcnic_setup_netdev(struct qlcnic_adapter *adapter, struct net_device *netdev,
+		    int pci_using_dac)
+{
+	int err;
+	struct pci_dev *pdev = adapter->pdev;
 
 	adapter->rx_csum = 1;
 	adapter->ahw->mc_enabled = 0;
 	qlcnic_set_mac_filter_count(adapter);
 
 	netdev->netdev_ops	   = &qlcnic_netdev_ops;
-	netdev->watchकरोg_समयo     = QLCNIC_WATCHDOG_TIMEOUTVALUE * HZ;
+	netdev->watchdog_timeo     = QLCNIC_WATCHDOG_TIMEOUTVALUE * HZ;
 
 	qlcnic_change_mtu(netdev, netdev->mtu);
 
@@ -2285,26 +2284,26 @@ qlcnic_setup_netdev(काष्ठा qlcnic_adapter *adapter, काष्ठ�
 	netdev->vlan_features |= (NETIF_F_SG | NETIF_F_IP_CSUM |
 				  NETIF_F_IPV6_CSUM);
 
-	अगर (QLCNIC_IS_TSO_CAPABLE(adapter)) अणु
+	if (QLCNIC_IS_TSO_CAPABLE(adapter)) {
 		netdev->features |= (NETIF_F_TSO | NETIF_F_TSO6);
 		netdev->vlan_features |= (NETIF_F_TSO | NETIF_F_TSO6);
-	पूर्ण
+	}
 
-	अगर (pci_using_dac) अणु
+	if (pci_using_dac) {
 		netdev->features |= NETIF_F_HIGHDMA;
 		netdev->vlan_features |= NETIF_F_HIGHDMA;
-	पूर्ण
+	}
 
-	अगर (qlcnic_vlan_tx_check(adapter))
+	if (qlcnic_vlan_tx_check(adapter))
 		netdev->features |= (NETIF_F_HW_VLAN_CTAG_TX);
 
-	अगर (qlcnic_sriov_vf_check(adapter))
+	if (qlcnic_sriov_vf_check(adapter))
 		netdev->features |= NETIF_F_HW_VLAN_CTAG_FILTER;
 
-	अगर (adapter->ahw->capabilities & QLCNIC_FW_CAPABILITY_HW_LRO)
+	if (adapter->ahw->capabilities & QLCNIC_FW_CAPABILITY_HW_LRO)
 		netdev->features |= NETIF_F_LRO;
 
-	अगर (qlcnic_encap_tx_offload(adapter)) अणु
+	if (qlcnic_encap_tx_offload(adapter)) {
 		netdev->features |= NETIF_F_GSO_UDP_TUNNEL;
 
 		/* encapsulation Tx offload supported by Adapter */
@@ -2312,13 +2311,13 @@ qlcnic_setup_netdev(काष्ठा qlcnic_adapter *adapter, काष्ठ�
 					  NETIF_F_GSO_UDP_TUNNEL |
 					  NETIF_F_TSO            |
 					  NETIF_F_TSO6;
-	पूर्ण
+	}
 
-	अगर (qlcnic_encap_rx_offload(adapter)) अणु
+	if (qlcnic_encap_rx_offload(adapter)) {
 		netdev->hw_enc_features |= NETIF_F_RXCSUM;
 
 		netdev->udp_tunnel_nic_info = &qlcnic_udp_tunnels;
-	पूर्ण
+	}
 
 	netdev->hw_features = netdev->features;
 	netdev->priv_flags |= IFF_UNICAST_FLT;
@@ -2330,181 +2329,181 @@ qlcnic_setup_netdev(काष्ठा qlcnic_adapter *adapter, काष्ठ�
 
 	err = qlcnic_set_real_num_queues(adapter, adapter->drv_tx_rings,
 					 adapter->drv_sds_rings);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	qlcnic_dcb_init_dcbnl_ops(adapter->dcb);
 
-	err = रेजिस्टर_netdev(netdev);
-	अगर (err) अणु
+	err = register_netdev(netdev);
+	if (err) {
 		dev_err(&pdev->dev, "failed to register net device\n");
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक qlcnic_set_dma_mask(काष्ठा pci_dev *pdev, पूर्णांक *pci_using_dac)
-अणु
-	अगर (!pci_set_dma_mask(pdev, DMA_BIT_MASK(64)) &&
+static int qlcnic_set_dma_mask(struct pci_dev *pdev, int *pci_using_dac)
+{
+	if (!pci_set_dma_mask(pdev, DMA_BIT_MASK(64)) &&
 			!pci_set_consistent_dma_mask(pdev, DMA_BIT_MASK(64)))
 		*pci_using_dac = 1;
-	अन्यथा अगर (!pci_set_dma_mask(pdev, DMA_BIT_MASK(32)) &&
+	else if (!pci_set_dma_mask(pdev, DMA_BIT_MASK(32)) &&
 			!pci_set_consistent_dma_mask(pdev, DMA_BIT_MASK(32)))
 		*pci_using_dac = 0;
-	अन्यथा अणु
+	else {
 		dev_err(&pdev->dev, "Unable to set DMA mask, aborting\n");
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम qlcnic_मुक्त_tx_rings(काष्ठा qlcnic_adapter *adapter)
-अणु
-	पूर्णांक ring;
-	काष्ठा qlcnic_host_tx_ring *tx_ring;
+void qlcnic_free_tx_rings(struct qlcnic_adapter *adapter)
+{
+	int ring;
+	struct qlcnic_host_tx_ring *tx_ring;
 
-	क्रम (ring = 0; ring < adapter->drv_tx_rings; ring++) अणु
+	for (ring = 0; ring < adapter->drv_tx_rings; ring++) {
 		tx_ring = &adapter->tx_ring[ring];
-		अगर (tx_ring) अणु
-			vमुक्त(tx_ring->cmd_buf_arr);
-			tx_ring->cmd_buf_arr = शून्य;
-		पूर्ण
-	पूर्ण
-	kमुक्त(adapter->tx_ring);
-पूर्ण
+		if (tx_ring) {
+			vfree(tx_ring->cmd_buf_arr);
+			tx_ring->cmd_buf_arr = NULL;
+		}
+	}
+	kfree(adapter->tx_ring);
+}
 
-पूर्णांक qlcnic_alloc_tx_rings(काष्ठा qlcnic_adapter *adapter,
-			  काष्ठा net_device *netdev)
-अणु
-	पूर्णांक ring, vector, index;
-	काष्ठा qlcnic_host_tx_ring *tx_ring;
-	काष्ठा qlcnic_cmd_buffer *cmd_buf_arr;
+int qlcnic_alloc_tx_rings(struct qlcnic_adapter *adapter,
+			  struct net_device *netdev)
+{
+	int ring, vector, index;
+	struct qlcnic_host_tx_ring *tx_ring;
+	struct qlcnic_cmd_buffer *cmd_buf_arr;
 
-	tx_ring = kसुस्मृति(adapter->drv_tx_rings,
-			  माप(काष्ठा qlcnic_host_tx_ring), GFP_KERNEL);
-	अगर (tx_ring == शून्य)
-		वापस -ENOMEM;
+	tx_ring = kcalloc(adapter->drv_tx_rings,
+			  sizeof(struct qlcnic_host_tx_ring), GFP_KERNEL);
+	if (tx_ring == NULL)
+		return -ENOMEM;
 
 	adapter->tx_ring = tx_ring;
 
-	क्रम (ring = 0; ring < adapter->drv_tx_rings; ring++) अणु
+	for (ring = 0; ring < adapter->drv_tx_rings; ring++) {
 		tx_ring = &adapter->tx_ring[ring];
 		tx_ring->num_desc = adapter->num_txd;
 		tx_ring->txq = netdev_get_tx_queue(netdev, ring);
 		cmd_buf_arr = vzalloc(TX_BUFF_RINGSIZE(tx_ring));
-		अगर (cmd_buf_arr == शून्य) अणु
-			qlcnic_मुक्त_tx_rings(adapter);
-			वापस -ENOMEM;
-		पूर्ण
+		if (cmd_buf_arr == NULL) {
+			qlcnic_free_tx_rings(adapter);
+			return -ENOMEM;
+		}
 		tx_ring->cmd_buf_arr = cmd_buf_arr;
 		spin_lock_init(&tx_ring->tx_clean_lock);
-	पूर्ण
+	}
 
-	अगर (qlcnic_83xx_check(adapter) ||
-	    (qlcnic_82xx_check(adapter) && qlcnic_check_multi_tx(adapter))) अणु
-		क्रम (ring = 0; ring < adapter->drv_tx_rings; ring++) अणु
+	if (qlcnic_83xx_check(adapter) ||
+	    (qlcnic_82xx_check(adapter) && qlcnic_check_multi_tx(adapter))) {
+		for (ring = 0; ring < adapter->drv_tx_rings; ring++) {
 			tx_ring = &adapter->tx_ring[ring];
 			tx_ring->adapter = adapter;
-			अगर (adapter->flags & QLCNIC_MSIX_ENABLED) अणु
+			if (adapter->flags & QLCNIC_MSIX_ENABLED) {
 				index = adapter->drv_sds_rings + ring;
 				vector = adapter->msix_entries[index].vector;
 				tx_ring->irq = vector;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम qlcnic_set_drv_version(काष्ठा qlcnic_adapter *adapter)
-अणु
-	काष्ठा qlcnic_hardware_context *ahw = adapter->ahw;
+void qlcnic_set_drv_version(struct qlcnic_adapter *adapter)
+{
+	struct qlcnic_hardware_context *ahw = adapter->ahw;
 	u32 fw_cmd = 0;
 
-	अगर (qlcnic_82xx_check(adapter))
+	if (qlcnic_82xx_check(adapter))
 		fw_cmd = QLCNIC_CMD_82XX_SET_DRV_VER;
-	अन्यथा अगर (qlcnic_83xx_check(adapter))
+	else if (qlcnic_83xx_check(adapter))
 		fw_cmd = QLCNIC_CMD_83XX_SET_DRV_VER;
 
-	अगर (ahw->extra_capability[0] & QLCNIC_FW_CAPABILITY_SET_DRV_VER)
+	if (ahw->extra_capability[0] & QLCNIC_FW_CAPABILITY_SET_DRV_VER)
 		qlcnic_fw_cmd_set_drv_version(adapter, fw_cmd);
-पूर्ण
+}
 
 /* Reset firmware API lock */
-अटल व्योम qlcnic_reset_api_lock(काष्ठा qlcnic_adapter *adapter)
-अणु
+static void qlcnic_reset_api_lock(struct qlcnic_adapter *adapter)
+{
 	qlcnic_api_lock(adapter);
 	qlcnic_api_unlock(adapter);
-पूर्ण
+}
 
 
-अटल पूर्णांक
-qlcnic_probe(काष्ठा pci_dev *pdev, स्थिर काष्ठा pci_device_id *ent)
-अणु
-	काष्ठा net_device *netdev = शून्य;
-	काष्ठा qlcnic_adapter *adapter = शून्य;
-	काष्ठा qlcnic_hardware_context *ahw;
-	पूर्णांक err, pci_using_dac = -1;
-	अक्षर board_name[QLCNIC_MAX_BOARD_NAME_LEN + 19]; /* MAC + ": " + name */
+static int
+qlcnic_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
+{
+	struct net_device *netdev = NULL;
+	struct qlcnic_adapter *adapter = NULL;
+	struct qlcnic_hardware_context *ahw;
+	int err, pci_using_dac = -1;
+	char board_name[QLCNIC_MAX_BOARD_NAME_LEN + 19]; /* MAC + ": " + name */
 
 	err = pci_enable_device(pdev);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	अगर (!(pci_resource_flags(pdev, 0) & IORESOURCE_MEM)) अणु
+	if (!(pci_resource_flags(pdev, 0) & IORESOURCE_MEM)) {
 		err = -ENODEV;
-		जाओ err_out_disable_pdev;
-	पूर्ण
+		goto err_out_disable_pdev;
+	}
 
 	err = qlcnic_set_dma_mask(pdev, &pci_using_dac);
-	अगर (err)
-		जाओ err_out_disable_pdev;
+	if (err)
+		goto err_out_disable_pdev;
 
 	err = pci_request_regions(pdev, qlcnic_driver_name);
-	अगर (err)
-		जाओ err_out_disable_pdev;
+	if (err)
+		goto err_out_disable_pdev;
 
 	pci_set_master(pdev);
 	pci_enable_pcie_error_reporting(pdev);
 
-	ahw = kzalloc(माप(काष्ठा qlcnic_hardware_context), GFP_KERNEL);
-	अगर (!ahw) अणु
+	ahw = kzalloc(sizeof(struct qlcnic_hardware_context), GFP_KERNEL);
+	if (!ahw) {
 		err = -ENOMEM;
-		जाओ err_out_मुक्त_res;
-	पूर्ण
+		goto err_out_free_res;
+	}
 
-	चयन (ent->device) अणु
-	हाल PCI_DEVICE_ID_QLOGIC_QLE824X:
+	switch (ent->device) {
+	case PCI_DEVICE_ID_QLOGIC_QLE824X:
 		ahw->hw_ops = &qlcnic_hw_ops;
 		ahw->reg_tbl = (u32 *) qlcnic_reg_tbl;
-		अवरोध;
-	हाल PCI_DEVICE_ID_QLOGIC_QLE834X:
-	हाल PCI_DEVICE_ID_QLOGIC_QLE8830:
-	हाल PCI_DEVICE_ID_QLOGIC_QLE844X:
-		qlcnic_83xx_रेजिस्टर_map(ahw);
-		अवरोध;
-	हाल PCI_DEVICE_ID_QLOGIC_VF_QLE834X:
-	हाल PCI_DEVICE_ID_QLOGIC_VF_QLE8C30:
-	हाल PCI_DEVICE_ID_QLOGIC_VF_QLE844X:
-		qlcnic_sriov_vf_रेजिस्टर_map(ahw);
-		अवरोध;
-	शेष:
+		break;
+	case PCI_DEVICE_ID_QLOGIC_QLE834X:
+	case PCI_DEVICE_ID_QLOGIC_QLE8830:
+	case PCI_DEVICE_ID_QLOGIC_QLE844X:
+		qlcnic_83xx_register_map(ahw);
+		break;
+	case PCI_DEVICE_ID_QLOGIC_VF_QLE834X:
+	case PCI_DEVICE_ID_QLOGIC_VF_QLE8C30:
+	case PCI_DEVICE_ID_QLOGIC_VF_QLE844X:
+		qlcnic_sriov_vf_register_map(ahw);
+		break;
+	default:
 		err = -EINVAL;
-		जाओ err_out_मुक्त_hw_res;
-	पूर्ण
+		goto err_out_free_hw_res;
+	}
 
 	err = qlcnic_setup_pci_map(pdev, ahw);
-	अगर (err)
-		जाओ err_out_मुक्त_hw_res;
+	if (err)
+		goto err_out_free_hw_res;
 
-	netdev = alloc_etherdev_mq(माप(काष्ठा qlcnic_adapter),
+	netdev = alloc_etherdev_mq(sizeof(struct qlcnic_adapter),
 				   QLCNIC_MAX_TX_RINGS);
-	अगर (!netdev) अणु
+	if (!netdev) {
 		err = -ENOMEM;
-		जाओ err_out_iounmap;
-	पूर्ण
+		goto err_out_iounmap;
+	}
 
 	SET_NETDEV_DEV(netdev, &pdev->dev);
 
@@ -2513,23 +2512,23 @@ qlcnic_probe(काष्ठा pci_dev *pdev, स्थिर काष्ठ�
 	adapter->pdev    = pdev;
 	adapter->ahw = ahw;
 
-	adapter->qlcnic_wq = create_singlethपढ़ो_workqueue("qlcnic");
-	अगर (adapter->qlcnic_wq == शून्य) अणु
+	adapter->qlcnic_wq = create_singlethread_workqueue("qlcnic");
+	if (adapter->qlcnic_wq == NULL) {
 		err = -ENOMEM;
 		dev_err(&pdev->dev, "Failed to create workqueue\n");
-		जाओ err_out_मुक्त_netdev;
-	पूर्ण
+		goto err_out_free_netdev;
+	}
 
 	err = qlcnic_alloc_adapter_resources(adapter);
-	अगर (err)
-		जाओ err_out_मुक्त_wq;
+	if (err)
+		goto err_out_free_wq;
 
-	adapter->dev_rst_समय = jअगरfies;
+	adapter->dev_rst_time = jiffies;
 	ahw->revision_id = pdev->revision;
 	ahw->max_vnic_func = qlcnic_get_vnic_func_count(adapter);
-	अगर (qlcnic_mac_learn == FDB_MAC_LEARN)
+	if (qlcnic_mac_learn == FDB_MAC_LEARN)
 		adapter->fdb_mac_learn = true;
-	अन्यथा अगर (qlcnic_mac_learn == DRV_MAC_LEARN)
+	else if (qlcnic_mac_learn == DRV_MAC_LEARN)
 		adapter->drv_mac_learn = true;
 
 	rwlock_init(&adapter->ahw->crb_lock);
@@ -2537,201 +2536,201 @@ qlcnic_probe(काष्ठा pci_dev *pdev, स्थिर काष्ठ�
 
 	INIT_LIST_HEAD(&adapter->mac_list);
 
-	qlcnic_रेजिस्टर_dcb(adapter);
+	qlcnic_register_dcb(adapter);
 
-	अगर (qlcnic_82xx_check(adapter)) अणु
+	if (qlcnic_82xx_check(adapter)) {
 		qlcnic_check_vf(adapter, ent);
 		adapter->portnum = adapter->ahw->pci_func;
 		qlcnic_reset_api_lock(adapter);
 		err = qlcnic_start_firmware(adapter);
-		अगर (err) अणु
+		if (err) {
 			dev_err(&pdev->dev, "Loading fw failed.Please Reboot\n"
 				"\t\tIf reboot doesn't help, try flashing the card\n");
-			जाओ err_out_मुख्यtenance_mode;
-		पूर्ण
+			goto err_out_maintenance_mode;
+		}
 
-		/* compute and set शेष and max tx/sds rings */
-		अगर (adapter->ahw->msix_supported) अणु
-			अगर (qlcnic_check_multi_tx_capability(adapter) == 1)
+		/* compute and set default and max tx/sds rings */
+		if (adapter->ahw->msix_supported) {
+			if (qlcnic_check_multi_tx_capability(adapter) == 1)
 				qlcnic_set_tx_ring_count(adapter,
 							 QLCNIC_SINGLE_RING);
-			अन्यथा
+			else
 				qlcnic_set_tx_ring_count(adapter,
 							 QLCNIC_DEF_TX_RINGS);
 			qlcnic_set_sds_ring_count(adapter,
 						  QLCNIC_DEF_SDS_RINGS);
-		पूर्ण अन्यथा अणु
+		} else {
 			qlcnic_set_tx_ring_count(adapter, QLCNIC_SINGLE_RING);
 			qlcnic_set_sds_ring_count(adapter, QLCNIC_SINGLE_RING);
-		पूर्ण
+		}
 
 		err = qlcnic_setup_idc_param(adapter);
-		अगर (err)
-			जाओ err_out_मुक्त_hw;
+		if (err)
+			goto err_out_free_hw;
 
 		adapter->flags |= QLCNIC_NEED_FLR;
 
-	पूर्ण अन्यथा अगर (qlcnic_83xx_check(adapter)) अणु
+	} else if (qlcnic_83xx_check(adapter)) {
 		qlcnic_83xx_check_vf(adapter, ent);
 		adapter->portnum = adapter->ahw->pci_func;
 		err = qlcnic_83xx_init(adapter, pci_using_dac);
-		अगर (err) अणु
-			चयन (err) अणु
-			हाल -ENOTRECOVERABLE:
+		if (err) {
+			switch (err) {
+			case -ENOTRECOVERABLE:
 				dev_err(&pdev->dev, "Adapter initialization failed due to a faulty hardware\n");
 				dev_err(&pdev->dev, "Please replace the adapter with new one and return the faulty adapter for repair\n");
-				जाओ err_out_मुक्त_hw;
-			हाल -ENOMEM:
+				goto err_out_free_hw;
+			case -ENOMEM:
 				dev_err(&pdev->dev, "Adapter initialization failed. Please reboot\n");
-				जाओ err_out_मुक्त_hw;
-			हाल -EOPNOTSUPP:
+				goto err_out_free_hw;
+			case -EOPNOTSUPP:
 				dev_err(&pdev->dev, "Adapter initialization failed\n");
-				जाओ err_out_मुक्त_hw;
-			शेष:
+				goto err_out_free_hw;
+			default:
 				dev_err(&pdev->dev, "Adapter initialization failed. Driver will load in maintenance mode to recover the adapter using the application\n");
-				जाओ err_out_मुख्यtenance_mode;
-			पूर्ण
-		पूर्ण
+				goto err_out_maintenance_mode;
+			}
+		}
 
-		अगर (qlcnic_sriov_vf_check(adapter))
-			वापस 0;
-	पूर्ण अन्यथा अणु
+		if (qlcnic_sriov_vf_check(adapter))
+			return 0;
+	} else {
 		dev_err(&pdev->dev,
 			"%s: failed. Please Reboot\n", __func__);
 		err = -ENODEV;
-		जाओ err_out_मुक्त_hw;
-	पूर्ण
+		goto err_out_free_hw;
+	}
 
-	अगर (qlcnic_पढ़ो_mac_addr(adapter))
+	if (qlcnic_read_mac_addr(adapter))
 		dev_warn(&pdev->dev, "failed to read mac addr\n");
 
-	qlcnic_पढ़ो_phys_port_id(adapter);
+	qlcnic_read_phys_port_id(adapter);
 
-	अगर (adapter->portnum == 0) अणु
+	if (adapter->portnum == 0) {
 		qlcnic_get_board_name(adapter, board_name);
 
 		pr_info("%s: %s Board Chip rev 0x%x\n",
 			module_name(THIS_MODULE),
 			board_name, adapter->ahw->revision_id);
-	पूर्ण
+	}
 
-	अगर (qlcnic_83xx_check(adapter) && !qlcnic_use_msi_x &&
+	if (qlcnic_83xx_check(adapter) && !qlcnic_use_msi_x &&
 	    !!qlcnic_use_msi)
 		dev_warn(&pdev->dev,
 			 "Device does not support MSI interrupts\n");
 
-	अगर (qlcnic_82xx_check(adapter)) अणु
+	if (qlcnic_82xx_check(adapter)) {
 		qlcnic_dcb_enable(adapter->dcb);
 		qlcnic_dcb_get_info(adapter->dcb);
-		err = qlcnic_setup_पूर्णांकr(adapter);
+		err = qlcnic_setup_intr(adapter);
 
-		अगर (err) अणु
+		if (err) {
 			dev_err(&pdev->dev, "Failed to setup interrupt\n");
-			जाओ err_out_disable_msi;
-		पूर्ण
-	पूर्ण
+			goto err_out_disable_msi;
+		}
+	}
 
 	err = qlcnic_get_act_pci_func(adapter);
-	अगर (err)
-		जाओ err_out_disable_mbx_पूर्णांकr;
+	if (err)
+		goto err_out_disable_mbx_intr;
 
-	अगर (adapter->portnum == 0)
+	if (adapter->portnum == 0)
 		qlcnic_set_drv_version(adapter);
 
 	err = qlcnic_setup_netdev(adapter, netdev, pci_using_dac);
-	अगर (err)
-		जाओ err_out_disable_mbx_पूर्णांकr;
+	if (err)
+		goto err_out_disable_mbx_intr;
 
 	pci_set_drvdata(pdev, adapter);
 
-	अगर (qlcnic_82xx_check(adapter))
+	if (qlcnic_82xx_check(adapter))
 		qlcnic_schedule_work(adapter, qlcnic_fw_poll_work,
 				     FW_POLL_DELAY);
 
-	चयन (adapter->ahw->port_type) अणु
-	हाल QLCNIC_GBE:
+	switch (adapter->ahw->port_type) {
+	case QLCNIC_GBE:
 		dev_info(&adapter->pdev->dev, "%s: GbE port initialized\n",
 				adapter->netdev->name);
-		अवरोध;
-	हाल QLCNIC_XGBE:
+		break;
+	case QLCNIC_XGBE:
 		dev_info(&adapter->pdev->dev, "%s: XGbE port initialized\n",
 				adapter->netdev->name);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	अगर (adapter->drv_mac_learn)
+	if (adapter->drv_mac_learn)
 		qlcnic_alloc_lb_filters_mem(adapter);
 
 	qlcnic_add_sysfs(adapter);
-	qlcnic_रेजिस्टर_hwmon_dev(adapter);
-	वापस 0;
+	qlcnic_register_hwmon_dev(adapter);
+	return 0;
 
-err_out_disable_mbx_पूर्णांकr:
-	अगर (qlcnic_83xx_check(adapter))
-		qlcnic_83xx_मुक्त_mbx_पूर्णांकr(adapter);
+err_out_disable_mbx_intr:
+	if (qlcnic_83xx_check(adapter))
+		qlcnic_83xx_free_mbx_intr(adapter);
 
 err_out_disable_msi:
-	qlcnic_tearकरोwn_पूर्णांकr(adapter);
+	qlcnic_teardown_intr(adapter);
 	qlcnic_cancel_idc_work(adapter);
 	qlcnic_clr_all_drv_state(adapter, 0);
 
-err_out_मुक्त_hw:
-	qlcnic_मुक्त_adapter_resources(adapter);
+err_out_free_hw:
+	qlcnic_free_adapter_resources(adapter);
 
-err_out_मुक्त_wq:
+err_out_free_wq:
 	destroy_workqueue(adapter->qlcnic_wq);
 
-err_out_मुक्त_netdev:
-	मुक्त_netdev(netdev);
+err_out_free_netdev:
+	free_netdev(netdev);
 
 err_out_iounmap:
 	qlcnic_cleanup_pci_map(ahw);
 
-err_out_मुक्त_hw_res:
-	kमुक्त(ahw);
+err_out_free_hw_res:
+	kfree(ahw);
 
-err_out_मुक्त_res:
+err_out_free_res:
 	pci_disable_pcie_error_reporting(pdev);
 	pci_release_regions(pdev);
 
 err_out_disable_pdev:
 	pci_disable_device(pdev);
-	वापस err;
+	return err;
 
-err_out_मुख्यtenance_mode:
-	set_bit(__QLCNIC_MAINTEन_अंकCE_MODE, &adapter->state);
+err_out_maintenance_mode:
+	set_bit(__QLCNIC_MAINTENANCE_MODE, &adapter->state);
 	netdev->netdev_ops = &qlcnic_netdev_failed_ops;
 	netdev->ethtool_ops = &qlcnic_ethtool_failed_ops;
 	ahw->port_type = QLCNIC_XGBE;
 
-	अगर (qlcnic_83xx_check(adapter))
-		adapter->tgt_status_reg = शून्य;
-	अन्यथा
+	if (qlcnic_83xx_check(adapter))
+		adapter->tgt_status_reg = NULL;
+	else
 		ahw->board_type = QLCNIC_BRDTYPE_P3P_10G_SFP_PLUS;
 
-	err = रेजिस्टर_netdev(netdev);
+	err = register_netdev(netdev);
 
-	अगर (err) अणु
+	if (err) {
 		dev_err(&pdev->dev, "Failed to register net device\n");
 		qlcnic_clr_all_drv_state(adapter, 0);
-		जाओ err_out_मुक्त_hw;
-	पूर्ण
+		goto err_out_free_hw;
+	}
 
 	pci_set_drvdata(pdev, adapter);
 	qlcnic_add_sysfs(adapter);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम qlcnic_हटाओ(काष्ठा pci_dev *pdev)
-अणु
-	काष्ठा qlcnic_adapter *adapter;
-	काष्ठा net_device *netdev;
-	काष्ठा qlcnic_hardware_context *ahw;
+static void qlcnic_remove(struct pci_dev *pdev)
+{
+	struct qlcnic_adapter *adapter;
+	struct net_device *netdev;
+	struct qlcnic_hardware_context *ahw;
 
 	adapter = pci_get_drvdata(pdev);
-	अगर (adapter == शून्य)
-		वापस;
+	if (adapter == NULL)
+		return;
 
 	netdev = adapter->netdev;
 
@@ -2739,35 +2738,35 @@ err_out_मुख्यtenance_mode:
 	qlcnic_sriov_pf_disable(adapter);
 	ahw = adapter->ahw;
 
-	unरेजिस्टर_netdev(netdev);
+	unregister_netdev(netdev);
 	qlcnic_sriov_cleanup(adapter);
 
-	अगर (qlcnic_83xx_check(adapter)) अणु
+	if (qlcnic_83xx_check(adapter)) {
 		qlcnic_83xx_initialize_nic(adapter, 0);
 		cancel_delayed_work_sync(&adapter->idc_aen_work);
-		qlcnic_83xx_मुक्त_mbx_पूर्णांकr(adapter);
+		qlcnic_83xx_free_mbx_intr(adapter);
 		qlcnic_83xx_detach_mailbox_work(adapter);
-		qlcnic_83xx_मुक्त_mailbox(ahw->mailbox);
-		kमुक्त(ahw->fw_info);
-	पूर्ण
+		qlcnic_83xx_free_mailbox(ahw->mailbox);
+		kfree(ahw->fw_info);
+	}
 
-	qlcnic_dcb_मुक्त(adapter->dcb);
+	qlcnic_dcb_free(adapter->dcb);
 	qlcnic_detach(adapter);
-	kमुक्त(adapter->npars);
-	kमुक्त(adapter->eचयन);
+	kfree(adapter->npars);
+	kfree(adapter->eswitch);
 
-	अगर (qlcnic_82xx_check(adapter))
+	if (qlcnic_82xx_check(adapter))
 		qlcnic_clr_all_drv_state(adapter, 0);
 
 	clear_bit(__QLCNIC_RESETTING, &adapter->state);
 
-	qlcnic_मुक्त_lb_filters_mem(adapter);
+	qlcnic_free_lb_filters_mem(adapter);
 
-	qlcnic_tearकरोwn_पूर्णांकr(adapter);
+	qlcnic_teardown_intr(adapter);
 
-	qlcnic_हटाओ_sysfs(adapter);
+	qlcnic_remove_sysfs(adapter);
 
-	qlcnic_unरेजिस्टर_hwmon_dev(adapter);
+	qlcnic_unregister_hwmon_dev(adapter);
 
 	qlcnic_cleanup_pci_map(adapter->ahw);
 
@@ -2777,106 +2776,106 @@ err_out_मुख्यtenance_mode:
 	pci_release_regions(pdev);
 	pci_disable_device(pdev);
 
-	अगर (adapter->qlcnic_wq) अणु
+	if (adapter->qlcnic_wq) {
 		destroy_workqueue(adapter->qlcnic_wq);
-		adapter->qlcnic_wq = शून्य;
-	पूर्ण
+		adapter->qlcnic_wq = NULL;
+	}
 
-	qlcnic_मुक्त_adapter_resources(adapter);
-	kमुक्त(ahw);
-	मुक्त_netdev(netdev);
-पूर्ण
+	qlcnic_free_adapter_resources(adapter);
+	kfree(ahw);
+	free_netdev(netdev);
+}
 
-अटल व्योम qlcnic_shutकरोwn(काष्ठा pci_dev *pdev)
-अणु
-	अगर (__qlcnic_shutकरोwn(pdev))
-		वापस;
+static void qlcnic_shutdown(struct pci_dev *pdev)
+{
+	if (__qlcnic_shutdown(pdev))
+		return;
 
 	pci_disable_device(pdev);
-पूर्ण
+}
 
-अटल पूर्णांक __maybe_unused qlcnic_suspend(काष्ठा device *dev_d)
-अणु
-	वापस __qlcnic_shutकरोwn(to_pci_dev(dev_d));
-पूर्ण
+static int __maybe_unused qlcnic_suspend(struct device *dev_d)
+{
+	return __qlcnic_shutdown(to_pci_dev(dev_d));
+}
 
-अटल पूर्णांक __maybe_unused qlcnic_resume(काष्ठा device *dev_d)
-अणु
-	काष्ठा qlcnic_adapter *adapter = dev_get_drvdata(dev_d);
+static int __maybe_unused qlcnic_resume(struct device *dev_d)
+{
+	struct qlcnic_adapter *adapter = dev_get_drvdata(dev_d);
 
-	वापस  __qlcnic_resume(adapter);
-पूर्ण
+	return  __qlcnic_resume(adapter);
+}
 
-अटल पूर्णांक qlcnic_खोलो(काष्ठा net_device *netdev)
-अणु
-	काष्ठा qlcnic_adapter *adapter = netdev_priv(netdev);
-	पूर्णांक err;
+static int qlcnic_open(struct net_device *netdev)
+{
+	struct qlcnic_adapter *adapter = netdev_priv(netdev);
+	int err;
 
-	अगर (test_bit(__QLCNIC_MAINTEन_अंकCE_MODE, &adapter->state)) अणु
+	if (test_bit(__QLCNIC_MAINTENANCE_MODE, &adapter->state)) {
 		netdev_err(netdev, "%s: Device is in non-operational state\n",
 			   __func__);
 
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	netअगर_carrier_off(netdev);
+	netif_carrier_off(netdev);
 
 	err = qlcnic_attach(adapter);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	err = __qlcnic_up(adapter, netdev);
-	अगर (err)
+	if (err)
 		qlcnic_detach(adapter);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /*
- * qlcnic_बंद - Disables a network पूर्णांकerface entry poपूर्णांक
+ * qlcnic_close - Disables a network interface entry point
  */
-अटल पूर्णांक qlcnic_बंद(काष्ठा net_device *netdev)
-अणु
-	काष्ठा qlcnic_adapter *adapter = netdev_priv(netdev);
+static int qlcnic_close(struct net_device *netdev)
+{
+	struct qlcnic_adapter *adapter = netdev_priv(netdev);
 
-	__qlcnic_करोwn(adapter, netdev);
+	__qlcnic_down(adapter, netdev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#घोषणा QLCNIC_VF_LB_BUCKET_SIZE 1
+#define QLCNIC_VF_LB_BUCKET_SIZE 1
 
-व्योम qlcnic_alloc_lb_filters_mem(काष्ठा qlcnic_adapter *adapter)
-अणु
-	व्योम *head;
-	पूर्णांक i;
-	काष्ठा net_device *netdev = adapter->netdev;
+void qlcnic_alloc_lb_filters_mem(struct qlcnic_adapter *adapter)
+{
+	void *head;
+	int i;
+	struct net_device *netdev = adapter->netdev;
 	u32 filter_size = 0;
 	u16 act_pci_func = 0;
 
-	अगर (adapter->fhash.fmax && adapter->fhash.fhead)
-		वापस;
+	if (adapter->fhash.fmax && adapter->fhash.fhead)
+		return;
 
 	act_pci_func = adapter->ahw->total_nic_func;
 	spin_lock_init(&adapter->mac_learn_lock);
 	spin_lock_init(&adapter->rx_mac_learn_lock);
 
-	अगर (qlcnic_sriov_vf_check(adapter)) अणु
+	if (qlcnic_sriov_vf_check(adapter)) {
 		filter_size = QLCNIC_83XX_SRIOV_VF_MAX_MAC - 1;
 		adapter->fhash.fbucket_size = QLCNIC_VF_LB_BUCKET_SIZE;
-	पूर्ण अन्यथा अगर (qlcnic_82xx_check(adapter)) अणु
+	} else if (qlcnic_82xx_check(adapter)) {
 		filter_size = QLCNIC_LB_MAX_FILTERS;
 		adapter->fhash.fbucket_size = QLCNIC_LB_BUCKET_SIZE;
-	पूर्ण अन्यथा अणु
+	} else {
 		filter_size = QLC_83XX_LB_MAX_FILTERS;
 		adapter->fhash.fbucket_size = QLC_83XX_LB_BUCKET_SIZE;
-	पूर्ण
+	}
 
-	head = kसुस्मृति(adapter->fhash.fbucket_size,
-		       माप(काष्ठा hlist_head), GFP_ATOMIC);
+	head = kcalloc(adapter->fhash.fbucket_size,
+		       sizeof(struct hlist_head), GFP_ATOMIC);
 
-	अगर (!head)
-		वापस;
+	if (!head)
+		return;
 
 	adapter->fhash.fmax = (filter_size / act_pci_func);
 	adapter->fhash.fhead = head;
@@ -2884,128 +2883,128 @@ err_out_मुख्यtenance_mode:
 	netdev_info(netdev, "active nic func = %d, mac filter size=%d\n",
 		    act_pci_func, adapter->fhash.fmax);
 
-	क्रम (i = 0; i < adapter->fhash.fbucket_size; i++)
+	for (i = 0; i < adapter->fhash.fbucket_size; i++)
 		INIT_HLIST_HEAD(&adapter->fhash.fhead[i]);
 
 	adapter->rx_fhash.fbucket_size = adapter->fhash.fbucket_size;
 
-	head = kसुस्मृति(adapter->rx_fhash.fbucket_size,
-		       माप(काष्ठा hlist_head), GFP_ATOMIC);
+	head = kcalloc(adapter->rx_fhash.fbucket_size,
+		       sizeof(struct hlist_head), GFP_ATOMIC);
 
-	अगर (!head)
-		वापस;
+	if (!head)
+		return;
 
 	adapter->rx_fhash.fmax = (filter_size / act_pci_func);
 	adapter->rx_fhash.fhead = head;
 
-	क्रम (i = 0; i < adapter->rx_fhash.fbucket_size; i++)
+	for (i = 0; i < adapter->rx_fhash.fbucket_size; i++)
 		INIT_HLIST_HEAD(&adapter->rx_fhash.fhead[i]);
-पूर्ण
+}
 
-अटल व्योम qlcnic_मुक्त_lb_filters_mem(काष्ठा qlcnic_adapter *adapter)
-अणु
-	अगर (adapter->fhash.fmax)
-		kमुक्त(adapter->fhash.fhead);
+static void qlcnic_free_lb_filters_mem(struct qlcnic_adapter *adapter)
+{
+	if (adapter->fhash.fmax)
+		kfree(adapter->fhash.fhead);
 
-	adapter->fhash.fhead = शून्य;
+	adapter->fhash.fhead = NULL;
 	adapter->fhash.fmax = 0;
 
-	अगर (adapter->rx_fhash.fmax)
-		kमुक्त(adapter->rx_fhash.fhead);
+	if (adapter->rx_fhash.fmax)
+		kfree(adapter->rx_fhash.fhead);
 
 	adapter->rx_fhash.fmax = 0;
-	adapter->rx_fhash.fhead = शून्य;
-पूर्ण
+	adapter->rx_fhash.fhead = NULL;
+}
 
-पूर्णांक qlcnic_check_temp(काष्ठा qlcnic_adapter *adapter)
-अणु
-	काष्ठा net_device *netdev = adapter->netdev;
+int qlcnic_check_temp(struct qlcnic_adapter *adapter)
+{
+	struct net_device *netdev = adapter->netdev;
 	u32 temp_state, temp_val, temp = 0;
-	पूर्णांक rv = 0;
+	int rv = 0;
 
-	अगर (qlcnic_83xx_check(adapter))
+	if (qlcnic_83xx_check(adapter))
 		temp = QLCRDX(adapter->ahw, QLC_83XX_ASIC_TEMP);
 
-	अगर (qlcnic_82xx_check(adapter))
+	if (qlcnic_82xx_check(adapter))
 		temp = QLC_SHARED_REG_RD32(adapter, QLCNIC_ASIC_TEMP);
 
 	temp_state = qlcnic_get_temp_state(temp);
 	temp_val = qlcnic_get_temp_val(temp);
 
-	अगर (temp_state == QLCNIC_TEMP_PANIC) अणु
+	if (temp_state == QLCNIC_TEMP_PANIC) {
 		dev_err(&netdev->dev,
 		       "Device temperature %d degrees C exceeds"
 		       " maximum allowed. Hardware has been shut down.\n",
 		       temp_val);
 		rv = 1;
-	पूर्ण अन्यथा अगर (temp_state == QLCNIC_TEMP_WARN) अणु
-		अगर (adapter->ahw->temp == QLCNIC_TEMP_NORMAL) अणु
+	} else if (temp_state == QLCNIC_TEMP_WARN) {
+		if (adapter->ahw->temp == QLCNIC_TEMP_NORMAL) {
 			dev_err(&netdev->dev,
 			       "Device temperature %d degrees C "
 			       "exceeds operating range."
 			       " Immediate action needed.\n",
 			       temp_val);
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		अगर (adapter->ahw->temp == QLCNIC_TEMP_WARN) अणु
+		}
+	} else {
+		if (adapter->ahw->temp == QLCNIC_TEMP_WARN) {
 			dev_info(&netdev->dev,
 			       "Device temperature is now %d degrees C"
 			       " in normal range.\n", temp_val);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	adapter->ahw->temp = temp_state;
-	वापस rv;
-पूर्ण
+	return rv;
+}
 
-अटल अंतरभूत व्योम dump_tx_ring_desc(काष्ठा qlcnic_host_tx_ring *tx_ring)
-अणु
-	पूर्णांक i;
+static inline void dump_tx_ring_desc(struct qlcnic_host_tx_ring *tx_ring)
+{
+	int i;
 
-	क्रम (i = 0; i < tx_ring->num_desc; i++) अणु
+	for (i = 0; i < tx_ring->num_desc; i++) {
 		pr_info("TX Desc: %d\n", i);
-		prपूर्णांक_hex_dump(KERN_INFO, "TX: ", DUMP_PREFIX_OFFSET, 16, 1,
+		print_hex_dump(KERN_INFO, "TX: ", DUMP_PREFIX_OFFSET, 16, 1,
 			       &tx_ring->desc_head[i],
-			       माप(काष्ठा cmd_desc_type0), true);
-	पूर्ण
-पूर्ण
+			       sizeof(struct cmd_desc_type0), true);
+	}
+}
 
-अटल व्योम qlcnic_dump_rings(काष्ठा qlcnic_adapter *adapter)
-अणु
-	काष्ठा qlcnic_recv_context *recv_ctx = adapter->recv_ctx;
-	काष्ठा net_device *netdev = adapter->netdev;
-	काष्ठा qlcnic_host_rds_ring *rds_ring;
-	काष्ठा qlcnic_host_sds_ring *sds_ring;
-	काष्ठा qlcnic_host_tx_ring *tx_ring;
-	पूर्णांक ring;
+static void qlcnic_dump_rings(struct qlcnic_adapter *adapter)
+{
+	struct qlcnic_recv_context *recv_ctx = adapter->recv_ctx;
+	struct net_device *netdev = adapter->netdev;
+	struct qlcnic_host_rds_ring *rds_ring;
+	struct qlcnic_host_sds_ring *sds_ring;
+	struct qlcnic_host_tx_ring *tx_ring;
+	int ring;
 
-	अगर (!netdev || !netअगर_running(netdev))
-		वापस;
+	if (!netdev || !netif_running(netdev))
+		return;
 
-	क्रम (ring = 0; ring < adapter->max_rds_rings; ring++) अणु
+	for (ring = 0; ring < adapter->max_rds_rings; ring++) {
 		rds_ring = &recv_ctx->rds_rings[ring];
-		अगर (!rds_ring)
-			जारी;
+		if (!rds_ring)
+			continue;
 		netdev_info(netdev,
 			    "rds_ring=%d crb_rcv_producer=%d producer=%u num_desc=%u\n",
-			     ring, पढ़ोl(rds_ring->crb_rcv_producer),
+			     ring, readl(rds_ring->crb_rcv_producer),
 			     rds_ring->producer, rds_ring->num_desc);
-	पूर्ण
+	}
 
-	क्रम (ring = 0; ring < adapter->drv_sds_rings; ring++) अणु
+	for (ring = 0; ring < adapter->drv_sds_rings; ring++) {
 		sds_ring = &(recv_ctx->sds_rings[ring]);
-		अगर (!sds_ring)
-			जारी;
+		if (!sds_ring)
+			continue;
 		netdev_info(netdev,
 			    "sds_ring=%d crb_sts_consumer=%d consumer=%u crb_intr_mask=%d num_desc=%u\n",
-			    ring, पढ़ोl(sds_ring->crb_sts_consumer),
-			    sds_ring->consumer, पढ़ोl(sds_ring->crb_पूर्णांकr_mask),
+			    ring, readl(sds_ring->crb_sts_consumer),
+			    sds_ring->consumer, readl(sds_ring->crb_intr_mask),
 			    sds_ring->num_desc);
-	पूर्ण
+	}
 
-	क्रम (ring = 0; ring < adapter->drv_tx_rings; ring++) अणु
+	for (ring = 0; ring < adapter->drv_tx_rings; ring++) {
 		tx_ring = &adapter->tx_ring[ring];
-		अगर (!tx_ring)
-			जारी;
+		if (!tx_ring)
+			continue;
 		netdev_info(netdev, "Tx ring=%d Context Id=0x%x\n",
 			    ring, tx_ring->ctx_id);
 		netdev_info(netdev,
@@ -3015,54 +3014,54 @@ err_out_मुख्यtenance_mode:
 			    tx_ring->tx_stats.xmit_on,
 			    tx_ring->tx_stats.xmit_off);
 
-		अगर (tx_ring->crb_पूर्णांकr_mask)
+		if (tx_ring->crb_intr_mask)
 			netdev_info(netdev, "crb_intr_mask=%d\n",
-				    पढ़ोl(tx_ring->crb_पूर्णांकr_mask));
+				    readl(tx_ring->crb_intr_mask));
 
 		netdev_info(netdev,
 			    "hw_producer=%d, sw_producer=%d sw_consumer=%d, hw_consumer=%d\n",
-			    पढ़ोl(tx_ring->crb_cmd_producer),
+			    readl(tx_ring->crb_cmd_producer),
 			    tx_ring->producer, tx_ring->sw_consumer,
 			    le32_to_cpu(*(tx_ring->hw_consumer)));
 
 		netdev_info(netdev, "Total desc=%d, Available desc=%d\n",
 			    tx_ring->num_desc, qlcnic_tx_avail(tx_ring));
 
-		अगर (netअगर_msg_tx_err(adapter->ahw))
+		if (netif_msg_tx_err(adapter->ahw))
 			dump_tx_ring_desc(tx_ring);
-	पूर्ण
+	}
 
-पूर्ण
+}
 
-अटल व्योम qlcnic_tx_समयout(काष्ठा net_device *netdev, अचिन्हित पूर्णांक txqueue)
-अणु
-	काष्ठा qlcnic_adapter *adapter = netdev_priv(netdev);
+static void qlcnic_tx_timeout(struct net_device *netdev, unsigned int txqueue)
+{
+	struct qlcnic_adapter *adapter = netdev_priv(netdev);
 
-	अगर (test_bit(__QLCNIC_RESETTING, &adapter->state))
-		वापस;
+	if (test_bit(__QLCNIC_RESETTING, &adapter->state))
+		return;
 
 	qlcnic_dump_rings(adapter);
 
-	अगर (++adapter->tx_समयo_cnt >= QLCNIC_MAX_TX_TIMEOUTS ||
-	    netअगर_msg_tx_err(adapter->ahw)) अणु
+	if (++adapter->tx_timeo_cnt >= QLCNIC_MAX_TX_TIMEOUTS ||
+	    netif_msg_tx_err(adapter->ahw)) {
 		netdev_err(netdev, "Tx timeout, reset the adapter.\n");
-		अगर (qlcnic_82xx_check(adapter))
+		if (qlcnic_82xx_check(adapter))
 			adapter->need_fw_reset = 1;
-		अन्यथा अगर (qlcnic_83xx_check(adapter))
+		else if (qlcnic_83xx_check(adapter))
 			qlcnic_83xx_idc_request_reset(adapter,
 						      QLCNIC_FORCE_FW_DUMP_KEY);
-	पूर्ण अन्यथा अणु
+	} else {
 		netdev_err(netdev, "Tx timeout, reset adapter context.\n");
 		adapter->ahw->reset_context = 1;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल काष्ठा net_device_stats *qlcnic_get_stats(काष्ठा net_device *netdev)
-अणु
-	काष्ठा qlcnic_adapter *adapter = netdev_priv(netdev);
-	काष्ठा net_device_stats *stats = &netdev->stats;
+static struct net_device_stats *qlcnic_get_stats(struct net_device *netdev)
+{
+	struct qlcnic_adapter *adapter = netdev_priv(netdev);
+	struct net_device_stats *stats = &netdev->stats;
 
-	अगर (test_bit(__QLCNIC_DEV_UP, &adapter->state))
+	if (test_bit(__QLCNIC_DEV_UP, &adapter->state))
 		qlcnic_update_stats(adapter);
 
 	stats->rx_packets = adapter->stats.rx_pkts + adapter->stats.lro_pkts;
@@ -3072,138 +3071,138 @@ err_out_मुख्यtenance_mode:
 	stats->rx_dropped = adapter->stats.rxdropped;
 	stats->tx_dropped = adapter->stats.txdropped;
 
-	वापस stats;
-पूर्ण
+	return stats;
+}
 
-अटल irqवापस_t qlcnic_82xx_clear_legacy_पूर्णांकr(काष्ठा qlcnic_adapter *adapter)
-अणु
+static irqreturn_t qlcnic_82xx_clear_legacy_intr(struct qlcnic_adapter *adapter)
+{
 	u32 status;
 
-	status = पढ़ोl(adapter->isr_पूर्णांक_vec);
+	status = readl(adapter->isr_int_vec);
 
-	अगर (!(status & adapter->ahw->पूर्णांक_vec_bit))
-		वापस IRQ_NONE;
+	if (!(status & adapter->ahw->int_vec_bit))
+		return IRQ_NONE;
 
-	/* check पूर्णांकerrupt state machine, to be sure */
-	status = पढ़ोl(adapter->crb_पूर्णांक_state_reg);
-	अगर (!ISR_LEGACY_INT_TRIGGERED(status))
-		वापस IRQ_NONE;
+	/* check interrupt state machine, to be sure */
+	status = readl(adapter->crb_int_state_reg);
+	if (!ISR_LEGACY_INT_TRIGGERED(status))
+		return IRQ_NONE;
 
-	ग_लिखोl(0xffffffff, adapter->tgt_status_reg);
-	/* पढ़ो twice to ensure ग_लिखो is flushed */
-	पढ़ोl(adapter->isr_पूर्णांक_vec);
-	पढ़ोl(adapter->isr_पूर्णांक_vec);
+	writel(0xffffffff, adapter->tgt_status_reg);
+	/* read twice to ensure write is flushed */
+	readl(adapter->isr_int_vec);
+	readl(adapter->isr_int_vec);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल irqवापस_t qlcnic_पंचांगp_पूर्णांकr(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा qlcnic_host_sds_ring *sds_ring = data;
-	काष्ठा qlcnic_adapter *adapter = sds_ring->adapter;
+static irqreturn_t qlcnic_tmp_intr(int irq, void *data)
+{
+	struct qlcnic_host_sds_ring *sds_ring = data;
+	struct qlcnic_adapter *adapter = sds_ring->adapter;
 
-	अगर (adapter->flags & QLCNIC_MSIX_ENABLED)
-		जाओ करोne;
-	अन्यथा अगर (adapter->flags & QLCNIC_MSI_ENABLED) अणु
-		ग_लिखोl(0xffffffff, adapter->tgt_status_reg);
-		जाओ करोne;
-	पूर्ण
+	if (adapter->flags & QLCNIC_MSIX_ENABLED)
+		goto done;
+	else if (adapter->flags & QLCNIC_MSI_ENABLED) {
+		writel(0xffffffff, adapter->tgt_status_reg);
+		goto done;
+	}
 
-	अगर (qlcnic_clear_legacy_पूर्णांकr(adapter) == IRQ_NONE)
-		वापस IRQ_NONE;
+	if (qlcnic_clear_legacy_intr(adapter) == IRQ_NONE)
+		return IRQ_NONE;
 
-करोne:
+done:
 	adapter->ahw->diag_cnt++;
-	qlcnic_enable_sds_पूर्णांकr(adapter, sds_ring);
-	वापस IRQ_HANDLED;
-पूर्ण
+	qlcnic_enable_sds_intr(adapter, sds_ring);
+	return IRQ_HANDLED;
+}
 
-अटल irqवापस_t qlcnic_पूर्णांकr(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा qlcnic_host_sds_ring *sds_ring = data;
-	काष्ठा qlcnic_adapter *adapter = sds_ring->adapter;
+static irqreturn_t qlcnic_intr(int irq, void *data)
+{
+	struct qlcnic_host_sds_ring *sds_ring = data;
+	struct qlcnic_adapter *adapter = sds_ring->adapter;
 
-	अगर (qlcnic_clear_legacy_पूर्णांकr(adapter) == IRQ_NONE)
-		वापस IRQ_NONE;
-
-	napi_schedule(&sds_ring->napi);
-
-	वापस IRQ_HANDLED;
-पूर्ण
-
-अटल irqवापस_t qlcnic_msi_पूर्णांकr(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा qlcnic_host_sds_ring *sds_ring = data;
-	काष्ठा qlcnic_adapter *adapter = sds_ring->adapter;
-
-	/* clear पूर्णांकerrupt */
-	ग_लिखोl(0xffffffff, adapter->tgt_status_reg);
+	if (qlcnic_clear_legacy_intr(adapter) == IRQ_NONE)
+		return IRQ_NONE;
 
 	napi_schedule(&sds_ring->napi);
-	वापस IRQ_HANDLED;
-पूर्ण
 
-अटल irqवापस_t qlcnic_msix_पूर्णांकr(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा qlcnic_host_sds_ring *sds_ring = data;
+	return IRQ_HANDLED;
+}
+
+static irqreturn_t qlcnic_msi_intr(int irq, void *data)
+{
+	struct qlcnic_host_sds_ring *sds_ring = data;
+	struct qlcnic_adapter *adapter = sds_ring->adapter;
+
+	/* clear interrupt */
+	writel(0xffffffff, adapter->tgt_status_reg);
 
 	napi_schedule(&sds_ring->napi);
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल irqवापस_t qlcnic_msix_tx_पूर्णांकr(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा qlcnic_host_tx_ring *tx_ring = data;
+static irqreturn_t qlcnic_msix_intr(int irq, void *data)
+{
+	struct qlcnic_host_sds_ring *sds_ring = data;
+
+	napi_schedule(&sds_ring->napi);
+	return IRQ_HANDLED;
+}
+
+static irqreturn_t qlcnic_msix_tx_intr(int irq, void *data)
+{
+	struct qlcnic_host_tx_ring *tx_ring = data;
 
 	napi_schedule(&tx_ring->napi);
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल व्योम
-qlcnic_idc_debug_info(काष्ठा qlcnic_adapter *adapter, u8 encoding)
-अणु
+static void
+qlcnic_idc_debug_info(struct qlcnic_adapter *adapter, u8 encoding)
+{
 	u32 val;
 
 	val = adapter->portnum & 0xf;
 	val |= encoding << 7;
-	val |= (jअगरfies - adapter->dev_rst_समय) << 8;
+	val |= (jiffies - adapter->dev_rst_time) << 8;
 
 	QLC_SHARED_REG_WR32(adapter, QLCNIC_CRB_DRV_SCRATCH, val);
-	adapter->dev_rst_समय = jअगरfies;
-पूर्ण
+	adapter->dev_rst_time = jiffies;
+}
 
-अटल पूर्णांक
-qlcnic_set_drv_state(काष्ठा qlcnic_adapter *adapter, u8 state)
-अणु
+static int
+qlcnic_set_drv_state(struct qlcnic_adapter *adapter, u8 state)
+{
 	u32  val;
 
 	WARN_ON(state != QLCNIC_DEV_NEED_RESET &&
 			state != QLCNIC_DEV_NEED_QUISCENT);
 
-	अगर (qlcnic_api_lock(adapter))
-		वापस -EIO;
+	if (qlcnic_api_lock(adapter))
+		return -EIO;
 
 	val = QLC_SHARED_REG_RD32(adapter, QLCNIC_CRB_DRV_STATE);
 
-	अगर (state == QLCNIC_DEV_NEED_RESET)
+	if (state == QLCNIC_DEV_NEED_RESET)
 		QLC_DEV_SET_RST_RDY(val, adapter->portnum);
-	अन्यथा अगर (state == QLCNIC_DEV_NEED_QUISCENT)
+	else if (state == QLCNIC_DEV_NEED_QUISCENT)
 		QLC_DEV_SET_QSCNT_RDY(val, adapter->portnum);
 
 	QLC_SHARED_REG_WR32(adapter, QLCNIC_CRB_DRV_STATE, val);
 
 	qlcnic_api_unlock(adapter);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-qlcnic_clr_drv_state(काष्ठा qlcnic_adapter *adapter)
-अणु
+static int
+qlcnic_clr_drv_state(struct qlcnic_adapter *adapter)
+{
 	u32  val;
 
-	अगर (qlcnic_api_lock(adapter))
-		वापस -EBUSY;
+	if (qlcnic_api_lock(adapter))
+		return -EBUSY;
 
 	val = QLC_SHARED_REG_RD32(adapter, QLCNIC_CRB_DRV_STATE);
 	QLC_DEV_CLR_RST_QSCNT(val, adapter->portnum);
@@ -3211,26 +3210,26 @@ qlcnic_clr_drv_state(काष्ठा qlcnic_adapter *adapter)
 
 	qlcnic_api_unlock(adapter);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम qlcnic_clr_all_drv_state(काष्ठा qlcnic_adapter *adapter, u8 failed)
-अणु
+void qlcnic_clr_all_drv_state(struct qlcnic_adapter *adapter, u8 failed)
+{
 	u32  val;
 
-	अगर (qlcnic_api_lock(adapter))
-		जाओ err;
+	if (qlcnic_api_lock(adapter))
+		goto err;
 
 	val = QLC_SHARED_REG_RD32(adapter, QLCNIC_CRB_DRV_ACTIVE);
 	QLC_DEV_CLR_REF_CNT(val, adapter->portnum);
 	QLC_SHARED_REG_WR32(adapter, QLCNIC_CRB_DRV_ACTIVE, val);
 
-	अगर (failed) अणु
+	if (failed) {
 		QLC_SHARED_REG_WR32(adapter, QLCNIC_CRB_DEV_STATE,
 				    QLCNIC_DEV_FAILED);
 		dev_info(&adapter->pdev->dev,
 				"Device state set to Failed. Please Reboot\n");
-	पूर्ण अन्यथा अगर (!(val & 0x11111111))
+	} else if (!(val & 0x11111111))
 		QLC_SHARED_REG_WR32(adapter, QLCNIC_CRB_DEV_STATE,
 				    QLCNIC_DEV_COLD);
 
@@ -3244,120 +3243,120 @@ err:
 	adapter->flags &= ~QLCNIC_FW_HANG;
 	clear_bit(__QLCNIC_START_FW, &adapter->state);
 	clear_bit(__QLCNIC_RESETTING, &adapter->state);
-पूर्ण
+}
 
-/* Grab api lock, beक्रमe checking state */
-अटल पूर्णांक
-qlcnic_check_drv_state(काष्ठा qlcnic_adapter *adapter)
-अणु
-	पूर्णांक act, state, active_mask;
-	काष्ठा qlcnic_hardware_context *ahw = adapter->ahw;
+/* Grab api lock, before checking state */
+static int
+qlcnic_check_drv_state(struct qlcnic_adapter *adapter)
+{
+	int act, state, active_mask;
+	struct qlcnic_hardware_context *ahw = adapter->ahw;
 
 	state = QLC_SHARED_REG_RD32(adapter, QLCNIC_CRB_DRV_STATE);
 	act = QLC_SHARED_REG_RD32(adapter, QLCNIC_CRB_DRV_ACTIVE);
 
-	अगर (adapter->flags & QLCNIC_FW_RESET_OWNER) अणु
+	if (adapter->flags & QLCNIC_FW_RESET_OWNER) {
 		active_mask = (~(1 << (ahw->pci_func * 4)));
 		act = act & active_mask;
-	पूर्ण
+	}
 
-	अगर (((state & 0x11111111) == (act & 0x11111111)) ||
+	if (((state & 0x11111111) == (act & 0x11111111)) ||
 			((act & 0x11111111) == ((state >> 1) & 0x11111111)))
-		वापस 0;
-	अन्यथा
-		वापस 1;
-पूर्ण
+		return 0;
+	else
+		return 1;
+}
 
-अटल पूर्णांक qlcnic_check_idc_ver(काष्ठा qlcnic_adapter *adapter)
-अणु
+static int qlcnic_check_idc_ver(struct qlcnic_adapter *adapter)
+{
 	u32 val = QLC_SHARED_REG_RD32(adapter, QLCNIC_CRB_DRV_IDC_VER);
 
-	अगर (val != QLCNIC_DRV_IDC_VER) अणु
+	if (val != QLCNIC_DRV_IDC_VER) {
 		dev_warn(&adapter->pdev->dev, "IDC Version mismatch, driver's"
 			" idc ver = %x; reqd = %x\n", QLCNIC_DRV_IDC_VER, val);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-qlcnic_can_start_firmware(काष्ठा qlcnic_adapter *adapter)
-अणु
+static int
+qlcnic_can_start_firmware(struct qlcnic_adapter *adapter)
+{
 	u32 val, prev_state;
-	u8 dev_init_समयo = adapter->dev_init_समयo;
+	u8 dev_init_timeo = adapter->dev_init_timeo;
 	u8 portnum = adapter->portnum;
 	u8 ret;
 
-	अगर (test_and_clear_bit(__QLCNIC_START_FW, &adapter->state))
-		वापस 1;
+	if (test_and_clear_bit(__QLCNIC_START_FW, &adapter->state))
+		return 1;
 
-	अगर (qlcnic_api_lock(adapter))
-		वापस -1;
+	if (qlcnic_api_lock(adapter))
+		return -1;
 
 	val = QLC_SHARED_REG_RD32(adapter, QLCNIC_CRB_DRV_ACTIVE);
-	अगर (!(val & (1 << (portnum * 4)))) अणु
+	if (!(val & (1 << (portnum * 4)))) {
 		QLC_DEV_SET_REF_CNT(val, portnum);
 		QLC_SHARED_REG_WR32(adapter, QLCNIC_CRB_DRV_ACTIVE, val);
-	पूर्ण
+	}
 
 	prev_state = QLC_SHARED_REG_RD32(adapter, QLCNIC_CRB_DEV_STATE);
 	QLCDB(adapter, HW, "Device state = %u\n", prev_state);
 
-	चयन (prev_state) अणु
-	हाल QLCNIC_DEV_COLD:
+	switch (prev_state) {
+	case QLCNIC_DEV_COLD:
 		QLC_SHARED_REG_WR32(adapter, QLCNIC_CRB_DEV_STATE,
 				    QLCNIC_DEV_INITIALIZING);
 		QLC_SHARED_REG_WR32(adapter, QLCNIC_CRB_DRV_IDC_VER,
 				    QLCNIC_DRV_IDC_VER);
 		qlcnic_idc_debug_info(adapter, 0);
 		qlcnic_api_unlock(adapter);
-		वापस 1;
+		return 1;
 
-	हाल QLCNIC_DEV_READY:
+	case QLCNIC_DEV_READY:
 		ret = qlcnic_check_idc_ver(adapter);
 		qlcnic_api_unlock(adapter);
-		वापस ret;
+		return ret;
 
-	हाल QLCNIC_DEV_NEED_RESET:
+	case QLCNIC_DEV_NEED_RESET:
 		val = QLC_SHARED_REG_RD32(adapter, QLCNIC_CRB_DRV_STATE);
 		QLC_DEV_SET_RST_RDY(val, portnum);
 		QLC_SHARED_REG_WR32(adapter, QLCNIC_CRB_DRV_STATE, val);
-		अवरोध;
+		break;
 
-	हाल QLCNIC_DEV_NEED_QUISCENT:
+	case QLCNIC_DEV_NEED_QUISCENT:
 		val = QLC_SHARED_REG_RD32(adapter, QLCNIC_CRB_DRV_STATE);
 		QLC_DEV_SET_QSCNT_RDY(val, portnum);
 		QLC_SHARED_REG_WR32(adapter, QLCNIC_CRB_DRV_STATE, val);
-		अवरोध;
+		break;
 
-	हाल QLCNIC_DEV_FAILED:
+	case QLCNIC_DEV_FAILED:
 		dev_err(&adapter->pdev->dev, "Device in failed state.\n");
 		qlcnic_api_unlock(adapter);
-		वापस -1;
+		return -1;
 
-	हाल QLCNIC_DEV_INITIALIZING:
-	हाल QLCNIC_DEV_QUISCENT:
-		अवरोध;
-	पूर्ण
+	case QLCNIC_DEV_INITIALIZING:
+	case QLCNIC_DEV_QUISCENT:
+		break;
+	}
 
 	qlcnic_api_unlock(adapter);
 
-	करो अणु
+	do {
 		msleep(1000);
 		prev_state = QLC_SHARED_REG_RD32(adapter, QLCNIC_CRB_DEV_STATE);
 
-		अगर (prev_state == QLCNIC_DEV_QUISCENT)
-			जारी;
-	पूर्ण जबतक ((prev_state != QLCNIC_DEV_READY) && --dev_init_समयo);
+		if (prev_state == QLCNIC_DEV_QUISCENT)
+			continue;
+	} while ((prev_state != QLCNIC_DEV_READY) && --dev_init_timeo);
 
-	अगर (!dev_init_समयo) अणु
+	if (!dev_init_timeo) {
 		dev_err(&adapter->pdev->dev,
 			"Waiting for device to initialize timeout\n");
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	अगर (qlcnic_api_lock(adapter))
-		वापस -1;
+	if (qlcnic_api_lock(adapter))
+		return -1;
 
 	val = QLC_SHARED_REG_RD32(adapter, QLCNIC_CRB_DRV_STATE);
 	QLC_DEV_CLR_RST_QSCNT(val, portnum);
@@ -3366,52 +3365,52 @@ qlcnic_can_start_firmware(काष्ठा qlcnic_adapter *adapter)
 	ret = qlcnic_check_idc_ver(adapter);
 	qlcnic_api_unlock(adapter);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम
-qlcnic_fwinit_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा qlcnic_adapter *adapter = container_of(work,
-			काष्ठा qlcnic_adapter, fw_work.work);
+static void
+qlcnic_fwinit_work(struct work_struct *work)
+{
+	struct qlcnic_adapter *adapter = container_of(work,
+			struct qlcnic_adapter, fw_work.work);
 	u32 dev_state = 0xf;
 	u32 val;
 
-	अगर (qlcnic_api_lock(adapter))
-		जाओ err_ret;
+	if (qlcnic_api_lock(adapter))
+		goto err_ret;
 
 	dev_state = QLC_SHARED_REG_RD32(adapter, QLCNIC_CRB_DEV_STATE);
-	अगर (dev_state == QLCNIC_DEV_QUISCENT ||
-	    dev_state == QLCNIC_DEV_NEED_QUISCENT) अणु
+	if (dev_state == QLCNIC_DEV_QUISCENT ||
+	    dev_state == QLCNIC_DEV_NEED_QUISCENT) {
 		qlcnic_api_unlock(adapter);
 		qlcnic_schedule_work(adapter, qlcnic_fwinit_work,
 						FW_POLL_DELAY * 2);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (adapter->ahw->op_mode == QLCNIC_NON_PRIV_FUNC) अणु
+	if (adapter->ahw->op_mode == QLCNIC_NON_PRIV_FUNC) {
 		qlcnic_api_unlock(adapter);
-		जाओ रुको_npar;
-	पूर्ण
+		goto wait_npar;
+	}
 
-	अगर (dev_state == QLCNIC_DEV_INITIALIZING ||
-	    dev_state == QLCNIC_DEV_READY) अणु
+	if (dev_state == QLCNIC_DEV_INITIALIZING ||
+	    dev_state == QLCNIC_DEV_READY) {
 		dev_info(&adapter->pdev->dev, "Detected state change from "
 				"DEV_NEED_RESET, skipping ack check\n");
-		जाओ skip_ack_check;
-	पूर्ण
+		goto skip_ack_check;
+	}
 
-	अगर (adapter->fw_रुको_cnt++ > adapter->reset_ack_समयo) अणु
+	if (adapter->fw_wait_cnt++ > adapter->reset_ack_timeo) {
 		dev_info(&adapter->pdev->dev, "Reset:Failed to get ack %d sec\n",
-					adapter->reset_ack_समयo);
-		जाओ skip_ack_check;
-	पूर्ण
+					adapter->reset_ack_timeo);
+		goto skip_ack_check;
+	}
 
-	अगर (!qlcnic_check_drv_state(adapter)) अणु
+	if (!qlcnic_check_drv_state(adapter)) {
 skip_ack_check:
 		dev_state = QLC_SHARED_REG_RD32(adapter, QLCNIC_CRB_DEV_STATE);
 
-		अगर (dev_state == QLCNIC_DEV_NEED_RESET) अणु
+		if (dev_state == QLCNIC_DEV_NEED_RESET) {
 			QLC_SHARED_REG_WR32(adapter, QLCNIC_CRB_DEV_STATE,
 					    QLCNIC_DEV_INITIALIZING);
 			set_bit(__QLCNIC_START_FW, &adapter->state);
@@ -3422,138 +3421,138 @@ skip_ack_check:
 			QLC_DEV_SET_RST_RDY(val, adapter->portnum);
 			QLC_SHARED_REG_WR32(adapter,
 					    QLCNIC_CRB_DRV_STATE, val);
-		पूर्ण
+		}
 
 		qlcnic_api_unlock(adapter);
 
 		rtnl_lock();
-		अगर (qlcnic_check_fw_dump_state(adapter) &&
-		    (adapter->flags & QLCNIC_FW_RESET_OWNER)) अणु
+		if (qlcnic_check_fw_dump_state(adapter) &&
+		    (adapter->flags & QLCNIC_FW_RESET_OWNER)) {
 			QLCDB(adapter, DRV, "Take FW dump\n");
 			qlcnic_dump_fw(adapter);
 			adapter->flags |= QLCNIC_FW_HANG;
-		पूर्ण
+		}
 		rtnl_unlock();
 
 		adapter->flags &= ~QLCNIC_FW_RESET_OWNER;
-		अगर (!adapter->nic_ops->start_firmware(adapter)) अणु
+		if (!adapter->nic_ops->start_firmware(adapter)) {
 			qlcnic_schedule_work(adapter, qlcnic_attach_work, 0);
-			adapter->fw_रुको_cnt = 0;
-			वापस;
-		पूर्ण
-		जाओ err_ret;
-	पूर्ण
+			adapter->fw_wait_cnt = 0;
+			return;
+		}
+		goto err_ret;
+	}
 
 	qlcnic_api_unlock(adapter);
 
-रुको_npar:
+wait_npar:
 	dev_state = QLC_SHARED_REG_RD32(adapter, QLCNIC_CRB_DEV_STATE);
 	QLCDB(adapter, HW, "Func waiting: Device state=%u\n", dev_state);
 
-	चयन (dev_state) अणु
-	हाल QLCNIC_DEV_READY:
-		अगर (!qlcnic_start_firmware(adapter)) अणु
+	switch (dev_state) {
+	case QLCNIC_DEV_READY:
+		if (!qlcnic_start_firmware(adapter)) {
 			qlcnic_schedule_work(adapter, qlcnic_attach_work, 0);
-			adapter->fw_रुको_cnt = 0;
-			वापस;
-		पूर्ण
-	हाल QLCNIC_DEV_FAILED:
-		अवरोध;
-	शेष:
+			adapter->fw_wait_cnt = 0;
+			return;
+		}
+	case QLCNIC_DEV_FAILED:
+		break;
+	default:
 		qlcnic_schedule_work(adapter,
 			qlcnic_fwinit_work, FW_POLL_DELAY);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 err_ret:
 	dev_err(&adapter->pdev->dev, "Fwinit work failed state=%u "
-		"fw_wait_cnt=%u\n", dev_state, adapter->fw_रुको_cnt);
-	netअगर_device_attach(adapter->netdev);
+		"fw_wait_cnt=%u\n", dev_state, adapter->fw_wait_cnt);
+	netif_device_attach(adapter->netdev);
 	qlcnic_clr_all_drv_state(adapter, 0);
-पूर्ण
+}
 
-अटल व्योम
-qlcnic_detach_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा qlcnic_adapter *adapter = container_of(work,
-			काष्ठा qlcnic_adapter, fw_work.work);
-	काष्ठा net_device *netdev = adapter->netdev;
+static void
+qlcnic_detach_work(struct work_struct *work)
+{
+	struct qlcnic_adapter *adapter = container_of(work,
+			struct qlcnic_adapter, fw_work.work);
+	struct net_device *netdev = adapter->netdev;
 	u32 status;
 
-	netअगर_device_detach(netdev);
+	netif_device_detach(netdev);
 
 	/* Dont grab rtnl lock during Quiscent mode */
-	अगर (adapter->dev_state == QLCNIC_DEV_NEED_QUISCENT) अणु
-		अगर (netअगर_running(netdev))
-			__qlcnic_करोwn(adapter, netdev);
-	पूर्ण अन्यथा
-		qlcnic_करोwn(adapter, netdev);
+	if (adapter->dev_state == QLCNIC_DEV_NEED_QUISCENT) {
+		if (netif_running(netdev))
+			__qlcnic_down(adapter, netdev);
+	} else
+		qlcnic_down(adapter, netdev);
 
 	status = QLC_SHARED_REG_RD32(adapter, QLCNIC_PEG_HALT_STATUS1);
 
-	अगर (status & QLCNIC_RCODE_FATAL_ERROR) अणु
+	if (status & QLCNIC_RCODE_FATAL_ERROR) {
 		dev_err(&adapter->pdev->dev,
 			"Detaching the device: peg halt status1=0x%x\n",
 					status);
 
-		अगर (QLCNIC_FWERROR_CODE(status) == QLCNIC_FWERROR_FAN_FAILURE) अणु
+		if (QLCNIC_FWERROR_CODE(status) == QLCNIC_FWERROR_FAN_FAILURE) {
 			dev_err(&adapter->pdev->dev,
 			"On board active cooling fan failed. "
 				"Device has been halted.\n");
 			dev_err(&adapter->pdev->dev,
 				"Replace the adapter.\n");
-		पूर्ण
+		}
 
-		जाओ err_ret;
-	पूर्ण
+		goto err_ret;
+	}
 
-	अगर (adapter->ahw->temp == QLCNIC_TEMP_PANIC) अणु
+	if (adapter->ahw->temp == QLCNIC_TEMP_PANIC) {
 		dev_err(&adapter->pdev->dev, "Detaching the device: temp=%d\n",
 			adapter->ahw->temp);
-		जाओ err_ret;
-	पूर्ण
+		goto err_ret;
+	}
 
-	/* Dont ack अगर this instance is the reset owner */
-	अगर (!(adapter->flags & QLCNIC_FW_RESET_OWNER)) अणु
-		अगर (qlcnic_set_drv_state(adapter, adapter->dev_state)) अणु
+	/* Dont ack if this instance is the reset owner */
+	if (!(adapter->flags & QLCNIC_FW_RESET_OWNER)) {
+		if (qlcnic_set_drv_state(adapter, adapter->dev_state)) {
 			dev_err(&adapter->pdev->dev,
 				"Failed to set driver state,"
 					"detaching the device.\n");
-			जाओ err_ret;
-		पूर्ण
-	पूर्ण
+			goto err_ret;
+		}
+	}
 
-	adapter->fw_रुको_cnt = 0;
+	adapter->fw_wait_cnt = 0;
 
 	qlcnic_schedule_work(adapter, qlcnic_fwinit_work, FW_POLL_DELAY);
 
-	वापस;
+	return;
 
 err_ret:
-	netअगर_device_attach(netdev);
+	netif_device_attach(netdev);
 	qlcnic_clr_all_drv_state(adapter, 1);
-पूर्ण
+}
 
 /*Transit NPAR state to NON Operational */
-अटल व्योम
-qlcnic_set_npar_non_operational(काष्ठा qlcnic_adapter *adapter)
-अणु
+static void
+qlcnic_set_npar_non_operational(struct qlcnic_adapter *adapter)
+{
 	u32 state;
 
 	state = QLC_SHARED_REG_RD32(adapter, QLCNIC_CRB_DEV_NPAR_STATE);
-	अगर (state == QLCNIC_DEV_NPAR_NON_OPER)
-		वापस;
+	if (state == QLCNIC_DEV_NPAR_NON_OPER)
+		return;
 
-	अगर (qlcnic_api_lock(adapter))
-		वापस;
+	if (qlcnic_api_lock(adapter))
+		return;
 	QLC_SHARED_REG_WR32(adapter, QLCNIC_CRB_DEV_NPAR_STATE,
 			    QLCNIC_DEV_NPAR_NON_OPER);
 	qlcnic_api_unlock(adapter);
-पूर्ण
+}
 
-अटल व्योम qlcnic_82xx_dev_request_reset(काष्ठा qlcnic_adapter *adapter,
+static void qlcnic_82xx_dev_request_reset(struct qlcnic_adapter *adapter,
 					  u32 key)
-अणु
+{
 	u32 state, xg_val = 0, gb_val = 0;
 
 	qlcnic_xg_set_xg0_mask(xg_val);
@@ -3568,144 +3567,144 @@ qlcnic_set_npar_non_operational(काष्ठा qlcnic_adapter *adapter)
 				" on all ports\n");
 	adapter->need_fw_reset = 1;
 
-	अगर (qlcnic_api_lock(adapter))
-		वापस;
+	if (qlcnic_api_lock(adapter))
+		return;
 
 	state = QLC_SHARED_REG_RD32(adapter, QLCNIC_CRB_DEV_STATE);
 
-	अगर (test_bit(__QLCNIC_MAINTEन_अंकCE_MODE, &adapter->state)) अणु
+	if (test_bit(__QLCNIC_MAINTENANCE_MODE, &adapter->state)) {
 		netdev_err(adapter->netdev, "%s: Device is in non-operational state\n",
 			   __func__);
 		qlcnic_api_unlock(adapter);
 
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (state == QLCNIC_DEV_READY) अणु
+	if (state == QLCNIC_DEV_READY) {
 		QLC_SHARED_REG_WR32(adapter, QLCNIC_CRB_DEV_STATE,
 				    QLCNIC_DEV_NEED_RESET);
 		adapter->flags |= QLCNIC_FW_RESET_OWNER;
 		QLCDB(adapter, DRV, "NEED_RESET state set\n");
 		qlcnic_idc_debug_info(adapter, 0);
-	पूर्ण
+	}
 
 	QLC_SHARED_REG_WR32(adapter, QLCNIC_CRB_DEV_NPAR_STATE,
 			    QLCNIC_DEV_NPAR_NON_OPER);
 	qlcnic_api_unlock(adapter);
-पूर्ण
+}
 
 /* Transit to NPAR READY state from NPAR NOT READY state */
-अटल व्योम
-qlcnic_dev_set_npar_पढ़ोy(काष्ठा qlcnic_adapter *adapter)
-अणु
-	अगर (qlcnic_api_lock(adapter))
-		वापस;
+static void
+qlcnic_dev_set_npar_ready(struct qlcnic_adapter *adapter)
+{
+	if (qlcnic_api_lock(adapter))
+		return;
 
 	QLC_SHARED_REG_WR32(adapter, QLCNIC_CRB_DEV_NPAR_STATE,
 			    QLCNIC_DEV_NPAR_OPER);
 	QLCDB(adapter, DRV, "NPAR operational state set\n");
 
 	qlcnic_api_unlock(adapter);
-पूर्ण
+}
 
-व्योम qlcnic_schedule_work(काष्ठा qlcnic_adapter *adapter,
-			  work_func_t func, पूर्णांक delay)
-अणु
-	अगर (test_bit(__QLCNIC_AER, &adapter->state))
-		वापस;
+void qlcnic_schedule_work(struct qlcnic_adapter *adapter,
+			  work_func_t func, int delay)
+{
+	if (test_bit(__QLCNIC_AER, &adapter->state))
+		return;
 
 	INIT_DELAYED_WORK(&adapter->fw_work, func);
 	queue_delayed_work(adapter->qlcnic_wq, &adapter->fw_work,
-			   round_jअगरfies_relative(delay));
-पूर्ण
+			   round_jiffies_relative(delay));
+}
 
-अटल व्योम
-qlcnic_attach_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा qlcnic_adapter *adapter = container_of(work,
-				काष्ठा qlcnic_adapter, fw_work.work);
-	काष्ठा net_device *netdev = adapter->netdev;
+static void
+qlcnic_attach_work(struct work_struct *work)
+{
+	struct qlcnic_adapter *adapter = container_of(work,
+				struct qlcnic_adapter, fw_work.work);
+	struct net_device *netdev = adapter->netdev;
 	u32 npar_state;
 
-	अगर (adapter->ahw->op_mode != QLCNIC_MGMT_FUNC) अणु
+	if (adapter->ahw->op_mode != QLCNIC_MGMT_FUNC) {
 		npar_state = QLC_SHARED_REG_RD32(adapter,
 						 QLCNIC_CRB_DEV_NPAR_STATE);
-		अगर (adapter->fw_रुको_cnt++ > QLCNIC_DEV_NPAR_OPER_TIMEO)
+		if (adapter->fw_wait_cnt++ > QLCNIC_DEV_NPAR_OPER_TIMEO)
 			qlcnic_clr_all_drv_state(adapter, 0);
-		अन्यथा अगर (npar_state != QLCNIC_DEV_NPAR_OPER)
+		else if (npar_state != QLCNIC_DEV_NPAR_OPER)
 			qlcnic_schedule_work(adapter, qlcnic_attach_work,
 							FW_POLL_DELAY);
-		अन्यथा
-			जाओ attach;
+		else
+			goto attach;
 		QLCDB(adapter, DRV, "Waiting for NPAR state to operational\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 attach:
 	qlcnic_dcb_get_info(adapter->dcb);
 
-	अगर (netअगर_running(netdev)) अणु
-		अगर (qlcnic_up(adapter, netdev))
-			जाओ करोne;
+	if (netif_running(netdev)) {
+		if (qlcnic_up(adapter, netdev))
+			goto done;
 
 		qlcnic_restore_indev_addr(netdev, NETDEV_UP);
-	पूर्ण
+	}
 
-करोne:
-	netअगर_device_attach(netdev);
+done:
+	netif_device_attach(netdev);
 	adapter->fw_fail_cnt = 0;
 	adapter->flags &= ~QLCNIC_FW_HANG;
 	clear_bit(__QLCNIC_RESETTING, &adapter->state);
-	अगर (adapter->portnum == 0)
+	if (adapter->portnum == 0)
 		qlcnic_set_drv_version(adapter);
 
-	अगर (!qlcnic_clr_drv_state(adapter))
+	if (!qlcnic_clr_drv_state(adapter))
 		qlcnic_schedule_work(adapter, qlcnic_fw_poll_work,
 							FW_POLL_DELAY);
-पूर्ण
+}
 
-अटल पूर्णांक
-qlcnic_check_health(काष्ठा qlcnic_adapter *adapter)
-अणु
-	काष्ठा qlcnic_hardware_context *ahw = adapter->ahw;
-	काष्ठा qlcnic_fw_dump *fw_dump = &ahw->fw_dump;
+static int
+qlcnic_check_health(struct qlcnic_adapter *adapter)
+{
+	struct qlcnic_hardware_context *ahw = adapter->ahw;
+	struct qlcnic_fw_dump *fw_dump = &ahw->fw_dump;
 	u32 state = 0, heartbeat;
 	u32 peg_status;
-	पूर्णांक err = 0;
+	int err = 0;
 
-	अगर (qlcnic_check_temp(adapter))
-		जाओ detach;
+	if (qlcnic_check_temp(adapter))
+		goto detach;
 
-	अगर (adapter->need_fw_reset)
+	if (adapter->need_fw_reset)
 		qlcnic_dev_request_reset(adapter, 0);
 
 	state = QLC_SHARED_REG_RD32(adapter, QLCNIC_CRB_DEV_STATE);
-	अगर (state == QLCNIC_DEV_NEED_RESET) अणु
+	if (state == QLCNIC_DEV_NEED_RESET) {
 		qlcnic_set_npar_non_operational(adapter);
 		adapter->need_fw_reset = 1;
-	पूर्ण अन्यथा अगर (state == QLCNIC_DEV_NEED_QUISCENT)
-		जाओ detach;
+	} else if (state == QLCNIC_DEV_NEED_QUISCENT)
+		goto detach;
 
 	heartbeat = QLC_SHARED_REG_RD32(adapter, QLCNIC_PEG_ALIVE_COUNTER);
-	अगर (heartbeat != adapter->heartbeat) अणु
+	if (heartbeat != adapter->heartbeat) {
 		adapter->heartbeat = heartbeat;
 		adapter->fw_fail_cnt = 0;
-		अगर (adapter->need_fw_reset)
-			जाओ detach;
+		if (adapter->need_fw_reset)
+			goto detach;
 
-		अगर (ahw->reset_context && qlcnic_स्वतः_fw_reset)
+		if (ahw->reset_context && qlcnic_auto_fw_reset)
 			qlcnic_reset_hw_context(adapter);
 
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (++adapter->fw_fail_cnt < FW_FAIL_THRESH)
-		वापस 0;
+	if (++adapter->fw_fail_cnt < FW_FAIL_THRESH)
+		return 0;
 
 	adapter->flags |= QLCNIC_FW_HANG;
 
 	qlcnic_dev_request_reset(adapter, 0);
 
-	अगर (qlcnic_स्वतः_fw_reset)
+	if (qlcnic_auto_fw_reset)
 		clear_bit(__QLCNIC_FW_ATTACHED, &adapter->state);
 
 	dev_err(&adapter->pdev->dev, "firmware hang detected\n");
@@ -3722,7 +3721,7 @@ qlcnic_check_health(काष्ठा qlcnic_adapter *adapter)
 			QLCRD32(adapter, QLCNIC_CRB_PEG_NET_2 + 0x3c, &err),
 			QLCRD32(adapter, QLCNIC_CRB_PEG_NET_3 + 0x3c, &err),
 			QLCRD32(adapter, QLCNIC_CRB_PEG_NET_4 + 0x3c, &err));
-	अगर (QLCNIC_FWERROR_CODE(peg_status) == 0x67)
+	if (QLCNIC_FWERROR_CODE(peg_status) == 0x67)
 		dev_err(&adapter->pdev->dev,
 			"Firmware aborted with error code 0x00006700. "
 				"Device is being reset.\n");
@@ -3730,156 +3729,156 @@ detach:
 	adapter->dev_state = (state == QLCNIC_DEV_NEED_QUISCENT) ? state :
 		QLCNIC_DEV_NEED_RESET;
 
-	अगर (qlcnic_स्वतः_fw_reset && !test_and_set_bit(__QLCNIC_RESETTING,
-						      &adapter->state)) अणु
+	if (qlcnic_auto_fw_reset && !test_and_set_bit(__QLCNIC_RESETTING,
+						      &adapter->state)) {
 
 		qlcnic_schedule_work(adapter, qlcnic_detach_work, 0);
 		QLCDB(adapter, DRV, "fw recovery scheduled.\n");
-	पूर्ण अन्यथा अगर (!qlcnic_स्वतः_fw_reset && fw_dump->enable &&
-		   adapter->flags & QLCNIC_FW_RESET_OWNER) अणु
+	} else if (!qlcnic_auto_fw_reset && fw_dump->enable &&
+		   adapter->flags & QLCNIC_FW_RESET_OWNER) {
 		qlcnic_dump_fw(adapter);
-	पूर्ण
+	}
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-व्योम qlcnic_fw_poll_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा qlcnic_adapter *adapter = container_of(work,
-				काष्ठा qlcnic_adapter, fw_work.work);
+void qlcnic_fw_poll_work(struct work_struct *work)
+{
+	struct qlcnic_adapter *adapter = container_of(work,
+				struct qlcnic_adapter, fw_work.work);
 
-	अगर (test_bit(__QLCNIC_RESETTING, &adapter->state))
-		जाओ reschedule;
+	if (test_bit(__QLCNIC_RESETTING, &adapter->state))
+		goto reschedule;
 
 
-	अगर (qlcnic_check_health(adapter))
-		वापस;
+	if (qlcnic_check_health(adapter))
+		return;
 
-	अगर (adapter->fhash.fnum)
+	if (adapter->fhash.fnum)
 		qlcnic_prune_lb_filters(adapter);
 
 reschedule:
 	qlcnic_schedule_work(adapter, qlcnic_fw_poll_work, FW_POLL_DELAY);
-पूर्ण
+}
 
-अटल पूर्णांक qlcnic_is_first_func(काष्ठा pci_dev *pdev)
-अणु
-	काष्ठा pci_dev *oth_pdev;
-	पूर्णांक val = pdev->devfn;
+static int qlcnic_is_first_func(struct pci_dev *pdev)
+{
+	struct pci_dev *oth_pdev;
+	int val = pdev->devfn;
 
-	जबतक (val-- > 0) अणु
-		oth_pdev = pci_get_करोमुख्य_bus_and_slot(pci_करोमुख्य_nr
+	while (val-- > 0) {
+		oth_pdev = pci_get_domain_bus_and_slot(pci_domain_nr
 			(pdev->bus), pdev->bus->number,
 			PCI_DEVFN(PCI_SLOT(pdev->devfn), val));
-		अगर (!oth_pdev)
-			जारी;
+		if (!oth_pdev)
+			continue;
 
-		अगर (oth_pdev->current_state != PCI_D3cold) अणु
+		if (oth_pdev->current_state != PCI_D3cold) {
 			pci_dev_put(oth_pdev);
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 		pci_dev_put(oth_pdev);
-	पूर्ण
-	वापस 1;
-पूर्ण
+	}
+	return 1;
+}
 
-अटल पूर्णांक qlcnic_attach_func(काष्ठा pci_dev *pdev)
-अणु
-	पूर्णांक err, first_func;
-	काष्ठा qlcnic_adapter *adapter = pci_get_drvdata(pdev);
-	काष्ठा net_device *netdev = adapter->netdev;
+static int qlcnic_attach_func(struct pci_dev *pdev)
+{
+	int err, first_func;
+	struct qlcnic_adapter *adapter = pci_get_drvdata(pdev);
+	struct net_device *netdev = adapter->netdev;
 
 	pdev->error_state = pci_channel_io_normal;
 
 	err = pci_enable_device(pdev);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	pci_set_master(pdev);
 	pci_restore_state(pdev);
 
 	first_func = qlcnic_is_first_func(pdev);
 
-	अगर (qlcnic_api_lock(adapter))
-		वापस -EINVAL;
+	if (qlcnic_api_lock(adapter))
+		return -EINVAL;
 
-	अगर (adapter->ahw->op_mode != QLCNIC_NON_PRIV_FUNC && first_func) अणु
+	if (adapter->ahw->op_mode != QLCNIC_NON_PRIV_FUNC && first_func) {
 		adapter->need_fw_reset = 1;
 		set_bit(__QLCNIC_START_FW, &adapter->state);
 		QLC_SHARED_REG_WR32(adapter, QLCNIC_CRB_DEV_STATE,
 				    QLCNIC_DEV_INITIALIZING);
 		QLCDB(adapter, DRV, "Restarting fw\n");
-	पूर्ण
+	}
 	qlcnic_api_unlock(adapter);
 
 	err = qlcnic_start_firmware(adapter);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	qlcnic_clr_drv_state(adapter);
-	kमुक्त(adapter->msix_entries);
-	adapter->msix_entries = शून्य;
-	err = qlcnic_setup_पूर्णांकr(adapter);
+	kfree(adapter->msix_entries);
+	adapter->msix_entries = NULL;
+	err = qlcnic_setup_intr(adapter);
 
-	अगर (err) अणु
-		kमुक्त(adapter->msix_entries);
+	if (err) {
+		kfree(adapter->msix_entries);
 		netdev_err(netdev, "failed to setup interrupt\n");
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	अगर (netअगर_running(netdev)) अणु
+	if (netif_running(netdev)) {
 		err = qlcnic_attach(adapter);
-		अगर (err) अणु
+		if (err) {
 			qlcnic_clr_all_drv_state(adapter, 1);
 			clear_bit(__QLCNIC_AER, &adapter->state);
-			netअगर_device_attach(netdev);
-			वापस err;
-		पूर्ण
+			netif_device_attach(netdev);
+			return err;
+		}
 
 		err = qlcnic_up(adapter, netdev);
-		अगर (err)
-			जाओ करोne;
+		if (err)
+			goto done;
 
 		qlcnic_restore_indev_addr(netdev, NETDEV_UP);
-	पूर्ण
- करोne:
-	netअगर_device_attach(netdev);
-	वापस err;
-पूर्ण
+	}
+ done:
+	netif_device_attach(netdev);
+	return err;
+}
 
-अटल pci_ers_result_t qlcnic_82xx_io_error_detected(काष्ठा pci_dev *pdev,
+static pci_ers_result_t qlcnic_82xx_io_error_detected(struct pci_dev *pdev,
 						      pci_channel_state_t state)
-अणु
-	काष्ठा qlcnic_adapter *adapter = pci_get_drvdata(pdev);
-	काष्ठा net_device *netdev = adapter->netdev;
+{
+	struct qlcnic_adapter *adapter = pci_get_drvdata(pdev);
+	struct net_device *netdev = adapter->netdev;
 
-	अगर (state == pci_channel_io_perm_failure)
-		वापस PCI_ERS_RESULT_DISCONNECT;
+	if (state == pci_channel_io_perm_failure)
+		return PCI_ERS_RESULT_DISCONNECT;
 
-	अगर (state == pci_channel_io_normal)
-		वापस PCI_ERS_RESULT_RECOVERED;
+	if (state == pci_channel_io_normal)
+		return PCI_ERS_RESULT_RECOVERED;
 
 	set_bit(__QLCNIC_AER, &adapter->state);
-	netअगर_device_detach(netdev);
+	netif_device_detach(netdev);
 
 	cancel_delayed_work_sync(&adapter->fw_work);
 
-	अगर (netअगर_running(netdev))
-		qlcnic_करोwn(adapter, netdev);
+	if (netif_running(netdev))
+		qlcnic_down(adapter, netdev);
 
 	qlcnic_detach(adapter);
-	qlcnic_tearकरोwn_पूर्णांकr(adapter);
+	qlcnic_teardown_intr(adapter);
 
 	clear_bit(__QLCNIC_RESETTING, &adapter->state);
 
 	pci_save_state(pdev);
 	pci_disable_device(pdev);
 
-	वापस PCI_ERS_RESULT_NEED_RESET;
-पूर्ण
+	return PCI_ERS_RESULT_NEED_RESET;
+}
 
-अटल pci_ers_result_t qlcnic_82xx_io_slot_reset(काष्ठा pci_dev *pdev)
-अणु
+static pci_ers_result_t qlcnic_82xx_io_slot_reset(struct pci_dev *pdev)
+{
 	pci_ers_result_t res;
 
 	rtnl_lock();
@@ -3887,391 +3886,391 @@ reschedule:
 					 PCI_ERS_RESULT_RECOVERED;
 	rtnl_unlock();
 
-	वापस res;
-पूर्ण
+	return res;
+}
 
-अटल व्योम qlcnic_82xx_io_resume(काष्ठा pci_dev *pdev)
-अणु
+static void qlcnic_82xx_io_resume(struct pci_dev *pdev)
+{
 	u32 state;
-	काष्ठा qlcnic_adapter *adapter = pci_get_drvdata(pdev);
+	struct qlcnic_adapter *adapter = pci_get_drvdata(pdev);
 
 	state = QLC_SHARED_REG_RD32(adapter, QLCNIC_CRB_DEV_STATE);
-	अगर (state == QLCNIC_DEV_READY && test_and_clear_bit(__QLCNIC_AER,
+	if (state == QLCNIC_DEV_READY && test_and_clear_bit(__QLCNIC_AER,
 							    &adapter->state))
 		qlcnic_schedule_work(adapter, qlcnic_fw_poll_work,
 				     FW_POLL_DELAY);
-पूर्ण
+}
 
-अटल pci_ers_result_t qlcnic_io_error_detected(काष्ठा pci_dev *pdev,
+static pci_ers_result_t qlcnic_io_error_detected(struct pci_dev *pdev,
 						 pci_channel_state_t state)
-अणु
-	काष्ठा qlcnic_adapter *adapter = pci_get_drvdata(pdev);
-	काष्ठा qlcnic_hardware_ops *hw_ops = adapter->ahw->hw_ops;
+{
+	struct qlcnic_adapter *adapter = pci_get_drvdata(pdev);
+	struct qlcnic_hardware_ops *hw_ops = adapter->ahw->hw_ops;
 
-	अगर (hw_ops->io_error_detected) अणु
-		वापस hw_ops->io_error_detected(pdev, state);
-	पूर्ण अन्यथा अणु
+	if (hw_ops->io_error_detected) {
+		return hw_ops->io_error_detected(pdev, state);
+	} else {
 		dev_err(&pdev->dev, "AER error_detected handler not registered.\n");
-		वापस PCI_ERS_RESULT_DISCONNECT;
-	पूर्ण
-पूर्ण
+		return PCI_ERS_RESULT_DISCONNECT;
+	}
+}
 
-अटल pci_ers_result_t qlcnic_io_slot_reset(काष्ठा pci_dev *pdev)
-अणु
-	काष्ठा qlcnic_adapter *adapter = pci_get_drvdata(pdev);
-	काष्ठा qlcnic_hardware_ops *hw_ops = adapter->ahw->hw_ops;
+static pci_ers_result_t qlcnic_io_slot_reset(struct pci_dev *pdev)
+{
+	struct qlcnic_adapter *adapter = pci_get_drvdata(pdev);
+	struct qlcnic_hardware_ops *hw_ops = adapter->ahw->hw_ops;
 
-	अगर (hw_ops->io_slot_reset) अणु
-		वापस hw_ops->io_slot_reset(pdev);
-	पूर्ण अन्यथा अणु
+	if (hw_ops->io_slot_reset) {
+		return hw_ops->io_slot_reset(pdev);
+	} else {
 		dev_err(&pdev->dev, "AER slot_reset handler not registered.\n");
-		वापस PCI_ERS_RESULT_DISCONNECT;
-	पूर्ण
-पूर्ण
+		return PCI_ERS_RESULT_DISCONNECT;
+	}
+}
 
-अटल व्योम qlcnic_io_resume(काष्ठा pci_dev *pdev)
-अणु
-	काष्ठा qlcnic_adapter *adapter = pci_get_drvdata(pdev);
-	काष्ठा qlcnic_hardware_ops *hw_ops = adapter->ahw->hw_ops;
+static void qlcnic_io_resume(struct pci_dev *pdev)
+{
+	struct qlcnic_adapter *adapter = pci_get_drvdata(pdev);
+	struct qlcnic_hardware_ops *hw_ops = adapter->ahw->hw_ops;
 
-	अगर (hw_ops->io_resume)
+	if (hw_ops->io_resume)
 		hw_ops->io_resume(pdev);
-	अन्यथा
+	else
 		dev_err(&pdev->dev, "AER resume handler not registered.\n");
-पूर्ण
+}
 
 
-अटल पूर्णांक
-qlcnicvf_start_firmware(काष्ठा qlcnic_adapter *adapter)
-अणु
-	पूर्णांक err;
+static int
+qlcnicvf_start_firmware(struct qlcnic_adapter *adapter)
+{
+	int err;
 
 	err = qlcnic_can_start_firmware(adapter);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	err = qlcnic_check_npar_opertional(adapter);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	err = qlcnic_initialize_nic(adapter);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	qlcnic_check_options(adapter);
 
-	err = qlcnic_set_eचयन_port_config(adapter);
-	अगर (err)
-		वापस err;
+	err = qlcnic_set_eswitch_port_config(adapter);
+	if (err)
+		return err;
 
 	adapter->need_fw_reset = 0;
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक qlcnic_validate_rings(काष्ठा qlcnic_adapter *adapter, __u32 ring_cnt,
-			  पूर्णांक queue_type)
-अणु
-	काष्ठा net_device *netdev = adapter->netdev;
-	अक्षर buf[8];
+int qlcnic_validate_rings(struct qlcnic_adapter *adapter, __u32 ring_cnt,
+			  int queue_type)
+{
+	struct net_device *netdev = adapter->netdev;
+	char buf[8];
 
-	अगर (queue_type == QLCNIC_RX_QUEUE)
-		म_नकल(buf, "SDS");
-	अन्यथा
-		म_नकल(buf, "Tx");
+	if (queue_type == QLCNIC_RX_QUEUE)
+		strcpy(buf, "SDS");
+	else
+		strcpy(buf, "Tx");
 
-	अगर (!is_घातer_of_2(ring_cnt)) अणु
+	if (!is_power_of_2(ring_cnt)) {
 		netdev_err(netdev, "%s rings value should be a power of 2\n",
 			   buf);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (qlcnic_82xx_check(adapter) && (queue_type == QLCNIC_TX_QUEUE) &&
-	    !qlcnic_check_multi_tx(adapter)) अणु
+	if (qlcnic_82xx_check(adapter) && (queue_type == QLCNIC_TX_QUEUE) &&
+	    !qlcnic_check_multi_tx(adapter)) {
 			netdev_err(netdev, "No Multi Tx queue support\n");
-			वापस -EINVAL;
-	पूर्ण
+			return -EINVAL;
+	}
 
-	अगर (ring_cnt > num_online_cpus()) अणु
+	if (ring_cnt > num_online_cpus()) {
 		netdev_err(netdev,
 			   "%s value[%u] should not be higher than, number of online CPUs\n",
 			   buf, num_online_cpus());
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक qlcnic_setup_rings(काष्ठा qlcnic_adapter *adapter)
-अणु
-	काष्ठा net_device *netdev = adapter->netdev;
+int qlcnic_setup_rings(struct qlcnic_adapter *adapter)
+{
+	struct net_device *netdev = adapter->netdev;
 	u8 tx_rings, rx_rings;
-	पूर्णांक err;
+	int err;
 
-	अगर (test_bit(__QLCNIC_RESETTING, &adapter->state))
-		वापस -EBUSY;
+	if (test_bit(__QLCNIC_RESETTING, &adapter->state))
+		return -EBUSY;
 
 	tx_rings = adapter->drv_tss_rings;
 	rx_rings = adapter->drv_rss_rings;
 
-	netअगर_device_detach(netdev);
+	netif_device_detach(netdev);
 
 	err = qlcnic_set_real_num_queues(adapter, tx_rings, rx_rings);
-	अगर (err)
-		जाओ करोne;
+	if (err)
+		goto done;
 
-	अगर (netअगर_running(netdev))
-		__qlcnic_करोwn(adapter, netdev);
+	if (netif_running(netdev))
+		__qlcnic_down(adapter, netdev);
 
 	qlcnic_detach(adapter);
 
-	अगर (qlcnic_83xx_check(adapter)) अणु
-		qlcnic_83xx_मुक्त_mbx_पूर्णांकr(adapter);
+	if (qlcnic_83xx_check(adapter)) {
+		qlcnic_83xx_free_mbx_intr(adapter);
 		qlcnic_83xx_enable_mbx_poll(adapter);
-	पूर्ण
+	}
 
-	qlcnic_tearकरोwn_पूर्णांकr(adapter);
+	qlcnic_teardown_intr(adapter);
 
-	err = qlcnic_setup_पूर्णांकr(adapter);
-	अगर (err) अणु
-		kमुक्त(adapter->msix_entries);
+	err = qlcnic_setup_intr(adapter);
+	if (err) {
+		kfree(adapter->msix_entries);
 		netdev_err(netdev, "failed to setup interrupt\n");
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	/* Check अगर we need to update real_num_अणुtx|rxपूर्ण_queues because
-	 * qlcnic_setup_पूर्णांकr() may change Tx/Rx rings size
+	/* Check if we need to update real_num_{tx|rx}_queues because
+	 * qlcnic_setup_intr() may change Tx/Rx rings size
 	 */
-	अगर ((tx_rings != adapter->drv_tx_rings) ||
-	    (rx_rings != adapter->drv_sds_rings)) अणु
+	if ((tx_rings != adapter->drv_tx_rings) ||
+	    (rx_rings != adapter->drv_sds_rings)) {
 		err = qlcnic_set_real_num_queues(adapter,
 						 adapter->drv_tx_rings,
 						 adapter->drv_sds_rings);
-		अगर (err)
-			जाओ करोne;
-	पूर्ण
+		if (err)
+			goto done;
+	}
 
-	अगर (qlcnic_83xx_check(adapter)) अणु
+	if (qlcnic_83xx_check(adapter)) {
 		qlcnic_83xx_initialize_nic(adapter, 1);
-		err = qlcnic_83xx_setup_mbx_पूर्णांकr(adapter);
+		err = qlcnic_83xx_setup_mbx_intr(adapter);
 		qlcnic_83xx_disable_mbx_poll(adapter);
-		अगर (err) अणु
+		if (err) {
 			dev_err(&adapter->pdev->dev,
 				"failed to setup mbx interrupt\n");
-			जाओ करोne;
-		पूर्ण
-	पूर्ण
+			goto done;
+		}
+	}
 
-	अगर (netअगर_running(netdev)) अणु
+	if (netif_running(netdev)) {
 		err = qlcnic_attach(adapter);
-		अगर (err)
-			जाओ करोne;
+		if (err)
+			goto done;
 		err = __qlcnic_up(adapter, netdev);
-		अगर (err)
-			जाओ करोne;
+		if (err)
+			goto done;
 		qlcnic_restore_indev_addr(netdev, NETDEV_UP);
-	पूर्ण
-करोne:
-	netअगर_device_attach(netdev);
+	}
+done:
+	netif_device_attach(netdev);
 	clear_bit(__QLCNIC_RESETTING, &adapter->state);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-#अगर_घोषित CONFIG_INET
+#ifdef CONFIG_INET
 
-#घोषणा is_qlcnic_netdev(dev) (dev->netdev_ops == &qlcnic_netdev_ops)
+#define is_qlcnic_netdev(dev) (dev->netdev_ops == &qlcnic_netdev_ops)
 
-अटल व्योम
-qlcnic_config_indev_addr(काष्ठा qlcnic_adapter *adapter,
-			काष्ठा net_device *dev, अचिन्हित दीर्घ event)
-अणु
-	स्थिर काष्ठा in_अगरaddr *अगरa;
-	काष्ठा in_device *indev;
+static void
+qlcnic_config_indev_addr(struct qlcnic_adapter *adapter,
+			struct net_device *dev, unsigned long event)
+{
+	const struct in_ifaddr *ifa;
+	struct in_device *indev;
 
 	indev = in_dev_get(dev);
-	अगर (!indev)
-		वापस;
+	if (!indev)
+		return;
 
-	in_dev_क्रम_each_अगरa_rtnl(अगरa, indev) अणु
-		चयन (event) अणु
-		हाल NETDEV_UP:
+	in_dev_for_each_ifa_rtnl(ifa, indev) {
+		switch (event) {
+		case NETDEV_UP:
 			qlcnic_config_ipaddr(adapter,
-					अगरa->अगरa_address, QLCNIC_IP_UP);
-			अवरोध;
-		हाल NETDEV_DOWN:
+					ifa->ifa_address, QLCNIC_IP_UP);
+			break;
+		case NETDEV_DOWN:
 			qlcnic_config_ipaddr(adapter,
-					अगरa->अगरa_address, QLCNIC_IP_DOWN);
-			अवरोध;
-		शेष:
-			अवरोध;
-		पूर्ण
-	पूर्ण
+					ifa->ifa_address, QLCNIC_IP_DOWN);
+			break;
+		default:
+			break;
+		}
+	}
 
 	in_dev_put(indev);
-पूर्ण
+}
 
-व्योम qlcnic_restore_indev_addr(काष्ठा net_device *netdev, अचिन्हित दीर्घ event)
-अणु
-	काष्ठा qlcnic_adapter *adapter = netdev_priv(netdev);
-	काष्ठा net_device *dev;
+void qlcnic_restore_indev_addr(struct net_device *netdev, unsigned long event)
+{
+	struct qlcnic_adapter *adapter = netdev_priv(netdev);
+	struct net_device *dev;
 	u16 vid;
 
 	qlcnic_config_indev_addr(adapter, netdev, event);
 
-	rcu_पढ़ो_lock();
-	क्रम_each_set_bit(vid, adapter->vlans, VLAN_N_VID) अणु
+	rcu_read_lock();
+	for_each_set_bit(vid, adapter->vlans, VLAN_N_VID) {
 		dev = __vlan_find_dev_deep_rcu(netdev, htons(ETH_P_8021Q), vid);
-		अगर (!dev)
-			जारी;
+		if (!dev)
+			continue;
 		qlcnic_config_indev_addr(adapter, dev, event);
-	पूर्ण
-	rcu_पढ़ो_unlock();
-पूर्ण
+	}
+	rcu_read_unlock();
+}
 
-अटल पूर्णांक qlcnic_netdev_event(काष्ठा notअगरier_block *this,
-				 अचिन्हित दीर्घ event, व्योम *ptr)
-अणु
-	काष्ठा qlcnic_adapter *adapter;
-	काष्ठा net_device *dev = netdev_notअगरier_info_to_dev(ptr);
+static int qlcnic_netdev_event(struct notifier_block *this,
+				 unsigned long event, void *ptr)
+{
+	struct qlcnic_adapter *adapter;
+	struct net_device *dev = netdev_notifier_info_to_dev(ptr);
 
 recheck:
-	अगर (dev == शून्य)
-		जाओ करोne;
+	if (dev == NULL)
+		goto done;
 
-	अगर (is_vlan_dev(dev)) अणु
+	if (is_vlan_dev(dev)) {
 		dev = vlan_dev_real_dev(dev);
-		जाओ recheck;
-	पूर्ण
+		goto recheck;
+	}
 
-	अगर (!is_qlcnic_netdev(dev))
-		जाओ करोne;
+	if (!is_qlcnic_netdev(dev))
+		goto done;
 
 	adapter = netdev_priv(dev);
 
-	अगर (!adapter)
-		जाओ करोne;
+	if (!adapter)
+		goto done;
 
-	अगर (!test_bit(__QLCNIC_DEV_UP, &adapter->state))
-		जाओ करोne;
+	if (!test_bit(__QLCNIC_DEV_UP, &adapter->state))
+		goto done;
 
 	qlcnic_config_indev_addr(adapter, dev, event);
-करोne:
-	वापस NOTIFY_DONE;
-पूर्ण
+done:
+	return NOTIFY_DONE;
+}
 
-अटल पूर्णांक
-qlcnic_inetaddr_event(काष्ठा notअगरier_block *this,
-		अचिन्हित दीर्घ event, व्योम *ptr)
-अणु
-	काष्ठा qlcnic_adapter *adapter;
-	काष्ठा net_device *dev;
+static int
+qlcnic_inetaddr_event(struct notifier_block *this,
+		unsigned long event, void *ptr)
+{
+	struct qlcnic_adapter *adapter;
+	struct net_device *dev;
 
-	काष्ठा in_अगरaddr *अगरa = (काष्ठा in_अगरaddr *)ptr;
+	struct in_ifaddr *ifa = (struct in_ifaddr *)ptr;
 
-	dev = अगरa->अगरa_dev ? अगरa->अगरa_dev->dev : शून्य;
+	dev = ifa->ifa_dev ? ifa->ifa_dev->dev : NULL;
 
 recheck:
-	अगर (dev == शून्य)
-		जाओ करोne;
+	if (dev == NULL)
+		goto done;
 
-	अगर (is_vlan_dev(dev)) अणु
+	if (is_vlan_dev(dev)) {
 		dev = vlan_dev_real_dev(dev);
-		जाओ recheck;
-	पूर्ण
+		goto recheck;
+	}
 
-	अगर (!is_qlcnic_netdev(dev))
-		जाओ करोne;
+	if (!is_qlcnic_netdev(dev))
+		goto done;
 
 	adapter = netdev_priv(dev);
 
-	अगर (!adapter)
-		जाओ करोne;
+	if (!adapter)
+		goto done;
 
-	अगर (!test_bit(__QLCNIC_DEV_UP, &adapter->state))
-		जाओ करोne;
+	if (!test_bit(__QLCNIC_DEV_UP, &adapter->state))
+		goto done;
 
-	चयन (event) अणु
-	हाल NETDEV_UP:
-		qlcnic_config_ipaddr(adapter, अगरa->अगरa_address, QLCNIC_IP_UP);
+	switch (event) {
+	case NETDEV_UP:
+		qlcnic_config_ipaddr(adapter, ifa->ifa_address, QLCNIC_IP_UP);
 
-		अवरोध;
-	हाल NETDEV_DOWN:
-		qlcnic_config_ipaddr(adapter, अगरa->अगरa_address, QLCNIC_IP_DOWN);
+		break;
+	case NETDEV_DOWN:
+		qlcnic_config_ipaddr(adapter, ifa->ifa_address, QLCNIC_IP_DOWN);
 
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+		break;
+	default:
+		break;
+	}
 
-करोne:
-	वापस NOTIFY_DONE;
-पूर्ण
+done:
+	return NOTIFY_DONE;
+}
 
-अटल काष्ठा notअगरier_block	qlcnic_netdev_cb = अणु
-	.notअगरier_call = qlcnic_netdev_event,
-पूर्ण;
+static struct notifier_block	qlcnic_netdev_cb = {
+	.notifier_call = qlcnic_netdev_event,
+};
 
-अटल काष्ठा notअगरier_block qlcnic_inetaddr_cb = अणु
-	.notअगरier_call = qlcnic_inetaddr_event,
-पूर्ण;
-#अन्यथा
-व्योम qlcnic_restore_indev_addr(काष्ठा net_device *dev, अचिन्हित दीर्घ event)
-अणु पूर्ण
-#पूर्ण_अगर
-अटल स्थिर काष्ठा pci_error_handlers qlcnic_err_handler = अणु
+static struct notifier_block qlcnic_inetaddr_cb = {
+	.notifier_call = qlcnic_inetaddr_event,
+};
+#else
+void qlcnic_restore_indev_addr(struct net_device *dev, unsigned long event)
+{ }
+#endif
+static const struct pci_error_handlers qlcnic_err_handler = {
 	.error_detected = qlcnic_io_error_detected,
 	.slot_reset = qlcnic_io_slot_reset,
 	.resume = qlcnic_io_resume,
-पूर्ण;
+};
 
-अटल SIMPLE_DEV_PM_OPS(qlcnic_pm_ops, qlcnic_suspend, qlcnic_resume);
+static SIMPLE_DEV_PM_OPS(qlcnic_pm_ops, qlcnic_suspend, qlcnic_resume);
 
-अटल काष्ठा pci_driver qlcnic_driver = अणु
+static struct pci_driver qlcnic_driver = {
 	.name = qlcnic_driver_name,
 	.id_table = qlcnic_pci_tbl,
 	.probe = qlcnic_probe,
-	.हटाओ = qlcnic_हटाओ,
+	.remove = qlcnic_remove,
 	.driver.pm = &qlcnic_pm_ops,
-	.shutकरोwn = qlcnic_shutकरोwn,
+	.shutdown = qlcnic_shutdown,
 	.err_handler = &qlcnic_err_handler,
-#अगर_घोषित CONFIG_QLCNIC_SRIOV
+#ifdef CONFIG_QLCNIC_SRIOV
 	.sriov_configure = qlcnic_pci_sriov_configure,
-#पूर्ण_अगर
+#endif
 
-पूर्ण;
+};
 
-अटल पूर्णांक __init qlcnic_init_module(व्योम)
-अणु
-	पूर्णांक ret;
+static int __init qlcnic_init_module(void)
+{
+	int ret;
 
-	prपूर्णांकk(KERN_INFO "%s\n", qlcnic_driver_string);
+	printk(KERN_INFO "%s\n", qlcnic_driver_string);
 
-#अगर_घोषित CONFIG_INET
-	रेजिस्टर_netdevice_notअगरier(&qlcnic_netdev_cb);
-	रेजिस्टर_inetaddr_notअगरier(&qlcnic_inetaddr_cb);
-#पूर्ण_अगर
+#ifdef CONFIG_INET
+	register_netdevice_notifier(&qlcnic_netdev_cb);
+	register_inetaddr_notifier(&qlcnic_inetaddr_cb);
+#endif
 
-	ret = pci_रेजिस्टर_driver(&qlcnic_driver);
-	अगर (ret) अणु
-#अगर_घोषित CONFIG_INET
-		unरेजिस्टर_inetaddr_notअगरier(&qlcnic_inetaddr_cb);
-		unरेजिस्टर_netdevice_notअगरier(&qlcnic_netdev_cb);
-#पूर्ण_अगर
-	पूर्ण
+	ret = pci_register_driver(&qlcnic_driver);
+	if (ret) {
+#ifdef CONFIG_INET
+		unregister_inetaddr_notifier(&qlcnic_inetaddr_cb);
+		unregister_netdevice_notifier(&qlcnic_netdev_cb);
+#endif
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 module_init(qlcnic_init_module);
 
-अटल व्योम __निकास qlcnic_निकास_module(व्योम)
-अणु
-	pci_unरेजिस्टर_driver(&qlcnic_driver);
+static void __exit qlcnic_exit_module(void)
+{
+	pci_unregister_driver(&qlcnic_driver);
 
-#अगर_घोषित CONFIG_INET
-	unरेजिस्टर_inetaddr_notअगरier(&qlcnic_inetaddr_cb);
-	unरेजिस्टर_netdevice_notअगरier(&qlcnic_netdev_cb);
-#पूर्ण_अगर
-पूर्ण
+#ifdef CONFIG_INET
+	unregister_inetaddr_notifier(&qlcnic_inetaddr_cb);
+	unregister_netdevice_notifier(&qlcnic_netdev_cb);
+#endif
+}
 
-module_निकास(qlcnic_निकास_module);
+module_exit(qlcnic_exit_module);

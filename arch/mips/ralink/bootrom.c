@@ -1,41 +1,40 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  *
  * Copyright (C) 2013 John Crispin <john@phrozen.org>
  */
 
-#समावेश <linux/debugfs.h>
-#समावेश <linux/seq_file.h>
+#include <linux/debugfs.h>
+#include <linux/seq_file.h>
 
-#घोषणा BOOTROM_OFFSET	0x10118000
-#घोषणा BOOTROM_SIZE	0x8000
+#define BOOTROM_OFFSET	0x10118000
+#define BOOTROM_SIZE	0x8000
 
-अटल व्योम __iomem *membase = (व्योम __iomem *) KSEG1ADDR(BOOTROM_OFFSET);
+static void __iomem *membase = (void __iomem *) KSEG1ADDR(BOOTROM_OFFSET);
 
-अटल पूर्णांक bootrom_show(काष्ठा seq_file *s, व्योम *unused)
-अणु
-	seq_ग_लिखो(s, membase, BOOTROM_SIZE);
+static int bootrom_show(struct seq_file *s, void *unused)
+{
+	seq_write(s, membase, BOOTROM_SIZE);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक bootrom_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	वापस single_खोलो(file, bootrom_show, शून्य);
-पूर्ण
+static int bootrom_open(struct inode *inode, struct file *file)
+{
+	return single_open(file, bootrom_show, NULL);
+}
 
-अटल स्थिर काष्ठा file_operations bootrom_file_ops = अणु
-	.खोलो		= bootrom_खोलो,
-	.पढ़ो		= seq_पढ़ो,
+static const struct file_operations bootrom_file_ops = {
+	.open		= bootrom_open,
+	.read		= seq_read,
 	.llseek		= seq_lseek,
 	.release	= single_release,
-पूर्ण;
+};
 
-अटल पूर्णांक __init bootrom_setup(व्योम)
-अणु
-	debugfs_create_file("bootrom", 0444, शून्य, शून्य, &bootrom_file_ops);
-	वापस 0;
-पूर्ण
+static int __init bootrom_setup(void)
+{
+	debugfs_create_file("bootrom", 0444, NULL, NULL, &bootrom_file_ops);
+	return 0;
+}
 
 postcore_initcall(bootrom_setup);

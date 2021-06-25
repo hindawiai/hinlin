@@ -1,703 +1,702 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (c) 2014 Red Hat, Inc.
  * All Rights Reserved.
  */
 
-#समावेश "xfs.h"
-#समावेश "xfs_shared.h"
-#समावेश "xfs_format.h"
-#समावेश "xfs_log_format.h"
-#समावेश "xfs_trans_resv.h"
-#समावेश "xfs_sysfs.h"
-#समावेश "xfs_log_priv.h"
-#समावेश "xfs_mount.h"
+#include "xfs.h"
+#include "xfs_shared.h"
+#include "xfs_format.h"
+#include "xfs_log_format.h"
+#include "xfs_trans_resv.h"
+#include "xfs_sysfs.h"
+#include "xfs_log_priv.h"
+#include "xfs_mount.h"
 
-काष्ठा xfs_sysfs_attr अणु
-	काष्ठा attribute attr;
-	sमाप_प्रकार (*show)(काष्ठा kobject *kobject, अक्षर *buf);
-	sमाप_प्रकार (*store)(काष्ठा kobject *kobject, स्थिर अक्षर *buf,
-			 माप_प्रकार count);
-पूर्ण;
+struct xfs_sysfs_attr {
+	struct attribute attr;
+	ssize_t (*show)(struct kobject *kobject, char *buf);
+	ssize_t (*store)(struct kobject *kobject, const char *buf,
+			 size_t count);
+};
 
-अटल अंतरभूत काष्ठा xfs_sysfs_attr *
-to_attr(काष्ठा attribute *attr)
-अणु
-	वापस container_of(attr, काष्ठा xfs_sysfs_attr, attr);
-पूर्ण
+static inline struct xfs_sysfs_attr *
+to_attr(struct attribute *attr)
+{
+	return container_of(attr, struct xfs_sysfs_attr, attr);
+}
 
-#घोषणा XFS_SYSFS_ATTR_RW(name) \
-	अटल काष्ठा xfs_sysfs_attr xfs_sysfs_attr_##name = __ATTR_RW(name)
-#घोषणा XFS_SYSFS_ATTR_RO(name) \
-	अटल काष्ठा xfs_sysfs_attr xfs_sysfs_attr_##name = __ATTR_RO(name)
-#घोषणा XFS_SYSFS_ATTR_WO(name) \
-	अटल काष्ठा xfs_sysfs_attr xfs_sysfs_attr_##name = __ATTR_WO(name)
+#define XFS_SYSFS_ATTR_RW(name) \
+	static struct xfs_sysfs_attr xfs_sysfs_attr_##name = __ATTR_RW(name)
+#define XFS_SYSFS_ATTR_RO(name) \
+	static struct xfs_sysfs_attr xfs_sysfs_attr_##name = __ATTR_RO(name)
+#define XFS_SYSFS_ATTR_WO(name) \
+	static struct xfs_sysfs_attr xfs_sysfs_attr_##name = __ATTR_WO(name)
 
-#घोषणा ATTR_LIST(name) &xfs_sysfs_attr_##name.attr
+#define ATTR_LIST(name) &xfs_sysfs_attr_##name.attr
 
-STATIC sमाप_प्रकार
+STATIC ssize_t
 xfs_sysfs_object_show(
-	काष्ठा kobject		*kobject,
-	काष्ठा attribute	*attr,
-	अक्षर			*buf)
-अणु
-	काष्ठा xfs_sysfs_attr *xfs_attr = to_attr(attr);
+	struct kobject		*kobject,
+	struct attribute	*attr,
+	char			*buf)
+{
+	struct xfs_sysfs_attr *xfs_attr = to_attr(attr);
 
-	वापस xfs_attr->show ? xfs_attr->show(kobject, buf) : 0;
-पूर्ण
+	return xfs_attr->show ? xfs_attr->show(kobject, buf) : 0;
+}
 
-STATIC sमाप_प्रकार
+STATIC ssize_t
 xfs_sysfs_object_store(
-	काष्ठा kobject		*kobject,
-	काष्ठा attribute	*attr,
-	स्थिर अक्षर		*buf,
-	माप_प्रकार			count)
-अणु
-	काष्ठा xfs_sysfs_attr *xfs_attr = to_attr(attr);
+	struct kobject		*kobject,
+	struct attribute	*attr,
+	const char		*buf,
+	size_t			count)
+{
+	struct xfs_sysfs_attr *xfs_attr = to_attr(attr);
 
-	वापस xfs_attr->store ? xfs_attr->store(kobject, buf, count) : 0;
-पूर्ण
+	return xfs_attr->store ? xfs_attr->store(kobject, buf, count) : 0;
+}
 
-अटल स्थिर काष्ठा sysfs_ops xfs_sysfs_ops = अणु
+static const struct sysfs_ops xfs_sysfs_ops = {
 	.show = xfs_sysfs_object_show,
 	.store = xfs_sysfs_object_store,
-पूर्ण;
+};
 
-अटल काष्ठा attribute *xfs_mp_attrs[] = अणु
-	शून्य,
-पूर्ण;
+static struct attribute *xfs_mp_attrs[] = {
+	NULL,
+};
 
-काष्ठा kobj_type xfs_mp_ktype = अणु
+struct kobj_type xfs_mp_ktype = {
 	.release = xfs_sysfs_release,
 	.sysfs_ops = &xfs_sysfs_ops,
-	.शेष_attrs = xfs_mp_attrs,
-पूर्ण;
+	.default_attrs = xfs_mp_attrs,
+};
 
-#अगर_घोषित DEBUG
+#ifdef DEBUG
 /* debug */
 
-STATIC sमाप_प्रकार
-bug_on_निश्चित_store(
-	काष्ठा kobject		*kobject,
-	स्थिर अक्षर		*buf,
-	माप_प्रकार			count)
-अणु
-	पूर्णांक			ret;
-	पूर्णांक			val;
+STATIC ssize_t
+bug_on_assert_store(
+	struct kobject		*kobject,
+	const char		*buf,
+	size_t			count)
+{
+	int			ret;
+	int			val;
 
-	ret = kstrtoपूर्णांक(buf, 0, &val);
-	अगर (ret)
-		वापस ret;
+	ret = kstrtoint(buf, 0, &val);
+	if (ret)
+		return ret;
 
-	अगर (val == 1)
-		xfs_globals.bug_on_निश्चित = true;
-	अन्यथा अगर (val == 0)
-		xfs_globals.bug_on_निश्चित = false;
-	अन्यथा
-		वापस -EINVAL;
+	if (val == 1)
+		xfs_globals.bug_on_assert = true;
+	else if (val == 0)
+		xfs_globals.bug_on_assert = false;
+	else
+		return -EINVAL;
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-STATIC sमाप_प्रकार
-bug_on_निश्चित_show(
-	काष्ठा kobject		*kobject,
-	अक्षर			*buf)
-अणु
-	वापस snम_लिखो(buf, PAGE_SIZE, "%d\n", xfs_globals.bug_on_निश्चित ? 1 : 0);
-पूर्ण
-XFS_SYSFS_ATTR_RW(bug_on_निश्चित);
+STATIC ssize_t
+bug_on_assert_show(
+	struct kobject		*kobject,
+	char			*buf)
+{
+	return snprintf(buf, PAGE_SIZE, "%d\n", xfs_globals.bug_on_assert ? 1 : 0);
+}
+XFS_SYSFS_ATTR_RW(bug_on_assert);
 
-STATIC sमाप_प्रकार
+STATIC ssize_t
 log_recovery_delay_store(
-	काष्ठा kobject	*kobject,
-	स्थिर अक्षर	*buf,
-	माप_प्रकार		count)
-अणु
-	पूर्णांक		ret;
-	पूर्णांक		val;
+	struct kobject	*kobject,
+	const char	*buf,
+	size_t		count)
+{
+	int		ret;
+	int		val;
 
-	ret = kstrtoपूर्णांक(buf, 0, &val);
-	अगर (ret)
-		वापस ret;
+	ret = kstrtoint(buf, 0, &val);
+	if (ret)
+		return ret;
 
-	अगर (val < 0 || val > 60)
-		वापस -EINVAL;
+	if (val < 0 || val > 60)
+		return -EINVAL;
 
 	xfs_globals.log_recovery_delay = val;
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-STATIC sमाप_प्रकार
+STATIC ssize_t
 log_recovery_delay_show(
-	काष्ठा kobject	*kobject,
-	अक्षर		*buf)
-अणु
-	वापस snम_लिखो(buf, PAGE_SIZE, "%d\n", xfs_globals.log_recovery_delay);
-पूर्ण
+	struct kobject	*kobject,
+	char		*buf)
+{
+	return snprintf(buf, PAGE_SIZE, "%d\n", xfs_globals.log_recovery_delay);
+}
 XFS_SYSFS_ATTR_RW(log_recovery_delay);
 
-STATIC sमाप_प्रकार
+STATIC ssize_t
 mount_delay_store(
-	काष्ठा kobject	*kobject,
-	स्थिर अक्षर	*buf,
-	माप_प्रकार		count)
-अणु
-	पूर्णांक		ret;
-	पूर्णांक		val;
+	struct kobject	*kobject,
+	const char	*buf,
+	size_t		count)
+{
+	int		ret;
+	int		val;
 
-	ret = kstrtoपूर्णांक(buf, 0, &val);
-	अगर (ret)
-		वापस ret;
+	ret = kstrtoint(buf, 0, &val);
+	if (ret)
+		return ret;
 
-	अगर (val < 0 || val > 60)
-		वापस -EINVAL;
+	if (val < 0 || val > 60)
+		return -EINVAL;
 
 	xfs_globals.mount_delay = val;
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-STATIC sमाप_प्रकार
+STATIC ssize_t
 mount_delay_show(
-	काष्ठा kobject	*kobject,
-	अक्षर		*buf)
-अणु
-	वापस snम_लिखो(buf, PAGE_SIZE, "%d\n", xfs_globals.mount_delay);
-पूर्ण
+	struct kobject	*kobject,
+	char		*buf)
+{
+	return snprintf(buf, PAGE_SIZE, "%d\n", xfs_globals.mount_delay);
+}
 XFS_SYSFS_ATTR_RW(mount_delay);
 
-अटल sमाप_प्रकार
+static ssize_t
 always_cow_store(
-	काष्ठा kobject	*kobject,
-	स्थिर अक्षर	*buf,
-	माप_प्रकार		count)
-अणु
-	sमाप_प्रकार		ret;
+	struct kobject	*kobject,
+	const char	*buf,
+	size_t		count)
+{
+	ssize_t		ret;
 
 	ret = kstrtobool(buf, &xfs_globals.always_cow);
-	अगर (ret < 0)
-		वापस ret;
-	वापस count;
-पूर्ण
+	if (ret < 0)
+		return ret;
+	return count;
+}
 
-अटल sमाप_प्रकार
+static ssize_t
 always_cow_show(
-	काष्ठा kobject	*kobject,
-	अक्षर		*buf)
-अणु
-	वापस snम_लिखो(buf, PAGE_SIZE, "%d\n", xfs_globals.always_cow);
-पूर्ण
+	struct kobject	*kobject,
+	char		*buf)
+{
+	return snprintf(buf, PAGE_SIZE, "%d\n", xfs_globals.always_cow);
+}
 XFS_SYSFS_ATTR_RW(always_cow);
 
-#अगर_घोषित DEBUG
+#ifdef DEBUG
 /*
- * Override how many thपढ़ोs the parallel work queue is allowed to create.
+ * Override how many threads the parallel work queue is allowed to create.
  * This has to be a debug-only global (instead of an errortag) because one of
- * the मुख्य users of parallel workqueues is mount समय quotacheck.
+ * the main users of parallel workqueues is mount time quotacheck.
  */
-STATIC sमाप_प्रकार
-pwork_thपढ़ोs_store(
-	काष्ठा kobject	*kobject,
-	स्थिर अक्षर	*buf,
-	माप_प्रकार		count)
-अणु
-	पूर्णांक		ret;
-	पूर्णांक		val;
+STATIC ssize_t
+pwork_threads_store(
+	struct kobject	*kobject,
+	const char	*buf,
+	size_t		count)
+{
+	int		ret;
+	int		val;
 
-	ret = kstrtoपूर्णांक(buf, 0, &val);
-	अगर (ret)
-		वापस ret;
+	ret = kstrtoint(buf, 0, &val);
+	if (ret)
+		return ret;
 
-	अगर (val < -1 || val > num_possible_cpus())
-		वापस -EINVAL;
+	if (val < -1 || val > num_possible_cpus())
+		return -EINVAL;
 
-	xfs_globals.pwork_thपढ़ोs = val;
+	xfs_globals.pwork_threads = val;
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-STATIC sमाप_प्रकार
-pwork_thपढ़ोs_show(
-	काष्ठा kobject	*kobject,
-	अक्षर		*buf)
-अणु
-	वापस snम_लिखो(buf, PAGE_SIZE, "%d\n", xfs_globals.pwork_thपढ़ोs);
-पूर्ण
-XFS_SYSFS_ATTR_RW(pwork_thपढ़ोs);
-#पूर्ण_अगर /* DEBUG */
+STATIC ssize_t
+pwork_threads_show(
+	struct kobject	*kobject,
+	char		*buf)
+{
+	return snprintf(buf, PAGE_SIZE, "%d\n", xfs_globals.pwork_threads);
+}
+XFS_SYSFS_ATTR_RW(pwork_threads);
+#endif /* DEBUG */
 
-अटल काष्ठा attribute *xfs_dbg_attrs[] = अणु
-	ATTR_LIST(bug_on_निश्चित),
+static struct attribute *xfs_dbg_attrs[] = {
+	ATTR_LIST(bug_on_assert),
 	ATTR_LIST(log_recovery_delay),
 	ATTR_LIST(mount_delay),
 	ATTR_LIST(always_cow),
-#अगर_घोषित DEBUG
-	ATTR_LIST(pwork_thपढ़ोs),
-#पूर्ण_अगर
-	शून्य,
-पूर्ण;
+#ifdef DEBUG
+	ATTR_LIST(pwork_threads),
+#endif
+	NULL,
+};
 
-काष्ठा kobj_type xfs_dbg_ktype = अणु
+struct kobj_type xfs_dbg_ktype = {
 	.release = xfs_sysfs_release,
 	.sysfs_ops = &xfs_sysfs_ops,
-	.शेष_attrs = xfs_dbg_attrs,
-पूर्ण;
+	.default_attrs = xfs_dbg_attrs,
+};
 
-#पूर्ण_अगर /* DEBUG */
+#endif /* DEBUG */
 
 /* stats */
 
-अटल अंतरभूत काष्ठा xstats *
-to_xstats(काष्ठा kobject *kobject)
-अणु
-	काष्ठा xfs_kobj *kobj = to_kobj(kobject);
+static inline struct xstats *
+to_xstats(struct kobject *kobject)
+{
+	struct xfs_kobj *kobj = to_kobj(kobject);
 
-	वापस container_of(kobj, काष्ठा xstats, xs_kobj);
-पूर्ण
+	return container_of(kobj, struct xstats, xs_kobj);
+}
 
-STATIC sमाप_प्रकार
+STATIC ssize_t
 stats_show(
-	काष्ठा kobject	*kobject,
-	अक्षर		*buf)
-अणु
-	काष्ठा xstats	*stats = to_xstats(kobject);
+	struct kobject	*kobject,
+	char		*buf)
+{
+	struct xstats	*stats = to_xstats(kobject);
 
-	वापस xfs_stats_क्रमmat(stats->xs_stats, buf);
-पूर्ण
+	return xfs_stats_format(stats->xs_stats, buf);
+}
 XFS_SYSFS_ATTR_RO(stats);
 
-STATIC sमाप_प्रकार
+STATIC ssize_t
 stats_clear_store(
-	काष्ठा kobject	*kobject,
-	स्थिर अक्षर	*buf,
-	माप_प्रकार		count)
-अणु
-	पूर्णांक		ret;
-	पूर्णांक		val;
-	काष्ठा xstats	*stats = to_xstats(kobject);
+	struct kobject	*kobject,
+	const char	*buf,
+	size_t		count)
+{
+	int		ret;
+	int		val;
+	struct xstats	*stats = to_xstats(kobject);
 
-	ret = kstrtoपूर्णांक(buf, 0, &val);
-	अगर (ret)
-		वापस ret;
+	ret = kstrtoint(buf, 0, &val);
+	if (ret)
+		return ret;
 
-	अगर (val != 1)
-		वापस -EINVAL;
+	if (val != 1)
+		return -EINVAL;
 
 	xfs_stats_clearall(stats->xs_stats);
-	वापस count;
-पूर्ण
+	return count;
+}
 XFS_SYSFS_ATTR_WO(stats_clear);
 
-अटल काष्ठा attribute *xfs_stats_attrs[] = अणु
+static struct attribute *xfs_stats_attrs[] = {
 	ATTR_LIST(stats),
 	ATTR_LIST(stats_clear),
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-काष्ठा kobj_type xfs_stats_ktype = अणु
+struct kobj_type xfs_stats_ktype = {
 	.release = xfs_sysfs_release,
 	.sysfs_ops = &xfs_sysfs_ops,
-	.शेष_attrs = xfs_stats_attrs,
-पूर्ण;
+	.default_attrs = xfs_stats_attrs,
+};
 
 /* xlog */
 
-अटल अंतरभूत काष्ठा xlog *
-to_xlog(काष्ठा kobject *kobject)
-अणु
-	काष्ठा xfs_kobj *kobj = to_kobj(kobject);
+static inline struct xlog *
+to_xlog(struct kobject *kobject)
+{
+	struct xfs_kobj *kobj = to_kobj(kobject);
 
-	वापस container_of(kobj, काष्ठा xlog, l_kobj);
-पूर्ण
+	return container_of(kobj, struct xlog, l_kobj);
+}
 
-STATIC sमाप_प्रकार
+STATIC ssize_t
 log_head_lsn_show(
-	काष्ठा kobject	*kobject,
-	अक्षर		*buf)
-अणु
-	पूर्णांक cycle;
-	पूर्णांक block;
-	काष्ठा xlog *log = to_xlog(kobject);
+	struct kobject	*kobject,
+	char		*buf)
+{
+	int cycle;
+	int block;
+	struct xlog *log = to_xlog(kobject);
 
 	spin_lock(&log->l_icloglock);
 	cycle = log->l_curr_cycle;
 	block = log->l_curr_block;
 	spin_unlock(&log->l_icloglock);
 
-	वापस snम_लिखो(buf, PAGE_SIZE, "%d:%d\n", cycle, block);
-पूर्ण
+	return snprintf(buf, PAGE_SIZE, "%d:%d\n", cycle, block);
+}
 XFS_SYSFS_ATTR_RO(log_head_lsn);
 
-STATIC sमाप_प्रकार
+STATIC ssize_t
 log_tail_lsn_show(
-	काष्ठा kobject	*kobject,
-	अक्षर		*buf)
-अणु
-	पूर्णांक cycle;
-	पूर्णांक block;
-	काष्ठा xlog *log = to_xlog(kobject);
+	struct kobject	*kobject,
+	char		*buf)
+{
+	int cycle;
+	int block;
+	struct xlog *log = to_xlog(kobject);
 
 	xlog_crack_atomic_lsn(&log->l_tail_lsn, &cycle, &block);
-	वापस snम_लिखो(buf, PAGE_SIZE, "%d:%d\n", cycle, block);
-पूर्ण
+	return snprintf(buf, PAGE_SIZE, "%d:%d\n", cycle, block);
+}
 XFS_SYSFS_ATTR_RO(log_tail_lsn);
 
-STATIC sमाप_प्रकार
+STATIC ssize_t
 reserve_grant_head_show(
-	काष्ठा kobject	*kobject,
-	अक्षर		*buf)
+	struct kobject	*kobject,
+	char		*buf)
 
-अणु
-	पूर्णांक cycle;
-	पूर्णांक bytes;
-	काष्ठा xlog *log = to_xlog(kobject);
+{
+	int cycle;
+	int bytes;
+	struct xlog *log = to_xlog(kobject);
 
 	xlog_crack_grant_head(&log->l_reserve_head.grant, &cycle, &bytes);
-	वापस snम_लिखो(buf, PAGE_SIZE, "%d:%d\n", cycle, bytes);
-पूर्ण
+	return snprintf(buf, PAGE_SIZE, "%d:%d\n", cycle, bytes);
+}
 XFS_SYSFS_ATTR_RO(reserve_grant_head);
 
-STATIC sमाप_प्रकार
-ग_लिखो_grant_head_show(
-	काष्ठा kobject	*kobject,
-	अक्षर		*buf)
-अणु
-	पूर्णांक cycle;
-	पूर्णांक bytes;
-	काष्ठा xlog *log = to_xlog(kobject);
+STATIC ssize_t
+write_grant_head_show(
+	struct kobject	*kobject,
+	char		*buf)
+{
+	int cycle;
+	int bytes;
+	struct xlog *log = to_xlog(kobject);
 
-	xlog_crack_grant_head(&log->l_ग_लिखो_head.grant, &cycle, &bytes);
-	वापस snम_लिखो(buf, PAGE_SIZE, "%d:%d\n", cycle, bytes);
-पूर्ण
-XFS_SYSFS_ATTR_RO(ग_लिखो_grant_head);
+	xlog_crack_grant_head(&log->l_write_head.grant, &cycle, &bytes);
+	return snprintf(buf, PAGE_SIZE, "%d:%d\n", cycle, bytes);
+}
+XFS_SYSFS_ATTR_RO(write_grant_head);
 
-अटल काष्ठा attribute *xfs_log_attrs[] = अणु
+static struct attribute *xfs_log_attrs[] = {
 	ATTR_LIST(log_head_lsn),
 	ATTR_LIST(log_tail_lsn),
 	ATTR_LIST(reserve_grant_head),
-	ATTR_LIST(ग_लिखो_grant_head),
-	शून्य,
-पूर्ण;
+	ATTR_LIST(write_grant_head),
+	NULL,
+};
 
-काष्ठा kobj_type xfs_log_ktype = अणु
+struct kobj_type xfs_log_ktype = {
 	.release = xfs_sysfs_release,
 	.sysfs_ops = &xfs_sysfs_ops,
-	.शेष_attrs = xfs_log_attrs,
-पूर्ण;
+	.default_attrs = xfs_log_attrs,
+};
 
 /*
  * Metadata IO error configuration
  *
- * The sysfs काष्ठाure here is:
- *	...xfs/<dev>/error/<class>/<त्रुटि_सं>/<error_attrs>
+ * The sysfs structure here is:
+ *	...xfs/<dev>/error/<class>/<errno>/<error_attrs>
  *
  * where <class> allows us to discriminate between data IO and metadata IO,
  * and any other future type of IO (e.g. special inode or directory error
  * handling) we care to support.
  */
-अटल अंतरभूत काष्ठा xfs_error_cfg *
-to_error_cfg(काष्ठा kobject *kobject)
-अणु
-	काष्ठा xfs_kobj *kobj = to_kobj(kobject);
-	वापस container_of(kobj, काष्ठा xfs_error_cfg, kobj);
-पूर्ण
+static inline struct xfs_error_cfg *
+to_error_cfg(struct kobject *kobject)
+{
+	struct xfs_kobj *kobj = to_kobj(kobject);
+	return container_of(kobj, struct xfs_error_cfg, kobj);
+}
 
-अटल अंतरभूत काष्ठा xfs_mount *
-err_to_mp(काष्ठा kobject *kobject)
-अणु
-	काष्ठा xfs_kobj *kobj = to_kobj(kobject);
-	वापस container_of(kobj, काष्ठा xfs_mount, m_error_kobj);
-पूर्ण
+static inline struct xfs_mount *
+err_to_mp(struct kobject *kobject)
+{
+	struct xfs_kobj *kobj = to_kobj(kobject);
+	return container_of(kobj, struct xfs_mount, m_error_kobj);
+}
 
-अटल sमाप_प्रकार
+static ssize_t
 max_retries_show(
-	काष्ठा kobject	*kobject,
-	अक्षर		*buf)
-अणु
-	पूर्णांक		retries;
-	काष्ठा xfs_error_cfg *cfg = to_error_cfg(kobject);
+	struct kobject	*kobject,
+	char		*buf)
+{
+	int		retries;
+	struct xfs_error_cfg *cfg = to_error_cfg(kobject);
 
-	अगर (cfg->max_retries == XFS_ERR_RETRY_FOREVER)
+	if (cfg->max_retries == XFS_ERR_RETRY_FOREVER)
 		retries = -1;
-	अन्यथा
+	else
 		retries = cfg->max_retries;
 
-	वापस snम_लिखो(buf, PAGE_SIZE, "%d\n", retries);
-पूर्ण
+	return snprintf(buf, PAGE_SIZE, "%d\n", retries);
+}
 
-अटल sमाप_प्रकार
+static ssize_t
 max_retries_store(
-	काष्ठा kobject	*kobject,
-	स्थिर अक्षर	*buf,
-	माप_प्रकार		count)
-अणु
-	काष्ठा xfs_error_cfg *cfg = to_error_cfg(kobject);
-	पूर्णांक		ret;
-	पूर्णांक		val;
+	struct kobject	*kobject,
+	const char	*buf,
+	size_t		count)
+{
+	struct xfs_error_cfg *cfg = to_error_cfg(kobject);
+	int		ret;
+	int		val;
 
-	ret = kstrtoपूर्णांक(buf, 0, &val);
-	अगर (ret)
-		वापस ret;
+	ret = kstrtoint(buf, 0, &val);
+	if (ret)
+		return ret;
 
-	अगर (val < -1)
-		वापस -EINVAL;
+	if (val < -1)
+		return -EINVAL;
 
-	अगर (val == -1)
+	if (val == -1)
 		cfg->max_retries = XFS_ERR_RETRY_FOREVER;
-	अन्यथा
+	else
 		cfg->max_retries = val;
-	वापस count;
-पूर्ण
+	return count;
+}
 XFS_SYSFS_ATTR_RW(max_retries);
 
-अटल sमाप_प्रकार
-retry_समयout_seconds_show(
-	काष्ठा kobject	*kobject,
-	अक्षर		*buf)
-अणु
-	पूर्णांक		समयout;
-	काष्ठा xfs_error_cfg *cfg = to_error_cfg(kobject);
+static ssize_t
+retry_timeout_seconds_show(
+	struct kobject	*kobject,
+	char		*buf)
+{
+	int		timeout;
+	struct xfs_error_cfg *cfg = to_error_cfg(kobject);
 
-	अगर (cfg->retry_समयout == XFS_ERR_RETRY_FOREVER)
-		समयout = -1;
-	अन्यथा
-		समयout = jअगरfies_to_msecs(cfg->retry_समयout) / MSEC_PER_SEC;
+	if (cfg->retry_timeout == XFS_ERR_RETRY_FOREVER)
+		timeout = -1;
+	else
+		timeout = jiffies_to_msecs(cfg->retry_timeout) / MSEC_PER_SEC;
 
-	वापस snम_लिखो(buf, PAGE_SIZE, "%d\n", समयout);
-पूर्ण
+	return snprintf(buf, PAGE_SIZE, "%d\n", timeout);
+}
 
-अटल sमाप_प्रकार
-retry_समयout_seconds_store(
-	काष्ठा kobject	*kobject,
-	स्थिर अक्षर	*buf,
-	माप_प्रकार		count)
-अणु
-	काष्ठा xfs_error_cfg *cfg = to_error_cfg(kobject);
-	पूर्णांक		ret;
-	पूर्णांक		val;
+static ssize_t
+retry_timeout_seconds_store(
+	struct kobject	*kobject,
+	const char	*buf,
+	size_t		count)
+{
+	struct xfs_error_cfg *cfg = to_error_cfg(kobject);
+	int		ret;
+	int		val;
 
-	ret = kstrtoपूर्णांक(buf, 0, &val);
-	अगर (ret)
-		वापस ret;
+	ret = kstrtoint(buf, 0, &val);
+	if (ret)
+		return ret;
 
-	/* 1 day समयout maximum, -1 means infinite */
-	अगर (val < -1 || val > 86400)
-		वापस -EINVAL;
+	/* 1 day timeout maximum, -1 means infinite */
+	if (val < -1 || val > 86400)
+		return -EINVAL;
 
-	अगर (val == -1)
-		cfg->retry_समयout = XFS_ERR_RETRY_FOREVER;
-	अन्यथा अणु
-		cfg->retry_समयout = msecs_to_jअगरfies(val * MSEC_PER_SEC);
-		ASSERT(msecs_to_jअगरfies(val * MSEC_PER_SEC) < दीर्घ_उच्च);
-	पूर्ण
-	वापस count;
-पूर्ण
-XFS_SYSFS_ATTR_RW(retry_समयout_seconds);
+	if (val == -1)
+		cfg->retry_timeout = XFS_ERR_RETRY_FOREVER;
+	else {
+		cfg->retry_timeout = msecs_to_jiffies(val * MSEC_PER_SEC);
+		ASSERT(msecs_to_jiffies(val * MSEC_PER_SEC) < LONG_MAX);
+	}
+	return count;
+}
+XFS_SYSFS_ATTR_RW(retry_timeout_seconds);
 
-अटल sमाप_प्रकार
+static ssize_t
 fail_at_unmount_show(
-	काष्ठा kobject	*kobject,
-	अक्षर		*buf)
-अणु
-	काष्ठा xfs_mount	*mp = err_to_mp(kobject);
+	struct kobject	*kobject,
+	char		*buf)
+{
+	struct xfs_mount	*mp = err_to_mp(kobject);
 
-	वापस snम_लिखो(buf, PAGE_SIZE, "%d\n", mp->m_fail_unmount);
-पूर्ण
+	return snprintf(buf, PAGE_SIZE, "%d\n", mp->m_fail_unmount);
+}
 
-अटल sमाप_प्रकार
+static ssize_t
 fail_at_unmount_store(
-	काष्ठा kobject	*kobject,
-	स्थिर अक्षर	*buf,
-	माप_प्रकार		count)
-अणु
-	काष्ठा xfs_mount	*mp = err_to_mp(kobject);
-	पूर्णांक		ret;
-	पूर्णांक		val;
+	struct kobject	*kobject,
+	const char	*buf,
+	size_t		count)
+{
+	struct xfs_mount	*mp = err_to_mp(kobject);
+	int		ret;
+	int		val;
 
-	ret = kstrtoपूर्णांक(buf, 0, &val);
-	अगर (ret)
-		वापस ret;
+	ret = kstrtoint(buf, 0, &val);
+	if (ret)
+		return ret;
 
-	अगर (val < 0 || val > 1)
-		वापस -EINVAL;
+	if (val < 0 || val > 1)
+		return -EINVAL;
 
 	mp->m_fail_unmount = val;
-	वापस count;
-पूर्ण
+	return count;
+}
 XFS_SYSFS_ATTR_RW(fail_at_unmount);
 
-अटल काष्ठा attribute *xfs_error_attrs[] = अणु
+static struct attribute *xfs_error_attrs[] = {
 	ATTR_LIST(max_retries),
-	ATTR_LIST(retry_समयout_seconds),
-	शून्य,
-पूर्ण;
+	ATTR_LIST(retry_timeout_seconds),
+	NULL,
+};
 
 
-अटल काष्ठा kobj_type xfs_error_cfg_ktype = अणु
+static struct kobj_type xfs_error_cfg_ktype = {
 	.release = xfs_sysfs_release,
 	.sysfs_ops = &xfs_sysfs_ops,
-	.शेष_attrs = xfs_error_attrs,
-पूर्ण;
+	.default_attrs = xfs_error_attrs,
+};
 
-अटल काष्ठा kobj_type xfs_error_ktype = अणु
+static struct kobj_type xfs_error_ktype = {
 	.release = xfs_sysfs_release,
 	.sysfs_ops = &xfs_sysfs_ops,
-पूर्ण;
+};
 
 /*
  * Error initialization tables. These need to be ordered in the same
- * order as the क्रमागतs used to index the array. All class init tables need to
+ * order as the enums used to index the array. All class init tables need to
  * define a "default" behaviour as the first entry, all other entries can be
  * empty.
  */
-काष्ठा xfs_error_init अणु
-	अक्षर		*name;
-	पूर्णांक		max_retries;
-	पूर्णांक		retry_समयout;	/* in seconds */
-पूर्ण;
+struct xfs_error_init {
+	char		*name;
+	int		max_retries;
+	int		retry_timeout;	/* in seconds */
+};
 
-अटल स्थिर काष्ठा xfs_error_init xfs_error_meta_init[XFS_ERR_ERRNO_MAX] = अणु
-	अणु .name = "default",
+static const struct xfs_error_init xfs_error_meta_init[XFS_ERR_ERRNO_MAX] = {
+	{ .name = "default",
 	  .max_retries = XFS_ERR_RETRY_FOREVER,
-	  .retry_समयout = XFS_ERR_RETRY_FOREVER,
-	पूर्ण,
-	अणु .name = "EIO",
+	  .retry_timeout = XFS_ERR_RETRY_FOREVER,
+	},
+	{ .name = "EIO",
 	  .max_retries = XFS_ERR_RETRY_FOREVER,
-	  .retry_समयout = XFS_ERR_RETRY_FOREVER,
-	पूर्ण,
-	अणु .name = "ENOSPC",
+	  .retry_timeout = XFS_ERR_RETRY_FOREVER,
+	},
+	{ .name = "ENOSPC",
 	  .max_retries = XFS_ERR_RETRY_FOREVER,
-	  .retry_समयout = XFS_ERR_RETRY_FOREVER,
-	पूर्ण,
-	अणु .name = "ENODEV",
+	  .retry_timeout = XFS_ERR_RETRY_FOREVER,
+	},
+	{ .name = "ENODEV",
 	  .max_retries = 0,	/* We can't recover from devices disappearing */
-	  .retry_समयout = 0,
-	पूर्ण,
-पूर्ण;
+	  .retry_timeout = 0,
+	},
+};
 
-अटल पूर्णांक
+static int
 xfs_error_sysfs_init_class(
-	काष्ठा xfs_mount	*mp,
-	पूर्णांक			class,
-	स्थिर अक्षर		*parent_name,
-	काष्ठा xfs_kobj		*parent_kobj,
-	स्थिर काष्ठा xfs_error_init init[])
-अणु
-	काष्ठा xfs_error_cfg	*cfg;
-	पूर्णांक			error;
-	पूर्णांक			i;
+	struct xfs_mount	*mp,
+	int			class,
+	const char		*parent_name,
+	struct xfs_kobj		*parent_kobj,
+	const struct xfs_error_init init[])
+{
+	struct xfs_error_cfg	*cfg;
+	int			error;
+	int			i;
 
 	ASSERT(class < XFS_ERR_CLASS_MAX);
 
 	error = xfs_sysfs_init(parent_kobj, &xfs_error_ktype,
 				&mp->m_error_kobj, parent_name);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
-	क्रम (i = 0; i < XFS_ERR_ERRNO_MAX; i++) अणु
+	for (i = 0; i < XFS_ERR_ERRNO_MAX; i++) {
 		cfg = &mp->m_error_cfg[class][i];
 		error = xfs_sysfs_init(&cfg->kobj, &xfs_error_cfg_ktype,
 					parent_kobj, init[i].name);
-		अगर (error)
-			जाओ out_error;
+		if (error)
+			goto out_error;
 
 		cfg->max_retries = init[i].max_retries;
-		अगर (init[i].retry_समयout == XFS_ERR_RETRY_FOREVER)
-			cfg->retry_समयout = XFS_ERR_RETRY_FOREVER;
-		अन्यथा
-			cfg->retry_समयout = msecs_to_jअगरfies(
-					init[i].retry_समयout * MSEC_PER_SEC);
-	पूर्ण
-	वापस 0;
+		if (init[i].retry_timeout == XFS_ERR_RETRY_FOREVER)
+			cfg->retry_timeout = XFS_ERR_RETRY_FOREVER;
+		else
+			cfg->retry_timeout = msecs_to_jiffies(
+					init[i].retry_timeout * MSEC_PER_SEC);
+	}
+	return 0;
 
 out_error:
 	/* unwind the entries that succeeded */
-	क्रम (i--; i >= 0; i--) अणु
+	for (i--; i >= 0; i--) {
 		cfg = &mp->m_error_cfg[class][i];
 		xfs_sysfs_del(&cfg->kobj);
-	पूर्ण
+	}
 	xfs_sysfs_del(parent_kobj);
-	वापस error;
-पूर्ण
+	return error;
+}
 
-पूर्णांक
+int
 xfs_error_sysfs_init(
-	काष्ठा xfs_mount	*mp)
-अणु
-	पूर्णांक			error;
+	struct xfs_mount	*mp)
+{
+	int			error;
 
 	/* .../xfs/<dev>/error/ */
 	error = xfs_sysfs_init(&mp->m_error_kobj, &xfs_error_ktype,
 				&mp->m_kobj, "error");
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
 	error = sysfs_create_file(&mp->m_error_kobj.kobject,
 				  ATTR_LIST(fail_at_unmount));
 
-	अगर (error)
-		जाओ out_error;
+	if (error)
+		goto out_error;
 
 	/* .../xfs/<dev>/error/metadata/ */
 	error = xfs_error_sysfs_init_class(mp, XFS_ERR_METADATA,
 				"metadata", &mp->m_error_meta_kobj,
 				xfs_error_meta_init);
-	अगर (error)
-		जाओ out_error;
+	if (error)
+		goto out_error;
 
-	वापस 0;
+	return 0;
 
 out_error:
 	xfs_sysfs_del(&mp->m_error_kobj);
-	वापस error;
-पूर्ण
+	return error;
+}
 
-व्योम
+void
 xfs_error_sysfs_del(
-	काष्ठा xfs_mount	*mp)
-अणु
-	काष्ठा xfs_error_cfg	*cfg;
-	पूर्णांक			i, j;
+	struct xfs_mount	*mp)
+{
+	struct xfs_error_cfg	*cfg;
+	int			i, j;
 
-	क्रम (i = 0; i < XFS_ERR_CLASS_MAX; i++) अणु
-		क्रम (j = 0; j < XFS_ERR_ERRNO_MAX; j++) अणु
+	for (i = 0; i < XFS_ERR_CLASS_MAX; i++) {
+		for (j = 0; j < XFS_ERR_ERRNO_MAX; j++) {
 			cfg = &mp->m_error_cfg[i][j];
 
 			xfs_sysfs_del(&cfg->kobj);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	xfs_sysfs_del(&mp->m_error_meta_kobj);
 	xfs_sysfs_del(&mp->m_error_kobj);
-पूर्ण
+}
 
-काष्ठा xfs_error_cfg *
+struct xfs_error_cfg *
 xfs_error_get_cfg(
-	काष्ठा xfs_mount	*mp,
-	पूर्णांक			error_class,
-	पूर्णांक			error)
-अणु
-	काष्ठा xfs_error_cfg	*cfg;
+	struct xfs_mount	*mp,
+	int			error_class,
+	int			error)
+{
+	struct xfs_error_cfg	*cfg;
 
-	अगर (error < 0)
+	if (error < 0)
 		error = -error;
 
-	चयन (error) अणु
-	हाल EIO:
+	switch (error) {
+	case EIO:
 		cfg = &mp->m_error_cfg[error_class][XFS_ERR_EIO];
-		अवरोध;
-	हाल ENOSPC:
+		break;
+	case ENOSPC:
 		cfg = &mp->m_error_cfg[error_class][XFS_ERR_ENOSPC];
-		अवरोध;
-	हाल ENODEV:
+		break;
+	case ENODEV:
 		cfg = &mp->m_error_cfg[error_class][XFS_ERR_ENODEV];
-		अवरोध;
-	शेष:
+		break;
+	default:
 		cfg = &mp->m_error_cfg[error_class][XFS_ERR_DEFAULT];
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस cfg;
-पूर्ण
+	return cfg;
+}

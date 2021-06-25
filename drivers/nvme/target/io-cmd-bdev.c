@@ -1,29 +1,28 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * NVMe I/O command implementation.
  * Copyright (c) 2015-2016 HGST, a Western Digital Company.
  */
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
-#समावेश <linux/blkdev.h>
-#समावेश <linux/module.h>
-#समावेश "nvmet.h"
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#include <linux/blkdev.h>
+#include <linux/module.h>
+#include "nvmet.h"
 
-व्योम nvmet_bdev_set_limits(काष्ठा block_device *bdev, काष्ठा nvme_id_ns *id)
-अणु
-	स्थिर काष्ठा queue_limits *ql = &bdev_get_queue(bdev)->limits;
+void nvmet_bdev_set_limits(struct block_device *bdev, struct nvme_id_ns *id)
+{
+	const struct queue_limits *ql = &bdev_get_queue(bdev)->limits;
 	/* Number of logical blocks per physical block. */
-	स्थिर u32 lpp = ql->physical_block_size / ql->logical_block_size;
+	const u32 lpp = ql->physical_block_size / ql->logical_block_size;
 	/* Logical blocks per physical block, 0's based. */
-	स्थिर __le16 lpp0b = to0based(lpp);
+	const __le16 lpp0b = to0based(lpp);
 
 	/*
 	 * For NVMe 1.2 and later, bit 1 indicates that the fields NAWUN,
-	 * NAWUPF, and NACWU are defined क्रम this namespace and should be
-	 * used by the host क्रम this namespace instead of the AWUN, AWUPF,
-	 * and ACWU fields in the Identअगरy Controller data काष्ठाure. If
+	 * NAWUPF, and NACWU are defined for this namespace and should be
+	 * used by the host for this namespace instead of the AWUN, AWUPF,
+	 * and ACWU fields in the Identify Controller data structure. If
 	 * any of these fields are zero that means that the corresponding
-	 * field from the identअगरy controller data काष्ठाure should be used.
+	 * field from the identify controller data structure should be used.
 	 */
 	id->nsfeat |= 1 << 1;
 	id->nawun = lpp0b;
@@ -32,8 +31,8 @@
 
 	/*
 	 * Bit 4 indicates that the fields NPWG, NPWA, NPDG, NPDA, and
-	 * NOWS are defined क्रम this namespace and should be used by
-	 * the host क्रम I/O optimization.
+	 * NOWS are defined for this namespace and should be used by
+	 * the host for I/O optimization.
 	 */
 	id->nsfeat |= 1 << 4;
 	/* NPWG = Namespace Preferred Write Granularity. 0's based */
@@ -46,249 +45,249 @@
 	id->npda = id->npdg;
 	/* NOWS = Namespace Optimal Write Size */
 	id->nows = to0based(ql->io_opt / ql->logical_block_size);
-पूर्ण
+}
 
-अटल व्योम nvmet_bdev_ns_enable_पूर्णांकegrity(काष्ठा nvmet_ns *ns)
-अणु
-	काष्ठा blk_पूर्णांकegrity *bi = bdev_get_पूर्णांकegrity(ns->bdev);
+static void nvmet_bdev_ns_enable_integrity(struct nvmet_ns *ns)
+{
+	struct blk_integrity *bi = bdev_get_integrity(ns->bdev);
 
-	अगर (bi) अणु
+	if (bi) {
 		ns->metadata_size = bi->tuple_size;
-		अगर (bi->profile == &t10_pi_type1_crc)
+		if (bi->profile == &t10_pi_type1_crc)
 			ns->pi_type = NVME_NS_DPS_PI_TYPE1;
-		अन्यथा अगर (bi->profile == &t10_pi_type3_crc)
+		else if (bi->profile == &t10_pi_type3_crc)
 			ns->pi_type = NVME_NS_DPS_PI_TYPE3;
-		अन्यथा
+		else
 			/* Unsupported metadata type */
 			ns->metadata_size = 0;
-	पूर्ण
-पूर्ण
+	}
+}
 
-पूर्णांक nvmet_bdev_ns_enable(काष्ठा nvmet_ns *ns)
-अणु
-	पूर्णांक ret;
+int nvmet_bdev_ns_enable(struct nvmet_ns *ns)
+{
+	int ret;
 
 	ns->bdev = blkdev_get_by_path(ns->device_path,
-			FMODE_READ | FMODE_WRITE, शून्य);
-	अगर (IS_ERR(ns->bdev)) अणु
+			FMODE_READ | FMODE_WRITE, NULL);
+	if (IS_ERR(ns->bdev)) {
 		ret = PTR_ERR(ns->bdev);
-		अगर (ret != -ENOTBLK) अणु
+		if (ret != -ENOTBLK) {
 			pr_err("failed to open block device %s: (%ld)\n",
 					ns->device_path, PTR_ERR(ns->bdev));
-		पूर्ण
-		ns->bdev = शून्य;
-		वापस ret;
-	पूर्ण
-	ns->size = i_size_पढ़ो(ns->bdev->bd_inode);
-	ns->blksize_shअगरt = blksize_bits(bdev_logical_block_size(ns->bdev));
+		}
+		ns->bdev = NULL;
+		return ret;
+	}
+	ns->size = i_size_read(ns->bdev->bd_inode);
+	ns->blksize_shift = blksize_bits(bdev_logical_block_size(ns->bdev));
 
 	ns->pi_type = 0;
 	ns->metadata_size = 0;
-	अगर (IS_ENABLED(CONFIG_BLK_DEV_INTEGRITY_T10))
-		nvmet_bdev_ns_enable_पूर्णांकegrity(ns);
+	if (IS_ENABLED(CONFIG_BLK_DEV_INTEGRITY_T10))
+		nvmet_bdev_ns_enable_integrity(ns);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम nvmet_bdev_ns_disable(काष्ठा nvmet_ns *ns)
-अणु
-	अगर (ns->bdev) अणु
+void nvmet_bdev_ns_disable(struct nvmet_ns *ns)
+{
+	if (ns->bdev) {
 		blkdev_put(ns->bdev, FMODE_WRITE | FMODE_READ);
-		ns->bdev = शून्य;
-	पूर्ण
-पूर्ण
+		ns->bdev = NULL;
+	}
+}
 
-व्योम nvmet_bdev_ns_revalidate(काष्ठा nvmet_ns *ns)
-अणु
-	ns->size = i_size_पढ़ो(ns->bdev->bd_inode);
-पूर्ण
+void nvmet_bdev_ns_revalidate(struct nvmet_ns *ns)
+{
+	ns->size = i_size_read(ns->bdev->bd_inode);
+}
 
-अटल u16 blk_to_nvme_status(काष्ठा nvmet_req *req, blk_status_t blk_sts)
-अणु
+static u16 blk_to_nvme_status(struct nvmet_req *req, blk_status_t blk_sts)
+{
 	u16 status = NVME_SC_SUCCESS;
 
-	अगर (likely(blk_sts == BLK_STS_OK))
-		वापस status;
+	if (likely(blk_sts == BLK_STS_OK))
+		return status;
 	/*
 	 * Right now there exists M : 1 mapping between block layer error
 	 * to the NVMe status code (see nvme_error_status()). For consistency,
 	 * when we reverse map we use most appropriate NVMe Status code from
 	 * the group of the NVMe staus codes used in the nvme_error_status().
 	 */
-	चयन (blk_sts) अणु
-	हाल BLK_STS_NOSPC:
+	switch (blk_sts) {
+	case BLK_STS_NOSPC:
 		status = NVME_SC_CAP_EXCEEDED | NVME_SC_DNR;
-		req->error_loc = दुरत्व(काष्ठा nvme_rw_command, length);
-		अवरोध;
-	हाल BLK_STS_TARGET:
+		req->error_loc = offsetof(struct nvme_rw_command, length);
+		break;
+	case BLK_STS_TARGET:
 		status = NVME_SC_LBA_RANGE | NVME_SC_DNR;
-		req->error_loc = दुरत्व(काष्ठा nvme_rw_command, slba);
-		अवरोध;
-	हाल BLK_STS_NOTSUPP:
-		req->error_loc = दुरत्व(काष्ठा nvme_common_command, opcode);
-		चयन (req->cmd->common.opcode) अणु
-		हाल nvme_cmd_dsm:
-		हाल nvme_cmd_ग_लिखो_zeroes:
+		req->error_loc = offsetof(struct nvme_rw_command, slba);
+		break;
+	case BLK_STS_NOTSUPP:
+		req->error_loc = offsetof(struct nvme_common_command, opcode);
+		switch (req->cmd->common.opcode) {
+		case nvme_cmd_dsm:
+		case nvme_cmd_write_zeroes:
 			status = NVME_SC_ONCS_NOT_SUPPORTED | NVME_SC_DNR;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			status = NVME_SC_INVALID_OPCODE | NVME_SC_DNR;
-		पूर्ण
-		अवरोध;
-	हाल BLK_STS_MEDIUM:
+		}
+		break;
+	case BLK_STS_MEDIUM:
 		status = NVME_SC_ACCESS_DENIED;
-		req->error_loc = दुरत्व(काष्ठा nvme_rw_command, nsid);
-		अवरोध;
-	हाल BLK_STS_IOERR:
-	शेष:
+		req->error_loc = offsetof(struct nvme_rw_command, nsid);
+		break;
+	case BLK_STS_IOERR:
+	default:
 		status = NVME_SC_INTERNAL | NVME_SC_DNR;
-		req->error_loc = दुरत्व(काष्ठा nvme_common_command, opcode);
-	पूर्ण
+		req->error_loc = offsetof(struct nvme_common_command, opcode);
+	}
 
-	चयन (req->cmd->common.opcode) अणु
-	हाल nvme_cmd_पढ़ो:
-	हाल nvme_cmd_ग_लिखो:
+	switch (req->cmd->common.opcode) {
+	case nvme_cmd_read:
+	case nvme_cmd_write:
 		req->error_slba = le64_to_cpu(req->cmd->rw.slba);
-		अवरोध;
-	हाल nvme_cmd_ग_लिखो_zeroes:
+		break;
+	case nvme_cmd_write_zeroes:
 		req->error_slba =
-			le64_to_cpu(req->cmd->ग_लिखो_zeroes.slba);
-		अवरोध;
-	शेष:
+			le64_to_cpu(req->cmd->write_zeroes.slba);
+		break;
+	default:
 		req->error_slba = 0;
-	पूर्ण
-	वापस status;
-पूर्ण
+	}
+	return status;
+}
 
-अटल व्योम nvmet_bio_करोne(काष्ठा bio *bio)
-अणु
-	काष्ठा nvmet_req *req = bio->bi_निजी;
+static void nvmet_bio_done(struct bio *bio)
+{
+	struct nvmet_req *req = bio->bi_private;
 
 	nvmet_req_complete(req, blk_to_nvme_status(req, bio->bi_status));
-	अगर (bio != &req->b.अंतरभूत_bio)
+	if (bio != &req->b.inline_bio)
 		bio_put(bio);
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_BLK_DEV_INTEGRITY
-अटल पूर्णांक nvmet_bdev_alloc_bip(काष्ठा nvmet_req *req, काष्ठा bio *bio,
-				काष्ठा sg_mapping_iter *miter)
-अणु
-	काष्ठा blk_पूर्णांकegrity *bi;
-	काष्ठा bio_पूर्णांकegrity_payload *bip;
-	काष्ठा block_device *bdev = req->ns->bdev;
-	पूर्णांक rc;
-	माप_प्रकार resid, len;
+#ifdef CONFIG_BLK_DEV_INTEGRITY
+static int nvmet_bdev_alloc_bip(struct nvmet_req *req, struct bio *bio,
+				struct sg_mapping_iter *miter)
+{
+	struct blk_integrity *bi;
+	struct bio_integrity_payload *bip;
+	struct block_device *bdev = req->ns->bdev;
+	int rc;
+	size_t resid, len;
 
-	bi = bdev_get_पूर्णांकegrity(bdev);
-	अगर (unlikely(!bi)) अणु
+	bi = bdev_get_integrity(bdev);
+	if (unlikely(!bi)) {
 		pr_err("Unable to locate bio_integrity\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	bip = bio_पूर्णांकegrity_alloc(bio, GFP_NOIO,
+	bip = bio_integrity_alloc(bio, GFP_NOIO,
 					bio_max_segs(req->metadata_sg_cnt));
-	अगर (IS_ERR(bip)) अणु
+	if (IS_ERR(bip)) {
 		pr_err("Unable to allocate bio_integrity_payload\n");
-		वापस PTR_ERR(bip);
-	पूर्ण
+		return PTR_ERR(bip);
+	}
 
-	bip->bip_iter.bi_size = bio_पूर्णांकegrity_bytes(bi, bio_sectors(bio));
-	/* भव start sector must be in पूर्णांकegrity पूर्णांकerval units */
+	bip->bip_iter.bi_size = bio_integrity_bytes(bi, bio_sectors(bio));
+	/* virtual start sector must be in integrity interval units */
 	bip_set_seed(bip, bio->bi_iter.bi_sector >>
-		     (bi->पूर्णांकerval_exp - SECTOR_SHIFT));
+		     (bi->interval_exp - SECTOR_SHIFT));
 
 	resid = bip->bip_iter.bi_size;
-	जबतक (resid > 0 && sg_miter_next(miter)) अणु
-		len = min_t(माप_प्रकार, miter->length, resid);
-		rc = bio_पूर्णांकegrity_add_page(bio, miter->page, len,
+	while (resid > 0 && sg_miter_next(miter)) {
+		len = min_t(size_t, miter->length, resid);
+		rc = bio_integrity_add_page(bio, miter->page, len,
 					    offset_in_page(miter->addr));
-		अगर (unlikely(rc != len)) अणु
+		if (unlikely(rc != len)) {
 			pr_err("bio_integrity_add_page() failed; %d\n", rc);
 			sg_miter_stop(miter);
-			वापस -ENOMEM;
-		पूर्ण
+			return -ENOMEM;
+		}
 
 		resid -= len;
-		अगर (len < miter->length)
+		if (len < miter->length)
 			miter->consumed -= miter->length - len;
-	पूर्ण
+	}
 	sg_miter_stop(miter);
 
-	वापस 0;
-पूर्ण
-#अन्यथा
-अटल पूर्णांक nvmet_bdev_alloc_bip(काष्ठा nvmet_req *req, काष्ठा bio *bio,
-				काष्ठा sg_mapping_iter *miter)
-अणु
-	वापस -EINVAL;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_BLK_DEV_INTEGRITY */
+	return 0;
+}
+#else
+static int nvmet_bdev_alloc_bip(struct nvmet_req *req, struct bio *bio,
+				struct sg_mapping_iter *miter)
+{
+	return -EINVAL;
+}
+#endif /* CONFIG_BLK_DEV_INTEGRITY */
 
-अटल व्योम nvmet_bdev_execute_rw(काष्ठा nvmet_req *req)
-अणु
-	अचिन्हित पूर्णांक sg_cnt = req->sg_cnt;
-	काष्ठा bio *bio;
-	काष्ठा scatterlist *sg;
-	काष्ठा blk_plug plug;
+static void nvmet_bdev_execute_rw(struct nvmet_req *req)
+{
+	unsigned int sg_cnt = req->sg_cnt;
+	struct bio *bio;
+	struct scatterlist *sg;
+	struct blk_plug plug;
 	sector_t sector;
-	पूर्णांक op, i, rc;
-	काष्ठा sg_mapping_iter prot_miter;
-	अचिन्हित पूर्णांक iter_flags;
-	अचिन्हित पूर्णांक total_len = nvmet_rw_data_len(req) + req->metadata_len;
+	int op, i, rc;
+	struct sg_mapping_iter prot_miter;
+	unsigned int iter_flags;
+	unsigned int total_len = nvmet_rw_data_len(req) + req->metadata_len;
 
-	अगर (!nvmet_check_transfer_len(req, total_len))
-		वापस;
+	if (!nvmet_check_transfer_len(req, total_len))
+		return;
 
-	अगर (!req->sg_cnt) अणु
+	if (!req->sg_cnt) {
 		nvmet_req_complete(req, 0);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (req->cmd->rw.opcode == nvme_cmd_ग_लिखो) अणु
+	if (req->cmd->rw.opcode == nvme_cmd_write) {
 		op = REQ_OP_WRITE | REQ_SYNC | REQ_IDLE;
-		अगर (req->cmd->rw.control & cpu_to_le16(NVME_RW_FUA))
+		if (req->cmd->rw.control & cpu_to_le16(NVME_RW_FUA))
 			op |= REQ_FUA;
 		iter_flags = SG_MITER_TO_SG;
-	पूर्ण अन्यथा अणु
+	} else {
 		op = REQ_OP_READ;
 		iter_flags = SG_MITER_FROM_SG;
-	पूर्ण
+	}
 
-	अगर (is_pci_p2pdma_page(sg_page(req->sg)))
+	if (is_pci_p2pdma_page(sg_page(req->sg)))
 		op |= REQ_NOMERGE;
 
 	sector = nvmet_lba_to_sect(req->ns, req->cmd->rw.slba);
 
-	अगर (nvmet_use_अंतरभूत_bvec(req)) अणु
-		bio = &req->b.अंतरभूत_bio;
-		bio_init(bio, req->अंतरभूत_bvec, ARRAY_SIZE(req->अंतरभूत_bvec));
-	पूर्ण अन्यथा अणु
+	if (nvmet_use_inline_bvec(req)) {
+		bio = &req->b.inline_bio;
+		bio_init(bio, req->inline_bvec, ARRAY_SIZE(req->inline_bvec));
+	} else {
 		bio = bio_alloc(GFP_KERNEL, bio_max_segs(sg_cnt));
-	पूर्ण
+	}
 	bio_set_dev(bio, req->ns->bdev);
 	bio->bi_iter.bi_sector = sector;
-	bio->bi_निजी = req;
-	bio->bi_end_io = nvmet_bio_करोne;
+	bio->bi_private = req;
+	bio->bi_end_io = nvmet_bio_done;
 	bio->bi_opf = op;
 
 	blk_start_plug(&plug);
-	अगर (req->metadata_len)
+	if (req->metadata_len)
 		sg_miter_start(&prot_miter, req->metadata_sg,
 			       req->metadata_sg_cnt, iter_flags);
 
-	क्रम_each_sg(req->sg, sg, req->sg_cnt, i) अणु
-		जबतक (bio_add_page(bio, sg_page(sg), sg->length, sg->offset)
-				!= sg->length) अणु
-			काष्ठा bio *prev = bio;
+	for_each_sg(req->sg, sg, req->sg_cnt, i) {
+		while (bio_add_page(bio, sg_page(sg), sg->length, sg->offset)
+				!= sg->length) {
+			struct bio *prev = bio;
 
-			अगर (req->metadata_len) अणु
+			if (req->metadata_len) {
 				rc = nvmet_bdev_alloc_bip(req, bio,
 							  &prot_miter);
-				अगर (unlikely(rc)) अणु
+				if (unlikely(rc)) {
 					bio_io_error(bio);
-					वापस;
-				पूर्ण
-			पूर्ण
+					return;
+				}
+			}
 
 			bio = bio_alloc(GFP_KERNEL, bio_max_segs(sg_cnt));
 			bio_set_dev(bio, req->ns->bdev);
@@ -297,159 +296,159 @@
 
 			bio_chain(bio, prev);
 			submit_bio(prev);
-		पूर्ण
+		}
 
 		sector += sg->length >> 9;
 		sg_cnt--;
-	पूर्ण
+	}
 
-	अगर (req->metadata_len) अणु
+	if (req->metadata_len) {
 		rc = nvmet_bdev_alloc_bip(req, bio, &prot_miter);
-		अगर (unlikely(rc)) अणु
+		if (unlikely(rc)) {
 			bio_io_error(bio);
-			वापस;
-		पूर्ण
-	पूर्ण
+			return;
+		}
+	}
 
 	submit_bio(bio);
 	blk_finish_plug(&plug);
-पूर्ण
+}
 
-अटल व्योम nvmet_bdev_execute_flush(काष्ठा nvmet_req *req)
-अणु
-	काष्ठा bio *bio = &req->b.अंतरभूत_bio;
+static void nvmet_bdev_execute_flush(struct nvmet_req *req)
+{
+	struct bio *bio = &req->b.inline_bio;
 
-	अगर (!nvmet_check_transfer_len(req, 0))
-		वापस;
+	if (!nvmet_check_transfer_len(req, 0))
+		return;
 
-	bio_init(bio, req->अंतरभूत_bvec, ARRAY_SIZE(req->अंतरभूत_bvec));
+	bio_init(bio, req->inline_bvec, ARRAY_SIZE(req->inline_bvec));
 	bio_set_dev(bio, req->ns->bdev);
-	bio->bi_निजी = req;
-	bio->bi_end_io = nvmet_bio_करोne;
+	bio->bi_private = req;
+	bio->bi_end_io = nvmet_bio_done;
 	bio->bi_opf = REQ_OP_WRITE | REQ_PREFLUSH;
 
 	submit_bio(bio);
-पूर्ण
+}
 
-u16 nvmet_bdev_flush(काष्ठा nvmet_req *req)
-अणु
-	अगर (blkdev_issue_flush(req->ns->bdev))
-		वापस NVME_SC_INTERNAL | NVME_SC_DNR;
-	वापस 0;
-पूर्ण
+u16 nvmet_bdev_flush(struct nvmet_req *req)
+{
+	if (blkdev_issue_flush(req->ns->bdev))
+		return NVME_SC_INTERNAL | NVME_SC_DNR;
+	return 0;
+}
 
-अटल u16 nvmet_bdev_discard_range(काष्ठा nvmet_req *req,
-		काष्ठा nvme_dsm_range *range, काष्ठा bio **bio)
-अणु
-	काष्ठा nvmet_ns *ns = req->ns;
-	पूर्णांक ret;
+static u16 nvmet_bdev_discard_range(struct nvmet_req *req,
+		struct nvme_dsm_range *range, struct bio **bio)
+{
+	struct nvmet_ns *ns = req->ns;
+	int ret;
 
 	ret = __blkdev_issue_discard(ns->bdev,
 			nvmet_lba_to_sect(ns, range->slba),
-			le32_to_cpu(range->nlb) << (ns->blksize_shअगरt - 9),
+			le32_to_cpu(range->nlb) << (ns->blksize_shift - 9),
 			GFP_KERNEL, 0, bio);
-	अगर (ret && ret != -EOPNOTSUPP) अणु
+	if (ret && ret != -EOPNOTSUPP) {
 		req->error_slba = le64_to_cpu(range->slba);
-		वापस त्रुटि_सं_to_nvme_status(req, ret);
-	पूर्ण
-	वापस NVME_SC_SUCCESS;
-पूर्ण
+		return errno_to_nvme_status(req, ret);
+	}
+	return NVME_SC_SUCCESS;
+}
 
-अटल व्योम nvmet_bdev_execute_discard(काष्ठा nvmet_req *req)
-अणु
-	काष्ठा nvme_dsm_range range;
-	काष्ठा bio *bio = शून्य;
-	पूर्णांक i;
+static void nvmet_bdev_execute_discard(struct nvmet_req *req)
+{
+	struct nvme_dsm_range range;
+	struct bio *bio = NULL;
+	int i;
 	u16 status;
 
-	क्रम (i = 0; i <= le32_to_cpu(req->cmd->dsm.nr); i++) अणु
-		status = nvmet_copy_from_sgl(req, i * माप(range), &range,
-				माप(range));
-		अगर (status)
-			अवरोध;
+	for (i = 0; i <= le32_to_cpu(req->cmd->dsm.nr); i++) {
+		status = nvmet_copy_from_sgl(req, i * sizeof(range), &range,
+				sizeof(range));
+		if (status)
+			break;
 
 		status = nvmet_bdev_discard_range(req, &range, &bio);
-		अगर (status)
-			अवरोध;
-	पूर्ण
+		if (status)
+			break;
+	}
 
-	अगर (bio) अणु
-		bio->bi_निजी = req;
-		bio->bi_end_io = nvmet_bio_करोne;
-		अगर (status)
+	if (bio) {
+		bio->bi_private = req;
+		bio->bi_end_io = nvmet_bio_done;
+		if (status)
 			bio_io_error(bio);
-		अन्यथा
+		else
 			submit_bio(bio);
-	पूर्ण अन्यथा अणु
+	} else {
 		nvmet_req_complete(req, status);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम nvmet_bdev_execute_dsm(काष्ठा nvmet_req *req)
-अणु
-	अगर (!nvmet_check_data_len_lte(req, nvmet_dsm_len(req)))
-		वापस;
+static void nvmet_bdev_execute_dsm(struct nvmet_req *req)
+{
+	if (!nvmet_check_data_len_lte(req, nvmet_dsm_len(req)))
+		return;
 
-	चयन (le32_to_cpu(req->cmd->dsm.attributes)) अणु
-	हाल NVME_DSMGMT_AD:
+	switch (le32_to_cpu(req->cmd->dsm.attributes)) {
+	case NVME_DSMGMT_AD:
 		nvmet_bdev_execute_discard(req);
-		वापस;
-	हाल NVME_DSMGMT_IDR:
-	हाल NVME_DSMGMT_IDW:
-	शेष:
+		return;
+	case NVME_DSMGMT_IDR:
+	case NVME_DSMGMT_IDW:
+	default:
 		/* Not supported yet */
 		nvmet_req_complete(req, 0);
-		वापस;
-	पूर्ण
-पूर्ण
+		return;
+	}
+}
 
-अटल व्योम nvmet_bdev_execute_ग_लिखो_zeroes(काष्ठा nvmet_req *req)
-अणु
-	काष्ठा nvme_ग_लिखो_zeroes_cmd *ग_लिखो_zeroes = &req->cmd->ग_लिखो_zeroes;
-	काष्ठा bio *bio = शून्य;
+static void nvmet_bdev_execute_write_zeroes(struct nvmet_req *req)
+{
+	struct nvme_write_zeroes_cmd *write_zeroes = &req->cmd->write_zeroes;
+	struct bio *bio = NULL;
 	sector_t sector;
 	sector_t nr_sector;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (!nvmet_check_transfer_len(req, 0))
-		वापस;
+	if (!nvmet_check_transfer_len(req, 0))
+		return;
 
-	sector = nvmet_lba_to_sect(req->ns, ग_लिखो_zeroes->slba);
-	nr_sector = (((sector_t)le16_to_cpu(ग_लिखो_zeroes->length) + 1) <<
-		(req->ns->blksize_shअगरt - 9));
+	sector = nvmet_lba_to_sect(req->ns, write_zeroes->slba);
+	nr_sector = (((sector_t)le16_to_cpu(write_zeroes->length) + 1) <<
+		(req->ns->blksize_shift - 9));
 
 	ret = __blkdev_issue_zeroout(req->ns->bdev, sector, nr_sector,
 			GFP_KERNEL, &bio, 0);
-	अगर (bio) अणु
-		bio->bi_निजी = req;
-		bio->bi_end_io = nvmet_bio_करोne;
+	if (bio) {
+		bio->bi_private = req;
+		bio->bi_end_io = nvmet_bio_done;
 		submit_bio(bio);
-	पूर्ण अन्यथा अणु
-		nvmet_req_complete(req, त्रुटि_सं_to_nvme_status(req, ret));
-	पूर्ण
-पूर्ण
+	} else {
+		nvmet_req_complete(req, errno_to_nvme_status(req, ret));
+	}
+}
 
-u16 nvmet_bdev_parse_io_cmd(काष्ठा nvmet_req *req)
-अणु
-	काष्ठा nvme_command *cmd = req->cmd;
+u16 nvmet_bdev_parse_io_cmd(struct nvmet_req *req)
+{
+	struct nvme_command *cmd = req->cmd;
 
-	चयन (cmd->common.opcode) अणु
-	हाल nvme_cmd_पढ़ो:
-	हाल nvme_cmd_ग_लिखो:
+	switch (cmd->common.opcode) {
+	case nvme_cmd_read:
+	case nvme_cmd_write:
 		req->execute = nvmet_bdev_execute_rw;
-		अगर (req->sq->ctrl->pi_support && nvmet_ns_has_pi(req->ns))
+		if (req->sq->ctrl->pi_support && nvmet_ns_has_pi(req->ns))
 			req->metadata_len = nvmet_rw_metadata_len(req);
-		वापस 0;
-	हाल nvme_cmd_flush:
+		return 0;
+	case nvme_cmd_flush:
 		req->execute = nvmet_bdev_execute_flush;
-		वापस 0;
-	हाल nvme_cmd_dsm:
+		return 0;
+	case nvme_cmd_dsm:
 		req->execute = nvmet_bdev_execute_dsm;
-		वापस 0;
-	हाल nvme_cmd_ग_लिखो_zeroes:
-		req->execute = nvmet_bdev_execute_ग_लिखो_zeroes;
-		वापस 0;
-	शेष:
-		वापस nvmet_report_invalid_opcode(req);
-	पूर्ण
-पूर्ण
+		return 0;
+	case nvme_cmd_write_zeroes:
+		req->execute = nvmet_bdev_execute_write_zeroes;
+		return 0;
+	default:
+		return nvmet_report_invalid_opcode(req);
+	}
+}

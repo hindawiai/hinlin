@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * SDHCI support क्रम CNS3xxx SoC
+ * SDHCI support for CNS3xxx SoC
  *
  * Copyright 2008 Cavium Networks
  * Copyright 2010 MontaVista Software, LLC.
@@ -10,103 +9,103 @@
  *	    Anton Vorontsov <avorontsov@mvista.com>
  */
 
-#समावेश <linux/delay.h>
-#समावेश <linux/device.h>
-#समावेश <linux/mmc/host.h>
-#समावेश <linux/module.h>
-#समावेश "sdhci-pltfm.h"
+#include <linux/delay.h>
+#include <linux/device.h>
+#include <linux/mmc/host.h>
+#include <linux/module.h>
+#include "sdhci-pltfm.h"
 
-अटल अचिन्हित पूर्णांक sdhci_cns3xxx_get_max_clk(काष्ठा sdhci_host *host)
-अणु
-	वापस 150000000;
-पूर्ण
+static unsigned int sdhci_cns3xxx_get_max_clk(struct sdhci_host *host)
+{
+	return 150000000;
+}
 
-अटल व्योम sdhci_cns3xxx_set_घड़ी(काष्ठा sdhci_host *host, अचिन्हित पूर्णांक घड़ी)
-अणु
-	काष्ठा device *dev = mmc_dev(host->mmc);
-	पूर्णांक भाग = 1;
+static void sdhci_cns3xxx_set_clock(struct sdhci_host *host, unsigned int clock)
+{
+	struct device *dev = mmc_dev(host->mmc);
+	int div = 1;
 	u16 clk;
-	अचिन्हित दीर्घ समयout;
+	unsigned long timeout;
 
-	host->mmc->actual_घड़ी = 0;
+	host->mmc->actual_clock = 0;
 
-	sdhci_ग_लिखोw(host, 0, SDHCI_CLOCK_CONTROL);
+	sdhci_writew(host, 0, SDHCI_CLOCK_CONTROL);
 
-	अगर (घड़ी == 0)
-		वापस;
+	if (clock == 0)
+		return;
 
-	जबतक (host->max_clk / भाग > घड़ी) अणु
+	while (host->max_clk / div > clock) {
 		/*
-		 * On CNS3xxx भागider grows linearly up to 4, and then
+		 * On CNS3xxx divider grows linearly up to 4, and then
 		 * exponentially up to 256.
 		 */
-		अगर (भाग < 4)
-			भाग += 1;
-		अन्यथा अगर (भाग < 256)
-			भाग *= 2;
-		अन्यथा
-			अवरोध;
-	पूर्ण
+		if (div < 4)
+			div += 1;
+		else if (div < 256)
+			div *= 2;
+		else
+			break;
+	}
 
 	dev_dbg(dev, "desired SD clock: %d, actual: %d\n",
-		घड़ी, host->max_clk / भाग);
+		clock, host->max_clk / div);
 
 	/* Divide by 3 is special. */
-	अगर (भाग != 3)
-		भाग >>= 1;
+	if (div != 3)
+		div >>= 1;
 
-	clk = भाग << SDHCI_DIVIDER_SHIFT;
+	clk = div << SDHCI_DIVIDER_SHIFT;
 	clk |= SDHCI_CLOCK_INT_EN;
-	sdhci_ग_लिखोw(host, clk, SDHCI_CLOCK_CONTROL);
+	sdhci_writew(host, clk, SDHCI_CLOCK_CONTROL);
 
-	समयout = 20;
-	जबतक (!((clk = sdhci_पढ़ोw(host, SDHCI_CLOCK_CONTROL))
-			& SDHCI_CLOCK_INT_STABLE)) अणु
-		अगर (समयout == 0) अणु
+	timeout = 20;
+	while (!((clk = sdhci_readw(host, SDHCI_CLOCK_CONTROL))
+			& SDHCI_CLOCK_INT_STABLE)) {
+		if (timeout == 0) {
 			dev_warn(dev, "clock is unstable");
-			अवरोध;
-		पूर्ण
-		समयout--;
+			break;
+		}
+		timeout--;
 		mdelay(1);
-	पूर्ण
+	}
 
 	clk |= SDHCI_CLOCK_CARD_EN;
-	sdhci_ग_लिखोw(host, clk, SDHCI_CLOCK_CONTROL);
-पूर्ण
+	sdhci_writew(host, clk, SDHCI_CLOCK_CONTROL);
+}
 
-अटल स्थिर काष्ठा sdhci_ops sdhci_cns3xxx_ops = अणु
-	.get_max_घड़ी	= sdhci_cns3xxx_get_max_clk,
-	.set_घड़ी	= sdhci_cns3xxx_set_घड़ी,
+static const struct sdhci_ops sdhci_cns3xxx_ops = {
+	.get_max_clock	= sdhci_cns3xxx_get_max_clk,
+	.set_clock	= sdhci_cns3xxx_set_clock,
 	.set_bus_width	= sdhci_set_bus_width,
 	.reset          = sdhci_reset,
-	.set_uhs_संकेतing = sdhci_set_uhs_संकेतing,
-पूर्ण;
+	.set_uhs_signaling = sdhci_set_uhs_signaling,
+};
 
-अटल स्थिर काष्ठा sdhci_pltfm_data sdhci_cns3xxx_pdata = अणु
+static const struct sdhci_pltfm_data sdhci_cns3xxx_pdata = {
 	.ops = &sdhci_cns3xxx_ops,
 	.quirks = SDHCI_QUIRK_BROKEN_DMA |
 		  SDHCI_QUIRK_DATA_TIMEOUT_USES_SDCLK |
 		  SDHCI_QUIRK_INVERTED_WRITE_PROTECT |
 		  SDHCI_QUIRK_CAP_CLOCK_BASE_BROKEN |
 		  SDHCI_QUIRK_BROKEN_TIMEOUT_VAL,
-पूर्ण;
+};
 
-अटल पूर्णांक sdhci_cns3xxx_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	वापस sdhci_pltfm_रेजिस्टर(pdev, &sdhci_cns3xxx_pdata, 0);
-पूर्ण
+static int sdhci_cns3xxx_probe(struct platform_device *pdev)
+{
+	return sdhci_pltfm_register(pdev, &sdhci_cns3xxx_pdata, 0);
+}
 
-अटल काष्ठा platक्रमm_driver sdhci_cns3xxx_driver = अणु
-	.driver		= अणु
+static struct platform_driver sdhci_cns3xxx_driver = {
+	.driver		= {
 		.name	= "sdhci-cns3xxx",
 		.probe_type = PROBE_PREFER_ASYNCHRONOUS,
 		.pm	= &sdhci_pltfm_pmops,
-	पूर्ण,
+	},
 	.probe		= sdhci_cns3xxx_probe,
-	.हटाओ		= sdhci_pltfm_unरेजिस्टर,
-पूर्ण;
+	.remove		= sdhci_pltfm_unregister,
+};
 
-module_platक्रमm_driver(sdhci_cns3xxx_driver);
+module_platform_driver(sdhci_cns3xxx_driver);
 
 MODULE_DESCRIPTION("SDHCI driver for CNS3xxx");
 MODULE_AUTHOR("Scott Shu, "

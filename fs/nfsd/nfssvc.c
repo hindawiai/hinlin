@@ -1,105 +1,104 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Central processing क्रम nfsd.
+ * Central processing for nfsd.
  *
  * Authors:	Olaf Kirch (okir@monad.swb.de)
  *
  * Copyright (C) 1995, 1996, 1997 Olaf Kirch <okir@monad.swb.de>
  */
 
-#समावेश <linux/sched/संकेत.स>
-#समावेश <linux/मुक्तzer.h>
-#समावेश <linux/module.h>
-#समावेश <linux/fs_काष्ठा.h>
-#समावेश <linux/swap.h>
+#include <linux/sched/signal.h>
+#include <linux/freezer.h>
+#include <linux/module.h>
+#include <linux/fs_struct.h>
+#include <linux/swap.h>
 
-#समावेश <linux/sunrpc/stats.h>
-#समावेश <linux/sunrpc/svcsock.h>
-#समावेश <linux/sunrpc/svc_xprt.h>
-#समावेश <linux/lockd/bind.h>
-#समावेश <linux/nfsacl.h>
-#समावेश <linux/seq_file.h>
-#समावेश <linux/inetdevice.h>
-#समावेश <net/addrconf.h>
-#समावेश <net/ipv6.h>
-#समावेश <net/net_namespace.h>
-#समावेश "nfsd.h"
-#समावेश "cache.h"
-#समावेश "vfs.h"
-#समावेश "netns.h"
-#समावेश "filecache.h"
+#include <linux/sunrpc/stats.h>
+#include <linux/sunrpc/svcsock.h>
+#include <linux/sunrpc/svc_xprt.h>
+#include <linux/lockd/bind.h>
+#include <linux/nfsacl.h>
+#include <linux/seq_file.h>
+#include <linux/inetdevice.h>
+#include <net/addrconf.h>
+#include <net/ipv6.h>
+#include <net/net_namespace.h>
+#include "nfsd.h"
+#include "cache.h"
+#include "vfs.h"
+#include "netns.h"
+#include "filecache.h"
 
-#समावेश "trace.h"
+#include "trace.h"
 
-#घोषणा NFSDDBG_FACILITY	NFSDDBG_SVC
+#define NFSDDBG_FACILITY	NFSDDBG_SVC
 
-बाह्य काष्ठा svc_program	nfsd_program;
-अटल पूर्णांक			nfsd(व्योम *vrqstp);
-#अगर defined(CONFIG_NFSD_V2_ACL) || defined(CONFIG_NFSD_V3_ACL)
-अटल पूर्णांक			nfsd_acl_rpcbind_set(काष्ठा net *,
-						     स्थिर काष्ठा svc_program *,
-						     u32, पूर्णांक,
-						     अचिन्हित लघु,
-						     अचिन्हित लघु);
-अटल __be32			nfsd_acl_init_request(काष्ठा svc_rqst *,
-						स्थिर काष्ठा svc_program *,
-						काष्ठा svc_process_info *);
-#पूर्ण_अगर
-अटल पूर्णांक			nfsd_rpcbind_set(काष्ठा net *,
-						 स्थिर काष्ठा svc_program *,
-						 u32, पूर्णांक,
-						 अचिन्हित लघु,
-						 अचिन्हित लघु);
-अटल __be32			nfsd_init_request(काष्ठा svc_rqst *,
-						स्थिर काष्ठा svc_program *,
-						काष्ठा svc_process_info *);
+extern struct svc_program	nfsd_program;
+static int			nfsd(void *vrqstp);
+#if defined(CONFIG_NFSD_V2_ACL) || defined(CONFIG_NFSD_V3_ACL)
+static int			nfsd_acl_rpcbind_set(struct net *,
+						     const struct svc_program *,
+						     u32, int,
+						     unsigned short,
+						     unsigned short);
+static __be32			nfsd_acl_init_request(struct svc_rqst *,
+						const struct svc_program *,
+						struct svc_process_info *);
+#endif
+static int			nfsd_rpcbind_set(struct net *,
+						 const struct svc_program *,
+						 u32, int,
+						 unsigned short,
+						 unsigned short);
+static __be32			nfsd_init_request(struct svc_rqst *,
+						const struct svc_program *,
+						struct svc_process_info *);
 
 /*
- * nfsd_mutex protects nn->nfsd_serv -- both the poपूर्णांकer itself and the members
- * of the svc_serv काष्ठा. In particular, ->sv_nrthपढ़ोs but also to some
+ * nfsd_mutex protects nn->nfsd_serv -- both the pointer itself and the members
+ * of the svc_serv struct. In particular, ->sv_nrthreads but also to some
  * extent ->sv_temp_socks and ->sv_permsocks. It also protects nfsdstats.th_cnt
  *
- * If (out side the lock) nn->nfsd_serv is non-शून्य, then it must poपूर्णांक to a
- * properly initialised 'struct svc_serv' with ->sv_nrthपढ़ोs > 0. That number
- * of nfsd thपढ़ोs must exist and each must listed in ->sp_all_thपढ़ोs in each
+ * If (out side the lock) nn->nfsd_serv is non-NULL, then it must point to a
+ * properly initialised 'struct svc_serv' with ->sv_nrthreads > 0. That number
+ * of nfsd threads must exist and each must listed in ->sp_all_threads in each
  * entry of ->sv_pools[].
  *
- * Transitions of the thपढ़ो count between zero and non-zero are of particular
- * पूर्णांकerest since the svc_serv needs to be created and initialized at that
- * poपूर्णांक, or मुक्तd.
+ * Transitions of the thread count between zero and non-zero are of particular
+ * interest since the svc_serv needs to be created and initialized at that
+ * point, or freed.
  *
  * Finally, the nfsd_mutex also protects some of the global variables that are
- * accessed when nfsd starts and that are settable via the ग_लिखो_* routines in
+ * accessed when nfsd starts and that are settable via the write_* routines in
  * nfsctl.c. In particular:
  *
- *	user_recovery_स_नाम
- *	user_lease_समय
+ *	user_recovery_dirname
+ *	user_lease_time
  *	nfsd_versions
  */
 DEFINE_MUTEX(nfsd_mutex);
 
 /*
  * nfsd_drc_lock protects nfsd_drc_max_pages and nfsd_drc_pages_used.
- * nfsd_drc_max_pages limits the total amount of memory available क्रम
+ * nfsd_drc_max_pages limits the total amount of memory available for
  * version 4.1 DRC caches.
  * nfsd_drc_pages_used tracks the current version 4.1 DRC memory usage.
  */
 DEFINE_SPINLOCK(nfsd_drc_lock);
-अचिन्हित दीर्घ	nfsd_drc_max_mem;
-अचिन्हित दीर्घ	nfsd_drc_mem_used;
+unsigned long	nfsd_drc_max_mem;
+unsigned long	nfsd_drc_mem_used;
 
-#अगर defined(CONFIG_NFSD_V2_ACL) || defined(CONFIG_NFSD_V3_ACL)
-अटल काष्ठा svc_stat	nfsd_acl_svcstats;
-अटल स्थिर काष्ठा svc_version *nfsd_acl_version[] = अणु
+#if defined(CONFIG_NFSD_V2_ACL) || defined(CONFIG_NFSD_V3_ACL)
+static struct svc_stat	nfsd_acl_svcstats;
+static const struct svc_version *nfsd_acl_version[] = {
 	[2] = &nfsd_acl_version2,
 	[3] = &nfsd_acl_version3,
-पूर्ण;
+};
 
-#घोषणा NFSD_ACL_MINVERS            2
-#घोषणा NFSD_ACL_NRVERS		ARRAY_SIZE(nfsd_acl_version)
+#define NFSD_ACL_MINVERS            2
+#define NFSD_ACL_NRVERS		ARRAY_SIZE(nfsd_acl_version)
 
-अटल काष्ठा svc_program	nfsd_acl_program = अणु
+static struct svc_program	nfsd_acl_program = {
 	.pg_prog		= NFS_ACL_PROGRAM,
 	.pg_nvers		= NFSD_ACL_NRVERS,
 	.pg_vers		= nfsd_acl_version,
@@ -109,30 +108,30 @@ DEFINE_SPINLOCK(nfsd_drc_lock);
 	.pg_authenticate	= &svc_set_client,
 	.pg_init_request	= nfsd_acl_init_request,
 	.pg_rpcbind_set		= nfsd_acl_rpcbind_set,
-पूर्ण;
+};
 
-अटल काष्ठा svc_stat	nfsd_acl_svcstats = अणु
+static struct svc_stat	nfsd_acl_svcstats = {
 	.program	= &nfsd_acl_program,
-पूर्ण;
-#पूर्ण_अगर /* defined(CONFIG_NFSD_V2_ACL) || defined(CONFIG_NFSD_V3_ACL) */
+};
+#endif /* defined(CONFIG_NFSD_V2_ACL) || defined(CONFIG_NFSD_V3_ACL) */
 
-अटल स्थिर काष्ठा svc_version *nfsd_version[] = अणु
+static const struct svc_version *nfsd_version[] = {
 	[2] = &nfsd_version2,
-#अगर defined(CONFIG_NFSD_V3)
+#if defined(CONFIG_NFSD_V3)
 	[3] = &nfsd_version3,
-#पूर्ण_अगर
-#अगर defined(CONFIG_NFSD_V4)
+#endif
+#if defined(CONFIG_NFSD_V4)
 	[4] = &nfsd_version4,
-#पूर्ण_अगर
-पूर्ण;
+#endif
+};
 
-#घोषणा NFSD_MINVERS    	2
-#घोषणा NFSD_NRVERS		ARRAY_SIZE(nfsd_version)
+#define NFSD_MINVERS    	2
+#define NFSD_NRVERS		ARRAY_SIZE(nfsd_version)
 
-काष्ठा svc_program		nfsd_program = अणु
-#अगर defined(CONFIG_NFSD_V2_ACL) || defined(CONFIG_NFSD_V3_ACL)
+struct svc_program		nfsd_program = {
+#if defined(CONFIG_NFSD_V2_ACL) || defined(CONFIG_NFSD_V3_ACL)
 	.pg_next		= &nfsd_acl_program,
-#पूर्ण_अगर
+#endif
 	.pg_prog		= NFS_PROGRAM,		/* program number */
 	.pg_nvers		= NFSD_NRVERS,		/* nr of entries in nfsd_version */
 	.pg_vers		= nfsd_version,		/* version table */
@@ -142,926 +141,926 @@ DEFINE_SPINLOCK(nfsd_drc_lock);
 	.pg_authenticate	= &svc_set_client,	/* export authentication */
 	.pg_init_request	= nfsd_init_request,
 	.pg_rpcbind_set		= nfsd_rpcbind_set,
-पूर्ण;
+};
 
-अटल bool
-nfsd_support_version(पूर्णांक vers)
-अणु
-	अगर (vers >= NFSD_MINVERS && vers < NFSD_NRVERS)
-		वापस nfsd_version[vers] != शून्य;
-	वापस false;
-पूर्ण
+static bool
+nfsd_support_version(int vers)
+{
+	if (vers >= NFSD_MINVERS && vers < NFSD_NRVERS)
+		return nfsd_version[vers] != NULL;
+	return false;
+}
 
-अटल bool *
-nfsd_alloc_versions(व्योम)
-अणु
-	bool *vers = kदो_स्मृति_array(NFSD_NRVERS, माप(bool), GFP_KERNEL);
-	अचिन्हित i;
+static bool *
+nfsd_alloc_versions(void)
+{
+	bool *vers = kmalloc_array(NFSD_NRVERS, sizeof(bool), GFP_KERNEL);
+	unsigned i;
 
-	अगर (vers) अणु
-		/* All compiled versions are enabled by शेष */
-		क्रम (i = 0; i < NFSD_NRVERS; i++)
+	if (vers) {
+		/* All compiled versions are enabled by default */
+		for (i = 0; i < NFSD_NRVERS; i++)
 			vers[i] = nfsd_support_version(i);
-	पूर्ण
-	वापस vers;
-पूर्ण
+	}
+	return vers;
+}
 
-अटल bool *
-nfsd_alloc_minorversions(व्योम)
-अणु
-	bool *vers = kदो_स्मृति_array(NFSD_SUPPORTED_MINOR_VERSION + 1,
-			माप(bool), GFP_KERNEL);
-	अचिन्हित i;
+static bool *
+nfsd_alloc_minorversions(void)
+{
+	bool *vers = kmalloc_array(NFSD_SUPPORTED_MINOR_VERSION + 1,
+			sizeof(bool), GFP_KERNEL);
+	unsigned i;
 
-	अगर (vers) अणु
-		/* All minor versions are enabled by शेष */
-		क्रम (i = 0; i <= NFSD_SUPPORTED_MINOR_VERSION; i++)
+	if (vers) {
+		/* All minor versions are enabled by default */
+		for (i = 0; i <= NFSD_SUPPORTED_MINOR_VERSION; i++)
 			vers[i] = nfsd_support_version(4);
-	पूर्ण
-	वापस vers;
-पूर्ण
+	}
+	return vers;
+}
 
-व्योम
-nfsd_netns_मुक्त_versions(काष्ठा nfsd_net *nn)
-अणु
-	kमुक्त(nn->nfsd_versions);
-	kमुक्त(nn->nfsd4_minorversions);
-	nn->nfsd_versions = शून्य;
-	nn->nfsd4_minorversions = शून्य;
-पूर्ण
+void
+nfsd_netns_free_versions(struct nfsd_net *nn)
+{
+	kfree(nn->nfsd_versions);
+	kfree(nn->nfsd4_minorversions);
+	nn->nfsd_versions = NULL;
+	nn->nfsd4_minorversions = NULL;
+}
 
-अटल व्योम
-nfsd_netns_init_versions(काष्ठा nfsd_net *nn)
-अणु
-	अगर (!nn->nfsd_versions) अणु
+static void
+nfsd_netns_init_versions(struct nfsd_net *nn)
+{
+	if (!nn->nfsd_versions) {
 		nn->nfsd_versions = nfsd_alloc_versions();
 		nn->nfsd4_minorversions = nfsd_alloc_minorversions();
-		अगर (!nn->nfsd_versions || !nn->nfsd4_minorversions)
-			nfsd_netns_मुक्त_versions(nn);
-	पूर्ण
-पूर्ण
+		if (!nn->nfsd_versions || !nn->nfsd4_minorversions)
+			nfsd_netns_free_versions(nn);
+	}
+}
 
-पूर्णांक nfsd_vers(काष्ठा nfsd_net *nn, पूर्णांक vers, क्रमागत vers_op change)
-अणु
-	अगर (vers < NFSD_MINVERS || vers >= NFSD_NRVERS)
-		वापस 0;
-	चयन(change) अणु
-	हाल NFSD_SET:
-		अगर (nn->nfsd_versions)
+int nfsd_vers(struct nfsd_net *nn, int vers, enum vers_op change)
+{
+	if (vers < NFSD_MINVERS || vers >= NFSD_NRVERS)
+		return 0;
+	switch(change) {
+	case NFSD_SET:
+		if (nn->nfsd_versions)
 			nn->nfsd_versions[vers] = nfsd_support_version(vers);
-		अवरोध;
-	हाल NFSD_CLEAR:
+		break;
+	case NFSD_CLEAR:
 		nfsd_netns_init_versions(nn);
-		अगर (nn->nfsd_versions)
+		if (nn->nfsd_versions)
 			nn->nfsd_versions[vers] = false;
-		अवरोध;
-	हाल NFSD_TEST:
-		अगर (nn->nfsd_versions)
-			वापस nn->nfsd_versions[vers];
+		break;
+	case NFSD_TEST:
+		if (nn->nfsd_versions)
+			return nn->nfsd_versions[vers];
 		fallthrough;
-	हाल NFSD_AVAIL:
-		वापस nfsd_support_version(vers);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	case NFSD_AVAIL:
+		return nfsd_support_version(vers);
+	}
+	return 0;
+}
 
-अटल व्योम
-nfsd_adjust_nfsd_versions4(काष्ठा nfsd_net *nn)
-अणु
-	अचिन्हित i;
+static void
+nfsd_adjust_nfsd_versions4(struct nfsd_net *nn)
+{
+	unsigned i;
 
-	क्रम (i = 0; i <= NFSD_SUPPORTED_MINOR_VERSION; i++) अणु
-		अगर (nn->nfsd4_minorversions[i])
-			वापस;
-	पूर्ण
+	for (i = 0; i <= NFSD_SUPPORTED_MINOR_VERSION; i++) {
+		if (nn->nfsd4_minorversions[i])
+			return;
+	}
 	nfsd_vers(nn, 4, NFSD_CLEAR);
-पूर्ण
+}
 
-पूर्णांक nfsd_minorversion(काष्ठा nfsd_net *nn, u32 minorversion, क्रमागत vers_op change)
-अणु
-	अगर (minorversion > NFSD_SUPPORTED_MINOR_VERSION &&
+int nfsd_minorversion(struct nfsd_net *nn, u32 minorversion, enum vers_op change)
+{
+	if (minorversion > NFSD_SUPPORTED_MINOR_VERSION &&
 	    change != NFSD_AVAIL)
-		वापस -1;
+		return -1;
 
-	चयन(change) अणु
-	हाल NFSD_SET:
-		अगर (nn->nfsd4_minorversions) अणु
+	switch(change) {
+	case NFSD_SET:
+		if (nn->nfsd4_minorversions) {
 			nfsd_vers(nn, 4, NFSD_SET);
 			nn->nfsd4_minorversions[minorversion] =
 				nfsd_vers(nn, 4, NFSD_TEST);
-		पूर्ण
-		अवरोध;
-	हाल NFSD_CLEAR:
+		}
+		break;
+	case NFSD_CLEAR:
 		nfsd_netns_init_versions(nn);
-		अगर (nn->nfsd4_minorversions) अणु
+		if (nn->nfsd4_minorversions) {
 			nn->nfsd4_minorversions[minorversion] = false;
 			nfsd_adjust_nfsd_versions4(nn);
-		पूर्ण
-		अवरोध;
-	हाल NFSD_TEST:
-		अगर (nn->nfsd4_minorversions)
-			वापस nn->nfsd4_minorversions[minorversion];
-		वापस nfsd_vers(nn, 4, NFSD_TEST);
-	हाल NFSD_AVAIL:
-		वापस minorversion <= NFSD_SUPPORTED_MINOR_VERSION &&
+		}
+		break;
+	case NFSD_TEST:
+		if (nn->nfsd4_minorversions)
+			return nn->nfsd4_minorversions[minorversion];
+		return nfsd_vers(nn, 4, NFSD_TEST);
+	case NFSD_AVAIL:
+		return minorversion <= NFSD_SUPPORTED_MINOR_VERSION &&
 			nfsd_vers(nn, 4, NFSD_AVAIL);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
 /*
  * Maximum number of nfsd processes
  */
-#घोषणा	NFSD_MAXSERVS		8192
+#define	NFSD_MAXSERVS		8192
 
-पूर्णांक nfsd_nrthपढ़ोs(काष्ठा net *net)
-अणु
-	पूर्णांक rv = 0;
-	काष्ठा nfsd_net *nn = net_generic(net, nfsd_net_id);
+int nfsd_nrthreads(struct net *net)
+{
+	int rv = 0;
+	struct nfsd_net *nn = net_generic(net, nfsd_net_id);
 
 	mutex_lock(&nfsd_mutex);
-	अगर (nn->nfsd_serv)
-		rv = nn->nfsd_serv->sv_nrthपढ़ोs;
+	if (nn->nfsd_serv)
+		rv = nn->nfsd_serv->sv_nrthreads;
 	mutex_unlock(&nfsd_mutex);
-	वापस rv;
-पूर्ण
+	return rv;
+}
 
-अटल पूर्णांक nfsd_init_socks(काष्ठा net *net, स्थिर काष्ठा cred *cred)
-अणु
-	पूर्णांक error;
-	काष्ठा nfsd_net *nn = net_generic(net, nfsd_net_id);
+static int nfsd_init_socks(struct net *net, const struct cred *cred)
+{
+	int error;
+	struct nfsd_net *nn = net_generic(net, nfsd_net_id);
 
-	अगर (!list_empty(&nn->nfsd_serv->sv_permsocks))
-		वापस 0;
+	if (!list_empty(&nn->nfsd_serv->sv_permsocks))
+		return 0;
 
 	error = svc_create_xprt(nn->nfsd_serv, "udp", net, PF_INET, NFS_PORT,
 					SVC_SOCK_DEFAULTS, cred);
-	अगर (error < 0)
-		वापस error;
+	if (error < 0)
+		return error;
 
 	error = svc_create_xprt(nn->nfsd_serv, "tcp", net, PF_INET, NFS_PORT,
 					SVC_SOCK_DEFAULTS, cred);
-	अगर (error < 0)
-		वापस error;
+	if (error < 0)
+		return error;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक nfsd_users = 0;
+static int nfsd_users = 0;
 
-अटल पूर्णांक nfsd_startup_generic(व्योम)
-अणु
-	पूर्णांक ret;
+static int nfsd_startup_generic(void)
+{
+	int ret;
 
-	अगर (nfsd_users++)
-		वापस 0;
+	if (nfsd_users++)
+		return 0;
 
 	ret = nfsd_file_cache_init();
-	अगर (ret)
-		जाओ dec_users;
+	if (ret)
+		goto dec_users;
 
 	ret = nfs4_state_start();
-	अगर (ret)
-		जाओ out_file_cache;
-	वापस 0;
+	if (ret)
+		goto out_file_cache;
+	return 0;
 
 out_file_cache:
-	nfsd_file_cache_shutकरोwn();
+	nfsd_file_cache_shutdown();
 dec_users:
 	nfsd_users--;
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम nfsd_shutकरोwn_generic(व्योम)
-अणु
-	अगर (--nfsd_users)
-		वापस;
+static void nfsd_shutdown_generic(void)
+{
+	if (--nfsd_users)
+		return;
 
-	nfs4_state_shutकरोwn();
-	nfsd_file_cache_shutकरोwn();
-पूर्ण
+	nfs4_state_shutdown();
+	nfsd_file_cache_shutdown();
+}
 
-अटल bool nfsd_needs_lockd(काष्ठा nfsd_net *nn)
-अणु
-	वापस nfsd_vers(nn, 2, NFSD_TEST) || nfsd_vers(nn, 3, NFSD_TEST);
-पूर्ण
+static bool nfsd_needs_lockd(struct nfsd_net *nn)
+{
+	return nfsd_vers(nn, 2, NFSD_TEST) || nfsd_vers(nn, 3, NFSD_TEST);
+}
 
-व्योम nfsd_copy_boot_verअगरier(__be32 verf[2], काष्ठा nfsd_net *nn)
-अणु
-	पूर्णांक seq = 0;
+void nfsd_copy_boot_verifier(__be32 verf[2], struct nfsd_net *nn)
+{
+	int seq = 0;
 
-	करो अणु
-		पढ़ो_seqbegin_or_lock(&nn->boot_lock, &seq);
+	do {
+		read_seqbegin_or_lock(&nn->boot_lock, &seq);
 		/*
 		 * This is opaque to client, so no need to byte-swap. Use
-		 * __क्रमce to keep sparse happy. y2038 समय_प्रकार overflow is
+		 * __force to keep sparse happy. y2038 time_t overflow is
 		 * irrelevant in this usage
 		 */
-		verf[0] = (__क्रमce __be32)nn->nfssvc_boot.tv_sec;
-		verf[1] = (__क्रमce __be32)nn->nfssvc_boot.tv_nsec;
-	पूर्ण जबतक (need_seqretry(&nn->boot_lock, seq));
-	करोne_seqretry(&nn->boot_lock, seq);
-पूर्ण
+		verf[0] = (__force __be32)nn->nfssvc_boot.tv_sec;
+		verf[1] = (__force __be32)nn->nfssvc_boot.tv_nsec;
+	} while (need_seqretry(&nn->boot_lock, seq));
+	done_seqretry(&nn->boot_lock, seq);
+}
 
-अटल व्योम nfsd_reset_boot_verअगरier_locked(काष्ठा nfsd_net *nn)
-अणु
-	kसमय_get_real_ts64(&nn->nfssvc_boot);
-पूर्ण
+static void nfsd_reset_boot_verifier_locked(struct nfsd_net *nn)
+{
+	ktime_get_real_ts64(&nn->nfssvc_boot);
+}
 
-व्योम nfsd_reset_boot_verअगरier(काष्ठा nfsd_net *nn)
-अणु
-	ग_लिखो_seqlock(&nn->boot_lock);
-	nfsd_reset_boot_verअगरier_locked(nn);
-	ग_लिखो_sequnlock(&nn->boot_lock);
-पूर्ण
+void nfsd_reset_boot_verifier(struct nfsd_net *nn)
+{
+	write_seqlock(&nn->boot_lock);
+	nfsd_reset_boot_verifier_locked(nn);
+	write_sequnlock(&nn->boot_lock);
+}
 
-अटल पूर्णांक nfsd_startup_net(काष्ठा net *net, स्थिर काष्ठा cred *cred)
-अणु
-	काष्ठा nfsd_net *nn = net_generic(net, nfsd_net_id);
-	पूर्णांक ret;
+static int nfsd_startup_net(struct net *net, const struct cred *cred)
+{
+	struct nfsd_net *nn = net_generic(net, nfsd_net_id);
+	int ret;
 
-	अगर (nn->nfsd_net_up)
-		वापस 0;
+	if (nn->nfsd_net_up)
+		return 0;
 
 	ret = nfsd_startup_generic();
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 	ret = nfsd_init_socks(net, cred);
-	अगर (ret)
-		जाओ out_socks;
+	if (ret)
+		goto out_socks;
 
-	अगर (nfsd_needs_lockd(nn) && !nn->lockd_up) अणु
+	if (nfsd_needs_lockd(nn) && !nn->lockd_up) {
 		ret = lockd_up(net, cred);
-		अगर (ret)
-			जाओ out_socks;
+		if (ret)
+			goto out_socks;
 		nn->lockd_up = true;
-	पूर्ण
+	}
 
 	ret = nfsd_file_cache_start_net(net);
-	अगर (ret)
-		जाओ out_lockd;
+	if (ret)
+		goto out_lockd;
 	ret = nfs4_state_start_net(net);
-	अगर (ret)
-		जाओ out_filecache;
+	if (ret)
+		goto out_filecache;
 
 	nn->nfsd_net_up = true;
-	वापस 0;
+	return 0;
 
 out_filecache:
-	nfsd_file_cache_shutकरोwn_net(net);
+	nfsd_file_cache_shutdown_net(net);
 out_lockd:
-	अगर (nn->lockd_up) अणु
-		lockd_करोwn(net);
+	if (nn->lockd_up) {
+		lockd_down(net);
 		nn->lockd_up = false;
-	पूर्ण
+	}
 out_socks:
-	nfsd_shutकरोwn_generic();
-	वापस ret;
-पूर्ण
+	nfsd_shutdown_generic();
+	return ret;
+}
 
-अटल व्योम nfsd_shutकरोwn_net(काष्ठा net *net)
-अणु
-	काष्ठा nfsd_net *nn = net_generic(net, nfsd_net_id);
+static void nfsd_shutdown_net(struct net *net)
+{
+	struct nfsd_net *nn = net_generic(net, nfsd_net_id);
 
-	nfsd_file_cache_shutकरोwn_net(net);
-	nfs4_state_shutकरोwn_net(net);
-	अगर (nn->lockd_up) अणु
-		lockd_करोwn(net);
+	nfsd_file_cache_shutdown_net(net);
+	nfs4_state_shutdown_net(net);
+	if (nn->lockd_up) {
+		lockd_down(net);
 		nn->lockd_up = false;
-	पूर्ण
+	}
 	nn->nfsd_net_up = false;
-	nfsd_shutकरोwn_generic();
-पूर्ण
+	nfsd_shutdown_generic();
+}
 
-अटल पूर्णांक nfsd_inetaddr_event(काष्ठा notअगरier_block *this, अचिन्हित दीर्घ event,
-	व्योम *ptr)
-अणु
-	काष्ठा in_अगरaddr *अगरa = (काष्ठा in_अगरaddr *)ptr;
-	काष्ठा net_device *dev = अगरa->अगरa_dev->dev;
-	काष्ठा net *net = dev_net(dev);
-	काष्ठा nfsd_net *nn = net_generic(net, nfsd_net_id);
-	काष्ठा sockaddr_in sin;
+static int nfsd_inetaddr_event(struct notifier_block *this, unsigned long event,
+	void *ptr)
+{
+	struct in_ifaddr *ifa = (struct in_ifaddr *)ptr;
+	struct net_device *dev = ifa->ifa_dev->dev;
+	struct net *net = dev_net(dev);
+	struct nfsd_net *nn = net_generic(net, nfsd_net_id);
+	struct sockaddr_in sin;
 
-	अगर ((event != NETDEV_DOWN) ||
+	if ((event != NETDEV_DOWN) ||
 	    !atomic_inc_not_zero(&nn->ntf_refcnt))
-		जाओ out;
+		goto out;
 
-	अगर (nn->nfsd_serv) अणु
-		dprपूर्णांकk("nfsd_inetaddr_event: removed %pI4\n", &अगरa->अगरa_local);
+	if (nn->nfsd_serv) {
+		dprintk("nfsd_inetaddr_event: removed %pI4\n", &ifa->ifa_local);
 		sin.sin_family = AF_INET;
-		sin.sin_addr.s_addr = अगरa->अगरa_local;
-		svc_age_temp_xprts_now(nn->nfsd_serv, (काष्ठा sockaddr *)&sin);
-	पूर्ण
+		sin.sin_addr.s_addr = ifa->ifa_local;
+		svc_age_temp_xprts_now(nn->nfsd_serv, (struct sockaddr *)&sin);
+	}
 	atomic_dec(&nn->ntf_refcnt);
 	wake_up(&nn->ntf_wq);
 
 out:
-	वापस NOTIFY_DONE;
-पूर्ण
+	return NOTIFY_DONE;
+}
 
-अटल काष्ठा notअगरier_block nfsd_inetaddr_notअगरier = अणु
-	.notअगरier_call = nfsd_inetaddr_event,
-पूर्ण;
+static struct notifier_block nfsd_inetaddr_notifier = {
+	.notifier_call = nfsd_inetaddr_event,
+};
 
-#अगर IS_ENABLED(CONFIG_IPV6)
-अटल पूर्णांक nfsd_inet6addr_event(काष्ठा notअगरier_block *this,
-	अचिन्हित दीर्घ event, व्योम *ptr)
-अणु
-	काष्ठा inet6_अगरaddr *अगरa = (काष्ठा inet6_अगरaddr *)ptr;
-	काष्ठा net_device *dev = अगरa->idev->dev;
-	काष्ठा net *net = dev_net(dev);
-	काष्ठा nfsd_net *nn = net_generic(net, nfsd_net_id);
-	काष्ठा sockaddr_in6 sin6;
+#if IS_ENABLED(CONFIG_IPV6)
+static int nfsd_inet6addr_event(struct notifier_block *this,
+	unsigned long event, void *ptr)
+{
+	struct inet6_ifaddr *ifa = (struct inet6_ifaddr *)ptr;
+	struct net_device *dev = ifa->idev->dev;
+	struct net *net = dev_net(dev);
+	struct nfsd_net *nn = net_generic(net, nfsd_net_id);
+	struct sockaddr_in6 sin6;
 
-	अगर ((event != NETDEV_DOWN) ||
+	if ((event != NETDEV_DOWN) ||
 	    !atomic_inc_not_zero(&nn->ntf_refcnt))
-		जाओ out;
+		goto out;
 
-	अगर (nn->nfsd_serv) अणु
-		dprपूर्णांकk("nfsd_inet6addr_event: removed %pI6\n", &अगरa->addr);
+	if (nn->nfsd_serv) {
+		dprintk("nfsd_inet6addr_event: removed %pI6\n", &ifa->addr);
 		sin6.sin6_family = AF_INET6;
-		sin6.sin6_addr = अगरa->addr;
-		अगर (ipv6_addr_type(&sin6.sin6_addr) & IPV6_ADDR_LINKLOCAL)
-			sin6.sin6_scope_id = अगरa->idev->dev->अगरindex;
-		svc_age_temp_xprts_now(nn->nfsd_serv, (काष्ठा sockaddr *)&sin6);
-	पूर्ण
+		sin6.sin6_addr = ifa->addr;
+		if (ipv6_addr_type(&sin6.sin6_addr) & IPV6_ADDR_LINKLOCAL)
+			sin6.sin6_scope_id = ifa->idev->dev->ifindex;
+		svc_age_temp_xprts_now(nn->nfsd_serv, (struct sockaddr *)&sin6);
+	}
 	atomic_dec(&nn->ntf_refcnt);
 	wake_up(&nn->ntf_wq);
 out:
-	वापस NOTIFY_DONE;
-पूर्ण
+	return NOTIFY_DONE;
+}
 
-अटल काष्ठा notअगरier_block nfsd_inet6addr_notअगरier = अणु
-	.notअगरier_call = nfsd_inet6addr_event,
-पूर्ण;
-#पूर्ण_अगर
+static struct notifier_block nfsd_inet6addr_notifier = {
+	.notifier_call = nfsd_inet6addr_event,
+};
+#endif
 
-/* Only used under nfsd_mutex, so this atomic may be overसमाप्त: */
-अटल atomic_t nfsd_notअगरier_refcount = ATOMIC_INIT(0);
+/* Only used under nfsd_mutex, so this atomic may be overkill: */
+static atomic_t nfsd_notifier_refcount = ATOMIC_INIT(0);
 
-अटल व्योम nfsd_last_thपढ़ो(काष्ठा svc_serv *serv, काष्ठा net *net)
-अणु
-	काष्ठा nfsd_net *nn = net_generic(net, nfsd_net_id);
+static void nfsd_last_thread(struct svc_serv *serv, struct net *net)
+{
+	struct nfsd_net *nn = net_generic(net, nfsd_net_id);
 
 	atomic_dec(&nn->ntf_refcnt);
-	/* check अगर the notअगरier still has clients */
-	अगर (atomic_dec_वापस(&nfsd_notअगरier_refcount) == 0) अणु
-		unरेजिस्टर_inetaddr_notअगरier(&nfsd_inetaddr_notअगरier);
-#अगर IS_ENABLED(CONFIG_IPV6)
-		unरेजिस्टर_inet6addr_notअगरier(&nfsd_inet6addr_notअगरier);
-#पूर्ण_अगर
-	पूर्ण
-	रुको_event(nn->ntf_wq, atomic_पढ़ो(&nn->ntf_refcnt) == 0);
+	/* check if the notifier still has clients */
+	if (atomic_dec_return(&nfsd_notifier_refcount) == 0) {
+		unregister_inetaddr_notifier(&nfsd_inetaddr_notifier);
+#if IS_ENABLED(CONFIG_IPV6)
+		unregister_inet6addr_notifier(&nfsd_inet6addr_notifier);
+#endif
+	}
+	wait_event(nn->ntf_wq, atomic_read(&nn->ntf_refcnt) == 0);
 
 	/*
-	 * ग_लिखो_ports can create the server without actually starting
-	 * any thपढ़ोs--अगर we get shut करोwn beक्रमe any thपढ़ोs are
-	 * started, then nfsd_last_thपढ़ो will be run beक्रमe any of this
-	 * other initialization has been करोne except the rpcb inक्रमmation.
+	 * write_ports can create the server without actually starting
+	 * any threads--if we get shut down before any threads are
+	 * started, then nfsd_last_thread will be run before any of this
+	 * other initialization has been done except the rpcb information.
 	 */
 	svc_rpcb_cleanup(serv, net);
-	अगर (!nn->nfsd_net_up)
-		वापस;
+	if (!nn->nfsd_net_up)
+		return;
 
-	nfsd_shutकरोwn_net(net);
+	nfsd_shutdown_net(net);
 	pr_info("nfsd: last server has exited, flushing export cache\n");
 	nfsd_export_flush(net);
-पूर्ण
+}
 
-व्योम nfsd_reset_versions(काष्ठा nfsd_net *nn)
-अणु
-	पूर्णांक i;
+void nfsd_reset_versions(struct nfsd_net *nn)
+{
+	int i;
 
-	क्रम (i = 0; i < NFSD_NRVERS; i++)
-		अगर (nfsd_vers(nn, i, NFSD_TEST))
-			वापस;
+	for (i = 0; i < NFSD_NRVERS; i++)
+		if (nfsd_vers(nn, i, NFSD_TEST))
+			return;
 
-	क्रम (i = 0; i < NFSD_NRVERS; i++)
-		अगर (i != 4)
+	for (i = 0; i < NFSD_NRVERS; i++)
+		if (i != 4)
 			nfsd_vers(nn, i, NFSD_SET);
-		अन्यथा अणु
-			पूर्णांक minor = 0;
-			जबतक (nfsd_minorversion(nn, minor, NFSD_SET) >= 0)
+		else {
+			int minor = 0;
+			while (nfsd_minorversion(nn, minor, NFSD_SET) >= 0)
 				minor++;
-		पूर्ण
-पूर्ण
+		}
+}
 
 /*
- * Each session guarantees a negotiated per slot memory cache क्रम replies
+ * Each session guarantees a negotiated per slot memory cache for replies
  * which in turn consumes memory beyond the v2/v3/v4.0 server. A dedicated
- * NFSv4.1 server might want to use more memory क्रम a DRC than a machine
+ * NFSv4.1 server might want to use more memory for a DRC than a machine
  * with mutiple services.
  *
- * Impose a hard limit on the number of pages क्रम the DRC which varies
- * according to the machines मुक्त pages. This is of course only a शेष.
+ * Impose a hard limit on the number of pages for the DRC which varies
+ * according to the machines free pages. This is of course only a default.
  *
- * For now this is a #घोषणाd shअगरt which could be under admin control
+ * For now this is a #defined shift which could be under admin control
  * in the future.
  */
-अटल व्योम set_max_drc(व्योम)
-अणु
-	#घोषणा NFSD_DRC_SIZE_SHIFT	7
-	nfsd_drc_max_mem = (nr_मुक्त_buffer_pages()
+static void set_max_drc(void)
+{
+	#define NFSD_DRC_SIZE_SHIFT	7
+	nfsd_drc_max_mem = (nr_free_buffer_pages()
 					>> NFSD_DRC_SIZE_SHIFT) * PAGE_SIZE;
 	nfsd_drc_mem_used = 0;
-	dprपूर्णांकk("%s nfsd_drc_max_mem %lu \n", __func__, nfsd_drc_max_mem);
-पूर्ण
+	dprintk("%s nfsd_drc_max_mem %lu \n", __func__, nfsd_drc_max_mem);
+}
 
-अटल पूर्णांक nfsd_get_शेष_max_blksize(व्योम)
-अणु
-	काष्ठा sysinfo i;
-	अचिन्हित दीर्घ दीर्घ target;
-	अचिन्हित दीर्घ ret;
+static int nfsd_get_default_max_blksize(void)
+{
+	struct sysinfo i;
+	unsigned long long target;
+	unsigned long ret;
 
 	si_meminfo(&i);
 	target = (i.totalram - i.totalhigh) << PAGE_SHIFT;
 	/*
-	 * Aim क्रम 1/4096 of memory per thपढ़ो This gives 1MB on 4Gig
+	 * Aim for 1/4096 of memory per thread This gives 1MB on 4Gig
 	 * machines, but only uses 32K on 128M machines.  Bottom out at
-	 * 8K on 32M and smaller.  Of course, this is only a शेष.
+	 * 8K on 32M and smaller.  Of course, this is only a default.
 	 */
 	target >>= 12;
 
 	ret = NFSSVC_MAXBLKSIZE;
-	जबतक (ret > target && ret >= 8*1024*2)
+	while (ret > target && ret >= 8*1024*2)
 		ret /= 2;
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा svc_serv_ops nfsd_thपढ़ो_sv_ops = अणु
-	.svo_shutकरोwn		= nfsd_last_thपढ़ो,
+static const struct svc_serv_ops nfsd_thread_sv_ops = {
+	.svo_shutdown		= nfsd_last_thread,
 	.svo_function		= nfsd,
-	.svo_enqueue_xprt	= svc_xprt_करो_enqueue,
-	.svo_setup		= svc_set_num_thपढ़ोs,
+	.svo_enqueue_xprt	= svc_xprt_do_enqueue,
+	.svo_setup		= svc_set_num_threads,
 	.svo_module		= THIS_MODULE,
-पूर्ण;
+};
 
-अटल व्योम nfsd_complete_shutकरोwn(काष्ठा net *net)
-अणु
-	काष्ठा nfsd_net *nn = net_generic(net, nfsd_net_id);
+static void nfsd_complete_shutdown(struct net *net)
+{
+	struct nfsd_net *nn = net_generic(net, nfsd_net_id);
 
 	WARN_ON(!mutex_is_locked(&nfsd_mutex));
 
-	nn->nfsd_serv = शून्य;
-	complete(&nn->nfsd_shutकरोwn_complete);
-पूर्ण
+	nn->nfsd_serv = NULL;
+	complete(&nn->nfsd_shutdown_complete);
+}
 
-व्योम nfsd_shutकरोwn_thपढ़ोs(काष्ठा net *net)
-अणु
-	काष्ठा nfsd_net *nn = net_generic(net, nfsd_net_id);
-	काष्ठा svc_serv *serv;
+void nfsd_shutdown_threads(struct net *net)
+{
+	struct nfsd_net *nn = net_generic(net, nfsd_net_id);
+	struct svc_serv *serv;
 
 	mutex_lock(&nfsd_mutex);
 	serv = nn->nfsd_serv;
-	अगर (serv == शून्य) अणु
+	if (serv == NULL) {
 		mutex_unlock(&nfsd_mutex);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	svc_get(serv);
-	/* Kill outstanding nfsd thपढ़ोs */
-	serv->sv_ops->svo_setup(serv, शून्य, 0);
+	/* Kill outstanding nfsd threads */
+	serv->sv_ops->svo_setup(serv, NULL, 0);
 	nfsd_destroy(net);
 	mutex_unlock(&nfsd_mutex);
-	/* Wait क्रम shutकरोwn of nfsd_serv to complete */
-	रुको_क्रम_completion(&nn->nfsd_shutकरोwn_complete);
-पूर्ण
+	/* Wait for shutdown of nfsd_serv to complete */
+	wait_for_completion(&nn->nfsd_shutdown_complete);
+}
 
-bool i_am_nfsd(व्योम)
-अणु
-	वापस kthपढ़ो_func(current) == nfsd;
-पूर्ण
+bool i_am_nfsd(void)
+{
+	return kthread_func(current) == nfsd;
+}
 
-पूर्णांक nfsd_create_serv(काष्ठा net *net)
-अणु
-	पूर्णांक error;
-	काष्ठा nfsd_net *nn = net_generic(net, nfsd_net_id);
+int nfsd_create_serv(struct net *net)
+{
+	int error;
+	struct nfsd_net *nn = net_generic(net, nfsd_net_id);
 
 	WARN_ON(!mutex_is_locked(&nfsd_mutex));
-	अगर (nn->nfsd_serv) अणु
+	if (nn->nfsd_serv) {
 		svc_get(nn->nfsd_serv);
-		वापस 0;
-	पूर्ण
-	अगर (nfsd_max_blksize == 0)
-		nfsd_max_blksize = nfsd_get_शेष_max_blksize();
+		return 0;
+	}
+	if (nfsd_max_blksize == 0)
+		nfsd_max_blksize = nfsd_get_default_max_blksize();
 	nfsd_reset_versions(nn);
 	nn->nfsd_serv = svc_create_pooled(&nfsd_program, nfsd_max_blksize,
-						&nfsd_thपढ़ो_sv_ops);
-	अगर (nn->nfsd_serv == शून्य)
-		वापस -ENOMEM;
-	init_completion(&nn->nfsd_shutकरोwn_complete);
+						&nfsd_thread_sv_ops);
+	if (nn->nfsd_serv == NULL)
+		return -ENOMEM;
+	init_completion(&nn->nfsd_shutdown_complete);
 
 	nn->nfsd_serv->sv_maxconn = nn->max_connections;
 	error = svc_bind(nn->nfsd_serv, net);
-	अगर (error < 0) अणु
+	if (error < 0) {
 		svc_destroy(nn->nfsd_serv);
-		nfsd_complete_shutकरोwn(net);
-		वापस error;
-	पूर्ण
+		nfsd_complete_shutdown(net);
+		return error;
+	}
 
 	set_max_drc();
-	/* check अगर the notअगरier is alपढ़ोy set */
-	अगर (atomic_inc_वापस(&nfsd_notअगरier_refcount) == 1) अणु
-		रेजिस्टर_inetaddr_notअगरier(&nfsd_inetaddr_notअगरier);
-#अगर IS_ENABLED(CONFIG_IPV6)
-		रेजिस्टर_inet6addr_notअगरier(&nfsd_inet6addr_notअगरier);
-#पूर्ण_अगर
-	पूर्ण
+	/* check if the notifier is already set */
+	if (atomic_inc_return(&nfsd_notifier_refcount) == 1) {
+		register_inetaddr_notifier(&nfsd_inetaddr_notifier);
+#if IS_ENABLED(CONFIG_IPV6)
+		register_inet6addr_notifier(&nfsd_inet6addr_notifier);
+#endif
+	}
 	atomic_inc(&nn->ntf_refcnt);
-	nfsd_reset_boot_verअगरier(nn);
-	वापस 0;
-पूर्ण
+	nfsd_reset_boot_verifier(nn);
+	return 0;
+}
 
-पूर्णांक nfsd_nrpools(काष्ठा net *net)
-अणु
-	काष्ठा nfsd_net *nn = net_generic(net, nfsd_net_id);
+int nfsd_nrpools(struct net *net)
+{
+	struct nfsd_net *nn = net_generic(net, nfsd_net_id);
 
-	अगर (nn->nfsd_serv == शून्य)
-		वापस 0;
-	अन्यथा
-		वापस nn->nfsd_serv->sv_nrpools;
-पूर्ण
+	if (nn->nfsd_serv == NULL)
+		return 0;
+	else
+		return nn->nfsd_serv->sv_nrpools;
+}
 
-पूर्णांक nfsd_get_nrthपढ़ोs(पूर्णांक n, पूर्णांक *nthपढ़ोs, काष्ठा net *net)
-अणु
-	पूर्णांक i = 0;
-	काष्ठा nfsd_net *nn = net_generic(net, nfsd_net_id);
+int nfsd_get_nrthreads(int n, int *nthreads, struct net *net)
+{
+	int i = 0;
+	struct nfsd_net *nn = net_generic(net, nfsd_net_id);
 
-	अगर (nn->nfsd_serv != शून्य) अणु
-		क्रम (i = 0; i < nn->nfsd_serv->sv_nrpools && i < n; i++)
-			nthपढ़ोs[i] = nn->nfsd_serv->sv_pools[i].sp_nrthपढ़ोs;
-	पूर्ण
+	if (nn->nfsd_serv != NULL) {
+		for (i = 0; i < nn->nfsd_serv->sv_nrpools && i < n; i++)
+			nthreads[i] = nn->nfsd_serv->sv_pools[i].sp_nrthreads;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम nfsd_destroy(काष्ठा net *net)
-अणु
-	काष्ठा nfsd_net *nn = net_generic(net, nfsd_net_id);
-	पूर्णांक destroy = (nn->nfsd_serv->sv_nrthपढ़ोs == 1);
+void nfsd_destroy(struct net *net)
+{
+	struct nfsd_net *nn = net_generic(net, nfsd_net_id);
+	int destroy = (nn->nfsd_serv->sv_nrthreads == 1);
 
-	अगर (destroy)
-		svc_shutकरोwn_net(nn->nfsd_serv, net);
+	if (destroy)
+		svc_shutdown_net(nn->nfsd_serv, net);
 	svc_destroy(nn->nfsd_serv);
-	अगर (destroy)
-		nfsd_complete_shutकरोwn(net);
-पूर्ण
+	if (destroy)
+		nfsd_complete_shutdown(net);
+}
 
-पूर्णांक nfsd_set_nrthपढ़ोs(पूर्णांक n, पूर्णांक *nthपढ़ोs, काष्ठा net *net)
-अणु
-	पूर्णांक i = 0;
-	पूर्णांक tot = 0;
-	पूर्णांक err = 0;
-	काष्ठा nfsd_net *nn = net_generic(net, nfsd_net_id);
+int nfsd_set_nrthreads(int n, int *nthreads, struct net *net)
+{
+	int i = 0;
+	int tot = 0;
+	int err = 0;
+	struct nfsd_net *nn = net_generic(net, nfsd_net_id);
 
 	WARN_ON(!mutex_is_locked(&nfsd_mutex));
 
-	अगर (nn->nfsd_serv == शून्य || n <= 0)
-		वापस 0;
+	if (nn->nfsd_serv == NULL || n <= 0)
+		return 0;
 
-	अगर (n > nn->nfsd_serv->sv_nrpools)
+	if (n > nn->nfsd_serv->sv_nrpools)
 		n = nn->nfsd_serv->sv_nrpools;
 
-	/* enक्रमce a global maximum number of thपढ़ोs */
+	/* enforce a global maximum number of threads */
 	tot = 0;
-	क्रम (i = 0; i < n; i++) अणु
-		nthपढ़ोs[i] = min(nthपढ़ोs[i], NFSD_MAXSERVS);
-		tot += nthपढ़ोs[i];
-	पूर्ण
-	अगर (tot > NFSD_MAXSERVS) अणु
-		/* total too large: scale करोwn requested numbers */
-		क्रम (i = 0; i < n && tot > 0; i++) अणु
-		    	पूर्णांक new = nthपढ़ोs[i] * NFSD_MAXSERVS / tot;
-			tot -= (nthपढ़ोs[i] - new);
-			nthपढ़ोs[i] = new;
-		पूर्ण
-		क्रम (i = 0; i < n && tot > 0; i++) अणु
-			nthपढ़ोs[i]--;
+	for (i = 0; i < n; i++) {
+		nthreads[i] = min(nthreads[i], NFSD_MAXSERVS);
+		tot += nthreads[i];
+	}
+	if (tot > NFSD_MAXSERVS) {
+		/* total too large: scale down requested numbers */
+		for (i = 0; i < n && tot > 0; i++) {
+		    	int new = nthreads[i] * NFSD_MAXSERVS / tot;
+			tot -= (nthreads[i] - new);
+			nthreads[i] = new;
+		}
+		for (i = 0; i < n && tot > 0; i++) {
+			nthreads[i]--;
 			tot--;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/*
-	 * There must always be a thपढ़ो in pool 0; the admin
-	 * can't shut करोwn NFS completely using pool_thपढ़ोs.
+	 * There must always be a thread in pool 0; the admin
+	 * can't shut down NFS completely using pool_threads.
 	 */
-	अगर (nthपढ़ोs[0] == 0)
-		nthपढ़ोs[0] = 1;
+	if (nthreads[0] == 0)
+		nthreads[0] = 1;
 
 	/* apply the new numbers */
 	svc_get(nn->nfsd_serv);
-	क्रम (i = 0; i < n; i++) अणु
+	for (i = 0; i < n; i++) {
 		err = nn->nfsd_serv->sv_ops->svo_setup(nn->nfsd_serv,
-				&nn->nfsd_serv->sv_pools[i], nthपढ़ोs[i]);
-		अगर (err)
-			अवरोध;
-	पूर्ण
+				&nn->nfsd_serv->sv_pools[i], nthreads[i]);
+		if (err)
+			break;
+	}
 	nfsd_destroy(net);
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /*
- * Adjust the number of thपढ़ोs and वापस the new number of thपढ़ोs.
- * This is also the function that starts the server अगर necessary, अगर
- * this is the first समय nrservs is nonzero.
+ * Adjust the number of threads and return the new number of threads.
+ * This is also the function that starts the server if necessary, if
+ * this is the first time nrservs is nonzero.
  */
-पूर्णांक
-nfsd_svc(पूर्णांक nrservs, काष्ठा net *net, स्थिर काष्ठा cred *cred)
-अणु
-	पूर्णांक	error;
-	bool	nfsd_up_beक्रमe;
-	काष्ठा nfsd_net *nn = net_generic(net, nfsd_net_id);
+int
+nfsd_svc(int nrservs, struct net *net, const struct cred *cred)
+{
+	int	error;
+	bool	nfsd_up_before;
+	struct nfsd_net *nn = net_generic(net, nfsd_net_id);
 
 	mutex_lock(&nfsd_mutex);
-	dprपूर्णांकk("nfsd: creating service\n");
+	dprintk("nfsd: creating service\n");
 
 	nrservs = max(nrservs, 0);
 	nrservs = min(nrservs, NFSD_MAXSERVS);
 	error = 0;
 
-	अगर (nrservs == 0 && nn->nfsd_serv == शून्य)
-		जाओ out;
+	if (nrservs == 0 && nn->nfsd_serv == NULL)
+		goto out;
 
 	strlcpy(nn->nfsd_name, utsname()->nodename,
-		माप(nn->nfsd_name));
+		sizeof(nn->nfsd_name));
 
 	error = nfsd_create_serv(net);
-	अगर (error)
-		जाओ out;
+	if (error)
+		goto out;
 
-	nfsd_up_beक्रमe = nn->nfsd_net_up;
+	nfsd_up_before = nn->nfsd_net_up;
 
 	error = nfsd_startup_net(net, cred);
-	अगर (error)
-		जाओ out_destroy;
+	if (error)
+		goto out_destroy;
 	error = nn->nfsd_serv->sv_ops->svo_setup(nn->nfsd_serv,
-			शून्य, nrservs);
-	अगर (error)
-		जाओ out_shutकरोwn;
+			NULL, nrservs);
+	if (error)
+		goto out_shutdown;
 	/* We are holding a reference to nn->nfsd_serv which
-	 * we करोn't want to count in the वापस value,
+	 * we don't want to count in the return value,
 	 * so subtract 1
 	 */
-	error = nn->nfsd_serv->sv_nrthपढ़ोs - 1;
-out_shutकरोwn:
-	अगर (error < 0 && !nfsd_up_beक्रमe)
-		nfsd_shutकरोwn_net(net);
+	error = nn->nfsd_serv->sv_nrthreads - 1;
+out_shutdown:
+	if (error < 0 && !nfsd_up_before)
+		nfsd_shutdown_net(net);
 out_destroy:
 	nfsd_destroy(net);		/* Release server */
 out:
 	mutex_unlock(&nfsd_mutex);
-	वापस error;
-पूर्ण
+	return error;
+}
 
-#अगर defined(CONFIG_NFSD_V2_ACL) || defined(CONFIG_NFSD_V3_ACL)
-अटल bool
-nfsd_support_acl_version(पूर्णांक vers)
-अणु
-	अगर (vers >= NFSD_ACL_MINVERS && vers < NFSD_ACL_NRVERS)
-		वापस nfsd_acl_version[vers] != शून्य;
-	वापस false;
-पूर्ण
+#if defined(CONFIG_NFSD_V2_ACL) || defined(CONFIG_NFSD_V3_ACL)
+static bool
+nfsd_support_acl_version(int vers)
+{
+	if (vers >= NFSD_ACL_MINVERS && vers < NFSD_ACL_NRVERS)
+		return nfsd_acl_version[vers] != NULL;
+	return false;
+}
 
-अटल पूर्णांक
-nfsd_acl_rpcbind_set(काष्ठा net *net, स्थिर काष्ठा svc_program *progp,
-		     u32 version, पूर्णांक family, अचिन्हित लघु proto,
-		     अचिन्हित लघु port)
-अणु
-	अगर (!nfsd_support_acl_version(version) ||
+static int
+nfsd_acl_rpcbind_set(struct net *net, const struct svc_program *progp,
+		     u32 version, int family, unsigned short proto,
+		     unsigned short port)
+{
+	if (!nfsd_support_acl_version(version) ||
 	    !nfsd_vers(net_generic(net, nfsd_net_id), version, NFSD_TEST))
-		वापस 0;
-	वापस svc_generic_rpcbind_set(net, progp, version, family,
+		return 0;
+	return svc_generic_rpcbind_set(net, progp, version, family,
 			proto, port);
-पूर्ण
+}
 
-अटल __be32
-nfsd_acl_init_request(काष्ठा svc_rqst *rqstp,
-		      स्थिर काष्ठा svc_program *progp,
-		      काष्ठा svc_process_info *ret)
-अणु
-	काष्ठा nfsd_net *nn = net_generic(SVC_NET(rqstp), nfsd_net_id);
-	पूर्णांक i;
+static __be32
+nfsd_acl_init_request(struct svc_rqst *rqstp,
+		      const struct svc_program *progp,
+		      struct svc_process_info *ret)
+{
+	struct nfsd_net *nn = net_generic(SVC_NET(rqstp), nfsd_net_id);
+	int i;
 
-	अगर (likely(nfsd_support_acl_version(rqstp->rq_vers) &&
+	if (likely(nfsd_support_acl_version(rqstp->rq_vers) &&
 	    nfsd_vers(nn, rqstp->rq_vers, NFSD_TEST)))
-		वापस svc_generic_init_request(rqstp, progp, ret);
+		return svc_generic_init_request(rqstp, progp, ret);
 
 	ret->mismatch.lovers = NFSD_ACL_NRVERS;
-	क्रम (i = NFSD_ACL_MINVERS; i < NFSD_ACL_NRVERS; i++) अणु
-		अगर (nfsd_support_acl_version(rqstp->rq_vers) &&
-		    nfsd_vers(nn, i, NFSD_TEST)) अणु
+	for (i = NFSD_ACL_MINVERS; i < NFSD_ACL_NRVERS; i++) {
+		if (nfsd_support_acl_version(rqstp->rq_vers) &&
+		    nfsd_vers(nn, i, NFSD_TEST)) {
 			ret->mismatch.lovers = i;
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	अगर (ret->mismatch.lovers == NFSD_ACL_NRVERS)
-		वापस rpc_prog_unavail;
+			break;
+		}
+	}
+	if (ret->mismatch.lovers == NFSD_ACL_NRVERS)
+		return rpc_prog_unavail;
 	ret->mismatch.hivers = NFSD_ACL_MINVERS;
-	क्रम (i = NFSD_ACL_NRVERS - 1; i >= NFSD_ACL_MINVERS; i--) अणु
-		अगर (nfsd_support_acl_version(rqstp->rq_vers) &&
-		    nfsd_vers(nn, i, NFSD_TEST)) अणु
+	for (i = NFSD_ACL_NRVERS - 1; i >= NFSD_ACL_MINVERS; i--) {
+		if (nfsd_support_acl_version(rqstp->rq_vers) &&
+		    nfsd_vers(nn, i, NFSD_TEST)) {
 			ret->mismatch.hivers = i;
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	वापस rpc_prog_mismatch;
-पूर्ण
-#पूर्ण_अगर
+			break;
+		}
+	}
+	return rpc_prog_mismatch;
+}
+#endif
 
-अटल पूर्णांक
-nfsd_rpcbind_set(काष्ठा net *net, स्थिर काष्ठा svc_program *progp,
-		 u32 version, पूर्णांक family, अचिन्हित लघु proto,
-		 अचिन्हित लघु port)
-अणु
-	अगर (!nfsd_vers(net_generic(net, nfsd_net_id), version, NFSD_TEST))
-		वापस 0;
-	वापस svc_generic_rpcbind_set(net, progp, version, family,
+static int
+nfsd_rpcbind_set(struct net *net, const struct svc_program *progp,
+		 u32 version, int family, unsigned short proto,
+		 unsigned short port)
+{
+	if (!nfsd_vers(net_generic(net, nfsd_net_id), version, NFSD_TEST))
+		return 0;
+	return svc_generic_rpcbind_set(net, progp, version, family,
 			proto, port);
-पूर्ण
+}
 
-अटल __be32
-nfsd_init_request(काष्ठा svc_rqst *rqstp,
-		  स्थिर काष्ठा svc_program *progp,
-		  काष्ठा svc_process_info *ret)
-अणु
-	काष्ठा nfsd_net *nn = net_generic(SVC_NET(rqstp), nfsd_net_id);
-	पूर्णांक i;
+static __be32
+nfsd_init_request(struct svc_rqst *rqstp,
+		  const struct svc_program *progp,
+		  struct svc_process_info *ret)
+{
+	struct nfsd_net *nn = net_generic(SVC_NET(rqstp), nfsd_net_id);
+	int i;
 
-	अगर (likely(nfsd_vers(nn, rqstp->rq_vers, NFSD_TEST)))
-		वापस svc_generic_init_request(rqstp, progp, ret);
+	if (likely(nfsd_vers(nn, rqstp->rq_vers, NFSD_TEST)))
+		return svc_generic_init_request(rqstp, progp, ret);
 
 	ret->mismatch.lovers = NFSD_NRVERS;
-	क्रम (i = NFSD_MINVERS; i < NFSD_NRVERS; i++) अणु
-		अगर (nfsd_vers(nn, i, NFSD_TEST)) अणु
+	for (i = NFSD_MINVERS; i < NFSD_NRVERS; i++) {
+		if (nfsd_vers(nn, i, NFSD_TEST)) {
 			ret->mismatch.lovers = i;
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	अगर (ret->mismatch.lovers == NFSD_NRVERS)
-		वापस rpc_prog_unavail;
+			break;
+		}
+	}
+	if (ret->mismatch.lovers == NFSD_NRVERS)
+		return rpc_prog_unavail;
 	ret->mismatch.hivers = NFSD_MINVERS;
-	क्रम (i = NFSD_NRVERS - 1; i >= NFSD_MINVERS; i--) अणु
-		अगर (nfsd_vers(nn, i, NFSD_TEST)) अणु
+	for (i = NFSD_NRVERS - 1; i >= NFSD_MINVERS; i--) {
+		if (nfsd_vers(nn, i, NFSD_TEST)) {
 			ret->mismatch.hivers = i;
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	वापस rpc_prog_mismatch;
-पूर्ण
+			break;
+		}
+	}
+	return rpc_prog_mismatch;
+}
 
 /*
- * This is the NFS server kernel thपढ़ो
+ * This is the NFS server kernel thread
  */
-अटल पूर्णांक
-nfsd(व्योम *vrqstp)
-अणु
-	काष्ठा svc_rqst *rqstp = (काष्ठा svc_rqst *) vrqstp;
-	काष्ठा svc_xprt *perm_sock = list_entry(rqstp->rq_server->sv_permsocks.next, typeof(काष्ठा svc_xprt), xpt_list);
-	काष्ठा net *net = perm_sock->xpt_net;
-	काष्ठा nfsd_net *nn = net_generic(net, nfsd_net_id);
-	पूर्णांक err;
+static int
+nfsd(void *vrqstp)
+{
+	struct svc_rqst *rqstp = (struct svc_rqst *) vrqstp;
+	struct svc_xprt *perm_sock = list_entry(rqstp->rq_server->sv_permsocks.next, typeof(struct svc_xprt), xpt_list);
+	struct net *net = perm_sock->xpt_net;
+	struct nfsd_net *nn = net_generic(net, nfsd_net_id);
+	int err;
 
-	/* Lock module and set up kernel thपढ़ो */
+	/* Lock module and set up kernel thread */
 	mutex_lock(&nfsd_mutex);
 
-	/* At this poपूर्णांक, the thपढ़ो shares current->fs
+	/* At this point, the thread shares current->fs
 	 * with the init process. We need to create files with the
 	 * umask as defined by the client instead of init's umask. */
-	अगर (unshare_fs_काष्ठा() < 0) अणु
-		prपूर्णांकk("Unable to start nfsd thread: out of memory\n");
-		जाओ out;
-	पूर्ण
+	if (unshare_fs_struct() < 0) {
+		printk("Unable to start nfsd thread: out of memory\n");
+		goto out;
+	}
 
 	current->fs->umask = 0;
 
 	/*
-	 * thपढ़ो is spawned with all संकेतs set to संक_छोड़ो, re-enable
-	 * the ones that will bring करोwn the thपढ़ो
+	 * thread is spawned with all signals set to SIG_IGN, re-enable
+	 * the ones that will bring down the thread
 	 */
-	allow_संकेत(SIGKILL);
-	allow_संकेत(SIGHUP);
-	allow_संकेत(संक_विघ्न);
-	allow_संकेत(SIGQUIT);
+	allow_signal(SIGKILL);
+	allow_signal(SIGHUP);
+	allow_signal(SIGINT);
+	allow_signal(SIGQUIT);
 
 	nfsdstats.th_cnt++;
 	mutex_unlock(&nfsd_mutex);
 
-	set_मुक्तzable();
+	set_freezable();
 
 	/*
-	 * The मुख्य request loop
+	 * The main request loop
 	 */
-	क्रम (;;) अणु
-		/* Update sv_maxconn अगर it has changed */
+	for (;;) {
+		/* Update sv_maxconn if it has changed */
 		rqstp->rq_server->sv_maxconn = nn->max_connections;
 
 		/*
 		 * Find a socket with data available and call its
 		 * recvfrom routine.
 		 */
-		जबतक ((err = svc_recv(rqstp, 60*60*HZ)) == -EAGAIN)
+		while ((err = svc_recv(rqstp, 60*60*HZ)) == -EAGAIN)
 			;
-		अगर (err == -EINTR)
-			अवरोध;
+		if (err == -EINTR)
+			break;
 		validate_process_creds();
 		svc_process(rqstp);
 		validate_process_creds();
-	पूर्ण
+	}
 
-	/* Clear संकेतs beक्रमe calling svc_निकास_thपढ़ो() */
-	flush_संकेतs(current);
+	/* Clear signals before calling svc_exit_thread() */
+	flush_signals(current);
 
 	mutex_lock(&nfsd_mutex);
 	nfsdstats.th_cnt --;
 
 out:
-	rqstp->rq_server = शून्य;
+	rqstp->rq_server = NULL;
 
-	/* Release the thपढ़ो */
-	svc_निकास_thपढ़ो(rqstp);
+	/* Release the thread */
+	svc_exit_thread(rqstp);
 
 	nfsd_destroy(net);
 
 	/* Release module */
 	mutex_unlock(&nfsd_mutex);
-	module_put_and_निकास(0);
-	वापस 0;
-पूर्ण
+	module_put_and_exit(0);
+	return 0;
+}
 
 /**
  * nfsd_dispatch - Process an NFS or NFSACL Request
  * @rqstp: incoming request
- * @statp: poपूर्णांकer to location of accept_stat field in RPC Reply buffer
+ * @statp: pointer to location of accept_stat field in RPC Reply buffer
  *
- * This RPC dispatcher पूर्णांकegrates the NFS server's duplicate reply cache.
+ * This RPC dispatcher integrates the NFS server's duplicate reply cache.
  *
  * Return values:
- *  %0: Processing complete; करो not send a Reply
+ *  %0: Processing complete; do not send a Reply
  *  %1: Processing complete; send Reply in rqstp->rq_res
  */
-पूर्णांक nfsd_dispatch(काष्ठा svc_rqst *rqstp, __be32 *statp)
-अणु
-	स्थिर काष्ठा svc_procedure *proc = rqstp->rq_procinfo;
-	काष्ठा kvec *argv = &rqstp->rq_arg.head[0];
-	काष्ठा kvec *resv = &rqstp->rq_res.head[0];
+int nfsd_dispatch(struct svc_rqst *rqstp, __be32 *statp)
+{
+	const struct svc_procedure *proc = rqstp->rq_procinfo;
+	struct kvec *argv = &rqstp->rq_arg.head[0];
+	struct kvec *resv = &rqstp->rq_res.head[0];
 	__be32 *p;
 
 	/*
-	 * Give the xdr decoder a chance to change this अगर it wants
-	 * (necessary in the NFSv4.0 compound हाल)
+	 * Give the xdr decoder a chance to change this if it wants
+	 * (necessary in the NFSv4.0 compound case)
 	 */
 	rqstp->rq_cachetype = proc->pc_cachetype;
 
 	svcxdr_init_decode(rqstp);
-	अगर (!proc->pc_decode(rqstp, argv->iov_base))
-		जाओ out_decode_err;
+	if (!proc->pc_decode(rqstp, argv->iov_base))
+		goto out_decode_err;
 
-	चयन (nfsd_cache_lookup(rqstp)) अणु
-	हाल RC_DOIT:
-		अवरोध;
-	हाल RC_REPLY:
-		जाओ out_cached_reply;
-	हाल RC_DROPIT:
-		जाओ out_dropit;
-	पूर्ण
+	switch (nfsd_cache_lookup(rqstp)) {
+	case RC_DOIT:
+		break;
+	case RC_REPLY:
+		goto out_cached_reply;
+	case RC_DROPIT:
+		goto out_dropit;
+	}
 
 	/*
 	 * Need to grab the location to store the status, as
-	 * NFSv4 करोes some encoding जबतक processing
+	 * NFSv4 does some encoding while processing
 	 */
 	p = resv->iov_base + resv->iov_len;
 	svcxdr_init_encode(rqstp);
 
 	*statp = proc->pc_func(rqstp);
-	अगर (*statp == rpc_drop_reply || test_bit(RQ_DROPME, &rqstp->rq_flags))
-		जाओ out_update_drop;
+	if (*statp == rpc_drop_reply || test_bit(RQ_DROPME, &rqstp->rq_flags))
+		goto out_update_drop;
 
-	अगर (!proc->pc_encode(rqstp, p))
-		जाओ out_encode_err;
+	if (!proc->pc_encode(rqstp, p))
+		goto out_encode_err;
 
 	nfsd_cache_update(rqstp, rqstp->rq_cachetype, statp + 1);
 out_cached_reply:
-	वापस 1;
+	return 1;
 
 out_decode_err:
 	trace_nfsd_garbage_args_err(rqstp);
 	*statp = rpc_garbage_args;
-	वापस 1;
+	return 1;
 
 out_update_drop:
-	nfsd_cache_update(rqstp, RC_NOCACHE, शून्य);
+	nfsd_cache_update(rqstp, RC_NOCACHE, NULL);
 out_dropit:
-	वापस 0;
+	return 0;
 
 out_encode_err:
 	trace_nfsd_cant_encode_err(rqstp);
-	nfsd_cache_update(rqstp, RC_NOCACHE, शून्य);
-	*statp = rpc_प्रणाली_err;
-	वापस 1;
-पूर्ण
+	nfsd_cache_update(rqstp, RC_NOCACHE, NULL);
+	*statp = rpc_system_err;
+	return 1;
+}
 
 /**
- * nfssvc_decode_व्योमarg - Decode व्योम arguments
+ * nfssvc_decode_voidarg - Decode void arguments
  * @rqstp: Server RPC transaction context
  * @p: buffer containing arguments to decode
  *
@@ -1069,50 +1068,50 @@ out_encode_err:
  *   %0: Arguments were not valid
  *   %1: Decoding was successful
  */
-पूर्णांक nfssvc_decode_व्योमarg(काष्ठा svc_rqst *rqstp, __be32 *p)
-अणु
-	वापस 1;
-पूर्ण
+int nfssvc_decode_voidarg(struct svc_rqst *rqstp, __be32 *p)
+{
+	return 1;
+}
 
 /**
- * nfssvc_encode_व्योमres - Encode व्योम results
+ * nfssvc_encode_voidres - Encode void results
  * @rqstp: Server RPC transaction context
  * @p: buffer in which to encode results
  *
  * Return values:
- *   %0: Local error जबतक encoding
+ *   %0: Local error while encoding
  *   %1: Encoding was successful
  */
-पूर्णांक nfssvc_encode_व्योमres(काष्ठा svc_rqst *rqstp, __be32 *p)
-अणु
-	वापस 1;
-पूर्ण
+int nfssvc_encode_voidres(struct svc_rqst *rqstp, __be32 *p)
+{
+	return 1;
+}
 
-पूर्णांक nfsd_pool_stats_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	पूर्णांक ret;
-	काष्ठा nfsd_net *nn = net_generic(inode->i_sb->s_fs_info, nfsd_net_id);
+int nfsd_pool_stats_open(struct inode *inode, struct file *file)
+{
+	int ret;
+	struct nfsd_net *nn = net_generic(inode->i_sb->s_fs_info, nfsd_net_id);
 
 	mutex_lock(&nfsd_mutex);
-	अगर (nn->nfsd_serv == शून्य) अणु
+	if (nn->nfsd_serv == NULL) {
 		mutex_unlock(&nfsd_mutex);
-		वापस -ENODEV;
-	पूर्ण
-	/* bump up the psuकरो refcount जबतक traversing */
+		return -ENODEV;
+	}
+	/* bump up the psudo refcount while traversing */
 	svc_get(nn->nfsd_serv);
-	ret = svc_pool_stats_खोलो(nn->nfsd_serv, file);
+	ret = svc_pool_stats_open(nn->nfsd_serv, file);
 	mutex_unlock(&nfsd_mutex);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक nfsd_pool_stats_release(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	पूर्णांक ret = seq_release(inode, file);
-	काष्ठा net *net = inode->i_sb->s_fs_info;
+int nfsd_pool_stats_release(struct inode *inode, struct file *file)
+{
+	int ret = seq_release(inode, file);
+	struct net *net = inode->i_sb->s_fs_info;
 
 	mutex_lock(&nfsd_mutex);
 	/* this function really, really should have been called svc_put() */
 	nfsd_destroy(net);
 	mutex_unlock(&nfsd_mutex);
-	वापस ret;
-पूर्ण
+	return ret;
+}

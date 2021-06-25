@@ -1,118 +1,117 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 //
-// max77693_अक्षरger.c - Battery अक्षरger driver क्रम the Maxim 77693
+// max77693_charger.c - Battery charger driver for the Maxim 77693
 //
 // Copyright (C) 2014 Samsung Electronics
 // Krzysztof Kozlowski <krzk@kernel.org>
 
-#समावेश <linux/module.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/घातer_supply.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/mfd/max77693.h>
-#समावेश <linux/mfd/max77693-common.h>
-#समावेश <linux/mfd/max77693-निजी.h>
+#include <linux/module.h>
+#include <linux/platform_device.h>
+#include <linux/power_supply.h>
+#include <linux/regmap.h>
+#include <linux/mfd/max77693.h>
+#include <linux/mfd/max77693-common.h>
+#include <linux/mfd/max77693-private.h>
 
-#घोषणा MAX77693_CHARGER_NAME				"max77693-charger"
-अटल स्थिर अक्षर *max77693_अक्षरger_model		= "MAX77693";
-अटल स्थिर अक्षर *max77693_अक्षरger_manufacturer	= "Maxim Integrated";
+#define MAX77693_CHARGER_NAME				"max77693-charger"
+static const char *max77693_charger_model		= "MAX77693";
+static const char *max77693_charger_manufacturer	= "Maxim Integrated";
 
-काष्ठा max77693_अक्षरger अणु
-	काष्ठा device		*dev;
-	काष्ठा max77693_dev	*max77693;
-	काष्ठा घातer_supply	*अक्षरger;
+struct max77693_charger {
+	struct device		*dev;
+	struct max77693_dev	*max77693;
+	struct power_supply	*charger;
 
-	u32 स्थिरant_volt;
-	u32 min_प्रणाली_volt;
+	u32 constant_volt;
+	u32 min_system_volt;
 	u32 thermal_regulation_temp;
 	u32 batttery_overcurrent;
-	u32 अक्षरge_input_threshold_volt;
-पूर्ण;
+	u32 charge_input_threshold_volt;
+};
 
-अटल पूर्णांक max77693_get_अक्षरger_state(काष्ठा regmap *regmap, पूर्णांक *val)
-अणु
-	पूर्णांक ret;
-	अचिन्हित पूर्णांक data;
+static int max77693_get_charger_state(struct regmap *regmap, int *val)
+{
+	int ret;
+	unsigned int data;
 
-	ret = regmap_पढ़ो(regmap, MAX77693_CHG_REG_CHG_DETAILS_01, &data);
-	अगर (ret < 0)
-		वापस ret;
+	ret = regmap_read(regmap, MAX77693_CHG_REG_CHG_DETAILS_01, &data);
+	if (ret < 0)
+		return ret;
 
 	data &= CHG_DETAILS_01_CHG_MASK;
 	data >>= CHG_DETAILS_01_CHG_SHIFT;
 
-	चयन (data) अणु
-	हाल MAX77693_CHARGING_PREQUALIFICATION:
-	हाल MAX77693_CHARGING_FAST_CONST_CURRENT:
-	हाल MAX77693_CHARGING_FAST_CONST_VOLTAGE:
-	हाल MAX77693_CHARGING_TOP_OFF:
-	/* In high temp the अक्षरging current is reduced, but still अक्षरging */
-	हाल MAX77693_CHARGING_HIGH_TEMP:
+	switch (data) {
+	case MAX77693_CHARGING_PREQUALIFICATION:
+	case MAX77693_CHARGING_FAST_CONST_CURRENT:
+	case MAX77693_CHARGING_FAST_CONST_VOLTAGE:
+	case MAX77693_CHARGING_TOP_OFF:
+	/* In high temp the charging current is reduced, but still charging */
+	case MAX77693_CHARGING_HIGH_TEMP:
 		*val = POWER_SUPPLY_STATUS_CHARGING;
-		अवरोध;
-	हाल MAX77693_CHARGING_DONE:
+		break;
+	case MAX77693_CHARGING_DONE:
 		*val = POWER_SUPPLY_STATUS_FULL;
-		अवरोध;
-	हाल MAX77693_CHARGING_TIMER_EXPIRED:
-	हाल MAX77693_CHARGING_THERMISTOR_SUSPEND:
+		break;
+	case MAX77693_CHARGING_TIMER_EXPIRED:
+	case MAX77693_CHARGING_THERMISTOR_SUSPEND:
 		*val = POWER_SUPPLY_STATUS_NOT_CHARGING;
-		अवरोध;
-	हाल MAX77693_CHARGING_OFF:
-	हाल MAX77693_CHARGING_OVER_TEMP:
-	हाल MAX77693_CHARGING_WATCHDOG_EXPIRED:
+		break;
+	case MAX77693_CHARGING_OFF:
+	case MAX77693_CHARGING_OVER_TEMP:
+	case MAX77693_CHARGING_WATCHDOG_EXPIRED:
 		*val = POWER_SUPPLY_STATUS_DISCHARGING;
-		अवरोध;
-	हाल MAX77693_CHARGING_RESERVED:
-	शेष:
+		break;
+	case MAX77693_CHARGING_RESERVED:
+	default:
 		*val = POWER_SUPPLY_STATUS_UNKNOWN;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक max77693_get_अक्षरge_type(काष्ठा regmap *regmap, पूर्णांक *val)
-अणु
-	पूर्णांक ret;
-	अचिन्हित पूर्णांक data;
+static int max77693_get_charge_type(struct regmap *regmap, int *val)
+{
+	int ret;
+	unsigned int data;
 
-	ret = regmap_पढ़ो(regmap, MAX77693_CHG_REG_CHG_DETAILS_01, &data);
-	अगर (ret < 0)
-		वापस ret;
+	ret = regmap_read(regmap, MAX77693_CHG_REG_CHG_DETAILS_01, &data);
+	if (ret < 0)
+		return ret;
 
 	data &= CHG_DETAILS_01_CHG_MASK;
 	data >>= CHG_DETAILS_01_CHG_SHIFT;
 
-	चयन (data) अणु
-	हाल MAX77693_CHARGING_PREQUALIFICATION:
+	switch (data) {
+	case MAX77693_CHARGING_PREQUALIFICATION:
 	/*
 	 * Top-off: trickle or fast? In top-off the current varies between
-	 * 100 and 250 mA. It is higher than prequalअगरication current.
+	 * 100 and 250 mA. It is higher than prequalification current.
 	 */
-	हाल MAX77693_CHARGING_TOP_OFF:
+	case MAX77693_CHARGING_TOP_OFF:
 		*val = POWER_SUPPLY_CHARGE_TYPE_TRICKLE;
-		अवरोध;
-	हाल MAX77693_CHARGING_FAST_CONST_CURRENT:
-	हाल MAX77693_CHARGING_FAST_CONST_VOLTAGE:
-	/* In high temp the अक्षरging current is reduced, but still अक्षरging */
-	हाल MAX77693_CHARGING_HIGH_TEMP:
+		break;
+	case MAX77693_CHARGING_FAST_CONST_CURRENT:
+	case MAX77693_CHARGING_FAST_CONST_VOLTAGE:
+	/* In high temp the charging current is reduced, but still charging */
+	case MAX77693_CHARGING_HIGH_TEMP:
 		*val = POWER_SUPPLY_CHARGE_TYPE_FAST;
-		अवरोध;
-	हाल MAX77693_CHARGING_DONE:
-	हाल MAX77693_CHARGING_TIMER_EXPIRED:
-	हाल MAX77693_CHARGING_THERMISTOR_SUSPEND:
-	हाल MAX77693_CHARGING_OFF:
-	हाल MAX77693_CHARGING_OVER_TEMP:
-	हाल MAX77693_CHARGING_WATCHDOG_EXPIRED:
+		break;
+	case MAX77693_CHARGING_DONE:
+	case MAX77693_CHARGING_TIMER_EXPIRED:
+	case MAX77693_CHARGING_THERMISTOR_SUSPEND:
+	case MAX77693_CHARGING_OFF:
+	case MAX77693_CHARGING_OVER_TEMP:
+	case MAX77693_CHARGING_WATCHDOG_EXPIRED:
 		*val = POWER_SUPPLY_CHARGE_TYPE_NONE;
-		अवरोध;
-	हाल MAX77693_CHARGING_RESERVED:
-	शेष:
+		break;
+	case MAX77693_CHARGING_RESERVED:
+	default:
 		*val = POWER_SUPPLY_CHARGE_TYPE_UNKNOWN;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Supported health statuses:
@@ -123,82 +122,82 @@
  *  - POWER_SUPPLY_HEALTH_UNKNOWN
  *  - POWER_SUPPLY_HEALTH_UNSPEC_FAILURE
  */
-अटल पूर्णांक max77693_get_battery_health(काष्ठा regmap *regmap, पूर्णांक *val)
-अणु
-	पूर्णांक ret;
-	अचिन्हित पूर्णांक data;
+static int max77693_get_battery_health(struct regmap *regmap, int *val)
+{
+	int ret;
+	unsigned int data;
 
-	ret = regmap_पढ़ो(regmap, MAX77693_CHG_REG_CHG_DETAILS_01, &data);
-	अगर (ret < 0)
-		वापस ret;
+	ret = regmap_read(regmap, MAX77693_CHG_REG_CHG_DETAILS_01, &data);
+	if (ret < 0)
+		return ret;
 
 	data &= CHG_DETAILS_01_BAT_MASK;
 	data >>= CHG_DETAILS_01_BAT_SHIFT;
 
-	चयन (data) अणु
-	हाल MAX77693_BATTERY_NOBAT:
+	switch (data) {
+	case MAX77693_BATTERY_NOBAT:
 		*val = POWER_SUPPLY_HEALTH_DEAD;
-		अवरोध;
-	हाल MAX77693_BATTERY_PREQUALIFICATION:
-	हाल MAX77693_BATTERY_GOOD:
-	हाल MAX77693_BATTERY_LOWVOLTAGE:
+		break;
+	case MAX77693_BATTERY_PREQUALIFICATION:
+	case MAX77693_BATTERY_GOOD:
+	case MAX77693_BATTERY_LOWVOLTAGE:
 		*val = POWER_SUPPLY_HEALTH_GOOD;
-		अवरोध;
-	हाल MAX77693_BATTERY_TIMER_EXPIRED:
+		break;
+	case MAX77693_BATTERY_TIMER_EXPIRED:
 		/*
-		 * Took दीर्घer to अक्षरge than expected, अक्षरging suspended.
+		 * Took longer to charge than expected, charging suspended.
 		 * Damaged battery?
 		 */
 		*val = POWER_SUPPLY_HEALTH_SAFETY_TIMER_EXPIRE;
-		अवरोध;
-	हाल MAX77693_BATTERY_OVERVOLTAGE:
+		break;
+	case MAX77693_BATTERY_OVERVOLTAGE:
 		*val = POWER_SUPPLY_HEALTH_OVERVOLTAGE;
-		अवरोध;
-	हाल MAX77693_BATTERY_OVERCURRENT:
+		break;
+	case MAX77693_BATTERY_OVERCURRENT:
 		*val = POWER_SUPPLY_HEALTH_UNSPEC_FAILURE;
-		अवरोध;
-	हाल MAX77693_BATTERY_RESERVED:
-	शेष:
+		break;
+	case MAX77693_BATTERY_RESERVED:
+	default:
 		*val = POWER_SUPPLY_HEALTH_UNKNOWN;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक max77693_get_present(काष्ठा regmap *regmap, पूर्णांक *val)
-अणु
-	अचिन्हित पूर्णांक data;
-	पूर्णांक ret;
+static int max77693_get_present(struct regmap *regmap, int *val)
+{
+	unsigned int data;
+	int ret;
 
 	/*
-	 * Read CHG_INT_OK रेजिस्टर. High DETBAT bit here should be
+	 * Read CHG_INT_OK register. High DETBAT bit here should be
 	 * equal to value 0x0 in CHG_DETAILS_01/BAT field.
 	 */
-	ret = regmap_पढ़ो(regmap, MAX77693_CHG_REG_CHG_INT_OK, &data);
-	अगर (ret < 0)
-		वापस ret;
+	ret = regmap_read(regmap, MAX77693_CHG_REG_CHG_INT_OK, &data);
+	if (ret < 0)
+		return ret;
 
 	*val = (data & CHG_INT_OK_DETBAT_MASK) ? 0 : 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक max77693_get_online(काष्ठा regmap *regmap, पूर्णांक *val)
-अणु
-	अचिन्हित पूर्णांक data;
-	पूर्णांक ret;
+static int max77693_get_online(struct regmap *regmap, int *val)
+{
+	unsigned int data;
+	int ret;
 
-	ret = regmap_पढ़ो(regmap, MAX77693_CHG_REG_CHG_INT_OK, &data);
-	अगर (ret < 0)
-		वापस ret;
+	ret = regmap_read(regmap, MAX77693_CHG_REG_CHG_INT_OK, &data);
+	if (ret < 0)
+		return ret;
 
 	*val = (data & CHG_INT_OK_CHGIN_MASK) ? 1 : 0;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल क्रमागत घातer_supply_property max77693_अक्षरger_props[] = अणु
+static enum power_supply_property max77693_charger_props[] = {
 	POWER_SUPPLY_PROP_STATUS,
 	POWER_SUPPLY_PROP_CHARGE_TYPE,
 	POWER_SUPPLY_PROP_HEALTH,
@@ -206,104 +205,104 @@
 	POWER_SUPPLY_PROP_ONLINE,
 	POWER_SUPPLY_PROP_MODEL_NAME,
 	POWER_SUPPLY_PROP_MANUFACTURER,
-पूर्ण;
+};
 
-अटल पूर्णांक max77693_अक्षरger_get_property(काष्ठा घातer_supply *psy,
-			    क्रमागत घातer_supply_property psp,
-			    जोड़ घातer_supply_propval *val)
-अणु
-	काष्ठा max77693_अक्षरger *chg = घातer_supply_get_drvdata(psy);
-	काष्ठा regmap *regmap = chg->max77693->regmap;
-	पूर्णांक ret = 0;
+static int max77693_charger_get_property(struct power_supply *psy,
+			    enum power_supply_property psp,
+			    union power_supply_propval *val)
+{
+	struct max77693_charger *chg = power_supply_get_drvdata(psy);
+	struct regmap *regmap = chg->max77693->regmap;
+	int ret = 0;
 
-	चयन (psp) अणु
-	हाल POWER_SUPPLY_PROP_STATUS:
-		ret = max77693_get_अक्षरger_state(regmap, &val->पूर्णांकval);
-		अवरोध;
-	हाल POWER_SUPPLY_PROP_CHARGE_TYPE:
-		ret = max77693_get_अक्षरge_type(regmap, &val->पूर्णांकval);
-		अवरोध;
-	हाल POWER_SUPPLY_PROP_HEALTH:
-		ret = max77693_get_battery_health(regmap, &val->पूर्णांकval);
-		अवरोध;
-	हाल POWER_SUPPLY_PROP_PRESENT:
-		ret = max77693_get_present(regmap, &val->पूर्णांकval);
-		अवरोध;
-	हाल POWER_SUPPLY_PROP_ONLINE:
-		ret = max77693_get_online(regmap, &val->पूर्णांकval);
-		अवरोध;
-	हाल POWER_SUPPLY_PROP_MODEL_NAME:
-		val->strval = max77693_अक्षरger_model;
-		अवरोध;
-	हाल POWER_SUPPLY_PROP_MANUFACTURER:
-		val->strval = max77693_अक्षरger_manufacturer;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+	switch (psp) {
+	case POWER_SUPPLY_PROP_STATUS:
+		ret = max77693_get_charger_state(regmap, &val->intval);
+		break;
+	case POWER_SUPPLY_PROP_CHARGE_TYPE:
+		ret = max77693_get_charge_type(regmap, &val->intval);
+		break;
+	case POWER_SUPPLY_PROP_HEALTH:
+		ret = max77693_get_battery_health(regmap, &val->intval);
+		break;
+	case POWER_SUPPLY_PROP_PRESENT:
+		ret = max77693_get_present(regmap, &val->intval);
+		break;
+	case POWER_SUPPLY_PROP_ONLINE:
+		ret = max77693_get_online(regmap, &val->intval);
+		break;
+	case POWER_SUPPLY_PROP_MODEL_NAME:
+		val->strval = max77693_charger_model;
+		break;
+	case POWER_SUPPLY_PROP_MANUFACTURER:
+		val->strval = max77693_charger_manufacturer;
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा घातer_supply_desc max77693_अक्षरger_desc = अणु
+static const struct power_supply_desc max77693_charger_desc = {
 	.name		= MAX77693_CHARGER_NAME,
 	.type		= POWER_SUPPLY_TYPE_BATTERY,
-	.properties	= max77693_अक्षरger_props,
-	.num_properties	= ARRAY_SIZE(max77693_अक्षरger_props),
-	.get_property	= max77693_अक्षरger_get_property,
-पूर्ण;
+	.properties	= max77693_charger_props,
+	.num_properties	= ARRAY_SIZE(max77693_charger_props),
+	.get_property	= max77693_charger_get_property,
+};
 
-अटल sमाप_प्रकार device_attr_store(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार count,
-		पूर्णांक (*fn)(काष्ठा max77693_अक्षरger *, अचिन्हित दीर्घ))
-अणु
-	काष्ठा max77693_अक्षरger *chg = dev_get_drvdata(dev);
-	अचिन्हित दीर्घ val;
-	पूर्णांक ret;
+static ssize_t device_attr_store(struct device *dev,
+		struct device_attribute *attr, const char *buf, size_t count,
+		int (*fn)(struct max77693_charger *, unsigned long))
+{
+	struct max77693_charger *chg = dev_get_drvdata(dev);
+	unsigned long val;
+	int ret;
 
-	ret = kम_से_अदीर्घ(buf, 10, &val);
-	अगर (ret)
-		वापस ret;
+	ret = kstrtoul(buf, 10, &val);
+	if (ret)
+		return ret;
 
 	ret = fn(chg, val);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल sमाप_प्रकार fast_अक्षरge_समयr_show(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा max77693_अक्षरger *chg = dev_get_drvdata(dev);
-	अचिन्हित पूर्णांक data, val;
-	पूर्णांक ret;
+static ssize_t fast_charge_timer_show(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	struct max77693_charger *chg = dev_get_drvdata(dev);
+	unsigned int data, val;
+	int ret;
 
-	ret = regmap_पढ़ो(chg->max77693->regmap, MAX77693_CHG_REG_CHG_CNFG_01,
+	ret = regmap_read(chg->max77693->regmap, MAX77693_CHG_REG_CHG_CNFG_01,
 			&data);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	data &= CHG_CNFG_01_FCHGTIME_MASK;
 	data >>= CHG_CNFG_01_FCHGTIME_SHIFT;
-	चयन (data) अणु
-	हाल 0x1 ... 0x7:
+	switch (data) {
+	case 0x1 ... 0x7:
 		/* Starting from 4 hours, step by 2 hours */
 		val = 4 + (data - 1) * 2;
-		अवरोध;
-	हाल 0x0:
-	शेष:
+		break;
+	case 0x0:
+	default:
 		val = 0;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस scnम_लिखो(buf, PAGE_SIZE, "%u\n", val);
-पूर्ण
+	return scnprintf(buf, PAGE_SIZE, "%u\n", val);
+}
 
-अटल पूर्णांक max77693_set_fast_अक्षरge_समयr(काष्ठा max77693_अक्षरger *chg,
-		अचिन्हित दीर्घ hours)
-अणु
-	अचिन्हित पूर्णांक data;
+static int max77693_set_fast_charge_timer(struct max77693_charger *chg,
+		unsigned long hours)
+{
+	unsigned int data;
 
 	/*
 	 * 0x00 - disable
@@ -311,135 +310,135 @@
 	 * 0x02 - 6h
 	 * ...
 	 * 0x07 - 16h
-	 * Round करोwn odd values.
+	 * Round down odd values.
 	 */
-	चयन (hours) अणु
-	हाल 4 ... 16:
+	switch (hours) {
+	case 4 ... 16:
 		data = (hours - 4) / 2 + 1;
-		अवरोध;
-	हाल 0:
+		break;
+	case 0:
 		/* Disable */
 		data = 0;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 	data <<= CHG_CNFG_01_FCHGTIME_SHIFT;
 
-	वापस regmap_update_bits(chg->max77693->regmap,
+	return regmap_update_bits(chg->max77693->regmap,
 			MAX77693_CHG_REG_CHG_CNFG_01,
 			CHG_CNFG_01_FCHGTIME_MASK, data);
-पूर्ण
+}
 
-अटल sमाप_प्रकार fast_अक्षरge_समयr_store(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	वापस device_attr_store(dev, attr, buf, count,
-			max77693_set_fast_अक्षरge_समयr);
-पूर्ण
+static ssize_t fast_charge_timer_store(struct device *dev,
+		struct device_attribute *attr, const char *buf, size_t count)
+{
+	return device_attr_store(dev, attr, buf, count,
+			max77693_set_fast_charge_timer);
+}
 
-अटल sमाप_प्रकार top_off_threshold_current_show(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा max77693_अक्षरger *chg = dev_get_drvdata(dev);
-	अचिन्हित पूर्णांक data, val;
-	पूर्णांक ret;
+static ssize_t top_off_threshold_current_show(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	struct max77693_charger *chg = dev_get_drvdata(dev);
+	unsigned int data, val;
+	int ret;
 
-	ret = regmap_पढ़ो(chg->max77693->regmap, MAX77693_CHG_REG_CHG_CNFG_03,
+	ret = regmap_read(chg->max77693->regmap, MAX77693_CHG_REG_CHG_CNFG_03,
 			&data);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	data &= CHG_CNFG_03_TOITH_MASK;
 	data >>= CHG_CNFG_03_TOITH_SHIFT;
 
-	अगर (data <= 0x04)
+	if (data <= 0x04)
 		val = 100000 + data * 25000;
-	अन्यथा
+	else
 		val = data * 50000;
 
-	वापस scnम_लिखो(buf, PAGE_SIZE, "%u\n", val);
-पूर्ण
+	return scnprintf(buf, PAGE_SIZE, "%u\n", val);
+}
 
-अटल पूर्णांक max77693_set_top_off_threshold_current(काष्ठा max77693_अक्षरger *chg,
-		अचिन्हित दीर्घ uamp)
-अणु
-	अचिन्हित पूर्णांक data;
+static int max77693_set_top_off_threshold_current(struct max77693_charger *chg,
+		unsigned long uamp)
+{
+	unsigned int data;
 
-	अगर (uamp < 100000 || uamp > 350000)
-		वापस -EINVAL;
+	if (uamp < 100000 || uamp > 350000)
+		return -EINVAL;
 
-	अगर (uamp <= 200000)
+	if (uamp <= 200000)
 		data = (uamp - 100000) / 25000;
-	अन्यथा
+	else
 		/* (200000, 350000> */
 		data = uamp / 50000;
 
 	data <<= CHG_CNFG_03_TOITH_SHIFT;
 
-	वापस regmap_update_bits(chg->max77693->regmap,
+	return regmap_update_bits(chg->max77693->regmap,
 			MAX77693_CHG_REG_CHG_CNFG_03,
 			CHG_CNFG_03_TOITH_MASK, data);
-पूर्ण
+}
 
-अटल sमाप_प्रकार top_off_threshold_current_store(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	वापस device_attr_store(dev, attr, buf, count,
+static ssize_t top_off_threshold_current_store(struct device *dev,
+		struct device_attribute *attr, const char *buf, size_t count)
+{
+	return device_attr_store(dev, attr, buf, count,
 			max77693_set_top_off_threshold_current);
-पूर्ण
+}
 
-अटल sमाप_प्रकार top_off_समयr_show(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा max77693_अक्षरger *chg = dev_get_drvdata(dev);
-	अचिन्हित पूर्णांक data, val;
-	पूर्णांक ret;
+static ssize_t top_off_timer_show(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	struct max77693_charger *chg = dev_get_drvdata(dev);
+	unsigned int data, val;
+	int ret;
 
-	ret = regmap_पढ़ो(chg->max77693->regmap, MAX77693_CHG_REG_CHG_CNFG_03,
+	ret = regmap_read(chg->max77693->regmap, MAX77693_CHG_REG_CHG_CNFG_03,
 			&data);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	data &= CHG_CNFG_03_TOTIME_MASK;
 	data >>= CHG_CNFG_03_TOTIME_SHIFT;
 
 	val = data * 10;
 
-	वापस scnम_लिखो(buf, PAGE_SIZE, "%u\n", val);
-पूर्ण
+	return scnprintf(buf, PAGE_SIZE, "%u\n", val);
+}
 
-अटल पूर्णांक max77693_set_top_off_समयr(काष्ठा max77693_अक्षरger *chg,
-		अचिन्हित दीर्घ minutes)
-अणु
-	अचिन्हित पूर्णांक data;
+static int max77693_set_top_off_timer(struct max77693_charger *chg,
+		unsigned long minutes)
+{
+	unsigned int data;
 
-	अगर (minutes > 70)
-		वापस -EINVAL;
+	if (minutes > 70)
+		return -EINVAL;
 
 	data = minutes / 10;
 	data <<= CHG_CNFG_03_TOTIME_SHIFT;
 
-	वापस regmap_update_bits(chg->max77693->regmap,
+	return regmap_update_bits(chg->max77693->regmap,
 			MAX77693_CHG_REG_CHG_CNFG_03,
 			CHG_CNFG_03_TOTIME_MASK, data);
-पूर्ण
+}
 
-अटल sमाप_प्रकार top_off_समयr_store(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	वापस device_attr_store(dev, attr, buf, count,
-			max77693_set_top_off_समयr);
-पूर्ण
+static ssize_t top_off_timer_store(struct device *dev,
+		struct device_attribute *attr, const char *buf, size_t count)
+{
+	return device_attr_store(dev, attr, buf, count,
+			max77693_set_top_off_timer);
+}
 
-अटल DEVICE_ATTR_RW(fast_अक्षरge_समयr);
-अटल DEVICE_ATTR_RW(top_off_threshold_current);
-अटल DEVICE_ATTR_RW(top_off_समयr);
+static DEVICE_ATTR_RW(fast_charge_timer);
+static DEVICE_ATTR_RW(top_off_threshold_current);
+static DEVICE_ATTR_RW(top_off_timer);
 
-अटल पूर्णांक max77693_set_स्थिरant_volt(काष्ठा max77693_अक्षरger *chg,
-		अचिन्हित पूर्णांक uvolt)
-अणु
-	अचिन्हित पूर्णांक data;
+static int max77693_set_constant_volt(struct max77693_charger *chg,
+		unsigned int uvolt)
+{
+	unsigned int data;
 
 	/*
 	 * 0x00 - 3.650 V
@@ -451,36 +450,36 @@
 	 * 0x1e - 4.375 V
 	 * 0x1f - 4.400 V
 	 */
-	अगर (uvolt >= 3650000 && uvolt < 4340000)
+	if (uvolt >= 3650000 && uvolt < 4340000)
 		data = (uvolt - 3650000) / 25000;
-	अन्यथा अगर (uvolt >= 4340000 && uvolt < 4350000)
+	else if (uvolt >= 4340000 && uvolt < 4350000)
 		data = 0x1c;
-	अन्यथा अगर (uvolt >= 4350000 && uvolt <= 4400000)
+	else if (uvolt >= 4350000 && uvolt <= 4400000)
 		data = 0x1d + (uvolt - 4350000) / 25000;
-	अन्यथा अणु
+	else {
 		dev_err(chg->dev, "Wrong value for charging constant voltage\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	data <<= CHG_CNFG_04_CHGCVPRM_SHIFT;
 
 	dev_dbg(chg->dev, "Charging constant voltage: %u (0x%x)\n", uvolt,
 			data);
 
-	वापस regmap_update_bits(chg->max77693->regmap,
+	return regmap_update_bits(chg->max77693->regmap,
 			MAX77693_CHG_REG_CHG_CNFG_04,
 			CHG_CNFG_04_CHGCVPRM_MASK, data);
-पूर्ण
+}
 
-अटल पूर्णांक max77693_set_min_प्रणाली_volt(काष्ठा max77693_अक्षरger *chg,
-		अचिन्हित पूर्णांक uvolt)
-अणु
-	अचिन्हित पूर्णांक data;
+static int max77693_set_min_system_volt(struct max77693_charger *chg,
+		unsigned int uvolt)
+{
+	unsigned int data;
 
-	अगर (uvolt < 3000000 || uvolt > 3700000) अणु
+	if (uvolt < 3000000 || uvolt > 3700000) {
 		dev_err(chg->dev, "Wrong value for minimum system regulation voltage\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	data = (uvolt - 3000000) / 100000;
 
@@ -489,274 +488,274 @@
 	dev_dbg(chg->dev, "Minimum system regulation voltage: %u (0x%x)\n",
 			uvolt, data);
 
-	वापस regmap_update_bits(chg->max77693->regmap,
+	return regmap_update_bits(chg->max77693->regmap,
 			MAX77693_CHG_REG_CHG_CNFG_04,
 			CHG_CNFG_04_MINVSYS_MASK, data);
-पूर्ण
+}
 
-अटल पूर्णांक max77693_set_thermal_regulation_temp(काष्ठा max77693_अक्षरger *chg,
-		अचिन्हित पूर्णांक cels)
-अणु
-	अचिन्हित पूर्णांक data;
+static int max77693_set_thermal_regulation_temp(struct max77693_charger *chg,
+		unsigned int cels)
+{
+	unsigned int data;
 
-	चयन (cels) अणु
-	हाल 70:
-	हाल 85:
-	हाल 100:
-	हाल 115:
+	switch (cels) {
+	case 70:
+	case 85:
+	case 100:
+	case 115:
 		data = (cels - 70) / 15;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		dev_err(chg->dev, "Wrong value for thermal regulation loop temperature\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	data <<= CHG_CNFG_07_REGTEMP_SHIFT;
 
 	dev_dbg(chg->dev, "Thermal regulation loop temperature: %u (0x%x)\n",
 			cels, data);
 
-	वापस regmap_update_bits(chg->max77693->regmap,
+	return regmap_update_bits(chg->max77693->regmap,
 			MAX77693_CHG_REG_CHG_CNFG_07,
 			CHG_CNFG_07_REGTEMP_MASK, data);
-पूर्ण
+}
 
-अटल पूर्णांक max77693_set_batttery_overcurrent(काष्ठा max77693_अक्षरger *chg,
-		अचिन्हित पूर्णांक uamp)
-अणु
-	अचिन्हित पूर्णांक data;
+static int max77693_set_batttery_overcurrent(struct max77693_charger *chg,
+		unsigned int uamp)
+{
+	unsigned int data;
 
-	अगर (uamp && (uamp < 2000000 || uamp > 3500000)) अणु
+	if (uamp && (uamp < 2000000 || uamp > 3500000)) {
 		dev_err(chg->dev, "Wrong value for battery overcurrent\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (uamp)
+	if (uamp)
 		data = ((uamp - 2000000) / 250000) + 1;
-	अन्यथा
+	else
 		data = 0; /* disable */
 
 	data <<= CHG_CNFG_12_B2SOVRC_SHIFT;
 
 	dev_dbg(chg->dev, "Battery overcurrent: %u (0x%x)\n", uamp, data);
 
-	वापस regmap_update_bits(chg->max77693->regmap,
+	return regmap_update_bits(chg->max77693->regmap,
 			MAX77693_CHG_REG_CHG_CNFG_12,
 			CHG_CNFG_12_B2SOVRC_MASK, data);
-पूर्ण
+}
 
-अटल पूर्णांक max77693_set_अक्षरge_input_threshold_volt(काष्ठा max77693_अक्षरger *chg,
-		अचिन्हित पूर्णांक uvolt)
-अणु
-	अचिन्हित पूर्णांक data;
+static int max77693_set_charge_input_threshold_volt(struct max77693_charger *chg,
+		unsigned int uvolt)
+{
+	unsigned int data;
 
-	चयन (uvolt) अणु
-	हाल 4300000:
+	switch (uvolt) {
+	case 4300000:
 		data = 0x0;
-		अवरोध;
-	हाल 4700000:
-	हाल 4800000:
-	हाल 4900000:
+		break;
+	case 4700000:
+	case 4800000:
+	case 4900000:
 		data = (uvolt - 4700000) / 100000;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		dev_err(chg->dev, "Wrong value for charge input voltage regulation threshold\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	data <<= CHG_CNFG_12_VCHGINREG_SHIFT;
 
 	dev_dbg(chg->dev, "Charge input voltage regulation threshold: %u (0x%x)\n",
 			uvolt, data);
 
-	वापस regmap_update_bits(chg->max77693->regmap,
+	return regmap_update_bits(chg->max77693->regmap,
 			MAX77693_CHG_REG_CHG_CNFG_12,
 			CHG_CNFG_12_VCHGINREG_MASK, data);
-पूर्ण
+}
 
 /*
- * Sets अक्षरger रेजिस्टरs to proper and safe शेष values.
+ * Sets charger registers to proper and safe default values.
  */
-अटल पूर्णांक max77693_reg_init(काष्ठा max77693_अक्षरger *chg)
-अणु
-	पूर्णांक ret;
-	अचिन्हित पूर्णांक data;
+static int max77693_reg_init(struct max77693_charger *chg)
+{
+	int ret;
+	unsigned int data;
 
-	/* Unlock अक्षरger रेजिस्टर protection */
+	/* Unlock charger register protection */
 	data = (0x3 << CHG_CNFG_06_CHGPROT_SHIFT);
 	ret = regmap_update_bits(chg->max77693->regmap,
 				MAX77693_CHG_REG_CHG_CNFG_06,
 				CHG_CNFG_06_CHGPROT_MASK, data);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(chg->dev, "Error unlocking registers: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = max77693_set_fast_अक्षरge_समयr(chg, DEFAULT_FAST_CHARGE_TIMER);
-	अगर (ret)
-		वापस ret;
+	ret = max77693_set_fast_charge_timer(chg, DEFAULT_FAST_CHARGE_TIMER);
+	if (ret)
+		return ret;
 
 	ret = max77693_set_top_off_threshold_current(chg,
 			DEFAULT_TOP_OFF_THRESHOLD_CURRENT);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	ret = max77693_set_top_off_समयr(chg, DEFAULT_TOP_OFF_TIMER);
-	अगर (ret)
-		वापस ret;
+	ret = max77693_set_top_off_timer(chg, DEFAULT_TOP_OFF_TIMER);
+	if (ret)
+		return ret;
 
-	ret = max77693_set_स्थिरant_volt(chg, chg->स्थिरant_volt);
-	अगर (ret)
-		वापस ret;
+	ret = max77693_set_constant_volt(chg, chg->constant_volt);
+	if (ret)
+		return ret;
 
-	ret = max77693_set_min_प्रणाली_volt(chg, chg->min_प्रणाली_volt);
-	अगर (ret)
-		वापस ret;
+	ret = max77693_set_min_system_volt(chg, chg->min_system_volt);
+	if (ret)
+		return ret;
 
 	ret = max77693_set_thermal_regulation_temp(chg,
 			chg->thermal_regulation_temp);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = max77693_set_batttery_overcurrent(chg, chg->batttery_overcurrent);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस max77693_set_अक्षरge_input_threshold_volt(chg,
-			chg->अक्षरge_input_threshold_volt);
-पूर्ण
+	return max77693_set_charge_input_threshold_volt(chg,
+			chg->charge_input_threshold_volt);
+}
 
-#अगर_घोषित CONFIG_OF
-अटल पूर्णांक max77693_dt_init(काष्ठा device *dev, काष्ठा max77693_अक्षरger *chg)
-अणु
-	काष्ठा device_node *np = dev->of_node;
+#ifdef CONFIG_OF
+static int max77693_dt_init(struct device *dev, struct max77693_charger *chg)
+{
+	struct device_node *np = dev->of_node;
 
-	अगर (!np) अणु
+	if (!np) {
 		dev_err(dev, "no charger OF node\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (of_property_पढ़ो_u32(np, "maxim,constant-microvolt",
-			&chg->स्थिरant_volt))
-		chg->स्थिरant_volt = DEFAULT_CONSTANT_VOLT;
+	if (of_property_read_u32(np, "maxim,constant-microvolt",
+			&chg->constant_volt))
+		chg->constant_volt = DEFAULT_CONSTANT_VOLT;
 
-	अगर (of_property_पढ़ो_u32(np, "maxim,min-system-microvolt",
-			&chg->min_प्रणाली_volt))
-		chg->min_प्रणाली_volt = DEFAULT_MIN_SYSTEM_VOLT;
+	if (of_property_read_u32(np, "maxim,min-system-microvolt",
+			&chg->min_system_volt))
+		chg->min_system_volt = DEFAULT_MIN_SYSTEM_VOLT;
 
-	अगर (of_property_पढ़ो_u32(np, "maxim,thermal-regulation-celsius",
+	if (of_property_read_u32(np, "maxim,thermal-regulation-celsius",
 			&chg->thermal_regulation_temp))
 		chg->thermal_regulation_temp = DEFAULT_THERMAL_REGULATION_TEMP;
 
-	अगर (of_property_पढ़ो_u32(np, "maxim,battery-overcurrent-microamp",
+	if (of_property_read_u32(np, "maxim,battery-overcurrent-microamp",
 			&chg->batttery_overcurrent))
 		chg->batttery_overcurrent = DEFAULT_BATTERY_OVERCURRENT;
 
-	अगर (of_property_पढ़ो_u32(np, "maxim,charge-input-threshold-microvolt",
-			&chg->अक्षरge_input_threshold_volt))
-		chg->अक्षरge_input_threshold_volt =
+	if (of_property_read_u32(np, "maxim,charge-input-threshold-microvolt",
+			&chg->charge_input_threshold_volt))
+		chg->charge_input_threshold_volt =
 			DEFAULT_CHARGER_INPUT_THRESHOLD_VOLT;
 
-	वापस 0;
-पूर्ण
-#अन्यथा /* CONFIG_OF */
-अटल पूर्णांक max77693_dt_init(काष्ठा device *dev, काष्ठा max77693_अक्षरger *chg)
-अणु
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_OF */
+	return 0;
+}
+#else /* CONFIG_OF */
+static int max77693_dt_init(struct device *dev, struct max77693_charger *chg)
+{
+	return 0;
+}
+#endif /* CONFIG_OF */
 
-अटल पूर्णांक max77693_अक्षरger_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा max77693_अक्षरger *chg;
-	काष्ठा घातer_supply_config psy_cfg = अणुपूर्ण;
-	काष्ठा max77693_dev *max77693 = dev_get_drvdata(pdev->dev.parent);
-	पूर्णांक ret;
+static int max77693_charger_probe(struct platform_device *pdev)
+{
+	struct max77693_charger *chg;
+	struct power_supply_config psy_cfg = {};
+	struct max77693_dev *max77693 = dev_get_drvdata(pdev->dev.parent);
+	int ret;
 
-	chg = devm_kzalloc(&pdev->dev, माप(*chg), GFP_KERNEL);
-	अगर (!chg)
-		वापस -ENOMEM;
+	chg = devm_kzalloc(&pdev->dev, sizeof(*chg), GFP_KERNEL);
+	if (!chg)
+		return -ENOMEM;
 
-	platक्रमm_set_drvdata(pdev, chg);
+	platform_set_drvdata(pdev, chg);
 	chg->dev = &pdev->dev;
 	chg->max77693 = max77693;
 
 	ret = max77693_dt_init(&pdev->dev, chg);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = max77693_reg_init(chg);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	psy_cfg.drv_data = chg;
 
-	ret = device_create_file(&pdev->dev, &dev_attr_fast_अक्षरge_समयr);
-	अगर (ret) अणु
+	ret = device_create_file(&pdev->dev, &dev_attr_fast_charge_timer);
+	if (ret) {
 		dev_err(&pdev->dev, "failed: create fast charge timer sysfs entry\n");
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	ret = device_create_file(&pdev->dev,
 			&dev_attr_top_off_threshold_current);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&pdev->dev, "failed: create top off current sysfs entry\n");
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	ret = device_create_file(&pdev->dev, &dev_attr_top_off_समयr);
-	अगर (ret) अणु
+	ret = device_create_file(&pdev->dev, &dev_attr_top_off_timer);
+	if (ret) {
 		dev_err(&pdev->dev, "failed: create top off timer sysfs entry\n");
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	chg->अक्षरger = घातer_supply_रेजिस्टर(&pdev->dev,
-						&max77693_अक्षरger_desc,
+	chg->charger = power_supply_register(&pdev->dev,
+						&max77693_charger_desc,
 						&psy_cfg);
-	अगर (IS_ERR(chg->अक्षरger)) अणु
+	if (IS_ERR(chg->charger)) {
 		dev_err(&pdev->dev, "failed: power supply register\n");
-		ret = PTR_ERR(chg->अक्षरger);
-		जाओ err;
-	पूर्ण
+		ret = PTR_ERR(chg->charger);
+		goto err;
+	}
 
-	वापस 0;
+	return 0;
 
 err:
-	device_हटाओ_file(&pdev->dev, &dev_attr_top_off_समयr);
-	device_हटाओ_file(&pdev->dev, &dev_attr_top_off_threshold_current);
-	device_हटाओ_file(&pdev->dev, &dev_attr_fast_अक्षरge_समयr);
+	device_remove_file(&pdev->dev, &dev_attr_top_off_timer);
+	device_remove_file(&pdev->dev, &dev_attr_top_off_threshold_current);
+	device_remove_file(&pdev->dev, &dev_attr_fast_charge_timer);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक max77693_अक्षरger_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा max77693_अक्षरger *chg = platक्रमm_get_drvdata(pdev);
+static int max77693_charger_remove(struct platform_device *pdev)
+{
+	struct max77693_charger *chg = platform_get_drvdata(pdev);
 
-	device_हटाओ_file(&pdev->dev, &dev_attr_top_off_समयr);
-	device_हटाओ_file(&pdev->dev, &dev_attr_top_off_threshold_current);
-	device_हटाओ_file(&pdev->dev, &dev_attr_fast_अक्षरge_समयr);
+	device_remove_file(&pdev->dev, &dev_attr_top_off_timer);
+	device_remove_file(&pdev->dev, &dev_attr_top_off_threshold_current);
+	device_remove_file(&pdev->dev, &dev_attr_fast_charge_timer);
 
-	घातer_supply_unरेजिस्टर(chg->अक्षरger);
+	power_supply_unregister(chg->charger);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा platक्रमm_device_id max77693_अक्षरger_id[] = अणु
-	अणु "max77693-charger", 0, पूर्ण,
-	अणु पूर्ण
-पूर्ण;
-MODULE_DEVICE_TABLE(platक्रमm, max77693_अक्षरger_id);
+static const struct platform_device_id max77693_charger_id[] = {
+	{ "max77693-charger", 0, },
+	{ }
+};
+MODULE_DEVICE_TABLE(platform, max77693_charger_id);
 
-अटल काष्ठा platक्रमm_driver max77693_अक्षरger_driver = अणु
-	.driver = अणु
+static struct platform_driver max77693_charger_driver = {
+	.driver = {
 		.name	= "max77693-charger",
-	पूर्ण,
-	.probe		= max77693_अक्षरger_probe,
-	.हटाओ		= max77693_अक्षरger_हटाओ,
-	.id_table	= max77693_अक्षरger_id,
-पूर्ण;
-module_platक्रमm_driver(max77693_अक्षरger_driver);
+	},
+	.probe		= max77693_charger_probe,
+	.remove		= max77693_charger_remove,
+	.id_table	= max77693_charger_id,
+};
+module_platform_driver(max77693_charger_driver);
 
 MODULE_AUTHOR("Krzysztof Kozlowski <krzk@kernel.org>");
 MODULE_DESCRIPTION("Maxim 77693 charger driver");

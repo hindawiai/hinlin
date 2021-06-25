@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Faraday FTGMAC100 Gigabit Ethernet
  *
@@ -7,95 +6,95 @@
  * Po-Yu Chuang <ratbert@faraday-tech.com>
  */
 
-#घोषणा pr_fmt(fmt)	KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt)	KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/clk.h>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/etherdevice.h>
-#समावेश <linux/ethtool.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/module.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_mdपन.स>
-#समावेश <linux/phy.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/property.h>
-#समावेश <linux/crc32.h>
-#समावेश <linux/अगर_vlan.h>
-#समावेश <linux/of_net.h>
-#समावेश <net/ip.h>
-#समावेश <net/ncsi.h>
+#include <linux/clk.h>
+#include <linux/dma-mapping.h>
+#include <linux/etherdevice.h>
+#include <linux/ethtool.h>
+#include <linux/interrupt.h>
+#include <linux/io.h>
+#include <linux/module.h>
+#include <linux/netdevice.h>
+#include <linux/of.h>
+#include <linux/of_mdio.h>
+#include <linux/phy.h>
+#include <linux/platform_device.h>
+#include <linux/property.h>
+#include <linux/crc32.h>
+#include <linux/if_vlan.h>
+#include <linux/of_net.h>
+#include <net/ip.h>
+#include <net/ncsi.h>
 
-#समावेश "ftgmac100.h"
+#include "ftgmac100.h"
 
-#घोषणा DRV_NAME	"ftgmac100"
+#define DRV_NAME	"ftgmac100"
 
 /* Arbitrary values, I am not sure the HW has limits */
-#घोषणा MAX_RX_QUEUE_ENTRIES	1024
-#घोषणा MAX_TX_QUEUE_ENTRIES	1024
-#घोषणा MIN_RX_QUEUE_ENTRIES	32
-#घोषणा MIN_TX_QUEUE_ENTRIES	32
+#define MAX_RX_QUEUE_ENTRIES	1024
+#define MAX_TX_QUEUE_ENTRIES	1024
+#define MIN_RX_QUEUE_ENTRIES	32
+#define MIN_TX_QUEUE_ENTRIES	32
 
 /* Defaults */
-#घोषणा DEF_RX_QUEUE_ENTRIES	128
-#घोषणा DEF_TX_QUEUE_ENTRIES	128
+#define DEF_RX_QUEUE_ENTRIES	128
+#define DEF_TX_QUEUE_ENTRIES	128
 
-#घोषणा MAX_PKT_SIZE		1536
-#घोषणा RX_BUF_SIZE		MAX_PKT_SIZE	/* must be smaller than 0x3fff */
+#define MAX_PKT_SIZE		1536
+#define RX_BUF_SIZE		MAX_PKT_SIZE	/* must be smaller than 0x3fff */
 
-/* Min number of tx ring entries beक्रमe stopping queue */
-#घोषणा TX_THRESHOLD		(MAX_SKB_FRAGS + 1)
+/* Min number of tx ring entries before stopping queue */
+#define TX_THRESHOLD		(MAX_SKB_FRAGS + 1)
 
-#घोषणा FTGMAC_100MHZ		100000000
-#घोषणा FTGMAC_25MHZ		25000000
+#define FTGMAC_100MHZ		100000000
+#define FTGMAC_25MHZ		25000000
 
-काष्ठा ftgmac100 अणु
+struct ftgmac100 {
 	/* Registers */
-	काष्ठा resource *res;
-	व्योम __iomem *base;
+	struct resource *res;
+	void __iomem *base;
 
 	/* Rx ring */
-	अचिन्हित पूर्णांक rx_q_entries;
-	काष्ठा ftgmac100_rxdes *rxdes;
+	unsigned int rx_q_entries;
+	struct ftgmac100_rxdes *rxdes;
 	dma_addr_t rxdes_dma;
-	काष्ठा sk_buff **rx_skbs;
-	अचिन्हित पूर्णांक rx_poपूर्णांकer;
-	u32 rxdes0_eकरोrr_mask;
+	struct sk_buff **rx_skbs;
+	unsigned int rx_pointer;
+	u32 rxdes0_edorr_mask;
 
 	/* Tx ring */
-	अचिन्हित पूर्णांक tx_q_entries;
-	काष्ठा ftgmac100_txdes *txdes;
+	unsigned int tx_q_entries;
+	struct ftgmac100_txdes *txdes;
 	dma_addr_t txdes_dma;
-	काष्ठा sk_buff **tx_skbs;
-	अचिन्हित पूर्णांक tx_clean_poपूर्णांकer;
-	अचिन्हित पूर्णांक tx_poपूर्णांकer;
-	u32 txdes0_eकरोtr_mask;
+	struct sk_buff **tx_skbs;
+	unsigned int tx_clean_pointer;
+	unsigned int tx_pointer;
+	u32 txdes0_edotr_mask;
 
-	/* Used to संकेत the reset task of ring change request */
-	अचिन्हित पूर्णांक new_rx_q_entries;
-	अचिन्हित पूर्णांक new_tx_q_entries;
+	/* Used to signal the reset task of ring change request */
+	unsigned int new_rx_q_entries;
+	unsigned int new_tx_q_entries;
 
 	/* Scratch page to use when rx skb alloc fails */
-	व्योम *rx_scratch;
+	void *rx_scratch;
 	dma_addr_t rx_scratch_dma;
 
-	/* Component काष्ठाures */
-	काष्ठा net_device *netdev;
-	काष्ठा device *dev;
-	काष्ठा ncsi_dev *ndev;
-	काष्ठा napi_काष्ठा napi;
-	काष्ठा work_काष्ठा reset_task;
-	काष्ठा mii_bus *mii_bus;
-	काष्ठा clk *clk;
+	/* Component structures */
+	struct net_device *netdev;
+	struct device *dev;
+	struct ncsi_dev *ndev;
+	struct napi_struct napi;
+	struct work_struct reset_task;
+	struct mii_bus *mii_bus;
+	struct clk *clk;
 
-	/* AST2500/AST2600 RMII ref घड़ी gate */
-	काष्ठा clk *rclk;
+	/* AST2500/AST2600 RMII ref clock gate */
+	struct clk *rclk;
 
 	/* Link management */
-	पूर्णांक cur_speed;
-	पूर्णांक cur_duplex;
+	int cur_speed;
+	int cur_duplex;
 	bool use_ncsi;
 
 	/* Multicast filter settings */
@@ -103,98 +102,98 @@
 	u32 maht1;
 
 	/* Flow control settings */
-	bool tx_छोड़ो;
-	bool rx_छोड़ो;
-	bool aneg_छोड़ो;
+	bool tx_pause;
+	bool rx_pause;
+	bool aneg_pause;
 
 	/* Misc */
 	bool need_mac_restart;
 	bool is_aspeed;
-पूर्ण;
+};
 
-अटल पूर्णांक ftgmac100_reset_mac(काष्ठा ftgmac100 *priv, u32 maccr)
-अणु
-	काष्ठा net_device *netdev = priv->netdev;
-	पूर्णांक i;
+static int ftgmac100_reset_mac(struct ftgmac100 *priv, u32 maccr)
+{
+	struct net_device *netdev = priv->netdev;
+	int i;
 
-	/* NOTE: reset clears all रेजिस्टरs */
-	ioग_लिखो32(maccr, priv->base + FTGMAC100_OFFSET_MACCR);
-	ioग_लिखो32(maccr | FTGMAC100_MACCR_SW_RST,
+	/* NOTE: reset clears all registers */
+	iowrite32(maccr, priv->base + FTGMAC100_OFFSET_MACCR);
+	iowrite32(maccr | FTGMAC100_MACCR_SW_RST,
 		  priv->base + FTGMAC100_OFFSET_MACCR);
-	क्रम (i = 0; i < 200; i++) अणु
-		अचिन्हित पूर्णांक maccr;
+	for (i = 0; i < 200; i++) {
+		unsigned int maccr;
 
-		maccr = ioपढ़ो32(priv->base + FTGMAC100_OFFSET_MACCR);
-		अगर (!(maccr & FTGMAC100_MACCR_SW_RST))
-			वापस 0;
+		maccr = ioread32(priv->base + FTGMAC100_OFFSET_MACCR);
+		if (!(maccr & FTGMAC100_MACCR_SW_RST))
+			return 0;
 
 		udelay(1);
-	पूर्ण
+	}
 
 	netdev_err(netdev, "Hardware reset failed\n");
-	वापस -EIO;
-पूर्ण
+	return -EIO;
+}
 
-अटल पूर्णांक ftgmac100_reset_and_config_mac(काष्ठा ftgmac100 *priv)
-अणु
+static int ftgmac100_reset_and_config_mac(struct ftgmac100 *priv)
+{
 	u32 maccr = 0;
 
-	चयन (priv->cur_speed) अणु
-	हाल SPEED_10:
-	हाल 0: /* no link */
-		अवरोध;
+	switch (priv->cur_speed) {
+	case SPEED_10:
+	case 0: /* no link */
+		break;
 
-	हाल SPEED_100:
+	case SPEED_100:
 		maccr |= FTGMAC100_MACCR_FAST_MODE;
-		अवरोध;
+		break;
 
-	हाल SPEED_1000:
+	case SPEED_1000:
 		maccr |= FTGMAC100_MACCR_GIGA_MODE;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		netdev_err(priv->netdev, "Unknown speed %d !\n",
 			   priv->cur_speed);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	/* (Re)initialize the queue poपूर्णांकers */
-	priv->rx_poपूर्णांकer = 0;
-	priv->tx_clean_poपूर्णांकer = 0;
-	priv->tx_poपूर्णांकer = 0;
+	/* (Re)initialize the queue pointers */
+	priv->rx_pointer = 0;
+	priv->tx_clean_pointer = 0;
+	priv->tx_pointer = 0;
 
-	/* The करोc says reset twice with 10us पूर्णांकerval */
-	अगर (ftgmac100_reset_mac(priv, maccr))
-		वापस -EIO;
+	/* The doc says reset twice with 10us interval */
+	if (ftgmac100_reset_mac(priv, maccr))
+		return -EIO;
 	usleep_range(10, 1000);
-	वापस ftgmac100_reset_mac(priv, maccr);
-पूर्ण
+	return ftgmac100_reset_mac(priv, maccr);
+}
 
-अटल व्योम ftgmac100_ग_लिखो_mac_addr(काष्ठा ftgmac100 *priv, स्थिर u8 *mac)
-अणु
-	अचिन्हित पूर्णांक maddr = mac[0] << 8 | mac[1];
-	अचिन्हित पूर्णांक laddr = mac[2] << 24 | mac[3] << 16 | mac[4] << 8 | mac[5];
+static void ftgmac100_write_mac_addr(struct ftgmac100 *priv, const u8 *mac)
+{
+	unsigned int maddr = mac[0] << 8 | mac[1];
+	unsigned int laddr = mac[2] << 24 | mac[3] << 16 | mac[4] << 8 | mac[5];
 
-	ioग_लिखो32(maddr, priv->base + FTGMAC100_OFFSET_MAC_MADR);
-	ioग_लिखो32(laddr, priv->base + FTGMAC100_OFFSET_MAC_LADR);
-पूर्ण
+	iowrite32(maddr, priv->base + FTGMAC100_OFFSET_MAC_MADR);
+	iowrite32(laddr, priv->base + FTGMAC100_OFFSET_MAC_LADR);
+}
 
-अटल व्योम ftgmac100_initial_mac(काष्ठा ftgmac100 *priv)
-अणु
+static void ftgmac100_initial_mac(struct ftgmac100 *priv)
+{
 	u8 mac[ETH_ALEN];
-	अचिन्हित पूर्णांक m;
-	अचिन्हित पूर्णांक l;
-	व्योम *addr;
+	unsigned int m;
+	unsigned int l;
+	void *addr;
 
 	addr = device_get_mac_address(priv->dev, mac, ETH_ALEN);
-	अगर (addr) अणु
+	if (addr) {
 		ether_addr_copy(priv->netdev->dev_addr, mac);
 		dev_info(priv->dev, "Read MAC address %pM from device tree\n",
 			 mac);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	m = ioपढ़ो32(priv->base + FTGMAC100_OFFSET_MAC_MADR);
-	l = ioपढ़ो32(priv->base + FTGMAC100_OFFSET_MAC_LADR);
+	m = ioread32(priv->base + FTGMAC100_OFFSET_MAC_MADR);
+	l = ioread32(priv->base + FTGMAC100_OFFSET_MAC_LADR);
 
 	mac[0] = (m >> 8) & 0xff;
 	mac[1] = m & 0xff;
@@ -203,117 +202,117 @@
 	mac[4] = (l >> 8) & 0xff;
 	mac[5] = l & 0xff;
 
-	अगर (is_valid_ether_addr(mac)) अणु
+	if (is_valid_ether_addr(mac)) {
 		ether_addr_copy(priv->netdev->dev_addr, mac);
 		dev_info(priv->dev, "Read MAC address %pM from chip\n", mac);
-	पूर्ण अन्यथा अणु
-		eth_hw_addr_अक्रमom(priv->netdev);
+	} else {
+		eth_hw_addr_random(priv->netdev);
 		dev_info(priv->dev, "Generated random MAC address %pM\n",
 			 priv->netdev->dev_addr);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक ftgmac100_set_mac_addr(काष्ठा net_device *dev, व्योम *p)
-अणु
-	पूर्णांक ret;
+static int ftgmac100_set_mac_addr(struct net_device *dev, void *p)
+{
+	int ret;
 
 	ret = eth_prepare_mac_addr_change(dev, p);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	eth_commit_mac_addr_change(dev, p);
-	ftgmac100_ग_लिखो_mac_addr(netdev_priv(dev), dev->dev_addr);
+	ftgmac100_write_mac_addr(netdev_priv(dev), dev->dev_addr);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ftgmac100_config_छोड़ो(काष्ठा ftgmac100 *priv)
-अणु
+static void ftgmac100_config_pause(struct ftgmac100 *priv)
+{
 	u32 fcr = FTGMAC100_FCR_PAUSE_TIME(16);
 
-	/* Throttle tx queue when receiving छोड़ो frames */
-	अगर (priv->rx_छोड़ो)
+	/* Throttle tx queue when receiving pause frames */
+	if (priv->rx_pause)
 		fcr |= FTGMAC100_FCR_FC_EN;
 
-	/* Enables sending छोड़ो frames when the RX queue is past a
+	/* Enables sending pause frames when the RX queue is past a
 	 * certain threshold.
 	 */
-	अगर (priv->tx_छोड़ो)
+	if (priv->tx_pause)
 		fcr |= FTGMAC100_FCR_FCTHR_EN;
 
-	ioग_लिखो32(fcr, priv->base + FTGMAC100_OFFSET_FCR);
-पूर्ण
+	iowrite32(fcr, priv->base + FTGMAC100_OFFSET_FCR);
+}
 
-अटल व्योम ftgmac100_init_hw(काष्ठा ftgmac100 *priv)
-अणु
-	u32 reg, rfअगरo_sz, tfअगरo_sz;
+static void ftgmac100_init_hw(struct ftgmac100 *priv)
+{
+	u32 reg, rfifo_sz, tfifo_sz;
 
-	/* Clear stale पूर्णांकerrupts */
-	reg = ioपढ़ो32(priv->base + FTGMAC100_OFFSET_ISR);
-	ioग_लिखो32(reg, priv->base + FTGMAC100_OFFSET_ISR);
+	/* Clear stale interrupts */
+	reg = ioread32(priv->base + FTGMAC100_OFFSET_ISR);
+	iowrite32(reg, priv->base + FTGMAC100_OFFSET_ISR);
 
 	/* Setup RX ring buffer base */
-	ioग_लिखो32(priv->rxdes_dma, priv->base + FTGMAC100_OFFSET_RXR_BADR);
+	iowrite32(priv->rxdes_dma, priv->base + FTGMAC100_OFFSET_RXR_BADR);
 
 	/* Setup TX ring buffer base */
-	ioग_लिखो32(priv->txdes_dma, priv->base + FTGMAC100_OFFSET_NPTXR_BADR);
+	iowrite32(priv->txdes_dma, priv->base + FTGMAC100_OFFSET_NPTXR_BADR);
 
 	/* Configure RX buffer size */
-	ioग_लिखो32(FTGMAC100_RBSR_SIZE(RX_BUF_SIZE),
+	iowrite32(FTGMAC100_RBSR_SIZE(RX_BUF_SIZE),
 		  priv->base + FTGMAC100_OFFSET_RBSR);
 
-	/* Set RX descriptor स्वतःpoll */
-	ioग_लिखो32(FTGMAC100_APTC_RXPOLL_CNT(1),
+	/* Set RX descriptor autopoll */
+	iowrite32(FTGMAC100_APTC_RXPOLL_CNT(1),
 		  priv->base + FTGMAC100_OFFSET_APTC);
 
 	/* Write MAC address */
-	ftgmac100_ग_लिखो_mac_addr(priv, priv->netdev->dev_addr);
+	ftgmac100_write_mac_addr(priv, priv->netdev->dev_addr);
 
 	/* Write multicast filter */
-	ioग_लिखो32(priv->maht0, priv->base + FTGMAC100_OFFSET_MAHT0);
-	ioग_लिखो32(priv->maht1, priv->base + FTGMAC100_OFFSET_MAHT1);
+	iowrite32(priv->maht0, priv->base + FTGMAC100_OFFSET_MAHT0);
+	iowrite32(priv->maht1, priv->base + FTGMAC100_OFFSET_MAHT1);
 
 	/* Configure descriptor sizes and increase burst sizes according
 	 * to values in Aspeed SDK. The FIFO arbitration is enabled and
 	 * the thresholds set based on the recommended values in the
-	 * AST2400 specअगरication.
+	 * AST2400 specification.
 	 */
-	ioग_लिखो32(FTGMAC100_DBLAC_RXDES_SIZE(2) |   /* 2*8 bytes RX descs */
+	iowrite32(FTGMAC100_DBLAC_RXDES_SIZE(2) |   /* 2*8 bytes RX descs */
 		  FTGMAC100_DBLAC_TXDES_SIZE(2) |   /* 2*8 bytes TX descs */
 		  FTGMAC100_DBLAC_RXBURST_SIZE(3) | /* 512 bytes max RX bursts */
 		  FTGMAC100_DBLAC_TXBURST_SIZE(3) | /* 512 bytes max TX bursts */
-		  FTGMAC100_DBLAC_RX_THR_EN |       /* Enable fअगरo threshold arb */
+		  FTGMAC100_DBLAC_RX_THR_EN |       /* Enable fifo threshold arb */
 		  FTGMAC100_DBLAC_RXFIFO_HTHR(6) |  /* 6/8 of FIFO high threshold */
 		  FTGMAC100_DBLAC_RXFIFO_LTHR(2),   /* 2/8 of FIFO low threshold */
 		  priv->base + FTGMAC100_OFFSET_DBLAC);
 
-	/* Interrupt mitigation configured क्रम 1 पूर्णांकerrupt/packet. HW पूर्णांकerrupt
-	 * mitigation करोesn't seem to provide any benefit with NAPI so leave
+	/* Interrupt mitigation configured for 1 interrupt/packet. HW interrupt
+	 * mitigation doesn't seem to provide any benefit with NAPI so leave
 	 * it at that.
 	 */
-	ioग_लिखो32(FTGMAC100_ITC_RXINT_THR(1) |
+	iowrite32(FTGMAC100_ITC_RXINT_THR(1) |
 		  FTGMAC100_ITC_TXINT_THR(1),
 		  priv->base + FTGMAC100_OFFSET_ITC);
 
-	/* Configure FIFO sizes in the TPAFCR रेजिस्टर */
-	reg = ioपढ़ो32(priv->base + FTGMAC100_OFFSET_FEAR);
-	rfअगरo_sz = reg & 0x00000007;
-	tfअगरo_sz = (reg >> 3) & 0x00000007;
-	reg = ioपढ़ो32(priv->base + FTGMAC100_OFFSET_TPAFCR);
+	/* Configure FIFO sizes in the TPAFCR register */
+	reg = ioread32(priv->base + FTGMAC100_OFFSET_FEAR);
+	rfifo_sz = reg & 0x00000007;
+	tfifo_sz = (reg >> 3) & 0x00000007;
+	reg = ioread32(priv->base + FTGMAC100_OFFSET_TPAFCR);
 	reg &= ~0x3f000000;
-	reg |= (tfअगरo_sz << 27);
-	reg |= (rfअगरo_sz << 24);
-	ioग_लिखो32(reg, priv->base + FTGMAC100_OFFSET_TPAFCR);
-पूर्ण
+	reg |= (tfifo_sz << 27);
+	reg |= (rfifo_sz << 24);
+	iowrite32(reg, priv->base + FTGMAC100_OFFSET_TPAFCR);
+}
 
-अटल व्योम ftgmac100_start_hw(काष्ठा ftgmac100 *priv)
-अणु
-	u32 maccr = ioपढ़ो32(priv->base + FTGMAC100_OFFSET_MACCR);
+static void ftgmac100_start_hw(struct ftgmac100 *priv)
+{
+	u32 maccr = ioread32(priv->base + FTGMAC100_OFFSET_MACCR);
 
 	/* Keep the original GMAC and FAST bits */
 	maccr &= (FTGMAC100_MACCR_FAST_MODE | FTGMAC100_MACCR_GIGA_MODE);
 
-	/* Add all the मुख्य enable bits */
+	/* Add all the main enable bits */
 	maccr |= FTGMAC100_MACCR_TXDMA_EN	|
 		 FTGMAC100_MACCR_RXDMA_EN	|
 		 FTGMAC100_MACCR_TXMAC_EN	|
@@ -324,237 +323,237 @@
 		 FTGMAC100_MACCR_RX_BROADPKT;
 
 	/* Add other bits as needed */
-	अगर (priv->cur_duplex == DUPLEX_FULL)
+	if (priv->cur_duplex == DUPLEX_FULL)
 		maccr |= FTGMAC100_MACCR_FULLDUP;
-	अगर (priv->netdev->flags & IFF_PROMISC)
+	if (priv->netdev->flags & IFF_PROMISC)
 		maccr |= FTGMAC100_MACCR_RX_ALL;
-	अगर (priv->netdev->flags & IFF_ALLMULTI)
+	if (priv->netdev->flags & IFF_ALLMULTI)
 		maccr |= FTGMAC100_MACCR_RX_MULTIPKT;
-	अन्यथा अगर (netdev_mc_count(priv->netdev))
+	else if (netdev_mc_count(priv->netdev))
 		maccr |= FTGMAC100_MACCR_HT_MULTI_EN;
 
 	/* Vlan filtering enabled */
-	अगर (priv->netdev->features & NETIF_F_HW_VLAN_CTAG_RX)
+	if (priv->netdev->features & NETIF_F_HW_VLAN_CTAG_RX)
 		maccr |= FTGMAC100_MACCR_RM_VLAN;
 
 	/* Hit the HW */
-	ioग_लिखो32(maccr, priv->base + FTGMAC100_OFFSET_MACCR);
-पूर्ण
+	iowrite32(maccr, priv->base + FTGMAC100_OFFSET_MACCR);
+}
 
-अटल व्योम ftgmac100_stop_hw(काष्ठा ftgmac100 *priv)
-अणु
-	ioग_लिखो32(0, priv->base + FTGMAC100_OFFSET_MACCR);
-पूर्ण
+static void ftgmac100_stop_hw(struct ftgmac100 *priv)
+{
+	iowrite32(0, priv->base + FTGMAC100_OFFSET_MACCR);
+}
 
-अटल व्योम ftgmac100_calc_mc_hash(काष्ठा ftgmac100 *priv)
-अणु
-	काष्ठा netdev_hw_addr *ha;
+static void ftgmac100_calc_mc_hash(struct ftgmac100 *priv)
+{
+	struct netdev_hw_addr *ha;
 
 	priv->maht1 = 0;
 	priv->maht0 = 0;
-	netdev_क्रम_each_mc_addr(ha, priv->netdev) अणु
+	netdev_for_each_mc_addr(ha, priv->netdev) {
 		u32 crc_val = ether_crc_le(ETH_ALEN, ha->addr);
 
 		crc_val = (~(crc_val >> 2)) & 0x3f;
-		अगर (crc_val >= 32)
+		if (crc_val >= 32)
 			priv->maht1 |= 1ul << (crc_val - 32);
-		अन्यथा
+		else
 			priv->maht0 |= 1ul << (crc_val);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम ftgmac100_set_rx_mode(काष्ठा net_device *netdev)
-अणु
-	काष्ठा ftgmac100 *priv = netdev_priv(netdev);
+static void ftgmac100_set_rx_mode(struct net_device *netdev)
+{
+	struct ftgmac100 *priv = netdev_priv(netdev);
 
 	/* Setup the hash filter */
 	ftgmac100_calc_mc_hash(priv);
 
-	/* Interface करोwn ? that's all there is to करो */
-	अगर (!netअगर_running(netdev))
-		वापस;
+	/* Interface down ? that's all there is to do */
+	if (!netif_running(netdev))
+		return;
 
 	/* Update the HW */
-	ioग_लिखो32(priv->maht0, priv->base + FTGMAC100_OFFSET_MAHT0);
-	ioग_लिखो32(priv->maht1, priv->base + FTGMAC100_OFFSET_MAHT1);
+	iowrite32(priv->maht0, priv->base + FTGMAC100_OFFSET_MAHT0);
+	iowrite32(priv->maht1, priv->base + FTGMAC100_OFFSET_MAHT1);
 
 	/* Reconfigure MACCR */
 	ftgmac100_start_hw(priv);
-पूर्ण
+}
 
-अटल पूर्णांक ftgmac100_alloc_rx_buf(काष्ठा ftgmac100 *priv, अचिन्हित पूर्णांक entry,
-				  काष्ठा ftgmac100_rxdes *rxdes, gfp_t gfp)
-अणु
-	काष्ठा net_device *netdev = priv->netdev;
-	काष्ठा sk_buff *skb;
+static int ftgmac100_alloc_rx_buf(struct ftgmac100 *priv, unsigned int entry,
+				  struct ftgmac100_rxdes *rxdes, gfp_t gfp)
+{
+	struct net_device *netdev = priv->netdev;
+	struct sk_buff *skb;
 	dma_addr_t map;
-	पूर्णांक err = 0;
+	int err = 0;
 
 	skb = netdev_alloc_skb_ip_align(netdev, RX_BUF_SIZE);
-	अगर (unlikely(!skb)) अणु
-		अगर (net_ratelimit())
+	if (unlikely(!skb)) {
+		if (net_ratelimit())
 			netdev_warn(netdev, "failed to allocate rx skb\n");
 		err = -ENOMEM;
 		map = priv->rx_scratch_dma;
-	पूर्ण अन्यथा अणु
+	} else {
 		map = dma_map_single(priv->dev, skb->data, RX_BUF_SIZE,
 				     DMA_FROM_DEVICE);
-		अगर (unlikely(dma_mapping_error(priv->dev, map))) अणु
-			अगर (net_ratelimit())
+		if (unlikely(dma_mapping_error(priv->dev, map))) {
+			if (net_ratelimit())
 				netdev_err(netdev, "failed to map rx page\n");
-			dev_kमुक्त_skb_any(skb);
+			dev_kfree_skb_any(skb);
 			map = priv->rx_scratch_dma;
-			skb = शून्य;
+			skb = NULL;
 			err = -ENOMEM;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/* Store skb */
 	priv->rx_skbs[entry] = skb;
 
-	/* Store DMA address पूर्णांकo RX desc */
+	/* Store DMA address into RX desc */
 	rxdes->rxdes3 = cpu_to_le32(map);
 
 	/* Ensure the above is ordered vs clearing the OWN bit */
 	dma_wmb();
 
 	/* Clean status (which resets own bit) */
-	अगर (entry == (priv->rx_q_entries - 1))
-		rxdes->rxdes0 = cpu_to_le32(priv->rxdes0_eकरोrr_mask);
-	अन्यथा
+	if (entry == (priv->rx_q_entries - 1))
+		rxdes->rxdes0 = cpu_to_le32(priv->rxdes0_edorr_mask);
+	else
 		rxdes->rxdes0 = 0;
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल अचिन्हित पूर्णांक ftgmac100_next_rx_poपूर्णांकer(काष्ठा ftgmac100 *priv,
-					      अचिन्हित पूर्णांक poपूर्णांकer)
-अणु
-	वापस (poपूर्णांकer + 1) & (priv->rx_q_entries - 1);
-पूर्ण
+static unsigned int ftgmac100_next_rx_pointer(struct ftgmac100 *priv,
+					      unsigned int pointer)
+{
+	return (pointer + 1) & (priv->rx_q_entries - 1);
+}
 
-अटल व्योम ftgmac100_rx_packet_error(काष्ठा ftgmac100 *priv, u32 status)
-अणु
-	काष्ठा net_device *netdev = priv->netdev;
+static void ftgmac100_rx_packet_error(struct ftgmac100 *priv, u32 status)
+{
+	struct net_device *netdev = priv->netdev;
 
-	अगर (status & FTGMAC100_RXDES0_RX_ERR)
+	if (status & FTGMAC100_RXDES0_RX_ERR)
 		netdev->stats.rx_errors++;
 
-	अगर (status & FTGMAC100_RXDES0_CRC_ERR)
+	if (status & FTGMAC100_RXDES0_CRC_ERR)
 		netdev->stats.rx_crc_errors++;
 
-	अगर (status & (FTGMAC100_RXDES0_FTL |
+	if (status & (FTGMAC100_RXDES0_FTL |
 		      FTGMAC100_RXDES0_RUNT |
 		      FTGMAC100_RXDES0_RX_ODD_NB))
 		netdev->stats.rx_length_errors++;
-पूर्ण
+}
 
-अटल bool ftgmac100_rx_packet(काष्ठा ftgmac100 *priv, पूर्णांक *processed)
-अणु
-	काष्ठा net_device *netdev = priv->netdev;
-	काष्ठा ftgmac100_rxdes *rxdes;
-	काष्ठा sk_buff *skb;
-	अचिन्हित पूर्णांक poपूर्णांकer, size;
+static bool ftgmac100_rx_packet(struct ftgmac100 *priv, int *processed)
+{
+	struct net_device *netdev = priv->netdev;
+	struct ftgmac100_rxdes *rxdes;
+	struct sk_buff *skb;
+	unsigned int pointer, size;
 	u32 status, csum_vlan;
 	dma_addr_t map;
 
 	/* Grab next RX descriptor */
-	poपूर्णांकer = priv->rx_poपूर्णांकer;
-	rxdes = &priv->rxdes[poपूर्णांकer];
+	pointer = priv->rx_pointer;
+	rxdes = &priv->rxdes[pointer];
 
 	/* Grab descriptor status */
 	status = le32_to_cpu(rxdes->rxdes0);
 
 	/* Do we have a packet ? */
-	अगर (!(status & FTGMAC100_RXDES0_RXPKT_RDY))
-		वापस false;
+	if (!(status & FTGMAC100_RXDES0_RXPKT_RDY))
+		return false;
 
-	/* Order subsequent पढ़ोs with the test क्रम the पढ़ोy bit */
+	/* Order subsequent reads with the test for the ready bit */
 	dma_rmb();
 
-	/* We करोn't cope with fragmented RX packets */
-	अगर (unlikely(!(status & FTGMAC100_RXDES0_FRS) ||
+	/* We don't cope with fragmented RX packets */
+	if (unlikely(!(status & FTGMAC100_RXDES0_FRS) ||
 		     !(status & FTGMAC100_RXDES0_LRS)))
-		जाओ drop;
+		goto drop;
 
 	/* Grab received size and csum vlan field in the descriptor */
 	size = status & FTGMAC100_RXDES0_VDBC;
 	csum_vlan = le32_to_cpu(rxdes->rxdes1);
 
 	/* Any error (other than csum offload) flagged ? */
-	अगर (unlikely(status & RXDES0_ANY_ERROR)) अणु
-		/* Correct क्रम incorrect flagging of runt packets
+	if (unlikely(status & RXDES0_ANY_ERROR)) {
+		/* Correct for incorrect flagging of runt packets
 		 * with vlan tags... Just accept a runt packet that
 		 * has been flagged as vlan and whose size is at
 		 * least 60 bytes.
 		 */
-		अगर ((status & FTGMAC100_RXDES0_RUNT) &&
+		if ((status & FTGMAC100_RXDES0_RUNT) &&
 		    (csum_vlan & FTGMAC100_RXDES1_VLANTAG_AVAIL) &&
 		    (size >= 60))
 			status &= ~FTGMAC100_RXDES0_RUNT;
 
 		/* Any error still in there ? */
-		अगर (status & RXDES0_ANY_ERROR) अणु
+		if (status & RXDES0_ANY_ERROR) {
 			ftgmac100_rx_packet_error(priv, status);
-			जाओ drop;
-		पूर्ण
-	पूर्ण
+			goto drop;
+		}
+	}
 
 	/* If the packet had no skb (failed to allocate earlier)
 	 * then try to allocate one and skip
 	 */
-	skb = priv->rx_skbs[poपूर्णांकer];
-	अगर (!unlikely(skb)) अणु
-		ftgmac100_alloc_rx_buf(priv, poपूर्णांकer, rxdes, GFP_ATOMIC);
-		जाओ drop;
-	पूर्ण
+	skb = priv->rx_skbs[pointer];
+	if (!unlikely(skb)) {
+		ftgmac100_alloc_rx_buf(priv, pointer, rxdes, GFP_ATOMIC);
+		goto drop;
+	}
 
-	अगर (unlikely(status & FTGMAC100_RXDES0_MULTICAST))
+	if (unlikely(status & FTGMAC100_RXDES0_MULTICAST))
 		netdev->stats.multicast++;
 
 	/* If the HW found checksum errors, bounce it to software.
 	 *
-	 * If we didn't, we need to see अगर the packet was recognized
-	 * by HW as one of the supported checksummed protocols beक्रमe
+	 * If we didn't, we need to see if the packet was recognized
+	 * by HW as one of the supported checksummed protocols before
 	 * we accept the HW test results.
 	 */
-	अगर (netdev->features & NETIF_F_RXCSUM) अणु
+	if (netdev->features & NETIF_F_RXCSUM) {
 		u32 err_bits = FTGMAC100_RXDES1_TCP_CHKSUM_ERR |
 			FTGMAC100_RXDES1_UDP_CHKSUM_ERR |
 			FTGMAC100_RXDES1_IP_CHKSUM_ERR;
-		अगर ((csum_vlan & err_bits) ||
+		if ((csum_vlan & err_bits) ||
 		    !(csum_vlan & FTGMAC100_RXDES1_PROT_MASK))
 			skb->ip_summed = CHECKSUM_NONE;
-		अन्यथा
+		else
 			skb->ip_summed = CHECKSUM_UNNECESSARY;
-	पूर्ण
+	}
 
 	/* Transfer received size to skb */
 	skb_put(skb, size);
 
 	/* Extract vlan tag */
-	अगर ((netdev->features & NETIF_F_HW_VLAN_CTAG_RX) &&
+	if ((netdev->features & NETIF_F_HW_VLAN_CTAG_RX) &&
 	    (csum_vlan & FTGMAC100_RXDES1_VLANTAG_AVAIL))
 		__vlan_hwaccel_put_tag(skb, htons(ETH_P_8021Q),
 				       csum_vlan & 0xffff);
 
-	/* Tear करोwn DMA mapping, करो necessary cache management */
+	/* Tear down DMA mapping, do necessary cache management */
 	map = le32_to_cpu(rxdes->rxdes3);
 
-#अगर defined(CONFIG_ARM) && !defined(CONFIG_ARM_DMA_USE_IOMMU)
-	/* When we करोn't have an iommu, we can save cycles by not
-	 * invalidating the cache क्रम the part of the packet that
+#if defined(CONFIG_ARM) && !defined(CONFIG_ARM_DMA_USE_IOMMU)
+	/* When we don't have an iommu, we can save cycles by not
+	 * invalidating the cache for the part of the packet that
 	 * wasn't received.
 	 */
 	dma_unmap_single(priv->dev, map, size, DMA_FROM_DEVICE);
-#अन्यथा
+#else
 	dma_unmap_single(priv->dev, map, RX_BUF_SIZE, DMA_FROM_DEVICE);
-#पूर्ण_अगर
+#endif
 
 
 	/* Resplenish rx ring */
-	ftgmac100_alloc_rx_buf(priv, poपूर्णांकer, rxdes, GFP_ATOMIC);
-	priv->rx_poपूर्णांकer = ftgmac100_next_rx_poपूर्णांकer(priv, poपूर्णांकer);
+	ftgmac100_alloc_rx_buf(priv, pointer, rxdes, GFP_ATOMIC);
+	priv->rx_pointer = ftgmac100_next_rx_pointer(priv, pointer);
 
 	skb->protocol = eth_type_trans(skb, netdev);
 
@@ -562,168 +561,168 @@
 	netdev->stats.rx_bytes += size;
 
 	/* push packet to protocol stack */
-	अगर (skb->ip_summed == CHECKSUM_NONE)
-		netअगर_receive_skb(skb);
-	अन्यथा
+	if (skb->ip_summed == CHECKSUM_NONE)
+		netif_receive_skb(skb);
+	else
 		napi_gro_receive(&priv->napi, skb);
 
 	(*processed)++;
-	वापस true;
+	return true;
 
  drop:
 	/* Clean rxdes0 (which resets own bit) */
-	rxdes->rxdes0 = cpu_to_le32(status & priv->rxdes0_eकरोrr_mask);
-	priv->rx_poपूर्णांकer = ftgmac100_next_rx_poपूर्णांकer(priv, poपूर्णांकer);
+	rxdes->rxdes0 = cpu_to_le32(status & priv->rxdes0_edorr_mask);
+	priv->rx_pointer = ftgmac100_next_rx_pointer(priv, pointer);
 	netdev->stats.rx_dropped++;
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल u32 ftgmac100_base_tx_ctlstat(काष्ठा ftgmac100 *priv,
-				     अचिन्हित पूर्णांक index)
-अणु
-	अगर (index == (priv->tx_q_entries - 1))
-		वापस priv->txdes0_eकरोtr_mask;
-	अन्यथा
-		वापस 0;
-पूर्ण
+static u32 ftgmac100_base_tx_ctlstat(struct ftgmac100 *priv,
+				     unsigned int index)
+{
+	if (index == (priv->tx_q_entries - 1))
+		return priv->txdes0_edotr_mask;
+	else
+		return 0;
+}
 
-अटल अचिन्हित पूर्णांक ftgmac100_next_tx_poपूर्णांकer(काष्ठा ftgmac100 *priv,
-					      अचिन्हित पूर्णांक poपूर्णांकer)
-अणु
-	वापस (poपूर्णांकer + 1) & (priv->tx_q_entries - 1);
-पूर्ण
+static unsigned int ftgmac100_next_tx_pointer(struct ftgmac100 *priv,
+					      unsigned int pointer)
+{
+	return (pointer + 1) & (priv->tx_q_entries - 1);
+}
 
-अटल u32 ftgmac100_tx_buf_avail(काष्ठा ftgmac100 *priv)
-अणु
+static u32 ftgmac100_tx_buf_avail(struct ftgmac100 *priv)
+{
 	/* Returns the number of available slots in the TX queue
 	 *
-	 * This always leaves one मुक्त slot so we करोn't have to
-	 * worry about empty vs. full, and this simplअगरies the
-	 * test क्रम ftgmac100_tx_buf_cleanable() below
+	 * This always leaves one free slot so we don't have to
+	 * worry about empty vs. full, and this simplifies the
+	 * test for ftgmac100_tx_buf_cleanable() below
 	 */
-	वापस (priv->tx_clean_poपूर्णांकer - priv->tx_poपूर्णांकer - 1) &
+	return (priv->tx_clean_pointer - priv->tx_pointer - 1) &
 		(priv->tx_q_entries - 1);
-पूर्ण
+}
 
-अटल bool ftgmac100_tx_buf_cleanable(काष्ठा ftgmac100 *priv)
-अणु
-	वापस priv->tx_poपूर्णांकer != priv->tx_clean_poपूर्णांकer;
-पूर्ण
+static bool ftgmac100_tx_buf_cleanable(struct ftgmac100 *priv)
+{
+	return priv->tx_pointer != priv->tx_clean_pointer;
+}
 
-अटल व्योम ftgmac100_मुक्त_tx_packet(काष्ठा ftgmac100 *priv,
-				     अचिन्हित पूर्णांक poपूर्णांकer,
-				     काष्ठा sk_buff *skb,
-				     काष्ठा ftgmac100_txdes *txdes,
+static void ftgmac100_free_tx_packet(struct ftgmac100 *priv,
+				     unsigned int pointer,
+				     struct sk_buff *skb,
+				     struct ftgmac100_txdes *txdes,
 				     u32 ctl_stat)
-अणु
+{
 	dma_addr_t map = le32_to_cpu(txdes->txdes3);
-	माप_प्रकार len;
+	size_t len;
 
-	अगर (ctl_stat & FTGMAC100_TXDES0_FTS) अणु
+	if (ctl_stat & FTGMAC100_TXDES0_FTS) {
 		len = skb_headlen(skb);
 		dma_unmap_single(priv->dev, map, len, DMA_TO_DEVICE);
-	पूर्ण अन्यथा अणु
+	} else {
 		len = FTGMAC100_TXDES0_TXBUF_SIZE(ctl_stat);
 		dma_unmap_page(priv->dev, map, len, DMA_TO_DEVICE);
-	पूर्ण
+	}
 
 	/* Free SKB on last segment */
-	अगर (ctl_stat & FTGMAC100_TXDES0_LTS)
-		dev_kमुक्त_skb(skb);
-	priv->tx_skbs[poपूर्णांकer] = शून्य;
-पूर्ण
+	if (ctl_stat & FTGMAC100_TXDES0_LTS)
+		dev_kfree_skb(skb);
+	priv->tx_skbs[pointer] = NULL;
+}
 
-अटल bool ftgmac100_tx_complete_packet(काष्ठा ftgmac100 *priv)
-अणु
-	काष्ठा net_device *netdev = priv->netdev;
-	काष्ठा ftgmac100_txdes *txdes;
-	काष्ठा sk_buff *skb;
-	अचिन्हित पूर्णांक poपूर्णांकer;
+static bool ftgmac100_tx_complete_packet(struct ftgmac100 *priv)
+{
+	struct net_device *netdev = priv->netdev;
+	struct ftgmac100_txdes *txdes;
+	struct sk_buff *skb;
+	unsigned int pointer;
 	u32 ctl_stat;
 
-	poपूर्णांकer = priv->tx_clean_poपूर्णांकer;
-	txdes = &priv->txdes[poपूर्णांकer];
+	pointer = priv->tx_clean_pointer;
+	txdes = &priv->txdes[pointer];
 
 	ctl_stat = le32_to_cpu(txdes->txdes0);
-	अगर (ctl_stat & FTGMAC100_TXDES0_TXDMA_OWN)
-		वापस false;
+	if (ctl_stat & FTGMAC100_TXDES0_TXDMA_OWN)
+		return false;
 
-	skb = priv->tx_skbs[poपूर्णांकer];
+	skb = priv->tx_skbs[pointer];
 	netdev->stats.tx_packets++;
 	netdev->stats.tx_bytes += skb->len;
-	ftgmac100_मुक्त_tx_packet(priv, poपूर्णांकer, skb, txdes, ctl_stat);
-	txdes->txdes0 = cpu_to_le32(ctl_stat & priv->txdes0_eकरोtr_mask);
+	ftgmac100_free_tx_packet(priv, pointer, skb, txdes, ctl_stat);
+	txdes->txdes0 = cpu_to_le32(ctl_stat & priv->txdes0_edotr_mask);
 
-	priv->tx_clean_poपूर्णांकer = ftgmac100_next_tx_poपूर्णांकer(priv, poपूर्णांकer);
+	priv->tx_clean_pointer = ftgmac100_next_tx_pointer(priv, pointer);
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल व्योम ftgmac100_tx_complete(काष्ठा ftgmac100 *priv)
-अणु
-	काष्ठा net_device *netdev = priv->netdev;
+static void ftgmac100_tx_complete(struct ftgmac100 *priv)
+{
+	struct net_device *netdev = priv->netdev;
 
 	/* Process all completed packets */
-	जबतक (ftgmac100_tx_buf_cleanable(priv) &&
+	while (ftgmac100_tx_buf_cleanable(priv) &&
 	       ftgmac100_tx_complete_packet(priv))
 		;
 
-	/* Restart queue अगर needed */
+	/* Restart queue if needed */
 	smp_mb();
-	अगर (unlikely(netअगर_queue_stopped(netdev) &&
-		     ftgmac100_tx_buf_avail(priv) >= TX_THRESHOLD)) अणु
-		काष्ठा netdev_queue *txq;
+	if (unlikely(netif_queue_stopped(netdev) &&
+		     ftgmac100_tx_buf_avail(priv) >= TX_THRESHOLD)) {
+		struct netdev_queue *txq;
 
 		txq = netdev_get_tx_queue(netdev, 0);
-		__netअगर_tx_lock(txq, smp_processor_id());
-		अगर (netअगर_queue_stopped(netdev) &&
+		__netif_tx_lock(txq, smp_processor_id());
+		if (netif_queue_stopped(netdev) &&
 		    ftgmac100_tx_buf_avail(priv) >= TX_THRESHOLD)
-			netअगर_wake_queue(netdev);
-		__netअगर_tx_unlock(txq);
-	पूर्ण
-पूर्ण
+			netif_wake_queue(netdev);
+		__netif_tx_unlock(txq);
+	}
+}
 
-अटल bool ftgmac100_prep_tx_csum(काष्ठा sk_buff *skb, u32 *csum_vlan)
-अणु
-	अगर (skb->protocol == cpu_to_be16(ETH_P_IP)) अणु
+static bool ftgmac100_prep_tx_csum(struct sk_buff *skb, u32 *csum_vlan)
+{
+	if (skb->protocol == cpu_to_be16(ETH_P_IP)) {
 		u8 ip_proto = ip_hdr(skb)->protocol;
 
 		*csum_vlan |= FTGMAC100_TXDES1_IP_CHKSUM;
-		चयन(ip_proto) अणु
-		हाल IPPROTO_TCP:
+		switch(ip_proto) {
+		case IPPROTO_TCP:
 			*csum_vlan |= FTGMAC100_TXDES1_TCP_CHKSUM;
-			वापस true;
-		हाल IPPROTO_UDP:
+			return true;
+		case IPPROTO_UDP:
 			*csum_vlan |= FTGMAC100_TXDES1_UDP_CHKSUM;
-			वापस true;
-		हाल IPPROTO_IP:
-			वापस true;
-		पूर्ण
-	पूर्ण
-	वापस skb_checksum_help(skb) == 0;
-पूर्ण
+			return true;
+		case IPPROTO_IP:
+			return true;
+		}
+	}
+	return skb_checksum_help(skb) == 0;
+}
 
-अटल netdev_tx_t ftgmac100_hard_start_xmit(काष्ठा sk_buff *skb,
-					     काष्ठा net_device *netdev)
-अणु
-	काष्ठा ftgmac100 *priv = netdev_priv(netdev);
-	काष्ठा ftgmac100_txdes *txdes, *first;
-	अचिन्हित पूर्णांक poपूर्णांकer, nfrags, len, i, j;
+static netdev_tx_t ftgmac100_hard_start_xmit(struct sk_buff *skb,
+					     struct net_device *netdev)
+{
+	struct ftgmac100 *priv = netdev_priv(netdev);
+	struct ftgmac100_txdes *txdes, *first;
+	unsigned int pointer, nfrags, len, i, j;
 	u32 f_ctl_stat, ctl_stat, csum_vlan;
 	dma_addr_t map;
 
-	/* The HW करोesn't pad small frames */
-	अगर (eth_skb_pad(skb)) अणु
+	/* The HW doesn't pad small frames */
+	if (eth_skb_pad(skb)) {
 		netdev->stats.tx_dropped++;
-		वापस NETDEV_TX_OK;
-	पूर्ण
+		return NETDEV_TX_OK;
+	}
 
 	/* Reject oversize packets */
-	अगर (unlikely(skb->len > MAX_PKT_SIZE)) अणु
-		अगर (net_ratelimit())
+	if (unlikely(skb->len > MAX_PKT_SIZE)) {
+		if (net_ratelimit())
 			netdev_dbg(netdev, "tx packet too big\n");
-		जाओ drop;
-	पूर्ण
+		goto drop;
+	}
 
 	/* Do we have a limit on #fragments ? I yet have to get a reply
 	 * from Aspeed. If there's one I haven't hit it.
@@ -732,49 +731,49 @@
 
 	/* Setup HW checksumming */
 	csum_vlan = 0;
-	अगर (skb->ip_summed == CHECKSUM_PARTIAL &&
+	if (skb->ip_summed == CHECKSUM_PARTIAL &&
 	    !ftgmac100_prep_tx_csum(skb, &csum_vlan))
-		जाओ drop;
+		goto drop;
 
 	/* Add VLAN tag */
-	अगर (skb_vlan_tag_present(skb)) अणु
+	if (skb_vlan_tag_present(skb)) {
 		csum_vlan |= FTGMAC100_TXDES1_INS_VLANTAG;
 		csum_vlan |= skb_vlan_tag_get(skb) & 0xffff;
-	पूर्ण
+	}
 
 	/* Get header len */
 	len = skb_headlen(skb);
 
 	/* Map the packet head */
 	map = dma_map_single(priv->dev, skb->data, len, DMA_TO_DEVICE);
-	अगर (dma_mapping_error(priv->dev, map)) अणु
-		अगर (net_ratelimit())
+	if (dma_mapping_error(priv->dev, map)) {
+		if (net_ratelimit())
 			netdev_err(netdev, "map tx packet head failed\n");
-		जाओ drop;
-	पूर्ण
+		goto drop;
+	}
 
-	/* Grab the next मुक्त tx descriptor */
-	poपूर्णांकer = priv->tx_poपूर्णांकer;
-	txdes = first = &priv->txdes[poपूर्णांकer];
+	/* Grab the next free tx descriptor */
+	pointer = priv->tx_pointer;
+	txdes = first = &priv->txdes[pointer];
 
-	/* Setup it up with the packet head. Don't ग_लिखो the head to the
+	/* Setup it up with the packet head. Don't write the head to the
 	 * ring just yet
 	 */
-	priv->tx_skbs[poपूर्णांकer] = skb;
-	f_ctl_stat = ftgmac100_base_tx_ctlstat(priv, poपूर्णांकer);
+	priv->tx_skbs[pointer] = skb;
+	f_ctl_stat = ftgmac100_base_tx_ctlstat(priv, pointer);
 	f_ctl_stat |= FTGMAC100_TXDES0_TXDMA_OWN;
 	f_ctl_stat |= FTGMAC100_TXDES0_TXBUF_SIZE(len);
 	f_ctl_stat |= FTGMAC100_TXDES0_FTS;
-	अगर (nfrags == 0)
+	if (nfrags == 0)
 		f_ctl_stat |= FTGMAC100_TXDES0_LTS;
 	txdes->txdes3 = cpu_to_le32(map);
 	txdes->txdes1 = cpu_to_le32(csum_vlan);
 
 	/* Next descriptor */
-	poपूर्णांकer = ftgmac100_next_tx_poपूर्णांकer(priv, poपूर्णांकer);
+	pointer = ftgmac100_next_tx_pointer(priv, pointer);
 
 	/* Add the fragments */
-	क्रम (i = 0; i < nfrags; i++) अणु
+	for (i = 0; i < nfrags; i++) {
 		skb_frag_t *frag = &skb_shinfo(skb)->frags[i];
 
 		len = skb_frag_size(frag);
@@ -782,336 +781,336 @@
 		/* Map it */
 		map = skb_frag_dma_map(priv->dev, frag, 0, len,
 				       DMA_TO_DEVICE);
-		अगर (dma_mapping_error(priv->dev, map))
-			जाओ dma_err;
+		if (dma_mapping_error(priv->dev, map))
+			goto dma_err;
 
 		/* Setup descriptor */
-		priv->tx_skbs[poपूर्णांकer] = skb;
-		txdes = &priv->txdes[poपूर्णांकer];
-		ctl_stat = ftgmac100_base_tx_ctlstat(priv, poपूर्णांकer);
+		priv->tx_skbs[pointer] = skb;
+		txdes = &priv->txdes[pointer];
+		ctl_stat = ftgmac100_base_tx_ctlstat(priv, pointer);
 		ctl_stat |= FTGMAC100_TXDES0_TXDMA_OWN;
 		ctl_stat |= FTGMAC100_TXDES0_TXBUF_SIZE(len);
-		अगर (i == (nfrags - 1))
+		if (i == (nfrags - 1))
 			ctl_stat |= FTGMAC100_TXDES0_LTS;
 		txdes->txdes0 = cpu_to_le32(ctl_stat);
 		txdes->txdes1 = 0;
 		txdes->txdes3 = cpu_to_le32(map);
 
 		/* Next one */
-		poपूर्णांकer = ftgmac100_next_tx_poपूर्णांकer(priv, poपूर्णांकer);
-	पूर्ण
+		pointer = ftgmac100_next_tx_pointer(priv, pointer);
+	}
 
 	/* Order the previous packet and descriptor udpates
-	 * beक्रमe setting the OWN bit on the first descriptor.
+	 * before setting the OWN bit on the first descriptor.
 	 */
 	dma_wmb();
 	first->txdes0 = cpu_to_le32(f_ctl_stat);
 
-	/* Update next TX poपूर्णांकer */
-	priv->tx_poपूर्णांकer = poपूर्णांकer;
+	/* Update next TX pointer */
+	priv->tx_pointer = pointer;
 
-	/* If there isn't enough room क्रम all the fragments of a new packet
-	 * in the TX ring, stop the queue. The sequence below is race मुक्त
+	/* If there isn't enough room for all the fragments of a new packet
+	 * in the TX ring, stop the queue. The sequence below is race free
 	 * vs. a concurrent restart in ftgmac100_poll()
 	 */
-	अगर (unlikely(ftgmac100_tx_buf_avail(priv) < TX_THRESHOLD)) अणु
-		netअगर_stop_queue(netdev);
+	if (unlikely(ftgmac100_tx_buf_avail(priv) < TX_THRESHOLD)) {
+		netif_stop_queue(netdev);
 		/* Order the queue stop with the test below */
 		smp_mb();
-		अगर (ftgmac100_tx_buf_avail(priv) >= TX_THRESHOLD)
-			netअगर_wake_queue(netdev);
-	पूर्ण
+		if (ftgmac100_tx_buf_avail(priv) >= TX_THRESHOLD)
+			netif_wake_queue(netdev);
+	}
 
-	/* Poke transmitter to पढ़ो the updated TX descriptors */
-	ioग_लिखो32(1, priv->base + FTGMAC100_OFFSET_NPTXPD);
+	/* Poke transmitter to read the updated TX descriptors */
+	iowrite32(1, priv->base + FTGMAC100_OFFSET_NPTXPD);
 
-	वापस NETDEV_TX_OK;
+	return NETDEV_TX_OK;
 
  dma_err:
-	अगर (net_ratelimit())
+	if (net_ratelimit())
 		netdev_err(netdev, "map tx fragment failed\n");
 
 	/* Free head */
-	poपूर्णांकer = priv->tx_poपूर्णांकer;
-	ftgmac100_मुक्त_tx_packet(priv, poपूर्णांकer, skb, first, f_ctl_stat);
-	first->txdes0 = cpu_to_le32(f_ctl_stat & priv->txdes0_eकरोtr_mask);
+	pointer = priv->tx_pointer;
+	ftgmac100_free_tx_packet(priv, pointer, skb, first, f_ctl_stat);
+	first->txdes0 = cpu_to_le32(f_ctl_stat & priv->txdes0_edotr_mask);
 
 	/* Then all fragments */
-	क्रम (j = 0; j < i; j++) अणु
-		poपूर्णांकer = ftgmac100_next_tx_poपूर्णांकer(priv, poपूर्णांकer);
-		txdes = &priv->txdes[poपूर्णांकer];
+	for (j = 0; j < i; j++) {
+		pointer = ftgmac100_next_tx_pointer(priv, pointer);
+		txdes = &priv->txdes[pointer];
 		ctl_stat = le32_to_cpu(txdes->txdes0);
-		ftgmac100_मुक्त_tx_packet(priv, poपूर्णांकer, skb, txdes, ctl_stat);
-		txdes->txdes0 = cpu_to_le32(ctl_stat & priv->txdes0_eकरोtr_mask);
-	पूर्ण
+		ftgmac100_free_tx_packet(priv, pointer, skb, txdes, ctl_stat);
+		txdes->txdes0 = cpu_to_le32(ctl_stat & priv->txdes0_edotr_mask);
+	}
 
-	/* This cannot be reached अगर we successfully mapped the
-	 * last fragment, so we know ftgmac100_मुक्त_tx_packet()
-	 * hasn't मुक्तd the skb yet.
+	/* This cannot be reached if we successfully mapped the
+	 * last fragment, so we know ftgmac100_free_tx_packet()
+	 * hasn't freed the skb yet.
 	 */
  drop:
 	/* Drop the packet */
-	dev_kमुक्त_skb_any(skb);
+	dev_kfree_skb_any(skb);
 	netdev->stats.tx_dropped++;
 
-	वापस NETDEV_TX_OK;
-पूर्ण
+	return NETDEV_TX_OK;
+}
 
-अटल व्योम ftgmac100_मुक्त_buffers(काष्ठा ftgmac100 *priv)
-अणु
-	पूर्णांक i;
+static void ftgmac100_free_buffers(struct ftgmac100 *priv)
+{
+	int i;
 
 	/* Free all RX buffers */
-	क्रम (i = 0; i < priv->rx_q_entries; i++) अणु
-		काष्ठा ftgmac100_rxdes *rxdes = &priv->rxdes[i];
-		काष्ठा sk_buff *skb = priv->rx_skbs[i];
+	for (i = 0; i < priv->rx_q_entries; i++) {
+		struct ftgmac100_rxdes *rxdes = &priv->rxdes[i];
+		struct sk_buff *skb = priv->rx_skbs[i];
 		dma_addr_t map = le32_to_cpu(rxdes->rxdes3);
 
-		अगर (!skb)
-			जारी;
+		if (!skb)
+			continue;
 
-		priv->rx_skbs[i] = शून्य;
+		priv->rx_skbs[i] = NULL;
 		dma_unmap_single(priv->dev, map, RX_BUF_SIZE, DMA_FROM_DEVICE);
-		dev_kमुक्त_skb_any(skb);
-	पूर्ण
+		dev_kfree_skb_any(skb);
+	}
 
 	/* Free all TX buffers */
-	क्रम (i = 0; i < priv->tx_q_entries; i++) अणु
-		काष्ठा ftgmac100_txdes *txdes = &priv->txdes[i];
-		काष्ठा sk_buff *skb = priv->tx_skbs[i];
+	for (i = 0; i < priv->tx_q_entries; i++) {
+		struct ftgmac100_txdes *txdes = &priv->txdes[i];
+		struct sk_buff *skb = priv->tx_skbs[i];
 
-		अगर (!skb)
-			जारी;
-		ftgmac100_मुक्त_tx_packet(priv, i, skb, txdes,
+		if (!skb)
+			continue;
+		ftgmac100_free_tx_packet(priv, i, skb, txdes,
 					 le32_to_cpu(txdes->txdes0));
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम ftgmac100_मुक्त_rings(काष्ठा ftgmac100 *priv)
-अणु
+static void ftgmac100_free_rings(struct ftgmac100 *priv)
+{
 	/* Free skb arrays */
-	kमुक्त(priv->rx_skbs);
-	kमुक्त(priv->tx_skbs);
+	kfree(priv->rx_skbs);
+	kfree(priv->tx_skbs);
 
 	/* Free descriptors */
-	अगर (priv->rxdes)
-		dma_मुक्त_coherent(priv->dev, MAX_RX_QUEUE_ENTRIES *
-				  माप(काष्ठा ftgmac100_rxdes),
+	if (priv->rxdes)
+		dma_free_coherent(priv->dev, MAX_RX_QUEUE_ENTRIES *
+				  sizeof(struct ftgmac100_rxdes),
 				  priv->rxdes, priv->rxdes_dma);
-	priv->rxdes = शून्य;
+	priv->rxdes = NULL;
 
-	अगर (priv->txdes)
-		dma_मुक्त_coherent(priv->dev, MAX_TX_QUEUE_ENTRIES *
-				  माप(काष्ठा ftgmac100_txdes),
+	if (priv->txdes)
+		dma_free_coherent(priv->dev, MAX_TX_QUEUE_ENTRIES *
+				  sizeof(struct ftgmac100_txdes),
 				  priv->txdes, priv->txdes_dma);
-	priv->txdes = शून्य;
+	priv->txdes = NULL;
 
 	/* Free scratch packet buffer */
-	अगर (priv->rx_scratch)
-		dma_मुक्त_coherent(priv->dev, RX_BUF_SIZE,
+	if (priv->rx_scratch)
+		dma_free_coherent(priv->dev, RX_BUF_SIZE,
 				  priv->rx_scratch, priv->rx_scratch_dma);
-पूर्ण
+}
 
-अटल पूर्णांक ftgmac100_alloc_rings(काष्ठा ftgmac100 *priv)
-अणु
+static int ftgmac100_alloc_rings(struct ftgmac100 *priv)
+{
 	/* Allocate skb arrays */
-	priv->rx_skbs = kसुस्मृति(MAX_RX_QUEUE_ENTRIES, माप(व्योम *),
+	priv->rx_skbs = kcalloc(MAX_RX_QUEUE_ENTRIES, sizeof(void *),
 				GFP_KERNEL);
-	अगर (!priv->rx_skbs)
-		वापस -ENOMEM;
-	priv->tx_skbs = kसुस्मृति(MAX_TX_QUEUE_ENTRIES, माप(व्योम *),
+	if (!priv->rx_skbs)
+		return -ENOMEM;
+	priv->tx_skbs = kcalloc(MAX_TX_QUEUE_ENTRIES, sizeof(void *),
 				GFP_KERNEL);
-	अगर (!priv->tx_skbs)
-		वापस -ENOMEM;
+	if (!priv->tx_skbs)
+		return -ENOMEM;
 
 	/* Allocate descriptors */
 	priv->rxdes = dma_alloc_coherent(priv->dev,
-					 MAX_RX_QUEUE_ENTRIES * माप(काष्ठा ftgmac100_rxdes),
+					 MAX_RX_QUEUE_ENTRIES * sizeof(struct ftgmac100_rxdes),
 					 &priv->rxdes_dma, GFP_KERNEL);
-	अगर (!priv->rxdes)
-		वापस -ENOMEM;
+	if (!priv->rxdes)
+		return -ENOMEM;
 	priv->txdes = dma_alloc_coherent(priv->dev,
-					 MAX_TX_QUEUE_ENTRIES * माप(काष्ठा ftgmac100_txdes),
+					 MAX_TX_QUEUE_ENTRIES * sizeof(struct ftgmac100_txdes),
 					 &priv->txdes_dma, GFP_KERNEL);
-	अगर (!priv->txdes)
-		वापस -ENOMEM;
+	if (!priv->txdes)
+		return -ENOMEM;
 
 	/* Allocate scratch packet buffer */
 	priv->rx_scratch = dma_alloc_coherent(priv->dev,
 					      RX_BUF_SIZE,
 					      &priv->rx_scratch_dma,
 					      GFP_KERNEL);
-	अगर (!priv->rx_scratch)
-		वापस -ENOMEM;
+	if (!priv->rx_scratch)
+		return -ENOMEM;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ftgmac100_init_rings(काष्ठा ftgmac100 *priv)
-अणु
-	काष्ठा ftgmac100_rxdes *rxdes = शून्य;
-	काष्ठा ftgmac100_txdes *txdes = शून्य;
-	पूर्णांक i;
+static void ftgmac100_init_rings(struct ftgmac100 *priv)
+{
+	struct ftgmac100_rxdes *rxdes = NULL;
+	struct ftgmac100_txdes *txdes = NULL;
+	int i;
 
 	/* Update entries counts */
 	priv->rx_q_entries = priv->new_rx_q_entries;
 	priv->tx_q_entries = priv->new_tx_q_entries;
 
-	अगर (WARN_ON(priv->rx_q_entries < MIN_RX_QUEUE_ENTRIES))
-		वापस;
+	if (WARN_ON(priv->rx_q_entries < MIN_RX_QUEUE_ENTRIES))
+		return;
 
 	/* Initialize RX ring */
-	क्रम (i = 0; i < priv->rx_q_entries; i++) अणु
+	for (i = 0; i < priv->rx_q_entries; i++) {
 		rxdes = &priv->rxdes[i];
 		rxdes->rxdes0 = 0;
 		rxdes->rxdes3 = cpu_to_le32(priv->rx_scratch_dma);
-	पूर्ण
+	}
 	/* Mark the end of the ring */
-	rxdes->rxdes0 |= cpu_to_le32(priv->rxdes0_eकरोrr_mask);
+	rxdes->rxdes0 |= cpu_to_le32(priv->rxdes0_edorr_mask);
 
-	अगर (WARN_ON(priv->tx_q_entries < MIN_RX_QUEUE_ENTRIES))
-		वापस;
+	if (WARN_ON(priv->tx_q_entries < MIN_RX_QUEUE_ENTRIES))
+		return;
 
 	/* Initialize TX ring */
-	क्रम (i = 0; i < priv->tx_q_entries; i++) अणु
+	for (i = 0; i < priv->tx_q_entries; i++) {
 		txdes = &priv->txdes[i];
 		txdes->txdes0 = 0;
-	पूर्ण
-	txdes->txdes0 |= cpu_to_le32(priv->txdes0_eकरोtr_mask);
-पूर्ण
+	}
+	txdes->txdes0 |= cpu_to_le32(priv->txdes0_edotr_mask);
+}
 
-अटल पूर्णांक ftgmac100_alloc_rx_buffers(काष्ठा ftgmac100 *priv)
-अणु
-	पूर्णांक i;
+static int ftgmac100_alloc_rx_buffers(struct ftgmac100 *priv)
+{
+	int i;
 
-	क्रम (i = 0; i < priv->rx_q_entries; i++) अणु
-		काष्ठा ftgmac100_rxdes *rxdes = &priv->rxdes[i];
+	for (i = 0; i < priv->rx_q_entries; i++) {
+		struct ftgmac100_rxdes *rxdes = &priv->rxdes[i];
 
-		अगर (ftgmac100_alloc_rx_buf(priv, i, rxdes, GFP_KERNEL))
-			वापस -ENOMEM;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		if (ftgmac100_alloc_rx_buf(priv, i, rxdes, GFP_KERNEL))
+			return -ENOMEM;
+	}
+	return 0;
+}
 
-अटल व्योम ftgmac100_adjust_link(काष्ठा net_device *netdev)
-अणु
-	काष्ठा ftgmac100 *priv = netdev_priv(netdev);
-	काष्ठा phy_device *phydev = netdev->phydev;
-	bool tx_छोड़ो, rx_छोड़ो;
-	पूर्णांक new_speed;
+static void ftgmac100_adjust_link(struct net_device *netdev)
+{
+	struct ftgmac100 *priv = netdev_priv(netdev);
+	struct phy_device *phydev = netdev->phydev;
+	bool tx_pause, rx_pause;
+	int new_speed;
 
 	/* We store "no link" as speed 0 */
-	अगर (!phydev->link)
+	if (!phydev->link)
 		new_speed = 0;
-	अन्यथा
+	else
 		new_speed = phydev->speed;
 
-	/* Grab छोड़ो settings from PHY अगर configured to करो so */
-	अगर (priv->aneg_छोड़ो) अणु
-		rx_छोड़ो = tx_छोड़ो = phydev->छोड़ो;
-		अगर (phydev->asym_छोड़ो)
-			tx_छोड़ो = !rx_छोड़ो;
-	पूर्ण अन्यथा अणु
-		rx_छोड़ो = priv->rx_छोड़ो;
-		tx_छोड़ो = priv->tx_छोड़ो;
-	पूर्ण
+	/* Grab pause settings from PHY if configured to do so */
+	if (priv->aneg_pause) {
+		rx_pause = tx_pause = phydev->pause;
+		if (phydev->asym_pause)
+			tx_pause = !rx_pause;
+	} else {
+		rx_pause = priv->rx_pause;
+		tx_pause = priv->tx_pause;
+	}
 
-	/* Link hasn't changed, करो nothing */
-	अगर (phydev->speed == priv->cur_speed &&
+	/* Link hasn't changed, do nothing */
+	if (phydev->speed == priv->cur_speed &&
 	    phydev->duplex == priv->cur_duplex &&
-	    rx_छोड़ो == priv->rx_छोड़ो &&
-	    tx_छोड़ो == priv->tx_छोड़ो)
-		वापस;
+	    rx_pause == priv->rx_pause &&
+	    tx_pause == priv->tx_pause)
+		return;
 
-	/* Prपूर्णांक status अगर we have a link or we had one and just lost it,
-	 * करोn't prपूर्णांक otherwise.
+	/* Print status if we have a link or we had one and just lost it,
+	 * don't print otherwise.
 	 */
-	अगर (new_speed || priv->cur_speed)
-		phy_prपूर्णांक_status(phydev);
+	if (new_speed || priv->cur_speed)
+		phy_print_status(phydev);
 
 	priv->cur_speed = new_speed;
 	priv->cur_duplex = phydev->duplex;
-	priv->rx_छोड़ो = rx_छोड़ो;
-	priv->tx_छोड़ो = tx_छोड़ो;
+	priv->rx_pause = rx_pause;
+	priv->tx_pause = tx_pause;
 
-	/* Link is करोwn, करो nothing अन्यथा */
-	अगर (!new_speed)
-		वापस;
+	/* Link is down, do nothing else */
+	if (!new_speed)
+		return;
 
-	/* Disable all पूर्णांकerrupts */
-	ioग_लिखो32(0, priv->base + FTGMAC100_OFFSET_IER);
+	/* Disable all interrupts */
+	iowrite32(0, priv->base + FTGMAC100_OFFSET_IER);
 
 	/* Reset the adapter asynchronously */
 	schedule_work(&priv->reset_task);
-पूर्ण
+}
 
-अटल पूर्णांक ftgmac100_mii_probe(काष्ठा net_device *netdev)
-अणु
-	काष्ठा ftgmac100 *priv = netdev_priv(netdev);
-	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(priv->dev);
-	काष्ठा device_node *np = pdev->dev.of_node;
-	काष्ठा phy_device *phydev;
-	phy_पूर्णांकerface_t phy_पूर्णांकf;
-	पूर्णांक err;
+static int ftgmac100_mii_probe(struct net_device *netdev)
+{
+	struct ftgmac100 *priv = netdev_priv(netdev);
+	struct platform_device *pdev = to_platform_device(priv->dev);
+	struct device_node *np = pdev->dev.of_node;
+	struct phy_device *phydev;
+	phy_interface_t phy_intf;
+	int err;
 
 	/* Default to RGMII. It's a gigabit part after all */
-	err = of_get_phy_mode(np, &phy_पूर्णांकf);
-	अगर (err)
-		phy_पूर्णांकf = PHY_INTERFACE_MODE_RGMII;
+	err = of_get_phy_mode(np, &phy_intf);
+	if (err)
+		phy_intf = PHY_INTERFACE_MODE_RGMII;
 
-	/* Aspeed only supports these. I करोn't know about other IP
-	 * block venकरोrs so I'm going to just let them through क्रम
-	 * now. Note that this is only a warning अगर क्रम some obscure
+	/* Aspeed only supports these. I don't know about other IP
+	 * block vendors so I'm going to just let them through for
+	 * now. Note that this is only a warning if for some obscure
 	 * reason the DT really means to lie about it or it's a newer
-	 * part we करोn't know about.
+	 * part we don't know about.
 	 *
 	 * On the Aspeed SoC there are additionally straps and SCU
-	 * control bits that could tell us what the पूर्णांकerface is
-	 * (or allow us to configure it जबतक the IP block is held
+	 * control bits that could tell us what the interface is
+	 * (or allow us to configure it while the IP block is held
 	 * in reset). For now I chose to keep this driver away from
-	 * those SoC specअगरic bits and assume the device-tree is
+	 * those SoC specific bits and assume the device-tree is
 	 * right and the SCU has been configured properly by pinmux
 	 * or the firmware.
 	 */
-	अगर (priv->is_aspeed && !(phy_पूर्णांकerface_mode_is_rgmii(phy_पूर्णांकf))) अणु
+	if (priv->is_aspeed && !(phy_interface_mode_is_rgmii(phy_intf))) {
 		netdev_warn(netdev,
 			    "Unsupported PHY mode %s !\n",
-			    phy_modes(phy_पूर्णांकf));
-	पूर्ण
+			    phy_modes(phy_intf));
+	}
 
 	phydev = phy_find_first(priv->mii_bus);
-	अगर (!phydev) अणु
+	if (!phydev) {
 		netdev_info(netdev, "%s: no PHY found\n", netdev->name);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	phydev = phy_connect(netdev, phydev_name(phydev),
-			     &ftgmac100_adjust_link, phy_पूर्णांकf);
+			     &ftgmac100_adjust_link, phy_intf);
 
-	अगर (IS_ERR(phydev)) अणु
+	if (IS_ERR(phydev)) {
 		netdev_err(netdev, "%s: Could not attach to PHY\n", netdev->name);
-		वापस PTR_ERR(phydev);
-	पूर्ण
+		return PTR_ERR(phydev);
+	}
 
 	/* Indicate that we support PAUSE frames (see comment in
 	 * Documentation/networking/phy.rst)
 	 */
-	phy_support_asym_छोड़ो(phydev);
+	phy_support_asym_pause(phydev);
 
 	/* Display what we found */
 	phy_attached_info(phydev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ftgmac100_mdiobus_पढ़ो(काष्ठा mii_bus *bus, पूर्णांक phy_addr, पूर्णांक regnum)
-अणु
-	काष्ठा net_device *netdev = bus->priv;
-	काष्ठा ftgmac100 *priv = netdev_priv(netdev);
-	अचिन्हित पूर्णांक phycr;
-	पूर्णांक i;
+static int ftgmac100_mdiobus_read(struct mii_bus *bus, int phy_addr, int regnum)
+{
+	struct net_device *netdev = bus->priv;
+	struct ftgmac100 *priv = netdev_priv(netdev);
+	unsigned int phycr;
+	int i;
 
-	phycr = ioपढ़ो32(priv->base + FTGMAC100_OFFSET_PHYCR);
+	phycr = ioread32(priv->base + FTGMAC100_OFFSET_PHYCR);
 
 	/* preserve MDC cycle threshold */
 	phycr &= FTGMAC100_PHYCR_MDC_CYCTHR_MASK;
@@ -1120,35 +1119,35 @@
 		 FTGMAC100_PHYCR_REGAD(regnum) |
 		 FTGMAC100_PHYCR_MIIRD;
 
-	ioग_लिखो32(phycr, priv->base + FTGMAC100_OFFSET_PHYCR);
+	iowrite32(phycr, priv->base + FTGMAC100_OFFSET_PHYCR);
 
-	क्रम (i = 0; i < 10; i++) अणु
-		phycr = ioपढ़ो32(priv->base + FTGMAC100_OFFSET_PHYCR);
+	for (i = 0; i < 10; i++) {
+		phycr = ioread32(priv->base + FTGMAC100_OFFSET_PHYCR);
 
-		अगर ((phycr & FTGMAC100_PHYCR_MIIRD) == 0) अणु
-			पूर्णांक data;
+		if ((phycr & FTGMAC100_PHYCR_MIIRD) == 0) {
+			int data;
 
-			data = ioपढ़ो32(priv->base + FTGMAC100_OFFSET_PHYDATA);
-			वापस FTGMAC100_PHYDATA_MIIRDATA(data);
-		पूर्ण
+			data = ioread32(priv->base + FTGMAC100_OFFSET_PHYDATA);
+			return FTGMAC100_PHYDATA_MIIRDATA(data);
+		}
 
 		udelay(100);
-	पूर्ण
+	}
 
 	netdev_err(netdev, "mdio read timed out\n");
-	वापस -EIO;
-पूर्ण
+	return -EIO;
+}
 
-अटल पूर्णांक ftgmac100_mdiobus_ग_लिखो(काष्ठा mii_bus *bus, पूर्णांक phy_addr,
-				   पूर्णांक regnum, u16 value)
-अणु
-	काष्ठा net_device *netdev = bus->priv;
-	काष्ठा ftgmac100 *priv = netdev_priv(netdev);
-	अचिन्हित पूर्णांक phycr;
-	पूर्णांक data;
-	पूर्णांक i;
+static int ftgmac100_mdiobus_write(struct mii_bus *bus, int phy_addr,
+				   int regnum, u16 value)
+{
+	struct net_device *netdev = bus->priv;
+	struct ftgmac100 *priv = netdev_priv(netdev);
+	unsigned int phycr;
+	int data;
+	int i;
 
-	phycr = ioपढ़ो32(priv->base + FTGMAC100_OFFSET_PHYCR);
+	phycr = ioread32(priv->base + FTGMAC100_OFFSET_PHYCR);
 
 	/* preserve MDC cycle threshold */
 	phycr &= FTGMAC100_PHYCR_MDC_CYCTHR_MASK;
@@ -1159,94 +1158,94 @@
 
 	data = FTGMAC100_PHYDATA_MIIWDATA(value);
 
-	ioग_लिखो32(data, priv->base + FTGMAC100_OFFSET_PHYDATA);
-	ioग_लिखो32(phycr, priv->base + FTGMAC100_OFFSET_PHYCR);
+	iowrite32(data, priv->base + FTGMAC100_OFFSET_PHYDATA);
+	iowrite32(phycr, priv->base + FTGMAC100_OFFSET_PHYCR);
 
-	क्रम (i = 0; i < 10; i++) अणु
-		phycr = ioपढ़ो32(priv->base + FTGMAC100_OFFSET_PHYCR);
+	for (i = 0; i < 10; i++) {
+		phycr = ioread32(priv->base + FTGMAC100_OFFSET_PHYCR);
 
-		अगर ((phycr & FTGMAC100_PHYCR_MIIWR) == 0)
-			वापस 0;
+		if ((phycr & FTGMAC100_PHYCR_MIIWR) == 0)
+			return 0;
 
 		udelay(100);
-	पूर्ण
+	}
 
 	netdev_err(netdev, "mdio write timed out\n");
-	वापस -EIO;
-पूर्ण
+	return -EIO;
+}
 
-अटल व्योम ftgmac100_get_drvinfo(काष्ठा net_device *netdev,
-				  काष्ठा ethtool_drvinfo *info)
-अणु
-	strlcpy(info->driver, DRV_NAME, माप(info->driver));
-	strlcpy(info->bus_info, dev_name(&netdev->dev), माप(info->bus_info));
-पूर्ण
+static void ftgmac100_get_drvinfo(struct net_device *netdev,
+				  struct ethtool_drvinfo *info)
+{
+	strlcpy(info->driver, DRV_NAME, sizeof(info->driver));
+	strlcpy(info->bus_info, dev_name(&netdev->dev), sizeof(info->bus_info));
+}
 
-अटल व्योम ftgmac100_get_ringparam(काष्ठा net_device *netdev,
-				    काष्ठा ethtool_ringparam *ering)
-अणु
-	काष्ठा ftgmac100 *priv = netdev_priv(netdev);
+static void ftgmac100_get_ringparam(struct net_device *netdev,
+				    struct ethtool_ringparam *ering)
+{
+	struct ftgmac100 *priv = netdev_priv(netdev);
 
-	स_रखो(ering, 0, माप(*ering));
+	memset(ering, 0, sizeof(*ering));
 	ering->rx_max_pending = MAX_RX_QUEUE_ENTRIES;
 	ering->tx_max_pending = MAX_TX_QUEUE_ENTRIES;
 	ering->rx_pending = priv->rx_q_entries;
 	ering->tx_pending = priv->tx_q_entries;
-पूर्ण
+}
 
-अटल पूर्णांक ftgmac100_set_ringparam(काष्ठा net_device *netdev,
-				   काष्ठा ethtool_ringparam *ering)
-अणु
-	काष्ठा ftgmac100 *priv = netdev_priv(netdev);
+static int ftgmac100_set_ringparam(struct net_device *netdev,
+				   struct ethtool_ringparam *ering)
+{
+	struct ftgmac100 *priv = netdev_priv(netdev);
 
-	अगर (ering->rx_pending > MAX_RX_QUEUE_ENTRIES ||
+	if (ering->rx_pending > MAX_RX_QUEUE_ENTRIES ||
 	    ering->tx_pending > MAX_TX_QUEUE_ENTRIES ||
 	    ering->rx_pending < MIN_RX_QUEUE_ENTRIES ||
 	    ering->tx_pending < MIN_TX_QUEUE_ENTRIES ||
-	    !is_घातer_of_2(ering->rx_pending) ||
-	    !is_घातer_of_2(ering->tx_pending))
-		वापस -EINVAL;
+	    !is_power_of_2(ering->rx_pending) ||
+	    !is_power_of_2(ering->tx_pending))
+		return -EINVAL;
 
 	priv->new_rx_q_entries = ering->rx_pending;
 	priv->new_tx_q_entries = ering->tx_pending;
-	अगर (netअगर_running(netdev))
+	if (netif_running(netdev))
 		schedule_work(&priv->reset_task);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ftgmac100_get_छोड़ोparam(काष्ठा net_device *netdev,
-				     काष्ठा ethtool_छोड़ोparam *छोड़ो)
-अणु
-	काष्ठा ftgmac100 *priv = netdev_priv(netdev);
+static void ftgmac100_get_pauseparam(struct net_device *netdev,
+				     struct ethtool_pauseparam *pause)
+{
+	struct ftgmac100 *priv = netdev_priv(netdev);
 
-	छोड़ो->स्वतःneg = priv->aneg_छोड़ो;
-	छोड़ो->tx_छोड़ो = priv->tx_छोड़ो;
-	छोड़ो->rx_छोड़ो = priv->rx_छोड़ो;
-पूर्ण
+	pause->autoneg = priv->aneg_pause;
+	pause->tx_pause = priv->tx_pause;
+	pause->rx_pause = priv->rx_pause;
+}
 
-अटल पूर्णांक ftgmac100_set_छोड़ोparam(काष्ठा net_device *netdev,
-				    काष्ठा ethtool_छोड़ोparam *छोड़ो)
-अणु
-	काष्ठा ftgmac100 *priv = netdev_priv(netdev);
-	काष्ठा phy_device *phydev = netdev->phydev;
+static int ftgmac100_set_pauseparam(struct net_device *netdev,
+				    struct ethtool_pauseparam *pause)
+{
+	struct ftgmac100 *priv = netdev_priv(netdev);
+	struct phy_device *phydev = netdev->phydev;
 
-	priv->aneg_छोड़ो = छोड़ो->स्वतःneg;
-	priv->tx_छोड़ो = छोड़ो->tx_छोड़ो;
-	priv->rx_छोड़ो = छोड़ो->rx_छोड़ो;
+	priv->aneg_pause = pause->autoneg;
+	priv->tx_pause = pause->tx_pause;
+	priv->rx_pause = pause->rx_pause;
 
-	अगर (phydev)
-		phy_set_asym_छोड़ो(phydev, छोड़ो->rx_छोड़ो, छोड़ो->tx_छोड़ो);
+	if (phydev)
+		phy_set_asym_pause(phydev, pause->rx_pause, pause->tx_pause);
 
-	अगर (netअगर_running(netdev)) अणु
-		अगर (!(phydev && priv->aneg_छोड़ो))
-			ftgmac100_config_छोड़ो(priv);
-	पूर्ण
+	if (netif_running(netdev)) {
+		if (!(phydev && priv->aneg_pause))
+			ftgmac100_config_pause(priv);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा ethtool_ops ftgmac100_ethtool_ops = अणु
+static const struct ethtool_ops ftgmac100_ethtool_ops = {
 	.get_drvinfo		= ftgmac100_get_drvinfo,
 	.get_link		= ethtool_op_get_link,
 	.get_link_ksettings	= phy_ethtool_get_link_ksettings,
@@ -1254,532 +1253,532 @@
 	.nway_reset		= phy_ethtool_nway_reset,
 	.get_ringparam		= ftgmac100_get_ringparam,
 	.set_ringparam		= ftgmac100_set_ringparam,
-	.get_छोड़ोparam		= ftgmac100_get_छोड़ोparam,
-	.set_छोड़ोparam		= ftgmac100_set_छोड़ोparam,
-पूर्ण;
+	.get_pauseparam		= ftgmac100_get_pauseparam,
+	.set_pauseparam		= ftgmac100_set_pauseparam,
+};
 
-अटल irqवापस_t ftgmac100_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा net_device *netdev = dev_id;
-	काष्ठा ftgmac100 *priv = netdev_priv(netdev);
-	अचिन्हित पूर्णांक status, new_mask = FTGMAC100_INT_BAD;
+static irqreturn_t ftgmac100_interrupt(int irq, void *dev_id)
+{
+	struct net_device *netdev = dev_id;
+	struct ftgmac100 *priv = netdev_priv(netdev);
+	unsigned int status, new_mask = FTGMAC100_INT_BAD;
 
-	/* Fetch and clear पूर्णांकerrupt bits, process abnormal ones */
-	status = ioपढ़ो32(priv->base + FTGMAC100_OFFSET_ISR);
-	ioग_लिखो32(status, priv->base + FTGMAC100_OFFSET_ISR);
-	अगर (unlikely(status & FTGMAC100_INT_BAD)) अणु
+	/* Fetch and clear interrupt bits, process abnormal ones */
+	status = ioread32(priv->base + FTGMAC100_OFFSET_ISR);
+	iowrite32(status, priv->base + FTGMAC100_OFFSET_ISR);
+	if (unlikely(status & FTGMAC100_INT_BAD)) {
 
 		/* RX buffer unavailable */
-		अगर (status & FTGMAC100_INT_NO_RXBUF)
+		if (status & FTGMAC100_INT_NO_RXBUF)
 			netdev->stats.rx_over_errors++;
 
 		/* received packet lost due to RX FIFO full */
-		अगर (status & FTGMAC100_INT_RPKT_LOST)
-			netdev->stats.rx_fअगरo_errors++;
+		if (status & FTGMAC100_INT_RPKT_LOST)
+			netdev->stats.rx_fifo_errors++;
 
 		/* sent packet lost due to excessive TX collision */
-		अगर (status & FTGMAC100_INT_XPKT_LOST)
-			netdev->stats.tx_fअगरo_errors++;
+		if (status & FTGMAC100_INT_XPKT_LOST)
+			netdev->stats.tx_fifo_errors++;
 
 		/* AHB error -> Reset the chip */
-		अगर (status & FTGMAC100_INT_AHB_ERR) अणु
-			अगर (net_ratelimit())
+		if (status & FTGMAC100_INT_AHB_ERR) {
+			if (net_ratelimit())
 				netdev_warn(netdev,
 					   "AHB bus error ! Resetting chip.\n");
-			ioग_लिखो32(0, priv->base + FTGMAC100_OFFSET_IER);
+			iowrite32(0, priv->base + FTGMAC100_OFFSET_IER);
 			schedule_work(&priv->reset_task);
-			वापस IRQ_HANDLED;
-		पूर्ण
+			return IRQ_HANDLED;
+		}
 
 		/* We may need to restart the MAC after such errors, delay
-		 * this until after we have मुक्तd some Rx buffers though
+		 * this until after we have freed some Rx buffers though
 		 */
 		priv->need_mac_restart = true;
 
 		/* Disable those errors until we restart */
 		new_mask &= ~status;
-	पूर्ण
+	}
 
-	/* Only enable "bad" पूर्णांकerrupts जबतक NAPI is on */
-	ioग_लिखो32(new_mask, priv->base + FTGMAC100_OFFSET_IER);
+	/* Only enable "bad" interrupts while NAPI is on */
+	iowrite32(new_mask, priv->base + FTGMAC100_OFFSET_IER);
 
 	/* Schedule NAPI bh */
 	napi_schedule_irqoff(&priv->napi);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल bool ftgmac100_check_rx(काष्ठा ftgmac100 *priv)
-अणु
-	काष्ठा ftgmac100_rxdes *rxdes = &priv->rxdes[priv->rx_poपूर्णांकer];
+static bool ftgmac100_check_rx(struct ftgmac100 *priv)
+{
+	struct ftgmac100_rxdes *rxdes = &priv->rxdes[priv->rx_pointer];
 
 	/* Do we have a packet ? */
-	वापस !!(rxdes->rxdes0 & cpu_to_le32(FTGMAC100_RXDES0_RXPKT_RDY));
-पूर्ण
+	return !!(rxdes->rxdes0 & cpu_to_le32(FTGMAC100_RXDES0_RXPKT_RDY));
+}
 
-अटल पूर्णांक ftgmac100_poll(काष्ठा napi_काष्ठा *napi, पूर्णांक budget)
-अणु
-	काष्ठा ftgmac100 *priv = container_of(napi, काष्ठा ftgmac100, napi);
-	पूर्णांक work_करोne = 0;
+static int ftgmac100_poll(struct napi_struct *napi, int budget)
+{
+	struct ftgmac100 *priv = container_of(napi, struct ftgmac100, napi);
+	int work_done = 0;
 	bool more;
 
 	/* Handle TX completions */
-	अगर (ftgmac100_tx_buf_cleanable(priv))
+	if (ftgmac100_tx_buf_cleanable(priv))
 		ftgmac100_tx_complete(priv);
 
 	/* Handle RX packets */
-	करो अणु
-		more = ftgmac100_rx_packet(priv, &work_करोne);
-	पूर्ण जबतक (more && work_करोne < budget);
+	do {
+		more = ftgmac100_rx_packet(priv, &work_done);
+	} while (more && work_done < budget);
 
 
-	/* The पूर्णांकerrupt is telling us to kick the MAC back to lअगरe
+	/* The interrupt is telling us to kick the MAC back to life
 	 * after an RX overflow
 	 */
-	अगर (unlikely(priv->need_mac_restart)) अणु
+	if (unlikely(priv->need_mac_restart)) {
 		ftgmac100_start_hw(priv);
 		priv->need_mac_restart = false;
 
-		/* Re-enable "bad" पूर्णांकerrupts */
-		ioग_लिखो32(FTGMAC100_INT_BAD,
+		/* Re-enable "bad" interrupts */
+		iowrite32(FTGMAC100_INT_BAD,
 			  priv->base + FTGMAC100_OFFSET_IER);
-	पूर्ण
+	}
 
-	/* As दीर्घ as we are रुकोing क्रम transmit packets to be
+	/* As long as we are waiting for transmit packets to be
 	 * completed we keep NAPI going
 	 */
-	अगर (ftgmac100_tx_buf_cleanable(priv))
-		work_करोne = budget;
+	if (ftgmac100_tx_buf_cleanable(priv))
+		work_done = budget;
 
-	अगर (work_करोne < budget) अणु
-		/* We are about to re-enable all पूर्णांकerrupts. However
-		 * the HW has been latching RX/TX packet पूर्णांकerrupts जबतक
+	if (work_done < budget) {
+		/* We are about to re-enable all interrupts. However
+		 * the HW has been latching RX/TX packet interrupts while
 		 * they were masked. So we clear them first, then we need
-		 * to re-check अगर there's something to process
+		 * to re-check if there's something to process
 		 */
-		ioग_लिखो32(FTGMAC100_INT_RXTX,
+		iowrite32(FTGMAC100_INT_RXTX,
 			  priv->base + FTGMAC100_OFFSET_ISR);
 
 		/* Push the above (and provides a barrier vs. subsequent
-		 * पढ़ोs of the descriptor).
+		 * reads of the descriptor).
 		 */
-		ioपढ़ो32(priv->base + FTGMAC100_OFFSET_ISR);
+		ioread32(priv->base + FTGMAC100_OFFSET_ISR);
 
-		/* Check RX and TX descriptors क्रम more work to करो */
-		अगर (ftgmac100_check_rx(priv) ||
+		/* Check RX and TX descriptors for more work to do */
+		if (ftgmac100_check_rx(priv) ||
 		    ftgmac100_tx_buf_cleanable(priv))
-			वापस budget;
+			return budget;
 
 		/* deschedule NAPI */
 		napi_complete(napi);
 
-		/* enable all पूर्णांकerrupts */
-		ioग_लिखो32(FTGMAC100_INT_ALL,
+		/* enable all interrupts */
+		iowrite32(FTGMAC100_INT_ALL,
 			  priv->base + FTGMAC100_OFFSET_IER);
-	पूर्ण
+	}
 
-	वापस work_करोne;
-पूर्ण
+	return work_done;
+}
 
-अटल पूर्णांक ftgmac100_init_all(काष्ठा ftgmac100 *priv, bool ignore_alloc_err)
-अणु
-	पूर्णांक err = 0;
+static int ftgmac100_init_all(struct ftgmac100 *priv, bool ignore_alloc_err)
+{
+	int err = 0;
 
 	/* Re-init descriptors (adjust queue sizes) */
 	ftgmac100_init_rings(priv);
 
 	/* Realloc rx descriptors */
 	err = ftgmac100_alloc_rx_buffers(priv);
-	अगर (err && !ignore_alloc_err)
-		वापस err;
+	if (err && !ignore_alloc_err)
+		return err;
 
 	/* Reinit and restart HW */
 	ftgmac100_init_hw(priv);
-	ftgmac100_config_छोड़ो(priv);
+	ftgmac100_config_pause(priv);
 	ftgmac100_start_hw(priv);
 
 	/* Re-enable the device */
 	napi_enable(&priv->napi);
-	netअगर_start_queue(priv->netdev);
+	netif_start_queue(priv->netdev);
 
-	/* Enable all पूर्णांकerrupts */
-	ioग_लिखो32(FTGMAC100_INT_ALL, priv->base + FTGMAC100_OFFSET_IER);
+	/* Enable all interrupts */
+	iowrite32(FTGMAC100_INT_ALL, priv->base + FTGMAC100_OFFSET_IER);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम ftgmac100_reset_task(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा ftgmac100 *priv = container_of(work, काष्ठा ftgmac100,
+static void ftgmac100_reset_task(struct work_struct *work)
+{
+	struct ftgmac100 *priv = container_of(work, struct ftgmac100,
 					      reset_task);
-	काष्ठा net_device *netdev = priv->netdev;
-	पूर्णांक err;
+	struct net_device *netdev = priv->netdev;
+	int err;
 
 	netdev_dbg(netdev, "Resetting NIC...\n");
 
 	/* Lock the world */
 	rtnl_lock();
-	अगर (netdev->phydev)
+	if (netdev->phydev)
 		mutex_lock(&netdev->phydev->lock);
-	अगर (priv->mii_bus)
+	if (priv->mii_bus)
 		mutex_lock(&priv->mii_bus->mdio_lock);
 
 
-	/* Check अगर the पूर्णांकerface is still up */
-	अगर (!netअगर_running(netdev))
-		जाओ bail;
+	/* Check if the interface is still up */
+	if (!netif_running(netdev))
+		goto bail;
 
 	/* Stop the network stack */
-	netअगर_trans_update(netdev);
+	netif_trans_update(netdev);
 	napi_disable(&priv->napi);
-	netअगर_tx_disable(netdev);
+	netif_tx_disable(netdev);
 
 	/* Stop and reset the MAC */
 	ftgmac100_stop_hw(priv);
 	err = ftgmac100_reset_and_config_mac(priv);
-	अगर (err) अणु
-		/* Not much we can करो ... it might come back... */
+	if (err) {
+		/* Not much we can do ... it might come back... */
 		netdev_err(netdev, "attempting to continue...\n");
-	पूर्ण
+	}
 
 	/* Free all rx and tx buffers */
-	ftgmac100_मुक्त_buffers(priv);
+	ftgmac100_free_buffers(priv);
 
 	/* Setup everything again and restart chip */
 	ftgmac100_init_all(priv, true);
 
 	netdev_dbg(netdev, "Reset done !\n");
  bail:
-	अगर (priv->mii_bus)
+	if (priv->mii_bus)
 		mutex_unlock(&priv->mii_bus->mdio_lock);
-	अगर (netdev->phydev)
+	if (netdev->phydev)
 		mutex_unlock(&netdev->phydev->lock);
 	rtnl_unlock();
-पूर्ण
+}
 
-अटल पूर्णांक ftgmac100_खोलो(काष्ठा net_device *netdev)
-अणु
-	काष्ठा ftgmac100 *priv = netdev_priv(netdev);
-	पूर्णांक err;
+static int ftgmac100_open(struct net_device *netdev)
+{
+	struct ftgmac100 *priv = netdev_priv(netdev);
+	int err;
 
 	/* Allocate ring buffers  */
 	err = ftgmac100_alloc_rings(priv);
-	अगर (err) अणु
+	if (err) {
 		netdev_err(netdev, "Failed to allocate descriptors\n");
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	/* When using NC-SI we क्रमce the speed to 100Mbit/s full duplex,
+	/* When using NC-SI we force the speed to 100Mbit/s full duplex,
 	 *
 	 * Otherwise we leave it set to 0 (no link), the link
 	 * message from the PHY layer will handle setting it up to
-	 * something अन्यथा अगर needed.
+	 * something else if needed.
 	 */
-	अगर (priv->use_ncsi) अणु
+	if (priv->use_ncsi) {
 		priv->cur_duplex = DUPLEX_FULL;
 		priv->cur_speed = SPEED_100;
-	पूर्ण अन्यथा अणु
+	} else {
 		priv->cur_duplex = 0;
 		priv->cur_speed = 0;
-	पूर्ण
+	}
 
 	/* Reset the hardware */
 	err = ftgmac100_reset_and_config_mac(priv);
-	अगर (err)
-		जाओ err_hw;
+	if (err)
+		goto err_hw;
 
 	/* Initialize NAPI */
-	netअगर_napi_add(netdev, &priv->napi, ftgmac100_poll, 64);
+	netif_napi_add(netdev, &priv->napi, ftgmac100_poll, 64);
 
-	/* Grab our पूर्णांकerrupt */
-	err = request_irq(netdev->irq, ftgmac100_पूर्णांकerrupt, 0, netdev->name, netdev);
-	अगर (err) अणु
+	/* Grab our interrupt */
+	err = request_irq(netdev->irq, ftgmac100_interrupt, 0, netdev->name, netdev);
+	if (err) {
 		netdev_err(netdev, "failed to request irq %d\n", netdev->irq);
-		जाओ err_irq;
-	पूर्ण
+		goto err_irq;
+	}
 
 	/* Start things up */
 	err = ftgmac100_init_all(priv, false);
-	अगर (err) अणु
+	if (err) {
 		netdev_err(netdev, "Failed to allocate packet buffers\n");
-		जाओ err_alloc;
-	पूर्ण
+		goto err_alloc;
+	}
 
-	अगर (netdev->phydev) अणु
+	if (netdev->phydev) {
 		/* If we have a PHY, start polling */
 		phy_start(netdev->phydev);
-	पूर्ण अन्यथा अगर (priv->use_ncsi) अणु
+	} else if (priv->use_ncsi) {
 		/* If using NC-SI, set our carrier on and start the stack */
-		netअगर_carrier_on(netdev);
+		netif_carrier_on(netdev);
 
 		/* Start the NCSI device */
 		err = ncsi_start_dev(priv->ndev);
-		अगर (err)
-			जाओ err_ncsi;
-	पूर्ण
+		if (err)
+			goto err_ncsi;
+	}
 
-	वापस 0;
+	return 0;
 
  err_ncsi:
 	napi_disable(&priv->napi);
-	netअगर_stop_queue(netdev);
+	netif_stop_queue(netdev);
  err_alloc:
-	ftgmac100_मुक्त_buffers(priv);
-	मुक्त_irq(netdev->irq, netdev);
+	ftgmac100_free_buffers(priv);
+	free_irq(netdev->irq, netdev);
  err_irq:
-	netअगर_napi_del(&priv->napi);
+	netif_napi_del(&priv->napi);
  err_hw:
-	ioग_लिखो32(0, priv->base + FTGMAC100_OFFSET_IER);
-	ftgmac100_मुक्त_rings(priv);
-	वापस err;
-पूर्ण
+	iowrite32(0, priv->base + FTGMAC100_OFFSET_IER);
+	ftgmac100_free_rings(priv);
+	return err;
+}
 
-अटल पूर्णांक ftgmac100_stop(काष्ठा net_device *netdev)
-अणु
-	काष्ठा ftgmac100 *priv = netdev_priv(netdev);
+static int ftgmac100_stop(struct net_device *netdev)
+{
+	struct ftgmac100 *priv = netdev_priv(netdev);
 
 	/* Note about the reset task: We are called with the rtnl lock
 	 * held, so we are synchronized against the core of the reset
 	 * task. We must not try to synchronously cancel it otherwise
-	 * we can deadlock. But since it will test क्रम netअगर_running()
-	 * which has alपढ़ोy been cleared by the net core, we करोn't
-	 * anything special to करो.
+	 * we can deadlock. But since it will test for netif_running()
+	 * which has already been cleared by the net core, we don't
+	 * anything special to do.
 	 */
 
-	/* disable all पूर्णांकerrupts */
-	ioग_लिखो32(0, priv->base + FTGMAC100_OFFSET_IER);
+	/* disable all interrupts */
+	iowrite32(0, priv->base + FTGMAC100_OFFSET_IER);
 
-	netअगर_stop_queue(netdev);
+	netif_stop_queue(netdev);
 	napi_disable(&priv->napi);
-	netअगर_napi_del(&priv->napi);
-	अगर (netdev->phydev)
+	netif_napi_del(&priv->napi);
+	if (netdev->phydev)
 		phy_stop(netdev->phydev);
-	अन्यथा अगर (priv->use_ncsi)
+	else if (priv->use_ncsi)
 		ncsi_stop_dev(priv->ndev);
 
 	ftgmac100_stop_hw(priv);
-	मुक्त_irq(netdev->irq, netdev);
-	ftgmac100_मुक्त_buffers(priv);
-	ftgmac100_मुक्त_rings(priv);
+	free_irq(netdev->irq, netdev);
+	ftgmac100_free_buffers(priv);
+	ftgmac100_free_rings(priv);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ftgmac100_tx_समयout(काष्ठा net_device *netdev, अचिन्हित पूर्णांक txqueue)
-अणु
-	काष्ठा ftgmac100 *priv = netdev_priv(netdev);
+static void ftgmac100_tx_timeout(struct net_device *netdev, unsigned int txqueue)
+{
+	struct ftgmac100 *priv = netdev_priv(netdev);
 
-	/* Disable all पूर्णांकerrupts */
-	ioग_लिखो32(0, priv->base + FTGMAC100_OFFSET_IER);
+	/* Disable all interrupts */
+	iowrite32(0, priv->base + FTGMAC100_OFFSET_IER);
 
-	/* Do the reset outside of पूर्णांकerrupt context */
+	/* Do the reset outside of interrupt context */
 	schedule_work(&priv->reset_task);
-पूर्ण
+}
 
-अटल पूर्णांक ftgmac100_set_features(काष्ठा net_device *netdev,
+static int ftgmac100_set_features(struct net_device *netdev,
 				  netdev_features_t features)
-अणु
-	काष्ठा ftgmac100 *priv = netdev_priv(netdev);
+{
+	struct ftgmac100 *priv = netdev_priv(netdev);
 	netdev_features_t changed = netdev->features ^ features;
 
-	अगर (!netअगर_running(netdev))
-		वापस 0;
+	if (!netif_running(netdev))
+		return 0;
 
 	/* Update the vlan filtering bit */
-	अगर (changed & NETIF_F_HW_VLAN_CTAG_RX) अणु
+	if (changed & NETIF_F_HW_VLAN_CTAG_RX) {
 		u32 maccr;
 
-		maccr = ioपढ़ो32(priv->base + FTGMAC100_OFFSET_MACCR);
-		अगर (priv->netdev->features & NETIF_F_HW_VLAN_CTAG_RX)
+		maccr = ioread32(priv->base + FTGMAC100_OFFSET_MACCR);
+		if (priv->netdev->features & NETIF_F_HW_VLAN_CTAG_RX)
 			maccr |= FTGMAC100_MACCR_RM_VLAN;
-		अन्यथा
+		else
 			maccr &= ~FTGMAC100_MACCR_RM_VLAN;
-		ioग_लिखो32(maccr, priv->base + FTGMAC100_OFFSET_MACCR);
-	पूर्ण
+		iowrite32(maccr, priv->base + FTGMAC100_OFFSET_MACCR);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_NET_POLL_CONTROLLER
-अटल व्योम ftgmac100_poll_controller(काष्ठा net_device *netdev)
-अणु
-	अचिन्हित दीर्घ flags;
+#ifdef CONFIG_NET_POLL_CONTROLLER
+static void ftgmac100_poll_controller(struct net_device *netdev)
+{
+	unsigned long flags;
 
 	local_irq_save(flags);
-	ftgmac100_पूर्णांकerrupt(netdev->irq, netdev);
+	ftgmac100_interrupt(netdev->irq, netdev);
 	local_irq_restore(flags);
-पूर्ण
-#पूर्ण_अगर
+}
+#endif
 
-अटल स्थिर काष्ठा net_device_ops ftgmac100_netdev_ops = अणु
-	.nकरो_खोलो		= ftgmac100_खोलो,
-	.nकरो_stop		= ftgmac100_stop,
-	.nकरो_start_xmit		= ftgmac100_hard_start_xmit,
-	.nकरो_set_mac_address	= ftgmac100_set_mac_addr,
-	.nकरो_validate_addr	= eth_validate_addr,
-	.nकरो_करो_ioctl		= phy_करो_ioctl,
-	.nकरो_tx_समयout		= ftgmac100_tx_समयout,
-	.nकरो_set_rx_mode	= ftgmac100_set_rx_mode,
-	.nकरो_set_features	= ftgmac100_set_features,
-#अगर_घोषित CONFIG_NET_POLL_CONTROLLER
-	.nकरो_poll_controller	= ftgmac100_poll_controller,
-#पूर्ण_अगर
-	.nकरो_vlan_rx_add_vid	= ncsi_vlan_rx_add_vid,
-	.nकरो_vlan_rx_समाप्त_vid	= ncsi_vlan_rx_समाप्त_vid,
-पूर्ण;
+static const struct net_device_ops ftgmac100_netdev_ops = {
+	.ndo_open		= ftgmac100_open,
+	.ndo_stop		= ftgmac100_stop,
+	.ndo_start_xmit		= ftgmac100_hard_start_xmit,
+	.ndo_set_mac_address	= ftgmac100_set_mac_addr,
+	.ndo_validate_addr	= eth_validate_addr,
+	.ndo_do_ioctl		= phy_do_ioctl,
+	.ndo_tx_timeout		= ftgmac100_tx_timeout,
+	.ndo_set_rx_mode	= ftgmac100_set_rx_mode,
+	.ndo_set_features	= ftgmac100_set_features,
+#ifdef CONFIG_NET_POLL_CONTROLLER
+	.ndo_poll_controller	= ftgmac100_poll_controller,
+#endif
+	.ndo_vlan_rx_add_vid	= ncsi_vlan_rx_add_vid,
+	.ndo_vlan_rx_kill_vid	= ncsi_vlan_rx_kill_vid,
+};
 
-अटल पूर्णांक ftgmac100_setup_mdio(काष्ठा net_device *netdev)
-अणु
-	काष्ठा ftgmac100 *priv = netdev_priv(netdev);
-	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(priv->dev);
-	काष्ठा device_node *np = pdev->dev.of_node;
-	काष्ठा device_node *mdio_np;
-	पूर्णांक i, err = 0;
+static int ftgmac100_setup_mdio(struct net_device *netdev)
+{
+	struct ftgmac100 *priv = netdev_priv(netdev);
+	struct platform_device *pdev = to_platform_device(priv->dev);
+	struct device_node *np = pdev->dev.of_node;
+	struct device_node *mdio_np;
+	int i, err = 0;
 	u32 reg;
 
 	/* initialize mdio bus */
 	priv->mii_bus = mdiobus_alloc();
-	अगर (!priv->mii_bus)
-		वापस -EIO;
+	if (!priv->mii_bus)
+		return -EIO;
 
-	अगर (of_device_is_compatible(np, "aspeed,ast2400-mac") ||
-	    of_device_is_compatible(np, "aspeed,ast2500-mac")) अणु
+	if (of_device_is_compatible(np, "aspeed,ast2400-mac") ||
+	    of_device_is_compatible(np, "aspeed,ast2500-mac")) {
 		/* The AST2600 has a separate MDIO controller */
 
 		/* For the AST2400 and AST2500 this driver only supports the
-		 * old MDIO पूर्णांकerface
+		 * old MDIO interface
 		 */
-		reg = ioपढ़ो32(priv->base + FTGMAC100_OFFSET_REVR);
+		reg = ioread32(priv->base + FTGMAC100_OFFSET_REVR);
 		reg &= ~FTGMAC100_REVR_NEW_MDIO_INTERFACE;
-		ioग_लिखो32(reg, priv->base + FTGMAC100_OFFSET_REVR);
-	पूर्ण
+		iowrite32(reg, priv->base + FTGMAC100_OFFSET_REVR);
+	}
 
 	priv->mii_bus->name = "ftgmac100_mdio";
-	snम_लिखो(priv->mii_bus->id, MII_BUS_ID_SIZE, "%s-%d",
+	snprintf(priv->mii_bus->id, MII_BUS_ID_SIZE, "%s-%d",
 		 pdev->name, pdev->id);
 	priv->mii_bus->parent = priv->dev;
 	priv->mii_bus->priv = priv->netdev;
-	priv->mii_bus->पढ़ो = ftgmac100_mdiobus_पढ़ो;
-	priv->mii_bus->ग_लिखो = ftgmac100_mdiobus_ग_लिखो;
+	priv->mii_bus->read = ftgmac100_mdiobus_read;
+	priv->mii_bus->write = ftgmac100_mdiobus_write;
 
-	क्रम (i = 0; i < PHY_MAX_ADDR; i++)
+	for (i = 0; i < PHY_MAX_ADDR; i++)
 		priv->mii_bus->irq[i] = PHY_POLL;
 
 	mdio_np = of_get_child_by_name(np, "mdio");
 
-	err = of_mdiobus_रेजिस्टर(priv->mii_bus, mdio_np);
-	अगर (err) अणु
+	err = of_mdiobus_register(priv->mii_bus, mdio_np);
+	if (err) {
 		dev_err(priv->dev, "Cannot register MDIO bus!\n");
-		जाओ err_रेजिस्टर_mdiobus;
-	पूर्ण
+		goto err_register_mdiobus;
+	}
 
 	of_node_put(mdio_np);
 
-	वापस 0;
+	return 0;
 
-err_रेजिस्टर_mdiobus:
-	mdiobus_मुक्त(priv->mii_bus);
-	वापस err;
-पूर्ण
+err_register_mdiobus:
+	mdiobus_free(priv->mii_bus);
+	return err;
+}
 
-अटल व्योम ftgmac100_phy_disconnect(काष्ठा net_device *netdev)
-अणु
-	अगर (!netdev->phydev)
-		वापस;
+static void ftgmac100_phy_disconnect(struct net_device *netdev)
+{
+	if (!netdev->phydev)
+		return;
 
 	phy_disconnect(netdev->phydev);
-पूर्ण
+}
 
-अटल व्योम ftgmac100_destroy_mdio(काष्ठा net_device *netdev)
-अणु
-	काष्ठा ftgmac100 *priv = netdev_priv(netdev);
+static void ftgmac100_destroy_mdio(struct net_device *netdev)
+{
+	struct ftgmac100 *priv = netdev_priv(netdev);
 
-	अगर (!priv->mii_bus)
-		वापस;
+	if (!priv->mii_bus)
+		return;
 
-	mdiobus_unरेजिस्टर(priv->mii_bus);
-	mdiobus_मुक्त(priv->mii_bus);
-पूर्ण
+	mdiobus_unregister(priv->mii_bus);
+	mdiobus_free(priv->mii_bus);
+}
 
-अटल व्योम ftgmac100_ncsi_handler(काष्ठा ncsi_dev *nd)
-अणु
-	अगर (unlikely(nd->state != ncsi_dev_state_functional))
-		वापस;
+static void ftgmac100_ncsi_handler(struct ncsi_dev *nd)
+{
+	if (unlikely(nd->state != ncsi_dev_state_functional))
+		return;
 
 	netdev_dbg(nd->dev, "NCSI interface %s\n",
 		   nd->link_up ? "up" : "down");
-पूर्ण
+}
 
-अटल पूर्णांक ftgmac100_setup_clk(काष्ठा ftgmac100 *priv)
-अणु
-	काष्ठा clk *clk;
-	पूर्णांक rc;
+static int ftgmac100_setup_clk(struct ftgmac100 *priv)
+{
+	struct clk *clk;
+	int rc;
 
-	clk = devm_clk_get(priv->dev, शून्य /* MACCLK */);
-	अगर (IS_ERR(clk))
-		वापस PTR_ERR(clk);
+	clk = devm_clk_get(priv->dev, NULL /* MACCLK */);
+	if (IS_ERR(clk))
+		return PTR_ERR(clk);
 	priv->clk = clk;
 	rc = clk_prepare_enable(priv->clk);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
-	/* Aspeed specअगरies a 100MHz घड़ी is required क्रम up to
+	/* Aspeed specifies a 100MHz clock is required for up to
 	 * 1000Mbit link speeds. As NCSI is limited to 100Mbit, 25MHz
 	 * is sufficient
 	 */
 	rc = clk_set_rate(priv->clk, priv->use_ncsi ? FTGMAC_25MHZ :
 			  FTGMAC_100MHZ);
-	अगर (rc)
-		जाओ cleanup_clk;
+	if (rc)
+		goto cleanup_clk;
 
-	/* RCLK is क्रम RMII, typically used क्रम NCSI. Optional because it's not
-	 * necessary अगर it's the AST2400 MAC, or the MAC is configured क्रम
+	/* RCLK is for RMII, typically used for NCSI. Optional because it's not
+	 * necessary if it's the AST2400 MAC, or the MAC is configured for
 	 * RGMII, or the controller is not an ASPEED-based controller.
 	 */
 	priv->rclk = devm_clk_get_optional(priv->dev, "RCLK");
 	rc = clk_prepare_enable(priv->rclk);
-	अगर (!rc)
-		वापस 0;
+	if (!rc)
+		return 0;
 
 cleanup_clk:
 	clk_disable_unprepare(priv->clk);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक ftgmac100_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा resource *res;
-	पूर्णांक irq;
-	काष्ठा net_device *netdev;
-	काष्ठा ftgmac100 *priv;
-	काष्ठा device_node *np;
-	पूर्णांक err = 0;
+static int ftgmac100_probe(struct platform_device *pdev)
+{
+	struct resource *res;
+	int irq;
+	struct net_device *netdev;
+	struct ftgmac100 *priv;
+	struct device_node *np;
+	int err = 0;
 
-	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
-	अगर (!res)
-		वापस -ENXIO;
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	if (!res)
+		return -ENXIO;
 
-	irq = platक्रमm_get_irq(pdev, 0);
-	अगर (irq < 0)
-		वापस irq;
+	irq = platform_get_irq(pdev, 0);
+	if (irq < 0)
+		return irq;
 
 	/* setup net_device */
-	netdev = alloc_etherdev(माप(*priv));
-	अगर (!netdev) अणु
+	netdev = alloc_etherdev(sizeof(*priv));
+	if (!netdev) {
 		err = -ENOMEM;
-		जाओ err_alloc_etherdev;
-	पूर्ण
+		goto err_alloc_etherdev;
+	}
 
 	SET_NETDEV_DEV(netdev, &pdev->dev);
 
 	netdev->ethtool_ops = &ftgmac100_ethtool_ops;
 	netdev->netdev_ops = &ftgmac100_netdev_ops;
-	netdev->watchकरोg_समयo = 5 * HZ;
+	netdev->watchdog_timeo = 5 * HZ;
 
-	platक्रमm_set_drvdata(pdev, netdev);
+	platform_set_drvdata(pdev, netdev);
 
-	/* setup निजी data */
+	/* setup private data */
 	priv = netdev_priv(netdev);
 	priv->netdev = netdev;
 	priv->dev = &pdev->dev;
@@ -1788,109 +1787,109 @@ cleanup_clk:
 	/* map io memory */
 	priv->res = request_mem_region(res->start, resource_size(res),
 				       dev_name(&pdev->dev));
-	अगर (!priv->res) अणु
+	if (!priv->res) {
 		dev_err(&pdev->dev, "Could not reserve memory region\n");
 		err = -ENOMEM;
-		जाओ err_req_mem;
-	पूर्ण
+		goto err_req_mem;
+	}
 
 	priv->base = ioremap(res->start, resource_size(res));
-	अगर (!priv->base) अणु
+	if (!priv->base) {
 		dev_err(&pdev->dev, "Failed to ioremap ethernet registers\n");
 		err = -EIO;
-		जाओ err_ioremap;
-	पूर्ण
+		goto err_ioremap;
+	}
 
 	netdev->irq = irq;
 
-	/* Enable छोड़ो */
-	priv->tx_छोड़ो = true;
-	priv->rx_छोड़ो = true;
-	priv->aneg_छोड़ो = true;
+	/* Enable pause */
+	priv->tx_pause = true;
+	priv->rx_pause = true;
+	priv->aneg_pause = true;
 
-	/* MAC address from chip or अक्रमom one */
+	/* MAC address from chip or random one */
 	ftgmac100_initial_mac(priv);
 
 	np = pdev->dev.of_node;
-	अगर (np && (of_device_is_compatible(np, "aspeed,ast2400-mac") ||
+	if (np && (of_device_is_compatible(np, "aspeed,ast2400-mac") ||
 		   of_device_is_compatible(np, "aspeed,ast2500-mac") ||
-		   of_device_is_compatible(np, "aspeed,ast2600-mac"))) अणु
-		priv->rxdes0_eकरोrr_mask = BIT(30);
-		priv->txdes0_eकरोtr_mask = BIT(30);
+		   of_device_is_compatible(np, "aspeed,ast2600-mac"))) {
+		priv->rxdes0_edorr_mask = BIT(30);
+		priv->txdes0_edotr_mask = BIT(30);
 		priv->is_aspeed = true;
 		/* Disable ast2600 problematic HW arbitration */
-		अगर (of_device_is_compatible(np, "aspeed,ast2600-mac")) अणु
-			ioग_लिखो32(FTGMAC100_TM_DEFAULT,
+		if (of_device_is_compatible(np, "aspeed,ast2600-mac")) {
+			iowrite32(FTGMAC100_TM_DEFAULT,
 				  priv->base + FTGMAC100_OFFSET_TM);
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		priv->rxdes0_eकरोrr_mask = BIT(15);
-		priv->txdes0_eकरोtr_mask = BIT(15);
-	पूर्ण
+		}
+	} else {
+		priv->rxdes0_edorr_mask = BIT(15);
+		priv->txdes0_edotr_mask = BIT(15);
+	}
 
-	अगर (np && of_get_property(np, "use-ncsi", शून्य)) अणु
-		अगर (!IS_ENABLED(CONFIG_NET_NCSI)) अणु
+	if (np && of_get_property(np, "use-ncsi", NULL)) {
+		if (!IS_ENABLED(CONFIG_NET_NCSI)) {
 			dev_err(&pdev->dev, "NCSI stack not enabled\n");
-			जाओ err_phy_connect;
-		पूर्ण
+			goto err_phy_connect;
+		}
 
 		dev_info(&pdev->dev, "Using NCSI interface\n");
 		priv->use_ncsi = true;
-		priv->ndev = ncsi_रेजिस्टर_dev(netdev, ftgmac100_ncsi_handler);
-		अगर (!priv->ndev)
-			जाओ err_phy_connect;
-	पूर्ण अन्यथा अगर (np && of_get_property(np, "phy-handle", शून्य)) अणु
-		काष्ठा phy_device *phy;
+		priv->ndev = ncsi_register_dev(netdev, ftgmac100_ncsi_handler);
+		if (!priv->ndev)
+			goto err_phy_connect;
+	} else if (np && of_get_property(np, "phy-handle", NULL)) {
+		struct phy_device *phy;
 
-		/* Support "mdio"/"phy" child nodes क्रम ast2400/2500 with
-		 * an embedded MDIO controller. Automatically scan the DTS क्रम
-		 * available PHYs and रेजिस्टर them.
+		/* Support "mdio"/"phy" child nodes for ast2400/2500 with
+		 * an embedded MDIO controller. Automatically scan the DTS for
+		 * available PHYs and register them.
 		 */
-		अगर (of_device_is_compatible(np, "aspeed,ast2400-mac") ||
-		    of_device_is_compatible(np, "aspeed,ast2500-mac")) अणु
+		if (of_device_is_compatible(np, "aspeed,ast2400-mac") ||
+		    of_device_is_compatible(np, "aspeed,ast2500-mac")) {
 			err = ftgmac100_setup_mdio(netdev);
-			अगर (err)
-				जाओ err_setup_mdio;
-		पूर्ण
+			if (err)
+				goto err_setup_mdio;
+		}
 
 		phy = of_phy_get_and_connect(priv->netdev, np,
 					     &ftgmac100_adjust_link);
-		अगर (!phy) अणु
+		if (!phy) {
 			dev_err(&pdev->dev, "Failed to connect to phy\n");
-			जाओ err_phy_connect;
-		पूर्ण
+			goto err_phy_connect;
+		}
 
 		/* Indicate that we support PAUSE frames (see comment in
 		 * Documentation/networking/phy.rst)
 		 */
-		phy_support_asym_छोड़ो(phy);
+		phy_support_asym_pause(phy);
 
 		/* Display what we found */
 		phy_attached_info(phy);
-	पूर्ण अन्यथा अगर (np && !of_get_child_by_name(np, "mdio")) अणु
+	} else if (np && !of_get_child_by_name(np, "mdio")) {
 		/* Support legacy ASPEED devicetree descriptions that decribe a
 		 * MAC with an embedded MDIO controller but have no "mdio"
-		 * child node. Automatically scan the MDIO bus क्रम available
+		 * child node. Automatically scan the MDIO bus for available
 		 * PHYs.
 		 */
 		priv->use_ncsi = false;
 		err = ftgmac100_setup_mdio(netdev);
-		अगर (err)
-			जाओ err_setup_mdio;
+		if (err)
+			goto err_setup_mdio;
 
 		err = ftgmac100_mii_probe(netdev);
-		अगर (err) अणु
+		if (err) {
 			dev_err(priv->dev, "MII probe failed!\n");
-			जाओ err_ncsi_dev;
-		पूर्ण
+			goto err_ncsi_dev;
+		}
 
-	पूर्ण
+	}
 
-	अगर (priv->is_aspeed) अणु
+	if (priv->is_aspeed) {
 		err = ftgmac100_setup_clk(priv);
-		अगर (err)
-			जाओ err_phy_connect;
-	पूर्ण
+		if (err)
+			goto err_phy_connect;
+	}
 
 	/* Default ring sizes */
 	priv->rx_q_entries = priv->new_rx_q_entries = DEF_RX_QUEUE_ENTRIES;
@@ -1901,63 +1900,63 @@ cleanup_clk:
 		NETIF_F_GRO | NETIF_F_SG | NETIF_F_HW_VLAN_CTAG_RX |
 		NETIF_F_HW_VLAN_CTAG_TX;
 
-	अगर (priv->use_ncsi)
+	if (priv->use_ncsi)
 		netdev->hw_features |= NETIF_F_HW_VLAN_CTAG_FILTER;
 
-	/* AST2400  करोesn't have working HW checksum generation */
-	अगर (np && (of_device_is_compatible(np, "aspeed,ast2400-mac")))
+	/* AST2400  doesn't have working HW checksum generation */
+	if (np && (of_device_is_compatible(np, "aspeed,ast2400-mac")))
 		netdev->hw_features &= ~NETIF_F_HW_CSUM;
-	अगर (np && of_get_property(np, "no-hw-checksum", शून्य))
+	if (np && of_get_property(np, "no-hw-checksum", NULL))
 		netdev->hw_features &= ~(NETIF_F_HW_CSUM | NETIF_F_RXCSUM);
 	netdev->features |= netdev->hw_features;
 
-	/* रेजिस्टर network device */
-	err = रेजिस्टर_netdev(netdev);
-	अगर (err) अणु
+	/* register network device */
+	err = register_netdev(netdev);
+	if (err) {
 		dev_err(&pdev->dev, "Failed to register netdev\n");
-		जाओ err_रेजिस्टर_netdev;
-	पूर्ण
+		goto err_register_netdev;
+	}
 
 	netdev_info(netdev, "irq %d, mapped at %p\n", netdev->irq, priv->base);
 
-	वापस 0;
+	return 0;
 
-err_रेजिस्टर_netdev:
+err_register_netdev:
 	clk_disable_unprepare(priv->rclk);
 	clk_disable_unprepare(priv->clk);
 err_phy_connect:
 	ftgmac100_phy_disconnect(netdev);
 err_ncsi_dev:
-	अगर (priv->ndev)
-		ncsi_unरेजिस्टर_dev(priv->ndev);
+	if (priv->ndev)
+		ncsi_unregister_dev(priv->ndev);
 	ftgmac100_destroy_mdio(netdev);
 err_setup_mdio:
 	iounmap(priv->base);
 err_ioremap:
 	release_resource(priv->res);
 err_req_mem:
-	मुक्त_netdev(netdev);
+	free_netdev(netdev);
 err_alloc_etherdev:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक ftgmac100_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा net_device *netdev;
-	काष्ठा ftgmac100 *priv;
+static int ftgmac100_remove(struct platform_device *pdev)
+{
+	struct net_device *netdev;
+	struct ftgmac100 *priv;
 
-	netdev = platक्रमm_get_drvdata(pdev);
+	netdev = platform_get_drvdata(pdev);
 	priv = netdev_priv(netdev);
 
-	अगर (priv->ndev)
-		ncsi_unरेजिस्टर_dev(priv->ndev);
-	unरेजिस्टर_netdev(netdev);
+	if (priv->ndev)
+		ncsi_unregister_dev(priv->ndev);
+	unregister_netdev(netdev);
 
 	clk_disable_unprepare(priv->rclk);
 	clk_disable_unprepare(priv->clk);
 
 	/* There's a small chance the reset task will have been re-queued,
-	 * during stop, make sure it's gone beक्रमe we मुक्त the काष्ठाure.
+	 * during stop, make sure it's gone before we free the structure.
 	 */
 	cancel_work_sync(&priv->reset_task);
 
@@ -1967,26 +1966,26 @@ err_alloc_etherdev:
 	iounmap(priv->base);
 	release_resource(priv->res);
 
-	netअगर_napi_del(&priv->napi);
-	मुक्त_netdev(netdev);
-	वापस 0;
-पूर्ण
+	netif_napi_del(&priv->napi);
+	free_netdev(netdev);
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id ftgmac100_of_match[] = अणु
-	अणु .compatible = "faraday,ftgmac100" पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct of_device_id ftgmac100_of_match[] = {
+	{ .compatible = "faraday,ftgmac100" },
+	{ }
+};
 MODULE_DEVICE_TABLE(of, ftgmac100_of_match);
 
-अटल काष्ठा platक्रमm_driver ftgmac100_driver = अणु
+static struct platform_driver ftgmac100_driver = {
 	.probe	= ftgmac100_probe,
-	.हटाओ	= ftgmac100_हटाओ,
-	.driver	= अणु
+	.remove	= ftgmac100_remove,
+	.driver	= {
 		.name		= DRV_NAME,
 		.of_match_table	= ftgmac100_of_match,
-	पूर्ण,
-पूर्ण;
-module_platक्रमm_driver(ftgmac100_driver);
+	},
+};
+module_platform_driver(ftgmac100_driver);
 
 MODULE_AUTHOR("Po-Yu Chuang <ratbert@faraday-tech.com>");
 MODULE_DESCRIPTION("FTGMAC100 driver");

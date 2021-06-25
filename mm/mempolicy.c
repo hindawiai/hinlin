@@ -1,400 +1,399 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Simple NUMA memory policy क्रम the Linux kernel.
+ * Simple NUMA memory policy for the Linux kernel.
  *
- * Copyright 2003,2004 Andi Kleen, SuSE Lअसल.
+ * Copyright 2003,2004 Andi Kleen, SuSE Labs.
  * (C) Copyright 2005 Christoph Lameter, Silicon Graphics, Inc.
  *
- * NUMA policy allows the user to give hपूर्णांकs in which node(s) memory should
+ * NUMA policy allows the user to give hints in which node(s) memory should
  * be allocated.
  *
  * Support four policies per VMA and per process:
  *
- * The VMA policy has priority over the process policy क्रम a page fault.
+ * The VMA policy has priority over the process policy for a page fault.
  *
- * पूर्णांकerleave     Allocate memory पूर्णांकerleaved over a set of nodes,
- *                with normal fallback अगर it fails.
- *                For VMA based allocations this पूर्णांकerleaves based on the
- *                offset पूर्णांकo the backing object or offset पूर्णांकo the mapping
- *                क्रम anonymous memory. For process policy an process counter
+ * interleave     Allocate memory interleaved over a set of nodes,
+ *                with normal fallback if it fails.
+ *                For VMA based allocations this interleaves based on the
+ *                offset into the backing object or offset into the mapping
+ *                for anonymous memory. For process policy an process counter
  *                is used.
  *
- * bind           Only allocate memory on a specअगरic set of nodes,
+ * bind           Only allocate memory on a specific set of nodes,
  *                no fallback.
  *                FIXME: memory is allocated starting with the first node
- *                to the last. It would be better अगर bind would truly restrict
+ *                to the last. It would be better if bind would truly restrict
  *                the allocation to memory nodes instead
  *
- * preferred       Try a specअगरic node first beक्रमe normal fallback.
- *                As a special हाल NUMA_NO_NODE here means करो the allocation
- *                on the local CPU. This is normally identical to शेष,
- *                but useful to set in a VMA when you have a non शेष
+ * preferred       Try a specific node first before normal fallback.
+ *                As a special case NUMA_NO_NODE here means do the allocation
+ *                on the local CPU. This is normally identical to default,
+ *                but useful to set in a VMA when you have a non default
  *                process policy.
  *
- * शेष        Allocate on the local node first, or when on a VMA
+ * default        Allocate on the local node first, or when on a VMA
  *                use the process policy. This is what Linux always did
- *		  in a NUMA aware kernel and still करोes by, ahem, शेष.
+ *		  in a NUMA aware kernel and still does by, ahem, default.
  *
- * The process policy is applied क्रम most non पूर्णांकerrupt memory allocations
+ * The process policy is applied for most non interrupt memory allocations
  * in that process' context. Interrupts ignore the policies and always
- * try to allocate on the local CPU. The VMA policy is only applied क्रम memory
- * allocations क्रम a VMA in the VM.
+ * try to allocate on the local CPU. The VMA policy is only applied for memory
+ * allocations for a VMA in the VM.
  *
- * Currently there are a few corner हालs in swapping where the policy
+ * Currently there are a few corner cases in swapping where the policy
  * is not applied, but the majority should be handled. When process policy
  * is used it is not remembered over swap outs/swap ins.
  *
- * Only the highest zone in the zone hierarchy माला_लो policied. Allocations
- * requesting a lower zone just use शेष policy. This implies that
- * on प्रणालीs with highmem kernel lowmem allocation करोn't get policied.
+ * Only the highest zone in the zone hierarchy gets policied. Allocations
+ * requesting a lower zone just use default policy. This implies that
+ * on systems with highmem kernel lowmem allocation don't get policied.
  * Same with GFP_DMA allocations.
  *
- * For shmfs/पंचांगpfs/hugetlbfs shared memory the policy is shared between
+ * For shmfs/tmpfs/hugetlbfs shared memory the policy is shared between
  * all users and remembered even when nobody has memory mapped.
  */
 
 /* Notebook:
-   fix mmap पढ़ोahead to honour policy and enable policy क्रम any page cache
+   fix mmap readahead to honour policy and enable policy for any page cache
    object
-   statistics क्रम bigpages
-   global policy क्रम page cache? currently it uses process policy. Requires
+   statistics for bigpages
+   global policy for page cache? currently it uses process policy. Requires
    first item above.
-   handle mremap क्रम shared memory (currently ignored क्रम the policy)
-   grows करोwn?
+   handle mremap for shared memory (currently ignored for the policy)
+   grows down?
    make bind policy root only? It can trigger oom much faster and the
    kernel is not always grateful with that.
 */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/mempolicy.h>
-#समावेश <linux/pagewalk.h>
-#समावेश <linux/highस्मृति.स>
-#समावेश <linux/hugetlb.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/sched/mm.h>
-#समावेश <linux/sched/numa_balancing.h>
-#समावेश <linux/sched/task.h>
-#समावेश <linux/nodemask.h>
-#समावेश <linux/cpuset.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/export.h>
-#समावेश <linux/nsproxy.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/init.h>
-#समावेश <linux/compat.h>
-#समावेश <linux/ptrace.h>
-#समावेश <linux/swap.h>
-#समावेश <linux/seq_file.h>
-#समावेश <linux/proc_fs.h>
-#समावेश <linux/migrate.h>
-#समावेश <linux/ksm.h>
-#समावेश <linux/rmap.h>
-#समावेश <linux/security.h>
-#समावेश <linux/syscalls.h>
-#समावेश <linux/प्रकार.स>
-#समावेश <linux/mm_अंतरभूत.h>
-#समावेश <linux/mmu_notअगरier.h>
-#समावेश <linux/prपूर्णांकk.h>
-#समावेश <linux/swapops.h>
+#include <linux/mempolicy.h>
+#include <linux/pagewalk.h>
+#include <linux/highmem.h>
+#include <linux/hugetlb.h>
+#include <linux/kernel.h>
+#include <linux/sched.h>
+#include <linux/sched/mm.h>
+#include <linux/sched/numa_balancing.h>
+#include <linux/sched/task.h>
+#include <linux/nodemask.h>
+#include <linux/cpuset.h>
+#include <linux/slab.h>
+#include <linux/string.h>
+#include <linux/export.h>
+#include <linux/nsproxy.h>
+#include <linux/interrupt.h>
+#include <linux/init.h>
+#include <linux/compat.h>
+#include <linux/ptrace.h>
+#include <linux/swap.h>
+#include <linux/seq_file.h>
+#include <linux/proc_fs.h>
+#include <linux/migrate.h>
+#include <linux/ksm.h>
+#include <linux/rmap.h>
+#include <linux/security.h>
+#include <linux/syscalls.h>
+#include <linux/ctype.h>
+#include <linux/mm_inline.h>
+#include <linux/mmu_notifier.h>
+#include <linux/printk.h>
+#include <linux/swapops.h>
 
-#समावेश <यंत्र/tlbflush.h>
-#समावेश <linux/uaccess.h>
+#include <asm/tlbflush.h>
+#include <linux/uaccess.h>
 
-#समावेश "internal.h"
+#include "internal.h"
 
 /* Internal flags */
-#घोषणा MPOL_MF_DISCONTIG_OK (MPOL_MF_INTERNAL << 0)	/* Skip checks क्रम continuous vmas */
-#घोषणा MPOL_MF_INVERT (MPOL_MF_INTERNAL << 1)		/* Invert check क्रम nodemask */
+#define MPOL_MF_DISCONTIG_OK (MPOL_MF_INTERNAL << 0)	/* Skip checks for continuous vmas */
+#define MPOL_MF_INVERT (MPOL_MF_INTERNAL << 1)		/* Invert check for nodemask */
 
-अटल काष्ठा kmem_cache *policy_cache;
-अटल काष्ठा kmem_cache *sn_cache;
+static struct kmem_cache *policy_cache;
+static struct kmem_cache *sn_cache;
 
-/* Highest zone. An specअगरic allocation क्रम a zone below that is not
+/* Highest zone. An specific allocation for a zone below that is not
    policied. */
-क्रमागत zone_type policy_zone = 0;
+enum zone_type policy_zone = 0;
 
 /*
- * run-समय प्रणाली-wide शेष policy => local allocation
+ * run-time system-wide default policy => local allocation
  */
-अटल काष्ठा mempolicy शेष_policy = अणु
-	.refcnt = ATOMIC_INIT(1), /* never मुक्त it */
+static struct mempolicy default_policy = {
+	.refcnt = ATOMIC_INIT(1), /* never free it */
 	.mode = MPOL_PREFERRED,
 	.flags = MPOL_F_LOCAL,
-पूर्ण;
+};
 
-अटल काष्ठा mempolicy preferred_node_policy[MAX_NUMNODES];
+static struct mempolicy preferred_node_policy[MAX_NUMNODES];
 
 /**
- * numa_map_to_online_node - Find बंदst online node
+ * numa_map_to_online_node - Find closest online node
  * @node: Node id to start the search
  *
- * Lookup the next बंदst node by distance अगर @nid is not online.
+ * Lookup the next closest node by distance if @nid is not online.
  */
-पूर्णांक numa_map_to_online_node(पूर्णांक node)
-अणु
-	पूर्णांक min_dist = पूर्णांक_उच्च, dist, n, min_node;
+int numa_map_to_online_node(int node)
+{
+	int min_dist = INT_MAX, dist, n, min_node;
 
-	अगर (node == NUMA_NO_NODE || node_online(node))
-		वापस node;
+	if (node == NUMA_NO_NODE || node_online(node))
+		return node;
 
 	min_node = node;
-	क्रम_each_online_node(n) अणु
+	for_each_online_node(n) {
 		dist = node_distance(node, n);
-		अगर (dist < min_dist) अणु
+		if (dist < min_dist) {
 			min_dist = dist;
 			min_node = n;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस min_node;
-पूर्ण
+	return min_node;
+}
 EXPORT_SYMBOL_GPL(numa_map_to_online_node);
 
-काष्ठा mempolicy *get_task_policy(काष्ठा task_काष्ठा *p)
-अणु
-	काष्ठा mempolicy *pol = p->mempolicy;
-	पूर्णांक node;
+struct mempolicy *get_task_policy(struct task_struct *p)
+{
+	struct mempolicy *pol = p->mempolicy;
+	int node;
 
-	अगर (pol)
-		वापस pol;
+	if (pol)
+		return pol;
 
 	node = numa_node_id();
-	अगर (node != NUMA_NO_NODE) अणु
+	if (node != NUMA_NO_NODE) {
 		pol = &preferred_node_policy[node];
 		/* preferred_node_policy is not initialised early in boot */
-		अगर (pol->mode)
-			वापस pol;
-	पूर्ण
+		if (pol->mode)
+			return pol;
+	}
 
-	वापस &शेष_policy;
-पूर्ण
+	return &default_policy;
+}
 
-अटल स्थिर काष्ठा mempolicy_operations अणु
-	पूर्णांक (*create)(काष्ठा mempolicy *pol, स्थिर nodemask_t *nodes);
-	व्योम (*rebind)(काष्ठा mempolicy *pol, स्थिर nodemask_t *nodes);
-पूर्ण mpol_ops[MPOL_MAX];
+static const struct mempolicy_operations {
+	int (*create)(struct mempolicy *pol, const nodemask_t *nodes);
+	void (*rebind)(struct mempolicy *pol, const nodemask_t *nodes);
+} mpol_ops[MPOL_MAX];
 
-अटल अंतरभूत पूर्णांक mpol_store_user_nodemask(स्थिर काष्ठा mempolicy *pol)
-अणु
-	वापस pol->flags & MPOL_MODE_FLAGS;
-पूर्ण
+static inline int mpol_store_user_nodemask(const struct mempolicy *pol)
+{
+	return pol->flags & MPOL_MODE_FLAGS;
+}
 
-अटल व्योम mpol_relative_nodemask(nodemask_t *ret, स्थिर nodemask_t *orig,
-				   स्थिर nodemask_t *rel)
-अणु
-	nodemask_t पंचांगp;
-	nodes_fold(पंचांगp, *orig, nodes_weight(*rel));
-	nodes_onto(*ret, पंचांगp, *rel);
-पूर्ण
+static void mpol_relative_nodemask(nodemask_t *ret, const nodemask_t *orig,
+				   const nodemask_t *rel)
+{
+	nodemask_t tmp;
+	nodes_fold(tmp, *orig, nodes_weight(*rel));
+	nodes_onto(*ret, tmp, *rel);
+}
 
-अटल पूर्णांक mpol_new_पूर्णांकerleave(काष्ठा mempolicy *pol, स्थिर nodemask_t *nodes)
-अणु
-	अगर (nodes_empty(*nodes))
-		वापस -EINVAL;
+static int mpol_new_interleave(struct mempolicy *pol, const nodemask_t *nodes)
+{
+	if (nodes_empty(*nodes))
+		return -EINVAL;
 	pol->v.nodes = *nodes;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mpol_new_preferred(काष्ठा mempolicy *pol, स्थिर nodemask_t *nodes)
-अणु
-	अगर (!nodes)
+static int mpol_new_preferred(struct mempolicy *pol, const nodemask_t *nodes)
+{
+	if (!nodes)
 		pol->flags |= MPOL_F_LOCAL;	/* local allocation */
-	अन्यथा अगर (nodes_empty(*nodes))
-		वापस -EINVAL;			/*  no allowed nodes */
-	अन्यथा
+	else if (nodes_empty(*nodes))
+		return -EINVAL;			/*  no allowed nodes */
+	else
 		pol->v.preferred_node = first_node(*nodes);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mpol_new_bind(काष्ठा mempolicy *pol, स्थिर nodemask_t *nodes)
-अणु
-	अगर (nodes_empty(*nodes))
-		वापस -EINVAL;
+static int mpol_new_bind(struct mempolicy *pol, const nodemask_t *nodes)
+{
+	if (nodes_empty(*nodes))
+		return -EINVAL;
 	pol->v.nodes = *nodes;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * mpol_set_nodemask is called after mpol_new() to set up the nodemask, अगर
- * any, क्रम the new policy.  mpol_new() has alपढ़ोy validated the nodes
+ * mpol_set_nodemask is called after mpol_new() to set up the nodemask, if
+ * any, for the new policy.  mpol_new() has already validated the nodes
  * parameter with respect to the policy mode and flags.  But, we need to
  * handle an empty nodemask with MPOL_PREFERRED here.
  *
  * Must be called holding task's alloc_lock to protect task's mems_allowed
- * and mempolicy.  May also be called holding the mmap_lock क्रम ग_लिखो.
+ * and mempolicy.  May also be called holding the mmap_lock for write.
  */
-अटल पूर्णांक mpol_set_nodemask(काष्ठा mempolicy *pol,
-		     स्थिर nodemask_t *nodes, काष्ठा nodemask_scratch *nsc)
-अणु
-	पूर्णांक ret;
+static int mpol_set_nodemask(struct mempolicy *pol,
+		     const nodemask_t *nodes, struct nodemask_scratch *nsc)
+{
+	int ret;
 
-	/* अगर mode is MPOL_DEFAULT, pol is शून्य. This is right. */
-	अगर (pol == शून्य)
-		वापस 0;
+	/* if mode is MPOL_DEFAULT, pol is NULL. This is right. */
+	if (pol == NULL)
+		return 0;
 	/* Check N_MEMORY */
 	nodes_and(nsc->mask1,
 		  cpuset_current_mems_allowed, node_states[N_MEMORY]);
 
 	VM_BUG_ON(!nodes);
-	अगर (pol->mode == MPOL_PREFERRED && nodes_empty(*nodes))
-		nodes = शून्य;	/* explicit local allocation */
-	अन्यथा अणु
-		अगर (pol->flags & MPOL_F_RELATIVE_NODES)
+	if (pol->mode == MPOL_PREFERRED && nodes_empty(*nodes))
+		nodes = NULL;	/* explicit local allocation */
+	else {
+		if (pol->flags & MPOL_F_RELATIVE_NODES)
 			mpol_relative_nodemask(&nsc->mask2, nodes, &nsc->mask1);
-		अन्यथा
+		else
 			nodes_and(nsc->mask2, *nodes, nsc->mask1);
 
-		अगर (mpol_store_user_nodemask(pol))
+		if (mpol_store_user_nodemask(pol))
 			pol->w.user_nodemask = *nodes;
-		अन्यथा
+		else
 			pol->w.cpuset_mems_allowed =
 						cpuset_current_mems_allowed;
-	पूर्ण
+	}
 
-	अगर (nodes)
+	if (nodes)
 		ret = mpol_ops[pol->mode].create(pol, &nsc->mask2);
-	अन्यथा
-		ret = mpol_ops[pol->mode].create(pol, शून्य);
-	वापस ret;
-पूर्ण
+	else
+		ret = mpol_ops[pol->mode].create(pol, NULL);
+	return ret;
+}
 
 /*
- * This function just creates a new policy, करोes some check and simple
+ * This function just creates a new policy, does some check and simple
  * initialization. You must invoke mpol_set_nodemask() to set nodes.
  */
-अटल काष्ठा mempolicy *mpol_new(अचिन्हित लघु mode, अचिन्हित लघु flags,
+static struct mempolicy *mpol_new(unsigned short mode, unsigned short flags,
 				  nodemask_t *nodes)
-अणु
-	काष्ठा mempolicy *policy;
+{
+	struct mempolicy *policy;
 
 	pr_debug("setting mode %d flags %d nodes[0] %lx\n",
 		 mode, flags, nodes ? nodes_addr(*nodes)[0] : NUMA_NO_NODE);
 
-	अगर (mode == MPOL_DEFAULT) अणु
-		अगर (nodes && !nodes_empty(*nodes))
-			वापस ERR_PTR(-EINVAL);
-		वापस शून्य;
-	पूर्ण
+	if (mode == MPOL_DEFAULT) {
+		if (nodes && !nodes_empty(*nodes))
+			return ERR_PTR(-EINVAL);
+		return NULL;
+	}
 	VM_BUG_ON(!nodes);
 
 	/*
 	 * MPOL_PREFERRED cannot be used with MPOL_F_STATIC_NODES or
-	 * MPOL_F_RELATIVE_NODES अगर the nodemask is empty (local allocation).
-	 * All other modes require a valid poपूर्णांकer to a non-empty nodemask.
+	 * MPOL_F_RELATIVE_NODES if the nodemask is empty (local allocation).
+	 * All other modes require a valid pointer to a non-empty nodemask.
 	 */
-	अगर (mode == MPOL_PREFERRED) अणु
-		अगर (nodes_empty(*nodes)) अणु
-			अगर (((flags & MPOL_F_STATIC_NODES) ||
+	if (mode == MPOL_PREFERRED) {
+		if (nodes_empty(*nodes)) {
+			if (((flags & MPOL_F_STATIC_NODES) ||
 			     (flags & MPOL_F_RELATIVE_NODES)))
-				वापस ERR_PTR(-EINVAL);
-		पूर्ण
-	पूर्ण अन्यथा अगर (mode == MPOL_LOCAL) अणु
-		अगर (!nodes_empty(*nodes) ||
+				return ERR_PTR(-EINVAL);
+		}
+	} else if (mode == MPOL_LOCAL) {
+		if (!nodes_empty(*nodes) ||
 		    (flags & MPOL_F_STATIC_NODES) ||
 		    (flags & MPOL_F_RELATIVE_NODES))
-			वापस ERR_PTR(-EINVAL);
+			return ERR_PTR(-EINVAL);
 		mode = MPOL_PREFERRED;
-	पूर्ण अन्यथा अगर (nodes_empty(*nodes))
-		वापस ERR_PTR(-EINVAL);
+	} else if (nodes_empty(*nodes))
+		return ERR_PTR(-EINVAL);
 	policy = kmem_cache_alloc(policy_cache, GFP_KERNEL);
-	अगर (!policy)
-		वापस ERR_PTR(-ENOMEM);
+	if (!policy)
+		return ERR_PTR(-ENOMEM);
 	atomic_set(&policy->refcnt, 1);
 	policy->mode = mode;
 	policy->flags = flags;
 
-	वापस policy;
-पूर्ण
+	return policy;
+}
 
-/* Slow path of a mpol deकाष्ठाor. */
-व्योम __mpol_put(काष्ठा mempolicy *p)
-अणु
-	अगर (!atomic_dec_and_test(&p->refcnt))
-		वापस;
-	kmem_cache_मुक्त(policy_cache, p);
-पूर्ण
+/* Slow path of a mpol destructor. */
+void __mpol_put(struct mempolicy *p)
+{
+	if (!atomic_dec_and_test(&p->refcnt))
+		return;
+	kmem_cache_free(policy_cache, p);
+}
 
-अटल व्योम mpol_rebind_शेष(काष्ठा mempolicy *pol, स्थिर nodemask_t *nodes)
-अणु
-पूर्ण
+static void mpol_rebind_default(struct mempolicy *pol, const nodemask_t *nodes)
+{
+}
 
-अटल व्योम mpol_rebind_nodemask(काष्ठा mempolicy *pol, स्थिर nodemask_t *nodes)
-अणु
-	nodemask_t पंचांगp;
+static void mpol_rebind_nodemask(struct mempolicy *pol, const nodemask_t *nodes)
+{
+	nodemask_t tmp;
 
-	अगर (pol->flags & MPOL_F_STATIC_NODES)
-		nodes_and(पंचांगp, pol->w.user_nodemask, *nodes);
-	अन्यथा अगर (pol->flags & MPOL_F_RELATIVE_NODES)
-		mpol_relative_nodemask(&पंचांगp, &pol->w.user_nodemask, nodes);
-	अन्यथा अणु
-		nodes_remap(पंचांगp, pol->v.nodes, pol->w.cpuset_mems_allowed,
+	if (pol->flags & MPOL_F_STATIC_NODES)
+		nodes_and(tmp, pol->w.user_nodemask, *nodes);
+	else if (pol->flags & MPOL_F_RELATIVE_NODES)
+		mpol_relative_nodemask(&tmp, &pol->w.user_nodemask, nodes);
+	else {
+		nodes_remap(tmp, pol->v.nodes, pol->w.cpuset_mems_allowed,
 								*nodes);
 		pol->w.cpuset_mems_allowed = *nodes;
-	पूर्ण
+	}
 
-	अगर (nodes_empty(पंचांगp))
-		पंचांगp = *nodes;
+	if (nodes_empty(tmp))
+		tmp = *nodes;
 
-	pol->v.nodes = पंचांगp;
-पूर्ण
+	pol->v.nodes = tmp;
+}
 
-अटल व्योम mpol_rebind_preferred(काष्ठा mempolicy *pol,
-						स्थिर nodemask_t *nodes)
-अणु
-	nodemask_t पंचांगp;
+static void mpol_rebind_preferred(struct mempolicy *pol,
+						const nodemask_t *nodes)
+{
+	nodemask_t tmp;
 
-	अगर (pol->flags & MPOL_F_STATIC_NODES) अणु
-		पूर्णांक node = first_node(pol->w.user_nodemask);
+	if (pol->flags & MPOL_F_STATIC_NODES) {
+		int node = first_node(pol->w.user_nodemask);
 
-		अगर (node_isset(node, *nodes)) अणु
+		if (node_isset(node, *nodes)) {
 			pol->v.preferred_node = node;
 			pol->flags &= ~MPOL_F_LOCAL;
-		पूर्ण अन्यथा
+		} else
 			pol->flags |= MPOL_F_LOCAL;
-	पूर्ण अन्यथा अगर (pol->flags & MPOL_F_RELATIVE_NODES) अणु
-		mpol_relative_nodemask(&पंचांगp, &pol->w.user_nodemask, nodes);
-		pol->v.preferred_node = first_node(पंचांगp);
-	पूर्ण अन्यथा अगर (!(pol->flags & MPOL_F_LOCAL)) अणु
+	} else if (pol->flags & MPOL_F_RELATIVE_NODES) {
+		mpol_relative_nodemask(&tmp, &pol->w.user_nodemask, nodes);
+		pol->v.preferred_node = first_node(tmp);
+	} else if (!(pol->flags & MPOL_F_LOCAL)) {
 		pol->v.preferred_node = node_remap(pol->v.preferred_node,
 						   pol->w.cpuset_mems_allowed,
 						   *nodes);
 		pol->w.cpuset_mems_allowed = *nodes;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
- * mpol_rebind_policy - Migrate a policy to a dअगरferent set of nodes
+ * mpol_rebind_policy - Migrate a policy to a different set of nodes
  *
- * Per-vma policies are रक्षित by mmap_lock. Allocations using per-task
- * policies are रक्षित by task->mems_allowed_seq to prevent a premature
- * OOM/allocation failure due to parallel nodemask modअगरication.
+ * Per-vma policies are protected by mmap_lock. Allocations using per-task
+ * policies are protected by task->mems_allowed_seq to prevent a premature
+ * OOM/allocation failure due to parallel nodemask modification.
  */
-अटल व्योम mpol_rebind_policy(काष्ठा mempolicy *pol, स्थिर nodemask_t *newmask)
-अणु
-	अगर (!pol)
-		वापस;
-	अगर (!mpol_store_user_nodemask(pol) && !(pol->flags & MPOL_F_LOCAL) &&
+static void mpol_rebind_policy(struct mempolicy *pol, const nodemask_t *newmask)
+{
+	if (!pol)
+		return;
+	if (!mpol_store_user_nodemask(pol) && !(pol->flags & MPOL_F_LOCAL) &&
 	    nodes_equal(pol->w.cpuset_mems_allowed, *newmask))
-		वापस;
+		return;
 
 	mpol_ops[pol->mode].rebind(pol, newmask);
-पूर्ण
+}
 
 /*
- * Wrapper क्रम mpol_rebind_policy() that just requires task
- * poपूर्णांकer, and updates task mempolicy.
+ * Wrapper for mpol_rebind_policy() that just requires task
+ * pointer, and updates task mempolicy.
  *
  * Called with task's alloc_lock held.
  */
 
-व्योम mpol_rebind_task(काष्ठा task_काष्ठा *tsk, स्थिर nodemask_t *new)
-अणु
+void mpol_rebind_task(struct task_struct *tsk, const nodemask_t *new)
+{
 	mpol_rebind_policy(tsk->mempolicy, new);
-पूर्ण
+}
 
 /*
  * Rebind each vma in mm to new nodemask.
@@ -402,215 +401,215 @@ EXPORT_SYMBOL_GPL(numa_map_to_online_node);
  * Call holding a reference to mm.  Takes mm->mmap_lock during call.
  */
 
-व्योम mpol_rebind_mm(काष्ठा mm_काष्ठा *mm, nodemask_t *new)
-अणु
-	काष्ठा vm_area_काष्ठा *vma;
+void mpol_rebind_mm(struct mm_struct *mm, nodemask_t *new)
+{
+	struct vm_area_struct *vma;
 
-	mmap_ग_लिखो_lock(mm);
-	क्रम (vma = mm->mmap; vma; vma = vma->vm_next)
+	mmap_write_lock(mm);
+	for (vma = mm->mmap; vma; vma = vma->vm_next)
 		mpol_rebind_policy(vma->vm_policy, new);
-	mmap_ग_लिखो_unlock(mm);
-पूर्ण
+	mmap_write_unlock(mm);
+}
 
-अटल स्थिर काष्ठा mempolicy_operations mpol_ops[MPOL_MAX] = अणु
-	[MPOL_DEFAULT] = अणु
-		.rebind = mpol_rebind_शेष,
-	पूर्ण,
-	[MPOL_INTERLEAVE] = अणु
-		.create = mpol_new_पूर्णांकerleave,
+static const struct mempolicy_operations mpol_ops[MPOL_MAX] = {
+	[MPOL_DEFAULT] = {
+		.rebind = mpol_rebind_default,
+	},
+	[MPOL_INTERLEAVE] = {
+		.create = mpol_new_interleave,
 		.rebind = mpol_rebind_nodemask,
-	पूर्ण,
-	[MPOL_PREFERRED] = अणु
+	},
+	[MPOL_PREFERRED] = {
 		.create = mpol_new_preferred,
 		.rebind = mpol_rebind_preferred,
-	पूर्ण,
-	[MPOL_BIND] = अणु
+	},
+	[MPOL_BIND] = {
 		.create = mpol_new_bind,
 		.rebind = mpol_rebind_nodemask,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक migrate_page_add(काष्ठा page *page, काष्ठा list_head *pagelist,
-				अचिन्हित दीर्घ flags);
+static int migrate_page_add(struct page *page, struct list_head *pagelist,
+				unsigned long flags);
 
-काष्ठा queue_pages अणु
-	काष्ठा list_head *pagelist;
-	अचिन्हित दीर्घ flags;
+struct queue_pages {
+	struct list_head *pagelist;
+	unsigned long flags;
 	nodemask_t *nmask;
-	अचिन्हित दीर्घ start;
-	अचिन्हित दीर्घ end;
-	काष्ठा vm_area_काष्ठा *first;
-पूर्ण;
+	unsigned long start;
+	unsigned long end;
+	struct vm_area_struct *first;
+};
 
 /*
- * Check अगर the page's nid is in qp->nmask.
+ * Check if the page's nid is in qp->nmask.
  *
- * If MPOL_MF_INVERT is set in qp->flags, check अगर the nid is
+ * If MPOL_MF_INVERT is set in qp->flags, check if the nid is
  * in the invert of qp->nmask.
  */
-अटल अंतरभूत bool queue_pages_required(काष्ठा page *page,
-					काष्ठा queue_pages *qp)
-अणु
-	पूर्णांक nid = page_to_nid(page);
-	अचिन्हित दीर्घ flags = qp->flags;
+static inline bool queue_pages_required(struct page *page,
+					struct queue_pages *qp)
+{
+	int nid = page_to_nid(page);
+	unsigned long flags = qp->flags;
 
-	वापस node_isset(nid, *qp->nmask) == !(flags & MPOL_MF_INVERT);
-पूर्ण
+	return node_isset(nid, *qp->nmask) == !(flags & MPOL_MF_INVERT);
+}
 
 /*
- * queue_pages_pmd() has four possible वापस values:
+ * queue_pages_pmd() has four possible return values:
  * 0 - pages are placed on the right node or queued successfully.
  * 1 - there is unmovable page, and MPOL_MF_MOVE* & MPOL_MF_STRICT were
- *     specअगरied.
+ *     specified.
  * 2 - THP was split.
- * -EIO - is migration entry or only MPOL_MF_STRICT was specअगरied and an
- *        existing page was alपढ़ोy on a node that करोes not follow the
+ * -EIO - is migration entry or only MPOL_MF_STRICT was specified and an
+ *        existing page was already on a node that does not follow the
  *        policy.
  */
-अटल पूर्णांक queue_pages_pmd(pmd_t *pmd, spinlock_t *ptl, अचिन्हित दीर्घ addr,
-				अचिन्हित दीर्घ end, काष्ठा mm_walk *walk)
+static int queue_pages_pmd(pmd_t *pmd, spinlock_t *ptl, unsigned long addr,
+				unsigned long end, struct mm_walk *walk)
 	__releases(ptl)
-अणु
-	पूर्णांक ret = 0;
-	काष्ठा page *page;
-	काष्ठा queue_pages *qp = walk->निजी;
-	अचिन्हित दीर्घ flags;
+{
+	int ret = 0;
+	struct page *page;
+	struct queue_pages *qp = walk->private;
+	unsigned long flags;
 
-	अगर (unlikely(is_pmd_migration_entry(*pmd))) अणु
+	if (unlikely(is_pmd_migration_entry(*pmd))) {
 		ret = -EIO;
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 	page = pmd_page(*pmd);
-	अगर (is_huge_zero_page(page)) अणु
+	if (is_huge_zero_page(page)) {
 		spin_unlock(ptl);
-		__split_huge_pmd(walk->vma, pmd, addr, false, शून्य);
+		__split_huge_pmd(walk->vma, pmd, addr, false, NULL);
 		ret = 2;
-		जाओ out;
-	पूर्ण
-	अगर (!queue_pages_required(page, qp))
-		जाओ unlock;
+		goto out;
+	}
+	if (!queue_pages_required(page, qp))
+		goto unlock;
 
 	flags = qp->flags;
 	/* go to thp migration */
-	अगर (flags & (MPOL_MF_MOVE | MPOL_MF_MOVE_ALL)) अणु
-		अगर (!vma_migratable(walk->vma) ||
-		    migrate_page_add(page, qp->pagelist, flags)) अणु
+	if (flags & (MPOL_MF_MOVE | MPOL_MF_MOVE_ALL)) {
+		if (!vma_migratable(walk->vma) ||
+		    migrate_page_add(page, qp->pagelist, flags)) {
 			ret = 1;
-			जाओ unlock;
-		पूर्ण
-	पूर्ण अन्यथा
+			goto unlock;
+		}
+	} else
 		ret = -EIO;
 unlock:
 	spin_unlock(ptl);
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * Scan through pages checking अगर pages follow certain conditions,
- * and move them to the pagelist अगर they करो.
+ * Scan through pages checking if pages follow certain conditions,
+ * and move them to the pagelist if they do.
  *
- * queue_pages_pte_range() has three possible वापस values:
+ * queue_pages_pte_range() has three possible return values:
  * 0 - pages are placed on the right node or queued successfully.
  * 1 - there is unmovable page, and MPOL_MF_MOVE* & MPOL_MF_STRICT were
- *     specअगरied.
- * -EIO - only MPOL_MF_STRICT was specअगरied and an existing page was alपढ़ोy
- *        on a node that करोes not follow the policy.
+ *     specified.
+ * -EIO - only MPOL_MF_STRICT was specified and an existing page was already
+ *        on a node that does not follow the policy.
  */
-अटल पूर्णांक queue_pages_pte_range(pmd_t *pmd, अचिन्हित दीर्घ addr,
-			अचिन्हित दीर्घ end, काष्ठा mm_walk *walk)
-अणु
-	काष्ठा vm_area_काष्ठा *vma = walk->vma;
-	काष्ठा page *page;
-	काष्ठा queue_pages *qp = walk->निजी;
-	अचिन्हित दीर्घ flags = qp->flags;
-	पूर्णांक ret;
+static int queue_pages_pte_range(pmd_t *pmd, unsigned long addr,
+			unsigned long end, struct mm_walk *walk)
+{
+	struct vm_area_struct *vma = walk->vma;
+	struct page *page;
+	struct queue_pages *qp = walk->private;
+	unsigned long flags = qp->flags;
+	int ret;
 	bool has_unmovable = false;
 	pte_t *pte, *mapped_pte;
 	spinlock_t *ptl;
 
 	ptl = pmd_trans_huge_lock(pmd, vma);
-	अगर (ptl) अणु
+	if (ptl) {
 		ret = queue_pages_pmd(pmd, ptl, addr, end, walk);
-		अगर (ret != 2)
-			वापस ret;
-	पूर्ण
+		if (ret != 2)
+			return ret;
+	}
 	/* THP was split, fall through to pte walk */
 
-	अगर (pmd_trans_unstable(pmd))
-		वापस 0;
+	if (pmd_trans_unstable(pmd))
+		return 0;
 
 	mapped_pte = pte = pte_offset_map_lock(walk->mm, pmd, addr, &ptl);
-	क्रम (; addr != end; pte++, addr += PAGE_SIZE) अणु
-		अगर (!pte_present(*pte))
-			जारी;
+	for (; addr != end; pte++, addr += PAGE_SIZE) {
+		if (!pte_present(*pte))
+			continue;
 		page = vm_normal_page(vma, addr, *pte);
-		अगर (!page)
-			जारी;
+		if (!page)
+			continue;
 		/*
 		 * vm_normal_page() filters out zero pages, but there might
 		 * still be PageReserved pages to skip, perhaps in a VDSO.
 		 */
-		अगर (PageReserved(page))
-			जारी;
-		अगर (!queue_pages_required(page, qp))
-			जारी;
-		अगर (flags & (MPOL_MF_MOVE | MPOL_MF_MOVE_ALL)) अणु
-			/* MPOL_MF_STRICT must be specअगरied अगर we get here */
-			अगर (!vma_migratable(vma)) अणु
+		if (PageReserved(page))
+			continue;
+		if (!queue_pages_required(page, qp))
+			continue;
+		if (flags & (MPOL_MF_MOVE | MPOL_MF_MOVE_ALL)) {
+			/* MPOL_MF_STRICT must be specified if we get here */
+			if (!vma_migratable(vma)) {
 				has_unmovable = true;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 
 			/*
-			 * Do not पात immediately since there may be
+			 * Do not abort immediately since there may be
 			 * temporary off LRU pages in the range.  Still
 			 * need migrate other LRU pages.
 			 */
-			अगर (migrate_page_add(page, qp->pagelist, flags))
+			if (migrate_page_add(page, qp->pagelist, flags))
 				has_unmovable = true;
-		पूर्ण अन्यथा
-			अवरोध;
-	पूर्ण
+		} else
+			break;
+	}
 	pte_unmap_unlock(mapped_pte, ptl);
 	cond_resched();
 
-	अगर (has_unmovable)
-		वापस 1;
+	if (has_unmovable)
+		return 1;
 
-	वापस addr != end ? -EIO : 0;
-पूर्ण
+	return addr != end ? -EIO : 0;
+}
 
-अटल पूर्णांक queue_pages_hugetlb(pte_t *pte, अचिन्हित दीर्घ hmask,
-			       अचिन्हित दीर्घ addr, अचिन्हित दीर्घ end,
-			       काष्ठा mm_walk *walk)
-अणु
-	पूर्णांक ret = 0;
-#अगर_घोषित CONFIG_HUGETLB_PAGE
-	काष्ठा queue_pages *qp = walk->निजी;
-	अचिन्हित दीर्घ flags = (qp->flags & MPOL_MF_VALID);
-	काष्ठा page *page;
+static int queue_pages_hugetlb(pte_t *pte, unsigned long hmask,
+			       unsigned long addr, unsigned long end,
+			       struct mm_walk *walk)
+{
+	int ret = 0;
+#ifdef CONFIG_HUGETLB_PAGE
+	struct queue_pages *qp = walk->private;
+	unsigned long flags = (qp->flags & MPOL_MF_VALID);
+	struct page *page;
 	spinlock_t *ptl;
 	pte_t entry;
 
 	ptl = huge_pte_lock(hstate_vma(walk->vma), walk->mm, pte);
 	entry = huge_ptep_get(pte);
-	अगर (!pte_present(entry))
-		जाओ unlock;
+	if (!pte_present(entry))
+		goto unlock;
 	page = pte_page(entry);
-	अगर (!queue_pages_required(page, qp))
-		जाओ unlock;
+	if (!queue_pages_required(page, qp))
+		goto unlock;
 
-	अगर (flags == MPOL_MF_STRICT) अणु
+	if (flags == MPOL_MF_STRICT) {
 		/*
 		 * STRICT alone means only detecting misplaced page and no
 		 * need to further check other vma.
 		 */
 		ret = -EIO;
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
-	अगर (!vma_migratable(walk->vma)) अणु
+	if (!vma_migratable(walk->vma)) {
 		/*
 		 * Must be STRICT with MOVE*, otherwise .test_walk() have
 		 * stopped walking current vma.
@@ -618,483 +617,483 @@ out:
 		 * have been queued.
 		 */
 		ret = 1;
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
 	/* With MPOL_MF_MOVE, we migrate only unshared hugepage. */
-	अगर (flags & (MPOL_MF_MOVE_ALL) ||
-	    (flags & MPOL_MF_MOVE && page_mapcount(page) == 1)) अणु
-		अगर (!isolate_huge_page(page, qp->pagelist) &&
+	if (flags & (MPOL_MF_MOVE_ALL) ||
+	    (flags & MPOL_MF_MOVE && page_mapcount(page) == 1)) {
+		if (!isolate_huge_page(page, qp->pagelist) &&
 			(flags & MPOL_MF_STRICT))
 			/*
 			 * Failed to isolate page but allow migrating pages
 			 * which have been queued.
 			 */
 			ret = 1;
-	पूर्ण
+	}
 unlock:
 	spin_unlock(ptl);
-#अन्यथा
+#else
 	BUG();
-#पूर्ण_अगर
-	वापस ret;
-पूर्ण
+#endif
+	return ret;
+}
 
-#अगर_घोषित CONFIG_NUMA_BALANCING
+#ifdef CONFIG_NUMA_BALANCING
 /*
- * This is used to mark a range of भव addresses to be inaccessible.
- * These are later cleared by a NUMA hपूर्णांकing fault. Depending on these
- * faults, pages may be migrated क्रम better NUMA placement.
+ * This is used to mark a range of virtual addresses to be inaccessible.
+ * These are later cleared by a NUMA hinting fault. Depending on these
+ * faults, pages may be migrated for better NUMA placement.
  *
  * This is assuming that NUMA faults are handled using PROT_NONE. If
- * an architecture makes a dअगरferent choice, it will need further
+ * an architecture makes a different choice, it will need further
  * changes to the core.
  */
-अचिन्हित दीर्घ change_prot_numa(काष्ठा vm_area_काष्ठा *vma,
-			अचिन्हित दीर्घ addr, अचिन्हित दीर्घ end)
-अणु
-	पूर्णांक nr_updated;
+unsigned long change_prot_numa(struct vm_area_struct *vma,
+			unsigned long addr, unsigned long end)
+{
+	int nr_updated;
 
 	nr_updated = change_protection(vma, addr, end, PAGE_NONE, MM_CP_PROT_NUMA);
-	अगर (nr_updated)
+	if (nr_updated)
 		count_vm_numa_events(NUMA_PTE_UPDATES, nr_updated);
 
-	वापस nr_updated;
-पूर्ण
-#अन्यथा
-अटल अचिन्हित दीर्घ change_prot_numa(काष्ठा vm_area_काष्ठा *vma,
-			अचिन्हित दीर्घ addr, अचिन्हित दीर्घ end)
-अणु
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_NUMA_BALANCING */
+	return nr_updated;
+}
+#else
+static unsigned long change_prot_numa(struct vm_area_struct *vma,
+			unsigned long addr, unsigned long end)
+{
+	return 0;
+}
+#endif /* CONFIG_NUMA_BALANCING */
 
-अटल पूर्णांक queue_pages_test_walk(अचिन्हित दीर्घ start, अचिन्हित दीर्घ end,
-				काष्ठा mm_walk *walk)
-अणु
-	काष्ठा vm_area_काष्ठा *vma = walk->vma;
-	काष्ठा queue_pages *qp = walk->निजी;
-	अचिन्हित दीर्घ endvma = vma->vm_end;
-	अचिन्हित दीर्घ flags = qp->flags;
+static int queue_pages_test_walk(unsigned long start, unsigned long end,
+				struct mm_walk *walk)
+{
+	struct vm_area_struct *vma = walk->vma;
+	struct queue_pages *qp = walk->private;
+	unsigned long endvma = vma->vm_end;
+	unsigned long flags = qp->flags;
 
 	/* range check first */
 	VM_BUG_ON_VMA(!range_in_vma(vma, start, end), vma);
 
-	अगर (!qp->first) अणु
+	if (!qp->first) {
 		qp->first = vma;
-		अगर (!(flags & MPOL_MF_DISCONTIG_OK) &&
+		if (!(flags & MPOL_MF_DISCONTIG_OK) &&
 			(qp->start < vma->vm_start))
 			/* hole at head side of range */
-			वापस -EFAULT;
-	पूर्ण
-	अगर (!(flags & MPOL_MF_DISCONTIG_OK) &&
+			return -EFAULT;
+	}
+	if (!(flags & MPOL_MF_DISCONTIG_OK) &&
 		((vma->vm_end < qp->end) &&
 		(!vma->vm_next || vma->vm_end < vma->vm_next->vm_start)))
 		/* hole at middle or tail of range */
-		वापस -EFAULT;
+		return -EFAULT;
 
 	/*
-	 * Need check MPOL_MF_STRICT to वापस -EIO अगर possible
+	 * Need check MPOL_MF_STRICT to return -EIO if possible
 	 * regardless of vma_migratable
 	 */
-	अगर (!vma_migratable(vma) &&
+	if (!vma_migratable(vma) &&
 	    !(flags & MPOL_MF_STRICT))
-		वापस 1;
+		return 1;
 
-	अगर (endvma > end)
+	if (endvma > end)
 		endvma = end;
 
-	अगर (flags & MPOL_MF_LAZY) अणु
+	if (flags & MPOL_MF_LAZY) {
 		/* Similar to task_numa_work, skip inaccessible VMAs */
-		अगर (!is_vm_hugetlb_page(vma) && vma_is_accessible(vma) &&
+		if (!is_vm_hugetlb_page(vma) && vma_is_accessible(vma) &&
 			!(vma->vm_flags & VM_MIXEDMAP))
 			change_prot_numa(vma, start, endvma);
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 
 	/* queue pages from current vma */
-	अगर (flags & MPOL_MF_VALID)
-		वापस 0;
-	वापस 1;
-पूर्ण
+	if (flags & MPOL_MF_VALID)
+		return 0;
+	return 1;
+}
 
-अटल स्थिर काष्ठा mm_walk_ops queue_pages_walk_ops = अणु
+static const struct mm_walk_ops queue_pages_walk_ops = {
 	.hugetlb_entry		= queue_pages_hugetlb,
 	.pmd_entry		= queue_pages_pte_range,
 	.test_walk		= queue_pages_test_walk,
-पूर्ण;
+};
 
 /*
  * Walk through page tables and collect pages to be migrated.
  *
  * If pages found in a given range are on a set of nodes (determined by
  * @nodes and @flags,) it's isolated and queued to the pagelist which is
- * passed via @निजी.
+ * passed via @private.
  *
- * queue_pages_range() has three possible वापस values:
+ * queue_pages_range() has three possible return values:
  * 1 - there is unmovable page, but MPOL_MF_MOVE* & MPOL_MF_STRICT were
- *     specअगरied.
+ *     specified.
  * 0 - queue pages successfully or no misplaced page.
- * त्रुटि_सं - i.e. misplaced pages with MPOL_MF_STRICT specअगरied (-EIO) or
- *         memory range specअगरied by nodemask and maxnode poपूर्णांकs outside
+ * errno - i.e. misplaced pages with MPOL_MF_STRICT specified (-EIO) or
+ *         memory range specified by nodemask and maxnode points outside
  *         your accessible address space (-EFAULT)
  */
-अटल पूर्णांक
-queue_pages_range(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ start, अचिन्हित दीर्घ end,
-		nodemask_t *nodes, अचिन्हित दीर्घ flags,
-		काष्ठा list_head *pagelist)
-अणु
-	पूर्णांक err;
-	काष्ठा queue_pages qp = अणु
+static int
+queue_pages_range(struct mm_struct *mm, unsigned long start, unsigned long end,
+		nodemask_t *nodes, unsigned long flags,
+		struct list_head *pagelist)
+{
+	int err;
+	struct queue_pages qp = {
 		.pagelist = pagelist,
 		.flags = flags,
 		.nmask = nodes,
 		.start = start,
 		.end = end,
-		.first = शून्य,
-	पूर्ण;
+		.first = NULL,
+	};
 
 	err = walk_page_range(mm, start, end, &queue_pages_walk_ops, &qp);
 
-	अगर (!qp.first)
+	if (!qp.first)
 		/* whole range in hole */
 		err = -EFAULT;
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /*
  * Apply policy to a single VMA
- * This must be called with the mmap_lock held क्रम writing.
+ * This must be called with the mmap_lock held for writing.
  */
-अटल पूर्णांक vma_replace_policy(काष्ठा vm_area_काष्ठा *vma,
-						काष्ठा mempolicy *pol)
-अणु
-	पूर्णांक err;
-	काष्ठा mempolicy *old;
-	काष्ठा mempolicy *new;
+static int vma_replace_policy(struct vm_area_struct *vma,
+						struct mempolicy *pol)
+{
+	int err;
+	struct mempolicy *old;
+	struct mempolicy *new;
 
 	pr_debug("vma %lx-%lx/%lx vm_ops %p vm_file %p set_policy %p\n",
 		 vma->vm_start, vma->vm_end, vma->vm_pgoff,
 		 vma->vm_ops, vma->vm_file,
-		 vma->vm_ops ? vma->vm_ops->set_policy : शून्य);
+		 vma->vm_ops ? vma->vm_ops->set_policy : NULL);
 
 	new = mpol_dup(pol);
-	अगर (IS_ERR(new))
-		वापस PTR_ERR(new);
+	if (IS_ERR(new))
+		return PTR_ERR(new);
 
-	अगर (vma->vm_ops && vma->vm_ops->set_policy) अणु
+	if (vma->vm_ops && vma->vm_ops->set_policy) {
 		err = vma->vm_ops->set_policy(vma, new);
-		अगर (err)
-			जाओ err_out;
-	पूर्ण
+		if (err)
+			goto err_out;
+	}
 
 	old = vma->vm_policy;
-	vma->vm_policy = new; /* रक्षित by mmap_lock */
+	vma->vm_policy = new; /* protected by mmap_lock */
 	mpol_put(old);
 
-	वापस 0;
+	return 0;
  err_out:
 	mpol_put(new);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-/* Step 2: apply policy to a range and करो splits. */
-अटल पूर्णांक mbind_range(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ start,
-		       अचिन्हित दीर्घ end, काष्ठा mempolicy *new_pol)
-अणु
-	काष्ठा vm_area_काष्ठा *next;
-	काष्ठा vm_area_काष्ठा *prev;
-	काष्ठा vm_area_काष्ठा *vma;
-	पूर्णांक err = 0;
+/* Step 2: apply policy to a range and do splits. */
+static int mbind_range(struct mm_struct *mm, unsigned long start,
+		       unsigned long end, struct mempolicy *new_pol)
+{
+	struct vm_area_struct *next;
+	struct vm_area_struct *prev;
+	struct vm_area_struct *vma;
+	int err = 0;
 	pgoff_t pgoff;
-	अचिन्हित दीर्घ vmstart;
-	अचिन्हित दीर्घ vmend;
+	unsigned long vmstart;
+	unsigned long vmend;
 
 	vma = find_vma(mm, start);
 	VM_BUG_ON(!vma);
 
 	prev = vma->vm_prev;
-	अगर (start > vma->vm_start)
+	if (start > vma->vm_start)
 		prev = vma;
 
-	क्रम (; vma && vma->vm_start < end; prev = vma, vma = next) अणु
+	for (; vma && vma->vm_start < end; prev = vma, vma = next) {
 		next = vma->vm_next;
 		vmstart = max(start, vma->vm_start);
 		vmend   = min(end, vma->vm_end);
 
-		अगर (mpol_equal(vma_policy(vma), new_pol))
-			जारी;
+		if (mpol_equal(vma_policy(vma), new_pol))
+			continue;
 
 		pgoff = vma->vm_pgoff +
 			((vmstart - vma->vm_start) >> PAGE_SHIFT);
 		prev = vma_merge(mm, prev, vmstart, vmend, vma->vm_flags,
 				 vma->anon_vma, vma->vm_file, pgoff,
 				 new_pol, vma->vm_userfaultfd_ctx);
-		अगर (prev) अणु
+		if (prev) {
 			vma = prev;
 			next = vma->vm_next;
-			अगर (mpol_equal(vma_policy(vma), new_pol))
-				जारी;
-			/* vma_merge() joined vma && vma->next, हाल 8 */
-			जाओ replace;
-		पूर्ण
-		अगर (vma->vm_start != vmstart) अणु
+			if (mpol_equal(vma_policy(vma), new_pol))
+				continue;
+			/* vma_merge() joined vma && vma->next, case 8 */
+			goto replace;
+		}
+		if (vma->vm_start != vmstart) {
 			err = split_vma(vma->vm_mm, vma, vmstart, 1);
-			अगर (err)
-				जाओ out;
-		पूर्ण
-		अगर (vma->vm_end != vmend) अणु
+			if (err)
+				goto out;
+		}
+		if (vma->vm_end != vmend) {
 			err = split_vma(vma->vm_mm, vma, vmend, 0);
-			अगर (err)
-				जाओ out;
-		पूर्ण
+			if (err)
+				goto out;
+		}
  replace:
 		err = vma_replace_policy(vma, new_pol);
-		अगर (err)
-			जाओ out;
-	पूर्ण
+		if (err)
+			goto out;
+	}
 
  out:
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /* Set the process memory policy */
-अटल दीर्घ करो_set_mempolicy(अचिन्हित लघु mode, अचिन्हित लघु flags,
+static long do_set_mempolicy(unsigned short mode, unsigned short flags,
 			     nodemask_t *nodes)
-अणु
-	काष्ठा mempolicy *new, *old;
+{
+	struct mempolicy *new, *old;
 	NODEMASK_SCRATCH(scratch);
-	पूर्णांक ret;
+	int ret;
 
-	अगर (!scratch)
-		वापस -ENOMEM;
+	if (!scratch)
+		return -ENOMEM;
 
 	new = mpol_new(mode, flags, nodes);
-	अगर (IS_ERR(new)) अणु
+	if (IS_ERR(new)) {
 		ret = PTR_ERR(new);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (flags & MPOL_F_NUMA_BALANCING) अणु
-		अगर (new && new->mode == MPOL_BIND) अणु
+	if (flags & MPOL_F_NUMA_BALANCING) {
+		if (new && new->mode == MPOL_BIND) {
 			new->flags |= (MPOL_F_MOF | MPOL_F_MORON);
-		पूर्ण अन्यथा अणु
+		} else {
 			ret = -EINVAL;
 			mpol_put(new);
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 
 	ret = mpol_set_nodemask(new, nodes, scratch);
-	अगर (ret) अणु
+	if (ret) {
 		mpol_put(new);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	task_lock(current);
 	old = current->mempolicy;
 	current->mempolicy = new;
-	अगर (new && new->mode == MPOL_INTERLEAVE)
+	if (new && new->mode == MPOL_INTERLEAVE)
 		current->il_prev = MAX_NUMNODES-1;
 	task_unlock(current);
 	mpol_put(old);
 	ret = 0;
 out:
 	NODEMASK_SCRATCH_FREE(scratch);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * Return nodemask क्रम policy क्रम get_mempolicy() query
+ * Return nodemask for policy for get_mempolicy() query
  *
  * Called with task's alloc_lock held
  */
-अटल व्योम get_policy_nodemask(काष्ठा mempolicy *p, nodemask_t *nodes)
-अणु
+static void get_policy_nodemask(struct mempolicy *p, nodemask_t *nodes)
+{
 	nodes_clear(*nodes);
-	अगर (p == &शेष_policy)
-		वापस;
+	if (p == &default_policy)
+		return;
 
-	चयन (p->mode) अणु
-	हाल MPOL_BIND:
-	हाल MPOL_INTERLEAVE:
+	switch (p->mode) {
+	case MPOL_BIND:
+	case MPOL_INTERLEAVE:
 		*nodes = p->v.nodes;
-		अवरोध;
-	हाल MPOL_PREFERRED:
-		अगर (!(p->flags & MPOL_F_LOCAL))
+		break;
+	case MPOL_PREFERRED:
+		if (!(p->flags & MPOL_F_LOCAL))
 			node_set(p->v.preferred_node, *nodes);
-		/* अन्यथा वापस empty node mask क्रम local allocation */
-		अवरोध;
-	शेष:
+		/* else return empty node mask for local allocation */
+		break;
+	default:
 		BUG();
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक lookup_node(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ addr)
-अणु
-	काष्ठा page *p = शून्य;
-	पूर्णांक err;
+static int lookup_node(struct mm_struct *mm, unsigned long addr)
+{
+	struct page *p = NULL;
+	int err;
 
-	पूर्णांक locked = 1;
+	int locked = 1;
 	err = get_user_pages_locked(addr & PAGE_MASK, 1, 0, &p, &locked);
-	अगर (err > 0) अणु
+	if (err > 0) {
 		err = page_to_nid(p);
 		put_page(p);
-	पूर्ण
-	अगर (locked)
-		mmap_पढ़ो_unlock(mm);
-	वापस err;
-पूर्ण
+	}
+	if (locked)
+		mmap_read_unlock(mm);
+	return err;
+}
 
 /* Retrieve NUMA policy */
-अटल दीर्घ करो_get_mempolicy(पूर्णांक *policy, nodemask_t *nmask,
-			     अचिन्हित दीर्घ addr, अचिन्हित दीर्घ flags)
-अणु
-	पूर्णांक err;
-	काष्ठा mm_काष्ठा *mm = current->mm;
-	काष्ठा vm_area_काष्ठा *vma = शून्य;
-	काष्ठा mempolicy *pol = current->mempolicy, *pol_refcount = शून्य;
+static long do_get_mempolicy(int *policy, nodemask_t *nmask,
+			     unsigned long addr, unsigned long flags)
+{
+	int err;
+	struct mm_struct *mm = current->mm;
+	struct vm_area_struct *vma = NULL;
+	struct mempolicy *pol = current->mempolicy, *pol_refcount = NULL;
 
-	अगर (flags &
-		~(अचिन्हित दीर्घ)(MPOL_F_NODE|MPOL_F_ADDR|MPOL_F_MEMS_ALLOWED))
-		वापस -EINVAL;
+	if (flags &
+		~(unsigned long)(MPOL_F_NODE|MPOL_F_ADDR|MPOL_F_MEMS_ALLOWED))
+		return -EINVAL;
 
-	अगर (flags & MPOL_F_MEMS_ALLOWED) अणु
-		अगर (flags & (MPOL_F_NODE|MPOL_F_ADDR))
-			वापस -EINVAL;
+	if (flags & MPOL_F_MEMS_ALLOWED) {
+		if (flags & (MPOL_F_NODE|MPOL_F_ADDR))
+			return -EINVAL;
 		*policy = 0;	/* just so it's initialized */
 		task_lock(current);
 		*nmask  = cpuset_current_mems_allowed;
 		task_unlock(current);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (flags & MPOL_F_ADDR) अणु
+	if (flags & MPOL_F_ADDR) {
 		/*
-		 * Do NOT fall back to task policy अगर the
-		 * vma/shared policy at addr is शून्य.  We
-		 * want to वापस MPOL_DEFAULT in this हाल.
+		 * Do NOT fall back to task policy if the
+		 * vma/shared policy at addr is NULL.  We
+		 * want to return MPOL_DEFAULT in this case.
 		 */
-		mmap_पढ़ो_lock(mm);
-		vma = find_vma_पूर्णांकersection(mm, addr, addr+1);
-		अगर (!vma) अणु
-			mmap_पढ़ो_unlock(mm);
-			वापस -EFAULT;
-		पूर्ण
-		अगर (vma->vm_ops && vma->vm_ops->get_policy)
+		mmap_read_lock(mm);
+		vma = find_vma_intersection(mm, addr, addr+1);
+		if (!vma) {
+			mmap_read_unlock(mm);
+			return -EFAULT;
+		}
+		if (vma->vm_ops && vma->vm_ops->get_policy)
 			pol = vma->vm_ops->get_policy(vma, addr);
-		अन्यथा
+		else
 			pol = vma->vm_policy;
-	पूर्ण अन्यथा अगर (addr)
-		वापस -EINVAL;
+	} else if (addr)
+		return -EINVAL;
 
-	अगर (!pol)
-		pol = &शेष_policy;	/* indicates शेष behavior */
+	if (!pol)
+		pol = &default_policy;	/* indicates default behavior */
 
-	अगर (flags & MPOL_F_NODE) अणु
-		अगर (flags & MPOL_F_ADDR) अणु
+	if (flags & MPOL_F_NODE) {
+		if (flags & MPOL_F_ADDR) {
 			/*
 			 * Take a refcount on the mpol, lookup_node()
 			 * will drop the mmap_lock, so after calling
-			 * lookup_node() only "pol" reमुख्यs valid, "vma"
+			 * lookup_node() only "pol" remains valid, "vma"
 			 * is stale.
 			 */
 			pol_refcount = pol;
-			vma = शून्य;
+			vma = NULL;
 			mpol_get(pol);
 			err = lookup_node(mm, addr);
-			अगर (err < 0)
-				जाओ out;
+			if (err < 0)
+				goto out;
 			*policy = err;
-		पूर्ण अन्यथा अगर (pol == current->mempolicy &&
-				pol->mode == MPOL_INTERLEAVE) अणु
+		} else if (pol == current->mempolicy &&
+				pol->mode == MPOL_INTERLEAVE) {
 			*policy = next_node_in(current->il_prev, pol->v.nodes);
-		पूर्ण अन्यथा अणु
+		} else {
 			err = -EINVAL;
-			जाओ out;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		*policy = pol == &शेष_policy ? MPOL_DEFAULT :
+			goto out;
+		}
+	} else {
+		*policy = pol == &default_policy ? MPOL_DEFAULT :
 						pol->mode;
 		/*
-		 * Internal mempolicy flags must be masked off beक्रमe exposing
+		 * Internal mempolicy flags must be masked off before exposing
 		 * the policy to userspace.
 		 */
 		*policy |= (pol->flags & MPOL_MODE_FLAGS);
-	पूर्ण
+	}
 
 	err = 0;
-	अगर (nmask) अणु
-		अगर (mpol_store_user_nodemask(pol)) अणु
+	if (nmask) {
+		if (mpol_store_user_nodemask(pol)) {
 			*nmask = pol->w.user_nodemask;
-		पूर्ण अन्यथा अणु
+		} else {
 			task_lock(current);
 			get_policy_nodemask(pol, nmask);
 			task_unlock(current);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
  out:
 	mpol_cond_put(pol);
-	अगर (vma)
-		mmap_पढ़ो_unlock(mm);
-	अगर (pol_refcount)
+	if (vma)
+		mmap_read_unlock(mm);
+	if (pol_refcount)
 		mpol_put(pol_refcount);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-#अगर_घोषित CONFIG_MIGRATION
+#ifdef CONFIG_MIGRATION
 /*
  * page migration, thp tail pages can be passed.
  */
-अटल पूर्णांक migrate_page_add(काष्ठा page *page, काष्ठा list_head *pagelist,
-				अचिन्हित दीर्घ flags)
-अणु
-	काष्ठा page *head = compound_head(page);
+static int migrate_page_add(struct page *page, struct list_head *pagelist,
+				unsigned long flags)
+{
+	struct page *head = compound_head(page);
 	/*
-	 * Aव्योम migrating a page that is shared with others.
+	 * Avoid migrating a page that is shared with others.
 	 */
-	अगर ((flags & MPOL_MF_MOVE_ALL) || page_mapcount(head) == 1) अणु
-		अगर (!isolate_lru_page(head)) अणु
+	if ((flags & MPOL_MF_MOVE_ALL) || page_mapcount(head) == 1) {
+		if (!isolate_lru_page(head)) {
 			list_add_tail(&head->lru, pagelist);
 			mod_node_page_state(page_pgdat(head),
 				NR_ISOLATED_ANON + page_is_file_lru(head),
 				thp_nr_pages(head));
-		पूर्ण अन्यथा अगर (flags & MPOL_MF_STRICT) अणु
+		} else if (flags & MPOL_MF_STRICT) {
 			/*
 			 * Non-movable page may reach here.  And, there may be
 			 * temporary off LRU pages or non-LRU movable pages.
 			 * Treat them as unmovable pages since they can't be
 			 * isolated, so they can't be moved at the moment.  It
-			 * should वापस -EIO क्रम this हाल too.
+			 * should return -EIO for this case too.
 			 */
-			वापस -EIO;
-		पूर्ण
-	पूर्ण
+			return -EIO;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Migrate pages from one node to a target node.
  * Returns error or the number of pages not migrated.
  */
-अटल पूर्णांक migrate_to_node(काष्ठा mm_काष्ठा *mm, पूर्णांक source, पूर्णांक dest,
-			   पूर्णांक flags)
-अणु
+static int migrate_to_node(struct mm_struct *mm, int source, int dest,
+			   int flags)
+{
 	nodemask_t nmask;
 	LIST_HEAD(pagelist);
-	पूर्णांक err = 0;
-	काष्ठा migration_target_control mtc = अणु
+	int err = 0;
+	struct migration_target_control mtc = {
 		.nid = dest,
 		.gfp_mask = GFP_HIGHUSER_MOVABLE | __GFP_THISNODE,
-	पूर्ण;
+	};
 
 	nodes_clear(nmask);
 	node_set(source, nmask);
 
 	/*
-	 * This करोes not "check" the range but isolates all pages that
+	 * This does not "check" the range but isolates all pages that
 	 * need migration.  Between passing in the full user address
 	 * space range and MPOL_MF_DISCONTIG_OK, this call can not fail.
 	 */
@@ -1102,15 +1101,15 @@ out:
 	queue_pages_range(mm, mm->mmap->vm_start, mm->task_size, &nmask,
 			flags | MPOL_MF_DISCONTIG_OK, &pagelist);
 
-	अगर (!list_empty(&pagelist)) अणु
-		err = migrate_pages(&pagelist, alloc_migration_target, शून्य,
-				(अचिन्हित दीर्घ)&mtc, MIGRATE_SYNC, MR_SYSCALL);
-		अगर (err)
+	if (!list_empty(&pagelist)) {
+		err = migrate_pages(&pagelist, alloc_migration_target, NULL,
+				(unsigned long)&mtc, MIGRATE_SYNC, MR_SYSCALL);
+		if (err)
 			putback_movable_pages(&pagelist);
-	पूर्ण
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /*
  * Move pages between the two nodesets so as to preserve the physical
@@ -1118,21 +1117,21 @@ out:
  *
  * Returns the number of page that could not be moved.
  */
-पूर्णांक करो_migrate_pages(काष्ठा mm_काष्ठा *mm, स्थिर nodemask_t *from,
-		     स्थिर nodemask_t *to, पूर्णांक flags)
-अणु
-	पूर्णांक busy = 0;
-	पूर्णांक err = 0;
-	nodemask_t पंचांगp;
+int do_migrate_pages(struct mm_struct *mm, const nodemask_t *from,
+		     const nodemask_t *to, int flags)
+{
+	int busy = 0;
+	int err = 0;
+	nodemask_t tmp;
 
 	lru_cache_disable();
 
-	mmap_पढ़ो_lock(mm);
+	mmap_read_lock(mm);
 
 	/*
 	 * Find a 'source' bit set in 'tmp' whose corresponding 'dest'
 	 * bit in 'to' is not also set in 'tmp'.  Clear the found 'source'
-	 * bit in 'tmp', and वापस that <source, dest> pair क्रम migration.
+	 * bit in 'tmp', and return that <source, dest> pair for migration.
 	 * The pair of nodemasks 'to' and 'from' define the map.
 	 *
 	 * If no pair of bits is found that way, fallback to picking some
@@ -1140,42 +1139,42 @@ out:
 	 * 'source' and 'dest' bits are the same, this represents a node
 	 * that will be migrating to itself, so no pages need move.
 	 *
-	 * If no bits are left in 'tmp', or अगर all reमुख्यing bits left
-	 * in 'tmp' correspond to the same bit in 'to', वापस false
+	 * If no bits are left in 'tmp', or if all remaining bits left
+	 * in 'tmp' correspond to the same bit in 'to', return false
 	 * (nothing left to migrate).
 	 *
 	 * This lets us pick a pair of nodes to migrate between, such that
-	 * अगर possible the dest node is not alपढ़ोy occupied by some other
+	 * if possible the dest node is not already occupied by some other
 	 * source node, minimizing the risk of overloading the memory on a
-	 * node that would happen अगर we migrated incoming memory to a node
-	 * beक्रमe migrating outgoing memory source that same node.
+	 * node that would happen if we migrated incoming memory to a node
+	 * before migrating outgoing memory source that same node.
 	 *
-	 * A single scan of पंचांगp is sufficient.  As we go, we remember the
+	 * A single scan of tmp is sufficient.  As we go, we remember the
 	 * most recent <s, d> pair that moved (s != d).  If we find a pair
 	 * that not only moved, but what's better, moved to an empty slot
-	 * (d is not set in पंचांगp), then we अवरोध out then, with that pair.
-	 * Otherwise when we finish scanning from_पंचांगp, we at least have the
+	 * (d is not set in tmp), then we break out then, with that pair.
+	 * Otherwise when we finish scanning from_tmp, we at least have the
 	 * most recent <s, d> pair that moved.  If we get all the way through
-	 * the scan of पंचांगp without finding any node that moved, much less
+	 * the scan of tmp without finding any node that moved, much less
 	 * moved to an empty node, then there is nothing left worth migrating.
 	 */
 
-	पंचांगp = *from;
-	जबतक (!nodes_empty(पंचांगp)) अणु
-		पूर्णांक s, d;
-		पूर्णांक source = NUMA_NO_NODE;
-		पूर्णांक dest = 0;
+	tmp = *from;
+	while (!nodes_empty(tmp)) {
+		int s, d;
+		int source = NUMA_NO_NODE;
+		int dest = 0;
 
-		क्रम_each_node_mask(s, पंचांगp) अणु
+		for_each_node_mask(s, tmp) {
 
 			/*
-			 * करो_migrate_pages() tries to मुख्यtain the relative
+			 * do_migrate_pages() tries to maintain the relative
 			 * node relationship of the pages established between
-			 * thपढ़ोs and memory areas.
+			 * threads and memory areas.
                          *
-			 * However अगर the number of source nodes is not equal to
+			 * However if the number of source nodes is not equal to
 			 * the number of destination nodes we can not preserve
-			 * this node relative relationship.  In that हाल, skip
+			 * this node relative relationship.  In that case, skip
 			 * copying memory from a node that is in the destination
 			 * mask.
 			 *
@@ -1183,1037 +1182,1037 @@ out:
 			 *          [0-7] - > [3,4,5] moves only 0,1,2,6,7.
 			 */
 
-			अगर ((nodes_weight(*from) != nodes_weight(*to)) &&
+			if ((nodes_weight(*from) != nodes_weight(*to)) &&
 						(node_isset(s, *to)))
-				जारी;
+				continue;
 
 			d = node_remap(s, *from, *to);
-			अगर (s == d)
-				जारी;
+			if (s == d)
+				continue;
 
 			source = s;	/* Node moved. Memorize */
 			dest = d;
 
-			/* dest not in reमुख्यing from nodes? */
-			अगर (!node_isset(dest, पंचांगp))
-				अवरोध;
-		पूर्ण
-		अगर (source == NUMA_NO_NODE)
-			अवरोध;
+			/* dest not in remaining from nodes? */
+			if (!node_isset(dest, tmp))
+				break;
+		}
+		if (source == NUMA_NO_NODE)
+			break;
 
-		node_clear(source, पंचांगp);
+		node_clear(source, tmp);
 		err = migrate_to_node(mm, source, dest, flags);
-		अगर (err > 0)
+		if (err > 0)
 			busy += err;
-		अगर (err < 0)
-			अवरोध;
-	पूर्ण
-	mmap_पढ़ो_unlock(mm);
+		if (err < 0)
+			break;
+	}
+	mmap_read_unlock(mm);
 
 	lru_cache_enable();
-	अगर (err < 0)
-		वापस err;
-	वापस busy;
+	if (err < 0)
+		return err;
+	return busy;
 
-पूर्ण
+}
 
 /*
- * Allocate a new page क्रम page migration based on vma policy.
+ * Allocate a new page for page migration based on vma policy.
  * Start by assuming the page is mapped by the same vma as contains @start.
- * Search क्रमward from there, अगर not.  N.B., this assumes that the
+ * Search forward from there, if not.  N.B., this assumes that the
  * list of pages handed to migrate_pages()--which is how we get here--
- * is in भव address order.
+ * is in virtual address order.
  */
-अटल काष्ठा page *new_page(काष्ठा page *page, अचिन्हित दीर्घ start)
-अणु
-	काष्ठा vm_area_काष्ठा *vma;
-	अचिन्हित दीर्घ address;
+static struct page *new_page(struct page *page, unsigned long start)
+{
+	struct vm_area_struct *vma;
+	unsigned long address;
 
 	vma = find_vma(current->mm, start);
-	जबतक (vma) अणु
+	while (vma) {
 		address = page_address_in_vma(page, vma);
-		अगर (address != -EFAULT)
-			अवरोध;
+		if (address != -EFAULT)
+			break;
 		vma = vma->vm_next;
-	पूर्ण
+	}
 
-	अगर (PageHuge(page)) अणु
-		वापस alloc_huge_page_vma(page_hstate(compound_head(page)),
+	if (PageHuge(page)) {
+		return alloc_huge_page_vma(page_hstate(compound_head(page)),
 				vma, address);
-	पूर्ण अन्यथा अगर (PageTransHuge(page)) अणु
-		काष्ठा page *thp;
+	} else if (PageTransHuge(page)) {
+		struct page *thp;
 
 		thp = alloc_hugepage_vma(GFP_TRANSHUGE, vma, address,
 					 HPAGE_PMD_ORDER);
-		अगर (!thp)
-			वापस शून्य;
+		if (!thp)
+			return NULL;
 		prep_transhuge_page(thp);
-		वापस thp;
-	पूर्ण
+		return thp;
+	}
 	/*
-	 * अगर !vma, alloc_page_vma() will use task or प्रणाली शेष policy
+	 * if !vma, alloc_page_vma() will use task or system default policy
 	 */
-	वापस alloc_page_vma(GFP_HIGHUSER_MOVABLE | __GFP_RETRY_MAYFAIL,
+	return alloc_page_vma(GFP_HIGHUSER_MOVABLE | __GFP_RETRY_MAYFAIL,
 			vma, address);
-पूर्ण
-#अन्यथा
+}
+#else
 
-अटल पूर्णांक migrate_page_add(काष्ठा page *page, काष्ठा list_head *pagelist,
-				अचिन्हित दीर्घ flags)
-अणु
-	वापस -EIO;
-पूर्ण
+static int migrate_page_add(struct page *page, struct list_head *pagelist,
+				unsigned long flags)
+{
+	return -EIO;
+}
 
-पूर्णांक करो_migrate_pages(काष्ठा mm_काष्ठा *mm, स्थिर nodemask_t *from,
-		     स्थिर nodemask_t *to, पूर्णांक flags)
-अणु
-	वापस -ENOSYS;
-पूर्ण
+int do_migrate_pages(struct mm_struct *mm, const nodemask_t *from,
+		     const nodemask_t *to, int flags)
+{
+	return -ENOSYS;
+}
 
-अटल काष्ठा page *new_page(काष्ठा page *page, अचिन्हित दीर्घ start)
-अणु
-	वापस शून्य;
-पूर्ण
-#पूर्ण_अगर
+static struct page *new_page(struct page *page, unsigned long start)
+{
+	return NULL;
+}
+#endif
 
-अटल दीर्घ करो_mbind(अचिन्हित दीर्घ start, अचिन्हित दीर्घ len,
-		     अचिन्हित लघु mode, अचिन्हित लघु mode_flags,
-		     nodemask_t *nmask, अचिन्हित दीर्घ flags)
-अणु
-	काष्ठा mm_काष्ठा *mm = current->mm;
-	काष्ठा mempolicy *new;
-	अचिन्हित दीर्घ end;
-	पूर्णांक err;
-	पूर्णांक ret;
+static long do_mbind(unsigned long start, unsigned long len,
+		     unsigned short mode, unsigned short mode_flags,
+		     nodemask_t *nmask, unsigned long flags)
+{
+	struct mm_struct *mm = current->mm;
+	struct mempolicy *new;
+	unsigned long end;
+	int err;
+	int ret;
 	LIST_HEAD(pagelist);
 
-	अगर (flags & ~(अचिन्हित दीर्घ)MPOL_MF_VALID)
-		वापस -EINVAL;
-	अगर ((flags & MPOL_MF_MOVE_ALL) && !capable(CAP_SYS_NICE))
-		वापस -EPERM;
+	if (flags & ~(unsigned long)MPOL_MF_VALID)
+		return -EINVAL;
+	if ((flags & MPOL_MF_MOVE_ALL) && !capable(CAP_SYS_NICE))
+		return -EPERM;
 
-	अगर (start & ~PAGE_MASK)
-		वापस -EINVAL;
+	if (start & ~PAGE_MASK)
+		return -EINVAL;
 
-	अगर (mode == MPOL_DEFAULT)
+	if (mode == MPOL_DEFAULT)
 		flags &= ~MPOL_MF_STRICT;
 
 	len = (len + PAGE_SIZE - 1) & PAGE_MASK;
 	end = start + len;
 
-	अगर (end < start)
-		वापस -EINVAL;
-	अगर (end == start)
-		वापस 0;
+	if (end < start)
+		return -EINVAL;
+	if (end == start)
+		return 0;
 
 	new = mpol_new(mode, mode_flags, nmask);
-	अगर (IS_ERR(new))
-		वापस PTR_ERR(new);
+	if (IS_ERR(new))
+		return PTR_ERR(new);
 
-	अगर (flags & MPOL_MF_LAZY)
+	if (flags & MPOL_MF_LAZY)
 		new->flags |= MPOL_F_MOF;
 
 	/*
-	 * If we are using the शेष policy then operation
+	 * If we are using the default policy then operation
 	 * on discontinuous address spaces is okay after all
 	 */
-	अगर (!new)
+	if (!new)
 		flags |= MPOL_MF_DISCONTIG_OK;
 
 	pr_debug("mbind %lx-%lx mode:%d flags:%d nodes:%lx\n",
 		 start, start + len, mode, mode_flags,
 		 nmask ? nodes_addr(*nmask)[0] : NUMA_NO_NODE);
 
-	अगर (flags & (MPOL_MF_MOVE | MPOL_MF_MOVE_ALL)) अणु
+	if (flags & (MPOL_MF_MOVE | MPOL_MF_MOVE_ALL)) {
 
 		lru_cache_disable();
-	पूर्ण
-	अणु
+	}
+	{
 		NODEMASK_SCRATCH(scratch);
-		अगर (scratch) अणु
-			mmap_ग_लिखो_lock(mm);
+		if (scratch) {
+			mmap_write_lock(mm);
 			err = mpol_set_nodemask(new, nmask, scratch);
-			अगर (err)
-				mmap_ग_लिखो_unlock(mm);
-		पूर्ण अन्यथा
+			if (err)
+				mmap_write_unlock(mm);
+		} else
 			err = -ENOMEM;
 		NODEMASK_SCRATCH_FREE(scratch);
-	पूर्ण
-	अगर (err)
-		जाओ mpol_out;
+	}
+	if (err)
+		goto mpol_out;
 
 	ret = queue_pages_range(mm, start, end, nmask,
 			  flags | MPOL_MF_INVERT, &pagelist);
 
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		err = ret;
-		जाओ up_out;
-	पूर्ण
+		goto up_out;
+	}
 
 	err = mbind_range(mm, start, end, new);
 
-	अगर (!err) अणु
-		पूर्णांक nr_failed = 0;
+	if (!err) {
+		int nr_failed = 0;
 
-		अगर (!list_empty(&pagelist)) अणु
+		if (!list_empty(&pagelist)) {
 			WARN_ON_ONCE(flags & MPOL_MF_LAZY);
-			nr_failed = migrate_pages(&pagelist, new_page, शून्य,
+			nr_failed = migrate_pages(&pagelist, new_page, NULL,
 				start, MIGRATE_SYNC, MR_MEMPOLICY_MBIND);
-			अगर (nr_failed)
+			if (nr_failed)
 				putback_movable_pages(&pagelist);
-		पूर्ण
+		}
 
-		अगर ((ret > 0) || (nr_failed && (flags & MPOL_MF_STRICT)))
+		if ((ret > 0) || (nr_failed && (flags & MPOL_MF_STRICT)))
 			err = -EIO;
-	पूर्ण अन्यथा अणु
+	} else {
 up_out:
-		अगर (!list_empty(&pagelist))
+		if (!list_empty(&pagelist))
 			putback_movable_pages(&pagelist);
-	पूर्ण
+	}
 
-	mmap_ग_लिखो_unlock(mm);
+	mmap_write_unlock(mm);
 mpol_out:
 	mpol_put(new);
-	अगर (flags & (MPOL_MF_MOVE | MPOL_MF_MOVE_ALL))
+	if (flags & (MPOL_MF_MOVE | MPOL_MF_MOVE_ALL))
 		lru_cache_enable();
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /*
- * User space पूर्णांकerface with variable sized biपंचांगaps क्रम nodelists.
+ * User space interface with variable sized bitmaps for nodelists.
  */
 
 /* Copy a node mask from user space. */
-अटल पूर्णांक get_nodes(nodemask_t *nodes, स्थिर अचिन्हित दीर्घ __user *nmask,
-		     अचिन्हित दीर्घ maxnode)
-अणु
-	अचिन्हित दीर्घ k;
-	अचिन्हित दीर्घ t;
-	अचिन्हित दीर्घ nदीर्घs;
-	अचिन्हित दीर्घ endmask;
+static int get_nodes(nodemask_t *nodes, const unsigned long __user *nmask,
+		     unsigned long maxnode)
+{
+	unsigned long k;
+	unsigned long t;
+	unsigned long nlongs;
+	unsigned long endmask;
 
 	--maxnode;
 	nodes_clear(*nodes);
-	अगर (maxnode == 0 || !nmask)
-		वापस 0;
-	अगर (maxnode > PAGE_SIZE*BITS_PER_BYTE)
-		वापस -EINVAL;
+	if (maxnode == 0 || !nmask)
+		return 0;
+	if (maxnode > PAGE_SIZE*BITS_PER_BYTE)
+		return -EINVAL;
 
-	nदीर्घs = BITS_TO_LONGS(maxnode);
-	अगर ((maxnode % BITS_PER_LONG) == 0)
+	nlongs = BITS_TO_LONGS(maxnode);
+	if ((maxnode % BITS_PER_LONG) == 0)
 		endmask = ~0UL;
-	अन्यथा
+	else
 		endmask = (1UL << (maxnode % BITS_PER_LONG)) - 1;
 
 	/*
-	 * When the user specअगरied more nodes than supported just check
-	 * अगर the non supported part is all zero.
+	 * When the user specified more nodes than supported just check
+	 * if the non supported part is all zero.
 	 *
-	 * If maxnode have more दीर्घs than MAX_NUMNODES, check
+	 * If maxnode have more longs than MAX_NUMNODES, check
 	 * the bits in that area first. And then go through to
 	 * check the rest bits which equal or bigger than MAX_NUMNODES.
 	 * Otherwise, just check bits [MAX_NUMNODES, maxnode).
 	 */
-	अगर (nदीर्घs > BITS_TO_LONGS(MAX_NUMNODES)) अणु
-		क्रम (k = BITS_TO_LONGS(MAX_NUMNODES); k < nदीर्घs; k++) अणु
-			अगर (get_user(t, nmask + k))
-				वापस -EFAULT;
-			अगर (k == nदीर्घs - 1) अणु
-				अगर (t & endmask)
-					वापस -EINVAL;
-			पूर्ण अन्यथा अगर (t)
-				वापस -EINVAL;
-		पूर्ण
-		nदीर्घs = BITS_TO_LONGS(MAX_NUMNODES);
+	if (nlongs > BITS_TO_LONGS(MAX_NUMNODES)) {
+		for (k = BITS_TO_LONGS(MAX_NUMNODES); k < nlongs; k++) {
+			if (get_user(t, nmask + k))
+				return -EFAULT;
+			if (k == nlongs - 1) {
+				if (t & endmask)
+					return -EINVAL;
+			} else if (t)
+				return -EINVAL;
+		}
+		nlongs = BITS_TO_LONGS(MAX_NUMNODES);
 		endmask = ~0UL;
-	पूर्ण
+	}
 
-	अगर (maxnode > MAX_NUMNODES && MAX_NUMNODES % BITS_PER_LONG != 0) अणु
-		अचिन्हित दीर्घ valid_mask = endmask;
+	if (maxnode > MAX_NUMNODES && MAX_NUMNODES % BITS_PER_LONG != 0) {
+		unsigned long valid_mask = endmask;
 
 		valid_mask &= ~((1UL << (MAX_NUMNODES % BITS_PER_LONG)) - 1);
-		अगर (get_user(t, nmask + nदीर्घs - 1))
-			वापस -EFAULT;
-		अगर (t & valid_mask)
-			वापस -EINVAL;
-	पूर्ण
+		if (get_user(t, nmask + nlongs - 1))
+			return -EFAULT;
+		if (t & valid_mask)
+			return -EINVAL;
+	}
 
-	अगर (copy_from_user(nodes_addr(*nodes), nmask, nदीर्घs*माप(अचिन्हित दीर्घ)))
-		वापस -EFAULT;
-	nodes_addr(*nodes)[nदीर्घs-1] &= endmask;
-	वापस 0;
-पूर्ण
+	if (copy_from_user(nodes_addr(*nodes), nmask, nlongs*sizeof(unsigned long)))
+		return -EFAULT;
+	nodes_addr(*nodes)[nlongs-1] &= endmask;
+	return 0;
+}
 
 /* Copy a kernel node mask to user space */
-अटल पूर्णांक copy_nodes_to_user(अचिन्हित दीर्घ __user *mask, अचिन्हित दीर्घ maxnode,
+static int copy_nodes_to_user(unsigned long __user *mask, unsigned long maxnode,
 			      nodemask_t *nodes)
-अणु
-	अचिन्हित दीर्घ copy = ALIGN(maxnode-1, 64) / 8;
-	अचिन्हित पूर्णांक nbytes = BITS_TO_LONGS(nr_node_ids) * माप(दीर्घ);
+{
+	unsigned long copy = ALIGN(maxnode-1, 64) / 8;
+	unsigned int nbytes = BITS_TO_LONGS(nr_node_ids) * sizeof(long);
 
-	अगर (copy > nbytes) अणु
-		अगर (copy > PAGE_SIZE)
-			वापस -EINVAL;
-		अगर (clear_user((अक्षर __user *)mask + nbytes, copy - nbytes))
-			वापस -EFAULT;
+	if (copy > nbytes) {
+		if (copy > PAGE_SIZE)
+			return -EINVAL;
+		if (clear_user((char __user *)mask + nbytes, copy - nbytes))
+			return -EFAULT;
 		copy = nbytes;
-	पूर्ण
-	वापस copy_to_user(mask, nodes_addr(*nodes), copy) ? -EFAULT : 0;
-पूर्ण
+	}
+	return copy_to_user(mask, nodes_addr(*nodes), copy) ? -EFAULT : 0;
+}
 
-अटल दीर्घ kernel_mbind(अचिन्हित दीर्घ start, अचिन्हित दीर्घ len,
-			 अचिन्हित दीर्घ mode, स्थिर अचिन्हित दीर्घ __user *nmask,
-			 अचिन्हित दीर्घ maxnode, अचिन्हित पूर्णांक flags)
-अणु
+static long kernel_mbind(unsigned long start, unsigned long len,
+			 unsigned long mode, const unsigned long __user *nmask,
+			 unsigned long maxnode, unsigned int flags)
+{
 	nodemask_t nodes;
-	पूर्णांक err;
-	अचिन्हित लघु mode_flags;
+	int err;
+	unsigned short mode_flags;
 
 	start = untagged_addr(start);
 	mode_flags = mode & MPOL_MODE_FLAGS;
 	mode &= ~MPOL_MODE_FLAGS;
-	अगर (mode >= MPOL_MAX)
-		वापस -EINVAL;
-	अगर ((mode_flags & MPOL_F_STATIC_NODES) &&
+	if (mode >= MPOL_MAX)
+		return -EINVAL;
+	if ((mode_flags & MPOL_F_STATIC_NODES) &&
 	    (mode_flags & MPOL_F_RELATIVE_NODES))
-		वापस -EINVAL;
+		return -EINVAL;
 	err = get_nodes(&nodes, nmask, maxnode);
-	अगर (err)
-		वापस err;
-	वापस करो_mbind(start, len, mode, mode_flags, &nodes, flags);
-पूर्ण
+	if (err)
+		return err;
+	return do_mbind(start, len, mode, mode_flags, &nodes, flags);
+}
 
-SYSCALL_DEFINE6(mbind, अचिन्हित दीर्घ, start, अचिन्हित दीर्घ, len,
-		अचिन्हित दीर्घ, mode, स्थिर अचिन्हित दीर्घ __user *, nmask,
-		अचिन्हित दीर्घ, maxnode, अचिन्हित पूर्णांक, flags)
-अणु
-	वापस kernel_mbind(start, len, mode, nmask, maxnode, flags);
-पूर्ण
+SYSCALL_DEFINE6(mbind, unsigned long, start, unsigned long, len,
+		unsigned long, mode, const unsigned long __user *, nmask,
+		unsigned long, maxnode, unsigned int, flags)
+{
+	return kernel_mbind(start, len, mode, nmask, maxnode, flags);
+}
 
 /* Set the process memory policy */
-अटल दीर्घ kernel_set_mempolicy(पूर्णांक mode, स्थिर अचिन्हित दीर्घ __user *nmask,
-				 अचिन्हित दीर्घ maxnode)
-अणु
-	पूर्णांक err;
+static long kernel_set_mempolicy(int mode, const unsigned long __user *nmask,
+				 unsigned long maxnode)
+{
+	int err;
 	nodemask_t nodes;
-	अचिन्हित लघु flags;
+	unsigned short flags;
 
 	flags = mode & MPOL_MODE_FLAGS;
 	mode &= ~MPOL_MODE_FLAGS;
-	अगर ((अचिन्हित पूर्णांक)mode >= MPOL_MAX)
-		वापस -EINVAL;
-	अगर ((flags & MPOL_F_STATIC_NODES) && (flags & MPOL_F_RELATIVE_NODES))
-		वापस -EINVAL;
+	if ((unsigned int)mode >= MPOL_MAX)
+		return -EINVAL;
+	if ((flags & MPOL_F_STATIC_NODES) && (flags & MPOL_F_RELATIVE_NODES))
+		return -EINVAL;
 	err = get_nodes(&nodes, nmask, maxnode);
-	अगर (err)
-		वापस err;
-	वापस करो_set_mempolicy(mode, flags, &nodes);
-पूर्ण
+	if (err)
+		return err;
+	return do_set_mempolicy(mode, flags, &nodes);
+}
 
-SYSCALL_DEFINE3(set_mempolicy, पूर्णांक, mode, स्थिर अचिन्हित दीर्घ __user *, nmask,
-		अचिन्हित दीर्घ, maxnode)
-अणु
-	वापस kernel_set_mempolicy(mode, nmask, maxnode);
-पूर्ण
+SYSCALL_DEFINE3(set_mempolicy, int, mode, const unsigned long __user *, nmask,
+		unsigned long, maxnode)
+{
+	return kernel_set_mempolicy(mode, nmask, maxnode);
+}
 
-अटल पूर्णांक kernel_migrate_pages(pid_t pid, अचिन्हित दीर्घ maxnode,
-				स्थिर अचिन्हित दीर्घ __user *old_nodes,
-				स्थिर अचिन्हित दीर्घ __user *new_nodes)
-अणु
-	काष्ठा mm_काष्ठा *mm = शून्य;
-	काष्ठा task_काष्ठा *task;
+static int kernel_migrate_pages(pid_t pid, unsigned long maxnode,
+				const unsigned long __user *old_nodes,
+				const unsigned long __user *new_nodes)
+{
+	struct mm_struct *mm = NULL;
+	struct task_struct *task;
 	nodemask_t task_nodes;
-	पूर्णांक err;
+	int err;
 	nodemask_t *old;
 	nodemask_t *new;
 	NODEMASK_SCRATCH(scratch);
 
-	अगर (!scratch)
-		वापस -ENOMEM;
+	if (!scratch)
+		return -ENOMEM;
 
 	old = &scratch->mask1;
 	new = &scratch->mask2;
 
 	err = get_nodes(old, old_nodes, maxnode);
-	अगर (err)
-		जाओ out;
+	if (err)
+		goto out;
 
 	err = get_nodes(new, new_nodes, maxnode);
-	अगर (err)
-		जाओ out;
+	if (err)
+		goto out;
 
-	/* Find the mm_काष्ठा */
-	rcu_पढ़ो_lock();
+	/* Find the mm_struct */
+	rcu_read_lock();
 	task = pid ? find_task_by_vpid(pid) : current;
-	अगर (!task) अणु
-		rcu_पढ़ो_unlock();
+	if (!task) {
+		rcu_read_unlock();
 		err = -ESRCH;
-		जाओ out;
-	पूर्ण
-	get_task_काष्ठा(task);
+		goto out;
+	}
+	get_task_struct(task);
 
 	err = -EINVAL;
 
 	/*
-	 * Check अगर this process has the right to modअगरy the specअगरied process.
+	 * Check if this process has the right to modify the specified process.
 	 * Use the regular "ptrace_may_access()" checks.
 	 */
-	अगर (!ptrace_may_access(task, PTRACE_MODE_READ_REALCREDS)) अणु
-		rcu_पढ़ो_unlock();
+	if (!ptrace_may_access(task, PTRACE_MODE_READ_REALCREDS)) {
+		rcu_read_unlock();
 		err = -EPERM;
-		जाओ out_put;
-	पूर्ण
-	rcu_पढ़ो_unlock();
+		goto out_put;
+	}
+	rcu_read_unlock();
 
 	task_nodes = cpuset_mems_allowed(task);
 	/* Is the user allowed to access the target nodes? */
-	अगर (!nodes_subset(*new, task_nodes) && !capable(CAP_SYS_NICE)) अणु
+	if (!nodes_subset(*new, task_nodes) && !capable(CAP_SYS_NICE)) {
 		err = -EPERM;
-		जाओ out_put;
-	पूर्ण
+		goto out_put;
+	}
 
 	task_nodes = cpuset_mems_allowed(current);
 	nodes_and(*new, *new, task_nodes);
-	अगर (nodes_empty(*new))
-		जाओ out_put;
+	if (nodes_empty(*new))
+		goto out_put;
 
 	err = security_task_movememory(task);
-	अगर (err)
-		जाओ out_put;
+	if (err)
+		goto out_put;
 
 	mm = get_task_mm(task);
-	put_task_काष्ठा(task);
+	put_task_struct(task);
 
-	अगर (!mm) अणु
+	if (!mm) {
 		err = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	err = करो_migrate_pages(mm, old, new,
+	err = do_migrate_pages(mm, old, new,
 		capable(CAP_SYS_NICE) ? MPOL_MF_MOVE_ALL : MPOL_MF_MOVE);
 
 	mmput(mm);
 out:
 	NODEMASK_SCRATCH_FREE(scratch);
 
-	वापस err;
+	return err;
 
 out_put:
-	put_task_काष्ठा(task);
-	जाओ out;
+	put_task_struct(task);
+	goto out;
 
-पूर्ण
+}
 
-SYSCALL_DEFINE4(migrate_pages, pid_t, pid, अचिन्हित दीर्घ, maxnode,
-		स्थिर अचिन्हित दीर्घ __user *, old_nodes,
-		स्थिर अचिन्हित दीर्घ __user *, new_nodes)
-अणु
-	वापस kernel_migrate_pages(pid, maxnode, old_nodes, new_nodes);
-पूर्ण
+SYSCALL_DEFINE4(migrate_pages, pid_t, pid, unsigned long, maxnode,
+		const unsigned long __user *, old_nodes,
+		const unsigned long __user *, new_nodes)
+{
+	return kernel_migrate_pages(pid, maxnode, old_nodes, new_nodes);
+}
 
 
 /* Retrieve NUMA policy */
-अटल पूर्णांक kernel_get_mempolicy(पूर्णांक __user *policy,
-				अचिन्हित दीर्घ __user *nmask,
-				अचिन्हित दीर्घ maxnode,
-				अचिन्हित दीर्घ addr,
-				अचिन्हित दीर्घ flags)
-अणु
-	पूर्णांक err;
-	पूर्णांक pval;
+static int kernel_get_mempolicy(int __user *policy,
+				unsigned long __user *nmask,
+				unsigned long maxnode,
+				unsigned long addr,
+				unsigned long flags)
+{
+	int err;
+	int pval;
 	nodemask_t nodes;
 
-	अगर (nmask != शून्य && maxnode < nr_node_ids)
-		वापस -EINVAL;
+	if (nmask != NULL && maxnode < nr_node_ids)
+		return -EINVAL;
 
 	addr = untagged_addr(addr);
 
-	err = करो_get_mempolicy(&pval, &nodes, addr, flags);
+	err = do_get_mempolicy(&pval, &nodes, addr, flags);
 
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	अगर (policy && put_user(pval, policy))
-		वापस -EFAULT;
+	if (policy && put_user(pval, policy))
+		return -EFAULT;
 
-	अगर (nmask)
+	if (nmask)
 		err = copy_nodes_to_user(nmask, maxnode, &nodes);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-SYSCALL_DEFINE5(get_mempolicy, पूर्णांक __user *, policy,
-		अचिन्हित दीर्घ __user *, nmask, अचिन्हित दीर्घ, maxnode,
-		अचिन्हित दीर्घ, addr, अचिन्हित दीर्घ, flags)
-अणु
-	वापस kernel_get_mempolicy(policy, nmask, maxnode, addr, flags);
-पूर्ण
+SYSCALL_DEFINE5(get_mempolicy, int __user *, policy,
+		unsigned long __user *, nmask, unsigned long, maxnode,
+		unsigned long, addr, unsigned long, flags)
+{
+	return kernel_get_mempolicy(policy, nmask, maxnode, addr, flags);
+}
 
-#अगर_घोषित CONFIG_COMPAT
+#ifdef CONFIG_COMPAT
 
-COMPAT_SYSCALL_DEFINE5(get_mempolicy, पूर्णांक __user *, policy,
-		       compat_uदीर्घ_t __user *, nmask,
-		       compat_uदीर्घ_t, maxnode,
-		       compat_uदीर्घ_t, addr, compat_uदीर्घ_t, flags)
-अणु
-	दीर्घ err;
-	अचिन्हित दीर्घ __user *nm = शून्य;
-	अचिन्हित दीर्घ nr_bits, alloc_size;
+COMPAT_SYSCALL_DEFINE5(get_mempolicy, int __user *, policy,
+		       compat_ulong_t __user *, nmask,
+		       compat_ulong_t, maxnode,
+		       compat_ulong_t, addr, compat_ulong_t, flags)
+{
+	long err;
+	unsigned long __user *nm = NULL;
+	unsigned long nr_bits, alloc_size;
 	DECLARE_BITMAP(bm, MAX_NUMNODES);
 
-	nr_bits = min_t(अचिन्हित दीर्घ, maxnode-1, nr_node_ids);
+	nr_bits = min_t(unsigned long, maxnode-1, nr_node_ids);
 	alloc_size = ALIGN(nr_bits, BITS_PER_LONG) / 8;
 
-	अगर (nmask)
+	if (nmask)
 		nm = compat_alloc_user_space(alloc_size);
 
 	err = kernel_get_mempolicy(policy, nm, nr_bits+1, addr, flags);
 
-	अगर (!err && nmask) अणु
-		अचिन्हित दीर्घ copy_size;
-		copy_size = min_t(अचिन्हित दीर्घ, माप(bm), alloc_size);
+	if (!err && nmask) {
+		unsigned long copy_size;
+		copy_size = min_t(unsigned long, sizeof(bm), alloc_size);
 		err = copy_from_user(bm, nm, copy_size);
-		/* ensure entire biपंचांगap is zeroed */
+		/* ensure entire bitmap is zeroed */
 		err |= clear_user(nmask, ALIGN(maxnode-1, 8) / 8);
-		err |= compat_put_biपंचांगap(nmask, bm, nr_bits);
-	पूर्ण
+		err |= compat_put_bitmap(nmask, bm, nr_bits);
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-COMPAT_SYSCALL_DEFINE3(set_mempolicy, पूर्णांक, mode, compat_uदीर्घ_t __user *, nmask,
-		       compat_uदीर्घ_t, maxnode)
-अणु
-	अचिन्हित दीर्घ __user *nm = शून्य;
-	अचिन्हित दीर्घ nr_bits, alloc_size;
+COMPAT_SYSCALL_DEFINE3(set_mempolicy, int, mode, compat_ulong_t __user *, nmask,
+		       compat_ulong_t, maxnode)
+{
+	unsigned long __user *nm = NULL;
+	unsigned long nr_bits, alloc_size;
 	DECLARE_BITMAP(bm, MAX_NUMNODES);
 
-	nr_bits = min_t(अचिन्हित दीर्घ, maxnode-1, MAX_NUMNODES);
+	nr_bits = min_t(unsigned long, maxnode-1, MAX_NUMNODES);
 	alloc_size = ALIGN(nr_bits, BITS_PER_LONG) / 8;
 
-	अगर (nmask) अणु
-		अगर (compat_get_biपंचांगap(bm, nmask, nr_bits))
-			वापस -EFAULT;
+	if (nmask) {
+		if (compat_get_bitmap(bm, nmask, nr_bits))
+			return -EFAULT;
 		nm = compat_alloc_user_space(alloc_size);
-		अगर (copy_to_user(nm, bm, alloc_size))
-			वापस -EFAULT;
-	पूर्ण
+		if (copy_to_user(nm, bm, alloc_size))
+			return -EFAULT;
+	}
 
-	वापस kernel_set_mempolicy(mode, nm, nr_bits+1);
-पूर्ण
+	return kernel_set_mempolicy(mode, nm, nr_bits+1);
+}
 
-COMPAT_SYSCALL_DEFINE6(mbind, compat_uदीर्घ_t, start, compat_uदीर्घ_t, len,
-		       compat_uदीर्घ_t, mode, compat_uदीर्घ_t __user *, nmask,
-		       compat_uदीर्घ_t, maxnode, compat_uदीर्घ_t, flags)
-अणु
-	अचिन्हित दीर्घ __user *nm = शून्य;
-	अचिन्हित दीर्घ nr_bits, alloc_size;
+COMPAT_SYSCALL_DEFINE6(mbind, compat_ulong_t, start, compat_ulong_t, len,
+		       compat_ulong_t, mode, compat_ulong_t __user *, nmask,
+		       compat_ulong_t, maxnode, compat_ulong_t, flags)
+{
+	unsigned long __user *nm = NULL;
+	unsigned long nr_bits, alloc_size;
 	nodemask_t bm;
 
-	nr_bits = min_t(अचिन्हित दीर्घ, maxnode-1, MAX_NUMNODES);
+	nr_bits = min_t(unsigned long, maxnode-1, MAX_NUMNODES);
 	alloc_size = ALIGN(nr_bits, BITS_PER_LONG) / 8;
 
-	अगर (nmask) अणु
-		अगर (compat_get_biपंचांगap(nodes_addr(bm), nmask, nr_bits))
-			वापस -EFAULT;
+	if (nmask) {
+		if (compat_get_bitmap(nodes_addr(bm), nmask, nr_bits))
+			return -EFAULT;
 		nm = compat_alloc_user_space(alloc_size);
-		अगर (copy_to_user(nm, nodes_addr(bm), alloc_size))
-			वापस -EFAULT;
-	पूर्ण
+		if (copy_to_user(nm, nodes_addr(bm), alloc_size))
+			return -EFAULT;
+	}
 
-	वापस kernel_mbind(start, len, mode, nm, nr_bits+1, flags);
-पूर्ण
+	return kernel_mbind(start, len, mode, nm, nr_bits+1, flags);
+}
 
 COMPAT_SYSCALL_DEFINE4(migrate_pages, compat_pid_t, pid,
-		       compat_uदीर्घ_t, maxnode,
-		       स्थिर compat_uदीर्घ_t __user *, old_nodes,
-		       स्थिर compat_uदीर्घ_t __user *, new_nodes)
-अणु
-	अचिन्हित दीर्घ __user *old = शून्य;
-	अचिन्हित दीर्घ __user *new = शून्य;
-	nodemask_t पंचांगp_mask;
-	अचिन्हित दीर्घ nr_bits;
-	अचिन्हित दीर्घ size;
+		       compat_ulong_t, maxnode,
+		       const compat_ulong_t __user *, old_nodes,
+		       const compat_ulong_t __user *, new_nodes)
+{
+	unsigned long __user *old = NULL;
+	unsigned long __user *new = NULL;
+	nodemask_t tmp_mask;
+	unsigned long nr_bits;
+	unsigned long size;
 
-	nr_bits = min_t(अचिन्हित दीर्घ, maxnode - 1, MAX_NUMNODES);
+	nr_bits = min_t(unsigned long, maxnode - 1, MAX_NUMNODES);
 	size = ALIGN(nr_bits, BITS_PER_LONG) / 8;
-	अगर (old_nodes) अणु
-		अगर (compat_get_biपंचांगap(nodes_addr(पंचांगp_mask), old_nodes, nr_bits))
-			वापस -EFAULT;
+	if (old_nodes) {
+		if (compat_get_bitmap(nodes_addr(tmp_mask), old_nodes, nr_bits))
+			return -EFAULT;
 		old = compat_alloc_user_space(new_nodes ? size * 2 : size);
-		अगर (new_nodes)
-			new = old + size / माप(अचिन्हित दीर्घ);
-		अगर (copy_to_user(old, nodes_addr(पंचांगp_mask), size))
-			वापस -EFAULT;
-	पूर्ण
-	अगर (new_nodes) अणु
-		अगर (compat_get_biपंचांगap(nodes_addr(पंचांगp_mask), new_nodes, nr_bits))
-			वापस -EFAULT;
-		अगर (new == शून्य)
+		if (new_nodes)
+			new = old + size / sizeof(unsigned long);
+		if (copy_to_user(old, nodes_addr(tmp_mask), size))
+			return -EFAULT;
+	}
+	if (new_nodes) {
+		if (compat_get_bitmap(nodes_addr(tmp_mask), new_nodes, nr_bits))
+			return -EFAULT;
+		if (new == NULL)
 			new = compat_alloc_user_space(size);
-		अगर (copy_to_user(new, nodes_addr(पंचांगp_mask), size))
-			वापस -EFAULT;
-	पूर्ण
-	वापस kernel_migrate_pages(pid, nr_bits + 1, old, new);
-पूर्ण
+		if (copy_to_user(new, nodes_addr(tmp_mask), size))
+			return -EFAULT;
+	}
+	return kernel_migrate_pages(pid, nr_bits + 1, old, new);
+}
 
-#पूर्ण_अगर /* CONFIG_COMPAT */
+#endif /* CONFIG_COMPAT */
 
-bool vma_migratable(काष्ठा vm_area_काष्ठा *vma)
-अणु
-	अगर (vma->vm_flags & (VM_IO | VM_PFNMAP))
-		वापस false;
+bool vma_migratable(struct vm_area_struct *vma)
+{
+	if (vma->vm_flags & (VM_IO | VM_PFNMAP))
+		return false;
 
 	/*
-	 * DAX device mappings require predictable access latency, so aव्योम
+	 * DAX device mappings require predictable access latency, so avoid
 	 * incurring periodic faults.
 	 */
-	अगर (vma_is_dax(vma))
-		वापस false;
+	if (vma_is_dax(vma))
+		return false;
 
-	अगर (is_vm_hugetlb_page(vma) &&
+	if (is_vm_hugetlb_page(vma) &&
 		!hugepage_migration_supported(hstate_vma(vma)))
-		वापस false;
+		return false;
 
 	/*
 	 * Migration allocates pages in the highest zone. If we cannot
-	 * करो so then migration (at least from node to node) is not
+	 * do so then migration (at least from node to node) is not
 	 * possible.
 	 */
-	अगर (vma->vm_file &&
+	if (vma->vm_file &&
 		gfp_zone(mapping_gfp_mask(vma->vm_file->f_mapping))
 			< policy_zone)
-		वापस false;
-	वापस true;
-पूर्ण
+		return false;
+	return true;
+}
 
-काष्ठा mempolicy *__get_vma_policy(काष्ठा vm_area_काष्ठा *vma,
-						अचिन्हित दीर्घ addr)
-अणु
-	काष्ठा mempolicy *pol = शून्य;
+struct mempolicy *__get_vma_policy(struct vm_area_struct *vma,
+						unsigned long addr)
+{
+	struct mempolicy *pol = NULL;
 
-	अगर (vma) अणु
-		अगर (vma->vm_ops && vma->vm_ops->get_policy) अणु
+	if (vma) {
+		if (vma->vm_ops && vma->vm_ops->get_policy) {
 			pol = vma->vm_ops->get_policy(vma, addr);
-		पूर्ण अन्यथा अगर (vma->vm_policy) अणु
+		} else if (vma->vm_policy) {
 			pol = vma->vm_policy;
 
 			/*
 			 * shmem_alloc_page() passes MPOL_F_SHARED policy with
-			 * a pseuकरो vma whose vma->vm_ops=शून्य. Take a reference
+			 * a pseudo vma whose vma->vm_ops=NULL. Take a reference
 			 * count on these policies which will be dropped by
 			 * mpol_cond_put() later
 			 */
-			अगर (mpol_needs_cond_ref(pol))
+			if (mpol_needs_cond_ref(pol))
 				mpol_get(pol);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस pol;
-पूर्ण
+	return pol;
+}
 
 /*
  * get_vma_policy(@vma, @addr)
- * @vma: भव memory area whose policy is sought
- * @addr: address in @vma क्रम shared policy lookup
+ * @vma: virtual memory area whose policy is sought
+ * @addr: address in @vma for shared policy lookup
  *
- * Returns effective policy क्रम a VMA at specअगरied address.
- * Falls back to current->mempolicy or प्रणाली शेष policy, as necessary.
+ * Returns effective policy for a VMA at specified address.
+ * Falls back to current->mempolicy or system default policy, as necessary.
  * Shared policies [those marked as MPOL_F_SHARED] require an extra reference
  * count--added by the get_policy() vm_op, as appropriate--to protect against
- * मुक्तing by another task.  It is the caller's responsibility to मुक्त the
- * extra reference क्रम shared policies.
+ * freeing by another task.  It is the caller's responsibility to free the
+ * extra reference for shared policies.
  */
-अटल काष्ठा mempolicy *get_vma_policy(काष्ठा vm_area_काष्ठा *vma,
-						अचिन्हित दीर्घ addr)
-अणु
-	काष्ठा mempolicy *pol = __get_vma_policy(vma, addr);
+static struct mempolicy *get_vma_policy(struct vm_area_struct *vma,
+						unsigned long addr)
+{
+	struct mempolicy *pol = __get_vma_policy(vma, addr);
 
-	अगर (!pol)
+	if (!pol)
 		pol = get_task_policy(current);
 
-	वापस pol;
-पूर्ण
+	return pol;
+}
 
-bool vma_policy_mof(काष्ठा vm_area_काष्ठा *vma)
-अणु
-	काष्ठा mempolicy *pol;
+bool vma_policy_mof(struct vm_area_struct *vma)
+{
+	struct mempolicy *pol;
 
-	अगर (vma->vm_ops && vma->vm_ops->get_policy) अणु
+	if (vma->vm_ops && vma->vm_ops->get_policy) {
 		bool ret = false;
 
 		pol = vma->vm_ops->get_policy(vma, vma->vm_start);
-		अगर (pol && (pol->flags & MPOL_F_MOF))
+		if (pol && (pol->flags & MPOL_F_MOF))
 			ret = true;
 		mpol_cond_put(pol);
 
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	pol = vma->vm_policy;
-	अगर (!pol)
+	if (!pol)
 		pol = get_task_policy(current);
 
-	वापस pol->flags & MPOL_F_MOF;
-पूर्ण
+	return pol->flags & MPOL_F_MOF;
+}
 
-अटल पूर्णांक apply_policy_zone(काष्ठा mempolicy *policy, क्रमागत zone_type zone)
-अणु
-	क्रमागत zone_type dynamic_policy_zone = policy_zone;
+static int apply_policy_zone(struct mempolicy *policy, enum zone_type zone)
+{
+	enum zone_type dynamic_policy_zone = policy_zone;
 
 	BUG_ON(dynamic_policy_zone == ZONE_MOVABLE);
 
 	/*
-	 * अगर policy->v.nodes has movable memory only,
+	 * if policy->v.nodes has movable memory only,
 	 * we apply policy when gfp_zone(gfp) = ZONE_MOVABLE only.
 	 *
-	 * policy->v.nodes is पूर्णांकersect with node_states[N_MEMORY].
-	 * so अगर the following test fails, it implies
+	 * policy->v.nodes is intersect with node_states[N_MEMORY].
+	 * so if the following test fails, it implies
 	 * policy->v.nodes has movable memory only.
 	 */
-	अगर (!nodes_पूर्णांकersects(policy->v.nodes, node_states[N_HIGH_MEMORY]))
+	if (!nodes_intersects(policy->v.nodes, node_states[N_HIGH_MEMORY]))
 		dynamic_policy_zone = ZONE_MOVABLE;
 
-	वापस zone >= dynamic_policy_zone;
-पूर्ण
+	return zone >= dynamic_policy_zone;
+}
 
 /*
- * Return a nodemask representing a mempolicy क्रम filtering nodes क्रम
+ * Return a nodemask representing a mempolicy for filtering nodes for
  * page allocation
  */
-nodemask_t *policy_nodemask(gfp_t gfp, काष्ठा mempolicy *policy)
-अणु
-	/* Lower zones करोn't get a nodemask applied क्रम MPOL_BIND */
-	अगर (unlikely(policy->mode == MPOL_BIND) &&
+nodemask_t *policy_nodemask(gfp_t gfp, struct mempolicy *policy)
+{
+	/* Lower zones don't get a nodemask applied for MPOL_BIND */
+	if (unlikely(policy->mode == MPOL_BIND) &&
 			apply_policy_zone(policy, gfp_zone(gfp)) &&
 			cpuset_nodemask_valid_mems_allowed(&policy->v.nodes))
-		वापस &policy->v.nodes;
+		return &policy->v.nodes;
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
 /* Return the node id preferred by the given mempolicy, or the given id */
-अटल पूर्णांक policy_node(gfp_t gfp, काष्ठा mempolicy *policy, पूर्णांक nd)
-अणु
-	अगर (policy->mode == MPOL_PREFERRED && !(policy->flags & MPOL_F_LOCAL))
+static int policy_node(gfp_t gfp, struct mempolicy *policy, int nd)
+{
+	if (policy->mode == MPOL_PREFERRED && !(policy->flags & MPOL_F_LOCAL))
 		nd = policy->v.preferred_node;
-	अन्यथा अणु
+	else {
 		/*
 		 * __GFP_THISNODE shouldn't even be used with the bind policy
-		 * because we might easily अवरोध the expectation to stay on the
-		 * requested node and not अवरोध the policy.
+		 * because we might easily break the expectation to stay on the
+		 * requested node and not break the policy.
 		 */
 		WARN_ON_ONCE(policy->mode == MPOL_BIND && (gfp & __GFP_THISNODE));
-	पूर्ण
+	}
 
-	वापस nd;
-पूर्ण
+	return nd;
+}
 
-/* Do dynamic पूर्णांकerleaving क्रम a process */
-अटल अचिन्हित पूर्णांकerleave_nodes(काष्ठा mempolicy *policy)
-अणु
-	अचिन्हित next;
-	काष्ठा task_काष्ठा *me = current;
+/* Do dynamic interleaving for a process */
+static unsigned interleave_nodes(struct mempolicy *policy)
+{
+	unsigned next;
+	struct task_struct *me = current;
 
 	next = next_node_in(me->il_prev, policy->v.nodes);
-	अगर (next < MAX_NUMNODES)
+	if (next < MAX_NUMNODES)
 		me->il_prev = next;
-	वापस next;
-पूर्ण
+	return next;
+}
 
 /*
  * Depending on the memory policy provide a node from which to allocate the
  * next slab entry.
  */
-अचिन्हित पूर्णांक mempolicy_slab_node(व्योम)
-अणु
-	काष्ठा mempolicy *policy;
-	पूर्णांक node = numa_mem_id();
+unsigned int mempolicy_slab_node(void)
+{
+	struct mempolicy *policy;
+	int node = numa_mem_id();
 
-	अगर (in_पूर्णांकerrupt())
-		वापस node;
+	if (in_interrupt())
+		return node;
 
 	policy = current->mempolicy;
-	अगर (!policy || policy->flags & MPOL_F_LOCAL)
-		वापस node;
+	if (!policy || policy->flags & MPOL_F_LOCAL)
+		return node;
 
-	चयन (policy->mode) अणु
-	हाल MPOL_PREFERRED:
+	switch (policy->mode) {
+	case MPOL_PREFERRED:
 		/*
 		 * handled MPOL_F_LOCAL above
 		 */
-		वापस policy->v.preferred_node;
+		return policy->v.preferred_node;
 
-	हाल MPOL_INTERLEAVE:
-		वापस पूर्णांकerleave_nodes(policy);
+	case MPOL_INTERLEAVE:
+		return interleave_nodes(policy);
 
-	हाल MPOL_BIND: अणु
-		काष्ठा zoneref *z;
+	case MPOL_BIND: {
+		struct zoneref *z;
 
 		/*
 		 * Follow bind policy behavior and start allocation at the
 		 * first node.
 		 */
-		काष्ठा zonelist *zonelist;
-		क्रमागत zone_type highest_zoneidx = gfp_zone(GFP_KERNEL);
+		struct zonelist *zonelist;
+		enum zone_type highest_zoneidx = gfp_zone(GFP_KERNEL);
 		zonelist = &NODE_DATA(node)->node_zonelists[ZONELIST_FALLBACK];
 		z = first_zones_zonelist(zonelist, highest_zoneidx,
 							&policy->v.nodes);
-		वापस z->zone ? zone_to_nid(z->zone) : node;
-	पूर्ण
+		return z->zone ? zone_to_nid(z->zone) : node;
+	}
 
-	शेष:
+	default:
 		BUG();
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
- * Do अटल पूर्णांकerleaving क्रम a VMA with known offset @n.  Returns the n'th
- * node in pol->v.nodes (starting from n=0), wrapping around अगर n exceeds the
+ * Do static interleaving for a VMA with known offset @n.  Returns the n'th
+ * node in pol->v.nodes (starting from n=0), wrapping around if n exceeds the
  * number of present nodes.
  */
-अटल अचिन्हित offset_il_node(काष्ठा mempolicy *pol, अचिन्हित दीर्घ n)
-अणु
-	अचिन्हित nnodes = nodes_weight(pol->v.nodes);
-	अचिन्हित target;
-	पूर्णांक i;
-	पूर्णांक nid;
+static unsigned offset_il_node(struct mempolicy *pol, unsigned long n)
+{
+	unsigned nnodes = nodes_weight(pol->v.nodes);
+	unsigned target;
+	int i;
+	int nid;
 
-	अगर (!nnodes)
-		वापस numa_node_id();
-	target = (अचिन्हित पूर्णांक)n % nnodes;
+	if (!nnodes)
+		return numa_node_id();
+	target = (unsigned int)n % nnodes;
 	nid = first_node(pol->v.nodes);
-	क्रम (i = 0; i < target; i++)
+	for (i = 0; i < target; i++)
 		nid = next_node(nid, pol->v.nodes);
-	वापस nid;
-पूर्ण
+	return nid;
+}
 
-/* Determine a node number क्रम पूर्णांकerleave */
-अटल अंतरभूत अचिन्हित पूर्णांकerleave_nid(काष्ठा mempolicy *pol,
-		 काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ addr, पूर्णांक shअगरt)
-अणु
-	अगर (vma) अणु
-		अचिन्हित दीर्घ off;
+/* Determine a node number for interleave */
+static inline unsigned interleave_nid(struct mempolicy *pol,
+		 struct vm_area_struct *vma, unsigned long addr, int shift)
+{
+	if (vma) {
+		unsigned long off;
 
 		/*
-		 * क्रम small pages, there is no dअगरference between
-		 * shअगरt and PAGE_SHIFT, so the bit-shअगरt is safe.
-		 * क्रम huge pages, since vm_pgoff is in units of small
-		 * pages, we need to shअगरt off the always 0 bits to get
+		 * for small pages, there is no difference between
+		 * shift and PAGE_SHIFT, so the bit-shift is safe.
+		 * for huge pages, since vm_pgoff is in units of small
+		 * pages, we need to shift off the always 0 bits to get
 		 * a useful offset.
 		 */
-		BUG_ON(shअगरt < PAGE_SHIFT);
-		off = vma->vm_pgoff >> (shअगरt - PAGE_SHIFT);
-		off += (addr - vma->vm_start) >> shअगरt;
-		वापस offset_il_node(pol, off);
-	पूर्ण अन्यथा
-		वापस पूर्णांकerleave_nodes(pol);
-पूर्ण
+		BUG_ON(shift < PAGE_SHIFT);
+		off = vma->vm_pgoff >> (shift - PAGE_SHIFT);
+		off += (addr - vma->vm_start) >> shift;
+		return offset_il_node(pol, off);
+	} else
+		return interleave_nodes(pol);
+}
 
-#अगर_घोषित CONFIG_HUGETLBFS
+#ifdef CONFIG_HUGETLBFS
 /*
  * huge_node(@vma, @addr, @gfp_flags, @mpol)
- * @vma: भव memory area whose policy is sought
- * @addr: address in @vma क्रम shared policy lookup and पूर्णांकerleave policy
- * @gfp_flags: क्रम requested zone
- * @mpol: poपूर्णांकer to mempolicy poपूर्णांकer क्रम reference counted mempolicy
- * @nodemask: poपूर्णांकer to nodemask poपूर्णांकer क्रम MPOL_BIND nodemask
+ * @vma: virtual memory area whose policy is sought
+ * @addr: address in @vma for shared policy lookup and interleave policy
+ * @gfp_flags: for requested zone
+ * @mpol: pointer to mempolicy pointer for reference counted mempolicy
+ * @nodemask: pointer to nodemask pointer for MPOL_BIND nodemask
  *
- * Returns a nid suitable क्रम a huge page allocation and a poपूर्णांकer
- * to the काष्ठा mempolicy क्रम conditional unref after allocation.
+ * Returns a nid suitable for a huge page allocation and a pointer
+ * to the struct mempolicy for conditional unref after allocation.
  * If the effective policy is 'BIND, returns a pointer to the mempolicy's
- * @nodemask क्रम filtering the zonelist.
+ * @nodemask for filtering the zonelist.
  *
- * Must be रक्षित by पढ़ो_mems_allowed_begin()
+ * Must be protected by read_mems_allowed_begin()
  */
-पूर्णांक huge_node(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ addr, gfp_t gfp_flags,
-				काष्ठा mempolicy **mpol, nodemask_t **nodemask)
-अणु
-	पूर्णांक nid;
+int huge_node(struct vm_area_struct *vma, unsigned long addr, gfp_t gfp_flags,
+				struct mempolicy **mpol, nodemask_t **nodemask)
+{
+	int nid;
 
 	*mpol = get_vma_policy(vma, addr);
-	*nodemask = शून्य;	/* assume !MPOL_BIND */
+	*nodemask = NULL;	/* assume !MPOL_BIND */
 
-	अगर (unlikely((*mpol)->mode == MPOL_INTERLEAVE)) अणु
-		nid = पूर्णांकerleave_nid(*mpol, vma, addr,
-					huge_page_shअगरt(hstate_vma(vma)));
-	पूर्ण अन्यथा अणु
+	if (unlikely((*mpol)->mode == MPOL_INTERLEAVE)) {
+		nid = interleave_nid(*mpol, vma, addr,
+					huge_page_shift(hstate_vma(vma)));
+	} else {
 		nid = policy_node(gfp_flags, *mpol, numa_node_id());
-		अगर ((*mpol)->mode == MPOL_BIND)
+		if ((*mpol)->mode == MPOL_BIND)
 			*nodemask = &(*mpol)->v.nodes;
-	पूर्ण
-	वापस nid;
-पूर्ण
+	}
+	return nid;
+}
 
 /*
  * init_nodemask_of_mempolicy
  *
  * If the current task's mempolicy is "default" [NULL], return 'false'
- * to indicate शेष policy.  Otherwise, extract the policy nodemask
- * क्रम 'bind' or 'interleave' policy पूर्णांकo the argument nodemask, or
- * initialize the argument nodemask to contain the single node क्रम
+ * to indicate default policy.  Otherwise, extract the policy nodemask
+ * for 'bind' or 'interleave' policy into the argument nodemask, or
+ * initialize the argument nodemask to contain the single node for
  * 'preferred' or 'local' policy and return 'true' to indicate presence
- * of non-शेष mempolicy.
+ * of non-default mempolicy.
  *
- * We करोn't bother with reference counting the mempolicy [mpol_get/put]
+ * We don't bother with reference counting the mempolicy [mpol_get/put]
  * because the current task is examining it's own mempolicy and a task's
  * mempolicy is only ever changed by the task itself.
  *
- * N.B., it is the caller's responsibility to मुक्त a वापसed nodemask.
+ * N.B., it is the caller's responsibility to free a returned nodemask.
  */
 bool init_nodemask_of_mempolicy(nodemask_t *mask)
-अणु
-	काष्ठा mempolicy *mempolicy;
-	पूर्णांक nid;
+{
+	struct mempolicy *mempolicy;
+	int nid;
 
-	अगर (!(mask && current->mempolicy))
-		वापस false;
+	if (!(mask && current->mempolicy))
+		return false;
 
 	task_lock(current);
 	mempolicy = current->mempolicy;
-	चयन (mempolicy->mode) अणु
-	हाल MPOL_PREFERRED:
-		अगर (mempolicy->flags & MPOL_F_LOCAL)
+	switch (mempolicy->mode) {
+	case MPOL_PREFERRED:
+		if (mempolicy->flags & MPOL_F_LOCAL)
 			nid = numa_node_id();
-		अन्यथा
+		else
 			nid = mempolicy->v.preferred_node;
 		init_nodemask_of_node(mask, nid);
-		अवरोध;
+		break;
 
-	हाल MPOL_BIND:
-	हाल MPOL_INTERLEAVE:
+	case MPOL_BIND:
+	case MPOL_INTERLEAVE:
 		*mask =  mempolicy->v.nodes;
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		BUG();
-	पूर्ण
+	}
 	task_unlock(current);
 
-	वापस true;
-पूर्ण
-#पूर्ण_अगर
+	return true;
+}
+#endif
 
 /*
- * mempolicy_nodemask_पूर्णांकersects
+ * mempolicy_nodemask_intersects
  *
- * If tsk's mempolicy is "default" [NULL], return 'true' to indicate शेष
- * policy.  Otherwise, check क्रम पूर्णांकersection between mask and the policy
- * nodemask क्रम 'bind' or 'interleave' policy.  For 'preferred' or 'local'
- * policy, always वापस true since it may allocate अन्यथाwhere on fallback.
+ * If tsk's mempolicy is "default" [NULL], return 'true' to indicate default
+ * policy.  Otherwise, check for intersection between mask and the policy
+ * nodemask for 'bind' or 'interleave' policy.  For 'preferred' or 'local'
+ * policy, always return true since it may allocate elsewhere on fallback.
  *
- * Takes task_lock(tsk) to prevent मुक्तing of its mempolicy.
+ * Takes task_lock(tsk) to prevent freeing of its mempolicy.
  */
-bool mempolicy_nodemask_पूर्णांकersects(काष्ठा task_काष्ठा *tsk,
-					स्थिर nodemask_t *mask)
-अणु
-	काष्ठा mempolicy *mempolicy;
+bool mempolicy_nodemask_intersects(struct task_struct *tsk,
+					const nodemask_t *mask)
+{
+	struct mempolicy *mempolicy;
 	bool ret = true;
 
-	अगर (!mask)
-		वापस ret;
+	if (!mask)
+		return ret;
 	task_lock(tsk);
 	mempolicy = tsk->mempolicy;
-	अगर (!mempolicy)
-		जाओ out;
+	if (!mempolicy)
+		goto out;
 
-	चयन (mempolicy->mode) अणु
-	हाल MPOL_PREFERRED:
+	switch (mempolicy->mode) {
+	case MPOL_PREFERRED:
 		/*
 		 * MPOL_PREFERRED and MPOL_F_LOCAL are only preferred nodes to
 		 * allocate from, they may fallback to other nodes when oom.
-		 * Thus, it's possible क्रम tsk to have allocated memory from
+		 * Thus, it's possible for tsk to have allocated memory from
 		 * nodes in mask.
 		 */
-		अवरोध;
-	हाल MPOL_BIND:
-	हाल MPOL_INTERLEAVE:
-		ret = nodes_पूर्णांकersects(mempolicy->v.nodes, *mask);
-		अवरोध;
-	शेष:
+		break;
+	case MPOL_BIND:
+	case MPOL_INTERLEAVE:
+		ret = nodes_intersects(mempolicy->v.nodes, *mask);
+		break;
+	default:
 		BUG();
-	पूर्ण
+	}
 out:
 	task_unlock(tsk);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-/* Allocate a page in पूर्णांकerleaved policy.
-   Own path because it needs to करो special accounting. */
-अटल काष्ठा page *alloc_page_पूर्णांकerleave(gfp_t gfp, अचिन्हित order,
-					अचिन्हित nid)
-अणु
-	काष्ठा page *page;
+/* Allocate a page in interleaved policy.
+   Own path because it needs to do special accounting. */
+static struct page *alloc_page_interleave(gfp_t gfp, unsigned order,
+					unsigned nid)
+{
+	struct page *page;
 
-	page = __alloc_pages(gfp, order, nid, शून्य);
-	/* skip NUMA_INTERLEAVE_HIT counter update अगर numa stats is disabled */
-	अगर (!अटल_branch_likely(&vm_numa_stat_key))
-		वापस page;
-	अगर (page && page_to_nid(page) == nid) अणु
+	page = __alloc_pages(gfp, order, nid, NULL);
+	/* skip NUMA_INTERLEAVE_HIT counter update if numa stats is disabled */
+	if (!static_branch_likely(&vm_numa_stat_key))
+		return page;
+	if (page && page_to_nid(page) == nid) {
 		preempt_disable();
 		__inc_numa_state(page_zone(page), NUMA_INTERLEAVE_HIT);
 		preempt_enable();
-	पूर्ण
-	वापस page;
-पूर्ण
+	}
+	return page;
+}
 
 /**
- * alloc_pages_vma - Allocate a page क्रम a VMA.
+ * alloc_pages_vma - Allocate a page for a VMA.
  * @gfp: GFP flags.
  * @order: Order of the GFP allocation.
- * @vma: Poपूर्णांकer to VMA or शून्य अगर not available.
+ * @vma: Pointer to VMA or NULL if not available.
  * @addr: Virtual address of the allocation.  Must be inside @vma.
- * @node: Which node to prefer क्रम allocation (modulo policy).
- * @hugepage: For hugepages try only the preferred node अगर possible.
+ * @node: Which node to prefer for allocation (modulo policy).
+ * @hugepage: For hugepages try only the preferred node if possible.
  *
- * Allocate a page क्रम a specअगरic address in @vma, using the appropriate
- * NUMA policy.  When @vma is not शून्य the caller must hold the mmap_lock
- * of the mm_काष्ठा of the VMA to prevent it from going away.  Should be
- * used क्रम all allocations क्रम pages that will be mapped पूर्णांकo user space.
+ * Allocate a page for a specific address in @vma, using the appropriate
+ * NUMA policy.  When @vma is not NULL the caller must hold the mmap_lock
+ * of the mm_struct of the VMA to prevent it from going away.  Should be
+ * used for all allocations for pages that will be mapped into user space.
  *
- * Return: The page on success or शून्य अगर allocation fails.
+ * Return: The page on success or NULL if allocation fails.
  */
-काष्ठा page *alloc_pages_vma(gfp_t gfp, पूर्णांक order, काष्ठा vm_area_काष्ठा *vma,
-		अचिन्हित दीर्घ addr, पूर्णांक node, bool hugepage)
-अणु
-	काष्ठा mempolicy *pol;
-	काष्ठा page *page;
-	पूर्णांक preferred_nid;
+struct page *alloc_pages_vma(gfp_t gfp, int order, struct vm_area_struct *vma,
+		unsigned long addr, int node, bool hugepage)
+{
+	struct mempolicy *pol;
+	struct page *page;
+	int preferred_nid;
 	nodemask_t *nmask;
 
 	pol = get_vma_policy(vma, addr);
 
-	अगर (pol->mode == MPOL_INTERLEAVE) अणु
-		अचिन्हित nid;
+	if (pol->mode == MPOL_INTERLEAVE) {
+		unsigned nid;
 
-		nid = पूर्णांकerleave_nid(pol, vma, addr, PAGE_SHIFT + order);
+		nid = interleave_nid(pol, vma, addr, PAGE_SHIFT + order);
 		mpol_cond_put(pol);
-		page = alloc_page_पूर्णांकerleave(gfp, order, nid);
-		जाओ out;
-	पूर्ण
+		page = alloc_page_interleave(gfp, order, nid);
+		goto out;
+	}
 
-	अगर (unlikely(IS_ENABLED(CONFIG_TRANSPARENT_HUGEPAGE) && hugepage)) अणु
-		पूर्णांक hpage_node = node;
+	if (unlikely(IS_ENABLED(CONFIG_TRANSPARENT_HUGEPAGE) && hugepage)) {
+		int hpage_node = node;
 
 		/*
-		 * For hugepage allocation and non-पूर्णांकerleave policy which
+		 * For hugepage allocation and non-interleave policy which
 		 * allows the current node (or other explicitly preferred
 		 * node) we only try to allocate from the current/preferred
-		 * node and करोn't fall back to other nodes, as the cost of
+		 * node and don't fall back to other nodes, as the cost of
 		 * remote accesses would likely offset THP benefits.
 		 *
-		 * If the policy is पूर्णांकerleave, or करोes not allow the current
+		 * If the policy is interleave, or does not allow the current
 		 * node in its nodemask, we allocate the standard way.
 		 */
-		अगर (pol->mode == MPOL_PREFERRED && !(pol->flags & MPOL_F_LOCAL))
+		if (pol->mode == MPOL_PREFERRED && !(pol->flags & MPOL_F_LOCAL))
 			hpage_node = pol->v.preferred_node;
 
 		nmask = policy_nodemask(gfp, pol);
-		अगर (!nmask || node_isset(hpage_node, *nmask)) अणु
+		if (!nmask || node_isset(hpage_node, *nmask)) {
 			mpol_cond_put(pol);
 			/*
 			 * First, try to allocate THP only on local node, but
-			 * करोn't reclaim unnecessarily, just compact.
+			 * don't reclaim unnecessarily, just compact.
 			 */
 			page = __alloc_pages_node(hpage_node,
 				gfp | __GFP_THISNODE | __GFP_NORETRY, order);
@@ -2224,21 +2223,21 @@ out:
 			 * to prefer hugepage backing, retry allowing remote
 			 * memory with both reclaim and compact as well.
 			 */
-			अगर (!page && (gfp & __GFP_सूचीECT_RECLAIM))
+			if (!page && (gfp & __GFP_DIRECT_RECLAIM))
 				page = __alloc_pages_node(hpage_node,
 								gfp, order);
 
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 
 	nmask = policy_nodemask(gfp, pol);
 	preferred_nid = policy_node(gfp, pol, node);
 	page = __alloc_pages(gfp, order, preferred_nid, nmask);
 	mpol_cond_put(pol);
 out:
-	वापस page;
-पूर्ण
+	return page;
+}
 EXPORT_SYMBOL(alloc_pages_vma);
 
 /**
@@ -2253,458 +2252,458 @@ EXPORT_SYMBOL(alloc_pages_vma);
  *
  * Context: Can be called from any context, providing the appropriate GFP
  * flags are used.
- * Return: The page on success or शून्य अगर allocation fails.
+ * Return: The page on success or NULL if allocation fails.
  */
-काष्ठा page *alloc_pages(gfp_t gfp, अचिन्हित order)
-अणु
-	काष्ठा mempolicy *pol = &शेष_policy;
-	काष्ठा page *page;
+struct page *alloc_pages(gfp_t gfp, unsigned order)
+{
+	struct mempolicy *pol = &default_policy;
+	struct page *page;
 
-	अगर (!in_पूर्णांकerrupt() && !(gfp & __GFP_THISNODE))
+	if (!in_interrupt() && !(gfp & __GFP_THISNODE))
 		pol = get_task_policy(current);
 
 	/*
-	 * No reference counting needed क्रम current->mempolicy
-	 * nor प्रणाली शेष_policy
+	 * No reference counting needed for current->mempolicy
+	 * nor system default_policy
 	 */
-	अगर (pol->mode == MPOL_INTERLEAVE)
-		page = alloc_page_पूर्णांकerleave(gfp, order, पूर्णांकerleave_nodes(pol));
-	अन्यथा
+	if (pol->mode == MPOL_INTERLEAVE)
+		page = alloc_page_interleave(gfp, order, interleave_nodes(pol));
+	else
 		page = __alloc_pages(gfp, order,
 				policy_node(gfp, pol, numa_node_id()),
 				policy_nodemask(gfp, pol));
 
-	वापस page;
-पूर्ण
+	return page;
+}
 EXPORT_SYMBOL(alloc_pages);
 
-पूर्णांक vma_dup_policy(काष्ठा vm_area_काष्ठा *src, काष्ठा vm_area_काष्ठा *dst)
-अणु
-	काष्ठा mempolicy *pol = mpol_dup(vma_policy(src));
+int vma_dup_policy(struct vm_area_struct *src, struct vm_area_struct *dst)
+{
+	struct mempolicy *pol = mpol_dup(vma_policy(src));
 
-	अगर (IS_ERR(pol))
-		वापस PTR_ERR(pol);
+	if (IS_ERR(pol))
+		return PTR_ERR(pol);
 	dst->vm_policy = pol;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * If mpol_dup() sees current->cpuset == cpuset_being_rebound, then it
  * rebinds the mempolicy its copying by calling mpol_rebind_policy()
- * with the mems_allowed वापसed by cpuset_mems_allowed().  This
+ * with the mems_allowed returned by cpuset_mems_allowed().  This
  * keeps mempolicies cpuset relative after its cpuset moves.  See
  * further kernel/cpuset.c update_nodemask().
  *
  * current's mempolicy may be rebinded by the other task(the task that changes
- * cpuset's mems), so we needn't करो rebind work क्रम current task.
+ * cpuset's mems), so we needn't do rebind work for current task.
  */
 
 /* Slow path of a mempolicy duplicate */
-काष्ठा mempolicy *__mpol_dup(काष्ठा mempolicy *old)
-अणु
-	काष्ठा mempolicy *new = kmem_cache_alloc(policy_cache, GFP_KERNEL);
+struct mempolicy *__mpol_dup(struct mempolicy *old)
+{
+	struct mempolicy *new = kmem_cache_alloc(policy_cache, GFP_KERNEL);
 
-	अगर (!new)
-		वापस ERR_PTR(-ENOMEM);
+	if (!new)
+		return ERR_PTR(-ENOMEM);
 
-	/* task's mempolicy is रक्षित by alloc_lock */
-	अगर (old == current->mempolicy) अणु
+	/* task's mempolicy is protected by alloc_lock */
+	if (old == current->mempolicy) {
 		task_lock(current);
 		*new = *old;
 		task_unlock(current);
-	पूर्ण अन्यथा
+	} else
 		*new = *old;
 
-	अगर (current_cpuset_is_being_rebound()) अणु
+	if (current_cpuset_is_being_rebound()) {
 		nodemask_t mems = cpuset_mems_allowed(current);
 		mpol_rebind_policy(new, &mems);
-	पूर्ण
+	}
 	atomic_set(&new->refcnt, 1);
-	वापस new;
-पूर्ण
+	return new;
+}
 
 /* Slow path of a mempolicy comparison */
-bool __mpol_equal(काष्ठा mempolicy *a, काष्ठा mempolicy *b)
-अणु
-	अगर (!a || !b)
-		वापस false;
-	अगर (a->mode != b->mode)
-		वापस false;
-	अगर (a->flags != b->flags)
-		वापस false;
-	अगर (mpol_store_user_nodemask(a))
-		अगर (!nodes_equal(a->w.user_nodemask, b->w.user_nodemask))
-			वापस false;
+bool __mpol_equal(struct mempolicy *a, struct mempolicy *b)
+{
+	if (!a || !b)
+		return false;
+	if (a->mode != b->mode)
+		return false;
+	if (a->flags != b->flags)
+		return false;
+	if (mpol_store_user_nodemask(a))
+		if (!nodes_equal(a->w.user_nodemask, b->w.user_nodemask))
+			return false;
 
-	चयन (a->mode) अणु
-	हाल MPOL_BIND:
-	हाल MPOL_INTERLEAVE:
-		वापस !!nodes_equal(a->v.nodes, b->v.nodes);
-	हाल MPOL_PREFERRED:
+	switch (a->mode) {
+	case MPOL_BIND:
+	case MPOL_INTERLEAVE:
+		return !!nodes_equal(a->v.nodes, b->v.nodes);
+	case MPOL_PREFERRED:
 		/* a's ->flags is the same as b's */
-		अगर (a->flags & MPOL_F_LOCAL)
-			वापस true;
-		वापस a->v.preferred_node == b->v.preferred_node;
-	शेष:
+		if (a->flags & MPOL_F_LOCAL)
+			return true;
+		return a->v.preferred_node == b->v.preferred_node;
+	default:
 		BUG();
-		वापस false;
-	पूर्ण
-पूर्ण
+		return false;
+	}
+}
 
 /*
  * Shared memory backing store policy support.
  *
  * Remember policies even when nobody has shared memory mapped.
  * The policies are kept in Red-Black tree linked from the inode.
- * They are रक्षित by the sp->lock rwlock, which should be held
- * क्रम any accesses to the tree.
+ * They are protected by the sp->lock rwlock, which should be held
+ * for any accesses to the tree.
  */
 
 /*
- * lookup first element पूर्णांकersecting start-end.  Caller holds sp->lock क्रम
- * पढ़ोing or क्रम writing
+ * lookup first element intersecting start-end.  Caller holds sp->lock for
+ * reading or for writing
  */
-अटल काष्ठा sp_node *
-sp_lookup(काष्ठा shared_policy *sp, अचिन्हित दीर्घ start, अचिन्हित दीर्घ end)
-अणु
-	काष्ठा rb_node *n = sp->root.rb_node;
+static struct sp_node *
+sp_lookup(struct shared_policy *sp, unsigned long start, unsigned long end)
+{
+	struct rb_node *n = sp->root.rb_node;
 
-	जबतक (n) अणु
-		काष्ठा sp_node *p = rb_entry(n, काष्ठा sp_node, nd);
+	while (n) {
+		struct sp_node *p = rb_entry(n, struct sp_node, nd);
 
-		अगर (start >= p->end)
+		if (start >= p->end)
 			n = n->rb_right;
-		अन्यथा अगर (end <= p->start)
+		else if (end <= p->start)
 			n = n->rb_left;
-		अन्यथा
-			अवरोध;
-	पूर्ण
-	अगर (!n)
-		वापस शून्य;
-	क्रम (;;) अणु
-		काष्ठा sp_node *w = शून्य;
-		काष्ठा rb_node *prev = rb_prev(n);
-		अगर (!prev)
-			अवरोध;
-		w = rb_entry(prev, काष्ठा sp_node, nd);
-		अगर (w->end <= start)
-			अवरोध;
+		else
+			break;
+	}
+	if (!n)
+		return NULL;
+	for (;;) {
+		struct sp_node *w = NULL;
+		struct rb_node *prev = rb_prev(n);
+		if (!prev)
+			break;
+		w = rb_entry(prev, struct sp_node, nd);
+		if (w->end <= start)
+			break;
 		n = prev;
-	पूर्ण
-	वापस rb_entry(n, काष्ठा sp_node, nd);
-पूर्ण
+	}
+	return rb_entry(n, struct sp_node, nd);
+}
 
 /*
- * Insert a new shared policy पूर्णांकo the list.  Caller holds sp->lock क्रम
+ * Insert a new shared policy into the list.  Caller holds sp->lock for
  * writing.
  */
-अटल व्योम sp_insert(काष्ठा shared_policy *sp, काष्ठा sp_node *new)
-अणु
-	काष्ठा rb_node **p = &sp->root.rb_node;
-	काष्ठा rb_node *parent = शून्य;
-	काष्ठा sp_node *nd;
+static void sp_insert(struct shared_policy *sp, struct sp_node *new)
+{
+	struct rb_node **p = &sp->root.rb_node;
+	struct rb_node *parent = NULL;
+	struct sp_node *nd;
 
-	जबतक (*p) अणु
+	while (*p) {
 		parent = *p;
-		nd = rb_entry(parent, काष्ठा sp_node, nd);
-		अगर (new->start < nd->start)
+		nd = rb_entry(parent, struct sp_node, nd);
+		if (new->start < nd->start)
 			p = &(*p)->rb_left;
-		अन्यथा अगर (new->end > nd->end)
+		else if (new->end > nd->end)
 			p = &(*p)->rb_right;
-		अन्यथा
+		else
 			BUG();
-	पूर्ण
+	}
 	rb_link_node(&new->nd, parent, p);
 	rb_insert_color(&new->nd, &sp->root);
 	pr_debug("inserting %lx-%lx: %d\n", new->start, new->end,
 		 new->policy ? new->policy->mode : 0);
-पूर्ण
+}
 
-/* Find shared policy पूर्णांकersecting idx */
-काष्ठा mempolicy *
-mpol_shared_policy_lookup(काष्ठा shared_policy *sp, अचिन्हित दीर्घ idx)
-अणु
-	काष्ठा mempolicy *pol = शून्य;
-	काष्ठा sp_node *sn;
+/* Find shared policy intersecting idx */
+struct mempolicy *
+mpol_shared_policy_lookup(struct shared_policy *sp, unsigned long idx)
+{
+	struct mempolicy *pol = NULL;
+	struct sp_node *sn;
 
-	अगर (!sp->root.rb_node)
-		वापस शून्य;
-	पढ़ो_lock(&sp->lock);
+	if (!sp->root.rb_node)
+		return NULL;
+	read_lock(&sp->lock);
 	sn = sp_lookup(sp, idx, idx+1);
-	अगर (sn) अणु
+	if (sn) {
 		mpol_get(sn->policy);
 		pol = sn->policy;
-	पूर्ण
-	पढ़ो_unlock(&sp->lock);
-	वापस pol;
-पूर्ण
+	}
+	read_unlock(&sp->lock);
+	return pol;
+}
 
-अटल व्योम sp_मुक्त(काष्ठा sp_node *n)
-अणु
+static void sp_free(struct sp_node *n)
+{
 	mpol_put(n->policy);
-	kmem_cache_मुक्त(sn_cache, n);
-पूर्ण
+	kmem_cache_free(sn_cache, n);
+}
 
 /**
  * mpol_misplaced - check whether current page node is valid in policy
  *
  * @page: page to be checked
  * @vma: vm area where page mapped
- * @addr: भव address where page mapped
+ * @addr: virtual address where page mapped
  *
- * Lookup current policy node id क्रम vma,addr and "compare to" page's
+ * Lookup current policy node id for vma,addr and "compare to" page's
  * node id.  Policy determination "mimics" alloc_page_vma().
  * Called from fault path where we know the vma and faulting address.
  *
- * Return: -1 अगर the page is in a node that is valid क्रम this policy, or a
+ * Return: -1 if the page is in a node that is valid for this policy, or a
  * suitable node ID to allocate a replacement page from.
  */
-पूर्णांक mpol_misplaced(काष्ठा page *page, काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ addr)
-अणु
-	काष्ठा mempolicy *pol;
-	काष्ठा zoneref *z;
-	पूर्णांक curnid = page_to_nid(page);
-	अचिन्हित दीर्घ pgoff;
-	पूर्णांक thiscpu = raw_smp_processor_id();
-	पूर्णांक thisnid = cpu_to_node(thiscpu);
-	पूर्णांक polnid = NUMA_NO_NODE;
-	पूर्णांक ret = -1;
+int mpol_misplaced(struct page *page, struct vm_area_struct *vma, unsigned long addr)
+{
+	struct mempolicy *pol;
+	struct zoneref *z;
+	int curnid = page_to_nid(page);
+	unsigned long pgoff;
+	int thiscpu = raw_smp_processor_id();
+	int thisnid = cpu_to_node(thiscpu);
+	int polnid = NUMA_NO_NODE;
+	int ret = -1;
 
 	pol = get_vma_policy(vma, addr);
-	अगर (!(pol->flags & MPOL_F_MOF))
-		जाओ out;
+	if (!(pol->flags & MPOL_F_MOF))
+		goto out;
 
-	चयन (pol->mode) अणु
-	हाल MPOL_INTERLEAVE:
+	switch (pol->mode) {
+	case MPOL_INTERLEAVE:
 		pgoff = vma->vm_pgoff;
 		pgoff += (addr - vma->vm_start) >> PAGE_SHIFT;
 		polnid = offset_il_node(pol, pgoff);
-		अवरोध;
+		break;
 
-	हाल MPOL_PREFERRED:
-		अगर (pol->flags & MPOL_F_LOCAL)
+	case MPOL_PREFERRED:
+		if (pol->flags & MPOL_F_LOCAL)
 			polnid = numa_node_id();
-		अन्यथा
+		else
 			polnid = pol->v.preferred_node;
-		अवरोध;
+		break;
 
-	हाल MPOL_BIND:
+	case MPOL_BIND:
 		/* Optimize placement among multiple nodes via NUMA balancing */
-		अगर (pol->flags & MPOL_F_MORON) अणु
-			अगर (node_isset(thisnid, pol->v.nodes))
-				अवरोध;
-			जाओ out;
-		पूर्ण
+		if (pol->flags & MPOL_F_MORON) {
+			if (node_isset(thisnid, pol->v.nodes))
+				break;
+			goto out;
+		}
 
 		/*
 		 * allows binding to multiple nodes.
-		 * use current page अगर in policy nodemask,
-		 * अन्यथा select nearest allowed node, अगर any.
+		 * use current page if in policy nodemask,
+		 * else select nearest allowed node, if any.
 		 * If no allowed nodes, use current [!misplaced].
 		 */
-		अगर (node_isset(curnid, pol->v.nodes))
-			जाओ out;
+		if (node_isset(curnid, pol->v.nodes))
+			goto out;
 		z = first_zones_zonelist(
 				node_zonelist(numa_node_id(), GFP_HIGHUSER),
 				gfp_zone(GFP_HIGHUSER),
 				&pol->v.nodes);
 		polnid = zone_to_nid(z->zone);
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		BUG();
-	पूर्ण
+	}
 
 	/* Migrate the page towards the node whose CPU is referencing it */
-	अगर (pol->flags & MPOL_F_MORON) अणु
+	if (pol->flags & MPOL_F_MORON) {
 		polnid = thisnid;
 
-		अगर (!should_numa_migrate_memory(current, page, curnid, thiscpu))
-			जाओ out;
-	पूर्ण
+		if (!should_numa_migrate_memory(current, page, curnid, thiscpu))
+			goto out;
+	}
 
-	अगर (curnid != polnid)
+	if (curnid != polnid)
 		ret = polnid;
 out:
 	mpol_cond_put(pol);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
  * Drop the (possibly final) reference to task->mempolicy.  It needs to be
- * dropped after task->mempolicy is set to शून्य so that any allocation करोne as
- * part of its kmem_cache_मुक्त(), such as by KASAN, करोesn't reference a मुक्तd
+ * dropped after task->mempolicy is set to NULL so that any allocation done as
+ * part of its kmem_cache_free(), such as by KASAN, doesn't reference a freed
  * policy.
  */
-व्योम mpol_put_task_policy(काष्ठा task_काष्ठा *task)
-अणु
-	काष्ठा mempolicy *pol;
+void mpol_put_task_policy(struct task_struct *task)
+{
+	struct mempolicy *pol;
 
 	task_lock(task);
 	pol = task->mempolicy;
-	task->mempolicy = शून्य;
+	task->mempolicy = NULL;
 	task_unlock(task);
 	mpol_put(pol);
-पूर्ण
+}
 
-अटल व्योम sp_delete(काष्ठा shared_policy *sp, काष्ठा sp_node *n)
-अणु
+static void sp_delete(struct shared_policy *sp, struct sp_node *n)
+{
 	pr_debug("deleting %lx-l%lx\n", n->start, n->end);
 	rb_erase(&n->nd, &sp->root);
-	sp_मुक्त(n);
-पूर्ण
+	sp_free(n);
+}
 
-अटल व्योम sp_node_init(काष्ठा sp_node *node, अचिन्हित दीर्घ start,
-			अचिन्हित दीर्घ end, काष्ठा mempolicy *pol)
-अणु
+static void sp_node_init(struct sp_node *node, unsigned long start,
+			unsigned long end, struct mempolicy *pol)
+{
 	node->start = start;
 	node->end = end;
 	node->policy = pol;
-पूर्ण
+}
 
-अटल काष्ठा sp_node *sp_alloc(अचिन्हित दीर्घ start, अचिन्हित दीर्घ end,
-				काष्ठा mempolicy *pol)
-अणु
-	काष्ठा sp_node *n;
-	काष्ठा mempolicy *newpol;
+static struct sp_node *sp_alloc(unsigned long start, unsigned long end,
+				struct mempolicy *pol)
+{
+	struct sp_node *n;
+	struct mempolicy *newpol;
 
 	n = kmem_cache_alloc(sn_cache, GFP_KERNEL);
-	अगर (!n)
-		वापस शून्य;
+	if (!n)
+		return NULL;
 
 	newpol = mpol_dup(pol);
-	अगर (IS_ERR(newpol)) अणु
-		kmem_cache_मुक्त(sn_cache, n);
-		वापस शून्य;
-	पूर्ण
+	if (IS_ERR(newpol)) {
+		kmem_cache_free(sn_cache, n);
+		return NULL;
+	}
 	newpol->flags |= MPOL_F_SHARED;
 	sp_node_init(n, start, end, newpol);
 
-	वापस n;
-पूर्ण
+	return n;
+}
 
 /* Replace a policy range. */
-अटल पूर्णांक shared_policy_replace(काष्ठा shared_policy *sp, अचिन्हित दीर्घ start,
-				 अचिन्हित दीर्घ end, काष्ठा sp_node *new)
-अणु
-	काष्ठा sp_node *n;
-	काष्ठा sp_node *n_new = शून्य;
-	काष्ठा mempolicy *mpol_new = शून्य;
-	पूर्णांक ret = 0;
+static int shared_policy_replace(struct shared_policy *sp, unsigned long start,
+				 unsigned long end, struct sp_node *new)
+{
+	struct sp_node *n;
+	struct sp_node *n_new = NULL;
+	struct mempolicy *mpol_new = NULL;
+	int ret = 0;
 
 restart:
-	ग_लिखो_lock(&sp->lock);
+	write_lock(&sp->lock);
 	n = sp_lookup(sp, start, end);
 	/* Take care of old policies in the same range. */
-	जबतक (n && n->start < end) अणु
-		काष्ठा rb_node *next = rb_next(&n->nd);
-		अगर (n->start >= start) अणु
-			अगर (n->end <= end)
+	while (n && n->start < end) {
+		struct rb_node *next = rb_next(&n->nd);
+		if (n->start >= start) {
+			if (n->end <= end)
 				sp_delete(sp, n);
-			अन्यथा
+			else
 				n->start = end;
-		पूर्ण अन्यथा अणु
+		} else {
 			/* Old policy spanning whole new range. */
-			अगर (n->end > end) अणु
-				अगर (!n_new)
-					जाओ alloc_new;
+			if (n->end > end) {
+				if (!n_new)
+					goto alloc_new;
 
 				*mpol_new = *n->policy;
 				atomic_set(&mpol_new->refcnt, 1);
 				sp_node_init(n_new, end, n->end, mpol_new);
 				n->end = start;
 				sp_insert(sp, n_new);
-				n_new = शून्य;
-				mpol_new = शून्य;
-				अवरोध;
-			पूर्ण अन्यथा
+				n_new = NULL;
+				mpol_new = NULL;
+				break;
+			} else
 				n->end = start;
-		पूर्ण
-		अगर (!next)
-			अवरोध;
-		n = rb_entry(next, काष्ठा sp_node, nd);
-	पूर्ण
-	अगर (new)
+		}
+		if (!next)
+			break;
+		n = rb_entry(next, struct sp_node, nd);
+	}
+	if (new)
 		sp_insert(sp, new);
-	ग_लिखो_unlock(&sp->lock);
+	write_unlock(&sp->lock);
 	ret = 0;
 
 err_out:
-	अगर (mpol_new)
+	if (mpol_new)
 		mpol_put(mpol_new);
-	अगर (n_new)
-		kmem_cache_मुक्त(sn_cache, n_new);
+	if (n_new)
+		kmem_cache_free(sn_cache, n_new);
 
-	वापस ret;
+	return ret;
 
 alloc_new:
-	ग_लिखो_unlock(&sp->lock);
+	write_unlock(&sp->lock);
 	ret = -ENOMEM;
 	n_new = kmem_cache_alloc(sn_cache, GFP_KERNEL);
-	अगर (!n_new)
-		जाओ err_out;
+	if (!n_new)
+		goto err_out;
 	mpol_new = kmem_cache_alloc(policy_cache, GFP_KERNEL);
-	अगर (!mpol_new)
-		जाओ err_out;
-	जाओ restart;
-पूर्ण
+	if (!mpol_new)
+		goto err_out;
+	goto restart;
+}
 
 /**
- * mpol_shared_policy_init - initialize shared policy क्रम inode
- * @sp: poपूर्णांकer to inode shared policy
- * @mpol:  काष्ठा mempolicy to install
+ * mpol_shared_policy_init - initialize shared policy for inode
+ * @sp: pointer to inode shared policy
+ * @mpol:  struct mempolicy to install
  *
- * Install non-शून्य @mpol in inode's shared policy rb-tree.
- * On entry, the current task has a reference on a non-शून्य @mpol.
- * This must be released on निकास.
+ * Install non-NULL @mpol in inode's shared policy rb-tree.
+ * On entry, the current task has a reference on a non-NULL @mpol.
+ * This must be released on exit.
  * This is called at get_inode() calls and we can use GFP_KERNEL.
  */
-व्योम mpol_shared_policy_init(काष्ठा shared_policy *sp, काष्ठा mempolicy *mpol)
-अणु
-	पूर्णांक ret;
+void mpol_shared_policy_init(struct shared_policy *sp, struct mempolicy *mpol)
+{
+	int ret;
 
-	sp->root = RB_ROOT;		/* empty tree == शेष mempolicy */
+	sp->root = RB_ROOT;		/* empty tree == default mempolicy */
 	rwlock_init(&sp->lock);
 
-	अगर (mpol) अणु
-		काष्ठा vm_area_काष्ठा pvma;
-		काष्ठा mempolicy *new;
+	if (mpol) {
+		struct vm_area_struct pvma;
+		struct mempolicy *new;
 		NODEMASK_SCRATCH(scratch);
 
-		अगर (!scratch)
-			जाओ put_mpol;
-		/* contextualize the पंचांगpfs mount poपूर्णांक mempolicy */
+		if (!scratch)
+			goto put_mpol;
+		/* contextualize the tmpfs mount point mempolicy */
 		new = mpol_new(mpol->mode, mpol->flags, &mpol->w.user_nodemask);
-		अगर (IS_ERR(new))
-			जाओ मुक्त_scratch; /* no valid nodemask पूर्णांकersection */
+		if (IS_ERR(new))
+			goto free_scratch; /* no valid nodemask intersection */
 
 		task_lock(current);
 		ret = mpol_set_nodemask(new, &mpol->w.user_nodemask, scratch);
 		task_unlock(current);
-		अगर (ret)
-			जाओ put_new;
+		if (ret)
+			goto put_new;
 
-		/* Create pseuकरो-vma that contains just the policy */
-		vma_init(&pvma, शून्य);
+		/* Create pseudo-vma that contains just the policy */
+		vma_init(&pvma, NULL);
 		pvma.vm_end = TASK_SIZE;	/* policy covers entire file */
 		mpol_set_shared_policy(sp, &pvma, new); /* adds ref */
 
 put_new:
 		mpol_put(new);			/* drop initial ref */
-मुक्त_scratch:
+free_scratch:
 		NODEMASK_SCRATCH_FREE(scratch);
 put_mpol:
 		mpol_put(mpol);	/* drop our incoming ref on sb mpol */
-	पूर्ण
-पूर्ण
+	}
+}
 
-पूर्णांक mpol_set_shared_policy(काष्ठा shared_policy *info,
-			काष्ठा vm_area_काष्ठा *vma, काष्ठा mempolicy *npol)
-अणु
-	पूर्णांक err;
-	काष्ठा sp_node *new = शून्य;
-	अचिन्हित दीर्घ sz = vma_pages(vma);
+int mpol_set_shared_policy(struct shared_policy *info,
+			struct vm_area_struct *vma, struct mempolicy *npol)
+{
+	int err;
+	struct sp_node *new = NULL;
+	unsigned long sz = vma_pages(vma);
 
 	pr_debug("set_shared_policy %lx sz %lu %d %d %lx\n",
 		 vma->vm_pgoff,
@@ -2712,348 +2711,348 @@ put_mpol:
 		 npol ? npol->flags : -1,
 		 npol ? nodes_addr(npol->v.nodes)[0] : NUMA_NO_NODE);
 
-	अगर (npol) अणु
+	if (npol) {
 		new = sp_alloc(vma->vm_pgoff, vma->vm_pgoff + sz, npol);
-		अगर (!new)
-			वापस -ENOMEM;
-	पूर्ण
+		if (!new)
+			return -ENOMEM;
+	}
 	err = shared_policy_replace(info, vma->vm_pgoff, vma->vm_pgoff+sz, new);
-	अगर (err && new)
-		sp_मुक्त(new);
-	वापस err;
-पूर्ण
+	if (err && new)
+		sp_free(new);
+	return err;
+}
 
 /* Free a backing policy store on inode delete. */
-व्योम mpol_मुक्त_shared_policy(काष्ठा shared_policy *p)
-अणु
-	काष्ठा sp_node *n;
-	काष्ठा rb_node *next;
+void mpol_free_shared_policy(struct shared_policy *p)
+{
+	struct sp_node *n;
+	struct rb_node *next;
 
-	अगर (!p->root.rb_node)
-		वापस;
-	ग_लिखो_lock(&p->lock);
+	if (!p->root.rb_node)
+		return;
+	write_lock(&p->lock);
 	next = rb_first(&p->root);
-	जबतक (next) अणु
-		n = rb_entry(next, काष्ठा sp_node, nd);
+	while (next) {
+		n = rb_entry(next, struct sp_node, nd);
 		next = rb_next(&n->nd);
 		sp_delete(p, n);
-	पूर्ण
-	ग_लिखो_unlock(&p->lock);
-पूर्ण
+	}
+	write_unlock(&p->lock);
+}
 
-#अगर_घोषित CONFIG_NUMA_BALANCING
-अटल पूर्णांक __initdata numabalancing_override;
+#ifdef CONFIG_NUMA_BALANCING
+static int __initdata numabalancing_override;
 
-अटल व्योम __init check_numabalancing_enable(व्योम)
-अणु
-	bool numabalancing_शेष = false;
+static void __init check_numabalancing_enable(void)
+{
+	bool numabalancing_default = false;
 
-	अगर (IS_ENABLED(CONFIG_NUMA_BALANCING_DEFAULT_ENABLED))
-		numabalancing_शेष = true;
+	if (IS_ENABLED(CONFIG_NUMA_BALANCING_DEFAULT_ENABLED))
+		numabalancing_default = true;
 
 	/* Parsed by setup_numabalancing. override == 1 enables, -1 disables */
-	अगर (numabalancing_override)
+	if (numabalancing_override)
 		set_numabalancing_state(numabalancing_override == 1);
 
-	अगर (num_online_nodes() > 1 && !numabalancing_override) अणु
+	if (num_online_nodes() > 1 && !numabalancing_override) {
 		pr_info("%s automatic NUMA balancing. Configure with numa_balancing= or the kernel.numa_balancing sysctl\n",
-			numabalancing_शेष ? "Enabling" : "Disabling");
-		set_numabalancing_state(numabalancing_शेष);
-	पूर्ण
-पूर्ण
+			numabalancing_default ? "Enabling" : "Disabling");
+		set_numabalancing_state(numabalancing_default);
+	}
+}
 
-अटल पूर्णांक __init setup_numabalancing(अक्षर *str)
-अणु
-	पूर्णांक ret = 0;
-	अगर (!str)
-		जाओ out;
+static int __init setup_numabalancing(char *str)
+{
+	int ret = 0;
+	if (!str)
+		goto out;
 
-	अगर (!म_भेद(str, "enable")) अणु
+	if (!strcmp(str, "enable")) {
 		numabalancing_override = 1;
 		ret = 1;
-	पूर्ण अन्यथा अगर (!म_भेद(str, "disable")) अणु
+	} else if (!strcmp(str, "disable")) {
 		numabalancing_override = -1;
 		ret = 1;
-	पूर्ण
+	}
 out:
-	अगर (!ret)
+	if (!ret)
 		pr_warn("Unable to parse numa_balancing=\n");
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 __setup("numa_balancing=", setup_numabalancing);
-#अन्यथा
-अटल अंतरभूत व्योम __init check_numabalancing_enable(व्योम)
-अणु
-पूर्ण
-#पूर्ण_अगर /* CONFIG_NUMA_BALANCING */
+#else
+static inline void __init check_numabalancing_enable(void)
+{
+}
+#endif /* CONFIG_NUMA_BALANCING */
 
 /* assumes fs == KERNEL_DS */
-व्योम __init numa_policy_init(व्योम)
-अणु
-	nodemask_t पूर्णांकerleave_nodes;
-	अचिन्हित दीर्घ largest = 0;
-	पूर्णांक nid, prefer = 0;
+void __init numa_policy_init(void)
+{
+	nodemask_t interleave_nodes;
+	unsigned long largest = 0;
+	int nid, prefer = 0;
 
 	policy_cache = kmem_cache_create("numa_policy",
-					 माप(काष्ठा mempolicy),
-					 0, SLAB_PANIC, शून्य);
+					 sizeof(struct mempolicy),
+					 0, SLAB_PANIC, NULL);
 
 	sn_cache = kmem_cache_create("shared_policy_node",
-				     माप(काष्ठा sp_node),
-				     0, SLAB_PANIC, शून्य);
+				     sizeof(struct sp_node),
+				     0, SLAB_PANIC, NULL);
 
-	क्रम_each_node(nid) अणु
-		preferred_node_policy[nid] = (काष्ठा mempolicy) अणु
+	for_each_node(nid) {
+		preferred_node_policy[nid] = (struct mempolicy) {
 			.refcnt = ATOMIC_INIT(1),
 			.mode = MPOL_PREFERRED,
 			.flags = MPOL_F_MOF | MPOL_F_MORON,
-			.v = अणु .preferred_node = nid, पूर्ण,
-		पूर्ण;
-	पूर्ण
+			.v = { .preferred_node = nid, },
+		};
+	}
 
 	/*
-	 * Set पूर्णांकerleaving policy क्रम प्रणाली init. Interleaving is only
-	 * enabled across suitably sized nodes (शेष is >= 16MB), or
-	 * fall back to the largest node अगर they're all smaller.
+	 * Set interleaving policy for system init. Interleaving is only
+	 * enabled across suitably sized nodes (default is >= 16MB), or
+	 * fall back to the largest node if they're all smaller.
 	 */
-	nodes_clear(पूर्णांकerleave_nodes);
-	क्रम_each_node_state(nid, N_MEMORY) अणु
-		अचिन्हित दीर्घ total_pages = node_present_pages(nid);
+	nodes_clear(interleave_nodes);
+	for_each_node_state(nid, N_MEMORY) {
+		unsigned long total_pages = node_present_pages(nid);
 
 		/* Preserve the largest node */
-		अगर (largest < total_pages) अणु
+		if (largest < total_pages) {
 			largest = total_pages;
 			prefer = nid;
-		पूर्ण
+		}
 
 		/* Interleave this node? */
-		अगर ((total_pages << PAGE_SHIFT) >= (16 << 20))
-			node_set(nid, पूर्णांकerleave_nodes);
-	पूर्ण
+		if ((total_pages << PAGE_SHIFT) >= (16 << 20))
+			node_set(nid, interleave_nodes);
+	}
 
 	/* All too small, use the largest */
-	अगर (unlikely(nodes_empty(पूर्णांकerleave_nodes)))
-		node_set(prefer, पूर्णांकerleave_nodes);
+	if (unlikely(nodes_empty(interleave_nodes)))
+		node_set(prefer, interleave_nodes);
 
-	अगर (करो_set_mempolicy(MPOL_INTERLEAVE, 0, &पूर्णांकerleave_nodes))
+	if (do_set_mempolicy(MPOL_INTERLEAVE, 0, &interleave_nodes))
 		pr_err("%s: interleaving failed\n", __func__);
 
 	check_numabalancing_enable();
-पूर्ण
+}
 
-/* Reset policy of current process to शेष */
-व्योम numa_शेष_policy(व्योम)
-अणु
-	करो_set_mempolicy(MPOL_DEFAULT, 0, शून्य);
-पूर्ण
+/* Reset policy of current process to default */
+void numa_default_policy(void)
+{
+	do_set_mempolicy(MPOL_DEFAULT, 0, NULL);
+}
 
 /*
- * Parse and क्रमmat mempolicy from/to strings
+ * Parse and format mempolicy from/to strings
  */
 
 /*
- * "local" is implemented पूर्णांकernally by MPOL_PREFERRED with MPOL_F_LOCAL flag.
+ * "local" is implemented internally by MPOL_PREFERRED with MPOL_F_LOCAL flag.
  */
-अटल स्थिर अक्षर * स्थिर policy_modes[] =
-अणु
+static const char * const policy_modes[] =
+{
 	[MPOL_DEFAULT]    = "default",
 	[MPOL_PREFERRED]  = "prefer",
 	[MPOL_BIND]       = "bind",
 	[MPOL_INTERLEAVE] = "interleave",
 	[MPOL_LOCAL]      = "local",
-पूर्ण;
+};
 
 
-#अगर_घोषित CONFIG_TMPFS
+#ifdef CONFIG_TMPFS
 /**
- * mpol_parse_str - parse string to mempolicy, क्रम पंचांगpfs mpol mount option.
+ * mpol_parse_str - parse string to mempolicy, for tmpfs mpol mount option.
  * @str:  string containing mempolicy to parse
- * @mpol:  poपूर्णांकer to काष्ठा mempolicy poपूर्णांकer, वापसed on success.
+ * @mpol:  pointer to struct mempolicy pointer, returned on success.
  *
  * Format of input:
  *	<mode>[=<flags>][:<nodelist>]
  *
- * On success, वापसs 0, अन्यथा 1
+ * On success, returns 0, else 1
  */
-पूर्णांक mpol_parse_str(अक्षर *str, काष्ठा mempolicy **mpol)
-अणु
-	काष्ठा mempolicy *new = शून्य;
-	अचिन्हित लघु mode_flags;
+int mpol_parse_str(char *str, struct mempolicy **mpol)
+{
+	struct mempolicy *new = NULL;
+	unsigned short mode_flags;
 	nodemask_t nodes;
-	अक्षर *nodelist = म_अक्षर(str, ':');
-	अक्षर *flags = म_अक्षर(str, '=');
-	पूर्णांक err = 1, mode;
+	char *nodelist = strchr(str, ':');
+	char *flags = strchr(str, '=');
+	int err = 1, mode;
 
-	अगर (flags)
+	if (flags)
 		*flags++ = '\0';	/* terminate mode string */
 
-	अगर (nodelist) अणु
+	if (nodelist) {
 		/* NUL-terminate mode or flags string */
 		*nodelist++ = '\0';
-		अगर (nodelist_parse(nodelist, nodes))
-			जाओ out;
-		अगर (!nodes_subset(nodes, node_states[N_MEMORY]))
-			जाओ out;
-	पूर्ण अन्यथा
+		if (nodelist_parse(nodelist, nodes))
+			goto out;
+		if (!nodes_subset(nodes, node_states[N_MEMORY]))
+			goto out;
+	} else
 		nodes_clear(nodes);
 
 	mode = match_string(policy_modes, MPOL_MAX, str);
-	अगर (mode < 0)
-		जाओ out;
+	if (mode < 0)
+		goto out;
 
-	चयन (mode) अणु
-	हाल MPOL_PREFERRED:
+	switch (mode) {
+	case MPOL_PREFERRED:
 		/*
 		 * Insist on a nodelist of one node only, although later
 		 * we use first_node(nodes) to grab a single node, so here
 		 * nodelist (or nodes) cannot be empty.
 		 */
-		अगर (nodelist) अणु
-			अक्षर *rest = nodelist;
-			जबतक (है_अंक(*rest))
+		if (nodelist) {
+			char *rest = nodelist;
+			while (isdigit(*rest))
 				rest++;
-			अगर (*rest)
-				जाओ out;
-			अगर (nodes_empty(nodes))
-				जाओ out;
-		पूर्ण
-		अवरोध;
-	हाल MPOL_INTERLEAVE:
+			if (*rest)
+				goto out;
+			if (nodes_empty(nodes))
+				goto out;
+		}
+		break;
+	case MPOL_INTERLEAVE:
 		/*
-		 * Default to online nodes with memory अगर no nodelist
+		 * Default to online nodes with memory if no nodelist
 		 */
-		अगर (!nodelist)
+		if (!nodelist)
 			nodes = node_states[N_MEMORY];
-		अवरोध;
-	हाल MPOL_LOCAL:
+		break;
+	case MPOL_LOCAL:
 		/*
 		 * Don't allow a nodelist;  mpol_new() checks flags
 		 */
-		अगर (nodelist)
-			जाओ out;
+		if (nodelist)
+			goto out;
 		mode = MPOL_PREFERRED;
-		अवरोध;
-	हाल MPOL_DEFAULT:
+		break;
+	case MPOL_DEFAULT:
 		/*
 		 * Insist on a empty nodelist
 		 */
-		अगर (!nodelist)
+		if (!nodelist)
 			err = 0;
-		जाओ out;
-	हाल MPOL_BIND:
+		goto out;
+	case MPOL_BIND:
 		/*
 		 * Insist on a nodelist
 		 */
-		अगर (!nodelist)
-			जाओ out;
-	पूर्ण
+		if (!nodelist)
+			goto out;
+	}
 
 	mode_flags = 0;
-	अगर (flags) अणु
+	if (flags) {
 		/*
 		 * Currently, we only support two mutually exclusive
 		 * mode flags.
 		 */
-		अगर (!म_भेद(flags, "static"))
+		if (!strcmp(flags, "static"))
 			mode_flags |= MPOL_F_STATIC_NODES;
-		अन्यथा अगर (!म_भेद(flags, "relative"))
+		else if (!strcmp(flags, "relative"))
 			mode_flags |= MPOL_F_RELATIVE_NODES;
-		अन्यथा
-			जाओ out;
-	पूर्ण
+		else
+			goto out;
+	}
 
 	new = mpol_new(mode, mode_flags, &nodes);
-	अगर (IS_ERR(new))
-		जाओ out;
+	if (IS_ERR(new))
+		goto out;
 
 	/*
-	 * Save nodes क्रम mpol_to_str() to show the पंचांगpfs mount options
-	 * क्रम /proc/mounts, /proc/pid/mounts and /proc/pid/mountinfo.
+	 * Save nodes for mpol_to_str() to show the tmpfs mount options
+	 * for /proc/mounts, /proc/pid/mounts and /proc/pid/mountinfo.
 	 */
-	अगर (mode != MPOL_PREFERRED)
+	if (mode != MPOL_PREFERRED)
 		new->v.nodes = nodes;
-	अन्यथा अगर (nodelist)
+	else if (nodelist)
 		new->v.preferred_node = first_node(nodes);
-	अन्यथा
+	else
 		new->flags |= MPOL_F_LOCAL;
 
 	/*
-	 * Save nodes क्रम contextualization: this will be used to "clone"
-	 * the mempolicy in a specअगरic context [cpuset] at a later समय.
+	 * Save nodes for contextualization: this will be used to "clone"
+	 * the mempolicy in a specific context [cpuset] at a later time.
 	 */
 	new->w.user_nodemask = nodes;
 
 	err = 0;
 
 out:
-	/* Restore string क्रम error message */
-	अगर (nodelist)
+	/* Restore string for error message */
+	if (nodelist)
 		*--nodelist = ':';
-	अगर (flags)
+	if (flags)
 		*--flags = '=';
-	अगर (!err)
+	if (!err)
 		*mpol = new;
-	वापस err;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_TMPFS */
+	return err;
+}
+#endif /* CONFIG_TMPFS */
 
 /**
- * mpol_to_str - क्रमmat a mempolicy काष्ठाure क्रम prपूर्णांकing
- * @buffer:  to contain क्रमmatted mempolicy string
+ * mpol_to_str - format a mempolicy structure for printing
+ * @buffer:  to contain formatted mempolicy string
  * @maxlen:  length of @buffer
- * @pol:  poपूर्णांकer to mempolicy to be क्रमmatted
+ * @pol:  pointer to mempolicy to be formatted
  *
- * Convert @pol पूर्णांकo a string.  If @buffer is too लघु, truncate the string.
- * Recommend a @maxlen of at least 32 क्रम the दीर्घest mode, "interleave", the
- * दीर्घest flag, "relative", and to display at least a few node ids.
+ * Convert @pol into a string.  If @buffer is too short, truncate the string.
+ * Recommend a @maxlen of at least 32 for the longest mode, "interleave", the
+ * longest flag, "relative", and to display at least a few node ids.
  */
-व्योम mpol_to_str(अक्षर *buffer, पूर्णांक maxlen, काष्ठा mempolicy *pol)
-अणु
-	अक्षर *p = buffer;
+void mpol_to_str(char *buffer, int maxlen, struct mempolicy *pol)
+{
+	char *p = buffer;
 	nodemask_t nodes = NODE_MASK_NONE;
-	अचिन्हित लघु mode = MPOL_DEFAULT;
-	अचिन्हित लघु flags = 0;
+	unsigned short mode = MPOL_DEFAULT;
+	unsigned short flags = 0;
 
-	अगर (pol && pol != &शेष_policy && !(pol->flags & MPOL_F_MORON)) अणु
+	if (pol && pol != &default_policy && !(pol->flags & MPOL_F_MORON)) {
 		mode = pol->mode;
 		flags = pol->flags;
-	पूर्ण
+	}
 
-	चयन (mode) अणु
-	हाल MPOL_DEFAULT:
-		अवरोध;
-	हाल MPOL_PREFERRED:
-		अगर (flags & MPOL_F_LOCAL)
+	switch (mode) {
+	case MPOL_DEFAULT:
+		break;
+	case MPOL_PREFERRED:
+		if (flags & MPOL_F_LOCAL)
 			mode = MPOL_LOCAL;
-		अन्यथा
+		else
 			node_set(pol->v.preferred_node, nodes);
-		अवरोध;
-	हाल MPOL_BIND:
-	हाल MPOL_INTERLEAVE:
+		break;
+	case MPOL_BIND:
+	case MPOL_INTERLEAVE:
 		nodes = pol->v.nodes;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		WARN_ON_ONCE(1);
-		snम_लिखो(p, maxlen, "unknown");
-		वापस;
-	पूर्ण
+		snprintf(p, maxlen, "unknown");
+		return;
+	}
 
-	p += snम_लिखो(p, maxlen, "%s", policy_modes[mode]);
+	p += snprintf(p, maxlen, "%s", policy_modes[mode]);
 
-	अगर (flags & MPOL_MODE_FLAGS) अणु
-		p += snम_लिखो(p, buffer + maxlen - p, "=");
+	if (flags & MPOL_MODE_FLAGS) {
+		p += snprintf(p, buffer + maxlen - p, "=");
 
 		/*
 		 * Currently, the only defined flags are mutually exclusive
 		 */
-		अगर (flags & MPOL_F_STATIC_NODES)
-			p += snम_लिखो(p, buffer + maxlen - p, "static");
-		अन्यथा अगर (flags & MPOL_F_RELATIVE_NODES)
-			p += snम_लिखो(p, buffer + maxlen - p, "relative");
-	पूर्ण
+		if (flags & MPOL_F_STATIC_NODES)
+			p += snprintf(p, buffer + maxlen - p, "static");
+		else if (flags & MPOL_F_RELATIVE_NODES)
+			p += snprintf(p, buffer + maxlen - p, "relative");
+	}
 
-	अगर (!nodes_empty(nodes))
-		p += scnम_लिखो(p, buffer + maxlen - p, ":%*pbl",
+	if (!nodes_empty(nodes))
+		p += scnprintf(p, buffer + maxlen - p, ":%*pbl",
 			       nodemask_pr_args(&nodes));
-पूर्ण
+}

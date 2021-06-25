@@ -1,22 +1,21 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
-#अगर_अघोषित _ASMPARISC_SIGCONTEXT_H
-#घोषणा _ASMPARISC_SIGCONTEXT_H
+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+#ifndef _ASMPARISC_SIGCONTEXT_H
+#define _ASMPARISC_SIGCONTEXT_H
 
-#घोषणा PARISC_SC_FLAG_ONSTACK 1<<0
-#घोषणा PARISC_SC_FLAG_IN_SYSCALL 1<<1
+#define PARISC_SC_FLAG_ONSTACK 1<<0
+#define PARISC_SC_FLAG_IN_SYSCALL 1<<1
 
 /* We will add more stuff here as it becomes necessary, until we know
    it works. */
-काष्ठा sigcontext अणु
-	अचिन्हित दीर्घ sc_flags;
+struct sigcontext {
+	unsigned long sc_flags;
 
-	अचिन्हित दीर्घ sc_gr[32]; /* PSW in sc_gr[0] */
-	अचिन्हित दीर्घ दीर्घ sc_fr[32]; /* FIXME, करो we need other state info? */
-	अचिन्हित दीर्घ sc_iasq[2];
-	अचिन्हित दीर्घ sc_iaoq[2];
-	अचिन्हित दीर्घ sc_sar; /* cr11 */
-पूर्ण;
+	unsigned long sc_gr[32]; /* PSW in sc_gr[0] */
+	unsigned long long sc_fr[32]; /* FIXME, do we need other state info? */
+	unsigned long sc_iasq[2];
+	unsigned long sc_iaoq[2];
+	unsigned long sc_sar; /* cr11 */
+};
 
 
-#पूर्ण_अगर
+#endif

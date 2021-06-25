@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2012 Red Hat Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modअगरy, merge, publish,
+ * without limitation the rights to use, copy, modify, merge, publish,
  * distribute, sub license, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to करो so, subject to
+ * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
@@ -26,36 +25,36 @@
 /*
  * Authors: Dave Airlie <airlied@redhat.com>
  */
-#अगर_अघोषित __AST_DRV_H__
-#घोषणा __AST_DRV_H__
+#ifndef __AST_DRV_H__
+#define __AST_DRV_H__
 
-#समावेश <linux/i2c.h>
-#समावेश <linux/i2c-algo-bit.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/types.h>
+#include <linux/i2c.h>
+#include <linux/i2c-algo-bit.h>
+#include <linux/io.h>
+#include <linux/types.h>
 
-#समावेश <drm/drm_connector.h>
-#समावेश <drm/drm_crtc.h>
-#समावेश <drm/drm_encoder.h>
-#समावेश <drm/drm_mode.h>
-#समावेश <drm/drm_framebuffer.h>
-#समावेश <drm/drm_fb_helper.h>
+#include <drm/drm_connector.h>
+#include <drm/drm_crtc.h>
+#include <drm/drm_encoder.h>
+#include <drm/drm_mode.h>
+#include <drm/drm_framebuffer.h>
+#include <drm/drm_fb_helper.h>
 
-#घोषणा DRIVER_AUTHOR		"Dave Airlie"
+#define DRIVER_AUTHOR		"Dave Airlie"
 
-#घोषणा DRIVER_NAME		"ast"
-#घोषणा DRIVER_DESC		"AST"
-#घोषणा DRIVER_DATE		"20120228"
+#define DRIVER_NAME		"ast"
+#define DRIVER_DESC		"AST"
+#define DRIVER_DATE		"20120228"
 
-#घोषणा DRIVER_MAJOR		0
-#घोषणा DRIVER_MINOR		1
-#घोषणा DRIVER_PATCHLEVEL	0
+#define DRIVER_MAJOR		0
+#define DRIVER_MINOR		1
+#define DRIVER_PATCHLEVEL	0
 
-#घोषणा PCI_CHIP_AST2000 0x2000
-#घोषणा PCI_CHIP_AST2100 0x2010
+#define PCI_CHIP_AST2000 0x2000
+#define PCI_CHIP_AST2100 0x2010
 
 
-क्रमागत ast_chip अणु
+enum ast_chip {
 	AST2000,
 	AST2100,
 	AST1100,
@@ -65,225 +64,225 @@
 	AST2400,
 	AST2500,
 	AST2600,
-पूर्ण;
+};
 
-क्रमागत ast_tx_chip अणु
+enum ast_tx_chip {
 	AST_TX_NONE,
 	AST_TX_SIL164,
 	AST_TX_ITE66121,
 	AST_TX_DP501,
-पूर्ण;
+};
 
-#घोषणा AST_DRAM_512Mx16 0
-#घोषणा AST_DRAM_1Gx16   1
-#घोषणा AST_DRAM_512Mx32 2
-#घोषणा AST_DRAM_1Gx32   3
-#घोषणा AST_DRAM_2Gx16   6
-#घोषणा AST_DRAM_4Gx16   7
-#घोषणा AST_DRAM_8Gx16   8
+#define AST_DRAM_512Mx16 0
+#define AST_DRAM_1Gx16   1
+#define AST_DRAM_512Mx32 2
+#define AST_DRAM_1Gx32   3
+#define AST_DRAM_2Gx16   6
+#define AST_DRAM_4Gx16   7
+#define AST_DRAM_8Gx16   8
 
 /*
  * Cursor plane
  */
 
-#घोषणा AST_MAX_HWC_WIDTH	64
-#घोषणा AST_MAX_HWC_HEIGHT	64
+#define AST_MAX_HWC_WIDTH	64
+#define AST_MAX_HWC_HEIGHT	64
 
-#घोषणा AST_HWC_SIZE		(AST_MAX_HWC_WIDTH * AST_MAX_HWC_HEIGHT * 2)
-#घोषणा AST_HWC_SIGNATURE_SIZE	32
+#define AST_HWC_SIZE		(AST_MAX_HWC_WIDTH * AST_MAX_HWC_HEIGHT * 2)
+#define AST_HWC_SIGNATURE_SIZE	32
 
-#घोषणा AST_DEFAULT_HWC_NUM	2
+#define AST_DEFAULT_HWC_NUM	2
 
-/* define क्रम signature काष्ठाure */
-#घोषणा AST_HWC_SIGNATURE_CHECKSUM	0x00
-#घोषणा AST_HWC_SIGNATURE_SizeX		0x04
-#घोषणा AST_HWC_SIGNATURE_SizeY		0x08
-#घोषणा AST_HWC_SIGNATURE_X		0x0C
-#घोषणा AST_HWC_SIGNATURE_Y		0x10
-#घोषणा AST_HWC_SIGNATURE_HOTSPOTX	0x14
-#घोषणा AST_HWC_SIGNATURE_HOTSPOTY	0x18
+/* define for signature structure */
+#define AST_HWC_SIGNATURE_CHECKSUM	0x00
+#define AST_HWC_SIGNATURE_SizeX		0x04
+#define AST_HWC_SIGNATURE_SizeY		0x08
+#define AST_HWC_SIGNATURE_X		0x0C
+#define AST_HWC_SIGNATURE_Y		0x10
+#define AST_HWC_SIGNATURE_HOTSPOTX	0x14
+#define AST_HWC_SIGNATURE_HOTSPOTY	0x18
 
-काष्ठा ast_cursor_plane अणु
-	काष्ठा drm_plane base;
+struct ast_cursor_plane {
+	struct drm_plane base;
 
-	काष्ठा अणु
-		काष्ठा drm_gem_vram_object *gbo;
-		काष्ठा dma_buf_map map;
+	struct {
+		struct drm_gem_vram_object *gbo;
+		struct dma_buf_map map;
 		u64 off;
-	पूर्ण hwc[AST_DEFAULT_HWC_NUM];
+	} hwc[AST_DEFAULT_HWC_NUM];
 
-	अचिन्हित पूर्णांक next_hwc_index;
-पूर्ण;
+	unsigned int next_hwc_index;
+};
 
-अटल अंतरभूत काष्ठा ast_cursor_plane *
-to_ast_cursor_plane(काष्ठा drm_plane *plane)
-अणु
-	वापस container_of(plane, काष्ठा ast_cursor_plane, base);
-पूर्ण
+static inline struct ast_cursor_plane *
+to_ast_cursor_plane(struct drm_plane *plane)
+{
+	return container_of(plane, struct ast_cursor_plane, base);
+}
 
 /*
  * Connector with i2c channel
  */
 
-काष्ठा ast_i2c_chan अणु
-	काष्ठा i2c_adapter adapter;
-	काष्ठा drm_device *dev;
-	काष्ठा i2c_algo_bit_data bit;
-पूर्ण;
+struct ast_i2c_chan {
+	struct i2c_adapter adapter;
+	struct drm_device *dev;
+	struct i2c_algo_bit_data bit;
+};
 
-काष्ठा ast_connector अणु
-	काष्ठा drm_connector base;
-	काष्ठा ast_i2c_chan *i2c;
-पूर्ण;
+struct ast_connector {
+	struct drm_connector base;
+	struct ast_i2c_chan *i2c;
+};
 
-अटल अंतरभूत काष्ठा ast_connector *
-to_ast_connector(काष्ठा drm_connector *connector)
-अणु
-	वापस container_of(connector, काष्ठा ast_connector, base);
-पूर्ण
+static inline struct ast_connector *
+to_ast_connector(struct drm_connector *connector)
+{
+	return container_of(connector, struct ast_connector, base);
+}
 
 /*
  * Device
  */
 
-काष्ठा ast_निजी अणु
-	काष्ठा drm_device base;
+struct ast_private {
+	struct drm_device base;
 
-	व्योम __iomem *regs;
-	व्योम __iomem *ioregs;
+	void __iomem *regs;
+	void __iomem *ioregs;
 
-	क्रमागत ast_chip chip;
+	enum ast_chip chip;
 	bool vga2_clone;
-	uपूर्णांक32_t dram_bus_width;
-	uपूर्णांक32_t dram_type;
-	uपूर्णांक32_t mclk;
+	uint32_t dram_bus_width;
+	uint32_t dram_type;
+	uint32_t mclk;
 
-	पूर्णांक fb_mtrr;
+	int fb_mtrr;
 
-	काष्ठा drm_plane primary_plane;
-	काष्ठा ast_cursor_plane cursor_plane;
-	काष्ठा drm_crtc crtc;
-	काष्ठा drm_encoder encoder;
-	काष्ठा ast_connector connector;
+	struct drm_plane primary_plane;
+	struct ast_cursor_plane cursor_plane;
+	struct drm_crtc crtc;
+	struct drm_encoder encoder;
+	struct ast_connector connector;
 
 	bool support_wide_screen;
-	क्रमागत अणु
+	enum {
 		ast_use_p2a,
 		ast_use_dt,
-		ast_use_शेषs
-	पूर्ण config_mode;
+		ast_use_defaults
+	} config_mode;
 
-	क्रमागत ast_tx_chip tx_chip_type;
+	enum ast_tx_chip tx_chip_type;
 	u8 dp501_maxclk;
 	u8 *dp501_fw_addr;
-	स्थिर काष्ठा firmware *dp501_fw;	/* dp501 fw */
-पूर्ण;
+	const struct firmware *dp501_fw;	/* dp501 fw */
+};
 
-अटल अंतरभूत काष्ठा ast_निजी *to_ast_निजी(काष्ठा drm_device *dev)
-अणु
-	वापस container_of(dev, काष्ठा ast_निजी, base);
-पूर्ण
+static inline struct ast_private *to_ast_private(struct drm_device *dev)
+{
+	return container_of(dev, struct ast_private, base);
+}
 
-काष्ठा ast_निजी *ast_device_create(स्थिर काष्ठा drm_driver *drv,
-				      काष्ठा pci_dev *pdev,
-				      अचिन्हित दीर्घ flags);
+struct ast_private *ast_device_create(const struct drm_driver *drv,
+				      struct pci_dev *pdev,
+				      unsigned long flags);
 
-#घोषणा AST_IO_AR_PORT_WRITE		(0x40)
-#घोषणा AST_IO_MISC_PORT_WRITE		(0x42)
-#घोषणा AST_IO_VGA_ENABLE_PORT		(0x43)
-#घोषणा AST_IO_SEQ_PORT			(0x44)
-#घोषणा AST_IO_DAC_INDEX_READ		(0x47)
-#घोषणा AST_IO_DAC_INDEX_WRITE		(0x48)
-#घोषणा AST_IO_DAC_DATA		        (0x49)
-#घोषणा AST_IO_GR_PORT			(0x4E)
-#घोषणा AST_IO_CRTC_PORT		(0x54)
-#घोषणा AST_IO_INPUT_STATUS1_READ	(0x5A)
-#घोषणा AST_IO_MISC_PORT_READ		(0x4C)
+#define AST_IO_AR_PORT_WRITE		(0x40)
+#define AST_IO_MISC_PORT_WRITE		(0x42)
+#define AST_IO_VGA_ENABLE_PORT		(0x43)
+#define AST_IO_SEQ_PORT			(0x44)
+#define AST_IO_DAC_INDEX_READ		(0x47)
+#define AST_IO_DAC_INDEX_WRITE		(0x48)
+#define AST_IO_DAC_DATA		        (0x49)
+#define AST_IO_GR_PORT			(0x4E)
+#define AST_IO_CRTC_PORT		(0x54)
+#define AST_IO_INPUT_STATUS1_READ	(0x5A)
+#define AST_IO_MISC_PORT_READ		(0x4C)
 
-#घोषणा AST_IO_MM_OFFSET		(0x380)
+#define AST_IO_MM_OFFSET		(0x380)
 
-#घोषणा AST_IO_VGAIR1_VREFRESH		BIT(3)
+#define AST_IO_VGAIR1_VREFRESH		BIT(3)
 
-#घोषणा AST_IO_VGACRCB_HWC_ENABLED     BIT(1)
-#घोषणा AST_IO_VGACRCB_HWC_16BPP       BIT(0) /* set: ARGB4444, cleared: 2bpp palette */
+#define AST_IO_VGACRCB_HWC_ENABLED     BIT(1)
+#define AST_IO_VGACRCB_HWC_16BPP       BIT(0) /* set: ARGB4444, cleared: 2bpp palette */
 
-#घोषणा __ast_पढ़ो(x) \
-अटल अंतरभूत u##x ast_पढ़ो##x(काष्ठा ast_निजी *ast, u32 reg) अणु \
+#define __ast_read(x) \
+static inline u##x ast_read##x(struct ast_private *ast, u32 reg) { \
 u##x val = 0;\
-val = ioपढ़ो##x(ast->regs + reg); \
-वापस val;\
-पूर्ण
+val = ioread##x(ast->regs + reg); \
+return val;\
+}
 
-__ast_पढ़ो(8);
-__ast_पढ़ो(16);
-__ast_पढ़ो(32)
+__ast_read(8);
+__ast_read(16);
+__ast_read(32)
 
-#घोषणा __ast_io_पढ़ो(x) \
-अटल अंतरभूत u##x ast_io_पढ़ो##x(काष्ठा ast_निजी *ast, u32 reg) अणु \
+#define __ast_io_read(x) \
+static inline u##x ast_io_read##x(struct ast_private *ast, u32 reg) { \
 u##x val = 0;\
-val = ioपढ़ो##x(ast->ioregs + reg); \
-वापस val;\
-पूर्ण
+val = ioread##x(ast->ioregs + reg); \
+return val;\
+}
 
-__ast_io_पढ़ो(8);
-__ast_io_पढ़ो(16);
-__ast_io_पढ़ो(32);
+__ast_io_read(8);
+__ast_io_read(16);
+__ast_io_read(32);
 
-#घोषणा __ast_ग_लिखो(x) \
-अटल अंतरभूत व्योम ast_ग_लिखो##x(काष्ठा ast_निजी *ast, u32 reg, u##x val) अणु\
-	ioग_लिखो##x(val, ast->regs + reg);\
-	पूर्ण
+#define __ast_write(x) \
+static inline void ast_write##x(struct ast_private *ast, u32 reg, u##x val) {\
+	iowrite##x(val, ast->regs + reg);\
+	}
 
-__ast_ग_लिखो(8);
-__ast_ग_लिखो(16);
-__ast_ग_लिखो(32);
+__ast_write(8);
+__ast_write(16);
+__ast_write(32);
 
-#घोषणा __ast_io_ग_लिखो(x) \
-अटल अंतरभूत व्योम ast_io_ग_लिखो##x(काष्ठा ast_निजी *ast, u32 reg, u##x val) अणु\
-	ioग_लिखो##x(val, ast->ioregs + reg);\
-	पूर्ण
+#define __ast_io_write(x) \
+static inline void ast_io_write##x(struct ast_private *ast, u32 reg, u##x val) {\
+	iowrite##x(val, ast->ioregs + reg);\
+	}
 
-__ast_io_ग_लिखो(8);
-__ast_io_ग_लिखो(16);
-#अघोषित __ast_io_ग_लिखो
+__ast_io_write(8);
+__ast_io_write(16);
+#undef __ast_io_write
 
-अटल अंतरभूत व्योम ast_set_index_reg(काष्ठा ast_निजी *ast,
-				     uपूर्णांक32_t base, uपूर्णांक8_t index,
-				     uपूर्णांक8_t val)
-अणु
-	ast_io_ग_लिखो16(ast, base, ((u16)val << 8) | index);
-पूर्ण
+static inline void ast_set_index_reg(struct ast_private *ast,
+				     uint32_t base, uint8_t index,
+				     uint8_t val)
+{
+	ast_io_write16(ast, base, ((u16)val << 8) | index);
+}
 
-व्योम ast_set_index_reg_mask(काष्ठा ast_निजी *ast,
-			    uपूर्णांक32_t base, uपूर्णांक8_t index,
-			    uपूर्णांक8_t mask, uपूर्णांक8_t val);
-uपूर्णांक8_t ast_get_index_reg(काष्ठा ast_निजी *ast,
-			  uपूर्णांक32_t base, uपूर्णांक8_t index);
-uपूर्णांक8_t ast_get_index_reg_mask(काष्ठा ast_निजी *ast,
-			       uपूर्णांक32_t base, uपूर्णांक8_t index, uपूर्णांक8_t mask);
+void ast_set_index_reg_mask(struct ast_private *ast,
+			    uint32_t base, uint8_t index,
+			    uint8_t mask, uint8_t val);
+uint8_t ast_get_index_reg(struct ast_private *ast,
+			  uint32_t base, uint8_t index);
+uint8_t ast_get_index_reg_mask(struct ast_private *ast,
+			       uint32_t base, uint8_t index, uint8_t mask);
 
-अटल अंतरभूत व्योम ast_खोलो_key(काष्ठा ast_निजी *ast)
-अणु
+static inline void ast_open_key(struct ast_private *ast)
+{
 	ast_set_index_reg(ast, AST_IO_CRTC_PORT, 0x80, 0xA8);
-पूर्ण
+}
 
-#घोषणा AST_VIDMEM_SIZE_8M    0x00800000
-#घोषणा AST_VIDMEM_SIZE_16M   0x01000000
-#घोषणा AST_VIDMEM_SIZE_32M   0x02000000
-#घोषणा AST_VIDMEM_SIZE_64M   0x04000000
-#घोषणा AST_VIDMEM_SIZE_128M  0x08000000
+#define AST_VIDMEM_SIZE_8M    0x00800000
+#define AST_VIDMEM_SIZE_16M   0x01000000
+#define AST_VIDMEM_SIZE_32M   0x02000000
+#define AST_VIDMEM_SIZE_64M   0x04000000
+#define AST_VIDMEM_SIZE_128M  0x08000000
 
-#घोषणा AST_VIDMEM_DEFAULT_SIZE AST_VIDMEM_SIZE_8M
+#define AST_VIDMEM_DEFAULT_SIZE AST_VIDMEM_SIZE_8M
 
-काष्ठा ast_vbios_stdtable अणु
+struct ast_vbios_stdtable {
 	u8 misc;
 	u8 seq[4];
 	u8 crtc[25];
 	u8 ar[20];
 	u8 gr[9];
-पूर्ण;
+};
 
-काष्ठा ast_vbios_enhtable अणु
+struct ast_vbios_enhtable {
 	u32 ht;
 	u32 hde;
 	u32 hfp;
@@ -297,49 +296,49 @@ uपूर्णांक8_t ast_get_index_reg_mask(काष्ठा ast_न�
 	u32 refresh_rate;
 	u32 refresh_rate_index;
 	u32 mode_id;
-पूर्ण;
+};
 
-काष्ठा ast_vbios_dclk_info अणु
+struct ast_vbios_dclk_info {
 	u8 param1;
 	u8 param2;
 	u8 param3;
-पूर्ण;
+};
 
-काष्ठा ast_vbios_mode_info अणु
-	स्थिर काष्ठा ast_vbios_stdtable *std_table;
-	स्थिर काष्ठा ast_vbios_enhtable *enh_table;
-पूर्ण;
+struct ast_vbios_mode_info {
+	const struct ast_vbios_stdtable *std_table;
+	const struct ast_vbios_enhtable *enh_table;
+};
 
-काष्ठा ast_crtc_state अणु
-	काष्ठा drm_crtc_state base;
+struct ast_crtc_state {
+	struct drm_crtc_state base;
 
-	/* Last known क्रमmat of primary plane */
-	स्थिर काष्ठा drm_क्रमmat_info *क्रमmat;
+	/* Last known format of primary plane */
+	const struct drm_format_info *format;
 
-	काष्ठा ast_vbios_mode_info vbios_mode_info;
-पूर्ण;
+	struct ast_vbios_mode_info vbios_mode_info;
+};
 
-#घोषणा to_ast_crtc_state(state) container_of(state, काष्ठा ast_crtc_state, base)
+#define to_ast_crtc_state(state) container_of(state, struct ast_crtc_state, base)
 
-पूर्णांक ast_mode_config_init(काष्ठा ast_निजी *ast);
+int ast_mode_config_init(struct ast_private *ast);
 
-#घोषणा AST_MM_ALIGN_SHIFT 4
-#घोषणा AST_MM_ALIGN_MASK ((1 << AST_MM_ALIGN_SHIFT) - 1)
+#define AST_MM_ALIGN_SHIFT 4
+#define AST_MM_ALIGN_MASK ((1 << AST_MM_ALIGN_SHIFT) - 1)
 
-पूर्णांक ast_mm_init(काष्ठा ast_निजी *ast);
+int ast_mm_init(struct ast_private *ast);
 
 /* ast post */
-व्योम ast_enable_vga(काष्ठा drm_device *dev);
-व्योम ast_enable_mmio(काष्ठा drm_device *dev);
-bool ast_is_vga_enabled(काष्ठा drm_device *dev);
-व्योम ast_post_gpu(काष्ठा drm_device *dev);
-u32 ast_mindwm(काष्ठा ast_निजी *ast, u32 r);
-व्योम ast_moutdwm(काष्ठा ast_निजी *ast, u32 r, u32 v);
+void ast_enable_vga(struct drm_device *dev);
+void ast_enable_mmio(struct drm_device *dev);
+bool ast_is_vga_enabled(struct drm_device *dev);
+void ast_post_gpu(struct drm_device *dev);
+u32 ast_mindwm(struct ast_private *ast, u32 r);
+void ast_moutdwm(struct ast_private *ast, u32 r, u32 v);
 /* ast dp501 */
-व्योम ast_set_dp501_video_output(काष्ठा drm_device *dev, u8 mode);
-bool ast_backup_fw(काष्ठा drm_device *dev, u8 *addr, u32 size);
-bool ast_dp501_पढ़ो_edid(काष्ठा drm_device *dev, u8 *ediddata);
-u8 ast_get_dp501_max_clk(काष्ठा drm_device *dev);
-व्योम ast_init_3rdtx(काष्ठा drm_device *dev);
+void ast_set_dp501_video_output(struct drm_device *dev, u8 mode);
+bool ast_backup_fw(struct drm_device *dev, u8 *addr, u32 size);
+bool ast_dp501_read_edid(struct drm_device *dev, u8 *ediddata);
+u8 ast_get_dp501_max_clk(struct drm_device *dev);
+void ast_init_3rdtx(struct drm_device *dev);
 
-#पूर्ण_अगर
+#endif

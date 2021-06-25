@@ -1,198 +1,197 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
- * Driver क्रम PowerMac onboard soundchips
+ * Driver for PowerMac onboard soundchips
  * Copyright (c) 2001 by Takashi Iwai <tiwai@suse.de>
  *   based on dmasound.c.
  */
 
 
-#अगर_अघोषित __PMAC_H
-#घोषणा __PMAC_H
+#ifndef __PMAC_H
+#define __PMAC_H
 
-#समावेश <sound/control.h>
-#समावेश <sound/pcm.h>
-#समावेश "awacs.h"
+#include <sound/control.h>
+#include <sound/pcm.h>
+#include "awacs.h"
 
-#समावेश <linux/adb.h>
-#अगर_घोषित CONFIG_ADB_CUDA
-#समावेश <linux/cuda.h>
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_ADB_PMU
-#समावेश <linux/pmu.h>
-#पूर्ण_अगर
-#समावेश <linux/nvram.h>
-#समावेश <linux/tty.h>
-#समावेश <linux/vt_kern.h>
-#समावेश <यंत्र/dbdma.h>
-#समावेश <यंत्र/prom.h>
-#समावेश <यंत्र/machdep.h>
+#include <linux/adb.h>
+#ifdef CONFIG_ADB_CUDA
+#include <linux/cuda.h>
+#endif
+#ifdef CONFIG_ADB_PMU
+#include <linux/pmu.h>
+#endif
+#include <linux/nvram.h>
+#include <linux/tty.h>
+#include <linux/vt_kern.h>
+#include <asm/dbdma.h>
+#include <asm/prom.h>
+#include <asm/machdep.h>
 
 /* maximum number of fragments */
-#घोषणा PMAC_MAX_FRAGS		32
+#define PMAC_MAX_FRAGS		32
 
 
-#घोषणा PMAC_SUPPORT_AUTOMUTE
+#define PMAC_SUPPORT_AUTOMUTE
 
 /*
  * DBDMA space
  */
-काष्ठा pmac_dbdma अणु
+struct pmac_dbdma {
 	dma_addr_t dma_base;
 	dma_addr_t addr;
-	काष्ठा dbdma_cmd __iomem *cmds;
-	व्योम *space;
-	पूर्णांक size;
-पूर्ण;
+	struct dbdma_cmd __iomem *cmds;
+	void *space;
+	int size;
+};
 
 /*
  * playback/capture stream
  */
-काष्ठा pmac_stream अणु
-	पूर्णांक running;	/* boolean */
+struct pmac_stream {
+	int running;	/* boolean */
 
-	पूर्णांक stream;	/* PLAYBACK/CAPTURE */
+	int stream;	/* PLAYBACK/CAPTURE */
 
-	पूर्णांक dma_size; /* in bytes */
-	पूर्णांक period_size; /* in bytes */
-	पूर्णांक buffer_size; /* in kbytes */
-	पूर्णांक nperiods, cur_period;
+	int dma_size; /* in bytes */
+	int period_size; /* in bytes */
+	int buffer_size; /* in kbytes */
+	int nperiods, cur_period;
 
-	काष्ठा pmac_dbdma cmd;
-	अस्थिर काष्ठा dbdma_regs __iomem *dma;
+	struct pmac_dbdma cmd;
+	volatile struct dbdma_regs __iomem *dma;
 
-	काष्ठा snd_pcm_substream *substream;
+	struct snd_pcm_substream *substream;
 
-	अचिन्हित पूर्णांक cur_freqs;		/* currently available frequencies */
-	अचिन्हित पूर्णांक cur_क्रमmats;	/* currently available क्रमmats */
-पूर्ण;
+	unsigned int cur_freqs;		/* currently available frequencies */
+	unsigned int cur_formats;	/* currently available formats */
+};
 
 
 /*
  */
 
-क्रमागत snd_pmac_model अणु
+enum snd_pmac_model {
 	PMAC_AWACS, PMAC_SCREAMER, PMAC_BURGUNDY, PMAC_DACA, PMAC_TUMBLER,
 	PMAC_SNAPPER
-पूर्ण;
+};
 
-काष्ठा snd_pmac अणु
-	काष्ठा snd_card *card;
+struct snd_pmac {
+	struct snd_card *card;
 
 	/* h/w info */
-	काष्ठा device_node *node;
-	काष्ठा pci_dev *pdev;
-	अचिन्हित पूर्णांक revision;
-	अचिन्हित पूर्णांक manufacturer;
-	अचिन्हित पूर्णांक subframe;
-	अचिन्हित पूर्णांक device_id;
-	क्रमागत snd_pmac_model model;
+	struct device_node *node;
+	struct pci_dev *pdev;
+	unsigned int revision;
+	unsigned int manufacturer;
+	unsigned int subframe;
+	unsigned int device_id;
+	enum snd_pmac_model model;
 
-	अचिन्हित पूर्णांक has_iic : 1;
-	अचिन्हित पूर्णांक is_pbook_3400 : 1;
-	अचिन्हित पूर्णांक is_pbook_G3 : 1;
-	अचिन्हित पूर्णांक is_k2 : 1;
+	unsigned int has_iic : 1;
+	unsigned int is_pbook_3400 : 1;
+	unsigned int is_pbook_G3 : 1;
+	unsigned int is_k2 : 1;
 
-	अचिन्हित पूर्णांक can_byte_swap : 1;
-	अचिन्हित पूर्णांक can_duplex : 1;
-	अचिन्हित पूर्णांक can_capture : 1;
+	unsigned int can_byte_swap : 1;
+	unsigned int can_duplex : 1;
+	unsigned int can_capture : 1;
 
-	अचिन्हित पूर्णांक स्वतः_mute : 1;
-	अचिन्हित पूर्णांक initialized : 1;
-	अचिन्हित पूर्णांक feature_is_set : 1;
+	unsigned int auto_mute : 1;
+	unsigned int initialized : 1;
+	unsigned int feature_is_set : 1;
 
-	अचिन्हित पूर्णांक requested;
-	काष्ठा resource rsrc[3];
+	unsigned int requested;
+	struct resource rsrc[3];
 
-	पूर्णांक num_freqs;
-	स्थिर पूर्णांक *freq_table;
-	अचिन्हित पूर्णांक freqs_ok;		/* bit flags */
-	अचिन्हित पूर्णांक क्रमmats_ok;	/* pcm hwinfo */
-	पूर्णांक active;
-	पूर्णांक rate_index;
-	पूर्णांक क्रमmat;			/* current क्रमmat */
+	int num_freqs;
+	const int *freq_table;
+	unsigned int freqs_ok;		/* bit flags */
+	unsigned int formats_ok;	/* pcm hwinfo */
+	int active;
+	int rate_index;
+	int format;			/* current format */
 
 	spinlock_t reg_lock;
-	अस्थिर काष्ठा awacs_regs __iomem *awacs;
-	पूर्णांक awacs_reg[8]; /* रेजिस्टर cache */
-	अचिन्हित पूर्णांक hp_stat_mask;
+	volatile struct awacs_regs __iomem *awacs;
+	int awacs_reg[8]; /* register cache */
+	unsigned int hp_stat_mask;
 
-	अचिन्हित अक्षर __iomem *latch_base;
-	अचिन्हित अक्षर __iomem *macio_base;
+	unsigned char __iomem *latch_base;
+	unsigned char __iomem *macio_base;
 
-	काष्ठा pmac_stream playback;
-	काष्ठा pmac_stream capture;
+	struct pmac_stream playback;
+	struct pmac_stream capture;
 
-	काष्ठा pmac_dbdma extra_dma;
+	struct pmac_dbdma extra_dma;
 
-	पूर्णांक irq, tx_irq, rx_irq;
+	int irq, tx_irq, rx_irq;
 
-	काष्ठा snd_pcm *pcm;
+	struct snd_pcm *pcm;
 
-	काष्ठा pmac_beep *beep;
+	struct pmac_beep *beep;
 
-	अचिन्हित पूर्णांक control_mask;	/* control mask */
+	unsigned int control_mask;	/* control mask */
 
 	/* mixer stuffs */
-	व्योम *mixer_data;
-	व्योम (*mixer_मुक्त)(काष्ठा snd_pmac *);
-	काष्ठा snd_kcontrol *master_sw_ctl;
-	काष्ठा snd_kcontrol *speaker_sw_ctl;
-	काष्ठा snd_kcontrol *drc_sw_ctl;	/* only used क्रम tumbler -ReneR */
-	काष्ठा snd_kcontrol *hp_detect_ctl;
-	काष्ठा snd_kcontrol *lineout_sw_ctl;
+	void *mixer_data;
+	void (*mixer_free)(struct snd_pmac *);
+	struct snd_kcontrol *master_sw_ctl;
+	struct snd_kcontrol *speaker_sw_ctl;
+	struct snd_kcontrol *drc_sw_ctl;	/* only used for tumbler -ReneR */
+	struct snd_kcontrol *hp_detect_ctl;
+	struct snd_kcontrol *lineout_sw_ctl;
 
 	/* lowlevel callbacks */
-	व्योम (*set_क्रमmat)(काष्ठा snd_pmac *chip);
-	व्योम (*update_स्वतःmute)(काष्ठा snd_pmac *chip, पूर्णांक करो_notअगरy);
-	पूर्णांक (*detect_headphone)(काष्ठा snd_pmac *chip);
-#अगर_घोषित CONFIG_PM
-	व्योम (*suspend)(काष्ठा snd_pmac *chip);
-	व्योम (*resume)(काष्ठा snd_pmac *chip);
-#पूर्ण_अगर
+	void (*set_format)(struct snd_pmac *chip);
+	void (*update_automute)(struct snd_pmac *chip, int do_notify);
+	int (*detect_headphone)(struct snd_pmac *chip);
+#ifdef CONFIG_PM
+	void (*suspend)(struct snd_pmac *chip);
+	void (*resume)(struct snd_pmac *chip);
+#endif
 
-पूर्ण;
+};
 
 
 /* exported functions */
-पूर्णांक snd_pmac_new(काष्ठा snd_card *card, काष्ठा snd_pmac **chip_वापस);
-पूर्णांक snd_pmac_pcm_new(काष्ठा snd_pmac *chip);
-पूर्णांक snd_pmac_attach_beep(काष्ठा snd_pmac *chip);
-व्योम snd_pmac_detach_beep(काष्ठा snd_pmac *chip);
-व्योम snd_pmac_beep_stop(काष्ठा snd_pmac *chip);
-अचिन्हित पूर्णांक snd_pmac_rate_index(काष्ठा snd_pmac *chip, काष्ठा pmac_stream *rec, अचिन्हित पूर्णांक rate);
+int snd_pmac_new(struct snd_card *card, struct snd_pmac **chip_return);
+int snd_pmac_pcm_new(struct snd_pmac *chip);
+int snd_pmac_attach_beep(struct snd_pmac *chip);
+void snd_pmac_detach_beep(struct snd_pmac *chip);
+void snd_pmac_beep_stop(struct snd_pmac *chip);
+unsigned int snd_pmac_rate_index(struct snd_pmac *chip, struct pmac_stream *rec, unsigned int rate);
 
-व्योम snd_pmac_beep_dma_start(काष्ठा snd_pmac *chip, पूर्णांक bytes, अचिन्हित दीर्घ addr, पूर्णांक speed);
-व्योम snd_pmac_beep_dma_stop(काष्ठा snd_pmac *chip);
+void snd_pmac_beep_dma_start(struct snd_pmac *chip, int bytes, unsigned long addr, int speed);
+void snd_pmac_beep_dma_stop(struct snd_pmac *chip);
 
-#अगर_घोषित CONFIG_PM
-व्योम snd_pmac_suspend(काष्ठा snd_pmac *chip);
-व्योम snd_pmac_resume(काष्ठा snd_pmac *chip);
-#पूर्ण_अगर
+#ifdef CONFIG_PM
+void snd_pmac_suspend(struct snd_pmac *chip);
+void snd_pmac_resume(struct snd_pmac *chip);
+#endif
 
 /* initialize mixer */
-पूर्णांक snd_pmac_awacs_init(काष्ठा snd_pmac *chip);
-पूर्णांक snd_pmac_burgundy_init(काष्ठा snd_pmac *chip);
-पूर्णांक snd_pmac_daca_init(काष्ठा snd_pmac *chip);
-पूर्णांक snd_pmac_tumbler_init(काष्ठा snd_pmac *chip);
-पूर्णांक snd_pmac_tumbler_post_init(व्योम);
+int snd_pmac_awacs_init(struct snd_pmac *chip);
+int snd_pmac_burgundy_init(struct snd_pmac *chip);
+int snd_pmac_daca_init(struct snd_pmac *chip);
+int snd_pmac_tumbler_init(struct snd_pmac *chip);
+int snd_pmac_tumbler_post_init(void);
 
 /* i2c functions */
-काष्ठा pmac_keywest अणु
-	पूर्णांक addr;
-	काष्ठा i2c_client *client;
-	पूर्णांक id;
-	पूर्णांक (*init_client)(काष्ठा pmac_keywest *i2c);
-	अक्षर *name;
-पूर्ण;
+struct pmac_keywest {
+	int addr;
+	struct i2c_client *client;
+	int id;
+	int (*init_client)(struct pmac_keywest *i2c);
+	char *name;
+};
 
-पूर्णांक snd_pmac_keywest_init(काष्ठा pmac_keywest *i2c);
-व्योम snd_pmac_keywest_cleanup(काष्ठा pmac_keywest *i2c);
+int snd_pmac_keywest_init(struct pmac_keywest *i2c);
+void snd_pmac_keywest_cleanup(struct pmac_keywest *i2c);
 
 /* misc */
-#घोषणा snd_pmac_boolean_stereo_info	snd_ctl_boolean_stereo_info
-#घोषणा snd_pmac_boolean_mono_info	snd_ctl_boolean_mono_info
+#define snd_pmac_boolean_stereo_info	snd_ctl_boolean_stereo_info
+#define snd_pmac_boolean_mono_info	snd_ctl_boolean_mono_info
 
-पूर्णांक snd_pmac_add_स्वतःmute(काष्ठा snd_pmac *chip);
+int snd_pmac_add_automute(struct snd_pmac *chip);
 
-#पूर्ण_अगर /* __PMAC_H */
+#endif /* __PMAC_H */

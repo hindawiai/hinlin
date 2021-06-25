@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * mm/mmap.c
  *
@@ -8,78 +7,78 @@
  * Address space accounting code	<alan@lxorguk.ukuu.org.uk>
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/backing-dev.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/vmacache.h>
-#समावेश <linux/shm.h>
-#समावेश <linux/mman.h>
-#समावेश <linux/pagemap.h>
-#समावेश <linux/swap.h>
-#समावेश <linux/syscalls.h>
-#समावेश <linux/capability.h>
-#समावेश <linux/init.h>
-#समावेश <linux/file.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/personality.h>
-#समावेश <linux/security.h>
-#समावेश <linux/hugetlb.h>
-#समावेश <linux/shmem_fs.h>
-#समावेश <linux/profile.h>
-#समावेश <linux/export.h>
-#समावेश <linux/mount.h>
-#समावेश <linux/mempolicy.h>
-#समावेश <linux/rmap.h>
-#समावेश <linux/mmu_notअगरier.h>
-#समावेश <linux/mmdebug.h>
-#समावेश <linux/perf_event.h>
-#समावेश <linux/audit.h>
-#समावेश <linux/khugepaged.h>
-#समावेश <linux/uprobes.h>
-#समावेश <linux/rbtree_augmented.h>
-#समावेश <linux/notअगरier.h>
-#समावेश <linux/memory.h>
-#समावेश <linux/prपूर्णांकk.h>
-#समावेश <linux/userfaultfd_k.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/pkeys.h>
-#समावेश <linux/oom.h>
-#समावेश <linux/sched/mm.h>
+#include <linux/kernel.h>
+#include <linux/slab.h>
+#include <linux/backing-dev.h>
+#include <linux/mm.h>
+#include <linux/vmacache.h>
+#include <linux/shm.h>
+#include <linux/mman.h>
+#include <linux/pagemap.h>
+#include <linux/swap.h>
+#include <linux/syscalls.h>
+#include <linux/capability.h>
+#include <linux/init.h>
+#include <linux/file.h>
+#include <linux/fs.h>
+#include <linux/personality.h>
+#include <linux/security.h>
+#include <linux/hugetlb.h>
+#include <linux/shmem_fs.h>
+#include <linux/profile.h>
+#include <linux/export.h>
+#include <linux/mount.h>
+#include <linux/mempolicy.h>
+#include <linux/rmap.h>
+#include <linux/mmu_notifier.h>
+#include <linux/mmdebug.h>
+#include <linux/perf_event.h>
+#include <linux/audit.h>
+#include <linux/khugepaged.h>
+#include <linux/uprobes.h>
+#include <linux/rbtree_augmented.h>
+#include <linux/notifier.h>
+#include <linux/memory.h>
+#include <linux/printk.h>
+#include <linux/userfaultfd_k.h>
+#include <linux/moduleparam.h>
+#include <linux/pkeys.h>
+#include <linux/oom.h>
+#include <linux/sched/mm.h>
 
-#समावेश <linux/uaccess.h>
-#समावेश <यंत्र/cacheflush.h>
-#समावेश <यंत्र/tlb.h>
-#समावेश <यंत्र/mmu_context.h>
+#include <linux/uaccess.h>
+#include <asm/cacheflush.h>
+#include <asm/tlb.h>
+#include <asm/mmu_context.h>
 
-#घोषणा CREATE_TRACE_POINTS
-#समावेश <trace/events/mmap.h>
+#define CREATE_TRACE_POINTS
+#include <trace/events/mmap.h>
 
-#समावेश "internal.h"
+#include "internal.h"
 
-#अगर_अघोषित arch_mmap_check
-#घोषणा arch_mmap_check(addr, len, flags)	(0)
-#पूर्ण_अगर
+#ifndef arch_mmap_check
+#define arch_mmap_check(addr, len, flags)	(0)
+#endif
 
-#अगर_घोषित CONFIG_HAVE_ARCH_MMAP_RND_BITS
-स्थिर पूर्णांक mmap_rnd_bits_min = CONFIG_ARCH_MMAP_RND_BITS_MIN;
-स्थिर पूर्णांक mmap_rnd_bits_max = CONFIG_ARCH_MMAP_RND_BITS_MAX;
-पूर्णांक mmap_rnd_bits __पढ़ो_mostly = CONFIG_ARCH_MMAP_RND_BITS;
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_HAVE_ARCH_MMAP_RND_COMPAT_BITS
-स्थिर पूर्णांक mmap_rnd_compat_bits_min = CONFIG_ARCH_MMAP_RND_COMPAT_BITS_MIN;
-स्थिर पूर्णांक mmap_rnd_compat_bits_max = CONFIG_ARCH_MMAP_RND_COMPAT_BITS_MAX;
-पूर्णांक mmap_rnd_compat_bits __पढ़ो_mostly = CONFIG_ARCH_MMAP_RND_COMPAT_BITS;
-#पूर्ण_अगर
+#ifdef CONFIG_HAVE_ARCH_MMAP_RND_BITS
+const int mmap_rnd_bits_min = CONFIG_ARCH_MMAP_RND_BITS_MIN;
+const int mmap_rnd_bits_max = CONFIG_ARCH_MMAP_RND_BITS_MAX;
+int mmap_rnd_bits __read_mostly = CONFIG_ARCH_MMAP_RND_BITS;
+#endif
+#ifdef CONFIG_HAVE_ARCH_MMAP_RND_COMPAT_BITS
+const int mmap_rnd_compat_bits_min = CONFIG_ARCH_MMAP_RND_COMPAT_BITS_MIN;
+const int mmap_rnd_compat_bits_max = CONFIG_ARCH_MMAP_RND_COMPAT_BITS_MAX;
+int mmap_rnd_compat_bits __read_mostly = CONFIG_ARCH_MMAP_RND_COMPAT_BITS;
+#endif
 
-अटल bool ignore_rlimit_data;
+static bool ignore_rlimit_data;
 core_param(ignore_rlimit_data, ignore_rlimit_data, bool, 0644);
 
-अटल व्योम unmap_region(काष्ठा mm_काष्ठा *mm,
-		काष्ठा vm_area_काष्ठा *vma, काष्ठा vm_area_काष्ठा *prev,
-		अचिन्हित दीर्घ start, अचिन्हित दीर्घ end);
+static void unmap_region(struct mm_struct *mm,
+		struct vm_area_struct *vma, struct vm_area_struct *prev,
+		unsigned long start, unsigned long end);
 
 /* description of effects of mapping type and prot in current implementation.
  * this is due to the limited x86 page protection hardware.  The expected
@@ -95,393 +94,393 @@ core_param(ignore_rlimit_data, ignore_rlimit_data, bool, 0644);
  *		w: (no) no	w: (no) no	w: (copy) copy	w: (no) no
  *		x: (no) no	x: (no) yes	x: (no) yes	x: (yes) yes
  *
- * On arm64, PROT_EXEC has the following behaviour क्रम both MAP_SHARED and
+ * On arm64, PROT_EXEC has the following behaviour for both MAP_SHARED and
  * MAP_PRIVATE (with Enhanced PAN supported):
  *								r: (no) no
  *								w: (no) no
  *								x: (yes) yes
  */
-pgprot_t protection_map[16] __ro_after_init = अणु
+pgprot_t protection_map[16] __ro_after_init = {
 	__P000, __P001, __P010, __P011, __P100, __P101, __P110, __P111,
 	__S000, __S001, __S010, __S011, __S100, __S101, __S110, __S111
-पूर्ण;
+};
 
-#अगर_अघोषित CONFIG_ARCH_HAS_FILTER_PGPROT
-अटल अंतरभूत pgprot_t arch_filter_pgprot(pgprot_t prot)
-अणु
-	वापस prot;
-पूर्ण
-#पूर्ण_अगर
+#ifndef CONFIG_ARCH_HAS_FILTER_PGPROT
+static inline pgprot_t arch_filter_pgprot(pgprot_t prot)
+{
+	return prot;
+}
+#endif
 
-pgprot_t vm_get_page_prot(अचिन्हित दीर्घ vm_flags)
-अणु
+pgprot_t vm_get_page_prot(unsigned long vm_flags)
+{
 	pgprot_t ret = __pgprot(pgprot_val(protection_map[vm_flags &
 				(VM_READ|VM_WRITE|VM_EXEC|VM_SHARED)]) |
 			pgprot_val(arch_vm_get_page_prot(vm_flags)));
 
-	वापस arch_filter_pgprot(ret);
-पूर्ण
+	return arch_filter_pgprot(ret);
+}
 EXPORT_SYMBOL(vm_get_page_prot);
 
-अटल pgprot_t vm_pgprot_modअगरy(pgprot_t oldprot, अचिन्हित दीर्घ vm_flags)
-अणु
-	वापस pgprot_modअगरy(oldprot, vm_get_page_prot(vm_flags));
-पूर्ण
+static pgprot_t vm_pgprot_modify(pgprot_t oldprot, unsigned long vm_flags)
+{
+	return pgprot_modify(oldprot, vm_get_page_prot(vm_flags));
+}
 
 /* Update vma->vm_page_prot to reflect vma->vm_flags. */
-व्योम vma_set_page_prot(काष्ठा vm_area_काष्ठा *vma)
-अणु
-	अचिन्हित दीर्घ vm_flags = vma->vm_flags;
+void vma_set_page_prot(struct vm_area_struct *vma)
+{
+	unsigned long vm_flags = vma->vm_flags;
 	pgprot_t vm_page_prot;
 
-	vm_page_prot = vm_pgprot_modअगरy(vma->vm_page_prot, vm_flags);
-	अगर (vma_wants_ग_लिखोnotअगरy(vma, vm_page_prot)) अणु
+	vm_page_prot = vm_pgprot_modify(vma->vm_page_prot, vm_flags);
+	if (vma_wants_writenotify(vma, vm_page_prot)) {
 		vm_flags &= ~VM_SHARED;
-		vm_page_prot = vm_pgprot_modअगरy(vm_page_prot, vm_flags);
-	पूर्ण
-	/* हटाओ_protection_ptes पढ़ोs vma->vm_page_prot without mmap_lock */
+		vm_page_prot = vm_pgprot_modify(vm_page_prot, vm_flags);
+	}
+	/* remove_protection_ptes reads vma->vm_page_prot without mmap_lock */
 	WRITE_ONCE(vma->vm_page_prot, vm_page_prot);
-पूर्ण
+}
 
 /*
  * Requires inode->i_mapping->i_mmap_rwsem
  */
-अटल व्योम __हटाओ_shared_vm_काष्ठा(काष्ठा vm_area_काष्ठा *vma,
-		काष्ठा file *file, काष्ठा address_space *mapping)
-अणु
-	अगर (vma->vm_flags & VM_DENYWRITE)
-		allow_ग_लिखो_access(file);
-	अगर (vma->vm_flags & VM_SHARED)
+static void __remove_shared_vm_struct(struct vm_area_struct *vma,
+		struct file *file, struct address_space *mapping)
+{
+	if (vma->vm_flags & VM_DENYWRITE)
+		allow_write_access(file);
+	if (vma->vm_flags & VM_SHARED)
 		mapping_unmap_writable(mapping);
 
 	flush_dcache_mmap_lock(mapping);
-	vma_पूर्णांकerval_tree_हटाओ(vma, &mapping->i_mmap);
+	vma_interval_tree_remove(vma, &mapping->i_mmap);
 	flush_dcache_mmap_unlock(mapping);
-पूर्ण
+}
 
 /*
- * Unlink a file-based vm काष्ठाure from its पूर्णांकerval tree, to hide
- * vma from rmap and vmtruncate beक्रमe मुक्तing its page tables.
+ * Unlink a file-based vm structure from its interval tree, to hide
+ * vma from rmap and vmtruncate before freeing its page tables.
  */
-व्योम unlink_file_vma(काष्ठा vm_area_काष्ठा *vma)
-अणु
-	काष्ठा file *file = vma->vm_file;
+void unlink_file_vma(struct vm_area_struct *vma)
+{
+	struct file *file = vma->vm_file;
 
-	अगर (file) अणु
-		काष्ठा address_space *mapping = file->f_mapping;
-		i_mmap_lock_ग_लिखो(mapping);
-		__हटाओ_shared_vm_काष्ठा(vma, file, mapping);
-		i_mmap_unlock_ग_लिखो(mapping);
-	पूर्ण
-पूर्ण
+	if (file) {
+		struct address_space *mapping = file->f_mapping;
+		i_mmap_lock_write(mapping);
+		__remove_shared_vm_struct(vma, file, mapping);
+		i_mmap_unlock_write(mapping);
+	}
+}
 
 /*
- * Close a vm काष्ठाure and मुक्त it, वापसing the next.
+ * Close a vm structure and free it, returning the next.
  */
-अटल काष्ठा vm_area_काष्ठा *हटाओ_vma(काष्ठा vm_area_काष्ठा *vma)
-अणु
-	काष्ठा vm_area_काष्ठा *next = vma->vm_next;
+static struct vm_area_struct *remove_vma(struct vm_area_struct *vma)
+{
+	struct vm_area_struct *next = vma->vm_next;
 
 	might_sleep();
-	अगर (vma->vm_ops && vma->vm_ops->बंद)
-		vma->vm_ops->बंद(vma);
-	अगर (vma->vm_file)
+	if (vma->vm_ops && vma->vm_ops->close)
+		vma->vm_ops->close(vma);
+	if (vma->vm_file)
 		fput(vma->vm_file);
 	mpol_put(vma_policy(vma));
-	vm_area_मुक्त(vma);
-	वापस next;
-पूर्ण
+	vm_area_free(vma);
+	return next;
+}
 
-अटल पूर्णांक करो_brk_flags(अचिन्हित दीर्घ addr, अचिन्हित दीर्घ request, अचिन्हित दीर्घ flags,
-		काष्ठा list_head *uf);
-SYSCALL_DEFINE1(brk, अचिन्हित दीर्घ, brk)
-अणु
-	अचिन्हित दीर्घ newbrk, oldbrk, origbrk;
-	काष्ठा mm_काष्ठा *mm = current->mm;
-	काष्ठा vm_area_काष्ठा *next;
-	अचिन्हित दीर्घ min_brk;
+static int do_brk_flags(unsigned long addr, unsigned long request, unsigned long flags,
+		struct list_head *uf);
+SYSCALL_DEFINE1(brk, unsigned long, brk)
+{
+	unsigned long newbrk, oldbrk, origbrk;
+	struct mm_struct *mm = current->mm;
+	struct vm_area_struct *next;
+	unsigned long min_brk;
 	bool populate;
-	bool करोwngraded = false;
+	bool downgraded = false;
 	LIST_HEAD(uf);
 
-	अगर (mmap_ग_लिखो_lock_समाप्तable(mm))
-		वापस -EINTR;
+	if (mmap_write_lock_killable(mm))
+		return -EINTR;
 
 	origbrk = mm->brk;
 
-#अगर_घोषित CONFIG_COMPAT_BRK
+#ifdef CONFIG_COMPAT_BRK
 	/*
 	 * CONFIG_COMPAT_BRK can still be overridden by setting
-	 * अक्रमomize_va_space to 2, which will still cause mm->start_brk
-	 * to be arbitrarily shअगरted
+	 * randomize_va_space to 2, which will still cause mm->start_brk
+	 * to be arbitrarily shifted
 	 */
-	अगर (current->brk_अक्रमomized)
+	if (current->brk_randomized)
 		min_brk = mm->start_brk;
-	अन्यथा
+	else
 		min_brk = mm->end_data;
-#अन्यथा
+#else
 	min_brk = mm->start_brk;
-#पूर्ण_अगर
-	अगर (brk < min_brk)
-		जाओ out;
+#endif
+	if (brk < min_brk)
+		goto out;
 
 	/*
-	 * Check against rlimit here. If this check is करोne later after the test
+	 * Check against rlimit here. If this check is done later after the test
 	 * of oldbrk with newbrk then it can escape the test and let the data
-	 * segment grow beyond its set limit the in हाल where the limit is
+	 * segment grow beyond its set limit the in case where the limit is
 	 * not page aligned -Ram Gupta
 	 */
-	अगर (check_data_rlimit(rlimit(RLIMIT_DATA), brk, mm->start_brk,
+	if (check_data_rlimit(rlimit(RLIMIT_DATA), brk, mm->start_brk,
 			      mm->end_data, mm->start_data))
-		जाओ out;
+		goto out;
 
 	newbrk = PAGE_ALIGN(brk);
 	oldbrk = PAGE_ALIGN(mm->brk);
-	अगर (oldbrk == newbrk) अणु
+	if (oldbrk == newbrk) {
 		mm->brk = brk;
-		जाओ success;
-	पूर्ण
+		goto success;
+	}
 
 	/*
 	 * Always allow shrinking brk.
-	 * __करो_munmap() may करोwngrade mmap_lock to पढ़ो.
+	 * __do_munmap() may downgrade mmap_lock to read.
 	 */
-	अगर (brk <= mm->brk) अणु
-		पूर्णांक ret;
+	if (brk <= mm->brk) {
+		int ret;
 
 		/*
-		 * mm->brk must to be रक्षित by ग_लिखो mmap_lock so update it
-		 * beक्रमe करोwngrading mmap_lock. When __करो_munmap() fails,
+		 * mm->brk must to be protected by write mmap_lock so update it
+		 * before downgrading mmap_lock. When __do_munmap() fails,
 		 * mm->brk will be restored from origbrk.
 		 */
 		mm->brk = brk;
-		ret = __करो_munmap(mm, newbrk, oldbrk-newbrk, &uf, true);
-		अगर (ret < 0) अणु
+		ret = __do_munmap(mm, newbrk, oldbrk-newbrk, &uf, true);
+		if (ret < 0) {
 			mm->brk = origbrk;
-			जाओ out;
-		पूर्ण अन्यथा अगर (ret == 1) अणु
-			करोwngraded = true;
-		पूर्ण
-		जाओ success;
-	पूर्ण
+			goto out;
+		} else if (ret == 1) {
+			downgraded = true;
+		}
+		goto success;
+	}
 
 	/* Check against existing mmap mappings. */
 	next = find_vma(mm, oldbrk);
-	अगर (next && newbrk + PAGE_SIZE > vm_start_gap(next))
-		जाओ out;
+	if (next && newbrk + PAGE_SIZE > vm_start_gap(next))
+		goto out;
 
 	/* Ok, looks good - let it rip. */
-	अगर (करो_brk_flags(oldbrk, newbrk-oldbrk, 0, &uf) < 0)
-		जाओ out;
+	if (do_brk_flags(oldbrk, newbrk-oldbrk, 0, &uf) < 0)
+		goto out;
 	mm->brk = brk;
 
 success:
 	populate = newbrk > oldbrk && (mm->def_flags & VM_LOCKED) != 0;
-	अगर (करोwngraded)
-		mmap_पढ़ो_unlock(mm);
-	अन्यथा
-		mmap_ग_लिखो_unlock(mm);
+	if (downgraded)
+		mmap_read_unlock(mm);
+	else
+		mmap_write_unlock(mm);
 	userfaultfd_unmap_complete(mm, &uf);
-	अगर (populate)
+	if (populate)
 		mm_populate(oldbrk, newbrk - oldbrk);
-	वापस brk;
+	return brk;
 
 out:
-	mmap_ग_लिखो_unlock(mm);
-	वापस origbrk;
-पूर्ण
+	mmap_write_unlock(mm);
+	return origbrk;
+}
 
-अटल अंतरभूत अचिन्हित दीर्घ vma_compute_gap(काष्ठा vm_area_काष्ठा *vma)
-अणु
-	अचिन्हित दीर्घ gap, prev_end;
+static inline unsigned long vma_compute_gap(struct vm_area_struct *vma)
+{
+	unsigned long gap, prev_end;
 
 	/*
-	 * Note: in the rare हाल of a VM_GROWSDOWN above a VM_GROWSUP, we
+	 * Note: in the rare case of a VM_GROWSDOWN above a VM_GROWSUP, we
 	 * allow two stack_guard_gaps between them here, and when choosing
 	 * an unmapped area; whereas when expanding we only require one.
 	 * That's a little inconsistent, but keeps the code here simpler.
 	 */
 	gap = vm_start_gap(vma);
-	अगर (vma->vm_prev) अणु
+	if (vma->vm_prev) {
 		prev_end = vm_end_gap(vma->vm_prev);
-		अगर (gap > prev_end)
+		if (gap > prev_end)
 			gap -= prev_end;
-		अन्यथा
+		else
 			gap = 0;
-	पूर्ण
-	वापस gap;
-पूर्ण
+	}
+	return gap;
+}
 
-#अगर_घोषित CONFIG_DEBUG_VM_RB
-अटल अचिन्हित दीर्घ vma_compute_subtree_gap(काष्ठा vm_area_काष्ठा *vma)
-अणु
-	अचिन्हित दीर्घ max = vma_compute_gap(vma), subtree_gap;
-	अगर (vma->vm_rb.rb_left) अणु
+#ifdef CONFIG_DEBUG_VM_RB
+static unsigned long vma_compute_subtree_gap(struct vm_area_struct *vma)
+{
+	unsigned long max = vma_compute_gap(vma), subtree_gap;
+	if (vma->vm_rb.rb_left) {
 		subtree_gap = rb_entry(vma->vm_rb.rb_left,
-				काष्ठा vm_area_काष्ठा, vm_rb)->rb_subtree_gap;
-		अगर (subtree_gap > max)
+				struct vm_area_struct, vm_rb)->rb_subtree_gap;
+		if (subtree_gap > max)
 			max = subtree_gap;
-	पूर्ण
-	अगर (vma->vm_rb.rb_right) अणु
+	}
+	if (vma->vm_rb.rb_right) {
 		subtree_gap = rb_entry(vma->vm_rb.rb_right,
-				काष्ठा vm_area_काष्ठा, vm_rb)->rb_subtree_gap;
-		अगर (subtree_gap > max)
+				struct vm_area_struct, vm_rb)->rb_subtree_gap;
+		if (subtree_gap > max)
 			max = subtree_gap;
-	पूर्ण
-	वापस max;
-पूर्ण
+	}
+	return max;
+}
 
-अटल पूर्णांक browse_rb(काष्ठा mm_काष्ठा *mm)
-अणु
-	काष्ठा rb_root *root = &mm->mm_rb;
-	पूर्णांक i = 0, j, bug = 0;
-	काष्ठा rb_node *nd, *pn = शून्य;
-	अचिन्हित दीर्घ prev = 0, pend = 0;
+static int browse_rb(struct mm_struct *mm)
+{
+	struct rb_root *root = &mm->mm_rb;
+	int i = 0, j, bug = 0;
+	struct rb_node *nd, *pn = NULL;
+	unsigned long prev = 0, pend = 0;
 
-	क्रम (nd = rb_first(root); nd; nd = rb_next(nd)) अणु
-		काष्ठा vm_area_काष्ठा *vma;
-		vma = rb_entry(nd, काष्ठा vm_area_काष्ठा, vm_rb);
-		अगर (vma->vm_start < prev) अणु
+	for (nd = rb_first(root); nd; nd = rb_next(nd)) {
+		struct vm_area_struct *vma;
+		vma = rb_entry(nd, struct vm_area_struct, vm_rb);
+		if (vma->vm_start < prev) {
 			pr_emerg("vm_start %lx < prev %lx\n",
 				  vma->vm_start, prev);
 			bug = 1;
-		पूर्ण
-		अगर (vma->vm_start < pend) अणु
+		}
+		if (vma->vm_start < pend) {
 			pr_emerg("vm_start %lx < pend %lx\n",
 				  vma->vm_start, pend);
 			bug = 1;
-		पूर्ण
-		अगर (vma->vm_start > vma->vm_end) अणु
+		}
+		if (vma->vm_start > vma->vm_end) {
 			pr_emerg("vm_start %lx > vm_end %lx\n",
 				  vma->vm_start, vma->vm_end);
 			bug = 1;
-		पूर्ण
+		}
 		spin_lock(&mm->page_table_lock);
-		अगर (vma->rb_subtree_gap != vma_compute_subtree_gap(vma)) अणु
+		if (vma->rb_subtree_gap != vma_compute_subtree_gap(vma)) {
 			pr_emerg("free gap %lx, correct %lx\n",
 			       vma->rb_subtree_gap,
 			       vma_compute_subtree_gap(vma));
 			bug = 1;
-		पूर्ण
+		}
 		spin_unlock(&mm->page_table_lock);
 		i++;
 		pn = nd;
 		prev = vma->vm_start;
 		pend = vma->vm_end;
-	पूर्ण
+	}
 	j = 0;
-	क्रम (nd = pn; nd; nd = rb_prev(nd))
+	for (nd = pn; nd; nd = rb_prev(nd))
 		j++;
-	अगर (i != j) अणु
+	if (i != j) {
 		pr_emerg("backwards %d, forwards %d\n", j, i);
 		bug = 1;
-	पूर्ण
-	वापस bug ? -1 : i;
-पूर्ण
+	}
+	return bug ? -1 : i;
+}
 
-अटल व्योम validate_mm_rb(काष्ठा rb_root *root, काष्ठा vm_area_काष्ठा *ignore)
-अणु
-	काष्ठा rb_node *nd;
+static void validate_mm_rb(struct rb_root *root, struct vm_area_struct *ignore)
+{
+	struct rb_node *nd;
 
-	क्रम (nd = rb_first(root); nd; nd = rb_next(nd)) अणु
-		काष्ठा vm_area_काष्ठा *vma;
-		vma = rb_entry(nd, काष्ठा vm_area_काष्ठा, vm_rb);
+	for (nd = rb_first(root); nd; nd = rb_next(nd)) {
+		struct vm_area_struct *vma;
+		vma = rb_entry(nd, struct vm_area_struct, vm_rb);
 		VM_BUG_ON_VMA(vma != ignore &&
 			vma->rb_subtree_gap != vma_compute_subtree_gap(vma),
 			vma);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम validate_mm(काष्ठा mm_काष्ठा *mm)
-अणु
-	पूर्णांक bug = 0;
-	पूर्णांक i = 0;
-	अचिन्हित दीर्घ highest_address = 0;
-	काष्ठा vm_area_काष्ठा *vma = mm->mmap;
+static void validate_mm(struct mm_struct *mm)
+{
+	int bug = 0;
+	int i = 0;
+	unsigned long highest_address = 0;
+	struct vm_area_struct *vma = mm->mmap;
 
-	जबतक (vma) अणु
-		काष्ठा anon_vma *anon_vma = vma->anon_vma;
-		काष्ठा anon_vma_chain *avc;
+	while (vma) {
+		struct anon_vma *anon_vma = vma->anon_vma;
+		struct anon_vma_chain *avc;
 
-		अगर (anon_vma) अणु
-			anon_vma_lock_पढ़ो(anon_vma);
-			list_क्रम_each_entry(avc, &vma->anon_vma_chain, same_vma)
-				anon_vma_पूर्णांकerval_tree_verअगरy(avc);
-			anon_vma_unlock_पढ़ो(anon_vma);
-		पूर्ण
+		if (anon_vma) {
+			anon_vma_lock_read(anon_vma);
+			list_for_each_entry(avc, &vma->anon_vma_chain, same_vma)
+				anon_vma_interval_tree_verify(avc);
+			anon_vma_unlock_read(anon_vma);
+		}
 
 		highest_address = vm_end_gap(vma);
 		vma = vma->vm_next;
 		i++;
-	पूर्ण
-	अगर (i != mm->map_count) अणु
+	}
+	if (i != mm->map_count) {
 		pr_emerg("map_count %d vm_next %d\n", mm->map_count, i);
 		bug = 1;
-	पूर्ण
-	अगर (highest_address != mm->highest_vm_end) अणु
+	}
+	if (highest_address != mm->highest_vm_end) {
 		pr_emerg("mm->highest_vm_end %lx, found %lx\n",
 			  mm->highest_vm_end, highest_address);
 		bug = 1;
-	पूर्ण
+	}
 	i = browse_rb(mm);
-	अगर (i != mm->map_count) अणु
-		अगर (i != -1)
+	if (i != mm->map_count) {
+		if (i != -1)
 			pr_emerg("map_count %d rb %d\n", mm->map_count, i);
 		bug = 1;
-	पूर्ण
+	}
 	VM_BUG_ON_MM(bug, mm);
-पूर्ण
-#अन्यथा
-#घोषणा validate_mm_rb(root, ignore) करो अणु पूर्ण जबतक (0)
-#घोषणा validate_mm(mm) करो अणु पूर्ण जबतक (0)
-#पूर्ण_अगर
+}
+#else
+#define validate_mm_rb(root, ignore) do { } while (0)
+#define validate_mm(mm) do { } while (0)
+#endif
 
-RB_DECLARE_CALLBACKS_MAX(अटल, vma_gap_callbacks,
-			 काष्ठा vm_area_काष्ठा, vm_rb,
-			 अचिन्हित दीर्घ, rb_subtree_gap, vma_compute_gap)
+RB_DECLARE_CALLBACKS_MAX(static, vma_gap_callbacks,
+			 struct vm_area_struct, vm_rb,
+			 unsigned long, rb_subtree_gap, vma_compute_gap)
 
 /*
  * Update augmented rbtree rb_subtree_gap values after vma->vm_start or
- * vma->vm_prev->vm_end values changed, without modअगरying the vma's position
+ * vma->vm_prev->vm_end values changed, without modifying the vma's position
  * in the rbtree.
  */
-अटल व्योम vma_gap_update(काष्ठा vm_area_काष्ठा *vma)
-अणु
+static void vma_gap_update(struct vm_area_struct *vma)
+{
 	/*
-	 * As it turns out, RB_DECLARE_CALLBACKS_MAX() alपढ़ोy created
-	 * a callback function that करोes exactly what we want.
+	 * As it turns out, RB_DECLARE_CALLBACKS_MAX() already created
+	 * a callback function that does exactly what we want.
 	 */
-	vma_gap_callbacks_propagate(&vma->vm_rb, शून्य);
-पूर्ण
+	vma_gap_callbacks_propagate(&vma->vm_rb, NULL);
+}
 
-अटल अंतरभूत व्योम vma_rb_insert(काष्ठा vm_area_काष्ठा *vma,
-				 काष्ठा rb_root *root)
-अणु
+static inline void vma_rb_insert(struct vm_area_struct *vma,
+				 struct rb_root *root)
+{
 	/* All rb_subtree_gap values must be consistent prior to insertion */
-	validate_mm_rb(root, शून्य);
+	validate_mm_rb(root, NULL);
 
 	rb_insert_augmented(&vma->vm_rb, root, &vma_gap_callbacks);
-पूर्ण
+}
 
-अटल व्योम __vma_rb_erase(काष्ठा vm_area_काष्ठा *vma, काष्ठा rb_root *root)
-अणु
+static void __vma_rb_erase(struct vm_area_struct *vma, struct rb_root *root)
+{
 	/*
-	 * Note rb_erase_augmented is a fairly large अंतरभूत function,
+	 * Note rb_erase_augmented is a fairly large inline function,
 	 * so make sure we instantiate it only once with our desired
 	 * augmented rbtree callbacks.
 	 */
 	rb_erase_augmented(&vma->vm_rb, root, &vma_gap_callbacks);
-पूर्ण
+}
 
-अटल __always_अंतरभूत व्योम vma_rb_erase_ignore(काष्ठा vm_area_काष्ठा *vma,
-						काष्ठा rb_root *root,
-						काष्ठा vm_area_काष्ठा *ignore)
-अणु
+static __always_inline void vma_rb_erase_ignore(struct vm_area_struct *vma,
+						struct rb_root *root,
+						struct vm_area_struct *ignore)
+{
 	/*
 	 * All rb_subtree_gap values must be consistent prior to erase,
 	 * with the possible exception of
 	 *
-	 * a. the "next" vma being erased अगर next->vm_start was reduced in
+	 * a. the "next" vma being erased if next->vm_start was reduced in
 	 *    __vma_adjust() -> __vma_unlink()
 	 * b. the vma being erased in detach_vmas_to_be_unmapped() ->
 	 *    vma_rb_erase()
@@ -489,167 +488,167 @@ RB_DECLARE_CALLBACKS_MAX(अटल, vma_gap_callbacks,
 	validate_mm_rb(root, ignore);
 
 	__vma_rb_erase(vma, root);
-पूर्ण
+}
 
-अटल __always_अंतरभूत व्योम vma_rb_erase(काष्ठा vm_area_काष्ठा *vma,
-					 काष्ठा rb_root *root)
-अणु
+static __always_inline void vma_rb_erase(struct vm_area_struct *vma,
+					 struct rb_root *root)
+{
 	vma_rb_erase_ignore(vma, root, vma);
-पूर्ण
+}
 
 /*
- * vma has some anon_vma asचिन्हित, and is alपढ़ोy inserted on that
- * anon_vma's पूर्णांकerval trees.
+ * vma has some anon_vma assigned, and is already inserted on that
+ * anon_vma's interval trees.
  *
- * Beक्रमe updating the vma's vm_start / vm_end / vm_pgoff fields, the
- * vma must be हटाओd from the anon_vma's पूर्णांकerval trees using
- * anon_vma_पूर्णांकerval_tree_pre_update_vma().
+ * Before updating the vma's vm_start / vm_end / vm_pgoff fields, the
+ * vma must be removed from the anon_vma's interval trees using
+ * anon_vma_interval_tree_pre_update_vma().
  *
  * After the update, the vma will be reinserted using
- * anon_vma_पूर्णांकerval_tree_post_update_vma().
+ * anon_vma_interval_tree_post_update_vma().
  *
- * The entire update must be रक्षित by exclusive mmap_lock and by
+ * The entire update must be protected by exclusive mmap_lock and by
  * the root anon_vma's mutex.
  */
-अटल अंतरभूत व्योम
-anon_vma_पूर्णांकerval_tree_pre_update_vma(काष्ठा vm_area_काष्ठा *vma)
-अणु
-	काष्ठा anon_vma_chain *avc;
+static inline void
+anon_vma_interval_tree_pre_update_vma(struct vm_area_struct *vma)
+{
+	struct anon_vma_chain *avc;
 
-	list_क्रम_each_entry(avc, &vma->anon_vma_chain, same_vma)
-		anon_vma_पूर्णांकerval_tree_हटाओ(avc, &avc->anon_vma->rb_root);
-पूर्ण
+	list_for_each_entry(avc, &vma->anon_vma_chain, same_vma)
+		anon_vma_interval_tree_remove(avc, &avc->anon_vma->rb_root);
+}
 
-अटल अंतरभूत व्योम
-anon_vma_पूर्णांकerval_tree_post_update_vma(काष्ठा vm_area_काष्ठा *vma)
-अणु
-	काष्ठा anon_vma_chain *avc;
+static inline void
+anon_vma_interval_tree_post_update_vma(struct vm_area_struct *vma)
+{
+	struct anon_vma_chain *avc;
 
-	list_क्रम_each_entry(avc, &vma->anon_vma_chain, same_vma)
-		anon_vma_पूर्णांकerval_tree_insert(avc, &avc->anon_vma->rb_root);
-पूर्ण
+	list_for_each_entry(avc, &vma->anon_vma_chain, same_vma)
+		anon_vma_interval_tree_insert(avc, &avc->anon_vma->rb_root);
+}
 
-अटल पूर्णांक find_vma_links(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ addr,
-		अचिन्हित दीर्घ end, काष्ठा vm_area_काष्ठा **pprev,
-		काष्ठा rb_node ***rb_link, काष्ठा rb_node **rb_parent)
-अणु
-	काष्ठा rb_node **__rb_link, *__rb_parent, *rb_prev;
+static int find_vma_links(struct mm_struct *mm, unsigned long addr,
+		unsigned long end, struct vm_area_struct **pprev,
+		struct rb_node ***rb_link, struct rb_node **rb_parent)
+{
+	struct rb_node **__rb_link, *__rb_parent, *rb_prev;
 
 	__rb_link = &mm->mm_rb.rb_node;
-	rb_prev = __rb_parent = शून्य;
+	rb_prev = __rb_parent = NULL;
 
-	जबतक (*__rb_link) अणु
-		काष्ठा vm_area_काष्ठा *vma_पंचांगp;
+	while (*__rb_link) {
+		struct vm_area_struct *vma_tmp;
 
 		__rb_parent = *__rb_link;
-		vma_पंचांगp = rb_entry(__rb_parent, काष्ठा vm_area_काष्ठा, vm_rb);
+		vma_tmp = rb_entry(__rb_parent, struct vm_area_struct, vm_rb);
 
-		अगर (vma_पंचांगp->vm_end > addr) अणु
-			/* Fail अगर an existing vma overlaps the area */
-			अगर (vma_पंचांगp->vm_start < end)
-				वापस -ENOMEM;
+		if (vma_tmp->vm_end > addr) {
+			/* Fail if an existing vma overlaps the area */
+			if (vma_tmp->vm_start < end)
+				return -ENOMEM;
 			__rb_link = &__rb_parent->rb_left;
-		पूर्ण अन्यथा अणु
+		} else {
 			rb_prev = __rb_parent;
 			__rb_link = &__rb_parent->rb_right;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	*pprev = शून्य;
-	अगर (rb_prev)
-		*pprev = rb_entry(rb_prev, काष्ठा vm_area_काष्ठा, vm_rb);
+	*pprev = NULL;
+	if (rb_prev)
+		*pprev = rb_entry(rb_prev, struct vm_area_struct, vm_rb);
 	*rb_link = __rb_link;
 	*rb_parent = __rb_parent;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * vma_next() - Get the next VMA.
- * @mm: The mm_काष्ठा.
+ * @mm: The mm_struct.
  * @vma: The current vma.
  *
- * If @vma is शून्य, वापस the first vma in the mm.
+ * If @vma is NULL, return the first vma in the mm.
  *
  * Returns: The next VMA after @vma.
  */
-अटल अंतरभूत काष्ठा vm_area_काष्ठा *vma_next(काष्ठा mm_काष्ठा *mm,
-					 काष्ठा vm_area_काष्ठा *vma)
-अणु
-	अगर (!vma)
-		वापस mm->mmap;
+static inline struct vm_area_struct *vma_next(struct mm_struct *mm,
+					 struct vm_area_struct *vma)
+{
+	if (!vma)
+		return mm->mmap;
 
-	वापस vma->vm_next;
-पूर्ण
+	return vma->vm_next;
+}
 
 /*
  * munmap_vma_range() - munmap VMAs that overlap a range.
- * @mm: The mm काष्ठा
+ * @mm: The mm struct
  * @start: The start of the range.
  * @len: The length of the range.
- * @pprev: poपूर्णांकer to the poपूर्णांकer that will be set to previous vm_area_काष्ठा
+ * @pprev: pointer to the pointer that will be set to previous vm_area_struct
  * @rb_link: the rb_node
  * @rb_parent: the parent rb_node
  *
- * Find all the vm_area_काष्ठा that overlap from @start to
- * @end and munmap them.  Set @pprev to the previous vm_area_काष्ठा.
+ * Find all the vm_area_struct that overlap from @start to
+ * @end and munmap them.  Set @pprev to the previous vm_area_struct.
  *
  * Returns: -ENOMEM on munmap failure or 0 on success.
  */
-अटल अंतरभूत पूर्णांक
-munmap_vma_range(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ start, अचिन्हित दीर्घ len,
-		 काष्ठा vm_area_काष्ठा **pprev, काष्ठा rb_node ***link,
-		 काष्ठा rb_node **parent, काष्ठा list_head *uf)
-अणु
+static inline int
+munmap_vma_range(struct mm_struct *mm, unsigned long start, unsigned long len,
+		 struct vm_area_struct **pprev, struct rb_node ***link,
+		 struct rb_node **parent, struct list_head *uf)
+{
 
-	जबतक (find_vma_links(mm, start, start + len, pprev, link, parent))
-		अगर (करो_munmap(mm, start, len, uf))
-			वापस -ENOMEM;
+	while (find_vma_links(mm, start, start + len, pprev, link, parent))
+		if (do_munmap(mm, start, len, uf))
+			return -ENOMEM;
 
-	वापस 0;
-पूर्ण
-अटल अचिन्हित दीर्घ count_vma_pages_range(काष्ठा mm_काष्ठा *mm,
-		अचिन्हित दीर्घ addr, अचिन्हित दीर्घ end)
-अणु
-	अचिन्हित दीर्घ nr_pages = 0;
-	काष्ठा vm_area_काष्ठा *vma;
+	return 0;
+}
+static unsigned long count_vma_pages_range(struct mm_struct *mm,
+		unsigned long addr, unsigned long end)
+{
+	unsigned long nr_pages = 0;
+	struct vm_area_struct *vma;
 
 	/* Find first overlapping mapping */
-	vma = find_vma_पूर्णांकersection(mm, addr, end);
-	अगर (!vma)
-		वापस 0;
+	vma = find_vma_intersection(mm, addr, end);
+	if (!vma)
+		return 0;
 
 	nr_pages = (min(end, vma->vm_end) -
 		max(addr, vma->vm_start)) >> PAGE_SHIFT;
 
 	/* Iterate over the rest of the overlaps */
-	क्रम (vma = vma->vm_next; vma; vma = vma->vm_next) अणु
-		अचिन्हित दीर्घ overlap_len;
+	for (vma = vma->vm_next; vma; vma = vma->vm_next) {
+		unsigned long overlap_len;
 
-		अगर (vma->vm_start > end)
-			अवरोध;
+		if (vma->vm_start > end)
+			break;
 
 		overlap_len = min(end, vma->vm_end) - vma->vm_start;
 		nr_pages += overlap_len >> PAGE_SHIFT;
-	पूर्ण
+	}
 
-	वापस nr_pages;
-पूर्ण
+	return nr_pages;
+}
 
-व्योम __vma_link_rb(काष्ठा mm_काष्ठा *mm, काष्ठा vm_area_काष्ठा *vma,
-		काष्ठा rb_node **rb_link, काष्ठा rb_node *rb_parent)
-अणु
-	/* Update tracking inक्रमmation क्रम the gap following the new vma. */
-	अगर (vma->vm_next)
+void __vma_link_rb(struct mm_struct *mm, struct vm_area_struct *vma,
+		struct rb_node **rb_link, struct rb_node *rb_parent)
+{
+	/* Update tracking information for the gap following the new vma. */
+	if (vma->vm_next)
 		vma_gap_update(vma->vm_next);
-	अन्यथा
+	else
 		mm->highest_vm_end = vm_end_gap(vma);
 
 	/*
 	 * vma->vm_prev wasn't known when we followed the rbtree to find the
-	 * correct insertion poपूर्णांक क्रम that vma. As a result, we could not
-	 * update the vma vm_rb parents rb_subtree_gap values on the way करोwn.
+	 * correct insertion point for that vma. As a result, we could not
+	 * update the vma vm_rb parents rb_subtree_gap values on the way down.
 	 * So, we first insert the vma with a zero rb_subtree_gap value
-	 * (to be consistent with what we did on the way करोwn), and then
+	 * (to be consistent with what we did on the way down), and then
 	 * immediately update the gap to the correct value. Finally we
 	 * rebalance the rbtree after all augmented values have been set.
 	 */
@@ -657,259 +656,259 @@ munmap_vma_range(काष्ठा mm_काष्ठा *mm, अचिन्�
 	vma->rb_subtree_gap = 0;
 	vma_gap_update(vma);
 	vma_rb_insert(vma, &mm->mm_rb);
-पूर्ण
+}
 
-अटल व्योम __vma_link_file(काष्ठा vm_area_काष्ठा *vma)
-अणु
-	काष्ठा file *file;
+static void __vma_link_file(struct vm_area_struct *vma)
+{
+	struct file *file;
 
 	file = vma->vm_file;
-	अगर (file) अणु
-		काष्ठा address_space *mapping = file->f_mapping;
+	if (file) {
+		struct address_space *mapping = file->f_mapping;
 
-		अगर (vma->vm_flags & VM_DENYWRITE)
-			put_ग_लिखो_access(file_inode(file));
-		अगर (vma->vm_flags & VM_SHARED)
+		if (vma->vm_flags & VM_DENYWRITE)
+			put_write_access(file_inode(file));
+		if (vma->vm_flags & VM_SHARED)
 			mapping_allow_writable(mapping);
 
 		flush_dcache_mmap_lock(mapping);
-		vma_पूर्णांकerval_tree_insert(vma, &mapping->i_mmap);
+		vma_interval_tree_insert(vma, &mapping->i_mmap);
 		flush_dcache_mmap_unlock(mapping);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम
-__vma_link(काष्ठा mm_काष्ठा *mm, काष्ठा vm_area_काष्ठा *vma,
-	काष्ठा vm_area_काष्ठा *prev, काष्ठा rb_node **rb_link,
-	काष्ठा rb_node *rb_parent)
-अणु
+static void
+__vma_link(struct mm_struct *mm, struct vm_area_struct *vma,
+	struct vm_area_struct *prev, struct rb_node **rb_link,
+	struct rb_node *rb_parent)
+{
 	__vma_link_list(mm, vma, prev);
 	__vma_link_rb(mm, vma, rb_link, rb_parent);
-पूर्ण
+}
 
-अटल व्योम vma_link(काष्ठा mm_काष्ठा *mm, काष्ठा vm_area_काष्ठा *vma,
-			काष्ठा vm_area_काष्ठा *prev, काष्ठा rb_node **rb_link,
-			काष्ठा rb_node *rb_parent)
-अणु
-	काष्ठा address_space *mapping = शून्य;
+static void vma_link(struct mm_struct *mm, struct vm_area_struct *vma,
+			struct vm_area_struct *prev, struct rb_node **rb_link,
+			struct rb_node *rb_parent)
+{
+	struct address_space *mapping = NULL;
 
-	अगर (vma->vm_file) अणु
+	if (vma->vm_file) {
 		mapping = vma->vm_file->f_mapping;
-		i_mmap_lock_ग_लिखो(mapping);
-	पूर्ण
+		i_mmap_lock_write(mapping);
+	}
 
 	__vma_link(mm, vma, prev, rb_link, rb_parent);
 	__vma_link_file(vma);
 
-	अगर (mapping)
-		i_mmap_unlock_ग_लिखो(mapping);
+	if (mapping)
+		i_mmap_unlock_write(mapping);
 
 	mm->map_count++;
 	validate_mm(mm);
-पूर्ण
+}
 
 /*
- * Helper क्रम vma_adjust() in the split_vma insert हाल: insert a vma पूर्णांकo the
- * mm's list and rbtree.  It has alपढ़ोy been inserted पूर्णांकo the पूर्णांकerval tree.
+ * Helper for vma_adjust() in the split_vma insert case: insert a vma into the
+ * mm's list and rbtree.  It has already been inserted into the interval tree.
  */
-अटल व्योम __insert_vm_काष्ठा(काष्ठा mm_काष्ठा *mm, काष्ठा vm_area_काष्ठा *vma)
-अणु
-	काष्ठा vm_area_काष्ठा *prev;
-	काष्ठा rb_node **rb_link, *rb_parent;
+static void __insert_vm_struct(struct mm_struct *mm, struct vm_area_struct *vma)
+{
+	struct vm_area_struct *prev;
+	struct rb_node **rb_link, *rb_parent;
 
-	अगर (find_vma_links(mm, vma->vm_start, vma->vm_end,
+	if (find_vma_links(mm, vma->vm_start, vma->vm_end,
 			   &prev, &rb_link, &rb_parent))
 		BUG();
 	__vma_link(mm, vma, prev, rb_link, rb_parent);
 	mm->map_count++;
-पूर्ण
+}
 
-अटल __always_अंतरभूत व्योम __vma_unlink(काष्ठा mm_काष्ठा *mm,
-						काष्ठा vm_area_काष्ठा *vma,
-						काष्ठा vm_area_काष्ठा *ignore)
-अणु
+static __always_inline void __vma_unlink(struct mm_struct *mm,
+						struct vm_area_struct *vma,
+						struct vm_area_struct *ignore)
+{
 	vma_rb_erase_ignore(vma, &mm->mm_rb, ignore);
 	__vma_unlink_list(mm, vma);
 	/* Kill the cache */
 	vmacache_invalidate(mm);
-पूर्ण
+}
 
 /*
  * We cannot adjust vm_start, vm_end, vm_pgoff fields of a vma that
- * is alपढ़ोy present in an i_mmap tree without adjusting the tree.
- * The following helper function should be used when such adjusपंचांगents
- * are necessary.  The "insert" vma (अगर any) is to be inserted
- * beक्रमe we drop the necessary locks.
+ * is already present in an i_mmap tree without adjusting the tree.
+ * The following helper function should be used when such adjustments
+ * are necessary.  The "insert" vma (if any) is to be inserted
+ * before we drop the necessary locks.
  */
-पूर्णांक __vma_adjust(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ start,
-	अचिन्हित दीर्घ end, pgoff_t pgoff, काष्ठा vm_area_काष्ठा *insert,
-	काष्ठा vm_area_काष्ठा *expand)
-अणु
-	काष्ठा mm_काष्ठा *mm = vma->vm_mm;
-	काष्ठा vm_area_काष्ठा *next = vma->vm_next, *orig_vma = vma;
-	काष्ठा address_space *mapping = शून्य;
-	काष्ठा rb_root_cached *root = शून्य;
-	काष्ठा anon_vma *anon_vma = शून्य;
-	काष्ठा file *file = vma->vm_file;
+int __vma_adjust(struct vm_area_struct *vma, unsigned long start,
+	unsigned long end, pgoff_t pgoff, struct vm_area_struct *insert,
+	struct vm_area_struct *expand)
+{
+	struct mm_struct *mm = vma->vm_mm;
+	struct vm_area_struct *next = vma->vm_next, *orig_vma = vma;
+	struct address_space *mapping = NULL;
+	struct rb_root_cached *root = NULL;
+	struct anon_vma *anon_vma = NULL;
+	struct file *file = vma->vm_file;
 	bool start_changed = false, end_changed = false;
-	दीर्घ adjust_next = 0;
-	पूर्णांक हटाओ_next = 0;
+	long adjust_next = 0;
+	int remove_next = 0;
 
-	अगर (next && !insert) अणु
-		काष्ठा vm_area_काष्ठा *exporter = शून्य, *importer = शून्य;
+	if (next && !insert) {
+		struct vm_area_struct *exporter = NULL, *importer = NULL;
 
-		अगर (end >= next->vm_end) अणु
+		if (end >= next->vm_end) {
 			/*
 			 * vma expands, overlapping all the next, and
-			 * perhaps the one after too (mprotect हाल 6).
-			 * The only other हालs that माला_लो here are
-			 * हाल 1, हाल 7 and हाल 8.
+			 * perhaps the one after too (mprotect case 6).
+			 * The only other cases that gets here are
+			 * case 1, case 7 and case 8.
 			 */
-			अगर (next == expand) अणु
+			if (next == expand) {
 				/*
-				 * The only हाल where we करोn't expand "vma"
-				 * and we expand "next" instead is हाल 8.
+				 * The only case where we don't expand "vma"
+				 * and we expand "next" instead is case 8.
 				 */
 				VM_WARN_ON(end != next->vm_end);
 				/*
-				 * हटाओ_next == 3 means we're
-				 * removing "vma" and that to करो so we
+				 * remove_next == 3 means we're
+				 * removing "vma" and that to do so we
 				 * swapped "vma" and "next".
 				 */
-				हटाओ_next = 3;
+				remove_next = 3;
 				VM_WARN_ON(file != next->vm_file);
 				swap(vma, next);
-			पूर्ण अन्यथा अणु
+			} else {
 				VM_WARN_ON(expand != vma);
 				/*
-				 * हाल 1, 6, 7, हटाओ_next == 2 is हाल 6,
-				 * हटाओ_next == 1 is हाल 1 or 7.
+				 * case 1, 6, 7, remove_next == 2 is case 6,
+				 * remove_next == 1 is case 1 or 7.
 				 */
-				हटाओ_next = 1 + (end > next->vm_end);
-				VM_WARN_ON(हटाओ_next == 2 &&
+				remove_next = 1 + (end > next->vm_end);
+				VM_WARN_ON(remove_next == 2 &&
 					   end != next->vm_next->vm_end);
-				/* trim end to next, क्रम हाल 6 first pass */
+				/* trim end to next, for case 6 first pass */
 				end = next->vm_end;
-			पूर्ण
+			}
 
 			exporter = next;
 			importer = vma;
 
 			/*
-			 * If next करोesn't have anon_vma, import from vma after
-			 * next, अगर the vma overlaps with it.
+			 * If next doesn't have anon_vma, import from vma after
+			 * next, if the vma overlaps with it.
 			 */
-			अगर (हटाओ_next == 2 && !next->anon_vma)
+			if (remove_next == 2 && !next->anon_vma)
 				exporter = next->vm_next;
 
-		पूर्ण अन्यथा अगर (end > next->vm_start) अणु
+		} else if (end > next->vm_start) {
 			/*
 			 * vma expands, overlapping part of the next:
-			 * mprotect हाल 5 shअगरting the boundary up.
+			 * mprotect case 5 shifting the boundary up.
 			 */
 			adjust_next = (end - next->vm_start);
 			exporter = next;
 			importer = vma;
 			VM_WARN_ON(expand != importer);
-		पूर्ण अन्यथा अगर (end < vma->vm_end) अणु
+		} else if (end < vma->vm_end) {
 			/*
 			 * vma shrinks, and !insert tells it's not
 			 * split_vma inserting another: so it must be
-			 * mprotect हाल 4 shअगरting the boundary करोwn.
+			 * mprotect case 4 shifting the boundary down.
 			 */
 			adjust_next = -(vma->vm_end - end);
 			exporter = vma;
 			importer = next;
 			VM_WARN_ON(expand != importer);
-		पूर्ण
+		}
 
 		/*
-		 * Easily overlooked: when mprotect shअगरts the boundary,
-		 * make sure the expanding vma has anon_vma set अगर the
+		 * Easily overlooked: when mprotect shifts the boundary,
+		 * make sure the expanding vma has anon_vma set if the
 		 * shrinking vma had, to cover any anon pages imported.
 		 */
-		अगर (exporter && exporter->anon_vma && !importer->anon_vma) अणु
-			पूर्णांक error;
+		if (exporter && exporter->anon_vma && !importer->anon_vma) {
+			int error;
 
 			importer->anon_vma = exporter->anon_vma;
 			error = anon_vma_clone(importer, exporter);
-			अगर (error)
-				वापस error;
-		पूर्ण
-	पूर्ण
+			if (error)
+				return error;
+		}
+	}
 again:
 	vma_adjust_trans_huge(orig_vma, start, end, adjust_next);
 
-	अगर (file) अणु
+	if (file) {
 		mapping = file->f_mapping;
 		root = &mapping->i_mmap;
 		uprobe_munmap(vma, vma->vm_start, vma->vm_end);
 
-		अगर (adjust_next)
+		if (adjust_next)
 			uprobe_munmap(next, next->vm_start, next->vm_end);
 
-		i_mmap_lock_ग_लिखो(mapping);
-		अगर (insert) अणु
+		i_mmap_lock_write(mapping);
+		if (insert) {
 			/*
-			 * Put पूर्णांकo पूर्णांकerval tree now, so instantiated pages
+			 * Put into interval tree now, so instantiated pages
 			 * are visible to arm/parisc __flush_dcache_page
-			 * throughout; but we cannot insert पूर्णांकo address
+			 * throughout; but we cannot insert into address
 			 * space until vma start or end is updated.
 			 */
 			__vma_link_file(insert);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	anon_vma = vma->anon_vma;
-	अगर (!anon_vma && adjust_next)
+	if (!anon_vma && adjust_next)
 		anon_vma = next->anon_vma;
-	अगर (anon_vma) अणु
+	if (anon_vma) {
 		VM_WARN_ON(adjust_next && next->anon_vma &&
 			   anon_vma != next->anon_vma);
-		anon_vma_lock_ग_लिखो(anon_vma);
-		anon_vma_पूर्णांकerval_tree_pre_update_vma(vma);
-		अगर (adjust_next)
-			anon_vma_पूर्णांकerval_tree_pre_update_vma(next);
-	पूर्ण
+		anon_vma_lock_write(anon_vma);
+		anon_vma_interval_tree_pre_update_vma(vma);
+		if (adjust_next)
+			anon_vma_interval_tree_pre_update_vma(next);
+	}
 
-	अगर (file) अणु
+	if (file) {
 		flush_dcache_mmap_lock(mapping);
-		vma_पूर्णांकerval_tree_हटाओ(vma, root);
-		अगर (adjust_next)
-			vma_पूर्णांकerval_tree_हटाओ(next, root);
-	पूर्ण
+		vma_interval_tree_remove(vma, root);
+		if (adjust_next)
+			vma_interval_tree_remove(next, root);
+	}
 
-	अगर (start != vma->vm_start) अणु
+	if (start != vma->vm_start) {
 		vma->vm_start = start;
 		start_changed = true;
-	पूर्ण
-	अगर (end != vma->vm_end) अणु
+	}
+	if (end != vma->vm_end) {
 		vma->vm_end = end;
 		end_changed = true;
-	पूर्ण
+	}
 	vma->vm_pgoff = pgoff;
-	अगर (adjust_next) अणु
+	if (adjust_next) {
 		next->vm_start += adjust_next;
 		next->vm_pgoff += adjust_next >> PAGE_SHIFT;
-	पूर्ण
+	}
 
-	अगर (file) अणु
-		अगर (adjust_next)
-			vma_पूर्णांकerval_tree_insert(next, root);
-		vma_पूर्णांकerval_tree_insert(vma, root);
+	if (file) {
+		if (adjust_next)
+			vma_interval_tree_insert(next, root);
+		vma_interval_tree_insert(vma, root);
 		flush_dcache_mmap_unlock(mapping);
-	पूर्ण
+	}
 
-	अगर (हटाओ_next) अणु
+	if (remove_next) {
 		/*
-		 * vma_merge has merged next पूर्णांकo vma, and needs
-		 * us to हटाओ next beक्रमe dropping the locks.
+		 * vma_merge has merged next into vma, and needs
+		 * us to remove next before dropping the locks.
 		 */
-		अगर (हटाओ_next != 3)
+		if (remove_next != 3)
 			__vma_unlink(mm, next, next);
-		अन्यथा
+		else
 			/*
-			 * vma is not beक्रमe next अगर they've been
+			 * vma is not before next if they've been
 			 * swapped.
 			 *
 			 * pre-swap() next->vm_start was reduced so
@@ -918,225 +917,225 @@ again:
 			 * "vma").
 			 */
 			__vma_unlink(mm, next, vma);
-		अगर (file)
-			__हटाओ_shared_vm_काष्ठा(next, file, mapping);
-	पूर्ण अन्यथा अगर (insert) अणु
+		if (file)
+			__remove_shared_vm_struct(next, file, mapping);
+	} else if (insert) {
 		/*
 		 * split_vma has split insert from vma, and needs
-		 * us to insert it beक्रमe dropping the locks
+		 * us to insert it before dropping the locks
 		 * (it may either follow vma or precede it).
 		 */
-		__insert_vm_काष्ठा(mm, insert);
-	पूर्ण अन्यथा अणु
-		अगर (start_changed)
+		__insert_vm_struct(mm, insert);
+	} else {
+		if (start_changed)
 			vma_gap_update(vma);
-		अगर (end_changed) अणु
-			अगर (!next)
+		if (end_changed) {
+			if (!next)
 				mm->highest_vm_end = vm_end_gap(vma);
-			अन्यथा अगर (!adjust_next)
+			else if (!adjust_next)
 				vma_gap_update(next);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (anon_vma) अणु
-		anon_vma_पूर्णांकerval_tree_post_update_vma(vma);
-		अगर (adjust_next)
-			anon_vma_पूर्णांकerval_tree_post_update_vma(next);
-		anon_vma_unlock_ग_लिखो(anon_vma);
-	पूर्ण
+	if (anon_vma) {
+		anon_vma_interval_tree_post_update_vma(vma);
+		if (adjust_next)
+			anon_vma_interval_tree_post_update_vma(next);
+		anon_vma_unlock_write(anon_vma);
+	}
 
-	अगर (file) अणु
-		i_mmap_unlock_ग_लिखो(mapping);
+	if (file) {
+		i_mmap_unlock_write(mapping);
 		uprobe_mmap(vma);
 
-		अगर (adjust_next)
+		if (adjust_next)
 			uprobe_mmap(next);
-	पूर्ण
+	}
 
-	अगर (हटाओ_next) अणु
-		अगर (file) अणु
+	if (remove_next) {
+		if (file) {
 			uprobe_munmap(next, next->vm_start, next->vm_end);
 			fput(file);
-		पूर्ण
-		अगर (next->anon_vma)
+		}
+		if (next->anon_vma)
 			anon_vma_merge(vma, next);
 		mm->map_count--;
 		mpol_put(vma_policy(next));
-		vm_area_मुक्त(next);
+		vm_area_free(next);
 		/*
-		 * In mprotect's हाल 6 (see comments on vma_merge),
-		 * we must हटाओ another next too. It would clutter
-		 * up the code too much to करो both in one go.
+		 * In mprotect's case 6 (see comments on vma_merge),
+		 * we must remove another next too. It would clutter
+		 * up the code too much to do both in one go.
 		 */
-		अगर (हटाओ_next != 3) अणु
+		if (remove_next != 3) {
 			/*
-			 * If "next" was हटाओd and vma->vm_end was
+			 * If "next" was removed and vma->vm_end was
 			 * expanded (up) over it, in turn
 			 * "next->vm_prev->vm_end" changed and the
 			 * "vma->vm_next" gap must be updated.
 			 */
 			next = vma->vm_next;
-		पूर्ण अन्यथा अणु
+		} else {
 			/*
 			 * For the scope of the comment "next" and
-			 * "vma" considered pre-swap(): अगर "vma" was
-			 * हटाओd, next->vm_start was expanded (करोwn)
+			 * "vma" considered pre-swap(): if "vma" was
+			 * removed, next->vm_start was expanded (down)
 			 * over it and the "next" gap must be updated.
 			 * Because of the swap() the post-swap() "vma"
-			 * actually poपूर्णांकs to pre-swap() "next"
+			 * actually points to pre-swap() "next"
 			 * (post-swap() "next" as opposed is now a
-			 * dangling poपूर्णांकer).
+			 * dangling pointer).
 			 */
 			next = vma;
-		पूर्ण
-		अगर (हटाओ_next == 2) अणु
-			हटाओ_next = 1;
+		}
+		if (remove_next == 2) {
+			remove_next = 1;
 			end = next->vm_end;
-			जाओ again;
-		पूर्ण
-		अन्यथा अगर (next)
+			goto again;
+		}
+		else if (next)
 			vma_gap_update(next);
-		अन्यथा अणु
+		else {
 			/*
-			 * If हटाओ_next == 2 we obviously can't
+			 * If remove_next == 2 we obviously can't
 			 * reach this path.
 			 *
-			 * If हटाओ_next == 3 we can't reach this
+			 * If remove_next == 3 we can't reach this
 			 * path because pre-swap() next is always not
-			 * शून्य. pre-swap() "next" is not being
-			 * हटाओd and its next->vm_end is not altered
-			 * (and furthermore "end" alपढ़ोy matches
-			 * next->vm_end in हटाओ_next == 3).
+			 * NULL. pre-swap() "next" is not being
+			 * removed and its next->vm_end is not altered
+			 * (and furthermore "end" already matches
+			 * next->vm_end in remove_next == 3).
 			 *
-			 * We reach this only in the हटाओ_next == 1
-			 * हाल अगर the "next" vma that was हटाओd was
+			 * We reach this only in the remove_next == 1
+			 * case if the "next" vma that was removed was
 			 * the highest vma of the mm. However in such
-			 * हाल next->vm_end == "end" and the extended
+			 * case next->vm_end == "end" and the extended
 			 * "vma" has vma->vm_end == next->vm_end so
-			 * mm->highest_vm_end करोesn't need any update
-			 * in हटाओ_next == 1 हाल.
+			 * mm->highest_vm_end doesn't need any update
+			 * in remove_next == 1 case.
 			 */
 			VM_WARN_ON(mm->highest_vm_end != vm_end_gap(vma));
-		पूर्ण
-	पूर्ण
-	अगर (insert && file)
+		}
+	}
+	if (insert && file)
 		uprobe_mmap(insert);
 
 	validate_mm(mm);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * If the vma has a ->बंद operation then the driver probably needs to release
- * per-vma resources, so we करोn't attempt to merge those.
+ * If the vma has a ->close operation then the driver probably needs to release
+ * per-vma resources, so we don't attempt to merge those.
  */
-अटल अंतरभूत पूर्णांक is_mergeable_vma(काष्ठा vm_area_काष्ठा *vma,
-				काष्ठा file *file, अचिन्हित दीर्घ vm_flags,
-				काष्ठा vm_userfaultfd_ctx vm_userfaultfd_ctx)
-अणु
+static inline int is_mergeable_vma(struct vm_area_struct *vma,
+				struct file *file, unsigned long vm_flags,
+				struct vm_userfaultfd_ctx vm_userfaultfd_ctx)
+{
 	/*
-	 * VM_SOFTसूचीTY should not prevent from VMA merging, अगर we
+	 * VM_SOFTDIRTY should not prevent from VMA merging, if we
 	 * match the flags but dirty bit -- the caller should mark
 	 * merged VMA as dirty. If dirty bit won't be excluded from
-	 * comparison, we increase pressure on the memory प्रणाली क्रमcing
+	 * comparison, we increase pressure on the memory system forcing
 	 * the kernel to generate new VMAs when old one could be
 	 * extended instead.
 	 */
-	अगर ((vma->vm_flags ^ vm_flags) & ~VM_SOFTसूचीTY)
-		वापस 0;
-	अगर (vma->vm_file != file)
-		वापस 0;
-	अगर (vma->vm_ops && vma->vm_ops->बंद)
-		वापस 0;
-	अगर (!is_mergeable_vm_userfaultfd_ctx(vma, vm_userfaultfd_ctx))
-		वापस 0;
-	वापस 1;
-पूर्ण
+	if ((vma->vm_flags ^ vm_flags) & ~VM_SOFTDIRTY)
+		return 0;
+	if (vma->vm_file != file)
+		return 0;
+	if (vma->vm_ops && vma->vm_ops->close)
+		return 0;
+	if (!is_mergeable_vm_userfaultfd_ctx(vma, vm_userfaultfd_ctx))
+		return 0;
+	return 1;
+}
 
-अटल अंतरभूत पूर्णांक is_mergeable_anon_vma(काष्ठा anon_vma *anon_vma1,
-					काष्ठा anon_vma *anon_vma2,
-					काष्ठा vm_area_काष्ठा *vma)
-अणु
+static inline int is_mergeable_anon_vma(struct anon_vma *anon_vma1,
+					struct anon_vma *anon_vma2,
+					struct vm_area_struct *vma)
+{
 	/*
-	 * The list_is_singular() test is to aव्योम merging VMA cloned from
+	 * The list_is_singular() test is to avoid merging VMA cloned from
 	 * parents. This can improve scalability caused by anon_vma lock.
 	 */
-	अगर ((!anon_vma1 || !anon_vma2) && (!vma ||
+	if ((!anon_vma1 || !anon_vma2) && (!vma ||
 		list_is_singular(&vma->anon_vma_chain)))
-		वापस 1;
-	वापस anon_vma1 == anon_vma2;
-पूर्ण
+		return 1;
+	return anon_vma1 == anon_vma2;
+}
 
 /*
- * Return true अगर we can merge this (vm_flags,anon_vma,file,vm_pgoff)
- * in front of (at a lower भव address and file offset than) the vma.
+ * Return true if we can merge this (vm_flags,anon_vma,file,vm_pgoff)
+ * in front of (at a lower virtual address and file offset than) the vma.
  *
- * We cannot merge two vmas अगर they have dअगरferently asचिन्हित (non-शून्य)
- * anon_vmas, nor अगर same anon_vma is asचिन्हित but offsets incompatible.
+ * We cannot merge two vmas if they have differently assigned (non-NULL)
+ * anon_vmas, nor if same anon_vma is assigned but offsets incompatible.
  *
- * We करोn't check here क्रम the merged mmap wrapping around the end of pagecache
- * indices (16TB on ia32) because करो_mmap() करोes not permit mmap's which
+ * We don't check here for the merged mmap wrapping around the end of pagecache
+ * indices (16TB on ia32) because do_mmap() does not permit mmap's which
  * wrap, nor mmaps which cover the final page at index -1UL.
  */
-अटल पूर्णांक
-can_vma_merge_beक्रमe(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ vm_flags,
-		     काष्ठा anon_vma *anon_vma, काष्ठा file *file,
+static int
+can_vma_merge_before(struct vm_area_struct *vma, unsigned long vm_flags,
+		     struct anon_vma *anon_vma, struct file *file,
 		     pgoff_t vm_pgoff,
-		     काष्ठा vm_userfaultfd_ctx vm_userfaultfd_ctx)
-अणु
-	अगर (is_mergeable_vma(vma, file, vm_flags, vm_userfaultfd_ctx) &&
-	    is_mergeable_anon_vma(anon_vma, vma->anon_vma, vma)) अणु
-		अगर (vma->vm_pgoff == vm_pgoff)
-			वापस 1;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		     struct vm_userfaultfd_ctx vm_userfaultfd_ctx)
+{
+	if (is_mergeable_vma(vma, file, vm_flags, vm_userfaultfd_ctx) &&
+	    is_mergeable_anon_vma(anon_vma, vma->anon_vma, vma)) {
+		if (vma->vm_pgoff == vm_pgoff)
+			return 1;
+	}
+	return 0;
+}
 
 /*
- * Return true अगर we can merge this (vm_flags,anon_vma,file,vm_pgoff)
- * beyond (at a higher भव address and file offset than) the vma.
+ * Return true if we can merge this (vm_flags,anon_vma,file,vm_pgoff)
+ * beyond (at a higher virtual address and file offset than) the vma.
  *
- * We cannot merge two vmas अगर they have dअगरferently asचिन्हित (non-शून्य)
- * anon_vmas, nor अगर same anon_vma is asचिन्हित but offsets incompatible.
+ * We cannot merge two vmas if they have differently assigned (non-NULL)
+ * anon_vmas, nor if same anon_vma is assigned but offsets incompatible.
  */
-अटल पूर्णांक
-can_vma_merge_after(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ vm_flags,
-		    काष्ठा anon_vma *anon_vma, काष्ठा file *file,
+static int
+can_vma_merge_after(struct vm_area_struct *vma, unsigned long vm_flags,
+		    struct anon_vma *anon_vma, struct file *file,
 		    pgoff_t vm_pgoff,
-		    काष्ठा vm_userfaultfd_ctx vm_userfaultfd_ctx)
-अणु
-	अगर (is_mergeable_vma(vma, file, vm_flags, vm_userfaultfd_ctx) &&
-	    is_mergeable_anon_vma(anon_vma, vma->anon_vma, vma)) अणु
+		    struct vm_userfaultfd_ctx vm_userfaultfd_ctx)
+{
+	if (is_mergeable_vma(vma, file, vm_flags, vm_userfaultfd_ctx) &&
+	    is_mergeable_anon_vma(anon_vma, vma->anon_vma, vma)) {
 		pgoff_t vm_pglen;
 		vm_pglen = vma_pages(vma);
-		अगर (vma->vm_pgoff + vm_pglen == vm_pgoff)
-			वापस 1;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		if (vma->vm_pgoff + vm_pglen == vm_pgoff)
+			return 1;
+	}
+	return 0;
+}
 
 /*
  * Given a mapping request (addr,end,vm_flags,file,pgoff), figure out
  * whether that can be merged with its predecessor or its successor.
  * Or both (it neatly fills a hole).
  *
- * In most हालs - when called क्रम mmap, brk or mremap - [addr,end) is
- * certain not to be mapped by the समय vma_merge is called; but when
- * called क्रम mprotect, it is certain to be alपढ़ोy mapped (either at
+ * In most cases - when called for mmap, brk or mremap - [addr,end) is
+ * certain not to be mapped by the time vma_merge is called; but when
+ * called for mprotect, it is certain to be already mapped (either at
  * an offset within prev, or at the start of next), and the flags of
  * this area are about to be changed to vm_flags - and the no-change
- * हाल has alपढ़ोy been eliminated.
+ * case has already been eliminated.
  *
- * The following mprotect हालs have to be considered, where AAAA is
- * the area passed करोwn from mprotect_fixup, never extending beyond one
- * vma, PPPPPP is the prev vma specअगरied, and NNNNNN the next vma after:
+ * The following mprotect cases have to be considered, where AAAA is
+ * the area passed down from mprotect_fixup, never extending beyond one
+ * vma, PPPPPP is the prev vma specified, and NNNNNN the next vma after:
  *
  *     AAAA             AAAA                   AAAA
  *    PPPPPPNNNNNN    PPPPPPNNNNNN       PPPPPPNNNNNN
  *    cannot merge    might become       might become
  *                    PPNNNNNNNNNN       PPPPPPPPPPNN
- *    mmap, brk or    हाल 4 below       हाल 5 below
+ *    mmap, brk or    case 4 below       case 5 below
  *    mremap move:
  *                        AAAA               AAAA
  *                    PPPP    NNNN       PPPPNNNNXXXX
@@ -1145,44 +1144,44 @@ can_vma_merge_after(काष्ठा vm_area_काष्ठा *vma, अच�
  *                    PPPPPPPPNNNN 2 or  PPPPPPPPXXXX 7 or
  *                    PPPPNNNNNNNN 3     PPPPXXXXXXXX 8
  *
- * It is important क्रम हाल 8 that the vma NNNN overlapping the
+ * It is important for case 8 that the vma NNNN overlapping the
  * region AAAA is never going to extended over XXXX. Instead XXXX must
- * be extended in region AAAA and NNNN must be हटाओd. This way in
- * all हालs where vma_merge succeeds, the moment vma_adjust drops the
- * rmap_locks, the properties of the merged vma will be alपढ़ोy
- * correct क्रम the whole merged range. Some of those properties like
+ * be extended in region AAAA and NNNN must be removed. This way in
+ * all cases where vma_merge succeeds, the moment vma_adjust drops the
+ * rmap_locks, the properties of the merged vma will be already
+ * correct for the whole merged range. Some of those properties like
  * vm_page_prot/vm_flags may be accessed by rmap_walks and they must
- * be correct क्रम the whole merged range immediately after the
- * rmap_locks are released. Otherwise अगर XXXX would be हटाओd and
- * NNNN would be extended over the XXXX range, हटाओ_migration_ptes
- * or other rmap walkers (अगर working on addresses beyond the "end"
+ * be correct for the whole merged range immediately after the
+ * rmap_locks are released. Otherwise if XXXX would be removed and
+ * NNNN would be extended over the XXXX range, remove_migration_ptes
+ * or other rmap walkers (if working on addresses beyond the "end"
  * parameter) may establish ptes with the wrong permissions of NNNN
  * instead of the right permissions of XXXX.
  */
-काष्ठा vm_area_काष्ठा *vma_merge(काष्ठा mm_काष्ठा *mm,
-			काष्ठा vm_area_काष्ठा *prev, अचिन्हित दीर्घ addr,
-			अचिन्हित दीर्घ end, अचिन्हित दीर्घ vm_flags,
-			काष्ठा anon_vma *anon_vma, काष्ठा file *file,
-			pgoff_t pgoff, काष्ठा mempolicy *policy,
-			काष्ठा vm_userfaultfd_ctx vm_userfaultfd_ctx)
-अणु
+struct vm_area_struct *vma_merge(struct mm_struct *mm,
+			struct vm_area_struct *prev, unsigned long addr,
+			unsigned long end, unsigned long vm_flags,
+			struct anon_vma *anon_vma, struct file *file,
+			pgoff_t pgoff, struct mempolicy *policy,
+			struct vm_userfaultfd_ctx vm_userfaultfd_ctx)
+{
 	pgoff_t pglen = (end - addr) >> PAGE_SHIFT;
-	काष्ठा vm_area_काष्ठा *area, *next;
-	पूर्णांक err;
+	struct vm_area_struct *area, *next;
+	int err;
 
 	/*
 	 * We later require that vma->vm_flags == vm_flags,
 	 * so this tests vma->vm_flags & VM_SPECIAL, too.
 	 */
-	अगर (vm_flags & VM_SPECIAL)
-		वापस शून्य;
+	if (vm_flags & VM_SPECIAL)
+		return NULL;
 
 	next = vma_next(mm, prev);
 	area = next;
-	अगर (area && area->vm_end == end)		/* हालs 6, 7, 8 */
+	if (area && area->vm_end == end)		/* cases 6, 7, 8 */
 		next = next->vm_next;
 
-	/* verअगरy some invariant that must be enक्रमced by the caller */
+	/* verify some invariant that must be enforced by the caller */
 	VM_WARN_ON(prev && addr <= prev->vm_start);
 	VM_WARN_ON(area && end > area->vm_end);
 	VM_WARN_ON(addr >= end);
@@ -1190,434 +1189,434 @@ can_vma_merge_after(काष्ठा vm_area_काष्ठा *vma, अच�
 	/*
 	 * Can it merge with the predecessor?
 	 */
-	अगर (prev && prev->vm_end == addr &&
+	if (prev && prev->vm_end == addr &&
 			mpol_equal(vma_policy(prev), policy) &&
 			can_vma_merge_after(prev, vm_flags,
 					    anon_vma, file, pgoff,
-					    vm_userfaultfd_ctx)) अणु
+					    vm_userfaultfd_ctx)) {
 		/*
 		 * OK, it can.  Can we now merge in the successor as well?
 		 */
-		अगर (next && end == next->vm_start &&
+		if (next && end == next->vm_start &&
 				mpol_equal(policy, vma_policy(next)) &&
-				can_vma_merge_beक्रमe(next, vm_flags,
+				can_vma_merge_before(next, vm_flags,
 						     anon_vma, file,
 						     pgoff+pglen,
 						     vm_userfaultfd_ctx) &&
 				is_mergeable_anon_vma(prev->anon_vma,
-						      next->anon_vma, शून्य)) अणु
-							/* हालs 1, 6 */
+						      next->anon_vma, NULL)) {
+							/* cases 1, 6 */
 			err = __vma_adjust(prev, prev->vm_start,
-					 next->vm_end, prev->vm_pgoff, शून्य,
+					 next->vm_end, prev->vm_pgoff, NULL,
 					 prev);
-		पूर्ण अन्यथा					/* हालs 2, 5, 7 */
+		} else					/* cases 2, 5, 7 */
 			err = __vma_adjust(prev, prev->vm_start,
-					 end, prev->vm_pgoff, शून्य, prev);
-		अगर (err)
-			वापस शून्य;
+					 end, prev->vm_pgoff, NULL, prev);
+		if (err)
+			return NULL;
 		khugepaged_enter_vma_merge(prev, vm_flags);
-		वापस prev;
-	पूर्ण
+		return prev;
+	}
 
 	/*
 	 * Can this new request be merged in front of next?
 	 */
-	अगर (next && end == next->vm_start &&
+	if (next && end == next->vm_start &&
 			mpol_equal(policy, vma_policy(next)) &&
-			can_vma_merge_beक्रमe(next, vm_flags,
+			can_vma_merge_before(next, vm_flags,
 					     anon_vma, file, pgoff+pglen,
-					     vm_userfaultfd_ctx)) अणु
-		अगर (prev && addr < prev->vm_end)	/* हाल 4 */
+					     vm_userfaultfd_ctx)) {
+		if (prev && addr < prev->vm_end)	/* case 4 */
 			err = __vma_adjust(prev, prev->vm_start,
-					 addr, prev->vm_pgoff, शून्य, next);
-		अन्यथा अणु					/* हालs 3, 8 */
+					 addr, prev->vm_pgoff, NULL, next);
+		else {					/* cases 3, 8 */
 			err = __vma_adjust(area, addr, next->vm_end,
-					 next->vm_pgoff - pglen, शून्य, next);
+					 next->vm_pgoff - pglen, NULL, next);
 			/*
-			 * In हाल 3 area is alपढ़ोy equal to next and
-			 * this is a noop, but in हाल 8 "area" has
-			 * been हटाओd and next was expanded over it.
+			 * In case 3 area is already equal to next and
+			 * this is a noop, but in case 8 "area" has
+			 * been removed and next was expanded over it.
 			 */
 			area = next;
-		पूर्ण
-		अगर (err)
-			वापस शून्य;
+		}
+		if (err)
+			return NULL;
 		khugepaged_enter_vma_merge(area, vm_flags);
-		वापस area;
-	पूर्ण
+		return area;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
 /*
- * Rough compatibility check to quickly see अगर it's even worth looking
+ * Rough compatibility check to quickly see if it's even worth looking
  * at sharing an anon_vma.
  *
- * They need to have the same vm_file, and the flags can only dअगरfer
+ * They need to have the same vm_file, and the flags can only differ
  * in things that mprotect may change.
  *
- * NOTE! The fact that we share an anon_vma करोesn't _have_ to mean that
- * we can merge the two vma's. For example, we refuse to merge a vma अगर
- * there is a vm_ops->बंद() function, because that indicates that the
- * driver is करोing some kind of reference counting. But that करोesn't
- * really matter क्रम the anon_vma sharing हाल.
+ * NOTE! The fact that we share an anon_vma doesn't _have_ to mean that
+ * we can merge the two vma's. For example, we refuse to merge a vma if
+ * there is a vm_ops->close() function, because that indicates that the
+ * driver is doing some kind of reference counting. But that doesn't
+ * really matter for the anon_vma sharing case.
  */
-अटल पूर्णांक anon_vma_compatible(काष्ठा vm_area_काष्ठा *a, काष्ठा vm_area_काष्ठा *b)
-अणु
-	वापस a->vm_end == b->vm_start &&
+static int anon_vma_compatible(struct vm_area_struct *a, struct vm_area_struct *b)
+{
+	return a->vm_end == b->vm_start &&
 		mpol_equal(vma_policy(a), vma_policy(b)) &&
 		a->vm_file == b->vm_file &&
-		!((a->vm_flags ^ b->vm_flags) & ~(VM_ACCESS_FLAGS | VM_SOFTसूचीTY)) &&
+		!((a->vm_flags ^ b->vm_flags) & ~(VM_ACCESS_FLAGS | VM_SOFTDIRTY)) &&
 		b->vm_pgoff == a->vm_pgoff + ((b->vm_start - a->vm_start) >> PAGE_SHIFT);
-पूर्ण
+}
 
 /*
- * Do some basic sanity checking to see अगर we can re-use the anon_vma
+ * Do some basic sanity checking to see if we can re-use the anon_vma
  * from 'old'. The 'a'/'b' vma's are in VM order - one of them will be
  * the same as 'old', the other will be the new one that is trying
  * to share the anon_vma.
  *
- * NOTE! This runs with mm_sem held क्रम पढ़ोing, so it is possible that
+ * NOTE! This runs with mm_sem held for reading, so it is possible that
  * the anon_vma of 'old' is concurrently in the process of being set up
- * by another page fault trying to merge _that_. But that's ok: अगर it
- * is being set up, that स्वतःmatically means that it will be a singleton
- * acceptable क्रम merging, so we can करो all of this optimistically. But
- * we करो that READ_ONCE() to make sure that we never re-load the poपूर्णांकer.
+ * by another page fault trying to merge _that_. But that's ok: if it
+ * is being set up, that automatically means that it will be a singleton
+ * acceptable for merging, so we can do all of this optimistically. But
+ * we do that READ_ONCE() to make sure that we never re-load the pointer.
  *
  * IOW: that the "list_is_singular()" test on the anon_vma_chain only
- * matters क्रम the 'stable anon_vma' हाल (ie the thing we want to aव्योम
- * is to वापस an anon_vma that is "complex" due to having gone through
- * a विभाजन).
+ * matters for the 'stable anon_vma' case (ie the thing we want to avoid
+ * is to return an anon_vma that is "complex" due to having gone through
+ * a fork).
  *
  * We also make sure that the two vma's are compatible (adjacent,
  * and with the same memory policies). That's all stable, even with just
- * a पढ़ो lock on the mm_sem.
+ * a read lock on the mm_sem.
  */
-अटल काष्ठा anon_vma *reusable_anon_vma(काष्ठा vm_area_काष्ठा *old, काष्ठा vm_area_काष्ठा *a, काष्ठा vm_area_काष्ठा *b)
-अणु
-	अगर (anon_vma_compatible(a, b)) अणु
-		काष्ठा anon_vma *anon_vma = READ_ONCE(old->anon_vma);
+static struct anon_vma *reusable_anon_vma(struct vm_area_struct *old, struct vm_area_struct *a, struct vm_area_struct *b)
+{
+	if (anon_vma_compatible(a, b)) {
+		struct anon_vma *anon_vma = READ_ONCE(old->anon_vma);
 
-		अगर (anon_vma && list_is_singular(&old->anon_vma_chain))
-			वापस anon_vma;
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+		if (anon_vma && list_is_singular(&old->anon_vma_chain))
+			return anon_vma;
+	}
+	return NULL;
+}
 
 /*
  * find_mergeable_anon_vma is used by anon_vma_prepare, to check
- * neighbouring vmas क्रम a suitable anon_vma, beक्रमe it goes off
+ * neighbouring vmas for a suitable anon_vma, before it goes off
  * to allocate a new anon_vma.  It checks because a repetitive
  * sequence of mprotects and faults may otherwise lead to distinct
  * anon_vmas being allocated, preventing vma merge in subsequent
  * mprotect.
  */
-काष्ठा anon_vma *find_mergeable_anon_vma(काष्ठा vm_area_काष्ठा *vma)
-अणु
-	काष्ठा anon_vma *anon_vma = शून्य;
+struct anon_vma *find_mergeable_anon_vma(struct vm_area_struct *vma)
+{
+	struct anon_vma *anon_vma = NULL;
 
 	/* Try next first. */
-	अगर (vma->vm_next) अणु
+	if (vma->vm_next) {
 		anon_vma = reusable_anon_vma(vma->vm_next, vma, vma->vm_next);
-		अगर (anon_vma)
-			वापस anon_vma;
-	पूर्ण
+		if (anon_vma)
+			return anon_vma;
+	}
 
 	/* Try prev next. */
-	अगर (vma->vm_prev)
+	if (vma->vm_prev)
 		anon_vma = reusable_anon_vma(vma->vm_prev, vma->vm_prev, vma);
 
 	/*
-	 * We might reach here with anon_vma == शून्य अगर we can't find
+	 * We might reach here with anon_vma == NULL if we can't find
 	 * any reusable anon_vma.
-	 * There's no असलolute need to look only at touching neighbours:
-	 * we could search further afield क्रम "compatible" anon_vmas.
-	 * But it would probably just be a waste of समय searching,
+	 * There's no absolute need to look only at touching neighbours:
+	 * we could search further afield for "compatible" anon_vmas.
+	 * But it would probably just be a waste of time searching,
 	 * or lead to too many vmas hanging off the same anon_vma.
 	 * We're trying to allow mprotect remerging later on,
-	 * not trying to minimize memory used क्रम anon_vmas.
+	 * not trying to minimize memory used for anon_vmas.
 	 */
-	वापस anon_vma;
-पूर्ण
+	return anon_vma;
+}
 
 /*
- * If a hपूर्णांक addr is less than mmap_min_addr change hपूर्णांक to be as
+ * If a hint addr is less than mmap_min_addr change hint to be as
  * low as possible but still greater than mmap_min_addr
  */
-अटल अंतरभूत अचिन्हित दीर्घ round_hपूर्णांक_to_min(अचिन्हित दीर्घ hपूर्णांक)
-अणु
-	hपूर्णांक &= PAGE_MASK;
-	अगर (((व्योम *)hपूर्णांक != शून्य) &&
-	    (hपूर्णांक < mmap_min_addr))
-		वापस PAGE_ALIGN(mmap_min_addr);
-	वापस hपूर्णांक;
-पूर्ण
+static inline unsigned long round_hint_to_min(unsigned long hint)
+{
+	hint &= PAGE_MASK;
+	if (((void *)hint != NULL) &&
+	    (hint < mmap_min_addr))
+		return PAGE_ALIGN(mmap_min_addr);
+	return hint;
+}
 
-अटल अंतरभूत पूर्णांक mlock_future_check(काष्ठा mm_काष्ठा *mm,
-				     अचिन्हित दीर्घ flags,
-				     अचिन्हित दीर्घ len)
-अणु
-	अचिन्हित दीर्घ locked, lock_limit;
+static inline int mlock_future_check(struct mm_struct *mm,
+				     unsigned long flags,
+				     unsigned long len)
+{
+	unsigned long locked, lock_limit;
 
 	/*  mlock MCL_FUTURE? */
-	अगर (flags & VM_LOCKED) अणु
+	if (flags & VM_LOCKED) {
 		locked = len >> PAGE_SHIFT;
 		locked += mm->locked_vm;
 		lock_limit = rlimit(RLIMIT_MEMLOCK);
 		lock_limit >>= PAGE_SHIFT;
-		अगर (locked > lock_limit && !capable(CAP_IPC_LOCK))
-			वापस -EAGAIN;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		if (locked > lock_limit && !capable(CAP_IPC_LOCK))
+			return -EAGAIN;
+	}
+	return 0;
+}
 
-अटल अंतरभूत u64 file_mmap_size_max(काष्ठा file *file, काष्ठा inode *inode)
-अणु
-	अगर (S_ISREG(inode->i_mode))
-		वापस MAX_LFS_खाताSIZE;
+static inline u64 file_mmap_size_max(struct file *file, struct inode *inode)
+{
+	if (S_ISREG(inode->i_mode))
+		return MAX_LFS_FILESIZE;
 
-	अगर (S_ISBLK(inode->i_mode))
-		वापस MAX_LFS_खाताSIZE;
+	if (S_ISBLK(inode->i_mode))
+		return MAX_LFS_FILESIZE;
 
-	अगर (S_ISSOCK(inode->i_mode))
-		वापस MAX_LFS_खाताSIZE;
+	if (S_ISSOCK(inode->i_mode))
+		return MAX_LFS_FILESIZE;
 
-	/* Special "we do even unsigned file positions" हाल */
-	अगर (file->f_mode & FMODE_UNSIGNED_OFFSET)
-		वापस 0;
+	/* Special "we do even unsigned file positions" case */
+	if (file->f_mode & FMODE_UNSIGNED_OFFSET)
+		return 0;
 
-	/* Yes, अक्रमom drivers might want more. But I'm tired of buggy drivers */
-	वापस अच_दीर्घ_उच्च;
-पूर्ण
+	/* Yes, random drivers might want more. But I'm tired of buggy drivers */
+	return ULONG_MAX;
+}
 
-अटल अंतरभूत bool file_mmap_ok(काष्ठा file *file, काष्ठा inode *inode,
-				अचिन्हित दीर्घ pgoff, अचिन्हित दीर्घ len)
-अणु
+static inline bool file_mmap_ok(struct file *file, struct inode *inode,
+				unsigned long pgoff, unsigned long len)
+{
 	u64 maxsize = file_mmap_size_max(file, inode);
 
-	अगर (maxsize && len > maxsize)
-		वापस false;
+	if (maxsize && len > maxsize)
+		return false;
 	maxsize -= len;
-	अगर (pgoff > maxsize >> PAGE_SHIFT)
-		वापस false;
-	वापस true;
-पूर्ण
+	if (pgoff > maxsize >> PAGE_SHIFT)
+		return false;
+	return true;
+}
 
 /*
- * The caller must ग_लिखो-lock current->mm->mmap_lock.
+ * The caller must write-lock current->mm->mmap_lock.
  */
-अचिन्हित दीर्घ करो_mmap(काष्ठा file *file, अचिन्हित दीर्घ addr,
-			अचिन्हित दीर्घ len, अचिन्हित दीर्घ prot,
-			अचिन्हित दीर्घ flags, अचिन्हित दीर्घ pgoff,
-			अचिन्हित दीर्घ *populate, काष्ठा list_head *uf)
-अणु
-	काष्ठा mm_काष्ठा *mm = current->mm;
+unsigned long do_mmap(struct file *file, unsigned long addr,
+			unsigned long len, unsigned long prot,
+			unsigned long flags, unsigned long pgoff,
+			unsigned long *populate, struct list_head *uf)
+{
+	struct mm_struct *mm = current->mm;
 	vm_flags_t vm_flags;
-	पूर्णांक pkey = 0;
+	int pkey = 0;
 
 	*populate = 0;
 
-	अगर (!len)
-		वापस -EINVAL;
+	if (!len)
+		return -EINVAL;
 
 	/*
 	 * Does the application expect PROT_READ to imply PROT_EXEC?
 	 *
-	 * (the exception is when the underlying fileप्रणाली is noexec
-	 *  mounted, in which हाल we करोnt add PROT_EXEC.)
+	 * (the exception is when the underlying filesystem is noexec
+	 *  mounted, in which case we dont add PROT_EXEC.)
 	 */
-	अगर ((prot & PROT_READ) && (current->personality & READ_IMPLIES_EXEC))
-		अगर (!(file && path_noexec(&file->f_path)))
+	if ((prot & PROT_READ) && (current->personality & READ_IMPLIES_EXEC))
+		if (!(file && path_noexec(&file->f_path)))
 			prot |= PROT_EXEC;
 
-	/* क्रमce arch specअगरic MAP_FIXED handling in get_unmapped_area */
-	अगर (flags & MAP_FIXED_NOREPLACE)
+	/* force arch specific MAP_FIXED handling in get_unmapped_area */
+	if (flags & MAP_FIXED_NOREPLACE)
 		flags |= MAP_FIXED;
 
-	अगर (!(flags & MAP_FIXED))
-		addr = round_hपूर्णांक_to_min(addr);
+	if (!(flags & MAP_FIXED))
+		addr = round_hint_to_min(addr);
 
 	/* Careful about overflows.. */
 	len = PAGE_ALIGN(len);
-	अगर (!len)
-		वापस -ENOMEM;
+	if (!len)
+		return -ENOMEM;
 
 	/* offset overflow? */
-	अगर ((pgoff + (len >> PAGE_SHIFT)) < pgoff)
-		वापस -EOVERFLOW;
+	if ((pgoff + (len >> PAGE_SHIFT)) < pgoff)
+		return -EOVERFLOW;
 
 	/* Too many mappings? */
-	अगर (mm->map_count > sysctl_max_map_count)
-		वापस -ENOMEM;
+	if (mm->map_count > sysctl_max_map_count)
+		return -ENOMEM;
 
-	/* Obtain the address to map to. we verअगरy (or select) it and ensure
+	/* Obtain the address to map to. we verify (or select) it and ensure
 	 * that it represents a valid section of the address space.
 	 */
 	addr = get_unmapped_area(file, addr, len, pgoff, flags);
-	अगर (IS_ERR_VALUE(addr))
-		वापस addr;
+	if (IS_ERR_VALUE(addr))
+		return addr;
 
-	अगर (flags & MAP_FIXED_NOREPLACE) अणु
-		काष्ठा vm_area_काष्ठा *vma = find_vma(mm, addr);
+	if (flags & MAP_FIXED_NOREPLACE) {
+		struct vm_area_struct *vma = find_vma(mm, addr);
 
-		अगर (vma && vma->vm_start < addr + len)
-			वापस -EEXIST;
-	पूर्ण
+		if (vma && vma->vm_start < addr + len)
+			return -EEXIST;
+	}
 
-	अगर (prot == PROT_EXEC) अणु
+	if (prot == PROT_EXEC) {
 		pkey = execute_only_pkey(mm);
-		अगर (pkey < 0)
+		if (pkey < 0)
 			pkey = 0;
-	पूर्ण
+	}
 
 	/* Do simple checking here so the lower-level routines won't have
-	 * to. we assume access permissions have been handled by the खोलो
-	 * of the memory object, so we करोn't करो any here.
+	 * to. we assume access permissions have been handled by the open
+	 * of the memory object, so we don't do any here.
 	 */
 	vm_flags = calc_vm_prot_bits(prot, pkey) | calc_vm_flag_bits(flags) |
 			mm->def_flags | VM_MAYREAD | VM_MAYWRITE | VM_MAYEXEC;
 
-	अगर (flags & MAP_LOCKED)
-		अगर (!can_करो_mlock())
-			वापस -EPERM;
+	if (flags & MAP_LOCKED)
+		if (!can_do_mlock())
+			return -EPERM;
 
-	अगर (mlock_future_check(mm, vm_flags, len))
-		वापस -EAGAIN;
+	if (mlock_future_check(mm, vm_flags, len))
+		return -EAGAIN;
 
-	अगर (file) अणु
-		काष्ठा inode *inode = file_inode(file);
-		अचिन्हित दीर्घ flags_mask;
+	if (file) {
+		struct inode *inode = file_inode(file);
+		unsigned long flags_mask;
 
-		अगर (!file_mmap_ok(file, inode, pgoff, len))
-			वापस -EOVERFLOW;
+		if (!file_mmap_ok(file, inode, pgoff, len))
+			return -EOVERFLOW;
 
 		flags_mask = LEGACY_MAP_MASK | file->f_op->mmap_supported_flags;
 
-		चयन (flags & MAP_TYPE) अणु
-		हाल MAP_SHARED:
+		switch (flags & MAP_TYPE) {
+		case MAP_SHARED:
 			/*
 			 * Force use of MAP_SHARED_VALIDATE with non-legacy
 			 * flags. E.g. MAP_SYNC is dangerous to use with
-			 * MAP_SHARED as you करोn't know which consistency model
+			 * MAP_SHARED as you don't know which consistency model
 			 * you will get. We silently ignore unsupported flags
 			 * with MAP_SHARED to preserve backward compatibility.
 			 */
 			flags &= LEGACY_MAP_MASK;
 			fallthrough;
-		हाल MAP_SHARED_VALIDATE:
-			अगर (flags & ~flags_mask)
-				वापस -EOPNOTSUPP;
-			अगर (prot & PROT_WRITE) अणु
-				अगर (!(file->f_mode & FMODE_WRITE))
-					वापस -EACCES;
-				अगर (IS_SWAPखाता(file->f_mapping->host))
-					वापस -ETXTBSY;
-			पूर्ण
+		case MAP_SHARED_VALIDATE:
+			if (flags & ~flags_mask)
+				return -EOPNOTSUPP;
+			if (prot & PROT_WRITE) {
+				if (!(file->f_mode & FMODE_WRITE))
+					return -EACCES;
+				if (IS_SWAPFILE(file->f_mapping->host))
+					return -ETXTBSY;
+			}
 
 			/*
-			 * Make sure we करोn't allow writing to an append-only
+			 * Make sure we don't allow writing to an append-only
 			 * file..
 			 */
-			अगर (IS_APPEND(inode) && (file->f_mode & FMODE_WRITE))
-				वापस -EACCES;
+			if (IS_APPEND(inode) && (file->f_mode & FMODE_WRITE))
+				return -EACCES;
 
 			/*
 			 * Make sure there are no mandatory locks on the file.
 			 */
-			अगर (locks_verअगरy_locked(file))
-				वापस -EAGAIN;
+			if (locks_verify_locked(file))
+				return -EAGAIN;
 
 			vm_flags |= VM_SHARED | VM_MAYSHARE;
-			अगर (!(file->f_mode & FMODE_WRITE))
+			if (!(file->f_mode & FMODE_WRITE))
 				vm_flags &= ~(VM_MAYWRITE | VM_SHARED);
 			fallthrough;
-		हाल MAP_PRIVATE:
-			अगर (!(file->f_mode & FMODE_READ))
-				वापस -EACCES;
-			अगर (path_noexec(&file->f_path)) अणु
-				अगर (vm_flags & VM_EXEC)
-					वापस -EPERM;
+		case MAP_PRIVATE:
+			if (!(file->f_mode & FMODE_READ))
+				return -EACCES;
+			if (path_noexec(&file->f_path)) {
+				if (vm_flags & VM_EXEC)
+					return -EPERM;
 				vm_flags &= ~VM_MAYEXEC;
-			पूर्ण
+			}
 
-			अगर (!file->f_op->mmap)
-				वापस -ENODEV;
-			अगर (vm_flags & (VM_GROWSDOWN|VM_GROWSUP))
-				वापस -EINVAL;
-			अवरोध;
+			if (!file->f_op->mmap)
+				return -ENODEV;
+			if (vm_flags & (VM_GROWSDOWN|VM_GROWSUP))
+				return -EINVAL;
+			break;
 
-		शेष:
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		चयन (flags & MAP_TYPE) अणु
-		हाल MAP_SHARED:
-			अगर (vm_flags & (VM_GROWSDOWN|VM_GROWSUP))
-				वापस -EINVAL;
+		default:
+			return -EINVAL;
+		}
+	} else {
+		switch (flags & MAP_TYPE) {
+		case MAP_SHARED:
+			if (vm_flags & (VM_GROWSDOWN|VM_GROWSUP))
+				return -EINVAL;
 			/*
 			 * Ignore pgoff.
 			 */
 			pgoff = 0;
 			vm_flags |= VM_SHARED | VM_MAYSHARE;
-			अवरोध;
-		हाल MAP_PRIVATE:
+			break;
+		case MAP_PRIVATE:
 			/*
-			 * Set pgoff according to addr क्रम anon_vma.
+			 * Set pgoff according to addr for anon_vma.
 			 */
 			pgoff = addr >> PAGE_SHIFT;
-			अवरोध;
-		शेष:
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			break;
+		default:
+			return -EINVAL;
+		}
+	}
 
 	/*
-	 * Set 'VM_NORESERVE' अगर we should not account क्रम the
+	 * Set 'VM_NORESERVE' if we should not account for the
 	 * memory use of this mapping.
 	 */
-	अगर (flags & MAP_NORESERVE) अणु
-		/* We honor MAP_NORESERVE अगर allowed to overcommit */
-		अगर (sysctl_overcommit_memory != OVERCOMMIT_NEVER)
+	if (flags & MAP_NORESERVE) {
+		/* We honor MAP_NORESERVE if allowed to overcommit */
+		if (sysctl_overcommit_memory != OVERCOMMIT_NEVER)
 			vm_flags |= VM_NORESERVE;
 
 		/* hugetlb applies strict overcommit unless MAP_NORESERVE */
-		अगर (file && is_file_hugepages(file))
+		if (file && is_file_hugepages(file))
 			vm_flags |= VM_NORESERVE;
-	पूर्ण
+	}
 
 	addr = mmap_region(file, addr, len, vm_flags, pgoff, uf);
-	अगर (!IS_ERR_VALUE(addr) &&
+	if (!IS_ERR_VALUE(addr) &&
 	    ((vm_flags & VM_LOCKED) ||
 	     (flags & (MAP_POPULATE | MAP_NONBLOCK)) == MAP_POPULATE))
 		*populate = len;
-	वापस addr;
-पूर्ण
+	return addr;
+}
 
-अचिन्हित दीर्घ ksys_mmap_pgoff(अचिन्हित दीर्घ addr, अचिन्हित दीर्घ len,
-			      अचिन्हित दीर्घ prot, अचिन्हित दीर्घ flags,
-			      अचिन्हित दीर्घ fd, अचिन्हित दीर्घ pgoff)
-अणु
-	काष्ठा file *file = शून्य;
-	अचिन्हित दीर्घ retval;
+unsigned long ksys_mmap_pgoff(unsigned long addr, unsigned long len,
+			      unsigned long prot, unsigned long flags,
+			      unsigned long fd, unsigned long pgoff)
+{
+	struct file *file = NULL;
+	unsigned long retval;
 
-	अगर (!(flags & MAP_ANONYMOUS)) अणु
+	if (!(flags & MAP_ANONYMOUS)) {
 		audit_mmap_fd(fd, flags);
 		file = fget(fd);
-		अगर (!file)
-			वापस -EBADF;
-		अगर (is_file_hugepages(file)) अणु
+		if (!file)
+			return -EBADF;
+		if (is_file_hugepages(file)) {
 			len = ALIGN(len, huge_page_size(hstate_file(file)));
-		पूर्ण अन्यथा अगर (unlikely(flags & MAP_HUGETLB)) अणु
+		} else if (unlikely(flags & MAP_HUGETLB)) {
 			retval = -EINVAL;
-			जाओ out_fput;
-		पूर्ण
-	पूर्ण अन्यथा अगर (flags & MAP_HUGETLB) अणु
-		काष्ठा user_काष्ठा *user = शून्य;
-		काष्ठा hstate *hs;
+			goto out_fput;
+		}
+	} else if (flags & MAP_HUGETLB) {
+		struct user_struct *user = NULL;
+		struct hstate *hs;
 
 		hs = hstate_sizelog((flags >> MAP_HUGE_SHIFT) & MAP_HUGE_MASK);
-		अगर (!hs)
-			वापस -EINVAL;
+		if (!hs)
+			return -EINVAL;
 
 		len = ALIGN(len, huge_page_size(hs));
 		/*
@@ -1626,164 +1625,164 @@ can_vma_merge_after(काष्ठा vm_area_काष्ठा *vma, अच�
 		 * A dummy user value is used because we are not locking
 		 * memory so no accounting is necessary
 		 */
-		file = hugetlb_file_setup(HUGETLB_ANON_खाता, len,
+		file = hugetlb_file_setup(HUGETLB_ANON_FILE, len,
 				VM_NORESERVE,
 				&user, HUGETLB_ANONHUGE_INODE,
 				(flags >> MAP_HUGE_SHIFT) & MAP_HUGE_MASK);
-		अगर (IS_ERR(file))
-			वापस PTR_ERR(file);
-	पूर्ण
+		if (IS_ERR(file))
+			return PTR_ERR(file);
+	}
 
 	flags &= ~(MAP_EXECUTABLE | MAP_DENYWRITE);
 
 	retval = vm_mmap_pgoff(file, addr, len, prot, flags, pgoff);
 out_fput:
-	अगर (file)
+	if (file)
 		fput(file);
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-SYSCALL_DEFINE6(mmap_pgoff, अचिन्हित दीर्घ, addr, अचिन्हित दीर्घ, len,
-		अचिन्हित दीर्घ, prot, अचिन्हित दीर्घ, flags,
-		अचिन्हित दीर्घ, fd, अचिन्हित दीर्घ, pgoff)
-अणु
-	वापस ksys_mmap_pgoff(addr, len, prot, flags, fd, pgoff);
-पूर्ण
+SYSCALL_DEFINE6(mmap_pgoff, unsigned long, addr, unsigned long, len,
+		unsigned long, prot, unsigned long, flags,
+		unsigned long, fd, unsigned long, pgoff)
+{
+	return ksys_mmap_pgoff(addr, len, prot, flags, fd, pgoff);
+}
 
-#अगर_घोषित __ARCH_WANT_SYS_OLD_MMAP
-काष्ठा mmap_arg_काष्ठा अणु
-	अचिन्हित दीर्घ addr;
-	अचिन्हित दीर्घ len;
-	अचिन्हित दीर्घ prot;
-	अचिन्हित दीर्घ flags;
-	अचिन्हित दीर्घ fd;
-	अचिन्हित दीर्घ offset;
-पूर्ण;
+#ifdef __ARCH_WANT_SYS_OLD_MMAP
+struct mmap_arg_struct {
+	unsigned long addr;
+	unsigned long len;
+	unsigned long prot;
+	unsigned long flags;
+	unsigned long fd;
+	unsigned long offset;
+};
 
-SYSCALL_DEFINE1(old_mmap, काष्ठा mmap_arg_काष्ठा __user *, arg)
-अणु
-	काष्ठा mmap_arg_काष्ठा a;
+SYSCALL_DEFINE1(old_mmap, struct mmap_arg_struct __user *, arg)
+{
+	struct mmap_arg_struct a;
 
-	अगर (copy_from_user(&a, arg, माप(a)))
-		वापस -EFAULT;
-	अगर (offset_in_page(a.offset))
-		वापस -EINVAL;
+	if (copy_from_user(&a, arg, sizeof(a)))
+		return -EFAULT;
+	if (offset_in_page(a.offset))
+		return -EINVAL;
 
-	वापस ksys_mmap_pgoff(a.addr, a.len, a.prot, a.flags, a.fd,
+	return ksys_mmap_pgoff(a.addr, a.len, a.prot, a.flags, a.fd,
 			       a.offset >> PAGE_SHIFT);
-पूर्ण
-#पूर्ण_अगर /* __ARCH_WANT_SYS_OLD_MMAP */
+}
+#endif /* __ARCH_WANT_SYS_OLD_MMAP */
 
 /*
- * Some shared mappings will want the pages marked पढ़ो-only
- * to track ग_लिखो events. If so, we'll करोwngrade vm_page_prot
- * to the निजी version (using protection_map[] without the
+ * Some shared mappings will want the pages marked read-only
+ * to track write events. If so, we'll downgrade vm_page_prot
+ * to the private version (using protection_map[] without the
  * VM_SHARED bit).
  */
-पूर्णांक vma_wants_ग_लिखोnotअगरy(काष्ठा vm_area_काष्ठा *vma, pgprot_t vm_page_prot)
-अणु
+int vma_wants_writenotify(struct vm_area_struct *vma, pgprot_t vm_page_prot)
+{
 	vm_flags_t vm_flags = vma->vm_flags;
-	स्थिर काष्ठा vm_operations_काष्ठा *vm_ops = vma->vm_ops;
+	const struct vm_operations_struct *vm_ops = vma->vm_ops;
 
-	/* If it was निजी or non-writable, the ग_लिखो bit is alपढ़ोy clear */
-	अगर ((vm_flags & (VM_WRITE|VM_SHARED)) != ((VM_WRITE|VM_SHARED)))
-		वापस 0;
+	/* If it was private or non-writable, the write bit is already clear */
+	if ((vm_flags & (VM_WRITE|VM_SHARED)) != ((VM_WRITE|VM_SHARED)))
+		return 0;
 
 	/* The backer wishes to know when pages are first written to? */
-	अगर (vm_ops && (vm_ops->page_mkग_लिखो || vm_ops->pfn_mkग_लिखो))
-		वापस 1;
+	if (vm_ops && (vm_ops->page_mkwrite || vm_ops->pfn_mkwrite))
+		return 1;
 
-	/* The खोलो routine did something to the protections that pgprot_modअगरy
+	/* The open routine did something to the protections that pgprot_modify
 	 * won't preserve? */
-	अगर (pgprot_val(vm_page_prot) !=
-	    pgprot_val(vm_pgprot_modअगरy(vm_page_prot, vm_flags)))
-		वापस 0;
+	if (pgprot_val(vm_page_prot) !=
+	    pgprot_val(vm_pgprot_modify(vm_page_prot, vm_flags)))
+		return 0;
 
 	/* Do we need to track softdirty? */
-	अगर (IS_ENABLED(CONFIG_MEM_SOFT_सूचीTY) && !(vm_flags & VM_SOFTसूचीTY))
-		वापस 1;
+	if (IS_ENABLED(CONFIG_MEM_SOFT_DIRTY) && !(vm_flags & VM_SOFTDIRTY))
+		return 1;
 
 	/* Specialty mapping? */
-	अगर (vm_flags & VM_PFNMAP)
-		वापस 0;
+	if (vm_flags & VM_PFNMAP)
+		return 0;
 
 	/* Can the mapping track the dirty pages? */
-	वापस vma->vm_file && vma->vm_file->f_mapping &&
-		mapping_can_ग_लिखोback(vma->vm_file->f_mapping);
-पूर्ण
+	return vma->vm_file && vma->vm_file->f_mapping &&
+		mapping_can_writeback(vma->vm_file->f_mapping);
+}
 
 /*
- * We account क्रम memory अगर it's a निजी ग_लिखोable mapping,
+ * We account for memory if it's a private writeable mapping,
  * not hugepages and VM_NORESERVE wasn't set.
  */
-अटल अंतरभूत पूर्णांक accountable_mapping(काष्ठा file *file, vm_flags_t vm_flags)
-अणु
+static inline int accountable_mapping(struct file *file, vm_flags_t vm_flags)
+{
 	/*
 	 * hugetlb has its own accounting separate from the core VM
-	 * VM_HUGETLB may not be set yet so we cannot check क्रम that flag.
+	 * VM_HUGETLB may not be set yet so we cannot check for that flag.
 	 */
-	अगर (file && is_file_hugepages(file))
-		वापस 0;
+	if (file && is_file_hugepages(file))
+		return 0;
 
-	वापस (vm_flags & (VM_NORESERVE | VM_SHARED | VM_WRITE)) == VM_WRITE;
-पूर्ण
+	return (vm_flags & (VM_NORESERVE | VM_SHARED | VM_WRITE)) == VM_WRITE;
+}
 
-अचिन्हित दीर्घ mmap_region(काष्ठा file *file, अचिन्हित दीर्घ addr,
-		अचिन्हित दीर्घ len, vm_flags_t vm_flags, अचिन्हित दीर्घ pgoff,
-		काष्ठा list_head *uf)
-अणु
-	काष्ठा mm_काष्ठा *mm = current->mm;
-	काष्ठा vm_area_काष्ठा *vma, *prev, *merge;
-	पूर्णांक error;
-	काष्ठा rb_node **rb_link, *rb_parent;
-	अचिन्हित दीर्घ अक्षरged = 0;
+unsigned long mmap_region(struct file *file, unsigned long addr,
+		unsigned long len, vm_flags_t vm_flags, unsigned long pgoff,
+		struct list_head *uf)
+{
+	struct mm_struct *mm = current->mm;
+	struct vm_area_struct *vma, *prev, *merge;
+	int error;
+	struct rb_node **rb_link, *rb_parent;
+	unsigned long charged = 0;
 
 	/* Check against address space limit. */
-	अगर (!may_expand_vm(mm, vm_flags, len >> PAGE_SHIFT)) अणु
-		अचिन्हित दीर्घ nr_pages;
+	if (!may_expand_vm(mm, vm_flags, len >> PAGE_SHIFT)) {
+		unsigned long nr_pages;
 
 		/*
-		 * MAP_FIXED may हटाओ pages of mappings that पूर्णांकersects with
-		 * requested mapping. Account क्रम the pages it would unmap.
+		 * MAP_FIXED may remove pages of mappings that intersects with
+		 * requested mapping. Account for the pages it would unmap.
 		 */
 		nr_pages = count_vma_pages_range(mm, addr, addr + len);
 
-		अगर (!may_expand_vm(mm, vm_flags,
+		if (!may_expand_vm(mm, vm_flags,
 					(len >> PAGE_SHIFT) - nr_pages))
-			वापस -ENOMEM;
-	पूर्ण
+			return -ENOMEM;
+	}
 
 	/* Clear old maps, set up prev, rb_link, rb_parent, and uf */
-	अगर (munmap_vma_range(mm, addr, len, &prev, &rb_link, &rb_parent, uf))
-		वापस -ENOMEM;
+	if (munmap_vma_range(mm, addr, len, &prev, &rb_link, &rb_parent, uf))
+		return -ENOMEM;
 	/*
 	 * Private writable mapping: check memory availability
 	 */
-	अगर (accountable_mapping(file, vm_flags)) अणु
-		अक्षरged = len >> PAGE_SHIFT;
-		अगर (security_vm_enough_memory_mm(mm, अक्षरged))
-			वापस -ENOMEM;
+	if (accountable_mapping(file, vm_flags)) {
+		charged = len >> PAGE_SHIFT;
+		if (security_vm_enough_memory_mm(mm, charged))
+			return -ENOMEM;
 		vm_flags |= VM_ACCOUNT;
-	पूर्ण
+	}
 
 	/*
 	 * Can we just expand an old mapping?
 	 */
 	vma = vma_merge(mm, prev, addr, addr + len, vm_flags,
-			शून्य, file, pgoff, शून्य, शून्य_VM_UFFD_CTX);
-	अगर (vma)
-		जाओ out;
+			NULL, file, pgoff, NULL, NULL_VM_UFFD_CTX);
+	if (vma)
+		goto out;
 
 	/*
 	 * Determine the object being mapped and call the appropriate
-	 * specअगरic mapper. the address has alपढ़ोy been validated, but
-	 * not unmapped, but the maps are हटाओd from the list.
+	 * specific mapper. the address has already been validated, but
+	 * not unmapped, but the maps are removed from the list.
 	 */
 	vma = vm_area_alloc(mm);
-	अगर (!vma) अणु
+	if (!vma) {
 		error = -ENOMEM;
-		जाओ unacct_error;
-	पूर्ण
+		goto unacct_error;
+	}
 
 	vma->vm_start = addr;
 	vma->vm_end = addr + len;
@@ -1791,101 +1790,101 @@ SYSCALL_DEFINE1(old_mmap, काष्ठा mmap_arg_काष्ठा __user 
 	vma->vm_page_prot = vm_get_page_prot(vm_flags);
 	vma->vm_pgoff = pgoff;
 
-	अगर (file) अणु
-		अगर (vm_flags & VM_DENYWRITE) अणु
-			error = deny_ग_लिखो_access(file);
-			अगर (error)
-				जाओ मुक्त_vma;
-		पूर्ण
-		अगर (vm_flags & VM_SHARED) अणु
+	if (file) {
+		if (vm_flags & VM_DENYWRITE) {
+			error = deny_write_access(file);
+			if (error)
+				goto free_vma;
+		}
+		if (vm_flags & VM_SHARED) {
 			error = mapping_map_writable(file->f_mapping);
-			अगर (error)
-				जाओ allow_ग_लिखो_and_मुक्त_vma;
-		पूर्ण
+			if (error)
+				goto allow_write_and_free_vma;
+		}
 
 		/* ->mmap() can change vma->vm_file, but must guarantee that
-		 * vma_link() below can deny ग_लिखो-access अगर VM_DENYWRITE is set
-		 * and map writably अगर VM_SHARED is set. This usually means the
+		 * vma_link() below can deny write-access if VM_DENYWRITE is set
+		 * and map writably if VM_SHARED is set. This usually means the
 		 * new file must not have been exposed to user-space, yet.
 		 */
 		vma->vm_file = get_file(file);
 		error = call_mmap(file, vma);
-		अगर (error)
-			जाओ unmap_and_मुक्त_vma;
+		if (error)
+			goto unmap_and_free_vma;
 
 		/* Can addr have changed??
 		 *
-		 * Answer: Yes, several device drivers can करो it in their
+		 * Answer: Yes, several device drivers can do it in their
 		 *         f_op->mmap method. -DaveM
 		 * Bug: If addr is changed, prev, rb_link, rb_parent should
-		 *      be updated क्रम vma_link()
+		 *      be updated for vma_link()
 		 */
 		WARN_ON_ONCE(addr != vma->vm_start);
 
 		addr = vma->vm_start;
 
 		/* If vm_flags changed after call_mmap(), we should try merge vma again
-		 * as we may succeed this समय.
+		 * as we may succeed this time.
 		 */
-		अगर (unlikely(vm_flags != vma->vm_flags && prev)) अणु
+		if (unlikely(vm_flags != vma->vm_flags && prev)) {
 			merge = vma_merge(mm, prev, vma->vm_start, vma->vm_end, vma->vm_flags,
-				शून्य, vma->vm_file, vma->vm_pgoff, शून्य, शून्य_VM_UFFD_CTX);
-			अगर (merge) अणु
+				NULL, vma->vm_file, vma->vm_pgoff, NULL, NULL_VM_UFFD_CTX);
+			if (merge) {
 				/* ->mmap() can change vma->vm_file and fput the original file. So
-				 * fput the vma->vm_file here or we would add an extra fput क्रम file
+				 * fput the vma->vm_file here or we would add an extra fput for file
 				 * and cause general protection fault ultimately.
 				 */
 				fput(vma->vm_file);
-				vm_area_मुक्त(vma);
+				vm_area_free(vma);
 				vma = merge;
 				/* Update vm_flags to pick up the change. */
 				vm_flags = vma->vm_flags;
-				जाओ unmap_writable;
-			पूर्ण
-		पूर्ण
+				goto unmap_writable;
+			}
+		}
 
 		vm_flags = vma->vm_flags;
-	पूर्ण अन्यथा अगर (vm_flags & VM_SHARED) अणु
+	} else if (vm_flags & VM_SHARED) {
 		error = shmem_zero_setup(vma);
-		अगर (error)
-			जाओ मुक्त_vma;
-	पूर्ण अन्यथा अणु
+		if (error)
+			goto free_vma;
+	} else {
 		vma_set_anonymous(vma);
-	पूर्ण
+	}
 
 	/* Allow architectures to sanity-check the vm_flags */
-	अगर (!arch_validate_flags(vma->vm_flags)) अणु
+	if (!arch_validate_flags(vma->vm_flags)) {
 		error = -EINVAL;
-		अगर (file)
-			जाओ unmap_and_मुक्त_vma;
-		अन्यथा
-			जाओ मुक्त_vma;
-	पूर्ण
+		if (file)
+			goto unmap_and_free_vma;
+		else
+			goto free_vma;
+	}
 
 	vma_link(mm, vma, prev, rb_link, rb_parent);
-	/* Once vma denies ग_लिखो, unकरो our temporary denial count */
-	अगर (file) अणु
+	/* Once vma denies write, undo our temporary denial count */
+	if (file) {
 unmap_writable:
-		अगर (vm_flags & VM_SHARED)
+		if (vm_flags & VM_SHARED)
 			mapping_unmap_writable(file->f_mapping);
-		अगर (vm_flags & VM_DENYWRITE)
-			allow_ग_लिखो_access(file);
-	पूर्ण
+		if (vm_flags & VM_DENYWRITE)
+			allow_write_access(file);
+	}
 	file = vma->vm_file;
 out:
 	perf_event_mmap(vma);
 
 	vm_stat_account(mm, vm_flags, len >> PAGE_SHIFT);
-	अगर (vm_flags & VM_LOCKED) अणु
-		अगर ((vm_flags & VM_SPECIAL) || vma_is_dax(vma) ||
+	if (vm_flags & VM_LOCKED) {
+		if ((vm_flags & VM_SPECIAL) || vma_is_dax(vma) ||
 					is_vm_hugetlb_page(vma) ||
 					vma == get_gate_vma(current->mm))
 			vma->vm_flags &= VM_LOCKED_CLEAR_MASK;
-		अन्यथा
+		else
 			mm->locked_vm += (len >> PAGE_SHIFT);
-	पूर्ण
+	}
 
-	अगर (file)
+	if (file)
 		uprobe_mmap(vma);
 
 	/*
@@ -1895,125 +1894,125 @@ out:
 	 * then new mapped in-place (which must be aimed as
 	 * a completely new data area).
 	 */
-	vma->vm_flags |= VM_SOFTसूचीTY;
+	vma->vm_flags |= VM_SOFTDIRTY;
 
 	vma_set_page_prot(vma);
 
-	वापस addr;
+	return addr;
 
-unmap_and_मुक्त_vma:
+unmap_and_free_vma:
 	fput(vma->vm_file);
-	vma->vm_file = शून्य;
+	vma->vm_file = NULL;
 
-	/* Unकरो any partial mapping करोne by a device driver. */
+	/* Undo any partial mapping done by a device driver. */
 	unmap_region(mm, vma, prev, vma->vm_start, vma->vm_end);
-	अक्षरged = 0;
-	अगर (vm_flags & VM_SHARED)
+	charged = 0;
+	if (vm_flags & VM_SHARED)
 		mapping_unmap_writable(file->f_mapping);
-allow_ग_लिखो_and_मुक्त_vma:
-	अगर (vm_flags & VM_DENYWRITE)
-		allow_ग_लिखो_access(file);
-मुक्त_vma:
-	vm_area_मुक्त(vma);
+allow_write_and_free_vma:
+	if (vm_flags & VM_DENYWRITE)
+		allow_write_access(file);
+free_vma:
+	vm_area_free(vma);
 unacct_error:
-	अगर (अक्षरged)
-		vm_unacct_memory(अक्षरged);
-	वापस error;
-पूर्ण
+	if (charged)
+		vm_unacct_memory(charged);
+	return error;
+}
 
-अटल अचिन्हित दीर्घ unmapped_area(काष्ठा vm_unmapped_area_info *info)
-अणु
+static unsigned long unmapped_area(struct vm_unmapped_area_info *info)
+{
 	/*
-	 * We implement the search by looking क्रम an rbtree node that
+	 * We implement the search by looking for an rbtree node that
 	 * immediately follows a suitable gap. That is,
 	 * - gap_start = vma->vm_prev->vm_end <= info->high_limit - length;
 	 * - gap_end   = vma->vm_start        >= info->low_limit  + length;
 	 * - gap_end - gap_start >= length
 	 */
 
-	काष्ठा mm_काष्ठा *mm = current->mm;
-	काष्ठा vm_area_काष्ठा *vma;
-	अचिन्हित दीर्घ length, low_limit, high_limit, gap_start, gap_end;
+	struct mm_struct *mm = current->mm;
+	struct vm_area_struct *vma;
+	unsigned long length, low_limit, high_limit, gap_start, gap_end;
 
-	/* Adjust search length to account क्रम worst हाल alignment overhead */
+	/* Adjust search length to account for worst case alignment overhead */
 	length = info->length + info->align_mask;
-	अगर (length < info->length)
-		वापस -ENOMEM;
+	if (length < info->length)
+		return -ENOMEM;
 
 	/* Adjust search limits by the desired length */
-	अगर (info->high_limit < length)
-		वापस -ENOMEM;
+	if (info->high_limit < length)
+		return -ENOMEM;
 	high_limit = info->high_limit - length;
 
-	अगर (info->low_limit > high_limit)
-		वापस -ENOMEM;
+	if (info->low_limit > high_limit)
+		return -ENOMEM;
 	low_limit = info->low_limit + length;
 
-	/* Check अगर rbtree root looks promising */
-	अगर (RB_EMPTY_ROOT(&mm->mm_rb))
-		जाओ check_highest;
-	vma = rb_entry(mm->mm_rb.rb_node, काष्ठा vm_area_काष्ठा, vm_rb);
-	अगर (vma->rb_subtree_gap < length)
-		जाओ check_highest;
+	/* Check if rbtree root looks promising */
+	if (RB_EMPTY_ROOT(&mm->mm_rb))
+		goto check_highest;
+	vma = rb_entry(mm->mm_rb.rb_node, struct vm_area_struct, vm_rb);
+	if (vma->rb_subtree_gap < length)
+		goto check_highest;
 
-	जबतक (true) अणु
-		/* Visit left subtree अगर it looks promising */
+	while (true) {
+		/* Visit left subtree if it looks promising */
 		gap_end = vm_start_gap(vma);
-		अगर (gap_end >= low_limit && vma->vm_rb.rb_left) अणु
-			काष्ठा vm_area_काष्ठा *left =
+		if (gap_end >= low_limit && vma->vm_rb.rb_left) {
+			struct vm_area_struct *left =
 				rb_entry(vma->vm_rb.rb_left,
-					 काष्ठा vm_area_काष्ठा, vm_rb);
-			अगर (left->rb_subtree_gap >= length) अणु
+					 struct vm_area_struct, vm_rb);
+			if (left->rb_subtree_gap >= length) {
 				vma = left;
-				जारी;
-			पूर्ण
-		पूर्ण
+				continue;
+			}
+		}
 
 		gap_start = vma->vm_prev ? vm_end_gap(vma->vm_prev) : 0;
 check_current:
-		/* Check अगर current node has a suitable gap */
-		अगर (gap_start > high_limit)
-			वापस -ENOMEM;
-		अगर (gap_end >= low_limit &&
+		/* Check if current node has a suitable gap */
+		if (gap_start > high_limit)
+			return -ENOMEM;
+		if (gap_end >= low_limit &&
 		    gap_end > gap_start && gap_end - gap_start >= length)
-			जाओ found;
+			goto found;
 
-		/* Visit right subtree अगर it looks promising */
-		अगर (vma->vm_rb.rb_right) अणु
-			काष्ठा vm_area_काष्ठा *right =
+		/* Visit right subtree if it looks promising */
+		if (vma->vm_rb.rb_right) {
+			struct vm_area_struct *right =
 				rb_entry(vma->vm_rb.rb_right,
-					 काष्ठा vm_area_काष्ठा, vm_rb);
-			अगर (right->rb_subtree_gap >= length) अणु
+					 struct vm_area_struct, vm_rb);
+			if (right->rb_subtree_gap >= length) {
 				vma = right;
-				जारी;
-			पूर्ण
-		पूर्ण
+				continue;
+			}
+		}
 
 		/* Go back up the rbtree to find next candidate node */
-		जबतक (true) अणु
-			काष्ठा rb_node *prev = &vma->vm_rb;
-			अगर (!rb_parent(prev))
-				जाओ check_highest;
+		while (true) {
+			struct rb_node *prev = &vma->vm_rb;
+			if (!rb_parent(prev))
+				goto check_highest;
 			vma = rb_entry(rb_parent(prev),
-				       काष्ठा vm_area_काष्ठा, vm_rb);
-			अगर (prev == vma->vm_rb.rb_left) अणु
+				       struct vm_area_struct, vm_rb);
+			if (prev == vma->vm_rb.rb_left) {
 				gap_start = vm_end_gap(vma->vm_prev);
 				gap_end = vm_start_gap(vma);
-				जाओ check_current;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				goto check_current;
+			}
+		}
+	}
 
 check_highest:
-	/* Check highest gap, which करोes not precede any rbtree node */
+	/* Check highest gap, which does not precede any rbtree node */
 	gap_start = mm->highest_vm_end;
-	gap_end = अच_दीर्घ_उच्च;  /* Only क्रम VM_BUG_ON below */
-	अगर (gap_start > high_limit)
-		वापस -ENOMEM;
+	gap_end = ULONG_MAX;  /* Only for VM_BUG_ON below */
+	if (gap_start > high_limit)
+		return -ENOMEM;
 
 found:
 	/* We found a suitable gap. Clip it with the original low_limit. */
-	अगर (gap_start < info->low_limit)
+	if (gap_start < info->low_limit)
 		gap_start = info->low_limit;
 
 	/* Adjust gap address to the desired alignment */
@@ -2021,96 +2020,96 @@ found:
 
 	VM_BUG_ON(gap_start + info->length > info->high_limit);
 	VM_BUG_ON(gap_start + info->length > gap_end);
-	वापस gap_start;
-पूर्ण
+	return gap_start;
+}
 
-अटल अचिन्हित दीर्घ unmapped_area_topकरोwn(काष्ठा vm_unmapped_area_info *info)
-अणु
-	काष्ठा mm_काष्ठा *mm = current->mm;
-	काष्ठा vm_area_काष्ठा *vma;
-	अचिन्हित दीर्घ length, low_limit, high_limit, gap_start, gap_end;
+static unsigned long unmapped_area_topdown(struct vm_unmapped_area_info *info)
+{
+	struct mm_struct *mm = current->mm;
+	struct vm_area_struct *vma;
+	unsigned long length, low_limit, high_limit, gap_start, gap_end;
 
-	/* Adjust search length to account क्रम worst हाल alignment overhead */
+	/* Adjust search length to account for worst case alignment overhead */
 	length = info->length + info->align_mask;
-	अगर (length < info->length)
-		वापस -ENOMEM;
+	if (length < info->length)
+		return -ENOMEM;
 
 	/*
 	 * Adjust search limits by the desired length.
 	 * See implementation comment at top of unmapped_area().
 	 */
 	gap_end = info->high_limit;
-	अगर (gap_end < length)
-		वापस -ENOMEM;
+	if (gap_end < length)
+		return -ENOMEM;
 	high_limit = gap_end - length;
 
-	अगर (info->low_limit > high_limit)
-		वापस -ENOMEM;
+	if (info->low_limit > high_limit)
+		return -ENOMEM;
 	low_limit = info->low_limit + length;
 
-	/* Check highest gap, which करोes not precede any rbtree node */
+	/* Check highest gap, which does not precede any rbtree node */
 	gap_start = mm->highest_vm_end;
-	अगर (gap_start <= high_limit)
-		जाओ found_highest;
+	if (gap_start <= high_limit)
+		goto found_highest;
 
-	/* Check अगर rbtree root looks promising */
-	अगर (RB_EMPTY_ROOT(&mm->mm_rb))
-		वापस -ENOMEM;
-	vma = rb_entry(mm->mm_rb.rb_node, काष्ठा vm_area_काष्ठा, vm_rb);
-	अगर (vma->rb_subtree_gap < length)
-		वापस -ENOMEM;
+	/* Check if rbtree root looks promising */
+	if (RB_EMPTY_ROOT(&mm->mm_rb))
+		return -ENOMEM;
+	vma = rb_entry(mm->mm_rb.rb_node, struct vm_area_struct, vm_rb);
+	if (vma->rb_subtree_gap < length)
+		return -ENOMEM;
 
-	जबतक (true) अणु
-		/* Visit right subtree अगर it looks promising */
+	while (true) {
+		/* Visit right subtree if it looks promising */
 		gap_start = vma->vm_prev ? vm_end_gap(vma->vm_prev) : 0;
-		अगर (gap_start <= high_limit && vma->vm_rb.rb_right) अणु
-			काष्ठा vm_area_काष्ठा *right =
+		if (gap_start <= high_limit && vma->vm_rb.rb_right) {
+			struct vm_area_struct *right =
 				rb_entry(vma->vm_rb.rb_right,
-					 काष्ठा vm_area_काष्ठा, vm_rb);
-			अगर (right->rb_subtree_gap >= length) अणु
+					 struct vm_area_struct, vm_rb);
+			if (right->rb_subtree_gap >= length) {
 				vma = right;
-				जारी;
-			पूर्ण
-		पूर्ण
+				continue;
+			}
+		}
 
 check_current:
-		/* Check अगर current node has a suitable gap */
+		/* Check if current node has a suitable gap */
 		gap_end = vm_start_gap(vma);
-		अगर (gap_end < low_limit)
-			वापस -ENOMEM;
-		अगर (gap_start <= high_limit &&
+		if (gap_end < low_limit)
+			return -ENOMEM;
+		if (gap_start <= high_limit &&
 		    gap_end > gap_start && gap_end - gap_start >= length)
-			जाओ found;
+			goto found;
 
-		/* Visit left subtree अगर it looks promising */
-		अगर (vma->vm_rb.rb_left) अणु
-			काष्ठा vm_area_काष्ठा *left =
+		/* Visit left subtree if it looks promising */
+		if (vma->vm_rb.rb_left) {
+			struct vm_area_struct *left =
 				rb_entry(vma->vm_rb.rb_left,
-					 काष्ठा vm_area_काष्ठा, vm_rb);
-			अगर (left->rb_subtree_gap >= length) अणु
+					 struct vm_area_struct, vm_rb);
+			if (left->rb_subtree_gap >= length) {
 				vma = left;
-				जारी;
-			पूर्ण
-		पूर्ण
+				continue;
+			}
+		}
 
 		/* Go back up the rbtree to find next candidate node */
-		जबतक (true) अणु
-			काष्ठा rb_node *prev = &vma->vm_rb;
-			अगर (!rb_parent(prev))
-				वापस -ENOMEM;
+		while (true) {
+			struct rb_node *prev = &vma->vm_rb;
+			if (!rb_parent(prev))
+				return -ENOMEM;
 			vma = rb_entry(rb_parent(prev),
-				       काष्ठा vm_area_काष्ठा, vm_rb);
-			अगर (prev == vma->vm_rb.rb_right) अणु
+				       struct vm_area_struct, vm_rb);
+			if (prev == vma->vm_rb.rb_right) {
 				gap_start = vma->vm_prev ?
 					vm_end_gap(vma->vm_prev) : 0;
-				जाओ check_current;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				goto check_current;
+			}
+		}
+	}
 
 found:
 	/* We found a suitable gap. Clip it with the original high_limit. */
-	अगर (gap_end > info->high_limit)
+	if (gap_end > info->high_limit)
 		gap_end = info->high_limit;
 
 found_highest:
@@ -2120,38 +2119,38 @@ found_highest:
 
 	VM_BUG_ON(gap_end < info->low_limit);
 	VM_BUG_ON(gap_end < gap_start);
-	वापस gap_end;
-पूर्ण
+	return gap_end;
+}
 
 /*
- * Search क्रम an unmapped address range.
+ * Search for an unmapped address range.
  *
- * We are looking क्रम a range that:
- * - करोes not पूर्णांकersect with any VMA;
- * - is contained within the [low_limit, high_limit) पूर्णांकerval;
+ * We are looking for a range that:
+ * - does not intersect with any VMA;
+ * - is contained within the [low_limit, high_limit) interval;
  * - is at least the desired size.
  * - satisfies (begin_addr & align_mask) == (align_offset & align_mask)
  */
-अचिन्हित दीर्घ vm_unmapped_area(काष्ठा vm_unmapped_area_info *info)
-अणु
-	अचिन्हित दीर्घ addr;
+unsigned long vm_unmapped_area(struct vm_unmapped_area_info *info)
+{
+	unsigned long addr;
 
-	अगर (info->flags & VM_UNMAPPED_AREA_TOPDOWN)
-		addr = unmapped_area_topकरोwn(info);
-	अन्यथा
+	if (info->flags & VM_UNMAPPED_AREA_TOPDOWN)
+		addr = unmapped_area_topdown(info);
+	else
 		addr = unmapped_area(info);
 
 	trace_vm_unmapped_area(addr, info);
-	वापस addr;
-पूर्ण
+	return addr;
+}
 
-#अगर_अघोषित arch_get_mmap_end
-#घोषणा arch_get_mmap_end(addr)	(TASK_SIZE)
-#पूर्ण_अगर
+#ifndef arch_get_mmap_end
+#define arch_get_mmap_end(addr)	(TASK_SIZE)
+#endif
 
-#अगर_अघोषित arch_get_mmap_base
-#घोषणा arch_get_mmap_base(addr, base) (base)
-#पूर्ण_अगर
+#ifndef arch_get_mmap_base
+#define arch_get_mmap_base(addr, base) (base)
+#endif
 
 /* Get an address range which is currently unmapped.
  * For shmat() with addr=0.
@@ -2159,35 +2158,35 @@ found_highest:
  * Ugly calling convention alert:
  * Return value with the low bits set means error value,
  * ie
- *	अगर (ret & ~PAGE_MASK)
+ *	if (ret & ~PAGE_MASK)
  *		error = ret;
  *
  * This function "knows" that -ENOMEM has the bits set.
  */
-#अगर_अघोषित HAVE_ARCH_UNMAPPED_AREA
-अचिन्हित दीर्घ
-arch_get_unmapped_area(काष्ठा file *filp, अचिन्हित दीर्घ addr,
-		अचिन्हित दीर्घ len, अचिन्हित दीर्घ pgoff, अचिन्हित दीर्घ flags)
-अणु
-	काष्ठा mm_काष्ठा *mm = current->mm;
-	काष्ठा vm_area_काष्ठा *vma, *prev;
-	काष्ठा vm_unmapped_area_info info;
-	स्थिर अचिन्हित दीर्घ mmap_end = arch_get_mmap_end(addr);
+#ifndef HAVE_ARCH_UNMAPPED_AREA
+unsigned long
+arch_get_unmapped_area(struct file *filp, unsigned long addr,
+		unsigned long len, unsigned long pgoff, unsigned long flags)
+{
+	struct mm_struct *mm = current->mm;
+	struct vm_area_struct *vma, *prev;
+	struct vm_unmapped_area_info info;
+	const unsigned long mmap_end = arch_get_mmap_end(addr);
 
-	अगर (len > mmap_end - mmap_min_addr)
-		वापस -ENOMEM;
+	if (len > mmap_end - mmap_min_addr)
+		return -ENOMEM;
 
-	अगर (flags & MAP_FIXED)
-		वापस addr;
+	if (flags & MAP_FIXED)
+		return addr;
 
-	अगर (addr) अणु
+	if (addr) {
 		addr = PAGE_ALIGN(addr);
 		vma = find_vma_prev(mm, addr, &prev);
-		अगर (mmap_end - len >= addr && addr >= mmap_min_addr &&
+		if (mmap_end - len >= addr && addr >= mmap_min_addr &&
 		    (!vma || addr + len <= vm_start_gap(vma)) &&
 		    (!prev || addr >= vm_end_gap(prev)))
-			वापस addr;
-	पूर्ण
+			return addr;
+	}
 
 	info.flags = 0;
 	info.length = len;
@@ -2195,41 +2194,41 @@ arch_get_unmapped_area(काष्ठा file *filp, अचिन्हित �
 	info.high_limit = mmap_end;
 	info.align_mask = 0;
 	info.align_offset = 0;
-	वापस vm_unmapped_area(&info);
-पूर्ण
-#पूर्ण_अगर
+	return vm_unmapped_area(&info);
+}
+#endif
 
 /*
- * This mmap-allocator allocates new areas top-करोwn from below the
+ * This mmap-allocator allocates new areas top-down from below the
  * stack's low limit (the base):
  */
-#अगर_अघोषित HAVE_ARCH_UNMAPPED_AREA_TOPDOWN
-अचिन्हित दीर्घ
-arch_get_unmapped_area_topकरोwn(काष्ठा file *filp, अचिन्हित दीर्घ addr,
-			  अचिन्हित दीर्घ len, अचिन्हित दीर्घ pgoff,
-			  अचिन्हित दीर्घ flags)
-अणु
-	काष्ठा vm_area_काष्ठा *vma, *prev;
-	काष्ठा mm_काष्ठा *mm = current->mm;
-	काष्ठा vm_unmapped_area_info info;
-	स्थिर अचिन्हित दीर्घ mmap_end = arch_get_mmap_end(addr);
+#ifndef HAVE_ARCH_UNMAPPED_AREA_TOPDOWN
+unsigned long
+arch_get_unmapped_area_topdown(struct file *filp, unsigned long addr,
+			  unsigned long len, unsigned long pgoff,
+			  unsigned long flags)
+{
+	struct vm_area_struct *vma, *prev;
+	struct mm_struct *mm = current->mm;
+	struct vm_unmapped_area_info info;
+	const unsigned long mmap_end = arch_get_mmap_end(addr);
 
-	/* requested length too big क्रम entire address space */
-	अगर (len > mmap_end - mmap_min_addr)
-		वापस -ENOMEM;
+	/* requested length too big for entire address space */
+	if (len > mmap_end - mmap_min_addr)
+		return -ENOMEM;
 
-	अगर (flags & MAP_FIXED)
-		वापस addr;
+	if (flags & MAP_FIXED)
+		return addr;
 
-	/* requesting a specअगरic address */
-	अगर (addr) अणु
+	/* requesting a specific address */
+	if (addr) {
 		addr = PAGE_ALIGN(addr);
 		vma = find_vma_prev(mm, addr, &prev);
-		अगर (mmap_end - len >= addr && addr >= mmap_min_addr &&
+		if (mmap_end - len >= addr && addr >= mmap_min_addr &&
 				(!vma || addr + len <= vm_start_gap(vma)) &&
 				(!prev || addr >= vm_end_gap(prev)))
-			वापस addr;
-	पूर्ण
+			return addr;
+	}
 
 	info.flags = VM_UNMAPPED_AREA_TOPDOWN;
 	info.length = len;
@@ -2245,784 +2244,784 @@ arch_get_unmapped_area_topकरोwn(काष्ठा file *filp, अचि�
 	 * can happen with large stack limits and large mmap()
 	 * allocations.
 	 */
-	अगर (offset_in_page(addr)) अणु
+	if (offset_in_page(addr)) {
 		VM_BUG_ON(addr != -ENOMEM);
 		info.flags = 0;
 		info.low_limit = TASK_UNMAPPED_BASE;
 		info.high_limit = mmap_end;
 		addr = vm_unmapped_area(&info);
-	पूर्ण
+	}
 
-	वापस addr;
-पूर्ण
-#पूर्ण_अगर
+	return addr;
+}
+#endif
 
-अचिन्हित दीर्घ
-get_unmapped_area(काष्ठा file *file, अचिन्हित दीर्घ addr, अचिन्हित दीर्घ len,
-		अचिन्हित दीर्घ pgoff, अचिन्हित दीर्घ flags)
-अणु
-	अचिन्हित दीर्घ (*get_area)(काष्ठा file *, अचिन्हित दीर्घ,
-				  अचिन्हित दीर्घ, अचिन्हित दीर्घ, अचिन्हित दीर्घ);
+unsigned long
+get_unmapped_area(struct file *file, unsigned long addr, unsigned long len,
+		unsigned long pgoff, unsigned long flags)
+{
+	unsigned long (*get_area)(struct file *, unsigned long,
+				  unsigned long, unsigned long, unsigned long);
 
-	अचिन्हित दीर्घ error = arch_mmap_check(addr, len, flags);
-	अगर (error)
-		वापस error;
+	unsigned long error = arch_mmap_check(addr, len, flags);
+	if (error)
+		return error;
 
 	/* Careful about overflows.. */
-	अगर (len > TASK_SIZE)
-		वापस -ENOMEM;
+	if (len > TASK_SIZE)
+		return -ENOMEM;
 
 	get_area = current->mm->get_unmapped_area;
-	अगर (file) अणु
-		अगर (file->f_op->get_unmapped_area)
+	if (file) {
+		if (file->f_op->get_unmapped_area)
 			get_area = file->f_op->get_unmapped_area;
-	पूर्ण अन्यथा अगर (flags & MAP_SHARED) अणु
+	} else if (flags & MAP_SHARED) {
 		/*
 		 * mmap_region() will call shmem_zero_setup() to create a file,
-		 * so use shmem's get_unmapped_area in हाल it can be huge.
-		 * करो_mmap() will clear pgoff, so match alignment.
+		 * so use shmem's get_unmapped_area in case it can be huge.
+		 * do_mmap() will clear pgoff, so match alignment.
 		 */
 		pgoff = 0;
 		get_area = shmem_get_unmapped_area;
-	पूर्ण
+	}
 
 	addr = get_area(file, addr, len, pgoff, flags);
-	अगर (IS_ERR_VALUE(addr))
-		वापस addr;
+	if (IS_ERR_VALUE(addr))
+		return addr;
 
-	अगर (addr > TASK_SIZE - len)
-		वापस -ENOMEM;
-	अगर (offset_in_page(addr))
-		वापस -EINVAL;
+	if (addr > TASK_SIZE - len)
+		return -ENOMEM;
+	if (offset_in_page(addr))
+		return -EINVAL;
 
 	error = security_mmap_addr(addr);
-	वापस error ? error : addr;
-पूर्ण
+	return error ? error : addr;
+}
 
 EXPORT_SYMBOL(get_unmapped_area);
 
-/* Look up the first VMA which satisfies  addr < vm_end,  शून्य अगर none. */
-काष्ठा vm_area_काष्ठा *find_vma(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ addr)
-अणु
-	काष्ठा rb_node *rb_node;
-	काष्ठा vm_area_काष्ठा *vma;
+/* Look up the first VMA which satisfies  addr < vm_end,  NULL if none. */
+struct vm_area_struct *find_vma(struct mm_struct *mm, unsigned long addr)
+{
+	struct rb_node *rb_node;
+	struct vm_area_struct *vma;
 
 	/* Check the cache first. */
 	vma = vmacache_find(mm, addr);
-	अगर (likely(vma))
-		वापस vma;
+	if (likely(vma))
+		return vma;
 
 	rb_node = mm->mm_rb.rb_node;
 
-	जबतक (rb_node) अणु
-		काष्ठा vm_area_काष्ठा *पंचांगp;
+	while (rb_node) {
+		struct vm_area_struct *tmp;
 
-		पंचांगp = rb_entry(rb_node, काष्ठा vm_area_काष्ठा, vm_rb);
+		tmp = rb_entry(rb_node, struct vm_area_struct, vm_rb);
 
-		अगर (पंचांगp->vm_end > addr) अणु
-			vma = पंचांगp;
-			अगर (पंचांगp->vm_start <= addr)
-				अवरोध;
+		if (tmp->vm_end > addr) {
+			vma = tmp;
+			if (tmp->vm_start <= addr)
+				break;
 			rb_node = rb_node->rb_left;
-		पूर्ण अन्यथा
+		} else
 			rb_node = rb_node->rb_right;
-	पूर्ण
+	}
 
-	अगर (vma)
+	if (vma)
 		vmacache_update(addr, vma);
-	वापस vma;
-पूर्ण
+	return vma;
+}
 
 EXPORT_SYMBOL(find_vma);
 
 /*
- * Same as find_vma, but also वापस a poपूर्णांकer to the previous VMA in *pprev.
+ * Same as find_vma, but also return a pointer to the previous VMA in *pprev.
  */
-काष्ठा vm_area_काष्ठा *
-find_vma_prev(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ addr,
-			काष्ठा vm_area_काष्ठा **pprev)
-अणु
-	काष्ठा vm_area_काष्ठा *vma;
+struct vm_area_struct *
+find_vma_prev(struct mm_struct *mm, unsigned long addr,
+			struct vm_area_struct **pprev)
+{
+	struct vm_area_struct *vma;
 
 	vma = find_vma(mm, addr);
-	अगर (vma) अणु
+	if (vma) {
 		*pprev = vma->vm_prev;
-	पूर्ण अन्यथा अणु
-		काष्ठा rb_node *rb_node = rb_last(&mm->mm_rb);
+	} else {
+		struct rb_node *rb_node = rb_last(&mm->mm_rb);
 
-		*pprev = rb_node ? rb_entry(rb_node, काष्ठा vm_area_काष्ठा, vm_rb) : शून्य;
-	पूर्ण
-	वापस vma;
-पूर्ण
+		*pprev = rb_node ? rb_entry(rb_node, struct vm_area_struct, vm_rb) : NULL;
+	}
+	return vma;
+}
 
 /*
- * Verअगरy that the stack growth is acceptable and
+ * Verify that the stack growth is acceptable and
  * update accounting. This is shared with both the
- * grow-up and grow-करोwn हालs.
+ * grow-up and grow-down cases.
  */
-अटल पूर्णांक acct_stack_growth(काष्ठा vm_area_काष्ठा *vma,
-			     अचिन्हित दीर्घ size, अचिन्हित दीर्घ grow)
-अणु
-	काष्ठा mm_काष्ठा *mm = vma->vm_mm;
-	अचिन्हित दीर्घ new_start;
+static int acct_stack_growth(struct vm_area_struct *vma,
+			     unsigned long size, unsigned long grow)
+{
+	struct mm_struct *mm = vma->vm_mm;
+	unsigned long new_start;
 
 	/* address space limit tests */
-	अगर (!may_expand_vm(mm, vma->vm_flags, grow))
-		वापस -ENOMEM;
+	if (!may_expand_vm(mm, vma->vm_flags, grow))
+		return -ENOMEM;
 
 	/* Stack limit test */
-	अगर (size > rlimit(RLIMIT_STACK))
-		वापस -ENOMEM;
+	if (size > rlimit(RLIMIT_STACK))
+		return -ENOMEM;
 
 	/* mlock limit tests */
-	अगर (vma->vm_flags & VM_LOCKED) अणु
-		अचिन्हित दीर्घ locked;
-		अचिन्हित दीर्घ limit;
+	if (vma->vm_flags & VM_LOCKED) {
+		unsigned long locked;
+		unsigned long limit;
 		locked = mm->locked_vm + grow;
 		limit = rlimit(RLIMIT_MEMLOCK);
 		limit >>= PAGE_SHIFT;
-		अगर (locked > limit && !capable(CAP_IPC_LOCK))
-			वापस -ENOMEM;
-	पूर्ण
+		if (locked > limit && !capable(CAP_IPC_LOCK))
+			return -ENOMEM;
+	}
 
-	/* Check to ensure the stack will not grow पूर्णांकo a hugetlb-only region */
+	/* Check to ensure the stack will not grow into a hugetlb-only region */
 	new_start = (vma->vm_flags & VM_GROWSUP) ? vma->vm_start :
 			vma->vm_end - size;
-	अगर (is_hugepage_only_range(vma->vm_mm, new_start, size))
-		वापस -EFAULT;
+	if (is_hugepage_only_range(vma->vm_mm, new_start, size))
+		return -EFAULT;
 
 	/*
 	 * Overcommit..  This must be the final test, as it will
 	 * update security statistics.
 	 */
-	अगर (security_vm_enough_memory_mm(mm, grow))
-		वापस -ENOMEM;
+	if (security_vm_enough_memory_mm(mm, grow))
+		return -ENOMEM;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर defined(CONFIG_STACK_GROWSUP) || defined(CONFIG_IA64)
+#if defined(CONFIG_STACK_GROWSUP) || defined(CONFIG_IA64)
 /*
- * PA-RISC uses this क्रम its stack; IA64 क्रम its Register Backing Store.
+ * PA-RISC uses this for its stack; IA64 for its Register Backing Store.
  * vma is the last one with address > vma->vm_end.  Have to extend vma.
  */
-पूर्णांक expand_upwards(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ address)
-अणु
-	काष्ठा mm_काष्ठा *mm = vma->vm_mm;
-	काष्ठा vm_area_काष्ठा *next;
-	अचिन्हित दीर्घ gap_addr;
-	पूर्णांक error = 0;
+int expand_upwards(struct vm_area_struct *vma, unsigned long address)
+{
+	struct mm_struct *mm = vma->vm_mm;
+	struct vm_area_struct *next;
+	unsigned long gap_addr;
+	int error = 0;
 
-	अगर (!(vma->vm_flags & VM_GROWSUP))
-		वापस -EFAULT;
+	if (!(vma->vm_flags & VM_GROWSUP))
+		return -EFAULT;
 
 	/* Guard against exceeding limits of the address space. */
 	address &= PAGE_MASK;
-	अगर (address >= (TASK_SIZE & PAGE_MASK))
-		वापस -ENOMEM;
+	if (address >= (TASK_SIZE & PAGE_MASK))
+		return -ENOMEM;
 	address += PAGE_SIZE;
 
-	/* Enक्रमce stack_guard_gap */
+	/* Enforce stack_guard_gap */
 	gap_addr = address + stack_guard_gap;
 
 	/* Guard against overflow */
-	अगर (gap_addr < address || gap_addr > TASK_SIZE)
+	if (gap_addr < address || gap_addr > TASK_SIZE)
 		gap_addr = TASK_SIZE;
 
 	next = vma->vm_next;
-	अगर (next && next->vm_start < gap_addr && vma_is_accessible(next)) अणु
-		अगर (!(next->vm_flags & VM_GROWSUP))
-			वापस -ENOMEM;
+	if (next && next->vm_start < gap_addr && vma_is_accessible(next)) {
+		if (!(next->vm_flags & VM_GROWSUP))
+			return -ENOMEM;
 		/* Check that both stack segments have the same anon_vma? */
-	पूर्ण
+	}
 
 	/* We must make sure the anon_vma is allocated. */
-	अगर (unlikely(anon_vma_prepare(vma)))
-		वापस -ENOMEM;
+	if (unlikely(anon_vma_prepare(vma)))
+		return -ENOMEM;
 
 	/*
 	 * vma->vm_start/vm_end cannot change under us because the caller
-	 * is required to hold the mmap_lock in पढ़ो mode.  We need the
+	 * is required to hold the mmap_lock in read mode.  We need the
 	 * anon_vma lock to serialize against concurrent expand_stacks.
 	 */
-	anon_vma_lock_ग_लिखो(vma->anon_vma);
+	anon_vma_lock_write(vma->anon_vma);
 
-	/* Somebody अन्यथा might have raced and expanded it alपढ़ोy */
-	अगर (address > vma->vm_end) अणु
-		अचिन्हित दीर्घ size, grow;
+	/* Somebody else might have raced and expanded it already */
+	if (address > vma->vm_end) {
+		unsigned long size, grow;
 
 		size = address - vma->vm_start;
 		grow = (address - vma->vm_end) >> PAGE_SHIFT;
 
 		error = -ENOMEM;
-		अगर (vma->vm_pgoff + (size >> PAGE_SHIFT) >= vma->vm_pgoff) अणु
+		if (vma->vm_pgoff + (size >> PAGE_SHIFT) >= vma->vm_pgoff) {
 			error = acct_stack_growth(vma, size, grow);
-			अगर (!error) अणु
+			if (!error) {
 				/*
-				 * vma_gap_update() करोesn't support concurrent
+				 * vma_gap_update() doesn't support concurrent
 				 * updates, but we only hold a shared mmap_lock
 				 * lock here, so we need to protect against
 				 * concurrent vma expansions.
-				 * anon_vma_lock_ग_लिखो() करोesn't help here, as
-				 * we करोn't guarantee that all growable vmas
+				 * anon_vma_lock_write() doesn't help here, as
+				 * we don't guarantee that all growable vmas
 				 * in a mm share the same root anon vma.
 				 * So, we reuse mm->page_table_lock to guard
 				 * against concurrent vma expansions.
 				 */
 				spin_lock(&mm->page_table_lock);
-				अगर (vma->vm_flags & VM_LOCKED)
+				if (vma->vm_flags & VM_LOCKED)
 					mm->locked_vm += grow;
 				vm_stat_account(mm, vma->vm_flags, grow);
-				anon_vma_पूर्णांकerval_tree_pre_update_vma(vma);
+				anon_vma_interval_tree_pre_update_vma(vma);
 				vma->vm_end = address;
-				anon_vma_पूर्णांकerval_tree_post_update_vma(vma);
-				अगर (vma->vm_next)
+				anon_vma_interval_tree_post_update_vma(vma);
+				if (vma->vm_next)
 					vma_gap_update(vma->vm_next);
-				अन्यथा
+				else
 					mm->highest_vm_end = vm_end_gap(vma);
 				spin_unlock(&mm->page_table_lock);
 
 				perf_event_mmap(vma);
-			पूर्ण
-		पूर्ण
-	पूर्ण
-	anon_vma_unlock_ग_लिखो(vma->anon_vma);
+			}
+		}
+	}
+	anon_vma_unlock_write(vma->anon_vma);
 	khugepaged_enter_vma_merge(vma, vma->vm_flags);
 	validate_mm(mm);
-	वापस error;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_STACK_GROWSUP || CONFIG_IA64 */
+	return error;
+}
+#endif /* CONFIG_STACK_GROWSUP || CONFIG_IA64 */
 
 /*
  * vma is the first one with address < vma->vm_start.  Have to extend vma.
  */
-पूर्णांक expand_करोwnwards(काष्ठा vm_area_काष्ठा *vma,
-				   अचिन्हित दीर्घ address)
-अणु
-	काष्ठा mm_काष्ठा *mm = vma->vm_mm;
-	काष्ठा vm_area_काष्ठा *prev;
-	पूर्णांक error = 0;
+int expand_downwards(struct vm_area_struct *vma,
+				   unsigned long address)
+{
+	struct mm_struct *mm = vma->vm_mm;
+	struct vm_area_struct *prev;
+	int error = 0;
 
 	address &= PAGE_MASK;
-	अगर (address < mmap_min_addr)
-		वापस -EPERM;
+	if (address < mmap_min_addr)
+		return -EPERM;
 
-	/* Enक्रमce stack_guard_gap */
+	/* Enforce stack_guard_gap */
 	prev = vma->vm_prev;
 	/* Check that both stack segments have the same anon_vma? */
-	अगर (prev && !(prev->vm_flags & VM_GROWSDOWN) &&
-			vma_is_accessible(prev)) अणु
-		अगर (address - prev->vm_end < stack_guard_gap)
-			वापस -ENOMEM;
-	पूर्ण
+	if (prev && !(prev->vm_flags & VM_GROWSDOWN) &&
+			vma_is_accessible(prev)) {
+		if (address - prev->vm_end < stack_guard_gap)
+			return -ENOMEM;
+	}
 
 	/* We must make sure the anon_vma is allocated. */
-	अगर (unlikely(anon_vma_prepare(vma)))
-		वापस -ENOMEM;
+	if (unlikely(anon_vma_prepare(vma)))
+		return -ENOMEM;
 
 	/*
 	 * vma->vm_start/vm_end cannot change under us because the caller
-	 * is required to hold the mmap_lock in पढ़ो mode.  We need the
+	 * is required to hold the mmap_lock in read mode.  We need the
 	 * anon_vma lock to serialize against concurrent expand_stacks.
 	 */
-	anon_vma_lock_ग_लिखो(vma->anon_vma);
+	anon_vma_lock_write(vma->anon_vma);
 
-	/* Somebody अन्यथा might have raced and expanded it alपढ़ोy */
-	अगर (address < vma->vm_start) अणु
-		अचिन्हित दीर्घ size, grow;
+	/* Somebody else might have raced and expanded it already */
+	if (address < vma->vm_start) {
+		unsigned long size, grow;
 
 		size = vma->vm_end - address;
 		grow = (vma->vm_start - address) >> PAGE_SHIFT;
 
 		error = -ENOMEM;
-		अगर (grow <= vma->vm_pgoff) अणु
+		if (grow <= vma->vm_pgoff) {
 			error = acct_stack_growth(vma, size, grow);
-			अगर (!error) अणु
+			if (!error) {
 				/*
-				 * vma_gap_update() करोesn't support concurrent
+				 * vma_gap_update() doesn't support concurrent
 				 * updates, but we only hold a shared mmap_lock
 				 * lock here, so we need to protect against
 				 * concurrent vma expansions.
-				 * anon_vma_lock_ग_लिखो() करोesn't help here, as
-				 * we करोn't guarantee that all growable vmas
+				 * anon_vma_lock_write() doesn't help here, as
+				 * we don't guarantee that all growable vmas
 				 * in a mm share the same root anon vma.
 				 * So, we reuse mm->page_table_lock to guard
 				 * against concurrent vma expansions.
 				 */
 				spin_lock(&mm->page_table_lock);
-				अगर (vma->vm_flags & VM_LOCKED)
+				if (vma->vm_flags & VM_LOCKED)
 					mm->locked_vm += grow;
 				vm_stat_account(mm, vma->vm_flags, grow);
-				anon_vma_पूर्णांकerval_tree_pre_update_vma(vma);
+				anon_vma_interval_tree_pre_update_vma(vma);
 				vma->vm_start = address;
 				vma->vm_pgoff -= grow;
-				anon_vma_पूर्णांकerval_tree_post_update_vma(vma);
+				anon_vma_interval_tree_post_update_vma(vma);
 				vma_gap_update(vma);
 				spin_unlock(&mm->page_table_lock);
 
 				perf_event_mmap(vma);
-			पूर्ण
-		पूर्ण
-	पूर्ण
-	anon_vma_unlock_ग_लिखो(vma->anon_vma);
+			}
+		}
+	}
+	anon_vma_unlock_write(vma->anon_vma);
 	khugepaged_enter_vma_merge(vma, vma->vm_flags);
 	validate_mm(mm);
-	वापस error;
-पूर्ण
+	return error;
+}
 
-/* enक्रमced gap between the expanding stack and other mappings. */
-अचिन्हित दीर्घ stack_guard_gap = 256UL<<PAGE_SHIFT;
+/* enforced gap between the expanding stack and other mappings. */
+unsigned long stack_guard_gap = 256UL<<PAGE_SHIFT;
 
-अटल पूर्णांक __init cmdline_parse_stack_guard_gap(अक्षर *p)
-अणु
-	अचिन्हित दीर्घ val;
-	अक्षर *endptr;
+static int __init cmdline_parse_stack_guard_gap(char *p)
+{
+	unsigned long val;
+	char *endptr;
 
-	val = simple_म_से_अदीर्घ(p, &endptr, 10);
-	अगर (!*endptr)
+	val = simple_strtoul(p, &endptr, 10);
+	if (!*endptr)
 		stack_guard_gap = val << PAGE_SHIFT;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 __setup("stack_guard_gap=", cmdline_parse_stack_guard_gap);
 
-#अगर_घोषित CONFIG_STACK_GROWSUP
-पूर्णांक expand_stack(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ address)
-अणु
-	वापस expand_upwards(vma, address);
-पूर्ण
+#ifdef CONFIG_STACK_GROWSUP
+int expand_stack(struct vm_area_struct *vma, unsigned long address)
+{
+	return expand_upwards(vma, address);
+}
 
-काष्ठा vm_area_काष्ठा *
-find_extend_vma(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ addr)
-अणु
-	काष्ठा vm_area_काष्ठा *vma, *prev;
+struct vm_area_struct *
+find_extend_vma(struct mm_struct *mm, unsigned long addr)
+{
+	struct vm_area_struct *vma, *prev;
 
 	addr &= PAGE_MASK;
 	vma = find_vma_prev(mm, addr, &prev);
-	अगर (vma && (vma->vm_start <= addr))
-		वापस vma;
-	/* करोn't alter vm_end अगर the coredump is running */
-	अगर (!prev || expand_stack(prev, addr))
-		वापस शून्य;
-	अगर (prev->vm_flags & VM_LOCKED)
-		populate_vma_page_range(prev, addr, prev->vm_end, शून्य);
-	वापस prev;
-पूर्ण
-#अन्यथा
-पूर्णांक expand_stack(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ address)
-अणु
-	वापस expand_करोwnwards(vma, address);
-पूर्ण
+	if (vma && (vma->vm_start <= addr))
+		return vma;
+	/* don't alter vm_end if the coredump is running */
+	if (!prev || expand_stack(prev, addr))
+		return NULL;
+	if (prev->vm_flags & VM_LOCKED)
+		populate_vma_page_range(prev, addr, prev->vm_end, NULL);
+	return prev;
+}
+#else
+int expand_stack(struct vm_area_struct *vma, unsigned long address)
+{
+	return expand_downwards(vma, address);
+}
 
-काष्ठा vm_area_काष्ठा *
-find_extend_vma(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ addr)
-अणु
-	काष्ठा vm_area_काष्ठा *vma;
-	अचिन्हित दीर्घ start;
+struct vm_area_struct *
+find_extend_vma(struct mm_struct *mm, unsigned long addr)
+{
+	struct vm_area_struct *vma;
+	unsigned long start;
 
 	addr &= PAGE_MASK;
 	vma = find_vma(mm, addr);
-	अगर (!vma)
-		वापस शून्य;
-	अगर (vma->vm_start <= addr)
-		वापस vma;
-	अगर (!(vma->vm_flags & VM_GROWSDOWN))
-		वापस शून्य;
+	if (!vma)
+		return NULL;
+	if (vma->vm_start <= addr)
+		return vma;
+	if (!(vma->vm_flags & VM_GROWSDOWN))
+		return NULL;
 	start = vma->vm_start;
-	अगर (expand_stack(vma, addr))
-		वापस शून्य;
-	अगर (vma->vm_flags & VM_LOCKED)
-		populate_vma_page_range(vma, addr, start, शून्य);
-	वापस vma;
-पूर्ण
-#पूर्ण_अगर
+	if (expand_stack(vma, addr))
+		return NULL;
+	if (vma->vm_flags & VM_LOCKED)
+		populate_vma_page_range(vma, addr, start, NULL);
+	return vma;
+}
+#endif
 
 EXPORT_SYMBOL_GPL(find_extend_vma);
 
 /*
- * Ok - we have the memory areas we should मुक्त on the vma list,
- * so release them, and करो the vma updates.
+ * Ok - we have the memory areas we should free on the vma list,
+ * so release them, and do the vma updates.
  *
  * Called with the mm semaphore held.
  */
-अटल व्योम हटाओ_vma_list(काष्ठा mm_काष्ठा *mm, काष्ठा vm_area_काष्ठा *vma)
-अणु
-	अचिन्हित दीर्घ nr_accounted = 0;
+static void remove_vma_list(struct mm_struct *mm, struct vm_area_struct *vma)
+{
+	unsigned long nr_accounted = 0;
 
-	/* Update high watermark beक्रमe we lower total_vm */
+	/* Update high watermark before we lower total_vm */
 	update_hiwater_vm(mm);
-	करो अणु
-		दीर्घ nrpages = vma_pages(vma);
+	do {
+		long nrpages = vma_pages(vma);
 
-		अगर (vma->vm_flags & VM_ACCOUNT)
+		if (vma->vm_flags & VM_ACCOUNT)
 			nr_accounted += nrpages;
 		vm_stat_account(mm, vma->vm_flags, -nrpages);
-		vma = हटाओ_vma(vma);
-	पूर्ण जबतक (vma);
+		vma = remove_vma(vma);
+	} while (vma);
 	vm_unacct_memory(nr_accounted);
 	validate_mm(mm);
-पूर्ण
+}
 
 /*
- * Get rid of page table inक्रमmation in the indicated region.
+ * Get rid of page table information in the indicated region.
  *
  * Called with the mm semaphore held.
  */
-अटल व्योम unmap_region(काष्ठा mm_काष्ठा *mm,
-		काष्ठा vm_area_काष्ठा *vma, काष्ठा vm_area_काष्ठा *prev,
-		अचिन्हित दीर्घ start, अचिन्हित दीर्घ end)
-अणु
-	काष्ठा vm_area_काष्ठा *next = vma_next(mm, prev);
-	काष्ठा mmu_gather tlb;
+static void unmap_region(struct mm_struct *mm,
+		struct vm_area_struct *vma, struct vm_area_struct *prev,
+		unsigned long start, unsigned long end)
+{
+	struct vm_area_struct *next = vma_next(mm, prev);
+	struct mmu_gather tlb;
 
 	lru_add_drain();
 	tlb_gather_mmu(&tlb, mm);
 	update_hiwater_rss(mm);
 	unmap_vmas(&tlb, vma, start, end);
-	मुक्त_pgtables(&tlb, vma, prev ? prev->vm_end : FIRST_USER_ADDRESS,
+	free_pgtables(&tlb, vma, prev ? prev->vm_end : FIRST_USER_ADDRESS,
 				 next ? next->vm_start : USER_PGTABLES_CEILING);
 	tlb_finish_mmu(&tlb);
-पूर्ण
+}
 
 /*
  * Create a list of vma's touched by the unmap, removing them from the mm's
  * vma list as we go..
  */
-अटल bool
-detach_vmas_to_be_unmapped(काष्ठा mm_काष्ठा *mm, काष्ठा vm_area_काष्ठा *vma,
-	काष्ठा vm_area_काष्ठा *prev, अचिन्हित दीर्घ end)
-अणु
-	काष्ठा vm_area_काष्ठा **insertion_poपूर्णांक;
-	काष्ठा vm_area_काष्ठा *tail_vma = शून्य;
+static bool
+detach_vmas_to_be_unmapped(struct mm_struct *mm, struct vm_area_struct *vma,
+	struct vm_area_struct *prev, unsigned long end)
+{
+	struct vm_area_struct **insertion_point;
+	struct vm_area_struct *tail_vma = NULL;
 
-	insertion_poपूर्णांक = (prev ? &prev->vm_next : &mm->mmap);
-	vma->vm_prev = शून्य;
-	करो अणु
+	insertion_point = (prev ? &prev->vm_next : &mm->mmap);
+	vma->vm_prev = NULL;
+	do {
 		vma_rb_erase(vma, &mm->mm_rb);
 		mm->map_count--;
 		tail_vma = vma;
 		vma = vma->vm_next;
-	पूर्ण जबतक (vma && vma->vm_start < end);
-	*insertion_poपूर्णांक = vma;
-	अगर (vma) अणु
+	} while (vma && vma->vm_start < end);
+	*insertion_point = vma;
+	if (vma) {
 		vma->vm_prev = prev;
 		vma_gap_update(vma);
-	पूर्ण अन्यथा
+	} else
 		mm->highest_vm_end = prev ? vm_end_gap(prev) : 0;
-	tail_vma->vm_next = शून्य;
+	tail_vma->vm_next = NULL;
 
 	/* Kill the cache */
 	vmacache_invalidate(mm);
 
 	/*
-	 * Do not करोwngrade mmap_lock अगर we are next to VM_GROWSDOWN or
+	 * Do not downgrade mmap_lock if we are next to VM_GROWSDOWN or
 	 * VM_GROWSUP VMA. Such VMAs can change their size under
-	 * करोwn_पढ़ो(mmap_lock) and collide with the VMA we are about to unmap.
+	 * down_read(mmap_lock) and collide with the VMA we are about to unmap.
 	 */
-	अगर (vma && (vma->vm_flags & VM_GROWSDOWN))
-		वापस false;
-	अगर (prev && (prev->vm_flags & VM_GROWSUP))
-		वापस false;
-	वापस true;
-पूर्ण
+	if (vma && (vma->vm_flags & VM_GROWSDOWN))
+		return false;
+	if (prev && (prev->vm_flags & VM_GROWSUP))
+		return false;
+	return true;
+}
 
 /*
  * __split_vma() bypasses sysctl_max_map_count checking.  We use this where it
- * has alपढ़ोy been checked or करोesn't make sense to fail.
+ * has already been checked or doesn't make sense to fail.
  */
-पूर्णांक __split_vma(काष्ठा mm_काष्ठा *mm, काष्ठा vm_area_काष्ठा *vma,
-		अचिन्हित दीर्घ addr, पूर्णांक new_below)
-अणु
-	काष्ठा vm_area_काष्ठा *new;
-	पूर्णांक err;
+int __split_vma(struct mm_struct *mm, struct vm_area_struct *vma,
+		unsigned long addr, int new_below)
+{
+	struct vm_area_struct *new;
+	int err;
 
-	अगर (vma->vm_ops && vma->vm_ops->may_split) अणु
+	if (vma->vm_ops && vma->vm_ops->may_split) {
 		err = vma->vm_ops->may_split(vma, addr);
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 
 	new = vm_area_dup(vma);
-	अगर (!new)
-		वापस -ENOMEM;
+	if (!new)
+		return -ENOMEM;
 
-	अगर (new_below)
+	if (new_below)
 		new->vm_end = addr;
-	अन्यथा अणु
+	else {
 		new->vm_start = addr;
 		new->vm_pgoff += ((addr - vma->vm_start) >> PAGE_SHIFT);
-	पूर्ण
+	}
 
 	err = vma_dup_policy(vma, new);
-	अगर (err)
-		जाओ out_मुक्त_vma;
+	if (err)
+		goto out_free_vma;
 
 	err = anon_vma_clone(new, vma);
-	अगर (err)
-		जाओ out_मुक्त_mpol;
+	if (err)
+		goto out_free_mpol;
 
-	अगर (new->vm_file)
+	if (new->vm_file)
 		get_file(new->vm_file);
 
-	अगर (new->vm_ops && new->vm_ops->खोलो)
-		new->vm_ops->खोलो(new);
+	if (new->vm_ops && new->vm_ops->open)
+		new->vm_ops->open(new);
 
-	अगर (new_below)
+	if (new_below)
 		err = vma_adjust(vma, addr, vma->vm_end, vma->vm_pgoff +
 			((addr - new->vm_start) >> PAGE_SHIFT), new);
-	अन्यथा
+	else
 		err = vma_adjust(vma, vma->vm_start, addr, vma->vm_pgoff, new);
 
 	/* Success. */
-	अगर (!err)
-		वापस 0;
+	if (!err)
+		return 0;
 
-	/* Clean everything up अगर vma_adjust failed. */
-	अगर (new->vm_ops && new->vm_ops->बंद)
-		new->vm_ops->बंद(new);
-	अगर (new->vm_file)
+	/* Clean everything up if vma_adjust failed. */
+	if (new->vm_ops && new->vm_ops->close)
+		new->vm_ops->close(new);
+	if (new->vm_file)
 		fput(new->vm_file);
 	unlink_anon_vmas(new);
- out_मुक्त_mpol:
+ out_free_mpol:
 	mpol_put(vma_policy(new));
- out_मुक्त_vma:
-	vm_area_मुक्त(new);
-	वापस err;
-पूर्ण
+ out_free_vma:
+	vm_area_free(new);
+	return err;
+}
 
 /*
- * Split a vma पूर्णांकo two pieces at address 'addr', a new vma is allocated
- * either क्रम the first part or the tail.
+ * Split a vma into two pieces at address 'addr', a new vma is allocated
+ * either for the first part or the tail.
  */
-पूर्णांक split_vma(काष्ठा mm_काष्ठा *mm, काष्ठा vm_area_काष्ठा *vma,
-	      अचिन्हित दीर्घ addr, पूर्णांक new_below)
-अणु
-	अगर (mm->map_count >= sysctl_max_map_count)
-		वापस -ENOMEM;
+int split_vma(struct mm_struct *mm, struct vm_area_struct *vma,
+	      unsigned long addr, int new_below)
+{
+	if (mm->map_count >= sysctl_max_map_count)
+		return -ENOMEM;
 
-	वापस __split_vma(mm, vma, addr, new_below);
-पूर्ण
+	return __split_vma(mm, vma, addr, new_below);
+}
 
-/* Munmap is split पूर्णांकo 2 मुख्य parts -- this part which finds
- * what needs करोing, and the areas themselves, which करो the
+/* Munmap is split into 2 main parts -- this part which finds
+ * what needs doing, and the areas themselves, which do the
  * work.  This now handles partial unmappings.
  * Jeremy Fitzhardinge <jeremy@goop.org>
  */
-पूर्णांक __करो_munmap(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ start, माप_प्रकार len,
-		काष्ठा list_head *uf, bool करोwngrade)
-अणु
-	अचिन्हित दीर्घ end;
-	काष्ठा vm_area_काष्ठा *vma, *prev, *last;
+int __do_munmap(struct mm_struct *mm, unsigned long start, size_t len,
+		struct list_head *uf, bool downgrade)
+{
+	unsigned long end;
+	struct vm_area_struct *vma, *prev, *last;
 
-	अगर ((offset_in_page(start)) || start > TASK_SIZE || len > TASK_SIZE-start)
-		वापस -EINVAL;
+	if ((offset_in_page(start)) || start > TASK_SIZE || len > TASK_SIZE-start)
+		return -EINVAL;
 
 	len = PAGE_ALIGN(len);
 	end = start + len;
-	अगर (len == 0)
-		वापस -EINVAL;
+	if (len == 0)
+		return -EINVAL;
 
 	/*
-	 * arch_unmap() might करो unmaps itself.  It must be called
-	 * and finish any rbtree manipulation beक्रमe this code
+	 * arch_unmap() might do unmaps itself.  It must be called
+	 * and finish any rbtree manipulation before this code
 	 * runs and also starts to manipulate the rbtree.
 	 */
 	arch_unmap(mm, start, end);
 
 	/* Find the first overlapping VMA */
 	vma = find_vma(mm, start);
-	अगर (!vma)
-		वापस 0;
+	if (!vma)
+		return 0;
 	prev = vma->vm_prev;
 	/* we have  start < vma->vm_end  */
 
-	/* अगर it करोesn't overlap, we have nothing.. */
-	अगर (vma->vm_start >= end)
-		वापस 0;
+	/* if it doesn't overlap, we have nothing.. */
+	if (vma->vm_start >= end)
+		return 0;
 
 	/*
-	 * If we need to split any vma, करो it now to save pain later.
+	 * If we need to split any vma, do it now to save pain later.
 	 *
 	 * Note: mremap's move_vma VM_ACCOUNT handling assumes a partially
-	 * unmapped vm_area_काष्ठा will reमुख्य in use: so lower split_vma
-	 * places पंचांगp vma above, and higher split_vma places पंचांगp vma below.
+	 * unmapped vm_area_struct will remain in use: so lower split_vma
+	 * places tmp vma above, and higher split_vma places tmp vma below.
 	 */
-	अगर (start > vma->vm_start) अणु
-		पूर्णांक error;
+	if (start > vma->vm_start) {
+		int error;
 
 		/*
-		 * Make sure that map_count on वापस from munmap() will
+		 * Make sure that map_count on return from munmap() will
 		 * not exceed its limit; but let map_count go just above
-		 * its limit temporarily, to help मुक्त resources as expected.
+		 * its limit temporarily, to help free resources as expected.
 		 */
-		अगर (end < vma->vm_end && mm->map_count >= sysctl_max_map_count)
-			वापस -ENOMEM;
+		if (end < vma->vm_end && mm->map_count >= sysctl_max_map_count)
+			return -ENOMEM;
 
 		error = __split_vma(mm, vma, start, 0);
-		अगर (error)
-			वापस error;
+		if (error)
+			return error;
 		prev = vma;
-	पूर्ण
+	}
 
 	/* Does it split the last one? */
 	last = find_vma(mm, end);
-	अगर (last && end > last->vm_start) अणु
-		पूर्णांक error = __split_vma(mm, last, end, 1);
-		अगर (error)
-			वापस error;
-	पूर्ण
+	if (last && end > last->vm_start) {
+		int error = __split_vma(mm, last, end, 1);
+		if (error)
+			return error;
+	}
 	vma = vma_next(mm, prev);
 
-	अगर (unlikely(uf)) अणु
+	if (unlikely(uf)) {
 		/*
-		 * If userfaultfd_unmap_prep वापसs an error the vmas
-		 * will reमुख्य split, but userland will get a
+		 * If userfaultfd_unmap_prep returns an error the vmas
+		 * will remain split, but userland will get a
 		 * highly unexpected error anyway. This is no
-		 * dअगरferent than the हाल where the first of the two
-		 * __split_vma fails, but we करोn't unकरो the first
+		 * different than the case where the first of the two
+		 * __split_vma fails, but we don't undo the first
 		 * split, despite we could. This is unlikely enough
-		 * failure that it's not worth optimizing it क्रम.
+		 * failure that it's not worth optimizing it for.
 		 */
-		पूर्णांक error = userfaultfd_unmap_prep(vma, start, end, uf);
-		अगर (error)
-			वापस error;
-	पूर्ण
+		int error = userfaultfd_unmap_prep(vma, start, end, uf);
+		if (error)
+			return error;
+	}
 
 	/*
-	 * unlock any mlock()ed ranges beक्रमe detaching vmas
+	 * unlock any mlock()ed ranges before detaching vmas
 	 */
-	अगर (mm->locked_vm) अणु
-		काष्ठा vm_area_काष्ठा *पंचांगp = vma;
-		जबतक (पंचांगp && पंचांगp->vm_start < end) अणु
-			अगर (पंचांगp->vm_flags & VM_LOCKED) अणु
-				mm->locked_vm -= vma_pages(पंचांगp);
-				munlock_vma_pages_all(पंचांगp);
-			पूर्ण
+	if (mm->locked_vm) {
+		struct vm_area_struct *tmp = vma;
+		while (tmp && tmp->vm_start < end) {
+			if (tmp->vm_flags & VM_LOCKED) {
+				mm->locked_vm -= vma_pages(tmp);
+				munlock_vma_pages_all(tmp);
+			}
 
-			पंचांगp = पंचांगp->vm_next;
-		पूर्ण
-	पूर्ण
+			tmp = tmp->vm_next;
+		}
+	}
 
 	/* Detach vmas from rbtree */
-	अगर (!detach_vmas_to_be_unmapped(mm, vma, prev, end))
-		करोwngrade = false;
+	if (!detach_vmas_to_be_unmapped(mm, vma, prev, end))
+		downgrade = false;
 
-	अगर (करोwngrade)
-		mmap_ग_लिखो_करोwngrade(mm);
+	if (downgrade)
+		mmap_write_downgrade(mm);
 
 	unmap_region(mm, vma, prev, start, end);
 
-	/* Fix up all other VM inक्रमmation */
-	हटाओ_vma_list(mm, vma);
+	/* Fix up all other VM information */
+	remove_vma_list(mm, vma);
 
-	वापस करोwngrade ? 1 : 0;
-पूर्ण
+	return downgrade ? 1 : 0;
+}
 
-पूर्णांक करो_munmap(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ start, माप_प्रकार len,
-	      काष्ठा list_head *uf)
-अणु
-	वापस __करो_munmap(mm, start, len, uf, false);
-पूर्ण
+int do_munmap(struct mm_struct *mm, unsigned long start, size_t len,
+	      struct list_head *uf)
+{
+	return __do_munmap(mm, start, len, uf, false);
+}
 
-अटल पूर्णांक __vm_munmap(अचिन्हित दीर्घ start, माप_प्रकार len, bool करोwngrade)
-अणु
-	पूर्णांक ret;
-	काष्ठा mm_काष्ठा *mm = current->mm;
+static int __vm_munmap(unsigned long start, size_t len, bool downgrade)
+{
+	int ret;
+	struct mm_struct *mm = current->mm;
 	LIST_HEAD(uf);
 
-	अगर (mmap_ग_लिखो_lock_समाप्तable(mm))
-		वापस -EINTR;
+	if (mmap_write_lock_killable(mm))
+		return -EINTR;
 
-	ret = __करो_munmap(mm, start, len, &uf, करोwngrade);
+	ret = __do_munmap(mm, start, len, &uf, downgrade);
 	/*
-	 * Returning 1 indicates mmap_lock is करोwngraded.
-	 * But 1 is not legal वापस value of vm_munmap() and munmap(), reset
-	 * it to 0 beक्रमe वापस.
+	 * Returning 1 indicates mmap_lock is downgraded.
+	 * But 1 is not legal return value of vm_munmap() and munmap(), reset
+	 * it to 0 before return.
 	 */
-	अगर (ret == 1) अणु
-		mmap_पढ़ो_unlock(mm);
+	if (ret == 1) {
+		mmap_read_unlock(mm);
 		ret = 0;
-	पूर्ण अन्यथा
-		mmap_ग_लिखो_unlock(mm);
+	} else
+		mmap_write_unlock(mm);
 
 	userfaultfd_unmap_complete(mm, &uf);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक vm_munmap(अचिन्हित दीर्घ start, माप_प्रकार len)
-अणु
-	वापस __vm_munmap(start, len, false);
-पूर्ण
+int vm_munmap(unsigned long start, size_t len)
+{
+	return __vm_munmap(start, len, false);
+}
 EXPORT_SYMBOL(vm_munmap);
 
-SYSCALL_DEFINE2(munmap, अचिन्हित दीर्घ, addr, माप_प्रकार, len)
-अणु
+SYSCALL_DEFINE2(munmap, unsigned long, addr, size_t, len)
+{
 	addr = untagged_addr(addr);
 	profile_munmap(addr);
-	वापस __vm_munmap(addr, len, true);
-पूर्ण
+	return __vm_munmap(addr, len, true);
+}
 
 
 /*
  * Emulation of deprecated remap_file_pages() syscall.
  */
-SYSCALL_DEFINE5(remap_file_pages, अचिन्हित दीर्घ, start, अचिन्हित दीर्घ, size,
-		अचिन्हित दीर्घ, prot, अचिन्हित दीर्घ, pgoff, अचिन्हित दीर्घ, flags)
-अणु
+SYSCALL_DEFINE5(remap_file_pages, unsigned long, start, unsigned long, size,
+		unsigned long, prot, unsigned long, pgoff, unsigned long, flags)
+{
 
-	काष्ठा mm_काष्ठा *mm = current->mm;
-	काष्ठा vm_area_काष्ठा *vma;
-	अचिन्हित दीर्घ populate = 0;
-	अचिन्हित दीर्घ ret = -EINVAL;
-	काष्ठा file *file;
+	struct mm_struct *mm = current->mm;
+	struct vm_area_struct *vma;
+	unsigned long populate = 0;
+	unsigned long ret = -EINVAL;
+	struct file *file;
 
 	pr_warn_once("%s (%d) uses deprecated remap_file_pages() syscall. See Documentation/vm/remap_file_pages.rst.\n",
 		     current->comm, current->pid);
 
-	अगर (prot)
-		वापस ret;
+	if (prot)
+		return ret;
 	start = start & PAGE_MASK;
 	size = size & PAGE_MASK;
 
-	अगर (start + size <= start)
-		वापस ret;
+	if (start + size <= start)
+		return ret;
 
 	/* Does pgoff wrap? */
-	अगर (pgoff + (size >> PAGE_SHIFT) < pgoff)
-		वापस ret;
+	if (pgoff + (size >> PAGE_SHIFT) < pgoff)
+		return ret;
 
-	अगर (mmap_ग_लिखो_lock_समाप्तable(mm))
-		वापस -EINTR;
+	if (mmap_write_lock_killable(mm))
+		return -EINTR;
 
 	vma = find_vma(mm, start);
 
-	अगर (!vma || !(vma->vm_flags & VM_SHARED))
-		जाओ out;
+	if (!vma || !(vma->vm_flags & VM_SHARED))
+		goto out;
 
-	अगर (start < vma->vm_start)
-		जाओ out;
+	if (start < vma->vm_start)
+		goto out;
 
-	अगर (start + size > vma->vm_end) अणु
-		काष्ठा vm_area_काष्ठा *next;
+	if (start + size > vma->vm_end) {
+		struct vm_area_struct *next;
 
-		क्रम (next = vma->vm_next; next; next = next->vm_next) अणु
+		for (next = vma->vm_next; next; next = next->vm_next) {
 			/* hole between vmas ? */
-			अगर (next->vm_start != next->vm_prev->vm_end)
-				जाओ out;
+			if (next->vm_start != next->vm_prev->vm_end)
+				goto out;
 
-			अगर (next->vm_file != vma->vm_file)
-				जाओ out;
+			if (next->vm_file != vma->vm_file)
+				goto out;
 
-			अगर (next->vm_flags != vma->vm_flags)
-				जाओ out;
+			if (next->vm_flags != vma->vm_flags)
+				goto out;
 
-			अगर (start + size <= next->vm_end)
-				अवरोध;
-		पूर्ण
+			if (start + size <= next->vm_end)
+				break;
+		}
 
-		अगर (!next)
-			जाओ out;
-	पूर्ण
+		if (!next)
+			goto out;
+	}
 
 	prot |= vma->vm_flags & VM_READ ? PROT_READ : 0;
 	prot |= vma->vm_flags & VM_WRITE ? PROT_WRITE : 0;
@@ -3030,77 +3029,77 @@ SYSCALL_DEFINE5(remap_file_pages, अचिन्हित दीर्घ, star
 
 	flags &= MAP_NONBLOCK;
 	flags |= MAP_SHARED | MAP_FIXED | MAP_POPULATE;
-	अगर (vma->vm_flags & VM_LOCKED)
+	if (vma->vm_flags & VM_LOCKED)
 		flags |= MAP_LOCKED;
 
 	file = get_file(vma->vm_file);
-	ret = करो_mmap(vma->vm_file, start, size,
-			prot, flags, pgoff, &populate, शून्य);
+	ret = do_mmap(vma->vm_file, start, size,
+			prot, flags, pgoff, &populate, NULL);
 	fput(file);
 out:
-	mmap_ग_लिखो_unlock(mm);
-	अगर (populate)
+	mmap_write_unlock(mm);
+	if (populate)
 		mm_populate(ret, populate);
-	अगर (!IS_ERR_VALUE(ret))
+	if (!IS_ERR_VALUE(ret))
 		ret = 0;
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- *  this is really a simplअगरied "do_mmap".  it only handles
- *  anonymous maps.  eventually we may be able to करो some
- *  brk-specअगरic accounting here.
+ *  this is really a simplified "do_mmap".  it only handles
+ *  anonymous maps.  eventually we may be able to do some
+ *  brk-specific accounting here.
  */
-अटल पूर्णांक करो_brk_flags(अचिन्हित दीर्घ addr, अचिन्हित दीर्घ len, अचिन्हित दीर्घ flags, काष्ठा list_head *uf)
-अणु
-	काष्ठा mm_काष्ठा *mm = current->mm;
-	काष्ठा vm_area_काष्ठा *vma, *prev;
-	काष्ठा rb_node **rb_link, *rb_parent;
+static int do_brk_flags(unsigned long addr, unsigned long len, unsigned long flags, struct list_head *uf)
+{
+	struct mm_struct *mm = current->mm;
+	struct vm_area_struct *vma, *prev;
+	struct rb_node **rb_link, *rb_parent;
 	pgoff_t pgoff = addr >> PAGE_SHIFT;
-	पूर्णांक error;
-	अचिन्हित दीर्घ mapped_addr;
+	int error;
+	unsigned long mapped_addr;
 
 	/* Until we need other flags, refuse anything except VM_EXEC. */
-	अगर ((flags & (~VM_EXEC)) != 0)
-		वापस -EINVAL;
+	if ((flags & (~VM_EXEC)) != 0)
+		return -EINVAL;
 	flags |= VM_DATA_DEFAULT_FLAGS | VM_ACCOUNT | mm->def_flags;
 
-	mapped_addr = get_unmapped_area(शून्य, addr, len, 0, MAP_FIXED);
-	अगर (IS_ERR_VALUE(mapped_addr))
-		वापस mapped_addr;
+	mapped_addr = get_unmapped_area(NULL, addr, len, 0, MAP_FIXED);
+	if (IS_ERR_VALUE(mapped_addr))
+		return mapped_addr;
 
 	error = mlock_future_check(mm, mm->def_flags, len);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
 	/* Clear old maps, set up prev, rb_link, rb_parent, and uf */
-	अगर (munmap_vma_range(mm, addr, len, &prev, &rb_link, &rb_parent, uf))
-		वापस -ENOMEM;
+	if (munmap_vma_range(mm, addr, len, &prev, &rb_link, &rb_parent, uf))
+		return -ENOMEM;
 
 	/* Check against address space limits *after* clearing old maps... */
-	अगर (!may_expand_vm(mm, flags, len >> PAGE_SHIFT))
-		वापस -ENOMEM;
+	if (!may_expand_vm(mm, flags, len >> PAGE_SHIFT))
+		return -ENOMEM;
 
-	अगर (mm->map_count > sysctl_max_map_count)
-		वापस -ENOMEM;
+	if (mm->map_count > sysctl_max_map_count)
+		return -ENOMEM;
 
-	अगर (security_vm_enough_memory_mm(mm, len >> PAGE_SHIFT))
-		वापस -ENOMEM;
+	if (security_vm_enough_memory_mm(mm, len >> PAGE_SHIFT))
+		return -ENOMEM;
 
-	/* Can we just expand an old निजी anonymous mapping? */
+	/* Can we just expand an old private anonymous mapping? */
 	vma = vma_merge(mm, prev, addr, addr + len, flags,
-			शून्य, शून्य, pgoff, शून्य, शून्य_VM_UFFD_CTX);
-	अगर (vma)
-		जाओ out;
+			NULL, NULL, pgoff, NULL, NULL_VM_UFFD_CTX);
+	if (vma)
+		goto out;
 
 	/*
-	 * create a vma काष्ठा क्रम an anonymous mapping
+	 * create a vma struct for an anonymous mapping
 	 */
 	vma = vm_area_alloc(mm);
-	अगर (!vma) अणु
+	if (!vma) {
 		vm_unacct_memory(len >> PAGE_SHIFT);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	vma_set_anonymous(vma);
 	vma->vm_start = addr;
@@ -3113,93 +3112,93 @@ out:
 	perf_event_mmap(vma);
 	mm->total_vm += len >> PAGE_SHIFT;
 	mm->data_vm += len >> PAGE_SHIFT;
-	अगर (flags & VM_LOCKED)
+	if (flags & VM_LOCKED)
 		mm->locked_vm += (len >> PAGE_SHIFT);
-	vma->vm_flags |= VM_SOFTसूचीTY;
-	वापस 0;
-पूर्ण
+	vma->vm_flags |= VM_SOFTDIRTY;
+	return 0;
+}
 
-पूर्णांक vm_brk_flags(अचिन्हित दीर्घ addr, अचिन्हित दीर्घ request, अचिन्हित दीर्घ flags)
-अणु
-	काष्ठा mm_काष्ठा *mm = current->mm;
-	अचिन्हित दीर्घ len;
-	पूर्णांक ret;
+int vm_brk_flags(unsigned long addr, unsigned long request, unsigned long flags)
+{
+	struct mm_struct *mm = current->mm;
+	unsigned long len;
+	int ret;
 	bool populate;
 	LIST_HEAD(uf);
 
 	len = PAGE_ALIGN(request);
-	अगर (len < request)
-		वापस -ENOMEM;
-	अगर (!len)
-		वापस 0;
+	if (len < request)
+		return -ENOMEM;
+	if (!len)
+		return 0;
 
-	अगर (mmap_ग_लिखो_lock_समाप्तable(mm))
-		वापस -EINTR;
+	if (mmap_write_lock_killable(mm))
+		return -EINTR;
 
-	ret = करो_brk_flags(addr, len, flags, &uf);
+	ret = do_brk_flags(addr, len, flags, &uf);
 	populate = ((mm->def_flags & VM_LOCKED) != 0);
-	mmap_ग_लिखो_unlock(mm);
+	mmap_write_unlock(mm);
 	userfaultfd_unmap_complete(mm, &uf);
-	अगर (populate && !ret)
+	if (populate && !ret)
 		mm_populate(addr, len);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL(vm_brk_flags);
 
-पूर्णांक vm_brk(अचिन्हित दीर्घ addr, अचिन्हित दीर्घ len)
-अणु
-	वापस vm_brk_flags(addr, len, 0);
-पूर्ण
+int vm_brk(unsigned long addr, unsigned long len)
+{
+	return vm_brk_flags(addr, len, 0);
+}
 EXPORT_SYMBOL(vm_brk);
 
 /* Release all mmaps. */
-व्योम निकास_mmap(काष्ठा mm_काष्ठा *mm)
-अणु
-	काष्ठा mmu_gather tlb;
-	काष्ठा vm_area_काष्ठा *vma;
-	अचिन्हित दीर्घ nr_accounted = 0;
+void exit_mmap(struct mm_struct *mm)
+{
+	struct mmu_gather tlb;
+	struct vm_area_struct *vma;
+	unsigned long nr_accounted = 0;
 
-	/* mm's last user has gone, and its about to be pulled करोwn */
-	mmu_notअगरier_release(mm);
+	/* mm's last user has gone, and its about to be pulled down */
+	mmu_notifier_release(mm);
 
-	अगर (unlikely(mm_is_oom_victim(mm))) अणु
+	if (unlikely(mm_is_oom_victim(mm))) {
 		/*
-		 * Manually reap the mm to मुक्त as much memory as possible.
-		 * Then, as the oom reaper करोes, set MMF_OOM_SKIP to disregard
-		 * this mm from further consideration.  Taking mm->mmap_lock क्रम
-		 * ग_लिखो after setting MMF_OOM_SKIP will guarantee that the oom
+		 * Manually reap the mm to free as much memory as possible.
+		 * Then, as the oom reaper does, set MMF_OOM_SKIP to disregard
+		 * this mm from further consideration.  Taking mm->mmap_lock for
+		 * write after setting MMF_OOM_SKIP will guarantee that the oom
 		 * reaper will not run on this mm again after mmap_lock is
 		 * dropped.
 		 *
 		 * Nothing can be holding mm->mmap_lock here and the above call
-		 * to mmu_notअगरier_release(mm) ensures mmu notअगरier callbacks in
+		 * to mmu_notifier_release(mm) ensures mmu notifier callbacks in
 		 * __oom_reap_task_mm() will not block.
 		 *
-		 * This needs to be करोne beक्रमe calling munlock_vma_pages_all(),
+		 * This needs to be done before calling munlock_vma_pages_all(),
 		 * which clears VM_LOCKED, otherwise the oom reaper cannot
 		 * reliably test it.
 		 */
-		(व्योम)__oom_reap_task_mm(mm);
+		(void)__oom_reap_task_mm(mm);
 
 		set_bit(MMF_OOM_SKIP, &mm->flags);
-		mmap_ग_लिखो_lock(mm);
-		mmap_ग_लिखो_unlock(mm);
-	पूर्ण
+		mmap_write_lock(mm);
+		mmap_write_unlock(mm);
+	}
 
-	अगर (mm->locked_vm) अणु
+	if (mm->locked_vm) {
 		vma = mm->mmap;
-		जबतक (vma) अणु
-			अगर (vma->vm_flags & VM_LOCKED)
+		while (vma) {
+			if (vma->vm_flags & VM_LOCKED)
 				munlock_vma_pages_all(vma);
 			vma = vma->vm_next;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	arch_निकास_mmap(mm);
+	arch_exit_mmap(mm);
 
 	vma = mm->mmap;
-	अगर (!vma)	/* Can happen अगर dup_mmap() received an OOM */
-		वापस;
+	if (!vma)	/* Can happen if dup_mmap() received an OOM */
+		return;
 
 	lru_add_drain();
 	flush_cache_mm(mm);
@@ -3207,97 +3206,97 @@ EXPORT_SYMBOL(vm_brk);
 	/* update_hiwater_rss(mm) here? but nobody should be looking */
 	/* Use -1 here to ensure all VMAs in the mm are unmapped */
 	unmap_vmas(&tlb, vma, 0, -1);
-	मुक्त_pgtables(&tlb, vma, FIRST_USER_ADDRESS, USER_PGTABLES_CEILING);
+	free_pgtables(&tlb, vma, FIRST_USER_ADDRESS, USER_PGTABLES_CEILING);
 	tlb_finish_mmu(&tlb);
 
 	/*
-	 * Walk the list again, actually closing and मुक्तing it,
+	 * Walk the list again, actually closing and freeing it,
 	 * with preemption enabled, without holding any MM locks.
 	 */
-	जबतक (vma) अणु
-		अगर (vma->vm_flags & VM_ACCOUNT)
+	while (vma) {
+		if (vma->vm_flags & VM_ACCOUNT)
 			nr_accounted += vma_pages(vma);
-		vma = हटाओ_vma(vma);
+		vma = remove_vma(vma);
 		cond_resched();
-	पूर्ण
+	}
 	vm_unacct_memory(nr_accounted);
-पूर्ण
+}
 
-/* Insert vm काष्ठाure पूर्णांकo process list sorted by address
- * and पूर्णांकo the inode's i_mmap tree.  If vm_file is non-शून्य
+/* Insert vm structure into process list sorted by address
+ * and into the inode's i_mmap tree.  If vm_file is non-NULL
  * then i_mmap_rwsem is taken here.
  */
-पूर्णांक insert_vm_काष्ठा(काष्ठा mm_काष्ठा *mm, काष्ठा vm_area_काष्ठा *vma)
-अणु
-	काष्ठा vm_area_काष्ठा *prev;
-	काष्ठा rb_node **rb_link, *rb_parent;
+int insert_vm_struct(struct mm_struct *mm, struct vm_area_struct *vma)
+{
+	struct vm_area_struct *prev;
+	struct rb_node **rb_link, *rb_parent;
 
-	अगर (find_vma_links(mm, vma->vm_start, vma->vm_end,
+	if (find_vma_links(mm, vma->vm_start, vma->vm_end,
 			   &prev, &rb_link, &rb_parent))
-		वापस -ENOMEM;
-	अगर ((vma->vm_flags & VM_ACCOUNT) &&
+		return -ENOMEM;
+	if ((vma->vm_flags & VM_ACCOUNT) &&
 	     security_vm_enough_memory_mm(mm, vma_pages(vma)))
-		वापस -ENOMEM;
+		return -ENOMEM;
 
 	/*
 	 * The vm_pgoff of a purely anonymous vma should be irrelevant
-	 * until its first ग_लिखो fault, when page's anon_vma and index
+	 * until its first write fault, when page's anon_vma and index
 	 * are set.  But now set the vm_pgoff it will almost certainly
-	 * end up with (unless mremap moves it अन्यथाwhere beक्रमe that
+	 * end up with (unless mremap moves it elsewhere before that
 	 * first wfault), so /proc/pid/maps tells a consistent story.
 	 *
-	 * By setting it to reflect the भव start address of the
+	 * By setting it to reflect the virtual start address of the
 	 * vma, merges and splits can happen in a seamless way, just
 	 * using the existing file pgoff checks and manipulations.
-	 * Similarly in करो_mmap and in करो_brk_flags.
+	 * Similarly in do_mmap and in do_brk_flags.
 	 */
-	अगर (vma_is_anonymous(vma)) अणु
+	if (vma_is_anonymous(vma)) {
 		BUG_ON(vma->anon_vma);
 		vma->vm_pgoff = vma->vm_start >> PAGE_SHIFT;
-	पूर्ण
+	}
 
 	vma_link(mm, vma, prev, rb_link, rb_parent);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Copy the vma काष्ठाure to a new location in the same mm,
+ * Copy the vma structure to a new location in the same mm,
  * prior to moving page table entries, to effect an mremap move.
  */
-काष्ठा vm_area_काष्ठा *copy_vma(काष्ठा vm_area_काष्ठा **vmap,
-	अचिन्हित दीर्घ addr, अचिन्हित दीर्घ len, pgoff_t pgoff,
+struct vm_area_struct *copy_vma(struct vm_area_struct **vmap,
+	unsigned long addr, unsigned long len, pgoff_t pgoff,
 	bool *need_rmap_locks)
-अणु
-	काष्ठा vm_area_काष्ठा *vma = *vmap;
-	अचिन्हित दीर्घ vma_start = vma->vm_start;
-	काष्ठा mm_काष्ठा *mm = vma->vm_mm;
-	काष्ठा vm_area_काष्ठा *new_vma, *prev;
-	काष्ठा rb_node **rb_link, *rb_parent;
+{
+	struct vm_area_struct *vma = *vmap;
+	unsigned long vma_start = vma->vm_start;
+	struct mm_struct *mm = vma->vm_mm;
+	struct vm_area_struct *new_vma, *prev;
+	struct rb_node **rb_link, *rb_parent;
 	bool faulted_in_anon_vma = true;
 
 	/*
 	 * If anonymous vma has not yet been faulted, update new pgoff
 	 * to match new location, to increase its chance of merging.
 	 */
-	अगर (unlikely(vma_is_anonymous(vma) && !vma->anon_vma)) अणु
+	if (unlikely(vma_is_anonymous(vma) && !vma->anon_vma)) {
 		pgoff = addr >> PAGE_SHIFT;
 		faulted_in_anon_vma = false;
-	पूर्ण
+	}
 
-	अगर (find_vma_links(mm, addr, addr + len, &prev, &rb_link, &rb_parent))
-		वापस शून्य;	/* should never get here */
+	if (find_vma_links(mm, addr, addr + len, &prev, &rb_link, &rb_parent))
+		return NULL;	/* should never get here */
 	new_vma = vma_merge(mm, prev, addr, addr + len, vma->vm_flags,
 			    vma->anon_vma, vma->vm_file, pgoff, vma_policy(vma),
 			    vma->vm_userfaultfd_ctx);
-	अगर (new_vma) अणु
+	if (new_vma) {
 		/*
-		 * Source vma may have been merged पूर्णांकo new_vma
+		 * Source vma may have been merged into new_vma
 		 */
-		अगर (unlikely(vma_start >= new_vma->vm_start &&
-			     vma_start < new_vma->vm_end)) अणु
+		if (unlikely(vma_start >= new_vma->vm_start &&
+			     vma_start < new_vma->vm_end)) {
 			/*
 			 * The only way we can get a vma_merge with
-			 * self during an mremap is अगर the vma hasn't
+			 * self during an mremap is if the vma hasn't
 			 * been faulted in yet and we were allowed to
 			 * reset the dst vma->vm_pgoff to the
 			 * destination address of the mremap to allow
@@ -3305,55 +3304,55 @@ EXPORT_SYMBOL(vm_brk);
 			 * vm_pgoff linearity between src and dst vmas
 			 * (in turn preventing a vma_merge) to be
 			 * safe. It is only safe to keep the vm_pgoff
-			 * linear अगर there are no pages mapped yet.
+			 * linear if there are no pages mapped yet.
 			 */
 			VM_BUG_ON_VMA(faulted_in_anon_vma, new_vma);
 			*vmap = vma = new_vma;
-		पूर्ण
+		}
 		*need_rmap_locks = (new_vma->vm_pgoff <= vma->vm_pgoff);
-	पूर्ण अन्यथा अणु
+	} else {
 		new_vma = vm_area_dup(vma);
-		अगर (!new_vma)
-			जाओ out;
+		if (!new_vma)
+			goto out;
 		new_vma->vm_start = addr;
 		new_vma->vm_end = addr + len;
 		new_vma->vm_pgoff = pgoff;
-		अगर (vma_dup_policy(vma, new_vma))
-			जाओ out_मुक्त_vma;
-		अगर (anon_vma_clone(new_vma, vma))
-			जाओ out_मुक्त_mempol;
-		अगर (new_vma->vm_file)
+		if (vma_dup_policy(vma, new_vma))
+			goto out_free_vma;
+		if (anon_vma_clone(new_vma, vma))
+			goto out_free_mempol;
+		if (new_vma->vm_file)
 			get_file(new_vma->vm_file);
-		अगर (new_vma->vm_ops && new_vma->vm_ops->खोलो)
-			new_vma->vm_ops->खोलो(new_vma);
+		if (new_vma->vm_ops && new_vma->vm_ops->open)
+			new_vma->vm_ops->open(new_vma);
 		vma_link(mm, new_vma, prev, rb_link, rb_parent);
 		*need_rmap_locks = false;
-	पूर्ण
-	वापस new_vma;
+	}
+	return new_vma;
 
-out_मुक्त_mempol:
+out_free_mempol:
 	mpol_put(vma_policy(new_vma));
-out_मुक्त_vma:
-	vm_area_मुक्त(new_vma);
+out_free_vma:
+	vm_area_free(new_vma);
 out:
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
 /*
- * Return true अगर the calling process may expand its vm space by the passed
+ * Return true if the calling process may expand its vm space by the passed
  * number of pages
  */
-bool may_expand_vm(काष्ठा mm_काष्ठा *mm, vm_flags_t flags, अचिन्हित दीर्घ npages)
-अणु
-	अगर (mm->total_vm + npages > rlimit(RLIMIT_AS) >> PAGE_SHIFT)
-		वापस false;
+bool may_expand_vm(struct mm_struct *mm, vm_flags_t flags, unsigned long npages)
+{
+	if (mm->total_vm + npages > rlimit(RLIMIT_AS) >> PAGE_SHIFT)
+		return false;
 
-	अगर (is_data_mapping(flags) &&
-	    mm->data_vm + npages > rlimit(RLIMIT_DATA) >> PAGE_SHIFT) अणु
-		/* Workaround क्रम Valgrind */
-		अगर (rlimit(RLIMIT_DATA) == 0 &&
+	if (is_data_mapping(flags) &&
+	    mm->data_vm + npages > rlimit(RLIMIT_DATA) >> PAGE_SHIFT) {
+		/* Workaround for Valgrind */
+		if (rlimit(RLIMIT_DATA) == 0 &&
 		    mm->data_vm + npages <= rlimit_max(RLIMIT_DATA) >> PAGE_SHIFT)
-			वापस true;
+			return true;
 
 		pr_warn_once("%s (%d): VmData %lu exceed data ulimit %lu. Update limits%s.\n",
 			     current->comm, current->pid,
@@ -3361,418 +3360,418 @@ bool may_expand_vm(काष्ठा mm_काष्ठा *mm, vm_flags_t flag
 			     rlimit(RLIMIT_DATA),
 			     ignore_rlimit_data ? "" : " or use boot option ignore_rlimit_data");
 
-		अगर (!ignore_rlimit_data)
-			वापस false;
-	पूर्ण
+		if (!ignore_rlimit_data)
+			return false;
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-व्योम vm_stat_account(काष्ठा mm_काष्ठा *mm, vm_flags_t flags, दीर्घ npages)
-अणु
+void vm_stat_account(struct mm_struct *mm, vm_flags_t flags, long npages)
+{
 	mm->total_vm += npages;
 
-	अगर (is_exec_mapping(flags))
+	if (is_exec_mapping(flags))
 		mm->exec_vm += npages;
-	अन्यथा अगर (is_stack_mapping(flags))
+	else if (is_stack_mapping(flags))
 		mm->stack_vm += npages;
-	अन्यथा अगर (is_data_mapping(flags))
+	else if (is_data_mapping(flags))
 		mm->data_vm += npages;
-पूर्ण
+}
 
-अटल vm_fault_t special_mapping_fault(काष्ठा vm_fault *vmf);
+static vm_fault_t special_mapping_fault(struct vm_fault *vmf);
 
 /*
- * Having a बंद hook prevents vma merging regardless of flags.
+ * Having a close hook prevents vma merging regardless of flags.
  */
-अटल व्योम special_mapping_बंद(काष्ठा vm_area_काष्ठा *vma)
-अणु
-पूर्ण
+static void special_mapping_close(struct vm_area_struct *vma)
+{
+}
 
-अटल स्थिर अक्षर *special_mapping_name(काष्ठा vm_area_काष्ठा *vma)
-अणु
-	वापस ((काष्ठा vm_special_mapping *)vma->vm_निजी_data)->name;
-पूर्ण
+static const char *special_mapping_name(struct vm_area_struct *vma)
+{
+	return ((struct vm_special_mapping *)vma->vm_private_data)->name;
+}
 
-अटल पूर्णांक special_mapping_mremap(काष्ठा vm_area_काष्ठा *new_vma)
-अणु
-	काष्ठा vm_special_mapping *sm = new_vma->vm_निजी_data;
+static int special_mapping_mremap(struct vm_area_struct *new_vma)
+{
+	struct vm_special_mapping *sm = new_vma->vm_private_data;
 
-	अगर (WARN_ON_ONCE(current->mm != new_vma->vm_mm))
-		वापस -EFAULT;
+	if (WARN_ON_ONCE(current->mm != new_vma->vm_mm))
+		return -EFAULT;
 
-	अगर (sm->mremap)
-		वापस sm->mremap(sm, new_vma);
+	if (sm->mremap)
+		return sm->mremap(sm, new_vma);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक special_mapping_split(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ addr)
-अणु
+static int special_mapping_split(struct vm_area_struct *vma, unsigned long addr)
+{
 	/*
 	 * Forbid splitting special mappings - kernel has expectations over
 	 * the number of pages in mapping. Together with VM_DONTEXPAND
 	 * the size of vma should stay the same over the special mapping's
-	 * lअगरeसमय.
+	 * lifetime.
 	 */
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल स्थिर काष्ठा vm_operations_काष्ठा special_mapping_vmops = अणु
-	.बंद = special_mapping_बंद,
+static const struct vm_operations_struct special_mapping_vmops = {
+	.close = special_mapping_close,
 	.fault = special_mapping_fault,
 	.mremap = special_mapping_mremap,
 	.name = special_mapping_name,
 	/* vDSO code relies that VVAR can't be accessed remotely */
-	.access = शून्य,
+	.access = NULL,
 	.may_split = special_mapping_split,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा vm_operations_काष्ठा legacy_special_mapping_vmops = अणु
-	.बंद = special_mapping_बंद,
+static const struct vm_operations_struct legacy_special_mapping_vmops = {
+	.close = special_mapping_close,
 	.fault = special_mapping_fault,
-पूर्ण;
+};
 
-अटल vm_fault_t special_mapping_fault(काष्ठा vm_fault *vmf)
-अणु
-	काष्ठा vm_area_काष्ठा *vma = vmf->vma;
+static vm_fault_t special_mapping_fault(struct vm_fault *vmf)
+{
+	struct vm_area_struct *vma = vmf->vma;
 	pgoff_t pgoff;
-	काष्ठा page **pages;
+	struct page **pages;
 
-	अगर (vma->vm_ops == &legacy_special_mapping_vmops) अणु
-		pages = vma->vm_निजी_data;
-	पूर्ण अन्यथा अणु
-		काष्ठा vm_special_mapping *sm = vma->vm_निजी_data;
+	if (vma->vm_ops == &legacy_special_mapping_vmops) {
+		pages = vma->vm_private_data;
+	} else {
+		struct vm_special_mapping *sm = vma->vm_private_data;
 
-		अगर (sm->fault)
-			वापस sm->fault(sm, vmf->vma, vmf);
+		if (sm->fault)
+			return sm->fault(sm, vmf->vma, vmf);
 
 		pages = sm->pages;
-	पूर्ण
+	}
 
-	क्रम (pgoff = vmf->pgoff; pgoff && *pages; ++pages)
+	for (pgoff = vmf->pgoff; pgoff && *pages; ++pages)
 		pgoff--;
 
-	अगर (*pages) अणु
-		काष्ठा page *page = *pages;
+	if (*pages) {
+		struct page *page = *pages;
 		get_page(page);
 		vmf->page = page;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	वापस VM_FAULT_SIGBUS;
-पूर्ण
+	return VM_FAULT_SIGBUS;
+}
 
-अटल काष्ठा vm_area_काष्ठा *__install_special_mapping(
-	काष्ठा mm_काष्ठा *mm,
-	अचिन्हित दीर्घ addr, अचिन्हित दीर्घ len,
-	अचिन्हित दीर्घ vm_flags, व्योम *priv,
-	स्थिर काष्ठा vm_operations_काष्ठा *ops)
-अणु
-	पूर्णांक ret;
-	काष्ठा vm_area_काष्ठा *vma;
+static struct vm_area_struct *__install_special_mapping(
+	struct mm_struct *mm,
+	unsigned long addr, unsigned long len,
+	unsigned long vm_flags, void *priv,
+	const struct vm_operations_struct *ops)
+{
+	int ret;
+	struct vm_area_struct *vma;
 
 	vma = vm_area_alloc(mm);
-	अगर (unlikely(vma == शून्य))
-		वापस ERR_PTR(-ENOMEM);
+	if (unlikely(vma == NULL))
+		return ERR_PTR(-ENOMEM);
 
 	vma->vm_start = addr;
 	vma->vm_end = addr + len;
 
-	vma->vm_flags = vm_flags | mm->def_flags | VM_DONTEXPAND | VM_SOFTसूचीTY;
+	vma->vm_flags = vm_flags | mm->def_flags | VM_DONTEXPAND | VM_SOFTDIRTY;
 	vma->vm_page_prot = vm_get_page_prot(vma->vm_flags);
 
 	vma->vm_ops = ops;
-	vma->vm_निजी_data = priv;
+	vma->vm_private_data = priv;
 
-	ret = insert_vm_काष्ठा(mm, vma);
-	अगर (ret)
-		जाओ out;
+	ret = insert_vm_struct(mm, vma);
+	if (ret)
+		goto out;
 
 	vm_stat_account(mm, vma->vm_flags, len >> PAGE_SHIFT);
 
 	perf_event_mmap(vma);
 
-	वापस vma;
+	return vma;
 
 out:
-	vm_area_मुक्त(vma);
-	वापस ERR_PTR(ret);
-पूर्ण
+	vm_area_free(vma);
+	return ERR_PTR(ret);
+}
 
-bool vma_is_special_mapping(स्थिर काष्ठा vm_area_काष्ठा *vma,
-	स्थिर काष्ठा vm_special_mapping *sm)
-अणु
-	वापस vma->vm_निजी_data == sm &&
+bool vma_is_special_mapping(const struct vm_area_struct *vma,
+	const struct vm_special_mapping *sm)
+{
+	return vma->vm_private_data == sm &&
 		(vma->vm_ops == &special_mapping_vmops ||
 		 vma->vm_ops == &legacy_special_mapping_vmops);
-पूर्ण
+}
 
 /*
- * Called with mm->mmap_lock held क्रम writing.
+ * Called with mm->mmap_lock held for writing.
  * Insert a new vma covering the given region, with the given flags.
- * Its pages are supplied by the given array of काष्ठा page *.
- * The array can be लघुer than len >> PAGE_SHIFT अगर it's null-terminated.
+ * Its pages are supplied by the given array of struct page *.
+ * The array can be shorter than len >> PAGE_SHIFT if it's null-terminated.
  * The region past the last page supplied will always produce SIGBUS.
- * The array poपूर्णांकer and the pages it poपूर्णांकs to are assumed to stay alive
- * क्रम as दीर्घ as this mapping might exist.
+ * The array pointer and the pages it points to are assumed to stay alive
+ * for as long as this mapping might exist.
  */
-काष्ठा vm_area_काष्ठा *_install_special_mapping(
-	काष्ठा mm_काष्ठा *mm,
-	अचिन्हित दीर्घ addr, अचिन्हित दीर्घ len,
-	अचिन्हित दीर्घ vm_flags, स्थिर काष्ठा vm_special_mapping *spec)
-अणु
-	वापस __install_special_mapping(mm, addr, len, vm_flags, (व्योम *)spec,
+struct vm_area_struct *_install_special_mapping(
+	struct mm_struct *mm,
+	unsigned long addr, unsigned long len,
+	unsigned long vm_flags, const struct vm_special_mapping *spec)
+{
+	return __install_special_mapping(mm, addr, len, vm_flags, (void *)spec,
 					&special_mapping_vmops);
-पूर्ण
+}
 
-पूर्णांक install_special_mapping(काष्ठा mm_काष्ठा *mm,
-			    अचिन्हित दीर्घ addr, अचिन्हित दीर्घ len,
-			    अचिन्हित दीर्घ vm_flags, काष्ठा page **pages)
-अणु
-	काष्ठा vm_area_काष्ठा *vma = __install_special_mapping(
-		mm, addr, len, vm_flags, (व्योम *)pages,
+int install_special_mapping(struct mm_struct *mm,
+			    unsigned long addr, unsigned long len,
+			    unsigned long vm_flags, struct page **pages)
+{
+	struct vm_area_struct *vma = __install_special_mapping(
+		mm, addr, len, vm_flags, (void *)pages,
 		&legacy_special_mapping_vmops);
 
-	वापस PTR_ERR_OR_ZERO(vma);
-पूर्ण
+	return PTR_ERR_OR_ZERO(vma);
+}
 
-अटल DEFINE_MUTEX(mm_all_locks_mutex);
+static DEFINE_MUTEX(mm_all_locks_mutex);
 
-अटल व्योम vm_lock_anon_vma(काष्ठा mm_काष्ठा *mm, काष्ठा anon_vma *anon_vma)
-अणु
-	अगर (!test_bit(0, (अचिन्हित दीर्घ *) &anon_vma->root->rb_root.rb_root.rb_node)) अणु
+static void vm_lock_anon_vma(struct mm_struct *mm, struct anon_vma *anon_vma)
+{
+	if (!test_bit(0, (unsigned long *) &anon_vma->root->rb_root.rb_root.rb_node)) {
 		/*
 		 * The LSB of head.next can't change from under us
 		 * because we hold the mm_all_locks_mutex.
 		 */
-		करोwn_ग_लिखो_nest_lock(&anon_vma->root->rwsem, &mm->mmap_lock);
+		down_write_nest_lock(&anon_vma->root->rwsem, &mm->mmap_lock);
 		/*
-		 * We can safely modअगरy head.next after taking the
+		 * We can safely modify head.next after taking the
 		 * anon_vma->root->rwsem. If some other vma in this mm shares
 		 * the same anon_vma we won't take it again.
 		 *
-		 * No need of atomic inकाष्ठाions here, head.next
+		 * No need of atomic instructions here, head.next
 		 * can't change from under us thanks to the
 		 * anon_vma->root->rwsem.
 		 */
-		अगर (__test_and_set_bit(0, (अचिन्हित दीर्घ *)
+		if (__test_and_set_bit(0, (unsigned long *)
 				       &anon_vma->root->rb_root.rb_root.rb_node))
 			BUG();
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम vm_lock_mapping(काष्ठा mm_काष्ठा *mm, काष्ठा address_space *mapping)
-अणु
-	अगर (!test_bit(AS_MM_ALL_LOCKS, &mapping->flags)) अणु
+static void vm_lock_mapping(struct mm_struct *mm, struct address_space *mapping)
+{
+	if (!test_bit(AS_MM_ALL_LOCKS, &mapping->flags)) {
 		/*
 		 * AS_MM_ALL_LOCKS can't change from under us because
 		 * we hold the mm_all_locks_mutex.
 		 *
 		 * Operations on ->flags have to be atomic because
-		 * even अगर AS_MM_ALL_LOCKS is stable thanks to the
+		 * even if AS_MM_ALL_LOCKS is stable thanks to the
 		 * mm_all_locks_mutex, there may be other cpus
 		 * changing other bitflags in parallel to us.
 		 */
-		अगर (test_and_set_bit(AS_MM_ALL_LOCKS, &mapping->flags))
+		if (test_and_set_bit(AS_MM_ALL_LOCKS, &mapping->flags))
 			BUG();
-		करोwn_ग_लिखो_nest_lock(&mapping->i_mmap_rwsem, &mm->mmap_lock);
-	पूर्ण
-पूर्ण
+		down_write_nest_lock(&mapping->i_mmap_rwsem, &mm->mmap_lock);
+	}
+}
 
 /*
- * This operation locks against the VM क्रम all pte/vma/mm related
+ * This operation locks against the VM for all pte/vma/mm related
  * operations that could ever happen on a certain mm. This includes
  * vmtruncate, try_to_unmap, and all page faults.
  *
- * The caller must take the mmap_lock in ग_लिखो mode beक्रमe calling
+ * The caller must take the mmap_lock in write mode before calling
  * mm_take_all_locks(). The caller isn't allowed to release the
- * mmap_lock until mm_drop_all_locks() वापसs.
+ * mmap_lock until mm_drop_all_locks() returns.
  *
- * mmap_lock in ग_लिखो mode is required in order to block all operations
- * that could modअगरy pagetables and मुक्त pages without need of
- * altering the vma layout. It's also needed in ग_लिखो mode to aव्योम new
+ * mmap_lock in write mode is required in order to block all operations
+ * that could modify pagetables and free pages without need of
+ * altering the vma layout. It's also needed in write mode to avoid new
  * anon_vmas to be associated with existing vmas.
  *
  * A single task can't take more than one mm_take_all_locks() in a row
  * or it would deadlock.
  *
  * The LSB in anon_vma->rb_root.rb_node and the AS_MM_ALL_LOCKS bitflag in
- * mapping->flags aव्योम to take the same lock twice, अगर more than one
+ * mapping->flags avoid to take the same lock twice, if more than one
  * vma in this mm is backed by the same anon_vma or address_space.
  *
  * We take locks in following order, accordingly to comment at beginning
  * of mm/rmap.c:
- *   - all hugetlbfs_i_mmap_rwsem_key locks (aka mapping->i_mmap_rwsem क्रम
+ *   - all hugetlbfs_i_mmap_rwsem_key locks (aka mapping->i_mmap_rwsem for
  *     hugetlb mapping);
  *   - all i_mmap_rwsem locks;
  *   - all anon_vma->rwseml
  *
- * We can take all locks within these types अक्रमomly because the VM code
- * करोesn't nest them and we रक्षित from parallel mm_take_all_locks() by
+ * We can take all locks within these types randomly because the VM code
+ * doesn't nest them and we protected from parallel mm_take_all_locks() by
  * mm_all_locks_mutex.
  *
  * mm_take_all_locks() and mm_drop_all_locks are expensive operations
  * that may have to take thousand of locks.
  *
- * mm_take_all_locks() can fail अगर it's पूर्णांकerrupted by संकेतs.
+ * mm_take_all_locks() can fail if it's interrupted by signals.
  */
-पूर्णांक mm_take_all_locks(काष्ठा mm_काष्ठा *mm)
-अणु
-	काष्ठा vm_area_काष्ठा *vma;
-	काष्ठा anon_vma_chain *avc;
+int mm_take_all_locks(struct mm_struct *mm)
+{
+	struct vm_area_struct *vma;
+	struct anon_vma_chain *avc;
 
-	BUG_ON(mmap_पढ़ो_trylock(mm));
+	BUG_ON(mmap_read_trylock(mm));
 
 	mutex_lock(&mm_all_locks_mutex);
 
-	क्रम (vma = mm->mmap; vma; vma = vma->vm_next) अणु
-		अगर (संकेत_pending(current))
-			जाओ out_unlock;
-		अगर (vma->vm_file && vma->vm_file->f_mapping &&
+	for (vma = mm->mmap; vma; vma = vma->vm_next) {
+		if (signal_pending(current))
+			goto out_unlock;
+		if (vma->vm_file && vma->vm_file->f_mapping &&
 				is_vm_hugetlb_page(vma))
 			vm_lock_mapping(mm, vma->vm_file->f_mapping);
-	पूर्ण
+	}
 
-	क्रम (vma = mm->mmap; vma; vma = vma->vm_next) अणु
-		अगर (संकेत_pending(current))
-			जाओ out_unlock;
-		अगर (vma->vm_file && vma->vm_file->f_mapping &&
+	for (vma = mm->mmap; vma; vma = vma->vm_next) {
+		if (signal_pending(current))
+			goto out_unlock;
+		if (vma->vm_file && vma->vm_file->f_mapping &&
 				!is_vm_hugetlb_page(vma))
 			vm_lock_mapping(mm, vma->vm_file->f_mapping);
-	पूर्ण
+	}
 
-	क्रम (vma = mm->mmap; vma; vma = vma->vm_next) अणु
-		अगर (संकेत_pending(current))
-			जाओ out_unlock;
-		अगर (vma->anon_vma)
-			list_क्रम_each_entry(avc, &vma->anon_vma_chain, same_vma)
+	for (vma = mm->mmap; vma; vma = vma->vm_next) {
+		if (signal_pending(current))
+			goto out_unlock;
+		if (vma->anon_vma)
+			list_for_each_entry(avc, &vma->anon_vma_chain, same_vma)
 				vm_lock_anon_vma(mm, avc->anon_vma);
-	पूर्ण
+	}
 
-	वापस 0;
+	return 0;
 
 out_unlock:
 	mm_drop_all_locks(mm);
-	वापस -EINTR;
-पूर्ण
+	return -EINTR;
+}
 
-अटल व्योम vm_unlock_anon_vma(काष्ठा anon_vma *anon_vma)
-अणु
-	अगर (test_bit(0, (अचिन्हित दीर्घ *) &anon_vma->root->rb_root.rb_root.rb_node)) अणु
+static void vm_unlock_anon_vma(struct anon_vma *anon_vma)
+{
+	if (test_bit(0, (unsigned long *) &anon_vma->root->rb_root.rb_root.rb_node)) {
 		/*
 		 * The LSB of head.next can't change to 0 from under
 		 * us because we hold the mm_all_locks_mutex.
 		 *
-		 * We must however clear the bitflag beक्रमe unlocking
+		 * We must however clear the bitflag before unlocking
 		 * the vma so the users using the anon_vma->rb_root will
 		 * never see our bitflag.
 		 *
-		 * No need of atomic inकाष्ठाions here, head.next
+		 * No need of atomic instructions here, head.next
 		 * can't change from under us until we release the
 		 * anon_vma->root->rwsem.
 		 */
-		अगर (!__test_and_clear_bit(0, (अचिन्हित दीर्घ *)
+		if (!__test_and_clear_bit(0, (unsigned long *)
 					  &anon_vma->root->rb_root.rb_root.rb_node))
 			BUG();
-		anon_vma_unlock_ग_लिखो(anon_vma);
-	पूर्ण
-पूर्ण
+		anon_vma_unlock_write(anon_vma);
+	}
+}
 
-अटल व्योम vm_unlock_mapping(काष्ठा address_space *mapping)
-अणु
-	अगर (test_bit(AS_MM_ALL_LOCKS, &mapping->flags)) अणु
+static void vm_unlock_mapping(struct address_space *mapping)
+{
+	if (test_bit(AS_MM_ALL_LOCKS, &mapping->flags)) {
 		/*
 		 * AS_MM_ALL_LOCKS can't change to 0 from under us
 		 * because we hold the mm_all_locks_mutex.
 		 */
-		i_mmap_unlock_ग_लिखो(mapping);
-		अगर (!test_and_clear_bit(AS_MM_ALL_LOCKS,
+		i_mmap_unlock_write(mapping);
+		if (!test_and_clear_bit(AS_MM_ALL_LOCKS,
 					&mapping->flags))
 			BUG();
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
  * The mmap_lock cannot be released by the caller until
- * mm_drop_all_locks() वापसs.
+ * mm_drop_all_locks() returns.
  */
-व्योम mm_drop_all_locks(काष्ठा mm_काष्ठा *mm)
-अणु
-	काष्ठा vm_area_काष्ठा *vma;
-	काष्ठा anon_vma_chain *avc;
+void mm_drop_all_locks(struct mm_struct *mm)
+{
+	struct vm_area_struct *vma;
+	struct anon_vma_chain *avc;
 
-	BUG_ON(mmap_पढ़ो_trylock(mm));
+	BUG_ON(mmap_read_trylock(mm));
 	BUG_ON(!mutex_is_locked(&mm_all_locks_mutex));
 
-	क्रम (vma = mm->mmap; vma; vma = vma->vm_next) अणु
-		अगर (vma->anon_vma)
-			list_क्रम_each_entry(avc, &vma->anon_vma_chain, same_vma)
+	for (vma = mm->mmap; vma; vma = vma->vm_next) {
+		if (vma->anon_vma)
+			list_for_each_entry(avc, &vma->anon_vma_chain, same_vma)
 				vm_unlock_anon_vma(avc->anon_vma);
-		अगर (vma->vm_file && vma->vm_file->f_mapping)
+		if (vma->vm_file && vma->vm_file->f_mapping)
 			vm_unlock_mapping(vma->vm_file->f_mapping);
-	पूर्ण
+	}
 
 	mutex_unlock(&mm_all_locks_mutex);
-पूर्ण
+}
 
 /*
- * initialise the percpu counter क्रम VM
+ * initialise the percpu counter for VM
  */
-व्योम __init mmap_init(व्योम)
-अणु
-	पूर्णांक ret;
+void __init mmap_init(void)
+{
+	int ret;
 
 	ret = percpu_counter_init(&vm_committed_as, 0, GFP_KERNEL);
 	VM_BUG_ON(ret);
-पूर्ण
+}
 
 /*
  * Initialise sysctl_user_reserve_kbytes.
  *
- * This is पूर्णांकended to prevent a user from starting a single memory hogging
- * process, such that they cannot recover (समाप्त the hog) in OVERCOMMIT_NEVER
+ * This is intended to prevent a user from starting a single memory hogging
+ * process, such that they cannot recover (kill the hog) in OVERCOMMIT_NEVER
  * mode.
  *
- * The शेष value is min(3% of मुक्त memory, 128MB)
- * 128MB is enough to recover with sshd/login, bash, and top/समाप्त.
+ * The default value is min(3% of free memory, 128MB)
+ * 128MB is enough to recover with sshd/login, bash, and top/kill.
  */
-अटल पूर्णांक init_user_reserve(व्योम)
-अणु
-	अचिन्हित दीर्घ मुक्त_kbytes;
+static int init_user_reserve(void)
+{
+	unsigned long free_kbytes;
 
-	मुक्त_kbytes = global_zone_page_state(NR_FREE_PAGES) << (PAGE_SHIFT - 10);
+	free_kbytes = global_zone_page_state(NR_FREE_PAGES) << (PAGE_SHIFT - 10);
 
-	sysctl_user_reserve_kbytes = min(मुक्त_kbytes / 32, 1UL << 17);
-	वापस 0;
-पूर्ण
+	sysctl_user_reserve_kbytes = min(free_kbytes / 32, 1UL << 17);
+	return 0;
+}
 subsys_initcall(init_user_reserve);
 
 /*
  * Initialise sysctl_admin_reserve_kbytes.
  *
  * The purpose of sysctl_admin_reserve_kbytes is to allow the sys admin
- * to log in and समाप्त a memory hogging process.
+ * to log in and kill a memory hogging process.
  *
  * Systems with more than 256MB will reserve 8MB, enough to recover
- * with sshd, bash, and top in OVERCOMMIT_GUESS. Smaller प्रणालीs will
- * only reserve 3% of मुक्त pages by शेष.
+ * with sshd, bash, and top in OVERCOMMIT_GUESS. Smaller systems will
+ * only reserve 3% of free pages by default.
  */
-अटल पूर्णांक init_admin_reserve(व्योम)
-अणु
-	अचिन्हित दीर्घ मुक्त_kbytes;
+static int init_admin_reserve(void)
+{
+	unsigned long free_kbytes;
 
-	मुक्त_kbytes = global_zone_page_state(NR_FREE_PAGES) << (PAGE_SHIFT - 10);
+	free_kbytes = global_zone_page_state(NR_FREE_PAGES) << (PAGE_SHIFT - 10);
 
-	sysctl_admin_reserve_kbytes = min(मुक्त_kbytes / 32, 1UL << 13);
-	वापस 0;
-पूर्ण
+	sysctl_admin_reserve_kbytes = min(free_kbytes / 32, 1UL << 13);
+	return 0;
+}
 subsys_initcall(init_admin_reserve);
 
 /*
- * Reinititalise user and admin reserves अगर memory is added or हटाओd.
+ * Reinititalise user and admin reserves if memory is added or removed.
  *
- * The शेष user reserve max is 128MB, and the शेष max क्रम the
+ * The default user reserve max is 128MB, and the default max for the
  * admin reserve is 8MB. These are usually, but not always, enough to
  * enable recovery from a memory hogging process using login/sshd, a shell,
  * and tools like top. It may make sense to increase or even disable the
@@ -3780,61 +3779,61 @@ subsys_initcall(init_admin_reserve);
  * tools. So, the admin may have changed them.
  *
  * If memory is added and the reserves have been eliminated or increased above
- * the शेष max, then we'll trust the admin.
+ * the default max, then we'll trust the admin.
  *
- * If memory is हटाओd and there isn't enough मुक्त memory, then we
+ * If memory is removed and there isn't enough free memory, then we
  * need to reset the reserves.
  *
  * Otherwise keep the reserve set by the admin.
  */
-अटल पूर्णांक reserve_mem_notअगरier(काष्ठा notअगरier_block *nb,
-			     अचिन्हित दीर्घ action, व्योम *data)
-अणु
-	अचिन्हित दीर्घ पंचांगp, मुक्त_kbytes;
+static int reserve_mem_notifier(struct notifier_block *nb,
+			     unsigned long action, void *data)
+{
+	unsigned long tmp, free_kbytes;
 
-	चयन (action) अणु
-	हाल MEM_ONLINE:
-		/* Default max is 128MB. Leave alone अगर modअगरied by चालक. */
-		पंचांगp = sysctl_user_reserve_kbytes;
-		अगर (0 < पंचांगp && पंचांगp < (1UL << 17))
+	switch (action) {
+	case MEM_ONLINE:
+		/* Default max is 128MB. Leave alone if modified by operator. */
+		tmp = sysctl_user_reserve_kbytes;
+		if (0 < tmp && tmp < (1UL << 17))
 			init_user_reserve();
 
-		/* Default max is 8MB.  Leave alone अगर modअगरied by चालक. */
-		पंचांगp = sysctl_admin_reserve_kbytes;
-		अगर (0 < पंचांगp && पंचांगp < (1UL << 13))
+		/* Default max is 8MB.  Leave alone if modified by operator. */
+		tmp = sysctl_admin_reserve_kbytes;
+		if (0 < tmp && tmp < (1UL << 13))
 			init_admin_reserve();
 
-		अवरोध;
-	हाल MEM_OFFLINE:
-		मुक्त_kbytes = global_zone_page_state(NR_FREE_PAGES) << (PAGE_SHIFT - 10);
+		break;
+	case MEM_OFFLINE:
+		free_kbytes = global_zone_page_state(NR_FREE_PAGES) << (PAGE_SHIFT - 10);
 
-		अगर (sysctl_user_reserve_kbytes > मुक्त_kbytes) अणु
+		if (sysctl_user_reserve_kbytes > free_kbytes) {
 			init_user_reserve();
 			pr_info("vm.user_reserve_kbytes reset to %lu\n",
 				sysctl_user_reserve_kbytes);
-		पूर्ण
+		}
 
-		अगर (sysctl_admin_reserve_kbytes > मुक्त_kbytes) अणु
+		if (sysctl_admin_reserve_kbytes > free_kbytes) {
 			init_admin_reserve();
 			pr_info("vm.admin_reserve_kbytes reset to %lu\n",
 				sysctl_admin_reserve_kbytes);
-		पूर्ण
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-	वापस NOTIFY_OK;
-पूर्ण
+		}
+		break;
+	default:
+		break;
+	}
+	return NOTIFY_OK;
+}
 
-अटल काष्ठा notअगरier_block reserve_mem_nb = अणु
-	.notअगरier_call = reserve_mem_notअगरier,
-पूर्ण;
+static struct notifier_block reserve_mem_nb = {
+	.notifier_call = reserve_mem_notifier,
+};
 
-अटल पूर्णांक __meminit init_reserve_notअगरier(व्योम)
-अणु
-	अगर (रेजिस्टर_hoपंचांगemory_notअगरier(&reserve_mem_nb))
+static int __meminit init_reserve_notifier(void)
+{
+	if (register_hotmemory_notifier(&reserve_mem_nb))
 		pr_err("Failed registering memory add/remove notifier for admin reserve\n");
 
-	वापस 0;
-पूर्ण
-subsys_initcall(init_reserve_notअगरier);
+	return 0;
+}
+subsys_initcall(init_reserve_notifier);

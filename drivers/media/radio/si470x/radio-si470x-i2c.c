@@ -1,9 +1,8 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * drivers/media/radio/si470x/radio-si470x-i2c.c
  *
- * I2C driver क्रम radios with Silicon Lअसल Si470x FM Radio Receivers
+ * I2C driver for radios with Silicon Labs Si470x FM Radio Receivers
  *
  * Copyright (c) 2009 Samsung Electronics Co.Ltd
  * Author: Joonyoung Shim <jy0922.shim@samsung.com>
@@ -11,28 +10,28 @@
 
 
 /* driver definitions */
-#घोषणा DRIVER_AUTHOR "Joonyoung Shim <jy0922.shim@samsung.com>";
-#घोषणा DRIVER_CARD "Silicon Labs Si470x FM Radio Receiver"
-#घोषणा DRIVER_DESC "I2C radio driver for Si470x FM Radio Receivers"
-#घोषणा DRIVER_VERSION "1.0.2"
+#define DRIVER_AUTHOR "Joonyoung Shim <jy0922.shim@samsung.com>";
+#define DRIVER_CARD "Silicon Labs Si470x FM Radio Receiver"
+#define DRIVER_DESC "I2C radio driver for Si470x FM Radio Receivers"
+#define DRIVER_VERSION "1.0.2"
 
 /* kernel includes */
-#समावेश <linux/i2c.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/gpio/consumer.h>
-#समावेश <linux/पूर्णांकerrupt.h>
+#include <linux/i2c.h>
+#include <linux/slab.h>
+#include <linux/delay.h>
+#include <linux/gpio/consumer.h>
+#include <linux/interrupt.h>
 
-#समावेश "radio-si470x.h"
+#include "radio-si470x.h"
 
 
 /* I2C Device ID List */
-अटल स्थिर काष्ठा i2c_device_id si470x_i2c_id[] = अणु
+static const struct i2c_device_id si470x_i2c_id[] = {
 	/* Generic Entry */
-	अणु "si470x", 0 पूर्ण,
+	{ "si470x", 0 },
 	/* Terminating entry */
-	अणु पूर्ण
-पूर्ण;
+	{ }
+};
 MODULE_DEVICE_TABLE(i2c, si470x_i2c_id);
 
 
@@ -41,22 +40,22 @@ MODULE_DEVICE_TABLE(i2c, si470x_i2c_id);
  **************************************************************************/
 
 /* Radio Nr */
-अटल पूर्णांक radio_nr = -1;
-module_param(radio_nr, पूर्णांक, 0444);
+static int radio_nr = -1;
+module_param(radio_nr, int, 0444);
 MODULE_PARM_DESC(radio_nr, "Radio Nr");
 
 /* RDS buffer blocks */
-अटल अचिन्हित पूर्णांक rds_buf = 100;
-module_param(rds_buf, uपूर्णांक, 0444);
+static unsigned int rds_buf = 100;
+module_param(rds_buf, uint, 0444);
 MODULE_PARM_DESC(rds_buf, "RDS buffer entries: *100*");
 
 /* RDS maximum block errors */
-अटल अचिन्हित लघु max_rds_errors = 1;
+static unsigned short max_rds_errors = 1;
 /* 0 means   0  errors requiring correction */
 /* 1 means 1-2  errors requiring correction (used by original USBRadio.exe) */
 /* 2 means 3-5  errors requiring correction */
 /* 3 means   6+ errors or errors in checkword, correction not possible */
-module_param(max_rds_errors, uलघु, 0644);
+module_param(max_rds_errors, ushort, 0644);
 MODULE_PARM_DESC(max_rds_errors, "RDS maximum block errors: *1*");
 
 
@@ -65,13 +64,13 @@ MODULE_PARM_DESC(max_rds_errors, "RDS maximum block errors: *1*");
  * I2C Definitions
  **************************************************************************/
 
-/* Write starts with the upper byte of रेजिस्टर 0x02 */
-#घोषणा WRITE_REG_NUM		8
-#घोषणा WRITE_INDEX(i)		(i + 0x02)
+/* Write starts with the upper byte of register 0x02 */
+#define WRITE_REG_NUM		8
+#define WRITE_INDEX(i)		(i + 0x02)
 
-/* Read starts with the upper byte of रेजिस्टर 0x0a */
-#घोषणा READ_REG_NUM		RADIO_REGISTER_NUM
-#घोषणा READ_INDEX(i)		((i + RADIO_REGISTER_NUM - 0x0a) % READ_REG_NUM)
+/* Read starts with the upper byte of register 0x0a */
+#define READ_REG_NUM		RADIO_REGISTER_NUM
+#define READ_INDEX(i)		((i + RADIO_REGISTER_NUM - 0x0a) % READ_REG_NUM)
 
 
 
@@ -80,52 +79,52 @@ MODULE_PARM_DESC(max_rds_errors, "RDS maximum block errors: *1*");
  **************************************************************************/
 
 /*
- * si470x_get_रेजिस्टर - पढ़ो रेजिस्टर
+ * si470x_get_register - read register
  */
-अटल पूर्णांक si470x_get_रेजिस्टर(काष्ठा si470x_device *radio, पूर्णांक regnr)
-अणु
+static int si470x_get_register(struct si470x_device *radio, int regnr)
+{
 	__be16 buf[READ_REG_NUM];
-	काष्ठा i2c_msg msgs[1] = अणु
-		अणु
+	struct i2c_msg msgs[1] = {
+		{
 			.addr = radio->client->addr,
 			.flags = I2C_M_RD,
-			.len = माप(u16) * READ_REG_NUM,
-			.buf = (व्योम *)buf
-		पूर्ण,
-	पूर्ण;
+			.len = sizeof(u16) * READ_REG_NUM,
+			.buf = (void *)buf
+		},
+	};
 
-	अगर (i2c_transfer(radio->client->adapter, msgs, 1) != 1)
-		वापस -EIO;
+	if (i2c_transfer(radio->client->adapter, msgs, 1) != 1)
+		return -EIO;
 
-	radio->रेजिस्टरs[regnr] = __be16_to_cpu(buf[READ_INDEX(regnr)]);
+	radio->registers[regnr] = __be16_to_cpu(buf[READ_INDEX(regnr)]);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
 /*
- * si470x_set_रेजिस्टर - ग_लिखो रेजिस्टर
+ * si470x_set_register - write register
  */
-अटल पूर्णांक si470x_set_रेजिस्टर(काष्ठा si470x_device *radio, पूर्णांक regnr)
-अणु
-	पूर्णांक i;
+static int si470x_set_register(struct si470x_device *radio, int regnr)
+{
+	int i;
 	__be16 buf[WRITE_REG_NUM];
-	काष्ठा i2c_msg msgs[1] = अणु
-		अणु
+	struct i2c_msg msgs[1] = {
+		{
 			.addr = radio->client->addr,
-			.len = माप(u16) * WRITE_REG_NUM,
-			.buf = (व्योम *)buf
-		पूर्ण,
-	पूर्ण;
+			.len = sizeof(u16) * WRITE_REG_NUM,
+			.buf = (void *)buf
+		},
+	};
 
-	क्रम (i = 0; i < WRITE_REG_NUM; i++)
-		buf[i] = __cpu_to_be16(radio->रेजिस्टरs[WRITE_INDEX(i)]);
+	for (i = 0; i < WRITE_REG_NUM; i++)
+		buf[i] = __cpu_to_be16(radio->registers[WRITE_INDEX(i)]);
 
-	अगर (i2c_transfer(radio->client->adapter, msgs, 1) != 1)
-		वापस -EIO;
+	if (i2c_transfer(radio->client->adapter, msgs, 1) != 1)
+		return -EIO;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
 
@@ -134,29 +133,29 @@ MODULE_PARM_DESC(max_rds_errors, "RDS maximum block errors: *1*");
  **************************************************************************/
 
 /*
- * si470x_get_all_रेजिस्टरs - पढ़ो entire रेजिस्टरs
+ * si470x_get_all_registers - read entire registers
  */
-अटल पूर्णांक si470x_get_all_रेजिस्टरs(काष्ठा si470x_device *radio)
-अणु
-	पूर्णांक i;
+static int si470x_get_all_registers(struct si470x_device *radio)
+{
+	int i;
 	__be16 buf[READ_REG_NUM];
-	काष्ठा i2c_msg msgs[1] = अणु
-		अणु
+	struct i2c_msg msgs[1] = {
+		{
 			.addr = radio->client->addr,
 			.flags = I2C_M_RD,
-			.len = माप(u16) * READ_REG_NUM,
-			.buf = (व्योम *)buf
-		पूर्ण,
-	पूर्ण;
+			.len = sizeof(u16) * READ_REG_NUM,
+			.buf = (void *)buf
+		},
+	};
 
-	अगर (i2c_transfer(radio->client->adapter, msgs, 1) != 1)
-		वापस -EIO;
+	if (i2c_transfer(radio->client->adapter, msgs, 1) != 1)
+		return -EIO;
 
-	क्रम (i = 0; i < READ_REG_NUM; i++)
-		radio->रेजिस्टरs[i] = __be16_to_cpu(buf[READ_INDEX(i)]);
+	for (i = 0; i < READ_REG_NUM; i++)
+		radio->registers[i] = __be16_to_cpu(buf[READ_INDEX(i)]);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
 
@@ -165,50 +164,50 @@ MODULE_PARM_DESC(max_rds_errors, "RDS maximum block errors: *1*");
  **************************************************************************/
 
 /*
- * si470x_fops_खोलो - file खोलो
+ * si470x_fops_open - file open
  */
-अटल पूर्णांक si470x_fops_खोलो(काष्ठा file *file)
-अणु
-	काष्ठा si470x_device *radio = video_drvdata(file);
-	पूर्णांक retval = v4l2_fh_खोलो(file);
+static int si470x_fops_open(struct file *file)
+{
+	struct si470x_device *radio = video_drvdata(file);
+	int retval = v4l2_fh_open(file);
 
-	अगर (retval)
-		वापस retval;
+	if (retval)
+		return retval;
 
-	अगर (v4l2_fh_is_singular_file(file)) अणु
+	if (v4l2_fh_is_singular_file(file)) {
 		/* start radio */
 		retval = si470x_start(radio);
-		अगर (retval < 0)
-			जाओ करोne;
+		if (retval < 0)
+			goto done;
 
-		/* enable RDS / STC पूर्णांकerrupt */
-		radio->रेजिस्टरs[SYSCONFIG1] |= SYSCONFIG1_RDSIEN;
-		radio->रेजिस्टरs[SYSCONFIG1] |= SYSCONFIG1_STCIEN;
-		radio->रेजिस्टरs[SYSCONFIG1] &= ~SYSCONFIG1_GPIO2;
-		radio->रेजिस्टरs[SYSCONFIG1] |= 0x1 << 2;
-		retval = si470x_set_रेजिस्टर(radio, SYSCONFIG1);
-	पूर्ण
+		/* enable RDS / STC interrupt */
+		radio->registers[SYSCONFIG1] |= SYSCONFIG1_RDSIEN;
+		radio->registers[SYSCONFIG1] |= SYSCONFIG1_STCIEN;
+		radio->registers[SYSCONFIG1] &= ~SYSCONFIG1_GPIO2;
+		radio->registers[SYSCONFIG1] |= 0x1 << 2;
+		retval = si470x_set_register(radio, SYSCONFIG1);
+	}
 
-करोne:
-	अगर (retval)
+done:
+	if (retval)
 		v4l2_fh_release(file);
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
 
 /*
  * si470x_fops_release - file release
  */
-अटल पूर्णांक si470x_fops_release(काष्ठा file *file)
-अणु
-	काष्ठा si470x_device *radio = video_drvdata(file);
+static int si470x_fops_release(struct file *file)
+{
+	struct si470x_device *radio = video_drvdata(file);
 
-	अगर (v4l2_fh_is_singular_file(file))
+	if (v4l2_fh_is_singular_file(file))
 		/* stop radio */
 		si470x_stop(radio);
 
-	वापस v4l2_fh_release(file);
-पूर्ण
+	return v4l2_fh_release(file);
+}
 
 
 
@@ -219,13 +218,13 @@ MODULE_PARM_DESC(max_rds_errors, "RDS maximum block errors: *1*");
 /*
  * si470x_vidioc_querycap - query device capabilities
  */
-अटल पूर्णांक si470x_vidioc_querycap(काष्ठा file *file, व्योम *priv,
-				  काष्ठा v4l2_capability *capability)
-अणु
-	strscpy(capability->driver, DRIVER_NAME, माप(capability->driver));
-	strscpy(capability->card, DRIVER_CARD, माप(capability->card));
-	वापस 0;
-पूर्ण
+static int si470x_vidioc_querycap(struct file *file, void *priv,
+				  struct v4l2_capability *capability)
+{
+	strscpy(capability->driver, DRIVER_NAME, sizeof(capability->driver));
+	strscpy(capability->card, DRIVER_CARD, sizeof(capability->card));
+	return 0;
+}
 
 
 
@@ -234,146 +233,146 @@ MODULE_PARM_DESC(max_rds_errors, "RDS maximum block errors: *1*");
  **************************************************************************/
 
 /*
- * si470x_i2c_पूर्णांकerrupt - पूर्णांकerrupt handler
+ * si470x_i2c_interrupt - interrupt handler
  */
-अटल irqवापस_t si470x_i2c_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा si470x_device *radio = dev_id;
-	अचिन्हित अक्षर regnr;
-	अचिन्हित अक्षर blocknum;
-	अचिन्हित लघु bler; /* rds block errors */
-	अचिन्हित लघु rds;
-	अचिन्हित अक्षर पंचांगpbuf[3];
-	पूर्णांक retval = 0;
+static irqreturn_t si470x_i2c_interrupt(int irq, void *dev_id)
+{
+	struct si470x_device *radio = dev_id;
+	unsigned char regnr;
+	unsigned char blocknum;
+	unsigned short bler; /* rds block errors */
+	unsigned short rds;
+	unsigned char tmpbuf[3];
+	int retval = 0;
 
 	/* check Seek/Tune Complete */
-	retval = si470x_get_रेजिस्टर(radio, STATUSRSSI);
-	अगर (retval < 0)
-		जाओ end;
+	retval = si470x_get_register(radio, STATUSRSSI);
+	if (retval < 0)
+		goto end;
 
-	अगर (radio->रेजिस्टरs[STATUSRSSI] & STATUSRSSI_STC)
+	if (radio->registers[STATUSRSSI] & STATUSRSSI_STC)
 		complete(&radio->completion);
 
 	/* safety checks */
-	अगर ((radio->रेजिस्टरs[SYSCONFIG1] & SYSCONFIG1_RDS) == 0)
-		जाओ end;
+	if ((radio->registers[SYSCONFIG1] & SYSCONFIG1_RDS) == 0)
+		goto end;
 
-	/* Update RDS रेजिस्टरs */
-	क्रम (regnr = 1; regnr < RDS_REGISTER_NUM; regnr++) अणु
-		retval = si470x_get_रेजिस्टर(radio, STATUSRSSI + regnr);
-		अगर (retval < 0)
-			जाओ end;
-	पूर्ण
+	/* Update RDS registers */
+	for (regnr = 1; regnr < RDS_REGISTER_NUM; regnr++) {
+		retval = si470x_get_register(radio, STATUSRSSI + regnr);
+		if (retval < 0)
+			goto end;
+	}
 
 	/* get rds blocks */
-	अगर ((radio->रेजिस्टरs[STATUSRSSI] & STATUSRSSI_RDSR) == 0)
-		/* No RDS group पढ़ोy, better luck next समय */
-		जाओ end;
+	if ((radio->registers[STATUSRSSI] & STATUSRSSI_RDSR) == 0)
+		/* No RDS group ready, better luck next time */
+		goto end;
 
-	क्रम (blocknum = 0; blocknum < 4; blocknum++) अणु
-		चयन (blocknum) अणु
-		शेष:
-			bler = (radio->रेजिस्टरs[STATUSRSSI] &
+	for (blocknum = 0; blocknum < 4; blocknum++) {
+		switch (blocknum) {
+		default:
+			bler = (radio->registers[STATUSRSSI] &
 					STATUSRSSI_BLERA) >> 9;
-			rds = radio->रेजिस्टरs[RDSA];
-			अवरोध;
-		हाल 1:
-			bler = (radio->रेजिस्टरs[READCHAN] &
+			rds = radio->registers[RDSA];
+			break;
+		case 1:
+			bler = (radio->registers[READCHAN] &
 					READCHAN_BLERB) >> 14;
-			rds = radio->रेजिस्टरs[RDSB];
-			अवरोध;
-		हाल 2:
-			bler = (radio->रेजिस्टरs[READCHAN] &
+			rds = radio->registers[RDSB];
+			break;
+		case 2:
+			bler = (radio->registers[READCHAN] &
 					READCHAN_BLERC) >> 12;
-			rds = radio->रेजिस्टरs[RDSC];
-			अवरोध;
-		हाल 3:
-			bler = (radio->रेजिस्टरs[READCHAN] &
+			rds = radio->registers[RDSC];
+			break;
+		case 3:
+			bler = (radio->registers[READCHAN] &
 					READCHAN_BLERD) >> 10;
-			rds = radio->रेजिस्टरs[RDSD];
-			अवरोध;
-		पूर्ण
+			rds = radio->registers[RDSD];
+			break;
+		}
 
 		/* Fill the V4L2 RDS buffer */
-		put_unaligned_le16(rds, &पंचांगpbuf);
-		पंचांगpbuf[2] = blocknum;		/* offset name */
-		पंचांगpbuf[2] |= blocknum << 3;	/* received offset */
-		अगर (bler > max_rds_errors)
-			पंचांगpbuf[2] |= 0x80;	/* uncorrectable errors */
-		अन्यथा अगर (bler > 0)
-			पंचांगpbuf[2] |= 0x40;	/* corrected error(s) */
+		put_unaligned_le16(rds, &tmpbuf);
+		tmpbuf[2] = blocknum;		/* offset name */
+		tmpbuf[2] |= blocknum << 3;	/* received offset */
+		if (bler > max_rds_errors)
+			tmpbuf[2] |= 0x80;	/* uncorrectable errors */
+		else if (bler > 0)
+			tmpbuf[2] |= 0x40;	/* corrected error(s) */
 
-		/* copy RDS block to पूर्णांकernal buffer */
-		स_नकल(&radio->buffer[radio->wr_index], &पंचांगpbuf, 3);
+		/* copy RDS block to internal buffer */
+		memcpy(&radio->buffer[radio->wr_index], &tmpbuf, 3);
 		radio->wr_index += 3;
 
-		/* wrap ग_लिखो poपूर्णांकer */
-		अगर (radio->wr_index >= radio->buf_size)
+		/* wrap write pointer */
+		if (radio->wr_index >= radio->buf_size)
 			radio->wr_index = 0;
 
-		/* check क्रम overflow */
-		अगर (radio->wr_index == radio->rd_index) अणु
-			/* increment and wrap पढ़ो poपूर्णांकer */
+		/* check for overflow */
+		if (radio->wr_index == radio->rd_index) {
+			/* increment and wrap read pointer */
 			radio->rd_index += 3;
-			अगर (radio->rd_index >= radio->buf_size)
+			if (radio->rd_index >= radio->buf_size)
 				radio->rd_index = 0;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (radio->wr_index != radio->rd_index)
-		wake_up_पूर्णांकerruptible(&radio->पढ़ो_queue);
+	if (radio->wr_index != radio->rd_index)
+		wake_up_interruptible(&radio->read_queue);
 
 end:
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
 
 /*
- * si470x_i2c_probe - probe क्रम the device
+ * si470x_i2c_probe - probe for the device
  */
-अटल पूर्णांक si470x_i2c_probe(काष्ठा i2c_client *client)
-अणु
-	काष्ठा si470x_device *radio;
-	पूर्णांक retval = 0;
-	अचिन्हित अक्षर version_warning = 0;
+static int si470x_i2c_probe(struct i2c_client *client)
+{
+	struct si470x_device *radio;
+	int retval = 0;
+	unsigned char version_warning = 0;
 
-	/* निजी data allocation and initialization */
-	radio = devm_kzalloc(&client->dev, माप(*radio), GFP_KERNEL);
-	अगर (!radio) अणु
+	/* private data allocation and initialization */
+	radio = devm_kzalloc(&client->dev, sizeof(*radio), GFP_KERNEL);
+	if (!radio) {
 		retval = -ENOMEM;
-		जाओ err_initial;
-	पूर्ण
+		goto err_initial;
+	}
 
 	radio->client = client;
 	radio->band = 1; /* Default to 76 - 108 MHz */
 	mutex_init(&radio->lock);
 	init_completion(&radio->completion);
 
-	radio->get_रेजिस्टर = si470x_get_रेजिस्टर;
-	radio->set_रेजिस्टर = si470x_set_रेजिस्टर;
-	radio->fops_खोलो = si470x_fops_खोलो;
+	radio->get_register = si470x_get_register;
+	radio->set_register = si470x_set_register;
+	radio->fops_open = si470x_fops_open;
 	radio->fops_release = si470x_fops_release;
 	radio->vidioc_querycap = si470x_vidioc_querycap;
 
-	retval = v4l2_device_रेजिस्टर(&client->dev, &radio->v4l2_dev);
-	अगर (retval < 0) अणु
+	retval = v4l2_device_register(&client->dev, &radio->v4l2_dev);
+	if (retval < 0) {
 		dev_err(&client->dev, "couldn't register v4l2_device\n");
-		जाओ err_initial;
-	पूर्ण
+		goto err_initial;
+	}
 
 	v4l2_ctrl_handler_init(&radio->hdl, 2);
 	v4l2_ctrl_new_std(&radio->hdl, &si470x_ctrl_ops,
 			V4L2_CID_AUDIO_MUTE, 0, 1, 1, 1);
 	v4l2_ctrl_new_std(&radio->hdl, &si470x_ctrl_ops,
 			V4L2_CID_AUDIO_VOLUME, 0, 15, 1, 15);
-	अगर (radio->hdl.error) अणु
+	if (radio->hdl.error) {
 		retval = radio->hdl.error;
 		dev_err(&client->dev, "couldn't register control\n");
-		जाओ err_dev;
-	पूर्ण
+		goto err_dev;
+	}
 
 	/* video device initialization */
-	radio->videodev = si470x_viddev_ढाँचा;
+	radio->videodev = si470x_viddev_template;
 	radio->videodev.ctrl_handler = &radio->hdl;
 	radio->videodev.lock = &radio->lock;
 	radio->videodev.v4l2_dev = &radio->v4l2_dev;
@@ -385,171 +384,171 @@ end:
 
 	radio->gpio_reset = devm_gpiod_get_optional(&client->dev, "reset",
 						    GPIOD_OUT_LOW);
-	अगर (IS_ERR(radio->gpio_reset)) अणु
+	if (IS_ERR(radio->gpio_reset)) {
 		retval = PTR_ERR(radio->gpio_reset);
 		dev_err(&client->dev, "Failed to request gpio: %d\n", retval);
-		जाओ err_all;
-	पूर्ण
+		goto err_all;
+	}
 
-	अगर (radio->gpio_reset)
+	if (radio->gpio_reset)
 		gpiod_set_value(radio->gpio_reset, 1);
 
-	/* घातer up : need 110ms */
-	radio->रेजिस्टरs[POWERCFG] = POWERCFG_ENABLE;
-	अगर (si470x_set_रेजिस्टर(radio, POWERCFG) < 0) अणु
+	/* power up : need 110ms */
+	radio->registers[POWERCFG] = POWERCFG_ENABLE;
+	if (si470x_set_register(radio, POWERCFG) < 0) {
 		retval = -EIO;
-		जाओ err_all;
-	पूर्ण
+		goto err_all;
+	}
 	msleep(110);
 
 	/* get device and chip versions */
-	अगर (si470x_get_all_रेजिस्टरs(radio) < 0) अणु
+	if (si470x_get_all_registers(radio) < 0) {
 		retval = -EIO;
-		जाओ err_all;
-	पूर्ण
+		goto err_all;
+	}
 	dev_info(&client->dev, "DeviceID=0x%4.4hx ChipID=0x%4.4hx\n",
-			radio->रेजिस्टरs[DEVICEID], radio->रेजिस्टरs[SI_CHIPID]);
-	अगर ((radio->रेजिस्टरs[SI_CHIPID] & SI_CHIPID_FIRMWARE) < RADIO_FW_VERSION) अणु
+			radio->registers[DEVICEID], radio->registers[SI_CHIPID]);
+	if ((radio->registers[SI_CHIPID] & SI_CHIPID_FIRMWARE) < RADIO_FW_VERSION) {
 		dev_warn(&client->dev,
 			"This driver is known to work with firmware version %hu,\n",
 			RADIO_FW_VERSION);
 		dev_warn(&client->dev,
 			"but the device has firmware version %hu.\n",
-			radio->रेजिस्टरs[SI_CHIPID] & SI_CHIPID_FIRMWARE);
+			radio->registers[SI_CHIPID] & SI_CHIPID_FIRMWARE);
 		version_warning = 1;
-	पूर्ण
+	}
 
 	/* give out version warning */
-	अगर (version_warning == 1) अणु
+	if (version_warning == 1) {
 		dev_warn(&client->dev,
 			"If you have some trouble using this driver,\n");
 		dev_warn(&client->dev,
 			"please report to V4L ML at linux-media@vger.kernel.org\n");
-	पूर्ण
+	}
 
 	/* set initial frequency */
 	si470x_set_freq(radio, 87.5 * FREQ_MUL); /* available in all regions */
 
 	/* rds buffer allocation */
 	radio->buf_size = rds_buf * 3;
-	radio->buffer = devm_kदो_स्मृति(&client->dev, radio->buf_size, GFP_KERNEL);
-	अगर (!radio->buffer) अणु
+	radio->buffer = devm_kmalloc(&client->dev, radio->buf_size, GFP_KERNEL);
+	if (!radio->buffer) {
 		retval = -EIO;
-		जाओ err_all;
-	पूर्ण
+		goto err_all;
+	}
 
 	/* rds buffer configuration */
 	radio->wr_index = 0;
 	radio->rd_index = 0;
-	init_रुकोqueue_head(&radio->पढ़ो_queue);
+	init_waitqueue_head(&radio->read_queue);
 
-	retval = devm_request_thपढ़ोed_irq(&client->dev, client->irq, शून्य,
-					   si470x_i2c_पूर्णांकerrupt,
+	retval = devm_request_threaded_irq(&client->dev, client->irq, NULL,
+					   si470x_i2c_interrupt,
 					   IRQF_TRIGGER_FALLING | IRQF_ONESHOT,
 					   DRIVER_NAME, radio);
-	अगर (retval) अणु
+	if (retval) {
 		dev_err(&client->dev, "Failed to register interrupt\n");
-		जाओ err_all;
-	पूर्ण
+		goto err_all;
+	}
 
-	/* रेजिस्टर video device */
-	retval = video_रेजिस्टर_device(&radio->videodev, VFL_TYPE_RADIO,
+	/* register video device */
+	retval = video_register_device(&radio->videodev, VFL_TYPE_RADIO,
 			radio_nr);
-	अगर (retval) अणु
+	if (retval) {
 		dev_warn(&client->dev, "Could not register video device\n");
-		जाओ err_all;
-	पूर्ण
+		goto err_all;
+	}
 	i2c_set_clientdata(client, radio);
 
-	वापस 0;
+	return 0;
 err_all:
-	v4l2_ctrl_handler_मुक्त(&radio->hdl);
+	v4l2_ctrl_handler_free(&radio->hdl);
 err_dev:
-	v4l2_device_unरेजिस्टर(&radio->v4l2_dev);
+	v4l2_device_unregister(&radio->v4l2_dev);
 err_initial:
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
 
 /*
- * si470x_i2c_हटाओ - हटाओ the device
+ * si470x_i2c_remove - remove the device
  */
-अटल पूर्णांक si470x_i2c_हटाओ(काष्ठा i2c_client *client)
-अणु
-	काष्ठा si470x_device *radio = i2c_get_clientdata(client);
+static int si470x_i2c_remove(struct i2c_client *client)
+{
+	struct si470x_device *radio = i2c_get_clientdata(client);
 
-	video_unरेजिस्टर_device(&radio->videodev);
+	video_unregister_device(&radio->videodev);
 
-	अगर (radio->gpio_reset)
+	if (radio->gpio_reset)
 		gpiod_set_value(radio->gpio_reset, 0);
 
-	v4l2_ctrl_handler_मुक्त(&radio->hdl);
-	v4l2_device_unरेजिस्टर(&radio->v4l2_dev);
-	वापस 0;
-पूर्ण
+	v4l2_ctrl_handler_free(&radio->hdl);
+	v4l2_device_unregister(&radio->v4l2_dev);
+	return 0;
+}
 
 
-#अगर_घोषित CONFIG_PM_SLEEP
+#ifdef CONFIG_PM_SLEEP
 /*
  * si470x_i2c_suspend - suspend the device
  */
-अटल पूर्णांक si470x_i2c_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा i2c_client *client = to_i2c_client(dev);
-	काष्ठा si470x_device *radio = i2c_get_clientdata(client);
+static int si470x_i2c_suspend(struct device *dev)
+{
+	struct i2c_client *client = to_i2c_client(dev);
+	struct si470x_device *radio = i2c_get_clientdata(client);
 
-	/* घातer करोwn */
-	radio->रेजिस्टरs[POWERCFG] |= POWERCFG_DISABLE;
-	अगर (si470x_set_रेजिस्टर(radio, POWERCFG) < 0)
-		वापस -EIO;
+	/* power down */
+	radio->registers[POWERCFG] |= POWERCFG_DISABLE;
+	if (si470x_set_register(radio, POWERCFG) < 0)
+		return -EIO;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
 /*
  * si470x_i2c_resume - resume the device
  */
-अटल पूर्णांक si470x_i2c_resume(काष्ठा device *dev)
-अणु
-	काष्ठा i2c_client *client = to_i2c_client(dev);
-	काष्ठा si470x_device *radio = i2c_get_clientdata(client);
+static int si470x_i2c_resume(struct device *dev)
+{
+	struct i2c_client *client = to_i2c_client(dev);
+	struct si470x_device *radio = i2c_get_clientdata(client);
 
-	/* घातer up : need 110ms */
-	radio->रेजिस्टरs[POWERCFG] |= POWERCFG_ENABLE;
-	अगर (si470x_set_रेजिस्टर(radio, POWERCFG) < 0)
-		वापस -EIO;
+	/* power up : need 110ms */
+	radio->registers[POWERCFG] |= POWERCFG_ENABLE;
+	if (si470x_set_register(radio, POWERCFG) < 0)
+		return -EIO;
 	msleep(110);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल SIMPLE_DEV_PM_OPS(si470x_i2c_pm, si470x_i2c_suspend, si470x_i2c_resume);
-#पूर्ण_अगर
+static SIMPLE_DEV_PM_OPS(si470x_i2c_pm, si470x_i2c_suspend, si470x_i2c_resume);
+#endif
 
-#अगर IS_ENABLED(CONFIG_OF)
-अटल स्थिर काष्ठा of_device_id si470x_of_match[] = अणु
-	अणु .compatible = "silabs,si470x" पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+#if IS_ENABLED(CONFIG_OF)
+static const struct of_device_id si470x_of_match[] = {
+	{ .compatible = "silabs,si470x" },
+	{ },
+};
 MODULE_DEVICE_TABLE(of, si470x_of_match);
-#पूर्ण_अगर
+#endif
 
 /*
- * si470x_i2c_driver - i2c driver पूर्णांकerface
+ * si470x_i2c_driver - i2c driver interface
  */
-अटल काष्ठा i2c_driver si470x_i2c_driver = अणु
-	.driver = अणु
+static struct i2c_driver si470x_i2c_driver = {
+	.driver = {
 		.name		= "si470x",
 		.of_match_table = of_match_ptr(si470x_of_match),
-#अगर_घोषित CONFIG_PM_SLEEP
+#ifdef CONFIG_PM_SLEEP
 		.pm		= &si470x_i2c_pm,
-#पूर्ण_अगर
-	पूर्ण,
+#endif
+	},
 	.probe_new		= si470x_i2c_probe,
-	.हटाओ			= si470x_i2c_हटाओ,
+	.remove			= si470x_i2c_remove,
 	.id_table		= si470x_i2c_id,
-पूर्ण;
+};
 
 module_i2c_driver(si470x_i2c_driver);
 

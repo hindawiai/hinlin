@@ -1,68 +1,67 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * e750-wm9705.c  --  SoC audio क्रम e750
+ * e750-wm9705.c  --  SoC audio for e750
  *
  * Copyright 2007 (c) Ian Molton <spyro@f2s.com>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/gpपन.स>
+#include <linux/module.h>
+#include <linux/moduleparam.h>
+#include <linux/gpio.h>
 
-#समावेश <sound/core.h>
-#समावेश <sound/pcm.h>
-#समावेश <sound/soc.h>
+#include <sound/core.h>
+#include <sound/pcm.h>
+#include <sound/soc.h>
 
-#समावेश <mach/audपन.स>
-#समावेश <mach/eseries-gpपन.स>
+#include <mach/audio.h>
+#include <mach/eseries-gpio.h>
 
-#समावेश <यंत्र/mach-types.h>
+#include <asm/mach-types.h>
 
-अटल पूर्णांक e750_spk_amp_event(काष्ठा snd_soc_dapm_widget *w,
-				काष्ठा snd_kcontrol *kcontrol, पूर्णांक event)
-अणु
-	अगर (event & SND_SOC_DAPM_PRE_PMU)
+static int e750_spk_amp_event(struct snd_soc_dapm_widget *w,
+				struct snd_kcontrol *kcontrol, int event)
+{
+	if (event & SND_SOC_DAPM_PRE_PMU)
 		gpio_set_value(GPIO_E750_SPK_AMP_OFF, 0);
-	अन्यथा अगर (event & SND_SOC_DAPM_POST_PMD)
+	else if (event & SND_SOC_DAPM_POST_PMD)
 		gpio_set_value(GPIO_E750_SPK_AMP_OFF, 1);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक e750_hp_amp_event(काष्ठा snd_soc_dapm_widget *w,
-				काष्ठा snd_kcontrol *kcontrol, पूर्णांक event)
-अणु
-	अगर (event & SND_SOC_DAPM_PRE_PMU)
+static int e750_hp_amp_event(struct snd_soc_dapm_widget *w,
+				struct snd_kcontrol *kcontrol, int event)
+{
+	if (event & SND_SOC_DAPM_PRE_PMU)
 		gpio_set_value(GPIO_E750_HP_AMP_OFF, 0);
-	अन्यथा अगर (event & SND_SOC_DAPM_POST_PMD)
+	else if (event & SND_SOC_DAPM_POST_PMD)
 		gpio_set_value(GPIO_E750_HP_AMP_OFF, 1);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा snd_soc_dapm_widget e750_dapm_widमाला_लो[] = अणु
-	SND_SOC_DAPM_HP("Headphone Jack", शून्य),
-	SND_SOC_DAPM_SPK("Speaker", शून्य),
-	SND_SOC_DAPM_MIC("Mic (Internal)", शून्य),
-	SND_SOC_DAPM_PGA_E("Headphone Amp", SND_SOC_NOPM, 0, 0, शून्य, 0,
+static const struct snd_soc_dapm_widget e750_dapm_widgets[] = {
+	SND_SOC_DAPM_HP("Headphone Jack", NULL),
+	SND_SOC_DAPM_SPK("Speaker", NULL),
+	SND_SOC_DAPM_MIC("Mic (Internal)", NULL),
+	SND_SOC_DAPM_PGA_E("Headphone Amp", SND_SOC_NOPM, 0, 0, NULL, 0,
 			e750_hp_amp_event, SND_SOC_DAPM_PRE_PMU |
 			SND_SOC_DAPM_POST_PMD),
-	SND_SOC_DAPM_PGA_E("Speaker Amp", SND_SOC_NOPM, 0, 0, शून्य, 0,
+	SND_SOC_DAPM_PGA_E("Speaker Amp", SND_SOC_NOPM, 0, 0, NULL, 0,
 			e750_spk_amp_event, SND_SOC_DAPM_PRE_PMU |
 			SND_SOC_DAPM_POST_PMD),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा snd_soc_dapm_route audio_map[] = अणु
-	अणु"Headphone Amp", शून्य, "HPOUTL"पूर्ण,
-	अणु"Headphone Amp", शून्य, "HPOUTR"पूर्ण,
-	अणु"Headphone Jack", शून्य, "Headphone Amp"पूर्ण,
+static const struct snd_soc_dapm_route audio_map[] = {
+	{"Headphone Amp", NULL, "HPOUTL"},
+	{"Headphone Amp", NULL, "HPOUTR"},
+	{"Headphone Jack", NULL, "Headphone Amp"},
 
-	अणु"Speaker Amp", शून्य, "MONOOUT"पूर्ण,
-	अणु"Speaker", शून्य, "Speaker Amp"पूर्ण,
+	{"Speaker Amp", NULL, "MONOOUT"},
+	{"Speaker", NULL, "Speaker Amp"},
 
-	अणु"MIC1", शून्य, "Mic (Internal)"पूर्ण,
-पूर्ण;
+	{"MIC1", NULL, "Mic (Internal)"},
+};
 
 SND_SOC_DAILINK_DEFS(ac97,
 	DAILINK_COMP_ARRAY(COMP_CPU("pxa2xx-ac97")),
@@ -74,77 +73,77 @@ SND_SOC_DAILINK_DEFS(ac97_aux,
 	DAILINK_COMP_ARRAY(COMP_CODEC("wm9705-codec", "wm9705-aux")),
 	DAILINK_COMP_ARRAY(COMP_PLATFORM("pxa-pcm-audio")));
 
-अटल काष्ठा snd_soc_dai_link e750_dai[] = अणु
-	अणु
+static struct snd_soc_dai_link e750_dai[] = {
+	{
 		.name = "AC97",
 		.stream_name = "AC97 HiFi",
 		SND_SOC_DAILINK_REG(ac97),
 		/* use ops to check startup state */
-	पूर्ण,
-	अणु
+	},
+	{
 		.name = "AC97 Aux",
 		.stream_name = "AC97 Aux",
 		SND_SOC_DAILINK_REG(ac97_aux),
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल काष्ठा snd_soc_card e750 = अणु
+static struct snd_soc_card e750 = {
 	.name = "Toshiba e750",
 	.owner = THIS_MODULE,
 	.dai_link = e750_dai,
 	.num_links = ARRAY_SIZE(e750_dai),
 
-	.dapm_widमाला_लो = e750_dapm_widमाला_लो,
-	.num_dapm_widमाला_लो = ARRAY_SIZE(e750_dapm_widमाला_लो),
+	.dapm_widgets = e750_dapm_widgets,
+	.num_dapm_widgets = ARRAY_SIZE(e750_dapm_widgets),
 	.dapm_routes = audio_map,
 	.num_dapm_routes = ARRAY_SIZE(audio_map),
 	.fully_routed = true,
-पूर्ण;
+};
 
-अटल काष्ठा gpio e750_audio_gpios[] = अणु
-	अणु GPIO_E750_HP_AMP_OFF, GPIOF_OUT_INIT_HIGH, "Headphone amp" पूर्ण,
-	अणु GPIO_E750_SPK_AMP_OFF, GPIOF_OUT_INIT_HIGH, "Speaker amp" पूर्ण,
-पूर्ण;
+static struct gpio e750_audio_gpios[] = {
+	{ GPIO_E750_HP_AMP_OFF, GPIOF_OUT_INIT_HIGH, "Headphone amp" },
+	{ GPIO_E750_SPK_AMP_OFF, GPIOF_OUT_INIT_HIGH, "Speaker amp" },
+};
 
-अटल पूर्णांक e750_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा snd_soc_card *card = &e750;
-	पूर्णांक ret;
+static int e750_probe(struct platform_device *pdev)
+{
+	struct snd_soc_card *card = &e750;
+	int ret;
 
 	ret = gpio_request_array(e750_audio_gpios,
 				 ARRAY_SIZE(e750_audio_gpios));
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	card->dev = &pdev->dev;
 
-	ret = devm_snd_soc_रेजिस्टर_card(&pdev->dev, card);
-	अगर (ret) अणु
+	ret = devm_snd_soc_register_card(&pdev->dev, card);
+	if (ret) {
 		dev_err(&pdev->dev, "snd_soc_register_card() failed: %d\n",
 			ret);
-		gpio_मुक्त_array(e750_audio_gpios, ARRAY_SIZE(e750_audio_gpios));
-	पूर्ण
-	वापस ret;
-पूर्ण
+		gpio_free_array(e750_audio_gpios, ARRAY_SIZE(e750_audio_gpios));
+	}
+	return ret;
+}
 
-अटल पूर्णांक e750_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	gpio_मुक्त_array(e750_audio_gpios, ARRAY_SIZE(e750_audio_gpios));
-	वापस 0;
-पूर्ण
+static int e750_remove(struct platform_device *pdev)
+{
+	gpio_free_array(e750_audio_gpios, ARRAY_SIZE(e750_audio_gpios));
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver e750_driver = अणु
-	.driver		= अणु
+static struct platform_driver e750_driver = {
+	.driver		= {
 		.name	= "e750-audio",
 		.pm     = &snd_soc_pm_ops,
-	पूर्ण,
+	},
 	.probe		= e750_probe,
-	.हटाओ		= e750_हटाओ,
-पूर्ण;
+	.remove		= e750_remove,
+};
 
-module_platक्रमm_driver(e750_driver);
+module_platform_driver(e750_driver);
 
-/* Module inक्रमmation */
+/* Module information */
 MODULE_AUTHOR("Ian Molton <spyro@f2s.com>");
 MODULE_DESCRIPTION("ALSA SoC driver for e750");
 MODULE_LICENSE("GPL v2");

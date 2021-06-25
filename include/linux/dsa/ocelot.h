@@ -1,23 +1,22 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0
+/* SPDX-License-Identifier: GPL-2.0
  * Copyright 2019-2021 NXP Semiconductors
  */
 
-#अगर_अघोषित _NET_DSA_TAG_OCELOT_H
-#घोषणा _NET_DSA_TAG_OCELOT_H
+#ifndef _NET_DSA_TAG_OCELOT_H
+#define _NET_DSA_TAG_OCELOT_H
 
-#समावेश <linux/packing.h>
+#include <linux/packing.h>
 
-#घोषणा OCELOT_TAG_LEN			16
-#घोषणा OCELOT_SHORT_PREFIX_LEN		4
-#घोषणा OCELOT_LONG_PREFIX_LEN		16
-#घोषणा OCELOT_TOTAL_TAG_LEN	(OCELOT_SHORT_PREFIX_LEN + OCELOT_TAG_LEN)
+#define OCELOT_TAG_LEN			16
+#define OCELOT_SHORT_PREFIX_LEN		4
+#define OCELOT_LONG_PREFIX_LEN		16
+#define OCELOT_TOTAL_TAG_LEN	(OCELOT_SHORT_PREFIX_LEN + OCELOT_TAG_LEN)
 
 /* The CPU injection header and the CPU extraction header can have 3 types of
- * prefixes: दीर्घ, लघु and no prefix. The क्रमmat of the header itself is the
- * same in all 3 हालs.
+ * prefixes: long, short and no prefix. The format of the header itself is the
+ * same in all 3 cases.
  *
- * Extraction with दीर्घ prefix:
+ * Extraction with long prefix:
  *
  * +-------------------+-------------------+------+------+------------+-------+
  * | ff:ff:ff:ff:ff:ff | fe:ff:ff:ff:ff:ff | 8880 | 000a | extraction | frame |
@@ -25,7 +24,7 @@
  * +-------------------+-------------------+------+------+------------+-------+
  *        48 bits             48 bits      16 bits 16 bits  128 bits
  *
- * Extraction with लघु prefix:
+ * Extraction with short prefix:
  *
  *                                         +------+------+------------+-------+
  *                                         | 8880 | 000a | extraction | frame |
@@ -42,7 +41,7 @@
  *                                                          128 bits
  *
  *
- * Injection with दीर्घ prefix:
+ * Injection with long prefix:
  *
  * +-------------------+-------------------+------+------+------------+-------+
  * |      any dmac     |      any smac     | 8880 | 000a | injection  | frame |
@@ -50,7 +49,7 @@
  * +-------------------+-------------------+------+------+------------+-------+
  *        48 bits             48 bits      16 bits 16 bits  128 bits
  *
- * Injection with लघु prefix:
+ * Injection with short prefix:
  *
  *                                         +------+------+------------+-------+
  *                                         | 8880 | 000a | injection  | frame |
@@ -141,79 +140,79 @@
  *         +------+------+------+------+------+------+------+------+
  */
 
-अटल अंतरभूत व्योम ocelot_xfh_get_rew_val(व्योम *extraction, u64 *rew_val)
-अणु
+static inline void ocelot_xfh_get_rew_val(void *extraction, u64 *rew_val)
+{
 	packing(extraction, rew_val, 116, 85, OCELOT_TAG_LEN, UNPACK, 0);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम ocelot_xfh_get_len(व्योम *extraction, u64 *len)
-अणु
+static inline void ocelot_xfh_get_len(void *extraction, u64 *len)
+{
 	u64 llen, wlen;
 
 	packing(extraction, &llen, 84, 79, OCELOT_TAG_LEN, UNPACK, 0);
 	packing(extraction, &wlen, 78, 71, OCELOT_TAG_LEN, UNPACK, 0);
 
 	*len = 60 * wlen + llen - 80;
-पूर्ण
+}
 
-अटल अंतरभूत व्योम ocelot_xfh_get_src_port(व्योम *extraction, u64 *src_port)
-अणु
+static inline void ocelot_xfh_get_src_port(void *extraction, u64 *src_port)
+{
 	packing(extraction, src_port, 46, 43, OCELOT_TAG_LEN, UNPACK, 0);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम ocelot_xfh_get_qos_class(व्योम *extraction, u64 *qos_class)
-अणु
+static inline void ocelot_xfh_get_qos_class(void *extraction, u64 *qos_class)
+{
 	packing(extraction, qos_class, 19, 17, OCELOT_TAG_LEN, UNPACK, 0);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम ocelot_xfh_get_tag_type(व्योम *extraction, u64 *tag_type)
-अणु
+static inline void ocelot_xfh_get_tag_type(void *extraction, u64 *tag_type)
+{
 	packing(extraction, tag_type, 16, 16, OCELOT_TAG_LEN, UNPACK, 0);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम ocelot_xfh_get_vlan_tci(व्योम *extraction, u64 *vlan_tci)
-अणु
+static inline void ocelot_xfh_get_vlan_tci(void *extraction, u64 *vlan_tci)
+{
 	packing(extraction, vlan_tci, 15, 0, OCELOT_TAG_LEN, UNPACK, 0);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम ocelot_अगरh_set_bypass(व्योम *injection, u64 bypass)
-अणु
+static inline void ocelot_ifh_set_bypass(void *injection, u64 bypass)
+{
 	packing(injection, &bypass, 127, 127, OCELOT_TAG_LEN, PACK, 0);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम ocelot_अगरh_set_rew_op(व्योम *injection, u64 rew_op)
-अणु
+static inline void ocelot_ifh_set_rew_op(void *injection, u64 rew_op)
+{
 	packing(injection, &rew_op, 125, 117, OCELOT_TAG_LEN, PACK, 0);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम ocelot_अगरh_set_dest(व्योम *injection, u64 dest)
-अणु
+static inline void ocelot_ifh_set_dest(void *injection, u64 dest)
+{
 	packing(injection, &dest, 67, 56, OCELOT_TAG_LEN, PACK, 0);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम ocelot_अगरh_set_qos_class(व्योम *injection, u64 qos_class)
-अणु
+static inline void ocelot_ifh_set_qos_class(void *injection, u64 qos_class)
+{
 	packing(injection, &qos_class, 19, 17, OCELOT_TAG_LEN, PACK, 0);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम seville_अगरh_set_dest(व्योम *injection, u64 dest)
-अणु
+static inline void seville_ifh_set_dest(void *injection, u64 dest)
+{
 	packing(injection, &dest, 67, 57, OCELOT_TAG_LEN, PACK, 0);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम ocelot_अगरh_set_src(व्योम *injection, u64 src)
-अणु
+static inline void ocelot_ifh_set_src(void *injection, u64 src)
+{
 	packing(injection, &src, 46, 43, OCELOT_TAG_LEN, PACK, 0);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम ocelot_अगरh_set_tag_type(व्योम *injection, u64 tag_type)
-अणु
+static inline void ocelot_ifh_set_tag_type(void *injection, u64 tag_type)
+{
 	packing(injection, &tag_type, 16, 16, OCELOT_TAG_LEN, PACK, 0);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम ocelot_अगरh_set_vid(व्योम *injection, u64 vid)
-अणु
+static inline void ocelot_ifh_set_vid(void *injection, u64 vid)
+{
 	packing(injection, &vid, 11, 0, OCELOT_TAG_LEN, PACK, 0);
-पूर्ण
+}
 
-#पूर्ण_अगर
+#endif

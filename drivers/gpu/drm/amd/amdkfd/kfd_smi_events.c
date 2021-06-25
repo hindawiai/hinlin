@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2020 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,266 +20,266 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#समावेश <linux/poll.h>
-#समावेश <linux/रुको.h>
-#समावेश <linux/anon_inodes.h>
-#समावेश <uapi/linux/kfd_ioctl.h>
-#समावेश "amdgpu.h"
-#समावेश "amdgpu_vm.h"
-#समावेश "kfd_priv.h"
-#समावेश "kfd_smi_events.h"
+#include <linux/poll.h>
+#include <linux/wait.h>
+#include <linux/anon_inodes.h>
+#include <uapi/linux/kfd_ioctl.h>
+#include "amdgpu.h"
+#include "amdgpu_vm.h"
+#include "kfd_priv.h"
+#include "kfd_smi_events.h"
 
-काष्ठा kfd_smi_client अणु
-	काष्ठा list_head list;
-	काष्ठा kfअगरo fअगरo;
-	रुको_queue_head_t रुको_queue;
+struct kfd_smi_client {
+	struct list_head list;
+	struct kfifo fifo;
+	wait_queue_head_t wait_queue;
 	/* events enabled */
-	uपूर्णांक64_t events;
-	काष्ठा kfd_dev *dev;
+	uint64_t events;
+	struct kfd_dev *dev;
 	spinlock_t lock;
-पूर्ण;
+};
 
-#घोषणा MAX_KFIFO_SIZE	1024
+#define MAX_KFIFO_SIZE	1024
 
-अटल __poll_t kfd_smi_ev_poll(काष्ठा file *, काष्ठा poll_table_काष्ठा *);
-अटल sमाप_प्रकार kfd_smi_ev_पढ़ो(काष्ठा file *, अक्षर __user *, माप_प्रकार, loff_t *);
-अटल sमाप_प्रकार kfd_smi_ev_ग_लिखो(काष्ठा file *, स्थिर अक्षर __user *, माप_प्रकार,
+static __poll_t kfd_smi_ev_poll(struct file *, struct poll_table_struct *);
+static ssize_t kfd_smi_ev_read(struct file *, char __user *, size_t, loff_t *);
+static ssize_t kfd_smi_ev_write(struct file *, const char __user *, size_t,
 				loff_t *);
-अटल पूर्णांक kfd_smi_ev_release(काष्ठा inode *, काष्ठा file *);
+static int kfd_smi_ev_release(struct inode *, struct file *);
 
-अटल स्थिर अक्षर kfd_smi_name[] = "kfd_smi_ev";
+static const char kfd_smi_name[] = "kfd_smi_ev";
 
-अटल स्थिर काष्ठा file_operations kfd_smi_ev_fops = अणु
+static const struct file_operations kfd_smi_ev_fops = {
 	.owner = THIS_MODULE,
 	.poll = kfd_smi_ev_poll,
-	.पढ़ो = kfd_smi_ev_पढ़ो,
-	.ग_लिखो = kfd_smi_ev_ग_लिखो,
+	.read = kfd_smi_ev_read,
+	.write = kfd_smi_ev_write,
 	.release = kfd_smi_ev_release
-पूर्ण;
+};
 
-अटल __poll_t kfd_smi_ev_poll(काष्ठा file *filep,
-				काष्ठा poll_table_काष्ठा *रुको)
-अणु
-	काष्ठा kfd_smi_client *client = filep->निजी_data;
+static __poll_t kfd_smi_ev_poll(struct file *filep,
+				struct poll_table_struct *wait)
+{
+	struct kfd_smi_client *client = filep->private_data;
 	__poll_t mask = 0;
 
-	poll_रुको(filep, &client->रुको_queue, रुको);
+	poll_wait(filep, &client->wait_queue, wait);
 
 	spin_lock(&client->lock);
-	अगर (!kfअगरo_is_empty(&client->fअगरo))
+	if (!kfifo_is_empty(&client->fifo))
 		mask = EPOLLIN | EPOLLRDNORM;
 	spin_unlock(&client->lock);
 
-	वापस mask;
-पूर्ण
+	return mask;
+}
 
-अटल sमाप_प्रकार kfd_smi_ev_पढ़ो(काष्ठा file *filep, अक्षर __user *user,
-			       माप_प्रकार size, loff_t *offset)
-अणु
-	पूर्णांक ret;
-	माप_प्रकार to_copy;
-	काष्ठा kfd_smi_client *client = filep->निजी_data;
-	अचिन्हित अक्षर *buf;
+static ssize_t kfd_smi_ev_read(struct file *filep, char __user *user,
+			       size_t size, loff_t *offset)
+{
+	int ret;
+	size_t to_copy;
+	struct kfd_smi_client *client = filep->private_data;
+	unsigned char *buf;
 
-	buf = kदो_स्मृति_array(MAX_KFIFO_SIZE, माप(*buf), GFP_KERNEL);
-	अगर (!buf)
-		वापस -ENOMEM;
+	buf = kmalloc_array(MAX_KFIFO_SIZE, sizeof(*buf), GFP_KERNEL);
+	if (!buf)
+		return -ENOMEM;
 
-	/* kfअगरo_to_user can sleep so we can't use spinlock protection around
-	 * it. Instead, we kfअगरo out as spinlocked then copy them to the user.
+	/* kfifo_to_user can sleep so we can't use spinlock protection around
+	 * it. Instead, we kfifo out as spinlocked then copy them to the user.
 	 */
 	spin_lock(&client->lock);
-	to_copy = kfअगरo_len(&client->fअगरo);
-	अगर (!to_copy) अणु
+	to_copy = kfifo_len(&client->fifo);
+	if (!to_copy) {
 		spin_unlock(&client->lock);
 		ret = -EAGAIN;
-		जाओ ret_err;
-	पूर्ण
-	to_copy = min3(size, माप(buf), to_copy);
-	ret = kfअगरo_out(&client->fअगरo, buf, to_copy);
+		goto ret_err;
+	}
+	to_copy = min3(size, sizeof(buf), to_copy);
+	ret = kfifo_out(&client->fifo, buf, to_copy);
 	spin_unlock(&client->lock);
-	अगर (ret <= 0) अणु
+	if (ret <= 0) {
 		ret = -EAGAIN;
-		जाओ ret_err;
-	पूर्ण
+		goto ret_err;
+	}
 
 	ret = copy_to_user(user, buf, to_copy);
-	अगर (ret) अणु
+	if (ret) {
 		ret = -EFAULT;
-		जाओ ret_err;
-	पूर्ण
+		goto ret_err;
+	}
 
-	kमुक्त(buf);
-	वापस to_copy;
+	kfree(buf);
+	return to_copy;
 
 ret_err:
-	kमुक्त(buf);
-	वापस ret;
-पूर्ण
+	kfree(buf);
+	return ret;
+}
 
-अटल sमाप_प्रकार kfd_smi_ev_ग_लिखो(काष्ठा file *filep, स्थिर अक्षर __user *user,
-				माप_प्रकार size, loff_t *offset)
-अणु
-	काष्ठा kfd_smi_client *client = filep->निजी_data;
-	uपूर्णांक64_t events;
+static ssize_t kfd_smi_ev_write(struct file *filep, const char __user *user,
+				size_t size, loff_t *offset)
+{
+	struct kfd_smi_client *client = filep->private_data;
+	uint64_t events;
 
-	अगर (!access_ok(user, size) || size < माप(events))
-		वापस -EFAULT;
-	अगर (copy_from_user(&events, user, माप(events)))
-		वापस -EFAULT;
+	if (!access_ok(user, size) || size < sizeof(events))
+		return -EFAULT;
+	if (copy_from_user(&events, user, sizeof(events)))
+		return -EFAULT;
 
 	WRITE_ONCE(client->events, events);
 
-	वापस माप(events);
-पूर्ण
+	return sizeof(events);
+}
 
-अटल पूर्णांक kfd_smi_ev_release(काष्ठा inode *inode, काष्ठा file *filep)
-अणु
-	काष्ठा kfd_smi_client *client = filep->निजी_data;
-	काष्ठा kfd_dev *dev = client->dev;
+static int kfd_smi_ev_release(struct inode *inode, struct file *filep)
+{
+	struct kfd_smi_client *client = filep->private_data;
+	struct kfd_dev *dev = client->dev;
 
 	spin_lock(&dev->smi_lock);
 	list_del_rcu(&client->list);
 	spin_unlock(&dev->smi_lock);
 
 	synchronize_rcu();
-	kfअगरo_मुक्त(&client->fअगरo);
-	kमुक्त(client);
+	kfifo_free(&client->fifo);
+	kfree(client);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम add_event_to_kfअगरo(काष्ठा kfd_dev *dev, अचिन्हित पूर्णांक smi_event,
-			      अक्षर *event_msg, पूर्णांक len)
-अणु
-	काष्ठा kfd_smi_client *client;
+static void add_event_to_kfifo(struct kfd_dev *dev, unsigned int smi_event,
+			      char *event_msg, int len)
+{
+	struct kfd_smi_client *client;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 
-	list_क्रम_each_entry_rcu(client, &dev->smi_clients, list) अणु
-		अगर (!(READ_ONCE(client->events) &
+	list_for_each_entry_rcu(client, &dev->smi_clients, list) {
+		if (!(READ_ONCE(client->events) &
 				KFD_SMI_EVENT_MASK_FROM_INDEX(smi_event)))
-			जारी;
+			continue;
 		spin_lock(&client->lock);
-		अगर (kfअगरo_avail(&client->fअगरo) >= len) अणु
-			kfअगरo_in(&client->fअगरo, event_msg, len);
-			wake_up_all(&client->रुको_queue);
-		पूर्ण अन्यथा अणु
+		if (kfifo_avail(&client->fifo) >= len) {
+			kfifo_in(&client->fifo, event_msg, len);
+			wake_up_all(&client->wait_queue);
+		} else {
 			pr_debug("smi_event(EventID: %u): no space left\n",
 					smi_event);
-		पूर्ण
+		}
 		spin_unlock(&client->lock);
-	पूर्ण
+	}
 
-	rcu_पढ़ो_unlock();
-पूर्ण
+	rcu_read_unlock();
+}
 
-व्योम kfd_smi_event_update_gpu_reset(काष्ठा kfd_dev *dev, bool post_reset)
-अणु
+void kfd_smi_event_update_gpu_reset(struct kfd_dev *dev, bool post_reset)
+{
 	/*
-	 * GpuReset msg = Reset seq number (incremented क्रम
-	 * every reset message sent beक्रमe GPU reset).
+	 * GpuReset msg = Reset seq number (incremented for
+	 * every reset message sent before GPU reset).
 	 * 1 byte event + 1 byte space + 8 bytes seq num +
-	 * 1 byte \न + 1 byte \0 = 12
+	 * 1 byte \n + 1 byte \0 = 12
 	 */
-	अक्षर fअगरo_in[12];
-	पूर्णांक len;
-	अचिन्हित पूर्णांक event;
+	char fifo_in[12];
+	int len;
+	unsigned int event;
 
-	अगर (list_empty(&dev->smi_clients))
-		वापस;
+	if (list_empty(&dev->smi_clients))
+		return;
 
-	स_रखो(fअगरo_in, 0x0, माप(fअगरo_in));
+	memset(fifo_in, 0x0, sizeof(fifo_in));
 
-	अगर (post_reset) अणु
+	if (post_reset) {
 		event = KFD_SMI_EVENT_GPU_POST_RESET;
-	पूर्ण अन्यथा अणु
+	} else {
 		event = KFD_SMI_EVENT_GPU_PRE_RESET;
 		++(dev->reset_seq_num);
-	पूर्ण
+	}
 
-	len = snम_लिखो(fअगरo_in, माप(fअगरo_in), "%x %x\n", event,
+	len = snprintf(fifo_in, sizeof(fifo_in), "%x %x\n", event,
 						dev->reset_seq_num);
 
-	add_event_to_kfअगरo(dev, event, fअगरo_in, len);
-पूर्ण
+	add_event_to_kfifo(dev, event, fifo_in, len);
+}
 
-व्योम kfd_smi_event_update_thermal_throttling(काष्ठा kfd_dev *dev,
-					     uपूर्णांक32_t throttle_biपंचांगask)
-अणु
-	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)dev->kgd;
+void kfd_smi_event_update_thermal_throttling(struct kfd_dev *dev,
+					     uint32_t throttle_bitmask)
+{
+	struct amdgpu_device *adev = (struct amdgpu_device *)dev->kgd;
 	/*
-	 * ThermalThrottle msg = throttle_biपंचांगask(8):
-	 * 			 thermal_पूर्णांकerrupt_count(16):
-	 * 1 byte event + 1 byte space + 8 byte throttle_biपंचांगask +
-	 * 1 byte : + 16 byte thermal_पूर्णांकerupt_counter + 1 byte \न +
+	 * ThermalThrottle msg = throttle_bitmask(8):
+	 * 			 thermal_interrupt_count(16):
+	 * 1 byte event + 1 byte space + 8 byte throttle_bitmask +
+	 * 1 byte : + 16 byte thermal_interupt_counter + 1 byte \n +
 	 * 1 byte \0 = 29
 	 */
-	अक्षर fअगरo_in[29];
-	पूर्णांक len;
+	char fifo_in[29];
+	int len;
 
-	अगर (list_empty(&dev->smi_clients))
-		वापस;
+	if (list_empty(&dev->smi_clients))
+		return;
 
-	len = snम_लिखो(fअगरo_in, माप(fअगरo_in), "%x %x:%llx\n",
-		       KFD_SMI_EVENT_THERMAL_THROTTLE, throttle_biपंचांगask,
-		       atomic64_पढ़ो(&adev->smu.throttle_पूर्णांक_counter));
+	len = snprintf(fifo_in, sizeof(fifo_in), "%x %x:%llx\n",
+		       KFD_SMI_EVENT_THERMAL_THROTTLE, throttle_bitmask,
+		       atomic64_read(&adev->smu.throttle_int_counter));
 
-	add_event_to_kfअगरo(dev, KFD_SMI_EVENT_THERMAL_THROTTLE,	fअगरo_in, len);
-पूर्ण
+	add_event_to_kfifo(dev, KFD_SMI_EVENT_THERMAL_THROTTLE,	fifo_in, len);
+}
 
-व्योम kfd_smi_event_update_vmfault(काष्ठा kfd_dev *dev, uपूर्णांक16_t pasid)
-अणु
-	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)dev->kgd;
-	काष्ठा amdgpu_task_info task_info;
-	/* VmFault msg = (hex)uपूर्णांक32_pid(8) + :(1) + task name(16) = 25 */
-	/* 1 byte event + 1 byte space + 25 bytes msg + 1 byte \न +
+void kfd_smi_event_update_vmfault(struct kfd_dev *dev, uint16_t pasid)
+{
+	struct amdgpu_device *adev = (struct amdgpu_device *)dev->kgd;
+	struct amdgpu_task_info task_info;
+	/* VmFault msg = (hex)uint32_pid(8) + :(1) + task name(16) = 25 */
+	/* 1 byte event + 1 byte space + 25 bytes msg + 1 byte \n +
 	 * 1 byte \0 = 29
 	 */
-	अक्षर fअगरo_in[29];
-	पूर्णांक len;
+	char fifo_in[29];
+	int len;
 
-	अगर (list_empty(&dev->smi_clients))
-		वापस;
+	if (list_empty(&dev->smi_clients))
+		return;
 
-	स_रखो(&task_info, 0, माप(काष्ठा amdgpu_task_info));
+	memset(&task_info, 0, sizeof(struct amdgpu_task_info));
 	amdgpu_vm_get_task_info(adev, pasid, &task_info);
 	/* Report VM faults from user applications, not retry from kernel */
-	अगर (!task_info.pid)
-		वापस;
+	if (!task_info.pid)
+		return;
 
-	len = snम_लिखो(fअगरo_in, माप(fअगरo_in), "%x %x:%s\n", KFD_SMI_EVENT_VMFAULT,
+	len = snprintf(fifo_in, sizeof(fifo_in), "%x %x:%s\n", KFD_SMI_EVENT_VMFAULT,
 		task_info.pid, task_info.task_name);
 
-	add_event_to_kfअगरo(dev, KFD_SMI_EVENT_VMFAULT, fअगरo_in, len);
-पूर्ण
+	add_event_to_kfifo(dev, KFD_SMI_EVENT_VMFAULT, fifo_in, len);
+}
 
-पूर्णांक kfd_smi_event_खोलो(काष्ठा kfd_dev *dev, uपूर्णांक32_t *fd)
-अणु
-	काष्ठा kfd_smi_client *client;
-	पूर्णांक ret;
+int kfd_smi_event_open(struct kfd_dev *dev, uint32_t *fd)
+{
+	struct kfd_smi_client *client;
+	int ret;
 
-	client = kzalloc(माप(काष्ठा kfd_smi_client), GFP_KERNEL);
-	अगर (!client)
-		वापस -ENOMEM;
+	client = kzalloc(sizeof(struct kfd_smi_client), GFP_KERNEL);
+	if (!client)
+		return -ENOMEM;
 	INIT_LIST_HEAD(&client->list);
 
-	ret = kfअगरo_alloc(&client->fअगरo, MAX_KFIFO_SIZE, GFP_KERNEL);
-	अगर (ret) अणु
-		kमुक्त(client);
-		वापस ret;
-	पूर्ण
+	ret = kfifo_alloc(&client->fifo, MAX_KFIFO_SIZE, GFP_KERNEL);
+	if (ret) {
+		kfree(client);
+		return ret;
+	}
 
-	ret = anon_inode_getfd(kfd_smi_name, &kfd_smi_ev_fops, (व्योम *)client,
+	ret = anon_inode_getfd(kfd_smi_name, &kfd_smi_ev_fops, (void *)client,
 			       O_RDWR);
-	अगर (ret < 0) अणु
-		kfअगरo_मुक्त(&client->fअगरo);
-		kमुक्त(client);
-		वापस ret;
-	पूर्ण
+	if (ret < 0) {
+		kfifo_free(&client->fifo);
+		kfree(client);
+		return ret;
+	}
 	*fd = ret;
 
-	init_रुकोqueue_head(&client->रुको_queue);
+	init_waitqueue_head(&client->wait_queue);
 	spin_lock_init(&client->lock);
 	client->events = 0;
 	client->dev = dev;
@@ -289,5 +288,5 @@ ret_err:
 	list_add_rcu(&client->list, &dev->smi_clients);
 	spin_unlock(&dev->smi_lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

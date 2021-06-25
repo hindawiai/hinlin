@@ -1,124 +1,123 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Intel Memory Protection Keys management
  * Copyright (c) 2015, Intel Corporation.
  */
-#समावेश <linux/debugfs.h>		/* debugfs_create_u32()		*/
-#समावेश <linux/mm_types.h>             /* mm_काष्ठा, vma, etc...       */
-#समावेश <linux/pkeys.h>                /* PKEY_*                       */
-#समावेश <uapi/यंत्र-generic/mman-common.h>
+#include <linux/debugfs.h>		/* debugfs_create_u32()		*/
+#include <linux/mm_types.h>             /* mm_struct, vma, etc...       */
+#include <linux/pkeys.h>                /* PKEY_*                       */
+#include <uapi/asm-generic/mman-common.h>
 
-#समावेश <यंत्र/cpufeature.h>             /* boot_cpu_has, ...            */
-#समावेश <यंत्र/mmu_context.h>            /* vma_pkey()                   */
-#समावेश <यंत्र/fpu/पूर्णांकernal.h>		/* init_fpstate			*/
+#include <asm/cpufeature.h>             /* boot_cpu_has, ...            */
+#include <asm/mmu_context.h>            /* vma_pkey()                   */
+#include <asm/fpu/internal.h>		/* init_fpstate			*/
 
-पूर्णांक __execute_only_pkey(काष्ठा mm_काष्ठा *mm)
-अणु
+int __execute_only_pkey(struct mm_struct *mm)
+{
 	bool need_to_set_mm_pkey = false;
-	पूर्णांक execute_only_pkey = mm->context.execute_only_pkey;
-	पूर्णांक ret;
+	int execute_only_pkey = mm->context.execute_only_pkey;
+	int ret;
 
-	/* Do we need to assign a pkey क्रम mm's execute-only maps? */
-	अगर (execute_only_pkey == -1) अणु
+	/* Do we need to assign a pkey for mm's execute-only maps? */
+	if (execute_only_pkey == -1) {
 		/* Go allocate one to use, which might fail */
 		execute_only_pkey = mm_pkey_alloc(mm);
-		अगर (execute_only_pkey < 0)
-			वापस -1;
+		if (execute_only_pkey < 0)
+			return -1;
 		need_to_set_mm_pkey = true;
-	पूर्ण
+	}
 
 	/*
-	 * We करो not want to go through the relatively costly
-	 * dance to set PKRU अगर we करो not need to.  Check it
-	 * first and assume that अगर the execute-only pkey is
-	 * ग_लिखो-disabled that we करो not have to set it
+	 * We do not want to go through the relatively costly
+	 * dance to set PKRU if we do not need to.  Check it
+	 * first and assume that if the execute-only pkey is
+	 * write-disabled that we do not have to set it
 	 * ourselves.
 	 */
-	अगर (!need_to_set_mm_pkey &&
-	    !__pkru_allows_पढ़ो(पढ़ो_pkru(), execute_only_pkey)) अणु
-		वापस execute_only_pkey;
-	पूर्ण
+	if (!need_to_set_mm_pkey &&
+	    !__pkru_allows_read(read_pkru(), execute_only_pkey)) {
+		return execute_only_pkey;
+	}
 
 	/*
-	 * Set up PKRU so that it denies access क्रम everything
+	 * Set up PKRU so that it denies access for everything
 	 * other than execution.
 	 */
 	ret = arch_set_user_pkey_access(current, execute_only_pkey,
 			PKEY_DISABLE_ACCESS);
 	/*
-	 * If the PKRU-set operation failed somehow, just वापस
+	 * If the PKRU-set operation failed somehow, just return
 	 * 0 and effectively disable execute-only support.
 	 */
-	अगर (ret) अणु
-		mm_set_pkey_मुक्त(mm, execute_only_pkey);
-		वापस -1;
-	पूर्ण
+	if (ret) {
+		mm_set_pkey_free(mm, execute_only_pkey);
+		return -1;
+	}
 
 	/* We got one, store it and use it from here on out */
-	अगर (need_to_set_mm_pkey)
+	if (need_to_set_mm_pkey)
 		mm->context.execute_only_pkey = execute_only_pkey;
-	वापस execute_only_pkey;
-पूर्ण
+	return execute_only_pkey;
+}
 
-अटल अंतरभूत bool vma_is_pkey_exec_only(काष्ठा vm_area_काष्ठा *vma)
-अणु
+static inline bool vma_is_pkey_exec_only(struct vm_area_struct *vma)
+{
 	/* Do this check first since the vm_flags should be hot */
-	अगर ((vma->vm_flags & VM_ACCESS_FLAGS) != VM_EXEC)
-		वापस false;
-	अगर (vma_pkey(vma) != vma->vm_mm->context.execute_only_pkey)
-		वापस false;
+	if ((vma->vm_flags & VM_ACCESS_FLAGS) != VM_EXEC)
+		return false;
+	if (vma_pkey(vma) != vma->vm_mm->context.execute_only_pkey)
+		return false;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
 /*
- * This is only called क्रम *plain* mprotect calls.
+ * This is only called for *plain* mprotect calls.
  */
-पूर्णांक __arch_override_mprotect_pkey(काष्ठा vm_area_काष्ठा *vma, पूर्णांक prot, पूर्णांक pkey)
-अणु
+int __arch_override_mprotect_pkey(struct vm_area_struct *vma, int prot, int pkey)
+{
 	/*
 	 * Is this an mprotect_pkey() call?  If so, never
 	 * override the value that came from the user.
 	 */
-	अगर (pkey != -1)
-		वापस pkey;
+	if (pkey != -1)
+		return pkey;
 
 	/*
 	 * The mapping is execute-only.  Go try to get the
-	 * execute-only protection key.  If we fail to करो that,
-	 * fall through as अगर we करो not have execute-only
+	 * execute-only protection key.  If we fail to do that,
+	 * fall through as if we do not have execute-only
 	 * support in this mm.
 	 */
-	अगर (prot == PROT_EXEC) अणु
+	if (prot == PROT_EXEC) {
 		pkey = execute_only_pkey(vma->vm_mm);
-		अगर (pkey > 0)
-			वापस pkey;
-	पूर्ण अन्यथा अगर (vma_is_pkey_exec_only(vma)) अणु
+		if (pkey > 0)
+			return pkey;
+	} else if (vma_is_pkey_exec_only(vma)) {
 		/*
 		 * Protections are *not* PROT_EXEC, but the mapping
 		 * is using the exec-only pkey.  This mapping was
-		 * PROT_EXEC and will no दीर्घer be.  Move back to
-		 * the शेष pkey.
+		 * PROT_EXEC and will no longer be.  Move back to
+		 * the default pkey.
 		 */
-		वापस ARCH_DEFAULT_PKEY;
-	पूर्ण
+		return ARCH_DEFAULT_PKEY;
+	}
 
 	/*
 	 * This is a vanilla, non-pkey mprotect (or we failed to
 	 * setup execute-only), inherit the pkey from the VMA we
 	 * are working on.
 	 */
-	वापस vma_pkey(vma);
-पूर्ण
+	return vma_pkey(vma);
+}
 
-#घोषणा PKRU_AD_KEY(pkey)	(PKRU_AD_BIT << ((pkey) * PKRU_BITS_PER_PKEY))
+#define PKRU_AD_KEY(pkey)	(PKRU_AD_BIT << ((pkey) * PKRU_BITS_PER_PKEY))
 
 /*
- * Make the शेष PKRU value (at execve() समय) as restrictive
- * as possible.  This ensures that any thपढ़ोs clone()'d early
- * in the process's lअगरeसमय will not accidentally get access
- * to data which is pkey-रक्षित later on.
+ * Make the default PKRU value (at execve() time) as restrictive
+ * as possible.  This ensures that any threads clone()'d early
+ * in the process's lifetime will not accidentally get access
+ * to data which is pkey-protected later on.
  */
 u32 init_pkru_value = PKRU_AD_KEY( 1) | PKRU_AD_KEY( 2) | PKRU_AD_KEY( 3) |
 		      PKRU_AD_KEY( 4) | PKRU_AD_KEY( 5) | PKRU_AD_KEY( 6) |
@@ -128,86 +127,86 @@ u32 init_pkru_value = PKRU_AD_KEY( 1) | PKRU_AD_KEY( 2) | PKRU_AD_KEY( 3) |
 
 /*
  * Called from the FPU code when creating a fresh set of FPU
- * रेजिस्टरs.  This is called from a very specअगरic context where
- * we know the FPU रेजिस्टरs are safe क्रम use and we can use PKRU
+ * registers.  This is called from a very specific context where
+ * we know the FPU registers are safe for use and we can use PKRU
  * directly.
  */
-व्योम copy_init_pkru_to_fpregs(व्योम)
-अणु
+void copy_init_pkru_to_fpregs(void)
+{
 	u32 init_pkru_value_snapshot = READ_ONCE(init_pkru_value);
 	/*
 	 * Override the PKRU state that came from 'init_fpstate'
 	 * with the baseline from the process.
 	 */
-	ग_लिखो_pkru(init_pkru_value_snapshot);
-पूर्ण
+	write_pkru(init_pkru_value_snapshot);
+}
 
-अटल sमाप_प्रकार init_pkru_पढ़ो_file(काष्ठा file *file, अक्षर __user *user_buf,
-			     माप_प्रकार count, loff_t *ppos)
-अणु
-	अक्षर buf[32];
-	अचिन्हित पूर्णांक len;
+static ssize_t init_pkru_read_file(struct file *file, char __user *user_buf,
+			     size_t count, loff_t *ppos)
+{
+	char buf[32];
+	unsigned int len;
 
-	len = प्र_लिखो(buf, "0x%x\n", init_pkru_value);
-	वापस simple_पढ़ो_from_buffer(user_buf, count, ppos, buf, len);
-पूर्ण
+	len = sprintf(buf, "0x%x\n", init_pkru_value);
+	return simple_read_from_buffer(user_buf, count, ppos, buf, len);
+}
 
-अटल sमाप_प्रकार init_pkru_ग_लिखो_file(काष्ठा file *file,
-		 स्थिर अक्षर __user *user_buf, माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा pkru_state *pk;
-	अक्षर buf[32];
-	sमाप_प्रकार len;
+static ssize_t init_pkru_write_file(struct file *file,
+		 const char __user *user_buf, size_t count, loff_t *ppos)
+{
+	struct pkru_state *pk;
+	char buf[32];
+	ssize_t len;
 	u32 new_init_pkru;
 
-	len = min(count, माप(buf) - 1);
-	अगर (copy_from_user(buf, user_buf, len))
-		वापस -EFAULT;
+	len = min(count, sizeof(buf) - 1);
+	if (copy_from_user(buf, user_buf, len))
+		return -EFAULT;
 
 	/* Make the buffer a valid string that we can not overrun */
 	buf[len] = '\0';
-	अगर (kstrtouपूर्णांक(buf, 0, &new_init_pkru))
-		वापस -EINVAL;
+	if (kstrtouint(buf, 0, &new_init_pkru))
+		return -EINVAL;
 
 	/*
-	 * Don't allow insane settings that will blow the प्रणाली
-	 * up immediately अगर someone attempts to disable access
-	 * or ग_लिखोs to pkey 0.
+	 * Don't allow insane settings that will blow the system
+	 * up immediately if someone attempts to disable access
+	 * or writes to pkey 0.
 	 */
-	अगर (new_init_pkru & (PKRU_AD_BIT|PKRU_WD_BIT))
-		वापस -EINVAL;
+	if (new_init_pkru & (PKRU_AD_BIT|PKRU_WD_BIT))
+		return -EINVAL;
 
 	WRITE_ONCE(init_pkru_value, new_init_pkru);
 	pk = get_xsave_addr(&init_fpstate.xsave, XFEATURE_PKRU);
-	अगर (!pk)
-		वापस -EINVAL;
+	if (!pk)
+		return -EINVAL;
 	pk->pkru = new_init_pkru;
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल स्थिर काष्ठा file_operations fops_init_pkru = अणु
-	.पढ़ो = init_pkru_पढ़ो_file,
-	.ग_लिखो = init_pkru_ग_लिखो_file,
-	.llseek = शेष_llseek,
-पूर्ण;
+static const struct file_operations fops_init_pkru = {
+	.read = init_pkru_read_file,
+	.write = init_pkru_write_file,
+	.llseek = default_llseek,
+};
 
-अटल पूर्णांक __init create_init_pkru_value(व्योम)
-अणु
+static int __init create_init_pkru_value(void)
+{
 	debugfs_create_file("init_pkru", S_IRUSR | S_IWUSR,
-			arch_debugfs_dir, शून्य, &fops_init_pkru);
-	वापस 0;
-पूर्ण
+			arch_debugfs_dir, NULL, &fops_init_pkru);
+	return 0;
+}
 late_initcall(create_init_pkru_value);
 
-अटल __init पूर्णांक setup_init_pkru(अक्षर *opt)
-अणु
+static __init int setup_init_pkru(char *opt)
+{
 	u32 new_init_pkru;
 
-	अगर (kstrtouपूर्णांक(opt, 0, &new_init_pkru))
-		वापस 1;
+	if (kstrtouint(opt, 0, &new_init_pkru))
+		return 1;
 
 	WRITE_ONCE(init_pkru_value, new_init_pkru);
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 __setup("init_pkru=", setup_init_pkru);

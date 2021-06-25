@@ -1,1057 +1,1056 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  *  linux/fs/fcntl.c
  *
  *  Copyright (C) 1991, 1992  Linus Torvalds
  */
 
-#समावेश <linux/syscalls.h>
-#समावेश <linux/init.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/sched/task.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/file.h>
-#समावेश <linux/fdtable.h>
-#समावेश <linux/capability.h>
-#समावेश <linux/dnotअगरy.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/module.h>
-#समावेश <linux/pipe_fs_i.h>
-#समावेश <linux/security.h>
-#समावेश <linux/ptrace.h>
-#समावेश <linux/संकेत.स>
-#समावेश <linux/rcupdate.h>
-#समावेश <linux/pid_namespace.h>
-#समावेश <linux/user_namespace.h>
-#समावेश <linux/memfd.h>
-#समावेश <linux/compat.h>
-#समावेश <linux/mount.h>
+#include <linux/syscalls.h>
+#include <linux/init.h>
+#include <linux/mm.h>
+#include <linux/sched/task.h>
+#include <linux/fs.h>
+#include <linux/file.h>
+#include <linux/fdtable.h>
+#include <linux/capability.h>
+#include <linux/dnotify.h>
+#include <linux/slab.h>
+#include <linux/module.h>
+#include <linux/pipe_fs_i.h>
+#include <linux/security.h>
+#include <linux/ptrace.h>
+#include <linux/signal.h>
+#include <linux/rcupdate.h>
+#include <linux/pid_namespace.h>
+#include <linux/user_namespace.h>
+#include <linux/memfd.h>
+#include <linux/compat.h>
+#include <linux/mount.h>
 
-#समावेश <linux/poll.h>
-#समावेश <यंत्र/siginfo.h>
-#समावेश <linux/uaccess.h>
+#include <linux/poll.h>
+#include <asm/siginfo.h>
+#include <linux/uaccess.h>
 
-#घोषणा SETFL_MASK (O_APPEND | O_NONBLOCK | O_NDELAY | O_सूचीECT | O_NOATIME)
+#define SETFL_MASK (O_APPEND | O_NONBLOCK | O_NDELAY | O_DIRECT | O_NOATIME)
 
-अटल पूर्णांक setfl(पूर्णांक fd, काष्ठा file * filp, अचिन्हित दीर्घ arg)
-अणु
-	काष्ठा inode * inode = file_inode(filp);
-	पूर्णांक error = 0;
+static int setfl(int fd, struct file * filp, unsigned long arg)
+{
+	struct inode * inode = file_inode(filp);
+	int error = 0;
 
 	/*
-	 * O_APPEND cannot be cleared अगर the file is marked as append-only
-	 * and the file is खोलो क्रम ग_लिखो.
+	 * O_APPEND cannot be cleared if the file is marked as append-only
+	 * and the file is open for write.
 	 */
-	अगर (((arg ^ filp->f_flags) & O_APPEND) && IS_APPEND(inode))
-		वापस -EPERM;
+	if (((arg ^ filp->f_flags) & O_APPEND) && IS_APPEND(inode))
+		return -EPERM;
 
 	/* O_NOATIME can only be set by the owner or superuser */
-	अगर ((arg & O_NOATIME) && !(filp->f_flags & O_NOATIME))
-		अगर (!inode_owner_or_capable(file_mnt_user_ns(filp), inode))
-			वापस -EPERM;
+	if ((arg & O_NOATIME) && !(filp->f_flags & O_NOATIME))
+		if (!inode_owner_or_capable(file_mnt_user_ns(filp), inode))
+			return -EPERM;
 
-	/* required क्रम strict SunOS emulation */
-	अगर (O_NONBLOCK != O_NDELAY)
-	       अगर (arg & O_NDELAY)
+	/* required for strict SunOS emulation */
+	if (O_NONBLOCK != O_NDELAY)
+	       if (arg & O_NDELAY)
 		   arg |= O_NONBLOCK;
 
-	/* Pipe packetized mode is controlled by O_सूचीECT flag */
-	अगर (!S_ISFIFO(inode->i_mode) && (arg & O_सूचीECT)) अणु
-		अगर (!filp->f_mapping || !filp->f_mapping->a_ops ||
+	/* Pipe packetized mode is controlled by O_DIRECT flag */
+	if (!S_ISFIFO(inode->i_mode) && (arg & O_DIRECT)) {
+		if (!filp->f_mapping || !filp->f_mapping->a_ops ||
 			!filp->f_mapping->a_ops->direct_IO)
-				वापस -EINVAL;
-	पूर्ण
+				return -EINVAL;
+	}
 
-	अगर (filp->f_op->check_flags)
+	if (filp->f_op->check_flags)
 		error = filp->f_op->check_flags(arg);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
 	/*
-	 * ->fasync() is responsible क्रम setting the FASYNC bit.
+	 * ->fasync() is responsible for setting the FASYNC bit.
 	 */
-	अगर (((arg ^ filp->f_flags) & FASYNC) && filp->f_op->fasync) अणु
+	if (((arg ^ filp->f_flags) & FASYNC) && filp->f_op->fasync) {
 		error = filp->f_op->fasync(fd, filp, (arg & FASYNC) != 0);
-		अगर (error < 0)
-			जाओ out;
-		अगर (error > 0)
+		if (error < 0)
+			goto out;
+		if (error > 0)
 			error = 0;
-	पूर्ण
+	}
 	spin_lock(&filp->f_lock);
 	filp->f_flags = (arg & SETFL_MASK) | (filp->f_flags & ~SETFL_MASK);
 	spin_unlock(&filp->f_lock);
 
  out:
-	वापस error;
-पूर्ण
+	return error;
+}
 
-अटल व्योम f_moकरोwn(काष्ठा file *filp, काष्ठा pid *pid, क्रमागत pid_type type,
-                     पूर्णांक क्रमce)
-अणु
-	ग_लिखो_lock_irq(&filp->f_owner.lock);
-	अगर (क्रमce || !filp->f_owner.pid) अणु
+static void f_modown(struct file *filp, struct pid *pid, enum pid_type type,
+                     int force)
+{
+	write_lock_irq(&filp->f_owner.lock);
+	if (force || !filp->f_owner.pid) {
 		put_pid(filp->f_owner.pid);
 		filp->f_owner.pid = get_pid(pid);
 		filp->f_owner.pid_type = type;
 
-		अगर (pid) अणु
-			स्थिर काष्ठा cred *cred = current_cred();
+		if (pid) {
+			const struct cred *cred = current_cred();
 			filp->f_owner.uid = cred->uid;
 			filp->f_owner.euid = cred->euid;
-		पूर्ण
-	पूर्ण
-	ग_लिखो_unlock_irq(&filp->f_owner.lock);
-पूर्ण
+		}
+	}
+	write_unlock_irq(&filp->f_owner.lock);
+}
 
-व्योम __f_setown(काष्ठा file *filp, काष्ठा pid *pid, क्रमागत pid_type type,
-		पूर्णांक क्रमce)
-अणु
+void __f_setown(struct file *filp, struct pid *pid, enum pid_type type,
+		int force)
+{
 	security_file_set_fowner(filp);
-	f_moकरोwn(filp, pid, type, क्रमce);
-पूर्ण
+	f_modown(filp, pid, type, force);
+}
 EXPORT_SYMBOL(__f_setown);
 
-पूर्णांक f_setown(काष्ठा file *filp, अचिन्हित दीर्घ arg, पूर्णांक क्रमce)
-अणु
-	क्रमागत pid_type type;
-	काष्ठा pid *pid = शून्य;
-	पूर्णांक who = arg, ret = 0;
+int f_setown(struct file *filp, unsigned long arg, int force)
+{
+	enum pid_type type;
+	struct pid *pid = NULL;
+	int who = arg, ret = 0;
 
 	type = PIDTYPE_TGID;
-	अगर (who < 0) अणु
-		/* aव्योम overflow below */
-		अगर (who == पूर्णांक_न्यून)
-			वापस -EINVAL;
+	if (who < 0) {
+		/* avoid overflow below */
+		if (who == INT_MIN)
+			return -EINVAL;
 
 		type = PIDTYPE_PGID;
 		who = -who;
-	पूर्ण
+	}
 
-	rcu_पढ़ो_lock();
-	अगर (who) अणु
+	rcu_read_lock();
+	if (who) {
 		pid = find_vpid(who);
-		अगर (!pid)
+		if (!pid)
 			ret = -ESRCH;
-	पूर्ण
+	}
 
-	अगर (!ret)
-		__f_setown(filp, pid, type, क्रमce);
-	rcu_पढ़ो_unlock();
+	if (!ret)
+		__f_setown(filp, pid, type, force);
+	rcu_read_unlock();
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL(f_setown);
 
-व्योम f_delown(काष्ठा file *filp)
-अणु
-	f_moकरोwn(filp, शून्य, PIDTYPE_TGID, 1);
-पूर्ण
+void f_delown(struct file *filp)
+{
+	f_modown(filp, NULL, PIDTYPE_TGID, 1);
+}
 
-pid_t f_getown(काष्ठा file *filp)
-अणु
+pid_t f_getown(struct file *filp)
+{
 	pid_t pid = 0;
-	पढ़ो_lock(&filp->f_owner.lock);
-	rcu_पढ़ो_lock();
-	अगर (pid_task(filp->f_owner.pid, filp->f_owner.pid_type)) अणु
+	read_lock(&filp->f_owner.lock);
+	rcu_read_lock();
+	if (pid_task(filp->f_owner.pid, filp->f_owner.pid_type)) {
 		pid = pid_vnr(filp->f_owner.pid);
-		अगर (filp->f_owner.pid_type == PIDTYPE_PGID)
+		if (filp->f_owner.pid_type == PIDTYPE_PGID)
 			pid = -pid;
-	पूर्ण
-	rcu_पढ़ो_unlock();
-	पढ़ो_unlock(&filp->f_owner.lock);
-	वापस pid;
-पूर्ण
+	}
+	rcu_read_unlock();
+	read_unlock(&filp->f_owner.lock);
+	return pid;
+}
 
-अटल पूर्णांक f_setown_ex(काष्ठा file *filp, अचिन्हित दीर्घ arg)
-अणु
-	काष्ठा f_owner_ex __user *owner_p = (व्योम __user *)arg;
-	काष्ठा f_owner_ex owner;
-	काष्ठा pid *pid;
-	पूर्णांक type;
-	पूर्णांक ret;
+static int f_setown_ex(struct file *filp, unsigned long arg)
+{
+	struct f_owner_ex __user *owner_p = (void __user *)arg;
+	struct f_owner_ex owner;
+	struct pid *pid;
+	int type;
+	int ret;
 
-	ret = copy_from_user(&owner, owner_p, माप(owner));
-	अगर (ret)
-		वापस -EFAULT;
+	ret = copy_from_user(&owner, owner_p, sizeof(owner));
+	if (ret)
+		return -EFAULT;
 
-	चयन (owner.type) अणु
-	हाल F_OWNER_TID:
+	switch (owner.type) {
+	case F_OWNER_TID:
 		type = PIDTYPE_PID;
-		अवरोध;
+		break;
 
-	हाल F_OWNER_PID:
+	case F_OWNER_PID:
 		type = PIDTYPE_TGID;
-		अवरोध;
+		break;
 
-	हाल F_OWNER_PGRP:
+	case F_OWNER_PGRP:
 		type = PIDTYPE_PGID;
-		अवरोध;
+		break;
 
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+	default:
+		return -EINVAL;
+	}
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	pid = find_vpid(owner.pid);
-	अगर (owner.pid && !pid)
+	if (owner.pid && !pid)
 		ret = -ESRCH;
-	अन्यथा
+	else
 		 __f_setown(filp, pid, type, 1);
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक f_getown_ex(काष्ठा file *filp, अचिन्हित दीर्घ arg)
-अणु
-	काष्ठा f_owner_ex __user *owner_p = (व्योम __user *)arg;
-	काष्ठा f_owner_ex owner = अणुपूर्ण;
-	पूर्णांक ret = 0;
+static int f_getown_ex(struct file *filp, unsigned long arg)
+{
+	struct f_owner_ex __user *owner_p = (void __user *)arg;
+	struct f_owner_ex owner = {};
+	int ret = 0;
 
-	पढ़ो_lock(&filp->f_owner.lock);
-	rcu_पढ़ो_lock();
-	अगर (pid_task(filp->f_owner.pid, filp->f_owner.pid_type))
+	read_lock(&filp->f_owner.lock);
+	rcu_read_lock();
+	if (pid_task(filp->f_owner.pid, filp->f_owner.pid_type))
 		owner.pid = pid_vnr(filp->f_owner.pid);
-	rcu_पढ़ो_unlock();
-	चयन (filp->f_owner.pid_type) अणु
-	हाल PIDTYPE_PID:
+	rcu_read_unlock();
+	switch (filp->f_owner.pid_type) {
+	case PIDTYPE_PID:
 		owner.type = F_OWNER_TID;
-		अवरोध;
+		break;
 
-	हाल PIDTYPE_TGID:
+	case PIDTYPE_TGID:
 		owner.type = F_OWNER_PID;
-		अवरोध;
+		break;
 
-	हाल PIDTYPE_PGID:
+	case PIDTYPE_PGID:
 		owner.type = F_OWNER_PGRP;
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		WARN_ON(1);
 		ret = -EINVAL;
-		अवरोध;
-	पूर्ण
-	पढ़ो_unlock(&filp->f_owner.lock);
+		break;
+	}
+	read_unlock(&filp->f_owner.lock);
 
-	अगर (!ret) अणु
-		ret = copy_to_user(owner_p, &owner, माप(owner));
-		अगर (ret)
+	if (!ret) {
+		ret = copy_to_user(owner_p, &owner, sizeof(owner));
+		if (ret)
 			ret = -EFAULT;
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 
-#अगर_घोषित CONFIG_CHECKPOINT_RESTORE
-अटल पूर्णांक f_getowner_uids(काष्ठा file *filp, अचिन्हित दीर्घ arg)
-अणु
-	काष्ठा user_namespace *user_ns = current_user_ns();
-	uid_t __user *dst = (व्योम __user *)arg;
+#ifdef CONFIG_CHECKPOINT_RESTORE
+static int f_getowner_uids(struct file *filp, unsigned long arg)
+{
+	struct user_namespace *user_ns = current_user_ns();
+	uid_t __user *dst = (void __user *)arg;
 	uid_t src[2];
-	पूर्णांक err;
+	int err;
 
-	पढ़ो_lock(&filp->f_owner.lock);
+	read_lock(&filp->f_owner.lock);
 	src[0] = from_kuid(user_ns, filp->f_owner.uid);
 	src[1] = from_kuid(user_ns, filp->f_owner.euid);
-	पढ़ो_unlock(&filp->f_owner.lock);
+	read_unlock(&filp->f_owner.lock);
 
 	err  = put_user(src[0], &dst[0]);
 	err |= put_user(src[1], &dst[1]);
 
-	वापस err;
-पूर्ण
-#अन्यथा
-अटल पूर्णांक f_getowner_uids(काष्ठा file *filp, अचिन्हित दीर्घ arg)
-अणु
-	वापस -EINVAL;
-पूर्ण
-#पूर्ण_अगर
+	return err;
+}
+#else
+static int f_getowner_uids(struct file *filp, unsigned long arg)
+{
+	return -EINVAL;
+}
+#endif
 
-अटल bool rw_hपूर्णांक_valid(क्रमागत rw_hपूर्णांक hपूर्णांक)
-अणु
-	चयन (hपूर्णांक) अणु
-	हाल RWH_WRITE_LIFE_NOT_SET:
-	हाल RWH_WRITE_LIFE_NONE:
-	हाल RWH_WRITE_LIFE_SHORT:
-	हाल RWH_WRITE_LIFE_MEDIUM:
-	हाल RWH_WRITE_LIFE_LONG:
-	हाल RWH_WRITE_LIFE_EXTREME:
-		वापस true;
-	शेष:
-		वापस false;
-	पूर्ण
-पूर्ण
+static bool rw_hint_valid(enum rw_hint hint)
+{
+	switch (hint) {
+	case RWH_WRITE_LIFE_NOT_SET:
+	case RWH_WRITE_LIFE_NONE:
+	case RWH_WRITE_LIFE_SHORT:
+	case RWH_WRITE_LIFE_MEDIUM:
+	case RWH_WRITE_LIFE_LONG:
+	case RWH_WRITE_LIFE_EXTREME:
+		return true;
+	default:
+		return false;
+	}
+}
 
-अटल दीर्घ fcntl_rw_hपूर्णांक(काष्ठा file *file, अचिन्हित पूर्णांक cmd,
-			  अचिन्हित दीर्घ arg)
-अणु
-	काष्ठा inode *inode = file_inode(file);
+static long fcntl_rw_hint(struct file *file, unsigned int cmd,
+			  unsigned long arg)
+{
+	struct inode *inode = file_inode(file);
 	u64 __user *argp = (u64 __user *)arg;
-	क्रमागत rw_hपूर्णांक hपूर्णांक;
+	enum rw_hint hint;
 	u64 h;
 
-	चयन (cmd) अणु
-	हाल F_GET_खाता_RW_HINT:
-		h = file_ग_लिखो_hपूर्णांक(file);
-		अगर (copy_to_user(argp, &h, माप(*argp)))
-			वापस -EFAULT;
-		वापस 0;
-	हाल F_SET_खाता_RW_HINT:
-		अगर (copy_from_user(&h, argp, माप(h)))
-			वापस -EFAULT;
-		hपूर्णांक = (क्रमागत rw_hपूर्णांक) h;
-		अगर (!rw_hपूर्णांक_valid(hपूर्णांक))
-			वापस -EINVAL;
+	switch (cmd) {
+	case F_GET_FILE_RW_HINT:
+		h = file_write_hint(file);
+		if (copy_to_user(argp, &h, sizeof(*argp)))
+			return -EFAULT;
+		return 0;
+	case F_SET_FILE_RW_HINT:
+		if (copy_from_user(&h, argp, sizeof(h)))
+			return -EFAULT;
+		hint = (enum rw_hint) h;
+		if (!rw_hint_valid(hint))
+			return -EINVAL;
 
 		spin_lock(&file->f_lock);
-		file->f_ग_लिखो_hपूर्णांक = hपूर्णांक;
+		file->f_write_hint = hint;
 		spin_unlock(&file->f_lock);
-		वापस 0;
-	हाल F_GET_RW_HINT:
-		h = inode->i_ग_लिखो_hपूर्णांक;
-		अगर (copy_to_user(argp, &h, माप(*argp)))
-			वापस -EFAULT;
-		वापस 0;
-	हाल F_SET_RW_HINT:
-		अगर (copy_from_user(&h, argp, माप(h)))
-			वापस -EFAULT;
-		hपूर्णांक = (क्रमागत rw_hपूर्णांक) h;
-		अगर (!rw_hपूर्णांक_valid(hपूर्णांक))
-			वापस -EINVAL;
+		return 0;
+	case F_GET_RW_HINT:
+		h = inode->i_write_hint;
+		if (copy_to_user(argp, &h, sizeof(*argp)))
+			return -EFAULT;
+		return 0;
+	case F_SET_RW_HINT:
+		if (copy_from_user(&h, argp, sizeof(h)))
+			return -EFAULT;
+		hint = (enum rw_hint) h;
+		if (!rw_hint_valid(hint))
+			return -EINVAL;
 
 		inode_lock(inode);
-		inode->i_ग_लिखो_hपूर्णांक = hपूर्णांक;
+		inode->i_write_hint = hint;
 		inode_unlock(inode);
-		वापस 0;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-पूर्ण
+		return 0;
+	default:
+		return -EINVAL;
+	}
+}
 
-अटल दीर्घ करो_fcntl(पूर्णांक fd, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg,
-		काष्ठा file *filp)
-अणु
-	व्योम __user *argp = (व्योम __user *)arg;
-	काष्ठा flock flock;
-	दीर्घ err = -EINVAL;
+static long do_fcntl(int fd, unsigned int cmd, unsigned long arg,
+		struct file *filp)
+{
+	void __user *argp = (void __user *)arg;
+	struct flock flock;
+	long err = -EINVAL;
 
-	चयन (cmd) अणु
-	हाल F_DUPFD:
+	switch (cmd) {
+	case F_DUPFD:
 		err = f_dupfd(arg, filp, 0);
-		अवरोध;
-	हाल F_DUPFD_CLOEXEC:
+		break;
+	case F_DUPFD_CLOEXEC:
 		err = f_dupfd(arg, filp, O_CLOEXEC);
-		अवरोध;
-	हाल F_GETFD:
-		err = get_बंद_on_exec(fd) ? FD_CLOEXEC : 0;
-		अवरोध;
-	हाल F_SETFD:
+		break;
+	case F_GETFD:
+		err = get_close_on_exec(fd) ? FD_CLOEXEC : 0;
+		break;
+	case F_SETFD:
 		err = 0;
-		set_बंद_on_exec(fd, arg & FD_CLOEXEC);
-		अवरोध;
-	हाल F_GETFL:
+		set_close_on_exec(fd, arg & FD_CLOEXEC);
+		break;
+	case F_GETFL:
 		err = filp->f_flags;
-		अवरोध;
-	हाल F_SETFL:
+		break;
+	case F_SETFL:
 		err = setfl(fd, filp, arg);
-		अवरोध;
-#अगर BITS_PER_LONG != 32
+		break;
+#if BITS_PER_LONG != 32
 	/* 32-bit arches must use fcntl64() */
-	हाल F_OFD_GETLK:
-#पूर्ण_अगर
-	हाल F_GETLK:
-		अगर (copy_from_user(&flock, argp, माप(flock)))
-			वापस -EFAULT;
+	case F_OFD_GETLK:
+#endif
+	case F_GETLK:
+		if (copy_from_user(&flock, argp, sizeof(flock)))
+			return -EFAULT;
 		err = fcntl_getlk(filp, cmd, &flock);
-		अगर (!err && copy_to_user(argp, &flock, माप(flock)))
-			वापस -EFAULT;
-		अवरोध;
-#अगर BITS_PER_LONG != 32
+		if (!err && copy_to_user(argp, &flock, sizeof(flock)))
+			return -EFAULT;
+		break;
+#if BITS_PER_LONG != 32
 	/* 32-bit arches must use fcntl64() */
-	हाल F_OFD_SETLK:
-	हाल F_OFD_SETLKW:
-#पूर्ण_अगर
+	case F_OFD_SETLK:
+	case F_OFD_SETLKW:
+#endif
 		fallthrough;
-	हाल F_SETLK:
-	हाल F_SETLKW:
-		अगर (copy_from_user(&flock, argp, माप(flock)))
-			वापस -EFAULT;
+	case F_SETLK:
+	case F_SETLKW:
+		if (copy_from_user(&flock, argp, sizeof(flock)))
+			return -EFAULT;
 		err = fcntl_setlk(fd, filp, cmd, &flock);
-		अवरोध;
-	हाल F_GETOWN:
+		break;
+	case F_GETOWN:
 		/*
 		 * XXX If f_owner is a process group, the
-		 * negative वापस value will get converted
-		 * पूर्णांकo an error.  Oops.  If we keep the
+		 * negative return value will get converted
+		 * into an error.  Oops.  If we keep the
 		 * current syscall conventions, the only way
 		 * to fix this will be in libc.
 		 */
 		err = f_getown(filp);
-		क्रमce_successful_syscall_वापस();
-		अवरोध;
-	हाल F_SETOWN:
+		force_successful_syscall_return();
+		break;
+	case F_SETOWN:
 		err = f_setown(filp, arg, 1);
-		अवरोध;
-	हाल F_GETOWN_EX:
+		break;
+	case F_GETOWN_EX:
 		err = f_getown_ex(filp, arg);
-		अवरोध;
-	हाल F_SETOWN_EX:
+		break;
+	case F_SETOWN_EX:
 		err = f_setown_ex(filp, arg);
-		अवरोध;
-	हाल F_GETOWNER_UIDS:
+		break;
+	case F_GETOWNER_UIDS:
 		err = f_getowner_uids(filp, arg);
-		अवरोध;
-	हाल F_GETSIG:
+		break;
+	case F_GETSIG:
 		err = filp->f_owner.signum;
-		अवरोध;
-	हाल F_SETSIG:
-		/* arg == 0 restores शेष behaviour. */
-		अगर (!valid_संकेत(arg)) अणु
-			अवरोध;
-		पूर्ण
+		break;
+	case F_SETSIG:
+		/* arg == 0 restores default behaviour. */
+		if (!valid_signal(arg)) {
+			break;
+		}
 		err = 0;
 		filp->f_owner.signum = arg;
-		अवरोध;
-	हाल F_GETLEASE:
+		break;
+	case F_GETLEASE:
 		err = fcntl_getlease(filp);
-		अवरोध;
-	हाल F_SETLEASE:
+		break;
+	case F_SETLEASE:
 		err = fcntl_setlease(fd, filp, arg);
-		अवरोध;
-	हाल F_NOTIFY:
-		err = fcntl_dirnotअगरy(fd, filp, arg);
-		अवरोध;
-	हाल F_SETPIPE_SZ:
-	हाल F_GETPIPE_SZ:
+		break;
+	case F_NOTIFY:
+		err = fcntl_dirnotify(fd, filp, arg);
+		break;
+	case F_SETPIPE_SZ:
+	case F_GETPIPE_SZ:
 		err = pipe_fcntl(filp, cmd, arg);
-		अवरोध;
-	हाल F_ADD_SEALS:
-	हाल F_GET_SEALS:
+		break;
+	case F_ADD_SEALS:
+	case F_GET_SEALS:
 		err = memfd_fcntl(filp, cmd, arg);
-		अवरोध;
-	हाल F_GET_RW_HINT:
-	हाल F_SET_RW_HINT:
-	हाल F_GET_खाता_RW_HINT:
-	हाल F_SET_खाता_RW_HINT:
-		err = fcntl_rw_hपूर्णांक(filp, cmd, arg);
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-	वापस err;
-पूर्ण
+		break;
+	case F_GET_RW_HINT:
+	case F_SET_RW_HINT:
+	case F_GET_FILE_RW_HINT:
+	case F_SET_FILE_RW_HINT:
+		err = fcntl_rw_hint(filp, cmd, arg);
+		break;
+	default:
+		break;
+	}
+	return err;
+}
 
-अटल पूर्णांक check_fcntl_cmd(अचिन्हित cmd)
-अणु
-	चयन (cmd) अणु
-	हाल F_DUPFD:
-	हाल F_DUPFD_CLOEXEC:
-	हाल F_GETFD:
-	हाल F_SETFD:
-	हाल F_GETFL:
-		वापस 1;
-	पूर्ण
-	वापस 0;
-पूर्ण
+static int check_fcntl_cmd(unsigned cmd)
+{
+	switch (cmd) {
+	case F_DUPFD:
+	case F_DUPFD_CLOEXEC:
+	case F_GETFD:
+	case F_SETFD:
+	case F_GETFL:
+		return 1;
+	}
+	return 0;
+}
 
-SYSCALL_DEFINE3(fcntl, अचिन्हित पूर्णांक, fd, अचिन्हित पूर्णांक, cmd, अचिन्हित दीर्घ, arg)
-अणु	
-	काष्ठा fd f = fdget_raw(fd);
-	दीर्घ err = -EBADF;
+SYSCALL_DEFINE3(fcntl, unsigned int, fd, unsigned int, cmd, unsigned long, arg)
+{	
+	struct fd f = fdget_raw(fd);
+	long err = -EBADF;
 
-	अगर (!f.file)
-		जाओ out;
+	if (!f.file)
+		goto out;
 
-	अगर (unlikely(f.file->f_mode & FMODE_PATH)) अणु
-		अगर (!check_fcntl_cmd(cmd))
-			जाओ out1;
-	पूर्ण
+	if (unlikely(f.file->f_mode & FMODE_PATH)) {
+		if (!check_fcntl_cmd(cmd))
+			goto out1;
+	}
 
 	err = security_file_fcntl(f.file, cmd, arg);
-	अगर (!err)
-		err = करो_fcntl(fd, cmd, arg, f.file);
+	if (!err)
+		err = do_fcntl(fd, cmd, arg, f.file);
 
 out1:
  	fdput(f);
 out:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-#अगर BITS_PER_LONG == 32
-SYSCALL_DEFINE3(fcntl64, अचिन्हित पूर्णांक, fd, अचिन्हित पूर्णांक, cmd,
-		अचिन्हित दीर्घ, arg)
-अणु	
-	व्योम __user *argp = (व्योम __user *)arg;
-	काष्ठा fd f = fdget_raw(fd);
-	काष्ठा flock64 flock;
-	दीर्घ err = -EBADF;
+#if BITS_PER_LONG == 32
+SYSCALL_DEFINE3(fcntl64, unsigned int, fd, unsigned int, cmd,
+		unsigned long, arg)
+{	
+	void __user *argp = (void __user *)arg;
+	struct fd f = fdget_raw(fd);
+	struct flock64 flock;
+	long err = -EBADF;
 
-	अगर (!f.file)
-		जाओ out;
+	if (!f.file)
+		goto out;
 
-	अगर (unlikely(f.file->f_mode & FMODE_PATH)) अणु
-		अगर (!check_fcntl_cmd(cmd))
-			जाओ out1;
-	पूर्ण
+	if (unlikely(f.file->f_mode & FMODE_PATH)) {
+		if (!check_fcntl_cmd(cmd))
+			goto out1;
+	}
 
 	err = security_file_fcntl(f.file, cmd, arg);
-	अगर (err)
-		जाओ out1;
+	if (err)
+		goto out1;
 	
-	चयन (cmd) अणु
-	हाल F_GETLK64:
-	हाल F_OFD_GETLK:
+	switch (cmd) {
+	case F_GETLK64:
+	case F_OFD_GETLK:
 		err = -EFAULT;
-		अगर (copy_from_user(&flock, argp, माप(flock)))
-			अवरोध;
+		if (copy_from_user(&flock, argp, sizeof(flock)))
+			break;
 		err = fcntl_getlk64(f.file, cmd, &flock);
-		अगर (!err && copy_to_user(argp, &flock, माप(flock)))
+		if (!err && copy_to_user(argp, &flock, sizeof(flock)))
 			err = -EFAULT;
-		अवरोध;
-	हाल F_SETLK64:
-	हाल F_SETLKW64:
-	हाल F_OFD_SETLK:
-	हाल F_OFD_SETLKW:
+		break;
+	case F_SETLK64:
+	case F_SETLKW64:
+	case F_OFD_SETLK:
+	case F_OFD_SETLKW:
 		err = -EFAULT;
-		अगर (copy_from_user(&flock, argp, माप(flock)))
-			अवरोध;
+		if (copy_from_user(&flock, argp, sizeof(flock)))
+			break;
 		err = fcntl_setlk64(fd, f.file, cmd, &flock);
-		अवरोध;
-	शेष:
-		err = करो_fcntl(fd, cmd, arg, f.file);
-		अवरोध;
-	पूर्ण
+		break;
+	default:
+		err = do_fcntl(fd, cmd, arg, f.file);
+		break;
+	}
 out1:
 	fdput(f);
 out:
-	वापस err;
-पूर्ण
-#पूर्ण_अगर
+	return err;
+}
+#endif
 
-#अगर_घोषित CONFIG_COMPAT
-/* careful - करोn't use anywhere अन्यथा */
-#घोषणा copy_flock_fields(dst, src)		\
+#ifdef CONFIG_COMPAT
+/* careful - don't use anywhere else */
+#define copy_flock_fields(dst, src)		\
 	(dst)->l_type = (src)->l_type;		\
 	(dst)->l_whence = (src)->l_whence;	\
 	(dst)->l_start = (src)->l_start;	\
 	(dst)->l_len = (src)->l_len;		\
 	(dst)->l_pid = (src)->l_pid;
 
-अटल पूर्णांक get_compat_flock(काष्ठा flock *kfl, स्थिर काष्ठा compat_flock __user *ufl)
-अणु
-	काष्ठा compat_flock fl;
+static int get_compat_flock(struct flock *kfl, const struct compat_flock __user *ufl)
+{
+	struct compat_flock fl;
 
-	अगर (copy_from_user(&fl, ufl, माप(काष्ठा compat_flock)))
-		वापस -EFAULT;
+	if (copy_from_user(&fl, ufl, sizeof(struct compat_flock)))
+		return -EFAULT;
 	copy_flock_fields(kfl, &fl);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक get_compat_flock64(काष्ठा flock *kfl, स्थिर काष्ठा compat_flock64 __user *ufl)
-अणु
-	काष्ठा compat_flock64 fl;
+static int get_compat_flock64(struct flock *kfl, const struct compat_flock64 __user *ufl)
+{
+	struct compat_flock64 fl;
 
-	अगर (copy_from_user(&fl, ufl, माप(काष्ठा compat_flock64)))
-		वापस -EFAULT;
+	if (copy_from_user(&fl, ufl, sizeof(struct compat_flock64)))
+		return -EFAULT;
 	copy_flock_fields(kfl, &fl);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक put_compat_flock(स्थिर काष्ठा flock *kfl, काष्ठा compat_flock __user *ufl)
-अणु
-	काष्ठा compat_flock fl;
+static int put_compat_flock(const struct flock *kfl, struct compat_flock __user *ufl)
+{
+	struct compat_flock fl;
 
-	स_रखो(&fl, 0, माप(काष्ठा compat_flock));
+	memset(&fl, 0, sizeof(struct compat_flock));
 	copy_flock_fields(&fl, kfl);
-	अगर (copy_to_user(ufl, &fl, माप(काष्ठा compat_flock)))
-		वापस -EFAULT;
-	वापस 0;
-पूर्ण
+	if (copy_to_user(ufl, &fl, sizeof(struct compat_flock)))
+		return -EFAULT;
+	return 0;
+}
 
-अटल पूर्णांक put_compat_flock64(स्थिर काष्ठा flock *kfl, काष्ठा compat_flock64 __user *ufl)
-अणु
-	काष्ठा compat_flock64 fl;
+static int put_compat_flock64(const struct flock *kfl, struct compat_flock64 __user *ufl)
+{
+	struct compat_flock64 fl;
 
-	BUILD_BUG_ON(माप(kfl->l_start) > माप(ufl->l_start));
-	BUILD_BUG_ON(माप(kfl->l_len) > माप(ufl->l_len));
+	BUILD_BUG_ON(sizeof(kfl->l_start) > sizeof(ufl->l_start));
+	BUILD_BUG_ON(sizeof(kfl->l_len) > sizeof(ufl->l_len));
 
-	स_रखो(&fl, 0, माप(काष्ठा compat_flock64));
+	memset(&fl, 0, sizeof(struct compat_flock64));
 	copy_flock_fields(&fl, kfl);
-	अगर (copy_to_user(ufl, &fl, माप(काष्ठा compat_flock64)))
-		वापस -EFAULT;
-	वापस 0;
-पूर्ण
-#अघोषित copy_flock_fields
+	if (copy_to_user(ufl, &fl, sizeof(struct compat_flock64)))
+		return -EFAULT;
+	return 0;
+}
+#undef copy_flock_fields
 
-अटल अचिन्हित पूर्णांक
-convert_fcntl_cmd(अचिन्हित पूर्णांक cmd)
-अणु
-	चयन (cmd) अणु
-	हाल F_GETLK64:
-		वापस F_GETLK;
-	हाल F_SETLK64:
-		वापस F_SETLK;
-	हाल F_SETLKW64:
-		वापस F_SETLKW;
-	पूर्ण
+static unsigned int
+convert_fcntl_cmd(unsigned int cmd)
+{
+	switch (cmd) {
+	case F_GETLK64:
+		return F_GETLK;
+	case F_SETLK64:
+		return F_SETLK;
+	case F_SETLKW64:
+		return F_SETLKW;
+	}
 
-	वापस cmd;
-पूर्ण
+	return cmd;
+}
 
 /*
- * GETLK was successful and we need to वापस the data, but it needs to fit in
- * the compat काष्ठाure.
+ * GETLK was successful and we need to return the data, but it needs to fit in
+ * the compat structure.
  * l_start shouldn't be too big, unless the original start + end is greater than
- * COMPAT_OFF_T_MAX, in which हाल the app was asking क्रम trouble, so we वापस
- * -EOVERFLOW in that हाल.  l_len could be too big, in which हाल we just
+ * COMPAT_OFF_T_MAX, in which case the app was asking for trouble, so we return
+ * -EOVERFLOW in that case.  l_len could be too big, in which case we just
  * truncate it, and only allow the app to see that part of the conflicting lock
  * that might make sense to it anyway
  */
-अटल पूर्णांक fixup_compat_flock(काष्ठा flock *flock)
-अणु
-	अगर (flock->l_start > COMPAT_OFF_T_MAX)
-		वापस -EOVERFLOW;
-	अगर (flock->l_len > COMPAT_OFF_T_MAX)
+static int fixup_compat_flock(struct flock *flock)
+{
+	if (flock->l_start > COMPAT_OFF_T_MAX)
+		return -EOVERFLOW;
+	if (flock->l_len > COMPAT_OFF_T_MAX)
 		flock->l_len = COMPAT_OFF_T_MAX;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल दीर्घ करो_compat_fcntl64(अचिन्हित पूर्णांक fd, अचिन्हित पूर्णांक cmd,
-			     compat_uदीर्घ_t arg)
-अणु
-	काष्ठा fd f = fdget_raw(fd);
-	काष्ठा flock flock;
-	दीर्घ err = -EBADF;
+static long do_compat_fcntl64(unsigned int fd, unsigned int cmd,
+			     compat_ulong_t arg)
+{
+	struct fd f = fdget_raw(fd);
+	struct flock flock;
+	long err = -EBADF;
 
-	अगर (!f.file)
-		वापस err;
+	if (!f.file)
+		return err;
 
-	अगर (unlikely(f.file->f_mode & FMODE_PATH)) अणु
-		अगर (!check_fcntl_cmd(cmd))
-			जाओ out_put;
-	पूर्ण
+	if (unlikely(f.file->f_mode & FMODE_PATH)) {
+		if (!check_fcntl_cmd(cmd))
+			goto out_put;
+	}
 
 	err = security_file_fcntl(f.file, cmd, arg);
-	अगर (err)
-		जाओ out_put;
+	if (err)
+		goto out_put;
 
-	चयन (cmd) अणु
-	हाल F_GETLK:
+	switch (cmd) {
+	case F_GETLK:
 		err = get_compat_flock(&flock, compat_ptr(arg));
-		अगर (err)
-			अवरोध;
+		if (err)
+			break;
 		err = fcntl_getlk(f.file, convert_fcntl_cmd(cmd), &flock);
-		अगर (err)
-			अवरोध;
+		if (err)
+			break;
 		err = fixup_compat_flock(&flock);
-		अगर (!err)
+		if (!err)
 			err = put_compat_flock(&flock, compat_ptr(arg));
-		अवरोध;
-	हाल F_GETLK64:
-	हाल F_OFD_GETLK:
+		break;
+	case F_GETLK64:
+	case F_OFD_GETLK:
 		err = get_compat_flock64(&flock, compat_ptr(arg));
-		अगर (err)
-			अवरोध;
+		if (err)
+			break;
 		err = fcntl_getlk(f.file, convert_fcntl_cmd(cmd), &flock);
-		अगर (!err)
+		if (!err)
 			err = put_compat_flock64(&flock, compat_ptr(arg));
-		अवरोध;
-	हाल F_SETLK:
-	हाल F_SETLKW:
+		break;
+	case F_SETLK:
+	case F_SETLKW:
 		err = get_compat_flock(&flock, compat_ptr(arg));
-		अगर (err)
-			अवरोध;
+		if (err)
+			break;
 		err = fcntl_setlk(fd, f.file, convert_fcntl_cmd(cmd), &flock);
-		अवरोध;
-	हाल F_SETLK64:
-	हाल F_SETLKW64:
-	हाल F_OFD_SETLK:
-	हाल F_OFD_SETLKW:
+		break;
+	case F_SETLK64:
+	case F_SETLKW64:
+	case F_OFD_SETLK:
+	case F_OFD_SETLKW:
 		err = get_compat_flock64(&flock, compat_ptr(arg));
-		अगर (err)
-			अवरोध;
+		if (err)
+			break;
 		err = fcntl_setlk(fd, f.file, convert_fcntl_cmd(cmd), &flock);
-		अवरोध;
-	शेष:
-		err = करो_fcntl(fd, cmd, arg, f.file);
-		अवरोध;
-	पूर्ण
+		break;
+	default:
+		err = do_fcntl(fd, cmd, arg, f.file);
+		break;
+	}
 out_put:
 	fdput(f);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-COMPAT_SYSCALL_DEFINE3(fcntl64, अचिन्हित पूर्णांक, fd, अचिन्हित पूर्णांक, cmd,
-		       compat_uदीर्घ_t, arg)
-अणु
-	वापस करो_compat_fcntl64(fd, cmd, arg);
-पूर्ण
+COMPAT_SYSCALL_DEFINE3(fcntl64, unsigned int, fd, unsigned int, cmd,
+		       compat_ulong_t, arg)
+{
+	return do_compat_fcntl64(fd, cmd, arg);
+}
 
-COMPAT_SYSCALL_DEFINE3(fcntl, अचिन्हित पूर्णांक, fd, अचिन्हित पूर्णांक, cmd,
-		       compat_uदीर्घ_t, arg)
-अणु
-	चयन (cmd) अणु
-	हाल F_GETLK64:
-	हाल F_SETLK64:
-	हाल F_SETLKW64:
-	हाल F_OFD_GETLK:
-	हाल F_OFD_SETLK:
-	हाल F_OFD_SETLKW:
-		वापस -EINVAL;
-	पूर्ण
-	वापस करो_compat_fcntl64(fd, cmd, arg);
-पूर्ण
-#पूर्ण_अगर
+COMPAT_SYSCALL_DEFINE3(fcntl, unsigned int, fd, unsigned int, cmd,
+		       compat_ulong_t, arg)
+{
+	switch (cmd) {
+	case F_GETLK64:
+	case F_SETLK64:
+	case F_SETLKW64:
+	case F_OFD_GETLK:
+	case F_OFD_SETLK:
+	case F_OFD_SETLKW:
+		return -EINVAL;
+	}
+	return do_compat_fcntl64(fd, cmd, arg);
+}
+#endif
 
-/* Table to convert sigio संकेत codes पूर्णांकo poll band biपंचांगaps */
+/* Table to convert sigio signal codes into poll band bitmaps */
 
-अटल स्थिर __poll_t band_table[NSIGPOLL] = अणु
+static const __poll_t band_table[NSIGPOLL] = {
 	EPOLLIN | EPOLLRDNORM,			/* POLL_IN */
 	EPOLLOUT | EPOLLWRNORM | EPOLLWRBAND,	/* POLL_OUT */
 	EPOLLIN | EPOLLRDNORM | EPOLLMSG,		/* POLL_MSG */
 	EPOLLERR,				/* POLL_ERR */
 	EPOLLPRI | EPOLLRDBAND,			/* POLL_PRI */
 	EPOLLHUP | EPOLLERR			/* POLL_HUP */
-पूर्ण;
+};
 
-अटल अंतरभूत पूर्णांक sigio_perm(काष्ठा task_काष्ठा *p,
-                             काष्ठा fown_काष्ठा *fown, पूर्णांक sig)
-अणु
-	स्थिर काष्ठा cred *cred;
-	पूर्णांक ret;
+static inline int sigio_perm(struct task_struct *p,
+                             struct fown_struct *fown, int sig)
+{
+	const struct cred *cred;
+	int ret;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	cred = __task_cred(p);
 	ret = ((uid_eq(fown->euid, GLOBAL_ROOT_UID) ||
 		uid_eq(fown->euid, cred->suid) || uid_eq(fown->euid, cred->uid) ||
 		uid_eq(fown->uid,  cred->suid) || uid_eq(fown->uid,  cred->uid)) &&
 	       !security_file_send_sigiotask(p, fown, sig));
-	rcu_पढ़ो_unlock();
-	वापस ret;
-पूर्ण
+	rcu_read_unlock();
+	return ret;
+}
 
-अटल व्योम send_sigio_to_task(काष्ठा task_काष्ठा *p,
-			       काष्ठा fown_काष्ठा *fown,
-			       पूर्णांक fd, पूर्णांक reason, क्रमागत pid_type type)
-अणु
+static void send_sigio_to_task(struct task_struct *p,
+			       struct fown_struct *fown,
+			       int fd, int reason, enum pid_type type)
+{
 	/*
 	 * F_SETSIG can change ->signum lockless in parallel, make
-	 * sure we पढ़ो it once and use the same value throughout.
+	 * sure we read it once and use the same value throughout.
 	 */
-	पूर्णांक signum = READ_ONCE(fown->signum);
+	int signum = READ_ONCE(fown->signum);
 
-	अगर (!sigio_perm(p, fown, signum))
-		वापस;
+	if (!sigio_perm(p, fown, signum))
+		return;
 
-	चयन (signum) अणु
-		शेष: अणु
+	switch (signum) {
+		default: {
 			kernel_siginfo_t si;
 
-			/* Queue a rt संकेत with the appropriate fd as its
+			/* Queue a rt signal with the appropriate fd as its
 			   value.  We use SI_SIGIO as the source, not 
-			   SI_KERNEL, since kernel संकेतs always get 
-			   delivered even अगर we can't queue.  Failure to
-			   queue in this हाल _should_ be reported; we fall
-			   back to SIGIO in that हाल. --sct */
+			   SI_KERNEL, since kernel signals always get 
+			   delivered even if we can't queue.  Failure to
+			   queue in this case _should_ be reported; we fall
+			   back to SIGIO in that case. --sct */
 			clear_siginfo(&si);
 			si.si_signo = signum;
-			si.si_त्रुटि_सं = 0;
+			si.si_errno = 0;
 		        si.si_code  = reason;
 			/*
-			 * Posix definies POLL_IN and मित्रs to be संकेत
-			 * specअगरic si_codes क्रम SIG_POLL.  Linux extended
-			 * these si_codes to other संकेतs in a way that is
-			 * ambiguous अगर other संकेतs also have संकेत
-			 * specअगरic si_codes.  In that हाल use SI_SIGIO instead
-			 * to हटाओ the ambiguity.
+			 * Posix definies POLL_IN and friends to be signal
+			 * specific si_codes for SIG_POLL.  Linux extended
+			 * these si_codes to other signals in a way that is
+			 * ambiguous if other signals also have signal
+			 * specific si_codes.  In that case use SI_SIGIO instead
+			 * to remove the ambiguity.
 			 */
-			अगर ((signum != SIGPOLL) && sig_specअगरic_sicodes(signum))
+			if ((signum != SIGPOLL) && sig_specific_sicodes(signum))
 				si.si_code = SI_SIGIO;
 
 			/* Make sure we are called with one of the POLL_*
-			   reasons, otherwise we could leak kernel stack पूर्णांकo
+			   reasons, otherwise we could leak kernel stack into
 			   userspace.  */
 			BUG_ON((reason < POLL_IN) || ((reason - POLL_IN) >= NSIGPOLL));
-			अगर (reason - POLL_IN >= NSIGPOLL)
+			if (reason - POLL_IN >= NSIGPOLL)
 				si.si_band  = ~0L;
-			अन्यथा
+			else
 				si.si_band = mangle_poll(band_table[reason - POLL_IN]);
 			si.si_fd    = fd;
-			अगर (!करो_send_sig_info(signum, &si, p, type))
-				अवरोध;
-		पूर्ण
-			fallthrough;	/* fall back on the old plain SIGIO संकेत */
-		हाल 0:
-			करो_send_sig_info(SIGIO, SEND_SIG_PRIV, p, type);
-	पूर्ण
-पूर्ण
+			if (!do_send_sig_info(signum, &si, p, type))
+				break;
+		}
+			fallthrough;	/* fall back on the old plain SIGIO signal */
+		case 0:
+			do_send_sig_info(SIGIO, SEND_SIG_PRIV, p, type);
+	}
+}
 
-व्योम send_sigio(काष्ठा fown_काष्ठा *fown, पूर्णांक fd, पूर्णांक band)
-अणु
-	काष्ठा task_काष्ठा *p;
-	क्रमागत pid_type type;
-	अचिन्हित दीर्घ flags;
-	काष्ठा pid *pid;
+void send_sigio(struct fown_struct *fown, int fd, int band)
+{
+	struct task_struct *p;
+	enum pid_type type;
+	unsigned long flags;
+	struct pid *pid;
 	
-	पढ़ो_lock_irqsave(&fown->lock, flags);
+	read_lock_irqsave(&fown->lock, flags);
 
 	type = fown->pid_type;
 	pid = fown->pid;
-	अगर (!pid)
-		जाओ out_unlock_fown;
+	if (!pid)
+		goto out_unlock_fown;
 
-	अगर (type <= PIDTYPE_TGID) अणु
-		rcu_पढ़ो_lock();
+	if (type <= PIDTYPE_TGID) {
+		rcu_read_lock();
 		p = pid_task(pid, PIDTYPE_PID);
-		अगर (p)
+		if (p)
 			send_sigio_to_task(p, fown, fd, band, type);
-		rcu_पढ़ो_unlock();
-	पूर्ण अन्यथा अणु
-		पढ़ो_lock(&tasklist_lock);
-		करो_each_pid_task(pid, type, p) अणु
+		rcu_read_unlock();
+	} else {
+		read_lock(&tasklist_lock);
+		do_each_pid_task(pid, type, p) {
 			send_sigio_to_task(p, fown, fd, band, type);
-		पूर्ण जबतक_each_pid_task(pid, type, p);
-		पढ़ो_unlock(&tasklist_lock);
-	पूर्ण
+		} while_each_pid_task(pid, type, p);
+		read_unlock(&tasklist_lock);
+	}
  out_unlock_fown:
-	पढ़ो_unlock_irqrestore(&fown->lock, flags);
-पूर्ण
+	read_unlock_irqrestore(&fown->lock, flags);
+}
 
-अटल व्योम send_sigurg_to_task(काष्ठा task_काष्ठा *p,
-				काष्ठा fown_काष्ठा *fown, क्रमागत pid_type type)
-अणु
-	अगर (sigio_perm(p, fown, SIGURG))
-		करो_send_sig_info(SIGURG, SEND_SIG_PRIV, p, type);
-पूर्ण
+static void send_sigurg_to_task(struct task_struct *p,
+				struct fown_struct *fown, enum pid_type type)
+{
+	if (sigio_perm(p, fown, SIGURG))
+		do_send_sig_info(SIGURG, SEND_SIG_PRIV, p, type);
+}
 
-पूर्णांक send_sigurg(काष्ठा fown_काष्ठा *fown)
-अणु
-	काष्ठा task_काष्ठा *p;
-	क्रमागत pid_type type;
-	काष्ठा pid *pid;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret = 0;
+int send_sigurg(struct fown_struct *fown)
+{
+	struct task_struct *p;
+	enum pid_type type;
+	struct pid *pid;
+	unsigned long flags;
+	int ret = 0;
 	
-	पढ़ो_lock_irqsave(&fown->lock, flags);
+	read_lock_irqsave(&fown->lock, flags);
 
 	type = fown->pid_type;
 	pid = fown->pid;
-	अगर (!pid)
-		जाओ out_unlock_fown;
+	if (!pid)
+		goto out_unlock_fown;
 
 	ret = 1;
 
-	अगर (type <= PIDTYPE_TGID) अणु
-		rcu_पढ़ो_lock();
+	if (type <= PIDTYPE_TGID) {
+		rcu_read_lock();
 		p = pid_task(pid, PIDTYPE_PID);
-		अगर (p)
+		if (p)
 			send_sigurg_to_task(p, fown, type);
-		rcu_पढ़ो_unlock();
-	पूर्ण अन्यथा अणु
-		पढ़ो_lock(&tasklist_lock);
-		करो_each_pid_task(pid, type, p) अणु
+		rcu_read_unlock();
+	} else {
+		read_lock(&tasklist_lock);
+		do_each_pid_task(pid, type, p) {
 			send_sigurg_to_task(p, fown, type);
-		पूर्ण जबतक_each_pid_task(pid, type, p);
-		पढ़ो_unlock(&tasklist_lock);
-	पूर्ण
+		} while_each_pid_task(pid, type, p);
+		read_unlock(&tasklist_lock);
+	}
  out_unlock_fown:
-	पढ़ो_unlock_irqrestore(&fown->lock, flags);
-	वापस ret;
-पूर्ण
+	read_unlock_irqrestore(&fown->lock, flags);
+	return ret;
+}
 
-अटल DEFINE_SPINLOCK(fasync_lock);
-अटल काष्ठा kmem_cache *fasync_cache __पढ़ो_mostly;
+static DEFINE_SPINLOCK(fasync_lock);
+static struct kmem_cache *fasync_cache __read_mostly;
 
-अटल व्योम fasync_मुक्त_rcu(काष्ठा rcu_head *head)
-अणु
-	kmem_cache_मुक्त(fasync_cache,
-			container_of(head, काष्ठा fasync_काष्ठा, fa_rcu));
-पूर्ण
+static void fasync_free_rcu(struct rcu_head *head)
+{
+	kmem_cache_free(fasync_cache,
+			container_of(head, struct fasync_struct, fa_rcu));
+}
 
 /*
- * Remove a fasync entry. If successfully हटाओd, वापस
+ * Remove a fasync entry. If successfully removed, return
  * positive and clear the FASYNC flag. If no entry exists,
- * करो nothing and वापस 0.
+ * do nothing and return 0.
  *
  * NOTE! It is very important that the FASYNC flag always
  * match the state "is the filp on a fasync list".
  *
  */
-पूर्णांक fasync_हटाओ_entry(काष्ठा file *filp, काष्ठा fasync_काष्ठा **fapp)
-अणु
-	काष्ठा fasync_काष्ठा *fa, **fp;
-	पूर्णांक result = 0;
+int fasync_remove_entry(struct file *filp, struct fasync_struct **fapp)
+{
+	struct fasync_struct *fa, **fp;
+	int result = 0;
 
 	spin_lock(&filp->f_lock);
 	spin_lock(&fasync_lock);
-	क्रम (fp = fapp; (fa = *fp) != शून्य; fp = &fa->fa_next) अणु
-		अगर (fa->fa_file != filp)
-			जारी;
+	for (fp = fapp; (fa = *fp) != NULL; fp = &fa->fa_next) {
+		if (fa->fa_file != filp)
+			continue;
 
-		ग_लिखो_lock_irq(&fa->fa_lock);
-		fa->fa_file = शून्य;
-		ग_लिखो_unlock_irq(&fa->fa_lock);
+		write_lock_irq(&fa->fa_lock);
+		fa->fa_file = NULL;
+		write_unlock_irq(&fa->fa_lock);
 
 		*fp = fa->fa_next;
-		call_rcu(&fa->fa_rcu, fasync_मुक्त_rcu);
+		call_rcu(&fa->fa_rcu, fasync_free_rcu);
 		filp->f_flags &= ~FASYNC;
 		result = 1;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 	spin_unlock(&fasync_lock);
 	spin_unlock(&filp->f_lock);
-	वापस result;
-पूर्ण
+	return result;
+}
 
-काष्ठा fasync_काष्ठा *fasync_alloc(व्योम)
-अणु
-	वापस kmem_cache_alloc(fasync_cache, GFP_KERNEL);
-पूर्ण
+struct fasync_struct *fasync_alloc(void)
+{
+	return kmem_cache_alloc(fasync_cache, GFP_KERNEL);
+}
 
 /*
- * NOTE! This can be used only क्रम unused fasync entries:
+ * NOTE! This can be used only for unused fasync entries:
  * entries that actually got inserted on the fasync list
- * need to be released by rcu - see fasync_हटाओ_entry.
+ * need to be released by rcu - see fasync_remove_entry.
  */
-व्योम fasync_मुक्त(काष्ठा fasync_काष्ठा *new)
-अणु
-	kmem_cache_मुक्त(fasync_cache, new);
-पूर्ण
+void fasync_free(struct fasync_struct *new)
+{
+	kmem_cache_free(fasync_cache, new);
+}
 
 /*
- * Insert a new entry पूर्णांकo the fasync list.  Return the poपूर्णांकer to the
- * old one अगर we didn't use the new one.
+ * Insert a new entry into the fasync list.  Return the pointer to the
+ * old one if we didn't use the new one.
  *
  * NOTE! It is very important that the FASYNC flag always
  * match the state "is the filp on a fasync list".
  */
-काष्ठा fasync_काष्ठा *fasync_insert_entry(पूर्णांक fd, काष्ठा file *filp, काष्ठा fasync_काष्ठा **fapp, काष्ठा fasync_काष्ठा *new)
-अणु
-        काष्ठा fasync_काष्ठा *fa, **fp;
+struct fasync_struct *fasync_insert_entry(int fd, struct file *filp, struct fasync_struct **fapp, struct fasync_struct *new)
+{
+        struct fasync_struct *fa, **fp;
 
 	spin_lock(&filp->f_lock);
 	spin_lock(&fasync_lock);
-	क्रम (fp = fapp; (fa = *fp) != शून्य; fp = &fa->fa_next) अणु
-		अगर (fa->fa_file != filp)
-			जारी;
+	for (fp = fapp; (fa = *fp) != NULL; fp = &fa->fa_next) {
+		if (fa->fa_file != filp)
+			continue;
 
-		ग_लिखो_lock_irq(&fa->fa_lock);
+		write_lock_irq(&fa->fa_lock);
 		fa->fa_fd = fd;
-		ग_लिखो_unlock_irq(&fa->fa_lock);
-		जाओ out;
-	पूर्ण
+		write_unlock_irq(&fa->fa_lock);
+		goto out;
+	}
 
 	rwlock_init(&new->fa_lock);
 	new->magic = FASYNC_MAGIC;
 	new->fa_file = filp;
 	new->fa_fd = fd;
 	new->fa_next = *fapp;
-	rcu_assign_poपूर्णांकer(*fapp, new);
+	rcu_assign_pointer(*fapp, new);
 	filp->f_flags |= FASYNC;
 
 out:
 	spin_unlock(&fasync_lock);
 	spin_unlock(&filp->f_lock);
-	वापस fa;
-पूर्ण
+	return fa;
+}
 
 /*
- * Add a fasync entry. Return negative on error, positive अगर
- * added, and zero अगर did nothing but change an existing one.
+ * Add a fasync entry. Return negative on error, positive if
+ * added, and zero if did nothing but change an existing one.
  */
-अटल पूर्णांक fasync_add_entry(पूर्णांक fd, काष्ठा file *filp, काष्ठा fasync_काष्ठा **fapp)
-अणु
-	काष्ठा fasync_काष्ठा *new;
+static int fasync_add_entry(int fd, struct file *filp, struct fasync_struct **fapp)
+{
+	struct fasync_struct *new;
 
 	new = fasync_alloc();
-	अगर (!new)
-		वापस -ENOMEM;
+	if (!new)
+		return -ENOMEM;
 
 	/*
-	 * fasync_insert_entry() वापसs the old (update) entry अगर
+	 * fasync_insert_entry() returns the old (update) entry if
 	 * it existed.
 	 *
-	 * So मुक्त the (unused) new entry and वापस 0 to let the
+	 * So free the (unused) new entry and return 0 to let the
 	 * caller know that we didn't add any new fasync entries.
 	 */
-	अगर (fasync_insert_entry(fd, filp, fapp, new)) अणु
-		fasync_मुक्त(new);
-		वापस 0;
-	पूर्ण
+	if (fasync_insert_entry(fd, filp, fapp, new)) {
+		fasync_free(new);
+		return 0;
+	}
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
 /*
- * fasync_helper() is used by almost all अक्षरacter device drivers
- * to set up the fasync queue, and क्रम regular files by the file
- * lease code. It वापसs negative on error, 0 अगर it did no changes
- * and positive अगर it added/deleted the entry.
+ * fasync_helper() is used by almost all character device drivers
+ * to set up the fasync queue, and for regular files by the file
+ * lease code. It returns negative on error, 0 if it did no changes
+ * and positive if it added/deleted the entry.
  */
-पूर्णांक fasync_helper(पूर्णांक fd, काष्ठा file * filp, पूर्णांक on, काष्ठा fasync_काष्ठा **fapp)
-अणु
-	अगर (!on)
-		वापस fasync_हटाओ_entry(filp, fapp);
-	वापस fasync_add_entry(fd, filp, fapp);
-पूर्ण
+int fasync_helper(int fd, struct file * filp, int on, struct fasync_struct **fapp)
+{
+	if (!on)
+		return fasync_remove_entry(filp, fapp);
+	return fasync_add_entry(fd, filp, fapp);
+}
 
 EXPORT_SYMBOL(fasync_helper);
 
 /*
- * rcu_पढ़ो_lock() is held
+ * rcu_read_lock() is held
  */
-अटल व्योम समाप्त_fasync_rcu(काष्ठा fasync_काष्ठा *fa, पूर्णांक sig, पूर्णांक band)
-अणु
-	जबतक (fa) अणु
-		काष्ठा fown_काष्ठा *fown;
+static void kill_fasync_rcu(struct fasync_struct *fa, int sig, int band)
+{
+	while (fa) {
+		struct fown_struct *fown;
 
-		अगर (fa->magic != FASYNC_MAGIC) अणु
-			prपूर्णांकk(KERN_ERR "kill_fasync: bad magic number in "
+		if (fa->magic != FASYNC_MAGIC) {
+			printk(KERN_ERR "kill_fasync: bad magic number in "
 			       "fasync_struct!\n");
-			वापस;
-		पूर्ण
-		पढ़ो_lock(&fa->fa_lock);
-		अगर (fa->fa_file) अणु
+			return;
+		}
+		read_lock(&fa->fa_lock);
+		if (fa->fa_file) {
 			fown = &fa->fa_file->f_owner;
 			/* Don't send SIGURG to processes which have not set a
-			   queued signum: SIGURG has its own शेष संकेतling
+			   queued signum: SIGURG has its own default signalling
 			   mechanism. */
-			अगर (!(sig == SIGURG && fown->signum == 0))
+			if (!(sig == SIGURG && fown->signum == 0))
 				send_sigio(fown, fa->fa_fd, band);
-		पूर्ण
-		पढ़ो_unlock(&fa->fa_lock);
+		}
+		read_unlock(&fa->fa_lock);
 		fa = rcu_dereference(fa->fa_next);
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम समाप्त_fasync(काष्ठा fasync_काष्ठा **fp, पूर्णांक sig, पूर्णांक band)
-अणु
+void kill_fasync(struct fasync_struct **fp, int sig, int band)
+{
 	/* First a quick test without locking: usually
 	 * the list is empty.
 	 */
-	अगर (*fp) अणु
-		rcu_पढ़ो_lock();
-		समाप्त_fasync_rcu(rcu_dereference(*fp), sig, band);
-		rcu_पढ़ो_unlock();
-	पूर्ण
-पूर्ण
-EXPORT_SYMBOL(समाप्त_fasync);
+	if (*fp) {
+		rcu_read_lock();
+		kill_fasync_rcu(rcu_dereference(*fp), sig, band);
+		rcu_read_unlock();
+	}
+}
+EXPORT_SYMBOL(kill_fasync);
 
-अटल पूर्णांक __init fcntl_init(व्योम)
-अणु
+static int __init fcntl_init(void)
+{
 	/*
 	 * Please add new bits here to ensure allocation uniqueness.
 	 * Exceptions: O_NONBLOCK is a two bit define on parisc; O_NDELAY
-	 * is defined as O_NONBLOCK on some platक्रमms and not on others.
+	 * is defined as O_NONBLOCK on some platforms and not on others.
 	 */
-	BUILD_BUG_ON(21 - 1 /* क्रम O_RDONLY being 0 */ !=
+	BUILD_BUG_ON(21 - 1 /* for O_RDONLY being 0 */ !=
 		HWEIGHT32(
 			(VALID_OPEN_FLAGS & ~(O_NONBLOCK | O_NDELAY)) |
 			__FMODE_EXEC | __FMODE_NONOTIFY));
 
 	fasync_cache = kmem_cache_create("fasync_cache",
-		माप(काष्ठा fasync_काष्ठा), 0, SLAB_PANIC, शून्य);
-	वापस 0;
-पूर्ण
+		sizeof(struct fasync_struct), 0, SLAB_PANIC, NULL);
+	return 0;
+}
 
 module_init(fcntl_init)

@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * usnjrnl.h - NTFS kernel transaction log ($UsnJrnl) handling.  Part of the
  *	       Linux-NTFS project.
@@ -7,65 +6,65 @@
  * Copyright (c) 2005 Anton Altaparmakov
  */
 
-#अगर_घोषित NTFS_RW
+#ifdef NTFS_RW
 
-#समावेश <linux/fs.h>
-#समावेश <linux/highस्मृति.स>
-#समावेश <linux/mm.h>
+#include <linux/fs.h>
+#include <linux/highmem.h>
+#include <linux/mm.h>
 
-#समावेश "aops.h"
-#समावेश "debug.h"
-#समावेश "endian.h"
-#समावेश "time.h"
-#समावेश "types.h"
-#समावेश "usnjrnl.h"
-#समावेश "volume.h"
+#include "aops.h"
+#include "debug.h"
+#include "endian.h"
+#include "time.h"
+#include "types.h"
+#include "usnjrnl.h"
+#include "volume.h"
 
 /**
  * ntfs_stamp_usnjrnl - stamp the transaction log ($UsnJrnl) on an ntfs volume
  * @vol:	ntfs volume on which to stamp the transaction log
  *
- * Stamp the transaction log ($UsnJrnl) on the ntfs volume @vol and वापस
+ * Stamp the transaction log ($UsnJrnl) on the ntfs volume @vol and return
  * 'true' on success and 'false' on error.
  *
- * This function assumes that the transaction log has alपढ़ोy been loaded and
+ * This function assumes that the transaction log has already been loaded and
  * consistency checked by a call to fs/ntfs/super.c::load_and_init_usnjrnl().
  */
 bool ntfs_stamp_usnjrnl(ntfs_volume *vol)
-अणु
+{
 	ntfs_debug("Entering.");
-	अगर (likely(!NVolUsnJrnlStamped(vol))) अणु
+	if (likely(!NVolUsnJrnlStamped(vol))) {
 		sle64 stamp;
-		काष्ठा page *page;
+		struct page *page;
 		USN_HEADER *uh;
 
 		page = ntfs_map_page(vol->usnjrnl_max_ino->i_mapping, 0);
-		अगर (IS_ERR(page)) अणु
+		if (IS_ERR(page)) {
 			ntfs_error(vol->sb, "Failed to read from "
 					"$UsnJrnl/$DATA/$Max attribute.");
-			वापस false;
-		पूर्ण
+			return false;
+		}
 		uh = (USN_HEADER*)page_address(page);
-		stamp = get_current_ntfs_समय();
+		stamp = get_current_ntfs_time();
 		ntfs_debug("Stamping transaction log ($UsnJrnl): old "
 				"journal_id 0x%llx, old lowest_valid_usn "
 				"0x%llx, new journal_id 0x%llx, new "
 				"lowest_valid_usn 0x%llx.",
-				(दीर्घ दीर्घ)sle64_to_cpu(uh->journal_id),
-				(दीर्घ दीर्घ)sle64_to_cpu(uh->lowest_valid_usn),
-				(दीर्घ दीर्घ)sle64_to_cpu(stamp),
-				i_size_पढ़ो(vol->usnjrnl_j_ino));
+				(long long)sle64_to_cpu(uh->journal_id),
+				(long long)sle64_to_cpu(uh->lowest_valid_usn),
+				(long long)sle64_to_cpu(stamp),
+				i_size_read(vol->usnjrnl_j_ino));
 		uh->lowest_valid_usn =
-				cpu_to_sle64(i_size_पढ़ो(vol->usnjrnl_j_ino));
+				cpu_to_sle64(i_size_read(vol->usnjrnl_j_ino));
 		uh->journal_id = stamp;
 		flush_dcache_page(page);
 		set_page_dirty(page);
 		ntfs_unmap_page(page);
-		/* Set the flag so we करो not have to करो it again on remount. */
+		/* Set the flag so we do not have to do it again on remount. */
 		NVolSetUsnJrnlStamped(vol);
-	पूर्ण
+	}
 	ntfs_debug("Done.");
-	वापस true;
-पूर्ण
+	return true;
+}
 
-#पूर्ण_अगर /* NTFS_RW */
+#endif /* NTFS_RW */

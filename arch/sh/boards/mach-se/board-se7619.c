@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * arch/sh/boards/se/7619/setup.c
  *
@@ -8,21 +7,21 @@
  * Hitachi SH7619 SolutionEngine Support.
  */
 
-#समावेश <linux/init.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <यंत्र/पन.स>
-#समावेश <यंत्र/machvec.h>
+#include <linux/init.h>
+#include <linux/platform_device.h>
+#include <asm/io.h>
+#include <asm/machvec.h>
 
-अटल पूर्णांक se7619_mode_pins(व्योम)
-अणु
-	वापस MODE_PIN2 | MODE_PIN0;
-पूर्ण
+static int se7619_mode_pins(void)
+{
+	return MODE_PIN2 | MODE_PIN0;
+}
 
 /*
  * The Machine Vector
  */
 
-अटल काष्ठा sh_machine_vector mv_se __iniपंचांगv = अणु
+static struct sh_machine_vector mv_se __initmv = {
 	.mv_name		= "SolutionEngine",
 	.mv_mode_pins		= se7619_mode_pins,
-पूर्ण;
+};

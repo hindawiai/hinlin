@@ -1,308 +1,307 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (c) 2000-2005 Silicon Graphics, Inc.
  * All Rights Reserved.
  */
-#समावेश "xfs.h"
-#समावेश "xfs_fs.h"
-#समावेश "xfs_shared.h"
-#समावेश "xfs_format.h"
-#समावेश "xfs_log_format.h"
-#समावेश "xfs_trans_resv.h"
-#समावेश "xfs_sb.h"
-#समावेश "xfs_mount.h"
-#समावेश "xfs_trans.h"
-#समावेश "xfs_error.h"
-#समावेश "xfs_alloc.h"
-#समावेश "xfs_fsops.h"
-#समावेश "xfs_trans_space.h"
-#समावेश "xfs_log.h"
-#समावेश "xfs_ag.h"
-#समावेश "xfs_ag_resv.h"
+#include "xfs.h"
+#include "xfs_fs.h"
+#include "xfs_shared.h"
+#include "xfs_format.h"
+#include "xfs_log_format.h"
+#include "xfs_trans_resv.h"
+#include "xfs_sb.h"
+#include "xfs_mount.h"
+#include "xfs_trans.h"
+#include "xfs_error.h"
+#include "xfs_alloc.h"
+#include "xfs_fsops.h"
+#include "xfs_trans_space.h"
+#include "xfs_log.h"
+#include "xfs_ag.h"
+#include "xfs_ag_resv.h"
 
 /*
  * Write new AG headers to disk. Non-transactional, but need to be
  * written and completed prior to the growfs transaction being logged.
- * To करो this, we use a delayed ग_लिखो buffer list and रुको क्रम
+ * To do this, we use a delayed write buffer list and wait for
  * submission and IO completion of the list as a whole. This allows the
- * IO subप्रणाली to merge all the AG headers in a single AG पूर्णांकo a single
+ * IO subsystem to merge all the AG headers in a single AG into a single
  * IO and hide most of the latency of the IO from us.
  *
- * This also means that अगर we get an error whilst building the buffer
- * list to ग_लिखो, we can cancel the entire list without having written
+ * This also means that if we get an error whilst building the buffer
+ * list to write, we can cancel the entire list without having written
  * anything.
  */
-अटल पूर्णांक
+static int
 xfs_resizefs_init_new_ags(
-	काष्ठा xfs_trans	*tp,
-	काष्ठा aghdr_init_data	*id,
+	struct xfs_trans	*tp,
+	struct aghdr_init_data	*id,
 	xfs_agnumber_t		oagcount,
 	xfs_agnumber_t		nagcount,
 	xfs_rfsblock_t		delta,
 	bool			*lastag_extended)
-अणु
-	काष्ठा xfs_mount	*mp = tp->t_mountp;
+{
+	struct xfs_mount	*mp = tp->t_mountp;
 	xfs_rfsblock_t		nb = mp->m_sb.sb_dblocks + delta;
-	पूर्णांक			error;
+	int			error;
 
 	*lastag_extended = false;
 
 	INIT_LIST_HEAD(&id->buffer_list);
-	क्रम (id->agno = nagcount - 1;
+	for (id->agno = nagcount - 1;
 	     id->agno >= oagcount;
-	     id->agno--, delta -= id->agsize) अणु
+	     id->agno--, delta -= id->agsize) {
 
-		अगर (id->agno == nagcount - 1)
+		if (id->agno == nagcount - 1)
 			id->agsize = nb - (id->agno *
 					(xfs_rfsblock_t)mp->m_sb.sb_agblocks);
-		अन्यथा
+		else
 			id->agsize = mp->m_sb.sb_agblocks;
 
 		error = xfs_ag_init_headers(mp, id);
-		अगर (error) अणु
+		if (error) {
 			xfs_buf_delwri_cancel(&id->buffer_list);
-			वापस error;
-		पूर्ण
-	पूर्ण
+			return error;
+		}
+	}
 
 	error = xfs_buf_delwri_submit(&id->buffer_list);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
-	अगर (delta) अणु
+	if (delta) {
 		*lastag_extended = true;
 		error = xfs_ag_extend_space(mp, tp, id, delta);
-	पूर्ण
-	वापस error;
-पूर्ण
+	}
+	return error;
+}
 
 /*
  * growfs operations
  */
-अटल पूर्णांक
-xfs_growfs_data_निजी(
-	काष्ठा xfs_mount	*mp,		/* mount poपूर्णांक क्रम fileप्रणाली */
-	काष्ठा xfs_growfs_data	*in)		/* growfs data input काष्ठा */
-अणु
-	काष्ठा xfs_buf		*bp;
-	पूर्णांक			error;
+static int
+xfs_growfs_data_private(
+	struct xfs_mount	*mp,		/* mount point for filesystem */
+	struct xfs_growfs_data	*in)		/* growfs data input struct */
+{
+	struct xfs_buf		*bp;
+	int			error;
 	xfs_agnumber_t		nagcount;
 	xfs_agnumber_t		nagimax = 0;
-	xfs_rfsblock_t		nb, nb_भाग, nb_mod;
-	पूर्णांक64_t			delta;
+	xfs_rfsblock_t		nb, nb_div, nb_mod;
+	int64_t			delta;
 	bool			lastag_extended;
 	xfs_agnumber_t		oagcount;
-	काष्ठा xfs_trans	*tp;
-	काष्ठा aghdr_init_data	id = अणुपूर्ण;
+	struct xfs_trans	*tp;
+	struct aghdr_init_data	id = {};
 
 	nb = in->newblocks;
 	error = xfs_sb_validate_fsb_count(&mp->m_sb, nb);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
-	अगर (nb > mp->m_sb.sb_dblocks) अणु
-		error = xfs_buf_पढ़ो_uncached(mp->m_ddev_targp,
+	if (nb > mp->m_sb.sb_dblocks) {
+		error = xfs_buf_read_uncached(mp->m_ddev_targp,
 				XFS_FSB_TO_BB(mp, nb) - XFS_FSS_TO_BB(mp, 1),
-				XFS_FSS_TO_BB(mp, 1), 0, &bp, शून्य);
-		अगर (error)
-			वापस error;
-		xfs_buf_rअन्यथा(bp);
-	पूर्ण
+				XFS_FSS_TO_BB(mp, 1), 0, &bp, NULL);
+		if (error)
+			return error;
+		xfs_buf_relse(bp);
+	}
 
-	nb_भाग = nb;
-	nb_mod = करो_भाग(nb_भाग, mp->m_sb.sb_agblocks);
-	nagcount = nb_भाग + (nb_mod != 0);
-	अगर (nb_mod && nb_mod < XFS_MIN_AG_BLOCKS) अणु
+	nb_div = nb;
+	nb_mod = do_div(nb_div, mp->m_sb.sb_agblocks);
+	nagcount = nb_div + (nb_mod != 0);
+	if (nb_mod && nb_mod < XFS_MIN_AG_BLOCKS) {
 		nagcount--;
 		nb = (xfs_rfsblock_t)nagcount * mp->m_sb.sb_agblocks;
-	पूर्ण
+	}
 	delta = nb - mp->m_sb.sb_dblocks;
 	/*
-	 * Reject fileप्रणालीs with a single AG because they are not
+	 * Reject filesystems with a single AG because they are not
 	 * supported, and reject a shrink operation that would cause a
-	 * fileप्रणाली to become unsupported.
+	 * filesystem to become unsupported.
 	 */
-	अगर (delta < 0 && nagcount < 2)
-		वापस -EINVAL;
+	if (delta < 0 && nagcount < 2)
+		return -EINVAL;
 
 	oagcount = mp->m_sb.sb_agcount;
 
-	/* allocate the new per-ag काष्ठाures */
-	अगर (nagcount > oagcount) अणु
+	/* allocate the new per-ag structures */
+	if (nagcount > oagcount) {
 		error = xfs_initialize_perag(mp, nagcount, &nagimax);
-		अगर (error)
-			वापस error;
-	पूर्ण अन्यथा अगर (nagcount < oagcount) अणु
+		if (error)
+			return error;
+	} else if (nagcount < oagcount) {
 		/* TODO: shrinking the entire AGs hasn't yet completed */
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	error = xfs_trans_alloc(mp, &M_RES(mp)->tr_growdata,
 			(delta > 0 ? XFS_GROWFS_SPACE_RES(mp) : -delta), 0,
 			XFS_TRANS_RESERVE, &tp);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
-	अगर (delta > 0) अणु
+	if (delta > 0) {
 		error = xfs_resizefs_init_new_ags(tp, &id, oagcount, nagcount,
 						  delta, &lastag_extended);
-	पूर्ण अन्यथा अणु
-		अटल काष्ठा ratelimit_state shrink_warning = \
+	} else {
+		static struct ratelimit_state shrink_warning = \
 			RATELIMIT_STATE_INIT("shrink_warning", 86400 * HZ, 1);
 		ratelimit_set_flags(&shrink_warning, RATELIMIT_MSG_ON_RELEASE);
 
-		अगर (__ratelimit(&shrink_warning))
+		if (__ratelimit(&shrink_warning))
 			xfs_alert(mp,
 	"EXPERIMENTAL online shrink feature in use. Use at your own risk!");
 
 		error = xfs_ag_shrink_space(mp, &tp, nagcount - 1, -delta);
-	पूर्ण
-	अगर (error)
-		जाओ out_trans_cancel;
+	}
+	if (error)
+		goto out_trans_cancel;
 
 	/*
 	 * Update changed superblock fields transactionally. These are not
 	 * seen by the rest of the world until the transaction commit applies
 	 * them atomically to the superblock.
 	 */
-	अगर (nagcount > oagcount)
+	if (nagcount > oagcount)
 		xfs_trans_mod_sb(tp, XFS_TRANS_SB_AGCOUNT, nagcount - oagcount);
-	अगर (delta)
+	if (delta)
 		xfs_trans_mod_sb(tp, XFS_TRANS_SB_DBLOCKS, delta);
-	अगर (id.nमुक्त)
-		xfs_trans_mod_sb(tp, XFS_TRANS_SB_FDBLOCKS, id.nमुक्त);
+	if (id.nfree)
+		xfs_trans_mod_sb(tp, XFS_TRANS_SB_FDBLOCKS, id.nfree);
 
 	/*
 	 * Sync sb counters now to reflect the updated values. This is
-	 * particularly important क्रम shrink because the ग_लिखो verअगरier
-	 * will fail अगर sb_fdblocks is ever larger than sb_dblocks.
+	 * particularly important for shrink because the write verifier
+	 * will fail if sb_fdblocks is ever larger than sb_dblocks.
 	 */
-	अगर (xfs_sb_version_haslazysbcount(&mp->m_sb))
+	if (xfs_sb_version_haslazysbcount(&mp->m_sb))
 		xfs_log_sb(tp);
 
 	xfs_trans_set_sync(tp);
 	error = xfs_trans_commit(tp);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
-	/* New allocation groups fully initialized, so update mount काष्ठा */
-	अगर (nagimax)
+	/* New allocation groups fully initialized, so update mount struct */
+	if (nagimax)
 		mp->m_maxagi = nagimax;
 	xfs_set_low_space_thresholds(mp);
 	mp->m_alloc_set_aside = xfs_alloc_set_aside(mp);
 
-	अगर (delta > 0) अणु
+	if (delta > 0) {
 		/*
-		 * If we expanded the last AG, मुक्त the per-AG reservation
+		 * If we expanded the last AG, free the per-AG reservation
 		 * so we can reinitialize it with the new size.
 		 */
-		अगर (lastag_extended) अणु
-			काष्ठा xfs_perag	*pag;
+		if (lastag_extended) {
+			struct xfs_perag	*pag;
 
 			pag = xfs_perag_get(mp, id.agno);
-			error = xfs_ag_resv_मुक्त(pag);
+			error = xfs_ag_resv_free(pag);
 			xfs_perag_put(pag);
-			अगर (error)
-				वापस error;
-		पूर्ण
+			if (error)
+				return error;
+		}
 		/*
-		 * Reserve AG metadata blocks. ENOSPC here करोes not mean there
-		 * was a growfs failure, just that there still isn't space क्रम
+		 * Reserve AG metadata blocks. ENOSPC here does not mean there
+		 * was a growfs failure, just that there still isn't space for
 		 * new user data after the grow has been run.
 		 */
 		error = xfs_fs_reserve_ag_blocks(mp);
-		अगर (error == -ENOSPC)
+		if (error == -ENOSPC)
 			error = 0;
-	पूर्ण
-	वापस error;
+	}
+	return error;
 
 out_trans_cancel:
 	xfs_trans_cancel(tp);
-	वापस error;
-पूर्ण
+	return error;
+}
 
-अटल पूर्णांक
-xfs_growfs_log_निजी(
-	काष्ठा xfs_mount	*mp,	/* mount poपूर्णांक क्रम fileप्रणाली */
-	काष्ठा xfs_growfs_log	*in)	/* growfs log input काष्ठा */
-अणु
+static int
+xfs_growfs_log_private(
+	struct xfs_mount	*mp,	/* mount point for filesystem */
+	struct xfs_growfs_log	*in)	/* growfs log input struct */
+{
 	xfs_extlen_t		nb;
 
 	nb = in->newblocks;
-	अगर (nb < XFS_MIN_LOG_BLOCKS || nb < XFS_B_TO_FSB(mp, XFS_MIN_LOG_BYTES))
-		वापस -EINVAL;
-	अगर (nb == mp->m_sb.sb_logblocks &&
-	    in->isपूर्णांक == (mp->m_sb.sb_logstart != 0))
-		वापस -EINVAL;
+	if (nb < XFS_MIN_LOG_BLOCKS || nb < XFS_B_TO_FSB(mp, XFS_MIN_LOG_BYTES))
+		return -EINVAL;
+	if (nb == mp->m_sb.sb_logblocks &&
+	    in->isint == (mp->m_sb.sb_logstart != 0))
+		return -EINVAL;
 	/*
-	 * Moving the log is hard, need new पूर्णांकerfaces to sync
-	 * the log first, hold off all activity जबतक moving it.
-	 * Can have लघुer or दीर्घer log in the same space,
-	 * or transक्रमm पूर्णांकernal to बाह्यal log or vice versa.
+	 * Moving the log is hard, need new interfaces to sync
+	 * the log first, hold off all activity while moving it.
+	 * Can have shorter or longer log in the same space,
+	 * or transform internal to external log or vice versa.
 	 */
-	वापस -ENOSYS;
-पूर्ण
+	return -ENOSYS;
+}
 
-अटल पूर्णांक
+static int
 xfs_growfs_imaxpct(
-	काष्ठा xfs_mount	*mp,
+	struct xfs_mount	*mp,
 	__u32			imaxpct)
-अणु
-	काष्ठा xfs_trans	*tp;
-	पूर्णांक			dpct;
-	पूर्णांक			error;
+{
+	struct xfs_trans	*tp;
+	int			dpct;
+	int			error;
 
-	अगर (imaxpct > 100)
-		वापस -EINVAL;
+	if (imaxpct > 100)
+		return -EINVAL;
 
 	error = xfs_trans_alloc(mp, &M_RES(mp)->tr_growdata,
 			XFS_GROWFS_SPACE_RES(mp), 0, XFS_TRANS_RESERVE, &tp);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
 	dpct = imaxpct - mp->m_sb.sb_imax_pct;
 	xfs_trans_mod_sb(tp, XFS_TRANS_SB_IMAXPCT, dpct);
 	xfs_trans_set_sync(tp);
-	वापस xfs_trans_commit(tp);
-पूर्ण
+	return xfs_trans_commit(tp);
+}
 
 /*
- * रक्षित versions of growfs function acquire and release locks on the mount
- * poपूर्णांक - exported through ioctls: XFS_IOC_FSGROWFSDATA, XFS_IOC_FSGROWFSLOG,
+ * protected versions of growfs function acquire and release locks on the mount
+ * point - exported through ioctls: XFS_IOC_FSGROWFSDATA, XFS_IOC_FSGROWFSLOG,
  * XFS_IOC_FSGROWFSRT
  */
-पूर्णांक
+int
 xfs_growfs_data(
-	काष्ठा xfs_mount	*mp,
-	काष्ठा xfs_growfs_data	*in)
-अणु
-	पूर्णांक			error = 0;
+	struct xfs_mount	*mp,
+	struct xfs_growfs_data	*in)
+{
+	int			error = 0;
 
-	अगर (!capable(CAP_SYS_ADMIN))
-		वापस -EPERM;
-	अगर (!mutex_trylock(&mp->m_growlock))
-		वापस -EWOULDBLOCK;
+	if (!capable(CAP_SYS_ADMIN))
+		return -EPERM;
+	if (!mutex_trylock(&mp->m_growlock))
+		return -EWOULDBLOCK;
 
-	/* update imaxpct separately to the physical grow of the fileप्रणाली */
-	अगर (in->imaxpct != mp->m_sb.sb_imax_pct) अणु
+	/* update imaxpct separately to the physical grow of the filesystem */
+	if (in->imaxpct != mp->m_sb.sb_imax_pct) {
 		error = xfs_growfs_imaxpct(mp, in->imaxpct);
-		अगर (error)
-			जाओ out_error;
-	पूर्ण
+		if (error)
+			goto out_error;
+	}
 
-	अगर (in->newblocks != mp->m_sb.sb_dblocks) अणु
-		error = xfs_growfs_data_निजी(mp, in);
-		अगर (error)
-			जाओ out_error;
-	पूर्ण
+	if (in->newblocks != mp->m_sb.sb_dblocks) {
+		error = xfs_growfs_data_private(mp, in);
+		if (error)
+			goto out_error;
+	}
 
 	/* Post growfs calculations needed to reflect new state in operations */
-	अगर (mp->m_sb.sb_imax_pct) अणु
-		uपूर्णांक64_t icount = mp->m_sb.sb_dblocks * mp->m_sb.sb_imax_pct;
-		करो_भाग(icount, 100);
+	if (mp->m_sb.sb_imax_pct) {
+		uint64_t icount = mp->m_sb.sb_dblocks * mp->m_sb.sb_imax_pct;
+		do_div(icount, 100);
 		M_IGEO(mp)->maxicount = XFS_FSB_TO_INO(mp, icount);
-	पूर्ण अन्यथा
+	} else
 		M_IGEO(mp)->maxicount = 0;
 
 	/* Update secondary superblocks now the physical grow has completed */
@@ -311,48 +310,48 @@ xfs_growfs_data(
 out_error:
 	/*
 	 * Increment the generation unconditionally, the error could be from
-	 * updating the secondary superblocks, in which हाल the new size
-	 * is live alपढ़ोy.
+	 * updating the secondary superblocks, in which case the new size
+	 * is live already.
 	 */
 	mp->m_generation++;
 	mutex_unlock(&mp->m_growlock);
-	वापस error;
-पूर्ण
+	return error;
+}
 
-पूर्णांक
+int
 xfs_growfs_log(
 	xfs_mount_t		*mp,
-	काष्ठा xfs_growfs_log	*in)
-अणु
-	पूर्णांक error;
+	struct xfs_growfs_log	*in)
+{
+	int error;
 
-	अगर (!capable(CAP_SYS_ADMIN))
-		वापस -EPERM;
-	अगर (!mutex_trylock(&mp->m_growlock))
-		वापस -EWOULDBLOCK;
-	error = xfs_growfs_log_निजी(mp, in);
+	if (!capable(CAP_SYS_ADMIN))
+		return -EPERM;
+	if (!mutex_trylock(&mp->m_growlock))
+		return -EWOULDBLOCK;
+	error = xfs_growfs_log_private(mp, in);
 	mutex_unlock(&mp->m_growlock);
-	वापस error;
-पूर्ण
+	return error;
+}
 
 /*
  * exported through ioctl XFS_IOC_FSCOUNTS
  */
 
-व्योम
+void
 xfs_fs_counts(
 	xfs_mount_t		*mp,
 	xfs_fsop_counts_t	*cnt)
-अणु
-	cnt->allocino = percpu_counter_पढ़ो_positive(&mp->m_icount);
-	cnt->मुक्तino = percpu_counter_पढ़ो_positive(&mp->m_अगरree);
-	cnt->मुक्तdata = percpu_counter_पढ़ो_positive(&mp->m_fdblocks) -
+{
+	cnt->allocino = percpu_counter_read_positive(&mp->m_icount);
+	cnt->freeino = percpu_counter_read_positive(&mp->m_ifree);
+	cnt->freedata = percpu_counter_read_positive(&mp->m_fdblocks) -
 						mp->m_alloc_set_aside;
 
 	spin_lock(&mp->m_sb_lock);
-	cnt->मुक्तrtx = mp->m_sb.sb_frextents;
+	cnt->freertx = mp->m_sb.sb_frextents;
 	spin_unlock(&mp->m_sb_lock);
-पूर्ण
+}
 
 /*
  * exported through ioctl XFS_IOC_SET_RESBLKS & XFS_IOC_GET_RESBLKS
@@ -361,96 +360,96 @@ xfs_fs_counts(
  * in the in-core mount table. The number of unused reserved blocks
  * is kept in m_resblks_avail.
  *
- * Reserve the requested number of blocks अगर available. Otherwise वापस
+ * Reserve the requested number of blocks if available. Otherwise return
  * as many as possible to satisfy the request. The actual number
- * reserved are वापसed in outval
+ * reserved are returned in outval
  *
- * A null inval poपूर्णांकer indicates that only the current reserved blocks
- * available  should  be वापसed no settings are changed.
+ * A null inval pointer indicates that only the current reserved blocks
+ * available  should  be returned no settings are changed.
  */
 
-पूर्णांक
+int
 xfs_reserve_blocks(
 	xfs_mount_t             *mp,
-	uपूर्णांक64_t              *inval,
+	uint64_t              *inval,
 	xfs_fsop_resblks_t      *outval)
-अणु
-	पूर्णांक64_t			lcounter, delta;
-	पूर्णांक64_t			fdblks_delta = 0;
-	uपूर्णांक64_t		request;
-	पूर्णांक64_t			मुक्त;
-	पूर्णांक			error = 0;
+{
+	int64_t			lcounter, delta;
+	int64_t			fdblks_delta = 0;
+	uint64_t		request;
+	int64_t			free;
+	int			error = 0;
 
-	/* If inval is null, report current values and वापस */
-	अगर (inval == (uपूर्णांक64_t *)शून्य) अणु
-		अगर (!outval)
-			वापस -EINVAL;
+	/* If inval is null, report current values and return */
+	if (inval == (uint64_t *)NULL) {
+		if (!outval)
+			return -EINVAL;
 		outval->resblks = mp->m_resblks;
 		outval->resblks_avail = mp->m_resblks_avail;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	request = *inval;
 
 	/*
-	 * With per-cpu counters, this becomes an पूर्णांकeresting problem. we need
-	 * to work out अगर we are मुक्तing or allocation blocks first, then we can
-	 * करो the modअगरication as necessary.
+	 * With per-cpu counters, this becomes an interesting problem. we need
+	 * to work out if we are freeing or allocation blocks first, then we can
+	 * do the modification as necessary.
 	 *
-	 * We करो this under the m_sb_lock so that अगर we are near ENOSPC, we will
-	 * hold out any changes जबतक we work out what to करो. This means that
-	 * the amount of मुक्त space can change जबतक we करो this, so we need to
-	 * retry अगर we end up trying to reserve more space than is available.
+	 * We do this under the m_sb_lock so that if we are near ENOSPC, we will
+	 * hold out any changes while we work out what to do. This means that
+	 * the amount of free space can change while we do this, so we need to
+	 * retry if we end up trying to reserve more space than is available.
 	 */
 	spin_lock(&mp->m_sb_lock);
 
 	/*
 	 * If our previous reservation was larger than the current value,
-	 * then move any unused blocks back to the मुक्त pool. Modअगरy the resblks
+	 * then move any unused blocks back to the free pool. Modify the resblks
 	 * counters directly since we shouldn't have any problems unreserving
 	 * space.
 	 */
-	अगर (mp->m_resblks > request) अणु
+	if (mp->m_resblks > request) {
 		lcounter = mp->m_resblks_avail - request;
-		अगर (lcounter  > 0) अणु		/* release unused blocks */
+		if (lcounter  > 0) {		/* release unused blocks */
 			fdblks_delta = lcounter;
 			mp->m_resblks_avail -= lcounter;
-		पूर्ण
+		}
 		mp->m_resblks = request;
-		अगर (fdblks_delta) अणु
+		if (fdblks_delta) {
 			spin_unlock(&mp->m_sb_lock);
 			error = xfs_mod_fdblocks(mp, fdblks_delta, 0);
 			spin_lock(&mp->m_sb_lock);
-		पूर्ण
+		}
 
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/*
 	 * If the request is larger than the current reservation, reserve the
-	 * blocks beक्रमe we update the reserve counters. Sample m_fdblocks and
-	 * perक्रमm a partial reservation अगर the request exceeds मुक्त space.
+	 * blocks before we update the reserve counters. Sample m_fdblocks and
+	 * perform a partial reservation if the request exceeds free space.
 	 */
 	error = -ENOSPC;
-	करो अणु
-		मुक्त = percpu_counter_sum(&mp->m_fdblocks) -
+	do {
+		free = percpu_counter_sum(&mp->m_fdblocks) -
 						mp->m_alloc_set_aside;
-		अगर (मुक्त <= 0)
-			अवरोध;
+		if (free <= 0)
+			break;
 
 		delta = request - mp->m_resblks;
-		lcounter = मुक्त - delta;
-		अगर (lcounter < 0)
+		lcounter = free - delta;
+		if (lcounter < 0)
 			/* We can't satisfy the request, just get what we can */
-			fdblks_delta = मुक्त;
-		अन्यथा
+			fdblks_delta = free;
+		else
 			fdblks_delta = delta;
 
 		/*
-		 * We'll either succeed in getting space from the मुक्त block
+		 * We'll either succeed in getting space from the free block
 		 * count or we'll get an ENOSPC. If we get a ENOSPC, it means
-		 * things changed जबतक we were calculating fdblks_delta and so
-		 * we should try again to see अगर there is anything left to
+		 * things changed while we were calculating fdblks_delta and so
+		 * we should try again to see if there is anything left to
 		 * reserve.
 		 *
 		 * Don't set the reserved flag here - we don't want to reserve
@@ -459,164 +458,164 @@ xfs_reserve_blocks(
 		spin_unlock(&mp->m_sb_lock);
 		error = xfs_mod_fdblocks(mp, -fdblks_delta, 0);
 		spin_lock(&mp->m_sb_lock);
-	पूर्ण जबतक (error == -ENOSPC);
+	} while (error == -ENOSPC);
 
 	/*
-	 * Update the reserve counters अगर blocks have been successfully
+	 * Update the reserve counters if blocks have been successfully
 	 * allocated.
 	 */
-	अगर (!error && fdblks_delta) अणु
+	if (!error && fdblks_delta) {
 		mp->m_resblks += fdblks_delta;
 		mp->m_resblks_avail += fdblks_delta;
-	पूर्ण
+	}
 
 out:
-	अगर (outval) अणु
+	if (outval) {
 		outval->resblks = mp->m_resblks;
 		outval->resblks_avail = mp->m_resblks_avail;
-	पूर्ण
+	}
 
 	spin_unlock(&mp->m_sb_lock);
-	वापस error;
-पूर्ण
+	return error;
+}
 
-पूर्णांक
-xfs_fs_goingकरोwn(
+int
+xfs_fs_goingdown(
 	xfs_mount_t	*mp,
-	uपूर्णांक32_t	inflags)
-अणु
-	चयन (inflags) अणु
-	हाल XFS_FSOP_GOING_FLAGS_DEFAULT: अणु
-		अगर (!मुक्तze_bdev(mp->m_super->s_bdev)) अणु
-			xfs_क्रमce_shutकरोwn(mp, SHUTDOWN_FORCE_UMOUNT);
+	uint32_t	inflags)
+{
+	switch (inflags) {
+	case XFS_FSOP_GOING_FLAGS_DEFAULT: {
+		if (!freeze_bdev(mp->m_super->s_bdev)) {
+			xfs_force_shutdown(mp, SHUTDOWN_FORCE_UMOUNT);
 			thaw_bdev(mp->m_super->s_bdev);
-		पूर्ण
-		अवरोध;
-	पूर्ण
-	हाल XFS_FSOP_GOING_FLAGS_LOGFLUSH:
-		xfs_क्रमce_shutकरोwn(mp, SHUTDOWN_FORCE_UMOUNT);
-		अवरोध;
-	हाल XFS_FSOP_GOING_FLAGS_NOLOGFLUSH:
-		xfs_क्रमce_shutकरोwn(mp,
+		}
+		break;
+	}
+	case XFS_FSOP_GOING_FLAGS_LOGFLUSH:
+		xfs_force_shutdown(mp, SHUTDOWN_FORCE_UMOUNT);
+		break;
+	case XFS_FSOP_GOING_FLAGS_NOLOGFLUSH:
+		xfs_force_shutdown(mp,
 				SHUTDOWN_FORCE_UMOUNT | SHUTDOWN_LOG_IO_ERROR);
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Force a shutकरोwn of the fileप्रणाली instantly जबतक keeping the fileप्रणाली
- * consistent. We करोn't करो an unmount here; just shutकरोwn the shop, make sure
- * that असलolutely nothing persistent happens to this fileप्रणाली after this
- * poपूर्णांक.
+ * Force a shutdown of the filesystem instantly while keeping the filesystem
+ * consistent. We don't do an unmount here; just shutdown the shop, make sure
+ * that absolutely nothing persistent happens to this filesystem after this
+ * point.
  */
-व्योम
-xfs_करो_क्रमce_shutकरोwn(
-	काष्ठा xfs_mount *mp,
-	पूर्णांक		flags,
-	अक्षर		*fname,
-	पूर्णांक		lnnum)
-अणु
+void
+xfs_do_force_shutdown(
+	struct xfs_mount *mp,
+	int		flags,
+	char		*fname,
+	int		lnnum)
+{
 	bool		logerror = flags & SHUTDOWN_LOG_IO_ERROR;
 
 	/*
-	 * No need to duplicate efक्रमts.
+	 * No need to duplicate efforts.
 	 */
-	अगर (XFS_FORCED_SHUTDOWN(mp) && !logerror)
-		वापस;
+	if (XFS_FORCED_SHUTDOWN(mp) && !logerror)
+		return;
 
 	/*
-	 * This flags XFS_MOUNT_FS_SHUTDOWN, makes sure that we करोn't
+	 * This flags XFS_MOUNT_FS_SHUTDOWN, makes sure that we don't
 	 * queue up anybody new on the log reservations, and wakes up
 	 * everybody who's sleeping on log reservations to tell them
 	 * the bad news.
 	 */
-	अगर (xfs_log_क्रमce_umount(mp, logerror))
-		वापस;
+	if (xfs_log_force_umount(mp, logerror))
+		return;
 
-	अगर (flags & SHUTDOWN_FORCE_UMOUNT) अणु
+	if (flags & SHUTDOWN_FORCE_UMOUNT) {
 		xfs_alert(mp,
 "User initiated shutdown received. Shutting down filesystem");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	xfs_notice(mp,
 "%s(0x%x) called from line %d of file %s. Return address = "PTR_FMT,
-		__func__, flags, lnnum, fname, __वापस_address);
+		__func__, flags, lnnum, fname, __return_address);
 
-	अगर (flags & SHUTDOWN_CORRUPT_INCORE) अणु
+	if (flags & SHUTDOWN_CORRUPT_INCORE) {
 		xfs_alert_tag(mp, XFS_PTAG_SHUTDOWN_CORRUPT,
 "Corruption of in-memory data detected.  Shutting down filesystem");
-		अगर (XFS_ERRLEVEL_HIGH <= xfs_error_level)
+		if (XFS_ERRLEVEL_HIGH <= xfs_error_level)
 			xfs_stack_trace();
-	पूर्ण अन्यथा अगर (logerror) अणु
+	} else if (logerror) {
 		xfs_alert_tag(mp, XFS_PTAG_SHUTDOWN_LOGERROR,
 			"Log I/O Error Detected. Shutting down filesystem");
-	पूर्ण अन्यथा अणु
+	} else {
 		xfs_alert_tag(mp, XFS_PTAG_SHUTDOWN_IOERROR,
 			"I/O Error Detected. Shutting down filesystem");
-	पूर्ण
+	}
 
 	xfs_alert(mp,
 		"Please unmount the filesystem and rectify the problem(s)");
-पूर्ण
+}
 
 /*
- * Reserve मुक्त space क्रम per-AG metadata.
+ * Reserve free space for per-AG metadata.
  */
-पूर्णांक
+int
 xfs_fs_reserve_ag_blocks(
-	काष्ठा xfs_mount	*mp)
-अणु
+	struct xfs_mount	*mp)
+{
 	xfs_agnumber_t		agno;
-	काष्ठा xfs_perag	*pag;
-	पूर्णांक			error = 0;
-	पूर्णांक			err2;
+	struct xfs_perag	*pag;
+	int			error = 0;
+	int			err2;
 
 	mp->m_finobt_nores = false;
-	क्रम (agno = 0; agno < mp->m_sb.sb_agcount; agno++) अणु
+	for (agno = 0; agno < mp->m_sb.sb_agcount; agno++) {
 		pag = xfs_perag_get(mp, agno);
-		err2 = xfs_ag_resv_init(pag, शून्य);
+		err2 = xfs_ag_resv_init(pag, NULL);
 		xfs_perag_put(pag);
-		अगर (err2 && !error)
+		if (err2 && !error)
 			error = err2;
-	पूर्ण
+	}
 
-	अगर (error && error != -ENOSPC) अणु
+	if (error && error != -ENOSPC) {
 		xfs_warn(mp,
 	"Error %d reserving per-AG metadata reserve pool.", error);
-		xfs_क्रमce_shutकरोwn(mp, SHUTDOWN_CORRUPT_INCORE);
-	पूर्ण
+		xfs_force_shutdown(mp, SHUTDOWN_CORRUPT_INCORE);
+	}
 
-	वापस error;
-पूर्ण
+	return error;
+}
 
 /*
- * Free space reserved क्रम per-AG metadata.
+ * Free space reserved for per-AG metadata.
  */
-पूर्णांक
+int
 xfs_fs_unreserve_ag_blocks(
-	काष्ठा xfs_mount	*mp)
-अणु
+	struct xfs_mount	*mp)
+{
 	xfs_agnumber_t		agno;
-	काष्ठा xfs_perag	*pag;
-	पूर्णांक			error = 0;
-	पूर्णांक			err2;
+	struct xfs_perag	*pag;
+	int			error = 0;
+	int			err2;
 
-	क्रम (agno = 0; agno < mp->m_sb.sb_agcount; agno++) अणु
+	for (agno = 0; agno < mp->m_sb.sb_agcount; agno++) {
 		pag = xfs_perag_get(mp, agno);
-		err2 = xfs_ag_resv_मुक्त(pag);
+		err2 = xfs_ag_resv_free(pag);
 		xfs_perag_put(pag);
-		अगर (err2 && !error)
+		if (err2 && !error)
 			error = err2;
-	पूर्ण
+	}
 
-	अगर (error)
+	if (error)
 		xfs_warn(mp,
 	"Error %d freeing per-AG metadata reserve pool.", error);
 
-	वापस error;
-पूर्ण
+	return error;
+}

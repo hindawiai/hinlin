@@ -1,39 +1,38 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: ISC
+// SPDX-License-Identifier: ISC
 /*
  * Copyright (c) 2014-2016 Qualcomm Atheros, Inc.
  */
 
-#समावेश <linux/device.h>
-#समावेश "wil_platform.h"
+#include <linux/device.h>
+#include "wil_platform.h"
 
-पूर्णांक __init wil_platक्रमm_modinit(व्योम)
-अणु
-	वापस 0;
-पूर्ण
+int __init wil_platform_modinit(void)
+{
+	return 0;
+}
 
-व्योम wil_platक्रमm_modनिकास(व्योम)
-अणु
-पूर्ण
+void wil_platform_modexit(void)
+{
+}
 
-/* wil_platक्रमm_init() - wil6210 platक्रमm module init
+/* wil_platform_init() - wil6210 platform module init
  *
- * The function must be called beक्रमe all other functions in this module.
- * It वापसs a handle which is used with the rest of the API
+ * The function must be called before all other functions in this module.
+ * It returns a handle which is used with the rest of the API
  *
  */
-व्योम *wil_platक्रमm_init(काष्ठा device *dev, काष्ठा wil_platक्रमm_ops *ops,
-			स्थिर काष्ठा wil_platक्रमm_rops *rops, व्योम *wil_handle)
-अणु
-	व्योम *handle = ops; /* to वापस some non-शून्य क्रम 'void' impl. */
+void *wil_platform_init(struct device *dev, struct wil_platform_ops *ops,
+			const struct wil_platform_rops *rops, void *wil_handle)
+{
+	void *handle = ops; /* to return some non-NULL for 'void' impl. */
 
-	अगर (!ops) अणु
+	if (!ops) {
 		dev_err(dev,
 			"Invalid parameter. Cannot init platform module\n");
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	/* platक्रमm specअगरic init functions should be called here */
+	/* platform specific init functions should be called here */
 
-	वापस handle;
-पूर्ण
+	return handle;
+}

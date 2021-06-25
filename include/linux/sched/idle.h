@@ -1,77 +1,76 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _LINUX_SCHED_IDLE_H
-#घोषणा _LINUX_SCHED_IDLE_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _LINUX_SCHED_IDLE_H
+#define _LINUX_SCHED_IDLE_H
 
-#समावेश <linux/sched.h>
+#include <linux/sched.h>
 
-क्रमागत cpu_idle_type अणु
+enum cpu_idle_type {
 	CPU_IDLE,
 	CPU_NOT_IDLE,
 	CPU_NEWLY_IDLE,
 	CPU_MAX_IDLE_TYPES
-पूर्ण;
+};
 
-बाह्य व्योम wake_up_अगर_idle(पूर्णांक cpu);
+extern void wake_up_if_idle(int cpu);
 
 /*
- * Idle thपढ़ो specअगरic functions to determine the need_resched
+ * Idle thread specific functions to determine the need_resched
  * polling state.
  */
-#अगर_घोषित TIF_POLLING_NRFLAG
+#ifdef TIF_POLLING_NRFLAG
 
-अटल अंतरभूत व्योम __current_set_polling(व्योम)
-अणु
-	set_thपढ़ो_flag(TIF_POLLING_NRFLAG);
-पूर्ण
+static inline void __current_set_polling(void)
+{
+	set_thread_flag(TIF_POLLING_NRFLAG);
+}
 
-अटल अंतरभूत bool __must_check current_set_polling_and_test(व्योम)
-अणु
+static inline bool __must_check current_set_polling_and_test(void)
+{
 	__current_set_polling();
 
 	/*
-	 * Polling state must be visible beक्रमe we test NEED_RESCHED,
+	 * Polling state must be visible before we test NEED_RESCHED,
 	 * paired by resched_curr()
 	 */
 	smp_mb__after_atomic();
 
-	वापस unlikely(tअगर_need_resched());
-पूर्ण
+	return unlikely(tif_need_resched());
+}
 
-अटल अंतरभूत व्योम __current_clr_polling(व्योम)
-अणु
-	clear_thपढ़ो_flag(TIF_POLLING_NRFLAG);
-पूर्ण
+static inline void __current_clr_polling(void)
+{
+	clear_thread_flag(TIF_POLLING_NRFLAG);
+}
 
-अटल अंतरभूत bool __must_check current_clr_polling_and_test(व्योम)
-अणु
+static inline bool __must_check current_clr_polling_and_test(void)
+{
 	__current_clr_polling();
 
 	/*
-	 * Polling state must be visible beक्रमe we test NEED_RESCHED,
+	 * Polling state must be visible before we test NEED_RESCHED,
 	 * paired by resched_curr()
 	 */
 	smp_mb__after_atomic();
 
-	वापस unlikely(tअगर_need_resched());
-पूर्ण
+	return unlikely(tif_need_resched());
+}
 
-#अन्यथा
-अटल अंतरभूत व्योम __current_set_polling(व्योम) अणु पूर्ण
-अटल अंतरभूत व्योम __current_clr_polling(व्योम) अणु पूर्ण
+#else
+static inline void __current_set_polling(void) { }
+static inline void __current_clr_polling(void) { }
 
-अटल अंतरभूत bool __must_check current_set_polling_and_test(व्योम)
-अणु
-	वापस unlikely(tअगर_need_resched());
-पूर्ण
-अटल अंतरभूत bool __must_check current_clr_polling_and_test(व्योम)
-अणु
-	वापस unlikely(tअगर_need_resched());
-पूर्ण
-#पूर्ण_अगर
+static inline bool __must_check current_set_polling_and_test(void)
+{
+	return unlikely(tif_need_resched());
+}
+static inline bool __must_check current_clr_polling_and_test(void)
+{
+	return unlikely(tif_need_resched());
+}
+#endif
 
-अटल अंतरभूत व्योम current_clr_polling(व्योम)
-अणु
+static inline void current_clr_polling(void)
+{
 	__current_clr_polling();
 
 	/*
@@ -83,6 +82,6 @@
 	smp_mb(); /* paired with resched_curr() */
 
 	preempt_fold_need_resched();
-पूर्ण
+}
 
-#पूर्ण_अगर /* _LINUX_SCHED_IDLE_H */
+#endif /* _LINUX_SCHED_IDLE_H */

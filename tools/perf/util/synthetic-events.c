@@ -1,237 +1,236 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only 
+// SPDX-License-Identifier: GPL-2.0-only 
 
-#समावेश "util/debug.h"
-#समावेश "util/dso.h"
-#समावेश "util/event.h"
-#समावेश "util/evlist.h"
-#समावेश "util/machine.h"
-#समावेश "util/map.h"
-#समावेश "util/map_symbol.h"
-#समावेश "util/branch.h"
-#समावेश "util/memswap.h"
-#समावेश "util/namespaces.h"
-#समावेश "util/session.h"
-#समावेश "util/stat.h"
-#समावेश "util/symbol.h"
-#समावेश "util/synthetic-events.h"
-#समावेश "util/target.h"
-#समावेश "util/time-utils.h"
-#समावेश "util/cgroup.h"
-#समावेश <linux/bitops.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/zभाग.स>
-#समावेश <linux/perf_event.h>
-#समावेश <यंत्र/bug.h>
-#समावेश <perf/evsel.h>
-#समावेश <perf/cpumap.h>
-#समावेश <पूर्णांकernal/lib.h> // page_size
-#समावेश <पूर्णांकernal/thपढ़ोmap.h>
-#समावेश <perf/thपढ़ोmap.h>
-#समावेश <symbol/kallsyms.h>
-#समावेश <dirent.h>
-#समावेश <त्रुटिसं.स>
-#समावेश <पूर्णांकtypes.h>
-#समावेश <मानकपन.स>
-#समावेश <माला.स>
-#समावेश <uapi/linux/mman.h> /* To get things like MAP_HUGETLB even on older libc headers */
-#समावेश <api/fs/fs.h>
-#समावेश <api/पन.स>
-#समावेश <sys/types.h>
-#समावेश <sys/स्थिति.स>
-#समावेश <fcntl.h>
-#समावेश <unistd.h>
+#include "util/debug.h"
+#include "util/dso.h"
+#include "util/event.h"
+#include "util/evlist.h"
+#include "util/machine.h"
+#include "util/map.h"
+#include "util/map_symbol.h"
+#include "util/branch.h"
+#include "util/memswap.h"
+#include "util/namespaces.h"
+#include "util/session.h"
+#include "util/stat.h"
+#include "util/symbol.h"
+#include "util/synthetic-events.h"
+#include "util/target.h"
+#include "util/time-utils.h"
+#include "util/cgroup.h"
+#include <linux/bitops.h>
+#include <linux/kernel.h>
+#include <linux/string.h>
+#include <linux/zalloc.h>
+#include <linux/perf_event.h>
+#include <asm/bug.h>
+#include <perf/evsel.h>
+#include <perf/cpumap.h>
+#include <internal/lib.h> // page_size
+#include <internal/threadmap.h>
+#include <perf/threadmap.h>
+#include <symbol/kallsyms.h>
+#include <dirent.h>
+#include <errno.h>
+#include <inttypes.h>
+#include <stdio.h>
+#include <string.h>
+#include <uapi/linux/mman.h> /* To get things like MAP_HUGETLB even on older libc headers */
+#include <api/fs/fs.h>
+#include <api/io.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
 
-#घोषणा DEFAULT_PROC_MAP_PARSE_TIMEOUT 500
+#define DEFAULT_PROC_MAP_PARSE_TIMEOUT 500
 
-अचिन्हित पूर्णांक proc_map_समयout = DEFAULT_PROC_MAP_PARSE_TIMEOUT;
+unsigned int proc_map_timeout = DEFAULT_PROC_MAP_PARSE_TIMEOUT;
 
-पूर्णांक perf_tool__process_synth_event(काष्ठा perf_tool *tool,
-				   जोड़ perf_event *event,
-				   काष्ठा machine *machine,
+int perf_tool__process_synth_event(struct perf_tool *tool,
+				   union perf_event *event,
+				   struct machine *machine,
 				   perf_event__handler_t process)
-अणु
-	काष्ठा perf_sample synth_sample = अणु
+{
+	struct perf_sample synth_sample = {
 		.pid	   = -1,
 		.tid	   = -1,
-		.समय	   = -1,
+		.time	   = -1,
 		.stream_id = -1,
 		.cpu	   = -1,
 		.period	   = 1,
 		.cpumode   = event->header.misc & PERF_RECORD_MISC_CPUMODE_MASK,
-	पूर्ण;
+	};
 
-	वापस process(tool, event, &synth_sample, machine);
-पूर्ण;
+	return process(tool, event, &synth_sample, machine);
+};
 
 /*
  * Assumes that the first 4095 bytes of /proc/pid/stat contains
  * the comm, tgid and ppid.
  */
-अटल पूर्णांक perf_event__get_comm_ids(pid_t pid, pid_t tid, अक्षर *comm, माप_प्रकार len,
+static int perf_event__get_comm_ids(pid_t pid, pid_t tid, char *comm, size_t len,
 				    pid_t *tgid, pid_t *ppid, bool *kernel)
-अणु
-	अक्षर bf[4096];
-	पूर्णांक fd;
-	माप_प्रकार size = 0;
-	sमाप_प्रकार n;
-	अक्षर *name, *tgids, *ppids, *vmpeak, *thपढ़ोs;
+{
+	char bf[4096];
+	int fd;
+	size_t size = 0;
+	ssize_t n;
+	char *name, *tgids, *ppids, *vmpeak, *threads;
 
 	*tgid = -1;
 	*ppid = -1;
 
-	अगर (pid)
-		snम_लिखो(bf, माप(bf), "/proc/%d/task/%d/status", pid, tid);
-	अन्यथा
-		snम_लिखो(bf, माप(bf), "/proc/%d/status", tid);
+	if (pid)
+		snprintf(bf, sizeof(bf), "/proc/%d/task/%d/status", pid, tid);
+	else
+		snprintf(bf, sizeof(bf), "/proc/%d/status", tid);
 
-	fd = खोलो(bf, O_RDONLY);
-	अगर (fd < 0) अणु
+	fd = open(bf, O_RDONLY);
+	if (fd < 0) {
 		pr_debug("couldn't open %s\n", bf);
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	n = पढ़ो(fd, bf, माप(bf) - 1);
-	बंद(fd);
-	अगर (n <= 0) अणु
+	n = read(fd, bf, sizeof(bf) - 1);
+	close(fd);
+	if (n <= 0) {
 		pr_warning("Couldn't get COMM, tigd and ppid for pid %d\n",
 			   tid);
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 	bf[n] = '\0';
 
-	name = म_माला(bf, "Name:");
-	tgids = म_माला(name ?: bf, "Tgid:");
-	ppids = म_माला(tgids ?: bf, "PPid:");
-	vmpeak = म_माला(ppids ?: bf, "VmPeak:");
+	name = strstr(bf, "Name:");
+	tgids = strstr(name ?: bf, "Tgid:");
+	ppids = strstr(tgids ?: bf, "PPid:");
+	vmpeak = strstr(ppids ?: bf, "VmPeak:");
 
-	अगर (vmpeak)
-		thपढ़ोs = शून्य;
-	अन्यथा
-		thपढ़ोs = म_माला(ppids ?: bf, "Threads:");
+	if (vmpeak)
+		threads = NULL;
+	else
+		threads = strstr(ppids ?: bf, "Threads:");
 
-	अगर (name) अणु
-		अक्षर *nl;
+	if (name) {
+		char *nl;
 
-		name = skip_spaces(name + 5);  /* म_माप("Name:") */
-		nl = म_अक्षर(name, '\n');
-		अगर (nl)
+		name = skip_spaces(name + 5);  /* strlen("Name:") */
+		nl = strchr(name, '\n');
+		if (nl)
 			*nl = '\0';
 
-		size = म_माप(name);
-		अगर (size >= len)
+		size = strlen(name);
+		if (size >= len)
 			size = len - 1;
-		स_नकल(comm, name, size);
+		memcpy(comm, name, size);
 		comm[size] = '\0';
-	पूर्ण अन्यथा अणु
+	} else {
 		pr_debug("Name: string not found for pid %d\n", tid);
-	पूर्ण
+	}
 
-	अगर (tgids) अणु
-		tgids += 5;  /* म_माप("Tgid:") */
-		*tgid = म_से_प(tgids);
-	पूर्ण अन्यथा अणु
+	if (tgids) {
+		tgids += 5;  /* strlen("Tgid:") */
+		*tgid = atoi(tgids);
+	} else {
 		pr_debug("Tgid: string not found for pid %d\n", tid);
-	पूर्ण
+	}
 
-	अगर (ppids) अणु
-		ppids += 5;  /* म_माप("PPid:") */
-		*ppid = म_से_प(ppids);
-	पूर्ण अन्यथा अणु
+	if (ppids) {
+		ppids += 5;  /* strlen("PPid:") */
+		*ppid = atoi(ppids);
+	} else {
 		pr_debug("PPid: string not found for pid %d\n", tid);
-	पूर्ण
+	}
 
-	अगर (!vmpeak && thपढ़ोs)
+	if (!vmpeak && threads)
 		*kernel = true;
-	अन्यथा
+	else
 		*kernel = false;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक perf_event__prepare_comm(जोड़ perf_event *event, pid_t pid, pid_t tid,
-				    काष्ठा machine *machine,
+static int perf_event__prepare_comm(union perf_event *event, pid_t pid, pid_t tid,
+				    struct machine *machine,
 				    pid_t *tgid, pid_t *ppid, bool *kernel)
-अणु
-	माप_प्रकार size;
+{
+	size_t size;
 
 	*ppid = -1;
 
-	स_रखो(&event->comm, 0, माप(event->comm));
+	memset(&event->comm, 0, sizeof(event->comm));
 
-	अगर (machine__is_host(machine)) अणु
-		अगर (perf_event__get_comm_ids(pid, tid, event->comm.comm,
-					     माप(event->comm.comm),
-					     tgid, ppid, kernel) != 0) अणु
-			वापस -1;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+	if (machine__is_host(machine)) {
+		if (perf_event__get_comm_ids(pid, tid, event->comm.comm,
+					     sizeof(event->comm.comm),
+					     tgid, ppid, kernel) != 0) {
+			return -1;
+		}
+	} else {
 		*tgid = machine->pid;
-	पूर्ण
+	}
 
-	अगर (*tgid < 0)
-		वापस -1;
+	if (*tgid < 0)
+		return -1;
 
 	event->comm.pid = *tgid;
 	event->comm.header.type = PERF_RECORD_COMM;
 
-	size = म_माप(event->comm.comm) + 1;
-	size = PERF_ALIGN(size, माप(u64));
-	स_रखो(event->comm.comm + size, 0, machine->id_hdr_size);
-	event->comm.header.size = (माप(event->comm) -
-				(माप(event->comm.comm) - size) +
+	size = strlen(event->comm.comm) + 1;
+	size = PERF_ALIGN(size, sizeof(u64));
+	memset(event->comm.comm + size, 0, machine->id_hdr_size);
+	event->comm.header.size = (sizeof(event->comm) -
+				(sizeof(event->comm.comm) - size) +
 				machine->id_hdr_size);
 	event->comm.tid = tid;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-pid_t perf_event__synthesize_comm(काष्ठा perf_tool *tool,
-					 जोड़ perf_event *event, pid_t pid,
+pid_t perf_event__synthesize_comm(struct perf_tool *tool,
+					 union perf_event *event, pid_t pid,
 					 perf_event__handler_t process,
-					 काष्ठा machine *machine)
-अणु
+					 struct machine *machine)
+{
 	pid_t tgid, ppid;
-	bool kernel_thपढ़ो;
+	bool kernel_thread;
 
-	अगर (perf_event__prepare_comm(event, 0, pid, machine, &tgid, &ppid,
-				     &kernel_thपढ़ो) != 0)
-		वापस -1;
+	if (perf_event__prepare_comm(event, 0, pid, machine, &tgid, &ppid,
+				     &kernel_thread) != 0)
+		return -1;
 
-	अगर (perf_tool__process_synth_event(tool, event, machine, process) != 0)
-		वापस -1;
+	if (perf_tool__process_synth_event(tool, event, machine, process) != 0)
+		return -1;
 
-	वापस tgid;
-पूर्ण
+	return tgid;
+}
 
-अटल व्योम perf_event__get_ns_link_info(pid_t pid, स्थिर अक्षर *ns,
-					 काष्ठा perf_ns_link_info *ns_link_info)
-अणु
-	काष्ठा stat64 st;
-	अक्षर proc_ns[128];
+static void perf_event__get_ns_link_info(pid_t pid, const char *ns,
+					 struct perf_ns_link_info *ns_link_info)
+{
+	struct stat64 st;
+	char proc_ns[128];
 
-	प्र_लिखो(proc_ns, "/proc/%u/ns/%s", pid, ns);
-	अगर (stat64(proc_ns, &st) == 0) अणु
+	sprintf(proc_ns, "/proc/%u/ns/%s", pid, ns);
+	if (stat64(proc_ns, &st) == 0) {
 		ns_link_info->dev = st.st_dev;
 		ns_link_info->ino = st.st_ino;
-	पूर्ण
-पूर्ण
+	}
+}
 
-पूर्णांक perf_event__synthesize_namespaces(काष्ठा perf_tool *tool,
-				      जोड़ perf_event *event,
+int perf_event__synthesize_namespaces(struct perf_tool *tool,
+				      union perf_event *event,
 				      pid_t pid, pid_t tgid,
 				      perf_event__handler_t process,
-				      काष्ठा machine *machine)
-अणु
+				      struct machine *machine)
+{
 	u32 idx;
-	काष्ठा perf_ns_link_info *ns_link_info;
+	struct perf_ns_link_info *ns_link_info;
 
-	अगर (!tool || !tool->namespace_events)
-		वापस 0;
+	if (!tool || !tool->namespace_events)
+		return 0;
 
-	स_रखो(&event->namespaces, 0, (माप(event->namespaces) +
-	       (NR_NAMESPACES * माप(काष्ठा perf_ns_link_info)) +
+	memset(&event->namespaces, 0, (sizeof(event->namespaces) +
+	       (NR_NAMESPACES * sizeof(struct perf_ns_link_info)) +
 	       machine->id_hdr_size));
 
 	event->namespaces.pid = tgid;
@@ -241,197 +240,197 @@ pid_t perf_event__synthesize_comm(काष्ठा perf_tool *tool,
 
 	ns_link_info = event->namespaces.link_info;
 
-	क्रम (idx = 0; idx < event->namespaces.nr_namespaces; idx++)
+	for (idx = 0; idx < event->namespaces.nr_namespaces; idx++)
 		perf_event__get_ns_link_info(pid, perf_ns__name(idx),
 					     &ns_link_info[idx]);
 
 	event->namespaces.header.type = PERF_RECORD_NAMESPACES;
 
-	event->namespaces.header.size = (माप(event->namespaces) +
-			(NR_NAMESPACES * माप(काष्ठा perf_ns_link_info)) +
+	event->namespaces.header.size = (sizeof(event->namespaces) +
+			(NR_NAMESPACES * sizeof(struct perf_ns_link_info)) +
 			machine->id_hdr_size);
 
-	अगर (perf_tool__process_synth_event(tool, event, machine, process) != 0)
-		वापस -1;
+	if (perf_tool__process_synth_event(tool, event, machine, process) != 0)
+		return -1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक perf_event__synthesize_विभाजन(काष्ठा perf_tool *tool,
-				       जोड़ perf_event *event,
+static int perf_event__synthesize_fork(struct perf_tool *tool,
+				       union perf_event *event,
 				       pid_t pid, pid_t tgid, pid_t ppid,
 				       perf_event__handler_t process,
-				       काष्ठा machine *machine)
-अणु
-	स_रखो(&event->विभाजन, 0, माप(event->विभाजन) + machine->id_hdr_size);
+				       struct machine *machine)
+{
+	memset(&event->fork, 0, sizeof(event->fork) + machine->id_hdr_size);
 
 	/*
-	 * क्रम मुख्य thपढ़ो set parent to ppid from status file. For other
-	 * thपढ़ोs set parent pid to मुख्य thपढ़ो. ie., assume मुख्य thपढ़ो
-	 * spawns all thपढ़ोs in a process
+	 * for main thread set parent to ppid from status file. For other
+	 * threads set parent pid to main thread. ie., assume main thread
+	 * spawns all threads in a process
 	*/
-	अगर (tgid == pid) अणु
-		event->विभाजन.ppid = ppid;
-		event->विभाजन.ptid = ppid;
-	पूर्ण अन्यथा अणु
-		event->विभाजन.ppid = tgid;
-		event->विभाजन.ptid = tgid;
-	पूर्ण
-	event->विभाजन.pid  = tgid;
-	event->विभाजन.tid  = pid;
-	event->विभाजन.header.type = PERF_RECORD_FORK;
-	event->विभाजन.header.misc = PERF_RECORD_MISC_FORK_EXEC;
+	if (tgid == pid) {
+		event->fork.ppid = ppid;
+		event->fork.ptid = ppid;
+	} else {
+		event->fork.ppid = tgid;
+		event->fork.ptid = tgid;
+	}
+	event->fork.pid  = tgid;
+	event->fork.tid  = pid;
+	event->fork.header.type = PERF_RECORD_FORK;
+	event->fork.header.misc = PERF_RECORD_MISC_FORK_EXEC;
 
-	event->विभाजन.header.size = (माप(event->विभाजन) + machine->id_hdr_size);
+	event->fork.header.size = (sizeof(event->fork) + machine->id_hdr_size);
 
-	अगर (perf_tool__process_synth_event(tool, event, machine, process) != 0)
-		वापस -1;
+	if (perf_tool__process_synth_event(tool, event, machine, process) != 0)
+		return -1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल bool पढ़ो_proc_maps_line(काष्ठा io *io, __u64 *start, __u64 *end,
+static bool read_proc_maps_line(struct io *io, __u64 *start, __u64 *end,
 				u32 *prot, u32 *flags, __u64 *offset,
 				u32 *maj, u32 *min,
 				__u64 *inode,
-				sमाप_प्रकार pathname_size, अक्षर *pathname)
-अणु
+				ssize_t pathname_size, char *pathname)
+{
 	__u64 temp;
-	पूर्णांक ch;
-	अक्षर *start_pathname = pathname;
+	int ch;
+	char *start_pathname = pathname;
 
-	अगर (io__get_hex(io, start) != '-')
-		वापस false;
-	अगर (io__get_hex(io, end) != ' ')
-		वापस false;
+	if (io__get_hex(io, start) != '-')
+		return false;
+	if (io__get_hex(io, end) != ' ')
+		return false;
 
 	/* map protection and flags bits */
 	*prot = 0;
-	ch = io__get_अक्षर(io);
-	अगर (ch == 'r')
+	ch = io__get_char(io);
+	if (ch == 'r')
 		*prot |= PROT_READ;
-	अन्यथा अगर (ch != '-')
-		वापस false;
-	ch = io__get_अक्षर(io);
-	अगर (ch == 'w')
+	else if (ch != '-')
+		return false;
+	ch = io__get_char(io);
+	if (ch == 'w')
 		*prot |= PROT_WRITE;
-	अन्यथा अगर (ch != '-')
-		वापस false;
-	ch = io__get_अक्षर(io);
-	अगर (ch == 'x')
+	else if (ch != '-')
+		return false;
+	ch = io__get_char(io);
+	if (ch == 'x')
 		*prot |= PROT_EXEC;
-	अन्यथा अगर (ch != '-')
-		वापस false;
-	ch = io__get_अक्षर(io);
-	अगर (ch == 's')
+	else if (ch != '-')
+		return false;
+	ch = io__get_char(io);
+	if (ch == 's')
 		*flags = MAP_SHARED;
-	अन्यथा अगर (ch == 'p')
+	else if (ch == 'p')
 		*flags = MAP_PRIVATE;
-	अन्यथा
-		वापस false;
-	अगर (io__get_अक्षर(io) != ' ')
-		वापस false;
+	else
+		return false;
+	if (io__get_char(io) != ' ')
+		return false;
 
-	अगर (io__get_hex(io, offset) != ' ')
-		वापस false;
+	if (io__get_hex(io, offset) != ' ')
+		return false;
 
-	अगर (io__get_hex(io, &temp) != ':')
-		वापस false;
+	if (io__get_hex(io, &temp) != ':')
+		return false;
 	*maj = temp;
-	अगर (io__get_hex(io, &temp) != ' ')
-		वापस false;
+	if (io__get_hex(io, &temp) != ' ')
+		return false;
 	*min = temp;
 
 	ch = io__get_dec(io, inode);
-	अगर (ch != ' ') अणु
+	if (ch != ' ') {
 		*pathname = '\0';
-		वापस ch == '\n';
-	पूर्ण
-	करो अणु
-		ch = io__get_अक्षर(io);
-	पूर्ण जबतक (ch == ' ');
-	जबतक (true) अणु
-		अगर (ch < 0)
-			वापस false;
-		अगर (ch == '\0' || ch == '\n' ||
-		    (pathname + 1 - start_pathname) >= pathname_size) अणु
+		return ch == '\n';
+	}
+	do {
+		ch = io__get_char(io);
+	} while (ch == ' ');
+	while (true) {
+		if (ch < 0)
+			return false;
+		if (ch == '\0' || ch == '\n' ||
+		    (pathname + 1 - start_pathname) >= pathname_size) {
 			*pathname = '\0';
-			वापस true;
-		पूर्ण
+			return true;
+		}
 		*pathname++ = ch;
-		ch = io__get_अक्षर(io);
-	पूर्ण
-पूर्ण
+		ch = io__get_char(io);
+	}
+}
 
-अटल व्योम perf_record_mmap2__पढ़ो_build_id(काष्ठा perf_record_mmap2 *event,
+static void perf_record_mmap2__read_build_id(struct perf_record_mmap2 *event,
 					     bool is_kernel)
-अणु
-	काष्ठा build_id bid;
-	पूर्णांक rc;
+{
+	struct build_id bid;
+	int rc;
 
-	अगर (is_kernel)
-		rc = sysfs__पढ़ो_build_id("/sys/kernel/notes", &bid);
-	अन्यथा
-		rc = filename__पढ़ो_build_id(event->filename, &bid) > 0 ? 0 : -1;
+	if (is_kernel)
+		rc = sysfs__read_build_id("/sys/kernel/notes", &bid);
+	else
+		rc = filename__read_build_id(event->filename, &bid) > 0 ? 0 : -1;
 
-	अगर (rc == 0) अणु
-		स_नकल(event->build_id, bid.data, माप(bid.data));
+	if (rc == 0) {
+		memcpy(event->build_id, bid.data, sizeof(bid.data));
 		event->build_id_size = (u8) bid.size;
 		event->header.misc |= PERF_RECORD_MISC_MMAP_BUILD_ID;
 		event->__reserved_1 = 0;
 		event->__reserved_2 = 0;
-	पूर्ण अन्यथा अणु
-		अगर (event->filename[0] == '/') अणु
+	} else {
+		if (event->filename[0] == '/') {
 			pr_debug2("Failed to read build ID for %s\n",
 				  event->filename);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-पूर्णांक perf_event__synthesize_mmap_events(काष्ठा perf_tool *tool,
-				       जोड़ perf_event *event,
+int perf_event__synthesize_mmap_events(struct perf_tool *tool,
+				       union perf_event *event,
 				       pid_t pid, pid_t tgid,
 				       perf_event__handler_t process,
-				       काष्ठा machine *machine,
+				       struct machine *machine,
 				       bool mmap_data)
-अणु
-	अचिन्हित दीर्घ दीर्घ t;
-	अक्षर bf[बफ_मान];
-	काष्ठा io io;
+{
+	unsigned long long t;
+	char bf[BUFSIZ];
+	struct io io;
 	bool truncation = false;
-	अचिन्हित दीर्घ दीर्घ समयout = proc_map_समयout * 1000000ULL;
-	पूर्णांक rc = 0;
-	स्थिर अक्षर *hugetlbfs_mnt = hugetlbfs__mountpoपूर्णांक();
-	पूर्णांक hugetlbfs_mnt_len = hugetlbfs_mnt ? म_माप(hugetlbfs_mnt) : 0;
+	unsigned long long timeout = proc_map_timeout * 1000000ULL;
+	int rc = 0;
+	const char *hugetlbfs_mnt = hugetlbfs__mountpoint();
+	int hugetlbfs_mnt_len = hugetlbfs_mnt ? strlen(hugetlbfs_mnt) : 0;
 
-	अगर (machine__is_शेष_guest(machine))
-		वापस 0;
+	if (machine__is_default_guest(machine))
+		return 0;
 
-	snम_लिखो(bf, माप(bf), "%s/proc/%d/task/%d/maps",
+	snprintf(bf, sizeof(bf), "%s/proc/%d/task/%d/maps",
 		machine->root_dir, pid, pid);
 
-	io.fd = खोलो(bf, O_RDONLY, 0);
-	अगर (io.fd < 0) अणु
+	io.fd = open(bf, O_RDONLY, 0);
+	if (io.fd < 0) {
 		/*
-		 * We raced with a task निकासing - just वापस:
+		 * We raced with a task exiting - just return:
 		 */
 		pr_debug("couldn't open %s\n", bf);
-		वापस -1;
-	पूर्ण
-	io__init(&io, io.fd, bf, माप(bf));
+		return -1;
+	}
+	io__init(&io, io.fd, bf, sizeof(bf));
 
 	event->header.type = PERF_RECORD_MMAP2;
-	t = rdघड़ी();
+	t = rdclock();
 
-	जबतक (!io.eof) अणु
-		अटल स्थिर अक्षर anonstr[] = "//anon";
-		माप_प्रकार size, aligned_size;
+	while (!io.eof) {
+		static const char anonstr[] = "//anon";
+		size_t size, aligned_size;
 
 		/* ensure null termination since stack will be reused. */
 		event->mmap2.filename[0] = '\0';
 
 		/* 00400000-0040c000 r-xp 00000000 fd:01 41038  /bin/cat */
-		अगर (!पढ़ो_proc_maps_line(&io,
+		if (!read_proc_maps_line(&io,
 					&event->mmap2.start,
 					&event->mmap2.len,
 					&event->mmap2.prot,
@@ -440,791 +439,791 @@ pid_t perf_event__synthesize_comm(काष्ठा perf_tool *tool,
 					&event->mmap2.maj,
 					&event->mmap2.min,
 					&event->mmap2.ino,
-					माप(event->mmap2.filename),
+					sizeof(event->mmap2.filename),
 					event->mmap2.filename))
-			जारी;
+			continue;
 
-		अगर ((rdघड़ी() - t) > समयout) अणु
+		if ((rdclock() - t) > timeout) {
 			pr_warning("Reading %s/proc/%d/task/%d/maps time out. "
 				   "You may want to increase "
 				   "the time limit by --proc-map-timeout\n",
 				   machine->root_dir, pid, pid);
 			truncation = true;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		event->mmap2.ino_generation = 0;
 
 		/*
 		 * Just like the kernel, see __perf_event_mmap in kernel/perf_event.c
 		 */
-		अगर (machine__is_host(machine))
+		if (machine__is_host(machine))
 			event->header.misc = PERF_RECORD_MISC_USER;
-		अन्यथा
+		else
 			event->header.misc = PERF_RECORD_MISC_GUEST_USER;
 
-		अगर ((event->mmap2.prot & PROT_EXEC) == 0) अणु
-			अगर (!mmap_data || (event->mmap2.prot & PROT_READ) == 0)
-				जारी;
+		if ((event->mmap2.prot & PROT_EXEC) == 0) {
+			if (!mmap_data || (event->mmap2.prot & PROT_READ) == 0)
+				continue;
 
 			event->header.misc |= PERF_RECORD_MISC_MMAP_DATA;
-		पूर्ण
+		}
 
 out:
-		अगर (truncation)
+		if (truncation)
 			event->header.misc |= PERF_RECORD_MISC_PROC_MAP_PARSE_TIMEOUT;
 
-		अगर (!म_भेद(event->mmap2.filename, ""))
-			म_नकल(event->mmap2.filename, anonstr);
+		if (!strcmp(event->mmap2.filename, ""))
+			strcpy(event->mmap2.filename, anonstr);
 
-		अगर (hugetlbfs_mnt_len &&
-		    !म_भेदन(event->mmap2.filename, hugetlbfs_mnt,
-			     hugetlbfs_mnt_len)) अणु
-			म_नकल(event->mmap2.filename, anonstr);
+		if (hugetlbfs_mnt_len &&
+		    !strncmp(event->mmap2.filename, hugetlbfs_mnt,
+			     hugetlbfs_mnt_len)) {
+			strcpy(event->mmap2.filename, anonstr);
 			event->mmap2.flags |= MAP_HUGETLB;
-		पूर्ण
+		}
 
-		size = म_माप(event->mmap2.filename) + 1;
-		aligned_size = PERF_ALIGN(size, माप(u64));
+		size = strlen(event->mmap2.filename) + 1;
+		aligned_size = PERF_ALIGN(size, sizeof(u64));
 		event->mmap2.len -= event->mmap.start;
-		event->mmap2.header.size = (माप(event->mmap2) -
-					(माप(event->mmap2.filename) - aligned_size));
-		स_रखो(event->mmap2.filename + size, 0, machine->id_hdr_size +
+		event->mmap2.header.size = (sizeof(event->mmap2) -
+					(sizeof(event->mmap2.filename) - aligned_size));
+		memset(event->mmap2.filename + size, 0, machine->id_hdr_size +
 			(aligned_size - size));
 		event->mmap2.header.size += machine->id_hdr_size;
 		event->mmap2.pid = tgid;
 		event->mmap2.tid = pid;
 
-		अगर (symbol_conf.buildid_mmap2)
-			perf_record_mmap2__पढ़ो_build_id(&event->mmap2, false);
+		if (symbol_conf.buildid_mmap2)
+			perf_record_mmap2__read_build_id(&event->mmap2, false);
 
-		अगर (perf_tool__process_synth_event(tool, event, machine, process) != 0) अणु
+		if (perf_tool__process_synth_event(tool, event, machine, process) != 0) {
 			rc = -1;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (truncation)
-			अवरोध;
-	पूर्ण
+		if (truncation)
+			break;
+	}
 
-	बंद(io.fd);
-	वापस rc;
-पूर्ण
+	close(io.fd);
+	return rc;
+}
 
-#अगर_घोषित HAVE_खाता_HANDLE
-अटल पूर्णांक perf_event__synthesize_cgroup(काष्ठा perf_tool *tool,
-					 जोड़ perf_event *event,
-					 अक्षर *path, माप_प्रकार mount_len,
+#ifdef HAVE_FILE_HANDLE
+static int perf_event__synthesize_cgroup(struct perf_tool *tool,
+					 union perf_event *event,
+					 char *path, size_t mount_len,
 					 perf_event__handler_t process,
-					 काष्ठा machine *machine)
-अणु
-	माप_प्रकार event_size = माप(event->cgroup) - माप(event->cgroup.path);
-	माप_प्रकार path_len = म_माप(path) - mount_len + 1;
-	काष्ठा अणु
-		काष्ठा file_handle fh;
-		uपूर्णांक64_t cgroup_id;
-	पूर्ण handle;
-	पूर्णांक mount_id;
+					 struct machine *machine)
+{
+	size_t event_size = sizeof(event->cgroup) - sizeof(event->cgroup.path);
+	size_t path_len = strlen(path) - mount_len + 1;
+	struct {
+		struct file_handle fh;
+		uint64_t cgroup_id;
+	} handle;
+	int mount_id;
 
-	जबतक (path_len % माप(u64))
+	while (path_len % sizeof(u64))
 		path[mount_len + path_len++] = '\0';
 
-	स_रखो(&event->cgroup, 0, event_size);
+	memset(&event->cgroup, 0, event_size);
 
 	event->cgroup.header.type = PERF_RECORD_CGROUP;
 	event->cgroup.header.size = event_size + path_len + machine->id_hdr_size;
 
-	handle.fh.handle_bytes = माप(handle.cgroup_id);
-	अगर (name_to_handle_at(AT_FDCWD, path, &handle.fh, &mount_id, 0) < 0) अणु
+	handle.fh.handle_bytes = sizeof(handle.cgroup_id);
+	if (name_to_handle_at(AT_FDCWD, path, &handle.fh, &mount_id, 0) < 0) {
 		pr_debug("stat failed: %s\n", path);
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
 	event->cgroup.id = handle.cgroup_id;
-	म_नकलन(event->cgroup.path, path + mount_len, path_len);
-	स_रखो(event->cgroup.path + path_len, 0, machine->id_hdr_size);
+	strncpy(event->cgroup.path, path + mount_len, path_len);
+	memset(event->cgroup.path + path_len, 0, machine->id_hdr_size);
 
-	अगर (perf_tool__process_synth_event(tool, event, machine, process) < 0) अणु
+	if (perf_tool__process_synth_event(tool, event, machine, process) < 0) {
 		pr_debug("process synth event failed\n");
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक perf_event__walk_cgroup_tree(काष्ठा perf_tool *tool,
-					जोड़ perf_event *event,
-					अक्षर *path, माप_प्रकार mount_len,
+static int perf_event__walk_cgroup_tree(struct perf_tool *tool,
+					union perf_event *event,
+					char *path, size_t mount_len,
 					perf_event__handler_t process,
-					काष्ठा machine *machine)
-अणु
-	माप_प्रकार pos = म_माप(path);
-	सूची *d;
-	काष्ठा dirent *dent;
-	पूर्णांक ret = 0;
+					struct machine *machine)
+{
+	size_t pos = strlen(path);
+	DIR *d;
+	struct dirent *dent;
+	int ret = 0;
 
-	अगर (perf_event__synthesize_cgroup(tool, event, path, mount_len,
+	if (perf_event__synthesize_cgroup(tool, event, path, mount_len,
 					  process, machine) < 0)
-		वापस -1;
+		return -1;
 
-	d = सूची_खोलो(path);
-	अगर (d == शून्य) अणु
+	d = opendir(path);
+	if (d == NULL) {
 		pr_debug("failed to open directory: %s\n", path);
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	जबतक ((dent = सूची_पढ़ो(d)) != शून्य) अणु
-		अगर (dent->d_type != DT_सूची)
-			जारी;
-		अगर (!म_भेद(dent->d_name, ".") ||
-		    !म_भेद(dent->d_name, ".."))
-			जारी;
+	while ((dent = readdir(d)) != NULL) {
+		if (dent->d_type != DT_DIR)
+			continue;
+		if (!strcmp(dent->d_name, ".") ||
+		    !strcmp(dent->d_name, ".."))
+			continue;
 
 		/* any sane path should be less than PATH_MAX */
-		अगर (म_माप(path) + म_माप(dent->d_name) + 1 >= PATH_MAX)
-			जारी;
+		if (strlen(path) + strlen(dent->d_name) + 1 >= PATH_MAX)
+			continue;
 
-		अगर (path[pos - 1] != '/')
-			म_जोड़ो(path, "/");
-		म_जोड़ो(path, dent->d_name);
+		if (path[pos - 1] != '/')
+			strcat(path, "/");
+		strcat(path, dent->d_name);
 
 		ret = perf_event__walk_cgroup_tree(tool, event, path,
 						   mount_len, process, machine);
-		अगर (ret < 0)
-			अवरोध;
+		if (ret < 0)
+			break;
 
 		path[pos] = '\0';
-	पूर्ण
+	}
 
-	बंद_सूची(d);
-	वापस ret;
-पूर्ण
+	closedir(d);
+	return ret;
+}
 
-पूर्णांक perf_event__synthesize_cgroups(काष्ठा perf_tool *tool,
+int perf_event__synthesize_cgroups(struct perf_tool *tool,
 				   perf_event__handler_t process,
-				   काष्ठा machine *machine)
-अणु
-	जोड़ perf_event event;
-	अक्षर cgrp_root[PATH_MAX];
-	माप_प्रकार mount_len;  /* length of mount poपूर्णांक in the path */
+				   struct machine *machine)
+{
+	union perf_event event;
+	char cgrp_root[PATH_MAX];
+	size_t mount_len;  /* length of mount point in the path */
 
-	अगर (!tool || !tool->cgroup_events)
-		वापस 0;
+	if (!tool || !tool->cgroup_events)
+		return 0;
 
-	अगर (cgroupfs_find_mountpoपूर्णांक(cgrp_root, PATH_MAX, "perf_event") < 0) अणु
+	if (cgroupfs_find_mountpoint(cgrp_root, PATH_MAX, "perf_event") < 0) {
 		pr_debug("cannot find cgroup mount point\n");
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	mount_len = म_माप(cgrp_root);
-	/* make sure the path starts with a slash (after mount poपूर्णांक) */
-	म_जोड़ो(cgrp_root, "/");
+	mount_len = strlen(cgrp_root);
+	/* make sure the path starts with a slash (after mount point) */
+	strcat(cgrp_root, "/");
 
-	अगर (perf_event__walk_cgroup_tree(tool, &event, cgrp_root, mount_len,
+	if (perf_event__walk_cgroup_tree(tool, &event, cgrp_root, mount_len,
 					 process, machine) < 0)
-		वापस -1;
+		return -1;
 
-	वापस 0;
-पूर्ण
-#अन्यथा
-पूर्णांक perf_event__synthesize_cgroups(काष्ठा perf_tool *tool __maybe_unused,
+	return 0;
+}
+#else
+int perf_event__synthesize_cgroups(struct perf_tool *tool __maybe_unused,
 				   perf_event__handler_t process __maybe_unused,
-				   काष्ठा machine *machine __maybe_unused)
-अणु
-	वापस -1;
-पूर्ण
-#पूर्ण_अगर
+				   struct machine *machine __maybe_unused)
+{
+	return -1;
+}
+#endif
 
-पूर्णांक perf_event__synthesize_modules(काष्ठा perf_tool *tool, perf_event__handler_t process,
-				   काष्ठा machine *machine)
-अणु
-	पूर्णांक rc = 0;
-	काष्ठा map *pos;
-	काष्ठा maps *maps = machine__kernel_maps(machine);
-	जोड़ perf_event *event;
-	माप_प्रकार size = symbol_conf.buildid_mmap2 ?
-			माप(event->mmap2) : माप(event->mmap);
+int perf_event__synthesize_modules(struct perf_tool *tool, perf_event__handler_t process,
+				   struct machine *machine)
+{
+	int rc = 0;
+	struct map *pos;
+	struct maps *maps = machine__kernel_maps(machine);
+	union perf_event *event;
+	size_t size = symbol_conf.buildid_mmap2 ?
+			sizeof(event->mmap2) : sizeof(event->mmap);
 
 	event = zalloc(size + machine->id_hdr_size);
-	अगर (event == शून्य) अणु
+	if (event == NULL) {
 		pr_debug("Not enough memory synthesizing mmap event "
 			 "for kernel modules\n");
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
 	/*
-	 * kernel uses 0 क्रम user space maps, see kernel/perf_event.c
+	 * kernel uses 0 for user space maps, see kernel/perf_event.c
 	 * __perf_event_mmap
 	 */
-	अगर (machine__is_host(machine))
+	if (machine__is_host(machine))
 		event->header.misc = PERF_RECORD_MISC_KERNEL;
-	अन्यथा
+	else
 		event->header.misc = PERF_RECORD_MISC_GUEST_KERNEL;
 
-	maps__क्रम_each_entry(maps, pos) अणु
-		अगर (!__map__is_kmodule(pos))
-			जारी;
+	maps__for_each_entry(maps, pos) {
+		if (!__map__is_kmodule(pos))
+			continue;
 
-		अगर (symbol_conf.buildid_mmap2) अणु
-			size = PERF_ALIGN(pos->dso->दीर्घ_name_len + 1, माप(u64));
+		if (symbol_conf.buildid_mmap2) {
+			size = PERF_ALIGN(pos->dso->long_name_len + 1, sizeof(u64));
 			event->mmap2.header.type = PERF_RECORD_MMAP2;
-			event->mmap2.header.size = (माप(event->mmap2) -
-						(माप(event->mmap2.filename) - size));
-			स_रखो(event->mmap2.filename + size, 0, machine->id_hdr_size);
+			event->mmap2.header.size = (sizeof(event->mmap2) -
+						(sizeof(event->mmap2.filename) - size));
+			memset(event->mmap2.filename + size, 0, machine->id_hdr_size);
 			event->mmap2.header.size += machine->id_hdr_size;
 			event->mmap2.start = pos->start;
 			event->mmap2.len   = pos->end - pos->start;
 			event->mmap2.pid   = machine->pid;
 
-			स_नकल(event->mmap2.filename, pos->dso->दीर्घ_name,
-			       pos->dso->दीर्घ_name_len + 1);
+			memcpy(event->mmap2.filename, pos->dso->long_name,
+			       pos->dso->long_name_len + 1);
 
-			perf_record_mmap2__पढ़ो_build_id(&event->mmap2, false);
-		पूर्ण अन्यथा अणु
-			size = PERF_ALIGN(pos->dso->दीर्घ_name_len + 1, माप(u64));
+			perf_record_mmap2__read_build_id(&event->mmap2, false);
+		} else {
+			size = PERF_ALIGN(pos->dso->long_name_len + 1, sizeof(u64));
 			event->mmap.header.type = PERF_RECORD_MMAP;
-			event->mmap.header.size = (माप(event->mmap) -
-						(माप(event->mmap.filename) - size));
-			स_रखो(event->mmap.filename + size, 0, machine->id_hdr_size);
+			event->mmap.header.size = (sizeof(event->mmap) -
+						(sizeof(event->mmap.filename) - size));
+			memset(event->mmap.filename + size, 0, machine->id_hdr_size);
 			event->mmap.header.size += machine->id_hdr_size;
 			event->mmap.start = pos->start;
 			event->mmap.len   = pos->end - pos->start;
 			event->mmap.pid   = machine->pid;
 
-			स_नकल(event->mmap.filename, pos->dso->दीर्घ_name,
-			       pos->dso->दीर्घ_name_len + 1);
-		पूर्ण
+			memcpy(event->mmap.filename, pos->dso->long_name,
+			       pos->dso->long_name_len + 1);
+		}
 
-		अगर (perf_tool__process_synth_event(tool, event, machine, process) != 0) अणु
+		if (perf_tool__process_synth_event(tool, event, machine, process) != 0) {
 			rc = -1;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	मुक्त(event);
-	वापस rc;
-पूर्ण
+	free(event);
+	return rc;
+}
 
-अटल पूर्णांक filter_task(स्थिर काष्ठा dirent *dirent)
-अणु
-	वापस है_अंक(dirent->d_name[0]);
-पूर्ण
+static int filter_task(const struct dirent *dirent)
+{
+	return isdigit(dirent->d_name[0]);
+}
 
-अटल पूर्णांक __event__syntheमाप_प्रकारhपढ़ो(जोड़ perf_event *comm_event,
-				      जोड़ perf_event *mmap_event,
-				      जोड़ perf_event *विभाजन_event,
-				      जोड़ perf_event *namespaces_event,
-				      pid_t pid, पूर्णांक full, perf_event__handler_t process,
-				      काष्ठा perf_tool *tool, काष्ठा machine *machine, bool mmap_data)
-अणु
-	अक्षर filename[PATH_MAX];
-	काष्ठा dirent **dirent;
+static int __event__synthesize_thread(union perf_event *comm_event,
+				      union perf_event *mmap_event,
+				      union perf_event *fork_event,
+				      union perf_event *namespaces_event,
+				      pid_t pid, int full, perf_event__handler_t process,
+				      struct perf_tool *tool, struct machine *machine, bool mmap_data)
+{
+	char filename[PATH_MAX];
+	struct dirent **dirent;
 	pid_t tgid, ppid;
-	पूर्णांक rc = 0;
-	पूर्णांक i, n;
+	int rc = 0;
+	int i, n;
 
-	/* special हाल: only send one comm event using passed in pid */
-	अगर (!full) अणु
+	/* special case: only send one comm event using passed in pid */
+	if (!full) {
 		tgid = perf_event__synthesize_comm(tool, comm_event, pid,
 						   process, machine);
 
-		अगर (tgid == -1)
-			वापस -1;
+		if (tgid == -1)
+			return -1;
 
-		अगर (perf_event__synthesize_namespaces(tool, namespaces_event, pid,
+		if (perf_event__synthesize_namespaces(tool, namespaces_event, pid,
 						      tgid, process, machine) < 0)
-			वापस -1;
+			return -1;
 
 		/*
-		 * send mmap only क्रम thपढ़ो group leader
-		 * see thपढ़ो__init_maps()
+		 * send mmap only for thread group leader
+		 * see thread__init_maps()
 		 */
-		अगर (pid == tgid &&
+		if (pid == tgid &&
 		    perf_event__synthesize_mmap_events(tool, mmap_event, pid, tgid,
 						       process, machine, mmap_data))
-			वापस -1;
+			return -1;
 
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (machine__is_शेष_guest(machine))
-		वापस 0;
+	if (machine__is_default_guest(machine))
+		return 0;
 
-	snम_लिखो(filename, माप(filename), "%s/proc/%d/task",
+	snprintf(filename, sizeof(filename), "%s/proc/%d/task",
 		 machine->root_dir, pid);
 
 	n = scandir(filename, &dirent, filter_task, alphasort);
-	अगर (n < 0)
-		वापस n;
+	if (n < 0)
+		return n;
 
-	क्रम (i = 0; i < n; i++) अणु
-		अक्षर *end;
+	for (i = 0; i < n; i++) {
+		char *end;
 		pid_t _pid;
-		bool kernel_thपढ़ो = false;
+		bool kernel_thread = false;
 
-		_pid = म_से_दीर्घ(dirent[i]->d_name, &end, 10);
-		अगर (*end)
-			जारी;
+		_pid = strtol(dirent[i]->d_name, &end, 10);
+		if (*end)
+			continue;
 
 		rc = -1;
-		अगर (perf_event__prepare_comm(comm_event, pid, _pid, machine,
-					     &tgid, &ppid, &kernel_thपढ़ो) != 0)
-			अवरोध;
+		if (perf_event__prepare_comm(comm_event, pid, _pid, machine,
+					     &tgid, &ppid, &kernel_thread) != 0)
+			break;
 
-		अगर (perf_event__synthesize_विभाजन(tool, विभाजन_event, _pid, tgid,
+		if (perf_event__synthesize_fork(tool, fork_event, _pid, tgid,
 						ppid, process, machine) < 0)
-			अवरोध;
+			break;
 
-		अगर (perf_event__synthesize_namespaces(tool, namespaces_event, _pid,
+		if (perf_event__synthesize_namespaces(tool, namespaces_event, _pid,
 						      tgid, process, machine) < 0)
-			अवरोध;
+			break;
 
 		/*
 		 * Send the prepared comm event
 		 */
-		अगर (perf_tool__process_synth_event(tool, comm_event, machine, process) != 0)
-			अवरोध;
+		if (perf_tool__process_synth_event(tool, comm_event, machine, process) != 0)
+			break;
 
 		rc = 0;
-		अगर (_pid == pid && !kernel_thपढ़ो) अणु
+		if (_pid == pid && !kernel_thread) {
 			/* process the parent's maps too */
 			rc = perf_event__synthesize_mmap_events(tool, mmap_event, pid, tgid,
 						process, machine, mmap_data);
-			अगर (rc)
-				अवरोध;
-		पूर्ण
-	पूर्ण
+			if (rc)
+				break;
+		}
+	}
 
-	क्रम (i = 0; i < n; i++)
-		zमुक्त(&dirent[i]);
-	मुक्त(dirent);
+	for (i = 0; i < n; i++)
+		zfree(&dirent[i]);
+	free(dirent);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-पूर्णांक perf_event__syntheमाप_प्रकारhपढ़ो_map(काष्ठा perf_tool *tool,
-				      काष्ठा perf_thपढ़ो_map *thपढ़ोs,
+int perf_event__synthesize_thread_map(struct perf_tool *tool,
+				      struct perf_thread_map *threads,
 				      perf_event__handler_t process,
-				      काष्ठा machine *machine,
+				      struct machine *machine,
 				      bool mmap_data)
-अणु
-	जोड़ perf_event *comm_event, *mmap_event, *विभाजन_event;
-	जोड़ perf_event *namespaces_event;
-	पूर्णांक err = -1, thपढ़ो, j;
+{
+	union perf_event *comm_event, *mmap_event, *fork_event;
+	union perf_event *namespaces_event;
+	int err = -1, thread, j;
 
-	comm_event = दो_स्मृति(माप(comm_event->comm) + machine->id_hdr_size);
-	अगर (comm_event == शून्य)
-		जाओ out;
+	comm_event = malloc(sizeof(comm_event->comm) + machine->id_hdr_size);
+	if (comm_event == NULL)
+		goto out;
 
-	mmap_event = दो_स्मृति(माप(mmap_event->mmap2) + machine->id_hdr_size);
-	अगर (mmap_event == शून्य)
-		जाओ out_मुक्त_comm;
+	mmap_event = malloc(sizeof(mmap_event->mmap2) + machine->id_hdr_size);
+	if (mmap_event == NULL)
+		goto out_free_comm;
 
-	विभाजन_event = दो_स्मृति(माप(विभाजन_event->विभाजन) + machine->id_hdr_size);
-	अगर (विभाजन_event == शून्य)
-		जाओ out_मुक्त_mmap;
+	fork_event = malloc(sizeof(fork_event->fork) + machine->id_hdr_size);
+	if (fork_event == NULL)
+		goto out_free_mmap;
 
-	namespaces_event = दो_स्मृति(माप(namespaces_event->namespaces) +
-				  (NR_NAMESPACES * माप(काष्ठा perf_ns_link_info)) +
+	namespaces_event = malloc(sizeof(namespaces_event->namespaces) +
+				  (NR_NAMESPACES * sizeof(struct perf_ns_link_info)) +
 				  machine->id_hdr_size);
-	अगर (namespaces_event == शून्य)
-		जाओ out_मुक्त_विभाजन;
+	if (namespaces_event == NULL)
+		goto out_free_fork;
 
 	err = 0;
-	क्रम (thपढ़ो = 0; thपढ़ो < thपढ़ोs->nr; ++thपढ़ो) अणु
-		अगर (__event__syntheमाप_प्रकारhपढ़ो(comm_event, mmap_event,
-					       विभाजन_event, namespaces_event,
-					       perf_thपढ़ो_map__pid(thपढ़ोs, thपढ़ो), 0,
+	for (thread = 0; thread < threads->nr; ++thread) {
+		if (__event__synthesize_thread(comm_event, mmap_event,
+					       fork_event, namespaces_event,
+					       perf_thread_map__pid(threads, thread), 0,
 					       process, tool, machine,
-					       mmap_data)) अणु
+					       mmap_data)) {
 			err = -1;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		/*
-		 * comm.pid is set to thपढ़ो group id by
+		 * comm.pid is set to thread group id by
 		 * perf_event__synthesize_comm
 		 */
-		अगर ((पूर्णांक) comm_event->comm.pid != perf_thपढ़ो_map__pid(thपढ़ोs, thपढ़ो)) अणु
+		if ((int) comm_event->comm.pid != perf_thread_map__pid(threads, thread)) {
 			bool need_leader = true;
 
-			/* is thपढ़ो group leader in thपढ़ो_map? */
-			क्रम (j = 0; j < thपढ़ोs->nr; ++j) अणु
-				अगर ((पूर्णांक) comm_event->comm.pid == perf_thपढ़ो_map__pid(thपढ़ोs, j)) अणु
+			/* is thread group leader in thread_map? */
+			for (j = 0; j < threads->nr; ++j) {
+				if ((int) comm_event->comm.pid == perf_thread_map__pid(threads, j)) {
 					need_leader = false;
-					अवरोध;
-				पूर्ण
-			पूर्ण
+					break;
+				}
+			}
 
-			/* अगर not, generate events क्रम it */
-			अगर (need_leader &&
-			    __event__syntheमाप_प्रकारhपढ़ो(comm_event, mmap_event,
-						       विभाजन_event, namespaces_event,
+			/* if not, generate events for it */
+			if (need_leader &&
+			    __event__synthesize_thread(comm_event, mmap_event,
+						       fork_event, namespaces_event,
 						       comm_event->comm.pid, 0,
 						       process, tool, machine,
-						       mmap_data)) अणु
+						       mmap_data)) {
 				err = -1;
-				अवरोध;
-			पूर्ण
-		पूर्ण
-	पूर्ण
-	मुक्त(namespaces_event);
-out_मुक्त_विभाजन:
-	मुक्त(विभाजन_event);
-out_मुक्त_mmap:
-	मुक्त(mmap_event);
-out_मुक्त_comm:
-	मुक्त(comm_event);
+				break;
+			}
+		}
+	}
+	free(namespaces_event);
+out_free_fork:
+	free(fork_event);
+out_free_mmap:
+	free(mmap_event);
+out_free_comm:
+	free(comm_event);
 out:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक __perf_event__syntheमाप_प्रकारhपढ़ोs(काष्ठा perf_tool *tool,
+static int __perf_event__synthesize_threads(struct perf_tool *tool,
 					    perf_event__handler_t process,
-					    काष्ठा machine *machine,
+					    struct machine *machine,
 					    bool mmap_data,
-					    काष्ठा dirent **dirent,
-					    पूर्णांक start,
-					    पूर्णांक num)
-अणु
-	जोड़ perf_event *comm_event, *mmap_event, *विभाजन_event;
-	जोड़ perf_event *namespaces_event;
-	पूर्णांक err = -1;
-	अक्षर *end;
+					    struct dirent **dirent,
+					    int start,
+					    int num)
+{
+	union perf_event *comm_event, *mmap_event, *fork_event;
+	union perf_event *namespaces_event;
+	int err = -1;
+	char *end;
 	pid_t pid;
-	पूर्णांक i;
+	int i;
 
-	comm_event = दो_स्मृति(माप(comm_event->comm) + machine->id_hdr_size);
-	अगर (comm_event == शून्य)
-		जाओ out;
+	comm_event = malloc(sizeof(comm_event->comm) + machine->id_hdr_size);
+	if (comm_event == NULL)
+		goto out;
 
-	mmap_event = दो_स्मृति(माप(mmap_event->mmap2) + machine->id_hdr_size);
-	अगर (mmap_event == शून्य)
-		जाओ out_मुक्त_comm;
+	mmap_event = malloc(sizeof(mmap_event->mmap2) + machine->id_hdr_size);
+	if (mmap_event == NULL)
+		goto out_free_comm;
 
-	विभाजन_event = दो_स्मृति(माप(विभाजन_event->विभाजन) + machine->id_hdr_size);
-	अगर (विभाजन_event == शून्य)
-		जाओ out_मुक्त_mmap;
+	fork_event = malloc(sizeof(fork_event->fork) + machine->id_hdr_size);
+	if (fork_event == NULL)
+		goto out_free_mmap;
 
-	namespaces_event = दो_स्मृति(माप(namespaces_event->namespaces) +
-				  (NR_NAMESPACES * माप(काष्ठा perf_ns_link_info)) +
+	namespaces_event = malloc(sizeof(namespaces_event->namespaces) +
+				  (NR_NAMESPACES * sizeof(struct perf_ns_link_info)) +
 				  machine->id_hdr_size);
-	अगर (namespaces_event == शून्य)
-		जाओ out_मुक्त_विभाजन;
+	if (namespaces_event == NULL)
+		goto out_free_fork;
 
-	क्रम (i = start; i < start + num; i++) अणु
-		अगर (!है_अंक(dirent[i]->d_name[0]))
-			जारी;
+	for (i = start; i < start + num; i++) {
+		if (!isdigit(dirent[i]->d_name[0]))
+			continue;
 
-		pid = (pid_t)म_से_दीर्घ(dirent[i]->d_name, &end, 10);
-		/* only पूर्णांकerested in proper numerical dirents */
-		अगर (*end)
-			जारी;
+		pid = (pid_t)strtol(dirent[i]->d_name, &end, 10);
+		/* only interested in proper numerical dirents */
+		if (*end)
+			continue;
 		/*
-		 * We may race with निकासing thपढ़ो, so करोn't stop just because
-		 * one thपढ़ो couldn't be synthesized.
+		 * We may race with exiting thread, so don't stop just because
+		 * one thread couldn't be synthesized.
 		 */
-		__event__syntheमाप_प्रकारhपढ़ो(comm_event, mmap_event, विभाजन_event,
+		__event__synthesize_thread(comm_event, mmap_event, fork_event,
 					   namespaces_event, pid, 1, process,
 					   tool, machine, mmap_data);
-	पूर्ण
+	}
 	err = 0;
 
-	मुक्त(namespaces_event);
-out_मुक्त_विभाजन:
-	मुक्त(विभाजन_event);
-out_मुक्त_mmap:
-	मुक्त(mmap_event);
-out_मुक्त_comm:
-	मुक्त(comm_event);
+	free(namespaces_event);
+out_free_fork:
+	free(fork_event);
+out_free_mmap:
+	free(mmap_event);
+out_free_comm:
+	free(comm_event);
 out:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-काष्ठा syntheमाप_प्रकारhपढ़ोs_arg अणु
-	काष्ठा perf_tool *tool;
+struct synthesize_threads_arg {
+	struct perf_tool *tool;
 	perf_event__handler_t process;
-	काष्ठा machine *machine;
+	struct machine *machine;
 	bool mmap_data;
-	काष्ठा dirent **dirent;
-	पूर्णांक num;
-	पूर्णांक start;
-पूर्ण;
+	struct dirent **dirent;
+	int num;
+	int start;
+};
 
-अटल व्योम *syntheमाप_प्रकारhपढ़ोs_worker(व्योम *arg)
-अणु
-	काष्ठा syntheमाप_प्रकारhपढ़ोs_arg *args = arg;
+static void *synthesize_threads_worker(void *arg)
+{
+	struct synthesize_threads_arg *args = arg;
 
-	__perf_event__syntheमाप_प्रकारhपढ़ोs(args->tool, args->process,
+	__perf_event__synthesize_threads(args->tool, args->process,
 					 args->machine, args->mmap_data,
 					 args->dirent,
 					 args->start, args->num);
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-पूर्णांक perf_event__syntheमाप_प्रकारhपढ़ोs(काष्ठा perf_tool *tool,
+int perf_event__synthesize_threads(struct perf_tool *tool,
 				   perf_event__handler_t process,
-				   काष्ठा machine *machine,
+				   struct machine *machine,
 				   bool mmap_data,
-				   अचिन्हित पूर्णांक nr_thपढ़ोs_synthesize)
-अणु
-	काष्ठा syntheमाप_प्रकारhपढ़ोs_arg *args = शून्य;
-	pthपढ़ो_t *syntheमाप_प्रकारhपढ़ोs = शून्य;
-	अक्षर proc_path[PATH_MAX];
-	काष्ठा dirent **dirent;
-	पूर्णांक num_per_thपढ़ो;
-	पूर्णांक m, n, i, j;
-	पूर्णांक thपढ़ो_nr;
-	पूर्णांक base = 0;
-	पूर्णांक err = -1;
+				   unsigned int nr_threads_synthesize)
+{
+	struct synthesize_threads_arg *args = NULL;
+	pthread_t *synthesize_threads = NULL;
+	char proc_path[PATH_MAX];
+	struct dirent **dirent;
+	int num_per_thread;
+	int m, n, i, j;
+	int thread_nr;
+	int base = 0;
+	int err = -1;
 
 
-	अगर (machine__is_शेष_guest(machine))
-		वापस 0;
+	if (machine__is_default_guest(machine))
+		return 0;
 
-	snम_लिखो(proc_path, माप(proc_path), "%s/proc", machine->root_dir);
+	snprintf(proc_path, sizeof(proc_path), "%s/proc", machine->root_dir);
 	n = scandir(proc_path, &dirent, filter_task, alphasort);
-	अगर (n < 0)
-		वापस err;
+	if (n < 0)
+		return err;
 
-	अगर (nr_thपढ़ोs_synthesize == अच_पूर्णांक_उच्च)
-		thपढ़ो_nr = sysconf(_SC_NPROCESSORS_ONLN);
-	अन्यथा
-		thपढ़ो_nr = nr_thपढ़ोs_synthesize;
+	if (nr_threads_synthesize == UINT_MAX)
+		thread_nr = sysconf(_SC_NPROCESSORS_ONLN);
+	else
+		thread_nr = nr_threads_synthesize;
 
-	अगर (thपढ़ो_nr <= 1) अणु
-		err = __perf_event__syntheमाप_प्रकारhपढ़ोs(tool, process,
+	if (thread_nr <= 1) {
+		err = __perf_event__synthesize_threads(tool, process,
 						       machine, mmap_data,
 						       dirent, base, n);
-		जाओ मुक्त_dirent;
-	पूर्ण
-	अगर (thपढ़ो_nr > n)
-		thपढ़ो_nr = n;
+		goto free_dirent;
+	}
+	if (thread_nr > n)
+		thread_nr = n;
 
-	syntheमाप_प्रकारhपढ़ोs = सुस्मृति(माप(pthपढ़ो_t), thपढ़ो_nr);
-	अगर (syntheमाप_प्रकारhपढ़ोs == शून्य)
-		जाओ मुक्त_dirent;
+	synthesize_threads = calloc(sizeof(pthread_t), thread_nr);
+	if (synthesize_threads == NULL)
+		goto free_dirent;
 
-	args = सुस्मृति(माप(*args), thपढ़ो_nr);
-	अगर (args == शून्य)
-		जाओ मुक्त_thपढ़ोs;
+	args = calloc(sizeof(*args), thread_nr);
+	if (args == NULL)
+		goto free_threads;
 
-	num_per_thपढ़ो = n / thपढ़ो_nr;
-	m = n % thपढ़ो_nr;
-	क्रम (i = 0; i < thपढ़ो_nr; i++) अणु
+	num_per_thread = n / thread_nr;
+	m = n % thread_nr;
+	for (i = 0; i < thread_nr; i++) {
 		args[i].tool = tool;
 		args[i].process = process;
 		args[i].machine = machine;
 		args[i].mmap_data = mmap_data;
 		args[i].dirent = dirent;
-	पूर्ण
-	क्रम (i = 0; i < m; i++) अणु
-		args[i].num = num_per_thपढ़ो + 1;
+	}
+	for (i = 0; i < m; i++) {
+		args[i].num = num_per_thread + 1;
 		args[i].start = i * args[i].num;
-	पूर्ण
-	अगर (i != 0)
+	}
+	if (i != 0)
 		base = args[i-1].start + args[i-1].num;
-	क्रम (j = i; j < thपढ़ो_nr; j++) अणु
-		args[j].num = num_per_thपढ़ो;
+	for (j = i; j < thread_nr; j++) {
+		args[j].num = num_per_thread;
 		args[j].start = base + (j - i) * args[i].num;
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < thपढ़ो_nr; i++) अणु
-		अगर (pthपढ़ो_create(&syntheमाप_प्रकारhपढ़ोs[i], शून्य,
-				   syntheमाप_प्रकारhपढ़ोs_worker, &args[i]))
-			जाओ out_join;
-	पूर्ण
+	for (i = 0; i < thread_nr; i++) {
+		if (pthread_create(&synthesize_threads[i], NULL,
+				   synthesize_threads_worker, &args[i]))
+			goto out_join;
+	}
 	err = 0;
 out_join:
-	क्रम (i = 0; i < thपढ़ो_nr; i++)
-		pthपढ़ो_join(syntheमाप_प्रकारhपढ़ोs[i], शून्य);
-	मुक्त(args);
-मुक्त_thपढ़ोs:
-	मुक्त(syntheमाप_प्रकारhपढ़ोs);
-मुक्त_dirent:
-	क्रम (i = 0; i < n; i++)
-		zमुक्त(&dirent[i]);
-	मुक्त(dirent);
+	for (i = 0; i < thread_nr; i++)
+		pthread_join(synthesize_threads[i], NULL);
+	free(args);
+free_threads:
+	free(synthesize_threads);
+free_dirent:
+	for (i = 0; i < n; i++)
+		zfree(&dirent[i]);
+	free(dirent);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक __weak perf_event__synthesize_extra_kmaps(काष्ठा perf_tool *tool __maybe_unused,
+int __weak perf_event__synthesize_extra_kmaps(struct perf_tool *tool __maybe_unused,
 					      perf_event__handler_t process __maybe_unused,
-					      काष्ठा machine *machine __maybe_unused)
-अणु
-	वापस 0;
-पूर्ण
+					      struct machine *machine __maybe_unused)
+{
+	return 0;
+}
 
-अटल पूर्णांक __perf_event__synthesize_kernel_mmap(काष्ठा perf_tool *tool,
+static int __perf_event__synthesize_kernel_mmap(struct perf_tool *tool,
 						perf_event__handler_t process,
-						काष्ठा machine *machine)
-अणु
-	जोड़ perf_event *event;
-	माप_प्रकार size = symbol_conf.buildid_mmap2 ?
-			माप(event->mmap2) : माप(event->mmap);
-	काष्ठा map *map = machine__kernel_map(machine);
-	काष्ठा kmap *kmap;
-	पूर्णांक err;
+						struct machine *machine)
+{
+	union perf_event *event;
+	size_t size = symbol_conf.buildid_mmap2 ?
+			sizeof(event->mmap2) : sizeof(event->mmap);
+	struct map *map = machine__kernel_map(machine);
+	struct kmap *kmap;
+	int err;
 
-	अगर (map == शून्य)
-		वापस -1;
+	if (map == NULL)
+		return -1;
 
 	kmap = map__kmap(map);
-	अगर (!kmap->ref_reloc_sym)
-		वापस -1;
+	if (!kmap->ref_reloc_sym)
+		return -1;
 
 	/*
 	 * We should get this from /sys/kernel/sections/.text, but till that is
-	 * available use this, and after it is use this as a fallback क्रम older
+	 * available use this, and after it is use this as a fallback for older
 	 * kernels.
 	 */
 	event = zalloc(size + machine->id_hdr_size);
-	अगर (event == शून्य) अणु
+	if (event == NULL) {
 		pr_debug("Not enough memory synthesizing mmap event "
 			 "for kernel modules\n");
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	अगर (machine__is_host(machine)) अणु
+	if (machine__is_host(machine)) {
 		/*
-		 * kernel uses PERF_RECORD_MISC_USER क्रम user space maps,
+		 * kernel uses PERF_RECORD_MISC_USER for user space maps,
 		 * see kernel/perf_event.c __perf_event_mmap
 		 */
 		event->header.misc = PERF_RECORD_MISC_KERNEL;
-	पूर्ण अन्यथा अणु
+	} else {
 		event->header.misc = PERF_RECORD_MISC_GUEST_KERNEL;
-	पूर्ण
+	}
 
-	अगर (symbol_conf.buildid_mmap2) अणु
-		size = snम_लिखो(event->mmap2.filename, माप(event->mmap2.filename),
+	if (symbol_conf.buildid_mmap2) {
+		size = snprintf(event->mmap2.filename, sizeof(event->mmap2.filename),
 				"%s%s", machine->mmap_name, kmap->ref_reloc_sym->name) + 1;
-		size = PERF_ALIGN(size, माप(u64));
+		size = PERF_ALIGN(size, sizeof(u64));
 		event->mmap2.header.type = PERF_RECORD_MMAP2;
-		event->mmap2.header.size = (माप(event->mmap2) -
-				(माप(event->mmap2.filename) - size) + machine->id_hdr_size);
+		event->mmap2.header.size = (sizeof(event->mmap2) -
+				(sizeof(event->mmap2.filename) - size) + machine->id_hdr_size);
 		event->mmap2.pgoff = kmap->ref_reloc_sym->addr;
 		event->mmap2.start = map->start;
 		event->mmap2.len   = map->end - event->mmap.start;
 		event->mmap2.pid   = machine->pid;
 
-		perf_record_mmap2__पढ़ो_build_id(&event->mmap2, true);
-	पूर्ण अन्यथा अणु
-		size = snम_लिखो(event->mmap.filename, माप(event->mmap.filename),
+		perf_record_mmap2__read_build_id(&event->mmap2, true);
+	} else {
+		size = snprintf(event->mmap.filename, sizeof(event->mmap.filename),
 				"%s%s", machine->mmap_name, kmap->ref_reloc_sym->name) + 1;
-		size = PERF_ALIGN(size, माप(u64));
+		size = PERF_ALIGN(size, sizeof(u64));
 		event->mmap.header.type = PERF_RECORD_MMAP;
-		event->mmap.header.size = (माप(event->mmap) -
-				(माप(event->mmap.filename) - size) + machine->id_hdr_size);
+		event->mmap.header.size = (sizeof(event->mmap) -
+				(sizeof(event->mmap.filename) - size) + machine->id_hdr_size);
 		event->mmap.pgoff = kmap->ref_reloc_sym->addr;
 		event->mmap.start = map->start;
 		event->mmap.len   = map->end - event->mmap.start;
 		event->mmap.pid   = machine->pid;
-	पूर्ण
+	}
 
 	err = perf_tool__process_synth_event(tool, event, machine, process);
-	मुक्त(event);
+	free(event);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक perf_event__synthesize_kernel_mmap(काष्ठा perf_tool *tool,
+int perf_event__synthesize_kernel_mmap(struct perf_tool *tool,
 				       perf_event__handler_t process,
-				       काष्ठा machine *machine)
-अणु
-	पूर्णांक err;
+				       struct machine *machine)
+{
+	int err;
 
 	err = __perf_event__synthesize_kernel_mmap(tool, process, machine);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
-	वापस perf_event__synthesize_extra_kmaps(tool, process, machine);
-पूर्ण
+	return perf_event__synthesize_extra_kmaps(tool, process, machine);
+}
 
-पूर्णांक perf_event__syntheमाप_प्रकारhपढ़ो_map2(काष्ठा perf_tool *tool,
-				      काष्ठा perf_thपढ़ो_map *thपढ़ोs,
+int perf_event__synthesize_thread_map2(struct perf_tool *tool,
+				      struct perf_thread_map *threads,
 				      perf_event__handler_t process,
-				      काष्ठा machine *machine)
-अणु
-	जोड़ perf_event *event;
-	पूर्णांक i, err, size;
+				      struct machine *machine)
+{
+	union perf_event *event;
+	int i, err, size;
 
-	size  = माप(event->thपढ़ो_map);
-	size +=	thपढ़ोs->nr * माप(event->thपढ़ो_map.entries[0]);
+	size  = sizeof(event->thread_map);
+	size +=	threads->nr * sizeof(event->thread_map.entries[0]);
 
 	event = zalloc(size);
-	अगर (!event)
-		वापस -ENOMEM;
+	if (!event)
+		return -ENOMEM;
 
 	event->header.type = PERF_RECORD_THREAD_MAP;
 	event->header.size = size;
-	event->thपढ़ो_map.nr = thपढ़ोs->nr;
+	event->thread_map.nr = threads->nr;
 
-	क्रम (i = 0; i < thपढ़ोs->nr; i++) अणु
-		काष्ठा perf_record_thपढ़ो_map_entry *entry = &event->thपढ़ो_map.entries[i];
-		अक्षर *comm = perf_thपढ़ो_map__comm(thपढ़ोs, i);
+	for (i = 0; i < threads->nr; i++) {
+		struct perf_record_thread_map_entry *entry = &event->thread_map.entries[i];
+		char *comm = perf_thread_map__comm(threads, i);
 
-		अगर (!comm)
-			comm = (अक्षर *) "";
+		if (!comm)
+			comm = (char *) "";
 
-		entry->pid = perf_thपढ़ो_map__pid(thपढ़ोs, i);
-		म_नकलन((अक्षर *) &entry->comm, comm, माप(entry->comm));
-	पूर्ण
+		entry->pid = perf_thread_map__pid(threads, i);
+		strncpy((char *) &entry->comm, comm, sizeof(entry->comm));
+	}
 
-	err = process(tool, event, शून्य, machine);
+	err = process(tool, event, NULL, machine);
 
-	मुक्त(event);
-	वापस err;
-पूर्ण
+	free(event);
+	return err;
+}
 
-अटल व्योम synthesize_cpus(काष्ठा cpu_map_entries *cpus,
-			    काष्ठा perf_cpu_map *map)
-अणु
-	पूर्णांक i;
+static void synthesize_cpus(struct cpu_map_entries *cpus,
+			    struct perf_cpu_map *map)
+{
+	int i;
 
 	cpus->nr = map->nr;
 
-	क्रम (i = 0; i < map->nr; i++)
+	for (i = 0; i < map->nr; i++)
 		cpus->cpu[i] = map->map[i];
-पूर्ण
+}
 
-अटल व्योम synthesize_mask(काष्ठा perf_record_record_cpu_map *mask,
-			    काष्ठा perf_cpu_map *map, पूर्णांक max)
-अणु
-	पूर्णांक i;
+static void synthesize_mask(struct perf_record_record_cpu_map *mask,
+			    struct perf_cpu_map *map, int max)
+{
+	int i;
 
 	mask->nr = BITS_TO_LONGS(max);
-	mask->दीर्घ_size = माप(दीर्घ);
+	mask->long_size = sizeof(long);
 
-	क्रम (i = 0; i < map->nr; i++)
+	for (i = 0; i < map->nr; i++)
 		set_bit(map->map[i], mask->mask);
-पूर्ण
+}
 
-अटल माप_प्रकार cpus_size(काष्ठा perf_cpu_map *map)
-अणु
-	वापस माप(काष्ठा cpu_map_entries) + map->nr * माप(u16);
-पूर्ण
+static size_t cpus_size(struct perf_cpu_map *map)
+{
+	return sizeof(struct cpu_map_entries) + map->nr * sizeof(u16);
+}
 
-अटल माप_प्रकार mask_size(काष्ठा perf_cpu_map *map, पूर्णांक *max)
-अणु
-	पूर्णांक i;
+static size_t mask_size(struct perf_cpu_map *map, int *max)
+{
+	int i;
 
 	*max = 0;
 
-	क्रम (i = 0; i < map->nr; i++) अणु
+	for (i = 0; i < map->nr; i++) {
 		/* bit position of the cpu is + 1 */
-		पूर्णांक bit = map->map[i] + 1;
+		int bit = map->map[i] + 1;
 
-		अगर (bit > *max)
+		if (bit > *max)
 			*max = bit;
-	पूर्ण
+	}
 
-	वापस माप(काष्ठा perf_record_record_cpu_map) + BITS_TO_LONGS(*max) * माप(दीर्घ);
-पूर्ण
+	return sizeof(struct perf_record_record_cpu_map) + BITS_TO_LONGS(*max) * sizeof(long);
+}
 
-व्योम *cpu_map_data__alloc(काष्ठा perf_cpu_map *map, माप_प्रकार *size, u16 *type, पूर्णांक *max)
-अणु
-	माप_प्रकार size_cpus, size_mask;
+void *cpu_map_data__alloc(struct perf_cpu_map *map, size_t *size, u16 *type, int *max)
+{
+	size_t size_cpus, size_mask;
 	bool is_dummy = perf_cpu_map__empty(map);
 
 	/*
@@ -1233,791 +1232,791 @@ out_join:
 	 * The size of the 'struct perf_record_cpu_map_data' is:
 	 *
 	 *   array = size of 'struct cpu_map_entries' +
-	 *           number of cpus * माप(u64)
+	 *           number of cpus * sizeof(u64)
 	 *
 	 *   mask  = size of 'struct perf_record_record_cpu_map' +
-	 *           maximum cpu bit converted to size of दीर्घs
+	 *           maximum cpu bit converted to size of longs
 	 *
 	 * and finally + the size of 'struct perf_record_cpu_map_data'.
 	 */
 	size_cpus = cpus_size(map);
 	size_mask = mask_size(map, max);
 
-	अगर (is_dummy || (size_cpus < size_mask)) अणु
+	if (is_dummy || (size_cpus < size_mask)) {
 		*size += size_cpus;
 		*type  = PERF_CPU_MAP__CPUS;
-	पूर्ण अन्यथा अणु
+	} else {
 		*size += size_mask;
 		*type  = PERF_CPU_MAP__MASK;
-	पूर्ण
+	}
 
-	*size += माप(काष्ठा perf_record_cpu_map_data);
-	*size = PERF_ALIGN(*size, माप(u64));
-	वापस zalloc(*size);
-पूर्ण
+	*size += sizeof(struct perf_record_cpu_map_data);
+	*size = PERF_ALIGN(*size, sizeof(u64));
+	return zalloc(*size);
+}
 
-व्योम cpu_map_data__synthesize(काष्ठा perf_record_cpu_map_data *data, काष्ठा perf_cpu_map *map,
-			      u16 type, पूर्णांक max)
-अणु
+void cpu_map_data__synthesize(struct perf_record_cpu_map_data *data, struct perf_cpu_map *map,
+			      u16 type, int max)
+{
 	data->type = type;
 
-	चयन (type) अणु
-	हाल PERF_CPU_MAP__CPUS:
-		synthesize_cpus((काष्ठा cpu_map_entries *) data->data, map);
-		अवरोध;
-	हाल PERF_CPU_MAP__MASK:
-		synthesize_mask((काष्ठा perf_record_record_cpu_map *)data->data, map, max);
-	शेष:
-		अवरोध;
-	पूर्ण
-पूर्ण
+	switch (type) {
+	case PERF_CPU_MAP__CPUS:
+		synthesize_cpus((struct cpu_map_entries *) data->data, map);
+		break;
+	case PERF_CPU_MAP__MASK:
+		synthesize_mask((struct perf_record_record_cpu_map *)data->data, map, max);
+	default:
+		break;
+	}
+}
 
-अटल काष्ठा perf_record_cpu_map *cpu_map_event__new(काष्ठा perf_cpu_map *map)
-अणु
-	माप_प्रकार size = माप(काष्ठा perf_record_cpu_map);
-	काष्ठा perf_record_cpu_map *event;
-	पूर्णांक max;
+static struct perf_record_cpu_map *cpu_map_event__new(struct perf_cpu_map *map)
+{
+	size_t size = sizeof(struct perf_record_cpu_map);
+	struct perf_record_cpu_map *event;
+	int max;
 	u16 type;
 
 	event = cpu_map_data__alloc(map, &size, &type, &max);
-	अगर (!event)
-		वापस शून्य;
+	if (!event)
+		return NULL;
 
 	event->header.type = PERF_RECORD_CPU_MAP;
 	event->header.size = size;
 	event->data.type   = type;
 
 	cpu_map_data__synthesize(&event->data, map, type, max);
-	वापस event;
-पूर्ण
+	return event;
+}
 
-पूर्णांक perf_event__synthesize_cpu_map(काष्ठा perf_tool *tool,
-				   काष्ठा perf_cpu_map *map,
+int perf_event__synthesize_cpu_map(struct perf_tool *tool,
+				   struct perf_cpu_map *map,
 				   perf_event__handler_t process,
-				   काष्ठा machine *machine)
-अणु
-	काष्ठा perf_record_cpu_map *event;
-	पूर्णांक err;
+				   struct machine *machine)
+{
+	struct perf_record_cpu_map *event;
+	int err;
 
 	event = cpu_map_event__new(map);
-	अगर (!event)
-		वापस -ENOMEM;
+	if (!event)
+		return -ENOMEM;
 
-	err = process(tool, (जोड़ perf_event *) event, शून्य, machine);
+	err = process(tool, (union perf_event *) event, NULL, machine);
 
-	मुक्त(event);
-	वापस err;
-पूर्ण
+	free(event);
+	return err;
+}
 
-पूर्णांक perf_event__synthesize_stat_config(काष्ठा perf_tool *tool,
-				       काष्ठा perf_stat_config *config,
+int perf_event__synthesize_stat_config(struct perf_tool *tool,
+				       struct perf_stat_config *config,
 				       perf_event__handler_t process,
-				       काष्ठा machine *machine)
-अणु
-	काष्ठा perf_record_stat_config *event;
-	पूर्णांक size, i = 0, err;
+				       struct machine *machine)
+{
+	struct perf_record_stat_config *event;
+	int size, i = 0, err;
 
-	size  = माप(*event);
-	size += (PERF_STAT_CONFIG_TERM__MAX * माप(event->data[0]));
+	size  = sizeof(*event);
+	size += (PERF_STAT_CONFIG_TERM__MAX * sizeof(event->data[0]));
 
 	event = zalloc(size);
-	अगर (!event)
-		वापस -ENOMEM;
+	if (!event)
+		return -ENOMEM;
 
 	event->header.type = PERF_RECORD_STAT_CONFIG;
 	event->header.size = size;
 	event->nr          = PERF_STAT_CONFIG_TERM__MAX;
 
-#घोषणा ADD(__term, __val)					\
+#define ADD(__term, __val)					\
 	event->data[i].tag = PERF_STAT_CONFIG_TERM__##__term;	\
 	event->data[i].val = __val;				\
 	i++;
 
 	ADD(AGGR_MODE,	config->aggr_mode)
-	ADD(INTERVAL,	config->पूर्णांकerval)
+	ADD(INTERVAL,	config->interval)
 	ADD(SCALE,	config->scale)
 
 	WARN_ONCE(i != PERF_STAT_CONFIG_TERM__MAX,
 		  "stat config terms unbalanced\n");
-#अघोषित ADD
+#undef ADD
 
-	err = process(tool, (जोड़ perf_event *) event, शून्य, machine);
+	err = process(tool, (union perf_event *) event, NULL, machine);
 
-	मुक्त(event);
-	वापस err;
-पूर्ण
+	free(event);
+	return err;
+}
 
-पूर्णांक perf_event__synthesize_stat(काष्ठा perf_tool *tool,
-				u32 cpu, u32 thपढ़ो, u64 id,
-				काष्ठा perf_counts_values *count,
+int perf_event__synthesize_stat(struct perf_tool *tool,
+				u32 cpu, u32 thread, u64 id,
+				struct perf_counts_values *count,
 				perf_event__handler_t process,
-				काष्ठा machine *machine)
-अणु
-	काष्ठा perf_record_stat event;
+				struct machine *machine)
+{
+	struct perf_record_stat event;
 
 	event.header.type = PERF_RECORD_STAT;
-	event.header.size = माप(event);
+	event.header.size = sizeof(event);
 	event.header.misc = 0;
 
 	event.id        = id;
 	event.cpu       = cpu;
-	event.thपढ़ो    = thपढ़ो;
+	event.thread    = thread;
 	event.val       = count->val;
 	event.ena       = count->ena;
 	event.run       = count->run;
 
-	वापस process(tool, (जोड़ perf_event *) &event, शून्य, machine);
-पूर्ण
+	return process(tool, (union perf_event *) &event, NULL, machine);
+}
 
-पूर्णांक perf_event__synthesize_stat_round(काष्ठा perf_tool *tool,
-				      u64 evसमय, u64 type,
+int perf_event__synthesize_stat_round(struct perf_tool *tool,
+				      u64 evtime, u64 type,
 				      perf_event__handler_t process,
-				      काष्ठा machine *machine)
-अणु
-	काष्ठा perf_record_stat_round event;
+				      struct machine *machine)
+{
+	struct perf_record_stat_round event;
 
 	event.header.type = PERF_RECORD_STAT_ROUND;
-	event.header.size = माप(event);
+	event.header.size = sizeof(event);
 	event.header.misc = 0;
 
-	event.समय = evसमय;
+	event.time = evtime;
 	event.type = type;
 
-	वापस process(tool, (जोड़ perf_event *) &event, शून्य, machine);
-पूर्ण
+	return process(tool, (union perf_event *) &event, NULL, machine);
+}
 
-माप_प्रकार perf_event__sample_event_size(स्थिर काष्ठा perf_sample *sample, u64 type, u64 पढ़ो_क्रमmat)
-अणु
-	माप_प्रकार sz, result = माप(काष्ठा perf_record_sample);
+size_t perf_event__sample_event_size(const struct perf_sample *sample, u64 type, u64 read_format)
+{
+	size_t sz, result = sizeof(struct perf_record_sample);
 
-	अगर (type & PERF_SAMPLE_IDENTIFIER)
-		result += माप(u64);
+	if (type & PERF_SAMPLE_IDENTIFIER)
+		result += sizeof(u64);
 
-	अगर (type & PERF_SAMPLE_IP)
-		result += माप(u64);
+	if (type & PERF_SAMPLE_IP)
+		result += sizeof(u64);
 
-	अगर (type & PERF_SAMPLE_TID)
-		result += माप(u64);
+	if (type & PERF_SAMPLE_TID)
+		result += sizeof(u64);
 
-	अगर (type & PERF_SAMPLE_TIME)
-		result += माप(u64);
+	if (type & PERF_SAMPLE_TIME)
+		result += sizeof(u64);
 
-	अगर (type & PERF_SAMPLE_ADDR)
-		result += माप(u64);
+	if (type & PERF_SAMPLE_ADDR)
+		result += sizeof(u64);
 
-	अगर (type & PERF_SAMPLE_ID)
-		result += माप(u64);
+	if (type & PERF_SAMPLE_ID)
+		result += sizeof(u64);
 
-	अगर (type & PERF_SAMPLE_STREAM_ID)
-		result += माप(u64);
+	if (type & PERF_SAMPLE_STREAM_ID)
+		result += sizeof(u64);
 
-	अगर (type & PERF_SAMPLE_CPU)
-		result += माप(u64);
+	if (type & PERF_SAMPLE_CPU)
+		result += sizeof(u64);
 
-	अगर (type & PERF_SAMPLE_PERIOD)
-		result += माप(u64);
+	if (type & PERF_SAMPLE_PERIOD)
+		result += sizeof(u64);
 
-	अगर (type & PERF_SAMPLE_READ) अणु
-		result += माप(u64);
-		अगर (पढ़ो_क्रमmat & PERF_FORMAT_TOTAL_TIME_ENABLED)
-			result += माप(u64);
-		अगर (पढ़ो_क्रमmat & PERF_FORMAT_TOTAL_TIME_RUNNING)
-			result += माप(u64);
-		/* PERF_FORMAT_ID is क्रमced क्रम PERF_SAMPLE_READ */
-		अगर (पढ़ो_क्रमmat & PERF_FORMAT_GROUP) अणु
-			sz = sample->पढ़ो.group.nr *
-			     माप(काष्ठा sample_पढ़ो_value);
+	if (type & PERF_SAMPLE_READ) {
+		result += sizeof(u64);
+		if (read_format & PERF_FORMAT_TOTAL_TIME_ENABLED)
+			result += sizeof(u64);
+		if (read_format & PERF_FORMAT_TOTAL_TIME_RUNNING)
+			result += sizeof(u64);
+		/* PERF_FORMAT_ID is forced for PERF_SAMPLE_READ */
+		if (read_format & PERF_FORMAT_GROUP) {
+			sz = sample->read.group.nr *
+			     sizeof(struct sample_read_value);
 			result += sz;
-		पूर्ण अन्यथा अणु
-			result += माप(u64);
-		पूर्ण
-	पूर्ण
+		} else {
+			result += sizeof(u64);
+		}
+	}
 
-	अगर (type & PERF_SAMPLE_CALLCHAIN) अणु
-		sz = (sample->callchain->nr + 1) * माप(u64);
+	if (type & PERF_SAMPLE_CALLCHAIN) {
+		sz = (sample->callchain->nr + 1) * sizeof(u64);
 		result += sz;
-	पूर्ण
+	}
 
-	अगर (type & PERF_SAMPLE_RAW) अणु
-		result += माप(u32);
+	if (type & PERF_SAMPLE_RAW) {
+		result += sizeof(u32);
 		result += sample->raw_size;
-	पूर्ण
+	}
 
-	अगर (type & PERF_SAMPLE_BRANCH_STACK) अणु
-		sz = sample->branch_stack->nr * माप(काष्ठा branch_entry);
+	if (type & PERF_SAMPLE_BRANCH_STACK) {
+		sz = sample->branch_stack->nr * sizeof(struct branch_entry);
 		/* nr, hw_idx */
-		sz += 2 * माप(u64);
+		sz += 2 * sizeof(u64);
 		result += sz;
-	पूर्ण
+	}
 
-	अगर (type & PERF_SAMPLE_REGS_USER) अणु
-		अगर (sample->user_regs.abi) अणु
-			result += माप(u64);
-			sz = hweight64(sample->user_regs.mask) * माप(u64);
+	if (type & PERF_SAMPLE_REGS_USER) {
+		if (sample->user_regs.abi) {
+			result += sizeof(u64);
+			sz = hweight64(sample->user_regs.mask) * sizeof(u64);
 			result += sz;
-		पूर्ण अन्यथा अणु
-			result += माप(u64);
-		पूर्ण
-	पूर्ण
+		} else {
+			result += sizeof(u64);
+		}
+	}
 
-	अगर (type & PERF_SAMPLE_STACK_USER) अणु
+	if (type & PERF_SAMPLE_STACK_USER) {
 		sz = sample->user_stack.size;
-		result += माप(u64);
-		अगर (sz) अणु
+		result += sizeof(u64);
+		if (sz) {
 			result += sz;
-			result += माप(u64);
-		पूर्ण
-	पूर्ण
+			result += sizeof(u64);
+		}
+	}
 
-	अगर (type & PERF_SAMPLE_WEIGHT_TYPE)
-		result += माप(u64);
+	if (type & PERF_SAMPLE_WEIGHT_TYPE)
+		result += sizeof(u64);
 
-	अगर (type & PERF_SAMPLE_DATA_SRC)
-		result += माप(u64);
+	if (type & PERF_SAMPLE_DATA_SRC)
+		result += sizeof(u64);
 
-	अगर (type & PERF_SAMPLE_TRANSACTION)
-		result += माप(u64);
+	if (type & PERF_SAMPLE_TRANSACTION)
+		result += sizeof(u64);
 
-	अगर (type & PERF_SAMPLE_REGS_INTR) अणु
-		अगर (sample->पूर्णांकr_regs.abi) अणु
-			result += माप(u64);
-			sz = hweight64(sample->पूर्णांकr_regs.mask) * माप(u64);
+	if (type & PERF_SAMPLE_REGS_INTR) {
+		if (sample->intr_regs.abi) {
+			result += sizeof(u64);
+			sz = hweight64(sample->intr_regs.mask) * sizeof(u64);
 			result += sz;
-		पूर्ण अन्यथा अणु
-			result += माप(u64);
-		पूर्ण
-	पूर्ण
+		} else {
+			result += sizeof(u64);
+		}
+	}
 
-	अगर (type & PERF_SAMPLE_PHYS_ADDR)
-		result += माप(u64);
+	if (type & PERF_SAMPLE_PHYS_ADDR)
+		result += sizeof(u64);
 
-	अगर (type & PERF_SAMPLE_CGROUP)
-		result += माप(u64);
+	if (type & PERF_SAMPLE_CGROUP)
+		result += sizeof(u64);
 
-	अगर (type & PERF_SAMPLE_DATA_PAGE_SIZE)
-		result += माप(u64);
+	if (type & PERF_SAMPLE_DATA_PAGE_SIZE)
+		result += sizeof(u64);
 
-	अगर (type & PERF_SAMPLE_CODE_PAGE_SIZE)
-		result += माप(u64);
+	if (type & PERF_SAMPLE_CODE_PAGE_SIZE)
+		result += sizeof(u64);
 
-	अगर (type & PERF_SAMPLE_AUX) अणु
-		result += माप(u64);
+	if (type & PERF_SAMPLE_AUX) {
+		result += sizeof(u64);
 		result += sample->aux_sample.size;
-	पूर्ण
+	}
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
-व्योम __weak arch_perf_synthesize_sample_weight(स्थिर काष्ठा perf_sample *data,
+void __weak arch_perf_synthesize_sample_weight(const struct perf_sample *data,
 					       __u64 *array, u64 type __maybe_unused)
-अणु
+{
 	*array = data->weight;
-पूर्ण
+}
 
-पूर्णांक perf_event__synthesize_sample(जोड़ perf_event *event, u64 type, u64 पढ़ो_क्रमmat,
-				  स्थिर काष्ठा perf_sample *sample)
-अणु
+int perf_event__synthesize_sample(union perf_event *event, u64 type, u64 read_format,
+				  const struct perf_sample *sample)
+{
 	__u64 *array;
-	माप_प्रकार sz;
+	size_t sz;
 	/*
-	 * used क्रम cross-endian analysis. See git commit 65014ab3
-	 * क्रम why this goofiness is needed.
+	 * used for cross-endian analysis. See git commit 65014ab3
+	 * for why this goofiness is needed.
 	 */
-	जोड़ u64_swap u;
+	union u64_swap u;
 
 	array = event->sample.array;
 
-	अगर (type & PERF_SAMPLE_IDENTIFIER) अणु
+	if (type & PERF_SAMPLE_IDENTIFIER) {
 		*array = sample->id;
 		array++;
-	पूर्ण
+	}
 
-	अगर (type & PERF_SAMPLE_IP) अणु
+	if (type & PERF_SAMPLE_IP) {
 		*array = sample->ip;
 		array++;
-	पूर्ण
+	}
 
-	अगर (type & PERF_SAMPLE_TID) अणु
+	if (type & PERF_SAMPLE_TID) {
 		u.val32[0] = sample->pid;
 		u.val32[1] = sample->tid;
 		*array = u.val64;
 		array++;
-	पूर्ण
+	}
 
-	अगर (type & PERF_SAMPLE_TIME) अणु
-		*array = sample->समय;
+	if (type & PERF_SAMPLE_TIME) {
+		*array = sample->time;
 		array++;
-	पूर्ण
+	}
 
-	अगर (type & PERF_SAMPLE_ADDR) अणु
+	if (type & PERF_SAMPLE_ADDR) {
 		*array = sample->addr;
 		array++;
-	पूर्ण
+	}
 
-	अगर (type & PERF_SAMPLE_ID) अणु
+	if (type & PERF_SAMPLE_ID) {
 		*array = sample->id;
 		array++;
-	पूर्ण
+	}
 
-	अगर (type & PERF_SAMPLE_STREAM_ID) अणु
+	if (type & PERF_SAMPLE_STREAM_ID) {
 		*array = sample->stream_id;
 		array++;
-	पूर्ण
+	}
 
-	अगर (type & PERF_SAMPLE_CPU) अणु
+	if (type & PERF_SAMPLE_CPU) {
 		u.val32[0] = sample->cpu;
 		u.val32[1] = 0;
 		*array = u.val64;
 		array++;
-	पूर्ण
+	}
 
-	अगर (type & PERF_SAMPLE_PERIOD) अणु
+	if (type & PERF_SAMPLE_PERIOD) {
 		*array = sample->period;
 		array++;
-	पूर्ण
+	}
 
-	अगर (type & PERF_SAMPLE_READ) अणु
-		अगर (पढ़ो_क्रमmat & PERF_FORMAT_GROUP)
-			*array = sample->पढ़ो.group.nr;
-		अन्यथा
-			*array = sample->पढ़ो.one.value;
+	if (type & PERF_SAMPLE_READ) {
+		if (read_format & PERF_FORMAT_GROUP)
+			*array = sample->read.group.nr;
+		else
+			*array = sample->read.one.value;
 		array++;
 
-		अगर (पढ़ो_क्रमmat & PERF_FORMAT_TOTAL_TIME_ENABLED) अणु
-			*array = sample->पढ़ो.समय_enabled;
+		if (read_format & PERF_FORMAT_TOTAL_TIME_ENABLED) {
+			*array = sample->read.time_enabled;
 			array++;
-		पूर्ण
+		}
 
-		अगर (पढ़ो_क्रमmat & PERF_FORMAT_TOTAL_TIME_RUNNING) अणु
-			*array = sample->पढ़ो.समय_running;
+		if (read_format & PERF_FORMAT_TOTAL_TIME_RUNNING) {
+			*array = sample->read.time_running;
 			array++;
-		पूर्ण
+		}
 
-		/* PERF_FORMAT_ID is क्रमced क्रम PERF_SAMPLE_READ */
-		अगर (पढ़ो_क्रमmat & PERF_FORMAT_GROUP) अणु
-			sz = sample->पढ़ो.group.nr *
-			     माप(काष्ठा sample_पढ़ो_value);
-			स_नकल(array, sample->पढ़ो.group.values, sz);
-			array = (व्योम *)array + sz;
-		पूर्ण अन्यथा अणु
-			*array = sample->पढ़ो.one.id;
+		/* PERF_FORMAT_ID is forced for PERF_SAMPLE_READ */
+		if (read_format & PERF_FORMAT_GROUP) {
+			sz = sample->read.group.nr *
+			     sizeof(struct sample_read_value);
+			memcpy(array, sample->read.group.values, sz);
+			array = (void *)array + sz;
+		} else {
+			*array = sample->read.one.id;
 			array++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (type & PERF_SAMPLE_CALLCHAIN) अणु
-		sz = (sample->callchain->nr + 1) * माप(u64);
-		स_नकल(array, sample->callchain, sz);
-		array = (व्योम *)array + sz;
-	पूर्ण
+	if (type & PERF_SAMPLE_CALLCHAIN) {
+		sz = (sample->callchain->nr + 1) * sizeof(u64);
+		memcpy(array, sample->callchain, sz);
+		array = (void *)array + sz;
+	}
 
-	अगर (type & PERF_SAMPLE_RAW) अणु
+	if (type & PERF_SAMPLE_RAW) {
 		u.val32[0] = sample->raw_size;
 		*array = u.val64;
-		array = (व्योम *)array + माप(u32);
+		array = (void *)array + sizeof(u32);
 
-		स_नकल(array, sample->raw_data, sample->raw_size);
-		array = (व्योम *)array + sample->raw_size;
-	पूर्ण
+		memcpy(array, sample->raw_data, sample->raw_size);
+		array = (void *)array + sample->raw_size;
+	}
 
-	अगर (type & PERF_SAMPLE_BRANCH_STACK) अणु
-		sz = sample->branch_stack->nr * माप(काष्ठा branch_entry);
+	if (type & PERF_SAMPLE_BRANCH_STACK) {
+		sz = sample->branch_stack->nr * sizeof(struct branch_entry);
 		/* nr, hw_idx */
-		sz += 2 * माप(u64);
-		स_नकल(array, sample->branch_stack, sz);
-		array = (व्योम *)array + sz;
-	पूर्ण
+		sz += 2 * sizeof(u64);
+		memcpy(array, sample->branch_stack, sz);
+		array = (void *)array + sz;
+	}
 
-	अगर (type & PERF_SAMPLE_REGS_USER) अणु
-		अगर (sample->user_regs.abi) अणु
+	if (type & PERF_SAMPLE_REGS_USER) {
+		if (sample->user_regs.abi) {
 			*array++ = sample->user_regs.abi;
-			sz = hweight64(sample->user_regs.mask) * माप(u64);
-			स_नकल(array, sample->user_regs.regs, sz);
-			array = (व्योम *)array + sz;
-		पूर्ण अन्यथा अणु
+			sz = hweight64(sample->user_regs.mask) * sizeof(u64);
+			memcpy(array, sample->user_regs.regs, sz);
+			array = (void *)array + sz;
+		} else {
 			*array++ = 0;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (type & PERF_SAMPLE_STACK_USER) अणु
+	if (type & PERF_SAMPLE_STACK_USER) {
 		sz = sample->user_stack.size;
 		*array++ = sz;
-		अगर (sz) अणु
-			स_नकल(array, sample->user_stack.data, sz);
-			array = (व्योम *)array + sz;
+		if (sz) {
+			memcpy(array, sample->user_stack.data, sz);
+			array = (void *)array + sz;
 			*array++ = sz;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (type & PERF_SAMPLE_WEIGHT_TYPE) अणु
+	if (type & PERF_SAMPLE_WEIGHT_TYPE) {
 		arch_perf_synthesize_sample_weight(sample, array, type);
 		array++;
-	पूर्ण
+	}
 
-	अगर (type & PERF_SAMPLE_DATA_SRC) अणु
+	if (type & PERF_SAMPLE_DATA_SRC) {
 		*array = sample->data_src;
 		array++;
-	पूर्ण
+	}
 
-	अगर (type & PERF_SAMPLE_TRANSACTION) अणु
+	if (type & PERF_SAMPLE_TRANSACTION) {
 		*array = sample->transaction;
 		array++;
-	पूर्ण
+	}
 
-	अगर (type & PERF_SAMPLE_REGS_INTR) अणु
-		अगर (sample->पूर्णांकr_regs.abi) अणु
-			*array++ = sample->पूर्णांकr_regs.abi;
-			sz = hweight64(sample->पूर्णांकr_regs.mask) * माप(u64);
-			स_नकल(array, sample->पूर्णांकr_regs.regs, sz);
-			array = (व्योम *)array + sz;
-		पूर्ण अन्यथा अणु
+	if (type & PERF_SAMPLE_REGS_INTR) {
+		if (sample->intr_regs.abi) {
+			*array++ = sample->intr_regs.abi;
+			sz = hweight64(sample->intr_regs.mask) * sizeof(u64);
+			memcpy(array, sample->intr_regs.regs, sz);
+			array = (void *)array + sz;
+		} else {
 			*array++ = 0;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (type & PERF_SAMPLE_PHYS_ADDR) अणु
+	if (type & PERF_SAMPLE_PHYS_ADDR) {
 		*array = sample->phys_addr;
 		array++;
-	पूर्ण
+	}
 
-	अगर (type & PERF_SAMPLE_CGROUP) अणु
+	if (type & PERF_SAMPLE_CGROUP) {
 		*array = sample->cgroup;
 		array++;
-	पूर्ण
+	}
 
-	अगर (type & PERF_SAMPLE_DATA_PAGE_SIZE) अणु
+	if (type & PERF_SAMPLE_DATA_PAGE_SIZE) {
 		*array = sample->data_page_size;
 		array++;
-	पूर्ण
+	}
 
-	अगर (type & PERF_SAMPLE_CODE_PAGE_SIZE) अणु
+	if (type & PERF_SAMPLE_CODE_PAGE_SIZE) {
 		*array = sample->code_page_size;
 		array++;
-	पूर्ण
+	}
 
-	अगर (type & PERF_SAMPLE_AUX) अणु
+	if (type & PERF_SAMPLE_AUX) {
 		sz = sample->aux_sample.size;
 		*array++ = sz;
-		स_नकल(array, sample->aux_sample.data, sz);
-		array = (व्योम *)array + sz;
-	पूर्ण
+		memcpy(array, sample->aux_sample.data, sz);
+		array = (void *)array + sz;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक perf_event__synthesize_id_index(काष्ठा perf_tool *tool, perf_event__handler_t process,
-				    काष्ठा evlist *evlist, काष्ठा machine *machine)
-अणु
-	जोड़ perf_event *ev;
-	काष्ठा evsel *evsel;
-	माप_प्रकार nr = 0, i = 0, sz, max_nr, n;
-	पूर्णांक err;
+int perf_event__synthesize_id_index(struct perf_tool *tool, perf_event__handler_t process,
+				    struct evlist *evlist, struct machine *machine)
+{
+	union perf_event *ev;
+	struct evsel *evsel;
+	size_t nr = 0, i = 0, sz, max_nr, n;
+	int err;
 
 	pr_debug2("Synthesizing id index\n");
 
-	max_nr = (UINT16_MAX - माप(काष्ठा perf_record_id_index)) /
-		 माप(काष्ठा id_index_entry);
+	max_nr = (UINT16_MAX - sizeof(struct perf_record_id_index)) /
+		 sizeof(struct id_index_entry);
 
-	evlist__क्रम_each_entry(evlist, evsel)
+	evlist__for_each_entry(evlist, evsel)
 		nr += evsel->core.ids;
 
 	n = nr > max_nr ? max_nr : nr;
-	sz = माप(काष्ठा perf_record_id_index) + n * माप(काष्ठा id_index_entry);
+	sz = sizeof(struct perf_record_id_index) + n * sizeof(struct id_index_entry);
 	ev = zalloc(sz);
-	अगर (!ev)
-		वापस -ENOMEM;
+	if (!ev)
+		return -ENOMEM;
 
 	ev->id_index.header.type = PERF_RECORD_ID_INDEX;
 	ev->id_index.header.size = sz;
 	ev->id_index.nr = n;
 
-	evlist__क्रम_each_entry(evlist, evsel) अणु
+	evlist__for_each_entry(evlist, evsel) {
 		u32 j;
 
-		क्रम (j = 0; j < evsel->core.ids; j++) अणु
-			काष्ठा id_index_entry *e;
-			काष्ठा perf_sample_id *sid;
+		for (j = 0; j < evsel->core.ids; j++) {
+			struct id_index_entry *e;
+			struct perf_sample_id *sid;
 
-			अगर (i >= n) अणु
-				err = process(tool, ev, शून्य, machine);
-				अगर (err)
-					जाओ out_err;
+			if (i >= n) {
+				err = process(tool, ev, NULL, machine);
+				if (err)
+					goto out_err;
 				nr -= n;
 				i = 0;
-			पूर्ण
+			}
 
 			e = &ev->id_index.entries[i++];
 
 			e->id = evsel->core.id[j];
 
 			sid = evlist__id2sid(evlist, e->id);
-			अगर (!sid) अणु
-				मुक्त(ev);
-				वापस -ENOENT;
-			पूर्ण
+			if (!sid) {
+				free(ev);
+				return -ENOENT;
+			}
 
 			e->idx = sid->idx;
 			e->cpu = sid->cpu;
 			e->tid = sid->tid;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	sz = माप(काष्ठा perf_record_id_index) + nr * माप(काष्ठा id_index_entry);
+	sz = sizeof(struct perf_record_id_index) + nr * sizeof(struct id_index_entry);
 	ev->id_index.header.size = sz;
 	ev->id_index.nr = nr;
 
-	err = process(tool, ev, शून्य, machine);
+	err = process(tool, ev, NULL, machine);
 out_err:
-	मुक्त(ev);
+	free(ev);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक __machine__syntheमाप_प्रकारhपढ़ोs(काष्ठा machine *machine, काष्ठा perf_tool *tool,
-				  काष्ठा target *target, काष्ठा perf_thपढ़ो_map *thपढ़ोs,
+int __machine__synthesize_threads(struct machine *machine, struct perf_tool *tool,
+				  struct target *target, struct perf_thread_map *threads,
 				  perf_event__handler_t process, bool data_mmap,
-				  अचिन्हित पूर्णांक nr_thपढ़ोs_synthesize)
-अणु
-	अगर (target__has_task(target))
-		वापस perf_event__syntheमाप_प्रकारhपढ़ो_map(tool, thपढ़ोs, process, machine, data_mmap);
-	अन्यथा अगर (target__has_cpu(target))
-		वापस perf_event__syntheमाप_प्रकारhपढ़ोs(tool, process,
+				  unsigned int nr_threads_synthesize)
+{
+	if (target__has_task(target))
+		return perf_event__synthesize_thread_map(tool, threads, process, machine, data_mmap);
+	else if (target__has_cpu(target))
+		return perf_event__synthesize_threads(tool, process,
 						      machine, data_mmap,
-						      nr_thपढ़ोs_synthesize);
-	/* command specअगरied */
-	वापस 0;
-पूर्ण
+						      nr_threads_synthesize);
+	/* command specified */
+	return 0;
+}
 
-पूर्णांक machine__syntheमाप_प्रकारhपढ़ोs(काष्ठा machine *machine, काष्ठा target *target,
-				काष्ठा perf_thपढ़ो_map *thपढ़ोs, bool data_mmap,
-				अचिन्हित पूर्णांक nr_thपढ़ोs_synthesize)
-अणु
-	वापस __machine__syntheमाप_प्रकारhपढ़ोs(machine, शून्य, target, thपढ़ोs,
+int machine__synthesize_threads(struct machine *machine, struct target *target,
+				struct perf_thread_map *threads, bool data_mmap,
+				unsigned int nr_threads_synthesize)
+{
+	return __machine__synthesize_threads(machine, NULL, target, threads,
 					     perf_event__process, data_mmap,
-					     nr_thपढ़ोs_synthesize);
-पूर्ण
+					     nr_threads_synthesize);
+}
 
-अटल काष्ठा perf_record_event_update *event_update_event__new(माप_प्रकार size, u64 type, u64 id)
-अणु
-	काष्ठा perf_record_event_update *ev;
+static struct perf_record_event_update *event_update_event__new(size_t size, u64 type, u64 id)
+{
+	struct perf_record_event_update *ev;
 
-	size += माप(*ev);
-	size  = PERF_ALIGN(size, माप(u64));
+	size += sizeof(*ev);
+	size  = PERF_ALIGN(size, sizeof(u64));
 
 	ev = zalloc(size);
-	अगर (ev) अणु
+	if (ev) {
 		ev->header.type = PERF_RECORD_EVENT_UPDATE;
 		ev->header.size = (u16)size;
 		ev->type	= type;
 		ev->id		= id;
-	पूर्ण
-	वापस ev;
-पूर्ण
+	}
+	return ev;
+}
 
-पूर्णांक perf_event__synthesize_event_update_unit(काष्ठा perf_tool *tool, काष्ठा evsel *evsel,
+int perf_event__synthesize_event_update_unit(struct perf_tool *tool, struct evsel *evsel,
 					     perf_event__handler_t process)
-अणु
-	माप_प्रकार size = म_माप(evsel->unit);
-	काष्ठा perf_record_event_update *ev;
-	पूर्णांक err;
+{
+	size_t size = strlen(evsel->unit);
+	struct perf_record_event_update *ev;
+	int err;
 
 	ev = event_update_event__new(size + 1, PERF_EVENT_UPDATE__UNIT, evsel->core.id[0]);
-	अगर (ev == शून्य)
-		वापस -ENOMEM;
+	if (ev == NULL)
+		return -ENOMEM;
 
 	strlcpy(ev->data, evsel->unit, size + 1);
-	err = process(tool, (जोड़ perf_event *)ev, शून्य, शून्य);
-	मुक्त(ev);
-	वापस err;
-पूर्ण
+	err = process(tool, (union perf_event *)ev, NULL, NULL);
+	free(ev);
+	return err;
+}
 
-पूर्णांक perf_event__synthesize_event_update_scale(काष्ठा perf_tool *tool, काष्ठा evsel *evsel,
+int perf_event__synthesize_event_update_scale(struct perf_tool *tool, struct evsel *evsel,
 					      perf_event__handler_t process)
-अणु
-	काष्ठा perf_record_event_update *ev;
-	काष्ठा perf_record_event_update_scale *ev_data;
-	पूर्णांक err;
+{
+	struct perf_record_event_update *ev;
+	struct perf_record_event_update_scale *ev_data;
+	int err;
 
-	ev = event_update_event__new(माप(*ev_data), PERF_EVENT_UPDATE__SCALE, evsel->core.id[0]);
-	अगर (ev == शून्य)
-		वापस -ENOMEM;
+	ev = event_update_event__new(sizeof(*ev_data), PERF_EVENT_UPDATE__SCALE, evsel->core.id[0]);
+	if (ev == NULL)
+		return -ENOMEM;
 
-	ev_data = (काष्ठा perf_record_event_update_scale *)ev->data;
+	ev_data = (struct perf_record_event_update_scale *)ev->data;
 	ev_data->scale = evsel->scale;
-	err = process(tool, (जोड़ perf_event *)ev, शून्य, शून्य);
-	मुक्त(ev);
-	वापस err;
-पूर्ण
+	err = process(tool, (union perf_event *)ev, NULL, NULL);
+	free(ev);
+	return err;
+}
 
-पूर्णांक perf_event__synthesize_event_update_name(काष्ठा perf_tool *tool, काष्ठा evsel *evsel,
+int perf_event__synthesize_event_update_name(struct perf_tool *tool, struct evsel *evsel,
 					     perf_event__handler_t process)
-अणु
-	काष्ठा perf_record_event_update *ev;
-	माप_प्रकार len = म_माप(evsel->name);
-	पूर्णांक err;
+{
+	struct perf_record_event_update *ev;
+	size_t len = strlen(evsel->name);
+	int err;
 
 	ev = event_update_event__new(len + 1, PERF_EVENT_UPDATE__NAME, evsel->core.id[0]);
-	अगर (ev == शून्य)
-		वापस -ENOMEM;
+	if (ev == NULL)
+		return -ENOMEM;
 
 	strlcpy(ev->data, evsel->name, len + 1);
-	err = process(tool, (जोड़ perf_event *)ev, शून्य, शून्य);
-	मुक्त(ev);
-	वापस err;
-पूर्ण
+	err = process(tool, (union perf_event *)ev, NULL, NULL);
+	free(ev);
+	return err;
+}
 
-पूर्णांक perf_event__synthesize_event_update_cpus(काष्ठा perf_tool *tool, काष्ठा evsel *evsel,
+int perf_event__synthesize_event_update_cpus(struct perf_tool *tool, struct evsel *evsel,
 					     perf_event__handler_t process)
-अणु
-	माप_प्रकार size = माप(काष्ठा perf_record_event_update);
-	काष्ठा perf_record_event_update *ev;
-	पूर्णांक max, err;
+{
+	size_t size = sizeof(struct perf_record_event_update);
+	struct perf_record_event_update *ev;
+	int max, err;
 	u16 type;
 
-	अगर (!evsel->core.own_cpus)
-		वापस 0;
+	if (!evsel->core.own_cpus)
+		return 0;
 
 	ev = cpu_map_data__alloc(evsel->core.own_cpus, &size, &type, &max);
-	अगर (!ev)
-		वापस -ENOMEM;
+	if (!ev)
+		return -ENOMEM;
 
 	ev->header.type = PERF_RECORD_EVENT_UPDATE;
 	ev->header.size = (u16)size;
 	ev->type	= PERF_EVENT_UPDATE__CPUS;
 	ev->id		= evsel->core.id[0];
 
-	cpu_map_data__synthesize((काष्ठा perf_record_cpu_map_data *)ev->data,
+	cpu_map_data__synthesize((struct perf_record_cpu_map_data *)ev->data,
 				 evsel->core.own_cpus, type, max);
 
-	err = process(tool, (जोड़ perf_event *)ev, शून्य, शून्य);
-	मुक्त(ev);
-	वापस err;
-पूर्ण
+	err = process(tool, (union perf_event *)ev, NULL, NULL);
+	free(ev);
+	return err;
+}
 
-पूर्णांक perf_event__synthesize_attrs(काष्ठा perf_tool *tool, काष्ठा evlist *evlist,
+int perf_event__synthesize_attrs(struct perf_tool *tool, struct evlist *evlist,
 				 perf_event__handler_t process)
-अणु
-	काष्ठा evsel *evsel;
-	पूर्णांक err = 0;
+{
+	struct evsel *evsel;
+	int err = 0;
 
-	evlist__क्रम_each_entry(evlist, evsel) अणु
+	evlist__for_each_entry(evlist, evsel) {
 		err = perf_event__synthesize_attr(tool, &evsel->core.attr, evsel->core.ids,
 						  evsel->core.id, process);
-		अगर (err) अणु
+		if (err) {
 			pr_debug("failed to create perf header attribute\n");
-			वापस err;
-		पूर्ण
-	पूर्ण
+			return err;
+		}
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल bool has_unit(काष्ठा evsel *evsel)
-अणु
-	वापस evsel->unit && *evsel->unit;
-पूर्ण
+static bool has_unit(struct evsel *evsel)
+{
+	return evsel->unit && *evsel->unit;
+}
 
-अटल bool has_scale(काष्ठा evsel *evsel)
-अणु
-	वापस evsel->scale != 1;
-पूर्ण
+static bool has_scale(struct evsel *evsel)
+{
+	return evsel->scale != 1;
+}
 
-पूर्णांक perf_event__synthesize_extra_attr(काष्ठा perf_tool *tool, काष्ठा evlist *evsel_list,
+int perf_event__synthesize_extra_attr(struct perf_tool *tool, struct evlist *evsel_list,
 				      perf_event__handler_t process, bool is_pipe)
-अणु
-	काष्ठा evsel *evsel;
-	पूर्णांक err;
+{
+	struct evsel *evsel;
+	int err;
 
 	/*
 	 * Synthesize other events stuff not carried within
 	 * attr event - unit, scale, name
 	 */
-	evlist__क्रम_each_entry(evsel_list, evsel) अणु
-		अगर (!evsel->supported)
-			जारी;
+	evlist__for_each_entry(evsel_list, evsel) {
+		if (!evsel->supported)
+			continue;
 
 		/*
-		 * Synthesize unit and scale only अगर it's defined.
+		 * Synthesize unit and scale only if it's defined.
 		 */
-		अगर (has_unit(evsel)) अणु
+		if (has_unit(evsel)) {
 			err = perf_event__synthesize_event_update_unit(tool, evsel, process);
-			अगर (err < 0) अणु
+			if (err < 0) {
 				pr_err("Couldn't synthesize evsel unit.\n");
-				वापस err;
-			पूर्ण
-		पूर्ण
+				return err;
+			}
+		}
 
-		अगर (has_scale(evsel)) अणु
+		if (has_scale(evsel)) {
 			err = perf_event__synthesize_event_update_scale(tool, evsel, process);
-			अगर (err < 0) अणु
+			if (err < 0) {
 				pr_err("Couldn't synthesize evsel evsel.\n");
-				वापस err;
-			पूर्ण
-		पूर्ण
+				return err;
+			}
+		}
 
-		अगर (evsel->core.own_cpus) अणु
+		if (evsel->core.own_cpus) {
 			err = perf_event__synthesize_event_update_cpus(tool, evsel, process);
-			अगर (err < 0) अणु
+			if (err < 0) {
 				pr_err("Couldn't synthesize evsel cpus.\n");
-				वापस err;
-			पूर्ण
-		पूर्ण
+				return err;
+			}
+		}
 
 		/*
-		 * Name is needed only क्रम pipe output,
+		 * Name is needed only for pipe output,
 		 * perf.data carries event names.
 		 */
-		अगर (is_pipe) अणु
+		if (is_pipe) {
 			err = perf_event__synthesize_event_update_name(tool, evsel, process);
-			अगर (err < 0) अणु
+			if (err < 0) {
 				pr_err("Couldn't synthesize evsel name.\n");
-				वापस err;
-			पूर्ण
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+				return err;
+			}
+		}
+	}
+	return 0;
+}
 
-पूर्णांक perf_event__synthesize_attr(काष्ठा perf_tool *tool, काष्ठा perf_event_attr *attr,
+int perf_event__synthesize_attr(struct perf_tool *tool, struct perf_event_attr *attr,
 				u32 ids, u64 *id, perf_event__handler_t process)
-अणु
-	जोड़ perf_event *ev;
-	माप_प्रकार size;
-	पूर्णांक err;
+{
+	union perf_event *ev;
+	size_t size;
+	int err;
 
-	size = माप(काष्ठा perf_event_attr);
-	size = PERF_ALIGN(size, माप(u64));
-	size += माप(काष्ठा perf_event_header);
-	size += ids * माप(u64);
+	size = sizeof(struct perf_event_attr);
+	size = PERF_ALIGN(size, sizeof(u64));
+	size += sizeof(struct perf_event_header);
+	size += ids * sizeof(u64);
 
 	ev = zalloc(size);
 
-	अगर (ev == शून्य)
-		वापस -ENOMEM;
+	if (ev == NULL)
+		return -ENOMEM;
 
 	ev->attr.attr = *attr;
-	स_नकल(ev->attr.id, id, ids * माप(u64));
+	memcpy(ev->attr.id, id, ids * sizeof(u64));
 
 	ev->attr.header.type = PERF_RECORD_HEADER_ATTR;
 	ev->attr.header.size = (u16)size;
 
-	अगर (ev->attr.header.size == size)
-		err = process(tool, ev, शून्य, शून्य);
-	अन्यथा
+	if (ev->attr.header.size == size)
+		err = process(tool, ev, NULL, NULL);
+	else
 		err = -E2BIG;
 
-	मुक्त(ev);
+	free(ev);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक perf_event__syntheमाप_प्रकारracing_data(काष्ठा perf_tool *tool, पूर्णांक fd, काष्ठा evlist *evlist,
+int perf_event__synthesize_tracing_data(struct perf_tool *tool, int fd, struct evlist *evlist,
 					perf_event__handler_t process)
-अणु
-	जोड़ perf_event ev;
-	काष्ठा tracing_data *tdata;
-	sमाप_प्रकार size = 0, aligned_size = 0, padding;
-	काष्ठा feat_fd ff;
+{
+	union perf_event ev;
+	struct tracing_data *tdata;
+	ssize_t size = 0, aligned_size = 0, padding;
+	struct feat_fd ff;
 
 	/*
 	 * We are going to store the size of the data followed
@@ -2025,25 +2024,25 @@ out_err:
 	 * we cannot seek back to store the size of the data once
 	 * we know it. Instead we:
 	 *
-	 * - ग_लिखो the tracing data to the temp file
-	 * - get/ग_लिखो the data size to pipe
-	 * - ग_लिखो the tracing data from the temp file
+	 * - write the tracing data to the temp file
+	 * - get/write the data size to pipe
+	 * - write the tracing data from the temp file
 	 *   to the pipe
 	 */
 	tdata = tracing_data_get(&evlist->core.entries, fd, true);
-	अगर (!tdata)
-		वापस -1;
+	if (!tdata)
+		return -1;
 
-	स_रखो(&ev, 0, माप(ev));
+	memset(&ev, 0, sizeof(ev));
 
 	ev.tracing_data.header.type = PERF_RECORD_HEADER_TRACING_DATA;
 	size = tdata->size;
-	aligned_size = PERF_ALIGN(size, माप(u64));
+	aligned_size = PERF_ALIGN(size, sizeof(u64));
 	padding = aligned_size - size;
-	ev.tracing_data.header.size = माप(ev.tracing_data);
+	ev.tracing_data.header.size = sizeof(ev.tracing_data);
 	ev.tracing_data.size = aligned_size;
 
-	process(tool, &ev, शून्य, शून्य);
+	process(tool, &ev, NULL, NULL);
 
 	/*
 	 * The put function will copy all the tracing data
@@ -2051,132 +2050,132 @@ out_err:
 	 */
 	tracing_data_put(tdata);
 
-	ff = (काष्ठा feat_fd)अणु .fd = fd पूर्ण;
-	अगर (ग_लिखो_padded(&ff, शून्य, 0, padding))
-		वापस -1;
+	ff = (struct feat_fd){ .fd = fd };
+	if (write_padded(&ff, NULL, 0, padding))
+		return -1;
 
-	वापस aligned_size;
-पूर्ण
+	return aligned_size;
+}
 
-पूर्णांक perf_event__synthesize_build_id(काष्ठा perf_tool *tool, काष्ठा dso *pos, u16 misc,
-				    perf_event__handler_t process, काष्ठा machine *machine)
-अणु
-	जोड़ perf_event ev;
-	माप_प्रकार len;
+int perf_event__synthesize_build_id(struct perf_tool *tool, struct dso *pos, u16 misc,
+				    perf_event__handler_t process, struct machine *machine)
+{
+	union perf_event ev;
+	size_t len;
 
-	अगर (!pos->hit)
-		वापस 0;
+	if (!pos->hit)
+		return 0;
 
-	स_रखो(&ev, 0, माप(ev));
+	memset(&ev, 0, sizeof(ev));
 
-	len = pos->दीर्घ_name_len + 1;
+	len = pos->long_name_len + 1;
 	len = PERF_ALIGN(len, NAME_ALIGN);
-	स_नकल(&ev.build_id.build_id, pos->bid.data, माप(pos->bid.data));
+	memcpy(&ev.build_id.build_id, pos->bid.data, sizeof(pos->bid.data));
 	ev.build_id.header.type = PERF_RECORD_HEADER_BUILD_ID;
 	ev.build_id.header.misc = misc;
 	ev.build_id.pid = machine->pid;
-	ev.build_id.header.size = माप(ev.build_id) + len;
-	स_नकल(&ev.build_id.filename, pos->दीर्घ_name, pos->दीर्घ_name_len);
+	ev.build_id.header.size = sizeof(ev.build_id) + len;
+	memcpy(&ev.build_id.filename, pos->long_name, pos->long_name_len);
 
-	वापस process(tool, &ev, शून्य, machine);
-पूर्ण
+	return process(tool, &ev, NULL, machine);
+}
 
-पूर्णांक perf_event__synthesize_stat_events(काष्ठा perf_stat_config *config, काष्ठा perf_tool *tool,
-				       काष्ठा evlist *evlist, perf_event__handler_t process, bool attrs)
-अणु
-	पूर्णांक err;
+int perf_event__synthesize_stat_events(struct perf_stat_config *config, struct perf_tool *tool,
+				       struct evlist *evlist, perf_event__handler_t process, bool attrs)
+{
+	int err;
 
-	अगर (attrs) अणु
+	if (attrs) {
 		err = perf_event__synthesize_attrs(tool, evlist, process);
-		अगर (err < 0) अणु
+		if (err < 0) {
 			pr_err("Couldn't synthesize attrs.\n");
-			वापस err;
-		पूर्ण
-	पूर्ण
+			return err;
+		}
+	}
 
 	err = perf_event__synthesize_extra_attr(tool, evlist, process, attrs);
-	err = perf_event__syntheमाप_प्रकारhपढ़ो_map2(tool, evlist->core.thपढ़ोs, process, शून्य);
-	अगर (err < 0) अणु
+	err = perf_event__synthesize_thread_map2(tool, evlist->core.threads, process, NULL);
+	if (err < 0) {
 		pr_err("Couldn't synthesize thread map.\n");
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	err = perf_event__synthesize_cpu_map(tool, evlist->core.cpus, process, शून्य);
-	अगर (err < 0) अणु
+	err = perf_event__synthesize_cpu_map(tool, evlist->core.cpus, process, NULL);
+	if (err < 0) {
 		pr_err("Couldn't synthesize thread map.\n");
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	err = perf_event__synthesize_stat_config(tool, config, process, शून्य);
-	अगर (err < 0) अणु
+	err = perf_event__synthesize_stat_config(tool, config, process, NULL);
+	if (err < 0) {
 		pr_err("Couldn't synthesize config.\n");
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-बाह्य स्थिर काष्ठा perf_header_feature_ops feat_ops[HEADER_LAST_FEATURE];
+extern const struct perf_header_feature_ops feat_ops[HEADER_LAST_FEATURE];
 
-पूर्णांक perf_event__synthesize_features(काष्ठा perf_tool *tool, काष्ठा perf_session *session,
-				    काष्ठा evlist *evlist, perf_event__handler_t process)
-अणु
-	काष्ठा perf_header *header = &session->header;
-	काष्ठा perf_record_header_feature *fe;
-	काष्ठा feat_fd ff;
-	माप_प्रकार sz, sz_hdr;
-	पूर्णांक feat, ret;
+int perf_event__synthesize_features(struct perf_tool *tool, struct perf_session *session,
+				    struct evlist *evlist, perf_event__handler_t process)
+{
+	struct perf_header *header = &session->header;
+	struct perf_record_header_feature *fe;
+	struct feat_fd ff;
+	size_t sz, sz_hdr;
+	int feat, ret;
 
-	sz_hdr = माप(fe->header);
-	sz = माप(जोड़ perf_event);
+	sz_hdr = sizeof(fe->header);
+	sz = sizeof(union perf_event);
 	/* get a nice alignment */
 	sz = PERF_ALIGN(sz, page_size);
 
-	स_रखो(&ff, 0, माप(ff));
+	memset(&ff, 0, sizeof(ff));
 
-	ff.buf = दो_स्मृति(sz);
-	अगर (!ff.buf)
-		वापस -ENOMEM;
+	ff.buf = malloc(sz);
+	if (!ff.buf)
+		return -ENOMEM;
 
 	ff.size = sz - sz_hdr;
 	ff.ph = &session->header;
 
-	क्रम_each_set_bit(feat, header->adds_features, HEADER_FEAT_BITS) अणु
-		अगर (!feat_ops[feat].synthesize) अणु
+	for_each_set_bit(feat, header->adds_features, HEADER_FEAT_BITS) {
+		if (!feat_ops[feat].synthesize) {
 			pr_debug("No record header feature for header :%d\n", feat);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		ff.offset = माप(*fe);
+		ff.offset = sizeof(*fe);
 
-		ret = feat_ops[feat].ग_लिखो(&ff, evlist);
-		अगर (ret || ff.offset <= (sमाप_प्रकार)माप(*fe)) अणु
+		ret = feat_ops[feat].write(&ff, evlist);
+		if (ret || ff.offset <= (ssize_t)sizeof(*fe)) {
 			pr_debug("Error writing feature\n");
-			जारी;
-		पूर्ण
-		/* ff.buf may have changed due to पुनः_स्मृति in करो_ग_लिखो() */
+			continue;
+		}
+		/* ff.buf may have changed due to realloc in do_write() */
 		fe = ff.buf;
-		स_रखो(fe, 0, माप(*fe));
+		memset(fe, 0, sizeof(*fe));
 
 		fe->feat_id = feat;
 		fe->header.type = PERF_RECORD_HEADER_FEATURE;
 		fe->header.size = ff.offset;
 
-		ret = process(tool, ff.buf, शून्य, शून्य);
-		अगर (ret) अणु
-			मुक्त(ff.buf);
-			वापस ret;
-		पूर्ण
-	पूर्ण
+		ret = process(tool, ff.buf, NULL, NULL);
+		if (ret) {
+			free(ff.buf);
+			return ret;
+		}
+	}
 
 	/* Send HEADER_LAST_FEATURE mark. */
 	fe = ff.buf;
 	fe->feat_id     = HEADER_LAST_FEATURE;
 	fe->header.type = PERF_RECORD_HEADER_FEATURE;
-	fe->header.size = माप(*fe);
+	fe->header.size = sizeof(*fe);
 
-	ret = process(tool, ff.buf, शून्य, शून्य);
+	ret = process(tool, ff.buf, NULL, NULL);
 
-	मुक्त(ff.buf);
-	वापस ret;
-पूर्ण
+	free(ff.buf);
+	return ret;
+}

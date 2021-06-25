@@ -1,31 +1,30 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-// Copyright (C) 2018 Hangzhou C-SKY Microप्रणालीs co.,ltd.
+// SPDX-License-Identifier: GPL-2.0
+// Copyright (C) 2018 Hangzhou C-SKY Microsystems co.,ltd.
 
-#समावेश <linux/syscalls.h>
-#समावेश <यंत्र/page.h>
-#समावेश <यंत्र/cacheflush.h>
-#समावेश <यंत्र/cachectl.h>
+#include <linux/syscalls.h>
+#include <asm/page.h>
+#include <asm/cacheflush.h>
+#include <asm/cachectl.h>
 
 SYSCALL_DEFINE3(cacheflush,
-		व्योम __user *, addr,
-		अचिन्हित दीर्घ, bytes,
-		पूर्णांक, cache)
-अणु
-	चयन (cache) अणु
-	हाल ICACHE:
-	हाल BCACHE:
+		void __user *, addr,
+		unsigned long, bytes,
+		int, cache)
+{
+	switch (cache) {
+	case ICACHE:
+	case BCACHE:
 		flush_icache_mm_range(current->mm,
-				(अचिन्हित दीर्घ)addr,
-				(अचिन्हित दीर्घ)addr + bytes);
+				(unsigned long)addr,
+				(unsigned long)addr + bytes);
 		fallthrough;
-	हाल DCACHE:
-		dcache_wb_range((अचिन्हित दीर्घ)addr,
-				(अचिन्हित दीर्घ)addr + bytes);
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+	case DCACHE:
+		dcache_wb_range((unsigned long)addr,
+				(unsigned long)addr + bytes);
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

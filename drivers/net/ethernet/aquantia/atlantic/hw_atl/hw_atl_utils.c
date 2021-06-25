@@ -1,773 +1,772 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /* Atlantic Network Driver
  *
  * Copyright (C) 2014-2019 aQuantia Corporation
  * Copyright (C) 2019-2020 Marvell International Ltd.
  */
 
-/* File hw_atl_utils.c: Definition of common functions क्रम Atlantic hardware
- * असलtraction layer.
+/* File hw_atl_utils.c: Definition of common functions for Atlantic hardware
+ * abstraction layer.
  */
 
-#समावेश "../aq_nic.h"
-#समावेश "../aq_hw_utils.h"
-#समावेश "hw_atl_utils.h"
-#समावेश "hw_atl_llh.h"
-#समावेश "hw_atl_llh_internal.h"
+#include "../aq_nic.h"
+#include "../aq_hw_utils.h"
+#include "hw_atl_utils.h"
+#include "hw_atl_llh.h"
+#include "hw_atl_llh_internal.h"
 
-#समावेश <linux/अक्रमom.h>
+#include <linux/random.h>
 
-#घोषणा HW_ATL_UCP_0X370_REG    0x0370U
+#define HW_ATL_UCP_0X370_REG    0x0370U
 
-#घोषणा HW_ATL_MIF_CMD          0x0200U
-#घोषणा HW_ATL_MIF_ADDR         0x0208U
-#घोषणा HW_ATL_MIF_VAL          0x020CU
+#define HW_ATL_MIF_CMD          0x0200U
+#define HW_ATL_MIF_ADDR         0x0208U
+#define HW_ATL_MIF_VAL          0x020CU
 
-#घोषणा HW_ATL_MPI_RPC_ADDR     0x0334U
-#घोषणा HW_ATL_RPC_CONTROL_ADR  0x0338U
-#घोषणा HW_ATL_RPC_STATE_ADR    0x033CU
+#define HW_ATL_MPI_RPC_ADDR     0x0334U
+#define HW_ATL_RPC_CONTROL_ADR  0x0338U
+#define HW_ATL_RPC_STATE_ADR    0x033CU
 
-#घोषणा HW_ATL_MPI_FW_VERSION	0x18
-#घोषणा HW_ATL_MPI_CONTROL_ADR  0x0368U
-#घोषणा HW_ATL_MPI_STATE_ADR    0x036CU
+#define HW_ATL_MPI_FW_VERSION	0x18
+#define HW_ATL_MPI_CONTROL_ADR  0x0368U
+#define HW_ATL_MPI_STATE_ADR    0x036CU
 
-#घोषणा HW_ATL_MPI_STATE_MSK      0x00FFU
-#घोषणा HW_ATL_MPI_STATE_SHIFT    0U
-#घोषणा HW_ATL_MPI_SPEED_MSK      0x00FF0000U
-#घोषणा HW_ATL_MPI_SPEED_SHIFT    16U
-#घोषणा HW_ATL_MPI_सूचीTY_WAKE_MSK 0x02000000U
+#define HW_ATL_MPI_STATE_MSK      0x00FFU
+#define HW_ATL_MPI_STATE_SHIFT    0U
+#define HW_ATL_MPI_SPEED_MSK      0x00FF0000U
+#define HW_ATL_MPI_SPEED_SHIFT    16U
+#define HW_ATL_MPI_DIRTY_WAKE_MSK 0x02000000U
 
-#घोषणा HW_ATL_MPI_DAISY_CHAIN_STATUS	0x704
-#घोषणा HW_ATL_MPI_BOOT_EXIT_CODE	0x388
+#define HW_ATL_MPI_DAISY_CHAIN_STATUS	0x704
+#define HW_ATL_MPI_BOOT_EXIT_CODE	0x388
 
-#घोषणा HW_ATL_MAC_PHY_CONTROL	0x4000
-#घोषणा HW_ATL_MAC_PHY_MPI_RESET_BIT 0x1D
+#define HW_ATL_MAC_PHY_CONTROL	0x4000
+#define HW_ATL_MAC_PHY_MPI_RESET_BIT 0x1D
 
-#घोषणा HW_ATL_FW_VER_1X 0x01050006U
-#घोषणा HW_ATL_FW_VER_2X 0x02000000U
-#घोषणा HW_ATL_FW_VER_3X 0x03000000U
-#घोषणा HW_ATL_FW_VER_4X 0x04000000U
+#define HW_ATL_FW_VER_1X 0x01050006U
+#define HW_ATL_FW_VER_2X 0x02000000U
+#define HW_ATL_FW_VER_3X 0x03000000U
+#define HW_ATL_FW_VER_4X 0x04000000U
 
-#घोषणा FORCE_FLASHLESS 0
+#define FORCE_FLASHLESS 0
 
-क्रमागत mcp_area अणु
+enum mcp_area {
 	MCP_AREA_CONFIG = 0x80000000,
 	MCP_AREA_SETTINGS = 0x20000000,
-पूर्ण;
+};
 
-अटल पूर्णांक hw_atl_utils_mpi_set_state(काष्ठा aq_hw_s *self,
-				      क्रमागत hal_atl_utils_fw_state_e state);
-अटल u32 hw_atl_utils_get_mpi_mbox_tid(काष्ठा aq_hw_s *self);
-अटल u32 hw_atl_utils_mpi_get_state(काष्ठा aq_hw_s *self);
-अटल u32 hw_atl_utils_mअगर_cmd_get(काष्ठा aq_hw_s *self);
-अटल u32 hw_atl_utils_mअगर_addr_get(काष्ठा aq_hw_s *self);
-अटल u32 hw_atl_utils_rpc_state_get(काष्ठा aq_hw_s *self);
-अटल u32 aq_fw1x_rpc_get(काष्ठा aq_hw_s *self);
+static int hw_atl_utils_mpi_set_state(struct aq_hw_s *self,
+				      enum hal_atl_utils_fw_state_e state);
+static u32 hw_atl_utils_get_mpi_mbox_tid(struct aq_hw_s *self);
+static u32 hw_atl_utils_mpi_get_state(struct aq_hw_s *self);
+static u32 hw_atl_utils_mif_cmd_get(struct aq_hw_s *self);
+static u32 hw_atl_utils_mif_addr_get(struct aq_hw_s *self);
+static u32 hw_atl_utils_rpc_state_get(struct aq_hw_s *self);
+static u32 aq_fw1x_rpc_get(struct aq_hw_s *self);
 
-पूर्णांक hw_atl_utils_initfw(काष्ठा aq_hw_s *self, स्थिर काष्ठा aq_fw_ops **fw_ops)
-अणु
-	पूर्णांक err = 0;
+int hw_atl_utils_initfw(struct aq_hw_s *self, const struct aq_fw_ops **fw_ops)
+{
+	int err = 0;
 
 	hw_atl_utils_hw_chip_features_init(self,
 					   &self->chip_features);
 
 	self->fw_ver_actual = hw_atl_utils_get_fw_version(self);
 
-	अगर (hw_atl_utils_ver_match(HW_ATL_FW_VER_1X, self->fw_ver_actual)) अणु
+	if (hw_atl_utils_ver_match(HW_ATL_FW_VER_1X, self->fw_ver_actual)) {
 		*fw_ops = &aq_fw_1x_ops;
-	पूर्ण अन्यथा अगर (hw_atl_utils_ver_match(HW_ATL_FW_VER_2X, self->fw_ver_actual)) अणु
+	} else if (hw_atl_utils_ver_match(HW_ATL_FW_VER_2X, self->fw_ver_actual)) {
 		*fw_ops = &aq_fw_2x_ops;
-	पूर्ण अन्यथा अगर (hw_atl_utils_ver_match(HW_ATL_FW_VER_3X, self->fw_ver_actual)) अणु
+	} else if (hw_atl_utils_ver_match(HW_ATL_FW_VER_3X, self->fw_ver_actual)) {
 		*fw_ops = &aq_fw_2x_ops;
-	पूर्ण अन्यथा अगर (hw_atl_utils_ver_match(HW_ATL_FW_VER_4X, self->fw_ver_actual)) अणु
+	} else if (hw_atl_utils_ver_match(HW_ATL_FW_VER_4X, self->fw_ver_actual)) {
 		*fw_ops = &aq_fw_2x_ops;
-	पूर्ण अन्यथा अणु
+	} else {
 		aq_pr_err("Bad FW version detected: %x\n",
 			  self->fw_ver_actual);
-		वापस -EOPNOTSUPP;
-	पूर्ण
+		return -EOPNOTSUPP;
+	}
 	self->aq_fw_ops = *fw_ops;
 	err = self->aq_fw_ops->init(self);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक hw_atl_utils_soft_reset_flb(काष्ठा aq_hw_s *self)
-अणु
+static int hw_atl_utils_soft_reset_flb(struct aq_hw_s *self)
+{
 	u32 gsr, val;
-	पूर्णांक k = 0;
+	int k = 0;
 
-	aq_hw_ग_लिखो_reg(self, 0x404, 0x40e1);
+	aq_hw_write_reg(self, 0x404, 0x40e1);
 	AQ_HW_SLEEP(50);
 
 	/* Cleanup SPI */
-	val = aq_hw_पढ़ो_reg(self, 0x53C);
-	aq_hw_ग_लिखो_reg(self, 0x53C, val | 0x10);
+	val = aq_hw_read_reg(self, 0x53C);
+	aq_hw_write_reg(self, 0x53C, val | 0x10);
 
-	gsr = aq_hw_पढ़ो_reg(self, HW_ATL_GLB_SOFT_RES_ADR);
-	aq_hw_ग_लिखो_reg(self, HW_ATL_GLB_SOFT_RES_ADR, (gsr & 0xBFFF) | 0x8000);
+	gsr = aq_hw_read_reg(self, HW_ATL_GLB_SOFT_RES_ADR);
+	aq_hw_write_reg(self, HW_ATL_GLB_SOFT_RES_ADR, (gsr & 0xBFFF) | 0x8000);
 
 	/* Kickstart MAC */
-	aq_hw_ग_लिखो_reg(self, 0x404, 0x80e0);
-	aq_hw_ग_लिखो_reg(self, 0x32a8, 0x0);
-	aq_hw_ग_लिखो_reg(self, 0x520, 0x1);
+	aq_hw_write_reg(self, 0x404, 0x80e0);
+	aq_hw_write_reg(self, 0x32a8, 0x0);
+	aq_hw_write_reg(self, 0x520, 0x1);
 
-	/* Reset SPI again because of possible पूर्णांकerrupted SPI burst */
-	val = aq_hw_पढ़ो_reg(self, 0x53C);
-	aq_hw_ग_लिखो_reg(self, 0x53C, val | 0x10);
+	/* Reset SPI again because of possible interrupted SPI burst */
+	val = aq_hw_read_reg(self, 0x53C);
+	aq_hw_write_reg(self, 0x53C, val | 0x10);
 	AQ_HW_SLEEP(10);
 	/* Clear SPI reset state */
-	aq_hw_ग_लिखो_reg(self, 0x53C, val & ~0x10);
+	aq_hw_write_reg(self, 0x53C, val & ~0x10);
 
-	aq_hw_ग_लिखो_reg(self, 0x404, 0x180e0);
+	aq_hw_write_reg(self, 0x404, 0x180e0);
 
-	क्रम (k = 0; k < 1000; k++) अणु
-		u32 flb_status = aq_hw_पढ़ो_reg(self,
+	for (k = 0; k < 1000; k++) {
+		u32 flb_status = aq_hw_read_reg(self,
 						HW_ATL_MPI_DAISY_CHAIN_STATUS);
 
 		flb_status = flb_status & 0x10;
-		अगर (flb_status)
-			अवरोध;
+		if (flb_status)
+			break;
 		AQ_HW_SLEEP(10);
-	पूर्ण
-	अगर (k == 1000) अणु
+	}
+	if (k == 1000) {
 		aq_pr_err("MAC kickstart failed\n");
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
 	/* FW reset */
-	aq_hw_ग_लिखो_reg(self, 0x404, 0x80e0);
+	aq_hw_write_reg(self, 0x404, 0x80e0);
 	AQ_HW_SLEEP(50);
-	aq_hw_ग_लिखो_reg(self, 0x3a0, 0x1);
+	aq_hw_write_reg(self, 0x3a0, 0x1);
 
 	/* Kickstart PHY - skipped */
 
 	/* Global software reset*/
 	hw_atl_rx_rx_reg_res_dis_set(self, 0U);
 	hw_atl_tx_tx_reg_res_dis_set(self, 0U);
-	aq_hw_ग_लिखो_reg_bit(self, HW_ATL_MAC_PHY_CONTROL,
+	aq_hw_write_reg_bit(self, HW_ATL_MAC_PHY_CONTROL,
 			    BIT(HW_ATL_MAC_PHY_MPI_RESET_BIT),
 			    HW_ATL_MAC_PHY_MPI_RESET_BIT, 0x0);
-	gsr = aq_hw_पढ़ो_reg(self, HW_ATL_GLB_SOFT_RES_ADR);
-	aq_hw_ग_लिखो_reg(self, HW_ATL_GLB_SOFT_RES_ADR, (gsr & 0xBFFF) | 0x8000);
+	gsr = aq_hw_read_reg(self, HW_ATL_GLB_SOFT_RES_ADR);
+	aq_hw_write_reg(self, HW_ATL_GLB_SOFT_RES_ADR, (gsr & 0xBFFF) | 0x8000);
 
-	क्रम (k = 0; k < 1000; k++) अणु
-		u32 fw_state = aq_hw_पढ़ो_reg(self, HW_ATL_MPI_FW_VERSION);
+	for (k = 0; k < 1000; k++) {
+		u32 fw_state = aq_hw_read_reg(self, HW_ATL_MPI_FW_VERSION);
 
-		अगर (fw_state)
-			अवरोध;
+		if (fw_state)
+			break;
 		AQ_HW_SLEEP(10);
-	पूर्ण
-	अगर (k == 1000) अणु
+	}
+	if (k == 1000) {
 		aq_pr_err("FW kickstart failed\n");
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 	/* Old FW requires fixed delay after init */
 	AQ_HW_SLEEP(15);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक hw_atl_utils_soft_reset_rbl(काष्ठा aq_hw_s *self)
-अणु
+static int hw_atl_utils_soft_reset_rbl(struct aq_hw_s *self)
+{
 	u32 gsr, val, rbl_status;
-	पूर्णांक k;
+	int k;
 
-	aq_hw_ग_लिखो_reg(self, 0x404, 0x40e1);
-	aq_hw_ग_लिखो_reg(self, 0x3a0, 0x1);
-	aq_hw_ग_लिखो_reg(self, 0x32a8, 0x0);
+	aq_hw_write_reg(self, 0x404, 0x40e1);
+	aq_hw_write_reg(self, 0x3a0, 0x1);
+	aq_hw_write_reg(self, 0x32a8, 0x0);
 
 	/* Alter RBL status */
-	aq_hw_ग_लिखो_reg(self, 0x388, 0xDEAD);
+	aq_hw_write_reg(self, 0x388, 0xDEAD);
 
 	/* Cleanup SPI */
-	val = aq_hw_पढ़ो_reg(self, 0x53C);
-	aq_hw_ग_लिखो_reg(self, 0x53C, val | 0x10);
+	val = aq_hw_read_reg(self, 0x53C);
+	aq_hw_write_reg(self, 0x53C, val | 0x10);
 
 	/* Global software reset*/
 	hw_atl_rx_rx_reg_res_dis_set(self, 0U);
 	hw_atl_tx_tx_reg_res_dis_set(self, 0U);
-	aq_hw_ग_लिखो_reg_bit(self, HW_ATL_MAC_PHY_CONTROL,
+	aq_hw_write_reg_bit(self, HW_ATL_MAC_PHY_CONTROL,
 			    BIT(HW_ATL_MAC_PHY_MPI_RESET_BIT),
 			    HW_ATL_MAC_PHY_MPI_RESET_BIT, 0x0);
-	gsr = aq_hw_पढ़ो_reg(self, HW_ATL_GLB_SOFT_RES_ADR);
-	aq_hw_ग_लिखो_reg(self, HW_ATL_GLB_SOFT_RES_ADR,
+	gsr = aq_hw_read_reg(self, HW_ATL_GLB_SOFT_RES_ADR);
+	aq_hw_write_reg(self, HW_ATL_GLB_SOFT_RES_ADR,
 			(gsr & 0xFFFFBFFF) | 0x8000);
 
-	अगर (FORCE_FLASHLESS)
-		aq_hw_ग_लिखो_reg(self, 0x534, 0x0);
+	if (FORCE_FLASHLESS)
+		aq_hw_write_reg(self, 0x534, 0x0);
 
-	aq_hw_ग_लिखो_reg(self, 0x404, 0x40e0);
+	aq_hw_write_reg(self, 0x404, 0x40e0);
 
-	/* Wait क्रम RBL boot */
-	क्रम (k = 0; k < 1000; k++) अणु
-		rbl_status = aq_hw_पढ़ो_reg(self, 0x388) & 0xFFFF;
-		अगर (rbl_status && rbl_status != 0xDEAD)
-			अवरोध;
+	/* Wait for RBL boot */
+	for (k = 0; k < 1000; k++) {
+		rbl_status = aq_hw_read_reg(self, 0x388) & 0xFFFF;
+		if (rbl_status && rbl_status != 0xDEAD)
+			break;
 		AQ_HW_SLEEP(10);
-	पूर्ण
-	अगर (!rbl_status || rbl_status == 0xDEAD) अणु
+	}
+	if (!rbl_status || rbl_status == 0xDEAD) {
 		aq_pr_err("RBL Restart failed");
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
 	/* Restore NVR */
-	अगर (FORCE_FLASHLESS)
-		aq_hw_ग_लिखो_reg(self, 0x534, 0xA0);
+	if (FORCE_FLASHLESS)
+		aq_hw_write_reg(self, 0x534, 0xA0);
 
-	अगर (rbl_status == 0xF1A7) अणु
+	if (rbl_status == 0xF1A7) {
 		aq_pr_err("No FW detected. Dynamic FW load not implemented\n");
-		वापस -EOPNOTSUPP;
-	पूर्ण
+		return -EOPNOTSUPP;
+	}
 
-	क्रम (k = 0; k < 1000; k++) अणु
-		u32 fw_state = aq_hw_पढ़ो_reg(self, HW_ATL_MPI_FW_VERSION);
+	for (k = 0; k < 1000; k++) {
+		u32 fw_state = aq_hw_read_reg(self, HW_ATL_MPI_FW_VERSION);
 
-		अगर (fw_state)
-			अवरोध;
+		if (fw_state)
+			break;
 		AQ_HW_SLEEP(10);
-	पूर्ण
-	अगर (k == 1000) अणु
+	}
+	if (k == 1000) {
 		aq_pr_err("FW kickstart failed\n");
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 	/* Old FW requires fixed delay after init */
 	AQ_HW_SLEEP(15);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक hw_atl_utils_soft_reset(काष्ठा aq_hw_s *self)
-अणु
-	पूर्णांक ver = hw_atl_utils_get_fw_version(self);
-	u32 boot_निकास_code = 0;
+int hw_atl_utils_soft_reset(struct aq_hw_s *self)
+{
+	int ver = hw_atl_utils_get_fw_version(self);
+	u32 boot_exit_code = 0;
 	u32 val;
-	पूर्णांक k;
+	int k;
 
-	क्रम (k = 0; k < 1000; ++k) अणु
-		u32 flb_status = aq_hw_पढ़ो_reg(self,
+	for (k = 0; k < 1000; ++k) {
+		u32 flb_status = aq_hw_read_reg(self,
 						HW_ATL_MPI_DAISY_CHAIN_STATUS);
-		boot_निकास_code = aq_hw_पढ़ो_reg(self,
+		boot_exit_code = aq_hw_read_reg(self,
 						HW_ATL_MPI_BOOT_EXIT_CODE);
-		अगर (flb_status != 0x06000000 || boot_निकास_code != 0)
-			अवरोध;
-	पूर्ण
+		if (flb_status != 0x06000000 || boot_exit_code != 0)
+			break;
+	}
 
-	अगर (k == 1000) अणु
+	if (k == 1000) {
 		aq_pr_err("Neither RBL nor FLB firmware started\n");
-		वापस -EOPNOTSUPP;
-	पूर्ण
+		return -EOPNOTSUPP;
+	}
 
-	self->rbl_enabled = (boot_निकास_code != 0);
+	self->rbl_enabled = (boot_exit_code != 0);
 
-	अगर (hw_atl_utils_ver_match(HW_ATL_FW_VER_1X, ver)) अणु
-		पूर्णांक err = 0;
+	if (hw_atl_utils_ver_match(HW_ATL_FW_VER_1X, ver)) {
+		int err = 0;
 
 		/* FW 1.x may bootup in an invalid POWER state (WOL feature).
-		 * We should work around this by क्रमcing its state back to DEINIT
+		 * We should work around this by forcing its state back to DEINIT
 		 */
 		hw_atl_utils_mpi_set_state(self, MPI_DEINIT);
-		err = पढ़ोx_poll_समयout_atomic(hw_atl_utils_mpi_get_state,
+		err = readx_poll_timeout_atomic(hw_atl_utils_mpi_get_state,
 						self, val,
 						(val & HW_ATL_MPI_STATE_MSK) ==
 						 MPI_DEINIT,
 						10, 10000U);
-		अगर (err)
-			वापस err;
-	पूर्ण अन्यथा अगर (hw_atl_utils_ver_match(HW_ATL_FW_VER_4X, ver)) अणु
-		u64 sem_समयout = aq_hw_पढ़ो_reg(self, HW_ATL_MIF_RESET_TIMEOUT_ADR);
+		if (err)
+			return err;
+	} else if (hw_atl_utils_ver_match(HW_ATL_FW_VER_4X, ver)) {
+		u64 sem_timeout = aq_hw_read_reg(self, HW_ATL_MIF_RESET_TIMEOUT_ADR);
 
-		/* Acquire 2 semaphores beक्रमe issuing reset क्रम FW 4.x */
-		अगर (sem_समयout > 3000)
-			sem_समयout = 3000;
-		sem_समयout = sem_समयout * 1000;
+		/* Acquire 2 semaphores before issuing reset for FW 4.x */
+		if (sem_timeout > 3000)
+			sem_timeout = 3000;
+		sem_timeout = sem_timeout * 1000;
 
-		अगर (sem_समयout != 0) अणु
-			पूर्णांक err;
+		if (sem_timeout != 0) {
+			int err;
 
-			err = पढ़ोx_poll_समयout_atomic(hw_atl_sem_reset1_get, self, val,
-							val == 1U, 1U, sem_समयout);
-			अगर (err)
+			err = readx_poll_timeout_atomic(hw_atl_sem_reset1_get, self, val,
+							val == 1U, 1U, sem_timeout);
+			if (err)
 				aq_pr_err("reset sema1 timeout");
 
-			err = पढ़ोx_poll_समयout_atomic(hw_atl_sem_reset2_get, self, val,
-							val == 1U, 1U, sem_समयout);
-			अगर (err)
+			err = readx_poll_timeout_atomic(hw_atl_sem_reset2_get, self, val,
+							val == 1U, 1U, sem_timeout);
+			if (err)
 				aq_pr_err("reset sema2 timeout");
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (self->rbl_enabled)
-		वापस hw_atl_utils_soft_reset_rbl(self);
-	अन्यथा
-		वापस hw_atl_utils_soft_reset_flb(self);
-पूर्ण
+	if (self->rbl_enabled)
+		return hw_atl_utils_soft_reset_rbl(self);
+	else
+		return hw_atl_utils_soft_reset_flb(self);
+}
 
-पूर्णांक hw_atl_utils_fw_करोwnld_dwords(काष्ठा aq_hw_s *self, u32 a,
+int hw_atl_utils_fw_downld_dwords(struct aq_hw_s *self, u32 a,
 				  u32 *p, u32 cnt)
-अणु
-	पूर्णांक err = 0;
+{
+	int err = 0;
 	u32 val;
 
-	err = पढ़ोx_poll_समयout_atomic(hw_atl_sem_ram_get,
+	err = readx_poll_timeout_atomic(hw_atl_sem_ram_get,
 					self, val, val == 1U,
 					1U, 10000U);
 
-	अगर (err < 0) अणु
+	if (err < 0) {
 		bool is_locked;
 
 		hw_atl_reg_glb_cpu_sem_set(self, 1U, HW_ATL_FW_SM_RAM);
 		is_locked = hw_atl_sem_ram_get(self);
-		अगर (!is_locked) अणु
+		if (!is_locked) {
 			err = -ETIME;
-			जाओ err_निकास;
-		पूर्ण
-	पूर्ण
+			goto err_exit;
+		}
+	}
 
-	aq_hw_ग_लिखो_reg(self, HW_ATL_MIF_ADDR, a);
+	aq_hw_write_reg(self, HW_ATL_MIF_ADDR, a);
 
-	क्रम (++cnt; --cnt && !err;) अणु
-		aq_hw_ग_लिखो_reg(self, HW_ATL_MIF_CMD, 0x00008000U);
+	for (++cnt; --cnt && !err;) {
+		aq_hw_write_reg(self, HW_ATL_MIF_CMD, 0x00008000U);
 
-		अगर (ATL_HW_IS_CHIP_FEATURE(self, REVISION_B1))
-			err = पढ़ोx_poll_समयout_atomic(hw_atl_utils_mअगर_addr_get,
+		if (ATL_HW_IS_CHIP_FEATURE(self, REVISION_B1))
+			err = readx_poll_timeout_atomic(hw_atl_utils_mif_addr_get,
 							self, val, val != a,
 							1U, 1000U);
-		अन्यथा
-			err = पढ़ोx_poll_समयout_atomic(hw_atl_utils_mअगर_cmd_get,
+		else
+			err = readx_poll_timeout_atomic(hw_atl_utils_mif_cmd_get,
 							self, val,
 							!(val & 0x100),
 							1U, 1000U);
 
-		*(p++) = aq_hw_पढ़ो_reg(self, HW_ATL_MIF_VAL);
+		*(p++) = aq_hw_read_reg(self, HW_ATL_MIF_VAL);
 		a += 4;
-	पूर्ण
+	}
 
 	hw_atl_reg_glb_cpu_sem_set(self, 1U, HW_ATL_FW_SM_RAM);
 
-err_निकास:
-	वापस err;
-पूर्ण
+err_exit:
+	return err;
+}
 
-अटल पूर्णांक hw_atl_utils_ग_लिखो_b1_mbox(काष्ठा aq_hw_s *self, u32 addr,
-				      u32 *p, u32 cnt, क्रमागत mcp_area area)
-अणु
+static int hw_atl_utils_write_b1_mbox(struct aq_hw_s *self, u32 addr,
+				      u32 *p, u32 cnt, enum mcp_area area)
+{
 	u32 data_offset = 0;
 	u32 offset = addr;
-	पूर्णांक err = 0;
+	int err = 0;
 	u32 val;
 
-	चयन (area) अणु
-	हाल MCP_AREA_CONFIG:
+	switch (area) {
+	case MCP_AREA_CONFIG:
 		offset -= self->rpc_addr;
-		अवरोध;
+		break;
 
-	हाल MCP_AREA_SETTINGS:
+	case MCP_AREA_SETTINGS:
 		offset -= self->settings_addr;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	offset = offset / माप(u32);
+	offset = offset / sizeof(u32);
 
-	क्रम (; data_offset < cnt; ++data_offset, ++offset) अणु
-		aq_hw_ग_लिखो_reg(self, 0x328, p[data_offset]);
-		aq_hw_ग_लिखो_reg(self, 0x32C,
+	for (; data_offset < cnt; ++data_offset, ++offset) {
+		aq_hw_write_reg(self, 0x328, p[data_offset]);
+		aq_hw_write_reg(self, 0x32C,
 				(area | (0xFFFF & (offset * 4))));
-		hw_atl_mcp_up_क्रमce_पूर्णांकr_set(self, 1);
-		/* 1000 बार by 10us = 10ms */
-		err = पढ़ोx_poll_समयout_atomic(hw_atl_scrpad12_get,
+		hw_atl_mcp_up_force_intr_set(self, 1);
+		/* 1000 times by 10us = 10ms */
+		err = readx_poll_timeout_atomic(hw_atl_scrpad12_get,
 						self, val,
 						(val & 0xF0000000) !=
 						area,
 						10U, 10000U);
 
-		अगर (err < 0)
-			अवरोध;
-	पूर्ण
+		if (err < 0)
+			break;
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक hw_atl_utils_ग_लिखो_b0_mbox(काष्ठा aq_hw_s *self, u32 addr,
+static int hw_atl_utils_write_b0_mbox(struct aq_hw_s *self, u32 addr,
 				      u32 *p, u32 cnt)
-अणु
+{
 	u32 offset = 0;
-	पूर्णांक err = 0;
+	int err = 0;
 	u32 val;
 
-	aq_hw_ग_लिखो_reg(self, 0x208, addr);
+	aq_hw_write_reg(self, 0x208, addr);
 
-	क्रम (; offset < cnt; ++offset) अणु
-		aq_hw_ग_लिखो_reg(self, 0x20C, p[offset]);
-		aq_hw_ग_लिखो_reg(self, 0x200, 0xC000);
+	for (; offset < cnt; ++offset) {
+		aq_hw_write_reg(self, 0x20C, p[offset]);
+		aq_hw_write_reg(self, 0x200, 0xC000);
 
-		err = पढ़ोx_poll_समयout_atomic(hw_atl_utils_mअगर_cmd_get,
+		err = readx_poll_timeout_atomic(hw_atl_utils_mif_cmd_get,
 						self, val,
 						(val & 0x100) == 0U,
 						10U, 10000U);
 
-		अगर (err < 0)
-			अवरोध;
-	पूर्ण
+		if (err < 0)
+			break;
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक hw_atl_utils_fw_upload_dwords(काष्ठा aq_hw_s *self, u32 addr, u32 *p,
-					 u32 cnt, क्रमागत mcp_area area)
-अणु
-	पूर्णांक err = 0;
+static int hw_atl_utils_fw_upload_dwords(struct aq_hw_s *self, u32 addr, u32 *p,
+					 u32 cnt, enum mcp_area area)
+{
+	int err = 0;
 	u32 val;
 
-	err = पढ़ोx_poll_समयout_atomic(hw_atl_sem_ram_get, self,
+	err = readx_poll_timeout_atomic(hw_atl_sem_ram_get, self,
 					val, val == 1U,
 					10U, 100000U);
-	अगर (err < 0)
-		जाओ err_निकास;
+	if (err < 0)
+		goto err_exit;
 
-	अगर (ATL_HW_IS_CHIP_FEATURE(self, REVISION_B1))
-		err = hw_atl_utils_ग_लिखो_b1_mbox(self, addr, p, cnt, area);
-	अन्यथा
-		err = hw_atl_utils_ग_लिखो_b0_mbox(self, addr, p, cnt);
+	if (ATL_HW_IS_CHIP_FEATURE(self, REVISION_B1))
+		err = hw_atl_utils_write_b1_mbox(self, addr, p, cnt, area);
+	else
+		err = hw_atl_utils_write_b0_mbox(self, addr, p, cnt);
 
 	hw_atl_reg_glb_cpu_sem_set(self, 1U, HW_ATL_FW_SM_RAM);
 
-	अगर (err < 0)
-		जाओ err_निकास;
+	if (err < 0)
+		goto err_exit;
 
 	err = aq_hw_err_from_flags(self);
 
-err_निकास:
-	वापस err;
-पूर्ण
+err_exit:
+	return err;
+}
 
-पूर्णांक hw_atl_ग_लिखो_fwcfg_dwords(काष्ठा aq_hw_s *self, u32 *p, u32 cnt)
-अणु
-	वापस hw_atl_utils_fw_upload_dwords(self, self->rpc_addr, p,
+int hw_atl_write_fwcfg_dwords(struct aq_hw_s *self, u32 *p, u32 cnt)
+{
+	return hw_atl_utils_fw_upload_dwords(self, self->rpc_addr, p,
 					     cnt, MCP_AREA_CONFIG);
-पूर्ण
+}
 
-पूर्णांक hw_atl_ग_लिखो_fwsettings_dwords(काष्ठा aq_hw_s *self, u32 offset, u32 *p,
+int hw_atl_write_fwsettings_dwords(struct aq_hw_s *self, u32 offset, u32 *p,
 				   u32 cnt)
-अणु
-	वापस hw_atl_utils_fw_upload_dwords(self, self->settings_addr + offset,
+{
+	return hw_atl_utils_fw_upload_dwords(self, self->settings_addr + offset,
 					     p, cnt, MCP_AREA_SETTINGS);
-पूर्ण
+}
 
 bool hw_atl_utils_ver_match(u32 ver_expected, u32 ver_actual)
-अणु
-	स्थिर u32 dw_major_mask = 0xff000000U;
-	स्थिर u32 dw_minor_mask = 0x00ffffffU;
+{
+	const u32 dw_major_mask = 0xff000000U;
+	const u32 dw_minor_mask = 0x00ffffffU;
 	bool ver_match;
 
 	ver_match = (dw_major_mask & (ver_expected ^ ver_actual)) ? false : true;
-	अगर (!ver_match)
-		जाओ err_निकास;
+	if (!ver_match)
+		goto err_exit;
 	ver_match = ((dw_minor_mask & ver_expected) > (dw_minor_mask & ver_actual)) ?
 		false : true;
 
-err_निकास:
-	वापस ver_match;
-पूर्ण
+err_exit:
+	return ver_match;
+}
 
-अटल पूर्णांक hw_atl_utils_init_ucp(काष्ठा aq_hw_s *self,
-				 स्थिर काष्ठा aq_hw_caps_s *aq_hw_caps)
-अणु
-	पूर्णांक err = 0;
+static int hw_atl_utils_init_ucp(struct aq_hw_s *self,
+				 const struct aq_hw_caps_s *aq_hw_caps)
+{
+	int err = 0;
 
-	अगर (!aq_hw_पढ़ो_reg(self, 0x370U)) अणु
-		अचिन्हित पूर्णांक rnd = 0U;
-		अचिन्हित पूर्णांक ucp_0x370 = 0U;
+	if (!aq_hw_read_reg(self, 0x370U)) {
+		unsigned int rnd = 0U;
+		unsigned int ucp_0x370 = 0U;
 
-		get_अक्रमom_bytes(&rnd, माप(अचिन्हित पूर्णांक));
+		get_random_bytes(&rnd, sizeof(unsigned int));
 
 		ucp_0x370 = 0x02020202U | (0xFEFEFEFEU & rnd);
-		aq_hw_ग_लिखो_reg(self, HW_ATL_UCP_0X370_REG, ucp_0x370);
-	पूर्ण
+		aq_hw_write_reg(self, HW_ATL_UCP_0X370_REG, ucp_0x370);
+	}
 
 	hw_atl_reg_glb_cpu_scratch_scp_set(self, 0x00000000U, 25U);
 
-	/* check 10 बार by 1ms */
-	err = पढ़ोx_poll_समयout_atomic(hw_atl_scrpad25_get,
+	/* check 10 times by 1ms */
+	err = readx_poll_timeout_atomic(hw_atl_scrpad25_get,
 					self, self->mbox_addr,
 					self->mbox_addr != 0U,
 					1000U, 10000U);
-	err = पढ़ोx_poll_समयout_atomic(aq_fw1x_rpc_get, self,
+	err = readx_poll_timeout_atomic(aq_fw1x_rpc_get, self,
 					self->rpc_addr,
 					self->rpc_addr != 0U,
 					1000U, 100000U);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-काष्ठा aq_hw_atl_utils_fw_rpc_tid_s अणु
-	जोड़ अणु
+struct aq_hw_atl_utils_fw_rpc_tid_s {
+	union {
 		u32 val;
-		काष्ठा अणु
+		struct {
 			u16 tid;
 			u16 len;
-		पूर्ण;
-	पूर्ण;
-पूर्ण;
+		};
+	};
+};
 
-#घोषणा hw_atl_utils_fw_rpc_init(_H_) hw_atl_utils_fw_rpc_रुको(_H_, शून्य)
+#define hw_atl_utils_fw_rpc_init(_H_) hw_atl_utils_fw_rpc_wait(_H_, NULL)
 
-पूर्णांक hw_atl_utils_fw_rpc_call(काष्ठा aq_hw_s *self, अचिन्हित पूर्णांक rpc_size)
-अणु
-	काष्ठा aq_hw_atl_utils_fw_rpc_tid_s sw;
-	पूर्णांक err = 0;
+int hw_atl_utils_fw_rpc_call(struct aq_hw_s *self, unsigned int rpc_size)
+{
+	struct aq_hw_atl_utils_fw_rpc_tid_s sw;
+	int err = 0;
 
-	अगर (!ATL_HW_IS_CHIP_FEATURE(self, MIPS)) अणु
+	if (!ATL_HW_IS_CHIP_FEATURE(self, MIPS)) {
 		err = -1;
-		जाओ err_निकास;
-	पूर्ण
-	err = hw_atl_ग_लिखो_fwcfg_dwords(self, (u32 *)(व्योम *)&self->rpc,
-					(rpc_size + माप(u32) -
-					 माप(u8)) / माप(u32));
-	अगर (err < 0)
-		जाओ err_निकास;
+		goto err_exit;
+	}
+	err = hw_atl_write_fwcfg_dwords(self, (u32 *)(void *)&self->rpc,
+					(rpc_size + sizeof(u32) -
+					 sizeof(u8)) / sizeof(u32));
+	if (err < 0)
+		goto err_exit;
 
 	sw.tid = 0xFFFFU & (++self->rpc_tid);
 	sw.len = (u16)rpc_size;
-	aq_hw_ग_लिखो_reg(self, HW_ATL_RPC_CONTROL_ADR, sw.val);
+	aq_hw_write_reg(self, HW_ATL_RPC_CONTROL_ADR, sw.val);
 
-err_निकास:
-	वापस err;
-पूर्ण
+err_exit:
+	return err;
+}
 
-पूर्णांक hw_atl_utils_fw_rpc_रुको(काष्ठा aq_hw_s *self,
-			     काष्ठा hw_atl_utils_fw_rpc **rpc)
-अणु
-	काष्ठा aq_hw_atl_utils_fw_rpc_tid_s sw;
-	काष्ठा aq_hw_atl_utils_fw_rpc_tid_s fw;
-	पूर्णांक err = 0;
+int hw_atl_utils_fw_rpc_wait(struct aq_hw_s *self,
+			     struct hw_atl_utils_fw_rpc **rpc)
+{
+	struct aq_hw_atl_utils_fw_rpc_tid_s sw;
+	struct aq_hw_atl_utils_fw_rpc_tid_s fw;
+	int err = 0;
 
-	करो अणु
-		sw.val = aq_hw_पढ़ो_reg(self, HW_ATL_RPC_CONTROL_ADR);
+	do {
+		sw.val = aq_hw_read_reg(self, HW_ATL_RPC_CONTROL_ADR);
 
 		self->rpc_tid = sw.tid;
 
-		err = पढ़ोx_poll_समयout_atomic(hw_atl_utils_rpc_state_get,
+		err = readx_poll_timeout_atomic(hw_atl_utils_rpc_state_get,
 						self, fw.val,
 						sw.tid == fw.tid,
 						1000U, 100000U);
-		अगर (err < 0)
-			जाओ err_निकास;
+		if (err < 0)
+			goto err_exit;
 
 		err = aq_hw_err_from_flags(self);
-		अगर (err < 0)
-			जाओ err_निकास;
+		if (err < 0)
+			goto err_exit;
 
-		अगर (fw.len == 0xFFFFU) अणु
+		if (fw.len == 0xFFFFU) {
 			err = hw_atl_utils_fw_rpc_call(self, sw.len);
-			अगर (err < 0)
-				जाओ err_निकास;
-		पूर्ण
-	पूर्ण जबतक (sw.tid != fw.tid || 0xFFFFU == fw.len);
+			if (err < 0)
+				goto err_exit;
+		}
+	} while (sw.tid != fw.tid || 0xFFFFU == fw.len);
 
-	अगर (rpc) अणु
-		अगर (fw.len) अणु
+	if (rpc) {
+		if (fw.len) {
 			err =
-			hw_atl_utils_fw_करोwnld_dwords(self,
+			hw_atl_utils_fw_downld_dwords(self,
 						      self->rpc_addr,
-						      (u32 *)(व्योम *)
+						      (u32 *)(void *)
 						      &self->rpc,
-						      (fw.len + माप(u32) -
-						       माप(u8)) /
-						      माप(u32));
-			अगर (err < 0)
-				जाओ err_निकास;
-		पूर्ण
+						      (fw.len + sizeof(u32) -
+						       sizeof(u8)) /
+						      sizeof(u32));
+			if (err < 0)
+				goto err_exit;
+		}
 
 		*rpc = &self->rpc;
-	पूर्ण
+	}
 
-err_निकास:
-	वापस err;
-पूर्ण
+err_exit:
+	return err;
+}
 
-अटल पूर्णांक hw_atl_utils_mpi_create(काष्ठा aq_hw_s *self)
-अणु
-	पूर्णांक err = 0;
+static int hw_atl_utils_mpi_create(struct aq_hw_s *self)
+{
+	int err = 0;
 
 	err = hw_atl_utils_init_ucp(self, self->aq_nic_cfg->aq_hw_caps);
-	अगर (err < 0)
-		जाओ err_निकास;
+	if (err < 0)
+		goto err_exit;
 
 	err = hw_atl_utils_fw_rpc_init(self);
-	अगर (err < 0)
-		जाओ err_निकास;
+	if (err < 0)
+		goto err_exit;
 
-err_निकास:
-	वापस err;
-पूर्ण
+err_exit:
+	return err;
+}
 
-पूर्णांक hw_atl_utils_mpi_पढ़ो_mbox(काष्ठा aq_hw_s *self,
-			       काष्ठा hw_atl_utils_mbox_header *pmbox)
-अणु
-	वापस hw_atl_utils_fw_करोwnld_dwords(self,
+int hw_atl_utils_mpi_read_mbox(struct aq_hw_s *self,
+			       struct hw_atl_utils_mbox_header *pmbox)
+{
+	return hw_atl_utils_fw_downld_dwords(self,
 					     self->mbox_addr,
-					     (u32 *)(व्योम *)pmbox,
-					     माप(*pmbox) / माप(u32));
-पूर्ण
+					     (u32 *)(void *)pmbox,
+					     sizeof(*pmbox) / sizeof(u32));
+}
 
-व्योम hw_atl_utils_mpi_पढ़ो_stats(काष्ठा aq_hw_s *self,
-				 काष्ठा hw_atl_utils_mbox *pmbox)
-अणु
-	पूर्णांक err = 0;
+void hw_atl_utils_mpi_read_stats(struct aq_hw_s *self,
+				 struct hw_atl_utils_mbox *pmbox)
+{
+	int err = 0;
 
-	err = hw_atl_utils_fw_करोwnld_dwords(self,
+	err = hw_atl_utils_fw_downld_dwords(self,
 					    self->mbox_addr,
-					    (u32 *)(व्योम *)pmbox,
-					    माप(*pmbox) / माप(u32));
-	अगर (err < 0)
-		जाओ err_निकास;
+					    (u32 *)(void *)pmbox,
+					    sizeof(*pmbox) / sizeof(u32));
+	if (err < 0)
+		goto err_exit;
 
-	अगर (ATL_HW_IS_CHIP_FEATURE(self, REVISION_A0)) अणु
-		अचिन्हित पूर्णांक mtu = self->aq_nic_cfg ?
+	if (ATL_HW_IS_CHIP_FEATURE(self, REVISION_A0)) {
+		unsigned int mtu = self->aq_nic_cfg ?
 					self->aq_nic_cfg->mtu : 1514U;
 		pmbox->stats.ubrc = pmbox->stats.uprc * mtu;
 		pmbox->stats.ubtc = pmbox->stats.uptc * mtu;
-		pmbox->stats.dpc = atomic_पढ़ो(&self->dpc);
-	पूर्ण अन्यथा अणु
+		pmbox->stats.dpc = atomic_read(&self->dpc);
+	} else {
 		pmbox->stats.dpc = hw_atl_rpb_rx_dma_drop_pkt_cnt_get(self);
-	पूर्ण
+	}
 
-err_निकास:;
-पूर्ण
+err_exit:;
+}
 
-अटल पूर्णांक hw_atl_utils_mpi_set_speed(काष्ठा aq_hw_s *self, u32 speed)
-अणु
-	u32 val = aq_hw_पढ़ो_reg(self, HW_ATL_MPI_CONTROL_ADR);
+static int hw_atl_utils_mpi_set_speed(struct aq_hw_s *self, u32 speed)
+{
+	u32 val = aq_hw_read_reg(self, HW_ATL_MPI_CONTROL_ADR);
 
 	val = val & ~HW_ATL_MPI_SPEED_MSK;
 	val |= speed << HW_ATL_MPI_SPEED_SHIFT;
-	aq_hw_ग_लिखो_reg(self, HW_ATL_MPI_CONTROL_ADR, val);
+	aq_hw_write_reg(self, HW_ATL_MPI_CONTROL_ADR, val);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक hw_atl_utils_mpi_set_state(काष्ठा aq_hw_s *self,
-				      क्रमागत hal_atl_utils_fw_state_e state)
-अणु
-	u32 val = aq_hw_पढ़ो_reg(self, HW_ATL_MPI_CONTROL_ADR);
-	काष्ठा hw_atl_utils_mbox_header mbox;
+static int hw_atl_utils_mpi_set_state(struct aq_hw_s *self,
+				      enum hal_atl_utils_fw_state_e state)
+{
+	u32 val = aq_hw_read_reg(self, HW_ATL_MPI_CONTROL_ADR);
+	struct hw_atl_utils_mbox_header mbox;
 	u32 transaction_id = 0;
-	पूर्णांक err = 0;
+	int err = 0;
 
-	अगर (state == MPI_RESET) अणु
-		hw_atl_utils_mpi_पढ़ो_mbox(self, &mbox);
+	if (state == MPI_RESET) {
+		hw_atl_utils_mpi_read_mbox(self, &mbox);
 
 		transaction_id = mbox.transaction_id;
 
-		err = पढ़ोx_poll_समयout_atomic(hw_atl_utils_get_mpi_mbox_tid,
+		err = readx_poll_timeout_atomic(hw_atl_utils_get_mpi_mbox_tid,
 						self, mbox.transaction_id,
 						transaction_id !=
 						mbox.transaction_id,
 						1000U, 100000U);
-		अगर (err < 0)
-			जाओ err_निकास;
-	पूर्ण
-	/* On पूर्णांकerface DEINIT we disable DW (उठाओ bit)
+		if (err < 0)
+			goto err_exit;
+	}
+	/* On interface DEINIT we disable DW (raise bit)
 	 * Otherwise enable DW (clear bit)
 	 */
-	अगर (state == MPI_DEINIT || state == MPI_POWER)
-		val |= HW_ATL_MPI_सूचीTY_WAKE_MSK;
-	अन्यथा
-		val &= ~HW_ATL_MPI_सूचीTY_WAKE_MSK;
+	if (state == MPI_DEINIT || state == MPI_POWER)
+		val |= HW_ATL_MPI_DIRTY_WAKE_MSK;
+	else
+		val &= ~HW_ATL_MPI_DIRTY_WAKE_MSK;
 
 	/* Set new state bits */
 	val = val & ~HW_ATL_MPI_STATE_MSK;
 	val |= state & HW_ATL_MPI_STATE_MSK;
 
-	aq_hw_ग_लिखो_reg(self, HW_ATL_MPI_CONTROL_ADR, val);
+	aq_hw_write_reg(self, HW_ATL_MPI_CONTROL_ADR, val);
 
-err_निकास:
-	वापस err;
-पूर्ण
+err_exit:
+	return err;
+}
 
-पूर्णांक hw_atl_utils_mpi_get_link_status(काष्ठा aq_hw_s *self)
-अणु
-	काष्ठा aq_hw_link_status_s *link_status = &self->aq_link_status;
+int hw_atl_utils_mpi_get_link_status(struct aq_hw_s *self)
+{
+	struct aq_hw_link_status_s *link_status = &self->aq_link_status;
 	u32 mpi_state;
 	u32 speed;
 
 	mpi_state = hw_atl_utils_mpi_get_state(self);
 	speed = mpi_state >> HW_ATL_MPI_SPEED_SHIFT;
 
-	अगर (!speed) अणु
+	if (!speed) {
 		link_status->mbps = 0U;
-	पूर्ण अन्यथा अणु
-		चयन (speed) अणु
-		हाल HAL_ATLANTIC_RATE_10G:
+	} else {
+		switch (speed) {
+		case HAL_ATLANTIC_RATE_10G:
 			link_status->mbps = 10000U;
-			अवरोध;
+			break;
 
-		हाल HAL_ATLANTIC_RATE_5G:
-		हाल HAL_ATLANTIC_RATE_5GSR:
+		case HAL_ATLANTIC_RATE_5G:
+		case HAL_ATLANTIC_RATE_5GSR:
 			link_status->mbps = 5000U;
-			अवरोध;
+			break;
 
-		हाल HAL_ATLANTIC_RATE_2G5:
+		case HAL_ATLANTIC_RATE_2G5:
 			link_status->mbps = 2500U;
-			अवरोध;
+			break;
 
-		हाल HAL_ATLANTIC_RATE_1G:
+		case HAL_ATLANTIC_RATE_1G:
 			link_status->mbps = 1000U;
-			अवरोध;
+			break;
 
-		हाल HAL_ATLANTIC_RATE_100M:
+		case HAL_ATLANTIC_RATE_100M:
 			link_status->mbps = 100U;
-			अवरोध;
+			break;
 
-		शेष:
-			वापस -EBUSY;
-		पूर्ण
-	पूर्ण
+		default:
+			return -EBUSY;
+		}
+	}
 	link_status->full_duplex = true;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक hw_atl_utils_get_mac_permanent(काष्ठा aq_hw_s *self,
+int hw_atl_utils_get_mac_permanent(struct aq_hw_s *self,
 				   u8 *mac)
-अणु
+{
 	u32 mac_addr[2];
 	u32 efuse_addr;
-	पूर्णांक err = 0;
+	int err = 0;
 	u32 h = 0U;
 	u32 l = 0U;
 
-	अगर (!aq_hw_पढ़ो_reg(self, HW_ATL_UCP_0X370_REG)) अणु
-		अचिन्हित पूर्णांक ucp_0x370 = 0;
-		अचिन्हित पूर्णांक rnd = 0;
+	if (!aq_hw_read_reg(self, HW_ATL_UCP_0X370_REG)) {
+		unsigned int ucp_0x370 = 0;
+		unsigned int rnd = 0;
 
-		get_अक्रमom_bytes(&rnd, माप(अचिन्हित पूर्णांक));
+		get_random_bytes(&rnd, sizeof(unsigned int));
 
 		ucp_0x370 = 0x02020202 | (0xFEFEFEFE & rnd);
-		aq_hw_ग_लिखो_reg(self, HW_ATL_UCP_0X370_REG, ucp_0x370);
-	पूर्ण
+		aq_hw_write_reg(self, HW_ATL_UCP_0X370_REG, ucp_0x370);
+	}
 
-	efuse_addr = aq_hw_पढ़ो_reg(self, 0x00000374U);
+	efuse_addr = aq_hw_read_reg(self, 0x00000374U);
 
-	err = hw_atl_utils_fw_करोwnld_dwords(self, efuse_addr + (40U * 4U),
+	err = hw_atl_utils_fw_downld_dwords(self, efuse_addr + (40U * 4U),
 					    mac_addr, ARRAY_SIZE(mac_addr));
-	अगर (err < 0) अणु
+	if (err < 0) {
 		mac_addr[0] = 0U;
 		mac_addr[1] = 0U;
 		err = 0;
-	पूर्ण अन्यथा अणु
+	} else {
 		mac_addr[0] = __swab32(mac_addr[0]);
 		mac_addr[1] = __swab32(mac_addr[1]);
-	पूर्ण
+	}
 
 	ether_addr_copy(mac, (u8 *)mac_addr);
 
-	अगर ((mac[0] & 0x01U) || ((mac[0] | mac[1] | mac[2]) == 0x00U)) अणु
+	if ((mac[0] & 0x01U) || ((mac[0] | mac[1] | mac[2]) == 0x00U)) {
 		/* chip revision */
 		l = 0xE3000000U |
-		    (0xFFFFU & aq_hw_पढ़ो_reg(self, HW_ATL_UCP_0X370_REG)) |
+		    (0xFFFFU & aq_hw_read_reg(self, HW_ATL_UCP_0X370_REG)) |
 		    (0x00 << 16);
 		h = 0x8001300EU;
 
@@ -781,91 +780,91 @@ err_निकास:
 		mac[1] = (u8)(0xFFU & h);
 		h >>= 8;
 		mac[0] = (u8)(0xFFU & h);
-	पूर्ण
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अचिन्हित पूर्णांक hw_atl_utils_mbps_2_speed_index(अचिन्हित पूर्णांक mbps)
-अणु
-	अचिन्हित पूर्णांक ret = 0U;
+unsigned int hw_atl_utils_mbps_2_speed_index(unsigned int mbps)
+{
+	unsigned int ret = 0U;
 
-	चयन (mbps) अणु
-	हाल 100U:
+	switch (mbps) {
+	case 100U:
 		ret = 5U;
-		अवरोध;
+		break;
 
-	हाल 1000U:
+	case 1000U:
 		ret = 4U;
-		अवरोध;
+		break;
 
-	हाल 2500U:
+	case 2500U:
 		ret = 3U;
-		अवरोध;
+		break;
 
-	हाल 5000U:
+	case 5000U:
 		ret = 1U;
-		अवरोध;
+		break;
 
-	हाल 10000U:
+	case 10000U:
 		ret = 0U;
-		अवरोध;
+		break;
 
-	शेष:
-		अवरोध;
-	पूर्ण
+	default:
+		break;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम hw_atl_utils_hw_chip_features_init(काष्ठा aq_hw_s *self, u32 *p)
-अणु
-	u32 val = hw_atl_reg_glb_mअगर_id_get(self);
-	u32 mअगर_rev = val & 0xFFU;
+void hw_atl_utils_hw_chip_features_init(struct aq_hw_s *self, u32 *p)
+{
+	u32 val = hw_atl_reg_glb_mif_id_get(self);
+	u32 mif_rev = val & 0xFFU;
 	u32 chip_features = 0U;
 
 	chip_features |= ATL_HW_CHIP_ATLANTIC;
 
-	अगर ((0xFU & mअगर_rev) == 1U) अणु
+	if ((0xFU & mif_rev) == 1U) {
 		chip_features |= ATL_HW_CHIP_REVISION_A0 |
 			ATL_HW_CHIP_MPI_AQ |
 			ATL_HW_CHIP_MIPS;
-	पूर्ण अन्यथा अगर ((0xFU & mअगर_rev) == 2U) अणु
+	} else if ((0xFU & mif_rev) == 2U) {
 		chip_features |= ATL_HW_CHIP_REVISION_B0 |
 			ATL_HW_CHIP_MPI_AQ |
 			ATL_HW_CHIP_MIPS |
 			ATL_HW_CHIP_TPO2 |
 			ATL_HW_CHIP_RPF2;
-	पूर्ण अन्यथा अगर ((0xFU & mअगर_rev) == 0xAU) अणु
+	} else if ((0xFU & mif_rev) == 0xAU) {
 		chip_features |= ATL_HW_CHIP_REVISION_B1 |
 			ATL_HW_CHIP_MPI_AQ |
 			ATL_HW_CHIP_MIPS |
 			ATL_HW_CHIP_TPO2 |
 			ATL_HW_CHIP_RPF2;
-	पूर्ण
+	}
 
 	*p = chip_features;
-पूर्ण
+}
 
-अटल पूर्णांक hw_atl_fw1x_deinit(काष्ठा aq_hw_s *self)
-अणु
+static int hw_atl_fw1x_deinit(struct aq_hw_s *self)
+{
 	hw_atl_utils_mpi_set_speed(self, 0);
 	hw_atl_utils_mpi_set_state(self, MPI_DEINIT);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक hw_atl_utils_update_stats(काष्ठा aq_hw_s *self)
-अणु
-	काष्ठा aq_stats_s *cs = &self->curr_stats;
-	काष्ठा hw_atl_utils_mbox mbox;
+int hw_atl_utils_update_stats(struct aq_hw_s *self)
+{
+	struct aq_stats_s *cs = &self->curr_stats;
+	struct hw_atl_utils_mbox mbox;
 
-	hw_atl_utils_mpi_पढ़ो_stats(self, &mbox);
+	hw_atl_utils_mpi_read_stats(self, &mbox);
 
-#घोषणा AQ_SDELTA(_N_) (self->curr_stats._N_ += \
+#define AQ_SDELTA(_N_) (self->curr_stats._N_ += \
 			mbox.stats._N_ - self->last_stats._N_)
 
-	अगर (self->aq_link_status.mbps) अणु
+	if (self->aq_link_status.mbps) {
 		AQ_SDELTA(uprc);
 		AQ_SDELTA(mprc);
 		AQ_SDELTA(bprc);
@@ -883,25 +882,25 @@ err_निकास:
 		AQ_SDELTA(bbrc);
 		AQ_SDELTA(bbtc);
 		AQ_SDELTA(dpc);
-	पूर्ण
-#अघोषित AQ_SDELTA
+	}
+#undef AQ_SDELTA
 
 	cs->dma_pkt_rc = hw_atl_stats_rx_dma_good_pkt_counter_get(self);
 	cs->dma_pkt_tc = hw_atl_stats_tx_dma_good_pkt_counter_get(self);
 	cs->dma_oct_rc = hw_atl_stats_rx_dma_good_octet_counter_get(self);
 	cs->dma_oct_tc = hw_atl_stats_tx_dma_good_octet_counter_get(self);
 
-	स_नकल(&self->last_stats, &mbox.stats, माप(mbox.stats));
+	memcpy(&self->last_stats, &mbox.stats, sizeof(mbox.stats));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-काष्ठा aq_stats_s *hw_atl_utils_get_hw_stats(काष्ठा aq_hw_s *self)
-अणु
-	वापस &self->curr_stats;
-पूर्ण
+struct aq_stats_s *hw_atl_utils_get_hw_stats(struct aq_hw_s *self)
+{
+	return &self->curr_stats;
+}
 
-अटल स्थिर u32 hw_atl_utils_hw_mac_regs[] = अणु
+static const u32 hw_atl_utils_hw_mac_regs[] = {
 	0x00005580U, 0x00005590U, 0x000055B0U, 0x000055B4U,
 	0x000055C0U, 0x00005B00U, 0x00005B04U, 0x00005B08U,
 	0x00005B0CU, 0x00005B10U, 0x00005B14U, 0x00005B18U,
@@ -924,42 +923,42 @@ err_निकास:
 	0x0000030cU, 0x00000310U, 0x00000314U, 0x00000318U,
 	0x0000031cU, 0x00000360U, 0x00000364U, 0x00000368U,
 	0x0000036cU, 0x00000370U, 0x00000374U, 0x00006900U,
-पूर्ण;
+};
 
-पूर्णांक hw_atl_utils_hw_get_regs(काष्ठा aq_hw_s *self,
-			     स्थिर काष्ठा aq_hw_caps_s *aq_hw_caps,
+int hw_atl_utils_hw_get_regs(struct aq_hw_s *self,
+			     const struct aq_hw_caps_s *aq_hw_caps,
 			     u32 *regs_buff)
-अणु
-	अचिन्हित पूर्णांक i = 0U;
+{
+	unsigned int i = 0U;
 
-	क्रम (i = 0; i < aq_hw_caps->mac_regs_count; i++)
-		regs_buff[i] = aq_hw_पढ़ो_reg(self,
+	for (i = 0; i < aq_hw_caps->mac_regs_count; i++)
+		regs_buff[i] = aq_hw_read_reg(self,
 					      hw_atl_utils_hw_mac_regs[i]);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-u32 hw_atl_utils_get_fw_version(काष्ठा aq_hw_s *self)
-अणु
-	वापस aq_hw_पढ़ो_reg(self, HW_ATL_MPI_FW_VERSION);
-पूर्ण
+u32 hw_atl_utils_get_fw_version(struct aq_hw_s *self)
+{
+	return aq_hw_read_reg(self, HW_ATL_MPI_FW_VERSION);
+}
 
-अटल पूर्णांक aq_fw1x_set_wake_magic(काष्ठा aq_hw_s *self, bool wol_enabled,
+static int aq_fw1x_set_wake_magic(struct aq_hw_s *self, bool wol_enabled,
 				  u8 *mac)
-अणु
-	काष्ठा hw_atl_utils_fw_rpc *prpc = शून्य;
-	अचिन्हित पूर्णांक rpc_size = 0U;
-	पूर्णांक err = 0;
+{
+	struct hw_atl_utils_fw_rpc *prpc = NULL;
+	unsigned int rpc_size = 0U;
+	int err = 0;
 
-	err = hw_atl_utils_fw_rpc_रुको(self, &prpc);
-	अगर (err < 0)
-		जाओ err_निकास;
+	err = hw_atl_utils_fw_rpc_wait(self, &prpc);
+	if (err < 0)
+		goto err_exit;
 
-	स_रखो(prpc, 0, माप(*prpc));
+	memset(prpc, 0, sizeof(*prpc));
 
-	अगर (wol_enabled) अणु
-		rpc_size = दुरत्व(काष्ठा hw_atl_utils_fw_rpc, msg_wol_add) +
-			   माप(prpc->msg_wol_add);
+	if (wol_enabled) {
+		rpc_size = offsetof(struct hw_atl_utils_fw_rpc, msg_wol_add) +
+			   sizeof(prpc->msg_wol_add);
 
 
 		prpc->msg_id = HAL_ATLANTIC_UTILS_FW_MSG_WOL_ADD;
@@ -972,108 +971,108 @@ u32 hw_atl_utils_get_fw_version(काष्ठा aq_hw_s *self)
 
 		ether_addr_copy((u8 *)&prpc->msg_wol_add.magic_packet_pattern,
 				mac);
-	पूर्ण अन्यथा अणु
-		rpc_size = माप(prpc->msg_wol_हटाओ) +
-			   दुरत्व(काष्ठा hw_atl_utils_fw_rpc, msg_wol_हटाओ);
+	} else {
+		rpc_size = sizeof(prpc->msg_wol_remove) +
+			   offsetof(struct hw_atl_utils_fw_rpc, msg_wol_remove);
 
 		prpc->msg_id = HAL_ATLANTIC_UTILS_FW_MSG_WOL_DEL;
 		prpc->msg_wol_add.pattern_id =
 				HAL_ATLANTIC_UTILS_FW_MSG_WOL_PATTERN;
-	पूर्ण
+	}
 
 	err = hw_atl_utils_fw_rpc_call(self, rpc_size);
 
-err_निकास:
-	वापस err;
-पूर्ण
+err_exit:
+	return err;
+}
 
-अटल पूर्णांक aq_fw1x_set_घातer(काष्ठा aq_hw_s *self, अचिन्हित पूर्णांक घातer_state,
+static int aq_fw1x_set_power(struct aq_hw_s *self, unsigned int power_state,
 			     u8 *mac)
-अणु
-	काष्ठा hw_atl_utils_fw_rpc *prpc = शून्य;
-	अचिन्हित पूर्णांक rpc_size = 0U;
-	पूर्णांक err = 0;
+{
+	struct hw_atl_utils_fw_rpc *prpc = NULL;
+	unsigned int rpc_size = 0U;
+	int err = 0;
 
-	अगर (self->aq_nic_cfg->wol & WAKE_MAGIC) अणु
+	if (self->aq_nic_cfg->wol & WAKE_MAGIC) {
 		err = aq_fw1x_set_wake_magic(self, 1, mac);
 
-		अगर (err < 0)
-			जाओ err_निकास;
+		if (err < 0)
+			goto err_exit;
 
-		rpc_size = माप(prpc->msg_id) +
-			   माप(prpc->msg_enable_wakeup);
+		rpc_size = sizeof(prpc->msg_id) +
+			   sizeof(prpc->msg_enable_wakeup);
 
-		err = hw_atl_utils_fw_rpc_रुको(self, &prpc);
+		err = hw_atl_utils_fw_rpc_wait(self, &prpc);
 
-		अगर (err < 0)
-			जाओ err_निकास;
+		if (err < 0)
+			goto err_exit;
 
-		स_रखो(prpc, 0, rpc_size);
+		memset(prpc, 0, rpc_size);
 
 		prpc->msg_id = HAL_ATLANTIC_UTILS_FW_MSG_ENABLE_WAKEUP;
 		prpc->msg_enable_wakeup.pattern_mask = 0x00000002;
 
 		err = hw_atl_utils_fw_rpc_call(self, rpc_size);
-		अगर (err < 0)
-			जाओ err_निकास;
-	पूर्ण
+		if (err < 0)
+			goto err_exit;
+	}
 	hw_atl_utils_mpi_set_speed(self, 0);
 	hw_atl_utils_mpi_set_state(self, MPI_POWER);
 
-err_निकास:
-	वापस err;
-पूर्ण
+err_exit:
+	return err;
+}
 
-अटल u32 hw_atl_utils_get_mpi_mbox_tid(काष्ठा aq_hw_s *self)
-अणु
-	काष्ठा hw_atl_utils_mbox_header mbox;
+static u32 hw_atl_utils_get_mpi_mbox_tid(struct aq_hw_s *self)
+{
+	struct hw_atl_utils_mbox_header mbox;
 
-	hw_atl_utils_mpi_पढ़ो_mbox(self, &mbox);
+	hw_atl_utils_mpi_read_mbox(self, &mbox);
 
-	वापस mbox.transaction_id;
-पूर्ण
+	return mbox.transaction_id;
+}
 
-अटल u32 hw_atl_utils_mpi_get_state(काष्ठा aq_hw_s *self)
-अणु
-	वापस aq_hw_पढ़ो_reg(self, HW_ATL_MPI_STATE_ADR);
-पूर्ण
+static u32 hw_atl_utils_mpi_get_state(struct aq_hw_s *self)
+{
+	return aq_hw_read_reg(self, HW_ATL_MPI_STATE_ADR);
+}
 
-अटल u32 hw_atl_utils_mअगर_cmd_get(काष्ठा aq_hw_s *self)
-अणु
-	वापस aq_hw_पढ़ो_reg(self, HW_ATL_MIF_CMD);
-पूर्ण
+static u32 hw_atl_utils_mif_cmd_get(struct aq_hw_s *self)
+{
+	return aq_hw_read_reg(self, HW_ATL_MIF_CMD);
+}
 
-अटल u32 hw_atl_utils_mअगर_addr_get(काष्ठा aq_hw_s *self)
-अणु
-	वापस aq_hw_पढ़ो_reg(self, HW_ATL_MIF_ADDR);
-पूर्ण
+static u32 hw_atl_utils_mif_addr_get(struct aq_hw_s *self)
+{
+	return aq_hw_read_reg(self, HW_ATL_MIF_ADDR);
+}
 
-अटल u32 hw_atl_utils_rpc_state_get(काष्ठा aq_hw_s *self)
-अणु
-	वापस aq_hw_पढ़ो_reg(self, HW_ATL_RPC_STATE_ADR);
-पूर्ण
+static u32 hw_atl_utils_rpc_state_get(struct aq_hw_s *self)
+{
+	return aq_hw_read_reg(self, HW_ATL_RPC_STATE_ADR);
+}
 
-अटल u32 aq_fw1x_rpc_get(काष्ठा aq_hw_s *self)
-अणु
-	वापस aq_hw_पढ़ो_reg(self, HW_ATL_MPI_RPC_ADDR);
-पूर्ण
+static u32 aq_fw1x_rpc_get(struct aq_hw_s *self)
+{
+	return aq_hw_read_reg(self, HW_ATL_MPI_RPC_ADDR);
+}
 
-स्थिर काष्ठा aq_fw_ops aq_fw_1x_ops = अणु
+const struct aq_fw_ops aq_fw_1x_ops = {
 	.init = hw_atl_utils_mpi_create,
 	.deinit = hw_atl_fw1x_deinit,
-	.reset = शून्य,
+	.reset = NULL,
 	.get_mac_permanent = hw_atl_utils_get_mac_permanent,
 	.set_link_speed = hw_atl_utils_mpi_set_speed,
 	.set_state = hw_atl_utils_mpi_set_state,
 	.update_link_status = hw_atl_utils_mpi_get_link_status,
 	.update_stats = hw_atl_utils_update_stats,
-	.get_mac_temp = शून्य,
-	.get_phy_temp = शून्य,
-	.set_घातer = aq_fw1x_set_घातer,
-	.set_eee_rate = शून्य,
-	.get_eee_rate = शून्य,
-	.set_flow_control = शून्य,
-	.send_fw_request = शून्य,
-	.enable_ptp = शून्य,
-	.led_control = शून्य,
-पूर्ण;
+	.get_mac_temp = NULL,
+	.get_phy_temp = NULL,
+	.set_power = aq_fw1x_set_power,
+	.set_eee_rate = NULL,
+	.get_eee_rate = NULL,
+	.set_flow_control = NULL,
+	.send_fw_request = NULL,
+	.enable_ptp = NULL,
+	.led_control = NULL,
+};

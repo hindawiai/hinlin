@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2018 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,164 +21,164 @@
  *
  */
 
-#समावेश "amdgpu.h"
-#समावेश "amdgpu_sdma.h"
-#समावेश "amdgpu_ras.h"
+#include "amdgpu.h"
+#include "amdgpu_sdma.h"
+#include "amdgpu_ras.h"
 
-#घोषणा AMDGPU_CSA_SDMA_SIZE 64
+#define AMDGPU_CSA_SDMA_SIZE 64
 /* SDMA CSA reside in the 3rd page of CSA */
-#घोषणा AMDGPU_CSA_SDMA_OFFSET (4096 * 2)
+#define AMDGPU_CSA_SDMA_OFFSET (4096 * 2)
 
 /*
  * GPU SDMA IP block helpers function.
  */
 
-काष्ठा amdgpu_sdma_instance *amdgpu_sdma_get_instance_from_ring(काष्ठा amdgpu_ring *ring)
-अणु
-	काष्ठा amdgpu_device *adev = ring->adev;
-	पूर्णांक i;
+struct amdgpu_sdma_instance *amdgpu_sdma_get_instance_from_ring(struct amdgpu_ring *ring)
+{
+	struct amdgpu_device *adev = ring->adev;
+	int i;
 
-	क्रम (i = 0; i < adev->sdma.num_instances; i++)
-		अगर (ring == &adev->sdma.instance[i].ring ||
+	for (i = 0; i < adev->sdma.num_instances; i++)
+		if (ring == &adev->sdma.instance[i].ring ||
 		    ring == &adev->sdma.instance[i].page)
-			वापस &adev->sdma.instance[i];
+			return &adev->sdma.instance[i];
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-पूर्णांक amdgpu_sdma_get_index_from_ring(काष्ठा amdgpu_ring *ring, uपूर्णांक32_t *index)
-अणु
-	काष्ठा amdgpu_device *adev = ring->adev;
-	पूर्णांक i;
+int amdgpu_sdma_get_index_from_ring(struct amdgpu_ring *ring, uint32_t *index)
+{
+	struct amdgpu_device *adev = ring->adev;
+	int i;
 
-	क्रम (i = 0; i < adev->sdma.num_instances; i++) अणु
-		अगर (ring == &adev->sdma.instance[i].ring ||
-			ring == &adev->sdma.instance[i].page) अणु
+	for (i = 0; i < adev->sdma.num_instances; i++) {
+		if (ring == &adev->sdma.instance[i].ring ||
+			ring == &adev->sdma.instance[i].page) {
 			*index = i;
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			return 0;
+		}
+	}
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-uपूर्णांक64_t amdgpu_sdma_get_csa_mc_addr(काष्ठा amdgpu_ring *ring,
-				     अचिन्हित vmid)
-अणु
-	काष्ठा amdgpu_device *adev = ring->adev;
-	uपूर्णांक64_t csa_mc_addr;
-	uपूर्णांक32_t index = 0;
-	पूर्णांक r;
+uint64_t amdgpu_sdma_get_csa_mc_addr(struct amdgpu_ring *ring,
+				     unsigned vmid)
+{
+	struct amdgpu_device *adev = ring->adev;
+	uint64_t csa_mc_addr;
+	uint32_t index = 0;
+	int r;
 
-	/* करोn't enable OS preemption on SDMA under SRIOV */
-	अगर (amdgpu_sriov_vf(adev) || vmid == 0 || !amdgpu_mcbp)
-		वापस 0;
+	/* don't enable OS preemption on SDMA under SRIOV */
+	if (amdgpu_sriov_vf(adev) || vmid == 0 || !amdgpu_mcbp)
+		return 0;
 
 	r = amdgpu_sdma_get_index_from_ring(ring, &index);
 
-	अगर (r || index > 31)
+	if (r || index > 31)
 		csa_mc_addr = 0;
-	अन्यथा
+	else
 		csa_mc_addr = amdgpu_csa_vaddr(adev) +
 			AMDGPU_CSA_SDMA_OFFSET +
 			index * AMDGPU_CSA_SDMA_SIZE;
 
-	वापस csa_mc_addr;
-पूर्ण
+	return csa_mc_addr;
+}
 
-पूर्णांक amdgpu_sdma_ras_late_init(काष्ठा amdgpu_device *adev,
-			      व्योम *ras_ih_info)
-अणु
-	पूर्णांक r, i;
-	काष्ठा ras_ih_अगर *ih_info = (काष्ठा ras_ih_अगर *)ras_ih_info;
-	काष्ठा ras_fs_अगर fs_info = अणु
+int amdgpu_sdma_ras_late_init(struct amdgpu_device *adev,
+			      void *ras_ih_info)
+{
+	int r, i;
+	struct ras_ih_if *ih_info = (struct ras_ih_if *)ras_ih_info;
+	struct ras_fs_if fs_info = {
 		.sysfs_name = "sdma_err_count",
-	पूर्ण;
+	};
 
-	अगर (!ih_info)
-		वापस -EINVAL;
+	if (!ih_info)
+		return -EINVAL;
 
-	अगर (!adev->sdma.ras_अगर) अणु
-		adev->sdma.ras_अगर = kदो_स्मृति(माप(काष्ठा ras_common_अगर), GFP_KERNEL);
-		अगर (!adev->sdma.ras_अगर)
-			वापस -ENOMEM;
-		adev->sdma.ras_अगर->block = AMDGPU_RAS_BLOCK__SDMA;
-		adev->sdma.ras_अगर->type = AMDGPU_RAS_ERROR__MULTI_UNCORRECTABLE;
-		adev->sdma.ras_अगर->sub_block_index = 0;
-		म_नकल(adev->sdma.ras_अगर->name, "sdma");
-	पूर्ण
-	fs_info.head = ih_info->head = *adev->sdma.ras_अगर;
+	if (!adev->sdma.ras_if) {
+		adev->sdma.ras_if = kmalloc(sizeof(struct ras_common_if), GFP_KERNEL);
+		if (!adev->sdma.ras_if)
+			return -ENOMEM;
+		adev->sdma.ras_if->block = AMDGPU_RAS_BLOCK__SDMA;
+		adev->sdma.ras_if->type = AMDGPU_RAS_ERROR__MULTI_UNCORRECTABLE;
+		adev->sdma.ras_if->sub_block_index = 0;
+		strcpy(adev->sdma.ras_if->name, "sdma");
+	}
+	fs_info.head = ih_info->head = *adev->sdma.ras_if;
 
-	r = amdgpu_ras_late_init(adev, adev->sdma.ras_अगर,
+	r = amdgpu_ras_late_init(adev, adev->sdma.ras_if,
 				 &fs_info, ih_info);
-	अगर (r)
-		जाओ मुक्त;
+	if (r)
+		goto free;
 
-	अगर (amdgpu_ras_is_supported(adev, adev->sdma.ras_अगर->block)) अणु
-		क्रम (i = 0; i < adev->sdma.num_instances; i++) अणु
+	if (amdgpu_ras_is_supported(adev, adev->sdma.ras_if->block)) {
+		for (i = 0; i < adev->sdma.num_instances; i++) {
 			r = amdgpu_irq_get(adev, &adev->sdma.ecc_irq,
 				AMDGPU_SDMA_IRQ_INSTANCE0 + i);
-			अगर (r)
-				जाओ late_fini;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			if (r)
+				goto late_fini;
+		}
+	} else {
 		r = 0;
-		जाओ मुक्त;
-	पूर्ण
+		goto free;
+	}
 
-	वापस 0;
+	return 0;
 
 late_fini:
-	amdgpu_ras_late_fini(adev, adev->sdma.ras_अगर, ih_info);
-मुक्त:
-	kमुक्त(adev->sdma.ras_अगर);
-	adev->sdma.ras_अगर = शून्य;
-	वापस r;
-पूर्ण
+	amdgpu_ras_late_fini(adev, adev->sdma.ras_if, ih_info);
+free:
+	kfree(adev->sdma.ras_if);
+	adev->sdma.ras_if = NULL;
+	return r;
+}
 
-व्योम amdgpu_sdma_ras_fini(काष्ठा amdgpu_device *adev)
-अणु
-	अगर (amdgpu_ras_is_supported(adev, AMDGPU_RAS_BLOCK__SDMA) &&
-			adev->sdma.ras_अगर) अणु
-		काष्ठा ras_common_अगर *ras_अगर = adev->sdma.ras_अगर;
-		काष्ठा ras_ih_अगर ih_info = अणु
-			.head = *ras_अगर,
+void amdgpu_sdma_ras_fini(struct amdgpu_device *adev)
+{
+	if (amdgpu_ras_is_supported(adev, AMDGPU_RAS_BLOCK__SDMA) &&
+			adev->sdma.ras_if) {
+		struct ras_common_if *ras_if = adev->sdma.ras_if;
+		struct ras_ih_if ih_info = {
+			.head = *ras_if,
 			/* the cb member will not be used by
-			 * amdgpu_ras_पूर्णांकerrupt_हटाओ_handler, init it only
+			 * amdgpu_ras_interrupt_remove_handler, init it only
 			 * to cheat the check in ras_late_fini
 			 */
 			.cb = amdgpu_sdma_process_ras_data_cb,
-		पूर्ण;
+		};
 
-		amdgpu_ras_late_fini(adev, ras_अगर, &ih_info);
-		kमुक्त(ras_अगर);
-	पूर्ण
-पूर्ण
+		amdgpu_ras_late_fini(adev, ras_if, &ih_info);
+		kfree(ras_if);
+	}
+}
 
-पूर्णांक amdgpu_sdma_process_ras_data_cb(काष्ठा amdgpu_device *adev,
-		व्योम *err_data,
-		काष्ठा amdgpu_iv_entry *entry)
-अणु
+int amdgpu_sdma_process_ras_data_cb(struct amdgpu_device *adev,
+		void *err_data,
+		struct amdgpu_iv_entry *entry)
+{
 	kgd2kfd_set_sram_ecc_flag(adev->kfd.dev);
 	amdgpu_ras_reset_gpu(adev);
 
-	वापस AMDGPU_RAS_SUCCESS;
-पूर्ण
+	return AMDGPU_RAS_SUCCESS;
+}
 
-पूर्णांक amdgpu_sdma_process_ecc_irq(काष्ठा amdgpu_device *adev,
-				      काष्ठा amdgpu_irq_src *source,
-				      काष्ठा amdgpu_iv_entry *entry)
-अणु
-	काष्ठा ras_common_अगर *ras_अगर = adev->sdma.ras_अगर;
-	काष्ठा ras_dispatch_अगर ih_data = अणु
+int amdgpu_sdma_process_ecc_irq(struct amdgpu_device *adev,
+				      struct amdgpu_irq_src *source,
+				      struct amdgpu_iv_entry *entry)
+{
+	struct ras_common_if *ras_if = adev->sdma.ras_if;
+	struct ras_dispatch_if ih_data = {
 		.entry = entry,
-	पूर्ण;
+	};
 
-	अगर (!ras_अगर)
-		वापस 0;
+	if (!ras_if)
+		return 0;
 
-	ih_data.head = *ras_अगर;
+	ih_data.head = *ras_if;
 
-	amdgpu_ras_पूर्णांकerrupt_dispatch(adev, &ih_data);
-	वापस 0;
-पूर्ण
+	amdgpu_ras_interrupt_dispatch(adev, &ih_data);
+	return 0;
+}

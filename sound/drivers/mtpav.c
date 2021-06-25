@@ -1,13 +1,12 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  *      MOTU Midi Timepiece ALSA Main routines
  *      Copyright by Michael T. Mayers (c) Jan 09, 2000
  *      mail: michael@tweakoz.com
  *      Thanks to John Galbraith
  *
- *      This driver is क्रम the 'Mark Of The Unicorn' (MOTU)
- *      MidiTimePiece AV multiport MIDI पूर्णांकerface 
+ *      This driver is for the 'Mark Of The Unicorn' (MOTU)
+ *      MidiTimePiece AV multiport MIDI interface 
  *
  *      IOPORTS
  *      -------
@@ -15,9 +14,9 @@
  *      Video Sync In (BNC), Word Sync Out (BNC), 
  *      ADAT Sync Out (DB9)
  *      SMPTE in/out (1/4")
- *      2 programmable pedal/footचयन inमाला_दो and 4 programmable MIDI controller knobs.
- *      Macपूर्णांकosh RS422 serial port
- *      RS422 "network" port क्रम ganging multiple MTP's
+ *      2 programmable pedal/footswitch inputs and 4 programmable MIDI controller knobs.
+ *      Macintosh RS422 serial port
+ *      RS422 "network" port for ganging multiple MTP's
  *      PC Parallel Port ( which this driver currently uses )
  *
  *      MISC FEATURES
@@ -29,24 +28,24 @@
  * ChangeLog
  * Jun 11 2001	Takashi Iwai <tiwai@suse.de>
  *      - Recoded & debugged
- *      - Added समयr पूर्णांकerrupt क्रम midi outमाला_दो
- *      - hwports is between 1 and 8, which specअगरies the number of hardware ports.
+ *      - Added timer interrupt for midi outputs
+ *      - hwports is between 1 and 8, which specifies the number of hardware ports.
  *        The three global ports, computer, adat and broadcast ports, are created
  *        always after h/w and remote ports.
  */
 
-#समावेश <linux/init.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/module.h>
-#समावेश <linux/err.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/ioport.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/moduleparam.h>
-#समावेश <sound/core.h>
-#समावेश <sound/initval.h>
-#समावेश <sound/rawmidi.h>
-#समावेश <linux/delay.h>
+#include <linux/init.h>
+#include <linux/interrupt.h>
+#include <linux/module.h>
+#include <linux/err.h>
+#include <linux/platform_device.h>
+#include <linux/ioport.h>
+#include <linux/io.h>
+#include <linux/moduleparam.h>
+#include <sound/core.h>
+#include <sound/initval.h>
+#include <sound/rawmidi.h>
+#include <linux/delay.h>
 
 /*
  *      globals
@@ -56,88 +55,88 @@ MODULE_DESCRIPTION("MOTU MidiTimePiece AV multiport MIDI");
 MODULE_LICENSE("GPL");
 
 // io resources
-#घोषणा MTPAV_IOBASE		0x378
-#घोषणा MTPAV_IRQ		7
-#घोषणा MTPAV_MAX_PORTS		8
+#define MTPAV_IOBASE		0x378
+#define MTPAV_IRQ		7
+#define MTPAV_MAX_PORTS		8
 
-अटल पूर्णांक index = SNDRV_DEFAULT_IDX1;
-अटल अक्षर *id = SNDRV_DEFAULT_STR1;
-अटल दीर्घ port = MTPAV_IOBASE;	/* 0x378, 0x278 */
-अटल पूर्णांक irq = MTPAV_IRQ;		/* 7, 5 */
-अटल पूर्णांक hwports = MTPAV_MAX_PORTS;	/* use hardware ports 1-8 */
+static int index = SNDRV_DEFAULT_IDX1;
+static char *id = SNDRV_DEFAULT_STR1;
+static long port = MTPAV_IOBASE;	/* 0x378, 0x278 */
+static int irq = MTPAV_IRQ;		/* 7, 5 */
+static int hwports = MTPAV_MAX_PORTS;	/* use hardware ports 1-8 */
 
-module_param(index, पूर्णांक, 0444);
+module_param(index, int, 0444);
 MODULE_PARM_DESC(index, "Index value for MotuMTPAV MIDI.");
-module_param(id, अक्षरp, 0444);
+module_param(id, charp, 0444);
 MODULE_PARM_DESC(id, "ID string for MotuMTPAV MIDI.");
-module_param_hw(port, दीर्घ, ioport, 0444);
+module_param_hw(port, long, ioport, 0444);
 MODULE_PARM_DESC(port, "Parallel port # for MotuMTPAV MIDI.");
-module_param_hw(irq, पूर्णांक, irq, 0444);
+module_param_hw(irq, int, irq, 0444);
 MODULE_PARM_DESC(irq, "Parallel IRQ # for MotuMTPAV MIDI.");
-module_param(hwports, पूर्णांक, 0444);
+module_param(hwports, int, 0444);
 MODULE_PARM_DESC(hwports, "Hardware ports # for MotuMTPAV MIDI.");
 
-अटल काष्ठा platक्रमm_device *device;
+static struct platform_device *device;
 
 /*
  *      defines
  */
-//#घोषणा USE_FAKE_MTP //       करोn't actually पढ़ो/ग_लिखो to MTP device (क्रम debugging without an actual unit) (करोes not work yet)
+//#define USE_FAKE_MTP //       don't actually read/write to MTP device (for debugging without an actual unit) (does not work yet)
 
 // parallel port usage masks
-#घोषणा SIGS_BYTE 0x08
-#घोषणा SIGS_RFD 0x80
-#घोषणा SIGS_IRQ 0x40
-#घोषणा SIGS_IN0 0x10
-#घोषणा SIGS_IN1 0x20
+#define SIGS_BYTE 0x08
+#define SIGS_RFD 0x80
+#define SIGS_IRQ 0x40
+#define SIGS_IN0 0x10
+#define SIGS_IN1 0x20
 
-#घोषणा SIGC_WRITE 0x04
-#घोषणा SIGC_READ 0x08
-#घोषणा SIGC_INTEN 0x10
+#define SIGC_WRITE 0x04
+#define SIGC_READ 0x08
+#define SIGC_INTEN 0x10
 
-#घोषणा DREG 0
-#घोषणा SREG 1
-#घोषणा CREG 2
+#define DREG 0
+#define SREG 1
+#define CREG 2
 
 //
-#घोषणा MTPAV_MODE_INPUT_OPENED		0x01
-#घोषणा MTPAV_MODE_OUTPUT_OPENED	0x02
-#घोषणा MTPAV_MODE_INPUT_TRIGGERED	0x04
-#घोषणा MTPAV_MODE_OUTPUT_TRIGGERED	0x08
+#define MTPAV_MODE_INPUT_OPENED		0x01
+#define MTPAV_MODE_OUTPUT_OPENED	0x02
+#define MTPAV_MODE_INPUT_TRIGGERED	0x04
+#define MTPAV_MODE_OUTPUT_TRIGGERED	0x08
 
-#घोषणा NUMPORTS (0x12+1)
+#define NUMPORTS (0x12+1)
 
 
 /*
  */
 
-काष्ठा mtpav_port अणु
+struct mtpav_port {
 	u8 number;
 	u8 hwport;
 	u8 mode;
 	u8 running_status;
-	काष्ठा snd_rawmidi_substream *input;
-	काष्ठा snd_rawmidi_substream *output;
-पूर्ण;
+	struct snd_rawmidi_substream *input;
+	struct snd_rawmidi_substream *output;
+};
 
-काष्ठा mtpav अणु
-	काष्ठा snd_card *card;
-	अचिन्हित दीर्घ port;
-	काष्ठा resource *res_port;
-	पूर्णांक irq;			/* पूर्णांकerrupt (क्रम inमाला_दो) */
+struct mtpav {
+	struct snd_card *card;
+	unsigned long port;
+	struct resource *res_port;
+	int irq;			/* interrupt (for inputs) */
 	spinlock_t spinlock;
-	पूर्णांक share_irq;			/* number of accesses to input पूर्णांकerrupts */
-	पूर्णांक isसमयr;			/* number of accesses to समयr पूर्णांकerrupts */
-	काष्ठा समयr_list समयr;	/* समयr पूर्णांकerrupts क्रम outमाला_दो */
-	काष्ठा snd_rawmidi *rmidi;
-	पूर्णांक num_ports;		/* number of hw ports (1-8) */
-	काष्ठा mtpav_port ports[NUMPORTS];	/* all ports including computer, adat and bc */
+	int share_irq;			/* number of accesses to input interrupts */
+	int istimer;			/* number of accesses to timer interrupts */
+	struct timer_list timer;	/* timer interrupts for outputs */
+	struct snd_rawmidi *rmidi;
+	int num_ports;		/* number of hw ports (1-8) */
+	struct mtpav_port ports[NUMPORTS];	/* all ports including computer, adat and bc */
 
 	u32 inmidiport;		/* selected input midi port */
 	u32 inmidistate;	/* during midi command 0xf5 */
 
-	u32 ouपंचांगidihwport;	/* selected output midi hw port */
-पूर्ण;
+	u32 outmidihwport;	/* selected output midi hw port */
+};
 
 
 /*
@@ -158,613 +157,613 @@ MODULE_PARM_DESC(hwports, "Hardware ports # for MotuMTPAV MIDI.");
  *  where X = chip->num_ports
  */
 
-#घोषणा MTPAV_PIDX_COMPUTER	0
-#घोषणा MTPAV_PIDX_ADAT		1
-#घोषणा MTPAV_PIDX_BROADCAST	2
+#define MTPAV_PIDX_COMPUTER	0
+#define MTPAV_PIDX_ADAT		1
+#define MTPAV_PIDX_BROADCAST	2
 
 
-अटल पूर्णांक translate_subdevice_to_hwport(काष्ठा mtpav *chip, पूर्णांक subdev)
-अणु
-	अगर (subdev < 0)
-		वापस 0x01; /* invalid - use port 0 as शेष */
-	अन्यथा अगर (subdev < chip->num_ports)
-		वापस subdev + 1; /* single mtp port */
-	अन्यथा अगर (subdev < chip->num_ports * 2)
-		वापस subdev - chip->num_ports + 0x09; /* remote port */
-	अन्यथा अगर (subdev == chip->num_ports * 2 + MTPAV_PIDX_COMPUTER)
-		वापस 0x11; /* computer port */
-	अन्यथा अगर (subdev == chip->num_ports + MTPAV_PIDX_ADAT)
-		वापस 0x63;		/* ADAT */
-	वापस 0; /* all ports */
-पूर्ण
+static int translate_subdevice_to_hwport(struct mtpav *chip, int subdev)
+{
+	if (subdev < 0)
+		return 0x01; /* invalid - use port 0 as default */
+	else if (subdev < chip->num_ports)
+		return subdev + 1; /* single mtp port */
+	else if (subdev < chip->num_ports * 2)
+		return subdev - chip->num_ports + 0x09; /* remote port */
+	else if (subdev == chip->num_ports * 2 + MTPAV_PIDX_COMPUTER)
+		return 0x11; /* computer port */
+	else if (subdev == chip->num_ports + MTPAV_PIDX_ADAT)
+		return 0x63;		/* ADAT */
+	return 0; /* all ports */
+}
 
-अटल पूर्णांक translate_hwport_to_subdevice(काष्ठा mtpav *chip, पूर्णांक hwport)
-अणु
-	पूर्णांक p;
-	अगर (hwport <= 0x00) /* all ports */
-		वापस chip->num_ports + MTPAV_PIDX_BROADCAST;
-	अन्यथा अगर (hwport <= 0x08) अणु /* single port */
+static int translate_hwport_to_subdevice(struct mtpav *chip, int hwport)
+{
+	int p;
+	if (hwport <= 0x00) /* all ports */
+		return chip->num_ports + MTPAV_PIDX_BROADCAST;
+	else if (hwport <= 0x08) { /* single port */
 		p = hwport - 1;
-		अगर (p >= chip->num_ports)
+		if (p >= chip->num_ports)
 			p = 0;
-		वापस p;
-	पूर्ण अन्यथा अगर (hwport <= 0x10) अणु /* remote port */
+		return p;
+	} else if (hwport <= 0x10) { /* remote port */
 		p = hwport - 0x09 + chip->num_ports;
-		अगर (p >= chip->num_ports * 2)
+		if (p >= chip->num_ports * 2)
 			p = chip->num_ports;
-		वापस p;
-	पूर्ण अन्यथा अगर (hwport == 0x11)  /* computer port */
-		वापस chip->num_ports + MTPAV_PIDX_COMPUTER;
-	अन्यथा  /* ADAT */
-		वापस chip->num_ports + MTPAV_PIDX_ADAT;
-पूर्ण
+		return p;
+	} else if (hwport == 0x11)  /* computer port */
+		return chip->num_ports + MTPAV_PIDX_COMPUTER;
+	else  /* ADAT */
+		return chip->num_ports + MTPAV_PIDX_ADAT;
+}
 
 
 /*
  */
 
-अटल u8 snd_mtpav_getreg(काष्ठा mtpav *chip, u16 reg)
-अणु
+static u8 snd_mtpav_getreg(struct mtpav *chip, u16 reg)
+{
 	u8 rval = 0;
 
-	अगर (reg == SREG) अणु
+	if (reg == SREG) {
 		rval = inb(chip->port + SREG);
 		rval = (rval & 0xf8);
-	पूर्ण अन्यथा अगर (reg == CREG) अणु
+	} else if (reg == CREG) {
 		rval = inb(chip->port + CREG);
 		rval = (rval & 0x1c);
-	पूर्ण
+	}
 
-	वापस rval;
-पूर्ण
+	return rval;
+}
 
 /*
  */
 
-अटल अंतरभूत व्योम snd_mtpav_mputreg(काष्ठा mtpav *chip, u16 reg, u8 val)
-अणु
-	अगर (reg == DREG || reg == CREG)
+static inline void snd_mtpav_mputreg(struct mtpav *chip, u16 reg, u8 val)
+{
+	if (reg == DREG || reg == CREG)
 		outb(val, chip->port + reg);
-पूर्ण
+}
 
 /*
  */
 
-अटल व्योम snd_mtpav_रुको_rfdhi(काष्ठा mtpav *chip)
-अणु
-	पूर्णांक counts = 10000;
+static void snd_mtpav_wait_rfdhi(struct mtpav *chip)
+{
+	int counts = 10000;
 	u8 sbyte;
 
 	sbyte = snd_mtpav_getreg(chip, SREG);
-	जबतक (!(sbyte & SIGS_RFD) && counts--) अणु
+	while (!(sbyte & SIGS_RFD) && counts--) {
 		sbyte = snd_mtpav_getreg(chip, SREG);
 		udelay(10);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम snd_mtpav_send_byte(काष्ठा mtpav *chip, u8 byte)
-अणु
+static void snd_mtpav_send_byte(struct mtpav *chip, u8 byte)
+{
 	u8 tcbyt;
-	u8 clrग_लिखो;
-	u8 setग_लिखो;
+	u8 clrwrite;
+	u8 setwrite;
 
-	snd_mtpav_रुको_rfdhi(chip);
+	snd_mtpav_wait_rfdhi(chip);
 
 	/////////////////
 
 	tcbyt = snd_mtpav_getreg(chip, CREG);
-	clrग_लिखो = tcbyt & (SIGC_WRITE ^ 0xff);
-	setग_लिखो = tcbyt | SIGC_WRITE;
+	clrwrite = tcbyt & (SIGC_WRITE ^ 0xff);
+	setwrite = tcbyt | SIGC_WRITE;
 
 	snd_mtpav_mputreg(chip, DREG, byte);
-	snd_mtpav_mputreg(chip, CREG, clrग_लिखो);	// clear ग_लिखो bit
+	snd_mtpav_mputreg(chip, CREG, clrwrite);	// clear write bit
 
-	snd_mtpav_mputreg(chip, CREG, setग_लिखो);	// set ग_लिखो bit
+	snd_mtpav_mputreg(chip, CREG, setwrite);	// set write bit
 
-पूर्ण
+}
 
 
 /*
  */
 
 /* call this with spin lock held */
-अटल व्योम snd_mtpav_output_port_ग_लिखो(काष्ठा mtpav *mtp_card,
-					काष्ठा mtpav_port *portp,
-					काष्ठा snd_rawmidi_substream *substream)
-अणु
+static void snd_mtpav_output_port_write(struct mtpav *mtp_card,
+					struct mtpav_port *portp,
+					struct snd_rawmidi_substream *substream)
+{
 	u8 outbyte;
 
-	// Get the outbyte first, so we can emulate running status अगर
+	// Get the outbyte first, so we can emulate running status if
 	// necessary
-	अगर (snd_rawmidi_transmit(substream, &outbyte, 1) != 1)
-		वापस;
+	if (snd_rawmidi_transmit(substream, &outbyte, 1) != 1)
+		return;
 
-	// send port change command अगर necessary
+	// send port change command if necessary
 
-	अगर (portp->hwport != mtp_card->ouपंचांगidihwport) अणु
-		mtp_card->ouपंचांगidihwport = portp->hwport;
+	if (portp->hwport != mtp_card->outmidihwport) {
+		mtp_card->outmidihwport = portp->hwport;
 
 		snd_mtpav_send_byte(mtp_card, 0xf5);
 		snd_mtpav_send_byte(mtp_card, portp->hwport);
 		/*
-		snd_prपूर्णांकk(KERN_DEBUG "new outport: 0x%x\n",
-			   (अचिन्हित पूर्णांक) portp->hwport);
+		snd_printk(KERN_DEBUG "new outport: 0x%x\n",
+			   (unsigned int) portp->hwport);
 		*/
-		अगर (!(outbyte & 0x80) && portp->running_status)
+		if (!(outbyte & 0x80) && portp->running_status)
 			snd_mtpav_send_byte(mtp_card, portp->running_status);
-	पूर्ण
+	}
 
 	// send data
 
-	करो अणु
-		अगर (outbyte & 0x80)
+	do {
+		if (outbyte & 0x80)
 			portp->running_status = outbyte;
 		
 		snd_mtpav_send_byte(mtp_card, outbyte);
-	पूर्ण जबतक (snd_rawmidi_transmit(substream, &outbyte, 1) == 1);
-पूर्ण
+	} while (snd_rawmidi_transmit(substream, &outbyte, 1) == 1);
+}
 
-अटल व्योम snd_mtpav_output_ग_लिखो(काष्ठा snd_rawmidi_substream *substream)
-अणु
-	काष्ठा mtpav *mtp_card = substream->rmidi->निजी_data;
-	काष्ठा mtpav_port *portp = &mtp_card->ports[substream->number];
-	अचिन्हित दीर्घ flags;
+static void snd_mtpav_output_write(struct snd_rawmidi_substream *substream)
+{
+	struct mtpav *mtp_card = substream->rmidi->private_data;
+	struct mtpav_port *portp = &mtp_card->ports[substream->number];
+	unsigned long flags;
 
 	spin_lock_irqsave(&mtp_card->spinlock, flags);
-	snd_mtpav_output_port_ग_लिखो(mtp_card, portp, substream);
+	snd_mtpav_output_port_write(mtp_card, portp, substream);
 	spin_unlock_irqrestore(&mtp_card->spinlock, flags);
-पूर्ण
+}
 
 
 /*
  *      mtpav control
  */
 
-अटल व्योम snd_mtpav_portscan(काष्ठा mtpav *chip)	// put mtp पूर्णांकo smart routing mode
-अणु
+static void snd_mtpav_portscan(struct mtpav *chip)	// put mtp into smart routing mode
+{
 	u8 p;
 
-	क्रम (p = 0; p < 8; p++) अणु
+	for (p = 0; p < 8; p++) {
 		snd_mtpav_send_byte(chip, 0xf5);
 		snd_mtpav_send_byte(chip, p);
 		snd_mtpav_send_byte(chip, 0xfe);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
  */
 
-अटल पूर्णांक snd_mtpav_input_खोलो(काष्ठा snd_rawmidi_substream *substream)
-अणु
-	काष्ठा mtpav *mtp_card = substream->rmidi->निजी_data;
-	काष्ठा mtpav_port *portp = &mtp_card->ports[substream->number];
-	अचिन्हित दीर्घ flags;
+static int snd_mtpav_input_open(struct snd_rawmidi_substream *substream)
+{
+	struct mtpav *mtp_card = substream->rmidi->private_data;
+	struct mtpav_port *portp = &mtp_card->ports[substream->number];
+	unsigned long flags;
 
 	spin_lock_irqsave(&mtp_card->spinlock, flags);
 	portp->mode |= MTPAV_MODE_INPUT_OPENED;
 	portp->input = substream;
-	अगर (mtp_card->share_irq++ == 0)
-		snd_mtpav_mputreg(mtp_card, CREG, (SIGC_INTEN | SIGC_WRITE));	// enable pport पूर्णांकerrupts
+	if (mtp_card->share_irq++ == 0)
+		snd_mtpav_mputreg(mtp_card, CREG, (SIGC_INTEN | SIGC_WRITE));	// enable pport interrupts
 	spin_unlock_irqrestore(&mtp_card->spinlock, flags);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  */
 
-अटल पूर्णांक snd_mtpav_input_बंद(काष्ठा snd_rawmidi_substream *substream)
-अणु
-	काष्ठा mtpav *mtp_card = substream->rmidi->निजी_data;
-	काष्ठा mtpav_port *portp = &mtp_card->ports[substream->number];
-	अचिन्हित दीर्घ flags;
+static int snd_mtpav_input_close(struct snd_rawmidi_substream *substream)
+{
+	struct mtpav *mtp_card = substream->rmidi->private_data;
+	struct mtpav_port *portp = &mtp_card->ports[substream->number];
+	unsigned long flags;
 
 	spin_lock_irqsave(&mtp_card->spinlock, flags);
 	portp->mode &= ~MTPAV_MODE_INPUT_OPENED;
-	portp->input = शून्य;
-	अगर (--mtp_card->share_irq == 0)
-		snd_mtpav_mputreg(mtp_card, CREG, 0);	// disable pport पूर्णांकerrupts
+	portp->input = NULL;
+	if (--mtp_card->share_irq == 0)
+		snd_mtpav_mputreg(mtp_card, CREG, 0);	// disable pport interrupts
 	spin_unlock_irqrestore(&mtp_card->spinlock, flags);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  */
 
-अटल व्योम snd_mtpav_input_trigger(काष्ठा snd_rawmidi_substream *substream, पूर्णांक up)
-अणु
-	काष्ठा mtpav *mtp_card = substream->rmidi->निजी_data;
-	काष्ठा mtpav_port *portp = &mtp_card->ports[substream->number];
-	अचिन्हित दीर्घ flags;
+static void snd_mtpav_input_trigger(struct snd_rawmidi_substream *substream, int up)
+{
+	struct mtpav *mtp_card = substream->rmidi->private_data;
+	struct mtpav_port *portp = &mtp_card->ports[substream->number];
+	unsigned long flags;
 
 	spin_lock_irqsave(&mtp_card->spinlock, flags);
-	अगर (up)
+	if (up)
 		portp->mode |= MTPAV_MODE_INPUT_TRIGGERED;
-	अन्यथा
+	else
 		portp->mode &= ~MTPAV_MODE_INPUT_TRIGGERED;
 	spin_unlock_irqrestore(&mtp_card->spinlock, flags);
 
-पूर्ण
+}
 
 
 /*
- * समयr पूर्णांकerrupt क्रम outमाला_दो
+ * timer interrupt for outputs
  */
 
-अटल व्योम snd_mtpav_output_समयr(काष्ठा समयr_list *t)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा mtpav *chip = from_समयr(chip, t, समयr);
-	पूर्णांक p;
+static void snd_mtpav_output_timer(struct timer_list *t)
+{
+	unsigned long flags;
+	struct mtpav *chip = from_timer(chip, t, timer);
+	int p;
 
 	spin_lock_irqsave(&chip->spinlock, flags);
-	/* reprogram समयr */
-	mod_समयr(&chip->समयr, 1 + jअगरfies);
+	/* reprogram timer */
+	mod_timer(&chip->timer, 1 + jiffies);
 	/* process each port */
-	क्रम (p = 0; p <= chip->num_ports * 2 + MTPAV_PIDX_BROADCAST; p++) अणु
-		काष्ठा mtpav_port *portp = &chip->ports[p];
-		अगर ((portp->mode & MTPAV_MODE_OUTPUT_TRIGGERED) && portp->output)
-			snd_mtpav_output_port_ग_लिखो(chip, portp, portp->output);
-	पूर्ण
+	for (p = 0; p <= chip->num_ports * 2 + MTPAV_PIDX_BROADCAST; p++) {
+		struct mtpav_port *portp = &chip->ports[p];
+		if ((portp->mode & MTPAV_MODE_OUTPUT_TRIGGERED) && portp->output)
+			snd_mtpav_output_port_write(chip, portp, portp->output);
+	}
 	spin_unlock_irqrestore(&chip->spinlock, flags);
-पूर्ण
+}
 
 /* spinlock held! */
-अटल व्योम snd_mtpav_add_output_समयr(काष्ठा mtpav *chip)
-अणु
-	mod_समयr(&chip->समयr, 1 + jअगरfies);
-पूर्ण
+static void snd_mtpav_add_output_timer(struct mtpav *chip)
+{
+	mod_timer(&chip->timer, 1 + jiffies);
+}
 
 /* spinlock held! */
-अटल व्योम snd_mtpav_हटाओ_output_समयr(काष्ठा mtpav *chip)
-अणु
-	del_समयr(&chip->समयr);
-पूर्ण
+static void snd_mtpav_remove_output_timer(struct mtpav *chip)
+{
+	del_timer(&chip->timer);
+}
 
 /*
  */
 
-अटल पूर्णांक snd_mtpav_output_खोलो(काष्ठा snd_rawmidi_substream *substream)
-अणु
-	काष्ठा mtpav *mtp_card = substream->rmidi->निजी_data;
-	काष्ठा mtpav_port *portp = &mtp_card->ports[substream->number];
-	अचिन्हित दीर्घ flags;
+static int snd_mtpav_output_open(struct snd_rawmidi_substream *substream)
+{
+	struct mtpav *mtp_card = substream->rmidi->private_data;
+	struct mtpav_port *portp = &mtp_card->ports[substream->number];
+	unsigned long flags;
 
 	spin_lock_irqsave(&mtp_card->spinlock, flags);
 	portp->mode |= MTPAV_MODE_OUTPUT_OPENED;
 	portp->output = substream;
 	spin_unlock_irqrestore(&mtp_card->spinlock, flags);
-	वापस 0;
-पूर्ण;
+	return 0;
+};
 
 /*
  */
 
-अटल पूर्णांक snd_mtpav_output_बंद(काष्ठा snd_rawmidi_substream *substream)
-अणु
-	काष्ठा mtpav *mtp_card = substream->rmidi->निजी_data;
-	काष्ठा mtpav_port *portp = &mtp_card->ports[substream->number];
-	अचिन्हित दीर्घ flags;
+static int snd_mtpav_output_close(struct snd_rawmidi_substream *substream)
+{
+	struct mtpav *mtp_card = substream->rmidi->private_data;
+	struct mtpav_port *portp = &mtp_card->ports[substream->number];
+	unsigned long flags;
 
 	spin_lock_irqsave(&mtp_card->spinlock, flags);
 	portp->mode &= ~MTPAV_MODE_OUTPUT_OPENED;
-	portp->output = शून्य;
+	portp->output = NULL;
 	spin_unlock_irqrestore(&mtp_card->spinlock, flags);
-	वापस 0;
-पूर्ण;
+	return 0;
+};
 
 /*
  */
 
-अटल व्योम snd_mtpav_output_trigger(काष्ठा snd_rawmidi_substream *substream, पूर्णांक up)
-अणु
-	काष्ठा mtpav *mtp_card = substream->rmidi->निजी_data;
-	काष्ठा mtpav_port *portp = &mtp_card->ports[substream->number];
-	अचिन्हित दीर्घ flags;
+static void snd_mtpav_output_trigger(struct snd_rawmidi_substream *substream, int up)
+{
+	struct mtpav *mtp_card = substream->rmidi->private_data;
+	struct mtpav_port *portp = &mtp_card->ports[substream->number];
+	unsigned long flags;
 
 	spin_lock_irqsave(&mtp_card->spinlock, flags);
-	अगर (up) अणु
-		अगर (! (portp->mode & MTPAV_MODE_OUTPUT_TRIGGERED)) अणु
-			अगर (mtp_card->isसमयr++ == 0)
-				snd_mtpav_add_output_समयr(mtp_card);
+	if (up) {
+		if (! (portp->mode & MTPAV_MODE_OUTPUT_TRIGGERED)) {
+			if (mtp_card->istimer++ == 0)
+				snd_mtpav_add_output_timer(mtp_card);
 			portp->mode |= MTPAV_MODE_OUTPUT_TRIGGERED;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		portp->mode &= ~MTPAV_MODE_OUTPUT_TRIGGERED;
-		अगर (--mtp_card->isसमयr == 0)
-			snd_mtpav_हटाओ_output_समयr(mtp_card);
-	पूर्ण
+		if (--mtp_card->istimer == 0)
+			snd_mtpav_remove_output_timer(mtp_card);
+	}
 	spin_unlock_irqrestore(&mtp_card->spinlock, flags);
 
-	अगर (up)
-		snd_mtpav_output_ग_लिखो(substream);
-पूर्ण
+	if (up)
+		snd_mtpav_output_write(substream);
+}
 
 /*
- * midi पूर्णांकerrupt क्रम inमाला_दो
+ * midi interrupt for inputs
  */
 
-अटल व्योम snd_mtpav_inmidi_process(काष्ठा mtpav *mcrd, u8 inbyte)
-अणु
-	काष्ठा mtpav_port *portp;
+static void snd_mtpav_inmidi_process(struct mtpav *mcrd, u8 inbyte)
+{
+	struct mtpav_port *portp;
 
-	अगर ((पूर्णांक)mcrd->inmidiport > mcrd->num_ports * 2 + MTPAV_PIDX_BROADCAST)
-		वापस;
+	if ((int)mcrd->inmidiport > mcrd->num_ports * 2 + MTPAV_PIDX_BROADCAST)
+		return;
 
 	portp = &mcrd->ports[mcrd->inmidiport];
-	अगर (portp->mode & MTPAV_MODE_INPUT_TRIGGERED)
+	if (portp->mode & MTPAV_MODE_INPUT_TRIGGERED)
 		snd_rawmidi_receive(portp->input, &inbyte, 1);
-पूर्ण
+}
 
-अटल व्योम snd_mtpav_inmidi_h(काष्ठा mtpav *mcrd, u8 inbyte)
-अणु
-	अगर (inbyte >= 0xf8) अणु
-		/* real-समय midi code */
+static void snd_mtpav_inmidi_h(struct mtpav *mcrd, u8 inbyte)
+{
+	if (inbyte >= 0xf8) {
+		/* real-time midi code */
 		snd_mtpav_inmidi_process(mcrd, inbyte);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (mcrd->inmidistate == 0) अणु	// aरुकोing command
-		अगर (inbyte == 0xf5)	// MTP port #
+	if (mcrd->inmidistate == 0) {	// awaiting command
+		if (inbyte == 0xf5)	// MTP port #
 			mcrd->inmidistate = 1;
-		अन्यथा
+		else
 			snd_mtpav_inmidi_process(mcrd, inbyte);
-	पूर्ण अन्यथा अगर (mcrd->inmidistate) अणु
+	} else if (mcrd->inmidistate) {
 		mcrd->inmidiport = translate_hwport_to_subdevice(mcrd, inbyte);
 		mcrd->inmidistate = 0;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम snd_mtpav_पढ़ो_bytes(काष्ठा mtpav *mcrd)
-अणु
-	u8 clrपढ़ो, setपढ़ो;
-	u8 mtp_पढ़ो_byte;
+static void snd_mtpav_read_bytes(struct mtpav *mcrd)
+{
+	u8 clrread, setread;
+	u8 mtp_read_byte;
 	u8 sr, cbyt;
-	पूर्णांक i;
+	int i;
 
 	u8 sbyt = snd_mtpav_getreg(mcrd, SREG);
 
-	/* prपूर्णांकk(KERN_DEBUG "snd_mtpav_read_bytes() sbyt: 0x%x\n", sbyt); */
+	/* printk(KERN_DEBUG "snd_mtpav_read_bytes() sbyt: 0x%x\n", sbyt); */
 
-	अगर (!(sbyt & SIGS_BYTE))
-		वापस;
+	if (!(sbyt & SIGS_BYTE))
+		return;
 
 	cbyt = snd_mtpav_getreg(mcrd, CREG);
-	clrपढ़ो = cbyt & (SIGC_READ ^ 0xff);
-	setपढ़ो = cbyt | SIGC_READ;
+	clrread = cbyt & (SIGC_READ ^ 0xff);
+	setread = cbyt | SIGC_READ;
 
-	करो अणु
+	do {
 
-		mtp_पढ़ो_byte = 0;
-		क्रम (i = 0; i < 4; i++) अणु
-			snd_mtpav_mputreg(mcrd, CREG, setपढ़ो);
+		mtp_read_byte = 0;
+		for (i = 0; i < 4; i++) {
+			snd_mtpav_mputreg(mcrd, CREG, setread);
 			sr = snd_mtpav_getreg(mcrd, SREG);
-			snd_mtpav_mputreg(mcrd, CREG, clrपढ़ो);
+			snd_mtpav_mputreg(mcrd, CREG, clrread);
 
 			sr &= SIGS_IN0 | SIGS_IN1;
 			sr >>= 4;
-			mtp_पढ़ो_byte |= sr << (i * 2);
-		पूर्ण
+			mtp_read_byte |= sr << (i * 2);
+		}
 
-		snd_mtpav_inmidi_h(mcrd, mtp_पढ़ो_byte);
+		snd_mtpav_inmidi_h(mcrd, mtp_read_byte);
 
 		sbyt = snd_mtpav_getreg(mcrd, SREG);
 
-	पूर्ण जबतक (sbyt & SIGS_BYTE);
-पूर्ण
+	} while (sbyt & SIGS_BYTE);
+}
 
-अटल irqवापस_t snd_mtpav_irqh(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा mtpav *mcard = dev_id;
+static irqreturn_t snd_mtpav_irqh(int irq, void *dev_id)
+{
+	struct mtpav *mcard = dev_id;
 
 	spin_lock(&mcard->spinlock);
-	snd_mtpav_पढ़ो_bytes(mcard);
+	snd_mtpav_read_bytes(mcard);
 	spin_unlock(&mcard->spinlock);
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
 /*
  * get ISA resources
  */
-अटल पूर्णांक snd_mtpav_get_ISA(काष्ठा mtpav *mcard)
-अणु
-	अगर ((mcard->res_port = request_region(port, 3, "MotuMTPAV MIDI")) == शून्य) अणु
-		snd_prपूर्णांकk(KERN_ERR "MTVAP port 0x%lx is busy\n", port);
-		वापस -EBUSY;
-	पूर्ण
+static int snd_mtpav_get_ISA(struct mtpav *mcard)
+{
+	if ((mcard->res_port = request_region(port, 3, "MotuMTPAV MIDI")) == NULL) {
+		snd_printk(KERN_ERR "MTVAP port 0x%lx is busy\n", port);
+		return -EBUSY;
+	}
 	mcard->port = port;
-	अगर (request_irq(irq, snd_mtpav_irqh, 0, "MOTU MTPAV", mcard)) अणु
-		snd_prपूर्णांकk(KERN_ERR "MTVAP IRQ %d busy\n", irq);
-		वापस -EBUSY;
-	पूर्ण
+	if (request_irq(irq, snd_mtpav_irqh, 0, "MOTU MTPAV", mcard)) {
+		snd_printk(KERN_ERR "MTVAP IRQ %d busy\n", irq);
+		return -EBUSY;
+	}
 	mcard->irq = irq;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
 /*
  */
 
-अटल स्थिर काष्ठा snd_rawmidi_ops snd_mtpav_output = अणु
-	.खोलो =		snd_mtpav_output_खोलो,
-	.बंद =	snd_mtpav_output_बंद,
+static const struct snd_rawmidi_ops snd_mtpav_output = {
+	.open =		snd_mtpav_output_open,
+	.close =	snd_mtpav_output_close,
 	.trigger =	snd_mtpav_output_trigger,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा snd_rawmidi_ops snd_mtpav_input = अणु
-	.खोलो =		snd_mtpav_input_खोलो,
-	.बंद =	snd_mtpav_input_बंद,
+static const struct snd_rawmidi_ops snd_mtpav_input = {
+	.open =		snd_mtpav_input_open,
+	.close =	snd_mtpav_input_close,
 	.trigger =	snd_mtpav_input_trigger,
-पूर्ण;
+};
 
 
 /*
  * get RAWMIDI resources
  */
 
-अटल व्योम snd_mtpav_set_name(काष्ठा mtpav *chip,
-			       काष्ठा snd_rawmidi_substream *substream)
-अणु
-	अगर (substream->number >= 0 && substream->number < chip->num_ports)
-		प्र_लिखो(substream->name, "MTP direct %d", (substream->number % chip->num_ports) + 1);
-	अन्यथा अगर (substream->number >= 8 && substream->number < chip->num_ports * 2)
-		प्र_लिखो(substream->name, "MTP remote %d", (substream->number % chip->num_ports) + 1);
-	अन्यथा अगर (substream->number == chip->num_ports * 2)
-		म_नकल(substream->name, "MTP computer");
-	अन्यथा अगर (substream->number == chip->num_ports * 2 + 1)
-		म_नकल(substream->name, "MTP ADAT");
-	अन्यथा
-		म_नकल(substream->name, "MTP broadcast");
-पूर्ण
+static void snd_mtpav_set_name(struct mtpav *chip,
+			       struct snd_rawmidi_substream *substream)
+{
+	if (substream->number >= 0 && substream->number < chip->num_ports)
+		sprintf(substream->name, "MTP direct %d", (substream->number % chip->num_ports) + 1);
+	else if (substream->number >= 8 && substream->number < chip->num_ports * 2)
+		sprintf(substream->name, "MTP remote %d", (substream->number % chip->num_ports) + 1);
+	else if (substream->number == chip->num_ports * 2)
+		strcpy(substream->name, "MTP computer");
+	else if (substream->number == chip->num_ports * 2 + 1)
+		strcpy(substream->name, "MTP ADAT");
+	else
+		strcpy(substream->name, "MTP broadcast");
+}
 
-अटल पूर्णांक snd_mtpav_get_RAWMIDI(काष्ठा mtpav *mcard)
-अणु
-	पूर्णांक rval;
-	काष्ठा snd_rawmidi *rawmidi;
-	काष्ठा snd_rawmidi_substream *substream;
-	काष्ठा list_head *list;
+static int snd_mtpav_get_RAWMIDI(struct mtpav *mcard)
+{
+	int rval;
+	struct snd_rawmidi *rawmidi;
+	struct snd_rawmidi_substream *substream;
+	struct list_head *list;
 
-	अगर (hwports < 1)
+	if (hwports < 1)
 		hwports = 1;
-	अन्यथा अगर (hwports > 8)
+	else if (hwports > 8)
 		hwports = 8;
 	mcard->num_ports = hwports;
 
-	अगर ((rval = snd_rawmidi_new(mcard->card, "MotuMIDI", 0,
+	if ((rval = snd_rawmidi_new(mcard->card, "MotuMIDI", 0,
 				    mcard->num_ports * 2 + MTPAV_PIDX_BROADCAST + 1,
 				    mcard->num_ports * 2 + MTPAV_PIDX_BROADCAST + 1,
 				    &mcard->rmidi)) < 0)
-		वापस rval;
+		return rval;
 	rawmidi = mcard->rmidi;
-	rawmidi->निजी_data = mcard;
+	rawmidi->private_data = mcard;
 
-	list_क्रम_each(list, &rawmidi->streams[SNDRV_RAWMIDI_STREAM_INPUT].substreams) अणु
-		substream = list_entry(list, काष्ठा snd_rawmidi_substream, list);
+	list_for_each(list, &rawmidi->streams[SNDRV_RAWMIDI_STREAM_INPUT].substreams) {
+		substream = list_entry(list, struct snd_rawmidi_substream, list);
 		snd_mtpav_set_name(mcard, substream);
 		substream->ops = &snd_mtpav_input;
-	पूर्ण
-	list_क्रम_each(list, &rawmidi->streams[SNDRV_RAWMIDI_STREAM_OUTPUT].substreams) अणु
-		substream = list_entry(list, काष्ठा snd_rawmidi_substream, list);
+	}
+	list_for_each(list, &rawmidi->streams[SNDRV_RAWMIDI_STREAM_OUTPUT].substreams) {
+		substream = list_entry(list, struct snd_rawmidi_substream, list);
 		snd_mtpav_set_name(mcard, substream);
 		substream->ops = &snd_mtpav_output;
 		mcard->ports[substream->number].hwport = translate_subdevice_to_hwport(mcard, substream->number);
-	पूर्ण
+	}
 	rawmidi->info_flags |= SNDRV_RAWMIDI_INFO_OUTPUT | SNDRV_RAWMIDI_INFO_INPUT |
 			       SNDRV_RAWMIDI_INFO_DUPLEX;
-	प्र_लिखो(rawmidi->name, "MTP AV MIDI");
-	वापस 0;
-पूर्ण
+	sprintf(rawmidi->name, "MTP AV MIDI");
+	return 0;
+}
 
 /*
  */
 
-अटल व्योम snd_mtpav_मुक्त(काष्ठा snd_card *card)
-अणु
-	काष्ठा mtpav *crd = card->निजी_data;
-	अचिन्हित दीर्घ flags;
+static void snd_mtpav_free(struct snd_card *card)
+{
+	struct mtpav *crd = card->private_data;
+	unsigned long flags;
 
 	spin_lock_irqsave(&crd->spinlock, flags);
-	अगर (crd->isसमयr > 0)
-		snd_mtpav_हटाओ_output_समयr(crd);
+	if (crd->istimer > 0)
+		snd_mtpav_remove_output_timer(crd);
 	spin_unlock_irqrestore(&crd->spinlock, flags);
-	अगर (crd->irq >= 0)
-		मुक्त_irq(crd->irq, (व्योम *)crd);
-	release_and_मुक्त_resource(crd->res_port);
-पूर्ण
+	if (crd->irq >= 0)
+		free_irq(crd->irq, (void *)crd);
+	release_and_free_resource(crd->res_port);
+}
 
 /*
  */
-अटल पूर्णांक snd_mtpav_probe(काष्ठा platक्रमm_device *dev)
-अणु
-	काष्ठा snd_card *card;
-	पूर्णांक err;
-	काष्ठा mtpav *mtp_card;
+static int snd_mtpav_probe(struct platform_device *dev)
+{
+	struct snd_card *card;
+	int err;
+	struct mtpav *mtp_card;
 
 	err = snd_card_new(&dev->dev, index, id, THIS_MODULE,
-			   माप(*mtp_card), &card);
-	अगर (err < 0)
-		वापस err;
+			   sizeof(*mtp_card), &card);
+	if (err < 0)
+		return err;
 
-	mtp_card = card->निजी_data;
+	mtp_card = card->private_data;
 	spin_lock_init(&mtp_card->spinlock);
 	mtp_card->card = card;
 	mtp_card->irq = -1;
 	mtp_card->share_irq = 0;
 	mtp_card->inmidistate = 0;
-	mtp_card->ouपंचांगidihwport = 0xffffffff;
-	समयr_setup(&mtp_card->समयr, snd_mtpav_output_समयr, 0);
+	mtp_card->outmidihwport = 0xffffffff;
+	timer_setup(&mtp_card->timer, snd_mtpav_output_timer, 0);
 
-	card->निजी_मुक्त = snd_mtpav_मुक्त;
+	card->private_free = snd_mtpav_free;
 
 	err = snd_mtpav_get_RAWMIDI(mtp_card);
-	अगर (err < 0)
-		जाओ __error;
+	if (err < 0)
+		goto __error;
 
 	mtp_card->inmidiport = mtp_card->num_ports + MTPAV_PIDX_BROADCAST;
 
 	err = snd_mtpav_get_ISA(mtp_card);
-	अगर (err < 0)
-		जाओ __error;
+	if (err < 0)
+		goto __error;
 
-	म_नकल(card->driver, "MTPAV");
-	म_नकल(card->लघुname, "MTPAV on parallel port");
-	snम_लिखो(card->दीर्घname, माप(card->दीर्घname),
+	strcpy(card->driver, "MTPAV");
+	strcpy(card->shortname, "MTPAV on parallel port");
+	snprintf(card->longname, sizeof(card->longname),
 		 "MTPAV on parallel port at 0x%lx", port);
 
 	snd_mtpav_portscan(mtp_card);
 
-	err = snd_card_रेजिस्टर(mtp_card->card);
-	अगर (err < 0)
-		जाओ __error;
+	err = snd_card_register(mtp_card->card);
+	if (err < 0)
+		goto __error;
 
-	platक्रमm_set_drvdata(dev, card);
-	prपूर्णांकk(KERN_INFO "Motu MidiTimePiece on parallel port irq: %d ioport: 0x%lx\n", irq, port);
-	वापस 0;
+	platform_set_drvdata(dev, card);
+	printk(KERN_INFO "Motu MidiTimePiece on parallel port irq: %d ioport: 0x%lx\n", irq, port);
+	return 0;
 
  __error:
-	snd_card_मुक्त(card);
-	वापस err;
-पूर्ण
+	snd_card_free(card);
+	return err;
+}
 
-अटल पूर्णांक snd_mtpav_हटाओ(काष्ठा platक्रमm_device *devptr)
-अणु
-	snd_card_मुक्त(platक्रमm_get_drvdata(devptr));
-	वापस 0;
-पूर्ण
+static int snd_mtpav_remove(struct platform_device *devptr)
+{
+	snd_card_free(platform_get_drvdata(devptr));
+	return 0;
+}
 
-#घोषणा SND_MTPAV_DRIVER	"snd_mtpav"
+#define SND_MTPAV_DRIVER	"snd_mtpav"
 
-अटल काष्ठा platक्रमm_driver snd_mtpav_driver = अणु
+static struct platform_driver snd_mtpav_driver = {
 	.probe		= snd_mtpav_probe,
-	.हटाओ		= snd_mtpav_हटाओ,
-	.driver		= अणु
+	.remove		= snd_mtpav_remove,
+	.driver		= {
 		.name	= SND_MTPAV_DRIVER,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक __init alsa_card_mtpav_init(व्योम)
-अणु
-	पूर्णांक err;
+static int __init alsa_card_mtpav_init(void)
+{
+	int err;
 
-	अगर ((err = platक्रमm_driver_रेजिस्टर(&snd_mtpav_driver)) < 0)
-		वापस err;
+	if ((err = platform_driver_register(&snd_mtpav_driver)) < 0)
+		return err;
 
-	device = platक्रमm_device_रेजिस्टर_simple(SND_MTPAV_DRIVER, -1, शून्य, 0);
-	अगर (!IS_ERR(device)) अणु
-		अगर (platक्रमm_get_drvdata(device))
-			वापस 0;
-		platक्रमm_device_unरेजिस्टर(device);
+	device = platform_device_register_simple(SND_MTPAV_DRIVER, -1, NULL, 0);
+	if (!IS_ERR(device)) {
+		if (platform_get_drvdata(device))
+			return 0;
+		platform_device_unregister(device);
 		err = -ENODEV;
-	पूर्ण अन्यथा
+	} else
 		err = PTR_ERR(device);
-	platक्रमm_driver_unरेजिस्टर(&snd_mtpav_driver);
-	वापस err;
-पूर्ण
+	platform_driver_unregister(&snd_mtpav_driver);
+	return err;
+}
 
-अटल व्योम __निकास alsa_card_mtpav_निकास(व्योम)
-अणु
-	platक्रमm_device_unरेजिस्टर(device);
-	platक्रमm_driver_unरेजिस्टर(&snd_mtpav_driver);
-पूर्ण
+static void __exit alsa_card_mtpav_exit(void)
+{
+	platform_device_unregister(device);
+	platform_driver_unregister(&snd_mtpav_driver);
+}
 
 module_init(alsa_card_mtpav_init)
-module_निकास(alsa_card_mtpav_निकास)
+module_exit(alsa_card_mtpav_exit)

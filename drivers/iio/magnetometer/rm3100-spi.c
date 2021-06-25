@@ -1,33 +1,32 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Support क्रम PNI RM3100 3-axis geomagnetic sensor on a spi bus.
+ * Support for PNI RM3100 3-axis geomagnetic sensor on a spi bus.
  *
  * Copyright (C) 2018 Song Qiang <songqiang1304521@gmail.com>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/spi/spi.h>
+#include <linux/module.h>
+#include <linux/spi/spi.h>
 
-#समावेश "rm3100.h"
+#include "rm3100.h"
 
-अटल स्थिर काष्ठा regmap_config rm3100_regmap_config = अणु
+static const struct regmap_config rm3100_regmap_config = {
 	.reg_bits = 8,
 	.val_bits = 8,
 
-	.rd_table = &rm3100_पढ़ोable_table,
+	.rd_table = &rm3100_readable_table,
 	.wr_table = &rm3100_writable_table,
-	.अस्थिर_table = &rm3100_अस्थिर_table,
+	.volatile_table = &rm3100_volatile_table,
 
-	.पढ़ो_flag_mask = 0x80,
+	.read_flag_mask = 0x80,
 
 	.cache_type = REGCACHE_RBTREE,
-पूर्ण;
+};
 
-अटल पूर्णांक rm3100_probe(काष्ठा spi_device *spi)
-अणु
-	काष्ठा regmap *regmap;
-	पूर्णांक ret;
+static int rm3100_probe(struct spi_device *spi)
+{
+	struct regmap *regmap;
+	int ret;
 
 	/* Actually this device supports both mode 0 and mode 3. */
 	spi->mode = SPI_MODE_0;
@@ -35,29 +34,29 @@
 	spi->max_speed_hz = 1000000;
 	spi->bits_per_word = 8;
 	ret = spi_setup(spi);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	regmap = devm_regmap_init_spi(spi, &rm3100_regmap_config);
-	अगर (IS_ERR(regmap))
-		वापस PTR_ERR(regmap);
+	if (IS_ERR(regmap))
+		return PTR_ERR(regmap);
 
-	वापस rm3100_common_probe(&spi->dev, regmap, spi->irq);
-पूर्ण
+	return rm3100_common_probe(&spi->dev, regmap, spi->irq);
+}
 
-अटल स्थिर काष्ठा of_device_id rm3100_dt_match[] = अणु
-	अणु .compatible = "pni,rm3100", पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct of_device_id rm3100_dt_match[] = {
+	{ .compatible = "pni,rm3100", },
+	{ }
+};
 MODULE_DEVICE_TABLE(of, rm3100_dt_match);
 
-अटल काष्ठा spi_driver rm3100_driver = अणु
-	.driver = अणु
+static struct spi_driver rm3100_driver = {
+	.driver = {
 		.name = "rm3100-spi",
 		.of_match_table = rm3100_dt_match,
-	पूर्ण,
+	},
 	.probe = rm3100_probe,
-पूर्ण;
+};
 module_spi_driver(rm3100_driver);
 
 MODULE_AUTHOR("Song Qiang <songqiang1304521@gmail.com>");

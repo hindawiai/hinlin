@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Generic DSI Command Mode panel driver
  *
@@ -7,30 +6,30 @@
  * Author: Tomi Valkeinen <tomi.valkeinen@ti.com>
  */
 
-#समावेश <linux/backlight.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/gpio/consumer.h>
-#समावेश <linux/jअगरfies.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/regulator/consumer.h>
+#include <linux/backlight.h>
+#include <linux/delay.h>
+#include <linux/gpio/consumer.h>
+#include <linux/jiffies.h>
+#include <linux/module.h>
+#include <linux/of_device.h>
+#include <linux/regulator/consumer.h>
 
-#समावेश <drm/drm_connector.h>
-#समावेश <drm/drm_mipi_dsi.h>
-#समावेश <drm/drm_modes.h>
-#समावेश <drm/drm_panel.h>
+#include <drm/drm_connector.h>
+#include <drm/drm_mipi_dsi.h>
+#include <drm/drm_modes.h>
+#include <drm/drm_panel.h>
 
-#समावेश <video/mipi_display.h>
+#include <video/mipi_display.h>
 
-#घोषणा DCS_GET_ID1		0xda
-#घोषणा DCS_GET_ID2		0xdb
-#घोषणा DCS_GET_ID3		0xdc
+#define DCS_GET_ID1		0xda
+#define DCS_GET_ID2		0xdb
+#define DCS_GET_ID3		0xdc
 
-#घोषणा DCS_REGULATOR_SUPPLY_NUM 2
+#define DCS_REGULATOR_SUPPLY_NUM 2
 
-अटल स्थिर काष्ठा of_device_id dsicm_of_match[];
+static const struct of_device_id dsicm_of_match[];
 
-काष्ठा dsic_panel_data अणु
+struct dsic_panel_data {
 	u32 xres;
 	u32 yres;
 	u32 refresh;
@@ -39,461 +38,461 @@
 	u32 max_hs_rate;
 	u32 max_lp_rate;
 	bool te_support;
-पूर्ण;
+};
 
-काष्ठा panel_drv_data अणु
-	काष्ठा mipi_dsi_device *dsi;
-	काष्ठा drm_panel panel;
-	काष्ठा drm_display_mode mode;
+struct panel_drv_data {
+	struct mipi_dsi_device *dsi;
+	struct drm_panel panel;
+	struct drm_display_mode mode;
 
-	काष्ठा mutex lock;
+	struct mutex lock;
 
-	काष्ठा backlight_device *bldev;
-	काष्ठा backlight_device *extbldev;
+	struct backlight_device *bldev;
+	struct backlight_device *extbldev;
 
-	अचिन्हित दीर्घ	hw_guard_end;	/* next value of jअगरfies when we can
+	unsigned long	hw_guard_end;	/* next value of jiffies when we can
 					 * issue the next sleep in/out command
 					 */
-	अचिन्हित दीर्घ	hw_guard_रुको;	/* max guard समय in jअगरfies */
+	unsigned long	hw_guard_wait;	/* max guard time in jiffies */
 
-	स्थिर काष्ठा dsic_panel_data *panel_data;
+	const struct dsic_panel_data *panel_data;
 
-	काष्ठा gpio_desc *reset_gpio;
+	struct gpio_desc *reset_gpio;
 
-	काष्ठा regulator_bulk_data supplies[DCS_REGULATOR_SUPPLY_NUM];
+	struct regulator_bulk_data supplies[DCS_REGULATOR_SUPPLY_NUM];
 
 	bool use_dsi_backlight;
 
-	/* runसमय variables */
+	/* runtime variables */
 	bool enabled;
 
-	bool पूर्णांकro_prपूर्णांकed;
-पूर्ण;
+	bool intro_printed;
+};
 
-अटल अंतरभूत काष्ठा panel_drv_data *panel_to_ddata(काष्ठा drm_panel *panel)
-अणु
-	वापस container_of(panel, काष्ठा panel_drv_data, panel);
-पूर्ण
+static inline struct panel_drv_data *panel_to_ddata(struct drm_panel *panel)
+{
+	return container_of(panel, struct panel_drv_data, panel);
+}
 
-अटल व्योम dsicm_bl_घातer(काष्ठा panel_drv_data *ddata, bool enable)
-अणु
-	काष्ठा backlight_device *backlight;
+static void dsicm_bl_power(struct panel_drv_data *ddata, bool enable)
+{
+	struct backlight_device *backlight;
 
-	अगर (ddata->bldev)
+	if (ddata->bldev)
 		backlight = ddata->bldev;
-	अन्यथा अगर (ddata->extbldev)
+	else if (ddata->extbldev)
 		backlight = ddata->extbldev;
-	अन्यथा
-		वापस;
+	else
+		return;
 
-	अगर (enable) अणु
+	if (enable) {
 		backlight->props.fb_blank = FB_BLANK_UNBLANK;
 		backlight->props.state = ~(BL_CORE_FBBLANK | BL_CORE_SUSPENDED);
-		backlight->props.घातer = FB_BLANK_UNBLANK;
-	पूर्ण अन्यथा अणु
+		backlight->props.power = FB_BLANK_UNBLANK;
+	} else {
 		backlight->props.fb_blank = FB_BLANK_NORMAL;
-		backlight->props.घातer = FB_BLANK_POWERDOWN;
+		backlight->props.power = FB_BLANK_POWERDOWN;
 		backlight->props.state |= BL_CORE_FBBLANK | BL_CORE_SUSPENDED;
-	पूर्ण
+	}
 
 	backlight_update_status(backlight);
-पूर्ण
+}
 
-अटल व्योम hw_guard_start(काष्ठा panel_drv_data *ddata, पूर्णांक guard_msec)
-अणु
-	ddata->hw_guard_रुको = msecs_to_jअगरfies(guard_msec);
-	ddata->hw_guard_end = jअगरfies + ddata->hw_guard_रुको;
-पूर्ण
+static void hw_guard_start(struct panel_drv_data *ddata, int guard_msec)
+{
+	ddata->hw_guard_wait = msecs_to_jiffies(guard_msec);
+	ddata->hw_guard_end = jiffies + ddata->hw_guard_wait;
+}
 
-अटल व्योम hw_guard_रुको(काष्ठा panel_drv_data *ddata)
-अणु
-	अचिन्हित दीर्घ रुको = ddata->hw_guard_end - jअगरfies;
+static void hw_guard_wait(struct panel_drv_data *ddata)
+{
+	unsigned long wait = ddata->hw_guard_end - jiffies;
 
-	अगर ((दीर्घ)रुको > 0 && रुको <= ddata->hw_guard_रुको) अणु
+	if ((long)wait > 0 && wait <= ddata->hw_guard_wait) {
 		set_current_state(TASK_UNINTERRUPTIBLE);
-		schedule_समयout(रुको);
-	पूर्ण
-पूर्ण
+		schedule_timeout(wait);
+	}
+}
 
-अटल पूर्णांक dsicm_dcs_पढ़ो_1(काष्ठा panel_drv_data *ddata, u8 dcs_cmd, u8 *data)
-अणु
-	वापस mipi_dsi_dcs_पढ़ो(ddata->dsi, dcs_cmd, data, 1);
-पूर्ण
+static int dsicm_dcs_read_1(struct panel_drv_data *ddata, u8 dcs_cmd, u8 *data)
+{
+	return mipi_dsi_dcs_read(ddata->dsi, dcs_cmd, data, 1);
+}
 
-अटल पूर्णांक dsicm_dcs_ग_लिखो_1(काष्ठा panel_drv_data *ddata, u8 dcs_cmd, u8 param)
-अणु
-	वापस mipi_dsi_dcs_ग_लिखो(ddata->dsi, dcs_cmd, &param, 1);
-पूर्ण
+static int dsicm_dcs_write_1(struct panel_drv_data *ddata, u8 dcs_cmd, u8 param)
+{
+	return mipi_dsi_dcs_write(ddata->dsi, dcs_cmd, &param, 1);
+}
 
-अटल पूर्णांक dsicm_sleep_in(काष्ठा panel_drv_data *ddata)
+static int dsicm_sleep_in(struct panel_drv_data *ddata)
 
-अणु
-	पूर्णांक r;
+{
+	int r;
 
-	hw_guard_रुको(ddata);
+	hw_guard_wait(ddata);
 
 	r = mipi_dsi_dcs_enter_sleep_mode(ddata->dsi);
-	अगर (r)
-		वापस r;
+	if (r)
+		return r;
 
 	hw_guard_start(ddata, 120);
 
 	usleep_range(5000, 10000);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dsicm_sleep_out(काष्ठा panel_drv_data *ddata)
-अणु
-	पूर्णांक r;
+static int dsicm_sleep_out(struct panel_drv_data *ddata)
+{
+	int r;
 
-	hw_guard_रुको(ddata);
+	hw_guard_wait(ddata);
 
-	r = mipi_dsi_dcs_निकास_sleep_mode(ddata->dsi);
-	अगर (r)
-		वापस r;
+	r = mipi_dsi_dcs_exit_sleep_mode(ddata->dsi);
+	if (r)
+		return r;
 
 	hw_guard_start(ddata, 120);
 
 	usleep_range(5000, 10000);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dsicm_get_id(काष्ठा panel_drv_data *ddata, u8 *id1, u8 *id2, u8 *id3)
-अणु
-	पूर्णांक r;
+static int dsicm_get_id(struct panel_drv_data *ddata, u8 *id1, u8 *id2, u8 *id3)
+{
+	int r;
 
-	r = dsicm_dcs_पढ़ो_1(ddata, DCS_GET_ID1, id1);
-	अगर (r)
-		वापस r;
-	r = dsicm_dcs_पढ़ो_1(ddata, DCS_GET_ID2, id2);
-	अगर (r)
-		वापस r;
-	r = dsicm_dcs_पढ़ो_1(ddata, DCS_GET_ID3, id3);
-	अगर (r)
-		वापस r;
+	r = dsicm_dcs_read_1(ddata, DCS_GET_ID1, id1);
+	if (r)
+		return r;
+	r = dsicm_dcs_read_1(ddata, DCS_GET_ID2, id2);
+	if (r)
+		return r;
+	r = dsicm_dcs_read_1(ddata, DCS_GET_ID3, id3);
+	if (r)
+		return r;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dsicm_set_update_winकरोw(काष्ठा panel_drv_data *ddata)
-अणु
-	काष्ठा mipi_dsi_device *dsi = ddata->dsi;
-	पूर्णांक r;
+static int dsicm_set_update_window(struct panel_drv_data *ddata)
+{
+	struct mipi_dsi_device *dsi = ddata->dsi;
+	int r;
 
 	r = mipi_dsi_dcs_set_column_address(dsi, 0, ddata->mode.hdisplay - 1);
-	अगर (r < 0)
-		वापस r;
+	if (r < 0)
+		return r;
 
 	r = mipi_dsi_dcs_set_page_address(dsi, 0, ddata->mode.vdisplay - 1);
-	अगर (r < 0)
-		वापस r;
+	if (r < 0)
+		return r;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dsicm_bl_update_status(काष्ठा backlight_device *dev)
-अणु
-	काष्ठा panel_drv_data *ddata = dev_get_drvdata(&dev->dev);
-	पूर्णांक r = 0;
-	पूर्णांक level;
+static int dsicm_bl_update_status(struct backlight_device *dev)
+{
+	struct panel_drv_data *ddata = dev_get_drvdata(&dev->dev);
+	int r = 0;
+	int level;
 
-	अगर (dev->props.fb_blank == FB_BLANK_UNBLANK &&
-			dev->props.घातer == FB_BLANK_UNBLANK)
+	if (dev->props.fb_blank == FB_BLANK_UNBLANK &&
+			dev->props.power == FB_BLANK_UNBLANK)
 		level = dev->props.brightness;
-	अन्यथा
+	else
 		level = 0;
 
 	dev_dbg(&ddata->dsi->dev, "update brightness to %d\n", level);
 
 	mutex_lock(&ddata->lock);
 
-	अगर (ddata->enabled)
-		r = dsicm_dcs_ग_लिखो_1(ddata, MIPI_DCS_SET_DISPLAY_BRIGHTNESS,
+	if (ddata->enabled)
+		r = dsicm_dcs_write_1(ddata, MIPI_DCS_SET_DISPLAY_BRIGHTNESS,
 				      level);
 
 	mutex_unlock(&ddata->lock);
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल पूर्णांक dsicm_bl_get_पूर्णांकensity(काष्ठा backlight_device *dev)
-अणु
-	अगर (dev->props.fb_blank == FB_BLANK_UNBLANK &&
-			dev->props.घातer == FB_BLANK_UNBLANK)
-		वापस dev->props.brightness;
+static int dsicm_bl_get_intensity(struct backlight_device *dev)
+{
+	if (dev->props.fb_blank == FB_BLANK_UNBLANK &&
+			dev->props.power == FB_BLANK_UNBLANK)
+		return dev->props.brightness;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा backlight_ops dsicm_bl_ops = अणु
-	.get_brightness = dsicm_bl_get_पूर्णांकensity,
+static const struct backlight_ops dsicm_bl_ops = {
+	.get_brightness = dsicm_bl_get_intensity,
 	.update_status  = dsicm_bl_update_status,
-पूर्ण;
+};
 
-अटल sमाप_प्रकार num_dsi_errors_show(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा panel_drv_data *ddata = dev_get_drvdata(dev);
+static ssize_t num_dsi_errors_show(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	struct panel_drv_data *ddata = dev_get_drvdata(dev);
 	u8 errors = 0;
-	पूर्णांक r = -ENODEV;
+	int r = -ENODEV;
 
 	mutex_lock(&ddata->lock);
 
-	अगर (ddata->enabled)
-		r = dsicm_dcs_पढ़ो_1(ddata, MIPI_DCS_GET_ERROR_COUNT_ON_DSI, &errors);
+	if (ddata->enabled)
+		r = dsicm_dcs_read_1(ddata, MIPI_DCS_GET_ERROR_COUNT_ON_DSI, &errors);
 
 	mutex_unlock(&ddata->lock);
 
-	अगर (r)
-		वापस r;
+	if (r)
+		return r;
 
-	वापस snम_लिखो(buf, PAGE_SIZE, "%d\n", errors);
-पूर्ण
+	return snprintf(buf, PAGE_SIZE, "%d\n", errors);
+}
 
-अटल sमाप_प्रकार hw_revision_show(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा panel_drv_data *ddata = dev_get_drvdata(dev);
+static ssize_t hw_revision_show(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	struct panel_drv_data *ddata = dev_get_drvdata(dev);
 	u8 id1, id2, id3;
-	पूर्णांक r = -ENODEV;
+	int r = -ENODEV;
 
 	mutex_lock(&ddata->lock);
 
-	अगर (ddata->enabled)
+	if (ddata->enabled)
 		r = dsicm_get_id(ddata, &id1, &id2, &id3);
 
 	mutex_unlock(&ddata->lock);
 
-	अगर (r)
-		वापस r;
+	if (r)
+		return r;
 
-	वापस snम_लिखो(buf, PAGE_SIZE, "%02x.%02x.%02x\n", id1, id2, id3);
-पूर्ण
+	return snprintf(buf, PAGE_SIZE, "%02x.%02x.%02x\n", id1, id2, id3);
+}
 
-अटल DEVICE_ATTR_RO(num_dsi_errors);
-अटल DEVICE_ATTR_RO(hw_revision);
+static DEVICE_ATTR_RO(num_dsi_errors);
+static DEVICE_ATTR_RO(hw_revision);
 
-अटल काष्ठा attribute *dsicm_attrs[] = अणु
+static struct attribute *dsicm_attrs[] = {
 	&dev_attr_num_dsi_errors.attr,
 	&dev_attr_hw_revision.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल स्थिर काष्ठा attribute_group dsicm_attr_group = अणु
+static const struct attribute_group dsicm_attr_group = {
 	.attrs = dsicm_attrs,
-पूर्ण;
+};
 
-अटल व्योम dsicm_hw_reset(काष्ठा panel_drv_data *ddata)
-अणु
+static void dsicm_hw_reset(struct panel_drv_data *ddata)
+{
 	gpiod_set_value(ddata->reset_gpio, 1);
 	udelay(10);
 	/* reset the panel */
 	gpiod_set_value(ddata->reset_gpio, 0);
-	/* निश्चित reset */
+	/* assert reset */
 	udelay(10);
 	gpiod_set_value(ddata->reset_gpio, 1);
-	/* रुको after releasing reset */
+	/* wait after releasing reset */
 	usleep_range(5000, 10000);
-पूर्ण
+}
 
-अटल पूर्णांक dsicm_घातer_on(काष्ठा panel_drv_data *ddata)
-अणु
+static int dsicm_power_on(struct panel_drv_data *ddata)
+{
 	u8 id1, id2, id3;
-	पूर्णांक r;
+	int r;
 
 	dsicm_hw_reset(ddata);
 
 	ddata->dsi->mode_flags |= MIPI_DSI_MODE_LPM;
 
 	r = dsicm_sleep_out(ddata);
-	अगर (r)
-		जाओ err;
+	if (r)
+		goto err;
 
 	r = dsicm_get_id(ddata, &id1, &id2, &id3);
-	अगर (r)
-		जाओ err;
+	if (r)
+		goto err;
 
-	r = dsicm_dcs_ग_लिखो_1(ddata, MIPI_DCS_SET_DISPLAY_BRIGHTNESS, 0xff);
-	अगर (r)
-		जाओ err;
+	r = dsicm_dcs_write_1(ddata, MIPI_DCS_SET_DISPLAY_BRIGHTNESS, 0xff);
+	if (r)
+		goto err;
 
-	r = dsicm_dcs_ग_लिखो_1(ddata, MIPI_DCS_WRITE_CONTROL_DISPLAY,
+	r = dsicm_dcs_write_1(ddata, MIPI_DCS_WRITE_CONTROL_DISPLAY,
 			(1<<2) | (1<<5));	/* BL | BCTRL */
-	अगर (r)
-		जाओ err;
+	if (r)
+		goto err;
 
-	r = mipi_dsi_dcs_set_pixel_क्रमmat(ddata->dsi, MIPI_DCS_PIXEL_FMT_24BIT);
-	अगर (r)
-		जाओ err;
+	r = mipi_dsi_dcs_set_pixel_format(ddata->dsi, MIPI_DCS_PIXEL_FMT_24BIT);
+	if (r)
+		goto err;
 
-	r = dsicm_set_update_winकरोw(ddata);
-	अगर (r)
-		जाओ err;
+	r = dsicm_set_update_window(ddata);
+	if (r)
+		goto err;
 
 	r = mipi_dsi_dcs_set_display_on(ddata->dsi);
-	अगर (r)
-		जाओ err;
+	if (r)
+		goto err;
 
-	अगर (ddata->panel_data->te_support) अणु
+	if (ddata->panel_data->te_support) {
 		r = mipi_dsi_dcs_set_tear_on(ddata->dsi, MIPI_DSI_DCS_TEAR_MODE_VBLANK);
-		अगर (r)
-			जाओ err;
-	पूर्ण
+		if (r)
+			goto err;
+	}
 
 	/* possible panel bug */
 	msleep(100);
 
 	ddata->enabled = true;
 
-	अगर (!ddata->पूर्णांकro_prपूर्णांकed) अणु
+	if (!ddata->intro_printed) {
 		dev_info(&ddata->dsi->dev, "panel revision %02x.%02x.%02x\n",
 			id1, id2, id3);
-		ddata->पूर्णांकro_prपूर्णांकed = true;
-	पूर्ण
+		ddata->intro_printed = true;
+	}
 
 	ddata->dsi->mode_flags &= ~MIPI_DSI_MODE_LPM;
 
-	वापस 0;
+	return 0;
 err:
 	dev_err(&ddata->dsi->dev, "error while enabling panel, issuing HW reset\n");
 
 	dsicm_hw_reset(ddata);
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल पूर्णांक dsicm_घातer_off(काष्ठा panel_drv_data *ddata)
-अणु
-	पूर्णांक r;
+static int dsicm_power_off(struct panel_drv_data *ddata)
+{
+	int r;
 
 	ddata->enabled = false;
 
 	r = mipi_dsi_dcs_set_display_off(ddata->dsi);
-	अगर (!r)
+	if (!r)
 		r = dsicm_sleep_in(ddata);
 
-	अगर (r) अणु
+	if (r) {
 		dev_err(&ddata->dsi->dev,
 				"error disabling panel, issuing HW reset\n");
 		dsicm_hw_reset(ddata);
-	पूर्ण
+	}
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल पूर्णांक dsicm_prepare(काष्ठा drm_panel *panel)
-अणु
-	काष्ठा panel_drv_data *ddata = panel_to_ddata(panel);
-	पूर्णांक r;
+static int dsicm_prepare(struct drm_panel *panel)
+{
+	struct panel_drv_data *ddata = panel_to_ddata(panel);
+	int r;
 
 	r = regulator_bulk_enable(ARRAY_SIZE(ddata->supplies), ddata->supplies);
-	अगर (r)
+	if (r)
 		dev_err(&ddata->dsi->dev, "failed to enable supplies: %d\n", r);
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल पूर्णांक dsicm_enable(काष्ठा drm_panel *panel)
-अणु
-	काष्ठा panel_drv_data *ddata = panel_to_ddata(panel);
-	पूर्णांक r;
+static int dsicm_enable(struct drm_panel *panel)
+{
+	struct panel_drv_data *ddata = panel_to_ddata(panel);
+	int r;
 
 	mutex_lock(&ddata->lock);
 
-	r = dsicm_घातer_on(ddata);
-	अगर (r)
-		जाओ err;
+	r = dsicm_power_on(ddata);
+	if (r)
+		goto err;
 
 	mutex_unlock(&ddata->lock);
 
-	dsicm_bl_घातer(ddata, true);
+	dsicm_bl_power(ddata, true);
 
-	वापस 0;
+	return 0;
 err:
 	dev_err(&ddata->dsi->dev, "enable failed (%d)\n", r);
 	mutex_unlock(&ddata->lock);
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल पूर्णांक dsicm_unprepare(काष्ठा drm_panel *panel)
-अणु
-	काष्ठा panel_drv_data *ddata = panel_to_ddata(panel);
-	पूर्णांक r;
+static int dsicm_unprepare(struct drm_panel *panel)
+{
+	struct panel_drv_data *ddata = panel_to_ddata(panel);
+	int r;
 
 	r = regulator_bulk_disable(ARRAY_SIZE(ddata->supplies), ddata->supplies);
-	अगर (r)
+	if (r)
 		dev_err(&ddata->dsi->dev, "failed to disable supplies: %d\n", r);
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल पूर्णांक dsicm_disable(काष्ठा drm_panel *panel)
-अणु
-	काष्ठा panel_drv_data *ddata = panel_to_ddata(panel);
-	पूर्णांक r;
+static int dsicm_disable(struct drm_panel *panel)
+{
+	struct panel_drv_data *ddata = panel_to_ddata(panel);
+	int r;
 
-	dsicm_bl_घातer(ddata, false);
+	dsicm_bl_power(ddata, false);
 
 	mutex_lock(&ddata->lock);
 
-	r = dsicm_घातer_off(ddata);
+	r = dsicm_power_off(ddata);
 
 	mutex_unlock(&ddata->lock);
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल पूर्णांक dsicm_get_modes(काष्ठा drm_panel *panel,
-			   काष्ठा drm_connector *connector)
-अणु
-	काष्ठा panel_drv_data *ddata = panel_to_ddata(panel);
-	काष्ठा drm_display_mode *mode;
+static int dsicm_get_modes(struct drm_panel *panel,
+			   struct drm_connector *connector)
+{
+	struct panel_drv_data *ddata = panel_to_ddata(panel);
+	struct drm_display_mode *mode;
 
 	mode = drm_mode_duplicate(connector->dev, &ddata->mode);
-	अगर (!mode) अणु
+	if (!mode) {
 		dev_err(&ddata->dsi->dev, "failed to add mode %ux%ux@%u kHz\n",
 			ddata->mode.hdisplay, ddata->mode.vdisplay,
-			ddata->mode.घड़ी);
-		वापस -ENOMEM;
-	पूर्ण
+			ddata->mode.clock);
+		return -ENOMEM;
+	}
 
 	connector->display_info.width_mm = ddata->panel_data->width_mm;
 	connector->display_info.height_mm = ddata->panel_data->height_mm;
 
 	drm_mode_probed_add(connector, mode);
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल स्थिर काष्ठा drm_panel_funcs dsicm_panel_funcs = अणु
+static const struct drm_panel_funcs dsicm_panel_funcs = {
 	.unprepare = dsicm_unprepare,
 	.disable = dsicm_disable,
 	.prepare = dsicm_prepare,
 	.enable = dsicm_enable,
 	.get_modes = dsicm_get_modes,
-पूर्ण;
+};
 
-अटल पूर्णांक dsicm_probe_of(काष्ठा mipi_dsi_device *dsi)
-अणु
-	काष्ठा backlight_device *backlight;
-	काष्ठा panel_drv_data *ddata = mipi_dsi_get_drvdata(dsi);
-	पूर्णांक err;
-	काष्ठा drm_display_mode *mode = &ddata->mode;
+static int dsicm_probe_of(struct mipi_dsi_device *dsi)
+{
+	struct backlight_device *backlight;
+	struct panel_drv_data *ddata = mipi_dsi_get_drvdata(dsi);
+	int err;
+	struct drm_display_mode *mode = &ddata->mode;
 
 	ddata->reset_gpio = devm_gpiod_get(&dsi->dev, "reset", GPIOD_OUT_LOW);
-	अगर (IS_ERR(ddata->reset_gpio)) अणु
+	if (IS_ERR(ddata->reset_gpio)) {
 		err = PTR_ERR(ddata->reset_gpio);
 		dev_err(&dsi->dev, "reset gpio request failed: %d", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	mode->hdisplay = mode->hsync_start = mode->hsync_end = mode->htotal =
 		ddata->panel_data->xres;
 	mode->vdisplay = mode->vsync_start = mode->vsync_end = mode->vtotal =
 		ddata->panel_data->yres;
-	mode->घड़ी = ddata->panel_data->xres * ddata->panel_data->yres *
+	mode->clock = ddata->panel_data->xres * ddata->panel_data->yres *
 		ddata->panel_data->refresh / 1000;
 	mode->width_mm = ddata->panel_data->width_mm;
 	mode->height_mm = ddata->panel_data->height_mm;
@@ -504,45 +503,45 @@ err:
 	ddata->supplies[1].supply = "vddi";
 	err = devm_regulator_bulk_get(&dsi->dev, ARRAY_SIZE(ddata->supplies),
 				      ddata->supplies);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	backlight = devm_of_find_backlight(&dsi->dev);
-	अगर (IS_ERR(backlight))
-		वापस PTR_ERR(backlight);
+	if (IS_ERR(backlight))
+		return PTR_ERR(backlight);
 
 	/* If no backlight device is found assume native backlight support */
-	अगर (backlight)
+	if (backlight)
 		ddata->extbldev = backlight;
-	अन्यथा
+	else
 		ddata->use_dsi_backlight = true;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dsicm_probe(काष्ठा mipi_dsi_device *dsi)
-अणु
-	काष्ठा panel_drv_data *ddata;
-	काष्ठा backlight_device *bldev = शून्य;
-	काष्ठा device *dev = &dsi->dev;
-	पूर्णांक r;
+static int dsicm_probe(struct mipi_dsi_device *dsi)
+{
+	struct panel_drv_data *ddata;
+	struct backlight_device *bldev = NULL;
+	struct device *dev = &dsi->dev;
+	int r;
 
 	dev_dbg(dev, "probe\n");
 
-	ddata = devm_kzalloc(dev, माप(*ddata), GFP_KERNEL);
-	अगर (!ddata)
-		वापस -ENOMEM;
+	ddata = devm_kzalloc(dev, sizeof(*ddata), GFP_KERNEL);
+	if (!ddata)
+		return -ENOMEM;
 
 	mipi_dsi_set_drvdata(dsi, ddata);
 	ddata->dsi = dsi;
 
 	ddata->panel_data = of_device_get_match_data(dev);
-	अगर (!ddata->panel_data)
-		वापस -ENODEV;
+	if (!ddata->panel_data)
+		return -ENODEV;
 
 	r = dsicm_probe_of(dsi);
-	अगर (r)
-		वापस r;
+	if (r)
+		return r;
 
 	mutex_init(&ddata->lock);
 
@@ -551,29 +550,29 @@ err:
 	drm_panel_init(&ddata->panel, dev, &dsicm_panel_funcs,
 		       DRM_MODE_CONNECTOR_DSI);
 
-	अगर (ddata->use_dsi_backlight) अणु
-		काष्ठा backlight_properties props = अणु 0 पूर्ण;
+	if (ddata->use_dsi_backlight) {
+		struct backlight_properties props = { 0 };
 		props.max_brightness = 255;
 		props.type = BACKLIGHT_RAW;
 
-		bldev = devm_backlight_device_रेजिस्टर(dev, dev_name(dev),
+		bldev = devm_backlight_device_register(dev, dev_name(dev),
 			dev, ddata, &dsicm_bl_ops, &props);
-		अगर (IS_ERR(bldev)) अणु
+		if (IS_ERR(bldev)) {
 			r = PTR_ERR(bldev);
-			जाओ err_bl;
-		पूर्ण
+			goto err_bl;
+		}
 
 		ddata->bldev = bldev;
-	पूर्ण
+	}
 
 	r = sysfs_create_group(&dev->kobj, &dsicm_attr_group);
-	अगर (r) अणु
+	if (r) {
 		dev_err(dev, "failed to create sysfs files\n");
-		जाओ err_bl;
-	पूर्ण
+		goto err_bl;
+	}
 
 	dsi->lanes = 2;
-	dsi->क्रमmat = MIPI_DSI_FMT_RGB888;
+	dsi->format = MIPI_DSI_FMT_RGB888;
 	dsi->mode_flags = MIPI_DSI_CLOCK_NON_CONTINUOUS |
 			  MIPI_DSI_MODE_EOT_PACKET;
 	dsi->hs_rate = ddata->panel_data->max_hs_rate;
@@ -582,40 +581,40 @@ err:
 	drm_panel_add(&ddata->panel);
 
 	r = mipi_dsi_attach(dsi);
-	अगर (r < 0)
-		जाओ err_dsi_attach;
+	if (r < 0)
+		goto err_dsi_attach;
 
-	वापस 0;
+	return 0;
 
 err_dsi_attach:
-	drm_panel_हटाओ(&ddata->panel);
-	sysfs_हटाओ_group(&dsi->dev.kobj, &dsicm_attr_group);
+	drm_panel_remove(&ddata->panel);
+	sysfs_remove_group(&dsi->dev.kobj, &dsicm_attr_group);
 err_bl:
-	अगर (ddata->extbldev)
+	if (ddata->extbldev)
 		put_device(&ddata->extbldev->dev);
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल पूर्णांक dsicm_हटाओ(काष्ठा mipi_dsi_device *dsi)
-अणु
-	काष्ठा panel_drv_data *ddata = mipi_dsi_get_drvdata(dsi);
+static int dsicm_remove(struct mipi_dsi_device *dsi)
+{
+	struct panel_drv_data *ddata = mipi_dsi_get_drvdata(dsi);
 
 	dev_dbg(&dsi->dev, "remove\n");
 
 	mipi_dsi_detach(dsi);
 
-	drm_panel_हटाओ(&ddata->panel);
+	drm_panel_remove(&ddata->panel);
 
-	sysfs_हटाओ_group(&dsi->dev.kobj, &dsicm_attr_group);
+	sysfs_remove_group(&dsi->dev.kobj, &dsicm_attr_group);
 
-	अगर (ddata->extbldev)
+	if (ddata->extbldev)
 		put_device(&ddata->extbldev->dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा dsic_panel_data taal_data = अणु
+static const struct dsic_panel_data taal_data = {
 	.xres = 864,
 	.yres = 480,
 	.refresh = 60,
@@ -624,9 +623,9 @@ err_bl:
 	.max_hs_rate = 300000000,
 	.max_lp_rate = 10000000,
 	.te_support = true,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा dsic_panel_data himalaya_data = अणु
+static const struct dsic_panel_data himalaya_data = {
 	.xres = 480,
 	.yres = 864,
 	.refresh = 60,
@@ -635,9 +634,9 @@ err_bl:
 	.max_hs_rate = 300000000,
 	.max_lp_rate = 10000000,
 	.te_support = false,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा dsic_panel_data droid4_data = अणु
+static const struct dsic_panel_data droid4_data = {
 	.xres = 540,
 	.yres = 960,
 	.refresh = 60,
@@ -646,25 +645,25 @@ err_bl:
 	.max_hs_rate = 300000000,
 	.max_lp_rate = 10000000,
 	.te_support = false,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा of_device_id dsicm_of_match[] = अणु
-	अणु .compatible = "tpo,taal", .data = &taal_data पूर्ण,
-	अणु .compatible = "nokia,himalaya", &himalaya_data पूर्ण,
-	अणु .compatible = "motorola,droid4-panel", &droid4_data पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct of_device_id dsicm_of_match[] = {
+	{ .compatible = "tpo,taal", .data = &taal_data },
+	{ .compatible = "nokia,himalaya", &himalaya_data },
+	{ .compatible = "motorola,droid4-panel", &droid4_data },
+	{},
+};
 
 MODULE_DEVICE_TABLE(of, dsicm_of_match);
 
-अटल काष्ठा mipi_dsi_driver dsicm_driver = अणु
+static struct mipi_dsi_driver dsicm_driver = {
 	.probe = dsicm_probe,
-	.हटाओ = dsicm_हटाओ,
-	.driver = अणु
+	.remove = dsicm_remove,
+	.driver = {
 		.name = "panel-dsi-cm",
 		.of_match_table = dsicm_of_match,
-	पूर्ण,
-पूर्ण;
+	},
+};
 module_mipi_dsi_driver(dsicm_driver);
 
 MODULE_AUTHOR("Tomi Valkeinen <tomi.valkeinen@ti.com>");

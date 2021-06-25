@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Minimal file प्रणाली backend क्रम holding eBPF maps and programs,
+ * Minimal file system backend for holding eBPF maps and programs,
  * used by bpf(2) object pinning.
  *
  * Authors:
@@ -9,158 +8,158 @@
  *	Daniel Borkmann <daniel@iogearbox.net>
  */
 
-#समावेश <linux/init.h>
-#समावेश <linux/magic.h>
-#समावेश <linux/major.h>
-#समावेश <linux/mount.h>
-#समावेश <linux/namei.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/fs_context.h>
-#समावेश <linux/fs_parser.h>
-#समावेश <linux/kdev_t.h>
-#समावेश <linux/filter.h>
-#समावेश <linux/bpf.h>
-#समावेश <linux/bpf_trace.h>
-#समावेश "preload/bpf_preload.h"
+#include <linux/init.h>
+#include <linux/magic.h>
+#include <linux/major.h>
+#include <linux/mount.h>
+#include <linux/namei.h>
+#include <linux/fs.h>
+#include <linux/fs_context.h>
+#include <linux/fs_parser.h>
+#include <linux/kdev_t.h>
+#include <linux/filter.h>
+#include <linux/bpf.h>
+#include <linux/bpf_trace.h>
+#include "preload/bpf_preload.h"
 
-क्रमागत bpf_type अणु
+enum bpf_type {
 	BPF_TYPE_UNSPEC	= 0,
 	BPF_TYPE_PROG,
 	BPF_TYPE_MAP,
 	BPF_TYPE_LINK,
-पूर्ण;
+};
 
-अटल व्योम *bpf_any_get(व्योम *raw, क्रमागत bpf_type type)
-अणु
-	चयन (type) अणु
-	हाल BPF_TYPE_PROG:
+static void *bpf_any_get(void *raw, enum bpf_type type)
+{
+	switch (type) {
+	case BPF_TYPE_PROG:
 		bpf_prog_inc(raw);
-		अवरोध;
-	हाल BPF_TYPE_MAP:
+		break;
+	case BPF_TYPE_MAP:
 		bpf_map_inc_with_uref(raw);
-		अवरोध;
-	हाल BPF_TYPE_LINK:
+		break;
+	case BPF_TYPE_LINK:
 		bpf_link_inc(raw);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		WARN_ON_ONCE(1);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस raw;
-पूर्ण
+	return raw;
+}
 
-अटल व्योम bpf_any_put(व्योम *raw, क्रमागत bpf_type type)
-अणु
-	चयन (type) अणु
-	हाल BPF_TYPE_PROG:
+static void bpf_any_put(void *raw, enum bpf_type type)
+{
+	switch (type) {
+	case BPF_TYPE_PROG:
 		bpf_prog_put(raw);
-		अवरोध;
-	हाल BPF_TYPE_MAP:
+		break;
+	case BPF_TYPE_MAP:
 		bpf_map_put_with_uref(raw);
-		अवरोध;
-	हाल BPF_TYPE_LINK:
+		break;
+	case BPF_TYPE_LINK:
 		bpf_link_put(raw);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		WARN_ON_ONCE(1);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-अटल व्योम *bpf_fd_probe_obj(u32 ufd, क्रमागत bpf_type *type)
-अणु
-	व्योम *raw;
+static void *bpf_fd_probe_obj(u32 ufd, enum bpf_type *type)
+{
+	void *raw;
 
 	raw = bpf_map_get_with_uref(ufd);
-	अगर (!IS_ERR(raw)) अणु
+	if (!IS_ERR(raw)) {
 		*type = BPF_TYPE_MAP;
-		वापस raw;
-	पूर्ण
+		return raw;
+	}
 
 	raw = bpf_prog_get(ufd);
-	अगर (!IS_ERR(raw)) अणु
+	if (!IS_ERR(raw)) {
 		*type = BPF_TYPE_PROG;
-		वापस raw;
-	पूर्ण
+		return raw;
+	}
 
 	raw = bpf_link_get_from_fd(ufd);
-	अगर (!IS_ERR(raw)) अणु
+	if (!IS_ERR(raw)) {
 		*type = BPF_TYPE_LINK;
-		वापस raw;
-	पूर्ण
+		return raw;
+	}
 
-	वापस ERR_PTR(-EINVAL);
-पूर्ण
+	return ERR_PTR(-EINVAL);
+}
 
-अटल स्थिर काष्ठा inode_operations bpf_dir_iops;
+static const struct inode_operations bpf_dir_iops;
 
-अटल स्थिर काष्ठा inode_operations bpf_prog_iops = अणु पूर्ण;
-अटल स्थिर काष्ठा inode_operations bpf_map_iops  = अणु पूर्ण;
-अटल स्थिर काष्ठा inode_operations bpf_link_iops  = अणु पूर्ण;
+static const struct inode_operations bpf_prog_iops = { };
+static const struct inode_operations bpf_map_iops  = { };
+static const struct inode_operations bpf_link_iops  = { };
 
-अटल काष्ठा inode *bpf_get_inode(काष्ठा super_block *sb,
-				   स्थिर काष्ठा inode *dir,
+static struct inode *bpf_get_inode(struct super_block *sb,
+				   const struct inode *dir,
 				   umode_t mode)
-अणु
-	काष्ठा inode *inode;
+{
+	struct inode *inode;
 
-	चयन (mode & S_IFMT) अणु
-	हाल S_IFसूची:
-	हाल S_IFREG:
-	हाल S_IFLNK:
-		अवरोध;
-	शेष:
-		वापस ERR_PTR(-EINVAL);
-	पूर्ण
+	switch (mode & S_IFMT) {
+	case S_IFDIR:
+	case S_IFREG:
+	case S_IFLNK:
+		break;
+	default:
+		return ERR_PTR(-EINVAL);
+	}
 
 	inode = new_inode(sb);
-	अगर (!inode)
-		वापस ERR_PTR(-ENOSPC);
+	if (!inode)
+		return ERR_PTR(-ENOSPC);
 
 	inode->i_ino = get_next_ino();
-	inode->i_aसमय = current_समय(inode);
-	inode->i_mसमय = inode->i_aसमय;
-	inode->i_स_समय = inode->i_aसमय;
+	inode->i_atime = current_time(inode);
+	inode->i_mtime = inode->i_atime;
+	inode->i_ctime = inode->i_atime;
 
 	inode_init_owner(&init_user_ns, inode, dir, mode);
 
-	वापस inode;
-पूर्ण
+	return inode;
+}
 
-अटल पूर्णांक bpf_inode_type(स्थिर काष्ठा inode *inode, क्रमागत bpf_type *type)
-अणु
+static int bpf_inode_type(const struct inode *inode, enum bpf_type *type)
+{
 	*type = BPF_TYPE_UNSPEC;
-	अगर (inode->i_op == &bpf_prog_iops)
+	if (inode->i_op == &bpf_prog_iops)
 		*type = BPF_TYPE_PROG;
-	अन्यथा अगर (inode->i_op == &bpf_map_iops)
+	else if (inode->i_op == &bpf_map_iops)
 		*type = BPF_TYPE_MAP;
-	अन्यथा अगर (inode->i_op == &bpf_link_iops)
+	else if (inode->i_op == &bpf_link_iops)
 		*type = BPF_TYPE_LINK;
-	अन्यथा
-		वापस -EACCES;
+	else
+		return -EACCES;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम bpf_dentry_finalize(काष्ठा dentry *dentry, काष्ठा inode *inode,
-				काष्ठा inode *dir)
-अणु
+static void bpf_dentry_finalize(struct dentry *dentry, struct inode *inode,
+				struct inode *dir)
+{
 	d_instantiate(dentry, inode);
 	dget(dentry);
 
-	dir->i_mसमय = current_समय(dir);
-	dir->i_स_समय = dir->i_mसमय;
-पूर्ण
+	dir->i_mtime = current_time(dir);
+	dir->i_ctime = dir->i_mtime;
+}
 
-अटल पूर्णांक bpf_सूची_गढ़ो(काष्ठा user_namespace *mnt_userns, काष्ठा inode *dir,
-		     काष्ठा dentry *dentry, umode_t mode)
-अणु
-	काष्ठा inode *inode;
+static int bpf_mkdir(struct user_namespace *mnt_userns, struct inode *dir,
+		     struct dentry *dentry, umode_t mode)
+{
+	struct inode *inode;
 
-	inode = bpf_get_inode(dir->i_sb, dir, mode | S_IFसूची);
-	अगर (IS_ERR(inode))
-		वापस PTR_ERR(inode);
+	inode = bpf_get_inode(dir->i_sb, dir, mode | S_IFDIR);
+	if (IS_ERR(inode))
+		return PTR_ERR(inode);
 
 	inode->i_op = &bpf_dir_iops;
 	inode->i_fop = &simple_dir_operations;
@@ -169,597 +168,597 @@
 	inc_nlink(dir);
 
 	bpf_dentry_finalize(dentry, inode, dir);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-काष्ठा map_iter अणु
-	व्योम *key;
-	bool करोne;
-पूर्ण;
+struct map_iter {
+	void *key;
+	bool done;
+};
 
-अटल काष्ठा map_iter *map_iter(काष्ठा seq_file *m)
-अणु
-	वापस m->निजी;
-पूर्ण
+static struct map_iter *map_iter(struct seq_file *m)
+{
+	return m->private;
+}
 
-अटल काष्ठा bpf_map *seq_file_to_map(काष्ठा seq_file *m)
-अणु
-	वापस file_inode(m->file)->i_निजी;
-पूर्ण
+static struct bpf_map *seq_file_to_map(struct seq_file *m)
+{
+	return file_inode(m->file)->i_private;
+}
 
-अटल व्योम map_iter_मुक्त(काष्ठा map_iter *iter)
-अणु
-	अगर (iter) अणु
-		kमुक्त(iter->key);
-		kमुक्त(iter);
-	पूर्ण
-पूर्ण
+static void map_iter_free(struct map_iter *iter)
+{
+	if (iter) {
+		kfree(iter->key);
+		kfree(iter);
+	}
+}
 
-अटल काष्ठा map_iter *map_iter_alloc(काष्ठा bpf_map *map)
-अणु
-	काष्ठा map_iter *iter;
+static struct map_iter *map_iter_alloc(struct bpf_map *map)
+{
+	struct map_iter *iter;
 
-	iter = kzalloc(माप(*iter), GFP_KERNEL | __GFP_NOWARN);
-	अगर (!iter)
-		जाओ error;
+	iter = kzalloc(sizeof(*iter), GFP_KERNEL | __GFP_NOWARN);
+	if (!iter)
+		goto error;
 
 	iter->key = kzalloc(map->key_size, GFP_KERNEL | __GFP_NOWARN);
-	अगर (!iter->key)
-		जाओ error;
+	if (!iter->key)
+		goto error;
 
-	वापस iter;
+	return iter;
 
 error:
-	map_iter_मुक्त(iter);
-	वापस शून्य;
-पूर्ण
+	map_iter_free(iter);
+	return NULL;
+}
 
-अटल व्योम *map_seq_next(काष्ठा seq_file *m, व्योम *v, loff_t *pos)
-अणु
-	काष्ठा bpf_map *map = seq_file_to_map(m);
-	व्योम *key = map_iter(m)->key;
-	व्योम *prev_key;
+static void *map_seq_next(struct seq_file *m, void *v, loff_t *pos)
+{
+	struct bpf_map *map = seq_file_to_map(m);
+	void *key = map_iter(m)->key;
+	void *prev_key;
 
 	(*pos)++;
-	अगर (map_iter(m)->करोne)
-		वापस शून्य;
+	if (map_iter(m)->done)
+		return NULL;
 
-	अगर (unlikely(v == SEQ_START_TOKEN))
-		prev_key = शून्य;
-	अन्यथा
+	if (unlikely(v == SEQ_START_TOKEN))
+		prev_key = NULL;
+	else
 		prev_key = key;
 
-	rcu_पढ़ो_lock();
-	अगर (map->ops->map_get_next_key(map, prev_key, key)) अणु
-		map_iter(m)->करोne = true;
-		key = शून्य;
-	पूर्ण
-	rcu_पढ़ो_unlock();
-	वापस key;
-पूर्ण
+	rcu_read_lock();
+	if (map->ops->map_get_next_key(map, prev_key, key)) {
+		map_iter(m)->done = true;
+		key = NULL;
+	}
+	rcu_read_unlock();
+	return key;
+}
 
-अटल व्योम *map_seq_start(काष्ठा seq_file *m, loff_t *pos)
-अणु
-	अगर (map_iter(m)->करोne)
-		वापस शून्य;
+static void *map_seq_start(struct seq_file *m, loff_t *pos)
+{
+	if (map_iter(m)->done)
+		return NULL;
 
-	वापस *pos ? map_iter(m)->key : SEQ_START_TOKEN;
-पूर्ण
+	return *pos ? map_iter(m)->key : SEQ_START_TOKEN;
+}
 
-अटल व्योम map_seq_stop(काष्ठा seq_file *m, व्योम *v)
-अणु
-पूर्ण
+static void map_seq_stop(struct seq_file *m, void *v)
+{
+}
 
-अटल पूर्णांक map_seq_show(काष्ठा seq_file *m, व्योम *v)
-अणु
-	काष्ठा bpf_map *map = seq_file_to_map(m);
-	व्योम *key = map_iter(m)->key;
+static int map_seq_show(struct seq_file *m, void *v)
+{
+	struct bpf_map *map = seq_file_to_map(m);
+	void *key = map_iter(m)->key;
 
-	अगर (unlikely(v == SEQ_START_TOKEN)) अणु
-		seq_माला_दो(m, "# WARNING!! The output is for debug purpose only\n");
-		seq_माला_दो(m, "# WARNING!! The output format will change\n");
-	पूर्ण अन्यथा अणु
+	if (unlikely(v == SEQ_START_TOKEN)) {
+		seq_puts(m, "# WARNING!! The output is for debug purpose only\n");
+		seq_puts(m, "# WARNING!! The output format will change\n");
+	} else {
 		map->ops->map_seq_show_elem(map, key, m);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा seq_operations bpffs_map_seq_ops = अणु
+static const struct seq_operations bpffs_map_seq_ops = {
 	.start	= map_seq_start,
 	.next	= map_seq_next,
 	.show	= map_seq_show,
 	.stop	= map_seq_stop,
-पूर्ण;
+};
 
-अटल पूर्णांक bpffs_map_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा bpf_map *map = inode->i_निजी;
-	काष्ठा map_iter *iter;
-	काष्ठा seq_file *m;
-	पूर्णांक err;
+static int bpffs_map_open(struct inode *inode, struct file *file)
+{
+	struct bpf_map *map = inode->i_private;
+	struct map_iter *iter;
+	struct seq_file *m;
+	int err;
 
 	iter = map_iter_alloc(map);
-	अगर (!iter)
-		वापस -ENOMEM;
+	if (!iter)
+		return -ENOMEM;
 
-	err = seq_खोलो(file, &bpffs_map_seq_ops);
-	अगर (err) अणु
-		map_iter_मुक्त(iter);
-		वापस err;
-	पूर्ण
+	err = seq_open(file, &bpffs_map_seq_ops);
+	if (err) {
+		map_iter_free(iter);
+		return err;
+	}
 
-	m = file->निजी_data;
-	m->निजी = iter;
+	m = file->private_data;
+	m->private = iter;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक bpffs_map_release(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा seq_file *m = file->निजी_data;
+static int bpffs_map_release(struct inode *inode, struct file *file)
+{
+	struct seq_file *m = file->private_data;
 
-	map_iter_मुक्त(map_iter(m));
+	map_iter_free(map_iter(m));
 
-	वापस seq_release(inode, file);
-पूर्ण
+	return seq_release(inode, file);
+}
 
 /* bpffs_map_fops should only implement the basic
- * पढ़ो operation क्रम a BPF map.  The purpose is to
- * provide a simple user पूर्णांकuitive way to करो
+ * read operation for a BPF map.  The purpose is to
+ * provide a simple user intuitive way to do
  * "cat bpffs/pathto/a-pinned-map".
  *
- * Other operations (e.g. ग_लिखो, lookup...) should be realized by
+ * Other operations (e.g. write, lookup...) should be realized by
  * the userspace tools (e.g. bpftool) through the
  * BPF_OBJ_GET_INFO_BY_FD and the map's lookup/update
- * पूर्णांकerface.
+ * interface.
  */
-अटल स्थिर काष्ठा file_operations bpffs_map_fops = अणु
-	.खोलो		= bpffs_map_खोलो,
-	.पढ़ो		= seq_पढ़ो,
+static const struct file_operations bpffs_map_fops = {
+	.open		= bpffs_map_open,
+	.read		= seq_read,
 	.release	= bpffs_map_release,
-पूर्ण;
+};
 
-अटल पूर्णांक bpffs_obj_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	वापस -EIO;
-पूर्ण
+static int bpffs_obj_open(struct inode *inode, struct file *file)
+{
+	return -EIO;
+}
 
-अटल स्थिर काष्ठा file_operations bpffs_obj_fops = अणु
-	.खोलो		= bpffs_obj_खोलो,
-पूर्ण;
+static const struct file_operations bpffs_obj_fops = {
+	.open		= bpffs_obj_open,
+};
 
-अटल पूर्णांक bpf_mkobj_ops(काष्ठा dentry *dentry, umode_t mode, व्योम *raw,
-			 स्थिर काष्ठा inode_operations *iops,
-			 स्थिर काष्ठा file_operations *fops)
-अणु
-	काष्ठा inode *dir = dentry->d_parent->d_inode;
-	काष्ठा inode *inode = bpf_get_inode(dir->i_sb, dir, mode);
-	अगर (IS_ERR(inode))
-		वापस PTR_ERR(inode);
+static int bpf_mkobj_ops(struct dentry *dentry, umode_t mode, void *raw,
+			 const struct inode_operations *iops,
+			 const struct file_operations *fops)
+{
+	struct inode *dir = dentry->d_parent->d_inode;
+	struct inode *inode = bpf_get_inode(dir->i_sb, dir, mode);
+	if (IS_ERR(inode))
+		return PTR_ERR(inode);
 
 	inode->i_op = iops;
 	inode->i_fop = fops;
-	inode->i_निजी = raw;
+	inode->i_private = raw;
 
 	bpf_dentry_finalize(dentry, inode, dir);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक bpf_mkprog(काष्ठा dentry *dentry, umode_t mode, व्योम *arg)
-अणु
-	वापस bpf_mkobj_ops(dentry, mode, arg, &bpf_prog_iops,
+static int bpf_mkprog(struct dentry *dentry, umode_t mode, void *arg)
+{
+	return bpf_mkobj_ops(dentry, mode, arg, &bpf_prog_iops,
 			     &bpffs_obj_fops);
-पूर्ण
+}
 
-अटल पूर्णांक bpf_mkmap(काष्ठा dentry *dentry, umode_t mode, व्योम *arg)
-अणु
-	काष्ठा bpf_map *map = arg;
+static int bpf_mkmap(struct dentry *dentry, umode_t mode, void *arg)
+{
+	struct bpf_map *map = arg;
 
-	वापस bpf_mkobj_ops(dentry, mode, arg, &bpf_map_iops,
+	return bpf_mkobj_ops(dentry, mode, arg, &bpf_map_iops,
 			     bpf_map_support_seq_show(map) ?
 			     &bpffs_map_fops : &bpffs_obj_fops);
-पूर्ण
+}
 
-अटल पूर्णांक bpf_mklink(काष्ठा dentry *dentry, umode_t mode, व्योम *arg)
-अणु
-	काष्ठा bpf_link *link = arg;
+static int bpf_mklink(struct dentry *dentry, umode_t mode, void *arg)
+{
+	struct bpf_link *link = arg;
 
-	वापस bpf_mkobj_ops(dentry, mode, arg, &bpf_link_iops,
+	return bpf_mkobj_ops(dentry, mode, arg, &bpf_link_iops,
 			     bpf_link_is_iter(link) ?
 			     &bpf_iter_fops : &bpffs_obj_fops);
-पूर्ण
+}
 
-अटल काष्ठा dentry *
-bpf_lookup(काष्ठा inode *dir, काष्ठा dentry *dentry, अचिन्हित flags)
-अणु
-	/* Dots in names (e.g. "/sys/fs/bpf/foo.bar") are reserved क्रम future
+static struct dentry *
+bpf_lookup(struct inode *dir, struct dentry *dentry, unsigned flags)
+{
+	/* Dots in names (e.g. "/sys/fs/bpf/foo.bar") are reserved for future
 	 * extensions. That allows popoulate_bpffs() create special files.
 	 */
-	अगर ((dir->i_mode & S_IALLUGO) &&
-	    म_अक्षर(dentry->d_name.name, '.'))
-		वापस ERR_PTR(-EPERM);
+	if ((dir->i_mode & S_IALLUGO) &&
+	    strchr(dentry->d_name.name, '.'))
+		return ERR_PTR(-EPERM);
 
-	वापस simple_lookup(dir, dentry, flags);
-पूर्ण
+	return simple_lookup(dir, dentry, flags);
+}
 
-अटल पूर्णांक bpf_symlink(काष्ठा user_namespace *mnt_userns, काष्ठा inode *dir,
-		       काष्ठा dentry *dentry, स्थिर अक्षर *target)
-अणु
-	अक्षर *link = kstrdup(target, GFP_USER | __GFP_NOWARN);
-	काष्ठा inode *inode;
+static int bpf_symlink(struct user_namespace *mnt_userns, struct inode *dir,
+		       struct dentry *dentry, const char *target)
+{
+	char *link = kstrdup(target, GFP_USER | __GFP_NOWARN);
+	struct inode *inode;
 
-	अगर (!link)
-		वापस -ENOMEM;
+	if (!link)
+		return -ENOMEM;
 
 	inode = bpf_get_inode(dir->i_sb, dir, S_IRWXUGO | S_IFLNK);
-	अगर (IS_ERR(inode)) अणु
-		kमुक्त(link);
-		वापस PTR_ERR(inode);
-	पूर्ण
+	if (IS_ERR(inode)) {
+		kfree(link);
+		return PTR_ERR(inode);
+	}
 
 	inode->i_op = &simple_symlink_inode_operations;
 	inode->i_link = link;
 
 	bpf_dentry_finalize(dentry, inode, dir);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा inode_operations bpf_dir_iops = अणु
+static const struct inode_operations bpf_dir_iops = {
 	.lookup		= bpf_lookup,
-	.सूची_गढ़ो		= bpf_सूची_गढ़ो,
+	.mkdir		= bpf_mkdir,
 	.symlink	= bpf_symlink,
-	.सूची_हटाओ		= simple_सूची_हटाओ,
-	.नाम		= simple_नाम,
+	.rmdir		= simple_rmdir,
+	.rename		= simple_rename,
 	.link		= simple_link,
 	.unlink		= simple_unlink,
-पूर्ण;
+};
 
-/* pin iterator link पूर्णांकo bpffs */
-अटल पूर्णांक bpf_iter_link_pin_kernel(काष्ठा dentry *parent,
-				    स्थिर अक्षर *name, काष्ठा bpf_link *link)
-अणु
+/* pin iterator link into bpffs */
+static int bpf_iter_link_pin_kernel(struct dentry *parent,
+				    const char *name, struct bpf_link *link)
+{
 	umode_t mode = S_IFREG | S_IRUSR;
-	काष्ठा dentry *dentry;
-	पूर्णांक ret;
+	struct dentry *dentry;
+	int ret;
 
 	inode_lock(parent->d_inode);
-	dentry = lookup_one_len(name, parent, म_माप(name));
-	अगर (IS_ERR(dentry)) अणु
+	dentry = lookup_one_len(name, parent, strlen(name));
+	if (IS_ERR(dentry)) {
 		inode_unlock(parent->d_inode);
-		वापस PTR_ERR(dentry);
-	पूर्ण
+		return PTR_ERR(dentry);
+	}
 	ret = bpf_mkobj_ops(dentry, mode, link, &bpf_link_iops,
 			    &bpf_iter_fops);
 	dput(dentry);
 	inode_unlock(parent->d_inode);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक bpf_obj_करो_pin(स्थिर अक्षर __user *pathname, व्योम *raw,
-			  क्रमागत bpf_type type)
-अणु
-	काष्ठा dentry *dentry;
-	काष्ठा inode *dir;
-	काष्ठा path path;
+static int bpf_obj_do_pin(const char __user *pathname, void *raw,
+			  enum bpf_type type)
+{
+	struct dentry *dentry;
+	struct inode *dir;
+	struct path path;
 	umode_t mode;
-	पूर्णांक ret;
+	int ret;
 
 	dentry = user_path_create(AT_FDCWD, pathname, &path, 0);
-	अगर (IS_ERR(dentry))
-		वापस PTR_ERR(dentry);
+	if (IS_ERR(dentry))
+		return PTR_ERR(dentry);
 
 	mode = S_IFREG | ((S_IRUSR | S_IWUSR) & ~current_umask());
 
 	ret = security_path_mknod(&path, dentry, mode, 0);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
 	dir = d_inode(path.dentry);
-	अगर (dir->i_op != &bpf_dir_iops) अणु
+	if (dir->i_op != &bpf_dir_iops) {
 		ret = -EPERM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	चयन (type) अणु
-	हाल BPF_TYPE_PROG:
+	switch (type) {
+	case BPF_TYPE_PROG:
 		ret = vfs_mkobj(dentry, mode, bpf_mkprog, raw);
-		अवरोध;
-	हाल BPF_TYPE_MAP:
+		break;
+	case BPF_TYPE_MAP:
 		ret = vfs_mkobj(dentry, mode, bpf_mkmap, raw);
-		अवरोध;
-	हाल BPF_TYPE_LINK:
+		break;
+	case BPF_TYPE_LINK:
 		ret = vfs_mkobj(dentry, mode, bpf_mklink, raw);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		ret = -EPERM;
-	पूर्ण
+	}
 out:
-	करोne_path_create(&path, dentry);
-	वापस ret;
-पूर्ण
+	done_path_create(&path, dentry);
+	return ret;
+}
 
-पूर्णांक bpf_obj_pin_user(u32 ufd, स्थिर अक्षर __user *pathname)
-अणु
-	क्रमागत bpf_type type;
-	व्योम *raw;
-	पूर्णांक ret;
+int bpf_obj_pin_user(u32 ufd, const char __user *pathname)
+{
+	enum bpf_type type;
+	void *raw;
+	int ret;
 
 	raw = bpf_fd_probe_obj(ufd, &type);
-	अगर (IS_ERR(raw))
-		वापस PTR_ERR(raw);
+	if (IS_ERR(raw))
+		return PTR_ERR(raw);
 
-	ret = bpf_obj_करो_pin(pathname, raw, type);
-	अगर (ret != 0)
+	ret = bpf_obj_do_pin(pathname, raw, type);
+	if (ret != 0)
 		bpf_any_put(raw, type);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम *bpf_obj_करो_get(स्थिर अक्षर __user *pathname,
-			    क्रमागत bpf_type *type, पूर्णांक flags)
-अणु
-	काष्ठा inode *inode;
-	काष्ठा path path;
-	व्योम *raw;
-	पूर्णांक ret;
+static void *bpf_obj_do_get(const char __user *pathname,
+			    enum bpf_type *type, int flags)
+{
+	struct inode *inode;
+	struct path path;
+	void *raw;
+	int ret;
 
 	ret = user_path_at(AT_FDCWD, pathname, LOOKUP_FOLLOW, &path);
-	अगर (ret)
-		वापस ERR_PTR(ret);
+	if (ret)
+		return ERR_PTR(ret);
 
 	inode = d_backing_inode(path.dentry);
 	ret = path_permission(&path, ACC_MODE(flags));
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
 	ret = bpf_inode_type(inode, type);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
-	raw = bpf_any_get(inode->i_निजी, *type);
-	अगर (!IS_ERR(raw))
-		touch_aसमय(&path);
+	raw = bpf_any_get(inode->i_private, *type);
+	if (!IS_ERR(raw))
+		touch_atime(&path);
 
 	path_put(&path);
-	वापस raw;
+	return raw;
 out:
 	path_put(&path);
-	वापस ERR_PTR(ret);
-पूर्ण
+	return ERR_PTR(ret);
+}
 
-पूर्णांक bpf_obj_get_user(स्थिर अक्षर __user *pathname, पूर्णांक flags)
-अणु
-	क्रमागत bpf_type type = BPF_TYPE_UNSPEC;
-	पूर्णांक f_flags;
-	व्योम *raw;
-	पूर्णांक ret;
+int bpf_obj_get_user(const char __user *pathname, int flags)
+{
+	enum bpf_type type = BPF_TYPE_UNSPEC;
+	int f_flags;
+	void *raw;
+	int ret;
 
 	f_flags = bpf_get_file_flag(flags);
-	अगर (f_flags < 0)
-		वापस f_flags;
+	if (f_flags < 0)
+		return f_flags;
 
-	raw = bpf_obj_करो_get(pathname, &type, f_flags);
-	अगर (IS_ERR(raw))
-		वापस PTR_ERR(raw);
+	raw = bpf_obj_do_get(pathname, &type, f_flags);
+	if (IS_ERR(raw))
+		return PTR_ERR(raw);
 
-	अगर (type == BPF_TYPE_PROG)
+	if (type == BPF_TYPE_PROG)
 		ret = (f_flags != O_RDWR) ? -EINVAL : bpf_prog_new_fd(raw);
-	अन्यथा अगर (type == BPF_TYPE_MAP)
+	else if (type == BPF_TYPE_MAP)
 		ret = bpf_map_new_fd(raw, f_flags);
-	अन्यथा अगर (type == BPF_TYPE_LINK)
+	else if (type == BPF_TYPE_LINK)
 		ret = (f_flags != O_RDWR) ? -EINVAL : bpf_link_new_fd(raw);
-	अन्यथा
-		वापस -ENOENT;
+	else
+		return -ENOENT;
 
-	अगर (ret < 0)
+	if (ret < 0)
 		bpf_any_put(raw, type);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल काष्ठा bpf_prog *__get_prog_inode(काष्ठा inode *inode, क्रमागत bpf_prog_type type)
-अणु
-	काष्ठा bpf_prog *prog;
-	पूर्णांक ret = inode_permission(&init_user_ns, inode, MAY_READ);
-	अगर (ret)
-		वापस ERR_PTR(ret);
+static struct bpf_prog *__get_prog_inode(struct inode *inode, enum bpf_prog_type type)
+{
+	struct bpf_prog *prog;
+	int ret = inode_permission(&init_user_ns, inode, MAY_READ);
+	if (ret)
+		return ERR_PTR(ret);
 
-	अगर (inode->i_op == &bpf_map_iops)
-		वापस ERR_PTR(-EINVAL);
-	अगर (inode->i_op == &bpf_link_iops)
-		वापस ERR_PTR(-EINVAL);
-	अगर (inode->i_op != &bpf_prog_iops)
-		वापस ERR_PTR(-EACCES);
+	if (inode->i_op == &bpf_map_iops)
+		return ERR_PTR(-EINVAL);
+	if (inode->i_op == &bpf_link_iops)
+		return ERR_PTR(-EINVAL);
+	if (inode->i_op != &bpf_prog_iops)
+		return ERR_PTR(-EACCES);
 
-	prog = inode->i_निजी;
+	prog = inode->i_private;
 
 	ret = security_bpf_prog(prog);
-	अगर (ret < 0)
-		वापस ERR_PTR(ret);
+	if (ret < 0)
+		return ERR_PTR(ret);
 
-	अगर (!bpf_prog_get_ok(prog, &type, false))
-		वापस ERR_PTR(-EINVAL);
+	if (!bpf_prog_get_ok(prog, &type, false))
+		return ERR_PTR(-EINVAL);
 
 	bpf_prog_inc(prog);
-	वापस prog;
-पूर्ण
+	return prog;
+}
 
-काष्ठा bpf_prog *bpf_prog_get_type_path(स्थिर अक्षर *name, क्रमागत bpf_prog_type type)
-अणु
-	काष्ठा bpf_prog *prog;
-	काष्ठा path path;
-	पूर्णांक ret = kern_path(name, LOOKUP_FOLLOW, &path);
-	अगर (ret)
-		वापस ERR_PTR(ret);
+struct bpf_prog *bpf_prog_get_type_path(const char *name, enum bpf_prog_type type)
+{
+	struct bpf_prog *prog;
+	struct path path;
+	int ret = kern_path(name, LOOKUP_FOLLOW, &path);
+	if (ret)
+		return ERR_PTR(ret);
 	prog = __get_prog_inode(d_backing_inode(path.dentry), type);
-	अगर (!IS_ERR(prog))
-		touch_aसमय(&path);
+	if (!IS_ERR(prog))
+		touch_atime(&path);
 	path_put(&path);
-	वापस prog;
-पूर्ण
+	return prog;
+}
 EXPORT_SYMBOL(bpf_prog_get_type_path);
 
 /*
  * Display the mount options in /proc/mounts.
  */
-अटल पूर्णांक bpf_show_options(काष्ठा seq_file *m, काष्ठा dentry *root)
-अणु
+static int bpf_show_options(struct seq_file *m, struct dentry *root)
+{
 	umode_t mode = d_inode(root)->i_mode & S_IALLUGO & ~S_ISVTX;
 
-	अगर (mode != S_IRWXUGO)
-		seq_म_लिखो(m, ",mode=%o", mode);
-	वापस 0;
-पूर्ण
+	if (mode != S_IRWXUGO)
+		seq_printf(m, ",mode=%o", mode);
+	return 0;
+}
 
-अटल व्योम bpf_मुक्त_inode(काष्ठा inode *inode)
-अणु
-	क्रमागत bpf_type type;
+static void bpf_free_inode(struct inode *inode)
+{
+	enum bpf_type type;
 
-	अगर (S_ISLNK(inode->i_mode))
-		kमुक्त(inode->i_link);
-	अगर (!bpf_inode_type(inode, &type))
-		bpf_any_put(inode->i_निजी, type);
-	मुक्त_inode_nonrcu(inode);
-पूर्ण
+	if (S_ISLNK(inode->i_mode))
+		kfree(inode->i_link);
+	if (!bpf_inode_type(inode, &type))
+		bpf_any_put(inode->i_private, type);
+	free_inode_nonrcu(inode);
+}
 
-अटल स्थिर काष्ठा super_operations bpf_super_ops = अणु
+static const struct super_operations bpf_super_ops = {
 	.statfs		= simple_statfs,
 	.drop_inode	= generic_delete_inode,
 	.show_options	= bpf_show_options,
-	.मुक्त_inode	= bpf_मुक्त_inode,
-पूर्ण;
+	.free_inode	= bpf_free_inode,
+};
 
-क्रमागत अणु
+enum {
 	OPT_MODE,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा fs_parameter_spec bpf_fs_parameters[] = अणु
+static const struct fs_parameter_spec bpf_fs_parameters[] = {
 	fsparam_u32oct	("mode",			OPT_MODE),
-	अणुपूर्ण
-पूर्ण;
+	{}
+};
 
-काष्ठा bpf_mount_opts अणु
+struct bpf_mount_opts {
 	umode_t mode;
-पूर्ण;
+};
 
-अटल पूर्णांक bpf_parse_param(काष्ठा fs_context *fc, काष्ठा fs_parameter *param)
-अणु
-	काष्ठा bpf_mount_opts *opts = fc->fs_निजी;
-	काष्ठा fs_parse_result result;
-	पूर्णांक opt;
+static int bpf_parse_param(struct fs_context *fc, struct fs_parameter *param)
+{
+	struct bpf_mount_opts *opts = fc->fs_private;
+	struct fs_parse_result result;
+	int opt;
 
 	opt = fs_parse(fc, bpf_fs_parameters, param, &result);
-	अगर (opt < 0)
+	if (opt < 0)
 		/* We might like to report bad mount options here, but
 		 * traditionally we've ignored all mount options, so we'd
-		 * better जारी to ignore non-existing options क्रम bpf.
+		 * better continue to ignore non-existing options for bpf.
 		 */
-		वापस opt == -ENOPARAM ? 0 : opt;
+		return opt == -ENOPARAM ? 0 : opt;
 
-	चयन (opt) अणु
-	हाल OPT_MODE:
-		opts->mode = result.uपूर्णांक_32 & S_IALLUGO;
-		अवरोध;
-	पूर्ण
+	switch (opt) {
+	case OPT_MODE:
+		opts->mode = result.uint_32 & S_IALLUGO;
+		break;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-काष्ठा bpf_preload_ops *bpf_preload_ops;
+struct bpf_preload_ops *bpf_preload_ops;
 EXPORT_SYMBOL_GPL(bpf_preload_ops);
 
-अटल bool bpf_preload_mod_get(व्योम)
-अणु
+static bool bpf_preload_mod_get(void)
+{
 	/* If bpf_preload.ko wasn't loaded earlier then load it now.
-	 * When bpf_preload is built पूर्णांकo vmlinux the module's __init
+	 * When bpf_preload is built into vmlinux the module's __init
 	 * function will populate it.
 	 */
-	अगर (!bpf_preload_ops) अणु
+	if (!bpf_preload_ops) {
 		request_module("bpf_preload");
-		अगर (!bpf_preload_ops)
-			वापस false;
-	पूर्ण
-	/* And grab the reference, so the module करोesn't disappear जबतक the
-	 * kernel is पूर्णांकeracting with the kernel module and its UMD.
+		if (!bpf_preload_ops)
+			return false;
+	}
+	/* And grab the reference, so the module doesn't disappear while the
+	 * kernel is interacting with the kernel module and its UMD.
 	 */
-	अगर (!try_module_get(bpf_preload_ops->owner)) अणु
+	if (!try_module_get(bpf_preload_ops->owner)) {
 		pr_err("bpf_preload module get failed.\n");
-		वापस false;
-	पूर्ण
-	वापस true;
-पूर्ण
+		return false;
+	}
+	return true;
+}
 
-अटल व्योम bpf_preload_mod_put(व्योम)
-अणु
-	अगर (bpf_preload_ops)
-		/* now user can "rmmod bpf_preload" अगर necessary */
+static void bpf_preload_mod_put(void)
+{
+	if (bpf_preload_ops)
+		/* now user can "rmmod bpf_preload" if necessary */
 		module_put(bpf_preload_ops->owner);
-पूर्ण
+}
 
-अटल DEFINE_MUTEX(bpf_preload_lock);
+static DEFINE_MUTEX(bpf_preload_lock);
 
-अटल पूर्णांक populate_bpffs(काष्ठा dentry *parent)
-अणु
-	काष्ठा bpf_preload_info objs[BPF_PRELOAD_LINKS] = अणुपूर्ण;
-	काष्ठा bpf_link *links[BPF_PRELOAD_LINKS] = अणुपूर्ण;
-	पूर्णांक err = 0, i;
+static int populate_bpffs(struct dentry *parent)
+{
+	struct bpf_preload_info objs[BPF_PRELOAD_LINKS] = {};
+	struct bpf_link *links[BPF_PRELOAD_LINKS] = {};
+	int err = 0, i;
 
-	/* grab the mutex to make sure the kernel पूर्णांकeractions with bpf_preload
+	/* grab the mutex to make sure the kernel interactions with bpf_preload
 	 * UMD are serialized
 	 */
 	mutex_lock(&bpf_preload_lock);
 
-	/* अगर bpf_preload.ko wasn't built पूर्णांकo vmlinux then load it */
-	अगर (!bpf_preload_mod_get())
-		जाओ out;
+	/* if bpf_preload.ko wasn't built into vmlinux then load it */
+	if (!bpf_preload_mod_get())
+		goto out;
 
-	अगर (!bpf_preload_ops->info.tgid) अणु
+	if (!bpf_preload_ops->info.tgid) {
 		/* preload() will start UMD that will load BPF iterator programs */
 		err = bpf_preload_ops->preload(objs);
-		अगर (err)
-			जाओ out_put;
-		क्रम (i = 0; i < BPF_PRELOAD_LINKS; i++) अणु
+		if (err)
+			goto out_put;
+		for (i = 0; i < BPF_PRELOAD_LINKS; i++) {
 			links[i] = bpf_link_by_id(objs[i].link_id);
-			अगर (IS_ERR(links[i])) अणु
+			if (IS_ERR(links[i])) {
 				err = PTR_ERR(links[i]);
-				जाओ out_put;
-			पूर्ण
-		पूर्ण
-		क्रम (i = 0; i < BPF_PRELOAD_LINKS; i++) अणु
+				goto out_put;
+			}
+		}
+		for (i = 0; i < BPF_PRELOAD_LINKS; i++) {
 			err = bpf_iter_link_pin_kernel(parent,
 						       objs[i].link_name, links[i]);
-			अगर (err)
-				जाओ out_put;
-			/* करो not unlink successfully pinned links even
-			 * अगर later link fails to pin
+			if (err)
+				goto out_put;
+			/* do not unlink successfully pinned links even
+			 * if later link fails to pin
 			 */
-			links[i] = शून्य;
-		पूर्ण
-		/* finish() will tell UMD process to निकास */
+			links[i] = NULL;
+		}
+		/* finish() will tell UMD process to exit */
 		err = bpf_preload_ops->finish();
-		अगर (err)
-			जाओ out_put;
-	पूर्ण
+		if (err)
+			goto out_put;
+	}
 out_put:
 	bpf_preload_mod_put();
 out:
 	mutex_unlock(&bpf_preload_lock);
-	क्रम (i = 0; i < BPF_PRELOAD_LINKS && err; i++)
-		अगर (!IS_ERR_OR_शून्य(links[i]))
+	for (i = 0; i < BPF_PRELOAD_LINKS && err; i++)
+		if (!IS_ERR_OR_NULL(links[i]))
 			bpf_link_put(links[i]);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक bpf_fill_super(काष्ठा super_block *sb, काष्ठा fs_context *fc)
-अणु
-	अटल स्थिर काष्ठा tree_descr bpf_rfiles[] = अणु अणु "" पूर्ण पूर्ण;
-	काष्ठा bpf_mount_opts *opts = fc->fs_निजी;
-	काष्ठा inode *inode;
-	पूर्णांक ret;
+static int bpf_fill_super(struct super_block *sb, struct fs_context *fc)
+{
+	static const struct tree_descr bpf_rfiles[] = { { "" } };
+	struct bpf_mount_opts *opts = fc->fs_private;
+	struct inode *inode;
+	int ret;
 
 	ret = simple_fill_super(sb, BPF_FS_MAGIC, bpf_rfiles);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	sb->s_op = &bpf_super_ops;
 
@@ -768,63 +767,63 @@ out:
 	inode->i_mode &= ~S_IALLUGO;
 	populate_bpffs(sb->s_root);
 	inode->i_mode |= S_ISVTX | opts->mode;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक bpf_get_tree(काष्ठा fs_context *fc)
-अणु
-	वापस get_tree_nodev(fc, bpf_fill_super);
-पूर्ण
+static int bpf_get_tree(struct fs_context *fc)
+{
+	return get_tree_nodev(fc, bpf_fill_super);
+}
 
-अटल व्योम bpf_मुक्त_fc(काष्ठा fs_context *fc)
-अणु
-	kमुक्त(fc->fs_निजी);
-पूर्ण
+static void bpf_free_fc(struct fs_context *fc)
+{
+	kfree(fc->fs_private);
+}
 
-अटल स्थिर काष्ठा fs_context_operations bpf_context_ops = अणु
-	.मुक्त		= bpf_मुक्त_fc,
+static const struct fs_context_operations bpf_context_ops = {
+	.free		= bpf_free_fc,
 	.parse_param	= bpf_parse_param,
 	.get_tree	= bpf_get_tree,
-पूर्ण;
+};
 
 /*
- * Set up the fileप्रणाली mount context.
+ * Set up the filesystem mount context.
  */
-अटल पूर्णांक bpf_init_fs_context(काष्ठा fs_context *fc)
-अणु
-	काष्ठा bpf_mount_opts *opts;
+static int bpf_init_fs_context(struct fs_context *fc)
+{
+	struct bpf_mount_opts *opts;
 
-	opts = kzalloc(माप(काष्ठा bpf_mount_opts), GFP_KERNEL);
-	अगर (!opts)
-		वापस -ENOMEM;
+	opts = kzalloc(sizeof(struct bpf_mount_opts), GFP_KERNEL);
+	if (!opts)
+		return -ENOMEM;
 
 	opts->mode = S_IRWXUGO;
 
-	fc->fs_निजी = opts;
+	fc->fs_private = opts;
 	fc->ops = &bpf_context_ops;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा file_प्रणाली_type bpf_fs_type = अणु
+static struct file_system_type bpf_fs_type = {
 	.owner		= THIS_MODULE,
 	.name		= "bpf",
 	.init_fs_context = bpf_init_fs_context,
 	.parameters	= bpf_fs_parameters,
-	.समाप्त_sb	= समाप्त_litter_super,
-पूर्ण;
+	.kill_sb	= kill_litter_super,
+};
 
-अटल पूर्णांक __init bpf_init(व्योम)
-अणु
-	पूर्णांक ret;
+static int __init bpf_init(void)
+{
+	int ret;
 
-	ret = sysfs_create_mount_poपूर्णांक(fs_kobj, "bpf");
-	अगर (ret)
-		वापस ret;
+	ret = sysfs_create_mount_point(fs_kobj, "bpf");
+	if (ret)
+		return ret;
 
-	ret = रेजिस्टर_fileप्रणाली(&bpf_fs_type);
-	अगर (ret)
-		sysfs_हटाओ_mount_poपूर्णांक(fs_kobj, "bpf");
+	ret = register_filesystem(&bpf_fs_type);
+	if (ret)
+		sysfs_remove_mount_point(fs_kobj, "bpf");
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 fs_initcall(bpf_init);

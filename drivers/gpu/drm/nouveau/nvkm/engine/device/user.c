@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2012 Red Hat Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,340 +21,340 @@
  *
  * Authors: Ben Skeggs
  */
-#घोषणा nvkm_udevice(p) container_of((p), काष्ठा nvkm_udevice, object)
-#समावेश "priv.h"
-#समावेश "ctrl.h"
+#define nvkm_udevice(p) container_of((p), struct nvkm_udevice, object)
+#include "priv.h"
+#include "ctrl.h"
 
-#समावेश <core/client.h>
-#समावेश <subdev/fb.h>
-#समावेश <subdev/insपंचांगem.h>
-#समावेश <subdev/समयr.h>
+#include <core/client.h>
+#include <subdev/fb.h>
+#include <subdev/instmem.h>
+#include <subdev/timer.h>
 
-#समावेश <nvअगर/class.h>
-#समावेश <nvअगर/cl0080.h>
-#समावेश <nvअगर/unpack.h>
+#include <nvif/class.h>
+#include <nvif/cl0080.h>
+#include <nvif/unpack.h>
 
-काष्ठा nvkm_udevice अणु
-	काष्ठा nvkm_object object;
-	काष्ठा nvkm_device *device;
-पूर्ण;
+struct nvkm_udevice {
+	struct nvkm_object object;
+	struct nvkm_device *device;
+};
 
-अटल पूर्णांक
-nvkm_udevice_info_subdev(काष्ठा nvkm_device *device, u64 mthd, u64 *data)
-अणु
-	काष्ठा nvkm_subdev *subdev;
-	क्रमागत nvkm_subdev_type type;
+static int
+nvkm_udevice_info_subdev(struct nvkm_device *device, u64 mthd, u64 *data)
+{
+	struct nvkm_subdev *subdev;
+	enum nvkm_subdev_type type;
 
-	चयन (mthd & NV_DEVICE_INFO_UNIT) अणु
-	हाल NV_DEVICE_HOST(0): type = NVKM_ENGINE_FIFO; अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+	switch (mthd & NV_DEVICE_INFO_UNIT) {
+	case NV_DEVICE_HOST(0): type = NVKM_ENGINE_FIFO; break;
+	default:
+		return -EINVAL;
+	}
 
 	subdev = nvkm_device_subdev(device, type, 0);
-	अगर (subdev)
-		वापस nvkm_subdev_info(subdev, mthd, data);
-	वापस -ENODEV;
-पूर्ण
+	if (subdev)
+		return nvkm_subdev_info(subdev, mthd, data);
+	return -ENODEV;
+}
 
-अटल व्योम
-nvkm_udevice_info_v1(काष्ठा nvkm_device *device,
-		     काष्ठा nv_device_info_v1_data *args)
-अणु
-	अगर (args->mthd & NV_DEVICE_INFO_UNIT) अणु
-		अगर (nvkm_udevice_info_subdev(device, args->mthd, &args->data))
+static void
+nvkm_udevice_info_v1(struct nvkm_device *device,
+		     struct nv_device_info_v1_data *args)
+{
+	if (args->mthd & NV_DEVICE_INFO_UNIT) {
+		if (nvkm_udevice_info_subdev(device, args->mthd, &args->data))
 			args->mthd = NV_DEVICE_INFO_INVALID;
-		वापस;
-	पूर्ण
+		return;
+	}
 	args->mthd = NV_DEVICE_INFO_INVALID;
-पूर्ण
+}
 
-अटल पूर्णांक
-nvkm_udevice_info(काष्ठा nvkm_udevice *udev, व्योम *data, u32 size)
-अणु
-	काष्ठा nvkm_object *object = &udev->object;
-	काष्ठा nvkm_device *device = udev->device;
-	काष्ठा nvkm_fb *fb = device->fb;
-	काष्ठा nvkm_insपंचांगem *imem = device->imem;
-	जोड़ अणु
-		काष्ठा nv_device_info_v0 v0;
-		काष्ठा nv_device_info_v1 v1;
-	पूर्ण *args = data;
-	पूर्णांक ret = -ENOSYS, i;
+static int
+nvkm_udevice_info(struct nvkm_udevice *udev, void *data, u32 size)
+{
+	struct nvkm_object *object = &udev->object;
+	struct nvkm_device *device = udev->device;
+	struct nvkm_fb *fb = device->fb;
+	struct nvkm_instmem *imem = device->imem;
+	union {
+		struct nv_device_info_v0 v0;
+		struct nv_device_info_v1 v1;
+	} *args = data;
+	int ret = -ENOSYS, i;
 
-	nvअगर_ioctl(object, "device info size %d\n", size);
-	अगर (!(ret = nvअगर_unpack(ret, &data, &size, args->v1, 1, 1, true))) अणु
-		nvअगर_ioctl(object, "device info vers %d count %d\n",
+	nvif_ioctl(object, "device info size %d\n", size);
+	if (!(ret = nvif_unpack(ret, &data, &size, args->v1, 1, 1, true))) {
+		nvif_ioctl(object, "device info vers %d count %d\n",
 			   args->v1.version, args->v1.count);
-		अगर (args->v1.count * माप(args->v1.data[0]) == size) अणु
-			क्रम (i = 0; i < args->v1.count; i++)
+		if (args->v1.count * sizeof(args->v1.data[0]) == size) {
+			for (i = 0; i < args->v1.count; i++)
 				nvkm_udevice_info_v1(device, &args->v1.data[i]);
-			वापस 0;
-		पूर्ण
-		वापस -EINVAL;
-	पूर्ण अन्यथा
-	अगर (!(ret = nvअगर_unpack(ret, &data, &size, args->v0, 0, 0, false))) अणु
-		nvअगर_ioctl(object, "device info vers %d\n", args->v0.version);
-	पूर्ण अन्यथा
-		वापस ret;
+			return 0;
+		}
+		return -EINVAL;
+	} else
+	if (!(ret = nvif_unpack(ret, &data, &size, args->v0, 0, 0, false))) {
+		nvif_ioctl(object, "device info vers %d\n", args->v0.version);
+	} else
+		return ret;
 
-	चयन (device->chipset) अणु
-	हाल 0x01a:
-	हाल 0x01f:
-	हाल 0x04c:
-	हाल 0x04e:
-	हाल 0x063:
-	हाल 0x067:
-	हाल 0x068:
-	हाल 0x0aa:
-	हाल 0x0ac:
-	हाल 0x0af:
-		args->v0.platक्रमm = NV_DEVICE_INFO_V0_IGP;
-		अवरोध;
-	शेष:
-		चयन (device->type) अणु
-		हाल NVKM_DEVICE_PCI:
-			args->v0.platक्रमm = NV_DEVICE_INFO_V0_PCI;
-			अवरोध;
-		हाल NVKM_DEVICE_AGP:
-			args->v0.platक्रमm = NV_DEVICE_INFO_V0_AGP;
-			अवरोध;
-		हाल NVKM_DEVICE_PCIE:
-			args->v0.platक्रमm = NV_DEVICE_INFO_V0_PCIE;
-			अवरोध;
-		हाल NVKM_DEVICE_TEGRA:
-			args->v0.platक्रमm = NV_DEVICE_INFO_V0_SOC;
-			अवरोध;
-		शेष:
+	switch (device->chipset) {
+	case 0x01a:
+	case 0x01f:
+	case 0x04c:
+	case 0x04e:
+	case 0x063:
+	case 0x067:
+	case 0x068:
+	case 0x0aa:
+	case 0x0ac:
+	case 0x0af:
+		args->v0.platform = NV_DEVICE_INFO_V0_IGP;
+		break;
+	default:
+		switch (device->type) {
+		case NVKM_DEVICE_PCI:
+			args->v0.platform = NV_DEVICE_INFO_V0_PCI;
+			break;
+		case NVKM_DEVICE_AGP:
+			args->v0.platform = NV_DEVICE_INFO_V0_AGP;
+			break;
+		case NVKM_DEVICE_PCIE:
+			args->v0.platform = NV_DEVICE_INFO_V0_PCIE;
+			break;
+		case NVKM_DEVICE_TEGRA:
+			args->v0.platform = NV_DEVICE_INFO_V0_SOC;
+			break;
+		default:
 			WARN_ON(1);
-			अवरोध;
-		पूर्ण
-		अवरोध;
-	पूर्ण
+			break;
+		}
+		break;
+	}
 
-	चयन (device->card_type) अणु
-	हाल NV_04: args->v0.family = NV_DEVICE_INFO_V0_TNT; अवरोध;
-	हाल NV_10:
-	हाल NV_11: args->v0.family = NV_DEVICE_INFO_V0_CELSIUS; अवरोध;
-	हाल NV_20: args->v0.family = NV_DEVICE_INFO_V0_KELVIN; अवरोध;
-	हाल NV_30: args->v0.family = NV_DEVICE_INFO_V0_RANKINE; अवरोध;
-	हाल NV_40: args->v0.family = NV_DEVICE_INFO_V0_CURIE; अवरोध;
-	हाल NV_50: args->v0.family = NV_DEVICE_INFO_V0_TESLA; अवरोध;
-	हाल NV_C0: args->v0.family = NV_DEVICE_INFO_V0_FERMI; अवरोध;
-	हाल NV_E0: args->v0.family = NV_DEVICE_INFO_V0_KEPLER; अवरोध;
-	हाल GM100: args->v0.family = NV_DEVICE_INFO_V0_MAXWELL; अवरोध;
-	हाल GP100: args->v0.family = NV_DEVICE_INFO_V0_PASCAL; अवरोध;
-	हाल GV100: args->v0.family = NV_DEVICE_INFO_V0_VOLTA; अवरोध;
-	हाल TU100: args->v0.family = NV_DEVICE_INFO_V0_TURING; अवरोध;
-	हाल GA100: args->v0.family = NV_DEVICE_INFO_V0_AMPERE; अवरोध;
-	शेष:
+	switch (device->card_type) {
+	case NV_04: args->v0.family = NV_DEVICE_INFO_V0_TNT; break;
+	case NV_10:
+	case NV_11: args->v0.family = NV_DEVICE_INFO_V0_CELSIUS; break;
+	case NV_20: args->v0.family = NV_DEVICE_INFO_V0_KELVIN; break;
+	case NV_30: args->v0.family = NV_DEVICE_INFO_V0_RANKINE; break;
+	case NV_40: args->v0.family = NV_DEVICE_INFO_V0_CURIE; break;
+	case NV_50: args->v0.family = NV_DEVICE_INFO_V0_TESLA; break;
+	case NV_C0: args->v0.family = NV_DEVICE_INFO_V0_FERMI; break;
+	case NV_E0: args->v0.family = NV_DEVICE_INFO_V0_KEPLER; break;
+	case GM100: args->v0.family = NV_DEVICE_INFO_V0_MAXWELL; break;
+	case GP100: args->v0.family = NV_DEVICE_INFO_V0_PASCAL; break;
+	case GV100: args->v0.family = NV_DEVICE_INFO_V0_VOLTA; break;
+	case TU100: args->v0.family = NV_DEVICE_INFO_V0_TURING; break;
+	case GA100: args->v0.family = NV_DEVICE_INFO_V0_AMPERE; break;
+	default:
 		args->v0.family = 0;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	args->v0.chipset  = device->chipset;
 	args->v0.revision = device->chiprev;
-	अगर (fb && fb->ram)
+	if (fb && fb->ram)
 		args->v0.ram_size = args->v0.ram_user = fb->ram->size;
-	अन्यथा
+	else
 		args->v0.ram_size = args->v0.ram_user = 0;
-	अगर (imem && args->v0.ram_size > 0)
+	if (imem && args->v0.ram_size > 0)
 		args->v0.ram_user = args->v0.ram_user - imem->reserved;
 
-	म_नकलन(args->v0.chip, device->chip->name, माप(args->v0.chip));
-	म_नकलन(args->v0.name, device->name, माप(args->v0.name));
-	वापस 0;
-पूर्ण
+	strncpy(args->v0.chip, device->chip->name, sizeof(args->v0.chip));
+	strncpy(args->v0.name, device->name, sizeof(args->v0.name));
+	return 0;
+}
 
-अटल पूर्णांक
-nvkm_udevice_समय(काष्ठा nvkm_udevice *udev, व्योम *data, u32 size)
-अणु
-	काष्ठा nvkm_object *object = &udev->object;
-	काष्ठा nvkm_device *device = udev->device;
-	जोड़ अणु
-		काष्ठा nv_device_समय_v0 v0;
-	पूर्ण *args = data;
-	पूर्णांक ret = -ENOSYS;
+static int
+nvkm_udevice_time(struct nvkm_udevice *udev, void *data, u32 size)
+{
+	struct nvkm_object *object = &udev->object;
+	struct nvkm_device *device = udev->device;
+	union {
+		struct nv_device_time_v0 v0;
+	} *args = data;
+	int ret = -ENOSYS;
 
-	nvअगर_ioctl(object, "device time size %d\n", size);
-	अगर (!(ret = nvअगर_unpack(ret, &data, &size, args->v0, 0, 0, false))) अणु
-		nvअगर_ioctl(object, "device time vers %d\n", args->v0.version);
-		args->v0.समय = nvkm_समयr_पढ़ो(device->समयr);
-	पूर्ण
+	nvif_ioctl(object, "device time size %d\n", size);
+	if (!(ret = nvif_unpack(ret, &data, &size, args->v0, 0, 0, false))) {
+		nvif_ioctl(object, "device time vers %d\n", args->v0.version);
+		args->v0.time = nvkm_timer_read(device->timer);
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक
-nvkm_udevice_mthd(काष्ठा nvkm_object *object, u32 mthd, व्योम *data, u32 size)
-अणु
-	काष्ठा nvkm_udevice *udev = nvkm_udevice(object);
-	nvअगर_ioctl(object, "device mthd %08x\n", mthd);
-	चयन (mthd) अणु
-	हाल NV_DEVICE_V0_INFO:
-		वापस nvkm_udevice_info(udev, data, size);
-	हाल NV_DEVICE_V0_TIME:
-		वापस nvkm_udevice_समय(udev, data, size);
-	शेष:
-		अवरोध;
-	पूर्ण
-	वापस -EINVAL;
-पूर्ण
+static int
+nvkm_udevice_mthd(struct nvkm_object *object, u32 mthd, void *data, u32 size)
+{
+	struct nvkm_udevice *udev = nvkm_udevice(object);
+	nvif_ioctl(object, "device mthd %08x\n", mthd);
+	switch (mthd) {
+	case NV_DEVICE_V0_INFO:
+		return nvkm_udevice_info(udev, data, size);
+	case NV_DEVICE_V0_TIME:
+		return nvkm_udevice_time(udev, data, size);
+	default:
+		break;
+	}
+	return -EINVAL;
+}
 
-अटल पूर्णांक
-nvkm_udevice_rd08(काष्ठा nvkm_object *object, u64 addr, u8 *data)
-अणु
-	काष्ठा nvkm_udevice *udev = nvkm_udevice(object);
+static int
+nvkm_udevice_rd08(struct nvkm_object *object, u64 addr, u8 *data)
+{
+	struct nvkm_udevice *udev = nvkm_udevice(object);
 	*data = nvkm_rd08(udev->device, addr);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-nvkm_udevice_rd16(काष्ठा nvkm_object *object, u64 addr, u16 *data)
-अणु
-	काष्ठा nvkm_udevice *udev = nvkm_udevice(object);
+static int
+nvkm_udevice_rd16(struct nvkm_object *object, u64 addr, u16 *data)
+{
+	struct nvkm_udevice *udev = nvkm_udevice(object);
 	*data = nvkm_rd16(udev->device, addr);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-nvkm_udevice_rd32(काष्ठा nvkm_object *object, u64 addr, u32 *data)
-अणु
-	काष्ठा nvkm_udevice *udev = nvkm_udevice(object);
+static int
+nvkm_udevice_rd32(struct nvkm_object *object, u64 addr, u32 *data)
+{
+	struct nvkm_udevice *udev = nvkm_udevice(object);
 	*data = nvkm_rd32(udev->device, addr);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-nvkm_udevice_wr08(काष्ठा nvkm_object *object, u64 addr, u8 data)
-अणु
-	काष्ठा nvkm_udevice *udev = nvkm_udevice(object);
+static int
+nvkm_udevice_wr08(struct nvkm_object *object, u64 addr, u8 data)
+{
+	struct nvkm_udevice *udev = nvkm_udevice(object);
 	nvkm_wr08(udev->device, addr, data);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-nvkm_udevice_wr16(काष्ठा nvkm_object *object, u64 addr, u16 data)
-अणु
-	काष्ठा nvkm_udevice *udev = nvkm_udevice(object);
+static int
+nvkm_udevice_wr16(struct nvkm_object *object, u64 addr, u16 data)
+{
+	struct nvkm_udevice *udev = nvkm_udevice(object);
 	nvkm_wr16(udev->device, addr, data);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-nvkm_udevice_wr32(काष्ठा nvkm_object *object, u64 addr, u32 data)
-अणु
-	काष्ठा nvkm_udevice *udev = nvkm_udevice(object);
+static int
+nvkm_udevice_wr32(struct nvkm_object *object, u64 addr, u32 data)
+{
+	struct nvkm_udevice *udev = nvkm_udevice(object);
 	nvkm_wr32(udev->device, addr, data);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-nvkm_udevice_map(काष्ठा nvkm_object *object, व्योम *argv, u32 argc,
-		 क्रमागत nvkm_object_map *type, u64 *addr, u64 *size)
-अणु
-	काष्ठा nvkm_udevice *udev = nvkm_udevice(object);
-	काष्ठा nvkm_device *device = udev->device;
+static int
+nvkm_udevice_map(struct nvkm_object *object, void *argv, u32 argc,
+		 enum nvkm_object_map *type, u64 *addr, u64 *size)
+{
+	struct nvkm_udevice *udev = nvkm_udevice(object);
+	struct nvkm_device *device = udev->device;
 	*type = NVKM_OBJECT_MAP_IO;
 	*addr = device->func->resource_addr(device, 0);
 	*size = device->func->resource_size(device, 0);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-nvkm_udevice_fini(काष्ठा nvkm_object *object, bool suspend)
-अणु
-	काष्ठा nvkm_udevice *udev = nvkm_udevice(object);
-	काष्ठा nvkm_device *device = udev->device;
-	पूर्णांक ret = 0;
+static int
+nvkm_udevice_fini(struct nvkm_object *object, bool suspend)
+{
+	struct nvkm_udevice *udev = nvkm_udevice(object);
+	struct nvkm_device *device = udev->device;
+	int ret = 0;
 
 	mutex_lock(&device->mutex);
-	अगर (!--device->refcount) अणु
+	if (!--device->refcount) {
 		ret = nvkm_device_fini(device, suspend);
-		अगर (ret && suspend) अणु
+		if (ret && suspend) {
 			device->refcount++;
-			जाओ करोne;
-		पूर्ण
-	पूर्ण
+			goto done;
+		}
+	}
 
-करोne:
+done:
 	mutex_unlock(&device->mutex);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक
-nvkm_udevice_init(काष्ठा nvkm_object *object)
-अणु
-	काष्ठा nvkm_udevice *udev = nvkm_udevice(object);
-	काष्ठा nvkm_device *device = udev->device;
-	पूर्णांक ret = 0;
+static int
+nvkm_udevice_init(struct nvkm_object *object)
+{
+	struct nvkm_udevice *udev = nvkm_udevice(object);
+	struct nvkm_device *device = udev->device;
+	int ret = 0;
 
 	mutex_lock(&device->mutex);
-	अगर (!device->refcount++) अणु
+	if (!device->refcount++) {
 		ret = nvkm_device_init(device);
-		अगर (ret) अणु
+		if (ret) {
 			device->refcount--;
-			जाओ करोne;
-		पूर्ण
-	पूर्ण
+			goto done;
+		}
+	}
 
-करोne:
+done:
 	mutex_unlock(&device->mutex);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक
-nvkm_udevice_child_new(स्थिर काष्ठा nvkm_oclass *oclass,
-		       व्योम *data, u32 size, काष्ठा nvkm_object **pobject)
-अणु
-	काष्ठा nvkm_udevice *udev = nvkm_udevice(oclass->parent);
-	स्थिर काष्ठा nvkm_device_oclass *sclass = oclass->priv;
-	वापस sclass->ctor(udev->device, oclass, data, size, pobject);
-पूर्ण
+static int
+nvkm_udevice_child_new(const struct nvkm_oclass *oclass,
+		       void *data, u32 size, struct nvkm_object **pobject)
+{
+	struct nvkm_udevice *udev = nvkm_udevice(oclass->parent);
+	const struct nvkm_device_oclass *sclass = oclass->priv;
+	return sclass->ctor(udev->device, oclass, data, size, pobject);
+}
 
-अटल पूर्णांक
-nvkm_udevice_child_get(काष्ठा nvkm_object *object, पूर्णांक index,
-		       काष्ठा nvkm_oclass *oclass)
-अणु
-	काष्ठा nvkm_udevice *udev = nvkm_udevice(object);
-	काष्ठा nvkm_device *device = udev->device;
-	काष्ठा nvkm_engine *engine;
+static int
+nvkm_udevice_child_get(struct nvkm_object *object, int index,
+		       struct nvkm_oclass *oclass)
+{
+	struct nvkm_udevice *udev = nvkm_udevice(object);
+	struct nvkm_device *device = udev->device;
+	struct nvkm_engine *engine;
 	u64 mask = (1ULL << NVKM_ENGINE_DMAOBJ) |
 		   (1ULL << NVKM_ENGINE_FIFO) |
 		   (1ULL << NVKM_ENGINE_DISP) |
 		   (1ULL << NVKM_ENGINE_PM);
-	स्थिर काष्ठा nvkm_device_oclass *sclass = शून्य;
-	पूर्णांक i;
+	const struct nvkm_device_oclass *sclass = NULL;
+	int i;
 
-	क्रम (; i = __ffs64(mask), mask && !sclass; mask &= ~(1ULL << i)) अणु
-		अगर (!(engine = nvkm_device_engine(device, i, 0)) ||
+	for (; i = __ffs64(mask), mask && !sclass; mask &= ~(1ULL << i)) {
+		if (!(engine = nvkm_device_engine(device, i, 0)) ||
 		    !(engine->func->base.sclass))
-			जारी;
+			continue;
 		oclass->engine = engine;
 
 		index -= engine->func->base.sclass(oclass, index, &sclass);
-	पूर्ण
+	}
 
-	अगर (!sclass) अणु
-		अगर (index-- == 0)
+	if (!sclass) {
+		if (index-- == 0)
 			sclass = &nvkm_control_oclass;
-		अन्यथा अगर (device->mmu && index-- == 0)
+		else if (device->mmu && index-- == 0)
 			sclass = &device->mmu->user;
-		अन्यथा अगर (device->fault && index-- == 0)
+		else if (device->fault && index-- == 0)
 			sclass = &device->fault->user;
-		अन्यथा
-			वापस -EINVAL;
+		else
+			return -EINVAL;
 
 		oclass->base = sclass->base;
-	पूर्ण
+	}
 
 	oclass->ctor = nvkm_udevice_child_new;
 	oclass->priv = sclass;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा nvkm_object_func
-nvkm_udevice_super = अणु
+static const struct nvkm_object_func
+nvkm_udevice_super = {
 	.init = nvkm_udevice_init,
 	.fini = nvkm_udevice_fini,
 	.mthd = nvkm_udevice_mthd,
@@ -367,62 +366,62 @@ nvkm_udevice_super = अणु
 	.wr16 = nvkm_udevice_wr16,
 	.wr32 = nvkm_udevice_wr32,
 	.sclass = nvkm_udevice_child_get,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा nvkm_object_func
-nvkm_udevice = अणु
+static const struct nvkm_object_func
+nvkm_udevice = {
 	.init = nvkm_udevice_init,
 	.fini = nvkm_udevice_fini,
 	.mthd = nvkm_udevice_mthd,
 	.sclass = nvkm_udevice_child_get,
-पूर्ण;
+};
 
-अटल पूर्णांक
-nvkm_udevice_new(स्थिर काष्ठा nvkm_oclass *oclass, व्योम *data, u32 size,
-		 काष्ठा nvkm_object **pobject)
-अणु
-	जोड़ अणु
-		काष्ठा nv_device_v0 v0;
-	पूर्ण *args = data;
-	काष्ठा nvkm_client *client = oclass->client;
-	काष्ठा nvkm_object *parent = &client->object;
-	स्थिर काष्ठा nvkm_object_func *func;
-	काष्ठा nvkm_udevice *udev;
-	पूर्णांक ret = -ENOSYS;
+static int
+nvkm_udevice_new(const struct nvkm_oclass *oclass, void *data, u32 size,
+		 struct nvkm_object **pobject)
+{
+	union {
+		struct nv_device_v0 v0;
+	} *args = data;
+	struct nvkm_client *client = oclass->client;
+	struct nvkm_object *parent = &client->object;
+	const struct nvkm_object_func *func;
+	struct nvkm_udevice *udev;
+	int ret = -ENOSYS;
 
-	nvअगर_ioctl(parent, "create device size %d\n", size);
-	अगर (!(ret = nvअगर_unpack(ret, &data, &size, args->v0, 0, 0, false))) अणु
-		nvअगर_ioctl(parent, "create device v%d device %016llx\n",
+	nvif_ioctl(parent, "create device size %d\n", size);
+	if (!(ret = nvif_unpack(ret, &data, &size, args->v0, 0, 0, false))) {
+		nvif_ioctl(parent, "create device v%d device %016llx\n",
 			   args->v0.version, args->v0.device);
-	पूर्ण अन्यथा
-		वापस ret;
+	} else
+		return ret;
 
-	/* give priviledged clients रेजिस्टर access */
-	अगर (client->super)
+	/* give priviledged clients register access */
+	if (client->super)
 		func = &nvkm_udevice_super;
-	अन्यथा
+	else
 		func = &nvkm_udevice;
 
-	अगर (!(udev = kzalloc(माप(*udev), GFP_KERNEL)))
-		वापस -ENOMEM;
+	if (!(udev = kzalloc(sizeof(*udev), GFP_KERNEL)))
+		return -ENOMEM;
 	nvkm_object_ctor(func, oclass, &udev->object);
 	*pobject = &udev->object;
 
 	/* find the device that matches what the client requested */
-	अगर (args->v0.device != ~0)
+	if (args->v0.device != ~0)
 		udev->device = nvkm_device_find(args->v0.device);
-	अन्यथा
+	else
 		udev->device = nvkm_device_find(client->device);
-	अगर (!udev->device)
-		वापस -ENODEV;
+	if (!udev->device)
+		return -ENODEV;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-स्थिर काष्ठा nvkm_sclass
-nvkm_udevice_sclass = अणु
+const struct nvkm_sclass
+nvkm_udevice_sclass = {
 	.oclass = NV_DEVICE,
 	.minver = 0,
 	.maxver = 0,
 	.ctor = nvkm_udevice_new,
-पूर्ण;
+};

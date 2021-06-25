@@ -1,8 +1,7 @@
-<शैली गुरु>
 /*
- * drivers/watchकरोg/orion_wdt.c
+ * drivers/watchdog/orion_wdt.c
  *
- * Watchकरोg driver क्रम Orion/Kirkwood processors
+ * Watchdog driver for Orion/Kirkwood processors
  *
  * Author: Sylver Bruneau <sylver.bruneau@googlemail.com>
  *
@@ -11,673 +10,673 @@
  * warranty of any kind, whether express or implied.
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/module.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/types.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/watchकरोg.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/clk.h>
-#समावेश <linux/err.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_device.h>
+#include <linux/module.h>
+#include <linux/moduleparam.h>
+#include <linux/types.h>
+#include <linux/kernel.h>
+#include <linux/platform_device.h>
+#include <linux/watchdog.h>
+#include <linux/interrupt.h>
+#include <linux/io.h>
+#include <linux/clk.h>
+#include <linux/err.h>
+#include <linux/of.h>
+#include <linux/of_device.h>
 
-/* RSTOUT mask रेजिस्टर physical address क्रम Orion5x, Kirkwood and Dove */
-#घोषणा ORION_RSTOUT_MASK_OFFSET	0x20108
+/* RSTOUT mask register physical address for Orion5x, Kirkwood and Dove */
+#define ORION_RSTOUT_MASK_OFFSET	0x20108
 
-/* Internal रेजिस्टरs can be configured at any 1 MiB aligned address */
-#घोषणा INTERNAL_REGS_MASK		~(SZ_1M - 1)
+/* Internal registers can be configured at any 1 MiB aligned address */
+#define INTERNAL_REGS_MASK		~(SZ_1M - 1)
 
 /*
- * Watchकरोg समयr block रेजिस्टरs.
+ * Watchdog timer block registers.
  */
-#घोषणा TIMER_CTRL		0x0000
-#घोषणा TIMER1_FIXED_ENABLE_BIT	BIT(12)
-#घोषणा WDT_AXP_FIXED_ENABLE_BIT BIT(10)
-#घोषणा TIMER1_ENABLE_BIT	BIT(2)
+#define TIMER_CTRL		0x0000
+#define TIMER1_FIXED_ENABLE_BIT	BIT(12)
+#define WDT_AXP_FIXED_ENABLE_BIT BIT(10)
+#define TIMER1_ENABLE_BIT	BIT(2)
 
-#घोषणा TIMER_A370_STATUS	0x0004
-#घोषणा WDT_A370_EXPIRED	BIT(31)
-#घोषणा TIMER1_STATUS_BIT	BIT(8)
+#define TIMER_A370_STATUS	0x0004
+#define WDT_A370_EXPIRED	BIT(31)
+#define TIMER1_STATUS_BIT	BIT(8)
 
-#घोषणा TIMER1_VAL_OFF		0x001c
+#define TIMER1_VAL_OFF		0x001c
 
-#घोषणा WDT_MAX_CYCLE_COUNT	0xffffffff
+#define WDT_MAX_CYCLE_COUNT	0xffffffff
 
-#घोषणा WDT_A370_RATIO_MASK(v)	((v) << 16)
-#घोषणा WDT_A370_RATIO_SHIFT	5
-#घोषणा WDT_A370_RATIO		(1 << WDT_A370_RATIO_SHIFT)
+#define WDT_A370_RATIO_MASK(v)	((v) << 16)
+#define WDT_A370_RATIO_SHIFT	5
+#define WDT_A370_RATIO		(1 << WDT_A370_RATIO_SHIFT)
 
-अटल bool nowayout = WATCHDOG_NOWAYOUT;
-अटल पूर्णांक heartbeat;		/* module parameter (seconds) */
+static bool nowayout = WATCHDOG_NOWAYOUT;
+static int heartbeat;		/* module parameter (seconds) */
 
-काष्ठा orion_watchकरोg;
+struct orion_watchdog;
 
-काष्ठा orion_watchकरोg_data अणु
-	पूर्णांक wdt_counter_offset;
-	पूर्णांक wdt_enable_bit;
-	पूर्णांक rstout_enable_bit;
-	पूर्णांक rstout_mask_bit;
-	पूर्णांक (*घड़ी_init)(काष्ठा platक्रमm_device *,
-			  काष्ठा orion_watchकरोg *);
-	पूर्णांक (*enabled)(काष्ठा orion_watchकरोg *);
-	पूर्णांक (*start)(काष्ठा watchकरोg_device *);
-	पूर्णांक (*stop)(काष्ठा watchकरोg_device *);
-पूर्ण;
+struct orion_watchdog_data {
+	int wdt_counter_offset;
+	int wdt_enable_bit;
+	int rstout_enable_bit;
+	int rstout_mask_bit;
+	int (*clock_init)(struct platform_device *,
+			  struct orion_watchdog *);
+	int (*enabled)(struct orion_watchdog *);
+	int (*start)(struct watchdog_device *);
+	int (*stop)(struct watchdog_device *);
+};
 
-काष्ठा orion_watchकरोg अणु
-	काष्ठा watchकरोg_device wdt;
-	व्योम __iomem *reg;
-	व्योम __iomem *rstout;
-	व्योम __iomem *rstout_mask;
-	अचिन्हित दीर्घ clk_rate;
-	काष्ठा clk *clk;
-	स्थिर काष्ठा orion_watchकरोg_data *data;
-पूर्ण;
+struct orion_watchdog {
+	struct watchdog_device wdt;
+	void __iomem *reg;
+	void __iomem *rstout;
+	void __iomem *rstout_mask;
+	unsigned long clk_rate;
+	struct clk *clk;
+	const struct orion_watchdog_data *data;
+};
 
-अटल पूर्णांक orion_wdt_घड़ी_init(काष्ठा platक्रमm_device *pdev,
-				काष्ठा orion_watchकरोg *dev)
-अणु
-	पूर्णांक ret;
+static int orion_wdt_clock_init(struct platform_device *pdev,
+				struct orion_watchdog *dev)
+{
+	int ret;
 
-	dev->clk = clk_get(&pdev->dev, शून्य);
-	अगर (IS_ERR(dev->clk))
-		वापस PTR_ERR(dev->clk);
+	dev->clk = clk_get(&pdev->dev, NULL);
+	if (IS_ERR(dev->clk))
+		return PTR_ERR(dev->clk);
 	ret = clk_prepare_enable(dev->clk);
-	अगर (ret) अणु
+	if (ret) {
 		clk_put(dev->clk);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	dev->clk_rate = clk_get_rate(dev->clk);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक armada370_wdt_घड़ी_init(काष्ठा platक्रमm_device *pdev,
-				    काष्ठा orion_watchकरोg *dev)
-अणु
-	पूर्णांक ret;
+static int armada370_wdt_clock_init(struct platform_device *pdev,
+				    struct orion_watchdog *dev)
+{
+	int ret;
 
-	dev->clk = clk_get(&pdev->dev, शून्य);
-	अगर (IS_ERR(dev->clk))
-		वापस PTR_ERR(dev->clk);
+	dev->clk = clk_get(&pdev->dev, NULL);
+	if (IS_ERR(dev->clk))
+		return PTR_ERR(dev->clk);
 	ret = clk_prepare_enable(dev->clk);
-	अगर (ret) अणु
+	if (ret) {
 		clk_put(dev->clk);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	/* Setup watchकरोg input घड़ी */
-	atomic_io_modअगरy(dev->reg + TIMER_CTRL,
+	/* Setup watchdog input clock */
+	atomic_io_modify(dev->reg + TIMER_CTRL,
 			WDT_A370_RATIO_MASK(WDT_A370_RATIO_SHIFT),
 			WDT_A370_RATIO_MASK(WDT_A370_RATIO_SHIFT));
 
 	dev->clk_rate = clk_get_rate(dev->clk) / WDT_A370_RATIO;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक armada375_wdt_घड़ी_init(काष्ठा platक्रमm_device *pdev,
-				    काष्ठा orion_watchकरोg *dev)
-अणु
-	पूर्णांक ret;
+static int armada375_wdt_clock_init(struct platform_device *pdev,
+				    struct orion_watchdog *dev)
+{
+	int ret;
 
 	dev->clk = of_clk_get_by_name(pdev->dev.of_node, "fixed");
-	अगर (!IS_ERR(dev->clk)) अणु
+	if (!IS_ERR(dev->clk)) {
 		ret = clk_prepare_enable(dev->clk);
-		अगर (ret) अणु
+		if (ret) {
 			clk_put(dev->clk);
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 
-		atomic_io_modअगरy(dev->reg + TIMER_CTRL,
+		atomic_io_modify(dev->reg + TIMER_CTRL,
 				WDT_AXP_FIXED_ENABLE_BIT,
 				WDT_AXP_FIXED_ENABLE_BIT);
 		dev->clk_rate = clk_get_rate(dev->clk);
 
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	/* Mandatory fallback क्रम proper devicetree backward compatibility */
-	dev->clk = clk_get(&pdev->dev, शून्य);
-	अगर (IS_ERR(dev->clk))
-		वापस PTR_ERR(dev->clk);
+	/* Mandatory fallback for proper devicetree backward compatibility */
+	dev->clk = clk_get(&pdev->dev, NULL);
+	if (IS_ERR(dev->clk))
+		return PTR_ERR(dev->clk);
 
 	ret = clk_prepare_enable(dev->clk);
-	अगर (ret) अणु
+	if (ret) {
 		clk_put(dev->clk);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	atomic_io_modअगरy(dev->reg + TIMER_CTRL,
+	atomic_io_modify(dev->reg + TIMER_CTRL,
 			WDT_A370_RATIO_MASK(WDT_A370_RATIO_SHIFT),
 			WDT_A370_RATIO_MASK(WDT_A370_RATIO_SHIFT));
 	dev->clk_rate = clk_get_rate(dev->clk) / WDT_A370_RATIO;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक armadaxp_wdt_घड़ी_init(काष्ठा platक्रमm_device *pdev,
-				   काष्ठा orion_watchकरोg *dev)
-अणु
-	पूर्णांक ret;
+static int armadaxp_wdt_clock_init(struct platform_device *pdev,
+				   struct orion_watchdog *dev)
+{
+	int ret;
 	u32 val;
 
 	dev->clk = of_clk_get_by_name(pdev->dev.of_node, "fixed");
-	अगर (IS_ERR(dev->clk))
-		वापस PTR_ERR(dev->clk);
+	if (IS_ERR(dev->clk))
+		return PTR_ERR(dev->clk);
 	ret = clk_prepare_enable(dev->clk);
-	अगर (ret) अणु
+	if (ret) {
 		clk_put(dev->clk);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	/* Fix the wdt and समयr1 घड़ी freqency to 25MHz */
+	/* Fix the wdt and timer1 clock freqency to 25MHz */
 	val = WDT_AXP_FIXED_ENABLE_BIT | TIMER1_FIXED_ENABLE_BIT;
-	atomic_io_modअगरy(dev->reg + TIMER_CTRL, val, val);
+	atomic_io_modify(dev->reg + TIMER_CTRL, val, val);
 
 	dev->clk_rate = clk_get_rate(dev->clk);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक orion_wdt_ping(काष्ठा watchकरोg_device *wdt_dev)
-अणु
-	काष्ठा orion_watchकरोg *dev = watchकरोg_get_drvdata(wdt_dev);
-	/* Reload watchकरोg duration */
-	ग_लिखोl(dev->clk_rate * wdt_dev->समयout,
+static int orion_wdt_ping(struct watchdog_device *wdt_dev)
+{
+	struct orion_watchdog *dev = watchdog_get_drvdata(wdt_dev);
+	/* Reload watchdog duration */
+	writel(dev->clk_rate * wdt_dev->timeout,
 	       dev->reg + dev->data->wdt_counter_offset);
-	अगर (dev->wdt.info->options & WDIOF_PRETIMEOUT)
-		ग_लिखोl(dev->clk_rate * (wdt_dev->समयout - wdt_dev->preसमयout),
+	if (dev->wdt.info->options & WDIOF_PRETIMEOUT)
+		writel(dev->clk_rate * (wdt_dev->timeout - wdt_dev->pretimeout),
 		       dev->reg + TIMER1_VAL_OFF);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक armada375_start(काष्ठा watchकरोg_device *wdt_dev)
-अणु
-	काष्ठा orion_watchकरोg *dev = watchकरोg_get_drvdata(wdt_dev);
+static int armada375_start(struct watchdog_device *wdt_dev)
+{
+	struct orion_watchdog *dev = watchdog_get_drvdata(wdt_dev);
 	u32 reg;
 
-	/* Set watchकरोg duration */
-	ग_लिखोl(dev->clk_rate * wdt_dev->समयout,
+	/* Set watchdog duration */
+	writel(dev->clk_rate * wdt_dev->timeout,
 	       dev->reg + dev->data->wdt_counter_offset);
-	अगर (dev->wdt.info->options & WDIOF_PRETIMEOUT)
-		ग_लिखोl(dev->clk_rate * (wdt_dev->समयout - wdt_dev->preसमयout),
+	if (dev->wdt.info->options & WDIOF_PRETIMEOUT)
+		writel(dev->clk_rate * (wdt_dev->timeout - wdt_dev->pretimeout),
 		       dev->reg + TIMER1_VAL_OFF);
 
-	/* Clear the watchकरोg expiration bit */
-	atomic_io_modअगरy(dev->reg + TIMER_A370_STATUS, WDT_A370_EXPIRED, 0);
+	/* Clear the watchdog expiration bit */
+	atomic_io_modify(dev->reg + TIMER_A370_STATUS, WDT_A370_EXPIRED, 0);
 
-	/* Enable watchकरोg समयr */
+	/* Enable watchdog timer */
 	reg = dev->data->wdt_enable_bit;
-	अगर (dev->wdt.info->options & WDIOF_PRETIMEOUT)
+	if (dev->wdt.info->options & WDIOF_PRETIMEOUT)
 		reg |= TIMER1_ENABLE_BIT;
-	atomic_io_modअगरy(dev->reg + TIMER_CTRL, reg, reg);
+	atomic_io_modify(dev->reg + TIMER_CTRL, reg, reg);
 
-	/* Enable reset on watchकरोg */
-	reg = पढ़ोl(dev->rstout);
+	/* Enable reset on watchdog */
+	reg = readl(dev->rstout);
 	reg |= dev->data->rstout_enable_bit;
-	ग_लिखोl(reg, dev->rstout);
+	writel(reg, dev->rstout);
 
-	atomic_io_modअगरy(dev->rstout_mask, dev->data->rstout_mask_bit, 0);
-	वापस 0;
-पूर्ण
+	atomic_io_modify(dev->rstout_mask, dev->data->rstout_mask_bit, 0);
+	return 0;
+}
 
-अटल पूर्णांक armada370_start(काष्ठा watchकरोg_device *wdt_dev)
-अणु
-	काष्ठा orion_watchकरोg *dev = watchकरोg_get_drvdata(wdt_dev);
+static int armada370_start(struct watchdog_device *wdt_dev)
+{
+	struct orion_watchdog *dev = watchdog_get_drvdata(wdt_dev);
 	u32 reg;
 
-	/* Set watchकरोg duration */
-	ग_लिखोl(dev->clk_rate * wdt_dev->समयout,
+	/* Set watchdog duration */
+	writel(dev->clk_rate * wdt_dev->timeout,
 	       dev->reg + dev->data->wdt_counter_offset);
 
-	/* Clear the watchकरोg expiration bit */
-	atomic_io_modअगरy(dev->reg + TIMER_A370_STATUS, WDT_A370_EXPIRED, 0);
+	/* Clear the watchdog expiration bit */
+	atomic_io_modify(dev->reg + TIMER_A370_STATUS, WDT_A370_EXPIRED, 0);
 
-	/* Enable watchकरोg समयr */
-	atomic_io_modअगरy(dev->reg + TIMER_CTRL, dev->data->wdt_enable_bit,
+	/* Enable watchdog timer */
+	atomic_io_modify(dev->reg + TIMER_CTRL, dev->data->wdt_enable_bit,
 						dev->data->wdt_enable_bit);
 
-	/* Enable reset on watchकरोg */
-	reg = पढ़ोl(dev->rstout);
+	/* Enable reset on watchdog */
+	reg = readl(dev->rstout);
 	reg |= dev->data->rstout_enable_bit;
-	ग_लिखोl(reg, dev->rstout);
-	वापस 0;
-पूर्ण
+	writel(reg, dev->rstout);
+	return 0;
+}
 
-अटल पूर्णांक orion_start(काष्ठा watchकरोg_device *wdt_dev)
-अणु
-	काष्ठा orion_watchकरोg *dev = watchकरोg_get_drvdata(wdt_dev);
+static int orion_start(struct watchdog_device *wdt_dev)
+{
+	struct orion_watchdog *dev = watchdog_get_drvdata(wdt_dev);
 
-	/* Set watchकरोg duration */
-	ग_लिखोl(dev->clk_rate * wdt_dev->समयout,
+	/* Set watchdog duration */
+	writel(dev->clk_rate * wdt_dev->timeout,
 	       dev->reg + dev->data->wdt_counter_offset);
 
-	/* Enable watchकरोg समयr */
-	atomic_io_modअगरy(dev->reg + TIMER_CTRL, dev->data->wdt_enable_bit,
+	/* Enable watchdog timer */
+	atomic_io_modify(dev->reg + TIMER_CTRL, dev->data->wdt_enable_bit,
 						dev->data->wdt_enable_bit);
 
-	/* Enable reset on watchकरोg */
-	atomic_io_modअगरy(dev->rstout, dev->data->rstout_enable_bit,
+	/* Enable reset on watchdog */
+	atomic_io_modify(dev->rstout, dev->data->rstout_enable_bit,
 				      dev->data->rstout_enable_bit);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक orion_wdt_start(काष्ठा watchकरोg_device *wdt_dev)
-अणु
-	काष्ठा orion_watchकरोg *dev = watchकरोg_get_drvdata(wdt_dev);
+static int orion_wdt_start(struct watchdog_device *wdt_dev)
+{
+	struct orion_watchdog *dev = watchdog_get_drvdata(wdt_dev);
 
 	/* There are some per-SoC quirks to handle */
-	वापस dev->data->start(wdt_dev);
-पूर्ण
+	return dev->data->start(wdt_dev);
+}
 
-अटल पूर्णांक orion_stop(काष्ठा watchकरोg_device *wdt_dev)
-अणु
-	काष्ठा orion_watchकरोg *dev = watchकरोg_get_drvdata(wdt_dev);
+static int orion_stop(struct watchdog_device *wdt_dev)
+{
+	struct orion_watchdog *dev = watchdog_get_drvdata(wdt_dev);
 
-	/* Disable reset on watchकरोg */
-	atomic_io_modअगरy(dev->rstout, dev->data->rstout_enable_bit, 0);
+	/* Disable reset on watchdog */
+	atomic_io_modify(dev->rstout, dev->data->rstout_enable_bit, 0);
 
-	/* Disable watchकरोg समयr */
-	atomic_io_modअगरy(dev->reg + TIMER_CTRL, dev->data->wdt_enable_bit, 0);
+	/* Disable watchdog timer */
+	atomic_io_modify(dev->reg + TIMER_CTRL, dev->data->wdt_enable_bit, 0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक armada375_stop(काष्ठा watchकरोg_device *wdt_dev)
-अणु
-	काष्ठा orion_watchकरोg *dev = watchकरोg_get_drvdata(wdt_dev);
+static int armada375_stop(struct watchdog_device *wdt_dev)
+{
+	struct orion_watchdog *dev = watchdog_get_drvdata(wdt_dev);
 	u32 reg, mask;
 
-	/* Disable reset on watchकरोg */
-	atomic_io_modअगरy(dev->rstout_mask, dev->data->rstout_mask_bit,
+	/* Disable reset on watchdog */
+	atomic_io_modify(dev->rstout_mask, dev->data->rstout_mask_bit,
 					   dev->data->rstout_mask_bit);
-	reg = पढ़ोl(dev->rstout);
+	reg = readl(dev->rstout);
 	reg &= ~dev->data->rstout_enable_bit;
-	ग_लिखोl(reg, dev->rstout);
+	writel(reg, dev->rstout);
 
-	/* Disable watchकरोg समयr */
+	/* Disable watchdog timer */
 	mask = dev->data->wdt_enable_bit;
-	अगर (wdt_dev->info->options & WDIOF_PRETIMEOUT)
+	if (wdt_dev->info->options & WDIOF_PRETIMEOUT)
 		mask |= TIMER1_ENABLE_BIT;
-	atomic_io_modअगरy(dev->reg + TIMER_CTRL, mask, 0);
+	atomic_io_modify(dev->reg + TIMER_CTRL, mask, 0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक armada370_stop(काष्ठा watchकरोg_device *wdt_dev)
-अणु
-	काष्ठा orion_watchकरोg *dev = watchकरोg_get_drvdata(wdt_dev);
+static int armada370_stop(struct watchdog_device *wdt_dev)
+{
+	struct orion_watchdog *dev = watchdog_get_drvdata(wdt_dev);
 	u32 reg;
 
-	/* Disable reset on watchकरोg */
-	reg = पढ़ोl(dev->rstout);
+	/* Disable reset on watchdog */
+	reg = readl(dev->rstout);
 	reg &= ~dev->data->rstout_enable_bit;
-	ग_लिखोl(reg, dev->rstout);
+	writel(reg, dev->rstout);
 
-	/* Disable watchकरोg समयr */
-	atomic_io_modअगरy(dev->reg + TIMER_CTRL, dev->data->wdt_enable_bit, 0);
+	/* Disable watchdog timer */
+	atomic_io_modify(dev->reg + TIMER_CTRL, dev->data->wdt_enable_bit, 0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक orion_wdt_stop(काष्ठा watchकरोg_device *wdt_dev)
-अणु
-	काष्ठा orion_watchकरोg *dev = watchकरोg_get_drvdata(wdt_dev);
+static int orion_wdt_stop(struct watchdog_device *wdt_dev)
+{
+	struct orion_watchdog *dev = watchdog_get_drvdata(wdt_dev);
 
-	वापस dev->data->stop(wdt_dev);
-पूर्ण
+	return dev->data->stop(wdt_dev);
+}
 
-अटल पूर्णांक orion_enabled(काष्ठा orion_watchकरोg *dev)
-अणु
+static int orion_enabled(struct orion_watchdog *dev)
+{
 	bool enabled, running;
 
-	enabled = पढ़ोl(dev->rstout) & dev->data->rstout_enable_bit;
-	running = पढ़ोl(dev->reg + TIMER_CTRL) & dev->data->wdt_enable_bit;
+	enabled = readl(dev->rstout) & dev->data->rstout_enable_bit;
+	running = readl(dev->reg + TIMER_CTRL) & dev->data->wdt_enable_bit;
 
-	वापस enabled && running;
-पूर्ण
+	return enabled && running;
+}
 
-अटल पूर्णांक armada375_enabled(काष्ठा orion_watchकरोg *dev)
-अणु
+static int armada375_enabled(struct orion_watchdog *dev)
+{
 	bool masked, enabled, running;
 
-	masked = पढ़ोl(dev->rstout_mask) & dev->data->rstout_mask_bit;
-	enabled = पढ़ोl(dev->rstout) & dev->data->rstout_enable_bit;
-	running = पढ़ोl(dev->reg + TIMER_CTRL) & dev->data->wdt_enable_bit;
+	masked = readl(dev->rstout_mask) & dev->data->rstout_mask_bit;
+	enabled = readl(dev->rstout) & dev->data->rstout_enable_bit;
+	running = readl(dev->reg + TIMER_CTRL) & dev->data->wdt_enable_bit;
 
-	वापस !masked && enabled && running;
-पूर्ण
+	return !masked && enabled && running;
+}
 
-अटल पूर्णांक orion_wdt_enabled(काष्ठा watchकरोg_device *wdt_dev)
-अणु
-	काष्ठा orion_watchकरोg *dev = watchकरोg_get_drvdata(wdt_dev);
+static int orion_wdt_enabled(struct watchdog_device *wdt_dev)
+{
+	struct orion_watchdog *dev = watchdog_get_drvdata(wdt_dev);
 
-	वापस dev->data->enabled(dev);
-पूर्ण
+	return dev->data->enabled(dev);
+}
 
-अटल अचिन्हित पूर्णांक orion_wdt_get_समयleft(काष्ठा watchकरोg_device *wdt_dev)
-अणु
-	काष्ठा orion_watchकरोg *dev = watchकरोg_get_drvdata(wdt_dev);
-	वापस पढ़ोl(dev->reg + dev->data->wdt_counter_offset) / dev->clk_rate;
-पूर्ण
+static unsigned int orion_wdt_get_timeleft(struct watchdog_device *wdt_dev)
+{
+	struct orion_watchdog *dev = watchdog_get_drvdata(wdt_dev);
+	return readl(dev->reg + dev->data->wdt_counter_offset) / dev->clk_rate;
+}
 
-अटल काष्ठा watchकरोg_info orion_wdt_info = अणु
+static struct watchdog_info orion_wdt_info = {
 	.options = WDIOF_SETTIMEOUT | WDIOF_KEEPALIVEPING | WDIOF_MAGICCLOSE,
 	.identity = "Orion Watchdog",
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा watchकरोg_ops orion_wdt_ops = अणु
+static const struct watchdog_ops orion_wdt_ops = {
 	.owner = THIS_MODULE,
 	.start = orion_wdt_start,
 	.stop = orion_wdt_stop,
 	.ping = orion_wdt_ping,
-	.get_समयleft = orion_wdt_get_समयleft,
-पूर्ण;
+	.get_timeleft = orion_wdt_get_timeleft,
+};
 
-अटल irqवापस_t orion_wdt_irq(पूर्णांक irq, व्योम *devid)
-अणु
+static irqreturn_t orion_wdt_irq(int irq, void *devid)
+{
 	panic("Watchdog Timeout");
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल irqवापस_t orion_wdt_pre_irq(पूर्णांक irq, व्योम *devid)
-अणु
-	काष्ठा orion_watchकरोg *dev = devid;
+static irqreturn_t orion_wdt_pre_irq(int irq, void *devid)
+{
+	struct orion_watchdog *dev = devid;
 
-	atomic_io_modअगरy(dev->reg + TIMER_A370_STATUS,
+	atomic_io_modify(dev->reg + TIMER_A370_STATUS,
 			 TIMER1_STATUS_BIT, 0);
-	watchकरोg_notअगरy_preसमयout(&dev->wdt);
-	वापस IRQ_HANDLED;
-पूर्ण
+	watchdog_notify_pretimeout(&dev->wdt);
+	return IRQ_HANDLED;
+}
 
 /*
- * The original devicetree binding क्रम this driver specअगरied only
+ * The original devicetree binding for this driver specified only
  * one memory resource, so in order to keep DT backwards compatibility
- * we try to fallback to a hardcoded रेजिस्टर address, अगर the resource
+ * we try to fallback to a hardcoded register address, if the resource
  * is missing from the devicetree.
  */
-अटल व्योम __iomem *orion_wdt_ioremap_rstout(काष्ठा platक्रमm_device *pdev,
-					      phys_addr_t पूर्णांकernal_regs)
-अणु
-	काष्ठा resource *res;
+static void __iomem *orion_wdt_ioremap_rstout(struct platform_device *pdev,
+					      phys_addr_t internal_regs)
+{
+	struct resource *res;
 	phys_addr_t rstout;
 
-	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 1);
-	अगर (res)
-		वापस devm_ioremap(&pdev->dev, res->start,
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 1);
+	if (res)
+		return devm_ioremap(&pdev->dev, res->start,
 				    resource_size(res));
 
-	rstout = पूर्णांकernal_regs + ORION_RSTOUT_MASK_OFFSET;
+	rstout = internal_regs + ORION_RSTOUT_MASK_OFFSET;
 
 	WARN(1, FW_BUG "falling back to hardcoded RSTOUT reg %pa\n", &rstout);
-	वापस devm_ioremap(&pdev->dev, rstout, 0x4);
-पूर्ण
+	return devm_ioremap(&pdev->dev, rstout, 0x4);
+}
 
-अटल स्थिर काष्ठा orion_watchकरोg_data orion_data = अणु
+static const struct orion_watchdog_data orion_data = {
 	.rstout_enable_bit = BIT(1),
 	.wdt_enable_bit = BIT(4),
 	.wdt_counter_offset = 0x24,
-	.घड़ी_init = orion_wdt_घड़ी_init,
+	.clock_init = orion_wdt_clock_init,
 	.enabled = orion_enabled,
 	.start = orion_start,
 	.stop = orion_stop,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा orion_watchकरोg_data armada370_data = अणु
+static const struct orion_watchdog_data armada370_data = {
 	.rstout_enable_bit = BIT(8),
 	.wdt_enable_bit = BIT(8),
 	.wdt_counter_offset = 0x34,
-	.घड़ी_init = armada370_wdt_घड़ी_init,
+	.clock_init = armada370_wdt_clock_init,
 	.enabled = orion_enabled,
 	.start = armada370_start,
 	.stop = armada370_stop,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा orion_watchकरोg_data armadaxp_data = अणु
+static const struct orion_watchdog_data armadaxp_data = {
 	.rstout_enable_bit = BIT(8),
 	.wdt_enable_bit = BIT(8),
 	.wdt_counter_offset = 0x34,
-	.घड़ी_init = armadaxp_wdt_घड़ी_init,
+	.clock_init = armadaxp_wdt_clock_init,
 	.enabled = orion_enabled,
 	.start = armada370_start,
 	.stop = armada370_stop,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा orion_watchकरोg_data armada375_data = अणु
+static const struct orion_watchdog_data armada375_data = {
 	.rstout_enable_bit = BIT(8),
 	.rstout_mask_bit = BIT(10),
 	.wdt_enable_bit = BIT(8),
 	.wdt_counter_offset = 0x34,
-	.घड़ी_init = armada375_wdt_घड़ी_init,
+	.clock_init = armada375_wdt_clock_init,
 	.enabled = armada375_enabled,
 	.start = armada375_start,
 	.stop = armada375_stop,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा orion_watchकरोg_data armada380_data = अणु
+static const struct orion_watchdog_data armada380_data = {
 	.rstout_enable_bit = BIT(8),
 	.rstout_mask_bit = BIT(10),
 	.wdt_enable_bit = BIT(8),
 	.wdt_counter_offset = 0x34,
-	.घड़ी_init = armadaxp_wdt_घड़ी_init,
+	.clock_init = armadaxp_wdt_clock_init,
 	.enabled = armada375_enabled,
 	.start = armada375_start,
 	.stop = armada375_stop,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा of_device_id orion_wdt_of_match_table[] = अणु
-	अणु
+static const struct of_device_id orion_wdt_of_match_table[] = {
+	{
 		.compatible = "marvell,orion-wdt",
 		.data = &orion_data,
-	पूर्ण,
-	अणु
+	},
+	{
 		.compatible = "marvell,armada-370-wdt",
 		.data = &armada370_data,
-	पूर्ण,
-	अणु
+	},
+	{
 		.compatible = "marvell,armada-xp-wdt",
 		.data = &armadaxp_data,
-	पूर्ण,
-	अणु
+	},
+	{
 		.compatible = "marvell,armada-375-wdt",
 		.data = &armada375_data,
-	पूर्ण,
-	अणु
+	},
+	{
 		.compatible = "marvell,armada-380-wdt",
 		.data = &armada380_data,
-	पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+	},
+	{},
+};
 MODULE_DEVICE_TABLE(of, orion_wdt_of_match_table);
 
-अटल पूर्णांक orion_wdt_get_regs(काष्ठा platक्रमm_device *pdev,
-			      काष्ठा orion_watchकरोg *dev)
-अणु
-	काष्ठा device_node *node = pdev->dev.of_node;
-	काष्ठा resource *res;
+static int orion_wdt_get_regs(struct platform_device *pdev,
+			      struct orion_watchdog *dev)
+{
+	struct device_node *node = pdev->dev.of_node;
+	struct resource *res;
 
-	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
-	अगर (!res)
-		वापस -ENODEV;
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	if (!res)
+		return -ENODEV;
 	dev->reg = devm_ioremap(&pdev->dev, res->start,
 				resource_size(res));
-	अगर (!dev->reg)
-		वापस -ENOMEM;
+	if (!dev->reg)
+		return -ENOMEM;
 
-	/* Each supported compatible has some RSTOUT रेजिस्टर quirk */
-	अगर (of_device_is_compatible(node, "marvell,orion-wdt")) अणु
+	/* Each supported compatible has some RSTOUT register quirk */
+	if (of_device_is_compatible(node, "marvell,orion-wdt")) {
 
 		dev->rstout = orion_wdt_ioremap_rstout(pdev, res->start &
 						       INTERNAL_REGS_MASK);
-		अगर (!dev->rstout)
-			वापस -ENODEV;
+		if (!dev->rstout)
+			return -ENODEV;
 
-	पूर्ण अन्यथा अगर (of_device_is_compatible(node, "marvell,armada-370-wdt") ||
-		   of_device_is_compatible(node, "marvell,armada-xp-wdt")) अणु
+	} else if (of_device_is_compatible(node, "marvell,armada-370-wdt") ||
+		   of_device_is_compatible(node, "marvell,armada-xp-wdt")) {
 
-		/* Dedicated RSTOUT रेजिस्टर, can be requested. */
-		dev->rstout = devm_platक्रमm_ioremap_resource(pdev, 1);
-		अगर (IS_ERR(dev->rstout))
-			वापस PTR_ERR(dev->rstout);
+		/* Dedicated RSTOUT register, can be requested. */
+		dev->rstout = devm_platform_ioremap_resource(pdev, 1);
+		if (IS_ERR(dev->rstout))
+			return PTR_ERR(dev->rstout);
 
-	पूर्ण अन्यथा अगर (of_device_is_compatible(node, "marvell,armada-375-wdt") ||
-		   of_device_is_compatible(node, "marvell,armada-380-wdt")) अणु
+	} else if (of_device_is_compatible(node, "marvell,armada-375-wdt") ||
+		   of_device_is_compatible(node, "marvell,armada-380-wdt")) {
 
-		/* Dedicated RSTOUT रेजिस्टर, can be requested. */
-		dev->rstout = devm_platक्रमm_ioremap_resource(pdev, 1);
-		अगर (IS_ERR(dev->rstout))
-			वापस PTR_ERR(dev->rstout);
+		/* Dedicated RSTOUT register, can be requested. */
+		dev->rstout = devm_platform_ioremap_resource(pdev, 1);
+		if (IS_ERR(dev->rstout))
+			return PTR_ERR(dev->rstout);
 
-		res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 2);
-		अगर (!res)
-			वापस -ENODEV;
+		res = platform_get_resource(pdev, IORESOURCE_MEM, 2);
+		if (!res)
+			return -ENODEV;
 		dev->rstout_mask = devm_ioremap(&pdev->dev, res->start,
 						resource_size(res));
-		अगर (!dev->rstout_mask)
-			वापस -ENOMEM;
+		if (!dev->rstout_mask)
+			return -ENOMEM;
 
-	पूर्ण अन्यथा अणु
-		वापस -ENODEV;
-	पूर्ण
+	} else {
+		return -ENODEV;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक orion_wdt_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा orion_watchकरोg *dev;
-	स्थिर काष्ठा of_device_id *match;
-	अचिन्हित पूर्णांक wdt_max_duration;	/* (seconds) */
-	पूर्णांक ret, irq;
+static int orion_wdt_probe(struct platform_device *pdev)
+{
+	struct orion_watchdog *dev;
+	const struct of_device_id *match;
+	unsigned int wdt_max_duration;	/* (seconds) */
+	int ret, irq;
 
-	dev = devm_kzalloc(&pdev->dev, माप(काष्ठा orion_watchकरोg),
+	dev = devm_kzalloc(&pdev->dev, sizeof(struct orion_watchdog),
 			   GFP_KERNEL);
-	अगर (!dev)
-		वापस -ENOMEM;
+	if (!dev)
+		return -ENOMEM;
 
 	match = of_match_device(orion_wdt_of_match_table, &pdev->dev);
-	अगर (!match)
+	if (!match)
 		/* Default legacy match */
 		match = &orion_wdt_of_match_table[0];
 
 	dev->wdt.info = &orion_wdt_info;
 	dev->wdt.ops = &orion_wdt_ops;
-	dev->wdt.min_समयout = 1;
+	dev->wdt.min_timeout = 1;
 	dev->data = match->data;
 
 	ret = orion_wdt_get_regs(pdev, dev);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	ret = dev->data->घड़ी_init(pdev, dev);
-	अगर (ret) अणु
+	ret = dev->data->clock_init(pdev, dev);
+	if (ret) {
 		dev_err(&pdev->dev, "cannot initialize clock\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	wdt_max_duration = WDT_MAX_CYCLE_COUNT / dev->clk_rate;
 
-	dev->wdt.समयout = wdt_max_duration;
-	dev->wdt.max_समयout = wdt_max_duration;
+	dev->wdt.timeout = wdt_max_duration;
+	dev->wdt.max_timeout = wdt_max_duration;
 	dev->wdt.parent = &pdev->dev;
-	watchकरोg_init_समयout(&dev->wdt, heartbeat, &pdev->dev);
+	watchdog_init_timeout(&dev->wdt, heartbeat, &pdev->dev);
 
-	platक्रमm_set_drvdata(pdev, &dev->wdt);
-	watchकरोg_set_drvdata(&dev->wdt, dev);
+	platform_set_drvdata(pdev, &dev->wdt);
+	watchdog_set_drvdata(&dev->wdt, dev);
 
 	/*
 	 * Let's make sure the watchdog is fully stopped, unless it's
-	 * explicitly enabled. This may be the हाल अगर the module was
-	 * हटाओd and re-inserted, or अगर the bootloader explicitly
-	 * set a running watchकरोg beक्रमe booting the kernel.
+	 * explicitly enabled. This may be the case if the module was
+	 * removed and re-inserted, or if the bootloader explicitly
+	 * set a running watchdog before booting the kernel.
 	 */
-	अगर (!orion_wdt_enabled(&dev->wdt))
+	if (!orion_wdt_enabled(&dev->wdt))
 		orion_wdt_stop(&dev->wdt);
-	अन्यथा
+	else
 		set_bit(WDOG_HW_RUNNING, &dev->wdt.status);
 
-	/* Request the IRQ only after the watchकरोg is disabled */
-	irq = platक्रमm_get_irq_optional(pdev, 0);
-	अगर (irq > 0) अणु
+	/* Request the IRQ only after the watchdog is disabled */
+	irq = platform_get_irq_optional(pdev, 0);
+	if (irq > 0) {
 		/*
-		 * Not all supported platक्रमms specअगरy an पूर्णांकerrupt क्रम the
-		 * watchकरोg, so let's make it optional.
+		 * Not all supported platforms specify an interrupt for the
+		 * watchdog, so let's make it optional.
 		 */
 		ret = devm_request_irq(&pdev->dev, irq, orion_wdt_irq, 0,
 				       pdev->name, dev);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			dev_err(&pdev->dev, "failed to request IRQ\n");
-			जाओ disable_clk;
-		पूर्ण
-	पूर्ण
+			goto disable_clk;
+		}
+	}
 
-	/* Optional 2nd पूर्णांकerrupt क्रम preसमयout */
-	irq = platक्रमm_get_irq_optional(pdev, 1);
-	अगर (irq > 0) अणु
+	/* Optional 2nd interrupt for pretimeout */
+	irq = platform_get_irq_optional(pdev, 1);
+	if (irq > 0) {
 		orion_wdt_info.options |= WDIOF_PRETIMEOUT;
 		ret = devm_request_irq(&pdev->dev, irq, orion_wdt_pre_irq,
 				       0, pdev->name, dev);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			dev_err(&pdev->dev, "failed to request IRQ\n");
-			जाओ disable_clk;
-		पूर्ण
-	पूर्ण
+			goto disable_clk;
+		}
+	}
 
 
-	watchकरोg_set_nowayout(&dev->wdt, nowayout);
-	ret = watchकरोg_रेजिस्टर_device(&dev->wdt);
-	अगर (ret)
-		जाओ disable_clk;
+	watchdog_set_nowayout(&dev->wdt, nowayout);
+	ret = watchdog_register_device(&dev->wdt);
+	if (ret)
+		goto disable_clk;
 
 	pr_info("Initial timeout %d sec%s\n",
-		dev->wdt.समयout, nowayout ? ", nowayout" : "");
-	वापस 0;
+		dev->wdt.timeout, nowayout ? ", nowayout" : "");
+	return 0;
 
 disable_clk:
 	clk_disable_unprepare(dev->clk);
 	clk_put(dev->clk);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक orion_wdt_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा watchकरोg_device *wdt_dev = platक्रमm_get_drvdata(pdev);
-	काष्ठा orion_watchकरोg *dev = watchकरोg_get_drvdata(wdt_dev);
+static int orion_wdt_remove(struct platform_device *pdev)
+{
+	struct watchdog_device *wdt_dev = platform_get_drvdata(pdev);
+	struct orion_watchdog *dev = watchdog_get_drvdata(wdt_dev);
 
-	watchकरोg_unरेजिस्टर_device(wdt_dev);
+	watchdog_unregister_device(wdt_dev);
 	clk_disable_unprepare(dev->clk);
 	clk_put(dev->clk);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम orion_wdt_shutकरोwn(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा watchकरोg_device *wdt_dev = platक्रमm_get_drvdata(pdev);
+static void orion_wdt_shutdown(struct platform_device *pdev)
+{
+	struct watchdog_device *wdt_dev = platform_get_drvdata(pdev);
 	orion_wdt_stop(wdt_dev);
-पूर्ण
+}
 
-अटल काष्ठा platक्रमm_driver orion_wdt_driver = अणु
+static struct platform_driver orion_wdt_driver = {
 	.probe		= orion_wdt_probe,
-	.हटाओ		= orion_wdt_हटाओ,
-	.shutकरोwn	= orion_wdt_shutकरोwn,
-	.driver		= अणु
+	.remove		= orion_wdt_remove,
+	.shutdown	= orion_wdt_shutdown,
+	.driver		= {
 		.name	= "orion_wdt",
 		.of_match_table = orion_wdt_of_match_table,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver(orion_wdt_driver);
+module_platform_driver(orion_wdt_driver);
 
 MODULE_AUTHOR("Sylver Bruneau <sylver.bruneau@googlemail.com>");
 MODULE_DESCRIPTION("Orion Processor Watchdog");
 
-module_param(heartbeat, पूर्णांक, 0);
+module_param(heartbeat, int, 0);
 MODULE_PARM_DESC(heartbeat, "Initial watchdog heartbeat in seconds");
 
 module_param(nowayout, bool, 0);

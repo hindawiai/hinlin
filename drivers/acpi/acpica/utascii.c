@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0
+// SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
 /******************************************************************************
  *
  * Module Name: utascii - Utility ascii functions
@@ -8,100 +7,100 @@
  *
  *****************************************************************************/
 
-#समावेश <acpi/acpi.h>
-#समावेश "accommon.h"
+#include <acpi/acpi.h>
+#include "accommon.h"
 
 /*******************************************************************************
  *
  * FUNCTION:    acpi_ut_valid_nameseg
  *
  * PARAMETERS:  name            - The name or table signature to be examined.
- *                                Four अक्षरacters, करोes not have to be a
- *                                शून्य terminated string.
+ *                                Four characters, does not have to be a
+ *                                NULL terminated string.
  *
- * RETURN:      TRUE अगर signature is has 4 valid ACPI अक्षरacters
+ * RETURN:      TRUE if signature is has 4 valid ACPI characters
  *
  * DESCRIPTION: Validate an ACPI table signature.
  *
  ******************************************************************************/
 
-u8 acpi_ut_valid_nameseg(अक्षर *name)
-अणु
+u8 acpi_ut_valid_nameseg(char *name)
+{
 	u32 i;
 
-	/* Validate each अक्षरacter in the signature */
+	/* Validate each character in the signature */
 
-	क्रम (i = 0; i < ACPI_NAMESEG_SIZE; i++) अणु
-		अगर (!acpi_ut_valid_name_अक्षर(name[i], i)) अणु
-			वापस (FALSE);
-		पूर्ण
-	पूर्ण
+	for (i = 0; i < ACPI_NAMESEG_SIZE; i++) {
+		if (!acpi_ut_valid_name_char(name[i], i)) {
+			return (FALSE);
+		}
+	}
 
-	वापस (TRUE);
-पूर्ण
+	return (TRUE);
+}
 
 /*******************************************************************************
  *
- * FUNCTION:    acpi_ut_valid_name_अक्षर
+ * FUNCTION:    acpi_ut_valid_name_char
  *
- * PARAMETERS:  अक्षर            - The अक्षरacter to be examined
+ * PARAMETERS:  char            - The character to be examined
  *              position        - Byte position (0-3)
  *
- * RETURN:      TRUE अगर the अक्षरacter is valid, FALSE otherwise
+ * RETURN:      TRUE if the character is valid, FALSE otherwise
  *
- * DESCRIPTION: Check क्रम a valid ACPI अक्षरacter. Must be one of:
- *              1) Upper हाल alpha
+ * DESCRIPTION: Check for a valid ACPI character. Must be one of:
+ *              1) Upper case alpha
  *              2) numeric
  *              3) underscore
  *
- *              We allow a '!' as the last अक्षरacter because of the ASF! table
+ *              We allow a '!' as the last character because of the ASF! table
  *
  ******************************************************************************/
 
-u8 acpi_ut_valid_name_अक्षर(अक्षर अक्षरacter, u32 position)
-अणु
+u8 acpi_ut_valid_name_char(char character, u32 position)
+{
 
-	अगर (!((अक्षरacter >= 'A' && character <= 'Z') ||
-	      (अक्षरacter >= '0' && character <= '9') || (character == '_'))) अणु
+	if (!((character >= 'A' && character <= 'Z') ||
+	      (character >= '0' && character <= '9') || (character == '_'))) {
 
 		/* Allow a '!' in the last position */
 
-		अगर (अक्षरacter == '!' && position == 3) अणु
-			वापस (TRUE);
-		पूर्ण
+		if (character == '!' && position == 3) {
+			return (TRUE);
+		}
 
-		वापस (FALSE);
-	पूर्ण
+		return (FALSE);
+	}
 
-	वापस (TRUE);
-पूर्ण
+	return (TRUE);
+}
 
 /*******************************************************************************
  *
  * FUNCTION:    acpi_ut_check_and_repair_ascii
  *
  * PARAMETERS:  name                - Ascii string
- *              count               - Number of अक्षरacters to check
+ *              count               - Number of characters to check
  *
  * RETURN:      None
  *
- * DESCRIPTION: Ensure that the requested number of अक्षरacters are prपूर्णांकable
- *              Ascii अक्षरacters. Sets non-prपूर्णांकable and null अक्षरs to <space>.
+ * DESCRIPTION: Ensure that the requested number of characters are printable
+ *              Ascii characters. Sets non-printable and null chars to <space>.
  *
  ******************************************************************************/
 
-व्योम acpi_ut_check_and_repair_ascii(u8 *name, अक्षर *repaired_name, u32 count)
-अणु
+void acpi_ut_check_and_repair_ascii(u8 *name, char *repaired_name, u32 count)
+{
 	u32 i;
 
-	क्रम (i = 0; i < count; i++) अणु
-		repaired_name[i] = (अक्षर)name[i];
+	for (i = 0; i < count; i++) {
+		repaired_name[i] = (char)name[i];
 
-		अगर (!name[i]) अणु
-			वापस;
-		पूर्ण
-		अगर (!है_छाप(name[i])) अणु
+		if (!name[i]) {
+			return;
+		}
+		if (!isprint(name[i])) {
 			repaired_name[i] = ' ';
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}

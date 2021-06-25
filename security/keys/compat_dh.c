@@ -1,37 +1,36 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
-/* 32-bit compatibility syscall क्रम 64-bit प्रणालीs क्रम DH operations
+// SPDX-License-Identifier: GPL-2.0-or-later
+/* 32-bit compatibility syscall for 64-bit systems for DH operations
  *
  * Copyright (C) 2016 Stephan Mueller <smueller@chronox.de>
  */
 
-#समावेश <linux/uaccess.h>
+#include <linux/uaccess.h>
 
-#समावेश "internal.h"
+#include "internal.h"
 
 /*
- * Perक्रमm the DH computation or DH based key derivation.
+ * Perform the DH computation or DH based key derivation.
  *
- * If successful, 0 will be वापसed.
+ * If successful, 0 will be returned.
  */
-दीर्घ compat_keyctl_dh_compute(काष्ठा keyctl_dh_params __user *params,
-			      अक्षर __user *buffer, माप_प्रकार buflen,
-			      काष्ठा compat_keyctl_kdf_params __user *kdf)
-अणु
-	काष्ठा keyctl_kdf_params kdfcopy;
-	काष्ठा compat_keyctl_kdf_params compat_kdfcopy;
+long compat_keyctl_dh_compute(struct keyctl_dh_params __user *params,
+			      char __user *buffer, size_t buflen,
+			      struct compat_keyctl_kdf_params __user *kdf)
+{
+	struct keyctl_kdf_params kdfcopy;
+	struct compat_keyctl_kdf_params compat_kdfcopy;
 
-	अगर (!kdf)
-		वापस __keyctl_dh_compute(params, buffer, buflen, शून्य);
+	if (!kdf)
+		return __keyctl_dh_compute(params, buffer, buflen, NULL);
 
-	अगर (copy_from_user(&compat_kdfcopy, kdf, माप(compat_kdfcopy)) != 0)
-		वापस -EFAULT;
+	if (copy_from_user(&compat_kdfcopy, kdf, sizeof(compat_kdfcopy)) != 0)
+		return -EFAULT;
 
 	kdfcopy.hashname = compat_ptr(compat_kdfcopy.hashname);
 	kdfcopy.otherinfo = compat_ptr(compat_kdfcopy.otherinfo);
 	kdfcopy.otherinfolen = compat_kdfcopy.otherinfolen;
-	स_नकल(kdfcopy.__spare, compat_kdfcopy.__spare,
-	       माप(kdfcopy.__spare));
+	memcpy(kdfcopy.__spare, compat_kdfcopy.__spare,
+	       sizeof(kdfcopy.__spare));
 
-	वापस __keyctl_dh_compute(params, buffer, buflen, &kdfcopy);
-पूर्ण
+	return __keyctl_dh_compute(params, buffer, buflen, &kdfcopy);
+}

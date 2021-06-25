@@ -1,15 +1,14 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0 OR MIT
+// SPDX-License-Identifier: GPL-2.0 OR MIT
 /**************************************************************************
  *
  * Copyright 2009-2020 VMware, Inc., Palo Alto, CA., USA
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modअगरy, merge, publish,
+ * without limitation the rights to use, copy, modify, merge, publish,
  * distribute, sub license, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to करो so, subject to
+ * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
  *
  * The above copyright notice and this permission notice (including the
@@ -26,659 +25,659 @@
  *
  **************************************************************************/
 
-#समावेश <linux/sched/संकेत.स>
+#include <linux/sched/signal.h>
 
-#समावेश <drm/tपंचांग/tपंचांग_placement.h>
+#include <drm/ttm/ttm_placement.h>
 
-#समावेश "vmwgfx_drv.h"
+#include "vmwgfx_drv.h"
 
-काष्ठा vmw_temp_set_context अणु
+struct vmw_temp_set_context {
 	SVGA3dCmdHeader header;
 	SVGA3dCmdDXTempSetContext body;
-पूर्ण;
+};
 
-bool vmw_supports_3d(काष्ठा vmw_निजी *dev_priv)
-अणु
-	uपूर्णांक32_t fअगरo_min, hwversion;
-	स्थिर काष्ठा vmw_fअगरo_state *fअगरo = &dev_priv->fअगरo;
+bool vmw_supports_3d(struct vmw_private *dev_priv)
+{
+	uint32_t fifo_min, hwversion;
+	const struct vmw_fifo_state *fifo = &dev_priv->fifo;
 
-	अगर (!(dev_priv->capabilities & SVGA_CAP_3D))
-		वापस false;
+	if (!(dev_priv->capabilities & SVGA_CAP_3D))
+		return false;
 
-	अगर (dev_priv->capabilities & SVGA_CAP_GBOBJECTS) अणु
-		uपूर्णांक32_t result;
+	if (dev_priv->capabilities & SVGA_CAP_GBOBJECTS) {
+		uint32_t result;
 
-		अगर (!dev_priv->has_mob)
-			वापस false;
+		if (!dev_priv->has_mob)
+			return false;
 
 		spin_lock(&dev_priv->cap_lock);
-		vmw_ग_लिखो(dev_priv, SVGA_REG_DEV_CAP, SVGA3D_DEVCAP_3D);
-		result = vmw_पढ़ो(dev_priv, SVGA_REG_DEV_CAP);
+		vmw_write(dev_priv, SVGA_REG_DEV_CAP, SVGA3D_DEVCAP_3D);
+		result = vmw_read(dev_priv, SVGA_REG_DEV_CAP);
 		spin_unlock(&dev_priv->cap_lock);
 
-		वापस (result != 0);
-	पूर्ण
+		return (result != 0);
+	}
 
-	अगर (!(dev_priv->capabilities & SVGA_CAP_EXTENDED_FIFO))
-		वापस false;
+	if (!(dev_priv->capabilities & SVGA_CAP_EXTENDED_FIFO))
+		return false;
 
-	fअगरo_min = vmw_fअगरo_mem_पढ़ो(dev_priv, SVGA_FIFO_MIN);
-	अगर (fअगरo_min <= SVGA_FIFO_3D_HWVERSION * माप(अचिन्हित पूर्णांक))
-		वापस false;
+	fifo_min = vmw_fifo_mem_read(dev_priv, SVGA_FIFO_MIN);
+	if (fifo_min <= SVGA_FIFO_3D_HWVERSION * sizeof(unsigned int))
+		return false;
 
-	hwversion = vmw_fअगरo_mem_पढ़ो(dev_priv,
-				      ((fअगरo->capabilities &
+	hwversion = vmw_fifo_mem_read(dev_priv,
+				      ((fifo->capabilities &
 					SVGA_FIFO_CAP_3D_HWVERSION_REVISED) ?
 					       SVGA_FIFO_3D_HWVERSION_REVISED :
 					       SVGA_FIFO_3D_HWVERSION));
 
-	अगर (hwversion == 0)
-		वापस false;
+	if (hwversion == 0)
+		return false;
 
-	अगर (hwversion < SVGA3D_HWVERSION_WS8_B1)
-		वापस false;
+	if (hwversion < SVGA3D_HWVERSION_WS8_B1)
+		return false;
 
-	/* Legacy Display Unit करोes not support surfaces */
-	अगर (dev_priv->active_display_unit == vmw_du_legacy)
-		वापस false;
+	/* Legacy Display Unit does not support surfaces */
+	if (dev_priv->active_display_unit == vmw_du_legacy)
+		return false;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-bool vmw_fअगरo_have_pitchlock(काष्ठा vmw_निजी *dev_priv)
-अणु
-	uपूर्णांक32_t caps;
+bool vmw_fifo_have_pitchlock(struct vmw_private *dev_priv)
+{
+	uint32_t caps;
 
-	अगर (!(dev_priv->capabilities & SVGA_CAP_EXTENDED_FIFO))
-		वापस false;
+	if (!(dev_priv->capabilities & SVGA_CAP_EXTENDED_FIFO))
+		return false;
 
-	caps = vmw_fअगरo_mem_पढ़ो(dev_priv, SVGA_FIFO_CAPABILITIES);
-	अगर (caps & SVGA_FIFO_CAP_PITCHLOCK)
-		वापस true;
+	caps = vmw_fifo_mem_read(dev_priv, SVGA_FIFO_CAPABILITIES);
+	if (caps & SVGA_FIFO_CAP_PITCHLOCK)
+		return true;
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-पूर्णांक vmw_fअगरo_init(काष्ठा vmw_निजी *dev_priv, काष्ठा vmw_fअगरo_state *fअगरo)
-अणु
-	uपूर्णांक32_t max;
-	uपूर्णांक32_t min;
+int vmw_fifo_init(struct vmw_private *dev_priv, struct vmw_fifo_state *fifo)
+{
+	uint32_t max;
+	uint32_t min;
 
-	fअगरo->dx = false;
-	fअगरo->अटल_buffer_size = VMWGFX_FIFO_STATIC_SIZE;
-	fअगरo->अटल_buffer = vदो_स्मृति(fअगरo->अटल_buffer_size);
-	अगर (unlikely(fअगरo->अटल_buffer == शून्य))
-		वापस -ENOMEM;
+	fifo->dx = false;
+	fifo->static_buffer_size = VMWGFX_FIFO_STATIC_SIZE;
+	fifo->static_buffer = vmalloc(fifo->static_buffer_size);
+	if (unlikely(fifo->static_buffer == NULL))
+		return -ENOMEM;
 
-	fअगरo->dynamic_buffer = शून्य;
-	fअगरo->reserved_size = 0;
-	fअगरo->using_bounce_buffer = false;
+	fifo->dynamic_buffer = NULL;
+	fifo->reserved_size = 0;
+	fifo->using_bounce_buffer = false;
 
-	mutex_init(&fअगरo->fअगरo_mutex);
-	init_rwsem(&fअगरo->rwsem);
+	mutex_init(&fifo->fifo_mutex);
+	init_rwsem(&fifo->rwsem);
 
-	DRM_INFO("width %d\n", vmw_पढ़ो(dev_priv, SVGA_REG_WIDTH));
-	DRM_INFO("height %d\n", vmw_पढ़ो(dev_priv, SVGA_REG_HEIGHT));
-	DRM_INFO("bpp %d\n", vmw_पढ़ो(dev_priv, SVGA_REG_BITS_PER_PIXEL));
+	DRM_INFO("width %d\n", vmw_read(dev_priv, SVGA_REG_WIDTH));
+	DRM_INFO("height %d\n", vmw_read(dev_priv, SVGA_REG_HEIGHT));
+	DRM_INFO("bpp %d\n", vmw_read(dev_priv, SVGA_REG_BITS_PER_PIXEL));
 
-	dev_priv->enable_state = vmw_पढ़ो(dev_priv, SVGA_REG_ENABLE);
-	dev_priv->config_करोne_state = vmw_पढ़ो(dev_priv, SVGA_REG_CONFIG_DONE);
-	dev_priv->traces_state = vmw_पढ़ो(dev_priv, SVGA_REG_TRACES);
+	dev_priv->enable_state = vmw_read(dev_priv, SVGA_REG_ENABLE);
+	dev_priv->config_done_state = vmw_read(dev_priv, SVGA_REG_CONFIG_DONE);
+	dev_priv->traces_state = vmw_read(dev_priv, SVGA_REG_TRACES);
 
-	vmw_ग_लिखो(dev_priv, SVGA_REG_ENABLE, SVGA_REG_ENABLE_ENABLE |
+	vmw_write(dev_priv, SVGA_REG_ENABLE, SVGA_REG_ENABLE_ENABLE |
 		  SVGA_REG_ENABLE_HIDE);
 
-	vmw_ग_लिखो(dev_priv, SVGA_REG_TRACES, 0);
+	vmw_write(dev_priv, SVGA_REG_TRACES, 0);
 
 	min = 4;
-	अगर (dev_priv->capabilities & SVGA_CAP_EXTENDED_FIFO)
-		min = vmw_पढ़ो(dev_priv, SVGA_REG_MEM_REGS);
+	if (dev_priv->capabilities & SVGA_CAP_EXTENDED_FIFO)
+		min = vmw_read(dev_priv, SVGA_REG_MEM_REGS);
 	min <<= 2;
 
-	अगर (min < PAGE_SIZE)
+	if (min < PAGE_SIZE)
 		min = PAGE_SIZE;
 
-	vmw_fअगरo_mem_ग_लिखो(dev_priv, SVGA_FIFO_MIN, min);
-	vmw_fअगरo_mem_ग_लिखो(dev_priv, SVGA_FIFO_MAX, dev_priv->fअगरo_mem_size);
+	vmw_fifo_mem_write(dev_priv, SVGA_FIFO_MIN, min);
+	vmw_fifo_mem_write(dev_priv, SVGA_FIFO_MAX, dev_priv->fifo_mem_size);
 	wmb();
-	vmw_fअगरo_mem_ग_लिखो(dev_priv, SVGA_FIFO_NEXT_CMD, min);
-	vmw_fअगरo_mem_ग_लिखो(dev_priv, SVGA_FIFO_STOP, min);
-	vmw_fअगरo_mem_ग_लिखो(dev_priv, SVGA_FIFO_BUSY, 0);
+	vmw_fifo_mem_write(dev_priv, SVGA_FIFO_NEXT_CMD, min);
+	vmw_fifo_mem_write(dev_priv, SVGA_FIFO_STOP, min);
+	vmw_fifo_mem_write(dev_priv, SVGA_FIFO_BUSY, 0);
 	mb();
 
-	vmw_ग_लिखो(dev_priv, SVGA_REG_CONFIG_DONE, 1);
+	vmw_write(dev_priv, SVGA_REG_CONFIG_DONE, 1);
 
-	max = vmw_fअगरo_mem_पढ़ो(dev_priv, SVGA_FIFO_MAX);
-	min = vmw_fअगरo_mem_पढ़ो(dev_priv, SVGA_FIFO_MIN);
-	fअगरo->capabilities = vmw_fअगरo_mem_पढ़ो(dev_priv, SVGA_FIFO_CAPABILITIES);
+	max = vmw_fifo_mem_read(dev_priv, SVGA_FIFO_MAX);
+	min = vmw_fifo_mem_read(dev_priv, SVGA_FIFO_MIN);
+	fifo->capabilities = vmw_fifo_mem_read(dev_priv, SVGA_FIFO_CAPABILITIES);
 
 	DRM_INFO("Fifo max 0x%08x min 0x%08x cap 0x%08x\n",
-		 (अचिन्हित पूर्णांक) max,
-		 (अचिन्हित पूर्णांक) min,
-		 (अचिन्हित पूर्णांक) fअगरo->capabilities);
+		 (unsigned int) max,
+		 (unsigned int) min,
+		 (unsigned int) fifo->capabilities);
 
-	atomic_set(&dev_priv->marker_seq, dev_priv->last_पढ़ो_seqno);
-	vmw_fअगरo_mem_ग_लिखो(dev_priv, SVGA_FIFO_FENCE, dev_priv->last_पढ़ो_seqno);
+	atomic_set(&dev_priv->marker_seq, dev_priv->last_read_seqno);
+	vmw_fifo_mem_write(dev_priv, SVGA_FIFO_FENCE, dev_priv->last_read_seqno);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम vmw_fअगरo_ping_host(काष्ठा vmw_निजी *dev_priv, uपूर्णांक32_t reason)
-अणु
-	u32 *fअगरo_mem = dev_priv->fअगरo_mem;
+void vmw_fifo_ping_host(struct vmw_private *dev_priv, uint32_t reason)
+{
+	u32 *fifo_mem = dev_priv->fifo_mem;
 
-	अगर (cmpxchg(fअगरo_mem + SVGA_FIFO_BUSY, 0, 1) == 0)
-		vmw_ग_लिखो(dev_priv, SVGA_REG_SYNC, reason);
-पूर्ण
+	if (cmpxchg(fifo_mem + SVGA_FIFO_BUSY, 0, 1) == 0)
+		vmw_write(dev_priv, SVGA_REG_SYNC, reason);
+}
 
-व्योम vmw_fअगरo_release(काष्ठा vmw_निजी *dev_priv, काष्ठा vmw_fअगरo_state *fअगरo)
-अणु
-	vmw_ग_लिखो(dev_priv, SVGA_REG_SYNC, SVGA_SYNC_GENERIC);
-	जबतक (vmw_पढ़ो(dev_priv, SVGA_REG_BUSY) != 0)
+void vmw_fifo_release(struct vmw_private *dev_priv, struct vmw_fifo_state *fifo)
+{
+	vmw_write(dev_priv, SVGA_REG_SYNC, SVGA_SYNC_GENERIC);
+	while (vmw_read(dev_priv, SVGA_REG_BUSY) != 0)
 		;
 
-	dev_priv->last_पढ़ो_seqno = vmw_fअगरo_mem_पढ़ो(dev_priv, SVGA_FIFO_FENCE);
+	dev_priv->last_read_seqno = vmw_fifo_mem_read(dev_priv, SVGA_FIFO_FENCE);
 
-	vmw_ग_लिखो(dev_priv, SVGA_REG_CONFIG_DONE,
-		  dev_priv->config_करोne_state);
-	vmw_ग_लिखो(dev_priv, SVGA_REG_ENABLE,
+	vmw_write(dev_priv, SVGA_REG_CONFIG_DONE,
+		  dev_priv->config_done_state);
+	vmw_write(dev_priv, SVGA_REG_ENABLE,
 		  dev_priv->enable_state);
-	vmw_ग_लिखो(dev_priv, SVGA_REG_TRACES,
+	vmw_write(dev_priv, SVGA_REG_TRACES,
 		  dev_priv->traces_state);
 
-	अगर (likely(fअगरo->अटल_buffer != शून्य)) अणु
-		vमुक्त(fअगरo->अटल_buffer);
-		fअगरo->अटल_buffer = शून्य;
-	पूर्ण
+	if (likely(fifo->static_buffer != NULL)) {
+		vfree(fifo->static_buffer);
+		fifo->static_buffer = NULL;
+	}
 
-	अगर (likely(fअगरo->dynamic_buffer != शून्य)) अणु
-		vमुक्त(fअगरo->dynamic_buffer);
-		fअगरo->dynamic_buffer = शून्य;
-	पूर्ण
-पूर्ण
+	if (likely(fifo->dynamic_buffer != NULL)) {
+		vfree(fifo->dynamic_buffer);
+		fifo->dynamic_buffer = NULL;
+	}
+}
 
-अटल bool vmw_fअगरo_is_full(काष्ठा vmw_निजी *dev_priv, uपूर्णांक32_t bytes)
-अणु
-	uपूर्णांक32_t max = vmw_fअगरo_mem_पढ़ो(dev_priv, SVGA_FIFO_MAX);
-	uपूर्णांक32_t next_cmd = vmw_fअगरo_mem_पढ़ो(dev_priv, SVGA_FIFO_NEXT_CMD);
-	uपूर्णांक32_t min = vmw_fअगरo_mem_पढ़ो(dev_priv, SVGA_FIFO_MIN);
-	uपूर्णांक32_t stop = vmw_fअगरo_mem_पढ़ो(dev_priv, SVGA_FIFO_STOP);
+static bool vmw_fifo_is_full(struct vmw_private *dev_priv, uint32_t bytes)
+{
+	uint32_t max = vmw_fifo_mem_read(dev_priv, SVGA_FIFO_MAX);
+	uint32_t next_cmd = vmw_fifo_mem_read(dev_priv, SVGA_FIFO_NEXT_CMD);
+	uint32_t min = vmw_fifo_mem_read(dev_priv, SVGA_FIFO_MIN);
+	uint32_t stop = vmw_fifo_mem_read(dev_priv, SVGA_FIFO_STOP);
 
-	वापस ((max - next_cmd) + (stop - min) <= bytes);
-पूर्ण
+	return ((max - next_cmd) + (stop - min) <= bytes);
+}
 
-अटल पूर्णांक vmw_fअगरo_रुको_noirq(काष्ठा vmw_निजी *dev_priv,
-			       uपूर्णांक32_t bytes, bool पूर्णांकerruptible,
-			       अचिन्हित दीर्घ समयout)
-अणु
-	पूर्णांक ret = 0;
-	अचिन्हित दीर्घ end_jअगरfies = jअगरfies + समयout;
-	DEFINE_WAIT(__रुको);
+static int vmw_fifo_wait_noirq(struct vmw_private *dev_priv,
+			       uint32_t bytes, bool interruptible,
+			       unsigned long timeout)
+{
+	int ret = 0;
+	unsigned long end_jiffies = jiffies + timeout;
+	DEFINE_WAIT(__wait);
 
 	DRM_INFO("Fifo wait noirq.\n");
 
-	क्रम (;;) अणु
-		prepare_to_रुको(&dev_priv->fअगरo_queue, &__रुको,
-				(पूर्णांकerruptible) ?
+	for (;;) {
+		prepare_to_wait(&dev_priv->fifo_queue, &__wait,
+				(interruptible) ?
 				TASK_INTERRUPTIBLE : TASK_UNINTERRUPTIBLE);
-		अगर (!vmw_fअगरo_is_full(dev_priv, bytes))
-			अवरोध;
-		अगर (समय_after_eq(jअगरfies, end_jअगरfies)) अणु
+		if (!vmw_fifo_is_full(dev_priv, bytes))
+			break;
+		if (time_after_eq(jiffies, end_jiffies)) {
 			ret = -EBUSY;
 			DRM_ERROR("SVGA device lockup.\n");
-			अवरोध;
-		पूर्ण
-		schedule_समयout(1);
-		अगर (पूर्णांकerruptible && संकेत_pending(current)) अणु
+			break;
+		}
+		schedule_timeout(1);
+		if (interruptible && signal_pending(current)) {
 			ret = -ERESTARTSYS;
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	finish_रुको(&dev_priv->fअगरo_queue, &__रुको);
-	wake_up_all(&dev_priv->fअगरo_queue);
+			break;
+		}
+	}
+	finish_wait(&dev_priv->fifo_queue, &__wait);
+	wake_up_all(&dev_priv->fifo_queue);
 	DRM_INFO("Fifo noirq exit.\n");
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक vmw_fअगरo_रुको(काष्ठा vmw_निजी *dev_priv,
-			 uपूर्णांक32_t bytes, bool पूर्णांकerruptible,
-			 अचिन्हित दीर्घ समयout)
-अणु
-	दीर्घ ret = 1L;
+static int vmw_fifo_wait(struct vmw_private *dev_priv,
+			 uint32_t bytes, bool interruptible,
+			 unsigned long timeout)
+{
+	long ret = 1L;
 
-	अगर (likely(!vmw_fअगरo_is_full(dev_priv, bytes)))
-		वापस 0;
+	if (likely(!vmw_fifo_is_full(dev_priv, bytes)))
+		return 0;
 
-	vmw_fअगरo_ping_host(dev_priv, SVGA_SYNC_FIFOFULL);
-	अगर (!(dev_priv->capabilities & SVGA_CAP_IRQMASK))
-		वापस vmw_fअगरo_रुको_noirq(dev_priv, bytes,
-					   पूर्णांकerruptible, समयout);
+	vmw_fifo_ping_host(dev_priv, SVGA_SYNC_FIFOFULL);
+	if (!(dev_priv->capabilities & SVGA_CAP_IRQMASK))
+		return vmw_fifo_wait_noirq(dev_priv, bytes,
+					   interruptible, timeout);
 
-	vmw_generic_रुकोer_add(dev_priv, SVGA_IRQFLAG_FIFO_PROGRESS,
-			       &dev_priv->fअगरo_queue_रुकोers);
+	vmw_generic_waiter_add(dev_priv, SVGA_IRQFLAG_FIFO_PROGRESS,
+			       &dev_priv->fifo_queue_waiters);
 
-	अगर (पूर्णांकerruptible)
-		ret = रुको_event_पूर्णांकerruptible_समयout
-		    (dev_priv->fअगरo_queue,
-		     !vmw_fअगरo_is_full(dev_priv, bytes), समयout);
-	अन्यथा
-		ret = रुको_event_समयout
-		    (dev_priv->fअगरo_queue,
-		     !vmw_fअगरo_is_full(dev_priv, bytes), समयout);
+	if (interruptible)
+		ret = wait_event_interruptible_timeout
+		    (dev_priv->fifo_queue,
+		     !vmw_fifo_is_full(dev_priv, bytes), timeout);
+	else
+		ret = wait_event_timeout
+		    (dev_priv->fifo_queue,
+		     !vmw_fifo_is_full(dev_priv, bytes), timeout);
 
-	अगर (unlikely(ret == 0))
+	if (unlikely(ret == 0))
 		ret = -EBUSY;
-	अन्यथा अगर (likely(ret > 0))
+	else if (likely(ret > 0))
 		ret = 0;
 
-	vmw_generic_रुकोer_हटाओ(dev_priv, SVGA_IRQFLAG_FIFO_PROGRESS,
-				  &dev_priv->fअगरo_queue_रुकोers);
+	vmw_generic_waiter_remove(dev_priv, SVGA_IRQFLAG_FIFO_PROGRESS,
+				  &dev_priv->fifo_queue_waiters);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * Reserve @bytes number of bytes in the fअगरo.
+ * Reserve @bytes number of bytes in the fifo.
  *
- * This function will वापस शून्य (error) on two conditions:
- *  If it समयouts रुकोing क्रम fअगरo space, or अगर @bytes is larger than the
- *   available fअगरo space.
+ * This function will return NULL (error) on two conditions:
+ *  If it timeouts waiting for fifo space, or if @bytes is larger than the
+ *   available fifo space.
  *
  * Returns:
- *   Poपूर्णांकer to the fअगरo, or null on error (possible hardware hang).
+ *   Pointer to the fifo, or null on error (possible hardware hang).
  */
-अटल व्योम *vmw_local_fअगरo_reserve(काष्ठा vmw_निजी *dev_priv,
-				    uपूर्णांक32_t bytes)
-अणु
-	काष्ठा vmw_fअगरo_state *fअगरo_state = &dev_priv->fअगरo;
-	u32  *fअगरo_mem = dev_priv->fअगरo_mem;
-	uपूर्णांक32_t max;
-	uपूर्णांक32_t min;
-	uपूर्णांक32_t next_cmd;
-	uपूर्णांक32_t reserveable = fअगरo_state->capabilities & SVGA_FIFO_CAP_RESERVE;
-	पूर्णांक ret;
+static void *vmw_local_fifo_reserve(struct vmw_private *dev_priv,
+				    uint32_t bytes)
+{
+	struct vmw_fifo_state *fifo_state = &dev_priv->fifo;
+	u32  *fifo_mem = dev_priv->fifo_mem;
+	uint32_t max;
+	uint32_t min;
+	uint32_t next_cmd;
+	uint32_t reserveable = fifo_state->capabilities & SVGA_FIFO_CAP_RESERVE;
+	int ret;
 
-	mutex_lock(&fअगरo_state->fअगरo_mutex);
-	max = vmw_fअगरo_mem_पढ़ो(dev_priv, SVGA_FIFO_MAX);
-	min = vmw_fअगरo_mem_पढ़ो(dev_priv, SVGA_FIFO_MIN);
-	next_cmd = vmw_fअगरo_mem_पढ़ो(dev_priv, SVGA_FIFO_NEXT_CMD);
+	mutex_lock(&fifo_state->fifo_mutex);
+	max = vmw_fifo_mem_read(dev_priv, SVGA_FIFO_MAX);
+	min = vmw_fifo_mem_read(dev_priv, SVGA_FIFO_MIN);
+	next_cmd = vmw_fifo_mem_read(dev_priv, SVGA_FIFO_NEXT_CMD);
 
-	अगर (unlikely(bytes >= (max - min)))
-		जाओ out_err;
+	if (unlikely(bytes >= (max - min)))
+		goto out_err;
 
-	BUG_ON(fअगरo_state->reserved_size != 0);
-	BUG_ON(fअगरo_state->dynamic_buffer != शून्य);
+	BUG_ON(fifo_state->reserved_size != 0);
+	BUG_ON(fifo_state->dynamic_buffer != NULL);
 
-	fअगरo_state->reserved_size = bytes;
+	fifo_state->reserved_size = bytes;
 
-	जबतक (1) अणु
-		uपूर्णांक32_t stop = vmw_fअगरo_mem_पढ़ो(dev_priv, SVGA_FIFO_STOP);
+	while (1) {
+		uint32_t stop = vmw_fifo_mem_read(dev_priv, SVGA_FIFO_STOP);
 		bool need_bounce = false;
 		bool reserve_in_place = false;
 
-		अगर (next_cmd >= stop) अणु
-			अगर (likely((next_cmd + bytes < max ||
+		if (next_cmd >= stop) {
+			if (likely((next_cmd + bytes < max ||
 				    (next_cmd + bytes == max && stop > min))))
 				reserve_in_place = true;
 
-			अन्यथा अगर (vmw_fअगरo_is_full(dev_priv, bytes)) अणु
-				ret = vmw_fअगरo_रुको(dev_priv, bytes,
+			else if (vmw_fifo_is_full(dev_priv, bytes)) {
+				ret = vmw_fifo_wait(dev_priv, bytes,
 						    false, 3 * HZ);
-				अगर (unlikely(ret != 0))
-					जाओ out_err;
-			पूर्ण अन्यथा
+				if (unlikely(ret != 0))
+					goto out_err;
+			} else
 				need_bounce = true;
 
-		पूर्ण अन्यथा अणु
+		} else {
 
-			अगर (likely((next_cmd + bytes < stop)))
+			if (likely((next_cmd + bytes < stop)))
 				reserve_in_place = true;
-			अन्यथा अणु
-				ret = vmw_fअगरo_रुको(dev_priv, bytes,
+			else {
+				ret = vmw_fifo_wait(dev_priv, bytes,
 						    false, 3 * HZ);
-				अगर (unlikely(ret != 0))
-					जाओ out_err;
-			पूर्ण
-		पूर्ण
+				if (unlikely(ret != 0))
+					goto out_err;
+			}
+		}
 
-		अगर (reserve_in_place) अणु
-			अगर (reserveable || bytes <= माप(uपूर्णांक32_t)) अणु
-				fअगरo_state->using_bounce_buffer = false;
+		if (reserve_in_place) {
+			if (reserveable || bytes <= sizeof(uint32_t)) {
+				fifo_state->using_bounce_buffer = false;
 
-				अगर (reserveable)
-					vmw_fअगरo_mem_ग_लिखो(dev_priv,
+				if (reserveable)
+					vmw_fifo_mem_write(dev_priv,
 							   SVGA_FIFO_RESERVED,
 							   bytes);
-				वापस (व्योम __क्रमce *) (fअगरo_mem +
+				return (void __force *) (fifo_mem +
 							 (next_cmd >> 2));
-			पूर्ण अन्यथा अणु
+			} else {
 				need_bounce = true;
-			पूर्ण
-		पूर्ण
+			}
+		}
 
-		अगर (need_bounce) अणु
-			fअगरo_state->using_bounce_buffer = true;
-			अगर (bytes < fअगरo_state->अटल_buffer_size)
-				वापस fअगरo_state->अटल_buffer;
-			अन्यथा अणु
-				fअगरo_state->dynamic_buffer = vदो_स्मृति(bytes);
-				अगर (!fअगरo_state->dynamic_buffer)
-					जाओ out_err;
-				वापस fअगरo_state->dynamic_buffer;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+		if (need_bounce) {
+			fifo_state->using_bounce_buffer = true;
+			if (bytes < fifo_state->static_buffer_size)
+				return fifo_state->static_buffer;
+			else {
+				fifo_state->dynamic_buffer = vmalloc(bytes);
+				if (!fifo_state->dynamic_buffer)
+					goto out_err;
+				return fifo_state->dynamic_buffer;
+			}
+		}
+	}
 out_err:
-	fअगरo_state->reserved_size = 0;
-	mutex_unlock(&fअगरo_state->fअगरo_mutex);
+	fifo_state->reserved_size = 0;
+	mutex_unlock(&fifo_state->fifo_mutex);
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-व्योम *vmw_cmd_ctx_reserve(काष्ठा vmw_निजी *dev_priv, uपूर्णांक32_t bytes,
-			  पूर्णांक ctx_id)
-अणु
-	व्योम *ret;
+void *vmw_cmd_ctx_reserve(struct vmw_private *dev_priv, uint32_t bytes,
+			  int ctx_id)
+{
+	void *ret;
 
-	अगर (dev_priv->cman)
+	if (dev_priv->cman)
 		ret = vmw_cmdbuf_reserve(dev_priv->cman, bytes,
-					 ctx_id, false, शून्य);
-	अन्यथा अगर (ctx_id == SVGA3D_INVALID_ID)
-		ret = vmw_local_fअगरo_reserve(dev_priv, bytes);
-	अन्यथा अणु
+					 ctx_id, false, NULL);
+	else if (ctx_id == SVGA3D_INVALID_ID)
+		ret = vmw_local_fifo_reserve(dev_priv, bytes);
+	else {
 		WARN(1, "Command buffer has not been allocated.\n");
-		ret = शून्य;
-	पूर्ण
-	अगर (IS_ERR_OR_शून्य(ret))
-		वापस शून्य;
+		ret = NULL;
+	}
+	if (IS_ERR_OR_NULL(ret))
+		return NULL;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम vmw_fअगरo_res_copy(काष्ठा vmw_fअगरo_state *fअगरo_state,
-			      काष्ठा vmw_निजी *vmw,
-			      uपूर्णांक32_t next_cmd,
-			      uपूर्णांक32_t max, uपूर्णांक32_t min, uपूर्णांक32_t bytes)
-अणु
-	u32 *fअगरo_mem = vmw->fअगरo_mem;
-	uपूर्णांक32_t chunk_size = max - next_cmd;
-	uपूर्णांक32_t rest;
-	uपूर्णांक32_t *buffer = (fअगरo_state->dynamic_buffer != शून्य) ?
-	    fअगरo_state->dynamic_buffer : fअगरo_state->अटल_buffer;
+static void vmw_fifo_res_copy(struct vmw_fifo_state *fifo_state,
+			      struct vmw_private *vmw,
+			      uint32_t next_cmd,
+			      uint32_t max, uint32_t min, uint32_t bytes)
+{
+	u32 *fifo_mem = vmw->fifo_mem;
+	uint32_t chunk_size = max - next_cmd;
+	uint32_t rest;
+	uint32_t *buffer = (fifo_state->dynamic_buffer != NULL) ?
+	    fifo_state->dynamic_buffer : fifo_state->static_buffer;
 
-	अगर (bytes < chunk_size)
+	if (bytes < chunk_size)
 		chunk_size = bytes;
 
-	vmw_fअगरo_mem_ग_लिखो(vmw, SVGA_FIFO_RESERVED, bytes);
+	vmw_fifo_mem_write(vmw, SVGA_FIFO_RESERVED, bytes);
 	mb();
-	स_नकल(fअगरo_mem + (next_cmd >> 2), buffer, chunk_size);
+	memcpy(fifo_mem + (next_cmd >> 2), buffer, chunk_size);
 	rest = bytes - chunk_size;
-	अगर (rest)
-		स_नकल(fअगरo_mem + (min >> 2), buffer + (chunk_size >> 2), rest);
-पूर्ण
+	if (rest)
+		memcpy(fifo_mem + (min >> 2), buffer + (chunk_size >> 2), rest);
+}
 
-अटल व्योम vmw_fअगरo_slow_copy(काष्ठा vmw_fअगरo_state *fअगरo_state,
-			       काष्ठा vmw_निजी *vmw,
-			       uपूर्णांक32_t next_cmd,
-			       uपूर्णांक32_t max, uपूर्णांक32_t min, uपूर्णांक32_t bytes)
-अणु
-	uपूर्णांक32_t *buffer = (fअगरo_state->dynamic_buffer != शून्य) ?
-	    fअगरo_state->dynamic_buffer : fअगरo_state->अटल_buffer;
+static void vmw_fifo_slow_copy(struct vmw_fifo_state *fifo_state,
+			       struct vmw_private *vmw,
+			       uint32_t next_cmd,
+			       uint32_t max, uint32_t min, uint32_t bytes)
+{
+	uint32_t *buffer = (fifo_state->dynamic_buffer != NULL) ?
+	    fifo_state->dynamic_buffer : fifo_state->static_buffer;
 
-	जबतक (bytes > 0) अणु
-		vmw_fअगरo_mem_ग_लिखो(vmw, (next_cmd >> 2), *buffer++);
-		next_cmd += माप(uपूर्णांक32_t);
-		अगर (unlikely(next_cmd == max))
+	while (bytes > 0) {
+		vmw_fifo_mem_write(vmw, (next_cmd >> 2), *buffer++);
+		next_cmd += sizeof(uint32_t);
+		if (unlikely(next_cmd == max))
 			next_cmd = min;
 		mb();
-		vmw_fअगरo_mem_ग_लिखो(vmw, SVGA_FIFO_NEXT_CMD, next_cmd);
+		vmw_fifo_mem_write(vmw, SVGA_FIFO_NEXT_CMD, next_cmd);
 		mb();
-		bytes -= माप(uपूर्णांक32_t);
-	पूर्ण
-पूर्ण
+		bytes -= sizeof(uint32_t);
+	}
+}
 
-अटल व्योम vmw_local_fअगरo_commit(काष्ठा vmw_निजी *dev_priv, uपूर्णांक32_t bytes)
-अणु
-	काष्ठा vmw_fअगरo_state *fअगरo_state = &dev_priv->fअगरo;
-	uपूर्णांक32_t next_cmd = vmw_fअगरo_mem_पढ़ो(dev_priv, SVGA_FIFO_NEXT_CMD);
-	uपूर्णांक32_t max = vmw_fअगरo_mem_पढ़ो(dev_priv, SVGA_FIFO_MAX);
-	uपूर्णांक32_t min = vmw_fअगरo_mem_पढ़ो(dev_priv, SVGA_FIFO_MIN);
-	bool reserveable = fअगरo_state->capabilities & SVGA_FIFO_CAP_RESERVE;
+static void vmw_local_fifo_commit(struct vmw_private *dev_priv, uint32_t bytes)
+{
+	struct vmw_fifo_state *fifo_state = &dev_priv->fifo;
+	uint32_t next_cmd = vmw_fifo_mem_read(dev_priv, SVGA_FIFO_NEXT_CMD);
+	uint32_t max = vmw_fifo_mem_read(dev_priv, SVGA_FIFO_MAX);
+	uint32_t min = vmw_fifo_mem_read(dev_priv, SVGA_FIFO_MIN);
+	bool reserveable = fifo_state->capabilities & SVGA_FIFO_CAP_RESERVE;
 
-	अगर (fअगरo_state->dx)
-		bytes += माप(काष्ठा vmw_temp_set_context);
+	if (fifo_state->dx)
+		bytes += sizeof(struct vmw_temp_set_context);
 
-	fअगरo_state->dx = false;
+	fifo_state->dx = false;
 	BUG_ON((bytes & 3) != 0);
-	BUG_ON(bytes > fअगरo_state->reserved_size);
+	BUG_ON(bytes > fifo_state->reserved_size);
 
-	fअगरo_state->reserved_size = 0;
+	fifo_state->reserved_size = 0;
 
-	अगर (fअगरo_state->using_bounce_buffer) अणु
-		अगर (reserveable)
-			vmw_fअगरo_res_copy(fअगरo_state, dev_priv,
+	if (fifo_state->using_bounce_buffer) {
+		if (reserveable)
+			vmw_fifo_res_copy(fifo_state, dev_priv,
 					  next_cmd, max, min, bytes);
-		अन्यथा
-			vmw_fअगरo_slow_copy(fअगरo_state, dev_priv,
+		else
+			vmw_fifo_slow_copy(fifo_state, dev_priv,
 					   next_cmd, max, min, bytes);
 
-		अगर (fअगरo_state->dynamic_buffer) अणु
-			vमुक्त(fअगरo_state->dynamic_buffer);
-			fअगरo_state->dynamic_buffer = शून्य;
-		पूर्ण
+		if (fifo_state->dynamic_buffer) {
+			vfree(fifo_state->dynamic_buffer);
+			fifo_state->dynamic_buffer = NULL;
+		}
 
-	पूर्ण
+	}
 
-	करोwn_ग_लिखो(&fअगरo_state->rwsem);
-	अगर (fअगरo_state->using_bounce_buffer || reserveable) अणु
+	down_write(&fifo_state->rwsem);
+	if (fifo_state->using_bounce_buffer || reserveable) {
 		next_cmd += bytes;
-		अगर (next_cmd >= max)
+		if (next_cmd >= max)
 			next_cmd -= max - min;
 		mb();
-		vmw_fअगरo_mem_ग_लिखो(dev_priv, SVGA_FIFO_NEXT_CMD, next_cmd);
-	पूर्ण
+		vmw_fifo_mem_write(dev_priv, SVGA_FIFO_NEXT_CMD, next_cmd);
+	}
 
-	अगर (reserveable)
-		vmw_fअगरo_mem_ग_लिखो(dev_priv, SVGA_FIFO_RESERVED, 0);
+	if (reserveable)
+		vmw_fifo_mem_write(dev_priv, SVGA_FIFO_RESERVED, 0);
 	mb();
-	up_ग_लिखो(&fअगरo_state->rwsem);
-	vmw_fअगरo_ping_host(dev_priv, SVGA_SYNC_GENERIC);
-	mutex_unlock(&fअगरo_state->fअगरo_mutex);
-पूर्ण
+	up_write(&fifo_state->rwsem);
+	vmw_fifo_ping_host(dev_priv, SVGA_SYNC_GENERIC);
+	mutex_unlock(&fifo_state->fifo_mutex);
+}
 
-व्योम vmw_cmd_commit(काष्ठा vmw_निजी *dev_priv, uपूर्णांक32_t bytes)
-अणु
-	अगर (dev_priv->cman)
-		vmw_cmdbuf_commit(dev_priv->cman, bytes, शून्य, false);
-	अन्यथा
-		vmw_local_fअगरo_commit(dev_priv, bytes);
-पूर्ण
+void vmw_cmd_commit(struct vmw_private *dev_priv, uint32_t bytes)
+{
+	if (dev_priv->cman)
+		vmw_cmdbuf_commit(dev_priv->cman, bytes, NULL, false);
+	else
+		vmw_local_fifo_commit(dev_priv, bytes);
+}
 
 
 /**
- * vmw_fअगरo_commit_flush - Commit fअगरo space and flush any buffered commands.
+ * vmw_fifo_commit_flush - Commit fifo space and flush any buffered commands.
  *
- * @dev_priv: Poपूर्णांकer to device निजी काष्ठाure.
+ * @dev_priv: Pointer to device private structure.
  * @bytes: Number of bytes to commit.
  */
-व्योम vmw_cmd_commit_flush(काष्ठा vmw_निजी *dev_priv, uपूर्णांक32_t bytes)
-अणु
-	अगर (dev_priv->cman)
-		vmw_cmdbuf_commit(dev_priv->cman, bytes, शून्य, true);
-	अन्यथा
-		vmw_local_fअगरo_commit(dev_priv, bytes);
-पूर्ण
+void vmw_cmd_commit_flush(struct vmw_private *dev_priv, uint32_t bytes)
+{
+	if (dev_priv->cman)
+		vmw_cmdbuf_commit(dev_priv->cman, bytes, NULL, true);
+	else
+		vmw_local_fifo_commit(dev_priv, bytes);
+}
 
 /**
- * vmw_fअगरo_flush - Flush any buffered commands and make sure command processing
+ * vmw_fifo_flush - Flush any buffered commands and make sure command processing
  * starts.
  *
- * @dev_priv: Poपूर्णांकer to device निजी काष्ठाure.
- * @पूर्णांकerruptible: Whether to रुको पूर्णांकerruptible अगर function needs to sleep.
+ * @dev_priv: Pointer to device private structure.
+ * @interruptible: Whether to wait interruptible if function needs to sleep.
  */
-पूर्णांक vmw_cmd_flush(काष्ठा vmw_निजी *dev_priv, bool पूर्णांकerruptible)
-अणु
+int vmw_cmd_flush(struct vmw_private *dev_priv, bool interruptible)
+{
 	might_sleep();
 
-	अगर (dev_priv->cman)
-		वापस vmw_cmdbuf_cur_flush(dev_priv->cman, पूर्णांकerruptible);
-	अन्यथा
-		वापस 0;
-पूर्ण
+	if (dev_priv->cman)
+		return vmw_cmdbuf_cur_flush(dev_priv->cman, interruptible);
+	else
+		return 0;
+}
 
-पूर्णांक vmw_cmd_send_fence(काष्ठा vmw_निजी *dev_priv, uपूर्णांक32_t *seqno)
-अणु
-	काष्ठा vmw_fअगरo_state *fअगरo_state = &dev_priv->fअगरo;
-	काष्ठा svga_fअगरo_cmd_fence *cmd_fence;
+int vmw_cmd_send_fence(struct vmw_private *dev_priv, uint32_t *seqno)
+{
+	struct vmw_fifo_state *fifo_state = &dev_priv->fifo;
+	struct svga_fifo_cmd_fence *cmd_fence;
 	u32 *fm;
-	पूर्णांक ret = 0;
-	uपूर्णांक32_t bytes = माप(u32) + माप(*cmd_fence);
+	int ret = 0;
+	uint32_t bytes = sizeof(u32) + sizeof(*cmd_fence);
 
 	fm = VMW_CMD_RESERVE(dev_priv, bytes);
-	अगर (unlikely(fm == शून्य)) अणु
-		*seqno = atomic_पढ़ो(&dev_priv->marker_seq);
+	if (unlikely(fm == NULL)) {
+		*seqno = atomic_read(&dev_priv->marker_seq);
 		ret = -ENOMEM;
-		(व्योम)vmw_fallback_रुको(dev_priv, false, true, *seqno,
+		(void)vmw_fallback_wait(dev_priv, false, true, *seqno,
 					false, 3*HZ);
-		जाओ out_err;
-	पूर्ण
+		goto out_err;
+	}
 
-	करो अणु
-		*seqno = atomic_add_वापस(1, &dev_priv->marker_seq);
-	पूर्ण जबतक (*seqno == 0);
+	do {
+		*seqno = atomic_add_return(1, &dev_priv->marker_seq);
+	} while (*seqno == 0);
 
-	अगर (!(fअगरo_state->capabilities & SVGA_FIFO_CAP_FENCE)) अणु
+	if (!(fifo_state->capabilities & SVGA_FIFO_CAP_FENCE)) {
 
 		/*
 		 * Don't request hardware to send a fence. The
-		 * रुकोing code in vmwgfx_irq.c will emulate this.
+		 * waiting code in vmwgfx_irq.c will emulate this.
 		 */
 
 		vmw_cmd_commit(dev_priv, 0);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	*fm++ = SVGA_CMD_FENCE;
-	cmd_fence = (काष्ठा svga_fअगरo_cmd_fence *) fm;
+	cmd_fence = (struct svga_fifo_cmd_fence *) fm;
 	cmd_fence->fence = *seqno;
 	vmw_cmd_commit_flush(dev_priv, bytes);
-	vmw_update_seqno(dev_priv, fअगरo_state);
+	vmw_update_seqno(dev_priv, fifo_state);
 
 out_err:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * vmw_fअगरo_emit_dummy_legacy_query - emits a dummy query to the fअगरo using
+ * vmw_fifo_emit_dummy_legacy_query - emits a dummy query to the fifo using
  * legacy query commands.
  *
- * @dev_priv: The device निजी काष्ठाure.
- * @cid: The hardware context id used क्रम the query.
+ * @dev_priv: The device private structure.
+ * @cid: The hardware context id used for the query.
  *
- * See the vmw_fअगरo_emit_dummy_query करोcumentation.
+ * See the vmw_fifo_emit_dummy_query documentation.
  */
-अटल पूर्णांक vmw_fअगरo_emit_dummy_legacy_query(काष्ठा vmw_निजी *dev_priv,
-					    uपूर्णांक32_t cid)
-अणु
+static int vmw_fifo_emit_dummy_legacy_query(struct vmw_private *dev_priv,
+					    uint32_t cid)
+{
 	/*
-	 * A query रुको without a preceding query end will
-	 * actually finish all queries क्रम this cid
-	 * without writing to the query result काष्ठाure.
+	 * A query wait without a preceding query end will
+	 * actually finish all queries for this cid
+	 * without writing to the query result structure.
 	 */
 
-	काष्ठा tपंचांग_buffer_object *bo = &dev_priv->dummy_query_bo->base;
-	काष्ठा अणु
+	struct ttm_buffer_object *bo = &dev_priv->dummy_query_bo->base;
+	struct {
 		SVGA3dCmdHeader header;
 		SVGA3dCmdWaitForQuery body;
-	पूर्ण *cmd;
+	} *cmd;
 
-	cmd = VMW_CMD_RESERVE(dev_priv, माप(*cmd));
-	अगर (unlikely(cmd == शून्य))
-		वापस -ENOMEM;
+	cmd = VMW_CMD_RESERVE(dev_priv, sizeof(*cmd));
+	if (unlikely(cmd == NULL))
+		return -ENOMEM;
 
 	cmd->header.id = SVGA_3D_CMD_WAIT_FOR_QUERY;
-	cmd->header.size = माप(cmd->body);
+	cmd->header.size = sizeof(cmd->body);
 	cmd->body.cid = cid;
 	cmd->body.type = SVGA3D_QUERYTYPE_OCCLUSION;
 
-	अगर (bo->mem.mem_type == TTM_PL_VRAM) अणु
+	if (bo->mem.mem_type == TTM_PL_VRAM) {
 		cmd->body.guestResult.gmrId = SVGA_GMR_FRAMEBUFFER;
 		cmd->body.guestResult.offset = bo->mem.start << PAGE_SHIFT;
-	पूर्ण अन्यथा अणु
+	} else {
 		cmd->body.guestResult.gmrId = bo->mem.start;
 		cmd->body.guestResult.offset = 0;
-	पूर्ण
+	}
 
-	vmw_cmd_commit(dev_priv, माप(*cmd));
+	vmw_cmd_commit(dev_priv, sizeof(*cmd));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * vmw_fअगरo_emit_dummy_gb_query - emits a dummy query to the fअगरo using
+ * vmw_fifo_emit_dummy_gb_query - emits a dummy query to the fifo using
  * guest-backed resource query commands.
  *
- * @dev_priv: The device निजी काष्ठाure.
- * @cid: The hardware context id used क्रम the query.
+ * @dev_priv: The device private structure.
+ * @cid: The hardware context id used for the query.
  *
- * See the vmw_fअगरo_emit_dummy_query करोcumentation.
+ * See the vmw_fifo_emit_dummy_query documentation.
  */
-अटल पूर्णांक vmw_fअगरo_emit_dummy_gb_query(काष्ठा vmw_निजी *dev_priv,
-					uपूर्णांक32_t cid)
-अणु
+static int vmw_fifo_emit_dummy_gb_query(struct vmw_private *dev_priv,
+					uint32_t cid)
+{
 	/*
-	 * A query रुको without a preceding query end will
-	 * actually finish all queries क्रम this cid
-	 * without writing to the query result काष्ठाure.
+	 * A query wait without a preceding query end will
+	 * actually finish all queries for this cid
+	 * without writing to the query result structure.
 	 */
 
-	काष्ठा tपंचांग_buffer_object *bo = &dev_priv->dummy_query_bo->base;
-	काष्ठा अणु
+	struct ttm_buffer_object *bo = &dev_priv->dummy_query_bo->base;
+	struct {
 		SVGA3dCmdHeader header;
 		SVGA3dCmdWaitForGBQuery body;
-	पूर्ण *cmd;
+	} *cmd;
 
-	cmd = VMW_CMD_RESERVE(dev_priv, माप(*cmd));
-	अगर (unlikely(cmd == शून्य))
-		वापस -ENOMEM;
+	cmd = VMW_CMD_RESERVE(dev_priv, sizeof(*cmd));
+	if (unlikely(cmd == NULL))
+		return -ENOMEM;
 
 	cmd->header.id = SVGA_3D_CMD_WAIT_FOR_GB_QUERY;
-	cmd->header.size = माप(cmd->body);
+	cmd->header.size = sizeof(cmd->body);
 	cmd->body.cid = cid;
 	cmd->body.type = SVGA3D_QUERYTYPE_OCCLUSION;
 	BUG_ON(bo->mem.mem_type != VMW_PL_MOB);
 	cmd->body.mobid = bo->mem.start;
 	cmd->body.offset = 0;
 
-	vmw_cmd_commit(dev_priv, माप(*cmd));
+	vmw_cmd_commit(dev_priv, sizeof(*cmd));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
 /**
- * vmw_fअगरo_emit_dummy_gb_query - emits a dummy query to the fअगरo using
+ * vmw_fifo_emit_dummy_gb_query - emits a dummy query to the fifo using
  * appropriate resource query commands.
  *
- * @dev_priv: The device निजी काष्ठाure.
- * @cid: The hardware context id used क्रम the query.
+ * @dev_priv: The device private structure.
+ * @cid: The hardware context id used for the query.
  *
  * This function is used to emit a dummy occlusion query with
  * no primitives rendered between query begin and query end.
  * It's used to provide a query barrier, in order to know that when
  * this query is finished, all preceding queries are also finished.
  *
- * A Query results काष्ठाure should have been initialized at the start
+ * A Query results structure should have been initialized at the start
  * of the dev_priv->dummy_query_bo buffer object. And that buffer object
  * must also be either reserved or pinned when this function is called.
  *
- * Returns -ENOMEM on failure to reserve fअगरo space.
+ * Returns -ENOMEM on failure to reserve fifo space.
  */
-पूर्णांक vmw_cmd_emit_dummy_query(काष्ठा vmw_निजी *dev_priv,
-			      uपूर्णांक32_t cid)
-अणु
-	अगर (dev_priv->has_mob)
-		वापस vmw_fअगरo_emit_dummy_gb_query(dev_priv, cid);
+int vmw_cmd_emit_dummy_query(struct vmw_private *dev_priv,
+			      uint32_t cid)
+{
+	if (dev_priv->has_mob)
+		return vmw_fifo_emit_dummy_gb_query(dev_priv, cid);
 
-	वापस vmw_fअगरo_emit_dummy_legacy_query(dev_priv, cid);
-पूर्ण
+	return vmw_fifo_emit_dummy_legacy_query(dev_priv, cid);
+}

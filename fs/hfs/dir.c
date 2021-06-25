@@ -1,4 +1,3 @@
-<शैली गुरु>
 /*
  *  linux/fs/hfs/dir.c
  *
@@ -7,319 +6,319 @@
  * This file may be distributed under the terms of the GNU General Public License.
  *
  * This file contains directory-related functions independent of which
- * scheme is being used to represent विभाजनs.
+ * scheme is being used to represent forks.
  *
- * Based on the minix file प्रणाली code, (C) 1991, 1992 by Linus Torvalds
+ * Based on the minix file system code, (C) 1991, 1992 by Linus Torvalds
  */
 
-#समावेश "hfs_fs.h"
-#समावेश "btree.h"
+#include "hfs_fs.h"
+#include "btree.h"
 
 /*
  * hfs_lookup()
  */
-अटल काष्ठा dentry *hfs_lookup(काष्ठा inode *dir, काष्ठा dentry *dentry,
-				 अचिन्हित पूर्णांक flags)
-अणु
+static struct dentry *hfs_lookup(struct inode *dir, struct dentry *dentry,
+				 unsigned int flags)
+{
 	hfs_cat_rec rec;
-	काष्ठा hfs_find_data fd;
-	काष्ठा inode *inode = शून्य;
-	पूर्णांक res;
+	struct hfs_find_data fd;
+	struct inode *inode = NULL;
+	int res;
 
 	res = hfs_find_init(HFS_SB(dir->i_sb)->cat_tree, &fd);
-	अगर (res)
-		वापस ERR_PTR(res);
+	if (res)
+		return ERR_PTR(res);
 	hfs_cat_build_key(dir->i_sb, fd.search_key, dir->i_ino, &dentry->d_name);
-	res = hfs_brec_पढ़ो(&fd, &rec, माप(rec));
-	अगर (res) अणु
-		अगर (res != -ENOENT)
+	res = hfs_brec_read(&fd, &rec, sizeof(rec));
+	if (res) {
+		if (res != -ENOENT)
 			inode = ERR_PTR(res);
-	पूर्ण अन्यथा अणु
+	} else {
 		inode = hfs_iget(dir->i_sb, &fd.search_key->cat, &rec);
-		अगर (!inode)
+		if (!inode)
 			inode = ERR_PTR(-EACCES);
-	पूर्ण
-	hfs_find_निकास(&fd);
-	वापस d_splice_alias(inode, dentry);
-पूर्ण
+	}
+	hfs_find_exit(&fd);
+	return d_splice_alias(inode, dentry);
+}
 
 /*
- * hfs_सूची_पढ़ो
+ * hfs_readdir
  */
-अटल पूर्णांक hfs_सूची_पढ़ो(काष्ठा file *file, काष्ठा dir_context *ctx)
-अणु
-	काष्ठा inode *inode = file_inode(file);
-	काष्ठा super_block *sb = inode->i_sb;
-	पूर्णांक len, err;
-	अक्षर strbuf[HFS_MAX_NAMELEN];
-	जोड़ hfs_cat_rec entry;
-	काष्ठा hfs_find_data fd;
-	काष्ठा hfs_सूची_पढ़ो_data *rd;
+static int hfs_readdir(struct file *file, struct dir_context *ctx)
+{
+	struct inode *inode = file_inode(file);
+	struct super_block *sb = inode->i_sb;
+	int len, err;
+	char strbuf[HFS_MAX_NAMELEN];
+	union hfs_cat_rec entry;
+	struct hfs_find_data fd;
+	struct hfs_readdir_data *rd;
 	u16 type;
 
-	अगर (ctx->pos >= inode->i_size)
-		वापस 0;
+	if (ctx->pos >= inode->i_size)
+		return 0;
 
 	err = hfs_find_init(HFS_SB(sb)->cat_tree, &fd);
-	अगर (err)
-		वापस err;
-	hfs_cat_build_key(sb, fd.search_key, inode->i_ino, शून्य);
+	if (err)
+		return err;
+	hfs_cat_build_key(sb, fd.search_key, inode->i_ino, NULL);
 	err = hfs_brec_find(&fd);
-	अगर (err)
-		जाओ out;
+	if (err)
+		goto out;
 
-	अगर (ctx->pos == 0) अणु
-		/* This is completely artअगरicial... */
-		अगर (!dir_emit_करोt(file, ctx))
-			जाओ out;
+	if (ctx->pos == 0) {
+		/* This is completely artificial... */
+		if (!dir_emit_dot(file, ctx))
+			goto out;
 		ctx->pos = 1;
-	पूर्ण
-	अगर (ctx->pos == 1) अणु
-		अगर (fd.entrylength > माप(entry) || fd.entrylength < 0) अणु
+	}
+	if (ctx->pos == 1) {
+		if (fd.entrylength > sizeof(entry) || fd.entrylength < 0) {
 			err = -EIO;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
-		hfs_bnode_पढ़ो(fd.bnode, &entry, fd.entryoffset, fd.entrylength);
-		अगर (entry.type != HFS_CDR_THD) अणु
+		hfs_bnode_read(fd.bnode, &entry, fd.entryoffset, fd.entrylength);
+		if (entry.type != HFS_CDR_THD) {
 			pr_err("bad catalog folder thread\n");
 			err = -EIO;
-			जाओ out;
-		पूर्ण
-		//अगर (fd.entrylength < HFS_MIN_THREAD_SZ) अणु
+			goto out;
+		}
+		//if (fd.entrylength < HFS_MIN_THREAD_SZ) {
 		//	pr_err("truncated catalog thread\n");
 		//	err = -EIO;
-		//	जाओ out;
-		//पूर्ण
-		अगर (!dir_emit(ctx, "..", 2,
-			    be32_to_cpu(entry.thपढ़ो.ParID), DT_सूची))
-			जाओ out;
+		//	goto out;
+		//}
+		if (!dir_emit(ctx, "..", 2,
+			    be32_to_cpu(entry.thread.ParID), DT_DIR))
+			goto out;
 		ctx->pos = 2;
-	पूर्ण
-	अगर (ctx->pos >= inode->i_size)
-		जाओ out;
-	err = hfs_brec_जाओ(&fd, ctx->pos - 1);
-	अगर (err)
-		जाओ out;
+	}
+	if (ctx->pos >= inode->i_size)
+		goto out;
+	err = hfs_brec_goto(&fd, ctx->pos - 1);
+	if (err)
+		goto out;
 
-	क्रम (;;) अणु
-		अगर (be32_to_cpu(fd.key->cat.ParID) != inode->i_ino) अणु
+	for (;;) {
+		if (be32_to_cpu(fd.key->cat.ParID) != inode->i_ino) {
 			pr_err("walked past end of dir\n");
 			err = -EIO;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
-		अगर (fd.entrylength > माप(entry) || fd.entrylength < 0) अणु
+		if (fd.entrylength > sizeof(entry) || fd.entrylength < 0) {
 			err = -EIO;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
-		hfs_bnode_पढ़ो(fd.bnode, &entry, fd.entryoffset, fd.entrylength);
+		hfs_bnode_read(fd.bnode, &entry, fd.entryoffset, fd.entrylength);
 		type = entry.type;
 		len = hfs_mac2asc(sb, strbuf, &fd.key->cat.CName);
-		अगर (type == HFS_CDR_सूची) अणु
-			अगर (fd.entrylength < माप(काष्ठा hfs_cat_dir)) अणु
+		if (type == HFS_CDR_DIR) {
+			if (fd.entrylength < sizeof(struct hfs_cat_dir)) {
 				pr_err("small dir entry\n");
 				err = -EIO;
-				जाओ out;
-			पूर्ण
-			अगर (!dir_emit(ctx, strbuf, len,
-				    be32_to_cpu(entry.dir.DirID), DT_सूची))
-				अवरोध;
-		पूर्ण अन्यथा अगर (type == HFS_CDR_FIL) अणु
-			अगर (fd.entrylength < माप(काष्ठा hfs_cat_file)) अणु
+				goto out;
+			}
+			if (!dir_emit(ctx, strbuf, len,
+				    be32_to_cpu(entry.dir.DirID), DT_DIR))
+				break;
+		} else if (type == HFS_CDR_FIL) {
+			if (fd.entrylength < sizeof(struct hfs_cat_file)) {
 				pr_err("small file entry\n");
 				err = -EIO;
-				जाओ out;
-			पूर्ण
-			अगर (!dir_emit(ctx, strbuf, len,
+				goto out;
+			}
+			if (!dir_emit(ctx, strbuf, len,
 				    be32_to_cpu(entry.file.FlNum), DT_REG))
-				अवरोध;
-		पूर्ण अन्यथा अणु
+				break;
+		} else {
 			pr_err("bad catalog entry type %d\n", type);
 			err = -EIO;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		ctx->pos++;
-		अगर (ctx->pos >= inode->i_size)
-			जाओ out;
-		err = hfs_brec_जाओ(&fd, 1);
-		अगर (err)
-			जाओ out;
-	पूर्ण
-	rd = file->निजी_data;
-	अगर (!rd) अणु
-		rd = kदो_स्मृति(माप(काष्ठा hfs_सूची_पढ़ो_data), GFP_KERNEL);
-		अगर (!rd) अणु
+		if (ctx->pos >= inode->i_size)
+			goto out;
+		err = hfs_brec_goto(&fd, 1);
+		if (err)
+			goto out;
+	}
+	rd = file->private_data;
+	if (!rd) {
+		rd = kmalloc(sizeof(struct hfs_readdir_data), GFP_KERNEL);
+		if (!rd) {
 			err = -ENOMEM;
-			जाओ out;
-		पूर्ण
-		file->निजी_data = rd;
+			goto out;
+		}
+		file->private_data = rd;
 		rd->file = file;
-		spin_lock(&HFS_I(inode)->खोलो_dir_lock);
-		list_add(&rd->list, &HFS_I(inode)->खोलो_dir_list);
-		spin_unlock(&HFS_I(inode)->खोलो_dir_lock);
-	पूर्ण
+		spin_lock(&HFS_I(inode)->open_dir_lock);
+		list_add(&rd->list, &HFS_I(inode)->open_dir_list);
+		spin_unlock(&HFS_I(inode)->open_dir_lock);
+	}
 	/*
-	 * Can be करोne after the list insertion; exclusion with
+	 * Can be done after the list insertion; exclusion with
 	 * hfs_delete_cat() is provided by directory lock.
 	 */
-	स_नकल(&rd->key, &fd.key->cat, माप(काष्ठा hfs_cat_key));
+	memcpy(&rd->key, &fd.key->cat, sizeof(struct hfs_cat_key));
 out:
-	hfs_find_निकास(&fd);
-	वापस err;
-पूर्ण
+	hfs_find_exit(&fd);
+	return err;
+}
 
-अटल पूर्णांक hfs_dir_release(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा hfs_सूची_पढ़ो_data *rd = file->निजी_data;
-	अगर (rd) अणु
-		spin_lock(&HFS_I(inode)->खोलो_dir_lock);
+static int hfs_dir_release(struct inode *inode, struct file *file)
+{
+	struct hfs_readdir_data *rd = file->private_data;
+	if (rd) {
+		spin_lock(&HFS_I(inode)->open_dir_lock);
 		list_del(&rd->list);
-		spin_unlock(&HFS_I(inode)->खोलो_dir_lock);
-		kमुक्त(rd);
-	पूर्ण
-	वापस 0;
-पूर्ण
+		spin_unlock(&HFS_I(inode)->open_dir_lock);
+		kfree(rd);
+	}
+	return 0;
+}
 
 /*
  * hfs_create()
  *
- * This is the create() entry in the inode_operations काष्ठाure क्रम
+ * This is the create() entry in the inode_operations structure for
  * regular HFS directories.  The purpose is to create a new file in
- * a directory and वापस a corresponding inode, given the inode क्रम
+ * a directory and return a corresponding inode, given the inode for
  * the directory and the name (and its length) of the new file.
  */
-अटल पूर्णांक hfs_create(काष्ठा user_namespace *mnt_userns, काष्ठा inode *dir,
-		      काष्ठा dentry *dentry, umode_t mode, bool excl)
-अणु
-	काष्ठा inode *inode;
-	पूर्णांक res;
+static int hfs_create(struct user_namespace *mnt_userns, struct inode *dir,
+		      struct dentry *dentry, umode_t mode, bool excl)
+{
+	struct inode *inode;
+	int res;
 
 	inode = hfs_new_inode(dir, &dentry->d_name, mode);
-	अगर (!inode)
-		वापस -ENOMEM;
+	if (!inode)
+		return -ENOMEM;
 
 	res = hfs_cat_create(inode->i_ino, dir, &dentry->d_name, inode);
-	अगर (res) अणु
+	if (res) {
 		clear_nlink(inode);
 		hfs_delete_inode(inode);
 		iput(inode);
-		वापस res;
-	पूर्ण
+		return res;
+	}
 	d_instantiate(dentry, inode);
 	mark_inode_dirty(inode);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * hfs_सूची_गढ़ो()
+ * hfs_mkdir()
  *
- * This is the सूची_गढ़ो() entry in the inode_operations काष्ठाure क्रम
+ * This is the mkdir() entry in the inode_operations structure for
  * regular HFS directories.  The purpose is to create a new directory
- * in a directory, given the inode क्रम the parent directory and the
+ * in a directory, given the inode for the parent directory and the
  * name (and its length) of the new directory.
  */
-अटल पूर्णांक hfs_सूची_गढ़ो(काष्ठा user_namespace *mnt_userns, काष्ठा inode *dir,
-		     काष्ठा dentry *dentry, umode_t mode)
-अणु
-	काष्ठा inode *inode;
-	पूर्णांक res;
+static int hfs_mkdir(struct user_namespace *mnt_userns, struct inode *dir,
+		     struct dentry *dentry, umode_t mode)
+{
+	struct inode *inode;
+	int res;
 
-	inode = hfs_new_inode(dir, &dentry->d_name, S_IFसूची | mode);
-	अगर (!inode)
-		वापस -ENOMEM;
+	inode = hfs_new_inode(dir, &dentry->d_name, S_IFDIR | mode);
+	if (!inode)
+		return -ENOMEM;
 
 	res = hfs_cat_create(inode->i_ino, dir, &dentry->d_name, inode);
-	अगर (res) अणु
+	if (res) {
 		clear_nlink(inode);
 		hfs_delete_inode(inode);
 		iput(inode);
-		वापस res;
-	पूर्ण
+		return res;
+	}
 	d_instantiate(dentry, inode);
 	mark_inode_dirty(inode);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * hfs_हटाओ()
+ * hfs_remove()
  *
- * This serves as both unlink() and सूची_हटाओ() in the inode_operations
- * काष्ठाure क्रम regular HFS directories.  The purpose is to delete
- * an existing child, given the inode क्रम the parent directory and
+ * This serves as both unlink() and rmdir() in the inode_operations
+ * structure for regular HFS directories.  The purpose is to delete
+ * an existing child, given the inode for the parent directory and
  * the name (and its length) of the existing directory.
  *
- * HFS करोes not have hardlinks, so both सूची_हटाओ and unlink set the
- * link count to 0.  The only dअगरference is the emptiness check.
+ * HFS does not have hardlinks, so both rmdir and unlink set the
+ * link count to 0.  The only difference is the emptiness check.
  */
-अटल पूर्णांक hfs_हटाओ(काष्ठा inode *dir, काष्ठा dentry *dentry)
-अणु
-	काष्ठा inode *inode = d_inode(dentry);
-	पूर्णांक res;
+static int hfs_remove(struct inode *dir, struct dentry *dentry)
+{
+	struct inode *inode = d_inode(dentry);
+	int res;
 
-	अगर (S_ISसूची(inode->i_mode) && inode->i_size != 2)
-		वापस -ENOTEMPTY;
+	if (S_ISDIR(inode->i_mode) && inode->i_size != 2)
+		return -ENOTEMPTY;
 	res = hfs_cat_delete(inode->i_ino, dir, &dentry->d_name);
-	अगर (res)
-		वापस res;
+	if (res)
+		return res;
 	clear_nlink(inode);
-	inode->i_स_समय = current_समय(inode);
+	inode->i_ctime = current_time(inode);
 	hfs_delete_inode(inode);
 	mark_inode_dirty(inode);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * hfs_नाम()
+ * hfs_rename()
  *
- * This is the नाम() entry in the inode_operations काष्ठाure क्रम
- * regular HFS directories.  The purpose is to नाम an existing
- * file or directory, given the inode क्रम the current directory and
+ * This is the rename() entry in the inode_operations structure for
+ * regular HFS directories.  The purpose is to rename an existing
+ * file or directory, given the inode for the current directory and
  * the name (and its length) of the existing file/directory and the
- * inode क्रम the new directory and the name (and its length) of the
+ * inode for the new directory and the name (and its length) of the
  * new file/directory.
- * XXX: how करो you handle must_be dir?
+ * XXX: how do you handle must_be dir?
  */
-अटल पूर्णांक hfs_नाम(काष्ठा user_namespace *mnt_userns, काष्ठा inode *old_dir,
-		      काष्ठा dentry *old_dentry, काष्ठा inode *new_dir,
-		      काष्ठा dentry *new_dentry, अचिन्हित पूर्णांक flags)
-अणु
-	पूर्णांक res;
+static int hfs_rename(struct user_namespace *mnt_userns, struct inode *old_dir,
+		      struct dentry *old_dentry, struct inode *new_dir,
+		      struct dentry *new_dentry, unsigned int flags)
+{
+	int res;
 
-	अगर (flags & ~RENAME_NOREPLACE)
-		वापस -EINVAL;
+	if (flags & ~RENAME_NOREPLACE)
+		return -EINVAL;
 
-	/* Unlink destination अगर it alपढ़ोy exists */
-	अगर (d_really_is_positive(new_dentry)) अणु
-		res = hfs_हटाओ(new_dir, new_dentry);
-		अगर (res)
-			वापस res;
-	पूर्ण
+	/* Unlink destination if it already exists */
+	if (d_really_is_positive(new_dentry)) {
+		res = hfs_remove(new_dir, new_dentry);
+		if (res)
+			return res;
+	}
 
 	res = hfs_cat_move(d_inode(old_dentry)->i_ino,
 			   old_dir, &old_dentry->d_name,
 			   new_dir, &new_dentry->d_name);
-	अगर (!res)
+	if (!res)
 		hfs_cat_build_key(old_dir->i_sb,
 				  (btree_key *)&HFS_I(d_inode(old_dentry))->cat_key,
 				  new_dir->i_ino, &new_dentry->d_name);
-	वापस res;
-पूर्ण
+	return res;
+}
 
-स्थिर काष्ठा file_operations hfs_dir_operations = अणु
-	.पढ़ो		= generic_पढ़ो_dir,
-	.iterate_shared	= hfs_सूची_पढ़ो,
+const struct file_operations hfs_dir_operations = {
+	.read		= generic_read_dir,
+	.iterate_shared	= hfs_readdir,
 	.llseek		= generic_file_llseek,
 	.release	= hfs_dir_release,
-पूर्ण;
+};
 
-स्थिर काष्ठा inode_operations hfs_dir_inode_operations = अणु
+const struct inode_operations hfs_dir_inode_operations = {
 	.create		= hfs_create,
 	.lookup		= hfs_lookup,
-	.unlink		= hfs_हटाओ,
-	.सूची_गढ़ो		= hfs_सूची_गढ़ो,
-	.सूची_हटाओ		= hfs_हटाओ,
-	.नाम		= hfs_नाम,
+	.unlink		= hfs_remove,
+	.mkdir		= hfs_mkdir,
+	.rmdir		= hfs_remove,
+	.rename		= hfs_rename,
 	.setattr	= hfs_inode_setattr,
-पूर्ण;
+};

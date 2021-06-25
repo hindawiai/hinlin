@@ -1,26 +1,25 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
- * 8250_dma.c - DMA Engine API support क्रम 8250.c
+ * 8250_dma.c - DMA Engine API support for 8250.c
  *
  * Copyright (C) 2013 Intel Corporation
  */
-#समावेश <linux/tty.h>
-#समावेश <linux/tty_flip.h>
-#समावेश <linux/serial_reg.h>
-#समावेश <linux/dma-mapping.h>
+#include <linux/tty.h>
+#include <linux/tty_flip.h>
+#include <linux/serial_reg.h>
+#include <linux/dma-mapping.h>
 
-#समावेश "8250.h"
+#include "8250.h"
 
-अटल व्योम __dma_tx_complete(व्योम *param)
-अणु
-	काष्ठा uart_8250_port	*p = param;
-	काष्ठा uart_8250_dma	*dma = p->dma;
-	काष्ठा circ_buf		*xmit = &p->port.state->xmit;
-	अचिन्हित दीर्घ	flags;
-	पूर्णांक		ret;
+static void __dma_tx_complete(void *param)
+{
+	struct uart_8250_port	*p = param;
+	struct uart_8250_dma	*dma = p->dma;
+	struct circ_buf		*xmit = &p->port.state->xmit;
+	unsigned long	flags;
+	int		ret;
 
-	dma_sync_single_क्रम_cpu(dma->txchan->device->dev, dma->tx_addr,
+	dma_sync_single_for_cpu(dma->txchan->device->dev, dma->tx_addr,
 				UART_XMIT_SIZE, DMA_TO_DEVICE);
 
 	spin_lock_irqsave(&p->port.lock, flags);
@@ -31,23 +30,23 @@
 	xmit->tail &= UART_XMIT_SIZE - 1;
 	p->port.icount.tx += dma->tx_size;
 
-	अगर (uart_circ_अक्षरs_pending(xmit) < WAKEUP_CHARS)
-		uart_ग_लिखो_wakeup(&p->port);
+	if (uart_circ_chars_pending(xmit) < WAKEUP_CHARS)
+		uart_write_wakeup(&p->port);
 
 	ret = serial8250_tx_dma(p);
-	अगर (ret)
+	if (ret)
 		serial8250_set_THRI(p);
 
 	spin_unlock_irqrestore(&p->port.lock, flags);
-पूर्ण
+}
 
-अटल व्योम __dma_rx_complete(व्योम *param)
-अणु
-	काष्ठा uart_8250_port	*p = param;
-	काष्ठा uart_8250_dma	*dma = p->dma;
-	काष्ठा tty_port		*tty_port = &p->port.state->port;
-	काष्ठा dma_tx_state	state;
-	पूर्णांक			count;
+static void __dma_rx_complete(void *param)
+{
+	struct uart_8250_port	*p = param;
+	struct uart_8250_dma	*dma = p->dma;
+	struct tty_port		*tty_port = &p->port.state->port;
+	struct dma_tx_state	state;
+	int			count;
 
 	dma->rx_running = 0;
 	dmaengine_tx_status(dma->rxchan, dma->rx_cookie, &state);
@@ -58,23 +57,23 @@
 	p->port.icount.rx += count;
 
 	tty_flip_buffer_push(tty_port);
-पूर्ण
+}
 
-पूर्णांक serial8250_tx_dma(काष्ठा uart_8250_port *p)
-अणु
-	काष्ठा uart_8250_dma		*dma = p->dma;
-	काष्ठा circ_buf			*xmit = &p->port.state->xmit;
-	काष्ठा dma_async_tx_descriptor	*desc;
-	पूर्णांक ret;
+int serial8250_tx_dma(struct uart_8250_port *p)
+{
+	struct uart_8250_dma		*dma = p->dma;
+	struct circ_buf			*xmit = &p->port.state->xmit;
+	struct dma_async_tx_descriptor	*desc;
+	int ret;
 
-	अगर (dma->tx_running)
-		वापस 0;
+	if (dma->tx_running)
+		return 0;
 
-	अगर (uart_tx_stopped(&p->port) || uart_circ_empty(xmit)) अणु
+	if (uart_tx_stopped(&p->port) || uart_circ_empty(xmit)) {
 		/* We have been called from __dma_tx_complete() */
 		serial8250_rpm_put_tx(p);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	dma->tx_size = CIRC_CNT_TO_END(xmit->head, xmit->tail, UART_XMIT_SIZE);
 
@@ -82,10 +81,10 @@
 					   dma->tx_addr + xmit->tail,
 					   dma->tx_size, DMA_MEM_TO_DEV,
 					   DMA_PREP_INTERRUPT | DMA_CTRL_ACK);
-	अगर (!desc) अणु
+	if (!desc) {
 		ret = -EBUSY;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	dma->tx_running = 1;
 	desc->callback = __dma_tx_complete;
@@ -93,33 +92,33 @@
 
 	dma->tx_cookie = dmaengine_submit(desc);
 
-	dma_sync_single_क्रम_device(dma->txchan->device->dev, dma->tx_addr,
+	dma_sync_single_for_device(dma->txchan->device->dev, dma->tx_addr,
 				   UART_XMIT_SIZE, DMA_TO_DEVICE);
 
 	dma_async_issue_pending(dma->txchan);
-	अगर (dma->tx_err) अणु
+	if (dma->tx_err) {
 		dma->tx_err = 0;
 		serial8250_clear_THRI(p);
-	पूर्ण
-	वापस 0;
+	}
+	return 0;
 err:
 	dma->tx_err = 1;
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक serial8250_rx_dma(काष्ठा uart_8250_port *p)
-अणु
-	काष्ठा uart_8250_dma		*dma = p->dma;
-	काष्ठा dma_async_tx_descriptor	*desc;
+int serial8250_rx_dma(struct uart_8250_port *p)
+{
+	struct uart_8250_dma		*dma = p->dma;
+	struct dma_async_tx_descriptor	*desc;
 
-	अगर (dma->rx_running)
-		वापस 0;
+	if (dma->rx_running)
+		return 0;
 
 	desc = dmaengine_prep_slave_single(dma->rxchan, dma->rx_addr,
 					   dma->rx_size, DMA_DEV_TO_MEM,
 					   DMA_PREP_INTERRUPT | DMA_CTRL_ACK);
-	अगर (!desc)
-		वापस -EBUSY;
+	if (!desc)
+		return -EBUSY;
 
 	dma->rx_running = 1;
 	desc->callback = __dma_rx_complete;
@@ -129,31 +128,31 @@ err:
 
 	dma_async_issue_pending(dma->rxchan);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम serial8250_rx_dma_flush(काष्ठा uart_8250_port *p)
-अणु
-	काष्ठा uart_8250_dma *dma = p->dma;
+void serial8250_rx_dma_flush(struct uart_8250_port *p)
+{
+	struct uart_8250_dma *dma = p->dma;
 
-	अगर (dma->rx_running) अणु
-		dmaengine_छोड़ो(dma->rxchan);
+	if (dma->rx_running) {
+		dmaengine_pause(dma->rxchan);
 		__dma_rx_complete(p);
 		dmaengine_terminate_async(dma->rxchan);
-	पूर्ण
-पूर्ण
+	}
+}
 EXPORT_SYMBOL_GPL(serial8250_rx_dma_flush);
 
-पूर्णांक serial8250_request_dma(काष्ठा uart_8250_port *p)
-अणु
-	काष्ठा uart_8250_dma	*dma = p->dma;
+int serial8250_request_dma(struct uart_8250_port *p)
+{
+	struct uart_8250_dma	*dma = p->dma;
 	phys_addr_t rx_dma_addr = dma->rx_dma_addr ?
 				  dma->rx_dma_addr : p->port.mapbase;
 	phys_addr_t tx_dma_addr = dma->tx_dma_addr ?
 				  dma->tx_dma_addr : p->port.mapbase;
 	dma_cap_mask_t		mask;
-	काष्ठा dma_slave_caps	caps;
-	पूर्णांक			ret;
+	struct dma_slave_caps	caps;
+	int			ret;
 
 	/* Default slave configuration parameters */
 	dma->rxconf.direction		= DMA_DEV_TO_MEM;
@@ -167,101 +166,101 @@ EXPORT_SYMBOL_GPL(serial8250_rx_dma_flush);
 	dma_cap_zero(mask);
 	dma_cap_set(DMA_SLAVE, mask);
 
-	/* Get a channel क्रम RX */
+	/* Get a channel for RX */
 	dma->rxchan = dma_request_slave_channel_compat(mask,
 						       dma->fn, dma->rx_param,
 						       p->port.dev, "rx");
-	अगर (!dma->rxchan)
-		वापस -ENODEV;
+	if (!dma->rxchan)
+		return -ENODEV;
 
-	/* 8250 rx dma requires dmaengine driver to support छोड़ो/terminate */
+	/* 8250 rx dma requires dmaengine driver to support pause/terminate */
 	ret = dma_get_slave_caps(dma->rxchan, &caps);
-	अगर (ret)
-		जाओ release_rx;
-	अगर (!caps.cmd_छोड़ो || !caps.cmd_terminate ||
-	    caps.residue_granularity == DMA_RESIDUE_GRANULARITY_DESCRIPTOR) अणु
+	if (ret)
+		goto release_rx;
+	if (!caps.cmd_pause || !caps.cmd_terminate ||
+	    caps.residue_granularity == DMA_RESIDUE_GRANULARITY_DESCRIPTOR) {
 		ret = -EINVAL;
-		जाओ release_rx;
-	पूर्ण
+		goto release_rx;
+	}
 
 	dmaengine_slave_config(dma->rxchan, &dma->rxconf);
 
-	/* Get a channel क्रम TX */
+	/* Get a channel for TX */
 	dma->txchan = dma_request_slave_channel_compat(mask,
 						       dma->fn, dma->tx_param,
 						       p->port.dev, "tx");
-	अगर (!dma->txchan) अणु
+	if (!dma->txchan) {
 		ret = -ENODEV;
-		जाओ release_rx;
-	पूर्ण
+		goto release_rx;
+	}
 
 	/* 8250 tx dma requires dmaengine driver to support terminate */
 	ret = dma_get_slave_caps(dma->txchan, &caps);
-	अगर (ret)
-		जाओ err;
-	अगर (!caps.cmd_terminate) अणु
+	if (ret)
+		goto err;
+	if (!caps.cmd_terminate) {
 		ret = -EINVAL;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	dmaengine_slave_config(dma->txchan, &dma->txconf);
 
 	/* RX buffer */
-	अगर (!dma->rx_size)
+	if (!dma->rx_size)
 		dma->rx_size = PAGE_SIZE;
 
 	dma->rx_buf = dma_alloc_coherent(dma->rxchan->device->dev, dma->rx_size,
 					&dma->rx_addr, GFP_KERNEL);
-	अगर (!dma->rx_buf) अणु
+	if (!dma->rx_buf) {
 		ret = -ENOMEM;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	/* TX buffer */
 	dma->tx_addr = dma_map_single(dma->txchan->device->dev,
 					p->port.state->xmit.buf,
 					UART_XMIT_SIZE,
 					DMA_TO_DEVICE);
-	अगर (dma_mapping_error(dma->txchan->device->dev, dma->tx_addr)) अणु
-		dma_मुक्त_coherent(dma->rxchan->device->dev, dma->rx_size,
+	if (dma_mapping_error(dma->txchan->device->dev, dma->tx_addr)) {
+		dma_free_coherent(dma->rxchan->device->dev, dma->rx_size,
 				  dma->rx_buf, dma->rx_addr);
 		ret = -ENOMEM;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	dev_dbg_ratelimited(p->port.dev, "got both dma channels\n");
 
-	वापस 0;
+	return 0;
 err:
 	dma_release_channel(dma->txchan);
 release_rx:
 	dma_release_channel(dma->rxchan);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(serial8250_request_dma);
 
-व्योम serial8250_release_dma(काष्ठा uart_8250_port *p)
-अणु
-	काष्ठा uart_8250_dma *dma = p->dma;
+void serial8250_release_dma(struct uart_8250_port *p)
+{
+	struct uart_8250_dma *dma = p->dma;
 
-	अगर (!dma)
-		वापस;
+	if (!dma)
+		return;
 
 	/* Release RX resources */
 	dmaengine_terminate_sync(dma->rxchan);
-	dma_मुक्त_coherent(dma->rxchan->device->dev, dma->rx_size, dma->rx_buf,
+	dma_free_coherent(dma->rxchan->device->dev, dma->rx_size, dma->rx_buf,
 			  dma->rx_addr);
 	dma_release_channel(dma->rxchan);
-	dma->rxchan = शून्य;
+	dma->rxchan = NULL;
 
 	/* Release TX resources */
 	dmaengine_terminate_sync(dma->txchan);
 	dma_unmap_single(dma->txchan->device->dev, dma->tx_addr,
 			 UART_XMIT_SIZE, DMA_TO_DEVICE);
 	dma_release_channel(dma->txchan);
-	dma->txchan = शून्य;
+	dma->txchan = NULL;
 	dma->tx_running = 0;
 
 	dev_dbg_ratelimited(p->port.dev, "dma channels released\n");
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(serial8250_release_dma);

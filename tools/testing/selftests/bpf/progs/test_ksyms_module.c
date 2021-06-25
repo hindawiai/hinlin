@@ -1,27 +1,26 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /* Copyright (c) 2021 Facebook */
 
-#समावेश "vmlinux.h"
+#include "vmlinux.h"
 
-#समावेश <bpf/bpf_helpers.h>
+#include <bpf/bpf_helpers.h>
 
-बाह्य स्थिर पूर्णांक bpf_tesपंचांगod_ksym_percpu __ksym;
+extern const int bpf_testmod_ksym_percpu __ksym;
 
-पूर्णांक out_mod_ksym_global = 0;
+int out_mod_ksym_global = 0;
 bool triggered = false;
 
 SEC("raw_tp/sys_enter")
-पूर्णांक handler(स्थिर व्योम *ctx)
-अणु
-	पूर्णांक *val;
+int handler(const void *ctx)
+{
+	int *val;
 	__u32 cpu;
 
-	val = (पूर्णांक *)bpf_this_cpu_ptr(&bpf_tesपंचांगod_ksym_percpu);
+	val = (int *)bpf_this_cpu_ptr(&bpf_testmod_ksym_percpu);
 	out_mod_ksym_global = *val;
 	triggered = true;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अक्षर LICENSE[] SEC("license") = "GPL";
+char LICENSE[] SEC("license") = "GPL";

@@ -1,17 +1,16 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (C) Maxime Coquelin 2015
  * Copyright (C) STMicroelectronics 2017
- * Author:  Maxime Coquelin <mcoquelin.sपंचांग32@gmail.com>
+ * Author:  Maxime Coquelin <mcoquelin.stm32@gmail.com>
  */
-#समावेश <linux/init.h>
-#समावेश <linux/of.h>
-#समावेश <linux/platक्रमm_device.h>
+#include <linux/init.h>
+#include <linux/of.h>
+#include <linux/platform_device.h>
 
-#समावेश "pinctrl-stm32.h"
+#include "pinctrl-stm32.h"
 
-अटल स्थिर काष्ठा sपंचांग32_desc_pin sपंचांग32f746_pins[] = अणु
+static const struct stm32_desc_pin stm32f746_pins[] = {
 	STM32_PIN(
 		PINCTRL_PIN(0, "PA0"),
 		STM32_FUNCTION(0, "GPIOA0"),
@@ -1658,31 +1657,31 @@
 		STM32_FUNCTION(16, "EVENTOUT"),
 		STM32_FUNCTION(17, "ANALOG")
 	),
-पूर्ण;
+};
 
-अटल काष्ठा sपंचांग32_pinctrl_match_data sपंचांग32f746_match_data = अणु
-	.pins = sपंचांग32f746_pins,
-	.npins = ARRAY_SIZE(sपंचांग32f746_pins),
-पूर्ण;
+static struct stm32_pinctrl_match_data stm32f746_match_data = {
+	.pins = stm32f746_pins,
+	.npins = ARRAY_SIZE(stm32f746_pins),
+};
 
-अटल स्थिर काष्ठा of_device_id sपंचांग32f746_pctrl_match[] = अणु
-	अणु
+static const struct of_device_id stm32f746_pctrl_match[] = {
+	{
 		.compatible = "st,stm32f746-pinctrl",
-		.data = &sपंचांग32f746_match_data,
-	पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+		.data = &stm32f746_match_data,
+	},
+	{ }
+};
 
-अटल काष्ठा platक्रमm_driver sपंचांग32f746_pinctrl_driver = अणु
-	.probe = sपंचांग32_pctl_probe,
-	.driver = अणु
+static struct platform_driver stm32f746_pinctrl_driver = {
+	.probe = stm32_pctl_probe,
+	.driver = {
 		.name = "stm32f746-pinctrl",
-		.of_match_table = sपंचांग32f746_pctrl_match,
-	पूर्ण,
-पूर्ण;
+		.of_match_table = stm32f746_pctrl_match,
+	},
+};
 
-अटल पूर्णांक __init sपंचांग32f746_pinctrl_init(व्योम)
-अणु
-	वापस platक्रमm_driver_रेजिस्टर(&sपंचांग32f746_pinctrl_driver);
-पूर्ण
-arch_initcall(sपंचांग32f746_pinctrl_init);
+static int __init stm32f746_pinctrl_init(void)
+{
+	return platform_driver_register(&stm32f746_pinctrl_driver);
+}
+arch_initcall(stm32f746_pinctrl_init);

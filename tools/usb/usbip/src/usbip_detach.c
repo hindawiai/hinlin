@@ -1,125 +1,124 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright (C) 2011 matt mooney <mfm@muteddisk.com>
  *               2005-2007 Takahiro Hirofuchi
  */
 
-#समावेश <प्रकार.स>
-#समावेश <सीमा.स>
-#समावेश <मानक_निवेशt.h>
-#समावेश <मानकपन.स>
-#समावेश <मानककोष.स>
-#समावेश <माला.स>
+#include <ctype.h>
+#include <limits.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
-#समावेश <getopt.h>
-#समावेश <unistd.h>
+#include <getopt.h>
+#include <unistd.h>
 
-#समावेश "vhci_driver.h"
-#समावेश "usbip_common.h"
-#समावेश "usbip_network.h"
-#समावेश "usbip.h"
+#include "vhci_driver.h"
+#include "usbip_common.h"
+#include "usbip_network.h"
+#include "usbip.h"
 
-अटल स्थिर अक्षर usbip_detach_usage_string[] =
+static const char usbip_detach_usage_string[] =
 	"usbip detach <args>\n"
 	"    -p, --port=<port>    " USBIP_VHCI_DRV_NAME
 	" port the device is on\n";
 
-व्योम usbip_detach_usage(व्योम)
-अणु
-	म_लिखो("usage: %s", usbip_detach_usage_string);
-पूर्ण
+void usbip_detach_usage(void)
+{
+	printf("usage: %s", usbip_detach_usage_string);
+}
 
-अटल पूर्णांक detach_port(अक्षर *port)
-अणु
-	पूर्णांक ret = 0;
-	uपूर्णांक8_t portnum;
-	अक्षर path[PATH_MAX+1];
-	पूर्णांक i;
-	काष्ठा usbip_imported_device *idev;
-	पूर्णांक found = 0;
+static int detach_port(char *port)
+{
+	int ret = 0;
+	uint8_t portnum;
+	char path[PATH_MAX+1];
+	int i;
+	struct usbip_imported_device *idev;
+	int found = 0;
 
-	अचिन्हित पूर्णांक port_len = म_माप(port);
+	unsigned int port_len = strlen(port);
 
-	क्रम (अचिन्हित पूर्णांक i = 0; i < port_len; i++)
-		अगर (!है_अंक(port[i])) अणु
+	for (unsigned int i = 0; i < port_len; i++)
+		if (!isdigit(port[i])) {
 			err("invalid port %s", port);
-			वापस -1;
-		पूर्ण
+			return -1;
+		}
 
-	portnum = म_से_प(port);
+	portnum = atoi(port);
 
-	ret = usbip_vhci_driver_खोलो();
-	अगर (ret < 0) अणु
+	ret = usbip_vhci_driver_open();
+	if (ret < 0) {
 		err("open vhci_driver");
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	/* check क्रम invalid port */
-	क्रम (i = 0; i < vhci_driver->nports; i++) अणु
+	/* check for invalid port */
+	for (i = 0; i < vhci_driver->nports; i++) {
 		idev = &vhci_driver->idev[i];
 
-		अगर (idev->port == portnum) अणु
+		if (idev->port == portnum) {
 			found = 1;
-			अगर (idev->status != VDEV_ST_शून्य)
-				अवरोध;
+			if (idev->status != VDEV_ST_NULL)
+				break;
 			info("Port %d is already detached!\n", idev->port);
-			जाओ call_driver_बंद;
-		पूर्ण
-	पूर्ण
+			goto call_driver_close;
+		}
+	}
 
-	अगर (!found) अणु
+	if (!found) {
 		err("Invalid port %s > maxports %d",
 			port, vhci_driver->nports);
-		जाओ call_driver_बंद;
-	पूर्ण
+		goto call_driver_close;
+	}
 
-	/* हटाओ the port state file */
-	snम_लिखो(path, PATH_MAX, VHCI_STATE_PATH"/port%d", portnum);
+	/* remove the port state file */
+	snprintf(path, PATH_MAX, VHCI_STATE_PATH"/port%d", portnum);
 
-	हटाओ(path);
-	सूची_हटाओ(VHCI_STATE_PATH);
+	remove(path);
+	rmdir(VHCI_STATE_PATH);
 
 	ret = usbip_vhci_detach_device(portnum);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		ret = -1;
 		err("Port %d detach request failed!\n", portnum);
-		जाओ call_driver_बंद;
-	पूर्ण
+		goto call_driver_close;
+	}
 	info("Port %d is now detached!\n", portnum);
 
-call_driver_बंद:
-	usbip_vhci_driver_बंद();
+call_driver_close:
+	usbip_vhci_driver_close();
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक usbip_detach(पूर्णांक argc, अक्षर *argv[])
-अणु
-	अटल स्थिर काष्ठा option opts[] = अणु
-		अणु "port", required_argument, शून्य, 'p' पूर्ण,
-		अणु शून्य, 0, शून्य, 0 पूर्ण
-	पूर्ण;
-	पूर्णांक opt;
-	पूर्णांक ret = -1;
+int usbip_detach(int argc, char *argv[])
+{
+	static const struct option opts[] = {
+		{ "port", required_argument, NULL, 'p' },
+		{ NULL, 0, NULL, 0 }
+	};
+	int opt;
+	int ret = -1;
 
-	क्रम (;;) अणु
-		opt = getopt_दीर्घ(argc, argv, "p:", opts, शून्य);
+	for (;;) {
+		opt = getopt_long(argc, argv, "p:", opts, NULL);
 
-		अगर (opt == -1)
-			अवरोध;
+		if (opt == -1)
+			break;
 
-		चयन (opt) अणु
-		हाल 'p':
+		switch (opt) {
+		case 'p':
 			ret = detach_port(optarg);
-			जाओ out;
-		शेष:
-			जाओ err_out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		default:
+			goto err_out;
+		}
+	}
 
 err_out:
 	usbip_detach_usage();
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}

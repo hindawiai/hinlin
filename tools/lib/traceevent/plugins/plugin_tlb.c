@@ -1,67 +1,66 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: LGPL-2.1
+// SPDX-License-Identifier: LGPL-2.1
 /*
  * Copyright (C) 2015 Red Hat Inc, Steven Rostedt <srostedt@redhat.com>
  */
-#समावेश <मानकपन.स>
-#समावेश <मानककोष.स>
-#समावेश <माला.स>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
-#समावेश "event-parse.h"
+#include "event-parse.h"
 
-क्रमागत tlb_flush_reason अणु
+enum tlb_flush_reason {
 	TLB_FLUSH_ON_TASK_SWITCH,
 	TLB_REMOTE_SHOOTDOWN,
 	TLB_LOCAL_SHOOTDOWN,
 	TLB_LOCAL_MM_SHOOTDOWN,
 	NR_TLB_FLUSH_REASONS,
-पूर्ण;
+};
 
-अटल पूर्णांक tlb_flush_handler(काष्ठा trace_seq *s, काष्ठा tep_record *record,
-			     काष्ठा tep_event *event, व्योम *context)
-अणु
-	अचिन्हित दीर्घ दीर्घ val;
+static int tlb_flush_handler(struct trace_seq *s, struct tep_record *record,
+			     struct tep_event *event, void *context)
+{
+	unsigned long long val;
 
-	trace_seq_म_लिखो(s, "pages=");
+	trace_seq_printf(s, "pages=");
 
-	tep_prपूर्णांक_num_field(s, "%ld", event, "pages", record, 1);
+	tep_print_num_field(s, "%ld", event, "pages", record, 1);
 
-	अगर (tep_get_field_val(s, event, "reason", record, &val, 1) < 0)
-		वापस -1;
+	if (tep_get_field_val(s, event, "reason", record, &val, 1) < 0)
+		return -1;
 
-	trace_seq_माला_दो(s, " reason=");
+	trace_seq_puts(s, " reason=");
 
-	चयन (val) अणु
-	हाल TLB_FLUSH_ON_TASK_SWITCH:
-		trace_seq_माला_दो(s, "flush on task switch");
-		अवरोध;
-	हाल TLB_REMOTE_SHOOTDOWN:
-		trace_seq_माला_दो(s, "remote shootdown");
-		अवरोध;
-	हाल TLB_LOCAL_SHOOTDOWN:
-		trace_seq_माला_दो(s, "local shootdown");
-		अवरोध;
-	हाल TLB_LOCAL_MM_SHOOTDOWN:
-		trace_seq_माला_दो(s, "local mm shootdown");
-		अवरोध;
-	पूर्ण
+	switch (val) {
+	case TLB_FLUSH_ON_TASK_SWITCH:
+		trace_seq_puts(s, "flush on task switch");
+		break;
+	case TLB_REMOTE_SHOOTDOWN:
+		trace_seq_puts(s, "remote shootdown");
+		break;
+	case TLB_LOCAL_SHOOTDOWN:
+		trace_seq_puts(s, "local shootdown");
+		break;
+	case TLB_LOCAL_MM_SHOOTDOWN:
+		trace_seq_puts(s, "local mm shootdown");
+		break;
+	}
 
-	trace_seq_म_लिखो(s, " (%lld)", val);
+	trace_seq_printf(s, " (%lld)", val);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक TEP_PLUGIN_LOADER(काष्ठा tep_handle *tep)
-अणु
-	tep_रेजिस्टर_event_handler(tep, -1, "tlb", "tlb_flush",
-				   tlb_flush_handler, शून्य);
+int TEP_PLUGIN_LOADER(struct tep_handle *tep)
+{
+	tep_register_event_handler(tep, -1, "tlb", "tlb_flush",
+				   tlb_flush_handler, NULL);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम TEP_PLUGIN_UNLOADER(काष्ठा tep_handle *tep)
-अणु
-	tep_unरेजिस्टर_event_handler(tep, -1,
+void TEP_PLUGIN_UNLOADER(struct tep_handle *tep)
+{
+	tep_unregister_event_handler(tep, -1,
 				     "tlb", "tlb_flush",
-				     tlb_flush_handler, शून्य);
-पूर्ण
+				     tlb_flush_handler, NULL);
+}

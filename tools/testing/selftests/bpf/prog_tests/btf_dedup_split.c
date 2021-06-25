@@ -1,26 +1,25 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /* Copyright (c) 2020 Facebook */
-#समावेश <test_progs.h>
-#समावेश <bpf/btf.h>
-#समावेश "btf_helpers.h"
+#include <test_progs.h>
+#include <bpf/btf.h>
+#include "btf_helpers.h"
 
-अटल व्योम test_split_simple() अणु
-	स्थिर काष्ठा btf_type *t;
-	काष्ठा btf *btf1, *btf2;
-	पूर्णांक str_off, err;
+static void test_split_simple() {
+	const struct btf_type *t;
+	struct btf *btf1, *btf2;
+	int str_off, err;
 
 	btf1 = btf__new_empty();
-	अगर (!ASSERT_OK_PTR(btf1, "empty_main_btf"))
-		वापस;
+	if (!ASSERT_OK_PTR(btf1, "empty_main_btf"))
+		return;
 
-	btf__set_poपूर्णांकer_size(btf1, 8); /* enक्रमce 64-bit arch */
+	btf__set_pointer_size(btf1, 8); /* enforce 64-bit arch */
 
-	btf__add_पूर्णांक(btf1, "int", 4, BTF_INT_SIGNED);	/* [1] पूर्णांक */
-	btf__add_ptr(btf1, 1);				/* [2] ptr to पूर्णांक */
-	btf__add_काष्ठा(btf1, "s1", 4);			/* [3] काष्ठा s1 अणु */
-	btf__add_field(btf1, "f1", 1, 0, 0);		/*      पूर्णांक f1; */
-							/* पूर्ण */
+	btf__add_int(btf1, "int", 4, BTF_INT_SIGNED);	/* [1] int */
+	btf__add_ptr(btf1, 1);				/* [2] ptr to int */
+	btf__add_struct(btf1, "s1", 4);			/* [3] struct s1 { */
+	btf__add_field(btf1, "f1", 1, 0, 0);		/*      int f1; */
+							/* } */
 
 	VALIDATE_RAW_BTF(
 		btf1,
@@ -30,39 +29,39 @@
 		"\t'f1' type_id=1 bits_offset=0");
 
 	ASSERT_STREQ(btf_type_c_dump(btf1), "\
-काष्ठा s1 अणु\न\
-	पूर्णांक f1;\न\
-पूर्ण;\न\न", "c_dump");
+struct s1 {\n\
+	int f1;\n\
+};\n\n", "c_dump");
 
 	btf2 = btf__new_empty_split(btf1);
-	अगर (!ASSERT_OK_PTR(btf2, "empty_split_btf"))
-		जाओ cleanup;
+	if (!ASSERT_OK_PTR(btf2, "empty_split_btf"))
+		goto cleanup;
 
-	/* poपूर्णांकer size should be "inherited" from मुख्य BTF */
-	ASSERT_EQ(btf__poपूर्णांकer_size(btf2), 8, "inherit_ptr_sz");
+	/* pointer size should be "inherited" from main BTF */
+	ASSERT_EQ(btf__pointer_size(btf2), 8, "inherit_ptr_sz");
 
 	str_off = btf__find_str(btf2, "int");
 	ASSERT_NEQ(str_off, -ENOENT, "str_int_missing");
 
 	t = btf__type_by_id(btf2, 1);
-	अगर (!ASSERT_OK_PTR(t, "int_type"))
-		जाओ cleanup;
-	ASSERT_EQ(btf_is_पूर्णांक(t), true, "int_kind");
+	if (!ASSERT_OK_PTR(t, "int_type"))
+		goto cleanup;
+	ASSERT_EQ(btf_is_int(t), true, "int_kind");
 	ASSERT_STREQ(btf__str_by_offset(btf2, t->name_off), "int", "int_name");
 
-	btf__add_काष्ठा(btf2, "s2", 16);		/* [4] काष्ठा s2 अणु	*/
-	btf__add_field(btf2, "f1", 6, 0, 0);		/*      काष्ठा s1 f1;	*/
-	btf__add_field(btf2, "f2", 5, 32, 0);		/*      पूर्णांक f2;		*/
-	btf__add_field(btf2, "f3", 2, 64, 0);		/*      पूर्णांक *f3;	*/
-							/* पूर्ण */
+	btf__add_struct(btf2, "s2", 16);		/* [4] struct s2 {	*/
+	btf__add_field(btf2, "f1", 6, 0, 0);		/*      struct s1 f1;	*/
+	btf__add_field(btf2, "f2", 5, 32, 0);		/*      int f2;		*/
+	btf__add_field(btf2, "f3", 2, 64, 0);		/*      int *f3;	*/
+							/* } */
 
-	/* duplicated पूर्णांक */
-	btf__add_पूर्णांक(btf2, "int", 4, BTF_INT_SIGNED);	/* [5] पूर्णांक */
+	/* duplicated int */
+	btf__add_int(btf2, "int", 4, BTF_INT_SIGNED);	/* [5] int */
 
-	/* duplicated काष्ठा s1 */
-	btf__add_काष्ठा(btf2, "s1", 4);			/* [6] काष्ठा s1 अणु */
-	btf__add_field(btf2, "f1", 5, 0, 0);		/*      पूर्णांक f1; */
-							/* पूर्ण */
+	/* duplicated struct s1 */
+	btf__add_struct(btf2, "s1", 4);			/* [6] struct s1 { */
+	btf__add_field(btf2, "f1", 5, 0, 0);		/*      int f1; */
+							/* } */
 
 	VALIDATE_RAW_BTF(
 		btf2,
@@ -79,23 +78,23 @@
 		"\t'f1' type_id=5 bits_offset=0");
 
 	ASSERT_STREQ(btf_type_c_dump(btf2), "\
-काष्ठा s1 अणु\न\
-	पूर्णांक f1;\न\
-पूर्ण;\न\
-\न\
-काष्ठा s1___2 अणु\न\
-	पूर्णांक f1;\न\
-पूर्ण;\न\
-\न\
-काष्ठा s2 अणु\न\
-	काष्ठा s1___2 f1;\न\
-	पूर्णांक f2;\न\
-	पूर्णांक *f3;\न\
-पूर्ण;\न\न", "c_dump");
+struct s1 {\n\
+	int f1;\n\
+};\n\
+\n\
+struct s1___2 {\n\
+	int f1;\n\
+};\n\
+\n\
+struct s2 {\n\
+	struct s1___2 f1;\n\
+	int f2;\n\
+	int *f3;\n\
+};\n\n", "c_dump");
 
-	err = btf__dedup(btf2, शून्य, शून्य);
-	अगर (!ASSERT_OK(err, "btf_dedup"))
-		जाओ cleanup;
+	err = btf__dedup(btf2, NULL, NULL);
+	if (!ASSERT_OK(err, "btf_dedup"))
+		goto cleanup;
 
 	VALIDATE_RAW_BTF(
 		btf2,
@@ -109,41 +108,41 @@
 		"\t'f3' type_id=2 bits_offset=64");
 
 	ASSERT_STREQ(btf_type_c_dump(btf2), "\
-काष्ठा s1 अणु\न\
-	पूर्णांक f1;\न\
-पूर्ण;\न\
-\न\
-काष्ठा s2 अणु\न\
-	काष्ठा s1 f1;\न\
-	पूर्णांक f2;\न\
-	पूर्णांक *f3;\न\
-पूर्ण;\न\न", "c_dump");
+struct s1 {\n\
+	int f1;\n\
+};\n\
+\n\
+struct s2 {\n\
+	struct s1 f1;\n\
+	int f2;\n\
+	int *f3;\n\
+};\n\n", "c_dump");
 
 cleanup:
-	btf__मुक्त(btf2);
-	btf__मुक्त(btf1);
-पूर्ण
+	btf__free(btf2);
+	btf__free(btf1);
+}
 
-अटल व्योम test_split_fwd_resolve() अणु
-	काष्ठा btf *btf1, *btf2;
-	पूर्णांक err;
+static void test_split_fwd_resolve() {
+	struct btf *btf1, *btf2;
+	int err;
 
 	btf1 = btf__new_empty();
-	अगर (!ASSERT_OK_PTR(btf1, "empty_main_btf"))
-		वापस;
+	if (!ASSERT_OK_PTR(btf1, "empty_main_btf"))
+		return;
 
-	btf__set_poपूर्णांकer_size(btf1, 8); /* enक्रमce 64-bit arch */
+	btf__set_pointer_size(btf1, 8); /* enforce 64-bit arch */
 
-	btf__add_पूर्णांक(btf1, "int", 4, BTF_INT_SIGNED);	/* [1] पूर्णांक */
-	btf__add_ptr(btf1, 4);				/* [2] ptr to काष्ठा s1 */
-	btf__add_ptr(btf1, 5);				/* [3] ptr to काष्ठा s2 */
-	btf__add_काष्ठा(btf1, "s1", 16);		/* [4] काष्ठा s1 अणु */
-	btf__add_field(btf1, "f1", 2, 0, 0);		/*      काष्ठा s1 *f1; */
-	btf__add_field(btf1, "f2", 3, 64, 0);		/*      काष्ठा s2 *f2; */
-							/* पूर्ण */
-	btf__add_काष्ठा(btf1, "s2", 4);			/* [5] काष्ठा s2 अणु */
-	btf__add_field(btf1, "f1", 1, 0, 0);		/*      पूर्णांक f1; */
-							/* पूर्ण */
+	btf__add_int(btf1, "int", 4, BTF_INT_SIGNED);	/* [1] int */
+	btf__add_ptr(btf1, 4);				/* [2] ptr to struct s1 */
+	btf__add_ptr(btf1, 5);				/* [3] ptr to struct s2 */
+	btf__add_struct(btf1, "s1", 16);		/* [4] struct s1 { */
+	btf__add_field(btf1, "f1", 2, 0, 0);		/*      struct s1 *f1; */
+	btf__add_field(btf1, "f2", 3, 64, 0);		/*      struct s2 *f2; */
+							/* } */
+	btf__add_struct(btf1, "s2", 4);			/* [5] struct s2 { */
+	btf__add_field(btf1, "f1", 1, 0, 0);		/*      int f1; */
+							/* } */
 
 	VALIDATE_RAW_BTF(
 		btf1,
@@ -157,17 +156,17 @@ cleanup:
 		"\t'f1' type_id=1 bits_offset=0");
 
 	btf2 = btf__new_empty_split(btf1);
-	अगर (!ASSERT_OK_PTR(btf2, "empty_split_btf"))
-		जाओ cleanup;
+	if (!ASSERT_OK_PTR(btf2, "empty_split_btf"))
+		goto cleanup;
 
-	btf__add_पूर्णांक(btf2, "int", 4, BTF_INT_SIGNED);	/* [6] पूर्णांक */
-	btf__add_ptr(btf2, 10);				/* [7] ptr to काष्ठा s1 */
-	btf__add_fwd(btf2, "s2", BTF_FWD_STRUCT);	/* [8] fwd क्रम काष्ठा s2 */
-	btf__add_ptr(btf2, 8);				/* [9] ptr to fwd काष्ठा s2 */
-	btf__add_काष्ठा(btf2, "s1", 16);		/* [10] काष्ठा s1 अणु */
-	btf__add_field(btf2, "f1", 7, 0, 0);		/*      काष्ठा s1 *f1; */
-	btf__add_field(btf2, "f2", 9, 64, 0);		/*      काष्ठा s2 *f2; */
-							/* पूर्ण */
+	btf__add_int(btf2, "int", 4, BTF_INT_SIGNED);	/* [6] int */
+	btf__add_ptr(btf2, 10);				/* [7] ptr to struct s1 */
+	btf__add_fwd(btf2, "s2", BTF_FWD_STRUCT);	/* [8] fwd for struct s2 */
+	btf__add_ptr(btf2, 8);				/* [9] ptr to fwd struct s2 */
+	btf__add_struct(btf2, "s1", 16);		/* [10] struct s1 { */
+	btf__add_field(btf2, "f1", 7, 0, 0);		/*      struct s1 *f1; */
+	btf__add_field(btf2, "f2", 9, 64, 0);		/*      struct s2 *f2; */
+							/* } */
 
 	VALIDATE_RAW_BTF(
 		btf2,
@@ -187,9 +186,9 @@ cleanup:
 		"\t'f1' type_id=7 bits_offset=0\n"
 		"\t'f2' type_id=9 bits_offset=64");
 
-	err = btf__dedup(btf2, शून्य, शून्य);
-	अगर (!ASSERT_OK(err, "btf_dedup"))
-		जाओ cleanup;
+	err = btf__dedup(btf2, NULL, NULL);
+	if (!ASSERT_OK(err, "btf_dedup"))
+		goto cleanup;
 
 	VALIDATE_RAW_BTF(
 		btf2,
@@ -203,28 +202,28 @@ cleanup:
 		"\t'f1' type_id=1 bits_offset=0");
 
 cleanup:
-	btf__मुक्त(btf2);
-	btf__मुक्त(btf1);
-पूर्ण
+	btf__free(btf2);
+	btf__free(btf1);
+}
 
-अटल व्योम test_split_काष्ठा_duped() अणु
-	काष्ठा btf *btf1, *btf2;
-	पूर्णांक err;
+static void test_split_struct_duped() {
+	struct btf *btf1, *btf2;
+	int err;
 
 	btf1 = btf__new_empty();
-	अगर (!ASSERT_OK_PTR(btf1, "empty_main_btf"))
-		वापस;
+	if (!ASSERT_OK_PTR(btf1, "empty_main_btf"))
+		return;
 
-	btf__set_poपूर्णांकer_size(btf1, 8); /* enक्रमce 64-bit arch */
+	btf__set_pointer_size(btf1, 8); /* enforce 64-bit arch */
 
-	btf__add_पूर्णांक(btf1, "int", 4, BTF_INT_SIGNED);	/* [1] पूर्णांक */
-	btf__add_ptr(btf1, 5);				/* [2] ptr to काष्ठा s1 */
-	btf__add_fwd(btf1, "s2", BTF_FWD_STRUCT);	/* [3] fwd क्रम काष्ठा s2 */
-	btf__add_ptr(btf1, 3);				/* [4] ptr to fwd काष्ठा s2 */
-	btf__add_काष्ठा(btf1, "s1", 16);		/* [5] काष्ठा s1 अणु */
-	btf__add_field(btf1, "f1", 2, 0, 0);		/*      काष्ठा s1 *f1; */
-	btf__add_field(btf1, "f2", 4, 64, 0);		/*      काष्ठा s2 *f2; */
-							/* पूर्ण */
+	btf__add_int(btf1, "int", 4, BTF_INT_SIGNED);	/* [1] int */
+	btf__add_ptr(btf1, 5);				/* [2] ptr to struct s1 */
+	btf__add_fwd(btf1, "s2", BTF_FWD_STRUCT);	/* [3] fwd for struct s2 */
+	btf__add_ptr(btf1, 3);				/* [4] ptr to fwd struct s2 */
+	btf__add_struct(btf1, "s1", 16);		/* [5] struct s1 { */
+	btf__add_field(btf1, "f1", 2, 0, 0);		/*      struct s1 *f1; */
+	btf__add_field(btf1, "f2", 4, 64, 0);		/*      struct s2 *f2; */
+							/* } */
 
 	VALIDATE_RAW_BTF(
 		btf1,
@@ -237,27 +236,27 @@ cleanup:
 		"\t'f2' type_id=4 bits_offset=64");
 
 	btf2 = btf__new_empty_split(btf1);
-	अगर (!ASSERT_OK_PTR(btf2, "empty_split_btf"))
-		जाओ cleanup;
+	if (!ASSERT_OK_PTR(btf2, "empty_split_btf"))
+		goto cleanup;
 
-	btf__add_पूर्णांक(btf2, "int", 4, BTF_INT_SIGNED);	/* [6] पूर्णांक */
-	btf__add_ptr(btf2, 10);				/* [7] ptr to काष्ठा s1 */
-	btf__add_fwd(btf2, "s2", BTF_FWD_STRUCT);	/* [8] fwd क्रम काष्ठा s2 */
-	btf__add_ptr(btf2, 11);				/* [9] ptr to काष्ठा s2 */
-	btf__add_काष्ठा(btf2, "s1", 16);		/* [10] काष्ठा s1 अणु */
-	btf__add_field(btf2, "f1", 7, 0, 0);		/*      काष्ठा s1 *f1; */
-	btf__add_field(btf2, "f2", 9, 64, 0);		/*      काष्ठा s2 *f2; */
-							/* पूर्ण */
-	btf__add_काष्ठा(btf2, "s2", 40);		/* [11] काष्ठा s2 अणु	*/
-	btf__add_field(btf2, "f1", 7, 0, 0);		/*      काष्ठा s1 *f1;	*/
-	btf__add_field(btf2, "f2", 9, 64, 0);		/*      काष्ठा s2 *f2;	*/
-	btf__add_field(btf2, "f3", 6, 128, 0);		/*      पूर्णांक f3;		*/
-	btf__add_field(btf2, "f4", 10, 192, 0);		/*      काष्ठा s1 f4;	*/
-							/* पूर्ण */
-	btf__add_ptr(btf2, 8);				/* [12] ptr to fwd काष्ठा s2 */
-	btf__add_काष्ठा(btf2, "s3", 8);			/* [13] काष्ठा s3 अणु */
-	btf__add_field(btf2, "f1", 12, 0, 0);		/*      काष्ठा s2 *f1; (fwd) */
-							/* पूर्ण */
+	btf__add_int(btf2, "int", 4, BTF_INT_SIGNED);	/* [6] int */
+	btf__add_ptr(btf2, 10);				/* [7] ptr to struct s1 */
+	btf__add_fwd(btf2, "s2", BTF_FWD_STRUCT);	/* [8] fwd for struct s2 */
+	btf__add_ptr(btf2, 11);				/* [9] ptr to struct s2 */
+	btf__add_struct(btf2, "s1", 16);		/* [10] struct s1 { */
+	btf__add_field(btf2, "f1", 7, 0, 0);		/*      struct s1 *f1; */
+	btf__add_field(btf2, "f2", 9, 64, 0);		/*      struct s2 *f2; */
+							/* } */
+	btf__add_struct(btf2, "s2", 40);		/* [11] struct s2 {	*/
+	btf__add_field(btf2, "f1", 7, 0, 0);		/*      struct s1 *f1;	*/
+	btf__add_field(btf2, "f2", 9, 64, 0);		/*      struct s2 *f2;	*/
+	btf__add_field(btf2, "f3", 6, 128, 0);		/*      int f3;		*/
+	btf__add_field(btf2, "f4", 10, 192, 0);		/*      struct s1 f4;	*/
+							/* } */
+	btf__add_ptr(btf2, 8);				/* [12] ptr to fwd struct s2 */
+	btf__add_struct(btf2, "s3", 8);			/* [13] struct s3 { */
+	btf__add_field(btf2, "f1", 12, 0, 0);		/*      struct s2 *f1; (fwd) */
+							/* } */
 
 	VALIDATE_RAW_BTF(
 		btf2,
@@ -284,9 +283,9 @@ cleanup:
 		"[13] STRUCT 's3' size=8 vlen=1\n"
 		"\t'f1' type_id=12 bits_offset=0");
 
-	err = btf__dedup(btf2, शून्य, शून्य);
-	अगर (!ASSERT_OK(err, "btf_dedup"))
-		जाओ cleanup;
+	err = btf__dedup(btf2, NULL, NULL);
+	if (!ASSERT_OK(err, "btf_dedup"))
+		goto cleanup;
 
 	VALIDATE_RAW_BTF(
 		btf2,
@@ -311,16 +310,16 @@ cleanup:
 		"\t'f1' type_id=7 bits_offset=0");
 
 cleanup:
-	btf__मुक्त(btf2);
-	btf__मुक्त(btf1);
-पूर्ण
+	btf__free(btf2);
+	btf__free(btf1);
+}
 
-व्योम test_btf_dedup_split()
-अणु
-	अगर (test__start_subtest("split_simple"))
+void test_btf_dedup_split()
+{
+	if (test__start_subtest("split_simple"))
 		test_split_simple();
-	अगर (test__start_subtest("split_struct_duped"))
-		test_split_काष्ठा_duped();
-	अगर (test__start_subtest("split_fwd_resolve"))
+	if (test__start_subtest("split_struct_duped"))
+		test_split_struct_duped();
+	if (test__start_subtest("split_fwd_resolve"))
 		test_split_fwd_resolve();
-पूर्ण
+}

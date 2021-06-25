@@ -1,134 +1,133 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- *  IUCV protocol stack क्रम Linux on zSeries
+ *  IUCV protocol stack for Linux on zSeries
  *
  *  Copyright IBM Corp. 2006, 2009
  *
- *  Author(s):	Jennअगरer Hunt <jenhunt@us.ibm.com>
+ *  Author(s):	Jennifer Hunt <jenhunt@us.ibm.com>
  *		Hendrik Brueckner <brueckner@linux.vnet.ibm.com>
  *  PM functions:
  *		Ursula Braun <ursula.braun@de.ibm.com>
  */
 
-#घोषणा KMSG_COMPONENT "af_iucv"
-#घोषणा pr_fmt(fmt) KMSG_COMPONENT ": " fmt
+#define KMSG_COMPONENT "af_iucv"
+#define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
-#समावेश <linux/module.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/types.h>
-#समावेश <linux/सीमा.स>
-#समावेश <linux/list.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/sched/संकेत.स>
-#समावेश <linux/slab.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/init.h>
-#समावेश <linux/poll.h>
-#समावेश <linux/security.h>
-#समावेश <net/sock.h>
-#समावेश <यंत्र/ebcdic.h>
-#समावेश <यंत्र/cpcmd.h>
-#समावेश <linux/kmod.h>
+#include <linux/module.h>
+#include <linux/netdevice.h>
+#include <linux/types.h>
+#include <linux/limits.h>
+#include <linux/list.h>
+#include <linux/errno.h>
+#include <linux/kernel.h>
+#include <linux/sched/signal.h>
+#include <linux/slab.h>
+#include <linux/skbuff.h>
+#include <linux/init.h>
+#include <linux/poll.h>
+#include <linux/security.h>
+#include <net/sock.h>
+#include <asm/ebcdic.h>
+#include <asm/cpcmd.h>
+#include <linux/kmod.h>
 
-#समावेश <net/iucv/af_iucv.h>
+#include <net/iucv/af_iucv.h>
 
-#घोषणा VERSION "1.2"
+#define VERSION "1.2"
 
-अटल अक्षर iucv_userid[80];
+static char iucv_userid[80];
 
-अटल काष्ठा proto iucv_proto = अणु
+static struct proto iucv_proto = {
 	.name		= "AF_IUCV",
 	.owner		= THIS_MODULE,
-	.obj_size	= माप(काष्ठा iucv_sock),
-पूर्ण;
+	.obj_size	= sizeof(struct iucv_sock),
+};
 
-अटल काष्ठा iucv_पूर्णांकerface *pr_iucv;
+static struct iucv_interface *pr_iucv;
 
 /* special AF_IUCV IPRM messages */
-अटल स्थिर u8 iprm_shutकरोwn[8] =
-	अणु0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01पूर्ण;
+static const u8 iprm_shutdown[8] =
+	{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01};
 
-#घोषणा TRGCLS_SIZE	माप_field(काष्ठा iucv_message, class)
+#define TRGCLS_SIZE	sizeof_field(struct iucv_message, class)
 
-#घोषणा __iucv_sock_रुको(sk, condition, समयo, ret)			\
-करो अणु									\
-	DEFINE_WAIT(__रुको);						\
-	दीर्घ __समयo = समयo;						\
+#define __iucv_sock_wait(sk, condition, timeo, ret)			\
+do {									\
+	DEFINE_WAIT(__wait);						\
+	long __timeo = timeo;						\
 	ret = 0;							\
-	prepare_to_रुको(sk_sleep(sk), &__रुको, TASK_INTERRUPTIBLE);	\
-	जबतक (!(condition)) अणु						\
-		अगर (!__समयo) अणु						\
+	prepare_to_wait(sk_sleep(sk), &__wait, TASK_INTERRUPTIBLE);	\
+	while (!(condition)) {						\
+		if (!__timeo) {						\
 			ret = -EAGAIN;					\
-			अवरोध;						\
-		पूर्ण							\
-		अगर (संकेत_pending(current)) अणु				\
-			ret = sock_पूर्णांकr_त्रुटि_सं(__समयo);			\
-			अवरोध;						\
-		पूर्ण							\
+			break;						\
+		}							\
+		if (signal_pending(current)) {				\
+			ret = sock_intr_errno(__timeo);			\
+			break;						\
+		}							\
 		release_sock(sk);					\
-		__समयo = schedule_समयout(__समयo);			\
+		__timeo = schedule_timeout(__timeo);			\
 		lock_sock(sk);						\
 		ret = sock_error(sk);					\
-		अगर (ret)						\
-			अवरोध;						\
-	पूर्ण								\
-	finish_रुको(sk_sleep(sk), &__रुको);				\
-पूर्ण जबतक (0)
+		if (ret)						\
+			break;						\
+	}								\
+	finish_wait(sk_sleep(sk), &__wait);				\
+} while (0)
 
-#घोषणा iucv_sock_रुको(sk, condition, समयo)				\
-(अणु									\
-	पूर्णांक __ret = 0;							\
-	अगर (!(condition))						\
-		__iucv_sock_रुको(sk, condition, समयo, __ret);		\
+#define iucv_sock_wait(sk, condition, timeo)				\
+({									\
+	int __ret = 0;							\
+	if (!(condition))						\
+		__iucv_sock_wait(sk, condition, timeo, __ret);		\
 	__ret;								\
-पूर्ण)
+})
 
-अटल काष्ठा sock *iucv_accept_dequeue(काष्ठा sock *parent,
-					काष्ठा socket *newsock);
-अटल व्योम iucv_sock_समाप्त(काष्ठा sock *sk);
-अटल व्योम iucv_sock_बंद(काष्ठा sock *sk);
+static struct sock *iucv_accept_dequeue(struct sock *parent,
+					struct socket *newsock);
+static void iucv_sock_kill(struct sock *sk);
+static void iucv_sock_close(struct sock *sk);
 
-अटल व्योम afiucv_hs_callback_txnotअगरy(काष्ठा sock *sk, क्रमागत iucv_tx_notअगरy);
+static void afiucv_hs_callback_txnotify(struct sock *sk, enum iucv_tx_notify);
 
 /* Call Back functions */
-अटल व्योम iucv_callback_rx(काष्ठा iucv_path *, काष्ठा iucv_message *);
-अटल व्योम iucv_callback_txकरोne(काष्ठा iucv_path *, काष्ठा iucv_message *);
-अटल व्योम iucv_callback_connack(काष्ठा iucv_path *, u8 *);
-अटल पूर्णांक iucv_callback_connreq(काष्ठा iucv_path *, u8 *, u8 *);
-अटल व्योम iucv_callback_connrej(काष्ठा iucv_path *, u8 *);
-अटल व्योम iucv_callback_shutकरोwn(काष्ठा iucv_path *, u8 *);
+static void iucv_callback_rx(struct iucv_path *, struct iucv_message *);
+static void iucv_callback_txdone(struct iucv_path *, struct iucv_message *);
+static void iucv_callback_connack(struct iucv_path *, u8 *);
+static int iucv_callback_connreq(struct iucv_path *, u8 *, u8 *);
+static void iucv_callback_connrej(struct iucv_path *, u8 *);
+static void iucv_callback_shutdown(struct iucv_path *, u8 *);
 
-अटल काष्ठा iucv_sock_list iucv_sk_list = अणु
+static struct iucv_sock_list iucv_sk_list = {
 	.lock = __RW_LOCK_UNLOCKED(iucv_sk_list.lock),
-	.स्वतःbind_name = ATOMIC_INIT(0)
-पूर्ण;
+	.autobind_name = ATOMIC_INIT(0)
+};
 
-अटल काष्ठा iucv_handler af_iucv_handler = अणु
+static struct iucv_handler af_iucv_handler = {
 	.path_pending	  = iucv_callback_connreq,
 	.path_complete	  = iucv_callback_connack,
 	.path_severed	  = iucv_callback_connrej,
 	.message_pending  = iucv_callback_rx,
-	.message_complete = iucv_callback_txकरोne,
-	.path_quiesced	  = iucv_callback_shutकरोwn,
-पूर्ण;
+	.message_complete = iucv_callback_txdone,
+	.path_quiesced	  = iucv_callback_shutdown,
+};
 
-अटल अंतरभूत व्योम high_nmcpy(अचिन्हित अक्षर *dst, अक्षर *src)
-अणु
-       स_नकल(dst, src, 8);
-पूर्ण
+static inline void high_nmcpy(unsigned char *dst, char *src)
+{
+       memcpy(dst, src, 8);
+}
 
-अटल अंतरभूत व्योम low_nmcpy(अचिन्हित अक्षर *dst, अक्षर *src)
-अणु
-       स_नकल(&dst[8], src, 8);
-पूर्ण
+static inline void low_nmcpy(unsigned char *dst, char *src)
+{
+       memcpy(&dst[8], src, 8);
+}
 
 /**
  * iucv_msg_length() - Returns the length of an iucv message.
- * @msg:	Poपूर्णांकer to काष्ठा iucv_message, MUST NOT be शून्य
+ * @msg:	Pointer to struct iucv_message, MUST NOT be NULL
  *
- * The function वापसs the length of the specअगरied iucv message @msg of data
+ * The function returns the length of the specified iucv message @msg of data
  * stored in a buffer and of data stored in the parameter list (PRMDATA).
  *
  * For IUCV_IPRMDATA, AF_IUCV uses the following convention to transport socket
@@ -138,298 +137,298 @@
  *
  * The socket data length is computed by subtracting the socket data length
  * value from 0xFF.
- * If the socket data len is greater 7, then PRMDATA can be used क्रम special
- * notअगरications (see iucv_sock_shutकरोwn); and further,
- * अगर the socket data len is > 7, the function वापसs 8.
+ * If the socket data len is greater 7, then PRMDATA can be used for special
+ * notifications (see iucv_sock_shutdown); and further,
+ * if the socket data len is > 7, the function returns 8.
  *
  * Use this function to allocate socket buffers to store iucv message data.
  */
-अटल अंतरभूत माप_प्रकार iucv_msg_length(काष्ठा iucv_message *msg)
-अणु
-	माप_प्रकार datalen;
+static inline size_t iucv_msg_length(struct iucv_message *msg)
+{
+	size_t datalen;
 
-	अगर (msg->flags & IUCV_IPRMDATA) अणु
+	if (msg->flags & IUCV_IPRMDATA) {
 		datalen = 0xff - msg->rmmsg[7];
-		वापस (datalen < 8) ? datalen : 8;
-	पूर्ण
-	वापस msg->length;
-पूर्ण
+		return (datalen < 8) ? datalen : 8;
+	}
+	return msg->length;
+}
 
 /**
- * iucv_sock_in_state() - check क्रम specअगरic states
- * @sk:		sock काष्ठाure
+ * iucv_sock_in_state() - check for specific states
+ * @sk:		sock structure
  * @state:	first iucv sk state
  * @state:	second iucv sk state
  *
- * Returns true अगर the socket in either in the first or second state.
+ * Returns true if the socket in either in the first or second state.
  */
-अटल पूर्णांक iucv_sock_in_state(काष्ठा sock *sk, पूर्णांक state, पूर्णांक state2)
-अणु
-	वापस (sk->sk_state == state || sk->sk_state == state2);
-पूर्ण
+static int iucv_sock_in_state(struct sock *sk, int state, int state2)
+{
+	return (sk->sk_state == state || sk->sk_state == state2);
+}
 
 /**
- * iucv_below_msglim() - function to check अगर messages can be sent
- * @sk:		sock काष्ठाure
+ * iucv_below_msglim() - function to check if messages can be sent
+ * @sk:		sock structure
  *
- * Returns true अगर the send queue length is lower than the message limit.
- * Always वापसs true अगर the socket is not connected (no iucv path क्रम
+ * Returns true if the send queue length is lower than the message limit.
+ * Always returns true if the socket is not connected (no iucv path for
  * checking the message limit).
  */
-अटल अंतरभूत पूर्णांक iucv_below_msglim(काष्ठा sock *sk)
-अणु
-	काष्ठा iucv_sock *iucv = iucv_sk(sk);
+static inline int iucv_below_msglim(struct sock *sk)
+{
+	struct iucv_sock *iucv = iucv_sk(sk);
 
-	अगर (sk->sk_state != IUCV_CONNECTED)
-		वापस 1;
-	अगर (iucv->transport == AF_IUCV_TRANS_IUCV)
-		वापस (atomic_पढ़ो(&iucv->skbs_in_xmit) < iucv->path->msglim);
-	अन्यथा
-		वापस ((atomic_पढ़ो(&iucv->msg_sent) < iucv->msglimit_peer) &&
-			(atomic_पढ़ो(&iucv->pendings) <= 0));
-पूर्ण
+	if (sk->sk_state != IUCV_CONNECTED)
+		return 1;
+	if (iucv->transport == AF_IUCV_TRANS_IUCV)
+		return (atomic_read(&iucv->skbs_in_xmit) < iucv->path->msglim);
+	else
+		return ((atomic_read(&iucv->msg_sent) < iucv->msglimit_peer) &&
+			(atomic_read(&iucv->pendings) <= 0));
+}
 
 /**
- * iucv_sock_wake_msglim() - Wake up thपढ़ो रुकोing on msg limit
+ * iucv_sock_wake_msglim() - Wake up thread waiting on msg limit
  */
-अटल व्योम iucv_sock_wake_msglim(काष्ठा sock *sk)
-अणु
-	काष्ठा socket_wq *wq;
+static void iucv_sock_wake_msglim(struct sock *sk)
+{
+	struct socket_wq *wq;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	wq = rcu_dereference(sk->sk_wq);
-	अगर (skwq_has_sleeper(wq))
-		wake_up_पूर्णांकerruptible_all(&wq->रुको);
+	if (skwq_has_sleeper(wq))
+		wake_up_interruptible_all(&wq->wait);
 	sk_wake_async(sk, SOCK_WAKE_SPACE, POLL_OUT);
-	rcu_पढ़ो_unlock();
-पूर्ण
+	rcu_read_unlock();
+}
 
 /**
  * afiucv_hs_send() - send a message through HiperSockets transport
  */
-अटल पूर्णांक afiucv_hs_send(काष्ठा iucv_message *imsg, काष्ठा sock *sock,
-		   काष्ठा sk_buff *skb, u8 flags)
-अणु
-	काष्ठा iucv_sock *iucv = iucv_sk(sock);
-	काष्ठा af_iucv_trans_hdr *phs_hdr;
-	पूर्णांक err, confirm_recv = 0;
+static int afiucv_hs_send(struct iucv_message *imsg, struct sock *sock,
+		   struct sk_buff *skb, u8 flags)
+{
+	struct iucv_sock *iucv = iucv_sk(sock);
+	struct af_iucv_trans_hdr *phs_hdr;
+	int err, confirm_recv = 0;
 
-	phs_hdr = skb_push(skb, माप(*phs_hdr));
-	स_रखो(phs_hdr, 0, माप(*phs_hdr));
+	phs_hdr = skb_push(skb, sizeof(*phs_hdr));
+	memset(phs_hdr, 0, sizeof(*phs_hdr));
 	skb_reset_network_header(skb);
 
 	phs_hdr->magic = ETH_P_AF_IUCV;
 	phs_hdr->version = 1;
 	phs_hdr->flags = flags;
-	अगर (flags == AF_IUCV_FLAG_SYN)
-		phs_hdr->winकरोw = iucv->msglimit;
-	अन्यथा अगर ((flags == AF_IUCV_FLAG_WIN) || !flags) अणु
-		confirm_recv = atomic_पढ़ो(&iucv->msg_recv);
-		phs_hdr->winकरोw = confirm_recv;
-		अगर (confirm_recv)
+	if (flags == AF_IUCV_FLAG_SYN)
+		phs_hdr->window = iucv->msglimit;
+	else if ((flags == AF_IUCV_FLAG_WIN) || !flags) {
+		confirm_recv = atomic_read(&iucv->msg_recv);
+		phs_hdr->window = confirm_recv;
+		if (confirm_recv)
 			phs_hdr->flags = phs_hdr->flags | AF_IUCV_FLAG_WIN;
-	पूर्ण
-	स_नकल(phs_hdr->destUserID, iucv->dst_user_id, 8);
-	स_नकल(phs_hdr->destAppName, iucv->dst_name, 8);
-	स_नकल(phs_hdr->srcUserID, iucv->src_user_id, 8);
-	स_नकल(phs_hdr->srcAppName, iucv->src_name, 8);
-	ASCEBC(phs_hdr->destUserID, माप(phs_hdr->destUserID));
-	ASCEBC(phs_hdr->destAppName, माप(phs_hdr->destAppName));
-	ASCEBC(phs_hdr->srcUserID, माप(phs_hdr->srcUserID));
-	ASCEBC(phs_hdr->srcAppName, माप(phs_hdr->srcAppName));
-	अगर (imsg)
-		स_नकल(&phs_hdr->iucv_hdr, imsg, माप(काष्ठा iucv_message));
+	}
+	memcpy(phs_hdr->destUserID, iucv->dst_user_id, 8);
+	memcpy(phs_hdr->destAppName, iucv->dst_name, 8);
+	memcpy(phs_hdr->srcUserID, iucv->src_user_id, 8);
+	memcpy(phs_hdr->srcAppName, iucv->src_name, 8);
+	ASCEBC(phs_hdr->destUserID, sizeof(phs_hdr->destUserID));
+	ASCEBC(phs_hdr->destAppName, sizeof(phs_hdr->destAppName));
+	ASCEBC(phs_hdr->srcUserID, sizeof(phs_hdr->srcUserID));
+	ASCEBC(phs_hdr->srcAppName, sizeof(phs_hdr->srcAppName));
+	if (imsg)
+		memcpy(&phs_hdr->iucv_hdr, imsg, sizeof(struct iucv_message));
 
 	skb->dev = iucv->hs_dev;
-	अगर (!skb->dev) अणु
+	if (!skb->dev) {
 		err = -ENODEV;
-		जाओ err_मुक्त;
-	पूर्ण
+		goto err_free;
+	}
 
-	dev_hard_header(skb, skb->dev, ETH_P_AF_IUCV, शून्य, शून्य, skb->len);
+	dev_hard_header(skb, skb->dev, ETH_P_AF_IUCV, NULL, NULL, skb->len);
 
-	अगर (!(skb->dev->flags & IFF_UP) || !netअगर_carrier_ok(skb->dev)) अणु
+	if (!(skb->dev->flags & IFF_UP) || !netif_carrier_ok(skb->dev)) {
 		err = -ENETDOWN;
-		जाओ err_मुक्त;
-	पूर्ण
-	अगर (skb->len > skb->dev->mtu) अणु
-		अगर (sock->sk_type == SOCK_SEQPACKET) अणु
+		goto err_free;
+	}
+	if (skb->len > skb->dev->mtu) {
+		if (sock->sk_type == SOCK_SEQPACKET) {
 			err = -EMSGSIZE;
-			जाओ err_मुक्त;
-		पूर्ण
+			goto err_free;
+		}
 		err = pskb_trim(skb, skb->dev->mtu);
-		अगर (err)
-			जाओ err_मुक्त;
-	पूर्ण
+		if (err)
+			goto err_free;
+	}
 	skb->protocol = cpu_to_be16(ETH_P_AF_IUCV);
 
 	atomic_inc(&iucv->skbs_in_xmit);
 	err = dev_queue_xmit(skb);
-	अगर (net_xmit_eval(err)) अणु
+	if (net_xmit_eval(err)) {
 		atomic_dec(&iucv->skbs_in_xmit);
-	पूर्ण अन्यथा अणु
+	} else {
 		atomic_sub(confirm_recv, &iucv->msg_recv);
-		WARN_ON(atomic_पढ़ो(&iucv->msg_recv) < 0);
-	पूर्ण
-	वापस net_xmit_eval(err);
+		WARN_ON(atomic_read(&iucv->msg_recv) < 0);
+	}
+	return net_xmit_eval(err);
 
-err_मुक्त:
-	kमुक्त_skb(skb);
-	वापस err;
-पूर्ण
+err_free:
+	kfree_skb(skb);
+	return err;
+}
 
-अटल काष्ठा sock *__iucv_get_sock_by_name(अक्षर *nm)
-अणु
-	काष्ठा sock *sk;
+static struct sock *__iucv_get_sock_by_name(char *nm)
+{
+	struct sock *sk;
 
-	sk_क्रम_each(sk, &iucv_sk_list.head)
-		अगर (!स_भेद(&iucv_sk(sk)->src_name, nm, 8))
-			वापस sk;
+	sk_for_each(sk, &iucv_sk_list.head)
+		if (!memcmp(&iucv_sk(sk)->src_name, nm, 8))
+			return sk;
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल व्योम iucv_sock_deकाष्ठा(काष्ठा sock *sk)
-अणु
+static void iucv_sock_destruct(struct sock *sk)
+{
 	skb_queue_purge(&sk->sk_receive_queue);
 	skb_queue_purge(&sk->sk_error_queue);
 
 	sk_mem_reclaim(sk);
 
-	अगर (!sock_flag(sk, SOCK_DEAD)) अणु
+	if (!sock_flag(sk, SOCK_DEAD)) {
 		pr_err("Attempt to release alive iucv socket %p\n", sk);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	WARN_ON(atomic_पढ़ो(&sk->sk_rmem_alloc));
-	WARN_ON(refcount_पढ़ो(&sk->sk_wmem_alloc));
+	WARN_ON(atomic_read(&sk->sk_rmem_alloc));
+	WARN_ON(refcount_read(&sk->sk_wmem_alloc));
 	WARN_ON(sk->sk_wmem_queued);
-	WARN_ON(sk->sk_क्रमward_alloc);
-पूर्ण
+	WARN_ON(sk->sk_forward_alloc);
+}
 
 /* Cleanup Listen */
-अटल व्योम iucv_sock_cleanup_listen(काष्ठा sock *parent)
-अणु
-	काष्ठा sock *sk;
+static void iucv_sock_cleanup_listen(struct sock *parent)
+{
+	struct sock *sk;
 
 	/* Close non-accepted connections */
-	जबतक ((sk = iucv_accept_dequeue(parent, शून्य))) अणु
-		iucv_sock_बंद(sk);
-		iucv_sock_समाप्त(sk);
-	पूर्ण
+	while ((sk = iucv_accept_dequeue(parent, NULL))) {
+		iucv_sock_close(sk);
+		iucv_sock_kill(sk);
+	}
 
 	parent->sk_state = IUCV_CLOSED;
-पूर्ण
+}
 
-अटल व्योम iucv_sock_link(काष्ठा iucv_sock_list *l, काष्ठा sock *sk)
-अणु
-	ग_लिखो_lock_bh(&l->lock);
+static void iucv_sock_link(struct iucv_sock_list *l, struct sock *sk)
+{
+	write_lock_bh(&l->lock);
 	sk_add_node(sk, &l->head);
-	ग_लिखो_unlock_bh(&l->lock);
-पूर्ण
+	write_unlock_bh(&l->lock);
+}
 
-अटल व्योम iucv_sock_unlink(काष्ठा iucv_sock_list *l, काष्ठा sock *sk)
-अणु
-	ग_लिखो_lock_bh(&l->lock);
+static void iucv_sock_unlink(struct iucv_sock_list *l, struct sock *sk)
+{
+	write_lock_bh(&l->lock);
 	sk_del_node_init(sk);
-	ग_लिखो_unlock_bh(&l->lock);
-पूर्ण
+	write_unlock_bh(&l->lock);
+}
 
-/* Kill socket (only अगर zapped and orphaned) */
-अटल व्योम iucv_sock_समाप्त(काष्ठा sock *sk)
-अणु
-	अगर (!sock_flag(sk, SOCK_ZAPPED) || sk->sk_socket)
-		वापस;
+/* Kill socket (only if zapped and orphaned) */
+static void iucv_sock_kill(struct sock *sk)
+{
+	if (!sock_flag(sk, SOCK_ZAPPED) || sk->sk_socket)
+		return;
 
 	iucv_sock_unlink(&iucv_sk_list, sk);
 	sock_set_flag(sk, SOCK_DEAD);
 	sock_put(sk);
-पूर्ण
+}
 
 /* Terminate an IUCV path */
-अटल व्योम iucv_sever_path(काष्ठा sock *sk, पूर्णांक with_user_data)
-अणु
-	अचिन्हित अक्षर user_data[16];
-	काष्ठा iucv_sock *iucv = iucv_sk(sk);
-	काष्ठा iucv_path *path = iucv->path;
+static void iucv_sever_path(struct sock *sk, int with_user_data)
+{
+	unsigned char user_data[16];
+	struct iucv_sock *iucv = iucv_sk(sk);
+	struct iucv_path *path = iucv->path;
 
-	अगर (iucv->path) अणु
-		iucv->path = शून्य;
-		अगर (with_user_data) अणु
+	if (iucv->path) {
+		iucv->path = NULL;
+		if (with_user_data) {
 			low_nmcpy(user_data, iucv->src_name);
 			high_nmcpy(user_data, iucv->dst_name);
-			ASCEBC(user_data, माप(user_data));
+			ASCEBC(user_data, sizeof(user_data));
 			pr_iucv->path_sever(path, user_data);
-		पूर्ण अन्यथा
-			pr_iucv->path_sever(path, शून्य);
-		iucv_path_मुक्त(path);
-	पूर्ण
-पूर्ण
+		} else
+			pr_iucv->path_sever(path, NULL);
+		iucv_path_free(path);
+	}
+}
 
-/* Send controlling flags through an IUCV socket क्रम HIPER transport */
-अटल पूर्णांक iucv_send_ctrl(काष्ठा sock *sk, u8 flags)
-अणु
-	काष्ठा iucv_sock *iucv = iucv_sk(sk);
-	पूर्णांक err = 0;
-	पूर्णांक blen;
-	काष्ठा sk_buff *skb;
-	u8 shutकरोwn = 0;
+/* Send controlling flags through an IUCV socket for HIPER transport */
+static int iucv_send_ctrl(struct sock *sk, u8 flags)
+{
+	struct iucv_sock *iucv = iucv_sk(sk);
+	int err = 0;
+	int blen;
+	struct sk_buff *skb;
+	u8 shutdown = 0;
 
-	blen = माप(काष्ठा af_iucv_trans_hdr) +
+	blen = sizeof(struct af_iucv_trans_hdr) +
 	       LL_RESERVED_SPACE(iucv->hs_dev);
-	अगर (sk->sk_shutकरोwn & SEND_SHUTDOWN) अणु
+	if (sk->sk_shutdown & SEND_SHUTDOWN) {
 		/* controlling flags should be sent anyway */
-		shutकरोwn = sk->sk_shutकरोwn;
-		sk->sk_shutकरोwn &= RCV_SHUTDOWN;
-	पूर्ण
+		shutdown = sk->sk_shutdown;
+		sk->sk_shutdown &= RCV_SHUTDOWN;
+	}
 	skb = sock_alloc_send_skb(sk, blen, 1, &err);
-	अगर (skb) अणु
+	if (skb) {
 		skb_reserve(skb, blen);
-		err = afiucv_hs_send(शून्य, sk, skb, flags);
-	पूर्ण
-	अगर (shutकरोwn)
-		sk->sk_shutकरोwn = shutकरोwn;
-	वापस err;
-पूर्ण
+		err = afiucv_hs_send(NULL, sk, skb, flags);
+	}
+	if (shutdown)
+		sk->sk_shutdown = shutdown;
+	return err;
+}
 
 /* Close an IUCV socket */
-अटल व्योम iucv_sock_बंद(काष्ठा sock *sk)
-अणु
-	काष्ठा iucv_sock *iucv = iucv_sk(sk);
-	अचिन्हित दीर्घ समयo;
-	पूर्णांक err = 0;
+static void iucv_sock_close(struct sock *sk)
+{
+	struct iucv_sock *iucv = iucv_sk(sk);
+	unsigned long timeo;
+	int err = 0;
 
 	lock_sock(sk);
 
-	चयन (sk->sk_state) अणु
-	हाल IUCV_LISTEN:
+	switch (sk->sk_state) {
+	case IUCV_LISTEN:
 		iucv_sock_cleanup_listen(sk);
-		अवरोध;
+		break;
 
-	हाल IUCV_CONNECTED:
-		अगर (iucv->transport == AF_IUCV_TRANS_HIPER) अणु
+	case IUCV_CONNECTED:
+		if (iucv->transport == AF_IUCV_TRANS_HIPER) {
 			err = iucv_send_ctrl(sk, AF_IUCV_FLAG_FIN);
 			sk->sk_state = IUCV_DISCONN;
 			sk->sk_state_change(sk);
-		पूर्ण
+		}
 		fallthrough;
 
-	हाल IUCV_DISCONN:
+	case IUCV_DISCONN:
 		sk->sk_state = IUCV_CLOSING;
 		sk->sk_state_change(sk);
 
-		अगर (!err && atomic_पढ़ो(&iucv->skbs_in_xmit) > 0) अणु
-			अगर (sock_flag(sk, SOCK_LINGER) && sk->sk_lingerसमय)
-				समयo = sk->sk_lingerसमय;
-			अन्यथा
-				समयo = IUCV_DISCONN_TIMEOUT;
-			iucv_sock_रुको(sk,
+		if (!err && atomic_read(&iucv->skbs_in_xmit) > 0) {
+			if (sock_flag(sk, SOCK_LINGER) && sk->sk_lingertime)
+				timeo = sk->sk_lingertime;
+			else
+				timeo = IUCV_DISCONN_TIMEOUT;
+			iucv_sock_wait(sk,
 					iucv_sock_in_state(sk, IUCV_CLOSED, 0),
-					समयo);
-		पूर्ण
+					timeo);
+		}
 		fallthrough;
 
-	हाल IUCV_CLOSING:
+	case IUCV_CLOSING:
 		sk->sk_state = IUCV_CLOSED;
 		sk->sk_state_change(sk);
 
@@ -440,38 +439,38 @@ err_मुक्त:
 		skb_queue_purge(&iucv->backlog_skb_q);
 		fallthrough;
 
-	शेष:
+	default:
 		iucv_sever_path(sk, 1);
-	पूर्ण
+	}
 
-	अगर (iucv->hs_dev) अणु
+	if (iucv->hs_dev) {
 		dev_put(iucv->hs_dev);
-		iucv->hs_dev = शून्य;
-		sk->sk_bound_dev_अगर = 0;
-	पूर्ण
+		iucv->hs_dev = NULL;
+		sk->sk_bound_dev_if = 0;
+	}
 
-	/* mark socket क्रम deletion by iucv_sock_समाप्त() */
+	/* mark socket for deletion by iucv_sock_kill() */
 	sock_set_flag(sk, SOCK_ZAPPED);
 
 	release_sock(sk);
-पूर्ण
+}
 
-अटल व्योम iucv_sock_init(काष्ठा sock *sk, काष्ठा sock *parent)
-अणु
-	अगर (parent) अणु
+static void iucv_sock_init(struct sock *sk, struct sock *parent)
+{
+	if (parent) {
 		sk->sk_type = parent->sk_type;
 		security_sk_clone(parent, sk);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल काष्ठा sock *iucv_sock_alloc(काष्ठा socket *sock, पूर्णांक proto, gfp_t prio, पूर्णांक kern)
-अणु
-	काष्ठा sock *sk;
-	काष्ठा iucv_sock *iucv;
+static struct sock *iucv_sock_alloc(struct socket *sock, int proto, gfp_t prio, int kern)
+{
+	struct sock *sk;
+	struct iucv_sock *iucv;
 
 	sk = sk_alloc(&init_net, PF_IUCV, prio, &iucv_proto, kern);
-	अगर (!sk)
-		वापस शून्य;
+	if (!sk)
+		return NULL;
 	iucv = iucv_sk(sk);
 
 	sock_init_data(sock, sk);
@@ -488,16 +487,16 @@ err_मुक्त:
 	atomic_set(&iucv->skbs_in_xmit, 0);
 	atomic_set(&iucv->msg_sent, 0);
 	atomic_set(&iucv->msg_recv, 0);
-	iucv->path = शून्य;
-	iucv->sk_txnotअगरy = afiucv_hs_callback_txnotअगरy;
-	स_रखो(&iucv->src_user_id , 0, 32);
-	अगर (pr_iucv)
+	iucv->path = NULL;
+	iucv->sk_txnotify = afiucv_hs_callback_txnotify;
+	memset(&iucv->src_user_id , 0, 32);
+	if (pr_iucv)
 		iucv->transport = AF_IUCV_TRANS_IUCV;
-	अन्यथा
+	else
 		iucv->transport = AF_IUCV_TRANS_HIPER;
 
-	sk->sk_deकाष्ठा = iucv_sock_deकाष्ठा;
-	sk->sk_sndसमयo = IUCV_CONN_TIMEOUT;
+	sk->sk_destruct = iucv_sock_destruct;
+	sk->sk_sndtimeo = IUCV_CONN_TIMEOUT;
 
 	sock_reset_flag(sk, SOCK_ZAPPED);
 
@@ -505,13 +504,13 @@ err_मुक्त:
 	sk->sk_state	= IUCV_OPEN;
 
 	iucv_sock_link(&iucv_sk_list, sk);
-	वापस sk;
-पूर्ण
+	return sk;
+}
 
-अटल व्योम iucv_accept_enqueue(काष्ठा sock *parent, काष्ठा sock *sk)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा iucv_sock *par = iucv_sk(parent);
+static void iucv_accept_enqueue(struct sock *parent, struct sock *sk)
+{
+	unsigned long flags;
+	struct iucv_sock *par = iucv_sk(parent);
 
 	sock_hold(sk);
 	spin_lock_irqsave(&par->accept_q_lock, flags);
@@ -519,380 +518,380 @@ err_मुक्त:
 	spin_unlock_irqrestore(&par->accept_q_lock, flags);
 	iucv_sk(sk)->parent = parent;
 	sk_acceptq_added(parent);
-पूर्ण
+}
 
-अटल व्योम iucv_accept_unlink(काष्ठा sock *sk)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा iucv_sock *par = iucv_sk(iucv_sk(sk)->parent);
+static void iucv_accept_unlink(struct sock *sk)
+{
+	unsigned long flags;
+	struct iucv_sock *par = iucv_sk(iucv_sk(sk)->parent);
 
 	spin_lock_irqsave(&par->accept_q_lock, flags);
 	list_del_init(&iucv_sk(sk)->accept_q);
 	spin_unlock_irqrestore(&par->accept_q_lock, flags);
-	sk_acceptq_हटाओd(iucv_sk(sk)->parent);
-	iucv_sk(sk)->parent = शून्य;
+	sk_acceptq_removed(iucv_sk(sk)->parent);
+	iucv_sk(sk)->parent = NULL;
 	sock_put(sk);
-पूर्ण
+}
 
-अटल काष्ठा sock *iucv_accept_dequeue(काष्ठा sock *parent,
-					काष्ठा socket *newsock)
-अणु
-	काष्ठा iucv_sock *isk, *n;
-	काष्ठा sock *sk;
+static struct sock *iucv_accept_dequeue(struct sock *parent,
+					struct socket *newsock)
+{
+	struct iucv_sock *isk, *n;
+	struct sock *sk;
 
-	list_क्रम_each_entry_safe(isk, n, &iucv_sk(parent)->accept_q, accept_q) अणु
-		sk = (काष्ठा sock *) isk;
+	list_for_each_entry_safe(isk, n, &iucv_sk(parent)->accept_q, accept_q) {
+		sk = (struct sock *) isk;
 		lock_sock(sk);
 
-		अगर (sk->sk_state == IUCV_CLOSED) अणु
+		if (sk->sk_state == IUCV_CLOSED) {
 			iucv_accept_unlink(sk);
 			release_sock(sk);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		अगर (sk->sk_state == IUCV_CONNECTED ||
+		if (sk->sk_state == IUCV_CONNECTED ||
 		    sk->sk_state == IUCV_DISCONN ||
-		    !newsock) अणु
+		    !newsock) {
 			iucv_accept_unlink(sk);
-			अगर (newsock)
+			if (newsock)
 				sock_graft(sk, newsock);
 
 			release_sock(sk);
-			वापस sk;
-		पूर्ण
+			return sk;
+		}
 
 		release_sock(sk);
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+	}
+	return NULL;
+}
 
-अटल व्योम __iucv_स्वतः_name(काष्ठा iucv_sock *iucv)
-अणु
-	अक्षर name[12];
+static void __iucv_auto_name(struct iucv_sock *iucv)
+{
+	char name[12];
 
-	प्र_लिखो(name, "%08x", atomic_inc_वापस(&iucv_sk_list.स्वतःbind_name));
-	जबतक (__iucv_get_sock_by_name(name)) अणु
-		प्र_लिखो(name, "%08x",
-			atomic_inc_वापस(&iucv_sk_list.स्वतःbind_name));
-	पूर्ण
-	स_नकल(iucv->src_name, name, 8);
-पूर्ण
+	sprintf(name, "%08x", atomic_inc_return(&iucv_sk_list.autobind_name));
+	while (__iucv_get_sock_by_name(name)) {
+		sprintf(name, "%08x",
+			atomic_inc_return(&iucv_sk_list.autobind_name));
+	}
+	memcpy(iucv->src_name, name, 8);
+}
 
 /* Bind an unbound socket */
-अटल पूर्णांक iucv_sock_bind(काष्ठा socket *sock, काष्ठा sockaddr *addr,
-			  पूर्णांक addr_len)
-अणु
-	DECLARE_SOCKADDR(काष्ठा sockaddr_iucv *, sa, addr);
-	अक्षर uid[माप(sa->siucv_user_id)];
-	काष्ठा sock *sk = sock->sk;
-	काष्ठा iucv_sock *iucv;
-	पूर्णांक err = 0;
-	काष्ठा net_device *dev;
+static int iucv_sock_bind(struct socket *sock, struct sockaddr *addr,
+			  int addr_len)
+{
+	DECLARE_SOCKADDR(struct sockaddr_iucv *, sa, addr);
+	char uid[sizeof(sa->siucv_user_id)];
+	struct sock *sk = sock->sk;
+	struct iucv_sock *iucv;
+	int err = 0;
+	struct net_device *dev;
 
-	/* Verअगरy the input sockaddr */
-	अगर (addr_len < माप(काष्ठा sockaddr_iucv) ||
+	/* Verify the input sockaddr */
+	if (addr_len < sizeof(struct sockaddr_iucv) ||
 	    addr->sa_family != AF_IUCV)
-		वापस -EINVAL;
+		return -EINVAL;
 
 	lock_sock(sk);
-	अगर (sk->sk_state != IUCV_OPEN) अणु
+	if (sk->sk_state != IUCV_OPEN) {
 		err = -EBADFD;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	ग_लिखो_lock_bh(&iucv_sk_list.lock);
+	write_lock_bh(&iucv_sk_list.lock);
 
 	iucv = iucv_sk(sk);
-	अगर (__iucv_get_sock_by_name(sa->siucv_name)) अणु
+	if (__iucv_get_sock_by_name(sa->siucv_name)) {
 		err = -EADDRINUSE;
-		जाओ करोne_unlock;
-	पूर्ण
-	अगर (iucv->path)
-		जाओ करोne_unlock;
+		goto done_unlock;
+	}
+	if (iucv->path)
+		goto done_unlock;
 
 	/* Bind the socket */
-	अगर (pr_iucv)
-		अगर (!स_भेद(sa->siucv_user_id, iucv_userid, 8))
-			जाओ vm_bind; /* VM IUCV transport */
+	if (pr_iucv)
+		if (!memcmp(sa->siucv_user_id, iucv_userid, 8))
+			goto vm_bind; /* VM IUCV transport */
 
 	/* try hiper transport */
-	स_नकल(uid, sa->siucv_user_id, माप(uid));
+	memcpy(uid, sa->siucv_user_id, sizeof(uid));
 	ASCEBC(uid, 8);
-	rcu_पढ़ो_lock();
-	क्रम_each_netdev_rcu(&init_net, dev) अणु
-		अगर (!स_भेद(dev->perm_addr, uid, 8)) अणु
-			स_नकल(iucv->src_user_id, sa->siucv_user_id, 8);
-			/* Check क्रम uninitialized siucv_name */
-			अगर (म_भेदन(sa->siucv_name, "        ", 8) == 0)
-				__iucv_स्वतः_name(iucv);
-			अन्यथा
-				स_नकल(iucv->src_name, sa->siucv_name, 8);
-			sk->sk_bound_dev_अगर = dev->अगरindex;
+	rcu_read_lock();
+	for_each_netdev_rcu(&init_net, dev) {
+		if (!memcmp(dev->perm_addr, uid, 8)) {
+			memcpy(iucv->src_user_id, sa->siucv_user_id, 8);
+			/* Check for uninitialized siucv_name */
+			if (strncmp(sa->siucv_name, "        ", 8) == 0)
+				__iucv_auto_name(iucv);
+			else
+				memcpy(iucv->src_name, sa->siucv_name, 8);
+			sk->sk_bound_dev_if = dev->ifindex;
 			iucv->hs_dev = dev;
 			dev_hold(dev);
 			sk->sk_state = IUCV_BOUND;
 			iucv->transport = AF_IUCV_TRANS_HIPER;
-			अगर (!iucv->msglimit)
+			if (!iucv->msglimit)
 				iucv->msglimit = IUCV_HIPER_MSGLIM_DEFAULT;
-			rcu_पढ़ो_unlock();
-			जाओ करोne_unlock;
-		पूर्ण
-	पूर्ण
-	rcu_पढ़ो_unlock();
+			rcu_read_unlock();
+			goto done_unlock;
+		}
+	}
+	rcu_read_unlock();
 vm_bind:
-	अगर (pr_iucv) अणु
-		/* use local userid क्रम backward compat */
-		स_नकल(iucv->src_name, sa->siucv_name, 8);
-		स_नकल(iucv->src_user_id, iucv_userid, 8);
+	if (pr_iucv) {
+		/* use local userid for backward compat */
+		memcpy(iucv->src_name, sa->siucv_name, 8);
+		memcpy(iucv->src_user_id, iucv_userid, 8);
 		sk->sk_state = IUCV_BOUND;
 		iucv->transport = AF_IUCV_TRANS_IUCV;
 		sk->sk_allocation |= GFP_DMA;
-		अगर (!iucv->msglimit)
+		if (!iucv->msglimit)
 			iucv->msglimit = IUCV_QUEUELEN_DEFAULT;
-		जाओ करोne_unlock;
-	पूर्ण
+		goto done_unlock;
+	}
 	/* found no dev to bind */
 	err = -ENODEV;
-करोne_unlock:
+done_unlock:
 	/* Release the socket list lock */
-	ग_लिखो_unlock_bh(&iucv_sk_list.lock);
-करोne:
+	write_unlock_bh(&iucv_sk_list.lock);
+done:
 	release_sock(sk);
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /* Automatically bind an unbound socket */
-अटल पूर्णांक iucv_sock_स्वतःbind(काष्ठा sock *sk)
-अणु
-	काष्ठा iucv_sock *iucv = iucv_sk(sk);
-	पूर्णांक err = 0;
+static int iucv_sock_autobind(struct sock *sk)
+{
+	struct iucv_sock *iucv = iucv_sk(sk);
+	int err = 0;
 
-	अगर (unlikely(!pr_iucv))
-		वापस -EPROTO;
+	if (unlikely(!pr_iucv))
+		return -EPROTO;
 
-	स_नकल(iucv->src_user_id, iucv_userid, 8);
+	memcpy(iucv->src_user_id, iucv_userid, 8);
 	iucv->transport = AF_IUCV_TRANS_IUCV;
 	sk->sk_allocation |= GFP_DMA;
 
-	ग_लिखो_lock_bh(&iucv_sk_list.lock);
-	__iucv_स्वतः_name(iucv);
-	ग_लिखो_unlock_bh(&iucv_sk_list.lock);
+	write_lock_bh(&iucv_sk_list.lock);
+	__iucv_auto_name(iucv);
+	write_unlock_bh(&iucv_sk_list.lock);
 
-	अगर (!iucv->msglimit)
+	if (!iucv->msglimit)
 		iucv->msglimit = IUCV_QUEUELEN_DEFAULT;
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक afiucv_path_connect(काष्ठा socket *sock, काष्ठा sockaddr *addr)
-अणु
-	DECLARE_SOCKADDR(काष्ठा sockaddr_iucv *, sa, addr);
-	काष्ठा sock *sk = sock->sk;
-	काष्ठा iucv_sock *iucv = iucv_sk(sk);
-	अचिन्हित अक्षर user_data[16];
-	पूर्णांक err;
+static int afiucv_path_connect(struct socket *sock, struct sockaddr *addr)
+{
+	DECLARE_SOCKADDR(struct sockaddr_iucv *, sa, addr);
+	struct sock *sk = sock->sk;
+	struct iucv_sock *iucv = iucv_sk(sk);
+	unsigned char user_data[16];
+	int err;
 
 	high_nmcpy(user_data, sa->siucv_name);
 	low_nmcpy(user_data, iucv->src_name);
-	ASCEBC(user_data, माप(user_data));
+	ASCEBC(user_data, sizeof(user_data));
 
 	/* Create path. */
 	iucv->path = iucv_path_alloc(iucv->msglimit,
 				     IUCV_IPRMDATA, GFP_KERNEL);
-	अगर (!iucv->path) अणु
+	if (!iucv->path) {
 		err = -ENOMEM;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 	err = pr_iucv->path_connect(iucv->path, &af_iucv_handler,
-				    sa->siucv_user_id, शून्य, user_data,
+				    sa->siucv_user_id, NULL, user_data,
 				    sk);
-	अगर (err) अणु
-		iucv_path_मुक्त(iucv->path);
-		iucv->path = शून्य;
-		चयन (err) अणु
-		हाल 0x0b:	/* Target communicator is not logged on */
+	if (err) {
+		iucv_path_free(iucv->path);
+		iucv->path = NULL;
+		switch (err) {
+		case 0x0b:	/* Target communicator is not logged on */
 			err = -ENETUNREACH;
-			अवरोध;
-		हाल 0x0d:	/* Max connections क्रम this guest exceeded */
-		हाल 0x0e:	/* Max connections क्रम target guest exceeded */
+			break;
+		case 0x0d:	/* Max connections for this guest exceeded */
+		case 0x0e:	/* Max connections for target guest exceeded */
 			err = -EAGAIN;
-			अवरोध;
-		हाल 0x0f:	/* Missing IUCV authorization */
+			break;
+		case 0x0f:	/* Missing IUCV authorization */
 			err = -EACCES;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			err = -ECONNREFUSED;
-			अवरोध;
-		पूर्ण
-	पूर्ण
-करोne:
-	वापस err;
-पूर्ण
+			break;
+		}
+	}
+done:
+	return err;
+}
 
 /* Connect an unconnected socket */
-अटल पूर्णांक iucv_sock_connect(काष्ठा socket *sock, काष्ठा sockaddr *addr,
-			     पूर्णांक alen, पूर्णांक flags)
-अणु
-	DECLARE_SOCKADDR(काष्ठा sockaddr_iucv *, sa, addr);
-	काष्ठा sock *sk = sock->sk;
-	काष्ठा iucv_sock *iucv = iucv_sk(sk);
-	पूर्णांक err;
+static int iucv_sock_connect(struct socket *sock, struct sockaddr *addr,
+			     int alen, int flags)
+{
+	DECLARE_SOCKADDR(struct sockaddr_iucv *, sa, addr);
+	struct sock *sk = sock->sk;
+	struct iucv_sock *iucv = iucv_sk(sk);
+	int err;
 
-	अगर (alen < माप(काष्ठा sockaddr_iucv) || addr->sa_family != AF_IUCV)
-		वापस -EINVAL;
+	if (alen < sizeof(struct sockaddr_iucv) || addr->sa_family != AF_IUCV)
+		return -EINVAL;
 
-	अगर (sk->sk_state != IUCV_OPEN && sk->sk_state != IUCV_BOUND)
-		वापस -EBADFD;
+	if (sk->sk_state != IUCV_OPEN && sk->sk_state != IUCV_BOUND)
+		return -EBADFD;
 
-	अगर (sk->sk_state == IUCV_OPEN &&
+	if (sk->sk_state == IUCV_OPEN &&
 	    iucv->transport == AF_IUCV_TRANS_HIPER)
-		वापस -EBADFD; /* explicit bind required */
+		return -EBADFD; /* explicit bind required */
 
-	अगर (sk->sk_type != SOCK_STREAM && sk->sk_type != SOCK_SEQPACKET)
-		वापस -EINVAL;
+	if (sk->sk_type != SOCK_STREAM && sk->sk_type != SOCK_SEQPACKET)
+		return -EINVAL;
 
-	अगर (sk->sk_state == IUCV_OPEN) अणु
-		err = iucv_sock_स्वतःbind(sk);
-		अगर (unlikely(err))
-			वापस err;
-	पूर्ण
+	if (sk->sk_state == IUCV_OPEN) {
+		err = iucv_sock_autobind(sk);
+		if (unlikely(err))
+			return err;
+	}
 
 	lock_sock(sk);
 
-	/* Set the destination inक्रमmation */
-	स_नकल(iucv->dst_user_id, sa->siucv_user_id, 8);
-	स_नकल(iucv->dst_name, sa->siucv_name, 8);
+	/* Set the destination information */
+	memcpy(iucv->dst_user_id, sa->siucv_user_id, 8);
+	memcpy(iucv->dst_name, sa->siucv_name, 8);
 
-	अगर (iucv->transport == AF_IUCV_TRANS_HIPER)
+	if (iucv->transport == AF_IUCV_TRANS_HIPER)
 		err = iucv_send_ctrl(sock->sk, AF_IUCV_FLAG_SYN);
-	अन्यथा
+	else
 		err = afiucv_path_connect(sock, addr);
-	अगर (err)
-		जाओ करोne;
+	if (err)
+		goto done;
 
-	अगर (sk->sk_state != IUCV_CONNECTED)
-		err = iucv_sock_रुको(sk, iucv_sock_in_state(sk, IUCV_CONNECTED,
+	if (sk->sk_state != IUCV_CONNECTED)
+		err = iucv_sock_wait(sk, iucv_sock_in_state(sk, IUCV_CONNECTED,
 							    IUCV_DISCONN),
-				     sock_sndसमयo(sk, flags & O_NONBLOCK));
+				     sock_sndtimeo(sk, flags & O_NONBLOCK));
 
-	अगर (sk->sk_state == IUCV_DISCONN || sk->sk_state == IUCV_CLOSED)
+	if (sk->sk_state == IUCV_DISCONN || sk->sk_state == IUCV_CLOSED)
 		err = -ECONNREFUSED;
 
-	अगर (err && iucv->transport == AF_IUCV_TRANS_IUCV)
+	if (err && iucv->transport == AF_IUCV_TRANS_IUCV)
 		iucv_sever_path(sk, 0);
 
-करोne:
+done:
 	release_sock(sk);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-/* Move a socket पूर्णांकo listening state. */
-अटल पूर्णांक iucv_sock_listen(काष्ठा socket *sock, पूर्णांक backlog)
-अणु
-	काष्ठा sock *sk = sock->sk;
-	पूर्णांक err;
+/* Move a socket into listening state. */
+static int iucv_sock_listen(struct socket *sock, int backlog)
+{
+	struct sock *sk = sock->sk;
+	int err;
 
 	lock_sock(sk);
 
 	err = -EINVAL;
-	अगर (sk->sk_state != IUCV_BOUND)
-		जाओ करोne;
+	if (sk->sk_state != IUCV_BOUND)
+		goto done;
 
-	अगर (sock->type != SOCK_STREAM && sock->type != SOCK_SEQPACKET)
-		जाओ करोne;
+	if (sock->type != SOCK_STREAM && sock->type != SOCK_SEQPACKET)
+		goto done;
 
 	sk->sk_max_ack_backlog = backlog;
 	sk->sk_ack_backlog = 0;
 	sk->sk_state = IUCV_LISTEN;
 	err = 0;
 
-करोne:
+done:
 	release_sock(sk);
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /* Accept a pending connection */
-अटल पूर्णांक iucv_sock_accept(काष्ठा socket *sock, काष्ठा socket *newsock,
-			    पूर्णांक flags, bool kern)
-अणु
-	DECLARE_WAITQUEUE(रुको, current);
-	काष्ठा sock *sk = sock->sk, *nsk;
-	दीर्घ समयo;
-	पूर्णांक err = 0;
+static int iucv_sock_accept(struct socket *sock, struct socket *newsock,
+			    int flags, bool kern)
+{
+	DECLARE_WAITQUEUE(wait, current);
+	struct sock *sk = sock->sk, *nsk;
+	long timeo;
+	int err = 0;
 
 	lock_sock_nested(sk, SINGLE_DEPTH_NESTING);
 
-	अगर (sk->sk_state != IUCV_LISTEN) अणु
+	if (sk->sk_state != IUCV_LISTEN) {
 		err = -EBADFD;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	समयo = sock_rcvसमयo(sk, flags & O_NONBLOCK);
+	timeo = sock_rcvtimeo(sk, flags & O_NONBLOCK);
 
-	/* Wait क्रम an incoming connection */
-	add_रुको_queue_exclusive(sk_sleep(sk), &रुको);
-	जबतक (!(nsk = iucv_accept_dequeue(sk, newsock))) अणु
+	/* Wait for an incoming connection */
+	add_wait_queue_exclusive(sk_sleep(sk), &wait);
+	while (!(nsk = iucv_accept_dequeue(sk, newsock))) {
 		set_current_state(TASK_INTERRUPTIBLE);
-		अगर (!समयo) अणु
+		if (!timeo) {
 			err = -EAGAIN;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		release_sock(sk);
-		समयo = schedule_समयout(समयo);
+		timeo = schedule_timeout(timeo);
 		lock_sock_nested(sk, SINGLE_DEPTH_NESTING);
 
-		अगर (sk->sk_state != IUCV_LISTEN) अणु
+		if (sk->sk_state != IUCV_LISTEN) {
 			err = -EBADFD;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (संकेत_pending(current)) अणु
-			err = sock_पूर्णांकr_त्रुटि_सं(समयo);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+		if (signal_pending(current)) {
+			err = sock_intr_errno(timeo);
+			break;
+		}
+	}
 
 	set_current_state(TASK_RUNNING);
-	हटाओ_रुको_queue(sk_sleep(sk), &रुको);
+	remove_wait_queue(sk_sleep(sk), &wait);
 
-	अगर (err)
-		जाओ करोne;
+	if (err)
+		goto done;
 
 	newsock->state = SS_CONNECTED;
 
-करोne:
+done:
 	release_sock(sk);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक iucv_sock_getname(काष्ठा socket *sock, काष्ठा sockaddr *addr,
-			     पूर्णांक peer)
-अणु
-	DECLARE_SOCKADDR(काष्ठा sockaddr_iucv *, siucv, addr);
-	काष्ठा sock *sk = sock->sk;
-	काष्ठा iucv_sock *iucv = iucv_sk(sk);
+static int iucv_sock_getname(struct socket *sock, struct sockaddr *addr,
+			     int peer)
+{
+	DECLARE_SOCKADDR(struct sockaddr_iucv *, siucv, addr);
+	struct sock *sk = sock->sk;
+	struct iucv_sock *iucv = iucv_sk(sk);
 
 	addr->sa_family = AF_IUCV;
 
-	अगर (peer) अणु
-		स_नकल(siucv->siucv_user_id, iucv->dst_user_id, 8);
-		स_नकल(siucv->siucv_name, iucv->dst_name, 8);
-	पूर्ण अन्यथा अणु
-		स_नकल(siucv->siucv_user_id, iucv->src_user_id, 8);
-		स_नकल(siucv->siucv_name, iucv->src_name, 8);
-	पूर्ण
-	स_रखो(&siucv->siucv_port, 0, माप(siucv->siucv_port));
-	स_रखो(&siucv->siucv_addr, 0, माप(siucv->siucv_addr));
-	स_रखो(&siucv->siucv_nodeid, 0, माप(siucv->siucv_nodeid));
+	if (peer) {
+		memcpy(siucv->siucv_user_id, iucv->dst_user_id, 8);
+		memcpy(siucv->siucv_name, iucv->dst_name, 8);
+	} else {
+		memcpy(siucv->siucv_user_id, iucv->src_user_id, 8);
+		memcpy(siucv->siucv_name, iucv->src_name, 8);
+	}
+	memset(&siucv->siucv_port, 0, sizeof(siucv->siucv_port));
+	memset(&siucv->siucv_addr, 0, sizeof(siucv->siucv_addr));
+	memset(&siucv->siucv_nodeid, 0, sizeof(siucv->siucv_nodeid));
 
-	वापस माप(काष्ठा sockaddr_iucv);
-पूर्ण
+	return sizeof(struct sockaddr_iucv);
+}
 
 /**
  * iucv_send_iprm() - Send socket data in parameter list of an iucv message.
  * @path:	IUCV path
- * @msg:	Poपूर्णांकer to a काष्ठा iucv_message
+ * @msg:	Pointer to a struct iucv_message
  * @skb:	The socket data to send, skb->len MUST BE <= 7
  *
  * Send the socket data in the parameter list in the iucv message
@@ -902,755 +901,755 @@ vm_bind:
  *
  * Returns the error code from the iucv_message_send() call.
  */
-अटल पूर्णांक iucv_send_iprm(काष्ठा iucv_path *path, काष्ठा iucv_message *msg,
-			  काष्ठा sk_buff *skb)
-अणु
+static int iucv_send_iprm(struct iucv_path *path, struct iucv_message *msg,
+			  struct sk_buff *skb)
+{
 	u8 prmdata[8];
 
-	स_नकल(prmdata, (व्योम *) skb->data, skb->len);
+	memcpy(prmdata, (void *) skb->data, skb->len);
 	prmdata[7] = 0xff - (u8) skb->len;
-	वापस pr_iucv->message_send(path, msg, IUCV_IPRMDATA, 0,
-				 (व्योम *) prmdata, 8);
-पूर्ण
+	return pr_iucv->message_send(path, msg, IUCV_IPRMDATA, 0,
+				 (void *) prmdata, 8);
+}
 
-अटल पूर्णांक iucv_sock_sendmsg(काष्ठा socket *sock, काष्ठा msghdr *msg,
-			     माप_प्रकार len)
-अणु
-	काष्ठा sock *sk = sock->sk;
-	काष्ठा iucv_sock *iucv = iucv_sk(sk);
-	माप_प्रकार headroom = 0;
-	माप_प्रकार linear;
-	काष्ठा sk_buff *skb;
-	काष्ठा iucv_message txmsg = अणु0पूर्ण;
-	काष्ठा cmsghdr *cmsg;
-	पूर्णांक cmsg_करोne;
-	दीर्घ समयo;
-	अक्षर user_id[9];
-	अक्षर appl_id[9];
-	पूर्णांक err;
-	पूर्णांक noblock = msg->msg_flags & MSG_DONTWAIT;
+static int iucv_sock_sendmsg(struct socket *sock, struct msghdr *msg,
+			     size_t len)
+{
+	struct sock *sk = sock->sk;
+	struct iucv_sock *iucv = iucv_sk(sk);
+	size_t headroom = 0;
+	size_t linear;
+	struct sk_buff *skb;
+	struct iucv_message txmsg = {0};
+	struct cmsghdr *cmsg;
+	int cmsg_done;
+	long timeo;
+	char user_id[9];
+	char appl_id[9];
+	int err;
+	int noblock = msg->msg_flags & MSG_DONTWAIT;
 
 	err = sock_error(sk);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	अगर (msg->msg_flags & MSG_OOB)
-		वापस -EOPNOTSUPP;
+	if (msg->msg_flags & MSG_OOB)
+		return -EOPNOTSUPP;
 
-	/* SOCK_SEQPACKET: we करो not support segmented records */
-	अगर (sk->sk_type == SOCK_SEQPACKET && !(msg->msg_flags & MSG_EOR))
-		वापस -EOPNOTSUPP;
+	/* SOCK_SEQPACKET: we do not support segmented records */
+	if (sk->sk_type == SOCK_SEQPACKET && !(msg->msg_flags & MSG_EOR))
+		return -EOPNOTSUPP;
 
 	lock_sock(sk);
 
-	अगर (sk->sk_shutकरोwn & SEND_SHUTDOWN) अणु
+	if (sk->sk_shutdown & SEND_SHUTDOWN) {
 		err = -EPIPE;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	/* Return अगर the socket is not in connected state */
-	अगर (sk->sk_state != IUCV_CONNECTED) अणु
+	/* Return if the socket is not in connected state */
+	if (sk->sk_state != IUCV_CONNECTED) {
 		err = -ENOTCONN;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	/* initialize शेषs */
-	cmsg_करोne   = 0;	/* check क्रम duplicate headers */
+	/* initialize defaults */
+	cmsg_done   = 0;	/* check for duplicate headers */
 
 	/* iterate over control messages */
-	क्रम_each_cmsghdr(cmsg, msg) अणु
-		अगर (!CMSG_OK(msg, cmsg)) अणु
+	for_each_cmsghdr(cmsg, msg) {
+		if (!CMSG_OK(msg, cmsg)) {
 			err = -EINVAL;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
-		अगर (cmsg->cmsg_level != SOL_IUCV)
-			जारी;
+		if (cmsg->cmsg_level != SOL_IUCV)
+			continue;
 
-		अगर (cmsg->cmsg_type & cmsg_करोne) अणु
+		if (cmsg->cmsg_type & cmsg_done) {
 			err = -EINVAL;
-			जाओ out;
-		पूर्ण
-		cmsg_करोne |= cmsg->cmsg_type;
+			goto out;
+		}
+		cmsg_done |= cmsg->cmsg_type;
 
-		चयन (cmsg->cmsg_type) अणु
-		हाल SCM_IUCV_TRGCLS:
-			अगर (cmsg->cmsg_len != CMSG_LEN(TRGCLS_SIZE)) अणु
+		switch (cmsg->cmsg_type) {
+		case SCM_IUCV_TRGCLS:
+			if (cmsg->cmsg_len != CMSG_LEN(TRGCLS_SIZE)) {
 				err = -EINVAL;
-				जाओ out;
-			पूर्ण
+				goto out;
+			}
 
 			/* set iucv message target class */
-			स_नकल(&txmsg.class,
-				(व्योम *) CMSG_DATA(cmsg), TRGCLS_SIZE);
+			memcpy(&txmsg.class,
+				(void *) CMSG_DATA(cmsg), TRGCLS_SIZE);
 
-			अवरोध;
+			break;
 
-		शेष:
+		default:
 			err = -EINVAL;
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 
-	/* allocate one skb क्रम each iucv message:
-	 * this is fine क्रम SOCK_SEQPACKET (unless we want to support
+	/* allocate one skb for each iucv message:
+	 * this is fine for SOCK_SEQPACKET (unless we want to support
 	 * segmented records using the MSG_EOR flag), but
-	 * क्रम SOCK_STREAM we might want to improve it in future */
-	अगर (iucv->transport == AF_IUCV_TRANS_HIPER) अणु
-		headroom = माप(काष्ठा af_iucv_trans_hdr) +
+	 * for SOCK_STREAM we might want to improve it in future */
+	if (iucv->transport == AF_IUCV_TRANS_HIPER) {
+		headroom = sizeof(struct af_iucv_trans_hdr) +
 			   LL_RESERVED_SPACE(iucv->hs_dev);
 		linear = min(len, PAGE_SIZE - headroom);
-	पूर्ण अन्यथा अणु
-		अगर (len < PAGE_SIZE) अणु
+	} else {
+		if (len < PAGE_SIZE) {
 			linear = len;
-		पूर्ण अन्यथा अणु
+		} else {
 			/* In nonlinear "classic" iucv skb,
-			 * reserve space क्रम iucv_array
+			 * reserve space for iucv_array
 			 */
-			headroom = माप(काष्ठा iucv_array) *
+			headroom = sizeof(struct iucv_array) *
 				   (MAX_SKB_FRAGS + 1);
 			linear = PAGE_SIZE - headroom;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	skb = sock_alloc_send_pskb(sk, headroom + linear, len - linear,
 				   noblock, &err, 0);
-	अगर (!skb)
-		जाओ out;
-	अगर (headroom)
+	if (!skb)
+		goto out;
+	if (headroom)
 		skb_reserve(skb, headroom);
 	skb_put(skb, linear);
 	skb->len = len;
 	skb->data_len = len - linear;
 	err = skb_copy_datagram_from_iter(skb, 0, &msg->msg_iter, len);
-	अगर (err)
-		जाओ fail;
+	if (err)
+		goto fail;
 
-	/* रुको अगर outstanding messages क्रम iucv path has reached */
-	समयo = sock_sndसमयo(sk, noblock);
-	err = iucv_sock_रुको(sk, iucv_below_msglim(sk), समयo);
-	अगर (err)
-		जाओ fail;
+	/* wait if outstanding messages for iucv path has reached */
+	timeo = sock_sndtimeo(sk, noblock);
+	err = iucv_sock_wait(sk, iucv_below_msglim(sk), timeo);
+	if (err)
+		goto fail;
 
-	/* वापस -ECONNRESET अगर the socket is no दीर्घer connected */
-	अगर (sk->sk_state != IUCV_CONNECTED) अणु
+	/* return -ECONNRESET if the socket is no longer connected */
+	if (sk->sk_state != IUCV_CONNECTED) {
 		err = -ECONNRESET;
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
-	/* increment and save iucv message tag क्रम msg_completion cbk */
+	/* increment and save iucv message tag for msg_completion cbk */
 	txmsg.tag = iucv->send_tag++;
 	IUCV_SKB_CB(skb)->tag = txmsg.tag;
 
-	अगर (iucv->transport == AF_IUCV_TRANS_HIPER) अणु
+	if (iucv->transport == AF_IUCV_TRANS_HIPER) {
 		atomic_inc(&iucv->msg_sent);
 		err = afiucv_hs_send(&txmsg, sk, skb, 0);
-		अगर (err) अणु
+		if (err) {
 			atomic_dec(&iucv->msg_sent);
-			जाओ out;
-		पूर्ण
-	पूर्ण अन्यथा अणु /* Classic VM IUCV transport */
+			goto out;
+		}
+	} else { /* Classic VM IUCV transport */
 		skb_queue_tail(&iucv->send_skb_q, skb);
 		atomic_inc(&iucv->skbs_in_xmit);
 
-		अगर (((iucv->path->flags & IUCV_IPRMDATA) & iucv->flags) &&
-		    skb->len <= 7) अणु
+		if (((iucv->path->flags & IUCV_IPRMDATA) & iucv->flags) &&
+		    skb->len <= 7) {
 			err = iucv_send_iprm(iucv->path, &txmsg, skb);
 
 			/* on success: there is no message_complete callback */
-			/* क्रम an IPRMDATA msg; हटाओ skb from send queue   */
-			अगर (err == 0) अणु
+			/* for an IPRMDATA msg; remove skb from send queue   */
+			if (err == 0) {
 				atomic_dec(&iucv->skbs_in_xmit);
 				skb_unlink(skb, &iucv->send_skb_q);
-				kमुक्त_skb(skb);
-			पूर्ण
+				kfree_skb(skb);
+			}
 
 			/* this error should never happen since the	*/
 			/* IUCV_IPRMDATA path flag is set... sever path */
-			अगर (err == 0x15) अणु
-				pr_iucv->path_sever(iucv->path, शून्य);
+			if (err == 0x15) {
+				pr_iucv->path_sever(iucv->path, NULL);
 				atomic_dec(&iucv->skbs_in_xmit);
 				skb_unlink(skb, &iucv->send_skb_q);
 				err = -EPIPE;
-				जाओ fail;
-			पूर्ण
-		पूर्ण अन्यथा अगर (skb_is_nonlinear(skb)) अणु
-			काष्ठा iucv_array *iba = (काष्ठा iucv_array *)skb->head;
-			पूर्णांक i;
+				goto fail;
+			}
+		} else if (skb_is_nonlinear(skb)) {
+			struct iucv_array *iba = (struct iucv_array *)skb->head;
+			int i;
 
 			/* skip iucv_array lying in the headroom */
 			iba[0].address = (u32)(addr_t)skb->data;
 			iba[0].length = (u32)skb_headlen(skb);
-			क्रम (i = 0; i < skb_shinfo(skb)->nr_frags; i++) अणु
+			for (i = 0; i < skb_shinfo(skb)->nr_frags; i++) {
 				skb_frag_t *frag = &skb_shinfo(skb)->frags[i];
 
 				iba[i + 1].address =
 					(u32)(addr_t)skb_frag_address(frag);
 				iba[i + 1].length = (u32)skb_frag_size(frag);
-			पूर्ण
+			}
 			err = pr_iucv->message_send(iucv->path, &txmsg,
 						    IUCV_IPBUFLST, 0,
-						    (व्योम *)iba, skb->len);
-		पूर्ण अन्यथा अणु /* non-IPRM Linear skb */
+						    (void *)iba, skb->len);
+		} else { /* non-IPRM Linear skb */
 			err = pr_iucv->message_send(iucv->path, &txmsg,
-					0, 0, (व्योम *)skb->data, skb->len);
-		पूर्ण
-		अगर (err) अणु
-			अगर (err == 3) अणु
+					0, 0, (void *)skb->data, skb->len);
+		}
+		if (err) {
+			if (err == 3) {
 				user_id[8] = 0;
-				स_नकल(user_id, iucv->dst_user_id, 8);
+				memcpy(user_id, iucv->dst_user_id, 8);
 				appl_id[8] = 0;
-				स_नकल(appl_id, iucv->dst_name, 8);
+				memcpy(appl_id, iucv->dst_name, 8);
 				pr_err(
 		"Application %s on z/VM guest %s exceeds message limit\n",
 					appl_id, user_id);
 				err = -EAGAIN;
-			पूर्ण अन्यथा अणु
+			} else {
 				err = -EPIPE;
-			पूर्ण
+			}
 
 			atomic_dec(&iucv->skbs_in_xmit);
 			skb_unlink(skb, &iucv->send_skb_q);
-			जाओ fail;
-		पूर्ण
-	पूर्ण
+			goto fail;
+		}
+	}
 
 	release_sock(sk);
-	वापस len;
+	return len;
 
 fail:
-	kमुक्त_skb(skb);
+	kfree_skb(skb);
 out:
 	release_sock(sk);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल काष्ठा sk_buff *alloc_iucv_recv_skb(अचिन्हित दीर्घ len)
-अणु
-	माप_प्रकार headroom, linear;
-	काष्ठा sk_buff *skb;
-	पूर्णांक err;
+static struct sk_buff *alloc_iucv_recv_skb(unsigned long len)
+{
+	size_t headroom, linear;
+	struct sk_buff *skb;
+	int err;
 
-	अगर (len < PAGE_SIZE) अणु
+	if (len < PAGE_SIZE) {
 		headroom = 0;
 		linear = len;
-	पूर्ण अन्यथा अणु
-		headroom = माप(काष्ठा iucv_array) * (MAX_SKB_FRAGS + 1);
+	} else {
+		headroom = sizeof(struct iucv_array) * (MAX_SKB_FRAGS + 1);
 		linear = PAGE_SIZE - headroom;
-	पूर्ण
+	}
 	skb = alloc_skb_with_frags(headroom + linear, len - linear,
 				   0, &err, GFP_ATOMIC | GFP_DMA);
 	WARN_ONCE(!skb,
 		  "alloc of recv iucv skb len=%lu failed with errcode=%d\n",
 		  len, err);
-	अगर (skb) अणु
-		अगर (headroom)
+	if (skb) {
+		if (headroom)
 			skb_reserve(skb, headroom);
 		skb_put(skb, linear);
 		skb->len = len;
 		skb->data_len = len - linear;
-	पूर्ण
-	वापस skb;
-पूर्ण
+	}
+	return skb;
+}
 
 /* iucv_process_message() - Receive a single outstanding IUCV message
  *
  * Locking: must be called with message_q.lock held
  */
-अटल व्योम iucv_process_message(काष्ठा sock *sk, काष्ठा sk_buff *skb,
-				 काष्ठा iucv_path *path,
-				 काष्ठा iucv_message *msg)
-अणु
-	पूर्णांक rc;
-	अचिन्हित पूर्णांक len;
+static void iucv_process_message(struct sock *sk, struct sk_buff *skb,
+				 struct iucv_path *path,
+				 struct iucv_message *msg)
+{
+	int rc;
+	unsigned int len;
 
 	len = iucv_msg_length(msg);
 
 	/* store msg target class in the second 4 bytes of skb ctrl buffer */
-	/* Note: the first 4 bytes are reserved क्रम msg tag */
+	/* Note: the first 4 bytes are reserved for msg tag */
 	IUCV_SKB_CB(skb)->class = msg->class;
 
-	/* check क्रम special IPRM messages (e.g. iucv_sock_shutकरोwn) */
-	अगर ((msg->flags & IUCV_IPRMDATA) && len > 7) अणु
-		अगर (स_भेद(msg->rmmsg, iprm_shutकरोwn, 8) == 0) अणु
-			skb->data = शून्य;
+	/* check for special IPRM messages (e.g. iucv_sock_shutdown) */
+	if ((msg->flags & IUCV_IPRMDATA) && len > 7) {
+		if (memcmp(msg->rmmsg, iprm_shutdown, 8) == 0) {
+			skb->data = NULL;
 			skb->len = 0;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		अगर (skb_is_nonlinear(skb)) अणु
-			काष्ठा iucv_array *iba = (काष्ठा iucv_array *)skb->head;
-			पूर्णांक i;
+		}
+	} else {
+		if (skb_is_nonlinear(skb)) {
+			struct iucv_array *iba = (struct iucv_array *)skb->head;
+			int i;
 
 			iba[0].address = (u32)(addr_t)skb->data;
 			iba[0].length = (u32)skb_headlen(skb);
-			क्रम (i = 0; i < skb_shinfo(skb)->nr_frags; i++) अणु
+			for (i = 0; i < skb_shinfo(skb)->nr_frags; i++) {
 				skb_frag_t *frag = &skb_shinfo(skb)->frags[i];
 
 				iba[i + 1].address =
 					(u32)(addr_t)skb_frag_address(frag);
 				iba[i + 1].length = (u32)skb_frag_size(frag);
-			पूर्ण
+			}
 			rc = pr_iucv->message_receive(path, msg,
 					      IUCV_IPBUFLST,
-					      (व्योम *)iba, len, शून्य);
-		पूर्ण अन्यथा अणु
+					      (void *)iba, len, NULL);
+		} else {
 			rc = pr_iucv->message_receive(path, msg,
 					      msg->flags & IUCV_IPRMDATA,
-					      skb->data, len, शून्य);
-		पूर्ण
-		अगर (rc) अणु
-			kमुक्त_skb(skb);
-			वापस;
-		पूर्ण
+					      skb->data, len, NULL);
+		}
+		if (rc) {
+			kfree_skb(skb);
+			return;
+		}
 		WARN_ON_ONCE(skb->len != len);
-	पूर्ण
+	}
 
 	IUCV_SKB_CB(skb)->offset = 0;
-	अगर (sk_filter(sk, skb)) अणु
+	if (sk_filter(sk, skb)) {
 		atomic_inc(&sk->sk_drops);	/* skb rejected by filter */
-		kमुक्त_skb(skb);
-		वापस;
-	पूर्ण
-	अगर (__sock_queue_rcv_skb(sk, skb))	/* handle rcv queue full */
+		kfree_skb(skb);
+		return;
+	}
+	if (__sock_queue_rcv_skb(sk, skb))	/* handle rcv queue full */
 		skb_queue_tail(&iucv_sk(sk)->backlog_skb_q, skb);
-पूर्ण
+}
 
 /* iucv_process_message_q() - Process outstanding IUCV messages
  *
  * Locking: must be called with message_q.lock held
  */
-अटल व्योम iucv_process_message_q(काष्ठा sock *sk)
-अणु
-	काष्ठा iucv_sock *iucv = iucv_sk(sk);
-	काष्ठा sk_buff *skb;
-	काष्ठा sock_msg_q *p, *n;
+static void iucv_process_message_q(struct sock *sk)
+{
+	struct iucv_sock *iucv = iucv_sk(sk);
+	struct sk_buff *skb;
+	struct sock_msg_q *p, *n;
 
-	list_क्रम_each_entry_safe(p, n, &iucv->message_q.list, list) अणु
+	list_for_each_entry_safe(p, n, &iucv->message_q.list, list) {
 		skb = alloc_iucv_recv_skb(iucv_msg_length(&p->msg));
-		अगर (!skb)
-			अवरोध;
+		if (!skb)
+			break;
 		iucv_process_message(sk, skb, p->path, &p->msg);
 		list_del(&p->list);
-		kमुक्त(p);
-		अगर (!skb_queue_empty(&iucv->backlog_skb_q))
-			अवरोध;
-	पूर्ण
-पूर्ण
+		kfree(p);
+		if (!skb_queue_empty(&iucv->backlog_skb_q))
+			break;
+	}
+}
 
-अटल पूर्णांक iucv_sock_recvmsg(काष्ठा socket *sock, काष्ठा msghdr *msg,
-			     माप_प्रकार len, पूर्णांक flags)
-अणु
-	पूर्णांक noblock = flags & MSG_DONTWAIT;
-	काष्ठा sock *sk = sock->sk;
-	काष्ठा iucv_sock *iucv = iucv_sk(sk);
-	अचिन्हित पूर्णांक copied, rlen;
-	काष्ठा sk_buff *skb, *rskb, *cskb;
-	पूर्णांक err = 0;
+static int iucv_sock_recvmsg(struct socket *sock, struct msghdr *msg,
+			     size_t len, int flags)
+{
+	int noblock = flags & MSG_DONTWAIT;
+	struct sock *sk = sock->sk;
+	struct iucv_sock *iucv = iucv_sk(sk);
+	unsigned int copied, rlen;
+	struct sk_buff *skb, *rskb, *cskb;
+	int err = 0;
 	u32 offset;
 
-	अगर ((sk->sk_state == IUCV_DISCONN) &&
+	if ((sk->sk_state == IUCV_DISCONN) &&
 	    skb_queue_empty(&iucv->backlog_skb_q) &&
 	    skb_queue_empty(&sk->sk_receive_queue) &&
 	    list_empty(&iucv->message_q.list))
-		वापस 0;
+		return 0;
 
-	अगर (flags & (MSG_OOB))
-		वापस -EOPNOTSUPP;
+	if (flags & (MSG_OOB))
+		return -EOPNOTSUPP;
 
 	/* receive/dequeue next skb:
-	 * the function understands MSG_PEEK and, thus, करोes not dequeue skb */
+	 * the function understands MSG_PEEK and, thus, does not dequeue skb */
 	skb = skb_recv_datagram(sk, flags, noblock, &err);
-	अगर (!skb) अणु
-		अगर (sk->sk_shutकरोwn & RCV_SHUTDOWN)
-			वापस 0;
-		वापस err;
-	पूर्ण
+	if (!skb) {
+		if (sk->sk_shutdown & RCV_SHUTDOWN)
+			return 0;
+		return err;
+	}
 
 	offset = IUCV_SKB_CB(skb)->offset;
 	rlen   = skb->len - offset;		/* real length of skb */
-	copied = min_t(अचिन्हित पूर्णांक, rlen, len);
-	अगर (!rlen)
-		sk->sk_shutकरोwn = sk->sk_shutकरोwn | RCV_SHUTDOWN;
+	copied = min_t(unsigned int, rlen, len);
+	if (!rlen)
+		sk->sk_shutdown = sk->sk_shutdown | RCV_SHUTDOWN;
 
 	cskb = skb;
-	अगर (skb_copy_datagram_msg(cskb, offset, msg, copied)) अणु
-		अगर (!(flags & MSG_PEEK))
+	if (skb_copy_datagram_msg(cskb, offset, msg, copied)) {
+		if (!(flags & MSG_PEEK))
 			skb_queue_head(&sk->sk_receive_queue, skb);
-		वापस -EFAULT;
-	पूर्ण
+		return -EFAULT;
+	}
 
-	/* SOCK_SEQPACKET: set MSG_TRUNC अगर recv buf size is too small */
-	अगर (sk->sk_type == SOCK_SEQPACKET) अणु
-		अगर (copied < rlen)
+	/* SOCK_SEQPACKET: set MSG_TRUNC if recv buf size is too small */
+	if (sk->sk_type == SOCK_SEQPACKET) {
+		if (copied < rlen)
 			msg->msg_flags |= MSG_TRUNC;
 		/* each iucv message contains a complete record */
 		msg->msg_flags |= MSG_EOR;
-	पूर्ण
+	}
 
 	/* create control message to store iucv msg target class:
 	 * get the trgcls from the control buffer of the skb due to
 	 * fragmentation of original iucv message. */
 	err = put_cmsg(msg, SOL_IUCV, SCM_IUCV_TRGCLS,
-		       माप(IUCV_SKB_CB(skb)->class),
-		       (व्योम *)&IUCV_SKB_CB(skb)->class);
-	अगर (err) अणु
-		अगर (!(flags & MSG_PEEK))
+		       sizeof(IUCV_SKB_CB(skb)->class),
+		       (void *)&IUCV_SKB_CB(skb)->class);
+	if (err) {
+		if (!(flags & MSG_PEEK))
 			skb_queue_head(&sk->sk_receive_queue, skb);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	/* Mark पढ़ो part of skb as used */
-	अगर (!(flags & MSG_PEEK)) अणु
+	/* Mark read part of skb as used */
+	if (!(flags & MSG_PEEK)) {
 
-		/* SOCK_STREAM: re-queue skb अगर it contains unreceived data */
-		अगर (sk->sk_type == SOCK_STREAM) अणु
-			अगर (copied < rlen) अणु
+		/* SOCK_STREAM: re-queue skb if it contains unreceived data */
+		if (sk->sk_type == SOCK_STREAM) {
+			if (copied < rlen) {
 				IUCV_SKB_CB(skb)->offset = offset + copied;
 				skb_queue_head(&sk->sk_receive_queue, skb);
-				जाओ करोne;
-			पूर्ण
-		पूर्ण
+				goto done;
+			}
+		}
 
-		kमुक्त_skb(skb);
-		अगर (iucv->transport == AF_IUCV_TRANS_HIPER) अणु
+		kfree_skb(skb);
+		if (iucv->transport == AF_IUCV_TRANS_HIPER) {
 			atomic_inc(&iucv->msg_recv);
-			अगर (atomic_पढ़ो(&iucv->msg_recv) > iucv->msglimit) अणु
+			if (atomic_read(&iucv->msg_recv) > iucv->msglimit) {
 				WARN_ON(1);
-				iucv_sock_बंद(sk);
-				वापस -EFAULT;
-			पूर्ण
-		पूर्ण
+				iucv_sock_close(sk);
+				return -EFAULT;
+			}
+		}
 
 		/* Queue backlog skbs */
 		spin_lock_bh(&iucv->message_q.lock);
 		rskb = skb_dequeue(&iucv->backlog_skb_q);
-		जबतक (rskb) अणु
+		while (rskb) {
 			IUCV_SKB_CB(rskb)->offset = 0;
-			अगर (__sock_queue_rcv_skb(sk, rskb)) अणु
+			if (__sock_queue_rcv_skb(sk, rskb)) {
 				/* handle rcv queue full */
 				skb_queue_head(&iucv->backlog_skb_q,
 						rskb);
-				अवरोध;
-			पूर्ण
+				break;
+			}
 			rskb = skb_dequeue(&iucv->backlog_skb_q);
-		पूर्ण
-		अगर (skb_queue_empty(&iucv->backlog_skb_q)) अणु
-			अगर (!list_empty(&iucv->message_q.list))
+		}
+		if (skb_queue_empty(&iucv->backlog_skb_q)) {
+			if (!list_empty(&iucv->message_q.list))
 				iucv_process_message_q(sk);
-			अगर (atomic_पढ़ो(&iucv->msg_recv) >=
-							iucv->msglimit / 2) अणु
+			if (atomic_read(&iucv->msg_recv) >=
+							iucv->msglimit / 2) {
 				err = iucv_send_ctrl(sk, AF_IUCV_FLAG_WIN);
-				अगर (err) अणु
+				if (err) {
 					sk->sk_state = IUCV_DISCONN;
 					sk->sk_state_change(sk);
-				पूर्ण
-			पूर्ण
-		पूर्ण
+				}
+			}
+		}
 		spin_unlock_bh(&iucv->message_q.lock);
-	पूर्ण
+	}
 
-करोne:
-	/* SOCK_SEQPACKET: वापस real length अगर MSG_TRUNC is set */
-	अगर (sk->sk_type == SOCK_SEQPACKET && (flags & MSG_TRUNC))
+done:
+	/* SOCK_SEQPACKET: return real length if MSG_TRUNC is set */
+	if (sk->sk_type == SOCK_SEQPACKET && (flags & MSG_TRUNC))
 		copied = rlen;
 
-	वापस copied;
-पूर्ण
+	return copied;
+}
 
-अटल अंतरभूत __poll_t iucv_accept_poll(काष्ठा sock *parent)
-अणु
-	काष्ठा iucv_sock *isk, *n;
-	काष्ठा sock *sk;
+static inline __poll_t iucv_accept_poll(struct sock *parent)
+{
+	struct iucv_sock *isk, *n;
+	struct sock *sk;
 
-	list_क्रम_each_entry_safe(isk, n, &iucv_sk(parent)->accept_q, accept_q) अणु
-		sk = (काष्ठा sock *) isk;
+	list_for_each_entry_safe(isk, n, &iucv_sk(parent)->accept_q, accept_q) {
+		sk = (struct sock *) isk;
 
-		अगर (sk->sk_state == IUCV_CONNECTED)
-			वापस EPOLLIN | EPOLLRDNORM;
-	पूर्ण
+		if (sk->sk_state == IUCV_CONNECTED)
+			return EPOLLIN | EPOLLRDNORM;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल __poll_t iucv_sock_poll(काष्ठा file *file, काष्ठा socket *sock,
-			       poll_table *रुको)
-अणु
-	काष्ठा sock *sk = sock->sk;
+static __poll_t iucv_sock_poll(struct file *file, struct socket *sock,
+			       poll_table *wait)
+{
+	struct sock *sk = sock->sk;
 	__poll_t mask = 0;
 
-	sock_poll_रुको(file, sock, रुको);
+	sock_poll_wait(file, sock, wait);
 
-	अगर (sk->sk_state == IUCV_LISTEN)
-		वापस iucv_accept_poll(sk);
+	if (sk->sk_state == IUCV_LISTEN)
+		return iucv_accept_poll(sk);
 
-	अगर (sk->sk_err || !skb_queue_empty(&sk->sk_error_queue))
+	if (sk->sk_err || !skb_queue_empty(&sk->sk_error_queue))
 		mask |= EPOLLERR |
 			(sock_flag(sk, SOCK_SELECT_ERR_QUEUE) ? EPOLLPRI : 0);
 
-	अगर (sk->sk_shutकरोwn & RCV_SHUTDOWN)
+	if (sk->sk_shutdown & RCV_SHUTDOWN)
 		mask |= EPOLLRDHUP;
 
-	अगर (sk->sk_shutकरोwn == SHUTDOWN_MASK)
+	if (sk->sk_shutdown == SHUTDOWN_MASK)
 		mask |= EPOLLHUP;
 
-	अगर (!skb_queue_empty(&sk->sk_receive_queue) ||
-	    (sk->sk_shutकरोwn & RCV_SHUTDOWN))
+	if (!skb_queue_empty(&sk->sk_receive_queue) ||
+	    (sk->sk_shutdown & RCV_SHUTDOWN))
 		mask |= EPOLLIN | EPOLLRDNORM;
 
-	अगर (sk->sk_state == IUCV_CLOSED)
+	if (sk->sk_state == IUCV_CLOSED)
 		mask |= EPOLLHUP;
 
-	अगर (sk->sk_state == IUCV_DISCONN)
+	if (sk->sk_state == IUCV_DISCONN)
 		mask |= EPOLLIN;
 
-	अगर (sock_ग_लिखोable(sk) && iucv_below_msglim(sk))
+	if (sock_writeable(sk) && iucv_below_msglim(sk))
 		mask |= EPOLLOUT | EPOLLWRNORM | EPOLLWRBAND;
-	अन्यथा
+	else
 		sk_set_bit(SOCKWQ_ASYNC_NOSPACE, sk);
 
-	वापस mask;
-पूर्ण
+	return mask;
+}
 
-अटल पूर्णांक iucv_sock_shutकरोwn(काष्ठा socket *sock, पूर्णांक how)
-अणु
-	काष्ठा sock *sk = sock->sk;
-	काष्ठा iucv_sock *iucv = iucv_sk(sk);
-	काष्ठा iucv_message txmsg;
-	पूर्णांक err = 0;
+static int iucv_sock_shutdown(struct socket *sock, int how)
+{
+	struct sock *sk = sock->sk;
+	struct iucv_sock *iucv = iucv_sk(sk);
+	struct iucv_message txmsg;
+	int err = 0;
 
 	how++;
 
-	अगर ((how & ~SHUTDOWN_MASK) || !how)
-		वापस -EINVAL;
+	if ((how & ~SHUTDOWN_MASK) || !how)
+		return -EINVAL;
 
 	lock_sock(sk);
-	चयन (sk->sk_state) अणु
-	हाल IUCV_LISTEN:
-	हाल IUCV_DISCONN:
-	हाल IUCV_CLOSING:
-	हाल IUCV_CLOSED:
+	switch (sk->sk_state) {
+	case IUCV_LISTEN:
+	case IUCV_DISCONN:
+	case IUCV_CLOSING:
+	case IUCV_CLOSED:
 		err = -ENOTCONN;
-		जाओ fail;
-	शेष:
-		अवरोध;
-	पूर्ण
+		goto fail;
+	default:
+		break;
+	}
 
-	अगर ((how == SEND_SHUTDOWN || how == SHUTDOWN_MASK) &&
-	    sk->sk_state == IUCV_CONNECTED) अणु
-		अगर (iucv->transport == AF_IUCV_TRANS_IUCV) अणु
+	if ((how == SEND_SHUTDOWN || how == SHUTDOWN_MASK) &&
+	    sk->sk_state == IUCV_CONNECTED) {
+		if (iucv->transport == AF_IUCV_TRANS_IUCV) {
 			txmsg.class = 0;
 			txmsg.tag = 0;
 			err = pr_iucv->message_send(iucv->path, &txmsg,
-				IUCV_IPRMDATA, 0, (व्योम *) iprm_shutकरोwn, 8);
-			अगर (err) अणु
-				चयन (err) अणु
-				हाल 1:
+				IUCV_IPRMDATA, 0, (void *) iprm_shutdown, 8);
+			if (err) {
+				switch (err) {
+				case 1:
 					err = -ENOTCONN;
-					अवरोध;
-				हाल 2:
+					break;
+				case 2:
 					err = -ECONNRESET;
-					अवरोध;
-				शेष:
+					break;
+				default:
 					err = -ENOTCONN;
-					अवरोध;
-				पूर्ण
-			पूर्ण
-		पूर्ण अन्यथा
+					break;
+				}
+			}
+		} else
 			iucv_send_ctrl(sk, AF_IUCV_FLAG_SHT);
-	पूर्ण
+	}
 
-	sk->sk_shutकरोwn |= how;
-	अगर (how == RCV_SHUTDOWN || how == SHUTDOWN_MASK) अणु
-		अगर ((iucv->transport == AF_IUCV_TRANS_IUCV) &&
-		    iucv->path) अणु
-			err = pr_iucv->path_quiesce(iucv->path, शून्य);
-			अगर (err)
+	sk->sk_shutdown |= how;
+	if (how == RCV_SHUTDOWN || how == SHUTDOWN_MASK) {
+		if ((iucv->transport == AF_IUCV_TRANS_IUCV) &&
+		    iucv->path) {
+			err = pr_iucv->path_quiesce(iucv->path, NULL);
+			if (err)
 				err = -ENOTCONN;
 /*			skb_queue_purge(&sk->sk_receive_queue); */
-		पूर्ण
+		}
 		skb_queue_purge(&sk->sk_receive_queue);
-	पूर्ण
+	}
 
 	/* Wake up anyone sleeping in poll */
 	sk->sk_state_change(sk);
 
 fail:
 	release_sock(sk);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक iucv_sock_release(काष्ठा socket *sock)
-अणु
-	काष्ठा sock *sk = sock->sk;
-	पूर्णांक err = 0;
+static int iucv_sock_release(struct socket *sock)
+{
+	struct sock *sk = sock->sk;
+	int err = 0;
 
-	अगर (!sk)
-		वापस 0;
+	if (!sk)
+		return 0;
 
-	iucv_sock_बंद(sk);
+	iucv_sock_close(sk);
 
 	sock_orphan(sk);
-	iucv_sock_समाप्त(sk);
-	वापस err;
-पूर्ण
+	iucv_sock_kill(sk);
+	return err;
+}
 
-/* माला_लोockopt and setsockopt */
-अटल पूर्णांक iucv_sock_setsockopt(काष्ठा socket *sock, पूर्णांक level, पूर्णांक optname,
-				sockptr_t optval, अचिन्हित पूर्णांक optlen)
-अणु
-	काष्ठा sock *sk = sock->sk;
-	काष्ठा iucv_sock *iucv = iucv_sk(sk);
-	पूर्णांक val;
-	पूर्णांक rc;
+/* getsockopt and setsockopt */
+static int iucv_sock_setsockopt(struct socket *sock, int level, int optname,
+				sockptr_t optval, unsigned int optlen)
+{
+	struct sock *sk = sock->sk;
+	struct iucv_sock *iucv = iucv_sk(sk);
+	int val;
+	int rc;
 
-	अगर (level != SOL_IUCV)
-		वापस -ENOPROTOOPT;
+	if (level != SOL_IUCV)
+		return -ENOPROTOOPT;
 
-	अगर (optlen < माप(पूर्णांक))
-		वापस -EINVAL;
+	if (optlen < sizeof(int))
+		return -EINVAL;
 
-	अगर (copy_from_sockptr(&val, optval, माप(पूर्णांक)))
-		वापस -EFAULT;
+	if (copy_from_sockptr(&val, optval, sizeof(int)))
+		return -EFAULT;
 
 	rc = 0;
 
 	lock_sock(sk);
-	चयन (optname) अणु
-	हाल SO_IPRMDATA_MSG:
-		अगर (val)
+	switch (optname) {
+	case SO_IPRMDATA_MSG:
+		if (val)
 			iucv->flags |= IUCV_IPRMDATA;
-		अन्यथा
+		else
 			iucv->flags &= ~IUCV_IPRMDATA;
-		अवरोध;
-	हाल SO_MSGLIMIT:
-		चयन (sk->sk_state) अणु
-		हाल IUCV_OPEN:
-		हाल IUCV_BOUND:
-			अगर (val < 1 || val > U16_MAX)
+		break;
+	case SO_MSGLIMIT:
+		switch (sk->sk_state) {
+		case IUCV_OPEN:
+		case IUCV_BOUND:
+			if (val < 1 || val > U16_MAX)
 				rc = -EINVAL;
-			अन्यथा
+			else
 				iucv->msglimit = val;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			rc = -EINVAL;
-			अवरोध;
-		पूर्ण
-		अवरोध;
-	शेष:
+			break;
+		}
+		break;
+	default:
 		rc = -ENOPROTOOPT;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 	release_sock(sk);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक iucv_sock_माला_लोockopt(काष्ठा socket *sock, पूर्णांक level, पूर्णांक optname,
-				अक्षर __user *optval, पूर्णांक __user *optlen)
-अणु
-	काष्ठा sock *sk = sock->sk;
-	काष्ठा iucv_sock *iucv = iucv_sk(sk);
-	अचिन्हित पूर्णांक val;
-	पूर्णांक len;
+static int iucv_sock_getsockopt(struct socket *sock, int level, int optname,
+				char __user *optval, int __user *optlen)
+{
+	struct sock *sk = sock->sk;
+	struct iucv_sock *iucv = iucv_sk(sk);
+	unsigned int val;
+	int len;
 
-	अगर (level != SOL_IUCV)
-		वापस -ENOPROTOOPT;
+	if (level != SOL_IUCV)
+		return -ENOPROTOOPT;
 
-	अगर (get_user(len, optlen))
-		वापस -EFAULT;
+	if (get_user(len, optlen))
+		return -EFAULT;
 
-	अगर (len < 0)
-		वापस -EINVAL;
+	if (len < 0)
+		return -EINVAL;
 
-	len = min_t(अचिन्हित पूर्णांक, len, माप(पूर्णांक));
+	len = min_t(unsigned int, len, sizeof(int));
 
-	चयन (optname) अणु
-	हाल SO_IPRMDATA_MSG:
+	switch (optname) {
+	case SO_IPRMDATA_MSG:
 		val = (iucv->flags & IUCV_IPRMDATA) ? 1 : 0;
-		अवरोध;
-	हाल SO_MSGLIMIT:
+		break;
+	case SO_MSGLIMIT:
 		lock_sock(sk);
-		val = (iucv->path != शून्य) ? iucv->path->msglim	/* connected */
-					   : iucv->msglimit;	/* शेष */
+		val = (iucv->path != NULL) ? iucv->path->msglim	/* connected */
+					   : iucv->msglimit;	/* default */
 		release_sock(sk);
-		अवरोध;
-	हाल SO_MSGSIZE:
-		अगर (sk->sk_state == IUCV_OPEN)
-			वापस -EBADFD;
+		break;
+	case SO_MSGSIZE:
+		if (sk->sk_state == IUCV_OPEN)
+			return -EBADFD;
 		val = (iucv->hs_dev) ? iucv->hs_dev->mtu -
-				माप(काष्ठा af_iucv_trans_hdr) - ETH_HLEN :
+				sizeof(struct af_iucv_trans_hdr) - ETH_HLEN :
 				0x7fffffff;
-		अवरोध;
-	शेष:
-		वापस -ENOPROTOOPT;
-	पूर्ण
+		break;
+	default:
+		return -ENOPROTOOPT;
+	}
 
-	अगर (put_user(len, optlen))
-		वापस -EFAULT;
-	अगर (copy_to_user(optval, &val, len))
-		वापस -EFAULT;
+	if (put_user(len, optlen))
+		return -EFAULT;
+	if (copy_to_user(optval, &val, len))
+		return -EFAULT;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
 /* Callback wrappers - called from iucv base support */
-अटल पूर्णांक iucv_callback_connreq(काष्ठा iucv_path *path,
+static int iucv_callback_connreq(struct iucv_path *path,
 				 u8 ipvmid[8], u8 ipuser[16])
-अणु
-	अचिन्हित अक्षर user_data[16];
-	अचिन्हित अक्षर nuser_data[16];
-	अचिन्हित अक्षर src_name[8];
-	काष्ठा sock *sk, *nsk;
-	काष्ठा iucv_sock *iucv, *niucv;
-	पूर्णांक err;
+{
+	unsigned char user_data[16];
+	unsigned char nuser_data[16];
+	unsigned char src_name[8];
+	struct sock *sk, *nsk;
+	struct iucv_sock *iucv, *niucv;
+	int err;
 
-	स_नकल(src_name, ipuser, 8);
+	memcpy(src_name, ipuser, 8);
 	EBCASC(src_name, 8);
-	/* Find out अगर this path beदीर्घs to af_iucv. */
-	पढ़ो_lock(&iucv_sk_list.lock);
-	iucv = शून्य;
-	sk = शून्य;
-	sk_क्रम_each(sk, &iucv_sk_list.head)
-		अगर (sk->sk_state == IUCV_LISTEN &&
-		    !स_भेद(&iucv_sk(sk)->src_name, src_name, 8)) अणु
+	/* Find out if this path belongs to af_iucv. */
+	read_lock(&iucv_sk_list.lock);
+	iucv = NULL;
+	sk = NULL;
+	sk_for_each(sk, &iucv_sk_list.head)
+		if (sk->sk_state == IUCV_LISTEN &&
+		    !memcmp(&iucv_sk(sk)->src_name, src_name, 8)) {
 			/*
 			 * Found a listening socket with
 			 * src_name == ipuser[0-7].
 			 */
 			iucv = iucv_sk(sk);
-			अवरोध;
-		पूर्ण
-	पढ़ो_unlock(&iucv_sk_list.lock);
-	अगर (!iucv)
+			break;
+		}
+	read_unlock(&iucv_sk_list.lock);
+	if (!iucv)
 		/* No socket found, not one of our paths. */
-		वापस -EINVAL;
+		return -EINVAL;
 
 	bh_lock_sock(sk);
 
-	/* Check अगर parent socket is listening */
+	/* Check if parent socket is listening */
 	low_nmcpy(user_data, iucv->src_name);
 	high_nmcpy(user_data, iucv->dst_name);
-	ASCEBC(user_data, माप(user_data));
-	अगर (sk->sk_state != IUCV_LISTEN) अणु
+	ASCEBC(user_data, sizeof(user_data));
+	if (sk->sk_state != IUCV_LISTEN) {
 		err = pr_iucv->path_sever(path, user_data);
-		iucv_path_मुक्त(path);
-		जाओ fail;
-	पूर्ण
+		iucv_path_free(path);
+		goto fail;
+	}
 
-	/* Check क्रम backlog size */
-	अगर (sk_acceptq_is_full(sk)) अणु
+	/* Check for backlog size */
+	if (sk_acceptq_is_full(sk)) {
 		err = pr_iucv->path_sever(path, user_data);
-		iucv_path_मुक्त(path);
-		जाओ fail;
-	पूर्ण
+		iucv_path_free(path);
+		goto fail;
+	}
 
 	/* Create the new socket */
-	nsk = iucv_sock_alloc(शून्य, sk->sk_protocol, GFP_ATOMIC, 0);
-	अगर (!nsk) अणु
+	nsk = iucv_sock_alloc(NULL, sk->sk_protocol, GFP_ATOMIC, 0);
+	if (!nsk) {
 		err = pr_iucv->path_sever(path, user_data);
-		iucv_path_मुक्त(path);
-		जाओ fail;
-	पूर्ण
+		iucv_path_free(path);
+		goto fail;
+	}
 
 	niucv = iucv_sk(nsk);
 	iucv_sock_init(nsk, sk);
@@ -1658,82 +1657,82 @@ fail:
 	nsk->sk_allocation |= GFP_DMA;
 
 	/* Set the new iucv_sock */
-	स_नकल(niucv->dst_name, ipuser + 8, 8);
+	memcpy(niucv->dst_name, ipuser + 8, 8);
 	EBCASC(niucv->dst_name, 8);
-	स_नकल(niucv->dst_user_id, ipvmid, 8);
-	स_नकल(niucv->src_name, iucv->src_name, 8);
-	स_नकल(niucv->src_user_id, iucv->src_user_id, 8);
+	memcpy(niucv->dst_user_id, ipvmid, 8);
+	memcpy(niucv->src_name, iucv->src_name, 8);
+	memcpy(niucv->src_user_id, iucv->src_user_id, 8);
 	niucv->path = path;
 
 	/* Call iucv_accept */
 	high_nmcpy(nuser_data, ipuser + 8);
-	स_नकल(nuser_data + 8, niucv->src_name, 8);
+	memcpy(nuser_data + 8, niucv->src_name, 8);
 	ASCEBC(nuser_data + 8, 8);
 
-	/* set message limit क्रम path based on msglimit of accepting socket */
+	/* set message limit for path based on msglimit of accepting socket */
 	niucv->msglimit = iucv->msglimit;
 	path->msglim = iucv->msglimit;
 	err = pr_iucv->path_accept(path, &af_iucv_handler, nuser_data, nsk);
-	अगर (err) अणु
+	if (err) {
 		iucv_sever_path(nsk, 1);
-		iucv_sock_समाप्त(nsk);
-		जाओ fail;
-	पूर्ण
+		iucv_sock_kill(nsk);
+		goto fail;
+	}
 
 	iucv_accept_enqueue(sk, nsk);
 
 	/* Wake up accept */
 	nsk->sk_state = IUCV_CONNECTED;
-	sk->sk_data_पढ़ोy(sk);
+	sk->sk_data_ready(sk);
 	err = 0;
 fail:
 	bh_unlock_sock(sk);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम iucv_callback_connack(काष्ठा iucv_path *path, u8 ipuser[16])
-अणु
-	काष्ठा sock *sk = path->निजी;
+static void iucv_callback_connack(struct iucv_path *path, u8 ipuser[16])
+{
+	struct sock *sk = path->private;
 
 	sk->sk_state = IUCV_CONNECTED;
 	sk->sk_state_change(sk);
-पूर्ण
+}
 
-अटल व्योम iucv_callback_rx(काष्ठा iucv_path *path, काष्ठा iucv_message *msg)
-अणु
-	काष्ठा sock *sk = path->निजी;
-	काष्ठा iucv_sock *iucv = iucv_sk(sk);
-	काष्ठा sk_buff *skb;
-	काष्ठा sock_msg_q *save_msg;
-	पूर्णांक len;
+static void iucv_callback_rx(struct iucv_path *path, struct iucv_message *msg)
+{
+	struct sock *sk = path->private;
+	struct iucv_sock *iucv = iucv_sk(sk);
+	struct sk_buff *skb;
+	struct sock_msg_q *save_msg;
+	int len;
 
-	अगर (sk->sk_shutकरोwn & RCV_SHUTDOWN) अणु
+	if (sk->sk_shutdown & RCV_SHUTDOWN) {
 		pr_iucv->message_reject(path, msg);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	spin_lock(&iucv->message_q.lock);
 
-	अगर (!list_empty(&iucv->message_q.list) ||
+	if (!list_empty(&iucv->message_q.list) ||
 	    !skb_queue_empty(&iucv->backlog_skb_q))
-		जाओ save_message;
+		goto save_message;
 
-	len = atomic_पढ़ो(&sk->sk_rmem_alloc);
+	len = atomic_read(&sk->sk_rmem_alloc);
 	len += SKB_TRUESIZE(iucv_msg_length(msg));
-	अगर (len > sk->sk_rcvbuf)
-		जाओ save_message;
+	if (len > sk->sk_rcvbuf)
+		goto save_message;
 
 	skb = alloc_iucv_recv_skb(iucv_msg_length(msg));
-	अगर (!skb)
-		जाओ save_message;
+	if (!skb)
+		goto save_message;
 
 	iucv_process_message(sk, skb, path, msg);
-	जाओ out_unlock;
+	goto out_unlock;
 
 save_message:
-	save_msg = kzalloc(माप(काष्ठा sock_msg_q), GFP_ATOMIC | GFP_DMA);
-	अगर (!save_msg)
-		जाओ out_unlock;
+	save_msg = kzalloc(sizeof(struct sock_msg_q), GFP_ATOMIC | GFP_DMA);
+	if (!save_msg)
+		goto out_unlock;
 	save_msg->path = path;
 	save_msg->msg = *msg;
 
@@ -1741,17 +1740,17 @@ save_message:
 
 out_unlock:
 	spin_unlock(&iucv->message_q.lock);
-पूर्ण
+}
 
-अटल व्योम iucv_callback_txकरोne(काष्ठा iucv_path *path,
-				 काष्ठा iucv_message *msg)
-अणु
-	काष्ठा sock *sk = path->निजी;
-	काष्ठा sk_buff *this = शून्य;
-	काष्ठा sk_buff_head *list;
-	काष्ठा sk_buff *list_skb;
-	काष्ठा iucv_sock *iucv;
-	अचिन्हित दीर्घ flags;
+static void iucv_callback_txdone(struct iucv_path *path,
+				 struct iucv_message *msg)
+{
+	struct sock *sk = path->private;
+	struct sk_buff *this = NULL;
+	struct sk_buff_head *list;
+	struct sk_buff *list_skb;
+	struct iucv_sock *iucv;
+	unsigned long flags;
 
 	iucv = iucv_sk(sk);
 	list = &iucv->send_skb_q;
@@ -1759,41 +1758,41 @@ out_unlock:
 	bh_lock_sock(sk);
 
 	spin_lock_irqsave(&list->lock, flags);
-	skb_queue_walk(list, list_skb) अणु
-		अगर (msg->tag == IUCV_SKB_CB(list_skb)->tag) अणु
+	skb_queue_walk(list, list_skb) {
+		if (msg->tag == IUCV_SKB_CB(list_skb)->tag) {
 			this = list_skb;
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	अगर (this) अणु
+			break;
+		}
+	}
+	if (this) {
 		atomic_dec(&iucv->skbs_in_xmit);
 		__skb_unlink(this, list);
-	पूर्ण
+	}
 
 	spin_unlock_irqrestore(&list->lock, flags);
 
-	अगर (this) अणु
-		kमुक्त_skb(this);
-		/* wake up any process रुकोing क्रम sending */
+	if (this) {
+		kfree_skb(this);
+		/* wake up any process waiting for sending */
 		iucv_sock_wake_msglim(sk);
-	पूर्ण
+	}
 
-	अगर (sk->sk_state == IUCV_CLOSING) अणु
-		अगर (atomic_पढ़ो(&iucv->skbs_in_xmit) == 0) अणु
+	if (sk->sk_state == IUCV_CLOSING) {
+		if (atomic_read(&iucv->skbs_in_xmit) == 0) {
 			sk->sk_state = IUCV_CLOSED;
 			sk->sk_state_change(sk);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	bh_unlock_sock(sk);
 
-पूर्ण
+}
 
-अटल व्योम iucv_callback_connrej(काष्ठा iucv_path *path, u8 ipuser[16])
-अणु
-	काष्ठा sock *sk = path->निजी;
+static void iucv_callback_connrej(struct iucv_path *path, u8 ipuser[16])
+{
+	struct sock *sk = path->private;
 
-	अगर (sk->sk_state == IUCV_CLOSED)
-		वापस;
+	if (sk->sk_state == IUCV_CLOSED)
+		return;
 
 	bh_lock_sock(sk);
 	iucv_sever_path(sk, 1);
@@ -1801,416 +1800,416 @@ out_unlock:
 
 	sk->sk_state_change(sk);
 	bh_unlock_sock(sk);
-पूर्ण
+}
 
-/* called अगर the other communication side shuts करोwn its RECV direction;
+/* called if the other communication side shuts down its RECV direction;
  * in turn, the callback sets SEND_SHUTDOWN to disable sending of data.
  */
-अटल व्योम iucv_callback_shutकरोwn(काष्ठा iucv_path *path, u8 ipuser[16])
-अणु
-	काष्ठा sock *sk = path->निजी;
+static void iucv_callback_shutdown(struct iucv_path *path, u8 ipuser[16])
+{
+	struct sock *sk = path->private;
 
 	bh_lock_sock(sk);
-	अगर (sk->sk_state != IUCV_CLOSED) अणु
-		sk->sk_shutकरोwn |= SEND_SHUTDOWN;
+	if (sk->sk_state != IUCV_CLOSED) {
+		sk->sk_shutdown |= SEND_SHUTDOWN;
 		sk->sk_state_change(sk);
-	पूर्ण
+	}
 	bh_unlock_sock(sk);
-पूर्ण
+}
 
 /***************** HiperSockets transport callbacks ********************/
-अटल व्योम afiucv_swap_src_dest(काष्ठा sk_buff *skb)
-अणु
-	काष्ठा af_iucv_trans_hdr *trans_hdr = iucv_trans_hdr(skb);
-	अक्षर पंचांगpID[8];
-	अक्षर पंचांगpName[8];
+static void afiucv_swap_src_dest(struct sk_buff *skb)
+{
+	struct af_iucv_trans_hdr *trans_hdr = iucv_trans_hdr(skb);
+	char tmpID[8];
+	char tmpName[8];
 
-	ASCEBC(trans_hdr->destUserID, माप(trans_hdr->destUserID));
-	ASCEBC(trans_hdr->destAppName, माप(trans_hdr->destAppName));
-	ASCEBC(trans_hdr->srcUserID, माप(trans_hdr->srcUserID));
-	ASCEBC(trans_hdr->srcAppName, माप(trans_hdr->srcAppName));
-	स_नकल(पंचांगpID, trans_hdr->srcUserID, 8);
-	स_नकल(पंचांगpName, trans_hdr->srcAppName, 8);
-	स_नकल(trans_hdr->srcUserID, trans_hdr->destUserID, 8);
-	स_नकल(trans_hdr->srcAppName, trans_hdr->destAppName, 8);
-	स_नकल(trans_hdr->destUserID, पंचांगpID, 8);
-	स_नकल(trans_hdr->destAppName, पंचांगpName, 8);
+	ASCEBC(trans_hdr->destUserID, sizeof(trans_hdr->destUserID));
+	ASCEBC(trans_hdr->destAppName, sizeof(trans_hdr->destAppName));
+	ASCEBC(trans_hdr->srcUserID, sizeof(trans_hdr->srcUserID));
+	ASCEBC(trans_hdr->srcAppName, sizeof(trans_hdr->srcAppName));
+	memcpy(tmpID, trans_hdr->srcUserID, 8);
+	memcpy(tmpName, trans_hdr->srcAppName, 8);
+	memcpy(trans_hdr->srcUserID, trans_hdr->destUserID, 8);
+	memcpy(trans_hdr->srcAppName, trans_hdr->destAppName, 8);
+	memcpy(trans_hdr->destUserID, tmpID, 8);
+	memcpy(trans_hdr->destAppName, tmpName, 8);
 	skb_push(skb, ETH_HLEN);
-	स_रखो(skb->data, 0, ETH_HLEN);
-पूर्ण
+	memset(skb->data, 0, ETH_HLEN);
+}
 
 /**
  * afiucv_hs_callback_syn - react on received SYN
  **/
-अटल पूर्णांक afiucv_hs_callback_syn(काष्ठा sock *sk, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा af_iucv_trans_hdr *trans_hdr = iucv_trans_hdr(skb);
-	काष्ठा sock *nsk;
-	काष्ठा iucv_sock *iucv, *niucv;
-	पूर्णांक err;
+static int afiucv_hs_callback_syn(struct sock *sk, struct sk_buff *skb)
+{
+	struct af_iucv_trans_hdr *trans_hdr = iucv_trans_hdr(skb);
+	struct sock *nsk;
+	struct iucv_sock *iucv, *niucv;
+	int err;
 
 	iucv = iucv_sk(sk);
-	अगर (!iucv) अणु
+	if (!iucv) {
 		/* no sock - connection refused */
 		afiucv_swap_src_dest(skb);
 		trans_hdr->flags = AF_IUCV_FLAG_SYN | AF_IUCV_FLAG_FIN;
 		err = dev_queue_xmit(skb);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	nsk = iucv_sock_alloc(शून्य, sk->sk_protocol, GFP_ATOMIC, 0);
+	nsk = iucv_sock_alloc(NULL, sk->sk_protocol, GFP_ATOMIC, 0);
 	bh_lock_sock(sk);
-	अगर ((sk->sk_state != IUCV_LISTEN) ||
+	if ((sk->sk_state != IUCV_LISTEN) ||
 	    sk_acceptq_is_full(sk) ||
-	    !nsk) अणु
+	    !nsk) {
 		/* error on server socket - connection refused */
 		afiucv_swap_src_dest(skb);
 		trans_hdr->flags = AF_IUCV_FLAG_SYN | AF_IUCV_FLAG_FIN;
 		err = dev_queue_xmit(skb);
-		iucv_sock_समाप्त(nsk);
+		iucv_sock_kill(nsk);
 		bh_unlock_sock(sk);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	niucv = iucv_sk(nsk);
 	iucv_sock_init(nsk, sk);
 	niucv->transport = AF_IUCV_TRANS_HIPER;
 	niucv->msglimit = iucv->msglimit;
-	अगर (!trans_hdr->winकरोw)
+	if (!trans_hdr->window)
 		niucv->msglimit_peer = IUCV_HIPER_MSGLIM_DEFAULT;
-	अन्यथा
-		niucv->msglimit_peer = trans_hdr->winकरोw;
-	स_नकल(niucv->dst_name, trans_hdr->srcAppName, 8);
-	स_नकल(niucv->dst_user_id, trans_hdr->srcUserID, 8);
-	स_नकल(niucv->src_name, iucv->src_name, 8);
-	स_नकल(niucv->src_user_id, iucv->src_user_id, 8);
-	nsk->sk_bound_dev_अगर = sk->sk_bound_dev_अगर;
+	else
+		niucv->msglimit_peer = trans_hdr->window;
+	memcpy(niucv->dst_name, trans_hdr->srcAppName, 8);
+	memcpy(niucv->dst_user_id, trans_hdr->srcUserID, 8);
+	memcpy(niucv->src_name, iucv->src_name, 8);
+	memcpy(niucv->src_user_id, iucv->src_user_id, 8);
+	nsk->sk_bound_dev_if = sk->sk_bound_dev_if;
 	niucv->hs_dev = iucv->hs_dev;
 	dev_hold(niucv->hs_dev);
 	afiucv_swap_src_dest(skb);
 	trans_hdr->flags = AF_IUCV_FLAG_SYN | AF_IUCV_FLAG_ACK;
-	trans_hdr->winकरोw = niucv->msglimit;
-	/* अगर receiver acks the xmit connection is established */
+	trans_hdr->window = niucv->msglimit;
+	/* if receiver acks the xmit connection is established */
 	err = dev_queue_xmit(skb);
-	अगर (!err) अणु
+	if (!err) {
 		iucv_accept_enqueue(sk, nsk);
 		nsk->sk_state = IUCV_CONNECTED;
-		sk->sk_data_पढ़ोy(sk);
-	पूर्ण अन्यथा
-		iucv_sock_समाप्त(nsk);
+		sk->sk_data_ready(sk);
+	} else
+		iucv_sock_kill(nsk);
 	bh_unlock_sock(sk);
 
 out:
-	वापस NET_RX_SUCCESS;
-पूर्ण
+	return NET_RX_SUCCESS;
+}
 
 /**
  * afiucv_hs_callback_synack() - react on received SYN-ACK
  **/
-अटल पूर्णांक afiucv_hs_callback_synack(काष्ठा sock *sk, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा iucv_sock *iucv = iucv_sk(sk);
+static int afiucv_hs_callback_synack(struct sock *sk, struct sk_buff *skb)
+{
+	struct iucv_sock *iucv = iucv_sk(sk);
 
-	अगर (!iucv)
-		जाओ out;
-	अगर (sk->sk_state != IUCV_BOUND)
-		जाओ out;
+	if (!iucv)
+		goto out;
+	if (sk->sk_state != IUCV_BOUND)
+		goto out;
 	bh_lock_sock(sk);
-	iucv->msglimit_peer = iucv_trans_hdr(skb)->winकरोw;
+	iucv->msglimit_peer = iucv_trans_hdr(skb)->window;
 	sk->sk_state = IUCV_CONNECTED;
 	sk->sk_state_change(sk);
 	bh_unlock_sock(sk);
 out:
-	kमुक्त_skb(skb);
-	वापस NET_RX_SUCCESS;
-पूर्ण
+	kfree_skb(skb);
+	return NET_RX_SUCCESS;
+}
 
 /**
  * afiucv_hs_callback_synfin() - react on received SYN_FIN
  **/
-अटल पूर्णांक afiucv_hs_callback_synfin(काष्ठा sock *sk, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा iucv_sock *iucv = iucv_sk(sk);
+static int afiucv_hs_callback_synfin(struct sock *sk, struct sk_buff *skb)
+{
+	struct iucv_sock *iucv = iucv_sk(sk);
 
-	अगर (!iucv)
-		जाओ out;
-	अगर (sk->sk_state != IUCV_BOUND)
-		जाओ out;
+	if (!iucv)
+		goto out;
+	if (sk->sk_state != IUCV_BOUND)
+		goto out;
 	bh_lock_sock(sk);
 	sk->sk_state = IUCV_DISCONN;
 	sk->sk_state_change(sk);
 	bh_unlock_sock(sk);
 out:
-	kमुक्त_skb(skb);
-	वापस NET_RX_SUCCESS;
-पूर्ण
+	kfree_skb(skb);
+	return NET_RX_SUCCESS;
+}
 
 /**
  * afiucv_hs_callback_fin() - react on received FIN
  **/
-अटल पूर्णांक afiucv_hs_callback_fin(काष्ठा sock *sk, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा iucv_sock *iucv = iucv_sk(sk);
+static int afiucv_hs_callback_fin(struct sock *sk, struct sk_buff *skb)
+{
+	struct iucv_sock *iucv = iucv_sk(sk);
 
-	/* other end of connection बंदd */
-	अगर (!iucv)
-		जाओ out;
+	/* other end of connection closed */
+	if (!iucv)
+		goto out;
 	bh_lock_sock(sk);
-	अगर (sk->sk_state == IUCV_CONNECTED) अणु
+	if (sk->sk_state == IUCV_CONNECTED) {
 		sk->sk_state = IUCV_DISCONN;
 		sk->sk_state_change(sk);
-	पूर्ण
+	}
 	bh_unlock_sock(sk);
 out:
-	kमुक्त_skb(skb);
-	वापस NET_RX_SUCCESS;
-पूर्ण
+	kfree_skb(skb);
+	return NET_RX_SUCCESS;
+}
 
 /**
  * afiucv_hs_callback_win() - react on received WIN
  **/
-अटल पूर्णांक afiucv_hs_callback_win(काष्ठा sock *sk, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा iucv_sock *iucv = iucv_sk(sk);
+static int afiucv_hs_callback_win(struct sock *sk, struct sk_buff *skb)
+{
+	struct iucv_sock *iucv = iucv_sk(sk);
 
-	अगर (!iucv)
-		वापस NET_RX_SUCCESS;
+	if (!iucv)
+		return NET_RX_SUCCESS;
 
-	अगर (sk->sk_state != IUCV_CONNECTED)
-		वापस NET_RX_SUCCESS;
+	if (sk->sk_state != IUCV_CONNECTED)
+		return NET_RX_SUCCESS;
 
-	atomic_sub(iucv_trans_hdr(skb)->winकरोw, &iucv->msg_sent);
+	atomic_sub(iucv_trans_hdr(skb)->window, &iucv->msg_sent);
 	iucv_sock_wake_msglim(sk);
-	वापस NET_RX_SUCCESS;
-पूर्ण
+	return NET_RX_SUCCESS;
+}
 
 /**
  * afiucv_hs_callback_rx() - react on received data
  **/
-अटल पूर्णांक afiucv_hs_callback_rx(काष्ठा sock *sk, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा iucv_sock *iucv = iucv_sk(sk);
+static int afiucv_hs_callback_rx(struct sock *sk, struct sk_buff *skb)
+{
+	struct iucv_sock *iucv = iucv_sk(sk);
 
-	अगर (!iucv) अणु
-		kमुक्त_skb(skb);
-		वापस NET_RX_SUCCESS;
-	पूर्ण
+	if (!iucv) {
+		kfree_skb(skb);
+		return NET_RX_SUCCESS;
+	}
 
-	अगर (sk->sk_state != IUCV_CONNECTED) अणु
-		kमुक्त_skb(skb);
-		वापस NET_RX_SUCCESS;
-	पूर्ण
+	if (sk->sk_state != IUCV_CONNECTED) {
+		kfree_skb(skb);
+		return NET_RX_SUCCESS;
+	}
 
-	अगर (sk->sk_shutकरोwn & RCV_SHUTDOWN) अणु
-		kमुक्त_skb(skb);
-		वापस NET_RX_SUCCESS;
-	पूर्ण
+	if (sk->sk_shutdown & RCV_SHUTDOWN) {
+		kfree_skb(skb);
+		return NET_RX_SUCCESS;
+	}
 
-	/* ग_लिखो stuff from iucv_msg to skb cb */
-	skb_pull(skb, माप(काष्ठा af_iucv_trans_hdr));
+	/* write stuff from iucv_msg to skb cb */
+	skb_pull(skb, sizeof(struct af_iucv_trans_hdr));
 	skb_reset_transport_header(skb);
 	skb_reset_network_header(skb);
 	IUCV_SKB_CB(skb)->offset = 0;
-	अगर (sk_filter(sk, skb)) अणु
+	if (sk_filter(sk, skb)) {
 		atomic_inc(&sk->sk_drops);	/* skb rejected by filter */
-		kमुक्त_skb(skb);
-		वापस NET_RX_SUCCESS;
-	पूर्ण
+		kfree_skb(skb);
+		return NET_RX_SUCCESS;
+	}
 
 	spin_lock(&iucv->message_q.lock);
-	अगर (skb_queue_empty(&iucv->backlog_skb_q)) अणु
-		अगर (__sock_queue_rcv_skb(sk, skb))
+	if (skb_queue_empty(&iucv->backlog_skb_q)) {
+		if (__sock_queue_rcv_skb(sk, skb))
 			/* handle rcv queue full */
 			skb_queue_tail(&iucv->backlog_skb_q, skb);
-	पूर्ण अन्यथा
+	} else
 		skb_queue_tail(&iucv_sk(sk)->backlog_skb_q, skb);
 	spin_unlock(&iucv->message_q.lock);
-	वापस NET_RX_SUCCESS;
-पूर्ण
+	return NET_RX_SUCCESS;
+}
 
 /**
- * afiucv_hs_rcv() - base function क्रम arriving data through HiperSockets
+ * afiucv_hs_rcv() - base function for arriving data through HiperSockets
  *                   transport
- *                   called from netअगर RX softirq
+ *                   called from netif RX softirq
  **/
-अटल पूर्णांक afiucv_hs_rcv(काष्ठा sk_buff *skb, काष्ठा net_device *dev,
-	काष्ठा packet_type *pt, काष्ठा net_device *orig_dev)
-अणु
-	काष्ठा sock *sk;
-	काष्ठा iucv_sock *iucv;
-	काष्ठा af_iucv_trans_hdr *trans_hdr;
-	पूर्णांक err = NET_RX_SUCCESS;
-	अक्षर nullstring[8];
+static int afiucv_hs_rcv(struct sk_buff *skb, struct net_device *dev,
+	struct packet_type *pt, struct net_device *orig_dev)
+{
+	struct sock *sk;
+	struct iucv_sock *iucv;
+	struct af_iucv_trans_hdr *trans_hdr;
+	int err = NET_RX_SUCCESS;
+	char nullstring[8];
 
-	अगर (!pskb_may_pull(skb, माप(*trans_hdr))) अणु
-		kमुक्त_skb(skb);
-		वापस NET_RX_SUCCESS;
-	पूर्ण
+	if (!pskb_may_pull(skb, sizeof(*trans_hdr))) {
+		kfree_skb(skb);
+		return NET_RX_SUCCESS;
+	}
 
 	trans_hdr = iucv_trans_hdr(skb);
-	EBCASC(trans_hdr->destAppName, माप(trans_hdr->destAppName));
-	EBCASC(trans_hdr->destUserID, माप(trans_hdr->destUserID));
-	EBCASC(trans_hdr->srcAppName, माप(trans_hdr->srcAppName));
-	EBCASC(trans_hdr->srcUserID, माप(trans_hdr->srcUserID));
-	स_रखो(nullstring, 0, माप(nullstring));
-	iucv = शून्य;
-	sk = शून्य;
-	पढ़ो_lock(&iucv_sk_list.lock);
-	sk_क्रम_each(sk, &iucv_sk_list.head) अणु
-		अगर (trans_hdr->flags == AF_IUCV_FLAG_SYN) अणु
-			अगर ((!स_भेद(&iucv_sk(sk)->src_name,
+	EBCASC(trans_hdr->destAppName, sizeof(trans_hdr->destAppName));
+	EBCASC(trans_hdr->destUserID, sizeof(trans_hdr->destUserID));
+	EBCASC(trans_hdr->srcAppName, sizeof(trans_hdr->srcAppName));
+	EBCASC(trans_hdr->srcUserID, sizeof(trans_hdr->srcUserID));
+	memset(nullstring, 0, sizeof(nullstring));
+	iucv = NULL;
+	sk = NULL;
+	read_lock(&iucv_sk_list.lock);
+	sk_for_each(sk, &iucv_sk_list.head) {
+		if (trans_hdr->flags == AF_IUCV_FLAG_SYN) {
+			if ((!memcmp(&iucv_sk(sk)->src_name,
 				     trans_hdr->destAppName, 8)) &&
-			    (!स_भेद(&iucv_sk(sk)->src_user_id,
+			    (!memcmp(&iucv_sk(sk)->src_user_id,
 				     trans_hdr->destUserID, 8)) &&
-			    (!स_भेद(&iucv_sk(sk)->dst_name, nullstring, 8)) &&
-			    (!स_भेद(&iucv_sk(sk)->dst_user_id,
-				     nullstring, 8))) अणु
+			    (!memcmp(&iucv_sk(sk)->dst_name, nullstring, 8)) &&
+			    (!memcmp(&iucv_sk(sk)->dst_user_id,
+				     nullstring, 8))) {
 				iucv = iucv_sk(sk);
-				अवरोध;
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			अगर ((!स_भेद(&iucv_sk(sk)->src_name,
+				break;
+			}
+		} else {
+			if ((!memcmp(&iucv_sk(sk)->src_name,
 				     trans_hdr->destAppName, 8)) &&
-			    (!स_भेद(&iucv_sk(sk)->src_user_id,
+			    (!memcmp(&iucv_sk(sk)->src_user_id,
 				     trans_hdr->destUserID, 8)) &&
-			    (!स_भेद(&iucv_sk(sk)->dst_name,
+			    (!memcmp(&iucv_sk(sk)->dst_name,
 				     trans_hdr->srcAppName, 8)) &&
-			    (!स_भेद(&iucv_sk(sk)->dst_user_id,
-				     trans_hdr->srcUserID, 8))) अणु
+			    (!memcmp(&iucv_sk(sk)->dst_user_id,
+				     trans_hdr->srcUserID, 8))) {
 				iucv = iucv_sk(sk);
-				अवरोध;
-			पूर्ण
-		पूर्ण
-	पूर्ण
-	पढ़ो_unlock(&iucv_sk_list.lock);
-	अगर (!iucv)
-		sk = शून्य;
+				break;
+			}
+		}
+	}
+	read_unlock(&iucv_sk_list.lock);
+	if (!iucv)
+		sk = NULL;
 
 	/* no sock
 	how should we send with no sock
 	1) send without sock no send rc checking?
-	2) पूर्णांकroduce शेष sock to handle this हालs
+	2) introduce default sock to handle this cases
 
-	 SYN -> send SYN|ACK in good हाल, send SYN|FIN in bad हाल
+	 SYN -> send SYN|ACK in good case, send SYN|FIN in bad case
 	 data -> send FIN
 	 SYN|ACK, SYN|FIN, FIN -> no action? */
 
-	चयन (trans_hdr->flags) अणु
-	हाल AF_IUCV_FLAG_SYN:
+	switch (trans_hdr->flags) {
+	case AF_IUCV_FLAG_SYN:
 		/* connect request */
 		err = afiucv_hs_callback_syn(sk, skb);
-		अवरोध;
-	हाल (AF_IUCV_FLAG_SYN | AF_IUCV_FLAG_ACK):
+		break;
+	case (AF_IUCV_FLAG_SYN | AF_IUCV_FLAG_ACK):
 		/* connect request confirmed */
 		err = afiucv_hs_callback_synack(sk, skb);
-		अवरोध;
-	हाल (AF_IUCV_FLAG_SYN | AF_IUCV_FLAG_FIN):
+		break;
+	case (AF_IUCV_FLAG_SYN | AF_IUCV_FLAG_FIN):
 		/* connect request refused */
 		err = afiucv_hs_callback_synfin(sk, skb);
-		अवरोध;
-	हाल (AF_IUCV_FLAG_FIN):
-		/* बंद request */
+		break;
+	case (AF_IUCV_FLAG_FIN):
+		/* close request */
 		err = afiucv_hs_callback_fin(sk, skb);
-		अवरोध;
-	हाल (AF_IUCV_FLAG_WIN):
+		break;
+	case (AF_IUCV_FLAG_WIN):
 		err = afiucv_hs_callback_win(sk, skb);
-		अगर (skb->len == माप(काष्ठा af_iucv_trans_hdr)) अणु
-			kमुक्त_skb(skb);
-			अवरोध;
-		पूर्ण
+		if (skb->len == sizeof(struct af_iucv_trans_hdr)) {
+			kfree_skb(skb);
+			break;
+		}
 		fallthrough;	/* and receive non-zero length data */
-	हाल (AF_IUCV_FLAG_SHT):
-		/* shutकरोwn request */
+	case (AF_IUCV_FLAG_SHT):
+		/* shutdown request */
 		fallthrough;	/* and receive zero length data */
-	हाल 0:
+	case 0:
 		/* plain data frame */
 		IUCV_SKB_CB(skb)->class = trans_hdr->iucv_hdr.class;
 		err = afiucv_hs_callback_rx(sk, skb);
-		अवरोध;
-	शेष:
-		kमुक्त_skb(skb);
-	पूर्ण
+		break;
+	default:
+		kfree_skb(skb);
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /**
- * afiucv_hs_callback_txnotअगरy() - handle send notअगरications from HiperSockets
+ * afiucv_hs_callback_txnotify() - handle send notifications from HiperSockets
  *                                 transport
  **/
-अटल व्योम afiucv_hs_callback_txnotअगरy(काष्ठा sock *sk, क्रमागत iucv_tx_notअगरy n)
-अणु
-	काष्ठा iucv_sock *iucv = iucv_sk(sk);
+static void afiucv_hs_callback_txnotify(struct sock *sk, enum iucv_tx_notify n)
+{
+	struct iucv_sock *iucv = iucv_sk(sk);
 
-	अगर (sock_flag(sk, SOCK_ZAPPED))
-		वापस;
+	if (sock_flag(sk, SOCK_ZAPPED))
+		return;
 
-	चयन (n) अणु
-	हाल TX_NOTIFY_OK:
+	switch (n) {
+	case TX_NOTIFY_OK:
 		atomic_dec(&iucv->skbs_in_xmit);
 		iucv_sock_wake_msglim(sk);
-		अवरोध;
-	हाल TX_NOTIFY_PENDING:
+		break;
+	case TX_NOTIFY_PENDING:
 		atomic_inc(&iucv->pendings);
-		अवरोध;
-	हाल TX_NOTIFY_DELAYED_OK:
+		break;
+	case TX_NOTIFY_DELAYED_OK:
 		atomic_dec(&iucv->skbs_in_xmit);
-		अगर (atomic_dec_वापस(&iucv->pendings) <= 0)
+		if (atomic_dec_return(&iucv->pendings) <= 0)
 			iucv_sock_wake_msglim(sk);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		atomic_dec(&iucv->skbs_in_xmit);
-		अगर (sk->sk_state == IUCV_CONNECTED) अणु
+		if (sk->sk_state == IUCV_CONNECTED) {
 			sk->sk_state = IUCV_DISCONN;
 			sk->sk_state_change(sk);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (sk->sk_state == IUCV_CLOSING) अणु
-		अगर (atomic_पढ़ो(&iucv->skbs_in_xmit) == 0) अणु
+	if (sk->sk_state == IUCV_CLOSING) {
+		if (atomic_read(&iucv->skbs_in_xmit) == 0) {
 			sk->sk_state = IUCV_CLOSED;
 			sk->sk_state_change(sk);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
 /*
- * afiucv_netdev_event: handle netdev notअगरier chain events
+ * afiucv_netdev_event: handle netdev notifier chain events
  */
-अटल पूर्णांक afiucv_netdev_event(काष्ठा notअगरier_block *this,
-			       अचिन्हित दीर्घ event, व्योम *ptr)
-अणु
-	काष्ठा net_device *event_dev = netdev_notअगरier_info_to_dev(ptr);
-	काष्ठा sock *sk;
-	काष्ठा iucv_sock *iucv;
+static int afiucv_netdev_event(struct notifier_block *this,
+			       unsigned long event, void *ptr)
+{
+	struct net_device *event_dev = netdev_notifier_info_to_dev(ptr);
+	struct sock *sk;
+	struct iucv_sock *iucv;
 
-	चयन (event) अणु
-	हाल NETDEV_REBOOT:
-	हाल NETDEV_GOING_DOWN:
-		sk_क्रम_each(sk, &iucv_sk_list.head) अणु
+	switch (event) {
+	case NETDEV_REBOOT:
+	case NETDEV_GOING_DOWN:
+		sk_for_each(sk, &iucv_sk_list.head) {
 			iucv = iucv_sk(sk);
-			अगर ((iucv->hs_dev == event_dev) &&
-			    (sk->sk_state == IUCV_CONNECTED)) अणु
-				अगर (event == NETDEV_GOING_DOWN)
+			if ((iucv->hs_dev == event_dev) &&
+			    (sk->sk_state == IUCV_CONNECTED)) {
+				if (event == NETDEV_GOING_DOWN)
 					iucv_send_ctrl(sk, AF_IUCV_FLAG_FIN);
 				sk->sk_state = IUCV_DISCONN;
 				sk->sk_state_change(sk);
-			पूर्ण
-		पूर्ण
-		अवरोध;
-	हाल NETDEV_DOWN:
-	हाल NETDEV_UNREGISTER:
-	शेष:
-		अवरोध;
-	पूर्ण
-	वापस NOTIFY_DONE;
-पूर्ण
+			}
+		}
+		break;
+	case NETDEV_DOWN:
+	case NETDEV_UNREGISTER:
+	default:
+		break;
+	}
+	return NOTIFY_DONE;
+}
 
-अटल काष्ठा notअगरier_block afiucv_netdev_notअगरier = अणु
-	.notअगरier_call = afiucv_netdev_event,
-पूर्ण;
+static struct notifier_block afiucv_netdev_notifier = {
+	.notifier_call = afiucv_netdev_event,
+};
 
-अटल स्थिर काष्ठा proto_ops iucv_sock_ops = अणु
+static const struct proto_ops iucv_sock_ops = {
 	.family		= PF_IUCV,
 	.owner		= THIS_MODULE,
 	.release	= iucv_sock_release,
@@ -2225,131 +2224,131 @@ out:
 	.ioctl		= sock_no_ioctl,
 	.mmap		= sock_no_mmap,
 	.socketpair	= sock_no_socketpair,
-	.shutकरोwn	= iucv_sock_shutकरोwn,
+	.shutdown	= iucv_sock_shutdown,
 	.setsockopt	= iucv_sock_setsockopt,
-	.माला_लोockopt	= iucv_sock_माला_लोockopt,
-पूर्ण;
+	.getsockopt	= iucv_sock_getsockopt,
+};
 
-अटल पूर्णांक iucv_sock_create(काष्ठा net *net, काष्ठा socket *sock, पूर्णांक protocol,
-			    पूर्णांक kern)
-अणु
-	काष्ठा sock *sk;
+static int iucv_sock_create(struct net *net, struct socket *sock, int protocol,
+			    int kern)
+{
+	struct sock *sk;
 
-	अगर (protocol && protocol != PF_IUCV)
-		वापस -EPROTONOSUPPORT;
+	if (protocol && protocol != PF_IUCV)
+		return -EPROTONOSUPPORT;
 
 	sock->state = SS_UNCONNECTED;
 
-	चयन (sock->type) अणु
-	हाल SOCK_STREAM:
-	हाल SOCK_SEQPACKET:
+	switch (sock->type) {
+	case SOCK_STREAM:
+	case SOCK_SEQPACKET:
 		/* currently, proto ops can handle both sk types */
 		sock->ops = &iucv_sock_ops;
-		अवरोध;
-	शेष:
-		वापस -ESOCKTNOSUPPORT;
-	पूर्ण
+		break;
+	default:
+		return -ESOCKTNOSUPPORT;
+	}
 
 	sk = iucv_sock_alloc(sock, protocol, GFP_KERNEL, kern);
-	अगर (!sk)
-		वापस -ENOMEM;
+	if (!sk)
+		return -ENOMEM;
 
-	iucv_sock_init(sk, शून्य);
+	iucv_sock_init(sk, NULL);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा net_proto_family iucv_sock_family_ops = अणु
+static const struct net_proto_family iucv_sock_family_ops = {
 	.family	= AF_IUCV,
 	.owner	= THIS_MODULE,
 	.create	= iucv_sock_create,
-पूर्ण;
+};
 
-अटल काष्ठा packet_type iucv_packet_type = अणु
+static struct packet_type iucv_packet_type = {
 	.type = cpu_to_be16(ETH_P_AF_IUCV),
 	.func = afiucv_hs_rcv,
-पूर्ण;
+};
 
-अटल पूर्णांक afiucv_iucv_init(व्योम)
-अणु
-	वापस pr_iucv->iucv_रेजिस्टर(&af_iucv_handler, 0);
-पूर्ण
+static int afiucv_iucv_init(void)
+{
+	return pr_iucv->iucv_register(&af_iucv_handler, 0);
+}
 
-अटल व्योम afiucv_iucv_निकास(व्योम)
-अणु
-	pr_iucv->iucv_unरेजिस्टर(&af_iucv_handler, 0);
-पूर्ण
+static void afiucv_iucv_exit(void)
+{
+	pr_iucv->iucv_unregister(&af_iucv_handler, 0);
+}
 
-अटल पूर्णांक __init afiucv_init(व्योम)
-अणु
-	पूर्णांक err;
+static int __init afiucv_init(void)
+{
+	int err;
 
-	अगर (MACHINE_IS_VM) अणु
-		cpcmd("QUERY USERID", iucv_userid, माप(iucv_userid), &err);
-		अगर (unlikely(err)) अणु
+	if (MACHINE_IS_VM) {
+		cpcmd("QUERY USERID", iucv_userid, sizeof(iucv_userid), &err);
+		if (unlikely(err)) {
 			WARN_ON(err);
 			err = -EPROTONOSUPPORT;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
-		pr_iucv = try_then_request_module(symbol_get(iucv_अगर), "iucv");
-		अगर (!pr_iucv) अणु
-			prपूर्णांकk(KERN_WARNING "iucv_if lookup failed\n");
-			स_रखो(&iucv_userid, 0, माप(iucv_userid));
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		स_रखो(&iucv_userid, 0, माप(iucv_userid));
-		pr_iucv = शून्य;
-	पूर्ण
+		pr_iucv = try_then_request_module(symbol_get(iucv_if), "iucv");
+		if (!pr_iucv) {
+			printk(KERN_WARNING "iucv_if lookup failed\n");
+			memset(&iucv_userid, 0, sizeof(iucv_userid));
+		}
+	} else {
+		memset(&iucv_userid, 0, sizeof(iucv_userid));
+		pr_iucv = NULL;
+	}
 
-	err = proto_रेजिस्टर(&iucv_proto, 0);
-	अगर (err)
-		जाओ out;
-	err = sock_रेजिस्टर(&iucv_sock_family_ops);
-	अगर (err)
-		जाओ out_proto;
+	err = proto_register(&iucv_proto, 0);
+	if (err)
+		goto out;
+	err = sock_register(&iucv_sock_family_ops);
+	if (err)
+		goto out_proto;
 
-	अगर (pr_iucv) अणु
+	if (pr_iucv) {
 		err = afiucv_iucv_init();
-		अगर (err)
-			जाओ out_sock;
-	पूर्ण
+		if (err)
+			goto out_sock;
+	}
 
-	err = रेजिस्टर_netdevice_notअगरier(&afiucv_netdev_notअगरier);
-	अगर (err)
-		जाओ out_notअगरier;
+	err = register_netdevice_notifier(&afiucv_netdev_notifier);
+	if (err)
+		goto out_notifier;
 
 	dev_add_pack(&iucv_packet_type);
-	वापस 0;
+	return 0;
 
-out_notअगरier:
-	अगर (pr_iucv)
-		afiucv_iucv_निकास();
+out_notifier:
+	if (pr_iucv)
+		afiucv_iucv_exit();
 out_sock:
-	sock_unरेजिस्टर(PF_IUCV);
+	sock_unregister(PF_IUCV);
 out_proto:
-	proto_unरेजिस्टर(&iucv_proto);
+	proto_unregister(&iucv_proto);
 out:
-	अगर (pr_iucv)
-		symbol_put(iucv_अगर);
-	वापस err;
-पूर्ण
+	if (pr_iucv)
+		symbol_put(iucv_if);
+	return err;
+}
 
-अटल व्योम __निकास afiucv_निकास(व्योम)
-अणु
-	अगर (pr_iucv) अणु
-		afiucv_iucv_निकास();
-		symbol_put(iucv_अगर);
-	पूर्ण
+static void __exit afiucv_exit(void)
+{
+	if (pr_iucv) {
+		afiucv_iucv_exit();
+		symbol_put(iucv_if);
+	}
 
-	unरेजिस्टर_netdevice_notअगरier(&afiucv_netdev_notअगरier);
-	dev_हटाओ_pack(&iucv_packet_type);
-	sock_unरेजिस्टर(PF_IUCV);
-	proto_unरेजिस्टर(&iucv_proto);
-पूर्ण
+	unregister_netdevice_notifier(&afiucv_netdev_notifier);
+	dev_remove_pack(&iucv_packet_type);
+	sock_unregister(PF_IUCV);
+	proto_unregister(&iucv_proto);
+}
 
 module_init(afiucv_init);
-module_निकास(afiucv_निकास);
+module_exit(afiucv_exit);
 
 MODULE_AUTHOR("Jennifer Hunt <jenhunt@us.ibm.com>");
 MODULE_DESCRIPTION("IUCV Sockets ver " VERSION);

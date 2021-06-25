@@ -1,56 +1,55 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _SCSI_SCSI_EH_H
-#घोषणा _SCSI_SCSI_EH_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _SCSI_SCSI_EH_H
+#define _SCSI_SCSI_EH_H
 
-#समावेश <linux/scatterlist.h>
+#include <linux/scatterlist.h>
 
-#समावेश <scsi/scsi_cmnd.h>
-#समावेश <scsi/scsi_common.h>
-काष्ठा scsi_device;
-काष्ठा Scsi_Host;
+#include <scsi/scsi_cmnd.h>
+#include <scsi/scsi_common.h>
+struct scsi_device;
+struct Scsi_Host;
 
-बाह्य व्योम scsi_eh_finish_cmd(काष्ठा scsi_cmnd *scmd,
-			       काष्ठा list_head *करोne_q);
-बाह्य व्योम scsi_eh_flush_करोne_q(काष्ठा list_head *करोne_q);
-बाह्य व्योम scsi_report_bus_reset(काष्ठा Scsi_Host *, पूर्णांक);
-बाह्य व्योम scsi_report_device_reset(काष्ठा Scsi_Host *, पूर्णांक, पूर्णांक);
-बाह्य पूर्णांक scsi_block_when_processing_errors(काष्ठा scsi_device *);
-बाह्य bool scsi_command_normalize_sense(स्थिर काष्ठा scsi_cmnd *cmd,
-					 काष्ठा scsi_sense_hdr *sshdr);
-बाह्य क्रमागत scsi_disposition scsi_check_sense(काष्ठा scsi_cmnd *);
+extern void scsi_eh_finish_cmd(struct scsi_cmnd *scmd,
+			       struct list_head *done_q);
+extern void scsi_eh_flush_done_q(struct list_head *done_q);
+extern void scsi_report_bus_reset(struct Scsi_Host *, int);
+extern void scsi_report_device_reset(struct Scsi_Host *, int, int);
+extern int scsi_block_when_processing_errors(struct scsi_device *);
+extern bool scsi_command_normalize_sense(const struct scsi_cmnd *cmd,
+					 struct scsi_sense_hdr *sshdr);
+extern enum scsi_disposition scsi_check_sense(struct scsi_cmnd *);
 
-अटल अंतरभूत bool scsi_sense_is_deferred(स्थिर काष्ठा scsi_sense_hdr *sshdr)
-अणु
-	वापस ((sshdr->response_code >= 0x70) && (sshdr->response_code & 1));
-पूर्ण
+static inline bool scsi_sense_is_deferred(const struct scsi_sense_hdr *sshdr)
+{
+	return ((sshdr->response_code >= 0x70) && (sshdr->response_code & 1));
+}
 
-बाह्य bool scsi_get_sense_info_fld(स्थिर u8 *sense_buffer, पूर्णांक sb_len,
+extern bool scsi_get_sense_info_fld(const u8 *sense_buffer, int sb_len,
 				    u64 *info_out);
 
-बाह्य पूर्णांक scsi_ioctl_reset(काष्ठा scsi_device *, पूर्णांक __user *);
+extern int scsi_ioctl_reset(struct scsi_device *, int __user *);
 
-काष्ठा scsi_eh_save अणु
+struct scsi_eh_save {
 	/* saved state */
-	पूर्णांक result;
-	अचिन्हित पूर्णांक resid_len;
-	पूर्णांक eh_eflags;
-	क्रमागत dma_data_direction data_direction;
-	अचिन्हित underflow;
-	अचिन्हित अक्षर cmd_len;
-	अचिन्हित अक्षर prot_op;
-	अचिन्हित अक्षर *cmnd;
-	काष्ठा scsi_data_buffer sdb;
+	int result;
+	unsigned int resid_len;
+	int eh_eflags;
+	enum dma_data_direction data_direction;
+	unsigned underflow;
+	unsigned char cmd_len;
+	unsigned char prot_op;
+	unsigned char *cmnd;
+	struct scsi_data_buffer sdb;
 	/* new command support */
-	अचिन्हित अक्षर eh_cmnd[BLK_MAX_CDB];
-	काष्ठा scatterlist sense_sgl;
-पूर्ण;
+	unsigned char eh_cmnd[BLK_MAX_CDB];
+	struct scatterlist sense_sgl;
+};
 
-बाह्य व्योम scsi_eh_prep_cmnd(काष्ठा scsi_cmnd *scmd,
-		काष्ठा scsi_eh_save *ses, अचिन्हित अक्षर *cmnd,
-		पूर्णांक cmnd_size, अचिन्हित sense_bytes);
+extern void scsi_eh_prep_cmnd(struct scsi_cmnd *scmd,
+		struct scsi_eh_save *ses, unsigned char *cmnd,
+		int cmnd_size, unsigned sense_bytes);
 
-बाह्य व्योम scsi_eh_restore_cmnd(काष्ठा scsi_cmnd* scmd,
-		काष्ठा scsi_eh_save *ses);
+extern void scsi_eh_restore_cmnd(struct scsi_cmnd* scmd,
+		struct scsi_eh_save *ses);
 
-#पूर्ण_अगर /* _SCSI_SCSI_EH_H */
+#endif /* _SCSI_SCSI_EH_H */

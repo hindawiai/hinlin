@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright 2008 Simtec Electronics
  *	http://armlinux.simtec.co.uk/
@@ -8,50 +7,50 @@
  * S3C2412 CPU Frequency scalling
 */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/init.h>
-#समावेश <linux/module.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/ioport.h>
-#समावेश <linux/cpufreq.h>
-#समावेश <linux/device.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/err.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/soc/samsung/s3c-cpufreq-core.h>
-#समावेश <linux/soc/samsung/s3c-pm.h>
+#include <linux/init.h>
+#include <linux/module.h>
+#include <linux/interrupt.h>
+#include <linux/ioport.h>
+#include <linux/cpufreq.h>
+#include <linux/device.h>
+#include <linux/delay.h>
+#include <linux/clk.h>
+#include <linux/err.h>
+#include <linux/io.h>
+#include <linux/soc/samsung/s3c-cpufreq-core.h>
+#include <linux/soc/samsung/s3c-pm.h>
 
-#समावेश <यंत्र/mach/arch.h>
-#समावेश <यंत्र/mach/map.h>
+#include <asm/mach/arch.h>
+#include <asm/mach/map.h>
 
-#घोषणा S3C2412_CLKDIVN_PDIVN		(1<<2)
-#घोषणा S3C2412_CLKDIVN_HDIVN_MASK	(3<<0)
-#घोषणा S3C2412_CLKDIVN_ARMDIVN		(1<<3)
-#घोषणा S3C2412_CLKDIVN_DVSEN		(1<<4)
-#घोषणा S3C2412_CLKDIVN_HALFHCLK	(1<<5)
-#घोषणा S3C2412_CLKDIVN_USB48DIV	(1<<6)
-#घोषणा S3C2412_CLKDIVN_UARTDIV_MASK	(15<<8)
-#घोषणा S3C2412_CLKDIVN_UARTDIV_SHIFT	(8)
-#घोषणा S3C2412_CLKDIVN_I2SDIV_MASK	(15<<12)
-#घोषणा S3C2412_CLKDIVN_I2SDIV_SHIFT	(12)
-#घोषणा S3C2412_CLKDIVN_CAMDIV_MASK	(15<<16)
-#घोषणा S3C2412_CLKDIVN_CAMDIV_SHIFT	(16)
+#define S3C2412_CLKDIVN_PDIVN		(1<<2)
+#define S3C2412_CLKDIVN_HDIVN_MASK	(3<<0)
+#define S3C2412_CLKDIVN_ARMDIVN		(1<<3)
+#define S3C2412_CLKDIVN_DVSEN		(1<<4)
+#define S3C2412_CLKDIVN_HALFHCLK	(1<<5)
+#define S3C2412_CLKDIVN_USB48DIV	(1<<6)
+#define S3C2412_CLKDIVN_UARTDIV_MASK	(15<<8)
+#define S3C2412_CLKDIVN_UARTDIV_SHIFT	(8)
+#define S3C2412_CLKDIVN_I2SDIV_MASK	(15<<12)
+#define S3C2412_CLKDIVN_I2SDIV_SHIFT	(12)
+#define S3C2412_CLKDIVN_CAMDIV_MASK	(15<<16)
+#define S3C2412_CLKDIVN_CAMDIV_SHIFT	(16)
 
-/* our घड़ी resources. */
-अटल काष्ठा clk *xtal;
-अटल काष्ठा clk *fclk;
-अटल काष्ठा clk *hclk;
-अटल काष्ठा clk *armclk;
+/* our clock resources. */
+static struct clk *xtal;
+static struct clk *fclk;
+static struct clk *hclk;
+static struct clk *armclk;
 
 /* HDIV: 1, 2, 3, 4, 6, 8 */
 
-अटल पूर्णांक s3c2412_cpufreq_calcभागs(काष्ठा s3c_cpufreq_config *cfg)
-अणु
-	अचिन्हित पूर्णांक hभाग, pभाग, armभाग, dvs;
-	अचिन्हित दीर्घ hclk, fclk, armclk, armभाग_clk;
-	अचिन्हित दीर्घ hclk_max;
+static int s3c2412_cpufreq_calcdivs(struct s3c_cpufreq_config *cfg)
+{
+	unsigned int hdiv, pdiv, armdiv, dvs;
+	unsigned long hclk, fclk, armclk, armdiv_clk;
+	unsigned long hclk_max;
 
 	fclk = cfg->freq.fclk;
 	armclk = cfg->freq.armclk;
@@ -60,7 +59,7 @@
 	/* We can't run hclk above armclk as at the best we have to
 	 * have armclk and hclk in dvs mode. */
 
-	अगर (hclk_max > armclk)
+	if (hclk_max > armclk)
 		hclk_max = armclk;
 
 	s3c_freq_dbg("%s: fclk=%lu, armclk=%lu, hclk_max=%lu\n",
@@ -69,154 +68,154 @@
 		     __func__, cfg->freq.fclk, cfg->freq.armclk,
 		     cfg->freq.hclk, cfg->freq.pclk);
 
-	armभाग = fclk / armclk;
+	armdiv = fclk / armclk;
 
-	अगर (armभाग < 1)
-		armभाग = 1;
-	अगर (armभाग > 2)
-		armभाग = 2;
+	if (armdiv < 1)
+		armdiv = 1;
+	if (armdiv > 2)
+		armdiv = 2;
 
-	cfg->भागs.arm_भागisor = armभाग;
-	armभाग_clk = fclk / armभाग;
+	cfg->divs.arm_divisor = armdiv;
+	armdiv_clk = fclk / armdiv;
 
-	hभाग = armभाग_clk / hclk_max;
-	अगर (hभाग < 1)
-		hभाग = 1;
+	hdiv = armdiv_clk / hclk_max;
+	if (hdiv < 1)
+		hdiv = 1;
 
-	cfg->freq.hclk = hclk = armभाग_clk / hभाग;
+	cfg->freq.hclk = hclk = armdiv_clk / hdiv;
 
 	/* set dvs depending on whether we reached armclk or not. */
-	cfg->भागs.dvs = dvs = armclk < armभाग_clk;
+	cfg->divs.dvs = dvs = armclk < armdiv_clk;
 
 	/* update the actual armclk we achieved. */
-	cfg->freq.armclk = dvs ? hclk : armभाग_clk;
+	cfg->freq.armclk = dvs ? hclk : armdiv_clk;
 
 	s3c_freq_dbg("%s: armclk %lu, hclk %lu, armdiv %d, hdiv %d, dvs %d\n",
-		     __func__, armclk, hclk, armभाग, hभाग, cfg->भागs.dvs);
+		     __func__, armclk, hclk, armdiv, hdiv, cfg->divs.dvs);
 
-	अगर (hभाग > 4)
-		जाओ invalid;
+	if (hdiv > 4)
+		goto invalid;
 
-	pभाग = (hclk > cfg->max.pclk) ? 2 : 1;
+	pdiv = (hclk > cfg->max.pclk) ? 2 : 1;
 
-	अगर ((hclk / pभाग) > cfg->max.pclk)
-		pभाग++;
+	if ((hclk / pdiv) > cfg->max.pclk)
+		pdiv++;
 
-	cfg->freq.pclk = hclk / pभाग;
+	cfg->freq.pclk = hclk / pdiv;
 
-	s3c_freq_dbg("%s: pdiv %d\n", __func__, pभाग);
+	s3c_freq_dbg("%s: pdiv %d\n", __func__, pdiv);
 
-	अगर (pभाग > 2)
-		जाओ invalid;
+	if (pdiv > 2)
+		goto invalid;
 
-	pभाग *= hभाग;
+	pdiv *= hdiv;
 
-	/* store the result, and then वापस */
+	/* store the result, and then return */
 
-	cfg->भागs.h_भागisor = hभाग * armभाग;
-	cfg->भागs.p_भागisor = pभाग * armभाग;
+	cfg->divs.h_divisor = hdiv * armdiv;
+	cfg->divs.p_divisor = pdiv * armdiv;
 
-	वापस 0;
+	return 0;
 
 invalid:
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल व्योम s3c2412_cpufreq_setभागs(काष्ठा s3c_cpufreq_config *cfg)
-अणु
-	अचिन्हित दीर्घ clkभाग;
-	अचिन्हित दीर्घ oldभाग;
+static void s3c2412_cpufreq_setdivs(struct s3c_cpufreq_config *cfg)
+{
+	unsigned long clkdiv;
+	unsigned long olddiv;
 
-	oldभाग = clkभाग = s3c24xx_पढ़ो_clkभागn();
+	olddiv = clkdiv = s3c24xx_read_clkdivn();
 
-	/* clear off current घड़ी info */
+	/* clear off current clock info */
 
-	clkभाग &= ~S3C2412_CLKDIVN_ARMDIVN;
-	clkभाग &= ~S3C2412_CLKDIVN_HDIVN_MASK;
-	clkभाग &= ~S3C2412_CLKDIVN_PDIVN;
+	clkdiv &= ~S3C2412_CLKDIVN_ARMDIVN;
+	clkdiv &= ~S3C2412_CLKDIVN_HDIVN_MASK;
+	clkdiv &= ~S3C2412_CLKDIVN_PDIVN;
 
-	अगर (cfg->भागs.arm_भागisor == 2)
-		clkभाग |= S3C2412_CLKDIVN_ARMDIVN;
+	if (cfg->divs.arm_divisor == 2)
+		clkdiv |= S3C2412_CLKDIVN_ARMDIVN;
 
-	clkभाग |= ((cfg->भागs.h_भागisor / cfg->भागs.arm_भागisor) - 1);
+	clkdiv |= ((cfg->divs.h_divisor / cfg->divs.arm_divisor) - 1);
 
-	अगर (cfg->भागs.p_भागisor != cfg->भागs.h_भागisor)
-		clkभाग |= S3C2412_CLKDIVN_PDIVN;
+	if (cfg->divs.p_divisor != cfg->divs.h_divisor)
+		clkdiv |= S3C2412_CLKDIVN_PDIVN;
 
-	s3c_freq_dbg("%s: div %08lx => %08lx\n", __func__, oldभाग, clkभाग);
-	s3c24xx_ग_लिखो_clkभागn(clkभाग);
+	s3c_freq_dbg("%s: div %08lx => %08lx\n", __func__, olddiv, clkdiv);
+	s3c24xx_write_clkdivn(clkdiv);
 
-	clk_set_parent(armclk, cfg->भागs.dvs ? hclk : fclk);
-पूर्ण
+	clk_set_parent(armclk, cfg->divs.dvs ? hclk : fclk);
+}
 
-/* set the शेष cpu frequency inक्रमmation, based on an 200MHz part
+/* set the default cpu frequency information, based on an 200MHz part
  * as we have no other way of detecting the speed rating in software.
  */
 
-अटल काष्ठा s3c_cpufreq_info s3c2412_cpufreq_info = अणु
-	.max		= अणु
+static struct s3c_cpufreq_info s3c2412_cpufreq_info = {
+	.max		= {
 		.fclk	= 200000000,
 		.hclk	= 100000000,
 		.pclk	=  50000000,
-	पूर्ण,
+	},
 
 	.latency	= 5000000, /* 5ms */
 
-	.lockसमय_m	= 150,
-	.lockसमय_u	= 150,
-	.lockसमय_bits	= 16,
+	.locktime_m	= 150,
+	.locktime_u	= 150,
+	.locktime_bits	= 16,
 
 	.name		= "s3c2412",
 	.set_refresh	= s3c2412_cpufreq_setrefresh,
-	.set_भागs	= s3c2412_cpufreq_setभागs,
-	.calc_भागs	= s3c2412_cpufreq_calcभागs,
+	.set_divs	= s3c2412_cpufreq_setdivs,
+	.calc_divs	= s3c2412_cpufreq_calcdivs,
 
 	.calc_iotiming	= s3c2412_iotiming_calc,
 	.set_iotiming	= s3c2412_iotiming_set,
 	.get_iotiming	= s3c2412_iotiming_get,
 
 	.debug_io_show  = s3c_cpufreq_debugfs_call(s3c2412_iotiming_debugfs),
-पूर्ण;
+};
 
-अटल पूर्णांक s3c2412_cpufreq_add(काष्ठा device *dev,
-			       काष्ठा subsys_पूर्णांकerface *sअगर)
-अणु
-	अचिन्हित दीर्घ fclk_rate;
+static int s3c2412_cpufreq_add(struct device *dev,
+			       struct subsys_interface *sif)
+{
+	unsigned long fclk_rate;
 
-	hclk = clk_get(शून्य, "hclk");
-	अगर (IS_ERR(hclk)) अणु
+	hclk = clk_get(NULL, "hclk");
+	if (IS_ERR(hclk)) {
 		pr_err("cannot find hclk clock\n");
-		वापस -ENOENT;
-	पूर्ण
+		return -ENOENT;
+	}
 
-	fclk = clk_get(शून्य, "fclk");
-	अगर (IS_ERR(fclk)) अणु
+	fclk = clk_get(NULL, "fclk");
+	if (IS_ERR(fclk)) {
 		pr_err("cannot find fclk clock\n");
-		जाओ err_fclk;
-	पूर्ण
+		goto err_fclk;
+	}
 
 	fclk_rate = clk_get_rate(fclk);
-	अगर (fclk_rate > 200000000) अणु
+	if (fclk_rate > 200000000) {
 		pr_info("fclk %ld MHz, assuming 266MHz capable part\n",
 			fclk_rate / 1000000);
 		s3c2412_cpufreq_info.max.fclk = 266000000;
 		s3c2412_cpufreq_info.max.hclk = 133000000;
 		s3c2412_cpufreq_info.max.pclk =  66000000;
-	पूर्ण
+	}
 
-	armclk = clk_get(शून्य, "armclk");
-	अगर (IS_ERR(armclk)) अणु
+	armclk = clk_get(NULL, "armclk");
+	if (IS_ERR(armclk)) {
 		pr_err("cannot find arm clock\n");
-		जाओ err_armclk;
-	पूर्ण
+		goto err_armclk;
+	}
 
-	xtal = clk_get(शून्य, "xtal");
-	अगर (IS_ERR(xtal)) अणु
+	xtal = clk_get(NULL, "xtal");
+	if (IS_ERR(xtal)) {
 		pr_err("cannot find xtal clock\n");
-		जाओ err_xtal;
-	पूर्ण
+		goto err_xtal;
+	}
 
-	वापस s3c_cpufreq_रेजिस्टर(&s3c2412_cpufreq_info);
+	return s3c_cpufreq_register(&s3c2412_cpufreq_info);
 
 err_xtal:
 	clk_put(armclk);
@@ -225,17 +224,17 @@ err_armclk:
 err_fclk:
 	clk_put(hclk);
 
-	वापस -ENOENT;
-पूर्ण
+	return -ENOENT;
+}
 
-अटल काष्ठा subsys_पूर्णांकerface s3c2412_cpufreq_पूर्णांकerface = अणु
+static struct subsys_interface s3c2412_cpufreq_interface = {
 	.name		= "s3c2412_cpufreq",
 	.subsys		= &s3c2412_subsys,
 	.add_dev	= s3c2412_cpufreq_add,
-पूर्ण;
+};
 
-अटल पूर्णांक s3c2412_cpufreq_init(व्योम)
-अणु
-	वापस subsys_पूर्णांकerface_रेजिस्टर(&s3c2412_cpufreq_पूर्णांकerface);
-पूर्ण
+static int s3c2412_cpufreq_init(void)
+{
+	return subsys_interface_register(&s3c2412_cpufreq_interface);
+}
 arch_initcall(s3c2412_cpufreq_init);

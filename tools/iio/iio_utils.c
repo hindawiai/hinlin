@@ -1,82 +1,81 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /* IIO - useful set of util functionality
  *
  * Copyright (c) 2008 Jonathan Cameron
  */
-#समावेश <माला.स>
-#समावेश <मानककोष.स>
-#समावेश <मानकपन.स>
-#समावेश <मानक_निवेशt.h>
-#समावेश <dirent.h>
-#समावेश <त्रुटिसं.स>
-#समावेश <प्रकार.स>
-#समावेश "iio_utils.h"
+#include <string.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <stdint.h>
+#include <dirent.h>
+#include <errno.h>
+#include <ctype.h>
+#include "iio_utils.h"
 
-स्थिर अक्षर *iio_dir = "/sys/bus/iio/devices/";
+const char *iio_dir = "/sys/bus/iio/devices/";
 
-अटल अक्षर * स्थिर iio_direction[] = अणु
+static char * const iio_direction[] = {
 	"in",
 	"out",
-पूर्ण;
+};
 
 /**
- * iioutils_अवरोध_up_name() - extract generic name from full channel name
+ * iioutils_break_up_name() - extract generic name from full channel name
  * @full_name: the full channel name
  * @generic_name: the output generic channel name
  *
- * Returns 0 on success, or a negative error code अगर string extraction failed.
+ * Returns 0 on success, or a negative error code if string extraction failed.
  **/
-पूर्णांक iioutils_अवरोध_up_name(स्थिर अक्षर *full_name, अक्षर **generic_name)
-अणु
-	अक्षर *current;
-	अक्षर *w, *r;
-	अक्षर *working, *prefix = "";
-	पूर्णांक i, ret;
+int iioutils_break_up_name(const char *full_name, char **generic_name)
+{
+	char *current;
+	char *w, *r;
+	char *working, *prefix = "";
+	int i, ret;
 
-	क्रम (i = 0; i < ARRAY_SIZE(iio_direction); i++)
-		अगर (!म_भेदन(full_name, iio_direction[i],
-			     म_माप(iio_direction[i]))) अणु
+	for (i = 0; i < ARRAY_SIZE(iio_direction); i++)
+		if (!strncmp(full_name, iio_direction[i],
+			     strlen(iio_direction[i]))) {
 			prefix = iio_direction[i];
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-	current = strdup(full_name + म_माप(prefix) + 1);
-	अगर (!current)
-		वापस -ENOMEM;
+	current = strdup(full_name + strlen(prefix) + 1);
+	if (!current)
+		return -ENOMEM;
 
-	working = म_मोहर(current, "_\0");
-	अगर (!working) अणु
-		मुक्त(current);
-		वापस -EINVAL;
-	पूर्ण
+	working = strtok(current, "_\0");
+	if (!working) {
+		free(current);
+		return -EINVAL;
+	}
 
 	w = working;
 	r = working;
 
-	जबतक (*r != '\0') अणु
-		अगर (!है_अंक(*r)) अणु
+	while (*r != '\0') {
+		if (!isdigit(*r)) {
 			*w = *r;
 			w++;
-		पूर्ण
+		}
 
 		r++;
-	पूर्ण
+	}
 	*w = '\0';
-	ret = aप्र_लिखो(generic_name, "%s_%s", prefix, working);
-	मुक्त(current);
+	ret = asprintf(generic_name, "%s_%s", prefix, working);
+	free(current);
 
-	वापस (ret == -1) ? -ENOMEM : 0;
-पूर्ण
+	return (ret == -1) ? -ENOMEM : 0;
+}
 
 /**
  * iioutils_get_type() - find and process _type attribute data
- * @is_चिन्हित: output whether channel is चिन्हित
+ * @is_signed: output whether channel is signed
  * @bytes: output how many bytes the channel storage occupies
  * @bits_used: output number of valid bits of data
- * @shअगरt: output amount of bits to shअगरt right data beक्रमe applying bit mask
- * @mask: output a bit mask क्रम the raw data
- * @be: output अगर data in big endian
+ * @shift: output amount of bits to shift right data before applying bit mask
+ * @mask: output a bit mask for the raw data
+ * @be: output if data in big endian
  * @device_dir: the IIO device directory
  * @buffer_idx: the IIO buffer index
  * @name: the channel name
@@ -84,204 +83,204 @@
  *
  * Returns a value >= 0 on success, otherwise a negative error code.
  **/
-अटल पूर्णांक iioutils_get_type(अचिन्हित पूर्णांक *is_चिन्हित, अचिन्हित पूर्णांक *bytes,
-			     अचिन्हित पूर्णांक *bits_used, अचिन्हित पूर्णांक *shअगरt,
-			     uपूर्णांक64_t *mask, अचिन्हित पूर्णांक *be,
-			     स्थिर अक्षर *device_dir, पूर्णांक buffer_idx,
-			     स्थिर अक्षर *name, स्थिर अक्षर *generic_name)
-अणु
-	खाता *sysfsfp;
-	पूर्णांक ret;
-	सूची *dp;
-	अक्षर *scan_el_dir, *builtname, *builtname_generic, *filename = 0;
-	अक्षर signअक्षर, endianअक्षर;
-	अचिन्हित padपूर्णांक;
-	स्थिर काष्ठा dirent *ent;
+static int iioutils_get_type(unsigned int *is_signed, unsigned int *bytes,
+			     unsigned int *bits_used, unsigned int *shift,
+			     uint64_t *mask, unsigned int *be,
+			     const char *device_dir, int buffer_idx,
+			     const char *name, const char *generic_name)
+{
+	FILE *sysfsfp;
+	int ret;
+	DIR *dp;
+	char *scan_el_dir, *builtname, *builtname_generic, *filename = 0;
+	char signchar, endianchar;
+	unsigned padint;
+	const struct dirent *ent;
 
-	ret = aप्र_लिखो(&scan_el_dir, FORMAT_SCAN_ELEMENTS_सूची, device_dir, buffer_idx);
-	अगर (ret < 0)
-		वापस -ENOMEM;
+	ret = asprintf(&scan_el_dir, FORMAT_SCAN_ELEMENTS_DIR, device_dir, buffer_idx);
+	if (ret < 0)
+		return -ENOMEM;
 
-	ret = aप्र_लिखो(&builtname, FORMAT_TYPE_खाता, name);
-	अगर (ret < 0) अणु
+	ret = asprintf(&builtname, FORMAT_TYPE_FILE, name);
+	if (ret < 0) {
 		ret = -ENOMEM;
-		जाओ error_मुक्त_scan_el_dir;
-	पूर्ण
-	ret = aप्र_लिखो(&builtname_generic, FORMAT_TYPE_खाता, generic_name);
-	अगर (ret < 0) अणु
+		goto error_free_scan_el_dir;
+	}
+	ret = asprintf(&builtname_generic, FORMAT_TYPE_FILE, generic_name);
+	if (ret < 0) {
 		ret = -ENOMEM;
-		जाओ error_मुक्त_builtname;
-	पूर्ण
+		goto error_free_builtname;
+	}
 
-	dp = सूची_खोलो(scan_el_dir);
-	अगर (!dp) अणु
-		ret = -त्रुटि_सं;
-		जाओ error_मुक्त_builtname_generic;
-	पूर्ण
+	dp = opendir(scan_el_dir);
+	if (!dp) {
+		ret = -errno;
+		goto error_free_builtname_generic;
+	}
 
 	ret = -ENOENT;
-	जबतक (ent = सूची_पढ़ो(dp), ent)
-		अगर ((म_भेद(builtname, ent->d_name) == 0) ||
-		    (म_भेद(builtname_generic, ent->d_name) == 0)) अणु
-			ret = aप्र_लिखो(&filename,
+	while (ent = readdir(dp), ent)
+		if ((strcmp(builtname, ent->d_name) == 0) ||
+		    (strcmp(builtname_generic, ent->d_name) == 0)) {
+			ret = asprintf(&filename,
 				       "%s/%s", scan_el_dir, ent->d_name);
-			अगर (ret < 0) अणु
+			if (ret < 0) {
 				ret = -ENOMEM;
-				जाओ error_बंद_सूची;
-			पूर्ण
+				goto error_closedir;
+			}
 
-			sysfsfp = ख_खोलो(filename, "r");
-			अगर (!sysfsfp) अणु
-				ret = -त्रुटि_सं;
-				ख_लिखो(मानक_त्रुटि, "failed to open %s\n",
+			sysfsfp = fopen(filename, "r");
+			if (!sysfsfp) {
+				ret = -errno;
+				fprintf(stderr, "failed to open %s\n",
 					filename);
-				जाओ error_मुक्त_filename;
-			पूर्ण
+				goto error_free_filename;
+			}
 
-			ret = ख_पूछो(sysfsfp,
+			ret = fscanf(sysfsfp,
 				     "%ce:%c%u/%u>>%u",
-				     &endianअक्षर,
-				     &signअक्षर,
+				     &endianchar,
+				     &signchar,
 				     bits_used,
-				     &padपूर्णांक, shअगरt);
-			अगर (ret < 0) अणु
-				ret = -त्रुटि_सं;
-				ख_लिखो(मानक_त्रुटि,
+				     &padint, shift);
+			if (ret < 0) {
+				ret = -errno;
+				fprintf(stderr,
 					"failed to pass scan type description\n");
-				जाओ error_बंद_sysfsfp;
-			पूर्ण अन्यथा अगर (ret != 5) अणु
+				goto error_close_sysfsfp;
+			} else if (ret != 5) {
 				ret = -EIO;
-				ख_लिखो(मानक_त्रुटि,
+				fprintf(stderr,
 					"scan type description didn't match\n");
-				जाओ error_बंद_sysfsfp;
-			पूर्ण
+				goto error_close_sysfsfp;
+			}
 
-			*be = (endianअक्षर == 'b');
-			*bytes = padपूर्णांक / 8;
-			अगर (*bits_used == 64)
+			*be = (endianchar == 'b');
+			*bytes = padint / 8;
+			if (*bits_used == 64)
 				*mask = ~(0ULL);
-			अन्यथा
+			else
 				*mask = (1ULL << *bits_used) - 1ULL;
 
-			*is_चिन्हित = (signअक्षर == 's');
-			अगर (ख_बंद(sysfsfp)) अणु
-				ret = -त्रुटि_सं;
-				ख_लिखो(मानक_त्रुटि, "Failed to close %s\n",
+			*is_signed = (signchar == 's');
+			if (fclose(sysfsfp)) {
+				ret = -errno;
+				fprintf(stderr, "Failed to close %s\n",
 					filename);
-				जाओ error_मुक्त_filename;
-			पूर्ण
+				goto error_free_filename;
+			}
 
 			sysfsfp = 0;
-			मुक्त(filename);
+			free(filename);
 			filename = 0;
 
 			/*
-			 * Aव्योम having a more generic entry overwriting
+			 * Avoid having a more generic entry overwriting
 			 * the settings.
 			 */
-			अगर (म_भेद(builtname, ent->d_name) == 0)
-				अवरोध;
-		पूर्ण
+			if (strcmp(builtname, ent->d_name) == 0)
+				break;
+		}
 
-error_बंद_sysfsfp:
-	अगर (sysfsfp)
-		अगर (ख_बंद(sysfsfp))
-			लिखो_त्रुटि("iioutils_get_type(): Failed to close file");
+error_close_sysfsfp:
+	if (sysfsfp)
+		if (fclose(sysfsfp))
+			perror("iioutils_get_type(): Failed to close file");
 
-error_मुक्त_filename:
-	अगर (filename)
-		मुक्त(filename);
+error_free_filename:
+	if (filename)
+		free(filename);
 
-error_बंद_सूची:
-	अगर (बंद_सूची(dp) == -1)
-		लिखो_त्रुटि("iioutils_get_type(): Failed to close directory");
+error_closedir:
+	if (closedir(dp) == -1)
+		perror("iioutils_get_type(): Failed to close directory");
 
-error_मुक्त_builtname_generic:
-	मुक्त(builtname_generic);
-error_मुक्त_builtname:
-	मुक्त(builtname);
-error_मुक्त_scan_el_dir:
-	मुक्त(scan_el_dir);
+error_free_builtname_generic:
+	free(builtname_generic);
+error_free_builtname:
+	free(builtname);
+error_free_scan_el_dir:
+	free(scan_el_dir);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * iioutils_get_param_भग्न() - पढ़ो a भग्न value from a channel parameter
- * @output: output the भग्न value
- * @param_name: the parameter name to पढ़ो
+ * iioutils_get_param_float() - read a float value from a channel parameter
+ * @output: output the float value
+ * @param_name: the parameter name to read
  * @device_dir: the IIO device directory in sysfs
  * @name: the channel name
  * @generic_name: the channel type name
  *
  * Returns a value >= 0 on success, otherwise a negative error code.
  **/
-पूर्णांक iioutils_get_param_भग्न(भग्न *output, स्थिर अक्षर *param_name,
-			     स्थिर अक्षर *device_dir, स्थिर अक्षर *name,
-			     स्थिर अक्षर *generic_name)
-अणु
-	खाता *sysfsfp;
-	पूर्णांक ret;
-	सूची *dp;
-	अक्षर *builtname, *builtname_generic;
-	अक्षर *filename = शून्य;
-	स्थिर काष्ठा dirent *ent;
+int iioutils_get_param_float(float *output, const char *param_name,
+			     const char *device_dir, const char *name,
+			     const char *generic_name)
+{
+	FILE *sysfsfp;
+	int ret;
+	DIR *dp;
+	char *builtname, *builtname_generic;
+	char *filename = NULL;
+	const struct dirent *ent;
 
-	ret = aप्र_लिखो(&builtname, "%s_%s", name, param_name);
-	अगर (ret < 0)
-		वापस -ENOMEM;
+	ret = asprintf(&builtname, "%s_%s", name, param_name);
+	if (ret < 0)
+		return -ENOMEM;
 
-	ret = aप्र_लिखो(&builtname_generic,
+	ret = asprintf(&builtname_generic,
 		       "%s_%s", generic_name, param_name);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		ret = -ENOMEM;
-		जाओ error_मुक्त_builtname;
-	पूर्ण
+		goto error_free_builtname;
+	}
 
-	dp = सूची_खोलो(device_dir);
-	अगर (!dp) अणु
-		ret = -त्रुटि_सं;
-		जाओ error_मुक्त_builtname_generic;
-	पूर्ण
+	dp = opendir(device_dir);
+	if (!dp) {
+		ret = -errno;
+		goto error_free_builtname_generic;
+	}
 
 	ret = -ENOENT;
-	जबतक (ent = सूची_पढ़ो(dp), ent)
-		अगर ((म_भेद(builtname, ent->d_name) == 0) ||
-		    (म_भेद(builtname_generic, ent->d_name) == 0)) अणु
-			ret = aप्र_लिखो(&filename,
+	while (ent = readdir(dp), ent)
+		if ((strcmp(builtname, ent->d_name) == 0) ||
+		    (strcmp(builtname_generic, ent->d_name) == 0)) {
+			ret = asprintf(&filename,
 				       "%s/%s", device_dir, ent->d_name);
-			अगर (ret < 0) अणु
+			if (ret < 0) {
 				ret = -ENOMEM;
-				जाओ error_बंद_सूची;
-			पूर्ण
+				goto error_closedir;
+			}
 
-			sysfsfp = ख_खोलो(filename, "r");
-			अगर (!sysfsfp) अणु
-				ret = -त्रुटि_सं;
-				जाओ error_मुक्त_filename;
-			पूर्ण
+			sysfsfp = fopen(filename, "r");
+			if (!sysfsfp) {
+				ret = -errno;
+				goto error_free_filename;
+			}
 
-			त्रुटि_सं = 0;
-			अगर (ख_पूछो(sysfsfp, "%f", output) != 1)
-				ret = त्रुटि_सं ? -त्रुटि_सं : -ENODATA;
+			errno = 0;
+			if (fscanf(sysfsfp, "%f", output) != 1)
+				ret = errno ? -errno : -ENODATA;
 
-			अवरोध;
-		पूर्ण
-error_मुक्त_filename:
-	अगर (filename)
-		मुक्त(filename);
+			break;
+		}
+error_free_filename:
+	if (filename)
+		free(filename);
 
-error_बंद_सूची:
-	अगर (बंद_सूची(dp) == -1)
-		लिखो_त्रुटि("iioutils_get_param_float(): Failed to close directory");
+error_closedir:
+	if (closedir(dp) == -1)
+		perror("iioutils_get_param_float(): Failed to close directory");
 
-error_मुक्त_builtname_generic:
-	मुक्त(builtname_generic);
-error_मुक्त_builtname:
-	मुक्त(builtname);
+error_free_builtname_generic:
+	free(builtname_generic);
+error_free_builtname:
+	free(builtname);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
  * bsort_channel_array_by_index() - sort the array in index order
@@ -289,272 +288,272 @@ error_मुक्त_builtname:
  * @cnt: the amount of array elements
  **/
 
-व्योम bsort_channel_array_by_index(काष्ठा iio_channel_info *ci_array, पूर्णांक cnt)
-अणु
-	काष्ठा iio_channel_info temp;
-	पूर्णांक x, y;
+void bsort_channel_array_by_index(struct iio_channel_info *ci_array, int cnt)
+{
+	struct iio_channel_info temp;
+	int x, y;
 
-	क्रम (x = 0; x < cnt; x++)
-		क्रम (y = 0; y < (cnt - 1); y++)
-			अगर (ci_array[y].index > ci_array[y + 1].index) अणु
+	for (x = 0; x < cnt; x++)
+		for (y = 0; y < (cnt - 1); y++)
+			if (ci_array[y].index > ci_array[y + 1].index) {
 				temp = ci_array[y + 1];
 				ci_array[y + 1] = ci_array[y];
 				ci_array[y] = temp;
-			पूर्ण
-पूर्ण
+			}
+}
 
 /**
  * build_channel_array() - function to figure out what channels are present
  * @device_dir: the IIO device directory in sysfs
- * @buffer_idx: the IIO buffer क्रम this channel array
+ * @buffer_idx: the IIO buffer for this channel array
  * @ci_array: output the resulting array of iio_channel_info
  * @counter: output the amount of array elements
  *
  * Returns 0 on success, otherwise a negative error code.
  **/
-पूर्णांक build_channel_array(स्थिर अक्षर *device_dir, पूर्णांक buffer_idx,
-			काष्ठा iio_channel_info **ci_array, पूर्णांक *counter)
-अणु
-	सूची *dp;
-	खाता *sysfsfp;
-	पूर्णांक count = 0, i;
-	काष्ठा iio_channel_info *current;
-	पूर्णांक ret;
-	स्थिर काष्ठा dirent *ent;
-	अक्षर *scan_el_dir;
-	अक्षर *filename;
+int build_channel_array(const char *device_dir, int buffer_idx,
+			struct iio_channel_info **ci_array, int *counter)
+{
+	DIR *dp;
+	FILE *sysfsfp;
+	int count = 0, i;
+	struct iio_channel_info *current;
+	int ret;
+	const struct dirent *ent;
+	char *scan_el_dir;
+	char *filename;
 
 	*counter = 0;
-	ret = aप्र_लिखो(&scan_el_dir, FORMAT_SCAN_ELEMENTS_सूची, device_dir, buffer_idx);
-	अगर (ret < 0)
-		वापस -ENOMEM;
+	ret = asprintf(&scan_el_dir, FORMAT_SCAN_ELEMENTS_DIR, device_dir, buffer_idx);
+	if (ret < 0)
+		return -ENOMEM;
 
-	dp = सूची_खोलो(scan_el_dir);
-	अगर (!dp) अणु
-		ret = -त्रुटि_सं;
-		जाओ error_मुक्त_name;
-	पूर्ण
+	dp = opendir(scan_el_dir);
+	if (!dp) {
+		ret = -errno;
+		goto error_free_name;
+	}
 
-	जबतक (ent = सूची_पढ़ो(dp), ent)
-		अगर (म_भेद(ent->d_name + म_माप(ent->d_name) - म_माप("_en"),
-			   "_en") == 0) अणु
-			ret = aप्र_लिखो(&filename,
+	while (ent = readdir(dp), ent)
+		if (strcmp(ent->d_name + strlen(ent->d_name) - strlen("_en"),
+			   "_en") == 0) {
+			ret = asprintf(&filename,
 				       "%s/%s", scan_el_dir, ent->d_name);
-			अगर (ret < 0) अणु
+			if (ret < 0) {
 				ret = -ENOMEM;
-				जाओ error_बंद_dir;
-			पूर्ण
+				goto error_close_dir;
+			}
 
-			sysfsfp = ख_खोलो(filename, "r");
-			अगर (!sysfsfp) अणु
-				ret = -त्रुटि_सं;
-				मुक्त(filename);
-				जाओ error_बंद_dir;
-			पूर्ण
+			sysfsfp = fopen(filename, "r");
+			if (!sysfsfp) {
+				ret = -errno;
+				free(filename);
+				goto error_close_dir;
+			}
 
-			त्रुटि_सं = 0;
-			अगर (ख_पूछो(sysfsfp, "%i", &ret) != 1) अणु
-				ret = त्रुटि_सं ? -त्रुटि_सं : -ENODATA;
-				अगर (ख_बंद(sysfsfp))
-					लिखो_त्रुटि("build_channel_array(): Failed to close file");
+			errno = 0;
+			if (fscanf(sysfsfp, "%i", &ret) != 1) {
+				ret = errno ? -errno : -ENODATA;
+				if (fclose(sysfsfp))
+					perror("build_channel_array(): Failed to close file");
 
-				मुक्त(filename);
-				जाओ error_बंद_dir;
-			पूर्ण
-			अगर (ret == 1)
+				free(filename);
+				goto error_close_dir;
+			}
+			if (ret == 1)
 				(*counter)++;
 
-			अगर (ख_बंद(sysfsfp)) अणु
-				ret = -त्रुटि_सं;
-				मुक्त(filename);
-				जाओ error_बंद_dir;
-			पूर्ण
+			if (fclose(sysfsfp)) {
+				ret = -errno;
+				free(filename);
+				goto error_close_dir;
+			}
 
-			मुक्त(filename);
-		पूर्ण
+			free(filename);
+		}
 
-	*ci_array = दो_स्मृति(माप(**ci_array) * (*counter));
-	अगर (!*ci_array) अणु
+	*ci_array = malloc(sizeof(**ci_array) * (*counter));
+	if (!*ci_array) {
 		ret = -ENOMEM;
-		जाओ error_बंद_dir;
-	पूर्ण
+		goto error_close_dir;
+	}
 
 	seekdir(dp, 0);
-	जबतक (ent = सूची_पढ़ो(dp), ent) अणु
-		अगर (म_भेद(ent->d_name + म_माप(ent->d_name) - म_माप("_en"),
-			   "_en") == 0) अणु
-			पूर्णांक current_enabled = 0;
+	while (ent = readdir(dp), ent) {
+		if (strcmp(ent->d_name + strlen(ent->d_name) - strlen("_en"),
+			   "_en") == 0) {
+			int current_enabled = 0;
 
 			current = &(*ci_array)[count++];
-			ret = aप्र_लिखो(&filename,
+			ret = asprintf(&filename,
 				       "%s/%s", scan_el_dir, ent->d_name);
-			अगर (ret < 0) अणु
+			if (ret < 0) {
 				ret = -ENOMEM;
-				/* decrement count to aव्योम मुक्तing name */
+				/* decrement count to avoid freeing name */
 				count--;
-				जाओ error_cleanup_array;
-			पूर्ण
+				goto error_cleanup_array;
+			}
 
-			sysfsfp = ख_खोलो(filename, "r");
-			अगर (!sysfsfp) अणु
-				ret = -त्रुटि_सं;
-				मुक्त(filename);
+			sysfsfp = fopen(filename, "r");
+			if (!sysfsfp) {
+				ret = -errno;
+				free(filename);
 				count--;
-				जाओ error_cleanup_array;
-			पूर्ण
+				goto error_cleanup_array;
+			}
 
-			त्रुटि_सं = 0;
-			अगर (ख_पूछो(sysfsfp, "%i", &current_enabled) != 1) अणु
-				ret = त्रुटि_सं ? -त्रुटि_सं : -ENODATA;
-				मुक्त(filename);
+			errno = 0;
+			if (fscanf(sysfsfp, "%i", &current_enabled) != 1) {
+				ret = errno ? -errno : -ENODATA;
+				free(filename);
 				count--;
-				जाओ error_cleanup_array;
-			पूर्ण
+				goto error_cleanup_array;
+			}
 
-			अगर (ख_बंद(sysfsfp)) अणु
-				ret = -त्रुटि_सं;
-				मुक्त(filename);
+			if (fclose(sysfsfp)) {
+				ret = -errno;
+				free(filename);
 				count--;
-				जाओ error_cleanup_array;
-			पूर्ण
+				goto error_cleanup_array;
+			}
 
-			अगर (!current_enabled) अणु
-				मुक्त(filename);
+			if (!current_enabled) {
+				free(filename);
 				count--;
-				जारी;
-			पूर्ण
+				continue;
+			}
 
 			current->scale = 1.0;
 			current->offset = 0;
 			current->name = strndup(ent->d_name,
-						म_माप(ent->d_name) -
-						म_माप("_en"));
-			अगर (!current->name) अणु
-				मुक्त(filename);
+						strlen(ent->d_name) -
+						strlen("_en"));
+			if (!current->name) {
+				free(filename);
 				ret = -ENOMEM;
 				count--;
-				जाओ error_cleanup_array;
-			पूर्ण
+				goto error_cleanup_array;
+			}
 
-			/* Get the generic and specअगरic name elements */
-			ret = iioutils_अवरोध_up_name(current->name,
+			/* Get the generic and specific name elements */
+			ret = iioutils_break_up_name(current->name,
 						     &current->generic_name);
-			अगर (ret) अणु
-				मुक्त(filename);
-				मुक्त(current->name);
+			if (ret) {
+				free(filename);
+				free(current->name);
 				count--;
-				जाओ error_cleanup_array;
-			पूर्ण
+				goto error_cleanup_array;
+			}
 
-			ret = aप्र_लिखो(&filename,
+			ret = asprintf(&filename,
 				       "%s/%s_index",
 				       scan_el_dir,
 				       current->name);
-			अगर (ret < 0) अणु
-				मुक्त(filename);
+			if (ret < 0) {
+				free(filename);
 				ret = -ENOMEM;
-				जाओ error_cleanup_array;
-			पूर्ण
+				goto error_cleanup_array;
+			}
 
-			sysfsfp = ख_खोलो(filename, "r");
-			अगर (!sysfsfp) अणु
-				ret = -त्रुटि_सं;
-				ख_लिखो(मानक_त्रुटि, "failed to open %s\n",
+			sysfsfp = fopen(filename, "r");
+			if (!sysfsfp) {
+				ret = -errno;
+				fprintf(stderr, "failed to open %s\n",
 					filename);
-				मुक्त(filename);
-				जाओ error_cleanup_array;
-			पूर्ण
+				free(filename);
+				goto error_cleanup_array;
+			}
 
-			त्रुटि_सं = 0;
-			अगर (ख_पूछो(sysfsfp, "%u", &current->index) != 1) अणु
-				ret = त्रुटि_सं ? -त्रुटि_सं : -ENODATA;
-				अगर (ख_बंद(sysfsfp))
-					लिखो_त्रुटि("build_channel_array(): Failed to close file");
+			errno = 0;
+			if (fscanf(sysfsfp, "%u", &current->index) != 1) {
+				ret = errno ? -errno : -ENODATA;
+				if (fclose(sysfsfp))
+					perror("build_channel_array(): Failed to close file");
 
-				मुक्त(filename);
-				जाओ error_cleanup_array;
-			पूर्ण
+				free(filename);
+				goto error_cleanup_array;
+			}
 
-			अगर (ख_बंद(sysfsfp)) अणु
-				ret = -त्रुटि_सं;
-				मुक्त(filename);
-				जाओ error_cleanup_array;
-			पूर्ण
+			if (fclose(sysfsfp)) {
+				ret = -errno;
+				free(filename);
+				goto error_cleanup_array;
+			}
 
-			मुक्त(filename);
+			free(filename);
 			/* Find the scale */
-			ret = iioutils_get_param_भग्न(&current->scale,
+			ret = iioutils_get_param_float(&current->scale,
 						       "scale",
 						       device_dir,
 						       current->name,
 						       current->generic_name);
-			अगर ((ret < 0) && (ret != -ENOENT))
-				जाओ error_cleanup_array;
+			if ((ret < 0) && (ret != -ENOENT))
+				goto error_cleanup_array;
 
-			ret = iioutils_get_param_भग्न(&current->offset,
+			ret = iioutils_get_param_float(&current->offset,
 						       "offset",
 						       device_dir,
 						       current->name,
 						       current->generic_name);
-			अगर ((ret < 0) && (ret != -ENOENT))
-				जाओ error_cleanup_array;
+			if ((ret < 0) && (ret != -ENOENT))
+				goto error_cleanup_array;
 
-			ret = iioutils_get_type(&current->is_चिन्हित,
+			ret = iioutils_get_type(&current->is_signed,
 						&current->bytes,
 						&current->bits_used,
-						&current->shअगरt,
+						&current->shift,
 						&current->mask,
 						&current->be,
 						device_dir,
 						buffer_idx,
 						current->name,
 						current->generic_name);
-			अगर (ret < 0)
-				जाओ error_cleanup_array;
-		पूर्ण
-	पूर्ण
+			if (ret < 0)
+				goto error_cleanup_array;
+		}
+	}
 
-	अगर (बंद_सूची(dp) == -1) अणु
-		ret = -त्रुटि_सं;
-		जाओ error_cleanup_array;
-	पूर्ण
+	if (closedir(dp) == -1) {
+		ret = -errno;
+		goto error_cleanup_array;
+	}
 
-	मुक्त(scan_el_dir);
+	free(scan_el_dir);
 	/* reorder so that the array is in index order */
 	bsort_channel_array_by_index(*ci_array, *counter);
 
-	वापस 0;
+	return 0;
 
 error_cleanup_array:
-	क्रम (i = count - 1;  i >= 0; i--) अणु
-		मुक्त((*ci_array)[i].name);
-		मुक्त((*ci_array)[i].generic_name);
-	पूर्ण
-	मुक्त(*ci_array);
-	*ci_array = शून्य;
+	for (i = count - 1;  i >= 0; i--) {
+		free((*ci_array)[i].name);
+		free((*ci_array)[i].generic_name);
+	}
+	free(*ci_array);
+	*ci_array = NULL;
 	*counter = 0;
-error_बंद_dir:
-	अगर (dp)
-		अगर (बंद_सूची(dp) == -1)
-			लिखो_त्रुटि("build_channel_array(): Failed to close dir");
+error_close_dir:
+	if (dp)
+		if (closedir(dp) == -1)
+			perror("build_channel_array(): Failed to close dir");
 
-error_मुक्त_name:
-	मुक्त(scan_el_dir);
+error_free_name:
+	free(scan_el_dir);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक calc_digits(पूर्णांक num)
-अणु
-	पूर्णांक count = 0;
+static int calc_digits(int num)
+{
+	int count = 0;
 
-	जबतक (num != 0) अणु
+	while (num != 0) {
 		num /= 10;
 		count++;
-	पूर्ण
+	}
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
 /**
  * find_type_by_name() - function to match top level types by name
@@ -563,434 +562,434 @@ error_मुक्त_name:
  *
  * Returns the device number of a matched IIO device on success, otherwise a
  * negative error code.
- * Typical types this is used क्रम are device and trigger.
+ * Typical types this is used for are device and trigger.
  **/
-पूर्णांक find_type_by_name(स्थिर अक्षर *name, स्थिर अक्षर *type)
-अणु
-	स्थिर काष्ठा dirent *ent;
-	पूर्णांक number, numम_माप, ret;
+int find_type_by_name(const char *name, const char *type)
+{
+	const struct dirent *ent;
+	int number, numstrlen, ret;
 
-	खाता *namefp;
-	सूची *dp;
-	अक्षर thisname[IIO_MAX_NAME_LENGTH];
-	अक्षर *filename;
+	FILE *namefp;
+	DIR *dp;
+	char thisname[IIO_MAX_NAME_LENGTH];
+	char *filename;
 
-	dp = सूची_खोलो(iio_dir);
-	अगर (!dp) अणु
-		ख_लिखो(मानक_त्रुटि, "No industrialio devices available\n");
-		वापस -ENODEV;
-	पूर्ण
+	dp = opendir(iio_dir);
+	if (!dp) {
+		fprintf(stderr, "No industrialio devices available\n");
+		return -ENODEV;
+	}
 
-	जबतक (ent = सूची_पढ़ो(dp), ent) अणु
-		अगर (म_भेद(ent->d_name, ".") != 0 &&
-		    म_भेद(ent->d_name, "..") != 0 &&
-		    म_माप(ent->d_name) > म_माप(type) &&
-		    म_भेदन(ent->d_name, type, म_माप(type)) == 0) अणु
-			त्रुटि_सं = 0;
-			ret = माला_पूछो(ent->d_name + म_माप(type), "%d", &number);
-			अगर (ret < 0) अणु
-				ret = -त्रुटि_सं;
-				ख_लिखो(मानक_त्रुटि,
+	while (ent = readdir(dp), ent) {
+		if (strcmp(ent->d_name, ".") != 0 &&
+		    strcmp(ent->d_name, "..") != 0 &&
+		    strlen(ent->d_name) > strlen(type) &&
+		    strncmp(ent->d_name, type, strlen(type)) == 0) {
+			errno = 0;
+			ret = sscanf(ent->d_name + strlen(type), "%d", &number);
+			if (ret < 0) {
+				ret = -errno;
+				fprintf(stderr,
 					"failed to read element number\n");
-				जाओ error_बंद_dir;
-			पूर्ण अन्यथा अगर (ret != 1) अणु
+				goto error_close_dir;
+			} else if (ret != 1) {
 				ret = -EIO;
-				ख_लिखो(मानक_त्रुटि,
+				fprintf(stderr,
 					"failed to match element number\n");
-				जाओ error_बंद_dir;
-			पूर्ण
+				goto error_close_dir;
+			}
 
-			numम_माप = calc_digits(number);
-			/* verअगरy the next अक्षरacter is not a colon */
-			अगर (म_भेदन(ent->d_name + म_माप(type) + numम_माप,
-			    ":", 1) != 0) अणु
-				filename = दो_स्मृति(म_माप(iio_dir) + म_माप(type)
-						  + numम_माप + 6);
-				अगर (!filename) अणु
+			numstrlen = calc_digits(number);
+			/* verify the next character is not a colon */
+			if (strncmp(ent->d_name + strlen(type) + numstrlen,
+			    ":", 1) != 0) {
+				filename = malloc(strlen(iio_dir) + strlen(type)
+						  + numstrlen + 6);
+				if (!filename) {
 					ret = -ENOMEM;
-					जाओ error_बंद_dir;
-				पूर्ण
+					goto error_close_dir;
+				}
 
-				ret = प्र_लिखो(filename, "%s%s%d/name", iio_dir,
+				ret = sprintf(filename, "%s%s%d/name", iio_dir,
 					      type, number);
-				अगर (ret < 0) अणु
-					मुक्त(filename);
-					जाओ error_बंद_dir;
-				पूर्ण
+				if (ret < 0) {
+					free(filename);
+					goto error_close_dir;
+				}
 
-				namefp = ख_खोलो(filename, "r");
-				अगर (!namefp) अणु
-					मुक्त(filename);
-					जारी;
-				पूर्ण
+				namefp = fopen(filename, "r");
+				if (!namefp) {
+					free(filename);
+					continue;
+				}
 
-				मुक्त(filename);
-				त्रुटि_सं = 0;
-				अगर (ख_पूछो(namefp, "%s", thisname) != 1) अणु
-					ret = त्रुटि_सं ? -त्रुटि_सं : -ENODATA;
-					जाओ error_बंद_dir;
-				पूर्ण
+				free(filename);
+				errno = 0;
+				if (fscanf(namefp, "%s", thisname) != 1) {
+					ret = errno ? -errno : -ENODATA;
+					goto error_close_dir;
+				}
 
-				अगर (ख_बंद(namefp)) अणु
-					ret = -त्रुटि_सं;
-					जाओ error_बंद_dir;
-				पूर्ण
+				if (fclose(namefp)) {
+					ret = -errno;
+					goto error_close_dir;
+				}
 
-				अगर (म_भेद(name, thisname) == 0) अणु
-					अगर (बंद_सूची(dp) == -1)
-						वापस -त्रुटि_सं;
+				if (strcmp(name, thisname) == 0) {
+					if (closedir(dp) == -1)
+						return -errno;
 
-					वापस number;
-				पूर्ण
-			पूर्ण
-		पूर्ण
-	पूर्ण
-	अगर (बंद_सूची(dp) == -1)
-		वापस -त्रुटि_सं;
+					return number;
+				}
+			}
+		}
+	}
+	if (closedir(dp) == -1)
+		return -errno;
 
-	वापस -ENODEV;
+	return -ENODEV;
 
-error_बंद_dir:
-	अगर (बंद_सूची(dp) == -1)
-		लिखो_त्रुटि("find_type_by_name(): Failed to close directory");
+error_close_dir:
+	if (closedir(dp) == -1)
+		perror("find_type_by_name(): Failed to close directory");
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक _ग_लिखो_sysfs_पूर्णांक(स्थिर अक्षर *filename, स्थिर अक्षर *basedir, पूर्णांक val,
-			    पूर्णांक verअगरy)
-अणु
-	पूर्णांक ret = 0;
-	खाता *sysfsfp;
-	पूर्णांक test;
-	अक्षर *temp = दो_स्मृति(म_माप(basedir) + म_माप(filename) + 2);
+static int _write_sysfs_int(const char *filename, const char *basedir, int val,
+			    int verify)
+{
+	int ret = 0;
+	FILE *sysfsfp;
+	int test;
+	char *temp = malloc(strlen(basedir) + strlen(filename) + 2);
 
-	अगर (!temp)
-		वापस -ENOMEM;
+	if (!temp)
+		return -ENOMEM;
 
-	ret = प्र_लिखो(temp, "%s/%s", basedir, filename);
-	अगर (ret < 0)
-		जाओ error_मुक्त;
+	ret = sprintf(temp, "%s/%s", basedir, filename);
+	if (ret < 0)
+		goto error_free;
 
-	sysfsfp = ख_खोलो(temp, "w");
-	अगर (!sysfsfp) अणु
-		ret = -त्रुटि_सं;
-		ख_लिखो(मानक_त्रुटि, "failed to open %s\n", temp);
-		जाओ error_मुक्त;
-	पूर्ण
+	sysfsfp = fopen(temp, "w");
+	if (!sysfsfp) {
+		ret = -errno;
+		fprintf(stderr, "failed to open %s\n", temp);
+		goto error_free;
+	}
 
-	ret = ख_लिखो(sysfsfp, "%d", val);
-	अगर (ret < 0) अणु
-		अगर (ख_बंद(sysfsfp))
-			लिखो_त्रुटि("_write_sysfs_int(): Failed to close dir");
+	ret = fprintf(sysfsfp, "%d", val);
+	if (ret < 0) {
+		if (fclose(sysfsfp))
+			perror("_write_sysfs_int(): Failed to close dir");
 
-		जाओ error_मुक्त;
-	पूर्ण
+		goto error_free;
+	}
 
-	अगर (ख_बंद(sysfsfp)) अणु
-		ret = -त्रुटि_सं;
-		जाओ error_मुक्त;
-	पूर्ण
+	if (fclose(sysfsfp)) {
+		ret = -errno;
+		goto error_free;
+	}
 
-	अगर (verअगरy) अणु
-		sysfsfp = ख_खोलो(temp, "r");
-		अगर (!sysfsfp) अणु
-			ret = -त्रुटि_सं;
-			ख_लिखो(मानक_त्रुटि, "failed to open %s\n", temp);
-			जाओ error_मुक्त;
-		पूर्ण
+	if (verify) {
+		sysfsfp = fopen(temp, "r");
+		if (!sysfsfp) {
+			ret = -errno;
+			fprintf(stderr, "failed to open %s\n", temp);
+			goto error_free;
+		}
 
-		अगर (ख_पूछो(sysfsfp, "%d", &test) != 1) अणु
-			ret = त्रुटि_सं ? -त्रुटि_सं : -ENODATA;
-			अगर (ख_बंद(sysfsfp))
-				लिखो_त्रुटि("_write_sysfs_int(): Failed to close dir");
+		if (fscanf(sysfsfp, "%d", &test) != 1) {
+			ret = errno ? -errno : -ENODATA;
+			if (fclose(sysfsfp))
+				perror("_write_sysfs_int(): Failed to close dir");
 
-			जाओ error_मुक्त;
-		पूर्ण
+			goto error_free;
+		}
 
-		अगर (ख_बंद(sysfsfp)) अणु
-			ret = -त्रुटि_सं;
-			जाओ error_मुक्त;
-		पूर्ण
+		if (fclose(sysfsfp)) {
+			ret = -errno;
+			goto error_free;
+		}
 
-		अगर (test != val) अणु
-			ख_लिखो(मानक_त्रुटि,
+		if (test != val) {
+			fprintf(stderr,
 				"Possible failure in int write %d to %s/%s\n",
 				val, basedir, filename);
 			ret = -1;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-error_मुक्त:
-	मुक्त(temp);
-	वापस ret;
-पूर्ण
+error_free:
+	free(temp);
+	return ret;
+}
 
 /**
- * ग_लिखो_sysfs_पूर्णांक() - ग_लिखो an पूर्णांकeger value to a sysfs file
- * @filename: name of the file to ग_लिखो to
+ * write_sysfs_int() - write an integer value to a sysfs file
+ * @filename: name of the file to write to
  * @basedir: the sysfs directory in which the file is to be found
- * @val: पूर्णांकeger value to ग_लिखो to file
+ * @val: integer value to write to file
  *
  * Returns a value >= 0 on success, otherwise a negative error code.
  **/
-पूर्णांक ग_लिखो_sysfs_पूर्णांक(स्थिर अक्षर *filename, स्थिर अक्षर *basedir, पूर्णांक val)
-अणु
-	वापस _ग_लिखो_sysfs_पूर्णांक(filename, basedir, val, 0);
-पूर्ण
+int write_sysfs_int(const char *filename, const char *basedir, int val)
+{
+	return _write_sysfs_int(filename, basedir, val, 0);
+}
 
 /**
- * ग_लिखो_sysfs_पूर्णांक_and_verअगरy() - ग_लिखो an पूर्णांकeger value to a sysfs file
- *				  and verअगरy
- * @filename: name of the file to ग_लिखो to
+ * write_sysfs_int_and_verify() - write an integer value to a sysfs file
+ *				  and verify
+ * @filename: name of the file to write to
  * @basedir: the sysfs directory in which the file is to be found
- * @val: पूर्णांकeger value to ग_लिखो to file
+ * @val: integer value to write to file
  *
  * Returns a value >= 0 on success, otherwise a negative error code.
  **/
-पूर्णांक ग_लिखो_sysfs_पूर्णांक_and_verअगरy(स्थिर अक्षर *filename, स्थिर अक्षर *basedir,
-			       पूर्णांक val)
-अणु
-	वापस _ग_लिखो_sysfs_पूर्णांक(filename, basedir, val, 1);
-पूर्ण
+int write_sysfs_int_and_verify(const char *filename, const char *basedir,
+			       int val)
+{
+	return _write_sysfs_int(filename, basedir, val, 1);
+}
 
-अटल पूर्णांक _ग_लिखो_sysfs_string(स्थिर अक्षर *filename, स्थिर अक्षर *basedir,
-			       स्थिर अक्षर *val, पूर्णांक verअगरy)
-अणु
-	पूर्णांक ret = 0;
-	खाता  *sysfsfp;
-	अक्षर *temp = दो_स्मृति(म_माप(basedir) + म_माप(filename) + 2);
+static int _write_sysfs_string(const char *filename, const char *basedir,
+			       const char *val, int verify)
+{
+	int ret = 0;
+	FILE  *sysfsfp;
+	char *temp = malloc(strlen(basedir) + strlen(filename) + 2);
 
-	अगर (!temp) अणु
-		ख_लिखो(मानक_त्रुटि, "Memory allocation failed\n");
-		वापस -ENOMEM;
-	पूर्ण
+	if (!temp) {
+		fprintf(stderr, "Memory allocation failed\n");
+		return -ENOMEM;
+	}
 
-	ret = प्र_लिखो(temp, "%s/%s", basedir, filename);
-	अगर (ret < 0)
-		जाओ error_मुक्त;
+	ret = sprintf(temp, "%s/%s", basedir, filename);
+	if (ret < 0)
+		goto error_free;
 
-	sysfsfp = ख_खोलो(temp, "w");
-	अगर (!sysfsfp) अणु
-		ret = -त्रुटि_सं;
-		ख_लिखो(मानक_त्रुटि, "Could not open %s\n", temp);
-		जाओ error_मुक्त;
-	पूर्ण
+	sysfsfp = fopen(temp, "w");
+	if (!sysfsfp) {
+		ret = -errno;
+		fprintf(stderr, "Could not open %s\n", temp);
+		goto error_free;
+	}
 
-	ret = ख_लिखो(sysfsfp, "%s", val);
-	अगर (ret < 0) अणु
-		अगर (ख_बंद(sysfsfp))
-			लिखो_त्रुटि("_write_sysfs_string(): Failed to close dir");
+	ret = fprintf(sysfsfp, "%s", val);
+	if (ret < 0) {
+		if (fclose(sysfsfp))
+			perror("_write_sysfs_string(): Failed to close dir");
 
-		जाओ error_मुक्त;
-	पूर्ण
+		goto error_free;
+	}
 
-	अगर (ख_बंद(sysfsfp)) अणु
-		ret = -त्रुटि_सं;
-		जाओ error_मुक्त;
-	पूर्ण
+	if (fclose(sysfsfp)) {
+		ret = -errno;
+		goto error_free;
+	}
 
-	अगर (verअगरy) अणु
-		sysfsfp = ख_खोलो(temp, "r");
-		अगर (!sysfsfp) अणु
-			ret = -त्रुटि_सं;
-			ख_लिखो(मानक_त्रुटि, "Could not open file to verify\n");
-			जाओ error_मुक्त;
-		पूर्ण
+	if (verify) {
+		sysfsfp = fopen(temp, "r");
+		if (!sysfsfp) {
+			ret = -errno;
+			fprintf(stderr, "Could not open file to verify\n");
+			goto error_free;
+		}
 
-		अगर (ख_पूछो(sysfsfp, "%s", temp) != 1) अणु
-			ret = त्रुटि_सं ? -त्रुटि_सं : -ENODATA;
-			अगर (ख_बंद(sysfsfp))
-				लिखो_त्रुटि("_write_sysfs_string(): Failed to close dir");
+		if (fscanf(sysfsfp, "%s", temp) != 1) {
+			ret = errno ? -errno : -ENODATA;
+			if (fclose(sysfsfp))
+				perror("_write_sysfs_string(): Failed to close dir");
 
-			जाओ error_मुक्त;
-		पूर्ण
+			goto error_free;
+		}
 
-		अगर (ख_बंद(sysfsfp)) अणु
-			ret = -त्रुटि_सं;
-			जाओ error_मुक्त;
-		पूर्ण
+		if (fclose(sysfsfp)) {
+			ret = -errno;
+			goto error_free;
+		}
 
-		अगर (म_भेद(temp, val) != 0) अणु
-			ख_लिखो(मानक_त्रुटि,
+		if (strcmp(temp, val) != 0) {
+			fprintf(stderr,
 				"Possible failure in string write of %s "
 				"Should be %s written to %s/%s\n", temp, val,
 				basedir, filename);
 			ret = -1;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-error_मुक्त:
-	मुक्त(temp);
+error_free:
+	free(temp);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * ग_लिखो_sysfs_string_and_verअगरy() - string ग_लिखो, पढ़ोback and verअगरy
- * @filename: name of file to ग_लिखो to
+ * write_sysfs_string_and_verify() - string write, readback and verify
+ * @filename: name of file to write to
  * @basedir: the sysfs directory in which the file is to be found
- * @val: the string to ग_लिखो
+ * @val: the string to write
  *
  * Returns a value >= 0 on success, otherwise a negative error code.
  **/
-पूर्णांक ग_लिखो_sysfs_string_and_verअगरy(स्थिर अक्षर *filename, स्थिर अक्षर *basedir,
-				  स्थिर अक्षर *val)
-अणु
-	वापस _ग_लिखो_sysfs_string(filename, basedir, val, 1);
-पूर्ण
+int write_sysfs_string_and_verify(const char *filename, const char *basedir,
+				  const char *val)
+{
+	return _write_sysfs_string(filename, basedir, val, 1);
+}
 
 /**
- * ग_लिखो_sysfs_string() - ग_लिखो string to a sysfs file
- * @filename: name of file to ग_लिखो to
+ * write_sysfs_string() - write string to a sysfs file
+ * @filename: name of file to write to
  * @basedir: the sysfs directory in which the file is to be found
- * @val: the string to ग_लिखो
+ * @val: the string to write
  *
  * Returns a value >= 0 on success, otherwise a negative error code.
  **/
-पूर्णांक ग_लिखो_sysfs_string(स्थिर अक्षर *filename, स्थिर अक्षर *basedir,
-		       स्थिर अक्षर *val)
-अणु
-	वापस _ग_लिखो_sysfs_string(filename, basedir, val, 0);
-पूर्ण
+int write_sysfs_string(const char *filename, const char *basedir,
+		       const char *val)
+{
+	return _write_sysfs_string(filename, basedir, val, 0);
+}
 
 /**
- * पढ़ो_sysfs_posपूर्णांक() - पढ़ो an पूर्णांकeger value from file
- * @filename: name of file to पढ़ो from
+ * read_sysfs_posint() - read an integer value from file
+ * @filename: name of file to read from
  * @basedir: the sysfs directory in which the file is to be found
  *
- * Returns the पढ़ो पूर्णांकeger value >= 0 on success, otherwise a negative error
+ * Returns the read integer value >= 0 on success, otherwise a negative error
  * code.
  **/
-पूर्णांक पढ़ो_sysfs_posपूर्णांक(स्थिर अक्षर *filename, स्थिर अक्षर *basedir)
-अणु
-	पूर्णांक ret;
-	खाता  *sysfsfp;
-	अक्षर *temp = दो_स्मृति(म_माप(basedir) + म_माप(filename) + 2);
+int read_sysfs_posint(const char *filename, const char *basedir)
+{
+	int ret;
+	FILE  *sysfsfp;
+	char *temp = malloc(strlen(basedir) + strlen(filename) + 2);
 
-	अगर (!temp) अणु
-		ख_लिखो(मानक_त्रुटि, "Memory allocation failed");
-		वापस -ENOMEM;
-	पूर्ण
+	if (!temp) {
+		fprintf(stderr, "Memory allocation failed");
+		return -ENOMEM;
+	}
 
-	ret = प्र_लिखो(temp, "%s/%s", basedir, filename);
-	अगर (ret < 0)
-		जाओ error_मुक्त;
+	ret = sprintf(temp, "%s/%s", basedir, filename);
+	if (ret < 0)
+		goto error_free;
 
-	sysfsfp = ख_खोलो(temp, "r");
-	अगर (!sysfsfp) अणु
-		ret = -त्रुटि_सं;
-		जाओ error_मुक्त;
-	पूर्ण
+	sysfsfp = fopen(temp, "r");
+	if (!sysfsfp) {
+		ret = -errno;
+		goto error_free;
+	}
 
-	त्रुटि_सं = 0;
-	अगर (ख_पूछो(sysfsfp, "%d\n", &ret) != 1) अणु
-		ret = त्रुटि_सं ? -त्रुटि_सं : -ENODATA;
-		अगर (ख_बंद(sysfsfp))
-			लिखो_त्रुटि("read_sysfs_posint(): Failed to close dir");
+	errno = 0;
+	if (fscanf(sysfsfp, "%d\n", &ret) != 1) {
+		ret = errno ? -errno : -ENODATA;
+		if (fclose(sysfsfp))
+			perror("read_sysfs_posint(): Failed to close dir");
 
-		जाओ error_मुक्त;
-	पूर्ण
+		goto error_free;
+	}
 
-	अगर (ख_बंद(sysfsfp))
-		ret = -त्रुटि_सं;
+	if (fclose(sysfsfp))
+		ret = -errno;
 
-error_मुक्त:
-	मुक्त(temp);
+error_free:
+	free(temp);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * पढ़ो_sysfs_भग्न() - पढ़ो a भग्न value from file
- * @filename: name of file to पढ़ो from
+ * read_sysfs_float() - read a float value from file
+ * @filename: name of file to read from
  * @basedir: the sysfs directory in which the file is to be found
- * @val: output the पढ़ो भग्न value
+ * @val: output the read float value
  *
  * Returns a value >= 0 on success, otherwise a negative error code.
  **/
-पूर्णांक पढ़ो_sysfs_भग्न(स्थिर अक्षर *filename, स्थिर अक्षर *basedir, भग्न *val)
-अणु
-	पूर्णांक ret = 0;
-	खाता  *sysfsfp;
-	अक्षर *temp = दो_स्मृति(म_माप(basedir) + म_माप(filename) + 2);
+int read_sysfs_float(const char *filename, const char *basedir, float *val)
+{
+	int ret = 0;
+	FILE  *sysfsfp;
+	char *temp = malloc(strlen(basedir) + strlen(filename) + 2);
 
-	अगर (!temp) अणु
-		ख_लिखो(मानक_त्रुटि, "Memory allocation failed");
-		वापस -ENOMEM;
-	पूर्ण
+	if (!temp) {
+		fprintf(stderr, "Memory allocation failed");
+		return -ENOMEM;
+	}
 
-	ret = प्र_लिखो(temp, "%s/%s", basedir, filename);
-	अगर (ret < 0)
-		जाओ error_मुक्त;
+	ret = sprintf(temp, "%s/%s", basedir, filename);
+	if (ret < 0)
+		goto error_free;
 
-	sysfsfp = ख_खोलो(temp, "r");
-	अगर (!sysfsfp) अणु
-		ret = -त्रुटि_सं;
-		जाओ error_मुक्त;
-	पूर्ण
+	sysfsfp = fopen(temp, "r");
+	if (!sysfsfp) {
+		ret = -errno;
+		goto error_free;
+	}
 
-	त्रुटि_सं = 0;
-	अगर (ख_पूछो(sysfsfp, "%f\n", val) != 1) अणु
-		ret = त्रुटि_सं ? -त्रुटि_सं : -ENODATA;
-		अगर (ख_बंद(sysfsfp))
-			लिखो_त्रुटि("read_sysfs_float(): Failed to close dir");
+	errno = 0;
+	if (fscanf(sysfsfp, "%f\n", val) != 1) {
+		ret = errno ? -errno : -ENODATA;
+		if (fclose(sysfsfp))
+			perror("read_sysfs_float(): Failed to close dir");
 
-		जाओ error_मुक्त;
-	पूर्ण
+		goto error_free;
+	}
 
-	अगर (ख_बंद(sysfsfp))
-		ret = -त्रुटि_सं;
+	if (fclose(sysfsfp))
+		ret = -errno;
 
-error_मुक्त:
-	मुक्त(temp);
+error_free:
+	free(temp);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * पढ़ो_sysfs_string() - पढ़ो a string from file
- * @filename: name of file to पढ़ो from
+ * read_sysfs_string() - read a string from file
+ * @filename: name of file to read from
  * @basedir: the sysfs directory in which the file is to be found
- * @str: output the पढ़ो string
+ * @str: output the read string
  *
  * Returns a value >= 0 on success, otherwise a negative error code.
  **/
-पूर्णांक पढ़ो_sysfs_string(स्थिर अक्षर *filename, स्थिर अक्षर *basedir, अक्षर *str)
-अणु
-	पूर्णांक ret = 0;
-	खाता  *sysfsfp;
-	अक्षर *temp = दो_स्मृति(म_माप(basedir) + म_माप(filename) + 2);
+int read_sysfs_string(const char *filename, const char *basedir, char *str)
+{
+	int ret = 0;
+	FILE  *sysfsfp;
+	char *temp = malloc(strlen(basedir) + strlen(filename) + 2);
 
-	अगर (!temp) अणु
-		ख_लिखो(मानक_त्रुटि, "Memory allocation failed");
-		वापस -ENOMEM;
-	पूर्ण
+	if (!temp) {
+		fprintf(stderr, "Memory allocation failed");
+		return -ENOMEM;
+	}
 
-	ret = प्र_लिखो(temp, "%s/%s", basedir, filename);
-	अगर (ret < 0)
-		जाओ error_मुक्त;
+	ret = sprintf(temp, "%s/%s", basedir, filename);
+	if (ret < 0)
+		goto error_free;
 
-	sysfsfp = ख_खोलो(temp, "r");
-	अगर (!sysfsfp) अणु
-		ret = -त्रुटि_सं;
-		जाओ error_मुक्त;
-	पूर्ण
+	sysfsfp = fopen(temp, "r");
+	if (!sysfsfp) {
+		ret = -errno;
+		goto error_free;
+	}
 
-	त्रुटि_सं = 0;
-	अगर (ख_पूछो(sysfsfp, "%s\n", str) != 1) अणु
-		ret = त्रुटि_सं ? -त्रुटि_सं : -ENODATA;
-		अगर (ख_बंद(sysfsfp))
-			लिखो_त्रुटि("read_sysfs_string(): Failed to close dir");
+	errno = 0;
+	if (fscanf(sysfsfp, "%s\n", str) != 1) {
+		ret = errno ? -errno : -ENODATA;
+		if (fclose(sysfsfp))
+			perror("read_sysfs_string(): Failed to close dir");
 
-		जाओ error_मुक्त;
-	पूर्ण
+		goto error_free;
+	}
 
-	अगर (ख_बंद(sysfsfp))
-		ret = -त्रुटि_सं;
+	if (fclose(sysfsfp))
+		ret = -errno;
 
-error_मुक्त:
-	मुक्त(temp);
+error_free:
+	free(temp);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}

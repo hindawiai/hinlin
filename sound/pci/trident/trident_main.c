@@ -1,10 +1,9 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- *  Maपूर्णांकained by Jaroslav Kysela <perex@perex.cz>
- *  Originated by audio@tridenपंचांगicro.com
+ *  Maintained by Jaroslav Kysela <perex@perex.cz>
+ *  Originated by audio@tridentmicro.com
  *  Fri Feb 19 15:55:28 MST 1999
- *  Routines क्रम control of Trident 4DWave (DX and NX) chip
+ *  Routines for control of Trident 4DWave (DX and NX) chip
  *
  *  BUGS:
  *
@@ -14,46 +13,46 @@
  *  SiS7018 S/PDIF support by Thomas Winischhofer <thomas@winischhofer.net>
  */
 
-#समावेश <linux/delay.h>
-#समावेश <linux/init.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/vदो_स्मृति.h>
-#समावेश <linux/gameport.h>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/export.h>
-#समावेश <linux/पन.स>
+#include <linux/delay.h>
+#include <linux/init.h>
+#include <linux/interrupt.h>
+#include <linux/pci.h>
+#include <linux/slab.h>
+#include <linux/vmalloc.h>
+#include <linux/gameport.h>
+#include <linux/dma-mapping.h>
+#include <linux/export.h>
+#include <linux/io.h>
 
-#समावेश <sound/core.h>
-#समावेश <sound/info.h>
-#समावेश <sound/control.h>
-#समावेश <sound/tlv.h>
-#समावेश "trident.h"
-#समावेश <sound/asoundef.h>
+#include <sound/core.h>
+#include <sound/info.h>
+#include <sound/control.h>
+#include <sound/tlv.h>
+#include "trident.h"
+#include <sound/asoundef.h>
 
-अटल पूर्णांक snd_trident_pcm_mixer_build(काष्ठा snd_trident *trident,
-				       काष्ठा snd_trident_voice * voice,
-				       काष्ठा snd_pcm_substream *substream);
-अटल पूर्णांक snd_trident_pcm_mixer_मुक्त(काष्ठा snd_trident *trident,
-				      काष्ठा snd_trident_voice * voice,
-				      काष्ठा snd_pcm_substream *substream);
-अटल irqवापस_t snd_trident_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id);
-अटल पूर्णांक snd_trident_sis_reset(काष्ठा snd_trident *trident);
+static int snd_trident_pcm_mixer_build(struct snd_trident *trident,
+				       struct snd_trident_voice * voice,
+				       struct snd_pcm_substream *substream);
+static int snd_trident_pcm_mixer_free(struct snd_trident *trident,
+				      struct snd_trident_voice * voice,
+				      struct snd_pcm_substream *substream);
+static irqreturn_t snd_trident_interrupt(int irq, void *dev_id);
+static int snd_trident_sis_reset(struct snd_trident *trident);
 
-अटल व्योम snd_trident_clear_voices(काष्ठा snd_trident * trident,
-				     अचिन्हित लघु v_min, अचिन्हित लघु v_max);
-अटल पूर्णांक snd_trident_मुक्त(काष्ठा snd_trident *trident);
+static void snd_trident_clear_voices(struct snd_trident * trident,
+				     unsigned short v_min, unsigned short v_max);
+static int snd_trident_free(struct snd_trident *trident);
 
 /*
  *  common I/O routines
  */
 
 
-#अगर 0
-अटल व्योम snd_trident_prपूर्णांक_voice_regs(काष्ठा snd_trident *trident, पूर्णांक voice)
-अणु
-	अचिन्हित पूर्णांक val, पंचांगp;
+#if 0
+static void snd_trident_print_voice_regs(struct snd_trident *trident, int voice)
+{
+	unsigned int val, tmp;
 
 	dev_dbg(trident->card->dev, "Trident voice %i:\n", voice);
 	outb(voice, TRID_REG(trident, T4D_LFO_GC_CIR));
@@ -65,7 +64,7 @@
 	dev_dbg(trident->card->dev, "Vol: 0x%x\n", (val >> 16) & 0xff);
 	dev_dbg(trident->card->dev, "CTRL: 0x%x\n", (val >> 12) & 0x0f);
 	dev_dbg(trident->card->dev, "EC: 0x%x\n", val & 0x0fff);
-	अगर (trident->device != TRIDENT_DEVICE_ID_NX) अणु
+	if (trident->device != TRIDENT_DEVICE_ID_NX) {
 		val = inl(TRID_REG(trident, CH_DX_CSO_ALPHA_FMS));
 		dev_dbg(trident->card->dev, "CSO: 0x%x\n", val >> 16);
 		dev_dbg(trident->card->dev, "Alpha: 0x%x\n", (val >> 4) & 0x0fff);
@@ -74,366 +73,366 @@
 		dev_dbg(trident->card->dev, "ESO: 0x%x\n", val >> 16);
 		dev_dbg(trident->card->dev, "Delta: 0x%x\n", val & 0xffff);
 		val = inl(TRID_REG(trident, CH_DX_FMC_RVOL_CVOL));
-	पूर्ण अन्यथा अणु		// TRIDENT_DEVICE_ID_NX
+	} else {		// TRIDENT_DEVICE_ID_NX
 		val = inl(TRID_REG(trident, CH_NX_DELTA_CSO));
-		पंचांगp = (val >> 24) & 0xff;
+		tmp = (val >> 24) & 0xff;
 		dev_dbg(trident->card->dev, "CSO: 0x%x\n", val & 0x00ffffff);
 		val = inl(TRID_REG(trident, CH_NX_DELTA_ESO));
-		पंचांगp |= (val >> 16) & 0xff00;
-		dev_dbg(trident->card->dev, "Delta: 0x%x\n", पंचांगp);
+		tmp |= (val >> 16) & 0xff00;
+		dev_dbg(trident->card->dev, "Delta: 0x%x\n", tmp);
 		dev_dbg(trident->card->dev, "ESO: 0x%x\n", val & 0x00ffffff);
 		val = inl(TRID_REG(trident, CH_NX_ALPHA_FMS_FMC_RVOL_CVOL));
 		dev_dbg(trident->card->dev, "Alpha: 0x%x\n", val >> 20);
 		dev_dbg(trident->card->dev, "FMS: 0x%x\n", (val >> 16) & 0x0f);
-	पूर्ण
+	}
 	dev_dbg(trident->card->dev, "FMC: 0x%x\n", (val >> 14) & 3);
 	dev_dbg(trident->card->dev, "RVol: 0x%x\n", (val >> 7) & 0x7f);
 	dev_dbg(trident->card->dev, "CVol: 0x%x\n", val & 0x7f);
-पूर्ण
-#पूर्ण_अगर
+}
+#endif
 
 /*---------------------------------------------------------------------------
-   अचिन्हित लघु snd_trident_codec_पढ़ो(काष्ठा snd_ac97 *ac97, अचिन्हित लघु reg)
+   unsigned short snd_trident_codec_read(struct snd_ac97 *ac97, unsigned short reg)
   
-   Description: This routine will करो all of the पढ़ोing from the बाह्यal
+   Description: This routine will do all of the reading from the external
                 CODEC (AC97).
   
-   Parameters:  ac97 - ac97 codec काष्ठाure
-                reg - CODEC रेजिस्टर index, from AC97 Hal.
+   Parameters:  ac97 - ac97 codec structure
+                reg - CODEC register index, from AC97 Hal.
  
-   वापसs:     16 bit value पढ़ो from the AC97.
+   returns:     16 bit value read from the AC97.
   
   ---------------------------------------------------------------------------*/
-अटल अचिन्हित लघु snd_trident_codec_पढ़ो(काष्ठा snd_ac97 *ac97, अचिन्हित लघु reg)
-अणु
-	अचिन्हित पूर्णांक data = 0, treg;
-	अचिन्हित लघु count = 0xffff;
-	अचिन्हित दीर्घ flags;
-	काष्ठा snd_trident *trident = ac97->निजी_data;
+static unsigned short snd_trident_codec_read(struct snd_ac97 *ac97, unsigned short reg)
+{
+	unsigned int data = 0, treg;
+	unsigned short count = 0xffff;
+	unsigned long flags;
+	struct snd_trident *trident = ac97->private_data;
 
 	spin_lock_irqsave(&trident->reg_lock, flags);
-	अगर (trident->device == TRIDENT_DEVICE_ID_DX) अणु
+	if (trident->device == TRIDENT_DEVICE_ID_DX) {
 		data = (DX_AC97_BUSY_READ | (reg & 0x000000ff));
 		outl(data, TRID_REG(trident, DX_ACR1_AC97_R));
-		करो अणु
+		do {
 			data = inl(TRID_REG(trident, DX_ACR1_AC97_R));
-			अगर ((data & DX_AC97_BUSY_READ) == 0)
-				अवरोध;
-		पूर्ण जबतक (--count);
-	पूर्ण अन्यथा अगर (trident->device == TRIDENT_DEVICE_ID_NX) अणु
+			if ((data & DX_AC97_BUSY_READ) == 0)
+				break;
+		} while (--count);
+	} else if (trident->device == TRIDENT_DEVICE_ID_NX) {
 		data = (NX_AC97_BUSY_READ | (reg & 0x000000ff));
 		treg = ac97->num == 0 ? NX_ACR2_AC97_R_PRIMARY : NX_ACR3_AC97_R_SECONDARY;
 		outl(data, TRID_REG(trident, treg));
-		करो अणु
+		do {
 			data = inl(TRID_REG(trident, treg));
-			अगर ((data & 0x00000C00) == 0)
-				अवरोध;
-		पूर्ण जबतक (--count);
-	पूर्ण अन्यथा अगर (trident->device == TRIDENT_DEVICE_ID_SI7018) अणु
+			if ((data & 0x00000C00) == 0)
+				break;
+		} while (--count);
+	} else if (trident->device == TRIDENT_DEVICE_ID_SI7018) {
 		data = SI_AC97_BUSY_READ | SI_AC97_AUDIO_BUSY | (reg & 0x000000ff);
-		अगर (ac97->num == 1)
+		if (ac97->num == 1)
 			data |= SI_AC97_SECONDARY;
 		outl(data, TRID_REG(trident, SI_AC97_READ));
-		करो अणु
+		do {
 			data = inl(TRID_REG(trident, SI_AC97_READ));
-			अगर ((data & (SI_AC97_BUSY_READ)) == 0)
-				अवरोध;
-		पूर्ण जबतक (--count);
-	पूर्ण
+			if ((data & (SI_AC97_BUSY_READ)) == 0)
+				break;
+		} while (--count);
+	}
 
-	अगर (count == 0 && !trident->ac97_detect) अणु
+	if (count == 0 && !trident->ac97_detect) {
 		dev_err(trident->card->dev,
 			"ac97 codec read TIMEOUT [0x%x/0x%x]!!!\n",
 			   reg, data);
 		data = 0;
-	पूर्ण
+	}
 
 	spin_unlock_irqrestore(&trident->reg_lock, flags);
-	वापस ((अचिन्हित लघु) (data >> 16));
-पूर्ण
+	return ((unsigned short) (data >> 16));
+}
 
 /*---------------------------------------------------------------------------
-   व्योम snd_trident_codec_ग_लिखो(काष्ठा snd_ac97 *ac97, अचिन्हित लघु reg,
-   अचिन्हित लघु wdata)
+   void snd_trident_codec_write(struct snd_ac97 *ac97, unsigned short reg,
+   unsigned short wdata)
   
-   Description: This routine will करो all of the writing to the बाह्यal
+   Description: This routine will do all of the writing to the external
                 CODEC (AC97).
   
-   Parameters:	ac97 - ac97 codec काष्ठाure
-   	        reg - CODEC रेजिस्टर index, from AC97 Hal.
-                data  - Lower 16 bits are the data to ग_लिखो to CODEC.
+   Parameters:	ac97 - ac97 codec structure
+   	        reg - CODEC register index, from AC97 Hal.
+                data  - Lower 16 bits are the data to write to CODEC.
   
-   वापसs:     TRUE अगर everything went ok, अन्यथा FALSE.
+   returns:     TRUE if everything went ok, else FALSE.
   
   ---------------------------------------------------------------------------*/
-अटल व्योम snd_trident_codec_ग_लिखो(काष्ठा snd_ac97 *ac97, अचिन्हित लघु reg,
-				    अचिन्हित लघु wdata)
-अणु
-	अचिन्हित पूर्णांक address, data;
-	अचिन्हित लघु count = 0xffff;
-	अचिन्हित दीर्घ flags;
-	काष्ठा snd_trident *trident = ac97->निजी_data;
+static void snd_trident_codec_write(struct snd_ac97 *ac97, unsigned short reg,
+				    unsigned short wdata)
+{
+	unsigned int address, data;
+	unsigned short count = 0xffff;
+	unsigned long flags;
+	struct snd_trident *trident = ac97->private_data;
 
-	data = ((अचिन्हित दीर्घ) wdata) << 16;
+	data = ((unsigned long) wdata) << 16;
 
 	spin_lock_irqsave(&trident->reg_lock, flags);
-	अगर (trident->device == TRIDENT_DEVICE_ID_DX) अणु
+	if (trident->device == TRIDENT_DEVICE_ID_DX) {
 		address = DX_ACR0_AC97_W;
 
-		/* पढ़ो AC-97 ग_लिखो रेजिस्टर status */
-		करो अणु
-			अगर ((inw(TRID_REG(trident, address)) & DX_AC97_BUSY_WRITE) == 0)
-				अवरोध;
-		पूर्ण जबतक (--count);
+		/* read AC-97 write register status */
+		do {
+			if ((inw(TRID_REG(trident, address)) & DX_AC97_BUSY_WRITE) == 0)
+				break;
+		} while (--count);
 
 		data |= (DX_AC97_BUSY_WRITE | (reg & 0x000000ff));
-	पूर्ण अन्यथा अगर (trident->device == TRIDENT_DEVICE_ID_NX) अणु
+	} else if (trident->device == TRIDENT_DEVICE_ID_NX) {
 		address = NX_ACR1_AC97_W;
 
-		/* पढ़ो AC-97 ग_लिखो रेजिस्टर status */
-		करो अणु
-			अगर ((inw(TRID_REG(trident, address)) & NX_AC97_BUSY_WRITE) == 0)
-				अवरोध;
-		पूर्ण जबतक (--count);
+		/* read AC-97 write register status */
+		do {
+			if ((inw(TRID_REG(trident, address)) & NX_AC97_BUSY_WRITE) == 0)
+				break;
+		} while (--count);
 
 		data |= (NX_AC97_BUSY_WRITE | (ac97->num << 8) | (reg & 0x000000ff));
-	पूर्ण अन्यथा अगर (trident->device == TRIDENT_DEVICE_ID_SI7018) अणु
+	} else if (trident->device == TRIDENT_DEVICE_ID_SI7018) {
 		address = SI_AC97_WRITE;
 
-		/* पढ़ो AC-97 ग_लिखो रेजिस्टर status */
-		करो अणु
-			अगर ((inw(TRID_REG(trident, address)) & (SI_AC97_BUSY_WRITE)) == 0)
-				अवरोध;
-		पूर्ण जबतक (--count);
+		/* read AC-97 write register status */
+		do {
+			if ((inw(TRID_REG(trident, address)) & (SI_AC97_BUSY_WRITE)) == 0)
+				break;
+		} while (--count);
 
 		data |= SI_AC97_BUSY_WRITE | SI_AC97_AUDIO_BUSY | (reg & 0x000000ff);
-		अगर (ac97->num == 1)
+		if (ac97->num == 1)
 			data |= SI_AC97_SECONDARY;
-	पूर्ण अन्यथा अणु
+	} else {
 		address = 0;	/* keep GCC happy */
-		count = 0;	/* वापस */
-	पूर्ण
+		count = 0;	/* return */
+	}
 
-	अगर (count == 0) अणु
+	if (count == 0) {
 		spin_unlock_irqrestore(&trident->reg_lock, flags);
-		वापस;
-	पूर्ण
+		return;
+	}
 	outl(data, TRID_REG(trident, address));
 	spin_unlock_irqrestore(&trident->reg_lock, flags);
-पूर्ण
+}
 
 /*---------------------------------------------------------------------------
-   व्योम snd_trident_enable_eso(काष्ठा snd_trident *trident)
+   void snd_trident_enable_eso(struct snd_trident *trident)
   
-   Description: This routine will enable end of loop पूर्णांकerrupts.
-                End of loop पूर्णांकerrupts will occur when a running
+   Description: This routine will enable end of loop interrupts.
+                End of loop interrupts will occur when a running
                 channel reaches ESO.
-                Also enables middle of loop पूर्णांकerrupts.
+                Also enables middle of loop interrupts.
   
-   Parameters:  trident - poपूर्णांकer to target device class क्रम 4DWave.
+   Parameters:  trident - pointer to target device class for 4DWave.
   
   ---------------------------------------------------------------------------*/
 
-अटल व्योम snd_trident_enable_eso(काष्ठा snd_trident * trident)
-अणु
-	अचिन्हित पूर्णांक val;
+static void snd_trident_enable_eso(struct snd_trident * trident)
+{
+	unsigned int val;
 
 	val = inl(TRID_REG(trident, T4D_LFO_GC_CIR));
 	val |= ENDLP_IE;
 	val |= MIDLP_IE;
-	अगर (trident->device == TRIDENT_DEVICE_ID_SI7018)
+	if (trident->device == TRIDENT_DEVICE_ID_SI7018)
 		val |= BANK_B_EN;
 	outl(val, TRID_REG(trident, T4D_LFO_GC_CIR));
-पूर्ण
+}
 
 /*---------------------------------------------------------------------------
-   व्योम snd_trident_disable_eso(काष्ठा snd_trident *trident)
+   void snd_trident_disable_eso(struct snd_trident *trident)
   
-   Description: This routine will disable end of loop पूर्णांकerrupts.
-                End of loop पूर्णांकerrupts will occur when a running
+   Description: This routine will disable end of loop interrupts.
+                End of loop interrupts will occur when a running
                 channel reaches ESO.
-                Also disables middle of loop पूर्णांकerrupts.
+                Also disables middle of loop interrupts.
   
    Parameters:  
-                trident - poपूर्णांकer to target device class क्रम 4DWave.
+                trident - pointer to target device class for 4DWave.
   
-   वापसs:     TRUE अगर everything went ok, अन्यथा FALSE.
+   returns:     TRUE if everything went ok, else FALSE.
   
   ---------------------------------------------------------------------------*/
 
-अटल व्योम snd_trident_disable_eso(काष्ठा snd_trident * trident)
-अणु
-	अचिन्हित पूर्णांक पंचांगp;
+static void snd_trident_disable_eso(struct snd_trident * trident)
+{
+	unsigned int tmp;
 
-	पंचांगp = inl(TRID_REG(trident, T4D_LFO_GC_CIR));
-	पंचांगp &= ~ENDLP_IE;
-	पंचांगp &= ~MIDLP_IE;
-	outl(पंचांगp, TRID_REG(trident, T4D_LFO_GC_CIR));
-पूर्ण
+	tmp = inl(TRID_REG(trident, T4D_LFO_GC_CIR));
+	tmp &= ~ENDLP_IE;
+	tmp &= ~MIDLP_IE;
+	outl(tmp, TRID_REG(trident, T4D_LFO_GC_CIR));
+}
 
 /*---------------------------------------------------------------------------
-   व्योम snd_trident_start_voice(काष्ठा snd_trident * trident, अचिन्हित पूर्णांक voice)
+   void snd_trident_start_voice(struct snd_trident * trident, unsigned int voice)
 
     Description: Start a voice, any channel 0 thru 63.
-                 This routine स्वतःmatically handles the fact that there are
+                 This routine automatically handles the fact that there are
                  more than 32 channels available.
 
     Parameters : voice - Voice number 0 thru n.
-                 trident - poपूर्णांकer to target device class क्रम 4DWave.
+                 trident - pointer to target device class for 4DWave.
 
     Return Value: None.
 
   ---------------------------------------------------------------------------*/
 
-व्योम snd_trident_start_voice(काष्ठा snd_trident * trident, अचिन्हित पूर्णांक voice)
-अणु
-	अचिन्हित पूर्णांक mask = 1 << (voice & 0x1f);
-	अचिन्हित पूर्णांक reg = (voice & 0x20) ? T4D_START_B : T4D_START_A;
+void snd_trident_start_voice(struct snd_trident * trident, unsigned int voice)
+{
+	unsigned int mask = 1 << (voice & 0x1f);
+	unsigned int reg = (voice & 0x20) ? T4D_START_B : T4D_START_A;
 
 	outl(mask, TRID_REG(trident, reg));
-पूर्ण
+}
 
 EXPORT_SYMBOL(snd_trident_start_voice);
 
 /*---------------------------------------------------------------------------
-   व्योम snd_trident_stop_voice(काष्ठा snd_trident * trident, अचिन्हित पूर्णांक voice)
+   void snd_trident_stop_voice(struct snd_trident * trident, unsigned int voice)
 
     Description: Stop a voice, any channel 0 thru 63.
-                 This routine स्वतःmatically handles the fact that there are
+                 This routine automatically handles the fact that there are
                  more than 32 channels available.
 
     Parameters : voice - Voice number 0 thru n.
-                 trident - poपूर्णांकer to target device class क्रम 4DWave.
+                 trident - pointer to target device class for 4DWave.
 
     Return Value: None.
 
   ---------------------------------------------------------------------------*/
 
-व्योम snd_trident_stop_voice(काष्ठा snd_trident * trident, अचिन्हित पूर्णांक voice)
-अणु
-	अचिन्हित पूर्णांक mask = 1 << (voice & 0x1f);
-	अचिन्हित पूर्णांक reg = (voice & 0x20) ? T4D_STOP_B : T4D_STOP_A;
+void snd_trident_stop_voice(struct snd_trident * trident, unsigned int voice)
+{
+	unsigned int mask = 1 << (voice & 0x1f);
+	unsigned int reg = (voice & 0x20) ? T4D_STOP_B : T4D_STOP_A;
 
 	outl(mask, TRID_REG(trident, reg));
-पूर्ण
+}
 
 EXPORT_SYMBOL(snd_trident_stop_voice);
 
 /*---------------------------------------------------------------------------
-    पूर्णांक snd_trident_allocate_pcm_channel(काष्ठा snd_trident *trident)
+    int snd_trident_allocate_pcm_channel(struct snd_trident *trident)
   
     Description: Allocate hardware channel in Bank B (32-63).
   
-    Parameters :  trident - poपूर्णांकer to target device class क्रम 4DWave.
+    Parameters :  trident - pointer to target device class for 4DWave.
   
     Return Value: hardware channel - 32-63 or -1 when no channel is available
   
   ---------------------------------------------------------------------------*/
 
-अटल पूर्णांक snd_trident_allocate_pcm_channel(काष्ठा snd_trident * trident)
-अणु
-	पूर्णांक idx;
+static int snd_trident_allocate_pcm_channel(struct snd_trident * trident)
+{
+	int idx;
 
-	अगर (trident->ChanPCMcnt >= trident->ChanPCM)
-		वापस -1;
-	क्रम (idx = 31; idx >= 0; idx--) अणु
-		अगर (!(trident->ChanMap[T4D_BANK_B] & (1 << idx))) अणु
+	if (trident->ChanPCMcnt >= trident->ChanPCM)
+		return -1;
+	for (idx = 31; idx >= 0; idx--) {
+		if (!(trident->ChanMap[T4D_BANK_B] & (1 << idx))) {
 			trident->ChanMap[T4D_BANK_B] |= 1 << idx;
 			trident->ChanPCMcnt++;
-			वापस idx + 32;
-		पूर्ण
-	पूर्ण
-	वापस -1;
-पूर्ण
+			return idx + 32;
+		}
+	}
+	return -1;
+}
 
 /*---------------------------------------------------------------------------
-    व्योम snd_trident_मुक्त_pcm_channel(पूर्णांक channel)
+    void snd_trident_free_pcm_channel(int channel)
   
     Description: Free hardware channel in Bank B (32-63)
   
-    Parameters :  trident - poपूर्णांकer to target device class क्रम 4DWave.
+    Parameters :  trident - pointer to target device class for 4DWave.
 	          channel - hardware channel number 0-63
   
     Return Value: none
   
   ---------------------------------------------------------------------------*/
 
-अटल व्योम snd_trident_मुक्त_pcm_channel(काष्ठा snd_trident *trident, पूर्णांक channel)
-अणु
-	अगर (channel < 32 || channel > 63)
-		वापस;
+static void snd_trident_free_pcm_channel(struct snd_trident *trident, int channel)
+{
+	if (channel < 32 || channel > 63)
+		return;
 	channel &= 0x1f;
-	अगर (trident->ChanMap[T4D_BANK_B] & (1 << channel)) अणु
+	if (trident->ChanMap[T4D_BANK_B] & (1 << channel)) {
 		trident->ChanMap[T4D_BANK_B] &= ~(1 << channel);
 		trident->ChanPCMcnt--;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*---------------------------------------------------------------------------
-    अचिन्हित पूर्णांक snd_trident_allocate_synth_channel(व्योम)
+    unsigned int snd_trident_allocate_synth_channel(void)
   
     Description: Allocate hardware channel in Bank A (0-31).
   
-    Parameters :  trident - poपूर्णांकer to target device class क्रम 4DWave.
+    Parameters :  trident - pointer to target device class for 4DWave.
   
     Return Value: hardware channel - 0-31 or -1 when no channel is available
   
   ---------------------------------------------------------------------------*/
 
-अटल पूर्णांक snd_trident_allocate_synth_channel(काष्ठा snd_trident * trident)
-अणु
-	पूर्णांक idx;
+static int snd_trident_allocate_synth_channel(struct snd_trident * trident)
+{
+	int idx;
 
-	क्रम (idx = 31; idx >= 0; idx--) अणु
-		अगर (!(trident->ChanMap[T4D_BANK_A] & (1 << idx))) अणु
+	for (idx = 31; idx >= 0; idx--) {
+		if (!(trident->ChanMap[T4D_BANK_A] & (1 << idx))) {
 			trident->ChanMap[T4D_BANK_A] |= 1 << idx;
 			trident->synth.ChanSynthCount++;
-			वापस idx;
-		पूर्ण
-	पूर्ण
-	वापस -1;
-पूर्ण
+			return idx;
+		}
+	}
+	return -1;
+}
 
 /*---------------------------------------------------------------------------
-    व्योम snd_trident_मुक्त_synth_channel( पूर्णांक channel )
+    void snd_trident_free_synth_channel( int channel )
   
     Description: Free hardware channel in Bank B (0-31).
   
-    Parameters :  trident - poपूर्णांकer to target device class क्रम 4DWave.
+    Parameters :  trident - pointer to target device class for 4DWave.
 	          channel - hardware channel number 0-63
   
     Return Value: none
   
   ---------------------------------------------------------------------------*/
 
-अटल व्योम snd_trident_मुक्त_synth_channel(काष्ठा snd_trident *trident, पूर्णांक channel)
-अणु
-	अगर (channel < 0 || channel > 31)
-		वापस;
+static void snd_trident_free_synth_channel(struct snd_trident *trident, int channel)
+{
+	if (channel < 0 || channel > 31)
+		return;
 	channel &= 0x1f;
-	अगर (trident->ChanMap[T4D_BANK_A] & (1 << channel)) अणु
+	if (trident->ChanMap[T4D_BANK_A] & (1 << channel)) {
 		trident->ChanMap[T4D_BANK_A] &= ~(1 << channel);
 		trident->synth.ChanSynthCount--;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*---------------------------------------------------------------------------
-   snd_trident_ग_लिखो_voice_regs
+   snd_trident_write_voice_regs
   
-   Description: This routine will complete and ग_लिखो the 5 hardware channel
-                रेजिस्टरs to hardware.
+   Description: This routine will complete and write the 5 hardware channel
+                registers to hardware.
   
-   Parameters:  trident - poपूर्णांकer to target device class क्रम 4DWave.
-                voice - synthesizer voice काष्ठाure
-                Each रेजिस्टर field.
+   Parameters:  trident - pointer to target device class for 4DWave.
+                voice - synthesizer voice structure
+                Each register field.
   
   ---------------------------------------------------------------------------*/
 
-व्योम snd_trident_ग_लिखो_voice_regs(काष्ठा snd_trident * trident,
-				  काष्ठा snd_trident_voice * voice)
-अणु
-	अचिन्हित पूर्णांक FmcRvolCvol;
-	अचिन्हित पूर्णांक regs[5];
+void snd_trident_write_voice_regs(struct snd_trident * trident,
+				  struct snd_trident_voice * voice)
+{
+	unsigned int FmcRvolCvol;
+	unsigned int regs[5];
 
 	regs[1] = voice->LBA;
 	regs[4] = (voice->GVSel << 31) |
@@ -443,8 +442,8 @@ EXPORT_SYMBOL(snd_trident_stop_voice);
 	              ((voice->RVol & 0x7f) << 7) |
 	              (voice->CVol & 0x7f);
 
-	चयन (trident->device) अणु
-	हाल TRIDENT_DEVICE_ID_SI7018:
+	switch (trident->device) {
+	case TRIDENT_DEVICE_ID_SI7018:
 		regs[4] |= voice->number > 31 ?
 				(voice->Vol & 0x000003ff) :
 				((voice->Vol & 0x00003fc) << (16-2)) |
@@ -453,16 +452,16 @@ EXPORT_SYMBOL(snd_trident_stop_voice);
 			(voice->FMS & 0x0000000f);
 		regs[2] = (voice->ESO << 16) | (voice->Delta & 0x0ffff);
 		regs[3] = (voice->Attribute << 16) | FmcRvolCvol;
-		अवरोध;
-	हाल TRIDENT_DEVICE_ID_DX:
+		break;
+	case TRIDENT_DEVICE_ID_DX:
 		regs[4] |= ((voice->Vol & 0x000003fc) << (16-2)) |
 			   (voice->EC & 0x00000fff);
 		regs[0] = (voice->CSO << 16) | ((voice->Alpha & 0x00000fff) << 4) |
 			(voice->FMS & 0x0000000f);
 		regs[2] = (voice->ESO << 16) | (voice->Delta & 0x0ffff);
 		regs[3] = FmcRvolCvol;
-		अवरोध;
-	हाल TRIDENT_DEVICE_ID_NX:
+		break;
+	case TRIDENT_DEVICE_ID_NX:
 		regs[4] |= ((voice->Vol & 0x000003fc) << (16-2)) |
 			   (voice->EC & 0x00000fff);
 		regs[0] = (voice->Delta << 24) | (voice->CSO & 0x00ffffff);
@@ -470,11 +469,11 @@ EXPORT_SYMBOL(snd_trident_stop_voice);
 			(voice->ESO & 0x00ffffff);
 		regs[3] = (voice->Alpha << 20) |
 			((voice->FMS & 0x0000000f) << 16) | FmcRvolCvol;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		snd_BUG();
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	outb(voice->number, TRID_REG(trident, T4D_LFO_GC_CIR));
 	outl(regs[0], TRID_REG(trident, CH_START + 0));
@@ -483,7 +482,7 @@ EXPORT_SYMBOL(snd_trident_stop_voice);
 	outl(regs[3], TRID_REG(trident, CH_START + 12));
 	outl(regs[4], TRID_REG(trident, CH_START + 16));
 
-#अगर 0
+#if 0
 	dev_dbg(trident->card->dev, "written %i channel:\n", voice->number);
 	dev_dbg(trident->card->dev, "  regs[0] = 0x%x/0x%x\n",
 	       regs[0], inl(TRID_REG(trident, CH_START + 0)));
@@ -495,274 +494,274 @@ EXPORT_SYMBOL(snd_trident_stop_voice);
 	       regs[3], inl(TRID_REG(trident, CH_START + 12)));
 	dev_dbg(trident->card->dev, "  regs[4] = 0x%x/0x%x\n",
 	       regs[4], inl(TRID_REG(trident, CH_START + 16)));
-#पूर्ण_अगर
-पूर्ण
+#endif
+}
 
-EXPORT_SYMBOL(snd_trident_ग_लिखो_voice_regs);
+EXPORT_SYMBOL(snd_trident_write_voice_regs);
 
 /*---------------------------------------------------------------------------
-   snd_trident_ग_लिखो_cso_reg
+   snd_trident_write_cso_reg
   
-   Description: This routine will ग_लिखो the new CSO offset
-                रेजिस्टर to hardware.
+   Description: This routine will write the new CSO offset
+                register to hardware.
   
-   Parameters:  trident - poपूर्णांकer to target device class क्रम 4DWave.
-                voice - synthesizer voice काष्ठाure
+   Parameters:  trident - pointer to target device class for 4DWave.
+                voice - synthesizer voice structure
                 CSO - new CSO value
   
   ---------------------------------------------------------------------------*/
 
-अटल व्योम snd_trident_ग_लिखो_cso_reg(काष्ठा snd_trident * trident,
-				      काष्ठा snd_trident_voice * voice,
-				      अचिन्हित पूर्णांक CSO)
-अणु
+static void snd_trident_write_cso_reg(struct snd_trident * trident,
+				      struct snd_trident_voice * voice,
+				      unsigned int CSO)
+{
 	voice->CSO = CSO;
 	outb(voice->number, TRID_REG(trident, T4D_LFO_GC_CIR));
-	अगर (trident->device != TRIDENT_DEVICE_ID_NX) अणु
+	if (trident->device != TRIDENT_DEVICE_ID_NX) {
 		outw(voice->CSO, TRID_REG(trident, CH_DX_CSO_ALPHA_FMS) + 2);
-	पूर्ण अन्यथा अणु
+	} else {
 		outl((voice->Delta << 24) |
 		     (voice->CSO & 0x00ffffff), TRID_REG(trident, CH_NX_DELTA_CSO));
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*---------------------------------------------------------------------------
-   snd_trident_ग_लिखो_eso_reg
+   snd_trident_write_eso_reg
   
-   Description: This routine will ग_लिखो the new ESO offset
-                रेजिस्टर to hardware.
+   Description: This routine will write the new ESO offset
+                register to hardware.
   
-   Parameters:  trident - poपूर्णांकer to target device class क्रम 4DWave.
-                voice - synthesizer voice काष्ठाure
+   Parameters:  trident - pointer to target device class for 4DWave.
+                voice - synthesizer voice structure
                 ESO - new ESO value
   
   ---------------------------------------------------------------------------*/
 
-अटल व्योम snd_trident_ग_लिखो_eso_reg(काष्ठा snd_trident * trident,
-				      काष्ठा snd_trident_voice * voice,
-				      अचिन्हित पूर्णांक ESO)
-अणु
+static void snd_trident_write_eso_reg(struct snd_trident * trident,
+				      struct snd_trident_voice * voice,
+				      unsigned int ESO)
+{
 	voice->ESO = ESO;
 	outb(voice->number, TRID_REG(trident, T4D_LFO_GC_CIR));
-	अगर (trident->device != TRIDENT_DEVICE_ID_NX) अणु
+	if (trident->device != TRIDENT_DEVICE_ID_NX) {
 		outw(voice->ESO, TRID_REG(trident, CH_DX_ESO_DELTA) + 2);
-	पूर्ण अन्यथा अणु
+	} else {
 		outl(((voice->Delta << 16) & 0xff000000) | (voice->ESO & 0x00ffffff),
 		     TRID_REG(trident, CH_NX_DELTA_ESO));
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*---------------------------------------------------------------------------
-   snd_trident_ग_लिखो_vol_reg
+   snd_trident_write_vol_reg
   
-   Description: This routine will ग_लिखो the new voice volume
-                रेजिस्टर to hardware.
+   Description: This routine will write the new voice volume
+                register to hardware.
   
-   Parameters:  trident - poपूर्णांकer to target device class क्रम 4DWave.
-                voice - synthesizer voice काष्ठाure
+   Parameters:  trident - pointer to target device class for 4DWave.
+                voice - synthesizer voice structure
                 Vol - new voice volume
   
   ---------------------------------------------------------------------------*/
 
-अटल व्योम snd_trident_ग_लिखो_vol_reg(काष्ठा snd_trident * trident,
-				      काष्ठा snd_trident_voice * voice,
-				      अचिन्हित पूर्णांक Vol)
-अणु
+static void snd_trident_write_vol_reg(struct snd_trident * trident,
+				      struct snd_trident_voice * voice,
+				      unsigned int Vol)
+{
 	voice->Vol = Vol;
 	outb(voice->number, TRID_REG(trident, T4D_LFO_GC_CIR));
-	चयन (trident->device) अणु
-	हाल TRIDENT_DEVICE_ID_DX:
-	हाल TRIDENT_DEVICE_ID_NX:
+	switch (trident->device) {
+	case TRIDENT_DEVICE_ID_DX:
+	case TRIDENT_DEVICE_ID_NX:
 		outb(voice->Vol >> 2, TRID_REG(trident, CH_GVSEL_PAN_VOL_CTRL_EC + 2));
-		अवरोध;
-	हाल TRIDENT_DEVICE_ID_SI7018:
+		break;
+	case TRIDENT_DEVICE_ID_SI7018:
 		/* dev_dbg(trident->card->dev, "voice->Vol = 0x%x\n", voice->Vol); */
 		outw((voice->CTRL << 12) | voice->Vol,
 		     TRID_REG(trident, CH_GVSEL_PAN_VOL_CTRL_EC));
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
 /*---------------------------------------------------------------------------
-   snd_trident_ग_लिखो_pan_reg
+   snd_trident_write_pan_reg
   
-   Description: This routine will ग_लिखो the new voice pan
-                रेजिस्टर to hardware.
+   Description: This routine will write the new voice pan
+                register to hardware.
   
-   Parameters:  trident - poपूर्णांकer to target device class क्रम 4DWave.
-                voice - synthesizer voice काष्ठाure
+   Parameters:  trident - pointer to target device class for 4DWave.
+                voice - synthesizer voice structure
                 Pan - new pan value
   
   ---------------------------------------------------------------------------*/
 
-अटल व्योम snd_trident_ग_लिखो_pan_reg(काष्ठा snd_trident * trident,
-				      काष्ठा snd_trident_voice * voice,
-				      अचिन्हित पूर्णांक Pan)
-अणु
+static void snd_trident_write_pan_reg(struct snd_trident * trident,
+				      struct snd_trident_voice * voice,
+				      unsigned int Pan)
+{
 	voice->Pan = Pan;
 	outb(voice->number, TRID_REG(trident, T4D_LFO_GC_CIR));
 	outb(((voice->GVSel & 0x01) << 7) | (voice->Pan & 0x7f),
 	     TRID_REG(trident, CH_GVSEL_PAN_VOL_CTRL_EC + 3));
-पूर्ण
+}
 
 /*---------------------------------------------------------------------------
-   snd_trident_ग_लिखो_rvol_reg
+   snd_trident_write_rvol_reg
   
-   Description: This routine will ग_लिखो the new reverb volume
-                रेजिस्टर to hardware.
+   Description: This routine will write the new reverb volume
+                register to hardware.
   
-   Parameters:  trident - poपूर्णांकer to target device class क्रम 4DWave.
-                voice - synthesizer voice काष्ठाure
+   Parameters:  trident - pointer to target device class for 4DWave.
+                voice - synthesizer voice structure
                 RVol - new reverb volume
   
   ---------------------------------------------------------------------------*/
 
-अटल व्योम snd_trident_ग_लिखो_rvol_reg(काष्ठा snd_trident * trident,
-				       काष्ठा snd_trident_voice * voice,
-				       अचिन्हित पूर्णांक RVol)
-अणु
+static void snd_trident_write_rvol_reg(struct snd_trident * trident,
+				       struct snd_trident_voice * voice,
+				       unsigned int RVol)
+{
 	voice->RVol = RVol;
 	outb(voice->number, TRID_REG(trident, T4D_LFO_GC_CIR));
 	outw(((voice->FMC & 0x0003) << 14) | ((voice->RVol & 0x007f) << 7) |
 	     (voice->CVol & 0x007f),
 	     TRID_REG(trident, trident->device == TRIDENT_DEVICE_ID_NX ?
 		      CH_NX_ALPHA_FMS_FMC_RVOL_CVOL : CH_DX_FMC_RVOL_CVOL));
-पूर्ण
+}
 
 /*---------------------------------------------------------------------------
-   snd_trident_ग_लिखो_cvol_reg
+   snd_trident_write_cvol_reg
   
-   Description: This routine will ग_लिखो the new chorus volume
-                रेजिस्टर to hardware.
+   Description: This routine will write the new chorus volume
+                register to hardware.
   
-   Parameters:  trident - poपूर्णांकer to target device class क्रम 4DWave.
-                voice - synthesizer voice काष्ठाure
+   Parameters:  trident - pointer to target device class for 4DWave.
+                voice - synthesizer voice structure
                 CVol - new chorus volume
   
   ---------------------------------------------------------------------------*/
 
-अटल व्योम snd_trident_ग_लिखो_cvol_reg(काष्ठा snd_trident * trident,
-				       काष्ठा snd_trident_voice * voice,
-				       अचिन्हित पूर्णांक CVol)
-अणु
+static void snd_trident_write_cvol_reg(struct snd_trident * trident,
+				       struct snd_trident_voice * voice,
+				       unsigned int CVol)
+{
 	voice->CVol = CVol;
 	outb(voice->number, TRID_REG(trident, T4D_LFO_GC_CIR));
 	outw(((voice->FMC & 0x0003) << 14) | ((voice->RVol & 0x007f) << 7) |
 	     (voice->CVol & 0x007f),
 	     TRID_REG(trident, trident->device == TRIDENT_DEVICE_ID_NX ?
 		      CH_NX_ALPHA_FMS_FMC_RVOL_CVOL : CH_DX_FMC_RVOL_CVOL));
-पूर्ण
+}
 
 /*---------------------------------------------------------------------------
    snd_trident_convert_rate
 
    Description: This routine converts rate in HZ to hardware delta value.
   
-   Parameters:  trident - poपूर्णांकer to target device class क्रम 4DWave.
+   Parameters:  trident - pointer to target device class for 4DWave.
                 rate - Real or Virtual channel number.
   
    Returns:     Delta value.
   
   ---------------------------------------------------------------------------*/
-अटल अचिन्हित पूर्णांक snd_trident_convert_rate(अचिन्हित पूर्णांक rate)
-अणु
-	अचिन्हित पूर्णांक delta;
+static unsigned int snd_trident_convert_rate(unsigned int rate)
+{
+	unsigned int delta;
 
-	// We special हाल 44100 and 8000 since rounding with the equation
-	// करोes not give us an accurate enough value. For 11025 and 22050
+	// We special case 44100 and 8000 since rounding with the equation
+	// does not give us an accurate enough value. For 11025 and 22050
 	// the equation gives us the best answer. All other frequencies will
 	// also use the equation. JDW
-	अगर (rate == 44100)
+	if (rate == 44100)
 		delta = 0xeb3;
-	अन्यथा अगर (rate == 8000)
+	else if (rate == 8000)
 		delta = 0x2ab;
-	अन्यथा अगर (rate == 48000)
+	else if (rate == 48000)
 		delta = 0x1000;
-	अन्यथा
+	else
 		delta = DIV_ROUND_CLOSEST(rate << 12, 48000) & 0x0000ffff;
-	वापस delta;
-पूर्ण
+	return delta;
+}
 
 /*---------------------------------------------------------------------------
    snd_trident_convert_adc_rate
 
    Description: This routine converts rate in HZ to hardware delta value.
   
-   Parameters:  trident - poपूर्णांकer to target device class क्रम 4DWave.
+   Parameters:  trident - pointer to target device class for 4DWave.
                 rate - Real or Virtual channel number.
   
    Returns:     Delta value.
   
   ---------------------------------------------------------------------------*/
-अटल अचिन्हित पूर्णांक snd_trident_convert_adc_rate(अचिन्हित पूर्णांक rate)
-अणु
-	अचिन्हित पूर्णांक delta;
+static unsigned int snd_trident_convert_adc_rate(unsigned int rate)
+{
+	unsigned int delta;
 
-	// We special हाल 44100 and 8000 since rounding with the equation
-	// करोes not give us an accurate enough value. For 11025 and 22050
+	// We special case 44100 and 8000 since rounding with the equation
+	// does not give us an accurate enough value. For 11025 and 22050
 	// the equation gives us the best answer. All other frequencies will
 	// also use the equation. JDW
-	अगर (rate == 44100)
+	if (rate == 44100)
 		delta = 0x116a;
-	अन्यथा अगर (rate == 8000)
+	else if (rate == 8000)
 		delta = 0x6000;
-	अन्यथा अगर (rate == 48000)
+	else if (rate == 48000)
 		delta = 0x1000;
-	अन्यथा
+	else
 		delta = ((48000 << 12) / rate) & 0x0000ffff;
-	वापस delta;
-पूर्ण
+	return delta;
+}
 
 /*---------------------------------------------------------------------------
    snd_trident_spurious_threshold
 
    Description: This routine converts rate in HZ to spurious threshold.
   
-   Parameters:  trident - poपूर्णांकer to target device class क्रम 4DWave.
+   Parameters:  trident - pointer to target device class for 4DWave.
                 rate - Real or Virtual channel number.
   
    Returns:     Delta value.
   
   ---------------------------------------------------------------------------*/
-अटल अचिन्हित पूर्णांक snd_trident_spurious_threshold(अचिन्हित पूर्णांक rate,
-						   अचिन्हित पूर्णांक period_size)
-अणु
-	अचिन्हित पूर्णांक res = (rate * period_size) / 48000;
-	अगर (res < 64)
+static unsigned int snd_trident_spurious_threshold(unsigned int rate,
+						   unsigned int period_size)
+{
+	unsigned int res = (rate * period_size) / 48000;
+	if (res < 64)
 		res = res / 2;
-	अन्यथा
+	else
 		res -= 32;
-	वापस res;
-पूर्ण
+	return res;
+}
 
 /*---------------------------------------------------------------------------
    snd_trident_control_mode
 
-   Description: This routine वापसs a control mode क्रम a PCM channel.
+   Description: This routine returns a control mode for a PCM channel.
   
-   Parameters:  trident - poपूर्णांकer to target device class क्रम 4DWave.
+   Parameters:  trident - pointer to target device class for 4DWave.
                 substream  - PCM substream
   
    Returns:     Control value.
   
   ---------------------------------------------------------------------------*/
-अटल अचिन्हित पूर्णांक snd_trident_control_mode(काष्ठा snd_pcm_substream *substream)
-अणु
-	अचिन्हित पूर्णांक CTRL;
-	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
+static unsigned int snd_trident_control_mode(struct snd_pcm_substream *substream)
+{
+	unsigned int CTRL;
+	struct snd_pcm_runtime *runtime = substream->runtime;
 
 	/* set ctrl mode
-	   CTRL शेष: 8-bit (अचिन्हित) mono, loop mode enabled
+	   CTRL default: 8-bit (unsigned) mono, loop mode enabled
 	 */
 	CTRL = 0x00000001;
-	अगर (snd_pcm_क्रमmat_width(runसमय->क्रमmat) == 16)
+	if (snd_pcm_format_width(runtime->format) == 16)
 		CTRL |= 0x00000008;	// 16-bit data
-	अगर (snd_pcm_क्रमmat_चिन्हित(runसमय->क्रमmat))
-		CTRL |= 0x00000002;	// चिन्हित data
-	अगर (runसमय->channels > 1)
+	if (snd_pcm_format_signed(runtime->format))
+		CTRL |= 0x00000002;	// signed data
+	if (runtime->channels > 1)
 		CTRL |= 0x00000004;	// stereo data
-	वापस CTRL;
-पूर्ण
+	return CTRL;
+}
 
 /*
  *  PCM part
@@ -771,7 +770,7 @@ EXPORT_SYMBOL(snd_trident_ग_लिखो_voice_regs);
 /*---------------------------------------------------------------------------
    snd_trident_allocate_pcm_mem
   
-   Description: Allocate PCM ring buffer क्रम given substream
+   Description: Allocate PCM ring buffer for given substream
   
    Parameters:  substream  - PCM substream class
 		hw_params  - hardware parameters
@@ -780,29 +779,29 @@ EXPORT_SYMBOL(snd_trident_ग_लिखो_voice_regs);
   
   ---------------------------------------------------------------------------*/
 
-अटल पूर्णांक snd_trident_allocate_pcm_mem(काष्ठा snd_pcm_substream *substream,
-					काष्ठा snd_pcm_hw_params *hw_params)
-अणु
-	काष्ठा snd_trident *trident = snd_pcm_substream_chip(substream);
-	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
-	काष्ठा snd_trident_voice *voice = runसमय->निजी_data;
+static int snd_trident_allocate_pcm_mem(struct snd_pcm_substream *substream,
+					struct snd_pcm_hw_params *hw_params)
+{
+	struct snd_trident *trident = snd_pcm_substream_chip(substream);
+	struct snd_pcm_runtime *runtime = substream->runtime;
+	struct snd_trident_voice *voice = runtime->private_data;
 
-	अगर (trident->tlb.entries) अणु
-		अगर (runसमय->buffer_changed) अणु
-			अगर (voice->memblk)
-				snd_trident_मुक्त_pages(trident, voice->memblk);
+	if (trident->tlb.entries) {
+		if (runtime->buffer_changed) {
+			if (voice->memblk)
+				snd_trident_free_pages(trident, voice->memblk);
 			voice->memblk = snd_trident_alloc_pages(trident, substream);
-			अगर (voice->memblk == शून्य)
-				वापस -ENOMEM;
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+			if (voice->memblk == NULL)
+				return -ENOMEM;
+		}
+	}
+	return 0;
+}
 
 /*---------------------------------------------------------------------------
    snd_trident_allocate_evoice
   
-   Description: Allocate extra voice as पूर्णांकerrupt generator
+   Description: Allocate extra voice as interrupt generator
   
    Parameters:  substream  - PCM substream class
 		hw_params  - hardware parameters
@@ -811,38 +810,38 @@ EXPORT_SYMBOL(snd_trident_ग_लिखो_voice_regs);
   
   ---------------------------------------------------------------------------*/
 
-अटल पूर्णांक snd_trident_allocate_evoice(काष्ठा snd_pcm_substream *substream,
-				       काष्ठा snd_pcm_hw_params *hw_params)
-अणु
-	काष्ठा snd_trident *trident = snd_pcm_substream_chip(substream);
-	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
-	काष्ठा snd_trident_voice *voice = runसमय->निजी_data;
-	काष्ठा snd_trident_voice *evoice = voice->extra;
+static int snd_trident_allocate_evoice(struct snd_pcm_substream *substream,
+				       struct snd_pcm_hw_params *hw_params)
+{
+	struct snd_trident *trident = snd_pcm_substream_chip(substream);
+	struct snd_pcm_runtime *runtime = substream->runtime;
+	struct snd_trident_voice *voice = runtime->private_data;
+	struct snd_trident_voice *evoice = voice->extra;
 
 	/* voice management */
 
-	अगर (params_buffer_size(hw_params) / 2 != params_period_size(hw_params)) अणु
-		अगर (evoice == शून्य) अणु
+	if (params_buffer_size(hw_params) / 2 != params_period_size(hw_params)) {
+		if (evoice == NULL) {
 			evoice = snd_trident_alloc_voice(trident, SNDRV_TRIDENT_VOICE_TYPE_PCM, 0, 0);
-			अगर (evoice == शून्य)
-				वापस -ENOMEM;
+			if (evoice == NULL)
+				return -ENOMEM;
 			voice->extra = evoice;
 			evoice->substream = substream;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		अगर (evoice != शून्य) अणु
-			snd_trident_मुक्त_voice(trident, evoice);
-			voice->extra = evoice = शून्य;
-		पूर्ण
-	पूर्ण
+		}
+	} else {
+		if (evoice != NULL) {
+			snd_trident_free_voice(trident, evoice);
+			voice->extra = evoice = NULL;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*---------------------------------------------------------------------------
    snd_trident_hw_params
   
-   Description: Set the hardware parameters क्रम the playback device.
+   Description: Set the hardware parameters for the playback device.
   
    Parameters:  substream  - PCM substream class
 		hw_params  - hardware parameters
@@ -851,21 +850,21 @@ EXPORT_SYMBOL(snd_trident_ग_लिखो_voice_regs);
   
   ---------------------------------------------------------------------------*/
 
-अटल पूर्णांक snd_trident_hw_params(काष्ठा snd_pcm_substream *substream,
-				 काष्ठा snd_pcm_hw_params *hw_params)
-अणु
-	पूर्णांक err;
+static int snd_trident_hw_params(struct snd_pcm_substream *substream,
+				 struct snd_pcm_hw_params *hw_params)
+{
+	int err;
 
 	err = snd_trident_allocate_pcm_mem(substream, hw_params);
-	अगर (err >= 0)
+	if (err >= 0)
 		err = snd_trident_allocate_evoice(substream, hw_params);
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /*---------------------------------------------------------------------------
-   snd_trident_playback_hw_मुक्त
+   snd_trident_playback_hw_free
   
-   Description: Release the hardware resources क्रम the playback device.
+   Description: Release the hardware resources for the playback device.
   
    Parameters:  substream  - PCM substream class
   
@@ -873,30 +872,30 @@ EXPORT_SYMBOL(snd_trident_ग_लिखो_voice_regs);
   
   ---------------------------------------------------------------------------*/
 
-अटल पूर्णांक snd_trident_hw_मुक्त(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा snd_trident *trident = snd_pcm_substream_chip(substream);
-	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
-	काष्ठा snd_trident_voice *voice = runसमय->निजी_data;
-	काष्ठा snd_trident_voice *evoice = voice ? voice->extra : शून्य;
+static int snd_trident_hw_free(struct snd_pcm_substream *substream)
+{
+	struct snd_trident *trident = snd_pcm_substream_chip(substream);
+	struct snd_pcm_runtime *runtime = substream->runtime;
+	struct snd_trident_voice *voice = runtime->private_data;
+	struct snd_trident_voice *evoice = voice ? voice->extra : NULL;
 
-	अगर (trident->tlb.entries) अणु
-		अगर (voice && voice->memblk) अणु
-			snd_trident_मुक्त_pages(trident, voice->memblk);
-			voice->memblk = शून्य;
-		पूर्ण
-	पूर्ण
-	अगर (evoice != शून्य) अणु
-		snd_trident_मुक्त_voice(trident, evoice);
-		voice->extra = शून्य;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	if (trident->tlb.entries) {
+		if (voice && voice->memblk) {
+			snd_trident_free_pages(trident, voice->memblk);
+			voice->memblk = NULL;
+		}
+	}
+	if (evoice != NULL) {
+		snd_trident_free_voice(trident, evoice);
+		voice->extra = NULL;
+	}
+	return 0;
+}
 
 /*---------------------------------------------------------------------------
    snd_trident_playback_prepare
   
-   Description: Prepare playback device क्रम playback.
+   Description: Prepare playback device for playback.
   
    Parameters:  substream  - PCM substream class
   
@@ -904,28 +903,28 @@ EXPORT_SYMBOL(snd_trident_ग_लिखो_voice_regs);
   
   ---------------------------------------------------------------------------*/
 
-अटल पूर्णांक snd_trident_playback_prepare(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा snd_trident *trident = snd_pcm_substream_chip(substream);
-	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
-	काष्ठा snd_trident_voice *voice = runसमय->निजी_data;
-	काष्ठा snd_trident_voice *evoice = voice->extra;
-	काष्ठा snd_trident_pcm_mixer *mix = &trident->pcm_mixer[substream->number];
+static int snd_trident_playback_prepare(struct snd_pcm_substream *substream)
+{
+	struct snd_trident *trident = snd_pcm_substream_chip(substream);
+	struct snd_pcm_runtime *runtime = substream->runtime;
+	struct snd_trident_voice *voice = runtime->private_data;
+	struct snd_trident_voice *evoice = voice->extra;
+	struct snd_trident_pcm_mixer *mix = &trident->pcm_mixer[substream->number];
 
 	spin_lock_irq(&trident->reg_lock);	
 
 	/* set delta (rate) value */
-	voice->Delta = snd_trident_convert_rate(runसमय->rate);
-	voice->spurious_threshold = snd_trident_spurious_threshold(runसमय->rate, runसमय->period_size);
+	voice->Delta = snd_trident_convert_rate(runtime->rate);
+	voice->spurious_threshold = snd_trident_spurious_threshold(runtime->rate, runtime->period_size);
 
 	/* set Loop Begin Address */
-	अगर (voice->memblk)
+	if (voice->memblk)
 		voice->LBA = voice->memblk->offset;
-	अन्यथा
-		voice->LBA = runसमय->dma_addr;
+	else
+		voice->LBA = runtime->dma_addr;
  
 	voice->CSO = 0;
-	voice->ESO = runसमय->buffer_size - 1;	/* in samples */
+	voice->ESO = runtime->buffer_size - 1;	/* in samples */
 	voice->CTRL = snd_trident_control_mode(substream);
 	voice->FMC = 3;
 	voice->GVSel = 1;
@@ -937,21 +936,21 @@ EXPORT_SYMBOL(snd_trident_ग_लिखो_voice_regs);
 	voice->CVol = mix->cvol;
 	voice->Pan = mix->pan;
 	voice->Attribute = 0;
-#अगर 0
+#if 0
 	voice->Attribute = (1<<(30-16))|(2<<(26-16))|
 			   (0<<(24-16))|(0x1f<<(19-16));
-#अन्यथा
+#else
 	voice->Attribute = 0;
-#पूर्ण_अगर
+#endif
 
-	snd_trident_ग_लिखो_voice_regs(trident, voice);
+	snd_trident_write_voice_regs(trident, voice);
 
-	अगर (evoice != शून्य) अणु
+	if (evoice != NULL) {
 		evoice->Delta = voice->Delta;
 		evoice->spurious_threshold = voice->spurious_threshold;
 		evoice->LBA = voice->LBA;
 		evoice->CSO = 0;
-		evoice->ESO = (runसमय->period_size * 2) + 4 - 1; /* in samples */
+		evoice->ESO = (runtime->period_size * 2) + 4 - 1; /* in samples */
 		evoice->CTRL = voice->CTRL;
 		evoice->FMC = 3;
 		evoice->GVSel = trident->device == TRIDENT_DEVICE_ID_SI7018 ? 0 : 1;
@@ -961,27 +960,27 @@ EXPORT_SYMBOL(snd_trident_ग_लिखो_voice_regs);
 		evoice->Vol = 0x3ff;			/* mute */
 		evoice->RVol = evoice->CVol = 0x7f;	/* mute */
 		evoice->Pan = 0x7f;			/* mute */
-#अगर 0
+#if 0
 		evoice->Attribute = (1<<(30-16))|(2<<(26-16))|
 				    (0<<(24-16))|(0x1f<<(19-16));
-#अन्यथा
+#else
 		evoice->Attribute = 0;
-#पूर्ण_अगर
-		snd_trident_ग_लिखो_voice_regs(trident, evoice);
+#endif
+		snd_trident_write_voice_regs(trident, evoice);
 		evoice->isync2 = 1;
-		evoice->isync_mark = runसमय->period_size;
-		evoice->ESO = (runसमय->period_size * 2) - 1;
-	पूर्ण
+		evoice->isync_mark = runtime->period_size;
+		evoice->ESO = (runtime->period_size * 2) - 1;
+	}
 
 	spin_unlock_irq(&trident->reg_lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*---------------------------------------------------------------------------
    snd_trident_capture_hw_params
   
-   Description: Set the hardware parameters क्रम the capture device.
+   Description: Set the hardware parameters for the capture device.
   
    Parameters:  substream  - PCM substream class
 		hw_params  - hardware parameters
@@ -990,16 +989,16 @@ EXPORT_SYMBOL(snd_trident_ग_लिखो_voice_regs);
   
   ---------------------------------------------------------------------------*/
 
-अटल पूर्णांक snd_trident_capture_hw_params(काष्ठा snd_pcm_substream *substream,
-					 काष्ठा snd_pcm_hw_params *hw_params)
-अणु
-	वापस snd_trident_allocate_pcm_mem(substream, hw_params);
-पूर्ण
+static int snd_trident_capture_hw_params(struct snd_pcm_substream *substream,
+					 struct snd_pcm_hw_params *hw_params)
+{
+	return snd_trident_allocate_pcm_mem(substream, hw_params);
+}
 
 /*---------------------------------------------------------------------------
    snd_trident_capture_prepare
   
-   Description: Prepare capture device क्रम playback.
+   Description: Prepare capture device for playback.
   
    Parameters:  substream  - PCM substream class
   
@@ -1007,25 +1006,25 @@ EXPORT_SYMBOL(snd_trident_ग_लिखो_voice_regs);
   
   ---------------------------------------------------------------------------*/
 
-अटल पूर्णांक snd_trident_capture_prepare(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा snd_trident *trident = snd_pcm_substream_chip(substream);
-	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
-	काष्ठा snd_trident_voice *voice = runसमय->निजी_data;
-	अचिन्हित पूर्णांक val, ESO_bytes;
+static int snd_trident_capture_prepare(struct snd_pcm_substream *substream)
+{
+	struct snd_trident *trident = snd_pcm_substream_chip(substream);
+	struct snd_pcm_runtime *runtime = substream->runtime;
+	struct snd_trident_voice *voice = runtime->private_data;
+	unsigned int val, ESO_bytes;
 
 	spin_lock_irq(&trident->reg_lock);
 
 	// Initialize the channel and set channel Mode
 	outb(0, TRID_REG(trident, LEGACY_DMAR15));
 
-	// Set DMA channel operation mode रेजिस्टर
+	// Set DMA channel operation mode register
 	outb(0x54, TRID_REG(trident, LEGACY_DMAR11));
 
 	// Set channel buffer Address, DMAR0 expects contiguous PCI memory area	
-	voice->LBA = runसमय->dma_addr;
+	voice->LBA = runtime->dma_addr;
 	outl(voice->LBA, TRID_REG(trident, LEGACY_DMAR0));
-	अगर (voice->memblk)
+	if (voice->memblk)
 		voice->LBA = voice->memblk->offset;
 
 	// set ESO
@@ -1034,41 +1033,41 @@ EXPORT_SYMBOL(snd_trident_ग_लिखो_voice_regs);
 	outw((ESO_bytes & 0x0000ffff), TRID_REG(trident, LEGACY_DMAR4));
 	ESO_bytes++;
 
-	// Set channel sample rate, 4.12 क्रमmat
-	val = DIV_ROUND_CLOSEST(48000U << 12, runसमय->rate);
+	// Set channel sample rate, 4.12 format
+	val = DIV_ROUND_CLOSEST(48000U << 12, runtime->rate);
 	outw(val, TRID_REG(trident, T4D_SBDELTA_DELTA_R));
 
-	// Set channel पूर्णांकerrupt blk length
-	अगर (snd_pcm_क्रमmat_width(runसमय->क्रमmat) == 16) अणु
-		val = (अचिन्हित लघु) ((ESO_bytes >> 1) - 1);
-	पूर्ण अन्यथा अणु
-		val = (अचिन्हित लघु) (ESO_bytes - 1);
-	पूर्ण
+	// Set channel interrupt blk length
+	if (snd_pcm_format_width(runtime->format) == 16) {
+		val = (unsigned short) ((ESO_bytes >> 1) - 1);
+	} else {
+		val = (unsigned short) (ESO_bytes - 1);
+	}
 
 	outl((val << 16) | val, TRID_REG(trident, T4D_SBBL_SBCL));
 
-	// Right now, set क्रमmat and start to run captureing, 
+	// Right now, set format and start to run captureing, 
 	// continuous run loop enable.
 	trident->bDMAStart = 0x19;	// 0001 1001b
 
-	अगर (snd_pcm_क्रमmat_width(runसमय->क्रमmat) == 16)
+	if (snd_pcm_format_width(runtime->format) == 16)
 		trident->bDMAStart |= 0x80;
-	अगर (snd_pcm_क्रमmat_चिन्हित(runसमय->क्रमmat))
+	if (snd_pcm_format_signed(runtime->format))
 		trident->bDMAStart |= 0x20;
-	अगर (runसमय->channels > 1)
+	if (runtime->channels > 1)
 		trident->bDMAStart |= 0x40;
 
-	// Prepare capture पूर्णांकr channel
+	// Prepare capture intr channel
 
-	voice->Delta = snd_trident_convert_rate(runसमय->rate);
-	voice->spurious_threshold = snd_trident_spurious_threshold(runसमय->rate, runसमय->period_size);
+	voice->Delta = snd_trident_convert_rate(runtime->rate);
+	voice->spurious_threshold = snd_trident_spurious_threshold(runtime->rate, runtime->period_size);
 	voice->isync = 1;
-	voice->isync_mark = runसमय->period_size;
-	voice->isync_max = runसमय->buffer_size;
+	voice->isync_mark = runtime->period_size;
+	voice->isync_max = runtime->buffer_size;
 
 	// Set voice parameters
 	voice->CSO = 0;
-	voice->ESO = voice->isync_ESO = (runसमय->period_size * 2) + 6 - 1;
+	voice->ESO = voice->isync_ESO = (runtime->period_size * 2) + 6 - 1;
 	voice->CTRL = snd_trident_control_mode(substream);
 	voice->FMC = 3;
 	voice->RVol = 0x7f;
@@ -1081,16 +1080,16 @@ EXPORT_SYMBOL(snd_trident_ग_लिखो_voice_regs);
 	voice->FMS = 0;
 	voice->Attribute = 0;
 
-	snd_trident_ग_लिखो_voice_regs(trident, voice);
+	snd_trident_write_voice_regs(trident, voice);
 
 	spin_unlock_irq(&trident->reg_lock);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*---------------------------------------------------------------------------
    snd_trident_si7018_capture_hw_params
   
-   Description: Set the hardware parameters क्रम the capture device.
+   Description: Set the hardware parameters for the capture device.
   
    Parameters:  substream  - PCM substream class
 		hw_params  - hardware parameters
@@ -1099,16 +1098,16 @@ EXPORT_SYMBOL(snd_trident_ग_लिखो_voice_regs);
   
   ---------------------------------------------------------------------------*/
 
-अटल पूर्णांक snd_trident_si7018_capture_hw_params(काष्ठा snd_pcm_substream *substream,
-						काष्ठा snd_pcm_hw_params *hw_params)
-अणु
-	वापस snd_trident_allocate_evoice(substream, hw_params);
-पूर्ण
+static int snd_trident_si7018_capture_hw_params(struct snd_pcm_substream *substream,
+						struct snd_pcm_hw_params *hw_params)
+{
+	return snd_trident_allocate_evoice(substream, hw_params);
+}
 
 /*---------------------------------------------------------------------------
-   snd_trident_si7018_capture_hw_मुक्त
+   snd_trident_si7018_capture_hw_free
   
-   Description: Release the hardware resources क्रम the capture device.
+   Description: Release the hardware resources for the capture device.
   
    Parameters:  substream  - PCM substream class
   
@@ -1116,24 +1115,24 @@ EXPORT_SYMBOL(snd_trident_ग_लिखो_voice_regs);
   
   ---------------------------------------------------------------------------*/
 
-अटल पूर्णांक snd_trident_si7018_capture_hw_मुक्त(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा snd_trident *trident = snd_pcm_substream_chip(substream);
-	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
-	काष्ठा snd_trident_voice *voice = runसमय->निजी_data;
-	काष्ठा snd_trident_voice *evoice = voice ? voice->extra : शून्य;
+static int snd_trident_si7018_capture_hw_free(struct snd_pcm_substream *substream)
+{
+	struct snd_trident *trident = snd_pcm_substream_chip(substream);
+	struct snd_pcm_runtime *runtime = substream->runtime;
+	struct snd_trident_voice *voice = runtime->private_data;
+	struct snd_trident_voice *evoice = voice ? voice->extra : NULL;
 
-	अगर (evoice != शून्य) अणु
-		snd_trident_मुक्त_voice(trident, evoice);
-		voice->extra = शून्य;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	if (evoice != NULL) {
+		snd_trident_free_voice(trident, evoice);
+		voice->extra = NULL;
+	}
+	return 0;
+}
 
 /*---------------------------------------------------------------------------
    snd_trident_si7018_capture_prepare
   
-   Description: Prepare capture device क्रम playback.
+   Description: Prepare capture device for playback.
   
    Parameters:  substream  - PCM substream class
   
@@ -1141,22 +1140,22 @@ EXPORT_SYMBOL(snd_trident_ग_लिखो_voice_regs);
   
   ---------------------------------------------------------------------------*/
 
-अटल पूर्णांक snd_trident_si7018_capture_prepare(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा snd_trident *trident = snd_pcm_substream_chip(substream);
-	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
-	काष्ठा snd_trident_voice *voice = runसमय->निजी_data;
-	काष्ठा snd_trident_voice *evoice = voice->extra;
+static int snd_trident_si7018_capture_prepare(struct snd_pcm_substream *substream)
+{
+	struct snd_trident *trident = snd_pcm_substream_chip(substream);
+	struct snd_pcm_runtime *runtime = substream->runtime;
+	struct snd_trident_voice *voice = runtime->private_data;
+	struct snd_trident_voice *evoice = voice->extra;
 
 	spin_lock_irq(&trident->reg_lock);
 
-	voice->LBA = runसमय->dma_addr;
-	voice->Delta = snd_trident_convert_adc_rate(runसमय->rate);
-	voice->spurious_threshold = snd_trident_spurious_threshold(runसमय->rate, runसमय->period_size);
+	voice->LBA = runtime->dma_addr;
+	voice->Delta = snd_trident_convert_adc_rate(runtime->rate);
+	voice->spurious_threshold = snd_trident_spurious_threshold(runtime->rate, runtime->period_size);
 
 	// Set voice parameters
 	voice->CSO = 0;
-	voice->ESO = runसमय->buffer_size - 1;		/* in samples */
+	voice->ESO = runtime->buffer_size - 1;		/* in samples */
 	voice->CTRL = snd_trident_control_mode(substream);
 	voice->FMC = 0;
 	voice->RVol = 0;
@@ -1173,14 +1172,14 @@ EXPORT_SYMBOL(snd_trident_ग_लिखो_voice_regs);
 			   (2 << (24-16)) |
 			   (1 << (23-16));
 
-	snd_trident_ग_लिखो_voice_regs(trident, voice);
+	snd_trident_write_voice_regs(trident, voice);
 
-	अगर (evoice != शून्य) अणु
-		evoice->Delta = snd_trident_convert_rate(runसमय->rate);
+	if (evoice != NULL) {
+		evoice->Delta = snd_trident_convert_rate(runtime->rate);
 		evoice->spurious_threshold = voice->spurious_threshold;
 		evoice->LBA = voice->LBA;
 		evoice->CSO = 0;
-		evoice->ESO = (runसमय->period_size * 2) + 20 - 1; /* in samples, 20 means correction */
+		evoice->ESO = (runtime->period_size * 2) + 20 - 1; /* in samples, 20 means correction */
 		evoice->CTRL = voice->CTRL;
 		evoice->FMC = 3;
 		evoice->GVSel = 0;
@@ -1191,20 +1190,20 @@ EXPORT_SYMBOL(snd_trident_ग_लिखो_voice_regs);
 		evoice->RVol = evoice->CVol = 0x7f;	/* mute */
 		evoice->Pan = 0x7f;			/* mute */
 		evoice->Attribute = 0;
-		snd_trident_ग_लिखो_voice_regs(trident, evoice);
+		snd_trident_write_voice_regs(trident, evoice);
 		evoice->isync2 = 1;
-		evoice->isync_mark = runसमय->period_size;
-		evoice->ESO = (runसमय->period_size * 2) - 1;
-	पूर्ण
+		evoice->isync_mark = runtime->period_size;
+		evoice->ESO = (runtime->period_size * 2) - 1;
+	}
 	
 	spin_unlock_irq(&trident->reg_lock);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*---------------------------------------------------------------------------
    snd_trident_foldback_prepare
   
-   Description: Prepare foldback capture device क्रम playback.
+   Description: Prepare foldback capture device for playback.
   
    Parameters:  substream  - PCM substream class
   
@@ -1212,27 +1211,27 @@ EXPORT_SYMBOL(snd_trident_ग_लिखो_voice_regs);
   
   ---------------------------------------------------------------------------*/
 
-अटल पूर्णांक snd_trident_foldback_prepare(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा snd_trident *trident = snd_pcm_substream_chip(substream);
-	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
-	काष्ठा snd_trident_voice *voice = runसमय->निजी_data;
-	काष्ठा snd_trident_voice *evoice = voice->extra;
+static int snd_trident_foldback_prepare(struct snd_pcm_substream *substream)
+{
+	struct snd_trident *trident = snd_pcm_substream_chip(substream);
+	struct snd_pcm_runtime *runtime = substream->runtime;
+	struct snd_trident_voice *voice = runtime->private_data;
+	struct snd_trident_voice *evoice = voice->extra;
 
 	spin_lock_irq(&trident->reg_lock);
 
 	/* Set channel buffer Address */
-	अगर (voice->memblk)
+	if (voice->memblk)
 		voice->LBA = voice->memblk->offset;
-	अन्यथा
-		voice->LBA = runसमय->dma_addr;
+	else
+		voice->LBA = runtime->dma_addr;
 
-	/* set target ESO क्रम channel */
-	voice->ESO = runसमय->buffer_size - 1;	/* in samples */
+	/* set target ESO for channel */
+	voice->ESO = runtime->buffer_size - 1;	/* in samples */
 
 	/* set sample rate */
 	voice->Delta = 0x1000;
-	voice->spurious_threshold = snd_trident_spurious_threshold(48000, runसमय->period_size);
+	voice->spurious_threshold = snd_trident_spurious_threshold(48000, runtime->period_size);
 
 	voice->CSO = 0;
 	voice->CTRL = snd_trident_control_mode(substream);
@@ -1250,14 +1249,14 @@ EXPORT_SYMBOL(snd_trident_ग_लिखो_voice_regs);
 	/* set up capture channel */
 	outb(((voice->number & 0x3f) | 0x80), TRID_REG(trident, T4D_RCI + voice->foldback_chan));
 
-	snd_trident_ग_लिखो_voice_regs(trident, voice);
+	snd_trident_write_voice_regs(trident, voice);
 
-	अगर (evoice != शून्य) अणु
+	if (evoice != NULL) {
 		evoice->Delta = voice->Delta;
 		evoice->spurious_threshold = voice->spurious_threshold;
 		evoice->LBA = voice->LBA;
 		evoice->CSO = 0;
-		evoice->ESO = (runसमय->period_size * 2) + 4 - 1; /* in samples */
+		evoice->ESO = (runtime->period_size * 2) + 4 - 1; /* in samples */
 		evoice->CTRL = voice->CTRL;
 		evoice->FMC = 3;
 		evoice->GVSel = trident->device == TRIDENT_DEVICE_ID_SI7018 ? 0 : 1;
@@ -1268,20 +1267,20 @@ EXPORT_SYMBOL(snd_trident_ग_लिखो_voice_regs);
 		evoice->RVol = evoice->CVol = 0x7f;	/* mute */
 		evoice->Pan = 0x7f;			/* mute */
 		evoice->Attribute = 0;
-		snd_trident_ग_लिखो_voice_regs(trident, evoice);
+		snd_trident_write_voice_regs(trident, evoice);
 		evoice->isync2 = 1;
-		evoice->isync_mark = runसमय->period_size;
-		evoice->ESO = (runसमय->period_size * 2) - 1;
-	पूर्ण
+		evoice->isync_mark = runtime->period_size;
+		evoice->ESO = (runtime->period_size * 2) - 1;
+	}
 
 	spin_unlock_irq(&trident->reg_lock);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*---------------------------------------------------------------------------
-   snd_trident_spdअगर_hw_params
+   snd_trident_spdif_hw_params
   
-   Description: Set the hardware parameters क्रम the spdअगर device.
+   Description: Set the hardware parameters for the spdif device.
   
    Parameters:  substream  - PCM substream class
 		hw_params  - hardware parameters
@@ -1290,64 +1289,64 @@ EXPORT_SYMBOL(snd_trident_ग_लिखो_voice_regs);
   
   ---------------------------------------------------------------------------*/
 
-अटल पूर्णांक snd_trident_spdअगर_hw_params(काष्ठा snd_pcm_substream *substream,
-				       काष्ठा snd_pcm_hw_params *hw_params)
-अणु
-	काष्ठा snd_trident *trident = snd_pcm_substream_chip(substream);
-	अचिन्हित पूर्णांक old_bits = 0, change = 0;
-	पूर्णांक err;
+static int snd_trident_spdif_hw_params(struct snd_pcm_substream *substream,
+				       struct snd_pcm_hw_params *hw_params)
+{
+	struct snd_trident *trident = snd_pcm_substream_chip(substream);
+	unsigned int old_bits = 0, change = 0;
+	int err;
 
 	err = snd_trident_allocate_pcm_mem(substream, hw_params);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
-	अगर (trident->device == TRIDENT_DEVICE_ID_SI7018) अणु
+	if (trident->device == TRIDENT_DEVICE_ID_SI7018) {
 		err = snd_trident_allocate_evoice(substream, hw_params);
-		अगर (err < 0)
-			वापस err;
-	पूर्ण
+		if (err < 0)
+			return err;
+	}
 
 	/* prepare SPDIF channel */
 	spin_lock_irq(&trident->reg_lock);
-	old_bits = trident->spdअगर_pcm_bits;
-	अगर (old_bits & IEC958_AES0_PROFESSIONAL)
-		trident->spdअगर_pcm_bits &= ~IEC958_AES0_PRO_FS;
-	अन्यथा
-		trident->spdअगर_pcm_bits &= ~(IEC958_AES3_CON_FS << 24);
-	अगर (params_rate(hw_params) >= 48000) अणु
-		trident->spdअगर_pcm_ctrl = 0x3c;	// 48000 Hz
-		trident->spdअगर_pcm_bits |=
-			trident->spdअगर_bits & IEC958_AES0_PROFESSIONAL ?
+	old_bits = trident->spdif_pcm_bits;
+	if (old_bits & IEC958_AES0_PROFESSIONAL)
+		trident->spdif_pcm_bits &= ~IEC958_AES0_PRO_FS;
+	else
+		trident->spdif_pcm_bits &= ~(IEC958_AES3_CON_FS << 24);
+	if (params_rate(hw_params) >= 48000) {
+		trident->spdif_pcm_ctrl = 0x3c;	// 48000 Hz
+		trident->spdif_pcm_bits |=
+			trident->spdif_bits & IEC958_AES0_PROFESSIONAL ?
 				IEC958_AES0_PRO_FS_48000 :
 				(IEC958_AES3_CON_FS_48000 << 24);
-	पूर्ण
-	अन्यथा अगर (params_rate(hw_params) >= 44100) अणु
-		trident->spdअगर_pcm_ctrl = 0x3e;	// 44100 Hz
-		trident->spdअगर_pcm_bits |=
-			trident->spdअगर_bits & IEC958_AES0_PROFESSIONAL ?
+	}
+	else if (params_rate(hw_params) >= 44100) {
+		trident->spdif_pcm_ctrl = 0x3e;	// 44100 Hz
+		trident->spdif_pcm_bits |=
+			trident->spdif_bits & IEC958_AES0_PROFESSIONAL ?
 				IEC958_AES0_PRO_FS_44100 :
 				(IEC958_AES3_CON_FS_44100 << 24);
-	पूर्ण
-	अन्यथा अणु
-		trident->spdअगर_pcm_ctrl = 0x3d;	// 32000 Hz
-		trident->spdअगर_pcm_bits |=
-			trident->spdअगर_bits & IEC958_AES0_PROFESSIONAL ?
+	}
+	else {
+		trident->spdif_pcm_ctrl = 0x3d;	// 32000 Hz
+		trident->spdif_pcm_bits |=
+			trident->spdif_bits & IEC958_AES0_PROFESSIONAL ?
 				IEC958_AES0_PRO_FS_32000 :
 				(IEC958_AES3_CON_FS_32000 << 24);
-	पूर्ण
-	change = old_bits != trident->spdअगर_pcm_bits;
+	}
+	change = old_bits != trident->spdif_pcm_bits;
 	spin_unlock_irq(&trident->reg_lock);
 
-	अगर (change)
-		snd_ctl_notअगरy(trident->card, SNDRV_CTL_EVENT_MASK_VALUE, &trident->spdअगर_pcm_ctl->id);
+	if (change)
+		snd_ctl_notify(trident->card, SNDRV_CTL_EVENT_MASK_VALUE, &trident->spdif_pcm_ctl->id);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*---------------------------------------------------------------------------
-   snd_trident_spdअगर_prepare
+   snd_trident_spdif_prepare
   
-   Description: Prepare SPDIF device क्रम playback.
+   Description: Prepare SPDIF device for playback.
   
    Parameters:  substream  - PCM substream class
   
@@ -1355,39 +1354,39 @@ EXPORT_SYMBOL(snd_trident_ग_लिखो_voice_regs);
   
   ---------------------------------------------------------------------------*/
 
-अटल पूर्णांक snd_trident_spdअगर_prepare(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा snd_trident *trident = snd_pcm_substream_chip(substream);
-	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
-	काष्ठा snd_trident_voice *voice = runसमय->निजी_data;
-	काष्ठा snd_trident_voice *evoice = voice->extra;
-	काष्ठा snd_trident_pcm_mixer *mix = &trident->pcm_mixer[substream->number];
-	अचिन्हित पूर्णांक RESO, LBAO;
-	अचिन्हित पूर्णांक temp;
+static int snd_trident_spdif_prepare(struct snd_pcm_substream *substream)
+{
+	struct snd_trident *trident = snd_pcm_substream_chip(substream);
+	struct snd_pcm_runtime *runtime = substream->runtime;
+	struct snd_trident_voice *voice = runtime->private_data;
+	struct snd_trident_voice *evoice = voice->extra;
+	struct snd_trident_pcm_mixer *mix = &trident->pcm_mixer[substream->number];
+	unsigned int RESO, LBAO;
+	unsigned int temp;
 
 	spin_lock_irq(&trident->reg_lock);
 
-	अगर (trident->device != TRIDENT_DEVICE_ID_SI7018) अणु
+	if (trident->device != TRIDENT_DEVICE_ID_SI7018) {
 
 		/* set delta (rate) value */
-		voice->Delta = snd_trident_convert_rate(runसमय->rate);
-		voice->spurious_threshold = snd_trident_spurious_threshold(runसमय->rate, runसमय->period_size);
+		voice->Delta = snd_trident_convert_rate(runtime->rate);
+		voice->spurious_threshold = snd_trident_spurious_threshold(runtime->rate, runtime->period_size);
 
 		/* set Loop Back Address */
-		LBAO = runसमय->dma_addr;
-		अगर (voice->memblk)
+		LBAO = runtime->dma_addr;
+		if (voice->memblk)
 			voice->LBA = voice->memblk->offset;
-		अन्यथा
+		else
 			voice->LBA = LBAO;
 
 		voice->isync = 1;
 		voice->isync3 = 1;
-		voice->isync_mark = runसमय->period_size;
-		voice->isync_max = runसमय->buffer_size;
+		voice->isync_mark = runtime->period_size;
+		voice->isync_max = runtime->buffer_size;
 
-		/* set target ESO क्रम channel */
-		RESO = runसमय->buffer_size - 1;
-		voice->ESO = voice->isync_ESO = (runसमय->period_size * 2) + 6 - 1;
+		/* set target ESO for channel */
+		RESO = runtime->buffer_size - 1;
+		voice->ESO = voice->isync_ESO = (runtime->period_size * 2) + 6 - 1;
 
 		/* set ctrl mode */
 		voice->CTRL = snd_trident_control_mode(substream);
@@ -1405,7 +1404,7 @@ EXPORT_SYMBOL(snd_trident_ग_लिखो_voice_regs);
 		voice->Attribute = 0;
 
 		/* prepare surrogate IRQ channel */
-		snd_trident_ग_लिखो_voice_regs(trident, voice);
+		snd_trident_write_voice_regs(trident, voice);
 
 		outw((RESO & 0xffff), TRID_REG(trident, NX_SPESO));
 		outb((RESO >> 16), TRID_REG(trident, NX_SPESO + 2));
@@ -1414,23 +1413,23 @@ EXPORT_SYMBOL(snd_trident_ग_लिखो_voice_regs);
 		outb((voice->CSO >> 16), TRID_REG(trident, NX_SPCTRL_SPCSO + 2));
 
 		/* set SPDIF setting */
-		outb(trident->spdअगर_pcm_ctrl, TRID_REG(trident, NX_SPCTRL_SPCSO + 3));
-		outl(trident->spdअगर_pcm_bits, TRID_REG(trident, NX_SPCSTATUS));
+		outb(trident->spdif_pcm_ctrl, TRID_REG(trident, NX_SPCTRL_SPCSO + 3));
+		outl(trident->spdif_pcm_bits, TRID_REG(trident, NX_SPCSTATUS));
 
-	पूर्ण अन्यथा अणु	/* SiS */
+	} else {	/* SiS */
 	
 		/* set delta (rate) value */
 		voice->Delta = 0x800;
-		voice->spurious_threshold = snd_trident_spurious_threshold(48000, runसमय->period_size);
+		voice->spurious_threshold = snd_trident_spurious_threshold(48000, runtime->period_size);
 
 		/* set Loop Begin Address */
-		अगर (voice->memblk)
+		if (voice->memblk)
 			voice->LBA = voice->memblk->offset;
-		अन्यथा
-			voice->LBA = runसमय->dma_addr;
+		else
+			voice->LBA = runtime->dma_addr;
 
 		voice->CSO = 0;
-		voice->ESO = runसमय->buffer_size - 1;	/* in samples */
+		voice->ESO = runtime->buffer_size - 1;	/* in samples */
 		voice->CTRL = snd_trident_control_mode(substream);
 		voice->FMC = 3;
 		voice->GVSel = 1;
@@ -1444,14 +1443,14 @@ EXPORT_SYMBOL(snd_trident_ग_लिखो_voice_regs);
 		voice->Attribute = (1<<(30-16))|(7<<(26-16))|
 				   (0<<(24-16))|(0<<(19-16));
 
-		snd_trident_ग_लिखो_voice_regs(trident, voice);
+		snd_trident_write_voice_regs(trident, voice);
 
-		अगर (evoice != शून्य) अणु
+		if (evoice != NULL) {
 			evoice->Delta = voice->Delta;
 			evoice->spurious_threshold = voice->spurious_threshold;
 			evoice->LBA = voice->LBA;
 			evoice->CSO = 0;
-			evoice->ESO = (runसमय->period_size * 2) + 4 - 1; /* in samples */
+			evoice->ESO = (runtime->period_size * 2) + 4 - 1; /* in samples */
 			evoice->CTRL = voice->CTRL;
 			evoice->FMC = 3;
 			evoice->GVSel = trident->device == TRIDENT_DEVICE_ID_SI7018 ? 0 : 1;
@@ -1462,25 +1461,25 @@ EXPORT_SYMBOL(snd_trident_ग_लिखो_voice_regs);
 			evoice->RVol = evoice->CVol = 0x7f;	/* mute */
 			evoice->Pan = 0x7f;			/* mute */
 			evoice->Attribute = 0;
-			snd_trident_ग_लिखो_voice_regs(trident, evoice);
+			snd_trident_write_voice_regs(trident, evoice);
 			evoice->isync2 = 1;
-			evoice->isync_mark = runसमय->period_size;
-			evoice->ESO = (runसमय->period_size * 2) - 1;
-		पूर्ण
+			evoice->isync_mark = runtime->period_size;
+			evoice->ESO = (runtime->period_size * 2) - 1;
+		}
 
-		outl(trident->spdअगर_pcm_bits, TRID_REG(trident, SI_SPDIF_CS));
+		outl(trident->spdif_pcm_bits, TRID_REG(trident, SI_SPDIF_CS));
 		temp = inl(TRID_REG(trident, T4D_LFO_GC_CIR));
 		temp &= ~(1<<19);
 		outl(temp, TRID_REG(trident, T4D_LFO_GC_CIR));
 		temp = inl(TRID_REG(trident, SI_SERIAL_INTF_CTRL));
 		temp |= SPDIF_EN;
 		outl(temp, TRID_REG(trident, SI_SERIAL_INTF_CTRL));
-	पूर्ण
+	}
 
 	spin_unlock_irq(&trident->reg_lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*---------------------------------------------------------------------------
    snd_trident_trigger
@@ -1494,98 +1493,98 @@ EXPORT_SYMBOL(snd_trident_ग_लिखो_voice_regs);
   
   ---------------------------------------------------------------------------*/
 
-अटल पूर्णांक snd_trident_trigger(काष्ठा snd_pcm_substream *substream,
-			       पूर्णांक cmd)
+static int snd_trident_trigger(struct snd_pcm_substream *substream,
+			       int cmd)
 				    
-अणु
-	काष्ठा snd_trident *trident = snd_pcm_substream_chip(substream);
-	काष्ठा snd_pcm_substream *s;
-	अचिन्हित पूर्णांक what, whati, capture_flag, spdअगर_flag;
-	काष्ठा snd_trident_voice *voice, *evoice;
-	अचिन्हित पूर्णांक val, go;
+{
+	struct snd_trident *trident = snd_pcm_substream_chip(substream);
+	struct snd_pcm_substream *s;
+	unsigned int what, whati, capture_flag, spdif_flag;
+	struct snd_trident_voice *voice, *evoice;
+	unsigned int val, go;
 
-	चयन (cmd) अणु
-	हाल SNDRV_PCM_TRIGGER_START:
-	हाल SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
-	हाल SNDRV_PCM_TRIGGER_RESUME:
+	switch (cmd) {
+	case SNDRV_PCM_TRIGGER_START:
+	case SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
+	case SNDRV_PCM_TRIGGER_RESUME:
 		go = 1;
-		अवरोध;
-	हाल SNDRV_PCM_TRIGGER_STOP:
-	हाल SNDRV_PCM_TRIGGER_PAUSE_PUSH:
-	हाल SNDRV_PCM_TRIGGER_SUSPEND:
+		break;
+	case SNDRV_PCM_TRIGGER_STOP:
+	case SNDRV_PCM_TRIGGER_PAUSE_PUSH:
+	case SNDRV_PCM_TRIGGER_SUSPEND:
 		go = 0;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-	what = whati = capture_flag = spdअगर_flag = 0;
+		break;
+	default:
+		return -EINVAL;
+	}
+	what = whati = capture_flag = spdif_flag = 0;
 	spin_lock(&trident->reg_lock);
 	val = inl(TRID_REG(trident, T4D_STIMER)) & 0x00ffffff;
-	snd_pcm_group_क्रम_each_entry(s, substream) अणु
-		अगर ((काष्ठा snd_trident *) snd_pcm_substream_chip(s) == trident) अणु
-			voice = s->runसमय->निजी_data;
+	snd_pcm_group_for_each_entry(s, substream) {
+		if ((struct snd_trident *) snd_pcm_substream_chip(s) == trident) {
+			voice = s->runtime->private_data;
 			evoice = voice->extra;
 			what |= 1 << (voice->number & 0x1f);
-			अगर (evoice == शून्य) अणु
+			if (evoice == NULL) {
 				whati |= 1 << (voice->number & 0x1f);
-			पूर्ण अन्यथा अणु
+			} else {
 				what |= 1 << (evoice->number & 0x1f);
 				whati |= 1 << (evoice->number & 0x1f);
-				अगर (go)
-					evoice->sसमयr = val;
-			पूर्ण
-			अगर (go) अणु
+				if (go)
+					evoice->stimer = val;
+			}
+			if (go) {
 				voice->running = 1;
-				voice->sसमयr = val;
-			पूर्ण अन्यथा अणु
+				voice->stimer = val;
+			} else {
 				voice->running = 0;
-			पूर्ण
-			snd_pcm_trigger_करोne(s, substream);
-			अगर (voice->capture)
+			}
+			snd_pcm_trigger_done(s, substream);
+			if (voice->capture)
 				capture_flag = 1;
-			अगर (voice->spdअगर)
-				spdअगर_flag = 1;
-		पूर्ण
-	पूर्ण
-	अगर (spdअगर_flag) अणु
-		अगर (trident->device != TRIDENT_DEVICE_ID_SI7018) अणु
-			outl(trident->spdअगर_pcm_bits, TRID_REG(trident, NX_SPCSTATUS));
-			val = trident->spdअगर_pcm_ctrl;
-			अगर (!go)
+			if (voice->spdif)
+				spdif_flag = 1;
+		}
+	}
+	if (spdif_flag) {
+		if (trident->device != TRIDENT_DEVICE_ID_SI7018) {
+			outl(trident->spdif_pcm_bits, TRID_REG(trident, NX_SPCSTATUS));
+			val = trident->spdif_pcm_ctrl;
+			if (!go)
 				val &= ~(0x28);
 			outb(val, TRID_REG(trident, NX_SPCTRL_SPCSO + 3));
-		पूर्ण अन्यथा अणु
-			outl(trident->spdअगर_pcm_bits, TRID_REG(trident, SI_SPDIF_CS));
+		} else {
+			outl(trident->spdif_pcm_bits, TRID_REG(trident, SI_SPDIF_CS));
 			val = inl(TRID_REG(trident, SI_SERIAL_INTF_CTRL)) | SPDIF_EN;
 			outl(val, TRID_REG(trident, SI_SERIAL_INTF_CTRL));
-		पूर्ण
-	पूर्ण
-	अगर (!go)
+		}
+	}
+	if (!go)
 		outl(what, TRID_REG(trident, T4D_STOP_B));
 	val = inl(TRID_REG(trident, T4D_AINTEN_B));
-	अगर (go) अणु
+	if (go) {
 		val |= whati;
-	पूर्ण अन्यथा अणु
+	} else {
 		val &= ~whati;
-	पूर्ण
+	}
 	outl(val, TRID_REG(trident, T4D_AINTEN_B));
-	अगर (go) अणु
+	if (go) {
 		outl(what, TRID_REG(trident, T4D_START_B));
 
-		अगर (capture_flag && trident->device != TRIDENT_DEVICE_ID_SI7018)
+		if (capture_flag && trident->device != TRIDENT_DEVICE_ID_SI7018)
 			outb(trident->bDMAStart, TRID_REG(trident, T4D_SBCTRL_SBE2R_SBDD));
-	पूर्ण अन्यथा अणु
-		अगर (capture_flag && trident->device != TRIDENT_DEVICE_ID_SI7018)
+	} else {
+		if (capture_flag && trident->device != TRIDENT_DEVICE_ID_SI7018)
 			outb(0x00, TRID_REG(trident, T4D_SBCTRL_SBE2R_SBDD));
-	पूर्ण
+	}
 	spin_unlock(&trident->reg_lock);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*---------------------------------------------------------------------------
-   snd_trident_playback_poपूर्णांकer
+   snd_trident_playback_pointer
   
-   Description: This routine वापस the playback position
+   Description: This routine return the playback position
                 
    Parameters:	substream  - PCM substream class
 
@@ -1593,38 +1592,38 @@ EXPORT_SYMBOL(snd_trident_ग_लिखो_voice_regs);
   
   ---------------------------------------------------------------------------*/
 
-अटल snd_pcm_uframes_t snd_trident_playback_poपूर्णांकer(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा snd_trident *trident = snd_pcm_substream_chip(substream);
-	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
-	काष्ठा snd_trident_voice *voice = runसमय->निजी_data;
-	अचिन्हित पूर्णांक cso;
+static snd_pcm_uframes_t snd_trident_playback_pointer(struct snd_pcm_substream *substream)
+{
+	struct snd_trident *trident = snd_pcm_substream_chip(substream);
+	struct snd_pcm_runtime *runtime = substream->runtime;
+	struct snd_trident_voice *voice = runtime->private_data;
+	unsigned int cso;
 
-	अगर (!voice->running)
-		वापस 0;
+	if (!voice->running)
+		return 0;
 
 	spin_lock(&trident->reg_lock);
 
 	outb(voice->number, TRID_REG(trident, T4D_LFO_GC_CIR));
 
-	अगर (trident->device != TRIDENT_DEVICE_ID_NX) अणु
+	if (trident->device != TRIDENT_DEVICE_ID_NX) {
 		cso = inw(TRID_REG(trident, CH_DX_CSO_ALPHA_FMS + 2));
-	पूर्ण अन्यथा अणु		// ID_4DWAVE_NX
-		cso = (अचिन्हित पूर्णांक) inl(TRID_REG(trident, CH_NX_DELTA_CSO)) & 0x00ffffff;
-	पूर्ण
+	} else {		// ID_4DWAVE_NX
+		cso = (unsigned int) inl(TRID_REG(trident, CH_NX_DELTA_CSO)) & 0x00ffffff;
+	}
 
 	spin_unlock(&trident->reg_lock);
 
-	अगर (cso >= runसमय->buffer_size)
+	if (cso >= runtime->buffer_size)
 		cso = 0;
 
-	वापस cso;
-पूर्ण
+	return cso;
+}
 
 /*---------------------------------------------------------------------------
-   snd_trident_capture_poपूर्णांकer
+   snd_trident_capture_pointer
   
-   Description: This routine वापस the capture position
+   Description: This routine return the capture position
                 
    Parameters:   pcm1    - PCM device class
 
@@ -1632,29 +1631,29 @@ EXPORT_SYMBOL(snd_trident_ग_लिखो_voice_regs);
   
   ---------------------------------------------------------------------------*/
 
-अटल snd_pcm_uframes_t snd_trident_capture_poपूर्णांकer(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा snd_trident *trident = snd_pcm_substream_chip(substream);
-	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
-	काष्ठा snd_trident_voice *voice = runसमय->निजी_data;
-	अचिन्हित पूर्णांक result;
+static snd_pcm_uframes_t snd_trident_capture_pointer(struct snd_pcm_substream *substream)
+{
+	struct snd_trident *trident = snd_pcm_substream_chip(substream);
+	struct snd_pcm_runtime *runtime = substream->runtime;
+	struct snd_trident_voice *voice = runtime->private_data;
+	unsigned int result;
 
-	अगर (!voice->running)
-		वापस 0;
+	if (!voice->running)
+		return 0;
 
 	result = inw(TRID_REG(trident, T4D_SBBL_SBCL));
-	अगर (runसमय->channels > 1)
+	if (runtime->channels > 1)
 		result >>= 1;
-	अगर (result > 0)
-		result = runसमय->buffer_size - result;
+	if (result > 0)
+		result = runtime->buffer_size - result;
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
 /*---------------------------------------------------------------------------
-   snd_trident_spdअगर_poपूर्णांकer
+   snd_trident_spdif_pointer
   
-   Description: This routine वापस the SPDIF playback position
+   Description: This routine return the SPDIF playback position
                 
    Parameters:	substream  - PCM substream class
 
@@ -1662,32 +1661,32 @@ EXPORT_SYMBOL(snd_trident_ग_लिखो_voice_regs);
   
   ---------------------------------------------------------------------------*/
 
-अटल snd_pcm_uframes_t snd_trident_spdअगर_poपूर्णांकer(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा snd_trident *trident = snd_pcm_substream_chip(substream);
-	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
-	काष्ठा snd_trident_voice *voice = runसमय->निजी_data;
-	अचिन्हित पूर्णांक result;
+static snd_pcm_uframes_t snd_trident_spdif_pointer(struct snd_pcm_substream *substream)
+{
+	struct snd_trident *trident = snd_pcm_substream_chip(substream);
+	struct snd_pcm_runtime *runtime = substream->runtime;
+	struct snd_trident_voice *voice = runtime->private_data;
+	unsigned int result;
 
-	अगर (!voice->running)
-		वापस 0;
+	if (!voice->running)
+		return 0;
 
 	result = inl(TRID_REG(trident, NX_SPCTRL_SPCSO)) & 0x00ffffff;
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
 /*
  *  Playback support device description
  */
 
-अटल स्थिर काष्ठा snd_pcm_hardware snd_trident_playback =
-अणु
+static const struct snd_pcm_hardware snd_trident_playback =
+{
 	.info =			(SNDRV_PCM_INFO_MMAP | SNDRV_PCM_INFO_INTERLEAVED |
 				 SNDRV_PCM_INFO_BLOCK_TRANSFER |
 				 SNDRV_PCM_INFO_MMAP_VALID | SNDRV_PCM_INFO_SYNC_START |
 				 SNDRV_PCM_INFO_PAUSE /* | SNDRV_PCM_INFO_RESUME */),
-	.क्रमmats =		(SNDRV_PCM_FMTBIT_U8 | SNDRV_PCM_FMTBIT_S16_LE |
+	.formats =		(SNDRV_PCM_FMTBIT_U8 | SNDRV_PCM_FMTBIT_S16_LE |
 				 SNDRV_PCM_FMTBIT_S8 | SNDRV_PCM_FMTBIT_U16_LE),
 	.rates =		SNDRV_PCM_RATE_CONTINUOUS | SNDRV_PCM_RATE_8000_48000,
 	.rate_min =		4000,
@@ -1699,20 +1698,20 @@ EXPORT_SYMBOL(snd_trident_ग_लिखो_voice_regs);
 	.period_bytes_max =	(256*1024),
 	.periods_min =		1,
 	.periods_max =		1024,
-	.fअगरo_size =		0,
-पूर्ण;
+	.fifo_size =		0,
+};
 
 /*
  *  Capture support device description
  */
 
-अटल स्थिर काष्ठा snd_pcm_hardware snd_trident_capture =
-अणु
+static const struct snd_pcm_hardware snd_trident_capture =
+{
 	.info =			(SNDRV_PCM_INFO_MMAP | SNDRV_PCM_INFO_INTERLEAVED |
 				 SNDRV_PCM_INFO_BLOCK_TRANSFER |
 				 SNDRV_PCM_INFO_MMAP_VALID | SNDRV_PCM_INFO_SYNC_START |
 				 SNDRV_PCM_INFO_PAUSE /* | SNDRV_PCM_INFO_RESUME */),
-	.क्रमmats =		(SNDRV_PCM_FMTBIT_U8 | SNDRV_PCM_FMTBIT_S16_LE |
+	.formats =		(SNDRV_PCM_FMTBIT_U8 | SNDRV_PCM_FMTBIT_S16_LE |
 				 SNDRV_PCM_FMTBIT_S8 | SNDRV_PCM_FMTBIT_U16_LE),
 	.rates =		SNDRV_PCM_RATE_CONTINUOUS | SNDRV_PCM_RATE_8000_48000,
 	.rate_min =		4000,
@@ -1724,20 +1723,20 @@ EXPORT_SYMBOL(snd_trident_ग_लिखो_voice_regs);
 	.period_bytes_max =	(128*1024),
 	.periods_min =		1,
 	.periods_max =		1024,
-	.fअगरo_size =		0,
-पूर्ण;
+	.fifo_size =		0,
+};
 
 /*
  *  Foldback capture support device description
  */
 
-अटल स्थिर काष्ठा snd_pcm_hardware snd_trident_foldback =
-अणु
+static const struct snd_pcm_hardware snd_trident_foldback =
+{
 	.info =			(SNDRV_PCM_INFO_MMAP | SNDRV_PCM_INFO_INTERLEAVED |
 				 SNDRV_PCM_INFO_BLOCK_TRANSFER |
 				 SNDRV_PCM_INFO_MMAP_VALID | SNDRV_PCM_INFO_SYNC_START |
 				 SNDRV_PCM_INFO_PAUSE /* | SNDRV_PCM_INFO_RESUME */),
-	.क्रमmats =		SNDRV_PCM_FMTBIT_S16_LE,
+	.formats =		SNDRV_PCM_FMTBIT_S16_LE,
 	.rates =		SNDRV_PCM_RATE_48000,
 	.rate_min =		48000,
 	.rate_max =		48000,
@@ -1748,20 +1747,20 @@ EXPORT_SYMBOL(snd_trident_ग_लिखो_voice_regs);
 	.period_bytes_max =	(128*1024),
 	.periods_min =		1,
 	.periods_max =		1024,
-	.fअगरo_size =		0,
-पूर्ण;
+	.fifo_size =		0,
+};
 
 /*
  *  SPDIF playback support device description
  */
 
-अटल स्थिर काष्ठा snd_pcm_hardware snd_trident_spdअगर =
-अणु
+static const struct snd_pcm_hardware snd_trident_spdif =
+{
 	.info =			(SNDRV_PCM_INFO_MMAP | SNDRV_PCM_INFO_INTERLEAVED |
 				 SNDRV_PCM_INFO_BLOCK_TRANSFER |
 				 SNDRV_PCM_INFO_MMAP_VALID | SNDRV_PCM_INFO_SYNC_START |
 				 SNDRV_PCM_INFO_PAUSE /* | SNDRV_PCM_INFO_RESUME */),
-	.क्रमmats =		SNDRV_PCM_FMTBIT_S16_LE,
+	.formats =		SNDRV_PCM_FMTBIT_S16_LE,
 	.rates =		(SNDRV_PCM_RATE_32000 | SNDRV_PCM_RATE_44100 |
 				 SNDRV_PCM_RATE_48000),
 	.rate_min =		32000,
@@ -1773,16 +1772,16 @@ EXPORT_SYMBOL(snd_trident_ग_लिखो_voice_regs);
 	.period_bytes_max =	(128*1024),
 	.periods_min =		1,
 	.periods_max =		1024,
-	.fअगरo_size =		0,
-पूर्ण;
+	.fifo_size =		0,
+};
 
-अटल स्थिर काष्ठा snd_pcm_hardware snd_trident_spdअगर_7018 =
-अणु
+static const struct snd_pcm_hardware snd_trident_spdif_7018 =
+{
 	.info =			(SNDRV_PCM_INFO_MMAP | SNDRV_PCM_INFO_INTERLEAVED |
 				 SNDRV_PCM_INFO_BLOCK_TRANSFER |
 				 SNDRV_PCM_INFO_MMAP_VALID | SNDRV_PCM_INFO_SYNC_START |
 				 SNDRV_PCM_INFO_PAUSE /* | SNDRV_PCM_INFO_RESUME */),
-	.क्रमmats =		SNDRV_PCM_FMTBIT_S16_LE,
+	.formats =		SNDRV_PCM_FMTBIT_S16_LE,
 	.rates =		SNDRV_PCM_RATE_48000,
 	.rate_min =		48000,
 	.rate_max =		48000,
@@ -1793,62 +1792,62 @@ EXPORT_SYMBOL(snd_trident_ग_लिखो_voice_regs);
 	.period_bytes_max =	(128*1024),
 	.periods_min =		1,
 	.periods_max =		1024,
-	.fअगरo_size =		0,
-पूर्ण;
+	.fifo_size =		0,
+};
 
-अटल व्योम snd_trident_pcm_मुक्त_substream(काष्ठा snd_pcm_runसमय *runसमय)
-अणु
-	काष्ठा snd_trident_voice *voice = runसमय->निजी_data;
-	काष्ठा snd_trident *trident;
+static void snd_trident_pcm_free_substream(struct snd_pcm_runtime *runtime)
+{
+	struct snd_trident_voice *voice = runtime->private_data;
+	struct snd_trident *trident;
 
-	अगर (voice) अणु
+	if (voice) {
 		trident = voice->trident;
-		snd_trident_मुक्त_voice(trident, voice);
-	पूर्ण
-पूर्ण
+		snd_trident_free_voice(trident, voice);
+	}
+}
 
-अटल पूर्णांक snd_trident_playback_खोलो(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा snd_trident *trident = snd_pcm_substream_chip(substream);
-	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
-	काष्ठा snd_trident_voice *voice;
+static int snd_trident_playback_open(struct snd_pcm_substream *substream)
+{
+	struct snd_trident *trident = snd_pcm_substream_chip(substream);
+	struct snd_pcm_runtime *runtime = substream->runtime;
+	struct snd_trident_voice *voice;
 
 	voice = snd_trident_alloc_voice(trident, SNDRV_TRIDENT_VOICE_TYPE_PCM, 0, 0);
-	अगर (voice == शून्य)
-		वापस -EAGAIN;
+	if (voice == NULL)
+		return -EAGAIN;
 	snd_trident_pcm_mixer_build(trident, voice, substream);
 	voice->substream = substream;
-	runसमय->निजी_data = voice;
-	runसमय->निजी_मुक्त = snd_trident_pcm_मुक्त_substream;
-	runसमय->hw = snd_trident_playback;
+	runtime->private_data = voice;
+	runtime->private_free = snd_trident_pcm_free_substream;
+	runtime->hw = snd_trident_playback;
 	snd_pcm_set_sync(substream);
-	snd_pcm_hw_स्थिरraपूर्णांक_minmax(runसमय, SNDRV_PCM_HW_PARAM_BUFFER_SIZE, 0, 64*1024);
-	वापस 0;
-पूर्ण
+	snd_pcm_hw_constraint_minmax(runtime, SNDRV_PCM_HW_PARAM_BUFFER_SIZE, 0, 64*1024);
+	return 0;
+}
 
 /*---------------------------------------------------------------------------
-   snd_trident_playback_बंद
+   snd_trident_playback_close
   
-   Description: This routine will बंद the 4DWave playback device. For now 
-                we will simply मुक्त the dma transfer buffer.
+   Description: This routine will close the 4DWave playback device. For now 
+                we will simply free the dma transfer buffer.
                 
    Parameters:	substream  - PCM substream class
 
   ---------------------------------------------------------------------------*/
-अटल पूर्णांक snd_trident_playback_बंद(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा snd_trident *trident = snd_pcm_substream_chip(substream);
-	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
-	काष्ठा snd_trident_voice *voice = runसमय->निजी_data;
+static int snd_trident_playback_close(struct snd_pcm_substream *substream)
+{
+	struct snd_trident *trident = snd_pcm_substream_chip(substream);
+	struct snd_pcm_runtime *runtime = substream->runtime;
+	struct snd_trident_voice *voice = runtime->private_data;
 
-	snd_trident_pcm_mixer_मुक्त(trident, voice, substream);
-	वापस 0;
-पूर्ण
+	snd_trident_pcm_mixer_free(trident, voice, substream);
+	return 0;
+}
 
 /*---------------------------------------------------------------------------
-   snd_trident_spdअगर_खोलो
+   snd_trident_spdif_open
   
-   Description: This routine will खोलो the 4DWave SPDIF device.
+   Description: This routine will open the 4DWave SPDIF device.
 
    Parameters:	substream  - PCM substream class
 
@@ -1856,78 +1855,78 @@ EXPORT_SYMBOL(snd_trident_ग_लिखो_voice_regs);
   
   ---------------------------------------------------------------------------*/
 
-अटल पूर्णांक snd_trident_spdअगर_खोलो(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा snd_trident *trident = snd_pcm_substream_chip(substream);
-	काष्ठा snd_trident_voice *voice;
-	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
+static int snd_trident_spdif_open(struct snd_pcm_substream *substream)
+{
+	struct snd_trident *trident = snd_pcm_substream_chip(substream);
+	struct snd_trident_voice *voice;
+	struct snd_pcm_runtime *runtime = substream->runtime;
 	
 	voice = snd_trident_alloc_voice(trident, SNDRV_TRIDENT_VOICE_TYPE_PCM, 0, 0);
-	अगर (voice == शून्य)
-		वापस -EAGAIN;
-	voice->spdअगर = 1;
+	if (voice == NULL)
+		return -EAGAIN;
+	voice->spdif = 1;
 	voice->substream = substream;
 	spin_lock_irq(&trident->reg_lock);
-	trident->spdअगर_pcm_bits = trident->spdअगर_bits;
+	trident->spdif_pcm_bits = trident->spdif_bits;
 	spin_unlock_irq(&trident->reg_lock);
 
-	runसमय->निजी_data = voice;
-	runसमय->निजी_मुक्त = snd_trident_pcm_मुक्त_substream;
-	अगर (trident->device == TRIDENT_DEVICE_ID_SI7018) अणु
-		runसमय->hw = snd_trident_spdअगर;
-	पूर्ण अन्यथा अणु
-		runसमय->hw = snd_trident_spdअगर_7018;
-	पूर्ण
+	runtime->private_data = voice;
+	runtime->private_free = snd_trident_pcm_free_substream;
+	if (trident->device == TRIDENT_DEVICE_ID_SI7018) {
+		runtime->hw = snd_trident_spdif;
+	} else {
+		runtime->hw = snd_trident_spdif_7018;
+	}
 
-	trident->spdअगर_pcm_ctl->vd[0].access &= ~SNDRV_CTL_ELEM_ACCESS_INACTIVE;
-	snd_ctl_notअगरy(trident->card, SNDRV_CTL_EVENT_MASK_VALUE |
-		       SNDRV_CTL_EVENT_MASK_INFO, &trident->spdअगर_pcm_ctl->id);
+	trident->spdif_pcm_ctl->vd[0].access &= ~SNDRV_CTL_ELEM_ACCESS_INACTIVE;
+	snd_ctl_notify(trident->card, SNDRV_CTL_EVENT_MASK_VALUE |
+		       SNDRV_CTL_EVENT_MASK_INFO, &trident->spdif_pcm_ctl->id);
 
-	snd_pcm_hw_स्थिरraपूर्णांक_minmax(runसमय, SNDRV_PCM_HW_PARAM_BUFFER_SIZE, 0, 64*1024);
-	वापस 0;
-पूर्ण
+	snd_pcm_hw_constraint_minmax(runtime, SNDRV_PCM_HW_PARAM_BUFFER_SIZE, 0, 64*1024);
+	return 0;
+}
 
 
 /*---------------------------------------------------------------------------
-   snd_trident_spdअगर_बंद
+   snd_trident_spdif_close
   
-   Description: This routine will बंद the 4DWave SPDIF device.
+   Description: This routine will close the 4DWave SPDIF device.
                 
    Parameters:	substream  - PCM substream class
 
   ---------------------------------------------------------------------------*/
 
-अटल पूर्णांक snd_trident_spdअगर_बंद(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा snd_trident *trident = snd_pcm_substream_chip(substream);
-	अचिन्हित पूर्णांक temp;
+static int snd_trident_spdif_close(struct snd_pcm_substream *substream)
+{
+	struct snd_trident *trident = snd_pcm_substream_chip(substream);
+	unsigned int temp;
 
 	spin_lock_irq(&trident->reg_lock);
-	// restore शेष SPDIF setting
-	अगर (trident->device != TRIDENT_DEVICE_ID_SI7018) अणु
-		outb(trident->spdअगर_ctrl, TRID_REG(trident, NX_SPCTRL_SPCSO + 3));
-		outl(trident->spdअगर_bits, TRID_REG(trident, NX_SPCSTATUS));
-	पूर्ण अन्यथा अणु
-		outl(trident->spdअगर_bits, TRID_REG(trident, SI_SPDIF_CS));
+	// restore default SPDIF setting
+	if (trident->device != TRIDENT_DEVICE_ID_SI7018) {
+		outb(trident->spdif_ctrl, TRID_REG(trident, NX_SPCTRL_SPCSO + 3));
+		outl(trident->spdif_bits, TRID_REG(trident, NX_SPCSTATUS));
+	} else {
+		outl(trident->spdif_bits, TRID_REG(trident, SI_SPDIF_CS));
 		temp = inl(TRID_REG(trident, SI_SERIAL_INTF_CTRL));
-		अगर (trident->spdअगर_ctrl) अणु
+		if (trident->spdif_ctrl) {
 			temp |= SPDIF_EN;
-		पूर्ण अन्यथा अणु
+		} else {
 			temp &= ~SPDIF_EN;
-		पूर्ण
+		}
 		outl(temp, TRID_REG(trident, SI_SERIAL_INTF_CTRL));
-	पूर्ण
+	}
 	spin_unlock_irq(&trident->reg_lock);
-	trident->spdअगर_pcm_ctl->vd[0].access |= SNDRV_CTL_ELEM_ACCESS_INACTIVE;
-	snd_ctl_notअगरy(trident->card, SNDRV_CTL_EVENT_MASK_VALUE |
-		       SNDRV_CTL_EVENT_MASK_INFO, &trident->spdअगर_pcm_ctl->id);
-	वापस 0;
-पूर्ण
+	trident->spdif_pcm_ctl->vd[0].access |= SNDRV_CTL_ELEM_ACCESS_INACTIVE;
+	snd_ctl_notify(trident->card, SNDRV_CTL_EVENT_MASK_VALUE |
+		       SNDRV_CTL_EVENT_MASK_INFO, &trident->spdif_pcm_ctl->id);
+	return 0;
+}
 
 /*---------------------------------------------------------------------------
-   snd_trident_capture_खोलो
+   snd_trident_capture_open
   
-   Description: This routine will खोलो the 4DWave capture device.
+   Description: This routine will open the 4DWave capture device.
 
    Parameters:	substream  - PCM substream class
 
@@ -1935,43 +1934,43 @@ EXPORT_SYMBOL(snd_trident_ग_लिखो_voice_regs);
 
   ---------------------------------------------------------------------------*/
 
-अटल पूर्णांक snd_trident_capture_खोलो(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा snd_trident *trident = snd_pcm_substream_chip(substream);
-	काष्ठा snd_trident_voice *voice;
-	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
+static int snd_trident_capture_open(struct snd_pcm_substream *substream)
+{
+	struct snd_trident *trident = snd_pcm_substream_chip(substream);
+	struct snd_trident_voice *voice;
+	struct snd_pcm_runtime *runtime = substream->runtime;
 
 	voice = snd_trident_alloc_voice(trident, SNDRV_TRIDENT_VOICE_TYPE_PCM, 0, 0);
-	अगर (voice == शून्य)
-		वापस -EAGAIN;
+	if (voice == NULL)
+		return -EAGAIN;
 	voice->capture = 1;
 	voice->substream = substream;
-	runसमय->निजी_data = voice;
-	runसमय->निजी_मुक्त = snd_trident_pcm_मुक्त_substream;
-	runसमय->hw = snd_trident_capture;
+	runtime->private_data = voice;
+	runtime->private_free = snd_trident_pcm_free_substream;
+	runtime->hw = snd_trident_capture;
 	snd_pcm_set_sync(substream);
-	snd_pcm_hw_स्थिरraपूर्णांक_minmax(runसमय, SNDRV_PCM_HW_PARAM_BUFFER_SIZE, 0, 64*1024);
-	वापस 0;
-पूर्ण
+	snd_pcm_hw_constraint_minmax(runtime, SNDRV_PCM_HW_PARAM_BUFFER_SIZE, 0, 64*1024);
+	return 0;
+}
 
 /*---------------------------------------------------------------------------
-   snd_trident_capture_बंद
+   snd_trident_capture_close
   
-   Description: This routine will बंद the 4DWave capture device. For now 
-                we will simply मुक्त the dma transfer buffer.
+   Description: This routine will close the 4DWave capture device. For now 
+                we will simply free the dma transfer buffer.
                 
    Parameters:	substream  - PCM substream class
 
   ---------------------------------------------------------------------------*/
-अटल पूर्णांक snd_trident_capture_बंद(काष्ठा snd_pcm_substream *substream)
-अणु
-	वापस 0;
-पूर्ण
+static int snd_trident_capture_close(struct snd_pcm_substream *substream)
+{
+	return 0;
+}
 
 /*---------------------------------------------------------------------------
-   snd_trident_foldback_खोलो
+   snd_trident_foldback_open
   
-   Description: This routine will खोलो the 4DWave foldback capture device.
+   Description: This routine will open the 4DWave foldback capture device.
 
    Parameters:	substream  - PCM substream class
 
@@ -1979,157 +1978,157 @@ EXPORT_SYMBOL(snd_trident_ग_लिखो_voice_regs);
 
   ---------------------------------------------------------------------------*/
 
-अटल पूर्णांक snd_trident_foldback_खोलो(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा snd_trident *trident = snd_pcm_substream_chip(substream);
-	काष्ठा snd_trident_voice *voice;
-	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
+static int snd_trident_foldback_open(struct snd_pcm_substream *substream)
+{
+	struct snd_trident *trident = snd_pcm_substream_chip(substream);
+	struct snd_trident_voice *voice;
+	struct snd_pcm_runtime *runtime = substream->runtime;
 
 	voice = snd_trident_alloc_voice(trident, SNDRV_TRIDENT_VOICE_TYPE_PCM, 0, 0);
-	अगर (voice == शून्य)
-		वापस -EAGAIN;
+	if (voice == NULL)
+		return -EAGAIN;
 	voice->foldback_chan = substream->number;
 	voice->substream = substream;
-	runसमय->निजी_data = voice;
-	runसमय->निजी_मुक्त = snd_trident_pcm_मुक्त_substream;
-	runसमय->hw = snd_trident_foldback;
-	snd_pcm_hw_स्थिरraपूर्णांक_minmax(runसमय, SNDRV_PCM_HW_PARAM_BUFFER_SIZE, 0, 64*1024);
-	वापस 0;
-पूर्ण
+	runtime->private_data = voice;
+	runtime->private_free = snd_trident_pcm_free_substream;
+	runtime->hw = snd_trident_foldback;
+	snd_pcm_hw_constraint_minmax(runtime, SNDRV_PCM_HW_PARAM_BUFFER_SIZE, 0, 64*1024);
+	return 0;
+}
 
 /*---------------------------------------------------------------------------
-   snd_trident_foldback_बंद
+   snd_trident_foldback_close
   
-   Description: This routine will बंद the 4DWave foldback capture device. 
-		For now we will simply मुक्त the dma transfer buffer.
+   Description: This routine will close the 4DWave foldback capture device. 
+		For now we will simply free the dma transfer buffer.
                 
    Parameters:	substream  - PCM substream class
 
   ---------------------------------------------------------------------------*/
-अटल पूर्णांक snd_trident_foldback_बंद(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा snd_trident *trident = snd_pcm_substream_chip(substream);
-	काष्ठा snd_trident_voice *voice;
-	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
-	voice = runसमय->निजी_data;
+static int snd_trident_foldback_close(struct snd_pcm_substream *substream)
+{
+	struct snd_trident *trident = snd_pcm_substream_chip(substream);
+	struct snd_trident_voice *voice;
+	struct snd_pcm_runtime *runtime = substream->runtime;
+	voice = runtime->private_data;
 	
 	/* stop capture channel */
 	spin_lock_irq(&trident->reg_lock);
 	outb(0x00, TRID_REG(trident, T4D_RCI + voice->foldback_chan));
 	spin_unlock_irq(&trident->reg_lock);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*---------------------------------------------------------------------------
    PCM operations
   ---------------------------------------------------------------------------*/
 
-अटल स्थिर काष्ठा snd_pcm_ops snd_trident_playback_ops = अणु
-	.खोलो =		snd_trident_playback_खोलो,
-	.बंद =	snd_trident_playback_बंद,
+static const struct snd_pcm_ops snd_trident_playback_ops = {
+	.open =		snd_trident_playback_open,
+	.close =	snd_trident_playback_close,
 	.hw_params =	snd_trident_hw_params,
-	.hw_मुक्त =	snd_trident_hw_मुक्त,
+	.hw_free =	snd_trident_hw_free,
 	.prepare =	snd_trident_playback_prepare,
 	.trigger =	snd_trident_trigger,
-	.poपूर्णांकer =	snd_trident_playback_poपूर्णांकer,
-पूर्ण;
+	.pointer =	snd_trident_playback_pointer,
+};
 
-अटल स्थिर काष्ठा snd_pcm_ops snd_trident_nx_playback_ops = अणु
-	.खोलो =		snd_trident_playback_खोलो,
-	.बंद =	snd_trident_playback_बंद,
+static const struct snd_pcm_ops snd_trident_nx_playback_ops = {
+	.open =		snd_trident_playback_open,
+	.close =	snd_trident_playback_close,
 	.hw_params =	snd_trident_hw_params,
-	.hw_मुक्त =	snd_trident_hw_मुक्त,
+	.hw_free =	snd_trident_hw_free,
 	.prepare =	snd_trident_playback_prepare,
 	.trigger =	snd_trident_trigger,
-	.poपूर्णांकer =	snd_trident_playback_poपूर्णांकer,
-पूर्ण;
+	.pointer =	snd_trident_playback_pointer,
+};
 
-अटल स्थिर काष्ठा snd_pcm_ops snd_trident_capture_ops = अणु
-	.खोलो =		snd_trident_capture_खोलो,
-	.बंद =	snd_trident_capture_बंद,
+static const struct snd_pcm_ops snd_trident_capture_ops = {
+	.open =		snd_trident_capture_open,
+	.close =	snd_trident_capture_close,
 	.hw_params =	snd_trident_capture_hw_params,
-	.hw_मुक्त =	snd_trident_hw_मुक्त,
+	.hw_free =	snd_trident_hw_free,
 	.prepare =	snd_trident_capture_prepare,
 	.trigger =	snd_trident_trigger,
-	.poपूर्णांकer =	snd_trident_capture_poपूर्णांकer,
-पूर्ण;
+	.pointer =	snd_trident_capture_pointer,
+};
 
-अटल स्थिर काष्ठा snd_pcm_ops snd_trident_si7018_capture_ops = अणु
-	.खोलो =		snd_trident_capture_खोलो,
-	.बंद =	snd_trident_capture_बंद,
+static const struct snd_pcm_ops snd_trident_si7018_capture_ops = {
+	.open =		snd_trident_capture_open,
+	.close =	snd_trident_capture_close,
 	.hw_params =	snd_trident_si7018_capture_hw_params,
-	.hw_मुक्त =	snd_trident_si7018_capture_hw_मुक्त,
+	.hw_free =	snd_trident_si7018_capture_hw_free,
 	.prepare =	snd_trident_si7018_capture_prepare,
 	.trigger =	snd_trident_trigger,
-	.poपूर्णांकer =	snd_trident_playback_poपूर्णांकer,
-पूर्ण;
+	.pointer =	snd_trident_playback_pointer,
+};
 
-अटल स्थिर काष्ठा snd_pcm_ops snd_trident_foldback_ops = अणु
-	.खोलो =		snd_trident_foldback_खोलो,
-	.बंद =	snd_trident_foldback_बंद,
+static const struct snd_pcm_ops snd_trident_foldback_ops = {
+	.open =		snd_trident_foldback_open,
+	.close =	snd_trident_foldback_close,
 	.hw_params =	snd_trident_hw_params,
-	.hw_मुक्त =	snd_trident_hw_मुक्त,
+	.hw_free =	snd_trident_hw_free,
 	.prepare =	snd_trident_foldback_prepare,
 	.trigger =	snd_trident_trigger,
-	.poपूर्णांकer =	snd_trident_playback_poपूर्णांकer,
-पूर्ण;
+	.pointer =	snd_trident_playback_pointer,
+};
 
-अटल स्थिर काष्ठा snd_pcm_ops snd_trident_nx_foldback_ops = अणु
-	.खोलो =		snd_trident_foldback_खोलो,
-	.बंद =	snd_trident_foldback_बंद,
+static const struct snd_pcm_ops snd_trident_nx_foldback_ops = {
+	.open =		snd_trident_foldback_open,
+	.close =	snd_trident_foldback_close,
 	.hw_params =	snd_trident_hw_params,
-	.hw_मुक्त =	snd_trident_hw_मुक्त,
+	.hw_free =	snd_trident_hw_free,
 	.prepare =	snd_trident_foldback_prepare,
 	.trigger =	snd_trident_trigger,
-	.poपूर्णांकer =	snd_trident_playback_poपूर्णांकer,
-पूर्ण;
+	.pointer =	snd_trident_playback_pointer,
+};
 
-अटल स्थिर काष्ठा snd_pcm_ops snd_trident_spdअगर_ops = अणु
-	.खोलो =		snd_trident_spdअगर_खोलो,
-	.बंद =	snd_trident_spdअगर_बंद,
-	.hw_params =	snd_trident_spdअगर_hw_params,
-	.hw_मुक्त =	snd_trident_hw_मुक्त,
-	.prepare =	snd_trident_spdअगर_prepare,
+static const struct snd_pcm_ops snd_trident_spdif_ops = {
+	.open =		snd_trident_spdif_open,
+	.close =	snd_trident_spdif_close,
+	.hw_params =	snd_trident_spdif_hw_params,
+	.hw_free =	snd_trident_hw_free,
+	.prepare =	snd_trident_spdif_prepare,
 	.trigger =	snd_trident_trigger,
-	.poपूर्णांकer =	snd_trident_spdअगर_poपूर्णांकer,
-पूर्ण;
+	.pointer =	snd_trident_spdif_pointer,
+};
 
-अटल स्थिर काष्ठा snd_pcm_ops snd_trident_spdअगर_7018_ops = अणु
-	.खोलो =		snd_trident_spdअगर_खोलो,
-	.बंद =	snd_trident_spdअगर_बंद,
-	.hw_params =	snd_trident_spdअगर_hw_params,
-	.hw_मुक्त =	snd_trident_hw_मुक्त,
-	.prepare =	snd_trident_spdअगर_prepare,
+static const struct snd_pcm_ops snd_trident_spdif_7018_ops = {
+	.open =		snd_trident_spdif_open,
+	.close =	snd_trident_spdif_close,
+	.hw_params =	snd_trident_spdif_hw_params,
+	.hw_free =	snd_trident_hw_free,
+	.prepare =	snd_trident_spdif_prepare,
 	.trigger =	snd_trident_trigger,
-	.poपूर्णांकer =	snd_trident_playback_poपूर्णांकer,
-पूर्ण;
+	.pointer =	snd_trident_playback_pointer,
+};
 
 /*---------------------------------------------------------------------------
    snd_trident_pcm
   
-   Description: This routine रेजिस्टरs the 4DWave device क्रम PCM support.
+   Description: This routine registers the 4DWave device for PCM support.
                 
-   Parameters:  trident - poपूर्णांकer to target device class क्रम 4DWave.
+   Parameters:  trident - pointer to target device class for 4DWave.
 
    Returns:     None
   
   ---------------------------------------------------------------------------*/
 
-पूर्णांक snd_trident_pcm(काष्ठा snd_trident *trident, पूर्णांक device)
-अणु
-	काष्ठा snd_pcm *pcm;
-	पूर्णांक err;
+int snd_trident_pcm(struct snd_trident *trident, int device)
+{
+	struct snd_pcm *pcm;
+	int err;
 
-	अगर ((err = snd_pcm_new(trident->card, "trident_dx_nx", device, trident->ChanPCM, 1, &pcm)) < 0)
-		वापस err;
+	if ((err = snd_pcm_new(trident->card, "trident_dx_nx", device, trident->ChanPCM, 1, &pcm)) < 0)
+		return err;
 
-	pcm->निजी_data = trident;
+	pcm->private_data = trident;
 
-	अगर (trident->tlb.entries) अणु
+	if (trident->tlb.entries) {
 		snd_pcm_set_ops(pcm, SNDRV_PCM_STREAM_PLAYBACK, &snd_trident_nx_playback_ops);
-	पूर्ण अन्यथा अणु
+	} else {
 		snd_pcm_set_ops(pcm, SNDRV_PCM_STREAM_PLAYBACK, &snd_trident_playback_ops);
-	पूर्ण
+	}
 	snd_pcm_set_ops(pcm, SNDRV_PCM_STREAM_CAPTURE,
 			trident->device != TRIDENT_DEVICE_ID_SI7018 ?
 			&snd_trident_capture_ops :
@@ -2137,12 +2136,12 @@ EXPORT_SYMBOL(snd_trident_ग_लिखो_voice_regs);
 
 	pcm->info_flags = 0;
 	pcm->dev_subclass = SNDRV_PCM_SUBCLASS_GENERIC_MIX;
-	म_नकल(pcm->name, "Trident 4DWave");
+	strcpy(pcm->name, "Trident 4DWave");
 	trident->pcm = pcm;
 
-	अगर (trident->tlb.entries) अणु
-		काष्ठा snd_pcm_substream *substream;
-		क्रम (substream = pcm->streams[SNDRV_PCM_STREAM_PLAYBACK].substream; substream; substream = substream->next)
+	if (trident->tlb.entries) {
+		struct snd_pcm_substream *substream;
+		for (substream = pcm->streams[SNDRV_PCM_STREAM_PLAYBACK].substream; substream; substream = substream->next)
 			snd_pcm_set_managed_buffer(substream, SNDRV_DMA_TYPE_DEV_SG,
 						   &trident->pci->dev,
 						   64*1024, 128*1024);
@@ -2150,103 +2149,103 @@ EXPORT_SYMBOL(snd_trident_ग_लिखो_voice_regs);
 					   SNDRV_DMA_TYPE_DEV,
 					   &trident->pci->dev,
 					   64*1024, 128*1024);
-	पूर्ण अन्यथा अणु
+	} else {
 		snd_pcm_set_managed_buffer_all(pcm, SNDRV_DMA_TYPE_DEV,
 					       &trident->pci->dev,
 					       64*1024, 128*1024);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*---------------------------------------------------------------------------
    snd_trident_foldback_pcm
   
-   Description: This routine रेजिस्टरs the 4DWave device क्रम foldback PCM support.
+   Description: This routine registers the 4DWave device for foldback PCM support.
                 
-   Parameters:  trident - poपूर्णांकer to target device class क्रम 4DWave.
+   Parameters:  trident - pointer to target device class for 4DWave.
 
    Returns:     None
   
   ---------------------------------------------------------------------------*/
 
-पूर्णांक snd_trident_foldback_pcm(काष्ठा snd_trident *trident, पूर्णांक device)
-अणु
-	काष्ठा snd_pcm *foldback;
-	पूर्णांक err;
-	पूर्णांक num_chan = 3;
-	काष्ठा snd_pcm_substream *substream;
+int snd_trident_foldback_pcm(struct snd_trident *trident, int device)
+{
+	struct snd_pcm *foldback;
+	int err;
+	int num_chan = 3;
+	struct snd_pcm_substream *substream;
 
-	अगर (trident->device == TRIDENT_DEVICE_ID_NX)
+	if (trident->device == TRIDENT_DEVICE_ID_NX)
 		num_chan = 4;
-	अगर ((err = snd_pcm_new(trident->card, "trident_dx_nx", device, 0, num_chan, &foldback)) < 0)
-		वापस err;
+	if ((err = snd_pcm_new(trident->card, "trident_dx_nx", device, 0, num_chan, &foldback)) < 0)
+		return err;
 
-	foldback->निजी_data = trident;
-	अगर (trident->tlb.entries)
+	foldback->private_data = trident;
+	if (trident->tlb.entries)
 		snd_pcm_set_ops(foldback, SNDRV_PCM_STREAM_CAPTURE, &snd_trident_nx_foldback_ops);
-	अन्यथा
+	else
 		snd_pcm_set_ops(foldback, SNDRV_PCM_STREAM_CAPTURE, &snd_trident_foldback_ops);
 	foldback->info_flags = 0;
-	म_नकल(foldback->name, "Trident 4DWave");
+	strcpy(foldback->name, "Trident 4DWave");
 	substream = foldback->streams[SNDRV_PCM_STREAM_CAPTURE].substream;
-	म_नकल(substream->name, "Front Mixer");
+	strcpy(substream->name, "Front Mixer");
 	substream = substream->next;
-	म_नकल(substream->name, "Reverb Mixer");
+	strcpy(substream->name, "Reverb Mixer");
 	substream = substream->next;
-	म_नकल(substream->name, "Chorus Mixer");
-	अगर (num_chan == 4) अणु
+	strcpy(substream->name, "Chorus Mixer");
+	if (num_chan == 4) {
 		substream = substream->next;
-		म_नकल(substream->name, "Second AC'97 ADC");
-	पूर्ण
+		strcpy(substream->name, "Second AC'97 ADC");
+	}
 	trident->foldback = foldback;
 
-	अगर (trident->tlb.entries)
+	if (trident->tlb.entries)
 		snd_pcm_set_managed_buffer_all(foldback, SNDRV_DMA_TYPE_DEV_SG,
 					       &trident->pci->dev,
 					       0, 128*1024);
-	अन्यथा
+	else
 		snd_pcm_set_managed_buffer_all(foldback, SNDRV_DMA_TYPE_DEV,
 					       &trident->pci->dev,
 					       64*1024, 128*1024);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*---------------------------------------------------------------------------
-   snd_trident_spdअगर
+   snd_trident_spdif
   
-   Description: This routine रेजिस्टरs the 4DWave-NX device क्रम SPDIF support.
+   Description: This routine registers the 4DWave-NX device for SPDIF support.
                 
-   Parameters:  trident - poपूर्णांकer to target device class क्रम 4DWave-NX.
+   Parameters:  trident - pointer to target device class for 4DWave-NX.
 
    Returns:     None
   
   ---------------------------------------------------------------------------*/
 
-पूर्णांक snd_trident_spdअगर_pcm(काष्ठा snd_trident *trident, पूर्णांक device)
-अणु
-	काष्ठा snd_pcm *spdअगर;
-	पूर्णांक err;
+int snd_trident_spdif_pcm(struct snd_trident *trident, int device)
+{
+	struct snd_pcm *spdif;
+	int err;
 
-	अगर ((err = snd_pcm_new(trident->card, "trident_dx_nx IEC958", device, 1, 0, &spdअगर)) < 0)
-		वापस err;
+	if ((err = snd_pcm_new(trident->card, "trident_dx_nx IEC958", device, 1, 0, &spdif)) < 0)
+		return err;
 
-	spdअगर->निजी_data = trident;
-	अगर (trident->device != TRIDENT_DEVICE_ID_SI7018) अणु
-		snd_pcm_set_ops(spdअगर, SNDRV_PCM_STREAM_PLAYBACK, &snd_trident_spdअगर_ops);
-	पूर्ण अन्यथा अणु
-		snd_pcm_set_ops(spdअगर, SNDRV_PCM_STREAM_PLAYBACK, &snd_trident_spdअगर_7018_ops);
-	पूर्ण
-	spdअगर->info_flags = 0;
-	म_नकल(spdअगर->name, "Trident 4DWave IEC958");
-	trident->spdअगर = spdअगर;
+	spdif->private_data = trident;
+	if (trident->device != TRIDENT_DEVICE_ID_SI7018) {
+		snd_pcm_set_ops(spdif, SNDRV_PCM_STREAM_PLAYBACK, &snd_trident_spdif_ops);
+	} else {
+		snd_pcm_set_ops(spdif, SNDRV_PCM_STREAM_PLAYBACK, &snd_trident_spdif_7018_ops);
+	}
+	spdif->info_flags = 0;
+	strcpy(spdif->name, "Trident 4DWave IEC958");
+	trident->spdif = spdif;
 
-	snd_pcm_set_managed_buffer_all(spdअगर, SNDRV_DMA_TYPE_DEV,
+	snd_pcm_set_managed_buffer_all(spdif, SNDRV_DMA_TYPE_DEV,
 				       &trident->pci->dev, 64*1024, 128*1024);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  *  Mixer part
@@ -2254,274 +2253,274 @@ EXPORT_SYMBOL(snd_trident_ग_लिखो_voice_regs);
 
 
 /*---------------------------------------------------------------------------
-    snd_trident_spdअगर_control
+    snd_trident_spdif_control
 
     Description: enable/disable S/PDIF out from ac97 mixer
   ---------------------------------------------------------------------------*/
 
-#घोषणा snd_trident_spdअगर_control_info	snd_ctl_boolean_mono_info
+#define snd_trident_spdif_control_info	snd_ctl_boolean_mono_info
 
-अटल पूर्णांक snd_trident_spdअगर_control_get(काष्ठा snd_kcontrol *kcontrol,
-					 काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_trident *trident = snd_kcontrol_chip(kcontrol);
-	अचिन्हित अक्षर val;
+static int snd_trident_spdif_control_get(struct snd_kcontrol *kcontrol,
+					 struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_trident *trident = snd_kcontrol_chip(kcontrol);
+	unsigned char val;
 
 	spin_lock_irq(&trident->reg_lock);
-	val = trident->spdअगर_ctrl;
-	ucontrol->value.पूर्णांकeger.value[0] = val == kcontrol->निजी_value;
+	val = trident->spdif_ctrl;
+	ucontrol->value.integer.value[0] = val == kcontrol->private_value;
 	spin_unlock_irq(&trident->reg_lock);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक snd_trident_spdअगर_control_put(काष्ठा snd_kcontrol *kcontrol,
-					 काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_trident *trident = snd_kcontrol_chip(kcontrol);
-	अचिन्हित अक्षर val;
-	पूर्णांक change;
+static int snd_trident_spdif_control_put(struct snd_kcontrol *kcontrol,
+					 struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_trident *trident = snd_kcontrol_chip(kcontrol);
+	unsigned char val;
+	int change;
 
-	val = ucontrol->value.पूर्णांकeger.value[0] ? (अचिन्हित अक्षर) kcontrol->निजी_value : 0x00;
+	val = ucontrol->value.integer.value[0] ? (unsigned char) kcontrol->private_value : 0x00;
 	spin_lock_irq(&trident->reg_lock);
 	/* S/PDIF C Channel bits 0-31 : 48khz, SCMS disabled */
-	change = trident->spdअगर_ctrl != val;
-	trident->spdअगर_ctrl = val;
-	अगर (trident->device != TRIDENT_DEVICE_ID_SI7018) अणु
-		अगर ((inb(TRID_REG(trident, NX_SPCTRL_SPCSO + 3)) & 0x10) == 0) अणु
-			outl(trident->spdअगर_bits, TRID_REG(trident, NX_SPCSTATUS));
-			outb(trident->spdअगर_ctrl, TRID_REG(trident, NX_SPCTRL_SPCSO + 3));
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		अगर (trident->spdअगर == शून्य) अणु
-			अचिन्हित पूर्णांक temp;
-			outl(trident->spdअगर_bits, TRID_REG(trident, SI_SPDIF_CS));
+	change = trident->spdif_ctrl != val;
+	trident->spdif_ctrl = val;
+	if (trident->device != TRIDENT_DEVICE_ID_SI7018) {
+		if ((inb(TRID_REG(trident, NX_SPCTRL_SPCSO + 3)) & 0x10) == 0) {
+			outl(trident->spdif_bits, TRID_REG(trident, NX_SPCSTATUS));
+			outb(trident->spdif_ctrl, TRID_REG(trident, NX_SPCTRL_SPCSO + 3));
+		}
+	} else {
+		if (trident->spdif == NULL) {
+			unsigned int temp;
+			outl(trident->spdif_bits, TRID_REG(trident, SI_SPDIF_CS));
 			temp = inl(TRID_REG(trident, SI_SERIAL_INTF_CTRL)) & ~SPDIF_EN;
-			अगर (val)
+			if (val)
 				temp |= SPDIF_EN;
 			outl(temp, TRID_REG(trident, SI_SERIAL_INTF_CTRL));
-		पूर्ण
-	पूर्ण
+		}
+	}
 	spin_unlock_irq(&trident->reg_lock);
-	वापस change;
-पूर्ण
+	return change;
+}
 
-अटल स्थिर काष्ठा snd_kcontrol_new snd_trident_spdअगर_control =
-अणु
-	.अगरace =	SNDRV_CTL_ELEM_IFACE_MIXER,
+static const struct snd_kcontrol_new snd_trident_spdif_control =
+{
+	.iface =	SNDRV_CTL_ELEM_IFACE_MIXER,
 	.name =         SNDRV_CTL_NAME_IEC958("",PLAYBACK,SWITCH),
-	.info =		snd_trident_spdअगर_control_info,
-	.get =		snd_trident_spdअगर_control_get,
-	.put =		snd_trident_spdअगर_control_put,
-	.निजी_value = 0x28,
-पूर्ण;
+	.info =		snd_trident_spdif_control_info,
+	.get =		snd_trident_spdif_control_get,
+	.put =		snd_trident_spdif_control_put,
+	.private_value = 0x28,
+};
 
 /*---------------------------------------------------------------------------
-    snd_trident_spdअगर_शेष
+    snd_trident_spdif_default
 
-    Description: put/get the S/PDIF शेष settings
+    Description: put/get the S/PDIF default settings
   ---------------------------------------------------------------------------*/
 
-अटल पूर्णांक snd_trident_spdअगर_शेष_info(काष्ठा snd_kcontrol *kcontrol,
-					  काष्ठा snd_ctl_elem_info *uinfo)
-अणु
+static int snd_trident_spdif_default_info(struct snd_kcontrol *kcontrol,
+					  struct snd_ctl_elem_info *uinfo)
+{
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_IEC958;
 	uinfo->count = 1;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक snd_trident_spdअगर_शेष_get(काष्ठा snd_kcontrol *kcontrol,
-					 काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_trident *trident = snd_kcontrol_chip(kcontrol);
+static int snd_trident_spdif_default_get(struct snd_kcontrol *kcontrol,
+					 struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_trident *trident = snd_kcontrol_chip(kcontrol);
 
 	spin_lock_irq(&trident->reg_lock);
-	ucontrol->value.iec958.status[0] = (trident->spdअगर_bits >> 0) & 0xff;
-	ucontrol->value.iec958.status[1] = (trident->spdअगर_bits >> 8) & 0xff;
-	ucontrol->value.iec958.status[2] = (trident->spdअगर_bits >> 16) & 0xff;
-	ucontrol->value.iec958.status[3] = (trident->spdअगर_bits >> 24) & 0xff;
+	ucontrol->value.iec958.status[0] = (trident->spdif_bits >> 0) & 0xff;
+	ucontrol->value.iec958.status[1] = (trident->spdif_bits >> 8) & 0xff;
+	ucontrol->value.iec958.status[2] = (trident->spdif_bits >> 16) & 0xff;
+	ucontrol->value.iec958.status[3] = (trident->spdif_bits >> 24) & 0xff;
 	spin_unlock_irq(&trident->reg_lock);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक snd_trident_spdअगर_शेष_put(काष्ठा snd_kcontrol *kcontrol,
-					 काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_trident *trident = snd_kcontrol_chip(kcontrol);
-	अचिन्हित पूर्णांक val;
-	पूर्णांक change;
+static int snd_trident_spdif_default_put(struct snd_kcontrol *kcontrol,
+					 struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_trident *trident = snd_kcontrol_chip(kcontrol);
+	unsigned int val;
+	int change;
 
 	val = (ucontrol->value.iec958.status[0] << 0) |
 	      (ucontrol->value.iec958.status[1] << 8) |
 	      (ucontrol->value.iec958.status[2] << 16) |
 	      (ucontrol->value.iec958.status[3] << 24);
 	spin_lock_irq(&trident->reg_lock);
-	change = trident->spdअगर_bits != val;
-	trident->spdअगर_bits = val;
-	अगर (trident->device != TRIDENT_DEVICE_ID_SI7018) अणु
-		अगर ((inb(TRID_REG(trident, NX_SPCTRL_SPCSO + 3)) & 0x10) == 0)
-			outl(trident->spdअगर_bits, TRID_REG(trident, NX_SPCSTATUS));
-	पूर्ण अन्यथा अणु
-		अगर (trident->spdअगर == शून्य)
-			outl(trident->spdअगर_bits, TRID_REG(trident, SI_SPDIF_CS));
-	पूर्ण
+	change = trident->spdif_bits != val;
+	trident->spdif_bits = val;
+	if (trident->device != TRIDENT_DEVICE_ID_SI7018) {
+		if ((inb(TRID_REG(trident, NX_SPCTRL_SPCSO + 3)) & 0x10) == 0)
+			outl(trident->spdif_bits, TRID_REG(trident, NX_SPCSTATUS));
+	} else {
+		if (trident->spdif == NULL)
+			outl(trident->spdif_bits, TRID_REG(trident, SI_SPDIF_CS));
+	}
 	spin_unlock_irq(&trident->reg_lock);
-	वापस change;
-पूर्ण
+	return change;
+}
 
-अटल स्थिर काष्ठा snd_kcontrol_new snd_trident_spdअगर_शेष =
-अणु
-	.अगरace =	SNDRV_CTL_ELEM_IFACE_PCM,
+static const struct snd_kcontrol_new snd_trident_spdif_default =
+{
+	.iface =	SNDRV_CTL_ELEM_IFACE_PCM,
 	.name =         SNDRV_CTL_NAME_IEC958("",PLAYBACK,DEFAULT),
-	.info =		snd_trident_spdअगर_शेष_info,
-	.get =		snd_trident_spdअगर_शेष_get,
-	.put =		snd_trident_spdअगर_शेष_put
-पूर्ण;
+	.info =		snd_trident_spdif_default_info,
+	.get =		snd_trident_spdif_default_get,
+	.put =		snd_trident_spdif_default_put
+};
 
 /*---------------------------------------------------------------------------
-    snd_trident_spdअगर_mask
+    snd_trident_spdif_mask
 
     Description: put/get the S/PDIF mask
   ---------------------------------------------------------------------------*/
 
-अटल पूर्णांक snd_trident_spdअगर_mask_info(काष्ठा snd_kcontrol *kcontrol,
-				       काष्ठा snd_ctl_elem_info *uinfo)
-अणु
+static int snd_trident_spdif_mask_info(struct snd_kcontrol *kcontrol,
+				       struct snd_ctl_elem_info *uinfo)
+{
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_IEC958;
 	uinfo->count = 1;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक snd_trident_spdअगर_mask_get(काष्ठा snd_kcontrol *kcontrol,
-				      काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
+static int snd_trident_spdif_mask_get(struct snd_kcontrol *kcontrol,
+				      struct snd_ctl_elem_value *ucontrol)
+{
 	ucontrol->value.iec958.status[0] = 0xff;
 	ucontrol->value.iec958.status[1] = 0xff;
 	ucontrol->value.iec958.status[2] = 0xff;
 	ucontrol->value.iec958.status[3] = 0xff;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा snd_kcontrol_new snd_trident_spdअगर_mask =
-अणु
+static const struct snd_kcontrol_new snd_trident_spdif_mask =
+{
 	.access =	SNDRV_CTL_ELEM_ACCESS_READ,
-	.अगरace =	SNDRV_CTL_ELEM_IFACE_PCM,
+	.iface =	SNDRV_CTL_ELEM_IFACE_PCM,
 	.name =         SNDRV_CTL_NAME_IEC958("",PLAYBACK,MASK),
-	.info =		snd_trident_spdअगर_mask_info,
-	.get =		snd_trident_spdअगर_mask_get,
-पूर्ण;
+	.info =		snd_trident_spdif_mask_info,
+	.get =		snd_trident_spdif_mask_get,
+};
 
 /*---------------------------------------------------------------------------
-    snd_trident_spdअगर_stream
+    snd_trident_spdif_stream
 
     Description: put/get the S/PDIF stream settings
   ---------------------------------------------------------------------------*/
 
-अटल पूर्णांक snd_trident_spdअगर_stream_info(काष्ठा snd_kcontrol *kcontrol,
-					 काष्ठा snd_ctl_elem_info *uinfo)
-अणु
+static int snd_trident_spdif_stream_info(struct snd_kcontrol *kcontrol,
+					 struct snd_ctl_elem_info *uinfo)
+{
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_IEC958;
 	uinfo->count = 1;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक snd_trident_spdअगर_stream_get(काष्ठा snd_kcontrol *kcontrol,
-					काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_trident *trident = snd_kcontrol_chip(kcontrol);
+static int snd_trident_spdif_stream_get(struct snd_kcontrol *kcontrol,
+					struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_trident *trident = snd_kcontrol_chip(kcontrol);
 
 	spin_lock_irq(&trident->reg_lock);
-	ucontrol->value.iec958.status[0] = (trident->spdअगर_pcm_bits >> 0) & 0xff;
-	ucontrol->value.iec958.status[1] = (trident->spdअगर_pcm_bits >> 8) & 0xff;
-	ucontrol->value.iec958.status[2] = (trident->spdअगर_pcm_bits >> 16) & 0xff;
-	ucontrol->value.iec958.status[3] = (trident->spdअगर_pcm_bits >> 24) & 0xff;
+	ucontrol->value.iec958.status[0] = (trident->spdif_pcm_bits >> 0) & 0xff;
+	ucontrol->value.iec958.status[1] = (trident->spdif_pcm_bits >> 8) & 0xff;
+	ucontrol->value.iec958.status[2] = (trident->spdif_pcm_bits >> 16) & 0xff;
+	ucontrol->value.iec958.status[3] = (trident->spdif_pcm_bits >> 24) & 0xff;
 	spin_unlock_irq(&trident->reg_lock);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक snd_trident_spdअगर_stream_put(काष्ठा snd_kcontrol *kcontrol,
-					काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_trident *trident = snd_kcontrol_chip(kcontrol);
-	अचिन्हित पूर्णांक val;
-	पूर्णांक change;
+static int snd_trident_spdif_stream_put(struct snd_kcontrol *kcontrol,
+					struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_trident *trident = snd_kcontrol_chip(kcontrol);
+	unsigned int val;
+	int change;
 
 	val = (ucontrol->value.iec958.status[0] << 0) |
 	      (ucontrol->value.iec958.status[1] << 8) |
 	      (ucontrol->value.iec958.status[2] << 16) |
 	      (ucontrol->value.iec958.status[3] << 24);
 	spin_lock_irq(&trident->reg_lock);
-	change = trident->spdअगर_pcm_bits != val;
-	trident->spdअगर_pcm_bits = val;
-	अगर (trident->spdअगर != शून्य) अणु
-		अगर (trident->device != TRIDENT_DEVICE_ID_SI7018) अणु
-			outl(trident->spdअगर_pcm_bits, TRID_REG(trident, NX_SPCSTATUS));
-		पूर्ण अन्यथा अणु
-			outl(trident->spdअगर_bits, TRID_REG(trident, SI_SPDIF_CS));
-		पूर्ण
-	पूर्ण
+	change = trident->spdif_pcm_bits != val;
+	trident->spdif_pcm_bits = val;
+	if (trident->spdif != NULL) {
+		if (trident->device != TRIDENT_DEVICE_ID_SI7018) {
+			outl(trident->spdif_pcm_bits, TRID_REG(trident, NX_SPCSTATUS));
+		} else {
+			outl(trident->spdif_bits, TRID_REG(trident, SI_SPDIF_CS));
+		}
+	}
 	spin_unlock_irq(&trident->reg_lock);
-	वापस change;
-पूर्ण
+	return change;
+}
 
-अटल स्थिर काष्ठा snd_kcontrol_new snd_trident_spdअगर_stream =
-अणु
+static const struct snd_kcontrol_new snd_trident_spdif_stream =
+{
 	.access =	SNDRV_CTL_ELEM_ACCESS_READWRITE | SNDRV_CTL_ELEM_ACCESS_INACTIVE,
-	.अगरace =	SNDRV_CTL_ELEM_IFACE_PCM,
+	.iface =	SNDRV_CTL_ELEM_IFACE_PCM,
 	.name =         SNDRV_CTL_NAME_IEC958("",PLAYBACK,PCM_STREAM),
-	.info =		snd_trident_spdअगर_stream_info,
-	.get =		snd_trident_spdअगर_stream_get,
-	.put =		snd_trident_spdअगर_stream_put
-पूर्ण;
+	.info =		snd_trident_spdif_stream_info,
+	.get =		snd_trident_spdif_stream_get,
+	.put =		snd_trident_spdif_stream_put
+};
 
 /*---------------------------------------------------------------------------
     snd_trident_ac97_control
 
-    Description: enable/disable rear path क्रम ac97
+    Description: enable/disable rear path for ac97
   ---------------------------------------------------------------------------*/
 
-#घोषणा snd_trident_ac97_control_info	snd_ctl_boolean_mono_info
+#define snd_trident_ac97_control_info	snd_ctl_boolean_mono_info
 
-अटल पूर्णांक snd_trident_ac97_control_get(काष्ठा snd_kcontrol *kcontrol,
-					काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_trident *trident = snd_kcontrol_chip(kcontrol);
-	अचिन्हित अक्षर val;
+static int snd_trident_ac97_control_get(struct snd_kcontrol *kcontrol,
+					struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_trident *trident = snd_kcontrol_chip(kcontrol);
+	unsigned char val;
 
 	spin_lock_irq(&trident->reg_lock);
 	val = trident->ac97_ctrl = inl(TRID_REG(trident, NX_ACR0_AC97_COM_STAT));
-	ucontrol->value.पूर्णांकeger.value[0] = (val & (1 << kcontrol->निजी_value)) ? 1 : 0;
+	ucontrol->value.integer.value[0] = (val & (1 << kcontrol->private_value)) ? 1 : 0;
 	spin_unlock_irq(&trident->reg_lock);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक snd_trident_ac97_control_put(काष्ठा snd_kcontrol *kcontrol,
-					काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_trident *trident = snd_kcontrol_chip(kcontrol);
-	अचिन्हित अक्षर val;
-	पूर्णांक change = 0;
+static int snd_trident_ac97_control_put(struct snd_kcontrol *kcontrol,
+					struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_trident *trident = snd_kcontrol_chip(kcontrol);
+	unsigned char val;
+	int change = 0;
 
 	spin_lock_irq(&trident->reg_lock);
 	val = trident->ac97_ctrl = inl(TRID_REG(trident, NX_ACR0_AC97_COM_STAT));
-	val &= ~(1 << kcontrol->निजी_value);
-	अगर (ucontrol->value.पूर्णांकeger.value[0])
-		val |= 1 << kcontrol->निजी_value;
+	val &= ~(1 << kcontrol->private_value);
+	if (ucontrol->value.integer.value[0])
+		val |= 1 << kcontrol->private_value;
 	change = val != trident->ac97_ctrl;
 	trident->ac97_ctrl = val;
 	outl(trident->ac97_ctrl = val, TRID_REG(trident, NX_ACR0_AC97_COM_STAT));
 	spin_unlock_irq(&trident->reg_lock);
-	वापस change;
-पूर्ण
+	return change;
+}
 
-अटल स्थिर काष्ठा snd_kcontrol_new snd_trident_ac97_rear_control =
-अणु
-	.अगरace =	SNDRV_CTL_ELEM_IFACE_MIXER,
+static const struct snd_kcontrol_new snd_trident_ac97_rear_control =
+{
+	.iface =	SNDRV_CTL_ELEM_IFACE_MIXER,
 	.name =         "Rear Path",
 	.info =		snd_trident_ac97_control_info,
 	.get =		snd_trident_ac97_control_get,
 	.put =		snd_trident_ac97_control_put,
-	.निजी_value = 4,
-पूर्ण;
+	.private_value = 4,
+};
 
 /*---------------------------------------------------------------------------
     snd_trident_vol_control
@@ -2529,69 +2528,69 @@ EXPORT_SYMBOL(snd_trident_ग_लिखो_voice_regs);
     Description: wave & music volume control
   ---------------------------------------------------------------------------*/
 
-अटल पूर्णांक snd_trident_vol_control_info(काष्ठा snd_kcontrol *kcontrol,
-					काष्ठा snd_ctl_elem_info *uinfo)
-अणु
+static int snd_trident_vol_control_info(struct snd_kcontrol *kcontrol,
+					struct snd_ctl_elem_info *uinfo)
+{
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_INTEGER;
 	uinfo->count = 2;
-	uinfo->value.पूर्णांकeger.min = 0;
-	uinfo->value.पूर्णांकeger.max = 255;
-	वापस 0;
-पूर्ण
+	uinfo->value.integer.min = 0;
+	uinfo->value.integer.max = 255;
+	return 0;
+}
 
-अटल पूर्णांक snd_trident_vol_control_get(काष्ठा snd_kcontrol *kcontrol,
-				       काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_trident *trident = snd_kcontrol_chip(kcontrol);
-	अचिन्हित पूर्णांक val;
+static int snd_trident_vol_control_get(struct snd_kcontrol *kcontrol,
+				       struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_trident *trident = snd_kcontrol_chip(kcontrol);
+	unsigned int val;
 
 	val = trident->musicvol_wavevol;
-	ucontrol->value.पूर्णांकeger.value[0] = 255 - ((val >> kcontrol->निजी_value) & 0xff);
-	ucontrol->value.पूर्णांकeger.value[1] = 255 - ((val >> (kcontrol->निजी_value + 8)) & 0xff);
-	वापस 0;
-पूर्ण
+	ucontrol->value.integer.value[0] = 255 - ((val >> kcontrol->private_value) & 0xff);
+	ucontrol->value.integer.value[1] = 255 - ((val >> (kcontrol->private_value + 8)) & 0xff);
+	return 0;
+}
 
-अटल स्थिर DECLARE_TLV_DB_SCALE(db_scale_gvol, -6375, 25, 0);
+static const DECLARE_TLV_DB_SCALE(db_scale_gvol, -6375, 25, 0);
 
-अटल पूर्णांक snd_trident_vol_control_put(काष्ठा snd_kcontrol *kcontrol,
-				       काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_trident *trident = snd_kcontrol_chip(kcontrol);
-	अचिन्हित पूर्णांक val;
-	पूर्णांक change = 0;
+static int snd_trident_vol_control_put(struct snd_kcontrol *kcontrol,
+				       struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_trident *trident = snd_kcontrol_chip(kcontrol);
+	unsigned int val;
+	int change = 0;
 
 	spin_lock_irq(&trident->reg_lock);
 	val = trident->musicvol_wavevol;
-	val &= ~(0xffff << kcontrol->निजी_value);
-	val |= ((255 - (ucontrol->value.पूर्णांकeger.value[0] & 0xff)) |
-	        ((255 - (ucontrol->value.पूर्णांकeger.value[1] & 0xff)) << 8)) << kcontrol->निजी_value;
+	val &= ~(0xffff << kcontrol->private_value);
+	val |= ((255 - (ucontrol->value.integer.value[0] & 0xff)) |
+	        ((255 - (ucontrol->value.integer.value[1] & 0xff)) << 8)) << kcontrol->private_value;
 	change = val != trident->musicvol_wavevol;
 	outl(trident->musicvol_wavevol = val, TRID_REG(trident, T4D_MUSICVOL_WAVEVOL));
 	spin_unlock_irq(&trident->reg_lock);
-	वापस change;
-पूर्ण
+	return change;
+}
 
-अटल स्थिर काष्ठा snd_kcontrol_new snd_trident_vol_music_control =
-अणु
-	.अगरace =	SNDRV_CTL_ELEM_IFACE_MIXER,
+static const struct snd_kcontrol_new snd_trident_vol_music_control =
+{
+	.iface =	SNDRV_CTL_ELEM_IFACE_MIXER,
 	.name =         "Music Playback Volume",
 	.info =		snd_trident_vol_control_info,
 	.get =		snd_trident_vol_control_get,
 	.put =		snd_trident_vol_control_put,
-	.निजी_value = 16,
-	.tlv = अणु .p = db_scale_gvol पूर्ण,
-पूर्ण;
+	.private_value = 16,
+	.tlv = { .p = db_scale_gvol },
+};
 
-अटल स्थिर काष्ठा snd_kcontrol_new snd_trident_vol_wave_control =
-अणु
-	.अगरace =	SNDRV_CTL_ELEM_IFACE_MIXER,
+static const struct snd_kcontrol_new snd_trident_vol_wave_control =
+{
+	.iface =	SNDRV_CTL_ELEM_IFACE_MIXER,
 	.name =         "Wave Playback Volume",
 	.info =		snd_trident_vol_control_info,
 	.get =		snd_trident_vol_control_get,
 	.put =		snd_trident_vol_control_put,
-	.निजी_value = 0,
-	.tlv = अणु .p = db_scale_gvol पूर्ण,
-पूर्ण;
+	.private_value = 0,
+	.tlv = { .p = db_scale_gvol },
+};
 
 /*---------------------------------------------------------------------------
     snd_trident_pcm_vol_control
@@ -2599,59 +2598,59 @@ EXPORT_SYMBOL(snd_trident_ग_लिखो_voice_regs);
     Description: PCM front volume control
   ---------------------------------------------------------------------------*/
 
-अटल पूर्णांक snd_trident_pcm_vol_control_info(काष्ठा snd_kcontrol *kcontrol,
-					    काष्ठा snd_ctl_elem_info *uinfo)
-अणु
-	काष्ठा snd_trident *trident = snd_kcontrol_chip(kcontrol);
+static int snd_trident_pcm_vol_control_info(struct snd_kcontrol *kcontrol,
+					    struct snd_ctl_elem_info *uinfo)
+{
+	struct snd_trident *trident = snd_kcontrol_chip(kcontrol);
 
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_INTEGER;
 	uinfo->count = 1;
-	uinfo->value.पूर्णांकeger.min = 0;
-	uinfo->value.पूर्णांकeger.max = 255;
-	अगर (trident->device == TRIDENT_DEVICE_ID_SI7018)
-		uinfo->value.पूर्णांकeger.max = 1023;
-	वापस 0;
-पूर्ण
+	uinfo->value.integer.min = 0;
+	uinfo->value.integer.max = 255;
+	if (trident->device == TRIDENT_DEVICE_ID_SI7018)
+		uinfo->value.integer.max = 1023;
+	return 0;
+}
 
-अटल पूर्णांक snd_trident_pcm_vol_control_get(काष्ठा snd_kcontrol *kcontrol,
-					   काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_trident *trident = snd_kcontrol_chip(kcontrol);
-	काष्ठा snd_trident_pcm_mixer *mix = &trident->pcm_mixer[snd_ctl_get_ioffnum(kcontrol, &ucontrol->id)];
+static int snd_trident_pcm_vol_control_get(struct snd_kcontrol *kcontrol,
+					   struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_trident *trident = snd_kcontrol_chip(kcontrol);
+	struct snd_trident_pcm_mixer *mix = &trident->pcm_mixer[snd_ctl_get_ioffnum(kcontrol, &ucontrol->id)];
 
-	अगर (trident->device == TRIDENT_DEVICE_ID_SI7018) अणु
-		ucontrol->value.पूर्णांकeger.value[0] = 1023 - mix->vol;
-	पूर्ण अन्यथा अणु
-		ucontrol->value.पूर्णांकeger.value[0] = 255 - (mix->vol>>2);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	if (trident->device == TRIDENT_DEVICE_ID_SI7018) {
+		ucontrol->value.integer.value[0] = 1023 - mix->vol;
+	} else {
+		ucontrol->value.integer.value[0] = 255 - (mix->vol>>2);
+	}
+	return 0;
+}
 
-अटल पूर्णांक snd_trident_pcm_vol_control_put(काष्ठा snd_kcontrol *kcontrol,
-					   काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_trident *trident = snd_kcontrol_chip(kcontrol);
-	काष्ठा snd_trident_pcm_mixer *mix = &trident->pcm_mixer[snd_ctl_get_ioffnum(kcontrol, &ucontrol->id)];
-	अचिन्हित पूर्णांक val;
-	पूर्णांक change = 0;
+static int snd_trident_pcm_vol_control_put(struct snd_kcontrol *kcontrol,
+					   struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_trident *trident = snd_kcontrol_chip(kcontrol);
+	struct snd_trident_pcm_mixer *mix = &trident->pcm_mixer[snd_ctl_get_ioffnum(kcontrol, &ucontrol->id)];
+	unsigned int val;
+	int change = 0;
 
-	अगर (trident->device == TRIDENT_DEVICE_ID_SI7018) अणु
-		val = 1023 - (ucontrol->value.पूर्णांकeger.value[0] & 1023);
-	पूर्ण अन्यथा अणु
-		val = (255 - (ucontrol->value.पूर्णांकeger.value[0] & 255)) << 2;
-	पूर्ण
+	if (trident->device == TRIDENT_DEVICE_ID_SI7018) {
+		val = 1023 - (ucontrol->value.integer.value[0] & 1023);
+	} else {
+		val = (255 - (ucontrol->value.integer.value[0] & 255)) << 2;
+	}
 	spin_lock_irq(&trident->reg_lock);
 	change = val != mix->vol;
 	mix->vol = val;
-	अगर (mix->voice != शून्य)
-		snd_trident_ग_लिखो_vol_reg(trident, mix->voice, val);
+	if (mix->voice != NULL)
+		snd_trident_write_vol_reg(trident, mix->voice, val);
 	spin_unlock_irq(&trident->reg_lock);
-	वापस change;
-पूर्ण
+	return change;
+}
 
-अटल स्थिर काष्ठा snd_kcontrol_new snd_trident_pcm_vol_control =
-अणु
-	.अगरace =	SNDRV_CTL_ELEM_IFACE_MIXER,
+static const struct snd_kcontrol_new snd_trident_pcm_vol_control =
+{
+	.iface =	SNDRV_CTL_ELEM_IFACE_MIXER,
 	.name =         "PCM Front Playback Volume",
 	.access =	SNDRV_CTL_ELEM_ACCESS_READWRITE | SNDRV_CTL_ELEM_ACCESS_INACTIVE,
 	.count =	32,
@@ -2659,7 +2658,7 @@ EXPORT_SYMBOL(snd_trident_ग_लिखो_voice_regs);
 	.get =		snd_trident_pcm_vol_control_get,
 	.put =		snd_trident_pcm_vol_control_put,
 	/* FIXME: no tlv yet */
-पूर्ण;
+};
 
 /*---------------------------------------------------------------------------
     snd_trident_pcm_pan_control
@@ -2667,62 +2666,62 @@ EXPORT_SYMBOL(snd_trident_ग_लिखो_voice_regs);
     Description: PCM front pan control
   ---------------------------------------------------------------------------*/
 
-अटल पूर्णांक snd_trident_pcm_pan_control_info(काष्ठा snd_kcontrol *kcontrol,
-					    काष्ठा snd_ctl_elem_info *uinfo)
-अणु
+static int snd_trident_pcm_pan_control_info(struct snd_kcontrol *kcontrol,
+					    struct snd_ctl_elem_info *uinfo)
+{
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_INTEGER;
 	uinfo->count = 1;
-	uinfo->value.पूर्णांकeger.min = 0;
-	uinfo->value.पूर्णांकeger.max = 127;
-	वापस 0;
-पूर्ण
+	uinfo->value.integer.min = 0;
+	uinfo->value.integer.max = 127;
+	return 0;
+}
 
-अटल पूर्णांक snd_trident_pcm_pan_control_get(काष्ठा snd_kcontrol *kcontrol,
-					   काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_trident *trident = snd_kcontrol_chip(kcontrol);
-	काष्ठा snd_trident_pcm_mixer *mix = &trident->pcm_mixer[snd_ctl_get_ioffnum(kcontrol, &ucontrol->id)];
+static int snd_trident_pcm_pan_control_get(struct snd_kcontrol *kcontrol,
+					   struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_trident *trident = snd_kcontrol_chip(kcontrol);
+	struct snd_trident_pcm_mixer *mix = &trident->pcm_mixer[snd_ctl_get_ioffnum(kcontrol, &ucontrol->id)];
 
-	ucontrol->value.पूर्णांकeger.value[0] = mix->pan;
-	अगर (ucontrol->value.पूर्णांकeger.value[0] & 0x40) अणु
-		ucontrol->value.पूर्णांकeger.value[0] = (0x3f - (ucontrol->value.पूर्णांकeger.value[0] & 0x3f));
-	पूर्ण अन्यथा अणु
-		ucontrol->value.पूर्णांकeger.value[0] |= 0x40;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	ucontrol->value.integer.value[0] = mix->pan;
+	if (ucontrol->value.integer.value[0] & 0x40) {
+		ucontrol->value.integer.value[0] = (0x3f - (ucontrol->value.integer.value[0] & 0x3f));
+	} else {
+		ucontrol->value.integer.value[0] |= 0x40;
+	}
+	return 0;
+}
 
-अटल पूर्णांक snd_trident_pcm_pan_control_put(काष्ठा snd_kcontrol *kcontrol,
-					   काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_trident *trident = snd_kcontrol_chip(kcontrol);
-	काष्ठा snd_trident_pcm_mixer *mix = &trident->pcm_mixer[snd_ctl_get_ioffnum(kcontrol, &ucontrol->id)];
-	अचिन्हित अक्षर val;
-	पूर्णांक change = 0;
+static int snd_trident_pcm_pan_control_put(struct snd_kcontrol *kcontrol,
+					   struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_trident *trident = snd_kcontrol_chip(kcontrol);
+	struct snd_trident_pcm_mixer *mix = &trident->pcm_mixer[snd_ctl_get_ioffnum(kcontrol, &ucontrol->id)];
+	unsigned char val;
+	int change = 0;
 
-	अगर (ucontrol->value.पूर्णांकeger.value[0] & 0x40)
-		val = ucontrol->value.पूर्णांकeger.value[0] & 0x3f;
-	अन्यथा
-		val = (0x3f - (ucontrol->value.पूर्णांकeger.value[0] & 0x3f)) | 0x40;
+	if (ucontrol->value.integer.value[0] & 0x40)
+		val = ucontrol->value.integer.value[0] & 0x3f;
+	else
+		val = (0x3f - (ucontrol->value.integer.value[0] & 0x3f)) | 0x40;
 	spin_lock_irq(&trident->reg_lock);
 	change = val != mix->pan;
 	mix->pan = val;
-	अगर (mix->voice != शून्य)
-		snd_trident_ग_लिखो_pan_reg(trident, mix->voice, val);
+	if (mix->voice != NULL)
+		snd_trident_write_pan_reg(trident, mix->voice, val);
 	spin_unlock_irq(&trident->reg_lock);
-	वापस change;
-पूर्ण
+	return change;
+}
 
-अटल स्थिर काष्ठा snd_kcontrol_new snd_trident_pcm_pan_control =
-अणु
-	.अगरace =	SNDRV_CTL_ELEM_IFACE_MIXER,
+static const struct snd_kcontrol_new snd_trident_pcm_pan_control =
+{
+	.iface =	SNDRV_CTL_ELEM_IFACE_MIXER,
 	.name =         "PCM Pan Playback Control",
 	.access =	SNDRV_CTL_ELEM_ACCESS_READWRITE | SNDRV_CTL_ELEM_ACCESS_INACTIVE,
 	.count =	32,
 	.info =		snd_trident_pcm_pan_control_info,
 	.get =		snd_trident_pcm_pan_control_get,
 	.put =		snd_trident_pcm_pan_control_put,
-पूर्ण;
+};
 
 /*---------------------------------------------------------------------------
     snd_trident_pcm_rvol_control
@@ -2730,57 +2729,57 @@ EXPORT_SYMBOL(snd_trident_ग_लिखो_voice_regs);
     Description: PCM reverb volume control
   ---------------------------------------------------------------------------*/
 
-अटल पूर्णांक snd_trident_pcm_rvol_control_info(काष्ठा snd_kcontrol *kcontrol,
-					     काष्ठा snd_ctl_elem_info *uinfo)
-अणु
+static int snd_trident_pcm_rvol_control_info(struct snd_kcontrol *kcontrol,
+					     struct snd_ctl_elem_info *uinfo)
+{
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_INTEGER;
 	uinfo->count = 1;
-	uinfo->value.पूर्णांकeger.min = 0;
-	uinfo->value.पूर्णांकeger.max = 127;
-	वापस 0;
-पूर्ण
+	uinfo->value.integer.min = 0;
+	uinfo->value.integer.max = 127;
+	return 0;
+}
 
-अटल पूर्णांक snd_trident_pcm_rvol_control_get(काष्ठा snd_kcontrol *kcontrol,
-					    काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_trident *trident = snd_kcontrol_chip(kcontrol);
-	काष्ठा snd_trident_pcm_mixer *mix = &trident->pcm_mixer[snd_ctl_get_ioffnum(kcontrol, &ucontrol->id)];
+static int snd_trident_pcm_rvol_control_get(struct snd_kcontrol *kcontrol,
+					    struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_trident *trident = snd_kcontrol_chip(kcontrol);
+	struct snd_trident_pcm_mixer *mix = &trident->pcm_mixer[snd_ctl_get_ioffnum(kcontrol, &ucontrol->id)];
 
-	ucontrol->value.पूर्णांकeger.value[0] = 127 - mix->rvol;
-	वापस 0;
-पूर्ण
+	ucontrol->value.integer.value[0] = 127 - mix->rvol;
+	return 0;
+}
 
-अटल पूर्णांक snd_trident_pcm_rvol_control_put(काष्ठा snd_kcontrol *kcontrol,
-					    काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_trident *trident = snd_kcontrol_chip(kcontrol);
-	काष्ठा snd_trident_pcm_mixer *mix = &trident->pcm_mixer[snd_ctl_get_ioffnum(kcontrol, &ucontrol->id)];
-	अचिन्हित लघु val;
-	पूर्णांक change = 0;
+static int snd_trident_pcm_rvol_control_put(struct snd_kcontrol *kcontrol,
+					    struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_trident *trident = snd_kcontrol_chip(kcontrol);
+	struct snd_trident_pcm_mixer *mix = &trident->pcm_mixer[snd_ctl_get_ioffnum(kcontrol, &ucontrol->id)];
+	unsigned short val;
+	int change = 0;
 
-	val = 0x7f - (ucontrol->value.पूर्णांकeger.value[0] & 0x7f);
+	val = 0x7f - (ucontrol->value.integer.value[0] & 0x7f);
 	spin_lock_irq(&trident->reg_lock);
 	change = val != mix->rvol;
 	mix->rvol = val;
-	अगर (mix->voice != शून्य)
-		snd_trident_ग_लिखो_rvol_reg(trident, mix->voice, val);
+	if (mix->voice != NULL)
+		snd_trident_write_rvol_reg(trident, mix->voice, val);
 	spin_unlock_irq(&trident->reg_lock);
-	वापस change;
-पूर्ण
+	return change;
+}
 
-अटल स्थिर DECLARE_TLV_DB_SCALE(db_scale_crvol, -3175, 25, 1);
+static const DECLARE_TLV_DB_SCALE(db_scale_crvol, -3175, 25, 1);
 
-अटल स्थिर काष्ठा snd_kcontrol_new snd_trident_pcm_rvol_control =
-अणु
-	.अगरace =	SNDRV_CTL_ELEM_IFACE_MIXER,
+static const struct snd_kcontrol_new snd_trident_pcm_rvol_control =
+{
+	.iface =	SNDRV_CTL_ELEM_IFACE_MIXER,
 	.name =         "PCM Reverb Playback Volume",
 	.access =	SNDRV_CTL_ELEM_ACCESS_READWRITE | SNDRV_CTL_ELEM_ACCESS_INACTIVE,
 	.count = 	32,
 	.info =		snd_trident_pcm_rvol_control_info,
 	.get =		snd_trident_pcm_rvol_control_get,
 	.put =		snd_trident_pcm_rvol_control_put,
-	.tlv = अणु .p = db_scale_crvol पूर्ण,
-पूर्ण;
+	.tlv = { .p = db_scale_crvol },
+};
 
 /*---------------------------------------------------------------------------
     snd_trident_pcm_cvol_control
@@ -2788,355 +2787,355 @@ EXPORT_SYMBOL(snd_trident_ग_लिखो_voice_regs);
     Description: PCM chorus volume control
   ---------------------------------------------------------------------------*/
 
-अटल पूर्णांक snd_trident_pcm_cvol_control_info(काष्ठा snd_kcontrol *kcontrol,
-					     काष्ठा snd_ctl_elem_info *uinfo)
-अणु
+static int snd_trident_pcm_cvol_control_info(struct snd_kcontrol *kcontrol,
+					     struct snd_ctl_elem_info *uinfo)
+{
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_INTEGER;
 	uinfo->count = 1;
-	uinfo->value.पूर्णांकeger.min = 0;
-	uinfo->value.पूर्णांकeger.max = 127;
-	वापस 0;
-पूर्ण
+	uinfo->value.integer.min = 0;
+	uinfo->value.integer.max = 127;
+	return 0;
+}
 
-अटल पूर्णांक snd_trident_pcm_cvol_control_get(काष्ठा snd_kcontrol *kcontrol,
-					    काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_trident *trident = snd_kcontrol_chip(kcontrol);
-	काष्ठा snd_trident_pcm_mixer *mix = &trident->pcm_mixer[snd_ctl_get_ioffnum(kcontrol, &ucontrol->id)];
+static int snd_trident_pcm_cvol_control_get(struct snd_kcontrol *kcontrol,
+					    struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_trident *trident = snd_kcontrol_chip(kcontrol);
+	struct snd_trident_pcm_mixer *mix = &trident->pcm_mixer[snd_ctl_get_ioffnum(kcontrol, &ucontrol->id)];
 
-	ucontrol->value.पूर्णांकeger.value[0] = 127 - mix->cvol;
-	वापस 0;
-पूर्ण
+	ucontrol->value.integer.value[0] = 127 - mix->cvol;
+	return 0;
+}
 
-अटल पूर्णांक snd_trident_pcm_cvol_control_put(काष्ठा snd_kcontrol *kcontrol,
-					    काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_trident *trident = snd_kcontrol_chip(kcontrol);
-	काष्ठा snd_trident_pcm_mixer *mix = &trident->pcm_mixer[snd_ctl_get_ioffnum(kcontrol, &ucontrol->id)];
-	अचिन्हित लघु val;
-	पूर्णांक change = 0;
+static int snd_trident_pcm_cvol_control_put(struct snd_kcontrol *kcontrol,
+					    struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_trident *trident = snd_kcontrol_chip(kcontrol);
+	struct snd_trident_pcm_mixer *mix = &trident->pcm_mixer[snd_ctl_get_ioffnum(kcontrol, &ucontrol->id)];
+	unsigned short val;
+	int change = 0;
 
-	val = 0x7f - (ucontrol->value.पूर्णांकeger.value[0] & 0x7f);
+	val = 0x7f - (ucontrol->value.integer.value[0] & 0x7f);
 	spin_lock_irq(&trident->reg_lock);
 	change = val != mix->cvol;
 	mix->cvol = val;
-	अगर (mix->voice != शून्य)
-		snd_trident_ग_लिखो_cvol_reg(trident, mix->voice, val);
+	if (mix->voice != NULL)
+		snd_trident_write_cvol_reg(trident, mix->voice, val);
 	spin_unlock_irq(&trident->reg_lock);
-	वापस change;
-पूर्ण
+	return change;
+}
 
-अटल स्थिर काष्ठा snd_kcontrol_new snd_trident_pcm_cvol_control =
-अणु
-	.अगरace =	SNDRV_CTL_ELEM_IFACE_MIXER,
+static const struct snd_kcontrol_new snd_trident_pcm_cvol_control =
+{
+	.iface =	SNDRV_CTL_ELEM_IFACE_MIXER,
 	.name =         "PCM Chorus Playback Volume",
 	.access =	SNDRV_CTL_ELEM_ACCESS_READWRITE | SNDRV_CTL_ELEM_ACCESS_INACTIVE,
 	.count =	32,
 	.info =		snd_trident_pcm_cvol_control_info,
 	.get =		snd_trident_pcm_cvol_control_get,
 	.put =		snd_trident_pcm_cvol_control_put,
-	.tlv = अणु .p = db_scale_crvol पूर्ण,
-पूर्ण;
+	.tlv = { .p = db_scale_crvol },
+};
 
-अटल व्योम snd_trident_notअगरy_pcm_change1(काष्ठा snd_card *card,
-					   काष्ठा snd_kcontrol *kctl,
-					   पूर्णांक num, पूर्णांक activate)
-अणु
-	काष्ठा snd_ctl_elem_id id;
+static void snd_trident_notify_pcm_change1(struct snd_card *card,
+					   struct snd_kcontrol *kctl,
+					   int num, int activate)
+{
+	struct snd_ctl_elem_id id;
 
-	अगर (! kctl)
-		वापस;
-	अगर (activate)
+	if (! kctl)
+		return;
+	if (activate)
 		kctl->vd[num].access &= ~SNDRV_CTL_ELEM_ACCESS_INACTIVE;
-	अन्यथा
+	else
 		kctl->vd[num].access |= SNDRV_CTL_ELEM_ACCESS_INACTIVE;
-	snd_ctl_notअगरy(card, SNDRV_CTL_EVENT_MASK_VALUE |
+	snd_ctl_notify(card, SNDRV_CTL_EVENT_MASK_VALUE |
 		       SNDRV_CTL_EVENT_MASK_INFO,
 		       snd_ctl_build_ioff(&id, kctl, num));
-पूर्ण
+}
 
-अटल व्योम snd_trident_notअगरy_pcm_change(काष्ठा snd_trident *trident,
-					  काष्ठा snd_trident_pcm_mixer *पंचांगix,
-					  पूर्णांक num, पूर्णांक activate)
-अणु
-	snd_trident_notअगरy_pcm_change1(trident->card, trident->ctl_vol, num, activate);
-	snd_trident_notअगरy_pcm_change1(trident->card, trident->ctl_pan, num, activate);
-	snd_trident_notअगरy_pcm_change1(trident->card, trident->ctl_rvol, num, activate);
-	snd_trident_notअगरy_pcm_change1(trident->card, trident->ctl_cvol, num, activate);
-पूर्ण
+static void snd_trident_notify_pcm_change(struct snd_trident *trident,
+					  struct snd_trident_pcm_mixer *tmix,
+					  int num, int activate)
+{
+	snd_trident_notify_pcm_change1(trident->card, trident->ctl_vol, num, activate);
+	snd_trident_notify_pcm_change1(trident->card, trident->ctl_pan, num, activate);
+	snd_trident_notify_pcm_change1(trident->card, trident->ctl_rvol, num, activate);
+	snd_trident_notify_pcm_change1(trident->card, trident->ctl_cvol, num, activate);
+}
 
-अटल पूर्णांक snd_trident_pcm_mixer_build(काष्ठा snd_trident *trident,
-				       काष्ठा snd_trident_voice *voice,
-				       काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा snd_trident_pcm_mixer *पंचांगix;
+static int snd_trident_pcm_mixer_build(struct snd_trident *trident,
+				       struct snd_trident_voice *voice,
+				       struct snd_pcm_substream *substream)
+{
+	struct snd_trident_pcm_mixer *tmix;
 
-	अगर (snd_BUG_ON(!trident || !voice || !substream))
-		वापस -EINVAL;
-	पंचांगix = &trident->pcm_mixer[substream->number];
-	पंचांगix->voice = voice;
-	पंचांगix->vol = T4D_DEFAULT_PCM_VOL;
-	पंचांगix->pan = T4D_DEFAULT_PCM_PAN;
-	पंचांगix->rvol = T4D_DEFAULT_PCM_RVOL;
-	पंचांगix->cvol = T4D_DEFAULT_PCM_CVOL;
-	snd_trident_notअगरy_pcm_change(trident, पंचांगix, substream->number, 1);
-	वापस 0;
-पूर्ण
+	if (snd_BUG_ON(!trident || !voice || !substream))
+		return -EINVAL;
+	tmix = &trident->pcm_mixer[substream->number];
+	tmix->voice = voice;
+	tmix->vol = T4D_DEFAULT_PCM_VOL;
+	tmix->pan = T4D_DEFAULT_PCM_PAN;
+	tmix->rvol = T4D_DEFAULT_PCM_RVOL;
+	tmix->cvol = T4D_DEFAULT_PCM_CVOL;
+	snd_trident_notify_pcm_change(trident, tmix, substream->number, 1);
+	return 0;
+}
 
-अटल पूर्णांक snd_trident_pcm_mixer_मुक्त(काष्ठा snd_trident *trident, काष्ठा snd_trident_voice *voice, काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा snd_trident_pcm_mixer *पंचांगix;
+static int snd_trident_pcm_mixer_free(struct snd_trident *trident, struct snd_trident_voice *voice, struct snd_pcm_substream *substream)
+{
+	struct snd_trident_pcm_mixer *tmix;
 
-	अगर (snd_BUG_ON(!trident || !substream))
-		वापस -EINVAL;
-	पंचांगix = &trident->pcm_mixer[substream->number];
-	पंचांगix->voice = शून्य;
-	snd_trident_notअगरy_pcm_change(trident, पंचांगix, substream->number, 0);
-	वापस 0;
-पूर्ण
+	if (snd_BUG_ON(!trident || !substream))
+		return -EINVAL;
+	tmix = &trident->pcm_mixer[substream->number];
+	tmix->voice = NULL;
+	snd_trident_notify_pcm_change(trident, tmix, substream->number, 0);
+	return 0;
+}
 
 /*---------------------------------------------------------------------------
    snd_trident_mixer
   
-   Description: This routine रेजिस्टरs the 4DWave device क्रम mixer support.
+   Description: This routine registers the 4DWave device for mixer support.
                 
-   Parameters:  trident - poपूर्णांकer to target device class क्रम 4DWave.
+   Parameters:  trident - pointer to target device class for 4DWave.
 
    Returns:     None
   
   ---------------------------------------------------------------------------*/
 
-अटल पूर्णांक snd_trident_mixer(काष्ठा snd_trident *trident, पूर्णांक pcm_spdअगर_device)
-अणु
-	काष्ठा snd_ac97_ढाँचा _ac97;
-	काष्ठा snd_card *card = trident->card;
-	काष्ठा snd_kcontrol *kctl;
-	काष्ठा snd_ctl_elem_value *uctl;
-	पूर्णांक idx, err, retries = 2;
-	अटल स्थिर काष्ठा snd_ac97_bus_ops ops = अणु
-		.ग_लिखो = snd_trident_codec_ग_लिखो,
-		.पढ़ो = snd_trident_codec_पढ़ो,
-	पूर्ण;
+static int snd_trident_mixer(struct snd_trident *trident, int pcm_spdif_device)
+{
+	struct snd_ac97_template _ac97;
+	struct snd_card *card = trident->card;
+	struct snd_kcontrol *kctl;
+	struct snd_ctl_elem_value *uctl;
+	int idx, err, retries = 2;
+	static const struct snd_ac97_bus_ops ops = {
+		.write = snd_trident_codec_write,
+		.read = snd_trident_codec_read,
+	};
 
-	uctl = kzalloc(माप(*uctl), GFP_KERNEL);
-	अगर (!uctl)
-		वापस -ENOMEM;
+	uctl = kzalloc(sizeof(*uctl), GFP_KERNEL);
+	if (!uctl)
+		return -ENOMEM;
 
-	अगर ((err = snd_ac97_bus(trident->card, 0, &ops, शून्य, &trident->ac97_bus)) < 0)
-		जाओ __out;
+	if ((err = snd_ac97_bus(trident->card, 0, &ops, NULL, &trident->ac97_bus)) < 0)
+		goto __out;
 
-	स_रखो(&_ac97, 0, माप(_ac97));
-	_ac97.निजी_data = trident;
+	memset(&_ac97, 0, sizeof(_ac97));
+	_ac97.private_data = trident;
 	trident->ac97_detect = 1;
 
       __again:
-	अगर ((err = snd_ac97_mixer(trident->ac97_bus, &_ac97, &trident->ac97)) < 0) अणु
-		अगर (trident->device == TRIDENT_DEVICE_ID_SI7018) अणु
-			अगर ((err = snd_trident_sis_reset(trident)) < 0)
-				जाओ __out;
-			अगर (retries-- > 0)
-				जाओ __again;
+	if ((err = snd_ac97_mixer(trident->ac97_bus, &_ac97, &trident->ac97)) < 0) {
+		if (trident->device == TRIDENT_DEVICE_ID_SI7018) {
+			if ((err = snd_trident_sis_reset(trident)) < 0)
+				goto __out;
+			if (retries-- > 0)
+				goto __again;
 			err = -EIO;
-		पूर्ण
-		जाओ __out;
-	पूर्ण
+		}
+		goto __out;
+	}
 	
 	/* secondary codec? */
-	अगर (trident->device == TRIDENT_DEVICE_ID_SI7018 &&
-	    (inl(TRID_REG(trident, SI_SERIAL_INTF_CTRL)) & SI_AC97_PRIMARY_READY) != 0) अणु
+	if (trident->device == TRIDENT_DEVICE_ID_SI7018 &&
+	    (inl(TRID_REG(trident, SI_SERIAL_INTF_CTRL)) & SI_AC97_PRIMARY_READY) != 0) {
 		_ac97.num = 1;
 		err = snd_ac97_mixer(trident->ac97_bus, &_ac97, &trident->ac97_sec);
-		अगर (err < 0)
+		if (err < 0)
 			dev_err(trident->card->dev,
 				"SI7018: the secondary codec - invalid access\n");
-#अगर 0	// only क्रम my testing purpose --jk
-		अणु
-			काष्ठा snd_ac97 *mc97;
+#if 0	// only for my testing purpose --jk
+		{
+			struct snd_ac97 *mc97;
 			err = snd_ac97_modem(trident->card, &_ac97, &mc97);
-			अगर (err < 0)
+			if (err < 0)
 				dev_err(trident->card->dev,
 					"snd_ac97_modem returned error %i\n", err);
-		पूर्ण
-#पूर्ण_अगर
-	पूर्ण
+		}
+#endif
+	}
 	
 	trident->ac97_detect = 0;
 
-	अगर (trident->device != TRIDENT_DEVICE_ID_SI7018) अणु
-		अगर ((err = snd_ctl_add(card, kctl = snd_ctl_new1(&snd_trident_vol_wave_control, trident))) < 0)
-			जाओ __out;
+	if (trident->device != TRIDENT_DEVICE_ID_SI7018) {
+		if ((err = snd_ctl_add(card, kctl = snd_ctl_new1(&snd_trident_vol_wave_control, trident))) < 0)
+			goto __out;
 		kctl->put(kctl, uctl);
-		अगर ((err = snd_ctl_add(card, kctl = snd_ctl_new1(&snd_trident_vol_music_control, trident))) < 0)
-			जाओ __out;
+		if ((err = snd_ctl_add(card, kctl = snd_ctl_new1(&snd_trident_vol_music_control, trident))) < 0)
+			goto __out;
 		kctl->put(kctl, uctl);
 		outl(trident->musicvol_wavevol = 0x00000000, TRID_REG(trident, T4D_MUSICVOL_WAVEVOL));
-	पूर्ण अन्यथा अणु
+	} else {
 		outl(trident->musicvol_wavevol = 0xffff0000, TRID_REG(trident, T4D_MUSICVOL_WAVEVOL));
-	पूर्ण
+	}
 
-	क्रम (idx = 0; idx < 32; idx++) अणु
-		काष्ठा snd_trident_pcm_mixer *पंचांगix;
+	for (idx = 0; idx < 32; idx++) {
+		struct snd_trident_pcm_mixer *tmix;
 		
-		पंचांगix = &trident->pcm_mixer[idx];
-		पंचांगix->voice = शून्य;
-	पूर्ण
-	अगर ((trident->ctl_vol = snd_ctl_new1(&snd_trident_pcm_vol_control, trident)) == शून्य)
-		जाओ __nomem;
-	अगर ((err = snd_ctl_add(card, trident->ctl_vol)))
-		जाओ __out;
+		tmix = &trident->pcm_mixer[idx];
+		tmix->voice = NULL;
+	}
+	if ((trident->ctl_vol = snd_ctl_new1(&snd_trident_pcm_vol_control, trident)) == NULL)
+		goto __nomem;
+	if ((err = snd_ctl_add(card, trident->ctl_vol)))
+		goto __out;
 		
-	अगर ((trident->ctl_pan = snd_ctl_new1(&snd_trident_pcm_pan_control, trident)) == शून्य)
-		जाओ __nomem;
-	अगर ((err = snd_ctl_add(card, trident->ctl_pan)))
-		जाओ __out;
+	if ((trident->ctl_pan = snd_ctl_new1(&snd_trident_pcm_pan_control, trident)) == NULL)
+		goto __nomem;
+	if ((err = snd_ctl_add(card, trident->ctl_pan)))
+		goto __out;
 
-	अगर ((trident->ctl_rvol = snd_ctl_new1(&snd_trident_pcm_rvol_control, trident)) == शून्य)
-		जाओ __nomem;
-	अगर ((err = snd_ctl_add(card, trident->ctl_rvol)))
-		जाओ __out;
+	if ((trident->ctl_rvol = snd_ctl_new1(&snd_trident_pcm_rvol_control, trident)) == NULL)
+		goto __nomem;
+	if ((err = snd_ctl_add(card, trident->ctl_rvol)))
+		goto __out;
 
-	अगर ((trident->ctl_cvol = snd_ctl_new1(&snd_trident_pcm_cvol_control, trident)) == शून्य)
-		जाओ __nomem;
-	अगर ((err = snd_ctl_add(card, trident->ctl_cvol)))
-		जाओ __out;
+	if ((trident->ctl_cvol = snd_ctl_new1(&snd_trident_pcm_cvol_control, trident)) == NULL)
+		goto __nomem;
+	if ((err = snd_ctl_add(card, trident->ctl_cvol)))
+		goto __out;
 
-	अगर (trident->device == TRIDENT_DEVICE_ID_NX) अणु
-		अगर ((err = snd_ctl_add(card, kctl = snd_ctl_new1(&snd_trident_ac97_rear_control, trident))) < 0)
-			जाओ __out;
+	if (trident->device == TRIDENT_DEVICE_ID_NX) {
+		if ((err = snd_ctl_add(card, kctl = snd_ctl_new1(&snd_trident_ac97_rear_control, trident))) < 0)
+			goto __out;
 		kctl->put(kctl, uctl);
-	पूर्ण
-	अगर (trident->device == TRIDENT_DEVICE_ID_NX || trident->device == TRIDENT_DEVICE_ID_SI7018) अणु
+	}
+	if (trident->device == TRIDENT_DEVICE_ID_NX || trident->device == TRIDENT_DEVICE_ID_SI7018) {
 
-		kctl = snd_ctl_new1(&snd_trident_spdअगर_control, trident);
-		अगर (kctl == शून्य) अणु
+		kctl = snd_ctl_new1(&snd_trident_spdif_control, trident);
+		if (kctl == NULL) {
 			err = -ENOMEM;
-			जाओ __out;
-		पूर्ण
-		अगर (trident->ac97->ext_id & AC97_EI_SPDIF)
+			goto __out;
+		}
+		if (trident->ac97->ext_id & AC97_EI_SPDIF)
 			kctl->id.index++;
-		अगर (trident->ac97_sec && (trident->ac97_sec->ext_id & AC97_EI_SPDIF))
+		if (trident->ac97_sec && (trident->ac97_sec->ext_id & AC97_EI_SPDIF))
 			kctl->id.index++;
 		idx = kctl->id.index;
-		अगर ((err = snd_ctl_add(card, kctl)) < 0)
-			जाओ __out;
+		if ((err = snd_ctl_add(card, kctl)) < 0)
+			goto __out;
 		kctl->put(kctl, uctl);
 
-		kctl = snd_ctl_new1(&snd_trident_spdअगर_शेष, trident);
-		अगर (kctl == शून्य) अणु
+		kctl = snd_ctl_new1(&snd_trident_spdif_default, trident);
+		if (kctl == NULL) {
 			err = -ENOMEM;
-			जाओ __out;
-		पूर्ण
+			goto __out;
+		}
 		kctl->id.index = idx;
-		kctl->id.device = pcm_spdअगर_device;
-		अगर ((err = snd_ctl_add(card, kctl)) < 0)
-			जाओ __out;
+		kctl->id.device = pcm_spdif_device;
+		if ((err = snd_ctl_add(card, kctl)) < 0)
+			goto __out;
 
-		kctl = snd_ctl_new1(&snd_trident_spdअगर_mask, trident);
-		अगर (kctl == शून्य) अणु
+		kctl = snd_ctl_new1(&snd_trident_spdif_mask, trident);
+		if (kctl == NULL) {
 			err = -ENOMEM;
-			जाओ __out;
-		पूर्ण
+			goto __out;
+		}
 		kctl->id.index = idx;
-		kctl->id.device = pcm_spdअगर_device;
-		अगर ((err = snd_ctl_add(card, kctl)) < 0)
-			जाओ __out;
+		kctl->id.device = pcm_spdif_device;
+		if ((err = snd_ctl_add(card, kctl)) < 0)
+			goto __out;
 
-		kctl = snd_ctl_new1(&snd_trident_spdअगर_stream, trident);
-		अगर (kctl == शून्य) अणु
+		kctl = snd_ctl_new1(&snd_trident_spdif_stream, trident);
+		if (kctl == NULL) {
 			err = -ENOMEM;
-			जाओ __out;
-		पूर्ण
+			goto __out;
+		}
 		kctl->id.index = idx;
-		kctl->id.device = pcm_spdअगर_device;
-		अगर ((err = snd_ctl_add(card, kctl)) < 0)
-			जाओ __out;
-		trident->spdअगर_pcm_ctl = kctl;
-	पूर्ण
+		kctl->id.device = pcm_spdif_device;
+		if ((err = snd_ctl_add(card, kctl)) < 0)
+			goto __out;
+		trident->spdif_pcm_ctl = kctl;
+	}
 
 	err = 0;
-	जाओ __out;
+	goto __out;
 
  __nomem:
 	err = -ENOMEM;
 
  __out:
-	kमुक्त(uctl);
+	kfree(uctl);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /*
- * gameport पूर्णांकerface
+ * gameport interface
  */
 
-#अगर IS_REACHABLE(CONFIG_GAMEPORT)
+#if IS_REACHABLE(CONFIG_GAMEPORT)
 
-अटल अचिन्हित अक्षर snd_trident_gameport_पढ़ो(काष्ठा gameport *gameport)
-अणु
-	काष्ठा snd_trident *chip = gameport_get_port_data(gameport);
+static unsigned char snd_trident_gameport_read(struct gameport *gameport)
+{
+	struct snd_trident *chip = gameport_get_port_data(gameport);
 
-	अगर (snd_BUG_ON(!chip))
-		वापस 0;
-	वापस inb(TRID_REG(chip, GAMEPORT_LEGACY));
-पूर्ण
+	if (snd_BUG_ON(!chip))
+		return 0;
+	return inb(TRID_REG(chip, GAMEPORT_LEGACY));
+}
 
-अटल व्योम snd_trident_gameport_trigger(काष्ठा gameport *gameport)
-अणु
-	काष्ठा snd_trident *chip = gameport_get_port_data(gameport);
+static void snd_trident_gameport_trigger(struct gameport *gameport)
+{
+	struct snd_trident *chip = gameport_get_port_data(gameport);
 
-	अगर (snd_BUG_ON(!chip))
-		वापस;
+	if (snd_BUG_ON(!chip))
+		return;
 	outb(0xff, TRID_REG(chip, GAMEPORT_LEGACY));
-पूर्ण
+}
 
-अटल पूर्णांक snd_trident_gameport_cooked_पढ़ो(काष्ठा gameport *gameport, पूर्णांक *axes, पूर्णांक *buttons)
-अणु
-	काष्ठा snd_trident *chip = gameport_get_port_data(gameport);
-	पूर्णांक i;
+static int snd_trident_gameport_cooked_read(struct gameport *gameport, int *axes, int *buttons)
+{
+	struct snd_trident *chip = gameport_get_port_data(gameport);
+	int i;
 
-	अगर (snd_BUG_ON(!chip))
-		वापस 0;
+	if (snd_BUG_ON(!chip))
+		return 0;
 
 	*buttons = (~inb(TRID_REG(chip, GAMEPORT_LEGACY)) >> 4) & 0xf;
 
-	क्रम (i = 0; i < 4; i++) अणु
+	for (i = 0; i < 4; i++) {
 		axes[i] = inw(TRID_REG(chip, GAMEPORT_AXES + i * 2));
-		अगर (axes[i] == 0xffff) axes[i] = -1;
-	पूर्ण
+		if (axes[i] == 0xffff) axes[i] = -1;
+	}
         
-        वापस 0;
-पूर्ण
+        return 0;
+}
 
-अटल पूर्णांक snd_trident_gameport_खोलो(काष्ठा gameport *gameport, पूर्णांक mode)
-अणु
-	काष्ठा snd_trident *chip = gameport_get_port_data(gameport);
+static int snd_trident_gameport_open(struct gameport *gameport, int mode)
+{
+	struct snd_trident *chip = gameport_get_port_data(gameport);
 
-	अगर (snd_BUG_ON(!chip))
-		वापस 0;
+	if (snd_BUG_ON(!chip))
+		return 0;
 
-	चयन (mode) अणु
-		हाल GAMEPORT_MODE_COOKED:
+	switch (mode) {
+		case GAMEPORT_MODE_COOKED:
 			outb(GAMEPORT_MODE_ADC, TRID_REG(chip, GAMEPORT_GCR));
 			msleep(20);
-			वापस 0;
-		हाल GAMEPORT_MODE_RAW:
+			return 0;
+		case GAMEPORT_MODE_RAW:
 			outb(0, TRID_REG(chip, GAMEPORT_GCR));
-			वापस 0;
-		शेष:
-			वापस -1;
-	पूर्ण
-पूर्ण
+			return 0;
+		default:
+			return -1;
+	}
+}
 
-पूर्णांक snd_trident_create_gameport(काष्ठा snd_trident *chip)
-अणु
-	काष्ठा gameport *gp;
+int snd_trident_create_gameport(struct snd_trident *chip)
+{
+	struct gameport *gp;
 
 	chip->gameport = gp = gameport_allocate_port();
-	अगर (!gp) अणु
+	if (!gp) {
 		dev_err(chip->card->dev,
 			"cannot allocate memory for gameport\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	gameport_set_name(gp, "Trident 4DWave");
 	gameport_set_phys(gp, "pci%s/gameport0", pci_name(chip->pci));
@@ -3144,143 +3143,143 @@ EXPORT_SYMBOL(snd_trident_ग_लिखो_voice_regs);
 
 	gameport_set_port_data(gp, chip);
 	gp->fuzz = 64;
-	gp->पढ़ो = snd_trident_gameport_पढ़ो;
+	gp->read = snd_trident_gameport_read;
 	gp->trigger = snd_trident_gameport_trigger;
-	gp->cooked_पढ़ो = snd_trident_gameport_cooked_पढ़ो;
-	gp->खोलो = snd_trident_gameport_खोलो;
+	gp->cooked_read = snd_trident_gameport_cooked_read;
+	gp->open = snd_trident_gameport_open;
 
-	gameport_रेजिस्टर_port(gp);
+	gameport_register_port(gp);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत व्योम snd_trident_मुक्त_gameport(काष्ठा snd_trident *chip)
-अणु
-	अगर (chip->gameport) अणु
-		gameport_unरेजिस्टर_port(chip->gameport);
-		chip->gameport = शून्य;
-	पूर्ण
-पूर्ण
-#अन्यथा
-पूर्णांक snd_trident_create_gameport(काष्ठा snd_trident *chip) अणु वापस -ENOSYS; पूर्ण
-अटल अंतरभूत व्योम snd_trident_मुक्त_gameport(काष्ठा snd_trident *chip) अणु पूर्ण
-#पूर्ण_अगर /* CONFIG_GAMEPORT */
+static inline void snd_trident_free_gameport(struct snd_trident *chip)
+{
+	if (chip->gameport) {
+		gameport_unregister_port(chip->gameport);
+		chip->gameport = NULL;
+	}
+}
+#else
+int snd_trident_create_gameport(struct snd_trident *chip) { return -ENOSYS; }
+static inline void snd_trident_free_gameport(struct snd_trident *chip) { }
+#endif /* CONFIG_GAMEPORT */
 
 /*
- * delay क्रम 1 tick
+ * delay for 1 tick
  */
-अटल अंतरभूत व्योम करो_delay(काष्ठा snd_trident *chip)
-अणु
-	schedule_समयout_unपूर्णांकerruptible(1);
-पूर्ण
+static inline void do_delay(struct snd_trident *chip)
+{
+	schedule_timeout_uninterruptible(1);
+}
 
 /*
  *  SiS reset routine
  */
 
-अटल पूर्णांक snd_trident_sis_reset(काष्ठा snd_trident *trident)
-अणु
-	अचिन्हित दीर्घ end_समय;
-	अचिन्हित पूर्णांक i;
-	पूर्णांक r;
+static int snd_trident_sis_reset(struct snd_trident *trident)
+{
+	unsigned long end_time;
+	unsigned int i;
+	int r;
 
 	r = trident->in_suspend ? 0 : 2;	/* count of retries */
       __si7018_retry:
-	pci_ग_लिखो_config_byte(trident->pci, 0x46, 0x04);	/* SOFTWARE RESET */
+	pci_write_config_byte(trident->pci, 0x46, 0x04);	/* SOFTWARE RESET */
 	udelay(100);
-	pci_ग_लिखो_config_byte(trident->pci, 0x46, 0x00);
+	pci_write_config_byte(trident->pci, 0x46, 0x00);
 	udelay(100);
-	/* disable AC97 GPIO पूर्णांकerrupt */
+	/* disable AC97 GPIO interrupt */
 	outb(0x00, TRID_REG(trident, SI_AC97_GPIO));
-	/* initialize serial पूर्णांकerface, क्रमce cold reset */
+	/* initialize serial interface, force cold reset */
 	i = PCMOUT|SURROUT|CENTEROUT|LFEOUT|SECONDARY_ID|COLD_RESET;
 	outl(i, TRID_REG(trident, SI_SERIAL_INTF_CTRL));
 	udelay(1000);
-	/* हटाओ cold reset */
+	/* remove cold reset */
 	i &= ~COLD_RESET;
 	outl(i, TRID_REG(trident, SI_SERIAL_INTF_CTRL));
 	udelay(2000);
-	/* रुको, until the codec is पढ़ोy */
-	end_समय = (jअगरfies + (HZ * 3) / 4) + 1;
-	करो अणु
-		अगर ((inl(TRID_REG(trident, SI_SERIAL_INTF_CTRL)) & SI_AC97_PRIMARY_READY) != 0)
-			जाओ __si7018_ok;
-		करो_delay(trident);
-	पूर्ण जबतक (समय_after_eq(end_समय, jअगरfies));
+	/* wait, until the codec is ready */
+	end_time = (jiffies + (HZ * 3) / 4) + 1;
+	do {
+		if ((inl(TRID_REG(trident, SI_SERIAL_INTF_CTRL)) & SI_AC97_PRIMARY_READY) != 0)
+			goto __si7018_ok;
+		do_delay(trident);
+	} while (time_after_eq(end_time, jiffies));
 	dev_err(trident->card->dev, "AC'97 codec ready error [0x%x]\n",
 		inl(TRID_REG(trident, SI_SERIAL_INTF_CTRL)));
-	अगर (r-- > 0) अणु
-		end_समय = jअगरfies + HZ;
-		करो अणु
-			करो_delay(trident);
-		पूर्ण जबतक (समय_after_eq(end_समय, jअगरfies));
-		जाओ __si7018_retry;
-	पूर्ण
+	if (r-- > 0) {
+		end_time = jiffies + HZ;
+		do {
+			do_delay(trident);
+		} while (time_after_eq(end_time, jiffies));
+		goto __si7018_retry;
+	}
       __si7018_ok:
-	/* रुको क्रम the second codec */
-	करो अणु
-		अगर ((inl(TRID_REG(trident, SI_SERIAL_INTF_CTRL)) & SI_AC97_SECONDARY_READY) != 0)
-			अवरोध;
-		करो_delay(trident);
-	पूर्ण जबतक (समय_after_eq(end_समय, jअगरfies));
+	/* wait for the second codec */
+	do {
+		if ((inl(TRID_REG(trident, SI_SERIAL_INTF_CTRL)) & SI_AC97_SECONDARY_READY) != 0)
+			break;
+		do_delay(trident);
+	} while (time_after_eq(end_time, jiffies));
 	/* enable 64 channel mode */
 	outl(BANK_B_EN, TRID_REG(trident, T4D_LFO_GC_CIR));
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*  
- *  /proc पूर्णांकerface
+ *  /proc interface
  */
 
-अटल व्योम snd_trident_proc_पढ़ो(काष्ठा snd_info_entry *entry, 
-				  काष्ठा snd_info_buffer *buffer)
-अणु
-	काष्ठा snd_trident *trident = entry->निजी_data;
-	अक्षर *s;
+static void snd_trident_proc_read(struct snd_info_entry *entry, 
+				  struct snd_info_buffer *buffer)
+{
+	struct snd_trident *trident = entry->private_data;
+	char *s;
 
-	चयन (trident->device) अणु
-	हाल TRIDENT_DEVICE_ID_SI7018:
+	switch (trident->device) {
+	case TRIDENT_DEVICE_ID_SI7018:
 		s = "SiS 7018 Audio";
-		अवरोध;
-	हाल TRIDENT_DEVICE_ID_DX:
+		break;
+	case TRIDENT_DEVICE_ID_DX:
 		s = "Trident 4DWave PCI DX";
-		अवरोध;
-	हाल TRIDENT_DEVICE_ID_NX:
+		break;
+	case TRIDENT_DEVICE_ID_NX:
 		s = "Trident 4DWave PCI NX";
-		अवरोध;
-	शेष:
+		break;
+	default:
 		s = "???";
-	पूर्ण
-	snd_iम_लिखो(buffer, "%s\n\n", s);
-	snd_iम_लिखो(buffer, "Spurious IRQs    : %d\n", trident->spurious_irq_count);
-	snd_iम_लिखो(buffer, "Spurious IRQ dlta: %d\n", trident->spurious_irq_max_delta);
-	अगर (trident->device == TRIDENT_DEVICE_ID_NX || trident->device == TRIDENT_DEVICE_ID_SI7018)
-		snd_iम_लिखो(buffer, "IEC958 Mixer Out : %s\n", trident->spdअगर_ctrl == 0x28 ? "on" : "off");
-	अगर (trident->device == TRIDENT_DEVICE_ID_NX) अणु
-		snd_iम_लिखो(buffer, "Rear Speakers    : %s\n", trident->ac97_ctrl & 0x00000010 ? "on" : "off");
-		अगर (trident->tlb.entries) अणु
-			snd_iम_लिखो(buffer,"\nVirtual Memory\n");
-			snd_iम_लिखो(buffer, "Memory Maximum : %d\n", trident->tlb.memhdr->size);
-			snd_iम_लिखो(buffer, "Memory Used    : %d\n", trident->tlb.memhdr->used);
-			snd_iम_लिखो(buffer, "Memory Free    : %d\n", snd_util_mem_avail(trident->tlb.memhdr));
-		पूर्ण
-	पूर्ण
-पूर्ण
+	}
+	snd_iprintf(buffer, "%s\n\n", s);
+	snd_iprintf(buffer, "Spurious IRQs    : %d\n", trident->spurious_irq_count);
+	snd_iprintf(buffer, "Spurious IRQ dlta: %d\n", trident->spurious_irq_max_delta);
+	if (trident->device == TRIDENT_DEVICE_ID_NX || trident->device == TRIDENT_DEVICE_ID_SI7018)
+		snd_iprintf(buffer, "IEC958 Mixer Out : %s\n", trident->spdif_ctrl == 0x28 ? "on" : "off");
+	if (trident->device == TRIDENT_DEVICE_ID_NX) {
+		snd_iprintf(buffer, "Rear Speakers    : %s\n", trident->ac97_ctrl & 0x00000010 ? "on" : "off");
+		if (trident->tlb.entries) {
+			snd_iprintf(buffer,"\nVirtual Memory\n");
+			snd_iprintf(buffer, "Memory Maximum : %d\n", trident->tlb.memhdr->size);
+			snd_iprintf(buffer, "Memory Used    : %d\n", trident->tlb.memhdr->used);
+			snd_iprintf(buffer, "Memory Free    : %d\n", snd_util_mem_avail(trident->tlb.memhdr));
+		}
+	}
+}
 
-अटल व्योम snd_trident_proc_init(काष्ठा snd_trident *trident)
-अणु
-	स्थिर अक्षर *s = "trident";
+static void snd_trident_proc_init(struct snd_trident *trident)
+{
+	const char *s = "trident";
 	
-	अगर (trident->device == TRIDENT_DEVICE_ID_SI7018)
+	if (trident->device == TRIDENT_DEVICE_ID_SI7018)
 		s = "sis7018";
-	snd_card_ro_proc_new(trident->card, s, trident, snd_trident_proc_पढ़ो);
-पूर्ण
+	snd_card_ro_proc_new(trident->card, s, trident, snd_trident_proc_read);
+}
 
-अटल पूर्णांक snd_trident_dev_मुक्त(काष्ठा snd_device *device)
-अणु
-	काष्ठा snd_trident *trident = device->device_data;
-	वापस snd_trident_मुक्त(trident);
-पूर्ण
+static int snd_trident_dev_free(struct snd_device *device)
+{
+	struct snd_trident *trident = device->device_data;
+	return snd_trident_free(trident);
+}
 
 /*---------------------------------------------------------------------------
    snd_trident_tlb_alloc
@@ -3288,135 +3287,135 @@ EXPORT_SYMBOL(snd_trident_ग_लिखो_voice_regs);
    Description: Allocate and set up the TLB page table on 4D NX.
 		Each entry has 4 bytes (physical PCI address).
                 
-   Parameters:  trident - poपूर्णांकer to target device class क्रम 4DWave.
+   Parameters:  trident - pointer to target device class for 4DWave.
 
    Returns:     0 or negative error code
   
   ---------------------------------------------------------------------------*/
 
-अटल पूर्णांक snd_trident_tlb_alloc(काष्ठा snd_trident *trident)
-अणु
-	पूर्णांक i;
+static int snd_trident_tlb_alloc(struct snd_trident *trident)
+{
+	int i;
 
 	/* TLB array must be aligned to 16kB !!! so we allocate
 	   32kB region and correct offset when necessary */
 
-	अगर (snd_dma_alloc_pages(SNDRV_DMA_TYPE_DEV, &trident->pci->dev,
-				2 * SNDRV_TRIDENT_MAX_PAGES * 4, &trident->tlb.buffer) < 0) अणु
+	if (snd_dma_alloc_pages(SNDRV_DMA_TYPE_DEV, &trident->pci->dev,
+				2 * SNDRV_TRIDENT_MAX_PAGES * 4, &trident->tlb.buffer) < 0) {
 		dev_err(trident->card->dev, "unable to allocate TLB buffer\n");
-		वापस -ENOMEM;
-	पूर्ण
-	trident->tlb.entries = (__le32 *)ALIGN((अचिन्हित दीर्घ)trident->tlb.buffer.area, SNDRV_TRIDENT_MAX_PAGES * 4);
+		return -ENOMEM;
+	}
+	trident->tlb.entries = (__le32 *)ALIGN((unsigned long)trident->tlb.buffer.area, SNDRV_TRIDENT_MAX_PAGES * 4);
 	trident->tlb.entries_dmaaddr = ALIGN(trident->tlb.buffer.addr, SNDRV_TRIDENT_MAX_PAGES * 4);
-	/* allocate shaकरोw TLB page table (भव addresses) */
-	trident->tlb.shaकरोw_entries =
-		vदो_स्मृति(array_size(SNDRV_TRIDENT_MAX_PAGES,
-				   माप(अचिन्हित दीर्घ)));
-	अगर (!trident->tlb.shaकरोw_entries)
-		वापस -ENOMEM;
+	/* allocate shadow TLB page table (virtual addresses) */
+	trident->tlb.shadow_entries =
+		vmalloc(array_size(SNDRV_TRIDENT_MAX_PAGES,
+				   sizeof(unsigned long)));
+	if (!trident->tlb.shadow_entries)
+		return -ENOMEM;
 
 	/* allocate and setup silent page and initialise TLB entries */
-	अगर (snd_dma_alloc_pages(SNDRV_DMA_TYPE_DEV, &trident->pci->dev,
-				SNDRV_TRIDENT_PAGE_SIZE, &trident->tlb.silent_page) < 0) अणु
+	if (snd_dma_alloc_pages(SNDRV_DMA_TYPE_DEV, &trident->pci->dev,
+				SNDRV_TRIDENT_PAGE_SIZE, &trident->tlb.silent_page) < 0) {
 		dev_err(trident->card->dev, "unable to allocate silent page\n");
-		वापस -ENOMEM;
-	पूर्ण
-	स_रखो(trident->tlb.silent_page.area, 0, SNDRV_TRIDENT_PAGE_SIZE);
-	क्रम (i = 0; i < SNDRV_TRIDENT_MAX_PAGES; i++) अणु
+		return -ENOMEM;
+	}
+	memset(trident->tlb.silent_page.area, 0, SNDRV_TRIDENT_PAGE_SIZE);
+	for (i = 0; i < SNDRV_TRIDENT_MAX_PAGES; i++) {
 		trident->tlb.entries[i] = cpu_to_le32(trident->tlb.silent_page.addr & ~(SNDRV_TRIDENT_PAGE_SIZE-1));
-		trident->tlb.shaकरोw_entries[i] = (अचिन्हित दीर्घ)trident->tlb.silent_page.area;
-	पूर्ण
+		trident->tlb.shadow_entries[i] = (unsigned long)trident->tlb.silent_page.area;
+	}
 
 	/* use emu memory block manager code to manage tlb page allocation */
 	trident->tlb.memhdr = snd_util_memhdr_new(SNDRV_TRIDENT_PAGE_SIZE * SNDRV_TRIDENT_MAX_PAGES);
-	अगर (trident->tlb.memhdr == शून्य)
-		वापस -ENOMEM;
+	if (trident->tlb.memhdr == NULL)
+		return -ENOMEM;
 
-	trident->tlb.memhdr->block_extra_size = माप(काष्ठा snd_trident_memblk_arg);
-	वापस 0;
-पूर्ण
+	trident->tlb.memhdr->block_extra_size = sizeof(struct snd_trident_memblk_arg);
+	return 0;
+}
 
 /*
  * initialize 4D DX chip
  */
 
-अटल व्योम snd_trident_stop_all_voices(काष्ठा snd_trident *trident)
-अणु
+static void snd_trident_stop_all_voices(struct snd_trident *trident)
+{
 	outl(0xffffffff, TRID_REG(trident, T4D_STOP_A));
 	outl(0xffffffff, TRID_REG(trident, T4D_STOP_B));
 	outl(0, TRID_REG(trident, T4D_AINTEN_A));
 	outl(0, TRID_REG(trident, T4D_AINTEN_B));
-पूर्ण
+}
 
-अटल पूर्णांक snd_trident_4d_dx_init(काष्ठा snd_trident *trident)
-अणु
-	काष्ठा pci_dev *pci = trident->pci;
-	अचिन्हित दीर्घ end_समय;
+static int snd_trident_4d_dx_init(struct snd_trident *trident)
+{
+	struct pci_dev *pci = trident->pci;
+	unsigned long end_time;
 
 	/* reset the legacy configuration and whole audio/wavetable block */
-	pci_ग_लिखो_config_dword(pci, 0x40, 0);	/* DDMA */
-	pci_ग_लिखो_config_byte(pci, 0x44, 0);	/* ports */
-	pci_ग_लिखो_config_byte(pci, 0x45, 0);	/* Legacy DMA */
-	pci_ग_लिखो_config_byte(pci, 0x46, 4); /* reset */
+	pci_write_config_dword(pci, 0x40, 0);	/* DDMA */
+	pci_write_config_byte(pci, 0x44, 0);	/* ports */
+	pci_write_config_byte(pci, 0x45, 0);	/* Legacy DMA */
+	pci_write_config_byte(pci, 0x46, 4); /* reset */
 	udelay(100);
-	pci_ग_लिखो_config_byte(pci, 0x46, 0); /* release reset */
+	pci_write_config_byte(pci, 0x46, 0); /* release reset */
 	udelay(100);
 	
 	/* warm reset of the AC'97 codec */
 	outl(0x00000001, TRID_REG(trident, DX_ACR2_AC97_COM_STAT));
 	udelay(100);
 	outl(0x00000000, TRID_REG(trident, DX_ACR2_AC97_COM_STAT));
-	/* DAC on, disable SB IRQ and try to क्रमce ADC valid संकेत */
+	/* DAC on, disable SB IRQ and try to force ADC valid signal */
 	trident->ac97_ctrl = 0x0000004a;
 	outl(trident->ac97_ctrl, TRID_REG(trident, DX_ACR2_AC97_COM_STAT));
-	/* रुको, until the codec is पढ़ोy */
-	end_समय = (jअगरfies + (HZ * 3) / 4) + 1;
-	करो अणु
-		अगर ((inl(TRID_REG(trident, DX_ACR2_AC97_COM_STAT)) & 0x0010) != 0)
-			जाओ __dx_ok;
-		करो_delay(trident);
-	पूर्ण जबतक (समय_after_eq(end_समय, jअगरfies));
+	/* wait, until the codec is ready */
+	end_time = (jiffies + (HZ * 3) / 4) + 1;
+	do {
+		if ((inl(TRID_REG(trident, DX_ACR2_AC97_COM_STAT)) & 0x0010) != 0)
+			goto __dx_ok;
+		do_delay(trident);
+	} while (time_after_eq(end_time, jiffies));
 	dev_err(trident->card->dev, "AC'97 codec ready error\n");
-	वापस -EIO;
+	return -EIO;
 
  __dx_ok:
 	snd_trident_stop_all_voices(trident);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * initialize 4D NX chip
  */
-अटल पूर्णांक snd_trident_4d_nx_init(काष्ठा snd_trident *trident)
-अणु
-	काष्ठा pci_dev *pci = trident->pci;
-	अचिन्हित दीर्घ end_समय;
+static int snd_trident_4d_nx_init(struct snd_trident *trident)
+{
+	struct pci_dev *pci = trident->pci;
+	unsigned long end_time;
 
 	/* reset the legacy configuration and whole audio/wavetable block */
-	pci_ग_लिखो_config_dword(pci, 0x40, 0);	/* DDMA */
-	pci_ग_लिखो_config_byte(pci, 0x44, 0);	/* ports */
-	pci_ग_लिखो_config_byte(pci, 0x45, 0);	/* Legacy DMA */
+	pci_write_config_dword(pci, 0x40, 0);	/* DDMA */
+	pci_write_config_byte(pci, 0x44, 0);	/* ports */
+	pci_write_config_byte(pci, 0x45, 0);	/* Legacy DMA */
 
-	pci_ग_लिखो_config_byte(pci, 0x46, 1); /* reset */
+	pci_write_config_byte(pci, 0x46, 1); /* reset */
 	udelay(100);
-	pci_ग_लिखो_config_byte(pci, 0x46, 0); /* release reset */
+	pci_write_config_byte(pci, 0x46, 0); /* release reset */
 	udelay(100);
 
 	/* warm reset of the AC'97 codec */
 	outl(0x00000001, TRID_REG(trident, NX_ACR0_AC97_COM_STAT));
 	udelay(100);
 	outl(0x00000000, TRID_REG(trident, NX_ACR0_AC97_COM_STAT));
-	/* रुको, until the codec is पढ़ोy */
-	end_समय = (jअगरfies + (HZ * 3) / 4) + 1;
-	करो अणु
-		अगर ((inl(TRID_REG(trident, NX_ACR0_AC97_COM_STAT)) & 0x0008) != 0)
-			जाओ __nx_ok;
-		करो_delay(trident);
-	पूर्ण जबतक (समय_after_eq(end_समय, jअगरfies));
+	/* wait, until the codec is ready */
+	end_time = (jiffies + (HZ * 3) / 4) + 1;
+	do {
+		if ((inl(TRID_REG(trident, NX_ACR0_AC97_COM_STAT)) & 0x0008) != 0)
+			goto __nx_ok;
+		do_delay(trident);
+	} while (time_after_eq(end_time, jiffies));
 	dev_err(trident->card->dev, "AC'97 codec ready error [0x%x]\n",
 		inl(TRID_REG(trident, NX_ACR0_AC97_COM_STAT)));
-	वापस -EIO;
+	return -EIO;
 
  __nx_ok:
 	/* DAC on */
@@ -3427,101 +3426,101 @@ EXPORT_SYMBOL(snd_trident_ग_लिखो_voice_regs);
 
 	snd_trident_stop_all_voices(trident);
 
-	अगर (trident->tlb.entries != शून्य) अणु
-		अचिन्हित पूर्णांक i;
-		/* enable भव addressing via TLB */
+	if (trident->tlb.entries != NULL) {
+		unsigned int i;
+		/* enable virtual addressing via TLB */
 		i = trident->tlb.entries_dmaaddr;
 		i |= 0x00000001;
 		outl(i, TRID_REG(trident, NX_TLBC));
-	पूर्ण अन्यथा अणु
+	} else {
 		outl(0, TRID_REG(trident, NX_TLBC));
-	पूर्ण
+	}
 	/* initialize S/PDIF */
-	outl(trident->spdअगर_bits, TRID_REG(trident, NX_SPCSTATUS));
-	outb(trident->spdअगर_ctrl, TRID_REG(trident, NX_SPCTRL_SPCSO + 3));
+	outl(trident->spdif_bits, TRID_REG(trident, NX_SPCSTATUS));
+	outb(trident->spdif_ctrl, TRID_REG(trident, NX_SPCTRL_SPCSO + 3));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * initialize sis7018 chip
  */
-अटल पूर्णांक snd_trident_sis_init(काष्ठा snd_trident *trident)
-अणु
-	पूर्णांक err;
+static int snd_trident_sis_init(struct snd_trident *trident)
+{
+	int err;
 
-	अगर ((err = snd_trident_sis_reset(trident)) < 0)
-		वापस err;
+	if ((err = snd_trident_sis_reset(trident)) < 0)
+		return err;
 
 	snd_trident_stop_all_voices(trident);
 
 	/* initialize S/PDIF */
-	outl(trident->spdअगर_bits, TRID_REG(trident, SI_SPDIF_CS));
+	outl(trident->spdif_bits, TRID_REG(trident, SI_SPDIF_CS));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*---------------------------------------------------------------------------
    snd_trident_create
   
-   Description: This routine will create the device specअगरic class क्रम
-                the 4DWave card. It will also perक्रमm basic initialization.
+   Description: This routine will create the device specific class for
+                the 4DWave card. It will also perform basic initialization.
                 
    Parameters:  card  - which card to create
-                pci   - पूर्णांकerface to PCI bus resource info
+                pci   - interface to PCI bus resource info
                 dma1ptr - playback dma buffer
                 dma2ptr - capture dma buffer
-                irqptr  -  पूर्णांकerrupt resource info
+                irqptr  -  interrupt resource info
 
-   Returns:     4DWave device class निजी data
+   Returns:     4DWave device class private data
   
   ---------------------------------------------------------------------------*/
 
-पूर्णांक snd_trident_create(काष्ठा snd_card *card,
-		       काष्ठा pci_dev *pci,
-		       पूर्णांक pcm_streams,
-		       पूर्णांक pcm_spdअगर_device,
-		       पूर्णांक max_wavetable_size,
-		       काष्ठा snd_trident ** rtrident)
-अणु
-	काष्ठा snd_trident *trident;
-	पूर्णांक i, err;
-	काष्ठा snd_trident_voice *voice;
-	काष्ठा snd_trident_pcm_mixer *पंचांगix;
-	अटल स्थिर काष्ठा snd_device_ops ops = अणु
-		.dev_मुक्त =	snd_trident_dev_मुक्त,
-	पूर्ण;
+int snd_trident_create(struct snd_card *card,
+		       struct pci_dev *pci,
+		       int pcm_streams,
+		       int pcm_spdif_device,
+		       int max_wavetable_size,
+		       struct snd_trident ** rtrident)
+{
+	struct snd_trident *trident;
+	int i, err;
+	struct snd_trident_voice *voice;
+	struct snd_trident_pcm_mixer *tmix;
+	static const struct snd_device_ops ops = {
+		.dev_free =	snd_trident_dev_free,
+	};
 
-	*rtrident = शून्य;
+	*rtrident = NULL;
 
 	/* enable PCI device */
-	अगर ((err = pci_enable_device(pci)) < 0)
-		वापस err;
-	/* check, अगर we can restrict PCI DMA transfers to 30 bits */
-	अगर (dma_set_mask_and_coherent(&pci->dev, DMA_BIT_MASK(30))) अणु
+	if ((err = pci_enable_device(pci)) < 0)
+		return err;
+	/* check, if we can restrict PCI DMA transfers to 30 bits */
+	if (dma_set_mask_and_coherent(&pci->dev, DMA_BIT_MASK(30))) {
 		dev_err(card->dev,
 			"architecture does not support 30bit PCI busmaster DMA\n");
 		pci_disable_device(pci);
-		वापस -ENXIO;
-	पूर्ण
+		return -ENXIO;
+	}
 	
-	trident = kzalloc(माप(*trident), GFP_KERNEL);
-	अगर (trident == शून्य) अणु
+	trident = kzalloc(sizeof(*trident), GFP_KERNEL);
+	if (trident == NULL) {
 		pci_disable_device(pci);
-		वापस -ENOMEM;
-	पूर्ण
-	trident->device = (pci->venकरोr << 16) | pci->device;
+		return -ENOMEM;
+	}
+	trident->device = (pci->vendor << 16) | pci->device;
 	trident->card = card;
 	trident->pci = pci;
 	spin_lock_init(&trident->reg_lock);
 	spin_lock_init(&trident->event_lock);
 	spin_lock_init(&trident->voice_alloc);
-	अगर (pcm_streams < 1)
+	if (pcm_streams < 1)
 		pcm_streams = 1;
-	अगर (pcm_streams > 32)
+	if (pcm_streams > 32)
 		pcm_streams = 32;
 	trident->ChanPCM = pcm_streams;
-	अगर (max_wavetable_size < 0 )
+	if (max_wavetable_size < 0 )
 		max_wavetable_size = 0;
 	trident->synth.max_size = max_wavetable_size * 1024;
 	trident->irq = -1;
@@ -3529,132 +3528,132 @@ EXPORT_SYMBOL(snd_trident_ग_लिखो_voice_regs);
 	trident->midi_port = TRID_REG(trident, T4D_MPU401_BASE);
 	pci_set_master(pci);
 
-	अगर ((err = pci_request_regions(pci, "Trident Audio")) < 0) अणु
-		kमुक्त(trident);
+	if ((err = pci_request_regions(pci, "Trident Audio")) < 0) {
+		kfree(trident);
 		pci_disable_device(pci);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 	trident->port = pci_resource_start(pci, 0);
 
-	अगर (request_irq(pci->irq, snd_trident_पूर्णांकerrupt, IRQF_SHARED,
-			KBUILD_MODNAME, trident)) अणु
+	if (request_irq(pci->irq, snd_trident_interrupt, IRQF_SHARED,
+			KBUILD_MODNAME, trident)) {
 		dev_err(card->dev, "unable to grab IRQ %d\n", pci->irq);
-		snd_trident_मुक्त(trident);
-		वापस -EBUSY;
-	पूर्ण
+		snd_trident_free(trident);
+		return -EBUSY;
+	}
 	trident->irq = pci->irq;
 	card->sync_irq = trident->irq;
 
-	/* allocate 16k-aligned TLB क्रम NX cards */
-	trident->tlb.entries = शून्य;
-	trident->tlb.buffer.area = शून्य;
-	अगर (trident->device == TRIDENT_DEVICE_ID_NX) अणु
-		अगर ((err = snd_trident_tlb_alloc(trident)) < 0) अणु
-			snd_trident_मुक्त(trident);
-			वापस err;
-		पूर्ण
-	पूर्ण
+	/* allocate 16k-aligned TLB for NX cards */
+	trident->tlb.entries = NULL;
+	trident->tlb.buffer.area = NULL;
+	if (trident->device == TRIDENT_DEVICE_ID_NX) {
+		if ((err = snd_trident_tlb_alloc(trident)) < 0) {
+			snd_trident_free(trident);
+			return err;
+		}
+	}
 
-	trident->spdअगर_bits = trident->spdअगर_pcm_bits = SNDRV_PCM_DEFAULT_CON_SPDIF;
+	trident->spdif_bits = trident->spdif_pcm_bits = SNDRV_PCM_DEFAULT_CON_SPDIF;
 
 	/* initialize chip */
-	चयन (trident->device) अणु
-	हाल TRIDENT_DEVICE_ID_DX:
+	switch (trident->device) {
+	case TRIDENT_DEVICE_ID_DX:
 		err = snd_trident_4d_dx_init(trident);
-		अवरोध;
-	हाल TRIDENT_DEVICE_ID_NX:
+		break;
+	case TRIDENT_DEVICE_ID_NX:
 		err = snd_trident_4d_nx_init(trident);
-		अवरोध;
-	हाल TRIDENT_DEVICE_ID_SI7018:
+		break;
+	case TRIDENT_DEVICE_ID_SI7018:
 		err = snd_trident_sis_init(trident);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		snd_BUG();
-		अवरोध;
-	पूर्ण
-	अगर (err < 0) अणु
-		snd_trident_मुक्त(trident);
-		वापस err;
-	पूर्ण
+		break;
+	}
+	if (err < 0) {
+		snd_trident_free(trident);
+		return err;
+	}
 
-	अगर ((err = snd_device_new(card, SNDRV_DEV_LOWLEVEL, trident, &ops)) < 0) अणु
-		snd_trident_मुक्त(trident);
-		वापस err;
-	पूर्ण
+	if ((err = snd_device_new(card, SNDRV_DEV_LOWLEVEL, trident, &ops)) < 0) {
+		snd_trident_free(trident);
+		return err;
+	}
 
-	अगर ((err = snd_trident_mixer(trident, pcm_spdअगर_device)) < 0)
-		वापस err;
+	if ((err = snd_trident_mixer(trident, pcm_spdif_device)) < 0)
+		return err;
 	
 	/* initialise synth voices */
-	क्रम (i = 0; i < 64; i++) अणु
+	for (i = 0; i < 64; i++) {
 		voice = &trident->synth.voices[i];
 		voice->number = i;
 		voice->trident = trident;
-	पूर्ण
+	}
 	/* initialize pcm mixer entries */
-	क्रम (i = 0; i < 32; i++) अणु
-		पंचांगix = &trident->pcm_mixer[i];
-		पंचांगix->vol = T4D_DEFAULT_PCM_VOL;
-		पंचांगix->pan = T4D_DEFAULT_PCM_PAN;
-		पंचांगix->rvol = T4D_DEFAULT_PCM_RVOL;
-		पंचांगix->cvol = T4D_DEFAULT_PCM_CVOL;
-	पूर्ण
+	for (i = 0; i < 32; i++) {
+		tmix = &trident->pcm_mixer[i];
+		tmix->vol = T4D_DEFAULT_PCM_VOL;
+		tmix->pan = T4D_DEFAULT_PCM_PAN;
+		tmix->rvol = T4D_DEFAULT_PCM_RVOL;
+		tmix->cvol = T4D_DEFAULT_PCM_CVOL;
+	}
 
 	snd_trident_enable_eso(trident);
 
 	snd_trident_proc_init(trident);
 	*rtrident = trident;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*---------------------------------------------------------------------------
-   snd_trident_मुक्त
+   snd_trident_free
   
-   Description: This routine will मुक्त the device specअगरic class क्रम
+   Description: This routine will free the device specific class for
                 the 4DWave card. 
                 
-   Parameters:  trident  - device specअगरic निजी data क्रम 4DWave card
+   Parameters:  trident  - device specific private data for 4DWave card
 
    Returns:     None.
   
   ---------------------------------------------------------------------------*/
 
-अटल पूर्णांक snd_trident_मुक्त(काष्ठा snd_trident *trident)
-अणु
-	snd_trident_मुक्त_gameport(trident);
+static int snd_trident_free(struct snd_trident *trident)
+{
+	snd_trident_free_gameport(trident);
 	snd_trident_disable_eso(trident);
 	// Disable S/PDIF out
-	अगर (trident->device == TRIDENT_DEVICE_ID_NX)
+	if (trident->device == TRIDENT_DEVICE_ID_NX)
 		outb(0x00, TRID_REG(trident, NX_SPCTRL_SPCSO + 3));
-	अन्यथा अगर (trident->device == TRIDENT_DEVICE_ID_SI7018) अणु
+	else if (trident->device == TRIDENT_DEVICE_ID_SI7018) {
 		outl(0, TRID_REG(trident, SI_SERIAL_INTF_CTRL));
-	पूर्ण
-	अगर (trident->irq >= 0)
-		मुक्त_irq(trident->irq, trident);
-	अगर (trident->tlb.buffer.area) अणु
+	}
+	if (trident->irq >= 0)
+		free_irq(trident->irq, trident);
+	if (trident->tlb.buffer.area) {
 		outl(0, TRID_REG(trident, NX_TLBC));
-		snd_util_memhdr_मुक्त(trident->tlb.memhdr);
-		अगर (trident->tlb.silent_page.area)
-			snd_dma_मुक्त_pages(&trident->tlb.silent_page);
-		vमुक्त(trident->tlb.shaकरोw_entries);
-		snd_dma_मुक्त_pages(&trident->tlb.buffer);
-	पूर्ण
+		snd_util_memhdr_free(trident->tlb.memhdr);
+		if (trident->tlb.silent_page.area)
+			snd_dma_free_pages(&trident->tlb.silent_page);
+		vfree(trident->tlb.shadow_entries);
+		snd_dma_free_pages(&trident->tlb.buffer);
+	}
 	pci_release_regions(trident->pci);
 	pci_disable_device(trident->pci);
-	kमुक्त(trident);
-	वापस 0;
-पूर्ण
+	kfree(trident);
+	return 0;
+}
 
 /*---------------------------------------------------------------------------
-   snd_trident_पूर्णांकerrupt
+   snd_trident_interrupt
   
-   Description: ISR क्रम Trident 4DWave device
+   Description: ISR for Trident 4DWave device
                 
-   Parameters:  trident  - device specअगरic निजी data क्रम 4DWave card
+   Parameters:  trident  - device specific private data for 4DWave card
 
-   Problems:    It seems that Trident chips generates पूर्णांकerrupts more than
-                one समय in special हालs. The spurious पूर्णांकerrupts are
-                detected via sample समयr (T4D_STIMER) and computing
+   Problems:    It seems that Trident chips generates interrupts more than
+                one time in special cases. The spurious interrupts are
+                detected via sample timer (T4D_STIMER) and computing
                 corresponding delta value. The limits are detected with
                 the method try & fail so it is possible that it won't
                 work on all computers. [jaroslav]
@@ -3663,239 +3662,239 @@ EXPORT_SYMBOL(snd_trident_ग_लिखो_voice_regs);
   
   ---------------------------------------------------------------------------*/
 
-अटल irqवापस_t snd_trident_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा snd_trident *trident = dev_id;
-	अचिन्हित पूर्णांक audio_पूर्णांक, chn_पूर्णांक, sसमयr, channel, mask, पंचांगp;
-	पूर्णांक delta;
-	काष्ठा snd_trident_voice *voice;
+static irqreturn_t snd_trident_interrupt(int irq, void *dev_id)
+{
+	struct snd_trident *trident = dev_id;
+	unsigned int audio_int, chn_int, stimer, channel, mask, tmp;
+	int delta;
+	struct snd_trident_voice *voice;
 
-	audio_पूर्णांक = inl(TRID_REG(trident, T4D_MISCINT));
-	अगर ((audio_पूर्णांक & (ADDRESS_IRQ|MPU401_IRQ)) == 0)
-		वापस IRQ_NONE;
-	अगर (audio_पूर्णांक & ADDRESS_IRQ) अणु
-		// get पूर्णांकerrupt status क्रम all channels
+	audio_int = inl(TRID_REG(trident, T4D_MISCINT));
+	if ((audio_int & (ADDRESS_IRQ|MPU401_IRQ)) == 0)
+		return IRQ_NONE;
+	if (audio_int & ADDRESS_IRQ) {
+		// get interrupt status for all channels
 		spin_lock(&trident->reg_lock);
-		sसमयr = inl(TRID_REG(trident, T4D_STIMER)) & 0x00ffffff;
-		chn_पूर्णांक = inl(TRID_REG(trident, T4D_AINT_A));
-		अगर (chn_पूर्णांक == 0)
-			जाओ __skip1;
-		outl(chn_पूर्णांक, TRID_REG(trident, T4D_AINT_A));	/* ack */
+		stimer = inl(TRID_REG(trident, T4D_STIMER)) & 0x00ffffff;
+		chn_int = inl(TRID_REG(trident, T4D_AINT_A));
+		if (chn_int == 0)
+			goto __skip1;
+		outl(chn_int, TRID_REG(trident, T4D_AINT_A));	/* ack */
 	      __skip1:
-		chn_पूर्णांक = inl(TRID_REG(trident, T4D_AINT_B));
-		अगर (chn_पूर्णांक == 0)
-			जाओ __skip2;
-		क्रम (channel = 63; channel >= 32; channel--) अणु
+		chn_int = inl(TRID_REG(trident, T4D_AINT_B));
+		if (chn_int == 0)
+			goto __skip2;
+		for (channel = 63; channel >= 32; channel--) {
 			mask = 1 << (channel&0x1f);
-			अगर ((chn_पूर्णांक & mask) == 0)
-				जारी;
+			if ((chn_int & mask) == 0)
+				continue;
 			voice = &trident->synth.voices[channel];
-			अगर (!voice->pcm || voice->substream == शून्य) अणु
+			if (!voice->pcm || voice->substream == NULL) {
 				outl(mask, TRID_REG(trident, T4D_STOP_B));
-				जारी;
-			पूर्ण
-			delta = (पूर्णांक)sसमयr - (पूर्णांक)voice->sसमयr;
-			अगर (delta < 0)
+				continue;
+			}
+			delta = (int)stimer - (int)voice->stimer;
+			if (delta < 0)
 				delta = -delta;
-			अगर ((अचिन्हित पूर्णांक)delta < voice->spurious_threshold) अणु
-				/* करो some statistics here */
+			if ((unsigned int)delta < voice->spurious_threshold) {
+				/* do some statistics here */
 				trident->spurious_irq_count++;
-				अगर (trident->spurious_irq_max_delta < (अचिन्हित पूर्णांक)delta)
+				if (trident->spurious_irq_max_delta < (unsigned int)delta)
 					trident->spurious_irq_max_delta = delta;
-				जारी;
-			पूर्ण
-			voice->sसमयr = sसमयr;
-			अगर (voice->isync) अणु
-				अगर (!voice->isync3) अणु
-					पंचांगp = inw(TRID_REG(trident, T4D_SBBL_SBCL));
-					अगर (trident->bDMAStart & 0x40)
-						पंचांगp >>= 1;
-					अगर (पंचांगp > 0)
-						पंचांगp = voice->isync_max - पंचांगp;
-				पूर्ण अन्यथा अणु
-					पंचांगp = inl(TRID_REG(trident, NX_SPCTRL_SPCSO)) & 0x00ffffff;
-				पूर्ण
-				अगर (पंचांगp < voice->isync_mark) अणु
-					अगर (पंचांगp > 0x10)
-						पंचांगp = voice->isync_ESO - 7;
-					अन्यथा
-						पंचांगp = voice->isync_ESO + 2;
-					/* update ESO क्रम IRQ voice to preserve sync */
+				continue;
+			}
+			voice->stimer = stimer;
+			if (voice->isync) {
+				if (!voice->isync3) {
+					tmp = inw(TRID_REG(trident, T4D_SBBL_SBCL));
+					if (trident->bDMAStart & 0x40)
+						tmp >>= 1;
+					if (tmp > 0)
+						tmp = voice->isync_max - tmp;
+				} else {
+					tmp = inl(TRID_REG(trident, NX_SPCTRL_SPCSO)) & 0x00ffffff;
+				}
+				if (tmp < voice->isync_mark) {
+					if (tmp > 0x10)
+						tmp = voice->isync_ESO - 7;
+					else
+						tmp = voice->isync_ESO + 2;
+					/* update ESO for IRQ voice to preserve sync */
 					snd_trident_stop_voice(trident, voice->number);
-					snd_trident_ग_लिखो_eso_reg(trident, voice, पंचांगp);
+					snd_trident_write_eso_reg(trident, voice, tmp);
 					snd_trident_start_voice(trident, voice->number);
-				पूर्ण
-			पूर्ण अन्यथा अगर (voice->isync2) अणु
+				}
+			} else if (voice->isync2) {
 				voice->isync2 = 0;
-				/* ग_लिखो original ESO and update CSO क्रम IRQ voice to preserve sync */
+				/* write original ESO and update CSO for IRQ voice to preserve sync */
 				snd_trident_stop_voice(trident, voice->number);
-				snd_trident_ग_लिखो_cso_reg(trident, voice, voice->isync_mark);
-				snd_trident_ग_लिखो_eso_reg(trident, voice, voice->ESO);
+				snd_trident_write_cso_reg(trident, voice, voice->isync_mark);
+				snd_trident_write_eso_reg(trident, voice, voice->ESO);
 				snd_trident_start_voice(trident, voice->number);
-			पूर्ण
-#अगर 0
-			अगर (voice->extra) अणु
-				/* update CSO क्रम extra voice to preserve sync */
+			}
+#if 0
+			if (voice->extra) {
+				/* update CSO for extra voice to preserve sync */
 				snd_trident_stop_voice(trident, voice->extra->number);
-				snd_trident_ग_लिखो_cso_reg(trident, voice->extra, 0);
+				snd_trident_write_cso_reg(trident, voice->extra, 0);
 				snd_trident_start_voice(trident, voice->extra->number);
-			पूर्ण
-#पूर्ण_अगर
+			}
+#endif
 			spin_unlock(&trident->reg_lock);
 			snd_pcm_period_elapsed(voice->substream);
 			spin_lock(&trident->reg_lock);
-		पूर्ण
-		outl(chn_पूर्णांक, TRID_REG(trident, T4D_AINT_B));	/* ack */
+		}
+		outl(chn_int, TRID_REG(trident, T4D_AINT_B));	/* ack */
 	      __skip2:
 		spin_unlock(&trident->reg_lock);
-	पूर्ण
-	अगर (audio_पूर्णांक & MPU401_IRQ) अणु
-		अगर (trident->rmidi) अणु
-			snd_mpu401_uart_पूर्णांकerrupt(irq, trident->rmidi->निजी_data);
-		पूर्ण अन्यथा अणु
+	}
+	if (audio_int & MPU401_IRQ) {
+		if (trident->rmidi) {
+			snd_mpu401_uart_interrupt(irq, trident->rmidi->private_data);
+		} else {
 			inb(TRID_REG(trident, T4D_MPUR0));
-		पूर्ण
-	पूर्ण
+		}
+	}
 	// outl((ST_TARGET_REACHED | MIXER_OVERFLOW | MIXER_UNDERFLOW), TRID_REG(trident, T4D_MISCINT));
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-काष्ठा snd_trident_voice *snd_trident_alloc_voice(काष्ठा snd_trident * trident, पूर्णांक type, पूर्णांक client, पूर्णांक port)
-अणु
-	काष्ठा snd_trident_voice *pvoice;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक idx;
+struct snd_trident_voice *snd_trident_alloc_voice(struct snd_trident * trident, int type, int client, int port)
+{
+	struct snd_trident_voice *pvoice;
+	unsigned long flags;
+	int idx;
 
 	spin_lock_irqsave(&trident->voice_alloc, flags);
-	अगर (type == SNDRV_TRIDENT_VOICE_TYPE_PCM) अणु
+	if (type == SNDRV_TRIDENT_VOICE_TYPE_PCM) {
 		idx = snd_trident_allocate_pcm_channel(trident);
-		अगर(idx < 0) अणु
+		if(idx < 0) {
 			spin_unlock_irqrestore(&trident->voice_alloc, flags);
-			वापस शून्य;
-		पूर्ण
+			return NULL;
+		}
 		pvoice = &trident->synth.voices[idx];
 		pvoice->use = 1;
 		pvoice->pcm = 1;
 		pvoice->capture = 0;
-		pvoice->spdअगर = 0;
-		pvoice->memblk = शून्य;
-		pvoice->substream = शून्य;
+		pvoice->spdif = 0;
+		pvoice->memblk = NULL;
+		pvoice->substream = NULL;
 		spin_unlock_irqrestore(&trident->voice_alloc, flags);
-		वापस pvoice;
-	पूर्ण
-	अगर (type == SNDRV_TRIDENT_VOICE_TYPE_SYNTH) अणु
+		return pvoice;
+	}
+	if (type == SNDRV_TRIDENT_VOICE_TYPE_SYNTH) {
 		idx = snd_trident_allocate_synth_channel(trident);
-		अगर(idx < 0) अणु
+		if(idx < 0) {
 			spin_unlock_irqrestore(&trident->voice_alloc, flags);
-			वापस शून्य;
-		पूर्ण
+			return NULL;
+		}
 		pvoice = &trident->synth.voices[idx];
 		pvoice->use = 1;
 		pvoice->synth = 1;
 		pvoice->client = client;
 		pvoice->port = port;
-		pvoice->memblk = शून्य;
+		pvoice->memblk = NULL;
 		spin_unlock_irqrestore(&trident->voice_alloc, flags);
-		वापस pvoice;
-	पूर्ण
-	अगर (type == SNDRV_TRIDENT_VOICE_TYPE_MIDI) अणु
-	पूर्ण
+		return pvoice;
+	}
+	if (type == SNDRV_TRIDENT_VOICE_TYPE_MIDI) {
+	}
 	spin_unlock_irqrestore(&trident->voice_alloc, flags);
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
 EXPORT_SYMBOL(snd_trident_alloc_voice);
 
-व्योम snd_trident_मुक्त_voice(काष्ठा snd_trident * trident, काष्ठा snd_trident_voice *voice)
-अणु
-	अचिन्हित दीर्घ flags;
-	व्योम (*निजी_मुक्त)(काष्ठा snd_trident_voice *);
+void snd_trident_free_voice(struct snd_trident * trident, struct snd_trident_voice *voice)
+{
+	unsigned long flags;
+	void (*private_free)(struct snd_trident_voice *);
 
-	अगर (voice == शून्य || !voice->use)
-		वापस;
+	if (voice == NULL || !voice->use)
+		return;
 	snd_trident_clear_voices(trident, voice->number, voice->number);
 	spin_lock_irqsave(&trident->voice_alloc, flags);
-	निजी_मुक्त = voice->निजी_मुक्त;
-	voice->निजी_मुक्त = शून्य;
-	voice->निजी_data = शून्य;
-	अगर (voice->pcm)
-		snd_trident_मुक्त_pcm_channel(trident, voice->number);
-	अगर (voice->synth)
-		snd_trident_मुक्त_synth_channel(trident, voice->number);
+	private_free = voice->private_free;
+	voice->private_free = NULL;
+	voice->private_data = NULL;
+	if (voice->pcm)
+		snd_trident_free_pcm_channel(trident, voice->number);
+	if (voice->synth)
+		snd_trident_free_synth_channel(trident, voice->number);
 	voice->use = voice->pcm = voice->synth = voice->midi = 0;
-	voice->capture = voice->spdअगर = 0;
-	voice->sample_ops = शून्य;
-	voice->substream = शून्य;
-	voice->extra = शून्य;
+	voice->capture = voice->spdif = 0;
+	voice->sample_ops = NULL;
+	voice->substream = NULL;
+	voice->extra = NULL;
 	spin_unlock_irqrestore(&trident->voice_alloc, flags);
-	अगर (निजी_मुक्त)
-		निजी_मुक्त(voice);
-पूर्ण
+	if (private_free)
+		private_free(voice);
+}
 
-EXPORT_SYMBOL(snd_trident_मुक्त_voice);
+EXPORT_SYMBOL(snd_trident_free_voice);
 
-अटल व्योम snd_trident_clear_voices(काष्ठा snd_trident * trident, अचिन्हित लघु v_min, अचिन्हित लघु v_max)
-अणु
-	अचिन्हित पूर्णांक i, val, mask[2] = अणु 0, 0 पूर्ण;
+static void snd_trident_clear_voices(struct snd_trident * trident, unsigned short v_min, unsigned short v_max)
+{
+	unsigned int i, val, mask[2] = { 0, 0 };
 
-	अगर (snd_BUG_ON(v_min > 63 || v_max > 63))
-		वापस;
-	क्रम (i = v_min; i <= v_max; i++)
+	if (snd_BUG_ON(v_min > 63 || v_max > 63))
+		return;
+	for (i = v_min; i <= v_max; i++)
 		mask[i >> 5] |= 1 << (i & 0x1f);
-	अगर (mask[0]) अणु
+	if (mask[0]) {
 		outl(mask[0], TRID_REG(trident, T4D_STOP_A));
 		val = inl(TRID_REG(trident, T4D_AINTEN_A));
 		outl(val & ~mask[0], TRID_REG(trident, T4D_AINTEN_A));
-	पूर्ण
-	अगर (mask[1]) अणु
+	}
+	if (mask[1]) {
 		outl(mask[1], TRID_REG(trident, T4D_STOP_B));
 		val = inl(TRID_REG(trident, T4D_AINTEN_B));
 		outl(val & ~mask[1], TRID_REG(trident, T4D_AINTEN_B));
-	पूर्ण
-पूर्ण
+	}
+}
 
-#अगर_घोषित CONFIG_PM_SLEEP
-अटल पूर्णांक snd_trident_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा snd_card *card = dev_get_drvdata(dev);
-	काष्ठा snd_trident *trident = card->निजी_data;
+#ifdef CONFIG_PM_SLEEP
+static int snd_trident_suspend(struct device *dev)
+{
+	struct snd_card *card = dev_get_drvdata(dev);
+	struct snd_trident *trident = card->private_data;
 
 	trident->in_suspend = 1;
-	snd_घातer_change_state(card, SNDRV_CTL_POWER_D3hot);
+	snd_power_change_state(card, SNDRV_CTL_POWER_D3hot);
 	snd_ac97_suspend(trident->ac97);
 	snd_ac97_suspend(trident->ac97_sec);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक snd_trident_resume(काष्ठा device *dev)
-अणु
-	काष्ठा snd_card *card = dev_get_drvdata(dev);
-	काष्ठा snd_trident *trident = card->निजी_data;
+static int snd_trident_resume(struct device *dev)
+{
+	struct snd_card *card = dev_get_drvdata(dev);
+	struct snd_trident *trident = card->private_data;
 
-	चयन (trident->device) अणु
-	हाल TRIDENT_DEVICE_ID_DX:
+	switch (trident->device) {
+	case TRIDENT_DEVICE_ID_DX:
 		snd_trident_4d_dx_init(trident);
-		अवरोध;
-	हाल TRIDENT_DEVICE_ID_NX:
+		break;
+	case TRIDENT_DEVICE_ID_NX:
 		snd_trident_4d_nx_init(trident);
-		अवरोध;
-	हाल TRIDENT_DEVICE_ID_SI7018:
+		break;
+	case TRIDENT_DEVICE_ID_SI7018:
 		snd_trident_sis_init(trident);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	snd_ac97_resume(trident->ac97);
 	snd_ac97_resume(trident->ac97_sec);
 
-	/* restore some रेजिस्टरs */
+	/* restore some registers */
 	outl(trident->musicvol_wavevol, TRID_REG(trident, T4D_MUSICVOL_WAVEVOL));
 
 	snd_trident_enable_eso(trident);
 
-	snd_घातer_change_state(card, SNDRV_CTL_POWER_D0);
+	snd_power_change_state(card, SNDRV_CTL_POWER_D0);
 	trident->in_suspend = 0;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 SIMPLE_DEV_PM_OPS(snd_trident_pm, snd_trident_suspend, snd_trident_resume);
-#पूर्ण_अगर /* CONFIG_PM_SLEEP */
+#endif /* CONFIG_PM_SLEEP */

@@ -1,23 +1,22 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /* Copyright (c) 2021 Facebook */
 
-#समावेश <test_progs.h>
-#समावेश <sys/syscall.h>
-#समावेश "linked_maps.skel.h"
+#include <test_progs.h>
+#include <sys/syscall.h>
+#include "linked_maps.skel.h"
 
-व्योम test_linked_maps(व्योम)
-अणु
-	पूर्णांक err;
-	काष्ठा linked_maps *skel;
+void test_linked_maps(void)
+{
+	int err;
+	struct linked_maps *skel;
 
-	skel = linked_maps__खोलो_and_load();
-	अगर (!ASSERT_OK_PTR(skel, "skel_open"))
-		वापस;
+	skel = linked_maps__open_and_load();
+	if (!ASSERT_OK_PTR(skel, "skel_open"))
+		return;
 
 	err = linked_maps__attach(skel);
-	अगर (!ASSERT_OK(err, "skel_attach"))
-		जाओ cleanup;
+	if (!ASSERT_OK(err, "skel_attach"))
+		goto cleanup;
 
 	/* trigger */
 	syscall(SYS_getpgid);
@@ -28,4 +27,4 @@
 
 cleanup:
 	linked_maps__destroy(skel);
-पूर्ण
+}

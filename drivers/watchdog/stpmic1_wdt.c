@@ -1,140 +1,139 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 // Copyright (C) STMicroelectronics 2018
-// Author: Pascal Paillet <p.paillet@st.com> क्रम STMicroelectronics.
+// Author: Pascal Paillet <p.paillet@st.com> for STMicroelectronics.
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/mfd/stpmic1.h>
-#समावेश <linux/module.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/of.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/watchकरोg.h>
+#include <linux/kernel.h>
+#include <linux/mfd/stpmic1.h>
+#include <linux/module.h>
+#include <linux/platform_device.h>
+#include <linux/of.h>
+#include <linux/regmap.h>
+#include <linux/slab.h>
+#include <linux/watchdog.h>
 
 /* WATCHDOG CONTROL REGISTER bit */
-#घोषणा WDT_START		BIT(0)
-#घोषणा WDT_PING		BIT(1)
-#घोषणा WDT_START_MASK		BIT(0)
-#घोषणा WDT_PING_MASK		BIT(1)
-#घोषणा WDT_STOP		0
+#define WDT_START		BIT(0)
+#define WDT_PING		BIT(1)
+#define WDT_START_MASK		BIT(0)
+#define WDT_PING_MASK		BIT(1)
+#define WDT_STOP		0
 
-#घोषणा PMIC_WDT_MIN_TIMEOUT 1
-#घोषणा PMIC_WDT_MAX_TIMEOUT 256
-#घोषणा PMIC_WDT_DEFAULT_TIMEOUT 30
+#define PMIC_WDT_MIN_TIMEOUT 1
+#define PMIC_WDT_MAX_TIMEOUT 256
+#define PMIC_WDT_DEFAULT_TIMEOUT 30
 
-अटल bool nowayout = WATCHDOG_NOWAYOUT;
+static bool nowayout = WATCHDOG_NOWAYOUT;
 module_param(nowayout, bool, 0);
 MODULE_PARM_DESC(nowayout, "Watchdog cannot be stopped once started (default="
 		 __MODULE_STRING(WATCHDOG_NOWAYOUT) ")");
 
-काष्ठा stpmic1_wdt अणु
-	काष्ठा stpmic1 *pmic;
-	काष्ठा watchकरोg_device wdtdev;
-पूर्ण;
+struct stpmic1_wdt {
+	struct stpmic1 *pmic;
+	struct watchdog_device wdtdev;
+};
 
-अटल पूर्णांक pmic_wdt_start(काष्ठा watchकरोg_device *wdd)
-अणु
-	काष्ठा stpmic1_wdt *wdt = watchकरोg_get_drvdata(wdd);
+static int pmic_wdt_start(struct watchdog_device *wdd)
+{
+	struct stpmic1_wdt *wdt = watchdog_get_drvdata(wdd);
 
-	वापस regmap_update_bits(wdt->pmic->regmap,
+	return regmap_update_bits(wdt->pmic->regmap,
 				  WCHDG_CR, WDT_START_MASK, WDT_START);
-पूर्ण
+}
 
-अटल पूर्णांक pmic_wdt_stop(काष्ठा watchकरोg_device *wdd)
-अणु
-	काष्ठा stpmic1_wdt *wdt = watchकरोg_get_drvdata(wdd);
+static int pmic_wdt_stop(struct watchdog_device *wdd)
+{
+	struct stpmic1_wdt *wdt = watchdog_get_drvdata(wdd);
 
-	वापस regmap_update_bits(wdt->pmic->regmap,
+	return regmap_update_bits(wdt->pmic->regmap,
 				  WCHDG_CR, WDT_START_MASK, WDT_STOP);
-पूर्ण
+}
 
-अटल पूर्णांक pmic_wdt_ping(काष्ठा watchकरोg_device *wdd)
-अणु
-	काष्ठा stpmic1_wdt *wdt = watchकरोg_get_drvdata(wdd);
+static int pmic_wdt_ping(struct watchdog_device *wdd)
+{
+	struct stpmic1_wdt *wdt = watchdog_get_drvdata(wdd);
 
-	वापस regmap_update_bits(wdt->pmic->regmap,
+	return regmap_update_bits(wdt->pmic->regmap,
 				  WCHDG_CR, WDT_PING_MASK, WDT_PING);
-पूर्ण
+}
 
-अटल पूर्णांक pmic_wdt_set_समयout(काष्ठा watchकरोg_device *wdd,
-				अचिन्हित पूर्णांक समयout)
-अणु
-	काष्ठा stpmic1_wdt *wdt = watchकरोg_get_drvdata(wdd);
+static int pmic_wdt_set_timeout(struct watchdog_device *wdd,
+				unsigned int timeout)
+{
+	struct stpmic1_wdt *wdt = watchdog_get_drvdata(wdd);
 
-	wdd->समयout = समयout;
-	/* समयout is equal to रेजिस्टर value + 1 */
-	वापस regmap_ग_लिखो(wdt->pmic->regmap, WCHDG_TIMER_CR, समयout - 1);
-पूर्ण
+	wdd->timeout = timeout;
+	/* timeout is equal to register value + 1 */
+	return regmap_write(wdt->pmic->regmap, WCHDG_TIMER_CR, timeout - 1);
+}
 
-अटल स्थिर काष्ठा watchकरोg_info pmic_watchकरोg_info = अणु
+static const struct watchdog_info pmic_watchdog_info = {
 	.options = WDIOF_SETTIMEOUT | WDIOF_KEEPALIVEPING | WDIOF_MAGICCLOSE,
 	.identity = "STPMIC1 PMIC Watchdog",
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा watchकरोg_ops pmic_watchकरोg_ops = अणु
+static const struct watchdog_ops pmic_watchdog_ops = {
 	.owner = THIS_MODULE,
 	.start = pmic_wdt_start,
 	.stop = pmic_wdt_stop,
 	.ping = pmic_wdt_ping,
-	.set_समयout = pmic_wdt_set_समयout,
-पूर्ण;
+	.set_timeout = pmic_wdt_set_timeout,
+};
 
-अटल पूर्णांक pmic_wdt_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	पूर्णांक ret;
-	काष्ठा stpmic1 *pmic;
-	काष्ठा stpmic1_wdt *wdt;
+static int pmic_wdt_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	int ret;
+	struct stpmic1 *pmic;
+	struct stpmic1_wdt *wdt;
 
-	अगर (!dev->parent)
-		वापस -EINVAL;
+	if (!dev->parent)
+		return -EINVAL;
 
 	pmic = dev_get_drvdata(dev->parent);
-	अगर (!pmic)
-		वापस -EINVAL;
+	if (!pmic)
+		return -EINVAL;
 
-	wdt = devm_kzalloc(dev, माप(काष्ठा stpmic1_wdt), GFP_KERNEL);
-	अगर (!wdt)
-		वापस -ENOMEM;
+	wdt = devm_kzalloc(dev, sizeof(struct stpmic1_wdt), GFP_KERNEL);
+	if (!wdt)
+		return -ENOMEM;
 
 	wdt->pmic = pmic;
 
-	wdt->wdtdev.info = &pmic_watchकरोg_info;
-	wdt->wdtdev.ops = &pmic_watchकरोg_ops;
-	wdt->wdtdev.min_समयout = PMIC_WDT_MIN_TIMEOUT;
-	wdt->wdtdev.max_समयout = PMIC_WDT_MAX_TIMEOUT;
+	wdt->wdtdev.info = &pmic_watchdog_info;
+	wdt->wdtdev.ops = &pmic_watchdog_ops;
+	wdt->wdtdev.min_timeout = PMIC_WDT_MIN_TIMEOUT;
+	wdt->wdtdev.max_timeout = PMIC_WDT_MAX_TIMEOUT;
 	wdt->wdtdev.parent = dev;
 
-	wdt->wdtdev.समयout = PMIC_WDT_DEFAULT_TIMEOUT;
-	watchकरोg_init_समयout(&wdt->wdtdev, 0, dev);
+	wdt->wdtdev.timeout = PMIC_WDT_DEFAULT_TIMEOUT;
+	watchdog_init_timeout(&wdt->wdtdev, 0, dev);
 
-	watchकरोg_set_nowayout(&wdt->wdtdev, nowayout);
-	watchकरोg_set_drvdata(&wdt->wdtdev, wdt);
+	watchdog_set_nowayout(&wdt->wdtdev, nowayout);
+	watchdog_set_drvdata(&wdt->wdtdev, wdt);
 
-	ret = devm_watchकरोg_रेजिस्टर_device(dev, &wdt->wdtdev);
-	अगर (ret)
-		वापस ret;
+	ret = devm_watchdog_register_device(dev, &wdt->wdtdev);
+	if (ret)
+		return ret;
 
 	dev_dbg(wdt->pmic->dev, "PMIC Watchdog driver probed\n");
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id of_pmic_wdt_match[] = अणु
-	अणु .compatible = "st,stpmic1-wdt" पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+static const struct of_device_id of_pmic_wdt_match[] = {
+	{ .compatible = "st,stpmic1-wdt" },
+	{ },
+};
 
 MODULE_DEVICE_TABLE(of, of_pmic_wdt_match);
 
-अटल काष्ठा platक्रमm_driver stpmic1_wdt_driver = अणु
+static struct platform_driver stpmic1_wdt_driver = {
 	.probe = pmic_wdt_probe,
-	.driver = अणु
+	.driver = {
 		.name = "stpmic1-wdt",
 		.of_match_table = of_pmic_wdt_match,
-	पूर्ण,
-पूर्ण;
-module_platक्रमm_driver(stpmic1_wdt_driver);
+	},
+};
+module_platform_driver(stpmic1_wdt_driver);
 
 MODULE_DESCRIPTION("Watchdog driver for STPMIC1 device");
 MODULE_AUTHOR("Pascal Paillet <p.paillet@st.com>");

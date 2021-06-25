@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2020 Red Hat Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -20,75 +19,75 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-#समावेश "ior.h"
+#include "ior.h"
 
-अटल स्थिर काष्ठा nvkm_ior_func
-gp100_sor_hda = अणु
-	.route = अणु
+static const struct nvkm_ior_func
+gp100_sor_hda = {
+	.route = {
 		.get = gm200_sor_route_get,
 		.set = gm200_sor_route_set,
-	पूर्ण,
+	},
 	.state = gf119_sor_state,
-	.घातer = nv50_sor_घातer,
-	.घड़ी = gf119_sor_घड़ी,
-	.hdmi = अणु
+	.power = nv50_sor_power,
+	.clock = gf119_sor_clock,
+	.hdmi = {
 		.ctrl = gk104_hdmi_ctrl,
 		.scdc = gm200_hdmi_scdc,
-	पूर्ण,
-	.dp = अणु
-		.lanes = अणु 0, 1, 2, 3 पूर्ण,
+	},
+	.dp = {
+		.lanes = { 0, 1, 2, 3 },
 		.links = gf119_sor_dp_links,
-		.घातer = g94_sor_dp_घातer,
+		.power = g94_sor_dp_power,
 		.pattern = gm107_sor_dp_pattern,
 		.drive = gm200_sor_dp_drive,
 		.vcpi = gf119_sor_dp_vcpi,
 		.audio = gf119_sor_dp_audio,
 		.audio_sym = gf119_sor_dp_audio_sym,
 		.watermark = gf119_sor_dp_watermark,
-	पूर्ण,
-	.hda = अणु
+	},
+	.hda = {
 		.hpd = gf119_hda_hpd,
 		.eld = gf119_hda_eld,
 		.device_entry = gf119_hda_device_entry,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा nvkm_ior_func
-gp100_sor = अणु
-	.route = अणु
+static const struct nvkm_ior_func
+gp100_sor = {
+	.route = {
 		.get = gm200_sor_route_get,
 		.set = gm200_sor_route_set,
-	पूर्ण,
+	},
 	.state = gf119_sor_state,
-	.घातer = nv50_sor_घातer,
-	.घड़ी = gf119_sor_घड़ी,
-	.hdmi = अणु
+	.power = nv50_sor_power,
+	.clock = gf119_sor_clock,
+	.hdmi = {
 		.ctrl = gk104_hdmi_ctrl,
 		.scdc = gm200_hdmi_scdc,
-	पूर्ण,
-	.dp = अणु
-		.lanes = अणु 0, 1, 2, 3 पूर्ण,
+	},
+	.dp = {
+		.lanes = { 0, 1, 2, 3 },
 		.links = gf119_sor_dp_links,
-		.घातer = g94_sor_dp_घातer,
+		.power = g94_sor_dp_power,
 		.pattern = gm107_sor_dp_pattern,
 		.drive = gm200_sor_dp_drive,
 		.vcpi = gf119_sor_dp_vcpi,
 		.audio = gf119_sor_dp_audio,
 		.audio_sym = gf119_sor_dp_audio_sym,
 		.watermark = gf119_sor_dp_watermark,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-पूर्णांक
-gp100_sor_new(काष्ठा nvkm_disp *disp, पूर्णांक id)
-अणु
-	काष्ठा nvkm_device *device = disp->engine.subdev.device;
+int
+gp100_sor_new(struct nvkm_disp *disp, int id)
+{
+	struct nvkm_device *device = disp->engine.subdev.device;
 	u32 hda;
 
-	अगर (!((hda = nvkm_rd32(device, 0x08a15c)) & 0x40000000))
+	if (!((hda = nvkm_rd32(device, 0x08a15c)) & 0x40000000))
 		hda = nvkm_rd32(device, 0x10ebb0) >> 8;
 
-	अगर (hda & BIT(id))
-		वापस nvkm_ior_new_(&gp100_sor_hda, disp, SOR, id);
-	वापस nvkm_ior_new_(&gp100_sor, disp, SOR, id);
-पूर्ण
+	if (hda & BIT(id))
+		return nvkm_ior_new_(&gp100_sor_hda, disp, SOR, id);
+	return nvkm_ior_new_(&gp100_sor, disp, SOR, id);
+}

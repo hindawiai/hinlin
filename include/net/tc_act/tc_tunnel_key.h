@@ -1,87 +1,86 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * Copyright (c) 2016, Amir Vadai <amir@vadai.me>
  * Copyright (c) 2016, Mellanox Technologies. All rights reserved.
  */
 
-#अगर_अघोषित __NET_TC_TUNNEL_KEY_H
-#घोषणा __NET_TC_TUNNEL_KEY_H
+#ifndef __NET_TC_TUNNEL_KEY_H
+#define __NET_TC_TUNNEL_KEY_H
 
-#समावेश <net/act_api.h>
-#समावेश <linux/tc_act/tc_tunnel_key.h>
-#समावेश <net/dst_metadata.h>
+#include <net/act_api.h>
+#include <linux/tc_act/tc_tunnel_key.h>
+#include <net/dst_metadata.h>
 
-काष्ठा tcf_tunnel_key_params अणु
-	काष्ठा rcu_head		rcu;
-	पूर्णांक			tcft_action;
-	काष्ठा metadata_dst     *tcft_enc_metadata;
-पूर्ण;
+struct tcf_tunnel_key_params {
+	struct rcu_head		rcu;
+	int			tcft_action;
+	struct metadata_dst     *tcft_enc_metadata;
+};
 
-काष्ठा tcf_tunnel_key अणु
-	काष्ठा tc_action	      common;
-	काष्ठा tcf_tunnel_key_params __rcu *params;
-पूर्ण;
+struct tcf_tunnel_key {
+	struct tc_action	      common;
+	struct tcf_tunnel_key_params __rcu *params;
+};
 
-#घोषणा to_tunnel_key(a) ((काष्ठा tcf_tunnel_key *)a)
+#define to_tunnel_key(a) ((struct tcf_tunnel_key *)a)
 
-अटल अंतरभूत bool is_tcf_tunnel_set(स्थिर काष्ठा tc_action *a)
-अणु
-#अगर_घोषित CONFIG_NET_CLS_ACT
-	काष्ठा tcf_tunnel_key *t = to_tunnel_key(a);
-	काष्ठा tcf_tunnel_key_params *params;
+static inline bool is_tcf_tunnel_set(const struct tc_action *a)
+{
+#ifdef CONFIG_NET_CLS_ACT
+	struct tcf_tunnel_key *t = to_tunnel_key(a);
+	struct tcf_tunnel_key_params *params;
 
-	params = rcu_dereference_रक्षित(t->params,
+	params = rcu_dereference_protected(t->params,
 					   lockdep_is_held(&a->tcfa_lock));
-	अगर (a->ops && a->ops->id == TCA_ID_TUNNEL_KEY)
-		वापस params->tcft_action == TCA_TUNNEL_KEY_ACT_SET;
-#पूर्ण_अगर
-	वापस false;
-पूर्ण
+	if (a->ops && a->ops->id == TCA_ID_TUNNEL_KEY)
+		return params->tcft_action == TCA_TUNNEL_KEY_ACT_SET;
+#endif
+	return false;
+}
 
-अटल अंतरभूत bool is_tcf_tunnel_release(स्थिर काष्ठा tc_action *a)
-अणु
-#अगर_घोषित CONFIG_NET_CLS_ACT
-	काष्ठा tcf_tunnel_key *t = to_tunnel_key(a);
-	काष्ठा tcf_tunnel_key_params *params;
+static inline bool is_tcf_tunnel_release(const struct tc_action *a)
+{
+#ifdef CONFIG_NET_CLS_ACT
+	struct tcf_tunnel_key *t = to_tunnel_key(a);
+	struct tcf_tunnel_key_params *params;
 
-	params = rcu_dereference_रक्षित(t->params,
+	params = rcu_dereference_protected(t->params,
 					   lockdep_is_held(&a->tcfa_lock));
-	अगर (a->ops && a->ops->id == TCA_ID_TUNNEL_KEY)
-		वापस params->tcft_action == TCA_TUNNEL_KEY_ACT_RELEASE;
-#पूर्ण_अगर
-	वापस false;
-पूर्ण
+	if (a->ops && a->ops->id == TCA_ID_TUNNEL_KEY)
+		return params->tcft_action == TCA_TUNNEL_KEY_ACT_RELEASE;
+#endif
+	return false;
+}
 
-अटल अंतरभूत काष्ठा ip_tunnel_info *tcf_tunnel_info(स्थिर काष्ठा tc_action *a)
-अणु
-#अगर_घोषित CONFIG_NET_CLS_ACT
-	काष्ठा tcf_tunnel_key *t = to_tunnel_key(a);
-	काष्ठा tcf_tunnel_key_params *params;
+static inline struct ip_tunnel_info *tcf_tunnel_info(const struct tc_action *a)
+{
+#ifdef CONFIG_NET_CLS_ACT
+	struct tcf_tunnel_key *t = to_tunnel_key(a);
+	struct tcf_tunnel_key_params *params;
 
-	params = rcu_dereference_रक्षित(t->params,
+	params = rcu_dereference_protected(t->params,
 					   lockdep_is_held(&a->tcfa_lock));
 
-	वापस &params->tcft_enc_metadata->u.tun_info;
-#अन्यथा
-	वापस शून्य;
-#पूर्ण_अगर
-पूर्ण
+	return &params->tcft_enc_metadata->u.tun_info;
+#else
+	return NULL;
+#endif
+}
 
-अटल अंतरभूत काष्ठा ip_tunnel_info *
-tcf_tunnel_info_copy(स्थिर काष्ठा tc_action *a)
-अणु
-#अगर_घोषित CONFIG_NET_CLS_ACT
-	काष्ठा ip_tunnel_info *tun = tcf_tunnel_info(a);
+static inline struct ip_tunnel_info *
+tcf_tunnel_info_copy(const struct tc_action *a)
+{
+#ifdef CONFIG_NET_CLS_ACT
+	struct ip_tunnel_info *tun = tcf_tunnel_info(a);
 
-	अगर (tun) अणु
-		माप_प्रकार tun_size = माप(*tun) + tun->options_len;
-		काष्ठा ip_tunnel_info *tun_copy = kmemdup(tun, tun_size,
+	if (tun) {
+		size_t tun_size = sizeof(*tun) + tun->options_len;
+		struct ip_tunnel_info *tun_copy = kmemdup(tun, tun_size,
 							  GFP_ATOMIC);
 
-		वापस tun_copy;
-	पूर्ण
-#पूर्ण_अगर
-	वापस शून्य;
-पूर्ण
-#पूर्ण_अगर /* __NET_TC_TUNNEL_KEY_H */
+		return tun_copy;
+	}
+#endif
+	return NULL;
+}
+#endif /* __NET_TC_TUNNEL_KEY_H */

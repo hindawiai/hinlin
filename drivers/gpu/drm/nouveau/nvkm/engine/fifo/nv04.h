@@ -1,24 +1,23 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: MIT */
-#अगर_अघोषित __NV04_FIFO_H__
-#घोषणा __NV04_FIFO_H__
-#घोषणा nv04_fअगरo(p) container_of((p), काष्ठा nv04_fअगरo, base)
-#समावेश "priv.h"
+/* SPDX-License-Identifier: MIT */
+#ifndef __NV04_FIFO_H__
+#define __NV04_FIFO_H__
+#define nv04_fifo(p) container_of((p), struct nv04_fifo, base)
+#include "priv.h"
 
-काष्ठा nv04_fअगरo_ramfc अणु
-	अचिन्हित bits:6;
-	अचिन्हित ctxs:5;
-	अचिन्हित ctxp:8;
-	अचिन्हित regs:5;
-	अचिन्हित regp;
-पूर्ण;
+struct nv04_fifo_ramfc {
+	unsigned bits:6;
+	unsigned ctxs:5;
+	unsigned ctxp:8;
+	unsigned regs:5;
+	unsigned regp;
+};
 
-काष्ठा nv04_fअगरo अणु
-	काष्ठा nvkm_fअगरo base;
-	स्थिर काष्ठा nv04_fअगरo_ramfc *ramfc;
-पूर्ण;
+struct nv04_fifo {
+	struct nvkm_fifo base;
+	const struct nv04_fifo_ramfc *ramfc;
+};
 
-पूर्णांक nv04_fअगरo_new_(स्थिर काष्ठा nvkm_fअगरo_func *, काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक,
-		   पूर्णांक nr, स्थिर काष्ठा nv04_fअगरo_ramfc *, काष्ठा nvkm_fअगरo **);
-व्योम nv04_fअगरo_init(काष्ठा nvkm_fअगरo *);
-#पूर्ण_अगर
+int nv04_fifo_new_(const struct nvkm_fifo_func *, struct nvkm_device *, enum nvkm_subdev_type, int,
+		   int nr, const struct nv04_fifo_ramfc *, struct nvkm_fifo **);
+void nv04_fifo_init(struct nvkm_fifo *);
+#endif

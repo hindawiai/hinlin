@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  *  linux/fs/hpfs/dentry.c
  *
@@ -8,56 +7,56 @@
  *  dcache operations
  */
 
-#समावेश "hpfs_fn.h"
+#include "hpfs_fn.h"
 
 /*
  * Note: the dentry argument is the parent dentry.
  */
 
-अटल पूर्णांक hpfs_hash_dentry(स्थिर काष्ठा dentry *dentry, काष्ठा qstr *qstr)
-अणु
-	अचिन्हित दीर्घ	 hash;
-	पूर्णांक		 i;
-	अचिन्हित l = qstr->len;
+static int hpfs_hash_dentry(const struct dentry *dentry, struct qstr *qstr)
+{
+	unsigned long	 hash;
+	int		 i;
+	unsigned l = qstr->len;
 
-	अगर (l == 1) अगर (qstr->name[0]=='.') जाओ x;
-	अगर (l == 2) अगर (qstr->name[0]=='.' || qstr->name[1]=='.') जाओ x;
+	if (l == 1) if (qstr->name[0]=='.') goto x;
+	if (l == 2) if (qstr->name[0]=='.' || qstr->name[1]=='.') goto x;
 	hpfs_adjust_length(qstr->name, &l);
-	/*अगर (hpfs_chk_name(qstr->name,&l))*/
-		/*वापस -ENAMETOOLONG;*/
-		/*वापस -ENOENT;*/
+	/*if (hpfs_chk_name(qstr->name,&l))*/
+		/*return -ENAMETOOLONG;*/
+		/*return -ENOENT;*/
 	x:
 
 	hash = init_name_hash(dentry);
-	क्रम (i = 0; i < l; i++)
-		hash = partial_name_hash(hpfs_upहाल(hpfs_sb(dentry->d_sb)->sb_cp_table,qstr->name[i]), hash);
+	for (i = 0; i < l; i++)
+		hash = partial_name_hash(hpfs_upcase(hpfs_sb(dentry->d_sb)->sb_cp_table,qstr->name[i]), hash);
 	qstr->hash = end_name_hash(hash);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक hpfs_compare_dentry(स्थिर काष्ठा dentry *dentry,
-		अचिन्हित पूर्णांक len, स्थिर अक्षर *str, स्थिर काष्ठा qstr *name)
-अणु
-	अचिन्हित al = len;
-	अचिन्हित bl = name->len;
+static int hpfs_compare_dentry(const struct dentry *dentry,
+		unsigned int len, const char *str, const struct qstr *name)
+{
+	unsigned al = len;
+	unsigned bl = name->len;
 
 	hpfs_adjust_length(str, &al);
 	/*hpfs_adjust_length(b->name, &bl);*/
 
 	/*
-	 * 'str' is the nane of an alपढ़ोy existing dentry, so the name
+	 * 'str' is the nane of an already existing dentry, so the name
 	 * must be valid. 'name' must be validated first.
 	 */
 
-	अगर (hpfs_chk_name(name->name, &bl))
-		वापस 1;
-	अगर (hpfs_compare_names(dentry->d_sb, str, al, name->name, bl, 0))
-		वापस 1;
-	वापस 0;
-पूर्ण
+	if (hpfs_chk_name(name->name, &bl))
+		return 1;
+	if (hpfs_compare_names(dentry->d_sb, str, al, name->name, bl, 0))
+		return 1;
+	return 0;
+}
 
-स्थिर काष्ठा dentry_operations hpfs_dentry_operations = अणु
+const struct dentry_operations hpfs_dentry_operations = {
 	.d_hash		= hpfs_hash_dentry,
 	.d_compare	= hpfs_compare_dentry,
-पूर्ण;
+};

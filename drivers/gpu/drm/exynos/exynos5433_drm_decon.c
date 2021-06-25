@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /* drivers/gpu/drm/exynos5433_drm_decon.c
  *
  * Copyright (C) 2015 Samsung Electronics Co.Ltd
@@ -8,38 +7,38 @@
  *	Hyungwon Hwang <human.hwang@samsung.com>
  */
 
-#समावेश <linux/clk.h>
-#समावेश <linux/component.h>
-#समावेश <linux/iopoll.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/mfd/syscon.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <linux/regmap.h>
+#include <linux/clk.h>
+#include <linux/component.h>
+#include <linux/iopoll.h>
+#include <linux/irq.h>
+#include <linux/mfd/syscon.h>
+#include <linux/of_device.h>
+#include <linux/platform_device.h>
+#include <linux/pm_runtime.h>
+#include <linux/regmap.h>
 
-#समावेश <drm/drm_fourcc.h>
-#समावेश <drm/drm_vblank.h>
+#include <drm/drm_fourcc.h>
+#include <drm/drm_vblank.h>
 
-#समावेश "exynos_drm_crtc.h"
-#समावेश "exynos_drm_drv.h"
-#समावेश "exynos_drm_fb.h"
-#समावेश "exynos_drm_plane.h"
-#समावेश "regs-decon5433.h"
+#include "exynos_drm_crtc.h"
+#include "exynos_drm_drv.h"
+#include "exynos_drm_fb.h"
+#include "exynos_drm_plane.h"
+#include "regs-decon5433.h"
 
-#घोषणा DSD_CFG_MUX 0x1004
-#घोषणा DSD_CFG_MUX_TE_UNMASK_GLOBAL BIT(13)
+#define DSD_CFG_MUX 0x1004
+#define DSD_CFG_MUX_TE_UNMASK_GLOBAL BIT(13)
 
-#घोषणा WINDOWS_NR	5
-#घोषणा PRIMARY_WIN	2
-#घोषणा CURSON_WIN	4
+#define WINDOWS_NR	5
+#define PRIMARY_WIN	2
+#define CURSON_WIN	4
 
-#घोषणा MIN_FB_WIDTH_FOR_16WORD_BURST	128
+#define MIN_FB_WIDTH_FOR_16WORD_BURST	128
 
-#घोषणा I80_HW_TRG	(1 << 0)
-#घोषणा IFTYPE_HDMI	(1 << 1)
+#define I80_HW_TRG	(1 << 0)
+#define IFTYPE_HDMI	(1 << 1)
 
-अटल स्थिर अक्षर * स्थिर decon_clks_name[] = अणु
+static const char * const decon_clks_name[] = {
 	"pclk",
 	"aclk_decon",
 	"aclk_smmu_decon0x",
@@ -50,426 +49,426 @@
 	"pclk_smmu_decon1x",
 	"sclk_decon_vclk",
 	"sclk_decon_eclk",
-पूर्ण;
+};
 
-काष्ठा decon_context अणु
-	काष्ठा device			*dev;
-	काष्ठा drm_device		*drm_dev;
-	व्योम				*dma_priv;
-	काष्ठा exynos_drm_crtc		*crtc;
-	काष्ठा exynos_drm_plane		planes[WINDOWS_NR];
-	काष्ठा exynos_drm_plane_config	configs[WINDOWS_NR];
-	व्योम __iomem			*addr;
-	काष्ठा regmap			*sysreg;
-	काष्ठा clk			*clks[ARRAY_SIZE(decon_clks_name)];
-	अचिन्हित पूर्णांक			irq;
-	अचिन्हित पूर्णांक			irq_vsync;
-	अचिन्हित पूर्णांक			irq_lcd_sys;
-	अचिन्हित पूर्णांक			te_irq;
-	अचिन्हित दीर्घ			out_type;
-	पूर्णांक				first_win;
+struct decon_context {
+	struct device			*dev;
+	struct drm_device		*drm_dev;
+	void				*dma_priv;
+	struct exynos_drm_crtc		*crtc;
+	struct exynos_drm_plane		planes[WINDOWS_NR];
+	struct exynos_drm_plane_config	configs[WINDOWS_NR];
+	void __iomem			*addr;
+	struct regmap			*sysreg;
+	struct clk			*clks[ARRAY_SIZE(decon_clks_name)];
+	unsigned int			irq;
+	unsigned int			irq_vsync;
+	unsigned int			irq_lcd_sys;
+	unsigned int			te_irq;
+	unsigned long			out_type;
+	int				first_win;
 	spinlock_t			vblank_lock;
 	u32				frame_id;
-पूर्ण;
+};
 
-अटल स्थिर uपूर्णांक32_t decon_क्रमmats[] = अणु
+static const uint32_t decon_formats[] = {
 	DRM_FORMAT_XRGB1555,
 	DRM_FORMAT_RGB565,
 	DRM_FORMAT_XRGB8888,
 	DRM_FORMAT_ARGB8888,
-पूर्ण;
+};
 
-अटल स्थिर क्रमागत drm_plane_type decon_win_types[WINDOWS_NR] = अणु
+static const enum drm_plane_type decon_win_types[WINDOWS_NR] = {
 	[PRIMARY_WIN] = DRM_PLANE_TYPE_PRIMARY,
 	[CURSON_WIN] = DRM_PLANE_TYPE_CURSOR,
-पूर्ण;
+};
 
-अटल स्थिर अचिन्हित पूर्णांक capabilities[WINDOWS_NR] = अणु
+static const unsigned int capabilities[WINDOWS_NR] = {
 	0,
 	EXYNOS_DRM_PLANE_CAP_WIN_BLEND | EXYNOS_DRM_PLANE_CAP_PIX_BLEND,
 	EXYNOS_DRM_PLANE_CAP_WIN_BLEND | EXYNOS_DRM_PLANE_CAP_PIX_BLEND,
 	EXYNOS_DRM_PLANE_CAP_WIN_BLEND | EXYNOS_DRM_PLANE_CAP_PIX_BLEND,
 	EXYNOS_DRM_PLANE_CAP_WIN_BLEND | EXYNOS_DRM_PLANE_CAP_PIX_BLEND,
-पूर्ण;
+};
 
-अटल अंतरभूत व्योम decon_set_bits(काष्ठा decon_context *ctx, u32 reg, u32 mask,
+static inline void decon_set_bits(struct decon_context *ctx, u32 reg, u32 mask,
 				  u32 val)
-अणु
-	val = (val & mask) | (पढ़ोl(ctx->addr + reg) & ~mask);
-	ग_लिखोl(val, ctx->addr + reg);
-पूर्ण
+{
+	val = (val & mask) | (readl(ctx->addr + reg) & ~mask);
+	writel(val, ctx->addr + reg);
+}
 
-अटल पूर्णांक decon_enable_vblank(काष्ठा exynos_drm_crtc *crtc)
-अणु
-	काष्ठा decon_context *ctx = crtc->ctx;
+static int decon_enable_vblank(struct exynos_drm_crtc *crtc)
+{
+	struct decon_context *ctx = crtc->ctx;
 	u32 val;
 
 	val = VIDINTCON0_INTEN;
-	अगर (crtc->i80_mode)
+	if (crtc->i80_mode)
 		val |= VIDINTCON0_FRAMEDONE;
-	अन्यथा
+	else
 		val |= VIDINTCON0_INTFRMEN | VIDINTCON0_FRAMESEL_FP;
 
-	ग_लिखोl(val, ctx->addr + DECON_VIDINTCON0);
+	writel(val, ctx->addr + DECON_VIDINTCON0);
 
 	enable_irq(ctx->irq);
-	अगर (!(ctx->out_type & I80_HW_TRG))
+	if (!(ctx->out_type & I80_HW_TRG))
 		enable_irq(ctx->te_irq);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम decon_disable_vblank(काष्ठा exynos_drm_crtc *crtc)
-अणु
-	काष्ठा decon_context *ctx = crtc->ctx;
+static void decon_disable_vblank(struct exynos_drm_crtc *crtc)
+{
+	struct decon_context *ctx = crtc->ctx;
 
-	अगर (!(ctx->out_type & I80_HW_TRG))
+	if (!(ctx->out_type & I80_HW_TRG))
 		disable_irq_nosync(ctx->te_irq);
 	disable_irq_nosync(ctx->irq);
 
-	ग_लिखोl(0, ctx->addr + DECON_VIDINTCON0);
-पूर्ण
+	writel(0, ctx->addr + DECON_VIDINTCON0);
+}
 
-/* वापस number of starts/ends of frame transmissions since reset */
-अटल u32 decon_get_frame_count(काष्ठा decon_context *ctx, bool end)
-अणु
+/* return number of starts/ends of frame transmissions since reset */
+static u32 decon_get_frame_count(struct decon_context *ctx, bool end)
+{
 	u32 frm, pfrm, status, cnt = 2;
 
-	/* To get consistent result repeat पढ़ो until frame id is stable.
-	 * Usually the loop will be executed once, in rare हालs when the loop
-	 * is executed at frame change समय 2nd pass will be needed.
+	/* To get consistent result repeat read until frame id is stable.
+	 * Usually the loop will be executed once, in rare cases when the loop
+	 * is executed at frame change time 2nd pass will be needed.
 	 */
-	frm = पढ़ोl(ctx->addr + DECON_CRFMID);
-	करो अणु
-		status = पढ़ोl(ctx->addr + DECON_VIDCON1);
+	frm = readl(ctx->addr + DECON_CRFMID);
+	do {
+		status = readl(ctx->addr + DECON_VIDCON1);
 		pfrm = frm;
-		frm = पढ़ोl(ctx->addr + DECON_CRFMID);
-	पूर्ण जबतक (frm != pfrm && --cnt);
+		frm = readl(ctx->addr + DECON_CRFMID);
+	} while (frm != pfrm && --cnt);
 
-	/* CRFMID is incremented on BPORCH in हाल of I80 and on VSYNC in हाल
-	 * of RGB, it should be taken पूर्णांकo account.
+	/* CRFMID is incremented on BPORCH in case of I80 and on VSYNC in case
+	 * of RGB, it should be taken into account.
 	 */
-	अगर (!frm)
-		वापस 0;
+	if (!frm)
+		return 0;
 
-	चयन (status & (VIDCON1_VSTATUS_MASK | VIDCON1_I80_ACTIVE)) अणु
-	हाल VIDCON1_VSTATUS_VS:
-		अगर (!(ctx->crtc->i80_mode))
+	switch (status & (VIDCON1_VSTATUS_MASK | VIDCON1_I80_ACTIVE)) {
+	case VIDCON1_VSTATUS_VS:
+		if (!(ctx->crtc->i80_mode))
 			--frm;
-		अवरोध;
-	हाल VIDCON1_VSTATUS_BP:
+		break;
+	case VIDCON1_VSTATUS_BP:
 		--frm;
-		अवरोध;
-	हाल VIDCON1_I80_ACTIVE:
-	हाल VIDCON1_VSTATUS_AC:
-		अगर (end)
+		break;
+	case VIDCON1_I80_ACTIVE:
+	case VIDCON1_VSTATUS_AC:
+		if (end)
 			--frm;
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+		break;
+	default:
+		break;
+	}
 
-	वापस frm;
-पूर्ण
+	return frm;
+}
 
-अटल व्योम decon_setup_trigger(काष्ठा decon_context *ctx)
-अणु
-	अगर (!ctx->crtc->i80_mode && !(ctx->out_type & I80_HW_TRG))
-		वापस;
+static void decon_setup_trigger(struct decon_context *ctx)
+{
+	if (!ctx->crtc->i80_mode && !(ctx->out_type & I80_HW_TRG))
+		return;
 
-	अगर (!(ctx->out_type & I80_HW_TRG)) अणु
-		ग_लिखोl(TRIGCON_TRIGEN_PER_F | TRIGCON_TRIGEN_F |
+	if (!(ctx->out_type & I80_HW_TRG)) {
+		writel(TRIGCON_TRIGEN_PER_F | TRIGCON_TRIGEN_F |
 		       TRIGCON_TE_AUTO_MASK | TRIGCON_SWTRIGEN,
 		       ctx->addr + DECON_TRIGCON);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	ग_लिखोl(TRIGCON_TRIGEN_PER_F | TRIGCON_TRIGEN_F | TRIGCON_HWTRIGMASK
+	writel(TRIGCON_TRIGEN_PER_F | TRIGCON_TRIGEN_F | TRIGCON_HWTRIGMASK
 	       | TRIGCON_HWTRIGEN, ctx->addr + DECON_TRIGCON);
 
-	अगर (regmap_update_bits(ctx->sysreg, DSD_CFG_MUX,
+	if (regmap_update_bits(ctx->sysreg, DSD_CFG_MUX,
 			       DSD_CFG_MUX_TE_UNMASK_GLOBAL, ~0))
 		DRM_DEV_ERROR(ctx->dev, "Cannot update sysreg.\n");
-पूर्ण
+}
 
-अटल व्योम decon_commit(काष्ठा exynos_drm_crtc *crtc)
-अणु
-	काष्ठा decon_context *ctx = crtc->ctx;
-	काष्ठा drm_display_mode *m = &crtc->base.mode;
-	bool पूर्णांकerlaced = false;
+static void decon_commit(struct exynos_drm_crtc *crtc)
+{
+	struct decon_context *ctx = crtc->ctx;
+	struct drm_display_mode *m = &crtc->base.mode;
+	bool interlaced = false;
 	u32 val;
 
-	अगर (ctx->out_type & IFTYPE_HDMI) अणु
+	if (ctx->out_type & IFTYPE_HDMI) {
 		m->crtc_hsync_start = m->crtc_hdisplay + 10;
 		m->crtc_hsync_end = m->crtc_htotal - 92;
 		m->crtc_vsync_start = m->crtc_vdisplay + 1;
 		m->crtc_vsync_end = m->crtc_vsync_start + 1;
-		अगर (m->flags & DRM_MODE_FLAG_INTERLACE)
-			पूर्णांकerlaced = true;
-	पूर्ण
+		if (m->flags & DRM_MODE_FLAG_INTERLACE)
+			interlaced = true;
+	}
 
 	decon_setup_trigger(ctx);
 
-	/* lcd on and use command अगर */
+	/* lcd on and use command if */
 	val = VIDOUT_LCD_ON;
-	अगर (पूर्णांकerlaced)
+	if (interlaced)
 		val |= VIDOUT_INTERLACE_EN_F;
-	अगर (crtc->i80_mode) अणु
+	if (crtc->i80_mode) {
 		val |= VIDOUT_COMMAND_IF;
-	पूर्ण अन्यथा अणु
+	} else {
 		val |= VIDOUT_RGB_IF;
-	पूर्ण
+	}
 
-	ग_लिखोl(val, ctx->addr + DECON_VIDOUTCON0);
+	writel(val, ctx->addr + DECON_VIDOUTCON0);
 
-	अगर (पूर्णांकerlaced)
+	if (interlaced)
 		val = VIDTCON2_LINEVAL(m->vdisplay / 2 - 1) |
 			VIDTCON2_HOZVAL(m->hdisplay - 1);
-	अन्यथा
+	else
 		val = VIDTCON2_LINEVAL(m->vdisplay - 1) |
 			VIDTCON2_HOZVAL(m->hdisplay - 1);
-	ग_लिखोl(val, ctx->addr + DECON_VIDTCON2);
+	writel(val, ctx->addr + DECON_VIDTCON2);
 
-	अगर (!crtc->i80_mode) अणु
-		पूर्णांक vbp = m->crtc_vtotal - m->crtc_vsync_end;
-		पूर्णांक vfp = m->crtc_vsync_start - m->crtc_vdisplay;
+	if (!crtc->i80_mode) {
+		int vbp = m->crtc_vtotal - m->crtc_vsync_end;
+		int vfp = m->crtc_vsync_start - m->crtc_vdisplay;
 
-		अगर (पूर्णांकerlaced)
+		if (interlaced)
 			vbp = vbp / 2 - 1;
 		val = VIDTCON00_VBPD_F(vbp - 1) | VIDTCON00_VFPD_F(vfp - 1);
-		ग_लिखोl(val, ctx->addr + DECON_VIDTCON00);
+		writel(val, ctx->addr + DECON_VIDTCON00);
 
 		val = VIDTCON01_VSPW_F(
 				m->crtc_vsync_end - m->crtc_vsync_start - 1);
-		ग_लिखोl(val, ctx->addr + DECON_VIDTCON01);
+		writel(val, ctx->addr + DECON_VIDTCON01);
 
 		val = VIDTCON10_HBPD_F(
 				m->crtc_htotal - m->crtc_hsync_end - 1) |
 			VIDTCON10_HFPD_F(
 				m->crtc_hsync_start - m->crtc_hdisplay - 1);
-		ग_लिखोl(val, ctx->addr + DECON_VIDTCON10);
+		writel(val, ctx->addr + DECON_VIDTCON10);
 
 		val = VIDTCON11_HSPW_F(
 				m->crtc_hsync_end - m->crtc_hsync_start - 1);
-		ग_लिखोl(val, ctx->addr + DECON_VIDTCON11);
-	पूर्ण
+		writel(val, ctx->addr + DECON_VIDTCON11);
+	}
 
-	/* enable output and display संकेत */
+	/* enable output and display signal */
 	decon_set_bits(ctx, DECON_VIDCON0, VIDCON0_ENVID | VIDCON0_ENVID_F, ~0);
 
 	decon_set_bits(ctx, DECON_UPDATE, STANDALONE_UPDATE_F, ~0);
-पूर्ण
+}
 
-अटल व्योम decon_win_set_bldeq(काष्ठा decon_context *ctx, अचिन्हित पूर्णांक win,
-				अचिन्हित पूर्णांक alpha, अचिन्हित पूर्णांक pixel_alpha)
-अणु
+static void decon_win_set_bldeq(struct decon_context *ctx, unsigned int win,
+				unsigned int alpha, unsigned int pixel_alpha)
+{
 	u32 mask = BLENDERQ_A_FUNC_F(0xf) | BLENDERQ_B_FUNC_F(0xf);
 	u32 val = 0;
 
-	चयन (pixel_alpha) अणु
-	हाल DRM_MODE_BLEND_PIXEL_NONE:
-	हाल DRM_MODE_BLEND_COVERAGE:
+	switch (pixel_alpha) {
+	case DRM_MODE_BLEND_PIXEL_NONE:
+	case DRM_MODE_BLEND_COVERAGE:
 		val |= BLENDERQ_A_FUNC_F(BLENDERQ_ALPHA_A);
 		val |= BLENDERQ_B_FUNC_F(BLENDERQ_ONE_MINUS_ALPHA_A);
-		अवरोध;
-	हाल DRM_MODE_BLEND_PREMULTI:
-	शेष:
-		अगर (alpha != DRM_BLEND_ALPHA_OPAQUE) अणु
+		break;
+	case DRM_MODE_BLEND_PREMULTI:
+	default:
+		if (alpha != DRM_BLEND_ALPHA_OPAQUE) {
 			val |= BLENDERQ_A_FUNC_F(BLENDERQ_ALPHA0);
 			val |= BLENDERQ_B_FUNC_F(BLENDERQ_ONE_MINUS_ALPHA_A);
-		पूर्ण अन्यथा अणु
+		} else {
 			val |= BLENDERQ_A_FUNC_F(BLENDERQ_ONE);
 			val |= BLENDERQ_B_FUNC_F(BLENDERQ_ONE_MINUS_ALPHA_A);
-		पूर्ण
-		अवरोध;
-	पूर्ण
+		}
+		break;
+	}
 	decon_set_bits(ctx, DECON_BLENDERQx(win), mask, val);
-पूर्ण
+}
 
-अटल व्योम decon_win_set_bldmod(काष्ठा decon_context *ctx, अचिन्हित पूर्णांक win,
-				 अचिन्हित पूर्णांक alpha, अचिन्हित पूर्णांक pixel_alpha)
-अणु
+static void decon_win_set_bldmod(struct decon_context *ctx, unsigned int win,
+				 unsigned int alpha, unsigned int pixel_alpha)
+{
 	u32 win_alpha = alpha >> 8;
 	u32 val = 0;
 
-	चयन (pixel_alpha) अणु
-	हाल DRM_MODE_BLEND_PIXEL_NONE:
-		अवरोध;
-	हाल DRM_MODE_BLEND_COVERAGE:
-	हाल DRM_MODE_BLEND_PREMULTI:
-	शेष:
+	switch (pixel_alpha) {
+	case DRM_MODE_BLEND_PIXEL_NONE:
+		break;
+	case DRM_MODE_BLEND_COVERAGE:
+	case DRM_MODE_BLEND_PREMULTI:
+	default:
 		val |= WINCONx_ALPHA_SEL_F;
 		val |= WINCONx_BLD_PIX_F;
 		val |= WINCONx_ALPHA_MUL_F;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 	decon_set_bits(ctx, DECON_WINCONx(win), WINCONx_BLEND_MODE_MASK, val);
 
-	अगर (alpha != DRM_BLEND_ALPHA_OPAQUE) अणु
+	if (alpha != DRM_BLEND_ALPHA_OPAQUE) {
 		val = VIDOSD_Wx_ALPHA_R_F(win_alpha) |
 		      VIDOSD_Wx_ALPHA_G_F(win_alpha) |
 		      VIDOSD_Wx_ALPHA_B_F(win_alpha);
 		decon_set_bits(ctx, DECON_VIDOSDxC(win),
 			       VIDOSDxC_ALPHA0_RGB_MASK, val);
 		decon_set_bits(ctx, DECON_BLENDCON, BLEND_NEW, BLEND_NEW);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम decon_win_set_pixfmt(काष्ठा decon_context *ctx, अचिन्हित पूर्णांक win,
-				 काष्ठा drm_framebuffer *fb)
-अणु
-	काष्ठा exynos_drm_plane plane = ctx->planes[win];
-	काष्ठा exynos_drm_plane_state *state =
+static void decon_win_set_pixfmt(struct decon_context *ctx, unsigned int win,
+				 struct drm_framebuffer *fb)
+{
+	struct exynos_drm_plane plane = ctx->planes[win];
+	struct exynos_drm_plane_state *state =
 		to_exynos_plane_state(plane.base.state);
-	अचिन्हित पूर्णांक alpha = state->base.alpha;
-	अचिन्हित पूर्णांक pixel_alpha;
-	अचिन्हित दीर्घ val;
+	unsigned int alpha = state->base.alpha;
+	unsigned int pixel_alpha;
+	unsigned long val;
 
-	अगर (fb->क्रमmat->has_alpha)
+	if (fb->format->has_alpha)
 		pixel_alpha = state->base.pixel_blend_mode;
-	अन्यथा
+	else
 		pixel_alpha = DRM_MODE_BLEND_PIXEL_NONE;
 
-	val = पढ़ोl(ctx->addr + DECON_WINCONx(win));
+	val = readl(ctx->addr + DECON_WINCONx(win));
 	val &= WINCONx_ENWIN_F;
 
-	चयन (fb->क्रमmat->क्रमmat) अणु
-	हाल DRM_FORMAT_XRGB1555:
+	switch (fb->format->format) {
+	case DRM_FORMAT_XRGB1555:
 		val |= WINCONx_BPPMODE_16BPP_I1555;
 		val |= WINCONx_HAWSWP_F;
 		val |= WINCONx_BURSTLEN_16WORD;
-		अवरोध;
-	हाल DRM_FORMAT_RGB565:
+		break;
+	case DRM_FORMAT_RGB565:
 		val |= WINCONx_BPPMODE_16BPP_565;
 		val |= WINCONx_HAWSWP_F;
 		val |= WINCONx_BURSTLEN_16WORD;
-		अवरोध;
-	हाल DRM_FORMAT_XRGB8888:
+		break;
+	case DRM_FORMAT_XRGB8888:
 		val |= WINCONx_BPPMODE_24BPP_888;
 		val |= WINCONx_WSWP_F;
 		val |= WINCONx_BURSTLEN_16WORD;
-		अवरोध;
-	हाल DRM_FORMAT_ARGB8888:
-	शेष:
+		break;
+	case DRM_FORMAT_ARGB8888:
+	default:
 		val |= WINCONx_BPPMODE_32BPP_A8888;
 		val |= WINCONx_WSWP_F;
 		val |= WINCONx_BURSTLEN_16WORD;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	DRM_DEV_DEBUG_KMS(ctx->dev, "cpp = %u\n", fb->क्रमmat->cpp[0]);
+	DRM_DEV_DEBUG_KMS(ctx->dev, "cpp = %u\n", fb->format->cpp[0]);
 
 	/*
-	 * In हाल of exynos, setting dma-burst to 16Word causes permanent
-	 * tearing क्रम very small buffers, e.g. cursor buffer. Burst Mode
-	 * चयनing which is based on plane size is not recommended as
+	 * In case of exynos, setting dma-burst to 16Word causes permanent
+	 * tearing for very small buffers, e.g. cursor buffer. Burst Mode
+	 * switching which is based on plane size is not recommended as
 	 * plane size varies a lot towards the end of the screen and rapid
-	 * movement causes unstable DMA which results पूर्णांकo iommu crash/tear.
+	 * movement causes unstable DMA which results into iommu crash/tear.
 	 */
 
-	अगर (fb->width < MIN_FB_WIDTH_FOR_16WORD_BURST) अणु
+	if (fb->width < MIN_FB_WIDTH_FOR_16WORD_BURST) {
 		val &= ~WINCONx_BURSTLEN_MASK;
 		val |= WINCONx_BURSTLEN_8WORD;
-	पूर्ण
+	}
 	decon_set_bits(ctx, DECON_WINCONx(win), ~WINCONx_BLEND_MODE_MASK, val);
 
-	अगर (win > 0) अणु
+	if (win > 0) {
 		decon_win_set_bldmod(ctx, win, alpha, pixel_alpha);
 		decon_win_set_bldeq(ctx, win, alpha, pixel_alpha);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम decon_shaकरोw_protect(काष्ठा decon_context *ctx, bool protect)
-अणु
+static void decon_shadow_protect(struct decon_context *ctx, bool protect)
+{
 	decon_set_bits(ctx, DECON_SHADOWCON, SHADOWCON_PROTECT_MASK,
 		       protect ? ~0 : 0);
-पूर्ण
+}
 
-अटल व्योम decon_atomic_begin(काष्ठा exynos_drm_crtc *crtc)
-अणु
-	काष्ठा decon_context *ctx = crtc->ctx;
+static void decon_atomic_begin(struct exynos_drm_crtc *crtc)
+{
+	struct decon_context *ctx = crtc->ctx;
 
-	decon_shaकरोw_protect(ctx, true);
-पूर्ण
+	decon_shadow_protect(ctx, true);
+}
 
-#घोषणा BIT_VAL(x, e, s) (((x) & ((1 << ((e) - (s) + 1)) - 1)) << (s))
-#घोषणा COORDINATE_X(x) BIT_VAL((x), 23, 12)
-#घोषणा COORDINATE_Y(x) BIT_VAL((x), 11, 0)
+#define BIT_VAL(x, e, s) (((x) & ((1 << ((e) - (s) + 1)) - 1)) << (s))
+#define COORDINATE_X(x) BIT_VAL((x), 23, 12)
+#define COORDINATE_Y(x) BIT_VAL((x), 11, 0)
 
-अटल व्योम decon_update_plane(काष्ठा exynos_drm_crtc *crtc,
-			       काष्ठा exynos_drm_plane *plane)
-अणु
-	काष्ठा exynos_drm_plane_state *state =
+static void decon_update_plane(struct exynos_drm_crtc *crtc,
+			       struct exynos_drm_plane *plane)
+{
+	struct exynos_drm_plane_state *state =
 				to_exynos_plane_state(plane->base.state);
-	काष्ठा decon_context *ctx = crtc->ctx;
-	काष्ठा drm_framebuffer *fb = state->base.fb;
-	अचिन्हित पूर्णांक win = plane->index;
-	अचिन्हित पूर्णांक cpp = fb->क्रमmat->cpp[0];
-	अचिन्हित पूर्णांक pitch = fb->pitches[0];
+	struct decon_context *ctx = crtc->ctx;
+	struct drm_framebuffer *fb = state->base.fb;
+	unsigned int win = plane->index;
+	unsigned int cpp = fb->format->cpp[0];
+	unsigned int pitch = fb->pitches[0];
 	dma_addr_t dma_addr = exynos_drm_fb_dma_addr(fb, 0);
 	u32 val;
 
-	अगर (crtc->base.mode.flags & DRM_MODE_FLAG_INTERLACE) अणु
+	if (crtc->base.mode.flags & DRM_MODE_FLAG_INTERLACE) {
 		val = COORDINATE_X(state->crtc.x) |
 			COORDINATE_Y(state->crtc.y / 2);
-		ग_लिखोl(val, ctx->addr + DECON_VIDOSDxA(win));
+		writel(val, ctx->addr + DECON_VIDOSDxA(win));
 
 		val = COORDINATE_X(state->crtc.x + state->crtc.w - 1) |
 			COORDINATE_Y((state->crtc.y + state->crtc.h) / 2 - 1);
-		ग_लिखोl(val, ctx->addr + DECON_VIDOSDxB(win));
-	पूर्ण अन्यथा अणु
+		writel(val, ctx->addr + DECON_VIDOSDxB(win));
+	} else {
 		val = COORDINATE_X(state->crtc.x) | COORDINATE_Y(state->crtc.y);
-		ग_लिखोl(val, ctx->addr + DECON_VIDOSDxA(win));
+		writel(val, ctx->addr + DECON_VIDOSDxA(win));
 
 		val = COORDINATE_X(state->crtc.x + state->crtc.w - 1) |
 				COORDINATE_Y(state->crtc.y + state->crtc.h - 1);
-		ग_लिखोl(val, ctx->addr + DECON_VIDOSDxB(win));
-	पूर्ण
+		writel(val, ctx->addr + DECON_VIDOSDxB(win));
+	}
 
 	val = VIDOSD_Wx_ALPHA_R_F(0xff) | VIDOSD_Wx_ALPHA_G_F(0xff) |
 		VIDOSD_Wx_ALPHA_B_F(0xff);
-	ग_लिखोl(val, ctx->addr + DECON_VIDOSDxC(win));
+	writel(val, ctx->addr + DECON_VIDOSDxC(win));
 
 	val = VIDOSD_Wx_ALPHA_R_F(0x0) | VIDOSD_Wx_ALPHA_G_F(0x0) |
 		VIDOSD_Wx_ALPHA_B_F(0x0);
-	ग_लिखोl(val, ctx->addr + DECON_VIDOSDxD(win));
+	writel(val, ctx->addr + DECON_VIDOSDxD(win));
 
-	ग_लिखोl(dma_addr, ctx->addr + DECON_VIDW0xADD0B0(win));
+	writel(dma_addr, ctx->addr + DECON_VIDW0xADD0B0(win));
 
 	val = dma_addr + pitch * state->src.h;
-	ग_लिखोl(val, ctx->addr + DECON_VIDW0xADD1B0(win));
+	writel(val, ctx->addr + DECON_VIDW0xADD1B0(win));
 
-	अगर (!(ctx->out_type & IFTYPE_HDMI))
+	if (!(ctx->out_type & IFTYPE_HDMI))
 		val = BIT_VAL(pitch - state->crtc.w * cpp, 27, 14)
 			| BIT_VAL(state->crtc.w * cpp, 13, 0);
-	अन्यथा
+	else
 		val = BIT_VAL(pitch - state->crtc.w * cpp, 29, 15)
 			| BIT_VAL(state->crtc.w * cpp, 14, 0);
-	ग_लिखोl(val, ctx->addr + DECON_VIDW0xADD2(win));
+	writel(val, ctx->addr + DECON_VIDW0xADD2(win));
 
 	decon_win_set_pixfmt(ctx, win, fb);
 
-	/* winकरोw enable */
+	/* window enable */
 	decon_set_bits(ctx, DECON_WINCONx(win), WINCONx_ENWIN_F, ~0);
-पूर्ण
+}
 
-अटल व्योम decon_disable_plane(काष्ठा exynos_drm_crtc *crtc,
-				काष्ठा exynos_drm_plane *plane)
-अणु
-	काष्ठा decon_context *ctx = crtc->ctx;
-	अचिन्हित पूर्णांक win = plane->index;
+static void decon_disable_plane(struct exynos_drm_crtc *crtc,
+				struct exynos_drm_plane *plane)
+{
+	struct decon_context *ctx = crtc->ctx;
+	unsigned int win = plane->index;
 
 	decon_set_bits(ctx, DECON_WINCONx(win), WINCONx_ENWIN_F, 0);
-पूर्ण
+}
 
-अटल व्योम decon_atomic_flush(काष्ठा exynos_drm_crtc *crtc)
-अणु
-	काष्ठा decon_context *ctx = crtc->ctx;
-	अचिन्हित दीर्घ flags;
+static void decon_atomic_flush(struct exynos_drm_crtc *crtc)
+{
+	struct decon_context *ctx = crtc->ctx;
+	unsigned long flags;
 
 	spin_lock_irqsave(&ctx->vblank_lock, flags);
 
-	decon_shaकरोw_protect(ctx, false);
+	decon_shadow_protect(ctx, false);
 
 	decon_set_bits(ctx, DECON_UPDATE, STANDALONE_UPDATE_F, ~0);
 
@@ -478,20 +477,20 @@
 	exynos_crtc_handle_event(crtc);
 
 	spin_unlock_irqrestore(&ctx->vblank_lock, flags);
-पूर्ण
+}
 
-अटल व्योम decon_swreset(काष्ठा decon_context *ctx)
-अणु
-	अचिन्हित दीर्घ flags;
+static void decon_swreset(struct decon_context *ctx)
+{
+	unsigned long flags;
 	u32 val;
-	पूर्णांक ret;
+	int ret;
 
-	ग_लिखोl(0, ctx->addr + DECON_VIDCON0);
-	पढ़ोl_poll_समयout(ctx->addr + DECON_VIDCON0, val,
+	writel(0, ctx->addr + DECON_VIDCON0);
+	readl_poll_timeout(ctx->addr + DECON_VIDCON0, val,
 			   ~val & VIDCON0_STOP_STATUS, 12, 20000);
 
-	ग_लिखोl(VIDCON0_SWRESET, ctx->addr + DECON_VIDCON0);
-	ret = पढ़ोl_poll_समयout(ctx->addr + DECON_VIDCON0, val,
+	writel(VIDCON0_SWRESET, ctx->addr + DECON_VIDCON0);
+	ret = readl_poll_timeout(ctx->addr + DECON_VIDCON0, val,
 				 ~val & VIDCON0_SWRESET, 12, 20000);
 
 	WARN(ret < 0, "failed to software reset DECON\n");
@@ -500,106 +499,106 @@
 	ctx->frame_id = 0;
 	spin_unlock_irqrestore(&ctx->vblank_lock, flags);
 
-	अगर (!(ctx->out_type & IFTYPE_HDMI))
-		वापस;
+	if (!(ctx->out_type & IFTYPE_HDMI))
+		return;
 
-	ग_लिखोl(VIDCON0_CLKVALUP | VIDCON0_VLCKFREE, ctx->addr + DECON_VIDCON0);
+	writel(VIDCON0_CLKVALUP | VIDCON0_VLCKFREE, ctx->addr + DECON_VIDCON0);
 	decon_set_bits(ctx, DECON_CMU,
 		       CMU_CLKGAGE_MODE_SFR_F | CMU_CLKGAGE_MODE_MEM_F, ~0);
-	ग_लिखोl(VIDCON1_VCLK_RUN_VDEN_DISABLE, ctx->addr + DECON_VIDCON1);
-	ग_लिखोl(CRCCTRL_CRCEN | CRCCTRL_CRCSTART_F | CRCCTRL_CRCCLKEN,
+	writel(VIDCON1_VCLK_RUN_VDEN_DISABLE, ctx->addr + DECON_VIDCON1);
+	writel(CRCCTRL_CRCEN | CRCCTRL_CRCSTART_F | CRCCTRL_CRCCLKEN,
 	       ctx->addr + DECON_CRCCTRL);
-पूर्ण
+}
 
-अटल व्योम decon_atomic_enable(काष्ठा exynos_drm_crtc *crtc)
-अणु
-	काष्ठा decon_context *ctx = crtc->ctx;
+static void decon_atomic_enable(struct exynos_drm_crtc *crtc)
+{
+	struct decon_context *ctx = crtc->ctx;
 
-	pm_runसमय_get_sync(ctx->dev);
+	pm_runtime_get_sync(ctx->dev);
 
 	exynos_drm_pipe_clk_enable(crtc, true);
 
 	decon_swreset(ctx);
 
 	decon_commit(ctx->crtc);
-पूर्ण
+}
 
-अटल व्योम decon_atomic_disable(काष्ठा exynos_drm_crtc *crtc)
-अणु
-	काष्ठा decon_context *ctx = crtc->ctx;
-	पूर्णांक i;
+static void decon_atomic_disable(struct exynos_drm_crtc *crtc)
+{
+	struct decon_context *ctx = crtc->ctx;
+	int i;
 
-	अगर (!(ctx->out_type & I80_HW_TRG))
+	if (!(ctx->out_type & I80_HW_TRG))
 		synchronize_irq(ctx->te_irq);
 	synchronize_irq(ctx->irq);
 
 	/*
-	 * We need to make sure that all winकरोws are disabled beक्रमe we
+	 * We need to make sure that all windows are disabled before we
 	 * suspend that connector. Otherwise we might try to scan from
 	 * a destroyed buffer later.
 	 */
-	क्रम (i = ctx->first_win; i < WINDOWS_NR; i++)
+	for (i = ctx->first_win; i < WINDOWS_NR; i++)
 		decon_disable_plane(crtc, &ctx->planes[i]);
 
 	decon_swreset(ctx);
 
 	exynos_drm_pipe_clk_enable(crtc, false);
 
-	pm_runसमय_put_sync(ctx->dev);
-पूर्ण
+	pm_runtime_put_sync(ctx->dev);
+}
 
-अटल irqवापस_t decon_te_irq_handler(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा decon_context *ctx = dev_id;
+static irqreturn_t decon_te_irq_handler(int irq, void *dev_id)
+{
+	struct decon_context *ctx = dev_id;
 
 	decon_set_bits(ctx, DECON_TRIGCON, TRIGCON_SWTRIGCMD, ~0);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल व्योम decon_clear_channels(काष्ठा exynos_drm_crtc *crtc)
-अणु
-	काष्ठा decon_context *ctx = crtc->ctx;
-	पूर्णांक win, i, ret;
+static void decon_clear_channels(struct exynos_drm_crtc *crtc)
+{
+	struct decon_context *ctx = crtc->ctx;
+	int win, i, ret;
 
-	क्रम (i = 0; i < ARRAY_SIZE(decon_clks_name); i++) अणु
+	for (i = 0; i < ARRAY_SIZE(decon_clks_name); i++) {
 		ret = clk_prepare_enable(ctx->clks[i]);
-		अगर (ret < 0)
-			जाओ err;
-	पूर्ण
+		if (ret < 0)
+			goto err;
+	}
 
-	decon_shaकरोw_protect(ctx, true);
-	क्रम (win = 0; win < WINDOWS_NR; win++)
+	decon_shadow_protect(ctx, true);
+	for (win = 0; win < WINDOWS_NR; win++)
 		decon_set_bits(ctx, DECON_WINCONx(win), WINCONx_ENWIN_F, 0);
-	decon_shaकरोw_protect(ctx, false);
+	decon_shadow_protect(ctx, false);
 
 	decon_set_bits(ctx, DECON_UPDATE, STANDALONE_UPDATE_F, ~0);
 
-	/* TODO: रुको क्रम possible vsync */
+	/* TODO: wait for possible vsync */
 	msleep(50);
 
 err:
-	जबतक (--i >= 0)
+	while (--i >= 0)
 		clk_disable_unprepare(ctx->clks[i]);
-पूर्ण
+}
 
-अटल क्रमागत drm_mode_status decon_mode_valid(काष्ठा exynos_drm_crtc *crtc,
-		स्थिर काष्ठा drm_display_mode *mode)
-अणु
-	काष्ठा decon_context *ctx = crtc->ctx;
+static enum drm_mode_status decon_mode_valid(struct exynos_drm_crtc *crtc,
+		const struct drm_display_mode *mode)
+{
+	struct decon_context *ctx = crtc->ctx;
 
 	ctx->irq = crtc->i80_mode ? ctx->irq_lcd_sys : ctx->irq_vsync;
 
-	अगर (ctx->irq)
-		वापस MODE_OK;
+	if (ctx->irq)
+		return MODE_OK;
 
 	dev_info(ctx->dev, "Sink requires %s mode, but appropriate interrupt is not provided.\n",
 			crtc->i80_mode ? "command" : "video");
 
-	वापस MODE_BAD;
-पूर्ण
+	return MODE_BAD;
+}
 
-अटल स्थिर काष्ठा exynos_drm_crtc_ops decon_crtc_ops = अणु
+static const struct exynos_drm_crtc_ops decon_crtc_ops = {
 	.atomic_enable		= decon_atomic_enable,
 	.atomic_disable		= decon_atomic_disable,
 	.enable_vblank		= decon_enable_vblank,
@@ -609,275 +608,275 @@ err:
 	.disable_plane		= decon_disable_plane,
 	.mode_valid		= decon_mode_valid,
 	.atomic_flush		= decon_atomic_flush,
-पूर्ण;
+};
 
-अटल पूर्णांक decon_bind(काष्ठा device *dev, काष्ठा device *master, व्योम *data)
-अणु
-	काष्ठा decon_context *ctx = dev_get_drvdata(dev);
-	काष्ठा drm_device *drm_dev = data;
-	काष्ठा exynos_drm_plane *exynos_plane;
-	क्रमागत exynos_drm_output_type out_type;
-	अचिन्हित पूर्णांक win;
-	पूर्णांक ret;
+static int decon_bind(struct device *dev, struct device *master, void *data)
+{
+	struct decon_context *ctx = dev_get_drvdata(dev);
+	struct drm_device *drm_dev = data;
+	struct exynos_drm_plane *exynos_plane;
+	enum exynos_drm_output_type out_type;
+	unsigned int win;
+	int ret;
 
 	ctx->drm_dev = drm_dev;
 
-	क्रम (win = ctx->first_win; win < WINDOWS_NR; win++) अणु
-		ctx->configs[win].pixel_क्रमmats = decon_क्रमmats;
-		ctx->configs[win].num_pixel_क्रमmats = ARRAY_SIZE(decon_क्रमmats);
+	for (win = ctx->first_win; win < WINDOWS_NR; win++) {
+		ctx->configs[win].pixel_formats = decon_formats;
+		ctx->configs[win].num_pixel_formats = ARRAY_SIZE(decon_formats);
 		ctx->configs[win].zpos = win - ctx->first_win;
 		ctx->configs[win].type = decon_win_types[win];
 		ctx->configs[win].capabilities = capabilities[win];
 
 		ret = exynos_plane_init(drm_dev, &ctx->planes[win], win,
 					&ctx->configs[win]);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
 	exynos_plane = &ctx->planes[PRIMARY_WIN];
 	out_type = (ctx->out_type & IFTYPE_HDMI) ? EXYNOS_DISPLAY_TYPE_HDMI
 						  : EXYNOS_DISPLAY_TYPE_LCD;
 	ctx->crtc = exynos_drm_crtc_create(drm_dev, &exynos_plane->base,
 			out_type, &decon_crtc_ops, ctx);
-	अगर (IS_ERR(ctx->crtc))
-		वापस PTR_ERR(ctx->crtc);
+	if (IS_ERR(ctx->crtc))
+		return PTR_ERR(ctx->crtc);
 
 	decon_clear_channels(ctx->crtc);
 
-	वापस exynos_drm_रेजिस्टर_dma(drm_dev, dev, &ctx->dma_priv);
-पूर्ण
+	return exynos_drm_register_dma(drm_dev, dev, &ctx->dma_priv);
+}
 
-अटल व्योम decon_unbind(काष्ठा device *dev, काष्ठा device *master, व्योम *data)
-अणु
-	काष्ठा decon_context *ctx = dev_get_drvdata(dev);
+static void decon_unbind(struct device *dev, struct device *master, void *data)
+{
+	struct decon_context *ctx = dev_get_drvdata(dev);
 
 	decon_atomic_disable(ctx->crtc);
 
-	/* detach this sub driver from iommu mapping अगर supported. */
-	exynos_drm_unरेजिस्टर_dma(ctx->drm_dev, ctx->dev, &ctx->dma_priv);
-पूर्ण
+	/* detach this sub driver from iommu mapping if supported. */
+	exynos_drm_unregister_dma(ctx->drm_dev, ctx->dev, &ctx->dma_priv);
+}
 
-अटल स्थिर काष्ठा component_ops decon_component_ops = अणु
+static const struct component_ops decon_component_ops = {
 	.bind	= decon_bind,
 	.unbind = decon_unbind,
-पूर्ण;
+};
 
-अटल व्योम decon_handle_vblank(काष्ठा decon_context *ctx)
-अणु
+static void decon_handle_vblank(struct decon_context *ctx)
+{
 	u32 frm;
 
 	spin_lock(&ctx->vblank_lock);
 
 	frm = decon_get_frame_count(ctx, true);
 
-	अगर (frm != ctx->frame_id) अणु
-		/* handle only अगर incremented, take care of wrap-around */
-		अगर ((s32)(frm - ctx->frame_id) > 0)
+	if (frm != ctx->frame_id) {
+		/* handle only if incremented, take care of wrap-around */
+		if ((s32)(frm - ctx->frame_id) > 0)
 			drm_crtc_handle_vblank(&ctx->crtc->base);
 		ctx->frame_id = frm;
-	पूर्ण
+	}
 
 	spin_unlock(&ctx->vblank_lock);
-पूर्ण
+}
 
-अटल irqवापस_t decon_irq_handler(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा decon_context *ctx = dev_id;
+static irqreturn_t decon_irq_handler(int irq, void *dev_id)
+{
+	struct decon_context *ctx = dev_id;
 	u32 val;
 
-	val = पढ़ोl(ctx->addr + DECON_VIDINTCON1);
+	val = readl(ctx->addr + DECON_VIDINTCON1);
 	val &= VIDINTCON1_INTFRMDONEPEND | VIDINTCON1_INTFRMPEND;
 
-	अगर (val) अणु
-		ग_लिखोl(val, ctx->addr + DECON_VIDINTCON1);
-		अगर (ctx->out_type & IFTYPE_HDMI) अणु
-			val = पढ़ोl(ctx->addr + DECON_VIDOUTCON0);
+	if (val) {
+		writel(val, ctx->addr + DECON_VIDINTCON1);
+		if (ctx->out_type & IFTYPE_HDMI) {
+			val = readl(ctx->addr + DECON_VIDOUTCON0);
 			val &= VIDOUT_INTERLACE_EN_F | VIDOUT_INTERLACE_FIELD_F;
-			अगर (val ==
+			if (val ==
 			    (VIDOUT_INTERLACE_EN_F | VIDOUT_INTERLACE_FIELD_F))
-				वापस IRQ_HANDLED;
-		पूर्ण
+				return IRQ_HANDLED;
+		}
 		decon_handle_vblank(ctx);
-	पूर्ण
+	}
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-#अगर_घोषित CONFIG_PM
-अटल पूर्णांक exynos5433_decon_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा decon_context *ctx = dev_get_drvdata(dev);
-	पूर्णांक i = ARRAY_SIZE(decon_clks_name);
+#ifdef CONFIG_PM
+static int exynos5433_decon_suspend(struct device *dev)
+{
+	struct decon_context *ctx = dev_get_drvdata(dev);
+	int i = ARRAY_SIZE(decon_clks_name);
 
-	जबतक (--i >= 0)
+	while (--i >= 0)
 		clk_disable_unprepare(ctx->clks[i]);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक exynos5433_decon_resume(काष्ठा device *dev)
-अणु
-	काष्ठा decon_context *ctx = dev_get_drvdata(dev);
-	पूर्णांक i, ret;
+static int exynos5433_decon_resume(struct device *dev)
+{
+	struct decon_context *ctx = dev_get_drvdata(dev);
+	int i, ret;
 
-	क्रम (i = 0; i < ARRAY_SIZE(decon_clks_name); i++) अणु
+	for (i = 0; i < ARRAY_SIZE(decon_clks_name); i++) {
 		ret = clk_prepare_enable(ctx->clks[i]);
-		अगर (ret < 0)
-			जाओ err;
-	पूर्ण
+		if (ret < 0)
+			goto err;
+	}
 
-	वापस 0;
+	return 0;
 
 err:
-	जबतक (--i >= 0)
+	while (--i >= 0)
 		clk_disable_unprepare(ctx->clks[i]);
 
-	वापस ret;
-पूर्ण
-#पूर्ण_अगर
+	return ret;
+}
+#endif
 
-अटल स्थिर काष्ठा dev_pm_ops exynos5433_decon_pm_ops = अणु
+static const struct dev_pm_ops exynos5433_decon_pm_ops = {
 	SET_RUNTIME_PM_OPS(exynos5433_decon_suspend, exynos5433_decon_resume,
-			   शून्य)
-	SET_SYSTEM_SLEEP_PM_OPS(pm_runसमय_क्रमce_suspend,
-				     pm_runसमय_क्रमce_resume)
-पूर्ण;
+			   NULL)
+	SET_SYSTEM_SLEEP_PM_OPS(pm_runtime_force_suspend,
+				     pm_runtime_force_resume)
+};
 
-अटल स्थिर काष्ठा of_device_id exynos5433_decon_driver_dt_match[] = अणु
-	अणु
+static const struct of_device_id exynos5433_decon_driver_dt_match[] = {
+	{
 		.compatible = "samsung,exynos5433-decon",
-		.data = (व्योम *)I80_HW_TRG
-	पूर्ण,
-	अणु
+		.data = (void *)I80_HW_TRG
+	},
+	{
 		.compatible = "samsung,exynos5433-decon-tv",
-		.data = (व्योम *)(I80_HW_TRG | IFTYPE_HDMI)
-	पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+		.data = (void *)(I80_HW_TRG | IFTYPE_HDMI)
+	},
+	{},
+};
 MODULE_DEVICE_TABLE(of, exynos5433_decon_driver_dt_match);
 
-अटल पूर्णांक decon_conf_irq(काष्ठा decon_context *ctx, स्थिर अक्षर *name,
-		irq_handler_t handler, अचिन्हित दीर्घ पूर्णांक flags)
-अणु
-	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(ctx->dev);
-	पूर्णांक ret, irq = platक्रमm_get_irq_byname(pdev, name);
+static int decon_conf_irq(struct decon_context *ctx, const char *name,
+		irq_handler_t handler, unsigned long int flags)
+{
+	struct platform_device *pdev = to_platform_device(ctx->dev);
+	int ret, irq = platform_get_irq_byname(pdev, name);
 
-	अगर (irq < 0) अणु
-		चयन (irq) अणु
-		हाल -EPROBE_DEFER:
-			वापस irq;
-		हाल -ENODATA:
-		हाल -ENXIO:
-			वापस 0;
-		शेष:
+	if (irq < 0) {
+		switch (irq) {
+		case -EPROBE_DEFER:
+			return irq;
+		case -ENODATA:
+		case -ENXIO:
+			return 0;
+		default:
 			dev_err(ctx->dev, "IRQ %s get failed, %d\n", name, irq);
-			वापस irq;
-		पूर्ण
-	पूर्ण
+			return irq;
+		}
+	}
 	ret = devm_request_irq(ctx->dev, irq, handler,
 			       flags | IRQF_NO_AUTOEN, "drm_decon", ctx);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(ctx->dev, "IRQ %s request failed\n", name);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस irq;
-पूर्ण
+	return irq;
+}
 
-अटल पूर्णांक exynos5433_decon_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा decon_context *ctx;
-	काष्ठा resource *res;
-	पूर्णांक ret;
-	पूर्णांक i;
+static int exynos5433_decon_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	struct decon_context *ctx;
+	struct resource *res;
+	int ret;
+	int i;
 
-	ctx = devm_kzalloc(dev, माप(*ctx), GFP_KERNEL);
-	अगर (!ctx)
-		वापस -ENOMEM;
+	ctx = devm_kzalloc(dev, sizeof(*ctx), GFP_KERNEL);
+	if (!ctx)
+		return -ENOMEM;
 
 	ctx->dev = dev;
-	ctx->out_type = (अचिन्हित दीर्घ)of_device_get_match_data(dev);
+	ctx->out_type = (unsigned long)of_device_get_match_data(dev);
 	spin_lock_init(&ctx->vblank_lock);
 
-	अगर (ctx->out_type & IFTYPE_HDMI)
+	if (ctx->out_type & IFTYPE_HDMI)
 		ctx->first_win = 1;
 
-	क्रम (i = 0; i < ARRAY_SIZE(decon_clks_name); i++) अणु
-		काष्ठा clk *clk;
+	for (i = 0; i < ARRAY_SIZE(decon_clks_name); i++) {
+		struct clk *clk;
 
 		clk = devm_clk_get(ctx->dev, decon_clks_name[i]);
-		अगर (IS_ERR(clk))
-			वापस PTR_ERR(clk);
+		if (IS_ERR(clk))
+			return PTR_ERR(clk);
 
 		ctx->clks[i] = clk;
-	पूर्ण
+	}
 
-	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	ctx->addr = devm_ioremap_resource(dev, res);
-	अगर (IS_ERR(ctx->addr))
-		वापस PTR_ERR(ctx->addr);
+	if (IS_ERR(ctx->addr))
+		return PTR_ERR(ctx->addr);
 
 	ret = decon_conf_irq(ctx, "vsync", decon_irq_handler, 0);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 	ctx->irq_vsync = ret;
 
 	ret = decon_conf_irq(ctx, "lcd_sys", decon_irq_handler, 0);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 	ctx->irq_lcd_sys = ret;
 
 	ret = decon_conf_irq(ctx, "te", decon_te_irq_handler,
 			IRQF_TRIGGER_RISING);
-	अगर (ret < 0)
-			वापस ret;
-	अगर (ret) अणु
+	if (ret < 0)
+			return ret;
+	if (ret) {
 		ctx->te_irq = ret;
 		ctx->out_type &= ~I80_HW_TRG;
-	पूर्ण
+	}
 
-	अगर (ctx->out_type & I80_HW_TRG) अणु
+	if (ctx->out_type & I80_HW_TRG) {
 		ctx->sysreg = syscon_regmap_lookup_by_phandle(dev->of_node,
 							"samsung,disp-sysreg");
-		अगर (IS_ERR(ctx->sysreg)) अणु
+		if (IS_ERR(ctx->sysreg)) {
 			dev_err(dev, "failed to get system register\n");
-			वापस PTR_ERR(ctx->sysreg);
-		पूर्ण
-	पूर्ण
+			return PTR_ERR(ctx->sysreg);
+		}
+	}
 
-	platक्रमm_set_drvdata(pdev, ctx);
+	platform_set_drvdata(pdev, ctx);
 
-	pm_runसमय_enable(dev);
+	pm_runtime_enable(dev);
 
 	ret = component_add(dev, &decon_component_ops);
-	अगर (ret)
-		जाओ err_disable_pm_runसमय;
+	if (ret)
+		goto err_disable_pm_runtime;
 
-	वापस 0;
+	return 0;
 
-err_disable_pm_runसमय:
-	pm_runसमय_disable(dev);
+err_disable_pm_runtime:
+	pm_runtime_disable(dev);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक exynos5433_decon_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	pm_runसमय_disable(&pdev->dev);
+static int exynos5433_decon_remove(struct platform_device *pdev)
+{
+	pm_runtime_disable(&pdev->dev);
 
 	component_del(&pdev->dev, &decon_component_ops);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-काष्ठा platक्रमm_driver exynos5433_decon_driver = अणु
+struct platform_driver exynos5433_decon_driver = {
 	.probe		= exynos5433_decon_probe,
-	.हटाओ		= exynos5433_decon_हटाओ,
-	.driver		= अणु
+	.remove		= exynos5433_decon_remove,
+	.driver		= {
 		.name	= "exynos5433-decon",
 		.pm	= &exynos5433_decon_pm_ops,
 		.of_match_table = exynos5433_decon_driver_dt_match,
-	पूर्ण,
-पूर्ण;
+	},
+};

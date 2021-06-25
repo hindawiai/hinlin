@@ -1,234 +1,233 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Core driver क्रम TPS61050/61052 boost converters, used क्रम जबतक LED
- * driving, audio घातer amplअगरication, white LED flash, and generic
+ * Core driver for TPS61050/61052 boost converters, used for while LED
+ * driving, audio power amplification, white LED flash, and generic
  * boost conversion. Additionally it provides a 1-bit GPIO pin (out or in)
  * and a flash synchronization pin to synchronize flash events when used as
  * flashgun.
  *
  * Copyright (C) 2011 ST-Ericsson SA
- * Written on behalf of Linaro क्रम ST-Ericsson
+ * Written on behalf of Linaro for ST-Ericsson
  *
  * Author: Linus Walleij <linus.walleij@linaro.org>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/init.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/gpपन.स>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/err.h>
-#समावेश <linux/mfd/core.h>
-#समावेश <linux/mfd/tps6105x.h>
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/i2c.h>
+#include <linux/regmap.h>
+#include <linux/gpio.h>
+#include <linux/spinlock.h>
+#include <linux/slab.h>
+#include <linux/err.h>
+#include <linux/mfd/core.h>
+#include <linux/mfd/tps6105x.h>
 
-अटल काष्ठा regmap_config tps6105x_regmap_config = अणु
+static struct regmap_config tps6105x_regmap_config = {
 	.reg_bits = 8,
 	.val_bits = 8,
-	.max_रेजिस्टर = TPS6105X_REG_3,
-पूर्ण;
+	.max_register = TPS6105X_REG_3,
+};
 
-अटल पूर्णांक tps6105x_startup(काष्ठा tps6105x *tps6105x)
-अणु
-	पूर्णांक ret;
-	अचिन्हित पूर्णांक regval;
+static int tps6105x_startup(struct tps6105x *tps6105x)
+{
+	int ret;
+	unsigned int regval;
 
-	ret = regmap_पढ़ो(tps6105x->regmap, TPS6105X_REG_0, &regval);
-	अगर (ret)
-		वापस ret;
-	चयन (regval >> TPS6105X_REG0_MODE_SHIFT) अणु
-	हाल TPS6105X_REG0_MODE_SHUTDOWN:
+	ret = regmap_read(tps6105x->regmap, TPS6105X_REG_0, &regval);
+	if (ret)
+		return ret;
+	switch (regval >> TPS6105X_REG0_MODE_SHIFT) {
+	case TPS6105X_REG0_MODE_SHUTDOWN:
 		dev_info(&tps6105x->client->dev,
 			 "TPS6105x found in SHUTDOWN mode\n");
-		अवरोध;
-	हाल TPS6105X_REG0_MODE_TORCH:
+		break;
+	case TPS6105X_REG0_MODE_TORCH:
 		dev_info(&tps6105x->client->dev,
 			 "TPS6105x found in TORCH mode\n");
-		अवरोध;
-	हाल TPS6105X_REG0_MODE_TORCH_FLASH:
+		break;
+	case TPS6105X_REG0_MODE_TORCH_FLASH:
 		dev_info(&tps6105x->client->dev,
 			 "TPS6105x found in FLASH mode\n");
-		अवरोध;
-	हाल TPS6105X_REG0_MODE_VOLTAGE:
+		break;
+	case TPS6105X_REG0_MODE_VOLTAGE:
 		dev_info(&tps6105x->client->dev,
 			 "TPS6105x found in VOLTAGE mode\n");
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+		break;
+	default:
+		break;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
  * MFD cells - we always have a GPIO cell and we have one cell
  * which is selected operation mode.
  */
-अटल काष्ठा mfd_cell tps6105x_gpio_cell = अणु
+static struct mfd_cell tps6105x_gpio_cell = {
 	.name = "tps6105x-gpio",
-पूर्ण;
+};
 
-अटल काष्ठा mfd_cell tps6105x_leds_cell = अणु
+static struct mfd_cell tps6105x_leds_cell = {
 	.name = "tps6105x-leds",
-पूर्ण;
+};
 
-अटल काष्ठा mfd_cell tps6105x_flash_cell = अणु
+static struct mfd_cell tps6105x_flash_cell = {
 	.name = "tps6105x-flash",
-पूर्ण;
+};
 
-अटल काष्ठा mfd_cell tps6105x_regulator_cell = अणु
+static struct mfd_cell tps6105x_regulator_cell = {
 	.name = "tps6105x-regulator",
-पूर्ण;
+};
 
-अटल पूर्णांक tps6105x_add_device(काष्ठा tps6105x *tps6105x,
-			       काष्ठा mfd_cell *cell)
-अणु
-	cell->platक्रमm_data = tps6105x;
-	cell->pdata_size = माप(*tps6105x);
+static int tps6105x_add_device(struct tps6105x *tps6105x,
+			       struct mfd_cell *cell)
+{
+	cell->platform_data = tps6105x;
+	cell->pdata_size = sizeof(*tps6105x);
 
-	वापस mfd_add_devices(&tps6105x->client->dev,
-			       PLATFORM_DEVID_AUTO, cell, 1, शून्य, 0, शून्य);
-पूर्ण
+	return mfd_add_devices(&tps6105x->client->dev,
+			       PLATFORM_DEVID_AUTO, cell, 1, NULL, 0, NULL);
+}
 
-अटल काष्ठा tps6105x_platक्रमm_data *tps6105x_parse_dt(काष्ठा device *dev)
-अणु
-	काष्ठा device_node *np = dev->of_node;
-	काष्ठा tps6105x_platक्रमm_data *pdata;
-	काष्ठा device_node *child;
+static struct tps6105x_platform_data *tps6105x_parse_dt(struct device *dev)
+{
+	struct device_node *np = dev->of_node;
+	struct tps6105x_platform_data *pdata;
+	struct device_node *child;
 
-	अगर (!np)
-		वापस ERR_PTR(-EINVAL);
-	अगर (of_get_available_child_count(np) > 1) अणु
+	if (!np)
+		return ERR_PTR(-EINVAL);
+	if (of_get_available_child_count(np) > 1) {
 		dev_err(dev, "cannot support multiple operational modes");
-		वापस ERR_PTR(-EINVAL);
-	पूर्ण
-	pdata = devm_kzalloc(dev, माप(*pdata), GFP_KERNEL);
-	अगर (!pdata)
-		वापस ERR_PTR(-ENOMEM);
+		return ERR_PTR(-EINVAL);
+	}
+	pdata = devm_kzalloc(dev, sizeof(*pdata), GFP_KERNEL);
+	if (!pdata)
+		return ERR_PTR(-ENOMEM);
 	pdata->mode = TPS6105X_MODE_SHUTDOWN;
-	क्रम_each_available_child_of_node(np, child) अणु
-		अगर (child->name && !of_node_cmp(child->name, "regulator"))
+	for_each_available_child_of_node(np, child) {
+		if (child->name && !of_node_cmp(child->name, "regulator"))
 			pdata->mode = TPS6105X_MODE_VOLTAGE;
-		अन्यथा अगर (child->name && !of_node_cmp(child->name, "led"))
+		else if (child->name && !of_node_cmp(child->name, "led"))
 			pdata->mode = TPS6105X_MODE_TORCH;
-	पूर्ण
+	}
 
-	वापस pdata;
-पूर्ण
+	return pdata;
+}
 
-अटल पूर्णांक tps6105x_probe(काष्ठा i2c_client *client,
-			स्थिर काष्ठा i2c_device_id *id)
-अणु
-	काष्ठा tps6105x			*tps6105x;
-	काष्ठा tps6105x_platक्रमm_data	*pdata;
-	पूर्णांक ret;
+static int tps6105x_probe(struct i2c_client *client,
+			const struct i2c_device_id *id)
+{
+	struct tps6105x			*tps6105x;
+	struct tps6105x_platform_data	*pdata;
+	int ret;
 
 	pdata = dev_get_platdata(&client->dev);
-	अगर (!pdata)
+	if (!pdata)
 		pdata = tps6105x_parse_dt(&client->dev);
-	अगर (IS_ERR(pdata)) अणु
+	if (IS_ERR(pdata)) {
 		dev_err(&client->dev, "No platform data or DT found");
-		वापस PTR_ERR(pdata);
-	पूर्ण
+		return PTR_ERR(pdata);
+	}
 
-	tps6105x = devm_kदो_स्मृति(&client->dev, माप(*tps6105x), GFP_KERNEL);
-	अगर (!tps6105x)
-		वापस -ENOMEM;
+	tps6105x = devm_kmalloc(&client->dev, sizeof(*tps6105x), GFP_KERNEL);
+	if (!tps6105x)
+		return -ENOMEM;
 
 	tps6105x->regmap = devm_regmap_init_i2c(client, &tps6105x_regmap_config);
-	अगर (IS_ERR(tps6105x->regmap))
-		वापस PTR_ERR(tps6105x->regmap);
+	if (IS_ERR(tps6105x->regmap))
+		return PTR_ERR(tps6105x->regmap);
 
 	i2c_set_clientdata(client, tps6105x);
 	tps6105x->client = client;
 	tps6105x->pdata = pdata;
 
 	ret = tps6105x_startup(tps6105x);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&client->dev, "chip initialization failed\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	ret = tps6105x_add_device(tps6105x, &tps6105x_gpio_cell);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	चयन (pdata->mode) अणु
-	हाल TPS6105X_MODE_SHUTDOWN:
+	switch (pdata->mode) {
+	case TPS6105X_MODE_SHUTDOWN:
 		dev_info(&client->dev,
 			 "present, not used for anything, only GPIO\n");
-		अवरोध;
-	हाल TPS6105X_MODE_TORCH:
+		break;
+	case TPS6105X_MODE_TORCH:
 		ret = tps6105x_add_device(tps6105x, &tps6105x_leds_cell);
-		अवरोध;
-	हाल TPS6105X_MODE_TORCH_FLASH:
+		break;
+	case TPS6105X_MODE_TORCH_FLASH:
 		ret = tps6105x_add_device(tps6105x, &tps6105x_flash_cell);
-		अवरोध;
-	हाल TPS6105X_MODE_VOLTAGE:
+		break;
+	case TPS6105X_MODE_VOLTAGE:
 		ret = tps6105x_add_device(tps6105x, &tps6105x_regulator_cell);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		dev_warn(&client->dev, "invalid mode: %d\n", pdata->mode);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	अगर (ret)
-		mfd_हटाओ_devices(&client->dev);
+	if (ret)
+		mfd_remove_devices(&client->dev);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक tps6105x_हटाओ(काष्ठा i2c_client *client)
-अणु
-	काष्ठा tps6105x *tps6105x = i2c_get_clientdata(client);
+static int tps6105x_remove(struct i2c_client *client)
+{
+	struct tps6105x *tps6105x = i2c_get_clientdata(client);
 
-	mfd_हटाओ_devices(&client->dev);
+	mfd_remove_devices(&client->dev);
 
-	/* Put chip in shutकरोwn mode */
+	/* Put chip in shutdown mode */
 	regmap_update_bits(tps6105x->regmap, TPS6105X_REG_0,
 		TPS6105X_REG0_MODE_MASK,
 		TPS6105X_MODE_SHUTDOWN << TPS6105X_REG0_MODE_SHIFT);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा i2c_device_id tps6105x_id[] = अणु
-	अणु "tps61050", 0 पूर्ण,
-	अणु "tps61052", 0 पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct i2c_device_id tps6105x_id[] = {
+	{ "tps61050", 0 },
+	{ "tps61052", 0 },
+	{ }
+};
 MODULE_DEVICE_TABLE(i2c, tps6105x_id);
 
-अटल स्थिर काष्ठा of_device_id tps6105x_of_match[] = अणु
-	अणु .compatible = "ti,tps61050" पूर्ण,
-	अणु .compatible = "ti,tps61052" पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+static const struct of_device_id tps6105x_of_match[] = {
+	{ .compatible = "ti,tps61050" },
+	{ .compatible = "ti,tps61052" },
+	{ },
+};
 MODULE_DEVICE_TABLE(of, tps6105x_of_match);
 
-अटल काष्ठा i2c_driver tps6105x_driver = अणु
-	.driver = अणु
+static struct i2c_driver tps6105x_driver = {
+	.driver = {
 		.name	= "tps6105x",
 		.of_match_table = tps6105x_of_match,
-	पूर्ण,
+	},
 	.probe		= tps6105x_probe,
-	.हटाओ		= tps6105x_हटाओ,
+	.remove		= tps6105x_remove,
 	.id_table	= tps6105x_id,
-पूर्ण;
+};
 
-अटल पूर्णांक __init tps6105x_init(व्योम)
-अणु
-	वापस i2c_add_driver(&tps6105x_driver);
-पूर्ण
+static int __init tps6105x_init(void)
+{
+	return i2c_add_driver(&tps6105x_driver);
+}
 subsys_initcall(tps6105x_init);
 
-अटल व्योम __निकास tps6105x_निकास(व्योम)
-अणु
+static void __exit tps6105x_exit(void)
+{
 	i2c_del_driver(&tps6105x_driver);
-पूर्ण
-module_निकास(tps6105x_निकास);
+}
+module_exit(tps6105x_exit);
 
 MODULE_AUTHOR("Linus Walleij");
 MODULE_DESCRIPTION("TPS6105x White LED Boost Converter Driver");

@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: (GPL-2.0-only OR BSD-2-Clause)
+// SPDX-License-Identifier: (GPL-2.0-only OR BSD-2-Clause)
 /* Copyright (C) 2015-2017 Netronome Systems, Inc. */
 
 /* Authors: David Brunecz <david.brunecz@netronome.com>
@@ -7,127 +6,127 @@
  *          Jason Mcmullan <jason.mcmullan@netronome.com>
  */
 
-#समावेश <linux/bitfield.h>
-#समावेश <linux/ethtool.h>
-#समावेश <linux/अगर_ether.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
+#include <linux/bitfield.h>
+#include <linux/ethtool.h>
+#include <linux/if_ether.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
 
-#समावेश "nfp.h"
-#समावेश "nfp_nsp.h"
-#समावेश "nfp6000/nfp6000.h"
+#include "nfp.h"
+#include "nfp_nsp.h"
+#include "nfp6000/nfp6000.h"
 
-#घोषणा NSP_ETH_NBI_PORT_COUNT		24
-#घोषणा NSP_ETH_MAX_COUNT		(2 * NSP_ETH_NBI_PORT_COUNT)
-#घोषणा NSP_ETH_TABLE_SIZE		(NSP_ETH_MAX_COUNT *		\
-					 माप(जोड़ eth_table_entry))
+#define NSP_ETH_NBI_PORT_COUNT		24
+#define NSP_ETH_MAX_COUNT		(2 * NSP_ETH_NBI_PORT_COUNT)
+#define NSP_ETH_TABLE_SIZE		(NSP_ETH_MAX_COUNT *		\
+					 sizeof(union eth_table_entry))
 
-#घोषणा NSP_ETH_PORT_LANES		GENMASK_ULL(3, 0)
-#घोषणा NSP_ETH_PORT_INDEX		GENMASK_ULL(15, 8)
-#घोषणा NSP_ETH_PORT_LABEL		GENMASK_ULL(53, 48)
-#घोषणा NSP_ETH_PORT_PHYLABEL		GENMASK_ULL(59, 54)
-#घोषणा NSP_ETH_PORT_FEC_SUPP_BASER	BIT_ULL(60)
-#घोषणा NSP_ETH_PORT_FEC_SUPP_RS	BIT_ULL(61)
+#define NSP_ETH_PORT_LANES		GENMASK_ULL(3, 0)
+#define NSP_ETH_PORT_INDEX		GENMASK_ULL(15, 8)
+#define NSP_ETH_PORT_LABEL		GENMASK_ULL(53, 48)
+#define NSP_ETH_PORT_PHYLABEL		GENMASK_ULL(59, 54)
+#define NSP_ETH_PORT_FEC_SUPP_BASER	BIT_ULL(60)
+#define NSP_ETH_PORT_FEC_SUPP_RS	BIT_ULL(61)
 
-#घोषणा NSP_ETH_PORT_LANES_MASK		cpu_to_le64(NSP_ETH_PORT_LANES)
+#define NSP_ETH_PORT_LANES_MASK		cpu_to_le64(NSP_ETH_PORT_LANES)
 
-#घोषणा NSP_ETH_STATE_CONFIGURED	BIT_ULL(0)
-#घोषणा NSP_ETH_STATE_ENABLED		BIT_ULL(1)
-#घोषणा NSP_ETH_STATE_TX_ENABLED	BIT_ULL(2)
-#घोषणा NSP_ETH_STATE_RX_ENABLED	BIT_ULL(3)
-#घोषणा NSP_ETH_STATE_RATE		GENMASK_ULL(11, 8)
-#घोषणा NSP_ETH_STATE_INTERFACE		GENMASK_ULL(19, 12)
-#घोषणा NSP_ETH_STATE_MEDIA		GENMASK_ULL(21, 20)
-#घोषणा NSP_ETH_STATE_OVRD_CHNG		BIT_ULL(22)
-#घोषणा NSP_ETH_STATE_ANEG		GENMASK_ULL(25, 23)
-#घोषणा NSP_ETH_STATE_FEC		GENMASK_ULL(27, 26)
+#define NSP_ETH_STATE_CONFIGURED	BIT_ULL(0)
+#define NSP_ETH_STATE_ENABLED		BIT_ULL(1)
+#define NSP_ETH_STATE_TX_ENABLED	BIT_ULL(2)
+#define NSP_ETH_STATE_RX_ENABLED	BIT_ULL(3)
+#define NSP_ETH_STATE_RATE		GENMASK_ULL(11, 8)
+#define NSP_ETH_STATE_INTERFACE		GENMASK_ULL(19, 12)
+#define NSP_ETH_STATE_MEDIA		GENMASK_ULL(21, 20)
+#define NSP_ETH_STATE_OVRD_CHNG		BIT_ULL(22)
+#define NSP_ETH_STATE_ANEG		GENMASK_ULL(25, 23)
+#define NSP_ETH_STATE_FEC		GENMASK_ULL(27, 26)
 
-#घोषणा NSP_ETH_CTRL_CONFIGURED		BIT_ULL(0)
-#घोषणा NSP_ETH_CTRL_ENABLED		BIT_ULL(1)
-#घोषणा NSP_ETH_CTRL_TX_ENABLED		BIT_ULL(2)
-#घोषणा NSP_ETH_CTRL_RX_ENABLED		BIT_ULL(3)
-#घोषणा NSP_ETH_CTRL_SET_RATE		BIT_ULL(4)
-#घोषणा NSP_ETH_CTRL_SET_LANES		BIT_ULL(5)
-#घोषणा NSP_ETH_CTRL_SET_ANEG		BIT_ULL(6)
-#घोषणा NSP_ETH_CTRL_SET_FEC		BIT_ULL(7)
+#define NSP_ETH_CTRL_CONFIGURED		BIT_ULL(0)
+#define NSP_ETH_CTRL_ENABLED		BIT_ULL(1)
+#define NSP_ETH_CTRL_TX_ENABLED		BIT_ULL(2)
+#define NSP_ETH_CTRL_RX_ENABLED		BIT_ULL(3)
+#define NSP_ETH_CTRL_SET_RATE		BIT_ULL(4)
+#define NSP_ETH_CTRL_SET_LANES		BIT_ULL(5)
+#define NSP_ETH_CTRL_SET_ANEG		BIT_ULL(6)
+#define NSP_ETH_CTRL_SET_FEC		BIT_ULL(7)
 
-क्रमागत nfp_eth_raw अणु
+enum nfp_eth_raw {
 	NSP_ETH_RAW_PORT = 0,
 	NSP_ETH_RAW_STATE,
 	NSP_ETH_RAW_MAC,
 	NSP_ETH_RAW_CONTROL,
 
 	NSP_ETH_NUM_RAW
-पूर्ण;
+};
 
-क्रमागत nfp_eth_rate अणु
+enum nfp_eth_rate {
 	RATE_INVALID = 0,
 	RATE_10M,
 	RATE_100M,
 	RATE_1G,
 	RATE_10G,
 	RATE_25G,
-पूर्ण;
+};
 
-जोड़ eth_table_entry अणु
-	काष्ठा अणु
+union eth_table_entry {
+	struct {
 		__le64 port;
 		__le64 state;
 		u8 mac_addr[6];
 		u8 resv[2];
 		__le64 control;
-	पूर्ण;
+	};
 	__le64 raw[NSP_ETH_NUM_RAW];
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा अणु
-	क्रमागत nfp_eth_rate rate;
-	अचिन्हित पूर्णांक speed;
-पूर्ण nsp_eth_rate_tbl[] = अणु
-	अणु RATE_INVALID,	0, पूर्ण,
-	अणु RATE_10M,	SPEED_10, पूर्ण,
-	अणु RATE_100M,	SPEED_100, पूर्ण,
-	अणु RATE_1G,	SPEED_1000, पूर्ण,
-	अणु RATE_10G,	SPEED_10000, पूर्ण,
-	अणु RATE_25G,	SPEED_25000, पूर्ण,
-पूर्ण;
+static const struct {
+	enum nfp_eth_rate rate;
+	unsigned int speed;
+} nsp_eth_rate_tbl[] = {
+	{ RATE_INVALID,	0, },
+	{ RATE_10M,	SPEED_10, },
+	{ RATE_100M,	SPEED_100, },
+	{ RATE_1G,	SPEED_1000, },
+	{ RATE_10G,	SPEED_10000, },
+	{ RATE_25G,	SPEED_25000, },
+};
 
-अटल अचिन्हित पूर्णांक nfp_eth_rate2speed(क्रमागत nfp_eth_rate rate)
-अणु
-	पूर्णांक i;
+static unsigned int nfp_eth_rate2speed(enum nfp_eth_rate rate)
+{
+	int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(nsp_eth_rate_tbl); i++)
-		अगर (nsp_eth_rate_tbl[i].rate == rate)
-			वापस nsp_eth_rate_tbl[i].speed;
+	for (i = 0; i < ARRAY_SIZE(nsp_eth_rate_tbl); i++)
+		if (nsp_eth_rate_tbl[i].rate == rate)
+			return nsp_eth_rate_tbl[i].speed;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अचिन्हित पूर्णांक nfp_eth_speed2rate(अचिन्हित पूर्णांक speed)
-अणु
-	पूर्णांक i;
+static unsigned int nfp_eth_speed2rate(unsigned int speed)
+{
+	int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(nsp_eth_rate_tbl); i++)
-		अगर (nsp_eth_rate_tbl[i].speed == speed)
-			वापस nsp_eth_rate_tbl[i].rate;
+	for (i = 0; i < ARRAY_SIZE(nsp_eth_rate_tbl); i++)
+		if (nsp_eth_rate_tbl[i].speed == speed)
+			return nsp_eth_rate_tbl[i].rate;
 
-	वापस RATE_INVALID;
-पूर्ण
+	return RATE_INVALID;
+}
 
-अटल व्योम nfp_eth_copy_mac_reverse(u8 *dst, स्थिर u8 *src)
-अणु
-	पूर्णांक i;
+static void nfp_eth_copy_mac_reverse(u8 *dst, const u8 *src)
+{
+	int i;
 
-	क्रम (i = 0; i < ETH_ALEN; i++)
+	for (i = 0; i < ETH_ALEN; i++)
 		dst[ETH_ALEN - i - 1] = src[i];
-पूर्ण
+}
 
-अटल व्योम
-nfp_eth_port_translate(काष्ठा nfp_nsp *nsp, स्थिर जोड़ eth_table_entry *src,
-		       अचिन्हित पूर्णांक index, काष्ठा nfp_eth_table_port *dst)
-अणु
-	अचिन्हित पूर्णांक rate;
-	अचिन्हित पूर्णांक fec;
+static void
+nfp_eth_port_translate(struct nfp_nsp *nsp, const union eth_table_entry *src,
+		       unsigned int index, struct nfp_eth_table_port *dst)
+{
+	unsigned int rate;
+	unsigned int fec;
 	u64 port, state;
 
 	port = le64_to_cpu(src->port);
@@ -146,7 +145,7 @@ nfp_eth_port_translate(काष्ठा nfp_nsp *nsp, स्थिर जो�
 	rate = nfp_eth_rate2speed(FIELD_GET(NSP_ETH_STATE_RATE, state));
 	dst->speed = dst->lanes * rate;
 
-	dst->पूर्णांकerface = FIELD_GET(NSP_ETH_STATE_INTERFACE, state);
+	dst->interface = FIELD_GET(NSP_ETH_STATE_INTERFACE, state);
 	dst->media = FIELD_GET(NSP_ETH_STATE_MEDIA, state);
 
 	nfp_eth_copy_mac_reverse(dst->mac_addr, src->mac_addr);
@@ -154,42 +153,42 @@ nfp_eth_port_translate(काष्ठा nfp_nsp *nsp, स्थिर जो�
 	dst->label_port = FIELD_GET(NSP_ETH_PORT_PHYLABEL, port);
 	dst->label_subport = FIELD_GET(NSP_ETH_PORT_LABEL, port);
 
-	अगर (nfp_nsp_get_abi_ver_minor(nsp) < 17)
-		वापस;
+	if (nfp_nsp_get_abi_ver_minor(nsp) < 17)
+		return;
 
 	dst->override_changed = FIELD_GET(NSP_ETH_STATE_OVRD_CHNG, state);
 	dst->aneg = FIELD_GET(NSP_ETH_STATE_ANEG, state);
 
-	अगर (nfp_nsp_get_abi_ver_minor(nsp) < 22)
-		वापस;
+	if (nfp_nsp_get_abi_ver_minor(nsp) < 22)
+		return;
 
 	fec = FIELD_GET(NSP_ETH_PORT_FEC_SUPP_BASER, port);
 	dst->fec_modes_supported |= fec << NFP_FEC_BASER_BIT;
 	fec = FIELD_GET(NSP_ETH_PORT_FEC_SUPP_RS, port);
 	dst->fec_modes_supported |= fec << NFP_FEC_REED_SOLOMON_BIT;
-	अगर (dst->fec_modes_supported)
+	if (dst->fec_modes_supported)
 		dst->fec_modes_supported |= NFP_FEC_AUTO | NFP_FEC_DISABLED;
 
 	dst->fec = 1 << FIELD_GET(NSP_ETH_STATE_FEC, state);
-पूर्ण
+}
 
-अटल व्योम
-nfp_eth_calc_port_geometry(काष्ठा nfp_cpp *cpp, काष्ठा nfp_eth_table *table)
-अणु
-	अचिन्हित पूर्णांक i, j;
+static void
+nfp_eth_calc_port_geometry(struct nfp_cpp *cpp, struct nfp_eth_table *table)
+{
+	unsigned int i, j;
 
-	क्रम (i = 0; i < table->count; i++) अणु
+	for (i = 0; i < table->count; i++) {
 		table->max_index = max(table->max_index, table->ports[i].index);
 
-		क्रम (j = 0; j < table->count; j++) अणु
-			अगर (table->ports[i].label_port !=
+		for (j = 0; j < table->count; j++) {
+			if (table->ports[i].label_port !=
 			    table->ports[j].label_port)
-				जारी;
+				continue;
 			table->ports[i].port_lanes += table->ports[j].lanes;
 
-			अगर (i == j)
-				जारी;
-			अगर (table->ports[i].label_subport ==
+			if (i == j)
+				continue;
+			if (table->ports[i].label_subport ==
 			    table->ports[j].label_subport)
 				nfp_warn(cpp,
 					 "Port %d subport %d is a duplicate\n",
@@ -197,180 +196,180 @@ nfp_eth_calc_port_geometry(काष्ठा nfp_cpp *cpp, काष्ठा n
 					 table->ports[i].label_subport);
 
 			table->ports[i].is_split = true;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल व्योम
-nfp_eth_calc_port_type(काष्ठा nfp_cpp *cpp, काष्ठा nfp_eth_table_port *entry)
-अणु
-	अगर (entry->पूर्णांकerface == NFP_INTERFACE_NONE) अणु
+static void
+nfp_eth_calc_port_type(struct nfp_cpp *cpp, struct nfp_eth_table_port *entry)
+{
+	if (entry->interface == NFP_INTERFACE_NONE) {
 		entry->port_type = PORT_NONE;
-		वापस;
-	पूर्ण अन्यथा अगर (entry->पूर्णांकerface == NFP_INTERFACE_RJ45) अणु
+		return;
+	} else if (entry->interface == NFP_INTERFACE_RJ45) {
 		entry->port_type = PORT_TP;
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (entry->media == NFP_MEDIA_FIBRE)
+	if (entry->media == NFP_MEDIA_FIBRE)
 		entry->port_type = PORT_FIBRE;
-	अन्यथा
+	else
 		entry->port_type = PORT_DA;
-पूर्ण
+}
 
 /**
- * nfp_eth_पढ़ो_ports() - retrieve port inक्रमmation
+ * nfp_eth_read_ports() - retrieve port information
  * @cpp:	NFP CPP handle
  *
- * Read the port inक्रमmation from the device.  Returned काष्ठाure should
- * be मुक्तd with kमुक्त() once no दीर्घer needed.
+ * Read the port information from the device.  Returned structure should
+ * be freed with kfree() once no longer needed.
  *
- * Return: populated ETH table or शून्य on error.
+ * Return: populated ETH table or NULL on error.
  */
-काष्ठा nfp_eth_table *nfp_eth_पढ़ो_ports(काष्ठा nfp_cpp *cpp)
-अणु
-	काष्ठा nfp_eth_table *ret;
-	काष्ठा nfp_nsp *nsp;
+struct nfp_eth_table *nfp_eth_read_ports(struct nfp_cpp *cpp)
+{
+	struct nfp_eth_table *ret;
+	struct nfp_nsp *nsp;
 
-	nsp = nfp_nsp_खोलो(cpp);
-	अगर (IS_ERR(nsp))
-		वापस शून्य;
+	nsp = nfp_nsp_open(cpp);
+	if (IS_ERR(nsp))
+		return NULL;
 
-	ret = __nfp_eth_पढ़ो_ports(cpp, nsp);
-	nfp_nsp_बंद(nsp);
+	ret = __nfp_eth_read_ports(cpp, nsp);
+	nfp_nsp_close(nsp);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-काष्ठा nfp_eth_table *
-__nfp_eth_पढ़ो_ports(काष्ठा nfp_cpp *cpp, काष्ठा nfp_nsp *nsp)
-अणु
-	जोड़ eth_table_entry *entries;
-	काष्ठा nfp_eth_table *table;
-	पूर्णांक i, j, ret, cnt = 0;
+struct nfp_eth_table *
+__nfp_eth_read_ports(struct nfp_cpp *cpp, struct nfp_nsp *nsp)
+{
+	union eth_table_entry *entries;
+	struct nfp_eth_table *table;
+	int i, j, ret, cnt = 0;
 
 	entries = kzalloc(NSP_ETH_TABLE_SIZE, GFP_KERNEL);
-	अगर (!entries)
-		वापस शून्य;
+	if (!entries)
+		return NULL;
 
-	ret = nfp_nsp_पढ़ो_eth_table(nsp, entries, NSP_ETH_TABLE_SIZE);
-	अगर (ret < 0) अणु
+	ret = nfp_nsp_read_eth_table(nsp, entries, NSP_ETH_TABLE_SIZE);
+	if (ret < 0) {
 		nfp_err(cpp, "reading port table failed %d\n", ret);
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	क्रम (i = 0; i < NSP_ETH_MAX_COUNT; i++)
-		अगर (entries[i].port & NSP_ETH_PORT_LANES_MASK)
+	for (i = 0; i < NSP_ETH_MAX_COUNT; i++)
+		if (entries[i].port & NSP_ETH_PORT_LANES_MASK)
 			cnt++;
 
 	/* Some versions of flash will give us 0 instead of port count.
-	 * For those that give a port count, verअगरy it against the value
+	 * For those that give a port count, verify it against the value
 	 * calculated above.
 	 */
-	अगर (ret && ret != cnt) अणु
+	if (ret && ret != cnt) {
 		nfp_err(cpp, "table entry count reported (%d) does not match entries present (%d)\n",
 			ret, cnt);
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	table = kzalloc(काष्ठा_size(table, ports, cnt), GFP_KERNEL);
-	अगर (!table)
-		जाओ err;
+	table = kzalloc(struct_size(table, ports, cnt), GFP_KERNEL);
+	if (!table)
+		goto err;
 
 	table->count = cnt;
-	क्रम (i = 0, j = 0; i < NSP_ETH_MAX_COUNT; i++)
-		अगर (entries[i].port & NSP_ETH_PORT_LANES_MASK)
+	for (i = 0, j = 0; i < NSP_ETH_MAX_COUNT; i++)
+		if (entries[i].port & NSP_ETH_PORT_LANES_MASK)
 			nfp_eth_port_translate(nsp, &entries[i], i,
 					       &table->ports[j++]);
 
 	nfp_eth_calc_port_geometry(cpp, table);
-	क्रम (i = 0; i < table->count; i++)
+	for (i = 0; i < table->count; i++)
 		nfp_eth_calc_port_type(cpp, &table->ports[i]);
 
-	kमुक्त(entries);
+	kfree(entries);
 
-	वापस table;
+	return table;
 
 err:
-	kमुक्त(entries);
-	वापस शून्य;
-पूर्ण
+	kfree(entries);
+	return NULL;
+}
 
-काष्ठा nfp_nsp *nfp_eth_config_start(काष्ठा nfp_cpp *cpp, अचिन्हित पूर्णांक idx)
-अणु
-	जोड़ eth_table_entry *entries;
-	काष्ठा nfp_nsp *nsp;
-	पूर्णांक ret;
+struct nfp_nsp *nfp_eth_config_start(struct nfp_cpp *cpp, unsigned int idx)
+{
+	union eth_table_entry *entries;
+	struct nfp_nsp *nsp;
+	int ret;
 
 	entries = kzalloc(NSP_ETH_TABLE_SIZE, GFP_KERNEL);
-	अगर (!entries)
-		वापस ERR_PTR(-ENOMEM);
+	if (!entries)
+		return ERR_PTR(-ENOMEM);
 
-	nsp = nfp_nsp_खोलो(cpp);
-	अगर (IS_ERR(nsp)) अणु
-		kमुक्त(entries);
-		वापस nsp;
-	पूर्ण
+	nsp = nfp_nsp_open(cpp);
+	if (IS_ERR(nsp)) {
+		kfree(entries);
+		return nsp;
+	}
 
-	ret = nfp_nsp_पढ़ो_eth_table(nsp, entries, NSP_ETH_TABLE_SIZE);
-	अगर (ret < 0) अणु
+	ret = nfp_nsp_read_eth_table(nsp, entries, NSP_ETH_TABLE_SIZE);
+	if (ret < 0) {
 		nfp_err(cpp, "reading port table failed %d\n", ret);
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	अगर (!(entries[idx].port & NSP_ETH_PORT_LANES_MASK)) अणु
+	if (!(entries[idx].port & NSP_ETH_PORT_LANES_MASK)) {
 		nfp_warn(cpp, "trying to set port state on disabled port %d\n",
 			 idx);
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	nfp_nsp_config_set_state(nsp, entries, idx);
-	वापस nsp;
+	return nsp;
 
 err:
-	nfp_nsp_बंद(nsp);
-	kमुक्त(entries);
-	वापस ERR_PTR(-EIO);
-पूर्ण
+	nfp_nsp_close(nsp);
+	kfree(entries);
+	return ERR_PTR(-EIO);
+}
 
-व्योम nfp_eth_config_cleanup_end(काष्ठा nfp_nsp *nsp)
-अणु
-	जोड़ eth_table_entry *entries = nfp_nsp_config_entries(nsp);
+void nfp_eth_config_cleanup_end(struct nfp_nsp *nsp)
+{
+	union eth_table_entry *entries = nfp_nsp_config_entries(nsp);
 
-	nfp_nsp_config_set_modअगरied(nsp, false);
+	nfp_nsp_config_set_modified(nsp, false);
 	nfp_nsp_config_clear_state(nsp);
-	nfp_nsp_बंद(nsp);
-	kमुक्त(entries);
-पूर्ण
+	nfp_nsp_close(nsp);
+	kfree(entries);
+}
 
 /**
- * nfp_eth_config_commit_end() - perक्रमm recorded configuration changes
- * @nsp:	NFP NSP handle वापसed from nfp_eth_config_start()
+ * nfp_eth_config_commit_end() - perform recorded configuration changes
+ * @nsp:	NFP NSP handle returned from nfp_eth_config_start()
  *
- * Perक्रमm the configuration which was requested with __nfp_eth_set_*()
- * helpers and recorded in @nsp state.  If device was alपढ़ोy configured
+ * Perform the configuration which was requested with __nfp_eth_set_*()
+ * helpers and recorded in @nsp state.  If device was already configured
  * as requested or no __nfp_eth_set_*() operations were made no NSP command
- * will be perक्रमmed.
+ * will be performed.
  *
  * Return:
  * 0 - configuration successful;
  * 1 - no changes were needed;
  * -ERRNO - configuration failed.
  */
-पूर्णांक nfp_eth_config_commit_end(काष्ठा nfp_nsp *nsp)
-अणु
-	जोड़ eth_table_entry *entries = nfp_nsp_config_entries(nsp);
-	पूर्णांक ret = 1;
+int nfp_eth_config_commit_end(struct nfp_nsp *nsp)
+{
+	union eth_table_entry *entries = nfp_nsp_config_entries(nsp);
+	int ret = 1;
 
-	अगर (nfp_nsp_config_modअगरied(nsp)) अणु
-		ret = nfp_nsp_ग_लिखो_eth_table(nsp, entries, NSP_ETH_TABLE_SIZE);
+	if (nfp_nsp_config_modified(nsp)) {
+		ret = nfp_nsp_write_eth_table(nsp, entries, NSP_ETH_TABLE_SIZE);
 		ret = ret < 0 ? ret : 0;
-	पूर्ण
+	}
 
 	nfp_eth_config_cleanup_end(nsp);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
  * nfp_eth_set_mod_enable() - set PHY module enable control bit
@@ -386,31 +385,31 @@ err:
  * 1 - no changes were needed;
  * -ERRNO - configuration failed.
  */
-पूर्णांक nfp_eth_set_mod_enable(काष्ठा nfp_cpp *cpp, अचिन्हित पूर्णांक idx, bool enable)
-अणु
-	जोड़ eth_table_entry *entries;
-	काष्ठा nfp_nsp *nsp;
+int nfp_eth_set_mod_enable(struct nfp_cpp *cpp, unsigned int idx, bool enable)
+{
+	union eth_table_entry *entries;
+	struct nfp_nsp *nsp;
 	u64 reg;
 
 	nsp = nfp_eth_config_start(cpp, idx);
-	अगर (IS_ERR(nsp))
-		वापस PTR_ERR(nsp);
+	if (IS_ERR(nsp))
+		return PTR_ERR(nsp);
 
 	entries = nfp_nsp_config_entries(nsp);
 
-	/* Check अगर we are alपढ़ोy in requested state */
+	/* Check if we are already in requested state */
 	reg = le64_to_cpu(entries[idx].state);
-	अगर (enable != FIELD_GET(NSP_ETH_CTRL_ENABLED, reg)) अणु
+	if (enable != FIELD_GET(NSP_ETH_CTRL_ENABLED, reg)) {
 		reg = le64_to_cpu(entries[idx].control);
 		reg &= ~NSP_ETH_CTRL_ENABLED;
 		reg |= FIELD_PREP(NSP_ETH_CTRL_ENABLED, enable);
 		entries[idx].control = cpu_to_le64(reg);
 
-		nfp_nsp_config_set_modअगरied(nsp, true);
-	पूर्ण
+		nfp_nsp_config_set_modified(nsp, true);
+	}
 
-	वापस nfp_eth_config_commit_end(nsp);
-पूर्ण
+	return nfp_eth_config_commit_end(nsp);
+}
 
 /**
  * nfp_eth_set_configured() - set PHY module configured control bit
@@ -418,124 +417,124 @@ err:
  * @idx:	NFP chip-wide port index
  * @configed:	Desired state
  *
- * Set the अगरup/अगरकरोwn state on the PHY.
+ * Set the ifup/ifdown state on the PHY.
  *
  * Return:
  * 0 - configuration successful;
  * 1 - no changes were needed;
  * -ERRNO - configuration failed.
  */
-पूर्णांक nfp_eth_set_configured(काष्ठा nfp_cpp *cpp, अचिन्हित पूर्णांक idx, bool configed)
-अणु
-	जोड़ eth_table_entry *entries;
-	काष्ठा nfp_nsp *nsp;
+int nfp_eth_set_configured(struct nfp_cpp *cpp, unsigned int idx, bool configed)
+{
+	union eth_table_entry *entries;
+	struct nfp_nsp *nsp;
 	u64 reg;
 
 	nsp = nfp_eth_config_start(cpp, idx);
-	अगर (IS_ERR(nsp))
-		वापस PTR_ERR(nsp);
+	if (IS_ERR(nsp))
+		return PTR_ERR(nsp);
 
 	/* Older ABI versions did support this feature, however this has only
 	 * been reliable since ABI 20.
 	 */
-	अगर (nfp_nsp_get_abi_ver_minor(nsp) < 20) अणु
+	if (nfp_nsp_get_abi_ver_minor(nsp) < 20) {
 		nfp_eth_config_cleanup_end(nsp);
-		वापस -EOPNOTSUPP;
-	पूर्ण
+		return -EOPNOTSUPP;
+	}
 
 	entries = nfp_nsp_config_entries(nsp);
 
-	/* Check अगर we are alपढ़ोy in requested state */
+	/* Check if we are already in requested state */
 	reg = le64_to_cpu(entries[idx].state);
-	अगर (configed != FIELD_GET(NSP_ETH_STATE_CONFIGURED, reg)) अणु
+	if (configed != FIELD_GET(NSP_ETH_STATE_CONFIGURED, reg)) {
 		reg = le64_to_cpu(entries[idx].control);
 		reg &= ~NSP_ETH_CTRL_CONFIGURED;
 		reg |= FIELD_PREP(NSP_ETH_CTRL_CONFIGURED, configed);
 		entries[idx].control = cpu_to_le64(reg);
 
-		nfp_nsp_config_set_modअगरied(nsp, true);
-	पूर्ण
+		nfp_nsp_config_set_modified(nsp, true);
+	}
 
-	वापस nfp_eth_config_commit_end(nsp);
-पूर्ण
+	return nfp_eth_config_commit_end(nsp);
+}
 
-अटल पूर्णांक
-nfp_eth_set_bit_config(काष्ठा nfp_nsp *nsp, अचिन्हित पूर्णांक raw_idx,
-		       स्थिर u64 mask, स्थिर अचिन्हित पूर्णांक shअगरt,
-		       अचिन्हित पूर्णांक val, स्थिर u64 ctrl_bit)
-अणु
-	जोड़ eth_table_entry *entries = nfp_nsp_config_entries(nsp);
-	अचिन्हित पूर्णांक idx = nfp_nsp_config_idx(nsp);
+static int
+nfp_eth_set_bit_config(struct nfp_nsp *nsp, unsigned int raw_idx,
+		       const u64 mask, const unsigned int shift,
+		       unsigned int val, const u64 ctrl_bit)
+{
+	union eth_table_entry *entries = nfp_nsp_config_entries(nsp);
+	unsigned int idx = nfp_nsp_config_idx(nsp);
 	u64 reg;
 
 	/* Note: set features were added in ABI 0.14 but the error
 	 *	 codes were initially not populated correctly.
 	 */
-	अगर (nfp_nsp_get_abi_ver_minor(nsp) < 17) अणु
+	if (nfp_nsp_get_abi_ver_minor(nsp) < 17) {
 		nfp_err(nfp_nsp_cpp(nsp),
 			"set operations not supported, please update flash\n");
-		वापस -EOPNOTSUPP;
-	पूर्ण
+		return -EOPNOTSUPP;
+	}
 
-	/* Check अगर we are alपढ़ोy in requested state */
+	/* Check if we are already in requested state */
 	reg = le64_to_cpu(entries[idx].raw[raw_idx]);
-	अगर (val == (reg & mask) >> shअगरt)
-		वापस 0;
+	if (val == (reg & mask) >> shift)
+		return 0;
 
 	reg &= ~mask;
-	reg |= (val << shअगरt) & mask;
+	reg |= (val << shift) & mask;
 	entries[idx].raw[raw_idx] = cpu_to_le64(reg);
 
 	entries[idx].control |= cpu_to_le64(ctrl_bit);
 
-	nfp_nsp_config_set_modअगरied(nsp, true);
+	nfp_nsp_config_set_modified(nsp, true);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#घोषणा NFP_ETH_SET_BIT_CONFIG(nsp, raw_idx, mask, val, ctrl_bit)	\
-	(अणु								\
+#define NFP_ETH_SET_BIT_CONFIG(nsp, raw_idx, mask, val, ctrl_bit)	\
+	({								\
 		__BF_FIELD_CHECK(mask, 0ULL, val, "NFP_ETH_SET_BIT_CONFIG: "); \
 		nfp_eth_set_bit_config(nsp, raw_idx, mask, __bf_shf(mask), \
 				       val, ctrl_bit);			\
-	पूर्ण)
+	})
 
 /**
- * __nfp_eth_set_aneg() - set PHY स्वतःnegotiation control bit
- * @nsp:	NFP NSP handle वापसed from nfp_eth_config_start()
- * @mode:	Desired स्वतःnegotiation mode
+ * __nfp_eth_set_aneg() - set PHY autonegotiation control bit
+ * @nsp:	NFP NSP handle returned from nfp_eth_config_start()
+ * @mode:	Desired autonegotiation mode
  *
- * Allow/disallow PHY module to advertise/perक्रमm स्वतःnegotiation.
- * Will ग_लिखो to hwinfo overrides in the flash (persistent config).
+ * Allow/disallow PHY module to advertise/perform autonegotiation.
+ * Will write to hwinfo overrides in the flash (persistent config).
  *
  * Return: 0 or -ERRNO.
  */
-पूर्णांक __nfp_eth_set_aneg(काष्ठा nfp_nsp *nsp, क्रमागत nfp_eth_aneg mode)
-अणु
-	वापस NFP_ETH_SET_BIT_CONFIG(nsp, NSP_ETH_RAW_STATE,
+int __nfp_eth_set_aneg(struct nfp_nsp *nsp, enum nfp_eth_aneg mode)
+{
+	return NFP_ETH_SET_BIT_CONFIG(nsp, NSP_ETH_RAW_STATE,
 				      NSP_ETH_STATE_ANEG, mode,
 				      NSP_ETH_CTRL_SET_ANEG);
-पूर्ण
+}
 
 /**
- * __nfp_eth_set_fec() - set PHY क्रमward error correction control bit
- * @nsp:	NFP NSP handle वापसed from nfp_eth_config_start()
+ * __nfp_eth_set_fec() - set PHY forward error correction control bit
+ * @nsp:	NFP NSP handle returned from nfp_eth_config_start()
  * @mode:	Desired fec mode
  *
- * Set the PHY module क्रमward error correction mode.
- * Will ग_लिखो to hwinfo overrides in the flash (persistent config).
+ * Set the PHY module forward error correction mode.
+ * Will write to hwinfo overrides in the flash (persistent config).
  *
  * Return: 0 or -ERRNO.
  */
-अटल पूर्णांक __nfp_eth_set_fec(काष्ठा nfp_nsp *nsp, क्रमागत nfp_eth_fec mode)
-अणु
-	वापस NFP_ETH_SET_BIT_CONFIG(nsp, NSP_ETH_RAW_STATE,
+static int __nfp_eth_set_fec(struct nfp_nsp *nsp, enum nfp_eth_fec mode)
+{
+	return NFP_ETH_SET_BIT_CONFIG(nsp, NSP_ETH_RAW_STATE,
 				      NSP_ETH_STATE_FEC, mode,
 				      NSP_ETH_CTRL_SET_FEC);
-पूर्ण
+}
 
 /**
- * nfp_eth_set_fec() - set PHY क्रमward error correction control mode
+ * nfp_eth_set_fec() - set PHY forward error correction control mode
  * @cpp:	NFP CPP handle
  * @idx:	NFP chip-wide port index
  * @mode:	Desired fec mode
@@ -545,66 +544,66 @@ nfp_eth_set_bit_config(काष्ठा nfp_nsp *nsp, अचिन्हित
  * 1 - no changes were needed;
  * -ERRNO - configuration failed.
  */
-पूर्णांक
-nfp_eth_set_fec(काष्ठा nfp_cpp *cpp, अचिन्हित पूर्णांक idx, क्रमागत nfp_eth_fec mode)
-अणु
-	काष्ठा nfp_nsp *nsp;
-	पूर्णांक err;
+int
+nfp_eth_set_fec(struct nfp_cpp *cpp, unsigned int idx, enum nfp_eth_fec mode)
+{
+	struct nfp_nsp *nsp;
+	int err;
 
 	nsp = nfp_eth_config_start(cpp, idx);
-	अगर (IS_ERR(nsp))
-		वापस PTR_ERR(nsp);
+	if (IS_ERR(nsp))
+		return PTR_ERR(nsp);
 
 	err = __nfp_eth_set_fec(nsp, mode);
-	अगर (err) अणु
+	if (err) {
 		nfp_eth_config_cleanup_end(nsp);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	वापस nfp_eth_config_commit_end(nsp);
-पूर्ण
+	return nfp_eth_config_commit_end(nsp);
+}
 
 /**
- * __nfp_eth_set_speed() - set पूर्णांकerface speed/rate
- * @nsp:	NFP NSP handle वापसed from nfp_eth_config_start()
+ * __nfp_eth_set_speed() - set interface speed/rate
+ * @nsp:	NFP NSP handle returned from nfp_eth_config_start()
  * @speed:	Desired speed (per lane)
  *
- * Set lane speed.  Provided @speed value should be subport speed भागided
- * by number of lanes this subport is spanning (i.e. 10000 क्रम 40G, 25000 क्रम
+ * Set lane speed.  Provided @speed value should be subport speed divided
+ * by number of lanes this subport is spanning (i.e. 10000 for 40G, 25000 for
  * 50G, etc.)
- * Will ग_लिखो to hwinfo overrides in the flash (persistent config).
+ * Will write to hwinfo overrides in the flash (persistent config).
  *
  * Return: 0 or -ERRNO.
  */
-पूर्णांक __nfp_eth_set_speed(काष्ठा nfp_nsp *nsp, अचिन्हित पूर्णांक speed)
-अणु
-	क्रमागत nfp_eth_rate rate;
+int __nfp_eth_set_speed(struct nfp_nsp *nsp, unsigned int speed)
+{
+	enum nfp_eth_rate rate;
 
 	rate = nfp_eth_speed2rate(speed);
-	अगर (rate == RATE_INVALID) अणु
+	if (rate == RATE_INVALID) {
 		nfp_warn(nfp_nsp_cpp(nsp),
 			 "could not find matching lane rate for speed %u\n",
 			 speed);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस NFP_ETH_SET_BIT_CONFIG(nsp, NSP_ETH_RAW_STATE,
+	return NFP_ETH_SET_BIT_CONFIG(nsp, NSP_ETH_RAW_STATE,
 				      NSP_ETH_STATE_RATE, rate,
 				      NSP_ETH_CTRL_SET_RATE);
-पूर्ण
+}
 
 /**
- * __nfp_eth_set_split() - set पूर्णांकerface lane split
- * @nsp:	NFP NSP handle वापसed from nfp_eth_config_start()
+ * __nfp_eth_set_split() - set interface lane split
+ * @nsp:	NFP NSP handle returned from nfp_eth_config_start()
  * @lanes:	Desired lanes per port
  *
  * Set number of lanes in the port.
- * Will ग_लिखो to hwinfo overrides in the flash (persistent config).
+ * Will write to hwinfo overrides in the flash (persistent config).
  *
  * Return: 0 or -ERRNO.
  */
-पूर्णांक __nfp_eth_set_split(काष्ठा nfp_nsp *nsp, अचिन्हित पूर्णांक lanes)
-अणु
-	वापस NFP_ETH_SET_BIT_CONFIG(nsp, NSP_ETH_RAW_PORT, NSP_ETH_PORT_LANES,
+int __nfp_eth_set_split(struct nfp_nsp *nsp, unsigned int lanes)
+{
+	return NFP_ETH_SET_BIT_CONFIG(nsp, NSP_ETH_RAW_PORT, NSP_ETH_PORT_LANES,
 				      lanes, NSP_ETH_CTRL_SET_LANES);
-पूर्ण
+}

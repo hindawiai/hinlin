@@ -1,318 +1,317 @@
-<शैली गुरु>
 /*
  * Intel i82586 Ethernet definitions
  *
- * This is an extension to the Linux operating प्रणाली, and is covered by the
+ * This is an extension to the Linux operating system, and is covered by the
  * same Gnu Public License that covers that work.
  *
- * copyrights (c) 1994 by Michael Hipp (hippm@inक्रमmatik.uni-tuebingen.de)
+ * copyrights (c) 1994 by Michael Hipp (hippm@informatik.uni-tuebingen.de)
  *
- * I have करोne a look in the following sources:
+ * I have done a look in the following sources:
  *   crynwr-packet-driver by Russ Nelson
- *   Garret A. Wollman's i82586-driver क्रम BSD
+ *   Garret A. Wollman's i82586-driver for BSD
  */
 
 /*
  * Cloned from ni52.h, copyright as above.
  *
- * Modअगरied क्रम Sun3 OBIO i82586 by Sam Creasey (sammy@sammy.net)
+ * Modified for Sun3 OBIO i82586 by Sam Creasey (sammy@sammy.net)
  */
 
 
-/* defines क्रम the obio chip (not vme) */
-#घोषणा IEOB_NORSET 0x80        /* करोn't reset the board */
-#घोषणा IEOB_ONAIR  0x40        /* put us on the air */
-#घोषणा IEOB_ATTEN  0x20        /* attention! */
-#घोषणा IEOB_IENAB  0x10        /* पूर्णांकerrupt enable */
-#घोषणा IEOB_XXXXX  0x08        /* मुक्त bit */
-#घोषणा IEOB_XCVRL2 0x04        /* level 2 transceiver? */
-#घोषणा IEOB_BUSERR 0x02        /* bus error */
-#घोषणा IEOB_INT    0x01        /* पूर्णांकerrupt */
+/* defines for the obio chip (not vme) */
+#define IEOB_NORSET 0x80        /* don't reset the board */
+#define IEOB_ONAIR  0x40        /* put us on the air */
+#define IEOB_ATTEN  0x20        /* attention! */
+#define IEOB_IENAB  0x10        /* interrupt enable */
+#define IEOB_XXXXX  0x08        /* free bit */
+#define IEOB_XCVRL2 0x04        /* level 2 transceiver? */
+#define IEOB_BUSERR 0x02        /* bus error */
+#define IEOB_INT    0x01        /* interrupt */
 
 /* where the obio one lives */
-#घोषणा IE_OBIO 0xc0000
-#घोषणा IE_IRQ 3
+#define IE_OBIO 0xc0000
+#define IE_IRQ 3
 
 /*
- * where to find the System Configuration Poपूर्णांकer (SCP)
+ * where to find the System Configuration Pointer (SCP)
  */
-#घोषणा SCP_DEFAULT_ADDRESS 0xfffff4
-
-
-/*
- * System Configuration Poपूर्णांकer Struct
- */
-
-काष्ठा scp_काष्ठा
-अणु
-  अचिन्हित लघु zero_dum0;	/* has to be zero */
-  अचिन्हित अक्षर  sysbus;	/* 0=16Bit,1=8Bit */
-  अचिन्हित अक्षर  zero_dum1;	/* has to be zero क्रम 586 */
-  अचिन्हित लघु zero_dum2;
-  अचिन्हित लघु zero_dum3;
-  अक्षर          *iscp;		/* poपूर्णांकer to the iscp-block */
-पूर्ण;
+#define SCP_DEFAULT_ADDRESS 0xfffff4
 
 
 /*
- * Intermediate System Configuration Poपूर्णांकer (ISCP)
+ * System Configuration Pointer Struct
  */
-काष्ठा iscp_काष्ठा
-अणु
-  अचिन्हित अक्षर  busy;          /* 586 clears after successful init */
-  अचिन्हित अक्षर  zero_dummy;    /* has to be zero */
-  अचिन्हित लघु scb_offset;    /* poपूर्णांकeroffset to the scb_base */
-  अक्षर          *scb_base;      /* base-address of all 16-bit offsets */
-पूर्ण;
+
+struct scp_struct
+{
+  unsigned short zero_dum0;	/* has to be zero */
+  unsigned char  sysbus;	/* 0=16Bit,1=8Bit */
+  unsigned char  zero_dum1;	/* has to be zero for 586 */
+  unsigned short zero_dum2;
+  unsigned short zero_dum3;
+  char          *iscp;		/* pointer to the iscp-block */
+};
+
+
+/*
+ * Intermediate System Configuration Pointer (ISCP)
+ */
+struct iscp_struct
+{
+  unsigned char  busy;          /* 586 clears after successful init */
+  unsigned char  zero_dummy;    /* has to be zero */
+  unsigned short scb_offset;    /* pointeroffset to the scb_base */
+  char          *scb_base;      /* base-address of all 16-bit offsets */
+};
 
 /*
  * System Control Block (SCB)
  */
-काष्ठा scb_काष्ठा
-अणु
-  अचिन्हित अक्षर rus;
-  अचिन्हित अक्षर cus;
-  अचिन्हित अक्षर cmd_ruc;           /* command word: RU part */
-  अचिन्हित अक्षर cmd_cuc;           /* command word: CU part & ACK */
-  अचिन्हित लघु cbl_offset;    /* poपूर्णांकeroffset, command block list */
-  अचिन्हित लघु rfa_offset;    /* poपूर्णांकeroffset, receive frame area */
-  अचिन्हित लघु crc_errs;      /* CRC-Error counter */
-  अचिन्हित लघु aln_errs;      /* allignmenterror counter */
-  अचिन्हित लघु rsc_errs;      /* Resourceerror counter */
-  अचिन्हित लघु ovrn_errs;     /* OVerrunerror counter */
-पूर्ण;
+struct scb_struct
+{
+  unsigned char rus;
+  unsigned char cus;
+  unsigned char cmd_ruc;           /* command word: RU part */
+  unsigned char cmd_cuc;           /* command word: CU part & ACK */
+  unsigned short cbl_offset;    /* pointeroffset, command block list */
+  unsigned short rfa_offset;    /* pointeroffset, receive frame area */
+  unsigned short crc_errs;      /* CRC-Error counter */
+  unsigned short aln_errs;      /* allignmenterror counter */
+  unsigned short rsc_errs;      /* Resourceerror counter */
+  unsigned short ovrn_errs;     /* OVerrunerror counter */
+};
 
 /*
- * possible command values क्रम the command word
+ * possible command values for the command word
  */
-#घोषणा RUC_MASK	0x0070	/* mask क्रम RU commands */
-#घोषणा RUC_NOP		0x0000	/* NOP-command */
-#घोषणा RUC_START	0x0010	/* start RU */
-#घोषणा RUC_RESUME	0x0020	/* resume RU after suspend */
-#घोषणा RUC_SUSPEND	0x0030	/* suspend RU */
-#घोषणा RUC_ABORT	0x0040	/* पात receiver operation immediately */
+#define RUC_MASK	0x0070	/* mask for RU commands */
+#define RUC_NOP		0x0000	/* NOP-command */
+#define RUC_START	0x0010	/* start RU */
+#define RUC_RESUME	0x0020	/* resume RU after suspend */
+#define RUC_SUSPEND	0x0030	/* suspend RU */
+#define RUC_ABORT	0x0040	/* abort receiver operation immediately */
 
-#घोषणा CUC_MASK        0x07  /* mask क्रम CU command */
-#घोषणा CUC_NOP         0x00  /* NOP-command */
-#घोषणा CUC_START       0x01  /* start execution of 1. cmd on the CBL */
-#घोषणा CUC_RESUME      0x02  /* resume after suspend */
-#घोषणा CUC_SUSPEND     0x03  /* Suspend CU */
-#घोषणा CUC_ABORT       0x04  /* पात command operation immediately */
+#define CUC_MASK        0x07  /* mask for CU command */
+#define CUC_NOP         0x00  /* NOP-command */
+#define CUC_START       0x01  /* start execution of 1. cmd on the CBL */
+#define CUC_RESUME      0x02  /* resume after suspend */
+#define CUC_SUSPEND     0x03  /* Suspend CU */
+#define CUC_ABORT       0x04  /* abort command operation immediately */
 
-#घोषणा ACK_MASK        0xf0  /* mask क्रम ACK command */
-#घोषणा ACK_CX          0x80  /* acknowledges STAT_CX */
-#घोषणा ACK_FR          0x40  /* ack. STAT_FR */
-#घोषणा ACK_CNA         0x20  /* ack. STAT_CNA */
-#घोषणा ACK_RNR         0x10  /* ack. STAT_RNR */
+#define ACK_MASK        0xf0  /* mask for ACK command */
+#define ACK_CX          0x80  /* acknowledges STAT_CX */
+#define ACK_FR          0x40  /* ack. STAT_FR */
+#define ACK_CNA         0x20  /* ack. STAT_CNA */
+#define ACK_RNR         0x10  /* ack. STAT_RNR */
 
 /*
- * possible status values क्रम the status word
+ * possible status values for the status word
  */
-#घोषणा STAT_MASK       0xf0  /* mask क्रम cause of पूर्णांकerrupt */
-#घोषणा STAT_CX         0x80  /* CU finished cmd with its I bit set */
-#घोषणा STAT_FR         0x40  /* RU finished receiving a frame */
-#घोषणा STAT_CNA        0x20  /* CU left active state */
-#घोषणा STAT_RNR        0x10  /* RU left पढ़ोy state */
+#define STAT_MASK       0xf0  /* mask for cause of interrupt */
+#define STAT_CX         0x80  /* CU finished cmd with its I bit set */
+#define STAT_FR         0x40  /* RU finished receiving a frame */
+#define STAT_CNA        0x20  /* CU left active state */
+#define STAT_RNR        0x10  /* RU left ready state */
 
-#घोषणा CU_STATUS       0x7   /* CU status, 0=idle */
-#घोषणा CU_SUSPEND      0x1   /* CU is suspended */
-#घोषणा CU_ACTIVE       0x2   /* CU is active */
+#define CU_STATUS       0x7   /* CU status, 0=idle */
+#define CU_SUSPEND      0x1   /* CU is suspended */
+#define CU_ACTIVE       0x2   /* CU is active */
 
-#घोषणा RU_STATUS	0x70	/* RU status, 0=idle */
-#घोषणा RU_SUSPEND	0x10	/* RU suspended */
-#घोषणा RU_NOSPACE	0x20	/* RU no resources */
-#घोषणा RU_READY	0x40	/* RU is पढ़ोy */
+#define RU_STATUS	0x70	/* RU status, 0=idle */
+#define RU_SUSPEND	0x10	/* RU suspended */
+#define RU_NOSPACE	0x20	/* RU no resources */
+#define RU_READY	0x40	/* RU is ready */
 
 /*
  * Receive Frame Descriptor (RFD)
  */
-काष्ठा rfd_काष्ठा
-अणु
-  अचिन्हित अक्षर  stat_low;	/* status word */
-  अचिन्हित अक्षर  stat_high;	/* status word */
-  अचिन्हित अक्षर  rfd_sf;	/* 82596 mode only */
-  अचिन्हित अक्षर  last;		/* Bit15,Last Frame on List / Bit14,suspend */
-  अचिन्हित लघु next;		/* linkoffset to next RFD */
-  अचिन्हित लघु rbd_offset;	/* poपूर्णांकeroffset to RBD-buffer */
-  अचिन्हित अक्षर  dest[ETH_ALEN];	/* ethernet-address, destination */
-  अचिन्हित अक्षर  source[ETH_ALEN];	/* ethernet-address, source */
-  अचिन्हित लघु length;	/* 802.3 frame-length */
-  अचिन्हित लघु zero_dummy;	/* dummy */
-पूर्ण;
+struct rfd_struct
+{
+  unsigned char  stat_low;	/* status word */
+  unsigned char  stat_high;	/* status word */
+  unsigned char  rfd_sf;	/* 82596 mode only */
+  unsigned char  last;		/* Bit15,Last Frame on List / Bit14,suspend */
+  unsigned short next;		/* linkoffset to next RFD */
+  unsigned short rbd_offset;	/* pointeroffset to RBD-buffer */
+  unsigned char  dest[ETH_ALEN];	/* ethernet-address, destination */
+  unsigned char  source[ETH_ALEN];	/* ethernet-address, source */
+  unsigned short length;	/* 802.3 frame-length */
+  unsigned short zero_dummy;	/* dummy */
+};
 
-#घोषणा RFD_LAST     0x80	/* last: last rfd in the list */
-#घोषणा RFD_SUSP     0x40	/* last: suspend RU after  */
-#घोषणा RFD_COMPL    0x80
-#घोषणा RFD_OK       0x20
-#घोषणा RFD_BUSY     0x40
-#घोषणा RFD_ERR_LEN  0x10     /* Length error (अगर enabled length-checking */
-#घोषणा RFD_ERR_CRC  0x08     /* CRC error */
-#घोषणा RFD_ERR_ALGN 0x04     /* Alignment error */
-#घोषणा RFD_ERR_RNR  0x02     /* status: receiver out of resources */
-#घोषणा RFD_ERR_OVR  0x01     /* DMA Overrun! */
+#define RFD_LAST     0x80	/* last: last rfd in the list */
+#define RFD_SUSP     0x40	/* last: suspend RU after  */
+#define RFD_COMPL    0x80
+#define RFD_OK       0x20
+#define RFD_BUSY     0x40
+#define RFD_ERR_LEN  0x10     /* Length error (if enabled length-checking */
+#define RFD_ERR_CRC  0x08     /* CRC error */
+#define RFD_ERR_ALGN 0x04     /* Alignment error */
+#define RFD_ERR_RNR  0x02     /* status: receiver out of resources */
+#define RFD_ERR_OVR  0x01     /* DMA Overrun! */
 
-#घोषणा RFD_ERR_FTS  0x0080	/* Frame to लघु */
-#घोषणा RFD_ERR_NEOP 0x0040	/* No EOP flag (क्रम bitstuffing only) */
-#घोषणा RFD_ERR_TRUN 0x0020	/* (82596 only/SF mode) indicates truncated frame */
-#घोषणा RFD_MATCHADD 0x0002     /* status: Destinationaddress !matches IA (only 82596) */
-#घोषणा RFD_COLLDET  0x0001	/* Detected collision during reception */
+#define RFD_ERR_FTS  0x0080	/* Frame to short */
+#define RFD_ERR_NEOP 0x0040	/* No EOP flag (for bitstuffing only) */
+#define RFD_ERR_TRUN 0x0020	/* (82596 only/SF mode) indicates truncated frame */
+#define RFD_MATCHADD 0x0002     /* status: Destinationaddress !matches IA (only 82596) */
+#define RFD_COLLDET  0x0001	/* Detected collision during reception */
 
 /*
  * Receive Buffer Descriptor (RBD)
  */
-काष्ठा rbd_काष्ठा
-अणु
-  अचिन्हित लघु status;	/* status word,number of used bytes in buff */
-  अचिन्हित लघु next;		/* poपूर्णांकeroffset to next RBD */
-  अक्षर          *buffer;	/* receive buffer address poपूर्णांकer */
-  अचिन्हित लघु size;		/* size of this buffer */
-  अचिन्हित लघु zero_dummy;    /* dummy */
-पूर्ण;
+struct rbd_struct
+{
+  unsigned short status;	/* status word,number of used bytes in buff */
+  unsigned short next;		/* pointeroffset to next RBD */
+  char          *buffer;	/* receive buffer address pointer */
+  unsigned short size;		/* size of this buffer */
+  unsigned short zero_dummy;    /* dummy */
+};
 
-#घोषणा RBD_LAST	0x8000	/* last buffer */
-#घोषणा RBD_USED	0x4000	/* this buffer has data */
-#घोषणा RBD_MASK	0x3fff	/* size-mask क्रम length */
+#define RBD_LAST	0x8000	/* last buffer */
+#define RBD_USED	0x4000	/* this buffer has data */
+#define RBD_MASK	0x3fff	/* size-mask for length */
 
 /*
- * Statusvalues क्रम Commands/RFD
+ * Statusvalues for Commands/RFD
  */
-#घोषणा STAT_COMPL   0x8000	/* status: frame/command is complete */
-#घोषणा STAT_BUSY    0x4000	/* status: frame/command is busy */
-#घोषणा STAT_OK      0x2000	/* status: frame/command is ok */
+#define STAT_COMPL   0x8000	/* status: frame/command is complete */
+#define STAT_BUSY    0x4000	/* status: frame/command is busy */
+#define STAT_OK      0x2000	/* status: frame/command is ok */
 
 /*
  * Action-Commands
  */
-#घोषणा CMD_NOP		0x0000	/* NOP */
-#घोषणा CMD_IASETUP	0x0001	/* initial address setup command */
-#घोषणा CMD_CONFIGURE	0x0002	/* configure command */
-#घोषणा CMD_MCSETUP	0x0003	/* MC setup command */
-#घोषणा CMD_XMIT	0x0004	/* transmit command */
-#घोषणा CMD_TDR		0x0005	/* समय करोमुख्य reflectometer (TDR) command */
-#घोषणा CMD_DUMP	0x0006	/* dump command */
-#घोषणा CMD_DIAGNOSE	0x0007	/* diagnose command */
+#define CMD_NOP		0x0000	/* NOP */
+#define CMD_IASETUP	0x0001	/* initial address setup command */
+#define CMD_CONFIGURE	0x0002	/* configure command */
+#define CMD_MCSETUP	0x0003	/* MC setup command */
+#define CMD_XMIT	0x0004	/* transmit command */
+#define CMD_TDR		0x0005	/* time domain reflectometer (TDR) command */
+#define CMD_DUMP	0x0006	/* dump command */
+#define CMD_DIAGNOSE	0x0007	/* diagnose command */
 
 /*
  * Action command bits
  */
-#घोषणा CMD_LAST	0x8000	/* indicates last command in the CBL */
-#घोषणा CMD_SUSPEND	0x4000	/* suspend CU after this CB */
-#घोषणा CMD_INT		0x2000	/* generate पूर्णांकerrupt after execution */
+#define CMD_LAST	0x8000	/* indicates last command in the CBL */
+#define CMD_SUSPEND	0x4000	/* suspend CU after this CB */
+#define CMD_INT		0x2000	/* generate interrupt after execution */
 
 /*
  * NOP - command
  */
-काष्ठा nop_cmd_काष्ठा
-अणु
-  अचिन्हित लघु cmd_status;	/* status of this command */
-  अचिन्हित लघु cmd_cmd;       /* the command itself (+bits) */
-  अचिन्हित लघु cmd_link;      /* offsetpoपूर्णांकer to next command */
-पूर्ण;
+struct nop_cmd_struct
+{
+  unsigned short cmd_status;	/* status of this command */
+  unsigned short cmd_cmd;       /* the command itself (+bits) */
+  unsigned short cmd_link;      /* offsetpointer to next command */
+};
 
 /*
  * IA Setup command
  */
-काष्ठा iasetup_cmd_काष्ठा
-अणु
-  अचिन्हित लघु cmd_status;
-  अचिन्हित लघु cmd_cmd;
-  अचिन्हित लघु cmd_link;
-  अचिन्हित अक्षर  iaddr[6];
-पूर्ण;
+struct iasetup_cmd_struct
+{
+  unsigned short cmd_status;
+  unsigned short cmd_cmd;
+  unsigned short cmd_link;
+  unsigned char  iaddr[6];
+};
 
 /*
  * Configure command
  */
-काष्ठा configure_cmd_काष्ठा
-अणु
-  अचिन्हित लघु cmd_status;
-  अचिन्हित लघु cmd_cmd;
-  अचिन्हित लघु cmd_link;
-  अचिन्हित अक्षर  byte_cnt;   /* size of the config-cmd */
-  अचिन्हित अक्षर  fअगरo;       /* fअगरo/recv monitor */
-  अचिन्हित अक्षर  sav_bf;     /* save bad frames (bit7=1)*/
-  अचिन्हित अक्षर  adr_len;    /* adr_len(0-2),al_loc(3),pream(4-5),loopbak(6-7)*/
-  अचिन्हित अक्षर  priority;   /* lin_prio(0-2),exp_prio(4-6),bof_metd(7) */
-  अचिन्हित अक्षर  अगरs;        /* पूर्णांकer frame spacing */
-  अचिन्हित अक्षर  समय_low;   /* slot समय low */
-  अचिन्हित अक्षर  समय_high;  /* slot समय high(0-2) and max. retries(4-7) */
-  अचिन्हित अक्षर  promisc;    /* promisc-mode(0) , et al (1-7) */
-  अचिन्हित अक्षर  carr_coll;  /* carrier(0-3)/collision(4-7) stuff */
-  अचिन्हित अक्षर  fram_len;   /* minimal frame len */
-  अचिन्हित अक्षर  dummy;	     /* dummy */
-पूर्ण;
+struct configure_cmd_struct
+{
+  unsigned short cmd_status;
+  unsigned short cmd_cmd;
+  unsigned short cmd_link;
+  unsigned char  byte_cnt;   /* size of the config-cmd */
+  unsigned char  fifo;       /* fifo/recv monitor */
+  unsigned char  sav_bf;     /* save bad frames (bit7=1)*/
+  unsigned char  adr_len;    /* adr_len(0-2),al_loc(3),pream(4-5),loopbak(6-7)*/
+  unsigned char  priority;   /* lin_prio(0-2),exp_prio(4-6),bof_metd(7) */
+  unsigned char  ifs;        /* inter frame spacing */
+  unsigned char  time_low;   /* slot time low */
+  unsigned char  time_high;  /* slot time high(0-2) and max. retries(4-7) */
+  unsigned char  promisc;    /* promisc-mode(0) , et al (1-7) */
+  unsigned char  carr_coll;  /* carrier(0-3)/collision(4-7) stuff */
+  unsigned char  fram_len;   /* minimal frame len */
+  unsigned char  dummy;	     /* dummy */
+};
 
 /*
  * Multicast Setup command
  */
-काष्ठा mcsetup_cmd_काष्ठा
-अणु
-  अचिन्हित लघु cmd_status;
-  अचिन्हित लघु cmd_cmd;
-  अचिन्हित लघु cmd_link;
-  अचिन्हित लघु mc_cnt;		/* number of bytes in the MC-List */
-  अचिन्हित अक्षर  mc_list[0][6];  	/* poपूर्णांकer to 6 bytes entries */
-पूर्ण;
+struct mcsetup_cmd_struct
+{
+  unsigned short cmd_status;
+  unsigned short cmd_cmd;
+  unsigned short cmd_link;
+  unsigned short mc_cnt;		/* number of bytes in the MC-List */
+  unsigned char  mc_list[0][6];  	/* pointer to 6 bytes entries */
+};
 
 /*
  * DUMP command
  */
-काष्ठा dump_cmd_काष्ठा
-अणु
-  अचिन्हित लघु cmd_status;
-  अचिन्हित लघु cmd_cmd;
-  अचिन्हित लघु cmd_link;
-  अचिन्हित लघु dump_offset;    /* poपूर्णांकeroffset to DUMP space */
-पूर्ण;
+struct dump_cmd_struct
+{
+  unsigned short cmd_status;
+  unsigned short cmd_cmd;
+  unsigned short cmd_link;
+  unsigned short dump_offset;    /* pointeroffset to DUMP space */
+};
 
 /*
  * transmit command
  */
-काष्ठा transmit_cmd_काष्ठा
-अणु
-  अचिन्हित लघु cmd_status;
-  अचिन्हित लघु cmd_cmd;
-  अचिन्हित लघु cmd_link;
-  अचिन्हित लघु tbd_offset;	/* poपूर्णांकeroffset to TBD */
-  अचिन्हित अक्षर  dest[6];       /* destination address of the frame */
-  अचिन्हित लघु length;	/* user defined: 802.3 length / Ether type */
-पूर्ण;
+struct transmit_cmd_struct
+{
+  unsigned short cmd_status;
+  unsigned short cmd_cmd;
+  unsigned short cmd_link;
+  unsigned short tbd_offset;	/* pointeroffset to TBD */
+  unsigned char  dest[6];       /* destination address of the frame */
+  unsigned short length;	/* user defined: 802.3 length / Ether type */
+};
 
-#घोषणा TCMD_ERRMASK     0x0fa0
-#घोषणा TCMD_MAXCOLLMASK 0x000f
-#घोषणा TCMD_MAXCOLL     0x0020
-#घोषणा TCMD_HEARTBEAT   0x0040
-#घोषणा TCMD_DEFERRED    0x0080
-#घोषणा TCMD_UNDERRUN    0x0100
-#घोषणा TCMD_LOSTCTS     0x0200
-#घोषणा TCMD_NOCARRIER   0x0400
-#घोषणा TCMD_LATECOLL    0x0800
+#define TCMD_ERRMASK     0x0fa0
+#define TCMD_MAXCOLLMASK 0x000f
+#define TCMD_MAXCOLL     0x0020
+#define TCMD_HEARTBEAT   0x0040
+#define TCMD_DEFERRED    0x0080
+#define TCMD_UNDERRUN    0x0100
+#define TCMD_LOSTCTS     0x0200
+#define TCMD_NOCARRIER   0x0400
+#define TCMD_LATECOLL    0x0800
 
-काष्ठा tdr_cmd_काष्ठा
-अणु
-  अचिन्हित लघु cmd_status;
-  अचिन्हित लघु cmd_cmd;
-  अचिन्हित लघु cmd_link;
-  अचिन्हित लघु status;
-पूर्ण;
+struct tdr_cmd_struct
+{
+  unsigned short cmd_status;
+  unsigned short cmd_cmd;
+  unsigned short cmd_link;
+  unsigned short status;
+};
 
-#घोषणा TDR_LNK_OK	0x8000	/* No link problem identअगरied */
-#घोषणा TDR_XCVR_PRB	0x4000	/* indicates a transceiver problem */
-#घोषणा TDR_ET_OPN	0x2000	/* खोलो, no correct termination */
-#घोषणा TDR_ET_SRT	0x1000	/* TDR detected a लघु circuit */
-#घोषणा TDR_TIMEMASK	0x07ff	/* mask क्रम the समय field */
+#define TDR_LNK_OK	0x8000	/* No link problem identified */
+#define TDR_XCVR_PRB	0x4000	/* indicates a transceiver problem */
+#define TDR_ET_OPN	0x2000	/* open, no correct termination */
+#define TDR_ET_SRT	0x1000	/* TDR detected a short circuit */
+#define TDR_TIMEMASK	0x07ff	/* mask for the time field */
 
 /*
  * Transmit Buffer Descriptor (TBD)
  */
-काष्ठा tbd_काष्ठा
-अणु
-  अचिन्हित लघु size;		/* size + खातापूर्ण-Flag(15) */
-  अचिन्हित लघु next;          /* poपूर्णांकeroffset to next TBD */
-  अक्षर          *buffer;        /* poपूर्णांकer to buffer */
-पूर्ण;
+struct tbd_struct
+{
+  unsigned short size;		/* size + EOF-Flag(15) */
+  unsigned short next;          /* pointeroffset to next TBD */
+  char          *buffer;        /* pointer to buffer */
+};
 
-#घोषणा TBD_LAST 0x8000         /* खातापूर्ण-Flag, indicates last buffer in list */
+#define TBD_LAST 0x8000         /* EOF-Flag, indicates last buffer in list */
 
 
 

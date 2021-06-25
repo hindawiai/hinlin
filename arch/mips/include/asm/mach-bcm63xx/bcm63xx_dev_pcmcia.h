@@ -1,15 +1,14 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित BCM63XX_DEV_PCMCIA_H_
-#घोषणा BCM63XX_DEV_PCMCIA_H_
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef BCM63XX_DEV_PCMCIA_H_
+#define BCM63XX_DEV_PCMCIA_H_
 
 /*
- * PCMCIA driver platक्रमm data
+ * PCMCIA driver platform data
  */
-काष्ठा bcm63xx_pcmcia_platक्रमm_data अणु
-	अचिन्हित पूर्णांक पढ़ोy_gpio;
-पूर्ण;
+struct bcm63xx_pcmcia_platform_data {
+	unsigned int ready_gpio;
+};
 
-पूर्णांक bcm63xx_pcmcia_रेजिस्टर(व्योम);
+int bcm63xx_pcmcia_register(void);
 
-#पूर्ण_अगर /* BCM63XX_DEV_PCMCIA_H_ */
+#endif /* BCM63XX_DEV_PCMCIA_H_ */

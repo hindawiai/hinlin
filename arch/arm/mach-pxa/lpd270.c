@@ -1,56 +1,55 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * linux/arch/arm/mach-pxa/lpd270.c
  *
- * Support क्रम the LogicPD PXA270 Card Engine.
- * Derived from the मुख्यstone code, which carries these notices:
+ * Support for the LogicPD PXA270 Card Engine.
+ * Derived from the mainstone code, which carries these notices:
  *
  * Author:	Nicolas Pitre
  * Created:	Nov 05, 2002
  * Copyright:	MontaVista Software Inc.
  */
-#समावेश <linux/gpपन.स>
-#समावेश <linux/init.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/syscore_ops.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/bitops.h>
-#समावेश <linux/fb.h>
-#समावेश <linux/ioport.h>
-#समावेश <linux/mtd/mtd.h>
-#समावेश <linux/mtd/partitions.h>
-#समावेश <linux/pwm.h>
-#समावेश <linux/pwm_backlight.h>
-#समावेश <linux/smc91x.h>
+#include <linux/gpio.h>
+#include <linux/init.h>
+#include <linux/platform_device.h>
+#include <linux/syscore_ops.h>
+#include <linux/interrupt.h>
+#include <linux/sched.h>
+#include <linux/bitops.h>
+#include <linux/fb.h>
+#include <linux/ioport.h>
+#include <linux/mtd/mtd.h>
+#include <linux/mtd/partitions.h>
+#include <linux/pwm.h>
+#include <linux/pwm_backlight.h>
+#include <linux/smc91x.h>
 
-#समावेश <यंत्र/types.h>
-#समावेश <यंत्र/setup.h>
-#समावेश <यंत्र/memory.h>
-#समावेश <यंत्र/mach-types.h>
-#समावेश <mach/hardware.h>
-#समावेश <यंत्र/irq.h>
-#समावेश <linux/sizes.h>
+#include <asm/types.h>
+#include <asm/setup.h>
+#include <asm/memory.h>
+#include <asm/mach-types.h>
+#include <mach/hardware.h>
+#include <asm/irq.h>
+#include <linux/sizes.h>
 
-#समावेश <यंत्र/mach/arch.h>
-#समावेश <यंत्र/mach/map.h>
-#समावेश <यंत्र/mach/irq.h>
-#समावेश <यंत्र/mach/flash.h>
+#include <asm/mach/arch.h>
+#include <asm/mach/map.h>
+#include <asm/mach/irq.h>
+#include <asm/mach/flash.h>
 
-#समावेश "pxa27x.h"
-#समावेश "lpd270.h"
-#समावेश <mach/audपन.स>
-#समावेश <linux/platक्रमm_data/video-pxafb.h>
-#समावेश <linux/platक्रमm_data/mmc-pxamci.h>
-#समावेश <linux/platक्रमm_data/irda-pxaficp.h>
-#समावेश <linux/platक्रमm_data/usb-ohci-pxa27x.h>
-#समावेश <mach/smemc.h>
+#include "pxa27x.h"
+#include "lpd270.h"
+#include <mach/audio.h>
+#include <linux/platform_data/video-pxafb.h>
+#include <linux/platform_data/mmc-pxamci.h>
+#include <linux/platform_data/irda-pxaficp.h>
+#include <linux/platform_data/usb-ohci-pxa27x.h>
+#include <mach/smemc.h>
 
-#समावेश "generic.h"
-#समावेश "devices.h"
+#include "generic.h"
+#include "devices.h"
 
-अटल अचिन्हित दीर्घ lpd270_pin_config[] __initdata = अणु
+static unsigned long lpd270_pin_config[] __initdata = {
 	/* Chip Selects */
 	GPIO15_nCS_1,	/* Mainboard Flash */
 	GPIO78_nCS_2,	/* CPLD + Ethernet */
@@ -90,207 +89,207 @@
 	GPIO45_AC97_SYSCLK,
 
 	GPIO1_GPIO | WAKEUP_ON_EDGE_BOTH,
-पूर्ण;
+};
 
-अटल अचिन्हित पूर्णांक lpd270_irq_enabled;
+static unsigned int lpd270_irq_enabled;
 
-अटल व्योम lpd270_mask_irq(काष्ठा irq_data *d)
-अणु
-	पूर्णांक lpd270_irq = d->irq - LPD270_IRQ(0);
+static void lpd270_mask_irq(struct irq_data *d)
+{
+	int lpd270_irq = d->irq - LPD270_IRQ(0);
 
-	__raw_ग_लिखोw(~(1 << lpd270_irq), LPD270_INT_STATUS);
+	__raw_writew(~(1 << lpd270_irq), LPD270_INT_STATUS);
 
 	lpd270_irq_enabled &= ~(1 << lpd270_irq);
-	__raw_ग_लिखोw(lpd270_irq_enabled, LPD270_INT_MASK);
-पूर्ण
+	__raw_writew(lpd270_irq_enabled, LPD270_INT_MASK);
+}
 
-अटल व्योम lpd270_unmask_irq(काष्ठा irq_data *d)
-अणु
-	पूर्णांक lpd270_irq = d->irq - LPD270_IRQ(0);
+static void lpd270_unmask_irq(struct irq_data *d)
+{
+	int lpd270_irq = d->irq - LPD270_IRQ(0);
 
 	lpd270_irq_enabled |= 1 << lpd270_irq;
-	__raw_ग_लिखोw(lpd270_irq_enabled, LPD270_INT_MASK);
-पूर्ण
+	__raw_writew(lpd270_irq_enabled, LPD270_INT_MASK);
+}
 
-अटल काष्ठा irq_chip lpd270_irq_chip = अणु
+static struct irq_chip lpd270_irq_chip = {
 	.name		= "CPLD",
 	.irq_ack	= lpd270_mask_irq,
 	.irq_mask	= lpd270_mask_irq,
 	.irq_unmask	= lpd270_unmask_irq,
-पूर्ण;
+};
 
-अटल व्योम lpd270_irq_handler(काष्ठा irq_desc *desc)
-अणु
-	अचिन्हित पूर्णांक irq;
-	अचिन्हित दीर्घ pending;
+static void lpd270_irq_handler(struct irq_desc *desc)
+{
+	unsigned int irq;
+	unsigned long pending;
 
-	pending = __raw_पढ़ोw(LPD270_INT_STATUS) & lpd270_irq_enabled;
-	करो अणु
-		/* clear useless edge notअगरication */
+	pending = __raw_readw(LPD270_INT_STATUS) & lpd270_irq_enabled;
+	do {
+		/* clear useless edge notification */
 		desc->irq_data.chip->irq_ack(&desc->irq_data);
-		अगर (likely(pending)) अणु
+		if (likely(pending)) {
 			irq = LPD270_IRQ(0) + __ffs(pending);
 			generic_handle_irq(irq);
 
-			pending = __raw_पढ़ोw(LPD270_INT_STATUS) &
+			pending = __raw_readw(LPD270_INT_STATUS) &
 						lpd270_irq_enabled;
-		पूर्ण
-	पूर्ण जबतक (pending);
-पूर्ण
+		}
+	} while (pending);
+}
 
-अटल व्योम __init lpd270_init_irq(व्योम)
-अणु
-	पूर्णांक irq;
+static void __init lpd270_init_irq(void)
+{
+	int irq;
 
 	pxa27x_init_irq();
 
-	__raw_ग_लिखोw(0, LPD270_INT_MASK);
-	__raw_ग_लिखोw(0, LPD270_INT_STATUS);
+	__raw_writew(0, LPD270_INT_MASK);
+	__raw_writew(0, LPD270_INT_STATUS);
 
 	/* setup extra LogicPD PXA270 irqs */
-	क्रम (irq = LPD270_IRQ(2); irq <= LPD270_IRQ(4); irq++) अणु
+	for (irq = LPD270_IRQ(2); irq <= LPD270_IRQ(4); irq++) {
 		irq_set_chip_and_handler(irq, &lpd270_irq_chip,
 					 handle_level_irq);
 		irq_clear_status_flags(irq, IRQ_NOREQUEST | IRQ_NOPROBE);
-	पूर्ण
+	}
 	irq_set_chained_handler(PXA_GPIO_TO_IRQ(0), lpd270_irq_handler);
 	irq_set_irq_type(PXA_GPIO_TO_IRQ(0), IRQ_TYPE_EDGE_FALLING);
-पूर्ण
+}
 
 
-#अगर_घोषित CONFIG_PM
-अटल व्योम lpd270_irq_resume(व्योम)
-अणु
-	__raw_ग_लिखोw(lpd270_irq_enabled, LPD270_INT_MASK);
-पूर्ण
+#ifdef CONFIG_PM
+static void lpd270_irq_resume(void)
+{
+	__raw_writew(lpd270_irq_enabled, LPD270_INT_MASK);
+}
 
-अटल काष्ठा syscore_ops lpd270_irq_syscore_ops = अणु
+static struct syscore_ops lpd270_irq_syscore_ops = {
 	.resume = lpd270_irq_resume,
-पूर्ण;
+};
 
-अटल पूर्णांक __init lpd270_irq_device_init(व्योम)
-अणु
-	अगर (machine_is_logicpd_pxa270()) अणु
-		रेजिस्टर_syscore_ops(&lpd270_irq_syscore_ops);
-		वापस 0;
-	पूर्ण
-	वापस -ENODEV;
-पूर्ण
+static int __init lpd270_irq_device_init(void)
+{
+	if (machine_is_logicpd_pxa270()) {
+		register_syscore_ops(&lpd270_irq_syscore_ops);
+		return 0;
+	}
+	return -ENODEV;
+}
 
 device_initcall(lpd270_irq_device_init);
-#पूर्ण_अगर
+#endif
 
 
-अटल काष्ठा resource smc91x_resources[] = अणु
-	[0] = अणु
+static struct resource smc91x_resources[] = {
+	[0] = {
 		.start	= LPD270_ETH_PHYS,
 		.end	= (LPD270_ETH_PHYS + 0xfffff),
 		.flags	= IORESOURCE_MEM,
-	पूर्ण,
-	[1] = अणु
+	},
+	[1] = {
 		.start	= LPD270_ETHERNET_IRQ,
 		.end	= LPD270_ETHERNET_IRQ,
 		.flags	= IORESOURCE_IRQ | IORESOURCE_IRQ_HIGHEDGE,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-काष्ठा smc91x_platdata smc91x_platdata = अणु
+struct smc91x_platdata smc91x_platdata = {
 	.flags = SMC91X_USE_16BIT | SMC91X_NOWAIT,
-पूर्ण;
+};
 
-अटल काष्ठा platक्रमm_device smc91x_device = अणु
+static struct platform_device smc91x_device = {
 	.name		= "smc91x",
 	.id		= 0,
 	.num_resources	= ARRAY_SIZE(smc91x_resources),
 	.resource	= smc91x_resources,
-	.dev.platक्रमm_data = &smc91x_platdata,
-पूर्ण;
+	.dev.platform_data = &smc91x_platdata,
+};
 
-अटल काष्ठा resource lpd270_flash_resources[] = अणु
-	[0] = अणु
+static struct resource lpd270_flash_resources[] = {
+	[0] = {
 		.start	= PXA_CS0_PHYS,
 		.end	= PXA_CS0_PHYS + SZ_64M - 1,
 		.flags	= IORESOURCE_MEM,
-	पूर्ण,
-	[1] = अणु
+	},
+	[1] = {
 		.start	= PXA_CS1_PHYS,
 		.end	= PXA_CS1_PHYS + SZ_64M - 1,
 		.flags	= IORESOURCE_MEM,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल काष्ठा mtd_partition lpd270_flash0_partitions[] = अणु
-	अणु
+static struct mtd_partition lpd270_flash0_partitions[] = {
+	{
 		.name =		"Bootloader",
 		.size =		0x00040000,
 		.offset =	0,
-		.mask_flags =	MTD_WRITEABLE  /* क्रमce पढ़ो-only */
-	पूर्ण, अणु
+		.mask_flags =	MTD_WRITEABLE  /* force read-only */
+	}, {
 		.name =		"Kernel",
 		.size =		0x00400000,
 		.offset =	0x00040000,
-	पूर्ण, अणु
+	}, {
 		.name =		"Filesystem",
 		.size =		MTDPART_SIZ_FULL,
 		.offset =	0x00440000
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल काष्ठा flash_platक्रमm_data lpd270_flash_data[2] = अणु
-	अणु
+static struct flash_platform_data lpd270_flash_data[2] = {
+	{
 		.name		= "processor-flash",
 		.map_name	= "cfi_probe",
 		.parts		= lpd270_flash0_partitions,
 		.nr_parts	= ARRAY_SIZE(lpd270_flash0_partitions),
-	पूर्ण, अणु
+	}, {
 		.name		= "mainboard-flash",
 		.map_name	= "cfi_probe",
-		.parts		= शून्य,
+		.parts		= NULL,
 		.nr_parts	= 0,
-	पूर्ण
-पूर्ण;
+	}
+};
 
-अटल काष्ठा platक्रमm_device lpd270_flash_device[2] = अणु
-	अणु
+static struct platform_device lpd270_flash_device[2] = {
+	{
 		.name		= "pxa2xx-flash",
 		.id		= 0,
-		.dev = अणु
-			.platक्रमm_data	= &lpd270_flash_data[0],
-		पूर्ण,
+		.dev = {
+			.platform_data	= &lpd270_flash_data[0],
+		},
 		.resource	= &lpd270_flash_resources[0],
 		.num_resources	= 1,
-	पूर्ण, अणु
+	}, {
 		.name		= "pxa2xx-flash",
 		.id		= 1,
-		.dev = अणु
-			.platक्रमm_data	= &lpd270_flash_data[1],
-		पूर्ण,
+		.dev = {
+			.platform_data	= &lpd270_flash_data[1],
+		},
 		.resource	= &lpd270_flash_resources[1],
 		.num_resources	= 1,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल काष्ठा pwm_lookup lpd270_pwm_lookup[] = अणु
-	PWM_LOOKUP("pxa27x-pwm.0", 0, "pwm-backlight.0", शून्य, 78770,
+static struct pwm_lookup lpd270_pwm_lookup[] = {
+	PWM_LOOKUP("pxa27x-pwm.0", 0, "pwm-backlight.0", NULL, 78770,
 		   PWM_POLARITY_NORMAL),
-पूर्ण;
+};
 
-अटल काष्ठा platक्रमm_pwm_backlight_data lpd270_backlight_data = अणु
+static struct platform_pwm_backlight_data lpd270_backlight_data = {
 	.max_brightness	= 1,
 	.dft_brightness	= 1,
-पूर्ण;
+};
 
-अटल काष्ठा platक्रमm_device lpd270_backlight_device = अणु
+static struct platform_device lpd270_backlight_device = {
 	.name		= "pwm-backlight",
-	.dev		= अणु
+	.dev		= {
 		.parent	= &pxa27x_device_pwm0.dev,
-		.platक्रमm_data = &lpd270_backlight_data,
-	पूर्ण,
-पूर्ण;
+		.platform_data = &lpd270_backlight_data,
+	},
+};
 
 /* 5.7" TFT QVGA (LoLo display number 1) */
-अटल काष्ठा pxafb_mode_info sharp_lq057q3dc02_mode = अणु
-	.pixघड़ी		= 150000,
+static struct pxafb_mode_info sharp_lq057q3dc02_mode = {
+	.pixclock		= 150000,
 	.xres			= 320,
 	.yres			= 240,
 	.bpp			= 16,
@@ -301,18 +300,18 @@ device_initcall(lpd270_irq_device_init);
 	.upper_margin		= 0x08,
 	.lower_margin		= 0x14,
 	.sync			= FB_SYNC_HOR_HIGH_ACT | FB_SYNC_VERT_HIGH_ACT,
-पूर्ण;
+};
 
-अटल काष्ठा pxafb_mach_info sharp_lq057q3dc02 = अणु
+static struct pxafb_mach_info sharp_lq057q3dc02 = {
 	.modes			= &sharp_lq057q3dc02_mode,
 	.num_modes		= 1,
 	.lcd_conn		= LCD_COLOR_TFT_16BPP | LCD_PCLK_EDGE_FALL |
 				  LCD_ALTERNATE_MAPPING,
-पूर्ण;
+};
 
 /* 12.1" TFT SVGA (LoLo display number 2) */
-अटल काष्ठा pxafb_mode_info sharp_lq121s1dg31_mode = अणु
-	.pixघड़ी		= 50000,
+static struct pxafb_mode_info sharp_lq121s1dg31_mode = {
+	.pixclock		= 50000,
 	.xres			= 800,
 	.yres			= 600,
 	.bpp			= 16,
@@ -323,18 +322,18 @@ device_initcall(lpd270_irq_device_init);
 	.upper_margin		= 0x14,
 	.lower_margin		= 0x0a,
 	.sync			= FB_SYNC_HOR_HIGH_ACT | FB_SYNC_VERT_HIGH_ACT,
-पूर्ण;
+};
 
-अटल काष्ठा pxafb_mach_info sharp_lq121s1dg31 = अणु
+static struct pxafb_mach_info sharp_lq121s1dg31 = {
 	.modes			= &sharp_lq121s1dg31_mode,
 	.num_modes		= 1,
 	.lcd_conn		= LCD_COLOR_TFT_16BPP | LCD_PCLK_EDGE_FALL |
 				  LCD_ALTERNATE_MAPPING,
-पूर्ण;
+};
 
 /* 3.6" TFT QVGA (LoLo display number 3) */
-अटल काष्ठा pxafb_mode_info sharp_lq036q1da01_mode = अणु
-	.pixघड़ी		= 150000,
+static struct pxafb_mode_info sharp_lq036q1da01_mode = {
+	.pixclock		= 150000,
 	.xres			= 320,
 	.yres			= 240,
 	.bpp			= 16,
@@ -345,18 +344,18 @@ device_initcall(lpd270_irq_device_init);
 	.upper_margin		= 0x03,
 	.lower_margin		= 0x03,
 	.sync			= FB_SYNC_HOR_HIGH_ACT | FB_SYNC_VERT_HIGH_ACT,
-पूर्ण;
+};
 
-अटल काष्ठा pxafb_mach_info sharp_lq036q1da01 = अणु
+static struct pxafb_mach_info sharp_lq036q1da01 = {
 	.modes			= &sharp_lq036q1da01_mode,
 	.num_modes		= 1,
 	.lcd_conn		= LCD_COLOR_TFT_16BPP | LCD_PCLK_EDGE_FALL |
 				  LCD_ALTERNATE_MAPPING,
-पूर्ण;
+};
 
 /* 6.4" TFT VGA (LoLo display number 5) */
-अटल काष्ठा pxafb_mode_info sharp_lq64d343_mode = अणु
-	.pixघड़ी		= 25000,
+static struct pxafb_mode_info sharp_lq64d343_mode = {
+	.pixclock		= 25000,
 	.xres			= 640,
 	.yres			= 480,
 	.bpp			= 16,
@@ -367,18 +366,18 @@ device_initcall(lpd270_irq_device_init);
 	.upper_margin		= 0x22,
 	.lower_margin		= 0x00,
 	.sync			= FB_SYNC_HOR_HIGH_ACT | FB_SYNC_VERT_HIGH_ACT,
-पूर्ण;
+};
 
-अटल काष्ठा pxafb_mach_info sharp_lq64d343 = अणु
+static struct pxafb_mach_info sharp_lq64d343 = {
 	.modes			= &sharp_lq64d343_mode,
 	.num_modes		= 1,
 	.lcd_conn		= LCD_COLOR_TFT_16BPP | LCD_PCLK_EDGE_FALL |
 				  LCD_ALTERNATE_MAPPING,
-पूर्ण;
+};
 
 /* 10.4" TFT VGA (LoLo display number 7) */
-अटल काष्ठा pxafb_mode_info sharp_lq10d368_mode = अणु
-	.pixघड़ी		= 25000,
+static struct pxafb_mode_info sharp_lq10d368_mode = {
+	.pixclock		= 25000,
 	.xres			= 640,
 	.yres			= 480,
 	.bpp			= 16,
@@ -389,18 +388,18 @@ device_initcall(lpd270_irq_device_init);
 	.upper_margin		= 0x22,
 	.lower_margin		= 0x00,
 	.sync			= FB_SYNC_HOR_HIGH_ACT | FB_SYNC_VERT_HIGH_ACT,
-पूर्ण;
+};
 
-अटल काष्ठा pxafb_mach_info sharp_lq10d368 = अणु
+static struct pxafb_mach_info sharp_lq10d368 = {
 	.modes			= &sharp_lq10d368_mode,
 	.num_modes		= 1,
 	.lcd_conn		= LCD_COLOR_TFT_16BPP | LCD_PCLK_EDGE_FALL |
 				  LCD_ALTERNATE_MAPPING,
-पूर्ण;
+};
 
 /* 3.5" TFT QVGA (LoLo display number 8) */
-अटल काष्ठा pxafb_mode_info sharp_lq035q7db02_20_mode = अणु
-	.pixघड़ी		= 150000,
+static struct pxafb_mode_info sharp_lq035q7db02_20_mode = {
+	.pixclock		= 150000,
 	.xres			= 240,
 	.yres			= 320,
 	.bpp			= 16,
@@ -411,61 +410,61 @@ device_initcall(lpd270_irq_device_init);
 	.upper_margin		= 0x05,
 	.lower_margin		= 0x14,
 	.sync			= FB_SYNC_HOR_HIGH_ACT | FB_SYNC_VERT_HIGH_ACT,
-पूर्ण;
+};
 
-अटल काष्ठा pxafb_mach_info sharp_lq035q7db02_20 = अणु
+static struct pxafb_mach_info sharp_lq035q7db02_20 = {
 	.modes			= &sharp_lq035q7db02_20_mode,
 	.num_modes		= 1,
 	.lcd_conn		= LCD_COLOR_TFT_16BPP | LCD_PCLK_EDGE_FALL |
 				  LCD_ALTERNATE_MAPPING,
-पूर्ण;
+};
 
-अटल काष्ठा pxafb_mach_info *lpd270_lcd_to_use;
+static struct pxafb_mach_info *lpd270_lcd_to_use;
 
-अटल पूर्णांक __init lpd270_set_lcd(अक्षर *str)
-अणु
-	अगर (!strnहालcmp(str, "lq057q3dc02", 11)) अणु
+static int __init lpd270_set_lcd(char *str)
+{
+	if (!strncasecmp(str, "lq057q3dc02", 11)) {
 		lpd270_lcd_to_use = &sharp_lq057q3dc02;
-	पूर्ण अन्यथा अगर (!strnहालcmp(str, "lq121s1dg31", 11)) अणु
+	} else if (!strncasecmp(str, "lq121s1dg31", 11)) {
 		lpd270_lcd_to_use = &sharp_lq121s1dg31;
-	पूर्ण अन्यथा अगर (!strnहालcmp(str, "lq036q1da01", 11)) अणु
+	} else if (!strncasecmp(str, "lq036q1da01", 11)) {
 		lpd270_lcd_to_use = &sharp_lq036q1da01;
-	पूर्ण अन्यथा अगर (!strnहालcmp(str, "lq64d343", 8)) अणु
+	} else if (!strncasecmp(str, "lq64d343", 8)) {
 		lpd270_lcd_to_use = &sharp_lq64d343;
-	पूर्ण अन्यथा अगर (!strnहालcmp(str, "lq10d368", 8)) अणु
+	} else if (!strncasecmp(str, "lq10d368", 8)) {
 		lpd270_lcd_to_use = &sharp_lq10d368;
-	पूर्ण अन्यथा अगर (!strnहालcmp(str, "lq035q7db02-20", 14)) अणु
+	} else if (!strncasecmp(str, "lq035q7db02-20", 14)) {
 		lpd270_lcd_to_use = &sharp_lq035q7db02_20;
-	पूर्ण अन्यथा अणु
-		prपूर्णांकk(KERN_INFO "lpd270: unknown lcd panel [%s]\n", str);
-	पूर्ण
+	} else {
+		printk(KERN_INFO "lpd270: unknown lcd panel [%s]\n", str);
+	}
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
 __setup("lcd=", lpd270_set_lcd);
 
-अटल काष्ठा platक्रमm_device *platक्रमm_devices[] __initdata = अणु
+static struct platform_device *platform_devices[] __initdata = {
 	&smc91x_device,
 	&lpd270_backlight_device,
 	&lpd270_flash_device[0],
 	&lpd270_flash_device[1],
-पूर्ण;
+};
 
-अटल काष्ठा pxaohci_platक्रमm_data lpd270_ohci_platक्रमm_data = अणु
+static struct pxaohci_platform_data lpd270_ohci_platform_data = {
 	.port_mode	= PMM_PERPORT_MODE,
 	.flags		= ENABLE_PORT_ALL | POWER_CONTROL_LOW | POWER_SENSE_LOW,
-पूर्ण;
+};
 
-अटल व्योम __init lpd270_init(व्योम)
-अणु
+static void __init lpd270_init(void)
+{
 	pxa2xx_mfp_config(ARRAY_AND_SIZE(lpd270_pin_config));
 
-	pxa_set_ffuart_info(शून्य);
-	pxa_set_btuart_info(शून्य);
-	pxa_set_stuart_info(शून्य);
+	pxa_set_ffuart_info(NULL);
+	pxa_set_btuart_info(NULL);
+	pxa_set_stuart_info(NULL);
 
-	lpd270_flash_data[0].width = (__raw_पढ़ोl(BOOT_DEF) & 1) ? 2 : 4;
+	lpd270_flash_data[0].width = (__raw_readl(BOOT_DEF) & 1) ? 2 : 4;
 	lpd270_flash_data[1].width = 4;
 
 	/*
@@ -476,44 +475,44 @@ __setup("lcd=", lpd270_set_lcd);
 	ARB_CNTRL = ARB_CORE_PARK | 0x234;
 
 	pwm_add_table(lpd270_pwm_lookup, ARRAY_SIZE(lpd270_pwm_lookup));
-	platक्रमm_add_devices(platक्रमm_devices, ARRAY_SIZE(platक्रमm_devices));
+	platform_add_devices(platform_devices, ARRAY_SIZE(platform_devices));
 
-	pxa_set_ac97_info(शून्य);
+	pxa_set_ac97_info(NULL);
 
-	अगर (lpd270_lcd_to_use != शून्य)
-		pxa_set_fb_info(शून्य, lpd270_lcd_to_use);
+	if (lpd270_lcd_to_use != NULL)
+		pxa_set_fb_info(NULL, lpd270_lcd_to_use);
 
-	pxa_set_ohci_info(&lpd270_ohci_platक्रमm_data);
-पूर्ण
+	pxa_set_ohci_info(&lpd270_ohci_platform_data);
+}
 
 
-अटल काष्ठा map_desc lpd270_io_desc[] __initdata = अणु
-	अणु
-		.भव	= (अचिन्हित दीर्घ)LPD270_CPLD_VIRT,
+static struct map_desc lpd270_io_desc[] __initdata = {
+	{
+		.virtual	= (unsigned long)LPD270_CPLD_VIRT,
 		.pfn		= __phys_to_pfn(LPD270_CPLD_PHYS),
 		.length		= LPD270_CPLD_SIZE,
 		.type		= MT_DEVICE,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल व्योम __init lpd270_map_io(व्योम)
-अणु
+static void __init lpd270_map_io(void)
+{
 	pxa27x_map_io();
 	iotable_init(lpd270_io_desc, ARRAY_SIZE(lpd270_io_desc));
 
-	/* क्रम use I SRAM as framebuffer.  */
+	/* for use I SRAM as framebuffer.  */
 	PSLR |= 0x00000F04;
 	PCFR  = 0x00000066;
-पूर्ण
+}
 
 MACHINE_START(LOGICPD_PXA270, "LogicPD PXA270 Card Engine")
-	/* Maपूर्णांकainer: Peter Barada */
+	/* Maintainer: Peter Barada */
 	.atag_offset	= 0x100,
 	.map_io		= lpd270_map_io,
 	.nr_irqs	= LPD270_NR_IRQS,
 	.init_irq	= lpd270_init_irq,
 	.handle_irq	= pxa27x_handle_irq,
-	.init_समय	= pxa_समयr_init,
+	.init_time	= pxa_timer_init,
 	.init_machine	= lpd270_init,
 	.restart	= pxa_restart,
 MACHINE_END

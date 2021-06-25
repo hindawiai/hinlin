@@ -1,22 +1,21 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Power trace poपूर्णांकs
+ * Power trace points
  *
  * Copyright (C) 2009 Ming Lei <ming.lei@canonical.com>
  */
 
-#समावेश <linux/माला.स>
-#समावेश <linux/types.h>
-#समावेश <linux/workqueue.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/module.h>
-#समावेश <linux/usb.h>
+#include <linux/string.h>
+#include <linux/types.h>
+#include <linux/workqueue.h>
+#include <linux/sched.h>
+#include <linux/module.h>
+#include <linux/usb.h>
 
-#घोषणा CREATE_TRACE_POINTS
-#समावेश <trace/events/rpm.h>
+#define CREATE_TRACE_POINTS
+#include <trace/events/rpm.h>
 
-EXPORT_TRACEPOINT_SYMBOL_GPL(rpm_वापस_पूर्णांक);
+EXPORT_TRACEPOINT_SYMBOL_GPL(rpm_return_int);
 EXPORT_TRACEPOINT_SYMBOL_GPL(rpm_idle);
 EXPORT_TRACEPOINT_SYMBOL_GPL(rpm_suspend);
 EXPORT_TRACEPOINT_SYMBOL_GPL(rpm_resume);

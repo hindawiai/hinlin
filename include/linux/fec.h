@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /* include/linux/fec.h
  *
  * Copyright (c) 2009 Orex Computed Radiography
@@ -7,17 +6,17 @@
  *
  * Copyright (C) 2010 Freescale Semiconductor, Inc.
  *
- * Header file क्रम the FEC platक्रमm data
+ * Header file for the FEC platform data
  */
-#अगर_अघोषित __LINUX_FEC_H__
-#घोषणा __LINUX_FEC_H__
+#ifndef __LINUX_FEC_H__
+#define __LINUX_FEC_H__
 
-#समावेश <linux/phy.h>
+#include <linux/phy.h>
 
-काष्ठा fec_platक्रमm_data अणु
-	phy_पूर्णांकerface_t phy;
-	अचिन्हित अक्षर mac[ETH_ALEN];
-	व्योम (*sleep_mode_enable)(पूर्णांक enabled);
-पूर्ण;
+struct fec_platform_data {
+	phy_interface_t phy;
+	unsigned char mac[ETH_ALEN];
+	void (*sleep_mode_enable)(int enabled);
+};
 
-#पूर्ण_अगर
+#endif

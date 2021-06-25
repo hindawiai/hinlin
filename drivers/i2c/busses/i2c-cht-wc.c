@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Intel CHT Whiskey Cove PMIC I2C Master driver
  * Copyright (C) 2017 Hans de Goede <hdegoede@redhat.com>
@@ -8,325 +7,325 @@
  * Copyright (C) 2011 - 2014 Intel Corporation. All rights reserved.
  */
 
-#समावेश <linux/acpi.h>
-#समावेश <linux/completion.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/irqकरोमुख्य.h>
-#समावेश <linux/mfd/पूर्णांकel_soc_pmic.h>
-#समावेश <linux/module.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/घातer/bq24190_अक्षरger.h>
-#समावेश <linux/slab.h>
+#include <linux/acpi.h>
+#include <linux/completion.h>
+#include <linux/delay.h>
+#include <linux/i2c.h>
+#include <linux/interrupt.h>
+#include <linux/irq.h>
+#include <linux/irqdomain.h>
+#include <linux/mfd/intel_soc_pmic.h>
+#include <linux/module.h>
+#include <linux/platform_device.h>
+#include <linux/power/bq24190_charger.h>
+#include <linux/slab.h>
 
-#घोषणा CHT_WC_I2C_CTRL			0x5e24
-#घोषणा CHT_WC_I2C_CTRL_WR		BIT(0)
-#घोषणा CHT_WC_I2C_CTRL_RD		BIT(1)
-#घोषणा CHT_WC_I2C_CLIENT_ADDR		0x5e25
-#घोषणा CHT_WC_I2C_REG_OFFSET		0x5e26
-#घोषणा CHT_WC_I2C_WRDATA		0x5e27
-#घोषणा CHT_WC_I2C_RDDATA		0x5e28
+#define CHT_WC_I2C_CTRL			0x5e24
+#define CHT_WC_I2C_CTRL_WR		BIT(0)
+#define CHT_WC_I2C_CTRL_RD		BIT(1)
+#define CHT_WC_I2C_CLIENT_ADDR		0x5e25
+#define CHT_WC_I2C_REG_OFFSET		0x5e26
+#define CHT_WC_I2C_WRDATA		0x5e27
+#define CHT_WC_I2C_RDDATA		0x5e28
 
-#घोषणा CHT_WC_EXTCHGRIRQ		0x6e0a
-#घोषणा CHT_WC_EXTCHGRIRQ_CLIENT_IRQ	BIT(0)
-#घोषणा CHT_WC_EXTCHGRIRQ_WRITE_IRQ	BIT(1)
-#घोषणा CHT_WC_EXTCHGRIRQ_READ_IRQ	BIT(2)
-#घोषणा CHT_WC_EXTCHGRIRQ_NACK_IRQ	BIT(3)
-#घोषणा CHT_WC_EXTCHGRIRQ_ADAP_IRQMASK	((u8)GENMASK(3, 1))
-#घोषणा CHT_WC_EXTCHGRIRQ_MSK		0x6e17
+#define CHT_WC_EXTCHGRIRQ		0x6e0a
+#define CHT_WC_EXTCHGRIRQ_CLIENT_IRQ	BIT(0)
+#define CHT_WC_EXTCHGRIRQ_WRITE_IRQ	BIT(1)
+#define CHT_WC_EXTCHGRIRQ_READ_IRQ	BIT(2)
+#define CHT_WC_EXTCHGRIRQ_NACK_IRQ	BIT(3)
+#define CHT_WC_EXTCHGRIRQ_ADAP_IRQMASK	((u8)GENMASK(3, 1))
+#define CHT_WC_EXTCHGRIRQ_MSK		0x6e17
 
-काष्ठा cht_wc_i2c_adap अणु
-	काष्ठा i2c_adapter adapter;
-	रुको_queue_head_t रुको;
-	काष्ठा irq_chip irqchip;
-	काष्ठा mutex adap_lock;
-	काष्ठा mutex irqchip_lock;
-	काष्ठा regmap *regmap;
-	काष्ठा irq_करोमुख्य *irq_करोमुख्य;
-	काष्ठा i2c_client *client;
-	पूर्णांक client_irq;
+struct cht_wc_i2c_adap {
+	struct i2c_adapter adapter;
+	wait_queue_head_t wait;
+	struct irq_chip irqchip;
+	struct mutex adap_lock;
+	struct mutex irqchip_lock;
+	struct regmap *regmap;
+	struct irq_domain *irq_domain;
+	struct i2c_client *client;
+	int client_irq;
 	u8 irq_mask;
 	u8 old_irq_mask;
-	पूर्णांक पढ़ो_data;
+	int read_data;
 	bool io_error;
-	bool करोne;
-पूर्ण;
+	bool done;
+};
 
-अटल irqवापस_t cht_wc_i2c_adap_thपढ़ो_handler(पूर्णांक id, व्योम *data)
-अणु
-	काष्ठा cht_wc_i2c_adap *adap = data;
-	पूर्णांक ret, reg;
+static irqreturn_t cht_wc_i2c_adap_thread_handler(int id, void *data)
+{
+	struct cht_wc_i2c_adap *adap = data;
+	int ret, reg;
 
 	mutex_lock(&adap->adap_lock);
 
 	/* Read IRQs */
-	ret = regmap_पढ़ो(adap->regmap, CHT_WC_EXTCHGRIRQ, &reg);
-	अगर (ret) अणु
+	ret = regmap_read(adap->regmap, CHT_WC_EXTCHGRIRQ, &reg);
+	if (ret) {
 		dev_err(&adap->adapter.dev, "Error reading extchgrirq reg\n");
 		mutex_unlock(&adap->adap_lock);
-		वापस IRQ_NONE;
-	पूर्ण
+		return IRQ_NONE;
+	}
 
 	reg &= ~adap->irq_mask;
 
-	/* Reads must be acked after पढ़ोing the received data. */
-	ret = regmap_पढ़ो(adap->regmap, CHT_WC_I2C_RDDATA, &adap->पढ़ो_data);
-	अगर (ret)
+	/* Reads must be acked after reading the received data. */
+	ret = regmap_read(adap->regmap, CHT_WC_I2C_RDDATA, &adap->read_data);
+	if (ret)
 		adap->io_error = true;
 
 	/*
-	 * Immediately ack IRQs, so that अगर new IRQs arrives जबतक we're
-	 * handling the previous ones our irq will re-trigger when we're करोne.
+	 * Immediately ack IRQs, so that if new IRQs arrives while we're
+	 * handling the previous ones our irq will re-trigger when we're done.
 	 */
-	ret = regmap_ग_लिखो(adap->regmap, CHT_WC_EXTCHGRIRQ, reg);
-	अगर (ret)
+	ret = regmap_write(adap->regmap, CHT_WC_EXTCHGRIRQ, reg);
+	if (ret)
 		dev_err(&adap->adapter.dev, "Error writing extchgrirq reg\n");
 
-	अगर (reg & CHT_WC_EXTCHGRIRQ_ADAP_IRQMASK) अणु
+	if (reg & CHT_WC_EXTCHGRIRQ_ADAP_IRQMASK) {
 		adap->io_error |= !!(reg & CHT_WC_EXTCHGRIRQ_NACK_IRQ);
-		adap->करोne = true;
-	पूर्ण
+		adap->done = true;
+	}
 
 	mutex_unlock(&adap->adap_lock);
 
-	अगर (reg & CHT_WC_EXTCHGRIRQ_ADAP_IRQMASK)
-		wake_up(&adap->रुको);
+	if (reg & CHT_WC_EXTCHGRIRQ_ADAP_IRQMASK)
+		wake_up(&adap->wait);
 
 	/*
 	 * Do NOT use handle_nested_irq here, the client irq handler will
-	 * likely want to करो i2c transfers and the i2c controller uses this
-	 * पूर्णांकerrupt handler as well, so running the client irq handler from
-	 * this thपढ़ो will cause things to lock up.
+	 * likely want to do i2c transfers and the i2c controller uses this
+	 * interrupt handler as well, so running the client irq handler from
+	 * this thread will cause things to lock up.
 	 */
-	अगर (reg & CHT_WC_EXTCHGRIRQ_CLIENT_IRQ) अणु
+	if (reg & CHT_WC_EXTCHGRIRQ_CLIENT_IRQ) {
 		/*
 		 * generic_handle_irq expects local IRQs to be disabled
-		 * as normally it is called from पूर्णांकerrupt context.
+		 * as normally it is called from interrupt context.
 		 */
 		local_irq_disable();
 		generic_handle_irq(adap->client_irq);
 		local_irq_enable();
-	पूर्ण
+	}
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल u32 cht_wc_i2c_adap_master_func(काष्ठा i2c_adapter *adap)
-अणु
+static u32 cht_wc_i2c_adap_master_func(struct i2c_adapter *adap)
+{
 	/* This i2c adapter only supports SMBUS byte transfers */
-	वापस I2C_FUNC_SMBUS_BYTE_DATA;
-पूर्ण
+	return I2C_FUNC_SMBUS_BYTE_DATA;
+}
 
-अटल पूर्णांक cht_wc_i2c_adap_smbus_xfer(काष्ठा i2c_adapter *_adap, u16 addr,
-				      अचिन्हित लघु flags, अक्षर पढ़ो_ग_लिखो,
-				      u8 command, पूर्णांक size,
-				      जोड़ i2c_smbus_data *data)
-अणु
-	काष्ठा cht_wc_i2c_adap *adap = i2c_get_adapdata(_adap);
-	पूर्णांक ret;
+static int cht_wc_i2c_adap_smbus_xfer(struct i2c_adapter *_adap, u16 addr,
+				      unsigned short flags, char read_write,
+				      u8 command, int size,
+				      union i2c_smbus_data *data)
+{
+	struct cht_wc_i2c_adap *adap = i2c_get_adapdata(_adap);
+	int ret;
 
 	mutex_lock(&adap->adap_lock);
 	adap->io_error = false;
-	adap->करोne = false;
+	adap->done = false;
 	mutex_unlock(&adap->adap_lock);
 
-	ret = regmap_ग_लिखो(adap->regmap, CHT_WC_I2C_CLIENT_ADDR, addr);
-	अगर (ret)
-		वापस ret;
+	ret = regmap_write(adap->regmap, CHT_WC_I2C_CLIENT_ADDR, addr);
+	if (ret)
+		return ret;
 
-	अगर (पढ़ो_ग_लिखो == I2C_SMBUS_WRITE) अणु
-		ret = regmap_ग_लिखो(adap->regmap, CHT_WC_I2C_WRDATA, data->byte);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+	if (read_write == I2C_SMBUS_WRITE) {
+		ret = regmap_write(adap->regmap, CHT_WC_I2C_WRDATA, data->byte);
+		if (ret)
+			return ret;
+	}
 
-	ret = regmap_ग_लिखो(adap->regmap, CHT_WC_I2C_REG_OFFSET, command);
-	अगर (ret)
-		वापस ret;
+	ret = regmap_write(adap->regmap, CHT_WC_I2C_REG_OFFSET, command);
+	if (ret)
+		return ret;
 
-	ret = regmap_ग_लिखो(adap->regmap, CHT_WC_I2C_CTRL,
-			   (पढ़ो_ग_लिखो == I2C_SMBUS_WRITE) ?
+	ret = regmap_write(adap->regmap, CHT_WC_I2C_CTRL,
+			   (read_write == I2C_SMBUS_WRITE) ?
 			   CHT_WC_I2C_CTRL_WR : CHT_WC_I2C_CTRL_RD);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	ret = रुको_event_समयout(adap->रुको, adap->करोne, msecs_to_jअगरfies(30));
-	अगर (ret == 0) अणु
+	ret = wait_event_timeout(adap->wait, adap->done, msecs_to_jiffies(30));
+	if (ret == 0) {
 		/*
-		 * The CHT GPIO controller serializes all IRQs, someबार
-		 * causing signअगरicant delays, check status manually.
+		 * The CHT GPIO controller serializes all IRQs, sometimes
+		 * causing significant delays, check status manually.
 		 */
-		cht_wc_i2c_adap_thपढ़ो_handler(0, adap);
-		अगर (!adap->करोne)
-			वापस -ETIMEDOUT;
-	पूर्ण
+		cht_wc_i2c_adap_thread_handler(0, adap);
+		if (!adap->done)
+			return -ETIMEDOUT;
+	}
 
 	ret = 0;
 	mutex_lock(&adap->adap_lock);
-	अगर (adap->io_error)
+	if (adap->io_error)
 		ret = -EIO;
-	अन्यथा अगर (पढ़ो_ग_लिखो == I2C_SMBUS_READ)
-		data->byte = adap->पढ़ो_data;
+	else if (read_write == I2C_SMBUS_READ)
+		data->byte = adap->read_data;
 	mutex_unlock(&adap->adap_lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा i2c_algorithm cht_wc_i2c_adap_algo = अणु
+static const struct i2c_algorithm cht_wc_i2c_adap_algo = {
 	.functionality = cht_wc_i2c_adap_master_func,
 	.smbus_xfer = cht_wc_i2c_adap_smbus_xfer,
-पूर्ण;
+};
 
 /*
  * We are an i2c-adapter which itself is part of an i2c-client. This means that
- * transfers करोne through us take adapter->bus_lock twice, once क्रम our parent
- * i2c-adapter and once to take our own bus_lock. Lockdep करोes not like this
- * nested locking, to make lockdep happy in the हाल of busses with muxes, the
+ * transfers done through us take adapter->bus_lock twice, once for our parent
+ * i2c-adapter and once to take our own bus_lock. Lockdep does not like this
+ * nested locking, to make lockdep happy in the case of busses with muxes, the
  * i2c-core's i2c_adapter_lock_bus function calls:
  * rt_mutex_lock_nested(&adapter->bus_lock, i2c_adapter_depth(adapter));
  *
  * But i2c_adapter_depth only works when the direct parent of the adapter is
- * another adapter, as it is only meant क्रम muxes. In our हाल there is an
- * i2c-client and MFD instantiated platक्रमm_device in the parent->child chain
+ * another adapter, as it is only meant for muxes. In our case there is an
+ * i2c-client and MFD instantiated platform_device in the parent->child chain
  * between the 2 devices.
  *
- * So we override the शेष i2c_lock_operations and pass a hardcoded
+ * So we override the default i2c_lock_operations and pass a hardcoded
  * depth of 1 to rt_mutex_lock_nested, to make lockdep happy.
  *
- * Note that अगर there were to be a mux attached to our adapter, this would
- * अवरोध things again since the i2c-mux code expects the root-adapter to have
+ * Note that if there were to be a mux attached to our adapter, this would
+ * break things again since the i2c-mux code expects the root-adapter to have
  * a locking depth of 0. But we always have only 1 client directly attached
- * in the क्रमm of the Charger IC paired with the CHT Whiskey Cove PMIC.
+ * in the form of the Charger IC paired with the CHT Whiskey Cove PMIC.
  */
-अटल व्योम cht_wc_i2c_adap_lock_bus(काष्ठा i2c_adapter *adapter,
-				 अचिन्हित पूर्णांक flags)
-अणु
+static void cht_wc_i2c_adap_lock_bus(struct i2c_adapter *adapter,
+				 unsigned int flags)
+{
 	rt_mutex_lock_nested(&adapter->bus_lock, 1);
-पूर्ण
+}
 
-अटल पूर्णांक cht_wc_i2c_adap_trylock_bus(काष्ठा i2c_adapter *adapter,
-				   अचिन्हित पूर्णांक flags)
-अणु
-	वापस rt_mutex_trylock(&adapter->bus_lock);
-पूर्ण
+static int cht_wc_i2c_adap_trylock_bus(struct i2c_adapter *adapter,
+				   unsigned int flags)
+{
+	return rt_mutex_trylock(&adapter->bus_lock);
+}
 
-अटल व्योम cht_wc_i2c_adap_unlock_bus(काष्ठा i2c_adapter *adapter,
-				   अचिन्हित पूर्णांक flags)
-अणु
+static void cht_wc_i2c_adap_unlock_bus(struct i2c_adapter *adapter,
+				   unsigned int flags)
+{
 	rt_mutex_unlock(&adapter->bus_lock);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा i2c_lock_operations cht_wc_i2c_adap_lock_ops = अणु
+static const struct i2c_lock_operations cht_wc_i2c_adap_lock_ops = {
 	.lock_bus =    cht_wc_i2c_adap_lock_bus,
 	.trylock_bus = cht_wc_i2c_adap_trylock_bus,
 	.unlock_bus =  cht_wc_i2c_adap_unlock_bus,
-पूर्ण;
+};
 
-/**** irqchip क्रम the client connected to the extchgr i2c adapter ****/
-अटल व्योम cht_wc_i2c_irq_lock(काष्ठा irq_data *data)
-अणु
-	काष्ठा cht_wc_i2c_adap *adap = irq_data_get_irq_chip_data(data);
+/**** irqchip for the client connected to the extchgr i2c adapter ****/
+static void cht_wc_i2c_irq_lock(struct irq_data *data)
+{
+	struct cht_wc_i2c_adap *adap = irq_data_get_irq_chip_data(data);
 
 	mutex_lock(&adap->irqchip_lock);
-पूर्ण
+}
 
-अटल व्योम cht_wc_i2c_irq_sync_unlock(काष्ठा irq_data *data)
-अणु
-	काष्ठा cht_wc_i2c_adap *adap = irq_data_get_irq_chip_data(data);
-	पूर्णांक ret;
+static void cht_wc_i2c_irq_sync_unlock(struct irq_data *data)
+{
+	struct cht_wc_i2c_adap *adap = irq_data_get_irq_chip_data(data);
+	int ret;
 
-	अगर (adap->irq_mask != adap->old_irq_mask) अणु
-		ret = regmap_ग_लिखो(adap->regmap, CHT_WC_EXTCHGRIRQ_MSK,
+	if (adap->irq_mask != adap->old_irq_mask) {
+		ret = regmap_write(adap->regmap, CHT_WC_EXTCHGRIRQ_MSK,
 				   adap->irq_mask);
-		अगर (ret == 0)
+		if (ret == 0)
 			adap->old_irq_mask = adap->irq_mask;
-		अन्यथा
+		else
 			dev_err(&adap->adapter.dev, "Error writing EXTCHGRIRQ_MSK\n");
-	पूर्ण
+	}
 
 	mutex_unlock(&adap->irqchip_lock);
-पूर्ण
+}
 
-अटल व्योम cht_wc_i2c_irq_enable(काष्ठा irq_data *data)
-अणु
-	काष्ठा cht_wc_i2c_adap *adap = irq_data_get_irq_chip_data(data);
+static void cht_wc_i2c_irq_enable(struct irq_data *data)
+{
+	struct cht_wc_i2c_adap *adap = irq_data_get_irq_chip_data(data);
 
 	adap->irq_mask &= ~CHT_WC_EXTCHGRIRQ_CLIENT_IRQ;
-पूर्ण
+}
 
-अटल व्योम cht_wc_i2c_irq_disable(काष्ठा irq_data *data)
-अणु
-	काष्ठा cht_wc_i2c_adap *adap = irq_data_get_irq_chip_data(data);
+static void cht_wc_i2c_irq_disable(struct irq_data *data)
+{
+	struct cht_wc_i2c_adap *adap = irq_data_get_irq_chip_data(data);
 
 	adap->irq_mask |= CHT_WC_EXTCHGRIRQ_CLIENT_IRQ;
-पूर्ण
+}
 
-अटल स्थिर काष्ठा irq_chip cht_wc_i2c_irq_chip = अणु
+static const struct irq_chip cht_wc_i2c_irq_chip = {
 	.irq_bus_lock		= cht_wc_i2c_irq_lock,
 	.irq_bus_sync_unlock	= cht_wc_i2c_irq_sync_unlock,
 	.irq_disable		= cht_wc_i2c_irq_disable,
 	.irq_enable		= cht_wc_i2c_irq_enable,
 	.name			= "cht_wc_ext_chrg_irq_chip",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर bq24190_suppliers[] = अणु
-	"tcpm-source-psy-i2c-fusb302" पूर्ण;
+static const char * const bq24190_suppliers[] = {
+	"tcpm-source-psy-i2c-fusb302" };
 
-अटल स्थिर काष्ठा property_entry bq24190_props[] = अणु
+static const struct property_entry bq24190_props[] = {
 	PROPERTY_ENTRY_STRING_ARRAY("supplied-from", bq24190_suppliers),
 	PROPERTY_ENTRY_BOOL("omit-battery-class"),
 	PROPERTY_ENTRY_BOOL("disable-reset"),
-	अणु पूर्ण
-पूर्ण;
+	{ }
+};
 
-अटल स्थिर काष्ठा software_node bq24190_node = अणु
+static const struct software_node bq24190_node = {
 	.properties = bq24190_props,
-पूर्ण;
+};
 
-अटल काष्ठा regulator_consumer_supply fusb302_consumer = अणु
+static struct regulator_consumer_supply fusb302_consumer = {
 	.supply = "vbus",
-	/* Must match fusb302 dev_name in पूर्णांकel_cht_पूर्णांक33fe.c */
+	/* Must match fusb302 dev_name in intel_cht_int33fe.c */
 	.dev_name = "i2c-fusb302",
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा regulator_init_data bq24190_vbus_init_data = अणु
-	.स्थिरraपूर्णांकs = अणु
-		/* The name is used in पूर्णांकel_cht_पूर्णांक33fe.c करो not change. */
+static const struct regulator_init_data bq24190_vbus_init_data = {
+	.constraints = {
+		/* The name is used in intel_cht_int33fe.c do not change. */
 		.name = "cht_wc_usb_typec_vbus",
 		.valid_ops_mask = REGULATOR_CHANGE_STATUS,
-	पूर्ण,
+	},
 	.consumer_supplies = &fusb302_consumer,
 	.num_consumer_supplies = 1,
-पूर्ण;
+};
 
-अटल काष्ठा bq24190_platक्रमm_data bq24190_pdata = अणु
+static struct bq24190_platform_data bq24190_pdata = {
 	.regulator_init_data = &bq24190_vbus_init_data,
-पूर्ण;
+};
 
-अटल पूर्णांक cht_wc_i2c_adap_i2c_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा पूर्णांकel_soc_pmic *pmic = dev_get_drvdata(pdev->dev.parent);
-	काष्ठा cht_wc_i2c_adap *adap;
-	काष्ठा i2c_board_info board_info = अणु
+static int cht_wc_i2c_adap_i2c_probe(struct platform_device *pdev)
+{
+	struct intel_soc_pmic *pmic = dev_get_drvdata(pdev->dev.parent);
+	struct cht_wc_i2c_adap *adap;
+	struct i2c_board_info board_info = {
 		.type = "bq24190",
 		.addr = 0x6b,
 		.dev_name = "bq24190",
 		.swnode = &bq24190_node,
-		.platक्रमm_data = &bq24190_pdata,
-	पूर्ण;
-	पूर्णांक ret, reg, irq;
+		.platform_data = &bq24190_pdata,
+	};
+	int ret, reg, irq;
 
-	irq = platक्रमm_get_irq(pdev, 0);
-	अगर (irq < 0)
-		वापस irq;
+	irq = platform_get_irq(pdev, 0);
+	if (irq < 0)
+		return irq;
 
-	adap = devm_kzalloc(&pdev->dev, माप(*adap), GFP_KERNEL);
-	अगर (!adap)
-		वापस -ENOMEM;
+	adap = devm_kzalloc(&pdev->dev, sizeof(*adap), GFP_KERNEL);
+	if (!adap)
+		return -ENOMEM;
 
-	init_रुकोqueue_head(&adap->रुको);
+	init_waitqueue_head(&adap->wait);
 	mutex_init(&adap->adap_lock);
 	mutex_init(&adap->irqchip_lock);
 	adap->irqchip = cht_wc_i2c_irq_chip;
@@ -336,104 +335,104 @@
 	adap->adapter.algo = &cht_wc_i2c_adap_algo;
 	adap->adapter.lock_ops = &cht_wc_i2c_adap_lock_ops;
 	strlcpy(adap->adapter.name, "PMIC I2C Adapter",
-		माप(adap->adapter.name));
+		sizeof(adap->adapter.name));
 	adap->adapter.dev.parent = &pdev->dev;
 
-	/* Clear and activate i2c-adapter पूर्णांकerrupts, disable client IRQ */
+	/* Clear and activate i2c-adapter interrupts, disable client IRQ */
 	adap->old_irq_mask = adap->irq_mask = ~CHT_WC_EXTCHGRIRQ_ADAP_IRQMASK;
 
-	ret = regmap_पढ़ो(adap->regmap, CHT_WC_I2C_RDDATA, &reg);
-	अगर (ret)
-		वापस ret;
+	ret = regmap_read(adap->regmap, CHT_WC_I2C_RDDATA, &reg);
+	if (ret)
+		return ret;
 
-	ret = regmap_ग_लिखो(adap->regmap, CHT_WC_EXTCHGRIRQ, ~adap->irq_mask);
-	अगर (ret)
-		वापस ret;
+	ret = regmap_write(adap->regmap, CHT_WC_EXTCHGRIRQ, ~adap->irq_mask);
+	if (ret)
+		return ret;
 
-	ret = regmap_ग_लिखो(adap->regmap, CHT_WC_EXTCHGRIRQ_MSK, adap->irq_mask);
-	अगर (ret)
-		वापस ret;
+	ret = regmap_write(adap->regmap, CHT_WC_EXTCHGRIRQ_MSK, adap->irq_mask);
+	if (ret)
+		return ret;
 
-	/* Alloc and रेजिस्टर client IRQ */
-	adap->irq_करोमुख्य = irq_करोमुख्य_add_linear(pdev->dev.of_node, 1,
-						 &irq_करोमुख्य_simple_ops, शून्य);
-	अगर (!adap->irq_करोमुख्य)
-		वापस -ENOMEM;
+	/* Alloc and register client IRQ */
+	adap->irq_domain = irq_domain_add_linear(pdev->dev.of_node, 1,
+						 &irq_domain_simple_ops, NULL);
+	if (!adap->irq_domain)
+		return -ENOMEM;
 
-	adap->client_irq = irq_create_mapping(adap->irq_करोमुख्य, 0);
-	अगर (!adap->client_irq) अणु
+	adap->client_irq = irq_create_mapping(adap->irq_domain, 0);
+	if (!adap->client_irq) {
 		ret = -ENOMEM;
-		जाओ हटाओ_irq_करोमुख्य;
-	पूर्ण
+		goto remove_irq_domain;
+	}
 
 	irq_set_chip_data(adap->client_irq, adap);
 	irq_set_chip_and_handler(adap->client_irq, &adap->irqchip,
 				 handle_simple_irq);
 
-	ret = devm_request_thपढ़ोed_irq(&pdev->dev, irq, शून्य,
-					cht_wc_i2c_adap_thपढ़ो_handler,
+	ret = devm_request_threaded_irq(&pdev->dev, irq, NULL,
+					cht_wc_i2c_adap_thread_handler,
 					IRQF_ONESHOT, "PMIC I2C Adapter", adap);
-	अगर (ret)
-		जाओ हटाओ_irq_करोमुख्य;
+	if (ret)
+		goto remove_irq_domain;
 
 	i2c_set_adapdata(&adap->adapter, adap);
 	ret = i2c_add_adapter(&adap->adapter);
-	अगर (ret)
-		जाओ हटाओ_irq_करोमुख्य;
+	if (ret)
+		goto remove_irq_domain;
 
 	/*
-	 * Normally the Whiskey Cove PMIC is paired with a TI bq24292i अक्षरger,
+	 * Normally the Whiskey Cove PMIC is paired with a TI bq24292i charger,
 	 * connected to this i2c bus, and a max17047 fuel-gauge and a fusb302
 	 * USB Type-C controller connected to another i2c bus. In this setup
-	 * the max17047 and fusb302 devices are क्रमागतerated through an INT33FE
-	 * ACPI device. If this device is present रेजिस्टर an i2c-client क्रम
-	 * the TI bq24292i अक्षरger.
+	 * the max17047 and fusb302 devices are enumerated through an INT33FE
+	 * ACPI device. If this device is present register an i2c-client for
+	 * the TI bq24292i charger.
 	 */
-	अगर (acpi_dev_present("INT33FE", शून्य, -1)) अणु
+	if (acpi_dev_present("INT33FE", NULL, -1)) {
 		board_info.irq = adap->client_irq;
 		adap->client = i2c_new_client_device(&adap->adapter, &board_info);
-		अगर (IS_ERR(adap->client)) अणु
+		if (IS_ERR(adap->client)) {
 			ret = PTR_ERR(adap->client);
-			जाओ del_adapter;
-		पूर्ण
-	पूर्ण
+			goto del_adapter;
+		}
+	}
 
-	platक्रमm_set_drvdata(pdev, adap);
-	वापस 0;
+	platform_set_drvdata(pdev, adap);
+	return 0;
 
 del_adapter:
 	i2c_del_adapter(&adap->adapter);
-हटाओ_irq_करोमुख्य:
-	irq_करोमुख्य_हटाओ(adap->irq_करोमुख्य);
-	वापस ret;
-पूर्ण
+remove_irq_domain:
+	irq_domain_remove(adap->irq_domain);
+	return ret;
+}
 
-अटल पूर्णांक cht_wc_i2c_adap_i2c_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा cht_wc_i2c_adap *adap = platक्रमm_get_drvdata(pdev);
+static int cht_wc_i2c_adap_i2c_remove(struct platform_device *pdev)
+{
+	struct cht_wc_i2c_adap *adap = platform_get_drvdata(pdev);
 
-	i2c_unरेजिस्टर_device(adap->client);
+	i2c_unregister_device(adap->client);
 	i2c_del_adapter(&adap->adapter);
-	irq_करोमुख्य_हटाओ(adap->irq_करोमुख्य);
+	irq_domain_remove(adap->irq_domain);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा platक्रमm_device_id cht_wc_i2c_adap_id_table[] = अणु
-	अणु .name = "cht_wcove_ext_chgr" पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
-MODULE_DEVICE_TABLE(platक्रमm, cht_wc_i2c_adap_id_table);
+static const struct platform_device_id cht_wc_i2c_adap_id_table[] = {
+	{ .name = "cht_wcove_ext_chgr" },
+	{},
+};
+MODULE_DEVICE_TABLE(platform, cht_wc_i2c_adap_id_table);
 
-अटल काष्ठा platक्रमm_driver cht_wc_i2c_adap_driver = अणु
+static struct platform_driver cht_wc_i2c_adap_driver = {
 	.probe = cht_wc_i2c_adap_i2c_probe,
-	.हटाओ = cht_wc_i2c_adap_i2c_हटाओ,
-	.driver = अणु
+	.remove = cht_wc_i2c_adap_i2c_remove,
+	.driver = {
 		.name = "cht_wcove_ext_chgr",
-	पूर्ण,
+	},
 	.id_table = cht_wc_i2c_adap_id_table,
-पूर्ण;
-module_platक्रमm_driver(cht_wc_i2c_adap_driver);
+};
+module_platform_driver(cht_wc_i2c_adap_driver);
 
 MODULE_DESCRIPTION("Intel CHT Whiskey Cove PMIC I2C Master driver");
 MODULE_AUTHOR("Hans de Goede <hdegoede@redhat.com>");

@@ -1,266 +1,265 @@
-<शैली गुरु>
 /*
- * TI घड़ी स्वतःidle support
+ * TI clock autoidle support
  *
  * Copyright (C) 2013 Texas Instruments, Inc.
  *
  * Tero Kristo <t-kristo@ti.com>
  *
- * This program is मुक्त software; you can redistribute it and/or modअगरy
+ * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation.
  *
  * This program is distributed "as is" WITHOUT ANY WARRANTY of any
  * kind, whether express or implied; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License क्रम more details.
+ * GNU General Public License for more details.
  */
 
-#समावेश <linux/clk-provider.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/of.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/clk/ti.h>
+#include <linux/clk-provider.h>
+#include <linux/slab.h>
+#include <linux/io.h>
+#include <linux/of.h>
+#include <linux/of_address.h>
+#include <linux/clk/ti.h>
 
-#समावेश "clock.h"
+#include "clock.h"
 
-काष्ठा clk_ti_स्वतःidle अणु
-	काष्ठा clk_omap_reg	reg;
-	u8			shअगरt;
+struct clk_ti_autoidle {
+	struct clk_omap_reg	reg;
+	u8			shift;
 	u8			flags;
-	स्थिर अक्षर		*name;
-	काष्ठा list_head	node;
-पूर्ण;
+	const char		*name;
+	struct list_head	node;
+};
 
-#घोषणा AUTOIDLE_LOW		0x1
+#define AUTOIDLE_LOW		0x1
 
-अटल LIST_HEAD(स्वतःidle_clks);
+static LIST_HEAD(autoidle_clks);
 
 /*
- * we have some non-atomic पढ़ो/ग_लिखो
+ * we have some non-atomic read/write
  * operations behind it, so lets
- * take one lock क्रम handling स्वतःidle
- * of all घड़ीs
+ * take one lock for handling autoidle
+ * of all clocks
  */
-अटल DEFINE_SPINLOCK(स्वतःidle_spinlock);
+static DEFINE_SPINLOCK(autoidle_spinlock);
 
-अटल पूर्णांक _omap2_clk_deny_idle(काष्ठा clk_hw_omap *clk)
-अणु
-	अगर (clk->ops && clk->ops->deny_idle) अणु
-		अचिन्हित दीर्घ irqflags;
+static int _omap2_clk_deny_idle(struct clk_hw_omap *clk)
+{
+	if (clk->ops && clk->ops->deny_idle) {
+		unsigned long irqflags;
 
-		spin_lock_irqsave(&स्वतःidle_spinlock, irqflags);
-		clk->स्वतःidle_count++;
-		अगर (clk->स्वतःidle_count == 1)
+		spin_lock_irqsave(&autoidle_spinlock, irqflags);
+		clk->autoidle_count++;
+		if (clk->autoidle_count == 1)
 			clk->ops->deny_idle(clk);
 
-		spin_unlock_irqrestore(&स्वतःidle_spinlock, irqflags);
-	पूर्ण
-	वापस 0;
-पूर्ण
+		spin_unlock_irqrestore(&autoidle_spinlock, irqflags);
+	}
+	return 0;
+}
 
-अटल पूर्णांक _omap2_clk_allow_idle(काष्ठा clk_hw_omap *clk)
-अणु
-	अगर (clk->ops && clk->ops->allow_idle) अणु
-		अचिन्हित दीर्घ irqflags;
+static int _omap2_clk_allow_idle(struct clk_hw_omap *clk)
+{
+	if (clk->ops && clk->ops->allow_idle) {
+		unsigned long irqflags;
 
-		spin_lock_irqsave(&स्वतःidle_spinlock, irqflags);
-		clk->स्वतःidle_count--;
-		अगर (clk->स्वतःidle_count == 0)
+		spin_lock_irqsave(&autoidle_spinlock, irqflags);
+		clk->autoidle_count--;
+		if (clk->autoidle_count == 0)
 			clk->ops->allow_idle(clk);
 
-		spin_unlock_irqrestore(&स्वतःidle_spinlock, irqflags);
-	पूर्ण
-	वापस 0;
-पूर्ण
+		spin_unlock_irqrestore(&autoidle_spinlock, irqflags);
+	}
+	return 0;
+}
 
 /**
- * omap2_clk_deny_idle - disable स्वतःidle on an OMAP घड़ी
- * @clk: काष्ठा clk * to disable स्वतःidle क्रम
+ * omap2_clk_deny_idle - disable autoidle on an OMAP clock
+ * @clk: struct clk * to disable autoidle for
  *
- * Disable स्वतःidle on an OMAP घड़ी.
+ * Disable autoidle on an OMAP clock.
  */
-पूर्णांक omap2_clk_deny_idle(काष्ठा clk *clk)
-अणु
-	काष्ठा clk_hw *hw;
+int omap2_clk_deny_idle(struct clk *clk)
+{
+	struct clk_hw *hw;
 
-	अगर (!clk)
-		वापस -EINVAL;
+	if (!clk)
+		return -EINVAL;
 
 	hw = __clk_get_hw(clk);
 
-	अगर (omap2_clk_is_hw_omap(hw)) अणु
-		काष्ठा clk_hw_omap *c = to_clk_hw_omap(hw);
+	if (omap2_clk_is_hw_omap(hw)) {
+		struct clk_hw_omap *c = to_clk_hw_omap(hw);
 
-		वापस _omap2_clk_deny_idle(c);
-	पूर्ण
+		return _omap2_clk_deny_idle(c);
+	}
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
 /**
- * omap2_clk_allow_idle - enable स्वतःidle on an OMAP घड़ी
- * @clk: काष्ठा clk * to enable स्वतःidle क्रम
+ * omap2_clk_allow_idle - enable autoidle on an OMAP clock
+ * @clk: struct clk * to enable autoidle for
  *
- * Enable स्वतःidle on an OMAP घड़ी.
+ * Enable autoidle on an OMAP clock.
  */
-पूर्णांक omap2_clk_allow_idle(काष्ठा clk *clk)
-अणु
-	काष्ठा clk_hw *hw;
+int omap2_clk_allow_idle(struct clk *clk)
+{
+	struct clk_hw *hw;
 
-	अगर (!clk)
-		वापस -EINVAL;
+	if (!clk)
+		return -EINVAL;
 
 	hw = __clk_get_hw(clk);
 
-	अगर (omap2_clk_is_hw_omap(hw)) अणु
-		काष्ठा clk_hw_omap *c = to_clk_hw_omap(hw);
+	if (omap2_clk_is_hw_omap(hw)) {
+		struct clk_hw_omap *c = to_clk_hw_omap(hw);
 
-		वापस _omap2_clk_allow_idle(c);
-	पूर्ण
+		return _omap2_clk_allow_idle(c);
+	}
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल व्योम _allow_स्वतःidle(काष्ठा clk_ti_स्वतःidle *clk)
-अणु
+static void _allow_autoidle(struct clk_ti_autoidle *clk)
+{
 	u32 val;
 
-	val = ti_clk_ll_ops->clk_पढ़ोl(&clk->reg);
+	val = ti_clk_ll_ops->clk_readl(&clk->reg);
 
-	अगर (clk->flags & AUTOIDLE_LOW)
-		val &= ~(1 << clk->shअगरt);
-	अन्यथा
-		val |= (1 << clk->shअगरt);
+	if (clk->flags & AUTOIDLE_LOW)
+		val &= ~(1 << clk->shift);
+	else
+		val |= (1 << clk->shift);
 
-	ti_clk_ll_ops->clk_ग_लिखोl(val, &clk->reg);
-पूर्ण
+	ti_clk_ll_ops->clk_writel(val, &clk->reg);
+}
 
-अटल व्योम _deny_स्वतःidle(काष्ठा clk_ti_स्वतःidle *clk)
-अणु
+static void _deny_autoidle(struct clk_ti_autoidle *clk)
+{
 	u32 val;
 
-	val = ti_clk_ll_ops->clk_पढ़ोl(&clk->reg);
+	val = ti_clk_ll_ops->clk_readl(&clk->reg);
 
-	अगर (clk->flags & AUTOIDLE_LOW)
-		val |= (1 << clk->shअगरt);
-	अन्यथा
-		val &= ~(1 << clk->shअगरt);
+	if (clk->flags & AUTOIDLE_LOW)
+		val |= (1 << clk->shift);
+	else
+		val &= ~(1 << clk->shift);
 
-	ti_clk_ll_ops->clk_ग_लिखोl(val, &clk->reg);
-पूर्ण
+	ti_clk_ll_ops->clk_writel(val, &clk->reg);
+}
 
 /**
- * _clk_generic_allow_स्वतःidle_all - enable स्वतःidle क्रम all घड़ीs
+ * _clk_generic_allow_autoidle_all - enable autoidle for all clocks
  *
- * Enables hardware स्वतःidle क्रम all रेजिस्टरed DT घड़ीs, which have
+ * Enables hardware autoidle for all registered DT clocks, which have
  * the feature.
  */
-अटल व्योम _clk_generic_allow_स्वतःidle_all(व्योम)
-अणु
-	काष्ठा clk_ti_स्वतःidle *c;
+static void _clk_generic_allow_autoidle_all(void)
+{
+	struct clk_ti_autoidle *c;
 
-	list_क्रम_each_entry(c, &स्वतःidle_clks, node)
-		_allow_स्वतःidle(c);
-पूर्ण
+	list_for_each_entry(c, &autoidle_clks, node)
+		_allow_autoidle(c);
+}
 
 /**
- * _clk_generic_deny_स्वतःidle_all - disable स्वतःidle क्रम all घड़ीs
+ * _clk_generic_deny_autoidle_all - disable autoidle for all clocks
  *
- * Disables hardware स्वतःidle क्रम all रेजिस्टरed DT घड़ीs, which have
+ * Disables hardware autoidle for all registered DT clocks, which have
  * the feature.
  */
-अटल व्योम _clk_generic_deny_स्वतःidle_all(व्योम)
-अणु
-	काष्ठा clk_ti_स्वतःidle *c;
+static void _clk_generic_deny_autoidle_all(void)
+{
+	struct clk_ti_autoidle *c;
 
-	list_क्रम_each_entry(c, &स्वतःidle_clks, node)
-		_deny_स्वतःidle(c);
-पूर्ण
+	list_for_each_entry(c, &autoidle_clks, node)
+		_deny_autoidle(c);
+}
 
 /**
- * of_ti_clk_स्वतःidle_setup - sets up hardware स्वतःidle क्रम a घड़ी
- * @node: poपूर्णांकer to the घड़ी device node
+ * of_ti_clk_autoidle_setup - sets up hardware autoidle for a clock
+ * @node: pointer to the clock device node
  *
- * Checks अगर a घड़ी has hardware स्वतःidle support or not (check
- * क्रम presence of 'ti,autoidle-shift' property in the device tree
- * node) and sets up the hardware स्वतःidle feature क्रम the घड़ी
- * अगर available. If स्वतःidle is available, the घड़ी is also added
- * to the स्वतःidle list क्रम later processing. Returns 0 on success,
+ * Checks if a clock has hardware autoidle support or not (check
+ * for presence of 'ti,autoidle-shift' property in the device tree
+ * node) and sets up the hardware autoidle feature for the clock
+ * if available. If autoidle is available, the clock is also added
+ * to the autoidle list for later processing. Returns 0 on success,
  * negative error value on failure.
  */
-पूर्णांक __init of_ti_clk_स्वतःidle_setup(काष्ठा device_node *node)
-अणु
-	u32 shअगरt;
-	काष्ठा clk_ti_स्वतःidle *clk;
-	पूर्णांक ret;
+int __init of_ti_clk_autoidle_setup(struct device_node *node)
+{
+	u32 shift;
+	struct clk_ti_autoidle *clk;
+	int ret;
 
-	/* Check अगर this घड़ी has स्वतःidle support or not */
-	अगर (of_property_पढ़ो_u32(node, "ti,autoidle-shift", &shअगरt))
-		वापस 0;
+	/* Check if this clock has autoidle support or not */
+	if (of_property_read_u32(node, "ti,autoidle-shift", &shift))
+		return 0;
 
-	clk = kzalloc(माप(*clk), GFP_KERNEL);
+	clk = kzalloc(sizeof(*clk), GFP_KERNEL);
 
-	अगर (!clk)
-		वापस -ENOMEM;
+	if (!clk)
+		return -ENOMEM;
 
-	clk->shअगरt = shअगरt;
+	clk->shift = shift;
 	clk->name = node->name;
 	ret = ti_clk_get_reg_addr(node, 0, &clk->reg);
-	अगर (ret) अणु
-		kमुक्त(clk);
-		वापस ret;
-	पूर्ण
+	if (ret) {
+		kfree(clk);
+		return ret;
+	}
 
-	अगर (of_property_पढ़ो_bool(node, "ti,invert-autoidle-bit"))
+	if (of_property_read_bool(node, "ti,invert-autoidle-bit"))
 		clk->flags |= AUTOIDLE_LOW;
 
-	list_add(&clk->node, &स्वतःidle_clks);
+	list_add(&clk->node, &autoidle_clks);
 
-	वापस 0;
-पूर्ण
-
-/**
- * omap2_clk_enable_स्वतःidle_all - enable स्वतःidle on all OMAP घड़ीs that
- * support it
- *
- * Enable घड़ी स्वतःidle on all OMAP घड़ीs that have allow_idle
- * function poपूर्णांकers associated with them.  This function is पूर्णांकended
- * to be temporary until support क्रम this is added to the common घड़ी
- * code.  Returns 0.
- */
-पूर्णांक omap2_clk_enable_स्वतःidle_all(व्योम)
-अणु
-	पूर्णांक ret;
-
-	ret = omap2_clk_क्रम_each(_omap2_clk_allow_idle);
-	अगर (ret)
-		वापस ret;
-
-	_clk_generic_allow_स्वतःidle_all();
-
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * omap2_clk_disable_स्वतःidle_all - disable स्वतःidle on all OMAP घड़ीs that
+ * omap2_clk_enable_autoidle_all - enable autoidle on all OMAP clocks that
  * support it
  *
- * Disable घड़ी स्वतःidle on all OMAP घड़ीs that have allow_idle
- * function poपूर्णांकers associated with them.  This function is पूर्णांकended
- * to be temporary until support क्रम this is added to the common घड़ी
+ * Enable clock autoidle on all OMAP clocks that have allow_idle
+ * function pointers associated with them.  This function is intended
+ * to be temporary until support for this is added to the common clock
  * code.  Returns 0.
  */
-पूर्णांक omap2_clk_disable_स्वतःidle_all(व्योम)
-अणु
-	पूर्णांक ret;
+int omap2_clk_enable_autoidle_all(void)
+{
+	int ret;
 
-	ret = omap2_clk_क्रम_each(_omap2_clk_deny_idle);
-	अगर (ret)
-		वापस ret;
+	ret = omap2_clk_for_each(_omap2_clk_allow_idle);
+	if (ret)
+		return ret;
 
-	_clk_generic_deny_स्वतःidle_all();
+	_clk_generic_allow_autoidle_all();
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
+
+/**
+ * omap2_clk_disable_autoidle_all - disable autoidle on all OMAP clocks that
+ * support it
+ *
+ * Disable clock autoidle on all OMAP clocks that have allow_idle
+ * function pointers associated with them.  This function is intended
+ * to be temporary until support for this is added to the common clock
+ * code.  Returns 0.
+ */
+int omap2_clk_disable_autoidle_all(void)
+{
+	int ret;
+
+	ret = omap2_clk_for_each(_omap2_clk_deny_idle);
+	if (ret)
+		return ret;
+
+	_clk_generic_deny_autoidle_all();
+
+	return 0;
+}

@@ -1,24 +1,23 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Copyright (C) 2019 Hangzhou C-SKY Microप्रणालीs co.,ltd.
- * Mapping of DWARF debug रेजिस्टर numbers पूर्णांकo रेजिस्टर names.
+ * Copyright (C) 2019 Hangzhou C-SKY Microsystems co.,ltd.
+ * Mapping of DWARF debug register numbers into register names.
  */
 
-#समावेश <मानकघोष.स>
-#समावेश <त्रुटिसं.स> /* क्रम EINVAL */
-#समावेश <माला.स> /* क्रम म_भेद */
-#समावेश <dwarf-regs.h>
+#include <stddef.h>
+#include <errno.h> /* for EINVAL */
+#include <string.h> /* for strcmp */
+#include <dwarf-regs.h>
 
-काष्ठा pt_regs_dwarfnum अणु
-	स्थिर अक्षर *name;
-	अचिन्हित पूर्णांक dwarfnum;
-पूर्ण;
+struct pt_regs_dwarfnum {
+	const char *name;
+	unsigned int dwarfnum;
+};
 
-#घोषणा REG_DWARFNUM_NAME(r, num) अणु.name = r, .dwarfnum = numपूर्ण
-#घोषणा REG_DWARFNUM_END अणु.name = शून्य, .dwarfnum = 0पूर्ण
+#define REG_DWARFNUM_NAME(r, num) {.name = r, .dwarfnum = num}
+#define REG_DWARFNUM_END {.name = NULL, .dwarfnum = 0}
 
-काष्ठा pt_regs_dwarfnum riscv_dwarf_regs_table[] = अणु
+struct pt_regs_dwarfnum riscv_dwarf_regs_table[] = {
 	REG_DWARFNUM_NAME("%zero", 0),
 	REG_DWARFNUM_NAME("%ra", 1),
 	REG_DWARFNUM_NAME("%sp", 2),
@@ -52,22 +51,22 @@
 	REG_DWARFNUM_NAME("%t5", 30),
 	REG_DWARFNUM_NAME("%t6", 31),
 	REG_DWARFNUM_END,
-पूर्ण;
+};
 
-#घोषणा RISCV_MAX_REGS ((माप(riscv_dwarf_regs_table) / \
-		 माप(riscv_dwarf_regs_table[0])) - 1)
+#define RISCV_MAX_REGS ((sizeof(riscv_dwarf_regs_table) / \
+		 sizeof(riscv_dwarf_regs_table[0])) - 1)
 
-स्थिर अक्षर *get_arch_regstr(अचिन्हित पूर्णांक n)
-अणु
-	वापस (n < RISCV_MAX_REGS) ? riscv_dwarf_regs_table[n].name : शून्य;
-पूर्ण
+const char *get_arch_regstr(unsigned int n)
+{
+	return (n < RISCV_MAX_REGS) ? riscv_dwarf_regs_table[n].name : NULL;
+}
 
-पूर्णांक regs_query_रेजिस्टर_offset(स्थिर अक्षर *name)
-अणु
-	स्थिर काष्ठा pt_regs_dwarfnum *roff;
+int regs_query_register_offset(const char *name)
+{
+	const struct pt_regs_dwarfnum *roff;
 
-	क्रम (roff = riscv_dwarf_regs_table; roff->name; roff++)
-		अगर (!म_भेद(roff->name, name))
-			वापस roff->dwarfnum;
-	वापस -EINVAL;
-पूर्ण
+	for (roff = riscv_dwarf_regs_table; roff->name; roff++)
+		if (!strcmp(roff->name, name))
+			return roff->dwarfnum;
+	return -EINVAL;
+}

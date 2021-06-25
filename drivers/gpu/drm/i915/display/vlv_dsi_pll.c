@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
- * Copyright तऊ 2013 Intel Corporation
+ * Copyright © 2013 Intel Corporation
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -22,348 +21,348 @@
  * DEALINGS IN THE SOFTWARE.
  *
  * Authors:
- *	Shobhit Kumar <shobhit.kumar@पूर्णांकel.com>
- *	Yogesh Mohan Marimuthu <yogesh.mohan.marimuthu@पूर्णांकel.com>
+ *	Shobhit Kumar <shobhit.kumar@intel.com>
+ *	Yogesh Mohan Marimuthu <yogesh.mohan.marimuthu@intel.com>
  */
 
-#समावेश <linux/kernel.h>
+#include <linux/kernel.h>
 
-#समावेश "i915_drv.h"
-#समावेश "intel_display_types.h"
-#समावेश "intel_dsi.h"
-#समावेश "intel_sideband.h"
+#include "i915_drv.h"
+#include "intel_display_types.h"
+#include "intel_dsi.h"
+#include "intel_sideband.h"
 
-अटल स्थिर u16 lfsr_converts[] = अणु
+static const u16 lfsr_converts[] = {
 	426, 469, 234, 373, 442, 221, 110, 311, 411,		/* 62 - 70 */
 	461, 486, 243, 377, 188, 350, 175, 343, 427, 213,	/* 71 - 80 */
 	106, 53, 282, 397, 454, 227, 113, 56, 284, 142,		/* 81 - 90 */
 	71, 35, 273, 136, 324, 418, 465, 488, 500, 506		/* 91 - 100 */
-पूर्ण;
+};
 
-/* Get DSI घड़ी from pixel घड़ी */
-अटल u32 dsi_clk_from_pclk(u32 pclk, क्रमागत mipi_dsi_pixel_क्रमmat fmt,
-			     पूर्णांक lane_count)
-अणु
+/* Get DSI clock from pixel clock */
+static u32 dsi_clk_from_pclk(u32 pclk, enum mipi_dsi_pixel_format fmt,
+			     int lane_count)
+{
 	u32 dsi_clk_khz;
-	u32 bpp = mipi_dsi_pixel_क्रमmat_to_bpp(fmt);
+	u32 bpp = mipi_dsi_pixel_format_to_bpp(fmt);
 
-	/* DSI data rate = pixel घड़ी * bits per pixel / lane count
-	   pixel घड़ी is converted from KHz to Hz */
+	/* DSI data rate = pixel clock * bits per pixel / lane count
+	   pixel clock is converted from KHz to Hz */
 	dsi_clk_khz = DIV_ROUND_CLOSEST(pclk * bpp, lane_count);
 
-	वापस dsi_clk_khz;
-पूर्ण
+	return dsi_clk_khz;
+}
 
-अटल पूर्णांक dsi_calc_mnp(काष्ठा drm_i915_निजी *dev_priv,
-			काष्ठा पूर्णांकel_crtc_state *config,
-			पूर्णांक target_dsi_clk)
-अणु
-	अचिन्हित पूर्णांक m_min, m_max, p_min = 2, p_max = 6;
-	अचिन्हित पूर्णांक m, n, p;
-	अचिन्हित पूर्णांक calc_m, calc_p;
-	पूर्णांक delta, ref_clk;
+static int dsi_calc_mnp(struct drm_i915_private *dev_priv,
+			struct intel_crtc_state *config,
+			int target_dsi_clk)
+{
+	unsigned int m_min, m_max, p_min = 2, p_max = 6;
+	unsigned int m, n, p;
+	unsigned int calc_m, calc_p;
+	int delta, ref_clk;
 
 	/* target_dsi_clk is expected in kHz */
-	अगर (target_dsi_clk < 300000 || target_dsi_clk > 1150000) अणु
+	if (target_dsi_clk < 300000 || target_dsi_clk > 1150000) {
 		drm_err(&dev_priv->drm, "DSI CLK Out of Range\n");
-		वापस -ECHRNG;
-	पूर्ण
+		return -ECHRNG;
+	}
 
-	अगर (IS_CHERRYVIEW(dev_priv)) अणु
+	if (IS_CHERRYVIEW(dev_priv)) {
 		ref_clk = 100000;
 		n = 4;
 		m_min = 70;
 		m_max = 96;
-	पूर्ण अन्यथा अणु
+	} else {
 		ref_clk = 25000;
 		n = 1;
 		m_min = 62;
 		m_max = 92;
-	पूर्ण
+	}
 
 	calc_p = p_min;
 	calc_m = m_min;
-	delta = असल(target_dsi_clk - (m_min * ref_clk) / (p_min * n));
+	delta = abs(target_dsi_clk - (m_min * ref_clk) / (p_min * n));
 
-	क्रम (m = m_min; m <= m_max && delta; m++) अणु
-		क्रम (p = p_min; p <= p_max && delta; p++) अणु
+	for (m = m_min; m <= m_max && delta; m++) {
+		for (p = p_min; p <= p_max && delta; p++) {
 			/*
-			 * Find the optimal m and p भागisors with minimal delta
-			 * +/- the required घड़ी
+			 * Find the optimal m and p divisors with minimal delta
+			 * +/- the required clock
 			 */
-			पूर्णांक calc_dsi_clk = (m * ref_clk) / (p * n);
-			पूर्णांक d = असल(target_dsi_clk - calc_dsi_clk);
-			अगर (d < delta) अणु
+			int calc_dsi_clk = (m * ref_clk) / (p * n);
+			int d = abs(target_dsi_clk - calc_dsi_clk);
+			if (d < delta) {
 				delta = d;
 				calc_m = m;
 				calc_p = p;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
-	/* रेजिस्टर has log2(N1), this works fine क्रम घातers of two */
+	/* register has log2(N1), this works fine for powers of two */
 	config->dsi_pll.ctrl = 1 << (DSI_PLL_P1_POST_DIV_SHIFT + calc_p - 2);
-	config->dsi_pll.भाग =
+	config->dsi_pll.div =
 		(ffs(n) - 1) << DSI_PLL_N1_DIV_SHIFT |
 		(u32)lfsr_converts[calc_m - 62] << DSI_PLL_M1_DIV_SHIFT;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * XXX: The muxing and gating is hard coded क्रम now. Need to add support क्रम
- * sharing PLLs with two DSI outमाला_दो.
+ * XXX: The muxing and gating is hard coded for now. Need to add support for
+ * sharing PLLs with two DSI outputs.
  */
-पूर्णांक vlv_dsi_pll_compute(काष्ठा पूर्णांकel_encoder *encoder,
-			काष्ठा पूर्णांकel_crtc_state *config)
-अणु
-	काष्ठा drm_i915_निजी *dev_priv = to_i915(encoder->base.dev);
-	काष्ठा पूर्णांकel_dsi *पूर्णांकel_dsi = enc_to_पूर्णांकel_dsi(encoder);
-	पूर्णांक ret;
+int vlv_dsi_pll_compute(struct intel_encoder *encoder,
+			struct intel_crtc_state *config)
+{
+	struct drm_i915_private *dev_priv = to_i915(encoder->base.dev);
+	struct intel_dsi *intel_dsi = enc_to_intel_dsi(encoder);
+	int ret;
 	u32 dsi_clk;
 
-	dsi_clk = dsi_clk_from_pclk(पूर्णांकel_dsi->pclk, पूर्णांकel_dsi->pixel_क्रमmat,
-				    पूर्णांकel_dsi->lane_count);
+	dsi_clk = dsi_clk_from_pclk(intel_dsi->pclk, intel_dsi->pixel_format,
+				    intel_dsi->lane_count);
 
 	ret = dsi_calc_mnp(dev_priv, config, dsi_clk);
-	अगर (ret) अणु
+	if (ret) {
 		drm_dbg_kms(&dev_priv->drm, "dsi_calc_mnp failed\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	अगर (पूर्णांकel_dsi->ports & (1 << PORT_A))
+	if (intel_dsi->ports & (1 << PORT_A))
 		config->dsi_pll.ctrl |= DSI_PLL_CLK_GATE_DSI0_DSIPLL;
 
-	अगर (पूर्णांकel_dsi->ports & (1 << PORT_C))
+	if (intel_dsi->ports & (1 << PORT_C))
 		config->dsi_pll.ctrl |= DSI_PLL_CLK_GATE_DSI1_DSIPLL;
 
 	config->dsi_pll.ctrl |= DSI_PLL_VCO_EN;
 
 	drm_dbg_kms(&dev_priv->drm, "dsi pll div %08x, ctrl %08x\n",
-		    config->dsi_pll.भाग, config->dsi_pll.ctrl);
+		    config->dsi_pll.div, config->dsi_pll.ctrl);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम vlv_dsi_pll_enable(काष्ठा पूर्णांकel_encoder *encoder,
-			स्थिर काष्ठा पूर्णांकel_crtc_state *config)
-अणु
-	काष्ठा drm_i915_निजी *dev_priv = to_i915(encoder->base.dev);
+void vlv_dsi_pll_enable(struct intel_encoder *encoder,
+			const struct intel_crtc_state *config)
+{
+	struct drm_i915_private *dev_priv = to_i915(encoder->base.dev);
 
 	drm_dbg_kms(&dev_priv->drm, "\n");
 
 	vlv_cck_get(dev_priv);
 
-	vlv_cck_ग_लिखो(dev_priv, CCK_REG_DSI_PLL_CONTROL, 0);
-	vlv_cck_ग_लिखो(dev_priv, CCK_REG_DSI_PLL_DIVIDER, config->dsi_pll.भाग);
-	vlv_cck_ग_लिखो(dev_priv, CCK_REG_DSI_PLL_CONTROL,
+	vlv_cck_write(dev_priv, CCK_REG_DSI_PLL_CONTROL, 0);
+	vlv_cck_write(dev_priv, CCK_REG_DSI_PLL_DIVIDER, config->dsi_pll.div);
+	vlv_cck_write(dev_priv, CCK_REG_DSI_PLL_CONTROL,
 		      config->dsi_pll.ctrl & ~DSI_PLL_VCO_EN);
 
-	/* रुको at least 0.5 us after ungating beक्रमe enabling VCO,
-	 * allow hrसमयr subप्रणाली optimization by relaxing timing
+	/* wait at least 0.5 us after ungating before enabling VCO,
+	 * allow hrtimer subsystem optimization by relaxing timing
 	 */
 	usleep_range(10, 50);
 
-	vlv_cck_ग_लिखो(dev_priv, CCK_REG_DSI_PLL_CONTROL, config->dsi_pll.ctrl);
+	vlv_cck_write(dev_priv, CCK_REG_DSI_PLL_CONTROL, config->dsi_pll.ctrl);
 
-	अगर (रुको_क्रम(vlv_cck_पढ़ो(dev_priv, CCK_REG_DSI_PLL_CONTROL) &
-						DSI_PLL_LOCK, 20)) अणु
+	if (wait_for(vlv_cck_read(dev_priv, CCK_REG_DSI_PLL_CONTROL) &
+						DSI_PLL_LOCK, 20)) {
 
 		vlv_cck_put(dev_priv);
 		drm_err(&dev_priv->drm, "DSI PLL lock failed\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 	vlv_cck_put(dev_priv);
 
 	drm_dbg_kms(&dev_priv->drm, "DSI PLL locked\n");
-पूर्ण
+}
 
-व्योम vlv_dsi_pll_disable(काष्ठा पूर्णांकel_encoder *encoder)
-अणु
-	काष्ठा drm_i915_निजी *dev_priv = to_i915(encoder->base.dev);
-	u32 पंचांगp;
+void vlv_dsi_pll_disable(struct intel_encoder *encoder)
+{
+	struct drm_i915_private *dev_priv = to_i915(encoder->base.dev);
+	u32 tmp;
 
 	drm_dbg_kms(&dev_priv->drm, "\n");
 
 	vlv_cck_get(dev_priv);
 
-	पंचांगp = vlv_cck_पढ़ो(dev_priv, CCK_REG_DSI_PLL_CONTROL);
-	पंचांगp &= ~DSI_PLL_VCO_EN;
-	पंचांगp |= DSI_PLL_LDO_GATE;
-	vlv_cck_ग_लिखो(dev_priv, CCK_REG_DSI_PLL_CONTROL, पंचांगp);
+	tmp = vlv_cck_read(dev_priv, CCK_REG_DSI_PLL_CONTROL);
+	tmp &= ~DSI_PLL_VCO_EN;
+	tmp |= DSI_PLL_LDO_GATE;
+	vlv_cck_write(dev_priv, CCK_REG_DSI_PLL_CONTROL, tmp);
 
 	vlv_cck_put(dev_priv);
-पूर्ण
+}
 
-bool bxt_dsi_pll_is_enabled(काष्ठा drm_i915_निजी *dev_priv)
-अणु
+bool bxt_dsi_pll_is_enabled(struct drm_i915_private *dev_priv)
+{
 	bool enabled;
 	u32 val;
 	u32 mask;
 
 	mask = BXT_DSI_PLL_DO_ENABLE | BXT_DSI_PLL_LOCKED;
-	val = पूर्णांकel_de_पढ़ो(dev_priv, BXT_DSI_PLL_ENABLE);
+	val = intel_de_read(dev_priv, BXT_DSI_PLL_ENABLE);
 	enabled = (val & mask) == mask;
 
-	अगर (!enabled)
-		वापस false;
+	if (!enabled)
+		return false;
 
 	/*
-	 * Dividers must be programmed with valid values. As per BSEPC, क्रम
-	 * GEMINLAKE only PORT A भागider values are checked जबतक क्रम BXT
-	 * both भागider values are validated. Check this here क्रम
+	 * Dividers must be programmed with valid values. As per BSEPC, for
+	 * GEMINLAKE only PORT A divider values are checked while for BXT
+	 * both divider values are validated. Check this here for
 	 * paranoia, since BIOS is known to misconfigure PLLs in this way at
-	 * बार, and since accessing DSI रेजिस्टरs with invalid भागiders
-	 * causes a प्रणाली hang.
+	 * times, and since accessing DSI registers with invalid dividers
+	 * causes a system hang.
 	 */
-	val = पूर्णांकel_de_पढ़ो(dev_priv, BXT_DSI_PLL_CTL);
-	अगर (IS_GEMINILAKE(dev_priv)) अणु
-		अगर (!(val & BXT_DSIA_16X_MASK)) अणु
+	val = intel_de_read(dev_priv, BXT_DSI_PLL_CTL);
+	if (IS_GEMINILAKE(dev_priv)) {
+		if (!(val & BXT_DSIA_16X_MASK)) {
 			drm_dbg(&dev_priv->drm,
 				"Invalid PLL divider (%08x)\n", val);
 			enabled = false;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		अगर (!(val & BXT_DSIA_16X_MASK) || !(val & BXT_DSIC_16X_MASK)) अणु
+		}
+	} else {
+		if (!(val & BXT_DSIA_16X_MASK) || !(val & BXT_DSIC_16X_MASK)) {
 			drm_dbg(&dev_priv->drm,
 				"Invalid PLL divider (%08x)\n", val);
 			enabled = false;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस enabled;
-पूर्ण
+	return enabled;
+}
 
-व्योम bxt_dsi_pll_disable(काष्ठा पूर्णांकel_encoder *encoder)
-अणु
-	काष्ठा drm_i915_निजी *dev_priv = to_i915(encoder->base.dev);
+void bxt_dsi_pll_disable(struct intel_encoder *encoder)
+{
+	struct drm_i915_private *dev_priv = to_i915(encoder->base.dev);
 	u32 val;
 
 	drm_dbg_kms(&dev_priv->drm, "\n");
 
-	val = पूर्णांकel_de_पढ़ो(dev_priv, BXT_DSI_PLL_ENABLE);
+	val = intel_de_read(dev_priv, BXT_DSI_PLL_ENABLE);
 	val &= ~BXT_DSI_PLL_DO_ENABLE;
-	पूर्णांकel_de_ग_लिखो(dev_priv, BXT_DSI_PLL_ENABLE, val);
+	intel_de_write(dev_priv, BXT_DSI_PLL_ENABLE, val);
 
 	/*
-	 * PLL lock should deनिश्चित within 200us.
-	 * Wait up to 1ms beक्रमe timing out.
+	 * PLL lock should deassert within 200us.
+	 * Wait up to 1ms before timing out.
 	 */
-	अगर (पूर्णांकel_de_रुको_क्रम_clear(dev_priv, BXT_DSI_PLL_ENABLE,
+	if (intel_de_wait_for_clear(dev_priv, BXT_DSI_PLL_ENABLE,
 				    BXT_DSI_PLL_LOCKED, 1))
 		drm_err(&dev_priv->drm,
 			"Timeout waiting for PLL lock deassertion\n");
-पूर्ण
+}
 
-u32 vlv_dsi_get_pclk(काष्ठा पूर्णांकel_encoder *encoder,
-		     काष्ठा पूर्णांकel_crtc_state *config)
-अणु
-	काष्ठा drm_i915_निजी *dev_priv = to_i915(encoder->base.dev);
-	काष्ठा पूर्णांकel_dsi *पूर्णांकel_dsi = enc_to_पूर्णांकel_dsi(encoder);
-	पूर्णांक bpp = mipi_dsi_pixel_क्रमmat_to_bpp(पूर्णांकel_dsi->pixel_क्रमmat);
-	u32 dsi_घड़ी, pclk;
-	u32 pll_ctl, pll_भाग;
+u32 vlv_dsi_get_pclk(struct intel_encoder *encoder,
+		     struct intel_crtc_state *config)
+{
+	struct drm_i915_private *dev_priv = to_i915(encoder->base.dev);
+	struct intel_dsi *intel_dsi = enc_to_intel_dsi(encoder);
+	int bpp = mipi_dsi_pixel_format_to_bpp(intel_dsi->pixel_format);
+	u32 dsi_clock, pclk;
+	u32 pll_ctl, pll_div;
 	u32 m = 0, p = 0, n;
-	पूर्णांक refclk = IS_CHERRYVIEW(dev_priv) ? 100000 : 25000;
-	पूर्णांक i;
+	int refclk = IS_CHERRYVIEW(dev_priv) ? 100000 : 25000;
+	int i;
 
 	drm_dbg_kms(&dev_priv->drm, "\n");
 
 	vlv_cck_get(dev_priv);
-	pll_ctl = vlv_cck_पढ़ो(dev_priv, CCK_REG_DSI_PLL_CONTROL);
-	pll_भाग = vlv_cck_पढ़ो(dev_priv, CCK_REG_DSI_PLL_DIVIDER);
+	pll_ctl = vlv_cck_read(dev_priv, CCK_REG_DSI_PLL_CONTROL);
+	pll_div = vlv_cck_read(dev_priv, CCK_REG_DSI_PLL_DIVIDER);
 	vlv_cck_put(dev_priv);
 
 	config->dsi_pll.ctrl = pll_ctl & ~DSI_PLL_LOCK;
-	config->dsi_pll.भाग = pll_भाग;
+	config->dsi_pll.div = pll_div;
 
-	/* mask out other bits and extract the P1 भागisor */
+	/* mask out other bits and extract the P1 divisor */
 	pll_ctl &= DSI_PLL_P1_POST_DIV_MASK;
 	pll_ctl = pll_ctl >> (DSI_PLL_P1_POST_DIV_SHIFT - 2);
 
-	/* N1 भागisor */
-	n = (pll_भाग & DSI_PLL_N1_DIV_MASK) >> DSI_PLL_N1_DIV_SHIFT;
-	n = 1 << n; /* रेजिस्टर has log2(N1) */
+	/* N1 divisor */
+	n = (pll_div & DSI_PLL_N1_DIV_MASK) >> DSI_PLL_N1_DIV_SHIFT;
+	n = 1 << n; /* register has log2(N1) */
 
-	/* mask out the other bits and extract the M1 भागisor */
-	pll_भाग &= DSI_PLL_M1_DIV_MASK;
-	pll_भाग = pll_भाग >> DSI_PLL_M1_DIV_SHIFT;
+	/* mask out the other bits and extract the M1 divisor */
+	pll_div &= DSI_PLL_M1_DIV_MASK;
+	pll_div = pll_div >> DSI_PLL_M1_DIV_SHIFT;
 
-	जबतक (pll_ctl) अणु
+	while (pll_ctl) {
 		pll_ctl = pll_ctl >> 1;
 		p++;
-	पूर्ण
+	}
 	p--;
 
-	अगर (!p) अणु
+	if (!p) {
 		drm_err(&dev_priv->drm, "wrong P1 divisor\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	क्रम (i = 0; i < ARRAY_SIZE(lfsr_converts); i++) अणु
-		अगर (lfsr_converts[i] == pll_भाग)
-			अवरोध;
-	पूर्ण
+	for (i = 0; i < ARRAY_SIZE(lfsr_converts); i++) {
+		if (lfsr_converts[i] == pll_div)
+			break;
+	}
 
-	अगर (i == ARRAY_SIZE(lfsr_converts)) अणु
+	if (i == ARRAY_SIZE(lfsr_converts)) {
 		drm_err(&dev_priv->drm, "wrong m_seed programmed\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	m = i + 62;
 
-	dsi_घड़ी = (m * refclk) / (p * n);
+	dsi_clock = (m * refclk) / (p * n);
 
-	pclk = DIV_ROUND_CLOSEST(dsi_घड़ी * पूर्णांकel_dsi->lane_count, bpp);
+	pclk = DIV_ROUND_CLOSEST(dsi_clock * intel_dsi->lane_count, bpp);
 
-	वापस pclk;
-पूर्ण
+	return pclk;
+}
 
-u32 bxt_dsi_get_pclk(काष्ठा पूर्णांकel_encoder *encoder,
-		     काष्ठा पूर्णांकel_crtc_state *config)
-अणु
+u32 bxt_dsi_get_pclk(struct intel_encoder *encoder,
+		     struct intel_crtc_state *config)
+{
 	u32 pclk;
 	u32 dsi_clk;
 	u32 dsi_ratio;
-	काष्ठा पूर्णांकel_dsi *पूर्णांकel_dsi = enc_to_पूर्णांकel_dsi(encoder);
-	काष्ठा drm_i915_निजी *dev_priv = to_i915(encoder->base.dev);
-	पूर्णांक bpp = mipi_dsi_pixel_क्रमmat_to_bpp(पूर्णांकel_dsi->pixel_क्रमmat);
+	struct intel_dsi *intel_dsi = enc_to_intel_dsi(encoder);
+	struct drm_i915_private *dev_priv = to_i915(encoder->base.dev);
+	int bpp = mipi_dsi_pixel_format_to_bpp(intel_dsi->pixel_format);
 
-	config->dsi_pll.ctrl = पूर्णांकel_de_पढ़ो(dev_priv, BXT_DSI_PLL_CTL);
+	config->dsi_pll.ctrl = intel_de_read(dev_priv, BXT_DSI_PLL_CTL);
 
 	dsi_ratio = config->dsi_pll.ctrl & BXT_DSI_PLL_RATIO_MASK;
 
 	dsi_clk = (dsi_ratio * BXT_REF_CLOCK_KHZ) / 2;
 
-	pclk = DIV_ROUND_CLOSEST(dsi_clk * पूर्णांकel_dsi->lane_count, bpp);
+	pclk = DIV_ROUND_CLOSEST(dsi_clk * intel_dsi->lane_count, bpp);
 
 	drm_dbg(&dev_priv->drm, "Calculated pclk=%u\n", pclk);
-	वापस pclk;
-पूर्ण
+	return pclk;
+}
 
-व्योम vlv_dsi_reset_घड़ीs(काष्ठा पूर्णांकel_encoder *encoder, क्रमागत port port)
-अणु
+void vlv_dsi_reset_clocks(struct intel_encoder *encoder, enum port port)
+{
 	u32 temp;
-	काष्ठा drm_i915_निजी *dev_priv = to_i915(encoder->base.dev);
-	काष्ठा पूर्णांकel_dsi *पूर्णांकel_dsi = enc_to_पूर्णांकel_dsi(encoder);
+	struct drm_i915_private *dev_priv = to_i915(encoder->base.dev);
+	struct intel_dsi *intel_dsi = enc_to_intel_dsi(encoder);
 
-	temp = पूर्णांकel_de_पढ़ो(dev_priv, MIPI_CTRL(port));
+	temp = intel_de_read(dev_priv, MIPI_CTRL(port));
 	temp &= ~ESCAPE_CLOCK_DIVIDER_MASK;
-	पूर्णांकel_de_ग_लिखो(dev_priv, MIPI_CTRL(port),
-		       temp | पूर्णांकel_dsi->escape_clk_भाग << ESCAPE_CLOCK_DIVIDER_SHIFT);
-पूर्ण
+	intel_de_write(dev_priv, MIPI_CTRL(port),
+		       temp | intel_dsi->escape_clk_div << ESCAPE_CLOCK_DIVIDER_SHIFT);
+}
 
-अटल व्योम glk_dsi_program_esc_घड़ी(काष्ठा drm_device *dev,
-				   स्थिर काष्ठा पूर्णांकel_crtc_state *config)
-अणु
-	काष्ठा drm_i915_निजी *dev_priv = to_i915(dev);
+static void glk_dsi_program_esc_clock(struct drm_device *dev,
+				   const struct intel_crtc_state *config)
+{
+	struct drm_i915_private *dev_priv = to_i915(dev);
 	u32 dsi_rate = 0;
 	u32 pll_ratio = 0;
 	u32 ddr_clk = 0;
-	u32 भाग1_value = 0;
-	u32 भाग2_value = 0;
-	u32 txesc1_भाग = 0;
-	u32 txesc2_भाग = 0;
+	u32 div1_value = 0;
+	u32 div2_value = 0;
+	u32 txesc1_div = 0;
+	u32 txesc2_div = 0;
 
 	pll_ratio = config->dsi_pll.ctrl & BXT_DSI_PLL_RATIO_MASK;
 
@@ -371,200 +370,200 @@ u32 bxt_dsi_get_pclk(काष्ठा पूर्णांकel_encoder *enco
 
 	ddr_clk = dsi_rate / 2;
 
-	/* Variable भागider value */
-	भाग1_value = DIV_ROUND_CLOSEST(ddr_clk, 20000);
+	/* Variable divider value */
+	div1_value = DIV_ROUND_CLOSEST(ddr_clk, 20000);
 
-	/* Calculate TXESC1 भागider */
-	अगर (भाग1_value <= 10)
-		txesc1_भाग = भाग1_value;
-	अन्यथा अगर ((भाग1_value > 10) && (भाग1_value <= 20))
-		txesc1_भाग = DIV_ROUND_UP(भाग1_value, 2);
-	अन्यथा अगर ((भाग1_value > 20) && (भाग1_value <= 30))
-		txesc1_भाग = DIV_ROUND_UP(भाग1_value, 4);
-	अन्यथा अगर ((भाग1_value > 30) && (भाग1_value <= 40))
-		txesc1_भाग = DIV_ROUND_UP(भाग1_value, 6);
-	अन्यथा अगर ((भाग1_value > 40) && (भाग1_value <= 50))
-		txesc1_भाग = DIV_ROUND_UP(भाग1_value, 8);
-	अन्यथा
-		txesc1_भाग = 10;
+	/* Calculate TXESC1 divider */
+	if (div1_value <= 10)
+		txesc1_div = div1_value;
+	else if ((div1_value > 10) && (div1_value <= 20))
+		txesc1_div = DIV_ROUND_UP(div1_value, 2);
+	else if ((div1_value > 20) && (div1_value <= 30))
+		txesc1_div = DIV_ROUND_UP(div1_value, 4);
+	else if ((div1_value > 30) && (div1_value <= 40))
+		txesc1_div = DIV_ROUND_UP(div1_value, 6);
+	else if ((div1_value > 40) && (div1_value <= 50))
+		txesc1_div = DIV_ROUND_UP(div1_value, 8);
+	else
+		txesc1_div = 10;
 
-	/* Calculate TXESC2 भागider */
-	भाग2_value = DIV_ROUND_UP(भाग1_value, txesc1_भाग);
+	/* Calculate TXESC2 divider */
+	div2_value = DIV_ROUND_UP(div1_value, txesc1_div);
 
-	अगर (भाग2_value < 10)
-		txesc2_भाग = भाग2_value;
-	अन्यथा
-		txesc2_भाग = 10;
+	if (div2_value < 10)
+		txesc2_div = div2_value;
+	else
+		txesc2_div = 10;
 
-	पूर्णांकel_de_ग_लिखो(dev_priv, MIPIO_TXESC_CLK_DIV1,
-		       (1 << (txesc1_भाग - 1)) & GLK_TX_ESC_CLK_DIV1_MASK);
-	पूर्णांकel_de_ग_लिखो(dev_priv, MIPIO_TXESC_CLK_DIV2,
-		       (1 << (txesc2_भाग - 1)) & GLK_TX_ESC_CLK_DIV2_MASK);
-पूर्ण
+	intel_de_write(dev_priv, MIPIO_TXESC_CLK_DIV1,
+		       (1 << (txesc1_div - 1)) & GLK_TX_ESC_CLK_DIV1_MASK);
+	intel_de_write(dev_priv, MIPIO_TXESC_CLK_DIV2,
+		       (1 << (txesc2_div - 1)) & GLK_TX_ESC_CLK_DIV2_MASK);
+}
 
-/* Program BXT Mipi घड़ीs and भागiders */
-अटल व्योम bxt_dsi_program_घड़ीs(काष्ठा drm_device *dev, क्रमागत port port,
-				   स्थिर काष्ठा पूर्णांकel_crtc_state *config)
-अणु
-	काष्ठा drm_i915_निजी *dev_priv = to_i915(dev);
-	u32 पंचांगp;
+/* Program BXT Mipi clocks and dividers */
+static void bxt_dsi_program_clocks(struct drm_device *dev, enum port port,
+				   const struct intel_crtc_state *config)
+{
+	struct drm_i915_private *dev_priv = to_i915(dev);
+	u32 tmp;
 	u32 dsi_rate = 0;
 	u32 pll_ratio = 0;
-	u32 rx_भाग;
-	u32 tx_भाग;
-	u32 rx_भाग_upper;
-	u32 rx_भाग_lower;
-	u32 mipi_8by3_भागider;
+	u32 rx_div;
+	u32 tx_div;
+	u32 rx_div_upper;
+	u32 rx_div_lower;
+	u32 mipi_8by3_divider;
 
 	/* Clear old configurations */
-	पंचांगp = पूर्णांकel_de_पढ़ो(dev_priv, BXT_MIPI_CLOCK_CTL);
-	पंचांगp &= ~(BXT_MIPI_TX_ESCLK_FIXDIV_MASK(port));
-	पंचांगp &= ~(BXT_MIPI_RX_ESCLK_UPPER_FIXDIV_MASK(port));
-	पंचांगp &= ~(BXT_MIPI_8X_BY3_DIVIDER_MASK(port));
-	पंचांगp &= ~(BXT_MIPI_RX_ESCLK_LOWER_FIXDIV_MASK(port));
+	tmp = intel_de_read(dev_priv, BXT_MIPI_CLOCK_CTL);
+	tmp &= ~(BXT_MIPI_TX_ESCLK_FIXDIV_MASK(port));
+	tmp &= ~(BXT_MIPI_RX_ESCLK_UPPER_FIXDIV_MASK(port));
+	tmp &= ~(BXT_MIPI_8X_BY3_DIVIDER_MASK(port));
+	tmp &= ~(BXT_MIPI_RX_ESCLK_LOWER_FIXDIV_MASK(port));
 
 	/* Get the current DSI rate(actual) */
 	pll_ratio = config->dsi_pll.ctrl & BXT_DSI_PLL_RATIO_MASK;
 	dsi_rate = (BXT_REF_CLOCK_KHZ * pll_ratio) / 2;
 
 	/*
-	 * tx घड़ी should be <= 20MHz and the भाग value must be
+	 * tx clock should be <= 20MHz and the div value must be
 	 * subtracted by 1 as per bspec
 	 */
-	tx_भाग = DIV_ROUND_UP(dsi_rate, 20000) - 1;
+	tx_div = DIV_ROUND_UP(dsi_rate, 20000) - 1;
 	/*
-	 * rx घड़ी should be <= 150MHz and the भाग value must be
+	 * rx clock should be <= 150MHz and the div value must be
 	 * subtracted by 1 as per bspec
 	 */
-	rx_भाग = DIV_ROUND_UP(dsi_rate, 150000) - 1;
+	rx_div = DIV_ROUND_UP(dsi_rate, 150000) - 1;
 
 	/*
-	 * rx भागider value needs to be updated in the
-	 * two dअगरfernt bit fields in the रेजिस्टर hence splitting the
-	 * rx भागider value accordingly
+	 * rx divider value needs to be updated in the
+	 * two differnt bit fields in the register hence splitting the
+	 * rx divider value accordingly
 	 */
-	rx_भाग_lower = rx_भाग & RX_DIVIDER_BIT_1_2;
-	rx_भाग_upper = (rx_भाग & RX_DIVIDER_BIT_3_4) >> 2;
+	rx_div_lower = rx_div & RX_DIVIDER_BIT_1_2;
+	rx_div_upper = (rx_div & RX_DIVIDER_BIT_3_4) >> 2;
 
-	mipi_8by3_भागider = 0x2;
+	mipi_8by3_divider = 0x2;
 
-	पंचांगp |= BXT_MIPI_8X_BY3_DIVIDER(port, mipi_8by3_भागider);
-	पंचांगp |= BXT_MIPI_TX_ESCLK_DIVIDER(port, tx_भाग);
-	पंचांगp |= BXT_MIPI_RX_ESCLK_LOWER_DIVIDER(port, rx_भाग_lower);
-	पंचांगp |= BXT_MIPI_RX_ESCLK_UPPER_DIVIDER(port, rx_भाग_upper);
+	tmp |= BXT_MIPI_8X_BY3_DIVIDER(port, mipi_8by3_divider);
+	tmp |= BXT_MIPI_TX_ESCLK_DIVIDER(port, tx_div);
+	tmp |= BXT_MIPI_RX_ESCLK_LOWER_DIVIDER(port, rx_div_lower);
+	tmp |= BXT_MIPI_RX_ESCLK_UPPER_DIVIDER(port, rx_div_upper);
 
-	पूर्णांकel_de_ग_लिखो(dev_priv, BXT_MIPI_CLOCK_CTL, पंचांगp);
-पूर्ण
+	intel_de_write(dev_priv, BXT_MIPI_CLOCK_CTL, tmp);
+}
 
-पूर्णांक bxt_dsi_pll_compute(काष्ठा पूर्णांकel_encoder *encoder,
-			काष्ठा पूर्णांकel_crtc_state *config)
-अणु
-	काष्ठा drm_i915_निजी *dev_priv = to_i915(encoder->base.dev);
-	काष्ठा पूर्णांकel_dsi *पूर्णांकel_dsi = enc_to_पूर्णांकel_dsi(encoder);
+int bxt_dsi_pll_compute(struct intel_encoder *encoder,
+			struct intel_crtc_state *config)
+{
+	struct drm_i915_private *dev_priv = to_i915(encoder->base.dev);
+	struct intel_dsi *intel_dsi = enc_to_intel_dsi(encoder);
 	u8 dsi_ratio, dsi_ratio_min, dsi_ratio_max;
 	u32 dsi_clk;
 
-	dsi_clk = dsi_clk_from_pclk(पूर्णांकel_dsi->pclk, पूर्णांकel_dsi->pixel_क्रमmat,
-				    पूर्णांकel_dsi->lane_count);
+	dsi_clk = dsi_clk_from_pclk(intel_dsi->pclk, intel_dsi->pixel_format,
+				    intel_dsi->lane_count);
 
 	/*
-	 * From घड़ी diagram, to get PLL ratio भागider, भागide द्विगुन of DSI
-	 * link rate (i.e., 2*8x=16x frequency value) by ref घड़ी. Make sure to
+	 * From clock diagram, to get PLL ratio divider, divide double of DSI
+	 * link rate (i.e., 2*8x=16x frequency value) by ref clock. Make sure to
 	 * round 'up' the result
 	 */
 	dsi_ratio = DIV_ROUND_UP(dsi_clk * 2, BXT_REF_CLOCK_KHZ);
 
-	अगर (IS_BROXTON(dev_priv)) अणु
+	if (IS_BROXTON(dev_priv)) {
 		dsi_ratio_min = BXT_DSI_PLL_RATIO_MIN;
 		dsi_ratio_max = BXT_DSI_PLL_RATIO_MAX;
-	पूर्ण अन्यथा अणु
+	} else {
 		dsi_ratio_min = GLK_DSI_PLL_RATIO_MIN;
 		dsi_ratio_max = GLK_DSI_PLL_RATIO_MAX;
-	पूर्ण
+	}
 
-	अगर (dsi_ratio < dsi_ratio_min || dsi_ratio > dsi_ratio_max) अणु
+	if (dsi_ratio < dsi_ratio_min || dsi_ratio > dsi_ratio_max) {
 		drm_err(&dev_priv->drm,
 			"Can't get a suitable ratio from DSI PLL ratios\n");
-		वापस -ECHRNG;
-	पूर्ण अन्यथा
+		return -ECHRNG;
+	} else
 		drm_dbg_kms(&dev_priv->drm, "DSI PLL calculation is Done!!\n");
 
 	/*
 	 * Program DSI ratio and Select MIPIC and MIPIA PLL output as 8x
-	 * Spec says both have to be programmed, even अगर one is not getting
-	 * used. Configure MIPI_CLOCK_CTL भागiders in modeset
+	 * Spec says both have to be programmed, even if one is not getting
+	 * used. Configure MIPI_CLOCK_CTL dividers in modeset
 	 */
 	config->dsi_pll.ctrl = dsi_ratio | BXT_DSIA_16X_BY2 | BXT_DSIC_16X_BY2;
 
 	/* As per recommendation from hardware team,
-	 * Prog PVD ratio =1 अगर dsi ratio <= 50
+	 * Prog PVD ratio =1 if dsi ratio <= 50
 	 */
-	अगर (IS_BROXTON(dev_priv) && dsi_ratio <= 50)
+	if (IS_BROXTON(dev_priv) && dsi_ratio <= 50)
 		config->dsi_pll.ctrl |= BXT_DSI_PLL_PVD_RATIO_1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम bxt_dsi_pll_enable(काष्ठा पूर्णांकel_encoder *encoder,
-			स्थिर काष्ठा पूर्णांकel_crtc_state *config)
-अणु
-	काष्ठा drm_i915_निजी *dev_priv = to_i915(encoder->base.dev);
-	काष्ठा पूर्णांकel_dsi *पूर्णांकel_dsi = enc_to_पूर्णांकel_dsi(encoder);
-	क्रमागत port port;
+void bxt_dsi_pll_enable(struct intel_encoder *encoder,
+			const struct intel_crtc_state *config)
+{
+	struct drm_i915_private *dev_priv = to_i915(encoder->base.dev);
+	struct intel_dsi *intel_dsi = enc_to_intel_dsi(encoder);
+	enum port port;
 	u32 val;
 
 	drm_dbg_kms(&dev_priv->drm, "\n");
 
 	/* Configure PLL vales */
-	पूर्णांकel_de_ग_लिखो(dev_priv, BXT_DSI_PLL_CTL, config->dsi_pll.ctrl);
-	पूर्णांकel_de_posting_पढ़ो(dev_priv, BXT_DSI_PLL_CTL);
+	intel_de_write(dev_priv, BXT_DSI_PLL_CTL, config->dsi_pll.ctrl);
+	intel_de_posting_read(dev_priv, BXT_DSI_PLL_CTL);
 
-	/* Program TX, RX, Dphy घड़ीs */
-	अगर (IS_BROXTON(dev_priv)) अणु
-		क्रम_each_dsi_port(port, पूर्णांकel_dsi->ports)
-			bxt_dsi_program_घड़ीs(encoder->base.dev, port, config);
-	पूर्ण अन्यथा अणु
-		glk_dsi_program_esc_घड़ी(encoder->base.dev, config);
-	पूर्ण
+	/* Program TX, RX, Dphy clocks */
+	if (IS_BROXTON(dev_priv)) {
+		for_each_dsi_port(port, intel_dsi->ports)
+			bxt_dsi_program_clocks(encoder->base.dev, port, config);
+	} else {
+		glk_dsi_program_esc_clock(encoder->base.dev, config);
+	}
 
 	/* Enable DSI PLL */
-	val = पूर्णांकel_de_पढ़ो(dev_priv, BXT_DSI_PLL_ENABLE);
+	val = intel_de_read(dev_priv, BXT_DSI_PLL_ENABLE);
 	val |= BXT_DSI_PLL_DO_ENABLE;
-	पूर्णांकel_de_ग_लिखो(dev_priv, BXT_DSI_PLL_ENABLE, val);
+	intel_de_write(dev_priv, BXT_DSI_PLL_ENABLE, val);
 
-	/* Timeout and fail अगर PLL not locked */
-	अगर (पूर्णांकel_de_रुको_क्रम_set(dev_priv, BXT_DSI_PLL_ENABLE,
-				  BXT_DSI_PLL_LOCKED, 1)) अणु
+	/* Timeout and fail if PLL not locked */
+	if (intel_de_wait_for_set(dev_priv, BXT_DSI_PLL_ENABLE,
+				  BXT_DSI_PLL_LOCKED, 1)) {
 		drm_err(&dev_priv->drm,
 			"Timed out waiting for DSI PLL to lock\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	drm_dbg_kms(&dev_priv->drm, "DSI PLL locked\n");
-पूर्ण
+}
 
-व्योम bxt_dsi_reset_घड़ीs(काष्ठा पूर्णांकel_encoder *encoder, क्रमागत port port)
-अणु
-	u32 पंचांगp;
-	काष्ठा drm_device *dev = encoder->base.dev;
-	काष्ठा drm_i915_निजी *dev_priv = to_i915(dev);
+void bxt_dsi_reset_clocks(struct intel_encoder *encoder, enum port port)
+{
+	u32 tmp;
+	struct drm_device *dev = encoder->base.dev;
+	struct drm_i915_private *dev_priv = to_i915(dev);
 
 	/* Clear old configurations */
-	अगर (IS_BROXTON(dev_priv)) अणु
-		पंचांगp = पूर्णांकel_de_पढ़ो(dev_priv, BXT_MIPI_CLOCK_CTL);
-		पंचांगp &= ~(BXT_MIPI_TX_ESCLK_FIXDIV_MASK(port));
-		पंचांगp &= ~(BXT_MIPI_RX_ESCLK_UPPER_FIXDIV_MASK(port));
-		पंचांगp &= ~(BXT_MIPI_8X_BY3_DIVIDER_MASK(port));
-		पंचांगp &= ~(BXT_MIPI_RX_ESCLK_LOWER_FIXDIV_MASK(port));
-		पूर्णांकel_de_ग_लिखो(dev_priv, BXT_MIPI_CLOCK_CTL, पंचांगp);
-	पूर्ण अन्यथा अणु
-		पंचांगp = पूर्णांकel_de_पढ़ो(dev_priv, MIPIO_TXESC_CLK_DIV1);
-		पंचांगp &= ~GLK_TX_ESC_CLK_DIV1_MASK;
-		पूर्णांकel_de_ग_लिखो(dev_priv, MIPIO_TXESC_CLK_DIV1, पंचांगp);
+	if (IS_BROXTON(dev_priv)) {
+		tmp = intel_de_read(dev_priv, BXT_MIPI_CLOCK_CTL);
+		tmp &= ~(BXT_MIPI_TX_ESCLK_FIXDIV_MASK(port));
+		tmp &= ~(BXT_MIPI_RX_ESCLK_UPPER_FIXDIV_MASK(port));
+		tmp &= ~(BXT_MIPI_8X_BY3_DIVIDER_MASK(port));
+		tmp &= ~(BXT_MIPI_RX_ESCLK_LOWER_FIXDIV_MASK(port));
+		intel_de_write(dev_priv, BXT_MIPI_CLOCK_CTL, tmp);
+	} else {
+		tmp = intel_de_read(dev_priv, MIPIO_TXESC_CLK_DIV1);
+		tmp &= ~GLK_TX_ESC_CLK_DIV1_MASK;
+		intel_de_write(dev_priv, MIPIO_TXESC_CLK_DIV1, tmp);
 
-		पंचांगp = पूर्णांकel_de_पढ़ो(dev_priv, MIPIO_TXESC_CLK_DIV2);
-		पंचांगp &= ~GLK_TX_ESC_CLK_DIV2_MASK;
-		पूर्णांकel_de_ग_लिखो(dev_priv, MIPIO_TXESC_CLK_DIV2, पंचांगp);
-	पूर्ण
-	पूर्णांकel_de_ग_लिखो(dev_priv, MIPI_EOT_DISABLE(port), CLOCKSTOP);
-पूर्ण
+		tmp = intel_de_read(dev_priv, MIPIO_TXESC_CLK_DIV2);
+		tmp &= ~GLK_TX_ESC_CLK_DIV2_MASK;
+		intel_de_write(dev_priv, MIPIO_TXESC_CLK_DIV2, tmp);
+	}
+	intel_de_write(dev_priv, MIPI_EOT_DISABLE(port), CLOCKSTOP);
+}

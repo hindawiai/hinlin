@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Common LSM logging functions
  * Heavily borrowed from selinux/avc.h
@@ -9,120 +8,120 @@
  * All credits to : Stephen Smalley, <sds@tycho.nsa.gov>
  * All BUGS to : Etienne BASSET  <etienne.basset@ensta.org>
  */
-#अगर_अघोषित _LSM_COMMON_LOGGING_
-#घोषणा _LSM_COMMON_LOGGING_
+#ifndef _LSM_COMMON_LOGGING_
+#define _LSM_COMMON_LOGGING_
 
-#समावेश <linux/मानकघोष.स>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/kdev_t.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/init.h>
-#समावेश <linux/audit.h>
-#समावेश <linux/in6.h>
-#समावेश <linux/path.h>
-#समावेश <linux/key.h>
-#समावेश <linux/skbuff.h>
-#समावेश <rdma/ib_verbs.h>
+#include <linux/stddef.h>
+#include <linux/errno.h>
+#include <linux/kernel.h>
+#include <linux/kdev_t.h>
+#include <linux/spinlock.h>
+#include <linux/init.h>
+#include <linux/audit.h>
+#include <linux/in6.h>
+#include <linux/path.h>
+#include <linux/key.h>
+#include <linux/skbuff.h>
+#include <rdma/ib_verbs.h>
 
-काष्ठा lsm_network_audit अणु
-	पूर्णांक netअगर;
-	स्थिर काष्ठा sock *sk;
+struct lsm_network_audit {
+	int netif;
+	const struct sock *sk;
 	u16 family;
 	__be16 dport;
 	__be16 sport;
-	जोड़ अणु
-		काष्ठा अणु
+	union {
+		struct {
 			__be32 daddr;
 			__be32 saddr;
-		पूर्ण v4;
-		काष्ठा अणु
-			काष्ठा in6_addr daddr;
-			काष्ठा in6_addr saddr;
-		पूर्ण v6;
-	पूर्ण fam;
-पूर्ण;
+		} v4;
+		struct {
+			struct in6_addr daddr;
+			struct in6_addr saddr;
+		} v6;
+	} fam;
+};
 
-काष्ठा lsm_ioctlop_audit अणु
-	काष्ठा path path;
+struct lsm_ioctlop_audit {
+	struct path path;
 	u16 cmd;
-पूर्ण;
+};
 
-काष्ठा lsm_ibpkey_audit अणु
+struct lsm_ibpkey_audit {
 	u64	subnet_prefix;
 	u16	pkey;
-पूर्ण;
+};
 
-काष्ठा lsm_ibendport_audit अणु
-	अक्षर	dev_name[IB_DEVICE_NAME_MAX];
+struct lsm_ibendport_audit {
+	char	dev_name[IB_DEVICE_NAME_MAX];
 	u8	port;
-पूर्ण;
+};
 
 /* Auxiliary data to use in generating the audit record. */
-काष्ठा common_audit_data अणु
-	अक्षर type;
-#घोषणा LSM_AUDIT_DATA_PATH	1
-#घोषणा LSM_AUDIT_DATA_NET	2
-#घोषणा LSM_AUDIT_DATA_CAP	3
-#घोषणा LSM_AUDIT_DATA_IPC	4
-#घोषणा LSM_AUDIT_DATA_TASK	5
-#घोषणा LSM_AUDIT_DATA_KEY	6
-#घोषणा LSM_AUDIT_DATA_NONE	7
-#घोषणा LSM_AUDIT_DATA_KMOD	8
-#घोषणा LSM_AUDIT_DATA_INODE	9
-#घोषणा LSM_AUDIT_DATA_DENTRY	10
-#घोषणा LSM_AUDIT_DATA_IOCTL_OP	11
-#घोषणा LSM_AUDIT_DATA_खाता	12
-#घोषणा LSM_AUDIT_DATA_IBPKEY	13
-#घोषणा LSM_AUDIT_DATA_IBENDPORT 14
-#घोषणा LSM_AUDIT_DATA_LOCKDOWN 15
-#घोषणा LSM_AUDIT_DATA_NOTIFICATION 16
-	जोड़ 	अणु
-		काष्ठा path path;
-		काष्ठा dentry *dentry;
-		काष्ठा inode *inode;
-		काष्ठा lsm_network_audit *net;
-		पूर्णांक cap;
-		पूर्णांक ipc_id;
-		काष्ठा task_काष्ठा *tsk;
-#अगर_घोषित CONFIG_KEYS
-		काष्ठा अणु
+struct common_audit_data {
+	char type;
+#define LSM_AUDIT_DATA_PATH	1
+#define LSM_AUDIT_DATA_NET	2
+#define LSM_AUDIT_DATA_CAP	3
+#define LSM_AUDIT_DATA_IPC	4
+#define LSM_AUDIT_DATA_TASK	5
+#define LSM_AUDIT_DATA_KEY	6
+#define LSM_AUDIT_DATA_NONE	7
+#define LSM_AUDIT_DATA_KMOD	8
+#define LSM_AUDIT_DATA_INODE	9
+#define LSM_AUDIT_DATA_DENTRY	10
+#define LSM_AUDIT_DATA_IOCTL_OP	11
+#define LSM_AUDIT_DATA_FILE	12
+#define LSM_AUDIT_DATA_IBPKEY	13
+#define LSM_AUDIT_DATA_IBENDPORT 14
+#define LSM_AUDIT_DATA_LOCKDOWN 15
+#define LSM_AUDIT_DATA_NOTIFICATION 16
+	union 	{
+		struct path path;
+		struct dentry *dentry;
+		struct inode *inode;
+		struct lsm_network_audit *net;
+		int cap;
+		int ipc_id;
+		struct task_struct *tsk;
+#ifdef CONFIG_KEYS
+		struct {
 			key_serial_t key;
-			अक्षर *key_desc;
-		पूर्ण key_काष्ठा;
-#पूर्ण_अगर
-		अक्षर *kmod_name;
-		काष्ठा lsm_ioctlop_audit *op;
-		काष्ठा file *file;
-		काष्ठा lsm_ibpkey_audit *ibpkey;
-		काष्ठा lsm_ibendport_audit *ibendport;
-		पूर्णांक reason;
-	पूर्ण u;
-	/* this जोड़ contains LSM specअगरic data */
-	जोड़ अणु
-#अगर_घोषित CONFIG_SECURITY_SMACK
-		काष्ठा smack_audit_data *smack_audit_data;
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_SECURITY_SELINUX
-		काष्ठा selinux_audit_data *selinux_audit_data;
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_SECURITY_APPARMOR
-		काष्ठा apparmor_audit_data *apparmor_audit_data;
-#पूर्ण_अगर
-	पूर्ण; /* per LSM data poपूर्णांकer जोड़ */
-पूर्ण;
+			char *key_desc;
+		} key_struct;
+#endif
+		char *kmod_name;
+		struct lsm_ioctlop_audit *op;
+		struct file *file;
+		struct lsm_ibpkey_audit *ibpkey;
+		struct lsm_ibendport_audit *ibendport;
+		int reason;
+	} u;
+	/* this union contains LSM specific data */
+	union {
+#ifdef CONFIG_SECURITY_SMACK
+		struct smack_audit_data *smack_audit_data;
+#endif
+#ifdef CONFIG_SECURITY_SELINUX
+		struct selinux_audit_data *selinux_audit_data;
+#endif
+#ifdef CONFIG_SECURITY_APPARMOR
+		struct apparmor_audit_data *apparmor_audit_data;
+#endif
+	}; /* per LSM data pointer union */
+};
 
-#घोषणा v4info fam.v4
-#घोषणा v6info fam.v6
+#define v4info fam.v4
+#define v6info fam.v6
 
-पूर्णांक ipv4_skb_to_auditdata(काष्ठा sk_buff *skb,
-		काष्ठा common_audit_data *ad, u8 *proto);
+int ipv4_skb_to_auditdata(struct sk_buff *skb,
+		struct common_audit_data *ad, u8 *proto);
 
-पूर्णांक ipv6_skb_to_auditdata(काष्ठा sk_buff *skb,
-		काष्ठा common_audit_data *ad, u8 *proto);
+int ipv6_skb_to_auditdata(struct sk_buff *skb,
+		struct common_audit_data *ad, u8 *proto);
 
-व्योम common_lsm_audit(काष्ठा common_audit_data *a,
-	व्योम (*pre_audit)(काष्ठा audit_buffer *, व्योम *),
-	व्योम (*post_audit)(काष्ठा audit_buffer *, व्योम *));
+void common_lsm_audit(struct common_audit_data *a,
+	void (*pre_audit)(struct audit_buffer *, void *),
+	void (*post_audit)(struct audit_buffer *, void *));
 
-#पूर्ण_अगर
+#endif

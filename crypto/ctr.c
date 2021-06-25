@@ -1,61 +1,60 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * CTR: Counter mode
  *
  * (C) Copyright IBM Corp. 2007 - Joy Latten <latten@us.ibm.com>
  */
 
-#समावेश <crypto/algapi.h>
-#समावेश <crypto/ctr.h>
-#समावेश <crypto/पूर्णांकernal/cipher.h>
-#समावेश <crypto/पूर्णांकernal/skcipher.h>
-#समावेश <linux/err.h>
-#समावेश <linux/init.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
+#include <crypto/algapi.h>
+#include <crypto/ctr.h>
+#include <crypto/internal/cipher.h>
+#include <crypto/internal/skcipher.h>
+#include <linux/err.h>
+#include <linux/init.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/slab.h>
 
-काष्ठा crypto_rfc3686_ctx अणु
-	काष्ठा crypto_skcipher *child;
+struct crypto_rfc3686_ctx {
+	struct crypto_skcipher *child;
 	u8 nonce[CTR_RFC3686_NONCE_SIZE];
-पूर्ण;
+};
 
-काष्ठा crypto_rfc3686_req_ctx अणु
+struct crypto_rfc3686_req_ctx {
 	u8 iv[CTR_RFC3686_BLOCK_SIZE];
-	काष्ठा skcipher_request subreq CRYPTO_MINALIGN_ATTR;
-पूर्ण;
+	struct skcipher_request subreq CRYPTO_MINALIGN_ATTR;
+};
 
-अटल व्योम crypto_ctr_crypt_final(काष्ठा skcipher_walk *walk,
-				   काष्ठा crypto_cipher *tfm)
-अणु
-	अचिन्हित पूर्णांक bsize = crypto_cipher_blocksize(tfm);
-	अचिन्हित दीर्घ alignmask = crypto_cipher_alignmask(tfm);
+static void crypto_ctr_crypt_final(struct skcipher_walk *walk,
+				   struct crypto_cipher *tfm)
+{
+	unsigned int bsize = crypto_cipher_blocksize(tfm);
+	unsigned long alignmask = crypto_cipher_alignmask(tfm);
 	u8 *ctrblk = walk->iv;
-	u8 पंचांगp[MAX_CIPHER_BLOCKSIZE + MAX_CIPHER_ALIGNMASK];
-	u8 *keystream = PTR_ALIGN(पंचांगp + 0, alignmask + 1);
+	u8 tmp[MAX_CIPHER_BLOCKSIZE + MAX_CIPHER_ALIGNMASK];
+	u8 *keystream = PTR_ALIGN(tmp + 0, alignmask + 1);
 	u8 *src = walk->src.virt.addr;
 	u8 *dst = walk->dst.virt.addr;
-	अचिन्हित पूर्णांक nbytes = walk->nbytes;
+	unsigned int nbytes = walk->nbytes;
 
 	crypto_cipher_encrypt_one(tfm, keystream, ctrblk);
 	crypto_xor_cpy(dst, keystream, src, nbytes);
 
 	crypto_inc(ctrblk, bsize);
-पूर्ण
+}
 
-अटल पूर्णांक crypto_ctr_crypt_segment(काष्ठा skcipher_walk *walk,
-				    काष्ठा crypto_cipher *tfm)
-अणु
-	व्योम (*fn)(काष्ठा crypto_tfm *, u8 *, स्थिर u8 *) =
+static int crypto_ctr_crypt_segment(struct skcipher_walk *walk,
+				    struct crypto_cipher *tfm)
+{
+	void (*fn)(struct crypto_tfm *, u8 *, const u8 *) =
 		   crypto_cipher_alg(tfm)->cia_encrypt;
-	अचिन्हित पूर्णांक bsize = crypto_cipher_blocksize(tfm);
+	unsigned int bsize = crypto_cipher_blocksize(tfm);
 	u8 *ctrblk = walk->iv;
 	u8 *src = walk->src.virt.addr;
 	u8 *dst = walk->dst.virt.addr;
-	अचिन्हित पूर्णांक nbytes = walk->nbytes;
+	unsigned int nbytes = walk->nbytes;
 
-	करो अणु
+	do {
 		/* create keystream */
 		fn(crypto_cipher_tfm(tfm), dst, ctrblk);
 		crypto_xor(dst, src, bsize);
@@ -65,25 +64,25 @@
 
 		src += bsize;
 		dst += bsize;
-	पूर्ण जबतक ((nbytes -= bsize) >= bsize);
+	} while ((nbytes -= bsize) >= bsize);
 
-	वापस nbytes;
-पूर्ण
+	return nbytes;
+}
 
-अटल पूर्णांक crypto_ctr_crypt_inplace(काष्ठा skcipher_walk *walk,
-				    काष्ठा crypto_cipher *tfm)
-अणु
-	व्योम (*fn)(काष्ठा crypto_tfm *, u8 *, स्थिर u8 *) =
+static int crypto_ctr_crypt_inplace(struct skcipher_walk *walk,
+				    struct crypto_cipher *tfm)
+{
+	void (*fn)(struct crypto_tfm *, u8 *, const u8 *) =
 		   crypto_cipher_alg(tfm)->cia_encrypt;
-	अचिन्हित पूर्णांक bsize = crypto_cipher_blocksize(tfm);
-	अचिन्हित दीर्घ alignmask = crypto_cipher_alignmask(tfm);
-	अचिन्हित पूर्णांक nbytes = walk->nbytes;
+	unsigned int bsize = crypto_cipher_blocksize(tfm);
+	unsigned long alignmask = crypto_cipher_alignmask(tfm);
+	unsigned int nbytes = walk->nbytes;
 	u8 *ctrblk = walk->iv;
 	u8 *src = walk->src.virt.addr;
-	u8 पंचांगp[MAX_CIPHER_BLOCKSIZE + MAX_CIPHER_ALIGNMASK];
-	u8 *keystream = PTR_ALIGN(पंचांगp + 0, alignmask + 1);
+	u8 tmp[MAX_CIPHER_BLOCKSIZE + MAX_CIPHER_ALIGNMASK];
+	u8 *keystream = PTR_ALIGN(tmp + 0, alignmask + 1);
 
-	करो अणु
+	do {
 		/* create keystream */
 		fn(crypto_cipher_tfm(tfm), keystream, ctrblk);
 		crypto_xor(src, keystream, bsize);
@@ -92,65 +91,65 @@
 		crypto_inc(ctrblk, bsize);
 
 		src += bsize;
-	पूर्ण जबतक ((nbytes -= bsize) >= bsize);
+	} while ((nbytes -= bsize) >= bsize);
 
-	वापस nbytes;
-पूर्ण
+	return nbytes;
+}
 
-अटल पूर्णांक crypto_ctr_crypt(काष्ठा skcipher_request *req)
-अणु
-	काष्ठा crypto_skcipher *tfm = crypto_skcipher_reqtfm(req);
-	काष्ठा crypto_cipher *cipher = skcipher_cipher_simple(tfm);
-	स्थिर अचिन्हित पूर्णांक bsize = crypto_cipher_blocksize(cipher);
-	काष्ठा skcipher_walk walk;
-	अचिन्हित पूर्णांक nbytes;
-	पूर्णांक err;
+static int crypto_ctr_crypt(struct skcipher_request *req)
+{
+	struct crypto_skcipher *tfm = crypto_skcipher_reqtfm(req);
+	struct crypto_cipher *cipher = skcipher_cipher_simple(tfm);
+	const unsigned int bsize = crypto_cipher_blocksize(cipher);
+	struct skcipher_walk walk;
+	unsigned int nbytes;
+	int err;
 
 	err = skcipher_walk_virt(&walk, req, false);
 
-	जबतक (walk.nbytes >= bsize) अणु
-		अगर (walk.src.virt.addr == walk.dst.virt.addr)
+	while (walk.nbytes >= bsize) {
+		if (walk.src.virt.addr == walk.dst.virt.addr)
 			nbytes = crypto_ctr_crypt_inplace(&walk, cipher);
-		अन्यथा
+		else
 			nbytes = crypto_ctr_crypt_segment(&walk, cipher);
 
-		err = skcipher_walk_करोne(&walk, nbytes);
-	पूर्ण
+		err = skcipher_walk_done(&walk, nbytes);
+	}
 
-	अगर (walk.nbytes) अणु
+	if (walk.nbytes) {
 		crypto_ctr_crypt_final(&walk, cipher);
-		err = skcipher_walk_करोne(&walk, 0);
-	पूर्ण
+		err = skcipher_walk_done(&walk, 0);
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक crypto_ctr_create(काष्ठा crypto_ढाँचा *पंचांगpl, काष्ठा rtattr **tb)
-अणु
-	काष्ठा skcipher_instance *inst;
-	काष्ठा crypto_alg *alg;
-	पूर्णांक err;
+static int crypto_ctr_create(struct crypto_template *tmpl, struct rtattr **tb)
+{
+	struct skcipher_instance *inst;
+	struct crypto_alg *alg;
+	int err;
 
-	inst = skcipher_alloc_instance_simple(पंचांगpl, tb);
-	अगर (IS_ERR(inst))
-		वापस PTR_ERR(inst);
+	inst = skcipher_alloc_instance_simple(tmpl, tb);
+	if (IS_ERR(inst))
+		return PTR_ERR(inst);
 
 	alg = skcipher_ialg_simple(inst);
 
 	/* Block size must be >= 4 bytes. */
 	err = -EINVAL;
-	अगर (alg->cra_blocksize < 4)
-		जाओ out_मुक्त_inst;
+	if (alg->cra_blocksize < 4)
+		goto out_free_inst;
 
 	/* If this is false we'd fail the alignment of crypto_inc. */
-	अगर (alg->cra_blocksize % 4)
-		जाओ out_मुक्त_inst;
+	if (alg->cra_blocksize % 4)
+		goto out_free_inst;
 
 	/* CTR mode is a stream cipher. */
 	inst->alg.base.cra_blocksize = 1;
 
 	/*
-	 * To simplअगरy the implementation, configure the skcipher walk to only
+	 * To simplify the implementation, configure the skcipher walk to only
 	 * give a partial block at the very end, never earlier.
 	 */
 	inst->alg.chunksize = alg->cra_blocksize;
@@ -158,26 +157,26 @@
 	inst->alg.encrypt = crypto_ctr_crypt;
 	inst->alg.decrypt = crypto_ctr_crypt;
 
-	err = skcipher_रेजिस्टर_instance(पंचांगpl, inst);
-	अगर (err) अणु
-out_मुक्त_inst:
-		inst->मुक्त(inst);
-	पूर्ण
+	err = skcipher_register_instance(tmpl, inst);
+	if (err) {
+out_free_inst:
+		inst->free(inst);
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक crypto_rfc3686_setkey(काष्ठा crypto_skcipher *parent,
-				 स्थिर u8 *key, अचिन्हित पूर्णांक keylen)
-अणु
-	काष्ठा crypto_rfc3686_ctx *ctx = crypto_skcipher_ctx(parent);
-	काष्ठा crypto_skcipher *child = ctx->child;
+static int crypto_rfc3686_setkey(struct crypto_skcipher *parent,
+				 const u8 *key, unsigned int keylen)
+{
+	struct crypto_rfc3686_ctx *ctx = crypto_skcipher_ctx(parent);
+	struct crypto_skcipher *child = ctx->child;
 
 	/* the nonce is stored in bytes at end of key */
-	अगर (keylen < CTR_RFC3686_NONCE_SIZE)
-		वापस -EINVAL;
+	if (keylen < CTR_RFC3686_NONCE_SIZE)
+		return -EINVAL;
 
-	स_नकल(ctx->nonce, key + (keylen - CTR_RFC3686_NONCE_SIZE),
+	memcpy(ctx->nonce, key + (keylen - CTR_RFC3686_NONCE_SIZE),
 	       CTR_RFC3686_NONCE_SIZE);
 
 	keylen -= CTR_RFC3686_NONCE_SIZE;
@@ -185,23 +184,23 @@ out_मुक्त_inst:
 	crypto_skcipher_clear_flags(child, CRYPTO_TFM_REQ_MASK);
 	crypto_skcipher_set_flags(child, crypto_skcipher_get_flags(parent) &
 					 CRYPTO_TFM_REQ_MASK);
-	वापस crypto_skcipher_setkey(child, key, keylen);
-पूर्ण
+	return crypto_skcipher_setkey(child, key, keylen);
+}
 
-अटल पूर्णांक crypto_rfc3686_crypt(काष्ठा skcipher_request *req)
-अणु
-	काष्ठा crypto_skcipher *tfm = crypto_skcipher_reqtfm(req);
-	काष्ठा crypto_rfc3686_ctx *ctx = crypto_skcipher_ctx(tfm);
-	काष्ठा crypto_skcipher *child = ctx->child;
-	अचिन्हित दीर्घ align = crypto_skcipher_alignmask(tfm);
-	काष्ठा crypto_rfc3686_req_ctx *rctx =
-		(व्योम *)PTR_ALIGN((u8 *)skcipher_request_ctx(req), align + 1);
-	काष्ठा skcipher_request *subreq = &rctx->subreq;
+static int crypto_rfc3686_crypt(struct skcipher_request *req)
+{
+	struct crypto_skcipher *tfm = crypto_skcipher_reqtfm(req);
+	struct crypto_rfc3686_ctx *ctx = crypto_skcipher_ctx(tfm);
+	struct crypto_skcipher *child = ctx->child;
+	unsigned long align = crypto_skcipher_alignmask(tfm);
+	struct crypto_rfc3686_req_ctx *rctx =
+		(void *)PTR_ALIGN((u8 *)skcipher_request_ctx(req), align + 1);
+	struct skcipher_request *subreq = &rctx->subreq;
 	u8 *iv = rctx->iv;
 
 	/* set up counter block */
-	स_नकल(iv, ctx->nonce, CTR_RFC3686_NONCE_SIZE);
-	स_नकल(iv + CTR_RFC3686_NONCE_SIZE, req->iv, CTR_RFC3686_IV_SIZE);
+	memcpy(iv, ctx->nonce, CTR_RFC3686_NONCE_SIZE);
+	memcpy(iv + CTR_RFC3686_NONCE_SIZE, req->iv, CTR_RFC3686_IV_SIZE);
 
 	/* initialize counter portion of counter block */
 	*(__be32 *)(iv + CTR_RFC3686_NONCE_SIZE + CTR_RFC3686_IV_SIZE) =
@@ -213,91 +212,91 @@ out_मुक्त_inst:
 	skcipher_request_set_crypt(subreq, req->src, req->dst,
 				   req->cryptlen, iv);
 
-	वापस crypto_skcipher_encrypt(subreq);
-पूर्ण
+	return crypto_skcipher_encrypt(subreq);
+}
 
-अटल पूर्णांक crypto_rfc3686_init_tfm(काष्ठा crypto_skcipher *tfm)
-अणु
-	काष्ठा skcipher_instance *inst = skcipher_alg_instance(tfm);
-	काष्ठा crypto_skcipher_spawn *spawn = skcipher_instance_ctx(inst);
-	काष्ठा crypto_rfc3686_ctx *ctx = crypto_skcipher_ctx(tfm);
-	काष्ठा crypto_skcipher *cipher;
-	अचिन्हित दीर्घ align;
-	अचिन्हित पूर्णांक reqsize;
+static int crypto_rfc3686_init_tfm(struct crypto_skcipher *tfm)
+{
+	struct skcipher_instance *inst = skcipher_alg_instance(tfm);
+	struct crypto_skcipher_spawn *spawn = skcipher_instance_ctx(inst);
+	struct crypto_rfc3686_ctx *ctx = crypto_skcipher_ctx(tfm);
+	struct crypto_skcipher *cipher;
+	unsigned long align;
+	unsigned int reqsize;
 
 	cipher = crypto_spawn_skcipher(spawn);
-	अगर (IS_ERR(cipher))
-		वापस PTR_ERR(cipher);
+	if (IS_ERR(cipher))
+		return PTR_ERR(cipher);
 
 	ctx->child = cipher;
 
 	align = crypto_skcipher_alignmask(tfm);
 	align &= ~(crypto_tfm_ctx_alignment() - 1);
-	reqsize = align + माप(काष्ठा crypto_rfc3686_req_ctx) +
+	reqsize = align + sizeof(struct crypto_rfc3686_req_ctx) +
 		  crypto_skcipher_reqsize(cipher);
 	crypto_skcipher_set_reqsize(tfm, reqsize);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम crypto_rfc3686_निकास_tfm(काष्ठा crypto_skcipher *tfm)
-अणु
-	काष्ठा crypto_rfc3686_ctx *ctx = crypto_skcipher_ctx(tfm);
+static void crypto_rfc3686_exit_tfm(struct crypto_skcipher *tfm)
+{
+	struct crypto_rfc3686_ctx *ctx = crypto_skcipher_ctx(tfm);
 
-	crypto_मुक्त_skcipher(ctx->child);
-पूर्ण
+	crypto_free_skcipher(ctx->child);
+}
 
-अटल व्योम crypto_rfc3686_मुक्त(काष्ठा skcipher_instance *inst)
-अणु
-	काष्ठा crypto_skcipher_spawn *spawn = skcipher_instance_ctx(inst);
+static void crypto_rfc3686_free(struct skcipher_instance *inst)
+{
+	struct crypto_skcipher_spawn *spawn = skcipher_instance_ctx(inst);
 
 	crypto_drop_skcipher(spawn);
-	kमुक्त(inst);
-पूर्ण
+	kfree(inst);
+}
 
-अटल पूर्णांक crypto_rfc3686_create(काष्ठा crypto_ढाँचा *पंचांगpl,
-				 काष्ठा rtattr **tb)
-अणु
-	काष्ठा skcipher_instance *inst;
-	काष्ठा skcipher_alg *alg;
-	काष्ठा crypto_skcipher_spawn *spawn;
+static int crypto_rfc3686_create(struct crypto_template *tmpl,
+				 struct rtattr **tb)
+{
+	struct skcipher_instance *inst;
+	struct skcipher_alg *alg;
+	struct crypto_skcipher_spawn *spawn;
 	u32 mask;
-	पूर्णांक err;
+	int err;
 
 	err = crypto_check_attr_type(tb, CRYPTO_ALG_TYPE_SKCIPHER, &mask);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	inst = kzalloc(माप(*inst) + माप(*spawn), GFP_KERNEL);
-	अगर (!inst)
-		वापस -ENOMEM;
+	inst = kzalloc(sizeof(*inst) + sizeof(*spawn), GFP_KERNEL);
+	if (!inst)
+		return -ENOMEM;
 
 	spawn = skcipher_instance_ctx(inst);
 
 	err = crypto_grab_skcipher(spawn, skcipher_crypto_instance(inst),
 				   crypto_attr_alg_name(tb[1]), 0, mask);
-	अगर (err)
-		जाओ err_मुक्त_inst;
+	if (err)
+		goto err_free_inst;
 
 	alg = crypto_spawn_skcipher_alg(spawn);
 
 	/* We only support 16-byte blocks. */
 	err = -EINVAL;
-	अगर (crypto_skcipher_alg_ivsize(alg) != CTR_RFC3686_BLOCK_SIZE)
-		जाओ err_मुक्त_inst;
+	if (crypto_skcipher_alg_ivsize(alg) != CTR_RFC3686_BLOCK_SIZE)
+		goto err_free_inst;
 
 	/* Not a stream cipher? */
-	अगर (alg->base.cra_blocksize != 1)
-		जाओ err_मुक्त_inst;
+	if (alg->base.cra_blocksize != 1)
+		goto err_free_inst;
 
 	err = -ENAMETOOLONG;
-	अगर (snम_लिखो(inst->alg.base.cra_name, CRYPTO_MAX_ALG_NAME,
+	if (snprintf(inst->alg.base.cra_name, CRYPTO_MAX_ALG_NAME,
 		     "rfc3686(%s)", alg->base.cra_name) >= CRYPTO_MAX_ALG_NAME)
-		जाओ err_मुक्त_inst;
-	अगर (snम_लिखो(inst->alg.base.cra_driver_name, CRYPTO_MAX_ALG_NAME,
+		goto err_free_inst;
+	if (snprintf(inst->alg.base.cra_driver_name, CRYPTO_MAX_ALG_NAME,
 		     "rfc3686(%s)", alg->base.cra_driver_name) >=
 	    CRYPTO_MAX_ALG_NAME)
-		जाओ err_मुक्त_inst;
+		goto err_free_inst;
 
 	inst->alg.base.cra_priority = alg->base.cra_priority;
 	inst->alg.base.cra_blocksize = 1;
@@ -314,47 +313,47 @@ out_मुक्त_inst:
 	inst->alg.encrypt = crypto_rfc3686_crypt;
 	inst->alg.decrypt = crypto_rfc3686_crypt;
 
-	inst->alg.base.cra_ctxsize = माप(काष्ठा crypto_rfc3686_ctx);
+	inst->alg.base.cra_ctxsize = sizeof(struct crypto_rfc3686_ctx);
 
 	inst->alg.init = crypto_rfc3686_init_tfm;
-	inst->alg.निकास = crypto_rfc3686_निकास_tfm;
+	inst->alg.exit = crypto_rfc3686_exit_tfm;
 
-	inst->मुक्त = crypto_rfc3686_मुक्त;
+	inst->free = crypto_rfc3686_free;
 
-	err = skcipher_रेजिस्टर_instance(पंचांगpl, inst);
-	अगर (err) अणु
-err_मुक्त_inst:
-		crypto_rfc3686_मुक्त(inst);
-	पूर्ण
-	वापस err;
-पूर्ण
+	err = skcipher_register_instance(tmpl, inst);
+	if (err) {
+err_free_inst:
+		crypto_rfc3686_free(inst);
+	}
+	return err;
+}
 
-अटल काष्ठा crypto_ढाँचा crypto_ctr_पंचांगpls[] = अणु
-	अणु
+static struct crypto_template crypto_ctr_tmpls[] = {
+	{
 		.name = "ctr",
 		.create = crypto_ctr_create,
 		.module = THIS_MODULE,
-	पूर्ण, अणु
+	}, {
 		.name = "rfc3686",
 		.create = crypto_rfc3686_create,
 		.module = THIS_MODULE,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक __init crypto_ctr_module_init(व्योम)
-अणु
-	वापस crypto_रेजिस्टर_ढाँचाs(crypto_ctr_पंचांगpls,
-					 ARRAY_SIZE(crypto_ctr_पंचांगpls));
-पूर्ण
+static int __init crypto_ctr_module_init(void)
+{
+	return crypto_register_templates(crypto_ctr_tmpls,
+					 ARRAY_SIZE(crypto_ctr_tmpls));
+}
 
-अटल व्योम __निकास crypto_ctr_module_निकास(व्योम)
-अणु
-	crypto_unरेजिस्टर_ढाँचाs(crypto_ctr_पंचांगpls,
-				    ARRAY_SIZE(crypto_ctr_पंचांगpls));
-पूर्ण
+static void __exit crypto_ctr_module_exit(void)
+{
+	crypto_unregister_templates(crypto_ctr_tmpls,
+				    ARRAY_SIZE(crypto_ctr_tmpls));
+}
 
 subsys_initcall(crypto_ctr_module_init);
-module_निकास(crypto_ctr_module_निकास);
+module_exit(crypto_ctr_module_exit);
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("CTR block cipher mode of operation");

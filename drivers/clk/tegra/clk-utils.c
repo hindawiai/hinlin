@@ -1,44 +1,43 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
  */
 
-#समावेश <यंत्र/भाग64.h>
+#include <asm/div64.h>
 
-#समावेश "clk.h"
+#include "clk.h"
 
-#घोषणा भाग_mask(w) ((1 << (w)) - 1)
+#define div_mask(w) ((1 << (w)) - 1)
 
-पूर्णांक भाग_frac_get(अचिन्हित दीर्घ rate, अचिन्हित parent_rate, u8 width,
+int div_frac_get(unsigned long rate, unsigned parent_rate, u8 width,
 		 u8 frac_width, u8 flags)
-अणु
-	u64 भागider_ux1 = parent_rate;
-	पूर्णांक mul;
+{
+	u64 divider_ux1 = parent_rate;
+	int mul;
 
-	अगर (!rate)
-		वापस 0;
+	if (!rate)
+		return 0;
 
 	mul = 1 << frac_width;
 
-	अगर (!(flags & TEGRA_DIVIDER_INT))
-		भागider_ux1 *= mul;
+	if (!(flags & TEGRA_DIVIDER_INT))
+		divider_ux1 *= mul;
 
-	अगर (flags & TEGRA_DIVIDER_ROUND_UP)
-		भागider_ux1 += rate - 1;
+	if (flags & TEGRA_DIVIDER_ROUND_UP)
+		divider_ux1 += rate - 1;
 
-	करो_भाग(भागider_ux1, rate);
+	do_div(divider_ux1, rate);
 
-	अगर (flags & TEGRA_DIVIDER_INT)
-		भागider_ux1 *= mul;
+	if (flags & TEGRA_DIVIDER_INT)
+		divider_ux1 *= mul;
 
-	अगर (भागider_ux1 < mul)
-		वापस 0;
+	if (divider_ux1 < mul)
+		return 0;
 
-	भागider_ux1 -= mul;
+	divider_ux1 -= mul;
 
-	अगर (भागider_ux1 > भाग_mask(width))
-		वापस भाग_mask(width);
+	if (divider_ux1 > div_mask(width))
+		return div_mask(width);
 
-	वापस भागider_ux1;
-पूर्ण
+	return divider_ux1;
+}

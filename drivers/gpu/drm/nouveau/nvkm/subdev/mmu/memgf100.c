@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2017 Red Hat Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -20,76 +19,76 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-#समावेश "mem.h"
+#include "mem.h"
 
-#समावेश <core/memory.h>
-#समावेश <subdev/bar.h>
-#समावेश <subdev/fb.h>
+#include <core/memory.h>
+#include <subdev/bar.h>
+#include <subdev/fb.h>
 
-#समावेश <nvअगर/class.h>
-#समावेश <nvअगर/अगर900b.h>
-#समावेश <nvअगर/अगर900d.h>
-#समावेश <nvअगर/unpack.h>
+#include <nvif/class.h>
+#include <nvif/if900b.h>
+#include <nvif/if900d.h>
+#include <nvif/unpack.h>
 
-पूर्णांक
-gf100_mem_map(काष्ठा nvkm_mmu *mmu, काष्ठा nvkm_memory *memory, व्योम *argv,
-	      u32 argc, u64 *paddr, u64 *psize, काष्ठा nvkm_vma **pvma)
-अणु
-	काष्ठा gf100_vmm_map_v0 uvmm = अणुपूर्ण;
-	जोड़ अणु
-		काष्ठा gf100_mem_map_vn vn;
-		काष्ठा gf100_mem_map_v0 v0;
-	पूर्ण *args = argv;
-	काष्ठा nvkm_device *device = mmu->subdev.device;
-	काष्ठा nvkm_vmm *bar = nvkm_bar_bar1_vmm(device);
-	पूर्णांक ret = -ENOSYS;
+int
+gf100_mem_map(struct nvkm_mmu *mmu, struct nvkm_memory *memory, void *argv,
+	      u32 argc, u64 *paddr, u64 *psize, struct nvkm_vma **pvma)
+{
+	struct gf100_vmm_map_v0 uvmm = {};
+	union {
+		struct gf100_mem_map_vn vn;
+		struct gf100_mem_map_v0 v0;
+	} *args = argv;
+	struct nvkm_device *device = mmu->subdev.device;
+	struct nvkm_vmm *bar = nvkm_bar_bar1_vmm(device);
+	int ret = -ENOSYS;
 
-	अगर (!(ret = nvअगर_unpack(ret, &argv, &argc, args->v0, 0, 0, false))) अणु
+	if (!(ret = nvif_unpack(ret, &argv, &argc, args->v0, 0, 0, false))) {
 		uvmm.ro   = args->v0.ro;
 		uvmm.kind = args->v0.kind;
-	पूर्ण अन्यथा
-	अगर (!(ret = nvअगर_unvers(ret, &argv, &argc, args->vn))) अणु
-	पूर्ण अन्यथा
-		वापस ret;
+	} else
+	if (!(ret = nvif_unvers(ret, &argv, &argc, args->vn))) {
+	} else
+		return ret;
 
 	ret = nvkm_vmm_get(bar, nvkm_memory_page(memory),
 				nvkm_memory_size(memory), pvma);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	ret = nvkm_memory_map(memory, 0, bar, *pvma, &uvmm, माप(uvmm));
-	अगर (ret)
-		वापस ret;
+	ret = nvkm_memory_map(memory, 0, bar, *pvma, &uvmm, sizeof(uvmm));
+	if (ret)
+		return ret;
 
 	*paddr = device->func->resource_addr(device, 1) + (*pvma)->addr;
 	*psize = (*pvma)->size;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक
-gf100_mem_new(काष्ठा nvkm_mmu *mmu, पूर्णांक type, u8 page, u64 size,
-	      व्योम *argv, u32 argc, काष्ठा nvkm_memory **pmemory)
-अणु
-	जोड़ अणु
-		काष्ठा gf100_mem_vn vn;
-		काष्ठा gf100_mem_v0 v0;
-	पूर्ण *args = argv;
-	पूर्णांक ret = -ENOSYS;
+int
+gf100_mem_new(struct nvkm_mmu *mmu, int type, u8 page, u64 size,
+	      void *argv, u32 argc, struct nvkm_memory **pmemory)
+{
+	union {
+		struct gf100_mem_vn vn;
+		struct gf100_mem_v0 v0;
+	} *args = argv;
+	int ret = -ENOSYS;
 	bool contig;
 
-	अगर (!(ret = nvअगर_unpack(ret, &argv, &argc, args->v0, 0, 0, false))) अणु
+	if (!(ret = nvif_unpack(ret, &argv, &argc, args->v0, 0, 0, false))) {
 		contig = args->v0.contig;
-	पूर्ण अन्यथा
-	अगर (!(ret = nvअगर_unvers(ret, &argv, &argc, args->vn))) अणु
+	} else
+	if (!(ret = nvif_unvers(ret, &argv, &argc, args->vn))) {
 		contig = false;
-	पूर्ण अन्यथा
-		वापस ret;
+	} else
+		return ret;
 
-	अगर (mmu->type[type].type & (NVKM_MEM_DISP | NVKM_MEM_COMP))
+	if (mmu->type[type].type & (NVKM_MEM_DISP | NVKM_MEM_COMP))
 		type = NVKM_RAM_MM_NORMAL;
-	अन्यथा
+	else
 		type = NVKM_RAM_MM_MIXED;
 
-	वापस nvkm_ram_get(mmu->subdev.device, type, 0x01, page,
+	return nvkm_ram_get(mmu->subdev.device, type, 0x01, page,
 			    size, contig, false, pmemory);
-पूर्ण
+}

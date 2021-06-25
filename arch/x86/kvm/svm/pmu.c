@@ -1,29 +1,28 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * KVM PMU support क्रम AMD
+ * KVM PMU support for AMD
  *
  * Copyright 2015, Red Hat, Inc. and/or its affiliates.
  *
  * Author:
  *   Wei Huang <wei@redhat.com>
  *
- * Implementation is based on pmu_पूर्णांकel.c file
+ * Implementation is based on pmu_intel.c file
  */
-#समावेश <linux/types.h>
-#समावेश <linux/kvm_host.h>
-#समावेश <linux/perf_event.h>
-#समावेश "x86.h"
-#समावेश "cpuid.h"
-#समावेश "lapic.h"
-#समावेश "pmu.h"
+#include <linux/types.h>
+#include <linux/kvm_host.h>
+#include <linux/perf_event.h>
+#include "x86.h"
+#include "cpuid.h"
+#include "lapic.h"
+#include "pmu.h"
 
-क्रमागत pmu_type अणु
+enum pmu_type {
 	PMU_TYPE_COUNTER = 0,
 	PMU_TYPE_EVNTSEL,
-पूर्ण;
+};
 
-क्रमागत index अणु
+enum index {
 	INDEX_ZERO = 0,
 	INDEX_ONE,
 	INDEX_TWO,
@@ -31,296 +30,296 @@
 	INDEX_FOUR,
 	INDEX_FIVE,
 	INDEX_ERROR,
-पूर्ण;
+};
 
 /* duplicated from amd_perfmon_event_map, K7 and above should work. */
-अटल काष्ठा kvm_event_hw_type_mapping amd_event_mapping[] = अणु
-	[0] = अणु 0x76, 0x00, PERF_COUNT_HW_CPU_CYCLES पूर्ण,
-	[1] = अणु 0xc0, 0x00, PERF_COUNT_HW_INSTRUCTIONS पूर्ण,
-	[2] = अणु 0x7d, 0x07, PERF_COUNT_HW_CACHE_REFERENCES पूर्ण,
-	[3] = अणु 0x7e, 0x07, PERF_COUNT_HW_CACHE_MISSES पूर्ण,
-	[4] = अणु 0xc2, 0x00, PERF_COUNT_HW_BRANCH_INSTRUCTIONS पूर्ण,
-	[5] = अणु 0xc3, 0x00, PERF_COUNT_HW_BRANCH_MISSES पूर्ण,
-	[6] = अणु 0xd0, 0x00, PERF_COUNT_HW_STALLED_CYCLES_FRONTEND पूर्ण,
-	[7] = अणु 0xd1, 0x00, PERF_COUNT_HW_STALLED_CYCLES_BACKEND पूर्ण,
-पूर्ण;
+static struct kvm_event_hw_type_mapping amd_event_mapping[] = {
+	[0] = { 0x76, 0x00, PERF_COUNT_HW_CPU_CYCLES },
+	[1] = { 0xc0, 0x00, PERF_COUNT_HW_INSTRUCTIONS },
+	[2] = { 0x7d, 0x07, PERF_COUNT_HW_CACHE_REFERENCES },
+	[3] = { 0x7e, 0x07, PERF_COUNT_HW_CACHE_MISSES },
+	[4] = { 0xc2, 0x00, PERF_COUNT_HW_BRANCH_INSTRUCTIONS },
+	[5] = { 0xc3, 0x00, PERF_COUNT_HW_BRANCH_MISSES },
+	[6] = { 0xd0, 0x00, PERF_COUNT_HW_STALLED_CYCLES_FRONTEND },
+	[7] = { 0xd1, 0x00, PERF_COUNT_HW_STALLED_CYCLES_BACKEND },
+};
 
-अटल अचिन्हित पूर्णांक get_msr_base(काष्ठा kvm_pmu *pmu, क्रमागत pmu_type type)
-अणु
-	काष्ठा kvm_vcpu *vcpu = pmu_to_vcpu(pmu);
+static unsigned int get_msr_base(struct kvm_pmu *pmu, enum pmu_type type)
+{
+	struct kvm_vcpu *vcpu = pmu_to_vcpu(pmu);
 
-	अगर (guest_cpuid_has(vcpu, X86_FEATURE_PERFCTR_CORE)) अणु
-		अगर (type == PMU_TYPE_COUNTER)
-			वापस MSR_F15H_PERF_CTR;
-		अन्यथा
-			वापस MSR_F15H_PERF_CTL;
-	पूर्ण अन्यथा अणु
-		अगर (type == PMU_TYPE_COUNTER)
-			वापस MSR_K7_PERFCTR0;
-		अन्यथा
-			वापस MSR_K7_EVNTSEL0;
-	पूर्ण
-पूर्ण
+	if (guest_cpuid_has(vcpu, X86_FEATURE_PERFCTR_CORE)) {
+		if (type == PMU_TYPE_COUNTER)
+			return MSR_F15H_PERF_CTR;
+		else
+			return MSR_F15H_PERF_CTL;
+	} else {
+		if (type == PMU_TYPE_COUNTER)
+			return MSR_K7_PERFCTR0;
+		else
+			return MSR_K7_EVNTSEL0;
+	}
+}
 
-अटल क्रमागत index msr_to_index(u32 msr)
-अणु
-	चयन (msr) अणु
-	हाल MSR_F15H_PERF_CTL0:
-	हाल MSR_F15H_PERF_CTR0:
-	हाल MSR_K7_EVNTSEL0:
-	हाल MSR_K7_PERFCTR0:
-		वापस INDEX_ZERO;
-	हाल MSR_F15H_PERF_CTL1:
-	हाल MSR_F15H_PERF_CTR1:
-	हाल MSR_K7_EVNTSEL1:
-	हाल MSR_K7_PERFCTR1:
-		वापस INDEX_ONE;
-	हाल MSR_F15H_PERF_CTL2:
-	हाल MSR_F15H_PERF_CTR2:
-	हाल MSR_K7_EVNTSEL2:
-	हाल MSR_K7_PERFCTR2:
-		वापस INDEX_TWO;
-	हाल MSR_F15H_PERF_CTL3:
-	हाल MSR_F15H_PERF_CTR3:
-	हाल MSR_K7_EVNTSEL3:
-	हाल MSR_K7_PERFCTR3:
-		वापस INDEX_THREE;
-	हाल MSR_F15H_PERF_CTL4:
-	हाल MSR_F15H_PERF_CTR4:
-		वापस INDEX_FOUR;
-	हाल MSR_F15H_PERF_CTL5:
-	हाल MSR_F15H_PERF_CTR5:
-		वापस INDEX_FIVE;
-	शेष:
-		वापस INDEX_ERROR;
-	पूर्ण
-पूर्ण
+static enum index msr_to_index(u32 msr)
+{
+	switch (msr) {
+	case MSR_F15H_PERF_CTL0:
+	case MSR_F15H_PERF_CTR0:
+	case MSR_K7_EVNTSEL0:
+	case MSR_K7_PERFCTR0:
+		return INDEX_ZERO;
+	case MSR_F15H_PERF_CTL1:
+	case MSR_F15H_PERF_CTR1:
+	case MSR_K7_EVNTSEL1:
+	case MSR_K7_PERFCTR1:
+		return INDEX_ONE;
+	case MSR_F15H_PERF_CTL2:
+	case MSR_F15H_PERF_CTR2:
+	case MSR_K7_EVNTSEL2:
+	case MSR_K7_PERFCTR2:
+		return INDEX_TWO;
+	case MSR_F15H_PERF_CTL3:
+	case MSR_F15H_PERF_CTR3:
+	case MSR_K7_EVNTSEL3:
+	case MSR_K7_PERFCTR3:
+		return INDEX_THREE;
+	case MSR_F15H_PERF_CTL4:
+	case MSR_F15H_PERF_CTR4:
+		return INDEX_FOUR;
+	case MSR_F15H_PERF_CTL5:
+	case MSR_F15H_PERF_CTR5:
+		return INDEX_FIVE;
+	default:
+		return INDEX_ERROR;
+	}
+}
 
-अटल अंतरभूत काष्ठा kvm_pmc *get_gp_pmc_amd(काष्ठा kvm_pmu *pmu, u32 msr,
-					     क्रमागत pmu_type type)
-अणु
-	काष्ठा kvm_vcpu *vcpu = pmu_to_vcpu(pmu);
+static inline struct kvm_pmc *get_gp_pmc_amd(struct kvm_pmu *pmu, u32 msr,
+					     enum pmu_type type)
+{
+	struct kvm_vcpu *vcpu = pmu_to_vcpu(pmu);
 
-	चयन (msr) अणु
-	हाल MSR_F15H_PERF_CTL0:
-	हाल MSR_F15H_PERF_CTL1:
-	हाल MSR_F15H_PERF_CTL2:
-	हाल MSR_F15H_PERF_CTL3:
-	हाल MSR_F15H_PERF_CTL4:
-	हाल MSR_F15H_PERF_CTL5:
-		अगर (!guest_cpuid_has(vcpu, X86_FEATURE_PERFCTR_CORE))
-			वापस शून्य;
+	switch (msr) {
+	case MSR_F15H_PERF_CTL0:
+	case MSR_F15H_PERF_CTL1:
+	case MSR_F15H_PERF_CTL2:
+	case MSR_F15H_PERF_CTL3:
+	case MSR_F15H_PERF_CTL4:
+	case MSR_F15H_PERF_CTL5:
+		if (!guest_cpuid_has(vcpu, X86_FEATURE_PERFCTR_CORE))
+			return NULL;
 		fallthrough;
-	हाल MSR_K7_EVNTSEL0 ... MSR_K7_EVNTSEL3:
-		अगर (type != PMU_TYPE_EVNTSEL)
-			वापस शून्य;
-		अवरोध;
-	हाल MSR_F15H_PERF_CTR0:
-	हाल MSR_F15H_PERF_CTR1:
-	हाल MSR_F15H_PERF_CTR2:
-	हाल MSR_F15H_PERF_CTR3:
-	हाल MSR_F15H_PERF_CTR4:
-	हाल MSR_F15H_PERF_CTR5:
-		अगर (!guest_cpuid_has(vcpu, X86_FEATURE_PERFCTR_CORE))
-			वापस शून्य;
+	case MSR_K7_EVNTSEL0 ... MSR_K7_EVNTSEL3:
+		if (type != PMU_TYPE_EVNTSEL)
+			return NULL;
+		break;
+	case MSR_F15H_PERF_CTR0:
+	case MSR_F15H_PERF_CTR1:
+	case MSR_F15H_PERF_CTR2:
+	case MSR_F15H_PERF_CTR3:
+	case MSR_F15H_PERF_CTR4:
+	case MSR_F15H_PERF_CTR5:
+		if (!guest_cpuid_has(vcpu, X86_FEATURE_PERFCTR_CORE))
+			return NULL;
 		fallthrough;
-	हाल MSR_K7_PERFCTR0 ... MSR_K7_PERFCTR3:
-		अगर (type != PMU_TYPE_COUNTER)
-			वापस शून्य;
-		अवरोध;
-	शेष:
-		वापस शून्य;
-	पूर्ण
+	case MSR_K7_PERFCTR0 ... MSR_K7_PERFCTR3:
+		if (type != PMU_TYPE_COUNTER)
+			return NULL;
+		break;
+	default:
+		return NULL;
+	}
 
-	वापस &pmu->gp_counters[msr_to_index(msr)];
-पूर्ण
+	return &pmu->gp_counters[msr_to_index(msr)];
+}
 
-अटल अचिन्हित amd_find_arch_event(काष्ठा kvm_pmu *pmu,
+static unsigned amd_find_arch_event(struct kvm_pmu *pmu,
 				    u8 event_select,
 				    u8 unit_mask)
-अणु
-	पूर्णांक i;
+{
+	int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(amd_event_mapping); i++)
-		अगर (amd_event_mapping[i].eventsel == event_select
+	for (i = 0; i < ARRAY_SIZE(amd_event_mapping); i++)
+		if (amd_event_mapping[i].eventsel == event_select
 		    && amd_event_mapping[i].unit_mask == unit_mask)
-			अवरोध;
+			break;
 
-	अगर (i == ARRAY_SIZE(amd_event_mapping))
-		वापस PERF_COUNT_HW_MAX;
+	if (i == ARRAY_SIZE(amd_event_mapping))
+		return PERF_COUNT_HW_MAX;
 
-	वापस amd_event_mapping[i].event_type;
-पूर्ण
+	return amd_event_mapping[i].event_type;
+}
 
-/* वापस PERF_COUNT_HW_MAX as AMD करोesn't have fixed events */
-अटल अचिन्हित amd_find_fixed_event(पूर्णांक idx)
-अणु
-	वापस PERF_COUNT_HW_MAX;
-पूर्ण
+/* return PERF_COUNT_HW_MAX as AMD doesn't have fixed events */
+static unsigned amd_find_fixed_event(int idx)
+{
+	return PERF_COUNT_HW_MAX;
+}
 
-/* check अगर a PMC is enabled by comparing it against global_ctrl bits. Because
- * AMD CPU करोesn't have global_ctrl MSR, all PMCs are enabled (वापस TRUE).
+/* check if a PMC is enabled by comparing it against global_ctrl bits. Because
+ * AMD CPU doesn't have global_ctrl MSR, all PMCs are enabled (return TRUE).
  */
-अटल bool amd_pmc_is_enabled(काष्ठा kvm_pmc *pmc)
-अणु
-	वापस true;
-पूर्ण
+static bool amd_pmc_is_enabled(struct kvm_pmc *pmc)
+{
+	return true;
+}
 
-अटल काष्ठा kvm_pmc *amd_pmc_idx_to_pmc(काष्ठा kvm_pmu *pmu, पूर्णांक pmc_idx)
-अणु
-	अचिन्हित पूर्णांक base = get_msr_base(pmu, PMU_TYPE_COUNTER);
-	काष्ठा kvm_vcpu *vcpu = pmu_to_vcpu(pmu);
+static struct kvm_pmc *amd_pmc_idx_to_pmc(struct kvm_pmu *pmu, int pmc_idx)
+{
+	unsigned int base = get_msr_base(pmu, PMU_TYPE_COUNTER);
+	struct kvm_vcpu *vcpu = pmu_to_vcpu(pmu);
 
-	अगर (guest_cpuid_has(vcpu, X86_FEATURE_PERFCTR_CORE)) अणु
+	if (guest_cpuid_has(vcpu, X86_FEATURE_PERFCTR_CORE)) {
 		/*
 		 * The idx is contiguous. The MSRs are not. The counter MSRs
-		 * are पूर्णांकerleaved with the event select MSRs.
+		 * are interleaved with the event select MSRs.
 		 */
 		pmc_idx *= 2;
-	पूर्ण
+	}
 
-	वापस get_gp_pmc_amd(pmu, base + pmc_idx, PMU_TYPE_COUNTER);
-पूर्ण
+	return get_gp_pmc_amd(pmu, base + pmc_idx, PMU_TYPE_COUNTER);
+}
 
-/* वापसs 0 अगर idx's corresponding MSR exists; otherwise वापसs 1. */
-अटल पूर्णांक amd_is_valid_rdpmc_ecx(काष्ठा kvm_vcpu *vcpu, अचिन्हित पूर्णांक idx)
-अणु
-	काष्ठा kvm_pmu *pmu = vcpu_to_pmu(vcpu);
-
-	idx &= ~(3u << 30);
-
-	वापस (idx >= pmu->nr_arch_gp_counters);
-पूर्ण
-
-/* idx is the ECX रेजिस्टर of RDPMC inकाष्ठाion */
-अटल काष्ठा kvm_pmc *amd_rdpmc_ecx_to_pmc(काष्ठा kvm_vcpu *vcpu,
-	अचिन्हित पूर्णांक idx, u64 *mask)
-अणु
-	काष्ठा kvm_pmu *pmu = vcpu_to_pmu(vcpu);
-	काष्ठा kvm_pmc *counters;
+/* returns 0 if idx's corresponding MSR exists; otherwise returns 1. */
+static int amd_is_valid_rdpmc_ecx(struct kvm_vcpu *vcpu, unsigned int idx)
+{
+	struct kvm_pmu *pmu = vcpu_to_pmu(vcpu);
 
 	idx &= ~(3u << 30);
-	अगर (idx >= pmu->nr_arch_gp_counters)
-		वापस शून्य;
+
+	return (idx >= pmu->nr_arch_gp_counters);
+}
+
+/* idx is the ECX register of RDPMC instruction */
+static struct kvm_pmc *amd_rdpmc_ecx_to_pmc(struct kvm_vcpu *vcpu,
+	unsigned int idx, u64 *mask)
+{
+	struct kvm_pmu *pmu = vcpu_to_pmu(vcpu);
+	struct kvm_pmc *counters;
+
+	idx &= ~(3u << 30);
+	if (idx >= pmu->nr_arch_gp_counters)
+		return NULL;
 	counters = pmu->gp_counters;
 
-	वापस &counters[idx];
-पूर्ण
+	return &counters[idx];
+}
 
-अटल bool amd_is_valid_msr(काष्ठा kvm_vcpu *vcpu, u32 msr)
-अणु
+static bool amd_is_valid_msr(struct kvm_vcpu *vcpu, u32 msr)
+{
 	/* All MSRs refer to exactly one PMC, so msr_idx_to_pmc is enough.  */
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल काष्ठा kvm_pmc *amd_msr_idx_to_pmc(काष्ठा kvm_vcpu *vcpu, u32 msr)
-अणु
-	काष्ठा kvm_pmu *pmu = vcpu_to_pmu(vcpu);
-	काष्ठा kvm_pmc *pmc;
+static struct kvm_pmc *amd_msr_idx_to_pmc(struct kvm_vcpu *vcpu, u32 msr)
+{
+	struct kvm_pmu *pmu = vcpu_to_pmu(vcpu);
+	struct kvm_pmc *pmc;
 
 	pmc = get_gp_pmc_amd(pmu, msr, PMU_TYPE_COUNTER);
 	pmc = pmc ? pmc : get_gp_pmc_amd(pmu, msr, PMU_TYPE_EVNTSEL);
 
-	वापस pmc;
-पूर्ण
+	return pmc;
+}
 
-अटल पूर्णांक amd_pmu_get_msr(काष्ठा kvm_vcpu *vcpu, काष्ठा msr_data *msr_info)
-अणु
-	काष्ठा kvm_pmu *pmu = vcpu_to_pmu(vcpu);
-	काष्ठा kvm_pmc *pmc;
+static int amd_pmu_get_msr(struct kvm_vcpu *vcpu, struct msr_data *msr_info)
+{
+	struct kvm_pmu *pmu = vcpu_to_pmu(vcpu);
+	struct kvm_pmc *pmc;
 	u32 msr = msr_info->index;
 
 	/* MSR_PERFCTRn */
 	pmc = get_gp_pmc_amd(pmu, msr, PMU_TYPE_COUNTER);
-	अगर (pmc) अणु
-		msr_info->data = pmc_पढ़ो_counter(pmc);
-		वापस 0;
-	पूर्ण
+	if (pmc) {
+		msr_info->data = pmc_read_counter(pmc);
+		return 0;
+	}
 	/* MSR_EVNTSELn */
 	pmc = get_gp_pmc_amd(pmu, msr, PMU_TYPE_EVNTSEL);
-	अगर (pmc) अणु
+	if (pmc) {
 		msr_info->data = pmc->eventsel;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल पूर्णांक amd_pmu_set_msr(काष्ठा kvm_vcpu *vcpu, काष्ठा msr_data *msr_info)
-अणु
-	काष्ठा kvm_pmu *pmu = vcpu_to_pmu(vcpu);
-	काष्ठा kvm_pmc *pmc;
+static int amd_pmu_set_msr(struct kvm_vcpu *vcpu, struct msr_data *msr_info)
+{
+	struct kvm_pmu *pmu = vcpu_to_pmu(vcpu);
+	struct kvm_pmc *pmc;
 	u32 msr = msr_info->index;
 	u64 data = msr_info->data;
 
 	/* MSR_PERFCTRn */
 	pmc = get_gp_pmc_amd(pmu, msr, PMU_TYPE_COUNTER);
-	अगर (pmc) अणु
-		pmc->counter += data - pmc_पढ़ो_counter(pmc);
-		वापस 0;
-	पूर्ण
+	if (pmc) {
+		pmc->counter += data - pmc_read_counter(pmc);
+		return 0;
+	}
 	/* MSR_EVNTSELn */
 	pmc = get_gp_pmc_amd(pmu, msr, PMU_TYPE_EVNTSEL);
-	अगर (pmc) अणु
-		अगर (data == pmc->eventsel)
-			वापस 0;
-		अगर (!(data & pmu->reserved_bits)) अणु
+	if (pmc) {
+		if (data == pmc->eventsel)
+			return 0;
+		if (!(data & pmu->reserved_bits)) {
 			reprogram_gp_counter(pmc, data);
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			return 0;
+		}
+	}
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल व्योम amd_pmu_refresh(काष्ठा kvm_vcpu *vcpu)
-अणु
-	काष्ठा kvm_pmu *pmu = vcpu_to_pmu(vcpu);
+static void amd_pmu_refresh(struct kvm_vcpu *vcpu)
+{
+	struct kvm_pmu *pmu = vcpu_to_pmu(vcpu);
 
-	अगर (guest_cpuid_has(vcpu, X86_FEATURE_PERFCTR_CORE))
+	if (guest_cpuid_has(vcpu, X86_FEATURE_PERFCTR_CORE))
 		pmu->nr_arch_gp_counters = AMD64_NUM_COUNTERS_CORE;
-	अन्यथा
+	else
 		pmu->nr_arch_gp_counters = AMD64_NUM_COUNTERS;
 
-	pmu->counter_biपंचांगask[KVM_PMC_GP] = ((u64)1 << 48) - 1;
+	pmu->counter_bitmask[KVM_PMC_GP] = ((u64)1 << 48) - 1;
 	pmu->reserved_bits = 0xffffffff00200000ull;
 	pmu->version = 1;
 	/* not applicable to AMD; but clean them to prevent any fall out */
-	pmu->counter_biपंचांगask[KVM_PMC_FIXED] = 0;
+	pmu->counter_bitmask[KVM_PMC_FIXED] = 0;
 	pmu->nr_arch_fixed_counters = 0;
 	pmu->global_status = 0;
-	biपंचांगap_set(pmu->all_valid_pmc_idx, 0, pmu->nr_arch_gp_counters);
-पूर्ण
+	bitmap_set(pmu->all_valid_pmc_idx, 0, pmu->nr_arch_gp_counters);
+}
 
-अटल व्योम amd_pmu_init(काष्ठा kvm_vcpu *vcpu)
-अणु
-	काष्ठा kvm_pmu *pmu = vcpu_to_pmu(vcpu);
-	पूर्णांक i;
+static void amd_pmu_init(struct kvm_vcpu *vcpu)
+{
+	struct kvm_pmu *pmu = vcpu_to_pmu(vcpu);
+	int i;
 
 	BUILD_BUG_ON(AMD64_NUM_COUNTERS_CORE > INTEL_PMC_MAX_GENERIC);
 
-	क्रम (i = 0; i < AMD64_NUM_COUNTERS_CORE ; i++) अणु
+	for (i = 0; i < AMD64_NUM_COUNTERS_CORE ; i++) {
 		pmu->gp_counters[i].type = KVM_PMC_GP;
 		pmu->gp_counters[i].vcpu = vcpu;
 		pmu->gp_counters[i].idx = i;
 		pmu->gp_counters[i].current_config = 0;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम amd_pmu_reset(काष्ठा kvm_vcpu *vcpu)
-अणु
-	काष्ठा kvm_pmu *pmu = vcpu_to_pmu(vcpu);
-	पूर्णांक i;
+static void amd_pmu_reset(struct kvm_vcpu *vcpu)
+{
+	struct kvm_pmu *pmu = vcpu_to_pmu(vcpu);
+	int i;
 
-	क्रम (i = 0; i < AMD64_NUM_COUNTERS_CORE; i++) अणु
-		काष्ठा kvm_pmc *pmc = &pmu->gp_counters[i];
+	for (i = 0; i < AMD64_NUM_COUNTERS_CORE; i++) {
+		struct kvm_pmc *pmc = &pmu->gp_counters[i];
 
 		pmc_stop_counter(pmc);
 		pmc->counter = pmc->eventsel = 0;
-	पूर्ण
-पूर्ण
+	}
+}
 
-काष्ठा kvm_pmu_ops amd_pmu_ops = अणु
+struct kvm_pmu_ops amd_pmu_ops = {
 	.find_arch_event = amd_find_arch_event,
 	.find_fixed_event = amd_find_fixed_event,
 	.pmc_is_enabled = amd_pmc_is_enabled,
@@ -334,4 +333,4 @@
 	.refresh = amd_pmu_refresh,
 	.init = amd_pmu_init,
 	.reset = amd_pmu_reset,
-पूर्ण;
+};

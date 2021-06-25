@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2017 Red Hat Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,21 +21,21 @@
  *
  * Authors: Ben Skeggs <bskeggs@redhat.com>
  */
-#समावेश "ctxgf100.h"
+#include "ctxgf100.h"
 
-#समावेश <subdev/fb.h>
+#include <subdev/fb.h>
 
 /*******************************************************************************
  * PGRAPH context implementation
  ******************************************************************************/
 
-स्थिर काष्ठा gf100_grctx_func
-gp107_grctx = अणु
-	.मुख्य = gf100_grctx_generate_मुख्य,
+const struct gf100_grctx_func
+gp107_grctx = {
+	.main = gf100_grctx_generate_main,
 	.unkn = gk104_grctx_generate_unkn,
 	.bundle = gm107_grctx_generate_bundle,
 	.bundle_size = 0x3000,
-	.bundle_min_gpm_fअगरo_depth = 0x180,
+	.bundle_min_gpm_fifo_depth = 0x180,
 	.bundle_token_limit = 0x300,
 	.pagepool = gp100_grctx_generate_pagepool,
 	.pagepool_size = 0x20000,
@@ -54,4 +53,4 @@ gp107_grctx = अणु
 	.tpc_mask = gm200_grctx_generate_tpc_mask,
 	.smid_config = gp100_grctx_generate_smid_config,
 	.r419a3c = gm200_grctx_generate_r419a3c,
-पूर्ण;
+};

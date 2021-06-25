@@ -1,15 +1,14 @@
-<शैली गुरु>
 /*
- * GFX_8_1 Register करोcumentation
+ * GFX_8_1 Register documentation
  *
  * Copyright (C) 2014  Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
@@ -22,10 +21,10 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#अगर_अघोषित GFX_8_1_ENUM_H
-#घोषणा GFX_8_1_ENUM_H
+#ifndef GFX_8_1_ENUM_H
+#define GFX_8_1_ENUM_H
 
-प्रकार क्रमागत SurfaceNumber अणु
+typedef enum SurfaceNumber {
 	NUMBER_UNORM                                     = 0x0,
 	NUMBER_SNORM                                     = 0x1,
 	NUMBER_USCALED                                   = 0x2,
@@ -34,14 +33,14 @@
 	NUMBER_SINT                                      = 0x5,
 	NUMBER_SRGB                                      = 0x6,
 	NUMBER_FLOAT                                     = 0x7,
-पूर्ण SurfaceNumber;
-प्रकार क्रमागत SurfaceSwap अणु
+} SurfaceNumber;
+typedef enum SurfaceSwap {
 	SWAP_STD                                         = 0x0,
 	SWAP_ALT                                         = 0x1,
 	SWAP_STD_REV                                     = 0x2,
 	SWAP_ALT_REV                                     = 0x3,
-पूर्ण SurfaceSwap;
-प्रकार क्रमागत CBMode अणु
+} SurfaceSwap;
+typedef enum CBMode {
 	CB_DISABLE                                       = 0x0,
 	CB_NORMAL                                        = 0x1,
 	CB_ELIMINATE_FAST_CLEAR                          = 0x2,
@@ -49,18 +48,18 @@
 	CB_DECOMPRESS                                    = 0x4,
 	CB_FMASK_DECOMPRESS                              = 0x5,
 	CB_DCC_DECOMPRESS                                = 0x6,
-पूर्ण CBMode;
-प्रकार क्रमागत RoundMode अणु
+} CBMode;
+typedef enum RoundMode {
 	ROUND_BY_HALF                                    = 0x0,
 	ROUND_TRUNCATE                                   = 0x1,
-पूर्ण RoundMode;
-प्रकार क्रमागत SourceFormat अणु
+} RoundMode;
+typedef enum SourceFormat {
 	EXPORT_4C_32BPC                                  = 0x0,
 	EXPORT_4C_16BPC                                  = 0x1,
 	EXPORT_2C_32BPC_GR                               = 0x2,
 	EXPORT_2C_32BPC_AR                               = 0x3,
-पूर्ण SourceFormat;
-प्रकार क्रमागत BlendOp अणु
+} SourceFormat;
+typedef enum BlendOp {
 	BLEND_ZERO                                       = 0x0,
 	BLEND_ONE                                        = 0x1,
 	BLEND_SRC_COLOR                                  = 0x2,
@@ -82,15 +81,15 @@
 	BLEND_INV_SRC1_ALPHA                             = 0x12,
 	BLEND_CONSTANT_ALPHA                             = 0x13,
 	BLEND_ONE_MINUS_CONSTANT_ALPHA                   = 0x14,
-पूर्ण BlendOp;
-प्रकार क्रमागत CombFunc अणु
+} BlendOp;
+typedef enum CombFunc {
 	COMB_DST_PLUS_SRC                                = 0x0,
 	COMB_SRC_MINUS_DST                               = 0x1,
 	COMB_MIN_DST_SRC                                 = 0x2,
 	COMB_MAX_DST_SRC                                 = 0x3,
 	COMB_DST_MINUS_SRC                               = 0x4,
-पूर्ण CombFunc;
-प्रकार क्रमागत BlendOpt अणु
+} CombFunc;
+typedef enum BlendOpt {
 	FORCE_OPT_AUTO                                   = 0x0,
 	FORCE_OPT_DISABLE                                = 0x1,
 	FORCE_OPT_ENABLE_IF_SRC_A_0                      = 0x2,
@@ -99,8 +98,8 @@
 	FORCE_OPT_ENABLE_IF_SRC_A_1                      = 0x5,
 	FORCE_OPT_ENABLE_IF_SRC_RGB_1                    = 0x6,
 	FORCE_OPT_ENABLE_IF_SRC_ARGB_1                   = 0x7,
-पूर्ण BlendOpt;
-प्रकार क्रमागत CmaskCode अणु
+} BlendOpt;
+typedef enum CmaskCode {
 	CMASK_CLR00_F0                                   = 0x0,
 	CMASK_CLR00_F1                                   = 0x1,
 	CMASK_CLR00_F2                                   = 0x2,
@@ -117,13 +116,13 @@
 	CMASK_CLR11_F1                                   = 0xd,
 	CMASK_CLR11_F2                                   = 0xe,
 	CMASK_CLR11_FX                                   = 0xf,
-पूर्ण CmaskCode;
-प्रकार क्रमागत CmaskAddr अणु
+} CmaskCode;
+typedef enum CmaskAddr {
 	CMASK_ADDR_TILED                                 = 0x0,
 	CMASK_ADDR_LINEAR                                = 0x1,
 	CMASK_ADDR_COMPATIBLE                            = 0x2,
-पूर्ण CmaskAddr;
-प्रकार क्रमागत CBPerfSel अणु
+} CmaskAddr;
+typedef enum CBPerfSel {
 	CB_PERF_SEL_NONE                                 = 0x0,
 	CB_PERF_SEL_BUSY                                 = 0x1,
 	CB_PERF_SEL_CORE_SCLK_VLD                        = 0x2,
@@ -157,8 +156,8 @@
 	CB_PERF_SEL_LQUAD_FORMAT_IS_EXPORT_UNSIGNED16_ABGR= 0x1e,
 	CB_PERF_SEL_QUAD_KILLED_BY_EXTRA_PIXEL_EXPORT    = 0x1f,
 	CB_PERF_SEL_QUAD_KILLED_BY_COLOR_INVALID         = 0x20,
-	CB_PERF_SEL_QUAD_KILLED_BY_शून्य_TARGET_SHADER_MASK= 0x21,
-	CB_PERF_SEL_QUAD_KILLED_BY_शून्य_SAMPLE_MASK      = 0x22,
+	CB_PERF_SEL_QUAD_KILLED_BY_NULL_TARGET_SHADER_MASK= 0x21,
+	CB_PERF_SEL_QUAD_KILLED_BY_NULL_SAMPLE_MASK      = 0x22,
 	CB_PERF_SEL_QUAD_KILLED_BY_DISCARD_PIXEL         = 0x23,
 	CB_PERF_SEL_FC_CLEAR_QUAD_VALID_READY            = 0x24,
 	CB_PERF_SEL_FC_CLEAR_QUAD_VALID_READYB           = 0x25,
@@ -203,7 +202,7 @@
 	CB_PERF_SEL_CM_CACHE_FLUSH                       = 0x4c,
 	CB_PERF_SEL_CM_CACHE_TAGS_FLUSHED                = 0x4d,
 	CB_PERF_SEL_CM_CACHE_SECTORS_FLUSHED             = 0x4e,
-	CB_PERF_SEL_CM_CACHE_सूचीTY_SECTORS_FLUSHED       = 0x4f,
+	CB_PERF_SEL_CM_CACHE_DIRTY_SECTORS_FLUSHED       = 0x4f,
 	CB_PERF_SEL_FC_CACHE_HIT                         = 0x50,
 	CB_PERF_SEL_FC_CACHE_TAG_MISS                    = 0x51,
 	CB_PERF_SEL_FC_CACHE_SECTOR_MISS                 = 0x52,
@@ -218,7 +217,7 @@
 	CB_PERF_SEL_FC_CACHE_FLUSH                       = 0x5b,
 	CB_PERF_SEL_FC_CACHE_TAGS_FLUSHED                = 0x5c,
 	CB_PERF_SEL_FC_CACHE_SECTORS_FLUSHED             = 0x5d,
-	CB_PERF_SEL_FC_CACHE_सूचीTY_SECTORS_FLUSHED       = 0x5e,
+	CB_PERF_SEL_FC_CACHE_DIRTY_SECTORS_FLUSHED       = 0x5e,
 	CB_PERF_SEL_CC_CACHE_HIT                         = 0x5f,
 	CB_PERF_SEL_CC_CACHE_TAG_MISS                    = 0x60,
 	CB_PERF_SEL_CC_CACHE_SECTOR_MISS                 = 0x61,
@@ -233,7 +232,7 @@
 	CB_PERF_SEL_CC_CACHE_FLUSH                       = 0x6a,
 	CB_PERF_SEL_CC_CACHE_TAGS_FLUSHED                = 0x6b,
 	CB_PERF_SEL_CC_CACHE_SECTORS_FLUSHED             = 0x6c,
-	CB_PERF_SEL_CC_CACHE_सूचीTY_SECTORS_FLUSHED       = 0x6d,
+	CB_PERF_SEL_CC_CACHE_DIRTY_SECTORS_FLUSHED       = 0x6d,
 	CB_PERF_SEL_CC_CACHE_WA_TO_RMW_CONVERSION        = 0x6e,
 	CB_PERF_SEL_CC_CACHE_READS_SAVED_DUE_TO_DCC      = 0x6f,
 	CB_PERF_SEL_CB_TAP_WRREQ_VALID_READY             = 0x70,
@@ -379,7 +378,7 @@
 	CB_PERF_SEL_FC_DCC_CACHE_FLUSH                   = 0xfc,
 	CB_PERF_SEL_FC_DCC_CACHE_TAGS_FLUSHED            = 0xfd,
 	CB_PERF_SEL_FC_DCC_CACHE_SECTORS_FLUSHED         = 0xfe,
-	CB_PERF_SEL_FC_DCC_CACHE_सूचीTY_SECTORS_FLUSHED   = 0xff,
+	CB_PERF_SEL_FC_DCC_CACHE_DIRTY_SECTORS_FLUSHED   = 0xff,
 	CB_PERF_SEL_CC_DCC_BEYOND_TILE_SPLIT             = 0x100,
 	CB_PERF_SEL_FC_MC_DCC_WRITE_REQUEST              = 0x101,
 	CB_PERF_SEL_FC_MC_DCC_WRITE_REQUESTS_IN_FLIGHT   = 0x102,
@@ -529,60 +528,60 @@
 	CB_PERF_SEL_RBP_SPLIT_LINEAR_ADDRESSING          = 0x192,
 	CB_PERF_SEL_RBP_SPLIT_AA_NO_FMASK_COMPRESS       = 0x193,
 	CB_PERF_SEL_RBP_INSERT_MISSING_LAST_QUAD         = 0x194,
-पूर्ण CBPerfSel;
-प्रकार क्रमागत CBPerfOpFilterSel अणु
+} CBPerfSel;
+typedef enum CBPerfOpFilterSel {
 	CB_PERF_OP_FILTER_SEL_WRITE_ONLY                 = 0x0,
 	CB_PERF_OP_FILTER_SEL_NEEDS_DESTINATION          = 0x1,
 	CB_PERF_OP_FILTER_SEL_RESOLVE                    = 0x2,
 	CB_PERF_OP_FILTER_SEL_DECOMPRESS                 = 0x3,
 	CB_PERF_OP_FILTER_SEL_FMASK_DECOMPRESS           = 0x4,
 	CB_PERF_OP_FILTER_SEL_ELIMINATE_FAST_CLEAR       = 0x5,
-पूर्ण CBPerfOpFilterSel;
-प्रकार क्रमागत CBPerfClearFilterSel अणु
+} CBPerfOpFilterSel;
+typedef enum CBPerfClearFilterSel {
 	CB_PERF_CLEAR_FILTER_SEL_NONCLEAR                = 0x0,
 	CB_PERF_CLEAR_FILTER_SEL_CLEAR                   = 0x1,
-पूर्ण CBPerfClearFilterSel;
-प्रकार क्रमागत CP_RING_ID अणु
+} CBPerfClearFilterSel;
+typedef enum CP_RING_ID {
 	RINGID0                                          = 0x0,
 	RINGID1                                          = 0x1,
 	RINGID2                                          = 0x2,
 	RINGID3                                          = 0x3,
-पूर्ण CP_RING_ID;
-प्रकार क्रमागत CP_PIPE_ID अणु
+} CP_RING_ID;
+typedef enum CP_PIPE_ID {
 	PIPE_ID0                                         = 0x0,
 	PIPE_ID1                                         = 0x1,
 	PIPE_ID2                                         = 0x2,
 	PIPE_ID3                                         = 0x3,
-पूर्ण CP_PIPE_ID;
-प्रकार क्रमागत CP_ME_ID अणु
+} CP_PIPE_ID;
+typedef enum CP_ME_ID {
 	ME_ID0                                           = 0x0,
 	ME_ID1                                           = 0x1,
 	ME_ID2                                           = 0x2,
 	ME_ID3                                           = 0x3,
-पूर्ण CP_ME_ID;
-प्रकार क्रमागत SPM_PERFMON_STATE अणु
+} CP_ME_ID;
+typedef enum SPM_PERFMON_STATE {
 	STRM_PERFMON_STATE_DISABLE_AND_RESET             = 0x0,
 	STRM_PERFMON_STATE_START_COUNTING                = 0x1,
 	STRM_PERFMON_STATE_STOP_COUNTING                 = 0x2,
 	STRM_PERFMON_STATE_RESERVED_3                    = 0x3,
 	STRM_PERFMON_STATE_DISABLE_AND_RESET_PHANTOM     = 0x4,
 	STRM_PERFMON_STATE_COUNT_AND_DUMP_PHANTOM        = 0x5,
-पूर्ण SPM_PERFMON_STATE;
-प्रकार क्रमागत CP_PERFMON_STATE अणु
+} SPM_PERFMON_STATE;
+typedef enum CP_PERFMON_STATE {
 	CP_PERFMON_STATE_DISABLE_AND_RESET               = 0x0,
 	CP_PERFMON_STATE_START_COUNTING                  = 0x1,
 	CP_PERFMON_STATE_STOP_COUNTING                   = 0x2,
 	CP_PERFMON_STATE_RESERVED_3                      = 0x3,
 	CP_PERFMON_STATE_DISABLE_AND_RESET_PHANTOM       = 0x4,
 	CP_PERFMON_STATE_COUNT_AND_DUMP_PHANTOM          = 0x5,
-पूर्ण CP_PERFMON_STATE;
-प्रकार क्रमागत CP_PERFMON_ENABLE_MODE अणु
+} CP_PERFMON_STATE;
+typedef enum CP_PERFMON_ENABLE_MODE {
 	CP_PERFMON_ENABLE_MODE_ALWAYS_COUNT              = 0x0,
 	CP_PERFMON_ENABLE_MODE_RESERVED_1                = 0x1,
 	CP_PERFMON_ENABLE_MODE_COUNT_CONTEXT_TRUE        = 0x2,
 	CP_PERFMON_ENABLE_MODE_COUNT_CONTEXT_FALSE       = 0x3,
-पूर्ण CP_PERFMON_ENABLE_MODE;
-प्रकार क्रमागत CPG_PERFCOUNT_SEL अणु
+} CP_PERFMON_ENABLE_MODE;
+typedef enum CPG_PERFCOUNT_SEL {
 	CPG_PERF_SEL_ALWAYS_COUNT                        = 0x0,
 	CPG_PERF_SEL_RBIU_FIFO_FULL                      = 0x1,
 	CPG_PERF_SEL_CSF_RTS_BUT_MIU_NOT_RTR             = 0x2,
@@ -632,8 +631,8 @@
 	CPG_PERF_SEL_ATCL2IU_STALL_WAIT_ON_FREE          = 0x2e,
 	CPG_PERF_SEL_ATCL2IU_STALL_WAIT_ON_TAGS          = 0x2f,
 	CPG_PERF_SEL_ATCL1_STALL_ON_TRANSLATION          = 0x30,
-पूर्ण CPG_PERFCOUNT_SEL;
-प्रकार क्रमागत CPF_PERFCOUNT_SEL अणु
+} CPG_PERFCOUNT_SEL;
+typedef enum CPF_PERFCOUNT_SEL {
 	CPF_PERF_SEL_ALWAYS_COUNT                        = 0x0,
 	CPF_PERF_SEL_MIU_STALLED_WAITING_RDREQ_FREE      = 0x1,
 	CPF_PERF_SEL_TCIU_STALLED_WAITING_ON_FREE        = 0x2,
@@ -654,8 +653,8 @@
 	CPF_PERF_SEL_ATCL2IU_STALL_WAIT_ON_FREE          = 0x11,
 	CPF_PERF_SEL_ATCL2IU_STALL_WAIT_ON_TAGS          = 0x12,
 	CPF_PERF_SEL_ATCL1_STALL_ON_TRANSLATION          = 0x13,
-पूर्ण CPF_PERFCOUNT_SEL;
-प्रकार क्रमागत CPC_PERFCOUNT_SEL अणु
+} CPF_PERFCOUNT_SEL;
+typedef enum CPC_PERFCOUNT_SEL {
 	CPC_PERF_SEL_ALWAYS_COUNT                        = 0x0,
 	CPC_PERF_SEL_RCIU_STALL_WAIT_ON_FREE             = 0x1,
 	CPC_PERF_SEL_RCIU_STALL_PRIV_VIOLATION           = 0x2,
@@ -681,72 +680,72 @@
 	CPC_PERF_SEL_ATCL2IU_STALL_WAIT_ON_FREE          = 0x16,
 	CPC_PERF_SEL_ATCL2IU_STALL_WAIT_ON_TAGS          = 0x17,
 	CPC_PERF_SEL_ATCL1_STALL_ON_TRANSLATION          = 0x18,
-पूर्ण CPC_PERFCOUNT_SEL;
-प्रकार क्रमागत CP_ALPHA_TAG_RAM_SEL अणु
+} CPC_PERFCOUNT_SEL;
+typedef enum CP_ALPHA_TAG_RAM_SEL {
 	CPG_TAG_RAM                                      = 0x0,
 	CPC_TAG_RAM                                      = 0x1,
 	CPF_TAG_RAM                                      = 0x2,
 	RSV_TAG_RAM                                      = 0x3,
-पूर्ण CP_ALPHA_TAG_RAM_SEL;
-#घोषणा SEM_ECC_ERROR                             0x0
-#घोषणा SEM_RESERVED                              0x1
-#घोषणा SEM_FAILED                                0x2
-#घोषणा SEM_PASSED                                0x3
-#घोषणा IQ_QUEUE_SLEEP                            0x0
-#घोषणा IQ_OFFLOAD_RETRY                          0x1
-#घोषणा IQ_SCH_WAVE_MSG                           0x2
-#घोषणा IQ_SEM_REARM                              0x3
-#घोषणा IQ_DEQUEUE_RETRY                          0x4
-#घोषणा IQ_INTR_TYPE_PQ                           0x0
-#घोषणा IQ_INTR_TYPE_IB                           0x1
-#घोषणा IQ_INTR_TYPE_MQD                          0x2
-#घोषणा VMID_SZ                                   0x4
-#घोषणा CONFIG_SPACE_START                        0x2000
-#घोषणा CONFIG_SPACE_END                          0x9fff
-#घोषणा CONFIG_SPACE1_START                       0x2000
-#घोषणा CONFIG_SPACE1_END                         0x2bff
-#घोषणा CONFIG_SPACE2_START                       0x3000
-#घोषणा CONFIG_SPACE2_END                         0x9fff
-#घोषणा UCONFIG_SPACE_START                       0xc000
-#घोषणा UCONFIG_SPACE_END                         0xffff
-#घोषणा PERSISTENT_SPACE_START                    0x2c00
-#घोषणा PERSISTENT_SPACE_END                      0x2fff
-#घोषणा CONTEXT_SPACE_START                       0xa000
-#घोषणा CONTEXT_SPACE_END                         0xbfff
-प्रकार क्रमागत ForceControl अणु
+} CP_ALPHA_TAG_RAM_SEL;
+#define SEM_ECC_ERROR                             0x0
+#define SEM_RESERVED                              0x1
+#define SEM_FAILED                                0x2
+#define SEM_PASSED                                0x3
+#define IQ_QUEUE_SLEEP                            0x0
+#define IQ_OFFLOAD_RETRY                          0x1
+#define IQ_SCH_WAVE_MSG                           0x2
+#define IQ_SEM_REARM                              0x3
+#define IQ_DEQUEUE_RETRY                          0x4
+#define IQ_INTR_TYPE_PQ                           0x0
+#define IQ_INTR_TYPE_IB                           0x1
+#define IQ_INTR_TYPE_MQD                          0x2
+#define VMID_SZ                                   0x4
+#define CONFIG_SPACE_START                        0x2000
+#define CONFIG_SPACE_END                          0x9fff
+#define CONFIG_SPACE1_START                       0x2000
+#define CONFIG_SPACE1_END                         0x2bff
+#define CONFIG_SPACE2_START                       0x3000
+#define CONFIG_SPACE2_END                         0x9fff
+#define UCONFIG_SPACE_START                       0xc000
+#define UCONFIG_SPACE_END                         0xffff
+#define PERSISTENT_SPACE_START                    0x2c00
+#define PERSISTENT_SPACE_END                      0x2fff
+#define CONTEXT_SPACE_START                       0xa000
+#define CONTEXT_SPACE_END                         0xbfff
+typedef enum ForceControl {
 	FORCE_OFF                                        = 0x0,
 	FORCE_ENABLE                                     = 0x1,
 	FORCE_DISABLE                                    = 0x2,
 	FORCE_RESERVED                                   = 0x3,
-पूर्ण ForceControl;
-प्रकार क्रमागत ZSamplePosition अणु
+} ForceControl;
+typedef enum ZSamplePosition {
 	Z_SAMPLE_CENTER                                  = 0x0,
 	Z_SAMPLE_CENTROID                                = 0x1,
-पूर्ण ZSamplePosition;
-प्रकार क्रमागत ZOrder अणु
+} ZSamplePosition;
+typedef enum ZOrder {
 	LATE_Z                                           = 0x0,
 	EARLY_Z_THEN_LATE_Z                              = 0x1,
 	RE_Z                                             = 0x2,
 	EARLY_Z_THEN_RE_Z                                = 0x3,
-पूर्ण ZOrder;
-प्रकार क्रमागत ZpassControl अणु
+} ZOrder;
+typedef enum ZpassControl {
 	ZPASS_DISABLE                                    = 0x0,
 	ZPASS_SAMPLES                                    = 0x1,
 	ZPASS_PIXELS                                     = 0x2,
-पूर्ण ZpassControl;
-प्रकार क्रमागत ZModeForce अणु
+} ZpassControl;
+typedef enum ZModeForce {
 	NO_FORCE                                         = 0x0,
 	FORCE_EARLY_Z                                    = 0x1,
 	FORCE_LATE_Z                                     = 0x2,
 	FORCE_RE_Z                                       = 0x3,
-पूर्ण ZModeForce;
-प्रकार क्रमागत ZLimitSumm अणु
+} ZModeForce;
+typedef enum ZLimitSumm {
 	FORCE_SUMM_OFF                                   = 0x0,
 	FORCE_SUMM_MINZ                                  = 0x1,
 	FORCE_SUMM_MAXZ                                  = 0x2,
 	FORCE_SUMM_BOTH                                  = 0x3,
-पूर्ण ZLimitSumm;
-प्रकार क्रमागत CompareFrag अणु
+} ZLimitSumm;
+typedef enum CompareFrag {
 	FRAG_NEVER                                       = 0x0,
 	FRAG_LESS                                        = 0x1,
 	FRAG_EQUAL                                       = 0x2,
@@ -755,8 +754,8 @@
 	FRAG_NOTEQUAL                                    = 0x5,
 	FRAG_GEQUAL                                      = 0x6,
 	FRAG_ALWAYS                                      = 0x7,
-पूर्ण CompareFrag;
-प्रकार क्रमागत StencilOp अणु
+} CompareFrag;
+typedef enum StencilOp {
 	STENCIL_KEEP                                     = 0x0,
 	STENCIL_ZERO                                     = 0x1,
 	STENCIL_ONES                                     = 0x2,
@@ -770,31 +769,31 @@
 	STENCIL_AND                                      = 0xa,
 	STENCIL_OR                                       = 0xb,
 	STENCIL_XOR                                      = 0xc,
-	STENCIL_न_अंकD                                     = 0xd,
+	STENCIL_NAND                                     = 0xd,
 	STENCIL_NOR                                      = 0xe,
 	STENCIL_XNOR                                     = 0xf,
-पूर्ण StencilOp;
-प्रकार क्रमागत ConservativeZExport अणु
+} StencilOp;
+typedef enum ConservativeZExport {
 	EXPORT_ANY_Z                                     = 0x0,
 	EXPORT_LESS_THAN_Z                               = 0x1,
 	EXPORT_GREATER_THAN_Z                            = 0x2,
 	EXPORT_RESERVED                                  = 0x3,
-पूर्ण ConservativeZExport;
-प्रकार क्रमागत DbPSLControl अणु
+} ConservativeZExport;
+typedef enum DbPSLControl {
 	PSLC_AUTO                                        = 0x0,
 	PSLC_ON_HANG_ONLY                                = 0x1,
 	PSLC_ASAP                                        = 0x2,
 	PSLC_COUNTDOWN                                   = 0x3,
-पूर्ण DbPSLControl;
-प्रकार क्रमागत PerfCounter_Vals अणु
+} DbPSLControl;
+typedef enum PerfCounter_Vals {
 	DB_PERF_SEL_SC_DB_tile_sends                     = 0x0,
 	DB_PERF_SEL_SC_DB_tile_busy                      = 0x1,
 	DB_PERF_SEL_SC_DB_tile_stalls                    = 0x2,
 	DB_PERF_SEL_SC_DB_tile_events                    = 0x3,
 	DB_PERF_SEL_SC_DB_tile_tiles                     = 0x4,
 	DB_PERF_SEL_SC_DB_tile_covered                   = 0x5,
-	DB_PERF_SEL_hiz_tc_पढ़ो_starved                  = 0x6,
-	DB_PERF_SEL_hiz_tc_ग_लिखो_stall                   = 0x7,
+	DB_PERF_SEL_hiz_tc_read_starved                  = 0x6,
+	DB_PERF_SEL_hiz_tc_write_stall                   = 0x7,
 	DB_PERF_SEL_hiz_qtiles_culled                    = 0x8,
 	DB_PERF_SEL_his_qtiles_culled                    = 0x9,
 	DB_PERF_SEL_DB_SC_tile_sends                     = 0xa,
@@ -803,11 +802,11 @@
 	DB_PERF_SEL_DB_SC_tile_df_stalls                 = 0xd,
 	DB_PERF_SEL_DB_SC_tile_tiles                     = 0xe,
 	DB_PERF_SEL_DB_SC_tile_culled                    = 0xf,
-	DB_PERF_SEL_DB_SC_tile_hier_समाप्त                 = 0x10,
+	DB_PERF_SEL_DB_SC_tile_hier_kill                 = 0x10,
 	DB_PERF_SEL_DB_SC_tile_fast_ops                  = 0x11,
 	DB_PERF_SEL_DB_SC_tile_no_ops                    = 0x12,
 	DB_PERF_SEL_DB_SC_tile_tile_rate                 = 0x13,
-	DB_PERF_SEL_DB_SC_tile_ssaa_समाप्त                 = 0x14,
+	DB_PERF_SEL_DB_SC_tile_ssaa_kill                 = 0x14,
 	DB_PERF_SEL_DB_SC_tile_fast_z_ops                = 0x15,
 	DB_PERF_SEL_DB_SC_tile_fast_stencil_ops          = 0x16,
 	DB_PERF_SEL_SC_DB_quad_sends                     = 0x17,
@@ -815,7 +814,7 @@
 	DB_PERF_SEL_SC_DB_quad_squads                    = 0x19,
 	DB_PERF_SEL_SC_DB_quad_tiles                     = 0x1a,
 	DB_PERF_SEL_SC_DB_quad_pixels                    = 0x1b,
-	DB_PERF_SEL_SC_DB_quad_समाप्तed_tiles              = 0x1c,
+	DB_PERF_SEL_SC_DB_quad_killed_tiles              = 0x1c,
 	DB_PERF_SEL_DB_SC_quad_sends                     = 0x1d,
 	DB_PERF_SEL_DB_SC_quad_busy                      = 0x1e,
 	DB_PERF_SEL_DB_SC_quad_stalls                    = 0x1f,
@@ -861,10 +860,10 @@
 	DB_PERF_SEL_Tile_Cache_flushes                   = 0x47,
 	DB_PERF_SEL_Tile_Cache_surface_stall             = 0x48,
 	DB_PERF_SEL_Tile_Cache_starves                   = 0x49,
-	DB_PERF_SEL_Tile_Cache_mem_वापस_starve         = 0x4a,
-	DB_PERF_SEL_tcp_dispatcher_पढ़ोs                 = 0x4b,
-	DB_PERF_SEL_tcp_prefetcher_पढ़ोs                 = 0x4c,
-	DB_PERF_SEL_tcp_preloader_पढ़ोs                  = 0x4d,
+	DB_PERF_SEL_Tile_Cache_mem_return_starve         = 0x4a,
+	DB_PERF_SEL_tcp_dispatcher_reads                 = 0x4b,
+	DB_PERF_SEL_tcp_prefetcher_reads                 = 0x4c,
+	DB_PERF_SEL_tcp_preloader_reads                  = 0x4d,
 	DB_PERF_SEL_tcp_dispatcher_flushes               = 0x4e,
 	DB_PERF_SEL_tcp_prefetcher_flushes               = 0x4f,
 	DB_PERF_SEL_tcp_preloader_flushes                = 0x50,
@@ -879,14 +878,14 @@
 	DB_PERF_SEL_Depth_Tile_Cache_noop_tile           = 0x59,
 	DB_PERF_SEL_Depth_Tile_Cache_detailed_noop       = 0x5a,
 	DB_PERF_SEL_Depth_Tile_Cache_event               = 0x5b,
-	DB_PERF_SEL_Depth_Tile_Cache_tile_मुक्तs          = 0x5c,
-	DB_PERF_SEL_Depth_Tile_Cache_data_मुक्तs          = 0x5d,
-	DB_PERF_SEL_Depth_Tile_Cache_mem_वापस_starve   = 0x5e,
+	DB_PERF_SEL_Depth_Tile_Cache_tile_frees          = 0x5c,
+	DB_PERF_SEL_Depth_Tile_Cache_data_frees          = 0x5d,
+	DB_PERF_SEL_Depth_Tile_Cache_mem_return_starve   = 0x5e,
 	DB_PERF_SEL_Stencil_Cache_misses                 = 0x5f,
 	DB_PERF_SEL_Stencil_Cache_hits                   = 0x60,
 	DB_PERF_SEL_Stencil_Cache_flushes                = 0x61,
 	DB_PERF_SEL_Stencil_Cache_starves                = 0x62,
-	DB_PERF_SEL_Stencil_Cache_मुक्तs                  = 0x63,
+	DB_PERF_SEL_Stencil_Cache_frees                  = 0x63,
 	DB_PERF_SEL_Z_Cache_separate_Z_misses            = 0x64,
 	DB_PERF_SEL_Z_Cache_separate_Z_hits              = 0x65,
 	DB_PERF_SEL_Z_Cache_separate_Z_flushes           = 0x66,
@@ -895,12 +894,12 @@
 	DB_PERF_SEL_Z_Cache_pmask_hits                   = 0x69,
 	DB_PERF_SEL_Z_Cache_pmask_flushes                = 0x6a,
 	DB_PERF_SEL_Z_Cache_pmask_starves                = 0x6b,
-	DB_PERF_SEL_Z_Cache_मुक्तs                        = 0x6c,
+	DB_PERF_SEL_Z_Cache_frees                        = 0x6c,
 	DB_PERF_SEL_Plane_Cache_misses                   = 0x6d,
 	DB_PERF_SEL_Plane_Cache_hits                     = 0x6e,
 	DB_PERF_SEL_Plane_Cache_flushes                  = 0x6f,
 	DB_PERF_SEL_Plane_Cache_starves                  = 0x70,
-	DB_PERF_SEL_Plane_Cache_मुक्तs                    = 0x71,
+	DB_PERF_SEL_Plane_Cache_frees                    = 0x71,
 	DB_PERF_SEL_flush_expanded_stencil               = 0x72,
 	DB_PERF_SEL_flush_compressed_stencil             = 0x73,
 	DB_PERF_SEL_flush_single_stencil                 = 0x74,
@@ -922,8 +921,8 @@
 	DB_PERF_SEL_flush_15plane                        = 0x84,
 	DB_PERF_SEL_flush_16plane                        = 0x85,
 	DB_PERF_SEL_flush_expanded_z                     = 0x86,
-	DB_PERF_SEL_earlyZ_रुकोing_क्रम_postZ_करोne        = 0x87,
-	DB_PERF_SEL_reZ_रुकोing_क्रम_postZ_करोne           = 0x88,
+	DB_PERF_SEL_earlyZ_waiting_for_postZ_done        = 0x87,
+	DB_PERF_SEL_reZ_waiting_for_postZ_done           = 0x88,
 	DB_PERF_SEL_dk_tile_sends                        = 0x89,
 	DB_PERF_SEL_dk_tile_busy                         = 0x8a,
 	DB_PERF_SEL_dk_tile_quad_starves                 = 0x8b,
@@ -941,7 +940,7 @@
 	DB_PERF_SEL_qc_in_postZ_tile_stalls_preZ         = 0x97,
 	DB_PERF_SEL_tsc_insert_summarize_stall           = 0x98,
 	DB_PERF_SEL_tl_busy                              = 0x99,
-	DB_PERF_SEL_tl_dtc_पढ़ो_starved                  = 0x9a,
+	DB_PERF_SEL_tl_dtc_read_starved                  = 0x9a,
 	DB_PERF_SEL_tl_z_fetch_stall                     = 0x9b,
 	DB_PERF_SEL_tl_stencil_stall                     = 0x9c,
 	DB_PERF_SEL_tl_z_decompress_stall                = 0x9d,
@@ -970,22 +969,22 @@
 	DB_PERF_SEL_ts_tc_update_stall                   = 0xb4,
 	DB_PERF_SEL_sc_kick_start                        = 0xb5,
 	DB_PERF_SEL_sc_kick_end                          = 0xb6,
-	DB_PERF_SEL_घड़ी_reg_active                     = 0xb7,
-	DB_PERF_SEL_घड़ी_मुख्य_active                    = 0xb8,
-	DB_PERF_SEL_घड़ी_mem_export_active              = 0xb9,
+	DB_PERF_SEL_clock_reg_active                     = 0xb7,
+	DB_PERF_SEL_clock_main_active                    = 0xb8,
+	DB_PERF_SEL_clock_mem_export_active              = 0xb9,
 	DB_PERF_SEL_esr_ps_out_busy                      = 0xba,
 	DB_PERF_SEL_esr_ps_lqf_busy                      = 0xbb,
 	DB_PERF_SEL_esr_ps_lqf_stall                     = 0xbc,
 	DB_PERF_SEL_etr_out_send                         = 0xbd,
 	DB_PERF_SEL_etr_out_busy                         = 0xbe,
-	DB_PERF_SEL_etr_out_ltile_probe_fअगरo_full_stall  = 0xbf,
+	DB_PERF_SEL_etr_out_ltile_probe_fifo_full_stall  = 0xbf,
 	DB_PERF_SEL_etr_out_cb_tile_stall                = 0xc0,
 	DB_PERF_SEL_etr_out_esr_stall                    = 0xc1,
 	DB_PERF_SEL_esr_ps_sqq_busy                      = 0xc2,
 	DB_PERF_SEL_esr_ps_sqq_stall                     = 0xc3,
 	DB_PERF_SEL_esr_eot_fwd_busy                     = 0xc4,
 	DB_PERF_SEL_esr_eot_fwd_holding_squad            = 0xc5,
-	DB_PERF_SEL_esr_eot_fwd_क्रमward                  = 0xc6,
+	DB_PERF_SEL_esr_eot_fwd_forward                  = 0xc6,
 	DB_PERF_SEL_esr_sqq_zi_busy                      = 0xc7,
 	DB_PERF_SEL_esr_sqq_zi_stall                     = 0xc8,
 	DB_PERF_SEL_postzl_sq_pt_busy                    = 0xc9,
@@ -994,7 +993,7 @@
 	DB_PERF_SEL_postzl_se_stall                      = 0xcc,
 	DB_PERF_SEL_postzl_partial_launch                = 0xcd,
 	DB_PERF_SEL_postzl_full_launch                   = 0xce,
-	DB_PERF_SEL_postzl_partial_रुकोing               = 0xcf,
+	DB_PERF_SEL_postzl_partial_waiting               = 0xcf,
 	DB_PERF_SEL_postzl_tile_mem_stall                = 0xd0,
 	DB_PERF_SEL_postzl_tile_init_stall               = 0xd1,
 	DB_PEFF_SEL_prezl_tile_mem_stall                 = 0xd2,
@@ -1044,22 +1043,22 @@
 	DB_PERF_SEL_Op_Pipe_Prez_Busy                    = 0xfe,
 	DB_PERF_SEL_Op_Pipe_Postz_Busy                   = 0xff,
 	DB_PERF_SEL_di_dt_stall                          = 0x100,
-	DB_PERF_SEL_DB_SC_quad_द्विगुन_quad               = 0x101,
+	DB_PERF_SEL_DB_SC_quad_double_quad               = 0x101,
 	DB_PERF_SEL_SX_DB_quad_export_quads              = 0x102,
-	DB_PERF_SEL_SX_DB_quad_द्विगुन_क्रमmat             = 0x103,
-	DB_PERF_SEL_SX_DB_quad_fast_क्रमmat               = 0x104,
-	DB_PERF_SEL_SX_DB_quad_slow_क्रमmat               = 0x105,
+	DB_PERF_SEL_SX_DB_quad_double_format             = 0x103,
+	DB_PERF_SEL_SX_DB_quad_fast_format               = 0x104,
+	DB_PERF_SEL_SX_DB_quad_slow_format               = 0x105,
 	DB_PERF_SEL_DB_CB_lquad_export_quads             = 0x106,
-	DB_PERF_SEL_DB_CB_lquad_द्विगुन_क्रमmat            = 0x107,
-	DB_PERF_SEL_DB_CB_lquad_fast_क्रमmat              = 0x108,
-	DB_PERF_SEL_DB_CB_lquad_slow_क्रमmat              = 0x109,
-पूर्ण PerfCounter_Vals;
-प्रकार क्रमागत RingCounterControl अणु
+	DB_PERF_SEL_DB_CB_lquad_double_format            = 0x107,
+	DB_PERF_SEL_DB_CB_lquad_fast_format              = 0x108,
+	DB_PERF_SEL_DB_CB_lquad_slow_format              = 0x109,
+} PerfCounter_Vals;
+typedef enum RingCounterControl {
 	COUNTER_RING_SPLIT                               = 0x0,
 	COUNTER_RING_0                                   = 0x1,
 	COUNTER_RING_1                                   = 0x2,
-पूर्ण RingCounterControl;
-प्रकार क्रमागत PixelPipeCounterId अणु
+} RingCounterControl;
+typedef enum PixelPipeCounterId {
 	PIXEL_PIPE_OCCLUSION_COUNT_0                     = 0x0,
 	PIXEL_PIPE_OCCLUSION_COUNT_1                     = 0x1,
 	PIXEL_PIPE_OCCLUSION_COUNT_2                     = 0x2,
@@ -1068,21 +1067,21 @@
 	PIXEL_PIPE_SCREEN_MAX_EXTENTS_0                  = 0x5,
 	PIXEL_PIPE_SCREEN_MIN_EXTENTS_1                  = 0x6,
 	PIXEL_PIPE_SCREEN_MAX_EXTENTS_1                  = 0x7,
-पूर्ण PixelPipeCounterId;
-प्रकार क्रमागत PixelPipeStride अणु
+} PixelPipeCounterId;
+typedef enum PixelPipeStride {
 	PIXEL_PIPE_STRIDE_32_BITS                        = 0x0,
 	PIXEL_PIPE_STRIDE_64_BITS                        = 0x1,
 	PIXEL_PIPE_STRIDE_128_BITS                       = 0x2,
 	PIXEL_PIPE_STRIDE_256_BITS                       = 0x3,
-पूर्ण PixelPipeStride;
-प्रकार क्रमागत GB_EDC_DED_MODE अणु
+} PixelPipeStride;
+typedef enum GB_EDC_DED_MODE {
 	GB_EDC_DED_MODE_LOG                              = 0x0,
 	GB_EDC_DED_MODE_HALT                             = 0x1,
 	GB_EDC_DED_MODE_INT_HALT                         = 0x2,
-पूर्ण GB_EDC_DED_MODE;
-#घोषणा GB_TILING_CONFIG_TABLE_SIZE               0x20
-#घोषणा GB_TILING_CONFIG_MACROTABLE_SIZE          0x10
-प्रकार क्रमागत GRBM_PERF_SEL अणु
+} GB_EDC_DED_MODE;
+#define GB_TILING_CONFIG_TABLE_SIZE               0x20
+#define GB_TILING_CONFIG_MACROTABLE_SIZE          0x10
+typedef enum GRBM_PERF_SEL {
 	GRBM_PERF_SEL_COUNT                              = 0x0,
 	GRBM_PERF_SEL_USER_DEFINED                       = 0x1,
 	GRBM_PERF_SEL_GUI_ACTIVE                         = 0x2,
@@ -1117,8 +1116,8 @@
 	GRBM_PERF_SEL_CPF_BUSY                           = 0x1f,
 	GRBM_PERF_SEL_WD_BUSY                            = 0x20,
 	GRBM_PERF_SEL_WD_NO_DMA_BUSY                     = 0x21,
-पूर्ण GRBM_PERF_SEL;
-प्रकार क्रमागत GRBM_SE0_PERF_SEL अणु
+} GRBM_PERF_SEL;
+typedef enum GRBM_SE0_PERF_SEL {
 	GRBM_SE0_PERF_SEL_COUNT                          = 0x0,
 	GRBM_SE0_PERF_SEL_USER_DEFINED                   = 0x1,
 	GRBM_SE0_PERF_SEL_CB_BUSY                        = 0x2,
@@ -1134,8 +1133,8 @@
 	GRBM_SE0_PERF_SEL_PA_BUSY                        = 0xc,
 	GRBM_SE0_PERF_SEL_VGT_BUSY                       = 0xd,
 	GRBM_SE0_PERF_SEL_BCI_BUSY                       = 0xe,
-पूर्ण GRBM_SE0_PERF_SEL;
-प्रकार क्रमागत GRBM_SE1_PERF_SEL अणु
+} GRBM_SE0_PERF_SEL;
+typedef enum GRBM_SE1_PERF_SEL {
 	GRBM_SE1_PERF_SEL_COUNT                          = 0x0,
 	GRBM_SE1_PERF_SEL_USER_DEFINED                   = 0x1,
 	GRBM_SE1_PERF_SEL_CB_BUSY                        = 0x2,
@@ -1151,8 +1150,8 @@
 	GRBM_SE1_PERF_SEL_PA_BUSY                        = 0xc,
 	GRBM_SE1_PERF_SEL_VGT_BUSY                       = 0xd,
 	GRBM_SE1_PERF_SEL_BCI_BUSY                       = 0xe,
-पूर्ण GRBM_SE1_PERF_SEL;
-प्रकार क्रमागत GRBM_SE2_PERF_SEL अणु
+} GRBM_SE1_PERF_SEL;
+typedef enum GRBM_SE2_PERF_SEL {
 	GRBM_SE2_PERF_SEL_COUNT                          = 0x0,
 	GRBM_SE2_PERF_SEL_USER_DEFINED                   = 0x1,
 	GRBM_SE2_PERF_SEL_CB_BUSY                        = 0x2,
@@ -1168,8 +1167,8 @@
 	GRBM_SE2_PERF_SEL_PA_BUSY                        = 0xc,
 	GRBM_SE2_PERF_SEL_VGT_BUSY                       = 0xd,
 	GRBM_SE2_PERF_SEL_BCI_BUSY                       = 0xe,
-पूर्ण GRBM_SE2_PERF_SEL;
-प्रकार क्रमागत GRBM_SE3_PERF_SEL अणु
+} GRBM_SE2_PERF_SEL;
+typedef enum GRBM_SE3_PERF_SEL {
 	GRBM_SE3_PERF_SEL_COUNT                          = 0x0,
 	GRBM_SE3_PERF_SEL_USER_DEFINED                   = 0x1,
 	GRBM_SE3_PERF_SEL_CB_BUSY                        = 0x2,
@@ -1185,8 +1184,8 @@
 	GRBM_SE3_PERF_SEL_PA_BUSY                        = 0xc,
 	GRBM_SE3_PERF_SEL_VGT_BUSY                       = 0xd,
 	GRBM_SE3_PERF_SEL_BCI_BUSY                       = 0xe,
-पूर्ण GRBM_SE3_PERF_SEL;
-प्रकार क्रमागत SU_PERFCNT_SEL अणु
+} GRBM_SE3_PERF_SEL;
+typedef enum SU_PERFCNT_SEL {
 	PERF_PAPC_PASX_REQ                               = 0x0,
 	PERF_PAPC_PASX_DISABLE_PIPE                      = 0x1,
 	PERF_PAPC_PASX_FIRST_VECTOR                      = 0x2,
@@ -1194,9 +1193,9 @@
 	PERF_PAPC_PASX_FIRST_DEAD                        = 0x4,
 	PERF_PAPC_PASX_SECOND_DEAD                       = 0x5,
 	PERF_PAPC_PASX_VTX_KILL_DISCARD                  = 0x6,
-	PERF_PAPC_PASX_VTX_न_अंक_DISCARD                   = 0x7,
+	PERF_PAPC_PASX_VTX_NAN_DISCARD                   = 0x7,
 	PERF_PAPC_PA_INPUT_PRIM                          = 0x8,
-	PERF_PAPC_PA_INPUT_शून्य_PRIM                     = 0x9,
+	PERF_PAPC_PA_INPUT_NULL_PRIM                     = 0x9,
 	PERF_PAPC_PA_INPUT_EVENT_FLAG                    = 0xa,
 	PERF_PAPC_PA_INPUT_FIRST_PRIM_SLOT               = 0xb,
 	PERF_PAPC_PA_INPUT_END_OF_PACKET                 = 0xc,
@@ -1206,8 +1205,8 @@
 	PERF_PAPC_CLPR_VV_CULL_PRIM                      = 0x10,
 	PERF_PAPC_CLPR_UCP_CULL_PRIM                     = 0x11,
 	PERF_PAPC_CLPR_VTX_KILL_CULL_PRIM                = 0x12,
-	PERF_PAPC_CLPR_VTX_न_अंक_CULL_PRIM                 = 0x13,
-	PERF_PAPC_CLPR_CULL_TO_शून्य_PRIM                 = 0x14,
+	PERF_PAPC_CLPR_VTX_NAN_CULL_PRIM                 = 0x13,
+	PERF_PAPC_CLPR_CULL_TO_NULL_PRIM                 = 0x14,
 	PERF_PAPC_CLPR_VVUCP_CLIP_PRIM                   = 0x15,
 	PERF_PAPC_CLPR_VV_CLIP_PRIM                      = 0x16,
 	PERF_PAPC_CLPR_UCP_CLIP_PRIM                     = 0x17,
@@ -1226,9 +1225,9 @@
 	PERF_PAPC_CLPR_CLIP_PLANE_BOTTOM                 = 0x24,
 	PERF_PAPC_CLPR_GSC_KILL_CULL_PRIM                = 0x25,
 	PERF_PAPC_CLPR_RASTER_KILL_CULL_PRIM             = 0x26,
-	PERF_PAPC_CLSM_शून्य_PRIM                         = 0x27,
+	PERF_PAPC_CLSM_NULL_PRIM                         = 0x27,
 	PERF_PAPC_CLSM_TOTALLY_VISIBLE_PRIM              = 0x28,
-	PERF_PAPC_CLSM_CULL_TO_शून्य_PRIM                 = 0x29,
+	PERF_PAPC_CLSM_CULL_TO_NULL_PRIM                 = 0x29,
 	PERF_PAPC_CLSM_OUT_PRIM_CNT_1                    = 0x2a,
 	PERF_PAPC_CLSM_OUT_PRIM_CNT_2                    = 0x2b,
 	PERF_PAPC_CLSM_OUT_PRIM_CNT_3                    = 0x2c,
@@ -1238,7 +1237,7 @@
 	PERF_PAPC_CLIPGA_VTE_KILL_PRIM                   = 0x30,
 	PERF_PAPC_SU_INPUT_PRIM                          = 0x31,
 	PERF_PAPC_SU_INPUT_CLIP_PRIM                     = 0x32,
-	PERF_PAPC_SU_INPUT_शून्य_PRIM                     = 0x33,
+	PERF_PAPC_SU_INPUT_NULL_PRIM                     = 0x33,
 	PERF_PAPC_SU_INPUT_PRIM_DUAL                     = 0x34,
 	PERF_PAPC_SU_INPUT_CLIP_PRIM_DUAL                = 0x35,
 	PERF_PAPC_SU_ZERO_AREA_CULL_PRIM                 = 0x36,
@@ -1250,7 +1249,7 @@
 	PERF_PAPC_SU_POLYMODE_INVALID_FILL               = 0x3c,
 	PERF_PAPC_SU_OUTPUT_PRIM                         = 0x3d,
 	PERF_PAPC_SU_OUTPUT_CLIP_PRIM                    = 0x3e,
-	PERF_PAPC_SU_OUTPUT_शून्य_PRIM                    = 0x3f,
+	PERF_PAPC_SU_OUTPUT_NULL_PRIM                    = 0x3f,
 	PERF_PAPC_SU_OUTPUT_EVENT_FLAG                   = 0x40,
 	PERF_PAPC_SU_OUTPUT_FIRST_PRIM_SLOT              = 0x41,
 	PERF_PAPC_SU_OUTPUT_END_OF_PACKET                = 0x42,
@@ -1313,9 +1312,9 @@
 	PERF_PAPC_SU_SE0_OUTPUT_PRIM                     = 0x7b,
 	PERF_PAPC_SU_SE1_OUTPUT_PRIM                     = 0x7c,
 	PERF_PAPC_SU_SE01_OUTPUT_PRIM                    = 0x7d,
-	PERF_PAPC_SU_SE0_OUTPUT_शून्य_PRIM                = 0x7e,
-	PERF_PAPC_SU_SE1_OUTPUT_शून्य_PRIM                = 0x7f,
-	PERF_PAPC_SU_SE01_OUTPUT_शून्य_PRIM               = 0x80,
+	PERF_PAPC_SU_SE0_OUTPUT_NULL_PRIM                = 0x7e,
+	PERF_PAPC_SU_SE1_OUTPUT_NULL_PRIM                = 0x7f,
+	PERF_PAPC_SU_SE01_OUTPUT_NULL_PRIM               = 0x80,
 	PERF_PAPC_SU_SE0_OUTPUT_FIRST_PRIM_SLOT          = 0x81,
 	PERF_PAPC_SU_SE1_OUTPUT_FIRST_PRIM_SLOT          = 0x82,
 	PERF_PAPC_SU_SE0_STALLED_SC                      = 0x83,
@@ -1328,8 +1327,8 @@
 	PERF_PAPC_SU_SE3_PRIM_FILTER_CULL                = 0x8a,
 	PERF_PAPC_SU_SE2_OUTPUT_PRIM                     = 0x8b,
 	PERF_PAPC_SU_SE3_OUTPUT_PRIM                     = 0x8c,
-	PERF_PAPC_SU_SE2_OUTPUT_शून्य_PRIM                = 0x8d,
-	PERF_PAPC_SU_SE3_OUTPUT_शून्य_PRIM                = 0x8e,
+	PERF_PAPC_SU_SE2_OUTPUT_NULL_PRIM                = 0x8d,
+	PERF_PAPC_SU_SE3_OUTPUT_NULL_PRIM                = 0x8e,
 	PERF_PAPC_SU_SE0_OUTPUT_END_OF_PACKET            = 0x8f,
 	PERF_PAPC_SU_SE1_OUTPUT_END_OF_PACKET            = 0x90,
 	PERF_PAPC_SU_SE2_OUTPUT_END_OF_PACKET            = 0x91,
@@ -1340,8 +1339,8 @@
 	PERF_PAPC_SU_SE3_OUTPUT_EOPG                     = 0x96,
 	PERF_PAPC_SU_SE2_STALLED_SC                      = 0x97,
 	PERF_PAPC_SU_SE3_STALLED_SC                      = 0x98,
-पूर्ण SU_PERFCNT_SEL;
-प्रकार क्रमागत SC_PERFCNT_SEL अणु
+} SU_PERFCNT_SEL;
+typedef enum SC_PERFCNT_SEL {
 	SC_SRPS_WINDOW_VALID                             = 0x0,
 	SC_PSSW_WINDOW_VALID                             = 0x1,
 	SC_TPQZ_WINDOW_VALID                             = 0x2,
@@ -1660,7 +1659,7 @@
 	SC_PA3_SC_EVENT_WE                               = 0x13b,
 	SC_PS_ARB_OOO_THRESHOLD_SWITCH_TO_DESIRED_FIFO   = 0x13c,
 	SC_PS_ARB_OOO_FIFO_EMPTY_SWITCH                  = 0x13d,
-	SC_PS_ARB_शून्य_PRIM_BUBBLE_POP                   = 0x13e,
+	SC_PS_ARB_NULL_PRIM_BUBBLE_POP                   = 0x13e,
 	SC_PS_ARB_EOP_POP_SYNC_POP                       = 0x13f,
 	SC_PS_ARB_EVENT_SYNC_POP                         = 0x140,
 	SC_SC_PS_ENG_MULTICYCLE_BUBBLE                   = 0x141,
@@ -1695,8 +1694,8 @@
 	SC_PS_CTX_DONE_FIFO_POP                          = 0x15e,
 	SC_MULTICYCLE_BUBBLE_FREEZE                      = 0x15f,
 	SC_EOP_SYNC_WINDOW                               = 0x160,
-	SC_PA0_SC_शून्य_WE                                = 0x161,
-	SC_PA0_SC_शून्य_DEALLOC_WE                        = 0x162,
+	SC_PA0_SC_NULL_WE                                = 0x161,
+	SC_PA0_SC_NULL_DEALLOC_WE                        = 0x162,
 	SC_PA0_SC_DATA_FIFO_EOPG_RD                      = 0x163,
 	SC_PA0_SC_DATA_FIFO_EOP_RD                       = 0x164,
 	SC_PA0_SC_DEALLOC_0_RD                           = 0x165,
@@ -1705,20 +1704,20 @@
 	SC_PA1_SC_DATA_FIFO_EOP_RD                       = 0x168,
 	SC_PA1_SC_DEALLOC_0_RD                           = 0x169,
 	SC_PA1_SC_DEALLOC_1_RD                           = 0x16a,
-	SC_PA1_SC_शून्य_WE                                = 0x16b,
-	SC_PA1_SC_शून्य_DEALLOC_WE                        = 0x16c,
+	SC_PA1_SC_NULL_WE                                = 0x16b,
+	SC_PA1_SC_NULL_DEALLOC_WE                        = 0x16c,
 	SC_PA2_SC_DATA_FIFO_EOPG_RD                      = 0x16d,
 	SC_PA2_SC_DATA_FIFO_EOP_RD                       = 0x16e,
 	SC_PA2_SC_DEALLOC_0_RD                           = 0x16f,
 	SC_PA2_SC_DEALLOC_1_RD                           = 0x170,
-	SC_PA2_SC_शून्य_WE                                = 0x171,
-	SC_PA2_SC_शून्य_DEALLOC_WE                        = 0x172,
+	SC_PA2_SC_NULL_WE                                = 0x171,
+	SC_PA2_SC_NULL_DEALLOC_WE                        = 0x172,
 	SC_PA3_SC_DATA_FIFO_EOPG_RD                      = 0x173,
 	SC_PA3_SC_DATA_FIFO_EOP_RD                       = 0x174,
 	SC_PA3_SC_DEALLOC_0_RD                           = 0x175,
 	SC_PA3_SC_DEALLOC_1_RD                           = 0x176,
-	SC_PA3_SC_शून्य_WE                                = 0x177,
-	SC_PA3_SC_शून्य_DEALLOC_WE                        = 0x178,
+	SC_PA3_SC_NULL_WE                                = 0x177,
+	SC_PA3_SC_NULL_DEALLOC_WE                        = 0x178,
 	SC_PS_PA0_SC_FIFO_EMPTY                          = 0x179,
 	SC_PS_PA0_SC_FIFO_FULL                           = 0x17a,
 	SC_PA0_PS_DATA_SEND                              = 0x17b,
@@ -1739,134 +1738,134 @@
 	SC_SCB_BUSY                                      = 0x18a,
 	SC_STARVED_BY_PA_WITH_UNSELECTED_PA_NOT_EMPTY    = 0x18b,
 	SC_STARVED_BY_PA_WITH_UNSELECTED_PA_FULL         = 0x18c,
-पूर्ण SC_PERFCNT_SEL;
-प्रकार क्रमागत SePairXsel अणु
+} SC_PERFCNT_SEL;
+typedef enum SePairXsel {
 	RASTER_CONFIG_SE_PAIR_XSEL_8_WIDE_TILE           = 0x0,
 	RASTER_CONFIG_SE_PAIR_XSEL_16_WIDE_TILE          = 0x1,
 	RASTER_CONFIG_SE_PAIR_XSEL_32_WIDE_TILE          = 0x2,
 	RASTER_CONFIG_SE_PAIR_XSEL_64_WIDE_TILE          = 0x3,
-पूर्ण SePairXsel;
-प्रकार क्रमागत SePairYsel अणु
+} SePairXsel;
+typedef enum SePairYsel {
 	RASTER_CONFIG_SE_PAIR_YSEL_8_WIDE_TILE           = 0x0,
 	RASTER_CONFIG_SE_PAIR_YSEL_16_WIDE_TILE          = 0x1,
 	RASTER_CONFIG_SE_PAIR_YSEL_32_WIDE_TILE          = 0x2,
 	RASTER_CONFIG_SE_PAIR_YSEL_64_WIDE_TILE          = 0x3,
-पूर्ण SePairYsel;
-प्रकार क्रमागत SePairMap अणु
+} SePairYsel;
+typedef enum SePairMap {
 	RASTER_CONFIG_SE_PAIR_MAP_0                      = 0x0,
 	RASTER_CONFIG_SE_PAIR_MAP_1                      = 0x1,
 	RASTER_CONFIG_SE_PAIR_MAP_2                      = 0x2,
 	RASTER_CONFIG_SE_PAIR_MAP_3                      = 0x3,
-पूर्ण SePairMap;
-प्रकार क्रमागत SeXsel अणु
+} SePairMap;
+typedef enum SeXsel {
 	RASTER_CONFIG_SE_XSEL_8_WIDE_TILE                = 0x0,
 	RASTER_CONFIG_SE_XSEL_16_WIDE_TILE               = 0x1,
 	RASTER_CONFIG_SE_XSEL_32_WIDE_TILE               = 0x2,
 	RASTER_CONFIG_SE_XSEL_64_WIDE_TILE               = 0x3,
-पूर्ण SeXsel;
-प्रकार क्रमागत SeYsel अणु
+} SeXsel;
+typedef enum SeYsel {
 	RASTER_CONFIG_SE_YSEL_8_WIDE_TILE                = 0x0,
 	RASTER_CONFIG_SE_YSEL_16_WIDE_TILE               = 0x1,
 	RASTER_CONFIG_SE_YSEL_32_WIDE_TILE               = 0x2,
 	RASTER_CONFIG_SE_YSEL_64_WIDE_TILE               = 0x3,
-पूर्ण SeYsel;
-प्रकार क्रमागत SeMap अणु
+} SeYsel;
+typedef enum SeMap {
 	RASTER_CONFIG_SE_MAP_0                           = 0x0,
 	RASTER_CONFIG_SE_MAP_1                           = 0x1,
 	RASTER_CONFIG_SE_MAP_2                           = 0x2,
 	RASTER_CONFIG_SE_MAP_3                           = 0x3,
-पूर्ण SeMap;
-प्रकार क्रमागत ScXsel अणु
+} SeMap;
+typedef enum ScXsel {
 	RASTER_CONFIG_SC_XSEL_8_WIDE_TILE                = 0x0,
 	RASTER_CONFIG_SC_XSEL_16_WIDE_TILE               = 0x1,
 	RASTER_CONFIG_SC_XSEL_32_WIDE_TILE               = 0x2,
 	RASTER_CONFIG_SC_XSEL_64_WIDE_TILE               = 0x3,
-पूर्ण ScXsel;
-प्रकार क्रमागत ScYsel अणु
+} ScXsel;
+typedef enum ScYsel {
 	RASTER_CONFIG_SC_YSEL_8_WIDE_TILE                = 0x0,
 	RASTER_CONFIG_SC_YSEL_16_WIDE_TILE               = 0x1,
 	RASTER_CONFIG_SC_YSEL_32_WIDE_TILE               = 0x2,
 	RASTER_CONFIG_SC_YSEL_64_WIDE_TILE               = 0x3,
-पूर्ण ScYsel;
-प्रकार क्रमागत ScMap अणु
+} ScYsel;
+typedef enum ScMap {
 	RASTER_CONFIG_SC_MAP_0                           = 0x0,
 	RASTER_CONFIG_SC_MAP_1                           = 0x1,
 	RASTER_CONFIG_SC_MAP_2                           = 0x2,
 	RASTER_CONFIG_SC_MAP_3                           = 0x3,
-पूर्ण ScMap;
-प्रकार क्रमागत PkrXsel2 अणु
+} ScMap;
+typedef enum PkrXsel2 {
 	RASTER_CONFIG_PKR_XSEL2_0                        = 0x0,
 	RASTER_CONFIG_PKR_XSEL2_1                        = 0x1,
 	RASTER_CONFIG_PKR_XSEL2_2                        = 0x2,
 	RASTER_CONFIG_PKR_XSEL2_3                        = 0x3,
-पूर्ण PkrXsel2;
-प्रकार क्रमागत PkrXsel अणु
+} PkrXsel2;
+typedef enum PkrXsel {
 	RASTER_CONFIG_PKR_XSEL_0                         = 0x0,
 	RASTER_CONFIG_PKR_XSEL_1                         = 0x1,
 	RASTER_CONFIG_PKR_XSEL_2                         = 0x2,
 	RASTER_CONFIG_PKR_XSEL_3                         = 0x3,
-पूर्ण PkrXsel;
-प्रकार क्रमागत PkrYsel अणु
+} PkrXsel;
+typedef enum PkrYsel {
 	RASTER_CONFIG_PKR_YSEL_0                         = 0x0,
 	RASTER_CONFIG_PKR_YSEL_1                         = 0x1,
 	RASTER_CONFIG_PKR_YSEL_2                         = 0x2,
 	RASTER_CONFIG_PKR_YSEL_3                         = 0x3,
-पूर्ण PkrYsel;
-प्रकार क्रमागत PkrMap अणु
+} PkrYsel;
+typedef enum PkrMap {
 	RASTER_CONFIG_PKR_MAP_0                          = 0x0,
 	RASTER_CONFIG_PKR_MAP_1                          = 0x1,
 	RASTER_CONFIG_PKR_MAP_2                          = 0x2,
 	RASTER_CONFIG_PKR_MAP_3                          = 0x3,
-पूर्ण PkrMap;
-प्रकार क्रमागत RbXsel अणु
+} PkrMap;
+typedef enum RbXsel {
 	RASTER_CONFIG_RB_XSEL_0                          = 0x0,
 	RASTER_CONFIG_RB_XSEL_1                          = 0x1,
-पूर्ण RbXsel;
-प्रकार क्रमागत RbYsel अणु
+} RbXsel;
+typedef enum RbYsel {
 	RASTER_CONFIG_RB_YSEL_0                          = 0x0,
 	RASTER_CONFIG_RB_YSEL_1                          = 0x1,
-पूर्ण RbYsel;
-प्रकार क्रमागत RbXsel2 अणु
+} RbYsel;
+typedef enum RbXsel2 {
 	RASTER_CONFIG_RB_XSEL2_0                         = 0x0,
 	RASTER_CONFIG_RB_XSEL2_1                         = 0x1,
 	RASTER_CONFIG_RB_XSEL2_2                         = 0x2,
 	RASTER_CONFIG_RB_XSEL2_3                         = 0x3,
-पूर्ण RbXsel2;
-प्रकार क्रमागत RbMap अणु
+} RbXsel2;
+typedef enum RbMap {
 	RASTER_CONFIG_RB_MAP_0                           = 0x0,
 	RASTER_CONFIG_RB_MAP_1                           = 0x1,
 	RASTER_CONFIG_RB_MAP_2                           = 0x2,
 	RASTER_CONFIG_RB_MAP_3                           = 0x3,
-पूर्ण RbMap;
-प्रकार क्रमागत CSDATA_TYPE अणु
+} RbMap;
+typedef enum CSDATA_TYPE {
 	CSDATA_TYPE_TG                                   = 0x0,
 	CSDATA_TYPE_STATE                                = 0x1,
 	CSDATA_TYPE_EVENT                                = 0x2,
 	CSDATA_TYPE_PRIVATE                              = 0x3,
-पूर्ण CSDATA_TYPE;
-#घोषणा CSDATA_TYPE_WIDTH                         0x2
-#घोषणा CSDATA_ADDR_WIDTH                         0x7
-#घोषणा CSDATA_DATA_WIDTH                         0x20
-प्रकार क्रमागत SPI_SAMPLE_CNTL अणु
+} CSDATA_TYPE;
+#define CSDATA_TYPE_WIDTH                         0x2
+#define CSDATA_ADDR_WIDTH                         0x7
+#define CSDATA_DATA_WIDTH                         0x20
+typedef enum SPI_SAMPLE_CNTL {
 	CENTROIDS_ONLY                                   = 0x0,
 	CENTERS_ONLY                                     = 0x1,
 	CENTROIDS_AND_CENTERS                            = 0x2,
 	UNDEF                                            = 0x3,
-पूर्ण SPI_SAMPLE_CNTL;
-प्रकार क्रमागत SPI_FOG_MODE अणु
+} SPI_SAMPLE_CNTL;
+typedef enum SPI_FOG_MODE {
 	SPI_FOG_NONE                                     = 0x0,
 	SPI_FOG_EXP                                      = 0x1,
 	SPI_FOG_EXP2                                     = 0x2,
 	SPI_FOG_LINEAR                                   = 0x3,
-पूर्ण SPI_FOG_MODE;
-प्रकार क्रमागत SPI_PNT_SPRITE_OVERRIDE अणु
+} SPI_FOG_MODE;
+typedef enum SPI_PNT_SPRITE_OVERRIDE {
 	SPI_PNT_SPRITE_SEL_0                             = 0x0,
 	SPI_PNT_SPRITE_SEL_1                             = 0x1,
 	SPI_PNT_SPRITE_SEL_S                             = 0x2,
 	SPI_PNT_SPRITE_SEL_T                             = 0x3,
 	SPI_PNT_SPRITE_SEL_NONE                          = 0x4,
-पूर्ण SPI_PNT_SPRITE_OVERRIDE;
-प्रकार क्रमागत SPI_PERFCNT_SEL अणु
+} SPI_PNT_SPRITE_OVERRIDE;
+typedef enum SPI_PERFCNT_SEL {
 	SPI_PERF_VS_WINDOW_VALID                         = 0x0,
 	SPI_PERF_VS_BUSY                                 = 0x1,
 	SPI_PERF_VS_FIRST_WAVE                           = 0x2,
@@ -2064,15 +2063,15 @@
 	SPI_PERF_VS_LATE_ALLOC_ACCUM                     = 0xc2,
 	SPI_PERF_PC_ALLOC_CNT                            = 0xc3,
 	SPI_PERF_PC_ALLOC_ACCUM                          = 0xc4,
-पूर्ण SPI_PERFCNT_SEL;
-प्रकार क्रमागत SPI_SHADER_FORMAT अणु
+} SPI_PERFCNT_SEL;
+typedef enum SPI_SHADER_FORMAT {
 	SPI_SHADER_NONE                                  = 0x0,
 	SPI_SHADER_1COMP                                 = 0x1,
 	SPI_SHADER_2COMP                                 = 0x2,
 	SPI_SHADER_4COMPRESS                             = 0x3,
 	SPI_SHADER_4COMP                                 = 0x4,
-पूर्ण SPI_SHADER_FORMAT;
-प्रकार क्रमागत SPI_SHADER_EX_FORMAT अणु
+} SPI_SHADER_FORMAT;
+typedef enum SPI_SHADER_EX_FORMAT {
 	SPI_SHADER_ZERO                                  = 0x0,
 	SPI_SHADER_32_R                                  = 0x1,
 	SPI_SHADER_32_GR                                 = 0x2,
@@ -2083,19 +2082,19 @@
 	SPI_SHADER_UINT16_ABGR                           = 0x7,
 	SPI_SHADER_SINT16_ABGR                           = 0x8,
 	SPI_SHADER_32_ABGR                               = 0x9,
-पूर्ण SPI_SHADER_EX_FORMAT;
-प्रकार क्रमागत CLKGATE_SM_MODE अणु
+} SPI_SHADER_EX_FORMAT;
+typedef enum CLKGATE_SM_MODE {
 	ON_SEQ                                           = 0x0,
 	OFF_SEQ                                          = 0x1,
 	PROG_SEQ                                         = 0x2,
 	READ_SEQ                                         = 0x3,
 	SM_MODE_RESERVED                                 = 0x4,
-पूर्ण CLKGATE_SM_MODE;
-प्रकार क्रमागत CLKGATE_BASE_MODE अणु
+} CLKGATE_SM_MODE;
+typedef enum CLKGATE_BASE_MODE {
 	MULT_8                                           = 0x0,
 	MULT_16                                          = 0x1,
-पूर्ण CLKGATE_BASE_MODE;
-प्रकार क्रमागत SQ_TEX_CLAMP अणु
+} CLKGATE_BASE_MODE;
+typedef enum SQ_TEX_CLAMP {
 	SQ_TEX_WRAP                                      = 0x0,
 	SQ_TEX_MIRROR                                    = 0x1,
 	SQ_TEX_CLAMP_LAST_TEXEL                          = 0x2,
@@ -2104,32 +2103,32 @@
 	SQ_TEX_MIRROR_ONCE_HALF_BORDER                   = 0x5,
 	SQ_TEX_CLAMP_BORDER                              = 0x6,
 	SQ_TEX_MIRROR_ONCE_BORDER                        = 0x7,
-पूर्ण SQ_TEX_CLAMP;
-प्रकार क्रमागत SQ_TEX_XY_FILTER अणु
+} SQ_TEX_CLAMP;
+typedef enum SQ_TEX_XY_FILTER {
 	SQ_TEX_XY_FILTER_POINT                           = 0x0,
 	SQ_TEX_XY_FILTER_BILINEAR                        = 0x1,
 	SQ_TEX_XY_FILTER_ANISO_POINT                     = 0x2,
 	SQ_TEX_XY_FILTER_ANISO_BILINEAR                  = 0x3,
-पूर्ण SQ_TEX_XY_FILTER;
-प्रकार क्रमागत SQ_TEX_Z_FILTER अणु
+} SQ_TEX_XY_FILTER;
+typedef enum SQ_TEX_Z_FILTER {
 	SQ_TEX_Z_FILTER_NONE                             = 0x0,
 	SQ_TEX_Z_FILTER_POINT                            = 0x1,
 	SQ_TEX_Z_FILTER_LINEAR                           = 0x2,
-पूर्ण SQ_TEX_Z_FILTER;
-प्रकार क्रमागत SQ_TEX_MIP_FILTER अणु
+} SQ_TEX_Z_FILTER;
+typedef enum SQ_TEX_MIP_FILTER {
 	SQ_TEX_MIP_FILTER_NONE                           = 0x0,
 	SQ_TEX_MIP_FILTER_POINT                          = 0x1,
 	SQ_TEX_MIP_FILTER_LINEAR                         = 0x2,
 	SQ_TEX_MIP_FILTER_POINT_ANISO_ADJ                = 0x3,
-पूर्ण SQ_TEX_MIP_FILTER;
-प्रकार क्रमागत SQ_TEX_ANISO_RATIO अणु
+} SQ_TEX_MIP_FILTER;
+typedef enum SQ_TEX_ANISO_RATIO {
 	SQ_TEX_ANISO_RATIO_1                             = 0x0,
 	SQ_TEX_ANISO_RATIO_2                             = 0x1,
 	SQ_TEX_ANISO_RATIO_4                             = 0x2,
 	SQ_TEX_ANISO_RATIO_8                             = 0x3,
 	SQ_TEX_ANISO_RATIO_16                            = 0x4,
-पूर्ण SQ_TEX_ANISO_RATIO;
-प्रकार क्रमागत SQ_TEX_DEPTH_COMPARE अणु
+} SQ_TEX_ANISO_RATIO;
+typedef enum SQ_TEX_DEPTH_COMPARE {
 	SQ_TEX_DEPTH_COMPARE_NEVER                       = 0x0,
 	SQ_TEX_DEPTH_COMPARE_LESS                        = 0x1,
 	SQ_TEX_DEPTH_COMPARE_EQUAL                       = 0x2,
@@ -2138,20 +2137,20 @@
 	SQ_TEX_DEPTH_COMPARE_NOTEQUAL                    = 0x5,
 	SQ_TEX_DEPTH_COMPARE_GREATEREQUAL                = 0x6,
 	SQ_TEX_DEPTH_COMPARE_ALWAYS                      = 0x7,
-पूर्ण SQ_TEX_DEPTH_COMPARE;
-प्रकार क्रमागत SQ_TEX_BORDER_COLOR अणु
+} SQ_TEX_DEPTH_COMPARE;
+typedef enum SQ_TEX_BORDER_COLOR {
 	SQ_TEX_BORDER_COLOR_TRANS_BLACK                  = 0x0,
 	SQ_TEX_BORDER_COLOR_OPAQUE_BLACK                 = 0x1,
 	SQ_TEX_BORDER_COLOR_OPAQUE_WHITE                 = 0x2,
 	SQ_TEX_BORDER_COLOR_REGISTER                     = 0x3,
-पूर्ण SQ_TEX_BORDER_COLOR;
-प्रकार क्रमागत SQ_RSRC_BUF_TYPE अणु
+} SQ_TEX_BORDER_COLOR;
+typedef enum SQ_RSRC_BUF_TYPE {
 	SQ_RSRC_BUF                                      = 0x0,
 	SQ_RSRC_BUF_RSVD_1                               = 0x1,
 	SQ_RSRC_BUF_RSVD_2                               = 0x2,
 	SQ_RSRC_BUF_RSVD_3                               = 0x3,
-पूर्ण SQ_RSRC_BUF_TYPE;
-प्रकार क्रमागत SQ_RSRC_IMG_TYPE अणु
+} SQ_RSRC_BUF_TYPE;
+typedef enum SQ_RSRC_IMG_TYPE {
 	SQ_RSRC_IMG_RSVD_0                               = 0x0,
 	SQ_RSRC_IMG_RSVD_1                               = 0x1,
 	SQ_RSRC_IMG_RSVD_2                               = 0x2,
@@ -2168,19 +2167,19 @@
 	SQ_RSRC_IMG_2D_ARRAY                             = 0xd,
 	SQ_RSRC_IMG_2D_MSAA                              = 0xe,
 	SQ_RSRC_IMG_2D_MSAA_ARRAY                        = 0xf,
-पूर्ण SQ_RSRC_IMG_TYPE;
-प्रकार क्रमागत SQ_RSRC_FLAT_TYPE अणु
+} SQ_RSRC_IMG_TYPE;
+typedef enum SQ_RSRC_FLAT_TYPE {
 	SQ_RSRC_FLAT_RSVD_0                              = 0x0,
 	SQ_RSRC_FLAT                                     = 0x1,
 	SQ_RSRC_FLAT_RSVD_2                              = 0x2,
 	SQ_RSRC_FLAT_RSVD_3                              = 0x3,
-पूर्ण SQ_RSRC_FLAT_TYPE;
-प्रकार क्रमागत SQ_IMG_FILTER_TYPE अणु
+} SQ_RSRC_FLAT_TYPE;
+typedef enum SQ_IMG_FILTER_TYPE {
 	SQ_IMG_FILTER_MODE_BLEND                         = 0x0,
 	SQ_IMG_FILTER_MODE_MIN                           = 0x1,
 	SQ_IMG_FILTER_MODE_MAX                           = 0x2,
-पूर्ण SQ_IMG_FILTER_TYPE;
-प्रकार क्रमागत SQ_SEL_XYZW01 अणु
+} SQ_IMG_FILTER_TYPE;
+typedef enum SQ_SEL_XYZW01 {
 	SQ_SEL_0                                         = 0x0,
 	SQ_SEL_1                                         = 0x1,
 	SQ_SEL_RESERVED_0                                = 0x2,
@@ -2189,8 +2188,8 @@
 	SQ_SEL_Y                                         = 0x5,
 	SQ_SEL_Z                                         = 0x6,
 	SQ_SEL_W                                         = 0x7,
-पूर्ण SQ_SEL_XYZW01;
-प्रकार क्रमागत SQ_WAVE_TYPE अणु
+} SQ_SEL_XYZW01;
+typedef enum SQ_WAVE_TYPE {
 	SQ_WAVE_TYPE_PS                                  = 0x0,
 	SQ_WAVE_TYPE_VS                                  = 0x1,
 	SQ_WAVE_TYPE_GS                                  = 0x2,
@@ -2199,8 +2198,8 @@
 	SQ_WAVE_TYPE_LS                                  = 0x5,
 	SQ_WAVE_TYPE_CS                                  = 0x6,
 	SQ_WAVE_TYPE_PS1                                 = 0x7,
-पूर्ण SQ_WAVE_TYPE;
-प्रकार क्रमागत SQ_THREAD_TRACE_TOKEN_TYPE अणु
+} SQ_WAVE_TYPE;
+typedef enum SQ_THREAD_TRACE_TOKEN_TYPE {
 	SQ_THREAD_TRACE_TOKEN_MISC                       = 0x0,
 	SQ_THREAD_TRACE_TOKEN_TIMESTAMP                  = 0x1,
 	SQ_THREAD_TRACE_TOKEN_REG                        = 0x2,
@@ -2217,8 +2216,8 @@
 	SQ_THREAD_TRACE_TOKEN_ISSUE                      = 0xd,
 	SQ_THREAD_TRACE_TOKEN_PERF                       = 0xe,
 	SQ_THREAD_TRACE_TOKEN_REG_CS                     = 0xf,
-पूर्ण SQ_THREAD_TRACE_TOKEN_TYPE;
-प्रकार क्रमागत SQ_THREAD_TRACE_MISC_TOKEN_TYPE अणु
+} SQ_THREAD_TRACE_TOKEN_TYPE;
+typedef enum SQ_THREAD_TRACE_MISC_TOKEN_TYPE {
 	SQ_THREAD_TRACE_MISC_TOKEN_TIME                  = 0x0,
 	SQ_THREAD_TRACE_MISC_TOKEN_TIME_RESET            = 0x1,
 	SQ_THREAD_TRACE_MISC_TOKEN_PACKET_LOST           = 0x2,
@@ -2227,8 +2226,8 @@
 	SQ_THREAD_TRACE_MISC_TOKEN_TTRACE_STALL_END      = 0x5,
 	SQ_THREAD_TRACE_MISC_TOKEN_SAVECTX               = 0x6,
 	SQ_THREAD_TRACE_MISC_TOKEN_SHOOT_DOWN            = 0x7,
-पूर्ण SQ_THREAD_TRACE_MISC_TOKEN_TYPE;
-प्रकार क्रमागत SQ_THREAD_TRACE_INST_TYPE अणु
+} SQ_THREAD_TRACE_MISC_TOKEN_TYPE;
+typedef enum SQ_THREAD_TRACE_INST_TYPE {
 	SQ_THREAD_TRACE_INST_TYPE_SMEM_RD                = 0x0,
 	SQ_THREAD_TRACE_INST_TYPE_SALU_32                = 0x1,
 	SQ_THREAD_TRACE_INST_TYPE_VMEM_RD                = 0x2,
@@ -2254,8 +2253,8 @@
 	SQ_THREAD_TRACE_INST_TYPE_VMEM_WR_REPLAY         = 0x16,
 	SQ_THREAD_TRACE_INST_TYPE_FLAT_RD_REPLAY         = 0x17,
 	SQ_THREAD_TRACE_INST_TYPE_FLAT_WR_REPLAY         = 0x18,
-पूर्ण SQ_THREAD_TRACE_INST_TYPE;
-प्रकार क्रमागत SQ_THREAD_TRACE_REG_TYPE अणु
+} SQ_THREAD_TRACE_INST_TYPE;
+typedef enum SQ_THREAD_TRACE_REG_TYPE {
 	SQ_THREAD_TRACE_REG_TYPE_EVENT                   = 0x0,
 	SQ_THREAD_TRACE_REG_TYPE_DRAW                    = 0x1,
 	SQ_THREAD_TRACE_REG_TYPE_DISPATCH                = 0x2,
@@ -2264,42 +2263,42 @@
 	SQ_THREAD_TRACE_REG_TYPE_GFXDEC                  = 0x5,
 	SQ_THREAD_TRACE_REG_TYPE_SHDEC                   = 0x6,
 	SQ_THREAD_TRACE_REG_TYPE_OTHER                   = 0x7,
-पूर्ण SQ_THREAD_TRACE_REG_TYPE;
-प्रकार क्रमागत SQ_THREAD_TRACE_REG_OP अणु
+} SQ_THREAD_TRACE_REG_TYPE;
+typedef enum SQ_THREAD_TRACE_REG_OP {
 	SQ_THREAD_TRACE_REG_OP_READ                      = 0x0,
 	SQ_THREAD_TRACE_REG_OP_WRITE                     = 0x1,
-पूर्ण SQ_THREAD_TRACE_REG_OP;
-प्रकार क्रमागत SQ_THREAD_TRACE_MODE_SEL अणु
+} SQ_THREAD_TRACE_REG_OP;
+typedef enum SQ_THREAD_TRACE_MODE_SEL {
 	SQ_THREAD_TRACE_MODE_OFF                         = 0x0,
 	SQ_THREAD_TRACE_MODE_ON                          = 0x1,
-पूर्ण SQ_THREAD_TRACE_MODE_SEL;
-प्रकार क्रमागत SQ_THREAD_TRACE_CAPTURE_MODE अणु
+} SQ_THREAD_TRACE_MODE_SEL;
+typedef enum SQ_THREAD_TRACE_CAPTURE_MODE {
 	SQ_THREAD_TRACE_CAPTURE_MODE_ALL                 = 0x0,
 	SQ_THREAD_TRACE_CAPTURE_MODE_SELECT              = 0x1,
 	SQ_THREAD_TRACE_CAPTURE_MODE_SELECT_DETAIL       = 0x2,
-पूर्ण SQ_THREAD_TRACE_CAPTURE_MODE;
-प्रकार क्रमागत SQ_THREAD_TRACE_VM_ID_MASK अणु
+} SQ_THREAD_TRACE_CAPTURE_MODE;
+typedef enum SQ_THREAD_TRACE_VM_ID_MASK {
 	SQ_THREAD_TRACE_VM_ID_MASK_SINGLE                = 0x0,
 	SQ_THREAD_TRACE_VM_ID_MASK_ALL                   = 0x1,
 	SQ_THREAD_TRACE_VM_ID_MASK_SINGLE_DETAIL         = 0x2,
-पूर्ण SQ_THREAD_TRACE_VM_ID_MASK;
-प्रकार क्रमागत SQ_THREAD_TRACE_WAVE_MASK अणु
+} SQ_THREAD_TRACE_VM_ID_MASK;
+typedef enum SQ_THREAD_TRACE_WAVE_MASK {
 	SQ_THREAD_TRACE_WAVE_MASK_NONE                   = 0x0,
 	SQ_THREAD_TRACE_WAVE_MASK_ALL                    = 0x1,
-पूर्ण SQ_THREAD_TRACE_WAVE_MASK;
-प्रकार क्रमागत SQ_THREAD_TRACE_ISSUE अणु
-	SQ_THREAD_TRACE_ISSUE_शून्य                       = 0x0,
+} SQ_THREAD_TRACE_WAVE_MASK;
+typedef enum SQ_THREAD_TRACE_ISSUE {
+	SQ_THREAD_TRACE_ISSUE_NULL                       = 0x0,
 	SQ_THREAD_TRACE_ISSUE_STALL                      = 0x1,
 	SQ_THREAD_TRACE_ISSUE_INST                       = 0x2,
 	SQ_THREAD_TRACE_ISSUE_IMMED                      = 0x3,
-पूर्ण SQ_THREAD_TRACE_ISSUE;
-प्रकार क्रमागत SQ_THREAD_TRACE_ISSUE_MASK अणु
+} SQ_THREAD_TRACE_ISSUE;
+typedef enum SQ_THREAD_TRACE_ISSUE_MASK {
 	SQ_THREAD_TRACE_ISSUE_MASK_ALL                   = 0x0,
 	SQ_THREAD_TRACE_ISSUE_MASK_STALLED               = 0x1,
 	SQ_THREAD_TRACE_ISSUE_MASK_STALLED_AND_IMMED     = 0x2,
 	SQ_THREAD_TRACE_ISSUE_MASK_IMMED                 = 0x3,
-पूर्ण SQ_THREAD_TRACE_ISSUE_MASK;
-प्रकार क्रमागत SQ_PERF_SEL अणु
+} SQ_THREAD_TRACE_ISSUE_MASK;
+typedef enum SQ_PERF_SEL {
 	SQ_PERF_SEL_NONE                                 = 0x0,
 	SQ_PERF_SEL_ACCUM_PREV                           = 0x1,
 	SQ_PERF_SEL_CYCLES                               = 0x2,
@@ -2395,7 +2394,7 @@
 	SQ_PERF_SEL_IFETCH_LEVEL                         = 0x5c,
 	SQ_PERF_SEL_CBRANCH_FORK                         = 0x5d,
 	SQ_PERF_SEL_CBRANCH_FORK_SPLIT                   = 0x5e,
-	SQ_PERF_SEL_VALU_LDS_सूचीECT_RD                   = 0x5f,
+	SQ_PERF_SEL_VALU_LDS_DIRECT_RD                   = 0x5f,
 	SQ_PERF_SEL_VALU_LDS_INTERP_OP                   = 0x60,
 	SQ_PERF_SEL_LDS_BANK_CONFLICT                    = 0x61,
 	SQ_PERF_SEL_LDS_ADDR_CONFLICT                    = 0x62,
@@ -2592,8 +2591,8 @@
 	SQ_PERF_SEL_ATC_INSTS_VMEM_REPLAY                = 0x122,
 	SQ_PERF_SEL_ATC_INSTS_SMEM_REPLAY                = 0x123,
 	SQ_PERF_SEL_DUMMY_LAST1                          = 0x12a,
-पूर्ण SQ_PERF_SEL;
-प्रकार क्रमागत SQ_CAC_POWER_SEL अणु
+} SQ_PERF_SEL;
+typedef enum SQ_CAC_POWER_SEL {
 	SQ_CAC_POWER_VALU                                = 0x0,
 	SQ_CAC_POWER_VALU0                               = 0x1,
 	SQ_CAC_POWER_VALU1                               = 0x2,
@@ -2603,24 +2602,24 @@
 	SQ_CAC_POWER_LDS_BUSY                            = 0x6,
 	SQ_CAC_POWER_ALU_BUSY                            = 0x7,
 	SQ_CAC_POWER_TEX_BUSY                            = 0x8,
-पूर्ण SQ_CAC_POWER_SEL;
-प्रकार क्रमागत SQ_IND_CMD_CMD अणु
-	SQ_IND_CMD_CMD_शून्य                              = 0x0,
+} SQ_CAC_POWER_SEL;
+typedef enum SQ_IND_CMD_CMD {
+	SQ_IND_CMD_CMD_NULL                              = 0x0,
 	SQ_IND_CMD_CMD_SETHALT                           = 0x1,
 	SQ_IND_CMD_CMD_SAVECTX                           = 0x2,
 	SQ_IND_CMD_CMD_KILL                              = 0x3,
 	SQ_IND_CMD_CMD_DEBUG                             = 0x4,
 	SQ_IND_CMD_CMD_TRAP                              = 0x5,
 	SQ_IND_CMD_CMD_SET_SPI_PRIO                      = 0x6,
-पूर्ण SQ_IND_CMD_CMD;
-प्रकार क्रमागत SQ_IND_CMD_MODE अणु
+} SQ_IND_CMD_CMD;
+typedef enum SQ_IND_CMD_MODE {
 	SQ_IND_CMD_MODE_SINGLE                           = 0x0,
 	SQ_IND_CMD_MODE_BROADCAST                        = 0x1,
 	SQ_IND_CMD_MODE_BROADCAST_QUEUE                  = 0x2,
 	SQ_IND_CMD_MODE_BROADCAST_PIPE                   = 0x3,
 	SQ_IND_CMD_MODE_BROADCAST_ME                     = 0x4,
-पूर्ण SQ_IND_CMD_MODE;
-प्रकार क्रमागत SQ_EDC_INFO_SOURCE अणु
+} SQ_IND_CMD_MODE;
+typedef enum SQ_EDC_INFO_SOURCE {
 	SQ_EDC_INFO_SOURCE_INVALID                       = 0x0,
 	SQ_EDC_INFO_SOURCE_INST                          = 0x1,
 	SQ_EDC_INFO_SOURCE_SGPR                          = 0x2,
@@ -2628,19 +2627,19 @@
 	SQ_EDC_INFO_SOURCE_LDS                           = 0x4,
 	SQ_EDC_INFO_SOURCE_GDS                           = 0x5,
 	SQ_EDC_INFO_SOURCE_TA                            = 0x6,
-पूर्ण SQ_EDC_INFO_SOURCE;
-प्रकार क्रमागत SQ_ROUND_MODE अणु
+} SQ_EDC_INFO_SOURCE;
+typedef enum SQ_ROUND_MODE {
 	SQ_ROUND_NEAREST_EVEN                            = 0x0,
-	SQ_ROUND_PLUS_अनन्त                           = 0x1,
-	SQ_ROUND_MINUS_अनन्त                          = 0x2,
+	SQ_ROUND_PLUS_INFINITY                           = 0x1,
+	SQ_ROUND_MINUS_INFINITY                          = 0x2,
 	SQ_ROUND_TO_ZERO                                 = 0x3,
-पूर्ण SQ_ROUND_MODE;
-प्रकार क्रमागत SQ_INTERRUPT_WORD_ENCODING अणु
+} SQ_ROUND_MODE;
+typedef enum SQ_INTERRUPT_WORD_ENCODING {
 	SQ_INTERRUPT_WORD_ENCODING_AUTO                  = 0x0,
 	SQ_INTERRUPT_WORD_ENCODING_INST                  = 0x1,
 	SQ_INTERRUPT_WORD_ENCODING_ERROR                 = 0x2,
-पूर्ण SQ_INTERRUPT_WORD_ENCODING;
-प्रकार क्रमागत ENUM_SQ_EXPORT_RAT_INST अणु
+} SQ_INTERRUPT_WORD_ENCODING;
+typedef enum ENUM_SQ_EXPORT_RAT_INST {
 	SQ_EXPORT_RAT_INST_NOP                           = 0x0,
 	SQ_EXPORT_RAT_INST_STORE_TYPED                   = 0x1,
 	SQ_EXPORT_RAT_INST_STORE_RAW                     = 0x2,
@@ -2683,8 +2682,8 @@
 	SQ_EXPORT_RAT_INST_MSKOR_RTN                     = 0x31,
 	SQ_EXPORT_RAT_INST_INC_UINT_RTN                  = 0x32,
 	SQ_EXPORT_RAT_INST_DEC_UINT_RTN                  = 0x33,
-पूर्ण ENUM_SQ_EXPORT_RAT_INST;
-प्रकार क्रमागत SQ_IBUF_ST अणु
+} ENUM_SQ_EXPORT_RAT_INST;
+typedef enum SQ_IBUF_ST {
 	SQ_IBUF_IB_IDLE                                  = 0x0,
 	SQ_IBUF_IB_INI_WAIT_GNT                          = 0x1,
 	SQ_IBUF_IB_INI_WAIT_DRET                         = 0x2,
@@ -2693,8 +2692,8 @@
 	SQ_IBUF_IB_EMPTY_WAIT_DRET                       = 0x5,
 	SQ_IBUF_IB_DRET                                  = 0x6,
 	SQ_IBUF_IB_EMPTY_WAIT_GNT                        = 0x7,
-पूर्ण SQ_IBUF_ST;
-प्रकार क्रमागत SQ_INST_STR_ST अणु
+} SQ_IBUF_ST;
+typedef enum SQ_INST_STR_ST {
 	SQ_INST_STR_IB_WAVE_NORML                        = 0x0,
 	SQ_INST_STR_IB_WAVE2ID_NORMAL_INST_AV            = 0x1,
 	SQ_INST_STR_IB_WAVE_INTERNAL_INST_AV             = 0x2,
@@ -2703,1450 +2702,1450 @@
 	SQ_INST_STR_IB_WAVE_SETVSKIP_ST1                 = 0x5,
 	SQ_INST_STR_IB_WAVE_NOP_SLEEP_WAIT               = 0x6,
 	SQ_INST_STR_IB_WAVE_PC_FROM_SGPR_MSG_WAIT        = 0x7,
-पूर्ण SQ_INST_STR_ST;
-प्रकार क्रमागत SQ_WAVE_IB_ECC_ST अणु
+} SQ_INST_STR_ST;
+typedef enum SQ_WAVE_IB_ECC_ST {
 	SQ_WAVE_IB_ECC_CLEAN                             = 0x0,
 	SQ_WAVE_IB_ECC_ERR_CONTINUE                      = 0x1,
 	SQ_WAVE_IB_ECC_ERR_HALT                          = 0x2,
 	SQ_WAVE_IB_ECC_WITH_ERR_MSG                      = 0x3,
-पूर्ण SQ_WAVE_IB_ECC_ST;
-प्रकार क्रमागत SH_MEM_ADDRESS_MODE अणु
+} SQ_WAVE_IB_ECC_ST;
+typedef enum SH_MEM_ADDRESS_MODE {
 	SH_MEM_ADDRESS_MODE_GPUVM64                      = 0x0,
 	SH_MEM_ADDRESS_MODE_GPUVM32                      = 0x1,
 	SH_MEM_ADDRESS_MODE_HSA64                        = 0x2,
 	SH_MEM_ADDRESS_MODE_HSA32                        = 0x3,
-पूर्ण SH_MEM_ADDRESS_MODE;
-प्रकार क्रमागत SH_MEM_ALIGNMENT_MODE अणु
+} SH_MEM_ADDRESS_MODE;
+typedef enum SH_MEM_ALIGNMENT_MODE {
 	SH_MEM_ALIGNMENT_MODE_DWORD                      = 0x0,
 	SH_MEM_ALIGNMENT_MODE_DWORD_STRICT               = 0x1,
 	SH_MEM_ALIGNMENT_MODE_STRICT                     = 0x2,
 	SH_MEM_ALIGNMENT_MODE_UNALIGNED                  = 0x3,
-पूर्ण SH_MEM_ALIGNMENT_MODE;
-प्रकार क्रमागत SQ_THREAD_TRACE_WAVE_START_COUNT_PREFIX अणु
+} SH_MEM_ALIGNMENT_MODE;
+typedef enum SQ_THREAD_TRACE_WAVE_START_COUNT_PREFIX {
 	SQ_THREAD_TRACE_WAVE_START_COUNT_PREFIX_WREXEC   = 0x18,
 	SQ_THREAD_TRACE_WAVE_START_COUNT_PREFIX_RESTORE  = 0x19,
-पूर्ण SQ_THREAD_TRACE_WAVE_START_COUNT_PREFIX;
-#घोषणा SQ_WAVE_TYPE_PS0                          0x0
-#घोषणा SQIND_GLOBAL_REGS_OFFSET                  0x0
-#घोषणा SQIND_GLOBAL_REGS_SIZE                    0x8
-#घोषणा SQIND_LOCAL_REGS_OFFSET                   0x8
-#घोषणा SQIND_LOCAL_REGS_SIZE                     0x8
-#घोषणा SQIND_WAVE_HWREGS_OFFSET                  0x10
-#घोषणा SQIND_WAVE_HWREGS_SIZE                    0x1f0
-#घोषणा SQIND_WAVE_SGPRS_OFFSET                   0x200
-#घोषणा SQIND_WAVE_SGPRS_SIZE                     0x200
-#घोषणा SQ_GFXDEC_BEGIN                           0xa000
-#घोषणा SQ_GFXDEC_END                             0xc000
-#घोषणा SQ_GFXDEC_STATE_ID_SHIFT                  0xa
-#घोषणा SQDEC_BEGIN                               0x2300
-#घोषणा SQDEC_END                                 0x23ff
-#घोषणा SQPERFSDEC_BEGIN                          0xd9c0
-#घोषणा SQPERFSDEC_END                            0xda40
-#घोषणा SQPERFDDEC_BEGIN                          0xd1c0
-#घोषणा SQPERFDDEC_END                            0xd240
-#घोषणा SQGFXUDEC_BEGIN                           0xc330
-#घोषणा SQGFXUDEC_END                             0xc380
-#घोषणा SQPWRDEC_BEGIN                            0xf08c
-#घोषणा SQPWRDEC_END                              0xf094
-#घोषणा SQ_DISPATCHER_GFX_MIN                     0x10
-#घोषणा SQ_DISPATCHER_GFX_CNT_PER_RING            0x8
-#घोषणा SQ_MAX_PGM_SGPRS                          0x68
-#घोषणा SQ_MAX_PGM_VGPRS                          0x100
-#घोषणा SQ_THREAD_TRACE_TIME_UNIT                 0x4
-#घोषणा SQ_EX_MODE_EXCP_VALU_BASE                 0x0
-#घोषणा SQ_EX_MODE_EXCP_VALU_SIZE                 0x7
-#घोषणा SQ_EX_MODE_EXCP_INVALID                   0x0
-#घोषणा SQ_EX_MODE_EXCP_INPUT_DENORM              0x1
-#घोषणा SQ_EX_MODE_EXCP_DIV0                      0x2
-#घोषणा SQ_EX_MODE_EXCP_OVERFLOW                  0x3
-#घोषणा SQ_EX_MODE_EXCP_UNDERFLOW                 0x4
-#घोषणा SQ_EX_MODE_EXCP_INEXACT                   0x5
-#घोषणा SQ_EX_MODE_EXCP_INT_DIV0                  0x6
-#घोषणा SQ_EX_MODE_EXCP_ADDR_WATCH                0x7
-#घोषणा SQ_EX_MODE_EXCP_MEM_VIOL                  0x8
-#घोषणा INST_ID_PRIV_START                        0x80000000
-#घोषणा INST_ID_ECC_INTERRUPT_MSG                 0xfffffff0
-#घोषणा INST_ID_TTRACE_NEW_PC_MSG                 0xfffffff1
-#घोषणा INST_ID_HW_TRAP                           0xfffffff2
-#घोषणा INST_ID_KILL_SEQ                          0xfffffff3
-#घोषणा INST_ID_SPI_WREXEC                        0xfffffff4
-#घोषणा INST_ID_HOST_REG_TRAP_MSG                 0xfffffffe
-#घोषणा SQ_ENC_SOP1_BITS                          0xbe800000
-#घोषणा SQ_ENC_SOP1_MASK                          0xff800000
-#घोषणा SQ_ENC_SOP1_FIELD                         0x17d
-#घोषणा SQ_ENC_SOPC_BITS                          0xbf000000
-#घोषणा SQ_ENC_SOPC_MASK                          0xff800000
-#घोषणा SQ_ENC_SOPC_FIELD                         0x17e
-#घोषणा SQ_ENC_SOPP_BITS                          0xbf800000
-#घोषणा SQ_ENC_SOPP_MASK                          0xff800000
-#घोषणा SQ_ENC_SOPP_FIELD                         0x17f
-#घोषणा SQ_ENC_SOPK_BITS                          0xb0000000
-#घोषणा SQ_ENC_SOPK_MASK                          0xf0000000
-#घोषणा SQ_ENC_SOPK_FIELD                         0xb
-#घोषणा SQ_ENC_SOP2_BITS                          0x80000000
-#घोषणा SQ_ENC_SOP2_MASK                          0xc0000000
-#घोषणा SQ_ENC_SOP2_FIELD                         0x2
-#घोषणा SQ_ENC_SMEM_BITS                          0xc0000000
-#घोषणा SQ_ENC_SMEM_MASK                          0xfc000000
-#घोषणा SQ_ENC_SMEM_FIELD                         0x30
-#घोषणा SQ_ENC_VOP1_BITS                          0x7e000000
-#घोषणा SQ_ENC_VOP1_MASK                          0xfe000000
-#घोषणा SQ_ENC_VOP1_FIELD                         0x3f
-#घोषणा SQ_ENC_VOPC_BITS                          0x7c000000
-#घोषणा SQ_ENC_VOPC_MASK                          0xfe000000
-#घोषणा SQ_ENC_VOPC_FIELD                         0x3e
-#घोषणा SQ_ENC_VOP2_BITS                          0x0
-#घोषणा SQ_ENC_VOP2_MASK                          0x80000000
-#घोषणा SQ_ENC_VOP2_FIELD                         0x0
-#घोषणा SQ_ENC_VINTRP_BITS                        0xd4000000
-#घोषणा SQ_ENC_VINTRP_MASK                        0xfc000000
-#घोषणा SQ_ENC_VINTRP_FIELD                       0x35
-#घोषणा SQ_ENC_VOP3_BITS                          0xd0000000
-#घोषणा SQ_ENC_VOP3_MASK                          0xfc000000
-#घोषणा SQ_ENC_VOP3_FIELD                         0x34
-#घोषणा SQ_ENC_DS_BITS                            0xd8000000
-#घोषणा SQ_ENC_DS_MASK                            0xfc000000
-#घोषणा SQ_ENC_DS_FIELD                           0x36
-#घोषणा SQ_ENC_MUBUF_BITS                         0xe0000000
-#घोषणा SQ_ENC_MUBUF_MASK                         0xfc000000
-#घोषणा SQ_ENC_MUBUF_FIELD                        0x38
-#घोषणा SQ_ENC_MTBUF_BITS                         0xe8000000
-#घोषणा SQ_ENC_MTBUF_MASK                         0xfc000000
-#घोषणा SQ_ENC_MTBUF_FIELD                        0x3a
-#घोषणा SQ_ENC_MIMG_BITS                          0xf0000000
-#घोषणा SQ_ENC_MIMG_MASK                          0xfc000000
-#घोषणा SQ_ENC_MIMG_FIELD                         0x3c
-#घोषणा SQ_ENC_EXP_BITS                           0xc4000000
-#घोषणा SQ_ENC_EXP_MASK                           0xfc000000
-#घोषणा SQ_ENC_EXP_FIELD                          0x31
-#घोषणा SQ_ENC_FLAT_BITS                          0xdc000000
-#घोषणा SQ_ENC_FLAT_MASK                          0xfc000000
-#घोषणा SQ_ENC_FLAT_FIELD                         0x37
-#घोषणा SQ_V_OP3_INTRP_OFFSET                     0x274
-#घोषणा SQ_WAITCNT_VM_SHIFT                       0x0
-#घोषणा SQ_SENDMSG_STREAMID_SIZE                  0x2
-#घोषणा SQ_V_OPC_COUNT                            0x100
-#घोषणा SQ_V_OP3_INTRP_COUNT                      0xc
-#घोषणा SQ_XLATE_VOP3_TO_VOP2_OFFSET              0x100
-#घोषणा SQ_HWREG_OFFSET_SIZE                      0x5
-#घोषणा SQ_HWREG_OFFSET_SHIFT                     0x6
-#घोषणा SQ_V_OP3_3IN_OFFSET                       0x1c0
-#घोषणा SQ_NUM_ATTR                               0x21
-#घोषणा SQ_NUM_VGPR                               0x100
-#घोषणा SQ_XLATE_VOP3_TO_VINTRP_COUNT             0x4
-#घोषणा SQ_SENDMSG_MSG_SIZE                       0x4
-#घोषणा SQ_NUM_TTMP                               0xc
-#घोषणा SQ_HWREG_ID_SIZE                          0x6
-#घोषणा SQ_SENDMSG_GSOP_SIZE                      0x2
-#घोषणा SQ_NUM_SGPR                               0x66
-#घोषणा SQ_EXP_NUM_MRT                            0x8
-#घोषणा SQ_SENDMSG_SYSTEM_SIZE                    0x3
-#घोषणा SQ_WAITCNT_LGKM_SHIFT                     0x8
-#घोषणा SQ_XLATE_VOP3_TO_VOP2_COUNT               0x40
-#घोषणा SQ_V_OP3_3IN_COUNT                        0xb0
-#घोषणा SQ_V_INTRP_COUNT                          0x4
-#घोषणा SQ_WAITCNT_EXP_SIZE                       0x3
-#घोषणा SQ_SENDMSG_SYSTEM_SHIFT                   0x4
-#घोषणा SQ_EXP_NUM_GDS                            0x5
-#घोषणा SQ_HWREG_SIZE_SHIFT                       0xb
-#घोषणा SQ_XLATE_VOP3_TO_VOPC_OFFSET              0x0
-#घोषणा SQ_V_OP3_2IN_COUNT                        0x80
-#घोषणा SQ_XLATE_VOP3_TO_VINTRP_OFFSET            0x270
-#घोषणा SQ_SENDMSG_MSG_SHIFT                      0x0
-#घोषणा SQ_WAITCNT_EXP_SHIFT                      0x4
-#घोषणा SQ_WAITCNT_VM_SIZE                        0x4
-#घोषणा SQ_XLATE_VOP3_TO_VOP1_OFFSET              0x140
-#घोषणा SQ_SENDMSG_GSOP_SHIFT                     0x4
-#घोषणा SQ_XLATE_VOP3_TO_VOP1_COUNT               0x80
-#घोषणा SQ_SRC_VGPR_BIT                           0x100
-#घोषणा SQ_V_OP2_COUNT                            0x40
-#घोषणा SQ_EXP_NUM_PARAM                          0x20
-#घोषणा SQ_V_OP1_COUNT                            0x80
-#घोषणा SQ_SENDMSG_STREAMID_SHIFT                 0x8
-#घोषणा SQ_V_OP3_2IN_OFFSET                       0x280
-#घोषणा SQ_WAITCNT_LGKM_SIZE                      0x4
-#घोषणा SQ_XLATE_VOP3_TO_VOPC_COUNT               0x100
-#घोषणा SQ_EXP_NUM_POS                            0x4
-#घोषणा SQ_HWREG_SIZE_SIZE                        0x5
-#घोषणा SQ_HWREG_ID_SHIFT                         0x0
-#घोषणा SQ_S_MOV_B32                              0x0
-#घोषणा SQ_S_MOV_B64                              0x1
-#घोषणा SQ_S_CMOV_B32                             0x2
-#घोषणा SQ_S_CMOV_B64                             0x3
-#घोषणा SQ_S_NOT_B32                              0x4
-#घोषणा SQ_S_NOT_B64                              0x5
-#घोषणा SQ_S_WQM_B32                              0x6
-#घोषणा SQ_S_WQM_B64                              0x7
-#घोषणा SQ_S_BREV_B32                             0x8
-#घोषणा SQ_S_BREV_B64                             0x9
-#घोषणा SQ_S_BCNT0_I32_B32                        0xa
-#घोषणा SQ_S_BCNT0_I32_B64                        0xb
-#घोषणा SQ_S_BCNT1_I32_B32                        0xc
-#घोषणा SQ_S_BCNT1_I32_B64                        0xd
-#घोषणा SQ_S_FF0_I32_B32                          0xe
-#घोषणा SQ_S_FF0_I32_B64                          0xf
-#घोषणा SQ_S_FF1_I32_B32                          0x10
-#घोषणा SQ_S_FF1_I32_B64                          0x11
-#घोषणा SQ_S_FLBIT_I32_B32                        0x12
-#घोषणा SQ_S_FLBIT_I32_B64                        0x13
-#घोषणा SQ_S_FLBIT_I32                            0x14
-#घोषणा SQ_S_FLBIT_I32_I64                        0x15
-#घोषणा SQ_S_SEXT_I32_I8                          0x16
-#घोषणा SQ_S_SEXT_I32_I16                         0x17
-#घोषणा SQ_S_BITSET0_B32                          0x18
-#घोषणा SQ_S_BITSET0_B64                          0x19
-#घोषणा SQ_S_BITSET1_B32                          0x1a
-#घोषणा SQ_S_BITSET1_B64                          0x1b
-#घोषणा SQ_S_GETPC_B64                            0x1c
-#घोषणा SQ_S_SETPC_B64                            0x1d
-#घोषणा SQ_S_SWAPPC_B64                           0x1e
-#घोषणा SQ_S_RFE_B64                              0x1f
-#घोषणा SQ_S_AND_SAVEEXEC_B64                     0x20
-#घोषणा SQ_S_OR_SAVEEXEC_B64                      0x21
-#घोषणा SQ_S_XOR_SAVEEXEC_B64                     0x22
-#घोषणा SQ_S_ANDN2_SAVEEXEC_B64                   0x23
-#घोषणा SQ_S_ORN2_SAVEEXEC_B64                    0x24
-#घोषणा SQ_S_न_अंकD_SAVEEXEC_B64                    0x25
-#घोषणा SQ_S_NOR_SAVEEXEC_B64                     0x26
-#घोषणा SQ_S_XNOR_SAVEEXEC_B64                    0x27
-#घोषणा SQ_S_QUADMASK_B32                         0x28
-#घोषणा SQ_S_QUADMASK_B64                         0x29
-#घोषणा SQ_S_MOVRELS_B32                          0x2a
-#घोषणा SQ_S_MOVRELS_B64                          0x2b
-#घोषणा SQ_S_MOVRELD_B32                          0x2c
-#घोषणा SQ_S_MOVRELD_B64                          0x2d
-#घोषणा SQ_S_CBRANCH_JOIN                         0x2e
-#घोषणा SQ_S_MOV_REGRD_B32                        0x2f
-#घोषणा SQ_S_ABS_I32                              0x30
-#घोषणा SQ_S_MOV_FED_B32                          0x31
-#घोषणा SQ_S_SET_GPR_IDX_IDX                      0x32
-#घोषणा SQ_ATTR0                                  0x0
-#घोषणा SQ_S_MOVK_I32                             0x0
-#घोषणा SQ_S_CMOVK_I32                            0x1
-#घोषणा SQ_S_CMPK_EQ_I32                          0x2
-#घोषणा SQ_S_CMPK_LG_I32                          0x3
-#घोषणा SQ_S_CMPK_GT_I32                          0x4
-#घोषणा SQ_S_CMPK_GE_I32                          0x5
-#घोषणा SQ_S_CMPK_LT_I32                          0x6
-#घोषणा SQ_S_CMPK_LE_I32                          0x7
-#घोषणा SQ_S_CMPK_EQ_U32                          0x8
-#घोषणा SQ_S_CMPK_LG_U32                          0x9
-#घोषणा SQ_S_CMPK_GT_U32                          0xa
-#घोषणा SQ_S_CMPK_GE_U32                          0xb
-#घोषणा SQ_S_CMPK_LT_U32                          0xc
-#घोषणा SQ_S_CMPK_LE_U32                          0xd
-#घोषणा SQ_S_ADDK_I32                             0xe
-#घोषणा SQ_S_MULK_I32                             0xf
-#घोषणा SQ_S_CBRANCH_I_FORK                       0x10
-#घोषणा SQ_S_GETREG_B32                           0x11
-#घोषणा SQ_S_SETREG_B32                           0x12
-#घोषणा SQ_S_GETREG_REGRD_B32                     0x13
-#घोषणा SQ_S_SETREG_IMM32_B32                     0x14
-#घोषणा SQ_TBA_LO                                 0x6c
-#घोषणा SQ_TBA_HI                                 0x6d
-#घोषणा SQ_TMA_LO                                 0x6e
-#घोषणा SQ_TMA_HI                                 0x6f
-#घोषणा SQ_TTMP0                                  0x70
-#घोषणा SQ_TTMP1                                  0x71
-#घोषणा SQ_TTMP2                                  0x72
-#घोषणा SQ_TTMP3                                  0x73
-#घोषणा SQ_TTMP4                                  0x74
-#घोषणा SQ_TTMP5                                  0x75
-#घोषणा SQ_TTMP6                                  0x76
-#घोषणा SQ_TTMP7                                  0x77
-#घोषणा SQ_TTMP8                                  0x78
-#घोषणा SQ_TTMP9                                  0x79
-#घोषणा SQ_TTMP10                                 0x7a
-#घोषणा SQ_TTMP11                                 0x7b
-#घोषणा SQ_VGPR0                                  0x0
-#घोषणा SQ_EXP                                    0x0
-#घोषणा SQ_EXP_MRT0                               0x0
-#घोषणा SQ_EXP_MRTZ                               0x8
-#घोषणा SQ_EXP_शून्य                               0x9
-#घोषणा SQ_EXP_POS0                               0xc
-#घोषणा SQ_EXP_PARAM0                             0x20
-#घोषणा SQ_CNT1                                   0x0
-#घोषणा SQ_CNT2                                   0x1
-#घोषणा SQ_CNT3                                   0x2
-#घोषणा SQ_CNT4                                   0x3
-#घोषणा SQ_S_LOAD_DWORD                           0x0
-#घोषणा SQ_S_LOAD_DWORDX2                         0x1
-#घोषणा SQ_S_LOAD_DWORDX4                         0x2
-#घोषणा SQ_S_LOAD_DWORDX8                         0x3
-#घोषणा SQ_S_LOAD_DWORDX16                        0x4
-#घोषणा SQ_S_BUFFER_LOAD_DWORD                    0x8
-#घोषणा SQ_S_BUFFER_LOAD_DWORDX2                  0x9
-#घोषणा SQ_S_BUFFER_LOAD_DWORDX4                  0xa
-#घोषणा SQ_S_BUFFER_LOAD_DWORDX8                  0xb
-#घोषणा SQ_S_BUFFER_LOAD_DWORDX16                 0xc
-#घोषणा SQ_S_STORE_DWORD                          0x10
-#घोषणा SQ_S_STORE_DWORDX2                        0x11
-#घोषणा SQ_S_STORE_DWORDX4                        0x12
-#घोषणा SQ_S_BUFFER_STORE_DWORD                   0x18
-#घोषणा SQ_S_BUFFER_STORE_DWORDX2                 0x19
-#घोषणा SQ_S_BUFFER_STORE_DWORDX4                 0x1a
-#घोषणा SQ_S_DCACHE_INV                           0x20
-#घोषणा SQ_S_DCACHE_WB                            0x21
-#घोषणा SQ_S_DCACHE_INV_VOL                       0x22
-#घोषणा SQ_S_DCACHE_WB_VOL                        0x23
-#घोषणा SQ_S_MEMTIME                              0x24
-#घोषणा SQ_S_MEMREALTIME                          0x25
-#घोषणा SQ_S_ATC_PROBE                            0x26
-#घोषणा SQ_S_ATC_PROBE_BUFFER                     0x27
-#घोषणा SQ_S_BUFFER_ATOMIC_SWAP                   0x40
-#घोषणा SQ_S_BUFFER_ATOMIC_CMPSWAP                0x41
-#घोषणा SQ_S_BUFFER_ATOMIC_ADD                    0x42
-#घोषणा SQ_S_BUFFER_ATOMIC_SUB                    0x43
-#घोषणा SQ_S_BUFFER_ATOMIC_SMIN                   0x44
-#घोषणा SQ_S_BUFFER_ATOMIC_UMIN                   0x45
-#घोषणा SQ_S_BUFFER_ATOMIC_SMAX                   0x46
-#घोषणा SQ_S_BUFFER_ATOMIC_UMAX                   0x47
-#घोषणा SQ_S_BUFFER_ATOMIC_AND                    0x48
-#घोषणा SQ_S_BUFFER_ATOMIC_OR                     0x49
-#घोषणा SQ_S_BUFFER_ATOMIC_XOR                    0x4a
-#घोषणा SQ_S_BUFFER_ATOMIC_INC                    0x4b
-#घोषणा SQ_S_BUFFER_ATOMIC_DEC                    0x4c
-#घोषणा SQ_S_BUFFER_ATOMIC_SWAP_X2                0x60
-#घोषणा SQ_S_BUFFER_ATOMIC_CMPSWAP_X2             0x61
-#घोषणा SQ_S_BUFFER_ATOMIC_ADD_X2                 0x62
-#घोषणा SQ_S_BUFFER_ATOMIC_SUB_X2                 0x63
-#घोषणा SQ_S_BUFFER_ATOMIC_SMIN_X2                0x64
-#घोषणा SQ_S_BUFFER_ATOMIC_UMIN_X2                0x65
-#घोषणा SQ_S_BUFFER_ATOMIC_SMAX_X2                0x66
-#घोषणा SQ_S_BUFFER_ATOMIC_UMAX_X2                0x67
-#घोषणा SQ_S_BUFFER_ATOMIC_AND_X2                 0x68
-#घोषणा SQ_S_BUFFER_ATOMIC_OR_X2                  0x69
-#घोषणा SQ_S_BUFFER_ATOMIC_XOR_X2                 0x6a
-#घोषणा SQ_S_BUFFER_ATOMIC_INC_X2                 0x6b
-#घोषणा SQ_S_BUFFER_ATOMIC_DEC_X2                 0x6c
-#घोषणा SQ_F                                      0x0
-#घोषणा SQ_LT                                     0x1
-#घोषणा SQ_EQ                                     0x2
-#घोषणा SQ_LE                                     0x3
-#घोषणा SQ_GT                                     0x4
-#घोषणा SQ_LG                                     0x5
-#घोषणा SQ_GE                                     0x6
-#घोषणा SQ_O                                      0x7
-#घोषणा SQ_U                                      0x8
-#घोषणा SQ_NGE                                    0x9
-#घोषणा SQ_NLG                                    0xa
-#घोषणा SQ_NGT                                    0xb
-#घोषणा SQ_NLE                                    0xc
-#घोषणा SQ_NEQ                                    0xd
-#घोषणा SQ_NLT                                    0xe
-#घोषणा SQ_TRU                                    0xf
-#घोषणा SQ_V_CMP_CLASS_F32                        0x10
-#घोषणा SQ_V_CMPX_CLASS_F32                       0x11
-#घोषणा SQ_V_CMP_CLASS_F64                        0x12
-#घोषणा SQ_V_CMPX_CLASS_F64                       0x13
-#घोषणा SQ_V_CMP_CLASS_F16                        0x14
-#घोषणा SQ_V_CMPX_CLASS_F16                       0x15
-#घोषणा SQ_V_CMP_F_F16                            0x20
-#घोषणा SQ_V_CMP_LT_F16                           0x21
-#घोषणा SQ_V_CMP_EQ_F16                           0x22
-#घोषणा SQ_V_CMP_LE_F16                           0x23
-#घोषणा SQ_V_CMP_GT_F16                           0x24
-#घोषणा SQ_V_CMP_LG_F16                           0x25
-#घोषणा SQ_V_CMP_GE_F16                           0x26
-#घोषणा SQ_V_CMP_O_F16                            0x27
-#घोषणा SQ_V_CMP_U_F16                            0x28
-#घोषणा SQ_V_CMP_NGE_F16                          0x29
-#घोषणा SQ_V_CMP_NLG_F16                          0x2a
-#घोषणा SQ_V_CMP_NGT_F16                          0x2b
-#घोषणा SQ_V_CMP_NLE_F16                          0x2c
-#घोषणा SQ_V_CMP_NEQ_F16                          0x2d
-#घोषणा SQ_V_CMP_NLT_F16                          0x2e
-#घोषणा SQ_V_CMP_TRU_F16                          0x2f
-#घोषणा SQ_V_CMPX_F_F16                           0x30
-#घोषणा SQ_V_CMPX_LT_F16                          0x31
-#घोषणा SQ_V_CMPX_EQ_F16                          0x32
-#घोषणा SQ_V_CMPX_LE_F16                          0x33
-#घोषणा SQ_V_CMPX_GT_F16                          0x34
-#घोषणा SQ_V_CMPX_LG_F16                          0x35
-#घोषणा SQ_V_CMPX_GE_F16                          0x36
-#घोषणा SQ_V_CMPX_O_F16                           0x37
-#घोषणा SQ_V_CMPX_U_F16                           0x38
-#घोषणा SQ_V_CMPX_NGE_F16                         0x39
-#घोषणा SQ_V_CMPX_NLG_F16                         0x3a
-#घोषणा SQ_V_CMPX_NGT_F16                         0x3b
-#घोषणा SQ_V_CMPX_NLE_F16                         0x3c
-#घोषणा SQ_V_CMPX_NEQ_F16                         0x3d
-#घोषणा SQ_V_CMPX_NLT_F16                         0x3e
-#घोषणा SQ_V_CMPX_TRU_F16                         0x3f
-#घोषणा SQ_V_CMP_F_F32                            0x40
-#घोषणा SQ_V_CMP_LT_F32                           0x41
-#घोषणा SQ_V_CMP_EQ_F32                           0x42
-#घोषणा SQ_V_CMP_LE_F32                           0x43
-#घोषणा SQ_V_CMP_GT_F32                           0x44
-#घोषणा SQ_V_CMP_LG_F32                           0x45
-#घोषणा SQ_V_CMP_GE_F32                           0x46
-#घोषणा SQ_V_CMP_O_F32                            0x47
-#घोषणा SQ_V_CMP_U_F32                            0x48
-#घोषणा SQ_V_CMP_NGE_F32                          0x49
-#घोषणा SQ_V_CMP_NLG_F32                          0x4a
-#घोषणा SQ_V_CMP_NGT_F32                          0x4b
-#घोषणा SQ_V_CMP_NLE_F32                          0x4c
-#घोषणा SQ_V_CMP_NEQ_F32                          0x4d
-#घोषणा SQ_V_CMP_NLT_F32                          0x4e
-#घोषणा SQ_V_CMP_TRU_F32                          0x4f
-#घोषणा SQ_V_CMPX_F_F32                           0x50
-#घोषणा SQ_V_CMPX_LT_F32                          0x51
-#घोषणा SQ_V_CMPX_EQ_F32                          0x52
-#घोषणा SQ_V_CMPX_LE_F32                          0x53
-#घोषणा SQ_V_CMPX_GT_F32                          0x54
-#घोषणा SQ_V_CMPX_LG_F32                          0x55
-#घोषणा SQ_V_CMPX_GE_F32                          0x56
-#घोषणा SQ_V_CMPX_O_F32                           0x57
-#घोषणा SQ_V_CMPX_U_F32                           0x58
-#घोषणा SQ_V_CMPX_NGE_F32                         0x59
-#घोषणा SQ_V_CMPX_NLG_F32                         0x5a
-#घोषणा SQ_V_CMPX_NGT_F32                         0x5b
-#घोषणा SQ_V_CMPX_NLE_F32                         0x5c
-#घोषणा SQ_V_CMPX_NEQ_F32                         0x5d
-#घोषणा SQ_V_CMPX_NLT_F32                         0x5e
-#घोषणा SQ_V_CMPX_TRU_F32                         0x5f
-#घोषणा SQ_V_CMP_F_F64                            0x60
-#घोषणा SQ_V_CMP_LT_F64                           0x61
-#घोषणा SQ_V_CMP_EQ_F64                           0x62
-#घोषणा SQ_V_CMP_LE_F64                           0x63
-#घोषणा SQ_V_CMP_GT_F64                           0x64
-#घोषणा SQ_V_CMP_LG_F64                           0x65
-#घोषणा SQ_V_CMP_GE_F64                           0x66
-#घोषणा SQ_V_CMP_O_F64                            0x67
-#घोषणा SQ_V_CMP_U_F64                            0x68
-#घोषणा SQ_V_CMP_NGE_F64                          0x69
-#घोषणा SQ_V_CMP_NLG_F64                          0x6a
-#घोषणा SQ_V_CMP_NGT_F64                          0x6b
-#घोषणा SQ_V_CMP_NLE_F64                          0x6c
-#घोषणा SQ_V_CMP_NEQ_F64                          0x6d
-#घोषणा SQ_V_CMP_NLT_F64                          0x6e
-#घोषणा SQ_V_CMP_TRU_F64                          0x6f
-#घोषणा SQ_V_CMPX_F_F64                           0x70
-#घोषणा SQ_V_CMPX_LT_F64                          0x71
-#घोषणा SQ_V_CMPX_EQ_F64                          0x72
-#घोषणा SQ_V_CMPX_LE_F64                          0x73
-#घोषणा SQ_V_CMPX_GT_F64                          0x74
-#घोषणा SQ_V_CMPX_LG_F64                          0x75
-#घोषणा SQ_V_CMPX_GE_F64                          0x76
-#घोषणा SQ_V_CMPX_O_F64                           0x77
-#घोषणा SQ_V_CMPX_U_F64                           0x78
-#घोषणा SQ_V_CMPX_NGE_F64                         0x79
-#घोषणा SQ_V_CMPX_NLG_F64                         0x7a
-#घोषणा SQ_V_CMPX_NGT_F64                         0x7b
-#घोषणा SQ_V_CMPX_NLE_F64                         0x7c
-#घोषणा SQ_V_CMPX_NEQ_F64                         0x7d
-#घोषणा SQ_V_CMPX_NLT_F64                         0x7e
-#घोषणा SQ_V_CMPX_TRU_F64                         0x7f
-#घोषणा SQ_V_CMP_F_I16                            0xa0
-#घोषणा SQ_V_CMP_LT_I16                           0xa1
-#घोषणा SQ_V_CMP_EQ_I16                           0xa2
-#घोषणा SQ_V_CMP_LE_I16                           0xa3
-#घोषणा SQ_V_CMP_GT_I16                           0xa4
-#घोषणा SQ_V_CMP_NE_I16                           0xa5
-#घोषणा SQ_V_CMP_GE_I16                           0xa6
-#घोषणा SQ_V_CMP_T_I16                            0xa7
-#घोषणा SQ_V_CMP_F_U16                            0xa8
-#घोषणा SQ_V_CMP_LT_U16                           0xa9
-#घोषणा SQ_V_CMP_EQ_U16                           0xaa
-#घोषणा SQ_V_CMP_LE_U16                           0xab
-#घोषणा SQ_V_CMP_GT_U16                           0xac
-#घोषणा SQ_V_CMP_NE_U16                           0xad
-#घोषणा SQ_V_CMP_GE_U16                           0xae
-#घोषणा SQ_V_CMP_T_U16                            0xaf
-#घोषणा SQ_V_CMPX_F_I16                           0xb0
-#घोषणा SQ_V_CMPX_LT_I16                          0xb1
-#घोषणा SQ_V_CMPX_EQ_I16                          0xb2
-#घोषणा SQ_V_CMPX_LE_I16                          0xb3
-#घोषणा SQ_V_CMPX_GT_I16                          0xb4
-#घोषणा SQ_V_CMPX_NE_I16                          0xb5
-#घोषणा SQ_V_CMPX_GE_I16                          0xb6
-#घोषणा SQ_V_CMPX_T_I16                           0xb7
-#घोषणा SQ_V_CMPX_F_U16                           0xb8
-#घोषणा SQ_V_CMPX_LT_U16                          0xb9
-#घोषणा SQ_V_CMPX_EQ_U16                          0xba
-#घोषणा SQ_V_CMPX_LE_U16                          0xbb
-#घोषणा SQ_V_CMPX_GT_U16                          0xbc
-#घोषणा SQ_V_CMPX_NE_U16                          0xbd
-#घोषणा SQ_V_CMPX_GE_U16                          0xbe
-#घोषणा SQ_V_CMPX_T_U16                           0xbf
-#घोषणा SQ_V_CMP_F_I32                            0xc0
-#घोषणा SQ_V_CMP_LT_I32                           0xc1
-#घोषणा SQ_V_CMP_EQ_I32                           0xc2
-#घोषणा SQ_V_CMP_LE_I32                           0xc3
-#घोषणा SQ_V_CMP_GT_I32                           0xc4
-#घोषणा SQ_V_CMP_NE_I32                           0xc5
-#घोषणा SQ_V_CMP_GE_I32                           0xc6
-#घोषणा SQ_V_CMP_T_I32                            0xc7
-#घोषणा SQ_V_CMP_F_U32                            0xc8
-#घोषणा SQ_V_CMP_LT_U32                           0xc9
-#घोषणा SQ_V_CMP_EQ_U32                           0xca
-#घोषणा SQ_V_CMP_LE_U32                           0xcb
-#घोषणा SQ_V_CMP_GT_U32                           0xcc
-#घोषणा SQ_V_CMP_NE_U32                           0xcd
-#घोषणा SQ_V_CMP_GE_U32                           0xce
-#घोषणा SQ_V_CMP_T_U32                            0xcf
-#घोषणा SQ_V_CMPX_F_I32                           0xd0
-#घोषणा SQ_V_CMPX_LT_I32                          0xd1
-#घोषणा SQ_V_CMPX_EQ_I32                          0xd2
-#घोषणा SQ_V_CMPX_LE_I32                          0xd3
-#घोषणा SQ_V_CMPX_GT_I32                          0xd4
-#घोषणा SQ_V_CMPX_NE_I32                          0xd5
-#घोषणा SQ_V_CMPX_GE_I32                          0xd6
-#घोषणा SQ_V_CMPX_T_I32                           0xd7
-#घोषणा SQ_V_CMPX_F_U32                           0xd8
-#घोषणा SQ_V_CMPX_LT_U32                          0xd9
-#घोषणा SQ_V_CMPX_EQ_U32                          0xda
-#घोषणा SQ_V_CMPX_LE_U32                          0xdb
-#घोषणा SQ_V_CMPX_GT_U32                          0xdc
-#घोषणा SQ_V_CMPX_NE_U32                          0xdd
-#घोषणा SQ_V_CMPX_GE_U32                          0xde
-#घोषणा SQ_V_CMPX_T_U32                           0xdf
-#घोषणा SQ_V_CMP_F_I64                            0xe0
-#घोषणा SQ_V_CMP_LT_I64                           0xe1
-#घोषणा SQ_V_CMP_EQ_I64                           0xe2
-#घोषणा SQ_V_CMP_LE_I64                           0xe3
-#घोषणा SQ_V_CMP_GT_I64                           0xe4
-#घोषणा SQ_V_CMP_NE_I64                           0xe5
-#घोषणा SQ_V_CMP_GE_I64                           0xe6
-#घोषणा SQ_V_CMP_T_I64                            0xe7
-#घोषणा SQ_V_CMP_F_U64                            0xe8
-#घोषणा SQ_V_CMP_LT_U64                           0xe9
-#घोषणा SQ_V_CMP_EQ_U64                           0xea
-#घोषणा SQ_V_CMP_LE_U64                           0xeb
-#घोषणा SQ_V_CMP_GT_U64                           0xec
-#घोषणा SQ_V_CMP_NE_U64                           0xed
-#घोषणा SQ_V_CMP_GE_U64                           0xee
-#घोषणा SQ_V_CMP_T_U64                            0xef
-#घोषणा SQ_V_CMPX_F_I64                           0xf0
-#घोषणा SQ_V_CMPX_LT_I64                          0xf1
-#घोषणा SQ_V_CMPX_EQ_I64                          0xf2
-#घोषणा SQ_V_CMPX_LE_I64                          0xf3
-#घोषणा SQ_V_CMPX_GT_I64                          0xf4
-#घोषणा SQ_V_CMPX_NE_I64                          0xf5
-#घोषणा SQ_V_CMPX_GE_I64                          0xf6
-#घोषणा SQ_V_CMPX_T_I64                           0xf7
-#घोषणा SQ_V_CMPX_F_U64                           0xf8
-#घोषणा SQ_V_CMPX_LT_U64                          0xf9
-#घोषणा SQ_V_CMPX_EQ_U64                          0xfa
-#घोषणा SQ_V_CMPX_LE_U64                          0xfb
-#घोषणा SQ_V_CMPX_GT_U64                          0xfc
-#घोषणा SQ_V_CMPX_NE_U64                          0xfd
-#घोषणा SQ_V_CMPX_GE_U64                          0xfe
-#घोषणा SQ_V_CMPX_T_U64                           0xff
-#घोषणा SQ_L1                                     0x1
-#घोषणा SQ_L2                                     0x2
-#घोषणा SQ_L3                                     0x3
-#घोषणा SQ_L4                                     0x4
-#घोषणा SQ_L5                                     0x5
-#घोषणा SQ_L6                                     0x6
-#घोषणा SQ_L7                                     0x7
-#घोषणा SQ_L8                                     0x8
-#घोषणा SQ_L9                                     0x9
-#घोषणा SQ_L10                                    0xa
-#घोषणा SQ_L11                                    0xb
-#घोषणा SQ_L12                                    0xc
-#घोषणा SQ_L13                                    0xd
-#घोषणा SQ_L14                                    0xe
-#घोषणा SQ_L15                                    0xf
-#घोषणा SQ_SGPR0                                  0x0
-#घोषणा SQ_SDWA_UNUSED_PAD                        0x0
-#घोषणा SQ_SDWA_UNUSED_SEXT                       0x1
-#घोषणा SQ_SDWA_UNUSED_PRESERVE                   0x2
-#घोषणा SQ_F                                      0x0
-#घोषणा SQ_LT                                     0x1
-#घोषणा SQ_EQ                                     0x2
-#घोषणा SQ_LE                                     0x3
-#घोषणा SQ_GT                                     0x4
-#घोषणा SQ_NE                                     0x5
-#घोषणा SQ_GE                                     0x6
-#घोषणा SQ_T                                      0x7
-#घोषणा SQ_SRC_64_INT                             0xc0
-#घोषणा SQ_SRC_M_1_INT                            0xc1
-#घोषणा SQ_SRC_M_2_INT                            0xc2
-#घोषणा SQ_SRC_M_3_INT                            0xc3
-#घोषणा SQ_SRC_M_4_INT                            0xc4
-#घोषणा SQ_SRC_M_5_INT                            0xc5
-#घोषणा SQ_SRC_M_6_INT                            0xc6
-#घोषणा SQ_SRC_M_7_INT                            0xc7
-#घोषणा SQ_SRC_M_8_INT                            0xc8
-#घोषणा SQ_SRC_M_9_INT                            0xc9
-#घोषणा SQ_SRC_M_10_INT                           0xca
-#घोषणा SQ_SRC_M_11_INT                           0xcb
-#घोषणा SQ_SRC_M_12_INT                           0xcc
-#घोषणा SQ_SRC_M_13_INT                           0xcd
-#घोषणा SQ_SRC_M_14_INT                           0xce
-#घोषणा SQ_SRC_M_15_INT                           0xcf
-#घोषणा SQ_SRC_M_16_INT                           0xd0
-#घोषणा SQ_SRC_0_5                                0xf0
-#घोषणा SQ_SRC_M_0_5                              0xf1
-#घोषणा SQ_SRC_1                                  0xf2
-#घोषणा SQ_SRC_M_1                                0xf3
-#घोषणा SQ_SRC_2                                  0xf4
-#घोषणा SQ_SRC_M_2                                0xf5
-#घोषणा SQ_SRC_4                                  0xf6
-#घोषणा SQ_SRC_M_4                                0xf7
-#घोषणा SQ_SRC_INV_2PI                            0xf8
-#घोषणा SQ_SRC_0                                  0x80
-#घोषणा SQ_SRC_1_INT                              0x81
-#घोषणा SQ_SRC_2_INT                              0x82
-#घोषणा SQ_SRC_3_INT                              0x83
-#घोषणा SQ_SRC_4_INT                              0x84
-#घोषणा SQ_SRC_5_INT                              0x85
-#घोषणा SQ_SRC_6_INT                              0x86
-#घोषणा SQ_SRC_7_INT                              0x87
-#घोषणा SQ_SRC_8_INT                              0x88
-#घोषणा SQ_SRC_9_INT                              0x89
-#घोषणा SQ_SRC_10_INT                             0x8a
-#घोषणा SQ_SRC_11_INT                             0x8b
-#घोषणा SQ_SRC_12_INT                             0x8c
-#घोषणा SQ_SRC_13_INT                             0x8d
-#घोषणा SQ_SRC_14_INT                             0x8e
-#घोषणा SQ_SRC_15_INT                             0x8f
-#घोषणा SQ_SRC_16_INT                             0x90
-#घोषणा SQ_SRC_17_INT                             0x91
-#घोषणा SQ_SRC_18_INT                             0x92
-#घोषणा SQ_SRC_19_INT                             0x93
-#घोषणा SQ_SRC_20_INT                             0x94
-#घोषणा SQ_SRC_21_INT                             0x95
-#घोषणा SQ_SRC_22_INT                             0x96
-#घोषणा SQ_SRC_23_INT                             0x97
-#घोषणा SQ_SRC_24_INT                             0x98
-#घोषणा SQ_SRC_25_INT                             0x99
-#घोषणा SQ_SRC_26_INT                             0x9a
-#घोषणा SQ_SRC_27_INT                             0x9b
-#घोषणा SQ_SRC_28_INT                             0x9c
-#घोषणा SQ_SRC_29_INT                             0x9d
-#घोषणा SQ_SRC_30_INT                             0x9e
-#घोषणा SQ_SRC_31_INT                             0x9f
-#घोषणा SQ_SRC_32_INT                             0xa0
-#घोषणा SQ_SRC_33_INT                             0xa1
-#घोषणा SQ_SRC_34_INT                             0xa2
-#घोषणा SQ_SRC_35_INT                             0xa3
-#घोषणा SQ_SRC_36_INT                             0xa4
-#घोषणा SQ_SRC_37_INT                             0xa5
-#घोषणा SQ_SRC_38_INT                             0xa6
-#घोषणा SQ_SRC_39_INT                             0xa7
-#घोषणा SQ_SRC_40_INT                             0xa8
-#घोषणा SQ_SRC_41_INT                             0xa9
-#घोषणा SQ_SRC_42_INT                             0xaa
-#घोषणा SQ_SRC_43_INT                             0xab
-#घोषणा SQ_SRC_44_INT                             0xac
-#घोषणा SQ_SRC_45_INT                             0xad
-#घोषणा SQ_SRC_46_INT                             0xae
-#घोषणा SQ_SRC_47_INT                             0xaf
-#घोषणा SQ_SRC_48_INT                             0xb0
-#घोषणा SQ_SRC_49_INT                             0xb1
-#घोषणा SQ_SRC_50_INT                             0xb2
-#घोषणा SQ_SRC_51_INT                             0xb3
-#घोषणा SQ_SRC_52_INT                             0xb4
-#घोषणा SQ_SRC_53_INT                             0xb5
-#घोषणा SQ_SRC_54_INT                             0xb6
-#घोषणा SQ_SRC_55_INT                             0xb7
-#घोषणा SQ_SRC_56_INT                             0xb8
-#घोषणा SQ_SRC_57_INT                             0xb9
-#घोषणा SQ_SRC_58_INT                             0xba
-#घोषणा SQ_SRC_59_INT                             0xbb
-#घोषणा SQ_SRC_60_INT                             0xbc
-#घोषणा SQ_SRC_61_INT                             0xbd
-#घोषणा SQ_SRC_62_INT                             0xbe
-#घोषणा SQ_SRC_63_INT                             0xbf
-#घोषणा SQ_DS_ADD_U32                             0x0
-#घोषणा SQ_DS_SUB_U32                             0x1
-#घोषणा SQ_DS_RSUB_U32                            0x2
-#घोषणा SQ_DS_INC_U32                             0x3
-#घोषणा SQ_DS_DEC_U32                             0x4
-#घोषणा SQ_DS_MIN_I32                             0x5
-#घोषणा SQ_DS_MAX_I32                             0x6
-#घोषणा SQ_DS_MIN_U32                             0x7
-#घोषणा SQ_DS_MAX_U32                             0x8
-#घोषणा SQ_DS_AND_B32                             0x9
-#घोषणा SQ_DS_OR_B32                              0xa
-#घोषणा SQ_DS_XOR_B32                             0xb
-#घोषणा SQ_DS_MSKOR_B32                           0xc
-#घोषणा SQ_DS_WRITE_B32                           0xd
-#घोषणा SQ_DS_WRITE2_B32                          0xe
-#घोषणा SQ_DS_WRITE2ST64_B32                      0xf
-#घोषणा SQ_DS_CMPST_B32                           0x10
-#घोषणा SQ_DS_CMPST_F32                           0x11
-#घोषणा SQ_DS_MIN_F32                             0x12
-#घोषणा SQ_DS_MAX_F32                             0x13
-#घोषणा SQ_DS_NOP                                 0x14
-#घोषणा SQ_DS_ADD_F32                             0x15
-#घोषणा SQ_DS_WRITE_B8                            0x1e
-#घोषणा SQ_DS_WRITE_B16                           0x1f
-#घोषणा SQ_DS_ADD_RTN_U32                         0x20
-#घोषणा SQ_DS_SUB_RTN_U32                         0x21
-#घोषणा SQ_DS_RSUB_RTN_U32                        0x22
-#घोषणा SQ_DS_INC_RTN_U32                         0x23
-#घोषणा SQ_DS_DEC_RTN_U32                         0x24
-#घोषणा SQ_DS_MIN_RTN_I32                         0x25
-#घोषणा SQ_DS_MAX_RTN_I32                         0x26
-#घोषणा SQ_DS_MIN_RTN_U32                         0x27
-#घोषणा SQ_DS_MAX_RTN_U32                         0x28
-#घोषणा SQ_DS_AND_RTN_B32                         0x29
-#घोषणा SQ_DS_OR_RTN_B32                          0x2a
-#घोषणा SQ_DS_XOR_RTN_B32                         0x2b
-#घोषणा SQ_DS_MSKOR_RTN_B32                       0x2c
-#घोषणा SQ_DS_WRXCHG_RTN_B32                      0x2d
-#घोषणा SQ_DS_WRXCHG2_RTN_B32                     0x2e
-#घोषणा SQ_DS_WRXCHG2ST64_RTN_B32                 0x2f
-#घोषणा SQ_DS_CMPST_RTN_B32                       0x30
-#घोषणा SQ_DS_CMPST_RTN_F32                       0x31
-#घोषणा SQ_DS_MIN_RTN_F32                         0x32
-#घोषणा SQ_DS_MAX_RTN_F32                         0x33
-#घोषणा SQ_DS_WRAP_RTN_B32                        0x34
-#घोषणा SQ_DS_ADD_RTN_F32                         0x35
-#घोषणा SQ_DS_READ_B32                            0x36
-#घोषणा SQ_DS_READ2_B32                           0x37
-#घोषणा SQ_DS_READ2ST64_B32                       0x38
-#घोषणा SQ_DS_READ_I8                             0x39
-#घोषणा SQ_DS_READ_U8                             0x3a
-#घोषणा SQ_DS_READ_I16                            0x3b
-#घोषणा SQ_DS_READ_U16                            0x3c
-#घोषणा SQ_DS_SWIZZLE_B32                         0x3d
-#घोषणा SQ_DS_PERMUTE_B32                         0x3e
-#घोषणा SQ_DS_BPERMUTE_B32                        0x3f
-#घोषणा SQ_DS_ADD_U64                             0x40
-#घोषणा SQ_DS_SUB_U64                             0x41
-#घोषणा SQ_DS_RSUB_U64                            0x42
-#घोषणा SQ_DS_INC_U64                             0x43
-#घोषणा SQ_DS_DEC_U64                             0x44
-#घोषणा SQ_DS_MIN_I64                             0x45
-#घोषणा SQ_DS_MAX_I64                             0x46
-#घोषणा SQ_DS_MIN_U64                             0x47
-#घोषणा SQ_DS_MAX_U64                             0x48
-#घोषणा SQ_DS_AND_B64                             0x49
-#घोषणा SQ_DS_OR_B64                              0x4a
-#घोषणा SQ_DS_XOR_B64                             0x4b
-#घोषणा SQ_DS_MSKOR_B64                           0x4c
-#घोषणा SQ_DS_WRITE_B64                           0x4d
-#घोषणा SQ_DS_WRITE2_B64                          0x4e
-#घोषणा SQ_DS_WRITE2ST64_B64                      0x4f
-#घोषणा SQ_DS_CMPST_B64                           0x50
-#घोषणा SQ_DS_CMPST_F64                           0x51
-#घोषणा SQ_DS_MIN_F64                             0x52
-#घोषणा SQ_DS_MAX_F64                             0x53
-#घोषणा SQ_DS_ADD_RTN_U64                         0x60
-#घोषणा SQ_DS_SUB_RTN_U64                         0x61
-#घोषणा SQ_DS_RSUB_RTN_U64                        0x62
-#घोषणा SQ_DS_INC_RTN_U64                         0x63
-#घोषणा SQ_DS_DEC_RTN_U64                         0x64
-#घोषणा SQ_DS_MIN_RTN_I64                         0x65
-#घोषणा SQ_DS_MAX_RTN_I64                         0x66
-#घोषणा SQ_DS_MIN_RTN_U64                         0x67
-#घोषणा SQ_DS_MAX_RTN_U64                         0x68
-#घोषणा SQ_DS_AND_RTN_B64                         0x69
-#घोषणा SQ_DS_OR_RTN_B64                          0x6a
-#घोषणा SQ_DS_XOR_RTN_B64                         0x6b
-#घोषणा SQ_DS_MSKOR_RTN_B64                       0x6c
-#घोषणा SQ_DS_WRXCHG_RTN_B64                      0x6d
-#घोषणा SQ_DS_WRXCHG2_RTN_B64                     0x6e
-#घोषणा SQ_DS_WRXCHG2ST64_RTN_B64                 0x6f
-#घोषणा SQ_DS_CMPST_RTN_B64                       0x70
-#घोषणा SQ_DS_CMPST_RTN_F64                       0x71
-#घोषणा SQ_DS_MIN_RTN_F64                         0x72
-#घोषणा SQ_DS_MAX_RTN_F64                         0x73
-#घोषणा SQ_DS_READ_B64                            0x76
-#घोषणा SQ_DS_READ2_B64                           0x77
-#घोषणा SQ_DS_READ2ST64_B64                       0x78
-#घोषणा SQ_DS_CONDXCHG32_RTN_B64                  0x7e
-#घोषणा SQ_DS_ADD_SRC2_U32                        0x80
-#घोषणा SQ_DS_SUB_SRC2_U32                        0x81
-#घोषणा SQ_DS_RSUB_SRC2_U32                       0x82
-#घोषणा SQ_DS_INC_SRC2_U32                        0x83
-#घोषणा SQ_DS_DEC_SRC2_U32                        0x84
-#घोषणा SQ_DS_MIN_SRC2_I32                        0x85
-#घोषणा SQ_DS_MAX_SRC2_I32                        0x86
-#घोषणा SQ_DS_MIN_SRC2_U32                        0x87
-#घोषणा SQ_DS_MAX_SRC2_U32                        0x88
-#घोषणा SQ_DS_AND_SRC2_B32                        0x89
-#घोषणा SQ_DS_OR_SRC2_B32                         0x8a
-#घोषणा SQ_DS_XOR_SRC2_B32                        0x8b
-#घोषणा SQ_DS_WRITE_SRC2_B32                      0x8d
-#घोषणा SQ_DS_MIN_SRC2_F32                        0x92
-#घोषणा SQ_DS_MAX_SRC2_F32                        0x93
-#घोषणा SQ_DS_ADD_SRC2_F32                        0x95
-#घोषणा SQ_DS_GWS_SEMA_RELEASE_ALL                0x98
-#घोषणा SQ_DS_GWS_INIT                            0x99
-#घोषणा SQ_DS_GWS_SEMA_V                          0x9a
-#घोषणा SQ_DS_GWS_SEMA_BR                         0x9b
-#घोषणा SQ_DS_GWS_SEMA_P                          0x9c
-#घोषणा SQ_DS_GWS_BARRIER                         0x9d
-#घोषणा SQ_DS_CONSUME                             0xbd
-#घोषणा SQ_DS_APPEND                              0xbe
-#घोषणा SQ_DS_ORDERED_COUNT                       0xbf
-#घोषणा SQ_DS_ADD_SRC2_U64                        0xc0
-#घोषणा SQ_DS_SUB_SRC2_U64                        0xc1
-#घोषणा SQ_DS_RSUB_SRC2_U64                       0xc2
-#घोषणा SQ_DS_INC_SRC2_U64                        0xc3
-#घोषणा SQ_DS_DEC_SRC2_U64                        0xc4
-#घोषणा SQ_DS_MIN_SRC2_I64                        0xc5
-#घोषणा SQ_DS_MAX_SRC2_I64                        0xc6
-#घोषणा SQ_DS_MIN_SRC2_U64                        0xc7
-#घोषणा SQ_DS_MAX_SRC2_U64                        0xc8
-#घोषणा SQ_DS_AND_SRC2_B64                        0xc9
-#घोषणा SQ_DS_OR_SRC2_B64                         0xca
-#घोषणा SQ_DS_XOR_SRC2_B64                        0xcb
-#घोषणा SQ_DS_WRITE_SRC2_B64                      0xcd
-#घोषणा SQ_DS_MIN_SRC2_F64                        0xd2
-#घोषणा SQ_DS_MAX_SRC2_F64                        0xd3
-#घोषणा SQ_DS_WRITE_B96                           0xde
-#घोषणा SQ_DS_WRITE_B128                          0xdf
-#घोषणा SQ_DS_CONDXCHG32_RTN_B128                 0xfd
-#घोषणा SQ_DS_READ_B96                            0xfe
-#घोषणा SQ_DS_READ_B128                           0xff
-#घोषणा SQ_BUFFER_LOAD_FORMAT_X                   0x0
-#घोषणा SQ_BUFFER_LOAD_FORMAT_XY                  0x1
-#घोषणा SQ_BUFFER_LOAD_FORMAT_XYZ                 0x2
-#घोषणा SQ_BUFFER_LOAD_FORMAT_XYZW                0x3
-#घोषणा SQ_BUFFER_STORE_FORMAT_X                  0x4
-#घोषणा SQ_BUFFER_STORE_FORMAT_XY                 0x5
-#घोषणा SQ_BUFFER_STORE_FORMAT_XYZ                0x6
-#घोषणा SQ_BUFFER_STORE_FORMAT_XYZW               0x7
-#घोषणा SQ_BUFFER_LOAD_FORMAT_D16_X               0x8
-#घोषणा SQ_BUFFER_LOAD_FORMAT_D16_XY              0x9
-#घोषणा SQ_BUFFER_LOAD_FORMAT_D16_XYZ             0xa
-#घोषणा SQ_BUFFER_LOAD_FORMAT_D16_XYZW            0xb
-#घोषणा SQ_BUFFER_STORE_FORMAT_D16_X              0xc
-#घोषणा SQ_BUFFER_STORE_FORMAT_D16_XY             0xd
-#घोषणा SQ_BUFFER_STORE_FORMAT_D16_XYZ            0xe
-#घोषणा SQ_BUFFER_STORE_FORMAT_D16_XYZW           0xf
-#घोषणा SQ_BUFFER_LOAD_UBYTE                      0x10
-#घोषणा SQ_BUFFER_LOAD_SBYTE                      0x11
-#घोषणा SQ_BUFFER_LOAD_USHORT                     0x12
-#घोषणा SQ_BUFFER_LOAD_SSHORT                     0x13
-#घोषणा SQ_BUFFER_LOAD_DWORD                      0x14
-#घोषणा SQ_BUFFER_LOAD_DWORDX2                    0x15
-#घोषणा SQ_BUFFER_LOAD_DWORDX3                    0x16
-#घोषणा SQ_BUFFER_LOAD_DWORDX4                    0x17
-#घोषणा SQ_BUFFER_STORE_BYTE                      0x18
-#घोषणा SQ_BUFFER_STORE_SHORT                     0x1a
-#घोषणा SQ_BUFFER_STORE_DWORD                     0x1c
-#घोषणा SQ_BUFFER_STORE_DWORDX2                   0x1d
-#घोषणा SQ_BUFFER_STORE_DWORDX3                   0x1e
-#घोषणा SQ_BUFFER_STORE_DWORDX4                   0x1f
-#घोषणा SQ_BUFFER_STORE_LDS_DWORD                 0x3d
-#घोषणा SQ_BUFFER_WBINVL1                         0x3e
-#घोषणा SQ_BUFFER_WBINVL1_VOL                     0x3f
-#घोषणा SQ_BUFFER_ATOMIC_SWAP                     0x40
-#घोषणा SQ_BUFFER_ATOMIC_CMPSWAP                  0x41
-#घोषणा SQ_BUFFER_ATOMIC_ADD                      0x42
-#घोषणा SQ_BUFFER_ATOMIC_SUB                      0x43
-#घोषणा SQ_BUFFER_ATOMIC_SMIN                     0x44
-#घोषणा SQ_BUFFER_ATOMIC_UMIN                     0x45
-#घोषणा SQ_BUFFER_ATOMIC_SMAX                     0x46
-#घोषणा SQ_BUFFER_ATOMIC_UMAX                     0x47
-#घोषणा SQ_BUFFER_ATOMIC_AND                      0x48
-#घोषणा SQ_BUFFER_ATOMIC_OR                       0x49
-#घोषणा SQ_BUFFER_ATOMIC_XOR                      0x4a
-#घोषणा SQ_BUFFER_ATOMIC_INC                      0x4b
-#घोषणा SQ_BUFFER_ATOMIC_DEC                      0x4c
-#घोषणा SQ_BUFFER_ATOMIC_SWAP_X2                  0x60
-#घोषणा SQ_BUFFER_ATOMIC_CMPSWAP_X2               0x61
-#घोषणा SQ_BUFFER_ATOMIC_ADD_X2                   0x62
-#घोषणा SQ_BUFFER_ATOMIC_SUB_X2                   0x63
-#घोषणा SQ_BUFFER_ATOMIC_SMIN_X2                  0x64
-#घोषणा SQ_BUFFER_ATOMIC_UMIN_X2                  0x65
-#घोषणा SQ_BUFFER_ATOMIC_SMAX_X2                  0x66
-#घोषणा SQ_BUFFER_ATOMIC_UMAX_X2                  0x67
-#घोषणा SQ_BUFFER_ATOMIC_AND_X2                   0x68
-#घोषणा SQ_BUFFER_ATOMIC_OR_X2                    0x69
-#घोषणा SQ_BUFFER_ATOMIC_XOR_X2                   0x6a
-#घोषणा SQ_BUFFER_ATOMIC_INC_X2                   0x6b
-#घोषणा SQ_BUFFER_ATOMIC_DEC_X2                   0x6c
-#घोषणा SQ_EXEC_LO                                0x7e
-#घोषणा SQ_EXEC_HI                                0x7f
-#घोषणा SQ_SRC_SCC                                0xfd
-#घोषणा SQ_OMOD_OFF                               0x0
-#घोषणा SQ_OMOD_M2                                0x1
-#घोषणा SQ_OMOD_M4                                0x2
-#घोषणा SQ_OMOD_D2                                0x3
-#घोषणा SQ_DPP_QUAD_PERM                          0x0
-#घोषणा SQ_DPP_ROW_SL1                            0x101
-#घोषणा SQ_DPP_ROW_SL2                            0x102
-#घोषणा SQ_DPP_ROW_SL3                            0x103
-#घोषणा SQ_DPP_ROW_SL4                            0x104
-#घोषणा SQ_DPP_ROW_SL5                            0x105
-#घोषणा SQ_DPP_ROW_SL6                            0x106
-#घोषणा SQ_DPP_ROW_SL7                            0x107
-#घोषणा SQ_DPP_ROW_SL8                            0x108
-#घोषणा SQ_DPP_ROW_SL9                            0x109
-#घोषणा SQ_DPP_ROW_SL10                           0x10a
-#घोषणा SQ_DPP_ROW_SL11                           0x10b
-#घोषणा SQ_DPP_ROW_SL12                           0x10c
-#घोषणा SQ_DPP_ROW_SL13                           0x10d
-#घोषणा SQ_DPP_ROW_SL14                           0x10e
-#घोषणा SQ_DPP_ROW_SL15                           0x10f
-#घोषणा SQ_DPP_ROW_SR1                            0x111
-#घोषणा SQ_DPP_ROW_SR2                            0x112
-#घोषणा SQ_DPP_ROW_SR3                            0x113
-#घोषणा SQ_DPP_ROW_SR4                            0x114
-#घोषणा SQ_DPP_ROW_SR5                            0x115
-#घोषणा SQ_DPP_ROW_SR6                            0x116
-#घोषणा SQ_DPP_ROW_SR7                            0x117
-#घोषणा SQ_DPP_ROW_SR8                            0x118
-#घोषणा SQ_DPP_ROW_SR9                            0x119
-#घोषणा SQ_DPP_ROW_SR10                           0x11a
-#घोषणा SQ_DPP_ROW_SR11                           0x11b
-#घोषणा SQ_DPP_ROW_SR12                           0x11c
-#घोषणा SQ_DPP_ROW_SR13                           0x11d
-#घोषणा SQ_DPP_ROW_SR14                           0x11e
-#घोषणा SQ_DPP_ROW_SR15                           0x11f
-#घोषणा SQ_DPP_ROW_RR1                            0x121
-#घोषणा SQ_DPP_ROW_RR2                            0x122
-#घोषणा SQ_DPP_ROW_RR3                            0x123
-#घोषणा SQ_DPP_ROW_RR4                            0x124
-#घोषणा SQ_DPP_ROW_RR5                            0x125
-#घोषणा SQ_DPP_ROW_RR6                            0x126
-#घोषणा SQ_DPP_ROW_RR7                            0x127
-#घोषणा SQ_DPP_ROW_RR8                            0x128
-#घोषणा SQ_DPP_ROW_RR9                            0x129
-#घोषणा SQ_DPP_ROW_RR10                           0x12a
-#घोषणा SQ_DPP_ROW_RR11                           0x12b
-#घोषणा SQ_DPP_ROW_RR12                           0x12c
-#घोषणा SQ_DPP_ROW_RR13                           0x12d
-#घोषणा SQ_DPP_ROW_RR14                           0x12e
-#घोषणा SQ_DPP_ROW_RR15                           0x12f
-#घोषणा SQ_DPP_WF_SL1                             0x130
-#घोषणा SQ_DPP_WF_RL1                             0x134
-#घोषणा SQ_DPP_WF_SR1                             0x138
-#घोषणा SQ_DPP_WF_RR1                             0x13c
-#घोषणा SQ_DPP_ROW_MIRROR                         0x140
-#घोषणा SQ_DPP_ROW_HALF_MIRROR                    0x141
-#घोषणा SQ_DPP_ROW_BCAST15                        0x142
-#घोषणा SQ_DPP_ROW_BCAST31                        0x143
-#घोषणा SQ_EXP_GDS0                               0x18
-#घोषणा SQ_GS_OP_NOP                              0x0
-#घोषणा SQ_GS_OP_CUT                              0x1
-#घोषणा SQ_GS_OP_EMIT                             0x2
-#घोषणा SQ_GS_OP_EMIT_CUT                         0x3
-#घोषणा SQ_IMAGE_LOAD                             0x0
-#घोषणा SQ_IMAGE_LOAD_MIP                         0x1
-#घोषणा SQ_IMAGE_LOAD_PCK                         0x2
-#घोषणा SQ_IMAGE_LOAD_PCK_SGN                     0x3
-#घोषणा SQ_IMAGE_LOAD_MIP_PCK                     0x4
-#घोषणा SQ_IMAGE_LOAD_MIP_PCK_SGN                 0x5
-#घोषणा SQ_IMAGE_STORE                            0x8
-#घोषणा SQ_IMAGE_STORE_MIP                        0x9
-#घोषणा SQ_IMAGE_STORE_PCK                        0xa
-#घोषणा SQ_IMAGE_STORE_MIP_PCK                    0xb
-#घोषणा SQ_IMAGE_GET_RESINFO                      0xe
-#घोषणा SQ_IMAGE_ATOMIC_SWAP                      0x10
-#घोषणा SQ_IMAGE_ATOMIC_CMPSWAP                   0x11
-#घोषणा SQ_IMAGE_ATOMIC_ADD                       0x12
-#घोषणा SQ_IMAGE_ATOMIC_SUB                       0x13
-#घोषणा SQ_IMAGE_ATOMIC_SMIN                      0x14
-#घोषणा SQ_IMAGE_ATOMIC_UMIN                      0x15
-#घोषणा SQ_IMAGE_ATOMIC_SMAX                      0x16
-#घोषणा SQ_IMAGE_ATOMIC_UMAX                      0x17
-#घोषणा SQ_IMAGE_ATOMIC_AND                       0x18
-#घोषणा SQ_IMAGE_ATOMIC_OR                        0x19
-#घोषणा SQ_IMAGE_ATOMIC_XOR                       0x1a
-#घोषणा SQ_IMAGE_ATOMIC_INC                       0x1b
-#घोषणा SQ_IMAGE_ATOMIC_DEC                       0x1c
-#घोषणा SQ_IMAGE_SAMPLE                           0x20
-#घोषणा SQ_IMAGE_SAMPLE_CL                        0x21
-#घोषणा SQ_IMAGE_SAMPLE_D                         0x22
-#घोषणा SQ_IMAGE_SAMPLE_D_CL                      0x23
-#घोषणा SQ_IMAGE_SAMPLE_L                         0x24
-#घोषणा SQ_IMAGE_SAMPLE_B                         0x25
-#घोषणा SQ_IMAGE_SAMPLE_B_CL                      0x26
-#घोषणा SQ_IMAGE_SAMPLE_LZ                        0x27
-#घोषणा SQ_IMAGE_SAMPLE_C                         0x28
-#घोषणा SQ_IMAGE_SAMPLE_C_CL                      0x29
-#घोषणा SQ_IMAGE_SAMPLE_C_D                       0x2a
-#घोषणा SQ_IMAGE_SAMPLE_C_D_CL                    0x2b
-#घोषणा SQ_IMAGE_SAMPLE_C_L                       0x2c
-#घोषणा SQ_IMAGE_SAMPLE_C_B                       0x2d
-#घोषणा SQ_IMAGE_SAMPLE_C_B_CL                    0x2e
-#घोषणा SQ_IMAGE_SAMPLE_C_LZ                      0x2f
-#घोषणा SQ_IMAGE_SAMPLE_O                         0x30
-#घोषणा SQ_IMAGE_SAMPLE_CL_O                      0x31
-#घोषणा SQ_IMAGE_SAMPLE_D_O                       0x32
-#घोषणा SQ_IMAGE_SAMPLE_D_CL_O                    0x33
-#घोषणा SQ_IMAGE_SAMPLE_L_O                       0x34
-#घोषणा SQ_IMAGE_SAMPLE_B_O                       0x35
-#घोषणा SQ_IMAGE_SAMPLE_B_CL_O                    0x36
-#घोषणा SQ_IMAGE_SAMPLE_LZ_O                      0x37
-#घोषणा SQ_IMAGE_SAMPLE_C_O                       0x38
-#घोषणा SQ_IMAGE_SAMPLE_C_CL_O                    0x39
-#घोषणा SQ_IMAGE_SAMPLE_C_D_O                     0x3a
-#घोषणा SQ_IMAGE_SAMPLE_C_D_CL_O                  0x3b
-#घोषणा SQ_IMAGE_SAMPLE_C_L_O                     0x3c
-#घोषणा SQ_IMAGE_SAMPLE_C_B_O                     0x3d
-#घोषणा SQ_IMAGE_SAMPLE_C_B_CL_O                  0x3e
-#घोषणा SQ_IMAGE_SAMPLE_C_LZ_O                    0x3f
-#घोषणा SQ_IMAGE_GATHER4                          0x40
-#घोषणा SQ_IMAGE_GATHER4_CL                       0x41
-#घोषणा SQ_IMAGE_GATHER4_L                        0x44
-#घोषणा SQ_IMAGE_GATHER4_B                        0x45
-#घोषणा SQ_IMAGE_GATHER4_B_CL                     0x46
-#घोषणा SQ_IMAGE_GATHER4_LZ                       0x47
-#घोषणा SQ_IMAGE_GATHER4_C                        0x48
-#घोषणा SQ_IMAGE_GATHER4_C_CL                     0x49
-#घोषणा SQ_IMAGE_GATHER4_C_L                      0x4c
-#घोषणा SQ_IMAGE_GATHER4_C_B                      0x4d
-#घोषणा SQ_IMAGE_GATHER4_C_B_CL                   0x4e
-#घोषणा SQ_IMAGE_GATHER4_C_LZ                     0x4f
-#घोषणा SQ_IMAGE_GATHER4_O                        0x50
-#घोषणा SQ_IMAGE_GATHER4_CL_O                     0x51
-#घोषणा SQ_IMAGE_GATHER4_L_O                      0x54
-#घोषणा SQ_IMAGE_GATHER4_B_O                      0x55
-#घोषणा SQ_IMAGE_GATHER4_B_CL_O                   0x56
-#घोषणा SQ_IMAGE_GATHER4_LZ_O                     0x57
-#घोषणा SQ_IMAGE_GATHER4_C_O                      0x58
-#घोषणा SQ_IMAGE_GATHER4_C_CL_O                   0x59
-#घोषणा SQ_IMAGE_GATHER4_C_L_O                    0x5c
-#घोषणा SQ_IMAGE_GATHER4_C_B_O                    0x5d
-#घोषणा SQ_IMAGE_GATHER4_C_B_CL_O                 0x5e
-#घोषणा SQ_IMAGE_GATHER4_C_LZ_O                   0x5f
-#घोषणा SQ_IMAGE_GET_LOD                          0x60
-#घोषणा SQ_IMAGE_SAMPLE_CD                        0x68
-#घोषणा SQ_IMAGE_SAMPLE_CD_CL                     0x69
-#घोषणा SQ_IMAGE_SAMPLE_C_CD                      0x6a
-#घोषणा SQ_IMAGE_SAMPLE_C_CD_CL                   0x6b
-#घोषणा SQ_IMAGE_SAMPLE_CD_O                      0x6c
-#घोषणा SQ_IMAGE_SAMPLE_CD_CL_O                   0x6d
-#घोषणा SQ_IMAGE_SAMPLE_C_CD_O                    0x6e
-#घोषणा SQ_IMAGE_SAMPLE_C_CD_CL_O                 0x6f
-#घोषणा SQ_IMAGE_RSRC256                          0x7e
-#घोषणा SQ_IMAGE_SAMPLER                          0x7f
-#घोषणा SQ_SRC_VCCZ                               0xfb
-#घोषणा SQ_SRC_VGPR0                              0x100
-#घोषणा SQ_SDWA_BYTE_0                            0x0
-#घोषणा SQ_SDWA_BYTE_1                            0x1
-#घोषणा SQ_SDWA_BYTE_2                            0x2
-#घोषणा SQ_SDWA_BYTE_3                            0x3
-#घोषणा SQ_SDWA_WORD_0                            0x4
-#घोषणा SQ_SDWA_WORD_1                            0x5
-#घोषणा SQ_SDWA_DWORD                             0x6
-#घोषणा SQ_XNACK_MASK_LO                          0x68
-#घोषणा SQ_XNACK_MASK_HI                          0x69
-#घोषणा SQ_TBUFFER_LOAD_FORMAT_X                  0x0
-#घोषणा SQ_TBUFFER_LOAD_FORMAT_XY                 0x1
-#घोषणा SQ_TBUFFER_LOAD_FORMAT_XYZ                0x2
-#घोषणा SQ_TBUFFER_LOAD_FORMAT_XYZW               0x3
-#घोषणा SQ_TBUFFER_STORE_FORMAT_X                 0x4
-#घोषणा SQ_TBUFFER_STORE_FORMAT_XY                0x5
-#घोषणा SQ_TBUFFER_STORE_FORMAT_XYZ               0x6
-#घोषणा SQ_TBUFFER_STORE_FORMAT_XYZW              0x7
-#घोषणा SQ_TBUFFER_LOAD_FORMAT_D16_X              0x8
-#घोषणा SQ_TBUFFER_LOAD_FORMAT_D16_XY             0x9
-#घोषणा SQ_TBUFFER_LOAD_FORMAT_D16_XYZ            0xa
-#घोषणा SQ_TBUFFER_LOAD_FORMAT_D16_XYZW           0xb
-#घोषणा SQ_TBUFFER_STORE_FORMAT_D16_X             0xc
-#घोषणा SQ_TBUFFER_STORE_FORMAT_D16_XY            0xd
-#घोषणा SQ_TBUFFER_STORE_FORMAT_D16_XYZ           0xe
-#घोषणा SQ_TBUFFER_STORE_FORMAT_D16_XYZW          0xf
-#घोषणा SQ_CHAN_X                                 0x0
-#घोषणा SQ_CHAN_Y                                 0x1
-#घोषणा SQ_CHAN_Z                                 0x2
-#घोषणा SQ_CHAN_W                                 0x3
-#घोषणा SQ_V_NOP                                  0x0
-#घोषणा SQ_V_MOV_B32                              0x1
-#घोषणा SQ_V_READFIRSTLANE_B32                    0x2
-#घोषणा SQ_V_CVT_I32_F64                          0x3
-#घोषणा SQ_V_CVT_F64_I32                          0x4
-#घोषणा SQ_V_CVT_F32_I32                          0x5
-#घोषणा SQ_V_CVT_F32_U32                          0x6
-#घोषणा SQ_V_CVT_U32_F32                          0x7
-#घोषणा SQ_V_CVT_I32_F32                          0x8
-#घोषणा SQ_V_MOV_FED_B32                          0x9
-#घोषणा SQ_V_CVT_F16_F32                          0xa
-#घोषणा SQ_V_CVT_F32_F16                          0xb
-#घोषणा SQ_V_CVT_RPI_I32_F32                      0xc
-#घोषणा SQ_V_CVT_FLR_I32_F32                      0xd
-#घोषणा SQ_V_CVT_OFF_F32_I4                       0xe
-#घोषणा SQ_V_CVT_F32_F64                          0xf
-#घोषणा SQ_V_CVT_F64_F32                          0x10
-#घोषणा SQ_V_CVT_F32_UBYTE0                       0x11
-#घोषणा SQ_V_CVT_F32_UBYTE1                       0x12
-#घोषणा SQ_V_CVT_F32_UBYTE2                       0x13
-#घोषणा SQ_V_CVT_F32_UBYTE3                       0x14
-#घोषणा SQ_V_CVT_U32_F64                          0x15
-#घोषणा SQ_V_CVT_F64_U32                          0x16
-#घोषणा SQ_V_TRUNC_F64                            0x17
-#घोषणा SQ_V_CEIL_F64                             0x18
-#घोषणा SQ_V_RNDNE_F64                            0x19
-#घोषणा SQ_V_FLOOR_F64                            0x1a
-#घोषणा SQ_V_FRACT_F32                            0x1b
-#घोषणा SQ_V_TRUNC_F32                            0x1c
-#घोषणा SQ_V_CEIL_F32                             0x1d
-#घोषणा SQ_V_RNDNE_F32                            0x1e
-#घोषणा SQ_V_FLOOR_F32                            0x1f
-#घोषणा SQ_V_EXP_F32                              0x20
-#घोषणा SQ_V_LOG_F32                              0x21
-#घोषणा SQ_V_RCP_F32                              0x22
-#घोषणा SQ_V_RCP_IFLAG_F32                        0x23
-#घोषणा SQ_V_RSQ_F32                              0x24
-#घोषणा SQ_V_RCP_F64                              0x25
-#घोषणा SQ_V_RSQ_F64                              0x26
-#घोषणा SQ_V_SQRT_F32                             0x27
-#घोषणा SQ_V_SQRT_F64                             0x28
-#घोषणा SQ_V_SIN_F32                              0x29
-#घोषणा SQ_V_COS_F32                              0x2a
-#घोषणा SQ_V_NOT_B32                              0x2b
-#घोषणा SQ_V_BFREV_B32                            0x2c
-#घोषणा SQ_V_FFBH_U32                             0x2d
-#घोषणा SQ_V_FFBL_B32                             0x2e
-#घोषणा SQ_V_FFBH_I32                             0x2f
-#घोषणा SQ_V_FREXP_EXP_I32_F64                    0x30
-#घोषणा SQ_V_FREXP_MANT_F64                       0x31
-#घोषणा SQ_V_FRACT_F64                            0x32
-#घोषणा SQ_V_FREXP_EXP_I32_F32                    0x33
-#घोषणा SQ_V_FREXP_MANT_F32                       0x34
-#घोषणा SQ_V_CLREXCP                              0x35
-#घोषणा SQ_V_MOVRELD_B32                          0x36
-#घोषणा SQ_V_MOVRELS_B32                          0x37
-#घोषणा SQ_V_MOVRELSD_B32                         0x38
-#घोषणा SQ_V_CVT_F16_U16                          0x39
-#घोषणा SQ_V_CVT_F16_I16                          0x3a
-#घोषणा SQ_V_CVT_U16_F16                          0x3b
-#घोषणा SQ_V_CVT_I16_F16                          0x3c
-#घोषणा SQ_V_RCP_F16                              0x3d
-#घोषणा SQ_V_SQRT_F16                             0x3e
-#घोषणा SQ_V_RSQ_F16                              0x3f
-#घोषणा SQ_V_LOG_F16                              0x40
-#घोषणा SQ_V_EXP_F16                              0x41
-#घोषणा SQ_V_FREXP_MANT_F16                       0x42
-#घोषणा SQ_V_FREXP_EXP_I16_F16                    0x43
-#घोषणा SQ_V_FLOOR_F16                            0x44
-#घोषणा SQ_V_CEIL_F16                             0x45
-#घोषणा SQ_V_TRUNC_F16                            0x46
-#घोषणा SQ_V_RNDNE_F16                            0x47
-#घोषणा SQ_V_FRACT_F16                            0x48
-#घोषणा SQ_V_SIN_F16                              0x49
-#घोषणा SQ_V_COS_F16                              0x4a
-#घोषणा SQ_V_EXP_LEGACY_F32                       0x4b
-#घोषणा SQ_V_LOG_LEGACY_F32                       0x4c
-#घोषणा SQ_V_CVT_NORM_I16_F16                     0x4d
-#घोषणा SQ_V_CVT_NORM_U16_F16                     0x4e
-#घोषणा SQ_SRC_SDWA                               0xf9
-#घोषणा SQ_V_OPC_OFFSET                           0x0
-#घोषणा SQ_V_OP2_OFFSET                           0x100
-#घोषणा SQ_V_OP1_OFFSET                           0x140
-#घोषणा SQ_V_INTRP_OFFSET                         0x270
-#घोषणा SQ_V_INTERP_P1_F32                        0x0
-#घोषणा SQ_V_INTERP_P2_F32                        0x1
-#घोषणा SQ_V_INTERP_MOV_F32                       0x2
-#घोषणा SQ_S_NOP                                  0x0
-#घोषणा SQ_S_ENDPGM                               0x1
-#घोषणा SQ_S_BRANCH                               0x2
-#घोषणा SQ_S_WAKEUP                               0x3
-#घोषणा SQ_S_CBRANCH_SCC0                         0x4
-#घोषणा SQ_S_CBRANCH_SCC1                         0x5
-#घोषणा SQ_S_CBRANCH_VCCZ                         0x6
-#घोषणा SQ_S_CBRANCH_VCCNZ                        0x7
-#घोषणा SQ_S_CBRANCH_EXECZ                        0x8
-#घोषणा SQ_S_CBRANCH_EXECNZ                       0x9
-#घोषणा SQ_S_BARRIER                              0xa
-#घोषणा SQ_S_SETKILL                              0xb
-#घोषणा SQ_S_WAITCNT                              0xc
-#घोषणा SQ_S_SETHALT                              0xd
-#घोषणा SQ_S_SLEEP                                0xe
-#घोषणा SQ_S_SETPRIO                              0xf
-#घोषणा SQ_S_SENDMSG                              0x10
-#घोषणा SQ_S_SENDMSGHALT                          0x11
-#घोषणा SQ_S_TRAP                                 0x12
-#घोषणा SQ_S_ICACHE_INV                           0x13
-#घोषणा SQ_S_INCPERFLEVEL                         0x14
-#घोषणा SQ_S_DECPERFLEVEL                         0x15
-#घोषणा SQ_S_TTRACEDATA                           0x16
-#घोषणा SQ_S_CBRANCH_CDBGSYS                      0x17
-#घोषणा SQ_S_CBRANCH_CDBGUSER                     0x18
-#घोषणा SQ_S_CBRANCH_CDBGSYS_OR_USER              0x19
-#घोषणा SQ_S_CBRANCH_CDBGSYS_AND_USER             0x1a
-#घोषणा SQ_S_ENDPGM_SAVED                         0x1b
-#घोषणा SQ_S_SET_GPR_IDX_OFF                      0x1c
-#घोषणा SQ_S_SET_GPR_IDX_MODE                     0x1d
-#घोषणा SQ_SRC_DPP                                0xfa
-#घोषणा SQ_SRC_LITERAL                            0xff
-#घोषणा SQ_VCC_LO                                 0x6a
-#घोषणा SQ_VCC_HI                                 0x6b
-#घोषणा SQ_PARAM_P10                              0x0
-#घोषणा SQ_PARAM_P20                              0x1
-#घोषणा SQ_PARAM_P0                               0x2
-#घोषणा SQ_SRC_LDS_सूचीECT                         0xfe
-#घोषणा SQ_V_CNDMASK_B32                          0x0
-#घोषणा SQ_V_ADD_F32                              0x1
-#घोषणा SQ_V_SUB_F32                              0x2
-#घोषणा SQ_V_SUBREV_F32                           0x3
-#घोषणा SQ_V_MUL_LEGACY_F32                       0x4
-#घोषणा SQ_V_MUL_F32                              0x5
-#घोषणा SQ_V_MUL_I32_I24                          0x6
-#घोषणा SQ_V_MUL_HI_I32_I24                       0x7
-#घोषणा SQ_V_MUL_U32_U24                          0x8
-#घोषणा SQ_V_MUL_HI_U32_U24                       0x9
-#घोषणा SQ_V_MIN_F32                              0xa
-#घोषणा SQ_V_MAX_F32                              0xb
-#घोषणा SQ_V_MIN_I32                              0xc
-#घोषणा SQ_V_MAX_I32                              0xd
-#घोषणा SQ_V_MIN_U32                              0xe
-#घोषणा SQ_V_MAX_U32                              0xf
-#घोषणा SQ_V_LSHRREV_B32                          0x10
-#घोषणा SQ_V_ASHRREV_I32                          0x11
-#घोषणा SQ_V_LSHLREV_B32                          0x12
-#घोषणा SQ_V_AND_B32                              0x13
-#घोषणा SQ_V_OR_B32                               0x14
-#घोषणा SQ_V_XOR_B32                              0x15
-#घोषणा SQ_V_MAC_F32                              0x16
-#घोषणा SQ_V_MADMK_F32                            0x17
-#घोषणा SQ_V_MADAK_F32                            0x18
-#घोषणा SQ_V_ADD_U32                              0x19
-#घोषणा SQ_V_SUB_U32                              0x1a
-#घोषणा SQ_V_SUBREV_U32                           0x1b
-#घोषणा SQ_V_ADDC_U32                             0x1c
-#घोषणा SQ_V_SUBB_U32                             0x1d
-#घोषणा SQ_V_SUBBREV_U32                          0x1e
-#घोषणा SQ_V_ADD_F16                              0x1f
-#घोषणा SQ_V_SUB_F16                              0x20
-#घोषणा SQ_V_SUBREV_F16                           0x21
-#घोषणा SQ_V_MUL_F16                              0x22
-#घोषणा SQ_V_MAC_F16                              0x23
-#घोषणा SQ_V_MADMK_F16                            0x24
-#घोषणा SQ_V_MADAK_F16                            0x25
-#घोषणा SQ_V_ADD_U16                              0x26
-#घोषणा SQ_V_SUB_U16                              0x27
-#घोषणा SQ_V_SUBREV_U16                           0x28
-#घोषणा SQ_V_MUL_LO_U16                           0x29
-#घोषणा SQ_V_LSHLREV_B16                          0x2a
-#घोषणा SQ_V_LSHRREV_B16                          0x2b
-#घोषणा SQ_V_ASHRREV_I16                          0x2c
-#घोषणा SQ_V_MAX_F16                              0x2d
-#घोषणा SQ_V_MIN_F16                              0x2e
-#घोषणा SQ_V_MAX_U16                              0x2f
-#घोषणा SQ_V_MAX_I16                              0x30
-#घोषणा SQ_V_MIN_U16                              0x31
-#घोषणा SQ_V_MIN_I16                              0x32
-#घोषणा SQ_V_LDEXP_F16                            0x33
-#घोषणा SQ_FLAT_LOAD_UBYTE                        0x10
-#घोषणा SQ_FLAT_LOAD_SBYTE                        0x11
-#घोषणा SQ_FLAT_LOAD_USHORT                       0x12
-#घोषणा SQ_FLAT_LOAD_SSHORT                       0x13
-#घोषणा SQ_FLAT_LOAD_DWORD                        0x14
-#घोषणा SQ_FLAT_LOAD_DWORDX2                      0x15
-#घोषणा SQ_FLAT_LOAD_DWORDX3                      0x16
-#घोषणा SQ_FLAT_LOAD_DWORDX4                      0x17
-#घोषणा SQ_FLAT_STORE_BYTE                        0x18
-#घोषणा SQ_FLAT_STORE_SHORT                       0x1a
-#घोषणा SQ_FLAT_STORE_DWORD                       0x1c
-#घोषणा SQ_FLAT_STORE_DWORDX2                     0x1d
-#घोषणा SQ_FLAT_STORE_DWORDX3                     0x1e
-#घोषणा SQ_FLAT_STORE_DWORDX4                     0x1f
-#घोषणा SQ_FLAT_ATOMIC_SWAP                       0x40
-#घोषणा SQ_FLAT_ATOMIC_CMPSWAP                    0x41
-#घोषणा SQ_FLAT_ATOMIC_ADD                        0x42
-#घोषणा SQ_FLAT_ATOMIC_SUB                        0x43
-#घोषणा SQ_FLAT_ATOMIC_SMIN                       0x44
-#घोषणा SQ_FLAT_ATOMIC_UMIN                       0x45
-#घोषणा SQ_FLAT_ATOMIC_SMAX                       0x46
-#घोषणा SQ_FLAT_ATOMIC_UMAX                       0x47
-#घोषणा SQ_FLAT_ATOMIC_AND                        0x48
-#घोषणा SQ_FLAT_ATOMIC_OR                         0x49
-#घोषणा SQ_FLAT_ATOMIC_XOR                        0x4a
-#घोषणा SQ_FLAT_ATOMIC_INC                        0x4b
-#घोषणा SQ_FLAT_ATOMIC_DEC                        0x4c
-#घोषणा SQ_FLAT_ATOMIC_SWAP_X2                    0x60
-#घोषणा SQ_FLAT_ATOMIC_CMPSWAP_X2                 0x61
-#घोषणा SQ_FLAT_ATOMIC_ADD_X2                     0x62
-#घोषणा SQ_FLAT_ATOMIC_SUB_X2                     0x63
-#घोषणा SQ_FLAT_ATOMIC_SMIN_X2                    0x64
-#घोषणा SQ_FLAT_ATOMIC_UMIN_X2                    0x65
-#घोषणा SQ_FLAT_ATOMIC_SMAX_X2                    0x66
-#घोषणा SQ_FLAT_ATOMIC_UMAX_X2                    0x67
-#घोषणा SQ_FLAT_ATOMIC_AND_X2                     0x68
-#घोषणा SQ_FLAT_ATOMIC_OR_X2                      0x69
-#घोषणा SQ_FLAT_ATOMIC_XOR_X2                     0x6a
-#घोषणा SQ_FLAT_ATOMIC_INC_X2                     0x6b
-#घोषणा SQ_FLAT_ATOMIC_DEC_X2                     0x6c
-#घोषणा SQ_S_CMP_EQ_I32                           0x0
-#घोषणा SQ_S_CMP_LG_I32                           0x1
-#घोषणा SQ_S_CMP_GT_I32                           0x2
-#घोषणा SQ_S_CMP_GE_I32                           0x3
-#घोषणा SQ_S_CMP_LT_I32                           0x4
-#घोषणा SQ_S_CMP_LE_I32                           0x5
-#घोषणा SQ_S_CMP_EQ_U32                           0x6
-#घोषणा SQ_S_CMP_LG_U32                           0x7
-#घोषणा SQ_S_CMP_GT_U32                           0x8
-#घोषणा SQ_S_CMP_GE_U32                           0x9
-#घोषणा SQ_S_CMP_LT_U32                           0xa
-#घोषणा SQ_S_CMP_LE_U32                           0xb
-#घोषणा SQ_S_BITCMP0_B32                          0xc
-#घोषणा SQ_S_BITCMP1_B32                          0xd
-#घोषणा SQ_S_BITCMP0_B64                          0xe
-#घोषणा SQ_S_BITCMP1_B64                          0xf
-#घोषणा SQ_S_SETVSKIP                             0x10
-#घोषणा SQ_S_SET_GPR_IDX_ON                       0x11
-#घोषणा SQ_S_CMP_EQ_U64                           0x12
-#घोषणा SQ_S_CMP_LG_U64                           0x13
-#घोषणा SQ_M0                                     0x7c
-#घोषणा SQ_V_MAD_LEGACY_F32                       0x1c0
-#घोषणा SQ_V_MAD_F32                              0x1c1
-#घोषणा SQ_V_MAD_I32_I24                          0x1c2
-#घोषणा SQ_V_MAD_U32_U24                          0x1c3
-#घोषणा SQ_V_CUBEID_F32                           0x1c4
-#घोषणा SQ_V_CUBESC_F32                           0x1c5
-#घोषणा SQ_V_CUBETC_F32                           0x1c6
-#घोषणा SQ_V_CUBEMA_F32                           0x1c7
-#घोषणा SQ_V_BFE_U32                              0x1c8
-#घोषणा SQ_V_BFE_I32                              0x1c9
-#घोषणा SQ_V_BFI_B32                              0x1ca
-#घोषणा SQ_V_FMA_F32                              0x1cb
-#घोषणा SQ_V_FMA_F64                              0x1cc
-#घोषणा SQ_V_LERP_U8                              0x1cd
-#घोषणा SQ_V_ALIGNBIT_B32                         0x1ce
-#घोषणा SQ_V_ALIGNBYTE_B32                        0x1cf
-#घोषणा SQ_V_MIN3_F32                             0x1d0
-#घोषणा SQ_V_MIN3_I32                             0x1d1
-#घोषणा SQ_V_MIN3_U32                             0x1d2
-#घोषणा SQ_V_MAX3_F32                             0x1d3
-#घोषणा SQ_V_MAX3_I32                             0x1d4
-#घोषणा SQ_V_MAX3_U32                             0x1d5
-#घोषणा SQ_V_MED3_F32                             0x1d6
-#घोषणा SQ_V_MED3_I32                             0x1d7
-#घोषणा SQ_V_MED3_U32                             0x1d8
-#घोषणा SQ_V_SAD_U8                               0x1d9
-#घोषणा SQ_V_SAD_HI_U8                            0x1da
-#घोषणा SQ_V_SAD_U16                              0x1db
-#घोषणा SQ_V_SAD_U32                              0x1dc
-#घोषणा SQ_V_CVT_PK_U8_F32                        0x1dd
-#घोषणा SQ_V_DIV_FIXUP_F32                        0x1de
-#घोषणा SQ_V_DIV_FIXUP_F64                        0x1df
-#घोषणा SQ_V_DIV_SCALE_F32                        0x1e0
-#घोषणा SQ_V_DIV_SCALE_F64                        0x1e1
-#घोषणा SQ_V_DIV_FMAS_F32                         0x1e2
-#घोषणा SQ_V_DIV_FMAS_F64                         0x1e3
-#घोषणा SQ_V_MSAD_U8                              0x1e4
-#घोषणा SQ_V_QSAD_PK_U16_U8                       0x1e5
-#घोषणा SQ_V_MQSAD_PK_U16_U8                      0x1e6
-#घोषणा SQ_V_MQSAD_U32_U8                         0x1e7
-#घोषणा SQ_V_MAD_U64_U32                          0x1e8
-#घोषणा SQ_V_MAD_I64_I32                          0x1e9
-#घोषणा SQ_V_MAD_F16                              0x1ea
-#घोषणा SQ_V_MAD_U16                              0x1eb
-#घोषणा SQ_V_MAD_I16                              0x1ec
-#घोषणा SQ_V_PERM_B32                             0x1ed
-#घोषणा SQ_V_FMA_F16                              0x1ee
-#घोषणा SQ_V_DIV_FIXUP_F16                        0x1ef
-#घोषणा SQ_V_CVT_PKACCUM_U8_F32                   0x1f0
-#घोषणा SQ_V_INTERP_P1LL_F16                      0x274
-#घोषणा SQ_V_INTERP_P1LV_F16                      0x275
-#घोषणा SQ_V_INTERP_P2_F16                        0x276
-#घोषणा SQ_V_ADD_F64                              0x280
-#घोषणा SQ_V_MUL_F64                              0x281
-#घोषणा SQ_V_MIN_F64                              0x282
-#घोषणा SQ_V_MAX_F64                              0x283
-#घोषणा SQ_V_LDEXP_F64                            0x284
-#घोषणा SQ_V_MUL_LO_U32                           0x285
-#घोषणा SQ_V_MUL_HI_U32                           0x286
-#घोषणा SQ_V_MUL_HI_I32                           0x287
-#घोषणा SQ_V_LDEXP_F32                            0x288
-#घोषणा SQ_V_READLANE_B32                         0x289
-#घोषणा SQ_V_WRITELANE_B32                        0x28a
-#घोषणा SQ_V_BCNT_U32_B32                         0x28b
-#घोषणा SQ_V_MBCNT_LO_U32_B32                     0x28c
-#घोषणा SQ_V_MBCNT_HI_U32_B32                     0x28d
-#घोषणा SQ_V_MAC_LEGACY_F32                       0x28e
-#घोषणा SQ_V_LSHLREV_B64                          0x28f
-#घोषणा SQ_V_LSHRREV_B64                          0x290
-#घोषणा SQ_V_ASHRREV_I64                          0x291
-#घोषणा SQ_V_TRIG_PREOP_F64                       0x292
-#घोषणा SQ_V_BFM_B32                              0x293
-#घोषणा SQ_V_CVT_PKNORM_I16_F32                   0x294
-#घोषणा SQ_V_CVT_PKNORM_U16_F32                   0x295
-#घोषणा SQ_V_CVT_PKRTZ_F16_F32                    0x296
-#घोषणा SQ_V_CVT_PK_U16_U32                       0x297
-#घोषणा SQ_V_CVT_PK_I16_I32                       0x298
-#घोषणा SQ_V_CVT_PKNORM_I16_F16                   0x299
-#घोषणा SQ_V_CVT_PKNORM_U16_F16                   0x29a
-#घोषणा SQ_VCC_ALL                                0x0
-#घोषणा SQ_SRC_EXECZ                              0xfc
-#घोषणा SQ_FLAT_SCRATCH_LO                        0x66
-#घोषणा SQ_FLAT_SCRATCH_HI                        0x67
-#घोषणा SQ_SYSMSG_OP_ECC_ERR_INTERRUPT            0x1
-#घोषणा SQ_SYSMSG_OP_REG_RD                       0x2
-#घोषणा SQ_SYSMSG_OP_HOST_TRAP_ACK                0x3
-#घोषणा SQ_SYSMSG_OP_TTRACE_PC                    0x4
-#घोषणा SQ_HW_REG_MODE                            0x1
-#घोषणा SQ_HW_REG_STATUS                          0x2
-#घोषणा SQ_HW_REG_TRAPSTS                         0x3
-#घोषणा SQ_HW_REG_HW_ID                           0x4
-#घोषणा SQ_HW_REG_GPR_ALLOC                       0x5
-#घोषणा SQ_HW_REG_LDS_ALLOC                       0x6
-#घोषणा SQ_HW_REG_IB_STS                          0x7
-#घोषणा SQ_HW_REG_PC_LO                           0x8
-#घोषणा SQ_HW_REG_PC_HI                           0x9
-#घोषणा SQ_HW_REG_INST_DW0                        0xa
-#घोषणा SQ_HW_REG_INST_DW1                        0xb
-#घोषणा SQ_HW_REG_IB_DBG0                         0xc
-#घोषणा SQ_HW_REG_IB_DBG1                         0xd
-#घोषणा SQ_DPP_BOUND_OFF                          0x0
-#घोषणा SQ_DPP_BOUND_ZERO                         0x1
-#घोषणा SQ_R1                                     0x1
-#घोषणा SQ_R2                                     0x2
-#घोषणा SQ_R3                                     0x3
-#घोषणा SQ_R4                                     0x4
-#घोषणा SQ_R5                                     0x5
-#घोषणा SQ_R6                                     0x6
-#घोषणा SQ_R7                                     0x7
-#घोषणा SQ_R8                                     0x8
-#घोषणा SQ_R9                                     0x9
-#घोषणा SQ_R10                                    0xa
-#घोषणा SQ_R11                                    0xb
-#घोषणा SQ_R12                                    0xc
-#घोषणा SQ_R13                                    0xd
-#घोषणा SQ_R14                                    0xe
-#घोषणा SQ_R15                                    0xf
-#घोषणा SQ_S_ADD_U32                              0x0
-#घोषणा SQ_S_SUB_U32                              0x1
-#घोषणा SQ_S_ADD_I32                              0x2
-#घोषणा SQ_S_SUB_I32                              0x3
-#घोषणा SQ_S_ADDC_U32                             0x4
-#घोषणा SQ_S_SUBB_U32                             0x5
-#घोषणा SQ_S_MIN_I32                              0x6
-#घोषणा SQ_S_MIN_U32                              0x7
-#घोषणा SQ_S_MAX_I32                              0x8
-#घोषणा SQ_S_MAX_U32                              0x9
-#घोषणा SQ_S_CSELECT_B32                          0xa
-#घोषणा SQ_S_CSELECT_B64                          0xb
-#घोषणा SQ_S_AND_B32                              0xc
-#घोषणा SQ_S_AND_B64                              0xd
-#घोषणा SQ_S_OR_B32                               0xe
-#घोषणा SQ_S_OR_B64                               0xf
-#घोषणा SQ_S_XOR_B32                              0x10
-#घोषणा SQ_S_XOR_B64                              0x11
-#घोषणा SQ_S_ANDN2_B32                            0x12
-#घोषणा SQ_S_ANDN2_B64                            0x13
-#घोषणा SQ_S_ORN2_B32                             0x14
-#घोषणा SQ_S_ORN2_B64                             0x15
-#घोषणा SQ_S_न_अंकD_B32                             0x16
-#घोषणा SQ_S_न_अंकD_B64                             0x17
-#घोषणा SQ_S_NOR_B32                              0x18
-#घोषणा SQ_S_NOR_B64                              0x19
-#घोषणा SQ_S_XNOR_B32                             0x1a
-#घोषणा SQ_S_XNOR_B64                             0x1b
-#घोषणा SQ_S_LSHL_B32                             0x1c
-#घोषणा SQ_S_LSHL_B64                             0x1d
-#घोषणा SQ_S_LSHR_B32                             0x1e
-#घोषणा SQ_S_LSHR_B64                             0x1f
-#घोषणा SQ_S_ASHR_I32                             0x20
-#घोषणा SQ_S_ASHR_I64                             0x21
-#घोषणा SQ_S_BFM_B32                              0x22
-#घोषणा SQ_S_BFM_B64                              0x23
-#घोषणा SQ_S_MUL_I32                              0x24
-#घोषणा SQ_S_BFE_U32                              0x25
-#घोषणा SQ_S_BFE_I32                              0x26
-#घोषणा SQ_S_BFE_U64                              0x27
-#घोषणा SQ_S_BFE_I64                              0x28
-#घोषणा SQ_S_CBRANCH_G_FORK                       0x29
-#घोषणा SQ_S_ABSDIFF_I32                          0x2a
-#घोषणा SQ_S_RFE_RESTORE_B64                      0x2b
-#घोषणा SQ_MSG_INTERRUPT                          0x1
-#घोषणा SQ_MSG_GS                                 0x2
-#घोषणा SQ_MSG_GS_DONE                            0x3
-#घोषणा SQ_MSG_SAVEWAVE                           0x4
-#घोषणा SQ_MSG_SYSMSG                             0xf
-प्रकार क्रमागत SX_BLEND_OPT अणु
+} SQ_THREAD_TRACE_WAVE_START_COUNT_PREFIX;
+#define SQ_WAVE_TYPE_PS0                          0x0
+#define SQIND_GLOBAL_REGS_OFFSET                  0x0
+#define SQIND_GLOBAL_REGS_SIZE                    0x8
+#define SQIND_LOCAL_REGS_OFFSET                   0x8
+#define SQIND_LOCAL_REGS_SIZE                     0x8
+#define SQIND_WAVE_HWREGS_OFFSET                  0x10
+#define SQIND_WAVE_HWREGS_SIZE                    0x1f0
+#define SQIND_WAVE_SGPRS_OFFSET                   0x200
+#define SQIND_WAVE_SGPRS_SIZE                     0x200
+#define SQ_GFXDEC_BEGIN                           0xa000
+#define SQ_GFXDEC_END                             0xc000
+#define SQ_GFXDEC_STATE_ID_SHIFT                  0xa
+#define SQDEC_BEGIN                               0x2300
+#define SQDEC_END                                 0x23ff
+#define SQPERFSDEC_BEGIN                          0xd9c0
+#define SQPERFSDEC_END                            0xda40
+#define SQPERFDDEC_BEGIN                          0xd1c0
+#define SQPERFDDEC_END                            0xd240
+#define SQGFXUDEC_BEGIN                           0xc330
+#define SQGFXUDEC_END                             0xc380
+#define SQPWRDEC_BEGIN                            0xf08c
+#define SQPWRDEC_END                              0xf094
+#define SQ_DISPATCHER_GFX_MIN                     0x10
+#define SQ_DISPATCHER_GFX_CNT_PER_RING            0x8
+#define SQ_MAX_PGM_SGPRS                          0x68
+#define SQ_MAX_PGM_VGPRS                          0x100
+#define SQ_THREAD_TRACE_TIME_UNIT                 0x4
+#define SQ_EX_MODE_EXCP_VALU_BASE                 0x0
+#define SQ_EX_MODE_EXCP_VALU_SIZE                 0x7
+#define SQ_EX_MODE_EXCP_INVALID                   0x0
+#define SQ_EX_MODE_EXCP_INPUT_DENORM              0x1
+#define SQ_EX_MODE_EXCP_DIV0                      0x2
+#define SQ_EX_MODE_EXCP_OVERFLOW                  0x3
+#define SQ_EX_MODE_EXCP_UNDERFLOW                 0x4
+#define SQ_EX_MODE_EXCP_INEXACT                   0x5
+#define SQ_EX_MODE_EXCP_INT_DIV0                  0x6
+#define SQ_EX_MODE_EXCP_ADDR_WATCH                0x7
+#define SQ_EX_MODE_EXCP_MEM_VIOL                  0x8
+#define INST_ID_PRIV_START                        0x80000000
+#define INST_ID_ECC_INTERRUPT_MSG                 0xfffffff0
+#define INST_ID_TTRACE_NEW_PC_MSG                 0xfffffff1
+#define INST_ID_HW_TRAP                           0xfffffff2
+#define INST_ID_KILL_SEQ                          0xfffffff3
+#define INST_ID_SPI_WREXEC                        0xfffffff4
+#define INST_ID_HOST_REG_TRAP_MSG                 0xfffffffe
+#define SQ_ENC_SOP1_BITS                          0xbe800000
+#define SQ_ENC_SOP1_MASK                          0xff800000
+#define SQ_ENC_SOP1_FIELD                         0x17d
+#define SQ_ENC_SOPC_BITS                          0xbf000000
+#define SQ_ENC_SOPC_MASK                          0xff800000
+#define SQ_ENC_SOPC_FIELD                         0x17e
+#define SQ_ENC_SOPP_BITS                          0xbf800000
+#define SQ_ENC_SOPP_MASK                          0xff800000
+#define SQ_ENC_SOPP_FIELD                         0x17f
+#define SQ_ENC_SOPK_BITS                          0xb0000000
+#define SQ_ENC_SOPK_MASK                          0xf0000000
+#define SQ_ENC_SOPK_FIELD                         0xb
+#define SQ_ENC_SOP2_BITS                          0x80000000
+#define SQ_ENC_SOP2_MASK                          0xc0000000
+#define SQ_ENC_SOP2_FIELD                         0x2
+#define SQ_ENC_SMEM_BITS                          0xc0000000
+#define SQ_ENC_SMEM_MASK                          0xfc000000
+#define SQ_ENC_SMEM_FIELD                         0x30
+#define SQ_ENC_VOP1_BITS                          0x7e000000
+#define SQ_ENC_VOP1_MASK                          0xfe000000
+#define SQ_ENC_VOP1_FIELD                         0x3f
+#define SQ_ENC_VOPC_BITS                          0x7c000000
+#define SQ_ENC_VOPC_MASK                          0xfe000000
+#define SQ_ENC_VOPC_FIELD                         0x3e
+#define SQ_ENC_VOP2_BITS                          0x0
+#define SQ_ENC_VOP2_MASK                          0x80000000
+#define SQ_ENC_VOP2_FIELD                         0x0
+#define SQ_ENC_VINTRP_BITS                        0xd4000000
+#define SQ_ENC_VINTRP_MASK                        0xfc000000
+#define SQ_ENC_VINTRP_FIELD                       0x35
+#define SQ_ENC_VOP3_BITS                          0xd0000000
+#define SQ_ENC_VOP3_MASK                          0xfc000000
+#define SQ_ENC_VOP3_FIELD                         0x34
+#define SQ_ENC_DS_BITS                            0xd8000000
+#define SQ_ENC_DS_MASK                            0xfc000000
+#define SQ_ENC_DS_FIELD                           0x36
+#define SQ_ENC_MUBUF_BITS                         0xe0000000
+#define SQ_ENC_MUBUF_MASK                         0xfc000000
+#define SQ_ENC_MUBUF_FIELD                        0x38
+#define SQ_ENC_MTBUF_BITS                         0xe8000000
+#define SQ_ENC_MTBUF_MASK                         0xfc000000
+#define SQ_ENC_MTBUF_FIELD                        0x3a
+#define SQ_ENC_MIMG_BITS                          0xf0000000
+#define SQ_ENC_MIMG_MASK                          0xfc000000
+#define SQ_ENC_MIMG_FIELD                         0x3c
+#define SQ_ENC_EXP_BITS                           0xc4000000
+#define SQ_ENC_EXP_MASK                           0xfc000000
+#define SQ_ENC_EXP_FIELD                          0x31
+#define SQ_ENC_FLAT_BITS                          0xdc000000
+#define SQ_ENC_FLAT_MASK                          0xfc000000
+#define SQ_ENC_FLAT_FIELD                         0x37
+#define SQ_V_OP3_INTRP_OFFSET                     0x274
+#define SQ_WAITCNT_VM_SHIFT                       0x0
+#define SQ_SENDMSG_STREAMID_SIZE                  0x2
+#define SQ_V_OPC_COUNT                            0x100
+#define SQ_V_OP3_INTRP_COUNT                      0xc
+#define SQ_XLATE_VOP3_TO_VOP2_OFFSET              0x100
+#define SQ_HWREG_OFFSET_SIZE                      0x5
+#define SQ_HWREG_OFFSET_SHIFT                     0x6
+#define SQ_V_OP3_3IN_OFFSET                       0x1c0
+#define SQ_NUM_ATTR                               0x21
+#define SQ_NUM_VGPR                               0x100
+#define SQ_XLATE_VOP3_TO_VINTRP_COUNT             0x4
+#define SQ_SENDMSG_MSG_SIZE                       0x4
+#define SQ_NUM_TTMP                               0xc
+#define SQ_HWREG_ID_SIZE                          0x6
+#define SQ_SENDMSG_GSOP_SIZE                      0x2
+#define SQ_NUM_SGPR                               0x66
+#define SQ_EXP_NUM_MRT                            0x8
+#define SQ_SENDMSG_SYSTEM_SIZE                    0x3
+#define SQ_WAITCNT_LGKM_SHIFT                     0x8
+#define SQ_XLATE_VOP3_TO_VOP2_COUNT               0x40
+#define SQ_V_OP3_3IN_COUNT                        0xb0
+#define SQ_V_INTRP_COUNT                          0x4
+#define SQ_WAITCNT_EXP_SIZE                       0x3
+#define SQ_SENDMSG_SYSTEM_SHIFT                   0x4
+#define SQ_EXP_NUM_GDS                            0x5
+#define SQ_HWREG_SIZE_SHIFT                       0xb
+#define SQ_XLATE_VOP3_TO_VOPC_OFFSET              0x0
+#define SQ_V_OP3_2IN_COUNT                        0x80
+#define SQ_XLATE_VOP3_TO_VINTRP_OFFSET            0x270
+#define SQ_SENDMSG_MSG_SHIFT                      0x0
+#define SQ_WAITCNT_EXP_SHIFT                      0x4
+#define SQ_WAITCNT_VM_SIZE                        0x4
+#define SQ_XLATE_VOP3_TO_VOP1_OFFSET              0x140
+#define SQ_SENDMSG_GSOP_SHIFT                     0x4
+#define SQ_XLATE_VOP3_TO_VOP1_COUNT               0x80
+#define SQ_SRC_VGPR_BIT                           0x100
+#define SQ_V_OP2_COUNT                            0x40
+#define SQ_EXP_NUM_PARAM                          0x20
+#define SQ_V_OP1_COUNT                            0x80
+#define SQ_SENDMSG_STREAMID_SHIFT                 0x8
+#define SQ_V_OP3_2IN_OFFSET                       0x280
+#define SQ_WAITCNT_LGKM_SIZE                      0x4
+#define SQ_XLATE_VOP3_TO_VOPC_COUNT               0x100
+#define SQ_EXP_NUM_POS                            0x4
+#define SQ_HWREG_SIZE_SIZE                        0x5
+#define SQ_HWREG_ID_SHIFT                         0x0
+#define SQ_S_MOV_B32                              0x0
+#define SQ_S_MOV_B64                              0x1
+#define SQ_S_CMOV_B32                             0x2
+#define SQ_S_CMOV_B64                             0x3
+#define SQ_S_NOT_B32                              0x4
+#define SQ_S_NOT_B64                              0x5
+#define SQ_S_WQM_B32                              0x6
+#define SQ_S_WQM_B64                              0x7
+#define SQ_S_BREV_B32                             0x8
+#define SQ_S_BREV_B64                             0x9
+#define SQ_S_BCNT0_I32_B32                        0xa
+#define SQ_S_BCNT0_I32_B64                        0xb
+#define SQ_S_BCNT1_I32_B32                        0xc
+#define SQ_S_BCNT1_I32_B64                        0xd
+#define SQ_S_FF0_I32_B32                          0xe
+#define SQ_S_FF0_I32_B64                          0xf
+#define SQ_S_FF1_I32_B32                          0x10
+#define SQ_S_FF1_I32_B64                          0x11
+#define SQ_S_FLBIT_I32_B32                        0x12
+#define SQ_S_FLBIT_I32_B64                        0x13
+#define SQ_S_FLBIT_I32                            0x14
+#define SQ_S_FLBIT_I32_I64                        0x15
+#define SQ_S_SEXT_I32_I8                          0x16
+#define SQ_S_SEXT_I32_I16                         0x17
+#define SQ_S_BITSET0_B32                          0x18
+#define SQ_S_BITSET0_B64                          0x19
+#define SQ_S_BITSET1_B32                          0x1a
+#define SQ_S_BITSET1_B64                          0x1b
+#define SQ_S_GETPC_B64                            0x1c
+#define SQ_S_SETPC_B64                            0x1d
+#define SQ_S_SWAPPC_B64                           0x1e
+#define SQ_S_RFE_B64                              0x1f
+#define SQ_S_AND_SAVEEXEC_B64                     0x20
+#define SQ_S_OR_SAVEEXEC_B64                      0x21
+#define SQ_S_XOR_SAVEEXEC_B64                     0x22
+#define SQ_S_ANDN2_SAVEEXEC_B64                   0x23
+#define SQ_S_ORN2_SAVEEXEC_B64                    0x24
+#define SQ_S_NAND_SAVEEXEC_B64                    0x25
+#define SQ_S_NOR_SAVEEXEC_B64                     0x26
+#define SQ_S_XNOR_SAVEEXEC_B64                    0x27
+#define SQ_S_QUADMASK_B32                         0x28
+#define SQ_S_QUADMASK_B64                         0x29
+#define SQ_S_MOVRELS_B32                          0x2a
+#define SQ_S_MOVRELS_B64                          0x2b
+#define SQ_S_MOVRELD_B32                          0x2c
+#define SQ_S_MOVRELD_B64                          0x2d
+#define SQ_S_CBRANCH_JOIN                         0x2e
+#define SQ_S_MOV_REGRD_B32                        0x2f
+#define SQ_S_ABS_I32                              0x30
+#define SQ_S_MOV_FED_B32                          0x31
+#define SQ_S_SET_GPR_IDX_IDX                      0x32
+#define SQ_ATTR0                                  0x0
+#define SQ_S_MOVK_I32                             0x0
+#define SQ_S_CMOVK_I32                            0x1
+#define SQ_S_CMPK_EQ_I32                          0x2
+#define SQ_S_CMPK_LG_I32                          0x3
+#define SQ_S_CMPK_GT_I32                          0x4
+#define SQ_S_CMPK_GE_I32                          0x5
+#define SQ_S_CMPK_LT_I32                          0x6
+#define SQ_S_CMPK_LE_I32                          0x7
+#define SQ_S_CMPK_EQ_U32                          0x8
+#define SQ_S_CMPK_LG_U32                          0x9
+#define SQ_S_CMPK_GT_U32                          0xa
+#define SQ_S_CMPK_GE_U32                          0xb
+#define SQ_S_CMPK_LT_U32                          0xc
+#define SQ_S_CMPK_LE_U32                          0xd
+#define SQ_S_ADDK_I32                             0xe
+#define SQ_S_MULK_I32                             0xf
+#define SQ_S_CBRANCH_I_FORK                       0x10
+#define SQ_S_GETREG_B32                           0x11
+#define SQ_S_SETREG_B32                           0x12
+#define SQ_S_GETREG_REGRD_B32                     0x13
+#define SQ_S_SETREG_IMM32_B32                     0x14
+#define SQ_TBA_LO                                 0x6c
+#define SQ_TBA_HI                                 0x6d
+#define SQ_TMA_LO                                 0x6e
+#define SQ_TMA_HI                                 0x6f
+#define SQ_TTMP0                                  0x70
+#define SQ_TTMP1                                  0x71
+#define SQ_TTMP2                                  0x72
+#define SQ_TTMP3                                  0x73
+#define SQ_TTMP4                                  0x74
+#define SQ_TTMP5                                  0x75
+#define SQ_TTMP6                                  0x76
+#define SQ_TTMP7                                  0x77
+#define SQ_TTMP8                                  0x78
+#define SQ_TTMP9                                  0x79
+#define SQ_TTMP10                                 0x7a
+#define SQ_TTMP11                                 0x7b
+#define SQ_VGPR0                                  0x0
+#define SQ_EXP                                    0x0
+#define SQ_EXP_MRT0                               0x0
+#define SQ_EXP_MRTZ                               0x8
+#define SQ_EXP_NULL                               0x9
+#define SQ_EXP_POS0                               0xc
+#define SQ_EXP_PARAM0                             0x20
+#define SQ_CNT1                                   0x0
+#define SQ_CNT2                                   0x1
+#define SQ_CNT3                                   0x2
+#define SQ_CNT4                                   0x3
+#define SQ_S_LOAD_DWORD                           0x0
+#define SQ_S_LOAD_DWORDX2                         0x1
+#define SQ_S_LOAD_DWORDX4                         0x2
+#define SQ_S_LOAD_DWORDX8                         0x3
+#define SQ_S_LOAD_DWORDX16                        0x4
+#define SQ_S_BUFFER_LOAD_DWORD                    0x8
+#define SQ_S_BUFFER_LOAD_DWORDX2                  0x9
+#define SQ_S_BUFFER_LOAD_DWORDX4                  0xa
+#define SQ_S_BUFFER_LOAD_DWORDX8                  0xb
+#define SQ_S_BUFFER_LOAD_DWORDX16                 0xc
+#define SQ_S_STORE_DWORD                          0x10
+#define SQ_S_STORE_DWORDX2                        0x11
+#define SQ_S_STORE_DWORDX4                        0x12
+#define SQ_S_BUFFER_STORE_DWORD                   0x18
+#define SQ_S_BUFFER_STORE_DWORDX2                 0x19
+#define SQ_S_BUFFER_STORE_DWORDX4                 0x1a
+#define SQ_S_DCACHE_INV                           0x20
+#define SQ_S_DCACHE_WB                            0x21
+#define SQ_S_DCACHE_INV_VOL                       0x22
+#define SQ_S_DCACHE_WB_VOL                        0x23
+#define SQ_S_MEMTIME                              0x24
+#define SQ_S_MEMREALTIME                          0x25
+#define SQ_S_ATC_PROBE                            0x26
+#define SQ_S_ATC_PROBE_BUFFER                     0x27
+#define SQ_S_BUFFER_ATOMIC_SWAP                   0x40
+#define SQ_S_BUFFER_ATOMIC_CMPSWAP                0x41
+#define SQ_S_BUFFER_ATOMIC_ADD                    0x42
+#define SQ_S_BUFFER_ATOMIC_SUB                    0x43
+#define SQ_S_BUFFER_ATOMIC_SMIN                   0x44
+#define SQ_S_BUFFER_ATOMIC_UMIN                   0x45
+#define SQ_S_BUFFER_ATOMIC_SMAX                   0x46
+#define SQ_S_BUFFER_ATOMIC_UMAX                   0x47
+#define SQ_S_BUFFER_ATOMIC_AND                    0x48
+#define SQ_S_BUFFER_ATOMIC_OR                     0x49
+#define SQ_S_BUFFER_ATOMIC_XOR                    0x4a
+#define SQ_S_BUFFER_ATOMIC_INC                    0x4b
+#define SQ_S_BUFFER_ATOMIC_DEC                    0x4c
+#define SQ_S_BUFFER_ATOMIC_SWAP_X2                0x60
+#define SQ_S_BUFFER_ATOMIC_CMPSWAP_X2             0x61
+#define SQ_S_BUFFER_ATOMIC_ADD_X2                 0x62
+#define SQ_S_BUFFER_ATOMIC_SUB_X2                 0x63
+#define SQ_S_BUFFER_ATOMIC_SMIN_X2                0x64
+#define SQ_S_BUFFER_ATOMIC_UMIN_X2                0x65
+#define SQ_S_BUFFER_ATOMIC_SMAX_X2                0x66
+#define SQ_S_BUFFER_ATOMIC_UMAX_X2                0x67
+#define SQ_S_BUFFER_ATOMIC_AND_X2                 0x68
+#define SQ_S_BUFFER_ATOMIC_OR_X2                  0x69
+#define SQ_S_BUFFER_ATOMIC_XOR_X2                 0x6a
+#define SQ_S_BUFFER_ATOMIC_INC_X2                 0x6b
+#define SQ_S_BUFFER_ATOMIC_DEC_X2                 0x6c
+#define SQ_F                                      0x0
+#define SQ_LT                                     0x1
+#define SQ_EQ                                     0x2
+#define SQ_LE                                     0x3
+#define SQ_GT                                     0x4
+#define SQ_LG                                     0x5
+#define SQ_GE                                     0x6
+#define SQ_O                                      0x7
+#define SQ_U                                      0x8
+#define SQ_NGE                                    0x9
+#define SQ_NLG                                    0xa
+#define SQ_NGT                                    0xb
+#define SQ_NLE                                    0xc
+#define SQ_NEQ                                    0xd
+#define SQ_NLT                                    0xe
+#define SQ_TRU                                    0xf
+#define SQ_V_CMP_CLASS_F32                        0x10
+#define SQ_V_CMPX_CLASS_F32                       0x11
+#define SQ_V_CMP_CLASS_F64                        0x12
+#define SQ_V_CMPX_CLASS_F64                       0x13
+#define SQ_V_CMP_CLASS_F16                        0x14
+#define SQ_V_CMPX_CLASS_F16                       0x15
+#define SQ_V_CMP_F_F16                            0x20
+#define SQ_V_CMP_LT_F16                           0x21
+#define SQ_V_CMP_EQ_F16                           0x22
+#define SQ_V_CMP_LE_F16                           0x23
+#define SQ_V_CMP_GT_F16                           0x24
+#define SQ_V_CMP_LG_F16                           0x25
+#define SQ_V_CMP_GE_F16                           0x26
+#define SQ_V_CMP_O_F16                            0x27
+#define SQ_V_CMP_U_F16                            0x28
+#define SQ_V_CMP_NGE_F16                          0x29
+#define SQ_V_CMP_NLG_F16                          0x2a
+#define SQ_V_CMP_NGT_F16                          0x2b
+#define SQ_V_CMP_NLE_F16                          0x2c
+#define SQ_V_CMP_NEQ_F16                          0x2d
+#define SQ_V_CMP_NLT_F16                          0x2e
+#define SQ_V_CMP_TRU_F16                          0x2f
+#define SQ_V_CMPX_F_F16                           0x30
+#define SQ_V_CMPX_LT_F16                          0x31
+#define SQ_V_CMPX_EQ_F16                          0x32
+#define SQ_V_CMPX_LE_F16                          0x33
+#define SQ_V_CMPX_GT_F16                          0x34
+#define SQ_V_CMPX_LG_F16                          0x35
+#define SQ_V_CMPX_GE_F16                          0x36
+#define SQ_V_CMPX_O_F16                           0x37
+#define SQ_V_CMPX_U_F16                           0x38
+#define SQ_V_CMPX_NGE_F16                         0x39
+#define SQ_V_CMPX_NLG_F16                         0x3a
+#define SQ_V_CMPX_NGT_F16                         0x3b
+#define SQ_V_CMPX_NLE_F16                         0x3c
+#define SQ_V_CMPX_NEQ_F16                         0x3d
+#define SQ_V_CMPX_NLT_F16                         0x3e
+#define SQ_V_CMPX_TRU_F16                         0x3f
+#define SQ_V_CMP_F_F32                            0x40
+#define SQ_V_CMP_LT_F32                           0x41
+#define SQ_V_CMP_EQ_F32                           0x42
+#define SQ_V_CMP_LE_F32                           0x43
+#define SQ_V_CMP_GT_F32                           0x44
+#define SQ_V_CMP_LG_F32                           0x45
+#define SQ_V_CMP_GE_F32                           0x46
+#define SQ_V_CMP_O_F32                            0x47
+#define SQ_V_CMP_U_F32                            0x48
+#define SQ_V_CMP_NGE_F32                          0x49
+#define SQ_V_CMP_NLG_F32                          0x4a
+#define SQ_V_CMP_NGT_F32                          0x4b
+#define SQ_V_CMP_NLE_F32                          0x4c
+#define SQ_V_CMP_NEQ_F32                          0x4d
+#define SQ_V_CMP_NLT_F32                          0x4e
+#define SQ_V_CMP_TRU_F32                          0x4f
+#define SQ_V_CMPX_F_F32                           0x50
+#define SQ_V_CMPX_LT_F32                          0x51
+#define SQ_V_CMPX_EQ_F32                          0x52
+#define SQ_V_CMPX_LE_F32                          0x53
+#define SQ_V_CMPX_GT_F32                          0x54
+#define SQ_V_CMPX_LG_F32                          0x55
+#define SQ_V_CMPX_GE_F32                          0x56
+#define SQ_V_CMPX_O_F32                           0x57
+#define SQ_V_CMPX_U_F32                           0x58
+#define SQ_V_CMPX_NGE_F32                         0x59
+#define SQ_V_CMPX_NLG_F32                         0x5a
+#define SQ_V_CMPX_NGT_F32                         0x5b
+#define SQ_V_CMPX_NLE_F32                         0x5c
+#define SQ_V_CMPX_NEQ_F32                         0x5d
+#define SQ_V_CMPX_NLT_F32                         0x5e
+#define SQ_V_CMPX_TRU_F32                         0x5f
+#define SQ_V_CMP_F_F64                            0x60
+#define SQ_V_CMP_LT_F64                           0x61
+#define SQ_V_CMP_EQ_F64                           0x62
+#define SQ_V_CMP_LE_F64                           0x63
+#define SQ_V_CMP_GT_F64                           0x64
+#define SQ_V_CMP_LG_F64                           0x65
+#define SQ_V_CMP_GE_F64                           0x66
+#define SQ_V_CMP_O_F64                            0x67
+#define SQ_V_CMP_U_F64                            0x68
+#define SQ_V_CMP_NGE_F64                          0x69
+#define SQ_V_CMP_NLG_F64                          0x6a
+#define SQ_V_CMP_NGT_F64                          0x6b
+#define SQ_V_CMP_NLE_F64                          0x6c
+#define SQ_V_CMP_NEQ_F64                          0x6d
+#define SQ_V_CMP_NLT_F64                          0x6e
+#define SQ_V_CMP_TRU_F64                          0x6f
+#define SQ_V_CMPX_F_F64                           0x70
+#define SQ_V_CMPX_LT_F64                          0x71
+#define SQ_V_CMPX_EQ_F64                          0x72
+#define SQ_V_CMPX_LE_F64                          0x73
+#define SQ_V_CMPX_GT_F64                          0x74
+#define SQ_V_CMPX_LG_F64                          0x75
+#define SQ_V_CMPX_GE_F64                          0x76
+#define SQ_V_CMPX_O_F64                           0x77
+#define SQ_V_CMPX_U_F64                           0x78
+#define SQ_V_CMPX_NGE_F64                         0x79
+#define SQ_V_CMPX_NLG_F64                         0x7a
+#define SQ_V_CMPX_NGT_F64                         0x7b
+#define SQ_V_CMPX_NLE_F64                         0x7c
+#define SQ_V_CMPX_NEQ_F64                         0x7d
+#define SQ_V_CMPX_NLT_F64                         0x7e
+#define SQ_V_CMPX_TRU_F64                         0x7f
+#define SQ_V_CMP_F_I16                            0xa0
+#define SQ_V_CMP_LT_I16                           0xa1
+#define SQ_V_CMP_EQ_I16                           0xa2
+#define SQ_V_CMP_LE_I16                           0xa3
+#define SQ_V_CMP_GT_I16                           0xa4
+#define SQ_V_CMP_NE_I16                           0xa5
+#define SQ_V_CMP_GE_I16                           0xa6
+#define SQ_V_CMP_T_I16                            0xa7
+#define SQ_V_CMP_F_U16                            0xa8
+#define SQ_V_CMP_LT_U16                           0xa9
+#define SQ_V_CMP_EQ_U16                           0xaa
+#define SQ_V_CMP_LE_U16                           0xab
+#define SQ_V_CMP_GT_U16                           0xac
+#define SQ_V_CMP_NE_U16                           0xad
+#define SQ_V_CMP_GE_U16                           0xae
+#define SQ_V_CMP_T_U16                            0xaf
+#define SQ_V_CMPX_F_I16                           0xb0
+#define SQ_V_CMPX_LT_I16                          0xb1
+#define SQ_V_CMPX_EQ_I16                          0xb2
+#define SQ_V_CMPX_LE_I16                          0xb3
+#define SQ_V_CMPX_GT_I16                          0xb4
+#define SQ_V_CMPX_NE_I16                          0xb5
+#define SQ_V_CMPX_GE_I16                          0xb6
+#define SQ_V_CMPX_T_I16                           0xb7
+#define SQ_V_CMPX_F_U16                           0xb8
+#define SQ_V_CMPX_LT_U16                          0xb9
+#define SQ_V_CMPX_EQ_U16                          0xba
+#define SQ_V_CMPX_LE_U16                          0xbb
+#define SQ_V_CMPX_GT_U16                          0xbc
+#define SQ_V_CMPX_NE_U16                          0xbd
+#define SQ_V_CMPX_GE_U16                          0xbe
+#define SQ_V_CMPX_T_U16                           0xbf
+#define SQ_V_CMP_F_I32                            0xc0
+#define SQ_V_CMP_LT_I32                           0xc1
+#define SQ_V_CMP_EQ_I32                           0xc2
+#define SQ_V_CMP_LE_I32                           0xc3
+#define SQ_V_CMP_GT_I32                           0xc4
+#define SQ_V_CMP_NE_I32                           0xc5
+#define SQ_V_CMP_GE_I32                           0xc6
+#define SQ_V_CMP_T_I32                            0xc7
+#define SQ_V_CMP_F_U32                            0xc8
+#define SQ_V_CMP_LT_U32                           0xc9
+#define SQ_V_CMP_EQ_U32                           0xca
+#define SQ_V_CMP_LE_U32                           0xcb
+#define SQ_V_CMP_GT_U32                           0xcc
+#define SQ_V_CMP_NE_U32                           0xcd
+#define SQ_V_CMP_GE_U32                           0xce
+#define SQ_V_CMP_T_U32                            0xcf
+#define SQ_V_CMPX_F_I32                           0xd0
+#define SQ_V_CMPX_LT_I32                          0xd1
+#define SQ_V_CMPX_EQ_I32                          0xd2
+#define SQ_V_CMPX_LE_I32                          0xd3
+#define SQ_V_CMPX_GT_I32                          0xd4
+#define SQ_V_CMPX_NE_I32                          0xd5
+#define SQ_V_CMPX_GE_I32                          0xd6
+#define SQ_V_CMPX_T_I32                           0xd7
+#define SQ_V_CMPX_F_U32                           0xd8
+#define SQ_V_CMPX_LT_U32                          0xd9
+#define SQ_V_CMPX_EQ_U32                          0xda
+#define SQ_V_CMPX_LE_U32                          0xdb
+#define SQ_V_CMPX_GT_U32                          0xdc
+#define SQ_V_CMPX_NE_U32                          0xdd
+#define SQ_V_CMPX_GE_U32                          0xde
+#define SQ_V_CMPX_T_U32                           0xdf
+#define SQ_V_CMP_F_I64                            0xe0
+#define SQ_V_CMP_LT_I64                           0xe1
+#define SQ_V_CMP_EQ_I64                           0xe2
+#define SQ_V_CMP_LE_I64                           0xe3
+#define SQ_V_CMP_GT_I64                           0xe4
+#define SQ_V_CMP_NE_I64                           0xe5
+#define SQ_V_CMP_GE_I64                           0xe6
+#define SQ_V_CMP_T_I64                            0xe7
+#define SQ_V_CMP_F_U64                            0xe8
+#define SQ_V_CMP_LT_U64                           0xe9
+#define SQ_V_CMP_EQ_U64                           0xea
+#define SQ_V_CMP_LE_U64                           0xeb
+#define SQ_V_CMP_GT_U64                           0xec
+#define SQ_V_CMP_NE_U64                           0xed
+#define SQ_V_CMP_GE_U64                           0xee
+#define SQ_V_CMP_T_U64                            0xef
+#define SQ_V_CMPX_F_I64                           0xf0
+#define SQ_V_CMPX_LT_I64                          0xf1
+#define SQ_V_CMPX_EQ_I64                          0xf2
+#define SQ_V_CMPX_LE_I64                          0xf3
+#define SQ_V_CMPX_GT_I64                          0xf4
+#define SQ_V_CMPX_NE_I64                          0xf5
+#define SQ_V_CMPX_GE_I64                          0xf6
+#define SQ_V_CMPX_T_I64                           0xf7
+#define SQ_V_CMPX_F_U64                           0xf8
+#define SQ_V_CMPX_LT_U64                          0xf9
+#define SQ_V_CMPX_EQ_U64                          0xfa
+#define SQ_V_CMPX_LE_U64                          0xfb
+#define SQ_V_CMPX_GT_U64                          0xfc
+#define SQ_V_CMPX_NE_U64                          0xfd
+#define SQ_V_CMPX_GE_U64                          0xfe
+#define SQ_V_CMPX_T_U64                           0xff
+#define SQ_L1                                     0x1
+#define SQ_L2                                     0x2
+#define SQ_L3                                     0x3
+#define SQ_L4                                     0x4
+#define SQ_L5                                     0x5
+#define SQ_L6                                     0x6
+#define SQ_L7                                     0x7
+#define SQ_L8                                     0x8
+#define SQ_L9                                     0x9
+#define SQ_L10                                    0xa
+#define SQ_L11                                    0xb
+#define SQ_L12                                    0xc
+#define SQ_L13                                    0xd
+#define SQ_L14                                    0xe
+#define SQ_L15                                    0xf
+#define SQ_SGPR0                                  0x0
+#define SQ_SDWA_UNUSED_PAD                        0x0
+#define SQ_SDWA_UNUSED_SEXT                       0x1
+#define SQ_SDWA_UNUSED_PRESERVE                   0x2
+#define SQ_F                                      0x0
+#define SQ_LT                                     0x1
+#define SQ_EQ                                     0x2
+#define SQ_LE                                     0x3
+#define SQ_GT                                     0x4
+#define SQ_NE                                     0x5
+#define SQ_GE                                     0x6
+#define SQ_T                                      0x7
+#define SQ_SRC_64_INT                             0xc0
+#define SQ_SRC_M_1_INT                            0xc1
+#define SQ_SRC_M_2_INT                            0xc2
+#define SQ_SRC_M_3_INT                            0xc3
+#define SQ_SRC_M_4_INT                            0xc4
+#define SQ_SRC_M_5_INT                            0xc5
+#define SQ_SRC_M_6_INT                            0xc6
+#define SQ_SRC_M_7_INT                            0xc7
+#define SQ_SRC_M_8_INT                            0xc8
+#define SQ_SRC_M_9_INT                            0xc9
+#define SQ_SRC_M_10_INT                           0xca
+#define SQ_SRC_M_11_INT                           0xcb
+#define SQ_SRC_M_12_INT                           0xcc
+#define SQ_SRC_M_13_INT                           0xcd
+#define SQ_SRC_M_14_INT                           0xce
+#define SQ_SRC_M_15_INT                           0xcf
+#define SQ_SRC_M_16_INT                           0xd0
+#define SQ_SRC_0_5                                0xf0
+#define SQ_SRC_M_0_5                              0xf1
+#define SQ_SRC_1                                  0xf2
+#define SQ_SRC_M_1                                0xf3
+#define SQ_SRC_2                                  0xf4
+#define SQ_SRC_M_2                                0xf5
+#define SQ_SRC_4                                  0xf6
+#define SQ_SRC_M_4                                0xf7
+#define SQ_SRC_INV_2PI                            0xf8
+#define SQ_SRC_0                                  0x80
+#define SQ_SRC_1_INT                              0x81
+#define SQ_SRC_2_INT                              0x82
+#define SQ_SRC_3_INT                              0x83
+#define SQ_SRC_4_INT                              0x84
+#define SQ_SRC_5_INT                              0x85
+#define SQ_SRC_6_INT                              0x86
+#define SQ_SRC_7_INT                              0x87
+#define SQ_SRC_8_INT                              0x88
+#define SQ_SRC_9_INT                              0x89
+#define SQ_SRC_10_INT                             0x8a
+#define SQ_SRC_11_INT                             0x8b
+#define SQ_SRC_12_INT                             0x8c
+#define SQ_SRC_13_INT                             0x8d
+#define SQ_SRC_14_INT                             0x8e
+#define SQ_SRC_15_INT                             0x8f
+#define SQ_SRC_16_INT                             0x90
+#define SQ_SRC_17_INT                             0x91
+#define SQ_SRC_18_INT                             0x92
+#define SQ_SRC_19_INT                             0x93
+#define SQ_SRC_20_INT                             0x94
+#define SQ_SRC_21_INT                             0x95
+#define SQ_SRC_22_INT                             0x96
+#define SQ_SRC_23_INT                             0x97
+#define SQ_SRC_24_INT                             0x98
+#define SQ_SRC_25_INT                             0x99
+#define SQ_SRC_26_INT                             0x9a
+#define SQ_SRC_27_INT                             0x9b
+#define SQ_SRC_28_INT                             0x9c
+#define SQ_SRC_29_INT                             0x9d
+#define SQ_SRC_30_INT                             0x9e
+#define SQ_SRC_31_INT                             0x9f
+#define SQ_SRC_32_INT                             0xa0
+#define SQ_SRC_33_INT                             0xa1
+#define SQ_SRC_34_INT                             0xa2
+#define SQ_SRC_35_INT                             0xa3
+#define SQ_SRC_36_INT                             0xa4
+#define SQ_SRC_37_INT                             0xa5
+#define SQ_SRC_38_INT                             0xa6
+#define SQ_SRC_39_INT                             0xa7
+#define SQ_SRC_40_INT                             0xa8
+#define SQ_SRC_41_INT                             0xa9
+#define SQ_SRC_42_INT                             0xaa
+#define SQ_SRC_43_INT                             0xab
+#define SQ_SRC_44_INT                             0xac
+#define SQ_SRC_45_INT                             0xad
+#define SQ_SRC_46_INT                             0xae
+#define SQ_SRC_47_INT                             0xaf
+#define SQ_SRC_48_INT                             0xb0
+#define SQ_SRC_49_INT                             0xb1
+#define SQ_SRC_50_INT                             0xb2
+#define SQ_SRC_51_INT                             0xb3
+#define SQ_SRC_52_INT                             0xb4
+#define SQ_SRC_53_INT                             0xb5
+#define SQ_SRC_54_INT                             0xb6
+#define SQ_SRC_55_INT                             0xb7
+#define SQ_SRC_56_INT                             0xb8
+#define SQ_SRC_57_INT                             0xb9
+#define SQ_SRC_58_INT                             0xba
+#define SQ_SRC_59_INT                             0xbb
+#define SQ_SRC_60_INT                             0xbc
+#define SQ_SRC_61_INT                             0xbd
+#define SQ_SRC_62_INT                             0xbe
+#define SQ_SRC_63_INT                             0xbf
+#define SQ_DS_ADD_U32                             0x0
+#define SQ_DS_SUB_U32                             0x1
+#define SQ_DS_RSUB_U32                            0x2
+#define SQ_DS_INC_U32                             0x3
+#define SQ_DS_DEC_U32                             0x4
+#define SQ_DS_MIN_I32                             0x5
+#define SQ_DS_MAX_I32                             0x6
+#define SQ_DS_MIN_U32                             0x7
+#define SQ_DS_MAX_U32                             0x8
+#define SQ_DS_AND_B32                             0x9
+#define SQ_DS_OR_B32                              0xa
+#define SQ_DS_XOR_B32                             0xb
+#define SQ_DS_MSKOR_B32                           0xc
+#define SQ_DS_WRITE_B32                           0xd
+#define SQ_DS_WRITE2_B32                          0xe
+#define SQ_DS_WRITE2ST64_B32                      0xf
+#define SQ_DS_CMPST_B32                           0x10
+#define SQ_DS_CMPST_F32                           0x11
+#define SQ_DS_MIN_F32                             0x12
+#define SQ_DS_MAX_F32                             0x13
+#define SQ_DS_NOP                                 0x14
+#define SQ_DS_ADD_F32                             0x15
+#define SQ_DS_WRITE_B8                            0x1e
+#define SQ_DS_WRITE_B16                           0x1f
+#define SQ_DS_ADD_RTN_U32                         0x20
+#define SQ_DS_SUB_RTN_U32                         0x21
+#define SQ_DS_RSUB_RTN_U32                        0x22
+#define SQ_DS_INC_RTN_U32                         0x23
+#define SQ_DS_DEC_RTN_U32                         0x24
+#define SQ_DS_MIN_RTN_I32                         0x25
+#define SQ_DS_MAX_RTN_I32                         0x26
+#define SQ_DS_MIN_RTN_U32                         0x27
+#define SQ_DS_MAX_RTN_U32                         0x28
+#define SQ_DS_AND_RTN_B32                         0x29
+#define SQ_DS_OR_RTN_B32                          0x2a
+#define SQ_DS_XOR_RTN_B32                         0x2b
+#define SQ_DS_MSKOR_RTN_B32                       0x2c
+#define SQ_DS_WRXCHG_RTN_B32                      0x2d
+#define SQ_DS_WRXCHG2_RTN_B32                     0x2e
+#define SQ_DS_WRXCHG2ST64_RTN_B32                 0x2f
+#define SQ_DS_CMPST_RTN_B32                       0x30
+#define SQ_DS_CMPST_RTN_F32                       0x31
+#define SQ_DS_MIN_RTN_F32                         0x32
+#define SQ_DS_MAX_RTN_F32                         0x33
+#define SQ_DS_WRAP_RTN_B32                        0x34
+#define SQ_DS_ADD_RTN_F32                         0x35
+#define SQ_DS_READ_B32                            0x36
+#define SQ_DS_READ2_B32                           0x37
+#define SQ_DS_READ2ST64_B32                       0x38
+#define SQ_DS_READ_I8                             0x39
+#define SQ_DS_READ_U8                             0x3a
+#define SQ_DS_READ_I16                            0x3b
+#define SQ_DS_READ_U16                            0x3c
+#define SQ_DS_SWIZZLE_B32                         0x3d
+#define SQ_DS_PERMUTE_B32                         0x3e
+#define SQ_DS_BPERMUTE_B32                        0x3f
+#define SQ_DS_ADD_U64                             0x40
+#define SQ_DS_SUB_U64                             0x41
+#define SQ_DS_RSUB_U64                            0x42
+#define SQ_DS_INC_U64                             0x43
+#define SQ_DS_DEC_U64                             0x44
+#define SQ_DS_MIN_I64                             0x45
+#define SQ_DS_MAX_I64                             0x46
+#define SQ_DS_MIN_U64                             0x47
+#define SQ_DS_MAX_U64                             0x48
+#define SQ_DS_AND_B64                             0x49
+#define SQ_DS_OR_B64                              0x4a
+#define SQ_DS_XOR_B64                             0x4b
+#define SQ_DS_MSKOR_B64                           0x4c
+#define SQ_DS_WRITE_B64                           0x4d
+#define SQ_DS_WRITE2_B64                          0x4e
+#define SQ_DS_WRITE2ST64_B64                      0x4f
+#define SQ_DS_CMPST_B64                           0x50
+#define SQ_DS_CMPST_F64                           0x51
+#define SQ_DS_MIN_F64                             0x52
+#define SQ_DS_MAX_F64                             0x53
+#define SQ_DS_ADD_RTN_U64                         0x60
+#define SQ_DS_SUB_RTN_U64                         0x61
+#define SQ_DS_RSUB_RTN_U64                        0x62
+#define SQ_DS_INC_RTN_U64                         0x63
+#define SQ_DS_DEC_RTN_U64                         0x64
+#define SQ_DS_MIN_RTN_I64                         0x65
+#define SQ_DS_MAX_RTN_I64                         0x66
+#define SQ_DS_MIN_RTN_U64                         0x67
+#define SQ_DS_MAX_RTN_U64                         0x68
+#define SQ_DS_AND_RTN_B64                         0x69
+#define SQ_DS_OR_RTN_B64                          0x6a
+#define SQ_DS_XOR_RTN_B64                         0x6b
+#define SQ_DS_MSKOR_RTN_B64                       0x6c
+#define SQ_DS_WRXCHG_RTN_B64                      0x6d
+#define SQ_DS_WRXCHG2_RTN_B64                     0x6e
+#define SQ_DS_WRXCHG2ST64_RTN_B64                 0x6f
+#define SQ_DS_CMPST_RTN_B64                       0x70
+#define SQ_DS_CMPST_RTN_F64                       0x71
+#define SQ_DS_MIN_RTN_F64                         0x72
+#define SQ_DS_MAX_RTN_F64                         0x73
+#define SQ_DS_READ_B64                            0x76
+#define SQ_DS_READ2_B64                           0x77
+#define SQ_DS_READ2ST64_B64                       0x78
+#define SQ_DS_CONDXCHG32_RTN_B64                  0x7e
+#define SQ_DS_ADD_SRC2_U32                        0x80
+#define SQ_DS_SUB_SRC2_U32                        0x81
+#define SQ_DS_RSUB_SRC2_U32                       0x82
+#define SQ_DS_INC_SRC2_U32                        0x83
+#define SQ_DS_DEC_SRC2_U32                        0x84
+#define SQ_DS_MIN_SRC2_I32                        0x85
+#define SQ_DS_MAX_SRC2_I32                        0x86
+#define SQ_DS_MIN_SRC2_U32                        0x87
+#define SQ_DS_MAX_SRC2_U32                        0x88
+#define SQ_DS_AND_SRC2_B32                        0x89
+#define SQ_DS_OR_SRC2_B32                         0x8a
+#define SQ_DS_XOR_SRC2_B32                        0x8b
+#define SQ_DS_WRITE_SRC2_B32                      0x8d
+#define SQ_DS_MIN_SRC2_F32                        0x92
+#define SQ_DS_MAX_SRC2_F32                        0x93
+#define SQ_DS_ADD_SRC2_F32                        0x95
+#define SQ_DS_GWS_SEMA_RELEASE_ALL                0x98
+#define SQ_DS_GWS_INIT                            0x99
+#define SQ_DS_GWS_SEMA_V                          0x9a
+#define SQ_DS_GWS_SEMA_BR                         0x9b
+#define SQ_DS_GWS_SEMA_P                          0x9c
+#define SQ_DS_GWS_BARRIER                         0x9d
+#define SQ_DS_CONSUME                             0xbd
+#define SQ_DS_APPEND                              0xbe
+#define SQ_DS_ORDERED_COUNT                       0xbf
+#define SQ_DS_ADD_SRC2_U64                        0xc0
+#define SQ_DS_SUB_SRC2_U64                        0xc1
+#define SQ_DS_RSUB_SRC2_U64                       0xc2
+#define SQ_DS_INC_SRC2_U64                        0xc3
+#define SQ_DS_DEC_SRC2_U64                        0xc4
+#define SQ_DS_MIN_SRC2_I64                        0xc5
+#define SQ_DS_MAX_SRC2_I64                        0xc6
+#define SQ_DS_MIN_SRC2_U64                        0xc7
+#define SQ_DS_MAX_SRC2_U64                        0xc8
+#define SQ_DS_AND_SRC2_B64                        0xc9
+#define SQ_DS_OR_SRC2_B64                         0xca
+#define SQ_DS_XOR_SRC2_B64                        0xcb
+#define SQ_DS_WRITE_SRC2_B64                      0xcd
+#define SQ_DS_MIN_SRC2_F64                        0xd2
+#define SQ_DS_MAX_SRC2_F64                        0xd3
+#define SQ_DS_WRITE_B96                           0xde
+#define SQ_DS_WRITE_B128                          0xdf
+#define SQ_DS_CONDXCHG32_RTN_B128                 0xfd
+#define SQ_DS_READ_B96                            0xfe
+#define SQ_DS_READ_B128                           0xff
+#define SQ_BUFFER_LOAD_FORMAT_X                   0x0
+#define SQ_BUFFER_LOAD_FORMAT_XY                  0x1
+#define SQ_BUFFER_LOAD_FORMAT_XYZ                 0x2
+#define SQ_BUFFER_LOAD_FORMAT_XYZW                0x3
+#define SQ_BUFFER_STORE_FORMAT_X                  0x4
+#define SQ_BUFFER_STORE_FORMAT_XY                 0x5
+#define SQ_BUFFER_STORE_FORMAT_XYZ                0x6
+#define SQ_BUFFER_STORE_FORMAT_XYZW               0x7
+#define SQ_BUFFER_LOAD_FORMAT_D16_X               0x8
+#define SQ_BUFFER_LOAD_FORMAT_D16_XY              0x9
+#define SQ_BUFFER_LOAD_FORMAT_D16_XYZ             0xa
+#define SQ_BUFFER_LOAD_FORMAT_D16_XYZW            0xb
+#define SQ_BUFFER_STORE_FORMAT_D16_X              0xc
+#define SQ_BUFFER_STORE_FORMAT_D16_XY             0xd
+#define SQ_BUFFER_STORE_FORMAT_D16_XYZ            0xe
+#define SQ_BUFFER_STORE_FORMAT_D16_XYZW           0xf
+#define SQ_BUFFER_LOAD_UBYTE                      0x10
+#define SQ_BUFFER_LOAD_SBYTE                      0x11
+#define SQ_BUFFER_LOAD_USHORT                     0x12
+#define SQ_BUFFER_LOAD_SSHORT                     0x13
+#define SQ_BUFFER_LOAD_DWORD                      0x14
+#define SQ_BUFFER_LOAD_DWORDX2                    0x15
+#define SQ_BUFFER_LOAD_DWORDX3                    0x16
+#define SQ_BUFFER_LOAD_DWORDX4                    0x17
+#define SQ_BUFFER_STORE_BYTE                      0x18
+#define SQ_BUFFER_STORE_SHORT                     0x1a
+#define SQ_BUFFER_STORE_DWORD                     0x1c
+#define SQ_BUFFER_STORE_DWORDX2                   0x1d
+#define SQ_BUFFER_STORE_DWORDX3                   0x1e
+#define SQ_BUFFER_STORE_DWORDX4                   0x1f
+#define SQ_BUFFER_STORE_LDS_DWORD                 0x3d
+#define SQ_BUFFER_WBINVL1                         0x3e
+#define SQ_BUFFER_WBINVL1_VOL                     0x3f
+#define SQ_BUFFER_ATOMIC_SWAP                     0x40
+#define SQ_BUFFER_ATOMIC_CMPSWAP                  0x41
+#define SQ_BUFFER_ATOMIC_ADD                      0x42
+#define SQ_BUFFER_ATOMIC_SUB                      0x43
+#define SQ_BUFFER_ATOMIC_SMIN                     0x44
+#define SQ_BUFFER_ATOMIC_UMIN                     0x45
+#define SQ_BUFFER_ATOMIC_SMAX                     0x46
+#define SQ_BUFFER_ATOMIC_UMAX                     0x47
+#define SQ_BUFFER_ATOMIC_AND                      0x48
+#define SQ_BUFFER_ATOMIC_OR                       0x49
+#define SQ_BUFFER_ATOMIC_XOR                      0x4a
+#define SQ_BUFFER_ATOMIC_INC                      0x4b
+#define SQ_BUFFER_ATOMIC_DEC                      0x4c
+#define SQ_BUFFER_ATOMIC_SWAP_X2                  0x60
+#define SQ_BUFFER_ATOMIC_CMPSWAP_X2               0x61
+#define SQ_BUFFER_ATOMIC_ADD_X2                   0x62
+#define SQ_BUFFER_ATOMIC_SUB_X2                   0x63
+#define SQ_BUFFER_ATOMIC_SMIN_X2                  0x64
+#define SQ_BUFFER_ATOMIC_UMIN_X2                  0x65
+#define SQ_BUFFER_ATOMIC_SMAX_X2                  0x66
+#define SQ_BUFFER_ATOMIC_UMAX_X2                  0x67
+#define SQ_BUFFER_ATOMIC_AND_X2                   0x68
+#define SQ_BUFFER_ATOMIC_OR_X2                    0x69
+#define SQ_BUFFER_ATOMIC_XOR_X2                   0x6a
+#define SQ_BUFFER_ATOMIC_INC_X2                   0x6b
+#define SQ_BUFFER_ATOMIC_DEC_X2                   0x6c
+#define SQ_EXEC_LO                                0x7e
+#define SQ_EXEC_HI                                0x7f
+#define SQ_SRC_SCC                                0xfd
+#define SQ_OMOD_OFF                               0x0
+#define SQ_OMOD_M2                                0x1
+#define SQ_OMOD_M4                                0x2
+#define SQ_OMOD_D2                                0x3
+#define SQ_DPP_QUAD_PERM                          0x0
+#define SQ_DPP_ROW_SL1                            0x101
+#define SQ_DPP_ROW_SL2                            0x102
+#define SQ_DPP_ROW_SL3                            0x103
+#define SQ_DPP_ROW_SL4                            0x104
+#define SQ_DPP_ROW_SL5                            0x105
+#define SQ_DPP_ROW_SL6                            0x106
+#define SQ_DPP_ROW_SL7                            0x107
+#define SQ_DPP_ROW_SL8                            0x108
+#define SQ_DPP_ROW_SL9                            0x109
+#define SQ_DPP_ROW_SL10                           0x10a
+#define SQ_DPP_ROW_SL11                           0x10b
+#define SQ_DPP_ROW_SL12                           0x10c
+#define SQ_DPP_ROW_SL13                           0x10d
+#define SQ_DPP_ROW_SL14                           0x10e
+#define SQ_DPP_ROW_SL15                           0x10f
+#define SQ_DPP_ROW_SR1                            0x111
+#define SQ_DPP_ROW_SR2                            0x112
+#define SQ_DPP_ROW_SR3                            0x113
+#define SQ_DPP_ROW_SR4                            0x114
+#define SQ_DPP_ROW_SR5                            0x115
+#define SQ_DPP_ROW_SR6                            0x116
+#define SQ_DPP_ROW_SR7                            0x117
+#define SQ_DPP_ROW_SR8                            0x118
+#define SQ_DPP_ROW_SR9                            0x119
+#define SQ_DPP_ROW_SR10                           0x11a
+#define SQ_DPP_ROW_SR11                           0x11b
+#define SQ_DPP_ROW_SR12                           0x11c
+#define SQ_DPP_ROW_SR13                           0x11d
+#define SQ_DPP_ROW_SR14                           0x11e
+#define SQ_DPP_ROW_SR15                           0x11f
+#define SQ_DPP_ROW_RR1                            0x121
+#define SQ_DPP_ROW_RR2                            0x122
+#define SQ_DPP_ROW_RR3                            0x123
+#define SQ_DPP_ROW_RR4                            0x124
+#define SQ_DPP_ROW_RR5                            0x125
+#define SQ_DPP_ROW_RR6                            0x126
+#define SQ_DPP_ROW_RR7                            0x127
+#define SQ_DPP_ROW_RR8                            0x128
+#define SQ_DPP_ROW_RR9                            0x129
+#define SQ_DPP_ROW_RR10                           0x12a
+#define SQ_DPP_ROW_RR11                           0x12b
+#define SQ_DPP_ROW_RR12                           0x12c
+#define SQ_DPP_ROW_RR13                           0x12d
+#define SQ_DPP_ROW_RR14                           0x12e
+#define SQ_DPP_ROW_RR15                           0x12f
+#define SQ_DPP_WF_SL1                             0x130
+#define SQ_DPP_WF_RL1                             0x134
+#define SQ_DPP_WF_SR1                             0x138
+#define SQ_DPP_WF_RR1                             0x13c
+#define SQ_DPP_ROW_MIRROR                         0x140
+#define SQ_DPP_ROW_HALF_MIRROR                    0x141
+#define SQ_DPP_ROW_BCAST15                        0x142
+#define SQ_DPP_ROW_BCAST31                        0x143
+#define SQ_EXP_GDS0                               0x18
+#define SQ_GS_OP_NOP                              0x0
+#define SQ_GS_OP_CUT                              0x1
+#define SQ_GS_OP_EMIT                             0x2
+#define SQ_GS_OP_EMIT_CUT                         0x3
+#define SQ_IMAGE_LOAD                             0x0
+#define SQ_IMAGE_LOAD_MIP                         0x1
+#define SQ_IMAGE_LOAD_PCK                         0x2
+#define SQ_IMAGE_LOAD_PCK_SGN                     0x3
+#define SQ_IMAGE_LOAD_MIP_PCK                     0x4
+#define SQ_IMAGE_LOAD_MIP_PCK_SGN                 0x5
+#define SQ_IMAGE_STORE                            0x8
+#define SQ_IMAGE_STORE_MIP                        0x9
+#define SQ_IMAGE_STORE_PCK                        0xa
+#define SQ_IMAGE_STORE_MIP_PCK                    0xb
+#define SQ_IMAGE_GET_RESINFO                      0xe
+#define SQ_IMAGE_ATOMIC_SWAP                      0x10
+#define SQ_IMAGE_ATOMIC_CMPSWAP                   0x11
+#define SQ_IMAGE_ATOMIC_ADD                       0x12
+#define SQ_IMAGE_ATOMIC_SUB                       0x13
+#define SQ_IMAGE_ATOMIC_SMIN                      0x14
+#define SQ_IMAGE_ATOMIC_UMIN                      0x15
+#define SQ_IMAGE_ATOMIC_SMAX                      0x16
+#define SQ_IMAGE_ATOMIC_UMAX                      0x17
+#define SQ_IMAGE_ATOMIC_AND                       0x18
+#define SQ_IMAGE_ATOMIC_OR                        0x19
+#define SQ_IMAGE_ATOMIC_XOR                       0x1a
+#define SQ_IMAGE_ATOMIC_INC                       0x1b
+#define SQ_IMAGE_ATOMIC_DEC                       0x1c
+#define SQ_IMAGE_SAMPLE                           0x20
+#define SQ_IMAGE_SAMPLE_CL                        0x21
+#define SQ_IMAGE_SAMPLE_D                         0x22
+#define SQ_IMAGE_SAMPLE_D_CL                      0x23
+#define SQ_IMAGE_SAMPLE_L                         0x24
+#define SQ_IMAGE_SAMPLE_B                         0x25
+#define SQ_IMAGE_SAMPLE_B_CL                      0x26
+#define SQ_IMAGE_SAMPLE_LZ                        0x27
+#define SQ_IMAGE_SAMPLE_C                         0x28
+#define SQ_IMAGE_SAMPLE_C_CL                      0x29
+#define SQ_IMAGE_SAMPLE_C_D                       0x2a
+#define SQ_IMAGE_SAMPLE_C_D_CL                    0x2b
+#define SQ_IMAGE_SAMPLE_C_L                       0x2c
+#define SQ_IMAGE_SAMPLE_C_B                       0x2d
+#define SQ_IMAGE_SAMPLE_C_B_CL                    0x2e
+#define SQ_IMAGE_SAMPLE_C_LZ                      0x2f
+#define SQ_IMAGE_SAMPLE_O                         0x30
+#define SQ_IMAGE_SAMPLE_CL_O                      0x31
+#define SQ_IMAGE_SAMPLE_D_O                       0x32
+#define SQ_IMAGE_SAMPLE_D_CL_O                    0x33
+#define SQ_IMAGE_SAMPLE_L_O                       0x34
+#define SQ_IMAGE_SAMPLE_B_O                       0x35
+#define SQ_IMAGE_SAMPLE_B_CL_O                    0x36
+#define SQ_IMAGE_SAMPLE_LZ_O                      0x37
+#define SQ_IMAGE_SAMPLE_C_O                       0x38
+#define SQ_IMAGE_SAMPLE_C_CL_O                    0x39
+#define SQ_IMAGE_SAMPLE_C_D_O                     0x3a
+#define SQ_IMAGE_SAMPLE_C_D_CL_O                  0x3b
+#define SQ_IMAGE_SAMPLE_C_L_O                     0x3c
+#define SQ_IMAGE_SAMPLE_C_B_O                     0x3d
+#define SQ_IMAGE_SAMPLE_C_B_CL_O                  0x3e
+#define SQ_IMAGE_SAMPLE_C_LZ_O                    0x3f
+#define SQ_IMAGE_GATHER4                          0x40
+#define SQ_IMAGE_GATHER4_CL                       0x41
+#define SQ_IMAGE_GATHER4_L                        0x44
+#define SQ_IMAGE_GATHER4_B                        0x45
+#define SQ_IMAGE_GATHER4_B_CL                     0x46
+#define SQ_IMAGE_GATHER4_LZ                       0x47
+#define SQ_IMAGE_GATHER4_C                        0x48
+#define SQ_IMAGE_GATHER4_C_CL                     0x49
+#define SQ_IMAGE_GATHER4_C_L                      0x4c
+#define SQ_IMAGE_GATHER4_C_B                      0x4d
+#define SQ_IMAGE_GATHER4_C_B_CL                   0x4e
+#define SQ_IMAGE_GATHER4_C_LZ                     0x4f
+#define SQ_IMAGE_GATHER4_O                        0x50
+#define SQ_IMAGE_GATHER4_CL_O                     0x51
+#define SQ_IMAGE_GATHER4_L_O                      0x54
+#define SQ_IMAGE_GATHER4_B_O                      0x55
+#define SQ_IMAGE_GATHER4_B_CL_O                   0x56
+#define SQ_IMAGE_GATHER4_LZ_O                     0x57
+#define SQ_IMAGE_GATHER4_C_O                      0x58
+#define SQ_IMAGE_GATHER4_C_CL_O                   0x59
+#define SQ_IMAGE_GATHER4_C_L_O                    0x5c
+#define SQ_IMAGE_GATHER4_C_B_O                    0x5d
+#define SQ_IMAGE_GATHER4_C_B_CL_O                 0x5e
+#define SQ_IMAGE_GATHER4_C_LZ_O                   0x5f
+#define SQ_IMAGE_GET_LOD                          0x60
+#define SQ_IMAGE_SAMPLE_CD                        0x68
+#define SQ_IMAGE_SAMPLE_CD_CL                     0x69
+#define SQ_IMAGE_SAMPLE_C_CD                      0x6a
+#define SQ_IMAGE_SAMPLE_C_CD_CL                   0x6b
+#define SQ_IMAGE_SAMPLE_CD_O                      0x6c
+#define SQ_IMAGE_SAMPLE_CD_CL_O                   0x6d
+#define SQ_IMAGE_SAMPLE_C_CD_O                    0x6e
+#define SQ_IMAGE_SAMPLE_C_CD_CL_O                 0x6f
+#define SQ_IMAGE_RSRC256                          0x7e
+#define SQ_IMAGE_SAMPLER                          0x7f
+#define SQ_SRC_VCCZ                               0xfb
+#define SQ_SRC_VGPR0                              0x100
+#define SQ_SDWA_BYTE_0                            0x0
+#define SQ_SDWA_BYTE_1                            0x1
+#define SQ_SDWA_BYTE_2                            0x2
+#define SQ_SDWA_BYTE_3                            0x3
+#define SQ_SDWA_WORD_0                            0x4
+#define SQ_SDWA_WORD_1                            0x5
+#define SQ_SDWA_DWORD                             0x6
+#define SQ_XNACK_MASK_LO                          0x68
+#define SQ_XNACK_MASK_HI                          0x69
+#define SQ_TBUFFER_LOAD_FORMAT_X                  0x0
+#define SQ_TBUFFER_LOAD_FORMAT_XY                 0x1
+#define SQ_TBUFFER_LOAD_FORMAT_XYZ                0x2
+#define SQ_TBUFFER_LOAD_FORMAT_XYZW               0x3
+#define SQ_TBUFFER_STORE_FORMAT_X                 0x4
+#define SQ_TBUFFER_STORE_FORMAT_XY                0x5
+#define SQ_TBUFFER_STORE_FORMAT_XYZ               0x6
+#define SQ_TBUFFER_STORE_FORMAT_XYZW              0x7
+#define SQ_TBUFFER_LOAD_FORMAT_D16_X              0x8
+#define SQ_TBUFFER_LOAD_FORMAT_D16_XY             0x9
+#define SQ_TBUFFER_LOAD_FORMAT_D16_XYZ            0xa
+#define SQ_TBUFFER_LOAD_FORMAT_D16_XYZW           0xb
+#define SQ_TBUFFER_STORE_FORMAT_D16_X             0xc
+#define SQ_TBUFFER_STORE_FORMAT_D16_XY            0xd
+#define SQ_TBUFFER_STORE_FORMAT_D16_XYZ           0xe
+#define SQ_TBUFFER_STORE_FORMAT_D16_XYZW          0xf
+#define SQ_CHAN_X                                 0x0
+#define SQ_CHAN_Y                                 0x1
+#define SQ_CHAN_Z                                 0x2
+#define SQ_CHAN_W                                 0x3
+#define SQ_V_NOP                                  0x0
+#define SQ_V_MOV_B32                              0x1
+#define SQ_V_READFIRSTLANE_B32                    0x2
+#define SQ_V_CVT_I32_F64                          0x3
+#define SQ_V_CVT_F64_I32                          0x4
+#define SQ_V_CVT_F32_I32                          0x5
+#define SQ_V_CVT_F32_U32                          0x6
+#define SQ_V_CVT_U32_F32                          0x7
+#define SQ_V_CVT_I32_F32                          0x8
+#define SQ_V_MOV_FED_B32                          0x9
+#define SQ_V_CVT_F16_F32                          0xa
+#define SQ_V_CVT_F32_F16                          0xb
+#define SQ_V_CVT_RPI_I32_F32                      0xc
+#define SQ_V_CVT_FLR_I32_F32                      0xd
+#define SQ_V_CVT_OFF_F32_I4                       0xe
+#define SQ_V_CVT_F32_F64                          0xf
+#define SQ_V_CVT_F64_F32                          0x10
+#define SQ_V_CVT_F32_UBYTE0                       0x11
+#define SQ_V_CVT_F32_UBYTE1                       0x12
+#define SQ_V_CVT_F32_UBYTE2                       0x13
+#define SQ_V_CVT_F32_UBYTE3                       0x14
+#define SQ_V_CVT_U32_F64                          0x15
+#define SQ_V_CVT_F64_U32                          0x16
+#define SQ_V_TRUNC_F64                            0x17
+#define SQ_V_CEIL_F64                             0x18
+#define SQ_V_RNDNE_F64                            0x19
+#define SQ_V_FLOOR_F64                            0x1a
+#define SQ_V_FRACT_F32                            0x1b
+#define SQ_V_TRUNC_F32                            0x1c
+#define SQ_V_CEIL_F32                             0x1d
+#define SQ_V_RNDNE_F32                            0x1e
+#define SQ_V_FLOOR_F32                            0x1f
+#define SQ_V_EXP_F32                              0x20
+#define SQ_V_LOG_F32                              0x21
+#define SQ_V_RCP_F32                              0x22
+#define SQ_V_RCP_IFLAG_F32                        0x23
+#define SQ_V_RSQ_F32                              0x24
+#define SQ_V_RCP_F64                              0x25
+#define SQ_V_RSQ_F64                              0x26
+#define SQ_V_SQRT_F32                             0x27
+#define SQ_V_SQRT_F64                             0x28
+#define SQ_V_SIN_F32                              0x29
+#define SQ_V_COS_F32                              0x2a
+#define SQ_V_NOT_B32                              0x2b
+#define SQ_V_BFREV_B32                            0x2c
+#define SQ_V_FFBH_U32                             0x2d
+#define SQ_V_FFBL_B32                             0x2e
+#define SQ_V_FFBH_I32                             0x2f
+#define SQ_V_FREXP_EXP_I32_F64                    0x30
+#define SQ_V_FREXP_MANT_F64                       0x31
+#define SQ_V_FRACT_F64                            0x32
+#define SQ_V_FREXP_EXP_I32_F32                    0x33
+#define SQ_V_FREXP_MANT_F32                       0x34
+#define SQ_V_CLREXCP                              0x35
+#define SQ_V_MOVRELD_B32                          0x36
+#define SQ_V_MOVRELS_B32                          0x37
+#define SQ_V_MOVRELSD_B32                         0x38
+#define SQ_V_CVT_F16_U16                          0x39
+#define SQ_V_CVT_F16_I16                          0x3a
+#define SQ_V_CVT_U16_F16                          0x3b
+#define SQ_V_CVT_I16_F16                          0x3c
+#define SQ_V_RCP_F16                              0x3d
+#define SQ_V_SQRT_F16                             0x3e
+#define SQ_V_RSQ_F16                              0x3f
+#define SQ_V_LOG_F16                              0x40
+#define SQ_V_EXP_F16                              0x41
+#define SQ_V_FREXP_MANT_F16                       0x42
+#define SQ_V_FREXP_EXP_I16_F16                    0x43
+#define SQ_V_FLOOR_F16                            0x44
+#define SQ_V_CEIL_F16                             0x45
+#define SQ_V_TRUNC_F16                            0x46
+#define SQ_V_RNDNE_F16                            0x47
+#define SQ_V_FRACT_F16                            0x48
+#define SQ_V_SIN_F16                              0x49
+#define SQ_V_COS_F16                              0x4a
+#define SQ_V_EXP_LEGACY_F32                       0x4b
+#define SQ_V_LOG_LEGACY_F32                       0x4c
+#define SQ_V_CVT_NORM_I16_F16                     0x4d
+#define SQ_V_CVT_NORM_U16_F16                     0x4e
+#define SQ_SRC_SDWA                               0xf9
+#define SQ_V_OPC_OFFSET                           0x0
+#define SQ_V_OP2_OFFSET                           0x100
+#define SQ_V_OP1_OFFSET                           0x140
+#define SQ_V_INTRP_OFFSET                         0x270
+#define SQ_V_INTERP_P1_F32                        0x0
+#define SQ_V_INTERP_P2_F32                        0x1
+#define SQ_V_INTERP_MOV_F32                       0x2
+#define SQ_S_NOP                                  0x0
+#define SQ_S_ENDPGM                               0x1
+#define SQ_S_BRANCH                               0x2
+#define SQ_S_WAKEUP                               0x3
+#define SQ_S_CBRANCH_SCC0                         0x4
+#define SQ_S_CBRANCH_SCC1                         0x5
+#define SQ_S_CBRANCH_VCCZ                         0x6
+#define SQ_S_CBRANCH_VCCNZ                        0x7
+#define SQ_S_CBRANCH_EXECZ                        0x8
+#define SQ_S_CBRANCH_EXECNZ                       0x9
+#define SQ_S_BARRIER                              0xa
+#define SQ_S_SETKILL                              0xb
+#define SQ_S_WAITCNT                              0xc
+#define SQ_S_SETHALT                              0xd
+#define SQ_S_SLEEP                                0xe
+#define SQ_S_SETPRIO                              0xf
+#define SQ_S_SENDMSG                              0x10
+#define SQ_S_SENDMSGHALT                          0x11
+#define SQ_S_TRAP                                 0x12
+#define SQ_S_ICACHE_INV                           0x13
+#define SQ_S_INCPERFLEVEL                         0x14
+#define SQ_S_DECPERFLEVEL                         0x15
+#define SQ_S_TTRACEDATA                           0x16
+#define SQ_S_CBRANCH_CDBGSYS                      0x17
+#define SQ_S_CBRANCH_CDBGUSER                     0x18
+#define SQ_S_CBRANCH_CDBGSYS_OR_USER              0x19
+#define SQ_S_CBRANCH_CDBGSYS_AND_USER             0x1a
+#define SQ_S_ENDPGM_SAVED                         0x1b
+#define SQ_S_SET_GPR_IDX_OFF                      0x1c
+#define SQ_S_SET_GPR_IDX_MODE                     0x1d
+#define SQ_SRC_DPP                                0xfa
+#define SQ_SRC_LITERAL                            0xff
+#define SQ_VCC_LO                                 0x6a
+#define SQ_VCC_HI                                 0x6b
+#define SQ_PARAM_P10                              0x0
+#define SQ_PARAM_P20                              0x1
+#define SQ_PARAM_P0                               0x2
+#define SQ_SRC_LDS_DIRECT                         0xfe
+#define SQ_V_CNDMASK_B32                          0x0
+#define SQ_V_ADD_F32                              0x1
+#define SQ_V_SUB_F32                              0x2
+#define SQ_V_SUBREV_F32                           0x3
+#define SQ_V_MUL_LEGACY_F32                       0x4
+#define SQ_V_MUL_F32                              0x5
+#define SQ_V_MUL_I32_I24                          0x6
+#define SQ_V_MUL_HI_I32_I24                       0x7
+#define SQ_V_MUL_U32_U24                          0x8
+#define SQ_V_MUL_HI_U32_U24                       0x9
+#define SQ_V_MIN_F32                              0xa
+#define SQ_V_MAX_F32                              0xb
+#define SQ_V_MIN_I32                              0xc
+#define SQ_V_MAX_I32                              0xd
+#define SQ_V_MIN_U32                              0xe
+#define SQ_V_MAX_U32                              0xf
+#define SQ_V_LSHRREV_B32                          0x10
+#define SQ_V_ASHRREV_I32                          0x11
+#define SQ_V_LSHLREV_B32                          0x12
+#define SQ_V_AND_B32                              0x13
+#define SQ_V_OR_B32                               0x14
+#define SQ_V_XOR_B32                              0x15
+#define SQ_V_MAC_F32                              0x16
+#define SQ_V_MADMK_F32                            0x17
+#define SQ_V_MADAK_F32                            0x18
+#define SQ_V_ADD_U32                              0x19
+#define SQ_V_SUB_U32                              0x1a
+#define SQ_V_SUBREV_U32                           0x1b
+#define SQ_V_ADDC_U32                             0x1c
+#define SQ_V_SUBB_U32                             0x1d
+#define SQ_V_SUBBREV_U32                          0x1e
+#define SQ_V_ADD_F16                              0x1f
+#define SQ_V_SUB_F16                              0x20
+#define SQ_V_SUBREV_F16                           0x21
+#define SQ_V_MUL_F16                              0x22
+#define SQ_V_MAC_F16                              0x23
+#define SQ_V_MADMK_F16                            0x24
+#define SQ_V_MADAK_F16                            0x25
+#define SQ_V_ADD_U16                              0x26
+#define SQ_V_SUB_U16                              0x27
+#define SQ_V_SUBREV_U16                           0x28
+#define SQ_V_MUL_LO_U16                           0x29
+#define SQ_V_LSHLREV_B16                          0x2a
+#define SQ_V_LSHRREV_B16                          0x2b
+#define SQ_V_ASHRREV_I16                          0x2c
+#define SQ_V_MAX_F16                              0x2d
+#define SQ_V_MIN_F16                              0x2e
+#define SQ_V_MAX_U16                              0x2f
+#define SQ_V_MAX_I16                              0x30
+#define SQ_V_MIN_U16                              0x31
+#define SQ_V_MIN_I16                              0x32
+#define SQ_V_LDEXP_F16                            0x33
+#define SQ_FLAT_LOAD_UBYTE                        0x10
+#define SQ_FLAT_LOAD_SBYTE                        0x11
+#define SQ_FLAT_LOAD_USHORT                       0x12
+#define SQ_FLAT_LOAD_SSHORT                       0x13
+#define SQ_FLAT_LOAD_DWORD                        0x14
+#define SQ_FLAT_LOAD_DWORDX2                      0x15
+#define SQ_FLAT_LOAD_DWORDX3                      0x16
+#define SQ_FLAT_LOAD_DWORDX4                      0x17
+#define SQ_FLAT_STORE_BYTE                        0x18
+#define SQ_FLAT_STORE_SHORT                       0x1a
+#define SQ_FLAT_STORE_DWORD                       0x1c
+#define SQ_FLAT_STORE_DWORDX2                     0x1d
+#define SQ_FLAT_STORE_DWORDX3                     0x1e
+#define SQ_FLAT_STORE_DWORDX4                     0x1f
+#define SQ_FLAT_ATOMIC_SWAP                       0x40
+#define SQ_FLAT_ATOMIC_CMPSWAP                    0x41
+#define SQ_FLAT_ATOMIC_ADD                        0x42
+#define SQ_FLAT_ATOMIC_SUB                        0x43
+#define SQ_FLAT_ATOMIC_SMIN                       0x44
+#define SQ_FLAT_ATOMIC_UMIN                       0x45
+#define SQ_FLAT_ATOMIC_SMAX                       0x46
+#define SQ_FLAT_ATOMIC_UMAX                       0x47
+#define SQ_FLAT_ATOMIC_AND                        0x48
+#define SQ_FLAT_ATOMIC_OR                         0x49
+#define SQ_FLAT_ATOMIC_XOR                        0x4a
+#define SQ_FLAT_ATOMIC_INC                        0x4b
+#define SQ_FLAT_ATOMIC_DEC                        0x4c
+#define SQ_FLAT_ATOMIC_SWAP_X2                    0x60
+#define SQ_FLAT_ATOMIC_CMPSWAP_X2                 0x61
+#define SQ_FLAT_ATOMIC_ADD_X2                     0x62
+#define SQ_FLAT_ATOMIC_SUB_X2                     0x63
+#define SQ_FLAT_ATOMIC_SMIN_X2                    0x64
+#define SQ_FLAT_ATOMIC_UMIN_X2                    0x65
+#define SQ_FLAT_ATOMIC_SMAX_X2                    0x66
+#define SQ_FLAT_ATOMIC_UMAX_X2                    0x67
+#define SQ_FLAT_ATOMIC_AND_X2                     0x68
+#define SQ_FLAT_ATOMIC_OR_X2                      0x69
+#define SQ_FLAT_ATOMIC_XOR_X2                     0x6a
+#define SQ_FLAT_ATOMIC_INC_X2                     0x6b
+#define SQ_FLAT_ATOMIC_DEC_X2                     0x6c
+#define SQ_S_CMP_EQ_I32                           0x0
+#define SQ_S_CMP_LG_I32                           0x1
+#define SQ_S_CMP_GT_I32                           0x2
+#define SQ_S_CMP_GE_I32                           0x3
+#define SQ_S_CMP_LT_I32                           0x4
+#define SQ_S_CMP_LE_I32                           0x5
+#define SQ_S_CMP_EQ_U32                           0x6
+#define SQ_S_CMP_LG_U32                           0x7
+#define SQ_S_CMP_GT_U32                           0x8
+#define SQ_S_CMP_GE_U32                           0x9
+#define SQ_S_CMP_LT_U32                           0xa
+#define SQ_S_CMP_LE_U32                           0xb
+#define SQ_S_BITCMP0_B32                          0xc
+#define SQ_S_BITCMP1_B32                          0xd
+#define SQ_S_BITCMP0_B64                          0xe
+#define SQ_S_BITCMP1_B64                          0xf
+#define SQ_S_SETVSKIP                             0x10
+#define SQ_S_SET_GPR_IDX_ON                       0x11
+#define SQ_S_CMP_EQ_U64                           0x12
+#define SQ_S_CMP_LG_U64                           0x13
+#define SQ_M0                                     0x7c
+#define SQ_V_MAD_LEGACY_F32                       0x1c0
+#define SQ_V_MAD_F32                              0x1c1
+#define SQ_V_MAD_I32_I24                          0x1c2
+#define SQ_V_MAD_U32_U24                          0x1c3
+#define SQ_V_CUBEID_F32                           0x1c4
+#define SQ_V_CUBESC_F32                           0x1c5
+#define SQ_V_CUBETC_F32                           0x1c6
+#define SQ_V_CUBEMA_F32                           0x1c7
+#define SQ_V_BFE_U32                              0x1c8
+#define SQ_V_BFE_I32                              0x1c9
+#define SQ_V_BFI_B32                              0x1ca
+#define SQ_V_FMA_F32                              0x1cb
+#define SQ_V_FMA_F64                              0x1cc
+#define SQ_V_LERP_U8                              0x1cd
+#define SQ_V_ALIGNBIT_B32                         0x1ce
+#define SQ_V_ALIGNBYTE_B32                        0x1cf
+#define SQ_V_MIN3_F32                             0x1d0
+#define SQ_V_MIN3_I32                             0x1d1
+#define SQ_V_MIN3_U32                             0x1d2
+#define SQ_V_MAX3_F32                             0x1d3
+#define SQ_V_MAX3_I32                             0x1d4
+#define SQ_V_MAX3_U32                             0x1d5
+#define SQ_V_MED3_F32                             0x1d6
+#define SQ_V_MED3_I32                             0x1d7
+#define SQ_V_MED3_U32                             0x1d8
+#define SQ_V_SAD_U8                               0x1d9
+#define SQ_V_SAD_HI_U8                            0x1da
+#define SQ_V_SAD_U16                              0x1db
+#define SQ_V_SAD_U32                              0x1dc
+#define SQ_V_CVT_PK_U8_F32                        0x1dd
+#define SQ_V_DIV_FIXUP_F32                        0x1de
+#define SQ_V_DIV_FIXUP_F64                        0x1df
+#define SQ_V_DIV_SCALE_F32                        0x1e0
+#define SQ_V_DIV_SCALE_F64                        0x1e1
+#define SQ_V_DIV_FMAS_F32                         0x1e2
+#define SQ_V_DIV_FMAS_F64                         0x1e3
+#define SQ_V_MSAD_U8                              0x1e4
+#define SQ_V_QSAD_PK_U16_U8                       0x1e5
+#define SQ_V_MQSAD_PK_U16_U8                      0x1e6
+#define SQ_V_MQSAD_U32_U8                         0x1e7
+#define SQ_V_MAD_U64_U32                          0x1e8
+#define SQ_V_MAD_I64_I32                          0x1e9
+#define SQ_V_MAD_F16                              0x1ea
+#define SQ_V_MAD_U16                              0x1eb
+#define SQ_V_MAD_I16                              0x1ec
+#define SQ_V_PERM_B32                             0x1ed
+#define SQ_V_FMA_F16                              0x1ee
+#define SQ_V_DIV_FIXUP_F16                        0x1ef
+#define SQ_V_CVT_PKACCUM_U8_F32                   0x1f0
+#define SQ_V_INTERP_P1LL_F16                      0x274
+#define SQ_V_INTERP_P1LV_F16                      0x275
+#define SQ_V_INTERP_P2_F16                        0x276
+#define SQ_V_ADD_F64                              0x280
+#define SQ_V_MUL_F64                              0x281
+#define SQ_V_MIN_F64                              0x282
+#define SQ_V_MAX_F64                              0x283
+#define SQ_V_LDEXP_F64                            0x284
+#define SQ_V_MUL_LO_U32                           0x285
+#define SQ_V_MUL_HI_U32                           0x286
+#define SQ_V_MUL_HI_I32                           0x287
+#define SQ_V_LDEXP_F32                            0x288
+#define SQ_V_READLANE_B32                         0x289
+#define SQ_V_WRITELANE_B32                        0x28a
+#define SQ_V_BCNT_U32_B32                         0x28b
+#define SQ_V_MBCNT_LO_U32_B32                     0x28c
+#define SQ_V_MBCNT_HI_U32_B32                     0x28d
+#define SQ_V_MAC_LEGACY_F32                       0x28e
+#define SQ_V_LSHLREV_B64                          0x28f
+#define SQ_V_LSHRREV_B64                          0x290
+#define SQ_V_ASHRREV_I64                          0x291
+#define SQ_V_TRIG_PREOP_F64                       0x292
+#define SQ_V_BFM_B32                              0x293
+#define SQ_V_CVT_PKNORM_I16_F32                   0x294
+#define SQ_V_CVT_PKNORM_U16_F32                   0x295
+#define SQ_V_CVT_PKRTZ_F16_F32                    0x296
+#define SQ_V_CVT_PK_U16_U32                       0x297
+#define SQ_V_CVT_PK_I16_I32                       0x298
+#define SQ_V_CVT_PKNORM_I16_F16                   0x299
+#define SQ_V_CVT_PKNORM_U16_F16                   0x29a
+#define SQ_VCC_ALL                                0x0
+#define SQ_SRC_EXECZ                              0xfc
+#define SQ_FLAT_SCRATCH_LO                        0x66
+#define SQ_FLAT_SCRATCH_HI                        0x67
+#define SQ_SYSMSG_OP_ECC_ERR_INTERRUPT            0x1
+#define SQ_SYSMSG_OP_REG_RD                       0x2
+#define SQ_SYSMSG_OP_HOST_TRAP_ACK                0x3
+#define SQ_SYSMSG_OP_TTRACE_PC                    0x4
+#define SQ_HW_REG_MODE                            0x1
+#define SQ_HW_REG_STATUS                          0x2
+#define SQ_HW_REG_TRAPSTS                         0x3
+#define SQ_HW_REG_HW_ID                           0x4
+#define SQ_HW_REG_GPR_ALLOC                       0x5
+#define SQ_HW_REG_LDS_ALLOC                       0x6
+#define SQ_HW_REG_IB_STS                          0x7
+#define SQ_HW_REG_PC_LO                           0x8
+#define SQ_HW_REG_PC_HI                           0x9
+#define SQ_HW_REG_INST_DW0                        0xa
+#define SQ_HW_REG_INST_DW1                        0xb
+#define SQ_HW_REG_IB_DBG0                         0xc
+#define SQ_HW_REG_IB_DBG1                         0xd
+#define SQ_DPP_BOUND_OFF                          0x0
+#define SQ_DPP_BOUND_ZERO                         0x1
+#define SQ_R1                                     0x1
+#define SQ_R2                                     0x2
+#define SQ_R3                                     0x3
+#define SQ_R4                                     0x4
+#define SQ_R5                                     0x5
+#define SQ_R6                                     0x6
+#define SQ_R7                                     0x7
+#define SQ_R8                                     0x8
+#define SQ_R9                                     0x9
+#define SQ_R10                                    0xa
+#define SQ_R11                                    0xb
+#define SQ_R12                                    0xc
+#define SQ_R13                                    0xd
+#define SQ_R14                                    0xe
+#define SQ_R15                                    0xf
+#define SQ_S_ADD_U32                              0x0
+#define SQ_S_SUB_U32                              0x1
+#define SQ_S_ADD_I32                              0x2
+#define SQ_S_SUB_I32                              0x3
+#define SQ_S_ADDC_U32                             0x4
+#define SQ_S_SUBB_U32                             0x5
+#define SQ_S_MIN_I32                              0x6
+#define SQ_S_MIN_U32                              0x7
+#define SQ_S_MAX_I32                              0x8
+#define SQ_S_MAX_U32                              0x9
+#define SQ_S_CSELECT_B32                          0xa
+#define SQ_S_CSELECT_B64                          0xb
+#define SQ_S_AND_B32                              0xc
+#define SQ_S_AND_B64                              0xd
+#define SQ_S_OR_B32                               0xe
+#define SQ_S_OR_B64                               0xf
+#define SQ_S_XOR_B32                              0x10
+#define SQ_S_XOR_B64                              0x11
+#define SQ_S_ANDN2_B32                            0x12
+#define SQ_S_ANDN2_B64                            0x13
+#define SQ_S_ORN2_B32                             0x14
+#define SQ_S_ORN2_B64                             0x15
+#define SQ_S_NAND_B32                             0x16
+#define SQ_S_NAND_B64                             0x17
+#define SQ_S_NOR_B32                              0x18
+#define SQ_S_NOR_B64                              0x19
+#define SQ_S_XNOR_B32                             0x1a
+#define SQ_S_XNOR_B64                             0x1b
+#define SQ_S_LSHL_B32                             0x1c
+#define SQ_S_LSHL_B64                             0x1d
+#define SQ_S_LSHR_B32                             0x1e
+#define SQ_S_LSHR_B64                             0x1f
+#define SQ_S_ASHR_I32                             0x20
+#define SQ_S_ASHR_I64                             0x21
+#define SQ_S_BFM_B32                              0x22
+#define SQ_S_BFM_B64                              0x23
+#define SQ_S_MUL_I32                              0x24
+#define SQ_S_BFE_U32                              0x25
+#define SQ_S_BFE_I32                              0x26
+#define SQ_S_BFE_U64                              0x27
+#define SQ_S_BFE_I64                              0x28
+#define SQ_S_CBRANCH_G_FORK                       0x29
+#define SQ_S_ABSDIFF_I32                          0x2a
+#define SQ_S_RFE_RESTORE_B64                      0x2b
+#define SQ_MSG_INTERRUPT                          0x1
+#define SQ_MSG_GS                                 0x2
+#define SQ_MSG_GS_DONE                            0x3
+#define SQ_MSG_SAVEWAVE                           0x4
+#define SQ_MSG_SYSMSG                             0xf
+typedef enum SX_BLEND_OPT {
 	BLEND_OPT_PRESERVE_NONE_IGNORE_ALL               = 0x0,
 	BLEND_OPT_PRESERVE_ALL_IGNORE_NONE               = 0x1,
 	BLEND_OPT_PRESERVE_C1_IGNORE_C0                  = 0x2,
@@ -4155,8 +4154,8 @@
 	BLEND_OPT_PRESERVE_A0_IGNORE_A1                  = 0x5,
 	BLEND_OPT_PRESERVE_NONE_IGNORE_A0                = 0x6,
 	BLEND_OPT_PRESERVE_NONE_IGNORE_NONE              = 0x7,
-पूर्ण SX_BLEND_OPT;
-प्रकार क्रमागत SX_OPT_COMB_FCN अणु
+} SX_BLEND_OPT;
+typedef enum SX_OPT_COMB_FCN {
 	OPT_COMB_NONE                                    = 0x0,
 	OPT_COMB_ADD                                     = 0x1,
 	OPT_COMB_SUBTRACT                                = 0x2,
@@ -4165,8 +4164,8 @@
 	OPT_COMB_REVSUBTRACT                             = 0x5,
 	OPT_COMB_BLEND_DISABLED                          = 0x6,
 	OPT_COMB_SAFE_ADD                                = 0x7,
-पूर्ण SX_OPT_COMB_FCN;
-प्रकार क्रमागत SX_DOWNCONVERT_FORMAT अणु
+} SX_OPT_COMB_FCN;
+typedef enum SX_DOWNCONVERT_FORMAT {
 	SX_RT_EXPORT_NO_CONVERSION                       = 0x0,
 	SX_RT_EXPORT_32_R                                = 0x1,
 	SX_RT_EXPORT_32_A                                = 0x2,
@@ -4178,20 +4177,20 @@
 	SX_RT_EXPORT_4_4_4_4                             = 0x8,
 	SX_RT_EXPORT_16_16_GR                            = 0x9,
 	SX_RT_EXPORT_16_16_AR                            = 0xa,
-पूर्ण SX_DOWNCONVERT_FORMAT;
-प्रकार क्रमागत TEX_BORDER_COLOR_TYPE अणु
+} SX_DOWNCONVERT_FORMAT;
+typedef enum TEX_BORDER_COLOR_TYPE {
 	TEX_BorderColor_TransparentBlack                 = 0x0,
 	TEX_BorderColor_OpaqueBlack                      = 0x1,
 	TEX_BorderColor_OpaqueWhite                      = 0x2,
 	TEX_BorderColor_Register                         = 0x3,
-पूर्ण TEX_BORDER_COLOR_TYPE;
-प्रकार क्रमागत TEX_CHROMA_KEY अणु
+} TEX_BORDER_COLOR_TYPE;
+typedef enum TEX_CHROMA_KEY {
 	TEX_ChromaKey_Disabled                           = 0x0,
 	TEX_ChromaKey_Kill                               = 0x1,
 	TEX_ChromaKey_Blend                              = 0x2,
 	TEX_ChromaKey_RESERVED_3                         = 0x3,
-पूर्ण TEX_CHROMA_KEY;
-प्रकार क्रमागत TEX_CLAMP अणु
+} TEX_CHROMA_KEY;
+typedef enum TEX_CLAMP {
 	TEX_Clamp_Repeat                                 = 0x0,
 	TEX_Clamp_Mirror                                 = 0x1,
 	TEX_Clamp_ClampToLast                            = 0x2,
@@ -4200,12 +4199,12 @@
 	TEX_Clamp_MirrorOnceHalfToBorder                 = 0x5,
 	TEX_Clamp_ClampToBorder                          = 0x6,
 	TEX_Clamp_MirrorOnceToBorder                     = 0x7,
-पूर्ण TEX_CLAMP;
-प्रकार क्रमागत TEX_COORD_TYPE अणु
+} TEX_CLAMP;
+typedef enum TEX_COORD_TYPE {
 	TEX_CoordType_Unnormalized                       = 0x0,
 	TEX_CoordType_Normalized                         = 0x1,
-पूर्ण TEX_COORD_TYPE;
-प्रकार क्रमागत TEX_DEPTH_COMPARE_FUNCTION अणु
+} TEX_COORD_TYPE;
+typedef enum TEX_DEPTH_COMPARE_FUNCTION {
 	TEX_DepthCompareFunction_Never                   = 0x0,
 	TEX_DepthCompareFunction_Less                    = 0x1,
 	TEX_DepthCompareFunction_Equal                   = 0x2,
@@ -4214,8 +4213,8 @@
 	TEX_DepthCompareFunction_NotEqual                = 0x5,
 	TEX_DepthCompareFunction_GreaterEqual            = 0x6,
 	TEX_DepthCompareFunction_Always                  = 0x7,
-पूर्ण TEX_DEPTH_COMPARE_FUNCTION;
-प्रकार क्रमागत TEX_DIM अणु
+} TEX_DEPTH_COMPARE_FUNCTION;
+typedef enum TEX_DIM {
 	TEX_Dim_1D                                       = 0x0,
 	TEX_Dim_2D                                       = 0x1,
 	TEX_Dim_3D                                       = 0x2,
@@ -4224,14 +4223,14 @@
 	TEX_Dim_2DArray                                  = 0x5,
 	TEX_Dim_2D_MSAA                                  = 0x6,
 	TEX_Dim_2DArray_MSAA                             = 0x7,
-पूर्ण TEX_DIM;
-प्रकार क्रमागत TEX_FORMAT_COMP अणु
-	TEX_FormatComp_Unचिन्हित                          = 0x0,
+} TEX_DIM;
+typedef enum TEX_FORMAT_COMP {
+	TEX_FormatComp_Unsigned                          = 0x0,
 	TEX_FormatComp_Signed                            = 0x1,
-	TEX_FormatComp_Unचिन्हितBiased                    = 0x2,
+	TEX_FormatComp_UnsignedBiased                    = 0x2,
 	TEX_FormatComp_RESERVED_3                        = 0x3,
-पूर्ण TEX_FORMAT_COMP;
-प्रकार क्रमागत TEX_MAX_ANISO_RATIO अणु
+} TEX_FORMAT_COMP;
+typedef enum TEX_MAX_ANISO_RATIO {
 	TEX_MaxAnisoRatio_1to1                           = 0x0,
 	TEX_MaxAnisoRatio_2to1                           = 0x1,
 	TEX_MaxAnisoRatio_4to1                           = 0x2,
@@ -4240,54 +4239,54 @@
 	TEX_MaxAnisoRatio_RESERVED_5                     = 0x5,
 	TEX_MaxAnisoRatio_RESERVED_6                     = 0x6,
 	TEX_MaxAnisoRatio_RESERVED_7                     = 0x7,
-पूर्ण TEX_MAX_ANISO_RATIO;
-प्रकार क्रमागत TEX_MIP_FILTER अणु
+} TEX_MAX_ANISO_RATIO;
+typedef enum TEX_MIP_FILTER {
 	TEX_MipFilter_None                               = 0x0,
-	TEX_MipFilter_Poपूर्णांक                              = 0x1,
+	TEX_MipFilter_Point                              = 0x1,
 	TEX_MipFilter_Linear                             = 0x2,
-	TEX_MipFilter_Poपूर्णांक_Aniso_Adj                    = 0x3,
-पूर्ण TEX_MIP_FILTER;
-प्रकार क्रमागत TEX_REQUEST_SIZE अणु
+	TEX_MipFilter_Point_Aniso_Adj                    = 0x3,
+} TEX_MIP_FILTER;
+typedef enum TEX_REQUEST_SIZE {
 	TEX_RequestSize_32B                              = 0x0,
 	TEX_RequestSize_64B                              = 0x1,
 	TEX_RequestSize_128B                             = 0x2,
 	TEX_RequestSize_2X64B                            = 0x3,
-पूर्ण TEX_REQUEST_SIZE;
-प्रकार क्रमागत TEX_SAMPLER_TYPE अणु
+} TEX_REQUEST_SIZE;
+typedef enum TEX_SAMPLER_TYPE {
 	TEX_SamplerType_Invalid                          = 0x0,
 	TEX_SamplerType_Valid                            = 0x1,
-पूर्ण TEX_SAMPLER_TYPE;
-प्रकार क्रमागत TEX_XY_FILTER अणु
-	TEX_XYFilter_Poपूर्णांक                               = 0x0,
+} TEX_SAMPLER_TYPE;
+typedef enum TEX_XY_FILTER {
+	TEX_XYFilter_Point                               = 0x0,
 	TEX_XYFilter_Linear                              = 0x1,
-	TEX_XYFilter_AnisoPoपूर्णांक                          = 0x2,
+	TEX_XYFilter_AnisoPoint                          = 0x2,
 	TEX_XYFilter_AnisoLinear                         = 0x3,
-पूर्ण TEX_XY_FILTER;
-प्रकार क्रमागत TEX_Z_FILTER अणु
+} TEX_XY_FILTER;
+typedef enum TEX_Z_FILTER {
 	TEX_ZFilter_None                                 = 0x0,
-	TEX_ZFilter_Poपूर्णांक                                = 0x1,
+	TEX_ZFilter_Point                                = 0x1,
 	TEX_ZFilter_Linear                               = 0x2,
 	TEX_ZFilter_RESERVED_3                           = 0x3,
-पूर्ण TEX_Z_FILTER;
-प्रकार क्रमागत VTX_CLAMP अणु
+} TEX_Z_FILTER;
+typedef enum VTX_CLAMP {
 	VTX_Clamp_ClampToZero                            = 0x0,
-	VTX_Clamp_ClampToन_अंक                             = 0x1,
-पूर्ण VTX_CLAMP;
-प्रकार क्रमागत VTX_FETCH_TYPE अणु
+	VTX_Clamp_ClampToNAN                             = 0x1,
+} VTX_CLAMP;
+typedef enum VTX_FETCH_TYPE {
 	VTX_FetchType_VertexData                         = 0x0,
 	VTX_FetchType_InstanceData                       = 0x1,
 	VTX_FetchType_NoIndexOffset                      = 0x2,
 	VTX_FetchType_RESERVED_3                         = 0x3,
-पूर्ण VTX_FETCH_TYPE;
-प्रकार क्रमागत VTX_FORMAT_COMP_ALL अणु
-	VTX_FormatCompAll_Unचिन्हित                       = 0x0,
+} VTX_FETCH_TYPE;
+typedef enum VTX_FORMAT_COMP_ALL {
+	VTX_FormatCompAll_Unsigned                       = 0x0,
 	VTX_FormatCompAll_Signed                         = 0x1,
-पूर्ण VTX_FORMAT_COMP_ALL;
-प्रकार क्रमागत VTX_MEM_REQUEST_SIZE अणु
+} VTX_FORMAT_COMP_ALL;
+typedef enum VTX_MEM_REQUEST_SIZE {
 	VTX_MemRequestSize_32B                           = 0x0,
 	VTX_MemRequestSize_64B                           = 0x1,
-पूर्ण VTX_MEM_REQUEST_SIZE;
-प्रकार क्रमागत TVX_DATA_FORMAT अणु
+} VTX_MEM_REQUEST_SIZE;
+typedef enum TVX_DATA_FORMAT {
 	TVX_FMT_INVALID                                  = 0x0,
 	TVX_FMT_8                                        = 0x1,
 	TVX_FMT_4_4                                      = 0x2,
@@ -4352,8 +4351,8 @@
 	TVX_FMT_APC7                                     = 0x3d,
 	TVX_FMT_CTX1                                     = 0x3e,
 	TVX_FMT_RESERVED_63                              = 0x3f,
-पूर्ण TVX_DATA_FORMAT;
-प्रकार क्रमागत TVX_DST_SEL अणु
+} TVX_DATA_FORMAT;
+typedef enum TVX_DST_SEL {
 	TVX_DstSel_X                                     = 0x0,
 	TVX_DstSel_Y                                     = 0x1,
 	TVX_DstSel_Z                                     = 0x2,
@@ -4362,14 +4361,14 @@
 	TVX_DstSel_1f                                    = 0x5,
 	TVX_DstSel_RESERVED_6                            = 0x6,
 	TVX_DstSel_Mask                                  = 0x7,
-पूर्ण TVX_DST_SEL;
-प्रकार क्रमागत TVX_ENDIAN_SWAP अणु
+} TVX_DST_SEL;
+typedef enum TVX_ENDIAN_SWAP {
 	TVX_EndianSwap_None                              = 0x0,
 	TVX_EndianSwap_8in16                             = 0x1,
 	TVX_EndianSwap_8in32                             = 0x2,
 	TVX_EndianSwap_8in64                             = 0x3,
-पूर्ण TVX_ENDIAN_SWAP;
-प्रकार क्रमागत TVX_INST अणु
+} TVX_ENDIAN_SWAP;
+typedef enum TVX_INST {
 	TVX_Inst_NormalVertexFetch                       = 0x0,
 	TVX_Inst_SemanticVertexFetch                     = 0x1,
 	TVX_Inst_RESERVED_2                              = 0x2,
@@ -4402,37 +4401,37 @@
 	TVX_Inst_Gather4_C                               = 0x1d,
 	TVX_Inst_Sample_C_G_LB                           = 0x1e,
 	TVX_Inst_Gather4_C_O                             = 0x1f,
-पूर्ण TVX_INST;
-प्रकार क्रमागत TVX_NUM_FORMAT_ALL अणु
+} TVX_INST;
+typedef enum TVX_NUM_FORMAT_ALL {
 	TVX_NumFormatAll_Norm                            = 0x0,
 	TVX_NumFormatAll_Int                             = 0x1,
 	TVX_NumFormatAll_Scaled                          = 0x2,
 	TVX_NumFormatAll_RESERVED_3                      = 0x3,
-पूर्ण TVX_NUM_FORMAT_ALL;
-प्रकार क्रमागत TVX_SRC_SEL अणु
+} TVX_NUM_FORMAT_ALL;
+typedef enum TVX_SRC_SEL {
 	TVX_SrcSel_X                                     = 0x0,
 	TVX_SrcSel_Y                                     = 0x1,
 	TVX_SrcSel_Z                                     = 0x2,
 	TVX_SrcSel_W                                     = 0x3,
 	TVX_SrcSel_0f                                    = 0x4,
 	TVX_SrcSel_1f                                    = 0x5,
-पूर्ण TVX_SRC_SEL;
-प्रकार क्रमागत TVX_SRF_MODE_ALL अणु
+} TVX_SRC_SEL;
+typedef enum TVX_SRF_MODE_ALL {
 	TVX_SRFModeAll_ZCMO                              = 0x0,
 	TVX_SRFModeAll_NZ                                = 0x1,
-पूर्ण TVX_SRF_MODE_ALL;
-प्रकार क्रमागत TVX_TYPE अणु
+} TVX_SRF_MODE_ALL;
+typedef enum TVX_TYPE {
 	TVX_Type_InvalidTextureResource                  = 0x0,
 	TVX_Type_InvalidVertexBuffer                     = 0x1,
 	TVX_Type_ValidTextureResource                    = 0x2,
 	TVX_Type_ValidVertexBuffer                       = 0x3,
-पूर्ण TVX_TYPE;
-प्रकार क्रमागत TC_OP_MASKS अणु
+} TVX_TYPE;
+typedef enum TC_OP_MASKS {
 	TC_OP_MASK_FLUSH_DENROM                          = 0x8,
 	TC_OP_MASK_64                                    = 0x20,
 	TC_OP_MASK_NO_RTN                                = 0x40,
-पूर्ण TC_OP_MASKS;
-प्रकार क्रमागत TC_OP अणु
+} TC_OP_MASKS;
+typedef enum TC_OP {
 	TC_OP_READ                                       = 0x0,
 	TC_OP_ATOMIC_FCMPSWAP_RTN_32                     = 0x1,
 	TC_OP_ATOMIC_FMIN_RTN_32                         = 0x2,
@@ -4561,20 +4560,20 @@
 	TC_OP_RESERVED_NON_FLOAT_64_2                    = 0x7d,
 	TC_OP_RESERVED_NON_FLOAT_64_3                    = 0x7e,
 	TC_OP_RESERVED_NON_FLOAT_64_4                    = 0x7f,
-पूर्ण TC_OP;
-प्रकार क्रमागत TC_CHUB_REQ_CREDITS_ENUM अणु
+} TC_OP;
+typedef enum TC_CHUB_REQ_CREDITS_ENUM {
 	TC_CHUB_REQ_CREDITS                              = 0x10,
-पूर्ण TC_CHUB_REQ_CREDITS_ENUM;
-प्रकार क्रमागत CHUB_TC_RET_CREDITS_ENUM अणु
+} TC_CHUB_REQ_CREDITS_ENUM;
+typedef enum CHUB_TC_RET_CREDITS_ENUM {
 	CHUB_TC_RET_CREDITS                              = 0x20,
-पूर्ण CHUB_TC_RET_CREDITS_ENUM;
-प्रकार क्रमागत TC_NACKS अणु
+} CHUB_TC_RET_CREDITS_ENUM;
+typedef enum TC_NACKS {
 	TC_NACK_NO_FAULT                                 = 0x0,
 	TC_NACK_PAGE_FAULT                               = 0x1,
 	TC_NACK_PROTECTION_FAULT                         = 0x2,
 	TC_NACK_DATA_ERROR                               = 0x3,
-पूर्ण TC_NACKS;
-प्रकार क्रमागत TCC_PERF_SEL अणु
+} TC_NACKS;
+typedef enum TCC_PERF_SEL {
 	TCC_PERF_SEL_NONE                                = 0x0,
 	TCC_PERF_SEL_CYCLE                               = 0x1,
 	TCC_PERF_SEL_BUSY                                = 0x2,
@@ -4811,8 +4810,8 @@
 	TCC_PERF_SEL_CLIENT125_REQ                       = 0xfd,
 	TCC_PERF_SEL_CLIENT126_REQ                       = 0xfe,
 	TCC_PERF_SEL_CLIENT127_REQ                       = 0xff,
-पूर्ण TCC_PERF_SEL;
-प्रकार क्रमागत TCA_PERF_SEL अणु
+} TCC_PERF_SEL;
+typedef enum TCA_PERF_SEL {
 	TCA_PERF_SEL_NONE                                = 0x0,
 	TCA_PERF_SEL_CYCLE                               = 0x1,
 	TCA_PERF_SEL_BUSY                                = 0x2,
@@ -4848,8 +4847,8 @@
 	TCA_PERF_SEL_CROSSBAR_STALL_TCC5                 = 0x20,
 	TCA_PERF_SEL_CROSSBAR_STALL_TCC6                 = 0x21,
 	TCA_PERF_SEL_CROSSBAR_STALL_TCC7                 = 0x22,
-पूर्ण TCA_PERF_SEL;
-प्रकार क्रमागत TA_TC_ADDR_MODES अणु
+} TCA_PERF_SEL;
+typedef enum TA_TC_ADDR_MODES {
 	TA_TC_ADDR_MODE_DEFAULT                          = 0x0,
 	TA_TC_ADDR_MODE_COMP0                            = 0x1,
 	TA_TC_ADDR_MODE_COMP1                            = 0x2,
@@ -4857,62 +4856,62 @@
 	TA_TC_ADDR_MODE_COMP3                            = 0x4,
 	TA_TC_ADDR_MODE_UNALIGNED                        = 0x5,
 	TA_TC_ADDR_MODE_BORDER_COLOR                     = 0x6,
-पूर्ण TA_TC_ADDR_MODES;
-प्रकार क्रमागत TA_PERFCOUNT_SEL अणु
-	TA_PERF_SEL_शून्य                                 = 0x0,
-	TA_PERF_SEL_sh_fअगरo_busy                         = 0x1,
-	TA_PERF_SEL_sh_fअगरo_cmd_busy                     = 0x2,
-	TA_PERF_SEL_sh_fअगरo_addr_busy                    = 0x3,
-	TA_PERF_SEL_sh_fअगरo_data_busy                    = 0x4,
-	TA_PERF_SEL_sh_fअगरo_data_sfअगरo_busy              = 0x5,
-	TA_PERF_SEL_sh_fअगरo_data_tfअगरo_busy              = 0x6,
+} TA_TC_ADDR_MODES;
+typedef enum TA_PERFCOUNT_SEL {
+	TA_PERF_SEL_NULL                                 = 0x0,
+	TA_PERF_SEL_sh_fifo_busy                         = 0x1,
+	TA_PERF_SEL_sh_fifo_cmd_busy                     = 0x2,
+	TA_PERF_SEL_sh_fifo_addr_busy                    = 0x3,
+	TA_PERF_SEL_sh_fifo_data_busy                    = 0x4,
+	TA_PERF_SEL_sh_fifo_data_sfifo_busy              = 0x5,
+	TA_PERF_SEL_sh_fifo_data_tfifo_busy              = 0x6,
 	TA_PERF_SEL_gradient_busy                        = 0x7,
-	TA_PERF_SEL_gradient_fअगरo_busy                   = 0x8,
+	TA_PERF_SEL_gradient_fifo_busy                   = 0x8,
 	TA_PERF_SEL_lod_busy                             = 0x9,
-	TA_PERF_SEL_lod_fअगरo_busy                        = 0xa,
+	TA_PERF_SEL_lod_fifo_busy                        = 0xa,
 	TA_PERF_SEL_addresser_busy                       = 0xb,
-	TA_PERF_SEL_addresser_fअगरo_busy                  = 0xc,
+	TA_PERF_SEL_addresser_fifo_busy                  = 0xc,
 	TA_PERF_SEL_aligner_busy                         = 0xd,
-	TA_PERF_SEL_ग_लिखो_path_busy                      = 0xe,
+	TA_PERF_SEL_write_path_busy                      = 0xe,
 	TA_PERF_SEL_ta_busy                              = 0xf,
 	TA_PERF_SEL_sq_ta_cmd_cycles                     = 0x10,
 	TA_PERF_SEL_sp_ta_addr_cycles                    = 0x11,
 	TA_PERF_SEL_sp_ta_data_cycles                    = 0x12,
 	TA_PERF_SEL_ta_fa_data_state_cycles              = 0x13,
-	TA_PERF_SEL_sh_fअगरo_addr_रुकोing_on_cmd_cycles   = 0x14,
-	TA_PERF_SEL_sh_fअगरo_cmd_रुकोing_on_addr_cycles   = 0x15,
-	TA_PERF_SEL_sh_fअगरo_addr_starved_जबतक_busy_cycles= 0x16,
-	TA_PERF_SEL_sh_fअगरo_cmd_starved_जबतक_busy_cycles= 0x17,
-	TA_PERF_SEL_sh_fअगरo_data_रुकोing_on_data_state_cycles= 0x18,
-	TA_PERF_SEL_sh_fअगरo_data_state_रुकोing_on_data_cycles= 0x19,
-	TA_PERF_SEL_sh_fअगरo_data_starved_जबतक_busy_cycles= 0x1a,
-	TA_PERF_SEL_sh_fअगरo_data_state_starved_जबतक_busy_cycles= 0x1b,
+	TA_PERF_SEL_sh_fifo_addr_waiting_on_cmd_cycles   = 0x14,
+	TA_PERF_SEL_sh_fifo_cmd_waiting_on_addr_cycles   = 0x15,
+	TA_PERF_SEL_sh_fifo_addr_starved_while_busy_cycles= 0x16,
+	TA_PERF_SEL_sh_fifo_cmd_starved_while_busy_cycles= 0x17,
+	TA_PERF_SEL_sh_fifo_data_waiting_on_data_state_cycles= 0x18,
+	TA_PERF_SEL_sh_fifo_data_state_waiting_on_data_cycles= 0x19,
+	TA_PERF_SEL_sh_fifo_data_starved_while_busy_cycles= 0x1a,
+	TA_PERF_SEL_sh_fifo_data_state_starved_while_busy_cycles= 0x1b,
 	TA_PERF_SEL_RESERVED_28                          = 0x1c,
 	TA_PERF_SEL_RESERVED_29                          = 0x1d,
-	TA_PERF_SEL_sh_fअगरo_addr_cycles                  = 0x1e,
-	TA_PERF_SEL_sh_fअगरo_data_cycles                  = 0x1f,
+	TA_PERF_SEL_sh_fifo_addr_cycles                  = 0x1e,
+	TA_PERF_SEL_sh_fifo_data_cycles                  = 0x1f,
 	TA_PERF_SEL_total_wavefronts                     = 0x20,
 	TA_PERF_SEL_gradient_cycles                      = 0x21,
 	TA_PERF_SEL_walker_cycles                        = 0x22,
 	TA_PERF_SEL_aligner_cycles                       = 0x23,
 	TA_PERF_SEL_image_wavefronts                     = 0x24,
-	TA_PERF_SEL_image_पढ़ो_wavefronts                = 0x25,
-	TA_PERF_SEL_image_ग_लिखो_wavefronts               = 0x26,
+	TA_PERF_SEL_image_read_wavefronts                = 0x25,
+	TA_PERF_SEL_image_write_wavefronts               = 0x26,
 	TA_PERF_SEL_image_atomic_wavefronts              = 0x27,
 	TA_PERF_SEL_image_total_cycles                   = 0x28,
 	TA_PERF_SEL_RESERVED_41                          = 0x29,
 	TA_PERF_SEL_RESERVED_42                          = 0x2a,
 	TA_PERF_SEL_RESERVED_43                          = 0x2b,
 	TA_PERF_SEL_buffer_wavefronts                    = 0x2c,
-	TA_PERF_SEL_buffer_पढ़ो_wavefronts               = 0x2d,
-	TA_PERF_SEL_buffer_ग_लिखो_wavefronts              = 0x2e,
+	TA_PERF_SEL_buffer_read_wavefronts               = 0x2d,
+	TA_PERF_SEL_buffer_write_wavefronts              = 0x2e,
 	TA_PERF_SEL_buffer_atomic_wavefronts             = 0x2f,
 	TA_PERF_SEL_buffer_coalescable_wavefronts        = 0x30,
 	TA_PERF_SEL_buffer_total_cycles                  = 0x31,
 	TA_PERF_SEL_buffer_coalescable_addr_multicycled_cycles= 0x32,
 	TA_PERF_SEL_buffer_coalescable_clamp_16kdword_multicycled_cycles= 0x33,
-	TA_PERF_SEL_buffer_coalesced_पढ़ो_cycles         = 0x34,
-	TA_PERF_SEL_buffer_coalesced_ग_लिखो_cycles        = 0x35,
+	TA_PERF_SEL_buffer_coalesced_read_cycles         = 0x34,
+	TA_PERF_SEL_buffer_coalesced_write_cycles        = 0x35,
 	TA_PERF_SEL_addr_stalled_by_tc_cycles            = 0x36,
 	TA_PERF_SEL_addr_stalled_by_td_cycles            = 0x37,
 	TA_PERF_SEL_data_stalled_by_tc_cycles            = 0x38,
@@ -4931,7 +4930,7 @@
 	TA_PERF_SEL_mip_2_cycle_pixels                   = 0x45,
 	TA_PERF_SEL_vol_1_cycle_pixels                   = 0x46,
 	TA_PERF_SEL_vol_2_cycle_pixels                   = 0x47,
-	TA_PERF_SEL_bilin_poपूर्णांक_1_cycle_pixels           = 0x48,
+	TA_PERF_SEL_bilin_point_1_cycle_pixels           = 0x48,
 	TA_PERF_SEL_mipmap_lod_0_samples                 = 0x49,
 	TA_PERF_SEL_mipmap_lod_1_samples                 = 0x4a,
 	TA_PERF_SEL_mipmap_lod_2_samples                 = 0x4b,
@@ -4957,11 +4956,11 @@
 	TA_PERF_SEL_aniso_12_cycle_quads                 = 0x5f,
 	TA_PERF_SEL_aniso_14_cycle_quads                 = 0x60,
 	TA_PERF_SEL_aniso_16_cycle_quads                 = 0x61,
-	TA_PERF_SEL_ग_लिखो_path_input_cycles              = 0x62,
-	TA_PERF_SEL_ग_लिखो_path_output_cycles             = 0x63,
+	TA_PERF_SEL_write_path_input_cycles              = 0x62,
+	TA_PERF_SEL_write_path_output_cycles             = 0x63,
 	TA_PERF_SEL_flat_wavefronts                      = 0x64,
-	TA_PERF_SEL_flat_पढ़ो_wavefronts                 = 0x65,
-	TA_PERF_SEL_flat_ग_लिखो_wavefronts                = 0x66,
+	TA_PERF_SEL_flat_read_wavefronts                 = 0x65,
+	TA_PERF_SEL_flat_write_wavefronts                = 0x66,
 	TA_PERF_SEL_flat_atomic_wavefronts               = 0x67,
 	TA_PERF_SEL_flat_coalesceable_wavefronts         = 0x68,
 	TA_PERF_SEL_reg_sclk_vld                         = 0x69,
@@ -4978,8 +4977,8 @@
 	TA_PERF_SEL_first_xnack_on_phase1                = 0x74,
 	TA_PERF_SEL_first_xnack_on_phase2                = 0x75,
 	TA_PERF_SEL_first_xnack_on_phase3                = 0x76,
-पूर्ण TA_PERFCOUNT_SEL;
-प्रकार क्रमागत TD_PERFCOUNT_SEL अणु
+} TA_PERFCOUNT_SEL;
+typedef enum TD_PERFCOUNT_SEL {
 	TD_PERF_SEL_none                                 = 0x0,
 	TD_PERF_SEL_td_busy                              = 0x1,
 	TD_PERF_SEL_input_busy                           = 0x2,
@@ -4990,10 +4989,10 @@
 	TD_PERF_SEL_local_cg_dyn_sclk_grp1_en            = 0x7,
 	TD_PERF_SEL_local_cg_dyn_sclk_grp4_en            = 0x8,
 	TD_PERF_SEL_local_cg_dyn_sclk_grp5_en            = 0x9,
-	TD_PERF_SEL_tc_td_fअगरo_full                      = 0xa,
-	TD_PERF_SEL_स्थिरant_state_full                  = 0xb,
+	TD_PERF_SEL_tc_td_fifo_full                      = 0xa,
+	TD_PERF_SEL_constant_state_full                  = 0xb,
 	TD_PERF_SEL_sample_state_full                    = 0xc,
-	TD_PERF_SEL_output_fअगरo_full                     = 0xd,
+	TD_PERF_SEL_output_fifo_full                     = 0xd,
 	TD_PERF_SEL_RESERVED_14                          = 0xe,
 	TD_PERF_SEL_tc_stall                             = 0xf,
 	TD_PERF_SEL_pc_stall                             = 0x10,
@@ -5017,8 +5016,8 @@
 	TD_PERF_SEL_four_phase_wavefront                 = 0x22,
 	TD_PERF_SEL_eight_phase_wavefront                = 0x23,
 	TD_PERF_SEL_sixteen_phase_wavefront              = 0x24,
-	TD_PERF_SEL_four_phase_क्रमward_wavefront         = 0x25,
-	TD_PERF_SEL_ग_लिखो_ack_wavefront                  = 0x26,
+	TD_PERF_SEL_four_phase_forward_wavefront         = 0x25,
+	TD_PERF_SEL_write_ack_wavefront                  = 0x26,
 	TD_PERF_SEL_RESERVED_39                          = 0x27,
 	TD_PERF_SEL_user_defined_border                  = 0x28,
 	TD_PERF_SEL_white_border                         = 0x29,
@@ -5036,8 +5035,8 @@
 	TD_PERF_SEL_start_cycle_3                        = 0x35,
 	TD_PERF_SEL_null_cycle_output                    = 0x36,
 	TD_PERF_SEL_d16_data_packed                      = 0x37,
-पूर्ण TD_PERFCOUNT_SEL;
-प्रकार क्रमागत TCP_PERFCOUNT_SELECT अणु
+} TD_PERFCOUNT_SEL;
+typedef enum TCP_PERFCOUNT_SELECT {
 	TCP_PERF_SEL_TA_TCP_ADDR_STARVE_CYCLES           = 0x0,
 	TCP_PERF_SEL_TA_TCP_DATA_STARVE_CYCLES           = 0x1,
 	TCP_PERF_SEL_TCP_TA_ADDR_STALL_CYCLES            = 0x2,
@@ -5234,33 +5233,33 @@
 	TCP_PERF_SEL_IMG_WRITE_FMT_8_AS_64               = 0xc1,
 	TCP_PERF_SEL_IMG_WRITE_FMT_16_AS_64              = 0xc2,
 	TCP_PERF_SEL_IMG_WRITE_FMT_16_AS_128             = 0xc3,
-पूर्ण TCP_PERFCOUNT_SELECT;
-प्रकार क्रमागत TCP_CACHE_POLICIES अणु
+} TCP_PERFCOUNT_SELECT;
+typedef enum TCP_CACHE_POLICIES {
 	TCP_CACHE_POLICY_MISS_LRU                        = 0x0,
 	TCP_CACHE_POLICY_MISS_EVICT                      = 0x1,
 	TCP_CACHE_POLICY_HIT_LRU                         = 0x2,
 	TCP_CACHE_POLICY_HIT_EVICT                       = 0x3,
-पूर्ण TCP_CACHE_POLICIES;
-प्रकार क्रमागत TCP_CACHE_STORE_POLICIES अणु
+} TCP_CACHE_POLICIES;
+typedef enum TCP_CACHE_STORE_POLICIES {
 	TCP_CACHE_STORE_POLICY_WT_LRU                    = 0x0,
 	TCP_CACHE_STORE_POLICY_WT_EVICT                  = 0x1,
-पूर्ण TCP_CACHE_STORE_POLICIES;
-प्रकार क्रमागत TCP_WATCH_MODES अणु
+} TCP_CACHE_STORE_POLICIES;
+typedef enum TCP_WATCH_MODES {
 	TCP_WATCH_MODE_READ                              = 0x0,
 	TCP_WATCH_MODE_NONREAD                           = 0x1,
 	TCP_WATCH_MODE_ATOMIC                            = 0x2,
 	TCP_WATCH_MODE_ALL                               = 0x3,
-पूर्ण TCP_WATCH_MODES;
-प्रकार क्रमागत TCP_DSM_DATA_SEL अणु
+} TCP_WATCH_MODES;
+typedef enum TCP_DSM_DATA_SEL {
 	TCP_DSM_DISABLE                                  = 0x0,
 	TCP_DSM_SEL0                                     = 0x1,
 	TCP_DSM_SEL1                                     = 0x2,
 	TCP_DSM_SEL_BOTH                                 = 0x3,
-पूर्ण TCP_DSM_DATA_SEL;
-प्रकार क्रमागत TCP_DSM_SINGLE_WRITE अणु
+} TCP_DSM_DATA_SEL;
+typedef enum TCP_DSM_SINGLE_WRITE {
 	TCP_DSM_SINGLE_WRITE_EN                          = 0x1,
-पूर्ण TCP_DSM_SINGLE_WRITE;
-प्रकार क्रमागत VGT_OUT_PRIM_TYPE अणु
+} TCP_DSM_SINGLE_WRITE;
+typedef enum VGT_OUT_PRIM_TYPE {
 	VGT_OUT_POINT                                    = 0x0,
 	VGT_OUT_LINE                                     = 0x1,
 	VGT_OUT_TRI                                      = 0x2,
@@ -5276,8 +5275,8 @@
 	VGT_OUT_LINE_ADJ                                 = 0xc,
 	VGT_OUT_TRI_ADJ                                  = 0xd,
 	VGT_OUT_PATCH                                    = 0xe,
-पूर्ण VGT_OUT_PRIM_TYPE;
-प्रकार क्रमागत VGT_DI_PRIM_TYPE अणु
+} VGT_OUT_PRIM_TYPE;
+typedef enum VGT_DI_PRIM_TYPE {
 	DI_PT_NONE                                       = 0x0,
 	DI_PT_POINTLIST                                  = 0x1,
 	DI_PT_LINELIST                                   = 0x2,
@@ -5307,23 +5306,23 @@
 	DI_PT_2D_FILL_RECT_LIST                          = 0x1a,
 	DI_PT_2D_LINE_STRIP                              = 0x1b,
 	DI_PT_2D_TRI_STRIP                               = 0x1c,
-पूर्ण VGT_DI_PRIM_TYPE;
-प्रकार क्रमागत VGT_DI_SOURCE_SELECT अणु
+} VGT_DI_PRIM_TYPE;
+typedef enum VGT_DI_SOURCE_SELECT {
 	DI_SRC_SEL_DMA                                   = 0x0,
 	DI_SRC_SEL_IMMEDIATE                             = 0x1,
 	DI_SRC_SEL_AUTO_INDEX                            = 0x2,
 	DI_SRC_SEL_RESERVED                              = 0x3,
-पूर्ण VGT_DI_SOURCE_SELECT;
-प्रकार क्रमागत VGT_DI_MAJOR_MODE_SELECT अणु
+} VGT_DI_SOURCE_SELECT;
+typedef enum VGT_DI_MAJOR_MODE_SELECT {
 	DI_MAJOR_MODE_0                                  = 0x0,
 	DI_MAJOR_MODE_1                                  = 0x1,
-पूर्ण VGT_DI_MAJOR_MODE_SELECT;
-प्रकार क्रमागत VGT_DI_INDEX_SIZE अणु
+} VGT_DI_MAJOR_MODE_SELECT;
+typedef enum VGT_DI_INDEX_SIZE {
 	DI_INDEX_SIZE_16_BIT                             = 0x0,
 	DI_INDEX_SIZE_32_BIT                             = 0x1,
 	DI_INDEX_SIZE_8_BIT                              = 0x2,
-पूर्ण VGT_DI_INDEX_SIZE;
-प्रकार क्रमागत VGT_EVENT_TYPE अणु
+} VGT_DI_INDEX_SIZE;
+typedef enum VGT_EVENT_TYPE {
 	Reserved_0x00                                    = 0x0,
 	SAMPLE_STREAMOUTSTATS1                           = 0x1,
 	SAMPLE_STREAMOUTSTATS2                           = 0x2,
@@ -5385,32 +5384,32 @@
 	PIXEL_PIPE_STAT_RESET                            = 0x3a,
 	CONTEXT_SUSPEND                                  = 0x3b,
 	OFFCHIP_HS_DEALLOC                               = 0x3c,
-पूर्ण VGT_EVENT_TYPE;
-प्रकार क्रमागत VGT_DMA_SWAP_MODE अणु
+} VGT_EVENT_TYPE;
+typedef enum VGT_DMA_SWAP_MODE {
 	VGT_DMA_SWAP_NONE                                = 0x0,
 	VGT_DMA_SWAP_16_BIT                              = 0x1,
 	VGT_DMA_SWAP_32_BIT                              = 0x2,
 	VGT_DMA_SWAP_WORD                                = 0x3,
-पूर्ण VGT_DMA_SWAP_MODE;
-प्रकार क्रमागत VGT_INDEX_TYPE_MODE अणु
+} VGT_DMA_SWAP_MODE;
+typedef enum VGT_INDEX_TYPE_MODE {
 	VGT_INDEX_16                                     = 0x0,
 	VGT_INDEX_32                                     = 0x1,
 	VGT_INDEX_8                                      = 0x2,
-पूर्ण VGT_INDEX_TYPE_MODE;
-प्रकार क्रमागत VGT_DMA_BUF_TYPE अणु
+} VGT_INDEX_TYPE_MODE;
+typedef enum VGT_DMA_BUF_TYPE {
 	VGT_DMA_BUF_MEM                                  = 0x0,
 	VGT_DMA_BUF_RING                                 = 0x1,
 	VGT_DMA_BUF_SETUP                                = 0x2,
 	VGT_DMA_PTR_UPDATE                               = 0x3,
-पूर्ण VGT_DMA_BUF_TYPE;
-प्रकार क्रमागत VGT_OUTPATH_SELECT अणु
+} VGT_DMA_BUF_TYPE;
+typedef enum VGT_OUTPATH_SELECT {
 	VGT_OUTPATH_VTX_REUSE                            = 0x0,
 	VGT_OUTPATH_TESS_EN                              = 0x1,
 	VGT_OUTPATH_PASSTHRU                             = 0x2,
 	VGT_OUTPATH_GS_BLOCK                             = 0x3,
 	VGT_OUTPATH_HS_BLOCK                             = 0x4,
-पूर्ण VGT_OUTPATH_SELECT;
-प्रकार क्रमागत VGT_GRP_PRIM_TYPE अणु
+} VGT_OUTPATH_SELECT;
+typedef enum VGT_GRP_PRIM_TYPE {
 	VGT_GRP_3D_POINT                                 = 0x0,
 	VGT_GRP_3D_LINE                                  = 0x1,
 	VGT_GRP_3D_TRI                                   = 0x2,
@@ -5429,15 +5428,15 @@
 	VGT_GRP_3D_LINE_ADJ                              = 0xf,
 	VGT_GRP_3D_TRI_ADJ                               = 0x10,
 	VGT_GRP_3D_PATCH                                 = 0x11,
-पूर्ण VGT_GRP_PRIM_TYPE;
-प्रकार क्रमागत VGT_GRP_PRIM_ORDER अणु
+} VGT_GRP_PRIM_TYPE;
+typedef enum VGT_GRP_PRIM_ORDER {
 	VGT_GRP_LIST                                     = 0x0,
 	VGT_GRP_STRIP                                    = 0x1,
 	VGT_GRP_FAN                                      = 0x2,
 	VGT_GRP_LOOP                                     = 0x3,
 	VGT_GRP_POLYGON                                  = 0x4,
-पूर्ण VGT_GRP_PRIM_ORDER;
-प्रकार क्रमागत VGT_GROUP_CONV_SEL अणु
+} VGT_GRP_PRIM_ORDER;
+typedef enum VGT_GROUP_CONV_SEL {
 	VGT_GRP_INDEX_16                                 = 0x0,
 	VGT_GRP_INDEX_32                                 = 0x1,
 	VGT_GRP_UINT_16                                  = 0x2,
@@ -5447,84 +5446,84 @@
 	VGT_GRP_FLOAT_32                                 = 0x6,
 	VGT_GRP_AUTO_PRIM                                = 0x7,
 	VGT_GRP_FIX_1_23_TO_FLOAT                        = 0x8,
-पूर्ण VGT_GROUP_CONV_SEL;
-प्रकार क्रमागत VGT_GS_MODE_TYPE अणु
+} VGT_GROUP_CONV_SEL;
+typedef enum VGT_GS_MODE_TYPE {
 	GS_OFF                                           = 0x0,
 	GS_SCENARIO_A                                    = 0x1,
 	GS_SCENARIO_B                                    = 0x2,
 	GS_SCENARIO_G                                    = 0x3,
 	GS_SCENARIO_C                                    = 0x4,
 	SPRITE_EN                                        = 0x5,
-पूर्ण VGT_GS_MODE_TYPE;
-प्रकार क्रमागत VGT_GS_CUT_MODE अणु
+} VGT_GS_MODE_TYPE;
+typedef enum VGT_GS_CUT_MODE {
 	GS_CUT_1024                                      = 0x0,
 	GS_CUT_512                                       = 0x1,
 	GS_CUT_256                                       = 0x2,
 	GS_CUT_128                                       = 0x3,
-पूर्ण VGT_GS_CUT_MODE;
-प्रकार क्रमागत VGT_GS_OUTPRIM_TYPE अणु
+} VGT_GS_CUT_MODE;
+typedef enum VGT_GS_OUTPRIM_TYPE {
 	POINTLIST                                        = 0x0,
 	LINESTRIP                                        = 0x1,
 	TRISTRIP                                         = 0x2,
-पूर्ण VGT_GS_OUTPRIM_TYPE;
-प्रकार क्रमागत VGT_CACHE_INVALID_MODE अणु
+} VGT_GS_OUTPRIM_TYPE;
+typedef enum VGT_CACHE_INVALID_MODE {
 	VC_ONLY                                          = 0x0,
 	TC_ONLY                                          = 0x1,
 	VC_AND_TC                                        = 0x2,
-पूर्ण VGT_CACHE_INVALID_MODE;
-प्रकार क्रमागत VGT_TESS_TYPE अणु
+} VGT_CACHE_INVALID_MODE;
+typedef enum VGT_TESS_TYPE {
 	TESS_ISOLINE                                     = 0x0,
 	TESS_TRIANGLE                                    = 0x1,
 	TESS_QUAD                                        = 0x2,
-पूर्ण VGT_TESS_TYPE;
-प्रकार क्रमागत VGT_TESS_PARTITION अणु
+} VGT_TESS_TYPE;
+typedef enum VGT_TESS_PARTITION {
 	PART_INTEGER                                     = 0x0,
 	PART_POW2                                        = 0x1,
 	PART_FRAC_ODD                                    = 0x2,
 	PART_FRAC_EVEN                                   = 0x3,
-पूर्ण VGT_TESS_PARTITION;
-प्रकार क्रमागत VGT_TESS_TOPOLOGY अणु
+} VGT_TESS_PARTITION;
+typedef enum VGT_TESS_TOPOLOGY {
 	OUTPUT_POINT                                     = 0x0,
 	OUTPUT_LINE                                      = 0x1,
 	OUTPUT_TRIANGLE_CW                               = 0x2,
 	OUTPUT_TRIANGLE_CCW                              = 0x3,
-पूर्ण VGT_TESS_TOPOLOGY;
-प्रकार क्रमागत VGT_RDREQ_POLICY अणु
+} VGT_TESS_TOPOLOGY;
+typedef enum VGT_RDREQ_POLICY {
 	VGT_POLICY_LRU                                   = 0x0,
 	VGT_POLICY_STREAM                                = 0x1,
-पूर्ण VGT_RDREQ_POLICY;
-प्रकार क्रमागत VGT_DIST_MODE अणु
+} VGT_RDREQ_POLICY;
+typedef enum VGT_DIST_MODE {
 	NO_DIST                                          = 0x0,
 	PATCHES                                          = 0x1,
 	DONUTS                                           = 0x2,
-पूर्ण VGT_DIST_MODE;
-प्रकार क्रमागत VGT_STAGES_LS_EN अणु
+} VGT_DIST_MODE;
+typedef enum VGT_STAGES_LS_EN {
 	LS_STAGE_OFF                                     = 0x0,
 	LS_STAGE_ON                                      = 0x1,
 	CS_STAGE_ON                                      = 0x2,
 	RESERVED_LS                                      = 0x3,
-पूर्ण VGT_STAGES_LS_EN;
-प्रकार क्रमागत VGT_STAGES_HS_EN अणु
+} VGT_STAGES_LS_EN;
+typedef enum VGT_STAGES_HS_EN {
 	HS_STAGE_OFF                                     = 0x0,
 	HS_STAGE_ON                                      = 0x1,
-पूर्ण VGT_STAGES_HS_EN;
-प्रकार क्रमागत VGT_STAGES_ES_EN अणु
+} VGT_STAGES_HS_EN;
+typedef enum VGT_STAGES_ES_EN {
 	ES_STAGE_OFF                                     = 0x0,
 	ES_STAGE_DS                                      = 0x1,
 	ES_STAGE_REAL                                    = 0x2,
 	RESERVED_ES                                      = 0x3,
-पूर्ण VGT_STAGES_ES_EN;
-प्रकार क्रमागत VGT_STAGES_GS_EN अणु
+} VGT_STAGES_ES_EN;
+typedef enum VGT_STAGES_GS_EN {
 	GS_STAGE_OFF                                     = 0x0,
 	GS_STAGE_ON                                      = 0x1,
-पूर्ण VGT_STAGES_GS_EN;
-प्रकार क्रमागत VGT_STAGES_VS_EN अणु
+} VGT_STAGES_GS_EN;
+typedef enum VGT_STAGES_VS_EN {
 	VS_STAGE_REAL                                    = 0x0,
 	VS_STAGE_DS                                      = 0x1,
 	VS_STAGE_COPY_SHADER                             = 0x2,
 	RESERVED_VS                                      = 0x3,
-पूर्ण VGT_STAGES_VS_EN;
-प्रकार क्रमागत VGT_PERFCOUNT_SELECT अणु
+} VGT_STAGES_VS_EN;
+typedef enum VGT_PERFCOUNT_SELECT {
 	vgt_perf_VGT_SPI_ESTHREAD_EVENT_WINDOW_ACTIVE    = 0x0,
 	vgt_perf_VGT_SPI_ESVERT_VALID                    = 0x1,
 	vgt_perf_VGT_SPI_ESVERT_EOV                      = 0x2,
@@ -5563,7 +5562,7 @@
 	vgt_perf_VGT_PA_CLIPP_SEND                       = 0x23,
 	vgt_perf_VGT_PA_CLIPP_EOP                        = 0x24,
 	vgt_perf_VGT_PA_CLIPP_IS_EVENT                   = 0x25,
-	vgt_perf_VGT_PA_CLIPP_शून्य_PRIM                  = 0x26,
+	vgt_perf_VGT_PA_CLIPP_NULL_PRIM                  = 0x26,
 	vgt_perf_VGT_PA_CLIPP_NEW_VTX_VECT               = 0x27,
 	vgt_perf_VGT_PA_CLIPP_STALLED                    = 0x28,
 	vgt_perf_VGT_PA_CLIPP_STARVED_BUSY               = 0x29,
@@ -5576,9 +5575,9 @@
 	vgt_perf_VGT_PA_CLIPS_STATIC                     = 0x30,
 	vgt_perf_vsvert_ds_send                          = 0x31,
 	vgt_perf_vsvert_api_send                         = 0x32,
-	vgt_perf_hs_tअगर_stall                            = 0x33,
+	vgt_perf_hs_tif_stall                            = 0x33,
 	vgt_perf_hs_input_stall                          = 0x34,
-	vgt_perf_hs_पूर्णांकerface_stall                      = 0x35,
+	vgt_perf_hs_interface_stall                      = 0x35,
 	vgt_perf_hs_tfm_stall                            = 0x36,
 	vgt_perf_te11_starved                            = 0x37,
 	vgt_perf_gs_event_stall                          = 0x38,
@@ -5599,17 +5598,17 @@
 	vgt_perf_gsprim_stalled_gs_tbl                   = 0x47,
 	vgt_perf_gsprim_stalled_gs_event                 = 0x48,
 	vgt_perf_gsprim_stalled_esvert                   = 0x49,
-	vgt_perf_esthपढ़ो_stalled_es_rb_full             = 0x4a,
-	vgt_perf_esthपढ़ो_stalled_spi_bp                 = 0x4b,
+	vgt_perf_esthread_stalled_es_rb_full             = 0x4a,
+	vgt_perf_esthread_stalled_spi_bp                 = 0x4b,
 	vgt_perf_counters_avail_stalled                  = 0x4c,
 	vgt_perf_gs_rb_space_avail_stalled               = 0x4d,
 	vgt_perf_gs_issue_rtr_stalled                    = 0x4e,
-	vgt_perf_gsthपढ़ो_stalled                        = 0x4f,
+	vgt_perf_gsthread_stalled                        = 0x4f,
 	vgt_perf_strmout_stalled                         = 0x50,
-	vgt_perf_रुको_क्रम_es_करोne_stalled                = 0x51,
+	vgt_perf_wait_for_es_done_stalled                = 0x51,
 	vgt_perf_cm_stalled_by_gog                       = 0x52,
-	vgt_perf_cm_पढ़ोing_stalled                      = 0x53,
-	vgt_perf_cm_stalled_by_gsfetch_करोne              = 0x54,
+	vgt_perf_cm_reading_stalled                      = 0x53,
+	vgt_perf_cm_stalled_by_gsfetch_done              = 0x54,
 	vgt_perf_gog_vs_tbl_stalled                      = 0x55,
 	vgt_perf_gog_out_indx_stalled                    = 0x56,
 	vgt_perf_gog_out_prim_stalled                    = 0x57,
@@ -5640,26 +5639,26 @@
 	vgt_perf_VGT_SPI_HSWAVE_IS_EVENT                 = 0x70,
 	vgt_perf_VGT_SPI_HSWAVE_SEND                     = 0x71,
 	vgt_perf_ds_prims                                = 0x72,
-	vgt_perf_ls_thपढ़ो_groups                        = 0x73,
-	vgt_perf_hs_thपढ़ो_groups                        = 0x74,
-	vgt_perf_es_thपढ़ो_groups                        = 0x75,
-	vgt_perf_vs_thपढ़ो_groups                        = 0x76,
-	vgt_perf_ls_करोne_latency                         = 0x77,
-	vgt_perf_hs_करोne_latency                         = 0x78,
-	vgt_perf_es_करोne_latency                         = 0x79,
-	vgt_perf_gs_करोne_latency                         = 0x7a,
+	vgt_perf_ls_thread_groups                        = 0x73,
+	vgt_perf_hs_thread_groups                        = 0x74,
+	vgt_perf_es_thread_groups                        = 0x75,
+	vgt_perf_vs_thread_groups                        = 0x76,
+	vgt_perf_ls_done_latency                         = 0x77,
+	vgt_perf_hs_done_latency                         = 0x78,
+	vgt_perf_es_done_latency                         = 0x79,
+	vgt_perf_gs_done_latency                         = 0x7a,
 	vgt_perf_vgt_hs_busy                             = 0x7b,
 	vgt_perf_vgt_te11_busy                           = 0x7c,
 	vgt_perf_ls_flush                                = 0x7d,
 	vgt_perf_hs_flush                                = 0x7e,
 	vgt_perf_es_flush                                = 0x7f,
 	vgt_perf_vgt_pa_clipp_eopg                       = 0x80,
-	vgt_perf_ls_करोne                                 = 0x81,
-	vgt_perf_hs_करोne                                 = 0x82,
-	vgt_perf_es_करोne                                 = 0x83,
-	vgt_perf_gs_करोne                                 = 0x84,
-	vgt_perf_vsfetch_करोne                            = 0x85,
-	vgt_perf_gs_करोne_received                        = 0x86,
+	vgt_perf_ls_done                                 = 0x81,
+	vgt_perf_hs_done                                 = 0x82,
+	vgt_perf_es_done                                 = 0x83,
+	vgt_perf_gs_done                                 = 0x84,
+	vgt_perf_vsfetch_done                            = 0x85,
+	vgt_perf_gs_done_received                        = 0x86,
 	vgt_perf_es_ring_high_water_mark                 = 0x87,
 	vgt_perf_gs_ring_high_water_mark                 = 0x88,
 	vgt_perf_vs_table_high_water_mark                = 0x89,
@@ -5669,12 +5668,12 @@
 	vgt_perf_vsvert_work_received                    = 0x8d,
 	vgt_perf_vgt_pa_clipp_starved_after_work         = 0x8e,
 	vgt_perf_te11_con_starved_after_work             = 0x8f,
-	vgt_perf_hs_रुकोing_on_ls_करोne_stall             = 0x90,
+	vgt_perf_hs_waiting_on_ls_done_stall             = 0x90,
 	vgt_spi_vsvert_valid                             = 0x91,
-पूर्ण VGT_PERFCOUNT_SELECT;
-प्रकार क्रमागत IA_PERFCOUNT_SELECT अणु
+} VGT_PERFCOUNT_SELECT;
+typedef enum IA_PERFCOUNT_SELECT {
 	ia_perf_GRP_INPUT_EVENT_WINDOW_ACTIVE            = 0x0,
-	ia_perf_dma_data_fअगरo_full                       = 0x1,
+	ia_perf_dma_data_fifo_full                       = 0x1,
 	ia_perf_RESERVED1                                = 0x2,
 	ia_perf_RESERVED2                                = 0x3,
 	ia_perf_RESERVED3                                = 0x4,
@@ -5693,12 +5692,12 @@
 	ia_perf_RESERVED6                                = 0x11,
 	ia_perf_ia_sclk_core_vld_event                   = 0x12,
 	ia_perf_RESERVED7                                = 0x13,
-	ia_perf_ia_dma_वापस                            = 0x14,
+	ia_perf_ia_dma_return                            = 0x14,
 	ia_perf_ia_stalled                               = 0x15,
-	ia_perf_shअगरt_starved_pipe0_event                = 0x16,
-	ia_perf_shअगरt_starved_pipe1_event                = 0x17,
-पूर्ण IA_PERFCOUNT_SELECT;
-प्रकार क्रमागत WD_PERFCOUNT_SELECT अणु
+	ia_perf_shift_starved_pipe0_event                = 0x16,
+	ia_perf_shift_starved_pipe1_event                = 0x17,
+} IA_PERFCOUNT_SELECT;
+typedef enum WD_PERFCOUNT_SELECT {
 	wd_perf_RBIU_FIFOS_EVENT_WINDOW_ACTIVE           = 0x0,
 	wd_perf_RBIU_DR_FIFO_STARVED                     = 0x1,
 	wd_perf_RBIU_DR_FIFO_STALLED                     = 0x2,
@@ -5726,18 +5725,18 @@
 	wd_perf_tfreq_lat_bin_5                          = 0x18,
 	wd_perf_tfreq_lat_bin_6                          = 0x19,
 	wd_perf_tfreq_lat_bin_7                          = 0x1a,
-	wd_starved_on_hs_करोne                            = 0x1b,
-	wd_perf_se0_hs_करोne_latency                      = 0x1c,
-	wd_perf_se1_hs_करोne_latency                      = 0x1d,
-	wd_perf_se2_hs_करोne_latency                      = 0x1e,
-	wd_perf_se3_hs_करोne_latency                      = 0x1f,
-	wd_perf_hs_करोne_se0                              = 0x20,
-	wd_perf_hs_करोne_se1                              = 0x21,
-	wd_perf_hs_करोne_se2                              = 0x22,
-	wd_perf_hs_करोne_se3                              = 0x23,
+	wd_starved_on_hs_done                            = 0x1b,
+	wd_perf_se0_hs_done_latency                      = 0x1c,
+	wd_perf_se1_hs_done_latency                      = 0x1d,
+	wd_perf_se2_hs_done_latency                      = 0x1e,
+	wd_perf_se3_hs_done_latency                      = 0x1f,
+	wd_perf_hs_done_se0                              = 0x20,
+	wd_perf_hs_done_se1                              = 0x21,
+	wd_perf_hs_done_se2                              = 0x22,
+	wd_perf_hs_done_se3                              = 0x23,
 	wd_perf_null_patches                             = 0x24,
-पूर्ण WD_PERFCOUNT_SELECT;
-प्रकार क्रमागत WD_IA_DRAW_TYPE अणु
+} WD_PERFCOUNT_SELECT;
+typedef enum WD_IA_DRAW_TYPE {
 	WD_IA_DRAW_TYPE_DI_MM0                           = 0x0,
 	WD_IA_DRAW_TYPE_DI_MM1                           = 0x1,
 	WD_IA_DRAW_TYPE_EVENT_INIT                       = 0x2,
@@ -5746,15 +5745,15 @@
 	WD_IA_DRAW_TYPE_MAX_INDX                         = 0x5,
 	WD_IA_DRAW_TYPE_INDX_OFF                         = 0x6,
 	WD_IA_DRAW_TYPE_IMM_DATA                         = 0x7,
-पूर्ण WD_IA_DRAW_TYPE;
-प्रकार क्रमागत WD_IA_DRAW_SOURCE अणु
+} WD_IA_DRAW_TYPE;
+typedef enum WD_IA_DRAW_SOURCE {
 	WD_IA_DRAW_SOURCE_DMA                            = 0x0,
 	WD_IA_DRAW_SOURCE_IMMD                           = 0x1,
 	WD_IA_DRAW_SOURCE_AUTO                           = 0x2,
 	WD_IA_DRAW_SOURCE_OPAQ                           = 0x3,
-पूर्ण WD_IA_DRAW_SOURCE;
-#घोषणा GSTHREADID_SIZE                           0x2
-प्रकार क्रमागत DebugBlockId अणु
+} WD_IA_DRAW_SOURCE;
+#define GSTHREADID_SIZE                           0x2
+typedef enum DebugBlockId {
 	DBG_BLOCK_ID_RESERVED                            = 0x0,
 	DBG_BLOCK_ID_DBG                                 = 0x1,
 	DBG_BLOCK_ID_VMC                                 = 0x2,
@@ -6010,8 +6009,8 @@
 	DBG_BLOCK_ID_UNUSED44                            = 0xfc,
 	DBG_BLOCK_ID_UNUSED45                            = 0xfd,
 	DBG_BLOCK_ID_UNUSED46                            = 0xfe,
-पूर्ण DebugBlockId;
-प्रकार क्रमागत DebugBlockId_BY2 अणु
+} DebugBlockId;
+typedef enum DebugBlockId_BY2 {
 	DBG_BLOCK_ID_RESERVED_BY2                        = 0x0,
 	DBG_BLOCK_ID_VMC_BY2                             = 0x1,
 	DBG_BLOCK_ID_UNUSED0_BY2                         = 0x2,
@@ -6132,8 +6131,8 @@
 	DBG_BLOCK_ID_LDS1A_BY2                           = 0x75,
 	DBG_BLOCK_ID_UNUSED40_BY2                        = 0x76,
 	DBG_BLOCK_ID_UNUSED42_BY2                        = 0x77,
-पूर्ण DebugBlockId_BY2;
-प्रकार क्रमागत DebugBlockId_BY4 अणु
+} DebugBlockId_BY2;
+typedef enum DebugBlockId_BY4 {
 	DBG_BLOCK_ID_RESERVED_BY4                        = 0x0,
 	DBG_BLOCK_ID_UNUSED0_BY4                         = 0x1,
 	DBG_BLOCK_ID_CSC_BY4                             = 0x2,
@@ -6194,8 +6193,8 @@
 	DBG_BLOCK_ID_LDS14_BY4                           = 0x39,
 	DBG_BLOCK_ID_LDS18_BY4                           = 0x3a,
 	DBG_BLOCK_ID_UNUSED40_BY4                        = 0x3b,
-पूर्ण DebugBlockId_BY4;
-प्रकार क्रमागत DebugBlockId_BY8 अणु
+} DebugBlockId_BY4;
+typedef enum DebugBlockId_BY8 {
 	DBG_BLOCK_ID_RESERVED_BY8                        = 0x0,
 	DBG_BLOCK_ID_CSC_BY8                             = 0x1,
 	DBG_BLOCK_ID_SDMA0_BY8                           = 0x2,
@@ -6226,8 +6225,8 @@
 	DBG_BLOCK_ID_LDS08_BY8                           = 0x1b,
 	DBG_BLOCK_ID_LDS10_BY8                           = 0x1c,
 	DBG_BLOCK_ID_LDS18_BY8                           = 0x1d,
-पूर्ण DebugBlockId_BY8;
-प्रकार क्रमागत DebugBlockId_BY16 अणु
+} DebugBlockId_BY8;
+typedef enum DebugBlockId_BY16 {
 	DBG_BLOCK_ID_RESERVED_BY16                       = 0x0,
 	DBG_BLOCK_ID_SDMA0_BY16                          = 0x1,
 	DBG_BLOCK_ID_SXM_BY16                            = 0x2,
@@ -6243,14 +6242,14 @@
 	DBG_BLOCK_ID_TD10_BY16                           = 0xc,
 	DBG_BLOCK_ID_LDS_BY16                            = 0xd,
 	DBG_BLOCK_ID_LDS10_BY16                          = 0xe,
-पूर्ण DebugBlockId_BY16;
-प्रकार क्रमागत SurfaceEndian अणु
+} DebugBlockId_BY16;
+typedef enum SurfaceEndian {
 	ENDIAN_NONE                                      = 0x0,
 	ENDIAN_8IN16                                     = 0x1,
 	ENDIAN_8IN32                                     = 0x2,
 	ENDIAN_8IN64                                     = 0x3,
-पूर्ण SurfaceEndian;
-प्रकार क्रमागत ArrayMode अणु
+} SurfaceEndian;
+typedef enum ArrayMode {
 	ARRAY_LINEAR_GENERAL                             = 0x0,
 	ARRAY_LINEAR_ALIGNED                             = 0x1,
 	ARRAY_1D_TILED_THIN1                             = 0x2,
@@ -6267,22 +6266,22 @@
 	ARRAY_3D_TILED_THICK                             = 0xd,
 	ARRAY_3D_TILED_XTHICK                            = 0xe,
 	ARRAY_PRT_3D_TILED_THICK                         = 0xf,
-पूर्ण ArrayMode;
-प्रकार क्रमागत PipeTiling अणु
+} ArrayMode;
+typedef enum PipeTiling {
 	CONFIG_1_PIPE                                    = 0x0,
 	CONFIG_2_PIPE                                    = 0x1,
 	CONFIG_4_PIPE                                    = 0x2,
 	CONFIG_8_PIPE                                    = 0x3,
-पूर्ण PipeTiling;
-प्रकार क्रमागत BankTiling अणु
+} PipeTiling;
+typedef enum BankTiling {
 	CONFIG_4_BANK                                    = 0x0,
 	CONFIG_8_BANK                                    = 0x1,
-पूर्ण BankTiling;
-प्रकार क्रमागत GroupInterleave अणु
+} BankTiling;
+typedef enum GroupInterleave {
 	CONFIG_256B_GROUP                                = 0x0,
 	CONFIG_512B_GROUP                                = 0x1,
-पूर्ण GroupInterleave;
-प्रकार क्रमागत RowTiling अणु
+} GroupInterleave;
+typedef enum RowTiling {
 	CONFIG_1KB_ROW                                   = 0x0,
 	CONFIG_2KB_ROW                                   = 0x1,
 	CONFIG_4KB_ROW                                   = 0x2,
@@ -6291,70 +6290,70 @@
 	CONFIG_2KB_ROW_OPT                               = 0x5,
 	CONFIG_4KB_ROW_OPT                               = 0x6,
 	CONFIG_8KB_ROW_OPT                               = 0x7,
-पूर्ण RowTiling;
-प्रकार क्रमागत BankSwapBytes अणु
+} RowTiling;
+typedef enum BankSwapBytes {
 	CONFIG_128B_SWAPS                                = 0x0,
 	CONFIG_256B_SWAPS                                = 0x1,
 	CONFIG_512B_SWAPS                                = 0x2,
 	CONFIG_1KB_SWAPS                                 = 0x3,
-पूर्ण BankSwapBytes;
-प्रकार क्रमागत SampleSplitBytes अणु
+} BankSwapBytes;
+typedef enum SampleSplitBytes {
 	CONFIG_1KB_SPLIT                                 = 0x0,
 	CONFIG_2KB_SPLIT                                 = 0x1,
 	CONFIG_4KB_SPLIT                                 = 0x2,
 	CONFIG_8KB_SPLIT                                 = 0x3,
-पूर्ण SampleSplitBytes;
-प्रकार क्रमागत NumPipes अणु
+} SampleSplitBytes;
+typedef enum NumPipes {
 	ADDR_CONFIG_1_PIPE                               = 0x0,
 	ADDR_CONFIG_2_PIPE                               = 0x1,
 	ADDR_CONFIG_4_PIPE                               = 0x2,
 	ADDR_CONFIG_8_PIPE                               = 0x3,
-पूर्ण NumPipes;
-प्रकार क्रमागत PipeInterleaveSize अणु
+} NumPipes;
+typedef enum PipeInterleaveSize {
 	ADDR_CONFIG_PIPE_INTERLEAVE_256B                 = 0x0,
 	ADDR_CONFIG_PIPE_INTERLEAVE_512B                 = 0x1,
-पूर्ण PipeInterleaveSize;
-प्रकार क्रमागत BankInterleaveSize अणु
+} PipeInterleaveSize;
+typedef enum BankInterleaveSize {
 	ADDR_CONFIG_BANK_INTERLEAVE_1                    = 0x0,
 	ADDR_CONFIG_BANK_INTERLEAVE_2                    = 0x1,
 	ADDR_CONFIG_BANK_INTERLEAVE_4                    = 0x2,
 	ADDR_CONFIG_BANK_INTERLEAVE_8                    = 0x3,
-पूर्ण BankInterleaveSize;
-प्रकार क्रमागत NumShaderEngines अणु
+} BankInterleaveSize;
+typedef enum NumShaderEngines {
 	ADDR_CONFIG_1_SHADER_ENGINE                      = 0x0,
 	ADDR_CONFIG_2_SHADER_ENGINE                      = 0x1,
-पूर्ण NumShaderEngines;
-प्रकार क्रमागत ShaderEngineTileSize अणु
+} NumShaderEngines;
+typedef enum ShaderEngineTileSize {
 	ADDR_CONFIG_SE_TILE_16                           = 0x0,
 	ADDR_CONFIG_SE_TILE_32                           = 0x1,
-पूर्ण ShaderEngineTileSize;
-प्रकार क्रमागत NumGPUs अणु
+} ShaderEngineTileSize;
+typedef enum NumGPUs {
 	ADDR_CONFIG_1_GPU                                = 0x0,
 	ADDR_CONFIG_2_GPU                                = 0x1,
 	ADDR_CONFIG_4_GPU                                = 0x2,
-पूर्ण NumGPUs;
-प्रकार क्रमागत MultiGPUTileSize अणु
+} NumGPUs;
+typedef enum MultiGPUTileSize {
 	ADDR_CONFIG_GPU_TILE_16                          = 0x0,
 	ADDR_CONFIG_GPU_TILE_32                          = 0x1,
 	ADDR_CONFIG_GPU_TILE_64                          = 0x2,
 	ADDR_CONFIG_GPU_TILE_128                         = 0x3,
-पूर्ण MultiGPUTileSize;
-प्रकार क्रमागत RowSize अणु
+} MultiGPUTileSize;
+typedef enum RowSize {
 	ADDR_CONFIG_1KB_ROW                              = 0x0,
 	ADDR_CONFIG_2KB_ROW                              = 0x1,
 	ADDR_CONFIG_4KB_ROW                              = 0x2,
-पूर्ण RowSize;
-प्रकार क्रमागत NumLowerPipes अणु
+} RowSize;
+typedef enum NumLowerPipes {
 	ADDR_CONFIG_1_LOWER_PIPES                        = 0x0,
 	ADDR_CONFIG_2_LOWER_PIPES                        = 0x1,
-पूर्ण NumLowerPipes;
-प्रकार क्रमागत ColorTransक्रमm अणु
+} NumLowerPipes;
+typedef enum ColorTransform {
 	DCC_CT_AUTO                                      = 0x0,
 	DCC_CT_NONE                                      = 0x1,
 	ABGR_TO_A_BG_G_RB                                = 0x2,
 	BGRA_TO_BG_G_RB_A                                = 0x3,
-पूर्ण ColorTransक्रमm;
-प्रकार क्रमागत CompareRef अणु
+} ColorTransform;
+typedef enum CompareRef {
 	REF_NEVER                                        = 0x0,
 	REF_LESS                                         = 0x1,
 	REF_EQUAL                                        = 0x2,
@@ -6363,12 +6362,12 @@
 	REF_NOTEQUAL                                     = 0x5,
 	REF_GEQUAL                                       = 0x6,
 	REF_ALWAYS                                       = 0x7,
-पूर्ण CompareRef;
-प्रकार क्रमागत ReadSize अणु
+} CompareRef;
+typedef enum ReadSize {
 	READ_256_BITS                                    = 0x0,
 	READ_512_BITS                                    = 0x1,
-पूर्ण ReadSize;
-प्रकार क्रमागत DepthFormat अणु
+} ReadSize;
+typedef enum DepthFormat {
 	DEPTH_INVALID                                    = 0x0,
 	DEPTH_16                                         = 0x1,
 	DEPTH_X8_24                                      = 0x2,
@@ -6377,18 +6376,18 @@
 	DEPTH_8_24_FLOAT                                 = 0x5,
 	DEPTH_32_FLOAT                                   = 0x6,
 	DEPTH_X24_8_32_FLOAT                             = 0x7,
-पूर्ण DepthFormat;
-प्रकार क्रमागत ZFormat अणु
+} DepthFormat;
+typedef enum ZFormat {
 	Z_INVALID                                        = 0x0,
 	Z_16                                             = 0x1,
 	Z_24                                             = 0x2,
 	Z_32_FLOAT                                       = 0x3,
-पूर्ण ZFormat;
-प्रकार क्रमागत StencilFormat अणु
+} ZFormat;
+typedef enum StencilFormat {
 	STENCIL_INVALID                                  = 0x0,
 	STENCIL_8                                        = 0x1,
-पूर्ण StencilFormat;
-प्रकार क्रमागत CmaskMode अणु
+} StencilFormat;
+typedef enum CmaskMode {
 	CMASK_CLEAR_NONE                                 = 0x0,
 	CMASK_CLEAR_ONE                                  = 0x1,
 	CMASK_CLEAR_ALL                                  = 0x2,
@@ -6405,8 +6404,8 @@
 	CMASK_ALPHAX_FRAG2                               = 0xd,
 	CMASK_ALPHAX_FRAG4                               = 0xe,
 	CMASK_ALPHAX_FRAGS                               = 0xf,
-पूर्ण CmaskMode;
-प्रकार क्रमागत QuadExportFormat अणु
+} CmaskMode;
+typedef enum QuadExportFormat {
 	EXPORT_UNUSED                                    = 0x0,
 	EXPORT_32_R                                      = 0x1,
 	EXPORT_32_GR                                     = 0x2,
@@ -6419,16 +6418,16 @@
 	EXPORT_16_16_UNSIGNED_8PIX                       = 0x9,
 	EXPORT_16_16_SIGNED_8PIX                         = 0xa,
 	EXPORT_16_16_FLOAT_8PIX                          = 0xb,
-पूर्ण QuadExportFormat;
-प्रकार क्रमागत QuadExportFormatOld अणु
+} QuadExportFormat;
+typedef enum QuadExportFormatOld {
 	EXPORT_4P_32BPC_ABGR                             = 0x0,
 	EXPORT_4P_16BPC_ABGR                             = 0x1,
 	EXPORT_4P_32BPC_GR                               = 0x2,
 	EXPORT_4P_32BPC_AR                               = 0x3,
 	EXPORT_2P_32BPC_ABGR                             = 0x4,
 	EXPORT_8P_32BPC_R                                = 0x5,
-पूर्ण QuadExportFormatOld;
-प्रकार क्रमागत ColorFormat अणु
+} QuadExportFormatOld;
+typedef enum ColorFormat {
 	COLOR_INVALID                                    = 0x0,
 	COLOR_8                                          = 0x1,
 	COLOR_16                                         = 0x2,
@@ -6460,8 +6459,8 @@
 	COLOR_RESERVED_28                                = 0x1c,
 	COLOR_RESERVED_29                                = 0x1d,
 	COLOR_RESERVED_30                                = 0x1e,
-पूर्ण ColorFormat;
-प्रकार क्रमागत SurfaceFormat अणु
+} ColorFormat;
+typedef enum SurfaceFormat {
 	FMT_INVALID                                      = 0x0,
 	FMT_8                                            = 0x1,
 	FMT_16                                           = 0x2,
@@ -6526,8 +6525,8 @@
 	FMT_APC7                                         = 0x3d,
 	FMT_CTX1                                         = 0x3e,
 	FMT_RESERVED_63                                  = 0x3f,
-पूर्ण SurfaceFormat;
-प्रकार क्रमागत BUF_DATA_FORMAT अणु
+} SurfaceFormat;
+typedef enum BUF_DATA_FORMAT {
 	BUF_DATA_FORMAT_INVALID                          = 0x0,
 	BUF_DATA_FORMAT_8                                = 0x1,
 	BUF_DATA_FORMAT_16                               = 0x2,
@@ -6544,8 +6543,8 @@
 	BUF_DATA_FORMAT_32_32_32                         = 0xd,
 	BUF_DATA_FORMAT_32_32_32_32                      = 0xe,
 	BUF_DATA_FORMAT_RESERVED_15                      = 0xf,
-पूर्ण BUF_DATA_FORMAT;
-प्रकार क्रमागत IMG_DATA_FORMAT अणु
+} BUF_DATA_FORMAT;
+typedef enum IMG_DATA_FORMAT {
 	IMG_DATA_FORMAT_INVALID                          = 0x0,
 	IMG_DATA_FORMAT_8                                = 0x1,
 	IMG_DATA_FORMAT_16                               = 0x2,
@@ -6610,8 +6609,8 @@
 	IMG_DATA_FORMAT_8_AS_32                          = 0x3d,
 	IMG_DATA_FORMAT_8_AS_32_32                       = 0x3e,
 	IMG_DATA_FORMAT_32_AS_32_32_32_32                = 0x3f,
-पूर्ण IMG_DATA_FORMAT;
-प्रकार क्रमागत BUF_NUM_FORMAT अणु
+} IMG_DATA_FORMAT;
+typedef enum BUF_NUM_FORMAT {
 	BUF_NUM_FORMAT_UNORM                             = 0x0,
 	BUF_NUM_FORMAT_SNORM                             = 0x1,
 	BUF_NUM_FORMAT_USCALED                           = 0x2,
@@ -6620,8 +6619,8 @@
 	BUF_NUM_FORMAT_SINT                              = 0x5,
 	BUF_NUM_FORMAT_RESERVED_6                        = 0x6,
 	BUF_NUM_FORMAT_FLOAT                             = 0x7,
-पूर्ण BUF_NUM_FORMAT;
-प्रकार क्रमागत IMG_NUM_FORMAT अणु
+} BUF_NUM_FORMAT;
+typedef enum IMG_NUM_FORMAT {
 	IMG_NUM_FORMAT_UNORM                             = 0x0,
 	IMG_NUM_FORMAT_SNORM                             = 0x1,
 	IMG_NUM_FORMAT_USCALED                           = 0x2,
@@ -6638,23 +6637,23 @@
 	IMG_NUM_FORMAT_RESERVED_13                       = 0xd,
 	IMG_NUM_FORMAT_RESERVED_14                       = 0xe,
 	IMG_NUM_FORMAT_RESERVED_15                       = 0xf,
-पूर्ण IMG_NUM_FORMAT;
-प्रकार क्रमागत TileType अणु
+} IMG_NUM_FORMAT;
+typedef enum TileType {
 	ARRAY_COLOR_TILE                                 = 0x0,
 	ARRAY_DEPTH_TILE                                 = 0x1,
-पूर्ण TileType;
-प्रकार क्रमागत NonDispTilingOrder अणु
+} TileType;
+typedef enum NonDispTilingOrder {
 	ADDR_SURF_MICRO_TILING_DISPLAY                   = 0x0,
 	ADDR_SURF_MICRO_TILING_NON_DISPLAY               = 0x1,
-पूर्ण NonDispTilingOrder;
-प्रकार क्रमागत MicroTileMode अणु
+} NonDispTilingOrder;
+typedef enum MicroTileMode {
 	ADDR_SURF_DISPLAY_MICRO_TILING                   = 0x0,
 	ADDR_SURF_THIN_MICRO_TILING                      = 0x1,
 	ADDR_SURF_DEPTH_MICRO_TILING                     = 0x2,
 	ADDR_SURF_ROTATED_MICRO_TILING                   = 0x3,
 	ADDR_SURF_THICK_MICRO_TILING                     = 0x4,
-पूर्ण MicroTileMode;
-प्रकार क्रमागत TileSplit अणु
+} MicroTileMode;
+typedef enum TileSplit {
 	ADDR_SURF_TILE_SPLIT_64B                         = 0x0,
 	ADDR_SURF_TILE_SPLIT_128B                        = 0x1,
 	ADDR_SURF_TILE_SPLIT_256B                        = 0x2,
@@ -6662,14 +6661,14 @@
 	ADDR_SURF_TILE_SPLIT_1KB                         = 0x4,
 	ADDR_SURF_TILE_SPLIT_2KB                         = 0x5,
 	ADDR_SURF_TILE_SPLIT_4KB                         = 0x6,
-पूर्ण TileSplit;
-प्रकार क्रमागत SampleSplit अणु
+} TileSplit;
+typedef enum SampleSplit {
 	ADDR_SURF_SAMPLE_SPLIT_1                         = 0x0,
 	ADDR_SURF_SAMPLE_SPLIT_2                         = 0x1,
 	ADDR_SURF_SAMPLE_SPLIT_4                         = 0x2,
 	ADDR_SURF_SAMPLE_SPLIT_8                         = 0x3,
-पूर्ण SampleSplit;
-प्रकार क्रमागत PipeConfig अणु
+} SampleSplit;
+typedef enum PipeConfig {
 	ADDR_SURF_P2                                     = 0x0,
 	ADDR_SURF_P2_RESERVED0                           = 0x1,
 	ADDR_SURF_P2_RESERVED1                           = 0x2,
@@ -6688,57 +6687,57 @@
 	ADDR_SURF_P8_RESERVED0                           = 0xf,
 	ADDR_SURF_P16_32x32_8x16                         = 0x10,
 	ADDR_SURF_P16_32x32_16x16                        = 0x11,
-पूर्ण PipeConfig;
-प्रकार क्रमागत NumBanks अणु
+} PipeConfig;
+typedef enum NumBanks {
 	ADDR_SURF_2_BANK                                 = 0x0,
 	ADDR_SURF_4_BANK                                 = 0x1,
 	ADDR_SURF_8_BANK                                 = 0x2,
 	ADDR_SURF_16_BANK                                = 0x3,
-पूर्ण NumBanks;
-प्रकार क्रमागत BankWidth अणु
+} NumBanks;
+typedef enum BankWidth {
 	ADDR_SURF_BANK_WIDTH_1                           = 0x0,
 	ADDR_SURF_BANK_WIDTH_2                           = 0x1,
 	ADDR_SURF_BANK_WIDTH_4                           = 0x2,
 	ADDR_SURF_BANK_WIDTH_8                           = 0x3,
-पूर्ण BankWidth;
-प्रकार क्रमागत BankHeight अणु
+} BankWidth;
+typedef enum BankHeight {
 	ADDR_SURF_BANK_HEIGHT_1                          = 0x0,
 	ADDR_SURF_BANK_HEIGHT_2                          = 0x1,
 	ADDR_SURF_BANK_HEIGHT_4                          = 0x2,
 	ADDR_SURF_BANK_HEIGHT_8                          = 0x3,
-पूर्ण BankHeight;
-प्रकार क्रमागत BankWidthHeight अणु
+} BankHeight;
+typedef enum BankWidthHeight {
 	ADDR_SURF_BANK_WH_1                              = 0x0,
 	ADDR_SURF_BANK_WH_2                              = 0x1,
 	ADDR_SURF_BANK_WH_4                              = 0x2,
 	ADDR_SURF_BANK_WH_8                              = 0x3,
-पूर्ण BankWidthHeight;
-प्रकार क्रमागत MacroTileAspect अणु
+} BankWidthHeight;
+typedef enum MacroTileAspect {
 	ADDR_SURF_MACRO_ASPECT_1                         = 0x0,
 	ADDR_SURF_MACRO_ASPECT_2                         = 0x1,
 	ADDR_SURF_MACRO_ASPECT_4                         = 0x2,
 	ADDR_SURF_MACRO_ASPECT_8                         = 0x3,
-पूर्ण MacroTileAspect;
-प्रकार क्रमागत GATCL1RequestType अणु
+} MacroTileAspect;
+typedef enum GATCL1RequestType {
 	GATCL1_TYPE_NORMAL                               = 0x0,
 	GATCL1_TYPE_SHOOTDOWN                            = 0x1,
 	GATCL1_TYPE_BYPASS                               = 0x2,
-पूर्ण GATCL1RequestType;
-प्रकार क्रमागत TCC_CACHE_POLICIES अणु
+} GATCL1RequestType;
+typedef enum TCC_CACHE_POLICIES {
 	TCC_CACHE_POLICY_LRU                             = 0x0,
 	TCC_CACHE_POLICY_STREAM                          = 0x1,
-पूर्ण TCC_CACHE_POLICIES;
-प्रकार क्रमागत MTYPE अणु
+} TCC_CACHE_POLICIES;
+typedef enum MTYPE {
 	MTYPE_NC_NV                                      = 0x0,
 	MTYPE_NC                                         = 0x1,
 	MTYPE_CC                                         = 0x2,
 	MTYPE_UC                                         = 0x3,
-पूर्ण MTYPE;
-प्रकार क्रमागत PERFMON_COUNTER_MODE अणु
+} MTYPE;
+typedef enum PERFMON_COUNTER_MODE {
 	PERFMON_COUNTER_MODE_ACCUM                       = 0x0,
 	PERFMON_COUNTER_MODE_ACTIVE_CYCLES               = 0x1,
 	PERFMON_COUNTER_MODE_MAX                         = 0x2,
-	PERFMON_COUNTER_MODE_सूचीTY                       = 0x3,
+	PERFMON_COUNTER_MODE_DIRTY                       = 0x3,
 	PERFMON_COUNTER_MODE_SAMPLE                      = 0x4,
 	PERFMON_COUNTER_MODE_CYCLES_SINCE_FIRST_EVENT    = 0x5,
 	PERFMON_COUNTER_MODE_CYCLES_SINCE_LAST_EVENT     = 0x6,
@@ -6746,8 +6745,8 @@
 	PERFMON_COUNTER_MODE_CYCLES_EQ_HI                = 0x8,
 	PERFMON_COUNTER_MODE_INACTIVE_CYCLES             = 0x9,
 	PERFMON_COUNTER_MODE_RESERVED                    = 0xf,
-पूर्ण PERFMON_COUNTER_MODE;
-प्रकार क्रमागत PERFMON_SPM_MODE अणु
+} PERFMON_COUNTER_MODE;
+typedef enum PERFMON_SPM_MODE {
 	PERFMON_SPM_MODE_OFF                             = 0x0,
 	PERFMON_SPM_MODE_16BIT_CLAMP                     = 0x1,
 	PERFMON_SPM_MODE_16BIT_NO_CLAMP                  = 0x2,
@@ -6759,51 +6758,51 @@
 	PERFMON_SPM_MODE_TEST_MODE_0                     = 0x8,
 	PERFMON_SPM_MODE_TEST_MODE_1                     = 0x9,
 	PERFMON_SPM_MODE_TEST_MODE_2                     = 0xa,
-पूर्ण PERFMON_SPM_MODE;
-प्रकार क्रमागत SurfaceTiling अणु
+} PERFMON_SPM_MODE;
+typedef enum SurfaceTiling {
 	ARRAY_LINEAR                                     = 0x0,
 	ARRAY_TILED                                      = 0x1,
-पूर्ण SurfaceTiling;
-प्रकार क्रमागत SurfaceArray अणु
+} SurfaceTiling;
+typedef enum SurfaceArray {
 	ARRAY_1D                                         = 0x0,
 	ARRAY_2D                                         = 0x1,
 	ARRAY_3D                                         = 0x2,
 	ARRAY_3D_SLICE                                   = 0x3,
-पूर्ण SurfaceArray;
-प्रकार क्रमागत ColorArray अणु
+} SurfaceArray;
+typedef enum ColorArray {
 	ARRAY_2D_ALT_COLOR                               = 0x0,
 	ARRAY_2D_COLOR                                   = 0x1,
 	ARRAY_3D_SLICE_COLOR                             = 0x3,
-पूर्ण ColorArray;
-प्रकार क्रमागत DepthArray अणु
+} ColorArray;
+typedef enum DepthArray {
 	ARRAY_2D_ALT_DEPTH                               = 0x0,
 	ARRAY_2D_DEPTH                                   = 0x1,
-पूर्ण DepthArray;
-प्रकार क्रमागत ENUM_NUM_SIMD_PER_CU अणु
+} DepthArray;
+typedef enum ENUM_NUM_SIMD_PER_CU {
 	NUM_SIMD_PER_CU                                  = 0x4,
-पूर्ण ENUM_NUM_SIMD_PER_CU;
-प्रकार क्रमागत MEM_PWR_FORCE_CTRL अणु
+} ENUM_NUM_SIMD_PER_CU;
+typedef enum MEM_PWR_FORCE_CTRL {
 	NO_FORCE_REQUEST                                 = 0x0,
 	FORCE_LIGHT_SLEEP_REQUEST                        = 0x1,
 	FORCE_DEEP_SLEEP_REQUEST                         = 0x2,
 	FORCE_SHUT_DOWN_REQUEST                          = 0x3,
-पूर्ण MEM_PWR_FORCE_CTRL;
-प्रकार क्रमागत MEM_PWR_FORCE_CTRL2 अणु
+} MEM_PWR_FORCE_CTRL;
+typedef enum MEM_PWR_FORCE_CTRL2 {
 	NO_FORCE_REQ                                     = 0x0,
 	FORCE_LIGHT_SLEEP_REQ                            = 0x1,
-पूर्ण MEM_PWR_FORCE_CTRL2;
-प्रकार क्रमागत MEM_PWR_DIS_CTRL अणु
+} MEM_PWR_FORCE_CTRL2;
+typedef enum MEM_PWR_DIS_CTRL {
 	ENABLE_MEM_PWR_CTRL                              = 0x0,
 	DISABLE_MEM_PWR_CTRL                             = 0x1,
-पूर्ण MEM_PWR_DIS_CTRL;
-प्रकार क्रमागत MEM_PWR_SEL_CTRL अणु
+} MEM_PWR_DIS_CTRL;
+typedef enum MEM_PWR_SEL_CTRL {
 	DYNAMIC_SHUT_DOWN_ENABLE                         = 0x0,
 	DYNAMIC_DEEP_SLEEP_ENABLE                        = 0x1,
 	DYNAMIC_LIGHT_SLEEP_ENABLE                       = 0x2,
-पूर्ण MEM_PWR_SEL_CTRL;
-प्रकार क्रमागत MEM_PWR_SEL_CTRL2 अणु
+} MEM_PWR_SEL_CTRL;
+typedef enum MEM_PWR_SEL_CTRL2 {
 	DYNAMIC_DEEP_SLEEP_EN                            = 0x0,
 	DYNAMIC_LIGHT_SLEEP_EN                           = 0x1,
-पूर्ण MEM_PWR_SEL_CTRL2;
+} MEM_PWR_SEL_CTRL2;
 
-#पूर्ण_अगर /* GFX_8_1_ENUM_H */
+#endif /* GFX_8_1_ENUM_H */

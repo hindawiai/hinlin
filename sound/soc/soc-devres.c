@@ -1,162 +1,161 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 //
 // soc-devres.c  --  ALSA SoC Audio Layer devres functions
 //
 // Copyright (C) 2013 Linaro Ltd
 
-#समावेश <linux/module.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <sound/soc.h>
-#समावेश <sound/dmaengine_pcm.h>
+#include <linux/module.h>
+#include <linux/moduleparam.h>
+#include <sound/soc.h>
+#include <sound/dmaengine_pcm.h>
 
-अटल व्योम devm_dai_release(काष्ठा device *dev, व्योम *res)
-अणु
-	snd_soc_unरेजिस्टर_dai(*(काष्ठा snd_soc_dai **)res);
-पूर्ण
+static void devm_dai_release(struct device *dev, void *res)
+{
+	snd_soc_unregister_dai(*(struct snd_soc_dai **)res);
+}
 
 /**
- * devm_snd_soc_रेजिस्टर_dai - resource-managed dai registration
+ * devm_snd_soc_register_dai - resource-managed dai registration
  * @dev: Device used to manage component
- * @component: The component the DAIs are रेजिस्टरed क्रम
- * @dai_drv: DAI driver to use क्रम the DAI
- * @legacy_dai_naming: अगर %true, use legacy single-name क्रमmat;
- *	अगर %false, use multiple-name क्रमmat;
+ * @component: The component the DAIs are registered for
+ * @dai_drv: DAI driver to use for the DAI
+ * @legacy_dai_naming: if %true, use legacy single-name format;
+ *	if %false, use multiple-name format;
  */
-काष्ठा snd_soc_dai *devm_snd_soc_रेजिस्टर_dai(काष्ठा device *dev,
-					      काष्ठा snd_soc_component *component,
-					      काष्ठा snd_soc_dai_driver *dai_drv,
+struct snd_soc_dai *devm_snd_soc_register_dai(struct device *dev,
+					      struct snd_soc_component *component,
+					      struct snd_soc_dai_driver *dai_drv,
 					      bool legacy_dai_naming)
-अणु
-	काष्ठा snd_soc_dai **ptr;
-	काष्ठा snd_soc_dai *dai;
+{
+	struct snd_soc_dai **ptr;
+	struct snd_soc_dai *dai;
 
-	ptr = devres_alloc(devm_dai_release, माप(*ptr), GFP_KERNEL);
-	अगर (!ptr)
-		वापस शून्य;
+	ptr = devres_alloc(devm_dai_release, sizeof(*ptr), GFP_KERNEL);
+	if (!ptr)
+		return NULL;
 
-	dai = snd_soc_रेजिस्टर_dai(component, dai_drv, legacy_dai_naming);
-	अगर (dai) अणु
+	dai = snd_soc_register_dai(component, dai_drv, legacy_dai_naming);
+	if (dai) {
 		*ptr = dai;
 		devres_add(dev, ptr);
-	पूर्ण अन्यथा अणु
-		devres_मुक्त(ptr);
-	पूर्ण
+	} else {
+		devres_free(ptr);
+	}
 
-	वापस dai;
-पूर्ण
-EXPORT_SYMBOL_GPL(devm_snd_soc_रेजिस्टर_dai);
+	return dai;
+}
+EXPORT_SYMBOL_GPL(devm_snd_soc_register_dai);
 
-अटल व्योम devm_component_release(काष्ठा device *dev, व्योम *res)
-अणु
-	स्थिर काष्ठा snd_soc_component_driver **cmpnt_drv = res;
+static void devm_component_release(struct device *dev, void *res)
+{
+	const struct snd_soc_component_driver **cmpnt_drv = res;
 
-	snd_soc_unरेजिस्टर_component_by_driver(dev, *cmpnt_drv);
-पूर्ण
+	snd_soc_unregister_component_by_driver(dev, *cmpnt_drv);
+}
 
 /**
- * devm_snd_soc_रेजिस्टर_component - resource managed component registration
+ * devm_snd_soc_register_component - resource managed component registration
  * @dev: Device used to manage component
  * @cmpnt_drv: Component driver
  * @dai_drv: DAI driver
- * @num_dai: Number of DAIs to रेजिस्टर
+ * @num_dai: Number of DAIs to register
  *
- * Register a component with स्वतःmatic unregistration when the device is
- * unरेजिस्टरed.
+ * Register a component with automatic unregistration when the device is
+ * unregistered.
  */
-पूर्णांक devm_snd_soc_रेजिस्टर_component(काष्ठा device *dev,
-			 स्थिर काष्ठा snd_soc_component_driver *cmpnt_drv,
-			 काष्ठा snd_soc_dai_driver *dai_drv, पूर्णांक num_dai)
-अणु
-	स्थिर काष्ठा snd_soc_component_driver **ptr;
-	पूर्णांक ret;
+int devm_snd_soc_register_component(struct device *dev,
+			 const struct snd_soc_component_driver *cmpnt_drv,
+			 struct snd_soc_dai_driver *dai_drv, int num_dai)
+{
+	const struct snd_soc_component_driver **ptr;
+	int ret;
 
-	ptr = devres_alloc(devm_component_release, माप(*ptr), GFP_KERNEL);
-	अगर (!ptr)
-		वापस -ENOMEM;
+	ptr = devres_alloc(devm_component_release, sizeof(*ptr), GFP_KERNEL);
+	if (!ptr)
+		return -ENOMEM;
 
-	ret = snd_soc_रेजिस्टर_component(dev, cmpnt_drv, dai_drv, num_dai);
-	अगर (ret == 0) अणु
+	ret = snd_soc_register_component(dev, cmpnt_drv, dai_drv, num_dai);
+	if (ret == 0) {
 		*ptr = cmpnt_drv;
 		devres_add(dev, ptr);
-	पूर्ण अन्यथा अणु
-		devres_मुक्त(ptr);
-	पूर्ण
+	} else {
+		devres_free(ptr);
+	}
 
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(devm_snd_soc_रेजिस्टर_component);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(devm_snd_soc_register_component);
 
-अटल व्योम devm_card_release(काष्ठा device *dev, व्योम *res)
-अणु
-	snd_soc_unरेजिस्टर_card(*(काष्ठा snd_soc_card **)res);
-पूर्ण
+static void devm_card_release(struct device *dev, void *res)
+{
+	snd_soc_unregister_card(*(struct snd_soc_card **)res);
+}
 
 /**
- * devm_snd_soc_रेजिस्टर_card - resource managed card registration
+ * devm_snd_soc_register_card - resource managed card registration
  * @dev: Device used to manage card
- * @card: Card to रेजिस्टर
+ * @card: Card to register
  *
- * Register a card with स्वतःmatic unregistration when the device is
- * unरेजिस्टरed.
+ * Register a card with automatic unregistration when the device is
+ * unregistered.
  */
-पूर्णांक devm_snd_soc_रेजिस्टर_card(काष्ठा device *dev, काष्ठा snd_soc_card *card)
-अणु
-	काष्ठा snd_soc_card **ptr;
-	पूर्णांक ret;
+int devm_snd_soc_register_card(struct device *dev, struct snd_soc_card *card)
+{
+	struct snd_soc_card **ptr;
+	int ret;
 
-	ptr = devres_alloc(devm_card_release, माप(*ptr), GFP_KERNEL);
-	अगर (!ptr)
-		वापस -ENOMEM;
+	ptr = devres_alloc(devm_card_release, sizeof(*ptr), GFP_KERNEL);
+	if (!ptr)
+		return -ENOMEM;
 
-	ret = snd_soc_रेजिस्टर_card(card);
-	अगर (ret == 0) अणु
+	ret = snd_soc_register_card(card);
+	if (ret == 0) {
 		*ptr = card;
 		devres_add(dev, ptr);
-	पूर्ण अन्यथा अणु
-		devres_मुक्त(ptr);
-	पूर्ण
+	} else {
+		devres_free(ptr);
+	}
 
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(devm_snd_soc_रेजिस्टर_card);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(devm_snd_soc_register_card);
 
-#अगर_घोषित CONFIG_SND_SOC_GENERIC_DMAENGINE_PCM
+#ifdef CONFIG_SND_SOC_GENERIC_DMAENGINE_PCM
 
-अटल व्योम devm_dmaengine_pcm_release(काष्ठा device *dev, व्योम *res)
-अणु
-	snd_dmaengine_pcm_unरेजिस्टर(*(काष्ठा device **)res);
-पूर्ण
+static void devm_dmaengine_pcm_release(struct device *dev, void *res)
+{
+	snd_dmaengine_pcm_unregister(*(struct device **)res);
+}
 
 /**
- * devm_snd_dmaengine_pcm_रेजिस्टर - resource managed dmaengine PCM registration
- * @dev: The parent device क्रम the PCM device
- * @config: Platक्रमm specअगरic PCM configuration
- * @flags: Platक्रमm specअगरic quirks
+ * devm_snd_dmaengine_pcm_register - resource managed dmaengine PCM registration
+ * @dev: The parent device for the PCM device
+ * @config: Platform specific PCM configuration
+ * @flags: Platform specific quirks
  *
- * Register a dmaengine based PCM device with स्वतःmatic unregistration when the
- * device is unरेजिस्टरed.
+ * Register a dmaengine based PCM device with automatic unregistration when the
+ * device is unregistered.
  */
-पूर्णांक devm_snd_dmaengine_pcm_रेजिस्टर(काष्ठा device *dev,
-	स्थिर काष्ठा snd_dmaengine_pcm_config *config, अचिन्हित पूर्णांक flags)
-अणु
-	काष्ठा device **ptr;
-	पूर्णांक ret;
+int devm_snd_dmaengine_pcm_register(struct device *dev,
+	const struct snd_dmaengine_pcm_config *config, unsigned int flags)
+{
+	struct device **ptr;
+	int ret;
 
-	ptr = devres_alloc(devm_dmaengine_pcm_release, माप(*ptr), GFP_KERNEL);
-	अगर (!ptr)
-		वापस -ENOMEM;
+	ptr = devres_alloc(devm_dmaengine_pcm_release, sizeof(*ptr), GFP_KERNEL);
+	if (!ptr)
+		return -ENOMEM;
 
-	ret = snd_dmaengine_pcm_रेजिस्टर(dev, config, flags);
-	अगर (ret == 0) अणु
+	ret = snd_dmaengine_pcm_register(dev, config, flags);
+	if (ret == 0) {
 		*ptr = dev;
 		devres_add(dev, ptr);
-	पूर्ण अन्यथा अणु
-		devres_मुक्त(ptr);
-	पूर्ण
+	} else {
+		devres_free(ptr);
+	}
 
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(devm_snd_dmaengine_pcm_रेजिस्टर);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(devm_snd_dmaengine_pcm_register);
 
-#पूर्ण_अगर
+#endif

@@ -1,161 +1,160 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0 OR Linux-OpenIB
+// SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB
 // Copyright (c) 2019 Mellanox Technologies
 
-#समावेश <linux/mlx5/driver.h>
-#समावेश <linux/mlx5/device.h>
+#include <linux/mlx5/driver.h>
+#include <linux/mlx5/device.h>
 
-#समावेश "mlx5_core.h"
-#समावेश "lib/mlx5.h"
+#include "mlx5_core.h"
+#include "lib/mlx5.h"
 
-काष्ठा mlx5_dm अणु
-	/* protect access to icm biपंचांगask */
+struct mlx5_dm {
+	/* protect access to icm bitmask */
 	spinlock_t lock;
-	अचिन्हित दीर्घ *steering_sw_icm_alloc_blocks;
-	अचिन्हित दीर्घ *header_modअगरy_sw_icm_alloc_blocks;
-पूर्ण;
+	unsigned long *steering_sw_icm_alloc_blocks;
+	unsigned long *header_modify_sw_icm_alloc_blocks;
+};
 
-काष्ठा mlx5_dm *mlx5_dm_create(काष्ठा mlx5_core_dev *dev)
-अणु
-	u64 header_modअगरy_icm_blocks = 0;
+struct mlx5_dm *mlx5_dm_create(struct mlx5_core_dev *dev)
+{
+	u64 header_modify_icm_blocks = 0;
 	u64 steering_icm_blocks = 0;
-	काष्ठा mlx5_dm *dm;
+	struct mlx5_dm *dm;
 
-	अगर (!(MLX5_CAP_GEN_64(dev, general_obj_types) & MLX5_GENERAL_OBJ_TYPES_CAP_SW_ICM))
-		वापस शून्य;
+	if (!(MLX5_CAP_GEN_64(dev, general_obj_types) & MLX5_GENERAL_OBJ_TYPES_CAP_SW_ICM))
+		return NULL;
 
-	dm = kzalloc(माप(*dm), GFP_KERNEL);
-	अगर (!dm)
-		वापस ERR_PTR(-ENOMEM);
+	dm = kzalloc(sizeof(*dm), GFP_KERNEL);
+	if (!dm)
+		return ERR_PTR(-ENOMEM);
 
 	spin_lock_init(&dm->lock);
 
-	अगर (MLX5_CAP64_DEV_MEM(dev, steering_sw_icm_start_address)) अणु
+	if (MLX5_CAP64_DEV_MEM(dev, steering_sw_icm_start_address)) {
 		steering_icm_blocks =
 			BIT(MLX5_CAP_DEV_MEM(dev, log_steering_sw_icm_size) -
 			    MLX5_LOG_SW_ICM_BLOCK_SIZE(dev));
 
 		dm->steering_sw_icm_alloc_blocks =
-			kसुस्मृति(BITS_TO_LONGS(steering_icm_blocks),
-				माप(अचिन्हित दीर्घ), GFP_KERNEL);
-		अगर (!dm->steering_sw_icm_alloc_blocks)
-			जाओ err_steering;
-	पूर्ण
+			kcalloc(BITS_TO_LONGS(steering_icm_blocks),
+				sizeof(unsigned long), GFP_KERNEL);
+		if (!dm->steering_sw_icm_alloc_blocks)
+			goto err_steering;
+	}
 
-	अगर (MLX5_CAP64_DEV_MEM(dev, header_modअगरy_sw_icm_start_address)) अणु
-		header_modअगरy_icm_blocks =
-			BIT(MLX5_CAP_DEV_MEM(dev, log_header_modअगरy_sw_icm_size) -
+	if (MLX5_CAP64_DEV_MEM(dev, header_modify_sw_icm_start_address)) {
+		header_modify_icm_blocks =
+			BIT(MLX5_CAP_DEV_MEM(dev, log_header_modify_sw_icm_size) -
 			    MLX5_LOG_SW_ICM_BLOCK_SIZE(dev));
 
-		dm->header_modअगरy_sw_icm_alloc_blocks =
-			kसुस्मृति(BITS_TO_LONGS(header_modअगरy_icm_blocks),
-				माप(अचिन्हित दीर्घ), GFP_KERNEL);
-		अगर (!dm->header_modअगरy_sw_icm_alloc_blocks)
-			जाओ err_modअगरy_hdr;
-	पूर्ण
+		dm->header_modify_sw_icm_alloc_blocks =
+			kcalloc(BITS_TO_LONGS(header_modify_icm_blocks),
+				sizeof(unsigned long), GFP_KERNEL);
+		if (!dm->header_modify_sw_icm_alloc_blocks)
+			goto err_modify_hdr;
+	}
 
-	वापस dm;
+	return dm;
 
-err_modअगरy_hdr:
-	kमुक्त(dm->steering_sw_icm_alloc_blocks);
+err_modify_hdr:
+	kfree(dm->steering_sw_icm_alloc_blocks);
 
 err_steering:
-	kमुक्त(dm);
+	kfree(dm);
 
-	वापस ERR_PTR(-ENOMEM);
-पूर्ण
+	return ERR_PTR(-ENOMEM);
+}
 
-व्योम mlx5_dm_cleanup(काष्ठा mlx5_core_dev *dev)
-अणु
-	काष्ठा mlx5_dm *dm = dev->dm;
+void mlx5_dm_cleanup(struct mlx5_core_dev *dev)
+{
+	struct mlx5_dm *dm = dev->dm;
 
-	अगर (!dev->dm)
-		वापस;
+	if (!dev->dm)
+		return;
 
-	अगर (dm->steering_sw_icm_alloc_blocks) अणु
-		WARN_ON(!biपंचांगap_empty(dm->steering_sw_icm_alloc_blocks,
+	if (dm->steering_sw_icm_alloc_blocks) {
+		WARN_ON(!bitmap_empty(dm->steering_sw_icm_alloc_blocks,
 				      BIT(MLX5_CAP_DEV_MEM(dev, log_steering_sw_icm_size) -
 					  MLX5_LOG_SW_ICM_BLOCK_SIZE(dev))));
-		kमुक्त(dm->steering_sw_icm_alloc_blocks);
-	पूर्ण
+		kfree(dm->steering_sw_icm_alloc_blocks);
+	}
 
-	अगर (dm->header_modअगरy_sw_icm_alloc_blocks) अणु
-		WARN_ON(!biपंचांगap_empty(dm->header_modअगरy_sw_icm_alloc_blocks,
+	if (dm->header_modify_sw_icm_alloc_blocks) {
+		WARN_ON(!bitmap_empty(dm->header_modify_sw_icm_alloc_blocks,
 				      BIT(MLX5_CAP_DEV_MEM(dev,
-							   log_header_modअगरy_sw_icm_size) -
+							   log_header_modify_sw_icm_size) -
 				      MLX5_LOG_SW_ICM_BLOCK_SIZE(dev))));
-		kमुक्त(dm->header_modअगरy_sw_icm_alloc_blocks);
-	पूर्ण
+		kfree(dm->header_modify_sw_icm_alloc_blocks);
+	}
 
-	kमुक्त(dm);
-पूर्ण
+	kfree(dm);
+}
 
-पूर्णांक mlx5_dm_sw_icm_alloc(काष्ठा mlx5_core_dev *dev, क्रमागत mlx5_sw_icm_type type,
+int mlx5_dm_sw_icm_alloc(struct mlx5_core_dev *dev, enum mlx5_sw_icm_type type,
 			 u64 length, u32 log_alignment, u16 uid,
 			 phys_addr_t *addr, u32 *obj_id)
-अणु
+{
 	u32 num_blocks = DIV_ROUND_UP_ULL(length, MLX5_SW_ICM_BLOCK_SIZE(dev));
-	u32 out[MLX5_ST_SZ_DW(general_obj_out_cmd_hdr)] = अणुपूर्ण;
-	u32 in[MLX5_ST_SZ_DW(create_sw_icm_in)] = अणुपूर्ण;
-	काष्ठा mlx5_dm *dm = dev->dm;
-	अचिन्हित दीर्घ *block_map;
+	u32 out[MLX5_ST_SZ_DW(general_obj_out_cmd_hdr)] = {};
+	u32 in[MLX5_ST_SZ_DW(create_sw_icm_in)] = {};
+	struct mlx5_dm *dm = dev->dm;
+	unsigned long *block_map;
 	u64 icm_start_addr;
 	u32 log_icm_size;
 	u64 align_mask;
 	u32 max_blocks;
 	u64 block_idx;
-	व्योम *sw_icm;
-	पूर्णांक ret;
+	void *sw_icm;
+	int ret;
 
-	अगर (!dev->dm)
-		वापस -EOPNOTSUPP;
+	if (!dev->dm)
+		return -EOPNOTSUPP;
 
-	अगर (!length || (length & (length - 1)) ||
+	if (!length || (length & (length - 1)) ||
 	    length & (MLX5_SW_ICM_BLOCK_SIZE(dev) - 1))
-		वापस -EINVAL;
+		return -EINVAL;
 
 	MLX5_SET(general_obj_in_cmd_hdr, in, opcode,
 		 MLX5_CMD_OP_CREATE_GENERAL_OBJECT);
 	MLX5_SET(general_obj_in_cmd_hdr, in, obj_type, MLX5_OBJ_TYPE_SW_ICM);
 	MLX5_SET(general_obj_in_cmd_hdr, in, uid, uid);
 
-	चयन (type) अणु
-	हाल MLX5_SW_ICM_TYPE_STEERING:
+	switch (type) {
+	case MLX5_SW_ICM_TYPE_STEERING:
 		icm_start_addr = MLX5_CAP64_DEV_MEM(dev, steering_sw_icm_start_address);
 		log_icm_size = MLX5_CAP_DEV_MEM(dev, log_steering_sw_icm_size);
 		block_map = dm->steering_sw_icm_alloc_blocks;
-		अवरोध;
-	हाल MLX5_SW_ICM_TYPE_HEADER_MODIFY:
-		icm_start_addr = MLX5_CAP64_DEV_MEM(dev, header_modअगरy_sw_icm_start_address);
+		break;
+	case MLX5_SW_ICM_TYPE_HEADER_MODIFY:
+		icm_start_addr = MLX5_CAP64_DEV_MEM(dev, header_modify_sw_icm_start_address);
 		log_icm_size = MLX5_CAP_DEV_MEM(dev,
-						log_header_modअगरy_sw_icm_size);
-		block_map = dm->header_modअगरy_sw_icm_alloc_blocks;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+						log_header_modify_sw_icm_size);
+		block_map = dm->header_modify_sw_icm_alloc_blocks;
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	अगर (!block_map)
-		वापस -EOPNOTSUPP;
+	if (!block_map)
+		return -EOPNOTSUPP;
 
 	max_blocks = BIT(log_icm_size - MLX5_LOG_SW_ICM_BLOCK_SIZE(dev));
 
-	अगर (log_alignment < MLX5_LOG_SW_ICM_BLOCK_SIZE(dev))
+	if (log_alignment < MLX5_LOG_SW_ICM_BLOCK_SIZE(dev))
 		log_alignment = MLX5_LOG_SW_ICM_BLOCK_SIZE(dev);
 	align_mask = BIT(log_alignment - MLX5_LOG_SW_ICM_BLOCK_SIZE(dev)) - 1;
 
 	spin_lock(&dm->lock);
-	block_idx = biपंचांगap_find_next_zero_area(block_map, max_blocks, 0,
+	block_idx = bitmap_find_next_zero_area(block_map, max_blocks, 0,
 					       num_blocks, align_mask);
 
-	अगर (block_idx < max_blocks)
-		biपंचांगap_set(block_map,
+	if (block_idx < max_blocks)
+		bitmap_set(block_map,
 			   block_idx, num_blocks);
 
 	spin_unlock(&dm->lock);
 
-	अगर (block_idx >= max_blocks)
-		वापस -ENOMEM;
+	if (block_idx >= max_blocks)
+		return -ENOMEM;
 
 	sw_icm = MLX5_ADDR_OF(create_sw_icm_in, in, sw_icm);
 	icm_start_addr += block_idx << MLX5_LOG_SW_ICM_BLOCK_SIZE(dev);
@@ -163,50 +162,50 @@ err_steering:
 		   icm_start_addr);
 	MLX5_SET(sw_icm, sw_icm, log_sw_icm_size, ilog2(length));
 
-	ret = mlx5_cmd_exec(dev, in, माप(in), out, माप(out));
-	अगर (ret) अणु
+	ret = mlx5_cmd_exec(dev, in, sizeof(in), out, sizeof(out));
+	if (ret) {
 		spin_lock(&dm->lock);
-		biपंचांगap_clear(block_map,
+		bitmap_clear(block_map,
 			     block_idx, num_blocks);
 		spin_unlock(&dm->lock);
 
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	*addr = icm_start_addr;
 	*obj_id = MLX5_GET(general_obj_out_cmd_hdr, out, obj_id);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(mlx5_dm_sw_icm_alloc);
 
-पूर्णांक mlx5_dm_sw_icm_dealloc(काष्ठा mlx5_core_dev *dev, क्रमागत mlx5_sw_icm_type type,
+int mlx5_dm_sw_icm_dealloc(struct mlx5_core_dev *dev, enum mlx5_sw_icm_type type,
 			   u64 length, u16 uid, phys_addr_t addr, u32 obj_id)
-अणु
+{
 	u32 num_blocks = DIV_ROUND_UP_ULL(length, MLX5_SW_ICM_BLOCK_SIZE(dev));
-	u32 out[MLX5_ST_SZ_DW(general_obj_out_cmd_hdr)] = अणुपूर्ण;
-	u32 in[MLX5_ST_SZ_DW(general_obj_in_cmd_hdr)] = अणुपूर्ण;
-	काष्ठा mlx5_dm *dm = dev->dm;
-	अचिन्हित दीर्घ *block_map;
+	u32 out[MLX5_ST_SZ_DW(general_obj_out_cmd_hdr)] = {};
+	u32 in[MLX5_ST_SZ_DW(general_obj_in_cmd_hdr)] = {};
+	struct mlx5_dm *dm = dev->dm;
+	unsigned long *block_map;
 	u64 icm_start_addr;
 	u64 start_idx;
-	पूर्णांक err;
+	int err;
 
-	अगर (!dev->dm)
-		वापस -EOPNOTSUPP;
+	if (!dev->dm)
+		return -EOPNOTSUPP;
 
-	चयन (type) अणु
-	हाल MLX5_SW_ICM_TYPE_STEERING:
+	switch (type) {
+	case MLX5_SW_ICM_TYPE_STEERING:
 		icm_start_addr = MLX5_CAP64_DEV_MEM(dev, steering_sw_icm_start_address);
 		block_map = dm->steering_sw_icm_alloc_blocks;
-		अवरोध;
-	हाल MLX5_SW_ICM_TYPE_HEADER_MODIFY:
-		icm_start_addr = MLX5_CAP64_DEV_MEM(dev, header_modअगरy_sw_icm_start_address);
-		block_map = dm->header_modअगरy_sw_icm_alloc_blocks;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	case MLX5_SW_ICM_TYPE_HEADER_MODIFY:
+		icm_start_addr = MLX5_CAP64_DEV_MEM(dev, header_modify_sw_icm_start_address);
+		block_map = dm->header_modify_sw_icm_alloc_blocks;
+		break;
+	default:
+		return -EINVAL;
+	}
 
 	MLX5_SET(general_obj_in_cmd_hdr, in, opcode,
 		 MLX5_CMD_OP_DESTROY_GENERAL_OBJECT);
@@ -214,16 +213,16 @@ EXPORT_SYMBOL_GPL(mlx5_dm_sw_icm_alloc);
 	MLX5_SET(general_obj_in_cmd_hdr, in, obj_id, obj_id);
 	MLX5_SET(general_obj_in_cmd_hdr, in, uid, uid);
 
-	err =  mlx5_cmd_exec(dev, in, माप(in), out, माप(out));
-	अगर (err)
-		वापस err;
+	err =  mlx5_cmd_exec(dev, in, sizeof(in), out, sizeof(out));
+	if (err)
+		return err;
 
 	start_idx = (addr - icm_start_addr) >> MLX5_LOG_SW_ICM_BLOCK_SIZE(dev);
 	spin_lock(&dm->lock);
-	biपंचांगap_clear(block_map,
+	bitmap_clear(block_map,
 		     start_idx, num_blocks);
 	spin_unlock(&dm->lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(mlx5_dm_sw_icm_dealloc);

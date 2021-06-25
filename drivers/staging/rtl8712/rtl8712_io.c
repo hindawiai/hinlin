@@ -1,100 +1,99 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /******************************************************************************
  * rtl8712_io.c
  *
  * Copyright(c) 2007 - 2010 Realtek Corporation. All rights reserved.
- * Linux device driver क्रम RTL8192SU
+ * Linux device driver for RTL8192SU
  *
- * Modअगरications क्रम inclusion पूर्णांकo the Linux staging tree are
+ * Modifications for inclusion into the Linux staging tree are
  * Copyright(c) 2010 Larry Finger. All rights reserved.
  *
- * Contact inक्रमmation:
+ * Contact information:
  * WLAN FAE <wlanfae@realtek.com>.
  * Larry Finger <Larry.Finger@lwfinger.net>
  *
  ******************************************************************************/
 
-#घोषणा _RTL8712_IO_C_
+#define _RTL8712_IO_C_
 
-#समावेश "osdep_service.h"
-#समावेश "drv_types.h"
-#समावेश "rtl871x_io.h"
-#समावेश "osdep_intf.h"
-#समावेश "usb_ops.h"
+#include "osdep_service.h"
+#include "drv_types.h"
+#include "rtl871x_io.h"
+#include "osdep_intf.h"
+#include "usb_ops.h"
 
-u8 r8712_पढ़ो8(काष्ठा _adapter *adapter, u32 addr)
-अणु
-	काष्ठा पूर्णांकf_hdl *hdl = &adapter->pio_queue->पूर्णांकf;
+u8 r8712_read8(struct _adapter *adapter, u32 addr)
+{
+	struct intf_hdl *hdl = &adapter->pio_queue->intf;
 
-	वापस hdl->io_ops._पढ़ो8(hdl, addr);
-पूर्ण
+	return hdl->io_ops._read8(hdl, addr);
+}
 
-u16 r8712_पढ़ो16(काष्ठा _adapter *adapter, u32 addr)
-अणु
-	काष्ठा पूर्णांकf_hdl *hdl = &adapter->pio_queue->पूर्णांकf;
+u16 r8712_read16(struct _adapter *adapter, u32 addr)
+{
+	struct intf_hdl *hdl = &adapter->pio_queue->intf;
 
-	वापस hdl->io_ops._पढ़ो16(hdl, addr);
-पूर्ण
+	return hdl->io_ops._read16(hdl, addr);
+}
 
-u32 r8712_पढ़ो32(काष्ठा _adapter *adapter, u32 addr)
-अणु
-	काष्ठा पूर्णांकf_hdl *hdl = &adapter->pio_queue->पूर्णांकf;
+u32 r8712_read32(struct _adapter *adapter, u32 addr)
+{
+	struct intf_hdl *hdl = &adapter->pio_queue->intf;
 
-	वापस hdl->io_ops._पढ़ो32(hdl, addr);
-पूर्ण
+	return hdl->io_ops._read32(hdl, addr);
+}
 
-व्योम r8712_ग_लिखो8(काष्ठा _adapter *adapter, u32 addr, u8 val)
-अणु
-	काष्ठा पूर्णांकf_hdl *hdl = &adapter->pio_queue->पूर्णांकf;
+void r8712_write8(struct _adapter *adapter, u32 addr, u8 val)
+{
+	struct intf_hdl *hdl = &adapter->pio_queue->intf;
 
-	hdl->io_ops._ग_लिखो8(hdl, addr, val);
-पूर्ण
+	hdl->io_ops._write8(hdl, addr, val);
+}
 
-व्योम r8712_ग_लिखो16(काष्ठा _adapter *adapter, u32 addr, u16 val)
-अणु
-	काष्ठा पूर्णांकf_hdl *hdl = &adapter->pio_queue->पूर्णांकf;
+void r8712_write16(struct _adapter *adapter, u32 addr, u16 val)
+{
+	struct intf_hdl *hdl = &adapter->pio_queue->intf;
 
-	hdl->io_ops._ग_लिखो16(hdl, addr, val);
-पूर्ण
+	hdl->io_ops._write16(hdl, addr, val);
+}
 
-व्योम r8712_ग_लिखो32(काष्ठा _adapter *adapter, u32 addr, u32 val)
-अणु
-	काष्ठा पूर्णांकf_hdl *hdl = &adapter->pio_queue->पूर्णांकf;
+void r8712_write32(struct _adapter *adapter, u32 addr, u32 val)
+{
+	struct intf_hdl *hdl = &adapter->pio_queue->intf;
 
-	hdl->io_ops._ग_लिखो32(hdl, addr, val);
-पूर्ण
+	hdl->io_ops._write32(hdl, addr, val);
+}
 
-व्योम r8712_पढ़ो_mem(काष्ठा _adapter *adapter, u32 addr, u32 cnt, u8 *pmem)
-अणु
-	काष्ठा पूर्णांकf_hdl *hdl = &adapter->pio_queue->पूर्णांकf;
+void r8712_read_mem(struct _adapter *adapter, u32 addr, u32 cnt, u8 *pmem)
+{
+	struct intf_hdl *hdl = &adapter->pio_queue->intf;
 
-	अगर (adapter->driver_stopped || adapter->surprise_हटाओd)
-		वापस;
+	if (adapter->driver_stopped || adapter->surprise_removed)
+		return;
 
-	hdl->io_ops._पढ़ो_mem(hdl, addr, cnt, pmem);
-पूर्ण
+	hdl->io_ops._read_mem(hdl, addr, cnt, pmem);
+}
 
-व्योम r8712_ग_लिखो_mem(काष्ठा _adapter *adapter, u32 addr, u32 cnt, u8 *pmem)
-अणु
-	काष्ठा पूर्णांकf_hdl *hdl = &adapter->pio_queue->पूर्णांकf;
+void r8712_write_mem(struct _adapter *adapter, u32 addr, u32 cnt, u8 *pmem)
+{
+	struct intf_hdl *hdl = &adapter->pio_queue->intf;
 
-	hdl->io_ops._ग_लिखो_mem(hdl, addr, cnt, pmem);
-पूर्ण
+	hdl->io_ops._write_mem(hdl, addr, cnt, pmem);
+}
 
-व्योम r8712_पढ़ो_port(काष्ठा _adapter *adapter, u32 addr, u32 cnt, u8 *pmem)
-अणु
-	काष्ठा पूर्णांकf_hdl *hdl = &adapter->pio_queue->पूर्णांकf;
+void r8712_read_port(struct _adapter *adapter, u32 addr, u32 cnt, u8 *pmem)
+{
+	struct intf_hdl *hdl = &adapter->pio_queue->intf;
 
-	अगर (adapter->driver_stopped || adapter->surprise_हटाओd)
-		वापस;
+	if (adapter->driver_stopped || adapter->surprise_removed)
+		return;
 
-	hdl->io_ops._पढ़ो_port(hdl, addr, cnt, pmem);
-पूर्ण
+	hdl->io_ops._read_port(hdl, addr, cnt, pmem);
+}
 
-व्योम r8712_ग_लिखो_port(काष्ठा _adapter *adapter, u32 addr, u32 cnt, u8 *pmem)
-अणु
-	काष्ठा पूर्णांकf_hdl *hdl = &adapter->pio_queue->पूर्णांकf;
+void r8712_write_port(struct _adapter *adapter, u32 addr, u32 cnt, u8 *pmem)
+{
+	struct intf_hdl *hdl = &adapter->pio_queue->intf;
 
-	hdl->io_ops._ग_लिखो_port(hdl, addr, cnt, pmem);
-पूर्ण
+	hdl->io_ops._write_port(hdl, addr, cnt, pmem);
+}

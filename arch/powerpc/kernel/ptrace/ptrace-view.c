@@ -1,26 +1,25 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 
-#समावेश <linux/regset.h>
-#समावेश <linux/elf.h>
-#समावेश <linux/nospec.h>
-#समावेश <linux/pkeys.h>
+#include <linux/regset.h>
+#include <linux/elf.h>
+#include <linux/nospec.h>
+#include <linux/pkeys.h>
 
-#समावेश "ptrace-decl.h"
+#include "ptrace-decl.h"
 
-काष्ठा pt_regs_offset अणु
-	स्थिर अक्षर *name;
-	पूर्णांक offset;
-पूर्ण;
+struct pt_regs_offset {
+	const char *name;
+	int offset;
+};
 
-#घोषणा STR(s)	#s			/* convert to string */
-#घोषणा REG_OFFSET_NAME(r) अणु.name = #r, .offset = दुरत्व(काष्ठा pt_regs, r)पूर्ण
-#घोषणा GPR_OFFSET_NAME(num)	\
-	अणु.name = STR(r##num), .offset = दुरत्व(काष्ठा pt_regs, gpr[num])पूर्ण, \
-	अणु.name = STR(gpr##num), .offset = दुरत्व(काष्ठा pt_regs, gpr[num])पूर्ण
-#घोषणा REG_OFFSET_END अणु.name = शून्य, .offset = 0पूर्ण
+#define STR(s)	#s			/* convert to string */
+#define REG_OFFSET_NAME(r) {.name = #r, .offset = offsetof(struct pt_regs, r)}
+#define GPR_OFFSET_NAME(num)	\
+	{.name = STR(r##num), .offset = offsetof(struct pt_regs, gpr[num])}, \
+	{.name = STR(gpr##num), .offset = offsetof(struct pt_regs, gpr[num])}
+#define REG_OFFSET_END {.name = NULL, .offset = 0}
 
-अटल स्थिर काष्ठा pt_regs_offset regoffset_table[] = अणु
+static const struct pt_regs_offset regoffset_table[] = {
 	GPR_OFFSET_NAME(0),
 	GPR_OFFSET_NAME(1),
 	GPR_OFFSET_NAME(2),
@@ -59,789 +58,789 @@
 	REG_OFFSET_NAME(link),
 	REG_OFFSET_NAME(xer),
 	REG_OFFSET_NAME(ccr),
-#अगर_घोषित CONFIG_PPC64
+#ifdef CONFIG_PPC64
 	REG_OFFSET_NAME(softe),
-#अन्यथा
+#else
 	REG_OFFSET_NAME(mq),
-#पूर्ण_अगर
+#endif
 	REG_OFFSET_NAME(trap),
 	REG_OFFSET_NAME(dar),
 	REG_OFFSET_NAME(dsisr),
 	REG_OFFSET_END,
-पूर्ण;
+};
 
 /**
- * regs_query_रेजिस्टर_offset() - query रेजिस्टर offset from its name
- * @name:	the name of a रेजिस्टर
+ * regs_query_register_offset() - query register offset from its name
+ * @name:	the name of a register
  *
- * regs_query_रेजिस्टर_offset() वापसs the offset of a रेजिस्टर in काष्ठा
- * pt_regs from its name. If the name is invalid, this वापसs -EINVAL;
+ * regs_query_register_offset() returns the offset of a register in struct
+ * pt_regs from its name. If the name is invalid, this returns -EINVAL;
  */
-पूर्णांक regs_query_रेजिस्टर_offset(स्थिर अक्षर *name)
-अणु
-	स्थिर काष्ठा pt_regs_offset *roff;
-	क्रम (roff = regoffset_table; roff->name != शून्य; roff++)
-		अगर (!म_भेद(roff->name, name))
-			वापस roff->offset;
-	वापस -EINVAL;
-पूर्ण
+int regs_query_register_offset(const char *name)
+{
+	const struct pt_regs_offset *roff;
+	for (roff = regoffset_table; roff->name != NULL; roff++)
+		if (!strcmp(roff->name, name))
+			return roff->offset;
+	return -EINVAL;
+}
 
 /**
- * regs_query_रेजिस्टर_name() - query रेजिस्टर name from its offset
- * @offset:	the offset of a रेजिस्टर in काष्ठा pt_regs.
+ * regs_query_register_name() - query register name from its offset
+ * @offset:	the offset of a register in struct pt_regs.
  *
- * regs_query_रेजिस्टर_name() वापसs the name of a रेजिस्टर from its
- * offset in काष्ठा pt_regs. If the @offset is invalid, this वापसs शून्य;
+ * regs_query_register_name() returns the name of a register from its
+ * offset in struct pt_regs. If the @offset is invalid, this returns NULL;
  */
-स्थिर अक्षर *regs_query_रेजिस्टर_name(अचिन्हित पूर्णांक offset)
-अणु
-	स्थिर काष्ठा pt_regs_offset *roff;
-	क्रम (roff = regoffset_table; roff->name != शून्य; roff++)
-		अगर (roff->offset == offset)
-			वापस roff->name;
-	वापस शून्य;
-पूर्ण
+const char *regs_query_register_name(unsigned int offset)
+{
+	const struct pt_regs_offset *roff;
+	for (roff = regoffset_table; roff->name != NULL; roff++)
+		if (roff->offset == offset)
+			return roff->name;
+	return NULL;
+}
 
 /*
- * करोes not yet catch संकेतs sent when the child dies.
- * in निकास.c or in संकेत.c.
+ * does not yet catch signals sent when the child dies.
+ * in exit.c or in signal.c.
  */
 
-अटल अचिन्हित दीर्घ get_user_msr(काष्ठा task_काष्ठा *task)
-अणु
-	वापस task->thपढ़ो.regs->msr | task->thपढ़ो.fpexc_mode;
-पूर्ण
+static unsigned long get_user_msr(struct task_struct *task)
+{
+	return task->thread.regs->msr | task->thread.fpexc_mode;
+}
 
-अटल __always_अंतरभूत पूर्णांक set_user_msr(काष्ठा task_काष्ठा *task, अचिन्हित दीर्घ msr)
-अणु
-	task->thपढ़ो.regs->msr &= ~MSR_DEBUGCHANGE;
-	task->thपढ़ो.regs->msr |= msr & MSR_DEBUGCHANGE;
-	वापस 0;
-पूर्ण
+static __always_inline int set_user_msr(struct task_struct *task, unsigned long msr)
+{
+	task->thread.regs->msr &= ~MSR_DEBUGCHANGE;
+	task->thread.regs->msr |= msr & MSR_DEBUGCHANGE;
+	return 0;
+}
 
-#अगर_घोषित CONFIG_PPC64
-अटल पूर्णांक get_user_dscr(काष्ठा task_काष्ठा *task, अचिन्हित दीर्घ *data)
-अणु
-	*data = task->thपढ़ो.dscr;
-	वापस 0;
-पूर्ण
+#ifdef CONFIG_PPC64
+static int get_user_dscr(struct task_struct *task, unsigned long *data)
+{
+	*data = task->thread.dscr;
+	return 0;
+}
 
-अटल पूर्णांक set_user_dscr(काष्ठा task_काष्ठा *task, अचिन्हित दीर्घ dscr)
-अणु
-	task->thपढ़ो.dscr = dscr;
-	task->thपढ़ो.dscr_inherit = 1;
-	वापस 0;
-पूर्ण
-#अन्यथा
-अटल पूर्णांक get_user_dscr(काष्ठा task_काष्ठा *task, अचिन्हित दीर्घ *data)
-अणु
-	वापस -EIO;
-पूर्ण
+static int set_user_dscr(struct task_struct *task, unsigned long dscr)
+{
+	task->thread.dscr = dscr;
+	task->thread.dscr_inherit = 1;
+	return 0;
+}
+#else
+static int get_user_dscr(struct task_struct *task, unsigned long *data)
+{
+	return -EIO;
+}
 
-अटल पूर्णांक set_user_dscr(काष्ठा task_काष्ठा *task, अचिन्हित दीर्घ dscr)
-अणु
-	वापस -EIO;
-पूर्ण
-#पूर्ण_अगर
+static int set_user_dscr(struct task_struct *task, unsigned long dscr)
+{
+	return -EIO;
+}
+#endif
 
 /*
  * We prevent mucking around with the reserved area of trap
- * which are used पूर्णांकernally by the kernel.
+ * which are used internally by the kernel.
  */
-अटल __always_अंतरभूत पूर्णांक set_user_trap(काष्ठा task_काष्ठा *task, अचिन्हित दीर्घ trap)
-अणु
-	set_trap(task->thपढ़ो.regs, trap);
-	वापस 0;
-पूर्ण
+static __always_inline int set_user_trap(struct task_struct *task, unsigned long trap)
+{
+	set_trap(task->thread.regs, trap);
+	return 0;
+}
 
 /*
- * Get contents of रेजिस्टर REGNO in task TASK.
+ * Get contents of register REGNO in task TASK.
  */
-पूर्णांक ptrace_get_reg(काष्ठा task_काष्ठा *task, पूर्णांक regno, अचिन्हित दीर्घ *data)
-अणु
-	अचिन्हित पूर्णांक regs_max;
+int ptrace_get_reg(struct task_struct *task, int regno, unsigned long *data)
+{
+	unsigned int regs_max;
 
-	अगर (task->thपढ़ो.regs == शून्य || !data)
-		वापस -EIO;
+	if (task->thread.regs == NULL || !data)
+		return -EIO;
 
-	अगर (regno == PT_MSR) अणु
+	if (regno == PT_MSR) {
 		*data = get_user_msr(task);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (regno == PT_DSCR)
-		वापस get_user_dscr(task, data);
+	if (regno == PT_DSCR)
+		return get_user_dscr(task, data);
 
 	/*
 	 * softe copies paca->irq_soft_mask variable state. Since irq_soft_mask is
-	 * no more used as a flag, lets क्रमce usr to alway see the softe value as 1
-	 * which means पूर्णांकerrupts are not soft disabled.
+	 * no more used as a flag, lets force usr to alway see the softe value as 1
+	 * which means interrupts are not soft disabled.
 	 */
-	अगर (IS_ENABLED(CONFIG_PPC64) && regno == PT_SOFTE) अणु
+	if (IS_ENABLED(CONFIG_PPC64) && regno == PT_SOFTE) {
 		*data = 1;
-		वापस  0;
-	पूर्ण
+		return  0;
+	}
 
-	regs_max = माप(काष्ठा user_pt_regs) / माप(अचिन्हित दीर्घ);
-	अगर (regno < regs_max) अणु
+	regs_max = sizeof(struct user_pt_regs) / sizeof(unsigned long);
+	if (regno < regs_max) {
 		regno = array_index_nospec(regno, regs_max);
-		*data = ((अचिन्हित दीर्घ *)task->thपढ़ो.regs)[regno];
-		वापस 0;
-	पूर्ण
+		*data = ((unsigned long *)task->thread.regs)[regno];
+		return 0;
+	}
 
-	वापस -EIO;
-पूर्ण
+	return -EIO;
+}
 
 /*
- * Write contents of रेजिस्टर REGNO in task TASK.
+ * Write contents of register REGNO in task TASK.
  */
-पूर्णांक ptrace_put_reg(काष्ठा task_काष्ठा *task, पूर्णांक regno, अचिन्हित दीर्घ data)
-अणु
-	अगर (task->thपढ़ो.regs == शून्य)
-		वापस -EIO;
+int ptrace_put_reg(struct task_struct *task, int regno, unsigned long data)
+{
+	if (task->thread.regs == NULL)
+		return -EIO;
 
-	अगर (regno == PT_MSR)
-		वापस set_user_msr(task, data);
-	अगर (regno == PT_TRAP)
-		वापस set_user_trap(task, data);
-	अगर (regno == PT_DSCR)
-		वापस set_user_dscr(task, data);
+	if (regno == PT_MSR)
+		return set_user_msr(task, data);
+	if (regno == PT_TRAP)
+		return set_user_trap(task, data);
+	if (regno == PT_DSCR)
+		return set_user_dscr(task, data);
 
-	अगर (regno <= PT_MAX_PUT_REG) अणु
+	if (regno <= PT_MAX_PUT_REG) {
 		regno = array_index_nospec(regno, PT_MAX_PUT_REG + 1);
-		((अचिन्हित दीर्घ *)task->thपढ़ो.regs)[regno] = data;
-		वापस 0;
-	पूर्ण
-	वापस -EIO;
-पूर्ण
+		((unsigned long *)task->thread.regs)[regno] = data;
+		return 0;
+	}
+	return -EIO;
+}
 
-अटल पूर्णांक gpr_get(काष्ठा task_काष्ठा *target, स्थिर काष्ठा user_regset *regset,
-		   काष्ठा membuf to)
-अणु
-	काष्ठा membuf to_msr = membuf_at(&to, दुरत्व(काष्ठा pt_regs, msr));
-#अगर_घोषित CONFIG_PPC64
-	काष्ठा membuf to_softe = membuf_at(&to, दुरत्व(काष्ठा pt_regs, softe));
-#पूर्ण_अगर
-	अगर (target->thपढ़ो.regs == शून्य)
-		वापस -EIO;
+static int gpr_get(struct task_struct *target, const struct user_regset *regset,
+		   struct membuf to)
+{
+	struct membuf to_msr = membuf_at(&to, offsetof(struct pt_regs, msr));
+#ifdef CONFIG_PPC64
+	struct membuf to_softe = membuf_at(&to, offsetof(struct pt_regs, softe));
+#endif
+	if (target->thread.regs == NULL)
+		return -EIO;
 
-	membuf_ग_लिखो(&to, target->thपढ़ो.regs, माप(काष्ठा user_pt_regs));
+	membuf_write(&to, target->thread.regs, sizeof(struct user_pt_regs));
 
 	membuf_store(&to_msr, get_user_msr(target));
-#अगर_घोषित CONFIG_PPC64
+#ifdef CONFIG_PPC64
 	membuf_store(&to_softe, 0x1ul);
-#पूर्ण_अगर
-	वापस membuf_zero(&to, ELF_NGREG * माप(अचिन्हित दीर्घ) -
-				 माप(काष्ठा user_pt_regs));
-पूर्ण
+#endif
+	return membuf_zero(&to, ELF_NGREG * sizeof(unsigned long) -
+				 sizeof(struct user_pt_regs));
+}
 
-अटल पूर्णांक gpr_set(काष्ठा task_काष्ठा *target, स्थिर काष्ठा user_regset *regset,
-		   अचिन्हित पूर्णांक pos, अचिन्हित पूर्णांक count, स्थिर व्योम *kbuf,
-		   स्थिर व्योम __user *ubuf)
-अणु
-	अचिन्हित दीर्घ reg;
-	पूर्णांक ret;
+static int gpr_set(struct task_struct *target, const struct user_regset *regset,
+		   unsigned int pos, unsigned int count, const void *kbuf,
+		   const void __user *ubuf)
+{
+	unsigned long reg;
+	int ret;
 
-	अगर (target->thपढ़ो.regs == शून्य)
-		वापस -EIO;
+	if (target->thread.regs == NULL)
+		return -EIO;
 
 	ret = user_regset_copyin(&pos, &count, &kbuf, &ubuf,
-				 target->thपढ़ो.regs,
-				 0, PT_MSR * माप(reg));
+				 target->thread.regs,
+				 0, PT_MSR * sizeof(reg));
 
-	अगर (!ret && count > 0) अणु
+	if (!ret && count > 0) {
 		ret = user_regset_copyin(&pos, &count, &kbuf, &ubuf, &reg,
-					 PT_MSR * माप(reg),
-					 (PT_MSR + 1) * माप(reg));
-		अगर (!ret)
+					 PT_MSR * sizeof(reg),
+					 (PT_MSR + 1) * sizeof(reg));
+		if (!ret)
 			ret = set_user_msr(target, reg);
-	पूर्ण
+	}
 
-	BUILD_BUG_ON(दुरत्व(काष्ठा pt_regs, orig_gpr3) !=
-		     दुरत्व(काष्ठा pt_regs, msr) + माप(दीर्घ));
+	BUILD_BUG_ON(offsetof(struct pt_regs, orig_gpr3) !=
+		     offsetof(struct pt_regs, msr) + sizeof(long));
 
-	अगर (!ret)
+	if (!ret)
 		ret = user_regset_copyin(&pos, &count, &kbuf, &ubuf,
-					 &target->thपढ़ो.regs->orig_gpr3,
-					 PT_ORIG_R3 * माप(reg),
-					 (PT_MAX_PUT_REG + 1) * माप(reg));
+					 &target->thread.regs->orig_gpr3,
+					 PT_ORIG_R3 * sizeof(reg),
+					 (PT_MAX_PUT_REG + 1) * sizeof(reg));
 
-	अगर (PT_MAX_PUT_REG + 1 < PT_TRAP && !ret)
+	if (PT_MAX_PUT_REG + 1 < PT_TRAP && !ret)
 		ret = user_regset_copyin_ignore(&pos, &count, &kbuf, &ubuf,
-						(PT_MAX_PUT_REG + 1) * माप(reg),
-						PT_TRAP * माप(reg));
+						(PT_MAX_PUT_REG + 1) * sizeof(reg),
+						PT_TRAP * sizeof(reg));
 
-	अगर (!ret && count > 0) अणु
+	if (!ret && count > 0) {
 		ret = user_regset_copyin(&pos, &count, &kbuf, &ubuf, &reg,
-					 PT_TRAP * माप(reg),
-					 (PT_TRAP + 1) * माप(reg));
-		अगर (!ret)
+					 PT_TRAP * sizeof(reg),
+					 (PT_TRAP + 1) * sizeof(reg));
+		if (!ret)
 			ret = set_user_trap(target, reg);
-	पूर्ण
+	}
 
-	अगर (!ret)
+	if (!ret)
 		ret = user_regset_copyin_ignore(&pos, &count, &kbuf, &ubuf,
-						(PT_TRAP + 1) * माप(reg), -1);
+						(PT_TRAP + 1) * sizeof(reg), -1);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-#अगर_घोषित CONFIG_PPC64
-अटल पूर्णांक ppr_get(काष्ठा task_काष्ठा *target, स्थिर काष्ठा user_regset *regset,
-		   काष्ठा membuf to)
-अणु
-	वापस membuf_ग_लिखो(&to, &target->thपढ़ो.regs->ppr, माप(u64));
-पूर्ण
+#ifdef CONFIG_PPC64
+static int ppr_get(struct task_struct *target, const struct user_regset *regset,
+		   struct membuf to)
+{
+	return membuf_write(&to, &target->thread.regs->ppr, sizeof(u64));
+}
 
-अटल पूर्णांक ppr_set(काष्ठा task_काष्ठा *target, स्थिर काष्ठा user_regset *regset,
-		   अचिन्हित पूर्णांक pos, अचिन्हित पूर्णांक count, स्थिर व्योम *kbuf,
-		   स्थिर व्योम __user *ubuf)
-अणु
-	वापस user_regset_copyin(&pos, &count, &kbuf, &ubuf,
-				  &target->thपढ़ो.regs->ppr, 0, माप(u64));
-पूर्ण
+static int ppr_set(struct task_struct *target, const struct user_regset *regset,
+		   unsigned int pos, unsigned int count, const void *kbuf,
+		   const void __user *ubuf)
+{
+	return user_regset_copyin(&pos, &count, &kbuf, &ubuf,
+				  &target->thread.regs->ppr, 0, sizeof(u64));
+}
 
-अटल पूर्णांक dscr_get(काष्ठा task_काष्ठा *target, स्थिर काष्ठा user_regset *regset,
-		    काष्ठा membuf to)
-अणु
-	वापस membuf_ग_लिखो(&to, &target->thपढ़ो.dscr, माप(u64));
-पूर्ण
-अटल पूर्णांक dscr_set(काष्ठा task_काष्ठा *target, स्थिर काष्ठा user_regset *regset,
-		    अचिन्हित पूर्णांक pos, अचिन्हित पूर्णांक count, स्थिर व्योम *kbuf,
-		    स्थिर व्योम __user *ubuf)
-अणु
-	वापस user_regset_copyin(&pos, &count, &kbuf, &ubuf,
-				  &target->thपढ़ो.dscr, 0, माप(u64));
-पूर्ण
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_PPC_BOOK3S_64
-अटल पूर्णांक tar_get(काष्ठा task_काष्ठा *target, स्थिर काष्ठा user_regset *regset,
-		   काष्ठा membuf to)
-अणु
-	वापस membuf_ग_लिखो(&to, &target->thपढ़ो.tar, माप(u64));
-पूर्ण
-अटल पूर्णांक tar_set(काष्ठा task_काष्ठा *target, स्थिर काष्ठा user_regset *regset,
-		   अचिन्हित पूर्णांक pos, अचिन्हित पूर्णांक count, स्थिर व्योम *kbuf,
-		   स्थिर व्योम __user *ubuf)
-अणु
-	वापस user_regset_copyin(&pos, &count, &kbuf, &ubuf,
-				  &target->thपढ़ो.tar, 0, माप(u64));
-पूर्ण
+static int dscr_get(struct task_struct *target, const struct user_regset *regset,
+		    struct membuf to)
+{
+	return membuf_write(&to, &target->thread.dscr, sizeof(u64));
+}
+static int dscr_set(struct task_struct *target, const struct user_regset *regset,
+		    unsigned int pos, unsigned int count, const void *kbuf,
+		    const void __user *ubuf)
+{
+	return user_regset_copyin(&pos, &count, &kbuf, &ubuf,
+				  &target->thread.dscr, 0, sizeof(u64));
+}
+#endif
+#ifdef CONFIG_PPC_BOOK3S_64
+static int tar_get(struct task_struct *target, const struct user_regset *regset,
+		   struct membuf to)
+{
+	return membuf_write(&to, &target->thread.tar, sizeof(u64));
+}
+static int tar_set(struct task_struct *target, const struct user_regset *regset,
+		   unsigned int pos, unsigned int count, const void *kbuf,
+		   const void __user *ubuf)
+{
+	return user_regset_copyin(&pos, &count, &kbuf, &ubuf,
+				  &target->thread.tar, 0, sizeof(u64));
+}
 
-अटल पूर्णांक ebb_active(काष्ठा task_काष्ठा *target, स्थिर काष्ठा user_regset *regset)
-अणु
-	अगर (!cpu_has_feature(CPU_FTR_ARCH_207S))
-		वापस -ENODEV;
+static int ebb_active(struct task_struct *target, const struct user_regset *regset)
+{
+	if (!cpu_has_feature(CPU_FTR_ARCH_207S))
+		return -ENODEV;
 
-	अगर (target->thपढ़ो.used_ebb)
-		वापस regset->n;
+	if (target->thread.used_ebb)
+		return regset->n;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ebb_get(काष्ठा task_काष्ठा *target, स्थिर काष्ठा user_regset *regset,
-		   काष्ठा membuf to)
-अणु
+static int ebb_get(struct task_struct *target, const struct user_regset *regset,
+		   struct membuf to)
+{
 	/* Build tests */
-	BUILD_BUG_ON(TSO(ebbrr) + माप(अचिन्हित दीर्घ) != TSO(ebbhr));
-	BUILD_BUG_ON(TSO(ebbhr) + माप(अचिन्हित दीर्घ) != TSO(bescr));
+	BUILD_BUG_ON(TSO(ebbrr) + sizeof(unsigned long) != TSO(ebbhr));
+	BUILD_BUG_ON(TSO(ebbhr) + sizeof(unsigned long) != TSO(bescr));
 
-	अगर (!cpu_has_feature(CPU_FTR_ARCH_207S))
-		वापस -ENODEV;
+	if (!cpu_has_feature(CPU_FTR_ARCH_207S))
+		return -ENODEV;
 
-	अगर (!target->thपढ़ो.used_ebb)
-		वापस -ENODATA;
+	if (!target->thread.used_ebb)
+		return -ENODATA;
 
-	वापस membuf_ग_लिखो(&to, &target->thपढ़ो.ebbrr, 3 * माप(अचिन्हित दीर्घ));
-पूर्ण
+	return membuf_write(&to, &target->thread.ebbrr, 3 * sizeof(unsigned long));
+}
 
-अटल पूर्णांक ebb_set(काष्ठा task_काष्ठा *target, स्थिर काष्ठा user_regset *regset,
-		   अचिन्हित पूर्णांक pos, अचिन्हित पूर्णांक count, स्थिर व्योम *kbuf,
-		   स्थिर व्योम __user *ubuf)
-अणु
-	पूर्णांक ret = 0;
-
-	/* Build tests */
-	BUILD_BUG_ON(TSO(ebbrr) + माप(अचिन्हित दीर्घ) != TSO(ebbhr));
-	BUILD_BUG_ON(TSO(ebbhr) + माप(अचिन्हित दीर्घ) != TSO(bescr));
-
-	अगर (!cpu_has_feature(CPU_FTR_ARCH_207S))
-		वापस -ENODEV;
-
-	अगर (target->thपढ़ो.used_ebb)
-		वापस -ENODATA;
-
-	ret = user_regset_copyin(&pos, &count, &kbuf, &ubuf, &target->thपढ़ो.ebbrr,
-				 0, माप(अचिन्हित दीर्घ));
-
-	अगर (!ret)
-		ret = user_regset_copyin(&pos, &count, &kbuf, &ubuf,
-					 &target->thपढ़ो.ebbhr, माप(अचिन्हित दीर्घ),
-					 2 * माप(अचिन्हित दीर्घ));
-
-	अगर (!ret)
-		ret = user_regset_copyin(&pos, &count, &kbuf, &ubuf,
-					 &target->thपढ़ो.bescr, 2 * माप(अचिन्हित दीर्घ),
-					 3 * माप(अचिन्हित दीर्घ));
-
-	वापस ret;
-पूर्ण
-अटल पूर्णांक pmu_active(काष्ठा task_काष्ठा *target, स्थिर काष्ठा user_regset *regset)
-अणु
-	अगर (!cpu_has_feature(CPU_FTR_ARCH_207S))
-		वापस -ENODEV;
-
-	वापस regset->n;
-पूर्ण
-
-अटल पूर्णांक pmu_get(काष्ठा task_काष्ठा *target, स्थिर काष्ठा user_regset *regset,
-		   काष्ठा membuf to)
-अणु
-	/* Build tests */
-	BUILD_BUG_ON(TSO(siar) + माप(अचिन्हित दीर्घ) != TSO(sdar));
-	BUILD_BUG_ON(TSO(sdar) + माप(अचिन्हित दीर्घ) != TSO(sier));
-	BUILD_BUG_ON(TSO(sier) + माप(अचिन्हित दीर्घ) != TSO(mmcr2));
-	BUILD_BUG_ON(TSO(mmcr2) + माप(अचिन्हित दीर्घ) != TSO(mmcr0));
-
-	अगर (!cpu_has_feature(CPU_FTR_ARCH_207S))
-		वापस -ENODEV;
-
-	वापस membuf_ग_लिखो(&to, &target->thपढ़ो.siar, 5 * माप(अचिन्हित दीर्घ));
-पूर्ण
-
-अटल पूर्णांक pmu_set(काष्ठा task_काष्ठा *target, स्थिर काष्ठा user_regset *regset,
-		   अचिन्हित पूर्णांक pos, अचिन्हित पूर्णांक count, स्थिर व्योम *kbuf,
-		   स्थिर व्योम __user *ubuf)
-अणु
-	पूर्णांक ret = 0;
+static int ebb_set(struct task_struct *target, const struct user_regset *regset,
+		   unsigned int pos, unsigned int count, const void *kbuf,
+		   const void __user *ubuf)
+{
+	int ret = 0;
 
 	/* Build tests */
-	BUILD_BUG_ON(TSO(siar) + माप(अचिन्हित दीर्घ) != TSO(sdar));
-	BUILD_BUG_ON(TSO(sdar) + माप(अचिन्हित दीर्घ) != TSO(sier));
-	BUILD_BUG_ON(TSO(sier) + माप(अचिन्हित दीर्घ) != TSO(mmcr2));
-	BUILD_BUG_ON(TSO(mmcr2) + माप(अचिन्हित दीर्घ) != TSO(mmcr0));
+	BUILD_BUG_ON(TSO(ebbrr) + sizeof(unsigned long) != TSO(ebbhr));
+	BUILD_BUG_ON(TSO(ebbhr) + sizeof(unsigned long) != TSO(bescr));
 
-	अगर (!cpu_has_feature(CPU_FTR_ARCH_207S))
-		वापस -ENODEV;
+	if (!cpu_has_feature(CPU_FTR_ARCH_207S))
+		return -ENODEV;
 
-	ret = user_regset_copyin(&pos, &count, &kbuf, &ubuf, &target->thपढ़ो.siar,
-				 0, माप(अचिन्हित दीर्घ));
+	if (target->thread.used_ebb)
+		return -ENODATA;
 
-	अगर (!ret)
+	ret = user_regset_copyin(&pos, &count, &kbuf, &ubuf, &target->thread.ebbrr,
+				 0, sizeof(unsigned long));
+
+	if (!ret)
 		ret = user_regset_copyin(&pos, &count, &kbuf, &ubuf,
-					 &target->thपढ़ो.sdar, माप(अचिन्हित दीर्घ),
-					 2 * माप(अचिन्हित दीर्घ));
+					 &target->thread.ebbhr, sizeof(unsigned long),
+					 2 * sizeof(unsigned long));
 
-	अगर (!ret)
+	if (!ret)
 		ret = user_regset_copyin(&pos, &count, &kbuf, &ubuf,
-					 &target->thपढ़ो.sier, 2 * माप(अचिन्हित दीर्घ),
-					 3 * माप(अचिन्हित दीर्घ));
+					 &target->thread.bescr, 2 * sizeof(unsigned long),
+					 3 * sizeof(unsigned long));
 
-	अगर (!ret)
+	return ret;
+}
+static int pmu_active(struct task_struct *target, const struct user_regset *regset)
+{
+	if (!cpu_has_feature(CPU_FTR_ARCH_207S))
+		return -ENODEV;
+
+	return regset->n;
+}
+
+static int pmu_get(struct task_struct *target, const struct user_regset *regset,
+		   struct membuf to)
+{
+	/* Build tests */
+	BUILD_BUG_ON(TSO(siar) + sizeof(unsigned long) != TSO(sdar));
+	BUILD_BUG_ON(TSO(sdar) + sizeof(unsigned long) != TSO(sier));
+	BUILD_BUG_ON(TSO(sier) + sizeof(unsigned long) != TSO(mmcr2));
+	BUILD_BUG_ON(TSO(mmcr2) + sizeof(unsigned long) != TSO(mmcr0));
+
+	if (!cpu_has_feature(CPU_FTR_ARCH_207S))
+		return -ENODEV;
+
+	return membuf_write(&to, &target->thread.siar, 5 * sizeof(unsigned long));
+}
+
+static int pmu_set(struct task_struct *target, const struct user_regset *regset,
+		   unsigned int pos, unsigned int count, const void *kbuf,
+		   const void __user *ubuf)
+{
+	int ret = 0;
+
+	/* Build tests */
+	BUILD_BUG_ON(TSO(siar) + sizeof(unsigned long) != TSO(sdar));
+	BUILD_BUG_ON(TSO(sdar) + sizeof(unsigned long) != TSO(sier));
+	BUILD_BUG_ON(TSO(sier) + sizeof(unsigned long) != TSO(mmcr2));
+	BUILD_BUG_ON(TSO(mmcr2) + sizeof(unsigned long) != TSO(mmcr0));
+
+	if (!cpu_has_feature(CPU_FTR_ARCH_207S))
+		return -ENODEV;
+
+	ret = user_regset_copyin(&pos, &count, &kbuf, &ubuf, &target->thread.siar,
+				 0, sizeof(unsigned long));
+
+	if (!ret)
 		ret = user_regset_copyin(&pos, &count, &kbuf, &ubuf,
-					 &target->thपढ़ो.mmcr2, 3 * माप(अचिन्हित दीर्घ),
-					 4 * माप(अचिन्हित दीर्घ));
+					 &target->thread.sdar, sizeof(unsigned long),
+					 2 * sizeof(unsigned long));
 
-	अगर (!ret)
+	if (!ret)
 		ret = user_regset_copyin(&pos, &count, &kbuf, &ubuf,
-					 &target->thपढ़ो.mmcr0, 4 * माप(अचिन्हित दीर्घ),
-					 5 * माप(अचिन्हित दीर्घ));
-	वापस ret;
-पूर्ण
-#पूर्ण_अगर
+					 &target->thread.sier, 2 * sizeof(unsigned long),
+					 3 * sizeof(unsigned long));
 
-#अगर_घोषित CONFIG_PPC_MEM_KEYS
-अटल पूर्णांक pkey_active(काष्ठा task_काष्ठा *target, स्थिर काष्ठा user_regset *regset)
-अणु
-	अगर (!arch_pkeys_enabled())
-		वापस -ENODEV;
+	if (!ret)
+		ret = user_regset_copyin(&pos, &count, &kbuf, &ubuf,
+					 &target->thread.mmcr2, 3 * sizeof(unsigned long),
+					 4 * sizeof(unsigned long));
 
-	वापस regset->n;
-पूर्ण
+	if (!ret)
+		ret = user_regset_copyin(&pos, &count, &kbuf, &ubuf,
+					 &target->thread.mmcr0, 4 * sizeof(unsigned long),
+					 5 * sizeof(unsigned long));
+	return ret;
+}
+#endif
 
-अटल पूर्णांक pkey_get(काष्ठा task_काष्ठा *target, स्थिर काष्ठा user_regset *regset,
-		    काष्ठा membuf to)
-अणु
+#ifdef CONFIG_PPC_MEM_KEYS
+static int pkey_active(struct task_struct *target, const struct user_regset *regset)
+{
+	if (!arch_pkeys_enabled())
+		return -ENODEV;
 
-	अगर (!arch_pkeys_enabled())
-		वापस -ENODEV;
+	return regset->n;
+}
 
-	membuf_store(&to, target->thपढ़ो.regs->amr);
-	membuf_store(&to, target->thपढ़ो.regs->iamr);
-	वापस membuf_store(&to, शेष_uamor);
-पूर्ण
+static int pkey_get(struct task_struct *target, const struct user_regset *regset,
+		    struct membuf to)
+{
 
-अटल पूर्णांक pkey_set(काष्ठा task_काष्ठा *target, स्थिर काष्ठा user_regset *regset,
-		    अचिन्हित पूर्णांक pos, अचिन्हित पूर्णांक count, स्थिर व्योम *kbuf,
-		    स्थिर व्योम __user *ubuf)
-अणु
+	if (!arch_pkeys_enabled())
+		return -ENODEV;
+
+	membuf_store(&to, target->thread.regs->amr);
+	membuf_store(&to, target->thread.regs->iamr);
+	return membuf_store(&to, default_uamor);
+}
+
+static int pkey_set(struct task_struct *target, const struct user_regset *regset,
+		    unsigned int pos, unsigned int count, const void *kbuf,
+		    const void __user *ubuf)
+{
 	u64 new_amr;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (!arch_pkeys_enabled())
-		वापस -ENODEV;
+	if (!arch_pkeys_enabled())
+		return -ENODEV;
 
 	/* Only the AMR can be set from userspace */
-	अगर (pos != 0 || count != माप(new_amr))
-		वापस -EINVAL;
+	if (pos != 0 || count != sizeof(new_amr))
+		return -EINVAL;
 
 	ret = user_regset_copyin(&pos, &count, &kbuf, &ubuf,
-				 &new_amr, 0, माप(new_amr));
-	अगर (ret)
-		वापस ret;
+				 &new_amr, 0, sizeof(new_amr));
+	if (ret)
+		return ret;
 
 	/*
 	 * UAMOR determines which bits of the AMR can be set from userspace.
-	 * UAMOR value 0b11 indicates that the AMR value can be modअगरied
-	 * from userspace. If the kernel is using a specअगरic key, we aव्योम
-	 * userspace modअगरying the AMR value क्रम that key by masking them
+	 * UAMOR value 0b11 indicates that the AMR value can be modified
+	 * from userspace. If the kernel is using a specific key, we avoid
+	 * userspace modifying the AMR value for that key by masking them
 	 * via UAMOR 0b00.
 	 *
-	 * Pick the AMR values क्रम the keys that kernel is using. This
-	 * will be indicated by the ~शेष_uamor bits.
+	 * Pick the AMR values for the keys that kernel is using. This
+	 * will be indicated by the ~default_uamor bits.
 	 */
-	target->thपढ़ो.regs->amr = (new_amr & शेष_uamor) |
-		(target->thपढ़ो.regs->amr & ~शेष_uamor);
+	target->thread.regs->amr = (new_amr & default_uamor) |
+		(target->thread.regs->amr & ~default_uamor);
 
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_PPC_MEM_KEYS */
+	return 0;
+}
+#endif /* CONFIG_PPC_MEM_KEYS */
 
-अटल स्थिर काष्ठा user_regset native_regsets[] = अणु
-	[REGSET_GPR] = अणु
+static const struct user_regset native_regsets[] = {
+	[REGSET_GPR] = {
 		.core_note_type = NT_PRSTATUS, .n = ELF_NGREG,
-		.size = माप(दीर्घ), .align = माप(दीर्घ),
+		.size = sizeof(long), .align = sizeof(long),
 		.regset_get = gpr_get, .set = gpr_set
-	पूर्ण,
-	[REGSET_FPR] = अणु
+	},
+	[REGSET_FPR] = {
 		.core_note_type = NT_PRFPREG, .n = ELF_NFPREG,
-		.size = माप(द्विगुन), .align = माप(द्विगुन),
+		.size = sizeof(double), .align = sizeof(double),
 		.regset_get = fpr_get, .set = fpr_set
-	पूर्ण,
-#अगर_घोषित CONFIG_ALTIVEC
-	[REGSET_VMX] = अणु
+	},
+#ifdef CONFIG_ALTIVEC
+	[REGSET_VMX] = {
 		.core_note_type = NT_PPC_VMX, .n = 34,
-		.size = माप(vector128), .align = माप(vector128),
+		.size = sizeof(vector128), .align = sizeof(vector128),
 		.active = vr_active, .regset_get = vr_get, .set = vr_set
-	पूर्ण,
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_VSX
-	[REGSET_VSX] = अणु
+	},
+#endif
+#ifdef CONFIG_VSX
+	[REGSET_VSX] = {
 		.core_note_type = NT_PPC_VSX, .n = 32,
-		.size = माप(द्विगुन), .align = माप(द्विगुन),
+		.size = sizeof(double), .align = sizeof(double),
 		.active = vsr_active, .regset_get = vsr_get, .set = vsr_set
-	पूर्ण,
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_SPE
-	[REGSET_SPE] = अणु
+	},
+#endif
+#ifdef CONFIG_SPE
+	[REGSET_SPE] = {
 		.core_note_type = NT_PPC_SPE, .n = 35,
-		.size = माप(u32), .align = माप(u32),
+		.size = sizeof(u32), .align = sizeof(u32),
 		.active = evr_active, .regset_get = evr_get, .set = evr_set
-	पूर्ण,
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_PPC_TRANSACTIONAL_MEM
-	[REGSET_TM_CGPR] = अणु
+	},
+#endif
+#ifdef CONFIG_PPC_TRANSACTIONAL_MEM
+	[REGSET_TM_CGPR] = {
 		.core_note_type = NT_PPC_TM_CGPR, .n = ELF_NGREG,
-		.size = माप(दीर्घ), .align = माप(दीर्घ),
-		.active = पंचांग_cgpr_active, .regset_get = पंचांग_cgpr_get, .set = पंचांग_cgpr_set
-	पूर्ण,
-	[REGSET_TM_CFPR] = अणु
+		.size = sizeof(long), .align = sizeof(long),
+		.active = tm_cgpr_active, .regset_get = tm_cgpr_get, .set = tm_cgpr_set
+	},
+	[REGSET_TM_CFPR] = {
 		.core_note_type = NT_PPC_TM_CFPR, .n = ELF_NFPREG,
-		.size = माप(द्विगुन), .align = माप(द्विगुन),
-		.active = पंचांग_cfpr_active, .regset_get = पंचांग_cfpr_get, .set = पंचांग_cfpr_set
-	पूर्ण,
-	[REGSET_TM_CVMX] = अणु
+		.size = sizeof(double), .align = sizeof(double),
+		.active = tm_cfpr_active, .regset_get = tm_cfpr_get, .set = tm_cfpr_set
+	},
+	[REGSET_TM_CVMX] = {
 		.core_note_type = NT_PPC_TM_CVMX, .n = ELF_NVMX,
-		.size = माप(vector128), .align = माप(vector128),
-		.active = पंचांग_cvmx_active, .regset_get = पंचांग_cvmx_get, .set = पंचांग_cvmx_set
-	पूर्ण,
-	[REGSET_TM_CVSX] = अणु
+		.size = sizeof(vector128), .align = sizeof(vector128),
+		.active = tm_cvmx_active, .regset_get = tm_cvmx_get, .set = tm_cvmx_set
+	},
+	[REGSET_TM_CVSX] = {
 		.core_note_type = NT_PPC_TM_CVSX, .n = ELF_NVSX,
-		.size = माप(द्विगुन), .align = माप(द्विगुन),
-		.active = पंचांग_cvsx_active, .regset_get = पंचांग_cvsx_get, .set = पंचांग_cvsx_set
-	पूर्ण,
-	[REGSET_TM_SPR] = अणु
+		.size = sizeof(double), .align = sizeof(double),
+		.active = tm_cvsx_active, .regset_get = tm_cvsx_get, .set = tm_cvsx_set
+	},
+	[REGSET_TM_SPR] = {
 		.core_note_type = NT_PPC_TM_SPR, .n = ELF_NTMSPRREG,
-		.size = माप(u64), .align = माप(u64),
-		.active = पंचांग_spr_active, .regset_get = पंचांग_spr_get, .set = पंचांग_spr_set
-	पूर्ण,
-	[REGSET_TM_CTAR] = अणु
+		.size = sizeof(u64), .align = sizeof(u64),
+		.active = tm_spr_active, .regset_get = tm_spr_get, .set = tm_spr_set
+	},
+	[REGSET_TM_CTAR] = {
 		.core_note_type = NT_PPC_TM_CTAR, .n = 1,
-		.size = माप(u64), .align = माप(u64),
-		.active = पंचांग_tar_active, .regset_get = पंचांग_tar_get, .set = पंचांग_tar_set
-	पूर्ण,
-	[REGSET_TM_CPPR] = अणु
+		.size = sizeof(u64), .align = sizeof(u64),
+		.active = tm_tar_active, .regset_get = tm_tar_get, .set = tm_tar_set
+	},
+	[REGSET_TM_CPPR] = {
 		.core_note_type = NT_PPC_TM_CPPR, .n = 1,
-		.size = माप(u64), .align = माप(u64),
-		.active = पंचांग_ppr_active, .regset_get = पंचांग_ppr_get, .set = पंचांग_ppr_set
-	पूर्ण,
-	[REGSET_TM_CDSCR] = अणु
+		.size = sizeof(u64), .align = sizeof(u64),
+		.active = tm_ppr_active, .regset_get = tm_ppr_get, .set = tm_ppr_set
+	},
+	[REGSET_TM_CDSCR] = {
 		.core_note_type = NT_PPC_TM_CDSCR, .n = 1,
-		.size = माप(u64), .align = माप(u64),
-		.active = पंचांग_dscr_active, .regset_get = पंचांग_dscr_get, .set = पंचांग_dscr_set
-	पूर्ण,
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_PPC64
-	[REGSET_PPR] = अणु
+		.size = sizeof(u64), .align = sizeof(u64),
+		.active = tm_dscr_active, .regset_get = tm_dscr_get, .set = tm_dscr_set
+	},
+#endif
+#ifdef CONFIG_PPC64
+	[REGSET_PPR] = {
 		.core_note_type = NT_PPC_PPR, .n = 1,
-		.size = माप(u64), .align = माप(u64),
+		.size = sizeof(u64), .align = sizeof(u64),
 		.regset_get = ppr_get, .set = ppr_set
-	पूर्ण,
-	[REGSET_DSCR] = अणु
+	},
+	[REGSET_DSCR] = {
 		.core_note_type = NT_PPC_DSCR, .n = 1,
-		.size = माप(u64), .align = माप(u64),
+		.size = sizeof(u64), .align = sizeof(u64),
 		.regset_get = dscr_get, .set = dscr_set
-	पूर्ण,
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_PPC_BOOK3S_64
-	[REGSET_TAR] = अणु
+	},
+#endif
+#ifdef CONFIG_PPC_BOOK3S_64
+	[REGSET_TAR] = {
 		.core_note_type = NT_PPC_TAR, .n = 1,
-		.size = माप(u64), .align = माप(u64),
+		.size = sizeof(u64), .align = sizeof(u64),
 		.regset_get = tar_get, .set = tar_set
-	पूर्ण,
-	[REGSET_EBB] = अणु
+	},
+	[REGSET_EBB] = {
 		.core_note_type = NT_PPC_EBB, .n = ELF_NEBB,
-		.size = माप(u64), .align = माप(u64),
+		.size = sizeof(u64), .align = sizeof(u64),
 		.active = ebb_active, .regset_get = ebb_get, .set = ebb_set
-	पूर्ण,
-	[REGSET_PMR] = अणु
+	},
+	[REGSET_PMR] = {
 		.core_note_type = NT_PPC_PMU, .n = ELF_NPMU,
-		.size = माप(u64), .align = माप(u64),
+		.size = sizeof(u64), .align = sizeof(u64),
 		.active = pmu_active, .regset_get = pmu_get, .set = pmu_set
-	पूर्ण,
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_PPC_MEM_KEYS
-	[REGSET_PKEY] = अणु
+	},
+#endif
+#ifdef CONFIG_PPC_MEM_KEYS
+	[REGSET_PKEY] = {
 		.core_note_type = NT_PPC_PKEY, .n = ELF_NPKEY,
-		.size = माप(u64), .align = माप(u64),
+		.size = sizeof(u64), .align = sizeof(u64),
 		.active = pkey_active, .regset_get = pkey_get, .set = pkey_set
-	पूर्ण,
-#पूर्ण_अगर
-पूर्ण;
+	},
+#endif
+};
 
-स्थिर काष्ठा user_regset_view user_ppc_native_view = अणु
+const struct user_regset_view user_ppc_native_view = {
 	.name = UTS_MACHINE, .e_machine = ELF_ARCH, .ei_osabi = ELF_OSABI,
 	.regsets = native_regsets, .n = ARRAY_SIZE(native_regsets)
-पूर्ण;
+};
 
-#समावेश <linux/compat.h>
+#include <linux/compat.h>
 
-पूर्णांक gpr32_get_common(काष्ठा task_काष्ठा *target,
-		     स्थिर काष्ठा user_regset *regset,
-		     काष्ठा membuf to, अचिन्हित दीर्घ *regs)
-अणु
-	पूर्णांक i;
+int gpr32_get_common(struct task_struct *target,
+		     const struct user_regset *regset,
+		     struct membuf to, unsigned long *regs)
+{
+	int i;
 
-	क्रम (i = 0; i < PT_MSR; i++)
+	for (i = 0; i < PT_MSR; i++)
 		membuf_store(&to, (u32)regs[i]);
 	membuf_store(&to, (u32)get_user_msr(target));
-	क्रम (i++ ; i < PT_REGS_COUNT; i++)
+	for (i++ ; i < PT_REGS_COUNT; i++)
 		membuf_store(&to, (u32)regs[i]);
-	वापस membuf_zero(&to, (ELF_NGREG - PT_REGS_COUNT) * माप(u32));
-पूर्ण
+	return membuf_zero(&to, (ELF_NGREG - PT_REGS_COUNT) * sizeof(u32));
+}
 
-पूर्णांक gpr32_set_common(काष्ठा task_काष्ठा *target,
-		     स्थिर काष्ठा user_regset *regset,
-		     अचिन्हित पूर्णांक pos, अचिन्हित पूर्णांक count,
-		     स्थिर व्योम *kbuf, स्थिर व्योम __user *ubuf,
-		     अचिन्हित दीर्घ *regs)
-अणु
-	स्थिर compat_uदीर्घ_t *k = kbuf;
-	स्थिर compat_uदीर्घ_t __user *u = ubuf;
-	compat_uदीर्घ_t reg;
+int gpr32_set_common(struct task_struct *target,
+		     const struct user_regset *regset,
+		     unsigned int pos, unsigned int count,
+		     const void *kbuf, const void __user *ubuf,
+		     unsigned long *regs)
+{
+	const compat_ulong_t *k = kbuf;
+	const compat_ulong_t __user *u = ubuf;
+	compat_ulong_t reg;
 
-	अगर (!kbuf && !user_पढ़ो_access_begin(u, count))
-		वापस -EFAULT;
+	if (!kbuf && !user_read_access_begin(u, count))
+		return -EFAULT;
 
-	pos /= माप(reg);
-	count /= माप(reg);
+	pos /= sizeof(reg);
+	count /= sizeof(reg);
 
-	अगर (kbuf)
-		क्रम (; count > 0 && pos < PT_MSR; --count)
+	if (kbuf)
+		for (; count > 0 && pos < PT_MSR; --count)
 			regs[pos++] = *k++;
-	अन्यथा
-		क्रम (; count > 0 && pos < PT_MSR; --count) अणु
+	else
+		for (; count > 0 && pos < PT_MSR; --count) {
 			unsafe_get_user(reg, u++, Efault);
 			regs[pos++] = reg;
-		पूर्ण
+		}
 
 
-	अगर (count > 0 && pos == PT_MSR) अणु
-		अगर (kbuf)
+	if (count > 0 && pos == PT_MSR) {
+		if (kbuf)
 			reg = *k++;
-		अन्यथा
+		else
 			unsafe_get_user(reg, u++, Efault);
 		set_user_msr(target, reg);
 		++pos;
 		--count;
-	पूर्ण
+	}
 
-	अगर (kbuf) अणु
-		क्रम (; count > 0 && pos <= PT_MAX_PUT_REG; --count)
+	if (kbuf) {
+		for (; count > 0 && pos <= PT_MAX_PUT_REG; --count)
 			regs[pos++] = *k++;
-		क्रम (; count > 0 && pos < PT_TRAP; --count, ++pos)
+		for (; count > 0 && pos < PT_TRAP; --count, ++pos)
 			++k;
-	पूर्ण अन्यथा अणु
-		क्रम (; count > 0 && pos <= PT_MAX_PUT_REG; --count) अणु
+	} else {
+		for (; count > 0 && pos <= PT_MAX_PUT_REG; --count) {
 			unsafe_get_user(reg, u++, Efault);
 			regs[pos++] = reg;
-		पूर्ण
-		क्रम (; count > 0 && pos < PT_TRAP; --count, ++pos)
+		}
+		for (; count > 0 && pos < PT_TRAP; --count, ++pos)
 			unsafe_get_user(reg, u++, Efault);
-	पूर्ण
+	}
 
-	अगर (count > 0 && pos == PT_TRAP) अणु
-		अगर (kbuf)
+	if (count > 0 && pos == PT_TRAP) {
+		if (kbuf)
 			reg = *k++;
-		अन्यथा
+		else
 			unsafe_get_user(reg, u++, Efault);
 		set_user_trap(target, reg);
 		++pos;
 		--count;
-	पूर्ण
-	अगर (!kbuf)
-		user_पढ़ो_access_end();
+	}
+	if (!kbuf)
+		user_read_access_end();
 
 	kbuf = k;
 	ubuf = u;
-	pos *= माप(reg);
-	count *= माप(reg);
-	वापस user_regset_copyin_ignore(&pos, &count, &kbuf, &ubuf,
-					 (PT_TRAP + 1) * माप(reg), -1);
+	pos *= sizeof(reg);
+	count *= sizeof(reg);
+	return user_regset_copyin_ignore(&pos, &count, &kbuf, &ubuf,
+					 (PT_TRAP + 1) * sizeof(reg), -1);
 
 Efault:
-	user_पढ़ो_access_end();
-	वापस -EFAULT;
-पूर्ण
+	user_read_access_end();
+	return -EFAULT;
+}
 
-अटल पूर्णांक gpr32_get(काष्ठा task_काष्ठा *target,
-		     स्थिर काष्ठा user_regset *regset,
-		     काष्ठा membuf to)
-अणु
-	अगर (target->thपढ़ो.regs == शून्य)
-		वापस -EIO;
+static int gpr32_get(struct task_struct *target,
+		     const struct user_regset *regset,
+		     struct membuf to)
+{
+	if (target->thread.regs == NULL)
+		return -EIO;
 
-	वापस gpr32_get_common(target, regset, to,
-			&target->thपढ़ो.regs->gpr[0]);
-पूर्ण
+	return gpr32_get_common(target, regset, to,
+			&target->thread.regs->gpr[0]);
+}
 
-अटल पूर्णांक gpr32_set(काष्ठा task_काष्ठा *target,
-		     स्थिर काष्ठा user_regset *regset,
-		     अचिन्हित पूर्णांक pos, अचिन्हित पूर्णांक count,
-		     स्थिर व्योम *kbuf, स्थिर व्योम __user *ubuf)
-अणु
-	अगर (target->thपढ़ो.regs == शून्य)
-		वापस -EIO;
+static int gpr32_set(struct task_struct *target,
+		     const struct user_regset *regset,
+		     unsigned int pos, unsigned int count,
+		     const void *kbuf, const void __user *ubuf)
+{
+	if (target->thread.regs == NULL)
+		return -EIO;
 
-	वापस gpr32_set_common(target, regset, pos, count, kbuf, ubuf,
-			&target->thपढ़ो.regs->gpr[0]);
-पूर्ण
+	return gpr32_set_common(target, regset, pos, count, kbuf, ubuf,
+			&target->thread.regs->gpr[0]);
+}
 
 /*
  * These are the regset flavors matching the CONFIG_PPC32 native set.
  */
-अटल स्थिर काष्ठा user_regset compat_regsets[] = अणु
-	[REGSET_GPR] = अणु
+static const struct user_regset compat_regsets[] = {
+	[REGSET_GPR] = {
 		.core_note_type = NT_PRSTATUS, .n = ELF_NGREG,
-		.size = माप(compat_दीर्घ_t), .align = माप(compat_दीर्घ_t),
+		.size = sizeof(compat_long_t), .align = sizeof(compat_long_t),
 		.regset_get = gpr32_get, .set = gpr32_set
-	पूर्ण,
-	[REGSET_FPR] = अणु
+	},
+	[REGSET_FPR] = {
 		.core_note_type = NT_PRFPREG, .n = ELF_NFPREG,
-		.size = माप(द्विगुन), .align = माप(द्विगुन),
+		.size = sizeof(double), .align = sizeof(double),
 		.regset_get = fpr_get, .set = fpr_set
-	पूर्ण,
-#अगर_घोषित CONFIG_ALTIVEC
-	[REGSET_VMX] = अणु
+	},
+#ifdef CONFIG_ALTIVEC
+	[REGSET_VMX] = {
 		.core_note_type = NT_PPC_VMX, .n = 34,
-		.size = माप(vector128), .align = माप(vector128),
+		.size = sizeof(vector128), .align = sizeof(vector128),
 		.active = vr_active, .regset_get = vr_get, .set = vr_set
-	पूर्ण,
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_SPE
-	[REGSET_SPE] = अणु
+	},
+#endif
+#ifdef CONFIG_SPE
+	[REGSET_SPE] = {
 		.core_note_type = NT_PPC_SPE, .n = 35,
-		.size = माप(u32), .align = माप(u32),
+		.size = sizeof(u32), .align = sizeof(u32),
 		.active = evr_active, .regset_get = evr_get, .set = evr_set
-	पूर्ण,
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_PPC_TRANSACTIONAL_MEM
-	[REGSET_TM_CGPR] = अणु
+	},
+#endif
+#ifdef CONFIG_PPC_TRANSACTIONAL_MEM
+	[REGSET_TM_CGPR] = {
 		.core_note_type = NT_PPC_TM_CGPR, .n = ELF_NGREG,
-		.size = माप(दीर्घ), .align = माप(दीर्घ),
-		.active = पंचांग_cgpr_active,
-		.regset_get = पंचांग_cgpr32_get, .set = पंचांग_cgpr32_set
-	पूर्ण,
-	[REGSET_TM_CFPR] = अणु
+		.size = sizeof(long), .align = sizeof(long),
+		.active = tm_cgpr_active,
+		.regset_get = tm_cgpr32_get, .set = tm_cgpr32_set
+	},
+	[REGSET_TM_CFPR] = {
 		.core_note_type = NT_PPC_TM_CFPR, .n = ELF_NFPREG,
-		.size = माप(द्विगुन), .align = माप(द्विगुन),
-		.active = पंचांग_cfpr_active, .regset_get = पंचांग_cfpr_get, .set = पंचांग_cfpr_set
-	पूर्ण,
-	[REGSET_TM_CVMX] = अणु
+		.size = sizeof(double), .align = sizeof(double),
+		.active = tm_cfpr_active, .regset_get = tm_cfpr_get, .set = tm_cfpr_set
+	},
+	[REGSET_TM_CVMX] = {
 		.core_note_type = NT_PPC_TM_CVMX, .n = ELF_NVMX,
-		.size = माप(vector128), .align = माप(vector128),
-		.active = पंचांग_cvmx_active, .regset_get = पंचांग_cvmx_get, .set = पंचांग_cvmx_set
-	पूर्ण,
-	[REGSET_TM_CVSX] = अणु
+		.size = sizeof(vector128), .align = sizeof(vector128),
+		.active = tm_cvmx_active, .regset_get = tm_cvmx_get, .set = tm_cvmx_set
+	},
+	[REGSET_TM_CVSX] = {
 		.core_note_type = NT_PPC_TM_CVSX, .n = ELF_NVSX,
-		.size = माप(द्विगुन), .align = माप(द्विगुन),
-		.active = पंचांग_cvsx_active, .regset_get = पंचांग_cvsx_get, .set = पंचांग_cvsx_set
-	पूर्ण,
-	[REGSET_TM_SPR] = अणु
+		.size = sizeof(double), .align = sizeof(double),
+		.active = tm_cvsx_active, .regset_get = tm_cvsx_get, .set = tm_cvsx_set
+	},
+	[REGSET_TM_SPR] = {
 		.core_note_type = NT_PPC_TM_SPR, .n = ELF_NTMSPRREG,
-		.size = माप(u64), .align = माप(u64),
-		.active = पंचांग_spr_active, .regset_get = पंचांग_spr_get, .set = पंचांग_spr_set
-	पूर्ण,
-	[REGSET_TM_CTAR] = अणु
+		.size = sizeof(u64), .align = sizeof(u64),
+		.active = tm_spr_active, .regset_get = tm_spr_get, .set = tm_spr_set
+	},
+	[REGSET_TM_CTAR] = {
 		.core_note_type = NT_PPC_TM_CTAR, .n = 1,
-		.size = माप(u64), .align = माप(u64),
-		.active = पंचांग_tar_active, .regset_get = पंचांग_tar_get, .set = पंचांग_tar_set
-	पूर्ण,
-	[REGSET_TM_CPPR] = अणु
+		.size = sizeof(u64), .align = sizeof(u64),
+		.active = tm_tar_active, .regset_get = tm_tar_get, .set = tm_tar_set
+	},
+	[REGSET_TM_CPPR] = {
 		.core_note_type = NT_PPC_TM_CPPR, .n = 1,
-		.size = माप(u64), .align = माप(u64),
-		.active = पंचांग_ppr_active, .regset_get = पंचांग_ppr_get, .set = पंचांग_ppr_set
-	पूर्ण,
-	[REGSET_TM_CDSCR] = अणु
+		.size = sizeof(u64), .align = sizeof(u64),
+		.active = tm_ppr_active, .regset_get = tm_ppr_get, .set = tm_ppr_set
+	},
+	[REGSET_TM_CDSCR] = {
 		.core_note_type = NT_PPC_TM_CDSCR, .n = 1,
-		.size = माप(u64), .align = माप(u64),
-		.active = पंचांग_dscr_active, .regset_get = पंचांग_dscr_get, .set = पंचांग_dscr_set
-	पूर्ण,
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_PPC64
-	[REGSET_PPR] = अणु
+		.size = sizeof(u64), .align = sizeof(u64),
+		.active = tm_dscr_active, .regset_get = tm_dscr_get, .set = tm_dscr_set
+	},
+#endif
+#ifdef CONFIG_PPC64
+	[REGSET_PPR] = {
 		.core_note_type = NT_PPC_PPR, .n = 1,
-		.size = माप(u64), .align = माप(u64),
+		.size = sizeof(u64), .align = sizeof(u64),
 		.regset_get = ppr_get, .set = ppr_set
-	पूर्ण,
-	[REGSET_DSCR] = अणु
+	},
+	[REGSET_DSCR] = {
 		.core_note_type = NT_PPC_DSCR, .n = 1,
-		.size = माप(u64), .align = माप(u64),
+		.size = sizeof(u64), .align = sizeof(u64),
 		.regset_get = dscr_get, .set = dscr_set
-	पूर्ण,
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_PPC_BOOK3S_64
-	[REGSET_TAR] = अणु
+	},
+#endif
+#ifdef CONFIG_PPC_BOOK3S_64
+	[REGSET_TAR] = {
 		.core_note_type = NT_PPC_TAR, .n = 1,
-		.size = माप(u64), .align = माप(u64),
+		.size = sizeof(u64), .align = sizeof(u64),
 		.regset_get = tar_get, .set = tar_set
-	पूर्ण,
-	[REGSET_EBB] = अणु
+	},
+	[REGSET_EBB] = {
 		.core_note_type = NT_PPC_EBB, .n = ELF_NEBB,
-		.size = माप(u64), .align = माप(u64),
+		.size = sizeof(u64), .align = sizeof(u64),
 		.active = ebb_active, .regset_get = ebb_get, .set = ebb_set
-	पूर्ण,
-#पूर्ण_अगर
-पूर्ण;
+	},
+#endif
+};
 
-अटल स्थिर काष्ठा user_regset_view user_ppc_compat_view = अणु
+static const struct user_regset_view user_ppc_compat_view = {
 	.name = "ppc", .e_machine = EM_PPC, .ei_osabi = ELF_OSABI,
 	.regsets = compat_regsets, .n = ARRAY_SIZE(compat_regsets)
-पूर्ण;
+};
 
-स्थिर काष्ठा user_regset_view *task_user_regset_view(काष्ठा task_काष्ठा *task)
-अणु
-	अगर (IS_ENABLED(CONFIG_PPC64) && test_tsk_thपढ़ो_flag(task, TIF_32BIT))
-		वापस &user_ppc_compat_view;
-	वापस &user_ppc_native_view;
-पूर्ण
+const struct user_regset_view *task_user_regset_view(struct task_struct *task)
+{
+	if (IS_ENABLED(CONFIG_PPC64) && test_tsk_thread_flag(task, TIF_32BIT))
+		return &user_ppc_compat_view;
+	return &user_ppc_native_view;
+}

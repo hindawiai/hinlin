@@ -1,9 +1,8 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_घोषित DEFINE_DWARF_REGSTR_TABLE
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifdef DEFINE_DWARF_REGSTR_TABLE
 /* This is included in perf/util/dwarf-regs.c */
 
-स्थिर अक्षर * स्थिर sh_regstr_tbl[] = अणु
+const char * const sh_regstr_tbl[] = {
 	"r0",
 	"r1",
 	"r2",
@@ -22,6 +21,6 @@
 	"r15",
 	"pc",
 	"pr",
-पूर्ण;
+};
 
-#पूर्ण_अगर
+#endif

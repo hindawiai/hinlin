@@ -1,35 +1,34 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __ASM_SPINLOCK_TYPES_H
-#घोषणा __ASM_SPINLOCK_TYPES_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __ASM_SPINLOCK_TYPES_H
+#define __ASM_SPINLOCK_TYPES_H
 
-#अगर_अघोषित __LINUX_SPINLOCK_TYPES_H
+#ifndef __LINUX_SPINLOCK_TYPES_H
 # error "please don't include this file directly"
-#पूर्ण_अगर
+#endif
 
-#घोषणा TICKET_SHIFT	16
+#define TICKET_SHIFT	16
 
-प्रकार काष्ठा अणु
-	जोड़ अणु
+typedef struct {
+	union {
 		u32 slock;
-		काष्ठा __raw_tickets अणु
-#अगर_घोषित __ARMEB__
+		struct __raw_tickets {
+#ifdef __ARMEB__
 			u16 next;
 			u16 owner;
-#अन्यथा
+#else
 			u16 owner;
 			u16 next;
-#पूर्ण_अगर
-		पूर्ण tickets;
-	पूर्ण;
-पूर्ण arch_spinlock_t;
+#endif
+		} tickets;
+	};
+} arch_spinlock_t;
 
-#घोषणा __ARCH_SPIN_LOCK_UNLOCKED	अणु अणु 0 पूर्ण पूर्ण
+#define __ARCH_SPIN_LOCK_UNLOCKED	{ { 0 } }
 
-प्रकार काष्ठा अणु
+typedef struct {
 	u32 lock;
-पूर्ण arch_rwlock_t;
+} arch_rwlock_t;
 
-#घोषणा __ARCH_RW_LOCK_UNLOCKED		अणु 0 पूर्ण
+#define __ARCH_RW_LOCK_UNLOCKED		{ 0 }
 
-#पूर्ण_अगर
+#endif

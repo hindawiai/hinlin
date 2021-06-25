@@ -1,43 +1,42 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  *  linux/drivers/mmc/core/bus.h
  *
  *  Copyright (C) 2003 Russell King, All Rights Reserved.
  *  Copyright 2007 Pierre Ossman
  */
-#अगर_अघोषित _MMC_CORE_BUS_H
-#घोषणा _MMC_CORE_BUS_H
+#ifndef _MMC_CORE_BUS_H
+#define _MMC_CORE_BUS_H
 
-#समावेश <linux/device.h>
+#include <linux/device.h>
 
-काष्ठा mmc_host;
-काष्ठा mmc_card;
+struct mmc_host;
+struct mmc_card;
 
-#घोषणा MMC_DEV_ATTR(name, fmt, args...)					\
-अटल sमाप_प्रकार mmc_##name##_show (काष्ठा device *dev, काष्ठा device_attribute *attr, अक्षर *buf)	\
-अणु										\
-	काष्ठा mmc_card *card = mmc_dev_to_card(dev);				\
-	वापस प्र_लिखो(buf, fmt, args);						\
-पूर्ण										\
-अटल DEVICE_ATTR(name, S_IRUGO, mmc_##name##_show, शून्य)
+#define MMC_DEV_ATTR(name, fmt, args...)					\
+static ssize_t mmc_##name##_show (struct device *dev, struct device_attribute *attr, char *buf)	\
+{										\
+	struct mmc_card *card = mmc_dev_to_card(dev);				\
+	return sprintf(buf, fmt, args);						\
+}										\
+static DEVICE_ATTR(name, S_IRUGO, mmc_##name##_show, NULL)
 
-काष्ठा mmc_card *mmc_alloc_card(काष्ठा mmc_host *host,
-	काष्ठा device_type *type);
-पूर्णांक mmc_add_card(काष्ठा mmc_card *card);
-व्योम mmc_हटाओ_card(काष्ठा mmc_card *card);
+struct mmc_card *mmc_alloc_card(struct mmc_host *host,
+	struct device_type *type);
+int mmc_add_card(struct mmc_card *card);
+void mmc_remove_card(struct mmc_card *card);
 
-पूर्णांक mmc_रेजिस्टर_bus(व्योम);
-व्योम mmc_unरेजिस्टर_bus(व्योम);
+int mmc_register_bus(void);
+void mmc_unregister_bus(void);
 
-काष्ठा mmc_driver अणु
-	काष्ठा device_driver drv;
-	पूर्णांक (*probe)(काष्ठा mmc_card *card);
-	व्योम (*हटाओ)(काष्ठा mmc_card *card);
-	व्योम (*shutकरोwn)(काष्ठा mmc_card *card);
-पूर्ण;
+struct mmc_driver {
+	struct device_driver drv;
+	int (*probe)(struct mmc_card *card);
+	void (*remove)(struct mmc_card *card);
+	void (*shutdown)(struct mmc_card *card);
+};
 
-पूर्णांक mmc_रेजिस्टर_driver(काष्ठा mmc_driver *drv);
-व्योम mmc_unरेजिस्टर_driver(काष्ठा mmc_driver *drv);
+int mmc_register_driver(struct mmc_driver *drv);
+void mmc_unregister_driver(struct mmc_driver *drv);
 
-#पूर्ण_अगर
+#endif

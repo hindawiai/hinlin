@@ -1,39 +1,38 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __BRCMSTB_SOC_H
-#घोषणा __BRCMSTB_SOC_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __BRCMSTB_SOC_H
+#define __BRCMSTB_SOC_H
 
-#समावेश <linux/kconfig.h>
+#include <linux/kconfig.h>
 
-अटल अंतरभूत u32 BRCM_ID(u32 reg)
-अणु
-	वापस reg >> 28 ? reg >> 16 : reg >> 8;
-पूर्ण
+static inline u32 BRCM_ID(u32 reg)
+{
+	return reg >> 28 ? reg >> 16 : reg >> 8;
+}
 
-अटल अंतरभूत u32 BRCM_REV(u32 reg)
-अणु
-	वापस reg & 0xff;
-पूर्ण
+static inline u32 BRCM_REV(u32 reg)
+{
+	return reg & 0xff;
+}
 
-#अगर IS_ENABLED(CONFIG_SOC_BRCMSTB)
+#if IS_ENABLED(CONFIG_SOC_BRCMSTB)
 
 /*
- * Helper functions क्रम getting family or product id from the
+ * Helper functions for getting family or product id from the
  * SoC driver.
  */
-u32 brcmstb_get_family_id(व्योम);
-u32 brcmstb_get_product_id(व्योम);
+u32 brcmstb_get_family_id(void);
+u32 brcmstb_get_product_id(void);
 
-#अन्यथा
-अटल अंतरभूत u32 brcmstb_get_family_id(व्योम)
-अणु
-	वापस 0;
-पूर्ण
+#else
+static inline u32 brcmstb_get_family_id(void)
+{
+	return 0;
+}
 
-अटल अंतरभूत u32 brcmstb_get_product_id(व्योम)
-अणु
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+static inline u32 brcmstb_get_product_id(void)
+{
+	return 0;
+}
+#endif
 
-#पूर्ण_अगर /* __BRCMSTB_SOC_H */
+#endif /* __BRCMSTB_SOC_H */

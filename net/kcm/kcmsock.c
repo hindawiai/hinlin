@@ -1,98 +1,97 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Kernel Connection Multiplexor
  *
  * Copyright (c) 2016 Tom Herbert <tom@herbertland.com>
  */
 
-#समावेश <linux/bpf.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/errqueue.h>
-#समावेश <linux/file.h>
-#समावेश <linux/in.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/net.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/poll.h>
-#समावेश <linux/rculist.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/socket.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/workqueue.h>
-#समावेश <linux/syscalls.h>
-#समावेश <linux/sched/संकेत.स>
+#include <linux/bpf.h>
+#include <linux/errno.h>
+#include <linux/errqueue.h>
+#include <linux/file.h>
+#include <linux/in.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/net.h>
+#include <linux/netdevice.h>
+#include <linux/poll.h>
+#include <linux/rculist.h>
+#include <linux/skbuff.h>
+#include <linux/socket.h>
+#include <linux/uaccess.h>
+#include <linux/workqueue.h>
+#include <linux/syscalls.h>
+#include <linux/sched/signal.h>
 
-#समावेश <net/kcm.h>
-#समावेश <net/netns/generic.h>
-#समावेश <net/sock.h>
-#समावेश <uapi/linux/kcm.h>
+#include <net/kcm.h>
+#include <net/netns/generic.h>
+#include <net/sock.h>
+#include <uapi/linux/kcm.h>
 
-अचिन्हित पूर्णांक kcm_net_id;
+unsigned int kcm_net_id;
 
-अटल काष्ठा kmem_cache *kcm_psockp __पढ़ो_mostly;
-अटल काष्ठा kmem_cache *kcm_muxp __पढ़ो_mostly;
-अटल काष्ठा workqueue_काष्ठा *kcm_wq;
+static struct kmem_cache *kcm_psockp __read_mostly;
+static struct kmem_cache *kcm_muxp __read_mostly;
+static struct workqueue_struct *kcm_wq;
 
-अटल अंतरभूत काष्ठा kcm_sock *kcm_sk(स्थिर काष्ठा sock *sk)
-अणु
-	वापस (काष्ठा kcm_sock *)sk;
-पूर्ण
+static inline struct kcm_sock *kcm_sk(const struct sock *sk)
+{
+	return (struct kcm_sock *)sk;
+}
 
-अटल अंतरभूत काष्ठा kcm_tx_msg *kcm_tx_msg(काष्ठा sk_buff *skb)
-अणु
-	वापस (काष्ठा kcm_tx_msg *)skb->cb;
-पूर्ण
+static inline struct kcm_tx_msg *kcm_tx_msg(struct sk_buff *skb)
+{
+	return (struct kcm_tx_msg *)skb->cb;
+}
 
-अटल व्योम report_csk_error(काष्ठा sock *csk, पूर्णांक err)
-अणु
+static void report_csk_error(struct sock *csk, int err)
+{
 	csk->sk_err = EPIPE;
 	csk->sk_error_report(csk);
-पूर्ण
+}
 
-अटल व्योम kcm_पात_tx_psock(काष्ठा kcm_psock *psock, पूर्णांक err,
+static void kcm_abort_tx_psock(struct kcm_psock *psock, int err,
 			       bool wakeup_kcm)
-अणु
-	काष्ठा sock *csk = psock->sk;
-	काष्ठा kcm_mux *mux = psock->mux;
+{
+	struct sock *csk = psock->sk;
+	struct kcm_mux *mux = psock->mux;
 
 	/* Unrecoverable error in transmit */
 
 	spin_lock_bh(&mux->lock);
 
-	अगर (psock->tx_stopped) अणु
+	if (psock->tx_stopped) {
 		spin_unlock_bh(&mux->lock);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	psock->tx_stopped = 1;
-	KCM_STATS_INCR(psock->stats.tx_पातs);
+	KCM_STATS_INCR(psock->stats.tx_aborts);
 
-	अगर (!psock->tx_kcm) अणु
+	if (!psock->tx_kcm) {
 		/* Take off psocks_avail list */
 		list_del(&psock->psock_avail_list);
-	पूर्ण अन्यथा अगर (wakeup_kcm) अणु
-		/* In this हाल psock is being पातed जबतक outside of
-		 * ग_लिखो_msgs and psock is reserved. Schedule tx_work
+	} else if (wakeup_kcm) {
+		/* In this case psock is being aborted while outside of
+		 * write_msgs and psock is reserved. Schedule tx_work
 		 * to handle the failure there. Need to commit tx_stopped
-		 * beक्रमe queuing work.
+		 * before queuing work.
 		 */
 		smp_mb();
 
 		queue_work(kcm_wq, &psock->tx_kcm->tx_work);
-	पूर्ण
+	}
 
 	spin_unlock_bh(&mux->lock);
 
 	/* Report error on lower socket */
 	report_csk_error(csk, err);
-पूर्ण
+}
 
 /* RX mux lock held. */
-अटल व्योम kcm_update_rx_mux_stats(काष्ठा kcm_mux *mux,
-				    काष्ठा kcm_psock *psock)
-अणु
+static void kcm_update_rx_mux_stats(struct kcm_mux *mux,
+				    struct kcm_psock *psock)
+{
 	STRP_STATS_ADD(mux->stats.rx_bytes,
 		       psock->strp.stats.bytes -
 		       psock->saved_rx_bytes);
@@ -100,558 +99,558 @@
 		psock->strp.stats.msgs - psock->saved_rx_msgs;
 	psock->saved_rx_msgs = psock->strp.stats.msgs;
 	psock->saved_rx_bytes = psock->strp.stats.bytes;
-पूर्ण
+}
 
-अटल व्योम kcm_update_tx_mux_stats(काष्ठा kcm_mux *mux,
-				    काष्ठा kcm_psock *psock)
-अणु
+static void kcm_update_tx_mux_stats(struct kcm_mux *mux,
+				    struct kcm_psock *psock)
+{
 	KCM_STATS_ADD(mux->stats.tx_bytes,
 		      psock->stats.tx_bytes - psock->saved_tx_bytes);
 	mux->stats.tx_msgs +=
 		psock->stats.tx_msgs - psock->saved_tx_msgs;
 	psock->saved_tx_msgs = psock->stats.tx_msgs;
 	psock->saved_tx_bytes = psock->stats.tx_bytes;
-पूर्ण
+}
 
-अटल पूर्णांक kcm_queue_rcv_skb(काष्ठा sock *sk, काष्ठा sk_buff *skb);
+static int kcm_queue_rcv_skb(struct sock *sk, struct sk_buff *skb);
 
-/* KCM is पढ़ोy to receive messages on its queue-- either the KCM is new or
+/* KCM is ready to receive messages on its queue-- either the KCM is new or
  * has become unblocked after being blocked on full socket buffer. Queue any
- * pending पढ़ोy messages on a psock. RX mux lock held.
+ * pending ready messages on a psock. RX mux lock held.
  */
-अटल व्योम kcm_rcv_पढ़ोy(काष्ठा kcm_sock *kcm)
-अणु
-	काष्ठा kcm_mux *mux = kcm->mux;
-	काष्ठा kcm_psock *psock;
-	काष्ठा sk_buff *skb;
+static void kcm_rcv_ready(struct kcm_sock *kcm)
+{
+	struct kcm_mux *mux = kcm->mux;
+	struct kcm_psock *psock;
+	struct sk_buff *skb;
 
-	अगर (unlikely(kcm->rx_रुको || kcm->rx_psock || kcm->rx_disabled))
-		वापस;
+	if (unlikely(kcm->rx_wait || kcm->rx_psock || kcm->rx_disabled))
+		return;
 
-	जबतक (unlikely((skb = __skb_dequeue(&mux->rx_hold_queue)))) अणु
-		अगर (kcm_queue_rcv_skb(&kcm->sk, skb)) अणु
+	while (unlikely((skb = __skb_dequeue(&mux->rx_hold_queue)))) {
+		if (kcm_queue_rcv_skb(&kcm->sk, skb)) {
 			/* Assuming buffer limit has been reached */
 			skb_queue_head(&mux->rx_hold_queue, skb);
 			WARN_ON(!sk_rmem_alloc_get(&kcm->sk));
-			वापस;
-		पूर्ण
-	पूर्ण
+			return;
+		}
+	}
 
-	जबतक (!list_empty(&mux->psocks_पढ़ोy)) अणु
-		psock = list_first_entry(&mux->psocks_पढ़ोy, काष्ठा kcm_psock,
-					 psock_पढ़ोy_list);
+	while (!list_empty(&mux->psocks_ready)) {
+		psock = list_first_entry(&mux->psocks_ready, struct kcm_psock,
+					 psock_ready_list);
 
-		अगर (kcm_queue_rcv_skb(&kcm->sk, psock->पढ़ोy_rx_msg)) अणु
+		if (kcm_queue_rcv_skb(&kcm->sk, psock->ready_rx_msg)) {
 			/* Assuming buffer limit has been reached */
 			WARN_ON(!sk_rmem_alloc_get(&kcm->sk));
-			वापस;
-		पूर्ण
+			return;
+		}
 
-		/* Consumed the पढ़ोy message on the psock. Schedule rx_work to
+		/* Consumed the ready message on the psock. Schedule rx_work to
 		 * get more messages.
 		 */
-		list_del(&psock->psock_पढ़ोy_list);
-		psock->पढ़ोy_rx_msg = शून्य;
-		/* Commit clearing of पढ़ोy_rx_msg क्रम queuing work */
+		list_del(&psock->psock_ready_list);
+		psock->ready_rx_msg = NULL;
+		/* Commit clearing of ready_rx_msg for queuing work */
 		smp_mb();
 
-		strp_unछोड़ो(&psock->strp);
+		strp_unpause(&psock->strp);
 		strp_check_rcv(&psock->strp);
-	पूर्ण
+	}
 
-	/* Buffer limit is okay now, add to पढ़ोy list */
-	list_add_tail(&kcm->रुको_rx_list,
-		      &kcm->mux->kcm_rx_रुकोers);
-	kcm->rx_रुको = true;
-पूर्ण
+	/* Buffer limit is okay now, add to ready list */
+	list_add_tail(&kcm->wait_rx_list,
+		      &kcm->mux->kcm_rx_waiters);
+	kcm->rx_wait = true;
+}
 
-अटल व्योम kcm_rमुक्त(काष्ठा sk_buff *skb)
-अणु
-	काष्ठा sock *sk = skb->sk;
-	काष्ठा kcm_sock *kcm = kcm_sk(sk);
-	काष्ठा kcm_mux *mux = kcm->mux;
-	अचिन्हित पूर्णांक len = skb->truesize;
+static void kcm_rfree(struct sk_buff *skb)
+{
+	struct sock *sk = skb->sk;
+	struct kcm_sock *kcm = kcm_sk(sk);
+	struct kcm_mux *mux = kcm->mux;
+	unsigned int len = skb->truesize;
 
-	sk_mem_unअक्षरge(sk, len);
+	sk_mem_uncharge(sk, len);
 	atomic_sub(len, &sk->sk_rmem_alloc);
 
-	/* For पढ़ोing rx_रुको and rx_psock without holding lock */
+	/* For reading rx_wait and rx_psock without holding lock */
 	smp_mb__after_atomic();
 
-	अगर (!kcm->rx_रुको && !kcm->rx_psock &&
-	    sk_rmem_alloc_get(sk) < sk->sk_rcvlowat) अणु
+	if (!kcm->rx_wait && !kcm->rx_psock &&
+	    sk_rmem_alloc_get(sk) < sk->sk_rcvlowat) {
 		spin_lock_bh(&mux->rx_lock);
-		kcm_rcv_पढ़ोy(kcm);
+		kcm_rcv_ready(kcm);
 		spin_unlock_bh(&mux->rx_lock);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक kcm_queue_rcv_skb(काष्ठा sock *sk, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा sk_buff_head *list = &sk->sk_receive_queue;
+static int kcm_queue_rcv_skb(struct sock *sk, struct sk_buff *skb)
+{
+	struct sk_buff_head *list = &sk->sk_receive_queue;
 
-	अगर (atomic_पढ़ो(&sk->sk_rmem_alloc) >= sk->sk_rcvbuf)
-		वापस -ENOMEM;
+	if (atomic_read(&sk->sk_rmem_alloc) >= sk->sk_rcvbuf)
+		return -ENOMEM;
 
-	अगर (!sk_rmem_schedule(sk, skb, skb->truesize))
-		वापस -ENOBUFS;
+	if (!sk_rmem_schedule(sk, skb, skb->truesize))
+		return -ENOBUFS;
 
-	skb->dev = शून्य;
+	skb->dev = NULL;
 
 	skb_orphan(skb);
 	skb->sk = sk;
-	skb->deकाष्ठाor = kcm_rमुक्त;
+	skb->destructor = kcm_rfree;
 	atomic_add(skb->truesize, &sk->sk_rmem_alloc);
-	sk_mem_अक्षरge(sk, skb->truesize);
+	sk_mem_charge(sk, skb->truesize);
 
 	skb_queue_tail(list, skb);
 
-	अगर (!sock_flag(sk, SOCK_DEAD))
-		sk->sk_data_पढ़ोy(sk);
+	if (!sock_flag(sk, SOCK_DEAD))
+		sk->sk_data_ready(sk);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Requeue received messages क्रम a kcm socket to other kcm sockets. This is
+/* Requeue received messages for a kcm socket to other kcm sockets. This is
  * called with a kcm socket is receive disabled.
  * RX mux lock held.
  */
-अटल व्योम requeue_rx_msgs(काष्ठा kcm_mux *mux, काष्ठा sk_buff_head *head)
-अणु
-	काष्ठा sk_buff *skb;
-	काष्ठा kcm_sock *kcm;
+static void requeue_rx_msgs(struct kcm_mux *mux, struct sk_buff_head *head)
+{
+	struct sk_buff *skb;
+	struct kcm_sock *kcm;
 
-	जबतक ((skb = __skb_dequeue(head))) अणु
-		/* Reset deकाष्ठाor to aव्योम calling kcm_rcv_पढ़ोy */
-		skb->deकाष्ठाor = sock_rमुक्त;
+	while ((skb = __skb_dequeue(head))) {
+		/* Reset destructor to avoid calling kcm_rcv_ready */
+		skb->destructor = sock_rfree;
 		skb_orphan(skb);
 try_again:
-		अगर (list_empty(&mux->kcm_rx_रुकोers)) अणु
+		if (list_empty(&mux->kcm_rx_waiters)) {
 			skb_queue_tail(&mux->rx_hold_queue, skb);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		kcm = list_first_entry(&mux->kcm_rx_रुकोers,
-				       काष्ठा kcm_sock, रुको_rx_list);
+		kcm = list_first_entry(&mux->kcm_rx_waiters,
+				       struct kcm_sock, wait_rx_list);
 
-		अगर (kcm_queue_rcv_skb(&kcm->sk, skb)) अणु
+		if (kcm_queue_rcv_skb(&kcm->sk, skb)) {
 			/* Should mean socket buffer full */
-			list_del(&kcm->रुको_rx_list);
-			kcm->rx_रुको = false;
+			list_del(&kcm->wait_rx_list);
+			kcm->rx_wait = false;
 
-			/* Commit rx_रुको to पढ़ो in kcm_मुक्त */
+			/* Commit rx_wait to read in kcm_free */
 			smp_wmb();
 
-			जाओ try_again;
-		पूर्ण
-	पूर्ण
-पूर्ण
+			goto try_again;
+		}
+	}
+}
 
 /* Lower sock lock held */
-अटल काष्ठा kcm_sock *reserve_rx_kcm(काष्ठा kcm_psock *psock,
-				       काष्ठा sk_buff *head)
-अणु
-	काष्ठा kcm_mux *mux = psock->mux;
-	काष्ठा kcm_sock *kcm;
+static struct kcm_sock *reserve_rx_kcm(struct kcm_psock *psock,
+				       struct sk_buff *head)
+{
+	struct kcm_mux *mux = psock->mux;
+	struct kcm_sock *kcm;
 
-	WARN_ON(psock->पढ़ोy_rx_msg);
+	WARN_ON(psock->ready_rx_msg);
 
-	अगर (psock->rx_kcm)
-		वापस psock->rx_kcm;
+	if (psock->rx_kcm)
+		return psock->rx_kcm;
 
 	spin_lock_bh(&mux->rx_lock);
 
-	अगर (psock->rx_kcm) अणु
+	if (psock->rx_kcm) {
 		spin_unlock_bh(&mux->rx_lock);
-		वापस psock->rx_kcm;
-	पूर्ण
+		return psock->rx_kcm;
+	}
 
 	kcm_update_rx_mux_stats(mux, psock);
 
-	अगर (list_empty(&mux->kcm_rx_रुकोers)) अणु
-		psock->पढ़ोy_rx_msg = head;
-		strp_छोड़ो(&psock->strp);
-		list_add_tail(&psock->psock_पढ़ोy_list,
-			      &mux->psocks_पढ़ोy);
+	if (list_empty(&mux->kcm_rx_waiters)) {
+		psock->ready_rx_msg = head;
+		strp_pause(&psock->strp);
+		list_add_tail(&psock->psock_ready_list,
+			      &mux->psocks_ready);
 		spin_unlock_bh(&mux->rx_lock);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	kcm = list_first_entry(&mux->kcm_rx_रुकोers,
-			       काष्ठा kcm_sock, रुको_rx_list);
-	list_del(&kcm->रुको_rx_list);
-	kcm->rx_रुको = false;
+	kcm = list_first_entry(&mux->kcm_rx_waiters,
+			       struct kcm_sock, wait_rx_list);
+	list_del(&kcm->wait_rx_list);
+	kcm->rx_wait = false;
 
 	psock->rx_kcm = kcm;
 	kcm->rx_psock = psock;
 
 	spin_unlock_bh(&mux->rx_lock);
 
-	वापस kcm;
-पूर्ण
+	return kcm;
+}
 
-अटल व्योम kcm_करोne(काष्ठा kcm_sock *kcm);
+static void kcm_done(struct kcm_sock *kcm);
 
-अटल व्योम kcm_करोne_work(काष्ठा work_काष्ठा *w)
-अणु
-	kcm_करोne(container_of(w, काष्ठा kcm_sock, करोne_work));
-पूर्ण
+static void kcm_done_work(struct work_struct *w)
+{
+	kcm_done(container_of(w, struct kcm_sock, done_work));
+}
 
 /* Lower sock held */
-अटल व्योम unreserve_rx_kcm(काष्ठा kcm_psock *psock,
-			     bool rcv_पढ़ोy)
-अणु
-	काष्ठा kcm_sock *kcm = psock->rx_kcm;
-	काष्ठा kcm_mux *mux = psock->mux;
+static void unreserve_rx_kcm(struct kcm_psock *psock,
+			     bool rcv_ready)
+{
+	struct kcm_sock *kcm = psock->rx_kcm;
+	struct kcm_mux *mux = psock->mux;
 
-	अगर (!kcm)
-		वापस;
+	if (!kcm)
+		return;
 
 	spin_lock_bh(&mux->rx_lock);
 
-	psock->rx_kcm = शून्य;
-	kcm->rx_psock = शून्य;
+	psock->rx_kcm = NULL;
+	kcm->rx_psock = NULL;
 
-	/* Commit kcm->rx_psock beक्रमe sk_rmem_alloc_get to sync with
-	 * kcm_rमुक्त
+	/* Commit kcm->rx_psock before sk_rmem_alloc_get to sync with
+	 * kcm_rfree
 	 */
 	smp_mb();
 
-	अगर (unlikely(kcm->करोne)) अणु
+	if (unlikely(kcm->done)) {
 		spin_unlock_bh(&mux->rx_lock);
 
-		/* Need to run kcm_करोne in a task since we need to qcquire
-		 * callback locks which may alपढ़ोy be held here.
+		/* Need to run kcm_done in a task since we need to qcquire
+		 * callback locks which may already be held here.
 		 */
-		INIT_WORK(&kcm->करोne_work, kcm_करोne_work);
-		schedule_work(&kcm->करोne_work);
-		वापस;
-	पूर्ण
+		INIT_WORK(&kcm->done_work, kcm_done_work);
+		schedule_work(&kcm->done_work);
+		return;
+	}
 
-	अगर (unlikely(kcm->rx_disabled)) अणु
+	if (unlikely(kcm->rx_disabled)) {
 		requeue_rx_msgs(mux, &kcm->sk.sk_receive_queue);
-	पूर्ण अन्यथा अगर (rcv_पढ़ोy || unlikely(!sk_rmem_alloc_get(&kcm->sk))) अणु
-		/* Check क्रम degenerative race with rx_रुको that all
-		 * data was dequeued (accounted क्रम in kcm_rमुक्त).
+	} else if (rcv_ready || unlikely(!sk_rmem_alloc_get(&kcm->sk))) {
+		/* Check for degenerative race with rx_wait that all
+		 * data was dequeued (accounted for in kcm_rfree).
 		 */
-		kcm_rcv_पढ़ोy(kcm);
-	पूर्ण
+		kcm_rcv_ready(kcm);
+	}
 	spin_unlock_bh(&mux->rx_lock);
-पूर्ण
+}
 
 /* Lower sock lock held */
-अटल व्योम psock_data_पढ़ोy(काष्ठा sock *sk)
-अणु
-	काष्ठा kcm_psock *psock;
+static void psock_data_ready(struct sock *sk)
+{
+	struct kcm_psock *psock;
 
-	पढ़ो_lock_bh(&sk->sk_callback_lock);
+	read_lock_bh(&sk->sk_callback_lock);
 
-	psock = (काष्ठा kcm_psock *)sk->sk_user_data;
-	अगर (likely(psock))
-		strp_data_पढ़ोy(&psock->strp);
+	psock = (struct kcm_psock *)sk->sk_user_data;
+	if (likely(psock))
+		strp_data_ready(&psock->strp);
 
-	पढ़ो_unlock_bh(&sk->sk_callback_lock);
-पूर्ण
+	read_unlock_bh(&sk->sk_callback_lock);
+}
 
 /* Called with lower sock held */
-अटल व्योम kcm_rcv_strparser(काष्ठा strparser *strp, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा kcm_psock *psock = container_of(strp, काष्ठा kcm_psock, strp);
-	काष्ठा kcm_sock *kcm;
+static void kcm_rcv_strparser(struct strparser *strp, struct sk_buff *skb)
+{
+	struct kcm_psock *psock = container_of(strp, struct kcm_psock, strp);
+	struct kcm_sock *kcm;
 
 try_queue:
 	kcm = reserve_rx_kcm(psock, skb);
-	अगर (!kcm) अणु
+	if (!kcm) {
 		 /* Unable to reserve a KCM, message is held in psock and strp
-		  * is छोड़ोd.
+		  * is paused.
 		  */
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (kcm_queue_rcv_skb(&kcm->sk, skb)) अणु
+	if (kcm_queue_rcv_skb(&kcm->sk, skb)) {
 		/* Should mean socket buffer full */
 		unreserve_rx_kcm(psock, false);
-		जाओ try_queue;
-	पूर्ण
-पूर्ण
+		goto try_queue;
+	}
+}
 
-अटल पूर्णांक kcm_parse_func_strparser(काष्ठा strparser *strp, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा kcm_psock *psock = container_of(strp, काष्ठा kcm_psock, strp);
-	काष्ठा bpf_prog *prog = psock->bpf_prog;
-	पूर्णांक res;
+static int kcm_parse_func_strparser(struct strparser *strp, struct sk_buff *skb)
+{
+	struct kcm_psock *psock = container_of(strp, struct kcm_psock, strp);
+	struct bpf_prog *prog = psock->bpf_prog;
+	int res;
 
 	res = bpf_prog_run_pin_on_cpu(prog, skb);
-	वापस res;
-पूर्ण
+	return res;
+}
 
-अटल पूर्णांक kcm_पढ़ो_sock_करोne(काष्ठा strparser *strp, पूर्णांक err)
-अणु
-	काष्ठा kcm_psock *psock = container_of(strp, काष्ठा kcm_psock, strp);
+static int kcm_read_sock_done(struct strparser *strp, int err)
+{
+	struct kcm_psock *psock = container_of(strp, struct kcm_psock, strp);
 
 	unreserve_rx_kcm(psock, true);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम psock_state_change(काष्ठा sock *sk)
-अणु
-	/* TCP only करोes a EPOLLIN क्रम a half बंद. Do a EPOLLHUP here
+static void psock_state_change(struct sock *sk)
+{
+	/* TCP only does a EPOLLIN for a half close. Do a EPOLLHUP here
 	 * since application will normally not poll with EPOLLIN
 	 * on the TCP sockets.
 	 */
 
 	report_csk_error(sk, EPIPE);
-पूर्ण
+}
 
-अटल व्योम psock_ग_लिखो_space(काष्ठा sock *sk)
-अणु
-	काष्ठा kcm_psock *psock;
-	काष्ठा kcm_mux *mux;
-	काष्ठा kcm_sock *kcm;
+static void psock_write_space(struct sock *sk)
+{
+	struct kcm_psock *psock;
+	struct kcm_mux *mux;
+	struct kcm_sock *kcm;
 
-	पढ़ो_lock_bh(&sk->sk_callback_lock);
+	read_lock_bh(&sk->sk_callback_lock);
 
-	psock = (काष्ठा kcm_psock *)sk->sk_user_data;
-	अगर (unlikely(!psock))
-		जाओ out;
+	psock = (struct kcm_psock *)sk->sk_user_data;
+	if (unlikely(!psock))
+		goto out;
 	mux = psock->mux;
 
 	spin_lock_bh(&mux->lock);
 
-	/* Check अगर the socket is reserved so someone is रुकोing क्रम sending. */
+	/* Check if the socket is reserved so someone is waiting for sending. */
 	kcm = psock->tx_kcm;
-	अगर (kcm && !unlikely(kcm->tx_stopped))
+	if (kcm && !unlikely(kcm->tx_stopped))
 		queue_work(kcm_wq, &kcm->tx_work);
 
 	spin_unlock_bh(&mux->lock);
 out:
-	पढ़ो_unlock_bh(&sk->sk_callback_lock);
-पूर्ण
+	read_unlock_bh(&sk->sk_callback_lock);
+}
 
-अटल व्योम unreserve_psock(काष्ठा kcm_sock *kcm);
+static void unreserve_psock(struct kcm_sock *kcm);
 
 /* kcm sock is locked. */
-अटल काष्ठा kcm_psock *reserve_psock(काष्ठा kcm_sock *kcm)
-अणु
-	काष्ठा kcm_mux *mux = kcm->mux;
-	काष्ठा kcm_psock *psock;
+static struct kcm_psock *reserve_psock(struct kcm_sock *kcm)
+{
+	struct kcm_mux *mux = kcm->mux;
+	struct kcm_psock *psock;
 
 	psock = kcm->tx_psock;
 
-	smp_rmb(); /* Must पढ़ो tx_psock beक्रमe tx_रुको */
+	smp_rmb(); /* Must read tx_psock before tx_wait */
 
-	अगर (psock) अणु
-		WARN_ON(kcm->tx_रुको);
-		अगर (unlikely(psock->tx_stopped))
+	if (psock) {
+		WARN_ON(kcm->tx_wait);
+		if (unlikely(psock->tx_stopped))
 			unreserve_psock(kcm);
-		अन्यथा
-			वापस kcm->tx_psock;
-	पूर्ण
+		else
+			return kcm->tx_psock;
+	}
 
 	spin_lock_bh(&mux->lock);
 
-	/* Check again under lock to see अगर psock was reserved क्रम this
+	/* Check again under lock to see if psock was reserved for this
 	 * psock via psock_unreserve.
 	 */
 	psock = kcm->tx_psock;
-	अगर (unlikely(psock)) अणु
-		WARN_ON(kcm->tx_रुको);
+	if (unlikely(psock)) {
+		WARN_ON(kcm->tx_wait);
 		spin_unlock_bh(&mux->lock);
-		वापस kcm->tx_psock;
-	पूर्ण
+		return kcm->tx_psock;
+	}
 
-	अगर (!list_empty(&mux->psocks_avail)) अणु
+	if (!list_empty(&mux->psocks_avail)) {
 		psock = list_first_entry(&mux->psocks_avail,
-					 काष्ठा kcm_psock,
+					 struct kcm_psock,
 					 psock_avail_list);
 		list_del(&psock->psock_avail_list);
-		अगर (kcm->tx_रुको) अणु
-			list_del(&kcm->रुको_psock_list);
-			kcm->tx_रुको = false;
-		पूर्ण
+		if (kcm->tx_wait) {
+			list_del(&kcm->wait_psock_list);
+			kcm->tx_wait = false;
+		}
 		kcm->tx_psock = psock;
 		psock->tx_kcm = kcm;
 		KCM_STATS_INCR(psock->stats.reserved);
-	पूर्ण अन्यथा अगर (!kcm->tx_रुको) अणु
-		list_add_tail(&kcm->रुको_psock_list,
-			      &mux->kcm_tx_रुकोers);
-		kcm->tx_रुको = true;
-	पूर्ण
+	} else if (!kcm->tx_wait) {
+		list_add_tail(&kcm->wait_psock_list,
+			      &mux->kcm_tx_waiters);
+		kcm->tx_wait = true;
+	}
 
 	spin_unlock_bh(&mux->lock);
 
-	वापस psock;
-पूर्ण
+	return psock;
+}
 
 /* mux lock held */
-अटल व्योम psock_now_avail(काष्ठा kcm_psock *psock)
-अणु
-	काष्ठा kcm_mux *mux = psock->mux;
-	काष्ठा kcm_sock *kcm;
+static void psock_now_avail(struct kcm_psock *psock)
+{
+	struct kcm_mux *mux = psock->mux;
+	struct kcm_sock *kcm;
 
-	अगर (list_empty(&mux->kcm_tx_रुकोers)) अणु
+	if (list_empty(&mux->kcm_tx_waiters)) {
 		list_add_tail(&psock->psock_avail_list,
 			      &mux->psocks_avail);
-	पूर्ण अन्यथा अणु
-		kcm = list_first_entry(&mux->kcm_tx_रुकोers,
-				       काष्ठा kcm_sock,
-				       रुको_psock_list);
-		list_del(&kcm->रुको_psock_list);
-		kcm->tx_रुको = false;
+	} else {
+		kcm = list_first_entry(&mux->kcm_tx_waiters,
+				       struct kcm_sock,
+				       wait_psock_list);
+		list_del(&kcm->wait_psock_list);
+		kcm->tx_wait = false;
 		psock->tx_kcm = kcm;
 
-		/* Commit beक्रमe changing tx_psock since that is पढ़ो in
-		 * reserve_psock beक्रमe queuing work.
+		/* Commit before changing tx_psock since that is read in
+		 * reserve_psock before queuing work.
 		 */
 		smp_mb();
 
 		kcm->tx_psock = psock;
 		KCM_STATS_INCR(psock->stats.reserved);
 		queue_work(kcm_wq, &kcm->tx_work);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /* kcm sock is locked. */
-अटल व्योम unreserve_psock(काष्ठा kcm_sock *kcm)
-अणु
-	काष्ठा kcm_psock *psock;
-	काष्ठा kcm_mux *mux = kcm->mux;
+static void unreserve_psock(struct kcm_sock *kcm)
+{
+	struct kcm_psock *psock;
+	struct kcm_mux *mux = kcm->mux;
 
 	spin_lock_bh(&mux->lock);
 
 	psock = kcm->tx_psock;
 
-	अगर (WARN_ON(!psock)) अणु
+	if (WARN_ON(!psock)) {
 		spin_unlock_bh(&mux->lock);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	smp_rmb(); /* Read tx_psock beक्रमe tx_रुको */
+	smp_rmb(); /* Read tx_psock before tx_wait */
 
 	kcm_update_tx_mux_stats(mux, psock);
 
-	WARN_ON(kcm->tx_रुको);
+	WARN_ON(kcm->tx_wait);
 
-	kcm->tx_psock = शून्य;
-	psock->tx_kcm = शून्य;
+	kcm->tx_psock = NULL;
+	psock->tx_kcm = NULL;
 	KCM_STATS_INCR(psock->stats.unreserved);
 
-	अगर (unlikely(psock->tx_stopped)) अणु
-		अगर (psock->करोne) अणु
-			/* Deferred मुक्त */
+	if (unlikely(psock->tx_stopped)) {
+		if (psock->done) {
+			/* Deferred free */
 			list_del(&psock->psock_list);
 			mux->psocks_cnt--;
 			sock_put(psock->sk);
 			fput(psock->sk->sk_socket->file);
-			kmem_cache_मुक्त(kcm_psockp, psock);
-		पूर्ण
+			kmem_cache_free(kcm_psockp, psock);
+		}
 
 		/* Don't put back on available list */
 
 		spin_unlock_bh(&mux->lock);
 
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	psock_now_avail(psock);
 
 	spin_unlock_bh(&mux->lock);
-पूर्ण
+}
 
-अटल व्योम kcm_report_tx_retry(काष्ठा kcm_sock *kcm)
-अणु
-	काष्ठा kcm_mux *mux = kcm->mux;
+static void kcm_report_tx_retry(struct kcm_sock *kcm)
+{
+	struct kcm_mux *mux = kcm->mux;
 
 	spin_lock_bh(&mux->lock);
 	KCM_STATS_INCR(mux->stats.tx_retries);
 	spin_unlock_bh(&mux->lock);
-पूर्ण
+}
 
-/* Write any messages पढ़ोy on the kcm socket.  Called with kcm sock lock
+/* Write any messages ready on the kcm socket.  Called with kcm sock lock
  * held.  Return bytes actually sent or error.
  */
-अटल पूर्णांक kcm_ग_लिखो_msgs(काष्ठा kcm_sock *kcm)
-अणु
-	काष्ठा sock *sk = &kcm->sk;
-	काष्ठा kcm_psock *psock;
-	काष्ठा sk_buff *skb, *head;
-	काष्ठा kcm_tx_msg *txm;
-	अचिन्हित लघु fragidx, frag_offset;
-	अचिन्हित पूर्णांक sent, total_sent = 0;
-	पूर्णांक ret = 0;
+static int kcm_write_msgs(struct kcm_sock *kcm)
+{
+	struct sock *sk = &kcm->sk;
+	struct kcm_psock *psock;
+	struct sk_buff *skb, *head;
+	struct kcm_tx_msg *txm;
+	unsigned short fragidx, frag_offset;
+	unsigned int sent, total_sent = 0;
+	int ret = 0;
 
-	kcm->tx_रुको_more = false;
+	kcm->tx_wait_more = false;
 	psock = kcm->tx_psock;
-	अगर (unlikely(psock && psock->tx_stopped)) अणु
-		/* A reserved psock was पातed asynchronously. Unreserve
+	if (unlikely(psock && psock->tx_stopped)) {
+		/* A reserved psock was aborted asynchronously. Unreserve
 		 * it and we'll retry the message.
 		 */
 		unreserve_psock(kcm);
 		kcm_report_tx_retry(kcm);
-		अगर (skb_queue_empty(&sk->sk_ग_लिखो_queue))
-			वापस 0;
+		if (skb_queue_empty(&sk->sk_write_queue))
+			return 0;
 
-		kcm_tx_msg(skb_peek(&sk->sk_ग_लिखो_queue))->sent = 0;
+		kcm_tx_msg(skb_peek(&sk->sk_write_queue))->sent = 0;
 
-	पूर्ण अन्यथा अगर (skb_queue_empty(&sk->sk_ग_लिखो_queue)) अणु
-		वापस 0;
-	पूर्ण
+	} else if (skb_queue_empty(&sk->sk_write_queue)) {
+		return 0;
+	}
 
-	head = skb_peek(&sk->sk_ग_लिखो_queue);
+	head = skb_peek(&sk->sk_write_queue);
 	txm = kcm_tx_msg(head);
 
-	अगर (txm->sent) अणु
-		/* Send of first skbuff in queue alपढ़ोy in progress */
-		अगर (WARN_ON(!psock)) अणु
+	if (txm->sent) {
+		/* Send of first skbuff in queue already in progress */
+		if (WARN_ON(!psock)) {
 			ret = -EINVAL;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		sent = txm->sent;
 		frag_offset = txm->frag_offset;
 		fragidx = txm->fragidx;
 		skb = txm->frag_skb;
 
-		जाओ करो_frag;
-	पूर्ण
+		goto do_frag;
+	}
 
 try_again:
 	psock = reserve_psock(kcm);
-	अगर (!psock)
-		जाओ out;
+	if (!psock)
+		goto out;
 
-	करो अणु
+	do {
 		skb = head;
 		txm = kcm_tx_msg(head);
 		sent = 0;
 
-करो_frag_list:
-		अगर (WARN_ON(!skb_shinfo(skb)->nr_frags)) अणु
+do_frag_list:
+		if (WARN_ON(!skb_shinfo(skb)->nr_frags)) {
 			ret = -EINVAL;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
-		क्रम (fragidx = 0; fragidx < skb_shinfo(skb)->nr_frags;
-		     fragidx++) अणु
+		for (fragidx = 0; fragidx < skb_shinfo(skb)->nr_frags;
+		     fragidx++) {
 			skb_frag_t *frag;
 
 			frag_offset = 0;
-करो_frag:
+do_frag:
 			frag = &skb_shinfo(skb)->frags[fragidx];
-			अगर (WARN_ON(!skb_frag_size(frag))) अणु
+			if (WARN_ON(!skb_frag_size(frag))) {
 				ret = -EINVAL;
-				जाओ out;
-			पूर्ण
+				goto out;
+			}
 
 			ret = kernel_sendpage(psock->sk->sk_socket,
 					      skb_frag_page(frag),
 					      skb_frag_off(frag) + frag_offset,
 					      skb_frag_size(frag) - frag_offset,
 					      MSG_DONTWAIT);
-			अगर (ret <= 0) अणु
-				अगर (ret == -EAGAIN) अणु
+			if (ret <= 0) {
+				if (ret == -EAGAIN) {
 					/* Save state to try again when there's
-					 * ग_लिखो space on the socket
+					 * write space on the socket
 					 */
 					txm->sent = sent;
 					txm->frag_offset = frag_offset;
@@ -659,15 +658,15 @@ try_again:
 					txm->frag_skb = skb;
 
 					ret = 0;
-					जाओ out;
-				पूर्ण
+					goto out;
+				}
 
-				/* Hard failure in sending message, पात this
+				/* Hard failure in sending message, abort this
 				 * psock since it has lost framing
 				 * synchronization and retry sending the
 				 * message from the beginning.
 				 */
-				kcm_पात_tx_psock(psock, ret ? -ret : EPIPE,
+				kcm_abort_tx_psock(psock, ret ? -ret : EPIPE,
 						   true);
 				unreserve_psock(kcm);
 
@@ -675,97 +674,97 @@ try_again:
 				kcm_report_tx_retry(kcm);
 				ret = 0;
 
-				जाओ try_again;
-			पूर्ण
+				goto try_again;
+			}
 
 			sent += ret;
 			frag_offset += ret;
 			KCM_STATS_ADD(psock->stats.tx_bytes, ret);
-			अगर (frag_offset < skb_frag_size(frag)) अणु
+			if (frag_offset < skb_frag_size(frag)) {
 				/* Not finished with this frag */
-				जाओ करो_frag;
-			पूर्ण
-		पूर्ण
+				goto do_frag;
+			}
+		}
 
-		अगर (skb == head) अणु
-			अगर (skb_has_frag_list(skb)) अणु
+		if (skb == head) {
+			if (skb_has_frag_list(skb)) {
 				skb = skb_shinfo(skb)->frag_list;
-				जाओ करो_frag_list;
-			पूर्ण
-		पूर्ण अन्यथा अगर (skb->next) अणु
+				goto do_frag_list;
+			}
+		} else if (skb->next) {
 			skb = skb->next;
-			जाओ करो_frag_list;
-		पूर्ण
+			goto do_frag_list;
+		}
 
-		/* Successfully sent the whole packet, account क्रम it. */
-		skb_dequeue(&sk->sk_ग_लिखो_queue);
-		kमुक्त_skb(head);
+		/* Successfully sent the whole packet, account for it. */
+		skb_dequeue(&sk->sk_write_queue);
+		kfree_skb(head);
 		sk->sk_wmem_queued -= sent;
 		total_sent += sent;
 		KCM_STATS_INCR(psock->stats.tx_msgs);
-	पूर्ण जबतक ((head = skb_peek(&sk->sk_ग_लिखो_queue)));
+	} while ((head = skb_peek(&sk->sk_write_queue)));
 out:
-	अगर (!head) अणु
+	if (!head) {
 		/* Done with all queued messages. */
-		WARN_ON(!skb_queue_empty(&sk->sk_ग_लिखो_queue));
+		WARN_ON(!skb_queue_empty(&sk->sk_write_queue));
 		unreserve_psock(kcm);
-	पूर्ण
+	}
 
-	/* Check अगर ग_लिखो space is available */
-	sk->sk_ग_लिखो_space(sk);
+	/* Check if write space is available */
+	sk->sk_write_space(sk);
 
-	वापस total_sent ? : ret;
-पूर्ण
+	return total_sent ? : ret;
+}
 
-अटल व्योम kcm_tx_work(काष्ठा work_काष्ठा *w)
-अणु
-	काष्ठा kcm_sock *kcm = container_of(w, काष्ठा kcm_sock, tx_work);
-	काष्ठा sock *sk = &kcm->sk;
-	पूर्णांक err;
+static void kcm_tx_work(struct work_struct *w)
+{
+	struct kcm_sock *kcm = container_of(w, struct kcm_sock, tx_work);
+	struct sock *sk = &kcm->sk;
+	int err;
 
 	lock_sock(sk);
 
-	/* Primarily क्रम SOCK_DGRAM sockets, also handle asynchronous tx
-	 * पातs
+	/* Primarily for SOCK_DGRAM sockets, also handle asynchronous tx
+	 * aborts
 	 */
-	err = kcm_ग_लिखो_msgs(kcm);
-	अगर (err < 0) अणु
-		/* Hard failure in ग_लिखो, report error on KCM socket */
+	err = kcm_write_msgs(kcm);
+	if (err < 0) {
+		/* Hard failure in write, report error on KCM socket */
 		pr_warn("KCM: Hard failure on kcm_write_msgs %d\n", err);
 		report_csk_error(&kcm->sk, -err);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	/* Primarily क्रम SOCK_SEQPACKET sockets */
-	अगर (likely(sk->sk_socket) &&
-	    test_bit(SOCK_NOSPACE, &sk->sk_socket->flags)) अणु
+	/* Primarily for SOCK_SEQPACKET sockets */
+	if (likely(sk->sk_socket) &&
+	    test_bit(SOCK_NOSPACE, &sk->sk_socket->flags)) {
 		clear_bit(SOCK_NOSPACE, &sk->sk_socket->flags);
-		sk->sk_ग_लिखो_space(sk);
-	पूर्ण
+		sk->sk_write_space(sk);
+	}
 
 out:
 	release_sock(sk);
-पूर्ण
+}
 
-अटल व्योम kcm_push(काष्ठा kcm_sock *kcm)
-अणु
-	अगर (kcm->tx_रुको_more)
-		kcm_ग_लिखो_msgs(kcm);
-पूर्ण
+static void kcm_push(struct kcm_sock *kcm)
+{
+	if (kcm->tx_wait_more)
+		kcm_write_msgs(kcm);
+}
 
-अटल sमाप_प्रकार kcm_sendpage(काष्ठा socket *sock, काष्ठा page *page,
-			    पूर्णांक offset, माप_प्रकार size, पूर्णांक flags)
+static ssize_t kcm_sendpage(struct socket *sock, struct page *page,
+			    int offset, size_t size, int flags)
 
-अणु
-	काष्ठा sock *sk = sock->sk;
-	काष्ठा kcm_sock *kcm = kcm_sk(sk);
-	काष्ठा sk_buff *skb = शून्य, *head = शून्य;
-	दीर्घ समयo = sock_sndसमयo(sk, flags & MSG_DONTWAIT);
+{
+	struct sock *sk = sock->sk;
+	struct kcm_sock *kcm = kcm_sk(sk);
+	struct sk_buff *skb = NULL, *head = NULL;
+	long timeo = sock_sndtimeo(sk, flags & MSG_DONTWAIT);
 	bool eor;
-	पूर्णांक err = 0;
-	पूर्णांक i;
+	int err = 0;
+	int i;
 
-	अगर (flags & MSG_SENDPAGE_NOTLAST)
+	if (flags & MSG_SENDPAGE_NOTLAST)
 		flags |= MSG_MORE;
 
 	/* No MSG_EOR from splice, only look at MSG_MORE */
@@ -776,62 +775,62 @@ out:
 	sk_clear_bit(SOCKWQ_ASYNC_NOSPACE, sk);
 
 	err = -EPIPE;
-	अगर (sk->sk_err)
-		जाओ out_error;
+	if (sk->sk_err)
+		goto out_error;
 
-	अगर (kcm->seq_skb) अणु
-		/* Previously खोलोed message */
+	if (kcm->seq_skb) {
+		/* Previously opened message */
 		head = kcm->seq_skb;
 		skb = kcm_tx_msg(head)->last_skb;
 		i = skb_shinfo(skb)->nr_frags;
 
-		अगर (skb_can_coalesce(skb, i, page, offset)) अणु
+		if (skb_can_coalesce(skb, i, page, offset)) {
 			skb_frag_size_add(&skb_shinfo(skb)->frags[i - 1], size);
 			skb_shinfo(skb)->flags |= SKBFL_SHARED_FRAG;
-			जाओ coalesced;
-		पूर्ण
+			goto coalesced;
+		}
 
-		अगर (i >= MAX_SKB_FRAGS) अणु
-			काष्ठा sk_buff *tskb;
+		if (i >= MAX_SKB_FRAGS) {
+			struct sk_buff *tskb;
 
 			tskb = alloc_skb(0, sk->sk_allocation);
-			जबतक (!tskb) अणु
+			while (!tskb) {
 				kcm_push(kcm);
-				err = sk_stream_रुको_memory(sk, &समयo);
-				अगर (err)
-					जाओ out_error;
-			पूर्ण
+				err = sk_stream_wait_memory(sk, &timeo);
+				if (err)
+					goto out_error;
+			}
 
-			अगर (head == skb)
+			if (head == skb)
 				skb_shinfo(head)->frag_list = tskb;
-			अन्यथा
+			else
 				skb->next = tskb;
 
 			skb = tskb;
 			skb->ip_summed = CHECKSUM_UNNECESSARY;
 			i = 0;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		/* Call the sk_stream functions to manage the sndbuf mem. */
-		अगर (!sk_stream_memory_मुक्त(sk)) अणु
+		if (!sk_stream_memory_free(sk)) {
 			kcm_push(kcm);
 			set_bit(SOCK_NOSPACE, &sk->sk_socket->flags);
-			err = sk_stream_रुको_memory(sk, &समयo);
-			अगर (err)
-				जाओ out_error;
-		पूर्ण
+			err = sk_stream_wait_memory(sk, &timeo);
+			if (err)
+				goto out_error;
+		}
 
 		head = alloc_skb(0, sk->sk_allocation);
-		जबतक (!head) अणु
+		while (!head) {
 			kcm_push(kcm);
-			err = sk_stream_रुको_memory(sk, &समयo);
-			अगर (err)
-				जाओ out_error;
-		पूर्ण
+			err = sk_stream_wait_memory(sk, &timeo);
+			if (err)
+				goto out_error;
+		}
 
 		skb = head;
 		i = 0;
-	पूर्ण
+	}
 
 	get_page(page);
 	skb_fill_page_desc(skb, i, page, offset, size);
@@ -842,502 +841,502 @@ coalesced:
 	skb->data_len += size;
 	skb->truesize += size;
 	sk->sk_wmem_queued += size;
-	sk_mem_अक्षरge(sk, size);
+	sk_mem_charge(sk, size);
 
-	अगर (head != skb) अणु
+	if (head != skb) {
 		head->len += size;
 		head->data_len += size;
 		head->truesize += size;
-	पूर्ण
+	}
 
-	अगर (eor) अणु
-		bool not_busy = skb_queue_empty(&sk->sk_ग_लिखो_queue);
+	if (eor) {
+		bool not_busy = skb_queue_empty(&sk->sk_write_queue);
 
 		/* Message complete, queue it on send buffer */
-		__skb_queue_tail(&sk->sk_ग_लिखो_queue, head);
-		kcm->seq_skb = शून्य;
+		__skb_queue_tail(&sk->sk_write_queue, head);
+		kcm->seq_skb = NULL;
 		KCM_STATS_INCR(kcm->stats.tx_msgs);
 
-		अगर (flags & MSG_BATCH) अणु
-			kcm->tx_रुको_more = true;
-		पूर्ण अन्यथा अगर (kcm->tx_रुको_more || not_busy) अणु
-			err = kcm_ग_लिखो_msgs(kcm);
-			अगर (err < 0) अणु
-				/* We got a hard error in ग_लिखो_msgs but have
-				 * alपढ़ोy queued this message. Report an error
-				 * in the socket, but करोn't affect वापस value
+		if (flags & MSG_BATCH) {
+			kcm->tx_wait_more = true;
+		} else if (kcm->tx_wait_more || not_busy) {
+			err = kcm_write_msgs(kcm);
+			if (err < 0) {
+				/* We got a hard error in write_msgs but have
+				 * already queued this message. Report an error
+				 * in the socket, but don't affect return value
 				 * from sendmsg
 				 */
 				pr_warn("KCM: Hard failure on kcm_write_msgs\n");
 				report_csk_error(&kcm->sk, -err);
-			पूर्ण
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			}
+		}
+	} else {
 		/* Message not complete, save state */
 		kcm->seq_skb = head;
 		kcm_tx_msg(head)->last_skb = skb;
-	पूर्ण
+	}
 
 	KCM_STATS_ADD(kcm->stats.tx_bytes, size);
 
 	release_sock(sk);
-	वापस size;
+	return size;
 
 out_error:
 	kcm_push(kcm);
 
 	err = sk_stream_error(sk, flags, err);
 
-	/* make sure we wake any epoll edge trigger रुकोer */
-	अगर (unlikely(skb_queue_len(&sk->sk_ग_लिखो_queue) == 0 && err == -EAGAIN))
-		sk->sk_ग_लिखो_space(sk);
+	/* make sure we wake any epoll edge trigger waiter */
+	if (unlikely(skb_queue_len(&sk->sk_write_queue) == 0 && err == -EAGAIN))
+		sk->sk_write_space(sk);
 
 	release_sock(sk);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक kcm_sendmsg(काष्ठा socket *sock, काष्ठा msghdr *msg, माप_प्रकार len)
-अणु
-	काष्ठा sock *sk = sock->sk;
-	काष्ठा kcm_sock *kcm = kcm_sk(sk);
-	काष्ठा sk_buff *skb = शून्य, *head = शून्य;
-	माप_प्रकार copy, copied = 0;
-	दीर्घ समयo = sock_sndसमयo(sk, msg->msg_flags & MSG_DONTWAIT);
-	पूर्णांक eor = (sock->type == SOCK_DGRAM) ?
+static int kcm_sendmsg(struct socket *sock, struct msghdr *msg, size_t len)
+{
+	struct sock *sk = sock->sk;
+	struct kcm_sock *kcm = kcm_sk(sk);
+	struct sk_buff *skb = NULL, *head = NULL;
+	size_t copy, copied = 0;
+	long timeo = sock_sndtimeo(sk, msg->msg_flags & MSG_DONTWAIT);
+	int eor = (sock->type == SOCK_DGRAM) ?
 		  !(msg->msg_flags & MSG_MORE) : !!(msg->msg_flags & MSG_EOR);
-	पूर्णांक err = -EPIPE;
+	int err = -EPIPE;
 
 	lock_sock(sk);
 
 	/* Per tcp_sendmsg this should be in poll */
 	sk_clear_bit(SOCKWQ_ASYNC_NOSPACE, sk);
 
-	अगर (sk->sk_err)
-		जाओ out_error;
+	if (sk->sk_err)
+		goto out_error;
 
-	अगर (kcm->seq_skb) अणु
-		/* Previously खोलोed message */
+	if (kcm->seq_skb) {
+		/* Previously opened message */
 		head = kcm->seq_skb;
 		skb = kcm_tx_msg(head)->last_skb;
-		जाओ start;
-	पूर्ण
+		goto start;
+	}
 
 	/* Call the sk_stream functions to manage the sndbuf mem. */
-	अगर (!sk_stream_memory_मुक्त(sk)) अणु
+	if (!sk_stream_memory_free(sk)) {
 		kcm_push(kcm);
 		set_bit(SOCK_NOSPACE, &sk->sk_socket->flags);
-		err = sk_stream_रुको_memory(sk, &समयo);
-		अगर (err)
-			जाओ out_error;
-	पूर्ण
+		err = sk_stream_wait_memory(sk, &timeo);
+		if (err)
+			goto out_error;
+	}
 
-	अगर (msg_data_left(msg)) अणु
+	if (msg_data_left(msg)) {
 		/* New message, alloc head skb */
 		head = alloc_skb(0, sk->sk_allocation);
-		जबतक (!head) अणु
+		while (!head) {
 			kcm_push(kcm);
-			err = sk_stream_रुको_memory(sk, &समयo);
-			अगर (err)
-				जाओ out_error;
+			err = sk_stream_wait_memory(sk, &timeo);
+			if (err)
+				goto out_error;
 
 			head = alloc_skb(0, sk->sk_allocation);
-		पूर्ण
+		}
 
 		skb = head;
 
-		/* Set ip_summed to CHECKSUM_UNNECESSARY to aव्योम calling
-		 * csum_and_copy_from_iter from skb_करो_copy_data_nocache.
+		/* Set ip_summed to CHECKSUM_UNNECESSARY to avoid calling
+		 * csum_and_copy_from_iter from skb_do_copy_data_nocache.
 		 */
 		skb->ip_summed = CHECKSUM_UNNECESSARY;
-	पूर्ण
+	}
 
 start:
-	जबतक (msg_data_left(msg)) अणु
+	while (msg_data_left(msg)) {
 		bool merge = true;
-		पूर्णांक i = skb_shinfo(skb)->nr_frags;
-		काष्ठा page_frag *pfrag = sk_page_frag(sk);
+		int i = skb_shinfo(skb)->nr_frags;
+		struct page_frag *pfrag = sk_page_frag(sk);
 
-		अगर (!sk_page_frag_refill(sk, pfrag))
-			जाओ रुको_क्रम_memory;
+		if (!sk_page_frag_refill(sk, pfrag))
+			goto wait_for_memory;
 
-		अगर (!skb_can_coalesce(skb, i, pfrag->page,
-				      pfrag->offset)) अणु
-			अगर (i == MAX_SKB_FRAGS) अणु
-				काष्ठा sk_buff *tskb;
+		if (!skb_can_coalesce(skb, i, pfrag->page,
+				      pfrag->offset)) {
+			if (i == MAX_SKB_FRAGS) {
+				struct sk_buff *tskb;
 
 				tskb = alloc_skb(0, sk->sk_allocation);
-				अगर (!tskb)
-					जाओ रुको_क्रम_memory;
+				if (!tskb)
+					goto wait_for_memory;
 
-				अगर (head == skb)
+				if (head == skb)
 					skb_shinfo(head)->frag_list = tskb;
-				अन्यथा
+				else
 					skb->next = tskb;
 
 				skb = tskb;
 				skb->ip_summed = CHECKSUM_UNNECESSARY;
-				जारी;
-			पूर्ण
+				continue;
+			}
 			merge = false;
-		पूर्ण
+		}
 
-		copy = min_t(पूर्णांक, msg_data_left(msg),
+		copy = min_t(int, msg_data_left(msg),
 			     pfrag->size - pfrag->offset);
 
-		अगर (!sk_wmem_schedule(sk, copy))
-			जाओ रुको_क्रम_memory;
+		if (!sk_wmem_schedule(sk, copy))
+			goto wait_for_memory;
 
 		err = skb_copy_to_page_nocache(sk, &msg->msg_iter, skb,
 					       pfrag->page,
 					       pfrag->offset,
 					       copy);
-		अगर (err)
-			जाओ out_error;
+		if (err)
+			goto out_error;
 
 		/* Update the skb. */
-		अगर (merge) अणु
+		if (merge) {
 			skb_frag_size_add(&skb_shinfo(skb)->frags[i - 1], copy);
-		पूर्ण अन्यथा अणु
+		} else {
 			skb_fill_page_desc(skb, i, pfrag->page,
 					   pfrag->offset, copy);
 			get_page(pfrag->page);
-		पूर्ण
+		}
 
 		pfrag->offset += copy;
 		copied += copy;
-		अगर (head != skb) अणु
+		if (head != skb) {
 			head->len += copy;
 			head->data_len += copy;
-		पूर्ण
+		}
 
-		जारी;
+		continue;
 
-रुको_क्रम_memory:
+wait_for_memory:
 		kcm_push(kcm);
-		err = sk_stream_रुको_memory(sk, &समयo);
-		अगर (err)
-			जाओ out_error;
-	पूर्ण
+		err = sk_stream_wait_memory(sk, &timeo);
+		if (err)
+			goto out_error;
+	}
 
-	अगर (eor) अणु
-		bool not_busy = skb_queue_empty(&sk->sk_ग_लिखो_queue);
+	if (eor) {
+		bool not_busy = skb_queue_empty(&sk->sk_write_queue);
 
-		अगर (head) अणु
+		if (head) {
 			/* Message complete, queue it on send buffer */
-			__skb_queue_tail(&sk->sk_ग_लिखो_queue, head);
-			kcm->seq_skb = शून्य;
+			__skb_queue_tail(&sk->sk_write_queue, head);
+			kcm->seq_skb = NULL;
 			KCM_STATS_INCR(kcm->stats.tx_msgs);
-		पूर्ण
+		}
 
-		अगर (msg->msg_flags & MSG_BATCH) अणु
-			kcm->tx_रुको_more = true;
-		पूर्ण अन्यथा अगर (kcm->tx_रुको_more || not_busy) अणु
-			err = kcm_ग_लिखो_msgs(kcm);
-			अगर (err < 0) अणु
-				/* We got a hard error in ग_लिखो_msgs but have
-				 * alपढ़ोy queued this message. Report an error
-				 * in the socket, but करोn't affect वापस value
+		if (msg->msg_flags & MSG_BATCH) {
+			kcm->tx_wait_more = true;
+		} else if (kcm->tx_wait_more || not_busy) {
+			err = kcm_write_msgs(kcm);
+			if (err < 0) {
+				/* We got a hard error in write_msgs but have
+				 * already queued this message. Report an error
+				 * in the socket, but don't affect return value
 				 * from sendmsg
 				 */
 				pr_warn("KCM: Hard failure on kcm_write_msgs\n");
 				report_csk_error(&kcm->sk, -err);
-			पूर्ण
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			}
+		}
+	} else {
 		/* Message not complete, save state */
 partial_message:
-		अगर (head) अणु
+		if (head) {
 			kcm->seq_skb = head;
 			kcm_tx_msg(head)->last_skb = skb;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	KCM_STATS_ADD(kcm->stats.tx_bytes, copied);
 
 	release_sock(sk);
-	वापस copied;
+	return copied;
 
 out_error:
 	kcm_push(kcm);
 
-	अगर (copied && sock->type == SOCK_SEQPACKET) अणु
-		/* Wrote some bytes beक्रमe encountering an
-		 * error, वापस partial success.
+	if (copied && sock->type == SOCK_SEQPACKET) {
+		/* Wrote some bytes before encountering an
+		 * error, return partial success.
 		 */
-		जाओ partial_message;
-	पूर्ण
+		goto partial_message;
+	}
 
-	अगर (head != kcm->seq_skb)
-		kमुक्त_skb(head);
+	if (head != kcm->seq_skb)
+		kfree_skb(head);
 
 	err = sk_stream_error(sk, msg->msg_flags, err);
 
-	/* make sure we wake any epoll edge trigger रुकोer */
-	अगर (unlikely(skb_queue_len(&sk->sk_ग_लिखो_queue) == 0 && err == -EAGAIN))
-		sk->sk_ग_लिखो_space(sk);
+	/* make sure we wake any epoll edge trigger waiter */
+	if (unlikely(skb_queue_len(&sk->sk_write_queue) == 0 && err == -EAGAIN))
+		sk->sk_write_space(sk);
 
 	release_sock(sk);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल काष्ठा sk_buff *kcm_रुको_data(काष्ठा sock *sk, पूर्णांक flags,
-				     दीर्घ समयo, पूर्णांक *err)
-अणु
-	काष्ठा sk_buff *skb;
+static struct sk_buff *kcm_wait_data(struct sock *sk, int flags,
+				     long timeo, int *err)
+{
+	struct sk_buff *skb;
 
-	जबतक (!(skb = skb_peek(&sk->sk_receive_queue))) अणु
-		अगर (sk->sk_err) अणु
+	while (!(skb = skb_peek(&sk->sk_receive_queue))) {
+		if (sk->sk_err) {
 			*err = sock_error(sk);
-			वापस शून्य;
-		पूर्ण
+			return NULL;
+		}
 
-		अगर (sock_flag(sk, SOCK_DONE))
-			वापस शून्य;
+		if (sock_flag(sk, SOCK_DONE))
+			return NULL;
 
-		अगर ((flags & MSG_DONTWAIT) || !समयo) अणु
+		if ((flags & MSG_DONTWAIT) || !timeo) {
 			*err = -EAGAIN;
-			वापस शून्य;
-		पूर्ण
+			return NULL;
+		}
 
-		sk_रुको_data(sk, &समयo, शून्य);
+		sk_wait_data(sk, &timeo, NULL);
 
-		/* Handle संकेतs */
-		अगर (संकेत_pending(current)) अणु
-			*err = sock_पूर्णांकr_त्रुटि_सं(समयo);
-			वापस शून्य;
-		पूर्ण
-	पूर्ण
+		/* Handle signals */
+		if (signal_pending(current)) {
+			*err = sock_intr_errno(timeo);
+			return NULL;
+		}
+	}
 
-	वापस skb;
-पूर्ण
+	return skb;
+}
 
-अटल पूर्णांक kcm_recvmsg(काष्ठा socket *sock, काष्ठा msghdr *msg,
-		       माप_प्रकार len, पूर्णांक flags)
-अणु
-	काष्ठा sock *sk = sock->sk;
-	काष्ठा kcm_sock *kcm = kcm_sk(sk);
-	पूर्णांक err = 0;
-	दीर्घ समयo;
-	काष्ठा strp_msg *sपंचांग;
-	पूर्णांक copied = 0;
-	काष्ठा sk_buff *skb;
+static int kcm_recvmsg(struct socket *sock, struct msghdr *msg,
+		       size_t len, int flags)
+{
+	struct sock *sk = sock->sk;
+	struct kcm_sock *kcm = kcm_sk(sk);
+	int err = 0;
+	long timeo;
+	struct strp_msg *stm;
+	int copied = 0;
+	struct sk_buff *skb;
 
-	समयo = sock_rcvसमयo(sk, flags & MSG_DONTWAIT);
+	timeo = sock_rcvtimeo(sk, flags & MSG_DONTWAIT);
 
 	lock_sock(sk);
 
-	skb = kcm_रुको_data(sk, flags, समयo, &err);
-	अगर (!skb)
-		जाओ out;
+	skb = kcm_wait_data(sk, flags, timeo, &err);
+	if (!skb)
+		goto out;
 
 	/* Okay, have a message on the receive queue */
 
-	sपंचांग = strp_msg(skb);
+	stm = strp_msg(skb);
 
-	अगर (len > sपंचांग->full_len)
-		len = sपंचांग->full_len;
+	if (len > stm->full_len)
+		len = stm->full_len;
 
-	err = skb_copy_datagram_msg(skb, sपंचांग->offset, msg, len);
-	अगर (err < 0)
-		जाओ out;
+	err = skb_copy_datagram_msg(skb, stm->offset, msg, len);
+	if (err < 0)
+		goto out;
 
 	copied = len;
-	अगर (likely(!(flags & MSG_PEEK))) अणु
+	if (likely(!(flags & MSG_PEEK))) {
 		KCM_STATS_ADD(kcm->stats.rx_bytes, copied);
-		अगर (copied < sपंचांग->full_len) अणु
-			अगर (sock->type == SOCK_DGRAM) अणु
+		if (copied < stm->full_len) {
+			if (sock->type == SOCK_DGRAM) {
 				/* Truncated message */
 				msg->msg_flags |= MSG_TRUNC;
-				जाओ msg_finished;
-			पूर्ण
-			sपंचांग->offset += copied;
-			sपंचांग->full_len -= copied;
-		पूर्ण अन्यथा अणु
+				goto msg_finished;
+			}
+			stm->offset += copied;
+			stm->full_len -= copied;
+		} else {
 msg_finished:
 			/* Finished with message */
 			msg->msg_flags |= MSG_EOR;
 			KCM_STATS_INCR(kcm->stats.rx_msgs);
 			skb_unlink(skb, &sk->sk_receive_queue);
-			kमुक्त_skb(skb);
-		पूर्ण
-	पूर्ण
+			kfree_skb(skb);
+		}
+	}
 
 out:
 	release_sock(sk);
 
-	वापस copied ? : err;
-पूर्ण
+	return copied ? : err;
+}
 
-अटल sमाप_प्रकार kcm_splice_पढ़ो(काष्ठा socket *sock, loff_t *ppos,
-			       काष्ठा pipe_inode_info *pipe, माप_प्रकार len,
-			       अचिन्हित पूर्णांक flags)
-अणु
-	काष्ठा sock *sk = sock->sk;
-	काष्ठा kcm_sock *kcm = kcm_sk(sk);
-	दीर्घ समयo;
-	काष्ठा strp_msg *sपंचांग;
-	पूर्णांक err = 0;
-	sमाप_प्रकार copied;
-	काष्ठा sk_buff *skb;
+static ssize_t kcm_splice_read(struct socket *sock, loff_t *ppos,
+			       struct pipe_inode_info *pipe, size_t len,
+			       unsigned int flags)
+{
+	struct sock *sk = sock->sk;
+	struct kcm_sock *kcm = kcm_sk(sk);
+	long timeo;
+	struct strp_msg *stm;
+	int err = 0;
+	ssize_t copied;
+	struct sk_buff *skb;
 
-	/* Only support splice क्रम SOCKSEQPACKET */
+	/* Only support splice for SOCKSEQPACKET */
 
-	समयo = sock_rcvसमयo(sk, flags & MSG_DONTWAIT);
+	timeo = sock_rcvtimeo(sk, flags & MSG_DONTWAIT);
 
 	lock_sock(sk);
 
-	skb = kcm_रुको_data(sk, flags, समयo, &err);
-	अगर (!skb)
-		जाओ err_out;
+	skb = kcm_wait_data(sk, flags, timeo, &err);
+	if (!skb)
+		goto err_out;
 
 	/* Okay, have a message on the receive queue */
 
-	sपंचांग = strp_msg(skb);
+	stm = strp_msg(skb);
 
-	अगर (len > sपंचांग->full_len)
-		len = sपंचांग->full_len;
+	if (len > stm->full_len)
+		len = stm->full_len;
 
-	copied = skb_splice_bits(skb, sk, sपंचांग->offset, pipe, len, flags);
-	अगर (copied < 0) अणु
+	copied = skb_splice_bits(skb, sk, stm->offset, pipe, len, flags);
+	if (copied < 0) {
 		err = copied;
-		जाओ err_out;
-	पूर्ण
+		goto err_out;
+	}
 
 	KCM_STATS_ADD(kcm->stats.rx_bytes, copied);
 
-	sपंचांग->offset += copied;
-	sपंचांग->full_len -= copied;
+	stm->offset += copied;
+	stm->full_len -= copied;
 
-	/* We have no way to वापस MSG_EOR. If all the bytes have been
-	 * पढ़ो we still leave the message in the receive socket buffer.
-	 * A subsequent recvmsg needs to be करोne to वापस MSG_EOR and
-	 * finish पढ़ोing the message.
+	/* We have no way to return MSG_EOR. If all the bytes have been
+	 * read we still leave the message in the receive socket buffer.
+	 * A subsequent recvmsg needs to be done to return MSG_EOR and
+	 * finish reading the message.
 	 */
 
 	release_sock(sk);
 
-	वापस copied;
+	return copied;
 
 err_out:
 	release_sock(sk);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /* kcm sock lock held */
-अटल व्योम kcm_recv_disable(काष्ठा kcm_sock *kcm)
-अणु
-	काष्ठा kcm_mux *mux = kcm->mux;
+static void kcm_recv_disable(struct kcm_sock *kcm)
+{
+	struct kcm_mux *mux = kcm->mux;
 
-	अगर (kcm->rx_disabled)
-		वापस;
+	if (kcm->rx_disabled)
+		return;
 
 	spin_lock_bh(&mux->rx_lock);
 
 	kcm->rx_disabled = 1;
 
-	/* If a psock is reserved we'll करो cleanup in unreserve */
-	अगर (!kcm->rx_psock) अणु
-		अगर (kcm->rx_रुको) अणु
-			list_del(&kcm->रुको_rx_list);
-			kcm->rx_रुको = false;
-		पूर्ण
+	/* If a psock is reserved we'll do cleanup in unreserve */
+	if (!kcm->rx_psock) {
+		if (kcm->rx_wait) {
+			list_del(&kcm->wait_rx_list);
+			kcm->rx_wait = false;
+		}
 
 		requeue_rx_msgs(mux, &kcm->sk.sk_receive_queue);
-	पूर्ण
+	}
 
 	spin_unlock_bh(&mux->rx_lock);
-पूर्ण
+}
 
 /* kcm sock lock held */
-अटल व्योम kcm_recv_enable(काष्ठा kcm_sock *kcm)
-अणु
-	काष्ठा kcm_mux *mux = kcm->mux;
+static void kcm_recv_enable(struct kcm_sock *kcm)
+{
+	struct kcm_mux *mux = kcm->mux;
 
-	अगर (!kcm->rx_disabled)
-		वापस;
+	if (!kcm->rx_disabled)
+		return;
 
 	spin_lock_bh(&mux->rx_lock);
 
 	kcm->rx_disabled = 0;
-	kcm_rcv_पढ़ोy(kcm);
+	kcm_rcv_ready(kcm);
 
 	spin_unlock_bh(&mux->rx_lock);
-पूर्ण
+}
 
-अटल पूर्णांक kcm_setsockopt(काष्ठा socket *sock, पूर्णांक level, पूर्णांक optname,
-			  sockptr_t optval, अचिन्हित पूर्णांक optlen)
-अणु
-	काष्ठा kcm_sock *kcm = kcm_sk(sock->sk);
-	पूर्णांक val, valbool;
-	पूर्णांक err = 0;
+static int kcm_setsockopt(struct socket *sock, int level, int optname,
+			  sockptr_t optval, unsigned int optlen)
+{
+	struct kcm_sock *kcm = kcm_sk(sock->sk);
+	int val, valbool;
+	int err = 0;
 
-	अगर (level != SOL_KCM)
-		वापस -ENOPROTOOPT;
+	if (level != SOL_KCM)
+		return -ENOPROTOOPT;
 
-	अगर (optlen < माप(पूर्णांक))
-		वापस -EINVAL;
+	if (optlen < sizeof(int))
+		return -EINVAL;
 
-	अगर (copy_from_sockptr(&val, optval, माप(पूर्णांक)))
-		वापस -EFAULT;
+	if (copy_from_sockptr(&val, optval, sizeof(int)))
+		return -EFAULT;
 
 	valbool = val ? 1 : 0;
 
-	चयन (optname) अणु
-	हाल KCM_RECV_DISABLE:
+	switch (optname) {
+	case KCM_RECV_DISABLE:
 		lock_sock(&kcm->sk);
-		अगर (valbool)
+		if (valbool)
 			kcm_recv_disable(kcm);
-		अन्यथा
+		else
 			kcm_recv_enable(kcm);
 		release_sock(&kcm->sk);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		err = -ENOPROTOOPT;
-	पूर्ण
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक kcm_माला_लोockopt(काष्ठा socket *sock, पूर्णांक level, पूर्णांक optname,
-			  अक्षर __user *optval, पूर्णांक __user *optlen)
-अणु
-	काष्ठा kcm_sock *kcm = kcm_sk(sock->sk);
-	पूर्णांक val, len;
+static int kcm_getsockopt(struct socket *sock, int level, int optname,
+			  char __user *optval, int __user *optlen)
+{
+	struct kcm_sock *kcm = kcm_sk(sock->sk);
+	int val, len;
 
-	अगर (level != SOL_KCM)
-		वापस -ENOPROTOOPT;
+	if (level != SOL_KCM)
+		return -ENOPROTOOPT;
 
-	अगर (get_user(len, optlen))
-		वापस -EFAULT;
+	if (get_user(len, optlen))
+		return -EFAULT;
 
-	len = min_t(अचिन्हित पूर्णांक, len, माप(पूर्णांक));
-	अगर (len < 0)
-		वापस -EINVAL;
+	len = min_t(unsigned int, len, sizeof(int));
+	if (len < 0)
+		return -EINVAL;
 
-	चयन (optname) अणु
-	हाल KCM_RECV_DISABLE:
+	switch (optname) {
+	case KCM_RECV_DISABLE:
 		val = kcm->rx_disabled;
-		अवरोध;
-	शेष:
-		वापस -ENOPROTOOPT;
-	पूर्ण
+		break;
+	default:
+		return -ENOPROTOOPT;
+	}
 
-	अगर (put_user(len, optlen))
-		वापस -EFAULT;
-	अगर (copy_to_user(optval, &val, len))
-		वापस -EFAULT;
-	वापस 0;
-पूर्ण
+	if (put_user(len, optlen))
+		return -EFAULT;
+	if (copy_to_user(optval, &val, len))
+		return -EFAULT;
+	return 0;
+}
 
-अटल व्योम init_kcm_sock(काष्ठा kcm_sock *kcm, काष्ठा kcm_mux *mux)
-अणु
-	काष्ठा kcm_sock *tkcm;
-	काष्ठा list_head *head;
-	पूर्णांक index = 0;
+static void init_kcm_sock(struct kcm_sock *kcm, struct kcm_mux *mux)
+{
+	struct kcm_sock *tkcm;
+	struct list_head *head;
+	int index = 0;
 
 	/* For SOCK_SEQPACKET sock type, datagram_poll checks the sk_state, so
-	 * we set sk_state, otherwise epoll_रुको always वापसs right away with
+	 * we set sk_state, otherwise epoll_wait always returns right away with
 	 * EPOLLHUP
 	 */
 	kcm->sk.sk_state = TCP_ESTABLISHED;
@@ -1347,12 +1346,12 @@ err_out:
 	spin_lock_bh(&mux->lock);
 
 	head = &mux->kcm_socks;
-	list_क्रम_each_entry(tkcm, &mux->kcm_socks, kcm_sock_list) अणु
-		अगर (tkcm->index != index)
-			अवरोध;
+	list_for_each_entry(tkcm, &mux->kcm_socks, kcm_sock_list) {
+		if (tkcm->index != index)
+			break;
 		head = &tkcm->kcm_sock_list;
 		index++;
-	पूर्ण
+	}
 
 	list_add(&kcm->kcm_sock_list, head);
 	kcm->index = index;
@@ -1363,96 +1362,96 @@ err_out:
 	INIT_WORK(&kcm->tx_work, kcm_tx_work);
 
 	spin_lock_bh(&mux->rx_lock);
-	kcm_rcv_पढ़ोy(kcm);
+	kcm_rcv_ready(kcm);
 	spin_unlock_bh(&mux->rx_lock);
-पूर्ण
+}
 
-अटल पूर्णांक kcm_attach(काष्ठा socket *sock, काष्ठा socket *csock,
-		      काष्ठा bpf_prog *prog)
-अणु
-	काष्ठा kcm_sock *kcm = kcm_sk(sock->sk);
-	काष्ठा kcm_mux *mux = kcm->mux;
-	काष्ठा sock *csk;
-	काष्ठा kcm_psock *psock = शून्य, *tpsock;
-	काष्ठा list_head *head;
-	पूर्णांक index = 0;
-	अटल स्थिर काष्ठा strp_callbacks cb = अणु
+static int kcm_attach(struct socket *sock, struct socket *csock,
+		      struct bpf_prog *prog)
+{
+	struct kcm_sock *kcm = kcm_sk(sock->sk);
+	struct kcm_mux *mux = kcm->mux;
+	struct sock *csk;
+	struct kcm_psock *psock = NULL, *tpsock;
+	struct list_head *head;
+	int index = 0;
+	static const struct strp_callbacks cb = {
 		.rcv_msg = kcm_rcv_strparser,
 		.parse_msg = kcm_parse_func_strparser,
-		.पढ़ो_sock_करोne = kcm_पढ़ो_sock_करोne,
-	पूर्ण;
-	पूर्णांक err = 0;
+		.read_sock_done = kcm_read_sock_done,
+	};
+	int err = 0;
 
 	csk = csock->sk;
-	अगर (!csk)
-		वापस -EINVAL;
+	if (!csk)
+		return -EINVAL;
 
 	lock_sock(csk);
 
-	/* Only allow TCP sockets to be attached क्रम now */
-	अगर ((csk->sk_family != AF_INET && csk->sk_family != AF_INET6) ||
-	    csk->sk_protocol != IPPROTO_TCP) अणु
+	/* Only allow TCP sockets to be attached for now */
+	if ((csk->sk_family != AF_INET && csk->sk_family != AF_INET6) ||
+	    csk->sk_protocol != IPPROTO_TCP) {
 		err = -EOPNOTSUPP;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	/* Don't allow listeners or बंदd sockets */
-	अगर (csk->sk_state == TCP_LISTEN || csk->sk_state == TCP_CLOSE) अणु
+	/* Don't allow listeners or closed sockets */
+	if (csk->sk_state == TCP_LISTEN || csk->sk_state == TCP_CLOSE) {
 		err = -EOPNOTSUPP;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	psock = kmem_cache_zalloc(kcm_psockp, GFP_KERNEL);
-	अगर (!psock) अणु
+	if (!psock) {
 		err = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	psock->mux = mux;
 	psock->sk = csk;
 	psock->bpf_prog = prog;
 
 	err = strp_init(&psock->strp, csk, &cb);
-	अगर (err) अणु
-		kmem_cache_मुक्त(kcm_psockp, psock);
-		जाओ out;
-	पूर्ण
+	if (err) {
+		kmem_cache_free(kcm_psockp, psock);
+		goto out;
+	}
 
-	ग_लिखो_lock_bh(&csk->sk_callback_lock);
+	write_lock_bh(&csk->sk_callback_lock);
 
-	/* Check अगर sk_user_data is alपढ़ोy by KCM or someone अन्यथा.
-	 * Must be करोne under lock to prevent race conditions.
+	/* Check if sk_user_data is already by KCM or someone else.
+	 * Must be done under lock to prevent race conditions.
 	 */
-	अगर (csk->sk_user_data) अणु
-		ग_लिखो_unlock_bh(&csk->sk_callback_lock);
+	if (csk->sk_user_data) {
+		write_unlock_bh(&csk->sk_callback_lock);
 		strp_stop(&psock->strp);
-		strp_करोne(&psock->strp);
-		kmem_cache_मुक्त(kcm_psockp, psock);
+		strp_done(&psock->strp);
+		kmem_cache_free(kcm_psockp, psock);
 		err = -EALREADY;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	psock->save_data_पढ़ोy = csk->sk_data_पढ़ोy;
-	psock->save_ग_लिखो_space = csk->sk_ग_लिखो_space;
+	psock->save_data_ready = csk->sk_data_ready;
+	psock->save_write_space = csk->sk_write_space;
 	psock->save_state_change = csk->sk_state_change;
 	csk->sk_user_data = psock;
-	csk->sk_data_पढ़ोy = psock_data_पढ़ोy;
-	csk->sk_ग_लिखो_space = psock_ग_लिखो_space;
+	csk->sk_data_ready = psock_data_ready;
+	csk->sk_write_space = psock_write_space;
 	csk->sk_state_change = psock_state_change;
 
-	ग_लिखो_unlock_bh(&csk->sk_callback_lock);
+	write_unlock_bh(&csk->sk_callback_lock);
 
 	sock_hold(csk);
 
 	/* Finished initialization, now add the psock to the MUX. */
 	spin_lock_bh(&mux->lock);
 	head = &mux->psocks;
-	list_क्रम_each_entry(tpsock, &mux->psocks, psock_list) अणु
-		अगर (tpsock->index != index)
-			अवरोध;
+	list_for_each_entry(tpsock, &mux->psocks, psock_list) {
+		if (tpsock->index != index)
+			break;
 		head = &tpsock->psock_list;
 		index++;
-	पूर्ण
+	}
 
 	list_add(&psock->psock_list, head);
 	psock->index = index;
@@ -1462,87 +1461,87 @@ err_out:
 	psock_now_avail(psock);
 	spin_unlock_bh(&mux->lock);
 
-	/* Schedule RX work in हाल there are alपढ़ोy bytes queued */
+	/* Schedule RX work in case there are already bytes queued */
 	strp_check_rcv(&psock->strp);
 
 out:
 	release_sock(csk);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक kcm_attach_ioctl(काष्ठा socket *sock, काष्ठा kcm_attach *info)
-अणु
-	काष्ठा socket *csock;
-	काष्ठा bpf_prog *prog;
-	पूर्णांक err;
+static int kcm_attach_ioctl(struct socket *sock, struct kcm_attach *info)
+{
+	struct socket *csock;
+	struct bpf_prog *prog;
+	int err;
 
 	csock = sockfd_lookup(info->fd, &err);
-	अगर (!csock)
-		वापस -ENOENT;
+	if (!csock)
+		return -ENOENT;
 
 	prog = bpf_prog_get_type(info->bpf_fd, BPF_PROG_TYPE_SOCKET_FILTER);
-	अगर (IS_ERR(prog)) अणु
+	if (IS_ERR(prog)) {
 		err = PTR_ERR(prog);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	err = kcm_attach(sock, csock, prog);
-	अगर (err) अणु
+	if (err) {
 		bpf_prog_put(prog);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/* Keep reference on file also */
 
-	वापस 0;
+	return 0;
 out:
 	sockfd_put(csock);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम kcm_unattach(काष्ठा kcm_psock *psock)
-अणु
-	काष्ठा sock *csk = psock->sk;
-	काष्ठा kcm_mux *mux = psock->mux;
+static void kcm_unattach(struct kcm_psock *psock)
+{
+	struct sock *csk = psock->sk;
+	struct kcm_mux *mux = psock->mux;
 
 	lock_sock(csk);
 
 	/* Stop getting callbacks from TCP socket. After this there should
-	 * be no way to reserve a kcm क्रम this psock.
+	 * be no way to reserve a kcm for this psock.
 	 */
-	ग_लिखो_lock_bh(&csk->sk_callback_lock);
-	csk->sk_user_data = शून्य;
-	csk->sk_data_पढ़ोy = psock->save_data_पढ़ोy;
-	csk->sk_ग_लिखो_space = psock->save_ग_लिखो_space;
+	write_lock_bh(&csk->sk_callback_lock);
+	csk->sk_user_data = NULL;
+	csk->sk_data_ready = psock->save_data_ready;
+	csk->sk_write_space = psock->save_write_space;
 	csk->sk_state_change = psock->save_state_change;
 	strp_stop(&psock->strp);
 
-	अगर (WARN_ON(psock->rx_kcm)) अणु
-		ग_लिखो_unlock_bh(&csk->sk_callback_lock);
+	if (WARN_ON(psock->rx_kcm)) {
+		write_unlock_bh(&csk->sk_callback_lock);
 		release_sock(csk);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	spin_lock_bh(&mux->rx_lock);
 
-	/* Stop receiver activities. After this poपूर्णांक psock should not be
-	 * able to get onto पढ़ोy list either through callbacks or work.
+	/* Stop receiver activities. After this point psock should not be
+	 * able to get onto ready list either through callbacks or work.
 	 */
-	अगर (psock->पढ़ोy_rx_msg) अणु
-		list_del(&psock->psock_पढ़ोy_list);
-		kमुक्त_skb(psock->पढ़ोy_rx_msg);
-		psock->पढ़ोy_rx_msg = शून्य;
-		KCM_STATS_INCR(mux->stats.rx_पढ़ोy_drops);
-	पूर्ण
+	if (psock->ready_rx_msg) {
+		list_del(&psock->psock_ready_list);
+		kfree_skb(psock->ready_rx_msg);
+		psock->ready_rx_msg = NULL;
+		KCM_STATS_INCR(mux->stats.rx_ready_drops);
+	}
 
 	spin_unlock_bh(&mux->rx_lock);
 
-	ग_लिखो_unlock_bh(&csk->sk_callback_lock);
+	write_unlock_bh(&csk->sk_callback_lock);
 
-	/* Call strp_करोne without sock lock */
+	/* Call strp_done without sock lock */
 	release_sock(csk);
-	strp_करोne(&psock->strp);
+	strp_done(&psock->strp);
 	lock_sock(csk);
 
 	bpf_prog_put(psock->bpf_prog);
@@ -1554,7 +1553,7 @@ out:
 
 	KCM_STATS_INCR(mux->stats.psock_unattach);
 
-	अगर (psock->tx_kcm) अणु
+	if (psock->tx_kcm) {
 		/* psock was reserved.  Just mark it finished and we will clean
 		 * up in the kcm paths, we need kcm lock which can not be
 		 * acquired here.
@@ -1564,26 +1563,26 @@ out:
 
 		/* We are unattaching a socket that is reserved. Abort the
 		 * socket since we may be out of sync in sending on it. We need
-		 * to करो this without the mux lock.
+		 * to do this without the mux lock.
 		 */
-		kcm_पात_tx_psock(psock, EPIPE, false);
+		kcm_abort_tx_psock(psock, EPIPE, false);
 
 		spin_lock_bh(&mux->lock);
-		अगर (!psock->tx_kcm) अणु
-			/* psock now unreserved in winकरोw mux was unlocked */
-			जाओ no_reserved;
-		पूर्ण
-		psock->करोne = 1;
+		if (!psock->tx_kcm) {
+			/* psock now unreserved in window mux was unlocked */
+			goto no_reserved;
+		}
+		psock->done = 1;
 
-		/* Commit करोne beक्रमe queuing work to process it */
+		/* Commit done before queuing work to process it */
 		smp_mb();
 
-		/* Queue tx work to make sure psock->करोne is handled */
+		/* Queue tx work to make sure psock->done is handled */
 		queue_work(kcm_wq, &psock->tx_kcm->tx_work);
 		spin_unlock_bh(&mux->lock);
-	पूर्ण अन्यथा अणु
+	} else {
 no_reserved:
-		अगर (!psock->tx_stopped)
+		if (!psock->tx_stopped)
 			list_del(&psock->psock_avail_list);
 		list_del(&psock->psock_list);
 		mux->psocks_cnt--;
@@ -1591,79 +1590,79 @@ no_reserved:
 
 		sock_put(csk);
 		fput(csk->sk_socket->file);
-		kmem_cache_मुक्त(kcm_psockp, psock);
-	पूर्ण
+		kmem_cache_free(kcm_psockp, psock);
+	}
 
 	release_sock(csk);
-पूर्ण
+}
 
-अटल पूर्णांक kcm_unattach_ioctl(काष्ठा socket *sock, काष्ठा kcm_unattach *info)
-अणु
-	काष्ठा kcm_sock *kcm = kcm_sk(sock->sk);
-	काष्ठा kcm_mux *mux = kcm->mux;
-	काष्ठा kcm_psock *psock;
-	काष्ठा socket *csock;
-	काष्ठा sock *csk;
-	पूर्णांक err;
+static int kcm_unattach_ioctl(struct socket *sock, struct kcm_unattach *info)
+{
+	struct kcm_sock *kcm = kcm_sk(sock->sk);
+	struct kcm_mux *mux = kcm->mux;
+	struct kcm_psock *psock;
+	struct socket *csock;
+	struct sock *csk;
+	int err;
 
 	csock = sockfd_lookup(info->fd, &err);
-	अगर (!csock)
-		वापस -ENOENT;
+	if (!csock)
+		return -ENOENT;
 
 	csk = csock->sk;
-	अगर (!csk) अणु
+	if (!csk) {
 		err = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	err = -ENOENT;
 
 	spin_lock_bh(&mux->lock);
 
-	list_क्रम_each_entry(psock, &mux->psocks, psock_list) अणु
-		अगर (psock->sk != csk)
-			जारी;
+	list_for_each_entry(psock, &mux->psocks, psock_list) {
+		if (psock->sk != csk)
+			continue;
 
 		/* Found the matching psock */
 
-		अगर (psock->unattaching || WARN_ON(psock->करोne)) अणु
+		if (psock->unattaching || WARN_ON(psock->done)) {
 			err = -EALREADY;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		psock->unattaching = 1;
 
 		spin_unlock_bh(&mux->lock);
 
-		/* Lower socket lock should alपढ़ोy be held */
+		/* Lower socket lock should already be held */
 		kcm_unattach(psock);
 
 		err = 0;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	spin_unlock_bh(&mux->lock);
 
 out:
 	sockfd_put(csock);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल काष्ठा proto kcm_proto = अणु
+static struct proto kcm_proto = {
 	.name	= "KCM",
 	.owner	= THIS_MODULE,
-	.obj_size = माप(काष्ठा kcm_sock),
-पूर्ण;
+	.obj_size = sizeof(struct kcm_sock),
+};
 
 /* Clone a kcm socket. */
-अटल काष्ठा file *kcm_clone(काष्ठा socket *osock)
-अणु
-	काष्ठा socket *newsock;
-	काष्ठा sock *newsk;
+static struct file *kcm_clone(struct socket *osock)
+{
+	struct socket *newsock;
+	struct sock *newsk;
 
 	newsock = sock_alloc();
-	अगर (!newsock)
-		वापस ERR_PTR(-ENखाता);
+	if (!newsock)
+		return ERR_PTR(-ENFILE);
 
 	newsock->type = osock->type;
 	newsock->ops = osock->ops;
@@ -1672,94 +1671,94 @@ out:
 
 	newsk = sk_alloc(sock_net(osock->sk), PF_KCM, GFP_KERNEL,
 			 &kcm_proto, false);
-	अगर (!newsk) अणु
+	if (!newsk) {
 		sock_release(newsock);
-		वापस ERR_PTR(-ENOMEM);
-	पूर्ण
+		return ERR_PTR(-ENOMEM);
+	}
 	sock_init_data(newsock, newsk);
 	init_kcm_sock(kcm_sk(newsk), kcm_sk(osock->sk)->mux);
 
-	वापस sock_alloc_file(newsock, 0, osock->sk->sk_prot_creator->name);
-पूर्ण
+	return sock_alloc_file(newsock, 0, osock->sk->sk_prot_creator->name);
+}
 
-अटल पूर्णांक kcm_ioctl(काष्ठा socket *sock, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
-अणु
-	पूर्णांक err;
+static int kcm_ioctl(struct socket *sock, unsigned int cmd, unsigned long arg)
+{
+	int err;
 
-	चयन (cmd) अणु
-	हाल SIOCKCMATTACH: अणु
-		काष्ठा kcm_attach info;
+	switch (cmd) {
+	case SIOCKCMATTACH: {
+		struct kcm_attach info;
 
-		अगर (copy_from_user(&info, (व्योम __user *)arg, माप(info)))
-			वापस -EFAULT;
+		if (copy_from_user(&info, (void __user *)arg, sizeof(info)))
+			return -EFAULT;
 
 		err = kcm_attach_ioctl(sock, &info);
 
-		अवरोध;
-	पूर्ण
-	हाल SIOCKCMUNATTACH: अणु
-		काष्ठा kcm_unattach info;
+		break;
+	}
+	case SIOCKCMUNATTACH: {
+		struct kcm_unattach info;
 
-		अगर (copy_from_user(&info, (व्योम __user *)arg, माप(info)))
-			वापस -EFAULT;
+		if (copy_from_user(&info, (void __user *)arg, sizeof(info)))
+			return -EFAULT;
 
 		err = kcm_unattach_ioctl(sock, &info);
 
-		अवरोध;
-	पूर्ण
-	हाल SIOCKCMCLONE: अणु
-		काष्ठा kcm_clone info;
-		काष्ठा file *file;
+		break;
+	}
+	case SIOCKCMCLONE: {
+		struct kcm_clone info;
+		struct file *file;
 
 		info.fd = get_unused_fd_flags(0);
-		अगर (unlikely(info.fd < 0))
-			वापस info.fd;
+		if (unlikely(info.fd < 0))
+			return info.fd;
 
 		file = kcm_clone(sock);
-		अगर (IS_ERR(file)) अणु
+		if (IS_ERR(file)) {
 			put_unused_fd(info.fd);
-			वापस PTR_ERR(file);
-		पूर्ण
-		अगर (copy_to_user((व्योम __user *)arg, &info,
-				 माप(info))) अणु
+			return PTR_ERR(file);
+		}
+		if (copy_to_user((void __user *)arg, &info,
+				 sizeof(info))) {
 			put_unused_fd(info.fd);
 			fput(file);
-			वापस -EFAULT;
-		पूर्ण
+			return -EFAULT;
+		}
 		fd_install(info.fd, file);
 		err = 0;
-		अवरोध;
-	पूर्ण
-	शेष:
+		break;
+	}
+	default:
 		err = -ENOIOCTLCMD;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम मुक्त_mux(काष्ठा rcu_head *rcu)
-अणु
-	काष्ठा kcm_mux *mux = container_of(rcu,
-	    काष्ठा kcm_mux, rcu);
+static void free_mux(struct rcu_head *rcu)
+{
+	struct kcm_mux *mux = container_of(rcu,
+	    struct kcm_mux, rcu);
 
-	kmem_cache_मुक्त(kcm_muxp, mux);
-पूर्ण
+	kmem_cache_free(kcm_muxp, mux);
+}
 
-अटल व्योम release_mux(काष्ठा kcm_mux *mux)
-अणु
-	काष्ठा kcm_net *knet = mux->knet;
-	काष्ठा kcm_psock *psock, *पंचांगp_psock;
+static void release_mux(struct kcm_mux *mux)
+{
+	struct kcm_net *knet = mux->knet;
+	struct kcm_psock *psock, *tmp_psock;
 
 	/* Release psocks */
-	list_क्रम_each_entry_safe(psock, पंचांगp_psock,
-				 &mux->psocks, psock_list) अणु
-		अगर (!WARN_ON(psock->unattaching))
+	list_for_each_entry_safe(psock, tmp_psock,
+				 &mux->psocks, psock_list) {
+		if (!WARN_ON(psock->unattaching))
 			kcm_unattach(psock);
-	पूर्ण
+	}
 
-	अगर (WARN_ON(mux->psocks_cnt))
-		वापस;
+	if (WARN_ON(mux->psocks_cnt))
+		return;
 
 	__skb_queue_purge(&mux->rx_hold_queue);
 
@@ -1773,36 +1772,36 @@ out:
 	knet->count--;
 	mutex_unlock(&knet->mutex);
 
-	call_rcu(&mux->rcu, मुक्त_mux);
-पूर्ण
+	call_rcu(&mux->rcu, free_mux);
+}
 
-अटल व्योम kcm_करोne(काष्ठा kcm_sock *kcm)
-अणु
-	काष्ठा kcm_mux *mux = kcm->mux;
-	काष्ठा sock *sk = &kcm->sk;
-	पूर्णांक socks_cnt;
+static void kcm_done(struct kcm_sock *kcm)
+{
+	struct kcm_mux *mux = kcm->mux;
+	struct sock *sk = &kcm->sk;
+	int socks_cnt;
 
 	spin_lock_bh(&mux->rx_lock);
-	अगर (kcm->rx_psock) अणु
+	if (kcm->rx_psock) {
 		/* Cleanup in unreserve_rx_kcm */
-		WARN_ON(kcm->करोne);
+		WARN_ON(kcm->done);
 		kcm->rx_disabled = 1;
-		kcm->करोne = 1;
+		kcm->done = 1;
 		spin_unlock_bh(&mux->rx_lock);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (kcm->rx_रुको) अणु
-		list_del(&kcm->रुको_rx_list);
-		kcm->rx_रुको = false;
-	पूर्ण
+	if (kcm->rx_wait) {
+		list_del(&kcm->wait_rx_list);
+		kcm->rx_wait = false;
+	}
 	/* Move any pending receive messages to other kcm sockets */
 	requeue_rx_msgs(mux, &sk->sk_receive_queue);
 
 	spin_unlock_bh(&mux->rx_lock);
 
-	अगर (WARN_ON(sk_rmem_alloc_get(sk)))
-		वापस;
+	if (WARN_ON(sk_rmem_alloc_get(sk)))
+		return;
 
 	/* Detach from MUX */
 	spin_lock_bh(&mux->lock);
@@ -1813,44 +1812,44 @@ out:
 
 	spin_unlock_bh(&mux->lock);
 
-	अगर (!socks_cnt) अणु
-		/* We are करोne with the mux now. */
+	if (!socks_cnt) {
+		/* We are done with the mux now. */
 		release_mux(mux);
-	पूर्ण
+	}
 
-	WARN_ON(kcm->rx_रुको);
+	WARN_ON(kcm->rx_wait);
 
 	sock_put(&kcm->sk);
-पूर्ण
+}
 
-/* Called by kcm_release to बंद a KCM socket.
+/* Called by kcm_release to close a KCM socket.
  * If this is the last KCM socket on the MUX, destroy the MUX.
  */
-अटल पूर्णांक kcm_release(काष्ठा socket *sock)
-अणु
-	काष्ठा sock *sk = sock->sk;
-	काष्ठा kcm_sock *kcm;
-	काष्ठा kcm_mux *mux;
-	काष्ठा kcm_psock *psock;
+static int kcm_release(struct socket *sock)
+{
+	struct sock *sk = sock->sk;
+	struct kcm_sock *kcm;
+	struct kcm_mux *mux;
+	struct kcm_psock *psock;
 
-	अगर (!sk)
-		वापस 0;
+	if (!sk)
+		return 0;
 
 	kcm = kcm_sk(sk);
 	mux = kcm->mux;
 
 	sock_orphan(sk);
-	kमुक्त_skb(kcm->seq_skb);
+	kfree_skb(kcm->seq_skb);
 
 	lock_sock(sk);
-	/* Purge queue under lock to aव्योम race condition with tx_work trying
-	 * to act when queue is nonempty. If tx_work runs after this poपूर्णांक
-	 * it will just वापस.
+	/* Purge queue under lock to avoid race condition with tx_work trying
+	 * to act when queue is nonempty. If tx_work runs after this point
+	 * it will just return.
 	 */
-	__skb_queue_purge(&sk->sk_ग_लिखो_queue);
+	__skb_queue_purge(&sk->sk_write_queue);
 
 	/* Set tx_stopped. This is checked when psock is bound to a kcm and we
-	 * get a ग_लिखोspace callback. This prevents further work being queued
+	 * get a writespace callback. This prevents further work being queued
 	 * from the callback (unbinding the psock occurs after canceling work.
 	 */
 	kcm->tx_stopped = 1;
@@ -1858,43 +1857,43 @@ out:
 	release_sock(sk);
 
 	spin_lock_bh(&mux->lock);
-	अगर (kcm->tx_रुको) अणु
-		/* Take of tx_रुको list, after this poपूर्णांक there should be no way
-		 * that a psock will be asचिन्हित to this kcm.
+	if (kcm->tx_wait) {
+		/* Take of tx_wait list, after this point there should be no way
+		 * that a psock will be assigned to this kcm.
 		 */
-		list_del(&kcm->रुको_psock_list);
-		kcm->tx_रुको = false;
-	पूर्ण
+		list_del(&kcm->wait_psock_list);
+		kcm->tx_wait = false;
+	}
 	spin_unlock_bh(&mux->lock);
 
-	/* Cancel work. After this poपूर्णांक there should be no outside references
+	/* Cancel work. After this point there should be no outside references
 	 * to the kcm socket.
 	 */
 	cancel_work_sync(&kcm->tx_work);
 
 	lock_sock(sk);
 	psock = kcm->tx_psock;
-	अगर (psock) अणु
-		/* A psock was reserved, so we need to समाप्त it since it
-		 * may alपढ़ोy have some bytes queued from a message. We
-		 * need to करो this after removing kcm from tx_रुको list.
+	if (psock) {
+		/* A psock was reserved, so we need to kill it since it
+		 * may already have some bytes queued from a message. We
+		 * need to do this after removing kcm from tx_wait list.
 		 */
-		kcm_पात_tx_psock(psock, EPIPE, false);
+		kcm_abort_tx_psock(psock, EPIPE, false);
 		unreserve_psock(kcm);
-	पूर्ण
+	}
 	release_sock(sk);
 
-	WARN_ON(kcm->tx_रुको);
+	WARN_ON(kcm->tx_wait);
 	WARN_ON(kcm->tx_psock);
 
-	sock->sk = शून्य;
+	sock->sk = NULL;
 
-	kcm_करोne(kcm);
+	kcm_done(kcm);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा proto_ops kcm_dgram_ops = अणु
+static const struct proto_ops kcm_dgram_ops = {
 	.family =	PF_KCM,
 	.owner =	THIS_MODULE,
 	.release =	kcm_release,
@@ -1906,16 +1905,16 @@ out:
 	.poll =		datagram_poll,
 	.ioctl =	kcm_ioctl,
 	.listen =	sock_no_listen,
-	.shutकरोwn =	sock_no_shutकरोwn,
+	.shutdown =	sock_no_shutdown,
 	.setsockopt =	kcm_setsockopt,
-	.माला_लोockopt =	kcm_माला_लोockopt,
+	.getsockopt =	kcm_getsockopt,
 	.sendmsg =	kcm_sendmsg,
 	.recvmsg =	kcm_recvmsg,
 	.mmap =		sock_no_mmap,
 	.sendpage =	kcm_sendpage,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा proto_ops kcm_seqpacket_ops = अणु
+static const struct proto_ops kcm_seqpacket_ops = {
 	.family =	PF_KCM,
 	.owner =	THIS_MODULE,
 	.release =	kcm_release,
@@ -1927,57 +1926,57 @@ out:
 	.poll =		datagram_poll,
 	.ioctl =	kcm_ioctl,
 	.listen =	sock_no_listen,
-	.shutकरोwn =	sock_no_shutकरोwn,
+	.shutdown =	sock_no_shutdown,
 	.setsockopt =	kcm_setsockopt,
-	.माला_लोockopt =	kcm_माला_लोockopt,
+	.getsockopt =	kcm_getsockopt,
 	.sendmsg =	kcm_sendmsg,
 	.recvmsg =	kcm_recvmsg,
 	.mmap =		sock_no_mmap,
 	.sendpage =	kcm_sendpage,
-	.splice_पढ़ो =	kcm_splice_पढ़ो,
-पूर्ण;
+	.splice_read =	kcm_splice_read,
+};
 
-/* Create proto operation क्रम kcm sockets */
-अटल पूर्णांक kcm_create(काष्ठा net *net, काष्ठा socket *sock,
-		      पूर्णांक protocol, पूर्णांक kern)
-अणु
-	काष्ठा kcm_net *knet = net_generic(net, kcm_net_id);
-	काष्ठा sock *sk;
-	काष्ठा kcm_mux *mux;
+/* Create proto operation for kcm sockets */
+static int kcm_create(struct net *net, struct socket *sock,
+		      int protocol, int kern)
+{
+	struct kcm_net *knet = net_generic(net, kcm_net_id);
+	struct sock *sk;
+	struct kcm_mux *mux;
 
-	चयन (sock->type) अणु
-	हाल SOCK_DGRAM:
+	switch (sock->type) {
+	case SOCK_DGRAM:
 		sock->ops = &kcm_dgram_ops;
-		अवरोध;
-	हाल SOCK_SEQPACKET:
+		break;
+	case SOCK_SEQPACKET:
 		sock->ops = &kcm_seqpacket_ops;
-		अवरोध;
-	शेष:
-		वापस -ESOCKTNOSUPPORT;
-	पूर्ण
+		break;
+	default:
+		return -ESOCKTNOSUPPORT;
+	}
 
-	अगर (protocol != KCMPROTO_CONNECTED)
-		वापस -EPROTONOSUPPORT;
+	if (protocol != KCMPROTO_CONNECTED)
+		return -EPROTONOSUPPORT;
 
 	sk = sk_alloc(net, PF_KCM, GFP_KERNEL, &kcm_proto, kern);
-	अगर (!sk)
-		वापस -ENOMEM;
+	if (!sk)
+		return -ENOMEM;
 
 	/* Allocate a kcm mux, shared between KCM sockets */
 	mux = kmem_cache_zalloc(kcm_muxp, GFP_KERNEL);
-	अगर (!mux) अणु
-		sk_मुक्त(sk);
-		वापस -ENOMEM;
-	पूर्ण
+	if (!mux) {
+		sk_free(sk);
+		return -ENOMEM;
+	}
 
 	spin_lock_init(&mux->lock);
 	spin_lock_init(&mux->rx_lock);
 	INIT_LIST_HEAD(&mux->kcm_socks);
-	INIT_LIST_HEAD(&mux->kcm_rx_रुकोers);
-	INIT_LIST_HEAD(&mux->kcm_tx_रुकोers);
+	INIT_LIST_HEAD(&mux->kcm_rx_waiters);
+	INIT_LIST_HEAD(&mux->kcm_tx_waiters);
 
 	INIT_LIST_HEAD(&mux->psocks);
-	INIT_LIST_HEAD(&mux->psocks_पढ़ोy);
+	INIT_LIST_HEAD(&mux->psocks_ready);
 	INIT_LIST_HEAD(&mux->psocks_avail);
 
 	mux->knet = knet;
@@ -1994,113 +1993,113 @@ out:
 	sock_init_data(sock, sk);
 	init_kcm_sock(kcm_sk(sk), mux);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा net_proto_family kcm_family_ops = अणु
+static const struct net_proto_family kcm_family_ops = {
 	.family = PF_KCM,
 	.create = kcm_create,
 	.owner  = THIS_MODULE,
-पूर्ण;
+};
 
-अटल __net_init पूर्णांक kcm_init_net(काष्ठा net *net)
-अणु
-	काष्ठा kcm_net *knet = net_generic(net, kcm_net_id);
+static __net_init int kcm_init_net(struct net *net)
+{
+	struct kcm_net *knet = net_generic(net, kcm_net_id);
 
 	INIT_LIST_HEAD_RCU(&knet->mux_list);
 	mutex_init(&knet->mutex);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल __net_निकास व्योम kcm_निकास_net(काष्ठा net *net)
-अणु
-	काष्ठा kcm_net *knet = net_generic(net, kcm_net_id);
+static __net_exit void kcm_exit_net(struct net *net)
+{
+	struct kcm_net *knet = net_generic(net, kcm_net_id);
 
-	/* All KCM sockets should be बंदd at this poपूर्णांक, which should mean
+	/* All KCM sockets should be closed at this point, which should mean
 	 * that all multiplexors and psocks have been destroyed.
 	 */
 	WARN_ON(!list_empty(&knet->mux_list));
-पूर्ण
+}
 
-अटल काष्ठा pernet_operations kcm_net_ops = अणु
+static struct pernet_operations kcm_net_ops = {
 	.init = kcm_init_net,
-	.निकास = kcm_निकास_net,
+	.exit = kcm_exit_net,
 	.id   = &kcm_net_id,
-	.size = माप(काष्ठा kcm_net),
-पूर्ण;
+	.size = sizeof(struct kcm_net),
+};
 
-अटल पूर्णांक __init kcm_init(व्योम)
-अणु
-	पूर्णांक err = -ENOMEM;
+static int __init kcm_init(void)
+{
+	int err = -ENOMEM;
 
 	kcm_muxp = kmem_cache_create("kcm_mux_cache",
-				     माप(काष्ठा kcm_mux), 0,
-				     SLAB_HWCACHE_ALIGN, शून्य);
-	अगर (!kcm_muxp)
-		जाओ fail;
+				     sizeof(struct kcm_mux), 0,
+				     SLAB_HWCACHE_ALIGN, NULL);
+	if (!kcm_muxp)
+		goto fail;
 
 	kcm_psockp = kmem_cache_create("kcm_psock_cache",
-				       माप(काष्ठा kcm_psock), 0,
-					SLAB_HWCACHE_ALIGN, शून्य);
-	अगर (!kcm_psockp)
-		जाओ fail;
+				       sizeof(struct kcm_psock), 0,
+					SLAB_HWCACHE_ALIGN, NULL);
+	if (!kcm_psockp)
+		goto fail;
 
-	kcm_wq = create_singlethपढ़ो_workqueue("kkcmd");
-	अगर (!kcm_wq)
-		जाओ fail;
+	kcm_wq = create_singlethread_workqueue("kkcmd");
+	if (!kcm_wq)
+		goto fail;
 
-	err = proto_रेजिस्टर(&kcm_proto, 1);
-	अगर (err)
-		जाओ fail;
+	err = proto_register(&kcm_proto, 1);
+	if (err)
+		goto fail;
 
-	err = रेजिस्टर_pernet_device(&kcm_net_ops);
-	अगर (err)
-		जाओ net_ops_fail;
+	err = register_pernet_device(&kcm_net_ops);
+	if (err)
+		goto net_ops_fail;
 
-	err = sock_रेजिस्टर(&kcm_family_ops);
-	अगर (err)
-		जाओ sock_रेजिस्टर_fail;
+	err = sock_register(&kcm_family_ops);
+	if (err)
+		goto sock_register_fail;
 
 	err = kcm_proc_init();
-	अगर (err)
-		जाओ proc_init_fail;
+	if (err)
+		goto proc_init_fail;
 
-	वापस 0;
+	return 0;
 
 proc_init_fail:
-	sock_unरेजिस्टर(PF_KCM);
+	sock_unregister(PF_KCM);
 
-sock_रेजिस्टर_fail:
-	unरेजिस्टर_pernet_device(&kcm_net_ops);
+sock_register_fail:
+	unregister_pernet_device(&kcm_net_ops);
 
 net_ops_fail:
-	proto_unरेजिस्टर(&kcm_proto);
+	proto_unregister(&kcm_proto);
 
 fail:
 	kmem_cache_destroy(kcm_muxp);
 	kmem_cache_destroy(kcm_psockp);
 
-	अगर (kcm_wq)
+	if (kcm_wq)
 		destroy_workqueue(kcm_wq);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम __निकास kcm_निकास(व्योम)
-अणु
-	kcm_proc_निकास();
-	sock_unरेजिस्टर(PF_KCM);
-	unरेजिस्टर_pernet_device(&kcm_net_ops);
-	proto_unरेजिस्टर(&kcm_proto);
+static void __exit kcm_exit(void)
+{
+	kcm_proc_exit();
+	sock_unregister(PF_KCM);
+	unregister_pernet_device(&kcm_net_ops);
+	proto_unregister(&kcm_proto);
 	destroy_workqueue(kcm_wq);
 
 	kmem_cache_destroy(kcm_muxp);
 	kmem_cache_destroy(kcm_psockp);
-पूर्ण
+}
 
 module_init(kcm_init);
-module_निकास(kcm_निकास);
+module_exit(kcm_exit);
 
 MODULE_LICENSE("GPL");
 MODULE_ALIAS_NETPROTO(PF_KCM);

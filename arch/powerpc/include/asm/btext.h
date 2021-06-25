@@ -1,35 +1,34 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * Definitions क्रम using the procedures in btext.c.
+ * Definitions for using the procedures in btext.c.
  *
  * Benjamin Herrenschmidt <benh@kernel.crashing.org>
  */
-#अगर_अघोषित __PPC_BTEXT_H
-#घोषणा __PPC_BTEXT_H
-#अगर_घोषित __KERNEL__
+#ifndef __PPC_BTEXT_H
+#define __PPC_BTEXT_H
+#ifdef __KERNEL__
 
-बाह्य पूर्णांक btext_find_display(पूर्णांक allow_nonमानक_निकास);
-बाह्य व्योम btext_update_display(अचिन्हित दीर्घ phys, पूर्णांक width, पूर्णांक height,
-				 पूर्णांक depth, पूर्णांक pitch);
-बाह्य व्योम btext_setup_display(पूर्णांक width, पूर्णांक height, पूर्णांक depth, पूर्णांक pitch,
-				अचिन्हित दीर्घ address);
-#अगर_घोषित CONFIG_PPC32
-बाह्य व्योम btext_prepare_BAT(व्योम);
-#अन्यथा
-अटल अंतरभूत व्योम btext_prepare_BAT(व्योम) अणु पूर्ण
-#पूर्ण_अगर
-बाह्य व्योम btext_map(व्योम);
-बाह्य व्योम btext_unmap(व्योम);
+extern int btext_find_display(int allow_nonstdout);
+extern void btext_update_display(unsigned long phys, int width, int height,
+				 int depth, int pitch);
+extern void btext_setup_display(int width, int height, int depth, int pitch,
+				unsigned long address);
+#ifdef CONFIG_PPC32
+extern void btext_prepare_BAT(void);
+#else
+static inline void btext_prepare_BAT(void) { }
+#endif
+extern void btext_map(void);
+extern void btext_unmap(void);
 
-बाह्य व्योम btext_drawअक्षर(अक्षर c);
-बाह्य व्योम btext_drawstring(स्थिर अक्षर *str);
-बाह्य व्योम btext_drawhex(अचिन्हित दीर्घ v);
-बाह्य व्योम btext_drawtext(स्थिर अक्षर *c, अचिन्हित पूर्णांक len);
+extern void btext_drawchar(char c);
+extern void btext_drawstring(const char *str);
+extern void btext_drawhex(unsigned long v);
+extern void btext_drawtext(const char *c, unsigned int len);
 
-बाह्य व्योम btext_clearscreen(व्योम);
-बाह्य व्योम btext_flushscreen(व्योम);
-बाह्य व्योम btext_flushline(व्योम);
+extern void btext_clearscreen(void);
+extern void btext_flushscreen(void);
+extern void btext_flushline(void);
 
-#पूर्ण_अगर /* __KERNEL__ */
-#पूर्ण_अगर /* __PPC_BTEXT_H */
+#endif /* __KERNEL__ */
+#endif /* __PPC_BTEXT_H */

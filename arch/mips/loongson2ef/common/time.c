@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright (C) 2007 Lemote, Inc. & Institute of Computing Technology
  * Author: Fuxin Zhang, zhangfx@lemote.com
@@ -7,23 +6,23 @@
  * Copyright (C) 2009 Lemote Inc.
  * Author: Wu Zhangjin, wuzhangjin@gmail.com
  */
-#समावेश <यंत्र/mc146818-समय.स>
-#समावेश <यंत्र/समय.स>
-#समावेश <यंत्र/hpet.h>
+#include <asm/mc146818-time.h>
+#include <asm/time.h>
+#include <asm/hpet.h>
 
-#समावेश <loongson.h>
-#समावेश <cs5536/cs5536_mfgpt.h>
+#include <loongson.h>
+#include <cs5536/cs5536_mfgpt.h>
 
-व्योम __init plat_समय_init(व्योम)
-अणु
-	/* setup mips r4k समयr */
-	mips_hpt_frequency = cpu_घड़ी_freq / 2;
+void __init plat_time_init(void)
+{
+	/* setup mips r4k timer */
+	mips_hpt_frequency = cpu_clock_freq / 2;
 
-	setup_mfgpt0_समयr();
-पूर्ण
+	setup_mfgpt0_timer();
+}
 
-व्योम पढ़ो_persistent_घड़ी64(काष्ठा बारpec64 *ts)
-अणु
-	ts->tv_sec = mc146818_get_cmos_समय();
+void read_persistent_clock64(struct timespec64 *ts)
+{
+	ts->tv_sec = mc146818_get_cmos_time();
 	ts->tv_nsec = 0;
-पूर्ण
+}

@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0
+// SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
 /******************************************************************************
  *
  * Module Name: excreate - Named object creation
@@ -8,87 +7,87 @@
  *
  *****************************************************************************/
 
-#समावेश <acpi/acpi.h>
-#समावेश "accommon.h"
-#समावेश "acinterp.h"
-#समावेश "amlcode.h"
-#समावेश "acnamesp.h"
+#include <acpi/acpi.h>
+#include "accommon.h"
+#include "acinterp.h"
+#include "amlcode.h"
+#include "acnamesp.h"
 
-#घोषणा _COMPONENT          ACPI_EXECUTER
+#define _COMPONENT          ACPI_EXECUTER
 ACPI_MODULE_NAME("excreate")
 /*******************************************************************************
  *
  * FUNCTION:    acpi_ex_create_alias
  *
- * PARAMETERS:  walk_state           - Current state, contains opeअक्रमs
+ * PARAMETERS:  walk_state           - Current state, contains operands
  *
  * RETURN:      Status
  *
  * DESCRIPTION: Create a new named alias
  *
  ******************************************************************************/
-acpi_status acpi_ex_create_alias(काष्ठा acpi_walk_state *walk_state)
-अणु
-	काष्ठा acpi_namespace_node *target_node;
-	काष्ठा acpi_namespace_node *alias_node;
+acpi_status acpi_ex_create_alias(struct acpi_walk_state *walk_state)
+{
+	struct acpi_namespace_node *target_node;
+	struct acpi_namespace_node *alias_node;
 	acpi_status status = AE_OK;
 
 	ACPI_FUNCTION_TRACE(ex_create_alias);
 
-	/* Get the source/alias opeअक्रमs (both namespace nodes) */
+	/* Get the source/alias operands (both namespace nodes) */
 
-	alias_node = (काष्ठा acpi_namespace_node *)walk_state->opeअक्रमs[0];
-	target_node = (काष्ठा acpi_namespace_node *)walk_state->opeअक्रमs[1];
+	alias_node = (struct acpi_namespace_node *)walk_state->operands[0];
+	target_node = (struct acpi_namespace_node *)walk_state->operands[1];
 
-	अगर ((target_node->type == ACPI_TYPE_LOCAL_ALIAS) ||
-	    (target_node->type == ACPI_TYPE_LOCAL_METHOD_ALIAS)) अणु
+	if ((target_node->type == ACPI_TYPE_LOCAL_ALIAS) ||
+	    (target_node->type == ACPI_TYPE_LOCAL_METHOD_ALIAS)) {
 		/*
-		 * Dereference an existing alias so that we करोn't create a chain
+		 * Dereference an existing alias so that we don't create a chain
 		 * of aliases. With this code, we guarantee that an alias is
 		 * always exactly one level of indirection away from the
 		 * actual aliased name.
 		 */
 		target_node =
-		    ACPI_CAST_PTR(काष्ठा acpi_namespace_node,
+		    ACPI_CAST_PTR(struct acpi_namespace_node,
 				  target_node->object);
-	पूर्ण
+	}
 
 	/* Ensure that the target node is valid */
 
-	अगर (!target_node) अणु
-		वापस_ACPI_STATUS(AE_शून्य_OBJECT);
-	पूर्ण
+	if (!target_node) {
+		return_ACPI_STATUS(AE_NULL_OBJECT);
+	}
 
-	/* Conकाष्ठा the alias object (a namespace node) */
+	/* Construct the alias object (a namespace node) */
 
-	चयन (target_node->type) अणु
-	हाल ACPI_TYPE_METHOD:
+	switch (target_node->type) {
+	case ACPI_TYPE_METHOD:
 		/*
-		 * Control method aliases need to be dअगरferentiated with
+		 * Control method aliases need to be differentiated with
 		 * a special type
 		 */
 		alias_node->type = ACPI_TYPE_LOCAL_METHOD_ALIAS;
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		/*
 		 * All other object types.
 		 *
-		 * The new alias has the type ALIAS and poपूर्णांकs to the original
+		 * The new alias has the type ALIAS and points to the original
 		 * NS node, not the object itself.
 		 */
 		alias_node->type = ACPI_TYPE_LOCAL_ALIAS;
 		alias_node->object =
-		    ACPI_CAST_PTR(जोड़ acpi_opeअक्रम_object, target_node);
-		अवरोध;
-	पूर्ण
+		    ACPI_CAST_PTR(union acpi_operand_object, target_node);
+		break;
+	}
 
-	/* Since both opeअक्रमs are Nodes, we करोn't need to delete them */
+	/* Since both operands are Nodes, we don't need to delete them */
 
 	alias_node->object =
-	    ACPI_CAST_PTR(जोड़ acpi_opeअक्रम_object, target_node);
-	वापस_ACPI_STATUS(status);
-पूर्ण
+	    ACPI_CAST_PTR(union acpi_operand_object, target_node);
+	return_ACPI_STATUS(status);
+}
 
 /*******************************************************************************
  *
@@ -102,43 +101,43 @@ acpi_status acpi_ex_create_alias(काष्ठा acpi_walk_state *walk_state)
  *
  ******************************************************************************/
 
-acpi_status acpi_ex_create_event(काष्ठा acpi_walk_state *walk_state)
-अणु
+acpi_status acpi_ex_create_event(struct acpi_walk_state *walk_state)
+{
 	acpi_status status;
-	जोड़ acpi_opeअक्रम_object *obj_desc;
+	union acpi_operand_object *obj_desc;
 
 	ACPI_FUNCTION_TRACE(ex_create_event);
 
-	obj_desc = acpi_ut_create_पूर्णांकernal_object(ACPI_TYPE_EVENT);
-	अगर (!obj_desc) अणु
+	obj_desc = acpi_ut_create_internal_object(ACPI_TYPE_EVENT);
+	if (!obj_desc) {
 		status = AE_NO_MEMORY;
-		जाओ cleanup;
-	पूर्ण
+		goto cleanup;
+	}
 
 	/*
 	 * Create the actual OS semaphore, with zero initial units -- meaning
-	 * that the event is created in an unसंकेतled state
+	 * that the event is created in an unsignalled state
 	 */
 	status = acpi_os_create_semaphore(ACPI_NO_UNIT_LIMIT, 0,
 					  &obj_desc->event.os_semaphore);
-	अगर (ACPI_FAILURE(status)) अणु
-		जाओ cleanup;
-	पूर्ण
+	if (ACPI_FAILURE(status)) {
+		goto cleanup;
+	}
 
 	/* Attach object to the Node */
 
-	status = acpi_ns_attach_object((काष्ठा acpi_namespace_node *)
-				       walk_state->opeअक्रमs[0], obj_desc,
+	status = acpi_ns_attach_object((struct acpi_namespace_node *)
+				       walk_state->operands[0], obj_desc,
 				       ACPI_TYPE_EVENT);
 
 cleanup:
 	/*
 	 * Remove local reference to the object (on error, will cause deletion
-	 * of both object and semaphore अगर present.)
+	 * of both object and semaphore if present.)
 	 */
-	acpi_ut_हटाओ_reference(obj_desc);
-	वापस_ACPI_STATUS(status);
-पूर्ण
+	acpi_ut_remove_reference(obj_desc);
+	return_ACPI_STATUS(status);
+}
 
 /*******************************************************************************
  *
@@ -154,33 +153,33 @@ cleanup:
  *
  ******************************************************************************/
 
-acpi_status acpi_ex_create_mutex(काष्ठा acpi_walk_state *walk_state)
-अणु
+acpi_status acpi_ex_create_mutex(struct acpi_walk_state *walk_state)
+{
 	acpi_status status = AE_OK;
-	जोड़ acpi_opeअक्रम_object *obj_desc;
+	union acpi_operand_object *obj_desc;
 
 	ACPI_FUNCTION_TRACE_PTR(ex_create_mutex, ACPI_WALK_OPERANDS);
 
 	/* Create the new mutex object */
 
-	obj_desc = acpi_ut_create_पूर्णांकernal_object(ACPI_TYPE_MUTEX);
-	अगर (!obj_desc) अणु
+	obj_desc = acpi_ut_create_internal_object(ACPI_TYPE_MUTEX);
+	if (!obj_desc) {
 		status = AE_NO_MEMORY;
-		जाओ cleanup;
-	पूर्ण
+		goto cleanup;
+	}
 
 	/* Create the actual OS Mutex */
 
 	status = acpi_os_create_mutex(&obj_desc->mutex.os_mutex);
-	अगर (ACPI_FAILURE(status)) अणु
-		जाओ cleanup;
-	पूर्ण
+	if (ACPI_FAILURE(status)) {
+		goto cleanup;
+	}
 
 	/* Init object and attach to NS node */
 
-	obj_desc->mutex.sync_level = (u8)walk_state->opeअक्रमs[1]->पूर्णांकeger.value;
+	obj_desc->mutex.sync_level = (u8)walk_state->operands[1]->integer.value;
 	obj_desc->mutex.node =
-	    (काष्ठा acpi_namespace_node *)walk_state->opeअक्रमs[0];
+	    (struct acpi_namespace_node *)walk_state->operands[0];
 
 	status =
 	    acpi_ns_attach_object(obj_desc->mutex.node, obj_desc,
@@ -189,19 +188,19 @@ acpi_status acpi_ex_create_mutex(काष्ठा acpi_walk_state *walk_state)
 cleanup:
 	/*
 	 * Remove local reference to the object (on error, will cause deletion
-	 * of both object and semaphore अगर present.)
+	 * of both object and semaphore if present.)
 	 */
-	acpi_ut_हटाओ_reference(obj_desc);
-	वापस_ACPI_STATUS(status);
-पूर्ण
+	acpi_ut_remove_reference(obj_desc);
+	return_ACPI_STATUS(status);
+}
 
 /*******************************************************************************
  *
  * FUNCTION:    acpi_ex_create_region
  *
- * PARAMETERS:  aml_start           - Poपूर्णांकer to the region declaration AML
+ * PARAMETERS:  aml_start           - Pointer to the region declaration AML
  *              aml_length          - Max length of the declaration AML
- *              space_id            - Address space ID क्रम the region
+ *              space_id            - Address space ID for the region
  *              walk_state          - Current state
  *
  * RETURN:      Status
@@ -213,12 +212,12 @@ cleanup:
 acpi_status
 acpi_ex_create_region(u8 * aml_start,
 		      u32 aml_length,
-		      u8 space_id, काष्ठा acpi_walk_state *walk_state)
-अणु
+		      u8 space_id, struct acpi_walk_state *walk_state)
+{
 	acpi_status status;
-	जोड़ acpi_opeअक्रम_object *obj_desc;
-	काष्ठा acpi_namespace_node *node;
-	जोड़ acpi_opeअक्रम_object *region_obj2;
+	union acpi_operand_object *obj_desc;
+	struct acpi_namespace_node *node;
+	union acpi_operand_object *region_obj2;
 
 	ACPI_FUNCTION_TRACE(ex_create_region);
 
@@ -227,61 +226,61 @@ acpi_ex_create_region(u8 * aml_start,
 	node = walk_state->op->common.node;
 
 	/*
-	 * If the region object is alपढ़ोy attached to this node,
-	 * just वापस
+	 * If the region object is already attached to this node,
+	 * just return
 	 */
-	अगर (acpi_ns_get_attached_object(node)) अणु
-		वापस_ACPI_STATUS(AE_OK);
-	पूर्ण
+	if (acpi_ns_get_attached_object(node)) {
+		return_ACPI_STATUS(AE_OK);
+	}
 
 	/*
 	 * Space ID must be one of the predefined IDs, or in the user-defined
 	 * range
 	 */
-	अगर (!acpi_is_valid_space_id(space_id)) अणु
+	if (!acpi_is_valid_space_id(space_id)) {
 		/*
-		 * Prपूर्णांक an error message, but जारी. We करोn't want to पात
-		 * a table load क्रम this exception. Instead, अगर the region is
-		 * actually used at runसमय, पात the executing method.
+		 * Print an error message, but continue. We don't want to abort
+		 * a table load for this exception. Instead, if the region is
+		 * actually used at runtime, abort the executing method.
 		 */
 		ACPI_ERROR((AE_INFO,
 			    "Invalid/unknown Address Space ID: 0x%2.2X",
 			    space_id));
-	पूर्ण
+	}
 
 	ACPI_DEBUG_PRINT((ACPI_DB_LOAD, "Region Type - %s (0x%X)\n",
 			  acpi_ut_get_region_name(space_id), space_id));
 
 	/* Create the region descriptor */
 
-	obj_desc = acpi_ut_create_पूर्णांकernal_object(ACPI_TYPE_REGION);
-	अगर (!obj_desc) अणु
+	obj_desc = acpi_ut_create_internal_object(ACPI_TYPE_REGION);
+	if (!obj_desc) {
 		status = AE_NO_MEMORY;
-		जाओ cleanup;
-	पूर्ण
+		goto cleanup;
+	}
 
 	/*
 	 * Remember location in AML stream of address & length
-	 * opeअक्रमs since they need to be evaluated at run समय.
+	 * operands since they need to be evaluated at run time.
 	 */
 	region_obj2 = acpi_ns_get_secondary_object(obj_desc);
 	region_obj2->extra.aml_start = aml_start;
 	region_obj2->extra.aml_length = aml_length;
-	region_obj2->extra.method_REG = शून्य;
-	अगर (walk_state->scope_info) अणु
+	region_obj2->extra.method_REG = NULL;
+	if (walk_state->scope_info) {
 		region_obj2->extra.scope_node =
 		    walk_state->scope_info->scope.node;
-	पूर्ण अन्यथा अणु
+	} else {
 		region_obj2->extra.scope_node = node;
-	पूर्ण
+	}
 
-	/* Init the region from the opeअक्रमs */
+	/* Init the region from the operands */
 
 	obj_desc->region.space_id = space_id;
 	obj_desc->region.address = 0;
 	obj_desc->region.length = 0;
 	obj_desc->region.node = node;
-	obj_desc->region.handler = शून्य;
+	obj_desc->region.handler = NULL;
 	obj_desc->common.flags &=
 	    ~(AOPOBJ_SETUP_COMPLETE | AOPOBJ_REG_CONNECTED |
 	      AOPOBJ_OBJECT_INITIALIZED);
@@ -294,9 +293,9 @@ cleanup:
 
 	/* Remove local reference to the object */
 
-	acpi_ut_हटाओ_reference(obj_desc);
-	वापस_ACPI_STATUS(status);
-पूर्ण
+	acpi_ut_remove_reference(obj_desc);
+	return_ACPI_STATUS(status);
+}
 
 /*******************************************************************************
  *
@@ -312,91 +311,91 @@ cleanup:
  *
  ******************************************************************************/
 
-acpi_status acpi_ex_create_processor(काष्ठा acpi_walk_state *walk_state)
-अणु
-	जोड़ acpi_opeअक्रम_object **opeअक्रम = &walk_state->opeअक्रमs[0];
-	जोड़ acpi_opeअक्रम_object *obj_desc;
+acpi_status acpi_ex_create_processor(struct acpi_walk_state *walk_state)
+{
+	union acpi_operand_object **operand = &walk_state->operands[0];
+	union acpi_operand_object *obj_desc;
 	acpi_status status;
 
 	ACPI_FUNCTION_TRACE_PTR(ex_create_processor, walk_state);
 
 	/* Create the processor object */
 
-	obj_desc = acpi_ut_create_पूर्णांकernal_object(ACPI_TYPE_PROCESSOR);
-	अगर (!obj_desc) अणु
-		वापस_ACPI_STATUS(AE_NO_MEMORY);
-	पूर्ण
+	obj_desc = acpi_ut_create_internal_object(ACPI_TYPE_PROCESSOR);
+	if (!obj_desc) {
+		return_ACPI_STATUS(AE_NO_MEMORY);
+	}
 
-	/* Initialize the processor object from the opeअक्रमs */
+	/* Initialize the processor object from the operands */
 
-	obj_desc->processor.proc_id = (u8) opeअक्रम[1]->पूर्णांकeger.value;
-	obj_desc->processor.length = (u8) opeअक्रम[3]->पूर्णांकeger.value;
+	obj_desc->processor.proc_id = (u8) operand[1]->integer.value;
+	obj_desc->processor.length = (u8) operand[3]->integer.value;
 	obj_desc->processor.address =
-	    (acpi_io_address)opeअक्रम[2]->पूर्णांकeger.value;
+	    (acpi_io_address)operand[2]->integer.value;
 
 	/* Install the processor object in the parent Node */
 
-	status = acpi_ns_attach_object((काष्ठा acpi_namespace_node *)opeअक्रम[0],
+	status = acpi_ns_attach_object((struct acpi_namespace_node *)operand[0],
 				       obj_desc, ACPI_TYPE_PROCESSOR);
 
 	/* Remove local reference to the object */
 
-	acpi_ut_हटाओ_reference(obj_desc);
-	वापस_ACPI_STATUS(status);
-पूर्ण
+	acpi_ut_remove_reference(obj_desc);
+	return_ACPI_STATUS(status);
+}
 
 /*******************************************************************************
  *
- * FUNCTION:    acpi_ex_create_घातer_resource
+ * FUNCTION:    acpi_ex_create_power_resource
  *
  * PARAMETERS:  walk_state          - Current state
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Create a new घातer_resource object and populate the fields
+ * DESCRIPTION: Create a new power_resource object and populate the fields
  *
- *              घातer_resource (Name[0], प्रणाली_level[1], resource_order[2])
+ *              power_resource (Name[0], system_level[1], resource_order[2])
  *
  ******************************************************************************/
 
-acpi_status acpi_ex_create_घातer_resource(काष्ठा acpi_walk_state *walk_state)
-अणु
-	जोड़ acpi_opeअक्रम_object **opeअक्रम = &walk_state->opeअक्रमs[0];
+acpi_status acpi_ex_create_power_resource(struct acpi_walk_state *walk_state)
+{
+	union acpi_operand_object **operand = &walk_state->operands[0];
 	acpi_status status;
-	जोड़ acpi_opeअक्रम_object *obj_desc;
+	union acpi_operand_object *obj_desc;
 
-	ACPI_FUNCTION_TRACE_PTR(ex_create_घातer_resource, walk_state);
+	ACPI_FUNCTION_TRACE_PTR(ex_create_power_resource, walk_state);
 
-	/* Create the घातer resource object */
+	/* Create the power resource object */
 
-	obj_desc = acpi_ut_create_पूर्णांकernal_object(ACPI_TYPE_POWER);
-	अगर (!obj_desc) अणु
-		वापस_ACPI_STATUS(AE_NO_MEMORY);
-	पूर्ण
+	obj_desc = acpi_ut_create_internal_object(ACPI_TYPE_POWER);
+	if (!obj_desc) {
+		return_ACPI_STATUS(AE_NO_MEMORY);
+	}
 
-	/* Initialize the घातer object from the opeअक्रमs */
+	/* Initialize the power object from the operands */
 
-	obj_desc->घातer_resource.प्रणाली_level = (u8) opeअक्रम[1]->पूर्णांकeger.value;
-	obj_desc->घातer_resource.resource_order =
-	    (u16) opeअक्रम[2]->पूर्णांकeger.value;
+	obj_desc->power_resource.system_level = (u8) operand[1]->integer.value;
+	obj_desc->power_resource.resource_order =
+	    (u16) operand[2]->integer.value;
 
-	/* Install the  घातer resource object in the parent Node */
+	/* Install the  power resource object in the parent Node */
 
-	status = acpi_ns_attach_object((काष्ठा acpi_namespace_node *)opeअक्रम[0],
+	status = acpi_ns_attach_object((struct acpi_namespace_node *)operand[0],
 				       obj_desc, ACPI_TYPE_POWER);
 
 	/* Remove local reference to the object */
 
-	acpi_ut_हटाओ_reference(obj_desc);
-	वापस_ACPI_STATUS(status);
-पूर्ण
+	acpi_ut_remove_reference(obj_desc);
+	return_ACPI_STATUS(status);
+}
 
 /*******************************************************************************
  *
  * FUNCTION:    acpi_ex_create_method
  *
  * PARAMETERS:  aml_start       - First byte of the method's AML
- *              aml_length      - AML byte count क्रम this method
+ *              aml_length      - AML byte count for this method
  *              walk_state      - Current state
  *
  * RETURN:      Status
@@ -407,10 +406,10 @@ acpi_status acpi_ex_create_घातer_resource(काष्ठा acpi_walk_sta
 
 acpi_status
 acpi_ex_create_method(u8 * aml_start,
-		      u32 aml_length, काष्ठा acpi_walk_state *walk_state)
-अणु
-	जोड़ acpi_opeअक्रम_object **opeअक्रम = &walk_state->opeअक्रमs[0];
-	जोड़ acpi_opeअक्रम_object *obj_desc;
+		      u32 aml_length, struct acpi_walk_state *walk_state)
+{
+	union acpi_operand_object **operand = &walk_state->operands[0];
+	union acpi_operand_object *obj_desc;
 	acpi_status status;
 	u8 method_flags;
 
@@ -418,31 +417,31 @@ acpi_ex_create_method(u8 * aml_start,
 
 	/* Create a new method object */
 
-	obj_desc = acpi_ut_create_पूर्णांकernal_object(ACPI_TYPE_METHOD);
-	अगर (!obj_desc) अणु
+	obj_desc = acpi_ut_create_internal_object(ACPI_TYPE_METHOD);
+	if (!obj_desc) {
 		status = AE_NO_MEMORY;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
-	/* Save the method's AML poपूर्णांकer and length  */
+	/* Save the method's AML pointer and length  */
 
 	obj_desc->method.aml_start = aml_start;
 	obj_desc->method.aml_length = aml_length;
-	obj_desc->method.node = opeअक्रम[0];
+	obj_desc->method.node = operand[0];
 
 	/*
 	 * Disassemble the method flags. Split off the arg_count, Serialized
-	 * flag, and sync_level क्रम efficiency.
+	 * flag, and sync_level for efficiency.
 	 */
-	method_flags = (u8)opeअक्रम[1]->पूर्णांकeger.value;
+	method_flags = (u8)operand[1]->integer.value;
 	obj_desc->method.param_count = (u8)
 	    (method_flags & AML_METHOD_ARG_COUNT);
 
 	/*
 	 * Get the sync_level. If method is serialized, a mutex will be
-	 * created क्रम this method when it is parsed.
+	 * created for this method when it is parsed.
 	 */
-	अगर (method_flags & AML_METHOD_SERIALIZED) अणु
+	if (method_flags & AML_METHOD_SERIALIZED) {
 		obj_desc->method.info_flags = ACPI_METHOD_SERIALIZED;
 
 		/*
@@ -451,20 +450,20 @@ acpi_ex_create_method(u8 * aml_start,
 		 */
 		obj_desc->method.sync_level = (u8)
 		    ((method_flags & AML_METHOD_SYNC_LEVEL) >> 4);
-	पूर्ण
+	}
 
 	/* Attach the new object to the method Node */
 
-	status = acpi_ns_attach_object((काष्ठा acpi_namespace_node *)opeअक्रम[0],
+	status = acpi_ns_attach_object((struct acpi_namespace_node *)operand[0],
 				       obj_desc, ACPI_TYPE_METHOD);
 
 	/* Remove local reference to the object */
 
-	acpi_ut_हटाओ_reference(obj_desc);
+	acpi_ut_remove_reference(obj_desc);
 
-निकास:
-	/* Remove a reference to the opeअक्रम */
+exit:
+	/* Remove a reference to the operand */
 
-	acpi_ut_हटाओ_reference(opeअक्रम[1]);
-	वापस_ACPI_STATUS(status);
-पूर्ण
+	acpi_ut_remove_reference(operand[1]);
+	return_ACPI_STATUS(status);
+}

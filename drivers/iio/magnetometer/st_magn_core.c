@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * STMicroelectronics magnetometers driver
  *
@@ -8,53 +7,53 @@
  * Denis Ciocca <denis.ciocca@st.com>
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/types.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/iio/iपन.स>
-#समावेश <linux/iio/sysfs.h>
-#समावेश <linux/iio/buffer.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/errno.h>
+#include <linux/types.h>
+#include <linux/interrupt.h>
+#include <linux/i2c.h>
+#include <linux/irq.h>
+#include <linux/delay.h>
+#include <linux/iio/iio.h>
+#include <linux/iio/sysfs.h>
+#include <linux/iio/buffer.h>
 
-#समावेश <linux/iio/common/st_sensors.h>
-#समावेश "st_magn.h"
+#include <linux/iio/common/st_sensors.h>
+#include "st_magn.h"
 
-#घोषणा ST_MAGN_NUMBER_DATA_CHANNELS		3
+#define ST_MAGN_NUMBER_DATA_CHANNELS		3
 
 /* DEFAULT VALUE FOR SENSORS */
-#घोषणा ST_MAGN_DEFAULT_OUT_X_H_ADDR		0x03
-#घोषणा ST_MAGN_DEFAULT_OUT_Y_H_ADDR		0x07
-#घोषणा ST_MAGN_DEFAULT_OUT_Z_H_ADDR		0x05
+#define ST_MAGN_DEFAULT_OUT_X_H_ADDR		0x03
+#define ST_MAGN_DEFAULT_OUT_Y_H_ADDR		0x07
+#define ST_MAGN_DEFAULT_OUT_Z_H_ADDR		0x05
 
 /* FULLSCALE */
-#घोषणा ST_MAGN_FS_AVL_1300MG			1300
-#घोषणा ST_MAGN_FS_AVL_1900MG			1900
-#घोषणा ST_MAGN_FS_AVL_2500MG			2500
-#घोषणा ST_MAGN_FS_AVL_4000MG			4000
-#घोषणा ST_MAGN_FS_AVL_4700MG			4700
-#घोषणा ST_MAGN_FS_AVL_5600MG			5600
-#घोषणा ST_MAGN_FS_AVL_8000MG			8000
-#घोषणा ST_MAGN_FS_AVL_8100MG			8100
-#घोषणा ST_MAGN_FS_AVL_12000MG			12000
-#घोषणा ST_MAGN_FS_AVL_15000MG			15000
-#घोषणा ST_MAGN_FS_AVL_16000MG			16000
+#define ST_MAGN_FS_AVL_1300MG			1300
+#define ST_MAGN_FS_AVL_1900MG			1900
+#define ST_MAGN_FS_AVL_2500MG			2500
+#define ST_MAGN_FS_AVL_4000MG			4000
+#define ST_MAGN_FS_AVL_4700MG			4700
+#define ST_MAGN_FS_AVL_5600MG			5600
+#define ST_MAGN_FS_AVL_8000MG			8000
+#define ST_MAGN_FS_AVL_8100MG			8100
+#define ST_MAGN_FS_AVL_12000MG			12000
+#define ST_MAGN_FS_AVL_15000MG			15000
+#define ST_MAGN_FS_AVL_16000MG			16000
 
-/* Special L addresses क्रम Sensor 2 */
-#घोषणा ST_MAGN_2_OUT_X_L_ADDR			0x28
-#घोषणा ST_MAGN_2_OUT_Y_L_ADDR			0x2a
-#घोषणा ST_MAGN_2_OUT_Z_L_ADDR			0x2c
+/* Special L addresses for Sensor 2 */
+#define ST_MAGN_2_OUT_X_L_ADDR			0x28
+#define ST_MAGN_2_OUT_Y_L_ADDR			0x2a
+#define ST_MAGN_2_OUT_Z_L_ADDR			0x2c
 
-/* Special L addresses क्रम sensor 3 */
-#घोषणा ST_MAGN_3_OUT_X_L_ADDR			0x68
-#घोषणा ST_MAGN_3_OUT_Y_L_ADDR			0x6a
-#घोषणा ST_MAGN_3_OUT_Z_L_ADDR			0x6c
+/* Special L addresses for sensor 3 */
+#define ST_MAGN_3_OUT_X_L_ADDR			0x68
+#define ST_MAGN_3_OUT_Y_L_ADDR			0x6a
+#define ST_MAGN_3_OUT_Z_L_ADDR			0x6c
 
-अटल स्थिर काष्ठा iio_chan_spec st_magn_16bit_channels[] = अणु
+static const struct iio_chan_spec st_magn_16bit_channels[] = {
 	ST_SENSORS_LSM_CHANNELS(IIO_MAGN,
 			BIT(IIO_CHAN_INFO_RAW) | BIT(IIO_CHAN_INFO_SCALE),
 			ST_SENSORS_SCAN_X, 1, IIO_MOD_X, 's', IIO_BE, 16, 16,
@@ -68,9 +67,9 @@
 			ST_SENSORS_SCAN_Z, 1, IIO_MOD_Z, 's', IIO_BE, 16, 16,
 			ST_MAGN_DEFAULT_OUT_Z_H_ADDR),
 	IIO_CHAN_SOFT_TIMESTAMP(3)
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा iio_chan_spec st_magn_2_16bit_channels[] = अणु
+static const struct iio_chan_spec st_magn_2_16bit_channels[] = {
 	ST_SENSORS_LSM_CHANNELS(IIO_MAGN,
 			BIT(IIO_CHAN_INFO_RAW) | BIT(IIO_CHAN_INFO_SCALE),
 			ST_SENSORS_SCAN_X, 1, IIO_MOD_X, 's', IIO_LE, 16, 16,
@@ -84,9 +83,9 @@
 			ST_SENSORS_SCAN_Z, 1, IIO_MOD_Z, 's', IIO_LE, 16, 16,
 			ST_MAGN_2_OUT_Z_L_ADDR),
 	IIO_CHAN_SOFT_TIMESTAMP(3)
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा iio_chan_spec st_magn_3_16bit_channels[] = अणु
+static const struct iio_chan_spec st_magn_3_16bit_channels[] = {
 	ST_SENSORS_LSM_CHANNELS(IIO_MAGN,
 			BIT(IIO_CHAN_INFO_RAW) | BIT(IIO_CHAN_INFO_SCALE),
 			ST_SENSORS_SCAN_X, 1, IIO_MOD_X, 's', IIO_LE, 16, 16,
@@ -100,409 +99,409 @@
 			ST_SENSORS_SCAN_Z, 1, IIO_MOD_Z, 's', IIO_LE, 16, 16,
 			ST_MAGN_3_OUT_Z_L_ADDR),
 	IIO_CHAN_SOFT_TIMESTAMP(3)
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा st_sensor_settings st_magn_sensors_settings[] = अणु
-	अणु
+static const struct st_sensor_settings st_magn_sensors_settings[] = {
+	{
 		.wai = 0, /* This sensor has no valid WhoAmI report 0 */
 		.wai_addr = ST_SENSORS_DEFAULT_WAI_ADDRESS,
-		.sensors_supported = अणु
+		.sensors_supported = {
 			[0] = LSM303DLH_MAGN_DEV_NAME,
-		पूर्ण,
-		.ch = (काष्ठा iio_chan_spec *)st_magn_16bit_channels,
-		.odr = अणु
+		},
+		.ch = (struct iio_chan_spec *)st_magn_16bit_channels,
+		.odr = {
 			.addr = 0x00,
 			.mask = 0x1c,
-			.odr_avl = अणु
-				अणु .hz = 1, .value = 0x00 पूर्ण,
-				अणु .hz = 2, .value = 0x01 पूर्ण,
-				अणु .hz = 3, .value = 0x02 पूर्ण,
-				अणु .hz = 8, .value = 0x03 पूर्ण,
-				अणु .hz = 15, .value = 0x04 पूर्ण,
-				अणु .hz = 30, .value = 0x05 पूर्ण,
-				अणु .hz = 75, .value = 0x06 पूर्ण,
+			.odr_avl = {
+				{ .hz = 1, .value = 0x00 },
+				{ .hz = 2, .value = 0x01 },
+				{ .hz = 3, .value = 0x02 },
+				{ .hz = 8, .value = 0x03 },
+				{ .hz = 15, .value = 0x04 },
+				{ .hz = 30, .value = 0x05 },
+				{ .hz = 75, .value = 0x06 },
 				/* 220 Hz, 0x07 reportedly exist */
-			पूर्ण,
-		पूर्ण,
-		.pw = अणु
+			},
+		},
+		.pw = {
 			.addr = 0x02,
 			.mask = 0x03,
 			.value_on = 0x00,
 			.value_off = 0x03,
-		पूर्ण,
-		.fs = अणु
+		},
+		.fs = {
 			.addr = 0x01,
 			.mask = 0xe0,
-			.fs_avl = अणु
-				[0] = अणु
+			.fs_avl = {
+				[0] = {
 					.num = ST_MAGN_FS_AVL_1300MG,
 					.value = 0x01,
 					.gain = 1100,
 					.gain2 = 980,
-				पूर्ण,
-				[1] = अणु
+				},
+				[1] = {
 					.num = ST_MAGN_FS_AVL_1900MG,
 					.value = 0x02,
 					.gain = 855,
 					.gain2 = 760,
-				पूर्ण,
-				[2] = अणु
+				},
+				[2] = {
 					.num = ST_MAGN_FS_AVL_2500MG,
 					.value = 0x03,
 					.gain = 670,
 					.gain2 = 600,
-				पूर्ण,
-				[3] = अणु
+				},
+				[3] = {
 					.num = ST_MAGN_FS_AVL_4000MG,
 					.value = 0x04,
 					.gain = 450,
 					.gain2 = 400,
-				पूर्ण,
-				[4] = अणु
+				},
+				[4] = {
 					.num = ST_MAGN_FS_AVL_4700MG,
 					.value = 0x05,
 					.gain = 400,
 					.gain2 = 355,
-				पूर्ण,
-				[5] = अणु
+				},
+				[5] = {
 					.num = ST_MAGN_FS_AVL_5600MG,
 					.value = 0x06,
 					.gain = 330,
 					.gain2 = 295,
-				पूर्ण,
-				[6] = अणु
+				},
+				[6] = {
 					.num = ST_MAGN_FS_AVL_8100MG,
 					.value = 0x07,
 					.gain = 230,
 					.gain2 = 205,
-				पूर्ण,
-			पूर्ण,
-		पूर्ण,
-		.multi_पढ़ो_bit = false,
-		.booसमय = 2,
-	पूर्ण,
-	अणु
+				},
+			},
+		},
+		.multi_read_bit = false,
+		.bootime = 2,
+	},
+	{
 		.wai = 0x3c,
 		.wai_addr = ST_SENSORS_DEFAULT_WAI_ADDRESS,
-		.sensors_supported = अणु
+		.sensors_supported = {
 			[0] = LSM303DLHC_MAGN_DEV_NAME,
 			[1] = LSM303DLM_MAGN_DEV_NAME,
-		पूर्ण,
-		.ch = (काष्ठा iio_chan_spec *)st_magn_16bit_channels,
-		.odr = अणु
+		},
+		.ch = (struct iio_chan_spec *)st_magn_16bit_channels,
+		.odr = {
 			.addr = 0x00,
 			.mask = 0x1c,
-			.odr_avl = अणु
-				अणु .hz = 1, .value = 0x00 पूर्ण,
-				अणु .hz = 2, .value = 0x01 पूर्ण,
-				अणु .hz = 3, .value = 0x02 पूर्ण,
-				अणु .hz = 8, .value = 0x03 पूर्ण,
-				अणु .hz = 15, .value = 0x04 पूर्ण,
-				अणु .hz = 30, .value = 0x05 पूर्ण,
-				अणु .hz = 75, .value = 0x06 पूर्ण,
-				अणु .hz = 220, .value = 0x07 पूर्ण,
-			पूर्ण,
-		पूर्ण,
-		.pw = अणु
+			.odr_avl = {
+				{ .hz = 1, .value = 0x00 },
+				{ .hz = 2, .value = 0x01 },
+				{ .hz = 3, .value = 0x02 },
+				{ .hz = 8, .value = 0x03 },
+				{ .hz = 15, .value = 0x04 },
+				{ .hz = 30, .value = 0x05 },
+				{ .hz = 75, .value = 0x06 },
+				{ .hz = 220, .value = 0x07 },
+			},
+		},
+		.pw = {
 			.addr = 0x02,
 			.mask = 0x03,
 			.value_on = 0x00,
 			.value_off = 0x03,
-		पूर्ण,
-		.fs = अणु
+		},
+		.fs = {
 			.addr = 0x01,
 			.mask = 0xe0,
-			.fs_avl = अणु
-				[0] = अणु
+			.fs_avl = {
+				[0] = {
 					.num = ST_MAGN_FS_AVL_1300MG,
 					.value = 0x01,
 					.gain = 909,
 					.gain2 = 1020,
-				पूर्ण,
-				[1] = अणु
+				},
+				[1] = {
 					.num = ST_MAGN_FS_AVL_1900MG,
 					.value = 0x02,
 					.gain = 1169,
 					.gain2 = 1315,
-				पूर्ण,
-				[2] = अणु
+				},
+				[2] = {
 					.num = ST_MAGN_FS_AVL_2500MG,
 					.value = 0x03,
 					.gain = 1492,
 					.gain2 = 1666,
-				पूर्ण,
-				[3] = अणु
+				},
+				[3] = {
 					.num = ST_MAGN_FS_AVL_4000MG,
 					.value = 0x04,
 					.gain = 2222,
 					.gain2 = 2500,
-				पूर्ण,
-				[4] = अणु
+				},
+				[4] = {
 					.num = ST_MAGN_FS_AVL_4700MG,
 					.value = 0x05,
 					.gain = 2500,
 					.gain2 = 2816,
-				पूर्ण,
-				[5] = अणु
+				},
+				[5] = {
 					.num = ST_MAGN_FS_AVL_5600MG,
 					.value = 0x06,
 					.gain = 3030,
 					.gain2 = 3389,
-				पूर्ण,
-				[6] = अणु
+				},
+				[6] = {
 					.num = ST_MAGN_FS_AVL_8100MG,
 					.value = 0x07,
 					.gain = 4347,
 					.gain2 = 4878,
-				पूर्ण,
-			पूर्ण,
-		पूर्ण,
-		.multi_पढ़ो_bit = false,
-		.booसमय = 2,
-	पूर्ण,
-	अणु
+				},
+			},
+		},
+		.multi_read_bit = false,
+		.bootime = 2,
+	},
+	{
 		.wai = 0x3d,
 		.wai_addr = ST_SENSORS_DEFAULT_WAI_ADDRESS,
-		.sensors_supported = अणु
+		.sensors_supported = {
 			[0] = LIS3MDL_MAGN_DEV_NAME,
 			[1] = LSM9DS1_MAGN_DEV_NAME,
-		पूर्ण,
-		.ch = (काष्ठा iio_chan_spec *)st_magn_2_16bit_channels,
-		.odr = अणु
+		},
+		.ch = (struct iio_chan_spec *)st_magn_2_16bit_channels,
+		.odr = {
 			.addr = 0x20,
 			.mask = 0x1c,
-			.odr_avl = अणु
-				अणु .hz = 1, .value = 0x00 पूर्ण,
-				अणु .hz = 2, .value = 0x01 पूर्ण,
-				अणु .hz = 3, .value = 0x02 पूर्ण,
-				अणु .hz = 5, .value = 0x03 पूर्ण,
-				अणु .hz = 10, .value = 0x04 पूर्ण,
-				अणु .hz = 20, .value = 0x05 पूर्ण,
-				अणु .hz = 40, .value = 0x06 पूर्ण,
-				अणु .hz = 80, .value = 0x07 पूर्ण,
-			पूर्ण,
-		पूर्ण,
-		.pw = अणु
+			.odr_avl = {
+				{ .hz = 1, .value = 0x00 },
+				{ .hz = 2, .value = 0x01 },
+				{ .hz = 3, .value = 0x02 },
+				{ .hz = 5, .value = 0x03 },
+				{ .hz = 10, .value = 0x04 },
+				{ .hz = 20, .value = 0x05 },
+				{ .hz = 40, .value = 0x06 },
+				{ .hz = 80, .value = 0x07 },
+			},
+		},
+		.pw = {
 			.addr = 0x22,
 			.mask = 0x03,
 			.value_on = 0x00,
 			.value_off = 0x03,
-		पूर्ण,
-		.fs = अणु
+		},
+		.fs = {
 			.addr = 0x21,
 			.mask = 0x60,
-			.fs_avl = अणु
-				[0] = अणु
+			.fs_avl = {
+				[0] = {
 					.num = ST_MAGN_FS_AVL_4000MG,
 					.value = 0x00,
 					.gain = 146,
-				पूर्ण,
-				[1] = अणु
+				},
+				[1] = {
 					.num = ST_MAGN_FS_AVL_8000MG,
 					.value = 0x01,
 					.gain = 292,
-				पूर्ण,
-				[2] = अणु
+				},
+				[2] = {
 					.num = ST_MAGN_FS_AVL_12000MG,
 					.value = 0x02,
 					.gain = 438,
-				पूर्ण,
-				[3] = अणु
+				},
+				[3] = {
 					.num = ST_MAGN_FS_AVL_16000MG,
 					.value = 0x03,
 					.gain = 584,
-				पूर्ण,
-			पूर्ण,
-		पूर्ण,
-		.bdu = अणु
+				},
+			},
+		},
+		.bdu = {
 			.addr = 0x24,
 			.mask = 0x40,
-		पूर्ण,
-		.drdy_irq = अणु
+		},
+		.drdy_irq = {
 			/* drdy line is routed drdy pin */
-			.stat_drdy = अणु
+			.stat_drdy = {
 				.addr = ST_SENSORS_DEFAULT_STAT_ADDR,
 				.mask = 0x07,
-			पूर्ण,
-		पूर्ण,
-		.sim = अणु
+			},
+		},
+		.sim = {
 			.addr = 0x22,
 			.value = BIT(2),
-		पूर्ण,
-		.multi_पढ़ो_bit = true,
-		.booसमय = 2,
-	पूर्ण,
-	अणु
+		},
+		.multi_read_bit = true,
+		.bootime = 2,
+	},
+	{
 		.wai = 0x40,
 		.wai_addr = 0x4f,
-		.sensors_supported = अणु
+		.sensors_supported = {
 			[0] = LSM303AGR_MAGN_DEV_NAME,
 			[1] = LIS2MDL_MAGN_DEV_NAME,
 			[2] = IIS2MDC_MAGN_DEV_NAME,
-		पूर्ण,
-		.ch = (काष्ठा iio_chan_spec *)st_magn_3_16bit_channels,
-		.odr = अणु
+		},
+		.ch = (struct iio_chan_spec *)st_magn_3_16bit_channels,
+		.odr = {
 			.addr = 0x60,
 			.mask = 0x0c,
-			.odr_avl = अणु
-				अणु .hz = 10, .value = 0x00 पूर्ण,
-				अणु .hz = 20, .value = 0x01 पूर्ण,
-				अणु .hz = 50, .value = 0x02 पूर्ण,
-				अणु .hz = 100, .value = 0x03 पूर्ण,
-			पूर्ण,
-		पूर्ण,
-		.pw = अणु
+			.odr_avl = {
+				{ .hz = 10, .value = 0x00 },
+				{ .hz = 20, .value = 0x01 },
+				{ .hz = 50, .value = 0x02 },
+				{ .hz = 100, .value = 0x03 },
+			},
+		},
+		.pw = {
 			.addr = 0x60,
 			.mask = 0x03,
 			.value_on = 0x00,
 			.value_off = 0x03,
-		पूर्ण,
-		.fs = अणु
-			.fs_avl = अणु
-				[0] = अणु
+		},
+		.fs = {
+			.fs_avl = {
+				[0] = {
 					.num = ST_MAGN_FS_AVL_15000MG,
 					.gain = 1500,
-				पूर्ण,
-			पूर्ण,
-		पूर्ण,
-		.bdu = अणु
+				},
+			},
+		},
+		.bdu = {
 			.addr = 0x62,
 			.mask = 0x10,
-		पूर्ण,
-		.drdy_irq = अणु
-			.पूर्णांक1 = अणु
+		},
+		.drdy_irq = {
+			.int1 = {
 				.addr = 0x62,
 				.mask = 0x01,
-			पूर्ण,
-			.stat_drdy = अणु
+			},
+			.stat_drdy = {
 				.addr = 0x67,
 				.mask = 0x07,
-			पूर्ण,
-		पूर्ण,
-		.multi_पढ़ो_bit = false,
-		.booसमय = 2,
-	पूर्ण,
-पूर्ण;
+			},
+		},
+		.multi_read_bit = false,
+		.bootime = 2,
+	},
+};
 
-अटल पूर्णांक st_magn_पढ़ो_raw(काष्ठा iio_dev *indio_dev,
-			काष्ठा iio_chan_spec स्थिर *ch, पूर्णांक *val,
-							पूर्णांक *val2, दीर्घ mask)
-अणु
-	पूर्णांक err;
-	काष्ठा st_sensor_data *mdata = iio_priv(indio_dev);
+static int st_magn_read_raw(struct iio_dev *indio_dev,
+			struct iio_chan_spec const *ch, int *val,
+							int *val2, long mask)
+{
+	int err;
+	struct st_sensor_data *mdata = iio_priv(indio_dev);
 
-	चयन (mask) अणु
-	हाल IIO_CHAN_INFO_RAW:
-		err = st_sensors_पढ़ो_info_raw(indio_dev, ch, val);
-		अगर (err < 0)
-			जाओ पढ़ो_error;
+	switch (mask) {
+	case IIO_CHAN_INFO_RAW:
+		err = st_sensors_read_info_raw(indio_dev, ch, val);
+		if (err < 0)
+			goto read_error;
 
-		वापस IIO_VAL_INT;
-	हाल IIO_CHAN_INFO_SCALE:
+		return IIO_VAL_INT;
+	case IIO_CHAN_INFO_SCALE:
 		*val = 0;
-		अगर ((ch->scan_index == ST_SENSORS_SCAN_Z) &&
+		if ((ch->scan_index == ST_SENSORS_SCAN_Z) &&
 					(mdata->current_fullscale->gain2 != 0))
 			*val2 = mdata->current_fullscale->gain2;
-		अन्यथा
+		else
 			*val2 = mdata->current_fullscale->gain;
-		वापस IIO_VAL_INT_PLUS_MICRO;
-	हाल IIO_CHAN_INFO_SAMP_FREQ:
+		return IIO_VAL_INT_PLUS_MICRO;
+	case IIO_CHAN_INFO_SAMP_FREQ:
 		*val = mdata->odr;
-		वापस IIO_VAL_INT;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		return IIO_VAL_INT;
+	default:
+		return -EINVAL;
+	}
 
-पढ़ो_error:
-	वापस err;
-पूर्ण
+read_error:
+	return err;
+}
 
-अटल पूर्णांक st_magn_ग_लिखो_raw(काष्ठा iio_dev *indio_dev,
-		काष्ठा iio_chan_spec स्थिर *chan, पूर्णांक val, पूर्णांक val2, दीर्घ mask)
-अणु
-	पूर्णांक err;
+static int st_magn_write_raw(struct iio_dev *indio_dev,
+		struct iio_chan_spec const *chan, int val, int val2, long mask)
+{
+	int err;
 
-	चयन (mask) अणु
-	हाल IIO_CHAN_INFO_SCALE:
+	switch (mask) {
+	case IIO_CHAN_INFO_SCALE:
 		err = st_sensors_set_fullscale_by_gain(indio_dev, val2);
-		अवरोध;
-	हाल IIO_CHAN_INFO_SAMP_FREQ:
-		अगर (val2)
-			वापस -EINVAL;
+		break;
+	case IIO_CHAN_INFO_SAMP_FREQ:
+		if (val2)
+			return -EINVAL;
 		mutex_lock(&indio_dev->mlock);
 		err = st_sensors_set_odr(indio_dev, val);
 		mutex_unlock(&indio_dev->mlock);
-		वापस err;
-	शेष:
+		return err;
+	default:
 		err = -EINVAL;
-	पूर्ण
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल ST_SENSORS_DEV_ATTR_SAMP_FREQ_AVAIL();
-अटल ST_SENSORS_DEV_ATTR_SCALE_AVAIL(in_magn_scale_available);
+static ST_SENSORS_DEV_ATTR_SAMP_FREQ_AVAIL();
+static ST_SENSORS_DEV_ATTR_SCALE_AVAIL(in_magn_scale_available);
 
-अटल काष्ठा attribute *st_magn_attributes[] = अणु
+static struct attribute *st_magn_attributes[] = {
 	&iio_dev_attr_sampling_frequency_available.dev_attr.attr,
 	&iio_dev_attr_in_magn_scale_available.dev_attr.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल स्थिर काष्ठा attribute_group st_magn_attribute_group = अणु
+static const struct attribute_group st_magn_attribute_group = {
 	.attrs = st_magn_attributes,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा iio_info magn_info = अणु
+static const struct iio_info magn_info = {
 	.attrs = &st_magn_attribute_group,
-	.पढ़ो_raw = &st_magn_पढ़ो_raw,
-	.ग_लिखो_raw = &st_magn_ग_लिखो_raw,
+	.read_raw = &st_magn_read_raw,
+	.write_raw = &st_magn_write_raw,
 	.debugfs_reg_access = &st_sensors_debugfs_reg_access,
-पूर्ण;
+};
 
-#अगर_घोषित CONFIG_IIO_TRIGGER
-अटल स्थिर काष्ठा iio_trigger_ops st_magn_trigger_ops = अणु
+#ifdef CONFIG_IIO_TRIGGER
+static const struct iio_trigger_ops st_magn_trigger_ops = {
 	.set_trigger_state = ST_MAGN_TRIGGER_SET_STATE,
 	.validate_device = st_sensors_validate_device,
-पूर्ण;
-#घोषणा ST_MAGN_TRIGGER_OPS (&st_magn_trigger_ops)
-#अन्यथा
-#घोषणा ST_MAGN_TRIGGER_OPS शून्य
-#पूर्ण_अगर
+};
+#define ST_MAGN_TRIGGER_OPS (&st_magn_trigger_ops)
+#else
+#define ST_MAGN_TRIGGER_OPS NULL
+#endif
 
 /*
  * st_magn_get_settings() - get sensor settings from device name
  * @name: device name buffer reference.
  *
- * Return: valid reference on success, शून्य otherwise.
+ * Return: valid reference on success, NULL otherwise.
  */
-स्थिर काष्ठा st_sensor_settings *st_magn_get_settings(स्थिर अक्षर *name)
-अणु
-	पूर्णांक index = st_sensors_get_settings_index(name,
+const struct st_sensor_settings *st_magn_get_settings(const char *name)
+{
+	int index = st_sensors_get_settings_index(name,
 					st_magn_sensors_settings,
 					ARRAY_SIZE(st_magn_sensors_settings));
-	अगर (index < 0)
-		वापस शून्य;
+	if (index < 0)
+		return NULL;
 
-	वापस &st_magn_sensors_settings[index];
-पूर्ण
+	return &st_magn_sensors_settings[index];
+}
 EXPORT_SYMBOL(st_magn_get_settings);
 
-पूर्णांक st_magn_common_probe(काष्ठा iio_dev *indio_dev)
-अणु
-	काष्ठा st_sensor_data *mdata = iio_priv(indio_dev);
-	पूर्णांक err;
+int st_magn_common_probe(struct iio_dev *indio_dev)
+{
+	struct st_sensor_data *mdata = iio_priv(indio_dev);
+	int err;
 
-	indio_dev->modes = INDIO_सूचीECT_MODE;
+	indio_dev->modes = INDIO_DIRECT_MODE;
 	indio_dev->info = &magn_info;
 
-	err = st_sensors_घातer_enable(indio_dev);
-	अगर (err)
-		वापस err;
+	err = st_sensors_power_enable(indio_dev);
+	if (err)
+		return err;
 
-	err = st_sensors_verअगरy_id(indio_dev);
-	अगर (err < 0)
-		जाओ st_magn_घातer_off;
+	err = st_sensors_verify_id(indio_dev);
+	if (err < 0)
+		goto st_magn_power_off;
 
 	mdata->num_data_channels = ST_MAGN_NUMBER_DATA_CHANNELS;
 	indio_dev->channels = mdata->sensor_settings->ch;
@@ -511,55 +510,55 @@ EXPORT_SYMBOL(st_magn_get_settings);
 	mdata->current_fullscale = &mdata->sensor_settings->fs.fs_avl[0];
 	mdata->odr = mdata->sensor_settings->odr.odr_avl[0].hz;
 
-	err = st_sensors_init_sensor(indio_dev, शून्य);
-	अगर (err < 0)
-		जाओ st_magn_घातer_off;
+	err = st_sensors_init_sensor(indio_dev, NULL);
+	if (err < 0)
+		goto st_magn_power_off;
 
 	err = st_magn_allocate_ring(indio_dev);
-	अगर (err < 0)
-		जाओ st_magn_घातer_off;
+	if (err < 0)
+		goto st_magn_power_off;
 
-	अगर (mdata->irq > 0) अणु
+	if (mdata->irq > 0) {
 		err = st_sensors_allocate_trigger(indio_dev,
 						ST_MAGN_TRIGGER_OPS);
-		अगर (err < 0)
-			जाओ st_magn_probe_trigger_error;
-	पूर्ण
+		if (err < 0)
+			goto st_magn_probe_trigger_error;
+	}
 
-	err = iio_device_रेजिस्टर(indio_dev);
-	अगर (err)
-		जाओ st_magn_device_रेजिस्टर_error;
+	err = iio_device_register(indio_dev);
+	if (err)
+		goto st_magn_device_register_error;
 
 	dev_info(&indio_dev->dev, "registered magnetometer %s\n",
 		 indio_dev->name);
 
-	वापस 0;
+	return 0;
 
-st_magn_device_रेजिस्टर_error:
-	अगर (mdata->irq > 0)
+st_magn_device_register_error:
+	if (mdata->irq > 0)
 		st_sensors_deallocate_trigger(indio_dev);
 st_magn_probe_trigger_error:
 	st_magn_deallocate_ring(indio_dev);
-st_magn_घातer_off:
-	st_sensors_घातer_disable(indio_dev);
+st_magn_power_off:
+	st_sensors_power_disable(indio_dev);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 EXPORT_SYMBOL(st_magn_common_probe);
 
-व्योम st_magn_common_हटाओ(काष्ठा iio_dev *indio_dev)
-अणु
-	काष्ठा st_sensor_data *mdata = iio_priv(indio_dev);
+void st_magn_common_remove(struct iio_dev *indio_dev)
+{
+	struct st_sensor_data *mdata = iio_priv(indio_dev);
 
-	st_sensors_घातer_disable(indio_dev);
+	st_sensors_power_disable(indio_dev);
 
-	iio_device_unरेजिस्टर(indio_dev);
-	अगर (mdata->irq > 0)
+	iio_device_unregister(indio_dev);
+	if (mdata->irq > 0)
 		st_sensors_deallocate_trigger(indio_dev);
 
 	st_magn_deallocate_ring(indio_dev);
-पूर्ण
-EXPORT_SYMBOL(st_magn_common_हटाओ);
+}
+EXPORT_SYMBOL(st_magn_common_remove);
 
 MODULE_AUTHOR("Denis Ciocca <denis.ciocca@st.com>");
 MODULE_DESCRIPTION("STMicroelectronics magnetometers driver");

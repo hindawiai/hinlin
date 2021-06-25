@@ -1,7 +1,6 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * पूर्णांकerface to the SCLP-पढ़ो/ग_लिखो driver
+ * interface to the SCLP-read/write driver
  *
  * Copyright IBM Corporation 1999, 2009
  *
@@ -9,90 +8,90 @@
  *	      Martin Schwidefsky <schwidefsky@de.ibm.com>
  */
 
-#अगर_अघोषित __SCLP_RW_H__
-#घोषणा __SCLP_RW_H__
+#ifndef __SCLP_RW_H__
+#define __SCLP_RW_H__
 
-#समावेश <linux/list.h>
+#include <linux/list.h>
 
-काष्ठा mto अणु
+struct mto {
 	u16 length;
 	u16 type;
 	u16 line_type_flags;
 	u8  alarm_control;
 	u8  _reserved[3];
-पूर्ण __attribute__((packed));
+} __attribute__((packed));
 
-काष्ठा go अणु
+struct go {
 	u16 length;
 	u16 type;
-	u32 करोmid;
-	u8  hhmmss_समय[8];
-	u8  th_समय[3];
+	u32 domid;
+	u8  hhmmss_time[8];
+	u8  th_time[3];
 	u8  reserved_0;
 	u8  dddyyyy_date[7];
 	u8  _reserved_1;
 	u16 general_msg_flags;
 	u8  _reserved_2[10];
-	u8  originating_प्रणाली_name[8];
+	u8  originating_system_name[8];
 	u8  job_guest_name[8];
-पूर्ण __attribute__((packed));
+} __attribute__((packed));
 
-काष्ठा mdb_header अणु
+struct mdb_header {
 	u16 length;
 	u16 type;
 	u32 tag;
 	u32 revision_code;
-पूर्ण __attribute__((packed));
+} __attribute__((packed));
 
-काष्ठा mdb अणु
-	काष्ठा mdb_header header;
-	काष्ठा go go;
-	काष्ठा mto mto;
-पूर्ण __attribute__((packed));
+struct mdb {
+	struct mdb_header header;
+	struct go go;
+	struct mto mto;
+} __attribute__((packed));
 
-काष्ठा msg_buf अणु
-	काष्ठा evbuf_header header;
-	काष्ठा mdb mdb;
-पूर्ण __attribute__((packed));
+struct msg_buf {
+	struct evbuf_header header;
+	struct mdb mdb;
+} __attribute__((packed));
 
 /* The number of empty mto buffers that can be contained in a single sccb. */
-#घोषणा NR_EMPTY_MSG_PER_SCCB ((PAGE_SIZE - माप(काष्ठा sclp_buffer) - \
-			माप(काष्ठा sccb_header)) / माप(काष्ठा msg_buf))
+#define NR_EMPTY_MSG_PER_SCCB ((PAGE_SIZE - sizeof(struct sclp_buffer) - \
+			sizeof(struct sccb_header)) / sizeof(struct msg_buf))
 
 /*
- * data काष्ठाure क्रम inक्रमmation about list of SCCBs (only क्रम writing),
+ * data structure for information about list of SCCBs (only for writing),
  * will be located at the end of a SCCBs page
  */
-काष्ठा sclp_buffer अणु
-	काष्ठा list_head list;		/* list_head क्रम sccb_info chain */
-	काष्ठा sclp_req request;
-	व्योम *sccb;
-	काष्ठा msg_buf *current_msg;
-	अक्षर *current_line;
-	पूर्णांक current_length;
-	पूर्णांक retry_count;
-	/* output क्रमmat settings */
-	अचिन्हित लघु columns;
-	अचिन्हित लघु htab;
+struct sclp_buffer {
+	struct list_head list;		/* list_head for sccb_info chain */
+	struct sclp_req request;
+	void *sccb;
+	struct msg_buf *current_msg;
+	char *current_line;
+	int current_length;
+	int retry_count;
+	/* output format settings */
+	unsigned short columns;
+	unsigned short htab;
 	/* statistics about this buffer */
-	अचिन्हित पूर्णांक अक्षर_sum;		/* # अक्षरs in sccb */
-	अचिन्हित पूर्णांक messages;		/* # messages in sccb */
+	unsigned int char_sum;		/* # chars in sccb */
+	unsigned int messages;		/* # messages in sccb */
 	/* Callback that is called after reaching final status. */
-	व्योम (*callback)(काष्ठा sclp_buffer *, पूर्णांक);
-पूर्ण;
+	void (*callback)(struct sclp_buffer *, int);
+};
 
-पूर्णांक sclp_rw_init(व्योम);
-काष्ठा sclp_buffer *sclp_make_buffer(व्योम *, अचिन्हित लघु, अचिन्हित लघु);
-व्योम *sclp_unmake_buffer(काष्ठा sclp_buffer *);
-पूर्णांक sclp_buffer_space(काष्ठा sclp_buffer *);
-पूर्णांक sclp_ग_लिखो(काष्ठा sclp_buffer *buffer, स्थिर अचिन्हित अक्षर *, पूर्णांक);
-पूर्णांक sclp_emit_buffer(काष्ठा sclp_buffer *,व्योम (*)(काष्ठा sclp_buffer *,पूर्णांक));
-पूर्णांक sclp_अक्षरs_in_buffer(काष्ठा sclp_buffer *);
+int sclp_rw_init(void);
+struct sclp_buffer *sclp_make_buffer(void *, unsigned short, unsigned short);
+void *sclp_unmake_buffer(struct sclp_buffer *);
+int sclp_buffer_space(struct sclp_buffer *);
+int sclp_write(struct sclp_buffer *buffer, const unsigned char *, int);
+int sclp_emit_buffer(struct sclp_buffer *,void (*)(struct sclp_buffer *,int));
+int sclp_chars_in_buffer(struct sclp_buffer *);
 
-#अगर_घोषित CONFIG_SCLP_CONSOLE
-व्योम sclp_console_pm_event(क्रमागत sclp_pm_event sclp_pm_event);
-#अन्यथा
-अटल अंतरभूत व्योम sclp_console_pm_event(क्रमागत sclp_pm_event sclp_pm_event) अणु पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_SCLP_CONSOLE
+void sclp_console_pm_event(enum sclp_pm_event sclp_pm_event);
+#else
+static inline void sclp_console_pm_event(enum sclp_pm_event sclp_pm_event) { }
+#endif
 
-#पूर्ण_अगर	/* __SCLP_RW_H__ */
+#endif	/* __SCLP_RW_H__ */

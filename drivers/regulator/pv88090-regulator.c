@@ -1,26 +1,25 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 //
-// pv88090-regulator.c - Regulator device driver क्रम PV88090
+// pv88090-regulator.c - Regulator device driver for PV88090
 // Copyright (C) 2015  Powerventure Semiconductor Ltd.
 
-#समावेश <linux/err.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/module.h>
-#समावेश <linux/init.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/regulator/driver.h>
-#समावेश <linux/regulator/machine.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/regulator/of_regulator.h>
-#समावेश "pv88090-regulator.h"
+#include <linux/err.h>
+#include <linux/i2c.h>
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/slab.h>
+#include <linux/regulator/driver.h>
+#include <linux/regulator/machine.h>
+#include <linux/regmap.h>
+#include <linux/irq.h>
+#include <linux/interrupt.h>
+#include <linux/regulator/of_regulator.h>
+#include "pv88090-regulator.h"
 
-#घोषणा PV88090_MAX_REGULATORS	5
+#define PV88090_MAX_REGULATORS	5
 
 /* PV88090 REGULATOR IDs */
-क्रमागत अणु
+enum {
 	/* BUCKs */
 	PV88090_ID_BUCK1,
 	PV88090_ID_BUCK2,
@@ -29,115 +28,115 @@
 	/* LDOs */
 	PV88090_ID_LDO1,
 	PV88090_ID_LDO2,
-पूर्ण;
+};
 
-काष्ठा pv88090_regulator अणु
-	काष्ठा regulator_desc desc;
-	अचिन्हित पूर्णांक conf;
-	अचिन्हित पूर्णांक conf2;
-पूर्ण;
+struct pv88090_regulator {
+	struct regulator_desc desc;
+	unsigned int conf;
+	unsigned int conf2;
+};
 
-काष्ठा pv88090 अणु
-	काष्ठा device *dev;
-	काष्ठा regmap *regmap;
-	काष्ठा regulator_dev *rdev[PV88090_MAX_REGULATORS];
-पूर्ण;
+struct pv88090 {
+	struct device *dev;
+	struct regmap *regmap;
+	struct regulator_dev *rdev[PV88090_MAX_REGULATORS];
+};
 
-काष्ठा pv88090_buck_voltage अणु
-	पूर्णांक min_uV;
-	पूर्णांक max_uV;
-	पूर्णांक uV_step;
-पूर्ण;
+struct pv88090_buck_voltage {
+	int min_uV;
+	int max_uV;
+	int uV_step;
+};
 
-अटल स्थिर काष्ठा regmap_config pv88090_regmap_config = अणु
+static const struct regmap_config pv88090_regmap_config = {
 	.reg_bits = 8,
 	.val_bits = 8,
-पूर्ण;
+};
 
-/* Current limits array (in uA) क्रम BUCK1, BUCK2, BUCK3.
- *  Entry indexes corresponds to रेजिस्टर values.
+/* Current limits array (in uA) for BUCK1, BUCK2, BUCK3.
+ *  Entry indexes corresponds to register values.
  */
 
-अटल स्थिर अचिन्हित पूर्णांक pv88090_buck1_limits[] = अणु
+static const unsigned int pv88090_buck1_limits[] = {
 	 220000,  440000,  660000,  880000, 1100000, 1320000, 1540000, 1760000,
 	1980000, 2200000, 2420000, 2640000, 2860000, 3080000, 3300000, 3520000,
 	3740000, 3960000, 4180000, 4400000, 4620000, 4840000, 5060000, 5280000,
 	5500000, 5720000, 5940000, 6160000, 6380000, 6600000, 6820000, 7040000
-पूर्ण;
+};
 
-अटल स्थिर अचिन्हित पूर्णांक pv88090_buck23_limits[] = अणु
+static const unsigned int pv88090_buck23_limits[] = {
 	1496000, 2393000, 3291000, 4189000
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा pv88090_buck_voltage pv88090_buck_vol[3] = अणु
-	अणु
+static const struct pv88090_buck_voltage pv88090_buck_vol[3] = {
+	{
 		.min_uV = 600000,
 		.max_uV = 1393750,
 		.uV_step = 6250,
-	पूर्ण,
+	},
 
-	अणु
+	{
 		.min_uV = 1400000,
 		.max_uV = 2193750,
 		.uV_step = 6250,
-	पूर्ण,
-	अणु
+	},
+	{
 		.min_uV = 1250000,
 		.max_uV = 2837500,
 		.uV_step = 12500,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल अचिन्हित पूर्णांक pv88090_buck_get_mode(काष्ठा regulator_dev *rdev)
-अणु
-	काष्ठा pv88090_regulator *info = rdev_get_drvdata(rdev);
-	अचिन्हित पूर्णांक data;
-	पूर्णांक ret, mode = 0;
+static unsigned int pv88090_buck_get_mode(struct regulator_dev *rdev)
+{
+	struct pv88090_regulator *info = rdev_get_drvdata(rdev);
+	unsigned int data;
+	int ret, mode = 0;
 
-	ret = regmap_पढ़ो(rdev->regmap, info->conf, &data);
-	अगर (ret < 0)
-		वापस ret;
+	ret = regmap_read(rdev->regmap, info->conf, &data);
+	if (ret < 0)
+		return ret;
 
-	चयन (data & PV88090_BUCK1_MODE_MASK) अणु
-	हाल PV88090_BUCK_MODE_SYNC:
+	switch (data & PV88090_BUCK1_MODE_MASK) {
+	case PV88090_BUCK_MODE_SYNC:
 		mode = REGULATOR_MODE_FAST;
-		अवरोध;
-	हाल PV88090_BUCK_MODE_AUTO:
+		break;
+	case PV88090_BUCK_MODE_AUTO:
 		mode = REGULATOR_MODE_NORMAL;
-		अवरोध;
-	हाल PV88090_BUCK_MODE_SLEEP:
+		break;
+	case PV88090_BUCK_MODE_SLEEP:
 		mode = REGULATOR_MODE_STANDBY;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस mode;
-पूर्ण
+	return mode;
+}
 
-अटल पूर्णांक pv88090_buck_set_mode(काष्ठा regulator_dev *rdev,
-					अचिन्हित पूर्णांक mode)
-अणु
-	काष्ठा pv88090_regulator *info = rdev_get_drvdata(rdev);
-	पूर्णांक val = 0;
+static int pv88090_buck_set_mode(struct regulator_dev *rdev,
+					unsigned int mode)
+{
+	struct pv88090_regulator *info = rdev_get_drvdata(rdev);
+	int val = 0;
 
-	चयन (mode) अणु
-	हाल REGULATOR_MODE_FAST:
+	switch (mode) {
+	case REGULATOR_MODE_FAST:
 		val = PV88090_BUCK_MODE_SYNC;
-		अवरोध;
-	हाल REGULATOR_MODE_NORMAL:
+		break;
+	case REGULATOR_MODE_NORMAL:
 		val = PV88090_BUCK_MODE_AUTO;
-		अवरोध;
-	हाल REGULATOR_MODE_STANDBY:
+		break;
+	case REGULATOR_MODE_STANDBY:
 		val = PV88090_BUCK_MODE_SLEEP;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	वापस regmap_update_bits(rdev->regmap, info->conf,
+	return regmap_update_bits(rdev->regmap, info->conf,
 					PV88090_BUCK1_MODE_MASK, val);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा regulator_ops pv88090_buck_ops = अणु
+static const struct regulator_ops pv88090_buck_ops = {
 	.get_mode = pv88090_buck_get_mode,
 	.set_mode = pv88090_buck_set_mode,
 	.enable = regulator_enable_regmap,
@@ -148,22 +147,22 @@
 	.list_voltage = regulator_list_voltage_linear,
 	.set_current_limit = regulator_set_current_limit_regmap,
 	.get_current_limit = regulator_get_current_limit_regmap,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा regulator_ops pv88090_lकरो_ops = अणु
+static const struct regulator_ops pv88090_ldo_ops = {
 	.enable = regulator_enable_regmap,
 	.disable = regulator_disable_regmap,
 	.is_enabled = regulator_is_enabled_regmap,
 	.set_voltage_sel = regulator_set_voltage_sel_regmap,
 	.get_voltage_sel = regulator_get_voltage_sel_regmap,
 	.list_voltage = regulator_list_voltage_linear,
-पूर्ण;
+};
 
-#घोषणा PV88090_BUCK(chip, regl_name, min, step, max, limits_array) \
-अणु\
-	.desc	=	अणु\
+#define PV88090_BUCK(chip, regl_name, min, step, max, limits_array) \
+{\
+	.desc	=	{\
 		.id = chip##_ID_##regl_name,\
-		.name = __stringअगरy(chip##_##regl_name),\
+		.name = __stringify(chip##_##regl_name),\
 		.of_match = of_match_ptr(#regl_name),\
 		.regulators_node = of_match_ptr("regulators"),\
 		.type = REGULATOR_VOLTAGE,\
@@ -180,21 +179,21 @@
 		.n_current_limits = ARRAY_SIZE(limits_array), \
 		.csel_reg = PV88090_REG_##regl_name##_CONF1, \
 		.csel_mask = PV88090_##regl_name##_ILIM_MASK, \
-	पूर्ण,\
+	},\
 	.conf = PV88090_REG_##regl_name##_CONF1, \
 	.conf2 = PV88090_REG_##regl_name##_CONF2, \
-पूर्ण
+}
 
-#घोषणा PV88090_LDO(chip, regl_name, min, step, max) \
-अणु\
-	.desc	=	अणु\
+#define PV88090_LDO(chip, regl_name, min, step, max) \
+{\
+	.desc	=	{\
 		.id = chip##_ID_##regl_name,\
-		.name = __stringअगरy(chip##_##regl_name),\
+		.name = __stringify(chip##_##regl_name),\
 		.of_match = of_match_ptr(#regl_name),\
 		.regulators_node = of_match_ptr("regulators"),\
 		.type = REGULATOR_VOLTAGE,\
 		.owner = THIS_MODULE,\
-		.ops = &pv88090_lकरो_ops,\
+		.ops = &pv88090_ldo_ops,\
 		.min_uV = min, \
 		.uV_step = step, \
 		.n_voltages = ((max) - (min))/(step) + 1, \
@@ -202,10 +201,10 @@
 		.enable_mask = PV88090_##regl_name##_EN, \
 		.vsel_reg = PV88090_REG_##regl_name##_CONT, \
 		.vsel_mask = PV88090_V##regl_name##_MASK, \
-	पूर्ण,\
-पूर्ण
+	},\
+}
 
-अटल काष्ठा pv88090_regulator pv88090_regulator_info[] = अणु
+static struct pv88090_regulator pv88090_regulator_info[] = {
 	PV88090_BUCK(PV88090, BUCK1, 600000, 6250, 1393750,
 		pv88090_buck1_limits),
 	PV88090_BUCK(PV88090, BUCK2, 600000, 6250, 1393750,
@@ -214,149 +213,149 @@
 		pv88090_buck23_limits),
 	PV88090_LDO(PV88090, LDO1, 1200000, 50000, 4350000),
 	PV88090_LDO(PV88090, LDO2,  650000, 25000, 2225000),
-पूर्ण;
+};
 
-अटल irqवापस_t pv88090_irq_handler(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा pv88090 *chip = data;
-	पूर्णांक i, reg_val, err, ret = IRQ_NONE;
+static irqreturn_t pv88090_irq_handler(int irq, void *data)
+{
+	struct pv88090 *chip = data;
+	int i, reg_val, err, ret = IRQ_NONE;
 
-	err = regmap_पढ़ो(chip->regmap, PV88090_REG_EVENT_A, &reg_val);
-	अगर (err < 0)
-		जाओ error_i2c;
+	err = regmap_read(chip->regmap, PV88090_REG_EVENT_A, &reg_val);
+	if (err < 0)
+		goto error_i2c;
 
-	अगर (reg_val & PV88090_E_VDD_FLT) अणु
-		क्रम (i = 0; i < PV88090_MAX_REGULATORS; i++) अणु
-			अगर (chip->rdev[i] != शून्य)
-				regulator_notअगरier_call_chain(chip->rdev[i],
+	if (reg_val & PV88090_E_VDD_FLT) {
+		for (i = 0; i < PV88090_MAX_REGULATORS; i++) {
+			if (chip->rdev[i] != NULL)
+				regulator_notifier_call_chain(chip->rdev[i],
 					REGULATOR_EVENT_UNDER_VOLTAGE,
-					शून्य);
-		पूर्ण
+					NULL);
+		}
 
-		err = regmap_ग_लिखो(chip->regmap, PV88090_REG_EVENT_A,
+		err = regmap_write(chip->regmap, PV88090_REG_EVENT_A,
 			PV88090_E_VDD_FLT);
-		अगर (err < 0)
-			जाओ error_i2c;
+		if (err < 0)
+			goto error_i2c;
 
 		ret = IRQ_HANDLED;
-	पूर्ण
+	}
 
-	अगर (reg_val & PV88090_E_OVER_TEMP) अणु
-		क्रम (i = 0; i < PV88090_MAX_REGULATORS; i++) अणु
-			अगर (chip->rdev[i] != शून्य)
-				regulator_notअगरier_call_chain(chip->rdev[i],
+	if (reg_val & PV88090_E_OVER_TEMP) {
+		for (i = 0; i < PV88090_MAX_REGULATORS; i++) {
+			if (chip->rdev[i] != NULL)
+				regulator_notifier_call_chain(chip->rdev[i],
 					REGULATOR_EVENT_OVER_TEMP,
-					शून्य);
-		पूर्ण
+					NULL);
+		}
 
-		err = regmap_ग_लिखो(chip->regmap, PV88090_REG_EVENT_A,
+		err = regmap_write(chip->regmap, PV88090_REG_EVENT_A,
 			PV88090_E_OVER_TEMP);
-		अगर (err < 0)
-			जाओ error_i2c;
+		if (err < 0)
+			goto error_i2c;
 
 		ret = IRQ_HANDLED;
-	पूर्ण
+	}
 
-	वापस ret;
+	return ret;
 
 error_i2c:
 	dev_err(chip->dev, "I2C error : %d\n", err);
-	वापस IRQ_NONE;
-पूर्ण
+	return IRQ_NONE;
+}
 
 /*
- * I2C driver पूर्णांकerface functions
+ * I2C driver interface functions
  */
-अटल पूर्णांक pv88090_i2c_probe(काष्ठा i2c_client *i2c)
-अणु
-	काष्ठा regulator_init_data *init_data = dev_get_platdata(&i2c->dev);
-	काष्ठा pv88090 *chip;
-	काष्ठा regulator_config config = अणु पूर्ण;
-	पूर्णांक error, i, ret = 0;
-	अचिन्हित पूर्णांक conf2, range, index;
+static int pv88090_i2c_probe(struct i2c_client *i2c)
+{
+	struct regulator_init_data *init_data = dev_get_platdata(&i2c->dev);
+	struct pv88090 *chip;
+	struct regulator_config config = { };
+	int error, i, ret = 0;
+	unsigned int conf2, range, index;
 
-	chip = devm_kzalloc(&i2c->dev, माप(काष्ठा pv88090), GFP_KERNEL);
-	अगर (!chip)
-		वापस -ENOMEM;
+	chip = devm_kzalloc(&i2c->dev, sizeof(struct pv88090), GFP_KERNEL);
+	if (!chip)
+		return -ENOMEM;
 
 	chip->dev = &i2c->dev;
 	chip->regmap = devm_regmap_init_i2c(i2c, &pv88090_regmap_config);
-	अगर (IS_ERR(chip->regmap)) अणु
+	if (IS_ERR(chip->regmap)) {
 		error = PTR_ERR(chip->regmap);
 		dev_err(chip->dev, "Failed to allocate register map: %d\n",
 			error);
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
 	i2c_set_clientdata(i2c, chip);
 
-	अगर (i2c->irq != 0) अणु
-		ret = regmap_ग_लिखो(chip->regmap, PV88090_REG_MASK_A, 0xFF);
-		अगर (ret < 0) अणु
+	if (i2c->irq != 0) {
+		ret = regmap_write(chip->regmap, PV88090_REG_MASK_A, 0xFF);
+		if (ret < 0) {
 			dev_err(chip->dev,
 				"Failed to mask A reg: %d\n", ret);
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 
-		ret = regmap_ग_लिखो(chip->regmap, PV88090_REG_MASK_B, 0xFF);
-		अगर (ret < 0) अणु
+		ret = regmap_write(chip->regmap, PV88090_REG_MASK_B, 0xFF);
+		if (ret < 0) {
 			dev_err(chip->dev,
 				"Failed to mask B reg: %d\n", ret);
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 
-		ret = devm_request_thपढ़ोed_irq(&i2c->dev, i2c->irq, शून्य,
+		ret = devm_request_threaded_irq(&i2c->dev, i2c->irq, NULL,
 					pv88090_irq_handler,
 					IRQF_TRIGGER_LOW|IRQF_ONESHOT,
 					"pv88090", chip);
-		अगर (ret != 0) अणु
+		if (ret != 0) {
 			dev_err(chip->dev, "Failed to request IRQ: %d\n",
 				i2c->irq);
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 
 		ret = regmap_update_bits(chip->regmap, PV88090_REG_MASK_A,
 			PV88090_M_VDD_FLT | PV88090_M_OVER_TEMP, 0);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			dev_err(chip->dev,
 				"Failed to update mask reg: %d\n", ret);
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 
-	पूर्ण अन्यथा अणु
+	} else {
 		dev_warn(chip->dev, "No IRQ configured\n");
-	पूर्ण
+	}
 
 	config.dev = chip->dev;
 	config.regmap = chip->regmap;
 
-	क्रम (i = 0; i < PV88090_MAX_REGULATORS; i++) अणु
-		अगर (init_data)
+	for (i = 0; i < PV88090_MAX_REGULATORS; i++) {
+		if (init_data)
 			config.init_data = &init_data[i];
 
-		अगर (i == PV88090_ID_BUCK2 || i == PV88090_ID_BUCK3) अणु
-			ret = regmap_पढ़ो(chip->regmap,
+		if (i == PV88090_ID_BUCK2 || i == PV88090_ID_BUCK3) {
+			ret = regmap_read(chip->regmap,
 				pv88090_regulator_info[i].conf2, &conf2);
-			अगर (ret < 0)
-				वापस ret;
+			if (ret < 0)
+				return ret;
 
 			conf2 = (conf2 >> PV88090_BUCK_VDAC_RANGE_SHIFT) &
 				PV88090_BUCK_VDAC_RANGE_MASK;
 
-			ret = regmap_पढ़ो(chip->regmap,
+			ret = regmap_read(chip->regmap,
 				PV88090_REG_BUCK_FOLD_RANGE, &range);
-			अगर (ret < 0)
-				वापस ret;
+			if (ret < 0)
+				return ret;
 
 			range = (range >>
 				 (PV88090_BUCK_VRANGE_GAIN_SHIFT + i - 1)) &
 				PV88090_BUCK_VRANGE_GAIN_MASK;
 			index = ((range << 1) | conf2);
-			अगर (index > PV88090_ID_BUCK3) अणु
+			if (index > PV88090_ID_BUCK3) {
 				dev_err(chip->dev,
 					"Invalid index(%d)\n", index);
-				वापस -EINVAL;
-			पूर्ण
+				return -EINVAL;
+			}
 
 			pv88090_regulator_info[i].desc.min_uV
 				= pv88090_buck_vol[index].min_uV;
@@ -366,43 +365,43 @@ error_i2c:
 				= ((pv88090_buck_vol[index].max_uV)
 				- (pv88090_buck_vol[index].min_uV))
 				/(pv88090_buck_vol[index].uV_step) + 1;
-		पूर्ण
+		}
 
-		config.driver_data = (व्योम *)&pv88090_regulator_info[i];
-		chip->rdev[i] = devm_regulator_रेजिस्टर(chip->dev,
+		config.driver_data = (void *)&pv88090_regulator_info[i];
+		chip->rdev[i] = devm_regulator_register(chip->dev,
 			&pv88090_regulator_info[i].desc, &config);
-		अगर (IS_ERR(chip->rdev[i])) अणु
+		if (IS_ERR(chip->rdev[i])) {
 			dev_err(chip->dev,
 				"Failed to register PV88090 regulator\n");
-			वापस PTR_ERR(chip->rdev[i]);
-		पूर्ण
-	पूर्ण
+			return PTR_ERR(chip->rdev[i]);
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा i2c_device_id pv88090_i2c_id[] = अणु
-	अणु"pv88090", 0पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct i2c_device_id pv88090_i2c_id[] = {
+	{"pv88090", 0},
+	{},
+};
 MODULE_DEVICE_TABLE(i2c, pv88090_i2c_id);
 
-#अगर_घोषित CONFIG_OF
-अटल स्थिर काष्ठा of_device_id pv88090_dt_ids[] = अणु
-	अणु .compatible = "pvs,pv88090", .data = &pv88090_i2c_id[0] पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+#ifdef CONFIG_OF
+static const struct of_device_id pv88090_dt_ids[] = {
+	{ .compatible = "pvs,pv88090", .data = &pv88090_i2c_id[0] },
+	{},
+};
 MODULE_DEVICE_TABLE(of, pv88090_dt_ids);
-#पूर्ण_अगर
+#endif
 
-अटल काष्ठा i2c_driver pv88090_regulator_driver = अणु
-	.driver = अणु
+static struct i2c_driver pv88090_regulator_driver = {
+	.driver = {
 		.name = "pv88090",
 		.of_match_table = of_match_ptr(pv88090_dt_ids),
-	पूर्ण,
+	},
 	.probe_new = pv88090_i2c_probe,
 	.id_table = pv88090_i2c_id,
-पूर्ण;
+};
 
 module_i2c_driver(pv88090_regulator_driver);
 

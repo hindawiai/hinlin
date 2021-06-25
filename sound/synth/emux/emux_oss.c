@@ -1,128 +1,127 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- *  Interface क्रम OSS sequencer emulation
+ *  Interface for OSS sequencer emulation
  *
  *  Copyright (C) 1999 Takashi Iwai <tiwai@suse.de>
  *
  * Changes
- * 19990227   Steve Ratclअगरfe   Made separate file and merged in latest
+ * 19990227   Steve Ratcliffe   Made separate file and merged in latest
  * 				midi emulation.
  */
 
 
-#समावेश <linux/export.h>
-#समावेश <linux/uaccess.h>
-#समावेश <sound/core.h>
-#समावेश "emux_voice.h"
-#समावेश <sound/asoundef.h>
+#include <linux/export.h>
+#include <linux/uaccess.h>
+#include <sound/core.h>
+#include "emux_voice.h"
+#include <sound/asoundef.h>
 
-अटल पूर्णांक snd_emux_खोलो_seq_oss(काष्ठा snd_seq_oss_arg *arg, व्योम *closure);
-अटल पूर्णांक snd_emux_बंद_seq_oss(काष्ठा snd_seq_oss_arg *arg);
-अटल पूर्णांक snd_emux_ioctl_seq_oss(काष्ठा snd_seq_oss_arg *arg, अचिन्हित पूर्णांक cmd,
-				  अचिन्हित दीर्घ ioarg);
-अटल पूर्णांक snd_emux_load_patch_seq_oss(काष्ठा snd_seq_oss_arg *arg, पूर्णांक क्रमmat,
-				       स्थिर अक्षर __user *buf, पूर्णांक offs, पूर्णांक count);
-अटल पूर्णांक snd_emux_reset_seq_oss(काष्ठा snd_seq_oss_arg *arg);
-अटल पूर्णांक snd_emux_event_oss_input(काष्ठा snd_seq_event *ev, पूर्णांक direct,
-				    व्योम *निजी, पूर्णांक atomic, पूर्णांक hop);
-अटल व्योम reset_port_mode(काष्ठा snd_emux_port *port, पूर्णांक midi_mode);
-अटल व्योम emuspec_control(काष्ठा snd_emux *emu, काष्ठा snd_emux_port *port,
-			    पूर्णांक cmd, अचिन्हित अक्षर *event, पूर्णांक atomic, पूर्णांक hop);
-अटल व्योम gusspec_control(काष्ठा snd_emux *emu, काष्ठा snd_emux_port *port,
-			    पूर्णांक cmd, अचिन्हित अक्षर *event, पूर्णांक atomic, पूर्णांक hop);
-अटल व्योम fake_event(काष्ठा snd_emux *emu, काष्ठा snd_emux_port *port,
-		       पूर्णांक ch, पूर्णांक param, पूर्णांक val, पूर्णांक atomic, पूर्णांक hop);
+static int snd_emux_open_seq_oss(struct snd_seq_oss_arg *arg, void *closure);
+static int snd_emux_close_seq_oss(struct snd_seq_oss_arg *arg);
+static int snd_emux_ioctl_seq_oss(struct snd_seq_oss_arg *arg, unsigned int cmd,
+				  unsigned long ioarg);
+static int snd_emux_load_patch_seq_oss(struct snd_seq_oss_arg *arg, int format,
+				       const char __user *buf, int offs, int count);
+static int snd_emux_reset_seq_oss(struct snd_seq_oss_arg *arg);
+static int snd_emux_event_oss_input(struct snd_seq_event *ev, int direct,
+				    void *private, int atomic, int hop);
+static void reset_port_mode(struct snd_emux_port *port, int midi_mode);
+static void emuspec_control(struct snd_emux *emu, struct snd_emux_port *port,
+			    int cmd, unsigned char *event, int atomic, int hop);
+static void gusspec_control(struct snd_emux *emu, struct snd_emux_port *port,
+			    int cmd, unsigned char *event, int atomic, int hop);
+static void fake_event(struct snd_emux *emu, struct snd_emux_port *port,
+		       int ch, int param, int val, int atomic, int hop);
 
-/* चालकs */
-अटल स्थिर काष्ठा snd_seq_oss_callback oss_callback = अणु
+/* operators */
+static const struct snd_seq_oss_callback oss_callback = {
 	.owner = THIS_MODULE,
-	.खोलो = snd_emux_खोलो_seq_oss,
-	.बंद = snd_emux_बंद_seq_oss,
+	.open = snd_emux_open_seq_oss,
+	.close = snd_emux_close_seq_oss,
 	.ioctl = snd_emux_ioctl_seq_oss,
 	.load_patch = snd_emux_load_patch_seq_oss,
 	.reset = snd_emux_reset_seq_oss,
-पूर्ण;
+};
 
 
 /*
- * रेजिस्टर OSS synth
+ * register OSS synth
  */
 
-व्योम
-snd_emux_init_seq_oss(काष्ठा snd_emux *emu)
-अणु
-	काष्ठा snd_seq_oss_reg *arg;
-	काष्ठा snd_seq_device *dev;
+void
+snd_emux_init_seq_oss(struct snd_emux *emu)
+{
+	struct snd_seq_oss_reg *arg;
+	struct snd_seq_device *dev;
 
-	/* using device#1 here क्रम aव्योमing conflicts with OPL3 */
-	अगर (snd_seq_device_new(emu->card, 1, SNDRV_SEQ_DEV_ID_OSS,
-			       माप(काष्ठा snd_seq_oss_reg), &dev) < 0)
-		वापस;
+	/* using device#1 here for avoiding conflicts with OPL3 */
+	if (snd_seq_device_new(emu->card, 1, SNDRV_SEQ_DEV_ID_OSS,
+			       sizeof(struct snd_seq_oss_reg), &dev) < 0)
+		return;
 
 	emu->oss_synth = dev;
-	म_नकल(dev->name, emu->name);
+	strcpy(dev->name, emu->name);
 	arg = SNDRV_SEQ_DEVICE_ARGPTR(dev);
 	arg->type = SYNTH_TYPE_SAMPLE;
 	arg->subtype = SAMPLE_TYPE_AWE32;
 	arg->nvoices = emu->max_voices;
 	arg->oper = oss_callback;
-	arg->निजी_data = emu;
+	arg->private_data = emu;
 
-	/* रेजिस्टर to OSS synth table */
-	snd_device_रेजिस्टर(emu->card, dev);
-पूर्ण
+	/* register to OSS synth table */
+	snd_device_register(emu->card, dev);
+}
 
 
 /*
- * unरेजिस्टर
+ * unregister
  */
-व्योम
-snd_emux_detach_seq_oss(काष्ठा snd_emux *emu)
-अणु
-	अगर (emu->oss_synth) अणु
-		snd_device_मुक्त(emu->card, emu->oss_synth);
-		emu->oss_synth = शून्य;
-	पूर्ण
-पूर्ण
+void
+snd_emux_detach_seq_oss(struct snd_emux *emu)
+{
+	if (emu->oss_synth) {
+		snd_device_free(emu->card, emu->oss_synth);
+		emu->oss_synth = NULL;
+	}
+}
 
 
 /* use port number as a unique soundfont client number */
-#घोषणा SF_CLIENT_NO(p)	((p) + 0x1000)
+#define SF_CLIENT_NO(p)	((p) + 0x1000)
 
 /*
- * खोलो port क्रम OSS sequencer
+ * open port for OSS sequencer
  */
-अटल पूर्णांक
-snd_emux_खोलो_seq_oss(काष्ठा snd_seq_oss_arg *arg, व्योम *closure)
-अणु
-	काष्ठा snd_emux *emu;
-	काष्ठा snd_emux_port *p;
-	काष्ठा snd_seq_port_callback callback;
-	अक्षर क्षणिकe[64];
+static int
+snd_emux_open_seq_oss(struct snd_seq_oss_arg *arg, void *closure)
+{
+	struct snd_emux *emu;
+	struct snd_emux_port *p;
+	struct snd_seq_port_callback callback;
+	char tmpname[64];
 
 	emu = closure;
-	अगर (snd_BUG_ON(!arg || !emu))
-		वापस -ENXIO;
+	if (snd_BUG_ON(!arg || !emu))
+		return -ENXIO;
 
-	अगर (!snd_emux_inc_count(emu))
-		वापस -EFAULT;
+	if (!snd_emux_inc_count(emu))
+		return -EFAULT;
 
-	स_रखो(&callback, 0, माप(callback));
+	memset(&callback, 0, sizeof(callback));
 	callback.owner = THIS_MODULE;
 	callback.event_input = snd_emux_event_oss_input;
 
-	प्र_लिखो(क्षणिकe, "%s OSS Port", emu->name);
-	p = snd_emux_create_port(emu, क्षणिकe, 32,
+	sprintf(tmpname, "%s OSS Port", emu->name);
+	p = snd_emux_create_port(emu, tmpname, 32,
 				 1, &callback);
-	अगर (p == शून्य) अणु
-		snd_prपूर्णांकk(KERN_ERR "can't create port\n");
+	if (p == NULL) {
+		snd_printk(KERN_ERR "can't create port\n");
 		snd_emux_dec_count(emu);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	/* fill the argument data */
-	arg->निजी_data = p;
+	arg->private_data = p;
 	arg->addr.client = p->chset.client;
 	arg->addr.port = p->chset.port;
 	p->oss_arg = arg;
@@ -130,362 +129,362 @@ snd_emux_खोलो_seq_oss(काष्ठा snd_seq_oss_arg *arg, व्य
 	reset_port_mode(p, arg->seq_mode);
 
 	snd_emux_reset_port(p);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-#घोषणा DEFAULT_DRUM_FLAGS	((1<<9) | (1<<25))
+#define DEFAULT_DRUM_FLAGS	((1<<9) | (1<<25))
 
 /*
  * reset port mode
  */
-अटल व्योम
-reset_port_mode(काष्ठा snd_emux_port *port, पूर्णांक midi_mode)
-अणु
-	अगर (midi_mode) अणु
+static void
+reset_port_mode(struct snd_emux_port *port, int midi_mode)
+{
+	if (midi_mode) {
 		port->port_mode = SNDRV_EMUX_PORT_MODE_OSS_MIDI;
 		port->drum_flags = DEFAULT_DRUM_FLAGS;
 		port->volume_atten = 0;
 		port->oss_arg->event_passing = SNDRV_SEQ_OSS_PROCESS_KEYPRESS;
-	पूर्ण अन्यथा अणु
+	} else {
 		port->port_mode = SNDRV_EMUX_PORT_MODE_OSS_SYNTH;
 		port->drum_flags = 0;
 		port->volume_atten = 32;
 		port->oss_arg->event_passing = SNDRV_SEQ_OSS_PROCESS_EVENTS;
-	पूर्ण
-पूर्ण
+	}
+}
 
 
 /*
- * बंद port
+ * close port
  */
-अटल पूर्णांक
-snd_emux_बंद_seq_oss(काष्ठा snd_seq_oss_arg *arg)
-अणु
-	काष्ठा snd_emux *emu;
-	काष्ठा snd_emux_port *p;
+static int
+snd_emux_close_seq_oss(struct snd_seq_oss_arg *arg)
+{
+	struct snd_emux *emu;
+	struct snd_emux_port *p;
 
-	अगर (snd_BUG_ON(!arg))
-		वापस -ENXIO;
-	p = arg->निजी_data;
-	अगर (snd_BUG_ON(!p))
-		वापस -ENXIO;
+	if (snd_BUG_ON(!arg))
+		return -ENXIO;
+	p = arg->private_data;
+	if (snd_BUG_ON(!p))
+		return -ENXIO;
 
 	emu = p->emu;
-	अगर (snd_BUG_ON(!emu))
-		वापस -ENXIO;
+	if (snd_BUG_ON(!emu))
+		return -ENXIO;
 
 	snd_emux_sounds_off_all(p);
-	snd_soundfont_बंद_check(emu->sflist, SF_CLIENT_NO(p->chset.port));
+	snd_soundfont_close_check(emu->sflist, SF_CLIENT_NO(p->chset.port));
 	snd_seq_event_port_detach(p->chset.client, p->chset.port);
 	snd_emux_dec_count(emu);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
 /*
  * load patch
  */
-अटल पूर्णांक
-snd_emux_load_patch_seq_oss(काष्ठा snd_seq_oss_arg *arg, पूर्णांक क्रमmat,
-			    स्थिर अक्षर __user *buf, पूर्णांक offs, पूर्णांक count)
-अणु
-	काष्ठा snd_emux *emu;
-	काष्ठा snd_emux_port *p;
-	पूर्णांक rc;
+static int
+snd_emux_load_patch_seq_oss(struct snd_seq_oss_arg *arg, int format,
+			    const char __user *buf, int offs, int count)
+{
+	struct snd_emux *emu;
+	struct snd_emux_port *p;
+	int rc;
 
-	अगर (snd_BUG_ON(!arg))
-		वापस -ENXIO;
-	p = arg->निजी_data;
-	अगर (snd_BUG_ON(!p))
-		वापस -ENXIO;
+	if (snd_BUG_ON(!arg))
+		return -ENXIO;
+	p = arg->private_data;
+	if (snd_BUG_ON(!p))
+		return -ENXIO;
 
 	emu = p->emu;
-	अगर (snd_BUG_ON(!emu))
-		वापस -ENXIO;
+	if (snd_BUG_ON(!emu))
+		return -ENXIO;
 
-	अगर (क्रमmat == GUS_PATCH)
+	if (format == GUS_PATCH)
 		rc = snd_soundfont_load_guspatch(emu->sflist, buf, count,
 						 SF_CLIENT_NO(p->chset.port));
-	अन्यथा अगर (क्रमmat == SNDRV_OSS_SOUNDFONT_PATCH) अणु
-		काष्ठा soundfont_patch_info patch;
-		अगर (count < (पूर्णांक)माप(patch))
-			वापस -EINVAL;
-		अगर (copy_from_user(&patch, buf, माप(patch)))
-			वापस -EFAULT;
-		अगर (patch.type >= SNDRV_SFNT_LOAD_INFO &&
+	else if (format == SNDRV_OSS_SOUNDFONT_PATCH) {
+		struct soundfont_patch_info patch;
+		if (count < (int)sizeof(patch))
+			return -EINVAL;
+		if (copy_from_user(&patch, buf, sizeof(patch)))
+			return -EFAULT;
+		if (patch.type >= SNDRV_SFNT_LOAD_INFO &&
 		    patch.type <= SNDRV_SFNT_PROBE_DATA)
 			rc = snd_soundfont_load(emu->sflist, buf, count, SF_CLIENT_NO(p->chset.port));
-		अन्यथा अणु
-			अगर (emu->ops.load_fx)
+		else {
+			if (emu->ops.load_fx)
 				rc = emu->ops.load_fx(emu, patch.type, patch.optarg, buf, count);
-			अन्यथा
+			else
 				rc = -EINVAL;
-		पूर्ण
-	पूर्ण अन्यथा
+		}
+	} else
 		rc = 0;
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 
 /*
  * ioctl
  */
-अटल पूर्णांक
-snd_emux_ioctl_seq_oss(काष्ठा snd_seq_oss_arg *arg, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ ioarg)
-अणु
-	काष्ठा snd_emux_port *p;
-	काष्ठा snd_emux *emu;
+static int
+snd_emux_ioctl_seq_oss(struct snd_seq_oss_arg *arg, unsigned int cmd, unsigned long ioarg)
+{
+	struct snd_emux_port *p;
+	struct snd_emux *emu;
 
-	अगर (snd_BUG_ON(!arg))
-		वापस -ENXIO;
-	p = arg->निजी_data;
-	अगर (snd_BUG_ON(!p))
-		वापस -ENXIO;
+	if (snd_BUG_ON(!arg))
+		return -ENXIO;
+	p = arg->private_data;
+	if (snd_BUG_ON(!p))
+		return -ENXIO;
 
 	emu = p->emu;
-	अगर (snd_BUG_ON(!emu))
-		वापस -ENXIO;
+	if (snd_BUG_ON(!emu))
+		return -ENXIO;
 
-	चयन (cmd) अणु
-	हाल SNDCTL_SEQ_RESETSAMPLES:
-		snd_soundfont_हटाओ_samples(emu->sflist);
-		वापस 0;
+	switch (cmd) {
+	case SNDCTL_SEQ_RESETSAMPLES:
+		snd_soundfont_remove_samples(emu->sflist);
+		return 0;
 			
-	हाल SNDCTL_SYNTH_MEMAVL:
-		अगर (emu->memhdr)
-			वापस snd_util_mem_avail(emu->memhdr);
-		वापस 0;
-	पूर्ण
+	case SNDCTL_SYNTH_MEMAVL:
+		if (emu->memhdr)
+			return snd_util_mem_avail(emu->memhdr);
+		return 0;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
 /*
  * reset device
  */
-अटल पूर्णांक
-snd_emux_reset_seq_oss(काष्ठा snd_seq_oss_arg *arg)
-अणु
-	काष्ठा snd_emux_port *p;
+static int
+snd_emux_reset_seq_oss(struct snd_seq_oss_arg *arg)
+{
+	struct snd_emux_port *p;
 
-	अगर (snd_BUG_ON(!arg))
-		वापस -ENXIO;
-	p = arg->निजी_data;
-	अगर (snd_BUG_ON(!p))
-		वापस -ENXIO;
+	if (snd_BUG_ON(!arg))
+		return -ENXIO;
+	p = arg->private_data;
+	if (snd_BUG_ON(!p))
+		return -ENXIO;
 	snd_emux_reset_port(p);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
 /*
  * receive raw events: only SEQ_PRIVATE is accepted.
  */
-अटल पूर्णांक
-snd_emux_event_oss_input(काष्ठा snd_seq_event *ev, पूर्णांक direct, व्योम *निजी_data,
-			 पूर्णांक atomic, पूर्णांक hop)
-अणु
-	काष्ठा snd_emux *emu;
-	काष्ठा snd_emux_port *p;
-	अचिन्हित अक्षर cmd, *data;
+static int
+snd_emux_event_oss_input(struct snd_seq_event *ev, int direct, void *private_data,
+			 int atomic, int hop)
+{
+	struct snd_emux *emu;
+	struct snd_emux_port *p;
+	unsigned char cmd, *data;
 
-	p = निजी_data;
-	अगर (snd_BUG_ON(!p))
-		वापस -EINVAL;
+	p = private_data;
+	if (snd_BUG_ON(!p))
+		return -EINVAL;
 	emu = p->emu;
-	अगर (snd_BUG_ON(!emu))
-		वापस -EINVAL;
-	अगर (ev->type != SNDRV_SEQ_EVENT_OSS)
-		वापस snd_emux_event_input(ev, direct, निजी_data, atomic, hop);
+	if (snd_BUG_ON(!emu))
+		return -EINVAL;
+	if (ev->type != SNDRV_SEQ_EVENT_OSS)
+		return snd_emux_event_input(ev, direct, private_data, atomic, hop);
 
 	data = ev->data.raw8.d;
 	/* only SEQ_PRIVATE is accepted */
-	अगर (data[0] != 0xfe)
-		वापस 0;
+	if (data[0] != 0xfe)
+		return 0;
 	cmd = data[2] & _EMUX_OSS_MODE_VALUE_MASK;
-	अगर (data[2] & _EMUX_OSS_MODE_FLAG)
+	if (data[2] & _EMUX_OSS_MODE_FLAG)
 		emuspec_control(emu, p, cmd, data, atomic, hop);
-	अन्यथा
+	else
 		gusspec_control(emu, p, cmd, data, atomic, hop);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
 /*
- * OSS/AWE driver specअगरic h/w controls
+ * OSS/AWE driver specific h/w controls
  */
-अटल व्योम
-emuspec_control(काष्ठा snd_emux *emu, काष्ठा snd_emux_port *port, पूर्णांक cmd,
-		अचिन्हित अक्षर *event, पूर्णांक atomic, पूर्णांक hop)
-अणु
-	पूर्णांक voice;
-	अचिन्हित लघु p1;
-	लघु p2;
-	पूर्णांक i;
-	काष्ठा snd_midi_channel *chan;
+static void
+emuspec_control(struct snd_emux *emu, struct snd_emux_port *port, int cmd,
+		unsigned char *event, int atomic, int hop)
+{
+	int voice;
+	unsigned short p1;
+	short p2;
+	int i;
+	struct snd_midi_channel *chan;
 
 	voice = event[3];
-	अगर (voice < 0 || voice >= port->chset.max_channels)
-		chan = शून्य;
-	अन्यथा
+	if (voice < 0 || voice >= port->chset.max_channels)
+		chan = NULL;
+	else
 		chan = &port->chset.channels[voice];
 
-	p1 = *(अचिन्हित लघु *) &event[4];
-	p2 = *(लघु *) &event[6];
+	p1 = *(unsigned short *) &event[4];
+	p2 = *(short *) &event[6];
 
-	चयन (cmd) अणु
-#अगर 0 /* करोn't करो this atomically */
-	हाल _EMUX_OSS_REMOVE_LAST_SAMPLES:
-		snd_soundfont_हटाओ_unlocked(emu->sflist);
-		अवरोध;
-#पूर्ण_अगर
-	हाल _EMUX_OSS_SEND_EFFECT:
-		अगर (chan)
+	switch (cmd) {
+#if 0 /* don't do this atomically */
+	case _EMUX_OSS_REMOVE_LAST_SAMPLES:
+		snd_soundfont_remove_unlocked(emu->sflist);
+		break;
+#endif
+	case _EMUX_OSS_SEND_EFFECT:
+		if (chan)
 			snd_emux_send_effect_oss(port, chan, p1, p2);
-		अवरोध;
+		break;
 		
-	हाल _EMUX_OSS_TERMINATE_ALL:
+	case _EMUX_OSS_TERMINATE_ALL:
 		snd_emux_terminate_all(emu);
-		अवरोध;
+		break;
 
-	हाल _EMUX_OSS_TERMINATE_CHANNEL:
+	case _EMUX_OSS_TERMINATE_CHANNEL:
 		/*snd_emux_mute_channel(emu, chan);*/
-		अवरोध;
-	हाल _EMUX_OSS_RESET_CHANNEL:
+		break;
+	case _EMUX_OSS_RESET_CHANNEL:
 		/*snd_emux_channel_init(chset, chan);*/
-		अवरोध;
+		break;
 
-	हाल _EMUX_OSS_RELEASE_ALL:
+	case _EMUX_OSS_RELEASE_ALL:
 		fake_event(emu, port, voice, MIDI_CTL_ALL_NOTES_OFF, 0, atomic, hop);
-		अवरोध;
-	हाल _EMUX_OSS_NOTखातापूर्णF_ALL:
+		break;
+	case _EMUX_OSS_NOTEOFF_ALL:
 		fake_event(emu, port, voice, MIDI_CTL_ALL_SOUNDS_OFF, 0, atomic, hop);
-		अवरोध;
+		break;
 
-	हाल _EMUX_OSS_INITIAL_VOLUME:
-		अगर (p2) अणु
-			port->volume_atten = (लघु)p1;
+	case _EMUX_OSS_INITIAL_VOLUME:
+		if (p2) {
+			port->volume_atten = (short)p1;
 			snd_emux_update_port(port, SNDRV_EMUX_UPDATE_VOLUME);
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	हाल _EMUX_OSS_CHN_PRESSURE:
-		अगर (chan) अणु
+	case _EMUX_OSS_CHN_PRESSURE:
+		if (chan) {
 			chan->midi_pressure = p1;
 			snd_emux_update_channel(port, chan, SNDRV_EMUX_UPDATE_FMMOD|SNDRV_EMUX_UPDATE_FM2FRQ2);
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	हाल _EMUX_OSS_CHANNEL_MODE:
+	case _EMUX_OSS_CHANNEL_MODE:
 		reset_port_mode(port, p1);
 		snd_emux_reset_port(port);
-		अवरोध;
+		break;
 
-	हाल _EMUX_OSS_DRUM_CHANNELS:
-		port->drum_flags = *(अचिन्हित पूर्णांक*)&event[4];
-		क्रम (i = 0; i < port->chset.max_channels; i++) अणु
+	case _EMUX_OSS_DRUM_CHANNELS:
+		port->drum_flags = *(unsigned int*)&event[4];
+		for (i = 0; i < port->chset.max_channels; i++) {
 			chan = &port->chset.channels[i];
 			chan->drum_channel = ((port->drum_flags >> i) & 1) ? 1 : 0;
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	हाल _EMUX_OSS_MISC_MODE:
-		अगर (p1 < EMUX_MD_END)
+	case _EMUX_OSS_MISC_MODE:
+		if (p1 < EMUX_MD_END)
 			port->ctrls[p1] = p2;
-		अवरोध;
-	हाल _EMUX_OSS_DEBUG_MODE:
-		अवरोध;
+		break;
+	case _EMUX_OSS_DEBUG_MODE:
+		break;
 
-	शेष:
-		अगर (emu->ops.oss_ioctl)
+	default:
+		if (emu->ops.oss_ioctl)
 			emu->ops.oss_ioctl(emu, cmd, p1, p2);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
 /*
- * GUS specअगरic h/w controls
+ * GUS specific h/w controls
  */
 
-#समावेश <linux/ultrasound.h>
+#include <linux/ultrasound.h>
 
-अटल व्योम
-gusspec_control(काष्ठा snd_emux *emu, काष्ठा snd_emux_port *port, पूर्णांक cmd,
-		अचिन्हित अक्षर *event, पूर्णांक atomic, पूर्णांक hop)
-अणु
-	पूर्णांक voice;
-	अचिन्हित लघु p1;
-	पूर्णांक pदीर्घ;
-	काष्ठा snd_midi_channel *chan;
+static void
+gusspec_control(struct snd_emux *emu, struct snd_emux_port *port, int cmd,
+		unsigned char *event, int atomic, int hop)
+{
+	int voice;
+	unsigned short p1;
+	int plong;
+	struct snd_midi_channel *chan;
 
-	अगर (port->port_mode != SNDRV_EMUX_PORT_MODE_OSS_SYNTH)
-		वापस;
-	अगर (cmd == _GUS_NUMVOICES)
-		वापस;
+	if (port->port_mode != SNDRV_EMUX_PORT_MODE_OSS_SYNTH)
+		return;
+	if (cmd == _GUS_NUMVOICES)
+		return;
 	voice = event[3];
-	अगर (voice < 0 || voice >= port->chset.max_channels)
-		वापस;
+	if (voice < 0 || voice >= port->chset.max_channels)
+		return;
 
 	chan = &port->chset.channels[voice];
 
-	p1 = *(अचिन्हित लघु *) &event[4];
-	pदीर्घ = *(पूर्णांक*) &event[4];
+	p1 = *(unsigned short *) &event[4];
+	plong = *(int*) &event[4];
 
-	चयन (cmd) अणु
-	हाल _GUS_VOICESAMPLE:
+	switch (cmd) {
+	case _GUS_VOICESAMPLE:
 		chan->midi_program = p1;
-		वापस;
+		return;
 
-	हाल _GUS_VOICEBALA:
+	case _GUS_VOICEBALA:
 		/* 0 to 15 --> 0 to 127 */
-		chan->control[MIDI_CTL_MSB_PAN] = (पूर्णांक)p1 << 3;
+		chan->control[MIDI_CTL_MSB_PAN] = (int)p1 << 3;
 		snd_emux_update_channel(port, chan, SNDRV_EMUX_UPDATE_PAN);
-		वापस;
+		return;
 
-	हाल _GUS_VOICEVOL:
-	हाल _GUS_VOICEVOL2:
+	case _GUS_VOICEVOL:
+	case _GUS_VOICEVOL2:
 		/* not supported yet */
-		वापस;
+		return;
 
-	हाल _GUS_RAMPRANGE:
-	हाल _GUS_RAMPRATE:
-	हाल _GUS_RAMPMODE:
-	हाल _GUS_RAMPON:
-	हाल _GUS_RAMPOFF:
+	case _GUS_RAMPRANGE:
+	case _GUS_RAMPRATE:
+	case _GUS_RAMPMODE:
+	case _GUS_RAMPON:
+	case _GUS_RAMPOFF:
 		/* volume ramping not supported */
-		वापस;
+		return;
 
-	हाल _GUS_VOLUME_SCALE:
-		वापस;
+	case _GUS_VOLUME_SCALE:
+		return;
 
-	हाल _GUS_VOICE_POS:
-#अगर_घोषित SNDRV_EMUX_USE_RAW_EFFECT
+	case _GUS_VOICE_POS:
+#ifdef SNDRV_EMUX_USE_RAW_EFFECT
 		snd_emux_send_effect(port, chan, EMUX_FX_SAMPLE_START,
-				     (लघु)(pदीर्घ & 0x7fff),
+				     (short)(plong & 0x7fff),
 				     EMUX_FX_FLAG_SET);
 		snd_emux_send_effect(port, chan, EMUX_FX_COARSE_SAMPLE_START,
-				     (pदीर्घ >> 15) & 0xffff,
+				     (plong >> 15) & 0xffff,
 				     EMUX_FX_FLAG_SET);
-#पूर्ण_अगर
-		वापस;
-	पूर्ण
-पूर्ण
+#endif
+		return;
+	}
+}
 
 
 /*
  * send an event to midi emulation
  */
-अटल व्योम
-fake_event(काष्ठा snd_emux *emu, काष्ठा snd_emux_port *port, पूर्णांक ch, पूर्णांक param, पूर्णांक val, पूर्णांक atomic, पूर्णांक hop)
-अणु
-	काष्ठा snd_seq_event ev;
-	स_रखो(&ev, 0, माप(ev));
+static void
+fake_event(struct snd_emux *emu, struct snd_emux_port *port, int ch, int param, int val, int atomic, int hop)
+{
+	struct snd_seq_event ev;
+	memset(&ev, 0, sizeof(ev));
 	ev.type = SNDRV_SEQ_EVENT_CONTROLLER;
 	ev.data.control.channel = ch;
 	ev.data.control.param = param;
 	ev.data.control.value = val;
 	snd_emux_event_input(&ev, 0, port, atomic, hop);
-पूर्ण
+}

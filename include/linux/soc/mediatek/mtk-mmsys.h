@@ -1,16 +1,15 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (c) 2015 MediaTek Inc.
  */
 
-#अगर_अघोषित __MTK_MMSYS_H
-#घोषणा __MTK_MMSYS_H
+#ifndef __MTK_MMSYS_H
+#define __MTK_MMSYS_H
 
-क्रमागत mtk_ddp_comp_id;
-काष्ठा device;
+enum mtk_ddp_comp_id;
+struct device;
 
-क्रमागत mtk_ddp_comp_id अणु
+enum mtk_ddp_comp_id {
 	DDP_COMPONENT_AAL0,
 	DDP_COMPONENT_AAL1,
 	DDP_COMPONENT_BLS,
@@ -41,14 +40,14 @@
 	DDP_COMPONENT_WDMA0,
 	DDP_COMPONENT_WDMA1,
 	DDP_COMPONENT_ID_MAX,
-पूर्ण;
+};
 
-व्योम mtk_mmsys_ddp_connect(काष्ठा device *dev,
-			   क्रमागत mtk_ddp_comp_id cur,
-			   क्रमागत mtk_ddp_comp_id next);
+void mtk_mmsys_ddp_connect(struct device *dev,
+			   enum mtk_ddp_comp_id cur,
+			   enum mtk_ddp_comp_id next);
 
-व्योम mtk_mmsys_ddp_disconnect(काष्ठा device *dev,
-			      क्रमागत mtk_ddp_comp_id cur,
-			      क्रमागत mtk_ddp_comp_id next);
+void mtk_mmsys_ddp_disconnect(struct device *dev,
+			      enum mtk_ddp_comp_id cur,
+			      enum mtk_ddp_comp_id next);
 
-#पूर्ण_अगर /* __MTK_MMSYS_H */
+#endif /* __MTK_MMSYS_H */

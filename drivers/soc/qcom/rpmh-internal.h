@@ -1,27 +1,26 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Copyright (c) 2016-2018, The Linux Foundation. All rights reserved.
  */
 
 
-#अगर_अघोषित __RPM_INTERNAL_H__
-#घोषणा __RPM_INTERNAL_H__
+#ifndef __RPM_INTERNAL_H__
+#define __RPM_INTERNAL_H__
 
-#समावेश <linux/biपंचांगap.h>
-#समावेश <linux/रुको.h>
-#समावेश <soc/qcom/tcs.h>
+#include <linux/bitmap.h>
+#include <linux/wait.h>
+#include <soc/qcom/tcs.h>
 
-#घोषणा TCS_TYPE_NR			4
-#घोषणा MAX_CMDS_PER_TCS		16
-#घोषणा MAX_TCS_PER_TYPE		3
-#घोषणा MAX_TCS_NR			(MAX_TCS_PER_TYPE * TCS_TYPE_NR)
-#घोषणा MAX_TCS_SLOTS			(MAX_CMDS_PER_TCS * MAX_TCS_PER_TYPE)
+#define TCS_TYPE_NR			4
+#define MAX_CMDS_PER_TCS		16
+#define MAX_TCS_PER_TYPE		3
+#define MAX_TCS_NR			(MAX_TCS_PER_TYPE * TCS_TYPE_NR)
+#define MAX_TCS_SLOTS			(MAX_CMDS_PER_TCS * MAX_TCS_PER_TYPE)
 
-काष्ठा rsc_drv;
+struct rsc_drv;
 
 /**
- * काष्ठा tcs_group: group of Trigger Command Sets (TCS) to send state requests
+ * struct tcs_group: group of Trigger Command Sets (TCS) to send state requests
  * to the controller
  *
  * @drv:       The controller.
@@ -30,108 +29,108 @@
  * @offset:    Start of the TCS group relative to the TCSes in the RSC.
  * @num_tcs:   Number of TCSes in this type.
  * @ncpt:      Number of commands in each TCS.
- * @req:       Requests that are sent from the TCS; only used क्रम ACTIVE_ONLY
- *             transfers (could be on a wake/sleep TCS अगर we are borrowing क्रम
+ * @req:       Requests that are sent from the TCS; only used for ACTIVE_ONLY
+ *             transfers (could be on a wake/sleep TCS if we are borrowing for
  *             an ACTIVE_ONLY transfer).
  *             Start: grab drv->lock, set req, set tcs_in_use, drop drv->lock,
  *                    trigger
  *             End: get irq, access req,
  *                  grab drv->lock, clear tcs_in_use, drop drv->lock
- * @slots:     Indicates which of @cmd_addr are occupied; only used क्रम
+ * @slots:     Indicates which of @cmd_addr are occupied; only used for
  *             SLEEP / WAKE TCSs.  Things are tightly packed in the
- *             हाल that (ncpt < MAX_CMDS_PER_TCS).  That is अगर ncpt = 2 and
+ *             case that (ncpt < MAX_CMDS_PER_TCS).  That is if ncpt = 2 and
  *             MAX_CMDS_PER_TCS = 16 then bit[2] = the first bit in 2nd TCS.
  */
-काष्ठा tcs_group अणु
-	काष्ठा rsc_drv *drv;
-	पूर्णांक type;
+struct tcs_group {
+	struct rsc_drv *drv;
+	int type;
 	u32 mask;
 	u32 offset;
-	पूर्णांक num_tcs;
-	पूर्णांक ncpt;
-	स्थिर काष्ठा tcs_request *req[MAX_TCS_PER_TYPE];
+	int num_tcs;
+	int ncpt;
+	const struct tcs_request *req[MAX_TCS_PER_TYPE];
 	DECLARE_BITMAP(slots, MAX_TCS_SLOTS);
-पूर्ण;
+};
 
 /**
- * काष्ठा rpmh_request: the message to be sent to rpmh-rsc
+ * struct rpmh_request: the message to be sent to rpmh-rsc
  *
  * @msg: the request
  * @cmd: the payload that will be part of the @msg
- * @completion: triggered when request is करोne
+ * @completion: triggered when request is done
  * @dev: the device making the request
- * @err: err वापस from the controller
- * @needs_मुक्त: check to मुक्त dynamically allocated request object
+ * @err: err return from the controller
+ * @needs_free: check to free dynamically allocated request object
  */
-काष्ठा rpmh_request अणु
-	काष्ठा tcs_request msg;
-	काष्ठा tcs_cmd cmd[MAX_RPMH_PAYLOAD];
-	काष्ठा completion *completion;
-	स्थिर काष्ठा device *dev;
-	पूर्णांक err;
-	bool needs_मुक्त;
-पूर्ण;
+struct rpmh_request {
+	struct tcs_request msg;
+	struct tcs_cmd cmd[MAX_RPMH_PAYLOAD];
+	struct completion *completion;
+	const struct device *dev;
+	int err;
+	bool needs_free;
+};
 
 /**
- * काष्ठा rpmh_ctrlr: our representation of the controller
+ * struct rpmh_ctrlr: our representation of the controller
  *
  * @cache: the list of cached requests
  * @cache_lock: synchronize access to the cache data
  * @dirty: was the cache updated since flush
  * @batch_cache: Cache sleep and wake requests sent as batch
  */
-काष्ठा rpmh_ctrlr अणु
-	काष्ठा list_head cache;
+struct rpmh_ctrlr {
+	struct list_head cache;
 	spinlock_t cache_lock;
 	bool dirty;
-	काष्ठा list_head batch_cache;
-पूर्ण;
+	struct list_head batch_cache;
+};
 
 /**
- * काष्ठा rsc_drv: the Direct Resource Voter (DRV) of the
+ * struct rsc_drv: the Direct Resource Voter (DRV) of the
  * Resource State Coordinator controller (RSC)
  *
- * @name:               Controller identअगरier.
- * @tcs_base:           Start address of the TCS रेजिस्टरs in this controller.
+ * @name:               Controller identifier.
+ * @tcs_base:           Start address of the TCS registers in this controller.
  * @id:                 Instance id in the controller (Direct Resource Voter).
  * @num_tcs:            Number of TCSes in this DRV.
- * @rsc_pm:             CPU PM notअगरier क्रम controller.
+ * @rsc_pm:             CPU PM notifier for controller.
  *                      Used when solver mode is not present.
- * @cpus_in_pm:         Number of CPUs not in idle घातer collapse.
+ * @cpus_in_pm:         Number of CPUs not in idle power collapse.
  *                      Used when solver mode is not present.
  * @tcs:                TCS groups.
- * @tcs_in_use:         S/W state of the TCS; only set क्रम ACTIVE_ONLY
- *                      transfers, but might show a sleep/wake TCS in use अगर
- *                      it was borrowed क्रम an active_only transfer.  You
- *                      must hold the lock in this काष्ठा (AKA drv->lock) in
+ * @tcs_in_use:         S/W state of the TCS; only set for ACTIVE_ONLY
+ *                      transfers, but might show a sleep/wake TCS in use if
+ *                      it was borrowed for an active_only transfer.  You
+ *                      must hold the lock in this struct (AKA drv->lock) in
  *                      order to update this.
  * @lock:               Synchronize state of the controller.  If RPMH's cache
  *                      lock will also be held, the order is: drv->lock then
  *                      cache_lock.
- * @tcs_रुको:           Wait queue used to रुको क्रम @tcs_in_use to मुक्त up a
+ * @tcs_wait:           Wait queue used to wait for @tcs_in_use to free up a
  *                      slot
  * @client:             Handle to the DRV's client.
  */
-काष्ठा rsc_drv अणु
-	स्थिर अक्षर *name;
-	व्योम __iomem *tcs_base;
-	पूर्णांक id;
-	पूर्णांक num_tcs;
-	काष्ठा notअगरier_block rsc_pm;
+struct rsc_drv {
+	const char *name;
+	void __iomem *tcs_base;
+	int id;
+	int num_tcs;
+	struct notifier_block rsc_pm;
 	atomic_t cpus_in_pm;
-	काष्ठा tcs_group tcs[TCS_TYPE_NR];
+	struct tcs_group tcs[TCS_TYPE_NR];
 	DECLARE_BITMAP(tcs_in_use, MAX_TCS_NR);
 	spinlock_t lock;
-	रुको_queue_head_t tcs_रुको;
-	काष्ठा rpmh_ctrlr client;
-पूर्ण;
+	wait_queue_head_t tcs_wait;
+	struct rpmh_ctrlr client;
+};
 
-पूर्णांक rpmh_rsc_send_data(काष्ठा rsc_drv *drv, स्थिर काष्ठा tcs_request *msg);
-पूर्णांक rpmh_rsc_ग_लिखो_ctrl_data(काष्ठा rsc_drv *drv,
-			     स्थिर काष्ठा tcs_request *msg);
-व्योम rpmh_rsc_invalidate(काष्ठा rsc_drv *drv);
+int rpmh_rsc_send_data(struct rsc_drv *drv, const struct tcs_request *msg);
+int rpmh_rsc_write_ctrl_data(struct rsc_drv *drv,
+			     const struct tcs_request *msg);
+void rpmh_rsc_invalidate(struct rsc_drv *drv);
 
-व्योम rpmh_tx_करोne(स्थिर काष्ठा tcs_request *msg, पूर्णांक r);
-पूर्णांक rpmh_flush(काष्ठा rpmh_ctrlr *ctrlr);
+void rpmh_tx_done(const struct tcs_request *msg, int r);
+int rpmh_flush(struct rpmh_ctrlr *ctrlr);
 
-#पूर्ण_अगर /* __RPM_INTERNAL_H__ */
+#endif /* __RPM_INTERNAL_H__ */

@@ -1,152 +1,151 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * अणुपढ़ो,ग_लिखोपूर्णअणुb,w,l,qपूर्ण based on arch/arm64/include/यंत्र/पन.स
- *   which was based on arch/arm/include/पन.स
+ * {read,write}{b,w,l,q} based on arch/arm64/include/asm/io.h
+ *   which was based on arch/arm/include/io.h
  *
  * Copyright (C) 1996-2000 Russell King
  * Copyright (C) 2012 ARM Ltd.
- * Copyright (C) 2014 Regents of the University of Calअगरornia
+ * Copyright (C) 2014 Regents of the University of California
  */
 
-#अगर_अघोषित _ASM_RISCV_IO_H
-#घोषणा _ASM_RISCV_IO_H
+#ifndef _ASM_RISCV_IO_H
+#define _ASM_RISCV_IO_H
 
-#समावेश <linux/types.h>
-#समावेश <linux/pgtable.h>
-#समावेश <यंत्र/mmiowb.h>
-#समावेश <यंत्र/early_ioremap.h>
+#include <linux/types.h>
+#include <linux/pgtable.h>
+#include <asm/mmiowb.h>
+#include <asm/early_ioremap.h>
 
 /*
- * MMIO access functions are separated out to अवरोध dependency cycles
- * when using अणुपढ़ो,ग_लिखोपूर्ण* fns in low-level headers
+ * MMIO access functions are separated out to break dependency cycles
+ * when using {read,write}* fns in low-level headers
  */
-#समावेश <यंत्र/mmपन.स>
+#include <asm/mmio.h>
 
 /*
- *  I/O port access स्थिरants.
+ *  I/O port access constants.
  */
-#अगर_घोषित CONFIG_MMU
-#घोषणा IO_SPACE_LIMIT		(PCI_IO_SIZE - 1)
-#घोषणा PCI_IOBASE		((व्योम __iomem *)PCI_IO_START)
-#पूर्ण_अगर /* CONFIG_MMU */
+#ifdef CONFIG_MMU
+#define IO_SPACE_LIMIT		(PCI_IO_SIZE - 1)
+#define PCI_IOBASE		((void __iomem *)PCI_IO_START)
+#endif /* CONFIG_MMU */
 
 /*
- * Emulation routines क्रम the port-mapped IO space used by some PCI drivers.
+ * Emulation routines for the port-mapped IO space used by some PCI drivers.
  * These are defined as being "fully synchronous", but also "not guaranteed to
  * be fully ordered with respect to other memory and I/O operations".  We're
  * going to be on the safe side here and just make them:
  *  - Fully ordered WRT each other, by bracketing them with two fences.  The
- *    outer set contains both I/O so inX is ordered with outX, जबतक the inner just
- *    needs the type of the access (I क्रम inX and O क्रम outX).
- *  - Ordered in the same manner as पढ़ोX/ग_लिखोX WRT memory by subsuming their
+ *    outer set contains both I/O so inX is ordered with outX, while the inner just
+ *    needs the type of the access (I for inX and O for outX).
+ *  - Ordered in the same manner as readX/writeX WRT memory by subsuming their
  *    fences.
- *  - Ordered WRT समयr पढ़ोs, so udelay and मित्रs करोn't get elided by the
+ *  - Ordered WRT timer reads, so udelay and friends don't get elided by the
  *    implementation.
- * Note that there is no way to actually enक्रमce that outX is a non-posted
- * operation on RISC-V, but hopefully the समयr ordering स्थिरraपूर्णांक is
+ * Note that there is no way to actually enforce that outX is a non-posted
+ * operation on RISC-V, but hopefully the timer ordering constraint is
  * sufficient to ensure this works sanely on controllers that support I/O
- * ग_लिखोs.
+ * writes.
  */
-#घोषणा __io_pbr()	__यंत्र__ __अस्थिर__ ("fence io,i"  : : : "memory");
-#घोषणा __io_par(v)	__यंत्र__ __अस्थिर__ ("fence i,ior" : : : "memory");
-#घोषणा __io_pbw()	__यंत्र__ __अस्थिर__ ("fence iow,o" : : : "memory");
-#घोषणा __io_paw()	__यंत्र__ __अस्थिर__ ("fence o,io"  : : : "memory");
+#define __io_pbr()	__asm__ __volatile__ ("fence io,i"  : : : "memory");
+#define __io_par(v)	__asm__ __volatile__ ("fence i,ior" : : : "memory");
+#define __io_pbw()	__asm__ __volatile__ ("fence iow,o" : : : "memory");
+#define __io_paw()	__asm__ __volatile__ ("fence o,io"  : : : "memory");
 
-#घोषणा inb(c)		(अणु u8  __v; __io_pbr(); __v = पढ़ोb_cpu((व्योम*)(PCI_IOBASE + (c))); __io_par(__v); __v; पूर्ण)
-#घोषणा inw(c)		(अणु u16 __v; __io_pbr(); __v = पढ़ोw_cpu((व्योम*)(PCI_IOBASE + (c))); __io_par(__v); __v; पूर्ण)
-#घोषणा inl(c)		(अणु u32 __v; __io_pbr(); __v = पढ़ोl_cpu((व्योम*)(PCI_IOBASE + (c))); __io_par(__v); __v; पूर्ण)
+#define inb(c)		({ u8  __v; __io_pbr(); __v = readb_cpu((void*)(PCI_IOBASE + (c))); __io_par(__v); __v; })
+#define inw(c)		({ u16 __v; __io_pbr(); __v = readw_cpu((void*)(PCI_IOBASE + (c))); __io_par(__v); __v; })
+#define inl(c)		({ u32 __v; __io_pbr(); __v = readl_cpu((void*)(PCI_IOBASE + (c))); __io_par(__v); __v; })
 
-#घोषणा outb(v,c)	(अणु __io_pbw(); ग_लिखोb_cpu((v),(व्योम*)(PCI_IOBASE + (c))); __io_paw(); पूर्ण)
-#घोषणा outw(v,c)	(अणु __io_pbw(); ग_लिखोw_cpu((v),(व्योम*)(PCI_IOBASE + (c))); __io_paw(); पूर्ण)
-#घोषणा outl(v,c)	(अणु __io_pbw(); ग_लिखोl_cpu((v),(व्योम*)(PCI_IOBASE + (c))); __io_paw(); पूर्ण)
+#define outb(v,c)	({ __io_pbw(); writeb_cpu((v),(void*)(PCI_IOBASE + (c))); __io_paw(); })
+#define outw(v,c)	({ __io_pbw(); writew_cpu((v),(void*)(PCI_IOBASE + (c))); __io_paw(); })
+#define outl(v,c)	({ __io_pbw(); writel_cpu((v),(void*)(PCI_IOBASE + (c))); __io_paw(); })
 
-#अगर_घोषित CONFIG_64BIT
-#घोषणा inq(c)		(अणु u64 __v; __io_pbr(); __v = पढ़ोq_cpu((व्योम*)(c)); __io_par(__v); __v; पूर्ण)
-#घोषणा outq(v,c)	(अणु __io_pbw(); ग_लिखोq_cpu((v),(व्योम*)(c)); __io_paw(); पूर्ण)
-#पूर्ण_अगर
+#ifdef CONFIG_64BIT
+#define inq(c)		({ u64 __v; __io_pbr(); __v = readq_cpu((void*)(c)); __io_par(__v); __v; })
+#define outq(v,c)	({ __io_pbw(); writeq_cpu((v),(void*)(c)); __io_paw(); })
+#endif
 
 /*
  * Accesses from a single hart to a single I/O address must be ordered.  This
- * allows us to use the raw पढ़ो macros, but we still need to fence beक्रमe and
+ * allows us to use the raw read macros, but we still need to fence before and
  * after the block to ensure ordering WRT other macros.  These are defined to
- * perक्रमm host-endian accesses so we use __raw instead of __cpu.
+ * perform host-endian accesses so we use __raw instead of __cpu.
  */
-#घोषणा __io_पढ़ोs_ins(port, ctype, len, bfence, afence)			\
-	अटल अंतरभूत व्योम __ ## port ## len(स्थिर अस्थिर व्योम __iomem *addr,	\
-					     व्योम *buffer,			\
-					     अचिन्हित पूर्णांक count)		\
-	अणु									\
+#define __io_reads_ins(port, ctype, len, bfence, afence)			\
+	static inline void __ ## port ## len(const volatile void __iomem *addr,	\
+					     void *buffer,			\
+					     unsigned int count)		\
+	{									\
 		bfence;								\
-		अगर (count) अणु							\
+		if (count) {							\
 			ctype *buf = buffer;					\
 										\
-			करो अणु							\
-				ctype x = __raw_पढ़ो ## len(addr);		\
+			do {							\
+				ctype x = __raw_read ## len(addr);		\
 				*buf++ = x;					\
-			पूर्ण जबतक (--count);					\
-		पूर्ण								\
+			} while (--count);					\
+		}								\
 		afence;								\
-	पूर्ण
+	}
 
-#घोषणा __io_ग_लिखोs_outs(port, ctype, len, bfence, afence)			\
-	अटल अंतरभूत व्योम __ ## port ## len(अस्थिर व्योम __iomem *addr,	\
-					     स्थिर व्योम *buffer,		\
-					     अचिन्हित पूर्णांक count)		\
-	अणु									\
+#define __io_writes_outs(port, ctype, len, bfence, afence)			\
+	static inline void __ ## port ## len(volatile void __iomem *addr,	\
+					     const void *buffer,		\
+					     unsigned int count)		\
+	{									\
 		bfence;								\
-		अगर (count) अणु							\
-			स्थिर ctype *buf = buffer;				\
+		if (count) {							\
+			const ctype *buf = buffer;				\
 										\
-			करो अणु							\
-				__raw_ग_लिखो ## len(*buf++, addr);		\
-			पूर्ण जबतक (--count);					\
-		पूर्ण								\
+			do {							\
+				__raw_write ## len(*buf++, addr);		\
+			} while (--count);					\
+		}								\
 		afence;								\
-	पूर्ण
+	}
 
-__io_पढ़ोs_ins(पढ़ोs,  u8, b, __io_br(), __io_ar(addr))
-__io_पढ़ोs_ins(पढ़ोs, u16, w, __io_br(), __io_ar(addr))
-__io_पढ़ोs_ins(पढ़ोs, u32, l, __io_br(), __io_ar(addr))
-#घोषणा पढ़ोsb(addr, buffer, count) __पढ़ोsb(addr, buffer, count)
-#घोषणा पढ़ोsw(addr, buffer, count) __पढ़ोsw(addr, buffer, count)
-#घोषणा पढ़ोsl(addr, buffer, count) __पढ़ोsl(addr, buffer, count)
+__io_reads_ins(reads,  u8, b, __io_br(), __io_ar(addr))
+__io_reads_ins(reads, u16, w, __io_br(), __io_ar(addr))
+__io_reads_ins(reads, u32, l, __io_br(), __io_ar(addr))
+#define readsb(addr, buffer, count) __readsb(addr, buffer, count)
+#define readsw(addr, buffer, count) __readsw(addr, buffer, count)
+#define readsl(addr, buffer, count) __readsl(addr, buffer, count)
 
-__io_पढ़ोs_ins(ins,  u8, b, __io_pbr(), __io_par(addr))
-__io_पढ़ोs_ins(ins, u16, w, __io_pbr(), __io_par(addr))
-__io_पढ़ोs_ins(ins, u32, l, __io_pbr(), __io_par(addr))
-#घोषणा insb(addr, buffer, count) __insb((व्योम __iomem *)(दीर्घ)addr, buffer, count)
-#घोषणा insw(addr, buffer, count) __insw((व्योम __iomem *)(दीर्घ)addr, buffer, count)
-#घोषणा insl(addr, buffer, count) __insl((व्योम __iomem *)(दीर्घ)addr, buffer, count)
+__io_reads_ins(ins,  u8, b, __io_pbr(), __io_par(addr))
+__io_reads_ins(ins, u16, w, __io_pbr(), __io_par(addr))
+__io_reads_ins(ins, u32, l, __io_pbr(), __io_par(addr))
+#define insb(addr, buffer, count) __insb((void __iomem *)(long)addr, buffer, count)
+#define insw(addr, buffer, count) __insw((void __iomem *)(long)addr, buffer, count)
+#define insl(addr, buffer, count) __insl((void __iomem *)(long)addr, buffer, count)
 
-__io_ग_लिखोs_outs(ग_लिखोs,  u8, b, __io_bw(), __io_aw())
-__io_ग_लिखोs_outs(ग_लिखोs, u16, w, __io_bw(), __io_aw())
-__io_ग_लिखोs_outs(ग_लिखोs, u32, l, __io_bw(), __io_aw())
-#घोषणा ग_लिखोsb(addr, buffer, count) __ग_लिखोsb(addr, buffer, count)
-#घोषणा ग_लिखोsw(addr, buffer, count) __ग_लिखोsw(addr, buffer, count)
-#घोषणा ग_लिखोsl(addr, buffer, count) __ग_लिखोsl(addr, buffer, count)
+__io_writes_outs(writes,  u8, b, __io_bw(), __io_aw())
+__io_writes_outs(writes, u16, w, __io_bw(), __io_aw())
+__io_writes_outs(writes, u32, l, __io_bw(), __io_aw())
+#define writesb(addr, buffer, count) __writesb(addr, buffer, count)
+#define writesw(addr, buffer, count) __writesw(addr, buffer, count)
+#define writesl(addr, buffer, count) __writesl(addr, buffer, count)
 
-__io_ग_लिखोs_outs(outs,  u8, b, __io_pbw(), __io_paw())
-__io_ग_लिखोs_outs(outs, u16, w, __io_pbw(), __io_paw())
-__io_ग_लिखोs_outs(outs, u32, l, __io_pbw(), __io_paw())
-#घोषणा outsb(addr, buffer, count) __outsb((व्योम __iomem *)(दीर्घ)addr, buffer, count)
-#घोषणा outsw(addr, buffer, count) __outsw((व्योम __iomem *)(दीर्घ)addr, buffer, count)
-#घोषणा outsl(addr, buffer, count) __outsl((व्योम __iomem *)(दीर्घ)addr, buffer, count)
+__io_writes_outs(outs,  u8, b, __io_pbw(), __io_paw())
+__io_writes_outs(outs, u16, w, __io_pbw(), __io_paw())
+__io_writes_outs(outs, u32, l, __io_pbw(), __io_paw())
+#define outsb(addr, buffer, count) __outsb((void __iomem *)(long)addr, buffer, count)
+#define outsw(addr, buffer, count) __outsw((void __iomem *)(long)addr, buffer, count)
+#define outsl(addr, buffer, count) __outsl((void __iomem *)(long)addr, buffer, count)
 
-#अगर_घोषित CONFIG_64BIT
-__io_पढ़ोs_ins(पढ़ोs, u64, q, __io_br(), __io_ar(addr))
-#घोषणा पढ़ोsq(addr, buffer, count) __पढ़ोsq(addr, buffer, count)
+#ifdef CONFIG_64BIT
+__io_reads_ins(reads, u64, q, __io_br(), __io_ar(addr))
+#define readsq(addr, buffer, count) __readsq(addr, buffer, count)
 
-__io_पढ़ोs_ins(ins, u64, q, __io_pbr(), __io_par(addr))
-#घोषणा insq(addr, buffer, count) __insq((व्योम __iomem *)addr, buffer, count)
+__io_reads_ins(ins, u64, q, __io_pbr(), __io_par(addr))
+#define insq(addr, buffer, count) __insq((void __iomem *)addr, buffer, count)
 
-__io_ग_लिखोs_outs(ग_लिखोs, u64, q, __io_bw(), __io_aw())
-#घोषणा ग_लिखोsq(addr, buffer, count) __ग_लिखोsq(addr, buffer, count)
+__io_writes_outs(writes, u64, q, __io_bw(), __io_aw())
+#define writesq(addr, buffer, count) __writesq(addr, buffer, count)
 
-__io_ग_लिखोs_outs(outs, u64, q, __io_pbr(), __io_paw())
-#घोषणा outsq(addr, buffer, count) __outsq((व्योम __iomem *)addr, buffer, count)
-#पूर्ण_अगर
+__io_writes_outs(outs, u64, q, __io_pbr(), __io_paw())
+#define outsq(addr, buffer, count) __outsq((void __iomem *)addr, buffer, count)
+#endif
 
-#समावेश <यंत्र-generic/पन.स>
+#include <asm-generic/io.h>
 
-#पूर्ण_अगर /* _ASM_RISCV_IO_H */
+#endif /* _ASM_RISCV_IO_H */

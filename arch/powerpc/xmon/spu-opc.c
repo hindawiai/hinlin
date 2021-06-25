@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /* SPU opcode list
 
    Copyright 2006 Free Software Foundation, Inc.
@@ -8,28 +7,28 @@
 
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/bug.h>
-#समावेश "spu.h"
+#include <linux/kernel.h>
+#include <linux/bug.h>
+#include "spu.h"
 
 /* This file holds the Spu opcode table */
 
 
 /*
    Example contents of spu-insn.h
-      id_tag	mode	mode	type	opcode	mnemonic	यंत्रtype	    dependency		FPU	L/S?	branch?	inकाष्ठाion   
+      id_tag	mode	mode	type	opcode	mnemonic	asmtype	    dependency		FPU	L/S?	branch?	instruction   
                 QUAD	WORD                                               (0,RC,RB,RA,RT)    latency  			              		
-   APUOP(M_LQD,	1,	0,	RI9,	0x1f8,	"lqd",		ASM_RI9IDX,	00012,		FXU,	1,	0)	Load Quadword d-क्रमm 
+   APUOP(M_LQD,	1,	0,	RI9,	0x1f8,	"lqd",		ASM_RI9IDX,	00012,		FXU,	1,	0)	Load Quadword d-form 
  */
 
-स्थिर काष्ठा spu_opcode spu_opcodes[] = अणु
-#घोषणा APUOP(TAG,MACFORMAT,OPCODE,MNEMONIC,ASMFORMAT,DEP,PIPE) \
-	अणु MACFORMAT, OPCODE, MNEMONIC, ASMFORMAT पूर्ण,
-#घोषणा APUOPFB(TAG,MACFORMAT,OPCODE,FB,MNEMONIC,ASMFORMAT,DEP,PIPE) \
-	अणु MACFORMAT, OPCODE, MNEMONIC, ASMFORMAT पूर्ण,
-#समावेश "spu-insns.h"
-#अघोषित APUOP
-#अघोषित APUOPFB
-पूर्ण;
+const struct spu_opcode spu_opcodes[] = {
+#define APUOP(TAG,MACFORMAT,OPCODE,MNEMONIC,ASMFORMAT,DEP,PIPE) \
+	{ MACFORMAT, OPCODE, MNEMONIC, ASMFORMAT },
+#define APUOPFB(TAG,MACFORMAT,OPCODE,FB,MNEMONIC,ASMFORMAT,DEP,PIPE) \
+	{ MACFORMAT, OPCODE, MNEMONIC, ASMFORMAT },
+#include "spu-insns.h"
+#undef APUOP
+#undef APUOPFB
+};
 
-स्थिर पूर्णांक spu_num_opcodes = ARRAY_SIZE(spu_opcodes);
+const int spu_num_opcodes = ARRAY_SIZE(spu_opcodes);

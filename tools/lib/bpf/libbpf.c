@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: (LGPL-2.1 OR BSD-2-Clause)
+// SPDX-License-Identifier: (LGPL-2.1 OR BSD-2-Clause)
 
 /*
  * Common eBPF ELF object loading operations.
@@ -11,150 +10,150 @@
  * Copyright (C) 2019 Isovalent, Inc.
  */
 
-#अगर_अघोषित _GNU_SOURCE
-#घोषणा _GNU_SOURCE
-#पूर्ण_अगर
-#समावेश <मानककोष.स>
-#समावेश <मानकपन.स>
-#समावेश <मानकतर्क.स>
-#समावेश <libgen.h>
-#समावेश <पूर्णांकtypes.h>
-#समावेश <सीमा.स>
-#समावेश <माला.स>
-#समावेश <unistd.h>
-#समावेश <endian.h>
-#समावेश <fcntl.h>
-#समावेश <त्रुटिसं.स>
-#समावेश <प्रकार.स>
-#समावेश <यंत्र/unistd.h>
-#समावेश <linux/err.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/bpf.h>
-#समावेश <linux/btf.h>
-#समावेश <linux/filter.h>
-#समावेश <linux/list.h>
-#समावेश <linux/सीमा.स>
-#समावेश <linux/perf_event.h>
-#समावेश <linux/ring_buffer.h>
-#समावेश <linux/version.h>
-#समावेश <sys/epoll.h>
-#समावेश <sys/ioctl.h>
-#समावेश <sys/mman.h>
-#समावेश <sys/स्थिति.स>
-#समावेश <sys/types.h>
-#समावेश <sys/vfs.h>
-#समावेश <sys/utsname.h>
-#समावेश <sys/resource.h>
-#समावेश <libelf.h>
-#समावेश <gelf.h>
-#समावेश <zlib.h>
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE
+#endif
+#include <stdlib.h>
+#include <stdio.h>
+#include <stdarg.h>
+#include <libgen.h>
+#include <inttypes.h>
+#include <limits.h>
+#include <string.h>
+#include <unistd.h>
+#include <endian.h>
+#include <fcntl.h>
+#include <errno.h>
+#include <ctype.h>
+#include <asm/unistd.h>
+#include <linux/err.h>
+#include <linux/kernel.h>
+#include <linux/bpf.h>
+#include <linux/btf.h>
+#include <linux/filter.h>
+#include <linux/list.h>
+#include <linux/limits.h>
+#include <linux/perf_event.h>
+#include <linux/ring_buffer.h>
+#include <linux/version.h>
+#include <sys/epoll.h>
+#include <sys/ioctl.h>
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <sys/vfs.h>
+#include <sys/utsname.h>
+#include <sys/resource.h>
+#include <libelf.h>
+#include <gelf.h>
+#include <zlib.h>
 
-#समावेश "libbpf.h"
-#समावेश "bpf.h"
-#समावेश "btf.h"
-#समावेश "str_error.h"
-#समावेश "libbpf_internal.h"
-#समावेश "hashmap.h"
+#include "libbpf.h"
+#include "bpf.h"
+#include "btf.h"
+#include "str_error.h"
+#include "libbpf_internal.h"
+#include "hashmap.h"
 
-#अगर_अघोषित BPF_FS_MAGIC
-#घोषणा BPF_FS_MAGIC		0xcafe4a11
-#पूर्ण_अगर
+#ifndef BPF_FS_MAGIC
+#define BPF_FS_MAGIC		0xcafe4a11
+#endif
 
-#घोषणा BPF_INSN_SZ (माप(काष्ठा bpf_insn))
+#define BPF_INSN_SZ (sizeof(struct bpf_insn))
 
-/* भम_लिखो() in __base_pr() uses nonliteral क्रमmat string. It may अवरोध
- * compilation अगर user enables corresponding warning. Disable it explicitly.
+/* vsprintf() in __base_pr() uses nonliteral format string. It may break
+ * compilation if user enables corresponding warning. Disable it explicitly.
  */
-#आशय GCC diagnostic ignored "-Wformat-nonliteral"
+#pragma GCC diagnostic ignored "-Wformat-nonliteral"
 
-#घोषणा __म_लिखो(a, b)	__attribute__((क्रमmat(म_लिखो, a, b)))
+#define __printf(a, b)	__attribute__((format(printf, a, b)))
 
-अटल काष्ठा bpf_map *bpf_object__add_map(काष्ठा bpf_object *obj);
-अटल bool prog_is_subprog(स्थिर काष्ठा bpf_object *obj, स्थिर काष्ठा bpf_program *prog);
+static struct bpf_map *bpf_object__add_map(struct bpf_object *obj);
+static bool prog_is_subprog(const struct bpf_object *obj, const struct bpf_program *prog);
 
-अटल पूर्णांक __base_pr(क्रमागत libbpf_prपूर्णांक_level level, स्थिर अक्षर *क्रमmat,
-		     बहु_सूची args)
-अणु
-	अगर (level == LIBBPF_DEBUG)
-		वापस 0;
+static int __base_pr(enum libbpf_print_level level, const char *format,
+		     va_list args)
+{
+	if (level == LIBBPF_DEBUG)
+		return 0;
 
-	वापस भख_लिखो(मानक_त्रुटि, क्रमmat, args);
-पूर्ण
+	return vfprintf(stderr, format, args);
+}
 
-अटल libbpf_prपूर्णांक_fn_t __libbpf_pr = __base_pr;
+static libbpf_print_fn_t __libbpf_pr = __base_pr;
 
-libbpf_prपूर्णांक_fn_t libbpf_set_prपूर्णांक(libbpf_prपूर्णांक_fn_t fn)
-अणु
-	libbpf_prपूर्णांक_fn_t old_prपूर्णांक_fn = __libbpf_pr;
+libbpf_print_fn_t libbpf_set_print(libbpf_print_fn_t fn)
+{
+	libbpf_print_fn_t old_print_fn = __libbpf_pr;
 
 	__libbpf_pr = fn;
-	वापस old_prपूर्णांक_fn;
-पूर्ण
+	return old_print_fn;
+}
 
-__म_लिखो(2, 3)
-व्योम libbpf_prपूर्णांक(क्रमागत libbpf_prपूर्णांक_level level, स्थिर अक्षर *क्रमmat, ...)
-अणु
-	बहु_सूची args;
+__printf(2, 3)
+void libbpf_print(enum libbpf_print_level level, const char *format, ...)
+{
+	va_list args;
 
-	अगर (!__libbpf_pr)
-		वापस;
+	if (!__libbpf_pr)
+		return;
 
-	बहु_शुरू(args, क्रमmat);
-	__libbpf_pr(level, क्रमmat, args);
-	बहु_पूर्ण(args);
-पूर्ण
+	va_start(args, format);
+	__libbpf_pr(level, format, args);
+	va_end(args);
+}
 
-अटल व्योम pr_perm_msg(पूर्णांक err)
-अणु
-	काष्ठा rlimit limit;
-	अक्षर buf[100];
+static void pr_perm_msg(int err)
+{
+	struct rlimit limit;
+	char buf[100];
 
-	अगर (err != -EPERM || geteuid() != 0)
-		वापस;
+	if (err != -EPERM || geteuid() != 0)
+		return;
 
 	err = getrlimit(RLIMIT_MEMLOCK, &limit);
-	अगर (err)
-		वापस;
+	if (err)
+		return;
 
-	अगर (limit.rlim_cur == RLIM_अनन्त)
-		वापस;
+	if (limit.rlim_cur == RLIM_INFINITY)
+		return;
 
-	अगर (limit.rlim_cur < 1024)
-		snम_लिखो(buf, माप(buf), "%zu bytes", (माप_प्रकार)limit.rlim_cur);
-	अन्यथा अगर (limit.rlim_cur < 1024*1024)
-		snम_लिखो(buf, माप(buf), "%.1f KiB", (द्विगुन)limit.rlim_cur / 1024);
-	अन्यथा
-		snम_लिखो(buf, माप(buf), "%.1f MiB", (द्विगुन)limit.rlim_cur / (1024*1024));
+	if (limit.rlim_cur < 1024)
+		snprintf(buf, sizeof(buf), "%zu bytes", (size_t)limit.rlim_cur);
+	else if (limit.rlim_cur < 1024*1024)
+		snprintf(buf, sizeof(buf), "%.1f KiB", (double)limit.rlim_cur / 1024);
+	else
+		snprintf(buf, sizeof(buf), "%.1f MiB", (double)limit.rlim_cur / (1024*1024));
 
 	pr_warn("permission error while running as root; try raising 'ulimit -l'? current value: %s\n",
 		buf);
-पूर्ण
+}
 
-#घोषणा STRERR_बफ_मानE  128
+#define STRERR_BUFSIZE  128
 
 /* Copied from tools/perf/util/util.h */
-#अगर_अघोषित zमुक्त
-# define zमुक्त(ptr) (अणु मुक्त(*ptr); *ptr = शून्य; पूर्ण)
-#पूर्ण_अगर
+#ifndef zfree
+# define zfree(ptr) ({ free(*ptr); *ptr = NULL; })
+#endif
 
-#अगर_अघोषित zबंद
-# define zबंद(fd) (अणु			\
-	पूर्णांक ___err = 0;			\
-	अगर ((fd) >= 0)			\
-		___err = बंद((fd));	\
+#ifndef zclose
+# define zclose(fd) ({			\
+	int ___err = 0;			\
+	if ((fd) >= 0)			\
+		___err = close((fd));	\
 	fd = -1;			\
-	___err; पूर्ण)
-#पूर्ण_अगर
+	___err; })
+#endif
 
-अटल अंतरभूत __u64 ptr_to_u64(स्थिर व्योम *ptr)
-अणु
-	वापस (__u64) (अचिन्हित दीर्घ) ptr;
-पूर्ण
+static inline __u64 ptr_to_u64(const void *ptr)
+{
+	return (__u64) (unsigned long) ptr;
+}
 
-क्रमागत kern_feature_id अणु
-	/* v4.14: kernel support क्रम program & map names. */
+enum kern_feature_id {
+	/* v4.14: kernel support for program & map names. */
 	FEAT_PROG_NAME,
-	/* v5.2: kernel support क्रम global data sections. */
+	/* v5.2: kernel support for global data sections. */
 	FEAT_GLOBAL_DATA,
 	/* BTF support */
 	FEAT_BTF,
@@ -164,283 +163,283 @@ __म_लिखो(2, 3)
 	FEAT_BTF_DATASEC,
 	/* BTF_FUNC_GLOBAL is supported */
 	FEAT_BTF_GLOBAL_FUNC,
-	/* BPF_F_MMAPABLE is supported क्रम arrays */
+	/* BPF_F_MMAPABLE is supported for arrays */
 	FEAT_ARRAY_MMAP,
-	/* kernel support क्रम expected_attach_type in BPF_PROG_LOAD */
+	/* kernel support for expected_attach_type in BPF_PROG_LOAD */
 	FEAT_EXP_ATTACH_TYPE,
-	/* bpf_probe_पढ़ो_अणुkernel,userपूर्ण[_str] helpers */
+	/* bpf_probe_read_{kernel,user}[_str] helpers */
 	FEAT_PROBE_READ_KERN,
 	/* BPF_PROG_BIND_MAP is supported */
 	FEAT_PROG_BIND_MAP,
-	/* Kernel support क्रम module BTFs */
+	/* Kernel support for module BTFs */
 	FEAT_MODULE_BTF,
 	/* BTF_KIND_FLOAT support */
 	FEAT_BTF_FLOAT,
 	__FEAT_CNT,
-पूर्ण;
+};
 
-अटल bool kernel_supports(क्रमागत kern_feature_id feat_id);
+static bool kernel_supports(enum kern_feature_id feat_id);
 
-क्रमागत reloc_type अणु
+enum reloc_type {
 	RELO_LD64,
 	RELO_CALL,
 	RELO_DATA,
 	RELO_EXTERN_VAR,
 	RELO_EXTERN_FUNC,
 	RELO_SUBPROG_ADDR,
-पूर्ण;
+};
 
-काष्ठा reloc_desc अणु
-	क्रमागत reloc_type type;
-	पूर्णांक insn_idx;
-	पूर्णांक map_idx;
-	पूर्णांक sym_off;
-पूर्ण;
+struct reloc_desc {
+	enum reloc_type type;
+	int insn_idx;
+	int map_idx;
+	int sym_off;
+};
 
-काष्ठा bpf_sec_def;
+struct bpf_sec_def;
 
-प्रकार काष्ठा bpf_link *(*attach_fn_t)(स्थिर काष्ठा bpf_sec_def *sec,
-					काष्ठा bpf_program *prog);
+typedef struct bpf_link *(*attach_fn_t)(const struct bpf_sec_def *sec,
+					struct bpf_program *prog);
 
-काष्ठा bpf_sec_def अणु
-	स्थिर अक्षर *sec;
-	माप_प्रकार len;
-	क्रमागत bpf_prog_type prog_type;
-	क्रमागत bpf_attach_type expected_attach_type;
+struct bpf_sec_def {
+	const char *sec;
+	size_t len;
+	enum bpf_prog_type prog_type;
+	enum bpf_attach_type expected_attach_type;
 	bool is_exp_attach_type_optional;
 	bool is_attachable;
 	bool is_attach_btf;
 	bool is_sleepable;
 	attach_fn_t attach_fn;
-पूर्ण;
+};
 
 /*
  * bpf_prog should be a better name but it has been used in
  * linux/filter.h.
  */
-काष्ठा bpf_program अणु
-	स्थिर काष्ठा bpf_sec_def *sec_def;
-	अक्षर *sec_name;
-	माप_प्रकार sec_idx;
-	/* this program's inकाष्ठाion offset (in number of inकाष्ठाions)
+struct bpf_program {
+	const struct bpf_sec_def *sec_def;
+	char *sec_name;
+	size_t sec_idx;
+	/* this program's instruction offset (in number of instructions)
 	 * within its containing ELF section
 	 */
-	माप_प्रकार sec_insn_off;
-	/* number of original inकाष्ठाions in ELF section beदीर्घing to this
-	 * program, not taking पूर्णांकo account subprogram inकाष्ठाions possible
+	size_t sec_insn_off;
+	/* number of original instructions in ELF section belonging to this
+	 * program, not taking into account subprogram instructions possible
 	 * appended later during relocation
 	 */
-	माप_प्रकार sec_insn_cnt;
-	/* Offset (in number of inकाष्ठाions) of the start of inकाष्ठाion
-	 * beदीर्घing to this BPF program  within its containing मुख्य BPF
-	 * program. For the entry-poपूर्णांक (मुख्य) BPF program, this is always
-	 * zero. For a sub-program, this माला_लो reset beक्रमe each of मुख्य BPF
+	size_t sec_insn_cnt;
+	/* Offset (in number of instructions) of the start of instruction
+	 * belonging to this BPF program  within its containing main BPF
+	 * program. For the entry-point (main) BPF program, this is always
+	 * zero. For a sub-program, this gets reset before each of main BPF
 	 * programs are processed and relocated and is used to determined
-	 * whether sub-program was alपढ़ोy appended to the मुख्य program, and
-	 * अगर yes, at which inकाष्ठाion offset.
+	 * whether sub-program was already appended to the main program, and
+	 * if yes, at which instruction offset.
 	 */
-	माप_प्रकार sub_insn_off;
+	size_t sub_insn_off;
 
-	अक्षर *name;
+	char *name;
 	/* sec_name with / replaced by _; makes recursive pinning
 	 * in bpf_object__pin_programs easier
 	 */
-	अक्षर *pin_name;
+	char *pin_name;
 
-	/* inकाष्ठाions that beदीर्घ to BPF program; insns[0] is located at
-	 * sec_insn_off inकाष्ठाion within its ELF section in ELF file, so
-	 * when mapping ELF file inकाष्ठाion index to the local inकाष्ठाion,
+	/* instructions that belong to BPF program; insns[0] is located at
+	 * sec_insn_off instruction within its ELF section in ELF file, so
+	 * when mapping ELF file instruction index to the local instruction,
 	 * one needs to subtract sec_insn_off; and vice versa.
 	 */
-	काष्ठा bpf_insn *insns;
-	/* actual number of inकाष्ठाion in this BPF program's image; क्रम
-	 * entry-poपूर्णांक BPF programs this includes the size of मुख्य program
+	struct bpf_insn *insns;
+	/* actual number of instruction in this BPF program's image; for
+	 * entry-point BPF programs this includes the size of main program
 	 * itself plus all the used sub-programs, appended at the end
 	 */
-	माप_प्रकार insns_cnt;
+	size_t insns_cnt;
 
-	काष्ठा reloc_desc *reloc_desc;
-	पूर्णांक nr_reloc;
-	पूर्णांक log_level;
+	struct reloc_desc *reloc_desc;
+	int nr_reloc;
+	int log_level;
 
-	काष्ठा अणु
-		पूर्णांक nr;
-		पूर्णांक *fds;
-	पूर्ण instances;
+	struct {
+		int nr;
+		int *fds;
+	} instances;
 	bpf_program_prep_t preprocessor;
 
-	काष्ठा bpf_object *obj;
-	व्योम *priv;
+	struct bpf_object *obj;
+	void *priv;
 	bpf_program_clear_priv_t clear_priv;
 
 	bool load;
-	bool mark_btf_अटल;
-	क्रमागत bpf_prog_type type;
-	क्रमागत bpf_attach_type expected_attach_type;
-	पूर्णांक prog_अगरindex;
+	bool mark_btf_static;
+	enum bpf_prog_type type;
+	enum bpf_attach_type expected_attach_type;
+	int prog_ifindex;
 	__u32 attach_btf_obj_fd;
 	__u32 attach_btf_id;
 	__u32 attach_prog_fd;
-	व्योम *func_info;
+	void *func_info;
 	__u32 func_info_rec_size;
 	__u32 func_info_cnt;
 
-	व्योम *line_info;
+	void *line_info;
 	__u32 line_info_rec_size;
 	__u32 line_info_cnt;
 	__u32 prog_flags;
-पूर्ण;
+};
 
-काष्ठा bpf_काष्ठा_ops अणु
-	स्थिर अक्षर *tname;
-	स्थिर काष्ठा btf_type *type;
-	काष्ठा bpf_program **progs;
+struct bpf_struct_ops {
+	const char *tname;
+	const struct btf_type *type;
+	struct bpf_program **progs;
 	__u32 *kern_func_off;
-	/* e.g. काष्ठा tcp_congestion_ops in bpf_prog's btf क्रमmat */
-	व्योम *data;
-	/* e.g. काष्ठा bpf_काष्ठा_ops_tcp_congestion_ops in
-	 *      btf_vmlinux's क्रमmat.
-	 * काष्ठा bpf_काष्ठा_ops_tcp_congestion_ops अणु
+	/* e.g. struct tcp_congestion_ops in bpf_prog's btf format */
+	void *data;
+	/* e.g. struct bpf_struct_ops_tcp_congestion_ops in
+	 *      btf_vmlinux's format.
+	 * struct bpf_struct_ops_tcp_congestion_ops {
 	 *	[... some other kernel fields ...]
-	 *	काष्ठा tcp_congestion_ops data;
-	 * पूर्ण
-	 * kern_vdata-size == माप(काष्ठा bpf_काष्ठा_ops_tcp_congestion_ops)
-	 * bpf_map__init_kern_काष्ठा_ops() will populate the "kern_vdata"
+	 *	struct tcp_congestion_ops data;
+	 * }
+	 * kern_vdata-size == sizeof(struct bpf_struct_ops_tcp_congestion_ops)
+	 * bpf_map__init_kern_struct_ops() will populate the "kern_vdata"
 	 * from "data".
 	 */
-	व्योम *kern_vdata;
+	void *kern_vdata;
 	__u32 type_id;
-पूर्ण;
+};
 
-#घोषणा DATA_SEC ".data"
-#घोषणा BSS_SEC ".bss"
-#घोषणा RODATA_SEC ".rodata"
-#घोषणा KCONFIG_SEC ".kconfig"
-#घोषणा KSYMS_SEC ".ksyms"
-#घोषणा STRUCT_OPS_SEC ".struct_ops"
+#define DATA_SEC ".data"
+#define BSS_SEC ".bss"
+#define RODATA_SEC ".rodata"
+#define KCONFIG_SEC ".kconfig"
+#define KSYMS_SEC ".ksyms"
+#define STRUCT_OPS_SEC ".struct_ops"
 
-क्रमागत libbpf_map_type अणु
+enum libbpf_map_type {
 	LIBBPF_MAP_UNSPEC,
 	LIBBPF_MAP_DATA,
 	LIBBPF_MAP_BSS,
 	LIBBPF_MAP_RODATA,
 	LIBBPF_MAP_KCONFIG,
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर libbpf_type_to_btf_name[] = अणु
+static const char * const libbpf_type_to_btf_name[] = {
 	[LIBBPF_MAP_DATA]	= DATA_SEC,
 	[LIBBPF_MAP_BSS]	= BSS_SEC,
 	[LIBBPF_MAP_RODATA]	= RODATA_SEC,
 	[LIBBPF_MAP_KCONFIG]	= KCONFIG_SEC,
-पूर्ण;
+};
 
-काष्ठा bpf_map अणु
-	अक्षर *name;
-	पूर्णांक fd;
-	पूर्णांक sec_idx;
-	माप_प्रकार sec_offset;
-	पूर्णांक map_अगरindex;
-	पूर्णांक inner_map_fd;
-	काष्ठा bpf_map_def def;
+struct bpf_map {
+	char *name;
+	int fd;
+	int sec_idx;
+	size_t sec_offset;
+	int map_ifindex;
+	int inner_map_fd;
+	struct bpf_map_def def;
 	__u32 numa_node;
 	__u32 btf_var_idx;
 	__u32 btf_key_type_id;
 	__u32 btf_value_type_id;
 	__u32 btf_vmlinux_value_type_id;
-	व्योम *priv;
+	void *priv;
 	bpf_map_clear_priv_t clear_priv;
-	क्रमागत libbpf_map_type libbpf_type;
-	व्योम *mmaped;
-	काष्ठा bpf_काष्ठा_ops *st_ops;
-	काष्ठा bpf_map *inner_map;
-	व्योम **init_slots;
-	पूर्णांक init_slots_sz;
-	अक्षर *pin_path;
+	enum libbpf_map_type libbpf_type;
+	void *mmaped;
+	struct bpf_struct_ops *st_ops;
+	struct bpf_map *inner_map;
+	void **init_slots;
+	int init_slots_sz;
+	char *pin_path;
 	bool pinned;
 	bool reused;
-पूर्ण;
+};
 
-क्रमागत बाह्य_type अणु
+enum extern_type {
 	EXT_UNKNOWN,
 	EXT_KCFG,
 	EXT_KSYM,
-पूर्ण;
+};
 
-क्रमागत kcfg_type अणु
+enum kcfg_type {
 	KCFG_UNKNOWN,
 	KCFG_CHAR,
 	KCFG_BOOL,
 	KCFG_INT,
 	KCFG_TRISTATE,
 	KCFG_CHAR_ARR,
-पूर्ण;
+};
 
-काष्ठा बाह्य_desc अणु
-	क्रमागत बाह्य_type type;
-	पूर्णांक sym_idx;
-	पूर्णांक btf_id;
-	पूर्णांक sec_btf_id;
-	स्थिर अक्षर *name;
+struct extern_desc {
+	enum extern_type type;
+	int sym_idx;
+	int btf_id;
+	int sec_btf_id;
+	const char *name;
 	bool is_set;
 	bool is_weak;
-	जोड़ अणु
-		काष्ठा अणु
-			क्रमागत kcfg_type type;
-			पूर्णांक sz;
-			पूर्णांक align;
-			पूर्णांक data_off;
-			bool is_चिन्हित;
-		पूर्ण kcfg;
-		काष्ठा अणु
-			अचिन्हित दीर्घ दीर्घ addr;
+	union {
+		struct {
+			enum kcfg_type type;
+			int sz;
+			int align;
+			int data_off;
+			bool is_signed;
+		} kcfg;
+		struct {
+			unsigned long long addr;
 
 			/* target btf_id of the corresponding kernel var. */
-			पूर्णांक kernel_btf_obj_fd;
-			पूर्णांक kernel_btf_id;
+			int kernel_btf_obj_fd;
+			int kernel_btf_id;
 
-			/* local btf_id of the ksym बाह्य's type. */
+			/* local btf_id of the ksym extern's type. */
 			__u32 type_id;
-		पूर्ण ksym;
-	पूर्ण;
-पूर्ण;
+		} ksym;
+	};
+};
 
-अटल LIST_HEAD(bpf_objects_list);
+static LIST_HEAD(bpf_objects_list);
 
-काष्ठा module_btf अणु
-	काष्ठा btf *btf;
-	अक्षर *name;
+struct module_btf {
+	struct btf *btf;
+	char *name;
 	__u32 id;
-	पूर्णांक fd;
-पूर्ण;
+	int fd;
+};
 
-काष्ठा bpf_object अणु
-	अक्षर name[BPF_OBJ_NAME_LEN];
-	अक्षर license[64];
+struct bpf_object {
+	char name[BPF_OBJ_NAME_LEN];
+	char license[64];
 	__u32 kern_version;
 
-	काष्ठा bpf_program *programs;
-	माप_प्रकार nr_programs;
-	काष्ठा bpf_map *maps;
-	माप_प्रकार nr_maps;
-	माप_प्रकार maps_cap;
+	struct bpf_program *programs;
+	size_t nr_programs;
+	struct bpf_map *maps;
+	size_t nr_maps;
+	size_t maps_cap;
 
-	अक्षर *kconfig;
-	काष्ठा बाह्य_desc *बाह्यs;
-	पूर्णांक nr_बाह्य;
-	पूर्णांक kconfig_map_idx;
-	पूर्णांक rodata_map_idx;
+	char *kconfig;
+	struct extern_desc *externs;
+	int nr_extern;
+	int kconfig_map_idx;
+	int rodata_map_idx;
 
 	bool loaded;
 	bool has_subcalls;
 
 	/*
-	 * Inक्रमmation when करोing elf related work. Only valid अगर fd
+	 * Information when doing elf related work. Only valid if fd
 	 * is valid.
 	 */
-	काष्ठा अणु
-		पूर्णांक fd;
-		स्थिर व्योम *obj_buf;
-		माप_प्रकार obj_buf_sz;
+	struct {
+		int fd;
+		const void *obj_buf;
+		size_t obj_buf_sz;
 		Elf *elf;
 		GElf_Ehdr ehdr;
 		Elf_Data *symbols;
@@ -448,157 +447,157 @@ __म_लिखो(2, 3)
 		Elf_Data *rodata;
 		Elf_Data *bss;
 		Elf_Data *st_ops_data;
-		माप_प्रकार shstrndx; /* section index क्रम section name strings */
-		माप_प्रकार strtabidx;
-		काष्ठा अणु
+		size_t shstrndx; /* section index for section name strings */
+		size_t strtabidx;
+		struct {
 			GElf_Shdr shdr;
 			Elf_Data *data;
-		पूर्ण *reloc_sects;
-		पूर्णांक nr_reloc_sects;
-		पूर्णांक maps_shndx;
-		पूर्णांक btf_maps_shndx;
+		} *reloc_sects;
+		int nr_reloc_sects;
+		int maps_shndx;
+		int btf_maps_shndx;
 		__u32 btf_maps_sec_btf_id;
-		पूर्णांक text_shndx;
-		पूर्णांक symbols_shndx;
-		पूर्णांक data_shndx;
-		पूर्णांक rodata_shndx;
-		पूर्णांक bss_shndx;
-		पूर्णांक st_ops_shndx;
-	पूर्ण efile;
+		int text_shndx;
+		int symbols_shndx;
+		int data_shndx;
+		int rodata_shndx;
+		int bss_shndx;
+		int st_ops_shndx;
+	} efile;
 	/*
 	 * All loaded bpf_object is linked in a list, which is
 	 * hidden to caller. bpf_objects__<func> handlers deal with
 	 * all objects.
 	 */
-	काष्ठा list_head list;
+	struct list_head list;
 
-	काष्ठा btf *btf;
-	काष्ठा btf_ext *btf_ext;
+	struct btf *btf;
+	struct btf_ext *btf_ext;
 
-	/* Parse and load BTF vmlinux अगर any of the programs in the object need
-	 * it at load समय.
+	/* Parse and load BTF vmlinux if any of the programs in the object need
+	 * it at load time.
 	 */
-	काष्ठा btf *btf_vmlinux;
-	/* vmlinux BTF override क्रम CO-RE relocations */
-	काष्ठा btf *btf_vmlinux_override;
+	struct btf *btf_vmlinux;
+	/* vmlinux BTF override for CO-RE relocations */
+	struct btf *btf_vmlinux_override;
 	/* Lazily initialized kernel module BTFs */
-	काष्ठा module_btf *btf_modules;
+	struct module_btf *btf_modules;
 	bool btf_modules_loaded;
-	माप_प्रकार btf_module_cnt;
-	माप_प्रकार btf_module_cap;
+	size_t btf_module_cnt;
+	size_t btf_module_cap;
 
-	व्योम *priv;
+	void *priv;
 	bpf_object_clear_priv_t clear_priv;
 
-	अक्षर path[];
-पूर्ण;
-#घोषणा obj_elf_valid(o)	((o)->efile.elf)
+	char path[];
+};
+#define obj_elf_valid(o)	((o)->efile.elf)
 
-अटल स्थिर अक्षर *elf_sym_str(स्थिर काष्ठा bpf_object *obj, माप_प्रकार off);
-अटल स्थिर अक्षर *elf_sec_str(स्थिर काष्ठा bpf_object *obj, माप_प्रकार off);
-अटल Elf_Scn *elf_sec_by_idx(स्थिर काष्ठा bpf_object *obj, माप_प्रकार idx);
-अटल Elf_Scn *elf_sec_by_name(स्थिर काष्ठा bpf_object *obj, स्थिर अक्षर *name);
-अटल पूर्णांक elf_sec_hdr(स्थिर काष्ठा bpf_object *obj, Elf_Scn *scn, GElf_Shdr *hdr);
-अटल स्थिर अक्षर *elf_sec_name(स्थिर काष्ठा bpf_object *obj, Elf_Scn *scn);
-अटल Elf_Data *elf_sec_data(स्थिर काष्ठा bpf_object *obj, Elf_Scn *scn);
+static const char *elf_sym_str(const struct bpf_object *obj, size_t off);
+static const char *elf_sec_str(const struct bpf_object *obj, size_t off);
+static Elf_Scn *elf_sec_by_idx(const struct bpf_object *obj, size_t idx);
+static Elf_Scn *elf_sec_by_name(const struct bpf_object *obj, const char *name);
+static int elf_sec_hdr(const struct bpf_object *obj, Elf_Scn *scn, GElf_Shdr *hdr);
+static const char *elf_sec_name(const struct bpf_object *obj, Elf_Scn *scn);
+static Elf_Data *elf_sec_data(const struct bpf_object *obj, Elf_Scn *scn);
 
-व्योम bpf_program__unload(काष्ठा bpf_program *prog)
-अणु
-	पूर्णांक i;
+void bpf_program__unload(struct bpf_program *prog)
+{
+	int i;
 
-	अगर (!prog)
-		वापस;
+	if (!prog)
+		return;
 
 	/*
-	 * If the object is खोलोed but the program was never loaded,
+	 * If the object is opened but the program was never loaded,
 	 * it is possible that prog->instances.nr == -1.
 	 */
-	अगर (prog->instances.nr > 0) अणु
-		क्रम (i = 0; i < prog->instances.nr; i++)
-			zबंद(prog->instances.fds[i]);
-	पूर्ण अन्यथा अगर (prog->instances.nr != -1) अणु
+	if (prog->instances.nr > 0) {
+		for (i = 0; i < prog->instances.nr; i++)
+			zclose(prog->instances.fds[i]);
+	} else if (prog->instances.nr != -1) {
 		pr_warn("Internal error: instances.nr is %d\n",
 			prog->instances.nr);
-	पूर्ण
+	}
 
 	prog->instances.nr = -1;
-	zमुक्त(&prog->instances.fds);
+	zfree(&prog->instances.fds);
 
-	zमुक्त(&prog->func_info);
-	zमुक्त(&prog->line_info);
-पूर्ण
+	zfree(&prog->func_info);
+	zfree(&prog->line_info);
+}
 
-अटल व्योम bpf_program__निकास(काष्ठा bpf_program *prog)
-अणु
-	अगर (!prog)
-		वापस;
+static void bpf_program__exit(struct bpf_program *prog)
+{
+	if (!prog)
+		return;
 
-	अगर (prog->clear_priv)
+	if (prog->clear_priv)
 		prog->clear_priv(prog, prog->priv);
 
-	prog->priv = शून्य;
-	prog->clear_priv = शून्य;
+	prog->priv = NULL;
+	prog->clear_priv = NULL;
 
 	bpf_program__unload(prog);
-	zमुक्त(&prog->name);
-	zमुक्त(&prog->sec_name);
-	zमुक्त(&prog->pin_name);
-	zमुक्त(&prog->insns);
-	zमुक्त(&prog->reloc_desc);
+	zfree(&prog->name);
+	zfree(&prog->sec_name);
+	zfree(&prog->pin_name);
+	zfree(&prog->insns);
+	zfree(&prog->reloc_desc);
 
 	prog->nr_reloc = 0;
 	prog->insns_cnt = 0;
 	prog->sec_idx = -1;
-पूर्ण
+}
 
-अटल अक्षर *__bpf_program__pin_name(काष्ठा bpf_program *prog)
-अणु
-	अक्षर *name, *p;
+static char *__bpf_program__pin_name(struct bpf_program *prog)
+{
+	char *name, *p;
 
 	name = p = strdup(prog->sec_name);
-	जबतक ((p = म_अक्षर(p, '/')))
+	while ((p = strchr(p, '/')))
 		*p = '_';
 
-	वापस name;
-पूर्ण
+	return name;
+}
 
-अटल bool insn_is_subprog_call(स्थिर काष्ठा bpf_insn *insn)
-अणु
-	वापस BPF_CLASS(insn->code) == BPF_JMP &&
+static bool insn_is_subprog_call(const struct bpf_insn *insn)
+{
+	return BPF_CLASS(insn->code) == BPF_JMP &&
 	       BPF_OP(insn->code) == BPF_CALL &&
 	       BPF_SRC(insn->code) == BPF_K &&
 	       insn->src_reg == BPF_PSEUDO_CALL &&
 	       insn->dst_reg == 0 &&
 	       insn->off == 0;
-पूर्ण
+}
 
-अटल bool is_ldimm64_insn(काष्ठा bpf_insn *insn)
-अणु
-	वापस insn->code == (BPF_LD | BPF_IMM | BPF_DW);
-पूर्ण
+static bool is_ldimm64_insn(struct bpf_insn *insn)
+{
+	return insn->code == (BPF_LD | BPF_IMM | BPF_DW);
+}
 
-अटल bool is_call_insn(स्थिर काष्ठा bpf_insn *insn)
-अणु
-	वापस insn->code == (BPF_JMP | BPF_CALL);
-पूर्ण
+static bool is_call_insn(const struct bpf_insn *insn)
+{
+	return insn->code == (BPF_JMP | BPF_CALL);
+}
 
-अटल bool insn_is_pseuकरो_func(काष्ठा bpf_insn *insn)
-अणु
-	वापस is_ldimm64_insn(insn) && insn->src_reg == BPF_PSEUDO_FUNC;
-पूर्ण
+static bool insn_is_pseudo_func(struct bpf_insn *insn)
+{
+	return is_ldimm64_insn(insn) && insn->src_reg == BPF_PSEUDO_FUNC;
+}
 
-अटल पूर्णांक
-bpf_object__init_prog(काष्ठा bpf_object *obj, काष्ठा bpf_program *prog,
-		      स्थिर अक्षर *name, माप_प्रकार sec_idx, स्थिर अक्षर *sec_name,
-		      माप_प्रकार sec_off, व्योम *insn_data, माप_प्रकार insn_data_sz)
-अणु
-	अगर (insn_data_sz == 0 || insn_data_sz % BPF_INSN_SZ || sec_off % BPF_INSN_SZ) अणु
+static int
+bpf_object__init_prog(struct bpf_object *obj, struct bpf_program *prog,
+		      const char *name, size_t sec_idx, const char *sec_name,
+		      size_t sec_off, void *insn_data, size_t insn_data_sz)
+{
+	if (insn_data_sz == 0 || insn_data_sz % BPF_INSN_SZ || sec_off % BPF_INSN_SZ) {
 		pr_warn("sec '%s': corrupted program '%s', offset %zu, size %zu\n",
 			sec_name, name, sec_off, insn_data_sz);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	स_रखो(prog, 0, माप(*prog));
+	memset(prog, 0, sizeof(*prog));
 	prog->obj = obj;
 
 	prog->sec_idx = sec_idx;
@@ -610,174 +609,174 @@ bpf_object__init_prog(काष्ठा bpf_object *obj, काष्ठा bpf
 	prog->type = BPF_PROG_TYPE_UNSPEC;
 	prog->load = true;
 
-	prog->instances.fds = शून्य;
+	prog->instances.fds = NULL;
 	prog->instances.nr = -1;
 
 	prog->sec_name = strdup(sec_name);
-	अगर (!prog->sec_name)
-		जाओ errout;
+	if (!prog->sec_name)
+		goto errout;
 
 	prog->name = strdup(name);
-	अगर (!prog->name)
-		जाओ errout;
+	if (!prog->name)
+		goto errout;
 
 	prog->pin_name = __bpf_program__pin_name(prog);
-	अगर (!prog->pin_name)
-		जाओ errout;
+	if (!prog->pin_name)
+		goto errout;
 
-	prog->insns = दो_स्मृति(insn_data_sz);
-	अगर (!prog->insns)
-		जाओ errout;
-	स_नकल(prog->insns, insn_data, insn_data_sz);
+	prog->insns = malloc(insn_data_sz);
+	if (!prog->insns)
+		goto errout;
+	memcpy(prog->insns, insn_data, insn_data_sz);
 
-	वापस 0;
+	return 0;
 errout:
 	pr_warn("sec '%s': failed to allocate memory for prog '%s'\n", sec_name, name);
-	bpf_program__निकास(prog);
-	वापस -ENOMEM;
-पूर्ण
+	bpf_program__exit(prog);
+	return -ENOMEM;
+}
 
-अटल पूर्णांक
-bpf_object__add_programs(काष्ठा bpf_object *obj, Elf_Data *sec_data,
-			 स्थिर अक्षर *sec_name, पूर्णांक sec_idx)
-अणु
+static int
+bpf_object__add_programs(struct bpf_object *obj, Elf_Data *sec_data,
+			 const char *sec_name, int sec_idx)
+{
 	Elf_Data *symbols = obj->efile.symbols;
-	काष्ठा bpf_program *prog, *progs;
-	व्योम *data = sec_data->d_buf;
-	माप_प्रकार sec_sz = sec_data->d_size, sec_off, prog_sz, nr_syms;
-	पूर्णांक nr_progs, err, i;
-	स्थिर अक्षर *name;
+	struct bpf_program *prog, *progs;
+	void *data = sec_data->d_buf;
+	size_t sec_sz = sec_data->d_size, sec_off, prog_sz, nr_syms;
+	int nr_progs, err, i;
+	const char *name;
 	GElf_Sym sym;
 
 	progs = obj->programs;
 	nr_progs = obj->nr_programs;
-	nr_syms = symbols->d_size / माप(GElf_Sym);
+	nr_syms = symbols->d_size / sizeof(GElf_Sym);
 	sec_off = 0;
 
-	क्रम (i = 0; i < nr_syms; i++) अणु
-		अगर (!gelf_माला_लोym(symbols, i, &sym))
-			जारी;
-		अगर (sym.st_shndx != sec_idx)
-			जारी;
-		अगर (GELF_ST_TYPE(sym.st_info) != STT_FUNC)
-			जारी;
+	for (i = 0; i < nr_syms; i++) {
+		if (!gelf_getsym(symbols, i, &sym))
+			continue;
+		if (sym.st_shndx != sec_idx)
+			continue;
+		if (GELF_ST_TYPE(sym.st_info) != STT_FUNC)
+			continue;
 
 		prog_sz = sym.st_size;
 		sec_off = sym.st_value;
 
 		name = elf_sym_str(obj, sym.st_name);
-		अगर (!name) अणु
+		if (!name) {
 			pr_warn("sec '%s': failed to get symbol name for offset %zu\n",
 				sec_name, sec_off);
-			वापस -LIBBPF_ERRNO__FORMAT;
-		पूर्ण
+			return -LIBBPF_ERRNO__FORMAT;
+		}
 
-		अगर (sec_off + prog_sz > sec_sz) अणु
+		if (sec_off + prog_sz > sec_sz) {
 			pr_warn("sec '%s': program at offset %zu crosses section boundary\n",
 				sec_name, sec_off);
-			वापस -LIBBPF_ERRNO__FORMAT;
-		पूर्ण
+			return -LIBBPF_ERRNO__FORMAT;
+		}
 
 		pr_debug("sec '%s': found program '%s' at insn offset %zu (%zu bytes), code size %zu insns (%zu bytes)\n",
 			 sec_name, name, sec_off / BPF_INSN_SZ, sec_off, prog_sz / BPF_INSN_SZ, prog_sz);
 
-		progs = libbpf_पुनः_स्मृतिarray(progs, nr_progs + 1, माप(*progs));
-		अगर (!progs) अणु
+		progs = libbpf_reallocarray(progs, nr_progs + 1, sizeof(*progs));
+		if (!progs) {
 			/*
-			 * In this हाल the original obj->programs
-			 * is still valid, so करोn't need special treat क्रम
-			 * bpf_बंद_object().
+			 * In this case the original obj->programs
+			 * is still valid, so don't need special treat for
+			 * bpf_close_object().
 			 */
 			pr_warn("sec '%s': failed to alloc memory for new program '%s'\n",
 				sec_name, name);
-			वापस -ENOMEM;
-		पूर्ण
+			return -ENOMEM;
+		}
 		obj->programs = progs;
 
 		prog = &progs[nr_progs];
 
 		err = bpf_object__init_prog(obj, prog, name, sec_idx, sec_name,
 					    sec_off, data + sec_off, prog_sz);
-		अगर (err)
-			वापस err;
+		if (err)
+			return err;
 
-		/* अगर function is a global/weak symbol, but has hidden
-		 * visibility (STV_HIDDEN), mark its BTF FUNC as अटल to
-		 * enable more permissive BPF verअगरication mode with more
-		 * outside context available to BPF verअगरier
+		/* if function is a global/weak symbol, but has hidden
+		 * visibility (STV_HIDDEN), mark its BTF FUNC as static to
+		 * enable more permissive BPF verification mode with more
+		 * outside context available to BPF verifier
 		 */
-		अगर (GELF_ST_BIND(sym.st_info) != STB_LOCAL
+		if (GELF_ST_BIND(sym.st_info) != STB_LOCAL
 		    && GELF_ST_VISIBILITY(sym.st_other) == STV_HIDDEN)
-			prog->mark_btf_अटल = true;
+			prog->mark_btf_static = true;
 
 		nr_progs++;
 		obj->nr_programs = nr_progs;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल __u32 get_kernel_version(व्योम)
-अणु
+static __u32 get_kernel_version(void)
+{
 	__u32 major, minor, patch;
-	काष्ठा utsname info;
+	struct utsname info;
 
 	uname(&info);
-	अगर (माला_पूछो(info.release, "%u.%u.%u", &major, &minor, &patch) != 3)
-		वापस 0;
-	वापस KERNEL_VERSION(major, minor, patch);
-पूर्ण
+	if (sscanf(info.release, "%u.%u.%u", &major, &minor, &patch) != 3)
+		return 0;
+	return KERNEL_VERSION(major, minor, patch);
+}
 
-अटल स्थिर काष्ठा btf_member *
-find_member_by_offset(स्थिर काष्ठा btf_type *t, __u32 bit_offset)
-अणु
-	काष्ठा btf_member *m;
-	पूर्णांक i;
+static const struct btf_member *
+find_member_by_offset(const struct btf_type *t, __u32 bit_offset)
+{
+	struct btf_member *m;
+	int i;
 
-	क्रम (i = 0, m = btf_members(t); i < btf_vlen(t); i++, m++) अणु
-		अगर (btf_member_bit_offset(t, i) == bit_offset)
-			वापस m;
-	पूर्ण
+	for (i = 0, m = btf_members(t); i < btf_vlen(t); i++, m++) {
+		if (btf_member_bit_offset(t, i) == bit_offset)
+			return m;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल स्थिर काष्ठा btf_member *
-find_member_by_name(स्थिर काष्ठा btf *btf, स्थिर काष्ठा btf_type *t,
-		    स्थिर अक्षर *name)
-अणु
-	काष्ठा btf_member *m;
-	पूर्णांक i;
+static const struct btf_member *
+find_member_by_name(const struct btf *btf, const struct btf_type *t,
+		    const char *name)
+{
+	struct btf_member *m;
+	int i;
 
-	क्रम (i = 0, m = btf_members(t); i < btf_vlen(t); i++, m++) अणु
-		अगर (!म_भेद(btf__name_by_offset(btf, m->name_off), name))
-			वापस m;
-	पूर्ण
+	for (i = 0, m = btf_members(t); i < btf_vlen(t); i++, m++) {
+		if (!strcmp(btf__name_by_offset(btf, m->name_off), name))
+			return m;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-#घोषणा STRUCT_OPS_VALUE_PREFIX "bpf_struct_ops_"
-अटल पूर्णांक find_btf_by_prefix_kind(स्थिर काष्ठा btf *btf, स्थिर अक्षर *prefix,
-				   स्थिर अक्षर *name, __u32 kind);
+#define STRUCT_OPS_VALUE_PREFIX "bpf_struct_ops_"
+static int find_btf_by_prefix_kind(const struct btf *btf, const char *prefix,
+				   const char *name, __u32 kind);
 
-अटल पूर्णांक
-find_काष्ठा_ops_kern_types(स्थिर काष्ठा btf *btf, स्थिर अक्षर *tname,
-			   स्थिर काष्ठा btf_type **type, __u32 *type_id,
-			   स्थिर काष्ठा btf_type **vtype, __u32 *vtype_id,
-			   स्थिर काष्ठा btf_member **data_member)
-अणु
-	स्थिर काष्ठा btf_type *kern_type, *kern_vtype;
-	स्थिर काष्ठा btf_member *kern_data_member;
+static int
+find_struct_ops_kern_types(const struct btf *btf, const char *tname,
+			   const struct btf_type **type, __u32 *type_id,
+			   const struct btf_type **vtype, __u32 *vtype_id,
+			   const struct btf_member **data_member)
+{
+	const struct btf_type *kern_type, *kern_vtype;
+	const struct btf_member *kern_data_member;
 	__s32 kern_vtype_id, kern_type_id;
 	__u32 i;
 
 	kern_type_id = btf__find_by_name_kind(btf, tname, BTF_KIND_STRUCT);
-	अगर (kern_type_id < 0) अणु
+	if (kern_type_id < 0) {
 		pr_warn("struct_ops init_kern: struct %s is not found in kernel BTF\n",
 			tname);
-		वापस kern_type_id;
-	पूर्ण
+		return kern_type_id;
+	}
 	kern_type = btf__type_by_id(btf, kern_type_id);
 
 	/* Find the corresponding "map_value" type that will be used
@@ -787,29 +786,29 @@ find_काष्ठा_ops_kern_types(स्थिर काष्ठा btf *b
 	 */
 	kern_vtype_id = find_btf_by_prefix_kind(btf, STRUCT_OPS_VALUE_PREFIX,
 						tname, BTF_KIND_STRUCT);
-	अगर (kern_vtype_id < 0) अणु
+	if (kern_vtype_id < 0) {
 		pr_warn("struct_ops init_kern: struct %s%s is not found in kernel BTF\n",
 			STRUCT_OPS_VALUE_PREFIX, tname);
-		वापस kern_vtype_id;
-	पूर्ण
+		return kern_vtype_id;
+	}
 	kern_vtype = btf__type_by_id(btf, kern_vtype_id);
 
 	/* Find "struct tcp_congestion_ops" from
-	 * काष्ठा bpf_काष्ठा_ops_tcp_congestion_ops अणु
+	 * struct bpf_struct_ops_tcp_congestion_ops {
 	 *	[ ... ]
-	 *	काष्ठा tcp_congestion_ops data;
-	 * पूर्ण
+	 *	struct tcp_congestion_ops data;
+	 * }
 	 */
 	kern_data_member = btf_members(kern_vtype);
-	क्रम (i = 0; i < btf_vlen(kern_vtype); i++, kern_data_member++) अणु
-		अगर (kern_data_member->type == kern_type_id)
-			अवरोध;
-	पूर्ण
-	अगर (i == btf_vlen(kern_vtype)) अणु
+	for (i = 0; i < btf_vlen(kern_vtype); i++, kern_data_member++) {
+		if (kern_data_member->type == kern_type_id)
+			break;
+	}
+	if (i == btf_vlen(kern_vtype)) {
 		pr_warn("struct_ops init_kern: struct %s data is not found in struct %s%s\n",
 			tname, STRUCT_OPS_VALUE_PREFIX, tname);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	*type = kern_type;
 	*type_id = kern_type_id;
@@ -817,36 +816,36 @@ find_काष्ठा_ops_kern_types(स्थिर काष्ठा btf *b
 	*vtype_id = kern_vtype_id;
 	*data_member = kern_data_member;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल bool bpf_map__is_काष्ठा_ops(स्थिर काष्ठा bpf_map *map)
-अणु
-	वापस map->def.type == BPF_MAP_TYPE_STRUCT_OPS;
-पूर्ण
+static bool bpf_map__is_struct_ops(const struct bpf_map *map)
+{
+	return map->def.type == BPF_MAP_TYPE_STRUCT_OPS;
+}
 
 /* Init the map's fields that depend on kern_btf */
-अटल पूर्णांक bpf_map__init_kern_काष्ठा_ops(काष्ठा bpf_map *map,
-					 स्थिर काष्ठा btf *btf,
-					 स्थिर काष्ठा btf *kern_btf)
-अणु
-	स्थिर काष्ठा btf_member *member, *kern_member, *kern_data_member;
-	स्थिर काष्ठा btf_type *type, *kern_type, *kern_vtype;
+static int bpf_map__init_kern_struct_ops(struct bpf_map *map,
+					 const struct btf *btf,
+					 const struct btf *kern_btf)
+{
+	const struct btf_member *member, *kern_member, *kern_data_member;
+	const struct btf_type *type, *kern_type, *kern_vtype;
 	__u32 i, kern_type_id, kern_vtype_id, kern_data_off;
-	काष्ठा bpf_काष्ठा_ops *st_ops;
-	व्योम *data, *kern_data;
-	स्थिर अक्षर *tname;
-	पूर्णांक err;
+	struct bpf_struct_ops *st_ops;
+	void *data, *kern_data;
+	const char *tname;
+	int err;
 
 	st_ops = map->st_ops;
 	type = st_ops->type;
 	tname = st_ops->tname;
-	err = find_काष्ठा_ops_kern_types(kern_btf, tname,
+	err = find_struct_ops_kern_types(kern_btf, tname,
 					 &kern_type, &kern_type_id,
 					 &kern_vtype, &kern_vtype_id,
 					 &kern_data_member);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	pr_debug("struct_ops init_kern %s: type_id:%u kern_type_id:%u kern_vtype_id:%u\n",
 		 map->name, st_ops->type_id, kern_type_id, kern_vtype_id);
@@ -854,39 +853,39 @@ find_काष्ठा_ops_kern_types(स्थिर काष्ठा btf *b
 	map->def.value_size = kern_vtype->size;
 	map->btf_vmlinux_value_type_id = kern_vtype_id;
 
-	st_ops->kern_vdata = सुस्मृति(1, kern_vtype->size);
-	अगर (!st_ops->kern_vdata)
-		वापस -ENOMEM;
+	st_ops->kern_vdata = calloc(1, kern_vtype->size);
+	if (!st_ops->kern_vdata)
+		return -ENOMEM;
 
 	data = st_ops->data;
 	kern_data_off = kern_data_member->offset / 8;
 	kern_data = st_ops->kern_vdata + kern_data_off;
 
 	member = btf_members(type);
-	क्रम (i = 0; i < btf_vlen(type); i++, member++) अणु
-		स्थिर काष्ठा btf_type *mtype, *kern_mtype;
+	for (i = 0; i < btf_vlen(type); i++, member++) {
+		const struct btf_type *mtype, *kern_mtype;
 		__u32 mtype_id, kern_mtype_id;
-		व्योम *mdata, *kern_mdata;
+		void *mdata, *kern_mdata;
 		__s64 msize, kern_msize;
 		__u32 moff, kern_moff;
 		__u32 kern_member_idx;
-		स्थिर अक्षर *mname;
+		const char *mname;
 
 		mname = btf__name_by_offset(btf, member->name_off);
 		kern_member = find_member_by_name(kern_btf, kern_type, mname);
-		अगर (!kern_member) अणु
+		if (!kern_member) {
 			pr_warn("struct_ops init_kern %s: Cannot find member %s in kernel BTF\n",
 				map->name, mname);
-			वापस -ENOTSUP;
-		पूर्ण
+			return -ENOTSUP;
+		}
 
 		kern_member_idx = kern_member - btf_members(kern_type);
-		अगर (btf_member_bitfield_size(type, i) ||
-		    btf_member_bitfield_size(kern_type, kern_member_idx)) अणु
+		if (btf_member_bitfield_size(type, i) ||
+		    btf_member_bitfield_size(kern_type, kern_member_idx)) {
 			pr_warn("struct_ops init_kern %s: bitfield %s is not supported\n",
 				map->name, mname);
-			वापस -ENOTSUP;
-		पूर्ण
+			return -ENOTSUP;
+		}
 
 		moff = member->offset / 8;
 		kern_moff = kern_member->offset / 8;
@@ -894,37 +893,37 @@ find_काष्ठा_ops_kern_types(स्थिर काष्ठा btf *b
 		mdata = data + moff;
 		kern_mdata = kern_data + kern_moff;
 
-		mtype = skip_mods_and_प्रकारs(btf, member->type, &mtype_id);
-		kern_mtype = skip_mods_and_प्रकारs(kern_btf, kern_member->type,
+		mtype = skip_mods_and_typedefs(btf, member->type, &mtype_id);
+		kern_mtype = skip_mods_and_typedefs(kern_btf, kern_member->type,
 						    &kern_mtype_id);
-		अगर (BTF_INFO_KIND(mtype->info) !=
-		    BTF_INFO_KIND(kern_mtype->info)) अणु
+		if (BTF_INFO_KIND(mtype->info) !=
+		    BTF_INFO_KIND(kern_mtype->info)) {
 			pr_warn("struct_ops init_kern %s: Unmatched member type %s %u != %u(kernel)\n",
 				map->name, mname, BTF_INFO_KIND(mtype->info),
 				BTF_INFO_KIND(kern_mtype->info));
-			वापस -ENOTSUP;
-		पूर्ण
+			return -ENOTSUP;
+		}
 
-		अगर (btf_is_ptr(mtype)) अणु
-			काष्ठा bpf_program *prog;
+		if (btf_is_ptr(mtype)) {
+			struct bpf_program *prog;
 
 			prog = st_ops->progs[i];
-			अगर (!prog)
-				जारी;
+			if (!prog)
+				continue;
 
-			kern_mtype = skip_mods_and_प्रकारs(kern_btf,
+			kern_mtype = skip_mods_and_typedefs(kern_btf,
 							    kern_mtype->type,
 							    &kern_mtype_id);
 
 			/* mtype->type must be a func_proto which was
 			 * guaranteed in bpf_object__collect_st_ops_relos(),
-			 * so only check kern_mtype क्रम func_proto here.
+			 * so only check kern_mtype for func_proto here.
 			 */
-			अगर (!btf_is_func_proto(kern_mtype)) अणु
+			if (!btf_is_func_proto(kern_mtype)) {
 				pr_warn("struct_ops init_kern %s: kernel member %s is not a func ptr\n",
 					map->name, mname);
-				वापस -ENOTSUP;
-			पूर्ण
+				return -ENOTSUP;
+			}
 
 			prog->attach_btf_id = kern_type_id;
 			prog->expected_attach_type = kern_member_idx;
@@ -935,128 +934,128 @@ find_काष्ठा_ops_kern_types(स्थिर काष्ठा btf *b
 				 map->name, mname, prog->name, moff,
 				 kern_moff);
 
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		msize = btf__resolve_size(btf, mtype_id);
 		kern_msize = btf__resolve_size(kern_btf, kern_mtype_id);
-		अगर (msize < 0 || kern_msize < 0 || msize != kern_msize) अणु
+		if (msize < 0 || kern_msize < 0 || msize != kern_msize) {
 			pr_warn("struct_ops init_kern %s: Error in size of member %s: %zd != %zd(kernel)\n",
-				map->name, mname, (sमाप_प्रकार)msize,
-				(sमाप_प्रकार)kern_msize);
-			वापस -ENOTSUP;
-		पूर्ण
+				map->name, mname, (ssize_t)msize,
+				(ssize_t)kern_msize);
+			return -ENOTSUP;
+		}
 
 		pr_debug("struct_ops init_kern %s: copy %s %u bytes from data(+%u) to kern_data(+%u)\n",
-			 map->name, mname, (अचिन्हित पूर्णांक)msize,
+			 map->name, mname, (unsigned int)msize,
 			 moff, kern_moff);
-		स_नकल(kern_mdata, mdata, msize);
-	पूर्ण
+		memcpy(kern_mdata, mdata, msize);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक bpf_object__init_kern_काष्ठा_ops_maps(काष्ठा bpf_object *obj)
-अणु
-	काष्ठा bpf_map *map;
-	माप_प्रकार i;
-	पूर्णांक err;
+static int bpf_object__init_kern_struct_ops_maps(struct bpf_object *obj)
+{
+	struct bpf_map *map;
+	size_t i;
+	int err;
 
-	क्रम (i = 0; i < obj->nr_maps; i++) अणु
+	for (i = 0; i < obj->nr_maps; i++) {
 		map = &obj->maps[i];
 
-		अगर (!bpf_map__is_काष्ठा_ops(map))
-			जारी;
+		if (!bpf_map__is_struct_ops(map))
+			continue;
 
-		err = bpf_map__init_kern_काष्ठा_ops(map, obj->btf,
+		err = bpf_map__init_kern_struct_ops(map, obj->btf,
 						    obj->btf_vmlinux);
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक bpf_object__init_काष्ठा_ops_maps(काष्ठा bpf_object *obj)
-अणु
-	स्थिर काष्ठा btf_type *type, *datasec;
-	स्थिर काष्ठा btf_var_secinfo *vsi;
-	काष्ठा bpf_काष्ठा_ops *st_ops;
-	स्थिर अक्षर *tname, *var_name;
+static int bpf_object__init_struct_ops_maps(struct bpf_object *obj)
+{
+	const struct btf_type *type, *datasec;
+	const struct btf_var_secinfo *vsi;
+	struct bpf_struct_ops *st_ops;
+	const char *tname, *var_name;
 	__s32 type_id, datasec_id;
-	स्थिर काष्ठा btf *btf;
-	काष्ठा bpf_map *map;
+	const struct btf *btf;
+	struct bpf_map *map;
 	__u32 i;
 
-	अगर (obj->efile.st_ops_shndx == -1)
-		वापस 0;
+	if (obj->efile.st_ops_shndx == -1)
+		return 0;
 
 	btf = obj->btf;
 	datasec_id = btf__find_by_name_kind(btf, STRUCT_OPS_SEC,
 					    BTF_KIND_DATASEC);
-	अगर (datasec_id < 0) अणु
+	if (datasec_id < 0) {
 		pr_warn("struct_ops init: DATASEC %s not found\n",
 			STRUCT_OPS_SEC);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	datasec = btf__type_by_id(btf, datasec_id);
 	vsi = btf_var_secinfos(datasec);
-	क्रम (i = 0; i < btf_vlen(datasec); i++, vsi++) अणु
+	for (i = 0; i < btf_vlen(datasec); i++, vsi++) {
 		type = btf__type_by_id(obj->btf, vsi->type);
 		var_name = btf__name_by_offset(obj->btf, type->name_off);
 
 		type_id = btf__resolve_type(obj->btf, vsi->type);
-		अगर (type_id < 0) अणु
+		if (type_id < 0) {
 			pr_warn("struct_ops init: Cannot resolve var type_id %u in DATASEC %s\n",
 				vsi->type, STRUCT_OPS_SEC);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
 		type = btf__type_by_id(obj->btf, type_id);
 		tname = btf__name_by_offset(obj->btf, type->name_off);
-		अगर (!tname[0]) अणु
+		if (!tname[0]) {
 			pr_warn("struct_ops init: anonymous type is not supported\n");
-			वापस -ENOTSUP;
-		पूर्ण
-		अगर (!btf_is_काष्ठा(type)) अणु
+			return -ENOTSUP;
+		}
+		if (!btf_is_struct(type)) {
 			pr_warn("struct_ops init: %s is not a struct\n", tname);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
 		map = bpf_object__add_map(obj);
-		अगर (IS_ERR(map))
-			वापस PTR_ERR(map);
+		if (IS_ERR(map))
+			return PTR_ERR(map);
 
 		map->sec_idx = obj->efile.st_ops_shndx;
 		map->sec_offset = vsi->offset;
 		map->name = strdup(var_name);
-		अगर (!map->name)
-			वापस -ENOMEM;
+		if (!map->name)
+			return -ENOMEM;
 
 		map->def.type = BPF_MAP_TYPE_STRUCT_OPS;
-		map->def.key_size = माप(पूर्णांक);
+		map->def.key_size = sizeof(int);
 		map->def.value_size = type->size;
 		map->def.max_entries = 1;
 
-		map->st_ops = सुस्मृति(1, माप(*map->st_ops));
-		अगर (!map->st_ops)
-			वापस -ENOMEM;
+		map->st_ops = calloc(1, sizeof(*map->st_ops));
+		if (!map->st_ops)
+			return -ENOMEM;
 		st_ops = map->st_ops;
-		st_ops->data = दो_स्मृति(type->size);
-		st_ops->progs = सुस्मृति(btf_vlen(type), माप(*st_ops->progs));
-		st_ops->kern_func_off = दो_स्मृति(btf_vlen(type) *
-					       माप(*st_ops->kern_func_off));
-		अगर (!st_ops->data || !st_ops->progs || !st_ops->kern_func_off)
-			वापस -ENOMEM;
+		st_ops->data = malloc(type->size);
+		st_ops->progs = calloc(btf_vlen(type), sizeof(*st_ops->progs));
+		st_ops->kern_func_off = malloc(btf_vlen(type) *
+					       sizeof(*st_ops->kern_func_off));
+		if (!st_ops->data || !st_ops->progs || !st_ops->kern_func_off)
+			return -ENOMEM;
 
-		अगर (vsi->offset + type->size > obj->efile.st_ops_data->d_size) अणु
+		if (vsi->offset + type->size > obj->efile.st_ops_data->d_size) {
 			pr_warn("struct_ops init: var %s is beyond the end of DATASEC %s\n",
 				var_name, STRUCT_OPS_SEC);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
-		स_नकल(st_ops->data,
+		memcpy(st_ops->data,
 		       obj->efile.st_ops_data->d_buf + vsi->offset,
 		       type->size);
 		st_ops->tname = tname;
@@ -1065,44 +1064,44 @@ find_काष्ठा_ops_kern_types(स्थिर काष्ठा btf *b
 
 		pr_debug("struct_ops init: struct %s(type_id=%u) %s found at offset %u\n",
 			 tname, type_id, var_name, vsi->offset);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा bpf_object *bpf_object__new(स्थिर अक्षर *path,
-					  स्थिर व्योम *obj_buf,
-					  माप_प्रकार obj_buf_sz,
-					  स्थिर अक्षर *obj_name)
-अणु
-	काष्ठा bpf_object *obj;
-	अक्षर *end;
+static struct bpf_object *bpf_object__new(const char *path,
+					  const void *obj_buf,
+					  size_t obj_buf_sz,
+					  const char *obj_name)
+{
+	struct bpf_object *obj;
+	char *end;
 
-	obj = सुस्मृति(1, माप(काष्ठा bpf_object) + म_माप(path) + 1);
-	अगर (!obj) अणु
+	obj = calloc(1, sizeof(struct bpf_object) + strlen(path) + 1);
+	if (!obj) {
 		pr_warn("alloc memory failed for %s\n", path);
-		वापस ERR_PTR(-ENOMEM);
-	पूर्ण
+		return ERR_PTR(-ENOMEM);
+	}
 
-	म_नकल(obj->path, path);
-	अगर (obj_name) अणु
-		म_नकलन(obj->name, obj_name, माप(obj->name) - 1);
-		obj->name[माप(obj->name) - 1] = 0;
-	पूर्ण अन्यथा अणु
-		/* Using basename() GNU version which करोesn't modअगरy arg. */
-		म_नकलन(obj->name, basename((व्योम *)path),
-			माप(obj->name) - 1);
-		end = म_अक्षर(obj->name, '.');
-		अगर (end)
+	strcpy(obj->path, path);
+	if (obj_name) {
+		strncpy(obj->name, obj_name, sizeof(obj->name) - 1);
+		obj->name[sizeof(obj->name) - 1] = 0;
+	} else {
+		/* Using basename() GNU version which doesn't modify arg. */
+		strncpy(obj->name, basename((void *)path),
+			sizeof(obj->name) - 1);
+		end = strchr(obj->name, '.');
+		if (end)
 			*end = 0;
-	पूर्ण
+	}
 
 	obj->efile.fd = -1;
 	/*
 	 * Caller of this function should also call
-	 * bpf_object__elf_finish() after data collection to वापस
+	 * bpf_object__elf_finish() after data collection to return
 	 * obj_buf to user. If not, we should duplicate the buffer to
-	 * aव्योम user मुक्तing them beक्रमe elf finish.
+	 * avoid user freeing them before elf finish.
 	 */
 	obj->efile.obj_buf = obj_buf;
 	obj->efile.obj_buf_sz = obj_buf_sz;
@@ -1120,305 +1119,305 @@ find_काष्ठा_ops_kern_types(स्थिर काष्ठा btf *b
 
 	INIT_LIST_HEAD(&obj->list);
 	list_add(&obj->list, &bpf_objects_list);
-	वापस obj;
-पूर्ण
+	return obj;
+}
 
-अटल व्योम bpf_object__elf_finish(काष्ठा bpf_object *obj)
-अणु
-	अगर (!obj_elf_valid(obj))
-		वापस;
+static void bpf_object__elf_finish(struct bpf_object *obj)
+{
+	if (!obj_elf_valid(obj))
+		return;
 
-	अगर (obj->efile.elf) अणु
+	if (obj->efile.elf) {
 		elf_end(obj->efile.elf);
-		obj->efile.elf = शून्य;
-	पूर्ण
-	obj->efile.symbols = शून्य;
-	obj->efile.data = शून्य;
-	obj->efile.rodata = शून्य;
-	obj->efile.bss = शून्य;
-	obj->efile.st_ops_data = शून्य;
+		obj->efile.elf = NULL;
+	}
+	obj->efile.symbols = NULL;
+	obj->efile.data = NULL;
+	obj->efile.rodata = NULL;
+	obj->efile.bss = NULL;
+	obj->efile.st_ops_data = NULL;
 
-	zमुक्त(&obj->efile.reloc_sects);
+	zfree(&obj->efile.reloc_sects);
 	obj->efile.nr_reloc_sects = 0;
-	zबंद(obj->efile.fd);
-	obj->efile.obj_buf = शून्य;
+	zclose(obj->efile.fd);
+	obj->efile.obj_buf = NULL;
 	obj->efile.obj_buf_sz = 0;
-पूर्ण
+}
 
-अटल पूर्णांक bpf_object__elf_init(काष्ठा bpf_object *obj)
-अणु
-	पूर्णांक err = 0;
+static int bpf_object__elf_init(struct bpf_object *obj)
+{
+	int err = 0;
 	GElf_Ehdr *ep;
 
-	अगर (obj_elf_valid(obj)) अणु
+	if (obj_elf_valid(obj)) {
 		pr_warn("elf: init internal error\n");
-		वापस -LIBBPF_ERRNO__LIBELF;
-	पूर्ण
+		return -LIBBPF_ERRNO__LIBELF;
+	}
 
-	अगर (obj->efile.obj_buf_sz > 0) अणु
+	if (obj->efile.obj_buf_sz > 0) {
 		/*
 		 * obj_buf should have been validated by
-		 * bpf_object__खोलो_buffer().
+		 * bpf_object__open_buffer().
 		 */
-		obj->efile.elf = elf_memory((अक्षर *)obj->efile.obj_buf,
+		obj->efile.elf = elf_memory((char *)obj->efile.obj_buf,
 					    obj->efile.obj_buf_sz);
-	पूर्ण अन्यथा अणु
-		obj->efile.fd = खोलो(obj->path, O_RDONLY);
-		अगर (obj->efile.fd < 0) अणु
-			अक्षर errmsg[STRERR_बफ_मानE], *cp;
+	} else {
+		obj->efile.fd = open(obj->path, O_RDONLY);
+		if (obj->efile.fd < 0) {
+			char errmsg[STRERR_BUFSIZE], *cp;
 
-			err = -त्रुटि_सं;
-			cp = libbpf_म_त्रुटि_r(err, errmsg, माप(errmsg));
+			err = -errno;
+			cp = libbpf_strerror_r(err, errmsg, sizeof(errmsg));
 			pr_warn("elf: failed to open %s: %s\n", obj->path, cp);
-			वापस err;
-		पूर्ण
+			return err;
+		}
 
-		obj->efile.elf = elf_begin(obj->efile.fd, ELF_C_READ_MMAP, शून्य);
-	पूर्ण
+		obj->efile.elf = elf_begin(obj->efile.fd, ELF_C_READ_MMAP, NULL);
+	}
 
-	अगर (!obj->efile.elf) अणु
+	if (!obj->efile.elf) {
 		pr_warn("elf: failed to open %s as ELF file: %s\n", obj->path, elf_errmsg(-1));
 		err = -LIBBPF_ERRNO__LIBELF;
-		जाओ errout;
-	पूर्ण
+		goto errout;
+	}
 
-	अगर (!gelf_getehdr(obj->efile.elf, &obj->efile.ehdr)) अणु
+	if (!gelf_getehdr(obj->efile.elf, &obj->efile.ehdr)) {
 		pr_warn("elf: failed to get ELF header from %s: %s\n", obj->path, elf_errmsg(-1));
 		err = -LIBBPF_ERRNO__FORMAT;
-		जाओ errout;
-	पूर्ण
+		goto errout;
+	}
 	ep = &obj->efile.ehdr;
 
-	अगर (elf_माला_लोhdrstrndx(obj->efile.elf, &obj->efile.shstrndx)) अणु
+	if (elf_getshdrstrndx(obj->efile.elf, &obj->efile.shstrndx)) {
 		pr_warn("elf: failed to get section names section index for %s: %s\n",
 			obj->path, elf_errmsg(-1));
 		err = -LIBBPF_ERRNO__FORMAT;
-		जाओ errout;
-	पूर्ण
+		goto errout;
+	}
 
-	/* Elf is corrupted/truncated, aव्योम calling elf_strptr. */
-	अगर (!elf_rawdata(elf_माला_लोcn(obj->efile.elf, obj->efile.shstrndx), शून्य)) अणु
+	/* Elf is corrupted/truncated, avoid calling elf_strptr. */
+	if (!elf_rawdata(elf_getscn(obj->efile.elf, obj->efile.shstrndx), NULL)) {
 		pr_warn("elf: failed to get section names strings from %s: %s\n",
 			obj->path, elf_errmsg(-1));
 		err = -LIBBPF_ERRNO__FORMAT;
-		जाओ errout;
-	पूर्ण
+		goto errout;
+	}
 
 	/* Old LLVM set e_machine to EM_NONE */
-	अगर (ep->e_type != ET_REL ||
-	    (ep->e_machine && ep->e_machine != EM_BPF)) अणु
+	if (ep->e_type != ET_REL ||
+	    (ep->e_machine && ep->e_machine != EM_BPF)) {
 		pr_warn("elf: %s is not a valid eBPF object file\n", obj->path);
 		err = -LIBBPF_ERRNO__FORMAT;
-		जाओ errout;
-	पूर्ण
+		goto errout;
+	}
 
-	वापस 0;
+	return 0;
 errout:
 	bpf_object__elf_finish(obj);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक bpf_object__check_endianness(काष्ठा bpf_object *obj)
-अणु
-#अगर __BYTE_ORDER == __LITTLE_ENDIAN
-	अगर (obj->efile.ehdr.e_ident[EI_DATA] == ELFDATA2LSB)
-		वापस 0;
-#या_अगर __BYTE_ORDER == __BIG_ENDIAN
-	अगर (obj->efile.ehdr.e_ident[EI_DATA] == ELFDATA2MSB)
-		वापस 0;
-#अन्यथा
+static int bpf_object__check_endianness(struct bpf_object *obj)
+{
+#if __BYTE_ORDER == __LITTLE_ENDIAN
+	if (obj->efile.ehdr.e_ident[EI_DATA] == ELFDATA2LSB)
+		return 0;
+#elif __BYTE_ORDER == __BIG_ENDIAN
+	if (obj->efile.ehdr.e_ident[EI_DATA] == ELFDATA2MSB)
+		return 0;
+#else
 # error "Unrecognized __BYTE_ORDER__"
-#पूर्ण_अगर
+#endif
 	pr_warn("elf: endianness mismatch in %s.\n", obj->path);
-	वापस -LIBBPF_ERRNO__ENDIAN;
-पूर्ण
+	return -LIBBPF_ERRNO__ENDIAN;
+}
 
-अटल पूर्णांक
-bpf_object__init_license(काष्ठा bpf_object *obj, व्योम *data, माप_प्रकार size)
-अणु
-	स_नकल(obj->license, data, min(size, माप(obj->license) - 1));
+static int
+bpf_object__init_license(struct bpf_object *obj, void *data, size_t size)
+{
+	memcpy(obj->license, data, min(size, sizeof(obj->license) - 1));
 	pr_debug("license of %s is %s\n", obj->path, obj->license);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-bpf_object__init_kversion(काष्ठा bpf_object *obj, व्योम *data, माप_प्रकार size)
-अणु
+static int
+bpf_object__init_kversion(struct bpf_object *obj, void *data, size_t size)
+{
 	__u32 kver;
 
-	अगर (size != माप(kver)) अणु
+	if (size != sizeof(kver)) {
 		pr_warn("invalid kver section in %s\n", obj->path);
-		वापस -LIBBPF_ERRNO__FORMAT;
-	पूर्ण
-	स_नकल(&kver, data, माप(kver));
+		return -LIBBPF_ERRNO__FORMAT;
+	}
+	memcpy(&kver, data, sizeof(kver));
 	obj->kern_version = kver;
 	pr_debug("kernel version of %s is %x\n", obj->path, obj->kern_version);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल bool bpf_map_type__is_map_in_map(क्रमागत bpf_map_type type)
-अणु
-	अगर (type == BPF_MAP_TYPE_ARRAY_OF_MAPS ||
+static bool bpf_map_type__is_map_in_map(enum bpf_map_type type)
+{
+	if (type == BPF_MAP_TYPE_ARRAY_OF_MAPS ||
 	    type == BPF_MAP_TYPE_HASH_OF_MAPS)
-		वापस true;
-	वापस false;
-पूर्ण
+		return true;
+	return false;
+}
 
-पूर्णांक bpf_object__section_size(स्थिर काष्ठा bpf_object *obj, स्थिर अक्षर *name,
+int bpf_object__section_size(const struct bpf_object *obj, const char *name,
 			     __u32 *size)
-अणु
-	पूर्णांक ret = -ENOENT;
+{
+	int ret = -ENOENT;
 
 	*size = 0;
-	अगर (!name) अणु
-		वापस -EINVAL;
-	पूर्ण अन्यथा अगर (!म_भेद(name, DATA_SEC)) अणु
-		अगर (obj->efile.data)
+	if (!name) {
+		return -EINVAL;
+	} else if (!strcmp(name, DATA_SEC)) {
+		if (obj->efile.data)
 			*size = obj->efile.data->d_size;
-	पूर्ण अन्यथा अगर (!म_भेद(name, BSS_SEC)) अणु
-		अगर (obj->efile.bss)
+	} else if (!strcmp(name, BSS_SEC)) {
+		if (obj->efile.bss)
 			*size = obj->efile.bss->d_size;
-	पूर्ण अन्यथा अगर (!म_भेद(name, RODATA_SEC)) अणु
-		अगर (obj->efile.rodata)
+	} else if (!strcmp(name, RODATA_SEC)) {
+		if (obj->efile.rodata)
 			*size = obj->efile.rodata->d_size;
-	पूर्ण अन्यथा अगर (!म_भेद(name, STRUCT_OPS_SEC)) अणु
-		अगर (obj->efile.st_ops_data)
+	} else if (!strcmp(name, STRUCT_OPS_SEC)) {
+		if (obj->efile.st_ops_data)
 			*size = obj->efile.st_ops_data->d_size;
-	पूर्ण अन्यथा अणु
+	} else {
 		Elf_Scn *scn = elf_sec_by_name(obj, name);
 		Elf_Data *data = elf_sec_data(obj, scn);
 
-		अगर (data) अणु
+		if (data) {
 			ret = 0; /* found it */
 			*size = data->d_size;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस *size ? 0 : ret;
-पूर्ण
+	return *size ? 0 : ret;
+}
 
-पूर्णांक bpf_object__variable_offset(स्थिर काष्ठा bpf_object *obj, स्थिर अक्षर *name,
+int bpf_object__variable_offset(const struct bpf_object *obj, const char *name,
 				__u32 *off)
-अणु
+{
 	Elf_Data *symbols = obj->efile.symbols;
-	स्थिर अक्षर *sname;
-	माप_प्रकार si;
+	const char *sname;
+	size_t si;
 
-	अगर (!name || !off)
-		वापस -EINVAL;
+	if (!name || !off)
+		return -EINVAL;
 
-	क्रम (si = 0; si < symbols->d_size / माप(GElf_Sym); si++) अणु
+	for (si = 0; si < symbols->d_size / sizeof(GElf_Sym); si++) {
 		GElf_Sym sym;
 
-		अगर (!gelf_माला_लोym(symbols, si, &sym))
-			जारी;
-		अगर (GELF_ST_BIND(sym.st_info) != STB_GLOBAL ||
+		if (!gelf_getsym(symbols, si, &sym))
+			continue;
+		if (GELF_ST_BIND(sym.st_info) != STB_GLOBAL ||
 		    GELF_ST_TYPE(sym.st_info) != STT_OBJECT)
-			जारी;
+			continue;
 
 		sname = elf_sym_str(obj, sym.st_name);
-		अगर (!sname) अणु
+		if (!sname) {
 			pr_warn("failed to get sym name string for var %s\n",
 				name);
-			वापस -EIO;
-		पूर्ण
-		अगर (म_भेद(name, sname) == 0) अणु
+			return -EIO;
+		}
+		if (strcmp(name, sname) == 0) {
 			*off = sym.st_value;
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			return 0;
+		}
+	}
 
-	वापस -ENOENT;
-पूर्ण
+	return -ENOENT;
+}
 
-अटल काष्ठा bpf_map *bpf_object__add_map(काष्ठा bpf_object *obj)
-अणु
-	काष्ठा bpf_map *new_maps;
-	माप_प्रकार new_cap;
-	पूर्णांक i;
+static struct bpf_map *bpf_object__add_map(struct bpf_object *obj)
+{
+	struct bpf_map *new_maps;
+	size_t new_cap;
+	int i;
 
-	अगर (obj->nr_maps < obj->maps_cap)
-		वापस &obj->maps[obj->nr_maps++];
+	if (obj->nr_maps < obj->maps_cap)
+		return &obj->maps[obj->nr_maps++];
 
-	new_cap = max((माप_प्रकार)4, obj->maps_cap * 3 / 2);
-	new_maps = libbpf_पुनः_स्मृतिarray(obj->maps, new_cap, माप(*obj->maps));
-	अगर (!new_maps) अणु
+	new_cap = max((size_t)4, obj->maps_cap * 3 / 2);
+	new_maps = libbpf_reallocarray(obj->maps, new_cap, sizeof(*obj->maps));
+	if (!new_maps) {
 		pr_warn("alloc maps for object failed\n");
-		वापस ERR_PTR(-ENOMEM);
-	पूर्ण
+		return ERR_PTR(-ENOMEM);
+	}
 
 	obj->maps_cap = new_cap;
 	obj->maps = new_maps;
 
 	/* zero out new maps */
-	स_रखो(obj->maps + obj->nr_maps, 0,
-	       (obj->maps_cap - obj->nr_maps) * माप(*obj->maps));
+	memset(obj->maps + obj->nr_maps, 0,
+	       (obj->maps_cap - obj->nr_maps) * sizeof(*obj->maps));
 	/*
-	 * fill all fd with -1 so won't बंद incorrect fd (fd=0 is मानक_निवेश)
-	 * when failure (zबंद won't बंद negative fd)).
+	 * fill all fd with -1 so won't close incorrect fd (fd=0 is stdin)
+	 * when failure (zclose won't close negative fd)).
 	 */
-	क्रम (i = obj->nr_maps; i < obj->maps_cap; i++) अणु
+	for (i = obj->nr_maps; i < obj->maps_cap; i++) {
 		obj->maps[i].fd = -1;
 		obj->maps[i].inner_map_fd = -1;
-	पूर्ण
+	}
 
-	वापस &obj->maps[obj->nr_maps++];
-पूर्ण
+	return &obj->maps[obj->nr_maps++];
+}
 
-अटल माप_प्रकार bpf_map_mmap_sz(स्थिर काष्ठा bpf_map *map)
-अणु
-	दीर्घ page_sz = sysconf(_SC_PAGE_SIZE);
-	माप_प्रकार map_sz;
+static size_t bpf_map_mmap_sz(const struct bpf_map *map)
+{
+	long page_sz = sysconf(_SC_PAGE_SIZE);
+	size_t map_sz;
 
-	map_sz = (माप_प्रकार)roundup(map->def.value_size, 8) * map->def.max_entries;
+	map_sz = (size_t)roundup(map->def.value_size, 8) * map->def.max_entries;
 	map_sz = roundup(map_sz, page_sz);
-	वापस map_sz;
-पूर्ण
+	return map_sz;
+}
 
-अटल अक्षर *पूर्णांकernal_map_name(काष्ठा bpf_object *obj,
-			       क्रमागत libbpf_map_type type)
-अणु
-	अक्षर map_name[BPF_OBJ_NAME_LEN], *p;
-	स्थिर अक्षर *sfx = libbpf_type_to_btf_name[type];
-	पूर्णांक sfx_len = max((माप_प्रकार)7, म_माप(sfx));
-	पूर्णांक pfx_len = min((माप_प्रकार)BPF_OBJ_NAME_LEN - sfx_len - 1,
-			  म_माप(obj->name));
+static char *internal_map_name(struct bpf_object *obj,
+			       enum libbpf_map_type type)
+{
+	char map_name[BPF_OBJ_NAME_LEN], *p;
+	const char *sfx = libbpf_type_to_btf_name[type];
+	int sfx_len = max((size_t)7, strlen(sfx));
+	int pfx_len = min((size_t)BPF_OBJ_NAME_LEN - sfx_len - 1,
+			  strlen(obj->name));
 
-	snम_लिखो(map_name, माप(map_name), "%.*s%.*s", pfx_len, obj->name,
+	snprintf(map_name, sizeof(map_name), "%.*s%.*s", pfx_len, obj->name,
 		 sfx_len, libbpf_type_to_btf_name[type]);
 
-	/* sanitise map name to अक्षरacters allowed by kernel */
-	क्रम (p = map_name; *p && p < map_name + माप(map_name); p++)
-		अगर (!है_अक्षर_अंक(*p) && *p != '_' && *p != '.')
+	/* sanitise map name to characters allowed by kernel */
+	for (p = map_name; *p && p < map_name + sizeof(map_name); p++)
+		if (!isalnum(*p) && *p != '_' && *p != '.')
 			*p = '_';
 
-	वापस strdup(map_name);
-पूर्ण
+	return strdup(map_name);
+}
 
-अटल पूर्णांक
-bpf_object__init_पूर्णांकernal_map(काष्ठा bpf_object *obj, क्रमागत libbpf_map_type type,
-			      पूर्णांक sec_idx, व्योम *data, माप_प्रकार data_sz)
-अणु
-	काष्ठा bpf_map_def *def;
-	काष्ठा bpf_map *map;
-	पूर्णांक err;
+static int
+bpf_object__init_internal_map(struct bpf_object *obj, enum libbpf_map_type type,
+			      int sec_idx, void *data, size_t data_sz)
+{
+	struct bpf_map_def *def;
+	struct bpf_map *map;
+	int err;
 
 	map = bpf_object__add_map(obj);
-	अगर (IS_ERR(map))
-		वापस PTR_ERR(map);
+	if (IS_ERR(map))
+		return PTR_ERR(map);
 
 	map->libbpf_type = type;
 	map->sec_idx = sec_idx;
 	map->sec_offset = 0;
-	map->name = पूर्णांकernal_map_name(obj, type);
-	अगर (!map->name) अणु
+	map->name = internal_map_name(obj, type);
+	if (!map->name) {
 		pr_warn("failed to alloc map name\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	def = &map->def;
 	def->type = BPF_MAP_TYPE_ARRAY;
-	def->key_size = माप(पूर्णांक);
+	def->key_size = sizeof(int);
 	def->value_size = data_sz;
 	def->max_entries = 1;
 	def->map_flags = type == LIBBPF_MAP_RODATA || type == LIBBPF_MAP_KCONFIG
@@ -1428,381 +1427,381 @@ bpf_object__init_पूर्णांकernal_map(काष्ठा bpf_object
 	pr_debug("map '%s' (global data): at sec_idx %d, offset %zu, flags %x.\n",
 		 map->name, map->sec_idx, map->sec_offset, def->map_flags);
 
-	map->mmaped = mmap(शून्य, bpf_map_mmap_sz(map), PROT_READ | PROT_WRITE,
+	map->mmaped = mmap(NULL, bpf_map_mmap_sz(map), PROT_READ | PROT_WRITE,
 			   MAP_SHARED | MAP_ANONYMOUS, -1, 0);
-	अगर (map->mmaped == MAP_FAILED) अणु
-		err = -त्रुटि_सं;
-		map->mmaped = शून्य;
+	if (map->mmaped == MAP_FAILED) {
+		err = -errno;
+		map->mmaped = NULL;
 		pr_warn("failed to alloc map '%s' content buffer: %d\n",
 			map->name, err);
-		zमुक्त(&map->name);
-		वापस err;
-	पूर्ण
+		zfree(&map->name);
+		return err;
+	}
 
-	अगर (data)
-		स_नकल(map->mmaped, data, data_sz);
+	if (data)
+		memcpy(map->mmaped, data, data_sz);
 
 	pr_debug("map %td is \"%s\"\n", map - obj->maps, map->name);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक bpf_object__init_global_data_maps(काष्ठा bpf_object *obj)
-अणु
-	पूर्णांक err;
+static int bpf_object__init_global_data_maps(struct bpf_object *obj)
+{
+	int err;
 
 	/*
-	 * Populate obj->maps with libbpf पूर्णांकernal maps.
+	 * Populate obj->maps with libbpf internal maps.
 	 */
-	अगर (obj->efile.data_shndx >= 0) अणु
-		err = bpf_object__init_पूर्णांकernal_map(obj, LIBBPF_MAP_DATA,
+	if (obj->efile.data_shndx >= 0) {
+		err = bpf_object__init_internal_map(obj, LIBBPF_MAP_DATA,
 						    obj->efile.data_shndx,
 						    obj->efile.data->d_buf,
 						    obj->efile.data->d_size);
-		अगर (err)
-			वापस err;
-	पूर्ण
-	अगर (obj->efile.rodata_shndx >= 0) अणु
-		err = bpf_object__init_पूर्णांकernal_map(obj, LIBBPF_MAP_RODATA,
+		if (err)
+			return err;
+	}
+	if (obj->efile.rodata_shndx >= 0) {
+		err = bpf_object__init_internal_map(obj, LIBBPF_MAP_RODATA,
 						    obj->efile.rodata_shndx,
 						    obj->efile.rodata->d_buf,
 						    obj->efile.rodata->d_size);
-		अगर (err)
-			वापस err;
+		if (err)
+			return err;
 
 		obj->rodata_map_idx = obj->nr_maps - 1;
-	पूर्ण
-	अगर (obj->efile.bss_shndx >= 0) अणु
-		err = bpf_object__init_पूर्णांकernal_map(obj, LIBBPF_MAP_BSS,
+	}
+	if (obj->efile.bss_shndx >= 0) {
+		err = bpf_object__init_internal_map(obj, LIBBPF_MAP_BSS,
 						    obj->efile.bss_shndx,
-						    शून्य,
+						    NULL,
 						    obj->efile.bss->d_size);
-		अगर (err)
-			वापस err;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		if (err)
+			return err;
+	}
+	return 0;
+}
 
 
-अटल काष्ठा बाह्य_desc *find_बाह्य_by_name(स्थिर काष्ठा bpf_object *obj,
-					       स्थिर व्योम *name)
-अणु
-	पूर्णांक i;
+static struct extern_desc *find_extern_by_name(const struct bpf_object *obj,
+					       const void *name)
+{
+	int i;
 
-	क्रम (i = 0; i < obj->nr_बाह्य; i++) अणु
-		अगर (म_भेद(obj->बाह्यs[i].name, name) == 0)
-			वापस &obj->बाह्यs[i];
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+	for (i = 0; i < obj->nr_extern; i++) {
+		if (strcmp(obj->externs[i].name, name) == 0)
+			return &obj->externs[i];
+	}
+	return NULL;
+}
 
-अटल पूर्णांक set_kcfg_value_tri(काष्ठा बाह्य_desc *ext, व्योम *ext_val,
-			      अक्षर value)
-अणु
-	चयन (ext->kcfg.type) अणु
-	हाल KCFG_BOOL:
-		अगर (value == 'm') अणु
+static int set_kcfg_value_tri(struct extern_desc *ext, void *ext_val,
+			      char value)
+{
+	switch (ext->kcfg.type) {
+	case KCFG_BOOL:
+		if (value == 'm') {
 			pr_warn("extern (kcfg) %s=%c should be tristate or char\n",
 				ext->name, value);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 		*(bool *)ext_val = value == 'y' ? true : false;
-		अवरोध;
-	हाल KCFG_TRISTATE:
-		अगर (value == 'y')
-			*(क्रमागत libbpf_tristate *)ext_val = TRI_YES;
-		अन्यथा अगर (value == 'm')
-			*(क्रमागत libbpf_tristate *)ext_val = TRI_MODULE;
-		अन्यथा /* value == 'n' */
-			*(क्रमागत libbpf_tristate *)ext_val = TRI_NO;
-		अवरोध;
-	हाल KCFG_CHAR:
-		*(अक्षर *)ext_val = value;
-		अवरोध;
-	हाल KCFG_UNKNOWN:
-	हाल KCFG_INT:
-	हाल KCFG_CHAR_ARR:
-	शेष:
+		break;
+	case KCFG_TRISTATE:
+		if (value == 'y')
+			*(enum libbpf_tristate *)ext_val = TRI_YES;
+		else if (value == 'm')
+			*(enum libbpf_tristate *)ext_val = TRI_MODULE;
+		else /* value == 'n' */
+			*(enum libbpf_tristate *)ext_val = TRI_NO;
+		break;
+	case KCFG_CHAR:
+		*(char *)ext_val = value;
+		break;
+	case KCFG_UNKNOWN:
+	case KCFG_INT:
+	case KCFG_CHAR_ARR:
+	default:
 		pr_warn("extern (kcfg) %s=%c should be bool, tristate, or char\n",
 			ext->name, value);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	ext->is_set = true;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक set_kcfg_value_str(काष्ठा बाह्य_desc *ext, अक्षर *ext_val,
-			      स्थिर अक्षर *value)
-अणु
-	माप_प्रकार len;
+static int set_kcfg_value_str(struct extern_desc *ext, char *ext_val,
+			      const char *value)
+{
+	size_t len;
 
-	अगर (ext->kcfg.type != KCFG_CHAR_ARR) अणु
+	if (ext->kcfg.type != KCFG_CHAR_ARR) {
 		pr_warn("extern (kcfg) %s=%s should be char array\n", ext->name, value);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	len = म_माप(value);
-	अगर (value[len - 1] != '"') अणु
+	len = strlen(value);
+	if (value[len - 1] != '"') {
 		pr_warn("extern (kcfg) '%s': invalid string config '%s'\n",
 			ext->name, value);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/* strip quotes */
 	len -= 2;
-	अगर (len >= ext->kcfg.sz) अणु
+	if (len >= ext->kcfg.sz) {
 		pr_warn("extern (kcfg) '%s': long string config %s of (%zu bytes) truncated to %d bytes\n",
 			ext->name, value, len, ext->kcfg.sz - 1);
 		len = ext->kcfg.sz - 1;
-	पूर्ण
-	स_नकल(ext_val, value + 1, len);
+	}
+	memcpy(ext_val, value + 1, len);
 	ext_val[len] = '\0';
 	ext->is_set = true;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक parse_u64(स्थिर अक्षर *value, __u64 *res)
-अणु
-	अक्षर *value_end;
-	पूर्णांक err;
+static int parse_u64(const char *value, __u64 *res)
+{
+	char *value_end;
+	int err;
 
-	त्रुटि_सं = 0;
-	*res = म_से_अदीर्घl(value, &value_end, 0);
-	अगर (त्रुटि_सं) अणु
-		err = -त्रुटि_सं;
+	errno = 0;
+	*res = strtoull(value, &value_end, 0);
+	if (errno) {
+		err = -errno;
 		pr_warn("failed to parse '%s' as integer: %d\n", value, err);
-		वापस err;
-	पूर्ण
-	अगर (*value_end) अणु
+		return err;
+	}
+	if (*value_end) {
 		pr_warn("failed to parse '%s' as integer completely\n", value);
-		वापस -EINVAL;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return -EINVAL;
+	}
+	return 0;
+}
 
-अटल bool is_kcfg_value_in_range(स्थिर काष्ठा बाह्य_desc *ext, __u64 v)
-अणु
-	पूर्णांक bit_sz = ext->kcfg.sz * 8;
+static bool is_kcfg_value_in_range(const struct extern_desc *ext, __u64 v)
+{
+	int bit_sz = ext->kcfg.sz * 8;
 
-	अगर (ext->kcfg.sz == 8)
-		वापस true;
+	if (ext->kcfg.sz == 8)
+		return true;
 
-	/* Validate that value stored in u64 fits in पूर्णांकeger of `ext->sz`
-	 * bytes size without any loss of inक्रमmation. If the target पूर्णांकeger
-	 * is चिन्हित, we rely on the following limits of पूर्णांकeger type of
-	 * Y bits and subsequent transक्रमmation:
+	/* Validate that value stored in u64 fits in integer of `ext->sz`
+	 * bytes size without any loss of information. If the target integer
+	 * is signed, we rely on the following limits of integer type of
+	 * Y bits and subsequent transformation:
 	 *
 	 *     -2^(Y-1) <= X           <= 2^(Y-1) - 1
 	 *            0 <= X + 2^(Y-1) <= 2^Y - 1
 	 *            0 <= X + 2^(Y-1) <  2^Y
 	 *
-	 *  For अचिन्हित target पूर्णांकeger, check that all the (64 - Y) bits are
+	 *  For unsigned target integer, check that all the (64 - Y) bits are
 	 *  zero.
 	 */
-	अगर (ext->kcfg.is_चिन्हित)
-		वापस v + (1ULL << (bit_sz - 1)) < (1ULL << bit_sz);
-	अन्यथा
-		वापस (v >> bit_sz) == 0;
-पूर्ण
+	if (ext->kcfg.is_signed)
+		return v + (1ULL << (bit_sz - 1)) < (1ULL << bit_sz);
+	else
+		return (v >> bit_sz) == 0;
+}
 
-अटल पूर्णांक set_kcfg_value_num(काष्ठा बाह्य_desc *ext, व्योम *ext_val,
+static int set_kcfg_value_num(struct extern_desc *ext, void *ext_val,
 			      __u64 value)
-अणु
-	अगर (ext->kcfg.type != KCFG_INT && ext->kcfg.type != KCFG_CHAR) अणु
+{
+	if (ext->kcfg.type != KCFG_INT && ext->kcfg.type != KCFG_CHAR) {
 		pr_warn("extern (kcfg) %s=%llu should be integer\n",
-			ext->name, (अचिन्हित दीर्घ दीर्घ)value);
-		वापस -EINVAL;
-	पूर्ण
-	अगर (!is_kcfg_value_in_range(ext, value)) अणु
+			ext->name, (unsigned long long)value);
+		return -EINVAL;
+	}
+	if (!is_kcfg_value_in_range(ext, value)) {
 		pr_warn("extern (kcfg) %s=%llu value doesn't fit in %d bytes\n",
-			ext->name, (अचिन्हित दीर्घ दीर्घ)value, ext->kcfg.sz);
-		वापस -दुस्फल;
-	पूर्ण
-	चयन (ext->kcfg.sz) अणु
-		हाल 1: *(__u8 *)ext_val = value; अवरोध;
-		हाल 2: *(__u16 *)ext_val = value; अवरोध;
-		हाल 4: *(__u32 *)ext_val = value; अवरोध;
-		हाल 8: *(__u64 *)ext_val = value; अवरोध;
-		शेष:
-			वापस -EINVAL;
-	पूर्ण
+			ext->name, (unsigned long long)value, ext->kcfg.sz);
+		return -ERANGE;
+	}
+	switch (ext->kcfg.sz) {
+		case 1: *(__u8 *)ext_val = value; break;
+		case 2: *(__u16 *)ext_val = value; break;
+		case 4: *(__u32 *)ext_val = value; break;
+		case 8: *(__u64 *)ext_val = value; break;
+		default:
+			return -EINVAL;
+	}
 	ext->is_set = true;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक bpf_object__process_kconfig_line(काष्ठा bpf_object *obj,
-					    अक्षर *buf, व्योम *data)
-अणु
-	काष्ठा बाह्य_desc *ext;
-	अक्षर *sep, *value;
-	पूर्णांक len, err = 0;
-	व्योम *ext_val;
+static int bpf_object__process_kconfig_line(struct bpf_object *obj,
+					    char *buf, void *data)
+{
+	struct extern_desc *ext;
+	char *sep, *value;
+	int len, err = 0;
+	void *ext_val;
 	__u64 num;
 
-	अगर (म_भेदन(buf, "CONFIG_", 7))
-		वापस 0;
+	if (strncmp(buf, "CONFIG_", 7))
+		return 0;
 
-	sep = म_अक्षर(buf, '=');
-	अगर (!sep) अणु
+	sep = strchr(buf, '=');
+	if (!sep) {
 		pr_warn("failed to parse '%s': no separator\n", buf);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/* Trim ending '\n' */
-	len = म_माप(buf);
-	अगर (buf[len - 1] == '\n')
+	len = strlen(buf);
+	if (buf[len - 1] == '\n')
 		buf[len - 1] = '\0';
 	/* Split on '=' and ensure that a value is present. */
 	*sep = '\0';
-	अगर (!sep[1]) अणु
+	if (!sep[1]) {
 		*sep = '=';
 		pr_warn("failed to parse '%s': no value\n", buf);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	ext = find_बाह्य_by_name(obj, buf);
-	अगर (!ext || ext->is_set)
-		वापस 0;
+	ext = find_extern_by_name(obj, buf);
+	if (!ext || ext->is_set)
+		return 0;
 
 	ext_val = data + ext->kcfg.data_off;
 	value = sep + 1;
 
-	चयन (*value) अणु
-	हाल 'y': case 'n': case 'm':
+	switch (*value) {
+	case 'y': case 'n': case 'm':
 		err = set_kcfg_value_tri(ext, ext_val, *value);
-		अवरोध;
-	हाल '"':
+		break;
+	case '"':
 		err = set_kcfg_value_str(ext, ext_val, value);
-		अवरोध;
-	शेष:
-		/* assume पूर्णांकeger */
+		break;
+	default:
+		/* assume integer */
 		err = parse_u64(value, &num);
-		अगर (err) अणु
+		if (err) {
 			pr_warn("extern (kcfg) %s=%s should be integer\n",
 				ext->name, value);
-			वापस err;
-		पूर्ण
+			return err;
+		}
 		err = set_kcfg_value_num(ext, ext_val, num);
-		अवरोध;
-	पूर्ण
-	अगर (err)
-		वापस err;
+		break;
+	}
+	if (err)
+		return err;
 	pr_debug("extern (kcfg) %s=%s\n", ext->name, value);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक bpf_object__पढ़ो_kconfig_file(काष्ठा bpf_object *obj, व्योम *data)
-अणु
-	अक्षर buf[PATH_MAX];
-	काष्ठा utsname uts;
-	पूर्णांक len, err = 0;
+static int bpf_object__read_kconfig_file(struct bpf_object *obj, void *data)
+{
+	char buf[PATH_MAX];
+	struct utsname uts;
+	int len, err = 0;
 	gzFile file;
 
 	uname(&uts);
-	len = snम_लिखो(buf, PATH_MAX, "/boot/config-%s", uts.release);
-	अगर (len < 0)
-		वापस -EINVAL;
-	अन्यथा अगर (len >= PATH_MAX)
-		वापस -ENAMETOOLONG;
+	len = snprintf(buf, PATH_MAX, "/boot/config-%s", uts.release);
+	if (len < 0)
+		return -EINVAL;
+	else if (len >= PATH_MAX)
+		return -ENAMETOOLONG;
 
-	/* gzखोलो also accepts uncompressed files. */
-	file = gzखोलो(buf, "r");
-	अगर (!file)
-		file = gzखोलो("/proc/config.gz", "r");
+	/* gzopen also accepts uncompressed files. */
+	file = gzopen(buf, "r");
+	if (!file)
+		file = gzopen("/proc/config.gz", "r");
 
-	अगर (!file) अणु
+	if (!file) {
 		pr_warn("failed to open system Kconfig\n");
-		वापस -ENOENT;
-	पूर्ण
+		return -ENOENT;
+	}
 
-	जबतक (gzमाला_लो(file, buf, माप(buf))) अणु
+	while (gzgets(file, buf, sizeof(buf))) {
 		err = bpf_object__process_kconfig_line(obj, buf, data);
-		अगर (err) अणु
+		if (err) {
 			pr_warn("error parsing system Kconfig line '%s': %d\n",
 				buf, err);
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 
 out:
-	gzबंद(file);
-	वापस err;
-पूर्ण
+	gzclose(file);
+	return err;
+}
 
-अटल पूर्णांक bpf_object__पढ़ो_kconfig_mem(काष्ठा bpf_object *obj,
-					स्थिर अक्षर *config, व्योम *data)
-अणु
-	अक्षर buf[PATH_MAX];
-	पूर्णांक err = 0;
-	खाता *file;
+static int bpf_object__read_kconfig_mem(struct bpf_object *obj,
+					const char *config, void *data)
+{
+	char buf[PATH_MAX];
+	int err = 0;
+	FILE *file;
 
-	file = fmemखोलो((व्योम *)config, म_माप(config), "r");
-	अगर (!file) अणु
-		err = -त्रुटि_सं;
+	file = fmemopen((void *)config, strlen(config), "r");
+	if (!file) {
+		err = -errno;
 		pr_warn("failed to open in-memory Kconfig: %d\n", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	जबतक (ख_माला_लो(buf, माप(buf), file)) अणु
+	while (fgets(buf, sizeof(buf), file)) {
 		err = bpf_object__process_kconfig_line(obj, buf, data);
-		अगर (err) अणु
+		if (err) {
 			pr_warn("error parsing in-memory Kconfig line '%s': %d\n",
 				buf, err);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	ख_बंद(file);
-	वापस err;
-पूर्ण
+	fclose(file);
+	return err;
+}
 
-अटल पूर्णांक bpf_object__init_kconfig_map(काष्ठा bpf_object *obj)
-अणु
-	काष्ठा बाह्य_desc *last_ext = शून्य, *ext;
-	माप_प्रकार map_sz;
-	पूर्णांक i, err;
+static int bpf_object__init_kconfig_map(struct bpf_object *obj)
+{
+	struct extern_desc *last_ext = NULL, *ext;
+	size_t map_sz;
+	int i, err;
 
-	क्रम (i = 0; i < obj->nr_बाह्य; i++) अणु
-		ext = &obj->बाह्यs[i];
-		अगर (ext->type == EXT_KCFG)
+	for (i = 0; i < obj->nr_extern; i++) {
+		ext = &obj->externs[i];
+		if (ext->type == EXT_KCFG)
 			last_ext = ext;
-	पूर्ण
+	}
 
-	अगर (!last_ext)
-		वापस 0;
+	if (!last_ext)
+		return 0;
 
 	map_sz = last_ext->kcfg.data_off + last_ext->kcfg.sz;
-	err = bpf_object__init_पूर्णांकernal_map(obj, LIBBPF_MAP_KCONFIG,
+	err = bpf_object__init_internal_map(obj, LIBBPF_MAP_KCONFIG,
 					    obj->efile.symbols_shndx,
-					    शून्य, map_sz);
-	अगर (err)
-		वापस err;
+					    NULL, map_sz);
+	if (err)
+		return err;
 
 	obj->kconfig_map_idx = obj->nr_maps - 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक bpf_object__init_user_maps(काष्ठा bpf_object *obj, bool strict)
-अणु
+static int bpf_object__init_user_maps(struct bpf_object *obj, bool strict)
+{
 	Elf_Data *symbols = obj->efile.symbols;
-	पूर्णांक i, map_def_sz = 0, nr_maps = 0, nr_syms;
-	Elf_Data *data = शून्य;
+	int i, map_def_sz = 0, nr_maps = 0, nr_syms;
+	Elf_Data *data = NULL;
 	Elf_Scn *scn;
 
-	अगर (obj->efile.maps_shndx < 0)
-		वापस 0;
+	if (obj->efile.maps_shndx < 0)
+		return 0;
 
-	अगर (!symbols)
-		वापस -EINVAL;
+	if (!symbols)
+		return -EINVAL;
 
 
 	scn = elf_sec_by_idx(obj, obj->efile.maps_shndx);
 	data = elf_sec_data(obj, scn);
-	अगर (!scn || !data) अणु
+	if (!scn || !data) {
 		pr_warn("elf: failed to get legacy map definitions for %s\n",
 			obj->path);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/*
 	 * Count number of maps. Each map has a name.
@@ -1811,419 +1810,419 @@ out:
 	 *
 	 * TODO: Detect array of map and report error.
 	 */
-	nr_syms = symbols->d_size / माप(GElf_Sym);
-	क्रम (i = 0; i < nr_syms; i++) अणु
+	nr_syms = symbols->d_size / sizeof(GElf_Sym);
+	for (i = 0; i < nr_syms; i++) {
 		GElf_Sym sym;
 
-		अगर (!gelf_माला_लोym(symbols, i, &sym))
-			जारी;
-		अगर (sym.st_shndx != obj->efile.maps_shndx)
-			जारी;
+		if (!gelf_getsym(symbols, i, &sym))
+			continue;
+		if (sym.st_shndx != obj->efile.maps_shndx)
+			continue;
 		nr_maps++;
-	पूर्ण
+	}
 	/* Assume equally sized map definitions */
 	pr_debug("elf: found %d legacy map definitions (%zd bytes) in %s\n",
 		 nr_maps, data->d_size, obj->path);
 
-	अगर (!data->d_size || nr_maps == 0 || (data->d_size % nr_maps) != 0) अणु
+	if (!data->d_size || nr_maps == 0 || (data->d_size % nr_maps) != 0) {
 		pr_warn("elf: unable to determine legacy map definition size in %s\n",
 			obj->path);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	map_def_sz = data->d_size / nr_maps;
 
 	/* Fill obj->maps using data in "maps" section.  */
-	क्रम (i = 0; i < nr_syms; i++) अणु
+	for (i = 0; i < nr_syms; i++) {
 		GElf_Sym sym;
-		स्थिर अक्षर *map_name;
-		काष्ठा bpf_map_def *def;
-		काष्ठा bpf_map *map;
+		const char *map_name;
+		struct bpf_map_def *def;
+		struct bpf_map *map;
 
-		अगर (!gelf_माला_लोym(symbols, i, &sym))
-			जारी;
-		अगर (sym.st_shndx != obj->efile.maps_shndx)
-			जारी;
+		if (!gelf_getsym(symbols, i, &sym))
+			continue;
+		if (sym.st_shndx != obj->efile.maps_shndx)
+			continue;
 
 		map = bpf_object__add_map(obj);
-		अगर (IS_ERR(map))
-			वापस PTR_ERR(map);
+		if (IS_ERR(map))
+			return PTR_ERR(map);
 
 		map_name = elf_sym_str(obj, sym.st_name);
-		अगर (!map_name) अणु
+		if (!map_name) {
 			pr_warn("failed to get map #%d name sym string for obj %s\n",
 				i, obj->path);
-			वापस -LIBBPF_ERRNO__FORMAT;
-		पूर्ण
+			return -LIBBPF_ERRNO__FORMAT;
+		}
 
 		map->libbpf_type = LIBBPF_MAP_UNSPEC;
 		map->sec_idx = sym.st_shndx;
 		map->sec_offset = sym.st_value;
 		pr_debug("map '%s' (legacy): at sec_idx %d, offset %zu.\n",
 			 map_name, map->sec_idx, map->sec_offset);
-		अगर (sym.st_value + map_def_sz > data->d_size) अणु
+		if (sym.st_value + map_def_sz > data->d_size) {
 			pr_warn("corrupted maps section in %s: last map \"%s\" too small\n",
 				obj->path, map_name);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
 		map->name = strdup(map_name);
-		अगर (!map->name) अणु
+		if (!map->name) {
 			pr_warn("failed to alloc map name\n");
-			वापस -ENOMEM;
-		पूर्ण
+			return -ENOMEM;
+		}
 		pr_debug("map %d is \"%s\"\n", i, map->name);
-		def = (काष्ठा bpf_map_def *)(data->d_buf + sym.st_value);
+		def = (struct bpf_map_def *)(data->d_buf + sym.st_value);
 		/*
 		 * If the definition of the map in the object file fits in
 		 * bpf_map_def, copy it.  Any extra fields in our version
-		 * of bpf_map_def will शेष to zero as a result of the
-		 * सुस्मृति above.
+		 * of bpf_map_def will default to zero as a result of the
+		 * calloc above.
 		 */
-		अगर (map_def_sz <= माप(काष्ठा bpf_map_def)) अणु
-			स_नकल(&map->def, def, map_def_sz);
-		पूर्ण अन्यथा अणु
+		if (map_def_sz <= sizeof(struct bpf_map_def)) {
+			memcpy(&map->def, def, map_def_sz);
+		} else {
 			/*
-			 * Here the map काष्ठाure being पढ़ो is bigger than what
-			 * we expect, truncate अगर the excess bits are all zero.
+			 * Here the map structure being read is bigger than what
+			 * we expect, truncate if the excess bits are all zero.
 			 * If they are not zero, reject this map as
 			 * incompatible.
 			 */
-			अक्षर *b;
+			char *b;
 
-			क्रम (b = ((अक्षर *)def) + माप(काष्ठा bpf_map_def);
-			     b < ((अक्षर *)def) + map_def_sz; b++) अणु
-				अगर (*b != 0) अणु
+			for (b = ((char *)def) + sizeof(struct bpf_map_def);
+			     b < ((char *)def) + map_def_sz; b++) {
+				if (*b != 0) {
 					pr_warn("maps section in %s: \"%s\" has unrecognized, non-zero options\n",
 						obj->path, map_name);
-					अगर (strict)
-						वापस -EINVAL;
-				पूर्ण
-			पूर्ण
-			स_नकल(&map->def, def, माप(काष्ठा bpf_map_def));
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+					if (strict)
+						return -EINVAL;
+				}
+			}
+			memcpy(&map->def, def, sizeof(struct bpf_map_def));
+		}
+	}
+	return 0;
+}
 
-स्थिर काष्ठा btf_type *
-skip_mods_and_प्रकारs(स्थिर काष्ठा btf *btf, __u32 id, __u32 *res_id)
-अणु
-	स्थिर काष्ठा btf_type *t = btf__type_by_id(btf, id);
+const struct btf_type *
+skip_mods_and_typedefs(const struct btf *btf, __u32 id, __u32 *res_id)
+{
+	const struct btf_type *t = btf__type_by_id(btf, id);
 
-	अगर (res_id)
+	if (res_id)
 		*res_id = id;
 
-	जबतक (btf_is_mod(t) || btf_is_प्रकार(t)) अणु
-		अगर (res_id)
+	while (btf_is_mod(t) || btf_is_typedef(t)) {
+		if (res_id)
 			*res_id = t->type;
 		t = btf__type_by_id(btf, t->type);
-	पूर्ण
+	}
 
-	वापस t;
-पूर्ण
+	return t;
+}
 
-अटल स्थिर काष्ठा btf_type *
-resolve_func_ptr(स्थिर काष्ठा btf *btf, __u32 id, __u32 *res_id)
-अणु
-	स्थिर काष्ठा btf_type *t;
+static const struct btf_type *
+resolve_func_ptr(const struct btf *btf, __u32 id, __u32 *res_id)
+{
+	const struct btf_type *t;
 
-	t = skip_mods_and_प्रकारs(btf, id, शून्य);
-	अगर (!btf_is_ptr(t))
-		वापस शून्य;
+	t = skip_mods_and_typedefs(btf, id, NULL);
+	if (!btf_is_ptr(t))
+		return NULL;
 
-	t = skip_mods_and_प्रकारs(btf, t->type, res_id);
+	t = skip_mods_and_typedefs(btf, t->type, res_id);
 
-	वापस btf_is_func_proto(t) ? t : शून्य;
-पूर्ण
+	return btf_is_func_proto(t) ? t : NULL;
+}
 
-अटल स्थिर अक्षर *__btf_kind_str(__u16 kind)
-अणु
-	चयन (kind) अणु
-	हाल BTF_KIND_UNKN: वापस "void";
-	हाल BTF_KIND_INT: वापस "int";
-	हाल BTF_KIND_PTR: वापस "ptr";
-	हाल BTF_KIND_ARRAY: वापस "array";
-	हाल BTF_KIND_STRUCT: वापस "struct";
-	हाल BTF_KIND_UNION: वापस "union";
-	हाल BTF_KIND_ENUM: वापस "enum";
-	हाल BTF_KIND_FWD: वापस "fwd";
-	हाल BTF_KIND_TYPEDEF: वापस "typedef";
-	हाल BTF_KIND_VOLATILE: वापस "volatile";
-	हाल BTF_KIND_CONST: वापस "const";
-	हाल BTF_KIND_RESTRICT: वापस "restrict";
-	हाल BTF_KIND_FUNC: वापस "func";
-	हाल BTF_KIND_FUNC_PROTO: वापस "func_proto";
-	हाल BTF_KIND_VAR: वापस "var";
-	हाल BTF_KIND_DATASEC: वापस "datasec";
-	हाल BTF_KIND_FLOAT: वापस "float";
-	शेष: वापस "unknown";
-	पूर्ण
-पूर्ण
+static const char *__btf_kind_str(__u16 kind)
+{
+	switch (kind) {
+	case BTF_KIND_UNKN: return "void";
+	case BTF_KIND_INT: return "int";
+	case BTF_KIND_PTR: return "ptr";
+	case BTF_KIND_ARRAY: return "array";
+	case BTF_KIND_STRUCT: return "struct";
+	case BTF_KIND_UNION: return "union";
+	case BTF_KIND_ENUM: return "enum";
+	case BTF_KIND_FWD: return "fwd";
+	case BTF_KIND_TYPEDEF: return "typedef";
+	case BTF_KIND_VOLATILE: return "volatile";
+	case BTF_KIND_CONST: return "const";
+	case BTF_KIND_RESTRICT: return "restrict";
+	case BTF_KIND_FUNC: return "func";
+	case BTF_KIND_FUNC_PROTO: return "func_proto";
+	case BTF_KIND_VAR: return "var";
+	case BTF_KIND_DATASEC: return "datasec";
+	case BTF_KIND_FLOAT: return "float";
+	default: return "unknown";
+	}
+}
 
-स्थिर अक्षर *btf_kind_str(स्थिर काष्ठा btf_type *t)
-अणु
-	वापस __btf_kind_str(btf_kind(t));
-पूर्ण
+const char *btf_kind_str(const struct btf_type *t)
+{
+	return __btf_kind_str(btf_kind(t));
+}
 
 /*
- * Fetch पूर्णांकeger attribute of BTF map definition. Such attributes are
- * represented using a poपूर्णांकer to an array, in which dimensionality of array
- * encodes specअगरied पूर्णांकeger value. E.g., पूर्णांक (*type)[BPF_MAP_TYPE_ARRAY];
+ * Fetch integer attribute of BTF map definition. Such attributes are
+ * represented using a pointer to an array, in which dimensionality of array
+ * encodes specified integer value. E.g., int (*type)[BPF_MAP_TYPE_ARRAY];
  * encodes `type => BPF_MAP_TYPE_ARRAY` key/value pair completely using BTF
- * type definition, जबतक using only माप(व्योम *) space in ELF data section.
+ * type definition, while using only sizeof(void *) space in ELF data section.
  */
-अटल bool get_map_field_पूर्णांक(स्थिर अक्षर *map_name, स्थिर काष्ठा btf *btf,
-			      स्थिर काष्ठा btf_member *m, __u32 *res)
-अणु
-	स्थिर काष्ठा btf_type *t = skip_mods_and_प्रकारs(btf, m->type, शून्य);
-	स्थिर अक्षर *name = btf__name_by_offset(btf, m->name_off);
-	स्थिर काष्ठा btf_array *arr_info;
-	स्थिर काष्ठा btf_type *arr_t;
+static bool get_map_field_int(const char *map_name, const struct btf *btf,
+			      const struct btf_member *m, __u32 *res)
+{
+	const struct btf_type *t = skip_mods_and_typedefs(btf, m->type, NULL);
+	const char *name = btf__name_by_offset(btf, m->name_off);
+	const struct btf_array *arr_info;
+	const struct btf_type *arr_t;
 
-	अगर (!btf_is_ptr(t)) अणु
+	if (!btf_is_ptr(t)) {
 		pr_warn("map '%s': attr '%s': expected PTR, got %s.\n",
 			map_name, name, btf_kind_str(t));
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
 	arr_t = btf__type_by_id(btf, t->type);
-	अगर (!arr_t) अणु
+	if (!arr_t) {
 		pr_warn("map '%s': attr '%s': type [%u] not found.\n",
 			map_name, name, t->type);
-		वापस false;
-	पूर्ण
-	अगर (!btf_is_array(arr_t)) अणु
+		return false;
+	}
+	if (!btf_is_array(arr_t)) {
 		pr_warn("map '%s': attr '%s': expected ARRAY, got %s.\n",
 			map_name, name, btf_kind_str(arr_t));
-		वापस false;
-	पूर्ण
+		return false;
+	}
 	arr_info = btf_array(arr_t);
 	*res = arr_info->nelems;
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल पूर्णांक build_map_pin_path(काष्ठा bpf_map *map, स्थिर अक्षर *path)
-अणु
-	अक्षर buf[PATH_MAX];
-	पूर्णांक len;
+static int build_map_pin_path(struct bpf_map *map, const char *path)
+{
+	char buf[PATH_MAX];
+	int len;
 
-	अगर (!path)
+	if (!path)
 		path = "/sys/fs/bpf";
 
-	len = snम_लिखो(buf, PATH_MAX, "%s/%s", path, bpf_map__name(map));
-	अगर (len < 0)
-		वापस -EINVAL;
-	अन्यथा अगर (len >= PATH_MAX)
-		वापस -ENAMETOOLONG;
+	len = snprintf(buf, PATH_MAX, "%s/%s", path, bpf_map__name(map));
+	if (len < 0)
+		return -EINVAL;
+	else if (len >= PATH_MAX)
+		return -ENAMETOOLONG;
 
-	वापस bpf_map__set_pin_path(map, buf);
-पूर्ण
+	return bpf_map__set_pin_path(map, buf);
+}
 
-पूर्णांक parse_btf_map_def(स्थिर अक्षर *map_name, काष्ठा btf *btf,
-		      स्थिर काष्ठा btf_type *def_t, bool strict,
-		      काष्ठा btf_map_def *map_def, काष्ठा btf_map_def *inner_def)
-अणु
-	स्थिर काष्ठा btf_type *t;
-	स्थिर काष्ठा btf_member *m;
-	bool is_inner = inner_def == शून्य;
-	पूर्णांक vlen, i;
+int parse_btf_map_def(const char *map_name, struct btf *btf,
+		      const struct btf_type *def_t, bool strict,
+		      struct btf_map_def *map_def, struct btf_map_def *inner_def)
+{
+	const struct btf_type *t;
+	const struct btf_member *m;
+	bool is_inner = inner_def == NULL;
+	int vlen, i;
 
 	vlen = btf_vlen(def_t);
 	m = btf_members(def_t);
-	क्रम (i = 0; i < vlen; i++, m++) अणु
-		स्थिर अक्षर *name = btf__name_by_offset(btf, m->name_off);
+	for (i = 0; i < vlen; i++, m++) {
+		const char *name = btf__name_by_offset(btf, m->name_off);
 
-		अगर (!name) अणु
+		if (!name) {
 			pr_warn("map '%s': invalid field #%d.\n", map_name, i);
-			वापस -EINVAL;
-		पूर्ण
-		अगर (म_भेद(name, "type") == 0) अणु
-			अगर (!get_map_field_पूर्णांक(map_name, btf, m, &map_def->map_type))
-				वापस -EINVAL;
+			return -EINVAL;
+		}
+		if (strcmp(name, "type") == 0) {
+			if (!get_map_field_int(map_name, btf, m, &map_def->map_type))
+				return -EINVAL;
 			map_def->parts |= MAP_DEF_MAP_TYPE;
-		पूर्ण अन्यथा अगर (म_भेद(name, "max_entries") == 0) अणु
-			अगर (!get_map_field_पूर्णांक(map_name, btf, m, &map_def->max_entries))
-				वापस -EINVAL;
+		} else if (strcmp(name, "max_entries") == 0) {
+			if (!get_map_field_int(map_name, btf, m, &map_def->max_entries))
+				return -EINVAL;
 			map_def->parts |= MAP_DEF_MAX_ENTRIES;
-		पूर्ण अन्यथा अगर (म_भेद(name, "map_flags") == 0) अणु
-			अगर (!get_map_field_पूर्णांक(map_name, btf, m, &map_def->map_flags))
-				वापस -EINVAL;
+		} else if (strcmp(name, "map_flags") == 0) {
+			if (!get_map_field_int(map_name, btf, m, &map_def->map_flags))
+				return -EINVAL;
 			map_def->parts |= MAP_DEF_MAP_FLAGS;
-		पूर्ण अन्यथा अगर (म_भेद(name, "numa_node") == 0) अणु
-			अगर (!get_map_field_पूर्णांक(map_name, btf, m, &map_def->numa_node))
-				वापस -EINVAL;
+		} else if (strcmp(name, "numa_node") == 0) {
+			if (!get_map_field_int(map_name, btf, m, &map_def->numa_node))
+				return -EINVAL;
 			map_def->parts |= MAP_DEF_NUMA_NODE;
-		पूर्ण अन्यथा अगर (म_भेद(name, "key_size") == 0) अणु
+		} else if (strcmp(name, "key_size") == 0) {
 			__u32 sz;
 
-			अगर (!get_map_field_पूर्णांक(map_name, btf, m, &sz))
-				वापस -EINVAL;
-			अगर (map_def->key_size && map_def->key_size != sz) अणु
+			if (!get_map_field_int(map_name, btf, m, &sz))
+				return -EINVAL;
+			if (map_def->key_size && map_def->key_size != sz) {
 				pr_warn("map '%s': conflicting key size %u != %u.\n",
 					map_name, map_def->key_size, sz);
-				वापस -EINVAL;
-			पूर्ण
+				return -EINVAL;
+			}
 			map_def->key_size = sz;
 			map_def->parts |= MAP_DEF_KEY_SIZE;
-		पूर्ण अन्यथा अगर (म_भेद(name, "key") == 0) अणु
+		} else if (strcmp(name, "key") == 0) {
 			__s64 sz;
 
 			t = btf__type_by_id(btf, m->type);
-			अगर (!t) अणु
+			if (!t) {
 				pr_warn("map '%s': key type [%d] not found.\n",
 					map_name, m->type);
-				वापस -EINVAL;
-			पूर्ण
-			अगर (!btf_is_ptr(t)) अणु
+				return -EINVAL;
+			}
+			if (!btf_is_ptr(t)) {
 				pr_warn("map '%s': key spec is not PTR: %s.\n",
 					map_name, btf_kind_str(t));
-				वापस -EINVAL;
-			पूर्ण
+				return -EINVAL;
+			}
 			sz = btf__resolve_size(btf, t->type);
-			अगर (sz < 0) अणु
+			if (sz < 0) {
 				pr_warn("map '%s': can't determine key size for type [%u]: %zd.\n",
-					map_name, t->type, (sमाप_प्रकार)sz);
-				वापस sz;
-			पूर्ण
-			अगर (map_def->key_size && map_def->key_size != sz) अणु
+					map_name, t->type, (ssize_t)sz);
+				return sz;
+			}
+			if (map_def->key_size && map_def->key_size != sz) {
 				pr_warn("map '%s': conflicting key size %u != %zd.\n",
-					map_name, map_def->key_size, (sमाप_प्रकार)sz);
-				वापस -EINVAL;
-			पूर्ण
+					map_name, map_def->key_size, (ssize_t)sz);
+				return -EINVAL;
+			}
 			map_def->key_size = sz;
 			map_def->key_type_id = t->type;
 			map_def->parts |= MAP_DEF_KEY_SIZE | MAP_DEF_KEY_TYPE;
-		पूर्ण अन्यथा अगर (म_भेद(name, "value_size") == 0) अणु
+		} else if (strcmp(name, "value_size") == 0) {
 			__u32 sz;
 
-			अगर (!get_map_field_पूर्णांक(map_name, btf, m, &sz))
-				वापस -EINVAL;
-			अगर (map_def->value_size && map_def->value_size != sz) अणु
+			if (!get_map_field_int(map_name, btf, m, &sz))
+				return -EINVAL;
+			if (map_def->value_size && map_def->value_size != sz) {
 				pr_warn("map '%s': conflicting value size %u != %u.\n",
 					map_name, map_def->value_size, sz);
-				वापस -EINVAL;
-			पूर्ण
+				return -EINVAL;
+			}
 			map_def->value_size = sz;
 			map_def->parts |= MAP_DEF_VALUE_SIZE;
-		पूर्ण अन्यथा अगर (म_भेद(name, "value") == 0) अणु
+		} else if (strcmp(name, "value") == 0) {
 			__s64 sz;
 
 			t = btf__type_by_id(btf, m->type);
-			अगर (!t) अणु
+			if (!t) {
 				pr_warn("map '%s': value type [%d] not found.\n",
 					map_name, m->type);
-				वापस -EINVAL;
-			पूर्ण
-			अगर (!btf_is_ptr(t)) अणु
+				return -EINVAL;
+			}
+			if (!btf_is_ptr(t)) {
 				pr_warn("map '%s': value spec is not PTR: %s.\n",
 					map_name, btf_kind_str(t));
-				वापस -EINVAL;
-			पूर्ण
+				return -EINVAL;
+			}
 			sz = btf__resolve_size(btf, t->type);
-			अगर (sz < 0) अणु
+			if (sz < 0) {
 				pr_warn("map '%s': can't determine value size for type [%u]: %zd.\n",
-					map_name, t->type, (sमाप_प्रकार)sz);
-				वापस sz;
-			पूर्ण
-			अगर (map_def->value_size && map_def->value_size != sz) अणु
+					map_name, t->type, (ssize_t)sz);
+				return sz;
+			}
+			if (map_def->value_size && map_def->value_size != sz) {
 				pr_warn("map '%s': conflicting value size %u != %zd.\n",
-					map_name, map_def->value_size, (sमाप_प्रकार)sz);
-				वापस -EINVAL;
-			पूर्ण
+					map_name, map_def->value_size, (ssize_t)sz);
+				return -EINVAL;
+			}
 			map_def->value_size = sz;
 			map_def->value_type_id = t->type;
 			map_def->parts |= MAP_DEF_VALUE_SIZE | MAP_DEF_VALUE_TYPE;
-		पूर्ण
-		अन्यथा अगर (म_भेद(name, "values") == 0) अणु
-			अक्षर inner_map_name[128];
-			पूर्णांक err;
+		}
+		else if (strcmp(name, "values") == 0) {
+			char inner_map_name[128];
+			int err;
 
-			अगर (is_inner) अणु
+			if (is_inner) {
 				pr_warn("map '%s': multi-level inner maps not supported.\n",
 					map_name);
-				वापस -ENOTSUP;
-			पूर्ण
-			अगर (i != vlen - 1) अणु
+				return -ENOTSUP;
+			}
+			if (i != vlen - 1) {
 				pr_warn("map '%s': '%s' member should be last.\n",
 					map_name, name);
-				वापस -EINVAL;
-			पूर्ण
-			अगर (!bpf_map_type__is_map_in_map(map_def->map_type)) अणु
+				return -EINVAL;
+			}
+			if (!bpf_map_type__is_map_in_map(map_def->map_type)) {
 				pr_warn("map '%s': should be map-in-map.\n",
 					map_name);
-				वापस -ENOTSUP;
-			पूर्ण
-			अगर (map_def->value_size && map_def->value_size != 4) अणु
+				return -ENOTSUP;
+			}
+			if (map_def->value_size && map_def->value_size != 4) {
 				pr_warn("map '%s': conflicting value size %u != 4.\n",
 					map_name, map_def->value_size);
-				वापस -EINVAL;
-			पूर्ण
+				return -EINVAL;
+			}
 			map_def->value_size = 4;
 			t = btf__type_by_id(btf, m->type);
-			अगर (!t) अणु
+			if (!t) {
 				pr_warn("map '%s': map-in-map inner type [%d] not found.\n",
 					map_name, m->type);
-				वापस -EINVAL;
-			पूर्ण
-			अगर (!btf_is_array(t) || btf_array(t)->nelems) अणु
+				return -EINVAL;
+			}
+			if (!btf_is_array(t) || btf_array(t)->nelems) {
 				pr_warn("map '%s': map-in-map inner spec is not a zero-sized array.\n",
 					map_name);
-				वापस -EINVAL;
-			पूर्ण
-			t = skip_mods_and_प्रकारs(btf, btf_array(t)->type, शून्य);
-			अगर (!btf_is_ptr(t)) अणु
+				return -EINVAL;
+			}
+			t = skip_mods_and_typedefs(btf, btf_array(t)->type, NULL);
+			if (!btf_is_ptr(t)) {
 				pr_warn("map '%s': map-in-map inner def is of unexpected kind %s.\n",
 					map_name, btf_kind_str(t));
-				वापस -EINVAL;
-			पूर्ण
-			t = skip_mods_and_प्रकारs(btf, t->type, शून्य);
-			अगर (!btf_is_काष्ठा(t)) अणु
+				return -EINVAL;
+			}
+			t = skip_mods_and_typedefs(btf, t->type, NULL);
+			if (!btf_is_struct(t)) {
 				pr_warn("map '%s': map-in-map inner def is of unexpected kind %s.\n",
 					map_name, btf_kind_str(t));
-				वापस -EINVAL;
-			पूर्ण
+				return -EINVAL;
+			}
 
-			snम_लिखो(inner_map_name, माप(inner_map_name), "%s.inner", map_name);
-			err = parse_btf_map_def(inner_map_name, btf, t, strict, inner_def, शून्य);
-			अगर (err)
-				वापस err;
+			snprintf(inner_map_name, sizeof(inner_map_name), "%s.inner", map_name);
+			err = parse_btf_map_def(inner_map_name, btf, t, strict, inner_def, NULL);
+			if (err)
+				return err;
 
 			map_def->parts |= MAP_DEF_INNER_MAP;
-		पूर्ण अन्यथा अगर (म_भेद(name, "pinning") == 0) अणु
+		} else if (strcmp(name, "pinning") == 0) {
 			__u32 val;
 
-			अगर (is_inner) अणु
+			if (is_inner) {
 				pr_warn("map '%s': inner def can't be pinned.\n", map_name);
-				वापस -EINVAL;
-			पूर्ण
-			अगर (!get_map_field_पूर्णांक(map_name, btf, m, &val))
-				वापस -EINVAL;
-			अगर (val != LIBBPF_PIN_NONE && val != LIBBPF_PIN_BY_NAME) अणु
+				return -EINVAL;
+			}
+			if (!get_map_field_int(map_name, btf, m, &val))
+				return -EINVAL;
+			if (val != LIBBPF_PIN_NONE && val != LIBBPF_PIN_BY_NAME) {
 				pr_warn("map '%s': invalid pinning value %u.\n",
 					map_name, val);
-				वापस -EINVAL;
-			पूर्ण
+				return -EINVAL;
+			}
 			map_def->pinning = val;
 			map_def->parts |= MAP_DEF_PINNING;
-		पूर्ण अन्यथा अणु
-			अगर (strict) अणु
+		} else {
+			if (strict) {
 				pr_warn("map '%s': unknown field '%s'.\n", map_name, name);
-				वापस -ENOTSUP;
-			पूर्ण
+				return -ENOTSUP;
+			}
 			pr_debug("map '%s': ignoring unknown field '%s'.\n", map_name, name);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (map_def->map_type == BPF_MAP_TYPE_UNSPEC) अणु
+	if (map_def->map_type == BPF_MAP_TYPE_UNSPEC) {
 		pr_warn("map '%s': map type isn't specified.\n", map_name);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम fill_map_from_def(काष्ठा bpf_map *map, स्थिर काष्ठा btf_map_def *def)
-अणु
+static void fill_map_from_def(struct bpf_map *map, const struct btf_map_def *def)
+{
 	map->def.type = def->map_type;
 	map->def.key_size = def->key_size;
 	map->def.value_size = def->value_size;
@@ -2234,92 +2233,92 @@ resolve_func_ptr(स्थिर काष्ठा btf *btf, __u32 id, __u32 *r
 	map->btf_key_type_id = def->key_type_id;
 	map->btf_value_type_id = def->value_type_id;
 
-	अगर (def->parts & MAP_DEF_MAP_TYPE)
+	if (def->parts & MAP_DEF_MAP_TYPE)
 		pr_debug("map '%s': found type = %u.\n", map->name, def->map_type);
 
-	अगर (def->parts & MAP_DEF_KEY_TYPE)
+	if (def->parts & MAP_DEF_KEY_TYPE)
 		pr_debug("map '%s': found key [%u], sz = %u.\n",
 			 map->name, def->key_type_id, def->key_size);
-	अन्यथा अगर (def->parts & MAP_DEF_KEY_SIZE)
+	else if (def->parts & MAP_DEF_KEY_SIZE)
 		pr_debug("map '%s': found key_size = %u.\n", map->name, def->key_size);
 
-	अगर (def->parts & MAP_DEF_VALUE_TYPE)
+	if (def->parts & MAP_DEF_VALUE_TYPE)
 		pr_debug("map '%s': found value [%u], sz = %u.\n",
 			 map->name, def->value_type_id, def->value_size);
-	अन्यथा अगर (def->parts & MAP_DEF_VALUE_SIZE)
+	else if (def->parts & MAP_DEF_VALUE_SIZE)
 		pr_debug("map '%s': found value_size = %u.\n", map->name, def->value_size);
 
-	अगर (def->parts & MAP_DEF_MAX_ENTRIES)
+	if (def->parts & MAP_DEF_MAX_ENTRIES)
 		pr_debug("map '%s': found max_entries = %u.\n", map->name, def->max_entries);
-	अगर (def->parts & MAP_DEF_MAP_FLAGS)
+	if (def->parts & MAP_DEF_MAP_FLAGS)
 		pr_debug("map '%s': found map_flags = %u.\n", map->name, def->map_flags);
-	अगर (def->parts & MAP_DEF_PINNING)
+	if (def->parts & MAP_DEF_PINNING)
 		pr_debug("map '%s': found pinning = %u.\n", map->name, def->pinning);
-	अगर (def->parts & MAP_DEF_NUMA_NODE)
+	if (def->parts & MAP_DEF_NUMA_NODE)
 		pr_debug("map '%s': found numa_node = %u.\n", map->name, def->numa_node);
 
-	अगर (def->parts & MAP_DEF_INNER_MAP)
+	if (def->parts & MAP_DEF_INNER_MAP)
 		pr_debug("map '%s': found inner map definition.\n", map->name);
-पूर्ण
+}
 
-अटल पूर्णांक bpf_object__init_user_btf_map(काष्ठा bpf_object *obj,
-					 स्थिर काष्ठा btf_type *sec,
-					 पूर्णांक var_idx, पूर्णांक sec_idx,
-					 स्थिर Elf_Data *data, bool strict,
-					 स्थिर अक्षर *pin_root_path)
-अणु
-	काष्ठा btf_map_def map_def = अणुपूर्ण, inner_def = अणुपूर्ण;
-	स्थिर काष्ठा btf_type *var, *def;
-	स्थिर काष्ठा btf_var_secinfo *vi;
-	स्थिर काष्ठा btf_var *var_extra;
-	स्थिर अक्षर *map_name;
-	काष्ठा bpf_map *map;
-	पूर्णांक err;
+static int bpf_object__init_user_btf_map(struct bpf_object *obj,
+					 const struct btf_type *sec,
+					 int var_idx, int sec_idx,
+					 const Elf_Data *data, bool strict,
+					 const char *pin_root_path)
+{
+	struct btf_map_def map_def = {}, inner_def = {};
+	const struct btf_type *var, *def;
+	const struct btf_var_secinfo *vi;
+	const struct btf_var *var_extra;
+	const char *map_name;
+	struct bpf_map *map;
+	int err;
 
 	vi = btf_var_secinfos(sec) + var_idx;
 	var = btf__type_by_id(obj->btf, vi->type);
 	var_extra = btf_var(var);
 	map_name = btf__name_by_offset(obj->btf, var->name_off);
 
-	अगर (map_name == शून्य || map_name[0] == '\0') अणु
+	if (map_name == NULL || map_name[0] == '\0') {
 		pr_warn("map #%d: empty name.\n", var_idx);
-		वापस -EINVAL;
-	पूर्ण
-	अगर ((__u64)vi->offset + vi->size > data->d_size) अणु
+		return -EINVAL;
+	}
+	if ((__u64)vi->offset + vi->size > data->d_size) {
 		pr_warn("map '%s' BTF data is corrupted.\n", map_name);
-		वापस -EINVAL;
-	पूर्ण
-	अगर (!btf_is_var(var)) अणु
+		return -EINVAL;
+	}
+	if (!btf_is_var(var)) {
 		pr_warn("map '%s': unexpected var kind %s.\n",
 			map_name, btf_kind_str(var));
-		वापस -EINVAL;
-	पूर्ण
-	अगर (var_extra->linkage != BTF_VAR_GLOBAL_ALLOCATED &&
-	    var_extra->linkage != BTF_VAR_STATIC) अणु
+		return -EINVAL;
+	}
+	if (var_extra->linkage != BTF_VAR_GLOBAL_ALLOCATED &&
+	    var_extra->linkage != BTF_VAR_STATIC) {
 		pr_warn("map '%s': unsupported var linkage %u.\n",
 			map_name, var_extra->linkage);
-		वापस -EOPNOTSUPP;
-	पूर्ण
+		return -EOPNOTSUPP;
+	}
 
-	def = skip_mods_and_प्रकारs(obj->btf, var->type, शून्य);
-	अगर (!btf_is_काष्ठा(def)) अणु
+	def = skip_mods_and_typedefs(obj->btf, var->type, NULL);
+	if (!btf_is_struct(def)) {
 		pr_warn("map '%s': unexpected def kind %s.\n",
 			map_name, btf_kind_str(var));
-		वापस -EINVAL;
-	पूर्ण
-	अगर (def->size > vi->size) अणु
+		return -EINVAL;
+	}
+	if (def->size > vi->size) {
 		pr_warn("map '%s': invalid def size.\n", map_name);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	map = bpf_object__add_map(obj);
-	अगर (IS_ERR(map))
-		वापस PTR_ERR(map);
+	if (IS_ERR(map))
+		return PTR_ERR(map);
 	map->name = strdup(map_name);
-	अगर (!map->name) अणु
+	if (!map->name) {
 		pr_warn("map '%s': failed to alloc map name.\n", map_name);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 	map->libbpf_type = LIBBPF_MAP_UNSPEC;
 	map->def.type = BPF_MAP_TYPE_UNSPEC;
 	map->sec_idx = sec_idx;
@@ -2329,1411 +2328,1411 @@ resolve_func_ptr(स्थिर काष्ठा btf *btf, __u32 id, __u32 *r
 		 map_name, map->sec_idx, map->sec_offset);
 
 	err = parse_btf_map_def(map->name, obj->btf, def, strict, &map_def, &inner_def);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	fill_map_from_def(map, &map_def);
 
-	अगर (map_def.pinning == LIBBPF_PIN_BY_NAME) अणु
+	if (map_def.pinning == LIBBPF_PIN_BY_NAME) {
 		err = build_map_pin_path(map, pin_root_path);
-		अगर (err) अणु
+		if (err) {
 			pr_warn("map '%s': couldn't build pin path.\n", map->name);
-			वापस err;
-		पूर्ण
-	पूर्ण
+			return err;
+		}
+	}
 
-	अगर (map_def.parts & MAP_DEF_INNER_MAP) अणु
-		map->inner_map = सुस्मृति(1, माप(*map->inner_map));
-		अगर (!map->inner_map)
-			वापस -ENOMEM;
+	if (map_def.parts & MAP_DEF_INNER_MAP) {
+		map->inner_map = calloc(1, sizeof(*map->inner_map));
+		if (!map->inner_map)
+			return -ENOMEM;
 		map->inner_map->fd = -1;
 		map->inner_map->sec_idx = sec_idx;
-		map->inner_map->name = दो_स्मृति(म_माप(map_name) + माप(".inner") + 1);
-		अगर (!map->inner_map->name)
-			वापस -ENOMEM;
-		प्र_लिखो(map->inner_map->name, "%s.inner", map_name);
+		map->inner_map->name = malloc(strlen(map_name) + sizeof(".inner") + 1);
+		if (!map->inner_map->name)
+			return -ENOMEM;
+		sprintf(map->inner_map->name, "%s.inner", map_name);
 
 		fill_map_from_def(map->inner_map, &inner_def);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक bpf_object__init_user_btf_maps(काष्ठा bpf_object *obj, bool strict,
-					  स्थिर अक्षर *pin_root_path)
-अणु
-	स्थिर काष्ठा btf_type *sec = शून्य;
-	पूर्णांक nr_types, i, vlen, err;
-	स्थिर काष्ठा btf_type *t;
-	स्थिर अक्षर *name;
+static int bpf_object__init_user_btf_maps(struct bpf_object *obj, bool strict,
+					  const char *pin_root_path)
+{
+	const struct btf_type *sec = NULL;
+	int nr_types, i, vlen, err;
+	const struct btf_type *t;
+	const char *name;
 	Elf_Data *data;
 	Elf_Scn *scn;
 
-	अगर (obj->efile.btf_maps_shndx < 0)
-		वापस 0;
+	if (obj->efile.btf_maps_shndx < 0)
+		return 0;
 
 	scn = elf_sec_by_idx(obj, obj->efile.btf_maps_shndx);
 	data = elf_sec_data(obj, scn);
-	अगर (!scn || !data) अणु
+	if (!scn || !data) {
 		pr_warn("elf: failed to get %s map definitions for %s\n",
 			MAPS_ELF_SEC, obj->path);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	nr_types = btf__get_nr_types(obj->btf);
-	क्रम (i = 1; i <= nr_types; i++) अणु
+	for (i = 1; i <= nr_types; i++) {
 		t = btf__type_by_id(obj->btf, i);
-		अगर (!btf_is_datasec(t))
-			जारी;
+		if (!btf_is_datasec(t))
+			continue;
 		name = btf__name_by_offset(obj->btf, t->name_off);
-		अगर (म_भेद(name, MAPS_ELF_SEC) == 0) अणु
+		if (strcmp(name, MAPS_ELF_SEC) == 0) {
 			sec = t;
 			obj->efile.btf_maps_sec_btf_id = i;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	अगर (!sec) अणु
+	if (!sec) {
 		pr_warn("DATASEC '%s' not found.\n", MAPS_ELF_SEC);
-		वापस -ENOENT;
-	पूर्ण
+		return -ENOENT;
+	}
 
 	vlen = btf_vlen(sec);
-	क्रम (i = 0; i < vlen; i++) अणु
+	for (i = 0; i < vlen; i++) {
 		err = bpf_object__init_user_btf_map(obj, sec, i,
 						    obj->efile.btf_maps_shndx,
 						    data, strict,
 						    pin_root_path);
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक bpf_object__init_maps(काष्ठा bpf_object *obj,
-				 स्थिर काष्ठा bpf_object_खोलो_opts *opts)
-अणु
-	स्थिर अक्षर *pin_root_path;
+static int bpf_object__init_maps(struct bpf_object *obj,
+				 const struct bpf_object_open_opts *opts)
+{
+	const char *pin_root_path;
 	bool strict;
-	पूर्णांक err;
+	int err;
 
 	strict = !OPTS_GET(opts, relaxed_maps, false);
-	pin_root_path = OPTS_GET(opts, pin_root_path, शून्य);
+	pin_root_path = OPTS_GET(opts, pin_root_path, NULL);
 
 	err = bpf_object__init_user_maps(obj, strict);
 	err = err ?: bpf_object__init_user_btf_maps(obj, strict, pin_root_path);
 	err = err ?: bpf_object__init_global_data_maps(obj);
 	err = err ?: bpf_object__init_kconfig_map(obj);
-	err = err ?: bpf_object__init_काष्ठा_ops_maps(obj);
-	अगर (err)
-		वापस err;
+	err = err ?: bpf_object__init_struct_ops_maps(obj);
+	if (err)
+		return err;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल bool section_have_execinstr(काष्ठा bpf_object *obj, पूर्णांक idx)
-अणु
+static bool section_have_execinstr(struct bpf_object *obj, int idx)
+{
 	GElf_Shdr sh;
 
-	अगर (elf_sec_hdr(obj, elf_sec_by_idx(obj, idx), &sh))
-		वापस false;
+	if (elf_sec_hdr(obj, elf_sec_by_idx(obj, idx), &sh))
+		return false;
 
-	वापस sh.sh_flags & SHF_EXECINSTR;
-पूर्ण
+	return sh.sh_flags & SHF_EXECINSTR;
+}
 
-अटल bool btf_needs_sanitization(काष्ठा bpf_object *obj)
-अणु
+static bool btf_needs_sanitization(struct bpf_object *obj)
+{
 	bool has_func_global = kernel_supports(FEAT_BTF_GLOBAL_FUNC);
 	bool has_datasec = kernel_supports(FEAT_BTF_DATASEC);
-	bool has_भग्न = kernel_supports(FEAT_BTF_FLOAT);
+	bool has_float = kernel_supports(FEAT_BTF_FLOAT);
 	bool has_func = kernel_supports(FEAT_BTF_FUNC);
 
-	वापस !has_func || !has_datasec || !has_func_global || !has_भग्न;
-पूर्ण
+	return !has_func || !has_datasec || !has_func_global || !has_float;
+}
 
-अटल व्योम bpf_object__sanitize_btf(काष्ठा bpf_object *obj, काष्ठा btf *btf)
-अणु
+static void bpf_object__sanitize_btf(struct bpf_object *obj, struct btf *btf)
+{
 	bool has_func_global = kernel_supports(FEAT_BTF_GLOBAL_FUNC);
 	bool has_datasec = kernel_supports(FEAT_BTF_DATASEC);
-	bool has_भग्न = kernel_supports(FEAT_BTF_FLOAT);
+	bool has_float = kernel_supports(FEAT_BTF_FLOAT);
 	bool has_func = kernel_supports(FEAT_BTF_FUNC);
-	काष्ठा btf_type *t;
-	पूर्णांक i, j, vlen;
+	struct btf_type *t;
+	int i, j, vlen;
 
-	क्रम (i = 1; i <= btf__get_nr_types(btf); i++) अणु
-		t = (काष्ठा btf_type *)btf__type_by_id(btf, i);
+	for (i = 1; i <= btf__get_nr_types(btf); i++) {
+		t = (struct btf_type *)btf__type_by_id(btf, i);
 
-		अगर (!has_datasec && btf_is_var(t)) अणु
+		if (!has_datasec && btf_is_var(t)) {
 			/* replace VAR with INT */
 			t->info = BTF_INFO_ENC(BTF_KIND_INT, 0, 0);
 			/*
 			 * using size = 1 is the safest choice, 4 will be too
-			 * big and cause kernel BTF validation failure अगर
+			 * big and cause kernel BTF validation failure if
 			 * original variable took less than 4 bytes
 			 */
 			t->size = 1;
-			*(पूर्णांक *)(t + 1) = BTF_INT_ENC(0, 0, 8);
-		पूर्ण अन्यथा अगर (!has_datasec && btf_is_datasec(t)) अणु
+			*(int *)(t + 1) = BTF_INT_ENC(0, 0, 8);
+		} else if (!has_datasec && btf_is_datasec(t)) {
 			/* replace DATASEC with STRUCT */
-			स्थिर काष्ठा btf_var_secinfo *v = btf_var_secinfos(t);
-			काष्ठा btf_member *m = btf_members(t);
-			काष्ठा btf_type *vt;
-			अक्षर *name;
+			const struct btf_var_secinfo *v = btf_var_secinfos(t);
+			struct btf_member *m = btf_members(t);
+			struct btf_type *vt;
+			char *name;
 
-			name = (अक्षर *)btf__name_by_offset(btf, t->name_off);
-			जबतक (*name) अणु
-				अगर (*name == '.')
+			name = (char *)btf__name_by_offset(btf, t->name_off);
+			while (*name) {
+				if (*name == '.')
 					*name = '_';
 				name++;
-			पूर्ण
+			}
 
 			vlen = btf_vlen(t);
 			t->info = BTF_INFO_ENC(BTF_KIND_STRUCT, 0, vlen);
-			क्रम (j = 0; j < vlen; j++, v++, m++) अणु
+			for (j = 0; j < vlen; j++, v++, m++) {
 				/* order of field assignments is important */
 				m->offset = v->offset * 8;
 				m->type = v->type;
 				/* preserve variable name as member name */
-				vt = (व्योम *)btf__type_by_id(btf, v->type);
+				vt = (void *)btf__type_by_id(btf, v->type);
 				m->name_off = vt->name_off;
-			पूर्ण
-		पूर्ण अन्यथा अगर (!has_func && btf_is_func_proto(t)) अणु
+			}
+		} else if (!has_func && btf_is_func_proto(t)) {
 			/* replace FUNC_PROTO with ENUM */
 			vlen = btf_vlen(t);
 			t->info = BTF_INFO_ENC(BTF_KIND_ENUM, 0, vlen);
-			t->size = माप(__u32); /* kernel enक्रमced */
-		पूर्ण अन्यथा अगर (!has_func && btf_is_func(t)) अणु
+			t->size = sizeof(__u32); /* kernel enforced */
+		} else if (!has_func && btf_is_func(t)) {
 			/* replace FUNC with TYPEDEF */
 			t->info = BTF_INFO_ENC(BTF_KIND_TYPEDEF, 0, 0);
-		पूर्ण अन्यथा अगर (!has_func_global && btf_is_func(t)) अणु
+		} else if (!has_func_global && btf_is_func(t)) {
 			/* replace BTF_FUNC_GLOBAL with BTF_FUNC_STATIC */
 			t->info = BTF_INFO_ENC(BTF_KIND_FUNC, 0, 0);
-		पूर्ण अन्यथा अगर (!has_भग्न && btf_is_भग्न(t)) अणु
+		} else if (!has_float && btf_is_float(t)) {
 			/* replace FLOAT with an equally-sized empty STRUCT;
-			 * since C compilers करो not accept e.g. "float" as a
-			 * valid काष्ठा name, make it anonymous
+			 * since C compilers do not accept e.g. "float" as a
+			 * valid struct name, make it anonymous
 			 */
 			t->name_off = 0;
 			t->info = BTF_INFO_ENC(BTF_KIND_STRUCT, 0, 0);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल bool libbpf_needs_btf(स्थिर काष्ठा bpf_object *obj)
-अणु
-	वापस obj->efile.btf_maps_shndx >= 0 ||
+static bool libbpf_needs_btf(const struct bpf_object *obj)
+{
+	return obj->efile.btf_maps_shndx >= 0 ||
 	       obj->efile.st_ops_shndx >= 0 ||
-	       obj->nr_बाह्य > 0;
-पूर्ण
+	       obj->nr_extern > 0;
+}
 
-अटल bool kernel_needs_btf(स्थिर काष्ठा bpf_object *obj)
-अणु
-	वापस obj->efile.st_ops_shndx >= 0;
-पूर्ण
+static bool kernel_needs_btf(const struct bpf_object *obj)
+{
+	return obj->efile.st_ops_shndx >= 0;
+}
 
-अटल पूर्णांक bpf_object__init_btf(काष्ठा bpf_object *obj,
+static int bpf_object__init_btf(struct bpf_object *obj,
 				Elf_Data *btf_data,
 				Elf_Data *btf_ext_data)
-अणु
-	पूर्णांक err = -ENOENT;
+{
+	int err = -ENOENT;
 
-	अगर (btf_data) अणु
+	if (btf_data) {
 		obj->btf = btf__new(btf_data->d_buf, btf_data->d_size);
-		अगर (IS_ERR(obj->btf)) अणु
+		if (IS_ERR(obj->btf)) {
 			err = PTR_ERR(obj->btf);
-			obj->btf = शून्य;
+			obj->btf = NULL;
 			pr_warn("Error loading ELF section %s: %d.\n",
 				BTF_ELF_SEC, err);
-			जाओ out;
-		पूर्ण
-		/* enक्रमce 8-byte poपूर्णांकers क्रम BPF-targeted BTFs */
-		btf__set_poपूर्णांकer_size(obj->btf, 8);
+			goto out;
+		}
+		/* enforce 8-byte pointers for BPF-targeted BTFs */
+		btf__set_pointer_size(obj->btf, 8);
 		err = 0;
-	पूर्ण
-	अगर (btf_ext_data) अणु
-		अगर (!obj->btf) अणु
+	}
+	if (btf_ext_data) {
+		if (!obj->btf) {
 			pr_debug("Ignore ELF section %s because its depending ELF section %s is not found.\n",
 				 BTF_EXT_ELF_SEC, BTF_ELF_SEC);
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		obj->btf_ext = btf_ext__new(btf_ext_data->d_buf,
 					    btf_ext_data->d_size);
-		अगर (IS_ERR(obj->btf_ext)) अणु
+		if (IS_ERR(obj->btf_ext)) {
 			pr_warn("Error loading ELF section %s: %ld. Ignored and continue.\n",
 				BTF_EXT_ELF_SEC, PTR_ERR(obj->btf_ext));
-			obj->btf_ext = शून्य;
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			obj->btf_ext = NULL;
+			goto out;
+		}
+	}
 out:
-	अगर (err && libbpf_needs_btf(obj)) अणु
+	if (err && libbpf_needs_btf(obj)) {
 		pr_warn("BTF is required, but is missing or corrupted.\n");
-		वापस err;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return err;
+	}
+	return 0;
+}
 
-अटल पूर्णांक bpf_object__finalize_btf(काष्ठा bpf_object *obj)
-अणु
-	पूर्णांक err;
+static int bpf_object__finalize_btf(struct bpf_object *obj)
+{
+	int err;
 
-	अगर (!obj->btf)
-		वापस 0;
+	if (!obj->btf)
+		return 0;
 
 	err = btf__finalize_data(obj, obj->btf);
-	अगर (err) अणु
+	if (err) {
 		pr_warn("Error finalizing %s: %d.\n", BTF_ELF_SEC, err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल bool prog_needs_vmlinux_btf(काष्ठा bpf_program *prog)
-अणु
-	अगर (prog->type == BPF_PROG_TYPE_STRUCT_OPS ||
+static bool prog_needs_vmlinux_btf(struct bpf_program *prog)
+{
+	if (prog->type == BPF_PROG_TYPE_STRUCT_OPS ||
 	    prog->type == BPF_PROG_TYPE_LSM)
-		वापस true;
+		return true;
 
-	/* BPF_PROG_TYPE_TRACING programs which करो not attach to other programs
+	/* BPF_PROG_TYPE_TRACING programs which do not attach to other programs
 	 * also need vmlinux BTF
 	 */
-	अगर (prog->type == BPF_PROG_TYPE_TRACING && !prog->attach_prog_fd)
-		वापस true;
+	if (prog->type == BPF_PROG_TYPE_TRACING && !prog->attach_prog_fd)
+		return true;
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल bool obj_needs_vmlinux_btf(स्थिर काष्ठा bpf_object *obj)
-अणु
-	काष्ठा bpf_program *prog;
-	पूर्णांक i;
+static bool obj_needs_vmlinux_btf(const struct bpf_object *obj)
+{
+	struct bpf_program *prog;
+	int i;
 
 	/* CO-RE relocations need kernel BTF */
-	अगर (obj->btf_ext && obj->btf_ext->core_relo_info.len)
-		वापस true;
+	if (obj->btf_ext && obj->btf_ext->core_relo_info.len)
+		return true;
 
-	/* Support क्रम typed ksyms needs kernel BTF */
-	क्रम (i = 0; i < obj->nr_बाह्य; i++) अणु
-		स्थिर काष्ठा बाह्य_desc *ext;
+	/* Support for typed ksyms needs kernel BTF */
+	for (i = 0; i < obj->nr_extern; i++) {
+		const struct extern_desc *ext;
 
-		ext = &obj->बाह्यs[i];
-		अगर (ext->type == EXT_KSYM && ext->ksym.type_id)
-			वापस true;
-	पूर्ण
+		ext = &obj->externs[i];
+		if (ext->type == EXT_KSYM && ext->ksym.type_id)
+			return true;
+	}
 
-	bpf_object__क्रम_each_program(prog, obj) अणु
-		अगर (!prog->load)
-			जारी;
-		अगर (prog_needs_vmlinux_btf(prog))
-			वापस true;
-	पूर्ण
+	bpf_object__for_each_program(prog, obj) {
+		if (!prog->load)
+			continue;
+		if (prog_needs_vmlinux_btf(prog))
+			return true;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल पूर्णांक bpf_object__load_vmlinux_btf(काष्ठा bpf_object *obj, bool क्रमce)
-अणु
-	पूर्णांक err;
+static int bpf_object__load_vmlinux_btf(struct bpf_object *obj, bool force)
+{
+	int err;
 
 	/* btf_vmlinux could be loaded earlier */
-	अगर (obj->btf_vmlinux)
-		वापस 0;
+	if (obj->btf_vmlinux)
+		return 0;
 
-	अगर (!क्रमce && !obj_needs_vmlinux_btf(obj))
-		वापस 0;
+	if (!force && !obj_needs_vmlinux_btf(obj))
+		return 0;
 
 	obj->btf_vmlinux = libbpf_find_kernel_btf();
-	अगर (IS_ERR(obj->btf_vmlinux)) अणु
+	if (IS_ERR(obj->btf_vmlinux)) {
 		err = PTR_ERR(obj->btf_vmlinux);
 		pr_warn("Error loading vmlinux BTF: %d\n", err);
-		obj->btf_vmlinux = शून्य;
-		वापस err;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		obj->btf_vmlinux = NULL;
+		return err;
+	}
+	return 0;
+}
 
-अटल पूर्णांक bpf_object__sanitize_and_load_btf(काष्ठा bpf_object *obj)
-अणु
-	काष्ठा btf *kern_btf = obj->btf;
+static int bpf_object__sanitize_and_load_btf(struct bpf_object *obj)
+{
+	struct btf *kern_btf = obj->btf;
 	bool btf_mandatory, sanitize;
-	पूर्णांक i, err = 0;
+	int i, err = 0;
 
-	अगर (!obj->btf)
-		वापस 0;
+	if (!obj->btf)
+		return 0;
 
-	अगर (!kernel_supports(FEAT_BTF)) अणु
-		अगर (kernel_needs_btf(obj)) अणु
+	if (!kernel_supports(FEAT_BTF)) {
+		if (kernel_needs_btf(obj)) {
 			err = -EOPNOTSUPP;
-			जाओ report;
-		पूर्ण
+			goto report;
+		}
 		pr_debug("Kernel doesn't support BTF, skipping uploading it.\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	/* Even though some subprogs are global/weak, user might prefer more
-	 * permissive BPF verअगरication process that BPF verअगरier perक्रमms क्रम
-	 * अटल functions, taking पूर्णांकo account more context from the caller
-	 * functions. In such हाल, they need to mark such subprogs with
+	 * permissive BPF verification process that BPF verifier performs for
+	 * static functions, taking into account more context from the caller
+	 * functions. In such case, they need to mark such subprogs with
 	 * __attribute__((visibility("hidden"))) and libbpf will adjust
-	 * corresponding FUNC BTF type to be marked as अटल and trigger more
-	 * involved BPF verअगरication process.
+	 * corresponding FUNC BTF type to be marked as static and trigger more
+	 * involved BPF verification process.
 	 */
-	क्रम (i = 0; i < obj->nr_programs; i++) अणु
-		काष्ठा bpf_program *prog = &obj->programs[i];
-		काष्ठा btf_type *t;
-		स्थिर अक्षर *name;
-		पूर्णांक j, n;
+	for (i = 0; i < obj->nr_programs; i++) {
+		struct bpf_program *prog = &obj->programs[i];
+		struct btf_type *t;
+		const char *name;
+		int j, n;
 
-		अगर (!prog->mark_btf_अटल || !prog_is_subprog(obj, prog))
-			जारी;
+		if (!prog->mark_btf_static || !prog_is_subprog(obj, prog))
+			continue;
 
 		n = btf__get_nr_types(obj->btf);
-		क्रम (j = 1; j <= n; j++) अणु
+		for (j = 1; j <= n; j++) {
 			t = btf_type_by_id(obj->btf, j);
-			अगर (!btf_is_func(t) || btf_func_linkage(t) != BTF_FUNC_GLOBAL)
-				जारी;
+			if (!btf_is_func(t) || btf_func_linkage(t) != BTF_FUNC_GLOBAL)
+				continue;
 
 			name = btf__str_by_offset(obj->btf, t->name_off);
-			अगर (म_भेद(name, prog->name) != 0)
-				जारी;
+			if (strcmp(name, prog->name) != 0)
+				continue;
 
 			t->info = btf_type_info(BTF_KIND_FUNC, BTF_FUNC_STATIC, 0);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
 	sanitize = btf_needs_sanitization(obj);
-	अगर (sanitize) अणु
-		स्थिर व्योम *raw_data;
+	if (sanitize) {
+		const void *raw_data;
 		__u32 sz;
 
-		/* clone BTF to sanitize a copy and leave the original पूर्णांकact */
+		/* clone BTF to sanitize a copy and leave the original intact */
 		raw_data = btf__get_raw_data(obj->btf, &sz);
 		kern_btf = btf__new(raw_data, sz);
-		अगर (IS_ERR(kern_btf))
-			वापस PTR_ERR(kern_btf);
+		if (IS_ERR(kern_btf))
+			return PTR_ERR(kern_btf);
 
-		/* enक्रमce 8-byte poपूर्णांकers क्रम BPF-targeted BTFs */
-		btf__set_poपूर्णांकer_size(obj->btf, 8);
+		/* enforce 8-byte pointers for BPF-targeted BTFs */
+		btf__set_pointer_size(obj->btf, 8);
 		bpf_object__sanitize_btf(obj, kern_btf);
-	पूर्ण
+	}
 
 	err = btf__load(kern_btf);
-	अगर (sanitize) अणु
-		अगर (!err) अणु
+	if (sanitize) {
+		if (!err) {
 			/* move fd to libbpf's BTF */
 			btf__set_fd(obj->btf, btf__fd(kern_btf));
 			btf__set_fd(kern_btf, -1);
-		पूर्ण
-		btf__मुक्त(kern_btf);
-	पूर्ण
+		}
+		btf__free(kern_btf);
+	}
 report:
-	अगर (err) अणु
+	if (err) {
 		btf_mandatory = kernel_needs_btf(obj);
 		pr_warn("Error loading .BTF into kernel: %d. %s\n", err,
 			btf_mandatory ? "BTF is mandatory, can't proceed."
 				      : "BTF is optional, ignoring.");
-		अगर (!btf_mandatory)
+		if (!btf_mandatory)
 			err = 0;
-	पूर्ण
-	वापस err;
-पूर्ण
+	}
+	return err;
+}
 
-अटल स्थिर अक्षर *elf_sym_str(स्थिर काष्ठा bpf_object *obj, माप_प्रकार off)
-अणु
-	स्थिर अक्षर *name;
+static const char *elf_sym_str(const struct bpf_object *obj, size_t off)
+{
+	const char *name;
 
 	name = elf_strptr(obj->efile.elf, obj->efile.strtabidx, off);
-	अगर (!name) अणु
+	if (!name) {
 		pr_warn("elf: failed to get section name string at offset %zu from %s: %s\n",
 			off, obj->path, elf_errmsg(-1));
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	वापस name;
-पूर्ण
+	return name;
+}
 
-अटल स्थिर अक्षर *elf_sec_str(स्थिर काष्ठा bpf_object *obj, माप_प्रकार off)
-अणु
-	स्थिर अक्षर *name;
+static const char *elf_sec_str(const struct bpf_object *obj, size_t off)
+{
+	const char *name;
 
 	name = elf_strptr(obj->efile.elf, obj->efile.shstrndx, off);
-	अगर (!name) अणु
+	if (!name) {
 		pr_warn("elf: failed to get section name string at offset %zu from %s: %s\n",
 			off, obj->path, elf_errmsg(-1));
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	वापस name;
-पूर्ण
+	return name;
+}
 
-अटल Elf_Scn *elf_sec_by_idx(स्थिर काष्ठा bpf_object *obj, माप_प्रकार idx)
-अणु
+static Elf_Scn *elf_sec_by_idx(const struct bpf_object *obj, size_t idx)
+{
 	Elf_Scn *scn;
 
-	scn = elf_माला_लोcn(obj->efile.elf, idx);
-	अगर (!scn) अणु
+	scn = elf_getscn(obj->efile.elf, idx);
+	if (!scn) {
 		pr_warn("elf: failed to get section(%zu) from %s: %s\n",
 			idx, obj->path, elf_errmsg(-1));
-		वापस शून्य;
-	पूर्ण
-	वापस scn;
-पूर्ण
+		return NULL;
+	}
+	return scn;
+}
 
-अटल Elf_Scn *elf_sec_by_name(स्थिर काष्ठा bpf_object *obj, स्थिर अक्षर *name)
-अणु
-	Elf_Scn *scn = शून्य;
+static Elf_Scn *elf_sec_by_name(const struct bpf_object *obj, const char *name)
+{
+	Elf_Scn *scn = NULL;
 	Elf *elf = obj->efile.elf;
-	स्थिर अक्षर *sec_name;
+	const char *sec_name;
 
-	जबतक ((scn = elf_nextscn(elf, scn)) != शून्य) अणु
+	while ((scn = elf_nextscn(elf, scn)) != NULL) {
 		sec_name = elf_sec_name(obj, scn);
-		अगर (!sec_name)
-			वापस शून्य;
+		if (!sec_name)
+			return NULL;
 
-		अगर (म_भेद(sec_name, name) != 0)
-			जारी;
+		if (strcmp(sec_name, name) != 0)
+			continue;
 
-		वापस scn;
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+		return scn;
+	}
+	return NULL;
+}
 
-अटल पूर्णांक elf_sec_hdr(स्थिर काष्ठा bpf_object *obj, Elf_Scn *scn, GElf_Shdr *hdr)
-अणु
-	अगर (!scn)
-		वापस -EINVAL;
+static int elf_sec_hdr(const struct bpf_object *obj, Elf_Scn *scn, GElf_Shdr *hdr)
+{
+	if (!scn)
+		return -EINVAL;
 
-	अगर (gelf_माला_लोhdr(scn, hdr) != hdr) अणु
+	if (gelf_getshdr(scn, hdr) != hdr) {
 		pr_warn("elf: failed to get section(%zu) header from %s: %s\n",
 			elf_ndxscn(scn), obj->path, elf_errmsg(-1));
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर अक्षर *elf_sec_name(स्थिर काष्ठा bpf_object *obj, Elf_Scn *scn)
-अणु
-	स्थिर अक्षर *name;
+static const char *elf_sec_name(const struct bpf_object *obj, Elf_Scn *scn)
+{
+	const char *name;
 	GElf_Shdr sh;
 
-	अगर (!scn)
-		वापस शून्य;
+	if (!scn)
+		return NULL;
 
-	अगर (elf_sec_hdr(obj, scn, &sh))
-		वापस शून्य;
+	if (elf_sec_hdr(obj, scn, &sh))
+		return NULL;
 
 	name = elf_sec_str(obj, sh.sh_name);
-	अगर (!name) अणु
+	if (!name) {
 		pr_warn("elf: failed to get section(%zu) name from %s: %s\n",
 			elf_ndxscn(scn), obj->path, elf_errmsg(-1));
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	वापस name;
-पूर्ण
+	return name;
+}
 
-अटल Elf_Data *elf_sec_data(स्थिर काष्ठा bpf_object *obj, Elf_Scn *scn)
-अणु
+static Elf_Data *elf_sec_data(const struct bpf_object *obj, Elf_Scn *scn)
+{
 	Elf_Data *data;
 
-	अगर (!scn)
-		वापस शून्य;
+	if (!scn)
+		return NULL;
 
 	data = elf_getdata(scn, 0);
-	अगर (!data) अणु
+	if (!data) {
 		pr_warn("elf: failed to get section(%zu) %s data from %s: %s\n",
 			elf_ndxscn(scn), elf_sec_name(obj, scn) ?: "<?>",
 			obj->path, elf_errmsg(-1));
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	वापस data;
-पूर्ण
+	return data;
+}
 
-अटल bool is_sec_name_dwarf(स्थिर अक्षर *name)
-अणु
-	/* approximation, but the actual list is too दीर्घ */
-	वापस म_भेदन(name, ".debug_", माप(".debug_") - 1) == 0;
-पूर्ण
+static bool is_sec_name_dwarf(const char *name)
+{
+	/* approximation, but the actual list is too long */
+	return strncmp(name, ".debug_", sizeof(".debug_") - 1) == 0;
+}
 
-अटल bool ignore_elf_section(GElf_Shdr *hdr, स्थिर अक्षर *name)
-अणु
+static bool ignore_elf_section(GElf_Shdr *hdr, const char *name)
+{
 	/* no special handling of .strtab */
-	अगर (hdr->sh_type == SHT_STRTAB)
-		वापस true;
+	if (hdr->sh_type == SHT_STRTAB)
+		return true;
 
 	/* ignore .llvm_addrsig section as well */
-	अगर (hdr->sh_type == SHT_LLVM_ADDRSIG)
-		वापस true;
+	if (hdr->sh_type == SHT_LLVM_ADDRSIG)
+		return true;
 
 	/* no subprograms will lead to an empty .text section, ignore it */
-	अगर (hdr->sh_type == SHT_PROGBITS && hdr->sh_size == 0 &&
-	    म_भेद(name, ".text") == 0)
-		वापस true;
+	if (hdr->sh_type == SHT_PROGBITS && hdr->sh_size == 0 &&
+	    strcmp(name, ".text") == 0)
+		return true;
 
 	/* DWARF sections */
-	अगर (is_sec_name_dwarf(name))
-		वापस true;
+	if (is_sec_name_dwarf(name))
+		return true;
 
-	अगर (म_भेदन(name, ".rel", माप(".rel") - 1) == 0) अणु
-		name += माप(".rel") - 1;
+	if (strncmp(name, ".rel", sizeof(".rel") - 1) == 0) {
+		name += sizeof(".rel") - 1;
 		/* DWARF section relocations */
-		अगर (is_sec_name_dwarf(name))
-			वापस true;
+		if (is_sec_name_dwarf(name))
+			return true;
 
-		/* .BTF and .BTF.ext करोn't need relocations */
-		अगर (म_भेद(name, BTF_ELF_SEC) == 0 ||
-		    म_भेद(name, BTF_EXT_ELF_SEC) == 0)
-			वापस true;
-	पूर्ण
+		/* .BTF and .BTF.ext don't need relocations */
+		if (strcmp(name, BTF_ELF_SEC) == 0 ||
+		    strcmp(name, BTF_EXT_ELF_SEC) == 0)
+			return true;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल पूर्णांक cmp_progs(स्थिर व्योम *_a, स्थिर व्योम *_b)
-अणु
-	स्थिर काष्ठा bpf_program *a = _a;
-	स्थिर काष्ठा bpf_program *b = _b;
+static int cmp_progs(const void *_a, const void *_b)
+{
+	const struct bpf_program *a = _a;
+	const struct bpf_program *b = _b;
 
-	अगर (a->sec_idx != b->sec_idx)
-		वापस a->sec_idx < b->sec_idx ? -1 : 1;
+	if (a->sec_idx != b->sec_idx)
+		return a->sec_idx < b->sec_idx ? -1 : 1;
 
 	/* sec_insn_off can't be the same within the section */
-	वापस a->sec_insn_off < b->sec_insn_off ? -1 : 1;
-पूर्ण
+	return a->sec_insn_off < b->sec_insn_off ? -1 : 1;
+}
 
-अटल पूर्णांक bpf_object__elf_collect(काष्ठा bpf_object *obj)
-अणु
+static int bpf_object__elf_collect(struct bpf_object *obj)
+{
 	Elf *elf = obj->efile.elf;
-	Elf_Data *btf_ext_data = शून्य;
-	Elf_Data *btf_data = शून्य;
-	पूर्णांक idx = 0, err = 0;
-	स्थिर अक्षर *name;
+	Elf_Data *btf_ext_data = NULL;
+	Elf_Data *btf_data = NULL;
+	int idx = 0, err = 0;
+	const char *name;
 	Elf_Data *data;
 	Elf_Scn *scn;
 	GElf_Shdr sh;
 
 	/* a bunch of ELF parsing functionality depends on processing symbols,
-	 * so करो the first pass and find the symbol table
+	 * so do the first pass and find the symbol table
 	 */
-	scn = शून्य;
-	जबतक ((scn = elf_nextscn(elf, scn)) != शून्य) अणु
-		अगर (elf_sec_hdr(obj, scn, &sh))
-			वापस -LIBBPF_ERRNO__FORMAT;
+	scn = NULL;
+	while ((scn = elf_nextscn(elf, scn)) != NULL) {
+		if (elf_sec_hdr(obj, scn, &sh))
+			return -LIBBPF_ERRNO__FORMAT;
 
-		अगर (sh.sh_type == SHT_SYMTAB) अणु
-			अगर (obj->efile.symbols) अणु
+		if (sh.sh_type == SHT_SYMTAB) {
+			if (obj->efile.symbols) {
 				pr_warn("elf: multiple symbol tables in %s\n", obj->path);
-				वापस -LIBBPF_ERRNO__FORMAT;
-			पूर्ण
+				return -LIBBPF_ERRNO__FORMAT;
+			}
 
 			data = elf_sec_data(obj, scn);
-			अगर (!data)
-				वापस -LIBBPF_ERRNO__FORMAT;
+			if (!data)
+				return -LIBBPF_ERRNO__FORMAT;
 
 			obj->efile.symbols = data;
 			obj->efile.symbols_shndx = elf_ndxscn(scn);
 			obj->efile.strtabidx = sh.sh_link;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	scn = शून्य;
-	जबतक ((scn = elf_nextscn(elf, scn)) != शून्य) अणु
+	scn = NULL;
+	while ((scn = elf_nextscn(elf, scn)) != NULL) {
 		idx++;
 
-		अगर (elf_sec_hdr(obj, scn, &sh))
-			वापस -LIBBPF_ERRNO__FORMAT;
+		if (elf_sec_hdr(obj, scn, &sh))
+			return -LIBBPF_ERRNO__FORMAT;
 
 		name = elf_sec_str(obj, sh.sh_name);
-		अगर (!name)
-			वापस -LIBBPF_ERRNO__FORMAT;
+		if (!name)
+			return -LIBBPF_ERRNO__FORMAT;
 
-		अगर (ignore_elf_section(&sh, name))
-			जारी;
+		if (ignore_elf_section(&sh, name))
+			continue;
 
 		data = elf_sec_data(obj, scn);
-		अगर (!data)
-			वापस -LIBBPF_ERRNO__FORMAT;
+		if (!data)
+			return -LIBBPF_ERRNO__FORMAT;
 
 		pr_debug("elf: section(%d) %s, size %ld, link %d, flags %lx, type=%d\n",
-			 idx, name, (अचिन्हित दीर्घ)data->d_size,
-			 (पूर्णांक)sh.sh_link, (अचिन्हित दीर्घ)sh.sh_flags,
-			 (पूर्णांक)sh.sh_type);
+			 idx, name, (unsigned long)data->d_size,
+			 (int)sh.sh_link, (unsigned long)sh.sh_flags,
+			 (int)sh.sh_type);
 
-		अगर (म_भेद(name, "license") == 0) अणु
+		if (strcmp(name, "license") == 0) {
 			err = bpf_object__init_license(obj, data->d_buf, data->d_size);
-			अगर (err)
-				वापस err;
-		पूर्ण अन्यथा अगर (म_भेद(name, "version") == 0) अणु
+			if (err)
+				return err;
+		} else if (strcmp(name, "version") == 0) {
 			err = bpf_object__init_kversion(obj, data->d_buf, data->d_size);
-			अगर (err)
-				वापस err;
-		पूर्ण अन्यथा अगर (म_भेद(name, "maps") == 0) अणु
+			if (err)
+				return err;
+		} else if (strcmp(name, "maps") == 0) {
 			obj->efile.maps_shndx = idx;
-		पूर्ण अन्यथा अगर (म_भेद(name, MAPS_ELF_SEC) == 0) अणु
+		} else if (strcmp(name, MAPS_ELF_SEC) == 0) {
 			obj->efile.btf_maps_shndx = idx;
-		पूर्ण अन्यथा अगर (म_भेद(name, BTF_ELF_SEC) == 0) अणु
+		} else if (strcmp(name, BTF_ELF_SEC) == 0) {
 			btf_data = data;
-		पूर्ण अन्यथा अगर (म_भेद(name, BTF_EXT_ELF_SEC) == 0) अणु
+		} else if (strcmp(name, BTF_EXT_ELF_SEC) == 0) {
 			btf_ext_data = data;
-		पूर्ण अन्यथा अगर (sh.sh_type == SHT_SYMTAB) अणु
-			/* alपढ़ोy processed during the first pass above */
-		पूर्ण अन्यथा अगर (sh.sh_type == SHT_PROGBITS && data->d_size > 0) अणु
-			अगर (sh.sh_flags & SHF_EXECINSTR) अणु
-				अगर (म_भेद(name, ".text") == 0)
+		} else if (sh.sh_type == SHT_SYMTAB) {
+			/* already processed during the first pass above */
+		} else if (sh.sh_type == SHT_PROGBITS && data->d_size > 0) {
+			if (sh.sh_flags & SHF_EXECINSTR) {
+				if (strcmp(name, ".text") == 0)
 					obj->efile.text_shndx = idx;
 				err = bpf_object__add_programs(obj, data, name, idx);
-				अगर (err)
-					वापस err;
-			पूर्ण अन्यथा अगर (म_भेद(name, DATA_SEC) == 0) अणु
+				if (err)
+					return err;
+			} else if (strcmp(name, DATA_SEC) == 0) {
 				obj->efile.data = data;
 				obj->efile.data_shndx = idx;
-			पूर्ण अन्यथा अगर (म_भेद(name, RODATA_SEC) == 0) अणु
+			} else if (strcmp(name, RODATA_SEC) == 0) {
 				obj->efile.rodata = data;
 				obj->efile.rodata_shndx = idx;
-			पूर्ण अन्यथा अगर (म_भेद(name, STRUCT_OPS_SEC) == 0) अणु
+			} else if (strcmp(name, STRUCT_OPS_SEC) == 0) {
 				obj->efile.st_ops_data = data;
 				obj->efile.st_ops_shndx = idx;
-			पूर्ण अन्यथा अणु
+			} else {
 				pr_info("elf: skipping unrecognized data section(%d) %s\n",
 					idx, name);
-			पूर्ण
-		पूर्ण अन्यथा अगर (sh.sh_type == SHT_REL) अणु
-			पूर्णांक nr_sects = obj->efile.nr_reloc_sects;
-			व्योम *sects = obj->efile.reloc_sects;
-			पूर्णांक sec = sh.sh_info; /* poपूर्णांकs to other section */
+			}
+		} else if (sh.sh_type == SHT_REL) {
+			int nr_sects = obj->efile.nr_reloc_sects;
+			void *sects = obj->efile.reloc_sects;
+			int sec = sh.sh_info; /* points to other section */
 
-			/* Only करो relo क्रम section with exec inकाष्ठाions */
-			अगर (!section_have_execinstr(obj, sec) &&
-			    म_भेद(name, ".rel" STRUCT_OPS_SEC) &&
-			    म_भेद(name, ".rel" MAPS_ELF_SEC)) अणु
+			/* Only do relo for section with exec instructions */
+			if (!section_have_execinstr(obj, sec) &&
+			    strcmp(name, ".rel" STRUCT_OPS_SEC) &&
+			    strcmp(name, ".rel" MAPS_ELF_SEC)) {
 				pr_info("elf: skipping relo section(%d) %s for section(%d) %s\n",
 					idx, name, sec,
 					elf_sec_name(obj, elf_sec_by_idx(obj, sec)) ?: "<?>");
-				जारी;
-			पूर्ण
+				continue;
+			}
 
-			sects = libbpf_पुनः_स्मृतिarray(sects, nr_sects + 1,
-						    माप(*obj->efile.reloc_sects));
-			अगर (!sects)
-				वापस -ENOMEM;
+			sects = libbpf_reallocarray(sects, nr_sects + 1,
+						    sizeof(*obj->efile.reloc_sects));
+			if (!sects)
+				return -ENOMEM;
 
 			obj->efile.reloc_sects = sects;
 			obj->efile.nr_reloc_sects++;
 
 			obj->efile.reloc_sects[nr_sects].shdr = sh;
 			obj->efile.reloc_sects[nr_sects].data = data;
-		पूर्ण अन्यथा अगर (sh.sh_type == SHT_NOBITS && म_भेद(name, BSS_SEC) == 0) अणु
+		} else if (sh.sh_type == SHT_NOBITS && strcmp(name, BSS_SEC) == 0) {
 			obj->efile.bss = data;
 			obj->efile.bss_shndx = idx;
-		पूर्ण अन्यथा अणु
+		} else {
 			pr_info("elf: skipping section(%d) %s (size %zu)\n", idx, name,
-				(माप_प्रकार)sh.sh_size);
-		पूर्ण
-	पूर्ण
+				(size_t)sh.sh_size);
+		}
+	}
 
-	अगर (!obj->efile.strtabidx || obj->efile.strtabidx > idx) अणु
+	if (!obj->efile.strtabidx || obj->efile.strtabidx > idx) {
 		pr_warn("elf: symbol strings section missing or invalid in %s\n", obj->path);
-		वापस -LIBBPF_ERRNO__FORMAT;
-	पूर्ण
+		return -LIBBPF_ERRNO__FORMAT;
+	}
 
-	/* sort BPF programs by section name and in-section inकाष्ठाion offset
-	 * क्रम faster search */
-	क्विक(obj->programs, obj->nr_programs, माप(*obj->programs), cmp_progs);
+	/* sort BPF programs by section name and in-section instruction offset
+	 * for faster search */
+	qsort(obj->programs, obj->nr_programs, sizeof(*obj->programs), cmp_progs);
 
-	वापस bpf_object__init_btf(obj, btf_data, btf_ext_data);
-पूर्ण
+	return bpf_object__init_btf(obj, btf_data, btf_ext_data);
+}
 
-अटल bool sym_is_बाह्य(स्थिर GElf_Sym *sym)
-अणु
-	पूर्णांक bind = GELF_ST_BIND(sym->st_info);
-	/* बाह्यs are symbols w/ type=NOTYPE, bind=GLOBAL|WEAK, section=UND */
-	वापस sym->st_shndx == SHN_UNDEF &&
+static bool sym_is_extern(const GElf_Sym *sym)
+{
+	int bind = GELF_ST_BIND(sym->st_info);
+	/* externs are symbols w/ type=NOTYPE, bind=GLOBAL|WEAK, section=UND */
+	return sym->st_shndx == SHN_UNDEF &&
 	       (bind == STB_GLOBAL || bind == STB_WEAK) &&
 	       GELF_ST_TYPE(sym->st_info) == STT_NOTYPE;
-पूर्ण
+}
 
-अटल bool sym_is_subprog(स्थिर GElf_Sym *sym, पूर्णांक text_shndx)
-अणु
-	पूर्णांक bind = GELF_ST_BIND(sym->st_info);
-	पूर्णांक type = GELF_ST_TYPE(sym->st_info);
+static bool sym_is_subprog(const GElf_Sym *sym, int text_shndx)
+{
+	int bind = GELF_ST_BIND(sym->st_info);
+	int type = GELF_ST_TYPE(sym->st_info);
 
 	/* in .text section */
-	अगर (sym->st_shndx != text_shndx)
-		वापस false;
+	if (sym->st_shndx != text_shndx)
+		return false;
 
 	/* local function */
-	अगर (bind == STB_LOCAL && type == STT_SECTION)
-		वापस true;
+	if (bind == STB_LOCAL && type == STT_SECTION)
+		return true;
 
 	/* global function */
-	वापस bind == STB_GLOBAL && type == STT_FUNC;
-पूर्ण
+	return bind == STB_GLOBAL && type == STT_FUNC;
+}
 
-अटल पूर्णांक find_बाह्य_btf_id(स्थिर काष्ठा btf *btf, स्थिर अक्षर *ext_name)
-अणु
-	स्थिर काष्ठा btf_type *t;
-	स्थिर अक्षर *tname;
-	पूर्णांक i, n;
+static int find_extern_btf_id(const struct btf *btf, const char *ext_name)
+{
+	const struct btf_type *t;
+	const char *tname;
+	int i, n;
 
-	अगर (!btf)
-		वापस -ESRCH;
+	if (!btf)
+		return -ESRCH;
 
 	n = btf__get_nr_types(btf);
-	क्रम (i = 1; i <= n; i++) अणु
+	for (i = 1; i <= n; i++) {
 		t = btf__type_by_id(btf, i);
 
-		अगर (!btf_is_var(t) && !btf_is_func(t))
-			जारी;
+		if (!btf_is_var(t) && !btf_is_func(t))
+			continue;
 
 		tname = btf__name_by_offset(btf, t->name_off);
-		अगर (म_भेद(tname, ext_name))
-			जारी;
+		if (strcmp(tname, ext_name))
+			continue;
 
-		अगर (btf_is_var(t) &&
+		if (btf_is_var(t) &&
 		    btf_var(t)->linkage != BTF_VAR_GLOBAL_EXTERN)
-			वापस -EINVAL;
+			return -EINVAL;
 
-		अगर (btf_is_func(t) && btf_func_linkage(t) != BTF_FUNC_EXTERN)
-			वापस -EINVAL;
+		if (btf_is_func(t) && btf_func_linkage(t) != BTF_FUNC_EXTERN)
+			return -EINVAL;
 
-		वापस i;
-	पूर्ण
+		return i;
+	}
 
-	वापस -ENOENT;
-पूर्ण
+	return -ENOENT;
+}
 
-अटल पूर्णांक find_बाह्य_sec_btf_id(काष्ठा btf *btf, पूर्णांक ext_btf_id) अणु
-	स्थिर काष्ठा btf_var_secinfo *vs;
-	स्थिर काष्ठा btf_type *t;
-	पूर्णांक i, j, n;
+static int find_extern_sec_btf_id(struct btf *btf, int ext_btf_id) {
+	const struct btf_var_secinfo *vs;
+	const struct btf_type *t;
+	int i, j, n;
 
-	अगर (!btf)
-		वापस -ESRCH;
+	if (!btf)
+		return -ESRCH;
 
 	n = btf__get_nr_types(btf);
-	क्रम (i = 1; i <= n; i++) अणु
+	for (i = 1; i <= n; i++) {
 		t = btf__type_by_id(btf, i);
 
-		अगर (!btf_is_datasec(t))
-			जारी;
+		if (!btf_is_datasec(t))
+			continue;
 
 		vs = btf_var_secinfos(t);
-		क्रम (j = 0; j < btf_vlen(t); j++, vs++) अणु
-			अगर (vs->type == ext_btf_id)
-				वापस i;
-		पूर्ण
-	पूर्ण
+		for (j = 0; j < btf_vlen(t); j++, vs++) {
+			if (vs->type == ext_btf_id)
+				return i;
+		}
+	}
 
-	वापस -ENOENT;
-पूर्ण
+	return -ENOENT;
+}
 
-अटल क्रमागत kcfg_type find_kcfg_type(स्थिर काष्ठा btf *btf, पूर्णांक id,
-				     bool *is_चिन्हित)
-अणु
-	स्थिर काष्ठा btf_type *t;
-	स्थिर अक्षर *name;
+static enum kcfg_type find_kcfg_type(const struct btf *btf, int id,
+				     bool *is_signed)
+{
+	const struct btf_type *t;
+	const char *name;
 
-	t = skip_mods_and_प्रकारs(btf, id, शून्य);
+	t = skip_mods_and_typedefs(btf, id, NULL);
 	name = btf__name_by_offset(btf, t->name_off);
 
-	अगर (is_चिन्हित)
-		*is_चिन्हित = false;
-	चयन (btf_kind(t)) अणु
-	हाल BTF_KIND_INT: अणु
-		पूर्णांक enc = btf_पूर्णांक_encoding(t);
+	if (is_signed)
+		*is_signed = false;
+	switch (btf_kind(t)) {
+	case BTF_KIND_INT: {
+		int enc = btf_int_encoding(t);
 
-		अगर (enc & BTF_INT_BOOL)
-			वापस t->size == 1 ? KCFG_BOOL : KCFG_UNKNOWN;
-		अगर (is_चिन्हित)
-			*is_चिन्हित = enc & BTF_INT_SIGNED;
-		अगर (t->size == 1)
-			वापस KCFG_CHAR;
-		अगर (t->size < 1 || t->size > 8 || (t->size & (t->size - 1)))
-			वापस KCFG_UNKNOWN;
-		वापस KCFG_INT;
-	पूर्ण
-	हाल BTF_KIND_ENUM:
-		अगर (t->size != 4)
-			वापस KCFG_UNKNOWN;
-		अगर (म_भेद(name, "libbpf_tristate"))
-			वापस KCFG_UNKNOWN;
-		वापस KCFG_TRISTATE;
-	हाल BTF_KIND_ARRAY:
-		अगर (btf_array(t)->nelems == 0)
-			वापस KCFG_UNKNOWN;
-		अगर (find_kcfg_type(btf, btf_array(t)->type, शून्य) != KCFG_CHAR)
-			वापस KCFG_UNKNOWN;
-		वापस KCFG_CHAR_ARR;
-	शेष:
-		वापस KCFG_UNKNOWN;
-	पूर्ण
-पूर्ण
+		if (enc & BTF_INT_BOOL)
+			return t->size == 1 ? KCFG_BOOL : KCFG_UNKNOWN;
+		if (is_signed)
+			*is_signed = enc & BTF_INT_SIGNED;
+		if (t->size == 1)
+			return KCFG_CHAR;
+		if (t->size < 1 || t->size > 8 || (t->size & (t->size - 1)))
+			return KCFG_UNKNOWN;
+		return KCFG_INT;
+	}
+	case BTF_KIND_ENUM:
+		if (t->size != 4)
+			return KCFG_UNKNOWN;
+		if (strcmp(name, "libbpf_tristate"))
+			return KCFG_UNKNOWN;
+		return KCFG_TRISTATE;
+	case BTF_KIND_ARRAY:
+		if (btf_array(t)->nelems == 0)
+			return KCFG_UNKNOWN;
+		if (find_kcfg_type(btf, btf_array(t)->type, NULL) != KCFG_CHAR)
+			return KCFG_UNKNOWN;
+		return KCFG_CHAR_ARR;
+	default:
+		return KCFG_UNKNOWN;
+	}
+}
 
-अटल पूर्णांक cmp_बाह्यs(स्थिर व्योम *_a, स्थिर व्योम *_b)
-अणु
-	स्थिर काष्ठा बाह्य_desc *a = _a;
-	स्थिर काष्ठा बाह्य_desc *b = _b;
+static int cmp_externs(const void *_a, const void *_b)
+{
+	const struct extern_desc *a = _a;
+	const struct extern_desc *b = _b;
 
-	अगर (a->type != b->type)
-		वापस a->type < b->type ? -1 : 1;
+	if (a->type != b->type)
+		return a->type < b->type ? -1 : 1;
 
-	अगर (a->type == EXT_KCFG) अणु
+	if (a->type == EXT_KCFG) {
 		/* descending order by alignment requirements */
-		अगर (a->kcfg.align != b->kcfg.align)
-			वापस a->kcfg.align > b->kcfg.align ? -1 : 1;
+		if (a->kcfg.align != b->kcfg.align)
+			return a->kcfg.align > b->kcfg.align ? -1 : 1;
 		/* ascending order by size, within same alignment class */
-		अगर (a->kcfg.sz != b->kcfg.sz)
-			वापस a->kcfg.sz < b->kcfg.sz ? -1 : 1;
-	पूर्ण
+		if (a->kcfg.sz != b->kcfg.sz)
+			return a->kcfg.sz < b->kcfg.sz ? -1 : 1;
+	}
 
 	/* resolve ties by name */
-	वापस म_भेद(a->name, b->name);
-पूर्ण
+	return strcmp(a->name, b->name);
+}
 
-अटल पूर्णांक find_पूर्णांक_btf_id(स्थिर काष्ठा btf *btf)
-अणु
-	स्थिर काष्ठा btf_type *t;
-	पूर्णांक i, n;
+static int find_int_btf_id(const struct btf *btf)
+{
+	const struct btf_type *t;
+	int i, n;
 
 	n = btf__get_nr_types(btf);
-	क्रम (i = 1; i <= n; i++) अणु
+	for (i = 1; i <= n; i++) {
 		t = btf__type_by_id(btf, i);
 
-		अगर (btf_is_पूर्णांक(t) && btf_पूर्णांक_bits(t) == 32)
-			वापस i;
-	पूर्ण
+		if (btf_is_int(t) && btf_int_bits(t) == 32)
+			return i;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक add_dummy_ksym_var(काष्ठा btf *btf)
-अणु
-	पूर्णांक i, पूर्णांक_btf_id, sec_btf_id, dummy_var_btf_id;
-	स्थिर काष्ठा btf_var_secinfo *vs;
-	स्थिर काष्ठा btf_type *sec;
+static int add_dummy_ksym_var(struct btf *btf)
+{
+	int i, int_btf_id, sec_btf_id, dummy_var_btf_id;
+	const struct btf_var_secinfo *vs;
+	const struct btf_type *sec;
 
-	अगर (!btf)
-		वापस 0;
+	if (!btf)
+		return 0;
 
 	sec_btf_id = btf__find_by_name_kind(btf, KSYMS_SEC,
 					    BTF_KIND_DATASEC);
-	अगर (sec_btf_id < 0)
-		वापस 0;
+	if (sec_btf_id < 0)
+		return 0;
 
 	sec = btf__type_by_id(btf, sec_btf_id);
 	vs = btf_var_secinfos(sec);
-	क्रम (i = 0; i < btf_vlen(sec); i++, vs++) अणु
-		स्थिर काष्ठा btf_type *vt;
+	for (i = 0; i < btf_vlen(sec); i++, vs++) {
+		const struct btf_type *vt;
 
 		vt = btf__type_by_id(btf, vs->type);
-		अगर (btf_is_func(vt))
-			अवरोध;
-	पूर्ण
+		if (btf_is_func(vt))
+			break;
+	}
 
 	/* No func in ksyms sec.  No need to add dummy var. */
-	अगर (i == btf_vlen(sec))
-		वापस 0;
+	if (i == btf_vlen(sec))
+		return 0;
 
-	पूर्णांक_btf_id = find_पूर्णांक_btf_id(btf);
+	int_btf_id = find_int_btf_id(btf);
 	dummy_var_btf_id = btf__add_var(btf,
 					"dummy_ksym",
 					BTF_VAR_GLOBAL_ALLOCATED,
-					पूर्णांक_btf_id);
-	अगर (dummy_var_btf_id < 0)
+					int_btf_id);
+	if (dummy_var_btf_id < 0)
 		pr_warn("cannot create a dummy_ksym var\n");
 
-	वापस dummy_var_btf_id;
-पूर्ण
+	return dummy_var_btf_id;
+}
 
-अटल पूर्णांक bpf_object__collect_बाह्यs(काष्ठा bpf_object *obj)
-अणु
-	काष्ठा btf_type *sec, *kcfg_sec = शून्य, *ksym_sec = शून्य;
-	स्थिर काष्ठा btf_type *t;
-	काष्ठा बाह्य_desc *ext;
-	पूर्णांक i, n, off, dummy_var_btf_id;
-	स्थिर अक्षर *ext_name, *sec_name;
+static int bpf_object__collect_externs(struct bpf_object *obj)
+{
+	struct btf_type *sec, *kcfg_sec = NULL, *ksym_sec = NULL;
+	const struct btf_type *t;
+	struct extern_desc *ext;
+	int i, n, off, dummy_var_btf_id;
+	const char *ext_name, *sec_name;
 	Elf_Scn *scn;
 	GElf_Shdr sh;
 
-	अगर (!obj->efile.symbols)
-		वापस 0;
+	if (!obj->efile.symbols)
+		return 0;
 
 	scn = elf_sec_by_idx(obj, obj->efile.symbols_shndx);
-	अगर (elf_sec_hdr(obj, scn, &sh))
-		वापस -LIBBPF_ERRNO__FORMAT;
+	if (elf_sec_hdr(obj, scn, &sh))
+		return -LIBBPF_ERRNO__FORMAT;
 
 	dummy_var_btf_id = add_dummy_ksym_var(obj->btf);
-	अगर (dummy_var_btf_id < 0)
-		वापस dummy_var_btf_id;
+	if (dummy_var_btf_id < 0)
+		return dummy_var_btf_id;
 
 	n = sh.sh_size / sh.sh_entsize;
 	pr_debug("looking for externs among %d symbols...\n", n);
 
-	क्रम (i = 0; i < n; i++) अणु
+	for (i = 0; i < n; i++) {
 		GElf_Sym sym;
 
-		अगर (!gelf_माला_लोym(obj->efile.symbols, i, &sym))
-			वापस -LIBBPF_ERRNO__FORMAT;
-		अगर (!sym_is_बाह्य(&sym))
-			जारी;
+		if (!gelf_getsym(obj->efile.symbols, i, &sym))
+			return -LIBBPF_ERRNO__FORMAT;
+		if (!sym_is_extern(&sym))
+			continue;
 		ext_name = elf_sym_str(obj, sym.st_name);
-		अगर (!ext_name || !ext_name[0])
-			जारी;
+		if (!ext_name || !ext_name[0])
+			continue;
 
-		ext = obj->बाह्यs;
-		ext = libbpf_पुनः_स्मृतिarray(ext, obj->nr_बाह्य + 1, माप(*ext));
-		अगर (!ext)
-			वापस -ENOMEM;
-		obj->बाह्यs = ext;
-		ext = &ext[obj->nr_बाह्य];
-		स_रखो(ext, 0, माप(*ext));
-		obj->nr_बाह्य++;
+		ext = obj->externs;
+		ext = libbpf_reallocarray(ext, obj->nr_extern + 1, sizeof(*ext));
+		if (!ext)
+			return -ENOMEM;
+		obj->externs = ext;
+		ext = &ext[obj->nr_extern];
+		memset(ext, 0, sizeof(*ext));
+		obj->nr_extern++;
 
-		ext->btf_id = find_बाह्य_btf_id(obj->btf, ext_name);
-		अगर (ext->btf_id <= 0) अणु
+		ext->btf_id = find_extern_btf_id(obj->btf, ext_name);
+		if (ext->btf_id <= 0) {
 			pr_warn("failed to find BTF for extern '%s': %d\n",
 				ext_name, ext->btf_id);
-			वापस ext->btf_id;
-		पूर्ण
+			return ext->btf_id;
+		}
 		t = btf__type_by_id(obj->btf, ext->btf_id);
 		ext->name = btf__name_by_offset(obj->btf, t->name_off);
 		ext->sym_idx = i;
 		ext->is_weak = GELF_ST_BIND(sym.st_info) == STB_WEAK;
 
-		ext->sec_btf_id = find_बाह्य_sec_btf_id(obj->btf, ext->btf_id);
-		अगर (ext->sec_btf_id <= 0) अणु
+		ext->sec_btf_id = find_extern_sec_btf_id(obj->btf, ext->btf_id);
+		if (ext->sec_btf_id <= 0) {
 			pr_warn("failed to find BTF for extern '%s' [%d] section: %d\n",
 				ext_name, ext->btf_id, ext->sec_btf_id);
-			वापस ext->sec_btf_id;
-		पूर्ण
-		sec = (व्योम *)btf__type_by_id(obj->btf, ext->sec_btf_id);
+			return ext->sec_btf_id;
+		}
+		sec = (void *)btf__type_by_id(obj->btf, ext->sec_btf_id);
 		sec_name = btf__name_by_offset(obj->btf, sec->name_off);
 
-		अगर (म_भेद(sec_name, KCONFIG_SEC) == 0) अणु
-			अगर (btf_is_func(t)) अणु
+		if (strcmp(sec_name, KCONFIG_SEC) == 0) {
+			if (btf_is_func(t)) {
 				pr_warn("extern function %s is unsupported under %s section\n",
 					ext->name, KCONFIG_SEC);
-				वापस -ENOTSUP;
-			पूर्ण
+				return -ENOTSUP;
+			}
 			kcfg_sec = sec;
 			ext->type = EXT_KCFG;
 			ext->kcfg.sz = btf__resolve_size(obj->btf, t->type);
-			अगर (ext->kcfg.sz <= 0) अणु
+			if (ext->kcfg.sz <= 0) {
 				pr_warn("failed to resolve size of extern (kcfg) '%s': %d\n",
 					ext_name, ext->kcfg.sz);
-				वापस ext->kcfg.sz;
-			पूर्ण
+				return ext->kcfg.sz;
+			}
 			ext->kcfg.align = btf__align_of(obj->btf, t->type);
-			अगर (ext->kcfg.align <= 0) अणु
+			if (ext->kcfg.align <= 0) {
 				pr_warn("failed to determine alignment of extern (kcfg) '%s': %d\n",
 					ext_name, ext->kcfg.align);
-				वापस -EINVAL;
-			पूर्ण
+				return -EINVAL;
+			}
 			ext->kcfg.type = find_kcfg_type(obj->btf, t->type,
-						        &ext->kcfg.is_चिन्हित);
-			अगर (ext->kcfg.type == KCFG_UNKNOWN) अणु
+						        &ext->kcfg.is_signed);
+			if (ext->kcfg.type == KCFG_UNKNOWN) {
 				pr_warn("extern (kcfg) '%s' type is unsupported\n", ext_name);
-				वापस -ENOTSUP;
-			पूर्ण
-		पूर्ण अन्यथा अगर (म_भेद(sec_name, KSYMS_SEC) == 0) अणु
-			अगर (btf_is_func(t) && ext->is_weak) अणु
+				return -ENOTSUP;
+			}
+		} else if (strcmp(sec_name, KSYMS_SEC) == 0) {
+			if (btf_is_func(t) && ext->is_weak) {
 				pr_warn("extern weak function %s is unsupported\n",
 					ext->name);
-				वापस -ENOTSUP;
-			पूर्ण
+				return -ENOTSUP;
+			}
 			ksym_sec = sec;
 			ext->type = EXT_KSYM;
-			skip_mods_and_प्रकारs(obj->btf, t->type,
+			skip_mods_and_typedefs(obj->btf, t->type,
 					       &ext->ksym.type_id);
-		पूर्ण अन्यथा अणु
+		} else {
 			pr_warn("unrecognized extern section '%s'\n", sec_name);
-			वापस -ENOTSUP;
-		पूर्ण
-	पूर्ण
-	pr_debug("collected %d externs total\n", obj->nr_बाह्य);
+			return -ENOTSUP;
+		}
+	}
+	pr_debug("collected %d externs total\n", obj->nr_extern);
 
-	अगर (!obj->nr_बाह्य)
-		वापस 0;
+	if (!obj->nr_extern)
+		return 0;
 
-	/* sort बाह्यs by type, क्रम kcfg ones also by (align, size, name) */
-	क्विक(obj->बाह्यs, obj->nr_बाह्य, माप(*ext), cmp_बाह्यs);
+	/* sort externs by type, for kcfg ones also by (align, size, name) */
+	qsort(obj->externs, obj->nr_extern, sizeof(*ext), cmp_externs);
 
-	/* क्रम .ksyms section, we need to turn all बाह्यs पूर्णांकo allocated
-	 * variables in BTF to pass kernel verअगरication; we करो this by
-	 * pretending that each बाह्य is a 8-byte variable
+	/* for .ksyms section, we need to turn all externs into allocated
+	 * variables in BTF to pass kernel verification; we do this by
+	 * pretending that each extern is a 8-byte variable
 	 */
-	अगर (ksym_sec) अणु
-		/* find existing 4-byte पूर्णांकeger type in BTF to use क्रम fake
-		 * बाह्य variables in DATASEC
+	if (ksym_sec) {
+		/* find existing 4-byte integer type in BTF to use for fake
+		 * extern variables in DATASEC
 		 */
-		पूर्णांक पूर्णांक_btf_id = find_पूर्णांक_btf_id(obj->btf);
-		/* For बाह्य function, a dummy_var added earlier
+		int int_btf_id = find_int_btf_id(obj->btf);
+		/* For extern function, a dummy_var added earlier
 		 * will be used to replace the vs->type and
 		 * its name string will be used to refill
 		 * the missing param's name.
 		 */
-		स्थिर काष्ठा btf_type *dummy_var;
+		const struct btf_type *dummy_var;
 
 		dummy_var = btf__type_by_id(obj->btf, dummy_var_btf_id);
-		क्रम (i = 0; i < obj->nr_बाह्य; i++) अणु
-			ext = &obj->बाह्यs[i];
-			अगर (ext->type != EXT_KSYM)
-				जारी;
+		for (i = 0; i < obj->nr_extern; i++) {
+			ext = &obj->externs[i];
+			if (ext->type != EXT_KSYM)
+				continue;
 			pr_debug("extern (ksym) #%d: symbol %d, name %s\n",
 				 i, ext->sym_idx, ext->name);
-		पूर्ण
+		}
 
 		sec = ksym_sec;
 		n = btf_vlen(sec);
-		क्रम (i = 0, off = 0; i < n; i++, off += माप(पूर्णांक)) अणु
-			काष्ठा btf_var_secinfo *vs = btf_var_secinfos(sec) + i;
-			काष्ठा btf_type *vt;
+		for (i = 0, off = 0; i < n; i++, off += sizeof(int)) {
+			struct btf_var_secinfo *vs = btf_var_secinfos(sec) + i;
+			struct btf_type *vt;
 
-			vt = (व्योम *)btf__type_by_id(obj->btf, vs->type);
+			vt = (void *)btf__type_by_id(obj->btf, vs->type);
 			ext_name = btf__name_by_offset(obj->btf, vt->name_off);
-			ext = find_बाह्य_by_name(obj, ext_name);
-			अगर (!ext) अणु
+			ext = find_extern_by_name(obj, ext_name);
+			if (!ext) {
 				pr_warn("failed to find extern definition for BTF %s '%s'\n",
 					btf_kind_str(vt), ext_name);
-				वापस -ESRCH;
-			पूर्ण
-			अगर (btf_is_func(vt)) अणु
-				स्थिर काष्ठा btf_type *func_proto;
-				काष्ठा btf_param *param;
-				पूर्णांक j;
+				return -ESRCH;
+			}
+			if (btf_is_func(vt)) {
+				const struct btf_type *func_proto;
+				struct btf_param *param;
+				int j;
 
 				func_proto = btf__type_by_id(obj->btf,
 							     vt->type);
 				param = btf_params(func_proto);
-				/* Reuse the dummy_var string अगर the
-				 * func proto करोes not have param name.
+				/* Reuse the dummy_var string if the
+				 * func proto does not have param name.
 				 */
-				क्रम (j = 0; j < btf_vlen(func_proto); j++)
-					अगर (param[j].type && !param[j].name_off)
+				for (j = 0; j < btf_vlen(func_proto); j++)
+					if (param[j].type && !param[j].name_off)
 						param[j].name_off =
 							dummy_var->name_off;
 				vs->type = dummy_var_btf_id;
 				vt->info &= ~0xffff;
 				vt->info |= BTF_FUNC_GLOBAL;
-			पूर्ण अन्यथा अणु
+			} else {
 				btf_var(vt)->linkage = BTF_VAR_GLOBAL_ALLOCATED;
-				vt->type = पूर्णांक_btf_id;
-			पूर्ण
+				vt->type = int_btf_id;
+			}
 			vs->offset = off;
-			vs->size = माप(पूर्णांक);
-		पूर्ण
+			vs->size = sizeof(int);
+		}
 		sec->size = off;
-	पूर्ण
+	}
 
-	अगर (kcfg_sec) अणु
+	if (kcfg_sec) {
 		sec = kcfg_sec;
-		/* क्रम kcfg बाह्यs calculate their offsets within a .kconfig map */
+		/* for kcfg externs calculate their offsets within a .kconfig map */
 		off = 0;
-		क्रम (i = 0; i < obj->nr_बाह्य; i++) अणु
-			ext = &obj->बाह्यs[i];
-			अगर (ext->type != EXT_KCFG)
-				जारी;
+		for (i = 0; i < obj->nr_extern; i++) {
+			ext = &obj->externs[i];
+			if (ext->type != EXT_KCFG)
+				continue;
 
 			ext->kcfg.data_off = roundup(off, ext->kcfg.align);
 			off = ext->kcfg.data_off + ext->kcfg.sz;
 			pr_debug("extern (kcfg) #%d: symbol %d, off %u, name %s\n",
 				 i, ext->sym_idx, ext->kcfg.data_off, ext->name);
-		पूर्ण
+		}
 		sec->size = off;
 		n = btf_vlen(sec);
-		क्रम (i = 0; i < n; i++) अणु
-			काष्ठा btf_var_secinfo *vs = btf_var_secinfos(sec) + i;
+		for (i = 0; i < n; i++) {
+			struct btf_var_secinfo *vs = btf_var_secinfos(sec) + i;
 
 			t = btf__type_by_id(obj->btf, vs->type);
 			ext_name = btf__name_by_offset(obj->btf, t->name_off);
-			ext = find_बाह्य_by_name(obj, ext_name);
-			अगर (!ext) अणु
+			ext = find_extern_by_name(obj, ext_name);
+			if (!ext) {
 				pr_warn("failed to find extern definition for BTF var '%s'\n",
 					ext_name);
-				वापस -ESRCH;
-			पूर्ण
+				return -ESRCH;
+			}
 			btf_var(t)->linkage = BTF_VAR_GLOBAL_ALLOCATED;
 			vs->offset = ext->kcfg.data_off;
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+		}
+	}
+	return 0;
+}
 
-काष्ठा bpf_program *
-bpf_object__find_program_by_title(स्थिर काष्ठा bpf_object *obj,
-				  स्थिर अक्षर *title)
-अणु
-	काष्ठा bpf_program *pos;
+struct bpf_program *
+bpf_object__find_program_by_title(const struct bpf_object *obj,
+				  const char *title)
+{
+	struct bpf_program *pos;
 
-	bpf_object__क्रम_each_program(pos, obj) अणु
-		अगर (pos->sec_name && !म_भेद(pos->sec_name, title))
-			वापस pos;
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+	bpf_object__for_each_program(pos, obj) {
+		if (pos->sec_name && !strcmp(pos->sec_name, title))
+			return pos;
+	}
+	return NULL;
+}
 
-अटल bool prog_is_subprog(स्थिर काष्ठा bpf_object *obj,
-			    स्थिर काष्ठा bpf_program *prog)
-अणु
-	/* For legacy reasons, libbpf supports an entry-poपूर्णांक BPF programs
-	 * without SEC() attribute, i.e., those in the .text section. But अगर
+static bool prog_is_subprog(const struct bpf_object *obj,
+			    const struct bpf_program *prog)
+{
+	/* For legacy reasons, libbpf supports an entry-point BPF programs
+	 * without SEC() attribute, i.e., those in the .text section. But if
 	 * there are 2 or more such programs in the .text section, they all
-	 * must be subprograms called from entry-poपूर्णांक BPF programs in
+	 * must be subprograms called from entry-point BPF programs in
 	 * designated SEC()'tions, otherwise there is no way to distinguish
 	 * which of those programs should be loaded vs which are a subprogram.
-	 * Similarly, अगर there is a function/program in .text and at least one
+	 * Similarly, if there is a function/program in .text and at least one
 	 * other BPF program with custom SEC() attribute, then we just assume
-	 * .text programs are subprograms (even अगर they are not called from
+	 * .text programs are subprograms (even if they are not called from
 	 * other programs), because libbpf never explicitly supported mixing
-	 * SEC()-designated BPF programs and .text entry-poपूर्णांक BPF programs.
+	 * SEC()-designated BPF programs and .text entry-point BPF programs.
 	 */
-	वापस prog->sec_idx == obj->efile.text_shndx && obj->nr_programs > 1;
-पूर्ण
+	return prog->sec_idx == obj->efile.text_shndx && obj->nr_programs > 1;
+}
 
-काष्ठा bpf_program *
-bpf_object__find_program_by_name(स्थिर काष्ठा bpf_object *obj,
-				 स्थिर अक्षर *name)
-अणु
-	काष्ठा bpf_program *prog;
+struct bpf_program *
+bpf_object__find_program_by_name(const struct bpf_object *obj,
+				 const char *name)
+{
+	struct bpf_program *prog;
 
-	bpf_object__क्रम_each_program(prog, obj) अणु
-		अगर (prog_is_subprog(obj, prog))
-			जारी;
-		अगर (!म_भेद(prog->name, name))
-			वापस prog;
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+	bpf_object__for_each_program(prog, obj) {
+		if (prog_is_subprog(obj, prog))
+			continue;
+		if (!strcmp(prog->name, name))
+			return prog;
+	}
+	return NULL;
+}
 
-अटल bool bpf_object__shndx_is_data(स्थिर काष्ठा bpf_object *obj,
-				      पूर्णांक shndx)
-अणु
-	वापस shndx == obj->efile.data_shndx ||
+static bool bpf_object__shndx_is_data(const struct bpf_object *obj,
+				      int shndx)
+{
+	return shndx == obj->efile.data_shndx ||
 	       shndx == obj->efile.bss_shndx ||
 	       shndx == obj->efile.rodata_shndx;
-पूर्ण
+}
 
-अटल bool bpf_object__shndx_is_maps(स्थिर काष्ठा bpf_object *obj,
-				      पूर्णांक shndx)
-अणु
-	वापस shndx == obj->efile.maps_shndx ||
+static bool bpf_object__shndx_is_maps(const struct bpf_object *obj,
+				      int shndx)
+{
+	return shndx == obj->efile.maps_shndx ||
 	       shndx == obj->efile.btf_maps_shndx;
-पूर्ण
+}
 
-अटल क्रमागत libbpf_map_type
-bpf_object__section_to_libbpf_map_type(स्थिर काष्ठा bpf_object *obj, पूर्णांक shndx)
-अणु
-	अगर (shndx == obj->efile.data_shndx)
-		वापस LIBBPF_MAP_DATA;
-	अन्यथा अगर (shndx == obj->efile.bss_shndx)
-		वापस LIBBPF_MAP_BSS;
-	अन्यथा अगर (shndx == obj->efile.rodata_shndx)
-		वापस LIBBPF_MAP_RODATA;
-	अन्यथा अगर (shndx == obj->efile.symbols_shndx)
-		वापस LIBBPF_MAP_KCONFIG;
-	अन्यथा
-		वापस LIBBPF_MAP_UNSPEC;
-पूर्ण
+static enum libbpf_map_type
+bpf_object__section_to_libbpf_map_type(const struct bpf_object *obj, int shndx)
+{
+	if (shndx == obj->efile.data_shndx)
+		return LIBBPF_MAP_DATA;
+	else if (shndx == obj->efile.bss_shndx)
+		return LIBBPF_MAP_BSS;
+	else if (shndx == obj->efile.rodata_shndx)
+		return LIBBPF_MAP_RODATA;
+	else if (shndx == obj->efile.symbols_shndx)
+		return LIBBPF_MAP_KCONFIG;
+	else
+		return LIBBPF_MAP_UNSPEC;
+}
 
-अटल पूर्णांक bpf_program__record_reloc(काष्ठा bpf_program *prog,
-				     काष्ठा reloc_desc *reloc_desc,
-				     __u32 insn_idx, स्थिर अक्षर *sym_name,
-				     स्थिर GElf_Sym *sym, स्थिर GElf_Rel *rel)
-अणु
-	काष्ठा bpf_insn *insn = &prog->insns[insn_idx];
-	माप_प्रकार map_idx, nr_maps = prog->obj->nr_maps;
-	काष्ठा bpf_object *obj = prog->obj;
+static int bpf_program__record_reloc(struct bpf_program *prog,
+				     struct reloc_desc *reloc_desc,
+				     __u32 insn_idx, const char *sym_name,
+				     const GElf_Sym *sym, const GElf_Rel *rel)
+{
+	struct bpf_insn *insn = &prog->insns[insn_idx];
+	size_t map_idx, nr_maps = prog->obj->nr_maps;
+	struct bpf_object *obj = prog->obj;
 	__u32 shdr_idx = sym->st_shndx;
-	क्रमागत libbpf_map_type type;
-	स्थिर अक्षर *sym_sec_name;
-	काष्ठा bpf_map *map;
+	enum libbpf_map_type type;
+	const char *sym_sec_name;
+	struct bpf_map *map;
 
-	अगर (!is_call_insn(insn) && !is_ldimm64_insn(insn)) अणु
+	if (!is_call_insn(insn) && !is_ldimm64_insn(insn)) {
 		pr_warn("prog '%s': invalid relo against '%s' for insns[%d].code 0x%x\n",
 			prog->name, sym_name, insn_idx, insn->code);
-		वापस -LIBBPF_ERRNO__RELOC;
-	पूर्ण
+		return -LIBBPF_ERRNO__RELOC;
+	}
 
-	अगर (sym_is_बाह्य(sym)) अणु
-		पूर्णांक sym_idx = GELF_R_SYM(rel->r_info);
-		पूर्णांक i, n = obj->nr_बाह्य;
-		काष्ठा बाह्य_desc *ext;
+	if (sym_is_extern(sym)) {
+		int sym_idx = GELF_R_SYM(rel->r_info);
+		int i, n = obj->nr_extern;
+		struct extern_desc *ext;
 
-		क्रम (i = 0; i < n; i++) अणु
-			ext = &obj->बाह्यs[i];
-			अगर (ext->sym_idx == sym_idx)
-				अवरोध;
-		पूर्ण
-		अगर (i >= n) अणु
+		for (i = 0; i < n; i++) {
+			ext = &obj->externs[i];
+			if (ext->sym_idx == sym_idx)
+				break;
+		}
+		if (i >= n) {
 			pr_warn("prog '%s': extern relo failed to find extern for '%s' (%d)\n",
 				prog->name, sym_name, sym_idx);
-			वापस -LIBBPF_ERRNO__RELOC;
-		पूर्ण
+			return -LIBBPF_ERRNO__RELOC;
+		}
 		pr_debug("prog '%s': found extern #%d '%s' (sym %d) for insn #%u\n",
 			 prog->name, i, ext->name, ext->sym_idx, insn_idx);
-		अगर (insn->code == (BPF_JMP | BPF_CALL))
+		if (insn->code == (BPF_JMP | BPF_CALL))
 			reloc_desc->type = RELO_EXTERN_FUNC;
-		अन्यथा
+		else
 			reloc_desc->type = RELO_EXTERN_VAR;
 		reloc_desc->insn_idx = insn_idx;
-		reloc_desc->sym_off = i; /* sym_off stores बाह्य index */
-		वापस 0;
-	पूर्ण
+		reloc_desc->sym_off = i; /* sym_off stores extern index */
+		return 0;
+	}
 
 	/* sub-program call relocation */
-	अगर (is_call_insn(insn)) अणु
-		अगर (insn->src_reg != BPF_PSEUDO_CALL) अणु
+	if (is_call_insn(insn)) {
+		if (insn->src_reg != BPF_PSEUDO_CALL) {
 			pr_warn("prog '%s': incorrect bpf_call opcode\n", prog->name);
-			वापस -LIBBPF_ERRNO__RELOC;
-		पूर्ण
-		/* text_shndx can be 0, अगर no शेष "main" program exists */
-		अगर (!shdr_idx || shdr_idx != obj->efile.text_shndx) अणु
+			return -LIBBPF_ERRNO__RELOC;
+		}
+		/* text_shndx can be 0, if no default "main" program exists */
+		if (!shdr_idx || shdr_idx != obj->efile.text_shndx) {
 			sym_sec_name = elf_sec_name(obj, elf_sec_by_idx(obj, shdr_idx));
 			pr_warn("prog '%s': bad call relo against '%s' in section '%s'\n",
 				prog->name, sym_name, sym_sec_name);
-			वापस -LIBBPF_ERRNO__RELOC;
-		पूर्ण
-		अगर (sym->st_value % BPF_INSN_SZ) अणु
+			return -LIBBPF_ERRNO__RELOC;
+		}
+		if (sym->st_value % BPF_INSN_SZ) {
 			pr_warn("prog '%s': bad call relo against '%s' at offset %zu\n",
-				prog->name, sym_name, (माप_प्रकार)sym->st_value);
-			वापस -LIBBPF_ERRNO__RELOC;
-		पूर्ण
+				prog->name, sym_name, (size_t)sym->st_value);
+			return -LIBBPF_ERRNO__RELOC;
+		}
 		reloc_desc->type = RELO_CALL;
 		reloc_desc->insn_idx = insn_idx;
 		reloc_desc->sym_off = sym->st_value;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (!shdr_idx || shdr_idx >= SHN_LORESERVE) अणु
+	if (!shdr_idx || shdr_idx >= SHN_LORESERVE) {
 		pr_warn("prog '%s': invalid relo against '%s' in special section 0x%x; forgot to initialize global var?..\n",
 			prog->name, sym_name, shdr_idx);
-		वापस -LIBBPF_ERRNO__RELOC;
-	पूर्ण
+		return -LIBBPF_ERRNO__RELOC;
+	}
 
 	/* loading subprog addresses */
-	अगर (sym_is_subprog(sym, obj->efile.text_shndx)) अणु
+	if (sym_is_subprog(sym, obj->efile.text_shndx)) {
 		/* global_func: sym->st_value = offset in the section, insn->imm = 0.
 		 * local_func: sym->st_value = 0, insn->imm = offset in the section.
 		 */
-		अगर ((sym->st_value % BPF_INSN_SZ) || (insn->imm % BPF_INSN_SZ)) अणु
+		if ((sym->st_value % BPF_INSN_SZ) || (insn->imm % BPF_INSN_SZ)) {
 			pr_warn("prog '%s': bad subprog addr relo against '%s' at offset %zu+%d\n",
-				prog->name, sym_name, (माप_प्रकार)sym->st_value, insn->imm);
-			वापस -LIBBPF_ERRNO__RELOC;
-		पूर्ण
+				prog->name, sym_name, (size_t)sym->st_value, insn->imm);
+			return -LIBBPF_ERRNO__RELOC;
+		}
 
 		reloc_desc->type = RELO_SUBPROG_ADDR;
 		reloc_desc->insn_idx = insn_idx;
 		reloc_desc->sym_off = sym->st_value;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	type = bpf_object__section_to_libbpf_map_type(obj, shdr_idx);
 	sym_sec_name = elf_sec_name(obj, elf_sec_by_idx(obj, shdr_idx));
 
 	/* generic map reference relocation */
-	अगर (type == LIBBPF_MAP_UNSPEC) अणु
-		अगर (!bpf_object__shndx_is_maps(obj, shdr_idx)) अणु
+	if (type == LIBBPF_MAP_UNSPEC) {
+		if (!bpf_object__shndx_is_maps(obj, shdr_idx)) {
 			pr_warn("prog '%s': bad map relo against '%s' in section '%s'\n",
 				prog->name, sym_name, sym_sec_name);
-			वापस -LIBBPF_ERRNO__RELOC;
-		पूर्ण
-		क्रम (map_idx = 0; map_idx < nr_maps; map_idx++) अणु
+			return -LIBBPF_ERRNO__RELOC;
+		}
+		for (map_idx = 0; map_idx < nr_maps; map_idx++) {
 			map = &obj->maps[map_idx];
-			अगर (map->libbpf_type != type ||
+			if (map->libbpf_type != type ||
 			    map->sec_idx != sym->st_shndx ||
 			    map->sec_offset != sym->st_value)
-				जारी;
+				continue;
 			pr_debug("prog '%s': found map %zd (%s, sec %d, off %zu) for insn #%u\n",
 				 prog->name, map_idx, map->name, map->sec_idx,
 				 map->sec_offset, insn_idx);
-			अवरोध;
-		पूर्ण
-		अगर (map_idx >= nr_maps) अणु
+			break;
+		}
+		if (map_idx >= nr_maps) {
 			pr_warn("prog '%s': map relo failed to find map for section '%s', off %zu\n",
-				prog->name, sym_sec_name, (माप_प्रकार)sym->st_value);
-			वापस -LIBBPF_ERRNO__RELOC;
-		पूर्ण
+				prog->name, sym_sec_name, (size_t)sym->st_value);
+			return -LIBBPF_ERRNO__RELOC;
+		}
 		reloc_desc->type = RELO_LD64;
 		reloc_desc->insn_idx = insn_idx;
 		reloc_desc->map_idx = map_idx;
 		reloc_desc->sym_off = 0; /* sym->st_value determines map_idx */
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	/* global data map relocation */
-	अगर (!bpf_object__shndx_is_data(obj, shdr_idx)) अणु
+	if (!bpf_object__shndx_is_data(obj, shdr_idx)) {
 		pr_warn("prog '%s': bad data relo against section '%s'\n",
 			prog->name, sym_sec_name);
-		वापस -LIBBPF_ERRNO__RELOC;
-	पूर्ण
-	क्रम (map_idx = 0; map_idx < nr_maps; map_idx++) अणु
+		return -LIBBPF_ERRNO__RELOC;
+	}
+	for (map_idx = 0; map_idx < nr_maps; map_idx++) {
 		map = &obj->maps[map_idx];
-		अगर (map->libbpf_type != type)
-			जारी;
+		if (map->libbpf_type != type)
+			continue;
 		pr_debug("prog '%s': found data map %zd (%s, sec %d, off %zu) for insn %u\n",
 			 prog->name, map_idx, map->name, map->sec_idx,
 			 map->sec_offset, insn_idx);
-		अवरोध;
-	पूर्ण
-	अगर (map_idx >= nr_maps) अणु
+		break;
+	}
+	if (map_idx >= nr_maps) {
 		pr_warn("prog '%s': data relo failed to find map for section '%s'\n",
 			prog->name, sym_sec_name);
-		वापस -LIBBPF_ERRNO__RELOC;
-	पूर्ण
+		return -LIBBPF_ERRNO__RELOC;
+	}
 
 	reloc_desc->type = RELO_DATA;
 	reloc_desc->insn_idx = insn_idx;
 	reloc_desc->map_idx = map_idx;
 	reloc_desc->sym_off = sym->st_value;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल bool prog_contains_insn(स्थिर काष्ठा bpf_program *prog, माप_प्रकार insn_idx)
-अणु
-	वापस insn_idx >= prog->sec_insn_off &&
+static bool prog_contains_insn(const struct bpf_program *prog, size_t insn_idx)
+{
+	return insn_idx >= prog->sec_insn_off &&
 	       insn_idx < prog->sec_insn_off + prog->sec_insn_cnt;
-पूर्ण
+}
 
-अटल काष्ठा bpf_program *find_prog_by_sec_insn(स्थिर काष्ठा bpf_object *obj,
-						 माप_प्रकार sec_idx, माप_प्रकार insn_idx)
-अणु
-	पूर्णांक l = 0, r = obj->nr_programs - 1, m;
-	काष्ठा bpf_program *prog;
+static struct bpf_program *find_prog_by_sec_insn(const struct bpf_object *obj,
+						 size_t sec_idx, size_t insn_idx)
+{
+	int l = 0, r = obj->nr_programs - 1, m;
+	struct bpf_program *prog;
 
-	जबतक (l < r) अणु
+	while (l < r) {
 		m = l + (r - l + 1) / 2;
 		prog = &obj->programs[m];
 
-		अगर (prog->sec_idx < sec_idx ||
+		if (prog->sec_idx < sec_idx ||
 		    (prog->sec_idx == sec_idx && prog->sec_insn_off <= insn_idx))
 			l = m;
-		अन्यथा
+		else
 			r = m - 1;
-	पूर्ण
+	}
 	/* matching program could be at index l, but it still might be the
-	 * wrong one, so we need to द्विगुन check conditions क्रम the last समय
+	 * wrong one, so we need to double check conditions for the last time
 	 */
 	prog = &obj->programs[l];
-	अगर (prog->sec_idx == sec_idx && prog_contains_insn(prog, insn_idx))
-		वापस prog;
-	वापस शून्य;
-पूर्ण
+	if (prog->sec_idx == sec_idx && prog_contains_insn(prog, insn_idx))
+		return prog;
+	return NULL;
+}
 
-अटल पूर्णांक
-bpf_object__collect_prog_relos(काष्ठा bpf_object *obj, GElf_Shdr *shdr, Elf_Data *data)
-अणु
+static int
+bpf_object__collect_prog_relos(struct bpf_object *obj, GElf_Shdr *shdr, Elf_Data *data)
+{
 	Elf_Data *symbols = obj->efile.symbols;
-	स्थिर अक्षर *relo_sec_name, *sec_name;
-	माप_प्रकार sec_idx = shdr->sh_info;
-	काष्ठा bpf_program *prog;
-	काष्ठा reloc_desc *relos;
-	पूर्णांक err, i, nrels;
-	स्थिर अक्षर *sym_name;
+	const char *relo_sec_name, *sec_name;
+	size_t sec_idx = shdr->sh_info;
+	struct bpf_program *prog;
+	struct reloc_desc *relos;
+	int err, i, nrels;
+	const char *sym_name;
 	__u32 insn_idx;
 	Elf_Scn *scn;
 	Elf_Data *scn_data;
@@ -3745,40 +3744,40 @@ bpf_object__collect_prog_relos(काष्ठा bpf_object *obj, GElf_Shdr *sh
 
 	relo_sec_name = elf_sec_str(obj, shdr->sh_name);
 	sec_name = elf_sec_name(obj, scn);
-	अगर (!relo_sec_name || !sec_name)
-		वापस -EINVAL;
+	if (!relo_sec_name || !sec_name)
+		return -EINVAL;
 
 	pr_debug("sec '%s': collecting relocation for section(%zu) '%s'\n",
 		 relo_sec_name, sec_idx, sec_name);
 	nrels = shdr->sh_size / shdr->sh_entsize;
 
-	क्रम (i = 0; i < nrels; i++) अणु
-		अगर (!gelf_getrel(data, i, &rel)) अणु
+	for (i = 0; i < nrels; i++) {
+		if (!gelf_getrel(data, i, &rel)) {
 			pr_warn("sec '%s': failed to get relo #%d\n", relo_sec_name, i);
-			वापस -LIBBPF_ERRNO__FORMAT;
-		पूर्ण
-		अगर (!gelf_माला_लोym(symbols, GELF_R_SYM(rel.r_info), &sym)) अणु
+			return -LIBBPF_ERRNO__FORMAT;
+		}
+		if (!gelf_getsym(symbols, GELF_R_SYM(rel.r_info), &sym)) {
 			pr_warn("sec '%s': symbol 0x%zx not found for relo #%d\n",
-				relo_sec_name, (माप_प्रकार)GELF_R_SYM(rel.r_info), i);
-			वापस -LIBBPF_ERRNO__FORMAT;
-		पूर्ण
+				relo_sec_name, (size_t)GELF_R_SYM(rel.r_info), i);
+			return -LIBBPF_ERRNO__FORMAT;
+		}
 
-		अगर (rel.r_offset % BPF_INSN_SZ || rel.r_offset >= scn_data->d_size) अणु
+		if (rel.r_offset % BPF_INSN_SZ || rel.r_offset >= scn_data->d_size) {
 			pr_warn("sec '%s': invalid offset 0x%zx for relo #%d\n",
-				relo_sec_name, (माप_प्रकार)GELF_R_SYM(rel.r_info), i);
-			वापस -LIBBPF_ERRNO__FORMAT;
-		पूर्ण
+				relo_sec_name, (size_t)GELF_R_SYM(rel.r_info), i);
+			return -LIBBPF_ERRNO__FORMAT;
+		}
 
 		insn_idx = rel.r_offset / BPF_INSN_SZ;
-		/* relocations against अटल functions are recorded as
+		/* relocations against static functions are recorded as
 		 * relocations against the section that contains a function;
-		 * in such हाल, symbol will be STT_SECTION and sym.st_name
-		 * will poपूर्णांक to empty string (0), so fetch section name
+		 * in such case, symbol will be STT_SECTION and sym.st_name
+		 * will point to empty string (0), so fetch section name
 		 * instead
 		 */
-		अगर (GELF_ST_TYPE(sym.st_info) == STT_SECTION && sym.st_name == 0)
+		if (GELF_ST_TYPE(sym.st_info) == STT_SECTION && sym.st_name == 0)
 			sym_name = elf_sec_name(obj, elf_sec_by_idx(obj, sym.st_shndx));
-		अन्यथा
+		else
 			sym_name = elf_sym_str(obj, sym.st_name);
 		sym_name = sym_name ?: "<?";
 
@@ -3786,98 +3785,98 @@ bpf_object__collect_prog_relos(काष्ठा bpf_object *obj, GElf_Shdr *sh
 			 relo_sec_name, i, insn_idx, sym_name);
 
 		prog = find_prog_by_sec_insn(obj, sec_idx, insn_idx);
-		अगर (!prog) अणु
+		if (!prog) {
 			pr_debug("sec '%s': relo #%d: couldn't find program in section '%s' for insn #%u, probably overridden weak function, skipping...\n",
 				relo_sec_name, i, sec_name, insn_idx);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		relos = libbpf_पुनः_स्मृतिarray(prog->reloc_desc,
-					    prog->nr_reloc + 1, माप(*relos));
-		अगर (!relos)
-			वापस -ENOMEM;
+		relos = libbpf_reallocarray(prog->reloc_desc,
+					    prog->nr_reloc + 1, sizeof(*relos));
+		if (!relos)
+			return -ENOMEM;
 		prog->reloc_desc = relos;
 
 		/* adjust insn_idx to local BPF program frame of reference */
 		insn_idx -= prog->sec_insn_off;
 		err = bpf_program__record_reloc(prog, &relos[prog->nr_reloc],
 						insn_idx, sym_name, &sym, &rel);
-		अगर (err)
-			वापस err;
+		if (err)
+			return err;
 
 		prog->nr_reloc++;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल पूर्णांक bpf_map_find_btf_info(काष्ठा bpf_object *obj, काष्ठा bpf_map *map)
-अणु
-	काष्ठा bpf_map_def *def = &map->def;
+static int bpf_map_find_btf_info(struct bpf_object *obj, struct bpf_map *map)
+{
+	struct bpf_map_def *def = &map->def;
 	__u32 key_type_id = 0, value_type_id = 0;
-	पूर्णांक ret;
+	int ret;
 
-	/* अगर it's BTF-defined map, we don't need to search क्रम type IDs.
-	 * For काष्ठा_ops map, it करोes not need btf_key_type_id and
+	/* if it's BTF-defined map, we don't need to search for type IDs.
+	 * For struct_ops map, it does not need btf_key_type_id and
 	 * btf_value_type_id.
 	 */
-	अगर (map->sec_idx == obj->efile.btf_maps_shndx ||
-	    bpf_map__is_काष्ठा_ops(map))
-		वापस 0;
+	if (map->sec_idx == obj->efile.btf_maps_shndx ||
+	    bpf_map__is_struct_ops(map))
+		return 0;
 
-	अगर (!bpf_map__is_पूर्णांकernal(map)) अणु
+	if (!bpf_map__is_internal(map)) {
 		ret = btf__get_map_kv_tids(obj->btf, map->name, def->key_size,
 					   def->value_size, &key_type_id,
 					   &value_type_id);
-	पूर्ण अन्यथा अणु
+	} else {
 		/*
-		 * LLVM annotates global data dअगरferently in BTF, that is,
+		 * LLVM annotates global data differently in BTF, that is,
 		 * only as '.data', '.bss' or '.rodata'.
 		 */
 		ret = btf__find_by_name(obj->btf,
 				libbpf_type_to_btf_name[map->libbpf_type]);
-	पूर्ण
-	अगर (ret < 0)
-		वापस ret;
+	}
+	if (ret < 0)
+		return ret;
 
 	map->btf_key_type_id = key_type_id;
-	map->btf_value_type_id = bpf_map__is_पूर्णांकernal(map) ?
+	map->btf_value_type_id = bpf_map__is_internal(map) ?
 				 ret : value_type_id;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक bpf_map__reuse_fd(काष्ठा bpf_map *map, पूर्णांक fd)
-अणु
-	काष्ठा bpf_map_info info = अणुपूर्ण;
-	__u32 len = माप(info);
-	पूर्णांक new_fd, err;
-	अक्षर *new_name;
+int bpf_map__reuse_fd(struct bpf_map *map, int fd)
+{
+	struct bpf_map_info info = {};
+	__u32 len = sizeof(info);
+	int new_fd, err;
+	char *new_name;
 
 	err = bpf_obj_get_info_by_fd(fd, &info, &len);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	new_name = strdup(info.name);
-	अगर (!new_name)
-		वापस -त्रुटि_सं;
+	if (!new_name)
+		return -errno;
 
-	new_fd = खोलो("/", O_RDONLY | O_CLOEXEC);
-	अगर (new_fd < 0) अणु
-		err = -त्रुटि_सं;
-		जाओ err_मुक्त_new_name;
-	पूर्ण
+	new_fd = open("/", O_RDONLY | O_CLOEXEC);
+	if (new_fd < 0) {
+		err = -errno;
+		goto err_free_new_name;
+	}
 
 	new_fd = dup3(fd, new_fd, O_CLOEXEC);
-	अगर (new_fd < 0) अणु
-		err = -त्रुटि_सं;
-		जाओ err_बंद_new_fd;
-	पूर्ण
+	if (new_fd < 0) {
+		err = -errno;
+		goto err_close_new_fd;
+	}
 
-	err = zबंद(map->fd);
-	अगर (err) अणु
-		err = -त्रुटि_सं;
-		जाओ err_बंद_new_fd;
-	पूर्ण
-	मुक्त(map->name);
+	err = zclose(map->fd);
+	if (err) {
+		err = -errno;
+		goto err_close_new_fd;
+	}
+	free(map->name);
 
 	map->fd = new_fd;
 	map->name = new_name;
@@ -3890,201 +3889,201 @@ bpf_object__collect_prog_relos(काष्ठा bpf_object *obj, GElf_Shdr *sh
 	map->btf_value_type_id = info.btf_value_type_id;
 	map->reused = true;
 
-	वापस 0;
+	return 0;
 
-err_बंद_new_fd:
-	बंद(new_fd);
-err_मुक्त_new_name:
-	मुक्त(new_name);
-	वापस err;
-पूर्ण
+err_close_new_fd:
+	close(new_fd);
+err_free_new_name:
+	free(new_name);
+	return err;
+}
 
-__u32 bpf_map__max_entries(स्थिर काष्ठा bpf_map *map)
-अणु
-	वापस map->def.max_entries;
-पूर्ण
+__u32 bpf_map__max_entries(const struct bpf_map *map)
+{
+	return map->def.max_entries;
+}
 
-काष्ठा bpf_map *bpf_map__inner_map(काष्ठा bpf_map *map)
-अणु
-	अगर (!bpf_map_type__is_map_in_map(map->def.type))
-		वापस शून्य;
+struct bpf_map *bpf_map__inner_map(struct bpf_map *map)
+{
+	if (!bpf_map_type__is_map_in_map(map->def.type))
+		return NULL;
 
-	वापस map->inner_map;
-पूर्ण
+	return map->inner_map;
+}
 
-पूर्णांक bpf_map__set_max_entries(काष्ठा bpf_map *map, __u32 max_entries)
-अणु
-	अगर (map->fd >= 0)
-		वापस -EBUSY;
+int bpf_map__set_max_entries(struct bpf_map *map, __u32 max_entries)
+{
+	if (map->fd >= 0)
+		return -EBUSY;
 	map->def.max_entries = max_entries;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक bpf_map__resize(काष्ठा bpf_map *map, __u32 max_entries)
-अणु
-	अगर (!map || !max_entries)
-		वापस -EINVAL;
+int bpf_map__resize(struct bpf_map *map, __u32 max_entries)
+{
+	if (!map || !max_entries)
+		return -EINVAL;
 
-	वापस bpf_map__set_max_entries(map, max_entries);
-पूर्ण
+	return bpf_map__set_max_entries(map, max_entries);
+}
 
-अटल पूर्णांक
-bpf_object__probe_loading(काष्ठा bpf_object *obj)
-अणु
-	काष्ठा bpf_load_program_attr attr;
-	अक्षर *cp, errmsg[STRERR_बफ_मानE];
-	काष्ठा bpf_insn insns[] = अणु
+static int
+bpf_object__probe_loading(struct bpf_object *obj)
+{
+	struct bpf_load_program_attr attr;
+	char *cp, errmsg[STRERR_BUFSIZE];
+	struct bpf_insn insns[] = {
 		BPF_MOV64_IMM(BPF_REG_0, 0),
 		BPF_EXIT_INSN(),
-	पूर्ण;
-	पूर्णांक ret;
+	};
+	int ret;
 
 	/* make sure basic loading works */
 
-	स_रखो(&attr, 0, माप(attr));
+	memset(&attr, 0, sizeof(attr));
 	attr.prog_type = BPF_PROG_TYPE_SOCKET_FILTER;
 	attr.insns = insns;
 	attr.insns_cnt = ARRAY_SIZE(insns);
 	attr.license = "GPL";
 
-	ret = bpf_load_program_xattr(&attr, शून्य, 0);
-	अगर (ret < 0) अणु
-		ret = त्रुटि_सं;
-		cp = libbpf_म_त्रुटि_r(ret, errmsg, माप(errmsg));
+	ret = bpf_load_program_xattr(&attr, NULL, 0);
+	if (ret < 0) {
+		ret = errno;
+		cp = libbpf_strerror_r(ret, errmsg, sizeof(errmsg));
 		pr_warn("Error in %s():%s(%d). Couldn't load trivial BPF "
 			"program. Make sure your kernel supports BPF "
 			"(CONFIG_BPF_SYSCALL=y) and/or that RLIMIT_MEMLOCK is "
 			"set to big enough value.\n", __func__, cp, ret);
-		वापस -ret;
-	पूर्ण
-	बंद(ret);
+		return -ret;
+	}
+	close(ret);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक probe_fd(पूर्णांक fd)
-अणु
-	अगर (fd >= 0)
-		बंद(fd);
-	वापस fd >= 0;
-पूर्ण
+static int probe_fd(int fd)
+{
+	if (fd >= 0)
+		close(fd);
+	return fd >= 0;
+}
 
-अटल पूर्णांक probe_kern_prog_name(व्योम)
-अणु
-	काष्ठा bpf_load_program_attr attr;
-	काष्ठा bpf_insn insns[] = अणु
+static int probe_kern_prog_name(void)
+{
+	struct bpf_load_program_attr attr;
+	struct bpf_insn insns[] = {
 		BPF_MOV64_IMM(BPF_REG_0, 0),
 		BPF_EXIT_INSN(),
-	पूर्ण;
-	पूर्णांक ret;
+	};
+	int ret;
 
 	/* make sure loading with name works */
 
-	स_रखो(&attr, 0, माप(attr));
+	memset(&attr, 0, sizeof(attr));
 	attr.prog_type = BPF_PROG_TYPE_SOCKET_FILTER;
 	attr.insns = insns;
 	attr.insns_cnt = ARRAY_SIZE(insns);
 	attr.license = "GPL";
 	attr.name = "test";
-	ret = bpf_load_program_xattr(&attr, शून्य, 0);
-	वापस probe_fd(ret);
-पूर्ण
+	ret = bpf_load_program_xattr(&attr, NULL, 0);
+	return probe_fd(ret);
+}
 
-अटल पूर्णांक probe_kern_global_data(व्योम)
-अणु
-	काष्ठा bpf_load_program_attr prg_attr;
-	काष्ठा bpf_create_map_attr map_attr;
-	अक्षर *cp, errmsg[STRERR_बफ_मानE];
-	काष्ठा bpf_insn insns[] = अणु
+static int probe_kern_global_data(void)
+{
+	struct bpf_load_program_attr prg_attr;
+	struct bpf_create_map_attr map_attr;
+	char *cp, errmsg[STRERR_BUFSIZE];
+	struct bpf_insn insns[] = {
 		BPF_LD_MAP_VALUE(BPF_REG_1, 0, 16),
 		BPF_ST_MEM(BPF_DW, BPF_REG_1, 0, 42),
 		BPF_MOV64_IMM(BPF_REG_0, 0),
 		BPF_EXIT_INSN(),
-	पूर्ण;
-	पूर्णांक ret, map;
+	};
+	int ret, map;
 
-	स_रखो(&map_attr, 0, माप(map_attr));
+	memset(&map_attr, 0, sizeof(map_attr));
 	map_attr.map_type = BPF_MAP_TYPE_ARRAY;
-	map_attr.key_size = माप(पूर्णांक);
+	map_attr.key_size = sizeof(int);
 	map_attr.value_size = 32;
 	map_attr.max_entries = 1;
 
 	map = bpf_create_map_xattr(&map_attr);
-	अगर (map < 0) अणु
-		ret = -त्रुटि_सं;
-		cp = libbpf_म_त्रुटि_r(ret, errmsg, माप(errmsg));
+	if (map < 0) {
+		ret = -errno;
+		cp = libbpf_strerror_r(ret, errmsg, sizeof(errmsg));
 		pr_warn("Error in %s():%s(%d). Couldn't create simple array map.\n",
 			__func__, cp, -ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	insns[0].imm = map;
 
-	स_रखो(&prg_attr, 0, माप(prg_attr));
+	memset(&prg_attr, 0, sizeof(prg_attr));
 	prg_attr.prog_type = BPF_PROG_TYPE_SOCKET_FILTER;
 	prg_attr.insns = insns;
 	prg_attr.insns_cnt = ARRAY_SIZE(insns);
 	prg_attr.license = "GPL";
 
-	ret = bpf_load_program_xattr(&prg_attr, शून्य, 0);
-	बंद(map);
-	वापस probe_fd(ret);
-पूर्ण
+	ret = bpf_load_program_xattr(&prg_attr, NULL, 0);
+	close(map);
+	return probe_fd(ret);
+}
 
-अटल पूर्णांक probe_kern_btf(व्योम)
-अणु
-	अटल स्थिर अक्षर strs[] = "\0int";
-	__u32 types[] = अणु
-		/* पूर्णांक */
+static int probe_kern_btf(void)
+{
+	static const char strs[] = "\0int";
+	__u32 types[] = {
+		/* int */
 		BTF_TYPE_INT_ENC(1, BTF_INT_SIGNED, 0, 32, 4),
-	पूर्ण;
+	};
 
-	वापस probe_fd(libbpf__load_raw_btf((अक्षर *)types, माप(types),
-					     strs, माप(strs)));
-पूर्ण
+	return probe_fd(libbpf__load_raw_btf((char *)types, sizeof(types),
+					     strs, sizeof(strs)));
+}
 
-अटल पूर्णांक probe_kern_btf_func(व्योम)
-अणु
-	अटल स्थिर अक्षर strs[] = "\0int\0x\0a";
-	/* व्योम x(पूर्णांक a) अणुपूर्ण */
-	__u32 types[] = अणु
-		/* पूर्णांक */
+static int probe_kern_btf_func(void)
+{
+	static const char strs[] = "\0int\0x\0a";
+	/* void x(int a) {} */
+	__u32 types[] = {
+		/* int */
 		BTF_TYPE_INT_ENC(1, BTF_INT_SIGNED, 0, 32, 4),  /* [1] */
 		/* FUNC_PROTO */                                /* [2] */
 		BTF_TYPE_ENC(0, BTF_INFO_ENC(BTF_KIND_FUNC_PROTO, 0, 1), 0),
 		BTF_PARAM_ENC(7, 1),
 		/* FUNC x */                                    /* [3] */
 		BTF_TYPE_ENC(5, BTF_INFO_ENC(BTF_KIND_FUNC, 0, 0), 2),
-	पूर्ण;
+	};
 
-	वापस probe_fd(libbpf__load_raw_btf((अक्षर *)types, माप(types),
-					     strs, माप(strs)));
-पूर्ण
+	return probe_fd(libbpf__load_raw_btf((char *)types, sizeof(types),
+					     strs, sizeof(strs)));
+}
 
-अटल पूर्णांक probe_kern_btf_func_global(व्योम)
-अणु
-	अटल स्थिर अक्षर strs[] = "\0int\0x\0a";
-	/* अटल व्योम x(पूर्णांक a) अणुपूर्ण */
-	__u32 types[] = अणु
-		/* पूर्णांक */
+static int probe_kern_btf_func_global(void)
+{
+	static const char strs[] = "\0int\0x\0a";
+	/* static void x(int a) {} */
+	__u32 types[] = {
+		/* int */
 		BTF_TYPE_INT_ENC(1, BTF_INT_SIGNED, 0, 32, 4),  /* [1] */
 		/* FUNC_PROTO */                                /* [2] */
 		BTF_TYPE_ENC(0, BTF_INFO_ENC(BTF_KIND_FUNC_PROTO, 0, 1), 0),
 		BTF_PARAM_ENC(7, 1),
 		/* FUNC x BTF_FUNC_GLOBAL */                    /* [3] */
 		BTF_TYPE_ENC(5, BTF_INFO_ENC(BTF_KIND_FUNC, 0, BTF_FUNC_GLOBAL), 2),
-	पूर्ण;
+	};
 
-	वापस probe_fd(libbpf__load_raw_btf((अक्षर *)types, माप(types),
-					     strs, माप(strs)));
-पूर्ण
+	return probe_fd(libbpf__load_raw_btf((char *)types, sizeof(types),
+					     strs, sizeof(strs)));
+}
 
-अटल पूर्णांक probe_kern_btf_datasec(व्योम)
-अणु
-	अटल स्थिर अक्षर strs[] = "\0x\0.data";
-	/* अटल पूर्णांक a; */
-	__u32 types[] = अणु
-		/* पूर्णांक */
+static int probe_kern_btf_datasec(void)
+{
+	static const char strs[] = "\0x\0.data";
+	/* static int a; */
+	__u32 types[] = {
+		/* int */
 		BTF_TYPE_INT_ENC(0, BTF_INT_SIGNED, 0, 32, 4),  /* [1] */
 		/* VAR x */                                     /* [2] */
 		BTF_TYPE_ENC(1, BTF_INFO_ENC(BTF_KIND_VAR, 0, 0), 1),
@@ -4092,49 +4091,49 @@ bpf_object__probe_loading(काष्ठा bpf_object *obj)
 		/* DATASEC val */                               /* [3] */
 		BTF_TYPE_ENC(3, BTF_INFO_ENC(BTF_KIND_DATASEC, 0, 1), 4),
 		BTF_VAR_SECINFO_ENC(2, 0, 4),
-	पूर्ण;
+	};
 
-	वापस probe_fd(libbpf__load_raw_btf((अक्षर *)types, माप(types),
-					     strs, माप(strs)));
-पूर्ण
+	return probe_fd(libbpf__load_raw_btf((char *)types, sizeof(types),
+					     strs, sizeof(strs)));
+}
 
-अटल पूर्णांक probe_kern_btf_भग्न(व्योम)
-अणु
-	अटल स्थिर अक्षर strs[] = "\0float";
-	__u32 types[] = अणु
-		/* भग्न */
+static int probe_kern_btf_float(void)
+{
+	static const char strs[] = "\0float";
+	__u32 types[] = {
+		/* float */
 		BTF_TYPE_FLOAT_ENC(1, 4),
-	पूर्ण;
+	};
 
-	वापस probe_fd(libbpf__load_raw_btf((अक्षर *)types, माप(types),
-					     strs, माप(strs)));
-पूर्ण
+	return probe_fd(libbpf__load_raw_btf((char *)types, sizeof(types),
+					     strs, sizeof(strs)));
+}
 
-अटल पूर्णांक probe_kern_array_mmap(व्योम)
-अणु
-	काष्ठा bpf_create_map_attr attr = अणु
+static int probe_kern_array_mmap(void)
+{
+	struct bpf_create_map_attr attr = {
 		.map_type = BPF_MAP_TYPE_ARRAY,
 		.map_flags = BPF_F_MMAPABLE,
-		.key_size = माप(पूर्णांक),
-		.value_size = माप(पूर्णांक),
+		.key_size = sizeof(int),
+		.value_size = sizeof(int),
 		.max_entries = 1,
-	पूर्ण;
+	};
 
-	वापस probe_fd(bpf_create_map_xattr(&attr));
-पूर्ण
+	return probe_fd(bpf_create_map_xattr(&attr));
+}
 
-अटल पूर्णांक probe_kern_exp_attach_type(व्योम)
-अणु
-	काष्ठा bpf_load_program_attr attr;
-	काष्ठा bpf_insn insns[] = अणु
+static int probe_kern_exp_attach_type(void)
+{
+	struct bpf_load_program_attr attr;
+	struct bpf_insn insns[] = {
 		BPF_MOV64_IMM(BPF_REG_0, 0),
 		BPF_EXIT_INSN(),
-	पूर्ण;
+	};
 
-	स_रखो(&attr, 0, माप(attr));
+	memset(&attr, 0, sizeof(attr));
 	/* use any valid combination of program type and (optional)
 	 * non-zero expected attach type (i.e., not a BPF_CGROUP_INET_INGRESS)
-	 * to see अगर kernel supports expected_attach_type field क्रम
+	 * to see if kernel supports expected_attach_type field for
 	 * BPF_PROG_LOAD command
 	 */
 	attr.prog_type = BPF_PROG_TYPE_CGROUP_SOCK;
@@ -4143,336 +4142,336 @@ bpf_object__probe_loading(काष्ठा bpf_object *obj)
 	attr.insns_cnt = ARRAY_SIZE(insns);
 	attr.license = "GPL";
 
-	वापस probe_fd(bpf_load_program_xattr(&attr, शून्य, 0));
-पूर्ण
+	return probe_fd(bpf_load_program_xattr(&attr, NULL, 0));
+}
 
-अटल पूर्णांक probe_kern_probe_पढ़ो_kernel(व्योम)
-अणु
-	काष्ठा bpf_load_program_attr attr;
-	काष्ठा bpf_insn insns[] = अणु
+static int probe_kern_probe_read_kernel(void)
+{
+	struct bpf_load_program_attr attr;
+	struct bpf_insn insns[] = {
 		BPF_MOV64_REG(BPF_REG_1, BPF_REG_10),	/* r1 = r10 (fp) */
 		BPF_ALU64_IMM(BPF_ADD, BPF_REG_1, -8),	/* r1 += -8 */
 		BPF_MOV64_IMM(BPF_REG_2, 8),		/* r2 = 8 */
 		BPF_MOV64_IMM(BPF_REG_3, 0),		/* r3 = 0 */
-		BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_probe_पढ़ो_kernel),
+		BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_probe_read_kernel),
 		BPF_EXIT_INSN(),
-	पूर्ण;
+	};
 
-	स_रखो(&attr, 0, माप(attr));
+	memset(&attr, 0, sizeof(attr));
 	attr.prog_type = BPF_PROG_TYPE_KPROBE;
 	attr.insns = insns;
 	attr.insns_cnt = ARRAY_SIZE(insns);
 	attr.license = "GPL";
 
-	वापस probe_fd(bpf_load_program_xattr(&attr, शून्य, 0));
-पूर्ण
+	return probe_fd(bpf_load_program_xattr(&attr, NULL, 0));
+}
 
-अटल पूर्णांक probe_prog_bind_map(व्योम)
-अणु
-	काष्ठा bpf_load_program_attr prg_attr;
-	काष्ठा bpf_create_map_attr map_attr;
-	अक्षर *cp, errmsg[STRERR_बफ_मानE];
-	काष्ठा bpf_insn insns[] = अणु
+static int probe_prog_bind_map(void)
+{
+	struct bpf_load_program_attr prg_attr;
+	struct bpf_create_map_attr map_attr;
+	char *cp, errmsg[STRERR_BUFSIZE];
+	struct bpf_insn insns[] = {
 		BPF_MOV64_IMM(BPF_REG_0, 0),
 		BPF_EXIT_INSN(),
-	पूर्ण;
-	पूर्णांक ret, map, prog;
+	};
+	int ret, map, prog;
 
-	स_रखो(&map_attr, 0, माप(map_attr));
+	memset(&map_attr, 0, sizeof(map_attr));
 	map_attr.map_type = BPF_MAP_TYPE_ARRAY;
-	map_attr.key_size = माप(पूर्णांक);
+	map_attr.key_size = sizeof(int);
 	map_attr.value_size = 32;
 	map_attr.max_entries = 1;
 
 	map = bpf_create_map_xattr(&map_attr);
-	अगर (map < 0) अणु
-		ret = -त्रुटि_सं;
-		cp = libbpf_म_त्रुटि_r(ret, errmsg, माप(errmsg));
+	if (map < 0) {
+		ret = -errno;
+		cp = libbpf_strerror_r(ret, errmsg, sizeof(errmsg));
 		pr_warn("Error in %s():%s(%d). Couldn't create simple array map.\n",
 			__func__, cp, -ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	स_रखो(&prg_attr, 0, माप(prg_attr));
+	memset(&prg_attr, 0, sizeof(prg_attr));
 	prg_attr.prog_type = BPF_PROG_TYPE_SOCKET_FILTER;
 	prg_attr.insns = insns;
 	prg_attr.insns_cnt = ARRAY_SIZE(insns);
 	prg_attr.license = "GPL";
 
-	prog = bpf_load_program_xattr(&prg_attr, शून्य, 0);
-	अगर (prog < 0) अणु
-		बंद(map);
-		वापस 0;
-	पूर्ण
+	prog = bpf_load_program_xattr(&prg_attr, NULL, 0);
+	if (prog < 0) {
+		close(map);
+		return 0;
+	}
 
-	ret = bpf_prog_bind_map(prog, map, शून्य);
+	ret = bpf_prog_bind_map(prog, map, NULL);
 
-	बंद(map);
-	बंद(prog);
+	close(map);
+	close(prog);
 
-	वापस ret >= 0;
-पूर्ण
+	return ret >= 0;
+}
 
-अटल पूर्णांक probe_module_btf(व्योम)
-अणु
-	अटल स्थिर अक्षर strs[] = "\0int";
-	__u32 types[] = अणु
-		/* पूर्णांक */
+static int probe_module_btf(void)
+{
+	static const char strs[] = "\0int";
+	__u32 types[] = {
+		/* int */
 		BTF_TYPE_INT_ENC(1, BTF_INT_SIGNED, 0, 32, 4),
-	पूर्ण;
-	काष्ठा bpf_btf_info info;
-	__u32 len = माप(info);
-	अक्षर name[16];
-	पूर्णांक fd, err;
+	};
+	struct bpf_btf_info info;
+	__u32 len = sizeof(info);
+	char name[16];
+	int fd, err;
 
-	fd = libbpf__load_raw_btf((अक्षर *)types, माप(types), strs, माप(strs));
-	अगर (fd < 0)
-		वापस 0; /* BTF not supported at all */
+	fd = libbpf__load_raw_btf((char *)types, sizeof(types), strs, sizeof(strs));
+	if (fd < 0)
+		return 0; /* BTF not supported at all */
 
-	स_रखो(&info, 0, माप(info));
+	memset(&info, 0, sizeof(info));
 	info.name = ptr_to_u64(name);
-	info.name_len = माप(name);
+	info.name_len = sizeof(name);
 
-	/* check that BPF_OBJ_GET_INFO_BY_FD supports specअगरying name poपूर्णांकer;
-	 * kernel's module BTF support coincides with support क्रम
-	 * name/name_len fields in काष्ठा bpf_btf_info.
+	/* check that BPF_OBJ_GET_INFO_BY_FD supports specifying name pointer;
+	 * kernel's module BTF support coincides with support for
+	 * name/name_len fields in struct bpf_btf_info.
 	 */
 	err = bpf_obj_get_info_by_fd(fd, &info, &len);
-	बंद(fd);
-	वापस !err;
-पूर्ण
+	close(fd);
+	return !err;
+}
 
-क्रमागत kern_feature_result अणु
+enum kern_feature_result {
 	FEAT_UNKNOWN = 0,
 	FEAT_SUPPORTED = 1,
 	FEAT_MISSING = 2,
-पूर्ण;
+};
 
-प्रकार पूर्णांक (*feature_probe_fn)(व्योम);
+typedef int (*feature_probe_fn)(void);
 
-अटल काष्ठा kern_feature_desc अणु
-	स्थिर अक्षर *desc;
+static struct kern_feature_desc {
+	const char *desc;
 	feature_probe_fn probe;
-	क्रमागत kern_feature_result res;
-पूर्ण feature_probes[__FEAT_CNT] = अणु
-	[FEAT_PROG_NAME] = अणु
+	enum kern_feature_result res;
+} feature_probes[__FEAT_CNT] = {
+	[FEAT_PROG_NAME] = {
 		"BPF program name", probe_kern_prog_name,
-	पूर्ण,
-	[FEAT_GLOBAL_DATA] = अणु
+	},
+	[FEAT_GLOBAL_DATA] = {
 		"global variables", probe_kern_global_data,
-	पूर्ण,
-	[FEAT_BTF] = अणु
+	},
+	[FEAT_BTF] = {
 		"minimal BTF", probe_kern_btf,
-	पूर्ण,
-	[FEAT_BTF_FUNC] = अणु
+	},
+	[FEAT_BTF_FUNC] = {
 		"BTF functions", probe_kern_btf_func,
-	पूर्ण,
-	[FEAT_BTF_GLOBAL_FUNC] = अणु
+	},
+	[FEAT_BTF_GLOBAL_FUNC] = {
 		"BTF global function", probe_kern_btf_func_global,
-	पूर्ण,
-	[FEAT_BTF_DATASEC] = अणु
+	},
+	[FEAT_BTF_DATASEC] = {
 		"BTF data section and variable", probe_kern_btf_datasec,
-	पूर्ण,
-	[FEAT_ARRAY_MMAP] = अणु
+	},
+	[FEAT_ARRAY_MMAP] = {
 		"ARRAY map mmap()", probe_kern_array_mmap,
-	पूर्ण,
-	[FEAT_EXP_ATTACH_TYPE] = अणु
+	},
+	[FEAT_EXP_ATTACH_TYPE] = {
 		"BPF_PROG_LOAD expected_attach_type attribute",
 		probe_kern_exp_attach_type,
-	पूर्ण,
-	[FEAT_PROBE_READ_KERN] = अणु
-		"bpf_probe_read_kernel() helper", probe_kern_probe_पढ़ो_kernel,
-	पूर्ण,
-	[FEAT_PROG_BIND_MAP] = अणु
+	},
+	[FEAT_PROBE_READ_KERN] = {
+		"bpf_probe_read_kernel() helper", probe_kern_probe_read_kernel,
+	},
+	[FEAT_PROG_BIND_MAP] = {
 		"BPF_PROG_BIND_MAP support", probe_prog_bind_map,
-	पूर्ण,
-	[FEAT_MODULE_BTF] = अणु
+	},
+	[FEAT_MODULE_BTF] = {
 		"module BTF support", probe_module_btf,
-	पूर्ण,
-	[FEAT_BTF_FLOAT] = अणु
-		"BTF_KIND_FLOAT support", probe_kern_btf_भग्न,
-	पूर्ण,
-पूर्ण;
+	},
+	[FEAT_BTF_FLOAT] = {
+		"BTF_KIND_FLOAT support", probe_kern_btf_float,
+	},
+};
 
-अटल bool kernel_supports(क्रमागत kern_feature_id feat_id)
-अणु
-	काष्ठा kern_feature_desc *feat = &feature_probes[feat_id];
-	पूर्णांक ret;
+static bool kernel_supports(enum kern_feature_id feat_id)
+{
+	struct kern_feature_desc *feat = &feature_probes[feat_id];
+	int ret;
 
-	अगर (READ_ONCE(feat->res) == FEAT_UNKNOWN) अणु
+	if (READ_ONCE(feat->res) == FEAT_UNKNOWN) {
 		ret = feat->probe();
-		अगर (ret > 0) अणु
+		if (ret > 0) {
 			WRITE_ONCE(feat->res, FEAT_SUPPORTED);
-		पूर्ण अन्यथा अगर (ret == 0) अणु
+		} else if (ret == 0) {
 			WRITE_ONCE(feat->res, FEAT_MISSING);
-		पूर्ण अन्यथा अणु
+		} else {
 			pr_warn("Detection of kernel %s support failed: %d\n", feat->desc, ret);
 			WRITE_ONCE(feat->res, FEAT_MISSING);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस READ_ONCE(feat->res) == FEAT_SUPPORTED;
-पूर्ण
+	return READ_ONCE(feat->res) == FEAT_SUPPORTED;
+}
 
-अटल bool map_is_reuse_compat(स्थिर काष्ठा bpf_map *map, पूर्णांक map_fd)
-अणु
-	काष्ठा bpf_map_info map_info = अणुपूर्ण;
-	अक्षर msg[STRERR_बफ_मानE];
+static bool map_is_reuse_compat(const struct bpf_map *map, int map_fd)
+{
+	struct bpf_map_info map_info = {};
+	char msg[STRERR_BUFSIZE];
 	__u32 map_info_len;
 
-	map_info_len = माप(map_info);
+	map_info_len = sizeof(map_info);
 
-	अगर (bpf_obj_get_info_by_fd(map_fd, &map_info, &map_info_len)) अणु
+	if (bpf_obj_get_info_by_fd(map_fd, &map_info, &map_info_len)) {
 		pr_warn("failed to get map info for map FD %d: %s\n",
-			map_fd, libbpf_म_त्रुटि_r(त्रुटि_सं, msg, माप(msg)));
-		वापस false;
-	पूर्ण
+			map_fd, libbpf_strerror_r(errno, msg, sizeof(msg)));
+		return false;
+	}
 
-	वापस (map_info.type == map->def.type &&
+	return (map_info.type == map->def.type &&
 		map_info.key_size == map->def.key_size &&
 		map_info.value_size == map->def.value_size &&
 		map_info.max_entries == map->def.max_entries &&
 		map_info.map_flags == map->def.map_flags);
-पूर्ण
+}
 
-अटल पूर्णांक
-bpf_object__reuse_map(काष्ठा bpf_map *map)
-अणु
-	अक्षर *cp, errmsg[STRERR_बफ_मानE];
-	पूर्णांक err, pin_fd;
+static int
+bpf_object__reuse_map(struct bpf_map *map)
+{
+	char *cp, errmsg[STRERR_BUFSIZE];
+	int err, pin_fd;
 
 	pin_fd = bpf_obj_get(map->pin_path);
-	अगर (pin_fd < 0) अणु
-		err = -त्रुटि_सं;
-		अगर (err == -ENOENT) अणु
+	if (pin_fd < 0) {
+		err = -errno;
+		if (err == -ENOENT) {
 			pr_debug("found no pinned map to reuse at '%s'\n",
 				 map->pin_path);
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 
-		cp = libbpf_म_त्रुटि_r(-err, errmsg, माप(errmsg));
+		cp = libbpf_strerror_r(-err, errmsg, sizeof(errmsg));
 		pr_warn("couldn't retrieve pinned map '%s': %s\n",
 			map->pin_path, cp);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	अगर (!map_is_reuse_compat(map, pin_fd)) अणु
+	if (!map_is_reuse_compat(map, pin_fd)) {
 		pr_warn("couldn't reuse pinned map at '%s': parameter mismatch\n",
 			map->pin_path);
-		बंद(pin_fd);
-		वापस -EINVAL;
-	पूर्ण
+		close(pin_fd);
+		return -EINVAL;
+	}
 
 	err = bpf_map__reuse_fd(map, pin_fd);
-	अगर (err) अणु
-		बंद(pin_fd);
-		वापस err;
-	पूर्ण
+	if (err) {
+		close(pin_fd);
+		return err;
+	}
 	map->pinned = true;
 	pr_debug("reused pinned map at '%s'\n", map->pin_path);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-bpf_object__populate_पूर्णांकernal_map(काष्ठा bpf_object *obj, काष्ठा bpf_map *map)
-अणु
-	क्रमागत libbpf_map_type map_type = map->libbpf_type;
-	अक्षर *cp, errmsg[STRERR_बफ_मानE];
-	पूर्णांक err, zero = 0;
+static int
+bpf_object__populate_internal_map(struct bpf_object *obj, struct bpf_map *map)
+{
+	enum libbpf_map_type map_type = map->libbpf_type;
+	char *cp, errmsg[STRERR_BUFSIZE];
+	int err, zero = 0;
 
 	err = bpf_map_update_elem(map->fd, &zero, map->mmaped, 0);
-	अगर (err) अणु
-		err = -त्रुटि_सं;
-		cp = libbpf_म_त्रुटि_r(err, errmsg, माप(errmsg));
+	if (err) {
+		err = -errno;
+		cp = libbpf_strerror_r(err, errmsg, sizeof(errmsg));
 		pr_warn("Error setting initial map(%s) contents: %s\n",
 			map->name, cp);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	/* Freeze .rodata and .kconfig map as पढ़ो-only from syscall side. */
-	अगर (map_type == LIBBPF_MAP_RODATA || map_type == LIBBPF_MAP_KCONFIG) अणु
-		err = bpf_map_मुक्तze(map->fd);
-		अगर (err) अणु
-			err = -त्रुटि_सं;
-			cp = libbpf_म_त्रुटि_r(err, errmsg, माप(errmsg));
+	/* Freeze .rodata and .kconfig map as read-only from syscall side. */
+	if (map_type == LIBBPF_MAP_RODATA || map_type == LIBBPF_MAP_KCONFIG) {
+		err = bpf_map_freeze(map->fd);
+		if (err) {
+			err = -errno;
+			cp = libbpf_strerror_r(err, errmsg, sizeof(errmsg));
 			pr_warn("Error freezing map(%s) as read-only: %s\n",
 				map->name, cp);
-			वापस err;
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+			return err;
+		}
+	}
+	return 0;
+}
 
-अटल व्योम bpf_map__destroy(काष्ठा bpf_map *map);
+static void bpf_map__destroy(struct bpf_map *map);
 
-अटल पूर्णांक bpf_object__create_map(काष्ठा bpf_object *obj, काष्ठा bpf_map *map)
-अणु
-	काष्ठा bpf_create_map_attr create_attr;
-	काष्ठा bpf_map_def *def = &map->def;
+static int bpf_object__create_map(struct bpf_object *obj, struct bpf_map *map)
+{
+	struct bpf_create_map_attr create_attr;
+	struct bpf_map_def *def = &map->def;
 
-	स_रखो(&create_attr, 0, माप(create_attr));
+	memset(&create_attr, 0, sizeof(create_attr));
 
-	अगर (kernel_supports(FEAT_PROG_NAME))
+	if (kernel_supports(FEAT_PROG_NAME))
 		create_attr.name = map->name;
-	create_attr.map_अगरindex = map->map_अगरindex;
+	create_attr.map_ifindex = map->map_ifindex;
 	create_attr.map_type = def->type;
 	create_attr.map_flags = def->map_flags;
 	create_attr.key_size = def->key_size;
 	create_attr.value_size = def->value_size;
 	create_attr.numa_node = map->numa_node;
 
-	अगर (def->type == BPF_MAP_TYPE_PERF_EVENT_ARRAY && !def->max_entries) अणु
-		पूर्णांक nr_cpus;
+	if (def->type == BPF_MAP_TYPE_PERF_EVENT_ARRAY && !def->max_entries) {
+		int nr_cpus;
 
 		nr_cpus = libbpf_num_possible_cpus();
-		अगर (nr_cpus < 0) अणु
+		if (nr_cpus < 0) {
 			pr_warn("map '%s': failed to determine number of system CPUs: %d\n",
 				map->name, nr_cpus);
-			वापस nr_cpus;
-		पूर्ण
+			return nr_cpus;
+		}
 		pr_debug("map '%s': setting size to %d\n", map->name, nr_cpus);
 		create_attr.max_entries = nr_cpus;
-	पूर्ण अन्यथा अणु
+	} else {
 		create_attr.max_entries = def->max_entries;
-	पूर्ण
+	}
 
-	अगर (bpf_map__is_काष्ठा_ops(map))
+	if (bpf_map__is_struct_ops(map))
 		create_attr.btf_vmlinux_value_type_id =
 			map->btf_vmlinux_value_type_id;
 
 	create_attr.btf_fd = 0;
 	create_attr.btf_key_type_id = 0;
 	create_attr.btf_value_type_id = 0;
-	अगर (obj->btf && btf__fd(obj->btf) >= 0 && !bpf_map_find_btf_info(obj, map)) अणु
+	if (obj->btf && btf__fd(obj->btf) >= 0 && !bpf_map_find_btf_info(obj, map)) {
 		create_attr.btf_fd = btf__fd(obj->btf);
 		create_attr.btf_key_type_id = map->btf_key_type_id;
 		create_attr.btf_value_type_id = map->btf_value_type_id;
-	पूर्ण
+	}
 
-	अगर (bpf_map_type__is_map_in_map(def->type)) अणु
-		अगर (map->inner_map) अणु
-			पूर्णांक err;
+	if (bpf_map_type__is_map_in_map(def->type)) {
+		if (map->inner_map) {
+			int err;
 
 			err = bpf_object__create_map(obj, map->inner_map);
-			अगर (err) अणु
+			if (err) {
 				pr_warn("map '%s': failed to create inner map: %d\n",
 					map->name, err);
-				वापस err;
-			पूर्ण
+				return err;
+			}
 			map->inner_map_fd = bpf_map__fd(map->inner_map);
-		पूर्ण
-		अगर (map->inner_map_fd >= 0)
+		}
+		if (map->inner_map_fd >= 0)
 			create_attr.inner_map_fd = map->inner_map_fd;
-	पूर्ण
+	}
 
 	map->fd = bpf_create_map_xattr(&create_attr);
-	अगर (map->fd < 0 && (create_attr.btf_key_type_id ||
-			    create_attr.btf_value_type_id)) अणु
-		अक्षर *cp, errmsg[STRERR_बफ_मानE];
-		पूर्णांक err = -त्रुटि_सं;
+	if (map->fd < 0 && (create_attr.btf_key_type_id ||
+			    create_attr.btf_value_type_id)) {
+		char *cp, errmsg[STRERR_BUFSIZE];
+		int err = -errno;
 
-		cp = libbpf_म_त्रुटि_r(err, errmsg, माप(errmsg));
+		cp = libbpf_strerror_r(err, errmsg, sizeof(errmsg));
 		pr_warn("Error in bpf_create_map_xattr(%s):%s(%d). Retrying without BTF.\n",
 			map->name, cp, err);
 		create_attr.btf_fd = 0;
@@ -4481,307 +4480,307 @@ bpf_object__populate_पूर्णांकernal_map(काष्ठा bpf_ob
 		map->btf_key_type_id = 0;
 		map->btf_value_type_id = 0;
 		map->fd = bpf_create_map_xattr(&create_attr);
-	पूर्ण
+	}
 
-	अगर (map->fd < 0)
-		वापस -त्रुटि_सं;
+	if (map->fd < 0)
+		return -errno;
 
-	अगर (bpf_map_type__is_map_in_map(def->type) && map->inner_map) अणु
+	if (bpf_map_type__is_map_in_map(def->type) && map->inner_map) {
 		bpf_map__destroy(map->inner_map);
-		zमुक्त(&map->inner_map);
-	पूर्ण
+		zfree(&map->inner_map);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक init_map_slots(काष्ठा bpf_map *map)
-अणु
-	स्थिर काष्ठा bpf_map *targ_map;
-	अचिन्हित पूर्णांक i;
-	पूर्णांक fd, err;
+static int init_map_slots(struct bpf_map *map)
+{
+	const struct bpf_map *targ_map;
+	unsigned int i;
+	int fd, err;
 
-	क्रम (i = 0; i < map->init_slots_sz; i++) अणु
-		अगर (!map->init_slots[i])
-			जारी;
+	for (i = 0; i < map->init_slots_sz; i++) {
+		if (!map->init_slots[i])
+			continue;
 
 		targ_map = map->init_slots[i];
 		fd = bpf_map__fd(targ_map);
 		err = bpf_map_update_elem(map->fd, &i, &fd, 0);
-		अगर (err) अणु
-			err = -त्रुटि_सं;
+		if (err) {
+			err = -errno;
 			pr_warn("map '%s': failed to initialize slot [%d] to map '%s' fd=%d: %d\n",
 				map->name, i, targ_map->name,
 				fd, err);
-			वापस err;
-		पूर्ण
+			return err;
+		}
 		pr_debug("map '%s': slot [%d] set to map '%s' fd=%d\n",
 			 map->name, i, targ_map->name, fd);
-	पूर्ण
+	}
 
-	zमुक्त(&map->init_slots);
+	zfree(&map->init_slots);
 	map->init_slots_sz = 0;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-bpf_object__create_maps(काष्ठा bpf_object *obj)
-अणु
-	काष्ठा bpf_map *map;
-	अक्षर *cp, errmsg[STRERR_बफ_मानE];
-	अचिन्हित पूर्णांक i, j;
-	पूर्णांक err;
+static int
+bpf_object__create_maps(struct bpf_object *obj)
+{
+	struct bpf_map *map;
+	char *cp, errmsg[STRERR_BUFSIZE];
+	unsigned int i, j;
+	int err;
 
-	क्रम (i = 0; i < obj->nr_maps; i++) अणु
+	for (i = 0; i < obj->nr_maps; i++) {
 		map = &obj->maps[i];
 
-		अगर (map->pin_path) अणु
+		if (map->pin_path) {
 			err = bpf_object__reuse_map(map);
-			अगर (err) अणु
+			if (err) {
 				pr_warn("map '%s': error reusing pinned map\n",
 					map->name);
-				जाओ err_out;
-			पूर्ण
-		पूर्ण
+				goto err_out;
+			}
+		}
 
-		अगर (map->fd >= 0) अणु
+		if (map->fd >= 0) {
 			pr_debug("map '%s': skipping creation (preset fd=%d)\n",
 				 map->name, map->fd);
-		पूर्ण अन्यथा अणु
+		} else {
 			err = bpf_object__create_map(obj, map);
-			अगर (err)
-				जाओ err_out;
+			if (err)
+				goto err_out;
 
 			pr_debug("map '%s': created successfully, fd=%d\n",
 				 map->name, map->fd);
 
-			अगर (bpf_map__is_पूर्णांकernal(map)) अणु
-				err = bpf_object__populate_पूर्णांकernal_map(obj, map);
-				अगर (err < 0) अणु
-					zबंद(map->fd);
-					जाओ err_out;
-				पूर्ण
-			पूर्ण
+			if (bpf_map__is_internal(map)) {
+				err = bpf_object__populate_internal_map(obj, map);
+				if (err < 0) {
+					zclose(map->fd);
+					goto err_out;
+				}
+			}
 
-			अगर (map->init_slots_sz) अणु
+			if (map->init_slots_sz) {
 				err = init_map_slots(map);
-				अगर (err < 0) अणु
-					zबंद(map->fd);
-					जाओ err_out;
-				पूर्ण
-			पूर्ण
-		पूर्ण
+				if (err < 0) {
+					zclose(map->fd);
+					goto err_out;
+				}
+			}
+		}
 
-		अगर (map->pin_path && !map->pinned) अणु
-			err = bpf_map__pin(map, शून्य);
-			अगर (err) अणु
+		if (map->pin_path && !map->pinned) {
+			err = bpf_map__pin(map, NULL);
+			if (err) {
 				pr_warn("map '%s': failed to auto-pin at '%s': %d\n",
 					map->name, map->pin_path, err);
-				zबंद(map->fd);
-				जाओ err_out;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				zclose(map->fd);
+				goto err_out;
+			}
+		}
+	}
 
-	वापस 0;
+	return 0;
 
 err_out:
-	cp = libbpf_म_त्रुटि_r(err, errmsg, माप(errmsg));
+	cp = libbpf_strerror_r(err, errmsg, sizeof(errmsg));
 	pr_warn("map '%s': failed to create: %s(%d)\n", map->name, cp, err);
 	pr_perm_msg(err);
-	क्रम (j = 0; j < i; j++)
-		zबंद(obj->maps[j].fd);
-	वापस err;
-पूर्ण
+	for (j = 0; j < i; j++)
+		zclose(obj->maps[j].fd);
+	return err;
+}
 
-#घोषणा BPF_CORE_SPEC_MAX_LEN 64
+#define BPF_CORE_SPEC_MAX_LEN 64
 
 /* represents BPF CO-RE field or array element accessor */
-काष्ठा bpf_core_accessor अणु
-	__u32 type_id;		/* काष्ठा/जोड़ type or array element type */
+struct bpf_core_accessor {
+	__u32 type_id;		/* struct/union type or array element type */
 	__u32 idx;		/* field index or array index */
-	स्थिर अक्षर *name;	/* field name or शून्य क्रम array accessor */
-पूर्ण;
+	const char *name;	/* field name or NULL for array accessor */
+};
 
-काष्ठा bpf_core_spec अणु
-	स्थिर काष्ठा btf *btf;
+struct bpf_core_spec {
+	const struct btf *btf;
 	/* high-level spec: named fields and array indices only */
-	काष्ठा bpf_core_accessor spec[BPF_CORE_SPEC_MAX_LEN];
-	/* original unresolved (no skip_mods_or_प्रकारs) root type ID */
+	struct bpf_core_accessor spec[BPF_CORE_SPEC_MAX_LEN];
+	/* original unresolved (no skip_mods_or_typedefs) root type ID */
 	__u32 root_type_id;
 	/* CO-RE relocation kind */
-	क्रमागत bpf_core_relo_kind relo_kind;
+	enum bpf_core_relo_kind relo_kind;
 	/* high-level spec length */
-	पूर्णांक len;
+	int len;
 	/* raw, low-level spec: 1-to-1 with accessor spec string */
-	पूर्णांक raw_spec[BPF_CORE_SPEC_MAX_LEN];
+	int raw_spec[BPF_CORE_SPEC_MAX_LEN];
 	/* raw spec length */
-	पूर्णांक raw_len;
+	int raw_len;
 	/* field bit offset represented by spec */
 	__u32 bit_offset;
-पूर्ण;
+};
 
-अटल bool str_is_empty(स्थिर अक्षर *s)
-अणु
-	वापस !s || !s[0];
-पूर्ण
+static bool str_is_empty(const char *s)
+{
+	return !s || !s[0];
+}
 
-अटल bool is_flex_arr(स्थिर काष्ठा btf *btf,
-			स्थिर काष्ठा bpf_core_accessor *acc,
-			स्थिर काष्ठा btf_array *arr)
-अणु
-	स्थिर काष्ठा btf_type *t;
+static bool is_flex_arr(const struct btf *btf,
+			const struct bpf_core_accessor *acc,
+			const struct btf_array *arr)
+{
+	const struct btf_type *t;
 
-	/* not a flexible array, अगर not inside a काष्ठा or has non-zero size */
-	अगर (!acc->name || arr->nelems > 0)
-		वापस false;
+	/* not a flexible array, if not inside a struct or has non-zero size */
+	if (!acc->name || arr->nelems > 0)
+		return false;
 
-	/* has to be the last member of enclosing काष्ठा */
+	/* has to be the last member of enclosing struct */
 	t = btf__type_by_id(btf, acc->type_id);
-	वापस acc->idx == btf_vlen(t) - 1;
-पूर्ण
+	return acc->idx == btf_vlen(t) - 1;
+}
 
-अटल स्थिर अक्षर *core_relo_kind_str(क्रमागत bpf_core_relo_kind kind)
-अणु
-	चयन (kind) अणु
-	हाल BPF_FIELD_BYTE_OFFSET: वापस "byte_off";
-	हाल BPF_FIELD_BYTE_SIZE: वापस "byte_sz";
-	हाल BPF_FIELD_EXISTS: वापस "field_exists";
-	हाल BPF_FIELD_SIGNED: वापस "signed";
-	हाल BPF_FIELD_LSHIFT_U64: वापस "lshift_u64";
-	हाल BPF_FIELD_RSHIFT_U64: वापस "rshift_u64";
-	हाल BPF_TYPE_ID_LOCAL: वापस "local_type_id";
-	हाल BPF_TYPE_ID_TARGET: वापस "target_type_id";
-	हाल BPF_TYPE_EXISTS: वापस "type_exists";
-	हाल BPF_TYPE_SIZE: वापस "type_size";
-	हाल BPF_ENUMVAL_EXISTS: वापस "enumval_exists";
-	हाल BPF_ENUMVAL_VALUE: वापस "enumval_value";
-	शेष: वापस "unknown";
-	पूर्ण
-पूर्ण
+static const char *core_relo_kind_str(enum bpf_core_relo_kind kind)
+{
+	switch (kind) {
+	case BPF_FIELD_BYTE_OFFSET: return "byte_off";
+	case BPF_FIELD_BYTE_SIZE: return "byte_sz";
+	case BPF_FIELD_EXISTS: return "field_exists";
+	case BPF_FIELD_SIGNED: return "signed";
+	case BPF_FIELD_LSHIFT_U64: return "lshift_u64";
+	case BPF_FIELD_RSHIFT_U64: return "rshift_u64";
+	case BPF_TYPE_ID_LOCAL: return "local_type_id";
+	case BPF_TYPE_ID_TARGET: return "target_type_id";
+	case BPF_TYPE_EXISTS: return "type_exists";
+	case BPF_TYPE_SIZE: return "type_size";
+	case BPF_ENUMVAL_EXISTS: return "enumval_exists";
+	case BPF_ENUMVAL_VALUE: return "enumval_value";
+	default: return "unknown";
+	}
+}
 
-अटल bool core_relo_is_field_based(क्रमागत bpf_core_relo_kind kind)
-अणु
-	चयन (kind) अणु
-	हाल BPF_FIELD_BYTE_OFFSET:
-	हाल BPF_FIELD_BYTE_SIZE:
-	हाल BPF_FIELD_EXISTS:
-	हाल BPF_FIELD_SIGNED:
-	हाल BPF_FIELD_LSHIFT_U64:
-	हाल BPF_FIELD_RSHIFT_U64:
-		वापस true;
-	शेष:
-		वापस false;
-	पूर्ण
-पूर्ण
+static bool core_relo_is_field_based(enum bpf_core_relo_kind kind)
+{
+	switch (kind) {
+	case BPF_FIELD_BYTE_OFFSET:
+	case BPF_FIELD_BYTE_SIZE:
+	case BPF_FIELD_EXISTS:
+	case BPF_FIELD_SIGNED:
+	case BPF_FIELD_LSHIFT_U64:
+	case BPF_FIELD_RSHIFT_U64:
+		return true;
+	default:
+		return false;
+	}
+}
 
-अटल bool core_relo_is_type_based(क्रमागत bpf_core_relo_kind kind)
-अणु
-	चयन (kind) अणु
-	हाल BPF_TYPE_ID_LOCAL:
-	हाल BPF_TYPE_ID_TARGET:
-	हाल BPF_TYPE_EXISTS:
-	हाल BPF_TYPE_SIZE:
-		वापस true;
-	शेष:
-		वापस false;
-	पूर्ण
-पूर्ण
+static bool core_relo_is_type_based(enum bpf_core_relo_kind kind)
+{
+	switch (kind) {
+	case BPF_TYPE_ID_LOCAL:
+	case BPF_TYPE_ID_TARGET:
+	case BPF_TYPE_EXISTS:
+	case BPF_TYPE_SIZE:
+		return true;
+	default:
+		return false;
+	}
+}
 
-अटल bool core_relo_is_क्रमागतval_based(क्रमागत bpf_core_relo_kind kind)
-अणु
-	चयन (kind) अणु
-	हाल BPF_ENUMVAL_EXISTS:
-	हाल BPF_ENUMVAL_VALUE:
-		वापस true;
-	शेष:
-		वापस false;
-	पूर्ण
-पूर्ण
+static bool core_relo_is_enumval_based(enum bpf_core_relo_kind kind)
+{
+	switch (kind) {
+	case BPF_ENUMVAL_EXISTS:
+	case BPF_ENUMVAL_VALUE:
+		return true;
+	default:
+		return false;
+	}
+}
 
 /*
- * Turn bpf_core_relo पूर्णांकo a low- and high-level spec representation,
- * validating correctness aदीर्घ the way, as well as calculating resulting
- * field bit offset, specअगरied by accessor string. Low-level spec captures
+ * Turn bpf_core_relo into a low- and high-level spec representation,
+ * validating correctness along the way, as well as calculating resulting
+ * field bit offset, specified by accessor string. Low-level spec captures
  * every single level of nestedness, including traversing anonymous
- * काष्ठा/जोड़ members. High-level one only captures semantically meaningful
+ * struct/union members. High-level one only captures semantically meaningful
  * "turning points": named fields and array indicies.
- * E.g., क्रम this हाल:
+ * E.g., for this case:
  *
- *   काष्ठा sample अणु
- *       पूर्णांक __unimportant;
- *       काष्ठा अणु
- *           पूर्णांक __1;
- *           पूर्णांक __2;
- *           पूर्णांक a[7];
- *       पूर्ण;
- *   पूर्ण;
+ *   struct sample {
+ *       int __unimportant;
+ *       struct {
+ *           int __1;
+ *           int __2;
+ *           int a[7];
+ *       };
+ *   };
  *
- *   काष्ठा sample *s = ...;
+ *   struct sample *s = ...;
  *
- *   पूर्णांक x = &s->a[3]; // access string = '0:1:2:3'
+ *   int x = &s->a[3]; // access string = '0:1:2:3'
  *
  * Low-level spec has 1:1 mapping with each element of access string (it's
  * just a parsed access string representation): [0, 1, 2, 3].
  *
- * High-level spec will capture only 3 poपूर्णांकs:
- *   - पूर्णांकial zero-index access by poपूर्णांकer (&s->... is the same as &s[0]...);
+ * High-level spec will capture only 3 points:
+ *   - intial zero-index access by pointer (&s->... is the same as &s[0]...);
  *   - field 'a' access (corresponds to '2' in low-level spec);
  *   - array element #3 access (corresponds to '3' in low-level spec).
  *
  * Type-based relocations (TYPE_EXISTS/TYPE_SIZE,
- * TYPE_ID_LOCAL/TYPE_ID_TARGET) करोn't capture any field inक्रमmation. Their
+ * TYPE_ID_LOCAL/TYPE_ID_TARGET) don't capture any field information. Their
  * spec and raw_spec are kept empty.
  *
  * Enum value-based relocations (ENUMVAL_EXISTS/ENUMVAL_VALUE) use access
- * string to specअगरy क्रमागतerator's value index that need to be relocated.
+ * string to specify enumerator's value index that need to be relocated.
  */
-अटल पूर्णांक bpf_core_parse_spec(स्थिर काष्ठा btf *btf,
+static int bpf_core_parse_spec(const struct btf *btf,
 			       __u32 type_id,
-			       स्थिर अक्षर *spec_str,
-			       क्रमागत bpf_core_relo_kind relo_kind,
-			       काष्ठा bpf_core_spec *spec)
-अणु
-	पूर्णांक access_idx, parsed_len, i;
-	काष्ठा bpf_core_accessor *acc;
-	स्थिर काष्ठा btf_type *t;
-	स्थिर अक्षर *name;
+			       const char *spec_str,
+			       enum bpf_core_relo_kind relo_kind,
+			       struct bpf_core_spec *spec)
+{
+	int access_idx, parsed_len, i;
+	struct bpf_core_accessor *acc;
+	const struct btf_type *t;
+	const char *name;
 	__u32 id;
 	__s64 sz;
 
-	अगर (str_is_empty(spec_str) || *spec_str == ':')
-		वापस -EINVAL;
+	if (str_is_empty(spec_str) || *spec_str == ':')
+		return -EINVAL;
 
-	स_रखो(spec, 0, माप(*spec));
+	memset(spec, 0, sizeof(*spec));
 	spec->btf = btf;
 	spec->root_type_id = type_id;
 	spec->relo_kind = relo_kind;
 
-	/* type-based relocations करोn't have a field access string */
-	अगर (core_relo_is_type_based(relo_kind)) अणु
-		अगर (म_भेद(spec_str, "0"))
-			वापस -EINVAL;
-		वापस 0;
-	पूर्ण
+	/* type-based relocations don't have a field access string */
+	if (core_relo_is_type_based(relo_kind)) {
+		if (strcmp(spec_str, "0"))
+			return -EINVAL;
+		return 0;
+	}
 
-	/* parse spec_str="0:1:2:3:4" पूर्णांकo array raw_spec=[0, 1, 2, 3, 4] */
-	जबतक (*spec_str) अणु
-		अगर (*spec_str == ':')
+	/* parse spec_str="0:1:2:3:4" into array raw_spec=[0, 1, 2, 3, 4] */
+	while (*spec_str) {
+		if (*spec_str == ':')
 			++spec_str;
-		अगर (माला_पूछो(spec_str, "%d%n", &access_idx, &parsed_len) != 1)
-			वापस -EINVAL;
-		अगर (spec->raw_len == BPF_CORE_SPEC_MAX_LEN)
-			वापस -E2BIG;
+		if (sscanf(spec_str, "%d%n", &access_idx, &parsed_len) != 1)
+			return -EINVAL;
+		if (spec->raw_len == BPF_CORE_SPEC_MAX_LEN)
+			return -E2BIG;
 		spec_str += parsed_len;
 		spec->raw_spec[spec->raw_len++] = access_idx;
-	पूर्ण
+	}
 
-	अगर (spec->raw_len == 0)
-		वापस -EINVAL;
+	if (spec->raw_len == 0)
+		return -EINVAL;
 
-	t = skip_mods_and_प्रकारs(btf, type_id, &id);
-	अगर (!t)
-		वापस -EINVAL;
+	t = skip_mods_and_typedefs(btf, type_id, &id);
+	if (!t)
+		return -EINVAL;
 
 	access_idx = spec->raw_spec[0];
 	acc = &spec->spec[0];
@@ -4789,166 +4788,166 @@ err_out:
 	acc->idx = access_idx;
 	spec->len++;
 
-	अगर (core_relo_is_क्रमागतval_based(relo_kind)) अणु
-		अगर (!btf_is_क्रमागत(t) || spec->raw_len > 1 || access_idx >= btf_vlen(t))
-			वापस -EINVAL;
+	if (core_relo_is_enumval_based(relo_kind)) {
+		if (!btf_is_enum(t) || spec->raw_len > 1 || access_idx >= btf_vlen(t))
+			return -EINVAL;
 
-		/* record क्रमागतerator name in a first accessor */
-		acc->name = btf__name_by_offset(btf, btf_क्रमागत(t)[access_idx].name_off);
-		वापस 0;
-	पूर्ण
+		/* record enumerator name in a first accessor */
+		acc->name = btf__name_by_offset(btf, btf_enum(t)[access_idx].name_off);
+		return 0;
+	}
 
-	अगर (!core_relo_is_field_based(relo_kind))
-		वापस -EINVAL;
+	if (!core_relo_is_field_based(relo_kind))
+		return -EINVAL;
 
 	sz = btf__resolve_size(btf, id);
-	अगर (sz < 0)
-		वापस sz;
+	if (sz < 0)
+		return sz;
 	spec->bit_offset = access_idx * sz * 8;
 
-	क्रम (i = 1; i < spec->raw_len; i++) अणु
-		t = skip_mods_and_प्रकारs(btf, id, &id);
-		अगर (!t)
-			वापस -EINVAL;
+	for (i = 1; i < spec->raw_len; i++) {
+		t = skip_mods_and_typedefs(btf, id, &id);
+		if (!t)
+			return -EINVAL;
 
 		access_idx = spec->raw_spec[i];
 		acc = &spec->spec[spec->len];
 
-		अगर (btf_is_composite(t)) अणु
-			स्थिर काष्ठा btf_member *m;
+		if (btf_is_composite(t)) {
+			const struct btf_member *m;
 			__u32 bit_offset;
 
-			अगर (access_idx >= btf_vlen(t))
-				वापस -EINVAL;
+			if (access_idx >= btf_vlen(t))
+				return -EINVAL;
 
 			bit_offset = btf_member_bit_offset(t, access_idx);
 			spec->bit_offset += bit_offset;
 
 			m = btf_members(t) + access_idx;
-			अगर (m->name_off) अणु
+			if (m->name_off) {
 				name = btf__name_by_offset(btf, m->name_off);
-				अगर (str_is_empty(name))
-					वापस -EINVAL;
+				if (str_is_empty(name))
+					return -EINVAL;
 
 				acc->type_id = id;
 				acc->idx = access_idx;
 				acc->name = name;
 				spec->len++;
-			पूर्ण
+			}
 
 			id = m->type;
-		पूर्ण अन्यथा अगर (btf_is_array(t)) अणु
-			स्थिर काष्ठा btf_array *a = btf_array(t);
+		} else if (btf_is_array(t)) {
+			const struct btf_array *a = btf_array(t);
 			bool flex;
 
-			t = skip_mods_and_प्रकारs(btf, a->type, &id);
-			अगर (!t)
-				वापस -EINVAL;
+			t = skip_mods_and_typedefs(btf, a->type, &id);
+			if (!t)
+				return -EINVAL;
 
 			flex = is_flex_arr(btf, acc - 1, a);
-			अगर (!flex && access_idx >= a->nelems)
-				वापस -EINVAL;
+			if (!flex && access_idx >= a->nelems)
+				return -EINVAL;
 
 			spec->spec[spec->len].type_id = id;
 			spec->spec[spec->len].idx = access_idx;
 			spec->len++;
 
 			sz = btf__resolve_size(btf, id);
-			अगर (sz < 0)
-				वापस sz;
+			if (sz < 0)
+				return sz;
 			spec->bit_offset += access_idx * sz * 8;
-		पूर्ण अन्यथा अणु
+		} else {
 			pr_warn("relo for [%u] %s (at idx %d) captures type [%d] of unexpected kind %s\n",
 				type_id, spec_str, i, id, btf_kind_str(t));
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल bool bpf_core_is_flavor_sep(स्थिर अक्षर *s)
-अणु
+static bool bpf_core_is_flavor_sep(const char *s)
+{
 	/* check X___Y name pattern, where X and Y are not underscores */
-	वापस s[0] != '_' &&				      /* X */
+	return s[0] != '_' &&				      /* X */
 	       s[1] == '_' && s[2] == '_' && s[3] == '_' &&   /* ___ */
 	       s[4] != '_';				      /* Y */
-पूर्ण
+}
 
-/* Given 'some_struct_name___with_flavor' वापस the length of a name prefix
- * beक्रमe last triple underscore. Struct name part after last triple
+/* Given 'some_struct_name___with_flavor' return the length of a name prefix
+ * before last triple underscore. Struct name part after last triple
  * underscore is ignored by BPF CO-RE relocation during relocation matching.
  */
-अटल माप_प्रकार bpf_core_essential_name_len(स्थिर अक्षर *name)
-अणु
-	माप_प्रकार n = म_माप(name);
-	पूर्णांक i;
+static size_t bpf_core_essential_name_len(const char *name)
+{
+	size_t n = strlen(name);
+	int i;
 
-	क्रम (i = n - 5; i >= 0; i--) अणु
-		अगर (bpf_core_is_flavor_sep(name + i))
-			वापस i + 1;
-	पूर्ण
-	वापस n;
-पूर्ण
+	for (i = n - 5; i >= 0; i--) {
+		if (bpf_core_is_flavor_sep(name + i))
+			return i + 1;
+	}
+	return n;
+}
 
-काष्ठा core_cand
-अणु
-	स्थिर काष्ठा btf *btf;
-	स्थिर काष्ठा btf_type *t;
-	स्थिर अक्षर *name;
+struct core_cand
+{
+	const struct btf *btf;
+	const struct btf_type *t;
+	const char *name;
 	__u32 id;
-पूर्ण;
+};
 
-/* dynamically sized list of type IDs and its associated काष्ठा btf */
-काष्ठा core_cand_list अणु
-	काष्ठा core_cand *cands;
-	पूर्णांक len;
-पूर्ण;
+/* dynamically sized list of type IDs and its associated struct btf */
+struct core_cand_list {
+	struct core_cand *cands;
+	int len;
+};
 
-अटल व्योम bpf_core_मुक्त_cands(काष्ठा core_cand_list *cands)
-अणु
-	मुक्त(cands->cands);
-	मुक्त(cands);
-पूर्ण
+static void bpf_core_free_cands(struct core_cand_list *cands)
+{
+	free(cands->cands);
+	free(cands);
+}
 
-अटल पूर्णांक bpf_core_add_cands(काष्ठा core_cand *local_cand,
-			      माप_प्रकार local_essent_len,
-			      स्थिर काष्ठा btf *targ_btf,
-			      स्थिर अक्षर *targ_btf_name,
-			      पूर्णांक targ_start_id,
-			      काष्ठा core_cand_list *cands)
-अणु
-	काष्ठा core_cand *new_cands, *cand;
-	स्थिर काष्ठा btf_type *t;
-	स्थिर अक्षर *targ_name;
-	माप_प्रकार targ_essent_len;
-	पूर्णांक n, i;
+static int bpf_core_add_cands(struct core_cand *local_cand,
+			      size_t local_essent_len,
+			      const struct btf *targ_btf,
+			      const char *targ_btf_name,
+			      int targ_start_id,
+			      struct core_cand_list *cands)
+{
+	struct core_cand *new_cands, *cand;
+	const struct btf_type *t;
+	const char *targ_name;
+	size_t targ_essent_len;
+	int n, i;
 
 	n = btf__get_nr_types(targ_btf);
-	क्रम (i = targ_start_id; i <= n; i++) अणु
+	for (i = targ_start_id; i <= n; i++) {
 		t = btf__type_by_id(targ_btf, i);
-		अगर (btf_kind(t) != btf_kind(local_cand->t))
-			जारी;
+		if (btf_kind(t) != btf_kind(local_cand->t))
+			continue;
 
 		targ_name = btf__name_by_offset(targ_btf, t->name_off);
-		अगर (str_is_empty(targ_name))
-			जारी;
+		if (str_is_empty(targ_name))
+			continue;
 
 		targ_essent_len = bpf_core_essential_name_len(targ_name);
-		अगर (targ_essent_len != local_essent_len)
-			जारी;
+		if (targ_essent_len != local_essent_len)
+			continue;
 
-		अगर (म_भेदन(local_cand->name, targ_name, local_essent_len) != 0)
-			जारी;
+		if (strncmp(local_cand->name, targ_name, local_essent_len) != 0)
+			continue;
 
 		pr_debug("CO-RE relocating [%d] %s %s: found target candidate [%d] %s %s in [%s]\n",
 			 local_cand->id, btf_kind_str(local_cand->t),
 			 local_cand->name, i, btf_kind_str(t), targ_name,
 			 targ_btf_name);
-		new_cands = libbpf_पुनः_स्मृतिarray(cands->cands, cands->len + 1,
-					      माप(*cands->cands));
-		अगर (!new_cands)
-			वापस -ENOMEM;
+		new_cands = libbpf_reallocarray(cands->cands, cands->len + 1,
+					      sizeof(*cands->cands));
+		if (!new_cands)
+			return -ENOMEM;
 
 		cand = &new_cands[cands->len];
 		cand->btf = targ_btf;
@@ -4958,78 +4957,78 @@ err_out:
 
 		cands->cands = new_cands;
 		cands->len++;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल पूर्णांक load_module_btfs(काष्ठा bpf_object *obj)
-अणु
-	काष्ठा bpf_btf_info info;
-	काष्ठा module_btf *mod_btf;
-	काष्ठा btf *btf;
-	अक्षर name[64];
+static int load_module_btfs(struct bpf_object *obj)
+{
+	struct bpf_btf_info info;
+	struct module_btf *mod_btf;
+	struct btf *btf;
+	char name[64];
 	__u32 id = 0, len;
-	पूर्णांक err, fd;
+	int err, fd;
 
-	अगर (obj->btf_modules_loaded)
-		वापस 0;
+	if (obj->btf_modules_loaded)
+		return 0;
 
-	/* करोn't करो this again, even अगर we find no module BTFs */
+	/* don't do this again, even if we find no module BTFs */
 	obj->btf_modules_loaded = true;
 
 	/* kernel too old to support module BTFs */
-	अगर (!kernel_supports(FEAT_MODULE_BTF))
-		वापस 0;
+	if (!kernel_supports(FEAT_MODULE_BTF))
+		return 0;
 
-	जबतक (true) अणु
+	while (true) {
 		err = bpf_btf_get_next_id(id, &id);
-		अगर (err && त्रुटि_सं == ENOENT)
-			वापस 0;
-		अगर (err) अणु
-			err = -त्रुटि_सं;
+		if (err && errno == ENOENT)
+			return 0;
+		if (err) {
+			err = -errno;
 			pr_warn("failed to iterate BTF objects: %d\n", err);
-			वापस err;
-		पूर्ण
+			return err;
+		}
 
 		fd = bpf_btf_get_fd_by_id(id);
-		अगर (fd < 0) अणु
-			अगर (त्रुटि_सं == ENOENT)
-				जारी; /* expected race: BTF was unloaded */
-			err = -त्रुटि_सं;
+		if (fd < 0) {
+			if (errno == ENOENT)
+				continue; /* expected race: BTF was unloaded */
+			err = -errno;
 			pr_warn("failed to get BTF object #%d FD: %d\n", id, err);
-			वापस err;
-		पूर्ण
+			return err;
+		}
 
-		len = माप(info);
-		स_रखो(&info, 0, माप(info));
+		len = sizeof(info);
+		memset(&info, 0, sizeof(info));
 		info.name = ptr_to_u64(name);
-		info.name_len = माप(name);
+		info.name_len = sizeof(name);
 
 		err = bpf_obj_get_info_by_fd(fd, &info, &len);
-		अगर (err) अणु
-			err = -त्रुटि_सं;
+		if (err) {
+			err = -errno;
 			pr_warn("failed to get BTF object #%d info: %d\n", id, err);
-			जाओ err_out;
-		पूर्ण
+			goto err_out;
+		}
 
 		/* ignore non-module BTFs */
-		अगर (!info.kernel_btf || म_भेद(name, "vmlinux") == 0) अणु
-			बंद(fd);
-			जारी;
-		पूर्ण
+		if (!info.kernel_btf || strcmp(name, "vmlinux") == 0) {
+			close(fd);
+			continue;
+		}
 
 		btf = btf_get_from_fd(fd, obj->btf_vmlinux);
-		अगर (IS_ERR(btf)) अणु
+		if (IS_ERR(btf)) {
 			pr_warn("failed to load module [%s]'s BTF object #%d: %ld\n",
 				name, id, PTR_ERR(btf));
 			err = PTR_ERR(btf);
-			जाओ err_out;
-		पूर्ण
+			goto err_out;
+		}
 
-		err = libbpf_ensure_mem((व्योम **)&obj->btf_modules, &obj->btf_module_cap,
-				        माप(*obj->btf_modules), obj->btf_module_cnt + 1);
-		अगर (err)
-			जाओ err_out;
+		err = libbpf_ensure_mem((void **)&obj->btf_modules, &obj->btf_module_cap,
+				        sizeof(*obj->btf_modules), obj->btf_module_cnt + 1);
+		if (err)
+			goto err_out;
 
 		mod_btf = &obj->btf_modules[obj->btf_module_cnt++];
 
@@ -5037,121 +5036,121 @@ err_out:
 		mod_btf->id = id;
 		mod_btf->fd = fd;
 		mod_btf->name = strdup(name);
-		अगर (!mod_btf->name) अणु
+		if (!mod_btf->name) {
 			err = -ENOMEM;
-			जाओ err_out;
-		पूर्ण
-		जारी;
+			goto err_out;
+		}
+		continue;
 
 err_out:
-		बंद(fd);
-		वापस err;
-	पूर्ण
+		close(fd);
+		return err;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा core_cand_list *
-bpf_core_find_cands(काष्ठा bpf_object *obj, स्थिर काष्ठा btf *local_btf, __u32 local_type_id)
-अणु
-	काष्ठा core_cand local_cand = अणुपूर्ण;
-	काष्ठा core_cand_list *cands;
-	स्थिर काष्ठा btf *मुख्य_btf;
-	माप_प्रकार local_essent_len;
-	पूर्णांक err, i;
+static struct core_cand_list *
+bpf_core_find_cands(struct bpf_object *obj, const struct btf *local_btf, __u32 local_type_id)
+{
+	struct core_cand local_cand = {};
+	struct core_cand_list *cands;
+	const struct btf *main_btf;
+	size_t local_essent_len;
+	int err, i;
 
 	local_cand.btf = local_btf;
 	local_cand.t = btf__type_by_id(local_btf, local_type_id);
-	अगर (!local_cand.t)
-		वापस ERR_PTR(-EINVAL);
+	if (!local_cand.t)
+		return ERR_PTR(-EINVAL);
 
 	local_cand.name = btf__name_by_offset(local_btf, local_cand.t->name_off);
-	अगर (str_is_empty(local_cand.name))
-		वापस ERR_PTR(-EINVAL);
+	if (str_is_empty(local_cand.name))
+		return ERR_PTR(-EINVAL);
 	local_essent_len = bpf_core_essential_name_len(local_cand.name);
 
-	cands = सुस्मृति(1, माप(*cands));
-	अगर (!cands)
-		वापस ERR_PTR(-ENOMEM);
+	cands = calloc(1, sizeof(*cands));
+	if (!cands)
+		return ERR_PTR(-ENOMEM);
 
 	/* Attempt to find target candidates in vmlinux BTF first */
-	मुख्य_btf = obj->btf_vmlinux_override ?: obj->btf_vmlinux;
-	err = bpf_core_add_cands(&local_cand, local_essent_len, मुख्य_btf, "vmlinux", 1, cands);
-	अगर (err)
-		जाओ err_out;
+	main_btf = obj->btf_vmlinux_override ?: obj->btf_vmlinux;
+	err = bpf_core_add_cands(&local_cand, local_essent_len, main_btf, "vmlinux", 1, cands);
+	if (err)
+		goto err_out;
 
-	/* अगर vmlinux BTF has any candidate, करोn't got क्रम module BTFs */
-	अगर (cands->len)
-		वापस cands;
+	/* if vmlinux BTF has any candidate, don't got for module BTFs */
+	if (cands->len)
+		return cands;
 
-	/* अगर vmlinux BTF was overridden, करोn't attempt to load module BTFs */
-	अगर (obj->btf_vmlinux_override)
-		वापस cands;
+	/* if vmlinux BTF was overridden, don't attempt to load module BTFs */
+	if (obj->btf_vmlinux_override)
+		return cands;
 
 	/* now look through module BTFs, trying to still find candidates */
 	err = load_module_btfs(obj);
-	अगर (err)
-		जाओ err_out;
+	if (err)
+		goto err_out;
 
-	क्रम (i = 0; i < obj->btf_module_cnt; i++) अणु
+	for (i = 0; i < obj->btf_module_cnt; i++) {
 		err = bpf_core_add_cands(&local_cand, local_essent_len,
 					 obj->btf_modules[i].btf,
 					 obj->btf_modules[i].name,
 					 btf__get_nr_types(obj->btf_vmlinux) + 1,
 					 cands);
-		अगर (err)
-			जाओ err_out;
-	पूर्ण
+		if (err)
+			goto err_out;
+	}
 
-	वापस cands;
+	return cands;
 err_out:
-	bpf_core_मुक्त_cands(cands);
-	वापस ERR_PTR(err);
-पूर्ण
+	bpf_core_free_cands(cands);
+	return ERR_PTR(err);
+}
 
-/* Check two types क्रम compatibility क्रम the purpose of field access
- * relocation. स्थिर/अस्थिर/restrict and प्रकारs are skipped to ensure we
+/* Check two types for compatibility for the purpose of field access
+ * relocation. const/volatile/restrict and typedefs are skipped to ensure we
  * are relocating semantically compatible entities:
  *   - any two STRUCTs/UNIONs are compatible and can be mixed;
- *   - any two FWDs are compatible, अगर their names match (modulo flavor suffix);
+ *   - any two FWDs are compatible, if their names match (modulo flavor suffix);
  *   - any two PTRs are always compatible;
- *   - क्रम ENUMs, names should be the same (ignoring flavor suffix) or at
- *     least one of क्रमागतs should be anonymous;
- *   - क्रम ENUMs, check sizes, names are ignored;
- *   - क्रम INT, size and चिन्हितness are ignored;
+ *   - for ENUMs, names should be the same (ignoring flavor suffix) or at
+ *     least one of enums should be anonymous;
+ *   - for ENUMs, check sizes, names are ignored;
+ *   - for INT, size and signedness are ignored;
  *   - any two FLOATs are always compatible;
- *   - क्रम ARRAY, dimensionality is ignored, element types are checked क्रम
+ *   - for ARRAY, dimensionality is ignored, element types are checked for
  *     compatibility recursively;
- *   - everything अन्यथा shouldn't be ever a target of relocation.
+ *   - everything else shouldn't be ever a target of relocation.
  * These rules are not set in stone and probably will be adjusted as we get
  * more experience with using BPF CO-RE relocations.
  */
-अटल पूर्णांक bpf_core_fields_are_compat(स्थिर काष्ठा btf *local_btf,
+static int bpf_core_fields_are_compat(const struct btf *local_btf,
 				      __u32 local_id,
-				      स्थिर काष्ठा btf *targ_btf,
+				      const struct btf *targ_btf,
 				      __u32 targ_id)
-अणु
-	स्थिर काष्ठा btf_type *local_type, *targ_type;
+{
+	const struct btf_type *local_type, *targ_type;
 
 recur:
-	local_type = skip_mods_and_प्रकारs(local_btf, local_id, &local_id);
-	targ_type = skip_mods_and_प्रकारs(targ_btf, targ_id, &targ_id);
-	अगर (!local_type || !targ_type)
-		वापस -EINVAL;
+	local_type = skip_mods_and_typedefs(local_btf, local_id, &local_id);
+	targ_type = skip_mods_and_typedefs(targ_btf, targ_id, &targ_id);
+	if (!local_type || !targ_type)
+		return -EINVAL;
 
-	अगर (btf_is_composite(local_type) && btf_is_composite(targ_type))
-		वापस 1;
-	अगर (btf_kind(local_type) != btf_kind(targ_type))
-		वापस 0;
+	if (btf_is_composite(local_type) && btf_is_composite(targ_type))
+		return 1;
+	if (btf_kind(local_type) != btf_kind(targ_type))
+		return 0;
 
-	चयन (btf_kind(local_type)) अणु
-	हाल BTF_KIND_PTR:
-	हाल BTF_KIND_FLOAT:
-		वापस 1;
-	हाल BTF_KIND_FWD:
-	हाल BTF_KIND_ENUM: अणु
-		स्थिर अक्षर *local_name, *targ_name;
-		माप_प्रकार local_len, targ_len;
+	switch (btf_kind(local_type)) {
+	case BTF_KIND_PTR:
+	case BTF_KIND_FLOAT:
+		return 1;
+	case BTF_KIND_FWD:
+	case BTF_KIND_ENUM: {
+		const char *local_name, *targ_name;
+		size_t local_len, targ_len;
 
 		local_name = btf__name_by_offset(local_btf,
 						 local_type->name_off);
@@ -5159,61 +5158,61 @@ recur:
 		local_len = bpf_core_essential_name_len(local_name);
 		targ_len = bpf_core_essential_name_len(targ_name);
 		/* one of them is anonymous or both w/ same flavor-less names */
-		वापस local_len == 0 || targ_len == 0 ||
+		return local_len == 0 || targ_len == 0 ||
 		       (local_len == targ_len &&
-			म_भेदन(local_name, targ_name, local_len) == 0);
-	पूर्ण
-	हाल BTF_KIND_INT:
-		/* just reject deprecated bitfield-like पूर्णांकegers; all other
-		 * पूर्णांकegers are by शेष compatible between each other
+			strncmp(local_name, targ_name, local_len) == 0);
+	}
+	case BTF_KIND_INT:
+		/* just reject deprecated bitfield-like integers; all other
+		 * integers are by default compatible between each other
 		 */
-		वापस btf_पूर्णांक_offset(local_type) == 0 &&
-		       btf_पूर्णांक_offset(targ_type) == 0;
-	हाल BTF_KIND_ARRAY:
+		return btf_int_offset(local_type) == 0 &&
+		       btf_int_offset(targ_type) == 0;
+	case BTF_KIND_ARRAY:
 		local_id = btf_array(local_type)->type;
 		targ_id = btf_array(targ_type)->type;
-		जाओ recur;
-	शेष:
+		goto recur;
+	default:
 		pr_warn("unexpected kind %d relocated, local [%d], target [%d]\n",
 			btf_kind(local_type), local_id, targ_id);
-		वापस 0;
-	पूर्ण
-पूर्ण
+		return 0;
+	}
+}
 
 /*
  * Given single high-level named field accessor in local type, find
- * corresponding high-level accessor क्रम a target type. Aदीर्घ the way,
- * मुख्यtain low-level spec क्रम target as well. Also keep updating target
+ * corresponding high-level accessor for a target type. Along the way,
+ * maintain low-level spec for target as well. Also keep updating target
  * bit offset.
  *
- * Searching is perक्रमmed through recursive exhaustive क्रमागतeration of all
- * fields of a काष्ठा/जोड़. If there are any anonymous (embedded)
- * काष्ठाs/जोड़s, they are recursively searched as well. If field with
+ * Searching is performed through recursive exhaustive enumeration of all
+ * fields of a struct/union. If there are any anonymous (embedded)
+ * structs/unions, they are recursively searched as well. If field with
  * desired name is found, check compatibility between local and target types,
- * beक्रमe वापसing result.
+ * before returning result.
  *
- * 1 is वापसed, अगर field is found.
- * 0 is वापसed अगर no compatible field is found.
- * <0 is वापसed on error.
+ * 1 is returned, if field is found.
+ * 0 is returned if no compatible field is found.
+ * <0 is returned on error.
  */
-अटल पूर्णांक bpf_core_match_member(स्थिर काष्ठा btf *local_btf,
-				 स्थिर काष्ठा bpf_core_accessor *local_acc,
-				 स्थिर काष्ठा btf *targ_btf,
+static int bpf_core_match_member(const struct btf *local_btf,
+				 const struct bpf_core_accessor *local_acc,
+				 const struct btf *targ_btf,
 				 __u32 targ_id,
-				 काष्ठा bpf_core_spec *spec,
+				 struct bpf_core_spec *spec,
 				 __u32 *next_targ_id)
-अणु
-	स्थिर काष्ठा btf_type *local_type, *targ_type;
-	स्थिर काष्ठा btf_member *local_member, *m;
-	स्थिर अक्षर *local_name, *targ_name;
+{
+	const struct btf_type *local_type, *targ_type;
+	const struct btf_member *local_member, *m;
+	const char *local_name, *targ_name;
 	__u32 local_id;
-	पूर्णांक i, n, found;
+	int i, n, found;
 
-	targ_type = skip_mods_and_प्रकारs(targ_btf, targ_id, &targ_id);
-	अगर (!targ_type)
-		वापस -EINVAL;
-	अगर (!btf_is_composite(targ_type))
-		वापस 0;
+	targ_type = skip_mods_and_typedefs(targ_btf, targ_id, &targ_id);
+	if (!targ_type)
+		return -EINVAL;
+	if (!btf_is_composite(targ_type))
+		return 0;
 
 	local_id = local_acc->type_id;
 	local_type = btf__type_by_id(local_btf, local_id);
@@ -5222,30 +5221,30 @@ recur:
 
 	n = btf_vlen(targ_type);
 	m = btf_members(targ_type);
-	क्रम (i = 0; i < n; i++, m++) अणु
+	for (i = 0; i < n; i++, m++) {
 		__u32 bit_offset;
 
 		bit_offset = btf_member_bit_offset(targ_type, i);
 
-		/* too deep काष्ठा/जोड़/array nesting */
-		अगर (spec->raw_len == BPF_CORE_SPEC_MAX_LEN)
-			वापस -E2BIG;
+		/* too deep struct/union/array nesting */
+		if (spec->raw_len == BPF_CORE_SPEC_MAX_LEN)
+			return -E2BIG;
 
 		/* speculate this member will be the good one */
 		spec->bit_offset += bit_offset;
 		spec->raw_spec[spec->raw_len++] = i;
 
 		targ_name = btf__name_by_offset(targ_btf, m->name_off);
-		अगर (str_is_empty(targ_name)) अणु
-			/* embedded काष्ठा/जोड़, we need to go deeper */
+		if (str_is_empty(targ_name)) {
+			/* embedded struct/union, we need to go deeper */
 			found = bpf_core_match_member(local_btf, local_acc,
 						      targ_btf, m->type,
 						      spec, next_targ_id);
-			अगर (found) /* either found or error */
-				वापस found;
-		पूर्ण अन्यथा अगर (म_भेद(local_name, targ_name) == 0) अणु
+			if (found) /* either found or error */
+				return found;
+		} else if (strcmp(local_name, targ_name) == 0) {
 			/* matching named field */
-			काष्ठा bpf_core_accessor *targ_acc;
+			struct bpf_core_accessor *targ_acc;
 
 			targ_acc = &spec->spec[spec->len++];
 			targ_acc->type_id = targ_id;
@@ -5256,428 +5255,428 @@ recur:
 			found = bpf_core_fields_are_compat(local_btf,
 							   local_member->type,
 							   targ_btf, m->type);
-			अगर (!found)
+			if (!found)
 				spec->len--; /* pop accessor */
-			वापस found;
-		पूर्ण
-		/* member turned out not to be what we looked क्रम */
+			return found;
+		}
+		/* member turned out not to be what we looked for */
 		spec->bit_offset -= bit_offset;
 		spec->raw_len--;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Check local and target types क्रम compatibility. This check is used क्रम
- * type-based CO-RE relocations and follow slightly dअगरferent rules than
- * field-based relocations. This function assumes that root types were alपढ़ोy
- * checked क्रम name match. Beyond that initial root-level name check, names
+/* Check local and target types for compatibility. This check is used for
+ * type-based CO-RE relocations and follow slightly different rules than
+ * field-based relocations. This function assumes that root types were already
+ * checked for name match. Beyond that initial root-level name check, names
  * are completely ignored. Compatibility rules are as follows:
  *   - any two STRUCTs/UNIONs/FWDs/ENUMs/INTs are considered compatible, but
- *     kind should match क्रम local and target types (i.e., STRUCT is not
+ *     kind should match for local and target types (i.e., STRUCT is not
  *     compatible with UNION);
- *   - क्रम ENUMs, the size is ignored;
- *   - क्रम INT, size and चिन्हितness are ignored;
- *   - क्रम ARRAY, dimensionality is ignored, element types are checked क्रम
+ *   - for ENUMs, the size is ignored;
+ *   - for INT, size and signedness are ignored;
+ *   - for ARRAY, dimensionality is ignored, element types are checked for
  *     compatibility recursively;
- *   - CONST/VOLATILE/RESTRICT modअगरiers are ignored;
- *   - TYPEDEFs/PTRs are compatible अगर types they poपूर्णांकing to are compatible;
- *   - FUNC_PROTOs are compatible अगर they have compatible signature: same
- *     number of input args and compatible वापस and argument types.
+ *   - CONST/VOLATILE/RESTRICT modifiers are ignored;
+ *   - TYPEDEFs/PTRs are compatible if types they pointing to are compatible;
+ *   - FUNC_PROTOs are compatible if they have compatible signature: same
+ *     number of input args and compatible return and argument types.
  * These rules are not set in stone and probably will be adjusted as we get
  * more experience with using BPF CO-RE relocations.
  */
-अटल पूर्णांक bpf_core_types_are_compat(स्थिर काष्ठा btf *local_btf, __u32 local_id,
-				     स्थिर काष्ठा btf *targ_btf, __u32 targ_id)
-अणु
-	स्थिर काष्ठा btf_type *local_type, *targ_type;
-	पूर्णांक depth = 32; /* max recursion depth */
+static int bpf_core_types_are_compat(const struct btf *local_btf, __u32 local_id,
+				     const struct btf *targ_btf, __u32 targ_id)
+{
+	const struct btf_type *local_type, *targ_type;
+	int depth = 32; /* max recursion depth */
 
 	/* caller made sure that names match (ignoring flavor suffix) */
 	local_type = btf__type_by_id(local_btf, local_id);
 	targ_type = btf__type_by_id(targ_btf, targ_id);
-	अगर (btf_kind(local_type) != btf_kind(targ_type))
-		वापस 0;
+	if (btf_kind(local_type) != btf_kind(targ_type))
+		return 0;
 
 recur:
 	depth--;
-	अगर (depth < 0)
-		वापस -EINVAL;
+	if (depth < 0)
+		return -EINVAL;
 
-	local_type = skip_mods_and_प्रकारs(local_btf, local_id, &local_id);
-	targ_type = skip_mods_and_प्रकारs(targ_btf, targ_id, &targ_id);
-	अगर (!local_type || !targ_type)
-		वापस -EINVAL;
+	local_type = skip_mods_and_typedefs(local_btf, local_id, &local_id);
+	targ_type = skip_mods_and_typedefs(targ_btf, targ_id, &targ_id);
+	if (!local_type || !targ_type)
+		return -EINVAL;
 
-	अगर (btf_kind(local_type) != btf_kind(targ_type))
-		वापस 0;
+	if (btf_kind(local_type) != btf_kind(targ_type))
+		return 0;
 
-	चयन (btf_kind(local_type)) अणु
-	हाल BTF_KIND_UNKN:
-	हाल BTF_KIND_STRUCT:
-	हाल BTF_KIND_UNION:
-	हाल BTF_KIND_ENUM:
-	हाल BTF_KIND_FWD:
-		वापस 1;
-	हाल BTF_KIND_INT:
-		/* just reject deprecated bitfield-like पूर्णांकegers; all other
-		 * पूर्णांकegers are by शेष compatible between each other
+	switch (btf_kind(local_type)) {
+	case BTF_KIND_UNKN:
+	case BTF_KIND_STRUCT:
+	case BTF_KIND_UNION:
+	case BTF_KIND_ENUM:
+	case BTF_KIND_FWD:
+		return 1;
+	case BTF_KIND_INT:
+		/* just reject deprecated bitfield-like integers; all other
+		 * integers are by default compatible between each other
 		 */
-		वापस btf_पूर्णांक_offset(local_type) == 0 && btf_पूर्णांक_offset(targ_type) == 0;
-	हाल BTF_KIND_PTR:
+		return btf_int_offset(local_type) == 0 && btf_int_offset(targ_type) == 0;
+	case BTF_KIND_PTR:
 		local_id = local_type->type;
 		targ_id = targ_type->type;
-		जाओ recur;
-	हाल BTF_KIND_ARRAY:
+		goto recur;
+	case BTF_KIND_ARRAY:
 		local_id = btf_array(local_type)->type;
 		targ_id = btf_array(targ_type)->type;
-		जाओ recur;
-	हाल BTF_KIND_FUNC_PROTO: अणु
-		काष्ठा btf_param *local_p = btf_params(local_type);
-		काष्ठा btf_param *targ_p = btf_params(targ_type);
+		goto recur;
+	case BTF_KIND_FUNC_PROTO: {
+		struct btf_param *local_p = btf_params(local_type);
+		struct btf_param *targ_p = btf_params(targ_type);
 		__u16 local_vlen = btf_vlen(local_type);
 		__u16 targ_vlen = btf_vlen(targ_type);
-		पूर्णांक i, err;
+		int i, err;
 
-		अगर (local_vlen != targ_vlen)
-			वापस 0;
+		if (local_vlen != targ_vlen)
+			return 0;
 
-		क्रम (i = 0; i < local_vlen; i++, local_p++, targ_p++) अणु
-			skip_mods_and_प्रकारs(local_btf, local_p->type, &local_id);
-			skip_mods_and_प्रकारs(targ_btf, targ_p->type, &targ_id);
+		for (i = 0; i < local_vlen; i++, local_p++, targ_p++) {
+			skip_mods_and_typedefs(local_btf, local_p->type, &local_id);
+			skip_mods_and_typedefs(targ_btf, targ_p->type, &targ_id);
 			err = bpf_core_types_are_compat(local_btf, local_id, targ_btf, targ_id);
-			अगर (err <= 0)
-				वापस err;
-		पूर्ण
+			if (err <= 0)
+				return err;
+		}
 
-		/* tail recurse क्रम वापस type check */
-		skip_mods_and_प्रकारs(local_btf, local_type->type, &local_id);
-		skip_mods_and_प्रकारs(targ_btf, targ_type->type, &targ_id);
-		जाओ recur;
-	पूर्ण
-	शेष:
+		/* tail recurse for return type check */
+		skip_mods_and_typedefs(local_btf, local_type->type, &local_id);
+		skip_mods_and_typedefs(targ_btf, targ_type->type, &targ_id);
+		goto recur;
+	}
+	default:
 		pr_warn("unexpected kind %s relocated, local [%d], target [%d]\n",
 			btf_kind_str(local_type), local_id, targ_id);
-		वापस 0;
-	पूर्ण
-पूर्ण
+		return 0;
+	}
+}
 
 /*
- * Try to match local spec to a target type and, अगर successful, produce full
+ * Try to match local spec to a target type and, if successful, produce full
  * target spec (high-level, low-level + bit offset).
  */
-अटल पूर्णांक bpf_core_spec_match(काष्ठा bpf_core_spec *local_spec,
-			       स्थिर काष्ठा btf *targ_btf, __u32 targ_id,
-			       काष्ठा bpf_core_spec *targ_spec)
-अणु
-	स्थिर काष्ठा btf_type *targ_type;
-	स्थिर काष्ठा bpf_core_accessor *local_acc;
-	काष्ठा bpf_core_accessor *targ_acc;
-	पूर्णांक i, sz, matched;
+static int bpf_core_spec_match(struct bpf_core_spec *local_spec,
+			       const struct btf *targ_btf, __u32 targ_id,
+			       struct bpf_core_spec *targ_spec)
+{
+	const struct btf_type *targ_type;
+	const struct bpf_core_accessor *local_acc;
+	struct bpf_core_accessor *targ_acc;
+	int i, sz, matched;
 
-	स_रखो(targ_spec, 0, माप(*targ_spec));
+	memset(targ_spec, 0, sizeof(*targ_spec));
 	targ_spec->btf = targ_btf;
 	targ_spec->root_type_id = targ_id;
 	targ_spec->relo_kind = local_spec->relo_kind;
 
-	अगर (core_relo_is_type_based(local_spec->relo_kind)) अणु
-		वापस bpf_core_types_are_compat(local_spec->btf,
+	if (core_relo_is_type_based(local_spec->relo_kind)) {
+		return bpf_core_types_are_compat(local_spec->btf,
 						 local_spec->root_type_id,
 						 targ_btf, targ_id);
-	पूर्ण
+	}
 
 	local_acc = &local_spec->spec[0];
 	targ_acc = &targ_spec->spec[0];
 
-	अगर (core_relo_is_क्रमागतval_based(local_spec->relo_kind)) अणु
-		माप_प्रकार local_essent_len, targ_essent_len;
-		स्थिर काष्ठा btf_क्रमागत *e;
-		स्थिर अक्षर *targ_name;
+	if (core_relo_is_enumval_based(local_spec->relo_kind)) {
+		size_t local_essent_len, targ_essent_len;
+		const struct btf_enum *e;
+		const char *targ_name;
 
-		/* has to resolve to an क्रमागत */
-		targ_type = skip_mods_and_प्रकारs(targ_spec->btf, targ_id, &targ_id);
-		अगर (!btf_is_क्रमागत(targ_type))
-			वापस 0;
+		/* has to resolve to an enum */
+		targ_type = skip_mods_and_typedefs(targ_spec->btf, targ_id, &targ_id);
+		if (!btf_is_enum(targ_type))
+			return 0;
 
 		local_essent_len = bpf_core_essential_name_len(local_acc->name);
 
-		क्रम (i = 0, e = btf_क्रमागत(targ_type); i < btf_vlen(targ_type); i++, e++) अणु
+		for (i = 0, e = btf_enum(targ_type); i < btf_vlen(targ_type); i++, e++) {
 			targ_name = btf__name_by_offset(targ_spec->btf, e->name_off);
 			targ_essent_len = bpf_core_essential_name_len(targ_name);
-			अगर (targ_essent_len != local_essent_len)
-				जारी;
-			अगर (म_भेदन(local_acc->name, targ_name, local_essent_len) == 0) अणु
+			if (targ_essent_len != local_essent_len)
+				continue;
+			if (strncmp(local_acc->name, targ_name, local_essent_len) == 0) {
 				targ_acc->type_id = targ_id;
 				targ_acc->idx = i;
 				targ_acc->name = targ_name;
 				targ_spec->len++;
 				targ_spec->raw_spec[targ_spec->raw_len] = targ_acc->idx;
 				targ_spec->raw_len++;
-				वापस 1;
-			पूर्ण
-		पूर्ण
-		वापस 0;
-	पूर्ण
+				return 1;
+			}
+		}
+		return 0;
+	}
 
-	अगर (!core_relo_is_field_based(local_spec->relo_kind))
-		वापस -EINVAL;
+	if (!core_relo_is_field_based(local_spec->relo_kind))
+		return -EINVAL;
 
-	क्रम (i = 0; i < local_spec->len; i++, local_acc++, targ_acc++) अणु
-		targ_type = skip_mods_and_प्रकारs(targ_spec->btf, targ_id,
+	for (i = 0; i < local_spec->len; i++, local_acc++, targ_acc++) {
+		targ_type = skip_mods_and_typedefs(targ_spec->btf, targ_id,
 						   &targ_id);
-		अगर (!targ_type)
-			वापस -EINVAL;
+		if (!targ_type)
+			return -EINVAL;
 
-		अगर (local_acc->name) अणु
+		if (local_acc->name) {
 			matched = bpf_core_match_member(local_spec->btf,
 							local_acc,
 							targ_btf, targ_id,
 							targ_spec, &targ_id);
-			अगर (matched <= 0)
-				वापस matched;
-		पूर्ण अन्यथा अणु
-			/* क्रम i=0, targ_id is alपढ़ोy treated as array element
-			 * type (because it's the original काष्ठा), क्रम others
+			if (matched <= 0)
+				return matched;
+		} else {
+			/* for i=0, targ_id is already treated as array element
+			 * type (because it's the original struct), for others
 			 * we should find array element type first
 			 */
-			अगर (i > 0) अणु
-				स्थिर काष्ठा btf_array *a;
+			if (i > 0) {
+				const struct btf_array *a;
 				bool flex;
 
-				अगर (!btf_is_array(targ_type))
-					वापस 0;
+				if (!btf_is_array(targ_type))
+					return 0;
 
 				a = btf_array(targ_type);
 				flex = is_flex_arr(targ_btf, targ_acc - 1, a);
-				अगर (!flex && local_acc->idx >= a->nelems)
-					वापस 0;
-				अगर (!skip_mods_and_प्रकारs(targ_btf, a->type,
+				if (!flex && local_acc->idx >= a->nelems)
+					return 0;
+				if (!skip_mods_and_typedefs(targ_btf, a->type,
 							    &targ_id))
-					वापस -EINVAL;
-			पूर्ण
+					return -EINVAL;
+			}
 
-			/* too deep काष्ठा/जोड़/array nesting */
-			अगर (targ_spec->raw_len == BPF_CORE_SPEC_MAX_LEN)
-				वापस -E2BIG;
+			/* too deep struct/union/array nesting */
+			if (targ_spec->raw_len == BPF_CORE_SPEC_MAX_LEN)
+				return -E2BIG;
 
 			targ_acc->type_id = targ_id;
 			targ_acc->idx = local_acc->idx;
-			targ_acc->name = शून्य;
+			targ_acc->name = NULL;
 			targ_spec->len++;
 			targ_spec->raw_spec[targ_spec->raw_len] = targ_acc->idx;
 			targ_spec->raw_len++;
 
 			sz = btf__resolve_size(targ_btf, targ_id);
-			अगर (sz < 0)
-				वापस sz;
+			if (sz < 0)
+				return sz;
 			targ_spec->bit_offset += local_acc->idx * sz * 8;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल पूर्णांक bpf_core_calc_field_relo(स्थिर काष्ठा bpf_program *prog,
-				    स्थिर काष्ठा bpf_core_relo *relo,
-				    स्थिर काष्ठा bpf_core_spec *spec,
+static int bpf_core_calc_field_relo(const struct bpf_program *prog,
+				    const struct bpf_core_relo *relo,
+				    const struct bpf_core_spec *spec,
 				    __u32 *val, __u32 *field_sz, __u32 *type_id,
 				    bool *validate)
-अणु
-	स्थिर काष्ठा bpf_core_accessor *acc;
-	स्थिर काष्ठा btf_type *t;
+{
+	const struct bpf_core_accessor *acc;
+	const struct btf_type *t;
 	__u32 byte_off, byte_sz, bit_off, bit_sz, field_type_id;
-	स्थिर काष्ठा btf_member *m;
-	स्थिर काष्ठा btf_type *mt;
+	const struct btf_member *m;
+	const struct btf_type *mt;
 	bool bitfield;
 	__s64 sz;
 
 	*field_sz = 0;
 
-	अगर (relo->kind == BPF_FIELD_EXISTS) अणु
+	if (relo->kind == BPF_FIELD_EXISTS) {
 		*val = spec ? 1 : 0;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (!spec)
-		वापस -EUCLEAN; /* request inकाष्ठाion poisoning */
+	if (!spec)
+		return -EUCLEAN; /* request instruction poisoning */
 
 	acc = &spec->spec[spec->len - 1];
 	t = btf__type_by_id(spec->btf, acc->type_id);
 
 	/* a[n] accessor needs special handling */
-	अगर (!acc->name) अणु
-		अगर (relo->kind == BPF_FIELD_BYTE_OFFSET) अणु
+	if (!acc->name) {
+		if (relo->kind == BPF_FIELD_BYTE_OFFSET) {
 			*val = spec->bit_offset / 8;
-			/* remember field size क्रम load/store mem size */
+			/* remember field size for load/store mem size */
 			sz = btf__resolve_size(spec->btf, acc->type_id);
-			अगर (sz < 0)
-				वापस -EINVAL;
+			if (sz < 0)
+				return -EINVAL;
 			*field_sz = sz;
 			*type_id = acc->type_id;
-		पूर्ण अन्यथा अगर (relo->kind == BPF_FIELD_BYTE_SIZE) अणु
+		} else if (relo->kind == BPF_FIELD_BYTE_SIZE) {
 			sz = btf__resolve_size(spec->btf, acc->type_id);
-			अगर (sz < 0)
-				वापस -EINVAL;
+			if (sz < 0)
+				return -EINVAL;
 			*val = sz;
-		पूर्ण अन्यथा अणु
+		} else {
 			pr_warn("prog '%s': relo %d at insn #%d can't be applied to array access\n",
 				prog->name, relo->kind, relo->insn_off / 8);
-			वापस -EINVAL;
-		पूर्ण
-		अगर (validate)
+			return -EINVAL;
+		}
+		if (validate)
 			*validate = true;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	m = btf_members(t) + acc->idx;
-	mt = skip_mods_and_प्रकारs(spec->btf, m->type, &field_type_id);
+	mt = skip_mods_and_typedefs(spec->btf, m->type, &field_type_id);
 	bit_off = spec->bit_offset;
 	bit_sz = btf_member_bitfield_size(t, acc->idx);
 
 	bitfield = bit_sz > 0;
-	अगर (bitfield) अणु
+	if (bitfield) {
 		byte_sz = mt->size;
 		byte_off = bit_off / 8 / byte_sz * byte_sz;
-		/* figure out smallest पूर्णांक size necessary क्रम bitfield load */
-		जबतक (bit_off + bit_sz - byte_off * 8 > byte_sz * 8) अणु
-			अगर (byte_sz >= 8) अणु
-				/* bitfield can't be पढ़ो with 64-bit पढ़ो */
+		/* figure out smallest int size necessary for bitfield load */
+		while (bit_off + bit_sz - byte_off * 8 > byte_sz * 8) {
+			if (byte_sz >= 8) {
+				/* bitfield can't be read with 64-bit read */
 				pr_warn("prog '%s': relo %d at insn #%d can't be satisfied for bitfield\n",
 					prog->name, relo->kind, relo->insn_off / 8);
-				वापस -E2BIG;
-			पूर्ण
+				return -E2BIG;
+			}
 			byte_sz *= 2;
 			byte_off = bit_off / 8 / byte_sz * byte_sz;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		sz = btf__resolve_size(spec->btf, field_type_id);
-		अगर (sz < 0)
-			वापस -EINVAL;
+		if (sz < 0)
+			return -EINVAL;
 		byte_sz = sz;
 		byte_off = spec->bit_offset / 8;
 		bit_sz = byte_sz * 8;
-	पूर्ण
+	}
 
-	/* क्रम bitfields, all the relocatable aspects are ambiguous and we
+	/* for bitfields, all the relocatable aspects are ambiguous and we
 	 * might disagree with compiler, so turn off validation of expected
-	 * value, except क्रम चिन्हितness
+	 * value, except for signedness
 	 */
-	अगर (validate)
+	if (validate)
 		*validate = !bitfield;
 
-	चयन (relo->kind) अणु
-	हाल BPF_FIELD_BYTE_OFFSET:
+	switch (relo->kind) {
+	case BPF_FIELD_BYTE_OFFSET:
 		*val = byte_off;
-		अगर (!bitfield) अणु
+		if (!bitfield) {
 			*field_sz = byte_sz;
 			*type_id = field_type_id;
-		पूर्ण
-		अवरोध;
-	हाल BPF_FIELD_BYTE_SIZE:
+		}
+		break;
+	case BPF_FIELD_BYTE_SIZE:
 		*val = byte_sz;
-		अवरोध;
-	हाल BPF_FIELD_SIGNED:
-		/* क्रमागतs will be assumed अचिन्हित */
-		*val = btf_is_क्रमागत(mt) ||
-		       (btf_पूर्णांक_encoding(mt) & BTF_INT_SIGNED);
-		अगर (validate)
-			*validate = true; /* चिन्हितness is never ambiguous */
-		अवरोध;
-	हाल BPF_FIELD_LSHIFT_U64:
-#अगर __BYTE_ORDER == __LITTLE_ENDIAN
+		break;
+	case BPF_FIELD_SIGNED:
+		/* enums will be assumed unsigned */
+		*val = btf_is_enum(mt) ||
+		       (btf_int_encoding(mt) & BTF_INT_SIGNED);
+		if (validate)
+			*validate = true; /* signedness is never ambiguous */
+		break;
+	case BPF_FIELD_LSHIFT_U64:
+#if __BYTE_ORDER == __LITTLE_ENDIAN
 		*val = 64 - (bit_off + bit_sz - byte_off  * 8);
-#अन्यथा
+#else
 		*val = (8 - byte_sz) * 8 + (bit_off - byte_off * 8);
-#पूर्ण_अगर
-		अवरोध;
-	हाल BPF_FIELD_RSHIFT_U64:
+#endif
+		break;
+	case BPF_FIELD_RSHIFT_U64:
 		*val = 64 - bit_sz;
-		अगर (validate)
-			*validate = true; /* right shअगरt is never ambiguous */
-		अवरोध;
-	हाल BPF_FIELD_EXISTS:
-	शेष:
-		वापस -EOPNOTSUPP;
-	पूर्ण
+		if (validate)
+			*validate = true; /* right shift is never ambiguous */
+		break;
+	case BPF_FIELD_EXISTS:
+	default:
+		return -EOPNOTSUPP;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक bpf_core_calc_type_relo(स्थिर काष्ठा bpf_core_relo *relo,
-				   स्थिर काष्ठा bpf_core_spec *spec,
+static int bpf_core_calc_type_relo(const struct bpf_core_relo *relo,
+				   const struct bpf_core_spec *spec,
 				   __u32 *val)
-अणु
+{
 	__s64 sz;
 
-	/* type-based relos वापस zero when target type is not found */
-	अगर (!spec) अणु
+	/* type-based relos return zero when target type is not found */
+	if (!spec) {
 		*val = 0;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	चयन (relo->kind) अणु
-	हाल BPF_TYPE_ID_TARGET:
+	switch (relo->kind) {
+	case BPF_TYPE_ID_TARGET:
 		*val = spec->root_type_id;
-		अवरोध;
-	हाल BPF_TYPE_EXISTS:
+		break;
+	case BPF_TYPE_EXISTS:
 		*val = 1;
-		अवरोध;
-	हाल BPF_TYPE_SIZE:
+		break;
+	case BPF_TYPE_SIZE:
 		sz = btf__resolve_size(spec->btf, spec->root_type_id);
-		अगर (sz < 0)
-			वापस -EINVAL;
+		if (sz < 0)
+			return -EINVAL;
 		*val = sz;
-		अवरोध;
-	हाल BPF_TYPE_ID_LOCAL:
+		break;
+	case BPF_TYPE_ID_LOCAL:
 	/* BPF_TYPE_ID_LOCAL is handled specially and shouldn't get here */
-	शेष:
-		वापस -EOPNOTSUPP;
-	पूर्ण
+	default:
+		return -EOPNOTSUPP;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक bpf_core_calc_क्रमागतval_relo(स्थिर काष्ठा bpf_core_relo *relo,
-				      स्थिर काष्ठा bpf_core_spec *spec,
+static int bpf_core_calc_enumval_relo(const struct bpf_core_relo *relo,
+				      const struct bpf_core_spec *spec,
 				      __u32 *val)
-अणु
-	स्थिर काष्ठा btf_type *t;
-	स्थिर काष्ठा btf_क्रमागत *e;
+{
+	const struct btf_type *t;
+	const struct btf_enum *e;
 
-	चयन (relo->kind) अणु
-	हाल BPF_ENUMVAL_EXISTS:
+	switch (relo->kind) {
+	case BPF_ENUMVAL_EXISTS:
 		*val = spec ? 1 : 0;
-		अवरोध;
-	हाल BPF_ENUMVAL_VALUE:
-		अगर (!spec)
-			वापस -EUCLEAN; /* request inकाष्ठाion poisoning */
+		break;
+	case BPF_ENUMVAL_VALUE:
+		if (!spec)
+			return -EUCLEAN; /* request instruction poisoning */
 		t = btf__type_by_id(spec->btf, spec->spec[0].type_id);
-		e = btf_क्रमागत(t) + spec->spec[0].idx;
+		e = btf_enum(t) + spec->spec[0].idx;
 		*val = e->val;
-		अवरोध;
-	शेष:
-		वापस -EOPNOTSUPP;
-	पूर्ण
+		break;
+	default:
+		return -EOPNOTSUPP;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-काष्ठा bpf_core_relo_res
-अणु
-	/* expected value in the inकाष्ठाion, unless validate == false */
+struct bpf_core_relo_res
+{
+	/* expected value in the instruction, unless validate == false */
 	__u32 orig_val;
 	/* new value that needs to be patched up to */
 	__u32 new_val;
-	/* relocation unsuccessful, poison inकाष्ठाion, but करोn't fail load */
+	/* relocation unsuccessful, poison instruction, but don't fail load */
 	bool poison;
 	/* some relocations can't be validated against orig_val */
 	bool validate;
-	/* क्रम field byte offset relocations or the क्रमms:
+	/* for field byte offset relocations or the forms:
 	 *     *(T *)(rX + <off>) = rY
 	 *     rX = *(T *)(rY + <off>),
 	 * we remember original and resolved field size to adjust direct
-	 * memory loads of poपूर्णांकers and पूर्णांकegers; this is necessary क्रम 32-bit
-	 * host kernel architectures, but also allows to स्वतःmatically
+	 * memory loads of pointers and integers; this is necessary for 32-bit
+	 * host kernel architectures, but also allows to automatically
 	 * relocate fields that were resized from, e.g., u32 to u64, etc.
 	 */
 	bool fail_memsz_adjust;
@@ -5685,22 +5684,22 @@ recur:
 	__u32 orig_type_id;
 	__u32 new_sz;
 	__u32 new_type_id;
-पूर्ण;
+};
 
 /* Calculate original and target relocation values, given local and target
- * specs and relocation kind. These values are calculated क्रम each candidate.
+ * specs and relocation kind. These values are calculated for each candidate.
  * If there are multiple candidates, resulting values should all be consistent
  * with each other. Otherwise, libbpf will refuse to proceed due to ambiguity.
- * If inकाष्ठाion has to be poisoned, *poison will be set to true.
+ * If instruction has to be poisoned, *poison will be set to true.
  */
-अटल पूर्णांक bpf_core_calc_relo(स्थिर काष्ठा bpf_program *prog,
-			      स्थिर काष्ठा bpf_core_relo *relo,
-			      पूर्णांक relo_idx,
-			      स्थिर काष्ठा bpf_core_spec *local_spec,
-			      स्थिर काष्ठा bpf_core_spec *targ_spec,
-			      काष्ठा bpf_core_relo_res *res)
-अणु
-	पूर्णांक err = -EOPNOTSUPP;
+static int bpf_core_calc_relo(const struct bpf_program *prog,
+			      const struct bpf_core_relo *relo,
+			      int relo_idx,
+			      const struct bpf_core_spec *local_spec,
+			      const struct bpf_core_spec *targ_spec,
+			      struct bpf_core_relo_res *res)
+{
+	int err = -EOPNOTSUPP;
 
 	res->orig_val = 0;
 	res->new_val = 0;
@@ -5710,146 +5709,146 @@ recur:
 	res->orig_sz = res->new_sz = 0;
 	res->orig_type_id = res->new_type_id = 0;
 
-	अगर (core_relo_is_field_based(relo->kind)) अणु
+	if (core_relo_is_field_based(relo->kind)) {
 		err = bpf_core_calc_field_relo(prog, relo, local_spec,
 					       &res->orig_val, &res->orig_sz,
 					       &res->orig_type_id, &res->validate);
 		err = err ?: bpf_core_calc_field_relo(prog, relo, targ_spec,
 						      &res->new_val, &res->new_sz,
-						      &res->new_type_id, शून्य);
-		अगर (err)
-			जाओ करोne;
-		/* Validate अगर it's safe to adjust load/store memory size.
-		 * Adjusपंचांगents are perक्रमmed only अगर original and new memory
-		 * sizes dअगरfer.
+						      &res->new_type_id, NULL);
+		if (err)
+			goto done;
+		/* Validate if it's safe to adjust load/store memory size.
+		 * Adjustments are performed only if original and new memory
+		 * sizes differ.
 		 */
 		res->fail_memsz_adjust = false;
-		अगर (res->orig_sz != res->new_sz) अणु
-			स्थिर काष्ठा btf_type *orig_t, *new_t;
+		if (res->orig_sz != res->new_sz) {
+			const struct btf_type *orig_t, *new_t;
 
 			orig_t = btf__type_by_id(local_spec->btf, res->orig_type_id);
 			new_t = btf__type_by_id(targ_spec->btf, res->new_type_id);
 
-			/* There are two use हालs in which it's safe to
+			/* There are two use cases in which it's safe to
 			 * adjust load/store's mem size:
-			 *   - पढ़ोing a 32-bit kernel poपूर्णांकer, जबतक on BPF
-			 *   size poपूर्णांकers are always 64-bit; in this हाल
-			 *   it's safe to "downsize" inकाष्ठाion size due to
-			 *   poपूर्णांकer being treated as अचिन्हित पूर्णांकeger with
+			 *   - reading a 32-bit kernel pointer, while on BPF
+			 *   size pointers are always 64-bit; in this case
+			 *   it's safe to "downsize" instruction size due to
+			 *   pointer being treated as unsigned integer with
 			 *   zero-extended upper 32-bits;
-			 *   - पढ़ोing अचिन्हित पूर्णांकegers, again due to
+			 *   - reading unsigned integers, again due to
 			 *   zero-extension is preserving the value correctly.
 			 *
-			 * In all other हालs it's incorrect to attempt to
-			 * load/store field because पढ़ो value will be
-			 * incorrect, so we poison relocated inकाष्ठाion.
+			 * In all other cases it's incorrect to attempt to
+			 * load/store field because read value will be
+			 * incorrect, so we poison relocated instruction.
 			 */
-			अगर (btf_is_ptr(orig_t) && btf_is_ptr(new_t))
-				जाओ करोne;
-			अगर (btf_is_पूर्णांक(orig_t) && btf_is_पूर्णांक(new_t) &&
-			    btf_पूर्णांक_encoding(orig_t) != BTF_INT_SIGNED &&
-			    btf_पूर्णांक_encoding(new_t) != BTF_INT_SIGNED)
-				जाओ करोne;
+			if (btf_is_ptr(orig_t) && btf_is_ptr(new_t))
+				goto done;
+			if (btf_is_int(orig_t) && btf_is_int(new_t) &&
+			    btf_int_encoding(orig_t) != BTF_INT_SIGNED &&
+			    btf_int_encoding(new_t) != BTF_INT_SIGNED)
+				goto done;
 
-			/* mark as invalid mem size adjusपंचांगent, but this will
-			 * only be checked क्रम LDX/STX/ST insns
+			/* mark as invalid mem size adjustment, but this will
+			 * only be checked for LDX/STX/ST insns
 			 */
 			res->fail_memsz_adjust = true;
-		पूर्ण
-	पूर्ण अन्यथा अगर (core_relo_is_type_based(relo->kind)) अणु
+		}
+	} else if (core_relo_is_type_based(relo->kind)) {
 		err = bpf_core_calc_type_relo(relo, local_spec, &res->orig_val);
 		err = err ?: bpf_core_calc_type_relo(relo, targ_spec, &res->new_val);
-	पूर्ण अन्यथा अगर (core_relo_is_क्रमागतval_based(relo->kind)) अणु
-		err = bpf_core_calc_क्रमागतval_relo(relo, local_spec, &res->orig_val);
-		err = err ?: bpf_core_calc_क्रमागतval_relo(relo, targ_spec, &res->new_val);
-	पूर्ण
+	} else if (core_relo_is_enumval_based(relo->kind)) {
+		err = bpf_core_calc_enumval_relo(relo, local_spec, &res->orig_val);
+		err = err ?: bpf_core_calc_enumval_relo(relo, targ_spec, &res->new_val);
+	}
 
-करोne:
-	अगर (err == -EUCLEAN) अणु
-		/* EUCLEAN is used to संकेत inकाष्ठाion poisoning request */
+done:
+	if (err == -EUCLEAN) {
+		/* EUCLEAN is used to signal instruction poisoning request */
 		res->poison = true;
 		err = 0;
-	पूर्ण अन्यथा अगर (err == -EOPNOTSUPP) अणु
+	} else if (err == -EOPNOTSUPP) {
 		/* EOPNOTSUPP means unknown/unsupported relocation */
 		pr_warn("prog '%s': relo #%d: unrecognized CO-RE relocation %s (%d) at insn #%d\n",
 			prog->name, relo_idx, core_relo_kind_str(relo->kind),
 			relo->kind, relo->insn_off / 8);
-	पूर्ण
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /*
- * Turn inकाष्ठाion क्रम which CO_RE relocation failed पूर्णांकo invalid one with
+ * Turn instruction for which CO_RE relocation failed into invalid one with
  * distinct signature.
  */
-अटल व्योम bpf_core_poison_insn(काष्ठा bpf_program *prog, पूर्णांक relo_idx,
-				 पूर्णांक insn_idx, काष्ठा bpf_insn *insn)
-अणु
+static void bpf_core_poison_insn(struct bpf_program *prog, int relo_idx,
+				 int insn_idx, struct bpf_insn *insn)
+{
 	pr_debug("prog '%s': relo #%d: substituting insn #%d w/ invalid insn\n",
 		 prog->name, relo_idx, insn_idx);
 	insn->code = BPF_JMP | BPF_CALL;
 	insn->dst_reg = 0;
 	insn->src_reg = 0;
 	insn->off = 0;
-	/* अगर this inकाष्ठाion is reachable (not a dead code),
-	 * verअगरier will complain with the following message:
+	/* if this instruction is reachable (not a dead code),
+	 * verifier will complain with the following message:
 	 * invalid func unknown#195896080
 	 */
 	insn->imm = 195896080; /* => 0xbad2310 => "bad relo" */
-पूर्ण
+}
 
-अटल पूर्णांक insn_bpf_माप_प्रकारo_bytes(काष्ठा bpf_insn *insn)
-अणु
-	चयन (BPF_SIZE(insn->code)) अणु
-	हाल BPF_DW: वापस 8;
-	हाल BPF_W: वापस 4;
-	हाल BPF_H: वापस 2;
-	हाल BPF_B: वापस 1;
-	शेष: वापस -1;
-	पूर्ण
-पूर्ण
+static int insn_bpf_size_to_bytes(struct bpf_insn *insn)
+{
+	switch (BPF_SIZE(insn->code)) {
+	case BPF_DW: return 8;
+	case BPF_W: return 4;
+	case BPF_H: return 2;
+	case BPF_B: return 1;
+	default: return -1;
+	}
+}
 
-अटल पूर्णांक insn_bytes_to_bpf_size(__u32 sz)
-अणु
-	चयन (sz) अणु
-	हाल 8: वापस BPF_DW;
-	हाल 4: वापस BPF_W;
-	हाल 2: वापस BPF_H;
-	हाल 1: वापस BPF_B;
-	शेष: वापस -1;
-	पूर्ण
-पूर्ण
+static int insn_bytes_to_bpf_size(__u32 sz)
+{
+	switch (sz) {
+	case 8: return BPF_DW;
+	case 4: return BPF_W;
+	case 2: return BPF_H;
+	case 1: return BPF_B;
+	default: return -1;
+	}
+}
 
 /*
- * Patch relocatable BPF inकाष्ठाion.
+ * Patch relocatable BPF instruction.
  *
- * Patched value is determined by relocation kind and target specअगरication.
- * For existence relocations target spec will be शून्य अगर field/type is not found.
+ * Patched value is determined by relocation kind and target specification.
+ * For existence relocations target spec will be NULL if field/type is not found.
  * Expected insn->imm value is determined using relocation kind and local
- * spec, and is checked beक्रमe patching inकाष्ठाion. If actual insn->imm value
+ * spec, and is checked before patching instruction. If actual insn->imm value
  * is wrong, bail out with error.
  *
- * Currently supported classes of BPF inकाष्ठाion are:
- * 1. rX = <imm> (assignment with immediate opeअक्रम);
- * 2. rX += <imm> (arithmetic operations with immediate opeअक्रम);
+ * Currently supported classes of BPF instruction are:
+ * 1. rX = <imm> (assignment with immediate operand);
+ * 2. rX += <imm> (arithmetic operations with immediate operand);
  * 3. rX = <imm64> (load with 64-bit immediate value);
- * 4. rX = *(T *)(rY + <off>), where T is one of अणुu8, u16, u32, u64पूर्ण;
- * 5. *(T *)(rX + <off>) = rY, where T is one of अणुu8, u16, u32, u64पूर्ण;
- * 6. *(T *)(rX + <off>) = <imm>, where T is one of अणुu8, u16, u32, u64पूर्ण.
+ * 4. rX = *(T *)(rY + <off>), where T is one of {u8, u16, u32, u64};
+ * 5. *(T *)(rX + <off>) = rY, where T is one of {u8, u16, u32, u64};
+ * 6. *(T *)(rX + <off>) = <imm>, where T is one of {u8, u16, u32, u64}.
  */
-अटल पूर्णांक bpf_core_patch_insn(काष्ठा bpf_program *prog,
-			       स्थिर काष्ठा bpf_core_relo *relo,
-			       पूर्णांक relo_idx,
-			       स्थिर काष्ठा bpf_core_relo_res *res)
-अणु
+static int bpf_core_patch_insn(struct bpf_program *prog,
+			       const struct bpf_core_relo *relo,
+			       int relo_idx,
+			       const struct bpf_core_relo_res *res)
+{
 	__u32 orig_val, new_val;
-	काष्ठा bpf_insn *insn;
-	पूर्णांक insn_idx;
+	struct bpf_insn *insn;
+	int insn_idx;
 	__u8 class;
 
-	अगर (relo->insn_off % BPF_INSN_SZ)
-		वापस -EINVAL;
+	if (relo->insn_off % BPF_INSN_SZ)
+		return -EINVAL;
 	insn_idx = relo->insn_off / BPF_INSN_SZ;
 	/* adjust insn_idx from section frame of reference to the local
 	 * program's frame of reference; (sub-)program code is not yet
@@ -5859,348 +5858,348 @@ recur:
 	insn = &prog->insns[insn_idx];
 	class = BPF_CLASS(insn->code);
 
-	अगर (res->poison) अणु
+	if (res->poison) {
 poison:
-		/* poison second part of ldimm64 to aव्योम confusing error from
-		 * verअगरier about "unknown opcode 00"
+		/* poison second part of ldimm64 to avoid confusing error from
+		 * verifier about "unknown opcode 00"
 		 */
-		अगर (is_ldimm64_insn(insn))
+		if (is_ldimm64_insn(insn))
 			bpf_core_poison_insn(prog, relo_idx, insn_idx + 1, insn + 1);
 		bpf_core_poison_insn(prog, relo_idx, insn_idx, insn);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	orig_val = res->orig_val;
 	new_val = res->new_val;
 
-	चयन (class) अणु
-	हाल BPF_ALU:
-	हाल BPF_ALU64:
-		अगर (BPF_SRC(insn->code) != BPF_K)
-			वापस -EINVAL;
-		अगर (res->validate && insn->imm != orig_val) अणु
+	switch (class) {
+	case BPF_ALU:
+	case BPF_ALU64:
+		if (BPF_SRC(insn->code) != BPF_K)
+			return -EINVAL;
+		if (res->validate && insn->imm != orig_val) {
 			pr_warn("prog '%s': relo #%d: unexpected insn #%d (ALU/ALU64) value: got %u, exp %u -> %u\n",
 				prog->name, relo_idx,
 				insn_idx, insn->imm, orig_val, new_val);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 		orig_val = insn->imm;
 		insn->imm = new_val;
 		pr_debug("prog '%s': relo #%d: patched insn #%d (ALU/ALU64) imm %u -> %u\n",
 			 prog->name, relo_idx, insn_idx,
 			 orig_val, new_val);
-		अवरोध;
-	हाल BPF_LDX:
-	हाल BPF_ST:
-	हाल BPF_STX:
-		अगर (res->validate && insn->off != orig_val) अणु
+		break;
+	case BPF_LDX:
+	case BPF_ST:
+	case BPF_STX:
+		if (res->validate && insn->off != orig_val) {
 			pr_warn("prog '%s': relo #%d: unexpected insn #%d (LDX/ST/STX) value: got %u, exp %u -> %u\n",
 				prog->name, relo_idx, insn_idx, insn->off, orig_val, new_val);
-			वापस -EINVAL;
-		पूर्ण
-		अगर (new_val > लघु_उच्च) अणु
+			return -EINVAL;
+		}
+		if (new_val > SHRT_MAX) {
 			pr_warn("prog '%s': relo #%d: insn #%d (LDX/ST/STX) value too big: %u\n",
 				prog->name, relo_idx, insn_idx, new_val);
-			वापस -दुस्फल;
-		पूर्ण
-		अगर (res->fail_memsz_adjust) अणु
+			return -ERANGE;
+		}
+		if (res->fail_memsz_adjust) {
 			pr_warn("prog '%s': relo #%d: insn #%d (LDX/ST/STX) accesses field incorrectly. "
 				"Make sure you are accessing pointers, unsigned integers, or fields of matching type and size.\n",
 				prog->name, relo_idx, insn_idx);
-			जाओ poison;
-		पूर्ण
+			goto poison;
+		}
 
 		orig_val = insn->off;
 		insn->off = new_val;
 		pr_debug("prog '%s': relo #%d: patched insn #%d (LDX/ST/STX) off %u -> %u\n",
 			 prog->name, relo_idx, insn_idx, orig_val, new_val);
 
-		अगर (res->new_sz != res->orig_sz) अणु
-			पूर्णांक insn_bytes_sz, insn_bpf_sz;
+		if (res->new_sz != res->orig_sz) {
+			int insn_bytes_sz, insn_bpf_sz;
 
-			insn_bytes_sz = insn_bpf_माप_प्रकारo_bytes(insn);
-			अगर (insn_bytes_sz != res->orig_sz) अणु
+			insn_bytes_sz = insn_bpf_size_to_bytes(insn);
+			if (insn_bytes_sz != res->orig_sz) {
 				pr_warn("prog '%s': relo #%d: insn #%d (LDX/ST/STX) unexpected mem size: got %d, exp %u\n",
 					prog->name, relo_idx, insn_idx, insn_bytes_sz, res->orig_sz);
-				वापस -EINVAL;
-			पूर्ण
+				return -EINVAL;
+			}
 
 			insn_bpf_sz = insn_bytes_to_bpf_size(res->new_sz);
-			अगर (insn_bpf_sz < 0) अणु
+			if (insn_bpf_sz < 0) {
 				pr_warn("prog '%s': relo #%d: insn #%d (LDX/ST/STX) invalid new mem size: %u\n",
 					prog->name, relo_idx, insn_idx, res->new_sz);
-				वापस -EINVAL;
-			पूर्ण
+				return -EINVAL;
+			}
 
 			insn->code = BPF_MODE(insn->code) | insn_bpf_sz | BPF_CLASS(insn->code);
 			pr_debug("prog '%s': relo #%d: patched insn #%d (LDX/ST/STX) mem_sz %u -> %u\n",
 				 prog->name, relo_idx, insn_idx, res->orig_sz, res->new_sz);
-		पूर्ण
-		अवरोध;
-	हाल BPF_LD: अणु
+		}
+		break;
+	case BPF_LD: {
 		__u64 imm;
 
-		अगर (!is_ldimm64_insn(insn) ||
+		if (!is_ldimm64_insn(insn) ||
 		    insn[0].src_reg != 0 || insn[0].off != 0 ||
 		    insn_idx + 1 >= prog->insns_cnt ||
 		    insn[1].code != 0 || insn[1].dst_reg != 0 ||
-		    insn[1].src_reg != 0 || insn[1].off != 0) अणु
+		    insn[1].src_reg != 0 || insn[1].off != 0) {
 			pr_warn("prog '%s': relo #%d: insn #%d (LDIMM64) has unexpected form\n",
 				prog->name, relo_idx, insn_idx);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
 		imm = insn[0].imm + ((__u64)insn[1].imm << 32);
-		अगर (res->validate && imm != orig_val) अणु
+		if (res->validate && imm != orig_val) {
 			pr_warn("prog '%s': relo #%d: unexpected insn #%d (LDIMM64) value: got %llu, exp %u -> %u\n",
 				prog->name, relo_idx,
-				insn_idx, (अचिन्हित दीर्घ दीर्घ)imm,
+				insn_idx, (unsigned long long)imm,
 				orig_val, new_val);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
 		insn[0].imm = new_val;
 		insn[1].imm = 0; /* currently only 32-bit values are supported */
 		pr_debug("prog '%s': relo #%d: patched insn #%d (LDIMM64) imm64 %llu -> %u\n",
 			 prog->name, relo_idx, insn_idx,
-			 (अचिन्हित दीर्घ दीर्घ)imm, new_val);
-		अवरोध;
-	पूर्ण
-	शेष:
+			 (unsigned long long)imm, new_val);
+		break;
+	}
+	default:
 		pr_warn("prog '%s': relo #%d: trying to relocate unrecognized insn #%d, code:0x%x, src:0x%x, dst:0x%x, off:0x%x, imm:0x%x\n",
 			prog->name, relo_idx, insn_idx, insn->code,
 			insn->src_reg, insn->dst_reg, insn->off, insn->imm);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Output spec definition in the क्रमmat:
+/* Output spec definition in the format:
  * [<type-id>] (<type-name>) + <raw-spec> => <offset>@<spec>,
  * where <spec> is a C-syntax view of recorded field access, e.g.: x.a[3].b
  */
-अटल व्योम bpf_core_dump_spec(पूर्णांक level, स्थिर काष्ठा bpf_core_spec *spec)
-अणु
-	स्थिर काष्ठा btf_type *t;
-	स्थिर काष्ठा btf_क्रमागत *e;
-	स्थिर अक्षर *s;
+static void bpf_core_dump_spec(int level, const struct bpf_core_spec *spec)
+{
+	const struct btf_type *t;
+	const struct btf_enum *e;
+	const char *s;
 	__u32 type_id;
-	पूर्णांक i;
+	int i;
 
 	type_id = spec->root_type_id;
 	t = btf__type_by_id(spec->btf, type_id);
 	s = btf__name_by_offset(spec->btf, t->name_off);
 
-	libbpf_prपूर्णांक(level, "[%u] %s %s", type_id, btf_kind_str(t), str_is_empty(s) ? "<anon>" : s);
+	libbpf_print(level, "[%u] %s %s", type_id, btf_kind_str(t), str_is_empty(s) ? "<anon>" : s);
 
-	अगर (core_relo_is_type_based(spec->relo_kind))
-		वापस;
+	if (core_relo_is_type_based(spec->relo_kind))
+		return;
 
-	अगर (core_relo_is_क्रमागतval_based(spec->relo_kind)) अणु
-		t = skip_mods_and_प्रकारs(spec->btf, type_id, शून्य);
-		e = btf_क्रमागत(t) + spec->raw_spec[0];
+	if (core_relo_is_enumval_based(spec->relo_kind)) {
+		t = skip_mods_and_typedefs(spec->btf, type_id, NULL);
+		e = btf_enum(t) + spec->raw_spec[0];
 		s = btf__name_by_offset(spec->btf, e->name_off);
 
-		libbpf_prपूर्णांक(level, "::%s = %u", s, e->val);
-		वापस;
-	पूर्ण
+		libbpf_print(level, "::%s = %u", s, e->val);
+		return;
+	}
 
-	अगर (core_relo_is_field_based(spec->relo_kind)) अणु
-		क्रम (i = 0; i < spec->len; i++) अणु
-			अगर (spec->spec[i].name)
-				libbpf_prपूर्णांक(level, ".%s", spec->spec[i].name);
-			अन्यथा अगर (i > 0 || spec->spec[i].idx > 0)
-				libbpf_prपूर्णांक(level, "[%u]", spec->spec[i].idx);
-		पूर्ण
+	if (core_relo_is_field_based(spec->relo_kind)) {
+		for (i = 0; i < spec->len; i++) {
+			if (spec->spec[i].name)
+				libbpf_print(level, ".%s", spec->spec[i].name);
+			else if (i > 0 || spec->spec[i].idx > 0)
+				libbpf_print(level, "[%u]", spec->spec[i].idx);
+		}
 
-		libbpf_prपूर्णांक(level, " (");
-		क्रम (i = 0; i < spec->raw_len; i++)
-			libbpf_prपूर्णांक(level, "%s%d", i == 0 ? "" : ":", spec->raw_spec[i]);
+		libbpf_print(level, " (");
+		for (i = 0; i < spec->raw_len; i++)
+			libbpf_print(level, "%s%d", i == 0 ? "" : ":", spec->raw_spec[i]);
 
-		अगर (spec->bit_offset % 8)
-			libbpf_prपूर्णांक(level, " @ offset %u.%u)",
+		if (spec->bit_offset % 8)
+			libbpf_print(level, " @ offset %u.%u)",
 				     spec->bit_offset / 8, spec->bit_offset % 8);
-		अन्यथा
-			libbpf_prपूर्णांक(level, " @ offset %u)", spec->bit_offset / 8);
-		वापस;
-	पूर्ण
-पूर्ण
+		else
+			libbpf_print(level, " @ offset %u)", spec->bit_offset / 8);
+		return;
+	}
+}
 
-अटल माप_प्रकार bpf_core_hash_fn(स्थिर व्योम *key, व्योम *ctx)
-अणु
-	वापस (माप_प्रकार)key;
-पूर्ण
+static size_t bpf_core_hash_fn(const void *key, void *ctx)
+{
+	return (size_t)key;
+}
 
-अटल bool bpf_core_equal_fn(स्थिर व्योम *k1, स्थिर व्योम *k2, व्योम *ctx)
-अणु
-	वापस k1 == k2;
-पूर्ण
+static bool bpf_core_equal_fn(const void *k1, const void *k2, void *ctx)
+{
+	return k1 == k2;
+}
 
-अटल व्योम *u32_as_hash_key(__u32 x)
-अणु
-	वापस (व्योम *)(uपूर्णांकptr_t)x;
-पूर्ण
+static void *u32_as_hash_key(__u32 x)
+{
+	return (void *)(uintptr_t)x;
+}
 
 /*
- * CO-RE relocate single inकाष्ठाion.
+ * CO-RE relocate single instruction.
  *
- * The outline and important poपूर्णांकs of the algorithm:
+ * The outline and important points of the algorithm:
  * 1. For given local type, find corresponding candidate target types.
  *    Candidate type is a type with the same "essential" name, ignoring
  *    everything after last triple underscore (___). E.g., `sample`,
  *    `sample___flavor_one`, `sample___flavor_another_one`, are all candidates
- *    क्रम each other. Names with triple underscore are referred to as
+ *    for each other. Names with triple underscore are referred to as
  *    "flavors" and are useful, among other things, to allow to
- *    specअगरy/support incompatible variations of the same kernel काष्ठा, which
- *    might dअगरfer between dअगरferent kernel versions and/or build
+ *    specify/support incompatible variations of the same kernel struct, which
+ *    might differ between different kernel versions and/or build
  *    configurations.
  *
  *    N.B. Struct "flavors" could be generated by bpftool's BTF-to-C
  *    converter, when deduplicated BTF of a kernel still contains more than
- *    one dअगरferent types with the same name. In that हाल, ___2, ___3, etc
+ *    one different types with the same name. In that case, ___2, ___3, etc
  *    are appended starting from second name conflict. But start flavors are
  *    also useful to be defined "locally", in BPF program, to extract same
- *    data from incompatible changes between dअगरferent kernel
- *    versions/configurations. For instance, to handle field नामs between
- *    kernel versions, one can use two flavors of the काष्ठा name with the
+ *    data from incompatible changes between different kernel
+ *    versions/configurations. For instance, to handle field renames between
+ *    kernel versions, one can use two flavors of the struct name with the
  *    same common name and use conditional relocations to extract that field,
  *    depending on target kernel version.
- * 2. For each candidate type, try to match local specअगरication to this
+ * 2. For each candidate type, try to match local specification to this
  *    candidate target type. Matching involves finding corresponding
  *    high-level spec accessors, meaning that all named fields should match,
  *    as well as all array accesses should be within the actual bounds. Also,
- *    types should be compatible (see bpf_core_fields_are_compat क्रम details).
+ *    types should be compatible (see bpf_core_fields_are_compat for details).
  * 3. It is supported and expected that there might be multiple flavors
- *    matching the spec. As दीर्घ as all the specs resolve to the same set of
+ *    matching the spec. As long as all the specs resolve to the same set of
  *    offsets across all candidates, there is no error. If there is any
  *    ambiguity, CO-RE relocation will fail. This is necessary to accomodate
  *    imprefection of BTF deduplication, which can cause slight duplication of
- *    the same BTF type, अगर some directly or indirectly referenced (by
- *    poपूर्णांकer) type माला_लो resolved to dअगरferent actual types in dअगरferent
+ *    the same BTF type, if some directly or indirectly referenced (by
+ *    pointer) type gets resolved to different actual types in different
  *    object files. If such situation occurs, deduplicated BTF will end up
- *    with two (or more) काष्ठाurally identical types, which dअगरfer only in
- *    types they refer to through poपूर्णांकer. This should be OK in most हालs and
+ *    with two (or more) structurally identical types, which differ only in
+ *    types they refer to through pointer. This should be OK in most cases and
  *    is not an error.
- * 4. Candidate types search is perक्रमmed by linearly scanning through all
+ * 4. Candidate types search is performed by linearly scanning through all
  *    types in target BTF. It is anticipated that this is overall more
- *    efficient memory-wise and not signअगरicantly worse (अगर not better)
+ *    efficient memory-wise and not significantly worse (if not better)
  *    CPU-wise compared to prebuilding a map from all local type names to
  *    a list of candidate type names. It's also sped up by caching resolved
  *    list of matching candidates per each local "root" type ID, that has at
  *    least one bpf_core_relo associated with it. This list is shared
- *    between multiple relocations क्रम the same type ID and is updated as some
- *    of the candidates are pruned due to काष्ठाural incompatibility.
+ *    between multiple relocations for the same type ID and is updated as some
+ *    of the candidates are pruned due to structural incompatibility.
  */
-अटल पूर्णांक bpf_core_apply_relo(काष्ठा bpf_program *prog,
-			       स्थिर काष्ठा bpf_core_relo *relo,
-			       पूर्णांक relo_idx,
-			       स्थिर काष्ठा btf *local_btf,
-			       काष्ठा hashmap *cand_cache)
-अणु
-	काष्ठा bpf_core_spec local_spec, cand_spec, targ_spec = अणुपूर्ण;
-	स्थिर व्योम *type_key = u32_as_hash_key(relo->type_id);
-	काष्ठा bpf_core_relo_res cand_res, targ_res;
-	स्थिर काष्ठा btf_type *local_type;
-	स्थिर अक्षर *local_name;
-	काष्ठा core_cand_list *cands = शून्य;
+static int bpf_core_apply_relo(struct bpf_program *prog,
+			       const struct bpf_core_relo *relo,
+			       int relo_idx,
+			       const struct btf *local_btf,
+			       struct hashmap *cand_cache)
+{
+	struct bpf_core_spec local_spec, cand_spec, targ_spec = {};
+	const void *type_key = u32_as_hash_key(relo->type_id);
+	struct bpf_core_relo_res cand_res, targ_res;
+	const struct btf_type *local_type;
+	const char *local_name;
+	struct core_cand_list *cands = NULL;
 	__u32 local_id;
-	स्थिर अक्षर *spec_str;
-	पूर्णांक i, j, err;
+	const char *spec_str;
+	int i, j, err;
 
 	local_id = relo->type_id;
 	local_type = btf__type_by_id(local_btf, local_id);
-	अगर (!local_type)
-		वापस -EINVAL;
+	if (!local_type)
+		return -EINVAL;
 
 	local_name = btf__name_by_offset(local_btf, local_type->name_off);
-	अगर (!local_name)
-		वापस -EINVAL;
+	if (!local_name)
+		return -EINVAL;
 
 	spec_str = btf__name_by_offset(local_btf, relo->access_str_off);
-	अगर (str_is_empty(spec_str))
-		वापस -EINVAL;
+	if (str_is_empty(spec_str))
+		return -EINVAL;
 
 	err = bpf_core_parse_spec(local_btf, local_id, spec_str, relo->kind, &local_spec);
-	अगर (err) अणु
+	if (err) {
 		pr_warn("prog '%s': relo #%d: parsing [%d] %s %s + %s failed: %d\n",
 			prog->name, relo_idx, local_id, btf_kind_str(local_type),
 			str_is_empty(local_name) ? "<anon>" : local_name,
 			spec_str, err);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	pr_debug("prog '%s': relo #%d: kind <%s> (%d), spec is ", prog->name,
 		 relo_idx, core_relo_kind_str(relo->kind), relo->kind);
 	bpf_core_dump_spec(LIBBPF_DEBUG, &local_spec);
-	libbpf_prपूर्णांक(LIBBPF_DEBUG, "\n");
+	libbpf_print(LIBBPF_DEBUG, "\n");
 
-	/* TYPE_ID_LOCAL relo is special and करोesn't need candidate search */
-	अगर (relo->kind == BPF_TYPE_ID_LOCAL) अणु
+	/* TYPE_ID_LOCAL relo is special and doesn't need candidate search */
+	if (relo->kind == BPF_TYPE_ID_LOCAL) {
 		targ_res.validate = true;
 		targ_res.poison = false;
 		targ_res.orig_val = local_spec.root_type_id;
 		targ_res.new_val = local_spec.root_type_id;
-		जाओ patch_insn;
-	पूर्ण
+		goto patch_insn;
+	}
 
-	/* libbpf करोesn't support candidate search क्रम anonymous types */
-	अगर (str_is_empty(spec_str)) अणु
+	/* libbpf doesn't support candidate search for anonymous types */
+	if (str_is_empty(spec_str)) {
 		pr_warn("prog '%s': relo #%d: <%s> (%d) relocation doesn't support anonymous types\n",
 			prog->name, relo_idx, core_relo_kind_str(relo->kind), relo->kind);
-		वापस -EOPNOTSUPP;
-	पूर्ण
+		return -EOPNOTSUPP;
+	}
 
-	अगर (!hashmap__find(cand_cache, type_key, (व्योम **)&cands)) अणु
+	if (!hashmap__find(cand_cache, type_key, (void **)&cands)) {
 		cands = bpf_core_find_cands(prog->obj, local_btf, local_id);
-		अगर (IS_ERR(cands)) अणु
+		if (IS_ERR(cands)) {
 			pr_warn("prog '%s': relo #%d: target candidate search failed for [%d] %s %s: %ld\n",
 				prog->name, relo_idx, local_id, btf_kind_str(local_type),
 				local_name, PTR_ERR(cands));
-			वापस PTR_ERR(cands);
-		पूर्ण
-		err = hashmap__set(cand_cache, type_key, cands, शून्य, शून्य);
-		अगर (err) अणु
-			bpf_core_मुक्त_cands(cands);
-			वापस err;
-		पूर्ण
-	पूर्ण
+			return PTR_ERR(cands);
+		}
+		err = hashmap__set(cand_cache, type_key, cands, NULL, NULL);
+		if (err) {
+			bpf_core_free_cands(cands);
+			return err;
+		}
+	}
 
-	क्रम (i = 0, j = 0; i < cands->len; i++) अणु
+	for (i = 0, j = 0; i < cands->len; i++) {
 		err = bpf_core_spec_match(&local_spec, cands->cands[i].btf,
 					  cands->cands[i].id, &cand_spec);
-		अगर (err < 0) अणु
+		if (err < 0) {
 			pr_warn("prog '%s': relo #%d: error matching candidate #%d ",
 				prog->name, relo_idx, i);
 			bpf_core_dump_spec(LIBBPF_WARN, &cand_spec);
-			libbpf_prपूर्णांक(LIBBPF_WARN, ": %d\n", err);
-			वापस err;
-		पूर्ण
+			libbpf_print(LIBBPF_WARN, ": %d\n", err);
+			return err;
+		}
 
 		pr_debug("prog '%s': relo #%d: %s candidate #%d ", prog->name,
 			 relo_idx, err == 0 ? "non-matching" : "matching", i);
 		bpf_core_dump_spec(LIBBPF_DEBUG, &cand_spec);
-		libbpf_prपूर्णांक(LIBBPF_DEBUG, "\n");
+		libbpf_print(LIBBPF_DEBUG, "\n");
 
-		अगर (err == 0)
-			जारी;
+		if (err == 0)
+			continue;
 
 		err = bpf_core_calc_relo(prog, relo, relo_idx, &local_spec, &cand_spec, &cand_res);
-		अगर (err)
-			वापस err;
+		if (err)
+			return err;
 
-		अगर (j == 0) अणु
+		if (j == 0) {
 			targ_res = cand_res;
 			targ_spec = cand_spec;
-		पूर्ण अन्यथा अगर (cand_spec.bit_offset != targ_spec.bit_offset) अणु
-			/* अगर there are many field relo candidates, they
+		} else if (cand_spec.bit_offset != targ_spec.bit_offset) {
+			/* if there are many field relo candidates, they
 			 * should all resolve to the same bit offset
 			 */
 			pr_warn("prog '%s': relo #%d: field offset ambiguity: %u != %u\n",
 				prog->name, relo_idx, cand_spec.bit_offset,
 				targ_spec.bit_offset);
-			वापस -EINVAL;
-		पूर्ण अन्यथा अगर (cand_res.poison != targ_res.poison || cand_res.new_val != targ_res.new_val) अणु
+			return -EINVAL;
+		} else if (cand_res.poison != targ_res.poison || cand_res.new_val != targ_res.new_val) {
 			/* all candidates should result in the same relocation
 			 * decision and value, otherwise it's dangerous to
 			 * proceed due to ambiguity
@@ -6209,526 +6208,526 @@ poison:
 				prog->name, relo_idx,
 				cand_res.poison ? "failure" : "success", cand_res.new_val,
 				targ_res.poison ? "failure" : "success", targ_res.new_val);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
 		cands->cands[j++] = cands->cands[i];
-	पूर्ण
+	}
 
 	/*
 	 * For BPF_FIELD_EXISTS relo or when used BPF program has field
 	 * existence checks or kernel version/config checks, it's expected
-	 * that we might not find any candidates. In this हाल, अगर field
+	 * that we might not find any candidates. In this case, if field
 	 * wasn't found in any candidate, the list of candidates shouldn't
 	 * change at all, we'll just handle relocating appropriately,
 	 * depending on relo's kind.
 	 */
-	अगर (j > 0)
+	if (j > 0)
 		cands->len = j;
 
 	/*
 	 * If no candidates were found, it might be both a programmer error,
-	 * as well as expected हाल, depending whether inकाष्ठाion w/
+	 * as well as expected case, depending whether instruction w/
 	 * relocation is guarded in some way that makes it unreachable (dead
-	 * code) अगर relocation can't be resolved. This is handled in
-	 * bpf_core_patch_insn() unअगरormly by replacing that inकाष्ठाion with
-	 * BPF helper call insn (using invalid helper ID). If that inकाष्ठाion
+	 * code) if relocation can't be resolved. This is handled in
+	 * bpf_core_patch_insn() uniformly by replacing that instruction with
+	 * BPF helper call insn (using invalid helper ID). If that instruction
 	 * is indeed unreachable, then it will be ignored and eliminated by
-	 * verअगरier. If it was an error, then verअगरier will complain and poपूर्णांक
-	 * to a specअगरic inकाष्ठाion number in its log.
+	 * verifier. If it was an error, then verifier will complain and point
+	 * to a specific instruction number in its log.
 	 */
-	अगर (j == 0) अणु
+	if (j == 0) {
 		pr_debug("prog '%s': relo #%d: no matching targets found\n",
 			 prog->name, relo_idx);
 
 		/* calculate single target relo result explicitly */
-		err = bpf_core_calc_relo(prog, relo, relo_idx, &local_spec, शून्य, &targ_res);
-		अगर (err)
-			वापस err;
-	पूर्ण
+		err = bpf_core_calc_relo(prog, relo, relo_idx, &local_spec, NULL, &targ_res);
+		if (err)
+			return err;
+	}
 
 patch_insn:
 	/* bpf_core_patch_insn() should know how to handle missing targ_spec */
 	err = bpf_core_patch_insn(prog, relo, relo_idx, &targ_res);
-	अगर (err) अणु
+	if (err) {
 		pr_warn("prog '%s': relo #%d: failed to patch insn #%zu: %d\n",
 			prog->name, relo_idx, relo->insn_off / BPF_INSN_SZ, err);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-bpf_object__relocate_core(काष्ठा bpf_object *obj, स्थिर अक्षर *targ_btf_path)
-अणु
-	स्थिर काष्ठा btf_ext_info_sec *sec;
-	स्थिर काष्ठा bpf_core_relo *rec;
-	स्थिर काष्ठा btf_ext_info *seg;
-	काष्ठा hashmap_entry *entry;
-	काष्ठा hashmap *cand_cache = शून्य;
-	काष्ठा bpf_program *prog;
-	स्थिर अक्षर *sec_name;
-	पूर्णांक i, err = 0, insn_idx, sec_idx;
+static int
+bpf_object__relocate_core(struct bpf_object *obj, const char *targ_btf_path)
+{
+	const struct btf_ext_info_sec *sec;
+	const struct bpf_core_relo *rec;
+	const struct btf_ext_info *seg;
+	struct hashmap_entry *entry;
+	struct hashmap *cand_cache = NULL;
+	struct bpf_program *prog;
+	const char *sec_name;
+	int i, err = 0, insn_idx, sec_idx;
 
-	अगर (obj->btf_ext->core_relo_info.len == 0)
-		वापस 0;
+	if (obj->btf_ext->core_relo_info.len == 0)
+		return 0;
 
-	अगर (targ_btf_path) अणु
-		obj->btf_vmlinux_override = btf__parse(targ_btf_path, शून्य);
-		अगर (IS_ERR_OR_शून्य(obj->btf_vmlinux_override)) अणु
+	if (targ_btf_path) {
+		obj->btf_vmlinux_override = btf__parse(targ_btf_path, NULL);
+		if (IS_ERR_OR_NULL(obj->btf_vmlinux_override)) {
 			err = PTR_ERR(obj->btf_vmlinux_override);
 			pr_warn("failed to parse target BTF: %d\n", err);
-			वापस err;
-		पूर्ण
-	पूर्ण
+			return err;
+		}
+	}
 
-	cand_cache = hashmap__new(bpf_core_hash_fn, bpf_core_equal_fn, शून्य);
-	अगर (IS_ERR(cand_cache)) अणु
+	cand_cache = hashmap__new(bpf_core_hash_fn, bpf_core_equal_fn, NULL);
+	if (IS_ERR(cand_cache)) {
 		err = PTR_ERR(cand_cache);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	seg = &obj->btf_ext->core_relo_info;
-	क्रम_each_btf_ext_sec(seg, sec) अणु
+	for_each_btf_ext_sec(seg, sec) {
 		sec_name = btf__name_by_offset(obj->btf, sec->sec_name_off);
-		अगर (str_is_empty(sec_name)) अणु
+		if (str_is_empty(sec_name)) {
 			err = -EINVAL;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		/* bpf_object's ELF is gone by now so it's not easy to find
 		 * section index by section name, but we can find *any*
 		 * bpf_program within desired section name and use it's
-		 * prog->sec_idx to करो a proper search by section index and
-		 * inकाष्ठाion offset
+		 * prog->sec_idx to do a proper search by section index and
+		 * instruction offset
 		 */
-		prog = शून्य;
-		क्रम (i = 0; i < obj->nr_programs; i++) अणु
+		prog = NULL;
+		for (i = 0; i < obj->nr_programs; i++) {
 			prog = &obj->programs[i];
-			अगर (म_भेद(prog->sec_name, sec_name) == 0)
-				अवरोध;
-		पूर्ण
-		अगर (!prog) अणु
+			if (strcmp(prog->sec_name, sec_name) == 0)
+				break;
+		}
+		if (!prog) {
 			pr_warn("sec '%s': failed to find a BPF program\n", sec_name);
-			वापस -ENOENT;
-		पूर्ण
+			return -ENOENT;
+		}
 		sec_idx = prog->sec_idx;
 
 		pr_debug("sec '%s': found %d CO-RE relocations\n",
 			 sec_name, sec->num_info);
 
-		क्रम_each_btf_ext_rec(seg, sec, i, rec) अणु
+		for_each_btf_ext_rec(seg, sec, i, rec) {
 			insn_idx = rec->insn_off / BPF_INSN_SZ;
 			prog = find_prog_by_sec_insn(obj, sec_idx, insn_idx);
-			अगर (!prog) अणु
+			if (!prog) {
 				pr_warn("sec '%s': failed to find program at insn #%d for CO-RE offset relocation #%d\n",
 					sec_name, insn_idx, i);
 				err = -EINVAL;
-				जाओ out;
-			पूर्ण
-			/* no need to apply CO-RE relocation अगर the program is
+				goto out;
+			}
+			/* no need to apply CO-RE relocation if the program is
 			 * not going to be loaded
 			 */
-			अगर (!prog->load)
-				जारी;
+			if (!prog->load)
+				continue;
 
 			err = bpf_core_apply_relo(prog, rec, i, obj->btf, cand_cache);
-			अगर (err) अणु
+			if (err) {
 				pr_warn("prog '%s': relo #%d: failed to relocate: %d\n",
 					prog->name, i, err);
-				जाओ out;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				goto out;
+			}
+		}
+	}
 
 out:
-	/* obj->btf_vmlinux and module BTFs are मुक्तd after object load */
-	btf__मुक्त(obj->btf_vmlinux_override);
-	obj->btf_vmlinux_override = शून्य;
+	/* obj->btf_vmlinux and module BTFs are freed after object load */
+	btf__free(obj->btf_vmlinux_override);
+	obj->btf_vmlinux_override = NULL;
 
-	अगर (!IS_ERR_OR_शून्य(cand_cache)) अणु
-		hashmap__क्रम_each_entry(cand_cache, entry, i) अणु
-			bpf_core_मुक्त_cands(entry->value);
-		पूर्ण
-		hashmap__मुक्त(cand_cache);
-	पूर्ण
-	वापस err;
-पूर्ण
+	if (!IS_ERR_OR_NULL(cand_cache)) {
+		hashmap__for_each_entry(cand_cache, entry, i) {
+			bpf_core_free_cands(entry->value);
+		}
+		hashmap__free(cand_cache);
+	}
+	return err;
+}
 
 /* Relocate data references within program code:
  *  - map references;
  *  - global variable references;
- *  - बाह्य references.
+ *  - extern references.
  */
-अटल पूर्णांक
-bpf_object__relocate_data(काष्ठा bpf_object *obj, काष्ठा bpf_program *prog)
-अणु
-	पूर्णांक i;
+static int
+bpf_object__relocate_data(struct bpf_object *obj, struct bpf_program *prog)
+{
+	int i;
 
-	क्रम (i = 0; i < prog->nr_reloc; i++) अणु
-		काष्ठा reloc_desc *relo = &prog->reloc_desc[i];
-		काष्ठा bpf_insn *insn = &prog->insns[relo->insn_idx];
-		काष्ठा बाह्य_desc *ext;
+	for (i = 0; i < prog->nr_reloc; i++) {
+		struct reloc_desc *relo = &prog->reloc_desc[i];
+		struct bpf_insn *insn = &prog->insns[relo->insn_idx];
+		struct extern_desc *ext;
 
-		चयन (relo->type) अणु
-		हाल RELO_LD64:
+		switch (relo->type) {
+		case RELO_LD64:
 			insn[0].src_reg = BPF_PSEUDO_MAP_FD;
 			insn[0].imm = obj->maps[relo->map_idx].fd;
-			अवरोध;
-		हाल RELO_DATA:
+			break;
+		case RELO_DATA:
 			insn[0].src_reg = BPF_PSEUDO_MAP_VALUE;
 			insn[1].imm = insn[0].imm + relo->sym_off;
 			insn[0].imm = obj->maps[relo->map_idx].fd;
-			अवरोध;
-		हाल RELO_EXTERN_VAR:
-			ext = &obj->बाह्यs[relo->sym_off];
-			अगर (ext->type == EXT_KCFG) अणु
+			break;
+		case RELO_EXTERN_VAR:
+			ext = &obj->externs[relo->sym_off];
+			if (ext->type == EXT_KCFG) {
 				insn[0].src_reg = BPF_PSEUDO_MAP_VALUE;
 				insn[0].imm = obj->maps[obj->kconfig_map_idx].fd;
 				insn[1].imm = ext->kcfg.data_off;
-			पूर्ण अन्यथा /* EXT_KSYM */ अणु
-				अगर (ext->ksym.type_id) अणु /* typed ksyms */
+			} else /* EXT_KSYM */ {
+				if (ext->ksym.type_id) { /* typed ksyms */
 					insn[0].src_reg = BPF_PSEUDO_BTF_ID;
 					insn[0].imm = ext->ksym.kernel_btf_id;
 					insn[1].imm = ext->ksym.kernel_btf_obj_fd;
-				पूर्ण अन्यथा अणु /* typeless ksyms */
+				} else { /* typeless ksyms */
 					insn[0].imm = (__u32)ext->ksym.addr;
 					insn[1].imm = ext->ksym.addr >> 32;
-				पूर्ण
-			पूर्ण
-			अवरोध;
-		हाल RELO_EXTERN_FUNC:
-			ext = &obj->बाह्यs[relo->sym_off];
+				}
+			}
+			break;
+		case RELO_EXTERN_FUNC:
+			ext = &obj->externs[relo->sym_off];
 			insn[0].src_reg = BPF_PSEUDO_KFUNC_CALL;
 			insn[0].imm = ext->ksym.kernel_btf_id;
-			अवरोध;
-		हाल RELO_SUBPROG_ADDR:
+			break;
+		case RELO_SUBPROG_ADDR:
 			insn[0].src_reg = BPF_PSEUDO_FUNC;
 			/* will be handled as a follow up pass */
-			अवरोध;
-		हाल RELO_CALL:
+			break;
+		case RELO_CALL:
 			/* will be handled as a follow up pass */
-			अवरोध;
-		शेष:
+			break;
+		default:
 			pr_warn("prog '%s': relo #%d: bad relo type %d\n",
 				prog->name, i, relo->type);
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक adjust_prog_btf_ext_info(स्थिर काष्ठा bpf_object *obj,
-				    स्थिर काष्ठा bpf_program *prog,
-				    स्थिर काष्ठा btf_ext_info *ext_info,
-				    व्योम **prog_info, __u32 *prog_rec_cnt,
+static int adjust_prog_btf_ext_info(const struct bpf_object *obj,
+				    const struct bpf_program *prog,
+				    const struct btf_ext_info *ext_info,
+				    void **prog_info, __u32 *prog_rec_cnt,
 				    __u32 *prog_rec_sz)
-अणु
-	व्योम *copy_start = शून्य, *copy_end = शून्य;
-	व्योम *rec, *rec_end, *new_prog_info;
-	स्थिर काष्ठा btf_ext_info_sec *sec;
-	माप_प्रकार old_sz, new_sz;
-	स्थिर अक्षर *sec_name;
-	पूर्णांक i, off_adj;
+{
+	void *copy_start = NULL, *copy_end = NULL;
+	void *rec, *rec_end, *new_prog_info;
+	const struct btf_ext_info_sec *sec;
+	size_t old_sz, new_sz;
+	const char *sec_name;
+	int i, off_adj;
 
-	क्रम_each_btf_ext_sec(ext_info, sec) अणु
+	for_each_btf_ext_sec(ext_info, sec) {
 		sec_name = btf__name_by_offset(obj->btf, sec->sec_name_off);
-		अगर (!sec_name)
-			वापस -EINVAL;
-		अगर (म_भेद(sec_name, prog->sec_name) != 0)
-			जारी;
+		if (!sec_name)
+			return -EINVAL;
+		if (strcmp(sec_name, prog->sec_name) != 0)
+			continue;
 
-		क्रम_each_btf_ext_rec(ext_info, sec, i, rec) अणु
+		for_each_btf_ext_rec(ext_info, sec, i, rec) {
 			__u32 insn_off = *(__u32 *)rec / BPF_INSN_SZ;
 
-			अगर (insn_off < prog->sec_insn_off)
-				जारी;
-			अगर (insn_off >= prog->sec_insn_off + prog->sec_insn_cnt)
-				अवरोध;
+			if (insn_off < prog->sec_insn_off)
+				continue;
+			if (insn_off >= prog->sec_insn_off + prog->sec_insn_cnt)
+				break;
 
-			अगर (!copy_start)
+			if (!copy_start)
 				copy_start = rec;
 			copy_end = rec + ext_info->rec_size;
-		पूर्ण
+		}
 
-		अगर (!copy_start)
-			वापस -ENOENT;
+		if (!copy_start)
+			return -ENOENT;
 
-		/* append func/line info of a given (sub-)program to the मुख्य
+		/* append func/line info of a given (sub-)program to the main
 		 * program func/line info
 		 */
-		old_sz = (माप_प्रकार)(*prog_rec_cnt) * ext_info->rec_size;
+		old_sz = (size_t)(*prog_rec_cnt) * ext_info->rec_size;
 		new_sz = old_sz + (copy_end - copy_start);
-		new_prog_info = पुनः_स्मृति(*prog_info, new_sz);
-		अगर (!new_prog_info)
-			वापस -ENOMEM;
+		new_prog_info = realloc(*prog_info, new_sz);
+		if (!new_prog_info)
+			return -ENOMEM;
 		*prog_info = new_prog_info;
 		*prog_rec_cnt = new_sz / ext_info->rec_size;
-		स_नकल(new_prog_info + old_sz, copy_start, copy_end - copy_start);
+		memcpy(new_prog_info + old_sz, copy_start, copy_end - copy_start);
 
-		/* Kernel inकाष्ठाion offsets are in units of 8-byte
-		 * inकाष्ठाions, जबतक .BTF.ext inकाष्ठाion offsets generated
+		/* Kernel instruction offsets are in units of 8-byte
+		 * instructions, while .BTF.ext instruction offsets generated
 		 * by Clang are in units of bytes. So convert Clang offsets
-		 * पूर्णांकo kernel offsets and adjust offset according to program
+		 * into kernel offsets and adjust offset according to program
 		 * relocated position.
 		 */
 		off_adj = prog->sub_insn_off - prog->sec_insn_off;
 		rec = new_prog_info + old_sz;
 		rec_end = new_prog_info + new_sz;
-		क्रम (; rec < rec_end; rec += ext_info->rec_size) अणु
+		for (; rec < rec_end; rec += ext_info->rec_size) {
 			__u32 *insn_off = rec;
 
 			*insn_off = *insn_off / BPF_INSN_SZ + off_adj;
-		पूर्ण
+		}
 		*prog_rec_sz = ext_info->rec_size;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	वापस -ENOENT;
-पूर्ण
+	return -ENOENT;
+}
 
-अटल पूर्णांक
-reloc_prog_func_and_line_info(स्थिर काष्ठा bpf_object *obj,
-			      काष्ठा bpf_program *मुख्य_prog,
-			      स्थिर काष्ठा bpf_program *prog)
-अणु
-	पूर्णांक err;
+static int
+reloc_prog_func_and_line_info(const struct bpf_object *obj,
+			      struct bpf_program *main_prog,
+			      const struct bpf_program *prog)
+{
+	int err;
 
-	/* no .BTF.ext relocation अगर .BTF.ext is missing or kernel करोesn't
+	/* no .BTF.ext relocation if .BTF.ext is missing or kernel doesn't
 	 * supprot func/line info
 	 */
-	अगर (!obj->btf_ext || !kernel_supports(FEAT_BTF_FUNC))
-		वापस 0;
+	if (!obj->btf_ext || !kernel_supports(FEAT_BTF_FUNC))
+		return 0;
 
-	/* only attempt func info relocation अगर मुख्य program's func_info
+	/* only attempt func info relocation if main program's func_info
 	 * relocation was successful
 	 */
-	अगर (मुख्य_prog != prog && !मुख्य_prog->func_info)
-		जाओ line_info;
+	if (main_prog != prog && !main_prog->func_info)
+		goto line_info;
 
 	err = adjust_prog_btf_ext_info(obj, prog, &obj->btf_ext->func_info,
-				       &मुख्य_prog->func_info,
-				       &मुख्य_prog->func_info_cnt,
-				       &मुख्य_prog->func_info_rec_size);
-	अगर (err) अणु
-		अगर (err != -ENOENT) अणु
+				       &main_prog->func_info,
+				       &main_prog->func_info_cnt,
+				       &main_prog->func_info_rec_size);
+	if (err) {
+		if (err != -ENOENT) {
 			pr_warn("prog '%s': error relocating .BTF.ext function info: %d\n",
 				prog->name, err);
-			वापस err;
-		पूर्ण
-		अगर (मुख्य_prog->func_info) अणु
+			return err;
+		}
+		if (main_prog->func_info) {
 			/*
-			 * Some info has alपढ़ोy been found but has problem
+			 * Some info has already been found but has problem
 			 * in the last btf_ext reloc. Must have to error out.
 			 */
 			pr_warn("prog '%s': missing .BTF.ext function info.\n", prog->name);
-			वापस err;
-		पूर्ण
+			return err;
+		}
 		/* Have problem loading the very first info. Ignore the rest. */
 		pr_warn("prog '%s': missing .BTF.ext function info for the main program, skipping all of .BTF.ext func info.\n",
 			prog->name);
-	पूर्ण
+	}
 
 line_info:
-	/* करोn't relocate line info if main program's relocation failed */
-	अगर (मुख्य_prog != prog && !मुख्य_prog->line_info)
-		वापस 0;
+	/* don't relocate line info if main program's relocation failed */
+	if (main_prog != prog && !main_prog->line_info)
+		return 0;
 
 	err = adjust_prog_btf_ext_info(obj, prog, &obj->btf_ext->line_info,
-				       &मुख्य_prog->line_info,
-				       &मुख्य_prog->line_info_cnt,
-				       &मुख्य_prog->line_info_rec_size);
-	अगर (err) अणु
-		अगर (err != -ENOENT) अणु
+				       &main_prog->line_info,
+				       &main_prog->line_info_cnt,
+				       &main_prog->line_info_rec_size);
+	if (err) {
+		if (err != -ENOENT) {
 			pr_warn("prog '%s': error relocating .BTF.ext line info: %d\n",
 				prog->name, err);
-			वापस err;
-		पूर्ण
-		अगर (मुख्य_prog->line_info) अणु
+			return err;
+		}
+		if (main_prog->line_info) {
 			/*
-			 * Some info has alपढ़ोy been found but has problem
+			 * Some info has already been found but has problem
 			 * in the last btf_ext reloc. Must have to error out.
 			 */
 			pr_warn("prog '%s': missing .BTF.ext line info.\n", prog->name);
-			वापस err;
-		पूर्ण
+			return err;
+		}
 		/* Have problem loading the very first info. Ignore the rest. */
 		pr_warn("prog '%s': missing .BTF.ext line info for the main program, skipping all of .BTF.ext line info.\n",
 			prog->name);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल पूर्णांक cmp_relo_by_insn_idx(स्थिर व्योम *key, स्थिर व्योम *elem)
-अणु
-	माप_प्रकार insn_idx = *(स्थिर माप_प्रकार *)key;
-	स्थिर काष्ठा reloc_desc *relo = elem;
+static int cmp_relo_by_insn_idx(const void *key, const void *elem)
+{
+	size_t insn_idx = *(const size_t *)key;
+	const struct reloc_desc *relo = elem;
 
-	अगर (insn_idx == relo->insn_idx)
-		वापस 0;
-	वापस insn_idx < relo->insn_idx ? -1 : 1;
-पूर्ण
+	if (insn_idx == relo->insn_idx)
+		return 0;
+	return insn_idx < relo->insn_idx ? -1 : 1;
+}
 
-अटल काष्ठा reloc_desc *find_prog_insn_relo(स्थिर काष्ठा bpf_program *prog, माप_प्रकार insn_idx)
-अणु
-	वापस द्वा_खोज(&insn_idx, prog->reloc_desc, prog->nr_reloc,
-		       माप(*prog->reloc_desc), cmp_relo_by_insn_idx);
-पूर्ण
+static struct reloc_desc *find_prog_insn_relo(const struct bpf_program *prog, size_t insn_idx)
+{
+	return bsearch(&insn_idx, prog->reloc_desc, prog->nr_reloc,
+		       sizeof(*prog->reloc_desc), cmp_relo_by_insn_idx);
+}
 
-अटल पूर्णांक
-bpf_object__reloc_code(काष्ठा bpf_object *obj, काष्ठा bpf_program *मुख्य_prog,
-		       काष्ठा bpf_program *prog)
-अणु
-	माप_प्रकार sub_insn_idx, insn_idx, new_cnt;
-	काष्ठा bpf_program *subprog;
-	काष्ठा bpf_insn *insns, *insn;
-	काष्ठा reloc_desc *relo;
-	पूर्णांक err;
+static int
+bpf_object__reloc_code(struct bpf_object *obj, struct bpf_program *main_prog,
+		       struct bpf_program *prog)
+{
+	size_t sub_insn_idx, insn_idx, new_cnt;
+	struct bpf_program *subprog;
+	struct bpf_insn *insns, *insn;
+	struct reloc_desc *relo;
+	int err;
 
-	err = reloc_prog_func_and_line_info(obj, मुख्य_prog, prog);
-	अगर (err)
-		वापस err;
+	err = reloc_prog_func_and_line_info(obj, main_prog, prog);
+	if (err)
+		return err;
 
-	क्रम (insn_idx = 0; insn_idx < prog->sec_insn_cnt; insn_idx++) अणु
-		insn = &मुख्य_prog->insns[prog->sub_insn_off + insn_idx];
-		अगर (!insn_is_subprog_call(insn) && !insn_is_pseuकरो_func(insn))
-			जारी;
+	for (insn_idx = 0; insn_idx < prog->sec_insn_cnt; insn_idx++) {
+		insn = &main_prog->insns[prog->sub_insn_off + insn_idx];
+		if (!insn_is_subprog_call(insn) && !insn_is_pseudo_func(insn))
+			continue;
 
 		relo = find_prog_insn_relo(prog, insn_idx);
-		अगर (relo && relo->type != RELO_CALL && relo->type != RELO_SUBPROG_ADDR) अणु
+		if (relo && relo->type != RELO_CALL && relo->type != RELO_SUBPROG_ADDR) {
 			pr_warn("prog '%s': unexpected relo for insn #%zu, type %d\n",
 				prog->name, insn_idx, relo->type);
-			वापस -LIBBPF_ERRNO__RELOC;
-		पूर्ण
-		अगर (relo) अणु
-			/* sub-program inकाष्ठाion index is a combination of
-			 * an offset of a symbol poपूर्णांकed to by relocation and
-			 * call inकाष्ठाion's imm field; क्रम global functions,
-			 * call always has imm = -1, but क्रम अटल functions
+			return -LIBBPF_ERRNO__RELOC;
+		}
+		if (relo) {
+			/* sub-program instruction index is a combination of
+			 * an offset of a symbol pointed to by relocation and
+			 * call instruction's imm field; for global functions,
+			 * call always has imm = -1, but for static functions
 			 * relocation is against STT_SECTION and insn->imm
-			 * poपूर्णांकs to a start of a अटल function
+			 * points to a start of a static function
 			 *
-			 * क्रम subprog addr relocation, the relo->sym_off + insn->imm is
+			 * for subprog addr relocation, the relo->sym_off + insn->imm is
 			 * the byte offset in the corresponding section.
 			 */
-			अगर (relo->type == RELO_CALL)
+			if (relo->type == RELO_CALL)
 				sub_insn_idx = relo->sym_off / BPF_INSN_SZ + insn->imm + 1;
-			अन्यथा
+			else
 				sub_insn_idx = (relo->sym_off + insn->imm) / BPF_INSN_SZ;
-		पूर्ण अन्यथा अगर (insn_is_pseuकरो_func(insn)) अणु
+		} else if (insn_is_pseudo_func(insn)) {
 			/*
-			 * RELO_SUBPROG_ADDR relo is always emitted even अगर both
+			 * RELO_SUBPROG_ADDR relo is always emitted even if both
 			 * functions are in the same section, so it shouldn't reach here.
 			 */
 			pr_warn("prog '%s': missing subprog addr relo for insn #%zu\n",
 				prog->name, insn_idx);
-			वापस -LIBBPF_ERRNO__RELOC;
-		पूर्ण अन्यथा अणु
-			/* अगर subprogram call is to a अटल function within
+			return -LIBBPF_ERRNO__RELOC;
+		} else {
+			/* if subprogram call is to a static function within
 			 * the same ELF section, there won't be any relocation
 			 * emitted, but it also means there is no additional
 			 * offset necessary, insns->imm is relative to
-			 * inकाष्ठाion's original position within the section
+			 * instruction's original position within the section
 			 */
 			sub_insn_idx = prog->sec_insn_off + insn_idx + insn->imm + 1;
-		पूर्ण
+		}
 
-		/* we enक्रमce that sub-programs should be in .text section */
+		/* we enforce that sub-programs should be in .text section */
 		subprog = find_prog_by_sec_insn(obj, obj->efile.text_shndx, sub_insn_idx);
-		अगर (!subprog) अणु
+		if (!subprog) {
 			pr_warn("prog '%s': no .text section found yet sub-program call exists\n",
 				prog->name);
-			वापस -LIBBPF_ERRNO__RELOC;
-		पूर्ण
+			return -LIBBPF_ERRNO__RELOC;
+		}
 
-		/* अगर it's the first call inकाष्ठाion calling पूर्णांकo this
+		/* if it's the first call instruction calling into this
 		 * subprogram (meaning this subprog hasn't been processed
-		 * yet) within the context of current मुख्य program:
-		 *   - append it at the end of मुख्य program's inकाष्ठाions blog;
-		 *   - process is recursively, जबतक current program is put on hold;
-		 *   - अगर that subprogram calls some other not yet processes
+		 * yet) within the context of current main program:
+		 *   - append it at the end of main program's instructions blog;
+		 *   - process is recursively, while current program is put on hold;
+		 *   - if that subprogram calls some other not yet processes
 		 *   subprogram, same thing will happen recursively until
 		 *   there are no more unprocesses subprograms left to append
 		 *   and relocate.
 		 */
-		अगर (subprog->sub_insn_off == 0) अणु
-			subprog->sub_insn_off = मुख्य_prog->insns_cnt;
+		if (subprog->sub_insn_off == 0) {
+			subprog->sub_insn_off = main_prog->insns_cnt;
 
-			new_cnt = मुख्य_prog->insns_cnt + subprog->insns_cnt;
-			insns = libbpf_पुनः_स्मृतिarray(मुख्य_prog->insns, new_cnt, माप(*insns));
-			अगर (!insns) अणु
-				pr_warn("prog '%s': failed to realloc prog code\n", मुख्य_prog->name);
-				वापस -ENOMEM;
-			पूर्ण
-			मुख्य_prog->insns = insns;
-			मुख्य_prog->insns_cnt = new_cnt;
+			new_cnt = main_prog->insns_cnt + subprog->insns_cnt;
+			insns = libbpf_reallocarray(main_prog->insns, new_cnt, sizeof(*insns));
+			if (!insns) {
+				pr_warn("prog '%s': failed to realloc prog code\n", main_prog->name);
+				return -ENOMEM;
+			}
+			main_prog->insns = insns;
+			main_prog->insns_cnt = new_cnt;
 
-			स_नकल(मुख्य_prog->insns + subprog->sub_insn_off, subprog->insns,
-			       subprog->insns_cnt * माप(*insns));
+			memcpy(main_prog->insns + subprog->sub_insn_off, subprog->insns,
+			       subprog->insns_cnt * sizeof(*insns));
 
 			pr_debug("prog '%s': added %zu insns from sub-prog '%s'\n",
-				 मुख्य_prog->name, subprog->insns_cnt, subprog->name);
+				 main_prog->name, subprog->insns_cnt, subprog->name);
 
-			err = bpf_object__reloc_code(obj, मुख्य_prog, subprog);
-			अगर (err)
-				वापस err;
-		पूर्ण
+			err = bpf_object__reloc_code(obj, main_prog, subprog);
+			if (err)
+				return err;
+		}
 
-		/* मुख्य_prog->insns memory could have been re-allocated, so
-		 * calculate poपूर्णांकer again
+		/* main_prog->insns memory could have been re-allocated, so
+		 * calculate pointer again
 		 */
-		insn = &मुख्य_prog->insns[prog->sub_insn_off + insn_idx];
-		/* calculate correct inकाष्ठाion position within current मुख्य
-		 * prog; each मुख्य prog can have a dअगरferent set of
-		 * subprograms appended (potentially in dअगरferent order as
-		 * well), so position of any subprog can be dअगरferent क्रम
-		 * dअगरferent मुख्य programs */
+		insn = &main_prog->insns[prog->sub_insn_off + insn_idx];
+		/* calculate correct instruction position within current main
+		 * prog; each main prog can have a different set of
+		 * subprograms appended (potentially in different order as
+		 * well), so position of any subprog can be different for
+		 * different main programs */
 		insn->imm = subprog->sub_insn_off - (prog->sub_insn_off + insn_idx) - 1;
 
 		pr_debug("prog '%s': insn #%zu relocated, imm %d points to subprog '%s' (now at %zu offset)\n",
 			 prog->name, insn_idx, insn->imm, subprog->name, subprog->sub_insn_off);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Relocate sub-program calls.
  *
- * Algorithm operates as follows. Each entry-poपूर्णांक BPF program (referred to as
- * मुख्य prog) is processed separately. For each subprog (non-entry functions,
- * that can be called from either entry progs or other subprogs) माला_लो their
+ * Algorithm operates as follows. Each entry-point BPF program (referred to as
+ * main prog) is processed separately. For each subprog (non-entry functions,
+ * that can be called from either entry progs or other subprogs) gets their
  * sub_insn_off reset to zero. This serves as indicator that this subprogram
- * hasn't been yet appended and relocated within current मुख्य prog. Once its
- * relocated, sub_insn_off will poपूर्णांक at the position within current मुख्य prog
+ * hasn't been yet appended and relocated within current main prog. Once its
+ * relocated, sub_insn_off will point at the position within current main prog
  * where given subprog was appended. This will further be used to relocate all
- * the call inकाष्ठाions jumping पूर्णांकo this subprog.
+ * the call instructions jumping into this subprog.
  *
- * We start with मुख्य program and process all call inकाष्ठाions. If the call
- * is पूर्णांकo a subprog that hasn't been processed (i.e., subprog->sub_insn_off
- * is zero), subprog inकाष्ठाions are appended at the end of मुख्य program's
- * inकाष्ठाion array. Then मुख्य program is "put on hold" जबतक we recursively
- * process newly appended subprogram. If that subprogram calls पूर्णांकo another
+ * We start with main program and process all call instructions. If the call
+ * is into a subprog that hasn't been processed (i.e., subprog->sub_insn_off
+ * is zero), subprog instructions are appended at the end of main program's
+ * instruction array. Then main program is "put on hold" while we recursively
+ * process newly appended subprogram. If that subprogram calls into another
  * subprogram that hasn't been appended, new subprogram is appended again to
- * the *मुख्य* prog's instructions (subprog's inकाष्ठाions are always left
- * untouched, as they need to be in unmodअगरied state क्रम subsequent मुख्य progs
- * and subprog inकाष्ठाions are always sent only as part of a मुख्य prog) and
- * the process जारीs recursively. Once all the subprogs called from a मुख्य
+ * the *main* prog's instructions (subprog's instructions are always left
+ * untouched, as they need to be in unmodified state for subsequent main progs
+ * and subprog instructions are always sent only as part of a main prog) and
+ * the process continues recursively. Once all the subprogs called from a main
  * prog or any of its subprogs are appended (and relocated), all their
- * positions within finalized inकाष्ठाions array are known, so it's easy to
- * reग_लिखो call inकाष्ठाions with correct relative offsets, corresponding to
+ * positions within finalized instructions array are known, so it's easy to
+ * rewrite call instructions with correct relative offsets, corresponding to
  * desired target subprog.
  *
  * Its important to realize that some subprogs might not be called from some
- * मुख्य prog and any of its called/used subprogs. Those will keep their
- * subprog->sub_insn_off as zero at all बार and won't be appended to current
- * मुख्य prog and won't be relocated within the context of current मुख्य prog.
- * They might still be used from other मुख्य progs later.
+ * main prog and any of its called/used subprogs. Those will keep their
+ * subprog->sub_insn_off as zero at all times and won't be appended to current
+ * main prog and won't be relocated within the context of current main prog.
+ * They might still be used from other main progs later.
  *
- * Visually this process can be shown as below. Suppose we have two मुख्य
- * programs मुख्यA and मुख्यB and BPF object contains three subprogs: subA,
- * subB, and subC. मुख्यA calls only subA, मुख्यB calls only subC, but subA and
+ * Visually this process can be shown as below. Suppose we have two main
+ * programs mainA and mainB and BPF object contains three subprogs: subA,
+ * subB, and subC. mainA calls only subA, mainB calls only subC, but subA and
  * subC both call subB:
  *
  *        +--------+ +-------+
@@ -6739,381 +6738,381 @@ bpf_object__reloc_code(काष्ठा bpf_object *obj, काष्ठा bp
  *        ^                  ^
  *        |                  |
  *    +---+-------+   +------+----+
- *    |   मुख्यA   |   |   मुख्यB   |
+ *    |   mainA   |   |   mainB   |
  *    +-----------+   +-----------+
  *
- * We'll start relocating मुख्यA, will find subA, append it and start
+ * We'll start relocating mainA, will find subA, append it and start
  * processing sub A recursively:
  *
  *    +-----------+------+
- *    |   मुख्यA   | subA |
+ *    |   mainA   | subA |
  *    +-----------+------+
  *
- * At this poपूर्णांक we notice that subB is used from subA, so we append it and
+ * At this point we notice that subB is used from subA, so we append it and
  * relocate (there are no further subcalls from subB):
  *
  *    +-----------+------+------+
- *    |   मुख्यA   | subA | subB |
+ *    |   mainA   | subA | subB |
  *    +-----------+------+------+
  *
- * At this poपूर्णांक, we relocate subA calls, then go one level up and finish with
- * relocatin मुख्यA calls. मुख्यA is करोne.
+ * At this point, we relocate subA calls, then go one level up and finish with
+ * relocatin mainA calls. mainA is done.
  *
- * For मुख्यB process is similar but results in dअगरferent order. We start with
- * मुख्यB and skip subA and subB, as मुख्यB never calls them (at least
+ * For mainB process is similar but results in different order. We start with
+ * mainB and skip subA and subB, as mainB never calls them (at least
  * directly), but we see subC is needed, so we append and start processing it:
  *
  *    +-----------+------+
- *    |   मुख्यB   | subC |
+ *    |   mainB   | subC |
  *    +-----------+------+
  * Now we see subC needs subB, so we go back to it, append and relocate it:
  *
  *    +-----------+------+------+
- *    |   मुख्यB   | subC | subB |
+ *    |   mainB   | subC | subB |
  *    +-----------+------+------+
  *
- * At this poपूर्णांक we unwind recursion, relocate calls in subC, then in मुख्यB.
+ * At this point we unwind recursion, relocate calls in subC, then in mainB.
  */
-अटल पूर्णांक
-bpf_object__relocate_calls(काष्ठा bpf_object *obj, काष्ठा bpf_program *prog)
-अणु
-	काष्ठा bpf_program *subprog;
-	पूर्णांक i, err;
+static int
+bpf_object__relocate_calls(struct bpf_object *obj, struct bpf_program *prog)
+{
+	struct bpf_program *subprog;
+	int i, err;
 
 	/* mark all subprogs as not relocated (yet) within the context of
-	 * current मुख्य program
+	 * current main program
 	 */
-	क्रम (i = 0; i < obj->nr_programs; i++) अणु
+	for (i = 0; i < obj->nr_programs; i++) {
 		subprog = &obj->programs[i];
-		अगर (!prog_is_subprog(obj, subprog))
-			जारी;
+		if (!prog_is_subprog(obj, subprog))
+			continue;
 
 		subprog->sub_insn_off = 0;
-	पूर्ण
+	}
 
 	err = bpf_object__reloc_code(obj, prog, prog);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-bpf_object__relocate(काष्ठा bpf_object *obj, स्थिर अक्षर *targ_btf_path)
-अणु
-	काष्ठा bpf_program *prog;
-	माप_प्रकार i;
-	पूर्णांक err;
+static int
+bpf_object__relocate(struct bpf_object *obj, const char *targ_btf_path)
+{
+	struct bpf_program *prog;
+	size_t i;
+	int err;
 
-	अगर (obj->btf_ext) अणु
+	if (obj->btf_ext) {
 		err = bpf_object__relocate_core(obj, targ_btf_path);
-		अगर (err) अणु
+		if (err) {
 			pr_warn("failed to perform CO-RE relocations: %d\n",
 				err);
-			वापस err;
-		पूर्ण
-	पूर्ण
-	/* relocate data references first क्रम all programs and sub-programs,
-	 * as they करोn't change relative to code locations, so subsequent
+			return err;
+		}
+	}
+	/* relocate data references first for all programs and sub-programs,
+	 * as they don't change relative to code locations, so subsequent
 	 * subprogram processing won't need to re-calculate any of them
 	 */
-	क्रम (i = 0; i < obj->nr_programs; i++) अणु
+	for (i = 0; i < obj->nr_programs; i++) {
 		prog = &obj->programs[i];
 		err = bpf_object__relocate_data(obj, prog);
-		अगर (err) अणु
+		if (err) {
 			pr_warn("prog '%s': failed to relocate data references: %d\n",
 				prog->name, err);
-			वापस err;
-		पूर्ण
-	पूर्ण
-	/* now relocate subprogram calls and append used subprograms to मुख्य
+			return err;
+		}
+	}
+	/* now relocate subprogram calls and append used subprograms to main
 	 * programs; each copy of subprogram code needs to be relocated
-	 * dअगरferently क्रम each मुख्य program, because its code location might
+	 * differently for each main program, because its code location might
 	 * have changed
 	 */
-	क्रम (i = 0; i < obj->nr_programs; i++) अणु
+	for (i = 0; i < obj->nr_programs; i++) {
 		prog = &obj->programs[i];
 		/* sub-program's sub-calls are relocated within the context of
-		 * its मुख्य program only
+		 * its main program only
 		 */
-		अगर (prog_is_subprog(obj, prog))
-			जारी;
+		if (prog_is_subprog(obj, prog))
+			continue;
 
 		err = bpf_object__relocate_calls(obj, prog);
-		अगर (err) अणु
+		if (err) {
 			pr_warn("prog '%s': failed to relocate calls: %d\n",
 				prog->name, err);
-			वापस err;
-		पूर्ण
-	पूर्ण
-	/* मुक्त up relocation descriptors */
-	क्रम (i = 0; i < obj->nr_programs; i++) अणु
+			return err;
+		}
+	}
+	/* free up relocation descriptors */
+	for (i = 0; i < obj->nr_programs; i++) {
 		prog = &obj->programs[i];
-		zमुक्त(&prog->reloc_desc);
+		zfree(&prog->reloc_desc);
 		prog->nr_reloc = 0;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल पूर्णांक bpf_object__collect_st_ops_relos(काष्ठा bpf_object *obj,
+static int bpf_object__collect_st_ops_relos(struct bpf_object *obj,
 					    GElf_Shdr *shdr, Elf_Data *data);
 
-अटल पूर्णांक bpf_object__collect_map_relos(काष्ठा bpf_object *obj,
+static int bpf_object__collect_map_relos(struct bpf_object *obj,
 					 GElf_Shdr *shdr, Elf_Data *data)
-अणु
-	स्थिर पूर्णांक bpf_ptr_sz = 8, host_ptr_sz = माप(व्योम *);
-	पूर्णांक i, j, nrels, new_sz;
-	स्थिर काष्ठा btf_var_secinfo *vi = शून्य;
-	स्थिर काष्ठा btf_type *sec, *var, *def;
-	काष्ठा bpf_map *map = शून्य, *targ_map;
-	स्थिर काष्ठा btf_member *member;
-	स्थिर अक्षर *name, *mname;
+{
+	const int bpf_ptr_sz = 8, host_ptr_sz = sizeof(void *);
+	int i, j, nrels, new_sz;
+	const struct btf_var_secinfo *vi = NULL;
+	const struct btf_type *sec, *var, *def;
+	struct bpf_map *map = NULL, *targ_map;
+	const struct btf_member *member;
+	const char *name, *mname;
 	Elf_Data *symbols;
-	अचिन्हित पूर्णांक moff;
+	unsigned int moff;
 	GElf_Sym sym;
 	GElf_Rel rel;
-	व्योम *पंचांगp;
+	void *tmp;
 
-	अगर (!obj->efile.btf_maps_sec_btf_id || !obj->btf)
-		वापस -EINVAL;
+	if (!obj->efile.btf_maps_sec_btf_id || !obj->btf)
+		return -EINVAL;
 	sec = btf__type_by_id(obj->btf, obj->efile.btf_maps_sec_btf_id);
-	अगर (!sec)
-		वापस -EINVAL;
+	if (!sec)
+		return -EINVAL;
 
 	symbols = obj->efile.symbols;
 	nrels = shdr->sh_size / shdr->sh_entsize;
-	क्रम (i = 0; i < nrels; i++) अणु
-		अगर (!gelf_getrel(data, i, &rel)) अणु
+	for (i = 0; i < nrels; i++) {
+		if (!gelf_getrel(data, i, &rel)) {
 			pr_warn(".maps relo #%d: failed to get ELF relo\n", i);
-			वापस -LIBBPF_ERRNO__FORMAT;
-		पूर्ण
-		अगर (!gelf_माला_लोym(symbols, GELF_R_SYM(rel.r_info), &sym)) अणु
+			return -LIBBPF_ERRNO__FORMAT;
+		}
+		if (!gelf_getsym(symbols, GELF_R_SYM(rel.r_info), &sym)) {
 			pr_warn(".maps relo #%d: symbol %zx not found\n",
-				i, (माप_प्रकार)GELF_R_SYM(rel.r_info));
-			वापस -LIBBPF_ERRNO__FORMAT;
-		पूर्ण
+				i, (size_t)GELF_R_SYM(rel.r_info));
+			return -LIBBPF_ERRNO__FORMAT;
+		}
 		name = elf_sym_str(obj, sym.st_name) ?: "<?>";
-		अगर (sym.st_shndx != obj->efile.btf_maps_shndx) अणु
+		if (sym.st_shndx != obj->efile.btf_maps_shndx) {
 			pr_warn(".maps relo #%d: '%s' isn't a BTF-defined map\n",
 				i, name);
-			वापस -LIBBPF_ERRNO__RELOC;
-		पूर्ण
+			return -LIBBPF_ERRNO__RELOC;
+		}
 
 		pr_debug(".maps relo #%d: for %zd value %zd rel.r_offset %zu name %d ('%s')\n",
-			 i, (sमाप_प्रकार)(rel.r_info >> 32), (माप_प्रकार)sym.st_value,
-			 (माप_प्रकार)rel.r_offset, sym.st_name, name);
+			 i, (ssize_t)(rel.r_info >> 32), (size_t)sym.st_value,
+			 (size_t)rel.r_offset, sym.st_name, name);
 
-		क्रम (j = 0; j < obj->nr_maps; j++) अणु
+		for (j = 0; j < obj->nr_maps; j++) {
 			map = &obj->maps[j];
-			अगर (map->sec_idx != obj->efile.btf_maps_shndx)
-				जारी;
+			if (map->sec_idx != obj->efile.btf_maps_shndx)
+				continue;
 
 			vi = btf_var_secinfos(sec) + map->btf_var_idx;
-			अगर (vi->offset <= rel.r_offset &&
+			if (vi->offset <= rel.r_offset &&
 			    rel.r_offset + bpf_ptr_sz <= vi->offset + vi->size)
-				अवरोध;
-		पूर्ण
-		अगर (j == obj->nr_maps) अणु
+				break;
+		}
+		if (j == obj->nr_maps) {
 			pr_warn(".maps relo #%d: cannot find map '%s' at rel.r_offset %zu\n",
-				i, name, (माप_प्रकार)rel.r_offset);
-			वापस -EINVAL;
-		पूर्ण
+				i, name, (size_t)rel.r_offset);
+			return -EINVAL;
+		}
 
-		अगर (!bpf_map_type__is_map_in_map(map->def.type))
-			वापस -EINVAL;
-		अगर (map->def.type == BPF_MAP_TYPE_HASH_OF_MAPS &&
-		    map->def.key_size != माप(पूर्णांक)) अणु
+		if (!bpf_map_type__is_map_in_map(map->def.type))
+			return -EINVAL;
+		if (map->def.type == BPF_MAP_TYPE_HASH_OF_MAPS &&
+		    map->def.key_size != sizeof(int)) {
 			pr_warn(".maps relo #%d: hash-of-maps '%s' should have key size %zu.\n",
-				i, map->name, माप(पूर्णांक));
-			वापस -EINVAL;
-		पूर्ण
+				i, map->name, sizeof(int));
+			return -EINVAL;
+		}
 
 		targ_map = bpf_object__find_map_by_name(obj, name);
-		अगर (!targ_map)
-			वापस -ESRCH;
+		if (!targ_map)
+			return -ESRCH;
 
 		var = btf__type_by_id(obj->btf, vi->type);
-		def = skip_mods_and_प्रकारs(obj->btf, var->type, शून्य);
-		अगर (btf_vlen(def) == 0)
-			वापस -EINVAL;
+		def = skip_mods_and_typedefs(obj->btf, var->type, NULL);
+		if (btf_vlen(def) == 0)
+			return -EINVAL;
 		member = btf_members(def) + btf_vlen(def) - 1;
 		mname = btf__name_by_offset(obj->btf, member->name_off);
-		अगर (म_भेद(mname, "values"))
-			वापस -EINVAL;
+		if (strcmp(mname, "values"))
+			return -EINVAL;
 
 		moff = btf_member_bit_offset(def, btf_vlen(def) - 1) / 8;
-		अगर (rel.r_offset - vi->offset < moff)
-			वापस -EINVAL;
+		if (rel.r_offset - vi->offset < moff)
+			return -EINVAL;
 
 		moff = rel.r_offset - vi->offset - moff;
-		/* here we use BPF poपूर्णांकer size, which is always 64 bit, as we
-		 * are parsing ELF that was built क्रम BPF target
+		/* here we use BPF pointer size, which is always 64 bit, as we
+		 * are parsing ELF that was built for BPF target
 		 */
-		अगर (moff % bpf_ptr_sz)
-			वापस -EINVAL;
+		if (moff % bpf_ptr_sz)
+			return -EINVAL;
 		moff /= bpf_ptr_sz;
-		अगर (moff >= map->init_slots_sz) अणु
+		if (moff >= map->init_slots_sz) {
 			new_sz = moff + 1;
-			पंचांगp = libbpf_पुनः_स्मृतिarray(map->init_slots, new_sz, host_ptr_sz);
-			अगर (!पंचांगp)
-				वापस -ENOMEM;
-			map->init_slots = पंचांगp;
-			स_रखो(map->init_slots + map->init_slots_sz, 0,
+			tmp = libbpf_reallocarray(map->init_slots, new_sz, host_ptr_sz);
+			if (!tmp)
+				return -ENOMEM;
+			map->init_slots = tmp;
+			memset(map->init_slots + map->init_slots_sz, 0,
 			       (new_sz - map->init_slots_sz) * host_ptr_sz);
 			map->init_slots_sz = new_sz;
-		पूर्ण
+		}
 		map->init_slots[moff] = targ_map;
 
 		pr_debug(".maps relo #%d: map '%s' slot [%d] points to map '%s'\n",
 			 i, map->name, moff, name);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक cmp_relocs(स्थिर व्योम *_a, स्थिर व्योम *_b)
-अणु
-	स्थिर काष्ठा reloc_desc *a = _a;
-	स्थिर काष्ठा reloc_desc *b = _b;
+static int cmp_relocs(const void *_a, const void *_b)
+{
+	const struct reloc_desc *a = _a;
+	const struct reloc_desc *b = _b;
 
-	अगर (a->insn_idx != b->insn_idx)
-		वापस a->insn_idx < b->insn_idx ? -1 : 1;
+	if (a->insn_idx != b->insn_idx)
+		return a->insn_idx < b->insn_idx ? -1 : 1;
 
 	/* no two relocations should have the same insn_idx, but ... */
-	अगर (a->type != b->type)
-		वापस a->type < b->type ? -1 : 1;
+	if (a->type != b->type)
+		return a->type < b->type ? -1 : 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक bpf_object__collect_relos(काष्ठा bpf_object *obj)
-अणु
-	पूर्णांक i, err;
+static int bpf_object__collect_relos(struct bpf_object *obj)
+{
+	int i, err;
 
-	क्रम (i = 0; i < obj->efile.nr_reloc_sects; i++) अणु
+	for (i = 0; i < obj->efile.nr_reloc_sects; i++) {
 		GElf_Shdr *shdr = &obj->efile.reloc_sects[i].shdr;
 		Elf_Data *data = obj->efile.reloc_sects[i].data;
-		पूर्णांक idx = shdr->sh_info;
+		int idx = shdr->sh_info;
 
-		अगर (shdr->sh_type != SHT_REL) अणु
+		if (shdr->sh_type != SHT_REL) {
 			pr_warn("internal error at %d\n", __LINE__);
-			वापस -LIBBPF_ERRNO__INTERNAL;
-		पूर्ण
+			return -LIBBPF_ERRNO__INTERNAL;
+		}
 
-		अगर (idx == obj->efile.st_ops_shndx)
+		if (idx == obj->efile.st_ops_shndx)
 			err = bpf_object__collect_st_ops_relos(obj, shdr, data);
-		अन्यथा अगर (idx == obj->efile.btf_maps_shndx)
+		else if (idx == obj->efile.btf_maps_shndx)
 			err = bpf_object__collect_map_relos(obj, shdr, data);
-		अन्यथा
+		else
 			err = bpf_object__collect_prog_relos(obj, shdr, data);
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 
-	क्रम (i = 0; i < obj->nr_programs; i++) अणु
-		काष्ठा bpf_program *p = &obj->programs[i];
+	for (i = 0; i < obj->nr_programs; i++) {
+		struct bpf_program *p = &obj->programs[i];
 		
-		अगर (!p->nr_reloc)
-			जारी;
+		if (!p->nr_reloc)
+			continue;
 
-		क्विक(p->reloc_desc, p->nr_reloc, माप(*p->reloc_desc), cmp_relocs);
-	पूर्ण
-	वापस 0;
-पूर्ण
+		qsort(p->reloc_desc, p->nr_reloc, sizeof(*p->reloc_desc), cmp_relocs);
+	}
+	return 0;
+}
 
-अटल bool insn_is_helper_call(काष्ठा bpf_insn *insn, क्रमागत bpf_func_id *func_id)
-अणु
-	अगर (BPF_CLASS(insn->code) == BPF_JMP &&
+static bool insn_is_helper_call(struct bpf_insn *insn, enum bpf_func_id *func_id)
+{
+	if (BPF_CLASS(insn->code) == BPF_JMP &&
 	    BPF_OP(insn->code) == BPF_CALL &&
 	    BPF_SRC(insn->code) == BPF_K &&
 	    insn->src_reg == 0 &&
-	    insn->dst_reg == 0) अणु
+	    insn->dst_reg == 0) {
 		    *func_id = insn->imm;
-		    वापस true;
-	पूर्ण
-	वापस false;
-पूर्ण
+		    return true;
+	}
+	return false;
+}
 
-अटल पूर्णांक bpf_object__sanitize_prog(काष्ठा bpf_object *obj, काष्ठा bpf_program *prog)
-अणु
-	काष्ठा bpf_insn *insn = prog->insns;
-	क्रमागत bpf_func_id func_id;
-	पूर्णांक i;
+static int bpf_object__sanitize_prog(struct bpf_object *obj, struct bpf_program *prog)
+{
+	struct bpf_insn *insn = prog->insns;
+	enum bpf_func_id func_id;
+	int i;
 
-	क्रम (i = 0; i < prog->insns_cnt; i++, insn++) अणु
-		अगर (!insn_is_helper_call(insn, &func_id))
-			जारी;
+	for (i = 0; i < prog->insns_cnt; i++, insn++) {
+		if (!insn_is_helper_call(insn, &func_id))
+			continue;
 
-		/* on kernels that करोn't yet support
-		 * bpf_probe_पढ़ो_अणुkernel,userपूर्ण[_str] helpers, fall back
-		 * to bpf_probe_पढ़ो() which works well क्रम old kernels
+		/* on kernels that don't yet support
+		 * bpf_probe_read_{kernel,user}[_str] helpers, fall back
+		 * to bpf_probe_read() which works well for old kernels
 		 */
-		चयन (func_id) अणु
-		हाल BPF_FUNC_probe_पढ़ो_kernel:
-		हाल BPF_FUNC_probe_पढ़ो_user:
-			अगर (!kernel_supports(FEAT_PROBE_READ_KERN))
-				insn->imm = BPF_FUNC_probe_पढ़ो;
-			अवरोध;
-		हाल BPF_FUNC_probe_पढ़ो_kernel_str:
-		हाल BPF_FUNC_probe_पढ़ो_user_str:
-			अगर (!kernel_supports(FEAT_PROBE_READ_KERN))
-				insn->imm = BPF_FUNC_probe_पढ़ो_str;
-			अवरोध;
-		शेष:
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+		switch (func_id) {
+		case BPF_FUNC_probe_read_kernel:
+		case BPF_FUNC_probe_read_user:
+			if (!kernel_supports(FEAT_PROBE_READ_KERN))
+				insn->imm = BPF_FUNC_probe_read;
+			break;
+		case BPF_FUNC_probe_read_kernel_str:
+		case BPF_FUNC_probe_read_user_str:
+			if (!kernel_supports(FEAT_PROBE_READ_KERN))
+				insn->imm = BPF_FUNC_probe_read_str;
+			break;
+		default:
+			break;
+		}
+	}
+	return 0;
+}
 
-अटल पूर्णांक
-load_program(काष्ठा bpf_program *prog, काष्ठा bpf_insn *insns, पूर्णांक insns_cnt,
-	     अक्षर *license, __u32 kern_version, पूर्णांक *pfd)
-अणु
-	काष्ठा bpf_prog_load_params load_attr = अणुपूर्ण;
-	अक्षर *cp, errmsg[STRERR_बफ_मानE];
-	माप_प्रकार log_buf_size = 0;
-	अक्षर *log_buf = शून्य;
-	पूर्णांक btf_fd, ret;
+static int
+load_program(struct bpf_program *prog, struct bpf_insn *insns, int insns_cnt,
+	     char *license, __u32 kern_version, int *pfd)
+{
+	struct bpf_prog_load_params load_attr = {};
+	char *cp, errmsg[STRERR_BUFSIZE];
+	size_t log_buf_size = 0;
+	char *log_buf = NULL;
+	int btf_fd, ret;
 
-	अगर (prog->type == BPF_PROG_TYPE_UNSPEC) अणु
+	if (prog->type == BPF_PROG_TYPE_UNSPEC) {
 		/*
 		 * The program type must be set.  Most likely we couldn't find a proper
-		 * section definition at load समय, and thus we didn't infer the type.
+		 * section definition at load time, and thus we didn't infer the type.
 		 */
 		pr_warn("prog '%s': missing BPF prog type, check ELF section name '%s'\n",
 			prog->name, prog->sec_name);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (!insns || !insns_cnt)
-		वापस -EINVAL;
+	if (!insns || !insns_cnt)
+		return -EINVAL;
 
 	load_attr.prog_type = prog->type;
-	/* old kernels might not support specअगरying expected_attach_type */
-	अगर (!kernel_supports(FEAT_EXP_ATTACH_TYPE) && prog->sec_def &&
+	/* old kernels might not support specifying expected_attach_type */
+	if (!kernel_supports(FEAT_EXP_ATTACH_TYPE) && prog->sec_def &&
 	    prog->sec_def->is_exp_attach_type_optional)
 		load_attr.expected_attach_type = 0;
-	अन्यथा
+	else
 		load_attr.expected_attach_type = prog->expected_attach_type;
-	अगर (kernel_supports(FEAT_PROG_NAME))
+	if (kernel_supports(FEAT_PROG_NAME))
 		load_attr.name = prog->name;
 	load_attr.insns = insns;
 	load_attr.insn_cnt = insns_cnt;
 	load_attr.license = license;
 	load_attr.attach_btf_id = prog->attach_btf_id;
-	अगर (prog->attach_prog_fd)
+	if (prog->attach_prog_fd)
 		load_attr.attach_prog_fd = prog->attach_prog_fd;
-	अन्यथा
+	else
 		load_attr.attach_btf_obj_fd = prog->attach_btf_obj_fd;
 	load_attr.attach_btf_id = prog->attach_btf_id;
 	load_attr.kern_version = kern_version;
-	load_attr.prog_अगरindex = prog->prog_अगरindex;
+	load_attr.prog_ifindex = prog->prog_ifindex;
 
-	/* specअगरy func_info/line_info only अगर kernel supports them */
+	/* specify func_info/line_info only if kernel supports them */
 	btf_fd = bpf_object__btf_fd(prog->obj);
-	अगर (btf_fd >= 0 && kernel_supports(FEAT_BTF_FUNC)) अणु
+	if (btf_fd >= 0 && kernel_supports(FEAT_BTF_FUNC)) {
 		load_attr.prog_btf_fd = btf_fd;
 		load_attr.func_info = prog->func_info;
 		load_attr.func_info_rec_size = prog->func_info_rec_size;
@@ -7121,498 +7120,498 @@ load_program(काष्ठा bpf_program *prog, काष्ठा bpf_insn *
 		load_attr.line_info = prog->line_info;
 		load_attr.line_info_rec_size = prog->line_info_rec_size;
 		load_attr.line_info_cnt = prog->line_info_cnt;
-	पूर्ण
+	}
 	load_attr.log_level = prog->log_level;
 	load_attr.prog_flags = prog->prog_flags;
 
 retry_load:
-	अगर (log_buf_size) अणु
-		log_buf = दो_स्मृति(log_buf_size);
-		अगर (!log_buf)
-			वापस -ENOMEM;
+	if (log_buf_size) {
+		log_buf = malloc(log_buf_size);
+		if (!log_buf)
+			return -ENOMEM;
 
 		*log_buf = 0;
-	पूर्ण
+	}
 
 	load_attr.log_buf = log_buf;
 	load_attr.log_buf_sz = log_buf_size;
 	ret = libbpf__bpf_prog_load(&load_attr);
 
-	अगर (ret >= 0) अणु
-		अगर (log_buf && load_attr.log_level)
+	if (ret >= 0) {
+		if (log_buf && load_attr.log_level)
 			pr_debug("verifier log:\n%s", log_buf);
 
-		अगर (prog->obj->rodata_map_idx >= 0 &&
-		    kernel_supports(FEAT_PROG_BIND_MAP)) अणु
-			काष्ठा bpf_map *rodata_map =
+		if (prog->obj->rodata_map_idx >= 0 &&
+		    kernel_supports(FEAT_PROG_BIND_MAP)) {
+			struct bpf_map *rodata_map =
 				&prog->obj->maps[prog->obj->rodata_map_idx];
 
-			अगर (bpf_prog_bind_map(ret, bpf_map__fd(rodata_map), शून्य)) अणु
-				cp = libbpf_म_त्रुटि_r(त्रुटि_सं, errmsg, माप(errmsg));
+			if (bpf_prog_bind_map(ret, bpf_map__fd(rodata_map), NULL)) {
+				cp = libbpf_strerror_r(errno, errmsg, sizeof(errmsg));
 				pr_warn("prog '%s': failed to bind .rodata map: %s\n",
 					prog->name, cp);
 				/* Don't fail hard if can't bind rodata. */
-			पूर्ण
-		पूर्ण
+			}
+		}
 
 		*pfd = ret;
 		ret = 0;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (!log_buf || त्रुटि_सं == ENOSPC) अणु
-		log_buf_size = max((माप_प्रकार)BPF_LOG_BUF_SIZE,
+	if (!log_buf || errno == ENOSPC) {
+		log_buf_size = max((size_t)BPF_LOG_BUF_SIZE,
 				   log_buf_size << 1);
 
-		मुक्त(log_buf);
-		जाओ retry_load;
-	पूर्ण
-	ret = त्रुटि_सं ? -त्रुटि_सं : -LIBBPF_ERRNO__LOAD;
-	cp = libbpf_म_त्रुटि_r(त्रुटि_सं, errmsg, माप(errmsg));
+		free(log_buf);
+		goto retry_load;
+	}
+	ret = errno ? -errno : -LIBBPF_ERRNO__LOAD;
+	cp = libbpf_strerror_r(errno, errmsg, sizeof(errmsg));
 	pr_warn("load bpf program failed: %s\n", cp);
 	pr_perm_msg(ret);
 
-	अगर (log_buf && log_buf[0] != '\0') अणु
+	if (log_buf && log_buf[0] != '\0') {
 		ret = -LIBBPF_ERRNO__VERIFY;
 		pr_warn("-- BEGIN DUMP LOG ---\n");
 		pr_warn("\n%s\n", log_buf);
 		pr_warn("-- END LOG --\n");
-	पूर्ण अन्यथा अगर (load_attr.insn_cnt >= BPF_MAXINSNS) अणु
+	} else if (load_attr.insn_cnt >= BPF_MAXINSNS) {
 		pr_warn("Program too large (%zu insns), at most %d insns\n",
 			load_attr.insn_cnt, BPF_MAXINSNS);
 		ret = -LIBBPF_ERRNO__PROG2BIG;
-	पूर्ण अन्यथा अगर (load_attr.prog_type != BPF_PROG_TYPE_KPROBE) अणु
+	} else if (load_attr.prog_type != BPF_PROG_TYPE_KPROBE) {
 		/* Wrong program type? */
-		पूर्णांक fd;
+		int fd;
 
 		load_attr.prog_type = BPF_PROG_TYPE_KPROBE;
 		load_attr.expected_attach_type = 0;
-		load_attr.log_buf = शून्य;
+		load_attr.log_buf = NULL;
 		load_attr.log_buf_sz = 0;
 		fd = libbpf__bpf_prog_load(&load_attr);
-		अगर (fd >= 0) अणु
-			बंद(fd);
+		if (fd >= 0) {
+			close(fd);
 			ret = -LIBBPF_ERRNO__PROGTYPE;
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 
 out:
-	मुक्त(log_buf);
-	वापस ret;
-पूर्ण
+	free(log_buf);
+	return ret;
+}
 
-अटल पूर्णांक libbpf_find_attach_btf_id(काष्ठा bpf_program *prog, पूर्णांक *btf_obj_fd, पूर्णांक *btf_type_id);
+static int libbpf_find_attach_btf_id(struct bpf_program *prog, int *btf_obj_fd, int *btf_type_id);
 
-पूर्णांक bpf_program__load(काष्ठा bpf_program *prog, अक्षर *license, __u32 kern_ver)
-अणु
-	पूर्णांक err = 0, fd, i;
+int bpf_program__load(struct bpf_program *prog, char *license, __u32 kern_ver)
+{
+	int err = 0, fd, i;
 
-	अगर (prog->obj->loaded) अणु
+	if (prog->obj->loaded) {
 		pr_warn("prog '%s': can't load after object was loaded\n", prog->name);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर ((prog->type == BPF_PROG_TYPE_TRACING ||
+	if ((prog->type == BPF_PROG_TYPE_TRACING ||
 	     prog->type == BPF_PROG_TYPE_LSM ||
-	     prog->type == BPF_PROG_TYPE_EXT) && !prog->attach_btf_id) अणु
-		पूर्णांक btf_obj_fd = 0, btf_type_id = 0;
+	     prog->type == BPF_PROG_TYPE_EXT) && !prog->attach_btf_id) {
+		int btf_obj_fd = 0, btf_type_id = 0;
 
 		err = libbpf_find_attach_btf_id(prog, &btf_obj_fd, &btf_type_id);
-		अगर (err)
-			वापस err;
+		if (err)
+			return err;
 
 		prog->attach_btf_obj_fd = btf_obj_fd;
 		prog->attach_btf_id = btf_type_id;
-	पूर्ण
+	}
 
-	अगर (prog->instances.nr < 0 || !prog->instances.fds) अणु
-		अगर (prog->preprocessor) अणु
+	if (prog->instances.nr < 0 || !prog->instances.fds) {
+		if (prog->preprocessor) {
 			pr_warn("Internal error: can't load program '%s'\n",
 				prog->name);
-			वापस -LIBBPF_ERRNO__INTERNAL;
-		पूर्ण
+			return -LIBBPF_ERRNO__INTERNAL;
+		}
 
-		prog->instances.fds = दो_स्मृति(माप(पूर्णांक));
-		अगर (!prog->instances.fds) अणु
+		prog->instances.fds = malloc(sizeof(int));
+		if (!prog->instances.fds) {
 			pr_warn("Not enough memory for BPF fds\n");
-			वापस -ENOMEM;
-		पूर्ण
+			return -ENOMEM;
+		}
 		prog->instances.nr = 1;
 		prog->instances.fds[0] = -1;
-	पूर्ण
+	}
 
-	अगर (!prog->preprocessor) अणु
-		अगर (prog->instances.nr != 1) अणु
+	if (!prog->preprocessor) {
+		if (prog->instances.nr != 1) {
 			pr_warn("prog '%s': inconsistent nr(%d) != 1\n",
 				prog->name, prog->instances.nr);
-		पूर्ण
+		}
 		err = load_program(prog, prog->insns, prog->insns_cnt,
 				   license, kern_ver, &fd);
-		अगर (!err)
+		if (!err)
 			prog->instances.fds[0] = fd;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	क्रम (i = 0; i < prog->instances.nr; i++) अणु
-		काष्ठा bpf_prog_prep_result result;
+	for (i = 0; i < prog->instances.nr; i++) {
+		struct bpf_prog_prep_result result;
 		bpf_program_prep_t preprocessor = prog->preprocessor;
 
-		स_रखो(&result, 0, माप(result));
+		memset(&result, 0, sizeof(result));
 		err = preprocessor(prog, i, prog->insns,
 				   prog->insns_cnt, &result);
-		अगर (err) अणु
+		if (err) {
 			pr_warn("Preprocessing the %dth instance of program '%s' failed\n",
 				i, prog->name);
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
-		अगर (!result.new_insn_ptr || !result.new_insn_cnt) अणु
+		if (!result.new_insn_ptr || !result.new_insn_cnt) {
 			pr_debug("Skip loading the %dth instance of program '%s'\n",
 				 i, prog->name);
 			prog->instances.fds[i] = -1;
-			अगर (result.pfd)
+			if (result.pfd)
 				*result.pfd = -1;
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		err = load_program(prog, result.new_insn_ptr,
 				   result.new_insn_cnt, license, kern_ver, &fd);
-		अगर (err) अणु
+		if (err) {
 			pr_warn("Loading the %dth instance of program '%s' failed\n",
 				i, prog->name);
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
-		अगर (result.pfd)
+		if (result.pfd)
 			*result.pfd = fd;
 		prog->instances.fds[i] = fd;
-	पूर्ण
+	}
 out:
-	अगर (err)
+	if (err)
 		pr_warn("failed to load program '%s'\n", prog->name);
-	zमुक्त(&prog->insns);
+	zfree(&prog->insns);
 	prog->insns_cnt = 0;
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक
-bpf_object__load_progs(काष्ठा bpf_object *obj, पूर्णांक log_level)
-अणु
-	काष्ठा bpf_program *prog;
-	माप_प्रकार i;
-	पूर्णांक err;
+static int
+bpf_object__load_progs(struct bpf_object *obj, int log_level)
+{
+	struct bpf_program *prog;
+	size_t i;
+	int err;
 
-	क्रम (i = 0; i < obj->nr_programs; i++) अणु
+	for (i = 0; i < obj->nr_programs; i++) {
 		prog = &obj->programs[i];
 		err = bpf_object__sanitize_prog(obj, prog);
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 
-	क्रम (i = 0; i < obj->nr_programs; i++) अणु
+	for (i = 0; i < obj->nr_programs; i++) {
 		prog = &obj->programs[i];
-		अगर (prog_is_subprog(obj, prog))
-			जारी;
-		अगर (!prog->load) अणु
+		if (prog_is_subprog(obj, prog))
+			continue;
+		if (!prog->load) {
 			pr_debug("prog '%s': skipped loading\n", prog->name);
-			जारी;
-		पूर्ण
+			continue;
+		}
 		prog->log_level |= log_level;
 		err = bpf_program__load(prog, obj->license, obj->kern_version);
-		अगर (err)
-			वापस err;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		if (err)
+			return err;
+	}
+	return 0;
+}
 
-अटल स्थिर काष्ठा bpf_sec_def *find_sec_def(स्थिर अक्षर *sec_name);
+static const struct bpf_sec_def *find_sec_def(const char *sec_name);
 
-अटल काष्ठा bpf_object *
-__bpf_object__खोलो(स्थिर अक्षर *path, स्थिर व्योम *obj_buf, माप_प्रकार obj_buf_sz,
-		   स्थिर काष्ठा bpf_object_खोलो_opts *opts)
-अणु
-	स्थिर अक्षर *obj_name, *kconfig;
-	काष्ठा bpf_program *prog;
-	काष्ठा bpf_object *obj;
-	अक्षर पंचांगp_name[64];
-	पूर्णांक err;
+static struct bpf_object *
+__bpf_object__open(const char *path, const void *obj_buf, size_t obj_buf_sz,
+		   const struct bpf_object_open_opts *opts)
+{
+	const char *obj_name, *kconfig;
+	struct bpf_program *prog;
+	struct bpf_object *obj;
+	char tmp_name[64];
+	int err;
 
-	अगर (elf_version(EV_CURRENT) == EV_NONE) अणु
+	if (elf_version(EV_CURRENT) == EV_NONE) {
 		pr_warn("failed to init libelf for %s\n",
 			path ? : "(mem buf)");
-		वापस ERR_PTR(-LIBBPF_ERRNO__LIBELF);
-	पूर्ण
+		return ERR_PTR(-LIBBPF_ERRNO__LIBELF);
+	}
 
-	अगर (!OPTS_VALID(opts, bpf_object_खोलो_opts))
-		वापस ERR_PTR(-EINVAL);
+	if (!OPTS_VALID(opts, bpf_object_open_opts))
+		return ERR_PTR(-EINVAL);
 
-	obj_name = OPTS_GET(opts, object_name, शून्य);
-	अगर (obj_buf) अणु
-		अगर (!obj_name) अणु
-			snम_लिखो(पंचांगp_name, माप(पंचांगp_name), "%lx-%lx",
-				 (अचिन्हित दीर्घ)obj_buf,
-				 (अचिन्हित दीर्घ)obj_buf_sz);
-			obj_name = पंचांगp_name;
-		पूर्ण
+	obj_name = OPTS_GET(opts, object_name, NULL);
+	if (obj_buf) {
+		if (!obj_name) {
+			snprintf(tmp_name, sizeof(tmp_name), "%lx-%lx",
+				 (unsigned long)obj_buf,
+				 (unsigned long)obj_buf_sz);
+			obj_name = tmp_name;
+		}
 		path = obj_name;
 		pr_debug("loading object '%s' from buffer\n", obj_name);
-	पूर्ण
+	}
 
 	obj = bpf_object__new(path, obj_buf, obj_buf_sz, obj_name);
-	अगर (IS_ERR(obj))
-		वापस obj;
+	if (IS_ERR(obj))
+		return obj;
 
-	kconfig = OPTS_GET(opts, kconfig, शून्य);
-	अगर (kconfig) अणु
+	kconfig = OPTS_GET(opts, kconfig, NULL);
+	if (kconfig) {
 		obj->kconfig = strdup(kconfig);
-		अगर (!obj->kconfig)
-			वापस ERR_PTR(-ENOMEM);
-	पूर्ण
+		if (!obj->kconfig)
+			return ERR_PTR(-ENOMEM);
+	}
 
 	err = bpf_object__elf_init(obj);
 	err = err ? : bpf_object__check_endianness(obj);
 	err = err ? : bpf_object__elf_collect(obj);
-	err = err ? : bpf_object__collect_बाह्यs(obj);
+	err = err ? : bpf_object__collect_externs(obj);
 	err = err ? : bpf_object__finalize_btf(obj);
 	err = err ? : bpf_object__init_maps(obj, opts);
 	err = err ? : bpf_object__collect_relos(obj);
-	अगर (err)
-		जाओ out;
+	if (err)
+		goto out;
 	bpf_object__elf_finish(obj);
 
-	bpf_object__क्रम_each_program(prog, obj) अणु
+	bpf_object__for_each_program(prog, obj) {
 		prog->sec_def = find_sec_def(prog->sec_name);
-		अगर (!prog->sec_def) अणु
-			/* couldn't guess, but user might manually specअगरy */
+		if (!prog->sec_def) {
+			/* couldn't guess, but user might manually specify */
 			pr_debug("prog '%s': unrecognized ELF section name '%s'\n",
 				prog->name, prog->sec_name);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		अगर (prog->sec_def->is_sleepable)
+		if (prog->sec_def->is_sleepable)
 			prog->prog_flags |= BPF_F_SLEEPABLE;
 		bpf_program__set_type(prog, prog->sec_def->prog_type);
 		bpf_program__set_expected_attach_type(prog,
 				prog->sec_def->expected_attach_type);
 
-		अगर (prog->sec_def->prog_type == BPF_PROG_TYPE_TRACING ||
+		if (prog->sec_def->prog_type == BPF_PROG_TYPE_TRACING ||
 		    prog->sec_def->prog_type == BPF_PROG_TYPE_EXT)
 			prog->attach_prog_fd = OPTS_GET(opts, attach_prog_fd, 0);
-	पूर्ण
+	}
 
-	वापस obj;
+	return obj;
 out:
-	bpf_object__बंद(obj);
-	वापस ERR_PTR(err);
-पूर्ण
+	bpf_object__close(obj);
+	return ERR_PTR(err);
+}
 
-अटल काष्ठा bpf_object *
-__bpf_object__खोलो_xattr(काष्ठा bpf_object_खोलो_attr *attr, पूर्णांक flags)
-अणु
-	DECLARE_LIBBPF_OPTS(bpf_object_खोलो_opts, opts,
+static struct bpf_object *
+__bpf_object__open_xattr(struct bpf_object_open_attr *attr, int flags)
+{
+	DECLARE_LIBBPF_OPTS(bpf_object_open_opts, opts,
 		.relaxed_maps = flags & MAPS_RELAX_COMPAT,
 	);
 
 	/* param validation */
-	अगर (!attr->file)
-		वापस शून्य;
+	if (!attr->file)
+		return NULL;
 
 	pr_debug("loading %s\n", attr->file);
-	वापस __bpf_object__खोलो(attr->file, शून्य, 0, &opts);
-पूर्ण
+	return __bpf_object__open(attr->file, NULL, 0, &opts);
+}
 
-काष्ठा bpf_object *bpf_object__खोलो_xattr(काष्ठा bpf_object_खोलो_attr *attr)
-अणु
-	वापस __bpf_object__खोलो_xattr(attr, 0);
-पूर्ण
+struct bpf_object *bpf_object__open_xattr(struct bpf_object_open_attr *attr)
+{
+	return __bpf_object__open_xattr(attr, 0);
+}
 
-काष्ठा bpf_object *bpf_object__खोलो(स्थिर अक्षर *path)
-अणु
-	काष्ठा bpf_object_खोलो_attr attr = अणु
+struct bpf_object *bpf_object__open(const char *path)
+{
+	struct bpf_object_open_attr attr = {
 		.file		= path,
 		.prog_type	= BPF_PROG_TYPE_UNSPEC,
-	पूर्ण;
+	};
 
-	वापस bpf_object__खोलो_xattr(&attr);
-पूर्ण
+	return bpf_object__open_xattr(&attr);
+}
 
-काष्ठा bpf_object *
-bpf_object__खोलो_file(स्थिर अक्षर *path, स्थिर काष्ठा bpf_object_खोलो_opts *opts)
-अणु
-	अगर (!path)
-		वापस ERR_PTR(-EINVAL);
+struct bpf_object *
+bpf_object__open_file(const char *path, const struct bpf_object_open_opts *opts)
+{
+	if (!path)
+		return ERR_PTR(-EINVAL);
 
 	pr_debug("loading %s\n", path);
 
-	वापस __bpf_object__खोलो(path, शून्य, 0, opts);
-पूर्ण
+	return __bpf_object__open(path, NULL, 0, opts);
+}
 
-काष्ठा bpf_object *
-bpf_object__खोलो_mem(स्थिर व्योम *obj_buf, माप_प्रकार obj_buf_sz,
-		     स्थिर काष्ठा bpf_object_खोलो_opts *opts)
-अणु
-	अगर (!obj_buf || obj_buf_sz == 0)
-		वापस ERR_PTR(-EINVAL);
+struct bpf_object *
+bpf_object__open_mem(const void *obj_buf, size_t obj_buf_sz,
+		     const struct bpf_object_open_opts *opts)
+{
+	if (!obj_buf || obj_buf_sz == 0)
+		return ERR_PTR(-EINVAL);
 
-	वापस __bpf_object__खोलो(शून्य, obj_buf, obj_buf_sz, opts);
-पूर्ण
+	return __bpf_object__open(NULL, obj_buf, obj_buf_sz, opts);
+}
 
-काष्ठा bpf_object *
-bpf_object__खोलो_buffer(स्थिर व्योम *obj_buf, माप_प्रकार obj_buf_sz,
-			स्थिर अक्षर *name)
-अणु
-	DECLARE_LIBBPF_OPTS(bpf_object_खोलो_opts, opts,
+struct bpf_object *
+bpf_object__open_buffer(const void *obj_buf, size_t obj_buf_sz,
+			const char *name)
+{
+	DECLARE_LIBBPF_OPTS(bpf_object_open_opts, opts,
 		.object_name = name,
-		/* wrong शेष, but backwards-compatible */
+		/* wrong default, but backwards-compatible */
 		.relaxed_maps = true,
 	);
 
-	/* वापसing शून्य is wrong, but backwards-compatible */
-	अगर (!obj_buf || obj_buf_sz == 0)
-		वापस शून्य;
+	/* returning NULL is wrong, but backwards-compatible */
+	if (!obj_buf || obj_buf_sz == 0)
+		return NULL;
 
-	वापस bpf_object__खोलो_mem(obj_buf, obj_buf_sz, &opts);
-पूर्ण
+	return bpf_object__open_mem(obj_buf, obj_buf_sz, &opts);
+}
 
-पूर्णांक bpf_object__unload(काष्ठा bpf_object *obj)
-अणु
-	माप_प्रकार i;
+int bpf_object__unload(struct bpf_object *obj)
+{
+	size_t i;
 
-	अगर (!obj)
-		वापस -EINVAL;
+	if (!obj)
+		return -EINVAL;
 
-	क्रम (i = 0; i < obj->nr_maps; i++) अणु
-		zबंद(obj->maps[i].fd);
-		अगर (obj->maps[i].st_ops)
-			zमुक्त(&obj->maps[i].st_ops->kern_vdata);
-	पूर्ण
+	for (i = 0; i < obj->nr_maps; i++) {
+		zclose(obj->maps[i].fd);
+		if (obj->maps[i].st_ops)
+			zfree(&obj->maps[i].st_ops->kern_vdata);
+	}
 
-	क्रम (i = 0; i < obj->nr_programs; i++)
+	for (i = 0; i < obj->nr_programs; i++)
 		bpf_program__unload(&obj->programs[i]);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक bpf_object__sanitize_maps(काष्ठा bpf_object *obj)
-अणु
-	काष्ठा bpf_map *m;
+static int bpf_object__sanitize_maps(struct bpf_object *obj)
+{
+	struct bpf_map *m;
 
-	bpf_object__क्रम_each_map(m, obj) अणु
-		अगर (!bpf_map__is_पूर्णांकernal(m))
-			जारी;
-		अगर (!kernel_supports(FEAT_GLOBAL_DATA)) अणु
+	bpf_object__for_each_map(m, obj) {
+		if (!bpf_map__is_internal(m))
+			continue;
+		if (!kernel_supports(FEAT_GLOBAL_DATA)) {
 			pr_warn("kernel doesn't support global data\n");
-			वापस -ENOTSUP;
-		पूर्ण
-		अगर (!kernel_supports(FEAT_ARRAY_MMAP))
+			return -ENOTSUP;
+		}
+		if (!kernel_supports(FEAT_ARRAY_MMAP))
 			m->def.map_flags ^= BPF_F_MMAPABLE;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक bpf_object__पढ़ो_kallsyms_file(काष्ठा bpf_object *obj)
-अणु
-	अक्षर sym_type, sym_name[500];
-	अचिन्हित दीर्घ दीर्घ sym_addr;
-	स्थिर काष्ठा btf_type *t;
-	काष्ठा बाह्य_desc *ext;
-	पूर्णांक ret, err = 0;
-	खाता *f;
+static int bpf_object__read_kallsyms_file(struct bpf_object *obj)
+{
+	char sym_type, sym_name[500];
+	unsigned long long sym_addr;
+	const struct btf_type *t;
+	struct extern_desc *ext;
+	int ret, err = 0;
+	FILE *f;
 
-	f = ख_खोलो("/proc/kallsyms", "r");
-	अगर (!f) अणु
-		err = -त्रुटि_सं;
+	f = fopen("/proc/kallsyms", "r");
+	if (!f) {
+		err = -errno;
 		pr_warn("failed to open /proc/kallsyms: %d\n", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	जबतक (true) अणु
-		ret = ख_पूछो(f, "%llx %c %499s%*[^\न]\न",
+	while (true) {
+		ret = fscanf(f, "%llx %c %499s%*[^\n]\n",
 			     &sym_addr, &sym_type, sym_name);
-		अगर (ret == खातापूर्ण && ख_पूर्ण(f))
-			अवरोध;
-		अगर (ret != 3) अणु
+		if (ret == EOF && feof(f))
+			break;
+		if (ret != 3) {
 			pr_warn("failed to read kallsyms entry: %d\n", ret);
 			err = -EINVAL;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
-		ext = find_बाह्य_by_name(obj, sym_name);
-		अगर (!ext || ext->type != EXT_KSYM)
-			जारी;
+		ext = find_extern_by_name(obj, sym_name);
+		if (!ext || ext->type != EXT_KSYM)
+			continue;
 
 		t = btf__type_by_id(obj->btf, ext->btf_id);
-		अगर (!btf_is_var(t))
-			जारी;
+		if (!btf_is_var(t))
+			continue;
 
-		अगर (ext->is_set && ext->ksym.addr != sym_addr) अणु
+		if (ext->is_set && ext->ksym.addr != sym_addr) {
 			pr_warn("extern (ksym) '%s' resolution is ambiguous: 0x%llx or 0x%llx\n",
 				sym_name, ext->ksym.addr, sym_addr);
 			err = -EINVAL;
-			जाओ out;
-		पूर्ण
-		अगर (!ext->is_set) अणु
+			goto out;
+		}
+		if (!ext->is_set) {
 			ext->is_set = true;
 			ext->ksym.addr = sym_addr;
 			pr_debug("extern (ksym) %s=0x%llx\n", sym_name, sym_addr);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 out:
-	ख_बंद(f);
-	वापस err;
-पूर्ण
+	fclose(f);
+	return err;
+}
 
-अटल पूर्णांक find_ksym_btf_id(काष्ठा bpf_object *obj, स्थिर अक्षर *ksym_name,
-			    __u16 kind, काष्ठा btf **res_btf,
-			    पूर्णांक *res_btf_fd)
-अणु
-	पूर्णांक i, id, btf_fd, err;
-	काष्ठा btf *btf;
+static int find_ksym_btf_id(struct bpf_object *obj, const char *ksym_name,
+			    __u16 kind, struct btf **res_btf,
+			    int *res_btf_fd)
+{
+	int i, id, btf_fd, err;
+	struct btf *btf;
 
 	btf = obj->btf_vmlinux;
 	btf_fd = 0;
 	id = btf__find_by_name_kind(btf, ksym_name, kind);
 
-	अगर (id == -ENOENT) अणु
+	if (id == -ENOENT) {
 		err = load_module_btfs(obj);
-		अगर (err)
-			वापस err;
+		if (err)
+			return err;
 
-		क्रम (i = 0; i < obj->btf_module_cnt; i++) अणु
+		for (i = 0; i < obj->btf_module_cnt; i++) {
 			btf = obj->btf_modules[i].btf;
 			/* we assume module BTF FD is always >0 */
 			btf_fd = obj->btf_modules[i].fd;
 			id = btf__find_by_name_kind(btf, ksym_name, kind);
-			अगर (id != -ENOENT)
-				अवरोध;
-		पूर्ण
-	पूर्ण
-	अगर (id <= 0) अणु
+			if (id != -ENOENT)
+				break;
+		}
+	}
+	if (id <= 0) {
 		pr_warn("extern (%s ksym) '%s': failed to find BTF ID in kernel BTF(s).\n",
 			__btf_kind_str(kind), ksym_name);
-		वापस -ESRCH;
-	पूर्ण
+		return -ESRCH;
+	}
 
 	*res_btf = btf;
 	*res_btf_fd = btf_fd;
-	वापस id;
-पूर्ण
+	return id;
+}
 
-अटल पूर्णांक bpf_object__resolve_ksym_var_btf_id(काष्ठा bpf_object *obj,
-					       काष्ठा बाह्य_desc *ext)
-अणु
-	स्थिर काष्ठा btf_type *targ_var, *targ_type;
+static int bpf_object__resolve_ksym_var_btf_id(struct bpf_object *obj,
+					       struct extern_desc *ext)
+{
+	const struct btf_type *targ_var, *targ_type;
 	__u32 targ_type_id, local_type_id;
-	स्थिर अक्षर *targ_var_name;
-	पूर्णांक id, btf_fd = 0, err;
-	काष्ठा btf *btf = शून्य;
+	const char *targ_var_name;
+	int id, btf_fd = 0, err;
+	struct btf *btf = NULL;
 
 	id = find_ksym_btf_id(obj, ext->name, BTF_KIND_VAR, &btf, &btf_fd);
-	अगर (id < 0)
-		वापस id;
+	if (id < 0)
+		return id;
 
 	/* find local type_id */
 	local_type_id = ext->ksym.type_id;
@@ -7620,13 +7619,13 @@ out:
 	/* find target type_id */
 	targ_var = btf__type_by_id(btf, id);
 	targ_var_name = btf__name_by_offset(btf, targ_var->name_off);
-	targ_type = skip_mods_and_प्रकारs(btf, targ_var->type, &targ_type_id);
+	targ_type = skip_mods_and_typedefs(btf, targ_var->type, &targ_type_id);
 
 	err = bpf_core_types_are_compat(obj->btf, local_type_id,
 					btf, targ_type_id);
-	अगर (err <= 0) अणु
-		स्थिर काष्ठा btf_type *local_type;
-		स्थिर अक्षर *targ_name, *local_name;
+	if (err <= 0) {
+		const struct btf_type *local_type;
+		const char *targ_name, *local_name;
 
 		local_type = btf__type_by_id(obj->btf, local_type_id);
 		local_name = btf__name_by_offset(obj->btf, local_type->name_off);
@@ -7636,8 +7635,8 @@ out:
 			ext->name, local_type_id,
 			btf_kind_str(local_type), local_name, targ_type_id,
 			btf_kind_str(targ_type), targ_name);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	ext->is_set = true;
 	ext->ksym.kernel_btf_obj_fd = btf_fd;
@@ -7645,43 +7644,43 @@ out:
 	pr_debug("extern (var ksym) '%s': resolved to [%d] %s %s\n",
 		 ext->name, id, btf_kind_str(targ_var), targ_var_name);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक bpf_object__resolve_ksym_func_btf_id(काष्ठा bpf_object *obj,
-						काष्ठा बाह्य_desc *ext)
-अणु
-	पूर्णांक local_func_proto_id, kfunc_proto_id, kfunc_id;
-	स्थिर काष्ठा btf_type *kern_func;
-	काष्ठा btf *kern_btf = शून्य;
-	पूर्णांक ret, kern_btf_fd = 0;
+static int bpf_object__resolve_ksym_func_btf_id(struct bpf_object *obj,
+						struct extern_desc *ext)
+{
+	int local_func_proto_id, kfunc_proto_id, kfunc_id;
+	const struct btf_type *kern_func;
+	struct btf *kern_btf = NULL;
+	int ret, kern_btf_fd = 0;
 
 	local_func_proto_id = ext->ksym.type_id;
 
 	kfunc_id = find_ksym_btf_id(obj, ext->name, BTF_KIND_FUNC,
 				    &kern_btf, &kern_btf_fd);
-	अगर (kfunc_id < 0) अणु
+	if (kfunc_id < 0) {
 		pr_warn("extern (func ksym) '%s': not found in kernel BTF\n",
 			ext->name);
-		वापस kfunc_id;
-	पूर्ण
+		return kfunc_id;
+	}
 
-	अगर (kern_btf != obj->btf_vmlinux) अणु
+	if (kern_btf != obj->btf_vmlinux) {
 		pr_warn("extern (func ksym) '%s': function in kernel module is not supported\n",
 			ext->name);
-		वापस -ENOTSUP;
-	पूर्ण
+		return -ENOTSUP;
+	}
 
 	kern_func = btf__type_by_id(kern_btf, kfunc_id);
 	kfunc_proto_id = kern_func->type;
 
 	ret = bpf_core_types_are_compat(obj->btf, local_func_proto_id,
 					kern_btf, kfunc_proto_id);
-	अगर (ret <= 0) अणु
+	if (ret <= 0) {
 		pr_warn("extern (func ksym) '%s': func_proto [%d] incompatible with kernel [%d]\n",
 			ext->name, local_func_proto_id, kfunc_proto_id);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	ext->is_set = true;
 	ext->ksym.kernel_btf_obj_fd = kern_btf_fd;
@@ -7689,1140 +7688,1140 @@ out:
 	pr_debug("extern (func ksym) '%s': resolved to kernel [%d]\n",
 		 ext->name, kfunc_id);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक bpf_object__resolve_ksyms_btf_id(काष्ठा bpf_object *obj)
-अणु
-	स्थिर काष्ठा btf_type *t;
-	काष्ठा बाह्य_desc *ext;
-	पूर्णांक i, err;
+static int bpf_object__resolve_ksyms_btf_id(struct bpf_object *obj)
+{
+	const struct btf_type *t;
+	struct extern_desc *ext;
+	int i, err;
 
-	क्रम (i = 0; i < obj->nr_बाह्य; i++) अणु
-		ext = &obj->बाह्यs[i];
-		अगर (ext->type != EXT_KSYM || !ext->ksym.type_id)
-			जारी;
+	for (i = 0; i < obj->nr_extern; i++) {
+		ext = &obj->externs[i];
+		if (ext->type != EXT_KSYM || !ext->ksym.type_id)
+			continue;
 
 		t = btf__type_by_id(obj->btf, ext->btf_id);
-		अगर (btf_is_var(t))
+		if (btf_is_var(t))
 			err = bpf_object__resolve_ksym_var_btf_id(obj, ext);
-		अन्यथा
+		else
 			err = bpf_object__resolve_ksym_func_btf_id(obj, ext);
-		अगर (err)
-			वापस err;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		if (err)
+			return err;
+	}
+	return 0;
+}
 
-अटल पूर्णांक bpf_object__resolve_बाह्यs(काष्ठा bpf_object *obj,
-				       स्थिर अक्षर *extra_kconfig)
-अणु
+static int bpf_object__resolve_externs(struct bpf_object *obj,
+				       const char *extra_kconfig)
+{
 	bool need_config = false, need_kallsyms = false;
 	bool need_vmlinux_btf = false;
-	काष्ठा बाह्य_desc *ext;
-	व्योम *kcfg_data = शून्य;
-	पूर्णांक err, i;
+	struct extern_desc *ext;
+	void *kcfg_data = NULL;
+	int err, i;
 
-	अगर (obj->nr_बाह्य == 0)
-		वापस 0;
+	if (obj->nr_extern == 0)
+		return 0;
 
-	अगर (obj->kconfig_map_idx >= 0)
+	if (obj->kconfig_map_idx >= 0)
 		kcfg_data = obj->maps[obj->kconfig_map_idx].mmaped;
 
-	क्रम (i = 0; i < obj->nr_बाह्य; i++) अणु
-		ext = &obj->बाह्यs[i];
+	for (i = 0; i < obj->nr_extern; i++) {
+		ext = &obj->externs[i];
 
-		अगर (ext->type == EXT_KCFG &&
-		    म_भेद(ext->name, "LINUX_KERNEL_VERSION") == 0) अणु
-			व्योम *ext_val = kcfg_data + ext->kcfg.data_off;
+		if (ext->type == EXT_KCFG &&
+		    strcmp(ext->name, "LINUX_KERNEL_VERSION") == 0) {
+			void *ext_val = kcfg_data + ext->kcfg.data_off;
 			__u32 kver = get_kernel_version();
 
-			अगर (!kver) अणु
+			if (!kver) {
 				pr_warn("failed to get kernel version\n");
-				वापस -EINVAL;
-			पूर्ण
+				return -EINVAL;
+			}
 			err = set_kcfg_value_num(ext, ext_val, kver);
-			अगर (err)
-				वापस err;
+			if (err)
+				return err;
 			pr_debug("extern (kcfg) %s=0x%x\n", ext->name, kver);
-		पूर्ण अन्यथा अगर (ext->type == EXT_KCFG &&
-			   म_भेदन(ext->name, "CONFIG_", 7) == 0) अणु
+		} else if (ext->type == EXT_KCFG &&
+			   strncmp(ext->name, "CONFIG_", 7) == 0) {
 			need_config = true;
-		पूर्ण अन्यथा अगर (ext->type == EXT_KSYM) अणु
-			अगर (ext->ksym.type_id)
+		} else if (ext->type == EXT_KSYM) {
+			if (ext->ksym.type_id)
 				need_vmlinux_btf = true;
-			अन्यथा
+			else
 				need_kallsyms = true;
-		पूर्ण अन्यथा अणु
+		} else {
 			pr_warn("unrecognized extern '%s'\n", ext->name);
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
-	अगर (need_config && extra_kconfig) अणु
-		err = bpf_object__पढ़ो_kconfig_mem(obj, extra_kconfig, kcfg_data);
-		अगर (err)
-			वापस -EINVAL;
+			return -EINVAL;
+		}
+	}
+	if (need_config && extra_kconfig) {
+		err = bpf_object__read_kconfig_mem(obj, extra_kconfig, kcfg_data);
+		if (err)
+			return -EINVAL;
 		need_config = false;
-		क्रम (i = 0; i < obj->nr_बाह्य; i++) अणु
-			ext = &obj->बाह्यs[i];
-			अगर (ext->type == EXT_KCFG && !ext->is_set) अणु
+		for (i = 0; i < obj->nr_extern; i++) {
+			ext = &obj->externs[i];
+			if (ext->type == EXT_KCFG && !ext->is_set) {
 				need_config = true;
-				अवरोध;
-			पूर्ण
-		पूर्ण
-	पूर्ण
-	अगर (need_config) अणु
-		err = bpf_object__पढ़ो_kconfig_file(obj, kcfg_data);
-		अगर (err)
-			वापस -EINVAL;
-	पूर्ण
-	अगर (need_kallsyms) अणु
-		err = bpf_object__पढ़ो_kallsyms_file(obj);
-		अगर (err)
-			वापस -EINVAL;
-	पूर्ण
-	अगर (need_vmlinux_btf) अणु
+				break;
+			}
+		}
+	}
+	if (need_config) {
+		err = bpf_object__read_kconfig_file(obj, kcfg_data);
+		if (err)
+			return -EINVAL;
+	}
+	if (need_kallsyms) {
+		err = bpf_object__read_kallsyms_file(obj);
+		if (err)
+			return -EINVAL;
+	}
+	if (need_vmlinux_btf) {
 		err = bpf_object__resolve_ksyms_btf_id(obj);
-		अगर (err)
-			वापस -EINVAL;
-	पूर्ण
-	क्रम (i = 0; i < obj->nr_बाह्य; i++) अणु
-		ext = &obj->बाह्यs[i];
+		if (err)
+			return -EINVAL;
+	}
+	for (i = 0; i < obj->nr_extern; i++) {
+		ext = &obj->externs[i];
 
-		अगर (!ext->is_set && !ext->is_weak) अणु
+		if (!ext->is_set && !ext->is_weak) {
 			pr_warn("extern %s (strong) not resolved\n", ext->name);
-			वापस -ESRCH;
-		पूर्ण अन्यथा अगर (!ext->is_set) अणु
+			return -ESRCH;
+		} else if (!ext->is_set) {
 			pr_debug("extern %s (weak) not resolved, defaulting to zero\n",
 				 ext->name);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक bpf_object__load_xattr(काष्ठा bpf_object_load_attr *attr)
-अणु
-	काष्ठा bpf_object *obj;
-	पूर्णांक err, i;
+int bpf_object__load_xattr(struct bpf_object_load_attr *attr)
+{
+	struct bpf_object *obj;
+	int err, i;
 
-	अगर (!attr)
-		वापस -EINVAL;
+	if (!attr)
+		return -EINVAL;
 	obj = attr->obj;
-	अगर (!obj)
-		वापस -EINVAL;
+	if (!obj)
+		return -EINVAL;
 
-	अगर (obj->loaded) अणु
+	if (obj->loaded) {
 		pr_warn("object '%s': load can't be attempted twice\n", obj->name);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	err = bpf_object__probe_loading(obj);
 	err = err ? : bpf_object__load_vmlinux_btf(obj, false);
-	err = err ? : bpf_object__resolve_बाह्यs(obj, obj->kconfig);
+	err = err ? : bpf_object__resolve_externs(obj, obj->kconfig);
 	err = err ? : bpf_object__sanitize_and_load_btf(obj);
 	err = err ? : bpf_object__sanitize_maps(obj);
-	err = err ? : bpf_object__init_kern_काष्ठा_ops_maps(obj);
+	err = err ? : bpf_object__init_kern_struct_ops_maps(obj);
 	err = err ? : bpf_object__create_maps(obj);
 	err = err ? : bpf_object__relocate(obj, attr->target_btf_path);
 	err = err ? : bpf_object__load_progs(obj, attr->log_level);
 
 	/* clean up module BTFs */
-	क्रम (i = 0; i < obj->btf_module_cnt; i++) अणु
-		बंद(obj->btf_modules[i].fd);
-		btf__मुक्त(obj->btf_modules[i].btf);
-		मुक्त(obj->btf_modules[i].name);
-	पूर्ण
-	मुक्त(obj->btf_modules);
+	for (i = 0; i < obj->btf_module_cnt; i++) {
+		close(obj->btf_modules[i].fd);
+		btf__free(obj->btf_modules[i].btf);
+		free(obj->btf_modules[i].name);
+	}
+	free(obj->btf_modules);
 
 	/* clean up vmlinux BTF */
-	btf__मुक्त(obj->btf_vmlinux);
-	obj->btf_vmlinux = शून्य;
+	btf__free(obj->btf_vmlinux);
+	obj->btf_vmlinux = NULL;
 
-	obj->loaded = true; /* करोesn't matter अगर successfully or not */
+	obj->loaded = true; /* doesn't matter if successfully or not */
 
-	अगर (err)
-		जाओ out;
+	if (err)
+		goto out;
 
-	वापस 0;
+	return 0;
 out:
-	/* unpin any maps that were स्वतः-pinned during load */
-	क्रम (i = 0; i < obj->nr_maps; i++)
-		अगर (obj->maps[i].pinned && !obj->maps[i].reused)
-			bpf_map__unpin(&obj->maps[i], शून्य);
+	/* unpin any maps that were auto-pinned during load */
+	for (i = 0; i < obj->nr_maps; i++)
+		if (obj->maps[i].pinned && !obj->maps[i].reused)
+			bpf_map__unpin(&obj->maps[i], NULL);
 
 	bpf_object__unload(obj);
 	pr_warn("failed to load object '%s'\n", obj->path);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक bpf_object__load(काष्ठा bpf_object *obj)
-अणु
-	काष्ठा bpf_object_load_attr attr = अणु
+int bpf_object__load(struct bpf_object *obj)
+{
+	struct bpf_object_load_attr attr = {
 		.obj = obj,
-	पूर्ण;
+	};
 
-	वापस bpf_object__load_xattr(&attr);
-पूर्ण
+	return bpf_object__load_xattr(&attr);
+}
 
-अटल पूर्णांक make_parent_dir(स्थिर अक्षर *path)
-अणु
-	अक्षर *cp, errmsg[STRERR_बफ_मानE];
-	अक्षर *dname, *dir;
-	पूर्णांक err = 0;
+static int make_parent_dir(const char *path)
+{
+	char *cp, errmsg[STRERR_BUFSIZE];
+	char *dname, *dir;
+	int err = 0;
 
 	dname = strdup(path);
-	अगर (dname == शून्य)
-		वापस -ENOMEM;
+	if (dname == NULL)
+		return -ENOMEM;
 
-	dir = स_नाम(dname);
-	अगर (सूची_गढ़ो(dir, 0700) && त्रुटि_सं != EEXIST)
-		err = -त्रुटि_सं;
+	dir = dirname(dname);
+	if (mkdir(dir, 0700) && errno != EEXIST)
+		err = -errno;
 
-	मुक्त(dname);
-	अगर (err) अणु
-		cp = libbpf_म_त्रुटि_r(-err, errmsg, माप(errmsg));
+	free(dname);
+	if (err) {
+		cp = libbpf_strerror_r(-err, errmsg, sizeof(errmsg));
 		pr_warn("failed to mkdir %s: %s\n", path, cp);
-	पूर्ण
-	वापस err;
-पूर्ण
+	}
+	return err;
+}
 
-अटल पूर्णांक check_path(स्थिर अक्षर *path)
-अणु
-	अक्षर *cp, errmsg[STRERR_बफ_मानE];
-	काष्ठा statfs st_fs;
-	अक्षर *dname, *dir;
-	पूर्णांक err = 0;
+static int check_path(const char *path)
+{
+	char *cp, errmsg[STRERR_BUFSIZE];
+	struct statfs st_fs;
+	char *dname, *dir;
+	int err = 0;
 
-	अगर (path == शून्य)
-		वापस -EINVAL;
+	if (path == NULL)
+		return -EINVAL;
 
 	dname = strdup(path);
-	अगर (dname == शून्य)
-		वापस -ENOMEM;
+	if (dname == NULL)
+		return -ENOMEM;
 
-	dir = स_नाम(dname);
-	अगर (statfs(dir, &st_fs)) अणु
-		cp = libbpf_म_त्रुटि_r(त्रुटि_सं, errmsg, माप(errmsg));
+	dir = dirname(dname);
+	if (statfs(dir, &st_fs)) {
+		cp = libbpf_strerror_r(errno, errmsg, sizeof(errmsg));
 		pr_warn("failed to statfs %s: %s\n", dir, cp);
-		err = -त्रुटि_सं;
-	पूर्ण
-	मुक्त(dname);
+		err = -errno;
+	}
+	free(dname);
 
-	अगर (!err && st_fs.f_type != BPF_FS_MAGIC) अणु
+	if (!err && st_fs.f_type != BPF_FS_MAGIC) {
 		pr_warn("specified path %s is not on BPF FS\n", path);
 		err = -EINVAL;
-	पूर्ण
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक bpf_program__pin_instance(काष्ठा bpf_program *prog, स्थिर अक्षर *path,
-			      पूर्णांक instance)
-अणु
-	अक्षर *cp, errmsg[STRERR_बफ_मानE];
-	पूर्णांक err;
+int bpf_program__pin_instance(struct bpf_program *prog, const char *path,
+			      int instance)
+{
+	char *cp, errmsg[STRERR_BUFSIZE];
+	int err;
 
 	err = make_parent_dir(path);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	err = check_path(path);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	अगर (prog == शून्य) अणु
+	if (prog == NULL) {
 		pr_warn("invalid program pointer\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (instance < 0 || instance >= prog->instances.nr) अणु
+	if (instance < 0 || instance >= prog->instances.nr) {
 		pr_warn("invalid prog instance %d of prog %s (max %d)\n",
 			instance, prog->name, prog->instances.nr);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (bpf_obj_pin(prog->instances.fds[instance], path)) अणु
-		err = -त्रुटि_सं;
-		cp = libbpf_म_त्रुटि_r(err, errmsg, माप(errmsg));
+	if (bpf_obj_pin(prog->instances.fds[instance], path)) {
+		err = -errno;
+		cp = libbpf_strerror_r(err, errmsg, sizeof(errmsg));
 		pr_warn("failed to pin program: %s\n", cp);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 	pr_debug("pinned program '%s'\n", path);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक bpf_program__unpin_instance(काष्ठा bpf_program *prog, स्थिर अक्षर *path,
-				पूर्णांक instance)
-अणु
-	पूर्णांक err;
+int bpf_program__unpin_instance(struct bpf_program *prog, const char *path,
+				int instance)
+{
+	int err;
 
 	err = check_path(path);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	अगर (prog == शून्य) अणु
+	if (prog == NULL) {
 		pr_warn("invalid program pointer\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (instance < 0 || instance >= prog->instances.nr) अणु
+	if (instance < 0 || instance >= prog->instances.nr) {
 		pr_warn("invalid prog instance %d of prog %s (max %d)\n",
 			instance, prog->name, prog->instances.nr);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	err = unlink(path);
-	अगर (err != 0)
-		वापस -त्रुटि_सं;
+	if (err != 0)
+		return -errno;
 	pr_debug("unpinned program '%s'\n", path);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक bpf_program__pin(काष्ठा bpf_program *prog, स्थिर अक्षर *path)
-अणु
-	पूर्णांक i, err;
+int bpf_program__pin(struct bpf_program *prog, const char *path)
+{
+	int i, err;
 
 	err = make_parent_dir(path);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	err = check_path(path);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	अगर (prog == शून्य) अणु
+	if (prog == NULL) {
 		pr_warn("invalid program pointer\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (prog->instances.nr <= 0) अणु
+	if (prog->instances.nr <= 0) {
 		pr_warn("no instances of prog %s to pin\n", prog->name);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (prog->instances.nr == 1) अणु
-		/* करोn't create subdirs when pinning single instance */
-		वापस bpf_program__pin_instance(prog, path, 0);
-	पूर्ण
+	if (prog->instances.nr == 1) {
+		/* don't create subdirs when pinning single instance */
+		return bpf_program__pin_instance(prog, path, 0);
+	}
 
-	क्रम (i = 0; i < prog->instances.nr; i++) अणु
-		अक्षर buf[PATH_MAX];
-		पूर्णांक len;
+	for (i = 0; i < prog->instances.nr; i++) {
+		char buf[PATH_MAX];
+		int len;
 
-		len = snम_लिखो(buf, PATH_MAX, "%s/%d", path, i);
-		अगर (len < 0) अणु
+		len = snprintf(buf, PATH_MAX, "%s/%d", path, i);
+		if (len < 0) {
 			err = -EINVAL;
-			जाओ err_unpin;
-		पूर्ण अन्यथा अगर (len >= PATH_MAX) अणु
+			goto err_unpin;
+		} else if (len >= PATH_MAX) {
 			err = -ENAMETOOLONG;
-			जाओ err_unpin;
-		पूर्ण
+			goto err_unpin;
+		}
 
 		err = bpf_program__pin_instance(prog, buf, i);
-		अगर (err)
-			जाओ err_unpin;
-	पूर्ण
+		if (err)
+			goto err_unpin;
+	}
 
-	वापस 0;
+	return 0;
 
 err_unpin:
-	क्रम (i = i - 1; i >= 0; i--) अणु
-		अक्षर buf[PATH_MAX];
-		पूर्णांक len;
+	for (i = i - 1; i >= 0; i--) {
+		char buf[PATH_MAX];
+		int len;
 
-		len = snम_लिखो(buf, PATH_MAX, "%s/%d", path, i);
-		अगर (len < 0)
-			जारी;
-		अन्यथा अगर (len >= PATH_MAX)
-			जारी;
+		len = snprintf(buf, PATH_MAX, "%s/%d", path, i);
+		if (len < 0)
+			continue;
+		else if (len >= PATH_MAX)
+			continue;
 
 		bpf_program__unpin_instance(prog, buf, i);
-	पूर्ण
+	}
 
-	सूची_हटाओ(path);
+	rmdir(path);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक bpf_program__unpin(काष्ठा bpf_program *prog, स्थिर अक्षर *path)
-अणु
-	पूर्णांक i, err;
+int bpf_program__unpin(struct bpf_program *prog, const char *path)
+{
+	int i, err;
 
 	err = check_path(path);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	अगर (prog == शून्य) अणु
+	if (prog == NULL) {
 		pr_warn("invalid program pointer\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (prog->instances.nr <= 0) अणु
+	if (prog->instances.nr <= 0) {
 		pr_warn("no instances of prog %s to pin\n", prog->name);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (prog->instances.nr == 1) अणु
-		/* करोn't create subdirs when pinning single instance */
-		वापस bpf_program__unpin_instance(prog, path, 0);
-	पूर्ण
+	if (prog->instances.nr == 1) {
+		/* don't create subdirs when pinning single instance */
+		return bpf_program__unpin_instance(prog, path, 0);
+	}
 
-	क्रम (i = 0; i < prog->instances.nr; i++) अणु
-		अक्षर buf[PATH_MAX];
-		पूर्णांक len;
+	for (i = 0; i < prog->instances.nr; i++) {
+		char buf[PATH_MAX];
+		int len;
 
-		len = snम_लिखो(buf, PATH_MAX, "%s/%d", path, i);
-		अगर (len < 0)
-			वापस -EINVAL;
-		अन्यथा अगर (len >= PATH_MAX)
-			वापस -ENAMETOOLONG;
+		len = snprintf(buf, PATH_MAX, "%s/%d", path, i);
+		if (len < 0)
+			return -EINVAL;
+		else if (len >= PATH_MAX)
+			return -ENAMETOOLONG;
 
 		err = bpf_program__unpin_instance(prog, buf, i);
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 
-	err = सूची_हटाओ(path);
-	अगर (err)
-		वापस -त्रुटि_सं;
+	err = rmdir(path);
+	if (err)
+		return -errno;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक bpf_map__pin(काष्ठा bpf_map *map, स्थिर अक्षर *path)
-अणु
-	अक्षर *cp, errmsg[STRERR_बफ_मानE];
-	पूर्णांक err;
+int bpf_map__pin(struct bpf_map *map, const char *path)
+{
+	char *cp, errmsg[STRERR_BUFSIZE];
+	int err;
 
-	अगर (map == शून्य) अणु
+	if (map == NULL) {
 		pr_warn("invalid map pointer\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (map->pin_path) अणु
-		अगर (path && म_भेद(path, map->pin_path)) अणु
+	if (map->pin_path) {
+		if (path && strcmp(path, map->pin_path)) {
 			pr_warn("map '%s' already has pin path '%s' different from '%s'\n",
 				bpf_map__name(map), map->pin_path, path);
-			वापस -EINVAL;
-		पूर्ण अन्यथा अगर (map->pinned) अणु
+			return -EINVAL;
+		} else if (map->pinned) {
 			pr_debug("map '%s' already pinned at '%s'; not re-pinning\n",
 				 bpf_map__name(map), map->pin_path);
-			वापस 0;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		अगर (!path) अणु
+			return 0;
+		}
+	} else {
+		if (!path) {
 			pr_warn("missing a path to pin map '%s' at\n",
 				bpf_map__name(map));
-			वापस -EINVAL;
-		पूर्ण अन्यथा अगर (map->pinned) अणु
+			return -EINVAL;
+		} else if (map->pinned) {
 			pr_warn("map '%s' already pinned\n", bpf_map__name(map));
-			वापस -EEXIST;
-		पूर्ण
+			return -EEXIST;
+		}
 
 		map->pin_path = strdup(path);
-		अगर (!map->pin_path) अणु
-			err = -त्रुटि_सं;
-			जाओ out_err;
-		पूर्ण
-	पूर्ण
+		if (!map->pin_path) {
+			err = -errno;
+			goto out_err;
+		}
+	}
 
 	err = make_parent_dir(map->pin_path);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	err = check_path(map->pin_path);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	अगर (bpf_obj_pin(map->fd, map->pin_path)) अणु
-		err = -त्रुटि_सं;
-		जाओ out_err;
-	पूर्ण
+	if (bpf_obj_pin(map->fd, map->pin_path)) {
+		err = -errno;
+		goto out_err;
+	}
 
 	map->pinned = true;
 	pr_debug("pinned map '%s'\n", map->pin_path);
 
-	वापस 0;
+	return 0;
 
 out_err:
-	cp = libbpf_म_त्रुटि_r(-err, errmsg, माप(errmsg));
+	cp = libbpf_strerror_r(-err, errmsg, sizeof(errmsg));
 	pr_warn("failed to pin map: %s\n", cp);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक bpf_map__unpin(काष्ठा bpf_map *map, स्थिर अक्षर *path)
-अणु
-	पूर्णांक err;
+int bpf_map__unpin(struct bpf_map *map, const char *path)
+{
+	int err;
 
-	अगर (map == शून्य) अणु
+	if (map == NULL) {
 		pr_warn("invalid map pointer\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (map->pin_path) अणु
-		अगर (path && म_भेद(path, map->pin_path)) अणु
+	if (map->pin_path) {
+		if (path && strcmp(path, map->pin_path)) {
 			pr_warn("map '%s' already has pin path '%s' different from '%s'\n",
 				bpf_map__name(map), map->pin_path, path);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 		path = map->pin_path;
-	पूर्ण अन्यथा अगर (!path) अणु
+	} else if (!path) {
 		pr_warn("no path to unpin map '%s' from\n",
 			bpf_map__name(map));
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	err = check_path(path);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	err = unlink(path);
-	अगर (err != 0)
-		वापस -त्रुटि_सं;
+	if (err != 0)
+		return -errno;
 
 	map->pinned = false;
 	pr_debug("unpinned map '%s' from '%s'\n", bpf_map__name(map), path);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक bpf_map__set_pin_path(काष्ठा bpf_map *map, स्थिर अक्षर *path)
-अणु
-	अक्षर *new = शून्य;
+int bpf_map__set_pin_path(struct bpf_map *map, const char *path)
+{
+	char *new = NULL;
 
-	अगर (path) अणु
+	if (path) {
 		new = strdup(path);
-		अगर (!new)
-			वापस -त्रुटि_सं;
-	पूर्ण
+		if (!new)
+			return -errno;
+	}
 
-	मुक्त(map->pin_path);
+	free(map->pin_path);
 	map->pin_path = new;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-स्थिर अक्षर *bpf_map__get_pin_path(स्थिर काष्ठा bpf_map *map)
-अणु
-	वापस map->pin_path;
-पूर्ण
+const char *bpf_map__get_pin_path(const struct bpf_map *map)
+{
+	return map->pin_path;
+}
 
-bool bpf_map__is_pinned(स्थिर काष्ठा bpf_map *map)
-अणु
-	वापस map->pinned;
-पूर्ण
+bool bpf_map__is_pinned(const struct bpf_map *map)
+{
+	return map->pinned;
+}
 
-अटल व्योम sanitize_pin_path(अक्षर *s)
-अणु
+static void sanitize_pin_path(char *s)
+{
 	/* bpffs disallows periods in path names */
-	जबतक (*s) अणु
-		अगर (*s == '.')
+	while (*s) {
+		if (*s == '.')
 			*s = '_';
 		s++;
-	पूर्ण
-पूर्ण
+	}
+}
 
-पूर्णांक bpf_object__pin_maps(काष्ठा bpf_object *obj, स्थिर अक्षर *path)
-अणु
-	काष्ठा bpf_map *map;
-	पूर्णांक err;
+int bpf_object__pin_maps(struct bpf_object *obj, const char *path)
+{
+	struct bpf_map *map;
+	int err;
 
-	अगर (!obj)
-		वापस -ENOENT;
+	if (!obj)
+		return -ENOENT;
 
-	अगर (!obj->loaded) अणु
+	if (!obj->loaded) {
 		pr_warn("object not yet loaded; load it first\n");
-		वापस -ENOENT;
-	पूर्ण
+		return -ENOENT;
+	}
 
-	bpf_object__क्रम_each_map(map, obj) अणु
-		अक्षर *pin_path = शून्य;
-		अक्षर buf[PATH_MAX];
+	bpf_object__for_each_map(map, obj) {
+		char *pin_path = NULL;
+		char buf[PATH_MAX];
 
-		अगर (path) अणु
-			पूर्णांक len;
+		if (path) {
+			int len;
 
-			len = snम_लिखो(buf, PATH_MAX, "%s/%s", path,
+			len = snprintf(buf, PATH_MAX, "%s/%s", path,
 				       bpf_map__name(map));
-			अगर (len < 0) अणु
+			if (len < 0) {
 				err = -EINVAL;
-				जाओ err_unpin_maps;
-			पूर्ण अन्यथा अगर (len >= PATH_MAX) अणु
+				goto err_unpin_maps;
+			} else if (len >= PATH_MAX) {
 				err = -ENAMETOOLONG;
-				जाओ err_unpin_maps;
-			पूर्ण
+				goto err_unpin_maps;
+			}
 			sanitize_pin_path(buf);
 			pin_path = buf;
-		पूर्ण अन्यथा अगर (!map->pin_path) अणु
-			जारी;
-		पूर्ण
+		} else if (!map->pin_path) {
+			continue;
+		}
 
 		err = bpf_map__pin(map, pin_path);
-		अगर (err)
-			जाओ err_unpin_maps;
-	पूर्ण
+		if (err)
+			goto err_unpin_maps;
+	}
 
-	वापस 0;
+	return 0;
 
 err_unpin_maps:
-	जबतक ((map = bpf_map__prev(map, obj))) अणु
-		अगर (!map->pin_path)
-			जारी;
+	while ((map = bpf_map__prev(map, obj))) {
+		if (!map->pin_path)
+			continue;
 
-		bpf_map__unpin(map, शून्य);
-	पूर्ण
+		bpf_map__unpin(map, NULL);
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक bpf_object__unpin_maps(काष्ठा bpf_object *obj, स्थिर अक्षर *path)
-अणु
-	काष्ठा bpf_map *map;
-	पूर्णांक err;
+int bpf_object__unpin_maps(struct bpf_object *obj, const char *path)
+{
+	struct bpf_map *map;
+	int err;
 
-	अगर (!obj)
-		वापस -ENOENT;
+	if (!obj)
+		return -ENOENT;
 
-	bpf_object__क्रम_each_map(map, obj) अणु
-		अक्षर *pin_path = शून्य;
-		अक्षर buf[PATH_MAX];
+	bpf_object__for_each_map(map, obj) {
+		char *pin_path = NULL;
+		char buf[PATH_MAX];
 
-		अगर (path) अणु
-			पूर्णांक len;
+		if (path) {
+			int len;
 
-			len = snम_लिखो(buf, PATH_MAX, "%s/%s", path,
+			len = snprintf(buf, PATH_MAX, "%s/%s", path,
 				       bpf_map__name(map));
-			अगर (len < 0)
-				वापस -EINVAL;
-			अन्यथा अगर (len >= PATH_MAX)
-				वापस -ENAMETOOLONG;
+			if (len < 0)
+				return -EINVAL;
+			else if (len >= PATH_MAX)
+				return -ENAMETOOLONG;
 			sanitize_pin_path(buf);
 			pin_path = buf;
-		पूर्ण अन्यथा अगर (!map->pin_path) अणु
-			जारी;
-		पूर्ण
+		} else if (!map->pin_path) {
+			continue;
+		}
 
 		err = bpf_map__unpin(map, pin_path);
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक bpf_object__pin_programs(काष्ठा bpf_object *obj, स्थिर अक्षर *path)
-अणु
-	काष्ठा bpf_program *prog;
-	पूर्णांक err;
+int bpf_object__pin_programs(struct bpf_object *obj, const char *path)
+{
+	struct bpf_program *prog;
+	int err;
 
-	अगर (!obj)
-		वापस -ENOENT;
+	if (!obj)
+		return -ENOENT;
 
-	अगर (!obj->loaded) अणु
+	if (!obj->loaded) {
 		pr_warn("object not yet loaded; load it first\n");
-		वापस -ENOENT;
-	पूर्ण
+		return -ENOENT;
+	}
 
-	bpf_object__क्रम_each_program(prog, obj) अणु
-		अक्षर buf[PATH_MAX];
-		पूर्णांक len;
+	bpf_object__for_each_program(prog, obj) {
+		char buf[PATH_MAX];
+		int len;
 
-		len = snम_लिखो(buf, PATH_MAX, "%s/%s", path,
+		len = snprintf(buf, PATH_MAX, "%s/%s", path,
 			       prog->pin_name);
-		अगर (len < 0) अणु
+		if (len < 0) {
 			err = -EINVAL;
-			जाओ err_unpin_programs;
-		पूर्ण अन्यथा अगर (len >= PATH_MAX) अणु
+			goto err_unpin_programs;
+		} else if (len >= PATH_MAX) {
 			err = -ENAMETOOLONG;
-			जाओ err_unpin_programs;
-		पूर्ण
+			goto err_unpin_programs;
+		}
 
 		err = bpf_program__pin(prog, buf);
-		अगर (err)
-			जाओ err_unpin_programs;
-	पूर्ण
+		if (err)
+			goto err_unpin_programs;
+	}
 
-	वापस 0;
+	return 0;
 
 err_unpin_programs:
-	जबतक ((prog = bpf_program__prev(prog, obj))) अणु
-		अक्षर buf[PATH_MAX];
-		पूर्णांक len;
+	while ((prog = bpf_program__prev(prog, obj))) {
+		char buf[PATH_MAX];
+		int len;
 
-		len = snम_लिखो(buf, PATH_MAX, "%s/%s", path,
+		len = snprintf(buf, PATH_MAX, "%s/%s", path,
 			       prog->pin_name);
-		अगर (len < 0)
-			जारी;
-		अन्यथा अगर (len >= PATH_MAX)
-			जारी;
+		if (len < 0)
+			continue;
+		else if (len >= PATH_MAX)
+			continue;
 
 		bpf_program__unpin(prog, buf);
-	पूर्ण
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक bpf_object__unpin_programs(काष्ठा bpf_object *obj, स्थिर अक्षर *path)
-अणु
-	काष्ठा bpf_program *prog;
-	पूर्णांक err;
+int bpf_object__unpin_programs(struct bpf_object *obj, const char *path)
+{
+	struct bpf_program *prog;
+	int err;
 
-	अगर (!obj)
-		वापस -ENOENT;
+	if (!obj)
+		return -ENOENT;
 
-	bpf_object__क्रम_each_program(prog, obj) अणु
-		अक्षर buf[PATH_MAX];
-		पूर्णांक len;
+	bpf_object__for_each_program(prog, obj) {
+		char buf[PATH_MAX];
+		int len;
 
-		len = snम_लिखो(buf, PATH_MAX, "%s/%s", path,
+		len = snprintf(buf, PATH_MAX, "%s/%s", path,
 			       prog->pin_name);
-		अगर (len < 0)
-			वापस -EINVAL;
-		अन्यथा अगर (len >= PATH_MAX)
-			वापस -ENAMETOOLONG;
+		if (len < 0)
+			return -EINVAL;
+		else if (len >= PATH_MAX)
+			return -ENAMETOOLONG;
 
 		err = bpf_program__unpin(prog, buf);
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक bpf_object__pin(काष्ठा bpf_object *obj, स्थिर अक्षर *path)
-अणु
-	पूर्णांक err;
+int bpf_object__pin(struct bpf_object *obj, const char *path)
+{
+	int err;
 
 	err = bpf_object__pin_maps(obj, path);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	err = bpf_object__pin_programs(obj, path);
-	अगर (err) अणु
+	if (err) {
 		bpf_object__unpin_maps(obj, path);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम bpf_map__destroy(काष्ठा bpf_map *map)
-अणु
-	अगर (map->clear_priv)
+static void bpf_map__destroy(struct bpf_map *map)
+{
+	if (map->clear_priv)
 		map->clear_priv(map, map->priv);
-	map->priv = शून्य;
-	map->clear_priv = शून्य;
+	map->priv = NULL;
+	map->clear_priv = NULL;
 
-	अगर (map->inner_map) अणु
+	if (map->inner_map) {
 		bpf_map__destroy(map->inner_map);
-		zमुक्त(&map->inner_map);
-	पूर्ण
+		zfree(&map->inner_map);
+	}
 
-	zमुक्त(&map->init_slots);
+	zfree(&map->init_slots);
 	map->init_slots_sz = 0;
 
-	अगर (map->mmaped) अणु
+	if (map->mmaped) {
 		munmap(map->mmaped, bpf_map_mmap_sz(map));
-		map->mmaped = शून्य;
-	पूर्ण
+		map->mmaped = NULL;
+	}
 
-	अगर (map->st_ops) अणु
-		zमुक्त(&map->st_ops->data);
-		zमुक्त(&map->st_ops->progs);
-		zमुक्त(&map->st_ops->kern_func_off);
-		zमुक्त(&map->st_ops);
-	पूर्ण
+	if (map->st_ops) {
+		zfree(&map->st_ops->data);
+		zfree(&map->st_ops->progs);
+		zfree(&map->st_ops->kern_func_off);
+		zfree(&map->st_ops);
+	}
 
-	zमुक्त(&map->name);
-	zमुक्त(&map->pin_path);
+	zfree(&map->name);
+	zfree(&map->pin_path);
 
-	अगर (map->fd >= 0)
-		zबंद(map->fd);
-पूर्ण
+	if (map->fd >= 0)
+		zclose(map->fd);
+}
 
-व्योम bpf_object__बंद(काष्ठा bpf_object *obj)
-अणु
-	माप_प्रकार i;
+void bpf_object__close(struct bpf_object *obj)
+{
+	size_t i;
 
-	अगर (IS_ERR_OR_शून्य(obj))
-		वापस;
+	if (IS_ERR_OR_NULL(obj))
+		return;
 
-	अगर (obj->clear_priv)
+	if (obj->clear_priv)
 		obj->clear_priv(obj, obj->priv);
 
 	bpf_object__elf_finish(obj);
 	bpf_object__unload(obj);
-	btf__मुक्त(obj->btf);
-	btf_ext__मुक्त(obj->btf_ext);
+	btf__free(obj->btf);
+	btf_ext__free(obj->btf_ext);
 
-	क्रम (i = 0; i < obj->nr_maps; i++)
+	for (i = 0; i < obj->nr_maps; i++)
 		bpf_map__destroy(&obj->maps[i]);
 
-	zमुक्त(&obj->kconfig);
-	zमुक्त(&obj->बाह्यs);
-	obj->nr_बाह्य = 0;
+	zfree(&obj->kconfig);
+	zfree(&obj->externs);
+	obj->nr_extern = 0;
 
-	zमुक्त(&obj->maps);
+	zfree(&obj->maps);
 	obj->nr_maps = 0;
 
-	अगर (obj->programs && obj->nr_programs) अणु
-		क्रम (i = 0; i < obj->nr_programs; i++)
-			bpf_program__निकास(&obj->programs[i]);
-	पूर्ण
-	zमुक्त(&obj->programs);
+	if (obj->programs && obj->nr_programs) {
+		for (i = 0; i < obj->nr_programs; i++)
+			bpf_program__exit(&obj->programs[i]);
+	}
+	zfree(&obj->programs);
 
 	list_del(&obj->list);
-	मुक्त(obj);
-पूर्ण
+	free(obj);
+}
 
-काष्ठा bpf_object *
-bpf_object__next(काष्ठा bpf_object *prev)
-अणु
-	काष्ठा bpf_object *next;
+struct bpf_object *
+bpf_object__next(struct bpf_object *prev)
+{
+	struct bpf_object *next;
 
-	अगर (!prev)
+	if (!prev)
 		next = list_first_entry(&bpf_objects_list,
-					काष्ठा bpf_object,
+					struct bpf_object,
 					list);
-	अन्यथा
+	else
 		next = list_next_entry(prev, list);
 
-	/* Empty list is noticed here so करोn't need checking on entry. */
-	अगर (&next->list == &bpf_objects_list)
-		वापस शून्य;
+	/* Empty list is noticed here so don't need checking on entry. */
+	if (&next->list == &bpf_objects_list)
+		return NULL;
 
-	वापस next;
-पूर्ण
+	return next;
+}
 
-स्थिर अक्षर *bpf_object__name(स्थिर काष्ठा bpf_object *obj)
-अणु
-	वापस obj ? obj->name : ERR_PTR(-EINVAL);
-पूर्ण
+const char *bpf_object__name(const struct bpf_object *obj)
+{
+	return obj ? obj->name : ERR_PTR(-EINVAL);
+}
 
-अचिन्हित पूर्णांक bpf_object__kversion(स्थिर काष्ठा bpf_object *obj)
-अणु
-	वापस obj ? obj->kern_version : 0;
-पूर्ण
+unsigned int bpf_object__kversion(const struct bpf_object *obj)
+{
+	return obj ? obj->kern_version : 0;
+}
 
-काष्ठा btf *bpf_object__btf(स्थिर काष्ठा bpf_object *obj)
-अणु
-	वापस obj ? obj->btf : शून्य;
-पूर्ण
+struct btf *bpf_object__btf(const struct bpf_object *obj)
+{
+	return obj ? obj->btf : NULL;
+}
 
-पूर्णांक bpf_object__btf_fd(स्थिर काष्ठा bpf_object *obj)
-अणु
-	वापस obj->btf ? btf__fd(obj->btf) : -1;
-पूर्ण
+int bpf_object__btf_fd(const struct bpf_object *obj)
+{
+	return obj->btf ? btf__fd(obj->btf) : -1;
+}
 
-पूर्णांक bpf_object__set_kversion(काष्ठा bpf_object *obj, __u32 kern_version)
-अणु
-	अगर (obj->loaded)
-		वापस -EINVAL;
+int bpf_object__set_kversion(struct bpf_object *obj, __u32 kern_version)
+{
+	if (obj->loaded)
+		return -EINVAL;
 
 	obj->kern_version = kern_version;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक bpf_object__set_priv(काष्ठा bpf_object *obj, व्योम *priv,
+int bpf_object__set_priv(struct bpf_object *obj, void *priv,
 			 bpf_object_clear_priv_t clear_priv)
-अणु
-	अगर (obj->priv && obj->clear_priv)
+{
+	if (obj->priv && obj->clear_priv)
 		obj->clear_priv(obj, obj->priv);
 
 	obj->priv = priv;
 	obj->clear_priv = clear_priv;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम *bpf_object__priv(स्थिर काष्ठा bpf_object *obj)
-अणु
-	वापस obj ? obj->priv : ERR_PTR(-EINVAL);
-पूर्ण
+void *bpf_object__priv(const struct bpf_object *obj)
+{
+	return obj ? obj->priv : ERR_PTR(-EINVAL);
+}
 
-अटल काष्ठा bpf_program *
-__bpf_program__iter(स्थिर काष्ठा bpf_program *p, स्थिर काष्ठा bpf_object *obj,
-		    bool क्रमward)
-अणु
-	माप_प्रकार nr_programs = obj->nr_programs;
-	sमाप_प्रकार idx;
+static struct bpf_program *
+__bpf_program__iter(const struct bpf_program *p, const struct bpf_object *obj,
+		    bool forward)
+{
+	size_t nr_programs = obj->nr_programs;
+	ssize_t idx;
 
-	अगर (!nr_programs)
-		वापस शून्य;
+	if (!nr_programs)
+		return NULL;
 
-	अगर (!p)
+	if (!p)
 		/* Iter from the beginning */
-		वापस क्रमward ? &obj->programs[0] :
+		return forward ? &obj->programs[0] :
 			&obj->programs[nr_programs - 1];
 
-	अगर (p->obj != obj) अणु
+	if (p->obj != obj) {
 		pr_warn("error: program handler doesn't match object\n");
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	idx = (p - obj->programs) + (क्रमward ? 1 : -1);
-	अगर (idx >= obj->nr_programs || idx < 0)
-		वापस शून्य;
-	वापस &obj->programs[idx];
-पूर्ण
+	idx = (p - obj->programs) + (forward ? 1 : -1);
+	if (idx >= obj->nr_programs || idx < 0)
+		return NULL;
+	return &obj->programs[idx];
+}
 
-काष्ठा bpf_program *
-bpf_program__next(काष्ठा bpf_program *prev, स्थिर काष्ठा bpf_object *obj)
-अणु
-	काष्ठा bpf_program *prog = prev;
+struct bpf_program *
+bpf_program__next(struct bpf_program *prev, const struct bpf_object *obj)
+{
+	struct bpf_program *prog = prev;
 
-	करो अणु
+	do {
 		prog = __bpf_program__iter(prog, obj, true);
-	पूर्ण जबतक (prog && prog_is_subprog(obj, prog));
+	} while (prog && prog_is_subprog(obj, prog));
 
-	वापस prog;
-पूर्ण
+	return prog;
+}
 
-काष्ठा bpf_program *
-bpf_program__prev(काष्ठा bpf_program *next, स्थिर काष्ठा bpf_object *obj)
-अणु
-	काष्ठा bpf_program *prog = next;
+struct bpf_program *
+bpf_program__prev(struct bpf_program *next, const struct bpf_object *obj)
+{
+	struct bpf_program *prog = next;
 
-	करो अणु
+	do {
 		prog = __bpf_program__iter(prog, obj, false);
-	पूर्ण जबतक (prog && prog_is_subprog(obj, prog));
+	} while (prog && prog_is_subprog(obj, prog));
 
-	वापस prog;
-पूर्ण
+	return prog;
+}
 
-पूर्णांक bpf_program__set_priv(काष्ठा bpf_program *prog, व्योम *priv,
+int bpf_program__set_priv(struct bpf_program *prog, void *priv,
 			  bpf_program_clear_priv_t clear_priv)
-अणु
-	अगर (prog->priv && prog->clear_priv)
+{
+	if (prog->priv && prog->clear_priv)
 		prog->clear_priv(prog, prog->priv);
 
 	prog->priv = priv;
 	prog->clear_priv = clear_priv;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम *bpf_program__priv(स्थिर काष्ठा bpf_program *prog)
-अणु
-	वापस prog ? prog->priv : ERR_PTR(-EINVAL);
-पूर्ण
+void *bpf_program__priv(const struct bpf_program *prog)
+{
+	return prog ? prog->priv : ERR_PTR(-EINVAL);
+}
 
-व्योम bpf_program__set_अगरindex(काष्ठा bpf_program *prog, __u32 अगरindex)
-अणु
-	prog->prog_अगरindex = अगरindex;
-पूर्ण
+void bpf_program__set_ifindex(struct bpf_program *prog, __u32 ifindex)
+{
+	prog->prog_ifindex = ifindex;
+}
 
-स्थिर अक्षर *bpf_program__name(स्थिर काष्ठा bpf_program *prog)
-अणु
-	वापस prog->name;
-पूर्ण
+const char *bpf_program__name(const struct bpf_program *prog)
+{
+	return prog->name;
+}
 
-स्थिर अक्षर *bpf_program__section_name(स्थिर काष्ठा bpf_program *prog)
-अणु
-	वापस prog->sec_name;
-पूर्ण
+const char *bpf_program__section_name(const struct bpf_program *prog)
+{
+	return prog->sec_name;
+}
 
-स्थिर अक्षर *bpf_program__title(स्थिर काष्ठा bpf_program *prog, bool needs_copy)
-अणु
-	स्थिर अक्षर *title;
+const char *bpf_program__title(const struct bpf_program *prog, bool needs_copy)
+{
+	const char *title;
 
 	title = prog->sec_name;
-	अगर (needs_copy) अणु
+	if (needs_copy) {
 		title = strdup(title);
-		अगर (!title) अणु
+		if (!title) {
 			pr_warn("failed to strdup program title\n");
-			वापस ERR_PTR(-ENOMEM);
-		पूर्ण
-	पूर्ण
+			return ERR_PTR(-ENOMEM);
+		}
+	}
 
-	वापस title;
-पूर्ण
+	return title;
+}
 
-bool bpf_program__स्वतःload(स्थिर काष्ठा bpf_program *prog)
-अणु
-	वापस prog->load;
-पूर्ण
+bool bpf_program__autoload(const struct bpf_program *prog)
+{
+	return prog->load;
+}
 
-पूर्णांक bpf_program__set_स्वतःload(काष्ठा bpf_program *prog, bool स्वतःload)
-अणु
-	अगर (prog->obj->loaded)
-		वापस -EINVAL;
+int bpf_program__set_autoload(struct bpf_program *prog, bool autoload)
+{
+	if (prog->obj->loaded)
+		return -EINVAL;
 
-	prog->load = स्वतःload;
-	वापस 0;
-पूर्ण
+	prog->load = autoload;
+	return 0;
+}
 
-पूर्णांक bpf_program__fd(स्थिर काष्ठा bpf_program *prog)
-अणु
-	वापस bpf_program__nth_fd(prog, 0);
-पूर्ण
+int bpf_program__fd(const struct bpf_program *prog)
+{
+	return bpf_program__nth_fd(prog, 0);
+}
 
-माप_प्रकार bpf_program__size(स्थिर काष्ठा bpf_program *prog)
-अणु
-	वापस prog->insns_cnt * BPF_INSN_SZ;
-पूर्ण
+size_t bpf_program__size(const struct bpf_program *prog)
+{
+	return prog->insns_cnt * BPF_INSN_SZ;
+}
 
-पूर्णांक bpf_program__set_prep(काष्ठा bpf_program *prog, पूर्णांक nr_instances,
+int bpf_program__set_prep(struct bpf_program *prog, int nr_instances,
 			  bpf_program_prep_t prep)
-अणु
-	पूर्णांक *instances_fds;
+{
+	int *instances_fds;
 
-	अगर (nr_instances <= 0 || !prep)
-		वापस -EINVAL;
+	if (nr_instances <= 0 || !prep)
+		return -EINVAL;
 
-	अगर (prog->instances.nr > 0 || prog->instances.fds) अणु
+	if (prog->instances.nr > 0 || prog->instances.fds) {
 		pr_warn("Can't set pre-processor after loading\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	instances_fds = दो_स्मृति(माप(पूर्णांक) * nr_instances);
-	अगर (!instances_fds) अणु
+	instances_fds = malloc(sizeof(int) * nr_instances);
+	if (!instances_fds) {
 		pr_warn("alloc memory failed for fds\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	/* fill all fd with -1 */
-	स_रखो(instances_fds, -1, माप(पूर्णांक) * nr_instances);
+	memset(instances_fds, -1, sizeof(int) * nr_instances);
 
 	prog->instances.nr = nr_instances;
 	prog->instances.fds = instances_fds;
 	prog->preprocessor = prep;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक bpf_program__nth_fd(स्थिर काष्ठा bpf_program *prog, पूर्णांक n)
-अणु
-	पूर्णांक fd;
+int bpf_program__nth_fd(const struct bpf_program *prog, int n)
+{
+	int fd;
 
-	अगर (!prog)
-		वापस -EINVAL;
+	if (!prog)
+		return -EINVAL;
 
-	अगर (n >= prog->instances.nr || n < 0) अणु
+	if (n >= prog->instances.nr || n < 0) {
 		pr_warn("Can't get the %dth fd from program %s: only %d instances\n",
 			n, prog->name, prog->instances.nr);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	fd = prog->instances.fds[n];
-	अगर (fd < 0) अणु
+	if (fd < 0) {
 		pr_warn("%dth instance of program '%s' is invalid\n",
 			n, prog->name);
-		वापस -ENOENT;
-	पूर्ण
+		return -ENOENT;
+	}
 
-	वापस fd;
-पूर्ण
+	return fd;
+}
 
-क्रमागत bpf_prog_type bpf_program__get_type(स्थिर काष्ठा bpf_program *prog)
-अणु
-	वापस prog->type;
-पूर्ण
+enum bpf_prog_type bpf_program__get_type(const struct bpf_program *prog)
+{
+	return prog->type;
+}
 
-व्योम bpf_program__set_type(काष्ठा bpf_program *prog, क्रमागत bpf_prog_type type)
-अणु
+void bpf_program__set_type(struct bpf_program *prog, enum bpf_prog_type type)
+{
 	prog->type = type;
-पूर्ण
+}
 
-अटल bool bpf_program__is_type(स्थिर काष्ठा bpf_program *prog,
-				 क्रमागत bpf_prog_type type)
-अणु
-	वापस prog ? (prog->type == type) : false;
-पूर्ण
+static bool bpf_program__is_type(const struct bpf_program *prog,
+				 enum bpf_prog_type type)
+{
+	return prog ? (prog->type == type) : false;
+}
 
-#घोषणा BPF_PROG_TYPE_FNS(NAME, TYPE)				\
-पूर्णांक bpf_program__set_##NAME(काष्ठा bpf_program *prog)		\
-अणु								\
-	अगर (!prog)						\
-		वापस -EINVAL;					\
+#define BPF_PROG_TYPE_FNS(NAME, TYPE)				\
+int bpf_program__set_##NAME(struct bpf_program *prog)		\
+{								\
+	if (!prog)						\
+		return -EINVAL;					\
 	bpf_program__set_type(prog, TYPE);			\
-	वापस 0;						\
-पूर्ण								\
+	return 0;						\
+}								\
 								\
-bool bpf_program__is_##NAME(स्थिर काष्ठा bpf_program *prog)	\
-अणु								\
-	वापस bpf_program__is_type(prog, TYPE);		\
-पूर्ण								\
+bool bpf_program__is_##NAME(const struct bpf_program *prog)	\
+{								\
+	return bpf_program__is_type(prog, TYPE);		\
+}								\
 
 BPF_PROG_TYPE_FNS(socket_filter, BPF_PROG_TYPE_SOCKET_FILTER);
 BPF_PROG_TYPE_FNS(lsm, BPF_PROG_TYPE_LSM);
 BPF_PROG_TYPE_FNS(kprobe, BPF_PROG_TYPE_KPROBE);
 BPF_PROG_TYPE_FNS(sched_cls, BPF_PROG_TYPE_SCHED_CLS);
 BPF_PROG_TYPE_FNS(sched_act, BPF_PROG_TYPE_SCHED_ACT);
-BPF_PROG_TYPE_FNS(tracepoपूर्णांक, BPF_PROG_TYPE_TRACEPOINT);
-BPF_PROG_TYPE_FNS(raw_tracepoपूर्णांक, BPF_PROG_TYPE_RAW_TRACEPOINT);
+BPF_PROG_TYPE_FNS(tracepoint, BPF_PROG_TYPE_TRACEPOINT);
+BPF_PROG_TYPE_FNS(raw_tracepoint, BPF_PROG_TYPE_RAW_TRACEPOINT);
 BPF_PROG_TYPE_FNS(xdp, BPF_PROG_TYPE_XDP);
 BPF_PROG_TYPE_FNS(perf_event, BPF_PROG_TYPE_PERF_EVENT);
 BPF_PROG_TYPE_FNS(tracing, BPF_PROG_TYPE_TRACING);
-BPF_PROG_TYPE_FNS(काष्ठा_ops, BPF_PROG_TYPE_STRUCT_OPS);
+BPF_PROG_TYPE_FNS(struct_ops, BPF_PROG_TYPE_STRUCT_OPS);
 BPF_PROG_TYPE_FNS(extension, BPF_PROG_TYPE_EXT);
 BPF_PROG_TYPE_FNS(sk_lookup, BPF_PROG_TYPE_SK_LOOKUP);
 
-क्रमागत bpf_attach_type
-bpf_program__get_expected_attach_type(स्थिर काष्ठा bpf_program *prog)
-अणु
-	वापस prog->expected_attach_type;
-पूर्ण
+enum bpf_attach_type
+bpf_program__get_expected_attach_type(const struct bpf_program *prog)
+{
+	return prog->expected_attach_type;
+}
 
-व्योम bpf_program__set_expected_attach_type(काष्ठा bpf_program *prog,
-					   क्रमागत bpf_attach_type type)
-अणु
+void bpf_program__set_expected_attach_type(struct bpf_program *prog,
+					   enum bpf_attach_type type)
+{
 	prog->expected_attach_type = type;
-पूर्ण
+}
 
-#घोषणा BPF_PROG_SEC_IMPL(string, ptype, eatype, eatype_optional,	    \
+#define BPF_PROG_SEC_IMPL(string, ptype, eatype, eatype_optional,	    \
 			  attachable, attach_btf)			    \
-	अणु								    \
+	{								    \
 		.sec = string,						    \
-		.len = माप(string) - 1,				    \
+		.len = sizeof(string) - 1,				    \
 		.prog_type = ptype,					    \
 		.expected_attach_type = eatype,				    \
 		.is_exp_attach_type_optional = eatype_optional,		    \
 		.is_attachable = attachable,				    \
 		.is_attach_btf = attach_btf,				    \
-	पूर्ण
+	}
 
 /* Programs that can NOT be attached. */
-#घोषणा BPF_PROG_SEC(string, ptype) BPF_PROG_SEC_IMPL(string, ptype, 0, 0, 0, 0)
+#define BPF_PROG_SEC(string, ptype) BPF_PROG_SEC_IMPL(string, ptype, 0, 0, 0, 0)
 
 /* Programs that can be attached. */
-#घोषणा BPF_APROG_SEC(string, ptype, atype) \
+#define BPF_APROG_SEC(string, ptype, atype) \
 	BPF_PROG_SEC_IMPL(string, ptype, atype, true, 1, 0)
 
-/* Programs that must specअगरy expected attach type at load समय. */
-#घोषणा BPF_EAPROG_SEC(string, ptype, eatype) \
+/* Programs that must specify expected attach type at load time. */
+#define BPF_EAPROG_SEC(string, ptype, eatype) \
 	BPF_PROG_SEC_IMPL(string, ptype, eatype, false, 1, 0)
 
-/* Programs that use BTF to identअगरy attach poपूर्णांक */
-#घोषणा BPF_PROG_BTF(string, ptype, eatype) \
+/* Programs that use BTF to identify attach point */
+#define BPF_PROG_BTF(string, ptype, eatype) \
 	BPF_PROG_SEC_IMPL(string, ptype, eatype, false, 0, 1)
 
-/* Programs that can be attached but attach type can't be identअगरied by section
- * name. Kept क्रम backward compatibility.
+/* Programs that can be attached but attach type can't be identified by section
+ * name. Kept for backward compatibility.
  */
-#घोषणा BPF_APROG_COMPAT(string, ptype) BPF_PROG_SEC(string, ptype)
+#define BPF_APROG_COMPAT(string, ptype) BPF_PROG_SEC(string, ptype)
 
-#घोषणा SEC_DEF(sec_pfx, ptype, ...) अणु					    \
+#define SEC_DEF(sec_pfx, ptype, ...) {					    \
 	.sec = sec_pfx,							    \
-	.len = माप(sec_pfx) - 1,					    \
+	.len = sizeof(sec_pfx) - 1,					    \
 	.prog_type = BPF_PROG_TYPE_##ptype,				    \
 	__VA_ARGS__							    \
-पूर्ण
+}
 
-अटल काष्ठा bpf_link *attach_kprobe(स्थिर काष्ठा bpf_sec_def *sec,
-				      काष्ठा bpf_program *prog);
-अटल काष्ठा bpf_link *attach_tp(स्थिर काष्ठा bpf_sec_def *sec,
-				  काष्ठा bpf_program *prog);
-अटल काष्ठा bpf_link *attach_raw_tp(स्थिर काष्ठा bpf_sec_def *sec,
-				      काष्ठा bpf_program *prog);
-अटल काष्ठा bpf_link *attach_trace(स्थिर काष्ठा bpf_sec_def *sec,
-				     काष्ठा bpf_program *prog);
-अटल काष्ठा bpf_link *attach_lsm(स्थिर काष्ठा bpf_sec_def *sec,
-				   काष्ठा bpf_program *prog);
-अटल काष्ठा bpf_link *attach_iter(स्थिर काष्ठा bpf_sec_def *sec,
-				    काष्ठा bpf_program *prog);
+static struct bpf_link *attach_kprobe(const struct bpf_sec_def *sec,
+				      struct bpf_program *prog);
+static struct bpf_link *attach_tp(const struct bpf_sec_def *sec,
+				  struct bpf_program *prog);
+static struct bpf_link *attach_raw_tp(const struct bpf_sec_def *sec,
+				      struct bpf_program *prog);
+static struct bpf_link *attach_trace(const struct bpf_sec_def *sec,
+				     struct bpf_program *prog);
+static struct bpf_link *attach_lsm(const struct bpf_sec_def *sec,
+				   struct bpf_program *prog);
+static struct bpf_link *attach_iter(const struct bpf_sec_def *sec,
+				    struct bpf_program *prog);
 
-अटल स्थिर काष्ठा bpf_sec_def section_defs[] = अणु
+static const struct bpf_sec_def section_defs[] = {
 	BPF_PROG_SEC("socket",			BPF_PROG_TYPE_SOCKET_FILTER),
 	BPF_PROG_SEC("sk_reuseport",		BPF_PROG_TYPE_SK_REUSEPORT),
 	SEC_DEF("kprobe/", KPROBE,
@@ -8962,1687 +8961,1687 @@ bpf_program__get_expected_attach_type(स्थिर काष्ठा bpf_pro
 	BPF_PROG_SEC("struct_ops",		BPF_PROG_TYPE_STRUCT_OPS),
 	BPF_EAPROG_SEC("sk_lookup/",		BPF_PROG_TYPE_SK_LOOKUP,
 						BPF_SK_LOOKUP),
-पूर्ण;
+};
 
-#अघोषित BPF_PROG_SEC_IMPL
-#अघोषित BPF_PROG_SEC
-#अघोषित BPF_APROG_SEC
-#अघोषित BPF_EAPROG_SEC
-#अघोषित BPF_APROG_COMPAT
-#अघोषित SEC_DEF
+#undef BPF_PROG_SEC_IMPL
+#undef BPF_PROG_SEC
+#undef BPF_APROG_SEC
+#undef BPF_EAPROG_SEC
+#undef BPF_APROG_COMPAT
+#undef SEC_DEF
 
-#घोषणा MAX_TYPE_NAME_SIZE 32
+#define MAX_TYPE_NAME_SIZE 32
 
-अटल स्थिर काष्ठा bpf_sec_def *find_sec_def(स्थिर अक्षर *sec_name)
-अणु
-	पूर्णांक i, n = ARRAY_SIZE(section_defs);
+static const struct bpf_sec_def *find_sec_def(const char *sec_name)
+{
+	int i, n = ARRAY_SIZE(section_defs);
 
-	क्रम (i = 0; i < n; i++) अणु
-		अगर (म_भेदन(sec_name,
+	for (i = 0; i < n; i++) {
+		if (strncmp(sec_name,
 			    section_defs[i].sec, section_defs[i].len))
-			जारी;
-		वापस &section_defs[i];
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+			continue;
+		return &section_defs[i];
+	}
+	return NULL;
+}
 
-अटल अक्षर *libbpf_get_type_names(bool attach_type)
-अणु
-	पूर्णांक i, len = ARRAY_SIZE(section_defs) * MAX_TYPE_NAME_SIZE;
-	अक्षर *buf;
+static char *libbpf_get_type_names(bool attach_type)
+{
+	int i, len = ARRAY_SIZE(section_defs) * MAX_TYPE_NAME_SIZE;
+	char *buf;
 
-	buf = दो_स्मृति(len);
-	अगर (!buf)
-		वापस शून्य;
+	buf = malloc(len);
+	if (!buf)
+		return NULL;
 
 	buf[0] = '\0';
 	/* Forge string buf with all available names */
-	क्रम (i = 0; i < ARRAY_SIZE(section_defs); i++) अणु
-		अगर (attach_type && !section_defs[i].is_attachable)
-			जारी;
+	for (i = 0; i < ARRAY_SIZE(section_defs); i++) {
+		if (attach_type && !section_defs[i].is_attachable)
+			continue;
 
-		अगर (म_माप(buf) + म_माप(section_defs[i].sec) + 2 > len) अणु
-			मुक्त(buf);
-			वापस शून्य;
-		पूर्ण
-		म_जोड़ो(buf, " ");
-		म_जोड़ो(buf, section_defs[i].sec);
-	पूर्ण
+		if (strlen(buf) + strlen(section_defs[i].sec) + 2 > len) {
+			free(buf);
+			return NULL;
+		}
+		strcat(buf, " ");
+		strcat(buf, section_defs[i].sec);
+	}
 
-	वापस buf;
-पूर्ण
+	return buf;
+}
 
-पूर्णांक libbpf_prog_type_by_name(स्थिर अक्षर *name, क्रमागत bpf_prog_type *prog_type,
-			     क्रमागत bpf_attach_type *expected_attach_type)
-अणु
-	स्थिर काष्ठा bpf_sec_def *sec_def;
-	अक्षर *type_names;
+int libbpf_prog_type_by_name(const char *name, enum bpf_prog_type *prog_type,
+			     enum bpf_attach_type *expected_attach_type)
+{
+	const struct bpf_sec_def *sec_def;
+	char *type_names;
 
-	अगर (!name)
-		वापस -EINVAL;
+	if (!name)
+		return -EINVAL;
 
 	sec_def = find_sec_def(name);
-	अगर (sec_def) अणु
+	if (sec_def) {
 		*prog_type = sec_def->prog_type;
 		*expected_attach_type = sec_def->expected_attach_type;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	pr_debug("failed to guess program type from ELF section '%s'\n", name);
 	type_names = libbpf_get_type_names(false);
-	अगर (type_names != शून्य) अणु
+	if (type_names != NULL) {
 		pr_debug("supported section(type) names are:%s\n", type_names);
-		मुक्त(type_names);
-	पूर्ण
+		free(type_names);
+	}
 
-	वापस -ESRCH;
-पूर्ण
+	return -ESRCH;
+}
 
-अटल काष्ठा bpf_map *find_काष्ठा_ops_map_by_offset(काष्ठा bpf_object *obj,
-						     माप_प्रकार offset)
-अणु
-	काष्ठा bpf_map *map;
-	माप_प्रकार i;
+static struct bpf_map *find_struct_ops_map_by_offset(struct bpf_object *obj,
+						     size_t offset)
+{
+	struct bpf_map *map;
+	size_t i;
 
-	क्रम (i = 0; i < obj->nr_maps; i++) अणु
+	for (i = 0; i < obj->nr_maps; i++) {
 		map = &obj->maps[i];
-		अगर (!bpf_map__is_काष्ठा_ops(map))
-			जारी;
-		अगर (map->sec_offset <= offset &&
+		if (!bpf_map__is_struct_ops(map))
+			continue;
+		if (map->sec_offset <= offset &&
 		    offset - map->sec_offset < map->def.value_size)
-			वापस map;
-	पूर्ण
+			return map;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
 /* Collect the reloc from ELF and populate the st_ops->progs[] */
-अटल पूर्णांक bpf_object__collect_st_ops_relos(काष्ठा bpf_object *obj,
+static int bpf_object__collect_st_ops_relos(struct bpf_object *obj,
 					    GElf_Shdr *shdr, Elf_Data *data)
-अणु
-	स्थिर काष्ठा btf_member *member;
-	काष्ठा bpf_काष्ठा_ops *st_ops;
-	काष्ठा bpf_program *prog;
-	अचिन्हित पूर्णांक shdr_idx;
-	स्थिर काष्ठा btf *btf;
-	काष्ठा bpf_map *map;
+{
+	const struct btf_member *member;
+	struct bpf_struct_ops *st_ops;
+	struct bpf_program *prog;
+	unsigned int shdr_idx;
+	const struct btf *btf;
+	struct bpf_map *map;
 	Elf_Data *symbols;
-	अचिन्हित पूर्णांक moff, insn_idx;
-	स्थिर अक्षर *name;
+	unsigned int moff, insn_idx;
+	const char *name;
 	__u32 member_idx;
 	GElf_Sym sym;
 	GElf_Rel rel;
-	पूर्णांक i, nrels;
+	int i, nrels;
 
 	symbols = obj->efile.symbols;
 	btf = obj->btf;
 	nrels = shdr->sh_size / shdr->sh_entsize;
-	क्रम (i = 0; i < nrels; i++) अणु
-		अगर (!gelf_getrel(data, i, &rel)) अणु
+	for (i = 0; i < nrels; i++) {
+		if (!gelf_getrel(data, i, &rel)) {
 			pr_warn("struct_ops reloc: failed to get %d reloc\n", i);
-			वापस -LIBBPF_ERRNO__FORMAT;
-		पूर्ण
+			return -LIBBPF_ERRNO__FORMAT;
+		}
 
-		अगर (!gelf_माला_लोym(symbols, GELF_R_SYM(rel.r_info), &sym)) अणु
+		if (!gelf_getsym(symbols, GELF_R_SYM(rel.r_info), &sym)) {
 			pr_warn("struct_ops reloc: symbol %zx not found\n",
-				(माप_प्रकार)GELF_R_SYM(rel.r_info));
-			वापस -LIBBPF_ERRNO__FORMAT;
-		पूर्ण
+				(size_t)GELF_R_SYM(rel.r_info));
+			return -LIBBPF_ERRNO__FORMAT;
+		}
 
 		name = elf_sym_str(obj, sym.st_name) ?: "<?>";
-		map = find_काष्ठा_ops_map_by_offset(obj, rel.r_offset);
-		अगर (!map) अणु
+		map = find_struct_ops_map_by_offset(obj, rel.r_offset);
+		if (!map) {
 			pr_warn("struct_ops reloc: cannot find map at rel.r_offset %zu\n",
-				(माप_प्रकार)rel.r_offset);
-			वापस -EINVAL;
-		पूर्ण
+				(size_t)rel.r_offset);
+			return -EINVAL;
+		}
 
 		moff = rel.r_offset - map->sec_offset;
 		shdr_idx = sym.st_shndx;
 		st_ops = map->st_ops;
 		pr_debug("struct_ops reloc %s: for %lld value %lld shdr_idx %u rel.r_offset %zu map->sec_offset %zu name %d (\'%s\')\n",
 			 map->name,
-			 (दीर्घ दीर्घ)(rel.r_info >> 32),
-			 (दीर्घ दीर्घ)sym.st_value,
-			 shdr_idx, (माप_प्रकार)rel.r_offset,
+			 (long long)(rel.r_info >> 32),
+			 (long long)sym.st_value,
+			 shdr_idx, (size_t)rel.r_offset,
 			 map->sec_offset, sym.st_name, name);
 
-		अगर (shdr_idx >= SHN_LORESERVE) अणु
+		if (shdr_idx >= SHN_LORESERVE) {
 			pr_warn("struct_ops reloc %s: rel.r_offset %zu shdr_idx %u unsupported non-static function\n",
-				map->name, (माप_प्रकार)rel.r_offset, shdr_idx);
-			वापस -LIBBPF_ERRNO__RELOC;
-		पूर्ण
-		अगर (sym.st_value % BPF_INSN_SZ) अणु
+				map->name, (size_t)rel.r_offset, shdr_idx);
+			return -LIBBPF_ERRNO__RELOC;
+		}
+		if (sym.st_value % BPF_INSN_SZ) {
 			pr_warn("struct_ops reloc %s: invalid target program offset %llu\n",
-				map->name, (अचिन्हित दीर्घ दीर्घ)sym.st_value);
-			वापस -LIBBPF_ERRNO__FORMAT;
-		पूर्ण
+				map->name, (unsigned long long)sym.st_value);
+			return -LIBBPF_ERRNO__FORMAT;
+		}
 		insn_idx = sym.st_value / BPF_INSN_SZ;
 
 		member = find_member_by_offset(st_ops->type, moff * 8);
-		अगर (!member) अणु
+		if (!member) {
 			pr_warn("struct_ops reloc %s: cannot find member at moff %u\n",
 				map->name, moff);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 		member_idx = member - btf_members(st_ops->type);
 		name = btf__name_by_offset(btf, member->name_off);
 
-		अगर (!resolve_func_ptr(btf, member->type, शून्य)) अणु
+		if (!resolve_func_ptr(btf, member->type, NULL)) {
 			pr_warn("struct_ops reloc %s: cannot relocate non func ptr %s\n",
 				map->name, name);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
 		prog = find_prog_by_sec_insn(obj, shdr_idx, insn_idx);
-		अगर (!prog) अणु
+		if (!prog) {
 			pr_warn("struct_ops reloc %s: cannot find prog at shdr_idx %u to relocate func ptr %s\n",
 				map->name, shdr_idx, name);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
-		अगर (prog->type == BPF_PROG_TYPE_UNSPEC) अणु
-			स्थिर काष्ठा bpf_sec_def *sec_def;
+		if (prog->type == BPF_PROG_TYPE_UNSPEC) {
+			const struct bpf_sec_def *sec_def;
 
 			sec_def = find_sec_def(prog->sec_name);
-			अगर (sec_def &&
-			    sec_def->prog_type != BPF_PROG_TYPE_STRUCT_OPS) अणु
-				/* क्रम pr_warn */
+			if (sec_def &&
+			    sec_def->prog_type != BPF_PROG_TYPE_STRUCT_OPS) {
+				/* for pr_warn */
 				prog->type = sec_def->prog_type;
-				जाओ invalid_prog;
-			पूर्ण
+				goto invalid_prog;
+			}
 
 			prog->type = BPF_PROG_TYPE_STRUCT_OPS;
 			prog->attach_btf_id = st_ops->type_id;
 			prog->expected_attach_type = member_idx;
-		पूर्ण अन्यथा अगर (prog->type != BPF_PROG_TYPE_STRUCT_OPS ||
+		} else if (prog->type != BPF_PROG_TYPE_STRUCT_OPS ||
 			   prog->attach_btf_id != st_ops->type_id ||
-			   prog->expected_attach_type != member_idx) अणु
-			जाओ invalid_prog;
-		पूर्ण
+			   prog->expected_attach_type != member_idx) {
+			goto invalid_prog;
+		}
 		st_ops->progs[member_idx] = prog;
-	पूर्ण
+	}
 
-	वापस 0;
+	return 0;
 
 invalid_prog:
 	pr_warn("struct_ops reloc %s: cannot use prog %s in sec %s with type %u attach_btf_id %u expected_attach_type %u for func ptr %s\n",
 		map->name, prog->name, prog->sec_name, prog->type,
 		prog->attach_btf_id, prog->expected_attach_type, name);
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-#घोषणा BTF_TRACE_PREFIX "btf_trace_"
-#घोषणा BTF_LSM_PREFIX "bpf_lsm_"
-#घोषणा BTF_ITER_PREFIX "bpf_iter_"
-#घोषणा BTF_MAX_NAME_SIZE 128
+#define BTF_TRACE_PREFIX "btf_trace_"
+#define BTF_LSM_PREFIX "bpf_lsm_"
+#define BTF_ITER_PREFIX "bpf_iter_"
+#define BTF_MAX_NAME_SIZE 128
 
-अटल पूर्णांक find_btf_by_prefix_kind(स्थिर काष्ठा btf *btf, स्थिर अक्षर *prefix,
-				   स्थिर अक्षर *name, __u32 kind)
-अणु
-	अक्षर btf_type_name[BTF_MAX_NAME_SIZE];
-	पूर्णांक ret;
+static int find_btf_by_prefix_kind(const struct btf *btf, const char *prefix,
+				   const char *name, __u32 kind)
+{
+	char btf_type_name[BTF_MAX_NAME_SIZE];
+	int ret;
 
-	ret = snम_लिखो(btf_type_name, माप(btf_type_name),
+	ret = snprintf(btf_type_name, sizeof(btf_type_name),
 		       "%s%s", prefix, name);
-	/* snम_लिखो वापसs the number of अक्षरacters written excluding the
-	 * the terminating null. So, अगर >= BTF_MAX_NAME_SIZE are written, it
+	/* snprintf returns the number of characters written excluding the
+	 * the terminating null. So, if >= BTF_MAX_NAME_SIZE are written, it
 	 * indicates truncation.
 	 */
-	अगर (ret < 0 || ret >= माप(btf_type_name))
-		वापस -ENAMETOOLONG;
-	वापस btf__find_by_name_kind(btf, btf_type_name, kind);
-पूर्ण
+	if (ret < 0 || ret >= sizeof(btf_type_name))
+		return -ENAMETOOLONG;
+	return btf__find_by_name_kind(btf, btf_type_name, kind);
+}
 
-अटल अंतरभूत पूर्णांक find_attach_btf_id(काष्ठा btf *btf, स्थिर अक्षर *name,
-				     क्रमागत bpf_attach_type attach_type)
-अणु
-	पूर्णांक err;
+static inline int find_attach_btf_id(struct btf *btf, const char *name,
+				     enum bpf_attach_type attach_type)
+{
+	int err;
 
-	अगर (attach_type == BPF_TRACE_RAW_TP)
+	if (attach_type == BPF_TRACE_RAW_TP)
 		err = find_btf_by_prefix_kind(btf, BTF_TRACE_PREFIX, name,
 					      BTF_KIND_TYPEDEF);
-	अन्यथा अगर (attach_type == BPF_LSM_MAC)
+	else if (attach_type == BPF_LSM_MAC)
 		err = find_btf_by_prefix_kind(btf, BTF_LSM_PREFIX, name,
 					      BTF_KIND_FUNC);
-	अन्यथा अगर (attach_type == BPF_TRACE_ITER)
+	else if (attach_type == BPF_TRACE_ITER)
 		err = find_btf_by_prefix_kind(btf, BTF_ITER_PREFIX, name,
 					      BTF_KIND_FUNC);
-	अन्यथा
+	else
 		err = btf__find_by_name_kind(btf, name, BTF_KIND_FUNC);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक libbpf_find_vmlinux_btf_id(स्थिर अक्षर *name,
-			       क्रमागत bpf_attach_type attach_type)
-अणु
-	काष्ठा btf *btf;
-	पूर्णांक err;
+int libbpf_find_vmlinux_btf_id(const char *name,
+			       enum bpf_attach_type attach_type)
+{
+	struct btf *btf;
+	int err;
 
 	btf = libbpf_find_kernel_btf();
-	अगर (IS_ERR(btf)) अणु
+	if (IS_ERR(btf)) {
 		pr_warn("vmlinux BTF is not found\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	err = find_attach_btf_id(btf, name, attach_type);
-	अगर (err <= 0)
+	if (err <= 0)
 		pr_warn("%s is not found in vmlinux BTF\n", name);
 
-	btf__मुक्त(btf);
-	वापस err;
-पूर्ण
+	btf__free(btf);
+	return err;
+}
 
-अटल पूर्णांक libbpf_find_prog_btf_id(स्थिर अक्षर *name, __u32 attach_prog_fd)
-अणु
-	काष्ठा bpf_prog_info_linear *info_linear;
-	काष्ठा bpf_prog_info *info;
-	काष्ठा btf *btf = शून्य;
-	पूर्णांक err = -EINVAL;
+static int libbpf_find_prog_btf_id(const char *name, __u32 attach_prog_fd)
+{
+	struct bpf_prog_info_linear *info_linear;
+	struct bpf_prog_info *info;
+	struct btf *btf = NULL;
+	int err = -EINVAL;
 
 	info_linear = bpf_program__get_prog_info_linear(attach_prog_fd, 0);
-	अगर (IS_ERR_OR_शून्य(info_linear)) अणु
+	if (IS_ERR_OR_NULL(info_linear)) {
 		pr_warn("failed get_prog_info_linear for FD %d\n",
 			attach_prog_fd);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	info = &info_linear->info;
-	अगर (!info->btf_id) अणु
+	if (!info->btf_id) {
 		pr_warn("The target program doesn't have BTF\n");
-		जाओ out;
-	पूर्ण
-	अगर (btf__get_from_id(info->btf_id, &btf)) अणु
+		goto out;
+	}
+	if (btf__get_from_id(info->btf_id, &btf)) {
 		pr_warn("Failed to get BTF of the program\n");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	err = btf__find_by_name_kind(btf, name, BTF_KIND_FUNC);
-	btf__मुक्त(btf);
-	अगर (err <= 0) अणु
+	btf__free(btf);
+	if (err <= 0) {
 		pr_warn("%s is not found in prog's BTF\n", name);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 out:
-	मुक्त(info_linear);
-	वापस err;
-पूर्ण
+	free(info_linear);
+	return err;
+}
 
-अटल पूर्णांक find_kernel_btf_id(काष्ठा bpf_object *obj, स्थिर अक्षर *attach_name,
-			      क्रमागत bpf_attach_type attach_type,
-			      पूर्णांक *btf_obj_fd, पूर्णांक *btf_type_id)
-अणु
-	पूर्णांक ret, i;
+static int find_kernel_btf_id(struct bpf_object *obj, const char *attach_name,
+			      enum bpf_attach_type attach_type,
+			      int *btf_obj_fd, int *btf_type_id)
+{
+	int ret, i;
 
 	ret = find_attach_btf_id(obj->btf_vmlinux, attach_name, attach_type);
-	अगर (ret > 0) अणु
+	if (ret > 0) {
 		*btf_obj_fd = 0; /* vmlinux BTF */
 		*btf_type_id = ret;
-		वापस 0;
-	पूर्ण
-	अगर (ret != -ENOENT)
-		वापस ret;
+		return 0;
+	}
+	if (ret != -ENOENT)
+		return ret;
 
 	ret = load_module_btfs(obj);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	क्रम (i = 0; i < obj->btf_module_cnt; i++) अणु
-		स्थिर काष्ठा module_btf *mod = &obj->btf_modules[i];
+	for (i = 0; i < obj->btf_module_cnt; i++) {
+		const struct module_btf *mod = &obj->btf_modules[i];
 
 		ret = find_attach_btf_id(mod->btf, attach_name, attach_type);
-		अगर (ret > 0) अणु
+		if (ret > 0) {
 			*btf_obj_fd = mod->fd;
 			*btf_type_id = ret;
-			वापस 0;
-		पूर्ण
-		अगर (ret == -ENOENT)
-			जारी;
+			return 0;
+		}
+		if (ret == -ENOENT)
+			continue;
 
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस -ESRCH;
-पूर्ण
+	return -ESRCH;
+}
 
-अटल पूर्णांक libbpf_find_attach_btf_id(काष्ठा bpf_program *prog, पूर्णांक *btf_obj_fd, पूर्णांक *btf_type_id)
-अणु
-	क्रमागत bpf_attach_type attach_type = prog->expected_attach_type;
+static int libbpf_find_attach_btf_id(struct bpf_program *prog, int *btf_obj_fd, int *btf_type_id)
+{
+	enum bpf_attach_type attach_type = prog->expected_attach_type;
 	__u32 attach_prog_fd = prog->attach_prog_fd;
-	स्थिर अक्षर *name = prog->sec_name, *attach_name;
-	स्थिर काष्ठा bpf_sec_def *sec = शून्य;
-	पूर्णांक i, err;
+	const char *name = prog->sec_name, *attach_name;
+	const struct bpf_sec_def *sec = NULL;
+	int i, err;
 
-	अगर (!name)
-		वापस -EINVAL;
+	if (!name)
+		return -EINVAL;
 
-	क्रम (i = 0; i < ARRAY_SIZE(section_defs); i++) अणु
-		अगर (!section_defs[i].is_attach_btf)
-			जारी;
-		अगर (म_भेदन(name, section_defs[i].sec, section_defs[i].len))
-			जारी;
+	for (i = 0; i < ARRAY_SIZE(section_defs); i++) {
+		if (!section_defs[i].is_attach_btf)
+			continue;
+		if (strncmp(name, section_defs[i].sec, section_defs[i].len))
+			continue;
 
 		sec = &section_defs[i];
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	अगर (!sec) अणु
+	if (!sec) {
 		pr_warn("failed to identify BTF ID based on ELF section name '%s'\n", name);
-		वापस -ESRCH;
-	पूर्ण
+		return -ESRCH;
+	}
 	attach_name = name + sec->len;
 
 	/* BPF program's BTF ID */
-	अगर (attach_prog_fd) अणु
+	if (attach_prog_fd) {
 		err = libbpf_find_prog_btf_id(attach_name, attach_prog_fd);
-		अगर (err < 0) अणु
+		if (err < 0) {
 			pr_warn("failed to find BPF program (FD %d) BTF ID for '%s': %d\n",
 				 attach_prog_fd, attach_name, err);
-			वापस err;
-		पूर्ण
+			return err;
+		}
 		*btf_obj_fd = 0;
 		*btf_type_id = err;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	/* kernel/module BTF ID */
 	err = find_kernel_btf_id(prog->obj, attach_name, attach_type, btf_obj_fd, btf_type_id);
-	अगर (err) अणु
+	if (err) {
 		pr_warn("failed to find kernel BTF type ID of '%s': %d\n", attach_name, err);
-		वापस err;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return err;
+	}
+	return 0;
+}
 
-पूर्णांक libbpf_attach_type_by_name(स्थिर अक्षर *name,
-			       क्रमागत bpf_attach_type *attach_type)
-अणु
-	अक्षर *type_names;
-	पूर्णांक i;
+int libbpf_attach_type_by_name(const char *name,
+			       enum bpf_attach_type *attach_type)
+{
+	char *type_names;
+	int i;
 
-	अगर (!name)
-		वापस -EINVAL;
+	if (!name)
+		return -EINVAL;
 
-	क्रम (i = 0; i < ARRAY_SIZE(section_defs); i++) अणु
-		अगर (म_भेदन(name, section_defs[i].sec, section_defs[i].len))
-			जारी;
-		अगर (!section_defs[i].is_attachable)
-			वापस -EINVAL;
+	for (i = 0; i < ARRAY_SIZE(section_defs); i++) {
+		if (strncmp(name, section_defs[i].sec, section_defs[i].len))
+			continue;
+		if (!section_defs[i].is_attachable)
+			return -EINVAL;
 		*attach_type = section_defs[i].expected_attach_type;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 	pr_debug("failed to guess attach type based on ELF section name '%s'\n", name);
 	type_names = libbpf_get_type_names(true);
-	अगर (type_names != शून्य) अणु
+	if (type_names != NULL) {
 		pr_debug("attachable section(type) names are:%s\n", type_names);
-		मुक्त(type_names);
-	पूर्ण
+		free(type_names);
+	}
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-पूर्णांक bpf_map__fd(स्थिर काष्ठा bpf_map *map)
-अणु
-	वापस map ? map->fd : -EINVAL;
-पूर्ण
+int bpf_map__fd(const struct bpf_map *map)
+{
+	return map ? map->fd : -EINVAL;
+}
 
-स्थिर काष्ठा bpf_map_def *bpf_map__def(स्थिर काष्ठा bpf_map *map)
-अणु
-	वापस map ? &map->def : ERR_PTR(-EINVAL);
-पूर्ण
+const struct bpf_map_def *bpf_map__def(const struct bpf_map *map)
+{
+	return map ? &map->def : ERR_PTR(-EINVAL);
+}
 
-स्थिर अक्षर *bpf_map__name(स्थिर काष्ठा bpf_map *map)
-अणु
-	वापस map ? map->name : शून्य;
-पूर्ण
+const char *bpf_map__name(const struct bpf_map *map)
+{
+	return map ? map->name : NULL;
+}
 
-क्रमागत bpf_map_type bpf_map__type(स्थिर काष्ठा bpf_map *map)
-अणु
-	वापस map->def.type;
-पूर्ण
+enum bpf_map_type bpf_map__type(const struct bpf_map *map)
+{
+	return map->def.type;
+}
 
-पूर्णांक bpf_map__set_type(काष्ठा bpf_map *map, क्रमागत bpf_map_type type)
-अणु
-	अगर (map->fd >= 0)
-		वापस -EBUSY;
+int bpf_map__set_type(struct bpf_map *map, enum bpf_map_type type)
+{
+	if (map->fd >= 0)
+		return -EBUSY;
 	map->def.type = type;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-__u32 bpf_map__map_flags(स्थिर काष्ठा bpf_map *map)
-अणु
-	वापस map->def.map_flags;
-पूर्ण
+__u32 bpf_map__map_flags(const struct bpf_map *map)
+{
+	return map->def.map_flags;
+}
 
-पूर्णांक bpf_map__set_map_flags(काष्ठा bpf_map *map, __u32 flags)
-अणु
-	अगर (map->fd >= 0)
-		वापस -EBUSY;
+int bpf_map__set_map_flags(struct bpf_map *map, __u32 flags)
+{
+	if (map->fd >= 0)
+		return -EBUSY;
 	map->def.map_flags = flags;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-__u32 bpf_map__numa_node(स्थिर काष्ठा bpf_map *map)
-अणु
-	वापस map->numa_node;
-पूर्ण
+__u32 bpf_map__numa_node(const struct bpf_map *map)
+{
+	return map->numa_node;
+}
 
-पूर्णांक bpf_map__set_numa_node(काष्ठा bpf_map *map, __u32 numa_node)
-अणु
-	अगर (map->fd >= 0)
-		वापस -EBUSY;
+int bpf_map__set_numa_node(struct bpf_map *map, __u32 numa_node)
+{
+	if (map->fd >= 0)
+		return -EBUSY;
 	map->numa_node = numa_node;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-__u32 bpf_map__key_size(स्थिर काष्ठा bpf_map *map)
-अणु
-	वापस map->def.key_size;
-पूर्ण
+__u32 bpf_map__key_size(const struct bpf_map *map)
+{
+	return map->def.key_size;
+}
 
-पूर्णांक bpf_map__set_key_size(काष्ठा bpf_map *map, __u32 size)
-अणु
-	अगर (map->fd >= 0)
-		वापस -EBUSY;
+int bpf_map__set_key_size(struct bpf_map *map, __u32 size)
+{
+	if (map->fd >= 0)
+		return -EBUSY;
 	map->def.key_size = size;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-__u32 bpf_map__value_size(स्थिर काष्ठा bpf_map *map)
-अणु
-	वापस map->def.value_size;
-पूर्ण
+__u32 bpf_map__value_size(const struct bpf_map *map)
+{
+	return map->def.value_size;
+}
 
-पूर्णांक bpf_map__set_value_size(काष्ठा bpf_map *map, __u32 size)
-अणु
-	अगर (map->fd >= 0)
-		वापस -EBUSY;
+int bpf_map__set_value_size(struct bpf_map *map, __u32 size)
+{
+	if (map->fd >= 0)
+		return -EBUSY;
 	map->def.value_size = size;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-__u32 bpf_map__btf_key_type_id(स्थिर काष्ठा bpf_map *map)
-अणु
-	वापस map ? map->btf_key_type_id : 0;
-पूर्ण
+__u32 bpf_map__btf_key_type_id(const struct bpf_map *map)
+{
+	return map ? map->btf_key_type_id : 0;
+}
 
-__u32 bpf_map__btf_value_type_id(स्थिर काष्ठा bpf_map *map)
-अणु
-	वापस map ? map->btf_value_type_id : 0;
-पूर्ण
+__u32 bpf_map__btf_value_type_id(const struct bpf_map *map)
+{
+	return map ? map->btf_value_type_id : 0;
+}
 
-पूर्णांक bpf_map__set_priv(काष्ठा bpf_map *map, व्योम *priv,
+int bpf_map__set_priv(struct bpf_map *map, void *priv,
 		     bpf_map_clear_priv_t clear_priv)
-अणु
-	अगर (!map)
-		वापस -EINVAL;
+{
+	if (!map)
+		return -EINVAL;
 
-	अगर (map->priv) अणु
-		अगर (map->clear_priv)
+	if (map->priv) {
+		if (map->clear_priv)
 			map->clear_priv(map, map->priv);
-	पूर्ण
+	}
 
 	map->priv = priv;
 	map->clear_priv = clear_priv;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम *bpf_map__priv(स्थिर काष्ठा bpf_map *map)
-अणु
-	वापस map ? map->priv : ERR_PTR(-EINVAL);
-पूर्ण
+void *bpf_map__priv(const struct bpf_map *map)
+{
+	return map ? map->priv : ERR_PTR(-EINVAL);
+}
 
-पूर्णांक bpf_map__set_initial_value(काष्ठा bpf_map *map,
-			       स्थिर व्योम *data, माप_प्रकार size)
-अणु
-	अगर (!map->mmaped || map->libbpf_type == LIBBPF_MAP_KCONFIG ||
+int bpf_map__set_initial_value(struct bpf_map *map,
+			       const void *data, size_t size)
+{
+	if (!map->mmaped || map->libbpf_type == LIBBPF_MAP_KCONFIG ||
 	    size != map->def.value_size || map->fd >= 0)
-		वापस -EINVAL;
+		return -EINVAL;
 
-	स_नकल(map->mmaped, data, size);
-	वापस 0;
-पूर्ण
+	memcpy(map->mmaped, data, size);
+	return 0;
+}
 
-bool bpf_map__is_offload_neutral(स्थिर काष्ठा bpf_map *map)
-अणु
-	वापस map->def.type == BPF_MAP_TYPE_PERF_EVENT_ARRAY;
-पूर्ण
+bool bpf_map__is_offload_neutral(const struct bpf_map *map)
+{
+	return map->def.type == BPF_MAP_TYPE_PERF_EVENT_ARRAY;
+}
 
-bool bpf_map__is_पूर्णांकernal(स्थिर काष्ठा bpf_map *map)
-अणु
-	वापस map->libbpf_type != LIBBPF_MAP_UNSPEC;
-पूर्ण
+bool bpf_map__is_internal(const struct bpf_map *map)
+{
+	return map->libbpf_type != LIBBPF_MAP_UNSPEC;
+}
 
-__u32 bpf_map__अगरindex(स्थिर काष्ठा bpf_map *map)
-अणु
-	वापस map->map_अगरindex;
-पूर्ण
+__u32 bpf_map__ifindex(const struct bpf_map *map)
+{
+	return map->map_ifindex;
+}
 
-पूर्णांक bpf_map__set_अगरindex(काष्ठा bpf_map *map, __u32 अगरindex)
-अणु
-	अगर (map->fd >= 0)
-		वापस -EBUSY;
-	map->map_अगरindex = अगरindex;
-	वापस 0;
-पूर्ण
+int bpf_map__set_ifindex(struct bpf_map *map, __u32 ifindex)
+{
+	if (map->fd >= 0)
+		return -EBUSY;
+	map->map_ifindex = ifindex;
+	return 0;
+}
 
-पूर्णांक bpf_map__set_inner_map_fd(काष्ठा bpf_map *map, पूर्णांक fd)
-अणु
-	अगर (!bpf_map_type__is_map_in_map(map->def.type)) अणु
+int bpf_map__set_inner_map_fd(struct bpf_map *map, int fd)
+{
+	if (!bpf_map_type__is_map_in_map(map->def.type)) {
 		pr_warn("error: unsupported map type\n");
-		वापस -EINVAL;
-	पूर्ण
-	अगर (map->inner_map_fd != -1) अणु
+		return -EINVAL;
+	}
+	if (map->inner_map_fd != -1) {
 		pr_warn("error: inner_map_fd already specified\n");
-		वापस -EINVAL;
-	पूर्ण
-	zमुक्त(&map->inner_map);
+		return -EINVAL;
+	}
+	zfree(&map->inner_map);
 	map->inner_map_fd = fd;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा bpf_map *
-__bpf_map__iter(स्थिर काष्ठा bpf_map *m, स्थिर काष्ठा bpf_object *obj, पूर्णांक i)
-अणु
-	sमाप_प्रकार idx;
-	काष्ठा bpf_map *s, *e;
+static struct bpf_map *
+__bpf_map__iter(const struct bpf_map *m, const struct bpf_object *obj, int i)
+{
+	ssize_t idx;
+	struct bpf_map *s, *e;
 
-	अगर (!obj || !obj->maps)
-		वापस शून्य;
+	if (!obj || !obj->maps)
+		return NULL;
 
 	s = obj->maps;
 	e = obj->maps + obj->nr_maps;
 
-	अगर ((m < s) || (m >= e)) अणु
+	if ((m < s) || (m >= e)) {
 		pr_warn("error in %s: map handler doesn't belong to object\n",
 			 __func__);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
 	idx = (m - obj->maps) + i;
-	अगर (idx >= obj->nr_maps || idx < 0)
-		वापस शून्य;
-	वापस &obj->maps[idx];
-पूर्ण
+	if (idx >= obj->nr_maps || idx < 0)
+		return NULL;
+	return &obj->maps[idx];
+}
 
-काष्ठा bpf_map *
-bpf_map__next(स्थिर काष्ठा bpf_map *prev, स्थिर काष्ठा bpf_object *obj)
-अणु
-	अगर (prev == शून्य)
-		वापस obj->maps;
+struct bpf_map *
+bpf_map__next(const struct bpf_map *prev, const struct bpf_object *obj)
+{
+	if (prev == NULL)
+		return obj->maps;
 
-	वापस __bpf_map__iter(prev, obj, 1);
-पूर्ण
+	return __bpf_map__iter(prev, obj, 1);
+}
 
-काष्ठा bpf_map *
-bpf_map__prev(स्थिर काष्ठा bpf_map *next, स्थिर काष्ठा bpf_object *obj)
-अणु
-	अगर (next == शून्य) अणु
-		अगर (!obj->nr_maps)
-			वापस शून्य;
-		वापस obj->maps + obj->nr_maps - 1;
-	पूर्ण
+struct bpf_map *
+bpf_map__prev(const struct bpf_map *next, const struct bpf_object *obj)
+{
+	if (next == NULL) {
+		if (!obj->nr_maps)
+			return NULL;
+		return obj->maps + obj->nr_maps - 1;
+	}
 
-	वापस __bpf_map__iter(next, obj, -1);
-पूर्ण
+	return __bpf_map__iter(next, obj, -1);
+}
 
-काष्ठा bpf_map *
-bpf_object__find_map_by_name(स्थिर काष्ठा bpf_object *obj, स्थिर अक्षर *name)
-अणु
-	काष्ठा bpf_map *pos;
+struct bpf_map *
+bpf_object__find_map_by_name(const struct bpf_object *obj, const char *name)
+{
+	struct bpf_map *pos;
 
-	bpf_object__क्रम_each_map(pos, obj) अणु
-		अगर (pos->name && !म_भेद(pos->name, name))
-			वापस pos;
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+	bpf_object__for_each_map(pos, obj) {
+		if (pos->name && !strcmp(pos->name, name))
+			return pos;
+	}
+	return NULL;
+}
 
-पूर्णांक
-bpf_object__find_map_fd_by_name(स्थिर काष्ठा bpf_object *obj, स्थिर अक्षर *name)
-अणु
-	वापस bpf_map__fd(bpf_object__find_map_by_name(obj, name));
-पूर्ण
+int
+bpf_object__find_map_fd_by_name(const struct bpf_object *obj, const char *name)
+{
+	return bpf_map__fd(bpf_object__find_map_by_name(obj, name));
+}
 
-काष्ठा bpf_map *
-bpf_object__find_map_by_offset(काष्ठा bpf_object *obj, माप_प्रकार offset)
-अणु
-	वापस ERR_PTR(-ENOTSUP);
-पूर्ण
+struct bpf_map *
+bpf_object__find_map_by_offset(struct bpf_object *obj, size_t offset)
+{
+	return ERR_PTR(-ENOTSUP);
+}
 
-दीर्घ libbpf_get_error(स्थिर व्योम *ptr)
-अणु
-	वापस PTR_ERR_OR_ZERO(ptr);
-पूर्ण
+long libbpf_get_error(const void *ptr)
+{
+	return PTR_ERR_OR_ZERO(ptr);
+}
 
-पूर्णांक bpf_prog_load(स्थिर अक्षर *file, क्रमागत bpf_prog_type type,
-		  काष्ठा bpf_object **pobj, पूर्णांक *prog_fd)
-अणु
-	काष्ठा bpf_prog_load_attr attr;
+int bpf_prog_load(const char *file, enum bpf_prog_type type,
+		  struct bpf_object **pobj, int *prog_fd)
+{
+	struct bpf_prog_load_attr attr;
 
-	स_रखो(&attr, 0, माप(काष्ठा bpf_prog_load_attr));
+	memset(&attr, 0, sizeof(struct bpf_prog_load_attr));
 	attr.file = file;
 	attr.prog_type = type;
 	attr.expected_attach_type = 0;
 
-	वापस bpf_prog_load_xattr(&attr, pobj, prog_fd);
-पूर्ण
+	return bpf_prog_load_xattr(&attr, pobj, prog_fd);
+}
 
-पूर्णांक bpf_prog_load_xattr(स्थिर काष्ठा bpf_prog_load_attr *attr,
-			काष्ठा bpf_object **pobj, पूर्णांक *prog_fd)
-अणु
-	काष्ठा bpf_object_खोलो_attr खोलो_attr = अणुपूर्ण;
-	काष्ठा bpf_program *prog, *first_prog = शून्य;
-	काष्ठा bpf_object *obj;
-	काष्ठा bpf_map *map;
-	पूर्णांक err;
+int bpf_prog_load_xattr(const struct bpf_prog_load_attr *attr,
+			struct bpf_object **pobj, int *prog_fd)
+{
+	struct bpf_object_open_attr open_attr = {};
+	struct bpf_program *prog, *first_prog = NULL;
+	struct bpf_object *obj;
+	struct bpf_map *map;
+	int err;
 
-	अगर (!attr)
-		वापस -EINVAL;
-	अगर (!attr->file)
-		वापस -EINVAL;
+	if (!attr)
+		return -EINVAL;
+	if (!attr->file)
+		return -EINVAL;
 
-	खोलो_attr.file = attr->file;
-	खोलो_attr.prog_type = attr->prog_type;
+	open_attr.file = attr->file;
+	open_attr.prog_type = attr->prog_type;
 
-	obj = bpf_object__खोलो_xattr(&खोलो_attr);
-	अगर (IS_ERR_OR_शून्य(obj))
-		वापस -ENOENT;
+	obj = bpf_object__open_xattr(&open_attr);
+	if (IS_ERR_OR_NULL(obj))
+		return -ENOENT;
 
-	bpf_object__क्रम_each_program(prog, obj) अणु
-		क्रमागत bpf_attach_type attach_type = attr->expected_attach_type;
+	bpf_object__for_each_program(prog, obj) {
+		enum bpf_attach_type attach_type = attr->expected_attach_type;
 		/*
 		 * to preserve backwards compatibility, bpf_prog_load treats
-		 * attr->prog_type, अगर specअगरied, as an override to whatever
-		 * bpf_object__खोलो guessed
+		 * attr->prog_type, if specified, as an override to whatever
+		 * bpf_object__open guessed
 		 */
-		अगर (attr->prog_type != BPF_PROG_TYPE_UNSPEC) अणु
+		if (attr->prog_type != BPF_PROG_TYPE_UNSPEC) {
 			bpf_program__set_type(prog, attr->prog_type);
 			bpf_program__set_expected_attach_type(prog,
 							      attach_type);
-		पूर्ण
-		अगर (bpf_program__get_type(prog) == BPF_PROG_TYPE_UNSPEC) अणु
+		}
+		if (bpf_program__get_type(prog) == BPF_PROG_TYPE_UNSPEC) {
 			/*
 			 * we haven't guessed from section name and user
 			 * didn't provide a fallback type, too bad...
 			 */
-			bpf_object__बंद(obj);
-			वापस -EINVAL;
-		पूर्ण
+			bpf_object__close(obj);
+			return -EINVAL;
+		}
 
-		prog->prog_अगरindex = attr->अगरindex;
+		prog->prog_ifindex = attr->ifindex;
 		prog->log_level = attr->log_level;
 		prog->prog_flags |= attr->prog_flags;
-		अगर (!first_prog)
+		if (!first_prog)
 			first_prog = prog;
-	पूर्ण
+	}
 
-	bpf_object__क्रम_each_map(map, obj) अणु
-		अगर (!bpf_map__is_offload_neutral(map))
-			map->map_अगरindex = attr->अगरindex;
-	पूर्ण
+	bpf_object__for_each_map(map, obj) {
+		if (!bpf_map__is_offload_neutral(map))
+			map->map_ifindex = attr->ifindex;
+	}
 
-	अगर (!first_prog) अणु
+	if (!first_prog) {
 		pr_warn("object file doesn't contain bpf program\n");
-		bpf_object__बंद(obj);
-		वापस -ENOENT;
-	पूर्ण
+		bpf_object__close(obj);
+		return -ENOENT;
+	}
 
 	err = bpf_object__load(obj);
-	अगर (err) अणु
-		bpf_object__बंद(obj);
-		वापस err;
-	पूर्ण
+	if (err) {
+		bpf_object__close(obj);
+		return err;
+	}
 
 	*pobj = obj;
 	*prog_fd = bpf_program__fd(first_prog);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-काष्ठा bpf_link अणु
-	पूर्णांक (*detach)(काष्ठा bpf_link *link);
-	पूर्णांक (*destroy)(काष्ठा bpf_link *link);
-	अक्षर *pin_path;		/* शून्य, अगर not pinned */
-	पूर्णांक fd;			/* hook FD, -1 अगर not applicable */
+struct bpf_link {
+	int (*detach)(struct bpf_link *link);
+	int (*destroy)(struct bpf_link *link);
+	char *pin_path;		/* NULL, if not pinned */
+	int fd;			/* hook FD, -1 if not applicable */
 	bool disconnected;
-पूर्ण;
+};
 
 /* Replace link's underlying BPF program with the new one */
-पूर्णांक bpf_link__update_program(काष्ठा bpf_link *link, काष्ठा bpf_program *prog)
-अणु
-	वापस bpf_link_update(bpf_link__fd(link), bpf_program__fd(prog), शून्य);
-पूर्ण
+int bpf_link__update_program(struct bpf_link *link, struct bpf_program *prog)
+{
+	return bpf_link_update(bpf_link__fd(link), bpf_program__fd(prog), NULL);
+}
 
 /* Release "ownership" of underlying BPF resource (typically, BPF program
- * attached to some BPF hook, e.g., tracepoपूर्णांक, kprobe, etc). Disconnected
- * link, when deकाष्ठाed through bpf_link__destroy() call won't attempt to
+ * attached to some BPF hook, e.g., tracepoint, kprobe, etc). Disconnected
+ * link, when destructed through bpf_link__destroy() call won't attempt to
  * detach/unregisted that BPF resource. This is useful in situations where,
  * say, attached BPF program has to outlive userspace program that attached it
- * in the प्रणाली. Depending on type of BPF program, though, there might be
+ * in the system. Depending on type of BPF program, though, there might be
  * additional steps (like pinning BPF program in BPF FS) necessary to ensure
- * निकास of userspace program करोesn't trigger स्वतःmatic detachment and clean up
+ * exit of userspace program doesn't trigger automatic detachment and clean up
  * inside the kernel.
  */
-व्योम bpf_link__disconnect(काष्ठा bpf_link *link)
-अणु
+void bpf_link__disconnect(struct bpf_link *link)
+{
 	link->disconnected = true;
-पूर्ण
+}
 
-पूर्णांक bpf_link__destroy(काष्ठा bpf_link *link)
-अणु
-	पूर्णांक err = 0;
+int bpf_link__destroy(struct bpf_link *link)
+{
+	int err = 0;
 
-	अगर (IS_ERR_OR_शून्य(link))
-		वापस 0;
+	if (IS_ERR_OR_NULL(link))
+		return 0;
 
-	अगर (!link->disconnected && link->detach)
+	if (!link->disconnected && link->detach)
 		err = link->detach(link);
-	अगर (link->destroy)
+	if (link->destroy)
 		link->destroy(link);
-	अगर (link->pin_path)
-		मुक्त(link->pin_path);
-	मुक्त(link);
+	if (link->pin_path)
+		free(link->pin_path);
+	free(link);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक bpf_link__fd(स्थिर काष्ठा bpf_link *link)
-अणु
-	वापस link->fd;
-पूर्ण
+int bpf_link__fd(const struct bpf_link *link)
+{
+	return link->fd;
+}
 
-स्थिर अक्षर *bpf_link__pin_path(स्थिर काष्ठा bpf_link *link)
-अणु
-	वापस link->pin_path;
-पूर्ण
+const char *bpf_link__pin_path(const struct bpf_link *link)
+{
+	return link->pin_path;
+}
 
-अटल पूर्णांक bpf_link__detach_fd(काष्ठा bpf_link *link)
-अणु
-	वापस बंद(link->fd);
-पूर्ण
+static int bpf_link__detach_fd(struct bpf_link *link)
+{
+	return close(link->fd);
+}
 
-काष्ठा bpf_link *bpf_link__खोलो(स्थिर अक्षर *path)
-अणु
-	काष्ठा bpf_link *link;
-	पूर्णांक fd;
+struct bpf_link *bpf_link__open(const char *path)
+{
+	struct bpf_link *link;
+	int fd;
 
 	fd = bpf_obj_get(path);
-	अगर (fd < 0) अणु
-		fd = -त्रुटि_सं;
+	if (fd < 0) {
+		fd = -errno;
 		pr_warn("failed to open link at %s: %d\n", path, fd);
-		वापस ERR_PTR(fd);
-	पूर्ण
+		return ERR_PTR(fd);
+	}
 
-	link = सुस्मृति(1, माप(*link));
-	अगर (!link) अणु
-		बंद(fd);
-		वापस ERR_PTR(-ENOMEM);
-	पूर्ण
+	link = calloc(1, sizeof(*link));
+	if (!link) {
+		close(fd);
+		return ERR_PTR(-ENOMEM);
+	}
 	link->detach = &bpf_link__detach_fd;
 	link->fd = fd;
 
 	link->pin_path = strdup(path);
-	अगर (!link->pin_path) अणु
+	if (!link->pin_path) {
 		bpf_link__destroy(link);
-		वापस ERR_PTR(-ENOMEM);
-	पूर्ण
+		return ERR_PTR(-ENOMEM);
+	}
 
-	वापस link;
-पूर्ण
+	return link;
+}
 
-पूर्णांक bpf_link__detach(काष्ठा bpf_link *link)
-अणु
-	वापस bpf_link_detach(link->fd) ? -त्रुटि_सं : 0;
-पूर्ण
+int bpf_link__detach(struct bpf_link *link)
+{
+	return bpf_link_detach(link->fd) ? -errno : 0;
+}
 
-पूर्णांक bpf_link__pin(काष्ठा bpf_link *link, स्थिर अक्षर *path)
-अणु
-	पूर्णांक err;
+int bpf_link__pin(struct bpf_link *link, const char *path)
+{
+	int err;
 
-	अगर (link->pin_path)
-		वापस -EBUSY;
+	if (link->pin_path)
+		return -EBUSY;
 	err = make_parent_dir(path);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 	err = check_path(path);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	link->pin_path = strdup(path);
-	अगर (!link->pin_path)
-		वापस -ENOMEM;
+	if (!link->pin_path)
+		return -ENOMEM;
 
-	अगर (bpf_obj_pin(link->fd, link->pin_path)) अणु
-		err = -त्रुटि_सं;
-		zमुक्त(&link->pin_path);
-		वापस err;
-	पूर्ण
+	if (bpf_obj_pin(link->fd, link->pin_path)) {
+		err = -errno;
+		zfree(&link->pin_path);
+		return err;
+	}
 
 	pr_debug("link fd=%d: pinned at %s\n", link->fd, link->pin_path);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक bpf_link__unpin(काष्ठा bpf_link *link)
-अणु
-	पूर्णांक err;
+int bpf_link__unpin(struct bpf_link *link)
+{
+	int err;
 
-	अगर (!link->pin_path)
-		वापस -EINVAL;
+	if (!link->pin_path)
+		return -EINVAL;
 
 	err = unlink(link->pin_path);
-	अगर (err != 0)
-		वापस -त्रुटि_सं;
+	if (err != 0)
+		return -errno;
 
 	pr_debug("link fd=%d: unpinned from %s\n", link->fd, link->pin_path);
-	zमुक्त(&link->pin_path);
-	वापस 0;
-पूर्ण
+	zfree(&link->pin_path);
+	return 0;
+}
 
-अटल पूर्णांक bpf_link__detach_perf_event(काष्ठा bpf_link *link)
-अणु
-	पूर्णांक err;
+static int bpf_link__detach_perf_event(struct bpf_link *link)
+{
+	int err;
 
 	err = ioctl(link->fd, PERF_EVENT_IOC_DISABLE, 0);
-	अगर (err)
-		err = -त्रुटि_सं;
+	if (err)
+		err = -errno;
 
-	बंद(link->fd);
-	वापस err;
-पूर्ण
+	close(link->fd);
+	return err;
+}
 
-काष्ठा bpf_link *bpf_program__attach_perf_event(काष्ठा bpf_program *prog,
-						पूर्णांक pfd)
-अणु
-	अक्षर errmsg[STRERR_बफ_मानE];
-	काष्ठा bpf_link *link;
-	पूर्णांक prog_fd, err;
+struct bpf_link *bpf_program__attach_perf_event(struct bpf_program *prog,
+						int pfd)
+{
+	char errmsg[STRERR_BUFSIZE];
+	struct bpf_link *link;
+	int prog_fd, err;
 
-	अगर (pfd < 0) अणु
+	if (pfd < 0) {
 		pr_warn("prog '%s': invalid perf event FD %d\n",
 			prog->name, pfd);
-		वापस ERR_PTR(-EINVAL);
-	पूर्ण
+		return ERR_PTR(-EINVAL);
+	}
 	prog_fd = bpf_program__fd(prog);
-	अगर (prog_fd < 0) अणु
+	if (prog_fd < 0) {
 		pr_warn("prog '%s': can't attach BPF program w/o FD (did you load it?)\n",
 			prog->name);
-		वापस ERR_PTR(-EINVAL);
-	पूर्ण
+		return ERR_PTR(-EINVAL);
+	}
 
-	link = सुस्मृति(1, माप(*link));
-	अगर (!link)
-		वापस ERR_PTR(-ENOMEM);
+	link = calloc(1, sizeof(*link));
+	if (!link)
+		return ERR_PTR(-ENOMEM);
 	link->detach = &bpf_link__detach_perf_event;
 	link->fd = pfd;
 
-	अगर (ioctl(pfd, PERF_EVENT_IOC_SET_BPF, prog_fd) < 0) अणु
-		err = -त्रुटि_सं;
-		मुक्त(link);
+	if (ioctl(pfd, PERF_EVENT_IOC_SET_BPF, prog_fd) < 0) {
+		err = -errno;
+		free(link);
 		pr_warn("prog '%s': failed to attach to pfd %d: %s\n",
-			prog->name, pfd, libbpf_म_त्रुटि_r(err, errmsg, माप(errmsg)));
-		अगर (err == -EPROTO)
+			prog->name, pfd, libbpf_strerror_r(err, errmsg, sizeof(errmsg)));
+		if (err == -EPROTO)
 			pr_warn("prog '%s': try add PERF_SAMPLE_CALLCHAIN to or remove exclude_callchain_[kernel|user] from pfd %d\n",
 				prog->name, pfd);
-		वापस ERR_PTR(err);
-	पूर्ण
-	अगर (ioctl(pfd, PERF_EVENT_IOC_ENABLE, 0) < 0) अणु
-		err = -त्रुटि_सं;
-		मुक्त(link);
+		return ERR_PTR(err);
+	}
+	if (ioctl(pfd, PERF_EVENT_IOC_ENABLE, 0) < 0) {
+		err = -errno;
+		free(link);
 		pr_warn("prog '%s': failed to enable pfd %d: %s\n",
-			prog->name, pfd, libbpf_म_त्रुटि_r(err, errmsg, माप(errmsg)));
-		वापस ERR_PTR(err);
-	पूर्ण
-	वापस link;
-पूर्ण
+			prog->name, pfd, libbpf_strerror_r(err, errmsg, sizeof(errmsg)));
+		return ERR_PTR(err);
+	}
+	return link;
+}
 
 /*
- * this function is expected to parse पूर्णांकeger in the range of [0, 2^31-1] from
- * given file using म_पूछो क्रमmat string fmt. If actual parsed value is
+ * this function is expected to parse integer in the range of [0, 2^31-1] from
+ * given file using scanf format string fmt. If actual parsed value is
  * negative, the result might be indistinguishable from error
  */
-अटल पूर्णांक parse_uपूर्णांक_from_file(स्थिर अक्षर *file, स्थिर अक्षर *fmt)
-अणु
-	अक्षर buf[STRERR_बफ_मानE];
-	पूर्णांक err, ret;
-	खाता *f;
+static int parse_uint_from_file(const char *file, const char *fmt)
+{
+	char buf[STRERR_BUFSIZE];
+	int err, ret;
+	FILE *f;
 
-	f = ख_खोलो(file, "r");
-	अगर (!f) अणु
-		err = -त्रुटि_सं;
+	f = fopen(file, "r");
+	if (!f) {
+		err = -errno;
 		pr_debug("failed to open '%s': %s\n", file,
-			 libbpf_म_त्रुटि_r(err, buf, माप(buf)));
-		वापस err;
-	पूर्ण
-	err = ख_पूछो(f, fmt, &ret);
-	अगर (err != 1) अणु
-		err = err == खातापूर्ण ? -EIO : -त्रुटि_सं;
+			 libbpf_strerror_r(err, buf, sizeof(buf)));
+		return err;
+	}
+	err = fscanf(f, fmt, &ret);
+	if (err != 1) {
+		err = err == EOF ? -EIO : -errno;
 		pr_debug("failed to parse '%s': %s\n", file,
-			libbpf_म_त्रुटि_r(err, buf, माप(buf)));
-		ख_बंद(f);
-		वापस err;
-	पूर्ण
-	ख_बंद(f);
-	वापस ret;
-पूर्ण
+			libbpf_strerror_r(err, buf, sizeof(buf)));
+		fclose(f);
+		return err;
+	}
+	fclose(f);
+	return ret;
+}
 
-अटल पूर्णांक determine_kprobe_perf_type(व्योम)
-अणु
-	स्थिर अक्षर *file = "/sys/bus/event_source/devices/kprobe/type";
+static int determine_kprobe_perf_type(void)
+{
+	const char *file = "/sys/bus/event_source/devices/kprobe/type";
 
-	वापस parse_uपूर्णांक_from_file(file, "%d\n");
-पूर्ण
+	return parse_uint_from_file(file, "%d\n");
+}
 
-अटल पूर्णांक determine_uprobe_perf_type(व्योम)
-अणु
-	स्थिर अक्षर *file = "/sys/bus/event_source/devices/uprobe/type";
+static int determine_uprobe_perf_type(void)
+{
+	const char *file = "/sys/bus/event_source/devices/uprobe/type";
 
-	वापस parse_uपूर्णांक_from_file(file, "%d\n");
-पूर्ण
+	return parse_uint_from_file(file, "%d\n");
+}
 
-अटल पूर्णांक determine_kprobe_retprobe_bit(व्योम)
-अणु
-	स्थिर अक्षर *file = "/sys/bus/event_source/devices/kprobe/format/retprobe";
+static int determine_kprobe_retprobe_bit(void)
+{
+	const char *file = "/sys/bus/event_source/devices/kprobe/format/retprobe";
 
-	वापस parse_uपूर्णांक_from_file(file, "config:%d\n");
-पूर्ण
+	return parse_uint_from_file(file, "config:%d\n");
+}
 
-अटल पूर्णांक determine_uprobe_retprobe_bit(व्योम)
-अणु
-	स्थिर अक्षर *file = "/sys/bus/event_source/devices/uprobe/format/retprobe";
+static int determine_uprobe_retprobe_bit(void)
+{
+	const char *file = "/sys/bus/event_source/devices/uprobe/format/retprobe";
 
-	वापस parse_uपूर्णांक_from_file(file, "config:%d\n");
-पूर्ण
+	return parse_uint_from_file(file, "config:%d\n");
+}
 
-अटल पूर्णांक perf_event_खोलो_probe(bool uprobe, bool retprobe, स्थिर अक्षर *name,
-				 uपूर्णांक64_t offset, पूर्णांक pid)
-अणु
-	काष्ठा perf_event_attr attr = अणुपूर्ण;
-	अक्षर errmsg[STRERR_बफ_मानE];
-	पूर्णांक type, pfd, err;
+static int perf_event_open_probe(bool uprobe, bool retprobe, const char *name,
+				 uint64_t offset, int pid)
+{
+	struct perf_event_attr attr = {};
+	char errmsg[STRERR_BUFSIZE];
+	int type, pfd, err;
 
 	type = uprobe ? determine_uprobe_perf_type()
 		      : determine_kprobe_perf_type();
-	अगर (type < 0) अणु
+	if (type < 0) {
 		pr_warn("failed to determine %s perf type: %s\n",
 			uprobe ? "uprobe" : "kprobe",
-			libbpf_म_त्रुटि_r(type, errmsg, माप(errmsg)));
-		वापस type;
-	पूर्ण
-	अगर (retprobe) अणु
-		पूर्णांक bit = uprobe ? determine_uprobe_retprobe_bit()
+			libbpf_strerror_r(type, errmsg, sizeof(errmsg)));
+		return type;
+	}
+	if (retprobe) {
+		int bit = uprobe ? determine_uprobe_retprobe_bit()
 				 : determine_kprobe_retprobe_bit();
 
-		अगर (bit < 0) अणु
+		if (bit < 0) {
 			pr_warn("failed to determine %s retprobe bit: %s\n",
 				uprobe ? "uprobe" : "kprobe",
-				libbpf_म_त्रुटि_r(bit, errmsg, माप(errmsg)));
-			वापस bit;
-		पूर्ण
+				libbpf_strerror_r(bit, errmsg, sizeof(errmsg)));
+			return bit;
+		}
 		attr.config |= 1 << bit;
-	पूर्ण
-	attr.size = माप(attr);
+	}
+	attr.size = sizeof(attr);
 	attr.type = type;
 	attr.config1 = ptr_to_u64(name); /* kprobe_func or uprobe_path */
 	attr.config2 = offset;		 /* kprobe_addr or probe_offset */
 
-	/* pid filter is meaningful only क्रम uprobes */
-	pfd = syscall(__NR_perf_event_खोलो, &attr,
+	/* pid filter is meaningful only for uprobes */
+	pfd = syscall(__NR_perf_event_open, &attr,
 		      pid < 0 ? -1 : pid /* pid */,
 		      pid == -1 ? 0 : -1 /* cpu */,
 		      -1 /* group_fd */, PERF_FLAG_FD_CLOEXEC);
-	अगर (pfd < 0) अणु
-		err = -त्रुटि_सं;
+	if (pfd < 0) {
+		err = -errno;
 		pr_warn("%s perf_event_open() failed: %s\n",
 			uprobe ? "uprobe" : "kprobe",
-			libbpf_म_त्रुटि_r(err, errmsg, माप(errmsg)));
-		वापस err;
-	पूर्ण
-	वापस pfd;
-पूर्ण
+			libbpf_strerror_r(err, errmsg, sizeof(errmsg)));
+		return err;
+	}
+	return pfd;
+}
 
-काष्ठा bpf_link *bpf_program__attach_kprobe(काष्ठा bpf_program *prog,
+struct bpf_link *bpf_program__attach_kprobe(struct bpf_program *prog,
 					    bool retprobe,
-					    स्थिर अक्षर *func_name)
-अणु
-	अक्षर errmsg[STRERR_बफ_मानE];
-	काष्ठा bpf_link *link;
-	पूर्णांक pfd, err;
+					    const char *func_name)
+{
+	char errmsg[STRERR_BUFSIZE];
+	struct bpf_link *link;
+	int pfd, err;
 
-	pfd = perf_event_खोलो_probe(false /* uprobe */, retprobe, func_name,
+	pfd = perf_event_open_probe(false /* uprobe */, retprobe, func_name,
 				    0 /* offset */, -1 /* pid */);
-	अगर (pfd < 0) अणु
+	if (pfd < 0) {
 		pr_warn("prog '%s': failed to create %s '%s' perf event: %s\n",
 			prog->name, retprobe ? "kretprobe" : "kprobe", func_name,
-			libbpf_म_त्रुटि_r(pfd, errmsg, माप(errmsg)));
-		वापस ERR_PTR(pfd);
-	पूर्ण
+			libbpf_strerror_r(pfd, errmsg, sizeof(errmsg)));
+		return ERR_PTR(pfd);
+	}
 	link = bpf_program__attach_perf_event(prog, pfd);
-	अगर (IS_ERR(link)) अणु
-		बंद(pfd);
+	if (IS_ERR(link)) {
+		close(pfd);
 		err = PTR_ERR(link);
 		pr_warn("prog '%s': failed to attach to %s '%s': %s\n",
 			prog->name, retprobe ? "kretprobe" : "kprobe", func_name,
-			libbpf_म_त्रुटि_r(err, errmsg, माप(errmsg)));
-		वापस link;
-	पूर्ण
-	वापस link;
-पूर्ण
+			libbpf_strerror_r(err, errmsg, sizeof(errmsg)));
+		return link;
+	}
+	return link;
+}
 
-अटल काष्ठा bpf_link *attach_kprobe(स्थिर काष्ठा bpf_sec_def *sec,
-				      काष्ठा bpf_program *prog)
-अणु
-	स्थिर अक्षर *func_name;
+static struct bpf_link *attach_kprobe(const struct bpf_sec_def *sec,
+				      struct bpf_program *prog)
+{
+	const char *func_name;
 	bool retprobe;
 
 	func_name = prog->sec_name + sec->len;
-	retprobe = म_भेद(sec->sec, "kretprobe/") == 0;
+	retprobe = strcmp(sec->sec, "kretprobe/") == 0;
 
-	वापस bpf_program__attach_kprobe(prog, retprobe, func_name);
-पूर्ण
+	return bpf_program__attach_kprobe(prog, retprobe, func_name);
+}
 
-काष्ठा bpf_link *bpf_program__attach_uprobe(काष्ठा bpf_program *prog,
+struct bpf_link *bpf_program__attach_uprobe(struct bpf_program *prog,
 					    bool retprobe, pid_t pid,
-					    स्थिर अक्षर *binary_path,
-					    माप_प्रकार func_offset)
-अणु
-	अक्षर errmsg[STRERR_बफ_मानE];
-	काष्ठा bpf_link *link;
-	पूर्णांक pfd, err;
+					    const char *binary_path,
+					    size_t func_offset)
+{
+	char errmsg[STRERR_BUFSIZE];
+	struct bpf_link *link;
+	int pfd, err;
 
-	pfd = perf_event_खोलो_probe(true /* uprobe */, retprobe,
+	pfd = perf_event_open_probe(true /* uprobe */, retprobe,
 				    binary_path, func_offset, pid);
-	अगर (pfd < 0) अणु
+	if (pfd < 0) {
 		pr_warn("prog '%s': failed to create %s '%s:0x%zx' perf event: %s\n",
 			prog->name, retprobe ? "uretprobe" : "uprobe",
 			binary_path, func_offset,
-			libbpf_म_त्रुटि_r(pfd, errmsg, माप(errmsg)));
-		वापस ERR_PTR(pfd);
-	पूर्ण
+			libbpf_strerror_r(pfd, errmsg, sizeof(errmsg)));
+		return ERR_PTR(pfd);
+	}
 	link = bpf_program__attach_perf_event(prog, pfd);
-	अगर (IS_ERR(link)) अणु
-		बंद(pfd);
+	if (IS_ERR(link)) {
+		close(pfd);
 		err = PTR_ERR(link);
 		pr_warn("prog '%s': failed to attach to %s '%s:0x%zx': %s\n",
 			prog->name, retprobe ? "uretprobe" : "uprobe",
 			binary_path, func_offset,
-			libbpf_म_त्रुटि_r(err, errmsg, माप(errmsg)));
-		वापस link;
-	पूर्ण
-	वापस link;
-पूर्ण
+			libbpf_strerror_r(err, errmsg, sizeof(errmsg)));
+		return link;
+	}
+	return link;
+}
 
-अटल पूर्णांक determine_tracepoपूर्णांक_id(स्थिर अक्षर *tp_category,
-				   स्थिर अक्षर *tp_name)
-अणु
-	अक्षर file[PATH_MAX];
-	पूर्णांक ret;
+static int determine_tracepoint_id(const char *tp_category,
+				   const char *tp_name)
+{
+	char file[PATH_MAX];
+	int ret;
 
-	ret = snम_लिखो(file, माप(file),
+	ret = snprintf(file, sizeof(file),
 		       "/sys/kernel/debug/tracing/events/%s/%s/id",
 		       tp_category, tp_name);
-	अगर (ret < 0)
-		वापस -त्रुटि_सं;
-	अगर (ret >= माप(file)) अणु
+	if (ret < 0)
+		return -errno;
+	if (ret >= sizeof(file)) {
 		pr_debug("tracepoint %s/%s path is too long\n",
 			 tp_category, tp_name);
-		वापस -E2BIG;
-	पूर्ण
-	वापस parse_uपूर्णांक_from_file(file, "%d\n");
-पूर्ण
+		return -E2BIG;
+	}
+	return parse_uint_from_file(file, "%d\n");
+}
 
-अटल पूर्णांक perf_event_खोलो_tracepoपूर्णांक(स्थिर अक्षर *tp_category,
-				      स्थिर अक्षर *tp_name)
-अणु
-	काष्ठा perf_event_attr attr = अणुपूर्ण;
-	अक्षर errmsg[STRERR_बफ_मानE];
-	पूर्णांक tp_id, pfd, err;
+static int perf_event_open_tracepoint(const char *tp_category,
+				      const char *tp_name)
+{
+	struct perf_event_attr attr = {};
+	char errmsg[STRERR_BUFSIZE];
+	int tp_id, pfd, err;
 
-	tp_id = determine_tracepoपूर्णांक_id(tp_category, tp_name);
-	अगर (tp_id < 0) अणु
+	tp_id = determine_tracepoint_id(tp_category, tp_name);
+	if (tp_id < 0) {
 		pr_warn("failed to determine tracepoint '%s/%s' perf event ID: %s\n",
 			tp_category, tp_name,
-			libbpf_म_त्रुटि_r(tp_id, errmsg, माप(errmsg)));
-		वापस tp_id;
-	पूर्ण
+			libbpf_strerror_r(tp_id, errmsg, sizeof(errmsg)));
+		return tp_id;
+	}
 
 	attr.type = PERF_TYPE_TRACEPOINT;
-	attr.size = माप(attr);
+	attr.size = sizeof(attr);
 	attr.config = tp_id;
 
-	pfd = syscall(__NR_perf_event_खोलो, &attr, -1 /* pid */, 0 /* cpu */,
+	pfd = syscall(__NR_perf_event_open, &attr, -1 /* pid */, 0 /* cpu */,
 		      -1 /* group_fd */, PERF_FLAG_FD_CLOEXEC);
-	अगर (pfd < 0) अणु
-		err = -त्रुटि_सं;
+	if (pfd < 0) {
+		err = -errno;
 		pr_warn("tracepoint '%s/%s' perf_event_open() failed: %s\n",
 			tp_category, tp_name,
-			libbpf_म_त्रुटि_r(err, errmsg, माप(errmsg)));
-		वापस err;
-	पूर्ण
-	वापस pfd;
-पूर्ण
+			libbpf_strerror_r(err, errmsg, sizeof(errmsg)));
+		return err;
+	}
+	return pfd;
+}
 
-काष्ठा bpf_link *bpf_program__attach_tracepoपूर्णांक(काष्ठा bpf_program *prog,
-						स्थिर अक्षर *tp_category,
-						स्थिर अक्षर *tp_name)
-अणु
-	अक्षर errmsg[STRERR_बफ_मानE];
-	काष्ठा bpf_link *link;
-	पूर्णांक pfd, err;
+struct bpf_link *bpf_program__attach_tracepoint(struct bpf_program *prog,
+						const char *tp_category,
+						const char *tp_name)
+{
+	char errmsg[STRERR_BUFSIZE];
+	struct bpf_link *link;
+	int pfd, err;
 
-	pfd = perf_event_खोलो_tracepoपूर्णांक(tp_category, tp_name);
-	अगर (pfd < 0) अणु
+	pfd = perf_event_open_tracepoint(tp_category, tp_name);
+	if (pfd < 0) {
 		pr_warn("prog '%s': failed to create tracepoint '%s/%s' perf event: %s\n",
 			prog->name, tp_category, tp_name,
-			libbpf_म_त्रुटि_r(pfd, errmsg, माप(errmsg)));
-		वापस ERR_PTR(pfd);
-	पूर्ण
+			libbpf_strerror_r(pfd, errmsg, sizeof(errmsg)));
+		return ERR_PTR(pfd);
+	}
 	link = bpf_program__attach_perf_event(prog, pfd);
-	अगर (IS_ERR(link)) अणु
-		बंद(pfd);
+	if (IS_ERR(link)) {
+		close(pfd);
 		err = PTR_ERR(link);
 		pr_warn("prog '%s': failed to attach to tracepoint '%s/%s': %s\n",
 			prog->name, tp_category, tp_name,
-			libbpf_म_त्रुटि_r(err, errmsg, माप(errmsg)));
-		वापस link;
-	पूर्ण
-	वापस link;
-पूर्ण
+			libbpf_strerror_r(err, errmsg, sizeof(errmsg)));
+		return link;
+	}
+	return link;
+}
 
-अटल काष्ठा bpf_link *attach_tp(स्थिर काष्ठा bpf_sec_def *sec,
-				  काष्ठा bpf_program *prog)
-अणु
-	अक्षर *sec_name, *tp_cat, *tp_name;
-	काष्ठा bpf_link *link;
+static struct bpf_link *attach_tp(const struct bpf_sec_def *sec,
+				  struct bpf_program *prog)
+{
+	char *sec_name, *tp_cat, *tp_name;
+	struct bpf_link *link;
 
 	sec_name = strdup(prog->sec_name);
-	अगर (!sec_name)
-		वापस ERR_PTR(-ENOMEM);
+	if (!sec_name)
+		return ERR_PTR(-ENOMEM);
 
 	/* extract "tp/<category>/<name>" */
 	tp_cat = sec_name + sec->len;
-	tp_name = म_अक्षर(tp_cat, '/');
-	अगर (!tp_name) अणु
+	tp_name = strchr(tp_cat, '/');
+	if (!tp_name) {
 		link = ERR_PTR(-EINVAL);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	*tp_name = '\0';
 	tp_name++;
 
-	link = bpf_program__attach_tracepoपूर्णांक(prog, tp_cat, tp_name);
+	link = bpf_program__attach_tracepoint(prog, tp_cat, tp_name);
 out:
-	मुक्त(sec_name);
-	वापस link;
-पूर्ण
+	free(sec_name);
+	return link;
+}
 
-काष्ठा bpf_link *bpf_program__attach_raw_tracepoपूर्णांक(काष्ठा bpf_program *prog,
-						    स्थिर अक्षर *tp_name)
-अणु
-	अक्षर errmsg[STRERR_बफ_मानE];
-	काष्ठा bpf_link *link;
-	पूर्णांक prog_fd, pfd;
+struct bpf_link *bpf_program__attach_raw_tracepoint(struct bpf_program *prog,
+						    const char *tp_name)
+{
+	char errmsg[STRERR_BUFSIZE];
+	struct bpf_link *link;
+	int prog_fd, pfd;
 
 	prog_fd = bpf_program__fd(prog);
-	अगर (prog_fd < 0) अणु
+	if (prog_fd < 0) {
 		pr_warn("prog '%s': can't attach before loaded\n", prog->name);
-		वापस ERR_PTR(-EINVAL);
-	पूर्ण
+		return ERR_PTR(-EINVAL);
+	}
 
-	link = सुस्मृति(1, माप(*link));
-	अगर (!link)
-		वापस ERR_PTR(-ENOMEM);
+	link = calloc(1, sizeof(*link));
+	if (!link)
+		return ERR_PTR(-ENOMEM);
 	link->detach = &bpf_link__detach_fd;
 
-	pfd = bpf_raw_tracepoपूर्णांक_खोलो(tp_name, prog_fd);
-	अगर (pfd < 0) अणु
-		pfd = -त्रुटि_सं;
-		मुक्त(link);
+	pfd = bpf_raw_tracepoint_open(tp_name, prog_fd);
+	if (pfd < 0) {
+		pfd = -errno;
+		free(link);
 		pr_warn("prog '%s': failed to attach to raw tracepoint '%s': %s\n",
-			prog->name, tp_name, libbpf_म_त्रुटि_r(pfd, errmsg, माप(errmsg)));
-		वापस ERR_PTR(pfd);
-	पूर्ण
+			prog->name, tp_name, libbpf_strerror_r(pfd, errmsg, sizeof(errmsg)));
+		return ERR_PTR(pfd);
+	}
 	link->fd = pfd;
-	वापस link;
-पूर्ण
+	return link;
+}
 
-अटल काष्ठा bpf_link *attach_raw_tp(स्थिर काष्ठा bpf_sec_def *sec,
-				      काष्ठा bpf_program *prog)
-अणु
-	स्थिर अक्षर *tp_name = prog->sec_name + sec->len;
+static struct bpf_link *attach_raw_tp(const struct bpf_sec_def *sec,
+				      struct bpf_program *prog)
+{
+	const char *tp_name = prog->sec_name + sec->len;
 
-	वापस bpf_program__attach_raw_tracepoपूर्णांक(prog, tp_name);
-पूर्ण
+	return bpf_program__attach_raw_tracepoint(prog, tp_name);
+}
 
-/* Common logic क्रम all BPF program types that attach to a btf_id */
-अटल काष्ठा bpf_link *bpf_program__attach_btf_id(काष्ठा bpf_program *prog)
-अणु
-	अक्षर errmsg[STRERR_बफ_मानE];
-	काष्ठा bpf_link *link;
-	पूर्णांक prog_fd, pfd;
+/* Common logic for all BPF program types that attach to a btf_id */
+static struct bpf_link *bpf_program__attach_btf_id(struct bpf_program *prog)
+{
+	char errmsg[STRERR_BUFSIZE];
+	struct bpf_link *link;
+	int prog_fd, pfd;
 
 	prog_fd = bpf_program__fd(prog);
-	अगर (prog_fd < 0) अणु
+	if (prog_fd < 0) {
 		pr_warn("prog '%s': can't attach before loaded\n", prog->name);
-		वापस ERR_PTR(-EINVAL);
-	पूर्ण
+		return ERR_PTR(-EINVAL);
+	}
 
-	link = सुस्मृति(1, माप(*link));
-	अगर (!link)
-		वापस ERR_PTR(-ENOMEM);
+	link = calloc(1, sizeof(*link));
+	if (!link)
+		return ERR_PTR(-ENOMEM);
 	link->detach = &bpf_link__detach_fd;
 
-	pfd = bpf_raw_tracepoपूर्णांक_खोलो(शून्य, prog_fd);
-	अगर (pfd < 0) अणु
-		pfd = -त्रुटि_सं;
-		मुक्त(link);
+	pfd = bpf_raw_tracepoint_open(NULL, prog_fd);
+	if (pfd < 0) {
+		pfd = -errno;
+		free(link);
 		pr_warn("prog '%s': failed to attach: %s\n",
-			prog->name, libbpf_म_त्रुटि_r(pfd, errmsg, माप(errmsg)));
-		वापस ERR_PTR(pfd);
-	पूर्ण
+			prog->name, libbpf_strerror_r(pfd, errmsg, sizeof(errmsg)));
+		return ERR_PTR(pfd);
+	}
 	link->fd = pfd;
-	वापस (काष्ठा bpf_link *)link;
-पूर्ण
+	return (struct bpf_link *)link;
+}
 
-काष्ठा bpf_link *bpf_program__attach_trace(काष्ठा bpf_program *prog)
-अणु
-	वापस bpf_program__attach_btf_id(prog);
-पूर्ण
+struct bpf_link *bpf_program__attach_trace(struct bpf_program *prog)
+{
+	return bpf_program__attach_btf_id(prog);
+}
 
-काष्ठा bpf_link *bpf_program__attach_lsm(काष्ठा bpf_program *prog)
-अणु
-	वापस bpf_program__attach_btf_id(prog);
-पूर्ण
+struct bpf_link *bpf_program__attach_lsm(struct bpf_program *prog)
+{
+	return bpf_program__attach_btf_id(prog);
+}
 
-अटल काष्ठा bpf_link *attach_trace(स्थिर काष्ठा bpf_sec_def *sec,
-				     काष्ठा bpf_program *prog)
-अणु
-	वापस bpf_program__attach_trace(prog);
-पूर्ण
+static struct bpf_link *attach_trace(const struct bpf_sec_def *sec,
+				     struct bpf_program *prog)
+{
+	return bpf_program__attach_trace(prog);
+}
 
-अटल काष्ठा bpf_link *attach_lsm(स्थिर काष्ठा bpf_sec_def *sec,
-				   काष्ठा bpf_program *prog)
-अणु
-	वापस bpf_program__attach_lsm(prog);
-पूर्ण
+static struct bpf_link *attach_lsm(const struct bpf_sec_def *sec,
+				   struct bpf_program *prog)
+{
+	return bpf_program__attach_lsm(prog);
+}
 
-अटल काष्ठा bpf_link *attach_iter(स्थिर काष्ठा bpf_sec_def *sec,
-				    काष्ठा bpf_program *prog)
-अणु
-	वापस bpf_program__attach_iter(prog, शून्य);
-पूर्ण
+static struct bpf_link *attach_iter(const struct bpf_sec_def *sec,
+				    struct bpf_program *prog)
+{
+	return bpf_program__attach_iter(prog, NULL);
+}
 
-अटल काष्ठा bpf_link *
-bpf_program__attach_fd(काष्ठा bpf_program *prog, पूर्णांक target_fd, पूर्णांक btf_id,
-		       स्थिर अक्षर *target_name)
-अणु
+static struct bpf_link *
+bpf_program__attach_fd(struct bpf_program *prog, int target_fd, int btf_id,
+		       const char *target_name)
+{
 	DECLARE_LIBBPF_OPTS(bpf_link_create_opts, opts,
 			    .target_btf_id = btf_id);
-	क्रमागत bpf_attach_type attach_type;
-	अक्षर errmsg[STRERR_बफ_मानE];
-	काष्ठा bpf_link *link;
-	पूर्णांक prog_fd, link_fd;
+	enum bpf_attach_type attach_type;
+	char errmsg[STRERR_BUFSIZE];
+	struct bpf_link *link;
+	int prog_fd, link_fd;
 
 	prog_fd = bpf_program__fd(prog);
-	अगर (prog_fd < 0) अणु
+	if (prog_fd < 0) {
 		pr_warn("prog '%s': can't attach before loaded\n", prog->name);
-		वापस ERR_PTR(-EINVAL);
-	पूर्ण
+		return ERR_PTR(-EINVAL);
+	}
 
-	link = सुस्मृति(1, माप(*link));
-	अगर (!link)
-		वापस ERR_PTR(-ENOMEM);
+	link = calloc(1, sizeof(*link));
+	if (!link)
+		return ERR_PTR(-ENOMEM);
 	link->detach = &bpf_link__detach_fd;
 
 	attach_type = bpf_program__get_expected_attach_type(prog);
 	link_fd = bpf_link_create(prog_fd, target_fd, attach_type, &opts);
-	अगर (link_fd < 0) अणु
-		link_fd = -त्रुटि_सं;
-		मुक्त(link);
+	if (link_fd < 0) {
+		link_fd = -errno;
+		free(link);
 		pr_warn("prog '%s': failed to attach to %s: %s\n",
 			prog->name, target_name,
-			libbpf_म_त्रुटि_r(link_fd, errmsg, माप(errmsg)));
-		वापस ERR_PTR(link_fd);
-	पूर्ण
+			libbpf_strerror_r(link_fd, errmsg, sizeof(errmsg)));
+		return ERR_PTR(link_fd);
+	}
 	link->fd = link_fd;
-	वापस link;
-पूर्ण
+	return link;
+}
 
-काष्ठा bpf_link *
-bpf_program__attach_cgroup(काष्ठा bpf_program *prog, पूर्णांक cgroup_fd)
-अणु
-	वापस bpf_program__attach_fd(prog, cgroup_fd, 0, "cgroup");
-पूर्ण
+struct bpf_link *
+bpf_program__attach_cgroup(struct bpf_program *prog, int cgroup_fd)
+{
+	return bpf_program__attach_fd(prog, cgroup_fd, 0, "cgroup");
+}
 
-काष्ठा bpf_link *
-bpf_program__attach_netns(काष्ठा bpf_program *prog, पूर्णांक netns_fd)
-अणु
-	वापस bpf_program__attach_fd(prog, netns_fd, 0, "netns");
-पूर्ण
+struct bpf_link *
+bpf_program__attach_netns(struct bpf_program *prog, int netns_fd)
+{
+	return bpf_program__attach_fd(prog, netns_fd, 0, "netns");
+}
 
-काष्ठा bpf_link *bpf_program__attach_xdp(काष्ठा bpf_program *prog, पूर्णांक अगरindex)
-अणु
-	/* target_fd/target_अगरindex use the same field in LINK_CREATE */
-	वापस bpf_program__attach_fd(prog, अगरindex, 0, "xdp");
-पूर्ण
+struct bpf_link *bpf_program__attach_xdp(struct bpf_program *prog, int ifindex)
+{
+	/* target_fd/target_ifindex use the same field in LINK_CREATE */
+	return bpf_program__attach_fd(prog, ifindex, 0, "xdp");
+}
 
-काष्ठा bpf_link *bpf_program__attach_freplace(काष्ठा bpf_program *prog,
-					      पूर्णांक target_fd,
-					      स्थिर अक्षर *attach_func_name)
-अणु
-	पूर्णांक btf_id;
+struct bpf_link *bpf_program__attach_freplace(struct bpf_program *prog,
+					      int target_fd,
+					      const char *attach_func_name)
+{
+	int btf_id;
 
-	अगर (!!target_fd != !!attach_func_name) अणु
+	if (!!target_fd != !!attach_func_name) {
 		pr_warn("prog '%s': supply none or both of target_fd and attach_func_name\n",
 			prog->name);
-		वापस ERR_PTR(-EINVAL);
-	पूर्ण
+		return ERR_PTR(-EINVAL);
+	}
 
-	अगर (prog->type != BPF_PROG_TYPE_EXT) अणु
+	if (prog->type != BPF_PROG_TYPE_EXT) {
 		pr_warn("prog '%s': only BPF_PROG_TYPE_EXT can attach as freplace",
 			prog->name);
-		वापस ERR_PTR(-EINVAL);
-	पूर्ण
+		return ERR_PTR(-EINVAL);
+	}
 
-	अगर (target_fd) अणु
+	if (target_fd) {
 		btf_id = libbpf_find_prog_btf_id(attach_func_name, target_fd);
-		अगर (btf_id < 0)
-			वापस ERR_PTR(btf_id);
+		if (btf_id < 0)
+			return ERR_PTR(btf_id);
 
-		वापस bpf_program__attach_fd(prog, target_fd, btf_id, "freplace");
-	पूर्ण अन्यथा अणु
-		/* no target, so use raw_tracepoपूर्णांक_खोलो क्रम compatibility
+		return bpf_program__attach_fd(prog, target_fd, btf_id, "freplace");
+	} else {
+		/* no target, so use raw_tracepoint_open for compatibility
 		 * with old kernels
 		 */
-		वापस bpf_program__attach_trace(prog);
-	पूर्ण
-पूर्ण
+		return bpf_program__attach_trace(prog);
+	}
+}
 
-काष्ठा bpf_link *
-bpf_program__attach_iter(काष्ठा bpf_program *prog,
-			 स्थिर काष्ठा bpf_iter_attach_opts *opts)
-अणु
+struct bpf_link *
+bpf_program__attach_iter(struct bpf_program *prog,
+			 const struct bpf_iter_attach_opts *opts)
+{
 	DECLARE_LIBBPF_OPTS(bpf_link_create_opts, link_create_opts);
-	अक्षर errmsg[STRERR_बफ_मानE];
-	काष्ठा bpf_link *link;
-	पूर्णांक prog_fd, link_fd;
+	char errmsg[STRERR_BUFSIZE];
+	struct bpf_link *link;
+	int prog_fd, link_fd;
 	__u32 target_fd = 0;
 
-	अगर (!OPTS_VALID(opts, bpf_iter_attach_opts))
-		वापस ERR_PTR(-EINVAL);
+	if (!OPTS_VALID(opts, bpf_iter_attach_opts))
+		return ERR_PTR(-EINVAL);
 
-	link_create_opts.iter_info = OPTS_GET(opts, link_info, (व्योम *)0);
+	link_create_opts.iter_info = OPTS_GET(opts, link_info, (void *)0);
 	link_create_opts.iter_info_len = OPTS_GET(opts, link_info_len, 0);
 
 	prog_fd = bpf_program__fd(prog);
-	अगर (prog_fd < 0) अणु
+	if (prog_fd < 0) {
 		pr_warn("prog '%s': can't attach before loaded\n", prog->name);
-		वापस ERR_PTR(-EINVAL);
-	पूर्ण
+		return ERR_PTR(-EINVAL);
+	}
 
-	link = सुस्मृति(1, माप(*link));
-	अगर (!link)
-		वापस ERR_PTR(-ENOMEM);
+	link = calloc(1, sizeof(*link));
+	if (!link)
+		return ERR_PTR(-ENOMEM);
 	link->detach = &bpf_link__detach_fd;
 
 	link_fd = bpf_link_create(prog_fd, target_fd, BPF_TRACE_ITER,
 				  &link_create_opts);
-	अगर (link_fd < 0) अणु
-		link_fd = -त्रुटि_सं;
-		मुक्त(link);
+	if (link_fd < 0) {
+		link_fd = -errno;
+		free(link);
 		pr_warn("prog '%s': failed to attach to iterator: %s\n",
-			prog->name, libbpf_म_त्रुटि_r(link_fd, errmsg, माप(errmsg)));
-		वापस ERR_PTR(link_fd);
-	पूर्ण
+			prog->name, libbpf_strerror_r(link_fd, errmsg, sizeof(errmsg)));
+		return ERR_PTR(link_fd);
+	}
 	link->fd = link_fd;
-	वापस link;
-पूर्ण
+	return link;
+}
 
-काष्ठा bpf_link *bpf_program__attach(काष्ठा bpf_program *prog)
-अणु
-	स्थिर काष्ठा bpf_sec_def *sec_def;
+struct bpf_link *bpf_program__attach(struct bpf_program *prog)
+{
+	const struct bpf_sec_def *sec_def;
 
 	sec_def = find_sec_def(prog->sec_name);
-	अगर (!sec_def || !sec_def->attach_fn)
-		वापस ERR_PTR(-ESRCH);
+	if (!sec_def || !sec_def->attach_fn)
+		return ERR_PTR(-ESRCH);
 
-	वापस sec_def->attach_fn(sec_def, prog);
-पूर्ण
+	return sec_def->attach_fn(sec_def, prog);
+}
 
-अटल पूर्णांक bpf_link__detach_काष्ठा_ops(काष्ठा bpf_link *link)
-अणु
+static int bpf_link__detach_struct_ops(struct bpf_link *link)
+{
 	__u32 zero = 0;
 
-	अगर (bpf_map_delete_elem(link->fd, &zero))
-		वापस -त्रुटि_सं;
+	if (bpf_map_delete_elem(link->fd, &zero))
+		return -errno;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-काष्ठा bpf_link *bpf_map__attach_काष्ठा_ops(काष्ठा bpf_map *map)
-अणु
-	काष्ठा bpf_काष्ठा_ops *st_ops;
-	काष्ठा bpf_link *link;
+struct bpf_link *bpf_map__attach_struct_ops(struct bpf_map *map)
+{
+	struct bpf_struct_ops *st_ops;
+	struct bpf_link *link;
 	__u32 i, zero = 0;
-	पूर्णांक err;
+	int err;
 
-	अगर (!bpf_map__is_काष्ठा_ops(map) || map->fd == -1)
-		वापस ERR_PTR(-EINVAL);
+	if (!bpf_map__is_struct_ops(map) || map->fd == -1)
+		return ERR_PTR(-EINVAL);
 
-	link = सुस्मृति(1, माप(*link));
-	अगर (!link)
-		वापस ERR_PTR(-EINVAL);
+	link = calloc(1, sizeof(*link));
+	if (!link)
+		return ERR_PTR(-EINVAL);
 
 	st_ops = map->st_ops;
-	क्रम (i = 0; i < btf_vlen(st_ops->type); i++) अणु
-		काष्ठा bpf_program *prog = st_ops->progs[i];
-		व्योम *kern_data;
-		पूर्णांक prog_fd;
+	for (i = 0; i < btf_vlen(st_ops->type); i++) {
+		struct bpf_program *prog = st_ops->progs[i];
+		void *kern_data;
+		int prog_fd;
 
-		अगर (!prog)
-			जारी;
+		if (!prog)
+			continue;
 
 		prog_fd = bpf_program__fd(prog);
 		kern_data = st_ops->kern_vdata + st_ops->kern_func_off[i];
-		*(अचिन्हित दीर्घ *)kern_data = prog_fd;
-	पूर्ण
+		*(unsigned long *)kern_data = prog_fd;
+	}
 
 	err = bpf_map_update_elem(map->fd, &zero, st_ops->kern_vdata, 0);
-	अगर (err) अणु
-		err = -त्रुटि_सं;
-		मुक्त(link);
-		वापस ERR_PTR(err);
-	पूर्ण
+	if (err) {
+		err = -errno;
+		free(link);
+		return ERR_PTR(err);
+	}
 
-	link->detach = bpf_link__detach_काष्ठा_ops;
+	link->detach = bpf_link__detach_struct_ops;
 	link->fd = map->fd;
 
-	वापस link;
-पूर्ण
+	return link;
+}
 
-क्रमागत bpf_perf_event_ret
-bpf_perf_event_पढ़ो_simple(व्योम *mmap_mem, माप_प्रकार mmap_size, माप_प्रकार page_size,
-			   व्योम **copy_mem, माप_प्रकार *copy_size,
-			   bpf_perf_event_prपूर्णांक_t fn, व्योम *निजी_data)
-अणु
-	काष्ठा perf_event_mmap_page *header = mmap_mem;
-	__u64 data_head = ring_buffer_पढ़ो_head(header);
+enum bpf_perf_event_ret
+bpf_perf_event_read_simple(void *mmap_mem, size_t mmap_size, size_t page_size,
+			   void **copy_mem, size_t *copy_size,
+			   bpf_perf_event_print_t fn, void *private_data)
+{
+	struct perf_event_mmap_page *header = mmap_mem;
+	__u64 data_head = ring_buffer_read_head(header);
 	__u64 data_tail = header->data_tail;
-	व्योम *base = ((__u8 *)header) + page_size;
-	पूर्णांक ret = LIBBPF_PERF_EVENT_CONT;
-	काष्ठा perf_event_header *ehdr;
-	माप_प्रकार ehdr_size;
+	void *base = ((__u8 *)header) + page_size;
+	int ret = LIBBPF_PERF_EVENT_CONT;
+	struct perf_event_header *ehdr;
+	size_t ehdr_size;
 
-	जबतक (data_head != data_tail) अणु
+	while (data_head != data_tail) {
 		ehdr = base + (data_tail & (mmap_size - 1));
 		ehdr_size = ehdr->size;
 
-		अगर (((व्योम *)ehdr) + ehdr_size > base + mmap_size) अणु
-			व्योम *copy_start = ehdr;
-			माप_प्रकार len_first = base + mmap_size - copy_start;
-			माप_प्रकार len_secnd = ehdr_size - len_first;
+		if (((void *)ehdr) + ehdr_size > base + mmap_size) {
+			void *copy_start = ehdr;
+			size_t len_first = base + mmap_size - copy_start;
+			size_t len_secnd = ehdr_size - len_first;
 
-			अगर (*copy_size < ehdr_size) अणु
-				मुक्त(*copy_mem);
-				*copy_mem = दो_स्मृति(ehdr_size);
-				अगर (!*copy_mem) अणु
+			if (*copy_size < ehdr_size) {
+				free(*copy_mem);
+				*copy_mem = malloc(ehdr_size);
+				if (!*copy_mem) {
 					*copy_size = 0;
 					ret = LIBBPF_PERF_EVENT_ERROR;
-					अवरोध;
-				पूर्ण
+					break;
+				}
 				*copy_size = ehdr_size;
-			पूर्ण
+			}
 
-			स_नकल(*copy_mem, copy_start, len_first);
-			स_नकल(*copy_mem + len_first, base, len_secnd);
+			memcpy(*copy_mem, copy_start, len_first);
+			memcpy(*copy_mem + len_first, base, len_secnd);
 			ehdr = *copy_mem;
-		पूर्ण
+		}
 
-		ret = fn(ehdr, निजी_data);
+		ret = fn(ehdr, private_data);
 		data_tail += ehdr_size;
-		अगर (ret != LIBBPF_PERF_EVENT_CONT)
-			अवरोध;
-	पूर्ण
+		if (ret != LIBBPF_PERF_EVENT_CONT)
+			break;
+	}
 
-	ring_buffer_ग_लिखो_tail(header, data_tail);
-	वापस ret;
-पूर्ण
+	ring_buffer_write_tail(header, data_tail);
+	return ret;
+}
 
-काष्ठा perf_buffer;
+struct perf_buffer;
 
-काष्ठा perf_buffer_params अणु
-	काष्ठा perf_event_attr *attr;
-	/* अगर event_cb is specअगरied, it takes precendence */
+struct perf_buffer_params {
+	struct perf_event_attr *attr;
+	/* if event_cb is specified, it takes precendence */
 	perf_buffer_event_fn event_cb;
-	/* sample_cb and lost_cb are higher-level common-हाल callbacks */
+	/* sample_cb and lost_cb are higher-level common-case callbacks */
 	perf_buffer_sample_fn sample_cb;
 	perf_buffer_lost_fn lost_cb;
-	व्योम *ctx;
-	पूर्णांक cpu_cnt;
-	पूर्णांक *cpus;
-	पूर्णांक *map_keys;
-पूर्ण;
+	void *ctx;
+	int cpu_cnt;
+	int *cpus;
+	int *map_keys;
+};
 
-काष्ठा perf_cpu_buf अणु
-	काष्ठा perf_buffer *pb;
-	व्योम *base; /* mmap()'ed memory */
-	व्योम *buf; /* क्रम reस्थिरructing segmented data */
-	माप_प्रकार buf_size;
-	पूर्णांक fd;
-	पूर्णांक cpu;
-	पूर्णांक map_key;
-पूर्ण;
+struct perf_cpu_buf {
+	struct perf_buffer *pb;
+	void *base; /* mmap()'ed memory */
+	void *buf; /* for reconstructing segmented data */
+	size_t buf_size;
+	int fd;
+	int cpu;
+	int map_key;
+};
 
-काष्ठा perf_buffer अणु
+struct perf_buffer {
 	perf_buffer_event_fn event_cb;
 	perf_buffer_sample_fn sample_cb;
 	perf_buffer_lost_fn lost_cb;
-	व्योम *ctx; /* passed पूर्णांकo callbacks */
+	void *ctx; /* passed into callbacks */
 
-	माप_प्रकार page_size;
-	माप_प्रकार mmap_size;
-	काष्ठा perf_cpu_buf **cpu_bufs;
-	काष्ठा epoll_event *events;
-	पूर्णांक cpu_cnt; /* number of allocated CPU buffers */
-	पूर्णांक epoll_fd; /* perf event FD */
-	पूर्णांक map_fd; /* BPF_MAP_TYPE_PERF_EVENT_ARRAY BPF map FD */
-पूर्ण;
+	size_t page_size;
+	size_t mmap_size;
+	struct perf_cpu_buf **cpu_bufs;
+	struct epoll_event *events;
+	int cpu_cnt; /* number of allocated CPU buffers */
+	int epoll_fd; /* perf event FD */
+	int map_fd; /* BPF_MAP_TYPE_PERF_EVENT_ARRAY BPF map FD */
+};
 
-अटल व्योम perf_buffer__मुक्त_cpu_buf(काष्ठा perf_buffer *pb,
-				      काष्ठा perf_cpu_buf *cpu_buf)
-अणु
-	अगर (!cpu_buf)
-		वापस;
-	अगर (cpu_buf->base &&
+static void perf_buffer__free_cpu_buf(struct perf_buffer *pb,
+				      struct perf_cpu_buf *cpu_buf)
+{
+	if (!cpu_buf)
+		return;
+	if (cpu_buf->base &&
 	    munmap(cpu_buf->base, pb->mmap_size + pb->page_size))
 		pr_warn("failed to munmap cpu_buf #%d\n", cpu_buf->cpu);
-	अगर (cpu_buf->fd >= 0) अणु
+	if (cpu_buf->fd >= 0) {
 		ioctl(cpu_buf->fd, PERF_EVENT_IOC_DISABLE, 0);
-		बंद(cpu_buf->fd);
-	पूर्ण
-	मुक्त(cpu_buf->buf);
-	मुक्त(cpu_buf);
-पूर्ण
+		close(cpu_buf->fd);
+	}
+	free(cpu_buf->buf);
+	free(cpu_buf);
+}
 
-व्योम perf_buffer__मुक्त(काष्ठा perf_buffer *pb)
-अणु
-	पूर्णांक i;
+void perf_buffer__free(struct perf_buffer *pb)
+{
+	int i;
 
-	अगर (IS_ERR_OR_शून्य(pb))
-		वापस;
-	अगर (pb->cpu_bufs) अणु
-		क्रम (i = 0; i < pb->cpu_cnt; i++) अणु
-			काष्ठा perf_cpu_buf *cpu_buf = pb->cpu_bufs[i];
+	if (IS_ERR_OR_NULL(pb))
+		return;
+	if (pb->cpu_bufs) {
+		for (i = 0; i < pb->cpu_cnt; i++) {
+			struct perf_cpu_buf *cpu_buf = pb->cpu_bufs[i];
 
-			अगर (!cpu_buf)
-				जारी;
+			if (!cpu_buf)
+				continue;
 
 			bpf_map_delete_elem(pb->map_fd, &cpu_buf->map_key);
-			perf_buffer__मुक्त_cpu_buf(pb, cpu_buf);
-		पूर्ण
-		मुक्त(pb->cpu_bufs);
-	पूर्ण
-	अगर (pb->epoll_fd >= 0)
-		बंद(pb->epoll_fd);
-	मुक्त(pb->events);
-	मुक्त(pb);
-पूर्ण
+			perf_buffer__free_cpu_buf(pb, cpu_buf);
+		}
+		free(pb->cpu_bufs);
+	}
+	if (pb->epoll_fd >= 0)
+		close(pb->epoll_fd);
+	free(pb->events);
+	free(pb);
+}
 
-अटल काष्ठा perf_cpu_buf *
-perf_buffer__खोलो_cpu_buf(काष्ठा perf_buffer *pb, काष्ठा perf_event_attr *attr,
-			  पूर्णांक cpu, पूर्णांक map_key)
-अणु
-	काष्ठा perf_cpu_buf *cpu_buf;
-	अक्षर msg[STRERR_बफ_मानE];
-	पूर्णांक err;
+static struct perf_cpu_buf *
+perf_buffer__open_cpu_buf(struct perf_buffer *pb, struct perf_event_attr *attr,
+			  int cpu, int map_key)
+{
+	struct perf_cpu_buf *cpu_buf;
+	char msg[STRERR_BUFSIZE];
+	int err;
 
-	cpu_buf = सुस्मृति(1, माप(*cpu_buf));
-	अगर (!cpu_buf)
-		वापस ERR_PTR(-ENOMEM);
+	cpu_buf = calloc(1, sizeof(*cpu_buf));
+	if (!cpu_buf)
+		return ERR_PTR(-ENOMEM);
 
 	cpu_buf->pb = pb;
 	cpu_buf->cpu = cpu;
 	cpu_buf->map_key = map_key;
 
-	cpu_buf->fd = syscall(__NR_perf_event_खोलो, attr, -1 /* pid */, cpu,
+	cpu_buf->fd = syscall(__NR_perf_event_open, attr, -1 /* pid */, cpu,
 			      -1, PERF_FLAG_FD_CLOEXEC);
-	अगर (cpu_buf->fd < 0) अणु
-		err = -त्रुटि_सं;
+	if (cpu_buf->fd < 0) {
+		err = -errno;
 		pr_warn("failed to open perf buffer event on cpu #%d: %s\n",
-			cpu, libbpf_म_त्रुटि_r(err, msg, माप(msg)));
-		जाओ error;
-	पूर्ण
+			cpu, libbpf_strerror_r(err, msg, sizeof(msg)));
+		goto error;
+	}
 
-	cpu_buf->base = mmap(शून्य, pb->mmap_size + pb->page_size,
+	cpu_buf->base = mmap(NULL, pb->mmap_size + pb->page_size,
 			     PROT_READ | PROT_WRITE, MAP_SHARED,
 			     cpu_buf->fd, 0);
-	अगर (cpu_buf->base == MAP_FAILED) अणु
-		cpu_buf->base = शून्य;
-		err = -त्रुटि_सं;
+	if (cpu_buf->base == MAP_FAILED) {
+		cpu_buf->base = NULL;
+		err = -errno;
 		pr_warn("failed to mmap perf buffer on cpu #%d: %s\n",
-			cpu, libbpf_म_त्रुटि_r(err, msg, माप(msg)));
-		जाओ error;
-	पूर्ण
+			cpu, libbpf_strerror_r(err, msg, sizeof(msg)));
+		goto error;
+	}
 
-	अगर (ioctl(cpu_buf->fd, PERF_EVENT_IOC_ENABLE, 0) < 0) अणु
-		err = -त्रुटि_सं;
+	if (ioctl(cpu_buf->fd, PERF_EVENT_IOC_ENABLE, 0) < 0) {
+		err = -errno;
 		pr_warn("failed to enable perf buffer event on cpu #%d: %s\n",
-			cpu, libbpf_म_त्रुटि_r(err, msg, माप(msg)));
-		जाओ error;
-	पूर्ण
+			cpu, libbpf_strerror_r(err, msg, sizeof(msg)));
+		goto error;
+	}
 
-	वापस cpu_buf;
+	return cpu_buf;
 
 error:
-	perf_buffer__मुक्त_cpu_buf(pb, cpu_buf);
-	वापस (काष्ठा perf_cpu_buf *)ERR_PTR(err);
-पूर्ण
+	perf_buffer__free_cpu_buf(pb, cpu_buf);
+	return (struct perf_cpu_buf *)ERR_PTR(err);
+}
 
-अटल काष्ठा perf_buffer *__perf_buffer__new(पूर्णांक map_fd, माप_प्रकार page_cnt,
-					      काष्ठा perf_buffer_params *p);
+static struct perf_buffer *__perf_buffer__new(int map_fd, size_t page_cnt,
+					      struct perf_buffer_params *p);
 
-काष्ठा perf_buffer *perf_buffer__new(पूर्णांक map_fd, माप_प्रकार page_cnt,
-				     स्थिर काष्ठा perf_buffer_opts *opts)
-अणु
-	काष्ठा perf_buffer_params p = अणुपूर्ण;
-	काष्ठा perf_event_attr attr = अणु 0, पूर्ण;
+struct perf_buffer *perf_buffer__new(int map_fd, size_t page_cnt,
+				     const struct perf_buffer_opts *opts)
+{
+	struct perf_buffer_params p = {};
+	struct perf_event_attr attr = { 0, };
 
 	attr.config = PERF_COUNT_SW_BPF_OUTPUT;
 	attr.type = PERF_TYPE_SOFTWARE;
@@ -10651,18 +10650,18 @@ error:
 	attr.wakeup_events = 1;
 
 	p.attr = &attr;
-	p.sample_cb = opts ? opts->sample_cb : शून्य;
-	p.lost_cb = opts ? opts->lost_cb : शून्य;
-	p.ctx = opts ? opts->ctx : शून्य;
+	p.sample_cb = opts ? opts->sample_cb : NULL;
+	p.lost_cb = opts ? opts->lost_cb : NULL;
+	p.ctx = opts ? opts->ctx : NULL;
 
-	वापस __perf_buffer__new(map_fd, page_cnt, &p);
-पूर्ण
+	return __perf_buffer__new(map_fd, page_cnt, &p);
+}
 
-काष्ठा perf_buffer *
-perf_buffer__new_raw(पूर्णांक map_fd, माप_प्रकार page_cnt,
-		     स्थिर काष्ठा perf_buffer_raw_opts *opts)
-अणु
-	काष्ठा perf_buffer_params p = अणुपूर्ण;
+struct perf_buffer *
+perf_buffer__new_raw(int map_fd, size_t page_cnt,
+		     const struct perf_buffer_raw_opts *opts)
+{
+	struct perf_buffer_params p = {};
 
 	p.attr = opts->attr;
 	p.event_cb = opts->event_cb;
@@ -10671,53 +10670,53 @@ perf_buffer__new_raw(पूर्णांक map_fd, माप_प्रका�
 	p.cpus = opts->cpus;
 	p.map_keys = opts->map_keys;
 
-	वापस __perf_buffer__new(map_fd, page_cnt, &p);
-पूर्ण
+	return __perf_buffer__new(map_fd, page_cnt, &p);
+}
 
-अटल काष्ठा perf_buffer *__perf_buffer__new(पूर्णांक map_fd, माप_प्रकार page_cnt,
-					      काष्ठा perf_buffer_params *p)
-अणु
-	स्थिर अक्षर *online_cpus_file = "/sys/devices/system/cpu/online";
-	काष्ठा bpf_map_info map;
-	अक्षर msg[STRERR_बफ_मानE];
-	काष्ठा perf_buffer *pb;
-	bool *online = शून्य;
+static struct perf_buffer *__perf_buffer__new(int map_fd, size_t page_cnt,
+					      struct perf_buffer_params *p)
+{
+	const char *online_cpus_file = "/sys/devices/system/cpu/online";
+	struct bpf_map_info map;
+	char msg[STRERR_BUFSIZE];
+	struct perf_buffer *pb;
+	bool *online = NULL;
 	__u32 map_info_len;
-	पूर्णांक err, i, j, n;
+	int err, i, j, n;
 
-	अगर (page_cnt & (page_cnt - 1)) अणु
+	if (page_cnt & (page_cnt - 1)) {
 		pr_warn("page count should be power of two, but is %zu\n",
 			page_cnt);
-		वापस ERR_PTR(-EINVAL);
-	पूर्ण
+		return ERR_PTR(-EINVAL);
+	}
 
-	/* best-efक्रमt sanity checks */
-	स_रखो(&map, 0, माप(map));
-	map_info_len = माप(map);
+	/* best-effort sanity checks */
+	memset(&map, 0, sizeof(map));
+	map_info_len = sizeof(map);
 	err = bpf_obj_get_info_by_fd(map_fd, &map, &map_info_len);
-	अगर (err) अणु
-		err = -त्रुटि_सं;
-		/* अगर BPF_OBJ_GET_INFO_BY_FD is supported, will वापस
+	if (err) {
+		err = -errno;
+		/* if BPF_OBJ_GET_INFO_BY_FD is supported, will return
 		 * -EBADFD, -EFAULT, or -E2BIG on real error
 		 */
-		अगर (err != -EINVAL) अणु
+		if (err != -EINVAL) {
 			pr_warn("failed to get map info for map FD %d: %s\n",
-				map_fd, libbpf_म_त्रुटि_r(err, msg, माप(msg)));
-			वापस ERR_PTR(err);
-		पूर्ण
+				map_fd, libbpf_strerror_r(err, msg, sizeof(msg)));
+			return ERR_PTR(err);
+		}
 		pr_debug("failed to get map info for FD %d; API not supported? Ignoring...\n",
 			 map_fd);
-	पूर्ण अन्यथा अणु
-		अगर (map.type != BPF_MAP_TYPE_PERF_EVENT_ARRAY) अणु
+	} else {
+		if (map.type != BPF_MAP_TYPE_PERF_EVENT_ARRAY) {
 			pr_warn("map '%s' should be BPF_MAP_TYPE_PERF_EVENT_ARRAY\n",
 				map.name);
-			वापस ERR_PTR(-EINVAL);
-		पूर्ण
-	पूर्ण
+			return ERR_PTR(-EINVAL);
+		}
+	}
 
-	pb = सुस्मृति(1, माप(*pb));
-	अगर (!pb)
-		वापस ERR_PTR(-ENOMEM);
+	pb = calloc(1, sizeof(*pb));
+	if (!pb)
+		return ERR_PTR(-ENOMEM);
 
 	pb->event_cb = p->event_cb;
 	pb->sample_cb = p->sample_cb;
@@ -10729,410 +10728,410 @@ perf_buffer__new_raw(पूर्णांक map_fd, माप_प्रका�
 	pb->map_fd = map_fd;
 
 	pb->epoll_fd = epoll_create1(EPOLL_CLOEXEC);
-	अगर (pb->epoll_fd < 0) अणु
-		err = -त्रुटि_सं;
+	if (pb->epoll_fd < 0) {
+		err = -errno;
 		pr_warn("failed to create epoll instance: %s\n",
-			libbpf_म_त्रुटि_r(err, msg, माप(msg)));
-		जाओ error;
-	पूर्ण
+			libbpf_strerror_r(err, msg, sizeof(msg)));
+		goto error;
+	}
 
-	अगर (p->cpu_cnt > 0) अणु
+	if (p->cpu_cnt > 0) {
 		pb->cpu_cnt = p->cpu_cnt;
-	पूर्ण अन्यथा अणु
+	} else {
 		pb->cpu_cnt = libbpf_num_possible_cpus();
-		अगर (pb->cpu_cnt < 0) अणु
+		if (pb->cpu_cnt < 0) {
 			err = pb->cpu_cnt;
-			जाओ error;
-		पूर्ण
-		अगर (map.max_entries && map.max_entries < pb->cpu_cnt)
+			goto error;
+		}
+		if (map.max_entries && map.max_entries < pb->cpu_cnt)
 			pb->cpu_cnt = map.max_entries;
-	पूर्ण
+	}
 
-	pb->events = सुस्मृति(pb->cpu_cnt, माप(*pb->events));
-	अगर (!pb->events) अणु
+	pb->events = calloc(pb->cpu_cnt, sizeof(*pb->events));
+	if (!pb->events) {
 		err = -ENOMEM;
 		pr_warn("failed to allocate events: out of memory\n");
-		जाओ error;
-	पूर्ण
-	pb->cpu_bufs = सुस्मृति(pb->cpu_cnt, माप(*pb->cpu_bufs));
-	अगर (!pb->cpu_bufs) अणु
+		goto error;
+	}
+	pb->cpu_bufs = calloc(pb->cpu_cnt, sizeof(*pb->cpu_bufs));
+	if (!pb->cpu_bufs) {
 		err = -ENOMEM;
 		pr_warn("failed to allocate buffers: out of memory\n");
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
 	err = parse_cpu_mask_file(online_cpus_file, &online, &n);
-	अगर (err) अणु
+	if (err) {
 		pr_warn("failed to get online CPU mask: %d\n", err);
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
-	क्रम (i = 0, j = 0; i < pb->cpu_cnt; i++) अणु
-		काष्ठा perf_cpu_buf *cpu_buf;
-		पूर्णांक cpu, map_key;
+	for (i = 0, j = 0; i < pb->cpu_cnt; i++) {
+		struct perf_cpu_buf *cpu_buf;
+		int cpu, map_key;
 
 		cpu = p->cpu_cnt > 0 ? p->cpus[i] : i;
 		map_key = p->cpu_cnt > 0 ? p->map_keys[i] : i;
 
-		/* in हाल user didn't explicitly requested particular CPUs to
+		/* in case user didn't explicitly requested particular CPUs to
 		 * be attached to, skip offline/not present CPUs
 		 */
-		अगर (p->cpu_cnt <= 0 && (cpu >= n || !online[cpu]))
-			जारी;
+		if (p->cpu_cnt <= 0 && (cpu >= n || !online[cpu]))
+			continue;
 
-		cpu_buf = perf_buffer__खोलो_cpu_buf(pb, p->attr, cpu, map_key);
-		अगर (IS_ERR(cpu_buf)) अणु
+		cpu_buf = perf_buffer__open_cpu_buf(pb, p->attr, cpu, map_key);
+		if (IS_ERR(cpu_buf)) {
 			err = PTR_ERR(cpu_buf);
-			जाओ error;
-		पूर्ण
+			goto error;
+		}
 
 		pb->cpu_bufs[j] = cpu_buf;
 
 		err = bpf_map_update_elem(pb->map_fd, &map_key,
 					  &cpu_buf->fd, 0);
-		अगर (err) अणु
-			err = -त्रुटि_सं;
+		if (err) {
+			err = -errno;
 			pr_warn("failed to set cpu #%d, key %d -> perf FD %d: %s\n",
 				cpu, map_key, cpu_buf->fd,
-				libbpf_म_त्रुटि_r(err, msg, माप(msg)));
-			जाओ error;
-		पूर्ण
+				libbpf_strerror_r(err, msg, sizeof(msg)));
+			goto error;
+		}
 
 		pb->events[j].events = EPOLLIN;
 		pb->events[j].data.ptr = cpu_buf;
-		अगर (epoll_ctl(pb->epoll_fd, EPOLL_CTL_ADD, cpu_buf->fd,
-			      &pb->events[j]) < 0) अणु
-			err = -त्रुटि_सं;
+		if (epoll_ctl(pb->epoll_fd, EPOLL_CTL_ADD, cpu_buf->fd,
+			      &pb->events[j]) < 0) {
+			err = -errno;
 			pr_warn("failed to epoll_ctl cpu #%d perf FD %d: %s\n",
 				cpu, cpu_buf->fd,
-				libbpf_म_त्रुटि_r(err, msg, माप(msg)));
-			जाओ error;
-		पूर्ण
+				libbpf_strerror_r(err, msg, sizeof(msg)));
+			goto error;
+		}
 		j++;
-	पूर्ण
+	}
 	pb->cpu_cnt = j;
-	मुक्त(online);
+	free(online);
 
-	वापस pb;
+	return pb;
 
 error:
-	मुक्त(online);
-	अगर (pb)
-		perf_buffer__मुक्त(pb);
-	वापस ERR_PTR(err);
-पूर्ण
+	free(online);
+	if (pb)
+		perf_buffer__free(pb);
+	return ERR_PTR(err);
+}
 
-काष्ठा perf_sample_raw अणु
-	काष्ठा perf_event_header header;
-	uपूर्णांक32_t size;
-	अक्षर data[];
-पूर्ण;
+struct perf_sample_raw {
+	struct perf_event_header header;
+	uint32_t size;
+	char data[];
+};
 
-काष्ठा perf_sample_lost अणु
-	काष्ठा perf_event_header header;
-	uपूर्णांक64_t id;
-	uपूर्णांक64_t lost;
-	uपूर्णांक64_t sample_id;
-पूर्ण;
+struct perf_sample_lost {
+	struct perf_event_header header;
+	uint64_t id;
+	uint64_t lost;
+	uint64_t sample_id;
+};
 
-अटल क्रमागत bpf_perf_event_ret
-perf_buffer__process_record(काष्ठा perf_event_header *e, व्योम *ctx)
-अणु
-	काष्ठा perf_cpu_buf *cpu_buf = ctx;
-	काष्ठा perf_buffer *pb = cpu_buf->pb;
-	व्योम *data = e;
+static enum bpf_perf_event_ret
+perf_buffer__process_record(struct perf_event_header *e, void *ctx)
+{
+	struct perf_cpu_buf *cpu_buf = ctx;
+	struct perf_buffer *pb = cpu_buf->pb;
+	void *data = e;
 
 	/* user wants full control over parsing perf event */
-	अगर (pb->event_cb)
-		वापस pb->event_cb(pb->ctx, cpu_buf->cpu, e);
+	if (pb->event_cb)
+		return pb->event_cb(pb->ctx, cpu_buf->cpu, e);
 
-	चयन (e->type) अणु
-	हाल PERF_RECORD_SAMPLE: अणु
-		काष्ठा perf_sample_raw *s = data;
+	switch (e->type) {
+	case PERF_RECORD_SAMPLE: {
+		struct perf_sample_raw *s = data;
 
-		अगर (pb->sample_cb)
+		if (pb->sample_cb)
 			pb->sample_cb(pb->ctx, cpu_buf->cpu, s->data, s->size);
-		अवरोध;
-	पूर्ण
-	हाल PERF_RECORD_LOST: अणु
-		काष्ठा perf_sample_lost *s = data;
+		break;
+	}
+	case PERF_RECORD_LOST: {
+		struct perf_sample_lost *s = data;
 
-		अगर (pb->lost_cb)
+		if (pb->lost_cb)
 			pb->lost_cb(pb->ctx, cpu_buf->cpu, s->lost);
-		अवरोध;
-	पूर्ण
-	शेष:
+		break;
+	}
+	default:
 		pr_warn("unknown perf sample type %d\n", e->type);
-		वापस LIBBPF_PERF_EVENT_ERROR;
-	पूर्ण
-	वापस LIBBPF_PERF_EVENT_CONT;
-पूर्ण
+		return LIBBPF_PERF_EVENT_ERROR;
+	}
+	return LIBBPF_PERF_EVENT_CONT;
+}
 
-अटल पूर्णांक perf_buffer__process_records(काष्ठा perf_buffer *pb,
-					काष्ठा perf_cpu_buf *cpu_buf)
-अणु
-	क्रमागत bpf_perf_event_ret ret;
+static int perf_buffer__process_records(struct perf_buffer *pb,
+					struct perf_cpu_buf *cpu_buf)
+{
+	enum bpf_perf_event_ret ret;
 
-	ret = bpf_perf_event_पढ़ो_simple(cpu_buf->base, pb->mmap_size,
+	ret = bpf_perf_event_read_simple(cpu_buf->base, pb->mmap_size,
 					 pb->page_size, &cpu_buf->buf,
 					 &cpu_buf->buf_size,
 					 perf_buffer__process_record, cpu_buf);
-	अगर (ret != LIBBPF_PERF_EVENT_CONT)
-		वापस ret;
-	वापस 0;
-पूर्ण
+	if (ret != LIBBPF_PERF_EVENT_CONT)
+		return ret;
+	return 0;
+}
 
-पूर्णांक perf_buffer__epoll_fd(स्थिर काष्ठा perf_buffer *pb)
-अणु
-	वापस pb->epoll_fd;
-पूर्ण
+int perf_buffer__epoll_fd(const struct perf_buffer *pb)
+{
+	return pb->epoll_fd;
+}
 
-पूर्णांक perf_buffer__poll(काष्ठा perf_buffer *pb, पूर्णांक समयout_ms)
-अणु
-	पूर्णांक i, cnt, err;
+int perf_buffer__poll(struct perf_buffer *pb, int timeout_ms)
+{
+	int i, cnt, err;
 
-	cnt = epoll_रुको(pb->epoll_fd, pb->events, pb->cpu_cnt, समयout_ms);
-	क्रम (i = 0; i < cnt; i++) अणु
-		काष्ठा perf_cpu_buf *cpu_buf = pb->events[i].data.ptr;
+	cnt = epoll_wait(pb->epoll_fd, pb->events, pb->cpu_cnt, timeout_ms);
+	for (i = 0; i < cnt; i++) {
+		struct perf_cpu_buf *cpu_buf = pb->events[i].data.ptr;
 
 		err = perf_buffer__process_records(pb, cpu_buf);
-		अगर (err) अणु
+		if (err) {
 			pr_warn("error while processing records: %d\n", err);
-			वापस err;
-		पूर्ण
-	पूर्ण
-	वापस cnt < 0 ? -त्रुटि_सं : cnt;
-पूर्ण
+			return err;
+		}
+	}
+	return cnt < 0 ? -errno : cnt;
+}
 
 /* Return number of PERF_EVENT_ARRAY map slots set up by this perf_buffer
  * manager.
  */
-माप_प्रकार perf_buffer__buffer_cnt(स्थिर काष्ठा perf_buffer *pb)
-अणु
-	वापस pb->cpu_cnt;
-पूर्ण
+size_t perf_buffer__buffer_cnt(const struct perf_buffer *pb)
+{
+	return pb->cpu_cnt;
+}
 
 /*
  * Return perf_event FD of a ring buffer in *buf_idx* slot of
- * PERF_EVENT_ARRAY BPF map. This FD can be polled क्रम new data using
+ * PERF_EVENT_ARRAY BPF map. This FD can be polled for new data using
  * select()/poll()/epoll() Linux syscalls.
  */
-पूर्णांक perf_buffer__buffer_fd(स्थिर काष्ठा perf_buffer *pb, माप_प्रकार buf_idx)
-अणु
-	काष्ठा perf_cpu_buf *cpu_buf;
+int perf_buffer__buffer_fd(const struct perf_buffer *pb, size_t buf_idx)
+{
+	struct perf_cpu_buf *cpu_buf;
 
-	अगर (buf_idx >= pb->cpu_cnt)
-		वापस -EINVAL;
+	if (buf_idx >= pb->cpu_cnt)
+		return -EINVAL;
 
 	cpu_buf = pb->cpu_bufs[buf_idx];
-	अगर (!cpu_buf)
-		वापस -ENOENT;
+	if (!cpu_buf)
+		return -ENOENT;
 
-	वापस cpu_buf->fd;
-पूर्ण
+	return cpu_buf->fd;
+}
 
 /*
  * Consume data from perf ring buffer corresponding to slot *buf_idx* in
- * PERF_EVENT_ARRAY BPF map without रुकोing/polling. If there is no data to
- * consume, करो nothing and वापस success.
+ * PERF_EVENT_ARRAY BPF map without waiting/polling. If there is no data to
+ * consume, do nothing and return success.
  * Returns:
  *   - 0 on success;
  *   - <0 on failure.
  */
-पूर्णांक perf_buffer__consume_buffer(काष्ठा perf_buffer *pb, माप_प्रकार buf_idx)
-अणु
-	काष्ठा perf_cpu_buf *cpu_buf;
+int perf_buffer__consume_buffer(struct perf_buffer *pb, size_t buf_idx)
+{
+	struct perf_cpu_buf *cpu_buf;
 
-	अगर (buf_idx >= pb->cpu_cnt)
-		वापस -EINVAL;
+	if (buf_idx >= pb->cpu_cnt)
+		return -EINVAL;
 
 	cpu_buf = pb->cpu_bufs[buf_idx];
-	अगर (!cpu_buf)
-		वापस -ENOENT;
+	if (!cpu_buf)
+		return -ENOENT;
 
-	वापस perf_buffer__process_records(pb, cpu_buf);
-पूर्ण
+	return perf_buffer__process_records(pb, cpu_buf);
+}
 
-पूर्णांक perf_buffer__consume(काष्ठा perf_buffer *pb)
-अणु
-	पूर्णांक i, err;
+int perf_buffer__consume(struct perf_buffer *pb)
+{
+	int i, err;
 
-	क्रम (i = 0; i < pb->cpu_cnt; i++) अणु
-		काष्ठा perf_cpu_buf *cpu_buf = pb->cpu_bufs[i];
+	for (i = 0; i < pb->cpu_cnt; i++) {
+		struct perf_cpu_buf *cpu_buf = pb->cpu_bufs[i];
 
-		अगर (!cpu_buf)
-			जारी;
+		if (!cpu_buf)
+			continue;
 
 		err = perf_buffer__process_records(pb, cpu_buf);
-		अगर (err) अणु
+		if (err) {
 			pr_warn("perf_buffer: failed to process records in buffer #%d: %d\n", i, err);
-			वापस err;
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+			return err;
+		}
+	}
+	return 0;
+}
 
-काष्ठा bpf_prog_info_array_desc अणु
-	पूर्णांक	array_offset;	/* e.g. offset of jited_prog_insns */
-	पूर्णांक	count_offset;	/* e.g. offset of jited_prog_len */
-	पूर्णांक	size_offset;	/* > 0: offset of rec size,
+struct bpf_prog_info_array_desc {
+	int	array_offset;	/* e.g. offset of jited_prog_insns */
+	int	count_offset;	/* e.g. offset of jited_prog_len */
+	int	size_offset;	/* > 0: offset of rec size,
 				 * < 0: fix size of -size_offset
 				 */
-पूर्ण;
+};
 
-अटल काष्ठा bpf_prog_info_array_desc bpf_prog_info_array_desc[] = अणु
-	[BPF_PROG_INFO_JITED_INSNS] = अणु
-		दुरत्व(काष्ठा bpf_prog_info, jited_prog_insns),
-		दुरत्व(काष्ठा bpf_prog_info, jited_prog_len),
+static struct bpf_prog_info_array_desc bpf_prog_info_array_desc[] = {
+	[BPF_PROG_INFO_JITED_INSNS] = {
+		offsetof(struct bpf_prog_info, jited_prog_insns),
+		offsetof(struct bpf_prog_info, jited_prog_len),
 		-1,
-	पूर्ण,
-	[BPF_PROG_INFO_XLATED_INSNS] = अणु
-		दुरत्व(काष्ठा bpf_prog_info, xlated_prog_insns),
-		दुरत्व(काष्ठा bpf_prog_info, xlated_prog_len),
+	},
+	[BPF_PROG_INFO_XLATED_INSNS] = {
+		offsetof(struct bpf_prog_info, xlated_prog_insns),
+		offsetof(struct bpf_prog_info, xlated_prog_len),
 		-1,
-	पूर्ण,
-	[BPF_PROG_INFO_MAP_IDS] = अणु
-		दुरत्व(काष्ठा bpf_prog_info, map_ids),
-		दुरत्व(काष्ठा bpf_prog_info, nr_map_ids),
-		-(पूर्णांक)माप(__u32),
-	पूर्ण,
-	[BPF_PROG_INFO_JITED_KSYMS] = अणु
-		दुरत्व(काष्ठा bpf_prog_info, jited_ksyms),
-		दुरत्व(काष्ठा bpf_prog_info, nr_jited_ksyms),
-		-(पूर्णांक)माप(__u64),
-	पूर्ण,
-	[BPF_PROG_INFO_JITED_FUNC_LENS] = अणु
-		दुरत्व(काष्ठा bpf_prog_info, jited_func_lens),
-		दुरत्व(काष्ठा bpf_prog_info, nr_jited_func_lens),
-		-(पूर्णांक)माप(__u32),
-	पूर्ण,
-	[BPF_PROG_INFO_FUNC_INFO] = अणु
-		दुरत्व(काष्ठा bpf_prog_info, func_info),
-		दुरत्व(काष्ठा bpf_prog_info, nr_func_info),
-		दुरत्व(काष्ठा bpf_prog_info, func_info_rec_size),
-	पूर्ण,
-	[BPF_PROG_INFO_LINE_INFO] = अणु
-		दुरत्व(काष्ठा bpf_prog_info, line_info),
-		दुरत्व(काष्ठा bpf_prog_info, nr_line_info),
-		दुरत्व(काष्ठा bpf_prog_info, line_info_rec_size),
-	पूर्ण,
-	[BPF_PROG_INFO_JITED_LINE_INFO] = अणु
-		दुरत्व(काष्ठा bpf_prog_info, jited_line_info),
-		दुरत्व(काष्ठा bpf_prog_info, nr_jited_line_info),
-		दुरत्व(काष्ठा bpf_prog_info, jited_line_info_rec_size),
-	पूर्ण,
-	[BPF_PROG_INFO_PROG_TAGS] = अणु
-		दुरत्व(काष्ठा bpf_prog_info, prog_tags),
-		दुरत्व(काष्ठा bpf_prog_info, nr_prog_tags),
-		-(पूर्णांक)माप(__u8) * BPF_TAG_SIZE,
-	पूर्ण,
+	},
+	[BPF_PROG_INFO_MAP_IDS] = {
+		offsetof(struct bpf_prog_info, map_ids),
+		offsetof(struct bpf_prog_info, nr_map_ids),
+		-(int)sizeof(__u32),
+	},
+	[BPF_PROG_INFO_JITED_KSYMS] = {
+		offsetof(struct bpf_prog_info, jited_ksyms),
+		offsetof(struct bpf_prog_info, nr_jited_ksyms),
+		-(int)sizeof(__u64),
+	},
+	[BPF_PROG_INFO_JITED_FUNC_LENS] = {
+		offsetof(struct bpf_prog_info, jited_func_lens),
+		offsetof(struct bpf_prog_info, nr_jited_func_lens),
+		-(int)sizeof(__u32),
+	},
+	[BPF_PROG_INFO_FUNC_INFO] = {
+		offsetof(struct bpf_prog_info, func_info),
+		offsetof(struct bpf_prog_info, nr_func_info),
+		offsetof(struct bpf_prog_info, func_info_rec_size),
+	},
+	[BPF_PROG_INFO_LINE_INFO] = {
+		offsetof(struct bpf_prog_info, line_info),
+		offsetof(struct bpf_prog_info, nr_line_info),
+		offsetof(struct bpf_prog_info, line_info_rec_size),
+	},
+	[BPF_PROG_INFO_JITED_LINE_INFO] = {
+		offsetof(struct bpf_prog_info, jited_line_info),
+		offsetof(struct bpf_prog_info, nr_jited_line_info),
+		offsetof(struct bpf_prog_info, jited_line_info_rec_size),
+	},
+	[BPF_PROG_INFO_PROG_TAGS] = {
+		offsetof(struct bpf_prog_info, prog_tags),
+		offsetof(struct bpf_prog_info, nr_prog_tags),
+		-(int)sizeof(__u8) * BPF_TAG_SIZE,
+	},
 
-पूर्ण;
+};
 
-अटल __u32 bpf_prog_info_पढ़ो_offset_u32(काष्ठा bpf_prog_info *info,
-					   पूर्णांक offset)
-अणु
+static __u32 bpf_prog_info_read_offset_u32(struct bpf_prog_info *info,
+					   int offset)
+{
 	__u32 *array = (__u32 *)info;
 
-	अगर (offset >= 0)
-		वापस array[offset / माप(__u32)];
-	वापस -(पूर्णांक)offset;
-पूर्ण
+	if (offset >= 0)
+		return array[offset / sizeof(__u32)];
+	return -(int)offset;
+}
 
-अटल __u64 bpf_prog_info_पढ़ो_offset_u64(काष्ठा bpf_prog_info *info,
-					   पूर्णांक offset)
-अणु
+static __u64 bpf_prog_info_read_offset_u64(struct bpf_prog_info *info,
+					   int offset)
+{
 	__u64 *array = (__u64 *)info;
 
-	अगर (offset >= 0)
-		वापस array[offset / माप(__u64)];
-	वापस -(पूर्णांक)offset;
-पूर्ण
+	if (offset >= 0)
+		return array[offset / sizeof(__u64)];
+	return -(int)offset;
+}
 
-अटल व्योम bpf_prog_info_set_offset_u32(काष्ठा bpf_prog_info *info, पूर्णांक offset,
+static void bpf_prog_info_set_offset_u32(struct bpf_prog_info *info, int offset,
 					 __u32 val)
-अणु
+{
 	__u32 *array = (__u32 *)info;
 
-	अगर (offset >= 0)
-		array[offset / माप(__u32)] = val;
-पूर्ण
+	if (offset >= 0)
+		array[offset / sizeof(__u32)] = val;
+}
 
-अटल व्योम bpf_prog_info_set_offset_u64(काष्ठा bpf_prog_info *info, पूर्णांक offset,
+static void bpf_prog_info_set_offset_u64(struct bpf_prog_info *info, int offset,
 					 __u64 val)
-अणु
+{
 	__u64 *array = (__u64 *)info;
 
-	अगर (offset >= 0)
-		array[offset / माप(__u64)] = val;
-पूर्ण
+	if (offset >= 0)
+		array[offset / sizeof(__u64)] = val;
+}
 
-काष्ठा bpf_prog_info_linear *
-bpf_program__get_prog_info_linear(पूर्णांक fd, __u64 arrays)
-अणु
-	काष्ठा bpf_prog_info_linear *info_linear;
-	काष्ठा bpf_prog_info info = अणुपूर्ण;
-	__u32 info_len = माप(info);
+struct bpf_prog_info_linear *
+bpf_program__get_prog_info_linear(int fd, __u64 arrays)
+{
+	struct bpf_prog_info_linear *info_linear;
+	struct bpf_prog_info info = {};
+	__u32 info_len = sizeof(info);
 	__u32 data_len = 0;
-	पूर्णांक i, err;
-	व्योम *ptr;
+	int i, err;
+	void *ptr;
 
-	अगर (arrays >> BPF_PROG_INFO_LAST_ARRAY)
-		वापस ERR_PTR(-EINVAL);
+	if (arrays >> BPF_PROG_INFO_LAST_ARRAY)
+		return ERR_PTR(-EINVAL);
 
 	/* step 1: get array dimensions */
 	err = bpf_obj_get_info_by_fd(fd, &info, &info_len);
-	अगर (err) अणु
-		pr_debug("can't get prog info: %s", म_त्रुटि(त्रुटि_सं));
-		वापस ERR_PTR(-EFAULT);
-	पूर्ण
+	if (err) {
+		pr_debug("can't get prog info: %s", strerror(errno));
+		return ERR_PTR(-EFAULT);
+	}
 
 	/* step 2: calculate total size of all arrays */
-	क्रम (i = BPF_PROG_INFO_FIRST_ARRAY; i < BPF_PROG_INFO_LAST_ARRAY; ++i) अणु
+	for (i = BPF_PROG_INFO_FIRST_ARRAY; i < BPF_PROG_INFO_LAST_ARRAY; ++i) {
 		bool include_array = (arrays & (1UL << i)) > 0;
-		काष्ठा bpf_prog_info_array_desc *desc;
+		struct bpf_prog_info_array_desc *desc;
 		__u32 count, size;
 
 		desc = bpf_prog_info_array_desc + i;
 
 		/* kernel is too old to support this field */
-		अगर (info_len < desc->array_offset + माप(__u32) ||
-		    info_len < desc->count_offset + माप(__u32) ||
+		if (info_len < desc->array_offset + sizeof(__u32) ||
+		    info_len < desc->count_offset + sizeof(__u32) ||
 		    (desc->size_offset > 0 && info_len < desc->size_offset))
 			include_array = false;
 
-		अगर (!include_array) अणु
+		if (!include_array) {
 			arrays &= ~(1UL << i);	/* clear the bit */
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		count = bpf_prog_info_पढ़ो_offset_u32(&info, desc->count_offset);
-		size  = bpf_prog_info_पढ़ो_offset_u32(&info, desc->size_offset);
+		count = bpf_prog_info_read_offset_u32(&info, desc->count_offset);
+		size  = bpf_prog_info_read_offset_u32(&info, desc->size_offset);
 
 		data_len += count * size;
-	पूर्ण
+	}
 
 	/* step 3: allocate continuous memory */
-	data_len = roundup(data_len, माप(__u64));
-	info_linear = दो_स्मृति(माप(काष्ठा bpf_prog_info_linear) + data_len);
-	अगर (!info_linear)
-		वापस ERR_PTR(-ENOMEM);
+	data_len = roundup(data_len, sizeof(__u64));
+	info_linear = malloc(sizeof(struct bpf_prog_info_linear) + data_len);
+	if (!info_linear)
+		return ERR_PTR(-ENOMEM);
 
 	/* step 4: fill data to info_linear->info */
 	info_linear->arrays = arrays;
-	स_रखो(&info_linear->info, 0, माप(info));
+	memset(&info_linear->info, 0, sizeof(info));
 	ptr = info_linear->data;
 
-	क्रम (i = BPF_PROG_INFO_FIRST_ARRAY; i < BPF_PROG_INFO_LAST_ARRAY; ++i) अणु
-		काष्ठा bpf_prog_info_array_desc *desc;
+	for (i = BPF_PROG_INFO_FIRST_ARRAY; i < BPF_PROG_INFO_LAST_ARRAY; ++i) {
+		struct bpf_prog_info_array_desc *desc;
 		__u32 count, size;
 
-		अगर ((arrays & (1UL << i)) == 0)
-			जारी;
+		if ((arrays & (1UL << i)) == 0)
+			continue;
 
 		desc  = bpf_prog_info_array_desc + i;
-		count = bpf_prog_info_पढ़ो_offset_u32(&info, desc->count_offset);
-		size  = bpf_prog_info_पढ़ो_offset_u32(&info, desc->size_offset);
+		count = bpf_prog_info_read_offset_u32(&info, desc->count_offset);
+		size  = bpf_prog_info_read_offset_u32(&info, desc->size_offset);
 		bpf_prog_info_set_offset_u32(&info_linear->info,
 					     desc->count_offset, count);
 		bpf_prog_info_set_offset_u32(&info_linear->info,
@@ -11141,382 +11140,382 @@ bpf_program__get_prog_info_linear(पूर्णांक fd, __u64 arrays)
 					     desc->array_offset,
 					     ptr_to_u64(ptr));
 		ptr += count * size;
-	पूर्ण
+	}
 
 	/* step 5: call syscall again to get required arrays */
 	err = bpf_obj_get_info_by_fd(fd, &info_linear->info, &info_len);
-	अगर (err) अणु
-		pr_debug("can't get prog info: %s", म_त्रुटि(त्रुटि_सं));
-		मुक्त(info_linear);
-		वापस ERR_PTR(-EFAULT);
-	पूर्ण
+	if (err) {
+		pr_debug("can't get prog info: %s", strerror(errno));
+		free(info_linear);
+		return ERR_PTR(-EFAULT);
+	}
 
-	/* step 6: verअगरy the data */
-	क्रम (i = BPF_PROG_INFO_FIRST_ARRAY; i < BPF_PROG_INFO_LAST_ARRAY; ++i) अणु
-		काष्ठा bpf_prog_info_array_desc *desc;
+	/* step 6: verify the data */
+	for (i = BPF_PROG_INFO_FIRST_ARRAY; i < BPF_PROG_INFO_LAST_ARRAY; ++i) {
+		struct bpf_prog_info_array_desc *desc;
 		__u32 v1, v2;
 
-		अगर ((arrays & (1UL << i)) == 0)
-			जारी;
+		if ((arrays & (1UL << i)) == 0)
+			continue;
 
 		desc = bpf_prog_info_array_desc + i;
-		v1 = bpf_prog_info_पढ़ो_offset_u32(&info, desc->count_offset);
-		v2 = bpf_prog_info_पढ़ो_offset_u32(&info_linear->info,
+		v1 = bpf_prog_info_read_offset_u32(&info, desc->count_offset);
+		v2 = bpf_prog_info_read_offset_u32(&info_linear->info,
 						   desc->count_offset);
-		अगर (v1 != v2)
+		if (v1 != v2)
 			pr_warn("%s: mismatch in element count\n", __func__);
 
-		v1 = bpf_prog_info_पढ़ो_offset_u32(&info, desc->size_offset);
-		v2 = bpf_prog_info_पढ़ो_offset_u32(&info_linear->info,
+		v1 = bpf_prog_info_read_offset_u32(&info, desc->size_offset);
+		v2 = bpf_prog_info_read_offset_u32(&info_linear->info,
 						   desc->size_offset);
-		अगर (v1 != v2)
+		if (v1 != v2)
 			pr_warn("%s: mismatch in rec size\n", __func__);
-	पूर्ण
+	}
 
 	/* step 7: update info_len and data_len */
-	info_linear->info_len = माप(काष्ठा bpf_prog_info);
+	info_linear->info_len = sizeof(struct bpf_prog_info);
 	info_linear->data_len = data_len;
 
-	वापस info_linear;
-पूर्ण
+	return info_linear;
+}
 
-व्योम bpf_program__bpil_addr_to_offs(काष्ठा bpf_prog_info_linear *info_linear)
-अणु
-	पूर्णांक i;
+void bpf_program__bpil_addr_to_offs(struct bpf_prog_info_linear *info_linear)
+{
+	int i;
 
-	क्रम (i = BPF_PROG_INFO_FIRST_ARRAY; i < BPF_PROG_INFO_LAST_ARRAY; ++i) अणु
-		काष्ठा bpf_prog_info_array_desc *desc;
+	for (i = BPF_PROG_INFO_FIRST_ARRAY; i < BPF_PROG_INFO_LAST_ARRAY; ++i) {
+		struct bpf_prog_info_array_desc *desc;
 		__u64 addr, offs;
 
-		अगर ((info_linear->arrays & (1UL << i)) == 0)
-			जारी;
+		if ((info_linear->arrays & (1UL << i)) == 0)
+			continue;
 
 		desc = bpf_prog_info_array_desc + i;
-		addr = bpf_prog_info_पढ़ो_offset_u64(&info_linear->info,
+		addr = bpf_prog_info_read_offset_u64(&info_linear->info,
 						     desc->array_offset);
 		offs = addr - ptr_to_u64(info_linear->data);
 		bpf_prog_info_set_offset_u64(&info_linear->info,
 					     desc->array_offset, offs);
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम bpf_program__bpil_offs_to_addr(काष्ठा bpf_prog_info_linear *info_linear)
-अणु
-	पूर्णांक i;
+void bpf_program__bpil_offs_to_addr(struct bpf_prog_info_linear *info_linear)
+{
+	int i;
 
-	क्रम (i = BPF_PROG_INFO_FIRST_ARRAY; i < BPF_PROG_INFO_LAST_ARRAY; ++i) अणु
-		काष्ठा bpf_prog_info_array_desc *desc;
+	for (i = BPF_PROG_INFO_FIRST_ARRAY; i < BPF_PROG_INFO_LAST_ARRAY; ++i) {
+		struct bpf_prog_info_array_desc *desc;
 		__u64 addr, offs;
 
-		अगर ((info_linear->arrays & (1UL << i)) == 0)
-			जारी;
+		if ((info_linear->arrays & (1UL << i)) == 0)
+			continue;
 
 		desc = bpf_prog_info_array_desc + i;
-		offs = bpf_prog_info_पढ़ो_offset_u64(&info_linear->info,
+		offs = bpf_prog_info_read_offset_u64(&info_linear->info,
 						     desc->array_offset);
 		addr = offs + ptr_to_u64(info_linear->data);
 		bpf_prog_info_set_offset_u64(&info_linear->info,
 					     desc->array_offset, addr);
-	पूर्ण
-पूर्ण
+	}
+}
 
-पूर्णांक bpf_program__set_attach_target(काष्ठा bpf_program *prog,
-				   पूर्णांक attach_prog_fd,
-				   स्थिर अक्षर *attach_func_name)
-अणु
-	पूर्णांक btf_obj_fd = 0, btf_id = 0, err;
+int bpf_program__set_attach_target(struct bpf_program *prog,
+				   int attach_prog_fd,
+				   const char *attach_func_name)
+{
+	int btf_obj_fd = 0, btf_id = 0, err;
 
-	अगर (!prog || attach_prog_fd < 0 || !attach_func_name)
-		वापस -EINVAL;
+	if (!prog || attach_prog_fd < 0 || !attach_func_name)
+		return -EINVAL;
 
-	अगर (prog->obj->loaded)
-		वापस -EINVAL;
+	if (prog->obj->loaded)
+		return -EINVAL;
 
-	अगर (attach_prog_fd) अणु
+	if (attach_prog_fd) {
 		btf_id = libbpf_find_prog_btf_id(attach_func_name,
 						 attach_prog_fd);
-		अगर (btf_id < 0)
-			वापस btf_id;
-	पूर्ण अन्यथा अणु
-		/* load btf_vmlinux, अगर not yet */
+		if (btf_id < 0)
+			return btf_id;
+	} else {
+		/* load btf_vmlinux, if not yet */
 		err = bpf_object__load_vmlinux_btf(prog->obj, true);
-		अगर (err)
-			वापस err;
+		if (err)
+			return err;
 		err = find_kernel_btf_id(prog->obj, attach_func_name,
 					 prog->expected_attach_type,
 					 &btf_obj_fd, &btf_id);
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 
 	prog->attach_btf_id = btf_id;
 	prog->attach_btf_obj_fd = btf_obj_fd;
 	prog->attach_prog_fd = attach_prog_fd;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक parse_cpu_mask_str(स्थिर अक्षर *s, bool **mask, पूर्णांक *mask_sz)
-अणु
-	पूर्णांक err = 0, n, len, start, end = -1;
-	bool *पंचांगp;
+int parse_cpu_mask_str(const char *s, bool **mask, int *mask_sz)
+{
+	int err = 0, n, len, start, end = -1;
+	bool *tmp;
 
-	*mask = शून्य;
+	*mask = NULL;
 	*mask_sz = 0;
 
-	/* Each sub string separated by ',' has क्रमmat \d+-\d+ or \d+ */
-	जबतक (*s) अणु
-		अगर (*s == ',' || *s == '\n') अणु
+	/* Each sub string separated by ',' has format \d+-\d+ or \d+ */
+	while (*s) {
+		if (*s == ',' || *s == '\n') {
 			s++;
-			जारी;
-		पूर्ण
-		n = माला_पूछो(s, "%d%n-%d%n", &start, &len, &end, &len);
-		अगर (n <= 0 || n > 2) अणु
+			continue;
+		}
+		n = sscanf(s, "%d%n-%d%n", &start, &len, &end, &len);
+		if (n <= 0 || n > 2) {
 			pr_warn("Failed to get CPU range %s: %d\n", s, n);
 			err = -EINVAL;
-			जाओ cleanup;
-		पूर्ण अन्यथा अगर (n == 1) अणु
+			goto cleanup;
+		} else if (n == 1) {
 			end = start;
-		पूर्ण
-		अगर (start < 0 || start > end) अणु
+		}
+		if (start < 0 || start > end) {
 			pr_warn("Invalid CPU range [%d,%d] in %s\n",
 				start, end, s);
 			err = -EINVAL;
-			जाओ cleanup;
-		पूर्ण
-		पंचांगp = पुनः_स्मृति(*mask, end + 1);
-		अगर (!पंचांगp) अणु
+			goto cleanup;
+		}
+		tmp = realloc(*mask, end + 1);
+		if (!tmp) {
 			err = -ENOMEM;
-			जाओ cleanup;
-		पूर्ण
-		*mask = पंचांगp;
-		स_रखो(पंचांगp + *mask_sz, 0, start - *mask_sz);
-		स_रखो(पंचांगp + start, 1, end - start + 1);
+			goto cleanup;
+		}
+		*mask = tmp;
+		memset(tmp + *mask_sz, 0, start - *mask_sz);
+		memset(tmp + start, 1, end - start + 1);
 		*mask_sz = end + 1;
 		s += len;
-	पूर्ण
-	अगर (!*mask_sz) अणु
+	}
+	if (!*mask_sz) {
 		pr_warn("Empty CPU range\n");
-		वापस -EINVAL;
-	पूर्ण
-	वापस 0;
+		return -EINVAL;
+	}
+	return 0;
 cleanup:
-	मुक्त(*mask);
-	*mask = शून्य;
-	वापस err;
-पूर्ण
+	free(*mask);
+	*mask = NULL;
+	return err;
+}
 
-पूर्णांक parse_cpu_mask_file(स्थिर अक्षर *fcpu, bool **mask, पूर्णांक *mask_sz)
-अणु
-	पूर्णांक fd, err = 0, len;
-	अक्षर buf[128];
+int parse_cpu_mask_file(const char *fcpu, bool **mask, int *mask_sz)
+{
+	int fd, err = 0, len;
+	char buf[128];
 
-	fd = खोलो(fcpu, O_RDONLY);
-	अगर (fd < 0) अणु
-		err = -त्रुटि_सं;
+	fd = open(fcpu, O_RDONLY);
+	if (fd < 0) {
+		err = -errno;
 		pr_warn("Failed to open cpu mask file %s: %d\n", fcpu, err);
-		वापस err;
-	पूर्ण
-	len = पढ़ो(fd, buf, माप(buf));
-	बंद(fd);
-	अगर (len <= 0) अणु
-		err = len ? -त्रुटि_सं : -EINVAL;
+		return err;
+	}
+	len = read(fd, buf, sizeof(buf));
+	close(fd);
+	if (len <= 0) {
+		err = len ? -errno : -EINVAL;
 		pr_warn("Failed to read cpu mask from %s: %d\n", fcpu, err);
-		वापस err;
-	पूर्ण
-	अगर (len >= माप(buf)) अणु
+		return err;
+	}
+	if (len >= sizeof(buf)) {
 		pr_warn("CPU mask is too big in file %s\n", fcpu);
-		वापस -E2BIG;
-	पूर्ण
+		return -E2BIG;
+	}
 	buf[len] = '\0';
 
-	वापस parse_cpu_mask_str(buf, mask, mask_sz);
-पूर्ण
+	return parse_cpu_mask_str(buf, mask, mask_sz);
+}
 
-पूर्णांक libbpf_num_possible_cpus(व्योम)
-अणु
-	अटल स्थिर अक्षर *fcpu = "/sys/devices/system/cpu/possible";
-	अटल पूर्णांक cpus;
-	पूर्णांक err, n, i, पंचांगp_cpus;
+int libbpf_num_possible_cpus(void)
+{
+	static const char *fcpu = "/sys/devices/system/cpu/possible";
+	static int cpus;
+	int err, n, i, tmp_cpus;
 	bool *mask;
 
-	पंचांगp_cpus = READ_ONCE(cpus);
-	अगर (पंचांगp_cpus > 0)
-		वापस पंचांगp_cpus;
+	tmp_cpus = READ_ONCE(cpus);
+	if (tmp_cpus > 0)
+		return tmp_cpus;
 
 	err = parse_cpu_mask_file(fcpu, &mask, &n);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	पंचांगp_cpus = 0;
-	क्रम (i = 0; i < n; i++) अणु
-		अगर (mask[i])
-			पंचांगp_cpus++;
-	पूर्ण
-	मुक्त(mask);
+	tmp_cpus = 0;
+	for (i = 0; i < n; i++) {
+		if (mask[i])
+			tmp_cpus++;
+	}
+	free(mask);
 
-	WRITE_ONCE(cpus, पंचांगp_cpus);
-	वापस पंचांगp_cpus;
-पूर्ण
+	WRITE_ONCE(cpus, tmp_cpus);
+	return tmp_cpus;
+}
 
-पूर्णांक bpf_object__खोलो_skeleton(काष्ठा bpf_object_skeleton *s,
-			      स्थिर काष्ठा bpf_object_खोलो_opts *opts)
-अणु
-	DECLARE_LIBBPF_OPTS(bpf_object_खोलो_opts, skel_opts,
+int bpf_object__open_skeleton(struct bpf_object_skeleton *s,
+			      const struct bpf_object_open_opts *opts)
+{
+	DECLARE_LIBBPF_OPTS(bpf_object_open_opts, skel_opts,
 		.object_name = s->name,
 	);
-	काष्ठा bpf_object *obj;
-	पूर्णांक i;
+	struct bpf_object *obj;
+	int i;
 
 	/* Attempt to preserve opts->object_name, unless overriden by user
-	 * explicitly. Overwriting object name क्रम skeletons is discouraged,
-	 * as it अवरोधs global data maps, because they contain object name
+	 * explicitly. Overwriting object name for skeletons is discouraged,
+	 * as it breaks global data maps, because they contain object name
 	 * prefix as their own map name prefix. When skeleton is generated,
 	 * bpftool is making an assumption that this name will stay the same.
 	 */
-	अगर (opts) अणु
-		स_नकल(&skel_opts, opts, माप(*opts));
-		अगर (!opts->object_name)
+	if (opts) {
+		memcpy(&skel_opts, opts, sizeof(*opts));
+		if (!opts->object_name)
 			skel_opts.object_name = s->name;
-	पूर्ण
+	}
 
-	obj = bpf_object__खोलो_mem(s->data, s->data_sz, &skel_opts);
-	अगर (IS_ERR(obj)) अणु
+	obj = bpf_object__open_mem(s->data, s->data_sz, &skel_opts);
+	if (IS_ERR(obj)) {
 		pr_warn("failed to initialize skeleton BPF object '%s': %ld\n",
 			s->name, PTR_ERR(obj));
-		वापस PTR_ERR(obj);
-	पूर्ण
+		return PTR_ERR(obj);
+	}
 
 	*s->obj = obj;
 
-	क्रम (i = 0; i < s->map_cnt; i++) अणु
-		काष्ठा bpf_map **map = s->maps[i].map;
-		स्थिर अक्षर *name = s->maps[i].name;
-		व्योम **mmaped = s->maps[i].mmaped;
+	for (i = 0; i < s->map_cnt; i++) {
+		struct bpf_map **map = s->maps[i].map;
+		const char *name = s->maps[i].name;
+		void **mmaped = s->maps[i].mmaped;
 
 		*map = bpf_object__find_map_by_name(obj, name);
-		अगर (!*map) अणु
+		if (!*map) {
 			pr_warn("failed to find skeleton map '%s'\n", name);
-			वापस -ESRCH;
-		पूर्ण
+			return -ESRCH;
+		}
 
-		/* बाह्यs shouldn't be pre-setup from user code */
-		अगर (mmaped && (*map)->libbpf_type != LIBBPF_MAP_KCONFIG)
+		/* externs shouldn't be pre-setup from user code */
+		if (mmaped && (*map)->libbpf_type != LIBBPF_MAP_KCONFIG)
 			*mmaped = (*map)->mmaped;
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < s->prog_cnt; i++) अणु
-		काष्ठा bpf_program **prog = s->progs[i].prog;
-		स्थिर अक्षर *name = s->progs[i].name;
+	for (i = 0; i < s->prog_cnt; i++) {
+		struct bpf_program **prog = s->progs[i].prog;
+		const char *name = s->progs[i].name;
 
 		*prog = bpf_object__find_program_by_name(obj, name);
-		अगर (!*prog) अणु
+		if (!*prog) {
 			pr_warn("failed to find skeleton program '%s'\n", name);
-			वापस -ESRCH;
-		पूर्ण
-	पूर्ण
+			return -ESRCH;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक bpf_object__load_skeleton(काष्ठा bpf_object_skeleton *s)
-अणु
-	पूर्णांक i, err;
+int bpf_object__load_skeleton(struct bpf_object_skeleton *s)
+{
+	int i, err;
 
 	err = bpf_object__load(*s->obj);
-	अगर (err) अणु
+	if (err) {
 		pr_warn("failed to load BPF skeleton '%s': %d\n", s->name, err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	क्रम (i = 0; i < s->map_cnt; i++) अणु
-		काष्ठा bpf_map *map = *s->maps[i].map;
-		माप_प्रकार mmap_sz = bpf_map_mmap_sz(map);
-		पूर्णांक prot, map_fd = bpf_map__fd(map);
-		व्योम **mmaped = s->maps[i].mmaped;
+	for (i = 0; i < s->map_cnt; i++) {
+		struct bpf_map *map = *s->maps[i].map;
+		size_t mmap_sz = bpf_map_mmap_sz(map);
+		int prot, map_fd = bpf_map__fd(map);
+		void **mmaped = s->maps[i].mmaped;
 
-		अगर (!mmaped)
-			जारी;
+		if (!mmaped)
+			continue;
 
-		अगर (!(map->def.map_flags & BPF_F_MMAPABLE)) अणु
-			*mmaped = शून्य;
-			जारी;
-		पूर्ण
+		if (!(map->def.map_flags & BPF_F_MMAPABLE)) {
+			*mmaped = NULL;
+			continue;
+		}
 
-		अगर (map->def.map_flags & BPF_F_RDONLY_PROG)
+		if (map->def.map_flags & BPF_F_RDONLY_PROG)
 			prot = PROT_READ;
-		अन्यथा
+		else
 			prot = PROT_READ | PROT_WRITE;
 
 		/* Remap anonymous mmap()-ed "map initialization image" as
 		 * a BPF map-backed mmap()-ed memory, but preserving the same
 		 * memory address. This will cause kernel to change process'
-		 * page table to poपूर्णांक to a dअगरferent piece of kernel memory,
-		 * but from userspace poपूर्णांक of view memory address (and its
-		 * contents, being identical at this poपूर्णांक) will stay the
-		 * same. This mapping will be released by bpf_object__बंद()
-		 * as per normal clean up procedure, so we करोn't need to worry
+		 * page table to point to a different piece of kernel memory,
+		 * but from userspace point of view memory address (and its
+		 * contents, being identical at this point) will stay the
+		 * same. This mapping will be released by bpf_object__close()
+		 * as per normal clean up procedure, so we don't need to worry
 		 * about it from skeleton's clean up perspective.
 		 */
 		*mmaped = mmap(map->mmaped, mmap_sz, prot,
 				MAP_SHARED | MAP_FIXED, map_fd, 0);
-		अगर (*mmaped == MAP_FAILED) अणु
-			err = -त्रुटि_सं;
-			*mmaped = शून्य;
+		if (*mmaped == MAP_FAILED) {
+			err = -errno;
+			*mmaped = NULL;
 			pr_warn("failed to re-mmap() map '%s': %d\n",
 				 bpf_map__name(map), err);
-			वापस err;
-		पूर्ण
-	पूर्ण
+			return err;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक bpf_object__attach_skeleton(काष्ठा bpf_object_skeleton *s)
-अणु
-	पूर्णांक i;
+int bpf_object__attach_skeleton(struct bpf_object_skeleton *s)
+{
+	int i;
 
-	क्रम (i = 0; i < s->prog_cnt; i++) अणु
-		काष्ठा bpf_program *prog = *s->progs[i].prog;
-		काष्ठा bpf_link **link = s->progs[i].link;
-		स्थिर काष्ठा bpf_sec_def *sec_def;
+	for (i = 0; i < s->prog_cnt; i++) {
+		struct bpf_program *prog = *s->progs[i].prog;
+		struct bpf_link **link = s->progs[i].link;
+		const struct bpf_sec_def *sec_def;
 
-		अगर (!prog->load)
-			जारी;
+		if (!prog->load)
+			continue;
 
 		sec_def = find_sec_def(prog->sec_name);
-		अगर (!sec_def || !sec_def->attach_fn)
-			जारी;
+		if (!sec_def || !sec_def->attach_fn)
+			continue;
 
 		*link = sec_def->attach_fn(sec_def, prog);
-		अगर (IS_ERR(*link)) अणु
+		if (IS_ERR(*link)) {
 			pr_warn("failed to auto-attach program '%s': %ld\n",
 				bpf_program__name(prog), PTR_ERR(*link));
-			वापस PTR_ERR(*link);
-		पूर्ण
-	पूर्ण
+			return PTR_ERR(*link);
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम bpf_object__detach_skeleton(काष्ठा bpf_object_skeleton *s)
-अणु
-	पूर्णांक i;
+void bpf_object__detach_skeleton(struct bpf_object_skeleton *s)
+{
+	int i;
 
-	क्रम (i = 0; i < s->prog_cnt; i++) अणु
-		काष्ठा bpf_link **link = s->progs[i].link;
+	for (i = 0; i < s->prog_cnt; i++) {
+		struct bpf_link **link = s->progs[i].link;
 
 		bpf_link__destroy(*link);
-		*link = शून्य;
-	पूर्ण
-पूर्ण
+		*link = NULL;
+	}
+}
 
-व्योम bpf_object__destroy_skeleton(काष्ठा bpf_object_skeleton *s)
-अणु
-	अगर (s->progs)
+void bpf_object__destroy_skeleton(struct bpf_object_skeleton *s)
+{
+	if (s->progs)
 		bpf_object__detach_skeleton(s);
-	अगर (s->obj)
-		bpf_object__बंद(*s->obj);
-	मुक्त(s->maps);
-	मुक्त(s->progs);
-	मुक्त(s);
-पूर्ण
+	if (s->obj)
+		bpf_object__close(*s->obj);
+	free(s->maps);
+	free(s->progs);
+	free(s);
+}

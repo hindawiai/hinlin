@@ -1,306 +1,305 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (c) 2018, NVIDIA CORPORATION.
  */
 
-#समावेश <linux/genभाग.स>
-#समावेश <linux/mailbox_client.h>
-#समावेश <linux/platक्रमm_device.h>
+#include <linux/genalloc.h>
+#include <linux/mailbox_client.h>
+#include <linux/platform_device.h>
 
-#समावेश <soc/tegra/bpmp.h>
-#समावेश <soc/tegra/bpmp-abi.h>
-#समावेश <soc/tegra/ivc.h>
+#include <soc/tegra/bpmp.h>
+#include <soc/tegra/bpmp-abi.h>
+#include <soc/tegra/ivc.h>
 
-#समावेश "bpmp-private.h"
+#include "bpmp-private.h"
 
-काष्ठा tegra186_bpmp अणु
-	काष्ठा tegra_bpmp *parent;
+struct tegra186_bpmp {
+	struct tegra_bpmp *parent;
 
-	काष्ठा अणु
-		काष्ठा gen_pool *pool;
+	struct {
+		struct gen_pool *pool;
 		dma_addr_t phys;
-		व्योम *virt;
-	पूर्ण tx, rx;
+		void *virt;
+	} tx, rx;
 
-	काष्ठा अणु
-		काष्ठा mbox_client client;
-		काष्ठा mbox_chan *channel;
-	पूर्ण mbox;
-पूर्ण;
+	struct {
+		struct mbox_client client;
+		struct mbox_chan *channel;
+	} mbox;
+};
 
-अटल अंतरभूत काष्ठा tegra_bpmp *
-mbox_client_to_bpmp(काष्ठा mbox_client *client)
-अणु
-	काष्ठा tegra186_bpmp *priv;
+static inline struct tegra_bpmp *
+mbox_client_to_bpmp(struct mbox_client *client)
+{
+	struct tegra186_bpmp *priv;
 
-	priv = container_of(client, काष्ठा tegra186_bpmp, mbox.client);
+	priv = container_of(client, struct tegra186_bpmp, mbox.client);
 
-	वापस priv->parent;
-पूर्ण
+	return priv->parent;
+}
 
-अटल bool tegra186_bpmp_is_message_पढ़ोy(काष्ठा tegra_bpmp_channel *channel)
-अणु
-	व्योम *frame;
+static bool tegra186_bpmp_is_message_ready(struct tegra_bpmp_channel *channel)
+{
+	void *frame;
 
-	frame = tegra_ivc_पढ़ो_get_next_frame(channel->ivc);
-	अगर (IS_ERR(frame)) अणु
-		channel->ib = शून्य;
-		वापस false;
-	पूर्ण
+	frame = tegra_ivc_read_get_next_frame(channel->ivc);
+	if (IS_ERR(frame)) {
+		channel->ib = NULL;
+		return false;
+	}
 
 	channel->ib = frame;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल bool tegra186_bpmp_is_channel_मुक्त(काष्ठा tegra_bpmp_channel *channel)
-अणु
-	व्योम *frame;
+static bool tegra186_bpmp_is_channel_free(struct tegra_bpmp_channel *channel)
+{
+	void *frame;
 
-	frame = tegra_ivc_ग_लिखो_get_next_frame(channel->ivc);
-	अगर (IS_ERR(frame)) अणु
-		channel->ob = शून्य;
-		वापस false;
-	पूर्ण
+	frame = tegra_ivc_write_get_next_frame(channel->ivc);
+	if (IS_ERR(frame)) {
+		channel->ob = NULL;
+		return false;
+	}
 
 	channel->ob = frame;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल पूर्णांक tegra186_bpmp_ack_message(काष्ठा tegra_bpmp_channel *channel)
-अणु
-	वापस tegra_ivc_पढ़ो_advance(channel->ivc);
-पूर्ण
+static int tegra186_bpmp_ack_message(struct tegra_bpmp_channel *channel)
+{
+	return tegra_ivc_read_advance(channel->ivc);
+}
 
-अटल पूर्णांक tegra186_bpmp_post_message(काष्ठा tegra_bpmp_channel *channel)
-अणु
-	वापस tegra_ivc_ग_लिखो_advance(channel->ivc);
-पूर्ण
+static int tegra186_bpmp_post_message(struct tegra_bpmp_channel *channel)
+{
+	return tegra_ivc_write_advance(channel->ivc);
+}
 
-अटल पूर्णांक tegra186_bpmp_ring_करोorbell(काष्ठा tegra_bpmp *bpmp)
-अणु
-	काष्ठा tegra186_bpmp *priv = bpmp->priv;
-	पूर्णांक err;
+static int tegra186_bpmp_ring_doorbell(struct tegra_bpmp *bpmp)
+{
+	struct tegra186_bpmp *priv = bpmp->priv;
+	int err;
 
-	err = mbox_send_message(priv->mbox.channel, शून्य);
-	अगर (err < 0)
-		वापस err;
+	err = mbox_send_message(priv->mbox.channel, NULL);
+	if (err < 0)
+		return err;
 
-	mbox_client_txकरोne(priv->mbox.channel, 0);
+	mbox_client_txdone(priv->mbox.channel, 0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम tegra186_bpmp_ivc_notअगरy(काष्ठा tegra_ivc *ivc, व्योम *data)
-अणु
-	काष्ठा tegra_bpmp *bpmp = data;
-	काष्ठा tegra186_bpmp *priv = bpmp->priv;
+static void tegra186_bpmp_ivc_notify(struct tegra_ivc *ivc, void *data)
+{
+	struct tegra_bpmp *bpmp = data;
+	struct tegra186_bpmp *priv = bpmp->priv;
 
-	अगर (WARN_ON(priv->mbox.channel == शून्य))
-		वापस;
+	if (WARN_ON(priv->mbox.channel == NULL))
+		return;
 
-	tegra186_bpmp_ring_करोorbell(bpmp);
-पूर्ण
+	tegra186_bpmp_ring_doorbell(bpmp);
+}
 
-अटल पूर्णांक tegra186_bpmp_channel_init(काष्ठा tegra_bpmp_channel *channel,
-				      काष्ठा tegra_bpmp *bpmp,
-				      अचिन्हित पूर्णांक index)
-अणु
-	काष्ठा tegra186_bpmp *priv = bpmp->priv;
-	माप_प्रकार message_size, queue_size;
-	अचिन्हित पूर्णांक offset;
-	पूर्णांक err;
+static int tegra186_bpmp_channel_init(struct tegra_bpmp_channel *channel,
+				      struct tegra_bpmp *bpmp,
+				      unsigned int index)
+{
+	struct tegra186_bpmp *priv = bpmp->priv;
+	size_t message_size, queue_size;
+	unsigned int offset;
+	int err;
 
-	channel->ivc = devm_kzalloc(bpmp->dev, माप(*channel->ivc),
+	channel->ivc = devm_kzalloc(bpmp->dev, sizeof(*channel->ivc),
 				    GFP_KERNEL);
-	अगर (!channel->ivc)
-		वापस -ENOMEM;
+	if (!channel->ivc)
+		return -ENOMEM;
 
 	message_size = tegra_ivc_align(MSG_MIN_SZ);
 	queue_size = tegra_ivc_total_queue_size(message_size);
 	offset = queue_size * index;
 
-	err = tegra_ivc_init(channel->ivc, शून्य,
+	err = tegra_ivc_init(channel->ivc, NULL,
 			     priv->rx.virt + offset, priv->rx.phys + offset,
 			     priv->tx.virt + offset, priv->tx.phys + offset,
-			     1, message_size, tegra186_bpmp_ivc_notअगरy,
+			     1, message_size, tegra186_bpmp_ivc_notify,
 			     bpmp);
-	अगर (err < 0) अणु
+	if (err < 0) {
 		dev_err(bpmp->dev, "failed to setup IVC for channel %u: %d\n",
 			index, err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	init_completion(&channel->completion);
 	channel->bpmp = bpmp;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम tegra186_bpmp_channel_reset(काष्ठा tegra_bpmp_channel *channel)
-अणु
+static void tegra186_bpmp_channel_reset(struct tegra_bpmp_channel *channel)
+{
 	/* reset the channel state */
 	tegra_ivc_reset(channel->ivc);
 
 	/* sync the channel state with BPMP */
-	जबतक (tegra_ivc_notअगरied(channel->ivc))
+	while (tegra_ivc_notified(channel->ivc))
 		;
-पूर्ण
+}
 
-अटल व्योम tegra186_bpmp_channel_cleanup(काष्ठा tegra_bpmp_channel *channel)
-अणु
+static void tegra186_bpmp_channel_cleanup(struct tegra_bpmp_channel *channel)
+{
 	tegra_ivc_cleanup(channel->ivc);
-पूर्ण
+}
 
-अटल व्योम mbox_handle_rx(काष्ठा mbox_client *client, व्योम *data)
-अणु
-	काष्ठा tegra_bpmp *bpmp = mbox_client_to_bpmp(client);
+static void mbox_handle_rx(struct mbox_client *client, void *data)
+{
+	struct tegra_bpmp *bpmp = mbox_client_to_bpmp(client);
 
 	tegra_bpmp_handle_rx(bpmp);
-पूर्ण
+}
 
-अटल पूर्णांक tegra186_bpmp_init(काष्ठा tegra_bpmp *bpmp)
-अणु
-	काष्ठा tegra186_bpmp *priv;
-	अचिन्हित पूर्णांक i;
-	पूर्णांक err;
+static int tegra186_bpmp_init(struct tegra_bpmp *bpmp)
+{
+	struct tegra186_bpmp *priv;
+	unsigned int i;
+	int err;
 
-	priv = devm_kzalloc(bpmp->dev, माप(*priv), GFP_KERNEL);
-	अगर (!priv)
-		वापस -ENOMEM;
+	priv = devm_kzalloc(bpmp->dev, sizeof(*priv), GFP_KERNEL);
+	if (!priv)
+		return -ENOMEM;
 
 	bpmp->priv = priv;
 	priv->parent = bpmp;
 
 	priv->tx.pool = of_gen_pool_get(bpmp->dev->of_node, "shmem", 0);
-	अगर (!priv->tx.pool) अणु
+	if (!priv->tx.pool) {
 		dev_err(bpmp->dev, "TX shmem pool not found\n");
-		वापस -EPROBE_DEFER;
-	पूर्ण
+		return -EPROBE_DEFER;
+	}
 
 	priv->tx.virt = gen_pool_dma_alloc(priv->tx.pool, 4096, &priv->tx.phys);
-	अगर (!priv->tx.virt) अणु
+	if (!priv->tx.virt) {
 		dev_err(bpmp->dev, "failed to allocate from TX pool\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	priv->rx.pool = of_gen_pool_get(bpmp->dev->of_node, "shmem", 1);
-	अगर (!priv->rx.pool) अणु
+	if (!priv->rx.pool) {
 		dev_err(bpmp->dev, "RX shmem pool not found\n");
 		err = -EPROBE_DEFER;
-		जाओ मुक्त_tx;
-	पूर्ण
+		goto free_tx;
+	}
 
 	priv->rx.virt = gen_pool_dma_alloc(priv->rx.pool, 4096, &priv->rx.phys);
-	अगर (!priv->rx.virt) अणु
+	if (!priv->rx.virt) {
 		dev_err(bpmp->dev, "failed to allocate from RX pool\n");
 		err = -ENOMEM;
-		जाओ मुक्त_tx;
-	पूर्ण
+		goto free_tx;
+	}
 
 	err = tegra186_bpmp_channel_init(bpmp->tx_channel, bpmp,
 					 bpmp->soc->channels.cpu_tx.offset);
-	अगर (err < 0)
-		जाओ मुक्त_rx;
+	if (err < 0)
+		goto free_rx;
 
 	err = tegra186_bpmp_channel_init(bpmp->rx_channel, bpmp,
 					 bpmp->soc->channels.cpu_rx.offset);
-	अगर (err < 0)
-		जाओ cleanup_tx_channel;
+	if (err < 0)
+		goto cleanup_tx_channel;
 
-	क्रम (i = 0; i < bpmp->thपढ़ोed.count; i++) अणु
-		अचिन्हित पूर्णांक index = bpmp->soc->channels.thपढ़ो.offset + i;
+	for (i = 0; i < bpmp->threaded.count; i++) {
+		unsigned int index = bpmp->soc->channels.thread.offset + i;
 
-		err = tegra186_bpmp_channel_init(&bpmp->thपढ़ोed_channels[i],
+		err = tegra186_bpmp_channel_init(&bpmp->threaded_channels[i],
 						 bpmp, index);
-		अगर (err < 0)
-			जाओ cleanup_channels;
-	पूर्ण
+		if (err < 0)
+			goto cleanup_channels;
+	}
 
 	/* mbox registration */
 	priv->mbox.client.dev = bpmp->dev;
 	priv->mbox.client.rx_callback = mbox_handle_rx;
 	priv->mbox.client.tx_block = false;
-	priv->mbox.client.knows_txकरोne = false;
+	priv->mbox.client.knows_txdone = false;
 
 	priv->mbox.channel = mbox_request_channel(&priv->mbox.client, 0);
-	अगर (IS_ERR(priv->mbox.channel)) अणु
+	if (IS_ERR(priv->mbox.channel)) {
 		err = PTR_ERR(priv->mbox.channel);
 		dev_err(bpmp->dev, "failed to get HSP mailbox: %d\n", err);
-		जाओ cleanup_channels;
-	पूर्ण
+		goto cleanup_channels;
+	}
 
 	tegra186_bpmp_channel_reset(bpmp->tx_channel);
 	tegra186_bpmp_channel_reset(bpmp->rx_channel);
 
-	क्रम (i = 0; i < bpmp->thपढ़ोed.count; i++)
-		tegra186_bpmp_channel_reset(&bpmp->thपढ़ोed_channels[i]);
+	for (i = 0; i < bpmp->threaded.count; i++)
+		tegra186_bpmp_channel_reset(&bpmp->threaded_channels[i]);
 
-	वापस 0;
+	return 0;
 
 cleanup_channels:
-	क्रम (i = 0; i < bpmp->thपढ़ोed.count; i++) अणु
-		अगर (!bpmp->thपढ़ोed_channels[i].bpmp)
-			जारी;
+	for (i = 0; i < bpmp->threaded.count; i++) {
+		if (!bpmp->threaded_channels[i].bpmp)
+			continue;
 
-		tegra186_bpmp_channel_cleanup(&bpmp->thपढ़ोed_channels[i]);
-	पूर्ण
+		tegra186_bpmp_channel_cleanup(&bpmp->threaded_channels[i]);
+	}
 
 	tegra186_bpmp_channel_cleanup(bpmp->rx_channel);
 cleanup_tx_channel:
 	tegra186_bpmp_channel_cleanup(bpmp->tx_channel);
-मुक्त_rx:
-	gen_pool_मुक्त(priv->rx.pool, (अचिन्हित दीर्घ)priv->rx.virt, 4096);
-मुक्त_tx:
-	gen_pool_मुक्त(priv->tx.pool, (अचिन्हित दीर्घ)priv->tx.virt, 4096);
+free_rx:
+	gen_pool_free(priv->rx.pool, (unsigned long)priv->rx.virt, 4096);
+free_tx:
+	gen_pool_free(priv->tx.pool, (unsigned long)priv->tx.virt, 4096);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम tegra186_bpmp_deinit(काष्ठा tegra_bpmp *bpmp)
-अणु
-	काष्ठा tegra186_bpmp *priv = bpmp->priv;
-	अचिन्हित पूर्णांक i;
+static void tegra186_bpmp_deinit(struct tegra_bpmp *bpmp)
+{
+	struct tegra186_bpmp *priv = bpmp->priv;
+	unsigned int i;
 
-	mbox_मुक्त_channel(priv->mbox.channel);
+	mbox_free_channel(priv->mbox.channel);
 
-	क्रम (i = 0; i < bpmp->thपढ़ोed.count; i++)
-		tegra186_bpmp_channel_cleanup(&bpmp->thपढ़ोed_channels[i]);
+	for (i = 0; i < bpmp->threaded.count; i++)
+		tegra186_bpmp_channel_cleanup(&bpmp->threaded_channels[i]);
 
 	tegra186_bpmp_channel_cleanup(bpmp->rx_channel);
 	tegra186_bpmp_channel_cleanup(bpmp->tx_channel);
 
-	gen_pool_मुक्त(priv->rx.pool, (अचिन्हित दीर्घ)priv->rx.virt, 4096);
-	gen_pool_मुक्त(priv->tx.pool, (अचिन्हित दीर्घ)priv->tx.virt, 4096);
-पूर्ण
+	gen_pool_free(priv->rx.pool, (unsigned long)priv->rx.virt, 4096);
+	gen_pool_free(priv->tx.pool, (unsigned long)priv->tx.virt, 4096);
+}
 
-अटल पूर्णांक tegra186_bpmp_resume(काष्ठा tegra_bpmp *bpmp)
-अणु
-	अचिन्हित पूर्णांक i;
+static int tegra186_bpmp_resume(struct tegra_bpmp *bpmp)
+{
+	unsigned int i;
 
 	/* reset message channels */
 	tegra186_bpmp_channel_reset(bpmp->tx_channel);
 	tegra186_bpmp_channel_reset(bpmp->rx_channel);
 
-	क्रम (i = 0; i < bpmp->thपढ़ोed.count; i++)
-		tegra186_bpmp_channel_reset(&bpmp->thपढ़ोed_channels[i]);
+	for (i = 0; i < bpmp->threaded.count; i++)
+		tegra186_bpmp_channel_reset(&bpmp->threaded_channels[i]);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-स्थिर काष्ठा tegra_bpmp_ops tegra186_bpmp_ops = अणु
+const struct tegra_bpmp_ops tegra186_bpmp_ops = {
 	.init = tegra186_bpmp_init,
 	.deinit = tegra186_bpmp_deinit,
-	.is_response_पढ़ोy = tegra186_bpmp_is_message_पढ़ोy,
-	.is_request_पढ़ोy = tegra186_bpmp_is_message_पढ़ोy,
+	.is_response_ready = tegra186_bpmp_is_message_ready,
+	.is_request_ready = tegra186_bpmp_is_message_ready,
 	.ack_response = tegra186_bpmp_ack_message,
 	.ack_request = tegra186_bpmp_ack_message,
-	.is_response_channel_मुक्त = tegra186_bpmp_is_channel_मुक्त,
-	.is_request_channel_मुक्त = tegra186_bpmp_is_channel_मुक्त,
+	.is_response_channel_free = tegra186_bpmp_is_channel_free,
+	.is_request_channel_free = tegra186_bpmp_is_channel_free,
 	.post_response = tegra186_bpmp_post_message,
 	.post_request = tegra186_bpmp_post_message,
-	.ring_करोorbell = tegra186_bpmp_ring_करोorbell,
+	.ring_doorbell = tegra186_bpmp_ring_doorbell,
 	.resume = tegra186_bpmp_resume,
-पूर्ण;
+};

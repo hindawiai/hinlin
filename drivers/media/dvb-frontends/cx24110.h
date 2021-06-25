@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
     cx24110 - Single Chip Satellite Channel Receiver driver module
 
@@ -10,40 +9,40 @@
 
 */
 
-#अगर_अघोषित CX24110_H
-#घोषणा CX24110_H
+#ifndef CX24110_H
+#define CX24110_H
 
-#समावेश <linux/dvb/frontend.h>
+#include <linux/dvb/frontend.h>
 
-काष्ठा cx24110_config
-अणु
+struct cx24110_config
+{
 	/* the demodulator's i2c address */
 	u8 demod_address;
-पूर्ण;
+};
 
-अटल अंतरभूत पूर्णांक cx24110_pll_ग_लिखो(काष्ठा dvb_frontend *fe, u32 val)
-अणु
-	u8 buf[] = अणु
+static inline int cx24110_pll_write(struct dvb_frontend *fe, u32 val)
+{
+	u8 buf[] = {
 		(u8)((val >> 24) & 0xff),
 		(u8)((val >> 16) & 0xff),
 		(u8)((val >> 8) & 0xff)
-	पूर्ण;
+	};
 
-	अगर (fe->ops.ग_लिखो)
-		वापस fe->ops.ग_लिखो(fe, buf, 3);
-	वापस 0;
-पूर्ण
+	if (fe->ops.write)
+		return fe->ops.write(fe, buf, 3);
+	return 0;
+}
 
-#अगर IS_REACHABLE(CONFIG_DVB_CX24110)
-बाह्य काष्ठा dvb_frontend* cx24110_attach(स्थिर काष्ठा cx24110_config* config,
-					   काष्ठा i2c_adapter* i2c);
-#अन्यथा
-अटल अंतरभूत काष्ठा dvb_frontend* cx24110_attach(स्थिर काष्ठा cx24110_config* config,
-						  काष्ठा i2c_adapter* i2c)
-अणु
-	prपूर्णांकk(KERN_WARNING "%s: driver disabled by Kconfig\n", __func__);
-	वापस शून्य;
-पूर्ण
-#पूर्ण_अगर // CONFIG_DVB_CX24110
+#if IS_REACHABLE(CONFIG_DVB_CX24110)
+extern struct dvb_frontend* cx24110_attach(const struct cx24110_config* config,
+					   struct i2c_adapter* i2c);
+#else
+static inline struct dvb_frontend* cx24110_attach(const struct cx24110_config* config,
+						  struct i2c_adapter* i2c)
+{
+	printk(KERN_WARNING "%s: driver disabled by Kconfig\n", __func__);
+	return NULL;
+}
+#endif // CONFIG_DVB_CX24110
 
-#पूर्ण_अगर // CX24110_H
+#endif // CX24110_H

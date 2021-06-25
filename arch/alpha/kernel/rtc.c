@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  *  linux/arch/alpha/kernel/rtc.c
  *
@@ -7,216 +6,216 @@
  *
  * This file contains date handling.
  */
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/init.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/param.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/mc146818rtc.h>
-#समावेश <linux/bcd.h>
-#समावेश <linux/rtc.h>
-#समावेश <linux/platक्रमm_device.h>
+#include <linux/errno.h>
+#include <linux/init.h>
+#include <linux/kernel.h>
+#include <linux/param.h>
+#include <linux/string.h>
+#include <linux/mc146818rtc.h>
+#include <linux/bcd.h>
+#include <linux/rtc.h>
+#include <linux/platform_device.h>
 
-#समावेश "proto.h"
+#include "proto.h"
 
 
 /*
- * Support क्रम the RTC device.
+ * Support for the RTC device.
  *
- * We करोn't want to use the rtc-cmos driver, because we don't want to support
- * alarms, as that would be indistinguishable from समयr पूर्णांकerrupts.
+ * We don't want to use the rtc-cmos driver, because we don't want to support
+ * alarms, as that would be indistinguishable from timer interrupts.
  *
  * Further, generic code is really, really tied to a 1900 epoch.  This is
- * true in __get_rtc_समय as well as the users of काष्ठा rtc_समय e.g.
- * rtc_पंचांग_to_समय.  Thankfully all of the other epochs in use are later
+ * true in __get_rtc_time as well as the users of struct rtc_time e.g.
+ * rtc_tm_to_time.  Thankfully all of the other epochs in use are later
  * than 1900, and so it's easy to adjust.
  */
 
-अटल अचिन्हित दीर्घ rtc_epoch;
+static unsigned long rtc_epoch;
 
-अटल पूर्णांक __init
-specअगरiy_epoch(अक्षर *str)
-अणु
-	अचिन्हित दीर्घ epoch = simple_म_से_अदीर्घ(str, शून्य, 0);
-	अगर (epoch < 1900)
-		prपूर्णांकk("Ignoring invalid user specified epoch %lu\n", epoch);
-	अन्यथा
+static int __init
+specifiy_epoch(char *str)
+{
+	unsigned long epoch = simple_strtoul(str, NULL, 0);
+	if (epoch < 1900)
+		printk("Ignoring invalid user specified epoch %lu\n", epoch);
+	else
 		rtc_epoch = epoch;
-	वापस 1;
-पूर्ण
-__setup("epoch=", specअगरiy_epoch);
+	return 1;
+}
+__setup("epoch=", specifiy_epoch);
 
-अटल व्योम __init
-init_rtc_epoch(व्योम)
-अणु
-	पूर्णांक epoch, year, ctrl;
+static void __init
+init_rtc_epoch(void)
+{
+	int epoch, year, ctrl;
 
-	अगर (rtc_epoch != 0) अणु
-		/* The epoch was specअगरied on the command-line.  */
-		वापस;
-	पूर्ण
+	if (rtc_epoch != 0) {
+		/* The epoch was specified on the command-line.  */
+		return;
+	}
 
 	/* Detect the epoch in use on this computer.  */
 	ctrl = CMOS_READ(RTC_CONTROL);
 	year = CMOS_READ(RTC_YEAR);
-	अगर (!(ctrl & RTC_DM_BINARY) || RTC_ALWAYS_BCD)
+	if (!(ctrl & RTC_DM_BINARY) || RTC_ALWAYS_BCD)
 		year = bcd2bin(year);
 
-	/* PC-like is standard; used क्रम year >= 70 */
+	/* PC-like is standard; used for year >= 70 */
 	epoch = 1900;
-	अगर (year < 20) अणु
+	if (year < 20) {
 		epoch = 2000;
-	पूर्ण अन्यथा अगर (year >= 20 && year < 48) अणु
+	} else if (year >= 20 && year < 48) {
 		/* NT epoch */
 		epoch = 1980;
-	पूर्ण अन्यथा अगर (year >= 48 && year < 70) अणु
+	} else if (year >= 48 && year < 70) {
 		/* Digital UNIX epoch */
 		epoch = 1952;
-	पूर्ण
+	}
 	rtc_epoch = epoch;
 
-	prपूर्णांकk(KERN_INFO "Using epoch %d for rtc year %d\n", epoch, year);
-पूर्ण
+	printk(KERN_INFO "Using epoch %d for rtc year %d\n", epoch, year);
+}
 
-अटल पूर्णांक
-alpha_rtc_पढ़ो_समय(काष्ठा device *dev, काष्ठा rtc_समय *पंचांग)
-अणु
-	mc146818_get_समय(पंचांग);
+static int
+alpha_rtc_read_time(struct device *dev, struct rtc_time *tm)
+{
+	mc146818_get_time(tm);
 
-	/* Adjust क्रम non-शेष epochs.  It's easier to depend on the
-	   generic __get_rtc_समय and adjust the epoch here than create
-	   a copy of __get_rtc_समय with the edits we need.  */
-	अगर (rtc_epoch != 1900) अणु
-		पूर्णांक year = पंचांग->पंचांग_year;
-		/* Unकरो the century adjusपंचांगent made in __get_rtc_समय.  */
-		अगर (year >= 100)
+	/* Adjust for non-default epochs.  It's easier to depend on the
+	   generic __get_rtc_time and adjust the epoch here than create
+	   a copy of __get_rtc_time with the edits we need.  */
+	if (rtc_epoch != 1900) {
+		int year = tm->tm_year;
+		/* Undo the century adjustment made in __get_rtc_time.  */
+		if (year >= 100)
 			year -= 100;
 		year += rtc_epoch - 1900;
-		/* Reकरो the century adjusपंचांगent with the epoch in place.  */
-		अगर (year <= 69)
+		/* Redo the century adjustment with the epoch in place.  */
+		if (year <= 69)
 			year += 100;
-		पंचांग->पंचांग_year = year;
-	पूर्ण
+		tm->tm_year = year;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-alpha_rtc_set_समय(काष्ठा device *dev, काष्ठा rtc_समय *पंचांग)
-अणु
-	काष्ठा rtc_समय xपंचांग;
+static int
+alpha_rtc_set_time(struct device *dev, struct rtc_time *tm)
+{
+	struct rtc_time xtm;
 
-	अगर (rtc_epoch != 1900) अणु
-		xपंचांग = *पंचांग;
-		xपंचांग.पंचांग_year -= rtc_epoch - 1900;
-		पंचांग = &xपंचांग;
-	पूर्ण
+	if (rtc_epoch != 1900) {
+		xtm = *tm;
+		xtm.tm_year -= rtc_epoch - 1900;
+		tm = &xtm;
+	}
 
-	वापस mc146818_set_समय(पंचांग);
-पूर्ण
+	return mc146818_set_time(tm);
+}
 
-अटल पूर्णांक
-alpha_rtc_ioctl(काष्ठा device *dev, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
-अणु
-	चयन (cmd) अणु
-	हाल RTC_EPOCH_READ:
-		वापस put_user(rtc_epoch, (अचिन्हित दीर्घ __user *)arg);
-	हाल RTC_EPOCH_SET:
-		अगर (arg < 1900)
-			वापस -EINVAL;
+static int
+alpha_rtc_ioctl(struct device *dev, unsigned int cmd, unsigned long arg)
+{
+	switch (cmd) {
+	case RTC_EPOCH_READ:
+		return put_user(rtc_epoch, (unsigned long __user *)arg);
+	case RTC_EPOCH_SET:
+		if (arg < 1900)
+			return -EINVAL;
 		rtc_epoch = arg;
-		वापस 0;
-	शेष:
-		वापस -ENOIOCTLCMD;
-	पूर्ण
-पूर्ण
+		return 0;
+	default:
+		return -ENOIOCTLCMD;
+	}
+}
 
-अटल स्थिर काष्ठा rtc_class_ops alpha_rtc_ops = अणु
-	.पढ़ो_समय = alpha_rtc_पढ़ो_समय,
-	.set_समय = alpha_rtc_set_समय,
+static const struct rtc_class_ops alpha_rtc_ops = {
+	.read_time = alpha_rtc_read_time,
+	.set_time = alpha_rtc_set_time,
 	.ioctl = alpha_rtc_ioctl,
-पूर्ण;
+};
 
 /*
- * Similarly, except करो the actual CMOS access on the boot cpu only.
- * This requires marshalling the data across an पूर्णांकerprocessor call.
+ * Similarly, except do the actual CMOS access on the boot cpu only.
+ * This requires marshalling the data across an interprocessor call.
  */
 
-#अगर defined(CONFIG_SMP) && \
+#if defined(CONFIG_SMP) && \
     (defined(CONFIG_ALPHA_GENERIC) || defined(CONFIG_ALPHA_MARVEL))
 # define HAVE_REMOTE_RTC 1
 
-जोड़ remote_data अणु
-	काष्ठा rtc_समय *पंचांग;
-	दीर्घ retval;
-पूर्ण;
+union remote_data {
+	struct rtc_time *tm;
+	long retval;
+};
 
-अटल व्योम
-करो_remote_पढ़ो(व्योम *data)
-अणु
-	जोड़ remote_data *x = data;
-	x->retval = alpha_rtc_पढ़ो_समय(शून्य, x->पंचांग);
-पूर्ण
+static void
+do_remote_read(void *data)
+{
+	union remote_data *x = data;
+	x->retval = alpha_rtc_read_time(NULL, x->tm);
+}
 
-अटल पूर्णांक
-remote_पढ़ो_समय(काष्ठा device *dev, काष्ठा rtc_समय *पंचांग)
-अणु
-	जोड़ remote_data x;
-	अगर (smp_processor_id() != boot_cpuid) अणु
-		x.पंचांग = पंचांग;
-		smp_call_function_single(boot_cpuid, करो_remote_पढ़ो, &x, 1);
-		वापस x.retval;
-	पूर्ण
-	वापस alpha_rtc_पढ़ो_समय(शून्य, पंचांग);
-पूर्ण
+static int
+remote_read_time(struct device *dev, struct rtc_time *tm)
+{
+	union remote_data x;
+	if (smp_processor_id() != boot_cpuid) {
+		x.tm = tm;
+		smp_call_function_single(boot_cpuid, do_remote_read, &x, 1);
+		return x.retval;
+	}
+	return alpha_rtc_read_time(NULL, tm);
+}
 
-अटल व्योम
-करो_remote_set(व्योम *data)
-अणु
-	जोड़ remote_data *x = data;
-	x->retval = alpha_rtc_set_समय(शून्य, x->पंचांग);
-पूर्ण
+static void
+do_remote_set(void *data)
+{
+	union remote_data *x = data;
+	x->retval = alpha_rtc_set_time(NULL, x->tm);
+}
 
-अटल पूर्णांक
-remote_set_समय(काष्ठा device *dev, काष्ठा rtc_समय *पंचांग)
-अणु
-	जोड़ remote_data x;
-	अगर (smp_processor_id() != boot_cpuid) अणु
-		x.पंचांग = पंचांग;
-		smp_call_function_single(boot_cpuid, करो_remote_set, &x, 1);
-		वापस x.retval;
-	पूर्ण
-	वापस alpha_rtc_set_समय(शून्य, पंचांग);
-पूर्ण
+static int
+remote_set_time(struct device *dev, struct rtc_time *tm)
+{
+	union remote_data x;
+	if (smp_processor_id() != boot_cpuid) {
+		x.tm = tm;
+		smp_call_function_single(boot_cpuid, do_remote_set, &x, 1);
+		return x.retval;
+	}
+	return alpha_rtc_set_time(NULL, tm);
+}
 
-अटल स्थिर काष्ठा rtc_class_ops remote_rtc_ops = अणु
-	.पढ़ो_समय = remote_पढ़ो_समय,
-	.set_समय = remote_set_समय,
+static const struct rtc_class_ops remote_rtc_ops = {
+	.read_time = remote_read_time,
+	.set_time = remote_set_time,
 	.ioctl = alpha_rtc_ioctl,
-पूर्ण;
-#पूर्ण_अगर
+};
+#endif
 
-अटल पूर्णांक __init
-alpha_rtc_init(व्योम)
-अणु
-	काष्ठा platक्रमm_device *pdev;
-	काष्ठा rtc_device *rtc;
+static int __init
+alpha_rtc_init(void)
+{
+	struct platform_device *pdev;
+	struct rtc_device *rtc;
 
 	init_rtc_epoch();
 
-	pdev = platक्रमm_device_रेजिस्टर_simple("rtc-alpha", -1, शून्य, 0);
+	pdev = platform_device_register_simple("rtc-alpha", -1, NULL, 0);
 	rtc = devm_rtc_allocate_device(&pdev->dev);
-	अगर (IS_ERR(rtc))
-		वापस PTR_ERR(rtc);
+	if (IS_ERR(rtc))
+		return PTR_ERR(rtc);
 
-	platक्रमm_set_drvdata(pdev, rtc);
+	platform_set_drvdata(pdev, rtc);
 	rtc->ops = &alpha_rtc_ops;
 
-#अगर_घोषित HAVE_REMOTE_RTC
-	अगर (alpha_mv.rtc_boot_cpu_only)
+#ifdef HAVE_REMOTE_RTC
+	if (alpha_mv.rtc_boot_cpu_only)
 		rtc->ops = &remote_rtc_ops;
-#पूर्ण_अगर
+#endif
 
-	वापस devm_rtc_रेजिस्टर_device(rtc);
-पूर्ण
+	return devm_rtc_register_device(rtc);
+}
 device_initcall(alpha_rtc_init);

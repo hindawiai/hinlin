@@ -1,206 +1,205 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /* NXP PCF50633 Power Management Unit (PMU) driver
  *
  * (C) 2006-2008 by Openmoko, Inc.
- * Author: Harald Welte <laक्रमge@खोलोmoko.org>
- * 	   Balaji Rao <balajirrao@खोलोmoko.org>
+ * Author: Harald Welte <laforge@openmoko.org>
+ * 	   Balaji Rao <balajirrao@openmoko.org>
  * All rights reserved.
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/device.h>
-#समावेश <linux/sysfs.h>
-#समावेश <linux/module.h>
-#समावेश <linux/types.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/workqueue.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/pm.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/err.h>
+#include <linux/kernel.h>
+#include <linux/device.h>
+#include <linux/sysfs.h>
+#include <linux/module.h>
+#include <linux/types.h>
+#include <linux/interrupt.h>
+#include <linux/workqueue.h>
+#include <linux/platform_device.h>
+#include <linux/i2c.h>
+#include <linux/pm.h>
+#include <linux/slab.h>
+#include <linux/regmap.h>
+#include <linux/err.h>
 
-#समावेश <linux/mfd/pcf50633/core.h>
+#include <linux/mfd/pcf50633/core.h>
 
 /* Read a block of up to 32 regs  */
-पूर्णांक pcf50633_पढ़ो_block(काष्ठा pcf50633 *pcf, u8 reg,
-					पूर्णांक nr_regs, u8 *data)
-अणु
-	पूर्णांक ret;
+int pcf50633_read_block(struct pcf50633 *pcf, u8 reg,
+					int nr_regs, u8 *data)
+{
+	int ret;
 
-	ret = regmap_raw_पढ़ो(pcf->regmap, reg, data, nr_regs);
-	अगर (ret != 0)
-		वापस ret;
+	ret = regmap_raw_read(pcf->regmap, reg, data, nr_regs);
+	if (ret != 0)
+		return ret;
 
-	वापस nr_regs;
-पूर्ण
-EXPORT_SYMBOL_GPL(pcf50633_पढ़ो_block);
+	return nr_regs;
+}
+EXPORT_SYMBOL_GPL(pcf50633_read_block);
 
 /* Write a block of up to 32 regs  */
-पूर्णांक pcf50633_ग_लिखो_block(काष्ठा pcf50633 *pcf , u8 reg,
-					पूर्णांक nr_regs, u8 *data)
-अणु
-	वापस regmap_raw_ग_लिखो(pcf->regmap, reg, data, nr_regs);
-पूर्ण
-EXPORT_SYMBOL_GPL(pcf50633_ग_लिखो_block);
+int pcf50633_write_block(struct pcf50633 *pcf , u8 reg,
+					int nr_regs, u8 *data)
+{
+	return regmap_raw_write(pcf->regmap, reg, data, nr_regs);
+}
+EXPORT_SYMBOL_GPL(pcf50633_write_block);
 
-u8 pcf50633_reg_पढ़ो(काष्ठा pcf50633 *pcf, u8 reg)
-अणु
-	अचिन्हित पूर्णांक val;
-	पूर्णांक ret;
+u8 pcf50633_reg_read(struct pcf50633 *pcf, u8 reg)
+{
+	unsigned int val;
+	int ret;
 
-	ret = regmap_पढ़ो(pcf->regmap, reg, &val);
-	अगर (ret < 0)
-		वापस -1;
+	ret = regmap_read(pcf->regmap, reg, &val);
+	if (ret < 0)
+		return -1;
 
-	वापस val;
-पूर्ण
-EXPORT_SYMBOL_GPL(pcf50633_reg_पढ़ो);
+	return val;
+}
+EXPORT_SYMBOL_GPL(pcf50633_reg_read);
 
-पूर्णांक pcf50633_reg_ग_लिखो(काष्ठा pcf50633 *pcf, u8 reg, u8 val)
-अणु
-	वापस regmap_ग_लिखो(pcf->regmap, reg, val);
-पूर्ण
-EXPORT_SYMBOL_GPL(pcf50633_reg_ग_लिखो);
+int pcf50633_reg_write(struct pcf50633 *pcf, u8 reg, u8 val)
+{
+	return regmap_write(pcf->regmap, reg, val);
+}
+EXPORT_SYMBOL_GPL(pcf50633_reg_write);
 
-पूर्णांक pcf50633_reg_set_bit_mask(काष्ठा pcf50633 *pcf, u8 reg, u8 mask, u8 val)
-अणु
-	वापस regmap_update_bits(pcf->regmap, reg, mask, val);
-पूर्ण
+int pcf50633_reg_set_bit_mask(struct pcf50633 *pcf, u8 reg, u8 mask, u8 val)
+{
+	return regmap_update_bits(pcf->regmap, reg, mask, val);
+}
 EXPORT_SYMBOL_GPL(pcf50633_reg_set_bit_mask);
 
-पूर्णांक pcf50633_reg_clear_bits(काष्ठा pcf50633 *pcf, u8 reg, u8 val)
-अणु
-	वापस regmap_update_bits(pcf->regmap, reg, val, 0);
-पूर्ण
+int pcf50633_reg_clear_bits(struct pcf50633 *pcf, u8 reg, u8 val)
+{
+	return regmap_update_bits(pcf->regmap, reg, val, 0);
+}
 EXPORT_SYMBOL_GPL(pcf50633_reg_clear_bits);
 
 /* sysfs attributes */
-अटल sमाप_प्रकार show_dump_regs(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			    अक्षर *buf)
-अणु
-	काष्ठा pcf50633 *pcf = dev_get_drvdata(dev);
+static ssize_t show_dump_regs(struct device *dev, struct device_attribute *attr,
+			    char *buf)
+{
+	struct pcf50633 *pcf = dev_get_drvdata(dev);
 	u8 dump[16];
-	पूर्णांक n, n1, idx = 0;
-	अक्षर *buf1 = buf;
-	अटल u8 address_no_पढ़ो[] = अणु /* must be ascending */
+	int n, n1, idx = 0;
+	char *buf1 = buf;
+	static u8 address_no_read[] = { /* must be ascending */
 		PCF50633_REG_INT1,
 		PCF50633_REG_INT2,
 		PCF50633_REG_INT3,
 		PCF50633_REG_INT4,
 		PCF50633_REG_INT5,
 		0 /* terminator */
-	पूर्ण;
+	};
 
-	क्रम (n = 0; n < 256; n += माप(dump)) अणु
-		क्रम (n1 = 0; n1 < माप(dump); n1++)
-			अगर (n == address_no_पढ़ो[idx]) अणु
+	for (n = 0; n < 256; n += sizeof(dump)) {
+		for (n1 = 0; n1 < sizeof(dump); n1++)
+			if (n == address_no_read[idx]) {
 				idx++;
 				dump[n1] = 0x00;
-			पूर्ण अन्यथा
-				dump[n1] = pcf50633_reg_पढ़ो(pcf, n + n1);
+			} else
+				dump[n1] = pcf50633_reg_read(pcf, n + n1);
 
-		buf1 += प्र_लिखो(buf1, "%*ph\n", (पूर्णांक)माप(dump), dump);
-	पूर्ण
+		buf1 += sprintf(buf1, "%*ph\n", (int)sizeof(dump), dump);
+	}
 
-	वापस buf1 - buf;
-पूर्ण
-अटल DEVICE_ATTR(dump_regs, 0400, show_dump_regs, शून्य);
+	return buf1 - buf;
+}
+static DEVICE_ATTR(dump_regs, 0400, show_dump_regs, NULL);
 
-अटल sमाप_प्रकार show_resume_reason(काष्ठा device *dev,
-				काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा pcf50633 *pcf = dev_get_drvdata(dev);
-	पूर्णांक n;
+static ssize_t show_resume_reason(struct device *dev,
+				struct device_attribute *attr, char *buf)
+{
+	struct pcf50633 *pcf = dev_get_drvdata(dev);
+	int n;
 
-	n = प्र_लिखो(buf, "%02x%02x%02x%02x%02x\n",
+	n = sprintf(buf, "%02x%02x%02x%02x%02x\n",
 				pcf->resume_reason[0],
 				pcf->resume_reason[1],
 				pcf->resume_reason[2],
 				pcf->resume_reason[3],
 				pcf->resume_reason[4]);
 
-	वापस n;
-पूर्ण
-अटल DEVICE_ATTR(resume_reason, 0400, show_resume_reason, शून्य);
+	return n;
+}
+static DEVICE_ATTR(resume_reason, 0400, show_resume_reason, NULL);
 
-अटल काष्ठा attribute *pcf_sysfs_entries[] = अणु
+static struct attribute *pcf_sysfs_entries[] = {
 	&dev_attr_dump_regs.attr,
 	&dev_attr_resume_reason.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल काष्ठा attribute_group pcf_attr_group = अणु
-	.name	= शून्य,			/* put in device directory */
+static struct attribute_group pcf_attr_group = {
+	.name	= NULL,			/* put in device directory */
 	.attrs	= pcf_sysfs_entries,
-पूर्ण;
+};
 
-अटल व्योम
-pcf50633_client_dev_रेजिस्टर(काष्ठा pcf50633 *pcf, स्थिर अक्षर *name,
-						काष्ठा platक्रमm_device **pdev)
-अणु
-	पूर्णांक ret;
+static void
+pcf50633_client_dev_register(struct pcf50633 *pcf, const char *name,
+						struct platform_device **pdev)
+{
+	int ret;
 
-	*pdev = platक्रमm_device_alloc(name, -1);
-	अगर (!*pdev) अणु
+	*pdev = platform_device_alloc(name, -1);
+	if (!*pdev) {
 		dev_err(pcf->dev, "Failed to allocate %s\n", name);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	(*pdev)->dev.parent = pcf->dev;
 
-	ret = platक्रमm_device_add(*pdev);
-	अगर (ret) अणु
+	ret = platform_device_add(*pdev);
+	if (ret) {
 		dev_err(pcf->dev, "Failed to register %s: %d\n", name, ret);
-		platक्रमm_device_put(*pdev);
-		*pdev = शून्य;
-	पूर्ण
-पूर्ण
+		platform_device_put(*pdev);
+		*pdev = NULL;
+	}
+}
 
-#अगर_घोषित CONFIG_PM_SLEEP
-अटल पूर्णांक pcf50633_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा i2c_client *client = to_i2c_client(dev);
-	काष्ठा pcf50633 *pcf = i2c_get_clientdata(client);
+#ifdef CONFIG_PM_SLEEP
+static int pcf50633_suspend(struct device *dev)
+{
+	struct i2c_client *client = to_i2c_client(dev);
+	struct pcf50633 *pcf = i2c_get_clientdata(client);
 
-	वापस pcf50633_irq_suspend(pcf);
-पूर्ण
+	return pcf50633_irq_suspend(pcf);
+}
 
-अटल पूर्णांक pcf50633_resume(काष्ठा device *dev)
-अणु
-	काष्ठा i2c_client *client = to_i2c_client(dev);
-	काष्ठा pcf50633 *pcf = i2c_get_clientdata(client);
+static int pcf50633_resume(struct device *dev)
+{
+	struct i2c_client *client = to_i2c_client(dev);
+	struct pcf50633 *pcf = i2c_get_clientdata(client);
 
-	वापस pcf50633_irq_resume(pcf);
-पूर्ण
-#पूर्ण_अगर
+	return pcf50633_irq_resume(pcf);
+}
+#endif
 
-अटल SIMPLE_DEV_PM_OPS(pcf50633_pm, pcf50633_suspend, pcf50633_resume);
+static SIMPLE_DEV_PM_OPS(pcf50633_pm, pcf50633_suspend, pcf50633_resume);
 
-अटल स्थिर काष्ठा regmap_config pcf50633_regmap_config = अणु
+static const struct regmap_config pcf50633_regmap_config = {
 	.reg_bits = 8,
 	.val_bits = 8,
-पूर्ण;
+};
 
-अटल पूर्णांक pcf50633_probe(काष्ठा i2c_client *client,
-				स्थिर काष्ठा i2c_device_id *ids)
-अणु
-	काष्ठा pcf50633 *pcf;
-	काष्ठा platक्रमm_device *pdev;
-	काष्ठा pcf50633_platक्रमm_data *pdata = dev_get_platdata(&client->dev);
-	पूर्णांक i, j, ret;
-	पूर्णांक version, variant;
+static int pcf50633_probe(struct i2c_client *client,
+				const struct i2c_device_id *ids)
+{
+	struct pcf50633 *pcf;
+	struct platform_device *pdev;
+	struct pcf50633_platform_data *pdata = dev_get_platdata(&client->dev);
+	int i, j, ret;
+	int version, variant;
 
-	अगर (!client->irq) अणु
+	if (!client->irq) {
 		dev_err(&client->dev, "Missing IRQ\n");
-		वापस -ENOENT;
-	पूर्ण
+		return -ENOENT;
+	}
 
-	pcf = devm_kzalloc(&client->dev, माप(*pcf), GFP_KERNEL);
-	अगर (!pcf)
-		वापस -ENOMEM;
+	pcf = devm_kzalloc(&client->dev, sizeof(*pcf), GFP_KERNEL);
+	if (!pcf)
+		return -ENOMEM;
 
 	i2c_set_clientdata(client, pcf);
 	pcf->dev = &client->dev;
@@ -209,19 +208,19 @@ pcf50633_client_dev_रेजिस्टर(काष्ठा pcf50633 *pcf, �
 	mutex_init(&pcf->lock);
 
 	pcf->regmap = devm_regmap_init_i2c(client, &pcf50633_regmap_config);
-	अगर (IS_ERR(pcf->regmap)) अणु
+	if (IS_ERR(pcf->regmap)) {
 		ret = PTR_ERR(pcf->regmap);
 		dev_err(pcf->dev, "Failed to allocate register map: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	version = pcf50633_reg_पढ़ो(pcf, 0);
-	variant = pcf50633_reg_पढ़ो(pcf, 1);
-	अगर (version < 0 || variant < 0) अणु
+	version = pcf50633_reg_read(pcf, 0);
+	variant = pcf50633_reg_read(pcf, 1);
+	if (version < 0 || variant < 0) {
 		dev_err(pcf->dev, "Unable to probe pcf50633\n");
 		ret = -ENODEV;
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	dev_info(pcf->dev, "Probed device version %d variant %d\n",
 							version, variant);
@@ -229,100 +228,100 @@ pcf50633_client_dev_रेजिस्टर(काष्ठा pcf50633 *pcf, �
 	pcf50633_irq_init(pcf, client->irq);
 
 	/* Create sub devices */
-	pcf50633_client_dev_रेजिस्टर(pcf, "pcf50633-input", &pcf->input_pdev);
-	pcf50633_client_dev_रेजिस्टर(pcf, "pcf50633-rtc", &pcf->rtc_pdev);
-	pcf50633_client_dev_रेजिस्टर(pcf, "pcf50633-mbc", &pcf->mbc_pdev);
-	pcf50633_client_dev_रेजिस्टर(pcf, "pcf50633-adc", &pcf->adc_pdev);
-	pcf50633_client_dev_रेजिस्टर(pcf, "pcf50633-backlight", &pcf->bl_pdev);
+	pcf50633_client_dev_register(pcf, "pcf50633-input", &pcf->input_pdev);
+	pcf50633_client_dev_register(pcf, "pcf50633-rtc", &pcf->rtc_pdev);
+	pcf50633_client_dev_register(pcf, "pcf50633-mbc", &pcf->mbc_pdev);
+	pcf50633_client_dev_register(pcf, "pcf50633-adc", &pcf->adc_pdev);
+	pcf50633_client_dev_register(pcf, "pcf50633-backlight", &pcf->bl_pdev);
 
 
-	क्रम (i = 0; i < PCF50633_NUM_REGULATORS; i++) अणु
-		pdev = platक्रमm_device_alloc("pcf50633-regulator", i);
-		अगर (!pdev) अणु
+	for (i = 0; i < PCF50633_NUM_REGULATORS; i++) {
+		pdev = platform_device_alloc("pcf50633-regulator", i);
+		if (!pdev) {
 			ret = -ENOMEM;
-			जाओ err2;
-		पूर्ण
+			goto err2;
+		}
 
 		pdev->dev.parent = pcf->dev;
-		ret = platक्रमm_device_add_data(pdev, &pdata->reg_init_data[i],
-					       माप(pdata->reg_init_data[i]));
-		अगर (ret)
-			जाओ err;
+		ret = platform_device_add_data(pdev, &pdata->reg_init_data[i],
+					       sizeof(pdata->reg_init_data[i]));
+		if (ret)
+			goto err;
 
-		ret = platक्रमm_device_add(pdev);
-		अगर (ret)
-			जाओ err;
+		ret = platform_device_add(pdev);
+		if (ret)
+			goto err;
 
 		pcf->regulator_pdev[i] = pdev;
-	पूर्ण
+	}
 
 	ret = sysfs_create_group(&client->dev.kobj, &pcf_attr_group);
-	अगर (ret)
+	if (ret)
 		dev_warn(pcf->dev, "error creating sysfs entries\n");
 
-	अगर (pdata->probe_करोne)
-		pdata->probe_करोne(pcf);
+	if (pdata->probe_done)
+		pdata->probe_done(pcf);
 
-	वापस 0;
+	return 0;
 
 err:
-	platक्रमm_device_put(pdev);
+	platform_device_put(pdev);
 err2:
-	क्रम (j = 0; j < i; j++)
-		platक्रमm_device_put(pcf->regulator_pdev[j]);
+	for (j = 0; j < i; j++)
+		platform_device_put(pcf->regulator_pdev[j]);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक pcf50633_हटाओ(काष्ठा i2c_client *client)
-अणु
-	काष्ठा pcf50633 *pcf = i2c_get_clientdata(client);
-	पूर्णांक i;
+static int pcf50633_remove(struct i2c_client *client)
+{
+	struct pcf50633 *pcf = i2c_get_clientdata(client);
+	int i;
 
-	sysfs_हटाओ_group(&client->dev.kobj, &pcf_attr_group);
-	pcf50633_irq_मुक्त(pcf);
+	sysfs_remove_group(&client->dev.kobj, &pcf_attr_group);
+	pcf50633_irq_free(pcf);
 
-	platक्रमm_device_unरेजिस्टर(pcf->input_pdev);
-	platक्रमm_device_unरेजिस्टर(pcf->rtc_pdev);
-	platक्रमm_device_unरेजिस्टर(pcf->mbc_pdev);
-	platक्रमm_device_unरेजिस्टर(pcf->adc_pdev);
-	platक्रमm_device_unरेजिस्टर(pcf->bl_pdev);
+	platform_device_unregister(pcf->input_pdev);
+	platform_device_unregister(pcf->rtc_pdev);
+	platform_device_unregister(pcf->mbc_pdev);
+	platform_device_unregister(pcf->adc_pdev);
+	platform_device_unregister(pcf->bl_pdev);
 
-	क्रम (i = 0; i < PCF50633_NUM_REGULATORS; i++)
-		platक्रमm_device_unरेजिस्टर(pcf->regulator_pdev[i]);
+	for (i = 0; i < PCF50633_NUM_REGULATORS; i++)
+		platform_device_unregister(pcf->regulator_pdev[i]);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा i2c_device_id pcf50633_id_table[] = अणु
-	अणु"pcf50633", 0x73पूर्ण,
-	अणु/* end of list */पूर्ण
-पूर्ण;
+static const struct i2c_device_id pcf50633_id_table[] = {
+	{"pcf50633", 0x73},
+	{/* end of list */}
+};
 MODULE_DEVICE_TABLE(i2c, pcf50633_id_table);
 
-अटल काष्ठा i2c_driver pcf50633_driver = अणु
-	.driver = अणु
+static struct i2c_driver pcf50633_driver = {
+	.driver = {
 		.name	= "pcf50633",
 		.pm	= &pcf50633_pm,
-	पूर्ण,
+	},
 	.id_table = pcf50633_id_table,
 	.probe = pcf50633_probe,
-	.हटाओ = pcf50633_हटाओ,
-पूर्ण;
+	.remove = pcf50633_remove,
+};
 
-अटल पूर्णांक __init pcf50633_init(व्योम)
-अणु
-	वापस i2c_add_driver(&pcf50633_driver);
-पूर्ण
+static int __init pcf50633_init(void)
+{
+	return i2c_add_driver(&pcf50633_driver);
+}
 
-अटल व्योम __निकास pcf50633_निकास(व्योम)
-अणु
+static void __exit pcf50633_exit(void)
+{
 	i2c_del_driver(&pcf50633_driver);
-पूर्ण
+}
 
 MODULE_DESCRIPTION("I2C chip driver for NXP PCF50633 PMU");
 MODULE_AUTHOR("Harald Welte <laforge@openmoko.org>");
 MODULE_LICENSE("GPL");
 
 subsys_initcall(pcf50633_init);
-module_निकास(pcf50633_निकास);
+module_exit(pcf50633_exit);

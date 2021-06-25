@@ -1,257 +1,256 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * AMD ACPI support क्रम ACPI2platक्रमm device.
+ * AMD ACPI support for ACPI2platform device.
  *
  * Copyright (c) 2014,2015 AMD Corporation.
  * Authors: Ken Xue <Ken.Xue@amd.com>
  *	Wu, Jeff <Jeff.Wu@amd.com>
  */
 
-#समावेश <linux/acpi.h>
-#समावेश <linux/clkdev.h>
-#समावेश <linux/clk-provider.h>
-#समावेश <linux/err.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/platक्रमm_data/clk-fch.h>
-#समावेश <linux/platक्रमm_device.h>
+#include <linux/acpi.h>
+#include <linux/clkdev.h>
+#include <linux/clk-provider.h>
+#include <linux/err.h>
+#include <linux/io.h>
+#include <linux/platform_data/clk-fch.h>
+#include <linux/platform_device.h>
 
-#समावेश "internal.h"
+#include "internal.h"
 
-काष्ठा apd_निजी_data;
+struct apd_private_data;
 
 /**
- * काष्ठा apd_device_desc - a descriptor क्रम apd device
- * @fixed_clk_rate: fixed rate input घड़ी source क्रम acpi device;
- *			0 means no fixed rate input घड़ी source
+ * struct apd_device_desc - a descriptor for apd device
+ * @fixed_clk_rate: fixed rate input clock source for acpi device;
+ *			0 means no fixed rate input clock source
  * @properties: build-in properties of the device such as UART
- * @setup: a hook routine to set device resource during create platक्रमm device
+ * @setup: a hook routine to set device resource during create platform device
  *
  * Device description defined as acpi_device_id.driver_data
  */
-काष्ठा apd_device_desc अणु
-	अचिन्हित पूर्णांक fixed_clk_rate;
-	काष्ठा property_entry *properties;
-	पूर्णांक (*setup)(काष्ठा apd_निजी_data *pdata);
-पूर्ण;
+struct apd_device_desc {
+	unsigned int fixed_clk_rate;
+	struct property_entry *properties;
+	int (*setup)(struct apd_private_data *pdata);
+};
 
-काष्ठा apd_निजी_data अणु
-	काष्ठा clk *clk;
-	काष्ठा acpi_device *adev;
-	स्थिर काष्ठा apd_device_desc *dev_desc;
-पूर्ण;
+struct apd_private_data {
+	struct clk *clk;
+	struct acpi_device *adev;
+	const struct apd_device_desc *dev_desc;
+};
 
-#अगर defined(CONFIG_X86_AMD_PLATFORM_DEVICE) || defined(CONFIG_ARM64)
-#घोषणा APD_ADDR(desc)	((अचिन्हित दीर्घ)&desc)
+#if defined(CONFIG_X86_AMD_PLATFORM_DEVICE) || defined(CONFIG_ARM64)
+#define APD_ADDR(desc)	((unsigned long)&desc)
 
-अटल पूर्णांक acpi_apd_setup(काष्ठा apd_निजी_data *pdata)
-अणु
-	स्थिर काष्ठा apd_device_desc *dev_desc = pdata->dev_desc;
-	काष्ठा clk *clk;
+static int acpi_apd_setup(struct apd_private_data *pdata)
+{
+	const struct apd_device_desc *dev_desc = pdata->dev_desc;
+	struct clk *clk;
 
-	अगर (dev_desc->fixed_clk_rate) अणु
-		clk = clk_रेजिस्टर_fixed_rate(&pdata->adev->dev,
+	if (dev_desc->fixed_clk_rate) {
+		clk = clk_register_fixed_rate(&pdata->adev->dev,
 					dev_name(&pdata->adev->dev),
-					शून्य, 0, dev_desc->fixed_clk_rate);
-		clk_रेजिस्टर_clkdev(clk, शून्य, dev_name(&pdata->adev->dev));
+					NULL, 0, dev_desc->fixed_clk_rate);
+		clk_register_clkdev(clk, NULL, dev_name(&pdata->adev->dev));
 		pdata->clk = clk;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_X86_AMD_PLATFORM_DEVICE
-अटल पूर्णांक misc_check_res(काष्ठा acpi_resource *ares, व्योम *data)
-अणु
-	काष्ठा resource res;
+#ifdef CONFIG_X86_AMD_PLATFORM_DEVICE
+static int misc_check_res(struct acpi_resource *ares, void *data)
+{
+	struct resource res;
 
-	वापस !acpi_dev_resource_memory(ares, &res);
-पूर्ण
+	return !acpi_dev_resource_memory(ares, &res);
+}
 
-अटल पूर्णांक fch_misc_setup(काष्ठा apd_निजी_data *pdata)
-अणु
-	काष्ठा acpi_device *adev = pdata->adev;
-	स्थिर जोड़ acpi_object *obj;
-	काष्ठा platक्रमm_device *clkdev;
-	काष्ठा fch_clk_data *clk_data;
-	काष्ठा resource_entry *rentry;
-	काष्ठा list_head resource_list;
-	पूर्णांक ret;
+static int fch_misc_setup(struct apd_private_data *pdata)
+{
+	struct acpi_device *adev = pdata->adev;
+	const union acpi_object *obj;
+	struct platform_device *clkdev;
+	struct fch_clk_data *clk_data;
+	struct resource_entry *rentry;
+	struct list_head resource_list;
+	int ret;
 
-	clk_data = devm_kzalloc(&adev->dev, माप(*clk_data), GFP_KERNEL);
-	अगर (!clk_data)
-		वापस -ENOMEM;
+	clk_data = devm_kzalloc(&adev->dev, sizeof(*clk_data), GFP_KERNEL);
+	if (!clk_data)
+		return -ENOMEM;
 
 	INIT_LIST_HEAD(&resource_list);
 	ret = acpi_dev_get_resources(adev, &resource_list, misc_check_res,
-				     शून्य);
-	अगर (ret < 0)
-		वापस -ENOENT;
+				     NULL);
+	if (ret < 0)
+		return -ENOENT;
 
-	अगर (!acpi_dev_get_property(adev, "is-rv", ACPI_TYPE_INTEGER, &obj))
-		clk_data->is_rv = obj->पूर्णांकeger.value;
+	if (!acpi_dev_get_property(adev, "is-rv", ACPI_TYPE_INTEGER, &obj))
+		clk_data->is_rv = obj->integer.value;
 
-	list_क्रम_each_entry(rentry, &resource_list, node) अणु
+	list_for_each_entry(rentry, &resource_list, node) {
 		clk_data->base = devm_ioremap(&adev->dev, rentry->res->start,
 					      resource_size(rentry->res));
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	acpi_dev_मुक्त_resource_list(&resource_list);
+	acpi_dev_free_resource_list(&resource_list);
 
-	clkdev = platक्रमm_device_रेजिस्टर_data(&adev->dev, "clk-fch",
+	clkdev = platform_device_register_data(&adev->dev, "clk-fch",
 					       PLATFORM_DEVID_NONE, clk_data,
-					       माप(*clk_data));
-	वापस PTR_ERR_OR_ZERO(clkdev);
-पूर्ण
+					       sizeof(*clk_data));
+	return PTR_ERR_OR_ZERO(clkdev);
+}
 
-अटल स्थिर काष्ठा apd_device_desc cz_i2c_desc = अणु
+static const struct apd_device_desc cz_i2c_desc = {
 	.setup = acpi_apd_setup,
 	.fixed_clk_rate = 133000000,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा apd_device_desc wt_i2c_desc = अणु
+static const struct apd_device_desc wt_i2c_desc = {
 	.setup = acpi_apd_setup,
 	.fixed_clk_rate = 150000000,
-पूर्ण;
+};
 
-अटल काष्ठा property_entry uart_properties[] = अणु
+static struct property_entry uart_properties[] = {
 	PROPERTY_ENTRY_U32("reg-io-width", 4),
 	PROPERTY_ENTRY_U32("reg-shift", 2),
 	PROPERTY_ENTRY_BOOL("snps,uart-16550-compatible"),
-	अणु पूर्ण,
-पूर्ण;
+	{ },
+};
 
-अटल स्थिर काष्ठा apd_device_desc cz_uart_desc = अणु
+static const struct apd_device_desc cz_uart_desc = {
 	.setup = acpi_apd_setup,
 	.fixed_clk_rate = 48000000,
 	.properties = uart_properties,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा apd_device_desc fch_misc_desc = अणु
+static const struct apd_device_desc fch_misc_desc = {
 	.setup = fch_misc_setup,
-पूर्ण;
-#पूर्ण_अगर /* CONFIG_X86_AMD_PLATFORM_DEVICE */
+};
+#endif /* CONFIG_X86_AMD_PLATFORM_DEVICE */
 
-#अगर_घोषित CONFIG_ARM64
-अटल स्थिर काष्ठा apd_device_desc xgene_i2c_desc = अणु
+#ifdef CONFIG_ARM64
+static const struct apd_device_desc xgene_i2c_desc = {
 	.setup = acpi_apd_setup,
 	.fixed_clk_rate = 100000000,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा apd_device_desc vulcan_spi_desc = अणु
+static const struct apd_device_desc vulcan_spi_desc = {
 	.setup = acpi_apd_setup,
 	.fixed_clk_rate = 133000000,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा apd_device_desc hip07_i2c_desc = अणु
+static const struct apd_device_desc hip07_i2c_desc = {
 	.setup = acpi_apd_setup,
 	.fixed_clk_rate = 200000000,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा apd_device_desc hip08_i2c_desc = अणु
+static const struct apd_device_desc hip08_i2c_desc = {
 	.setup = acpi_apd_setup,
 	.fixed_clk_rate = 250000000,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा apd_device_desc hip08_lite_i2c_desc = अणु
+static const struct apd_device_desc hip08_lite_i2c_desc = {
 	.setup = acpi_apd_setup,
 	.fixed_clk_rate = 125000000,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा apd_device_desc thunderx2_i2c_desc = अणु
+static const struct apd_device_desc thunderx2_i2c_desc = {
 	.setup = acpi_apd_setup,
 	.fixed_clk_rate = 125000000,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा apd_device_desc nxp_i2c_desc = अणु
+static const struct apd_device_desc nxp_i2c_desc = {
 	.setup = acpi_apd_setup,
 	.fixed_clk_rate = 350000000,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा apd_device_desc hip08_spi_desc = अणु
+static const struct apd_device_desc hip08_spi_desc = {
 	.setup = acpi_apd_setup,
 	.fixed_clk_rate = 250000000,
-पूर्ण;
-#पूर्ण_अगर /* CONFIG_ARM64 */
+};
+#endif /* CONFIG_ARM64 */
 
-#पूर्ण_अगर
+#endif
 
 /*
- * Create platक्रमm device during acpi scan attach handle.
+ * Create platform device during acpi scan attach handle.
  * Return value > 0 on success of creating device.
  */
-अटल पूर्णांक acpi_apd_create_device(काष्ठा acpi_device *adev,
-				   स्थिर काष्ठा acpi_device_id *id)
-अणु
-	स्थिर काष्ठा apd_device_desc *dev_desc = (व्योम *)id->driver_data;
-	काष्ठा apd_निजी_data *pdata;
-	काष्ठा platक्रमm_device *pdev;
-	पूर्णांक ret;
+static int acpi_apd_create_device(struct acpi_device *adev,
+				   const struct acpi_device_id *id)
+{
+	const struct apd_device_desc *dev_desc = (void *)id->driver_data;
+	struct apd_private_data *pdata;
+	struct platform_device *pdev;
+	int ret;
 
-	अगर (!dev_desc) अणु
-		pdev = acpi_create_platक्रमm_device(adev, शून्य);
-		वापस IS_ERR_OR_शून्य(pdev) ? PTR_ERR(pdev) : 1;
-	पूर्ण
+	if (!dev_desc) {
+		pdev = acpi_create_platform_device(adev, NULL);
+		return IS_ERR_OR_NULL(pdev) ? PTR_ERR(pdev) : 1;
+	}
 
-	pdata = kzalloc(माप(*pdata), GFP_KERNEL);
-	अगर (!pdata)
-		वापस -ENOMEM;
+	pdata = kzalloc(sizeof(*pdata), GFP_KERNEL);
+	if (!pdata)
+		return -ENOMEM;
 
 	pdata->adev = adev;
 	pdata->dev_desc = dev_desc;
 
-	अगर (dev_desc->setup) अणु
+	if (dev_desc->setup) {
 		ret = dev_desc->setup(pdata);
-		अगर (ret)
-			जाओ err_out;
-	पूर्ण
+		if (ret)
+			goto err_out;
+	}
 
 	adev->driver_data = pdata;
-	pdev = acpi_create_platक्रमm_device(adev, dev_desc->properties);
-	अगर (!IS_ERR_OR_शून्य(pdev))
-		वापस 1;
+	pdev = acpi_create_platform_device(adev, dev_desc->properties);
+	if (!IS_ERR_OR_NULL(pdev))
+		return 1;
 
 	ret = PTR_ERR(pdev);
-	adev->driver_data = शून्य;
+	adev->driver_data = NULL;
 
  err_out:
-	kमुक्त(pdata);
-	वापस ret;
-पूर्ण
+	kfree(pdata);
+	return ret;
+}
 
-अटल स्थिर काष्ठा acpi_device_id acpi_apd_device_ids[] = अणु
+static const struct acpi_device_id acpi_apd_device_ids[] = {
 	/* Generic apd devices */
-#अगर_घोषित CONFIG_X86_AMD_PLATFORM_DEVICE
-	अणु "AMD0010", APD_ADDR(cz_i2c_desc) पूर्ण,
-	अणु "AMDI0010", APD_ADDR(wt_i2c_desc) पूर्ण,
-	अणु "AMD0020", APD_ADDR(cz_uart_desc) पूर्ण,
-	अणु "AMDI0020", APD_ADDR(cz_uart_desc) पूर्ण,
-	अणु "AMDI0022", APD_ADDR(cz_uart_desc) पूर्ण,
-	अणु "AMD0030", पूर्ण,
-	अणु "AMD0040", APD_ADDR(fch_misc_desc)पूर्ण,
-	अणु "HYGO0010", APD_ADDR(wt_i2c_desc) पूर्ण,
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_ARM64
-	अणु "APMC0D0F", APD_ADDR(xgene_i2c_desc) पूर्ण,
-	अणु "BRCM900D", APD_ADDR(vulcan_spi_desc) पूर्ण,
-	अणु "CAV900D",  APD_ADDR(vulcan_spi_desc) पूर्ण,
-	अणु "CAV9007",  APD_ADDR(thunderx2_i2c_desc) पूर्ण,
-	अणु "HISI02A1", APD_ADDR(hip07_i2c_desc) पूर्ण,
-	अणु "HISI02A2", APD_ADDR(hip08_i2c_desc) पूर्ण,
-	अणु "HISI02A3", APD_ADDR(hip08_lite_i2c_desc) पूर्ण,
-	अणु "HISI0173", APD_ADDR(hip08_spi_desc) पूर्ण,
-	अणु "NXP0001", APD_ADDR(nxp_i2c_desc) पूर्ण,
-#पूर्ण_अगर
-	अणु पूर्ण
-पूर्ण;
+#ifdef CONFIG_X86_AMD_PLATFORM_DEVICE
+	{ "AMD0010", APD_ADDR(cz_i2c_desc) },
+	{ "AMDI0010", APD_ADDR(wt_i2c_desc) },
+	{ "AMD0020", APD_ADDR(cz_uart_desc) },
+	{ "AMDI0020", APD_ADDR(cz_uart_desc) },
+	{ "AMDI0022", APD_ADDR(cz_uart_desc) },
+	{ "AMD0030", },
+	{ "AMD0040", APD_ADDR(fch_misc_desc)},
+	{ "HYGO0010", APD_ADDR(wt_i2c_desc) },
+#endif
+#ifdef CONFIG_ARM64
+	{ "APMC0D0F", APD_ADDR(xgene_i2c_desc) },
+	{ "BRCM900D", APD_ADDR(vulcan_spi_desc) },
+	{ "CAV900D",  APD_ADDR(vulcan_spi_desc) },
+	{ "CAV9007",  APD_ADDR(thunderx2_i2c_desc) },
+	{ "HISI02A1", APD_ADDR(hip07_i2c_desc) },
+	{ "HISI02A2", APD_ADDR(hip08_i2c_desc) },
+	{ "HISI02A3", APD_ADDR(hip08_lite_i2c_desc) },
+	{ "HISI0173", APD_ADDR(hip08_spi_desc) },
+	{ "NXP0001", APD_ADDR(nxp_i2c_desc) },
+#endif
+	{ }
+};
 
-अटल काष्ठा acpi_scan_handler apd_handler = अणु
+static struct acpi_scan_handler apd_handler = {
 	.ids = acpi_apd_device_ids,
 	.attach = acpi_apd_create_device,
-पूर्ण;
+};
 
-व्योम __init acpi_apd_init(व्योम)
-अणु
+void __init acpi_apd_init(void)
+{
 	acpi_scan_add_handler(&apd_handler);
-पूर्ण
+}

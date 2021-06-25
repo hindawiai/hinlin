@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright 2009-2010 Pengutronix
  * Uwe Kleine-Koenig <u.kleine-koenig@pengutronix.de>
@@ -8,130 +7,130 @@
  * Copyright 2009 Pengutronix, Sascha Hauer <s.hauer@pengutronix.de>
  */
 
-#समावेश <linux/slab.h>
-#समावेश <linux/module.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/mfd/core.h>
-#समावेश <linux/mfd/mc13xxx.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/of_gpपन.स>
-#समावेश <linux/err.h>
-#समावेश <linux/spi/spi.h>
+#include <linux/slab.h>
+#include <linux/module.h>
+#include <linux/platform_device.h>
+#include <linux/interrupt.h>
+#include <linux/mfd/core.h>
+#include <linux/mfd/mc13xxx.h>
+#include <linux/of.h>
+#include <linux/of_device.h>
+#include <linux/of_gpio.h>
+#include <linux/err.h>
+#include <linux/spi/spi.h>
 
-#समावेश "mc13xxx.h"
+#include "mc13xxx.h"
 
-अटल स्थिर काष्ठा spi_device_id mc13xxx_device_id[] = अणु
-	अणु
+static const struct spi_device_id mc13xxx_device_id[] = {
+	{
 		.name = "mc13783",
-		.driver_data = (kernel_uदीर्घ_t)&mc13xxx_variant_mc13783,
-	पूर्ण, अणु
+		.driver_data = (kernel_ulong_t)&mc13xxx_variant_mc13783,
+	}, {
 		.name = "mc13892",
-		.driver_data = (kernel_uदीर्घ_t)&mc13xxx_variant_mc13892,
-	पूर्ण, अणु
+		.driver_data = (kernel_ulong_t)&mc13xxx_variant_mc13892,
+	}, {
 		.name = "mc34708",
-		.driver_data = (kernel_uदीर्घ_t)&mc13xxx_variant_mc34708,
-	पूर्ण, अणु
+		.driver_data = (kernel_ulong_t)&mc13xxx_variant_mc34708,
+	}, {
 		/* sentinel */
-	पूर्ण
-पूर्ण;
+	}
+};
 MODULE_DEVICE_TABLE(spi, mc13xxx_device_id);
 
-अटल स्थिर काष्ठा of_device_id mc13xxx_dt_ids[] = अणु
-	अणु .compatible = "fsl,mc13783", .data = &mc13xxx_variant_mc13783, पूर्ण,
-	अणु .compatible = "fsl,mc13892", .data = &mc13xxx_variant_mc13892, पूर्ण,
-	अणु .compatible = "fsl,mc34708", .data = &mc13xxx_variant_mc34708, पूर्ण,
-	अणु /* sentinel */ पूर्ण
-पूर्ण;
+static const struct of_device_id mc13xxx_dt_ids[] = {
+	{ .compatible = "fsl,mc13783", .data = &mc13xxx_variant_mc13783, },
+	{ .compatible = "fsl,mc13892", .data = &mc13xxx_variant_mc13892, },
+	{ .compatible = "fsl,mc34708", .data = &mc13xxx_variant_mc34708, },
+	{ /* sentinel */ }
+};
 MODULE_DEVICE_TABLE(of, mc13xxx_dt_ids);
 
-अटल स्थिर काष्ठा regmap_config mc13xxx_regmap_spi_config = अणु
+static const struct regmap_config mc13xxx_regmap_spi_config = {
 	.reg_bits = 7,
 	.pad_bits = 1,
 	.val_bits = 24,
-	.ग_लिखो_flag_mask = 0x80,
+	.write_flag_mask = 0x80,
 
-	.max_रेजिस्टर = MC13XXX_NUMREGS,
+	.max_register = MC13XXX_NUMREGS,
 
 	.cache_type = REGCACHE_NONE,
-	.use_single_पढ़ो = true,
-	.use_single_ग_लिखो = true,
-पूर्ण;
+	.use_single_read = true,
+	.use_single_write = true,
+};
 
-अटल पूर्णांक mc13xxx_spi_पढ़ो(व्योम *context, स्थिर व्योम *reg, माप_प्रकार reg_size,
-				व्योम *val, माप_प्रकार val_size)
-अणु
-	अचिन्हित अक्षर w[4] = अणु *((अचिन्हित अक्षर *) reg), 0, 0, 0पूर्ण;
-	अचिन्हित अक्षर r[4];
-	अचिन्हित अक्षर *p = val;
-	काष्ठा device *dev = context;
-	काष्ठा spi_device *spi = to_spi_device(dev);
-	काष्ठा spi_transfer t = अणु
+static int mc13xxx_spi_read(void *context, const void *reg, size_t reg_size,
+				void *val, size_t val_size)
+{
+	unsigned char w[4] = { *((unsigned char *) reg), 0, 0, 0};
+	unsigned char r[4];
+	unsigned char *p = val;
+	struct device *dev = context;
+	struct spi_device *spi = to_spi_device(dev);
+	struct spi_transfer t = {
 		.tx_buf = w,
 		.rx_buf = r,
 		.len = 4,
-	पूर्ण;
+	};
 
-	काष्ठा spi_message m;
-	पूर्णांक ret;
+	struct spi_message m;
+	int ret;
 
-	अगर (val_size != 3 || reg_size != 1)
-		वापस -ENOTSUPP;
+	if (val_size != 3 || reg_size != 1)
+		return -ENOTSUPP;
 
 	spi_message_init(&m);
 	spi_message_add_tail(&t, &m);
 	ret = spi_sync(spi, &m);
 
-	स_नकल(p, &r[1], 3);
+	memcpy(p, &r[1], 3);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक mc13xxx_spi_ग_लिखो(व्योम *context, स्थिर व्योम *data, माप_प्रकार count)
-अणु
-	काष्ठा device *dev = context;
-	काष्ठा spi_device *spi = to_spi_device(dev);
-	स्थिर अक्षर *reg = data;
+static int mc13xxx_spi_write(void *context, const void *data, size_t count)
+{
+	struct device *dev = context;
+	struct spi_device *spi = to_spi_device(dev);
+	const char *reg = data;
 
-	अगर (count != 4)
-		वापस -ENOTSUPP;
+	if (count != 4)
+		return -ENOTSUPP;
 
-	/* include errata fix क्रम spi audio problems */
-	अगर (*reg == MC13783_AUDIO_CODEC || *reg == MC13783_AUDIO_DAC)
-		spi_ग_लिखो(spi, data, count);
+	/* include errata fix for spi audio problems */
+	if (*reg == MC13783_AUDIO_CODEC || *reg == MC13783_AUDIO_DAC)
+		spi_write(spi, data, count);
 
-	वापस spi_ग_लिखो(spi, data, count);
-पूर्ण
+	return spi_write(spi, data, count);
+}
 
 /*
  * We cannot use regmap-spi generic bus implementation here.
- * The MC13783 chip will get corrupted अगर CS संकेत is deनिश्चितed
- * and on i.Mx31 SoC (the target SoC क्रम MC13783 PMIC) the SPI controller
+ * The MC13783 chip will get corrupted if CS signal is deasserted
+ * and on i.Mx31 SoC (the target SoC for MC13783 PMIC) the SPI controller
  * has the following errata (DSPhl22960):
  * "The CSPI negates SS when the FIFO becomes empty with
  * SSCTL= 0. Software cannot guarantee that the FIFO will not
- * drain because of higher priority पूर्णांकerrupts and the
- * non-realसमय अक्षरacteristics of the operating प्रणाली. As a
- * result, the SS will negate beक्रमe all of the data has been
+ * drain because of higher priority interrupts and the
+ * non-realtime characteristics of the operating system. As a
+ * result, the SS will negate before all of the data has been
  * transferred to/from the peripheral."
  * We workaround this by accessing the SPI controller with a
  * single transfert.
  */
 
-अटल काष्ठा regmap_bus regmap_mc13xxx_bus = अणु
-	.ग_लिखो = mc13xxx_spi_ग_लिखो,
-	.पढ़ो = mc13xxx_spi_पढ़ो,
-पूर्ण;
+static struct regmap_bus regmap_mc13xxx_bus = {
+	.write = mc13xxx_spi_write,
+	.read = mc13xxx_spi_read,
+};
 
-अटल पूर्णांक mc13xxx_spi_probe(काष्ठा spi_device *spi)
-अणु
-	काष्ठा mc13xxx *mc13xxx;
-	पूर्णांक ret;
+static int mc13xxx_spi_probe(struct spi_device *spi)
+{
+	struct mc13xxx *mc13xxx;
+	int ret;
 
-	mc13xxx = devm_kzalloc(&spi->dev, माप(*mc13xxx), GFP_KERNEL);
-	अगर (!mc13xxx)
-		वापस -ENOMEM;
+	mc13xxx = devm_kzalloc(&spi->dev, sizeof(*mc13xxx), GFP_KERNEL);
+	if (!mc13xxx)
+		return -ENOMEM;
 
 	dev_set_drvdata(&spi->dev, mc13xxx);
 
@@ -141,58 +140,58 @@ MODULE_DEVICE_TABLE(of, mc13xxx_dt_ids);
 
 	spi->max_speed_hz = spi->max_speed_hz ? : 26000000;
 	ret = spi_setup(spi);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	mc13xxx->regmap = devm_regmap_init(&spi->dev, &regmap_mc13xxx_bus,
 					   &spi->dev,
 					   &mc13xxx_regmap_spi_config);
-	अगर (IS_ERR(mc13xxx->regmap)) अणु
+	if (IS_ERR(mc13xxx->regmap)) {
 		ret = PTR_ERR(mc13xxx->regmap);
 		dev_err(&spi->dev, "Failed to initialize regmap: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	अगर (spi->dev.of_node) अणु
-		स्थिर काष्ठा of_device_id *of_id =
+	if (spi->dev.of_node) {
+		const struct of_device_id *of_id =
 			of_match_device(mc13xxx_dt_ids, &spi->dev);
 
 		mc13xxx->variant = of_id->data;
-	पूर्ण अन्यथा अणु
-		स्थिर काष्ठा spi_device_id *id_entry = spi_get_device_id(spi);
+	} else {
+		const struct spi_device_id *id_entry = spi_get_device_id(spi);
 
-		mc13xxx->variant = (व्योम *)id_entry->driver_data;
-	पूर्ण
+		mc13xxx->variant = (void *)id_entry->driver_data;
+	}
 
-	वापस mc13xxx_common_init(&spi->dev);
-पूर्ण
+	return mc13xxx_common_init(&spi->dev);
+}
 
-अटल पूर्णांक mc13xxx_spi_हटाओ(काष्ठा spi_device *spi)
-अणु
-	वापस mc13xxx_common_निकास(&spi->dev);
-पूर्ण
+static int mc13xxx_spi_remove(struct spi_device *spi)
+{
+	return mc13xxx_common_exit(&spi->dev);
+}
 
-अटल काष्ठा spi_driver mc13xxx_spi_driver = अणु
+static struct spi_driver mc13xxx_spi_driver = {
 	.id_table = mc13xxx_device_id,
-	.driver = अणु
+	.driver = {
 		.name = "mc13xxx",
 		.of_match_table = mc13xxx_dt_ids,
-	पूर्ण,
+	},
 	.probe = mc13xxx_spi_probe,
-	.हटाओ = mc13xxx_spi_हटाओ,
-पूर्ण;
+	.remove = mc13xxx_spi_remove,
+};
 
-अटल पूर्णांक __init mc13xxx_init(व्योम)
-अणु
-	वापस spi_रेजिस्टर_driver(&mc13xxx_spi_driver);
-पूर्ण
+static int __init mc13xxx_init(void)
+{
+	return spi_register_driver(&mc13xxx_spi_driver);
+}
 subsys_initcall(mc13xxx_init);
 
-अटल व्योम __निकास mc13xxx_निकास(व्योम)
-अणु
-	spi_unरेजिस्टर_driver(&mc13xxx_spi_driver);
-पूर्ण
-module_निकास(mc13xxx_निकास);
+static void __exit mc13xxx_exit(void)
+{
+	spi_unregister_driver(&mc13xxx_spi_driver);
+}
+module_exit(mc13xxx_exit);
 
 MODULE_DESCRIPTION("Core driver for Freescale MC13XXX PMIC");
 MODULE_AUTHOR("Uwe Kleine-Koenig <u.kleine-koenig@pengutronix.de>");

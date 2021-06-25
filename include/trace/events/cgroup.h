@@ -1,22 +1,21 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अघोषित TRACE_SYSTEM
-#घोषणा TRACE_SYSTEM cgroup
+/* SPDX-License-Identifier: GPL-2.0 */
+#undef TRACE_SYSTEM
+#define TRACE_SYSTEM cgroup
 
-#अगर !defined(_TRACE_CGROUP_H) || defined(TRACE_HEADER_MULTI_READ)
-#घोषणा _TRACE_CGROUP_H
+#if !defined(_TRACE_CGROUP_H) || defined(TRACE_HEADER_MULTI_READ)
+#define _TRACE_CGROUP_H
 
-#समावेश <linux/cgroup.h>
-#समावेश <linux/tracepoपूर्णांक.h>
+#include <linux/cgroup.h>
+#include <linux/tracepoint.h>
 
 DECLARE_EVENT_CLASS(cgroup_root,
 
-	TP_PROTO(काष्ठा cgroup_root *root),
+	TP_PROTO(struct cgroup_root *root),
 
 	TP_ARGS(root),
 
 	TP_STRUCT__entry(
-		__field(	पूर्णांक,		root			)
+		__field(	int,		root			)
 		__field(	u16,		ss_mask			)
 		__string(	name,		root->name		)
 	),
@@ -27,41 +26,41 @@ DECLARE_EVENT_CLASS(cgroup_root,
 		__assign_str(name, root->name);
 	),
 
-	TP_prपूर्णांकk("root=%d ss_mask=%#x name=%s",
+	TP_printk("root=%d ss_mask=%#x name=%s",
 		  __entry->root, __entry->ss_mask, __get_str(name))
 );
 
 DEFINE_EVENT(cgroup_root, cgroup_setup_root,
 
-	TP_PROTO(काष्ठा cgroup_root *root),
+	TP_PROTO(struct cgroup_root *root),
 
 	TP_ARGS(root)
 );
 
 DEFINE_EVENT(cgroup_root, cgroup_destroy_root,
 
-	TP_PROTO(काष्ठा cgroup_root *root),
+	TP_PROTO(struct cgroup_root *root),
 
 	TP_ARGS(root)
 );
 
 DEFINE_EVENT(cgroup_root, cgroup_remount,
 
-	TP_PROTO(काष्ठा cgroup_root *root),
+	TP_PROTO(struct cgroup_root *root),
 
 	TP_ARGS(root)
 );
 
 DECLARE_EVENT_CLASS(cgroup,
 
-	TP_PROTO(काष्ठा cgroup *cgrp, स्थिर अक्षर *path),
+	TP_PROTO(struct cgroup *cgrp, const char *path),
 
 	TP_ARGS(cgrp, path),
 
 	TP_STRUCT__entry(
-		__field(	पूर्णांक,		root			)
-		__field(	पूर्णांक,		id			)
-		__field(	पूर्णांक,		level			)
+		__field(	int,		root			)
+		__field(	int,		id			)
+		__field(	int,		level			)
 		__string(	path,		path			)
 	),
 
@@ -72,64 +71,64 @@ DECLARE_EVENT_CLASS(cgroup,
 		__assign_str(path, path);
 	),
 
-	TP_prपूर्णांकk("root=%d id=%d level=%d path=%s",
+	TP_printk("root=%d id=%d level=%d path=%s",
 		  __entry->root, __entry->id, __entry->level, __get_str(path))
 );
 
-DEFINE_EVENT(cgroup, cgroup_सूची_गढ़ो,
+DEFINE_EVENT(cgroup, cgroup_mkdir,
 
-	TP_PROTO(काष्ठा cgroup *cgrp, स्थिर अक्षर *path),
+	TP_PROTO(struct cgroup *cgrp, const char *path),
 
 	TP_ARGS(cgrp, path)
 );
 
-DEFINE_EVENT(cgroup, cgroup_सूची_हटाओ,
+DEFINE_EVENT(cgroup, cgroup_rmdir,
 
-	TP_PROTO(काष्ठा cgroup *cgrp, स्थिर अक्षर *path),
+	TP_PROTO(struct cgroup *cgrp, const char *path),
 
 	TP_ARGS(cgrp, path)
 );
 
 DEFINE_EVENT(cgroup, cgroup_release,
 
-	TP_PROTO(काष्ठा cgroup *cgrp, स्थिर अक्षर *path),
+	TP_PROTO(struct cgroup *cgrp, const char *path),
 
 	TP_ARGS(cgrp, path)
 );
 
-DEFINE_EVENT(cgroup, cgroup_नाम,
+DEFINE_EVENT(cgroup, cgroup_rename,
 
-	TP_PROTO(काष्ठा cgroup *cgrp, स्थिर अक्षर *path),
-
-	TP_ARGS(cgrp, path)
-);
-
-DEFINE_EVENT(cgroup, cgroup_मुक्तze,
-
-	TP_PROTO(काष्ठा cgroup *cgrp, स्थिर अक्षर *path),
+	TP_PROTO(struct cgroup *cgrp, const char *path),
 
 	TP_ARGS(cgrp, path)
 );
 
-DEFINE_EVENT(cgroup, cgroup_unमुक्तze,
+DEFINE_EVENT(cgroup, cgroup_freeze,
 
-	TP_PROTO(काष्ठा cgroup *cgrp, स्थिर अक्षर *path),
+	TP_PROTO(struct cgroup *cgrp, const char *path),
+
+	TP_ARGS(cgrp, path)
+);
+
+DEFINE_EVENT(cgroup, cgroup_unfreeze,
+
+	TP_PROTO(struct cgroup *cgrp, const char *path),
 
 	TP_ARGS(cgrp, path)
 );
 
 DECLARE_EVENT_CLASS(cgroup_migrate,
 
-	TP_PROTO(काष्ठा cgroup *dst_cgrp, स्थिर अक्षर *path,
-		 काष्ठा task_काष्ठा *task, bool thपढ़ोgroup),
+	TP_PROTO(struct cgroup *dst_cgrp, const char *path,
+		 struct task_struct *task, bool threadgroup),
 
-	TP_ARGS(dst_cgrp, path, task, thपढ़ोgroup),
+	TP_ARGS(dst_cgrp, path, task, threadgroup),
 
 	TP_STRUCT__entry(
-		__field(	पूर्णांक,		dst_root		)
-		__field(	पूर्णांक,		dst_id			)
-		__field(	पूर्णांक,		dst_level		)
-		__field(	पूर्णांक,		pid			)
+		__field(	int,		dst_root		)
+		__field(	int,		dst_id			)
+		__field(	int,		dst_level		)
+		__field(	int,		pid			)
 		__string(	dst_path,	path			)
 		__string(	comm,		task->comm		)
 	),
@@ -143,39 +142,39 @@ DECLARE_EVENT_CLASS(cgroup_migrate,
 		__assign_str(comm, task->comm);
 	),
 
-	TP_prपूर्णांकk("dst_root=%d dst_id=%d dst_level=%d dst_path=%s pid=%d comm=%s",
+	TP_printk("dst_root=%d dst_id=%d dst_level=%d dst_path=%s pid=%d comm=%s",
 		  __entry->dst_root, __entry->dst_id, __entry->dst_level,
 		  __get_str(dst_path), __entry->pid, __get_str(comm))
 );
 
 DEFINE_EVENT(cgroup_migrate, cgroup_attach_task,
 
-	TP_PROTO(काष्ठा cgroup *dst_cgrp, स्थिर अक्षर *path,
-		 काष्ठा task_काष्ठा *task, bool thपढ़ोgroup),
+	TP_PROTO(struct cgroup *dst_cgrp, const char *path,
+		 struct task_struct *task, bool threadgroup),
 
-	TP_ARGS(dst_cgrp, path, task, thपढ़ोgroup)
+	TP_ARGS(dst_cgrp, path, task, threadgroup)
 );
 
 DEFINE_EVENT(cgroup_migrate, cgroup_transfer_tasks,
 
-	TP_PROTO(काष्ठा cgroup *dst_cgrp, स्थिर अक्षर *path,
-		 काष्ठा task_काष्ठा *task, bool thपढ़ोgroup),
+	TP_PROTO(struct cgroup *dst_cgrp, const char *path,
+		 struct task_struct *task, bool threadgroup),
 
-	TP_ARGS(dst_cgrp, path, task, thपढ़ोgroup)
+	TP_ARGS(dst_cgrp, path, task, threadgroup)
 );
 
 DECLARE_EVENT_CLASS(cgroup_event,
 
-	TP_PROTO(काष्ठा cgroup *cgrp, स्थिर अक्षर *path, पूर्णांक val),
+	TP_PROTO(struct cgroup *cgrp, const char *path, int val),
 
 	TP_ARGS(cgrp, path, val),
 
 	TP_STRUCT__entry(
-		__field(	पूर्णांक,		root			)
-		__field(	पूर्णांक,		id			)
-		__field(	पूर्णांक,		level			)
+		__field(	int,		root			)
+		__field(	int,		id			)
+		__field(	int,		level			)
 		__string(	path,		path			)
-		__field(	पूर्णांक,		val			)
+		__field(	int,		val			)
 	),
 
 	TP_fast_assign(
@@ -186,26 +185,26 @@ DECLARE_EVENT_CLASS(cgroup_event,
 		__entry->val = val;
 	),
 
-	TP_prपूर्णांकk("root=%d id=%d level=%d path=%s val=%d",
+	TP_printk("root=%d id=%d level=%d path=%s val=%d",
 		  __entry->root, __entry->id, __entry->level, __get_str(path),
 		  __entry->val)
 );
 
-DEFINE_EVENT(cgroup_event, cgroup_notअगरy_populated,
+DEFINE_EVENT(cgroup_event, cgroup_notify_populated,
 
-	TP_PROTO(काष्ठा cgroup *cgrp, स्थिर अक्षर *path, पूर्णांक val),
-
-	TP_ARGS(cgrp, path, val)
-);
-
-DEFINE_EVENT(cgroup_event, cgroup_notअगरy_frozen,
-
-	TP_PROTO(काष्ठा cgroup *cgrp, स्थिर अक्षर *path, पूर्णांक val),
+	TP_PROTO(struct cgroup *cgrp, const char *path, int val),
 
 	TP_ARGS(cgrp, path, val)
 );
 
-#पूर्ण_अगर /* _TRACE_CGROUP_H */
+DEFINE_EVENT(cgroup_event, cgroup_notify_frozen,
+
+	TP_PROTO(struct cgroup *cgrp, const char *path, int val),
+
+	TP_ARGS(cgrp, path, val)
+);
+
+#endif /* _TRACE_CGROUP_H */
 
 /* This part must be outside protection */
-#समावेश <trace/define_trace.h>
+#include <trace/define_trace.h>

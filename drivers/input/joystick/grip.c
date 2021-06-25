@@ -1,79 +1,78 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  *  Copyright (c) 1998-2001 Vojtech Pavlik
  */
 
 /*
- * Gravis/Kensington GrIP protocol joystick and gamepad driver क्रम Linux
+ * Gravis/Kensington GrIP protocol joystick and gamepad driver for Linux
  */
 
 /*
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/gameport.h>
-#समावेश <linux/input.h>
-#समावेश <linux/jअगरfies.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/gameport.h>
+#include <linux/input.h>
+#include <linux/jiffies.h>
 
-#घोषणा DRIVER_DESC	"Gravis GrIP protocol joystick driver"
+#define DRIVER_DESC	"Gravis GrIP protocol joystick driver"
 
 MODULE_AUTHOR("Vojtech Pavlik <vojtech@ucw.cz>");
 MODULE_DESCRIPTION(DRIVER_DESC);
 MODULE_LICENSE("GPL");
 
-#घोषणा GRIP_MODE_GPP		1
-#घोषणा GRIP_MODE_BD		2
-#घोषणा GRIP_MODE_XT		3
-#घोषणा GRIP_MODE_DC		4
+#define GRIP_MODE_GPP		1
+#define GRIP_MODE_BD		2
+#define GRIP_MODE_XT		3
+#define GRIP_MODE_DC		4
 
-#घोषणा GRIP_LENGTH_GPP		24
-#घोषणा GRIP_STROBE_GPP		200	/* 200 us */
-#घोषणा GRIP_LENGTH_XT		4
-#घोषणा GRIP_STROBE_XT		64	/* 64 us */
-#घोषणा GRIP_MAX_CHUNKS_XT	10
-#घोषणा GRIP_MAX_BITS_XT	30
+#define GRIP_LENGTH_GPP		24
+#define GRIP_STROBE_GPP		200	/* 200 us */
+#define GRIP_LENGTH_XT		4
+#define GRIP_STROBE_XT		64	/* 64 us */
+#define GRIP_MAX_CHUNKS_XT	10
+#define GRIP_MAX_BITS_XT	30
 
-काष्ठा grip अणु
-	काष्ठा gameport *gameport;
-	काष्ठा input_dev *dev[2];
-	अचिन्हित अक्षर mode[2];
-	पूर्णांक पढ़ोs;
-	पूर्णांक bads;
-	अक्षर phys[2][32];
-पूर्ण;
+struct grip {
+	struct gameport *gameport;
+	struct input_dev *dev[2];
+	unsigned char mode[2];
+	int reads;
+	int bads;
+	char phys[2][32];
+};
 
-अटल पूर्णांक grip_btn_gpp[] = अणु BTN_START, BTN_SELECT, BTN_TR2, BTN_Y, 0, BTN_TL2, BTN_A, BTN_B, BTN_X, 0, BTN_TL, BTN_TR, -1 पूर्ण;
-अटल पूर्णांक grip_btn_bd[] = अणु BTN_THUMB, BTN_THUMB2, BTN_TRIGGER, BTN_TOP, BTN_BASE, -1 पूर्ण;
-अटल पूर्णांक grip_btn_xt[] = अणु BTN_TRIGGER, BTN_THUMB, BTN_A, BTN_B, BTN_C, BTN_X, BTN_Y, BTN_Z, BTN_SELECT, BTN_START, BTN_MODE, -1 पूर्ण;
-अटल पूर्णांक grip_btn_dc[] = अणु BTN_TRIGGER, BTN_THUMB, BTN_TOP, BTN_TOP2, BTN_BASE, BTN_BASE2, BTN_BASE3, BTN_BASE4, BTN_BASE5, -1 पूर्ण;
+static int grip_btn_gpp[] = { BTN_START, BTN_SELECT, BTN_TR2, BTN_Y, 0, BTN_TL2, BTN_A, BTN_B, BTN_X, 0, BTN_TL, BTN_TR, -1 };
+static int grip_btn_bd[] = { BTN_THUMB, BTN_THUMB2, BTN_TRIGGER, BTN_TOP, BTN_BASE, -1 };
+static int grip_btn_xt[] = { BTN_TRIGGER, BTN_THUMB, BTN_A, BTN_B, BTN_C, BTN_X, BTN_Y, BTN_Z, BTN_SELECT, BTN_START, BTN_MODE, -1 };
+static int grip_btn_dc[] = { BTN_TRIGGER, BTN_THUMB, BTN_TOP, BTN_TOP2, BTN_BASE, BTN_BASE2, BTN_BASE3, BTN_BASE4, BTN_BASE5, -1 };
 
-अटल पूर्णांक grip_असल_gpp[] = अणु ABS_X, ABS_Y, -1 पूर्ण;
-अटल पूर्णांक grip_असल_bd[] = अणु ABS_X, ABS_Y, ABS_THROTTLE, ABS_HAT0X, ABS_HAT0Y, -1 पूर्ण;
-अटल पूर्णांक grip_असल_xt[] = अणु ABS_X, ABS_Y, ABS_BRAKE, ABS_GAS, ABS_THROTTLE, ABS_HAT0X, ABS_HAT0Y, ABS_HAT1X, ABS_HAT1Y, -1 पूर्ण;
-अटल पूर्णांक grip_असल_dc[] = अणु ABS_X, ABS_Y, ABS_RX, ABS_RY, ABS_THROTTLE, ABS_HAT0X, ABS_HAT0Y, -1 पूर्ण;
+static int grip_abs_gpp[] = { ABS_X, ABS_Y, -1 };
+static int grip_abs_bd[] = { ABS_X, ABS_Y, ABS_THROTTLE, ABS_HAT0X, ABS_HAT0Y, -1 };
+static int grip_abs_xt[] = { ABS_X, ABS_Y, ABS_BRAKE, ABS_GAS, ABS_THROTTLE, ABS_HAT0X, ABS_HAT0Y, ABS_HAT1X, ABS_HAT1Y, -1 };
+static int grip_abs_dc[] = { ABS_X, ABS_Y, ABS_RX, ABS_RY, ABS_THROTTLE, ABS_HAT0X, ABS_HAT0Y, -1 };
 
-अटल अक्षर *grip_name[] = अणु शून्य, "Gravis GamePad Pro", "Gravis Blackhawk Digital",
-				"Gravis Xterminator Digital", "Gravis Xterminator DualControl" पूर्ण;
-अटल पूर्णांक *grip_असल[] = अणु शून्य, grip_असल_gpp, grip_असल_bd, grip_असल_xt, grip_असल_dc पूर्ण;
-अटल पूर्णांक *grip_btn[] = अणु शून्य, grip_btn_gpp, grip_btn_bd, grip_btn_xt, grip_btn_dc पूर्ण;
-अटल अक्षर grip_anx[] = अणु 0, 0, 3, 5, 5 पूर्ण;
-अटल अक्षर grip_cen[] = अणु 0, 0, 2, 2, 4 पूर्ण;
+static char *grip_name[] = { NULL, "Gravis GamePad Pro", "Gravis Blackhawk Digital",
+				"Gravis Xterminator Digital", "Gravis Xterminator DualControl" };
+static int *grip_abs[] = { NULL, grip_abs_gpp, grip_abs_bd, grip_abs_xt, grip_abs_dc };
+static int *grip_btn[] = { NULL, grip_btn_gpp, grip_btn_bd, grip_btn_xt, grip_btn_dc };
+static char grip_anx[] = { 0, 0, 3, 5, 5 };
+static char grip_cen[] = { 0, 0, 2, 2, 4 };
 
 /*
- * grip_gpp_पढ़ो_packet() पढ़ोs a Gravis GamePad Pro packet.
+ * grip_gpp_read_packet() reads a Gravis GamePad Pro packet.
  */
 
-अटल पूर्णांक grip_gpp_पढ़ो_packet(काष्ठा gameport *gameport, पूर्णांक shअगरt, अचिन्हित पूर्णांक *data)
-अणु
-	अचिन्हित दीर्घ flags;
-	अचिन्हित अक्षर u, v;
-	अचिन्हित पूर्णांक t;
-	पूर्णांक i;
+static int grip_gpp_read_packet(struct gameport *gameport, int shift, unsigned int *data)
+{
+	unsigned long flags;
+	unsigned char u, v;
+	unsigned int t;
+	int i;
 
-	पूर्णांक strobe = gameport_समय(gameport, GRIP_STROBE_GPP);
+	int strobe = gameport_time(gameport, GRIP_STROBE_GPP);
 
 	data[0] = 0;
 	t = strobe;
@@ -81,40 +80,40 @@ MODULE_LICENSE("GPL");
 
 	local_irq_save(flags);
 
-	v = gameport_पढ़ो(gameport) >> shअगरt;
+	v = gameport_read(gameport) >> shift;
 
-	करो अणु
+	do {
 		t--;
-		u = v; v = (gameport_पढ़ो(gameport) >> shअगरt) & 3;
-		अगर (~v & u & 1) अणु
+		u = v; v = (gameport_read(gameport) >> shift) & 3;
+		if (~v & u & 1) {
 			data[0] |= (v >> 1) << i++;
 			t = strobe;
-		पूर्ण
-	पूर्ण जबतक (i < GRIP_LENGTH_GPP && t > 0);
+		}
+	} while (i < GRIP_LENGTH_GPP && t > 0);
 
 	local_irq_restore(flags);
 
-	अगर (i < GRIP_LENGTH_GPP) वापस -1;
+	if (i < GRIP_LENGTH_GPP) return -1;
 
-	क्रम (i = 0; i < GRIP_LENGTH_GPP && (data[0] & 0xfe4210) ^ 0x7c0000; i++)
+	for (i = 0; i < GRIP_LENGTH_GPP && (data[0] & 0xfe4210) ^ 0x7c0000; i++)
 		data[0] = data[0] >> 1 | (data[0] & 1) << (GRIP_LENGTH_GPP - 1);
 
-	वापस -(i == GRIP_LENGTH_GPP);
-पूर्ण
+	return -(i == GRIP_LENGTH_GPP);
+}
 
 /*
- * grip_xt_पढ़ो_packet() पढ़ोs a Gravis Xterminator packet.
+ * grip_xt_read_packet() reads a Gravis Xterminator packet.
  */
 
-अटल पूर्णांक grip_xt_पढ़ो_packet(काष्ठा gameport *gameport, पूर्णांक shअगरt, अचिन्हित पूर्णांक *data)
-अणु
-	अचिन्हित पूर्णांक i, j, buf, crc;
-	अचिन्हित अक्षर u, v, w;
-	अचिन्हित दीर्घ flags;
-	अचिन्हित पूर्णांक t;
-	अक्षर status;
+static int grip_xt_read_packet(struct gameport *gameport, int shift, unsigned int *data)
+{
+	unsigned int i, j, buf, crc;
+	unsigned char u, v, w;
+	unsigned long flags;
+	unsigned int t;
+	char status;
 
-	पूर्णांक strobe = gameport_समय(gameport, GRIP_STROBE_XT);
+	int strobe = gameport_time(gameport, GRIP_STROBE_XT);
 
 	data[0] = data[1] = data[2] = data[3] = 0;
 	status = buf = i = j = 0;
@@ -122,290 +121,290 @@ MODULE_LICENSE("GPL");
 
 	local_irq_save(flags);
 
-	v = w = (gameport_पढ़ो(gameport) >> shअगरt) & 3;
+	v = w = (gameport_read(gameport) >> shift) & 3;
 
-	करो अणु
+	do {
 		t--;
-		u = (gameport_पढ़ो(gameport) >> shअगरt) & 3;
+		u = (gameport_read(gameport) >> shift) & 3;
 
-		अगर (u ^ v) अणु
+		if (u ^ v) {
 
-			अगर ((u ^ v) & 1) अणु
+			if ((u ^ v) & 1) {
 				buf = (buf << 1) | (u >> 1);
 				t = strobe;
 				i++;
-			पूर्ण अन्यथा
+			} else
 
-			अगर ((((u ^ v) & (v ^ w)) >> 1) & ~(u | v | w) & 1) अणु
-				अगर (i == 20) अणु
+			if ((((u ^ v) & (v ^ w)) >> 1) & ~(u | v | w) & 1) {
+				if (i == 20) {
 					crc = buf ^ (buf >> 7) ^ (buf >> 14);
-					अगर (!((crc ^ (0x25cb9e70 >> ((crc >> 2) & 0x1c))) & 0xf)) अणु
+					if (!((crc ^ (0x25cb9e70 >> ((crc >> 2) & 0x1c))) & 0xf)) {
 						data[buf >> 18] = buf >> 4;
 						status |= 1 << (buf >> 18);
-					पूर्ण
+					}
 					j++;
-				पूर्ण
+				}
 				t = strobe;
 				buf = 0;
 				i = 0;
-			पूर्ण
+			}
 			w = v;
 			v = u;
-		पूर्ण
+		}
 
-	पूर्ण जबतक (status != 0xf && i < GRIP_MAX_BITS_XT && j < GRIP_MAX_CHUNKS_XT && t > 0);
+	} while (status != 0xf && i < GRIP_MAX_BITS_XT && j < GRIP_MAX_CHUNKS_XT && t > 0);
 
 	local_irq_restore(flags);
 
-	वापस -(status != 0xf);
-पूर्ण
+	return -(status != 0xf);
+}
 
 /*
- * grip_समयr() repeatedly polls the joysticks and generates events.
+ * grip_timer() repeatedly polls the joysticks and generates events.
  */
 
-अटल व्योम grip_poll(काष्ठा gameport *gameport)
-अणु
-	काष्ठा grip *grip = gameport_get_drvdata(gameport);
-	अचिन्हित पूर्णांक data[GRIP_LENGTH_XT];
-	काष्ठा input_dev *dev;
-	पूर्णांक i, j;
+static void grip_poll(struct gameport *gameport)
+{
+	struct grip *grip = gameport_get_drvdata(gameport);
+	unsigned int data[GRIP_LENGTH_XT];
+	struct input_dev *dev;
+	int i, j;
 
-	क्रम (i = 0; i < 2; i++) अणु
+	for (i = 0; i < 2; i++) {
 
 		dev = grip->dev[i];
-		अगर (!dev)
-			जारी;
+		if (!dev)
+			continue;
 
-		grip->पढ़ोs++;
+		grip->reads++;
 
-		चयन (grip->mode[i]) अणु
+		switch (grip->mode[i]) {
 
-			हाल GRIP_MODE_GPP:
+			case GRIP_MODE_GPP:
 
-				अगर (grip_gpp_पढ़ो_packet(grip->gameport, (i << 1) + 4, data)) अणु
+				if (grip_gpp_read_packet(grip->gameport, (i << 1) + 4, data)) {
 					grip->bads++;
-					अवरोध;
-				पूर्ण
+					break;
+				}
 
-				input_report_असल(dev, ABS_X, ((*data >> 15) & 1) - ((*data >> 16) & 1));
-				input_report_असल(dev, ABS_Y, ((*data >> 13) & 1) - ((*data >> 12) & 1));
+				input_report_abs(dev, ABS_X, ((*data >> 15) & 1) - ((*data >> 16) & 1));
+				input_report_abs(dev, ABS_Y, ((*data >> 13) & 1) - ((*data >> 12) & 1));
 
-				क्रम (j = 0; j < 12; j++)
-					अगर (grip_btn_gpp[j])
+				for (j = 0; j < 12; j++)
+					if (grip_btn_gpp[j])
 						input_report_key(dev, grip_btn_gpp[j], (*data >> j) & 1);
 
-				अवरोध;
+				break;
 
-			हाल GRIP_MODE_BD:
+			case GRIP_MODE_BD:
 
-				अगर (grip_xt_पढ़ो_packet(grip->gameport, (i << 1) + 4, data)) अणु
+				if (grip_xt_read_packet(grip->gameport, (i << 1) + 4, data)) {
 					grip->bads++;
-					अवरोध;
-				पूर्ण
+					break;
+				}
 
-				input_report_असल(dev, ABS_X,        (data[0] >> 2) & 0x3f);
-				input_report_असल(dev, ABS_Y,  63 - ((data[0] >> 8) & 0x3f));
-				input_report_असल(dev, ABS_THROTTLE, (data[2] >> 8) & 0x3f);
+				input_report_abs(dev, ABS_X,        (data[0] >> 2) & 0x3f);
+				input_report_abs(dev, ABS_Y,  63 - ((data[0] >> 8) & 0x3f));
+				input_report_abs(dev, ABS_THROTTLE, (data[2] >> 8) & 0x3f);
 
-				input_report_असल(dev, ABS_HAT0X, ((data[2] >> 1) & 1) - ( data[2]       & 1));
-				input_report_असल(dev, ABS_HAT0Y, ((data[2] >> 2) & 1) - ((data[2] >> 3) & 1));
+				input_report_abs(dev, ABS_HAT0X, ((data[2] >> 1) & 1) - ( data[2]       & 1));
+				input_report_abs(dev, ABS_HAT0Y, ((data[2] >> 2) & 1) - ((data[2] >> 3) & 1));
 
-				क्रम (j = 0; j < 5; j++)
+				for (j = 0; j < 5; j++)
 					input_report_key(dev, grip_btn_bd[j], (data[3] >> (j + 4)) & 1);
 
-				अवरोध;
+				break;
 
-			हाल GRIP_MODE_XT:
+			case GRIP_MODE_XT:
 
-				अगर (grip_xt_पढ़ो_packet(grip->gameport, (i << 1) + 4, data)) अणु
+				if (grip_xt_read_packet(grip->gameport, (i << 1) + 4, data)) {
 					grip->bads++;
-					अवरोध;
-				पूर्ण
+					break;
+				}
 
-				input_report_असल(dev, ABS_X,        (data[0] >> 2) & 0x3f);
-				input_report_असल(dev, ABS_Y,  63 - ((data[0] >> 8) & 0x3f));
-				input_report_असल(dev, ABS_BRAKE,    (data[1] >> 2) & 0x3f);
-				input_report_असल(dev, ABS_GAS,	    (data[1] >> 8) & 0x3f);
-				input_report_असल(dev, ABS_THROTTLE, (data[2] >> 8) & 0x3f);
+				input_report_abs(dev, ABS_X,        (data[0] >> 2) & 0x3f);
+				input_report_abs(dev, ABS_Y,  63 - ((data[0] >> 8) & 0x3f));
+				input_report_abs(dev, ABS_BRAKE,    (data[1] >> 2) & 0x3f);
+				input_report_abs(dev, ABS_GAS,	    (data[1] >> 8) & 0x3f);
+				input_report_abs(dev, ABS_THROTTLE, (data[2] >> 8) & 0x3f);
 
-				input_report_असल(dev, ABS_HAT0X, ((data[2] >> 1) & 1) - ( data[2]       & 1));
-				input_report_असल(dev, ABS_HAT0Y, ((data[2] >> 2) & 1) - ((data[2] >> 3) & 1));
-				input_report_असल(dev, ABS_HAT1X, ((data[2] >> 5) & 1) - ((data[2] >> 4) & 1));
-				input_report_असल(dev, ABS_HAT1Y, ((data[2] >> 6) & 1) - ((data[2] >> 7) & 1));
+				input_report_abs(dev, ABS_HAT0X, ((data[2] >> 1) & 1) - ( data[2]       & 1));
+				input_report_abs(dev, ABS_HAT0Y, ((data[2] >> 2) & 1) - ((data[2] >> 3) & 1));
+				input_report_abs(dev, ABS_HAT1X, ((data[2] >> 5) & 1) - ((data[2] >> 4) & 1));
+				input_report_abs(dev, ABS_HAT1Y, ((data[2] >> 6) & 1) - ((data[2] >> 7) & 1));
 
-				क्रम (j = 0; j < 11; j++)
+				for (j = 0; j < 11; j++)
 					input_report_key(dev, grip_btn_xt[j], (data[3] >> (j + 3)) & 1);
-				अवरोध;
+				break;
 
-			हाल GRIP_MODE_DC:
+			case GRIP_MODE_DC:
 
-				अगर (grip_xt_पढ़ो_packet(grip->gameport, (i << 1) + 4, data)) अणु
+				if (grip_xt_read_packet(grip->gameport, (i << 1) + 4, data)) {
 					grip->bads++;
-					अवरोध;
-				पूर्ण
+					break;
+				}
 
-				input_report_असल(dev, ABS_X,        (data[0] >> 2) & 0x3f);
-				input_report_असल(dev, ABS_Y,        (data[0] >> 8) & 0x3f);
-				input_report_असल(dev, ABS_RX,       (data[1] >> 2) & 0x3f);
-				input_report_असल(dev, ABS_RY,	    (data[1] >> 8) & 0x3f);
-				input_report_असल(dev, ABS_THROTTLE, (data[2] >> 8) & 0x3f);
+				input_report_abs(dev, ABS_X,        (data[0] >> 2) & 0x3f);
+				input_report_abs(dev, ABS_Y,        (data[0] >> 8) & 0x3f);
+				input_report_abs(dev, ABS_RX,       (data[1] >> 2) & 0x3f);
+				input_report_abs(dev, ABS_RY,	    (data[1] >> 8) & 0x3f);
+				input_report_abs(dev, ABS_THROTTLE, (data[2] >> 8) & 0x3f);
 
-				input_report_असल(dev, ABS_HAT0X, ((data[2] >> 1) & 1) - ( data[2]       & 1));
-				input_report_असल(dev, ABS_HAT0Y, ((data[2] >> 2) & 1) - ((data[2] >> 3) & 1));
+				input_report_abs(dev, ABS_HAT0X, ((data[2] >> 1) & 1) - ( data[2]       & 1));
+				input_report_abs(dev, ABS_HAT0Y, ((data[2] >> 2) & 1) - ((data[2] >> 3) & 1));
 
-				क्रम (j = 0; j < 9; j++)
+				for (j = 0; j < 9; j++)
 					input_report_key(dev, grip_btn_dc[j], (data[3] >> (j + 3)) & 1);
-				अवरोध;
+				break;
 
 
-		पूर्ण
+		}
 
 		input_sync(dev);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक grip_खोलो(काष्ठा input_dev *dev)
-अणु
-	काष्ठा grip *grip = input_get_drvdata(dev);
+static int grip_open(struct input_dev *dev)
+{
+	struct grip *grip = input_get_drvdata(dev);
 
 	gameport_start_polling(grip->gameport);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम grip_बंद(काष्ठा input_dev *dev)
-अणु
-	काष्ठा grip *grip = input_get_drvdata(dev);
+static void grip_close(struct input_dev *dev)
+{
+	struct grip *grip = input_get_drvdata(dev);
 
 	gameport_stop_polling(grip->gameport);
-पूर्ण
+}
 
-अटल पूर्णांक grip_connect(काष्ठा gameport *gameport, काष्ठा gameport_driver *drv)
-अणु
-	काष्ठा grip *grip;
-	काष्ठा input_dev *input_dev;
-	अचिन्हित पूर्णांक data[GRIP_LENGTH_XT];
-	पूर्णांक i, j, t;
-	पूर्णांक err;
+static int grip_connect(struct gameport *gameport, struct gameport_driver *drv)
+{
+	struct grip *grip;
+	struct input_dev *input_dev;
+	unsigned int data[GRIP_LENGTH_XT];
+	int i, j, t;
+	int err;
 
-	अगर (!(grip = kzalloc(माप(काष्ठा grip), GFP_KERNEL)))
-		वापस -ENOMEM;
+	if (!(grip = kzalloc(sizeof(struct grip), GFP_KERNEL)))
+		return -ENOMEM;
 
 	grip->gameport = gameport;
 
 	gameport_set_drvdata(gameport, grip);
 
-	err = gameport_खोलो(gameport, drv, GAMEPORT_MODE_RAW);
-	अगर (err)
-		जाओ fail1;
+	err = gameport_open(gameport, drv, GAMEPORT_MODE_RAW);
+	if (err)
+		goto fail1;
 
-	क्रम (i = 0; i < 2; i++) अणु
-		अगर (!grip_gpp_पढ़ो_packet(gameport, (i << 1) + 4, data)) अणु
+	for (i = 0; i < 2; i++) {
+		if (!grip_gpp_read_packet(gameport, (i << 1) + 4, data)) {
 			grip->mode[i] = GRIP_MODE_GPP;
-			जारी;
-		पूर्ण
-		अगर (!grip_xt_पढ़ो_packet(gameport, (i << 1) + 4, data)) अणु
-			अगर (!(data[3] & 7)) अणु
+			continue;
+		}
+		if (!grip_xt_read_packet(gameport, (i << 1) + 4, data)) {
+			if (!(data[3] & 7)) {
 				grip->mode[i] = GRIP_MODE_BD;
-				जारी;
-			पूर्ण
-			अगर (!(data[2] & 0xf0)) अणु
+				continue;
+			}
+			if (!(data[2] & 0xf0)) {
 				grip->mode[i] = GRIP_MODE_XT;
-				जारी;
-			पूर्ण
+				continue;
+			}
 			grip->mode[i] = GRIP_MODE_DC;
-			जारी;
-		पूर्ण
-	पूर्ण
+			continue;
+		}
+	}
 
-	अगर (!grip->mode[0] && !grip->mode[1]) अणु
+	if (!grip->mode[0] && !grip->mode[1]) {
 		err = -ENODEV;
-		जाओ fail2;
-	पूर्ण
+		goto fail2;
+	}
 
 	gameport_set_poll_handler(gameport, grip_poll);
-	gameport_set_poll_पूर्णांकerval(gameport, 20);
+	gameport_set_poll_interval(gameport, 20);
 
-	क्रम (i = 0; i < 2; i++) अणु
-		अगर (!grip->mode[i])
-			जारी;
+	for (i = 0; i < 2; i++) {
+		if (!grip->mode[i])
+			continue;
 
 		grip->dev[i] = input_dev = input_allocate_device();
-		अगर (!input_dev) अणु
+		if (!input_dev) {
 			err = -ENOMEM;
-			जाओ fail3;
-		पूर्ण
+			goto fail3;
+		}
 
-		snम_लिखो(grip->phys[i], माप(grip->phys[i]),
+		snprintf(grip->phys[i], sizeof(grip->phys[i]),
 			 "%s/input%d", gameport->phys, i);
 
 		input_dev->name = grip_name[grip->mode[i]];
 		input_dev->phys = grip->phys[i];
 		input_dev->id.bustype = BUS_GAMEPORT;
-		input_dev->id.venकरोr = GAMEPORT_ID_VENDOR_GRAVIS;
+		input_dev->id.vendor = GAMEPORT_ID_VENDOR_GRAVIS;
 		input_dev->id.product = grip->mode[i];
 		input_dev->id.version = 0x0100;
 		input_dev->dev.parent = &gameport->dev;
 
 		input_set_drvdata(input_dev, grip);
 
-		input_dev->खोलो = grip_खोलो;
-		input_dev->बंद = grip_बंद;
+		input_dev->open = grip_open;
+		input_dev->close = grip_close;
 
 		input_dev->evbit[0] = BIT_MASK(EV_KEY) | BIT_MASK(EV_ABS);
 
-		क्रम (j = 0; (t = grip_असल[grip->mode[i]][j]) >= 0; j++) अणु
+		for (j = 0; (t = grip_abs[grip->mode[i]][j]) >= 0; j++) {
 
-			अगर (j < grip_cen[grip->mode[i]])
-				input_set_असल_params(input_dev, t, 14, 52, 1, 2);
-			अन्यथा अगर (j < grip_anx[grip->mode[i]])
-				input_set_असल_params(input_dev, t, 3, 57, 1, 0);
-			अन्यथा
-				input_set_असल_params(input_dev, t, -1, 1, 0, 0);
-		पूर्ण
+			if (j < grip_cen[grip->mode[i]])
+				input_set_abs_params(input_dev, t, 14, 52, 1, 2);
+			else if (j < grip_anx[grip->mode[i]])
+				input_set_abs_params(input_dev, t, 3, 57, 1, 0);
+			else
+				input_set_abs_params(input_dev, t, -1, 1, 0, 0);
+		}
 
-		क्रम (j = 0; (t = grip_btn[grip->mode[i]][j]) >= 0; j++)
-			अगर (t > 0)
+		for (j = 0; (t = grip_btn[grip->mode[i]][j]) >= 0; j++)
+			if (t > 0)
 				set_bit(t, input_dev->keybit);
 
-		err = input_रेजिस्टर_device(grip->dev[i]);
-		अगर (err)
-			जाओ fail4;
-	पूर्ण
+		err = input_register_device(grip->dev[i]);
+		if (err)
+			goto fail4;
+	}
 
-	वापस 0;
+	return 0;
 
- fail4:	input_मुक्त_device(grip->dev[i]);
- fail3:	जबतक (--i >= 0)
-		अगर (grip->dev[i])
-			input_unरेजिस्टर_device(grip->dev[i]);
- fail2:	gameport_बंद(gameport);
- fail1:	gameport_set_drvdata(gameport, शून्य);
-	kमुक्त(grip);
-	वापस err;
-पूर्ण
+ fail4:	input_free_device(grip->dev[i]);
+ fail3:	while (--i >= 0)
+		if (grip->dev[i])
+			input_unregister_device(grip->dev[i]);
+ fail2:	gameport_close(gameport);
+ fail1:	gameport_set_drvdata(gameport, NULL);
+	kfree(grip);
+	return err;
+}
 
-अटल व्योम grip_disconnect(काष्ठा gameport *gameport)
-अणु
-	काष्ठा grip *grip = gameport_get_drvdata(gameport);
-	पूर्णांक i;
+static void grip_disconnect(struct gameport *gameport)
+{
+	struct grip *grip = gameport_get_drvdata(gameport);
+	int i;
 
-	क्रम (i = 0; i < 2; i++)
-		अगर (grip->dev[i])
-			input_unरेजिस्टर_device(grip->dev[i]);
-	gameport_बंद(gameport);
-	gameport_set_drvdata(gameport, शून्य);
-	kमुक्त(grip);
-पूर्ण
+	for (i = 0; i < 2; i++)
+		if (grip->dev[i])
+			input_unregister_device(grip->dev[i]);
+	gameport_close(gameport);
+	gameport_set_drvdata(gameport, NULL);
+	kfree(grip);
+}
 
-अटल काष्ठा gameport_driver grip_drv = अणु
-	.driver		= अणु
+static struct gameport_driver grip_drv = {
+	.driver		= {
 		.name	= "grip",
 		.owner	= THIS_MODULE,
-	पूर्ण,
+	},
 	.description	= DRIVER_DESC,
 	.connect	= grip_connect,
 	.disconnect	= grip_disconnect,
-पूर्ण;
+};
 
 module_gameport_driver(grip_drv);

@@ -1,56 +1,55 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/debugfs.h>
-#समावेश <linux/component.h>
-#समावेश <linux/of_irq.h>
-#समावेश <linux/delay.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/uaccess.h>
+#include <linux/debugfs.h>
+#include <linux/component.h>
+#include <linux/of_irq.h>
+#include <linux/delay.h>
 
-#समावेश "msm_drv.h"
-#समावेश "msm_kms.h"
-#समावेश "dp_hpd.h"
-#समावेश "dp_parser.h"
-#समावेश "dp_power.h"
-#समावेश "dp_catalog.h"
-#समावेश "dp_aux.h"
-#समावेश "dp_reg.h"
-#समावेश "dp_link.h"
-#समावेश "dp_panel.h"
-#समावेश "dp_ctrl.h"
-#समावेश "dp_display.h"
-#समावेश "dp_drm.h"
-#समावेश "dp_audio.h"
-#समावेश "dp_debug.h"
+#include "msm_drv.h"
+#include "msm_kms.h"
+#include "dp_hpd.h"
+#include "dp_parser.h"
+#include "dp_power.h"
+#include "dp_catalog.h"
+#include "dp_aux.h"
+#include "dp_reg.h"
+#include "dp_link.h"
+#include "dp_panel.h"
+#include "dp_ctrl.h"
+#include "dp_display.h"
+#include "dp_drm.h"
+#include "dp_audio.h"
+#include "dp_debug.h"
 
-अटल काष्ठा msm_dp *g_dp_display;
-#घोषणा HPD_STRING_SIZE 30
+static struct msm_dp *g_dp_display;
+#define HPD_STRING_SIZE 30
 
-क्रमागत अणु
+enum {
 	ISR_DISCONNECTED,
 	ISR_CONNECT_PENDING,
 	ISR_CONNECTED,
 	ISR_HPD_REPLUG_COUNT,
 	ISR_IRQ_HPD_PULSE_COUNT,
 	ISR_HPD_LO_GLITH_COUNT,
-पूर्ण;
+};
 
-/* event thपढ़ो connection state */
-क्रमागत अणु
+/* event thread connection state */
+enum {
 	ST_DISCONNECTED,
 	ST_CONNECT_PENDING,
 	ST_CONNECTED,
 	ST_DISCONNECT_PENDING,
 	ST_DISPLAY_OFF,
 	ST_SUSPENDED,
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	EV_NO_EVENT,
 	/* hpd events */
 	EV_HPD_INIT_SETUP,
@@ -61,281 +60,281 @@
 	EV_USER_NOTIFICATION,
 	EV_CONNECT_PENDING_TIMEOUT,
 	EV_DISCONNECT_PENDING_TIMEOUT,
-पूर्ण;
+};
 
-#घोषणा EVENT_TIMEOUT	(HZ/10)	/* 100ms */
-#घोषणा DP_EVENT_Q_MAX	8
+#define EVENT_TIMEOUT	(HZ/10)	/* 100ms */
+#define DP_EVENT_Q_MAX	8
 
-#घोषणा DP_TIMEOUT_5_SECOND	(5000/EVENT_TIMEOUT)
-#घोषणा DP_TIMEOUT_NONE		0
+#define DP_TIMEOUT_5_SECOND	(5000/EVENT_TIMEOUT)
+#define DP_TIMEOUT_NONE		0
 
-#घोषणा WAIT_FOR_RESUME_TIMEOUT_JIFFIES (HZ / 2)
+#define WAIT_FOR_RESUME_TIMEOUT_JIFFIES (HZ / 2)
 
-काष्ठा dp_event अणु
+struct dp_event {
 	u32 event_id;
 	u32 data;
 	u32 delay;
-पूर्ण;
+};
 
-काष्ठा dp_display_निजी अणु
-	अक्षर *name;
-	पूर्णांक irq;
+struct dp_display_private {
+	char *name;
+	int irq;
 
 	/* state variables */
 	bool core_initialized;
 	bool hpd_irq_on;
 	bool audio_supported;
 
-	काष्ठा platक्रमm_device *pdev;
-	काष्ठा dentry *root;
+	struct platform_device *pdev;
+	struct dentry *root;
 
-	काष्ठा dp_usbpd   *usbpd;
-	काष्ठा dp_parser  *parser;
-	काष्ठा dp_घातer   *घातer;
-	काष्ठा dp_catalog *catalog;
-	काष्ठा drm_dp_aux *aux;
-	काष्ठा dp_link    *link;
-	काष्ठा dp_panel   *panel;
-	काष्ठा dp_ctrl    *ctrl;
-	काष्ठा dp_debug   *debug;
+	struct dp_usbpd   *usbpd;
+	struct dp_parser  *parser;
+	struct dp_power   *power;
+	struct dp_catalog *catalog;
+	struct drm_dp_aux *aux;
+	struct dp_link    *link;
+	struct dp_panel   *panel;
+	struct dp_ctrl    *ctrl;
+	struct dp_debug   *debug;
 
-	काष्ठा dp_usbpd_cb usbpd_cb;
-	काष्ठा dp_display_mode dp_mode;
-	काष्ठा msm_dp dp_display;
+	struct dp_usbpd_cb usbpd_cb;
+	struct dp_display_mode dp_mode;
+	struct msm_dp dp_display;
 
 	bool encoder_mode_set;
 
-	/* रुको क्रम audio संकेतing */
-	काष्ठा completion audio_comp;
+	/* wait for audio signaling */
+	struct completion audio_comp;
 
-	/* event related only access by event thपढ़ो */
-	काष्ठा mutex event_mutex;
-	रुको_queue_head_t event_q;
+	/* event related only access by event thread */
+	struct mutex event_mutex;
+	wait_queue_head_t event_q;
 	u32 hpd_state;
 	u32 event_pndx;
 	u32 event_gndx;
-	काष्ठा dp_event event_list[DP_EVENT_Q_MAX];
+	struct dp_event event_list[DP_EVENT_Q_MAX];
 	spinlock_t event_lock;
 
-	काष्ठा dp_audio *audio;
-पूर्ण;
+	struct dp_audio *audio;
+};
 
-अटल स्थिर काष्ठा of_device_id dp_dt_match[] = अणु
-	अणु.compatible = "qcom,sc7180-dp"पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct of_device_id dp_dt_match[] = {
+	{.compatible = "qcom,sc7180-dp"},
+	{}
+};
 
-अटल पूर्णांक dp_add_event(काष्ठा dp_display_निजी *dp_priv, u32 event,
+static int dp_add_event(struct dp_display_private *dp_priv, u32 event,
 						u32 data, u32 delay)
-अणु
-	अचिन्हित दीर्घ flag;
-	काष्ठा dp_event *toकरो;
-	पूर्णांक pndx;
+{
+	unsigned long flag;
+	struct dp_event *todo;
+	int pndx;
 
 	spin_lock_irqsave(&dp_priv->event_lock, flag);
 	pndx = dp_priv->event_pndx + 1;
 	pndx %= DP_EVENT_Q_MAX;
-	अगर (pndx == dp_priv->event_gndx) अणु
+	if (pndx == dp_priv->event_gndx) {
 		pr_err("event_q is full: pndx=%d gndx=%d\n",
 			dp_priv->event_pndx, dp_priv->event_gndx);
 		spin_unlock_irqrestore(&dp_priv->event_lock, flag);
-		वापस -EPERM;
-	पूर्ण
-	toकरो = &dp_priv->event_list[dp_priv->event_pndx++];
+		return -EPERM;
+	}
+	todo = &dp_priv->event_list[dp_priv->event_pndx++];
 	dp_priv->event_pndx %= DP_EVENT_Q_MAX;
-	toकरो->event_id = event;
-	toकरो->data = data;
-	toकरो->delay = delay;
+	todo->event_id = event;
+	todo->data = data;
+	todo->delay = delay;
 	wake_up(&dp_priv->event_q);
 	spin_unlock_irqrestore(&dp_priv->event_lock, flag);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dp_del_event(काष्ठा dp_display_निजी *dp_priv, u32 event)
-अणु
-	अचिन्हित दीर्घ flag;
-	काष्ठा dp_event *toकरो;
+static int dp_del_event(struct dp_display_private *dp_priv, u32 event)
+{
+	unsigned long flag;
+	struct dp_event *todo;
 	u32	gndx;
 
 	spin_lock_irqsave(&dp_priv->event_lock, flag);
-	अगर (dp_priv->event_pndx == dp_priv->event_gndx) अणु
+	if (dp_priv->event_pndx == dp_priv->event_gndx) {
 		spin_unlock_irqrestore(&dp_priv->event_lock, flag);
-		वापस -ENOENT;
-	पूर्ण
+		return -ENOENT;
+	}
 
 	gndx = dp_priv->event_gndx;
-	जबतक (dp_priv->event_pndx != gndx) अणु
-		toकरो = &dp_priv->event_list[gndx];
-		अगर (toकरो->event_id == event) अणु
-			toकरो->event_id = EV_NO_EVENT;	/* deleted */
-			toकरो->delay = 0;
-		पूर्ण
+	while (dp_priv->event_pndx != gndx) {
+		todo = &dp_priv->event_list[gndx];
+		if (todo->event_id == event) {
+			todo->event_id = EV_NO_EVENT;	/* deleted */
+			todo->delay = 0;
+		}
 		gndx++;
 		gndx %= DP_EVENT_Q_MAX;
-	पूर्ण
+	}
 	spin_unlock_irqrestore(&dp_priv->event_lock, flag);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम dp_display_संकेत_audio_start(काष्ठा msm_dp *dp_display)
-अणु
-	काष्ठा dp_display_निजी *dp;
+void dp_display_signal_audio_start(struct msm_dp *dp_display)
+{
+	struct dp_display_private *dp;
 
-	dp = container_of(dp_display, काष्ठा dp_display_निजी, dp_display);
+	dp = container_of(dp_display, struct dp_display_private, dp_display);
 
 	reinit_completion(&dp->audio_comp);
-पूर्ण
+}
 
-व्योम dp_display_संकेत_audio_complete(काष्ठा msm_dp *dp_display)
-अणु
-	काष्ठा dp_display_निजी *dp;
+void dp_display_signal_audio_complete(struct msm_dp *dp_display)
+{
+	struct dp_display_private *dp;
 
-	dp = container_of(dp_display, काष्ठा dp_display_निजी, dp_display);
+	dp = container_of(dp_display, struct dp_display_private, dp_display);
 
 	complete_all(&dp->audio_comp);
-पूर्ण
+}
 
-अटल पूर्णांक dp_display_bind(काष्ठा device *dev, काष्ठा device *master,
-			   व्योम *data)
-अणु
-	पूर्णांक rc = 0;
-	काष्ठा dp_display_निजी *dp;
-	काष्ठा drm_device *drm;
-	काष्ठा msm_drm_निजी *priv;
+static int dp_display_bind(struct device *dev, struct device *master,
+			   void *data)
+{
+	int rc = 0;
+	struct dp_display_private *dp;
+	struct drm_device *drm;
+	struct msm_drm_private *priv;
 
 	drm = dev_get_drvdata(master);
 
 	dp = container_of(g_dp_display,
-			काष्ठा dp_display_निजी, dp_display);
-	अगर (!dp) अणु
+			struct dp_display_private, dp_display);
+	if (!dp) {
 		DRM_ERROR("DP driver bind failed. Invalid driver data\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	dp->dp_display.drm_dev = drm;
-	priv = drm->dev_निजी;
+	priv = drm->dev_private;
 	priv->dp = &(dp->dp_display);
 
 	rc = dp->parser->parse(dp->parser);
-	अगर (rc) अणु
+	if (rc) {
 		DRM_ERROR("device tree parsing failed\n");
-		जाओ end;
-	पूर्ण
+		goto end;
+	}
 
-	rc = dp_aux_रेजिस्टर(dp->aux);
-	अगर (rc) अणु
+	rc = dp_aux_register(dp->aux);
+	if (rc) {
 		DRM_ERROR("DRM DP AUX register failed\n");
-		जाओ end;
-	पूर्ण
+		goto end;
+	}
 
-	rc = dp_घातer_client_init(dp->घातer);
-	अगर (rc) अणु
+	rc = dp_power_client_init(dp->power);
+	if (rc) {
 		DRM_ERROR("Power client create failed\n");
-		जाओ end;
-	पूर्ण
+		goto end;
+	}
 
-	rc = dp_रेजिस्टर_audio_driver(dev, dp->audio);
-	अगर (rc)
+	rc = dp_register_audio_driver(dev, dp->audio);
+	if (rc)
 		DRM_ERROR("Audio registration Dp failed\n");
 
 end:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल व्योम dp_display_unbind(काष्ठा device *dev, काष्ठा device *master,
-			      व्योम *data)
-अणु
-	काष्ठा dp_display_निजी *dp;
-	काष्ठा drm_device *drm = dev_get_drvdata(master);
-	काष्ठा msm_drm_निजी *priv = drm->dev_निजी;
+static void dp_display_unbind(struct device *dev, struct device *master,
+			      void *data)
+{
+	struct dp_display_private *dp;
+	struct drm_device *drm = dev_get_drvdata(master);
+	struct msm_drm_private *priv = drm->dev_private;
 
 	dp = container_of(g_dp_display,
-			काष्ठा dp_display_निजी, dp_display);
-	अगर (!dp) अणु
+			struct dp_display_private, dp_display);
+	if (!dp) {
 		DRM_ERROR("Invalid DP driver data\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	dp_घातer_client_deinit(dp->घातer);
-	dp_aux_unरेजिस्टर(dp->aux);
-	priv->dp = शून्य;
-पूर्ण
+	dp_power_client_deinit(dp->power);
+	dp_aux_unregister(dp->aux);
+	priv->dp = NULL;
+}
 
-अटल स्थिर काष्ठा component_ops dp_display_comp_ops = अणु
+static const struct component_ops dp_display_comp_ops = {
 	.bind = dp_display_bind,
 	.unbind = dp_display_unbind,
-पूर्ण;
+};
 
-अटल bool dp_display_is_ds_bridge(काष्ठा dp_panel *panel)
-अणु
-	वापस (panel->dpcd[DP_DOWNSTREAMPORT_PRESENT] &
+static bool dp_display_is_ds_bridge(struct dp_panel *panel)
+{
+	return (panel->dpcd[DP_DOWNSTREAMPORT_PRESENT] &
 		DP_DWN_STRM_PORT_PRESENT);
-पूर्ण
+}
 
-अटल bool dp_display_is_sink_count_zero(काष्ठा dp_display_निजी *dp)
-अणु
-	वापस dp_display_is_ds_bridge(dp->panel) &&
+static bool dp_display_is_sink_count_zero(struct dp_display_private *dp)
+{
+	return dp_display_is_ds_bridge(dp->panel) &&
 		(dp->link->sink_count == 0);
-पूर्ण
+}
 
-अटल व्योम dp_display_send_hpd_event(काष्ठा msm_dp *dp_display)
-अणु
-	काष्ठा dp_display_निजी *dp;
-	काष्ठा drm_connector *connector;
+static void dp_display_send_hpd_event(struct msm_dp *dp_display)
+{
+	struct dp_display_private *dp;
+	struct drm_connector *connector;
 
-	dp = container_of(dp_display, काष्ठा dp_display_निजी, dp_display);
+	dp = container_of(dp_display, struct dp_display_private, dp_display);
 
 	connector = dp->dp_display.connector;
 	drm_helper_hpd_irq_event(connector->dev);
-पूर्ण
+}
 
 
-अटल व्योम dp_display_set_encoder_mode(काष्ठा dp_display_निजी *dp)
-अणु
-	काष्ठा msm_drm_निजी *priv = dp->dp_display.drm_dev->dev_निजी;
-	काष्ठा msm_kms *kms = priv->kms;
+static void dp_display_set_encoder_mode(struct dp_display_private *dp)
+{
+	struct msm_drm_private *priv = dp->dp_display.drm_dev->dev_private;
+	struct msm_kms *kms = priv->kms;
 
-	अगर (!dp->encoder_mode_set && dp->dp_display.encoder &&
-				kms->funcs->set_encoder_mode) अणु
+	if (!dp->encoder_mode_set && dp->dp_display.encoder &&
+				kms->funcs->set_encoder_mode) {
 		kms->funcs->set_encoder_mode(kms,
 				dp->dp_display.encoder, false);
 
 		dp->encoder_mode_set = true;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक dp_display_send_hpd_notअगरication(काष्ठा dp_display_निजी *dp,
+static int dp_display_send_hpd_notification(struct dp_display_private *dp,
 					    bool hpd)
-अणु
-	अगर ((hpd && dp->dp_display.is_connected) ||
-			(!hpd && !dp->dp_display.is_connected)) अणु
+{
+	if ((hpd && dp->dp_display.is_connected) ||
+			(!hpd && !dp->dp_display.is_connected)) {
 		DRM_DEBUG_DP("HPD already %s\n", (hpd ? "on" : "off"));
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	/* reset video pattern flag on disconnect */
-	अगर (!hpd)
+	if (!hpd)
 		dp->panel->video_test = false;
 
 	dp->dp_display.is_connected = hpd;
 
 	dp_display_send_hpd_event(&dp->dp_display);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dp_display_process_hpd_high(काष्ठा dp_display_निजी *dp)
-अणु
-	पूर्णांक rc = 0;
-	काष्ठा edid *edid;
+static int dp_display_process_hpd_high(struct dp_display_private *dp)
+{
+	int rc = 0;
+	struct edid *edid;
 
 	dp->panel->max_dp_lanes = dp->parser->max_dp_lanes;
 
-	rc = dp_panel_पढ़ो_sink_caps(dp->panel, dp->dp_display.connector);
-	अगर (rc)
-		जाओ end;
+	rc = dp_panel_read_sink_caps(dp->panel, dp->dp_display.connector);
+	if (rc)
+		goto end;
 
 	dp_link_process_request(dp->link);
 
@@ -349,480 +348,480 @@ end:
 
 	dp_link_reset_phy_params_vx_px(dp->link);
 	rc = dp_ctrl_on_link(dp->ctrl);
-	अगर (rc) अणु
+	if (rc) {
 		DRM_ERROR("failed to complete DP link training\n");
-		जाओ end;
-	पूर्ण
+		goto end;
+	}
 
 	dp_add_event(dp, EV_USER_NOTIFICATION, true, 0);
 
 end:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल व्योम dp_display_host_init(काष्ठा dp_display_निजी *dp, पूर्णांक reset)
-अणु
+static void dp_display_host_init(struct dp_display_private *dp, int reset)
+{
 	bool flip = false;
 
-	अगर (dp->core_initialized) अणु
+	if (dp->core_initialized) {
 		DRM_DEBUG_DP("DP core already initialized\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (dp->usbpd->orientation == ORIENTATION_CC2)
+	if (dp->usbpd->orientation == ORIENTATION_CC2)
 		flip = true;
 
 	dp_display_set_encoder_mode(dp);
 
-	dp_घातer_init(dp->घातer, flip);
+	dp_power_init(dp->power, flip);
 	dp_ctrl_host_init(dp->ctrl, flip, reset);
 	dp_aux_init(dp->aux);
 	dp->core_initialized = true;
-पूर्ण
+}
 
-अटल व्योम dp_display_host_deinit(काष्ठा dp_display_निजी *dp)
-अणु
-	अगर (!dp->core_initialized) अणु
+static void dp_display_host_deinit(struct dp_display_private *dp)
+{
+	if (!dp->core_initialized) {
 		DRM_DEBUG_DP("DP core not initialized\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	dp_ctrl_host_deinit(dp->ctrl);
 	dp_aux_deinit(dp->aux);
-	dp_घातer_deinit(dp->घातer);
+	dp_power_deinit(dp->power);
 
 	dp->core_initialized = false;
-पूर्ण
+}
 
-अटल पूर्णांक dp_display_usbpd_configure_cb(काष्ठा device *dev)
-अणु
-	पूर्णांक rc = 0;
-	काष्ठा dp_display_निजी *dp;
+static int dp_display_usbpd_configure_cb(struct device *dev)
+{
+	int rc = 0;
+	struct dp_display_private *dp;
 
-	अगर (!dev) अणु
+	if (!dev) {
 		DRM_ERROR("invalid dev\n");
 		rc = -EINVAL;
-		जाओ end;
-	पूर्ण
+		goto end;
+	}
 
 	dp = container_of(g_dp_display,
-			काष्ठा dp_display_निजी, dp_display);
-	अगर (!dp) अणु
+			struct dp_display_private, dp_display);
+	if (!dp) {
 		DRM_ERROR("no driver data found\n");
 		rc = -ENODEV;
-		जाओ end;
-	पूर्ण
+		goto end;
+	}
 
 	dp_display_host_init(dp, false);
 
 	/*
 	 * set sink to normal operation mode -- D0
-	 * beक्रमe dpcd पढ़ो
+	 * before dpcd read
 	 */
 	dp_link_psm_config(dp->link, &dp->panel->link_info, false);
 	rc = dp_display_process_hpd_high(dp);
 end:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक dp_display_usbpd_disconnect_cb(काष्ठा device *dev)
-अणु
-	पूर्णांक rc = 0;
-	काष्ठा dp_display_निजी *dp;
+static int dp_display_usbpd_disconnect_cb(struct device *dev)
+{
+	int rc = 0;
+	struct dp_display_private *dp;
 
-	अगर (!dev) अणु
+	if (!dev) {
 		DRM_ERROR("invalid dev\n");
 		rc = -EINVAL;
-		वापस rc;
-	पूर्ण
+		return rc;
+	}
 
 	dp = container_of(g_dp_display,
-			काष्ठा dp_display_निजी, dp_display);
-	अगर (!dp) अणु
+			struct dp_display_private, dp_display);
+	if (!dp) {
 		DRM_ERROR("no driver data found\n");
 		rc = -ENODEV;
-		वापस rc;
-	पूर्ण
+		return rc;
+	}
 
 	dp_add_event(dp, EV_USER_NOTIFICATION, false, 0);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल व्योम dp_display_handle_video_request(काष्ठा dp_display_निजी *dp)
-अणु
-	अगर (dp->link->sink_request & DP_TEST_LINK_VIDEO_PATTERN) अणु
+static void dp_display_handle_video_request(struct dp_display_private *dp)
+{
+	if (dp->link->sink_request & DP_TEST_LINK_VIDEO_PATTERN) {
 		dp->panel->video_test = true;
 		dp_link_send_test_response(dp->link);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक dp_display_handle_port_ststus_changed(काष्ठा dp_display_निजी *dp)
-अणु
-	पूर्णांक rc = 0;
+static int dp_display_handle_port_ststus_changed(struct dp_display_private *dp)
+{
+	int rc = 0;
 
-	अगर (dp_display_is_sink_count_zero(dp)) अणु
+	if (dp_display_is_sink_count_zero(dp)) {
 		DRM_DEBUG_DP("sink count is zero, nothing to do\n");
-		अगर (dp->hpd_state != ST_DISCONNECTED) अणु
+		if (dp->hpd_state != ST_DISCONNECTED) {
 			dp->hpd_state = ST_DISCONNECT_PENDING;
 			dp_add_event(dp, EV_USER_NOTIFICATION, false, 0);
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		अगर (dp->hpd_state == ST_DISCONNECTED) अणु
+		}
+	} else {
+		if (dp->hpd_state == ST_DISCONNECTED) {
 			dp->hpd_state = ST_CONNECT_PENDING;
 			rc = dp_display_process_hpd_high(dp);
-			अगर (rc)
+			if (rc)
 				dp->hpd_state = ST_DISCONNECTED;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक dp_display_handle_irq_hpd(काष्ठा dp_display_निजी *dp)
-अणु
+static int dp_display_handle_irq_hpd(struct dp_display_private *dp)
+{
 	u32 sink_request = dp->link->sink_request;
 
-	अगर (dp->hpd_state == ST_DISCONNECTED) अणु
-		अगर (sink_request & DP_LINK_STATUS_UPDATED) अणु
+	if (dp->hpd_state == ST_DISCONNECTED) {
+		if (sink_request & DP_LINK_STATUS_UPDATED) {
 			DRM_ERROR("Disconnected, no DP_LINK_STATUS_UPDATED\n");
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 
 	dp_ctrl_handle_sink_request(dp->ctrl);
 
-	अगर (sink_request & DP_TEST_LINK_VIDEO_PATTERN)
+	if (sink_request & DP_TEST_LINK_VIDEO_PATTERN)
 		dp_display_handle_video_request(dp);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dp_display_usbpd_attention_cb(काष्ठा device *dev)
-अणु
-	पूर्णांक rc = 0;
+static int dp_display_usbpd_attention_cb(struct device *dev)
+{
+	int rc = 0;
 	u32 sink_request;
-	काष्ठा dp_display_निजी *dp;
-	काष्ठा dp_usbpd *hpd;
+	struct dp_display_private *dp;
+	struct dp_usbpd *hpd;
 
-	अगर (!dev) अणु
+	if (!dev) {
 		DRM_ERROR("invalid dev\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	dp = container_of(g_dp_display,
-			काष्ठा dp_display_निजी, dp_display);
-	अगर (!dp) अणु
+			struct dp_display_private, dp_display);
+	if (!dp) {
 		DRM_ERROR("no driver data found\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	hpd = dp->usbpd;
 
-	/* check क्रम any test request issued by sink */
+	/* check for any test request issued by sink */
 	rc = dp_link_process_request(dp->link);
-	अगर (!rc) अणु
+	if (!rc) {
 		sink_request = dp->link->sink_request;
-		अगर (sink_request & DS_PORT_STATUS_CHANGED)
+		if (sink_request & DS_PORT_STATUS_CHANGED)
 			rc = dp_display_handle_port_ststus_changed(dp);
-		अन्यथा
+		else
 			rc = dp_display_handle_irq_hpd(dp);
-	पूर्ण
+	}
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक dp_hpd_plug_handle(काष्ठा dp_display_निजी *dp, u32 data)
-अणु
-	काष्ठा dp_usbpd *hpd = dp->usbpd;
+static int dp_hpd_plug_handle(struct dp_display_private *dp, u32 data)
+{
+	struct dp_usbpd *hpd = dp->usbpd;
 	u32 state;
 	u32 tout = DP_TIMEOUT_5_SECOND;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (!hpd)
-		वापस 0;
+	if (!hpd)
+		return 0;
 
 	mutex_lock(&dp->event_mutex);
 
 	state =  dp->hpd_state;
-	अगर (state == ST_DISPLAY_OFF || state == ST_SUSPENDED) अणु
+	if (state == ST_DISPLAY_OFF || state == ST_SUSPENDED) {
 		mutex_unlock(&dp->event_mutex);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (state == ST_CONNECT_PENDING || state == ST_CONNECTED) अणु
+	if (state == ST_CONNECT_PENDING || state == ST_CONNECTED) {
 		mutex_unlock(&dp->event_mutex);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (state == ST_DISCONNECT_PENDING) अणु
-		/* रुको until ST_DISCONNECTED */
+	if (state == ST_DISCONNECT_PENDING) {
+		/* wait until ST_DISCONNECTED */
 		dp_add_event(dp, EV_HPD_PLUG_INT, 0, 1); /* delay = 1 */
 		mutex_unlock(&dp->event_mutex);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	dp->hpd_state = ST_CONNECT_PENDING;
 
 	hpd->hpd_high = 1;
 
 	ret = dp_display_usbpd_configure_cb(&dp->pdev->dev);
-	अगर (ret) अणु	/* link train failed */
+	if (ret) {	/* link train failed */
 		hpd->hpd_high = 0;
 		dp->hpd_state = ST_DISCONNECTED;
 
-		अगर (ret == -ECONNRESET) अणु /* cable unplugged */
+		if (ret == -ECONNRESET) { /* cable unplugged */
 			dp->core_initialized = false;
-		पूर्ण
+		}
 
-	पूर्ण अन्यथा अणु
-		/* start sentinel checking in हाल of missing uevent */
+	} else {
+		/* start sentinel checking in case of missing uevent */
 		dp_add_event(dp, EV_CONNECT_PENDING_TIMEOUT, 0, tout);
-	पूर्ण
+	}
 
 	mutex_unlock(&dp->event_mutex);
 
 	/* uevent will complete connection part */
-	वापस 0;
-पूर्ण;
+	return 0;
+};
 
-अटल पूर्णांक dp_display_enable(काष्ठा dp_display_निजी *dp, u32 data);
-अटल पूर्णांक dp_display_disable(काष्ठा dp_display_निजी *dp, u32 data);
+static int dp_display_enable(struct dp_display_private *dp, u32 data);
+static int dp_display_disable(struct dp_display_private *dp, u32 data);
 
-अटल पूर्णांक dp_connect_pending_समयout(काष्ठा dp_display_निजी *dp, u32 data)
-अणु
+static int dp_connect_pending_timeout(struct dp_display_private *dp, u32 data)
+{
 	u32 state;
 
 	mutex_lock(&dp->event_mutex);
 
 	state = dp->hpd_state;
-	अगर (state == ST_CONNECT_PENDING)
+	if (state == ST_CONNECT_PENDING)
 		dp->hpd_state = ST_CONNECTED;
 
 	mutex_unlock(&dp->event_mutex);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम dp_display_handle_plugged_change(काष्ठा msm_dp *dp_display,
+static void dp_display_handle_plugged_change(struct msm_dp *dp_display,
 		bool plugged)
-अणु
-	काष्ठा dp_display_निजी *dp;
+{
+	struct dp_display_private *dp;
 
 	dp = container_of(dp_display,
-			काष्ठा dp_display_निजी, dp_display);
+			struct dp_display_private, dp_display);
 
-	/* notअगरy audio subप्रणाली only अगर sink supports audio */
-	अगर (dp_display->plugged_cb && dp_display->codec_dev &&
+	/* notify audio subsystem only if sink supports audio */
+	if (dp_display->plugged_cb && dp_display->codec_dev &&
 			dp->audio_supported)
 		dp_display->plugged_cb(dp_display->codec_dev, plugged);
-पूर्ण
+}
 
-अटल पूर्णांक dp_hpd_unplug_handle(काष्ठा dp_display_निजी *dp, u32 data)
-अणु
-	काष्ठा dp_usbpd *hpd = dp->usbpd;
+static int dp_hpd_unplug_handle(struct dp_display_private *dp, u32 data)
+{
+	struct dp_usbpd *hpd = dp->usbpd;
 	u32 state;
 
-	अगर (!hpd)
-		वापस 0;
+	if (!hpd)
+		return 0;
 
 	mutex_lock(&dp->event_mutex);
 
 	state = dp->hpd_state;
-	अगर (state == ST_DISCONNECT_PENDING || state == ST_DISCONNECTED) अणु
+	if (state == ST_DISCONNECT_PENDING || state == ST_DISCONNECTED) {
 		mutex_unlock(&dp->event_mutex);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (state == ST_CONNECT_PENDING) अणु
-		/* रुको until CONNECTED */
+	if (state == ST_CONNECT_PENDING) {
+		/* wait until CONNECTED */
 		dp_add_event(dp, EV_HPD_UNPLUG_INT, 0, 1); /* delay = 1 */
 		mutex_unlock(&dp->event_mutex);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	dp->hpd_state = ST_DISCONNECT_PENDING;
 
-	/* disable HPD plug पूर्णांकerrupt until disconnect is करोne */
-	dp_catalog_hpd_config_पूर्णांकr(dp->catalog, DP_DP_HPD_PLUG_INT_MASK
+	/* disable HPD plug interrupt until disconnect is done */
+	dp_catalog_hpd_config_intr(dp->catalog, DP_DP_HPD_PLUG_INT_MASK
 				| DP_DP_IRQ_HPD_INT_MASK, false);
 
 	hpd->hpd_high = 0;
 
 	/*
-	 * We करोn't need separate work क्रम disconnect as
-	 * connect/attention पूर्णांकerrupts are disabled
+	 * We don't need separate work for disconnect as
+	 * connect/attention interrupts are disabled
 	 */
 	dp_display_usbpd_disconnect_cb(&dp->pdev->dev);
 
-	/* start sentinel checking in हाल of missing uevent */
+	/* start sentinel checking in case of missing uevent */
 	dp_add_event(dp, EV_DISCONNECT_PENDING_TIMEOUT, 0, DP_TIMEOUT_5_SECOND);
 
-	/* संकेत the disconnect event early to ensure proper tearकरोwn */
+	/* signal the disconnect event early to ensure proper teardown */
 	dp_display_handle_plugged_change(g_dp_display, false);
 
-	dp_catalog_hpd_config_पूर्णांकr(dp->catalog, DP_DP_HPD_PLUG_INT_MASK |
+	dp_catalog_hpd_config_intr(dp->catalog, DP_DP_HPD_PLUG_INT_MASK |
 					DP_DP_IRQ_HPD_INT_MASK, true);
 
 	/* uevent will complete disconnection part */
 	mutex_unlock(&dp->event_mutex);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dp_disconnect_pending_समयout(काष्ठा dp_display_निजी *dp, u32 data)
-अणु
+static int dp_disconnect_pending_timeout(struct dp_display_private *dp, u32 data)
+{
 	u32 state;
 
 	mutex_lock(&dp->event_mutex);
 
 	state =  dp->hpd_state;
-	अगर (state == ST_DISCONNECT_PENDING)
+	if (state == ST_DISCONNECT_PENDING)
 		dp->hpd_state = ST_DISCONNECTED;
 
 	mutex_unlock(&dp->event_mutex);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dp_irq_hpd_handle(काष्ठा dp_display_निजी *dp, u32 data)
-अणु
+static int dp_irq_hpd_handle(struct dp_display_private *dp, u32 data)
+{
 	u32 state;
-	पूर्णांक ret;
+	int ret;
 
 	mutex_lock(&dp->event_mutex);
 
 	/* irq_hpd can happen at either connected or disconnected state */
 	state =  dp->hpd_state;
-	अगर (state == ST_DISPLAY_OFF) अणु
+	if (state == ST_DISPLAY_OFF) {
 		mutex_unlock(&dp->event_mutex);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (state == ST_CONNECT_PENDING) अणु
-		/* रुको until ST_CONNECTED */
+	if (state == ST_CONNECT_PENDING) {
+		/* wait until ST_CONNECTED */
 		dp_add_event(dp, EV_IRQ_HPD_INT, 0, 1); /* delay = 1 */
 		mutex_unlock(&dp->event_mutex);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (state == ST_CONNECT_PENDING || state == ST_DISCONNECT_PENDING) अणु
-		/* रुको until ST_CONNECTED */
+	if (state == ST_CONNECT_PENDING || state == ST_DISCONNECT_PENDING) {
+		/* wait until ST_CONNECTED */
 		dp_add_event(dp, EV_IRQ_HPD_INT, 0, 1); /* delay = 1 */
 		mutex_unlock(&dp->event_mutex);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	ret = dp_display_usbpd_attention_cb(&dp->pdev->dev);
-	अगर (ret == -ECONNRESET) अणु /* cable unplugged */
+	if (ret == -ECONNRESET) { /* cable unplugged */
 		dp->core_initialized = false;
-	पूर्ण
+	}
 
 	mutex_unlock(&dp->event_mutex);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम dp_display_deinit_sub_modules(काष्ठा dp_display_निजी *dp)
-अणु
+static void dp_display_deinit_sub_modules(struct dp_display_private *dp)
+{
 	dp_debug_put(dp->debug);
 	dp_ctrl_put(dp->ctrl);
 	dp_panel_put(dp->panel);
 	dp_aux_put(dp->aux);
 	dp_audio_put(dp->audio);
-पूर्ण
+}
 
-अटल पूर्णांक dp_init_sub_modules(काष्ठा dp_display_निजी *dp)
-अणु
-	पूर्णांक rc = 0;
-	काष्ठा device *dev = &dp->pdev->dev;
-	काष्ठा dp_usbpd_cb *cb = &dp->usbpd_cb;
-	काष्ठा dp_panel_in panel_in = अणु
+static int dp_init_sub_modules(struct dp_display_private *dp)
+{
+	int rc = 0;
+	struct device *dev = &dp->pdev->dev;
+	struct dp_usbpd_cb *cb = &dp->usbpd_cb;
+	struct dp_panel_in panel_in = {
 		.dev = dev,
-	पूर्ण;
+	};
 
-	/* Callback APIs used क्रम cable status change event */
+	/* Callback APIs used for cable status change event */
 	cb->configure  = dp_display_usbpd_configure_cb;
 	cb->disconnect = dp_display_usbpd_disconnect_cb;
 	cb->attention  = dp_display_usbpd_attention_cb;
 
 	dp->usbpd = dp_hpd_get(dev, cb);
-	अगर (IS_ERR(dp->usbpd)) अणु
+	if (IS_ERR(dp->usbpd)) {
 		rc = PTR_ERR(dp->usbpd);
 		DRM_ERROR("failed to initialize hpd, rc = %d\n", rc);
-		dp->usbpd = शून्य;
-		जाओ error;
-	पूर्ण
+		dp->usbpd = NULL;
+		goto error;
+	}
 
 	dp->parser = dp_parser_get(dp->pdev);
-	अगर (IS_ERR(dp->parser)) अणु
+	if (IS_ERR(dp->parser)) {
 		rc = PTR_ERR(dp->parser);
 		DRM_ERROR("failed to initialize parser, rc = %d\n", rc);
-		dp->parser = शून्य;
-		जाओ error;
-	पूर्ण
+		dp->parser = NULL;
+		goto error;
+	}
 
 	dp->catalog = dp_catalog_get(dev, &dp->parser->io);
-	अगर (IS_ERR(dp->catalog)) अणु
+	if (IS_ERR(dp->catalog)) {
 		rc = PTR_ERR(dp->catalog);
 		DRM_ERROR("failed to initialize catalog, rc = %d\n", rc);
-		dp->catalog = शून्य;
-		जाओ error;
-	पूर्ण
+		dp->catalog = NULL;
+		goto error;
+	}
 
-	dp->घातer = dp_घातer_get(dev, dp->parser);
-	अगर (IS_ERR(dp->घातer)) अणु
-		rc = PTR_ERR(dp->घातer);
+	dp->power = dp_power_get(dev, dp->parser);
+	if (IS_ERR(dp->power)) {
+		rc = PTR_ERR(dp->power);
 		DRM_ERROR("failed to initialize power, rc = %d\n", rc);
-		dp->घातer = शून्य;
-		जाओ error;
-	पूर्ण
+		dp->power = NULL;
+		goto error;
+	}
 
 	dp->aux = dp_aux_get(dev, dp->catalog);
-	अगर (IS_ERR(dp->aux)) अणु
+	if (IS_ERR(dp->aux)) {
 		rc = PTR_ERR(dp->aux);
 		DRM_ERROR("failed to initialize aux, rc = %d\n", rc);
-		dp->aux = शून्य;
-		जाओ error;
-	पूर्ण
+		dp->aux = NULL;
+		goto error;
+	}
 
 	dp->link = dp_link_get(dev, dp->aux);
-	अगर (IS_ERR(dp->link)) अणु
+	if (IS_ERR(dp->link)) {
 		rc = PTR_ERR(dp->link);
 		DRM_ERROR("failed to initialize link, rc = %d\n", rc);
-		dp->link = शून्य;
-		जाओ error_link;
-	पूर्ण
+		dp->link = NULL;
+		goto error_link;
+	}
 
 	panel_in.aux = dp->aux;
 	panel_in.catalog = dp->catalog;
 	panel_in.link = dp->link;
 
 	dp->panel = dp_panel_get(&panel_in);
-	अगर (IS_ERR(dp->panel)) अणु
+	if (IS_ERR(dp->panel)) {
 		rc = PTR_ERR(dp->panel);
 		DRM_ERROR("failed to initialize panel, rc = %d\n", rc);
-		dp->panel = शून्य;
-		जाओ error_link;
-	पूर्ण
+		dp->panel = NULL;
+		goto error_link;
+	}
 
 	dp->ctrl = dp_ctrl_get(dev, dp->link, dp->panel, dp->aux,
-			       dp->घातer, dp->catalog, dp->parser);
-	अगर (IS_ERR(dp->ctrl)) अणु
+			       dp->power, dp->catalog, dp->parser);
+	if (IS_ERR(dp->ctrl)) {
 		rc = PTR_ERR(dp->ctrl);
 		DRM_ERROR("failed to initialize ctrl, rc = %d\n", rc);
-		dp->ctrl = शून्य;
-		जाओ error_ctrl;
-	पूर्ण
+		dp->ctrl = NULL;
+		goto error_ctrl;
+	}
 
 	dp->audio = dp_audio_get(dp->pdev, dp->panel, dp->catalog);
-	अगर (IS_ERR(dp->audio)) अणु
+	if (IS_ERR(dp->audio)) {
 		rc = PTR_ERR(dp->audio);
 		pr_err("failed to initialize audio, rc = %d\n", rc);
-		dp->audio = शून्य;
-		जाओ error_audio;
-	पूर्ण
+		dp->audio = NULL;
+		goto error_audio;
+	}
 
-	वापस rc;
+	return rc;
 
 error_audio:
 	dp_ctrl_put(dp->ctrl);
@@ -831,83 +830,83 @@ error_ctrl:
 error_link:
 	dp_aux_put(dp->aux);
 error:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक dp_display_set_mode(काष्ठा msm_dp *dp_display,
-			       काष्ठा dp_display_mode *mode)
-अणु
-	काष्ठा dp_display_निजी *dp;
+static int dp_display_set_mode(struct msm_dp *dp_display,
+			       struct dp_display_mode *mode)
+{
+	struct dp_display_private *dp;
 
-	dp = container_of(dp_display, काष्ठा dp_display_निजी, dp_display);
+	dp = container_of(dp_display, struct dp_display_private, dp_display);
 
 	dp->panel->dp_mode.drm_mode = mode->drm_mode;
 	dp->panel->dp_mode.bpp = mode->bpp;
 	dp->panel->dp_mode.capabilities = mode->capabilities;
 	dp_panel_init_panel_info(dp->panel);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dp_display_prepare(काष्ठा msm_dp *dp)
-अणु
-	वापस 0;
-पूर्ण
+static int dp_display_prepare(struct msm_dp *dp)
+{
+	return 0;
+}
 
-अटल पूर्णांक dp_display_enable(काष्ठा dp_display_निजी *dp, u32 data)
-अणु
-	पूर्णांक rc = 0;
-	काष्ठा msm_dp *dp_display;
+static int dp_display_enable(struct dp_display_private *dp, u32 data)
+{
+	int rc = 0;
+	struct msm_dp *dp_display;
 
 	dp_display = g_dp_display;
 
-	अगर (dp_display->घातer_on) अणु
+	if (dp_display->power_on) {
 		DRM_DEBUG_DP("Link already setup, return\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	rc = dp_ctrl_on_stream(dp->ctrl);
-	अगर (!rc)
-		dp_display->घातer_on = true;
+	if (!rc)
+		dp_display->power_on = true;
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक dp_display_post_enable(काष्ठा msm_dp *dp_display)
-अणु
-	काष्ठा dp_display_निजी *dp;
+static int dp_display_post_enable(struct msm_dp *dp_display)
+{
+	struct dp_display_private *dp;
 	u32 rate;
 
-	dp = container_of(dp_display, काष्ठा dp_display_निजी, dp_display);
+	dp = container_of(dp_display, struct dp_display_private, dp_display);
 
 	rate = dp->link->link_params.rate;
 
-	अगर (dp->audio_supported) अणु
+	if (dp->audio_supported) {
 		dp->audio->bw_code = drm_dp_link_rate_to_bw_code(rate);
 		dp->audio->lane_count = dp->link->link_params.num_lanes;
-	पूर्ण
+	}
 
-	/* संकेत the connect event late to synchronize video and display */
+	/* signal the connect event late to synchronize video and display */
 	dp_display_handle_plugged_change(dp_display, true);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dp_display_disable(काष्ठा dp_display_निजी *dp, u32 data)
-अणु
-	काष्ठा msm_dp *dp_display;
+static int dp_display_disable(struct dp_display_private *dp, u32 data)
+{
+	struct msm_dp *dp_display;
 
 	dp_display = g_dp_display;
 
-	अगर (!dp_display->घातer_on)
-		वापस 0;
+	if (!dp_display->power_on)
+		return 0;
 
-	/* रुको only अगर audio was enabled */
-	अगर (dp_display->audio_enabled) अणु
-		/* संकेत the disconnect event */
+	/* wait only if audio was enabled */
+	if (dp_display->audio_enabled) {
+		/* signal the disconnect event */
 		dp_display_handle_plugged_change(dp_display, false);
-		अगर (!रुको_क्रम_completion_समयout(&dp->audio_comp,
+		if (!wait_for_completion_timeout(&dp->audio_comp,
 				HZ * 5))
 			DRM_ERROR("audio comp timeout\n");
-	पूर्ण
+	}
 
 	dp_display->audio_enabled = false;
 
@@ -915,19 +914,19 @@ error:
 
 	dp->core_initialized = false;
 
-	dp_display->घातer_on = false;
+	dp_display->power_on = false;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dp_display_unprepare(काष्ठा msm_dp *dp)
-अणु
-	वापस 0;
-पूर्ण
+static int dp_display_unprepare(struct msm_dp *dp)
+{
+	return 0;
+}
 
-पूर्णांक dp_display_set_plugged_cb(काष्ठा msm_dp *dp_display,
-		hdmi_codec_plugged_cb fn, काष्ठा device *codec_dev)
-अणु
+int dp_display_set_plugged_cb(struct msm_dp *dp_display,
+		hdmi_codec_plugged_cb fn, struct device *codec_dev)
+{
 	bool plugged;
 
 	dp_display->plugged_cb = fn;
@@ -935,27 +934,27 @@ error:
 	plugged = dp_display->is_connected;
 	dp_display_handle_plugged_change(dp_display, plugged);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक dp_display_validate_mode(काष्ठा msm_dp *dp, u32 mode_pclk_khz)
-अणु
-	स्थिर u32 num_components = 3, शेष_bpp = 24;
-	काष्ठा dp_display_निजी *dp_display;
-	काष्ठा dp_link_info *link_info;
+int dp_display_validate_mode(struct msm_dp *dp, u32 mode_pclk_khz)
+{
+	const u32 num_components = 3, default_bpp = 24;
+	struct dp_display_private *dp_display;
+	struct dp_link_info *link_info;
 	u32 mode_rate_khz = 0, supported_rate_khz = 0, mode_bpp = 0;
 
-	अगर (!dp || !mode_pclk_khz || !dp->connector) अणु
+	if (!dp || !mode_pclk_khz || !dp->connector) {
 		DRM_ERROR("invalid params\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	dp_display = container_of(dp, काष्ठा dp_display_निजी, dp_display);
+	dp_display = container_of(dp, struct dp_display_private, dp_display);
 	link_info = &dp_display->panel->link_info;
 
 	mode_bpp = dp->connector->display_info.bpc * num_components;
-	अगर (!mode_bpp)
-		mode_bpp = शेष_bpp;
+	if (!mode_bpp)
+		mode_bpp = default_bpp;
 
 	mode_bpp = dp_panel_get_mode_bpp(dp_display->panel,
 			mode_bpp, mode_pclk_khz);
@@ -963,199 +962,199 @@ error:
 	mode_rate_khz = mode_pclk_khz * mode_bpp;
 	supported_rate_khz = link_info->num_lanes * link_info->rate * 8;
 
-	अगर (mode_rate_khz > supported_rate_khz)
-		वापस MODE_BAD;
+	if (mode_rate_khz > supported_rate_khz)
+		return MODE_BAD;
 
-	वापस MODE_OK;
-पूर्ण
+	return MODE_OK;
+}
 
-पूर्णांक dp_display_get_modes(काष्ठा msm_dp *dp,
-				काष्ठा dp_display_mode *dp_mode)
-अणु
-	काष्ठा dp_display_निजी *dp_display;
-	पूर्णांक ret = 0;
+int dp_display_get_modes(struct msm_dp *dp,
+				struct dp_display_mode *dp_mode)
+{
+	struct dp_display_private *dp_display;
+	int ret = 0;
 
-	अगर (!dp) अणु
+	if (!dp) {
 		DRM_ERROR("invalid params\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	dp_display = container_of(dp, काष्ठा dp_display_निजी, dp_display);
+	dp_display = container_of(dp, struct dp_display_private, dp_display);
 
 	ret = dp_panel_get_modes(dp_display->panel,
 		dp->connector, dp_mode);
-	अगर (dp_mode->drm_mode.घड़ी)
-		dp->max_pclk_khz = dp_mode->drm_mode.घड़ी;
-	वापस ret;
-पूर्ण
+	if (dp_mode->drm_mode.clock)
+		dp->max_pclk_khz = dp_mode->drm_mode.clock;
+	return ret;
+}
 
-bool dp_display_check_video_test(काष्ठा msm_dp *dp)
-अणु
-	काष्ठा dp_display_निजी *dp_display;
+bool dp_display_check_video_test(struct msm_dp *dp)
+{
+	struct dp_display_private *dp_display;
 
-	dp_display = container_of(dp, काष्ठा dp_display_निजी, dp_display);
+	dp_display = container_of(dp, struct dp_display_private, dp_display);
 
-	वापस dp_display->panel->video_test;
-पूर्ण
+	return dp_display->panel->video_test;
+}
 
-पूर्णांक dp_display_get_test_bpp(काष्ठा msm_dp *dp)
-अणु
-	काष्ठा dp_display_निजी *dp_display;
+int dp_display_get_test_bpp(struct msm_dp *dp)
+{
+	struct dp_display_private *dp_display;
 
-	अगर (!dp) अणु
+	if (!dp) {
 		DRM_ERROR("invalid params\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	dp_display = container_of(dp, काष्ठा dp_display_निजी, dp_display);
+	dp_display = container_of(dp, struct dp_display_private, dp_display);
 
-	वापस dp_link_bit_depth_to_bpp(
+	return dp_link_bit_depth_to_bpp(
 		dp_display->link->test_video.test_bit_depth);
-पूर्ण
+}
 
-अटल व्योम dp_display_config_hpd(काष्ठा dp_display_निजी *dp)
-अणु
+static void dp_display_config_hpd(struct dp_display_private *dp)
+{
 
 	dp_display_host_init(dp, true);
 	dp_catalog_ctrl_hpd_config(dp->catalog);
 
-	/* Enable पूर्णांकerrupt first समय
-	 * we are leaving dp घड़ीs on during disconnect
-	 * and never disable पूर्णांकerrupt
+	/* Enable interrupt first time
+	 * we are leaving dp clocks on during disconnect
+	 * and never disable interrupt
 	 */
 	enable_irq(dp->irq);
-पूर्ण
+}
 
-अटल पूर्णांक hpd_event_thपढ़ो(व्योम *data)
-अणु
-	काष्ठा dp_display_निजी *dp_priv;
-	अचिन्हित दीर्घ flag;
-	काष्ठा dp_event *toकरो;
-	पूर्णांक समयout_mode = 0;
+static int hpd_event_thread(void *data)
+{
+	struct dp_display_private *dp_priv;
+	unsigned long flag;
+	struct dp_event *todo;
+	int timeout_mode = 0;
 
-	dp_priv = (काष्ठा dp_display_निजी *)data;
+	dp_priv = (struct dp_display_private *)data;
 
-	जबतक (1) अणु
-		अगर (समयout_mode) अणु
-			रुको_event_समयout(dp_priv->event_q,
+	while (1) {
+		if (timeout_mode) {
+			wait_event_timeout(dp_priv->event_q,
 				(dp_priv->event_pndx == dp_priv->event_gndx),
 						EVENT_TIMEOUT);
-		पूर्ण अन्यथा अणु
-			रुको_event_पूर्णांकerruptible(dp_priv->event_q,
+		} else {
+			wait_event_interruptible(dp_priv->event_q,
 				(dp_priv->event_pndx != dp_priv->event_gndx));
-		पूर्ण
+		}
 		spin_lock_irqsave(&dp_priv->event_lock, flag);
-		toकरो = &dp_priv->event_list[dp_priv->event_gndx];
-		अगर (toकरो->delay) अणु
-			काष्ठा dp_event *toकरो_next;
+		todo = &dp_priv->event_list[dp_priv->event_gndx];
+		if (todo->delay) {
+			struct dp_event *todo_next;
 
 			dp_priv->event_gndx++;
 			dp_priv->event_gndx %= DP_EVENT_Q_MAX;
 
-			/* re enter delay event पूर्णांकo q */
-			toकरो_next = &dp_priv->event_list[dp_priv->event_pndx++];
+			/* re enter delay event into q */
+			todo_next = &dp_priv->event_list[dp_priv->event_pndx++];
 			dp_priv->event_pndx %= DP_EVENT_Q_MAX;
-			toकरो_next->event_id = toकरो->event_id;
-			toकरो_next->data = toकरो->data;
-			toकरो_next->delay = toकरो->delay - 1;
+			todo_next->event_id = todo->event_id;
+			todo_next->data = todo->data;
+			todo_next->delay = todo->delay - 1;
 
 			/* clean up older event */
-			toकरो->event_id = EV_NO_EVENT;
-			toकरो->delay = 0;
+			todo->event_id = EV_NO_EVENT;
+			todo->delay = 0;
 
-			/* चयन to समयout mode */
-			समयout_mode = 1;
+			/* switch to timeout mode */
+			timeout_mode = 1;
 			spin_unlock_irqrestore(&dp_priv->event_lock, flag);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		/* समयout with no events in q */
-		अगर (dp_priv->event_pndx == dp_priv->event_gndx) अणु
+		/* timeout with no events in q */
+		if (dp_priv->event_pndx == dp_priv->event_gndx) {
 			spin_unlock_irqrestore(&dp_priv->event_lock, flag);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		dp_priv->event_gndx++;
 		dp_priv->event_gndx %= DP_EVENT_Q_MAX;
-		समयout_mode = 0;
+		timeout_mode = 0;
 		spin_unlock_irqrestore(&dp_priv->event_lock, flag);
 
-		चयन (toकरो->event_id) अणु
-		हाल EV_HPD_INIT_SETUP:
+		switch (todo->event_id) {
+		case EV_HPD_INIT_SETUP:
 			dp_display_config_hpd(dp_priv);
-			अवरोध;
-		हाल EV_HPD_PLUG_INT:
-			dp_hpd_plug_handle(dp_priv, toकरो->data);
-			अवरोध;
-		हाल EV_HPD_UNPLUG_INT:
-			dp_hpd_unplug_handle(dp_priv, toकरो->data);
-			अवरोध;
-		हाल EV_IRQ_HPD_INT:
-			dp_irq_hpd_handle(dp_priv, toकरो->data);
-			अवरोध;
-		हाल EV_HPD_REPLUG_INT:
-			/* करो nothing */
-			अवरोध;
-		हाल EV_USER_NOTIFICATION:
-			dp_display_send_hpd_notअगरication(dp_priv,
-						toकरो->data);
-			अवरोध;
-		हाल EV_CONNECT_PENDING_TIMEOUT:
-			dp_connect_pending_समयout(dp_priv,
-						toकरो->data);
-			अवरोध;
-		हाल EV_DISCONNECT_PENDING_TIMEOUT:
-			dp_disconnect_pending_समयout(dp_priv,
-						toकरो->data);
-			अवरोध;
-		शेष:
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		case EV_HPD_PLUG_INT:
+			dp_hpd_plug_handle(dp_priv, todo->data);
+			break;
+		case EV_HPD_UNPLUG_INT:
+			dp_hpd_unplug_handle(dp_priv, todo->data);
+			break;
+		case EV_IRQ_HPD_INT:
+			dp_irq_hpd_handle(dp_priv, todo->data);
+			break;
+		case EV_HPD_REPLUG_INT:
+			/* do nothing */
+			break;
+		case EV_USER_NOTIFICATION:
+			dp_display_send_hpd_notification(dp_priv,
+						todo->data);
+			break;
+		case EV_CONNECT_PENDING_TIMEOUT:
+			dp_connect_pending_timeout(dp_priv,
+						todo->data);
+			break;
+		case EV_DISCONNECT_PENDING_TIMEOUT:
+			dp_disconnect_pending_timeout(dp_priv,
+						todo->data);
+			break;
+		default:
+			break;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम dp_hpd_event_setup(काष्ठा dp_display_निजी *dp_priv)
-अणु
-	init_रुकोqueue_head(&dp_priv->event_q);
+static void dp_hpd_event_setup(struct dp_display_private *dp_priv)
+{
+	init_waitqueue_head(&dp_priv->event_q);
 	spin_lock_init(&dp_priv->event_lock);
 
-	kthपढ़ो_run(hpd_event_thपढ़ो, dp_priv, "dp_hpd_handler");
-पूर्ण
+	kthread_run(hpd_event_thread, dp_priv, "dp_hpd_handler");
+}
 
-अटल irqवापस_t dp_display_irq_handler(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा dp_display_निजी *dp = dev_id;
-	irqवापस_t ret = IRQ_HANDLED;
+static irqreturn_t dp_display_irq_handler(int irq, void *dev_id)
+{
+	struct dp_display_private *dp = dev_id;
+	irqreturn_t ret = IRQ_HANDLED;
 	u32 hpd_isr_status;
 
-	अगर (!dp) अणु
+	if (!dp) {
 		DRM_ERROR("invalid data\n");
-		वापस IRQ_NONE;
-	पूर्ण
+		return IRQ_NONE;
+	}
 
-	hpd_isr_status = dp_catalog_hpd_get_पूर्णांकr_status(dp->catalog);
+	hpd_isr_status = dp_catalog_hpd_get_intr_status(dp->catalog);
 
-	अगर (hpd_isr_status & 0x0F) अणु
-		/* hpd related पूर्णांकerrupts */
-		अगर (hpd_isr_status & DP_DP_HPD_PLUG_INT_MASK ||
-			hpd_isr_status & DP_DP_HPD_REPLUG_INT_MASK) अणु
+	if (hpd_isr_status & 0x0F) {
+		/* hpd related interrupts */
+		if (hpd_isr_status & DP_DP_HPD_PLUG_INT_MASK ||
+			hpd_isr_status & DP_DP_HPD_REPLUG_INT_MASK) {
 			dp_add_event(dp, EV_HPD_PLUG_INT, 0, 0);
-		पूर्ण
+		}
 
-		अगर (hpd_isr_status & DP_DP_IRQ_HPD_INT_MASK) अणु
+		if (hpd_isr_status & DP_DP_IRQ_HPD_INT_MASK) {
 			/* stop sentinel connect pending checking */
 			dp_del_event(dp, EV_CONNECT_PENDING_TIMEOUT);
 			dp_add_event(dp, EV_IRQ_HPD_INT, 0, 0);
-		पूर्ण
+		}
 
-		अगर (hpd_isr_status & DP_DP_HPD_REPLUG_INT_MASK)
+		if (hpd_isr_status & DP_DP_HPD_REPLUG_INT_MASK)
 			dp_add_event(dp, EV_HPD_REPLUG_INT, 0, 0);
 
-		अगर (hpd_isr_status & DP_DP_HPD_UNPLUG_INT_MASK)
+		if (hpd_isr_status & DP_DP_HPD_UNPLUG_INT_MASK)
 			dp_add_event(dp, EV_HPD_UNPLUG_INT, 0, 0);
-	पूर्ण
+	}
 
 	/* DP controller isr */
 	dp_ctrl_isr(dp->ctrl);
@@ -1163,63 +1162,63 @@ bool dp_display_check_video_test(काष्ठा msm_dp *dp)
 	/* DP aux isr */
 	dp_aux_isr(dp->aux);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक dp_display_request_irq(काष्ठा msm_dp *dp_display)
-अणु
-	पूर्णांक rc = 0;
-	काष्ठा dp_display_निजी *dp;
+int dp_display_request_irq(struct msm_dp *dp_display)
+{
+	int rc = 0;
+	struct dp_display_private *dp;
 
-	अगर (!dp_display) अणु
+	if (!dp_display) {
 		DRM_ERROR("invalid input\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	dp = container_of(dp_display, काष्ठा dp_display_निजी, dp_display);
+	dp = container_of(dp_display, struct dp_display_private, dp_display);
 
 	dp->irq = irq_of_parse_and_map(dp->pdev->dev.of_node, 0);
-	अगर (dp->irq < 0) अणु
+	if (dp->irq < 0) {
 		rc = dp->irq;
 		DRM_ERROR("failed to get irq: %d\n", rc);
-		वापस rc;
-	पूर्ण
+		return rc;
+	}
 
 	rc = devm_request_irq(&dp->pdev->dev, dp->irq,
 			dp_display_irq_handler,
 			IRQF_TRIGGER_HIGH, "dp_display_isr", dp);
-	अगर (rc < 0) अणु
+	if (rc < 0) {
 		DRM_ERROR("failed to request IRQ%u: %d\n",
 				dp->irq, rc);
-		वापस rc;
-	पूर्ण
+		return rc;
+	}
 	disable_irq(dp->irq);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dp_display_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	पूर्णांक rc = 0;
-	काष्ठा dp_display_निजी *dp;
+static int dp_display_probe(struct platform_device *pdev)
+{
+	int rc = 0;
+	struct dp_display_private *dp;
 
-	अगर (!pdev || !pdev->dev.of_node) अणु
+	if (!pdev || !pdev->dev.of_node) {
 		DRM_ERROR("pdev not found\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	dp = devm_kzalloc(&pdev->dev, माप(*dp), GFP_KERNEL);
-	अगर (!dp)
-		वापस -ENOMEM;
+	dp = devm_kzalloc(&pdev->dev, sizeof(*dp), GFP_KERNEL);
+	if (!dp)
+		return -ENOMEM;
 
 	dp->pdev = pdev;
 	dp->name = "drm_dp";
 
 	rc = dp_init_sub_modules(dp);
-	अगर (rc) अणु
+	if (rc) {
 		DRM_ERROR("init sub module failed\n");
-		वापस -EPROBE_DEFER;
-	पूर्ण
+		return -EPROBE_DEFER;
+	}
 
 	mutex_init(&dp->event_mutex);
 	g_dp_display = &dp->dp_display;
@@ -1229,40 +1228,40 @@ bool dp_display_check_video_test(काष्ठा msm_dp *dp)
 
 	init_completion(&dp->audio_comp);
 
-	platक्रमm_set_drvdata(pdev, g_dp_display);
+	platform_set_drvdata(pdev, g_dp_display);
 
 	rc = component_add(&pdev->dev, &dp_display_comp_ops);
-	अगर (rc) अणु
+	if (rc) {
 		DRM_ERROR("component add failed, rc=%d\n", rc);
 		dp_display_deinit_sub_modules(dp);
-	पूर्ण
+	}
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक dp_display_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा dp_display_निजी *dp;
+static int dp_display_remove(struct platform_device *pdev)
+{
+	struct dp_display_private *dp;
 
 	dp = container_of(g_dp_display,
-			काष्ठा dp_display_निजी, dp_display);
+			struct dp_display_private, dp_display);
 
 	dp_display_deinit_sub_modules(dp);
 
 	component_del(&pdev->dev, &dp_display_comp_ops);
-	platक्रमm_set_drvdata(pdev, शून्य);
+	platform_set_drvdata(pdev, NULL);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dp_pm_resume(काष्ठा device *dev)
-अणु
-	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(dev);
-	काष्ठा msm_dp *dp_display = platक्रमm_get_drvdata(pdev);
-	काष्ठा dp_display_निजी *dp;
+static int dp_pm_resume(struct device *dev)
+{
+	struct platform_device *pdev = to_platform_device(dev);
+	struct msm_dp *dp_display = platform_get_drvdata(pdev);
+	struct dp_display_private *dp;
 	u32 status;
 
-	dp = container_of(dp_display, काष्ठा dp_display_निजी, dp_display);
+	dp = container_of(dp_display, struct dp_display_private, dp_display);
 
 	mutex_lock(&dp->event_mutex);
 
@@ -1279,29 +1278,29 @@ bool dp_display_check_video_test(काष्ठा msm_dp *dp)
 	/*
 	 * can not declared display is connected unless
 	 * HDMI cable is plugged in and sink_count of
-	 * करोngle become 1
+	 * dongle become 1
 	 */
-	अगर (status && dp->link->sink_count)
+	if (status && dp->link->sink_count)
 		dp->dp_display.is_connected = true;
-	अन्यथा
+	else
 		dp->dp_display.is_connected = false;
 
 	mutex_unlock(&dp->event_mutex);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dp_pm_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(dev);
-	काष्ठा msm_dp *dp_display = platक्रमm_get_drvdata(pdev);
-	काष्ठा dp_display_निजी *dp;
+static int dp_pm_suspend(struct device *dev)
+{
+	struct platform_device *pdev = to_platform_device(dev);
+	struct msm_dp *dp_display = platform_get_drvdata(pdev);
+	struct dp_display_private *dp;
 
-	dp = container_of(dp_display, काष्ठा dp_display_निजी, dp_display);
+	dp = container_of(dp_display, struct dp_display_private, dp_display);
 
 	mutex_lock(&dp->event_mutex);
 
-	अगर (dp->core_initialized == true)
+	if (dp->core_initialized == true)
 		dp_display_host_deinit(dp);
 
 	dp->hpd_state = ST_SUSPENDED;
@@ -1311,130 +1310,130 @@ bool dp_display_check_video_test(काष्ठा msm_dp *dp)
 
 	mutex_unlock(&dp->event_mutex);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dp_pm_prepare(काष्ठा device *dev)
-अणु
-	वापस 0;
-पूर्ण
+static int dp_pm_prepare(struct device *dev)
+{
+	return 0;
+}
 
-अटल व्योम dp_pm_complete(काष्ठा device *dev)
-अणु
+static void dp_pm_complete(struct device *dev)
+{
 
-पूर्ण
+}
 
-अटल स्थिर काष्ठा dev_pm_ops dp_pm_ops = अणु
+static const struct dev_pm_ops dp_pm_ops = {
 	.suspend = dp_pm_suspend,
 	.resume =  dp_pm_resume,
 	.prepare = dp_pm_prepare,
 	.complete = dp_pm_complete,
-पूर्ण;
+};
 
-अटल काष्ठा platक्रमm_driver dp_display_driver = अणु
+static struct platform_driver dp_display_driver = {
 	.probe  = dp_display_probe,
-	.हटाओ = dp_display_हटाओ,
-	.driver = अणु
+	.remove = dp_display_remove,
+	.driver = {
 		.name = "msm-dp-display",
 		.of_match_table = dp_dt_match,
 		.suppress_bind_attrs = true,
 		.pm = &dp_pm_ops,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-पूर्णांक __init msm_dp_रेजिस्टर(व्योम)
-अणु
-	पूर्णांक ret;
+int __init msm_dp_register(void)
+{
+	int ret;
 
-	ret = platक्रमm_driver_रेजिस्टर(&dp_display_driver);
-	अगर (ret)
+	ret = platform_driver_register(&dp_display_driver);
+	if (ret)
 		DRM_ERROR("Dp display driver register failed");
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम __निकास msm_dp_unरेजिस्टर(व्योम)
-अणु
-	platक्रमm_driver_unरेजिस्टर(&dp_display_driver);
-पूर्ण
+void __exit msm_dp_unregister(void)
+{
+	platform_driver_unregister(&dp_display_driver);
+}
 
-व्योम msm_dp_irq_postinstall(काष्ठा msm_dp *dp_display)
-अणु
-	काष्ठा dp_display_निजी *dp;
+void msm_dp_irq_postinstall(struct msm_dp *dp_display)
+{
+	struct dp_display_private *dp;
 
-	अगर (!dp_display)
-		वापस;
+	if (!dp_display)
+		return;
 
-	dp = container_of(dp_display, काष्ठा dp_display_निजी, dp_display);
+	dp = container_of(dp_display, struct dp_display_private, dp_display);
 
 	dp_hpd_event_setup(dp);
 
 	dp_add_event(dp, EV_HPD_INIT_SETUP, 0, 100);
-पूर्ण
+}
 
-व्योम msm_dp_debugfs_init(काष्ठा msm_dp *dp_display, काष्ठा drm_minor *minor)
-अणु
-	काष्ठा dp_display_निजी *dp;
-	काष्ठा device *dev;
-	पूर्णांक rc;
+void msm_dp_debugfs_init(struct msm_dp *dp_display, struct drm_minor *minor)
+{
+	struct dp_display_private *dp;
+	struct device *dev;
+	int rc;
 
-	dp = container_of(dp_display, काष्ठा dp_display_निजी, dp_display);
+	dp = container_of(dp_display, struct dp_display_private, dp_display);
 	dev = &dp->pdev->dev;
 
 	dp->debug = dp_debug_get(dev, dp->panel, dp->usbpd,
 					dp->link, &dp->dp_display.connector,
 					minor);
-	अगर (IS_ERR(dp->debug)) अणु
+	if (IS_ERR(dp->debug)) {
 		rc = PTR_ERR(dp->debug);
 		DRM_ERROR("failed to initialize debug, rc = %d\n", rc);
-		dp->debug = शून्य;
-	पूर्ण
-पूर्ण
+		dp->debug = NULL;
+	}
+}
 
-पूर्णांक msm_dp_modeset_init(काष्ठा msm_dp *dp_display, काष्ठा drm_device *dev,
-			काष्ठा drm_encoder *encoder)
-अणु
-	काष्ठा msm_drm_निजी *priv;
-	पूर्णांक ret;
+int msm_dp_modeset_init(struct msm_dp *dp_display, struct drm_device *dev,
+			struct drm_encoder *encoder)
+{
+	struct msm_drm_private *priv;
+	int ret;
 
-	अगर (WARN_ON(!encoder) || WARN_ON(!dp_display) || WARN_ON(!dev))
-		वापस -EINVAL;
+	if (WARN_ON(!encoder) || WARN_ON(!dp_display) || WARN_ON(!dev))
+		return -EINVAL;
 
-	priv = dev->dev_निजी;
+	priv = dev->dev_private;
 	dp_display->drm_dev = dev;
 
 	ret = dp_display_request_irq(dp_display);
-	अगर (ret) अणु
+	if (ret) {
 		DRM_ERROR("request_irq failed, ret=%d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	dp_display->encoder = encoder;
 
 	dp_display->connector = dp_drm_connector_init(dp_display);
-	अगर (IS_ERR(dp_display->connector)) अणु
+	if (IS_ERR(dp_display->connector)) {
 		ret = PTR_ERR(dp_display->connector);
 		DRM_DEV_ERROR(dev->dev,
 			"failed to create dp connector: %d\n", ret);
-		dp_display->connector = शून्य;
-		वापस ret;
-	पूर्ण
+		dp_display->connector = NULL;
+		return ret;
+	}
 
 	priv->connectors[priv->num_connectors++] = dp_display->connector;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक msm_dp_display_enable(काष्ठा msm_dp *dp, काष्ठा drm_encoder *encoder)
-अणु
-	पूर्णांक rc = 0;
-	काष्ठा dp_display_निजी *dp_display;
+int msm_dp_display_enable(struct msm_dp *dp, struct drm_encoder *encoder)
+{
+	int rc = 0;
+	struct dp_display_private *dp_display;
 	u32 state;
 
-	dp_display = container_of(dp, काष्ठा dp_display_निजी, dp_display);
-	अगर (!dp_display->dp_mode.drm_mode.घड़ी) अणु
+	dp_display = container_of(dp, struct dp_display_private, dp_display);
+	if (!dp_display->dp_mode.drm_mode.clock) {
 		DRM_ERROR("invalid params\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	mutex_lock(&dp_display->event_mutex);
 
@@ -1442,35 +1441,35 @@ bool dp_display_check_video_test(काष्ठा msm_dp *dp)
 	dp_del_event(dp_display, EV_CONNECT_PENDING_TIMEOUT);
 
 	rc = dp_display_set_mode(dp, &dp_display->dp_mode);
-	अगर (rc) अणु
+	if (rc) {
 		DRM_ERROR("Failed to perform a mode set, rc=%d\n", rc);
 		mutex_unlock(&dp_display->event_mutex);
-		वापस rc;
-	पूर्ण
+		return rc;
+	}
 
 	rc = dp_display_prepare(dp);
-	अगर (rc) अणु
+	if (rc) {
 		DRM_ERROR("DP display prepare failed, rc=%d\n", rc);
 		mutex_unlock(&dp_display->event_mutex);
-		वापस rc;
-	पूर्ण
+		return rc;
+	}
 
 	state =  dp_display->hpd_state;
 
-	अगर (state == ST_DISPLAY_OFF)
+	if (state == ST_DISPLAY_OFF)
 		dp_display_host_init(dp_display, true);
 
 	dp_display_enable(dp_display, 0);
 
 	rc = dp_display_post_enable(dp);
-	अगर (rc) अणु
+	if (rc) {
 		DRM_ERROR("DP display post enable failed, rc=%d\n", rc);
 		dp_display_disable(dp_display, 0);
 		dp_display_unprepare(dp);
-	पूर्ण
+	}
 
 	/* manual kick off plug event to train link */
-	अगर (state == ST_DISPLAY_OFF)
+	if (state == ST_DISPLAY_OFF)
 		dp_add_event(dp_display, EV_IRQ_HPD_INT, 0, 0);
 
 	/* completed connection */
@@ -1478,27 +1477,27 @@ bool dp_display_check_video_test(काष्ठा msm_dp *dp)
 
 	mutex_unlock(&dp_display->event_mutex);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-पूर्णांक msm_dp_display_pre_disable(काष्ठा msm_dp *dp, काष्ठा drm_encoder *encoder)
-अणु
-	काष्ठा dp_display_निजी *dp_display;
+int msm_dp_display_pre_disable(struct msm_dp *dp, struct drm_encoder *encoder)
+{
+	struct dp_display_private *dp_display;
 
-	dp_display = container_of(dp, काष्ठा dp_display_निजी, dp_display);
+	dp_display = container_of(dp, struct dp_display_private, dp_display);
 
 	dp_ctrl_push_idle(dp_display->ctrl);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक msm_dp_display_disable(काष्ठा msm_dp *dp, काष्ठा drm_encoder *encoder)
-अणु
-	पूर्णांक rc = 0;
+int msm_dp_display_disable(struct msm_dp *dp, struct drm_encoder *encoder)
+{
+	int rc = 0;
 	u32 state;
-	काष्ठा dp_display_निजी *dp_display;
+	struct dp_display_private *dp_display;
 
-	dp_display = container_of(dp, काष्ठा dp_display_निजी, dp_display);
+	dp_display = container_of(dp, struct dp_display_private, dp_display);
 
 	mutex_lock(&dp_display->event_mutex);
 
@@ -1508,37 +1507,37 @@ bool dp_display_check_video_test(काष्ठा msm_dp *dp)
 	dp_display_disable(dp_display, 0);
 
 	rc = dp_display_unprepare(dp);
-	अगर (rc)
+	if (rc)
 		DRM_ERROR("DP display unprepare failed, rc=%d\n", rc);
 
 	state =  dp_display->hpd_state;
-	अगर (state == ST_DISCONNECT_PENDING) अणु
+	if (state == ST_DISCONNECT_PENDING) {
 		/* completed disconnection */
 		dp_display->hpd_state = ST_DISCONNECTED;
-	पूर्ण अन्यथा अणु
+	} else {
 		dp_display->hpd_state = ST_DISPLAY_OFF;
-	पूर्ण
+	}
 
 	mutex_unlock(&dp_display->event_mutex);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-व्योम msm_dp_display_mode_set(काष्ठा msm_dp *dp, काष्ठा drm_encoder *encoder,
-				काष्ठा drm_display_mode *mode,
-				काष्ठा drm_display_mode *adjusted_mode)
-अणु
-	काष्ठा dp_display_निजी *dp_display;
+void msm_dp_display_mode_set(struct msm_dp *dp, struct drm_encoder *encoder,
+				struct drm_display_mode *mode,
+				struct drm_display_mode *adjusted_mode)
+{
+	struct dp_display_private *dp_display;
 
-	dp_display = container_of(dp, काष्ठा dp_display_निजी, dp_display);
+	dp_display = container_of(dp, struct dp_display_private, dp_display);
 
-	स_रखो(&dp_display->dp_mode, 0x0, माप(काष्ठा dp_display_mode));
+	memset(&dp_display->dp_mode, 0x0, sizeof(struct dp_display_mode));
 
-	अगर (dp_display_check_video_test(dp))
+	if (dp_display_check_video_test(dp))
 		dp_display->dp_mode.bpp = dp_display_get_test_bpp(dp);
-	अन्यथा /* Default num_components per pixel = 3 */
+	else /* Default num_components per pixel = 3 */
 		dp_display->dp_mode.bpp = dp->connector->display_info.bpc * 3;
 
-	अगर (!dp_display->dp_mode.bpp)
+	if (!dp_display->dp_mode.bpp)
 		dp_display->dp_mode.bpp = 24; /* Default bpp */
 
 	drm_mode_copy(&dp_display->dp_mode.drm_mode, adjusted_mode);
@@ -1548,4 +1547,4 @@ bool dp_display_check_video_test(काष्ठा msm_dp *dp)
 
 	dp_display->dp_mode.h_active_low =
 		!!(dp_display->dp_mode.drm_mode.flags & DRM_MODE_FLAG_NHSYNC);
-पूर्ण
+}

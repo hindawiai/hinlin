@@ -1,7 +1,6 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * definition क्रम store प्रणाली inक्रमmation stsi
+ * definition for store system information stsi
  *
  * Copyright IBM Corp. 2001, 2008
  *
@@ -9,194 +8,194 @@
  *		 Christian Borntraeger <borntraeger@de.ibm.com>
  */
 
-#अगर_अघोषित __ASM_S390_SYSINFO_H
-#घोषणा __ASM_S390_SYSINFO_H
+#ifndef __ASM_S390_SYSINFO_H
+#define __ASM_S390_SYSINFO_H
 
-#समावेश <यंत्र/bitsperदीर्घ.h>
-#समावेश <linux/uuid.h>
+#include <asm/bitsperlong.h>
+#include <linux/uuid.h>
 
-काष्ठा sysinfo_1_1_1 अणु
-	अचिन्हित अक्षर p:1;
-	अचिन्हित अक्षर :6;
-	अचिन्हित अक्षर t:1;
-	अचिन्हित अक्षर :8;
-	अचिन्हित अक्षर ccr;
-	अचिन्हित अक्षर cai;
-	अक्षर reserved_0[20];
-	अचिन्हित दीर्घ lic;
-	अक्षर manufacturer[16];
-	अक्षर type[4];
-	अक्षर reserved_1[12];
-	अक्षर model_capacity[16];
-	अक्षर sequence[16];
-	अक्षर plant[4];
-	अक्षर model[16];
-	अक्षर model_perm_cap[16];
-	अक्षर model_temp_cap[16];
-	अचिन्हित पूर्णांक model_cap_rating;
-	अचिन्हित पूर्णांक model_perm_cap_rating;
-	अचिन्हित पूर्णांक model_temp_cap_rating;
-	अचिन्हित अक्षर typepct[5];
-	अचिन्हित अक्षर reserved_2[3];
-	अचिन्हित पूर्णांक ncr;
-	अचिन्हित पूर्णांक npr;
-	अचिन्हित पूर्णांक ntr;
-पूर्ण;
+struct sysinfo_1_1_1 {
+	unsigned char p:1;
+	unsigned char :6;
+	unsigned char t:1;
+	unsigned char :8;
+	unsigned char ccr;
+	unsigned char cai;
+	char reserved_0[20];
+	unsigned long lic;
+	char manufacturer[16];
+	char type[4];
+	char reserved_1[12];
+	char model_capacity[16];
+	char sequence[16];
+	char plant[4];
+	char model[16];
+	char model_perm_cap[16];
+	char model_temp_cap[16];
+	unsigned int model_cap_rating;
+	unsigned int model_perm_cap_rating;
+	unsigned int model_temp_cap_rating;
+	unsigned char typepct[5];
+	unsigned char reserved_2[3];
+	unsigned int ncr;
+	unsigned int npr;
+	unsigned int ntr;
+};
 
-काष्ठा sysinfo_1_2_1 अणु
-	अक्षर reserved_0[80];
-	अक्षर sequence[16];
-	अक्षर plant[4];
-	अक्षर reserved_1[2];
-	अचिन्हित लघु cpu_address;
-पूर्ण;
+struct sysinfo_1_2_1 {
+	char reserved_0[80];
+	char sequence[16];
+	char plant[4];
+	char reserved_1[2];
+	unsigned short cpu_address;
+};
 
-काष्ठा sysinfo_1_2_2 अणु
-	अक्षर क्रमmat;
-	अक्षर reserved_0[1];
-	अचिन्हित लघु acc_offset;
-	अचिन्हित अक्षर mt_installed :1;
-	अचिन्हित अक्षर :2;
-	अचिन्हित अक्षर mt_stid :5;
-	अचिन्हित अक्षर :3;
-	अचिन्हित अक्षर mt_gtid :5;
-	अक्षर reserved_1[18];
-	अचिन्हित पूर्णांक nominal_cap;
-	अचिन्हित पूर्णांक secondary_cap;
-	अचिन्हित पूर्णांक capability;
-	अचिन्हित लघु cpus_total;
-	अचिन्हित लघु cpus_configured;
-	अचिन्हित लघु cpus_standby;
-	अचिन्हित लघु cpus_reserved;
-	अचिन्हित लघु adjusपंचांगent[0];
-पूर्ण;
+struct sysinfo_1_2_2 {
+	char format;
+	char reserved_0[1];
+	unsigned short acc_offset;
+	unsigned char mt_installed :1;
+	unsigned char :2;
+	unsigned char mt_stid :5;
+	unsigned char :3;
+	unsigned char mt_gtid :5;
+	char reserved_1[18];
+	unsigned int nominal_cap;
+	unsigned int secondary_cap;
+	unsigned int capability;
+	unsigned short cpus_total;
+	unsigned short cpus_configured;
+	unsigned short cpus_standby;
+	unsigned short cpus_reserved;
+	unsigned short adjustment[0];
+};
 
-काष्ठा sysinfo_1_2_2_extension अणु
-	अचिन्हित पूर्णांक alt_capability;
-	अचिन्हित लघु alt_adjusपंचांगent[0];
-पूर्ण;
+struct sysinfo_1_2_2_extension {
+	unsigned int alt_capability;
+	unsigned short alt_adjustment[0];
+};
 
-काष्ठा sysinfo_2_2_1 अणु
-	अक्षर reserved_0[80];
-	अक्षर sequence[16];
-	अक्षर plant[4];
-	अचिन्हित लघु cpu_id;
-	अचिन्हित लघु cpu_address;
-पूर्ण;
+struct sysinfo_2_2_1 {
+	char reserved_0[80];
+	char sequence[16];
+	char plant[4];
+	unsigned short cpu_id;
+	unsigned short cpu_address;
+};
 
-काष्ठा sysinfo_2_2_2 अणु
-	अक्षर reserved_0[32];
-	अचिन्हित लघु lpar_number;
-	अक्षर reserved_1;
-	अचिन्हित अक्षर अक्षरacteristics;
-	अचिन्हित लघु cpus_total;
-	अचिन्हित लघु cpus_configured;
-	अचिन्हित लघु cpus_standby;
-	अचिन्हित लघु cpus_reserved;
-	अक्षर name[8];
-	अचिन्हित पूर्णांक caf;
-	अक्षर reserved_2[8];
-	अचिन्हित अक्षर mt_installed :1;
-	अचिन्हित अक्षर :2;
-	अचिन्हित अक्षर mt_stid :5;
-	अचिन्हित अक्षर :3;
-	अचिन्हित अक्षर mt_gtid :5;
-	अचिन्हित अक्षर :3;
-	अचिन्हित अक्षर mt_psmtid :5;
-	अक्षर reserved_3[5];
-	अचिन्हित लघु cpus_dedicated;
-	अचिन्हित लघु cpus_shared;
-	अक्षर reserved_4[3];
-	अचिन्हित अक्षर vsne;
+struct sysinfo_2_2_2 {
+	char reserved_0[32];
+	unsigned short lpar_number;
+	char reserved_1;
+	unsigned char characteristics;
+	unsigned short cpus_total;
+	unsigned short cpus_configured;
+	unsigned short cpus_standby;
+	unsigned short cpus_reserved;
+	char name[8];
+	unsigned int caf;
+	char reserved_2[8];
+	unsigned char mt_installed :1;
+	unsigned char :2;
+	unsigned char mt_stid :5;
+	unsigned char :3;
+	unsigned char mt_gtid :5;
+	unsigned char :3;
+	unsigned char mt_psmtid :5;
+	char reserved_3[5];
+	unsigned short cpus_dedicated;
+	unsigned short cpus_shared;
+	char reserved_4[3];
+	unsigned char vsne;
 	uuid_t uuid;
-	अक्षर reserved_5[160];
-	अक्षर ext_name[256];
-पूर्ण;
+	char reserved_5[160];
+	char ext_name[256];
+};
 
-#घोषणा LPAR_CHAR_DEDICATED	(1 << 7)
-#घोषणा LPAR_CHAR_SHARED	(1 << 6)
-#घोषणा LPAR_CHAR_LIMITED	(1 << 5)
+#define LPAR_CHAR_DEDICATED	(1 << 7)
+#define LPAR_CHAR_SHARED	(1 << 6)
+#define LPAR_CHAR_LIMITED	(1 << 5)
 
-काष्ठा sysinfo_3_2_2 अणु
-	अक्षर reserved_0[31];
-	अचिन्हित अक्षर :4;
-	अचिन्हित अक्षर count:4;
-	काष्ठा अणु
-		अक्षर reserved_0[4];
-		अचिन्हित लघु cpus_total;
-		अचिन्हित लघु cpus_configured;
-		अचिन्हित लघु cpus_standby;
-		अचिन्हित लघु cpus_reserved;
-		अक्षर name[8];
-		अचिन्हित पूर्णांक caf;
-		अक्षर cpi[16];
-		अक्षर reserved_1[3];
-		अचिन्हित अक्षर evmne;
-		अचिन्हित पूर्णांक reserved_2;
+struct sysinfo_3_2_2 {
+	char reserved_0[31];
+	unsigned char :4;
+	unsigned char count:4;
+	struct {
+		char reserved_0[4];
+		unsigned short cpus_total;
+		unsigned short cpus_configured;
+		unsigned short cpus_standby;
+		unsigned short cpus_reserved;
+		char name[8];
+		unsigned int caf;
+		char cpi[16];
+		char reserved_1[3];
+		unsigned char evmne;
+		unsigned int reserved_2;
 		uuid_t uuid;
-	पूर्ण vm[8];
-	अक्षर reserved_3[1504];
-	अक्षर ext_names[8][256];
-पूर्ण;
+	} vm[8];
+	char reserved_3[1504];
+	char ext_names[8][256];
+};
 
-बाह्य पूर्णांक topology_max_mnest;
+extern int topology_max_mnest;
 
 /*
  * Returns the maximum nesting level supported by the cpu topology code.
  * The current maximum level is 4 which is the drawer level.
  */
-अटल अंतरभूत अचिन्हित अक्षर topology_mnest_limit(व्योम)
-अणु
-	वापस min(topology_max_mnest, 4);
-पूर्ण
+static inline unsigned char topology_mnest_limit(void)
+{
+	return min(topology_max_mnest, 4);
+}
 
-#घोषणा TOPOLOGY_NR_MAG		6
+#define TOPOLOGY_NR_MAG		6
 
-काष्ठा topology_core अणु
-	अचिन्हित अक्षर nl;
-	अचिन्हित अक्षर reserved0[3];
-	अचिन्हित अक्षर :5;
-	अचिन्हित अक्षर d:1;
-	अचिन्हित अक्षर pp:2;
-	अचिन्हित अक्षर reserved1;
-	अचिन्हित लघु origin;
-	अचिन्हित दीर्घ mask;
-पूर्ण;
+struct topology_core {
+	unsigned char nl;
+	unsigned char reserved0[3];
+	unsigned char :5;
+	unsigned char d:1;
+	unsigned char pp:2;
+	unsigned char reserved1;
+	unsigned short origin;
+	unsigned long mask;
+};
 
-काष्ठा topology_container अणु
-	अचिन्हित अक्षर nl;
-	अचिन्हित अक्षर reserved[6];
-	अचिन्हित अक्षर id;
-पूर्ण;
+struct topology_container {
+	unsigned char nl;
+	unsigned char reserved[6];
+	unsigned char id;
+};
 
-जोड़ topology_entry अणु
-	अचिन्हित अक्षर nl;
-	काष्ठा topology_core cpu;
-	काष्ठा topology_container container;
-पूर्ण;
+union topology_entry {
+	unsigned char nl;
+	struct topology_core cpu;
+	struct topology_container container;
+};
 
-काष्ठा sysinfo_15_1_x अणु
-	अचिन्हित अक्षर reserved0[2];
-	अचिन्हित लघु length;
-	अचिन्हित अक्षर mag[TOPOLOGY_NR_MAG];
-	अचिन्हित अक्षर reserved1;
-	अचिन्हित अक्षर mnest;
-	अचिन्हित अक्षर reserved2[4];
-	जोड़ topology_entry tle[0];
-पूर्ण;
+struct sysinfo_15_1_x {
+	unsigned char reserved0[2];
+	unsigned short length;
+	unsigned char mag[TOPOLOGY_NR_MAG];
+	unsigned char reserved1;
+	unsigned char mnest;
+	unsigned char reserved2[4];
+	union topology_entry tle[0];
+};
 
-पूर्णांक stsi(व्योम *sysinfo, पूर्णांक fc, पूर्णांक sel1, पूर्णांक sel2);
+int stsi(void *sysinfo, int fc, int sel1, int sel2);
 
 /*
- * Service level reporting पूर्णांकerface.
+ * Service level reporting interface.
  */
-काष्ठा service_level अणु
-	काष्ठा list_head list;
-	व्योम (*seq_prपूर्णांक)(काष्ठा seq_file *, काष्ठा service_level *);
-पूर्ण;
+struct service_level {
+	struct list_head list;
+	void (*seq_print)(struct seq_file *, struct service_level *);
+};
 
-पूर्णांक रेजिस्टर_service_level(काष्ठा service_level *);
-पूर्णांक unरेजिस्टर_service_level(काष्ठा service_level *);
+int register_service_level(struct service_level *);
+int unregister_service_level(struct service_level *);
 
-पूर्णांक sthyi_fill(व्योम *dst, u64 *rc);
-#पूर्ण_अगर /* __ASM_S390_SYSINFO_H */
+int sthyi_fill(void *dst, u64 *rc);
+#endif /* __ASM_S390_SYSINFO_H */

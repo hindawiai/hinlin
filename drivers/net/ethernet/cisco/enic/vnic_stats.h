@@ -1,9 +1,8 @@
-<शैली गुरु>
 /*
  * Copyright 2008-2010 Cisco Systems, Inc.  All rights reserved.
  * Copyright 2007 Nuova Systems, Inc.  All rights reserved.
  *
- * This program is मुक्त software; you may redistribute it and/or modअगरy
+ * This program is free software; you may redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; version 2 of the License.
  *
@@ -18,11 +17,11 @@
  *
  */
 
-#अगर_अघोषित _VNIC_STATS_H_
-#घोषणा _VNIC_STATS_H_
+#ifndef _VNIC_STATS_H_
+#define _VNIC_STATS_H_
 
 /* Tx statistics */
-काष्ठा vnic_tx_stats अणु
+struct vnic_tx_stats {
 	u64 tx_frames_ok;
 	u64 tx_unicast_frames_ok;
 	u64 tx_multicast_frames_ok;
@@ -35,10 +34,10 @@
 	u64 tx_errors;
 	u64 tx_tso;
 	u64 rsvd[16];
-पूर्ण;
+};
 
 /* Rx statistics */
-काष्ठा vnic_rx_stats अणु
+struct vnic_rx_stats {
 	u64 rx_frames_ok;
 	u64 rx_frames_total;
 	u64 rx_unicast_frames_ok;
@@ -61,16 +60,16 @@
 	u64 rx_frames_1518;
 	u64 rx_frames_to_max;
 	u64 rsvd[16];
-पूर्ण;
+};
 
 /* Generic statistics */
-काष्ठा vnic_gen_stats अणु
+struct vnic_gen_stats {
 	u64 dma_map_error;
-पूर्ण;
+};
 
-काष्ठा vnic_stats अणु
-	काष्ठा vnic_tx_stats tx;
-	काष्ठा vnic_rx_stats rx;
-पूर्ण;
+struct vnic_stats {
+	struct vnic_tx_stats tx;
+	struct vnic_rx_stats rx;
+};
 
-#पूर्ण_अगर /* _VNIC_STATS_H_ */
+#endif /* _VNIC_STATS_H_ */

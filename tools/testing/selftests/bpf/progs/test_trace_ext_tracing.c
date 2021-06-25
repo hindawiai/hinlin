@@ -1,26 +1,25 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 
-#समावेश "vmlinux.h"
-#समावेश <bpf/bpf_helpers.h>
-#समावेश <bpf/bpf_tracing.h>
+#include "vmlinux.h"
+#include <bpf/bpf_helpers.h>
+#include <bpf/bpf_tracing.h>
 
 __u64 fentry_called = 0;
 
 SEC("fentry/test_pkt_md_access_new")
-पूर्णांक BPF_PROG(fentry, काष्ठा sk_buff *skb)
-अणु
+int BPF_PROG(fentry, struct sk_buff *skb)
+{
 	fentry_called = skb->len;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-__u64 fनिकास_called = 0;
+__u64 fexit_called = 0;
 
 SEC("fexit/test_pkt_md_access_new")
-पूर्णांक BPF_PROG(fनिकास, काष्ठा sk_buff *skb)
-अणु
-	fनिकास_called = skb->len;
-	वापस 0;
-पूर्ण
+int BPF_PROG(fexit, struct sk_buff *skb)
+{
+	fexit_called = skb->len;
+	return 0;
+}
 
-अक्षर _license[] SEC("license") = "GPL";
+char _license[] SEC("license") = "GPL";

@@ -1,93 +1,92 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (C) 2006-2007 PA Semi, Inc
  *
- * Maपूर्णांकained by: Olof Johansson <olof@lixom.net>
+ * Maintained by: Olof Johansson <olof@lixom.net>
  */
 
-#अघोषित DEBUG
+#undef DEBUG
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/irq.h>
+#include <linux/kernel.h>
+#include <linux/string.h>
+#include <linux/irq.h>
 
-#समावेश <यंत्र/machdep.h>
-#समावेश <यंत्र/reg.h>
-#समावेश <यंत्र/smp.h>
+#include <asm/machdep.h>
+#include <asm/reg.h>
+#include <asm/smp.h>
 
-#समावेश "pasemi.h"
+#include "pasemi.h"
 
-काष्ठा sleep_mode अणु
-	अक्षर *name;
-	व्योम (*entry)(व्योम);
-पूर्ण;
+struct sleep_mode {
+	char *name;
+	void (*entry)(void);
+};
 
-अटल काष्ठा sleep_mode modes[] = अणु
-	अणु .name = "spin", .entry = &idle_spin पूर्ण,
-	अणु .name = "doze", .entry = &idle_करोze पूर्ण,
-पूर्ण;
+static struct sleep_mode modes[] = {
+	{ .name = "spin", .entry = &idle_spin },
+	{ .name = "doze", .entry = &idle_doze },
+};
 
-अटल पूर्णांक current_mode = 0;
+static int current_mode = 0;
 
-अटल पूर्णांक pasemi_प्रणाली_reset_exception(काष्ठा pt_regs *regs)
-अणु
-	/* If we were woken up from घातer savings, we need to वापस
+static int pasemi_system_reset_exception(struct pt_regs *regs)
+{
+	/* If we were woken up from power savings, we need to return
 	 * to the calling function, since nip is not saved across
 	 * all modes.
 	 */
 
-	अगर (regs->msr & SRR1_WAKEMASK)
+	if (regs->msr & SRR1_WAKEMASK)
 		regs->nip = regs->link;
 
-	चयन (regs->msr & SRR1_WAKEMASK) अणु
-	हाल SRR1_WAKEDEC:
+	switch (regs->msr & SRR1_WAKEMASK) {
+	case SRR1_WAKEDEC:
 		set_dec(1);
-	हाल SRR1_WAKEEE:
+	case SRR1_WAKEEE:
 		/*
-		 * Handle these when पूर्णांकerrupts get re-enabled and we take
+		 * Handle these when interrupts get re-enabled and we take
 		 * them as regular exceptions. We are in an NMI context
 		 * and can't handle these here.
 		 */
-		अवरोध;
-	शेष:
-		/* करो प्रणाली reset */
-		वापस 0;
-	पूर्ण
+		break;
+	default:
+		/* do system reset */
+		return 0;
+	}
 
-	/* Set higher astate since we come out of घातer savings at 0 */
+	/* Set higher astate since we come out of power savings at 0 */
 	restore_astate(hard_smp_processor_id());
 
 	/* everything handled */
 	regs->msr |= MSR_RI;
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल पूर्णांक __init pasemi_idle_init(व्योम)
-अणु
-#अगर_अघोषित CONFIG_PPC_PASEMI_CPUFREQ
+static int __init pasemi_idle_init(void)
+{
+#ifndef CONFIG_PPC_PASEMI_CPUFREQ
 	pr_warn("No cpufreq driver, powersavings modes disabled\n");
 	current_mode = 0;
-#पूर्ण_अगर
+#endif
 
-	ppc_md.प्रणाली_reset_exception = pasemi_प्रणाली_reset_exception;
-	ppc_md.घातer_save = modes[current_mode].entry;
+	ppc_md.system_reset_exception = pasemi_system_reset_exception;
+	ppc_md.power_save = modes[current_mode].entry;
 	pr_info("Using PA6T idle loop (%s)\n", modes[current_mode].name);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 machine_late_initcall(pasemi, pasemi_idle_init);
 
-अटल पूर्णांक __init idle_param(अक्षर *p)
-अणु
-	पूर्णांक i;
-	क्रम (i = 0; i < ARRAY_SIZE(modes); i++) अणु
-		अगर (!म_भेद(modes[i].name, p)) अणु
+static int __init idle_param(char *p)
+{
+	int i;
+	for (i = 0; i < ARRAY_SIZE(modes); i++) {
+		if (!strcmp(modes[i].name, p)) {
 			current_mode = i;
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+			break;
+		}
+	}
+	return 0;
+}
 
 early_param("idle", idle_param);

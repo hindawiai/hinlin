@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2014 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,15 +21,15 @@
  *
  */
 
-#अगर_अघोषित KFD_DBGMGR_H_
-#घोषणा KFD_DBGMGR_H_
+#ifndef KFD_DBGMGR_H_
+#define KFD_DBGMGR_H_
 
-#समावेश "kfd_priv.h"
+#include "kfd_priv.h"
 
 /* must align with hsakmttypes definition */
-#आशय pack(push, 4)
+#pragma pack(push, 4)
 
-क्रमागत HSA_DBG_WAVEOP अणु
+enum HSA_DBG_WAVEOP {
 	HSA_DBG_WAVEOP_HALT = 1,   /* Halts a wavefront */
 	HSA_DBG_WAVEOP_RESUME = 2, /* Resumes a wavefront */
 	HSA_DBG_WAVEOP_KILL = 3,   /* Kills a wavefront */
@@ -38,14 +37,14 @@
 	HSA_DBG_WAVEOP_TRAP = 5,   /* Causes wavefront to take a trap */
 	HSA_DBG_NUM_WAVEOP = 5,
 	HSA_DBG_MAX_WAVEOP = 0xFFFFFFFF
-पूर्ण;
+};
 
-क्रमागत HSA_DBG_WAVEMODE अणु
+enum HSA_DBG_WAVEMODE {
 	/* send command to a single wave */
 	HSA_DBG_WAVEMODE_SINGLE = 0,
 	/*
 	 * Broadcast to all wavefronts of all processes is not
-	 * supported क्रम HSA user mode
+	 * supported for HSA user mode
 	 */
 
 	/* send to waves within current process */
@@ -54,241 +53,241 @@
 	HSA_DBG_WAVEMODE_BROADCAST_PROCESS_CU = 3,
 	HSA_DBG_NUM_WAVEMODE = 3,
 	HSA_DBG_MAX_WAVEMODE = 0xFFFFFFFF
-पूर्ण;
+};
 
-क्रमागत HSA_DBG_WAVEMSG_TYPE अणु
+enum HSA_DBG_WAVEMSG_TYPE {
 	HSA_DBG_WAVEMSG_AUTO = 0,
 	HSA_DBG_WAVEMSG_USER = 1,
 	HSA_DBG_WAVEMSG_ERROR = 2,
 	HSA_DBG_NUM_WAVEMSG,
 	HSA_DBG_MAX_WAVEMSG = 0xFFFFFFFF
-पूर्ण;
+};
 
-क्रमागत HSA_DBG_WATCH_MODE अणु
+enum HSA_DBG_WATCH_MODE {
 	HSA_DBG_WATCH_READ = 0,		/* Read operations only */
 	HSA_DBG_WATCH_NONREAD = 1,	/* Write or Atomic operations only */
 	HSA_DBG_WATCH_ATOMIC = 2,	/* Atomic Operations only */
 	HSA_DBG_WATCH_ALL = 3,		/* Read, Write or Atomic operations */
 	HSA_DBG_WATCH_NUM,
 	HSA_DBG_WATCH_SIZE = 0xFFFFFFFF
-पूर्ण;
+};
 
-/* This काष्ठाure is hardware specअगरic and may change in the future */
-काष्ठा HsaDbgWaveMsgAMDGen2 अणु
-	जोड़ अणु
-		काष्ठा ui32 अणु
-			uपूर्णांक32_t UserData:8;	/* user data */
-			uपूर्णांक32_t ShaderArray:1;	/* Shader array */
-			uपूर्णांक32_t Priv:1;	/* Privileged */
-			uपूर्णांक32_t Reserved0:4;	/* Reserved, should be 0 */
-			uपूर्णांक32_t WaveId:4;	/* wave id */
-			uपूर्णांक32_t SIMD:2;	/* SIMD id */
-			uपूर्णांक32_t HSACU:4;	/* Compute unit */
-			uपूर्णांक32_t ShaderEngine:2;/* Shader engine */
-			uपूर्णांक32_t MessageType:2;	/* see HSA_DBG_WAVEMSG_TYPE */
-			uपूर्णांक32_t Reserved1:4;	/* Reserved, should be 0 */
-		पूर्ण ui32;
-		uपूर्णांक32_t Value;
-	पूर्ण;
-	uपूर्णांक32_t Reserved2;
-पूर्ण;
+/* This structure is hardware specific and may change in the future */
+struct HsaDbgWaveMsgAMDGen2 {
+	union {
+		struct ui32 {
+			uint32_t UserData:8;	/* user data */
+			uint32_t ShaderArray:1;	/* Shader array */
+			uint32_t Priv:1;	/* Privileged */
+			uint32_t Reserved0:4;	/* Reserved, should be 0 */
+			uint32_t WaveId:4;	/* wave id */
+			uint32_t SIMD:2;	/* SIMD id */
+			uint32_t HSACU:4;	/* Compute unit */
+			uint32_t ShaderEngine:2;/* Shader engine */
+			uint32_t MessageType:2;	/* see HSA_DBG_WAVEMSG_TYPE */
+			uint32_t Reserved1:4;	/* Reserved, should be 0 */
+		} ui32;
+		uint32_t Value;
+	};
+	uint32_t Reserved2;
+};
 
-जोड़ HsaDbgWaveMessageAMD अणु
-	काष्ठा HsaDbgWaveMsgAMDGen2 WaveMsgInfoGen2;
-	/* क्रम future HsaDbgWaveMsgAMDGen3; */
-पूर्ण;
+union HsaDbgWaveMessageAMD {
+	struct HsaDbgWaveMsgAMDGen2 WaveMsgInfoGen2;
+	/* for future HsaDbgWaveMsgAMDGen3; */
+};
 
-काष्ठा HsaDbgWaveMessage अणु
-	व्योम *MemoryVA;		/* ptr to associated host-accessible data */
-	जोड़ HsaDbgWaveMessageAMD DbgWaveMsg;
-पूर्ण;
+struct HsaDbgWaveMessage {
+	void *MemoryVA;		/* ptr to associated host-accessible data */
+	union HsaDbgWaveMessageAMD DbgWaveMsg;
+};
 
 /*
  * TODO: This definitions to be MOVED to kfd_event, once it is implemented.
  *
- * HSA sync primitive, Event and HW Exception notअगरication API definitions.
- * The API functions allow the runसमय to define a so-called sync-primitive,
+ * HSA sync primitive, Event and HW Exception notification API definitions.
+ * The API functions allow the runtime to define a so-called sync-primitive,
  * a SW object combining a user-mode provided "syncvar" and a scheduler event
- * that can be संकेतed through a defined GPU पूर्णांकerrupt. A syncvar is
- * a process भव memory location of a certain size that can be accessed
+ * that can be signaled through a defined GPU interrupt. A syncvar is
+ * a process virtual memory location of a certain size that can be accessed
  * by CPU and GPU shader code within the process to set and query the content
  * within that memory. The definition of the content is determined by the HSA
- * runसमय and potentially GPU shader code पूर्णांकerfacing with the HSA runसमय.
+ * runtime and potentially GPU shader code interfacing with the HSA runtime.
  * The syncvar values may be commonly written through an PM4 WRITE_DATA packet
- * in the user mode inकाष्ठाion stream. The OS scheduler event is typically
- * associated and संकेतed by an पूर्णांकerrupt issued by the GPU, but other HSA
- * प्रणाली पूर्णांकerrupt conditions from other HW (e.g. IOMMUv2) may be surfaced
+ * in the user mode instruction stream. The OS scheduler event is typically
+ * associated and signaled by an interrupt issued by the GPU, but other HSA
+ * system interrupt conditions from other HW (e.g. IOMMUv2) may be surfaced
  * by the KFD by this mechanism, too.
  */
 
-/* these are the new definitions क्रम events */
-क्रमागत HSA_EVENTTYPE अणु
-	HSA_EVENTTYPE_SIGNAL = 0,	/* user-mode generated GPU संकेत */
+/* these are the new definitions for events */
+enum HSA_EVENTTYPE {
+	HSA_EVENTTYPE_SIGNAL = 0,	/* user-mode generated GPU signal */
 	HSA_EVENTTYPE_NODECHANGE = 1,	/* HSA node change (attach/detach) */
 	HSA_EVENTTYPE_DEVICESTATECHANGE = 2,	/* HSA device state change
 						 * (start/stop)
 						 */
 	HSA_EVENTTYPE_HW_EXCEPTION = 3,	/* GPU shader exception event */
 	HSA_EVENTTYPE_SYSTEM_EVENT = 4,	/* GPU SYSCALL with parameter info */
-	HSA_EVENTTYPE_DEBUG_EVENT = 5,	/* GPU संकेत क्रम debugging */
-	HSA_EVENTTYPE_PROखाता_EVENT = 6,/* GPU संकेत क्रम profiling */
-	HSA_EVENTTYPE_QUEUE_EVENT = 7,	/* GPU संकेत queue idle state
+	HSA_EVENTTYPE_DEBUG_EVENT = 5,	/* GPU signal for debugging */
+	HSA_EVENTTYPE_PROFILE_EVENT = 6,/* GPU signal for profiling */
+	HSA_EVENTTYPE_QUEUE_EVENT = 7,	/* GPU signal queue idle state
 					 * (EOP pm4)
 					 */
 	/* ...  */
 	HSA_EVENTTYPE_MAXID,
 	HSA_EVENTTYPE_TYPE_SIZE = 0xFFFFFFFF
-पूर्ण;
+};
 
-/* Sub-definitions क्रम various event types: Syncvar */
-काष्ठा HsaSyncVar अणु
-	जोड़ SyncVar अणु
-		व्योम *UserData;	/* poपूर्णांकer to user mode data */
-		uपूर्णांक64_t UserDataPtrValue; /* 64bit compatibility of value */
-	पूर्ण SyncVar;
-	uपूर्णांक64_t SyncVarSize;
-पूर्ण;
+/* Sub-definitions for various event types: Syncvar */
+struct HsaSyncVar {
+	union SyncVar {
+		void *UserData;	/* pointer to user mode data */
+		uint64_t UserDataPtrValue; /* 64bit compatibility of value */
+	} SyncVar;
+	uint64_t SyncVarSize;
+};
 
-/* Sub-definitions क्रम various event types: NodeChange */
+/* Sub-definitions for various event types: NodeChange */
 
-क्रमागत HSA_EVENTTYPE_NODECHANGE_FLAGS अणु
+enum HSA_EVENTTYPE_NODECHANGE_FLAGS {
 	HSA_EVENTTYPE_NODECHANGE_ADD = 0,
 	HSA_EVENTTYPE_NODECHANGE_REMOVE = 1,
 	HSA_EVENTTYPE_NODECHANGE_SIZE = 0xFFFFFFFF
-पूर्ण;
+};
 
-काष्ठा HsaNodeChange अणु
-	/* HSA node added/हटाओd on the platक्रमm */
-	क्रमागत HSA_EVENTTYPE_NODECHANGE_FLAGS Flags;
-पूर्ण;
+struct HsaNodeChange {
+	/* HSA node added/removed on the platform */
+	enum HSA_EVENTTYPE_NODECHANGE_FLAGS Flags;
+};
 
-/* Sub-definitions क्रम various event types: DeviceStateChange */
-क्रमागत HSA_EVENTTYPE_DEVICESTATECHANGE_FLAGS अणु
+/* Sub-definitions for various event types: DeviceStateChange */
+enum HSA_EVENTTYPE_DEVICESTATECHANGE_FLAGS {
 	/* device started (and available) */
 	HSA_EVENTTYPE_DEVICESTATUSCHANGE_START = 0,
 	/* device stopped (i.e. unavailable) */
 	HSA_EVENTTYPE_DEVICESTATUSCHANGE_STOP = 1,
 	HSA_EVENTTYPE_DEVICESTATUSCHANGE_SIZE = 0xFFFFFFFF
-पूर्ण;
+};
 
-क्रमागत HSA_DEVICE अणु
+enum HSA_DEVICE {
 	HSA_DEVICE_CPU = 0,
 	HSA_DEVICE_GPU = 1,
 	MAX_HSA_DEVICE = 2
-पूर्ण;
+};
 
-काष्ठा HsaDeviceStateChange अणु
-	uपूर्णांक32_t NodeId;	/* F-NUMA node that contains the device */
-	क्रमागत HSA_DEVICE Device;	/* device type: GPU or CPU */
-	क्रमागत HSA_EVENTTYPE_DEVICESTATECHANGE_FLAGS Flags; /* event flags */
-पूर्ण;
+struct HsaDeviceStateChange {
+	uint32_t NodeId;	/* F-NUMA node that contains the device */
+	enum HSA_DEVICE Device;	/* device type: GPU or CPU */
+	enum HSA_EVENTTYPE_DEVICESTATECHANGE_FLAGS Flags; /* event flags */
+};
 
-काष्ठा HsaEventData अणु
-	क्रमागत HSA_EVENTTYPE EventType; /* event type */
-	जोड़ EventData अणु
+struct HsaEventData {
+	enum HSA_EVENTTYPE EventType; /* event type */
+	union EventData {
 		/*
-		 * वापस data associated with HSA_EVENTTYPE_SIGNAL
+		 * return data associated with HSA_EVENTTYPE_SIGNAL
 		 * and other events
 		 */
-		काष्ठा HsaSyncVar SyncVar;
+		struct HsaSyncVar SyncVar;
 
 		/* data associated with HSA_EVENTTYPE_NODE_CHANGE */
-		काष्ठा HsaNodeChange NodeChangeState;
+		struct HsaNodeChange NodeChangeState;
 
 		/* data associated with HSA_EVENTTYPE_DEVICE_STATE_CHANGE */
-		काष्ठा HsaDeviceStateChange DeviceState;
-	पूर्ण EventData;
+		struct HsaDeviceStateChange DeviceState;
+	} EventData;
 
-	/* the following data entries are पूर्णांकernal to the KFD & thunk itself */
+	/* the following data entries are internal to the KFD & thunk itself */
 
-	/* पूर्णांकernal thunk store क्रम Event data (OsEventHandle) */
-	uपूर्णांक64_t HWData1;
-	/* पूर्णांकernal thunk store क्रम Event data (HWAddress) */
-	uपूर्णांक64_t HWData2;
-	/* पूर्णांकernal thunk store क्रम Event data (HWData) */
-	uपूर्णांक32_t HWData3;
-पूर्ण;
+	/* internal thunk store for Event data (OsEventHandle) */
+	uint64_t HWData1;
+	/* internal thunk store for Event data (HWAddress) */
+	uint64_t HWData2;
+	/* internal thunk store for Event data (HWData) */
+	uint32_t HWData3;
+};
 
-काष्ठा HsaEventDescriptor अणु
+struct HsaEventDescriptor {
 	/* event type to allocate */
-	क्रमागत HSA_EVENTTYPE EventType;
+	enum HSA_EVENTTYPE EventType;
 	/* H-NUMA node containing GPU device that is event source */
-	uपूर्णांक32_t NodeId;
-	/* poपूर्णांकer to user mode syncvar data, syncvar->UserDataPtrValue
-	 * may be शून्य
+	uint32_t NodeId;
+	/* pointer to user mode syncvar data, syncvar->UserDataPtrValue
+	 * may be NULL
 	 */
-	काष्ठा HsaSyncVar SyncVar;
-पूर्ण;
+	struct HsaSyncVar SyncVar;
+};
 
-काष्ठा HsaEvent अणु
-	uपूर्णांक32_t EventId;
-	काष्ठा HsaEventData EventData;
-पूर्ण;
+struct HsaEvent {
+	uint32_t EventId;
+	struct HsaEventData EventData;
+};
 
-#आशय pack(pop)
+#pragma pack(pop)
 
-क्रमागत DBGDEV_TYPE अणु
+enum DBGDEV_TYPE {
 	DBGDEV_TYPE_ILLEGAL = 0,
 	DBGDEV_TYPE_NODIQ = 1,
 	DBGDEV_TYPE_DIQ = 2,
 	DBGDEV_TYPE_TEST = 3
-पूर्ण;
+};
 
-काष्ठा dbg_address_watch_info अणु
-	काष्ठा kfd_process *process;
-	क्रमागत HSA_DBG_WATCH_MODE *watch_mode;
-	uपूर्णांक64_t *watch_address;
-	uपूर्णांक64_t *watch_mask;
-	काष्ठा HsaEvent *watch_event;
-	uपूर्णांक32_t num_watch_poपूर्णांकs;
-पूर्ण;
+struct dbg_address_watch_info {
+	struct kfd_process *process;
+	enum HSA_DBG_WATCH_MODE *watch_mode;
+	uint64_t *watch_address;
+	uint64_t *watch_mask;
+	struct HsaEvent *watch_event;
+	uint32_t num_watch_points;
+};
 
-काष्ठा dbg_wave_control_info अणु
-	काष्ठा kfd_process *process;
-	uपूर्णांक32_t trapId;
-	क्रमागत HSA_DBG_WAVEOP opeअक्रम;
-	क्रमागत HSA_DBG_WAVEMODE mode;
-	काष्ठा HsaDbgWaveMessage dbgWave_msg;
-पूर्ण;
+struct dbg_wave_control_info {
+	struct kfd_process *process;
+	uint32_t trapId;
+	enum HSA_DBG_WAVEOP operand;
+	enum HSA_DBG_WAVEMODE mode;
+	struct HsaDbgWaveMessage dbgWave_msg;
+};
 
-काष्ठा kfd_dbgdev अणु
+struct kfd_dbgdev {
 
 	/* The device that owns this data. */
-	काष्ठा kfd_dev *dev;
+	struct kfd_dev *dev;
 
-	/* kernel queue क्रम DIQ */
-	काष्ठा kernel_queue *kq;
+	/* kernel queue for DIQ */
+	struct kernel_queue *kq;
 
-	/* a poपूर्णांकer to the pqm of the calling process */
-	काष्ठा process_queue_manager *pqm;
+	/* a pointer to the pqm of the calling process */
+	struct process_queue_manager *pqm;
 
 	/* type of debug device ( DIQ, non DIQ, etc. ) */
-	क्रमागत DBGDEV_TYPE type;
+	enum DBGDEV_TYPE type;
 
-	/* भवized function poपूर्णांकers to device dbg */
-	पूर्णांक (*dbgdev_रेजिस्टर)(काष्ठा kfd_dbgdev *dbgdev);
-	पूर्णांक (*dbgdev_unरेजिस्टर)(काष्ठा kfd_dbgdev *dbgdev);
-	पूर्णांक (*dbgdev_address_watch)(काष्ठा kfd_dbgdev *dbgdev,
-				काष्ठा dbg_address_watch_info *adw_info);
-	पूर्णांक (*dbgdev_wave_control)(काष्ठा kfd_dbgdev *dbgdev,
-				काष्ठा dbg_wave_control_info *wac_info);
+	/* virtualized function pointers to device dbg */
+	int (*dbgdev_register)(struct kfd_dbgdev *dbgdev);
+	int (*dbgdev_unregister)(struct kfd_dbgdev *dbgdev);
+	int (*dbgdev_address_watch)(struct kfd_dbgdev *dbgdev,
+				struct dbg_address_watch_info *adw_info);
+	int (*dbgdev_wave_control)(struct kfd_dbgdev *dbgdev,
+				struct dbg_wave_control_info *wac_info);
 
-पूर्ण;
+};
 
-काष्ठा kfd_dbgmgr अणु
+struct kfd_dbgmgr {
 	u32 pasid;
-	काष्ठा kfd_dev *dev;
-	काष्ठा kfd_dbgdev *dbgdev;
-पूर्ण;
+	struct kfd_dev *dev;
+	struct kfd_dbgdev *dbgdev;
+};
 
-/* prototypes क्रम debug manager functions */
-काष्ठा mutex *kfd_get_dbgmgr_mutex(व्योम);
-व्योम kfd_dbgmgr_destroy(काष्ठा kfd_dbgmgr *pmgr);
-bool kfd_dbgmgr_create(काष्ठा kfd_dbgmgr **ppmgr, काष्ठा kfd_dev *pdev);
-दीर्घ kfd_dbgmgr_रेजिस्टर(काष्ठा kfd_dbgmgr *pmgr, काष्ठा kfd_process *p);
-दीर्घ kfd_dbgmgr_unरेजिस्टर(काष्ठा kfd_dbgmgr *pmgr, काष्ठा kfd_process *p);
-दीर्घ kfd_dbgmgr_wave_control(काष्ठा kfd_dbgmgr *pmgr,
-				काष्ठा dbg_wave_control_info *wac_info);
-दीर्घ kfd_dbgmgr_address_watch(काष्ठा kfd_dbgmgr *pmgr,
-			काष्ठा dbg_address_watch_info *adw_info);
-#पूर्ण_अगर /* KFD_DBGMGR_H_ */
+/* prototypes for debug manager functions */
+struct mutex *kfd_get_dbgmgr_mutex(void);
+void kfd_dbgmgr_destroy(struct kfd_dbgmgr *pmgr);
+bool kfd_dbgmgr_create(struct kfd_dbgmgr **ppmgr, struct kfd_dev *pdev);
+long kfd_dbgmgr_register(struct kfd_dbgmgr *pmgr, struct kfd_process *p);
+long kfd_dbgmgr_unregister(struct kfd_dbgmgr *pmgr, struct kfd_process *p);
+long kfd_dbgmgr_wave_control(struct kfd_dbgmgr *pmgr,
+				struct dbg_wave_control_info *wac_info);
+long kfd_dbgmgr_address_watch(struct kfd_dbgmgr *pmgr,
+			struct dbg_address_watch_info *adw_info);
+#endif /* KFD_DBGMGR_H_ */

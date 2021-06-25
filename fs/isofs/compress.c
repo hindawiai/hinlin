@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /* -*- linux-c -*- ------------------------------------------------------- *
  *   
  *   Copyright 2001 H. Peter Anvin - All Rights Reserved
@@ -9,154 +8,154 @@
 /*
  * linux/fs/isofs/compress.c
  *
- * Transparent decompression of files on an iso9660 fileप्रणाली
+ * Transparent decompression of files on an iso9660 filesystem
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/init.h>
-#समावेश <linux/bपन.स>
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/bio.h>
 
-#समावेश <linux/slab.h>
-#समावेश <linux/vदो_स्मृति.h>
-#समावेश <linux/zlib.h>
+#include <linux/slab.h>
+#include <linux/vmalloc.h>
+#include <linux/zlib.h>
 
-#समावेश "isofs.h"
-#समावेश "zisofs.h"
+#include "isofs.h"
+#include "zisofs.h"
 
 /* This should probably be global. */
-अटल अक्षर zisofs_sink_page[PAGE_SIZE];
+static char zisofs_sink_page[PAGE_SIZE];
 
 /*
- * This contains the zlib memory allocation and the mutex क्रम the
- * allocation; this aव्योमs failures at block-decompression समय.
+ * This contains the zlib memory allocation and the mutex for the
+ * allocation; this avoids failures at block-decompression time.
  */
-अटल व्योम *zisofs_zlib_workspace;
-अटल DEFINE_MUTEX(zisofs_zlib_lock);
+static void *zisofs_zlib_workspace;
+static DEFINE_MUTEX(zisofs_zlib_lock);
 
 /*
  * Read data of @inode from @block_start to @block_end and uncompress
  * to one zisofs block. Store the data in the @pages array with @pcount
  * entries. Start storing at offset @poffset of the first page.
  */
-अटल loff_t zisofs_uncompress_block(काष्ठा inode *inode, loff_t block_start,
-				      loff_t block_end, पूर्णांक pcount,
-				      काष्ठा page **pages, अचिन्हित poffset,
-				      पूर्णांक *errp)
-अणु
-	अचिन्हित पूर्णांक zisofs_block_shअगरt = ISOFS_I(inode)->i_क्रमmat_parm[1];
-	अचिन्हित पूर्णांक bufsize = ISOFS_BUFFER_SIZE(inode);
-	अचिन्हित पूर्णांक bufshअगरt = ISOFS_BUFFER_BITS(inode);
-	अचिन्हित पूर्णांक bufmask = bufsize - 1;
-	पूर्णांक i, block_size = block_end - block_start;
-	z_stream stream = अणु .total_out = 0,
+static loff_t zisofs_uncompress_block(struct inode *inode, loff_t block_start,
+				      loff_t block_end, int pcount,
+				      struct page **pages, unsigned poffset,
+				      int *errp)
+{
+	unsigned int zisofs_block_shift = ISOFS_I(inode)->i_format_parm[1];
+	unsigned int bufsize = ISOFS_BUFFER_SIZE(inode);
+	unsigned int bufshift = ISOFS_BUFFER_BITS(inode);
+	unsigned int bufmask = bufsize - 1;
+	int i, block_size = block_end - block_start;
+	z_stream stream = { .total_out = 0,
 			    .avail_in = 0,
-			    .avail_out = 0, पूर्ण;
-	पूर्णांक zerr;
-	पूर्णांक needblocks = (block_size + (block_start & bufmask) + bufmask)
-				>> bufshअगरt;
-	पूर्णांक haveblocks;
+			    .avail_out = 0, };
+	int zerr;
+	int needblocks = (block_size + (block_start & bufmask) + bufmask)
+				>> bufshift;
+	int haveblocks;
 	blkcnt_t blocknum;
-	काष्ठा buffer_head **bhs;
-	पूर्णांक curbh, curpage;
+	struct buffer_head **bhs;
+	int curbh, curpage;
 
-	अगर (block_size > deflateBound(1UL << zisofs_block_shअगरt)) अणु
+	if (block_size > deflateBound(1UL << zisofs_block_shift)) {
 		*errp = -EIO;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 	/* Empty block? */
-	अगर (block_size == 0) अणु
-		क्रम ( i = 0 ; i < pcount ; i++ ) अणु
-			अगर (!pages[i])
-				जारी;
-			स_रखो(page_address(pages[i]), 0, PAGE_SIZE);
+	if (block_size == 0) {
+		for ( i = 0 ; i < pcount ; i++ ) {
+			if (!pages[i])
+				continue;
+			memset(page_address(pages[i]), 0, PAGE_SIZE);
 			flush_dcache_page(pages[i]);
 			SetPageUptodate(pages[i]);
-		पूर्ण
-		वापस ((loff_t)pcount) << PAGE_SHIFT;
-	पूर्ण
+		}
+		return ((loff_t)pcount) << PAGE_SHIFT;
+	}
 
-	/* Because zlib is not thपढ़ो-safe, करो all the I/O at the top. */
-	blocknum = block_start >> bufshअगरt;
-	bhs = kसुस्मृति(needblocks + 1, माप(*bhs), GFP_KERNEL);
-	अगर (!bhs) अणु
+	/* Because zlib is not thread-safe, do all the I/O at the top. */
+	blocknum = block_start >> bufshift;
+	bhs = kcalloc(needblocks + 1, sizeof(*bhs), GFP_KERNEL);
+	if (!bhs) {
 		*errp = -ENOMEM;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 	haveblocks = isofs_get_blocks(inode, blocknum, bhs, needblocks);
 	ll_rw_block(REQ_OP_READ, 0, haveblocks, bhs);
 
 	curbh = 0;
 	curpage = 0;
 	/*
-	 * First block is special since it may be fractional.  We also रुको क्रम
-	 * it beक्रमe grabbing the zlib mutex; odds are that the subsequent
-	 * blocks are going to come in in लघु order so we करोn't hold the zlib
-	 * mutex दीर्घer than necessary.
+	 * First block is special since it may be fractional.  We also wait for
+	 * it before grabbing the zlib mutex; odds are that the subsequent
+	 * blocks are going to come in in short order so we don't hold the zlib
+	 * mutex longer than necessary.
 	 */
 
-	अगर (!bhs[0])
-		जाओ b_eio;
+	if (!bhs[0])
+		goto b_eio;
 
-	रुको_on_buffer(bhs[0]);
-	अगर (!buffer_uptodate(bhs[0])) अणु
+	wait_on_buffer(bhs[0]);
+	if (!buffer_uptodate(bhs[0])) {
 		*errp = -EIO;
-		जाओ b_eio;
-	पूर्ण
+		goto b_eio;
+	}
 
 	stream.workspace = zisofs_zlib_workspace;
 	mutex_lock(&zisofs_zlib_lock);
 		
 	zerr = zlib_inflateInit(&stream);
-	अगर (zerr != Z_OK) अणु
-		अगर (zerr == Z_MEM_ERROR)
+	if (zerr != Z_OK) {
+		if (zerr == Z_MEM_ERROR)
 			*errp = -ENOMEM;
-		अन्यथा
+		else
 			*errp = -EIO;
-		prपूर्णांकk(KERN_DEBUG "zisofs: zisofs_inflateInit returned %d\n",
+		printk(KERN_DEBUG "zisofs: zisofs_inflateInit returned %d\n",
 			       zerr);
-		जाओ z_eio;
-	पूर्ण
+		goto z_eio;
+	}
 
-	जबतक (curpage < pcount && curbh < haveblocks &&
-	       zerr != Z_STREAM_END) अणु
-		अगर (!stream.avail_out) अणु
-			अगर (pages[curpage]) अणु
+	while (curpage < pcount && curbh < haveblocks &&
+	       zerr != Z_STREAM_END) {
+		if (!stream.avail_out) {
+			if (pages[curpage]) {
 				stream.next_out = page_address(pages[curpage])
 						+ poffset;
 				stream.avail_out = PAGE_SIZE - poffset;
 				poffset = 0;
-			पूर्ण अन्यथा अणु
-				stream.next_out = (व्योम *)&zisofs_sink_page;
+			} else {
+				stream.next_out = (void *)&zisofs_sink_page;
 				stream.avail_out = PAGE_SIZE;
-			पूर्ण
-		पूर्ण
-		अगर (!stream.avail_in) अणु
-			रुको_on_buffer(bhs[curbh]);
-			अगर (!buffer_uptodate(bhs[curbh])) अणु
+			}
+		}
+		if (!stream.avail_in) {
+			wait_on_buffer(bhs[curbh]);
+			if (!buffer_uptodate(bhs[curbh])) {
 				*errp = -EIO;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 			stream.next_in  = bhs[curbh]->b_data +
 						(block_start & bufmask);
-			stream.avail_in = min_t(अचिन्हित, bufsize -
+			stream.avail_in = min_t(unsigned, bufsize -
 						(block_start & bufmask),
 						block_size);
 			block_size -= stream.avail_in;
 			block_start = 0;
-		पूर्ण
+		}
 
-		जबतक (stream.avail_out && stream.avail_in) अणु
+		while (stream.avail_out && stream.avail_in) {
 			zerr = zlib_inflate(&stream, Z_SYNC_FLUSH);
-			अगर (zerr == Z_BUF_ERROR && stream.avail_in == 0)
-				अवरोध;
-			अगर (zerr == Z_STREAM_END)
-				अवरोध;
-			अगर (zerr != Z_OK) अणु
-				/* खातापूर्ण, error, or trying to पढ़ो beyond end of input */
-				अगर (zerr == Z_MEM_ERROR)
+			if (zerr == Z_BUF_ERROR && stream.avail_in == 0)
+				break;
+			if (zerr == Z_STREAM_END)
+				break;
+			if (zerr != Z_OK) {
+				/* EOF, error, or trying to read beyond end of input */
+				if (zerr == Z_MEM_ERROR)
 					*errp = -ENOMEM;
-				अन्यथा अणु
-					prपूर्णांकk(KERN_DEBUG
+				else {
+					printk(KERN_DEBUG
 					       "zisofs: zisofs_inflate returned"
 					       " %d, inode = %lu,"
 					       " page idx = %d, bh idx = %d,"
@@ -166,22 +165,22 @@
 					       curbh, stream.avail_in,
 					       stream.avail_out);
 					*errp = -EIO;
-				पूर्ण
-				जाओ inflate_out;
-			पूर्ण
-		पूर्ण
+				}
+				goto inflate_out;
+			}
+		}
 
-		अगर (!stream.avail_out) अणु
+		if (!stream.avail_out) {
 			/* This page completed */
-			अगर (pages[curpage]) अणु
+			if (pages[curpage]) {
 				flush_dcache_page(pages[curpage]);
 				SetPageUptodate(pages[curpage]);
-			पूर्ण
+			}
 			curpage++;
-		पूर्ण
-		अगर (!stream.avail_in)
+		}
+		if (!stream.avail_in)
 			curbh++;
-	पूर्ण
+	}
 inflate_out:
 	zlib_inflateEnd(&stream);
 
@@ -189,76 +188,76 @@ z_eio:
 	mutex_unlock(&zisofs_zlib_lock);
 
 b_eio:
-	क्रम (i = 0; i < haveblocks; i++)
-		brअन्यथा(bhs[i]);
-	kमुक्त(bhs);
-	वापस stream.total_out;
-पूर्ण
+	for (i = 0; i < haveblocks; i++)
+		brelse(bhs[i]);
+	kfree(bhs);
+	return stream.total_out;
+}
 
 /*
  * Uncompress data so that pages[full_page] is fully uptodate and possibly
- * fills in other pages अगर we have data क्रम them.
+ * fills in other pages if we have data for them.
  */
-अटल पूर्णांक zisofs_fill_pages(काष्ठा inode *inode, पूर्णांक full_page, पूर्णांक pcount,
-			     काष्ठा page **pages)
-अणु
+static int zisofs_fill_pages(struct inode *inode, int full_page, int pcount,
+			     struct page **pages)
+{
 	loff_t start_off, end_off;
 	loff_t block_start, block_end;
-	अचिन्हित पूर्णांक header_size = ISOFS_I(inode)->i_क्रमmat_parm[0];
-	अचिन्हित पूर्णांक zisofs_block_shअगरt = ISOFS_I(inode)->i_क्रमmat_parm[1];
-	अचिन्हित पूर्णांक blockptr;
+	unsigned int header_size = ISOFS_I(inode)->i_format_parm[0];
+	unsigned int zisofs_block_shift = ISOFS_I(inode)->i_format_parm[1];
+	unsigned int blockptr;
 	loff_t poffset = 0;
 	blkcnt_t cstart_block, cend_block;
-	काष्ठा buffer_head *bh;
-	अचिन्हित पूर्णांक blkbits = ISOFS_BUFFER_BITS(inode);
-	अचिन्हित पूर्णांक blksize = 1 << blkbits;
-	पूर्णांक err;
+	struct buffer_head *bh;
+	unsigned int blkbits = ISOFS_BUFFER_BITS(inode);
+	unsigned int blksize = 1 << blkbits;
+	int err;
 	loff_t ret;
 
 	BUG_ON(!pages[full_page]);
 
 	/*
-	 * We want to पढ़ो at least 'full_page' page. Because we have to
+	 * We want to read at least 'full_page' page. Because we have to
 	 * uncompress the whole compression block anyway, fill the surrounding
 	 * pages with the data we have anyway...
 	 */
 	start_off = page_offset(pages[full_page]);
 	end_off = min_t(loff_t, start_off + PAGE_SIZE, inode->i_size);
 
-	cstart_block = start_off >> zisofs_block_shअगरt;
-	cend_block = (end_off + (1 << zisofs_block_shअगरt) - 1)
-			>> zisofs_block_shअगरt;
+	cstart_block = start_off >> zisofs_block_shift;
+	cend_block = (end_off + (1 << zisofs_block_shift) - 1)
+			>> zisofs_block_shift;
 
 	WARN_ON(start_off - (full_page << PAGE_SHIFT) !=
-		((cstart_block << zisofs_block_shअगरt) & PAGE_MASK));
+		((cstart_block << zisofs_block_shift) & PAGE_MASK));
 
-	/* Find the poपूर्णांकer to this specअगरic chunk */
+	/* Find the pointer to this specific chunk */
 	/* Note: we're not using isonum_731() here because the data is known aligned */
 	/* Note: header_size is in 32-bit words (4 bytes) */
 	blockptr = (header_size + cstart_block) << 2;
-	bh = isofs_bपढ़ो(inode, blockptr >> blkbits);
-	अगर (!bh)
-		वापस -EIO;
+	bh = isofs_bread(inode, blockptr >> blkbits);
+	if (!bh)
+		return -EIO;
 	block_start = le32_to_cpu(*(__le32 *)
 				(bh->b_data + (blockptr & (blksize - 1))));
 
-	जबतक (cstart_block < cend_block && pcount > 0) अणु
+	while (cstart_block < cend_block && pcount > 0) {
 		/* Load end of the compressed block in the file */
 		blockptr += 4;
 		/* Traversed to next block? */
-		अगर (!(blockptr & (blksize - 1))) अणु
-			brअन्यथा(bh);
+		if (!(blockptr & (blksize - 1))) {
+			brelse(bh);
 
-			bh = isofs_bपढ़ो(inode, blockptr >> blkbits);
-			अगर (!bh)
-				वापस -EIO;
-		पूर्ण
+			bh = isofs_bread(inode, blockptr >> blkbits);
+			if (!bh)
+				return -EIO;
+		}
 		block_end = le32_to_cpu(*(__le32 *)
 				(bh->b_data + (blockptr & (blksize - 1))));
-		अगर (block_start > block_end) अणु
-			brअन्यथा(bh);
-			वापस -EIO;
-		पूर्ण
+		if (block_start > block_end) {
+			brelse(bh);
+			return -EIO;
+		}
 		err = 0;
 		ret = zisofs_uncompress_block(inode, block_start, block_end,
 					      pcount, pages, poffset, &err);
@@ -268,122 +267,122 @@ b_eio:
 		full_page -= poffset >> PAGE_SHIFT;
 		poffset &= ~PAGE_MASK;
 
-		अगर (err) अणु
-			brअन्यथा(bh);
+		if (err) {
+			brelse(bh);
 			/*
-			 * Did we finish पढ़ोing the page we really wanted
-			 * to पढ़ो?
+			 * Did we finish reading the page we really wanted
+			 * to read?
 			 */
-			अगर (full_page < 0)
-				वापस 0;
-			वापस err;
-		पूर्ण
+			if (full_page < 0)
+				return 0;
+			return err;
+		}
 
 		block_start = block_end;
 		cstart_block++;
-	पूर्ण
+	}
 
-	अगर (poffset && *pages) अणु
-		स_रखो(page_address(*pages) + poffset, 0,
+	if (poffset && *pages) {
+		memset(page_address(*pages) + poffset, 0,
 		       PAGE_SIZE - poffset);
 		flush_dcache_page(*pages);
 		SetPageUptodate(*pages);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
 /*
  * When decompressing, we typically obtain more than one page
- * per reference.  We inject the additional pages पूर्णांकo the page
- * cache as a क्रमm of पढ़ोahead.
+ * per reference.  We inject the additional pages into the page
+ * cache as a form of readahead.
  */
-अटल पूर्णांक zisofs_पढ़ोpage(काष्ठा file *file, काष्ठा page *page)
-अणु
-	काष्ठा inode *inode = file_inode(file);
-	काष्ठा address_space *mapping = inode->i_mapping;
-	पूर्णांक err;
-	पूर्णांक i, pcount, full_page;
-	अचिन्हित पूर्णांक zisofs_block_shअगरt = ISOFS_I(inode)->i_क्रमmat_parm[1];
-	अचिन्हित पूर्णांक zisofs_pages_per_cblock =
-		PAGE_SHIFT <= zisofs_block_shअगरt ?
-		(1 << (zisofs_block_shअगरt - PAGE_SHIFT)) : 0;
-	काष्ठा page **pages;
+static int zisofs_readpage(struct file *file, struct page *page)
+{
+	struct inode *inode = file_inode(file);
+	struct address_space *mapping = inode->i_mapping;
+	int err;
+	int i, pcount, full_page;
+	unsigned int zisofs_block_shift = ISOFS_I(inode)->i_format_parm[1];
+	unsigned int zisofs_pages_per_cblock =
+		PAGE_SHIFT <= zisofs_block_shift ?
+		(1 << (zisofs_block_shift - PAGE_SHIFT)) : 0;
+	struct page **pages;
 	pgoff_t index = page->index, end_index;
 
 	end_index = (inode->i_size + PAGE_SIZE - 1) >> PAGE_SHIFT;
 	/*
-	 * If this page is wholly outside i_size we just वापस zero;
-	 * करो_generic_file_पढ़ो() will handle this क्रम us
+	 * If this page is wholly outside i_size we just return zero;
+	 * do_generic_file_read() will handle this for us
 	 */
-	अगर (index >= end_index) अणु
+	if (index >= end_index) {
 		SetPageUptodate(page);
 		unlock_page(page);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (PAGE_SHIFT <= zisofs_block_shअगरt) अणु
-		/* We have alपढ़ोy been given one page, this is the one
-		   we must करो. */
+	if (PAGE_SHIFT <= zisofs_block_shift) {
+		/* We have already been given one page, this is the one
+		   we must do. */
 		full_page = index & (zisofs_pages_per_cblock - 1);
-		pcount = min_t(पूर्णांक, zisofs_pages_per_cblock,
+		pcount = min_t(int, zisofs_pages_per_cblock,
 			end_index - (index & ~(zisofs_pages_per_cblock - 1)));
 		index -= full_page;
-	पूर्ण अन्यथा अणु
+	} else {
 		full_page = 0;
 		pcount = 1;
-	पूर्ण
-	pages = kसुस्मृति(max_t(अचिन्हित पूर्णांक, zisofs_pages_per_cblock, 1),
-					माप(*pages), GFP_KERNEL);
-	अगर (!pages) अणु
+	}
+	pages = kcalloc(max_t(unsigned int, zisofs_pages_per_cblock, 1),
+					sizeof(*pages), GFP_KERNEL);
+	if (!pages) {
 		unlock_page(page);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 	pages[full_page] = page;
 
-	क्रम (i = 0; i < pcount; i++, index++) अणु
-		अगर (i != full_page)
-			pages[i] = grab_cache_page_noरुको(mapping, index);
-		अगर (pages[i]) अणु
+	for (i = 0; i < pcount; i++, index++) {
+		if (i != full_page)
+			pages[i] = grab_cache_page_nowait(mapping, index);
+		if (pages[i]) {
 			ClearPageError(pages[i]);
 			kmap(pages[i]);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	err = zisofs_fill_pages(inode, full_page, pcount, pages);
 
-	/* Release any residual pages, करो not SetPageUptodate */
-	क्रम (i = 0; i < pcount; i++) अणु
-		अगर (pages[i]) अणु
+	/* Release any residual pages, do not SetPageUptodate */
+	for (i = 0; i < pcount; i++) {
+		if (pages[i]) {
 			flush_dcache_page(pages[i]);
-			अगर (i == full_page && err)
+			if (i == full_page && err)
 				SetPageError(pages[i]);
 			kunmap(pages[i]);
 			unlock_page(pages[i]);
-			अगर (i != full_page)
+			if (i != full_page)
 				put_page(pages[i]);
-		पूर्ण
-	पूर्ण			
+		}
+	}			
 
-	/* At this poपूर्णांक, err contains 0 or -EIO depending on the "critical" page */
-	kमुक्त(pages);
-	वापस err;
-पूर्ण
+	/* At this point, err contains 0 or -EIO depending on the "critical" page */
+	kfree(pages);
+	return err;
+}
 
-स्थिर काष्ठा address_space_operations zisofs_aops = अणु
-	.पढ़ोpage = zisofs_पढ़ोpage,
+const struct address_space_operations zisofs_aops = {
+	.readpage = zisofs_readpage,
 	/* No bmap operation supported */
-पूर्ण;
+};
 
-पूर्णांक __init zisofs_init(व्योम)
-अणु
-	zisofs_zlib_workspace = vदो_स्मृति(zlib_inflate_workspacesize());
-	अगर ( !zisofs_zlib_workspace )
-		वापस -ENOMEM;
+int __init zisofs_init(void)
+{
+	zisofs_zlib_workspace = vmalloc(zlib_inflate_workspacesize());
+	if ( !zisofs_zlib_workspace )
+		return -ENOMEM;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम zisofs_cleanup(व्योम)
-अणु
-	vमुक्त(zisofs_zlib_workspace);
-पूर्ण
+void zisofs_cleanup(void)
+{
+	vfree(zisofs_zlib_workspace);
+}

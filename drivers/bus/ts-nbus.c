@@ -1,6 +1,5 @@
-<शैली गुरु>
 /*
- * NBUS driver क्रम TS-4600 based boards
+ * NBUS driver for TS-4600 based boards
  *
  * Copyright (c) 2016 - Savoir-faire Linux
  * Author: Sebastien Bourdelin <sebastien.bourdelin@savoirfairelinux.com>
@@ -14,103 +13,103 @@
  * TS-4600 SoM.
  */
 
-#समावेश <linux/bitops.h>
-#समावेश <linux/gpio/consumer.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/of_platक्रमm.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/pwm.h>
-#समावेश <linux/ts-nbus.h>
+#include <linux/bitops.h>
+#include <linux/gpio/consumer.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/mutex.h>
+#include <linux/of_platform.h>
+#include <linux/platform_device.h>
+#include <linux/pwm.h>
+#include <linux/ts-nbus.h>
 
-#घोषणा TS_NBUS_सूचीECTION_IN  0
-#घोषणा TS_NBUS_सूचीECTION_OUT 1
-#घोषणा TS_NBUS_WRITE_ADR 0
-#घोषणा TS_NBUS_WRITE_VAL 1
+#define TS_NBUS_DIRECTION_IN  0
+#define TS_NBUS_DIRECTION_OUT 1
+#define TS_NBUS_WRITE_ADR 0
+#define TS_NBUS_WRITE_VAL 1
 
-काष्ठा ts_nbus अणु
-	काष्ठा pwm_device *pwm;
-	काष्ठा gpio_descs *data;
-	काष्ठा gpio_desc *csn;
-	काष्ठा gpio_desc *txrx;
-	काष्ठा gpio_desc *strobe;
-	काष्ठा gpio_desc *ale;
-	काष्ठा gpio_desc *rdy;
-	काष्ठा mutex lock;
-पूर्ण;
+struct ts_nbus {
+	struct pwm_device *pwm;
+	struct gpio_descs *data;
+	struct gpio_desc *csn;
+	struct gpio_desc *txrx;
+	struct gpio_desc *strobe;
+	struct gpio_desc *ale;
+	struct gpio_desc *rdy;
+	struct mutex lock;
+};
 
 /*
  * request all gpios required by the bus.
  */
-अटल पूर्णांक ts_nbus_init_pdata(काष्ठा platक्रमm_device *pdev, काष्ठा ts_nbus
+static int ts_nbus_init_pdata(struct platform_device *pdev, struct ts_nbus
 		*ts_nbus)
-अणु
+{
 	ts_nbus->data = devm_gpiod_get_array(&pdev->dev, "ts,data",
 			GPIOD_OUT_HIGH);
-	अगर (IS_ERR(ts_nbus->data)) अणु
+	if (IS_ERR(ts_nbus->data)) {
 		dev_err(&pdev->dev, "failed to retrieve ts,data-gpio from dts\n");
-		वापस PTR_ERR(ts_nbus->data);
-	पूर्ण
+		return PTR_ERR(ts_nbus->data);
+	}
 
 	ts_nbus->csn = devm_gpiod_get(&pdev->dev, "ts,csn", GPIOD_OUT_HIGH);
-	अगर (IS_ERR(ts_nbus->csn)) अणु
+	if (IS_ERR(ts_nbus->csn)) {
 		dev_err(&pdev->dev, "failed to retrieve ts,csn-gpio from dts\n");
-		वापस PTR_ERR(ts_nbus->csn);
-	पूर्ण
+		return PTR_ERR(ts_nbus->csn);
+	}
 
 	ts_nbus->txrx = devm_gpiod_get(&pdev->dev, "ts,txrx", GPIOD_OUT_HIGH);
-	अगर (IS_ERR(ts_nbus->txrx)) अणु
+	if (IS_ERR(ts_nbus->txrx)) {
 		dev_err(&pdev->dev, "failed to retrieve ts,txrx-gpio from dts\n");
-		वापस PTR_ERR(ts_nbus->txrx);
-	पूर्ण
+		return PTR_ERR(ts_nbus->txrx);
+	}
 
 	ts_nbus->strobe = devm_gpiod_get(&pdev->dev, "ts,strobe", GPIOD_OUT_HIGH);
-	अगर (IS_ERR(ts_nbus->strobe)) अणु
+	if (IS_ERR(ts_nbus->strobe)) {
 		dev_err(&pdev->dev, "failed to retrieve ts,strobe-gpio from dts\n");
-		वापस PTR_ERR(ts_nbus->strobe);
-	पूर्ण
+		return PTR_ERR(ts_nbus->strobe);
+	}
 
 	ts_nbus->ale = devm_gpiod_get(&pdev->dev, "ts,ale", GPIOD_OUT_HIGH);
-	अगर (IS_ERR(ts_nbus->ale)) अणु
+	if (IS_ERR(ts_nbus->ale)) {
 		dev_err(&pdev->dev, "failed to retrieve ts,ale-gpio from dts\n");
-		वापस PTR_ERR(ts_nbus->ale);
-	पूर्ण
+		return PTR_ERR(ts_nbus->ale);
+	}
 
 	ts_nbus->rdy = devm_gpiod_get(&pdev->dev, "ts,rdy", GPIOD_IN);
-	अगर (IS_ERR(ts_nbus->rdy)) अणु
+	if (IS_ERR(ts_nbus->rdy)) {
 		dev_err(&pdev->dev, "failed to retrieve ts,rdy-gpio from dts\n");
-		वापस PTR_ERR(ts_nbus->rdy);
-	पूर्ण
+		return PTR_ERR(ts_nbus->rdy);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * the data gpios are used क्रम पढ़ोing and writing values, their directions
+ * the data gpios are used for reading and writing values, their directions
  * should be adjusted accordingly.
  */
-अटल व्योम ts_nbus_set_direction(काष्ठा ts_nbus *ts_nbus, पूर्णांक direction)
-अणु
-	पूर्णांक i;
+static void ts_nbus_set_direction(struct ts_nbus *ts_nbus, int direction)
+{
+	int i;
 
-	क्रम (i = 0; i < 8; i++) अणु
-		अगर (direction == TS_NBUS_सूचीECTION_IN)
+	for (i = 0; i < 8; i++) {
+		if (direction == TS_NBUS_DIRECTION_IN)
 			gpiod_direction_input(ts_nbus->data->desc[i]);
-		अन्यथा
-			/* when used as output the शेष state of the data
+		else
+			/* when used as output the default state of the data
 			 * lines are set to high */
 			gpiod_direction_output(ts_nbus->data->desc[i], 1);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
  * reset the bus in its initial state.
  * The data, csn, strobe and ale lines must be zero'ed to let the FPGA knows a
  * new transaction can be process.
  */
-अटल व्योम ts_nbus_reset_bus(काष्ठा ts_nbus *ts_nbus)
-अणु
+static void ts_nbus_reset_bus(struct ts_nbus *ts_nbus)
+{
 	DECLARE_BITMAP(values, 8);
 
 	values[0] = 0;
@@ -120,200 +119,200 @@
 	gpiod_set_value_cansleep(ts_nbus->csn, 0);
 	gpiod_set_value_cansleep(ts_nbus->strobe, 0);
 	gpiod_set_value_cansleep(ts_nbus->ale, 0);
-पूर्ण
+}
 
 /*
  * let the FPGA knows it can process.
  */
-अटल व्योम ts_nbus_start_transaction(काष्ठा ts_nbus *ts_nbus)
-अणु
+static void ts_nbus_start_transaction(struct ts_nbus *ts_nbus)
+{
 	gpiod_set_value_cansleep(ts_nbus->strobe, 1);
-पूर्ण
+}
 
 /*
- * पढ़ो a byte value from the data gpios.
- * वापस 0 on success or negative त्रुटि_सं on failure.
+ * read a byte value from the data gpios.
+ * return 0 on success or negative errno on failure.
  */
-अटल पूर्णांक ts_nbus_पढ़ो_byte(काष्ठा ts_nbus *ts_nbus, u8 *val)
-अणु
-	काष्ठा gpio_descs *gpios = ts_nbus->data;
-	पूर्णांक ret, i;
+static int ts_nbus_read_byte(struct ts_nbus *ts_nbus, u8 *val)
+{
+	struct gpio_descs *gpios = ts_nbus->data;
+	int ret, i;
 
 	*val = 0;
-	क्रम (i = 0; i < 8; i++) अणु
+	for (i = 0; i < 8; i++) {
 		ret = gpiod_get_value_cansleep(gpios->desc[i]);
-		अगर (ret < 0)
-			वापस ret;
-		अगर (ret)
+		if (ret < 0)
+			return ret;
+		if (ret)
 			*val |= BIT(i);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * set the data gpios accordingly to the byte value.
  */
-अटल व्योम ts_nbus_ग_लिखो_byte(काष्ठा ts_nbus *ts_nbus, u8 byte)
-अणु
-	काष्ठा gpio_descs *gpios = ts_nbus->data;
+static void ts_nbus_write_byte(struct ts_nbus *ts_nbus, u8 byte)
+{
+	struct gpio_descs *gpios = ts_nbus->data;
 	DECLARE_BITMAP(values, 8);
 
 	values[0] = byte;
 
 	gpiod_set_array_value_cansleep(8, gpios->desc, gpios->info, values);
-पूर्ण
+}
 
 /*
- * पढ़ोing the bus consists of resetting the bus, then notअगरying the FPGA to
- * send the data in the data gpios and वापस the पढ़ो value.
- * वापस 0 on success or negative त्रुटि_सं on failure.
+ * reading the bus consists of resetting the bus, then notifying the FPGA to
+ * send the data in the data gpios and return the read value.
+ * return 0 on success or negative errno on failure.
  */
-अटल पूर्णांक ts_nbus_पढ़ो_bus(काष्ठा ts_nbus *ts_nbus, u8 *val)
-अणु
+static int ts_nbus_read_bus(struct ts_nbus *ts_nbus, u8 *val)
+{
 	ts_nbus_reset_bus(ts_nbus);
 	ts_nbus_start_transaction(ts_nbus);
 
-	वापस ts_nbus_पढ़ो_byte(ts_nbus, val);
-पूर्ण
+	return ts_nbus_read_byte(ts_nbus, val);
+}
 
 /*
  * writing to the bus consists of resetting the bus, then define the type of
- * command (address/value), ग_लिखो the data and notअगरy the FPGA to retrieve the
+ * command (address/value), write the data and notify the FPGA to retrieve the
  * value in the data gpios.
  */
-अटल व्योम ts_nbus_ग_लिखो_bus(काष्ठा ts_nbus *ts_nbus, पूर्णांक cmd, u8 val)
-अणु
+static void ts_nbus_write_bus(struct ts_nbus *ts_nbus, int cmd, u8 val)
+{
 	ts_nbus_reset_bus(ts_nbus);
 
-	अगर (cmd == TS_NBUS_WRITE_ADR)
+	if (cmd == TS_NBUS_WRITE_ADR)
 		gpiod_set_value_cansleep(ts_nbus->ale, 1);
 
-	ts_nbus_ग_लिखो_byte(ts_nbus, val);
+	ts_nbus_write_byte(ts_nbus, val);
 	ts_nbus_start_transaction(ts_nbus);
-पूर्ण
+}
 
 /*
- * पढ़ो the value in the FPGA रेजिस्टर at the given address.
- * वापस 0 on success or negative त्रुटि_सं on failure.
+ * read the value in the FPGA register at the given address.
+ * return 0 on success or negative errno on failure.
  */
-पूर्णांक ts_nbus_पढ़ो(काष्ठा ts_nbus *ts_nbus, u8 adr, u16 *val)
-अणु
-	पूर्णांक ret, i;
+int ts_nbus_read(struct ts_nbus *ts_nbus, u8 adr, u16 *val)
+{
+	int ret, i;
 	u8 byte;
 
 	/* bus access must be atomic */
 	mutex_lock(&ts_nbus->lock);
 
-	/* set the bus in पढ़ो mode */
+	/* set the bus in read mode */
 	gpiod_set_value_cansleep(ts_nbus->txrx, 0);
 
-	/* ग_लिखो address */
-	ts_nbus_ग_लिखो_bus(ts_nbus, TS_NBUS_WRITE_ADR, adr);
+	/* write address */
+	ts_nbus_write_bus(ts_nbus, TS_NBUS_WRITE_ADR, adr);
 
-	/* set the data gpios direction as input beक्रमe पढ़ोing */
-	ts_nbus_set_direction(ts_nbus, TS_NBUS_सूचीECTION_IN);
+	/* set the data gpios direction as input before reading */
+	ts_nbus_set_direction(ts_nbus, TS_NBUS_DIRECTION_IN);
 
-	/* पढ़ोing value MSB first */
-	करो अणु
+	/* reading value MSB first */
+	do {
 		*val = 0;
 		byte = 0;
-		क्रम (i = 1; i >= 0; i--) अणु
-			/* पढ़ो a byte from the bus, leave on error */
-			ret = ts_nbus_पढ़ो_bus(ts_nbus, &byte);
-			अगर (ret < 0)
-				जाओ err;
+		for (i = 1; i >= 0; i--) {
+			/* read a byte from the bus, leave on error */
+			ret = ts_nbus_read_bus(ts_nbus, &byte);
+			if (ret < 0)
+				goto err;
 
-			/* append the byte पढ़ो to the final value */
+			/* append the byte read to the final value */
 			*val |= byte << (i * 8);
-		पूर्ण
+		}
 		gpiod_set_value_cansleep(ts_nbus->csn, 1);
 		ret = gpiod_get_value_cansleep(ts_nbus->rdy);
-	पूर्ण जबतक (ret);
+	} while (ret);
 
 err:
-	/* restore the data gpios direction as output after पढ़ोing */
-	ts_nbus_set_direction(ts_nbus, TS_NBUS_सूचीECTION_OUT);
+	/* restore the data gpios direction as output after reading */
+	ts_nbus_set_direction(ts_nbus, TS_NBUS_DIRECTION_OUT);
 
 	mutex_unlock(&ts_nbus->lock);
 
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(ts_nbus_पढ़ो);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(ts_nbus_read);
 
 /*
- * ग_लिखो the desired value in the FPGA रेजिस्टर at the given address.
+ * write the desired value in the FPGA register at the given address.
  */
-पूर्णांक ts_nbus_ग_लिखो(काष्ठा ts_nbus *ts_nbus, u8 adr, u16 val)
-अणु
-	पूर्णांक i;
+int ts_nbus_write(struct ts_nbus *ts_nbus, u8 adr, u16 val)
+{
+	int i;
 
 	/* bus access must be atomic */
 	mutex_lock(&ts_nbus->lock);
 
-	/* set the bus in ग_लिखो mode */
+	/* set the bus in write mode */
 	gpiod_set_value_cansleep(ts_nbus->txrx, 1);
 
-	/* ग_लिखो address */
-	ts_nbus_ग_लिखो_bus(ts_nbus, TS_NBUS_WRITE_ADR, adr);
+	/* write address */
+	ts_nbus_write_bus(ts_nbus, TS_NBUS_WRITE_ADR, adr);
 
 	/* writing value MSB first */
-	क्रम (i = 1; i >= 0; i--)
-		ts_nbus_ग_लिखो_bus(ts_nbus, TS_NBUS_WRITE_VAL, (u8)(val >> (i * 8)));
+	for (i = 1; i >= 0; i--)
+		ts_nbus_write_bus(ts_nbus, TS_NBUS_WRITE_VAL, (u8)(val >> (i * 8)));
 
-	/* रुको क्रम completion */
+	/* wait for completion */
 	gpiod_set_value_cansleep(ts_nbus->csn, 1);
-	जबतक (gpiod_get_value_cansleep(ts_nbus->rdy) != 0) अणु
+	while (gpiod_get_value_cansleep(ts_nbus->rdy) != 0) {
 		gpiod_set_value_cansleep(ts_nbus->csn, 0);
 		gpiod_set_value_cansleep(ts_nbus->csn, 1);
-	पूर्ण
+	}
 
 	mutex_unlock(&ts_nbus->lock);
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(ts_nbus_ग_लिखो);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(ts_nbus_write);
 
-अटल पूर्णांक ts_nbus_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा pwm_device *pwm;
-	काष्ठा pwm_args pargs;
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा ts_nbus *ts_nbus;
-	पूर्णांक ret;
+static int ts_nbus_probe(struct platform_device *pdev)
+{
+	struct pwm_device *pwm;
+	struct pwm_args pargs;
+	struct device *dev = &pdev->dev;
+	struct ts_nbus *ts_nbus;
+	int ret;
 
-	ts_nbus = devm_kzalloc(dev, माप(*ts_nbus), GFP_KERNEL);
-	अगर (!ts_nbus)
-		वापस -ENOMEM;
+	ts_nbus = devm_kzalloc(dev, sizeof(*ts_nbus), GFP_KERNEL);
+	if (!ts_nbus)
+		return -ENOMEM;
 
 	mutex_init(&ts_nbus->lock);
 
 	ret = ts_nbus_init_pdata(pdev, ts_nbus);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	pwm = devm_pwm_get(dev, शून्य);
-	अगर (IS_ERR(pwm)) अणु
+	pwm = devm_pwm_get(dev, NULL);
+	if (IS_ERR(pwm)) {
 		ret = PTR_ERR(pwm);
-		अगर (ret != -EPROBE_DEFER)
+		if (ret != -EPROBE_DEFER)
 			dev_err(dev, "unable to request PWM\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	pwm_get_args(pwm, &pargs);
-	अगर (!pargs.period) अणु
+	if (!pargs.period) {
 		dev_err(&pdev->dev, "invalid PWM period\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/*
-	 * FIXME: pwm_apply_args() should be हटाओd when चयनing to
+	 * FIXME: pwm_apply_args() should be removed when switching to
 	 * the atomic PWM API.
 	 */
 	pwm_apply_args(pwm);
 	ret = pwm_config(pwm, pargs.period, pargs.period);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	/*
 	 * we can now start the FPGA and populate the peripherals.
@@ -326,43 +325,43 @@ EXPORT_SYMBOL_GPL(ts_nbus_ग_लिखो);
 	 */
 	dev_set_drvdata(dev, ts_nbus);
 
-	ret = of_platक्रमm_populate(dev->of_node, शून्य, शून्य, dev);
-	अगर (ret < 0)
-		वापस ret;
+	ret = of_platform_populate(dev->of_node, NULL, NULL, dev);
+	if (ret < 0)
+		return ret;
 
 	dev_info(dev, "initialized\n");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ts_nbus_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा ts_nbus *ts_nbus = dev_get_drvdata(&pdev->dev);
+static int ts_nbus_remove(struct platform_device *pdev)
+{
+	struct ts_nbus *ts_nbus = dev_get_drvdata(&pdev->dev);
 
-	/* shutकरोwn the FPGA */
+	/* shutdown the FPGA */
 	mutex_lock(&ts_nbus->lock);
 	pwm_disable(ts_nbus->pwm);
 	mutex_unlock(&ts_nbus->lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id ts_nbus_of_match[] = अणु
-	अणु .compatible = "technologic,ts-nbus", पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+static const struct of_device_id ts_nbus_of_match[] = {
+	{ .compatible = "technologic,ts-nbus", },
+	{ },
+};
 MODULE_DEVICE_TABLE(of, ts_nbus_of_match);
 
-अटल काष्ठा platक्रमm_driver ts_nbus_driver = अणु
+static struct platform_driver ts_nbus_driver = {
 	.probe		= ts_nbus_probe,
-	.हटाओ		= ts_nbus_हटाओ,
-	.driver		= अणु
+	.remove		= ts_nbus_remove,
+	.driver		= {
 		.name	= "ts_nbus",
 		.of_match_table = ts_nbus_of_match,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver(ts_nbus_driver);
+module_platform_driver(ts_nbus_driver);
 
 MODULE_ALIAS("platform:ts_nbus");
 MODULE_AUTHOR("Sebastien Bourdelin <sebastien.bourdelin@savoirfairelinux.com>");

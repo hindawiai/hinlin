@@ -1,37 +1,36 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Copyright (C) 2008 Michal Simek <monstr@monstr.eu>
- * Copyright (C) 2006 Aपंचांगark Techno, Inc.
+ * Copyright (C) 2006 Atmark Techno, Inc.
  */
 
-#अगर_अघोषित _ASM_MICROBLAZE_CHECKSUM_H
-#घोषणा _ASM_MICROBLAZE_CHECKSUM_H
+#ifndef _ASM_MICROBLAZE_CHECKSUM_H
+#define _ASM_MICROBLAZE_CHECKSUM_H
 
 /*
- * computes the checksum of the TCP/UDP pseuकरो-header
- * वापसs a 16-bit checksum, alपढ़ोy complemented
+ * computes the checksum of the TCP/UDP pseudo-header
+ * returns a 16-bit checksum, already complemented
  */
-#घोषणा csum_tcpudp_nofold	csum_tcpudp_nofold
-अटल अंतरभूत __wsum
+#define csum_tcpudp_nofold	csum_tcpudp_nofold
+static inline __wsum
 csum_tcpudp_nofold(__be32 saddr, __be32 daddr, __u32 len,
 		   __u8 proto, __wsum sum)
-अणु
-	__यंत्र__("add %0, %0, %1\n\t"
+{
+	__asm__("add %0, %0, %1\n\t"
 		"addc %0, %0, %2\n\t"
 		"addc %0, %0, %3\n\t"
 		"addc %0, %0, r0\n\t"
 		: "+&d" (sum)
 		: "d" (saddr), "d" (daddr),
-#अगर_घोषित __MICROBLAZEEL__
+#ifdef __MICROBLAZEEL__
 	"d" ((len + proto) << 8)
-#अन्यथा
+#else
 	"d" (len + proto)
-#पूर्ण_अगर
+#endif
 );
-	वापस sum;
-पूर्ण
+	return sum;
+}
 
-#समावेश <यंत्र-generic/checksum.h>
+#include <asm-generic/checksum.h>
 
-#पूर्ण_अगर /* _ASM_MICROBLAZE_CHECKSUM_H */
+#endif /* _ASM_MICROBLAZE_CHECKSUM_H */

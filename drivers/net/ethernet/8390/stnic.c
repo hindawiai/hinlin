@@ -1,149 +1,148 @@
-<शैली गुरु>
-/* stnic.c : A SH7750 specअगरic part of driver क्रम NS DP83902A ST-NIC.
+/* stnic.c : A SH7750 specific part of driver for NS DP83902A ST-NIC.
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the मुख्य directory of this archive
- * क्रम more details.
+ * License.  See the file "COPYING" in the main directory of this archive
+ * for more details.
  *
  * Copyright (C) 1999 kaz Kojima
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/ioport.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/etherdevice.h>
-#समावेश <linux/init.h>
-#समावेश <linux/delay.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/errno.h>
+#include <linux/interrupt.h>
+#include <linux/ioport.h>
+#include <linux/netdevice.h>
+#include <linux/etherdevice.h>
+#include <linux/init.h>
+#include <linux/delay.h>
 
-#समावेश <यंत्र/पन.स>
-#समावेश <mach-se/mach/se.h>
-#समावेश <यंत्र/machvec.h>
-#अगर_घोषित CONFIG_SH_STANDARD_BIOS
-#समावेश <यंत्र/sh_मूलप्रण.स>
-#पूर्ण_अगर
+#include <asm/io.h>
+#include <mach-se/mach/se.h>
+#include <asm/machvec.h>
+#ifdef CONFIG_SH_STANDARD_BIOS
+#include <asm/sh_bios.h>
+#endif
 
-#समावेश "8390.h"
+#include "8390.h"
 
-#घोषणा DRV_NAME "stnic"
+#define DRV_NAME "stnic"
 
-#घोषणा byte	अचिन्हित अक्षर
-#घोषणा half	अचिन्हित लघु
-#घोषणा word	अचिन्हित पूर्णांक
-#घोषणा vbyte	अस्थिर अचिन्हित अक्षर
-#घोषणा vhalf	अस्थिर अचिन्हित लघु
-#घोषणा vword	अस्थिर अचिन्हित पूर्णांक
+#define byte	unsigned char
+#define half	unsigned short
+#define word	unsigned int
+#define vbyte	volatile unsigned char
+#define vhalf	volatile unsigned short
+#define vword	volatile unsigned int
 
-#घोषणा STNIC_RUN	0x01	/* 1 == Run, 0 == reset. */
+#define STNIC_RUN	0x01	/* 1 == Run, 0 == reset. */
 
-#घोषणा START_PG	0	/* First page of TX buffer */
-#घोषणा STOP_PG		128	/* Last page +1 of RX ring */
+#define START_PG	0	/* First page of TX buffer */
+#define STOP_PG		128	/* Last page +1 of RX ring */
 
 /* Alias */
-#घोषणा STNIC_CR	E8390_CMD
-#घोषणा PG0_RSAR0	EN0_RSARLO
-#घोषणा PG0_RSAR1	EN0_RSARHI
-#घोषणा PG0_RBCR0	EN0_RCNTLO
-#घोषणा PG0_RBCR1	EN0_RCNTHI
+#define STNIC_CR	E8390_CMD
+#define PG0_RSAR0	EN0_RSARLO
+#define PG0_RSAR1	EN0_RSARHI
+#define PG0_RBCR0	EN0_RCNTLO
+#define PG0_RBCR1	EN0_RCNTHI
 
-#घोषणा CR_RRD		E8390_RREAD
-#घोषणा CR_RWR		E8390_RWRITE
-#घोषणा CR_PG0		E8390_PAGE0
-#घोषणा CR_STA		E8390_START
-#घोषणा CR_RDMA		E8390_NODMA
+#define CR_RRD		E8390_RREAD
+#define CR_RWR		E8390_RWRITE
+#define CR_PG0		E8390_PAGE0
+#define CR_STA		E8390_START
+#define CR_RDMA		E8390_NODMA
 
 /* FIXME! YOU MUST SET YOUR OWN ETHER ADDRESS.  */
-अटल byte stnic_eadr[6] =
-अणु0x00, 0xc0, 0x6e, 0x00, 0x00, 0x07पूर्ण;
+static byte stnic_eadr[6] =
+{0x00, 0xc0, 0x6e, 0x00, 0x00, 0x07};
 
-अटल काष्ठा net_device *stnic_dev;
+static struct net_device *stnic_dev;
 
-अटल व्योम stnic_reset (काष्ठा net_device *dev);
-अटल व्योम stnic_get_hdr (काष्ठा net_device *dev, काष्ठा e8390_pkt_hdr *hdr,
-			   पूर्णांक ring_page);
-अटल व्योम stnic_block_input (काष्ठा net_device *dev, पूर्णांक count,
-			       काष्ठा sk_buff *skb , पूर्णांक ring_offset);
-अटल व्योम stnic_block_output (काष्ठा net_device *dev, पूर्णांक count,
-				स्थिर अचिन्हित अक्षर *buf, पूर्णांक start_page);
+static void stnic_reset (struct net_device *dev);
+static void stnic_get_hdr (struct net_device *dev, struct e8390_pkt_hdr *hdr,
+			   int ring_page);
+static void stnic_block_input (struct net_device *dev, int count,
+			       struct sk_buff *skb , int ring_offset);
+static void stnic_block_output (struct net_device *dev, int count,
+				const unsigned char *buf, int start_page);
 
-अटल व्योम stnic_init (काष्ठा net_device *dev);
+static void stnic_init (struct net_device *dev);
 
-अटल u32 stnic_msg_enable;
+static u32 stnic_msg_enable;
 
-module_param_named(msg_enable, stnic_msg_enable, uपूर्णांक, 0444);
+module_param_named(msg_enable, stnic_msg_enable, uint, 0444);
 MODULE_PARM_DESC(msg_enable, "Debug message level (see linux/netdevice.h for bitmap)");
 
-/* SH7750 specअगरic पढ़ो/ग_लिखो io. */
-अटल अंतरभूत व्योम
-STNIC_DELAY (व्योम)
-अणु
+/* SH7750 specific read/write io. */
+static inline void
+STNIC_DELAY (void)
+{
   vword trash;
   trash = *(vword *) 0xa0000000;
   trash = *(vword *) 0xa0000000;
   trash = *(vword *) 0xa0000000;
-पूर्ण
+}
 
-अटल अंतरभूत byte
-STNIC_READ (पूर्णांक reg)
-अणु
+static inline byte
+STNIC_READ (int reg)
+{
   byte val;
 
   val = (*(vhalf *) (PA_83902 + ((reg) << 1)) >> 8) & 0xff;
   STNIC_DELAY ();
-  वापस val;
-पूर्ण
+  return val;
+}
 
-अटल अंतरभूत व्योम
-STNIC_WRITE (पूर्णांक reg, byte val)
-अणु
+static inline void
+STNIC_WRITE (int reg, byte val)
+{
   *(vhalf *) (PA_83902 + ((reg) << 1)) = ((half) (val) << 8);
   STNIC_DELAY ();
-पूर्ण
+}
 
-अटल पूर्णांक __init stnic_probe(व्योम)
-अणु
-  काष्ठा net_device *dev;
-  पूर्णांक i, err;
-  काष्ठा ei_device *ei_local;
+static int __init stnic_probe(void)
+{
+  struct net_device *dev;
+  int i, err;
+  struct ei_device *ei_local;
 
   /* If we are not running on a SolutionEngine, give up now */
-  अगर (! MACH_SE)
-    वापस -ENODEV;
+  if (! MACH_SE)
+    return -ENODEV;
 
   /* New style probing API */
   dev = alloc_ei_netdev();
-  अगर (!dev)
-  	वापस -ENOMEM;
+  if (!dev)
+  	return -ENOMEM;
 
-#अगर_घोषित CONFIG_SH_STANDARD_BIOS
+#ifdef CONFIG_SH_STANDARD_BIOS
   sh_bios_get_node_addr (stnic_eadr);
-#पूर्ण_अगर
-  क्रम (i = 0; i < ETH_ALEN; i++)
+#endif
+  for (i = 0; i < ETH_ALEN; i++)
     dev->dev_addr[i] = stnic_eadr[i];
 
-  /* Set the base address to poपूर्णांक to the NIC, not the "real" base! */
+  /* Set the base address to point to the NIC, not the "real" base! */
   dev->base_addr = 0x1000;
   dev->irq = IRQ_STNIC;
   dev->netdev_ops = &ei_netdev_ops;
 
-  /* Snarf the पूर्णांकerrupt now.  There's no poपूर्णांक in रुकोing since we cannot
+  /* Snarf the interrupt now.  There's no point in waiting since we cannot
      share and the board will usually be enabled. */
-  err = request_irq (dev->irq, ei_पूर्णांकerrupt, 0, DRV_NAME, dev);
-  अगर (err)  अणु
+  err = request_irq (dev->irq, ei_interrupt, 0, DRV_NAME, dev);
+  if (err)  {
 	netdev_emerg(dev, " unable to get IRQ %d.\n", dev->irq);
-	मुक्त_netdev(dev);
-	वापस err;
-  पूर्ण
+	free_netdev(dev);
+	return err;
+  }
 
   ei_status.name = dev->name;
   ei_status.word16 = 1;
-#अगर_घोषित __LITTLE_ENDIAN__
+#ifdef __LITTLE_ENDIAN__
   ei_status.bigendian = 0;
-#अन्यथा
+#else
   ei_status.bigendian = 1;
-#पूर्ण_अगर
+#endif
   ei_status.tx_start_page = START_PG;
   ei_status.rx_start_page = START_PG + TX_PAGES;
   ei_status.stop_page = STOP_PG;
@@ -157,36 +156,36 @@ STNIC_WRITE (पूर्णांक reg, byte val)
   ei_local = netdev_priv(dev);
   ei_local->msg_enable = stnic_msg_enable;
 
-  err = रेजिस्टर_netdev(dev);
-  अगर (err) अणु
-    मुक्त_irq(dev->irq, dev);
-    मुक्त_netdev(dev);
-    वापस err;
-  पूर्ण
+  err = register_netdev(dev);
+  if (err) {
+    free_irq(dev->irq, dev);
+    free_netdev(dev);
+    return err;
+  }
   stnic_dev = dev;
 
   netdev_info(dev, "NS ST-NIC 83902A\n");
 
-  वापस 0;
-पूर्ण
+  return 0;
+}
 
-अटल व्योम
-stnic_reset (काष्ठा net_device *dev)
-अणु
-  काष्ठा ei_device *ei_local = netdev_priv(dev);
+static void
+stnic_reset (struct net_device *dev)
+{
+  struct ei_device *ei_local = netdev_priv(dev);
 
   *(vhalf *) PA_83902_RST = 0;
   udelay (5);
-  netअगर_warn(ei_local, hw, dev, "8390 reset done (%ld).\n", jअगरfies);
+  netif_warn(ei_local, hw, dev, "8390 reset done (%ld).\n", jiffies);
   *(vhalf *) PA_83902_RST = ~0;
   udelay (5);
-पूर्ण
+}
 
-अटल व्योम
-stnic_get_hdr (काष्ठा net_device *dev, काष्ठा e8390_pkt_hdr *hdr,
-	       पूर्णांक ring_page)
-अणु
-  काष्ठा ei_device *ei_local = netdev_priv(dev);
+static void
+stnic_get_hdr (struct net_device *dev, struct e8390_pkt_hdr *hdr,
+	       int ring_page)
+{
+  struct ei_device *ei_local = netdev_priv(dev);
 
   half buf[2];
 
@@ -202,28 +201,28 @@ stnic_get_hdr (काष्ठा net_device *dev, काष्ठा e8390_pkt_
   STNIC_DELAY ();
   hdr->next = buf[0] >> 8;
   hdr->status = buf[0] & 0xff;
-#अगर_घोषित __LITTLE_ENDIAN__
+#ifdef __LITTLE_ENDIAN__
   hdr->count = buf[1];
-#अन्यथा
+#else
   hdr->count = ((buf[1] >> 8) & 0xff) | (buf[1] << 8);
-#पूर्ण_अगर
+#endif
 
-  netअगर_dbg(ei_local, probe, dev, "ring %x status %02x next %02x count %04x.\n",
+  netif_dbg(ei_local, probe, dev, "ring %x status %02x next %02x count %04x.\n",
 	    ring_page, hdr->status, hdr->next, hdr->count);
 
   STNIC_WRITE (STNIC_CR, CR_RDMA | CR_PG0 | CR_STA);
-पूर्ण
+}
 
 /* Block input and output, similar to the Crynwr packet driver. If you are
-   porting to a new ethercard look at the packet driver source क्रम hपूर्णांकs.
-   The HP LAN करोesn't use shared memory -- we put the packet
+   porting to a new ethercard look at the packet driver source for hints.
+   The HP LAN doesn't use shared memory -- we put the packet
    out through the "remote DMA" dataport. */
 
-अटल व्योम
-stnic_block_input (काष्ठा net_device *dev, पूर्णांक length, काष्ठा sk_buff *skb,
-		   पूर्णांक offset)
-अणु
-  अक्षर *buf = skb->data;
+static void
+stnic_block_input (struct net_device *dev, int length, struct sk_buff *skb,
+		   int offset)
+{
+  char *buf = skb->data;
   half val;
 
   STNIC_WRITE (PG0_RSAR0, offset & 0xff);
@@ -232,30 +231,30 @@ stnic_block_input (काष्ठा net_device *dev, पूर्णांक 
   STNIC_WRITE (PG0_RBCR1, length >> 8);
   STNIC_WRITE (STNIC_CR, CR_RRD | CR_PG0 | CR_STA);
 
-  अगर (length & 1)
+  if (length & 1)
     length++;
 
-  जबतक (length > 0)
-    अणु
+  while (length > 0)
+    {
       val = *(vhalf *) PA_83902_IF;
-#अगर_घोषित __LITTLE_ENDIAN__
+#ifdef __LITTLE_ENDIAN__
       *buf++ = val & 0xff;
       *buf++ = val >> 8;
-#अन्यथा
+#else
       *buf++ = val >> 8;
       *buf++ = val & 0xff;
-#पूर्ण_अगर
+#endif
       STNIC_DELAY ();
-      length -= माप (half);
-    पूर्ण
+      length -= sizeof (half);
+    }
 
   STNIC_WRITE (STNIC_CR, CR_RDMA | CR_PG0 | CR_STA);
-पूर्ण
+}
 
-अटल व्योम
-stnic_block_output (काष्ठा net_device *dev, पूर्णांक length,
-		    स्थिर अचिन्हित अक्षर *buf, पूर्णांक output_page)
-अणु
+static void
+stnic_block_output (struct net_device *dev, int length,
+		    const unsigned char *buf, int output_page)
+{
   STNIC_WRITE (PG0_RBCR0, 1);	/* Write non-zero value */
   STNIC_WRITE (STNIC_CR, CR_RRD | CR_PG0 | CR_STA);
   STNIC_DELAY ();
@@ -266,39 +265,39 @@ stnic_block_output (काष्ठा net_device *dev, पूर्णांक
   STNIC_WRITE (PG0_RSAR1, output_page);
   STNIC_WRITE (STNIC_CR, CR_RWR | CR_PG0 | CR_STA);
 
-  अगर (length & 1)
+  if (length & 1)
     length++;
 
-  जबतक (length > 0)
-    अणु
-#अगर_घोषित __LITTLE_ENDIAN__
+  while (length > 0)
+    {
+#ifdef __LITTLE_ENDIAN__
       *(vhalf *) PA_83902_IF = ((half) buf[1] << 8) | buf[0];
-#अन्यथा
+#else
       *(vhalf *) PA_83902_IF = ((half) buf[0] << 8) | buf[1];
-#पूर्ण_अगर
+#endif
       STNIC_DELAY ();
-      buf += माप (half);
-      length -= माप (half);
-    पूर्ण
+      buf += sizeof (half);
+      length -= sizeof (half);
+    }
 
   STNIC_WRITE (STNIC_CR, CR_RDMA | CR_PG0 | CR_STA);
-पूर्ण
+}
 
-/* This function resets the STNIC अगर something screws up.  */
-अटल व्योम
-stnic_init (काष्ठा net_device *dev)
-अणु
+/* This function resets the STNIC if something screws up.  */
+static void
+stnic_init (struct net_device *dev)
+{
   stnic_reset (dev);
   NS8390_init (dev, 0);
-पूर्ण
+}
 
-अटल व्योम __निकास stnic_cleanup(व्योम)
-अणु
-	unरेजिस्टर_netdev(stnic_dev);
-	मुक्त_irq(stnic_dev->irq, stnic_dev);
-	मुक्त_netdev(stnic_dev);
-पूर्ण
+static void __exit stnic_cleanup(void)
+{
+	unregister_netdev(stnic_dev);
+	free_irq(stnic_dev->irq, stnic_dev);
+	free_netdev(stnic_dev);
+}
 
 module_init(stnic_probe);
-module_निकास(stnic_cleanup);
+module_exit(stnic_cleanup);
 MODULE_LICENSE("GPL");

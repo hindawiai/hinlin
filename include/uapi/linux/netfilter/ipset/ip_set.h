@@ -1,31 +1,30 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
 /* Copyright (C) 2000-2002 Joakim Axelsson <gozem@linux.nu>
  *                         Patrick Schaaf <bof@bof.de>
  *                         Martin Josefsson <gandalf@wlug.westbo.se>
  * Copyright (C) 2003-2011 Jozsef Kadlecsik <kadlec@netfilter.org>
  *
- * This program is मुक्त software; you can redistribute it and/or modअगरy
+ * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation.
  */
-#अगर_अघोषित _UAPI_IP_SET_H
-#घोषणा _UAPI_IP_SET_H
+#ifndef _UAPI_IP_SET_H
+#define _UAPI_IP_SET_H
 
-#समावेश <linux/types.h>
+#include <linux/types.h>
 
 /* The protocol versions */
-#घोषणा IPSET_PROTOCOL		7
-#घोषणा IPSET_PROTOCOL_MIN	6
+#define IPSET_PROTOCOL		7
+#define IPSET_PROTOCOL_MIN	6
 
-/* The max length of strings including NUL: set and type identअगरiers */
-#घोषणा IPSET_MAXNAMELEN	32
+/* The max length of strings including NUL: set and type identifiers */
+#define IPSET_MAXNAMELEN	32
 
 /* The maximum permissible comment length we will accept over netlink */
-#घोषणा IPSET_MAX_COMMENT_SIZE	255
+#define IPSET_MAX_COMMENT_SIZE	255
 
 /* Message types and commands */
-क्रमागत ipset_cmd अणु
+enum ipset_cmd {
 	IPSET_CMD_NONE,
 	IPSET_CMD_PROTOCOL,	/* 1: Return protocol version */
 	IPSET_CMD_CREATE,	/* 2: Create a new (empty) set */
@@ -48,20 +47,20 @@
 	IPSET_CMD_RESTORE = IPSET_MSG_MAX, /* 16: Enter restore mode */
 	IPSET_CMD_HELP,		/* 17: Get help */
 	IPSET_CMD_VERSION,	/* 18: Get program version */
-	IPSET_CMD_QUIT,		/* 19: Quit from पूर्णांकeractive mode */
+	IPSET_CMD_QUIT,		/* 19: Quit from interactive mode */
 
 	IPSET_CMD_MAX,
 
 	IPSET_CMD_COMMIT = IPSET_CMD_MAX, /* 20: Commit buffered commands */
-पूर्ण;
+};
 
 /* Attributes at command level */
-क्रमागत अणु
+enum {
 	IPSET_ATTR_UNSPEC,
 	IPSET_ATTR_PROTOCOL,	/* 1: Protocol version */
 	IPSET_ATTR_SETNAME,	/* 2: Name of the set */
 	IPSET_ATTR_TYPENAME,	/* 3: Typename */
-	IPSET_ATTR_SETNAME2 = IPSET_ATTR_TYPENAME, /* Setname at नाम/swap */
+	IPSET_ATTR_SETNAME2 = IPSET_ATTR_TYPENAME, /* Setname at rename/swap */
 	IPSET_ATTR_REVISION,	/* 4: Settype revision */
 	IPSET_ATTR_FAMILY,	/* 5: Settype family */
 	IPSET_ATTR_FLAGS,	/* 6: Flags at command level */
@@ -72,11 +71,11 @@
 	IPSET_ATTR_REVISION_MIN	= IPSET_ATTR_PROTOCOL_MIN, /* type rev min */
 	IPSET_ATTR_INDEX,	/* 11: Kernel index of set */
 	__IPSET_ATTR_CMD_MAX,
-पूर्ण;
-#घोषणा IPSET_ATTR_CMD_MAX	(__IPSET_ATTR_CMD_MAX - 1)
+};
+#define IPSET_ATTR_CMD_MAX	(__IPSET_ATTR_CMD_MAX - 1)
 
-/* CADT specअगरic attributes */
-क्रमागत अणु
+/* CADT specific attributes */
+enum {
 	IPSET_ATTR_IP = IPSET_ATTR_UNSPEC + 1,
 	IPSET_ATTR_IP_FROM = IPSET_ATTR_IP,
 	IPSET_ATTR_IP_TO,	/* 2 */
@@ -92,7 +91,7 @@
 	IPSET_ATTR_MARKMASK,	/* 11 */
 	/* Reserve empty slots */
 	IPSET_ATTR_CADT_MAX = 16,
-	/* Create-only specअगरic attributes */
+	/* Create-only specific attributes */
 	IPSET_ATTR_INITVAL,	/* was unused IPSET_ATTR_GC */
 	IPSET_ATTR_HASHSIZE,
 	IPSET_ATTR_MAXELEM,
@@ -106,11 +105,11 @@
 	IPSET_ATTR_MEMSIZE,
 
 	__IPSET_ATTR_CREATE_MAX,
-पूर्ण;
-#घोषणा IPSET_ATTR_CREATE_MAX	(__IPSET_ATTR_CREATE_MAX - 1)
+};
+#define IPSET_ATTR_CREATE_MAX	(__IPSET_ATTR_CREATE_MAX - 1)
 
-/* ADT specअगरic attributes */
-क्रमागत अणु
+/* ADT specific attributes */
+enum {
 	IPSET_ATTR_ETHER = IPSET_ATTR_CADT_MAX + 1,
 	IPSET_ATTR_NAME,
 	IPSET_ATTR_NAMEREF,
@@ -126,19 +125,19 @@
 	IPSET_ATTR_SKBQUEUE,
 	IPSET_ATTR_PAD,
 	__IPSET_ATTR_ADT_MAX,
-पूर्ण;
-#घोषणा IPSET_ATTR_ADT_MAX	(__IPSET_ATTR_ADT_MAX - 1)
+};
+#define IPSET_ATTR_ADT_MAX	(__IPSET_ATTR_ADT_MAX - 1)
 
-/* IP specअगरic attributes */
-क्रमागत अणु
+/* IP specific attributes */
+enum {
 	IPSET_ATTR_IPADDR_IPV4 = IPSET_ATTR_UNSPEC + 1,
 	IPSET_ATTR_IPADDR_IPV6,
 	__IPSET_ATTR_IPADDR_MAX,
-पूर्ण;
-#घोषणा IPSET_ATTR_IPADDR_MAX	(__IPSET_ATTR_IPADDR_MAX - 1)
+};
+#define IPSET_ATTR_IPADDR_MAX	(__IPSET_ATTR_IPADDR_MAX - 1)
 
 /* Error codes */
-क्रमागत ipset_त्रुटि_सं अणु
+enum ipset_errno {
 	IPSET_ERR_PRIVATE = 4096,
 	IPSET_ERR_PROTOCOL,
 	IPSET_ERR_FIND_TYPE,
@@ -159,12 +158,12 @@
 	IPSET_ERR_INVALID_MARKMASK,
 	IPSET_ERR_SKBINFO,
 
-	/* Type specअगरic error codes */
+	/* Type specific error codes */
 	IPSET_ERR_TYPE_SPECIFIC = 4352,
-पूर्ण;
+};
 
 /* Flags at command level or match/target flags, lower half of cmdattrs*/
-क्रमागत ipset_cmd_flags अणु
+enum ipset_cmd_flags {
 	IPSET_FLAG_BIT_EXIST	= 0,
 	IPSET_FLAG_EXIST	= (1 << IPSET_FLAG_BIT_EXIST),
 	IPSET_FLAG_BIT_LIST_SETNAME = 1,
@@ -188,10 +187,10 @@
 	IPSET_FLAG_BIT_MAP_SKBQUEUE = 10,
 	IPSET_FLAG_MAP_SKBQUEUE = (1 << IPSET_FLAG_BIT_MAP_SKBQUEUE),
 	IPSET_FLAG_CMD_MAX = 15,
-पूर्ण;
+};
 
 /* Flags at CADT attribute level, upper half of cmdattrs */
-क्रमागत ipset_cadt_flags अणु
+enum ipset_cadt_flags {
 	IPSET_FLAG_BIT_BEFORE	= 0,
 	IPSET_FLAG_BEFORE	= (1 << IPSET_FLAG_BIT_BEFORE),
 	IPSET_FLAG_BIT_PHYSDEV	= 1,
@@ -209,36 +208,36 @@
 	IPSET_FLAG_BIT_IFACE_WILDCARD = 7,
 	IPSET_FLAG_IFACE_WILDCARD = (1 << IPSET_FLAG_BIT_IFACE_WILDCARD),
 	IPSET_FLAG_CADT_MAX	= 15,
-पूर्ण;
+};
 
 /* The flag bits which correspond to the non-extension create flags */
-क्रमागत ipset_create_flags अणु
+enum ipset_create_flags {
 	IPSET_CREATE_FLAG_BIT_FORCEADD = 0,
 	IPSET_CREATE_FLAG_FORCEADD = (1 << IPSET_CREATE_FLAG_BIT_FORCEADD),
 	IPSET_CREATE_FLAG_BIT_BUCKETSIZE = 1,
 	IPSET_CREATE_FLAG_BUCKETSIZE = (1 << IPSET_CREATE_FLAG_BIT_BUCKETSIZE),
 	IPSET_CREATE_FLAG_BIT_MAX = 7,
-पूर्ण;
+};
 
-/* Commands with settype-specअगरic attributes */
-क्रमागत ipset_adt अणु
+/* Commands with settype-specific attributes */
+enum ipset_adt {
 	IPSET_ADD,
 	IPSET_DEL,
 	IPSET_TEST,
 	IPSET_ADT_MAX,
 	IPSET_CREATE = IPSET_ADT_MAX,
 	IPSET_CADT_MAX,
-पूर्ण;
+};
 
-/* Sets are identअगरied by an index in kernel space. Tweak with ip_set_id_t
- * and IPSET_INVALID_ID अगर you want to increase the max number of sets.
+/* Sets are identified by an index in kernel space. Tweak with ip_set_id_t
+ * and IPSET_INVALID_ID if you want to increase the max number of sets.
  * Also, IPSET_ATTR_INDEX must be changed.
  */
-प्रकार __u16 ip_set_id_t;
+typedef __u16 ip_set_id_t;
 
-#घोषणा IPSET_INVALID_ID		65535
+#define IPSET_INVALID_ID		65535
 
-क्रमागत ip_set_dim अणु
+enum ip_set_dim {
 	IPSET_DIM_ZERO = 0,
 	IPSET_DIM_ONE,
 	IPSET_DIM_TWO,
@@ -249,67 +248,67 @@
 	IPSET_DIM_MAX = 6,
 	/* Backward compatibility: set match revision 2 */
 	IPSET_BIT_RETURN_NOMATCH = 7,
-पूर्ण;
+};
 
-/* Option flags क्रम kernel operations */
-क्रमागत ip_set_kopt अणु
+/* Option flags for kernel operations */
+enum ip_set_kopt {
 	IPSET_INV_MATCH = (1 << IPSET_DIM_ZERO),
 	IPSET_DIM_ONE_SRC = (1 << IPSET_DIM_ONE),
 	IPSET_DIM_TWO_SRC = (1 << IPSET_DIM_TWO),
 	IPSET_DIM_THREE_SRC = (1 << IPSET_DIM_THREE),
 	IPSET_RETURN_NOMATCH = (1 << IPSET_BIT_RETURN_NOMATCH),
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	IPSET_COUNTER_NONE = 0,
 	IPSET_COUNTER_EQ,
 	IPSET_COUNTER_NE,
 	IPSET_COUNTER_LT,
 	IPSET_COUNTER_GT,
-पूर्ण;
+};
 
-/* Backward compatibility क्रम set match v3 */
-काष्ठा ip_set_counter_match0 अणु
+/* Backward compatibility for set match v3 */
+struct ip_set_counter_match0 {
 	__u8 op;
 	__u64 value;
-पूर्ण;
+};
 
-काष्ठा ip_set_counter_match अणु
+struct ip_set_counter_match {
 	__aligned_u64 value;
 	__u8 op;
-पूर्ण;
+};
 
 /* Interface to iptables/ip6tables */
 
-#घोषणा SO_IP_SET		83
+#define SO_IP_SET		83
 
-जोड़ ip_set_name_index अणु
-	अक्षर name[IPSET_MAXNAMELEN];
+union ip_set_name_index {
+	char name[IPSET_MAXNAMELEN];
 	ip_set_id_t index;
-पूर्ण;
+};
 
-#घोषणा IP_SET_OP_GET_BYNAME	0x00000006	/* Get set index by name */
-काष्ठा ip_set_req_get_set अणु
-	अचिन्हित पूर्णांक op;
-	अचिन्हित पूर्णांक version;
-	जोड़ ip_set_name_index set;
-पूर्ण;
+#define IP_SET_OP_GET_BYNAME	0x00000006	/* Get set index by name */
+struct ip_set_req_get_set {
+	unsigned int op;
+	unsigned int version;
+	union ip_set_name_index set;
+};
 
-#घोषणा IP_SET_OP_GET_BYINDEX	0x00000007	/* Get set name by index */
+#define IP_SET_OP_GET_BYINDEX	0x00000007	/* Get set name by index */
 /* Uses ip_set_req_get_set */
 
-#घोषणा IP_SET_OP_GET_FNAME	0x00000008	/* Get set index and family */
-काष्ठा ip_set_req_get_set_family अणु
-	अचिन्हित पूर्णांक op;
-	अचिन्हित पूर्णांक version;
-	अचिन्हित पूर्णांक family;
-	जोड़ ip_set_name_index set;
-पूर्ण;
+#define IP_SET_OP_GET_FNAME	0x00000008	/* Get set index and family */
+struct ip_set_req_get_set_family {
+	unsigned int op;
+	unsigned int version;
+	unsigned int family;
+	union ip_set_name_index set;
+};
 
-#घोषणा IP_SET_OP_VERSION	0x00000100	/* Ask kernel version */
-काष्ठा ip_set_req_version अणु
-	अचिन्हित पूर्णांक op;
-	अचिन्हित पूर्णांक version;
-पूर्ण;
+#define IP_SET_OP_VERSION	0x00000100	/* Ask kernel version */
+struct ip_set_req_version {
+	unsigned int op;
+	unsigned int version;
+};
 
-#पूर्ण_अगर /* _UAPI_IP_SET_H */
+#endif /* _UAPI_IP_SET_H */

@@ -1,33 +1,32 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0 OR Linux-OpenIB
+// SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB
 /* Copyright (c) 2020 Mellanox Technologies Ltd. */
 
-#समावेश <linux/module.h>
-#समावेश <linux/vdpa.h>
-#समावेश <linux/vringh.h>
-#समावेश <uapi/linux/virtio_net.h>
-#समावेश <uapi/linux/virtio_ids.h>
-#समावेश <linux/virtio_config.h>
-#समावेश <linux/auxiliary_bus.h>
-#समावेश <linux/mlx5/cq.h>
-#समावेश <linux/mlx5/qp.h>
-#समावेश <linux/mlx5/device.h>
-#समावेश <linux/mlx5/driver.h>
-#समावेश <linux/mlx5/vport.h>
-#समावेश <linux/mlx5/fs.h>
-#समावेश <linux/mlx5/mlx5_अगरc_vdpa.h>
-#समावेश <linux/mlx5/mpfs.h>
-#समावेश "mlx5_vdpa.h"
+#include <linux/module.h>
+#include <linux/vdpa.h>
+#include <linux/vringh.h>
+#include <uapi/linux/virtio_net.h>
+#include <uapi/linux/virtio_ids.h>
+#include <linux/virtio_config.h>
+#include <linux/auxiliary_bus.h>
+#include <linux/mlx5/cq.h>
+#include <linux/mlx5/qp.h>
+#include <linux/mlx5/device.h>
+#include <linux/mlx5/driver.h>
+#include <linux/mlx5/vport.h>
+#include <linux/mlx5/fs.h>
+#include <linux/mlx5/mlx5_ifc_vdpa.h>
+#include <linux/mlx5/mpfs.h>
+#include "mlx5_vdpa.h"
 
 MODULE_AUTHOR("Eli Cohen <eli@mellanox.com>");
 MODULE_DESCRIPTION("Mellanox VDPA driver");
 MODULE_LICENSE("Dual BSD/GPL");
 
-#घोषणा to_mlx5_vdpa_ndev(__mvdev)                                             \
-	container_of(__mvdev, काष्ठा mlx5_vdpa_net, mvdev)
-#घोषणा to_mvdev(__vdev) container_of((__vdev), काष्ठा mlx5_vdpa_dev, vdev)
+#define to_mlx5_vdpa_ndev(__mvdev)                                             \
+	container_of(__mvdev, struct mlx5_vdpa_net, mvdev)
+#define to_mvdev(__vdev) container_of((__vdev), struct mlx5_vdpa_dev, vdev)
 
-#घोषणा VALID_FEATURES_MASK                                                                        \
+#define VALID_FEATURES_MASK                                                                        \
 	(BIT_ULL(VIRTIO_NET_F_CSUM) | BIT_ULL(VIRTIO_NET_F_GUEST_CSUM) |                                   \
 	 BIT_ULL(VIRTIO_NET_F_CTRL_GUEST_OFFLOADS) | BIT_ULL(VIRTIO_NET_F_MTU) | BIT_ULL(VIRTIO_NET_F_MAC) |   \
 	 BIT_ULL(VIRTIO_NET_F_GUEST_TSO4) | BIT_ULL(VIRTIO_NET_F_GUEST_TSO6) |                             \
@@ -42,156 +41,156 @@ MODULE_LICENSE("Dual BSD/GPL");
 	 BIT_ULL(VIRTIO_F_ANY_LAYOUT) | BIT_ULL(VIRTIO_F_VERSION_1) | BIT_ULL(VIRTIO_F_ACCESS_PLATFORM) |      \
 	 BIT_ULL(VIRTIO_F_RING_PACKED) | BIT_ULL(VIRTIO_F_ORDER_PLATFORM) | BIT_ULL(VIRTIO_F_SR_IOV))
 
-#घोषणा VALID_STATUS_MASK                                                                          \
+#define VALID_STATUS_MASK                                                                          \
 	(VIRTIO_CONFIG_S_ACKNOWLEDGE | VIRTIO_CONFIG_S_DRIVER | VIRTIO_CONFIG_S_DRIVER_OK |        \
 	 VIRTIO_CONFIG_S_FEATURES_OK | VIRTIO_CONFIG_S_NEEDS_RESET | VIRTIO_CONFIG_S_FAILED)
 
-काष्ठा mlx5_vdpa_net_resources अणु
+struct mlx5_vdpa_net_resources {
 	u32 tisn;
 	u32 tdn;
 	u32 tirn;
 	u32 rqtn;
 	bool valid;
-पूर्ण;
+};
 
-काष्ठा mlx5_vdpa_cq_buf अणु
-	काष्ठा mlx5_frag_buf_ctrl fbc;
-	काष्ठा mlx5_frag_buf frag_buf;
-	पूर्णांक cqe_size;
-	पूर्णांक nent;
-पूर्ण;
+struct mlx5_vdpa_cq_buf {
+	struct mlx5_frag_buf_ctrl fbc;
+	struct mlx5_frag_buf frag_buf;
+	int cqe_size;
+	int nent;
+};
 
-काष्ठा mlx5_vdpa_cq अणु
-	काष्ठा mlx5_core_cq mcq;
-	काष्ठा mlx5_vdpa_cq_buf buf;
-	काष्ठा mlx5_db db;
-	पूर्णांक cqe;
-पूर्ण;
+struct mlx5_vdpa_cq {
+	struct mlx5_core_cq mcq;
+	struct mlx5_vdpa_cq_buf buf;
+	struct mlx5_db db;
+	int cqe;
+};
 
-काष्ठा mlx5_vdpa_umem अणु
-	काष्ठा mlx5_frag_buf_ctrl fbc;
-	काष्ठा mlx5_frag_buf frag_buf;
-	पूर्णांक size;
+struct mlx5_vdpa_umem {
+	struct mlx5_frag_buf_ctrl fbc;
+	struct mlx5_frag_buf frag_buf;
+	int size;
 	u32 id;
-पूर्ण;
+};
 
-काष्ठा mlx5_vdpa_qp अणु
-	काष्ठा mlx5_core_qp mqp;
-	काष्ठा mlx5_frag_buf frag_buf;
-	काष्ठा mlx5_db db;
+struct mlx5_vdpa_qp {
+	struct mlx5_core_qp mqp;
+	struct mlx5_frag_buf frag_buf;
+	struct mlx5_db db;
 	u16 head;
 	bool fw;
-पूर्ण;
+};
 
-काष्ठा mlx5_vq_restore_info अणु
+struct mlx5_vq_restore_info {
 	u32 num_ent;
 	u64 desc_addr;
 	u64 device_addr;
 	u64 driver_addr;
 	u16 avail_index;
 	u16 used_index;
-	bool पढ़ोy;
-	काष्ठा vdpa_callback cb;
+	bool ready;
+	struct vdpa_callback cb;
 	bool restore;
-पूर्ण;
+};
 
-काष्ठा mlx5_vdpa_virtqueue अणु
-	bool पढ़ोy;
+struct mlx5_vdpa_virtqueue {
+	bool ready;
 	u64 desc_addr;
 	u64 device_addr;
 	u64 driver_addr;
 	u32 num_ent;
-	काष्ठा vdpa_callback event_cb;
+	struct vdpa_callback event_cb;
 
-	/* Resources क्रम implementing the notअगरication channel from the device
+	/* Resources for implementing the notification channel from the device
 	 * to the driver. fwqp is the firmware end of an RC connection; the
 	 * other end is vqqp used by the driver. cq is is where completions are
 	 * reported.
 	 */
-	काष्ठा mlx5_vdpa_cq cq;
-	काष्ठा mlx5_vdpa_qp fwqp;
-	काष्ठा mlx5_vdpa_qp vqqp;
+	struct mlx5_vdpa_cq cq;
+	struct mlx5_vdpa_qp fwqp;
+	struct mlx5_vdpa_qp vqqp;
 
-	/* umem resources are required क्रम the virtqueue operation. They're use
-	 * is पूर्णांकernal and they must be provided by the driver.
+	/* umem resources are required for the virtqueue operation. They're use
+	 * is internal and they must be provided by the driver.
 	 */
-	काष्ठा mlx5_vdpa_umem umem1;
-	काष्ठा mlx5_vdpa_umem umem2;
-	काष्ठा mlx5_vdpa_umem umem3;
+	struct mlx5_vdpa_umem umem1;
+	struct mlx5_vdpa_umem umem2;
+	struct mlx5_vdpa_umem umem3;
 
 	bool initialized;
-	पूर्णांक index;
+	int index;
 	u32 virtq_id;
-	काष्ठा mlx5_vdpa_net *ndev;
+	struct mlx5_vdpa_net *ndev;
 	u16 avail_idx;
 	u16 used_idx;
-	पूर्णांक fw_state;
+	int fw_state;
 
-	/* keep last in the काष्ठा */
-	काष्ठा mlx5_vq_restore_info ri;
-पूर्ण;
+	/* keep last in the struct */
+	struct mlx5_vq_restore_info ri;
+};
 
-/* We will हटाओ this limitation once mlx5_vdpa_alloc_resources()
- * provides क्रम driver space allocation
+/* We will remove this limitation once mlx5_vdpa_alloc_resources()
+ * provides for driver space allocation
  */
-#घोषणा MLX5_MAX_SUPPORTED_VQS 16
+#define MLX5_MAX_SUPPORTED_VQS 16
 
-काष्ठा mlx5_vdpa_net अणु
-	काष्ठा mlx5_vdpa_dev mvdev;
-	काष्ठा mlx5_vdpa_net_resources res;
-	काष्ठा virtio_net_config config;
-	काष्ठा mlx5_vdpa_virtqueue vqs[MLX5_MAX_SUPPORTED_VQS];
+struct mlx5_vdpa_net {
+	struct mlx5_vdpa_dev mvdev;
+	struct mlx5_vdpa_net_resources res;
+	struct virtio_net_config config;
+	struct mlx5_vdpa_virtqueue vqs[MLX5_MAX_SUPPORTED_VQS];
 
-	/* Serialize vq resources creation and deकाष्ठाion. This is required
+	/* Serialize vq resources creation and destruction. This is required
 	 * since memory map might change and we need to destroy and create
-	 * resources जबतक driver in operational.
+	 * resources while driver in operational.
 	 */
-	काष्ठा mutex reslock;
-	काष्ठा mlx5_flow_table *rxft;
-	काष्ठा mlx5_fc *rx_counter;
-	काष्ठा mlx5_flow_handle *rx_rule;
+	struct mutex reslock;
+	struct mlx5_flow_table *rxft;
+	struct mlx5_fc *rx_counter;
+	struct mlx5_flow_handle *rx_rule;
 	bool setup;
 	u16 mtu;
-पूर्ण;
+};
 
-अटल व्योम मुक्त_resources(काष्ठा mlx5_vdpa_net *ndev);
-अटल व्योम init_mvqs(काष्ठा mlx5_vdpa_net *ndev);
-अटल पूर्णांक setup_driver(काष्ठा mlx5_vdpa_net *ndev);
-अटल व्योम tearकरोwn_driver(काष्ठा mlx5_vdpa_net *ndev);
+static void free_resources(struct mlx5_vdpa_net *ndev);
+static void init_mvqs(struct mlx5_vdpa_net *ndev);
+static int setup_driver(struct mlx5_vdpa_net *ndev);
+static void teardown_driver(struct mlx5_vdpa_net *ndev);
 
-अटल bool mlx5_vdpa_debug;
+static bool mlx5_vdpa_debug;
 
-#घोषणा MLX5_LOG_VIO_FLAG(_feature)                                                                \
-	करो अणु                                                                                       \
-		अगर (features & BIT_ULL(_feature))                                                  \
+#define MLX5_LOG_VIO_FLAG(_feature)                                                                \
+	do {                                                                                       \
+		if (features & BIT_ULL(_feature))                                                  \
 			mlx5_vdpa_info(mvdev, "%s\n", #_feature);                                  \
-	पूर्ण जबतक (0)
+	} while (0)
 
-#घोषणा MLX5_LOG_VIO_STAT(_status)                                                                 \
-	करो अणु                                                                                       \
-		अगर (status & (_status))                                                            \
+#define MLX5_LOG_VIO_STAT(_status)                                                                 \
+	do {                                                                                       \
+		if (status & (_status))                                                            \
 			mlx5_vdpa_info(mvdev, "%s\n", #_status);                                   \
-	पूर्ण जबतक (0)
+	} while (0)
 
-अटल अंतरभूत u32 mlx5_vdpa_max_qps(पूर्णांक max_vqs)
-अणु
-	वापस max_vqs / 2;
-पूर्ण
+static inline u32 mlx5_vdpa_max_qps(int max_vqs)
+{
+	return max_vqs / 2;
+}
 
-अटल व्योम prपूर्णांक_status(काष्ठा mlx5_vdpa_dev *mvdev, u8 status, bool set)
-अणु
-	अगर (status & ~VALID_STATUS_MASK)
+static void print_status(struct mlx5_vdpa_dev *mvdev, u8 status, bool set)
+{
+	if (status & ~VALID_STATUS_MASK)
 		mlx5_vdpa_warn(mvdev, "Warning: there are invalid status bits 0x%x\n",
 			       status & ~VALID_STATUS_MASK);
 
-	अगर (!mlx5_vdpa_debug)
-		वापस;
+	if (!mlx5_vdpa_debug)
+		return;
 
 	mlx5_vdpa_info(mvdev, "driver status %s", set ? "set" : "get");
-	अगर (set && !status) अणु
+	if (set && !status) {
 		mlx5_vdpa_info(mvdev, "driver resets the device\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	MLX5_LOG_VIO_STAT(VIRTIO_CONFIG_S_ACKNOWLEDGE);
 	MLX5_LOG_VIO_STAT(VIRTIO_CONFIG_S_DRIVER);
@@ -199,19 +198,19 @@ MODULE_LICENSE("Dual BSD/GPL");
 	MLX5_LOG_VIO_STAT(VIRTIO_CONFIG_S_FEATURES_OK);
 	MLX5_LOG_VIO_STAT(VIRTIO_CONFIG_S_NEEDS_RESET);
 	MLX5_LOG_VIO_STAT(VIRTIO_CONFIG_S_FAILED);
-पूर्ण
+}
 
-अटल व्योम prपूर्णांक_features(काष्ठा mlx5_vdpa_dev *mvdev, u64 features, bool set)
-अणु
-	अगर (features & ~VALID_FEATURES_MASK)
+static void print_features(struct mlx5_vdpa_dev *mvdev, u64 features, bool set)
+{
+	if (features & ~VALID_FEATURES_MASK)
 		mlx5_vdpa_warn(mvdev, "There are invalid feature bits 0x%llx\n",
 			       features & ~VALID_FEATURES_MASK);
 
-	अगर (!mlx5_vdpa_debug)
-		वापस;
+	if (!mlx5_vdpa_debug)
+		return;
 
 	mlx5_vdpa_info(mvdev, "driver %s feature bits:\n", set ? "sets" : "reads");
-	अगर (!features)
+	if (!features)
 		mlx5_vdpa_info(mvdev, "all feature bits are cleared\n");
 
 	MLX5_LOG_VIO_FLAG(VIRTIO_NET_F_CSUM);
@@ -248,173 +247,173 @@ MODULE_LICENSE("Dual BSD/GPL");
 	MLX5_LOG_VIO_FLAG(VIRTIO_F_RING_PACKED);
 	MLX5_LOG_VIO_FLAG(VIRTIO_F_ORDER_PLATFORM);
 	MLX5_LOG_VIO_FLAG(VIRTIO_F_SR_IOV);
-पूर्ण
+}
 
-अटल पूर्णांक create_tis(काष्ठा mlx5_vdpa_net *ndev)
-अणु
-	काष्ठा mlx5_vdpa_dev *mvdev = &ndev->mvdev;
-	u32 in[MLX5_ST_SZ_DW(create_tis_in)] = अणुपूर्ण;
-	व्योम *tisc;
-	पूर्णांक err;
+static int create_tis(struct mlx5_vdpa_net *ndev)
+{
+	struct mlx5_vdpa_dev *mvdev = &ndev->mvdev;
+	u32 in[MLX5_ST_SZ_DW(create_tis_in)] = {};
+	void *tisc;
+	int err;
 
 	tisc = MLX5_ADDR_OF(create_tis_in, in, ctx);
-	MLX5_SET(tisc, tisc, transport_करोमुख्य, ndev->res.tdn);
+	MLX5_SET(tisc, tisc, transport_domain, ndev->res.tdn);
 	err = mlx5_vdpa_create_tis(mvdev, in, &ndev->res.tisn);
-	अगर (err)
+	if (err)
 		mlx5_vdpa_warn(mvdev, "create TIS (%d)\n", err);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम destroy_tis(काष्ठा mlx5_vdpa_net *ndev)
-अणु
+static void destroy_tis(struct mlx5_vdpa_net *ndev)
+{
 	mlx5_vdpa_destroy_tis(&ndev->mvdev, ndev->res.tisn);
-पूर्ण
+}
 
-#घोषणा MLX5_VDPA_CQE_SIZE 64
-#घोषणा MLX5_VDPA_LOG_CQE_SIZE ilog2(MLX5_VDPA_CQE_SIZE)
+#define MLX5_VDPA_CQE_SIZE 64
+#define MLX5_VDPA_LOG_CQE_SIZE ilog2(MLX5_VDPA_CQE_SIZE)
 
-अटल पूर्णांक cq_frag_buf_alloc(काष्ठा mlx5_vdpa_net *ndev, काष्ठा mlx5_vdpa_cq_buf *buf, पूर्णांक nent)
-अणु
-	काष्ठा mlx5_frag_buf *frag_buf = &buf->frag_buf;
+static int cq_frag_buf_alloc(struct mlx5_vdpa_net *ndev, struct mlx5_vdpa_cq_buf *buf, int nent)
+{
+	struct mlx5_frag_buf *frag_buf = &buf->frag_buf;
 	u8 log_wq_stride = MLX5_VDPA_LOG_CQE_SIZE;
 	u8 log_wq_sz = MLX5_VDPA_LOG_CQE_SIZE;
-	पूर्णांक err;
+	int err;
 
 	err = mlx5_frag_buf_alloc_node(ndev->mvdev.mdev, nent * MLX5_VDPA_CQE_SIZE, frag_buf,
 				       ndev->mvdev.mdev->priv.numa_node);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	mlx5_init_fbc(frag_buf->frags, log_wq_stride, log_wq_sz, &buf->fbc);
 
 	buf->cqe_size = MLX5_VDPA_CQE_SIZE;
 	buf->nent = nent;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक umem_frag_buf_alloc(काष्ठा mlx5_vdpa_net *ndev, काष्ठा mlx5_vdpa_umem *umem, पूर्णांक size)
-अणु
-	काष्ठा mlx5_frag_buf *frag_buf = &umem->frag_buf;
+static int umem_frag_buf_alloc(struct mlx5_vdpa_net *ndev, struct mlx5_vdpa_umem *umem, int size)
+{
+	struct mlx5_frag_buf *frag_buf = &umem->frag_buf;
 
-	वापस mlx5_frag_buf_alloc_node(ndev->mvdev.mdev, size, frag_buf,
+	return mlx5_frag_buf_alloc_node(ndev->mvdev.mdev, size, frag_buf,
 					ndev->mvdev.mdev->priv.numa_node);
-पूर्ण
+}
 
-अटल व्योम cq_frag_buf_मुक्त(काष्ठा mlx5_vdpa_net *ndev, काष्ठा mlx5_vdpa_cq_buf *buf)
-अणु
-	mlx5_frag_buf_मुक्त(ndev->mvdev.mdev, &buf->frag_buf);
-पूर्ण
+static void cq_frag_buf_free(struct mlx5_vdpa_net *ndev, struct mlx5_vdpa_cq_buf *buf)
+{
+	mlx5_frag_buf_free(ndev->mvdev.mdev, &buf->frag_buf);
+}
 
-अटल व्योम *get_cqe(काष्ठा mlx5_vdpa_cq *vcq, पूर्णांक n)
-अणु
-	वापस mlx5_frag_buf_get_wqe(&vcq->buf.fbc, n);
-पूर्ण
+static void *get_cqe(struct mlx5_vdpa_cq *vcq, int n)
+{
+	return mlx5_frag_buf_get_wqe(&vcq->buf.fbc, n);
+}
 
-अटल व्योम cq_frag_buf_init(काष्ठा mlx5_vdpa_cq *vcq, काष्ठा mlx5_vdpa_cq_buf *buf)
-अणु
-	काष्ठा mlx5_cqe64 *cqe64;
-	व्योम *cqe;
-	पूर्णांक i;
+static void cq_frag_buf_init(struct mlx5_vdpa_cq *vcq, struct mlx5_vdpa_cq_buf *buf)
+{
+	struct mlx5_cqe64 *cqe64;
+	void *cqe;
+	int i;
 
-	क्रम (i = 0; i < buf->nent; i++) अणु
+	for (i = 0; i < buf->nent; i++) {
 		cqe = get_cqe(vcq, i);
 		cqe64 = cqe;
 		cqe64->op_own = MLX5_CQE_INVALID << 4;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम *get_sw_cqe(काष्ठा mlx5_vdpa_cq *cq, पूर्णांक n)
-अणु
-	काष्ठा mlx5_cqe64 *cqe64 = get_cqe(cq, n & (cq->cqe - 1));
+static void *get_sw_cqe(struct mlx5_vdpa_cq *cq, int n)
+{
+	struct mlx5_cqe64 *cqe64 = get_cqe(cq, n & (cq->cqe - 1));
 
-	अगर (likely(get_cqe_opcode(cqe64) != MLX5_CQE_INVALID) &&
+	if (likely(get_cqe_opcode(cqe64) != MLX5_CQE_INVALID) &&
 	    !((cqe64->op_own & MLX5_CQE_OWNER_MASK) ^ !!(n & cq->cqe)))
-		वापस cqe64;
+		return cqe64;
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल व्योम rx_post(काष्ठा mlx5_vdpa_qp *vqp, पूर्णांक n)
-अणु
+static void rx_post(struct mlx5_vdpa_qp *vqp, int n)
+{
 	vqp->head += n;
 	vqp->db.db[0] = cpu_to_be32(vqp->head);
-पूर्ण
+}
 
-अटल व्योम qp_prepare(काष्ठा mlx5_vdpa_net *ndev, bool fw, व्योम *in,
-		       काष्ठा mlx5_vdpa_virtqueue *mvq, u32 num_ent)
-अणु
-	काष्ठा mlx5_vdpa_qp *vqp;
+static void qp_prepare(struct mlx5_vdpa_net *ndev, bool fw, void *in,
+		       struct mlx5_vdpa_virtqueue *mvq, u32 num_ent)
+{
+	struct mlx5_vdpa_qp *vqp;
 	__be64 *pas;
-	व्योम *qpc;
+	void *qpc;
 
 	vqp = fw ? &mvq->fwqp : &mvq->vqqp;
 	MLX5_SET(create_qp_in, in, uid, ndev->mvdev.res.uid);
 	qpc = MLX5_ADDR_OF(create_qp_in, in, qpc);
-	अगर (vqp->fw) अणु
-		/* Firmware QP is allocated by the driver क्रम the firmware's
+	if (vqp->fw) {
+		/* Firmware QP is allocated by the driver for the firmware's
 		 * use so we can skip part of the params as they will be chosen by firmware
 		 */
 		qpc = MLX5_ADDR_OF(create_qp_in, in, qpc);
 		MLX5_SET(qpc, qpc, rq_type, MLX5_ZERO_LEN_RQ);
 		MLX5_SET(qpc, qpc, no_sq, 1);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	MLX5_SET(qpc, qpc, st, MLX5_QP_ST_RC);
 	MLX5_SET(qpc, qpc, pm_state, MLX5_QP_PM_MIGRATED);
 	MLX5_SET(qpc, qpc, pd, ndev->mvdev.res.pdn);
 	MLX5_SET(qpc, qpc, mtu, MLX5_QPC_MTU_256_BYTES);
 	MLX5_SET(qpc, qpc, uar_page, ndev->mvdev.res.uar->index);
-	MLX5_SET(qpc, qpc, log_page_size, vqp->frag_buf.page_shअगरt - MLX5_ADAPTER_PAGE_SHIFT);
+	MLX5_SET(qpc, qpc, log_page_size, vqp->frag_buf.page_shift - MLX5_ADAPTER_PAGE_SHIFT);
 	MLX5_SET(qpc, qpc, no_sq, 1);
 	MLX5_SET(qpc, qpc, cqn_rcv, mvq->cq.mcq.cqn);
 	MLX5_SET(qpc, qpc, log_rq_size, ilog2(num_ent));
 	MLX5_SET(qpc, qpc, rq_type, MLX5_NON_ZERO_RQ);
 	pas = (__be64 *)MLX5_ADDR_OF(create_qp_in, in, pas);
 	mlx5_fill_page_frag_array(&vqp->frag_buf, pas);
-पूर्ण
+}
 
-अटल पूर्णांक rq_buf_alloc(काष्ठा mlx5_vdpa_net *ndev, काष्ठा mlx5_vdpa_qp *vqp, u32 num_ent)
-अणु
-	वापस mlx5_frag_buf_alloc_node(ndev->mvdev.mdev,
-					num_ent * माप(काष्ठा mlx5_wqe_data_seg), &vqp->frag_buf,
+static int rq_buf_alloc(struct mlx5_vdpa_net *ndev, struct mlx5_vdpa_qp *vqp, u32 num_ent)
+{
+	return mlx5_frag_buf_alloc_node(ndev->mvdev.mdev,
+					num_ent * sizeof(struct mlx5_wqe_data_seg), &vqp->frag_buf,
 					ndev->mvdev.mdev->priv.numa_node);
-पूर्ण
+}
 
-अटल व्योम rq_buf_मुक्त(काष्ठा mlx5_vdpa_net *ndev, काष्ठा mlx5_vdpa_qp *vqp)
-अणु
-	mlx5_frag_buf_मुक्त(ndev->mvdev.mdev, &vqp->frag_buf);
-पूर्ण
+static void rq_buf_free(struct mlx5_vdpa_net *ndev, struct mlx5_vdpa_qp *vqp)
+{
+	mlx5_frag_buf_free(ndev->mvdev.mdev, &vqp->frag_buf);
+}
 
-अटल पूर्णांक qp_create(काष्ठा mlx5_vdpa_net *ndev, काष्ठा mlx5_vdpa_virtqueue *mvq,
-		     काष्ठा mlx5_vdpa_qp *vqp)
-अणु
-	काष्ठा mlx5_core_dev *mdev = ndev->mvdev.mdev;
-	पूर्णांक inlen = MLX5_ST_SZ_BYTES(create_qp_in);
-	u32 out[MLX5_ST_SZ_DW(create_qp_out)] = अणुपूर्ण;
-	व्योम *qpc;
-	व्योम *in;
-	पूर्णांक err;
+static int qp_create(struct mlx5_vdpa_net *ndev, struct mlx5_vdpa_virtqueue *mvq,
+		     struct mlx5_vdpa_qp *vqp)
+{
+	struct mlx5_core_dev *mdev = ndev->mvdev.mdev;
+	int inlen = MLX5_ST_SZ_BYTES(create_qp_in);
+	u32 out[MLX5_ST_SZ_DW(create_qp_out)] = {};
+	void *qpc;
+	void *in;
+	int err;
 
-	अगर (!vqp->fw) अणु
+	if (!vqp->fw) {
 		vqp = &mvq->vqqp;
 		err = rq_buf_alloc(ndev, vqp, mvq->num_ent);
-		अगर (err)
-			वापस err;
+		if (err)
+			return err;
 
 		err = mlx5_db_alloc(ndev->mvdev.mdev, &vqp->db);
-		अगर (err)
-			जाओ err_db;
-		inlen += vqp->frag_buf.npages * माप(__be64);
-	पूर्ण
+		if (err)
+			goto err_db;
+		inlen += vqp->frag_buf.npages * sizeof(__be64);
+	}
 
 	in = kzalloc(inlen, GFP_KERNEL);
-	अगर (!in) अणु
+	if (!in) {
 		err = -ENOMEM;
-		जाओ err_kzalloc;
-	पूर्ण
+		goto err_kzalloc;
+	}
 
 	qp_prepare(ndev, vqp->fw, in, mvq, mvq->num_ent);
 	qpc = MLX5_ADDR_OF(create_qp_in, in, qpc);
@@ -422,154 +421,154 @@ MODULE_LICENSE("Dual BSD/GPL");
 	MLX5_SET(qpc, qpc, pm_state, MLX5_QP_PM_MIGRATED);
 	MLX5_SET(qpc, qpc, pd, ndev->mvdev.res.pdn);
 	MLX5_SET(qpc, qpc, mtu, MLX5_QPC_MTU_256_BYTES);
-	अगर (!vqp->fw)
+	if (!vqp->fw)
 		MLX5_SET64(qpc, qpc, dbr_addr, vqp->db.dma);
 	MLX5_SET(create_qp_in, in, opcode, MLX5_CMD_OP_CREATE_QP);
-	err = mlx5_cmd_exec(mdev, in, inlen, out, माप(out));
-	kमुक्त(in);
-	अगर (err)
-		जाओ err_kzalloc;
+	err = mlx5_cmd_exec(mdev, in, inlen, out, sizeof(out));
+	kfree(in);
+	if (err)
+		goto err_kzalloc;
 
 	vqp->mqp.uid = ndev->mvdev.res.uid;
 	vqp->mqp.qpn = MLX5_GET(create_qp_out, out, qpn);
 
-	अगर (!vqp->fw)
+	if (!vqp->fw)
 		rx_post(vqp, mvq->num_ent);
 
-	वापस 0;
+	return 0;
 
 err_kzalloc:
-	अगर (!vqp->fw)
-		mlx5_db_मुक्त(ndev->mvdev.mdev, &vqp->db);
+	if (!vqp->fw)
+		mlx5_db_free(ndev->mvdev.mdev, &vqp->db);
 err_db:
-	अगर (!vqp->fw)
-		rq_buf_मुक्त(ndev, vqp);
+	if (!vqp->fw)
+		rq_buf_free(ndev, vqp);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम qp_destroy(काष्ठा mlx5_vdpa_net *ndev, काष्ठा mlx5_vdpa_qp *vqp)
-अणु
-	u32 in[MLX5_ST_SZ_DW(destroy_qp_in)] = अणुपूर्ण;
+static void qp_destroy(struct mlx5_vdpa_net *ndev, struct mlx5_vdpa_qp *vqp)
+{
+	u32 in[MLX5_ST_SZ_DW(destroy_qp_in)] = {};
 
 	MLX5_SET(destroy_qp_in, in, opcode, MLX5_CMD_OP_DESTROY_QP);
 	MLX5_SET(destroy_qp_in, in, qpn, vqp->mqp.qpn);
 	MLX5_SET(destroy_qp_in, in, uid, ndev->mvdev.res.uid);
-	अगर (mlx5_cmd_exec_in(ndev->mvdev.mdev, destroy_qp, in))
+	if (mlx5_cmd_exec_in(ndev->mvdev.mdev, destroy_qp, in))
 		mlx5_vdpa_warn(&ndev->mvdev, "destroy qp 0x%x\n", vqp->mqp.qpn);
-	अगर (!vqp->fw) अणु
-		mlx5_db_मुक्त(ndev->mvdev.mdev, &vqp->db);
-		rq_buf_मुक्त(ndev, vqp);
-	पूर्ण
-पूर्ण
+	if (!vqp->fw) {
+		mlx5_db_free(ndev->mvdev.mdev, &vqp->db);
+		rq_buf_free(ndev, vqp);
+	}
+}
 
-अटल व्योम *next_cqe_sw(काष्ठा mlx5_vdpa_cq *cq)
-अणु
-	वापस get_sw_cqe(cq, cq->mcq.cons_index);
-पूर्ण
+static void *next_cqe_sw(struct mlx5_vdpa_cq *cq)
+{
+	return get_sw_cqe(cq, cq->mcq.cons_index);
+}
 
-अटल पूर्णांक mlx5_vdpa_poll_one(काष्ठा mlx5_vdpa_cq *vcq)
-अणु
-	काष्ठा mlx5_cqe64 *cqe64;
+static int mlx5_vdpa_poll_one(struct mlx5_vdpa_cq *vcq)
+{
+	struct mlx5_cqe64 *cqe64;
 
 	cqe64 = next_cqe_sw(vcq);
-	अगर (!cqe64)
-		वापस -EAGAIN;
+	if (!cqe64)
+		return -EAGAIN;
 
 	vcq->mcq.cons_index++;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम mlx5_vdpa_handle_completions(काष्ठा mlx5_vdpa_virtqueue *mvq, पूर्णांक num)
-अणु
+static void mlx5_vdpa_handle_completions(struct mlx5_vdpa_virtqueue *mvq, int num)
+{
 	mlx5_cq_set_ci(&mvq->cq.mcq);
 
-	/* make sure CQ cosumer update is visible to the hardware beक्रमe updating
-	 * RX करोorbell record.
+	/* make sure CQ cosumer update is visible to the hardware before updating
+	 * RX doorbell record.
 	 */
 	dma_wmb();
 	rx_post(&mvq->vqqp, num);
-	अगर (mvq->event_cb.callback)
-		mvq->event_cb.callback(mvq->event_cb.निजी);
-पूर्ण
+	if (mvq->event_cb.callback)
+		mvq->event_cb.callback(mvq->event_cb.private);
+}
 
-अटल व्योम mlx5_vdpa_cq_comp(काष्ठा mlx5_core_cq *mcq, काष्ठा mlx5_eqe *eqe)
-अणु
-	काष्ठा mlx5_vdpa_virtqueue *mvq = container_of(mcq, काष्ठा mlx5_vdpa_virtqueue, cq.mcq);
-	काष्ठा mlx5_vdpa_net *ndev = mvq->ndev;
-	व्योम __iomem *uar_page = ndev->mvdev.res.uar->map;
-	पूर्णांक num = 0;
+static void mlx5_vdpa_cq_comp(struct mlx5_core_cq *mcq, struct mlx5_eqe *eqe)
+{
+	struct mlx5_vdpa_virtqueue *mvq = container_of(mcq, struct mlx5_vdpa_virtqueue, cq.mcq);
+	struct mlx5_vdpa_net *ndev = mvq->ndev;
+	void __iomem *uar_page = ndev->mvdev.res.uar->map;
+	int num = 0;
 
-	जबतक (!mlx5_vdpa_poll_one(&mvq->cq)) अणु
+	while (!mlx5_vdpa_poll_one(&mvq->cq)) {
 		num++;
-		अगर (num > mvq->num_ent / 2) अणु
-			/* If completions keep coming जबतक we poll, we want to
+		if (num > mvq->num_ent / 2) {
+			/* If completions keep coming while we poll, we want to
 			 * let the hardware know that we consumed them by
-			 * updating the करोorbell record.  We also let vdpa core
+			 * updating the doorbell record.  We also let vdpa core
 			 * know about this so it passes it on the virtio driver
 			 * on the guest.
 			 */
 			mlx5_vdpa_handle_completions(mvq, num);
 			num = 0;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (num)
+	if (num)
 		mlx5_vdpa_handle_completions(mvq, num);
 
 	mlx5_cq_arm(&mvq->cq.mcq, MLX5_CQ_DB_REQ_NOT, uar_page, mvq->cq.mcq.cons_index);
-पूर्ण
+}
 
-अटल पूर्णांक cq_create(काष्ठा mlx5_vdpa_net *ndev, u16 idx, u32 num_ent)
-अणु
-	काष्ठा mlx5_vdpa_virtqueue *mvq = &ndev->vqs[idx];
-	काष्ठा mlx5_core_dev *mdev = ndev->mvdev.mdev;
-	व्योम __iomem *uar_page = ndev->mvdev.res.uar->map;
+static int cq_create(struct mlx5_vdpa_net *ndev, u16 idx, u32 num_ent)
+{
+	struct mlx5_vdpa_virtqueue *mvq = &ndev->vqs[idx];
+	struct mlx5_core_dev *mdev = ndev->mvdev.mdev;
+	void __iomem *uar_page = ndev->mvdev.res.uar->map;
 	u32 out[MLX5_ST_SZ_DW(create_cq_out)];
-	काष्ठा mlx5_vdpa_cq *vcq = &mvq->cq;
-	अचिन्हित पूर्णांक irqn;
+	struct mlx5_vdpa_cq *vcq = &mvq->cq;
+	unsigned int irqn;
 	__be64 *pas;
-	पूर्णांक inlen;
-	व्योम *cqc;
-	व्योम *in;
-	पूर्णांक err;
-	पूर्णांक eqn;
+	int inlen;
+	void *cqc;
+	void *in;
+	int err;
+	int eqn;
 
 	err = mlx5_db_alloc(mdev, &vcq->db);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	vcq->mcq.set_ci_db = vcq->db.db;
 	vcq->mcq.arm_db = vcq->db.db + 1;
 	vcq->mcq.cqe_sz = 64;
 
 	err = cq_frag_buf_alloc(ndev, &vcq->buf, num_ent);
-	अगर (err)
-		जाओ err_db;
+	if (err)
+		goto err_db;
 
 	cq_frag_buf_init(vcq, &vcq->buf);
 
 	inlen = MLX5_ST_SZ_BYTES(create_cq_in) +
 		MLX5_FLD_SZ_BYTES(create_cq_in, pas[0]) * vcq->buf.frag_buf.npages;
 	in = kzalloc(inlen, GFP_KERNEL);
-	अगर (!in) अणु
+	if (!in) {
 		err = -ENOMEM;
-		जाओ err_vzalloc;
-	पूर्ण
+		goto err_vzalloc;
+	}
 
 	MLX5_SET(create_cq_in, in, uid, ndev->mvdev.res.uid);
 	pas = (__be64 *)MLX5_ADDR_OF(create_cq_in, in, pas);
 	mlx5_fill_page_frag_array(&vcq->buf.frag_buf, pas);
 
 	cqc = MLX5_ADDR_OF(create_cq_in, in, cq_context);
-	MLX5_SET(cqc, cqc, log_page_size, vcq->buf.frag_buf.page_shअगरt - MLX5_ADAPTER_PAGE_SHIFT);
+	MLX5_SET(cqc, cqc, log_page_size, vcq->buf.frag_buf.page_shift - MLX5_ADAPTER_PAGE_SHIFT);
 
-	/* Use vector 0 by शेष. Consider adding code to choose least used
+	/* Use vector 0 by default. Consider adding code to choose least used
 	 * vector.
 	 */
 	err = mlx5_vector2eqn(mdev, 0, &eqn, &irqn);
-	अगर (err)
-		जाओ err_vec;
+	if (err)
+		goto err_vec;
 
 	cqc = MLX5_ADDR_OF(create_cq_in, in, cq_context);
 	MLX5_SET(cqc, cqc, log_cq_size, ilog2(num_ent));
@@ -577,228 +576,228 @@ err_db:
 	MLX5_SET(cqc, cqc, c_eqn, eqn);
 	MLX5_SET64(cqc, cqc, dbr_addr, vcq->db.dma);
 
-	err = mlx5_core_create_cq(mdev, &vcq->mcq, in, inlen, out, माप(out));
-	अगर (err)
-		जाओ err_vec;
+	err = mlx5_core_create_cq(mdev, &vcq->mcq, in, inlen, out, sizeof(out));
+	if (err)
+		goto err_vec;
 
 	vcq->mcq.comp = mlx5_vdpa_cq_comp;
 	vcq->cqe = num_ent;
 	vcq->mcq.set_ci_db = vcq->db.db;
 	vcq->mcq.arm_db = vcq->db.db + 1;
 	mlx5_cq_arm(&mvq->cq.mcq, MLX5_CQ_DB_REQ_NOT, uar_page, mvq->cq.mcq.cons_index);
-	kमुक्त(in);
-	वापस 0;
+	kfree(in);
+	return 0;
 
 err_vec:
-	kमुक्त(in);
+	kfree(in);
 err_vzalloc:
-	cq_frag_buf_मुक्त(ndev, &vcq->buf);
+	cq_frag_buf_free(ndev, &vcq->buf);
 err_db:
-	mlx5_db_मुक्त(ndev->mvdev.mdev, &vcq->db);
-	वापस err;
-पूर्ण
+	mlx5_db_free(ndev->mvdev.mdev, &vcq->db);
+	return err;
+}
 
-अटल व्योम cq_destroy(काष्ठा mlx5_vdpa_net *ndev, u16 idx)
-अणु
-	काष्ठा mlx5_vdpa_virtqueue *mvq = &ndev->vqs[idx];
-	काष्ठा mlx5_core_dev *mdev = ndev->mvdev.mdev;
-	काष्ठा mlx5_vdpa_cq *vcq = &mvq->cq;
+static void cq_destroy(struct mlx5_vdpa_net *ndev, u16 idx)
+{
+	struct mlx5_vdpa_virtqueue *mvq = &ndev->vqs[idx];
+	struct mlx5_core_dev *mdev = ndev->mvdev.mdev;
+	struct mlx5_vdpa_cq *vcq = &mvq->cq;
 
-	अगर (mlx5_core_destroy_cq(mdev, &vcq->mcq)) अणु
+	if (mlx5_core_destroy_cq(mdev, &vcq->mcq)) {
 		mlx5_vdpa_warn(&ndev->mvdev, "destroy CQ 0x%x\n", vcq->mcq.cqn);
-		वापस;
-	पूर्ण
-	cq_frag_buf_मुक्त(ndev, &vcq->buf);
-	mlx5_db_मुक्त(ndev->mvdev.mdev, &vcq->db);
-पूर्ण
+		return;
+	}
+	cq_frag_buf_free(ndev, &vcq->buf);
+	mlx5_db_free(ndev->mvdev.mdev, &vcq->db);
+}
 
-अटल पूर्णांक umem_size(काष्ठा mlx5_vdpa_net *ndev, काष्ठा mlx5_vdpa_virtqueue *mvq, पूर्णांक num,
-		     काष्ठा mlx5_vdpa_umem **umemp)
-अणु
-	काष्ठा mlx5_core_dev *mdev = ndev->mvdev.mdev;
-	पूर्णांक p_a;
-	पूर्णांक p_b;
+static int umem_size(struct mlx5_vdpa_net *ndev, struct mlx5_vdpa_virtqueue *mvq, int num,
+		     struct mlx5_vdpa_umem **umemp)
+{
+	struct mlx5_core_dev *mdev = ndev->mvdev.mdev;
+	int p_a;
+	int p_b;
 
-	चयन (num) अणु
-	हाल 1:
+	switch (num) {
+	case 1:
 		p_a = MLX5_CAP_DEV_VDPA_EMULATION(mdev, umem_1_buffer_param_a);
 		p_b = MLX5_CAP_DEV_VDPA_EMULATION(mdev, umem_1_buffer_param_b);
 		*umemp = &mvq->umem1;
-		अवरोध;
-	हाल 2:
+		break;
+	case 2:
 		p_a = MLX5_CAP_DEV_VDPA_EMULATION(mdev, umem_2_buffer_param_a);
 		p_b = MLX5_CAP_DEV_VDPA_EMULATION(mdev, umem_2_buffer_param_b);
 		*umemp = &mvq->umem2;
-		अवरोध;
-	हाल 3:
+		break;
+	case 3:
 		p_a = MLX5_CAP_DEV_VDPA_EMULATION(mdev, umem_3_buffer_param_a);
 		p_b = MLX5_CAP_DEV_VDPA_EMULATION(mdev, umem_3_buffer_param_b);
 		*umemp = &mvq->umem3;
-		अवरोध;
-	पूर्ण
-	वापस p_a * mvq->num_ent + p_b;
-पूर्ण
+		break;
+	}
+	return p_a * mvq->num_ent + p_b;
+}
 
-अटल व्योम umem_frag_buf_मुक्त(काष्ठा mlx5_vdpa_net *ndev, काष्ठा mlx5_vdpa_umem *umem)
-अणु
-	mlx5_frag_buf_मुक्त(ndev->mvdev.mdev, &umem->frag_buf);
-पूर्ण
+static void umem_frag_buf_free(struct mlx5_vdpa_net *ndev, struct mlx5_vdpa_umem *umem)
+{
+	mlx5_frag_buf_free(ndev->mvdev.mdev, &umem->frag_buf);
+}
 
-अटल पूर्णांक create_umem(काष्ठा mlx5_vdpa_net *ndev, काष्ठा mlx5_vdpa_virtqueue *mvq, पूर्णांक num)
-अणु
-	पूर्णांक inlen;
-	u32 out[MLX5_ST_SZ_DW(create_umem_out)] = अणुपूर्ण;
-	व्योम *um;
-	व्योम *in;
-	पूर्णांक err;
+static int create_umem(struct mlx5_vdpa_net *ndev, struct mlx5_vdpa_virtqueue *mvq, int num)
+{
+	int inlen;
+	u32 out[MLX5_ST_SZ_DW(create_umem_out)] = {};
+	void *um;
+	void *in;
+	int err;
 	__be64 *pas;
-	पूर्णांक size;
-	काष्ठा mlx5_vdpa_umem *umem;
+	int size;
+	struct mlx5_vdpa_umem *umem;
 
 	size = umem_size(ndev, mvq, num, &umem);
-	अगर (size < 0)
-		वापस size;
+	if (size < 0)
+		return size;
 
 	umem->size = size;
 	err = umem_frag_buf_alloc(ndev, umem, size);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	inlen = MLX5_ST_SZ_BYTES(create_umem_in) + MLX5_ST_SZ_BYTES(mtt) * umem->frag_buf.npages;
 
 	in = kzalloc(inlen, GFP_KERNEL);
-	अगर (!in) अणु
+	if (!in) {
 		err = -ENOMEM;
-		जाओ err_in;
-	पूर्ण
+		goto err_in;
+	}
 
 	MLX5_SET(create_umem_in, in, opcode, MLX5_CMD_OP_CREATE_UMEM);
 	MLX5_SET(create_umem_in, in, uid, ndev->mvdev.res.uid);
 	um = MLX5_ADDR_OF(create_umem_in, in, umem);
-	MLX5_SET(umem, um, log_page_size, umem->frag_buf.page_shअगरt - MLX5_ADAPTER_PAGE_SHIFT);
+	MLX5_SET(umem, um, log_page_size, umem->frag_buf.page_shift - MLX5_ADAPTER_PAGE_SHIFT);
 	MLX5_SET64(umem, um, num_of_mtt, umem->frag_buf.npages);
 
 	pas = (__be64 *)MLX5_ADDR_OF(umem, um, mtt[0]);
 	mlx5_fill_page_frag_array_perm(&umem->frag_buf, pas, MLX5_MTT_PERM_RW);
 
-	err = mlx5_cmd_exec(ndev->mvdev.mdev, in, inlen, out, माप(out));
-	अगर (err) अणु
+	err = mlx5_cmd_exec(ndev->mvdev.mdev, in, inlen, out, sizeof(out));
+	if (err) {
 		mlx5_vdpa_warn(&ndev->mvdev, "create umem(%d)\n", err);
-		जाओ err_cmd;
-	पूर्ण
+		goto err_cmd;
+	}
 
-	kमुक्त(in);
+	kfree(in);
 	umem->id = MLX5_GET(create_umem_out, out, umem_id);
 
-	वापस 0;
+	return 0;
 
 err_cmd:
-	kमुक्त(in);
+	kfree(in);
 err_in:
-	umem_frag_buf_मुक्त(ndev, umem);
-	वापस err;
-पूर्ण
+	umem_frag_buf_free(ndev, umem);
+	return err;
+}
 
-अटल व्योम umem_destroy(काष्ठा mlx5_vdpa_net *ndev, काष्ठा mlx5_vdpa_virtqueue *mvq, पूर्णांक num)
-अणु
-	u32 in[MLX5_ST_SZ_DW(destroy_umem_in)] = अणुपूर्ण;
-	u32 out[MLX5_ST_SZ_DW(destroy_umem_out)] = अणुपूर्ण;
-	काष्ठा mlx5_vdpa_umem *umem;
+static void umem_destroy(struct mlx5_vdpa_net *ndev, struct mlx5_vdpa_virtqueue *mvq, int num)
+{
+	u32 in[MLX5_ST_SZ_DW(destroy_umem_in)] = {};
+	u32 out[MLX5_ST_SZ_DW(destroy_umem_out)] = {};
+	struct mlx5_vdpa_umem *umem;
 
-	चयन (num) अणु
-	हाल 1:
+	switch (num) {
+	case 1:
 		umem = &mvq->umem1;
-		अवरोध;
-	हाल 2:
+		break;
+	case 2:
 		umem = &mvq->umem2;
-		अवरोध;
-	हाल 3:
+		break;
+	case 3:
 		umem = &mvq->umem3;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	MLX5_SET(destroy_umem_in, in, opcode, MLX5_CMD_OP_DESTROY_UMEM);
 	MLX5_SET(destroy_umem_in, in, umem_id, umem->id);
-	अगर (mlx5_cmd_exec(ndev->mvdev.mdev, in, माप(in), out, माप(out)))
-		वापस;
+	if (mlx5_cmd_exec(ndev->mvdev.mdev, in, sizeof(in), out, sizeof(out)))
+		return;
 
-	umem_frag_buf_मुक्त(ndev, umem);
-पूर्ण
+	umem_frag_buf_free(ndev, umem);
+}
 
-अटल पूर्णांक umems_create(काष्ठा mlx5_vdpa_net *ndev, काष्ठा mlx5_vdpa_virtqueue *mvq)
-अणु
-	पूर्णांक num;
-	पूर्णांक err;
+static int umems_create(struct mlx5_vdpa_net *ndev, struct mlx5_vdpa_virtqueue *mvq)
+{
+	int num;
+	int err;
 
-	क्रम (num = 1; num <= 3; num++) अणु
+	for (num = 1; num <= 3; num++) {
 		err = create_umem(ndev, mvq, num);
-		अगर (err)
-			जाओ err_umem;
-	पूर्ण
-	वापस 0;
+		if (err)
+			goto err_umem;
+	}
+	return 0;
 
 err_umem:
-	क्रम (num--; num > 0; num--)
+	for (num--; num > 0; num--)
 		umem_destroy(ndev, mvq, num);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम umems_destroy(काष्ठा mlx5_vdpa_net *ndev, काष्ठा mlx5_vdpa_virtqueue *mvq)
-अणु
-	पूर्णांक num;
+static void umems_destroy(struct mlx5_vdpa_net *ndev, struct mlx5_vdpa_virtqueue *mvq)
+{
+	int num;
 
-	क्रम (num = 3; num > 0; num--)
+	for (num = 3; num > 0; num--)
 		umem_destroy(ndev, mvq, num);
-पूर्ण
+}
 
-अटल पूर्णांक get_queue_type(काष्ठा mlx5_vdpa_net *ndev)
-अणु
+static int get_queue_type(struct mlx5_vdpa_net *ndev)
+{
 	u32 type_mask;
 
 	type_mask = MLX5_CAP_DEV_VDPA_EMULATION(ndev->mvdev.mdev, virtio_queue_type);
 
 	/* prefer split queue */
-	अगर (type_mask & MLX5_VIRTIO_EMULATION_CAP_VIRTIO_QUEUE_TYPE_PACKED)
-		वापस MLX5_VIRTIO_EMULATION_VIRTIO_QUEUE_TYPE_PACKED;
+	if (type_mask & MLX5_VIRTIO_EMULATION_CAP_VIRTIO_QUEUE_TYPE_PACKED)
+		return MLX5_VIRTIO_EMULATION_VIRTIO_QUEUE_TYPE_PACKED;
 
 	WARN_ON(!(type_mask & MLX5_VIRTIO_EMULATION_CAP_VIRTIO_QUEUE_TYPE_SPLIT));
 
-	वापस MLX5_VIRTIO_EMULATION_VIRTIO_QUEUE_TYPE_SPLIT;
-पूर्ण
+	return MLX5_VIRTIO_EMULATION_VIRTIO_QUEUE_TYPE_SPLIT;
+}
 
-अटल bool vq_is_tx(u16 idx)
-अणु
-	वापस idx % 2;
-पूर्ण
+static bool vq_is_tx(u16 idx)
+{
+	return idx % 2;
+}
 
-अटल u16 get_features_12_3(u64 features)
-अणु
-	वापस (!!(features & BIT_ULL(VIRTIO_NET_F_HOST_TSO4)) << 9) |
+static u16 get_features_12_3(u64 features)
+{
+	return (!!(features & BIT_ULL(VIRTIO_NET_F_HOST_TSO4)) << 9) |
 	       (!!(features & BIT_ULL(VIRTIO_NET_F_HOST_TSO6)) << 8) |
 	       (!!(features & BIT_ULL(VIRTIO_NET_F_CSUM)) << 7) |
 	       (!!(features & BIT_ULL(VIRTIO_NET_F_GUEST_CSUM)) << 6);
-पूर्ण
+}
 
-अटल पूर्णांक create_virtqueue(काष्ठा mlx5_vdpa_net *ndev, काष्ठा mlx5_vdpa_virtqueue *mvq)
-अणु
-	पूर्णांक inlen = MLX5_ST_SZ_BYTES(create_virtio_net_q_in);
-	u32 out[MLX5_ST_SZ_DW(create_virtio_net_q_out)] = अणुपूर्ण;
-	व्योम *obj_context;
-	व्योम *cmd_hdr;
-	व्योम *vq_ctx;
-	व्योम *in;
-	पूर्णांक err;
+static int create_virtqueue(struct mlx5_vdpa_net *ndev, struct mlx5_vdpa_virtqueue *mvq)
+{
+	int inlen = MLX5_ST_SZ_BYTES(create_virtio_net_q_in);
+	u32 out[MLX5_ST_SZ_DW(create_virtio_net_q_out)] = {};
+	void *obj_context;
+	void *cmd_hdr;
+	void *vq_ctx;
+	void *in;
+	int err;
 
 	err = umems_create(ndev, mvq);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	in = kzalloc(inlen, GFP_KERNEL);
-	अगर (!in) अणु
+	if (!in) {
 		err = -ENOMEM;
-		जाओ err_alloc;
-	पूर्ण
+		goto err_alloc;
+	}
 
 	cmd_hdr = MLX5_ADDR_OF(create_virtio_net_q_in, in, general_obj_in_cmd_hdr);
 
@@ -814,7 +813,7 @@ err_umem:
 	vq_ctx = MLX5_ADDR_OF(virtio_net_q_object, obj_context, virtio_q_context);
 	MLX5_SET(virtio_q, vq_ctx, virtio_q_type, get_queue_type(ndev));
 
-	अगर (vq_is_tx(mvq->index))
+	if (vq_is_tx(mvq->index))
 		MLX5_SET(virtio_net_q_object, obj_context, tisn_or_qpn, ndev->res.tisn);
 
 	MLX5_SET(virtio_q, vq_ctx, event_mode, MLX5_VIRTIO_Q_EVENT_MODE_QP_MODE);
@@ -834,29 +833,29 @@ err_umem:
 	MLX5_SET(virtio_q, vq_ctx, umem_3_id, mvq->umem3.id);
 	MLX5_SET(virtio_q, vq_ctx, umem_3_size, mvq->umem1.size);
 	MLX5_SET(virtio_q, vq_ctx, pd, ndev->mvdev.res.pdn);
-	अगर (MLX5_CAP_DEV_VDPA_EMULATION(ndev->mvdev.mdev, eth_frame_offload_type))
+	if (MLX5_CAP_DEV_VDPA_EMULATION(ndev->mvdev.mdev, eth_frame_offload_type))
 		MLX5_SET(virtio_q, vq_ctx, virtio_version_1_0, 1);
 
-	err = mlx5_cmd_exec(ndev->mvdev.mdev, in, inlen, out, माप(out));
-	अगर (err)
-		जाओ err_cmd;
+	err = mlx5_cmd_exec(ndev->mvdev.mdev, in, inlen, out, sizeof(out));
+	if (err)
+		goto err_cmd;
 
-	kमुक्त(in);
+	kfree(in);
 	mvq->virtq_id = MLX5_GET(general_obj_out_cmd_hdr, out, obj_id);
 
-	वापस 0;
+	return 0;
 
 err_cmd:
-	kमुक्त(in);
+	kfree(in);
 err_alloc:
 	umems_destroy(ndev, mvq);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम destroy_virtqueue(काष्ठा mlx5_vdpa_net *ndev, काष्ठा mlx5_vdpa_virtqueue *mvq)
-अणु
-	u32 in[MLX5_ST_SZ_DW(destroy_virtio_net_q_in)] = अणुपूर्ण;
-	u32 out[MLX5_ST_SZ_DW(destroy_virtio_net_q_out)] = अणुपूर्ण;
+static void destroy_virtqueue(struct mlx5_vdpa_net *ndev, struct mlx5_vdpa_virtqueue *mvq)
+{
+	u32 in[MLX5_ST_SZ_DW(destroy_virtio_net_q_in)] = {};
+	u32 out[MLX5_ST_SZ_DW(destroy_virtio_net_q_out)] = {};
 
 	MLX5_SET(destroy_virtio_net_q_in, in, general_obj_out_cmd_hdr.opcode,
 		 MLX5_CMD_OP_DESTROY_GENERAL_OBJECT);
@@ -864,49 +863,49 @@ err_alloc:
 	MLX5_SET(destroy_virtio_net_q_in, in, general_obj_out_cmd_hdr.uid, ndev->mvdev.res.uid);
 	MLX5_SET(destroy_virtio_net_q_in, in, general_obj_out_cmd_hdr.obj_type,
 		 MLX5_OBJ_TYPE_VIRTIO_NET_Q);
-	अगर (mlx5_cmd_exec(ndev->mvdev.mdev, in, माप(in), out, माप(out))) अणु
+	if (mlx5_cmd_exec(ndev->mvdev.mdev, in, sizeof(in), out, sizeof(out))) {
 		mlx5_vdpa_warn(&ndev->mvdev, "destroy virtqueue 0x%x\n", mvq->virtq_id);
-		वापस;
-	पूर्ण
+		return;
+	}
 	umems_destroy(ndev, mvq);
-पूर्ण
+}
 
-अटल u32 get_rqpn(काष्ठा mlx5_vdpa_virtqueue *mvq, bool fw)
-अणु
-	वापस fw ? mvq->vqqp.mqp.qpn : mvq->fwqp.mqp.qpn;
-पूर्ण
+static u32 get_rqpn(struct mlx5_vdpa_virtqueue *mvq, bool fw)
+{
+	return fw ? mvq->vqqp.mqp.qpn : mvq->fwqp.mqp.qpn;
+}
 
-अटल u32 get_qpn(काष्ठा mlx5_vdpa_virtqueue *mvq, bool fw)
-अणु
-	वापस fw ? mvq->fwqp.mqp.qpn : mvq->vqqp.mqp.qpn;
-पूर्ण
+static u32 get_qpn(struct mlx5_vdpa_virtqueue *mvq, bool fw)
+{
+	return fw ? mvq->fwqp.mqp.qpn : mvq->vqqp.mqp.qpn;
+}
 
-अटल व्योम alloc_inout(काष्ठा mlx5_vdpa_net *ndev, पूर्णांक cmd, व्योम **in, पूर्णांक *inlen, व्योम **out,
-			पूर्णांक *outlen, u32 qpn, u32 rqpn)
-अणु
-	व्योम *qpc;
-	व्योम *pp;
+static void alloc_inout(struct mlx5_vdpa_net *ndev, int cmd, void **in, int *inlen, void **out,
+			int *outlen, u32 qpn, u32 rqpn)
+{
+	void *qpc;
+	void *pp;
 
-	चयन (cmd) अणु
-	हाल MLX5_CMD_OP_2RST_QP:
+	switch (cmd) {
+	case MLX5_CMD_OP_2RST_QP:
 		*inlen = MLX5_ST_SZ_BYTES(qp_2rst_in);
 		*outlen = MLX5_ST_SZ_BYTES(qp_2rst_out);
 		*in = kzalloc(*inlen, GFP_KERNEL);
 		*out = kzalloc(*outlen, GFP_KERNEL);
-		अगर (!*in || !*out)
-			जाओ outerr;
+		if (!*in || !*out)
+			goto outerr;
 
 		MLX5_SET(qp_2rst_in, *in, opcode, cmd);
 		MLX5_SET(qp_2rst_in, *in, uid, ndev->mvdev.res.uid);
 		MLX5_SET(qp_2rst_in, *in, qpn, qpn);
-		अवरोध;
-	हाल MLX5_CMD_OP_RST2INIT_QP:
+		break;
+	case MLX5_CMD_OP_RST2INIT_QP:
 		*inlen = MLX5_ST_SZ_BYTES(rst2init_qp_in);
 		*outlen = MLX5_ST_SZ_BYTES(rst2init_qp_out);
 		*in = kzalloc(*inlen, GFP_KERNEL);
 		*out = kzalloc(MLX5_ST_SZ_BYTES(rst2init_qp_out), GFP_KERNEL);
-		अगर (!*in || !*out)
-			जाओ outerr;
+		if (!*in || !*out)
+			goto outerr;
 
 		MLX5_SET(rst2init_qp_in, *in, opcode, cmd);
 		MLX5_SET(rst2init_qp_in, *in, uid, ndev->mvdev.res.uid);
@@ -916,14 +915,14 @@ err_alloc:
 		MLX5_SET(qpc, qpc, rwe, 1);
 		pp = MLX5_ADDR_OF(qpc, qpc, primary_address_path);
 		MLX5_SET(ads, pp, vhca_port_num, 1);
-		अवरोध;
-	हाल MLX5_CMD_OP_INIT2RTR_QP:
+		break;
+	case MLX5_CMD_OP_INIT2RTR_QP:
 		*inlen = MLX5_ST_SZ_BYTES(init2rtr_qp_in);
 		*outlen = MLX5_ST_SZ_BYTES(init2rtr_qp_out);
 		*in = kzalloc(*inlen, GFP_KERNEL);
 		*out = kzalloc(MLX5_ST_SZ_BYTES(init2rtr_qp_out), GFP_KERNEL);
-		अगर (!*in || !*out)
-			जाओ outerr;
+		if (!*in || !*out)
+			goto outerr;
 
 		MLX5_SET(init2rtr_qp_in, *in, opcode, cmd);
 		MLX5_SET(init2rtr_qp_in, *in, uid, ndev->mvdev.res.uid);
@@ -934,115 +933,115 @@ err_alloc:
 		MLX5_SET(qpc, qpc, remote_qpn, rqpn);
 		pp = MLX5_ADDR_OF(qpc, qpc, primary_address_path);
 		MLX5_SET(ads, pp, fl, 1);
-		अवरोध;
-	हाल MLX5_CMD_OP_RTR2RTS_QP:
+		break;
+	case MLX5_CMD_OP_RTR2RTS_QP:
 		*inlen = MLX5_ST_SZ_BYTES(rtr2rts_qp_in);
 		*outlen = MLX5_ST_SZ_BYTES(rtr2rts_qp_out);
 		*in = kzalloc(*inlen, GFP_KERNEL);
 		*out = kzalloc(MLX5_ST_SZ_BYTES(rtr2rts_qp_out), GFP_KERNEL);
-		अगर (!*in || !*out)
-			जाओ outerr;
+		if (!*in || !*out)
+			goto outerr;
 
 		MLX5_SET(rtr2rts_qp_in, *in, opcode, cmd);
 		MLX5_SET(rtr2rts_qp_in, *in, uid, ndev->mvdev.res.uid);
 		MLX5_SET(rtr2rts_qp_in, *in, qpn, qpn);
 		qpc = MLX5_ADDR_OF(rst2init_qp_in, *in, qpc);
 		pp = MLX5_ADDR_OF(qpc, qpc, primary_address_path);
-		MLX5_SET(ads, pp, ack_समयout, 14);
+		MLX5_SET(ads, pp, ack_timeout, 14);
 		MLX5_SET(qpc, qpc, retry_count, 7);
 		MLX5_SET(qpc, qpc, rnr_retry, 7);
-		अवरोध;
-	शेष:
-		जाओ outerr_nullअगरy;
-	पूर्ण
+		break;
+	default:
+		goto outerr_nullify;
+	}
 
-	वापस;
+	return;
 
 outerr:
-	kमुक्त(*in);
-	kमुक्त(*out);
-outerr_nullअगरy:
-	*in = शून्य;
-	*out = शून्य;
-पूर्ण
+	kfree(*in);
+	kfree(*out);
+outerr_nullify:
+	*in = NULL;
+	*out = NULL;
+}
 
-अटल व्योम मुक्त_inout(व्योम *in, व्योम *out)
-अणु
-	kमुक्त(in);
-	kमुक्त(out);
-पूर्ण
+static void free_inout(void *in, void *out)
+{
+	kfree(in);
+	kfree(out);
+}
 
 /* Two QPs are used by each virtqueue. One is used by the driver and one by
  * firmware. The fw argument indicates whether the subjected QP is the one used
  * by firmware.
  */
-अटल पूर्णांक modअगरy_qp(काष्ठा mlx5_vdpa_net *ndev, काष्ठा mlx5_vdpa_virtqueue *mvq, bool fw, पूर्णांक cmd)
-अणु
-	पूर्णांक outlen;
-	पूर्णांक inlen;
-	व्योम *out;
-	व्योम *in;
-	पूर्णांक err;
+static int modify_qp(struct mlx5_vdpa_net *ndev, struct mlx5_vdpa_virtqueue *mvq, bool fw, int cmd)
+{
+	int outlen;
+	int inlen;
+	void *out;
+	void *in;
+	int err;
 
 	alloc_inout(ndev, cmd, &in, &inlen, &out, &outlen, get_qpn(mvq, fw), get_rqpn(mvq, fw));
-	अगर (!in || !out)
-		वापस -ENOMEM;
+	if (!in || !out)
+		return -ENOMEM;
 
 	err = mlx5_cmd_exec(ndev->mvdev.mdev, in, inlen, out, outlen);
-	मुक्त_inout(in, out);
-	वापस err;
-पूर्ण
+	free_inout(in, out);
+	return err;
+}
 
-अटल पूर्णांक connect_qps(काष्ठा mlx5_vdpa_net *ndev, काष्ठा mlx5_vdpa_virtqueue *mvq)
-अणु
-	पूर्णांक err;
+static int connect_qps(struct mlx5_vdpa_net *ndev, struct mlx5_vdpa_virtqueue *mvq)
+{
+	int err;
 
-	err = modअगरy_qp(ndev, mvq, true, MLX5_CMD_OP_2RST_QP);
-	अगर (err)
-		वापस err;
+	err = modify_qp(ndev, mvq, true, MLX5_CMD_OP_2RST_QP);
+	if (err)
+		return err;
 
-	err = modअगरy_qp(ndev, mvq, false, MLX5_CMD_OP_2RST_QP);
-	अगर (err)
-		वापस err;
+	err = modify_qp(ndev, mvq, false, MLX5_CMD_OP_2RST_QP);
+	if (err)
+		return err;
 
-	err = modअगरy_qp(ndev, mvq, true, MLX5_CMD_OP_RST2INIT_QP);
-	अगर (err)
-		वापस err;
+	err = modify_qp(ndev, mvq, true, MLX5_CMD_OP_RST2INIT_QP);
+	if (err)
+		return err;
 
-	err = modअगरy_qp(ndev, mvq, false, MLX5_CMD_OP_RST2INIT_QP);
-	अगर (err)
-		वापस err;
+	err = modify_qp(ndev, mvq, false, MLX5_CMD_OP_RST2INIT_QP);
+	if (err)
+		return err;
 
-	err = modअगरy_qp(ndev, mvq, true, MLX5_CMD_OP_INIT2RTR_QP);
-	अगर (err)
-		वापस err;
+	err = modify_qp(ndev, mvq, true, MLX5_CMD_OP_INIT2RTR_QP);
+	if (err)
+		return err;
 
-	err = modअगरy_qp(ndev, mvq, false, MLX5_CMD_OP_INIT2RTR_QP);
-	अगर (err)
-		वापस err;
+	err = modify_qp(ndev, mvq, false, MLX5_CMD_OP_INIT2RTR_QP);
+	if (err)
+		return err;
 
-	वापस modअगरy_qp(ndev, mvq, true, MLX5_CMD_OP_RTR2RTS_QP);
-पूर्ण
+	return modify_qp(ndev, mvq, true, MLX5_CMD_OP_RTR2RTS_QP);
+}
 
-काष्ठा mlx5_virtq_attr अणु
+struct mlx5_virtq_attr {
 	u8 state;
 	u16 available_index;
 	u16 used_index;
-पूर्ण;
+};
 
-अटल पूर्णांक query_virtqueue(काष्ठा mlx5_vdpa_net *ndev, काष्ठा mlx5_vdpa_virtqueue *mvq,
-			   काष्ठा mlx5_virtq_attr *attr)
-अणु
-	पूर्णांक outlen = MLX5_ST_SZ_BYTES(query_virtio_net_q_out);
-	u32 in[MLX5_ST_SZ_DW(query_virtio_net_q_in)] = अणुपूर्ण;
-	व्योम *out;
-	व्योम *obj_context;
-	व्योम *cmd_hdr;
-	पूर्णांक err;
+static int query_virtqueue(struct mlx5_vdpa_net *ndev, struct mlx5_vdpa_virtqueue *mvq,
+			   struct mlx5_virtq_attr *attr)
+{
+	int outlen = MLX5_ST_SZ_BYTES(query_virtio_net_q_out);
+	u32 in[MLX5_ST_SZ_DW(query_virtio_net_q_in)] = {};
+	void *out;
+	void *obj_context;
+	void *cmd_hdr;
+	int err;
 
 	out = kzalloc(outlen, GFP_KERNEL);
-	अगर (!out)
-		वापस -ENOMEM;
+	if (!out)
+		return -ENOMEM;
 
 	cmd_hdr = MLX5_ADDR_OF(query_virtio_net_q_in, in, general_obj_in_cmd_hdr);
 
@@ -1050,99 +1049,99 @@ outerr_nullअगरy:
 	MLX5_SET(general_obj_in_cmd_hdr, cmd_hdr, obj_type, MLX5_OBJ_TYPE_VIRTIO_NET_Q);
 	MLX5_SET(general_obj_in_cmd_hdr, cmd_hdr, obj_id, mvq->virtq_id);
 	MLX5_SET(general_obj_in_cmd_hdr, cmd_hdr, uid, ndev->mvdev.res.uid);
-	err = mlx5_cmd_exec(ndev->mvdev.mdev, in, माप(in), out, outlen);
-	अगर (err)
-		जाओ err_cmd;
+	err = mlx5_cmd_exec(ndev->mvdev.mdev, in, sizeof(in), out, outlen);
+	if (err)
+		goto err_cmd;
 
 	obj_context = MLX5_ADDR_OF(query_virtio_net_q_out, out, obj_context);
-	स_रखो(attr, 0, माप(*attr));
+	memset(attr, 0, sizeof(*attr));
 	attr->state = MLX5_GET(virtio_net_q_object, obj_context, state);
 	attr->available_index = MLX5_GET(virtio_net_q_object, obj_context, hw_available_index);
 	attr->used_index = MLX5_GET(virtio_net_q_object, obj_context, hw_used_index);
-	kमुक्त(out);
-	वापस 0;
+	kfree(out);
+	return 0;
 
 err_cmd:
-	kमुक्त(out);
-	वापस err;
-पूर्ण
+	kfree(out);
+	return err;
+}
 
-अटल पूर्णांक modअगरy_virtqueue(काष्ठा mlx5_vdpa_net *ndev, काष्ठा mlx5_vdpa_virtqueue *mvq, पूर्णांक state)
-अणु
-	पूर्णांक inlen = MLX5_ST_SZ_BYTES(modअगरy_virtio_net_q_in);
-	u32 out[MLX5_ST_SZ_DW(modअगरy_virtio_net_q_out)] = अणुपूर्ण;
-	व्योम *obj_context;
-	व्योम *cmd_hdr;
-	व्योम *in;
-	पूर्णांक err;
+static int modify_virtqueue(struct mlx5_vdpa_net *ndev, struct mlx5_vdpa_virtqueue *mvq, int state)
+{
+	int inlen = MLX5_ST_SZ_BYTES(modify_virtio_net_q_in);
+	u32 out[MLX5_ST_SZ_DW(modify_virtio_net_q_out)] = {};
+	void *obj_context;
+	void *cmd_hdr;
+	void *in;
+	int err;
 
 	in = kzalloc(inlen, GFP_KERNEL);
-	अगर (!in)
-		वापस -ENOMEM;
+	if (!in)
+		return -ENOMEM;
 
-	cmd_hdr = MLX5_ADDR_OF(modअगरy_virtio_net_q_in, in, general_obj_in_cmd_hdr);
+	cmd_hdr = MLX5_ADDR_OF(modify_virtio_net_q_in, in, general_obj_in_cmd_hdr);
 
 	MLX5_SET(general_obj_in_cmd_hdr, cmd_hdr, opcode, MLX5_CMD_OP_MODIFY_GENERAL_OBJECT);
 	MLX5_SET(general_obj_in_cmd_hdr, cmd_hdr, obj_type, MLX5_OBJ_TYPE_VIRTIO_NET_Q);
 	MLX5_SET(general_obj_in_cmd_hdr, cmd_hdr, obj_id, mvq->virtq_id);
 	MLX5_SET(general_obj_in_cmd_hdr, cmd_hdr, uid, ndev->mvdev.res.uid);
 
-	obj_context = MLX5_ADDR_OF(modअगरy_virtio_net_q_in, in, obj_context);
-	MLX5_SET64(virtio_net_q_object, obj_context, modअगरy_field_select,
+	obj_context = MLX5_ADDR_OF(modify_virtio_net_q_in, in, obj_context);
+	MLX5_SET64(virtio_net_q_object, obj_context, modify_field_select,
 		   MLX5_VIRTQ_MODIFY_MASK_STATE);
 	MLX5_SET(virtio_net_q_object, obj_context, state, state);
-	err = mlx5_cmd_exec(ndev->mvdev.mdev, in, inlen, out, माप(out));
-	kमुक्त(in);
-	अगर (!err)
+	err = mlx5_cmd_exec(ndev->mvdev.mdev, in, inlen, out, sizeof(out));
+	kfree(in);
+	if (!err)
 		mvq->fw_state = state;
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक setup_vq(काष्ठा mlx5_vdpa_net *ndev, काष्ठा mlx5_vdpa_virtqueue *mvq)
-अणु
+static int setup_vq(struct mlx5_vdpa_net *ndev, struct mlx5_vdpa_virtqueue *mvq)
+{
 	u16 idx = mvq->index;
-	पूर्णांक err;
+	int err;
 
-	अगर (!mvq->num_ent)
-		वापस 0;
+	if (!mvq->num_ent)
+		return 0;
 
-	अगर (mvq->initialized) अणु
+	if (mvq->initialized) {
 		mlx5_vdpa_warn(&ndev->mvdev, "attempt re init\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	err = cq_create(ndev, idx, mvq->num_ent);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	err = qp_create(ndev, mvq, &mvq->fwqp);
-	अगर (err)
-		जाओ err_fwqp;
+	if (err)
+		goto err_fwqp;
 
 	err = qp_create(ndev, mvq, &mvq->vqqp);
-	अगर (err)
-		जाओ err_vqqp;
+	if (err)
+		goto err_vqqp;
 
 	err = connect_qps(ndev, mvq);
-	अगर (err)
-		जाओ err_connect;
+	if (err)
+		goto err_connect;
 
 	err = create_virtqueue(ndev, mvq);
-	अगर (err)
-		जाओ err_connect;
+	if (err)
+		goto err_connect;
 
-	अगर (mvq->पढ़ोy) अणु
-		err = modअगरy_virtqueue(ndev, mvq, MLX5_VIRTIO_NET_Q_OBJECT_STATE_RDY);
-		अगर (err) अणु
+	if (mvq->ready) {
+		err = modify_virtqueue(ndev, mvq, MLX5_VIRTIO_NET_Q_OBJECT_STATE_RDY);
+		if (err) {
 			mlx5_vdpa_warn(&ndev->mvdev, "failed to modify to ready vq idx %d(%d)\n",
 				       idx, err);
-			जाओ err_connect;
-		पूर्ण
-	पूर्ण
+			goto err_connect;
+		}
+	}
 
 	mvq->initialized = true;
-	वापस 0;
+	return 0;
 
 err_connect:
 	qp_destroy(ndev, &mvq->vqqp);
@@ -1150,42 +1149,42 @@ err_vqqp:
 	qp_destroy(ndev, &mvq->fwqp);
 err_fwqp:
 	cq_destroy(ndev, idx);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम suspend_vq(काष्ठा mlx5_vdpa_net *ndev, काष्ठा mlx5_vdpa_virtqueue *mvq)
-अणु
-	काष्ठा mlx5_virtq_attr attr;
+static void suspend_vq(struct mlx5_vdpa_net *ndev, struct mlx5_vdpa_virtqueue *mvq)
+{
+	struct mlx5_virtq_attr attr;
 
-	अगर (!mvq->initialized)
-		वापस;
+	if (!mvq->initialized)
+		return;
 
-	अगर (mvq->fw_state != MLX5_VIRTIO_NET_Q_OBJECT_STATE_RDY)
-		वापस;
+	if (mvq->fw_state != MLX5_VIRTIO_NET_Q_OBJECT_STATE_RDY)
+		return;
 
-	अगर (modअगरy_virtqueue(ndev, mvq, MLX5_VIRTIO_NET_Q_OBJECT_STATE_SUSPEND))
+	if (modify_virtqueue(ndev, mvq, MLX5_VIRTIO_NET_Q_OBJECT_STATE_SUSPEND))
 		mlx5_vdpa_warn(&ndev->mvdev, "modify to suspend failed\n");
 
-	अगर (query_virtqueue(ndev, mvq, &attr)) अणु
+	if (query_virtqueue(ndev, mvq, &attr)) {
 		mlx5_vdpa_warn(&ndev->mvdev, "failed to query virtqueue\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 	mvq->avail_idx = attr.available_index;
 	mvq->used_idx = attr.used_index;
-पूर्ण
+}
 
-अटल व्योम suspend_vqs(काष्ठा mlx5_vdpa_net *ndev)
-अणु
-	पूर्णांक i;
+static void suspend_vqs(struct mlx5_vdpa_net *ndev)
+{
+	int i;
 
-	क्रम (i = 0; i < MLX5_MAX_SUPPORTED_VQS; i++)
+	for (i = 0; i < MLX5_MAX_SUPPORTED_VQS; i++)
 		suspend_vq(ndev, &ndev->vqs[i]);
-पूर्ण
+}
 
-अटल व्योम tearकरोwn_vq(काष्ठा mlx5_vdpa_net *ndev, काष्ठा mlx5_vdpa_virtqueue *mvq)
-अणु
-	अगर (!mvq->initialized)
-		वापस;
+static void teardown_vq(struct mlx5_vdpa_net *ndev, struct mlx5_vdpa_virtqueue *mvq)
+{
+	if (!mvq->initialized)
+		return;
 
 	suspend_vq(ndev, mvq);
 	destroy_virtqueue(ndev, mvq);
@@ -1193,26 +1192,26 @@ err_fwqp:
 	qp_destroy(ndev, &mvq->fwqp);
 	cq_destroy(ndev, mvq->index);
 	mvq->initialized = false;
-पूर्ण
+}
 
-अटल पूर्णांक create_rqt(काष्ठा mlx5_vdpa_net *ndev)
-अणु
-	पूर्णांक log_max_rqt;
+static int create_rqt(struct mlx5_vdpa_net *ndev)
+{
+	int log_max_rqt;
 	__be32 *list;
-	व्योम *rqtc;
-	पूर्णांक inlen;
-	व्योम *in;
-	पूर्णांक i, j;
-	पूर्णांक err;
+	void *rqtc;
+	int inlen;
+	void *in;
+	int i, j;
+	int err;
 
-	log_max_rqt = min_t(पूर्णांक, 1, MLX5_CAP_GEN(ndev->mvdev.mdev, log_max_rqt_size));
-	अगर (log_max_rqt < 1)
-		वापस -EOPNOTSUPP;
+	log_max_rqt = min_t(int, 1, MLX5_CAP_GEN(ndev->mvdev.mdev, log_max_rqt_size));
+	if (log_max_rqt < 1)
+		return -EOPNOTSUPP;
 
 	inlen = MLX5_ST_SZ_BYTES(create_rqt_in) + (1 << log_max_rqt) * MLX5_ST_SZ_BYTES(rq_num);
 	in = kzalloc(inlen, GFP_KERNEL);
-	अगर (!in)
-		वापस -ENOMEM;
+	if (!in)
+		return -ENOMEM;
 
 	MLX5_SET(create_rqt_in, in, uid, ndev->mvdev.res.uid);
 	rqtc = MLX5_ADDR_OF(create_rqt_in, in, rqt_context);
@@ -1221,57 +1220,57 @@ err_fwqp:
 	MLX5_SET(rqtc, rqtc, rqt_max_size, 1 << log_max_rqt);
 	MLX5_SET(rqtc, rqtc, rqt_actual_size, 1);
 	list = MLX5_ADDR_OF(rqtc, rqtc, rq_num[0]);
-	क्रम (i = 0, j = 0; j < ndev->mvdev.max_vqs; j++) अणु
-		अगर (!ndev->vqs[j].initialized)
-			जारी;
+	for (i = 0, j = 0; j < ndev->mvdev.max_vqs; j++) {
+		if (!ndev->vqs[j].initialized)
+			continue;
 
-		अगर (!vq_is_tx(ndev->vqs[j].index)) अणु
+		if (!vq_is_tx(ndev->vqs[j].index)) {
 			list[i] = cpu_to_be32(ndev->vqs[j].virtq_id);
 			i++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	err = mlx5_vdpa_create_rqt(&ndev->mvdev, in, inlen, &ndev->res.rqtn);
-	kमुक्त(in);
-	अगर (err)
-		वापस err;
+	kfree(in);
+	if (err)
+		return err;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम destroy_rqt(काष्ठा mlx5_vdpa_net *ndev)
-अणु
+static void destroy_rqt(struct mlx5_vdpa_net *ndev)
+{
 	mlx5_vdpa_destroy_rqt(&ndev->mvdev, ndev->res.rqtn);
-पूर्ण
+}
 
-अटल पूर्णांक create_tir(काष्ठा mlx5_vdpa_net *ndev)
-अणु
-#घोषणा HASH_IP_L4PORTS                                                                            \
+static int create_tir(struct mlx5_vdpa_net *ndev)
+{
+#define HASH_IP_L4PORTS                                                                            \
 	(MLX5_HASH_FIELD_SEL_SRC_IP | MLX5_HASH_FIELD_SEL_DST_IP | MLX5_HASH_FIELD_SEL_L4_SPORT |  \
 	 MLX5_HASH_FIELD_SEL_L4_DPORT)
-	अटल स्थिर u8 rx_hash_toeplitz_key[] = अणु 0x2c, 0xc6, 0x81, 0xd1, 0x5b, 0xdb, 0xf4, 0xf7,
+	static const u8 rx_hash_toeplitz_key[] = { 0x2c, 0xc6, 0x81, 0xd1, 0x5b, 0xdb, 0xf4, 0xf7,
 						   0xfc, 0xa2, 0x83, 0x19, 0xdb, 0x1a, 0x3e, 0x94,
 						   0x6b, 0x9e, 0x38, 0xd9, 0x2c, 0x9c, 0x03, 0xd1,
 						   0xad, 0x99, 0x44, 0xa7, 0xd9, 0x56, 0x3d, 0x59,
-						   0x06, 0x3c, 0x25, 0xf3, 0xfc, 0x1f, 0xdc, 0x2a पूर्ण;
-	व्योम *rss_key;
-	व्योम *outer;
-	व्योम *tirc;
-	व्योम *in;
-	पूर्णांक err;
+						   0x06, 0x3c, 0x25, 0xf3, 0xfc, 0x1f, 0xdc, 0x2a };
+	void *rss_key;
+	void *outer;
+	void *tirc;
+	void *in;
+	int err;
 
 	in = kzalloc(MLX5_ST_SZ_BYTES(create_tir_in), GFP_KERNEL);
-	अगर (!in)
-		वापस -ENOMEM;
+	if (!in)
+		return -ENOMEM;
 
 	MLX5_SET(create_tir_in, in, uid, ndev->mvdev.res.uid);
 	tirc = MLX5_ADDR_OF(create_tir_in, in, ctx);
-	MLX5_SET(tirc, tirc, disp_type, MLX5_TIRC_DISP_TYPE_INसूचीECT);
+	MLX5_SET(tirc, tirc, disp_type, MLX5_TIRC_DISP_TYPE_INDIRECT);
 
 	MLX5_SET(tirc, tirc, rx_hash_symmetric, 1);
 	MLX5_SET(tirc, tirc, rx_hash_fn, MLX5_RX_HASH_FN_TOEPLITZ);
 	rss_key = MLX5_ADDR_OF(tirc, tirc, rx_hash_toeplitz_key);
-	स_नकल(rss_key, rx_hash_toeplitz_key, माप(rx_hash_toeplitz_key));
+	memcpy(rss_key, rx_hash_toeplitz_key, sizeof(rx_hash_toeplitz_key));
 
 	outer = MLX5_ADDR_OF(tirc, tirc, rx_hash_field_selector_outer);
 	MLX5_SET(rx_hash_field_select, outer, l3_prot_type, MLX5_L3_PROT_TYPE_IPV4);
@@ -1279,624 +1278,624 @@ err_fwqp:
 	MLX5_SET(rx_hash_field_select, outer, selected_fields, HASH_IP_L4PORTS);
 
 	MLX5_SET(tirc, tirc, indirect_table, ndev->res.rqtn);
-	MLX5_SET(tirc, tirc, transport_करोमुख्य, ndev->res.tdn);
+	MLX5_SET(tirc, tirc, transport_domain, ndev->res.tdn);
 
 	err = mlx5_vdpa_create_tir(&ndev->mvdev, in, &ndev->res.tirn);
-	kमुक्त(in);
-	वापस err;
-पूर्ण
+	kfree(in);
+	return err;
+}
 
-अटल व्योम destroy_tir(काष्ठा mlx5_vdpa_net *ndev)
-अणु
+static void destroy_tir(struct mlx5_vdpa_net *ndev)
+{
 	mlx5_vdpa_destroy_tir(&ndev->mvdev, ndev->res.tirn);
-पूर्ण
+}
 
-अटल पूर्णांक add_fwd_to_tir(काष्ठा mlx5_vdpa_net *ndev)
-अणु
-	काष्ठा mlx5_flow_destination dest[2] = अणुपूर्ण;
-	काष्ठा mlx5_flow_table_attr ft_attr = अणुपूर्ण;
-	काष्ठा mlx5_flow_act flow_act = अणुपूर्ण;
-	काष्ठा mlx5_flow_namespace *ns;
-	पूर्णांक err;
+static int add_fwd_to_tir(struct mlx5_vdpa_net *ndev)
+{
+	struct mlx5_flow_destination dest[2] = {};
+	struct mlx5_flow_table_attr ft_attr = {};
+	struct mlx5_flow_act flow_act = {};
+	struct mlx5_flow_namespace *ns;
+	int err;
 
-	/* क्रम now, one entry, match all, क्रमward to tir */
+	/* for now, one entry, match all, forward to tir */
 	ft_attr.max_fte = 1;
-	ft_attr.स्वतःgroup.max_num_groups = 1;
+	ft_attr.autogroup.max_num_groups = 1;
 
 	ns = mlx5_get_flow_namespace(ndev->mvdev.mdev, MLX5_FLOW_NAMESPACE_BYPASS);
-	अगर (!ns) अणु
+	if (!ns) {
 		mlx5_vdpa_warn(&ndev->mvdev, "get flow namespace\n");
-		वापस -EOPNOTSUPP;
-	पूर्ण
+		return -EOPNOTSUPP;
+	}
 
-	ndev->rxft = mlx5_create_स्वतः_grouped_flow_table(ns, &ft_attr);
-	अगर (IS_ERR(ndev->rxft))
-		वापस PTR_ERR(ndev->rxft);
+	ndev->rxft = mlx5_create_auto_grouped_flow_table(ns, &ft_attr);
+	if (IS_ERR(ndev->rxft))
+		return PTR_ERR(ndev->rxft);
 
 	ndev->rx_counter = mlx5_fc_create(ndev->mvdev.mdev, false);
-	अगर (IS_ERR(ndev->rx_counter)) अणु
+	if (IS_ERR(ndev->rx_counter)) {
 		err = PTR_ERR(ndev->rx_counter);
-		जाओ err_fc;
-	पूर्ण
+		goto err_fc;
+	}
 
 	flow_act.action = MLX5_FLOW_CONTEXT_ACTION_FWD_DEST | MLX5_FLOW_CONTEXT_ACTION_COUNT;
 	dest[0].type = MLX5_FLOW_DESTINATION_TYPE_TIR;
 	dest[0].tir_num = ndev->res.tirn;
 	dest[1].type = MLX5_FLOW_DESTINATION_TYPE_COUNTER;
 	dest[1].counter_id = mlx5_fc_id(ndev->rx_counter);
-	ndev->rx_rule = mlx5_add_flow_rules(ndev->rxft, शून्य, &flow_act, dest, 2);
-	अगर (IS_ERR(ndev->rx_rule)) अणु
+	ndev->rx_rule = mlx5_add_flow_rules(ndev->rxft, NULL, &flow_act, dest, 2);
+	if (IS_ERR(ndev->rx_rule)) {
 		err = PTR_ERR(ndev->rx_rule);
-		ndev->rx_rule = शून्य;
-		जाओ err_rule;
-	पूर्ण
+		ndev->rx_rule = NULL;
+		goto err_rule;
+	}
 
-	वापस 0;
+	return 0;
 
 err_rule:
 	mlx5_fc_destroy(ndev->mvdev.mdev, ndev->rx_counter);
 err_fc:
 	mlx5_destroy_flow_table(ndev->rxft);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम हटाओ_fwd_to_tir(काष्ठा mlx5_vdpa_net *ndev)
-अणु
-	अगर (!ndev->rx_rule)
-		वापस;
+static void remove_fwd_to_tir(struct mlx5_vdpa_net *ndev)
+{
+	if (!ndev->rx_rule)
+		return;
 
 	mlx5_del_flow_rules(ndev->rx_rule);
 	mlx5_fc_destroy(ndev->mvdev.mdev, ndev->rx_counter);
 	mlx5_destroy_flow_table(ndev->rxft);
 
-	ndev->rx_rule = शून्य;
-पूर्ण
+	ndev->rx_rule = NULL;
+}
 
-अटल व्योम mlx5_vdpa_kick_vq(काष्ठा vdpa_device *vdev, u16 idx)
-अणु
-	काष्ठा mlx5_vdpa_dev *mvdev = to_mvdev(vdev);
-	काष्ठा mlx5_vdpa_net *ndev = to_mlx5_vdpa_ndev(mvdev);
-	काष्ठा mlx5_vdpa_virtqueue *mvq = &ndev->vqs[idx];
+static void mlx5_vdpa_kick_vq(struct vdpa_device *vdev, u16 idx)
+{
+	struct mlx5_vdpa_dev *mvdev = to_mvdev(vdev);
+	struct mlx5_vdpa_net *ndev = to_mlx5_vdpa_ndev(mvdev);
+	struct mlx5_vdpa_virtqueue *mvq = &ndev->vqs[idx];
 
-	अगर (unlikely(!mvq->पढ़ोy))
-		वापस;
+	if (unlikely(!mvq->ready))
+		return;
 
-	ioग_लिखो16(idx, ndev->mvdev.res.kick_addr);
-पूर्ण
+	iowrite16(idx, ndev->mvdev.res.kick_addr);
+}
 
-अटल पूर्णांक mlx5_vdpa_set_vq_address(काष्ठा vdpa_device *vdev, u16 idx, u64 desc_area,
+static int mlx5_vdpa_set_vq_address(struct vdpa_device *vdev, u16 idx, u64 desc_area,
 				    u64 driver_area, u64 device_area)
-अणु
-	काष्ठा mlx5_vdpa_dev *mvdev = to_mvdev(vdev);
-	काष्ठा mlx5_vdpa_net *ndev = to_mlx5_vdpa_ndev(mvdev);
-	काष्ठा mlx5_vdpa_virtqueue *mvq = &ndev->vqs[idx];
+{
+	struct mlx5_vdpa_dev *mvdev = to_mvdev(vdev);
+	struct mlx5_vdpa_net *ndev = to_mlx5_vdpa_ndev(mvdev);
+	struct mlx5_vdpa_virtqueue *mvq = &ndev->vqs[idx];
 
 	mvq->desc_addr = desc_area;
 	mvq->device_addr = device_area;
 	mvq->driver_addr = driver_area;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम mlx5_vdpa_set_vq_num(काष्ठा vdpa_device *vdev, u16 idx, u32 num)
-अणु
-	काष्ठा mlx5_vdpa_dev *mvdev = to_mvdev(vdev);
-	काष्ठा mlx5_vdpa_net *ndev = to_mlx5_vdpa_ndev(mvdev);
-	काष्ठा mlx5_vdpa_virtqueue *mvq;
+static void mlx5_vdpa_set_vq_num(struct vdpa_device *vdev, u16 idx, u32 num)
+{
+	struct mlx5_vdpa_dev *mvdev = to_mvdev(vdev);
+	struct mlx5_vdpa_net *ndev = to_mlx5_vdpa_ndev(mvdev);
+	struct mlx5_vdpa_virtqueue *mvq;
 
 	mvq = &ndev->vqs[idx];
 	mvq->num_ent = num;
-पूर्ण
+}
 
-अटल व्योम mlx5_vdpa_set_vq_cb(काष्ठा vdpa_device *vdev, u16 idx, काष्ठा vdpa_callback *cb)
-अणु
-	काष्ठा mlx5_vdpa_dev *mvdev = to_mvdev(vdev);
-	काष्ठा mlx5_vdpa_net *ndev = to_mlx5_vdpa_ndev(mvdev);
-	काष्ठा mlx5_vdpa_virtqueue *vq = &ndev->vqs[idx];
+static void mlx5_vdpa_set_vq_cb(struct vdpa_device *vdev, u16 idx, struct vdpa_callback *cb)
+{
+	struct mlx5_vdpa_dev *mvdev = to_mvdev(vdev);
+	struct mlx5_vdpa_net *ndev = to_mlx5_vdpa_ndev(mvdev);
+	struct mlx5_vdpa_virtqueue *vq = &ndev->vqs[idx];
 
 	vq->event_cb = *cb;
-पूर्ण
+}
 
-अटल व्योम mlx5_vdpa_set_vq_पढ़ोy(काष्ठा vdpa_device *vdev, u16 idx, bool पढ़ोy)
-अणु
-	काष्ठा mlx5_vdpa_dev *mvdev = to_mvdev(vdev);
-	काष्ठा mlx5_vdpa_net *ndev = to_mlx5_vdpa_ndev(mvdev);
-	काष्ठा mlx5_vdpa_virtqueue *mvq = &ndev->vqs[idx];
+static void mlx5_vdpa_set_vq_ready(struct vdpa_device *vdev, u16 idx, bool ready)
+{
+	struct mlx5_vdpa_dev *mvdev = to_mvdev(vdev);
+	struct mlx5_vdpa_net *ndev = to_mlx5_vdpa_ndev(mvdev);
+	struct mlx5_vdpa_virtqueue *mvq = &ndev->vqs[idx];
 
-	अगर (!पढ़ोy)
+	if (!ready)
 		suspend_vq(ndev, mvq);
 
-	mvq->पढ़ोy = पढ़ोy;
-पूर्ण
+	mvq->ready = ready;
+}
 
-अटल bool mlx5_vdpa_get_vq_पढ़ोy(काष्ठा vdpa_device *vdev, u16 idx)
-अणु
-	काष्ठा mlx5_vdpa_dev *mvdev = to_mvdev(vdev);
-	काष्ठा mlx5_vdpa_net *ndev = to_mlx5_vdpa_ndev(mvdev);
-	काष्ठा mlx5_vdpa_virtqueue *mvq = &ndev->vqs[idx];
+static bool mlx5_vdpa_get_vq_ready(struct vdpa_device *vdev, u16 idx)
+{
+	struct mlx5_vdpa_dev *mvdev = to_mvdev(vdev);
+	struct mlx5_vdpa_net *ndev = to_mlx5_vdpa_ndev(mvdev);
+	struct mlx5_vdpa_virtqueue *mvq = &ndev->vqs[idx];
 
-	वापस mvq->पढ़ोy;
-पूर्ण
+	return mvq->ready;
+}
 
-अटल पूर्णांक mlx5_vdpa_set_vq_state(काष्ठा vdpa_device *vdev, u16 idx,
-				  स्थिर काष्ठा vdpa_vq_state *state)
-अणु
-	काष्ठा mlx5_vdpa_dev *mvdev = to_mvdev(vdev);
-	काष्ठा mlx5_vdpa_net *ndev = to_mlx5_vdpa_ndev(mvdev);
-	काष्ठा mlx5_vdpa_virtqueue *mvq = &ndev->vqs[idx];
+static int mlx5_vdpa_set_vq_state(struct vdpa_device *vdev, u16 idx,
+				  const struct vdpa_vq_state *state)
+{
+	struct mlx5_vdpa_dev *mvdev = to_mvdev(vdev);
+	struct mlx5_vdpa_net *ndev = to_mlx5_vdpa_ndev(mvdev);
+	struct mlx5_vdpa_virtqueue *mvq = &ndev->vqs[idx];
 
-	अगर (mvq->fw_state == MLX5_VIRTIO_NET_Q_OBJECT_STATE_RDY) अणु
+	if (mvq->fw_state == MLX5_VIRTIO_NET_Q_OBJECT_STATE_RDY) {
 		mlx5_vdpa_warn(mvdev, "can't modify available index\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	mvq->used_idx = state->avail_index;
 	mvq->avail_idx = state->avail_index;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mlx5_vdpa_get_vq_state(काष्ठा vdpa_device *vdev, u16 idx, काष्ठा vdpa_vq_state *state)
-अणु
-	काष्ठा mlx5_vdpa_dev *mvdev = to_mvdev(vdev);
-	काष्ठा mlx5_vdpa_net *ndev = to_mlx5_vdpa_ndev(mvdev);
-	काष्ठा mlx5_vdpa_virtqueue *mvq = &ndev->vqs[idx];
-	काष्ठा mlx5_virtq_attr attr;
-	पूर्णांक err;
+static int mlx5_vdpa_get_vq_state(struct vdpa_device *vdev, u16 idx, struct vdpa_vq_state *state)
+{
+	struct mlx5_vdpa_dev *mvdev = to_mvdev(vdev);
+	struct mlx5_vdpa_net *ndev = to_mlx5_vdpa_ndev(mvdev);
+	struct mlx5_vdpa_virtqueue *mvq = &ndev->vqs[idx];
+	struct mlx5_virtq_attr attr;
+	int err;
 
 	/* If the virtq object was destroyed, use the value saved at
-	 * the last minute of suspend_vq. This caters क्रम userspace
+	 * the last minute of suspend_vq. This caters for userspace
 	 * that cares about emulating the index after vq is stopped.
 	 */
-	अगर (!mvq->initialized) अणु
-		/* Firmware वापसs a wrong value क्रम the available index.
+	if (!mvq->initialized) {
+		/* Firmware returns a wrong value for the available index.
 		 * Since both values should be identical, we take the value of
 		 * used_idx which is reported correctly.
 		 */
 		state->avail_index = mvq->used_idx;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	err = query_virtqueue(ndev, mvq, &attr);
-	अगर (err) अणु
+	if (err) {
 		mlx5_vdpa_warn(mvdev, "failed to query virtqueue\n");
-		वापस err;
-	पूर्ण
+		return err;
+	}
 	state->avail_index = attr.used_index;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल u32 mlx5_vdpa_get_vq_align(काष्ठा vdpa_device *vdev)
-अणु
-	वापस PAGE_SIZE;
-पूर्ण
+static u32 mlx5_vdpa_get_vq_align(struct vdpa_device *vdev)
+{
+	return PAGE_SIZE;
+}
 
-क्रमागत अणु MLX5_VIRTIO_NET_F_GUEST_CSUM = 1 << 9,
+enum { MLX5_VIRTIO_NET_F_GUEST_CSUM = 1 << 9,
 	MLX5_VIRTIO_NET_F_CSUM = 1 << 10,
 	MLX5_VIRTIO_NET_F_HOST_TSO6 = 1 << 11,
 	MLX5_VIRTIO_NET_F_HOST_TSO4 = 1 << 12,
-पूर्ण;
+};
 
-अटल u64 mlx_to_vritio_features(u16 dev_features)
-अणु
+static u64 mlx_to_vritio_features(u16 dev_features)
+{
 	u64 result = 0;
 
-	अगर (dev_features & MLX5_VIRTIO_NET_F_GUEST_CSUM)
+	if (dev_features & MLX5_VIRTIO_NET_F_GUEST_CSUM)
 		result |= BIT_ULL(VIRTIO_NET_F_GUEST_CSUM);
-	अगर (dev_features & MLX5_VIRTIO_NET_F_CSUM)
+	if (dev_features & MLX5_VIRTIO_NET_F_CSUM)
 		result |= BIT_ULL(VIRTIO_NET_F_CSUM);
-	अगर (dev_features & MLX5_VIRTIO_NET_F_HOST_TSO6)
+	if (dev_features & MLX5_VIRTIO_NET_F_HOST_TSO6)
 		result |= BIT_ULL(VIRTIO_NET_F_HOST_TSO6);
-	अगर (dev_features & MLX5_VIRTIO_NET_F_HOST_TSO4)
+	if (dev_features & MLX5_VIRTIO_NET_F_HOST_TSO4)
 		result |= BIT_ULL(VIRTIO_NET_F_HOST_TSO4);
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
-अटल u64 mlx5_vdpa_get_features(काष्ठा vdpa_device *vdev)
-अणु
-	काष्ठा mlx5_vdpa_dev *mvdev = to_mvdev(vdev);
-	काष्ठा mlx5_vdpa_net *ndev = to_mlx5_vdpa_ndev(mvdev);
+static u64 mlx5_vdpa_get_features(struct vdpa_device *vdev)
+{
+	struct mlx5_vdpa_dev *mvdev = to_mvdev(vdev);
+	struct mlx5_vdpa_net *ndev = to_mlx5_vdpa_ndev(mvdev);
 	u16 dev_features;
 
 	dev_features = MLX5_CAP_DEV_VDPA_EMULATION(mvdev->mdev, device_features_bits_mask);
 	ndev->mvdev.mlx_features = mlx_to_vritio_features(dev_features);
-	अगर (MLX5_CAP_DEV_VDPA_EMULATION(mvdev->mdev, virtio_version_1_0))
+	if (MLX5_CAP_DEV_VDPA_EMULATION(mvdev->mdev, virtio_version_1_0))
 		ndev->mvdev.mlx_features |= BIT_ULL(VIRTIO_F_VERSION_1);
 	ndev->mvdev.mlx_features |= BIT_ULL(VIRTIO_F_ACCESS_PLATFORM);
-	prपूर्णांक_features(mvdev, ndev->mvdev.mlx_features, false);
-	वापस ndev->mvdev.mlx_features;
-पूर्ण
+	print_features(mvdev, ndev->mvdev.mlx_features, false);
+	return ndev->mvdev.mlx_features;
+}
 
-अटल पूर्णांक verअगरy_min_features(काष्ठा mlx5_vdpa_dev *mvdev, u64 features)
-अणु
-	अगर (!(features & BIT_ULL(VIRTIO_F_ACCESS_PLATFORM)))
-		वापस -EOPNOTSUPP;
+static int verify_min_features(struct mlx5_vdpa_dev *mvdev, u64 features)
+{
+	if (!(features & BIT_ULL(VIRTIO_F_ACCESS_PLATFORM)))
+		return -EOPNOTSUPP;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक setup_virtqueues(काष्ठा mlx5_vdpa_net *ndev)
-अणु
-	पूर्णांक err;
-	पूर्णांक i;
+static int setup_virtqueues(struct mlx5_vdpa_net *ndev)
+{
+	int err;
+	int i;
 
-	क्रम (i = 0; i < 2 * mlx5_vdpa_max_qps(ndev->mvdev.max_vqs); i++) अणु
+	for (i = 0; i < 2 * mlx5_vdpa_max_qps(ndev->mvdev.max_vqs); i++) {
 		err = setup_vq(ndev, &ndev->vqs[i]);
-		अगर (err)
-			जाओ err_vq;
-	पूर्ण
+		if (err)
+			goto err_vq;
+	}
 
-	वापस 0;
+	return 0;
 
 err_vq:
-	क्रम (--i; i >= 0; i--)
-		tearकरोwn_vq(ndev, &ndev->vqs[i]);
+	for (--i; i >= 0; i--)
+		teardown_vq(ndev, &ndev->vqs[i]);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम tearकरोwn_virtqueues(काष्ठा mlx5_vdpa_net *ndev)
-अणु
-	काष्ठा mlx5_vdpa_virtqueue *mvq;
-	पूर्णांक i;
+static void teardown_virtqueues(struct mlx5_vdpa_net *ndev)
+{
+	struct mlx5_vdpa_virtqueue *mvq;
+	int i;
 
-	क्रम (i = ndev->mvdev.max_vqs - 1; i >= 0; i--) अणु
+	for (i = ndev->mvdev.max_vqs - 1; i >= 0; i--) {
 		mvq = &ndev->vqs[i];
-		अगर (!mvq->initialized)
-			जारी;
+		if (!mvq->initialized)
+			continue;
 
-		tearकरोwn_vq(ndev, mvq);
-	पूर्ण
-पूर्ण
+		teardown_vq(ndev, mvq);
+	}
+}
 
 /* TODO: cross-endian support */
-अटल अंतरभूत bool mlx5_vdpa_is_little_endian(काष्ठा mlx5_vdpa_dev *mvdev)
-अणु
-	वापस virtio_legacy_is_little_endian() ||
+static inline bool mlx5_vdpa_is_little_endian(struct mlx5_vdpa_dev *mvdev)
+{
+	return virtio_legacy_is_little_endian() ||
 		(mvdev->actual_features & BIT_ULL(VIRTIO_F_VERSION_1));
-पूर्ण
+}
 
-अटल __virtio16 cpu_to_mlx5vdpa16(काष्ठा mlx5_vdpa_dev *mvdev, u16 val)
-अणु
-	वापस __cpu_to_virtio16(mlx5_vdpa_is_little_endian(mvdev), val);
-पूर्ण
+static __virtio16 cpu_to_mlx5vdpa16(struct mlx5_vdpa_dev *mvdev, u16 val)
+{
+	return __cpu_to_virtio16(mlx5_vdpa_is_little_endian(mvdev), val);
+}
 
-अटल पूर्णांक mlx5_vdpa_set_features(काष्ठा vdpa_device *vdev, u64 features)
-अणु
-	काष्ठा mlx5_vdpa_dev *mvdev = to_mvdev(vdev);
-	काष्ठा mlx5_vdpa_net *ndev = to_mlx5_vdpa_ndev(mvdev);
-	पूर्णांक err;
+static int mlx5_vdpa_set_features(struct vdpa_device *vdev, u64 features)
+{
+	struct mlx5_vdpa_dev *mvdev = to_mvdev(vdev);
+	struct mlx5_vdpa_net *ndev = to_mlx5_vdpa_ndev(mvdev);
+	int err;
 
-	prपूर्णांक_features(mvdev, features, true);
+	print_features(mvdev, features, true);
 
-	err = verअगरy_min_features(mvdev, features);
-	अगर (err)
-		वापस err;
+	err = verify_min_features(mvdev, features);
+	if (err)
+		return err;
 
 	ndev->mvdev.actual_features = features & ndev->mvdev.mlx_features;
 	ndev->config.mtu = cpu_to_mlx5vdpa16(mvdev, ndev->mtu);
 	ndev->config.status |= cpu_to_mlx5vdpa16(mvdev, VIRTIO_NET_S_LINK_UP);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम mlx5_vdpa_set_config_cb(काष्ठा vdpa_device *vdev, काष्ठा vdpa_callback *cb)
-अणु
+static void mlx5_vdpa_set_config_cb(struct vdpa_device *vdev, struct vdpa_callback *cb)
+{
 	/* not implemented */
 	mlx5_vdpa_warn(to_mvdev(vdev), "set config callback not supported\n");
-पूर्ण
+}
 
-#घोषणा MLX5_VDPA_MAX_VQ_ENTRIES 256
-अटल u16 mlx5_vdpa_get_vq_num_max(काष्ठा vdpa_device *vdev)
-अणु
-	वापस MLX5_VDPA_MAX_VQ_ENTRIES;
-पूर्ण
+#define MLX5_VDPA_MAX_VQ_ENTRIES 256
+static u16 mlx5_vdpa_get_vq_num_max(struct vdpa_device *vdev)
+{
+	return MLX5_VDPA_MAX_VQ_ENTRIES;
+}
 
-अटल u32 mlx5_vdpa_get_device_id(काष्ठा vdpa_device *vdev)
-अणु
-	वापस VIRTIO_ID_NET;
-पूर्ण
+static u32 mlx5_vdpa_get_device_id(struct vdpa_device *vdev)
+{
+	return VIRTIO_ID_NET;
+}
 
-अटल u32 mlx5_vdpa_get_venकरोr_id(काष्ठा vdpa_device *vdev)
-अणु
-	वापस PCI_VENDOR_ID_MELLANOX;
-पूर्ण
+static u32 mlx5_vdpa_get_vendor_id(struct vdpa_device *vdev)
+{
+	return PCI_VENDOR_ID_MELLANOX;
+}
 
-अटल u8 mlx5_vdpa_get_status(काष्ठा vdpa_device *vdev)
-अणु
-	काष्ठा mlx5_vdpa_dev *mvdev = to_mvdev(vdev);
-	काष्ठा mlx5_vdpa_net *ndev = to_mlx5_vdpa_ndev(mvdev);
+static u8 mlx5_vdpa_get_status(struct vdpa_device *vdev)
+{
+	struct mlx5_vdpa_dev *mvdev = to_mvdev(vdev);
+	struct mlx5_vdpa_net *ndev = to_mlx5_vdpa_ndev(mvdev);
 
-	prपूर्णांक_status(mvdev, ndev->mvdev.status, false);
-	वापस ndev->mvdev.status;
-पूर्ण
+	print_status(mvdev, ndev->mvdev.status, false);
+	return ndev->mvdev.status;
+}
 
-अटल पूर्णांक save_channel_info(काष्ठा mlx5_vdpa_net *ndev, काष्ठा mlx5_vdpa_virtqueue *mvq)
-अणु
-	काष्ठा mlx5_vq_restore_info *ri = &mvq->ri;
-	काष्ठा mlx5_virtq_attr attr;
-	पूर्णांक err;
+static int save_channel_info(struct mlx5_vdpa_net *ndev, struct mlx5_vdpa_virtqueue *mvq)
+{
+	struct mlx5_vq_restore_info *ri = &mvq->ri;
+	struct mlx5_virtq_attr attr;
+	int err;
 
-	अगर (!mvq->initialized)
-		वापस 0;
+	if (!mvq->initialized)
+		return 0;
 
 	err = query_virtqueue(ndev, mvq, &attr);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	ri->avail_index = attr.available_index;
 	ri->used_index = attr.used_index;
-	ri->पढ़ोy = mvq->पढ़ोy;
+	ri->ready = mvq->ready;
 	ri->num_ent = mvq->num_ent;
 	ri->desc_addr = mvq->desc_addr;
 	ri->device_addr = mvq->device_addr;
 	ri->driver_addr = mvq->driver_addr;
 	ri->cb = mvq->event_cb;
 	ri->restore = true;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक save_channels_info(काष्ठा mlx5_vdpa_net *ndev)
-अणु
-	पूर्णांक i;
+static int save_channels_info(struct mlx5_vdpa_net *ndev)
+{
+	int i;
 
-	क्रम (i = 0; i < ndev->mvdev.max_vqs; i++) अणु
-		स_रखो(&ndev->vqs[i].ri, 0, माप(ndev->vqs[i].ri));
+	for (i = 0; i < ndev->mvdev.max_vqs; i++) {
+		memset(&ndev->vqs[i].ri, 0, sizeof(ndev->vqs[i].ri));
 		save_channel_info(ndev, &ndev->vqs[i]);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल व्योम mlx5_clear_vqs(काष्ठा mlx5_vdpa_net *ndev)
-अणु
-	पूर्णांक i;
+static void mlx5_clear_vqs(struct mlx5_vdpa_net *ndev)
+{
+	int i;
 
-	क्रम (i = 0; i < ndev->mvdev.max_vqs; i++)
-		स_रखो(&ndev->vqs[i], 0, दुरत्व(काष्ठा mlx5_vdpa_virtqueue, ri));
-पूर्ण
+	for (i = 0; i < ndev->mvdev.max_vqs; i++)
+		memset(&ndev->vqs[i], 0, offsetof(struct mlx5_vdpa_virtqueue, ri));
+}
 
-अटल व्योम restore_channels_info(काष्ठा mlx5_vdpa_net *ndev)
-अणु
-	काष्ठा mlx5_vdpa_virtqueue *mvq;
-	काष्ठा mlx5_vq_restore_info *ri;
-	पूर्णांक i;
+static void restore_channels_info(struct mlx5_vdpa_net *ndev)
+{
+	struct mlx5_vdpa_virtqueue *mvq;
+	struct mlx5_vq_restore_info *ri;
+	int i;
 
 	mlx5_clear_vqs(ndev);
 	init_mvqs(ndev);
-	क्रम (i = 0; i < ndev->mvdev.max_vqs; i++) अणु
+	for (i = 0; i < ndev->mvdev.max_vqs; i++) {
 		mvq = &ndev->vqs[i];
 		ri = &mvq->ri;
-		अगर (!ri->restore)
-			जारी;
+		if (!ri->restore)
+			continue;
 
 		mvq->avail_idx = ri->avail_index;
 		mvq->used_idx = ri->used_index;
-		mvq->पढ़ोy = ri->पढ़ोy;
+		mvq->ready = ri->ready;
 		mvq->num_ent = ri->num_ent;
 		mvq->desc_addr = ri->desc_addr;
 		mvq->device_addr = ri->device_addr;
 		mvq->driver_addr = ri->driver_addr;
 		mvq->event_cb = ri->cb;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक mlx5_vdpa_change_map(काष्ठा mlx5_vdpa_net *ndev, काष्ठा vhost_iotlb *iotlb)
-अणु
-	पूर्णांक err;
+static int mlx5_vdpa_change_map(struct mlx5_vdpa_net *ndev, struct vhost_iotlb *iotlb)
+{
+	int err;
 
 	suspend_vqs(ndev);
 	err = save_channels_info(ndev);
-	अगर (err)
-		जाओ err_mr;
+	if (err)
+		goto err_mr;
 
-	tearकरोwn_driver(ndev);
+	teardown_driver(ndev);
 	mlx5_vdpa_destroy_mr(&ndev->mvdev);
 	err = mlx5_vdpa_create_mr(&ndev->mvdev, iotlb);
-	अगर (err)
-		जाओ err_mr;
+	if (err)
+		goto err_mr;
 
-	अगर (!(ndev->mvdev.status & VIRTIO_CONFIG_S_DRIVER_OK))
-		वापस 0;
+	if (!(ndev->mvdev.status & VIRTIO_CONFIG_S_DRIVER_OK))
+		return 0;
 
 	restore_channels_info(ndev);
 	err = setup_driver(ndev);
-	अगर (err)
-		जाओ err_setup;
+	if (err)
+		goto err_setup;
 
-	वापस 0;
+	return 0;
 
 err_setup:
 	mlx5_vdpa_destroy_mr(&ndev->mvdev);
 err_mr:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक setup_driver(काष्ठा mlx5_vdpa_net *ndev)
-अणु
-	पूर्णांक err;
+static int setup_driver(struct mlx5_vdpa_net *ndev)
+{
+	int err;
 
 	mutex_lock(&ndev->reslock);
-	अगर (ndev->setup) अणु
+	if (ndev->setup) {
 		mlx5_vdpa_warn(&ndev->mvdev, "setup driver called for already setup driver\n");
 		err = 0;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	err = setup_virtqueues(ndev);
-	अगर (err) अणु
+	if (err) {
 		mlx5_vdpa_warn(&ndev->mvdev, "setup_virtqueues\n");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	err = create_rqt(ndev);
-	अगर (err) अणु
+	if (err) {
 		mlx5_vdpa_warn(&ndev->mvdev, "create_rqt\n");
-		जाओ err_rqt;
-	पूर्ण
+		goto err_rqt;
+	}
 
 	err = create_tir(ndev);
-	अगर (err) अणु
+	if (err) {
 		mlx5_vdpa_warn(&ndev->mvdev, "create_tir\n");
-		जाओ err_tir;
-	पूर्ण
+		goto err_tir;
+	}
 
 	err = add_fwd_to_tir(ndev);
-	अगर (err) अणु
+	if (err) {
 		mlx5_vdpa_warn(&ndev->mvdev, "add_fwd_to_tir\n");
-		जाओ err_fwd;
-	पूर्ण
+		goto err_fwd;
+	}
 	ndev->setup = true;
 	mutex_unlock(&ndev->reslock);
 
-	वापस 0;
+	return 0;
 
 err_fwd:
 	destroy_tir(ndev);
 err_tir:
 	destroy_rqt(ndev);
 err_rqt:
-	tearकरोwn_virtqueues(ndev);
+	teardown_virtqueues(ndev);
 out:
 	mutex_unlock(&ndev->reslock);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम tearकरोwn_driver(काष्ठा mlx5_vdpa_net *ndev)
-अणु
+static void teardown_driver(struct mlx5_vdpa_net *ndev)
+{
 	mutex_lock(&ndev->reslock);
-	अगर (!ndev->setup)
-		जाओ out;
+	if (!ndev->setup)
+		goto out;
 
-	हटाओ_fwd_to_tir(ndev);
+	remove_fwd_to_tir(ndev);
 	destroy_tir(ndev);
 	destroy_rqt(ndev);
-	tearकरोwn_virtqueues(ndev);
+	teardown_virtqueues(ndev);
 	ndev->setup = false;
 out:
 	mutex_unlock(&ndev->reslock);
-पूर्ण
+}
 
-अटल व्योम mlx5_vdpa_set_status(काष्ठा vdpa_device *vdev, u8 status)
-अणु
-	काष्ठा mlx5_vdpa_dev *mvdev = to_mvdev(vdev);
-	काष्ठा mlx5_vdpa_net *ndev = to_mlx5_vdpa_ndev(mvdev);
-	पूर्णांक err;
+static void mlx5_vdpa_set_status(struct vdpa_device *vdev, u8 status)
+{
+	struct mlx5_vdpa_dev *mvdev = to_mvdev(vdev);
+	struct mlx5_vdpa_net *ndev = to_mlx5_vdpa_ndev(mvdev);
+	int err;
 
-	prपूर्णांक_status(mvdev, status, true);
-	अगर (!status) अणु
+	print_status(mvdev, status, true);
+	if (!status) {
 		mlx5_vdpa_info(mvdev, "performing device reset\n");
-		tearकरोwn_driver(ndev);
+		teardown_driver(ndev);
 		mlx5_vdpa_destroy_mr(&ndev->mvdev);
 		ndev->mvdev.status = 0;
 		ndev->mvdev.mlx_features = 0;
 		++mvdev->generation;
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर ((status ^ ndev->mvdev.status) & VIRTIO_CONFIG_S_DRIVER_OK) अणु
-		अगर (status & VIRTIO_CONFIG_S_DRIVER_OK) अणु
+	if ((status ^ ndev->mvdev.status) & VIRTIO_CONFIG_S_DRIVER_OK) {
+		if (status & VIRTIO_CONFIG_S_DRIVER_OK) {
 			err = setup_driver(ndev);
-			अगर (err) अणु
+			if (err) {
 				mlx5_vdpa_warn(mvdev, "failed to setup driver\n");
-				जाओ err_setup;
-			पूर्ण
-		पूर्ण अन्यथा अणु
+				goto err_setup;
+			}
+		} else {
 			mlx5_vdpa_warn(mvdev, "did not expect DRIVER_OK to be cleared\n");
-			वापस;
-		पूर्ण
-	पूर्ण
+			return;
+		}
+	}
 
 	ndev->mvdev.status = status;
-	वापस;
+	return;
 
 err_setup:
 	mlx5_vdpa_destroy_mr(&ndev->mvdev);
 	ndev->mvdev.status |= VIRTIO_CONFIG_S_FAILED;
-पूर्ण
+}
 
-अटल माप_प्रकार mlx5_vdpa_get_config_size(काष्ठा vdpa_device *vdev)
-अणु
-	वापस माप(काष्ठा virtio_net_config);
-पूर्ण
+static size_t mlx5_vdpa_get_config_size(struct vdpa_device *vdev)
+{
+	return sizeof(struct virtio_net_config);
+}
 
-अटल व्योम mlx5_vdpa_get_config(काष्ठा vdpa_device *vdev, अचिन्हित पूर्णांक offset, व्योम *buf,
-				 अचिन्हित पूर्णांक len)
-अणु
-	काष्ठा mlx5_vdpa_dev *mvdev = to_mvdev(vdev);
-	काष्ठा mlx5_vdpa_net *ndev = to_mlx5_vdpa_ndev(mvdev);
+static void mlx5_vdpa_get_config(struct vdpa_device *vdev, unsigned int offset, void *buf,
+				 unsigned int len)
+{
+	struct mlx5_vdpa_dev *mvdev = to_mvdev(vdev);
+	struct mlx5_vdpa_net *ndev = to_mlx5_vdpa_ndev(mvdev);
 
-	अगर (offset + len <= माप(काष्ठा virtio_net_config))
-		स_नकल(buf, (u8 *)&ndev->config + offset, len);
-पूर्ण
+	if (offset + len <= sizeof(struct virtio_net_config))
+		memcpy(buf, (u8 *)&ndev->config + offset, len);
+}
 
-अटल व्योम mlx5_vdpa_set_config(काष्ठा vdpa_device *vdev, अचिन्हित पूर्णांक offset, स्थिर व्योम *buf,
-				 अचिन्हित पूर्णांक len)
-अणु
+static void mlx5_vdpa_set_config(struct vdpa_device *vdev, unsigned int offset, const void *buf,
+				 unsigned int len)
+{
 	/* not supported */
-पूर्ण
+}
 
-अटल u32 mlx5_vdpa_get_generation(काष्ठा vdpa_device *vdev)
-अणु
-	काष्ठा mlx5_vdpa_dev *mvdev = to_mvdev(vdev);
+static u32 mlx5_vdpa_get_generation(struct vdpa_device *vdev)
+{
+	struct mlx5_vdpa_dev *mvdev = to_mvdev(vdev);
 
-	वापस mvdev->generation;
-पूर्ण
+	return mvdev->generation;
+}
 
-अटल पूर्णांक mlx5_vdpa_set_map(काष्ठा vdpa_device *vdev, काष्ठा vhost_iotlb *iotlb)
-अणु
-	काष्ठा mlx5_vdpa_dev *mvdev = to_mvdev(vdev);
-	काष्ठा mlx5_vdpa_net *ndev = to_mlx5_vdpa_ndev(mvdev);
+static int mlx5_vdpa_set_map(struct vdpa_device *vdev, struct vhost_iotlb *iotlb)
+{
+	struct mlx5_vdpa_dev *mvdev = to_mvdev(vdev);
+	struct mlx5_vdpa_net *ndev = to_mlx5_vdpa_ndev(mvdev);
 	bool change_map;
-	पूर्णांक err;
+	int err;
 
 	err = mlx5_vdpa_handle_set_map(mvdev, iotlb, &change_map);
-	अगर (err) अणु
+	if (err) {
 		mlx5_vdpa_warn(mvdev, "set map failed(%d)\n", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	अगर (change_map)
-		वापस mlx5_vdpa_change_map(ndev, iotlb);
+	if (change_map)
+		return mlx5_vdpa_change_map(ndev, iotlb);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम mlx5_vdpa_मुक्त(काष्ठा vdpa_device *vdev)
-अणु
-	काष्ठा mlx5_vdpa_dev *mvdev = to_mvdev(vdev);
-	काष्ठा mlx5_core_dev *pfmdev;
-	काष्ठा mlx5_vdpa_net *ndev;
+static void mlx5_vdpa_free(struct vdpa_device *vdev)
+{
+	struct mlx5_vdpa_dev *mvdev = to_mvdev(vdev);
+	struct mlx5_core_dev *pfmdev;
+	struct mlx5_vdpa_net *ndev;
 
 	ndev = to_mlx5_vdpa_ndev(mvdev);
 
-	मुक्त_resources(ndev);
-	अगर (!is_zero_ether_addr(ndev->config.mac)) अणु
+	free_resources(ndev);
+	if (!is_zero_ether_addr(ndev->config.mac)) {
 		pfmdev = pci_get_drvdata(pci_physfn(mvdev->mdev->pdev));
 		mlx5_mpfs_del_mac(pfmdev, ndev->config.mac);
-	पूर्ण
-	mlx5_vdpa_मुक्त_resources(&ndev->mvdev);
+	}
+	mlx5_vdpa_free_resources(&ndev->mvdev);
 	mutex_destroy(&ndev->reslock);
-पूर्ण
+}
 
-अटल काष्ठा vdpa_notअगरication_area mlx5_get_vq_notअगरication(काष्ठा vdpa_device *vdev, u16 idx)
-अणु
-	काष्ठा vdpa_notअगरication_area ret = अणुपूर्ण;
+static struct vdpa_notification_area mlx5_get_vq_notification(struct vdpa_device *vdev, u16 idx)
+{
+	struct vdpa_notification_area ret = {};
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक mlx5_get_vq_irq(काष्ठा vdpa_device *vdv, u16 idx)
-अणु
-	वापस -EOPNOTSUPP;
-पूर्ण
+static int mlx5_get_vq_irq(struct vdpa_device *vdv, u16 idx)
+{
+	return -EOPNOTSUPP;
+}
 
-अटल स्थिर काष्ठा vdpa_config_ops mlx5_vdpa_ops = अणु
+static const struct vdpa_config_ops mlx5_vdpa_ops = {
 	.set_vq_address = mlx5_vdpa_set_vq_address,
 	.set_vq_num = mlx5_vdpa_set_vq_num,
 	.kick_vq = mlx5_vdpa_kick_vq,
 	.set_vq_cb = mlx5_vdpa_set_vq_cb,
-	.set_vq_पढ़ोy = mlx5_vdpa_set_vq_पढ़ोy,
-	.get_vq_पढ़ोy = mlx5_vdpa_get_vq_पढ़ोy,
+	.set_vq_ready = mlx5_vdpa_set_vq_ready,
+	.get_vq_ready = mlx5_vdpa_get_vq_ready,
 	.set_vq_state = mlx5_vdpa_set_vq_state,
 	.get_vq_state = mlx5_vdpa_get_vq_state,
-	.get_vq_notअगरication = mlx5_get_vq_notअगरication,
+	.get_vq_notification = mlx5_get_vq_notification,
 	.get_vq_irq = mlx5_get_vq_irq,
 	.get_vq_align = mlx5_vdpa_get_vq_align,
 	.get_features = mlx5_vdpa_get_features,
@@ -1904,7 +1903,7 @@ err_setup:
 	.set_config_cb = mlx5_vdpa_set_config_cb,
 	.get_vq_num_max = mlx5_vdpa_get_vq_num_max,
 	.get_device_id = mlx5_vdpa_get_device_id,
-	.get_venकरोr_id = mlx5_vdpa_get_venकरोr_id,
+	.get_vendor_id = mlx5_vdpa_get_vendor_id,
 	.get_status = mlx5_vdpa_get_status,
 	.set_status = mlx5_vdpa_set_status,
 	.get_config_size = mlx5_vdpa_get_config_size,
@@ -1912,110 +1911,110 @@ err_setup:
 	.set_config = mlx5_vdpa_set_config,
 	.get_generation = mlx5_vdpa_get_generation,
 	.set_map = mlx5_vdpa_set_map,
-	.मुक्त = mlx5_vdpa_मुक्त,
-पूर्ण;
+	.free = mlx5_vdpa_free,
+};
 
-अटल पूर्णांक query_mtu(काष्ठा mlx5_core_dev *mdev, u16 *mtu)
-अणु
+static int query_mtu(struct mlx5_core_dev *mdev, u16 *mtu)
+{
 	u16 hw_mtu;
-	पूर्णांक err;
+	int err;
 
 	err = mlx5_query_nic_vport_mtu(mdev, &hw_mtu);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	*mtu = hw_mtu - MLX5V_ETH_HARD_MTU;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक alloc_resources(काष्ठा mlx5_vdpa_net *ndev)
-अणु
-	काष्ठा mlx5_vdpa_net_resources *res = &ndev->res;
-	पूर्णांक err;
+static int alloc_resources(struct mlx5_vdpa_net *ndev)
+{
+	struct mlx5_vdpa_net_resources *res = &ndev->res;
+	int err;
 
-	अगर (res->valid) अणु
+	if (res->valid) {
 		mlx5_vdpa_warn(&ndev->mvdev, "resources already allocated\n");
-		वापस -EEXIST;
-	पूर्ण
+		return -EEXIST;
+	}
 
-	err = mlx5_vdpa_alloc_transport_करोमुख्य(&ndev->mvdev, &res->tdn);
-	अगर (err)
-		वापस err;
+	err = mlx5_vdpa_alloc_transport_domain(&ndev->mvdev, &res->tdn);
+	if (err)
+		return err;
 
 	err = create_tis(ndev);
-	अगर (err)
-		जाओ err_tis;
+	if (err)
+		goto err_tis;
 
 	res->valid = true;
 
-	वापस 0;
+	return 0;
 
 err_tis:
-	mlx5_vdpa_dealloc_transport_करोमुख्य(&ndev->mvdev, res->tdn);
-	वापस err;
-पूर्ण
+	mlx5_vdpa_dealloc_transport_domain(&ndev->mvdev, res->tdn);
+	return err;
+}
 
-अटल व्योम मुक्त_resources(काष्ठा mlx5_vdpa_net *ndev)
-अणु
-	काष्ठा mlx5_vdpa_net_resources *res = &ndev->res;
+static void free_resources(struct mlx5_vdpa_net *ndev)
+{
+	struct mlx5_vdpa_net_resources *res = &ndev->res;
 
-	अगर (!res->valid)
-		वापस;
+	if (!res->valid)
+		return;
 
 	destroy_tis(ndev);
-	mlx5_vdpa_dealloc_transport_करोमुख्य(&ndev->mvdev, res->tdn);
+	mlx5_vdpa_dealloc_transport_domain(&ndev->mvdev, res->tdn);
 	res->valid = false;
-पूर्ण
+}
 
-अटल व्योम init_mvqs(काष्ठा mlx5_vdpa_net *ndev)
-अणु
-	काष्ठा mlx5_vdpa_virtqueue *mvq;
-	पूर्णांक i;
+static void init_mvqs(struct mlx5_vdpa_net *ndev)
+{
+	struct mlx5_vdpa_virtqueue *mvq;
+	int i;
 
-	क्रम (i = 0; i < 2 * mlx5_vdpa_max_qps(ndev->mvdev.max_vqs); ++i) अणु
+	for (i = 0; i < 2 * mlx5_vdpa_max_qps(ndev->mvdev.max_vqs); ++i) {
 		mvq = &ndev->vqs[i];
-		स_रखो(mvq, 0, दुरत्व(काष्ठा mlx5_vdpa_virtqueue, ri));
+		memset(mvq, 0, offsetof(struct mlx5_vdpa_virtqueue, ri));
 		mvq->index = i;
 		mvq->ndev = ndev;
 		mvq->fwqp.fw = true;
-	पूर्ण
-	क्रम (; i < ndev->mvdev.max_vqs; i++) अणु
+	}
+	for (; i < ndev->mvdev.max_vqs; i++) {
 		mvq = &ndev->vqs[i];
-		स_रखो(mvq, 0, दुरत्व(काष्ठा mlx5_vdpa_virtqueue, ri));
+		memset(mvq, 0, offsetof(struct mlx5_vdpa_virtqueue, ri));
 		mvq->index = i;
 		mvq->ndev = ndev;
-	पूर्ण
-पूर्ण
+	}
+}
 
-काष्ठा mlx5_vdpa_mgmtdev अणु
-	काष्ठा vdpa_mgmt_dev mgtdev;
-	काष्ठा mlx5_adev *madev;
-	काष्ठा mlx5_vdpa_net *ndev;
-पूर्ण;
+struct mlx5_vdpa_mgmtdev {
+	struct vdpa_mgmt_dev mgtdev;
+	struct mlx5_adev *madev;
+	struct mlx5_vdpa_net *ndev;
+};
 
-अटल पूर्णांक mlx5_vdpa_dev_add(काष्ठा vdpa_mgmt_dev *v_mdev, स्थिर अक्षर *name)
-अणु
-	काष्ठा mlx5_vdpa_mgmtdev *mgtdev = container_of(v_mdev, काष्ठा mlx5_vdpa_mgmtdev, mgtdev);
-	काष्ठा virtio_net_config *config;
-	काष्ठा mlx5_core_dev *pfmdev;
-	काष्ठा mlx5_vdpa_dev *mvdev;
-	काष्ठा mlx5_vdpa_net *ndev;
-	काष्ठा mlx5_core_dev *mdev;
+static int mlx5_vdpa_dev_add(struct vdpa_mgmt_dev *v_mdev, const char *name)
+{
+	struct mlx5_vdpa_mgmtdev *mgtdev = container_of(v_mdev, struct mlx5_vdpa_mgmtdev, mgtdev);
+	struct virtio_net_config *config;
+	struct mlx5_core_dev *pfmdev;
+	struct mlx5_vdpa_dev *mvdev;
+	struct mlx5_vdpa_net *ndev;
+	struct mlx5_core_dev *mdev;
 	u32 max_vqs;
-	पूर्णांक err;
+	int err;
 
-	अगर (mgtdev->ndev)
-		वापस -ENOSPC;
+	if (mgtdev->ndev)
+		return -ENOSPC;
 
 	mdev = mgtdev->madev->mdev;
-	/* we save one virtqueue क्रम control virtqueue should we require it */
+	/* we save one virtqueue for control virtqueue should we require it */
 	max_vqs = MLX5_CAP_DEV_VDPA_EMULATION(mdev, max_num_virtio_queues);
 	max_vqs = min_t(u32, max_vqs, MLX5_MAX_SUPPORTED_VQS);
 
-	ndev = vdpa_alloc_device(काष्ठा mlx5_vdpa_net, mvdev.vdev, mdev->device, &mlx5_vdpa_ops,
+	ndev = vdpa_alloc_device(struct mlx5_vdpa_net, mvdev.vdev, mdev->device, &mlx5_vdpa_ops,
 				 name);
-	अगर (IS_ERR(ndev))
-		वापस PTR_ERR(ndev);
+	if (IS_ERR(ndev))
+		return PTR_ERR(ndev);
 
 	ndev->mvdev.max_vqs = max_vqs;
 	mvdev = &ndev->mvdev;
@@ -2024,120 +2023,120 @@ err_tis:
 	mutex_init(&ndev->reslock);
 	config = &ndev->config;
 	err = query_mtu(mdev, &ndev->mtu);
-	अगर (err)
-		जाओ err_mtu;
+	if (err)
+		goto err_mtu;
 
 	err = mlx5_query_nic_vport_mac_address(mdev, 0, 0, config->mac);
-	अगर (err)
-		जाओ err_mtu;
+	if (err)
+		goto err_mtu;
 
-	अगर (!is_zero_ether_addr(config->mac)) अणु
+	if (!is_zero_ether_addr(config->mac)) {
 		pfmdev = pci_get_drvdata(pci_physfn(mdev->pdev));
 		err = mlx5_mpfs_add_mac(pfmdev, config->mac);
-		अगर (err)
-			जाओ err_mtu;
-	पूर्ण
+		if (err)
+			goto err_mtu;
+	}
 
 	mvdev->vdev.dma_dev = mdev->device;
 	err = mlx5_vdpa_alloc_resources(&ndev->mvdev);
-	अगर (err)
-		जाओ err_mpfs;
+	if (err)
+		goto err_mpfs;
 
 	err = alloc_resources(ndev);
-	अगर (err)
-		जाओ err_res;
+	if (err)
+		goto err_res;
 
 	mvdev->vdev.mdev = &mgtdev->mgtdev;
-	err = _vdpa_रेजिस्टर_device(&mvdev->vdev, 2 * mlx5_vdpa_max_qps(max_vqs));
-	अगर (err)
-		जाओ err_reg;
+	err = _vdpa_register_device(&mvdev->vdev, 2 * mlx5_vdpa_max_qps(max_vqs));
+	if (err)
+		goto err_reg;
 
 	mgtdev->ndev = ndev;
-	वापस 0;
+	return 0;
 
 err_reg:
-	मुक्त_resources(ndev);
+	free_resources(ndev);
 err_res:
-	mlx5_vdpa_मुक्त_resources(&ndev->mvdev);
+	mlx5_vdpa_free_resources(&ndev->mvdev);
 err_mpfs:
-	अगर (!is_zero_ether_addr(config->mac))
+	if (!is_zero_ether_addr(config->mac))
 		mlx5_mpfs_del_mac(pfmdev, config->mac);
 err_mtu:
 	mutex_destroy(&ndev->reslock);
 	put_device(&mvdev->vdev.dev);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम mlx5_vdpa_dev_del(काष्ठा vdpa_mgmt_dev *v_mdev, काष्ठा vdpa_device *dev)
-अणु
-	काष्ठा mlx5_vdpa_mgmtdev *mgtdev = container_of(v_mdev, काष्ठा mlx5_vdpa_mgmtdev, mgtdev);
+static void mlx5_vdpa_dev_del(struct vdpa_mgmt_dev *v_mdev, struct vdpa_device *dev)
+{
+	struct mlx5_vdpa_mgmtdev *mgtdev = container_of(v_mdev, struct mlx5_vdpa_mgmtdev, mgtdev);
 
-	_vdpa_unरेजिस्टर_device(dev);
-	mgtdev->ndev = शून्य;
-पूर्ण
+	_vdpa_unregister_device(dev);
+	mgtdev->ndev = NULL;
+}
 
-अटल स्थिर काष्ठा vdpa_mgmtdev_ops mdev_ops = अणु
+static const struct vdpa_mgmtdev_ops mdev_ops = {
 	.dev_add = mlx5_vdpa_dev_add,
 	.dev_del = mlx5_vdpa_dev_del,
-पूर्ण;
+};
 
-अटल काष्ठा virtio_device_id id_table[] = अणु
-	अणु VIRTIO_ID_NET, VIRTIO_DEV_ANY_ID पूर्ण,
-	अणु 0 पूर्ण,
-पूर्ण;
+static struct virtio_device_id id_table[] = {
+	{ VIRTIO_ID_NET, VIRTIO_DEV_ANY_ID },
+	{ 0 },
+};
 
-अटल पूर्णांक mlx5v_probe(काष्ठा auxiliary_device *adev,
-		       स्थिर काष्ठा auxiliary_device_id *id)
+static int mlx5v_probe(struct auxiliary_device *adev,
+		       const struct auxiliary_device_id *id)
 
-अणु
-	काष्ठा mlx5_adev *madev = container_of(adev, काष्ठा mlx5_adev, adev);
-	काष्ठा mlx5_core_dev *mdev = madev->mdev;
-	काष्ठा mlx5_vdpa_mgmtdev *mgtdev;
-	पूर्णांक err;
+{
+	struct mlx5_adev *madev = container_of(adev, struct mlx5_adev, adev);
+	struct mlx5_core_dev *mdev = madev->mdev;
+	struct mlx5_vdpa_mgmtdev *mgtdev;
+	int err;
 
-	mgtdev = kzalloc(माप(*mgtdev), GFP_KERNEL);
-	अगर (!mgtdev)
-		वापस -ENOMEM;
+	mgtdev = kzalloc(sizeof(*mgtdev), GFP_KERNEL);
+	if (!mgtdev)
+		return -ENOMEM;
 
 	mgtdev->mgtdev.ops = &mdev_ops;
 	mgtdev->mgtdev.device = mdev->device;
 	mgtdev->mgtdev.id_table = id_table;
 	mgtdev->madev = madev;
 
-	err = vdpa_mgmtdev_रेजिस्टर(&mgtdev->mgtdev);
-	अगर (err)
-		जाओ reg_err;
+	err = vdpa_mgmtdev_register(&mgtdev->mgtdev);
+	if (err)
+		goto reg_err;
 
 	dev_set_drvdata(&adev->dev, mgtdev);
 
-	वापस 0;
+	return 0;
 
 reg_err:
-	kमुक्त(mgtdev);
-	वापस err;
-पूर्ण
+	kfree(mgtdev);
+	return err;
+}
 
-अटल व्योम mlx5v_हटाओ(काष्ठा auxiliary_device *adev)
-अणु
-	काष्ठा mlx5_vdpa_mgmtdev *mgtdev;
+static void mlx5v_remove(struct auxiliary_device *adev)
+{
+	struct mlx5_vdpa_mgmtdev *mgtdev;
 
 	mgtdev = dev_get_drvdata(&adev->dev);
-	vdpa_mgmtdev_unरेजिस्टर(&mgtdev->mgtdev);
-	kमुक्त(mgtdev);
-पूर्ण
+	vdpa_mgmtdev_unregister(&mgtdev->mgtdev);
+	kfree(mgtdev);
+}
 
-अटल स्थिर काष्ठा auxiliary_device_id mlx5v_id_table[] = अणु
-	अणु .name = MLX5_ADEV_NAME ".vnet", पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct auxiliary_device_id mlx5v_id_table[] = {
+	{ .name = MLX5_ADEV_NAME ".vnet", },
+	{},
+};
 
 MODULE_DEVICE_TABLE(auxiliary, mlx5v_id_table);
 
-अटल काष्ठा auxiliary_driver mlx5v_driver = अणु
+static struct auxiliary_driver mlx5v_driver = {
 	.name = "vnet",
 	.probe = mlx5v_probe,
-	.हटाओ = mlx5v_हटाओ,
+	.remove = mlx5v_remove,
 	.id_table = mlx5v_id_table,
-पूर्ण;
+};
 
 module_auxiliary_driver(mlx5v_driver);

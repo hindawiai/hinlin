@@ -1,14 +1,13 @@
-<शैली गुरु>
 /*
 *
-* mwavedd.h -- declarations क्रम mwave device driver
+* mwavedd.h -- declarations for mwave device driver
 *
 *
 * Written By: Mike Sullivan IBM Corporation
 *
 * Copyright (C) 1999 IBM Corporation
 *
-* This program is मुक्त software; you can redistribute it and/or modअगरy
+* This program is free software; you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
 * the Free Software Foundation; either version 2 of the License, or
 * (at your option) any later version.
@@ -16,22 +15,22 @@
 * This program is distributed in the hope that it will be useful,
 * but WITHOUT ANY WARRANTY; without even the implied warranty of
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU General Public License क्रम more details.
+* GNU General Public License for more details.
 *
 * NO WARRANTY
 * THE PROGRAM IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OR
 * CONDITIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED INCLUDING, WITHOUT
 * LIMITATION, ANY WARRANTIES OR CONDITIONS OF TITLE, NON-INFRINGEMENT,
 * MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Each Recipient is
-* solely responsible क्रम determining the appropriateness of using and
+* solely responsible for determining the appropriateness of using and
 * distributing the Program and assumes all risks associated with its
 * exercise of rights under this Agreement, including but not limited to
 * the risks and costs of program errors, damage to or loss of data,
-* programs or equipment, and unavailability or पूर्णांकerruption of operations.
+* programs or equipment, and unavailability or interruption of operations.
 *
 * DISCLAIMER OF LIABILITY
 * NEITHER RECIPIENT NOR ANY CONTRIBUTORS SHALL HAVE ANY LIABILITY FOR ANY
-* सूचीECT, INसूचीECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+* DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
 * DAMAGES (INCLUDING WITHOUT LIMITATION LOST PROFITS), HOWEVER CAUSED AND
 * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
 * TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
@@ -39,115 +38,115 @@
 * HEREUNDER, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGES
 *
 * You should have received a copy of the GNU General Public License
-* aदीर्घ with this program; अगर not, ग_लिखो to the Free Software
+* along with this program; if not, write to the Free Software
 * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 *
 *
 * 10/23/2000 - Alpha Release
-*	First release to the खुला
+*	First release to the public
 */
 
-#अगर_अघोषित _LINUX_MWAVEDD_H
-#घोषणा _LINUX_MWAVEDD_H
-#समावेश "3780i.h"
-#समावेश "tp3780i.h"
-#समावेश "smapi.h"
-#समावेश "mwavepub.h"
-#समावेश <linux/ioctl.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/रुको.h>
+#ifndef _LINUX_MWAVEDD_H
+#define _LINUX_MWAVEDD_H
+#include "3780i.h"
+#include "tp3780i.h"
+#include "smapi.h"
+#include "mwavepub.h"
+#include <linux/ioctl.h>
+#include <linux/uaccess.h>
+#include <linux/wait.h>
 
-बाह्य पूर्णांक mwave_debug;
-बाह्य पूर्णांक mwave_3780i_irq;
-बाह्य पूर्णांक mwave_3780i_io;
-बाह्य पूर्णांक mwave_uart_irq;
-बाह्य पूर्णांक mwave_uart_io;
+extern int mwave_debug;
+extern int mwave_3780i_irq;
+extern int mwave_3780i_io;
+extern int mwave_uart_irq;
+extern int mwave_uart_io;
 
-#घोषणा PRINTK_ERROR prपूर्णांकk
-#घोषणा KERN_ERR_MWAVE KERN_ERR "mwave: "
+#define PRINTK_ERROR printk
+#define KERN_ERR_MWAVE KERN_ERR "mwave: "
 
-#घोषणा TRACE_MWAVE     0x0001
-#घोषणा TRACE_SMAPI     0x0002
-#घोषणा TRACE_3780I     0x0004
-#घोषणा TRACE_TP3780I   0x0008
+#define TRACE_MWAVE     0x0001
+#define TRACE_SMAPI     0x0002
+#define TRACE_3780I     0x0004
+#define TRACE_TP3780I   0x0008
 
-#अगर_घोषित MW_TRACE
-#घोषणा PRINTK_1(f,s)                       \
-  अगर (f & (mwave_debug)) अणु                  \
-    prपूर्णांकk(s);                              \
-  पूर्ण
+#ifdef MW_TRACE
+#define PRINTK_1(f,s)                       \
+  if (f & (mwave_debug)) {                  \
+    printk(s);                              \
+  }
 
-#घोषणा PRINTK_2(f,s,v1)                    \
-  अगर (f & (mwave_debug)) अणु                  \
-    prपूर्णांकk(s,v1);                           \
-  पूर्ण
+#define PRINTK_2(f,s,v1)                    \
+  if (f & (mwave_debug)) {                  \
+    printk(s,v1);                           \
+  }
 
-#घोषणा PRINTK_3(f,s,v1,v2)                 \
-  अगर (f & (mwave_debug)) अणु                  \
-    prपूर्णांकk(s,v1,v2);                        \
-  पूर्ण
+#define PRINTK_3(f,s,v1,v2)                 \
+  if (f & (mwave_debug)) {                  \
+    printk(s,v1,v2);                        \
+  }
 
-#घोषणा PRINTK_4(f,s,v1,v2,v3)              \
-  अगर (f & (mwave_debug)) अणु                  \
-    prपूर्णांकk(s,v1,v2,v3);                     \
-  पूर्ण
+#define PRINTK_4(f,s,v1,v2,v3)              \
+  if (f & (mwave_debug)) {                  \
+    printk(s,v1,v2,v3);                     \
+  }
 
-#घोषणा PRINTK_5(f,s,v1,v2,v3,v4)           \
-  अगर (f & (mwave_debug)) अणु                  \
-    prपूर्णांकk(s,v1,v2,v3,v4);                  \
-  पूर्ण
+#define PRINTK_5(f,s,v1,v2,v3,v4)           \
+  if (f & (mwave_debug)) {                  \
+    printk(s,v1,v2,v3,v4);                  \
+  }
 
-#घोषणा PRINTK_6(f,s,v1,v2,v3,v4,v5)        \
-  अगर (f & (mwave_debug)) अणु                  \
-    prपूर्णांकk(s,v1,v2,v3,v4,v5);               \
-  पूर्ण
+#define PRINTK_6(f,s,v1,v2,v3,v4,v5)        \
+  if (f & (mwave_debug)) {                  \
+    printk(s,v1,v2,v3,v4,v5);               \
+  }
 
-#घोषणा PRINTK_7(f,s,v1,v2,v3,v4,v5,v6)     \
-  अगर (f & (mwave_debug)) अणु                  \
-    prपूर्णांकk(s,v1,v2,v3,v4,v5,v6);            \
-  पूर्ण
+#define PRINTK_7(f,s,v1,v2,v3,v4,v5,v6)     \
+  if (f & (mwave_debug)) {                  \
+    printk(s,v1,v2,v3,v4,v5,v6);            \
+  }
 
-#घोषणा PRINTK_8(f,s,v1,v2,v3,v4,v5,v6,v7)  \
-  अगर (f & (mwave_debug)) अणु                  \
-    prपूर्णांकk(s,v1,v2,v3,v4,v5,v6,v7);         \
-  पूर्ण
+#define PRINTK_8(f,s,v1,v2,v3,v4,v5,v6,v7)  \
+  if (f & (mwave_debug)) {                  \
+    printk(s,v1,v2,v3,v4,v5,v6,v7);         \
+  }
 
-#अन्यथा
-#घोषणा PRINTK_1(f,s)
-#घोषणा PRINTK_2(f,s,v1)
-#घोषणा PRINTK_3(f,s,v1,v2)
-#घोषणा PRINTK_4(f,s,v1,v2,v3)
-#घोषणा PRINTK_5(f,s,v1,v2,v3,v4)
-#घोषणा PRINTK_6(f,s,v1,v2,v3,v4,v5)
-#घोषणा PRINTK_7(f,s,v1,v2,v3,v4,v5,v6)
-#घोषणा PRINTK_8(f,s,v1,v2,v3,v4,v5,v6,v7)
-#पूर्ण_अगर
+#else
+#define PRINTK_1(f,s)
+#define PRINTK_2(f,s,v1)
+#define PRINTK_3(f,s,v1,v2)
+#define PRINTK_4(f,s,v1,v2,v3)
+#define PRINTK_5(f,s,v1,v2,v3,v4)
+#define PRINTK_6(f,s,v1,v2,v3,v4,v5)
+#define PRINTK_7(f,s,v1,v2,v3,v4,v5,v6)
+#define PRINTK_8(f,s,v1,v2,v3,v4,v5,v6,v7)
+#endif
 
 
-प्रकार काष्ठा _MWAVE_IPC अणु
-	अचिन्हित लघु usIntCount;	/* 0=none, 1=first, 2=greater than 1st */
+typedef struct _MWAVE_IPC {
+	unsigned short usIntCount;	/* 0=none, 1=first, 2=greater than 1st */
 	bool bIsEnabled;
 	bool bIsHere;
 	/* entry spin lock */
-	रुको_queue_head_t ipc_रुको_queue;
-पूर्ण MWAVE_IPC;
+	wait_queue_head_t ipc_wait_queue;
+} MWAVE_IPC;
 
-प्रकार काष्ठा _MWAVE_DEVICE_DATA अणु
+typedef struct _MWAVE_DEVICE_DATA {
 	THINKPAD_BD_DATA rBDData;	/* board driver's data area */
-	अचिन्हित दीर्घ ulIPCSource_ISR;	/* IPC source bits क्रम recently processed पूर्णांकr, set during ISR processing */
-	अचिन्हित दीर्घ ulIPCSource_DPC;	/* IPC source bits क्रम recently processed पूर्णांकr, set during DPC processing */
+	unsigned long ulIPCSource_ISR;	/* IPC source bits for recently processed intr, set during ISR processing */
+	unsigned long ulIPCSource_DPC;	/* IPC source bits for recently processed intr, set during DPC processing */
 	bool bBDInitialized;
 	bool bResourcesClaimed;
 	bool bDSPEnabled;
 	bool bDSPReset;
 	MWAVE_IPC IPCs[16];
 	bool bMwaveDevRegistered;
-	लघु sLine;
-	पूर्णांक nr_रेजिस्टरed_attrs;
-	पूर्णांक device_रेजिस्टरed;
+	short sLine;
+	int nr_registered_attrs;
+	int device_registered;
 
-पूर्ण MWAVE_DEVICE_DATA, *pMWAVE_DEVICE_DATA;
+} MWAVE_DEVICE_DATA, *pMWAVE_DEVICE_DATA;
 
-बाह्य MWAVE_DEVICE_DATA mwave_s_mdd;
+extern MWAVE_DEVICE_DATA mwave_s_mdd;
 
-#पूर्ण_अगर
+#endif

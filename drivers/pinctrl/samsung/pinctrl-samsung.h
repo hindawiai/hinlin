@@ -1,7 +1,6 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0+ */
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
- * pin-controller/pin-mux/pin-config/gpio-driver क्रम Samsung's SoC's.
+ * pin-controller/pin-mux/pin-config/gpio-driver for Samsung's SoC's.
  *
  * Copyright (c) 2012 Samsung Electronics Co., Ltd.
  *		http://www.samsung.com
@@ -11,27 +10,27 @@
  * Author: Thomas Abraham <thomas.ab@samsung.com>
  */
 
-#अगर_अघोषित __PINCTRL_SAMSUNG_H
-#घोषणा __PINCTRL_SAMSUNG_H
+#ifndef __PINCTRL_SAMSUNG_H
+#define __PINCTRL_SAMSUNG_H
 
-#समावेश <linux/pinctrl/pinctrl.h>
-#समावेश <linux/pinctrl/pinmux.h>
-#समावेश <linux/pinctrl/pinconf.h>
-#समावेश <linux/pinctrl/consumer.h>
-#समावेश <linux/pinctrl/machine.h>
+#include <linux/pinctrl/pinctrl.h>
+#include <linux/pinctrl/pinmux.h>
+#include <linux/pinctrl/pinconf.h>
+#include <linux/pinctrl/consumer.h>
+#include <linux/pinctrl/machine.h>
 
-#समावेश <linux/gpio/driver.h>
+#include <linux/gpio/driver.h>
 
 /**
- * क्रमागत pincfg_type - possible pin configuration types supported.
+ * enum pincfg_type - possible pin configuration types supported.
  * @PINCFG_TYPE_FUNC: Function configuration.
  * @PINCFG_TYPE_DAT: Pin value configuration.
- * @PINCFG_TYPE_PUD: Pull up/करोwn configuration.
+ * @PINCFG_TYPE_PUD: Pull up/down configuration.
  * @PINCFG_TYPE_DRV: Drive strength configuration.
- * @PINCFG_TYPE_CON_PDN: Pin function in घातer करोwn mode.
- * @PINCFG_TYPE_PUD_PDN: Pull up/करोwn configuration in घातer करोwn mode.
+ * @PINCFG_TYPE_CON_PDN: Pin function in power down mode.
+ * @PINCFG_TYPE_PUD_PDN: Pull up/down configuration in power down mode.
  */
-क्रमागत pincfg_type अणु
+enum pincfg_type {
 	PINCFG_TYPE_FUNC,
 	PINCFG_TYPE_DAT,
 	PINCFG_TYPE_PUD,
@@ -40,311 +39,311 @@
 	PINCFG_TYPE_PUD_PDN,
 
 	PINCFG_TYPE_NUM
-पूर्ण;
+};
 
 /*
- * pin configuration (pull up/करोwn and drive strength) type and its value are
- * packed together पूर्णांकo a 16-bits. The upper 8-bits represent the configuration
+ * pin configuration (pull up/down and drive strength) type and its value are
+ * packed together into a 16-bits. The upper 8-bits represent the configuration
  * type and the lower 8-bits hold the value of the configuration type.
  */
-#घोषणा PINCFG_TYPE_MASK		0xFF
-#घोषणा PINCFG_VALUE_SHIFT		8
-#घोषणा PINCFG_VALUE_MASK		(0xFF << PINCFG_VALUE_SHIFT)
-#घोषणा PINCFG_PACK(type, value)	(((value) << PINCFG_VALUE_SHIFT) | type)
-#घोषणा PINCFG_UNPACK_TYPE(cfg)		((cfg) & PINCFG_TYPE_MASK)
-#घोषणा PINCFG_UNPACK_VALUE(cfg)	(((cfg) & PINCFG_VALUE_MASK) >> \
+#define PINCFG_TYPE_MASK		0xFF
+#define PINCFG_VALUE_SHIFT		8
+#define PINCFG_VALUE_MASK		(0xFF << PINCFG_VALUE_SHIFT)
+#define PINCFG_PACK(type, value)	(((value) << PINCFG_VALUE_SHIFT) | type)
+#define PINCFG_UNPACK_TYPE(cfg)		((cfg) & PINCFG_TYPE_MASK)
+#define PINCFG_UNPACK_VALUE(cfg)	(((cfg) & PINCFG_VALUE_MASK) >> \
 						PINCFG_VALUE_SHIFT)
 /**
- * क्रमागत eपूर्णांक_type - possible बाह्यal पूर्णांकerrupt types.
- * @EINT_TYPE_NONE: bank करोes not support बाह्यal पूर्णांकerrupts
- * @EINT_TYPE_GPIO: bank supportes बाह्यal gpio पूर्णांकerrupts
- * @EINT_TYPE_WKUP: bank supportes बाह्यal wakeup पूर्णांकerrupts
- * @EINT_TYPE_WKUP_MUX: bank supports multiplexed बाह्यal wakeup पूर्णांकerrupts
+ * enum eint_type - possible external interrupt types.
+ * @EINT_TYPE_NONE: bank does not support external interrupts
+ * @EINT_TYPE_GPIO: bank supportes external gpio interrupts
+ * @EINT_TYPE_WKUP: bank supportes external wakeup interrupts
+ * @EINT_TYPE_WKUP_MUX: bank supports multiplexed external wakeup interrupts
  *
- * Samsung GPIO controller groups all the available pins पूर्णांकo banks. The pins
- * in a pin bank can support बाह्यal gpio पूर्णांकerrupts or बाह्यal wakeup
- * पूर्णांकerrupts or no पूर्णांकerrupts at all. From a software perspective, the only
- * dअगरference between बाह्यal gpio and बाह्यal wakeup पूर्णांकerrupts is that
- * the wakeup पूर्णांकerrupts can additionally wakeup the प्रणाली अगर it is in
+ * Samsung GPIO controller groups all the available pins into banks. The pins
+ * in a pin bank can support external gpio interrupts or external wakeup
+ * interrupts or no interrupts at all. From a software perspective, the only
+ * difference between external gpio and external wakeup interrupts is that
+ * the wakeup interrupts can additionally wakeup the system if it is in
  * suspended state.
  */
-क्रमागत eपूर्णांक_type अणु
+enum eint_type {
 	EINT_TYPE_NONE,
 	EINT_TYPE_GPIO,
 	EINT_TYPE_WKUP,
 	EINT_TYPE_WKUP_MUX,
-पूर्ण;
+};
 
 /* maximum length of a pin in pin descriptor (example: "gpa0-0") */
-#घोषणा PIN_NAME_LENGTH	10
+#define PIN_NAME_LENGTH	10
 
-#घोषणा PIN_GROUP(n, p, f)				\
-	अणु						\
+#define PIN_GROUP(n, p, f)				\
+	{						\
 		.name		= n,			\
 		.pins		= p,			\
 		.num_pins	= ARRAY_SIZE(p),	\
 		.func		= f			\
-	पूर्ण
+	}
 
-#घोषणा PMX_FUNC(n, g)					\
-	अणु						\
+#define PMX_FUNC(n, g)					\
+	{						\
 		.name		= n,			\
 		.groups		= g,			\
 		.num_groups	= ARRAY_SIZE(g),	\
-	पूर्ण
+	}
 
-काष्ठा samsung_pinctrl_drv_data;
+struct samsung_pinctrl_drv_data;
 
 /**
- * काष्ठा samsung_pin_bank_type: pin bank type description
- * @fld_width: widths of configuration bitfields (0 अगर unavailable)
- * @reg_offset: offsets of configuration रेजिस्टरs (करोn't care of width is 0)
+ * struct samsung_pin_bank_type: pin bank type description
+ * @fld_width: widths of configuration bitfields (0 if unavailable)
+ * @reg_offset: offsets of configuration registers (don't care of width is 0)
  */
-काष्ठा samsung_pin_bank_type अणु
+struct samsung_pin_bank_type {
 	u8 fld_width[PINCFG_TYPE_NUM];
 	u8 reg_offset[PINCFG_TYPE_NUM];
-पूर्ण;
+};
 
 /**
- * काष्ठा samsung_pin_bank_data: represent a controller pin-bank (init data).
- * @type: type of the bank (रेजिस्टर offsets and bitfield widths)
- * @pctl_offset: starting offset of the pin-bank रेजिस्टरs.
- * @pctl_res_idx: index of base address क्रम pin-bank रेजिस्टरs.
+ * struct samsung_pin_bank_data: represent a controller pin-bank (init data).
+ * @type: type of the bank (register offsets and bitfield widths)
+ * @pctl_offset: starting offset of the pin-bank registers.
+ * @pctl_res_idx: index of base address for pin-bank registers.
  * @nr_pins: number of pins included in this bank.
- * @eपूर्णांक_func: function to set in CON रेजिस्टर to configure pin as EINT.
- * @eपूर्णांक_type: type of the बाह्यal पूर्णांकerrupt supported by the bank.
- * @eपूर्णांक_mask: bit mask of pins which support EINT function.
- * @eपूर्णांक_offset: SoC-specअगरic EINT रेजिस्टर or पूर्णांकerrupt offset of bank.
- * @name: name to be prefixed क्रम each pin in this pin bank.
+ * @eint_func: function to set in CON register to configure pin as EINT.
+ * @eint_type: type of the external interrupt supported by the bank.
+ * @eint_mask: bit mask of pins which support EINT function.
+ * @eint_offset: SoC-specific EINT register or interrupt offset of bank.
+ * @name: name to be prefixed for each pin in this pin bank.
  */
-काष्ठा samsung_pin_bank_data अणु
-	स्थिर काष्ठा samsung_pin_bank_type *type;
+struct samsung_pin_bank_data {
+	const struct samsung_pin_bank_type *type;
 	u32		pctl_offset;
 	u8		pctl_res_idx;
 	u8		nr_pins;
-	u8		eपूर्णांक_func;
-	क्रमागत eपूर्णांक_type	eपूर्णांक_type;
-	u32		eपूर्णांक_mask;
-	u32		eपूर्णांक_offset;
-	स्थिर अक्षर	*name;
-पूर्ण;
+	u8		eint_func;
+	enum eint_type	eint_type;
+	u32		eint_mask;
+	u32		eint_offset;
+	const char	*name;
+};
 
 /**
- * काष्ठा samsung_pin_bank: represent a controller pin-bank.
- * @type: type of the bank (रेजिस्टर offsets and bitfield widths)
- * @pctl_base: base address of the pin-bank रेजिस्टरs
- * @pctl_offset: starting offset of the pin-bank रेजिस्टरs.
+ * struct samsung_pin_bank: represent a controller pin-bank.
+ * @type: type of the bank (register offsets and bitfield widths)
+ * @pctl_base: base address of the pin-bank registers
+ * @pctl_offset: starting offset of the pin-bank registers.
  * @nr_pins: number of pins included in this bank.
- * @eपूर्णांक_base: base address of the pin-bank EINT रेजिस्टरs.
- * @eपूर्णांक_func: function to set in CON रेजिस्टर to configure pin as EINT.
- * @eपूर्णांक_type: type of the बाह्यal पूर्णांकerrupt supported by the bank.
- * @eपूर्णांक_mask: bit mask of pins which support EINT function.
- * @eपूर्णांक_offset: SoC-specअगरic EINT रेजिस्टर or पूर्णांकerrupt offset of bank.
- * @name: name to be prefixed क्रम each pin in this pin bank.
+ * @eint_base: base address of the pin-bank EINT registers.
+ * @eint_func: function to set in CON register to configure pin as EINT.
+ * @eint_type: type of the external interrupt supported by the bank.
+ * @eint_mask: bit mask of pins which support EINT function.
+ * @eint_offset: SoC-specific EINT register or interrupt offset of bank.
+ * @name: name to be prefixed for each pin in this pin bank.
  * @pin_base: starting pin number of the bank.
- * @soc_priv: per-bank निजी data क्रम SoC-specअगरic code.
+ * @soc_priv: per-bank private data for SoC-specific code.
  * @of_node: OF node of the bank.
  * @drvdata: link to controller driver data
- * @irq_करोमुख्य: IRQ करोमुख्य of the bank.
+ * @irq_domain: IRQ domain of the bank.
  * @gpio_chip: GPIO chip of the bank.
  * @grange: linux gpio pin range supported by this bank.
- * @irq_chip: link to irq chip क्रम बाह्यal gpio and wakeup पूर्णांकerrupts.
- * @slock: spinlock protecting bank रेजिस्टरs
- * @pm_save: saved रेजिस्टर values during suspend
+ * @irq_chip: link to irq chip for external gpio and wakeup interrupts.
+ * @slock: spinlock protecting bank registers
+ * @pm_save: saved register values during suspend
  */
-काष्ठा samsung_pin_bank अणु
-	स्थिर काष्ठा samsung_pin_bank_type *type;
-	व्योम __iomem	*pctl_base;
+struct samsung_pin_bank {
+	const struct samsung_pin_bank_type *type;
+	void __iomem	*pctl_base;
 	u32		pctl_offset;
 	u8		nr_pins;
-	व्योम __iomem	*eपूर्णांक_base;
-	u8		eपूर्णांक_func;
-	क्रमागत eपूर्णांक_type	eपूर्णांक_type;
-	u32		eपूर्णांक_mask;
-	u32		eपूर्णांक_offset;
-	स्थिर अक्षर	*name;
+	void __iomem	*eint_base;
+	u8		eint_func;
+	enum eint_type	eint_type;
+	u32		eint_mask;
+	u32		eint_offset;
+	const char	*name;
 
 	u32		pin_base;
-	व्योम		*soc_priv;
-	काष्ठा device_node *of_node;
-	काष्ठा samsung_pinctrl_drv_data *drvdata;
-	काष्ठा irq_करोमुख्य *irq_करोमुख्य;
-	काष्ठा gpio_chip gpio_chip;
-	काष्ठा pinctrl_gpio_range grange;
-	काष्ठा exynos_irq_chip *irq_chip;
+	void		*soc_priv;
+	struct device_node *of_node;
+	struct samsung_pinctrl_drv_data *drvdata;
+	struct irq_domain *irq_domain;
+	struct gpio_chip gpio_chip;
+	struct pinctrl_gpio_range grange;
+	struct exynos_irq_chip *irq_chip;
 	raw_spinlock_t slock;
 
-	u32 pm_save[PINCFG_TYPE_NUM + 1]; /* +1 to handle द्विगुन CON रेजिस्टरs*/
-पूर्ण;
+	u32 pm_save[PINCFG_TYPE_NUM + 1]; /* +1 to handle double CON registers*/
+};
 
 /**
- * काष्ठा samsung_retention_data: runसमय pin-bank retention control data.
- * @regs: array of PMU रेजिस्टरs to control pad retention.
- * @nr_regs: number of रेजिस्टरs in @regs array.
- * @value: value to store to रेजिस्टरs to turn off retention.
- * @refcnt: atomic counter अगर retention control affects more than one bank.
- * @priv: retention control code निजी data
- * @enable: platक्रमm specअगरic callback to enter retention mode.
- * @disable: platक्रमm specअगरic callback to निकास retention mode.
+ * struct samsung_retention_data: runtime pin-bank retention control data.
+ * @regs: array of PMU registers to control pad retention.
+ * @nr_regs: number of registers in @regs array.
+ * @value: value to store to registers to turn off retention.
+ * @refcnt: atomic counter if retention control affects more than one bank.
+ * @priv: retention control code private data
+ * @enable: platform specific callback to enter retention mode.
+ * @disable: platform specific callback to exit retention mode.
  **/
-काष्ठा samsung_retention_ctrl अणु
-	स्थिर u32	*regs;
-	पूर्णांक		nr_regs;
+struct samsung_retention_ctrl {
+	const u32	*regs;
+	int		nr_regs;
 	u32		value;
 	atomic_t	*refcnt;
-	व्योम		*priv;
-	व्योम		(*enable)(काष्ठा samsung_pinctrl_drv_data *);
-	व्योम		(*disable)(काष्ठा samsung_pinctrl_drv_data *);
-पूर्ण;
+	void		*priv;
+	void		(*enable)(struct samsung_pinctrl_drv_data *);
+	void		(*disable)(struct samsung_pinctrl_drv_data *);
+};
 
 /**
- * काष्ठा samsung_retention_data: represent a pin-bank retention control data.
- * @regs: array of PMU रेजिस्टरs to control pad retention.
- * @nr_regs: number of रेजिस्टरs in @regs array.
- * @value: value to store to रेजिस्टरs to turn off retention.
- * @refcnt: atomic counter अगर retention control affects more than one bank.
- * @init: platक्रमm specअगरic callback to initialize retention control.
+ * struct samsung_retention_data: represent a pin-bank retention control data.
+ * @regs: array of PMU registers to control pad retention.
+ * @nr_regs: number of registers in @regs array.
+ * @value: value to store to registers to turn off retention.
+ * @refcnt: atomic counter if retention control affects more than one bank.
+ * @init: platform specific callback to initialize retention control.
  **/
-काष्ठा samsung_retention_data अणु
-	स्थिर u32	*regs;
-	पूर्णांक		nr_regs;
+struct samsung_retention_data {
+	const u32	*regs;
+	int		nr_regs;
 	u32		value;
 	atomic_t	*refcnt;
-	काष्ठा samsung_retention_ctrl *(*init)(काष्ठा samsung_pinctrl_drv_data *,
-					स्थिर काष्ठा samsung_retention_data *);
-पूर्ण;
+	struct samsung_retention_ctrl *(*init)(struct samsung_pinctrl_drv_data *,
+					const struct samsung_retention_data *);
+};
 
 /**
- * काष्ठा samsung_pin_ctrl: represent a pin controller.
+ * struct samsung_pin_ctrl: represent a pin controller.
  * @pin_banks: list of pin banks included in this controller.
  * @nr_banks: number of pin banks.
- * @nr_ext_resources: number of the extra base address क्रम pin banks.
- * @retention_data: configuration data क्रम retention control.
- * @eपूर्णांक_gpio_init: platक्रमm specअगरic callback to setup the बाह्यal gpio
- *	पूर्णांकerrupts क्रम the controller.
- * @eपूर्णांक_wkup_init: platक्रमm specअगरic callback to setup the बाह्यal wakeup
- *	पूर्णांकerrupts क्रम the controller.
- * @suspend: platक्रमm specअगरic suspend callback, executed during pin controller
+ * @nr_ext_resources: number of the extra base address for pin banks.
+ * @retention_data: configuration data for retention control.
+ * @eint_gpio_init: platform specific callback to setup the external gpio
+ *	interrupts for the controller.
+ * @eint_wkup_init: platform specific callback to setup the external wakeup
+ *	interrupts for the controller.
+ * @suspend: platform specific suspend callback, executed during pin controller
  *	device suspend, see samsung_pinctrl_suspend()
- * @resume: platक्रमm specअगरic resume callback, executed during pin controller
+ * @resume: platform specific resume callback, executed during pin controller
  *	device suspend, see samsung_pinctrl_resume()
  *
- * External wakeup पूर्णांकerrupts must define at least eपूर्णांक_wkup_init,
- * retention_data and suspend in order क्रम proper suspend/resume to work.
+ * External wakeup interrupts must define at least eint_wkup_init,
+ * retention_data and suspend in order for proper suspend/resume to work.
  */
-काष्ठा samsung_pin_ctrl अणु
-	स्थिर काष्ठा samsung_pin_bank_data *pin_banks;
-	अचिन्हित पूर्णांक	nr_banks;
-	अचिन्हित पूर्णांक	nr_ext_resources;
-	स्थिर काष्ठा samsung_retention_data *retention_data;
+struct samsung_pin_ctrl {
+	const struct samsung_pin_bank_data *pin_banks;
+	unsigned int	nr_banks;
+	unsigned int	nr_ext_resources;
+	const struct samsung_retention_data *retention_data;
 
-	पूर्णांक		(*eपूर्णांक_gpio_init)(काष्ठा samsung_pinctrl_drv_data *);
-	पूर्णांक		(*eपूर्णांक_wkup_init)(काष्ठा samsung_pinctrl_drv_data *);
-	व्योम		(*suspend)(काष्ठा samsung_pinctrl_drv_data *);
-	व्योम		(*resume)(काष्ठा samsung_pinctrl_drv_data *);
-पूर्ण;
+	int		(*eint_gpio_init)(struct samsung_pinctrl_drv_data *);
+	int		(*eint_wkup_init)(struct samsung_pinctrl_drv_data *);
+	void		(*suspend)(struct samsung_pinctrl_drv_data *);
+	void		(*resume)(struct samsung_pinctrl_drv_data *);
+};
 
 /**
- * काष्ठा samsung_pinctrl_drv_data: wrapper क्रम holding driver data together.
+ * struct samsung_pinctrl_drv_data: wrapper for holding driver data together.
  * @node: global list node
- * @virt_base: रेजिस्टर base address of the controller; this will be equal
+ * @virt_base: register base address of the controller; this will be equal
  *             to each bank samsung_pin_bank->pctl_base and used on legacy
- *             platक्रमms (like S3C24XX or S3C64XX) which has to access the base
+ *             platforms (like S3C24XX or S3C64XX) which has to access the base
  *             through samsung_pinctrl_drv_data, not samsung_pin_bank).
  * @dev: device instance representing the controller.
- * @irq: पूर्णांकerrpt number used by the controller to notअगरy gpio पूर्णांकerrupts.
+ * @irq: interrpt number used by the controller to notify gpio interrupts.
  * @ctrl: pin controller instance managed by the driver.
- * @pctl: pin controller descriptor रेजिस्टरed with the pinctrl subप्रणाली.
+ * @pctl: pin controller descriptor registered with the pinctrl subsystem.
  * @pctl_dev: cookie representing pinctrl device instance.
  * @pin_groups: list of pin groups available to the driver.
  * @nr_groups: number of such pin groups.
  * @pmx_functions: list of pin functions available to the driver.
  * @nr_function: number of such pin functions.
- * @pin_base: starting प्रणाली wide pin number.
+ * @pin_base: starting system wide pin number.
  * @nr_pins: number of pins supported by the controller.
- * @retention_ctrl: retention control runसमय data.
- * @suspend: platक्रमm specअगरic suspend callback, executed during pin controller
+ * @retention_ctrl: retention control runtime data.
+ * @suspend: platform specific suspend callback, executed during pin controller
  *	device suspend, see samsung_pinctrl_suspend()
- * @resume: platक्रमm specअगरic resume callback, executed during pin controller
+ * @resume: platform specific resume callback, executed during pin controller
  *	device suspend, see samsung_pinctrl_resume()
  */
-काष्ठा samsung_pinctrl_drv_data अणु
-	काष्ठा list_head		node;
-	व्योम __iomem			*virt_base;
-	काष्ठा device			*dev;
-	पूर्णांक				irq;
+struct samsung_pinctrl_drv_data {
+	struct list_head		node;
+	void __iomem			*virt_base;
+	struct device			*dev;
+	int				irq;
 
-	काष्ठा pinctrl_desc		pctl;
-	काष्ठा pinctrl_dev		*pctl_dev;
+	struct pinctrl_desc		pctl;
+	struct pinctrl_dev		*pctl_dev;
 
-	स्थिर काष्ठा samsung_pin_group	*pin_groups;
-	अचिन्हित पूर्णांक			nr_groups;
-	स्थिर काष्ठा samsung_pmx_func	*pmx_functions;
-	अचिन्हित पूर्णांक			nr_functions;
+	const struct samsung_pin_group	*pin_groups;
+	unsigned int			nr_groups;
+	const struct samsung_pmx_func	*pmx_functions;
+	unsigned int			nr_functions;
 
-	काष्ठा samsung_pin_bank		*pin_banks;
-	अचिन्हित पूर्णांक			nr_banks;
-	अचिन्हित पूर्णांक			pin_base;
-	अचिन्हित पूर्णांक			nr_pins;
+	struct samsung_pin_bank		*pin_banks;
+	unsigned int			nr_banks;
+	unsigned int			pin_base;
+	unsigned int			nr_pins;
 
-	काष्ठा samsung_retention_ctrl	*retention_ctrl;
+	struct samsung_retention_ctrl	*retention_ctrl;
 
-	व्योम (*suspend)(काष्ठा samsung_pinctrl_drv_data *);
-	व्योम (*resume)(काष्ठा samsung_pinctrl_drv_data *);
-पूर्ण;
+	void (*suspend)(struct samsung_pinctrl_drv_data *);
+	void (*resume)(struct samsung_pinctrl_drv_data *);
+};
 
 /**
- * काष्ठा samsung_pinctrl_of_match_data: OF match device specअगरic configuration data.
+ * struct samsung_pinctrl_of_match_data: OF match device specific configuration data.
  * @ctrl: array of pin controller data.
  * @num_ctrl: size of array @ctrl.
  */
-काष्ठा samsung_pinctrl_of_match_data अणु
-	स्थिर काष्ठा samsung_pin_ctrl	*ctrl;
-	अचिन्हित पूर्णांक			num_ctrl;
-पूर्ण;
+struct samsung_pinctrl_of_match_data {
+	const struct samsung_pin_ctrl	*ctrl;
+	unsigned int			num_ctrl;
+};
 
 /**
- * काष्ठा samsung_pin_group: represent group of pins of a pinmux function.
+ * struct samsung_pin_group: represent group of pins of a pinmux function.
  * @name: name of the pin group, used to lookup the group.
  * @pins: the pins included in this group.
  * @num_pins: number of pins included in this group.
  * @func: the function number to be programmed when selected.
  */
-काष्ठा samsung_pin_group अणु
-	स्थिर अक्षर		*name;
-	स्थिर अचिन्हित पूर्णांक	*pins;
+struct samsung_pin_group {
+	const char		*name;
+	const unsigned int	*pins;
 	u8			num_pins;
 	u8			func;
-पूर्ण;
+};
 
 /**
- * काष्ठा samsung_pmx_func: represent a pin function.
+ * struct samsung_pmx_func: represent a pin function.
  * @name: name of the pin function, used to lookup the function.
  * @groups: one or more names of pin groups that provide this function.
  * @num_groups: number of groups included in @groups.
  */
-काष्ठा samsung_pmx_func अणु
-	स्थिर अक्षर		*name;
-	स्थिर अक्षर		**groups;
+struct samsung_pmx_func {
+	const char		*name;
+	const char		**groups;
 	u8			num_groups;
 	u32			val;
-पूर्ण;
+};
 
-/* list of all exported SoC specअगरic data */
-बाह्य स्थिर काष्ठा samsung_pinctrl_of_match_data exynos3250_of_data;
-बाह्य स्थिर काष्ठा samsung_pinctrl_of_match_data exynos4210_of_data;
-बाह्य स्थिर काष्ठा samsung_pinctrl_of_match_data exynos4x12_of_data;
-बाह्य स्थिर काष्ठा samsung_pinctrl_of_match_data exynos5250_of_data;
-बाह्य स्थिर काष्ठा samsung_pinctrl_of_match_data exynos5260_of_data;
-बाह्य स्थिर काष्ठा samsung_pinctrl_of_match_data exynos5410_of_data;
-बाह्य स्थिर काष्ठा samsung_pinctrl_of_match_data exynos5420_of_data;
-बाह्य स्थिर काष्ठा samsung_pinctrl_of_match_data exynos5433_of_data;
-बाह्य स्थिर काष्ठा samsung_pinctrl_of_match_data exynos7_of_data;
-बाह्य स्थिर काष्ठा samsung_pinctrl_of_match_data s3c64xx_of_data;
-बाह्य स्थिर काष्ठा samsung_pinctrl_of_match_data s3c2412_of_data;
-बाह्य स्थिर काष्ठा samsung_pinctrl_of_match_data s3c2416_of_data;
-बाह्य स्थिर काष्ठा samsung_pinctrl_of_match_data s3c2440_of_data;
-बाह्य स्थिर काष्ठा samsung_pinctrl_of_match_data s3c2450_of_data;
-बाह्य स्थिर काष्ठा samsung_pinctrl_of_match_data s5pv210_of_data;
+/* list of all exported SoC specific data */
+extern const struct samsung_pinctrl_of_match_data exynos3250_of_data;
+extern const struct samsung_pinctrl_of_match_data exynos4210_of_data;
+extern const struct samsung_pinctrl_of_match_data exynos4x12_of_data;
+extern const struct samsung_pinctrl_of_match_data exynos5250_of_data;
+extern const struct samsung_pinctrl_of_match_data exynos5260_of_data;
+extern const struct samsung_pinctrl_of_match_data exynos5410_of_data;
+extern const struct samsung_pinctrl_of_match_data exynos5420_of_data;
+extern const struct samsung_pinctrl_of_match_data exynos5433_of_data;
+extern const struct samsung_pinctrl_of_match_data exynos7_of_data;
+extern const struct samsung_pinctrl_of_match_data s3c64xx_of_data;
+extern const struct samsung_pinctrl_of_match_data s3c2412_of_data;
+extern const struct samsung_pinctrl_of_match_data s3c2416_of_data;
+extern const struct samsung_pinctrl_of_match_data s3c2440_of_data;
+extern const struct samsung_pinctrl_of_match_data s3c2450_of_data;
+extern const struct samsung_pinctrl_of_match_data s5pv210_of_data;
 
-#पूर्ण_अगर /* __PINCTRL_SAMSUNG_H */
+#endif /* __PINCTRL_SAMSUNG_H */

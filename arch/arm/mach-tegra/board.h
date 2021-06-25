@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * arch/arm/mach-tegra/board.h
  *
@@ -11,15 +10,15 @@
  *	Erik Gilling <konkers@google.com>
  */
 
-#अगर_अघोषित __MACH_TEGRA_BOARD_H
-#घोषणा __MACH_TEGRA_BOARD_H
+#ifndef __MACH_TEGRA_BOARD_H
+#define __MACH_TEGRA_BOARD_H
 
-#समावेश <linux/types.h>
-#समावेश <linux/reboot.h>
+#include <linux/types.h>
+#include <linux/reboot.h>
 
-व्योम __init tegra_map_common_io(व्योम);
-व्योम __init tegra_init_irq(व्योम);
+void __init tegra_map_common_io(void);
+void __init tegra_init_irq(void);
 
-व्योम __init tegra_paz00_wअगरiसमाप्त_init(व्योम);
+void __init tegra_paz00_wifikill_init(void);
 
-#पूर्ण_अगर
+#endif

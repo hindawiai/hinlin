@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Texas Instruments PCM186x Universal Audio ADC
  *
@@ -8,68 +7,68 @@
  *	Andrew F. Davis <afd@ti.com>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/init.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/pm.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <linux/regulator/consumer.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/slab.h>
-#समावेश <sound/core.h>
-#समावेश <sound/pcm.h>
-#समावेश <sound/pcm_params.h>
-#समावेश <sound/soc.h>
-#समावेश <sound/jack.h>
-#समावेश <sound/initval.h>
-#समावेश <sound/tlv.h>
+#include <linux/module.h>
+#include <linux/moduleparam.h>
+#include <linux/init.h>
+#include <linux/delay.h>
+#include <linux/pm.h>
+#include <linux/pm_runtime.h>
+#include <linux/regulator/consumer.h>
+#include <linux/regmap.h>
+#include <linux/slab.h>
+#include <sound/core.h>
+#include <sound/pcm.h>
+#include <sound/pcm_params.h>
+#include <sound/soc.h>
+#include <sound/jack.h>
+#include <sound/initval.h>
+#include <sound/tlv.h>
 
-#समावेश "pcm186x.h"
+#include "pcm186x.h"
 
-अटल स्थिर अक्षर * स्थिर pcm186x_supply_names[] = अणु
-	"avdd",		/* Analog घातer supply. Connect to 3.3-V supply. */
-	"dvdd",		/* Digital घातer supply. Connect to 3.3-V supply. */
-	"iovdd",	/* I/O घातer supply. Connect to 3.3-V or 1.8-V. */
-पूर्ण;
-#घोषणा PCM186x_NUM_SUPPLIES ARRAY_SIZE(pcm186x_supply_names)
+static const char * const pcm186x_supply_names[] = {
+	"avdd",		/* Analog power supply. Connect to 3.3-V supply. */
+	"dvdd",		/* Digital power supply. Connect to 3.3-V supply. */
+	"iovdd",	/* I/O power supply. Connect to 3.3-V or 1.8-V. */
+};
+#define PCM186x_NUM_SUPPLIES ARRAY_SIZE(pcm186x_supply_names)
 
-काष्ठा pcm186x_priv अणु
-	काष्ठा regmap *regmap;
-	काष्ठा regulator_bulk_data supplies[PCM186x_NUM_SUPPLIES];
-	अचिन्हित पूर्णांक sysclk;
-	अचिन्हित पूर्णांक tdm_offset;
+struct pcm186x_priv {
+	struct regmap *regmap;
+	struct regulator_bulk_data supplies[PCM186x_NUM_SUPPLIES];
+	unsigned int sysclk;
+	unsigned int tdm_offset;
 	bool is_tdm_mode;
 	bool is_master_mode;
-पूर्ण;
+};
 
-अटल स्थिर DECLARE_TLV_DB_SCALE(pcm186x_pga_tlv, -1200, 50, 0);
+static const DECLARE_TLV_DB_SCALE(pcm186x_pga_tlv, -1200, 50, 0);
 
-अटल स्थिर काष्ठा snd_kcontrol_new pcm1863_snd_controls[] = अणु
+static const struct snd_kcontrol_new pcm1863_snd_controls[] = {
 	SOC_DOUBLE_R_S_TLV("ADC Capture Volume", PCM186X_PGA_VAL_CH1_L,
 			   PCM186X_PGA_VAL_CH1_R, 0, -24, 80, 7, 0,
 			   pcm186x_pga_tlv),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा snd_kcontrol_new pcm1865_snd_controls[] = अणु
+static const struct snd_kcontrol_new pcm1865_snd_controls[] = {
 	SOC_DOUBLE_R_S_TLV("ADC1 Capture Volume", PCM186X_PGA_VAL_CH1_L,
 			   PCM186X_PGA_VAL_CH1_R, 0, -24, 80, 7, 0,
 			   pcm186x_pga_tlv),
 	SOC_DOUBLE_R_S_TLV("ADC2 Capture Volume", PCM186X_PGA_VAL_CH2_L,
 			   PCM186X_PGA_VAL_CH2_R, 0, -24, 80, 7, 0,
 			   pcm186x_pga_tlv),
-पूर्ण;
+};
 
-अटल स्थिर अचिन्हित पूर्णांक pcm186x_adc_input_channel_sel_value[] = अणु
+static const unsigned int pcm186x_adc_input_channel_sel_value[] = {
 	0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
 	0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
 	0x10, 0x20, 0x30
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर pcm186x_adcl_input_channel_sel_text[] = अणु
+static const char * const pcm186x_adcl_input_channel_sel_text[] = {
 	"No Select",
-	"VINL1[SE]",					/* Default क्रम ADC1L */
-	"VINL2[SE]",					/* Default क्रम ADC2L */
+	"VINL1[SE]",					/* Default for ADC1L */
+	"VINL2[SE]",					/* Default for ADC2L */
 	"VINL2[SE] + VINL1[SE]",
 	"VINL3[SE]",
 	"VINL3[SE] + VINL1[SE]",
@@ -86,12 +85,12 @@
 	"{VIN1P, VIN1M}[DIFF]",
 	"{VIN4P, VIN4M}[DIFF]",
 	"{VIN1P, VIN1M}[DIFF] + {VIN4P, VIN4M}[DIFF]"
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर pcm186x_adcr_input_channel_sel_text[] = अणु
+static const char * const pcm186x_adcr_input_channel_sel_text[] = {
 	"No Select",
-	"VINR1[SE]",					/* Default क्रम ADC1R */
-	"VINR2[SE]",					/* Default क्रम ADC2R */
+	"VINR1[SE]",					/* Default for ADC1R */
+	"VINR2[SE]",					/* Default for ADC2R */
 	"VINR2[SE] + VINR1[SE]",
 	"VINR3[SE]",
 	"VINR3[SE] + VINR1[SE]",
@@ -108,9 +107,9 @@
 	"{VIN2P, VIN2M}[DIFF]",
 	"{VIN3P, VIN3M}[DIFF]",
 	"{VIN2P, VIN2M}[DIFF] + {VIN3P, VIN3M}[DIFF]"
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा soc_क्रमागत pcm186x_adc_input_channel_sel[] = अणु
+static const struct soc_enum pcm186x_adc_input_channel_sel[] = {
 	SOC_VALUE_ENUM_SINGLE(PCM186X_ADC1_INPUT_SEL_L, 0,
 			      PCM186X_ADC_INPUT_SEL_MASK,
 			      ARRAY_SIZE(pcm186x_adcl_input_channel_sel_text),
@@ -131,16 +130,16 @@
 			      ARRAY_SIZE(pcm186x_adcr_input_channel_sel_text),
 			      pcm186x_adcr_input_channel_sel_text,
 			      pcm186x_adc_input_channel_sel_value),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा snd_kcontrol_new pcm186x_adc_mux_controls[] = अणु
+static const struct snd_kcontrol_new pcm186x_adc_mux_controls[] = {
 	SOC_DAPM_ENUM("ADC1 Left Input", pcm186x_adc_input_channel_sel[0]),
 	SOC_DAPM_ENUM("ADC1 Right Input", pcm186x_adc_input_channel_sel[1]),
 	SOC_DAPM_ENUM("ADC2 Left Input", pcm186x_adc_input_channel_sel[2]),
 	SOC_DAPM_ENUM("ADC2 Right Input", pcm186x_adc_input_channel_sel[3]),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा snd_soc_dapm_widget pcm1863_dapm_widमाला_लो[] = अणु
+static const struct snd_soc_dapm_widget pcm1863_dapm_widgets[] = {
 	SND_SOC_DAPM_INPUT("VINL1"),
 	SND_SOC_DAPM_INPUT("VINR1"),
 	SND_SOC_DAPM_INPUT("VINL2"),
@@ -156,13 +155,13 @@
 			 &pcm186x_adc_mux_controls[1]),
 
 	/*
-	 * Put the codec पूर्णांकo SLEEP mode when not in use, allowing the
+	 * Put the codec into SLEEP mode when not in use, allowing the
 	 * Energysense mechanism to operate.
 	 */
 	SND_SOC_DAPM_ADC("ADC", "HiFi Capture", PCM186X_POWER_CTRL, 1,  1),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा snd_soc_dapm_widget pcm1865_dapm_widमाला_लो[] = अणु
+static const struct snd_soc_dapm_widget pcm1865_dapm_widgets[] = {
 	SND_SOC_DAPM_INPUT("VINL1"),
 	SND_SOC_DAPM_INPUT("VINR1"),
 	SND_SOC_DAPM_INPUT("VINL2"),
@@ -182,361 +181,361 @@
 			 &pcm186x_adc_mux_controls[3]),
 
 	/*
-	 * Put the codec पूर्णांकo SLEEP mode when not in use, allowing the
+	 * Put the codec into SLEEP mode when not in use, allowing the
 	 * Energysense mechanism to operate.
 	 */
 	SND_SOC_DAPM_ADC("ADC1", "HiFi Capture 1", PCM186X_POWER_CTRL, 1,  1),
 	SND_SOC_DAPM_ADC("ADC2", "HiFi Capture 2", PCM186X_POWER_CTRL, 1,  1),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा snd_soc_dapm_route pcm1863_dapm_routes[] = अणु
-	अणु "ADC Left Capture Source", शून्य, "VINL1" पूर्ण,
-	अणु "ADC Left Capture Source", शून्य, "VINR1" पूर्ण,
-	अणु "ADC Left Capture Source", शून्य, "VINL2" पूर्ण,
-	अणु "ADC Left Capture Source", शून्य, "VINR2" पूर्ण,
-	अणु "ADC Left Capture Source", शून्य, "VINL3" पूर्ण,
-	अणु "ADC Left Capture Source", शून्य, "VINR3" पूर्ण,
-	अणु "ADC Left Capture Source", शून्य, "VINL4" पूर्ण,
-	अणु "ADC Left Capture Source", शून्य, "VINR4" पूर्ण,
+static const struct snd_soc_dapm_route pcm1863_dapm_routes[] = {
+	{ "ADC Left Capture Source", NULL, "VINL1" },
+	{ "ADC Left Capture Source", NULL, "VINR1" },
+	{ "ADC Left Capture Source", NULL, "VINL2" },
+	{ "ADC Left Capture Source", NULL, "VINR2" },
+	{ "ADC Left Capture Source", NULL, "VINL3" },
+	{ "ADC Left Capture Source", NULL, "VINR3" },
+	{ "ADC Left Capture Source", NULL, "VINL4" },
+	{ "ADC Left Capture Source", NULL, "VINR4" },
 
-	अणु "ADC", शून्य, "ADC Left Capture Source" पूर्ण,
+	{ "ADC", NULL, "ADC Left Capture Source" },
 
-	अणु "ADC Right Capture Source", शून्य, "VINL1" पूर्ण,
-	अणु "ADC Right Capture Source", शून्य, "VINR1" पूर्ण,
-	अणु "ADC Right Capture Source", शून्य, "VINL2" पूर्ण,
-	अणु "ADC Right Capture Source", शून्य, "VINR2" पूर्ण,
-	अणु "ADC Right Capture Source", शून्य, "VINL3" पूर्ण,
-	अणु "ADC Right Capture Source", शून्य, "VINR3" पूर्ण,
-	अणु "ADC Right Capture Source", शून्य, "VINL4" पूर्ण,
-	अणु "ADC Right Capture Source", शून्य, "VINR4" पूर्ण,
+	{ "ADC Right Capture Source", NULL, "VINL1" },
+	{ "ADC Right Capture Source", NULL, "VINR1" },
+	{ "ADC Right Capture Source", NULL, "VINL2" },
+	{ "ADC Right Capture Source", NULL, "VINR2" },
+	{ "ADC Right Capture Source", NULL, "VINL3" },
+	{ "ADC Right Capture Source", NULL, "VINR3" },
+	{ "ADC Right Capture Source", NULL, "VINL4" },
+	{ "ADC Right Capture Source", NULL, "VINR4" },
 
-	अणु "ADC", शून्य, "ADC Right Capture Source" पूर्ण,
-पूर्ण;
+	{ "ADC", NULL, "ADC Right Capture Source" },
+};
 
-अटल स्थिर काष्ठा snd_soc_dapm_route pcm1865_dapm_routes[] = अणु
-	अणु "ADC1 Left Capture Source", शून्य, "VINL1" पूर्ण,
-	अणु "ADC1 Left Capture Source", शून्य, "VINR1" पूर्ण,
-	अणु "ADC1 Left Capture Source", शून्य, "VINL2" पूर्ण,
-	अणु "ADC1 Left Capture Source", शून्य, "VINR2" पूर्ण,
-	अणु "ADC1 Left Capture Source", शून्य, "VINL3" पूर्ण,
-	अणु "ADC1 Left Capture Source", शून्य, "VINR3" पूर्ण,
-	अणु "ADC1 Left Capture Source", शून्य, "VINL4" पूर्ण,
-	अणु "ADC1 Left Capture Source", शून्य, "VINR4" पूर्ण,
+static const struct snd_soc_dapm_route pcm1865_dapm_routes[] = {
+	{ "ADC1 Left Capture Source", NULL, "VINL1" },
+	{ "ADC1 Left Capture Source", NULL, "VINR1" },
+	{ "ADC1 Left Capture Source", NULL, "VINL2" },
+	{ "ADC1 Left Capture Source", NULL, "VINR2" },
+	{ "ADC1 Left Capture Source", NULL, "VINL3" },
+	{ "ADC1 Left Capture Source", NULL, "VINR3" },
+	{ "ADC1 Left Capture Source", NULL, "VINL4" },
+	{ "ADC1 Left Capture Source", NULL, "VINR4" },
 
-	अणु "ADC1", शून्य, "ADC1 Left Capture Source" पूर्ण,
+	{ "ADC1", NULL, "ADC1 Left Capture Source" },
 
-	अणु "ADC1 Right Capture Source", शून्य, "VINL1" पूर्ण,
-	अणु "ADC1 Right Capture Source", शून्य, "VINR1" पूर्ण,
-	अणु "ADC1 Right Capture Source", शून्य, "VINL2" पूर्ण,
-	अणु "ADC1 Right Capture Source", शून्य, "VINR2" पूर्ण,
-	अणु "ADC1 Right Capture Source", शून्य, "VINL3" पूर्ण,
-	अणु "ADC1 Right Capture Source", शून्य, "VINR3" पूर्ण,
-	अणु "ADC1 Right Capture Source", शून्य, "VINL4" पूर्ण,
-	अणु "ADC1 Right Capture Source", शून्य, "VINR4" पूर्ण,
+	{ "ADC1 Right Capture Source", NULL, "VINL1" },
+	{ "ADC1 Right Capture Source", NULL, "VINR1" },
+	{ "ADC1 Right Capture Source", NULL, "VINL2" },
+	{ "ADC1 Right Capture Source", NULL, "VINR2" },
+	{ "ADC1 Right Capture Source", NULL, "VINL3" },
+	{ "ADC1 Right Capture Source", NULL, "VINR3" },
+	{ "ADC1 Right Capture Source", NULL, "VINL4" },
+	{ "ADC1 Right Capture Source", NULL, "VINR4" },
 
-	अणु "ADC1", शून्य, "ADC1 Right Capture Source" पूर्ण,
+	{ "ADC1", NULL, "ADC1 Right Capture Source" },
 
-	अणु "ADC2 Left Capture Source", शून्य, "VINL1" पूर्ण,
-	अणु "ADC2 Left Capture Source", शून्य, "VINR1" पूर्ण,
-	अणु "ADC2 Left Capture Source", शून्य, "VINL2" पूर्ण,
-	अणु "ADC2 Left Capture Source", शून्य, "VINR2" पूर्ण,
-	अणु "ADC2 Left Capture Source", शून्य, "VINL3" पूर्ण,
-	अणु "ADC2 Left Capture Source", शून्य, "VINR3" पूर्ण,
-	अणु "ADC2 Left Capture Source", शून्य, "VINL4" पूर्ण,
-	अणु "ADC2 Left Capture Source", शून्य, "VINR4" पूर्ण,
+	{ "ADC2 Left Capture Source", NULL, "VINL1" },
+	{ "ADC2 Left Capture Source", NULL, "VINR1" },
+	{ "ADC2 Left Capture Source", NULL, "VINL2" },
+	{ "ADC2 Left Capture Source", NULL, "VINR2" },
+	{ "ADC2 Left Capture Source", NULL, "VINL3" },
+	{ "ADC2 Left Capture Source", NULL, "VINR3" },
+	{ "ADC2 Left Capture Source", NULL, "VINL4" },
+	{ "ADC2 Left Capture Source", NULL, "VINR4" },
 
-	अणु "ADC2", शून्य, "ADC2 Left Capture Source" पूर्ण,
+	{ "ADC2", NULL, "ADC2 Left Capture Source" },
 
-	अणु "ADC2 Right Capture Source", शून्य, "VINL1" पूर्ण,
-	अणु "ADC2 Right Capture Source", शून्य, "VINR1" पूर्ण,
-	अणु "ADC2 Right Capture Source", शून्य, "VINL2" पूर्ण,
-	अणु "ADC2 Right Capture Source", शून्य, "VINR2" पूर्ण,
-	अणु "ADC2 Right Capture Source", शून्य, "VINL3" पूर्ण,
-	अणु "ADC2 Right Capture Source", शून्य, "VINR3" पूर्ण,
-	अणु "ADC2 Right Capture Source", शून्य, "VINL4" पूर्ण,
-	अणु "ADC2 Right Capture Source", शून्य, "VINR4" पूर्ण,
+	{ "ADC2 Right Capture Source", NULL, "VINL1" },
+	{ "ADC2 Right Capture Source", NULL, "VINR1" },
+	{ "ADC2 Right Capture Source", NULL, "VINL2" },
+	{ "ADC2 Right Capture Source", NULL, "VINR2" },
+	{ "ADC2 Right Capture Source", NULL, "VINL3" },
+	{ "ADC2 Right Capture Source", NULL, "VINR3" },
+	{ "ADC2 Right Capture Source", NULL, "VINL4" },
+	{ "ADC2 Right Capture Source", NULL, "VINR4" },
 
-	अणु "ADC2", शून्य, "ADC2 Right Capture Source" पूर्ण,
-पूर्ण;
+	{ "ADC2", NULL, "ADC2 Right Capture Source" },
+};
 
-अटल पूर्णांक pcm186x_hw_params(काष्ठा snd_pcm_substream *substream,
-			     काष्ठा snd_pcm_hw_params *params,
-			     काष्ठा snd_soc_dai *dai)
-अणु
-	काष्ठा snd_soc_component *component = dai->component;
-	काष्ठा pcm186x_priv *priv = snd_soc_component_get_drvdata(component);
-	अचिन्हित पूर्णांक rate = params_rate(params);
-	snd_pcm_क्रमmat_t क्रमmat = params_क्रमmat(params);
-	अचिन्हित पूर्णांक width = params_width(params);
-	अचिन्हित पूर्णांक channels = params_channels(params);
-	अचिन्हित पूर्णांक भाग_lrck;
-	अचिन्हित पूर्णांक भाग_bck;
+static int pcm186x_hw_params(struct snd_pcm_substream *substream,
+			     struct snd_pcm_hw_params *params,
+			     struct snd_soc_dai *dai)
+{
+	struct snd_soc_component *component = dai->component;
+	struct pcm186x_priv *priv = snd_soc_component_get_drvdata(component);
+	unsigned int rate = params_rate(params);
+	snd_pcm_format_t format = params_format(params);
+	unsigned int width = params_width(params);
+	unsigned int channels = params_channels(params);
+	unsigned int div_lrck;
+	unsigned int div_bck;
 	u8 tdm_tx_sel = 0;
 	u8 pcm_cfg = 0;
 
 	dev_dbg(component->dev, "%s() rate=%u format=0x%x width=%u channels=%u\n",
-		__func__, rate, क्रमmat, width, channels);
+		__func__, rate, format, width, channels);
 
-	चयन (width) अणु
-	हाल 16:
+	switch (width) {
+	case 16:
 		pcm_cfg = PCM186X_PCM_CFG_RX_WLEN_16 <<
 			  PCM186X_PCM_CFG_RX_WLEN_SHIFT |
 			  PCM186X_PCM_CFG_TX_WLEN_16 <<
 			  PCM186X_PCM_CFG_TX_WLEN_SHIFT;
-		अवरोध;
-	हाल 20:
+		break;
+	case 20:
 		pcm_cfg = PCM186X_PCM_CFG_RX_WLEN_20 <<
 			  PCM186X_PCM_CFG_RX_WLEN_SHIFT |
 			  PCM186X_PCM_CFG_TX_WLEN_20 <<
 			  PCM186X_PCM_CFG_TX_WLEN_SHIFT;
-		अवरोध;
-	हाल 24:
+		break;
+	case 24:
 		pcm_cfg = PCM186X_PCM_CFG_RX_WLEN_24 <<
 			  PCM186X_PCM_CFG_RX_WLEN_SHIFT |
 			  PCM186X_PCM_CFG_TX_WLEN_24 <<
 			  PCM186X_PCM_CFG_TX_WLEN_SHIFT;
-		अवरोध;
-	हाल 32:
+		break;
+	case 32:
 		pcm_cfg = PCM186X_PCM_CFG_RX_WLEN_32 <<
 			  PCM186X_PCM_CFG_RX_WLEN_SHIFT |
 			  PCM186X_PCM_CFG_TX_WLEN_32 <<
 			  PCM186X_PCM_CFG_TX_WLEN_SHIFT;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
 	snd_soc_component_update_bits(component, PCM186X_PCM_CFG,
 			    PCM186X_PCM_CFG_RX_WLEN_MASK |
 			    PCM186X_PCM_CFG_TX_WLEN_MASK,
 			    pcm_cfg);
 
-	भाग_lrck = width * channels;
+	div_lrck = width * channels;
 
-	अगर (priv->is_tdm_mode) अणु
+	if (priv->is_tdm_mode) {
 		/* Select TDM transmission data */
-		चयन (channels) अणु
-		हाल 2:
+		switch (channels) {
+		case 2:
 			tdm_tx_sel = PCM186X_TDM_TX_SEL_2CH;
-			अवरोध;
-		हाल 4:
+			break;
+		case 4:
 			tdm_tx_sel = PCM186X_TDM_TX_SEL_4CH;
-			अवरोध;
-		हाल 6:
+			break;
+		case 6:
 			tdm_tx_sel = PCM186X_TDM_TX_SEL_6CH;
-			अवरोध;
-		शेष:
-			वापस -EINVAL;
-		पूर्ण
+			break;
+		default:
+			return -EINVAL;
+		}
 
 		snd_soc_component_update_bits(component, PCM186X_TDM_TX_SEL,
 				    PCM186X_TDM_TX_SEL_MASK, tdm_tx_sel);
 
-		/* In DSP/TDM mode, the LRCLK भागider must be 256 */
-		भाग_lrck = 256;
+		/* In DSP/TDM mode, the LRCLK divider must be 256 */
+		div_lrck = 256;
 
-		/* Configure 1/256 duty cycle क्रम LRCK */
+		/* Configure 1/256 duty cycle for LRCK */
 		snd_soc_component_update_bits(component, PCM186X_PCM_CFG,
 				    PCM186X_PCM_CFG_TDM_LRCK_MODE,
 				    PCM186X_PCM_CFG_TDM_LRCK_MODE);
-	पूर्ण
+	}
 
-	/* Only configure घड़ी भागiders in master mode. */
-	अगर (priv->is_master_mode) अणु
-		भाग_bck = priv->sysclk / (भाग_lrck * rate);
+	/* Only configure clock dividers in master mode. */
+	if (priv->is_master_mode) {
+		div_bck = priv->sysclk / (div_lrck * rate);
 
 		dev_dbg(component->dev,
 			"%s() master_clk=%u div_bck=%u div_lrck=%u\n",
-			__func__, priv->sysclk, भाग_bck, भाग_lrck);
+			__func__, priv->sysclk, div_bck, div_lrck);
 
-		snd_soc_component_ग_लिखो(component, PCM186X_BCK_DIV, भाग_bck - 1);
-		snd_soc_component_ग_लिखो(component, PCM186X_LRK_DIV, भाग_lrck - 1);
-	पूर्ण
+		snd_soc_component_write(component, PCM186X_BCK_DIV, div_bck - 1);
+		snd_soc_component_write(component, PCM186X_LRK_DIV, div_lrck - 1);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक pcm186x_set_fmt(काष्ठा snd_soc_dai *dai, अचिन्हित पूर्णांक क्रमmat)
-अणु
-	काष्ठा snd_soc_component *component = dai->component;
-	काष्ठा pcm186x_priv *priv = snd_soc_component_get_drvdata(component);
+static int pcm186x_set_fmt(struct snd_soc_dai *dai, unsigned int format)
+{
+	struct snd_soc_component *component = dai->component;
+	struct pcm186x_priv *priv = snd_soc_component_get_drvdata(component);
 	u8 clk_ctrl = 0;
 	u8 pcm_cfg = 0;
 
-	dev_dbg(component->dev, "%s() format=0x%x\n", __func__, क्रमmat);
+	dev_dbg(component->dev, "%s() format=0x%x\n", __func__, format);
 
-	/* set master/slave audio पूर्णांकerface */
-	चयन (क्रमmat & SND_SOC_DAIFMT_MASTER_MASK) अणु
-	हाल SND_SOC_DAIFMT_CBM_CFM:
-		अगर (!priv->sysclk) अणु
+	/* set master/slave audio interface */
+	switch (format & SND_SOC_DAIFMT_MASTER_MASK) {
+	case SND_SOC_DAIFMT_CBM_CFM:
+		if (!priv->sysclk) {
 			dev_err(component->dev, "operating in master mode requires sysclock to be configured\n");
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 		clk_ctrl |= PCM186X_CLK_CTRL_MST_MODE;
 		priv->is_master_mode = true;
-		अवरोध;
-	हाल SND_SOC_DAIFMT_CBS_CFS:
+		break;
+	case SND_SOC_DAIFMT_CBS_CFS:
 		priv->is_master_mode = false;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		dev_err(component->dev, "Invalid DAI master/slave interface\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	/* set पूर्णांकerface polarity */
-	चयन (क्रमmat & SND_SOC_DAIFMT_INV_MASK) अणु
-	हाल SND_SOC_DAIFMT_NB_NF:
-		अवरोध;
-	शेष:
+	/* set interface polarity */
+	switch (format & SND_SOC_DAIFMT_INV_MASK) {
+	case SND_SOC_DAIFMT_NB_NF:
+		break;
+	default:
 		dev_err(component->dev, "Inverted DAI clocks not supported\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	/* set पूर्णांकerface क्रमmat */
-	चयन (क्रमmat & SND_SOC_DAIFMT_FORMAT_MASK) अणु
-	हाल SND_SOC_DAIFMT_I2S:
+	/* set interface format */
+	switch (format & SND_SOC_DAIFMT_FORMAT_MASK) {
+	case SND_SOC_DAIFMT_I2S:
 		pcm_cfg = PCM186X_PCM_CFG_FMT_I2S;
-		अवरोध;
-	हाल SND_SOC_DAIFMT_LEFT_J:
+		break;
+	case SND_SOC_DAIFMT_LEFT_J:
 		pcm_cfg = PCM186X_PCM_CFG_FMT_LEFTJ;
-		अवरोध;
-	हाल SND_SOC_DAIFMT_DSP_A:
+		break;
+	case SND_SOC_DAIFMT_DSP_A:
 		priv->tdm_offset += 1;
 		fallthrough;
 		/* DSP_A uses the same basic config as DSP_B
-		 * except we need to shअगरt the TDM output by one BCK cycle
+		 * except we need to shift the TDM output by one BCK cycle
 		 */
-	हाल SND_SOC_DAIFMT_DSP_B:
+	case SND_SOC_DAIFMT_DSP_B:
 		priv->is_tdm_mode = true;
 		pcm_cfg = PCM186X_PCM_CFG_FMT_TDM;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		dev_err(component->dev, "Invalid DAI format\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	snd_soc_component_update_bits(component, PCM186X_CLK_CTRL,
 			    PCM186X_CLK_CTRL_MST_MODE, clk_ctrl);
 
-	snd_soc_component_ग_लिखो(component, PCM186X_TDM_TX_OFFSET, priv->tdm_offset);
+	snd_soc_component_write(component, PCM186X_TDM_TX_OFFSET, priv->tdm_offset);
 
 	snd_soc_component_update_bits(component, PCM186X_PCM_CFG,
 			    PCM186X_PCM_CFG_FMT_MASK, pcm_cfg);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक pcm186x_set_tdm_slot(काष्ठा snd_soc_dai *dai, अचिन्हित पूर्णांक tx_mask,
-				अचिन्हित पूर्णांक rx_mask, पूर्णांक slots, पूर्णांक slot_width)
-अणु
-	काष्ठा snd_soc_component *component = dai->component;
-	काष्ठा pcm186x_priv *priv = snd_soc_component_get_drvdata(component);
-	अचिन्हित पूर्णांक first_slot, last_slot, tdm_offset;
+static int pcm186x_set_tdm_slot(struct snd_soc_dai *dai, unsigned int tx_mask,
+				unsigned int rx_mask, int slots, int slot_width)
+{
+	struct snd_soc_component *component = dai->component;
+	struct pcm186x_priv *priv = snd_soc_component_get_drvdata(component);
+	unsigned int first_slot, last_slot, tdm_offset;
 
 	dev_dbg(component->dev,
 		"%s() tx_mask=0x%x rx_mask=0x%x slots=%d slot_width=%d\n",
 		__func__, tx_mask, rx_mask, slots, slot_width);
 
-	अगर (!tx_mask) अणु
+	if (!tx_mask) {
 		dev_err(component->dev, "tdm tx mask must not be 0\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	first_slot = __ffs(tx_mask);
 	last_slot = __fls(tx_mask);
 
-	अगर (last_slot - first_slot != hweight32(tx_mask) - 1) अणु
+	if (last_slot - first_slot != hweight32(tx_mask) - 1) {
 		dev_err(component->dev, "tdm tx mask must be contiguous\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	tdm_offset = first_slot * slot_width;
 
-	अगर (tdm_offset > 255) अणु
+	if (tdm_offset > 255) {
 		dev_err(component->dev, "tdm tx slot selection out of bounds\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	priv->tdm_offset = tdm_offset;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक pcm186x_set_dai_sysclk(काष्ठा snd_soc_dai *dai, पूर्णांक clk_id,
-				  अचिन्हित पूर्णांक freq, पूर्णांक dir)
-अणु
-	काष्ठा snd_soc_component *component = dai->component;
-	काष्ठा pcm186x_priv *priv = snd_soc_component_get_drvdata(component);
+static int pcm186x_set_dai_sysclk(struct snd_soc_dai *dai, int clk_id,
+				  unsigned int freq, int dir)
+{
+	struct snd_soc_component *component = dai->component;
+	struct pcm186x_priv *priv = snd_soc_component_get_drvdata(component);
 
 	dev_dbg(component->dev, "%s() clk_id=%d freq=%u dir=%d\n",
 		__func__, clk_id, freq, dir);
 
 	priv->sysclk = freq;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा snd_soc_dai_ops pcm186x_dai_ops = अणु
+static const struct snd_soc_dai_ops pcm186x_dai_ops = {
 	.set_sysclk = pcm186x_set_dai_sysclk,
 	.set_tdm_slot = pcm186x_set_tdm_slot,
 	.set_fmt = pcm186x_set_fmt,
 	.hw_params = pcm186x_hw_params,
-पूर्ण;
+};
 
-अटल काष्ठा snd_soc_dai_driver pcm1863_dai = अणु
+static struct snd_soc_dai_driver pcm1863_dai = {
 	.name = "pcm1863-aif",
-	.capture = अणु
+	.capture = {
 		 .stream_name = "Capture",
 		 .channels_min = 1,
 		 .channels_max = 2,
 		 .rates = PCM186X_RATES,
-		 .क्रमmats = PCM186X_FORMATS,
-	 पूर्ण,
+		 .formats = PCM186X_FORMATS,
+	 },
 	.ops = &pcm186x_dai_ops,
-पूर्ण;
+};
 
-अटल काष्ठा snd_soc_dai_driver pcm1865_dai = अणु
+static struct snd_soc_dai_driver pcm1865_dai = {
 	.name = "pcm1865-aif",
-	.capture = अणु
+	.capture = {
 		 .stream_name = "Capture",
 		 .channels_min = 1,
 		 .channels_max = 4,
 		 .rates = PCM186X_RATES,
-		 .क्रमmats = PCM186X_FORMATS,
-	 पूर्ण,
+		 .formats = PCM186X_FORMATS,
+	 },
 	.ops = &pcm186x_dai_ops,
-पूर्ण;
+};
 
-अटल पूर्णांक pcm186x_घातer_on(काष्ठा snd_soc_component *component)
-अणु
-	काष्ठा pcm186x_priv *priv = snd_soc_component_get_drvdata(component);
-	पूर्णांक ret = 0;
+static int pcm186x_power_on(struct snd_soc_component *component)
+{
+	struct pcm186x_priv *priv = snd_soc_component_get_drvdata(component);
+	int ret = 0;
 
 	ret = regulator_bulk_enable(ARRAY_SIZE(priv->supplies),
 				    priv->supplies);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	regcache_cache_only(priv->regmap, false);
 	ret = regcache_sync(priv->regmap);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(component->dev, "Failed to restore cache\n");
 		regcache_cache_only(priv->regmap, true);
 		regulator_bulk_disable(ARRAY_SIZE(priv->supplies),
 				       priv->supplies);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	snd_soc_component_update_bits(component, PCM186X_POWER_CTRL,
 			    PCM186X_PWR_CTRL_PWRDN, 0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक pcm186x_घातer_off(काष्ठा snd_soc_component *component)
-अणु
-	काष्ठा pcm186x_priv *priv = snd_soc_component_get_drvdata(component);
-	पूर्णांक ret;
+static int pcm186x_power_off(struct snd_soc_component *component)
+{
+	struct pcm186x_priv *priv = snd_soc_component_get_drvdata(component);
+	int ret;
 
 	snd_soc_component_update_bits(component, PCM186X_POWER_CTRL,
 			    PCM186X_PWR_CTRL_PWRDN, PCM186X_PWR_CTRL_PWRDN);
@@ -545,167 +544,167 @@
 
 	ret = regulator_bulk_disable(ARRAY_SIZE(priv->supplies),
 				     priv->supplies);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक pcm186x_set_bias_level(काष्ठा snd_soc_component *component,
-				  क्रमागत snd_soc_bias_level level)
-अणु
+static int pcm186x_set_bias_level(struct snd_soc_component *component,
+				  enum snd_soc_bias_level level)
+{
 	dev_dbg(component->dev, "## %s: %d -> %d\n", __func__,
 		snd_soc_component_get_bias_level(component), level);
 
-	चयन (level) अणु
-	हाल SND_SOC_BIAS_ON:
-		अवरोध;
-	हाल SND_SOC_BIAS_PREPARE:
-		अवरोध;
-	हाल SND_SOC_BIAS_STANDBY:
-		अगर (snd_soc_component_get_bias_level(component) == SND_SOC_BIAS_OFF)
-			pcm186x_घातer_on(component);
-		अवरोध;
-	हाल SND_SOC_BIAS_OFF:
-		pcm186x_घातer_off(component);
-		अवरोध;
-	पूर्ण
+	switch (level) {
+	case SND_SOC_BIAS_ON:
+		break;
+	case SND_SOC_BIAS_PREPARE:
+		break;
+	case SND_SOC_BIAS_STANDBY:
+		if (snd_soc_component_get_bias_level(component) == SND_SOC_BIAS_OFF)
+			pcm186x_power_on(component);
+		break;
+	case SND_SOC_BIAS_OFF:
+		pcm186x_power_off(component);
+		break;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा snd_soc_component_driver soc_codec_dev_pcm1863 = अणु
+static struct snd_soc_component_driver soc_codec_dev_pcm1863 = {
 	.set_bias_level		= pcm186x_set_bias_level,
 	.controls		= pcm1863_snd_controls,
 	.num_controls		= ARRAY_SIZE(pcm1863_snd_controls),
-	.dapm_widमाला_लो		= pcm1863_dapm_widमाला_लो,
-	.num_dapm_widमाला_लो	= ARRAY_SIZE(pcm1863_dapm_widमाला_लो),
+	.dapm_widgets		= pcm1863_dapm_widgets,
+	.num_dapm_widgets	= ARRAY_SIZE(pcm1863_dapm_widgets),
 	.dapm_routes		= pcm1863_dapm_routes,
 	.num_dapm_routes	= ARRAY_SIZE(pcm1863_dapm_routes),
 	.idle_bias_on		= 1,
-	.use_pmकरोwn_समय	= 1,
+	.use_pmdown_time	= 1,
 	.endianness		= 1,
 	.non_legacy_dai_naming	= 1,
-पूर्ण;
+};
 
-अटल काष्ठा snd_soc_component_driver soc_codec_dev_pcm1865 = अणु
+static struct snd_soc_component_driver soc_codec_dev_pcm1865 = {
 	.set_bias_level		= pcm186x_set_bias_level,
 	.controls		= pcm1865_snd_controls,
 	.num_controls		= ARRAY_SIZE(pcm1865_snd_controls),
-	.dapm_widमाला_लो		= pcm1865_dapm_widमाला_लो,
-	.num_dapm_widमाला_लो	= ARRAY_SIZE(pcm1865_dapm_widमाला_लो),
+	.dapm_widgets		= pcm1865_dapm_widgets,
+	.num_dapm_widgets	= ARRAY_SIZE(pcm1865_dapm_widgets),
 	.dapm_routes		= pcm1865_dapm_routes,
 	.num_dapm_routes	= ARRAY_SIZE(pcm1865_dapm_routes),
 	.suspend_bias_off	= 1,
 	.idle_bias_on		= 1,
-	.use_pmकरोwn_समय	= 1,
+	.use_pmdown_time	= 1,
 	.endianness		= 1,
 	.non_legacy_dai_naming	= 1,
-पूर्ण;
+};
 
-अटल bool pcm186x_अस्थिर(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
-अणु
-	चयन (reg) अणु
-	हाल PCM186X_PAGE:
-	हाल PCM186X_DEVICE_STATUS:
-	हाल PCM186X_FSAMPLE_STATUS:
-	हाल PCM186X_DIV_STATUS:
-	हाल PCM186X_CLK_STATUS:
-	हाल PCM186X_SUPPLY_STATUS:
-	हाल PCM186X_MMAP_STAT_CTRL:
-	हाल PCM186X_MMAP_ADDRESS:
-		वापस true;
-	पूर्ण
+static bool pcm186x_volatile(struct device *dev, unsigned int reg)
+{
+	switch (reg) {
+	case PCM186X_PAGE:
+	case PCM186X_DEVICE_STATUS:
+	case PCM186X_FSAMPLE_STATUS:
+	case PCM186X_DIV_STATUS:
+	case PCM186X_CLK_STATUS:
+	case PCM186X_SUPPLY_STATUS:
+	case PCM186X_MMAP_STAT_CTRL:
+	case PCM186X_MMAP_ADDRESS:
+		return true;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल स्थिर काष्ठा regmap_range_cfg pcm186x_range = अणु
+static const struct regmap_range_cfg pcm186x_range = {
 	.name = "Pages",
 	.range_max = PCM186X_MAX_REGISTER,
 	.selector_reg = PCM186X_PAGE,
 	.selector_mask = 0xff,
-	.winकरोw_len = PCM186X_PAGE_LEN,
-पूर्ण;
+	.window_len = PCM186X_PAGE_LEN,
+};
 
-स्थिर काष्ठा regmap_config pcm186x_regmap = अणु
+const struct regmap_config pcm186x_regmap = {
 	.reg_bits = 8,
 	.val_bits = 8,
 
-	.अस्थिर_reg = pcm186x_अस्थिर,
+	.volatile_reg = pcm186x_volatile,
 
 	.ranges = &pcm186x_range,
 	.num_ranges = 1,
 
-	.max_रेजिस्टर = PCM186X_MAX_REGISTER,
+	.max_register = PCM186X_MAX_REGISTER,
 
 	.cache_type = REGCACHE_RBTREE,
-पूर्ण;
+};
 EXPORT_SYMBOL_GPL(pcm186x_regmap);
 
-पूर्णांक pcm186x_probe(काष्ठा device *dev, क्रमागत pcm186x_type type, पूर्णांक irq,
-		  काष्ठा regmap *regmap)
-अणु
-	काष्ठा pcm186x_priv *priv;
-	पूर्णांक i, ret;
+int pcm186x_probe(struct device *dev, enum pcm186x_type type, int irq,
+		  struct regmap *regmap)
+{
+	struct pcm186x_priv *priv;
+	int i, ret;
 
-	priv = devm_kzalloc(dev, माप(काष्ठा pcm186x_priv), GFP_KERNEL);
-	अगर (!priv)
-		वापस -ENOMEM;
+	priv = devm_kzalloc(dev, sizeof(struct pcm186x_priv), GFP_KERNEL);
+	if (!priv)
+		return -ENOMEM;
 
 	dev_set_drvdata(dev, priv);
 	priv->regmap = regmap;
 
-	क्रम (i = 0; i < ARRAY_SIZE(priv->supplies); i++)
+	for (i = 0; i < ARRAY_SIZE(priv->supplies); i++)
 		priv->supplies[i].supply = pcm186x_supply_names[i];
 
 	ret = devm_regulator_bulk_get(dev, ARRAY_SIZE(priv->supplies),
 				      priv->supplies);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "failed to request supplies: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	ret = regulator_bulk_enable(ARRAY_SIZE(priv->supplies),
 				    priv->supplies);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "failed enable supplies: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	/* Reset device रेजिस्टरs क्रम a consistent घातer-on like state */
-	ret = regmap_ग_लिखो(regmap, PCM186X_PAGE, PCM186X_RESET);
-	अगर (ret) अणु
+	/* Reset device registers for a consistent power-on like state */
+	ret = regmap_write(regmap, PCM186X_PAGE, PCM186X_RESET);
+	if (ret) {
 		dev_err(dev, "failed to write device: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	ret = regulator_bulk_disable(ARRAY_SIZE(priv->supplies),
 				     priv->supplies);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "failed disable supplies: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	चयन (type) अणु
-	हाल PCM1865:
-	हाल PCM1864:
-		ret = devm_snd_soc_रेजिस्टर_component(dev, &soc_codec_dev_pcm1865,
+	switch (type) {
+	case PCM1865:
+	case PCM1864:
+		ret = devm_snd_soc_register_component(dev, &soc_codec_dev_pcm1865,
 					     &pcm1865_dai, 1);
-		अवरोध;
-	हाल PCM1863:
-	हाल PCM1862:
-	शेष:
-		ret = devm_snd_soc_रेजिस्टर_component(dev, &soc_codec_dev_pcm1863,
+		break;
+	case PCM1863:
+	case PCM1862:
+	default:
+		ret = devm_snd_soc_register_component(dev, &soc_codec_dev_pcm1863,
 					     &pcm1863_dai, 1);
-	पूर्ण
-	अगर (ret) अणु
+	}
+	if (ret) {
 		dev_err(dev, "failed to register CODEC: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(pcm186x_probe);
 
 MODULE_AUTHOR("Andreas Dannenberg <dannenberg@ti.com>");

@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2012 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,17 +21,17 @@
  *
  * Authors: Alex Deucher
  */
-#अगर_अघोषित _SUMOD_H_
-#घोषणा _SUMOD_H_
+#ifndef _SUMOD_H_
+#define _SUMOD_H_
 
-/* pm रेजिस्टरs */
+/* pm registers */
 
 /* rcu */
-#घोषणा RCU_FW_VERSION                                  0x30c
+#define RCU_FW_VERSION                                  0x30c
 
-#घोषणा RCU_PWR_GATING_SEQ0                             0x408
-#घोषणा RCU_PWR_GATING_SEQ1                             0x40c
-#घोषणा RCU_PWR_GATING_CNTL                             0x410
+#define RCU_PWR_GATING_SEQ0                             0x408
+#define RCU_PWR_GATING_SEQ1                             0x40c
+#define RCU_PWR_GATING_CNTL                             0x410
 #       define PWR_GATING_EN                            (1 << 0)
 #       define RSVD_MASK                                (0x3 << 1)
 #       define PCV(x)                                   ((x) << 3)
@@ -51,8 +50,8 @@
 #       define PGS_MASK                                 (0xf << 28)
 #       define PGS_SHIFT                                28
 
-#घोषणा RCU_ALTVDDNB_NOTIFY                             0x430
-#घोषणा RCU_LCLK_SCALING_CNTL                           0x434
+#define RCU_ALTVDDNB_NOTIFY                             0x430
+#define RCU_LCLK_SCALING_CNTL                           0x434
 #       define LCLK_SCALING_EN                          (1 << 0)
 #       define LCLK_SCALING_TYPE                        (1 << 1)
 #       define LCLK_SCALING_TIMER_PRESCALER(x)          ((x) << 4)
@@ -62,21 +61,21 @@
 #       define LCLK_SCALING_TIMER_PERIOD_MASK           (0xf << 16)
 #       define LCLK_SCALING_TIMER_PERIOD_SHIFT          16
 
-#घोषणा RCU_PWR_GATING_CNTL_2                           0x4a0
+#define RCU_PWR_GATING_CNTL_2                           0x4a0
 #       define MPPU(x)                                  ((x) << 0)
 #       define MPPU_MASK                                (0xffff << 0)
 #       define MPPU_SHIFT                               0
 #       define MPPD(x)                                  ((x) << 16)
 #       define MPPD_MASK                                (0xffff << 16)
 #       define MPPD_SHIFT                               16
-#घोषणा RCU_PWR_GATING_CNTL_3                           0x4a4
+#define RCU_PWR_GATING_CNTL_3                           0x4a4
 #       define DPPU(x)                                  ((x) << 0)
 #       define DPPU_MASK                                (0xffff << 0)
 #       define DPPU_SHIFT                               0
 #       define DPPD(x)                                  ((x) << 16)
 #       define DPPD_MASK                                (0xffff << 16)
 #       define DPPD_SHIFT                               16
-#घोषणा RCU_PWR_GATING_CNTL_4                           0x4a8
+#define RCU_PWR_GATING_CNTL_4                           0x4a8
 #       define RT(x)                                    ((x) << 0)
 #       define RT_MASK                                  (0xffff << 0)
 #       define RT_SHIFT                                 0
@@ -85,29 +84,29 @@
 #       define IT_SHIFT                                 16
 
 /* yes these two have the same address */
-#घोषणा RCU_PWR_GATING_CNTL_5                           0x504
-#घोषणा RCU_GPU_BOOST_DISABLE                           0x508
+#define RCU_PWR_GATING_CNTL_5                           0x504
+#define RCU_GPU_BOOST_DISABLE                           0x508
 
-#घोषणा MCU_M3ARB_INDEX                                 0x504
-#घोषणा MCU_M3ARB_PARAMS                                0x508
+#define MCU_M3ARB_INDEX                                 0x504
+#define MCU_M3ARB_PARAMS                                0x508
 
-#घोषणा RCU_GNB_PWR_REP_TIMER_CNTL                      0x50C
+#define RCU_GNB_PWR_REP_TIMER_CNTL                      0x50C
 
-#घोषणा RCU_SclkDpmTdpLimit01                           0x514
-#घोषणा RCU_SclkDpmTdpLimit23                           0x518
-#घोषणा RCU_SclkDpmTdpLimit47                           0x51C
-#घोषणा RCU_SclkDpmTdpLimitPG                           0x520
+#define RCU_SclkDpmTdpLimit01                           0x514
+#define RCU_SclkDpmTdpLimit23                           0x518
+#define RCU_SclkDpmTdpLimit47                           0x51C
+#define RCU_SclkDpmTdpLimitPG                           0x520
 
-#घोषणा GNB_TDP_LIMIT                                   0x540
-#घोषणा RCU_BOOST_MARGIN                                0x544
-#घोषणा RCU_THROTTLE_MARGIN                             0x548
+#define GNB_TDP_LIMIT                                   0x540
+#define RCU_BOOST_MARGIN                                0x544
+#define RCU_THROTTLE_MARGIN                             0x548
 
-#घोषणा SMU_PCIE_PG_ARGS                                0x58C
-#घोषणा SMU_PCIE_PG_ARGS_2                              0x598
-#घोषणा SMU_PCIE_PG_ARGS_3                              0x59C
+#define SMU_PCIE_PG_ARGS                                0x58C
+#define SMU_PCIE_PG_ARGS_2                              0x598
+#define SMU_PCIE_PG_ARGS_3                              0x59C
 
 /* mmio */
-#घोषणा RCU_STATUS                                      0x11c
+#define RCU_STATUS                                      0x11c
 #       define GMC_PWR_GATER_BUSY                       (1 << 8)
 #       define GFX_PWR_GATER_BUSY                       (1 << 9)
 #       define UVD_PWR_GATER_BUSY                       (1 << 10)
@@ -121,36 +120,36 @@
 #       define GFX1_PWR_GATER_STATE                     (1 << 18)
 #       define GFX2_PWR_GATER_STATE                     (1 << 19)
 
-#घोषणा GFX_INT_REQ                                     0x120
+#define GFX_INT_REQ                                     0x120
 #       define INT_REQ                                  (1 << 0)
 #       define SERV_INDEX(x)                            ((x) << 1)
 #       define SERV_INDEX_MASK                          (0xff << 1)
 #       define SERV_INDEX_SHIFT                         1
-#घोषणा GFX_INT_STATUS                                  0x124
+#define GFX_INT_STATUS                                  0x124
 #       define INT_ACK                                  (1 << 0)
 #       define INT_DONE                                 (1 << 1)
 
-#घोषणा CG_SCLK_CNTL                                    0x600
+#define CG_SCLK_CNTL                                    0x600
 #       define SCLK_DIVIDER(x)                          ((x) << 0)
 #       define SCLK_DIVIDER_MASK                        (0x7f << 0)
 #       define SCLK_DIVIDER_SHIFT                       0
-#घोषणा CG_SCLK_STATUS                                  0x604
+#define CG_SCLK_STATUS                                  0x604
 #       define SCLK_OVERCLK_DETECT                      (1 << 2)
 
-#घोषणा CG_DCLK_CNTL                                    0x610
+#define CG_DCLK_CNTL                                    0x610
 #       define DCLK_DIVIDER_MASK                        0x7f
-#       define DCLK_सूची_CNTL_EN                         (1 << 8)
-#घोषणा CG_DCLK_STATUS                                  0x614
+#       define DCLK_DIR_CNTL_EN                         (1 << 8)
+#define CG_DCLK_STATUS                                  0x614
 #       define DCLK_STATUS                              (1 << 0)
-#घोषणा CG_VCLK_CNTL                                    0x618
+#define CG_VCLK_CNTL                                    0x618
 #       define VCLK_DIVIDER_MASK                        0x7f
-#       define VCLK_सूची_CNTL_EN                         (1 << 8)
-#घोषणा CG_VCLK_STATUS                                  0x61c
+#       define VCLK_DIR_CNTL_EN                         (1 << 8)
+#define CG_VCLK_STATUS                                  0x61c
 
-#घोषणा GENERAL_PWRMGT                                  0x63c
+#define GENERAL_PWRMGT                                  0x63c
 #       define STATIC_PM_EN                             (1 << 1)
 
-#घोषणा SCLK_PWRMGT_CNTL                                0x644
+#define SCLK_PWRMGT_CNTL                                0x644
 #       define SCLK_PWRMGT_OFF                          (1 << 0)
 #       define SCLK_LOW_D1                              (1 << 1)
 #       define FIR_RESET                                (1 << 4)
@@ -166,7 +165,7 @@
 #       define GFX_VOLTAGE_CHANGE_EN                    (1 << 16)
 #       define GFX_VOLTAGE_CHANGE_MODE                  (1 << 17)
 
-#घोषणा TARGET_AND_CURRENT_PROखाता_INDEX                0x66c
+#define TARGET_AND_CURRENT_PROFILE_INDEX                0x66c
 #       define TARG_SCLK_INDEX(x)                       ((x) << 6)
 #       define TARG_SCLK_INDEX_MASK                     (0x7 << 6)
 #       define TARG_SCLK_INDEX_SHIFT                    6
@@ -180,7 +179,7 @@
 #       define CURR_INDEX_MASK                          (0x7 << 15)
 #       define CURR_INDEX_SHIFT                         15
 
-#घोषणा CG_SCLK_DPM_CTRL                                0x684
+#define CG_SCLK_DPM_CTRL                                0x684
 #       define SCLK_FSTATE_0_DIV(x)                     ((x) << 0)
 #       define SCLK_FSTATE_0_DIV_MASK                   (0x7f << 0)
 #       define SCLK_FSTATE_0_DIV_SHIFT                  0
@@ -197,8 +196,8 @@
 #       define SCLK_FSTATE_3_DIV_MASK                   (0x7f << 24)
 #       define SCLK_FSTATE_3_DIV_SHIFT                  24
 #       define SCLK_FSTATE_3_VLD                        (1 << 31)
-#घोषणा CG_SCLK_DPM_CTRL_2                              0x688
-#घोषणा CG_GCOOR                                        0x68c
+#define CG_SCLK_DPM_CTRL_2                              0x688
+#define CG_GCOOR                                        0x68c
 #       define PHC(x)                                   ((x) << 0)
 #       define PHC_MASK                                 (0x1f << 0)
 #       define PHC_SHIFT                                0
@@ -212,8 +211,8 @@
 #       define DIV_ID_MASK                              (0x7 << 28)
 #       define DIV_ID_SHIFT                             28
 
-#घोषणा CG_FTV                                          0x690
-#घोषणा CG_FFCT_0                                       0x694
+#define CG_FTV                                          0x690
+#define CG_FFCT_0                                       0x694
 #       define UTC_0(x)                                 ((x) << 0)
 #       define UTC_0_MASK                               (0x3ff << 0)
 #       define UTC_0_SHIFT                              0
@@ -221,7 +220,7 @@
 #       define DTC_0_MASK                               (0x3ff << 10)
 #       define DTC_0_SHIFT                              10
 
-#घोषणा CG_GIT                                          0x6d8
+#define CG_GIT                                          0x6d8
 #       define CG_GICST(x)                              ((x) << 0)
 #       define CG_GICST_MASK                            (0xffff << 0)
 #       define CG_GICST_SHIFT                           0
@@ -229,7 +228,7 @@
 #       define CG_GIPOT_MASK                            (0xffff << 16)
 #       define CG_GIPOT_SHIFT                           16
 
-#घोषणा CG_SCLK_DPM_CTRL_3                              0x6e0
+#define CG_SCLK_DPM_CTRL_3                              0x6e0
 #       define FORCE_SCLK_STATE(x)                      ((x) << 0)
 #       define FORCE_SCLK_STATE_MASK                    (0x7 << 0)
 #       define FORCE_SCLK_STATE_SHIFT                   0
@@ -244,7 +243,7 @@
 #       define GNB_SLOW_FSTATE_0_SHIFT                  23
 #       define FORCE_NB_PSTATE_1                        (1 << 31)
 
-#घोषणा CG_SSP                                          0x6e8
+#define CG_SSP                                          0x6e8
 #       define SST(x)                                   ((x) << 0)
 #       define SST_MASK                                 (0xffff << 0)
 #       define SST_SHIFT                                0
@@ -252,19 +251,19 @@
 #       define SSTU_MASK                                (0xffff << 16)
 #       define SSTU_SHIFT                               16
 
-#घोषणा CG_ACPI_CNTL                                    0x70c
+#define CG_ACPI_CNTL                                    0x70c
 #       define SCLK_ACPI_DIV(x)                         ((x) << 0)
 #       define SCLK_ACPI_DIV_MASK                       (0x7f << 0)
 #       define SCLK_ACPI_DIV_SHIFT                      0
 
-#घोषणा CG_SCLK_DPM_CTRL_4                              0x71c
+#define CG_SCLK_DPM_CTRL_4                              0x71c
 #       define DC_HDC(x)                                ((x) << 14)
 #       define DC_HDC_MASK                              (0x3fff << 14)
 #       define DC_HDC_SHIFT                             14
 #       define DC_HU(x)                                 ((x) << 28)
 #       define DC_HU_MASK                               (0xf << 28)
 #       define DC_HU_SHIFT                              28
-#घोषणा CG_SCLK_DPM_CTRL_5                              0x720
+#define CG_SCLK_DPM_CTRL_5                              0x720
 #       define SCLK_FSTATE_BOOTUP(x)                    ((x) << 0)
 #       define SCLK_FSTATE_BOOTUP_MASK                  (0x7 << 0)
 #       define SCLK_FSTATE_BOOTUP_SHIFT                 0
@@ -274,32 +273,32 @@
 #       define TT_TU(x)                                 ((x) << 19)
 #       define TT_TU_MASK                               (0xff << 19)
 #       define TT_TU_SHIFT                              19
-#घोषणा CG_SCLK_DPM_CTRL_6                              0x724
-#घोषणा CG_AT_0                                         0x728
+#define CG_SCLK_DPM_CTRL_6                              0x724
+#define CG_AT_0                                         0x728
 #       define CG_R(x)                                  ((x) << 0)
 #       define CG_R_MASK                                (0xffff << 0)
 #       define CG_R_SHIFT                               0
 #       define CG_L(x)                                  ((x) << 16)
 #       define CG_L_MASK                                (0xffff << 16)
 #       define CG_L_SHIFT                               16
-#घोषणा CG_AT_1                                         0x72c
-#घोषणा CG_AT_2                                         0x730
-#घोषणा	CG_THERMAL_INT					0x734
-#घोषणा		DIG_THERM_INTH(x)			((x) << 8)
-#घोषणा		DIG_THERM_INTH_MASK			0x0000FF00
-#घोषणा		DIG_THERM_INTH_SHIFT			8
-#घोषणा		DIG_THERM_INTL(x)			((x) << 16)
-#घोषणा		DIG_THERM_INTL_MASK			0x00FF0000
-#घोषणा		DIG_THERM_INTL_SHIFT			16
-#घोषणा 	THERM_INT_MASK_HIGH			(1 << 24)
-#घोषणा 	THERM_INT_MASK_LOW			(1 << 25)
-#घोषणा CG_AT_3                                         0x738
-#घोषणा CG_AT_4                                         0x73c
-#घोषणा CG_AT_5                                         0x740
-#घोषणा CG_AT_6                                         0x744
-#घोषणा CG_AT_7                                         0x748
+#define CG_AT_1                                         0x72c
+#define CG_AT_2                                         0x730
+#define	CG_THERMAL_INT					0x734
+#define		DIG_THERM_INTH(x)			((x) << 8)
+#define		DIG_THERM_INTH_MASK			0x0000FF00
+#define		DIG_THERM_INTH_SHIFT			8
+#define		DIG_THERM_INTL(x)			((x) << 16)
+#define		DIG_THERM_INTL_MASK			0x00FF0000
+#define		DIG_THERM_INTL_SHIFT			16
+#define 	THERM_INT_MASK_HIGH			(1 << 24)
+#define 	THERM_INT_MASK_LOW			(1 << 25)
+#define CG_AT_3                                         0x738
+#define CG_AT_4                                         0x73c
+#define CG_AT_5                                         0x740
+#define CG_AT_6                                         0x744
+#define CG_AT_7                                         0x748
 
-#घोषणा CG_BSP_0                                        0x750
+#define CG_BSP_0                                        0x750
 #       define BSP(x)                                   ((x) << 0)
 #       define BSP_MASK                                 (0xffff << 0)
 #       define BSP_SHIFT                                0
@@ -307,7 +306,7 @@
 #       define BSU_MASK                                 (0xf << 16)
 #       define BSU_SHIFT                                16
 
-#घोषणा CG_CG_VOLTAGE_CNTL                              0x770
+#define CG_CG_VOLTAGE_CNTL                              0x770
 #       define REQ                                      (1 << 0)
 #       define LEVEL(x)                                 ((x) << 1)
 #       define LEVEL_MASK                               (0x3 << 1)
@@ -321,15 +320,15 @@
 #       define UNIT_MASK                                (0xf << 24)
 #       define UNIT_SHIFT                               24
 
-#घोषणा CG_ACPI_VOLTAGE_CNTL                            0x780
+#define CG_ACPI_VOLTAGE_CNTL                            0x780
 #       define ACPI_VOLTAGE_EN                          (1 << 8)
 
-#घोषणा CG_DPM_VOLTAGE_CNTL                             0x788
+#define CG_DPM_VOLTAGE_CNTL                             0x788
 #       define DPM_STATE0_LEVEL_MASK                    (0x3 << 0)
 #       define DPM_STATE0_LEVEL_SHIFT                   0
 #       define DPM_VOLTAGE_EN                           (1 << 16)
 
-#घोषणा CG_PWR_GATING_CNTL                              0x7ac
+#define CG_PWR_GATING_CNTL                              0x7ac
 #       define DYN_PWR_DOWN_EN                          (1 << 0)
 #       define ACPI_PWR_DOWN_EN                         (1 << 1)
 #       define GFX_CLK_OFF_PWR_DOWN_EN                  (1 << 2)
@@ -342,32 +341,32 @@
 #       define PGU_MASK                                 (0xf << 24)
 #       define PGU_SHIFT                                24
 
-#घोषणा CG_CGTT_LOCAL_0                                 0x7d0
-#घोषणा CG_CGTT_LOCAL_1                                 0x7d4
+#define CG_CGTT_LOCAL_0                                 0x7d0
+#define CG_CGTT_LOCAL_1                                 0x7d4
 
-#घोषणा DEEP_SLEEP_CNTL                                 0x818
+#define DEEP_SLEEP_CNTL                                 0x818
 #       define R_DIS                                    (1 << 3)
 #       define HS(x)                                    ((x) << 4)
 #       define HS_MASK                                  (0xfff << 4)
 #       define HS_SHIFT                                 4
 #       define ENABLE_DS                                (1 << 31)
-#घोषणा DEEP_SLEEP_CNTL2                                0x81c
+#define DEEP_SLEEP_CNTL2                                0x81c
 #       define LB_UFP_EN                                (1 << 0)
 #       define INOUT_C(x)                               ((x) << 4)
 #       define INOUT_C_MASK                             (0xff << 4)
 #       define INOUT_C_SHIFT                            4
 
-#घोषणा CG_SCRATCH2                                     0x824
+#define CG_SCRATCH2                                     0x824
 
-#घोषणा CG_SCLK_DPM_CTRL_11                             0x830
+#define CG_SCLK_DPM_CTRL_11                             0x830
 
-#घोषणा HW_REV   					0x5564
+#define HW_REV   					0x5564
 #       define ATI_REV_ID_MASK                          (0xf << 28)
 #       define ATI_REV_ID_SHIFT                         28
 /* 0 = A0, 1 = A1, 2 = B0, 3 = C0, etc. */
 
-#घोषणा DOUT_SCRATCH3   				0x611c
+#define DOUT_SCRATCH3   				0x611c
 
-#घोषणा GB_ADDR_CONFIG  				0x98f8
+#define GB_ADDR_CONFIG  				0x98f8
 
-#पूर्ण_अगर
+#endif

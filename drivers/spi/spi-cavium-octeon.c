@@ -1,43 +1,42 @@
-<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the मुख्य directory of this archive
- * क्रम more details.
+ * License.  See the file "COPYING" in the main directory of this archive
+ * for more details.
  *
  * Copyright (C) 2011, 2012 Cavium, Inc.
  */
 
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/spi/spi.h>
-#समावेश <linux/module.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/of.h>
+#include <linux/platform_device.h>
+#include <linux/spi/spi.h>
+#include <linux/module.h>
+#include <linux/io.h>
+#include <linux/of.h>
 
-#समावेश <यंत्र/octeon/octeon.h>
+#include <asm/octeon/octeon.h>
 
-#समावेश "spi-cavium.h"
+#include "spi-cavium.h"
 
-अटल पूर्णांक octeon_spi_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	व्योम __iomem *reg_base;
-	काष्ठा spi_master *master;
-	काष्ठा octeon_spi *p;
-	पूर्णांक err = -ENOENT;
+static int octeon_spi_probe(struct platform_device *pdev)
+{
+	void __iomem *reg_base;
+	struct spi_master *master;
+	struct octeon_spi *p;
+	int err = -ENOENT;
 
-	master = spi_alloc_master(&pdev->dev, माप(काष्ठा octeon_spi));
-	अगर (!master)
-		वापस -ENOMEM;
+	master = spi_alloc_master(&pdev->dev, sizeof(struct octeon_spi));
+	if (!master)
+		return -ENOMEM;
 	p = spi_master_get_devdata(master);
-	platक्रमm_set_drvdata(pdev, master);
+	platform_set_drvdata(pdev, master);
 
-	reg_base = devm_platक्रमm_ioremap_resource(pdev, 0);
-	अगर (IS_ERR(reg_base)) अणु
+	reg_base = devm_platform_ioremap_resource(pdev, 0);
+	if (IS_ERR(reg_base)) {
 		err = PTR_ERR(reg_base);
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
-	p->रेजिस्टर_base = reg_base;
-	p->sys_freq = octeon_get_io_घड़ी_rate();
+	p->register_base = reg_base;
+	p->sys_freq = octeon_get_io_clock_rate();
 
 	p->regs.config = 0;
 	p->regs.status = 0x08;
@@ -56,47 +55,47 @@
 	master->max_speed_hz = OCTEON_SPI_MAX_CLOCK_HZ;
 
 	master->dev.of_node = pdev->dev.of_node;
-	err = devm_spi_रेजिस्टर_master(&pdev->dev, master);
-	अगर (err) अणु
+	err = devm_spi_register_master(&pdev->dev, master);
+	if (err) {
 		dev_err(&pdev->dev, "register master failed: %d\n", err);
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
 	dev_info(&pdev->dev, "OCTEON SPI bus driver\n");
 
-	वापस 0;
+	return 0;
 fail:
 	spi_master_put(master);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक octeon_spi_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा spi_master *master = platक्रमm_get_drvdata(pdev);
-	काष्ठा octeon_spi *p = spi_master_get_devdata(master);
+static int octeon_spi_remove(struct platform_device *pdev)
+{
+	struct spi_master *master = platform_get_drvdata(pdev);
+	struct octeon_spi *p = spi_master_get_devdata(master);
 
 	/* Clear the CSENA* and put everything in a known state. */
-	ग_लिखोq(0, p->रेजिस्टर_base + OCTEON_SPI_CFG(p));
+	writeq(0, p->register_base + OCTEON_SPI_CFG(p));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id octeon_spi_match[] = अणु
-	अणु .compatible = "cavium,octeon-3010-spi", पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct of_device_id octeon_spi_match[] = {
+	{ .compatible = "cavium,octeon-3010-spi", },
+	{},
+};
 MODULE_DEVICE_TABLE(of, octeon_spi_match);
 
-अटल काष्ठा platक्रमm_driver octeon_spi_driver = अणु
-	.driver = अणु
+static struct platform_driver octeon_spi_driver = {
+	.driver = {
 		.name		= "spi-octeon",
 		.of_match_table = octeon_spi_match,
-	पूर्ण,
+	},
 	.probe		= octeon_spi_probe,
-	.हटाओ		= octeon_spi_हटाओ,
-पूर्ण;
+	.remove		= octeon_spi_remove,
+};
 
-module_platक्रमm_driver(octeon_spi_driver);
+module_platform_driver(octeon_spi_driver);
 
 MODULE_DESCRIPTION("Cavium, Inc. OCTEON SPI bus driver");
 MODULE_AUTHOR("David Daney");

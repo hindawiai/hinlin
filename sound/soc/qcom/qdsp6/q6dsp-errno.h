@@ -1,52 +1,51 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 
-#अगर_अघोषित __Q6DSP_ERR_NO_H__
-#घोषणा __Q6DSP_ERR_NO_H__
-#समावेश <linux/kernel.h>
+#ifndef __Q6DSP_ERR_NO_H__
+#define __Q6DSP_ERR_NO_H__
+#include <linux/kernel.h>
 
 /* Success. The operation completed with no errors. */
-#घोषणा ADSP_EOK          0x00000000
+#define ADSP_EOK          0x00000000
 /* General failure. */
-#घोषणा ADSP_EFAILED      0x00000001
+#define ADSP_EFAILED      0x00000001
 /* Bad operation parameter. */
-#घोषणा ADSP_EBADPARAM    0x00000002
+#define ADSP_EBADPARAM    0x00000002
 /* Unsupported routine or operation. */
-#घोषणा ADSP_EUNSUPPORTED 0x00000003
+#define ADSP_EUNSUPPORTED 0x00000003
 /* Unsupported version. */
-#घोषणा ADSP_EVERSION     0x00000004
+#define ADSP_EVERSION     0x00000004
 /* Unexpected problem encountered. */
-#घोषणा ADSP_EUNEXPECTED  0x00000005
+#define ADSP_EUNEXPECTED  0x00000005
 /* Unhandled problem occurred. */
-#घोषणा ADSP_EPANIC       0x00000006
+#define ADSP_EPANIC       0x00000006
 /* Unable to allocate resource. */
-#घोषणा ADSP_ENORESOURCE  0x00000007
+#define ADSP_ENORESOURCE  0x00000007
 /* Invalid handle. */
-#घोषणा ADSP_EHANDLE      0x00000008
-/* Operation is alपढ़ोy processed. */
-#घोषणा ADSP_EALREADY     0x00000009
-/* Operation is not पढ़ोy to be processed. */
-#घोषणा ADSP_ENOTREADY    0x0000000A
+#define ADSP_EHANDLE      0x00000008
+/* Operation is already processed. */
+#define ADSP_EALREADY     0x00000009
+/* Operation is not ready to be processed. */
+#define ADSP_ENOTREADY    0x0000000A
 /* Operation is pending completion. */
-#घोषणा ADSP_EPENDING     0x0000000B
+#define ADSP_EPENDING     0x0000000B
 /* Operation could not be accepted or processed. */
-#घोषणा ADSP_EBUSY        0x0000000C
-/* Operation पातed due to an error. */
-#घोषणा ADSP_EABORTED     0x0000000D
+#define ADSP_EBUSY        0x0000000C
+/* Operation aborted due to an error. */
+#define ADSP_EABORTED     0x0000000D
 /* Operation preempted by a higher priority. */
-#घोषणा ADSP_EPREEMPTED   0x0000000E
-/* Operation requests पूर्णांकervention to complete. */
-#घोषणा ADSP_ECONTINUE    0x0000000F
-/* Operation requests immediate पूर्णांकervention to complete. */
-#घोषणा ADSP_EIMMEDIATE   0x00000010
+#define ADSP_EPREEMPTED   0x0000000E
+/* Operation requests intervention to complete. */
+#define ADSP_ECONTINUE    0x0000000F
+/* Operation requests immediate intervention to complete. */
+#define ADSP_EIMMEDIATE   0x00000010
 /* Operation is not implemented. */
-#घोषणा ADSP_ENOTIMPL     0x00000011
+#define ADSP_ENOTIMPL     0x00000011
 /* Operation needs more data or resources. */
-#घोषणा ADSP_ENEEDMORE    0x00000012
-/* Operation करोes not have memory. */
-#घोषणा ADSP_ENOMEMORY    0x00000014
-/* Item करोes not exist. */
-#घोषणा ADSP_ENOTEXIST    0x00000015
-/* Max count क्रम adsp error code sent to HLOS*/
+#define ADSP_ENEEDMORE    0x00000012
+/* Operation does not have memory. */
+#define ADSP_ENOMEMORY    0x00000014
+/* Item does not exist. */
+#define ADSP_ENOTEXIST    0x00000015
+/* Max count for adsp error code sent to HLOS*/
 
-#पूर्ण_अगर /*__Q6DSP_ERR_NO_H__ */
+#endif /*__Q6DSP_ERR_NO_H__ */

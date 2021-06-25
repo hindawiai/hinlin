@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Assorted bcache debug code
  *
@@ -7,42 +6,42 @@
  * Copyright 2012 Google, Inc.
  */
 
-#समावेश "bcache.h"
-#समावेश "btree.h"
-#समावेश "debug.h"
-#समावेश "extents.h"
+#include "bcache.h"
+#include "btree.h"
+#include "debug.h"
+#include "extents.h"
 
-#समावेश <linux/console.h>
-#समावेश <linux/debugfs.h>
-#समावेश <linux/module.h>
-#समावेश <linux/अक्रमom.h>
-#समावेश <linux/seq_file.h>
+#include <linux/console.h>
+#include <linux/debugfs.h>
+#include <linux/module.h>
+#include <linux/random.h>
+#include <linux/seq_file.h>
 
-काष्ठा dentry *bcache_debug;
+struct dentry *bcache_debug;
 
-#अगर_घोषित CONFIG_BCACHE_DEBUG
+#ifdef CONFIG_BCACHE_DEBUG
 
-#घोषणा क्रम_each_written_bset(b, start, i)				\
-	क्रम (i = (start);						\
-	     (व्योम *) i < (व्योम *) (start) + (KEY_SIZE(&b->key) << 9) &&\
+#define for_each_written_bset(b, start, i)				\
+	for (i = (start);						\
+	     (void *) i < (void *) (start) + (KEY_SIZE(&b->key) << 9) &&\
 	     i->seq == (start)->seq;					\
-	     i = (व्योम *) i + set_blocks(i, block_bytes(b->c->cache)) *	\
+	     i = (void *) i + set_blocks(i, block_bytes(b->c->cache)) *	\
 		 block_bytes(b->c->cache))
 
-व्योम bch_btree_verअगरy(काष्ठा btree *b)
-अणु
-	काष्ठा btree *v = b->c->verअगरy_data;
-	काष्ठा bset *ondisk, *sorted, *inmemory;
-	काष्ठा bio *bio;
+void bch_btree_verify(struct btree *b)
+{
+	struct btree *v = b->c->verify_data;
+	struct bset *ondisk, *sorted, *inmemory;
+	struct bio *bio;
 
-	अगर (!b->c->verअगरy || !b->c->verअगरy_ondisk)
-		वापस;
+	if (!b->c->verify || !b->c->verify_ondisk)
+		return;
 
-	करोwn(&b->io_mutex);
-	mutex_lock(&b->c->verअगरy_lock);
+	down(&b->io_mutex);
+	mutex_lock(&b->c->verify_lock);
 
-	ondisk = b->c->verअगरy_ondisk;
-	sorted = b->c->verअगरy_data->keys.set->data;
+	ondisk = b->c->verify_ondisk;
+	sorted = b->c->verify_data->keys.set->data;
 	inmemory = b->keys.set->data;
 
 	bkey_copy(&v->key, &b->key);
@@ -57,21 +56,21 @@
 	bio->bi_opf		= REQ_OP_READ | REQ_META;
 	bch_bio_map(bio, sorted);
 
-	submit_bio_रुको(bio);
-	bch_bbio_मुक्त(bio, b->c);
+	submit_bio_wait(bio);
+	bch_bbio_free(bio, b->c);
 
-	स_नकल(ondisk, sorted, KEY_SIZE(&v->key) << 9);
+	memcpy(ondisk, sorted, KEY_SIZE(&v->key) << 9);
 
-	bch_btree_node_पढ़ो_करोne(v);
+	bch_btree_node_read_done(v);
 	sorted = v->keys.set->data;
 
-	अगर (inmemory->keys != sorted->keys ||
-	    स_भेद(inmemory->start,
+	if (inmemory->keys != sorted->keys ||
+	    memcmp(inmemory->start,
 		   sorted->start,
-		   (व्योम *) bset_bkey_last(inmemory) -
-		   (व्योम *) inmemory->start)) अणु
-		काष्ठा bset *i;
-		अचिन्हित पूर्णांक j;
+		   (void *) bset_bkey_last(inmemory) -
+		   (void *) inmemory->start)) {
+		struct bset *i;
+		unsigned int j;
 
 		console_lock();
 
@@ -81,183 +80,183 @@
 		pr_err("*** read back in:\n");
 		bch_dump_bset(&v->keys, sorted, 0);
 
-		क्रम_each_written_bset(b, ondisk, i) अणु
-			अचिन्हित पूर्णांक block = ((व्योम *) i - (व्योम *) ondisk) /
+		for_each_written_bset(b, ondisk, i) {
+			unsigned int block = ((void *) i - (void *) ondisk) /
 				block_bytes(b->c->cache);
 
 			pr_err("*** on disk block %u:\n", block);
 			bch_dump_bset(&b->keys, i, block);
-		पूर्ण
+		}
 
 		pr_err("*** block %zu not written\n",
-		       ((व्योम *) i - (व्योम *) ondisk) / block_bytes(b->c->cache));
+		       ((void *) i - (void *) ondisk) / block_bytes(b->c->cache));
 
-		क्रम (j = 0; j < inmemory->keys; j++)
-			अगर (inmemory->d[j] != sorted->d[j])
-				अवरोध;
+		for (j = 0; j < inmemory->keys; j++)
+			if (inmemory->d[j] != sorted->d[j])
+				break;
 
 		pr_err("b->written %u\n", b->written);
 
 		console_unlock();
 		panic("verify failed at %u\n", j);
-	पूर्ण
+	}
 
-	mutex_unlock(&b->c->verअगरy_lock);
+	mutex_unlock(&b->c->verify_lock);
 	up(&b->io_mutex);
-पूर्ण
+}
 
-व्योम bch_data_verअगरy(काष्ठा cached_dev *dc, काष्ठा bio *bio)
-अणु
-	काष्ठा bio *check;
-	काष्ठा bio_vec bv, cbv;
-	काष्ठा bvec_iter iter, citer = अणु 0 पूर्ण;
+void bch_data_verify(struct cached_dev *dc, struct bio *bio)
+{
+	struct bio *check;
+	struct bio_vec bv, cbv;
+	struct bvec_iter iter, citer = { 0 };
 
-	check = bio_kदो_स्मृति(GFP_NOIO, bio_segments(bio));
-	अगर (!check)
-		वापस;
+	check = bio_kmalloc(GFP_NOIO, bio_segments(bio));
+	if (!check)
+		return;
 	bio_set_dev(check, bio->bi_bdev);
 	check->bi_opf = REQ_OP_READ;
 	check->bi_iter.bi_sector = bio->bi_iter.bi_sector;
 	check->bi_iter.bi_size = bio->bi_iter.bi_size;
 
-	bch_bio_map(check, शून्य);
-	अगर (bch_bio_alloc_pages(check, GFP_NOIO))
-		जाओ out_put;
+	bch_bio_map(check, NULL);
+	if (bch_bio_alloc_pages(check, GFP_NOIO))
+		goto out_put;
 
-	submit_bio_रुको(check);
+	submit_bio_wait(check);
 
-	citer.bi_size = अच_पूर्णांक_उच्च;
-	bio_क्रम_each_segment(bv, bio, iter) अणु
-		व्योम *p1 = kmap_atomic(bv.bv_page);
-		व्योम *p2;
+	citer.bi_size = UINT_MAX;
+	bio_for_each_segment(bv, bio, iter) {
+		void *p1 = kmap_atomic(bv.bv_page);
+		void *p2;
 
 		cbv = bio_iter_iovec(check, citer);
 		p2 = page_address(cbv.bv_page);
 
-		cache_set_err_on(स_भेद(p1 + bv.bv_offset,
+		cache_set_err_on(memcmp(p1 + bv.bv_offset,
 					p2 + bv.bv_offset,
 					bv.bv_len),
 				 dc->disk.c,
 				 "verify failed at dev %s sector %llu",
 				 dc->backing_dev_name,
-				 (uपूर्णांक64_t) bio->bi_iter.bi_sector);
+				 (uint64_t) bio->bi_iter.bi_sector);
 
 		kunmap_atomic(p1);
 		bio_advance_iter(check, &citer, bv.bv_len);
-	पूर्ण
+	}
 
-	bio_मुक्त_pages(check);
+	bio_free_pages(check);
 out_put:
 	bio_put(check);
-पूर्ण
+}
 
-#पूर्ण_अगर
+#endif
 
-#अगर_घोषित CONFIG_DEBUG_FS
+#ifdef CONFIG_DEBUG_FS
 
 /* XXX: cache set refcounting */
 
-काष्ठा dump_iterator अणु
-	अक्षर			buf[PAGE_SIZE];
-	माप_प्रकार			bytes;
-	काष्ठा cache_set	*c;
-	काष्ठा keybuf		keys;
-पूर्ण;
+struct dump_iterator {
+	char			buf[PAGE_SIZE];
+	size_t			bytes;
+	struct cache_set	*c;
+	struct keybuf		keys;
+};
 
-अटल bool dump_pred(काष्ठा keybuf *buf, काष्ठा bkey *k)
-अणु
-	वापस true;
-पूर्ण
+static bool dump_pred(struct keybuf *buf, struct bkey *k)
+{
+	return true;
+}
 
-अटल sमाप_प्रकार bch_dump_पढ़ो(काष्ठा file *file, अक्षर __user *buf,
-			     माप_प्रकार size, loff_t *ppos)
-अणु
-	काष्ठा dump_iterator *i = file->निजी_data;
-	sमाप_प्रकार ret = 0;
-	अक्षर kbuf[80];
+static ssize_t bch_dump_read(struct file *file, char __user *buf,
+			     size_t size, loff_t *ppos)
+{
+	struct dump_iterator *i = file->private_data;
+	ssize_t ret = 0;
+	char kbuf[80];
 
-	जबतक (size) अणु
-		काष्ठा keybuf_key *w;
-		अचिन्हित पूर्णांक bytes = min(i->bytes, size);
+	while (size) {
+		struct keybuf_key *w;
+		unsigned int bytes = min(i->bytes, size);
 
-		अगर (copy_to_user(buf, i->buf, bytes))
-			वापस -EFAULT;
+		if (copy_to_user(buf, i->buf, bytes))
+			return -EFAULT;
 
 		ret	 += bytes;
 		buf	 += bytes;
 		size	 -= bytes;
 		i->bytes -= bytes;
-		स_हटाओ(i->buf, i->buf + bytes, i->bytes);
+		memmove(i->buf, i->buf + bytes, i->bytes);
 
-		अगर (i->bytes)
-			अवरोध;
+		if (i->bytes)
+			break;
 
 		w = bch_keybuf_next_rescan(i->c, &i->keys, &MAX_KEY, dump_pred);
-		अगर (!w)
-			अवरोध;
+		if (!w)
+			break;
 
-		bch_extent_to_text(kbuf, माप(kbuf), &w->key);
-		i->bytes = snम_लिखो(i->buf, PAGE_SIZE, "%s\n", kbuf);
+		bch_extent_to_text(kbuf, sizeof(kbuf), &w->key);
+		i->bytes = snprintf(i->buf, PAGE_SIZE, "%s\n", kbuf);
 		bch_keybuf_del(&i->keys, w);
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक bch_dump_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा cache_set *c = inode->i_निजी;
-	काष्ठा dump_iterator *i;
+static int bch_dump_open(struct inode *inode, struct file *file)
+{
+	struct cache_set *c = inode->i_private;
+	struct dump_iterator *i;
 
-	i = kzalloc(माप(काष्ठा dump_iterator), GFP_KERNEL);
-	अगर (!i)
-		वापस -ENOMEM;
+	i = kzalloc(sizeof(struct dump_iterator), GFP_KERNEL);
+	if (!i)
+		return -ENOMEM;
 
-	file->निजी_data = i;
+	file->private_data = i;
 	i->c = c;
 	bch_keybuf_init(&i->keys);
 	i->keys.last_scanned = KEY(0, 0, 0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक bch_dump_release(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	kमुक्त(file->निजी_data);
-	वापस 0;
-पूर्ण
+static int bch_dump_release(struct inode *inode, struct file *file)
+{
+	kfree(file->private_data);
+	return 0;
+}
 
-अटल स्थिर काष्ठा file_operations cache_set_debug_ops = अणु
+static const struct file_operations cache_set_debug_ops = {
 	.owner		= THIS_MODULE,
-	.खोलो		= bch_dump_खोलो,
-	.पढ़ो		= bch_dump_पढ़ो,
+	.open		= bch_dump_open,
+	.read		= bch_dump_read,
 	.release	= bch_dump_release
-पूर्ण;
+};
 
-व्योम bch_debug_init_cache_set(काष्ठा cache_set *c)
-अणु
-	अगर (!IS_ERR_OR_शून्य(bcache_debug)) अणु
-		अक्षर name[50];
+void bch_debug_init_cache_set(struct cache_set *c)
+{
+	if (!IS_ERR_OR_NULL(bcache_debug)) {
+		char name[50];
 
-		snम_लिखो(name, 50, "bcache-%pU", c->set_uuid);
+		snprintf(name, 50, "bcache-%pU", c->set_uuid);
 		c->debug = debugfs_create_file(name, 0400, bcache_debug, c,
 					       &cache_set_debug_ops);
-	पूर्ण
-पूर्ण
+	}
+}
 
-#पूर्ण_अगर
+#endif
 
-व्योम bch_debug_निकास(व्योम)
-अणु
-	debugfs_हटाओ_recursive(bcache_debug);
-पूर्ण
+void bch_debug_exit(void)
+{
+	debugfs_remove_recursive(bcache_debug);
+}
 
-व्योम __init bch_debug_init(व्योम)
-अणु
+void __init bch_debug_init(void)
+{
 	/*
-	 * it is unnecessary to check वापस value of
+	 * it is unnecessary to check return value of
 	 * debugfs_create_file(), we should not care
 	 * about this.
 	 */
-	bcache_debug = debugfs_create_dir("bcache", शून्य);
-पूर्ण
+	bcache_debug = debugfs_create_dir("bcache", NULL);
+}

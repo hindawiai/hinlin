@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * This file is based on code from OCTEON SDK by Cavium Networks.
  *
@@ -7,42 +6,42 @@
  */
 
 /**
- * cvm_oct_get_buffer_ptr - convert packet data address to poपूर्णांकer
+ * cvm_oct_get_buffer_ptr - convert packet data address to pointer
  * @packet_ptr: Packet data hardware address
  *
- * Returns Packet buffer poपूर्णांकer
+ * Returns Packet buffer pointer
  */
-अटल अंतरभूत व्योम *cvm_oct_get_buffer_ptr(जोड़ cvmx_buf_ptr packet_ptr)
-अणु
-	वापस cvmx_phys_to_ptr(((packet_ptr.s.addr >> 7) - packet_ptr.s.back)
+static inline void *cvm_oct_get_buffer_ptr(union cvmx_buf_ptr packet_ptr)
+{
+	return cvmx_phys_to_ptr(((packet_ptr.s.addr >> 7) - packet_ptr.s.back)
 				<< 7);
-पूर्ण
+}
 
 /**
- * INTERFACE - convert IPD port to logical पूर्णांकerface
+ * INTERFACE - convert IPD port to logical interface
  * @ipd_port: Port to check
  *
- * Returns Logical पूर्णांकerface
+ * Returns Logical interface
  */
-अटल अंतरभूत पूर्णांक INTERFACE(पूर्णांक ipd_port)
-अणु
-	पूर्णांक पूर्णांकerface;
+static inline int INTERFACE(int ipd_port)
+{
+	int interface;
 
-	अगर (ipd_port == CVMX_PIP_NUM_INPUT_PORTS)
-		वापस 10;
-	पूर्णांकerface = cvmx_helper_get_पूर्णांकerface_num(ipd_port);
-	अगर (पूर्णांकerface >= 0)
-		वापस पूर्णांकerface;
+	if (ipd_port == CVMX_PIP_NUM_INPUT_PORTS)
+		return 10;
+	interface = cvmx_helper_get_interface_num(ipd_port);
+	if (interface >= 0)
+		return interface;
 	panic("Illegal ipd_port %d passed to %s\n", ipd_port, __func__);
-पूर्ण
+}
 
 /**
- * INDEX - convert IPD/PKO port number to the port's पूर्णांकerface index
+ * INDEX - convert IPD/PKO port number to the port's interface index
  * @ipd_port: Port to check
  *
- * Returns Index पूर्णांकo पूर्णांकerface port list
+ * Returns Index into interface port list
  */
-अटल अंतरभूत पूर्णांक INDEX(पूर्णांक ipd_port)
-अणु
-	वापस cvmx_helper_get_पूर्णांकerface_index_num(ipd_port);
-पूर्ण
+static inline int INDEX(int ipd_port)
+{
+	return cvmx_helper_get_interface_index_num(ipd_port);
+}

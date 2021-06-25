@@ -1,51 +1,50 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _LINUX_PERF_REGS_H
-#घोषणा _LINUX_PERF_REGS_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _LINUX_PERF_REGS_H
+#define _LINUX_PERF_REGS_H
 
-#समावेश <linux/sched/task_stack.h>
+#include <linux/sched/task_stack.h>
 
-काष्ठा perf_regs अणु
+struct perf_regs {
 	__u64		abi;
-	काष्ठा pt_regs	*regs;
-पूर्ण;
+	struct pt_regs	*regs;
+};
 
-#अगर_घोषित CONFIG_HAVE_PERF_REGS
-#समावेश <यंत्र/perf_regs.h>
+#ifdef CONFIG_HAVE_PERF_REGS
+#include <asm/perf_regs.h>
 
-#अगर_अघोषित PERF_REG_EXTENDED_MASK
-#घोषणा PERF_REG_EXTENDED_MASK	0
-#पूर्ण_अगर
+#ifndef PERF_REG_EXTENDED_MASK
+#define PERF_REG_EXTENDED_MASK	0
+#endif
 
-u64 perf_reg_value(काष्ठा pt_regs *regs, पूर्णांक idx);
-पूर्णांक perf_reg_validate(u64 mask);
-u64 perf_reg_abi(काष्ठा task_काष्ठा *task);
-व्योम perf_get_regs_user(काष्ठा perf_regs *regs_user,
-			काष्ठा pt_regs *regs);
-#अन्यथा
+u64 perf_reg_value(struct pt_regs *regs, int idx);
+int perf_reg_validate(u64 mask);
+u64 perf_reg_abi(struct task_struct *task);
+void perf_get_regs_user(struct perf_regs *regs_user,
+			struct pt_regs *regs);
+#else
 
-#घोषणा PERF_REG_EXTENDED_MASK	0
+#define PERF_REG_EXTENDED_MASK	0
 
-अटल अंतरभूत u64 perf_reg_value(काष्ठा pt_regs *regs, पूर्णांक idx)
-अणु
-	वापस 0;
-पूर्ण
+static inline u64 perf_reg_value(struct pt_regs *regs, int idx)
+{
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक perf_reg_validate(u64 mask)
-अणु
-	वापस mask ? -ENOSYS : 0;
-पूर्ण
+static inline int perf_reg_validate(u64 mask)
+{
+	return mask ? -ENOSYS : 0;
+}
 
-अटल अंतरभूत u64 perf_reg_abi(काष्ठा task_काष्ठा *task)
-अणु
-	वापस PERF_SAMPLE_REGS_ABI_NONE;
-पूर्ण
+static inline u64 perf_reg_abi(struct task_struct *task)
+{
+	return PERF_SAMPLE_REGS_ABI_NONE;
+}
 
-अटल अंतरभूत व्योम perf_get_regs_user(काष्ठा perf_regs *regs_user,
-				      काष्ठा pt_regs *regs)
-अणु
+static inline void perf_get_regs_user(struct perf_regs *regs_user,
+				      struct pt_regs *regs)
+{
 	regs_user->regs = task_pt_regs(current);
 	regs_user->abi = perf_reg_abi(current);
-पूर्ण
-#पूर्ण_अगर /* CONFIG_HAVE_PERF_REGS */
-#पूर्ण_अगर /* _LINUX_PERF_REGS_H */
+}
+#endif /* CONFIG_HAVE_PERF_REGS */
+#endif /* _LINUX_PERF_REGS_H */

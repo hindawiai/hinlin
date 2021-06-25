@@ -1,119 +1,118 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * ACPI helpers क्रम DMA request / controller
+ * ACPI helpers for DMA request / controller
  *
  * Based on of_dma.h
  *
  * Copyright (C) 2013, Intel Corporation
- * Author: Andy Shevchenko <andriy.shevchenko@linux.पूर्णांकel.com>
+ * Author: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
  */
 
-#अगर_अघोषित __LINUX_ACPI_DMA_H
-#घोषणा __LINUX_ACPI_DMA_H
+#ifndef __LINUX_ACPI_DMA_H
+#define __LINUX_ACPI_DMA_H
 
-#समावेश <linux/list.h>
-#समावेश <linux/device.h>
-#समावेश <linux/err.h>
-#समावेश <linux/dmaengine.h>
+#include <linux/list.h>
+#include <linux/device.h>
+#include <linux/err.h>
+#include <linux/dmaengine.h>
 
 /**
- * काष्ठा acpi_dma_spec - slave device DMA resources
+ * struct acpi_dma_spec - slave device DMA resources
  * @chan_id:	channel unique id
  * @slave_id:	request line unique id
- * @dev:	काष्ठा device of the DMA controller to be used in the filter
+ * @dev:	struct device of the DMA controller to be used in the filter
  *		function
  */
-काष्ठा acpi_dma_spec अणु
-	पूर्णांक		chan_id;
-	पूर्णांक		slave_id;
-	काष्ठा device	*dev;
-पूर्ण;
+struct acpi_dma_spec {
+	int		chan_id;
+	int		slave_id;
+	struct device	*dev;
+};
 
 /**
- * काष्ठा acpi_dma - representation of the रेजिस्टरed DMAC
+ * struct acpi_dma - representation of the registered DMAC
  * @dma_controllers:	linked list node
- * @dev:		काष्ठा device of this controller
+ * @dev:		struct device of this controller
  * @acpi_dma_xlate:	callback function to find a suitable channel
- * @data:		निजी data used by a callback function
+ * @data:		private data used by a callback function
  * @base_request_line:	first supported request line (CSRT)
  * @end_request_line:	last supported request line (CSRT)
  */
-काष्ठा acpi_dma अणु
-	काष्ठा list_head	dma_controllers;
-	काष्ठा device		*dev;
-	काष्ठा dma_chan		*(*acpi_dma_xlate)
-				(काष्ठा acpi_dma_spec *, काष्ठा acpi_dma *);
-	व्योम			*data;
-	अचिन्हित लघु		base_request_line;
-	अचिन्हित लघु		end_request_line;
-पूर्ण;
+struct acpi_dma {
+	struct list_head	dma_controllers;
+	struct device		*dev;
+	struct dma_chan		*(*acpi_dma_xlate)
+				(struct acpi_dma_spec *, struct acpi_dma *);
+	void			*data;
+	unsigned short		base_request_line;
+	unsigned short		end_request_line;
+};
 
 /* Used with acpi_dma_simple_xlate() */
-काष्ठा acpi_dma_filter_info अणु
+struct acpi_dma_filter_info {
 	dma_cap_mask_t	dma_cap;
 	dma_filter_fn	filter_fn;
-पूर्ण;
+};
 
-#अगर_घोषित CONFIG_DMA_ACPI
+#ifdef CONFIG_DMA_ACPI
 
-पूर्णांक acpi_dma_controller_रेजिस्टर(काष्ठा device *dev,
-		काष्ठा dma_chan *(*acpi_dma_xlate)
-		(काष्ठा acpi_dma_spec *, काष्ठा acpi_dma *),
-		व्योम *data);
-पूर्णांक acpi_dma_controller_मुक्त(काष्ठा device *dev);
-पूर्णांक devm_acpi_dma_controller_रेजिस्टर(काष्ठा device *dev,
-		काष्ठा dma_chan *(*acpi_dma_xlate)
-		(काष्ठा acpi_dma_spec *, काष्ठा acpi_dma *),
-		व्योम *data);
-व्योम devm_acpi_dma_controller_मुक्त(काष्ठा device *dev);
+int acpi_dma_controller_register(struct device *dev,
+		struct dma_chan *(*acpi_dma_xlate)
+		(struct acpi_dma_spec *, struct acpi_dma *),
+		void *data);
+int acpi_dma_controller_free(struct device *dev);
+int devm_acpi_dma_controller_register(struct device *dev,
+		struct dma_chan *(*acpi_dma_xlate)
+		(struct acpi_dma_spec *, struct acpi_dma *),
+		void *data);
+void devm_acpi_dma_controller_free(struct device *dev);
 
-काष्ठा dma_chan *acpi_dma_request_slave_chan_by_index(काष्ठा device *dev,
-						      माप_प्रकार index);
-काष्ठा dma_chan *acpi_dma_request_slave_chan_by_name(काष्ठा device *dev,
-						     स्थिर अक्षर *name);
+struct dma_chan *acpi_dma_request_slave_chan_by_index(struct device *dev,
+						      size_t index);
+struct dma_chan *acpi_dma_request_slave_chan_by_name(struct device *dev,
+						     const char *name);
 
-काष्ठा dma_chan *acpi_dma_simple_xlate(काष्ठा acpi_dma_spec *dma_spec,
-				       काष्ठा acpi_dma *adma);
-#अन्यथा
+struct dma_chan *acpi_dma_simple_xlate(struct acpi_dma_spec *dma_spec,
+				       struct acpi_dma *adma);
+#else
 
-अटल अंतरभूत पूर्णांक acpi_dma_controller_रेजिस्टर(काष्ठा device *dev,
-		काष्ठा dma_chan *(*acpi_dma_xlate)
-		(काष्ठा acpi_dma_spec *, काष्ठा acpi_dma *),
-		व्योम *data)
-अणु
-	वापस -ENODEV;
-पूर्ण
-अटल अंतरभूत पूर्णांक acpi_dma_controller_मुक्त(काष्ठा device *dev)
-अणु
-	वापस -ENODEV;
-पूर्ण
-अटल अंतरभूत पूर्णांक devm_acpi_dma_controller_रेजिस्टर(काष्ठा device *dev,
-		काष्ठा dma_chan *(*acpi_dma_xlate)
-		(काष्ठा acpi_dma_spec *, काष्ठा acpi_dma *),
-		व्योम *data)
-अणु
-	वापस -ENODEV;
-पूर्ण
-अटल अंतरभूत व्योम devm_acpi_dma_controller_मुक्त(काष्ठा device *dev)
-अणु
-पूर्ण
+static inline int acpi_dma_controller_register(struct device *dev,
+		struct dma_chan *(*acpi_dma_xlate)
+		(struct acpi_dma_spec *, struct acpi_dma *),
+		void *data)
+{
+	return -ENODEV;
+}
+static inline int acpi_dma_controller_free(struct device *dev)
+{
+	return -ENODEV;
+}
+static inline int devm_acpi_dma_controller_register(struct device *dev,
+		struct dma_chan *(*acpi_dma_xlate)
+		(struct acpi_dma_spec *, struct acpi_dma *),
+		void *data)
+{
+	return -ENODEV;
+}
+static inline void devm_acpi_dma_controller_free(struct device *dev)
+{
+}
 
-अटल अंतरभूत काष्ठा dma_chan *acpi_dma_request_slave_chan_by_index(
-		काष्ठा device *dev, माप_प्रकार index)
-अणु
-	वापस ERR_PTR(-ENODEV);
-पूर्ण
-अटल अंतरभूत काष्ठा dma_chan *acpi_dma_request_slave_chan_by_name(
-		काष्ठा device *dev, स्थिर अक्षर *name)
-अणु
-	वापस ERR_PTR(-ENODEV);
-पूर्ण
+static inline struct dma_chan *acpi_dma_request_slave_chan_by_index(
+		struct device *dev, size_t index)
+{
+	return ERR_PTR(-ENODEV);
+}
+static inline struct dma_chan *acpi_dma_request_slave_chan_by_name(
+		struct device *dev, const char *name)
+{
+	return ERR_PTR(-ENODEV);
+}
 
-#घोषणा acpi_dma_simple_xlate	शून्य
+#define acpi_dma_simple_xlate	NULL
 
-#पूर्ण_अगर
+#endif
 
-#घोषणा acpi_dma_request_slave_channel	acpi_dma_request_slave_chan_by_index
+#define acpi_dma_request_slave_channel	acpi_dma_request_slave_chan_by_index
 
-#पूर्ण_अगर /* __LINUX_ACPI_DMA_H */
+#endif /* __LINUX_ACPI_DMA_H */

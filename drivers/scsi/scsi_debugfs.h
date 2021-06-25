@@ -1,6 +1,5 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-काष्ठा request;
-काष्ठा seq_file;
+/* SPDX-License-Identifier: GPL-2.0 */
+struct request;
+struct seq_file;
 
-व्योम scsi_show_rq(काष्ठा seq_file *m, काष्ठा request *rq);
+void scsi_show_rq(struct seq_file *m, struct request *rq);

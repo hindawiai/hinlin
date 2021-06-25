@@ -1,8 +1,7 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * RapidIO पूर्णांकerconnect services
- * (RapidIO Interconnect Specअगरication, http://www.rapidio.org)
+ * RapidIO interconnect services
+ * (RapidIO Interconnect Specification, http://www.rapidio.org)
  *
  * Copyright 2005 MontaVista Software, Inc.
  * Matt Porter <mporter@kernel.crashing.org>
@@ -11,155 +10,155 @@
  * Alex Bounine <alexandre.bounine@idt.com>
  */
 
-#समावेश <linux/types.h>
-#समावेश <linux/kernel.h>
+#include <linux/types.h>
+#include <linux/kernel.h>
 
-#समावेश <linux/delay.h>
-#समावेश <linux/init.h>
-#समावेश <linux/rपन.स>
-#समावेश <linux/rio_drv.h>
-#समावेश <linux/rio_ids.h>
-#समावेश <linux/rio_regs.h>
-#समावेश <linux/module.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/पूर्णांकerrupt.h>
+#include <linux/delay.h>
+#include <linux/init.h>
+#include <linux/rio.h>
+#include <linux/rio_drv.h>
+#include <linux/rio_ids.h>
+#include <linux/rio_regs.h>
+#include <linux/module.h>
+#include <linux/spinlock.h>
+#include <linux/slab.h>
+#include <linux/interrupt.h>
 
-#समावेश "rio.h"
+#include "rio.h"
 
 /*
- * काष्ठा rio_pग_लिखो - RIO portग_लिखो event
- * @node:    Node in list of करोorbell events
+ * struct rio_pwrite - RIO portwrite event
+ * @node:    Node in list of doorbell events
  * @pwcback: Doorbell event callback
- * @context: Handler specअगरic context to pass on event
+ * @context: Handler specific context to pass on event
  */
-काष्ठा rio_pग_लिखो अणु
-	काष्ठा list_head node;
+struct rio_pwrite {
+	struct list_head node;
 
-	पूर्णांक (*pwcback)(काष्ठा rio_mport *mport, व्योम *context,
-		       जोड़ rio_pw_msg *msg, पूर्णांक step);
-	व्योम *context;
-पूर्ण;
+	int (*pwcback)(struct rio_mport *mport, void *context,
+		       union rio_pw_msg *msg, int step);
+	void *context;
+};
 
 MODULE_DESCRIPTION("RapidIO Subsystem Core");
 MODULE_AUTHOR("Matt Porter <mporter@kernel.crashing.org>");
 MODULE_AUTHOR("Alexandre Bounine <alexandre.bounine@idt.com>");
 MODULE_LICENSE("GPL");
 
-अटल पूर्णांक hdid[RIO_MAX_MPORTS];
-अटल पूर्णांक ids_num;
-module_param_array(hdid, पूर्णांक, &ids_num, 0);
+static int hdid[RIO_MAX_MPORTS];
+static int ids_num;
+module_param_array(hdid, int, &ids_num, 0);
 MODULE_PARM_DESC(hdid,
 	"Destination ID assignment to local RapidIO controllers");
 
-अटल LIST_HEAD(rio_devices);
-अटल LIST_HEAD(rio_nets);
-अटल DEFINE_SPINLOCK(rio_global_list_lock);
+static LIST_HEAD(rio_devices);
+static LIST_HEAD(rio_nets);
+static DEFINE_SPINLOCK(rio_global_list_lock);
 
-अटल LIST_HEAD(rio_mports);
-अटल LIST_HEAD(rio_scans);
-अटल DEFINE_MUTEX(rio_mport_list_lock);
-अटल अचिन्हित अक्षर next_portid;
-अटल DEFINE_SPINLOCK(rio_mmap_lock);
+static LIST_HEAD(rio_mports);
+static LIST_HEAD(rio_scans);
+static DEFINE_MUTEX(rio_mport_list_lock);
+static unsigned char next_portid;
+static DEFINE_SPINLOCK(rio_mmap_lock);
 
 /**
- * rio_local_get_device_id - Get the base/extended device id क्रम a port
+ * rio_local_get_device_id - Get the base/extended device id for a port
  * @port: RIO master port from which to get the deviceid
  *
  * Reads the base/extended device id from the local device
  * implementing the master port. Returns the 8/16-bit device
  * id.
  */
-u16 rio_local_get_device_id(काष्ठा rio_mport *port)
-अणु
+u16 rio_local_get_device_id(struct rio_mport *port)
+{
 	u32 result;
 
-	rio_local_पढ़ो_config_32(port, RIO_DID_CSR, &result);
+	rio_local_read_config_32(port, RIO_DID_CSR, &result);
 
-	वापस (RIO_GET_DID(port->sys_size, result));
-पूर्ण
+	return (RIO_GET_DID(port->sys_size, result));
+}
 EXPORT_SYMBOL_GPL(rio_local_get_device_id);
 
 /**
  * rio_query_mport - Query mport device attributes
  * @port: mport device to query
- * @mport_attr: mport attributes data काष्ठाure
+ * @mport_attr: mport attributes data structure
  *
- * Returns attributes of specअगरied mport through the
- * poपूर्णांकer to attributes data काष्ठाure.
+ * Returns attributes of specified mport through the
+ * pointer to attributes data structure.
  */
-पूर्णांक rio_query_mport(काष्ठा rio_mport *port,
-		    काष्ठा rio_mport_attr *mport_attr)
-अणु
-	अगर (!port->ops->query_mport)
-		वापस -ENODATA;
-	वापस port->ops->query_mport(port, mport_attr);
-पूर्ण
+int rio_query_mport(struct rio_mport *port,
+		    struct rio_mport_attr *mport_attr)
+{
+	if (!port->ops->query_mport)
+		return -ENODATA;
+	return port->ops->query_mport(port, mport_attr);
+}
 EXPORT_SYMBOL(rio_query_mport);
 
 /**
- * rio_alloc_net- Allocate and initialize a new RIO network data काष्ठाure
+ * rio_alloc_net- Allocate and initialize a new RIO network data structure
  * @mport: Master port associated with the RIO network
  *
- * Allocates a RIO network काष्ठाure, initializes per-network
+ * Allocates a RIO network structure, initializes per-network
  * list heads, and adds the associated master port to the
  * network list of associated master ports. Returns a
- * RIO network poपूर्णांकer on success or %शून्य on failure.
+ * RIO network pointer on success or %NULL on failure.
  */
-काष्ठा rio_net *rio_alloc_net(काष्ठा rio_mport *mport)
-अणु
-	काष्ठा rio_net *net = kzalloc(माप(*net), GFP_KERNEL);
+struct rio_net *rio_alloc_net(struct rio_mport *mport)
+{
+	struct rio_net *net = kzalloc(sizeof(*net), GFP_KERNEL);
 
-	अगर (net) अणु
+	if (net) {
 		INIT_LIST_HEAD(&net->node);
 		INIT_LIST_HEAD(&net->devices);
-		INIT_LIST_HEAD(&net->चयनes);
+		INIT_LIST_HEAD(&net->switches);
 		INIT_LIST_HEAD(&net->mports);
 		mport->net = net;
-	पूर्ण
-	वापस net;
-पूर्ण
+	}
+	return net;
+}
 EXPORT_SYMBOL_GPL(rio_alloc_net);
 
-पूर्णांक rio_add_net(काष्ठा rio_net *net)
-अणु
-	पूर्णांक err;
+int rio_add_net(struct rio_net *net)
+{
+	int err;
 
-	err = device_रेजिस्टर(&net->dev);
-	अगर (err)
-		वापस err;
+	err = device_register(&net->dev);
+	if (err)
+		return err;
 	spin_lock(&rio_global_list_lock);
 	list_add_tail(&net->node, &rio_nets);
 	spin_unlock(&rio_global_list_lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(rio_add_net);
 
-व्योम rio_मुक्त_net(काष्ठा rio_net *net)
-अणु
+void rio_free_net(struct rio_net *net)
+{
 	spin_lock(&rio_global_list_lock);
-	अगर (!list_empty(&net->node))
+	if (!list_empty(&net->node))
 		list_del(&net->node);
 	spin_unlock(&rio_global_list_lock);
-	अगर (net->release)
+	if (net->release)
 		net->release(net);
-	device_unरेजिस्टर(&net->dev);
-पूर्ण
-EXPORT_SYMBOL_GPL(rio_मुक्त_net);
+	device_unregister(&net->dev);
+}
+EXPORT_SYMBOL_GPL(rio_free_net);
 
 /**
- * rio_local_set_device_id - Set the base/extended device id क्रम a port
+ * rio_local_set_device_id - Set the base/extended device id for a port
  * @port: RIO master port
  * @did: Device ID value to be written
  *
  * Writes the base/extended device id from a device.
  */
-व्योम rio_local_set_device_id(काष्ठा rio_mport *port, u16 did)
-अणु
-	rio_local_ग_लिखो_config_32(port, RIO_DID_CSR,
+void rio_local_set_device_id(struct rio_mport *port, u16 did)
+{
+	rio_local_write_config_32(port, RIO_DID_CSR,
 				  RIO_SET_DID(port->sys_size, did));
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(rio_local_set_device_id);
 
 /**
@@ -168,61 +167,61 @@ EXPORT_SYMBOL_GPL(rio_local_set_device_id);
  *
  * Adds the RIO device to the global device list and adds the RIO
  * device to the RIO device list.  Creates the generic sysfs nodes
- * क्रम an RIO device.
+ * for an RIO device.
  */
-पूर्णांक rio_add_device(काष्ठा rio_dev *rdev)
-अणु
-	पूर्णांक err;
+int rio_add_device(struct rio_dev *rdev)
+{
+	int err;
 
 	atomic_set(&rdev->state, RIO_DEVICE_RUNNING);
-	err = device_रेजिस्टर(&rdev->dev);
-	अगर (err)
-		वापस err;
+	err = device_register(&rdev->dev);
+	if (err)
+		return err;
 
 	spin_lock(&rio_global_list_lock);
 	list_add_tail(&rdev->global_list, &rio_devices);
-	अगर (rdev->net) अणु
+	if (rdev->net) {
 		list_add_tail(&rdev->net_list, &rdev->net->devices);
-		अगर (rdev->pef & RIO_PEF_SWITCH)
-			list_add_tail(&rdev->rचयन->node,
-				      &rdev->net->चयनes);
-	पूर्ण
+		if (rdev->pef & RIO_PEF_SWITCH)
+			list_add_tail(&rdev->rswitch->node,
+				      &rdev->net->switches);
+	}
 	spin_unlock(&rio_global_list_lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(rio_add_device);
 
 /*
- * rio_del_device - हटाओs a RIO device from the device model
+ * rio_del_device - removes a RIO device from the device model
  * @rdev: RIO device
  * @state: device state to set during removal process
  *
- * Removes the RIO device to the kernel device list and subप्रणाली's device list.
- * Clears sysfs entries क्रम the हटाओd device.
+ * Removes the RIO device to the kernel device list and subsystem's device list.
+ * Clears sysfs entries for the removed device.
  */
-व्योम rio_del_device(काष्ठा rio_dev *rdev, क्रमागत rio_device_state state)
-अणु
+void rio_del_device(struct rio_dev *rdev, enum rio_device_state state)
+{
 	pr_debug("RIO: %s: removing %s\n", __func__, rio_name(rdev));
 	atomic_set(&rdev->state, state);
 	spin_lock(&rio_global_list_lock);
 	list_del(&rdev->global_list);
-	अगर (rdev->net) अणु
+	if (rdev->net) {
 		list_del(&rdev->net_list);
-		अगर (rdev->pef & RIO_PEF_SWITCH) अणु
-			list_del(&rdev->rचयन->node);
-			kमुक्त(rdev->rचयन->route_table);
-		पूर्ण
-	पूर्ण
+		if (rdev->pef & RIO_PEF_SWITCH) {
+			list_del(&rdev->rswitch->node);
+			kfree(rdev->rswitch->route_table);
+		}
+	}
 	spin_unlock(&rio_global_list_lock);
-	device_unरेजिस्टर(&rdev->dev);
-पूर्ण
+	device_unregister(&rdev->dev);
+}
 EXPORT_SYMBOL_GPL(rio_del_device);
 
 /**
  * rio_request_inb_mbox - request inbound mailbox service
  * @mport: RIO master port from which to allocate the mailbox resource
- * @dev_id: Device specअगरic poपूर्णांकer to pass on event
+ * @dev_id: Device specific pointer to pass on event
  * @mbox: Mailbox number to claim
  * @entries: Number of entries in inbound mailbox queue
  * @minb: Callback to execute when inbound message is received
@@ -230,49 +229,49 @@ EXPORT_SYMBOL_GPL(rio_del_device);
  * Requests ownership of an inbound mailbox resource and binds
  * a callback function to the resource. Returns %0 on success.
  */
-पूर्णांक rio_request_inb_mbox(काष्ठा rio_mport *mport,
-			 व्योम *dev_id,
-			 पूर्णांक mbox,
-			 पूर्णांक entries,
-			 व्योम (*minb) (काष्ठा rio_mport * mport, व्योम *dev_id, पूर्णांक mbox,
-				       पूर्णांक slot))
-अणु
-	पूर्णांक rc = -ENOSYS;
-	काष्ठा resource *res;
+int rio_request_inb_mbox(struct rio_mport *mport,
+			 void *dev_id,
+			 int mbox,
+			 int entries,
+			 void (*minb) (struct rio_mport * mport, void *dev_id, int mbox,
+				       int slot))
+{
+	int rc = -ENOSYS;
+	struct resource *res;
 
-	अगर (!mport->ops->खोलो_inb_mbox)
-		जाओ out;
+	if (!mport->ops->open_inb_mbox)
+		goto out;
 
-	res = kzalloc(माप(*res), GFP_KERNEL);
-	अगर (res) अणु
+	res = kzalloc(sizeof(*res), GFP_KERNEL);
+	if (res) {
 		rio_init_mbox_res(res, mbox, mbox);
 
 		/* Make sure this mailbox isn't in use */
 		rc = request_resource(&mport->riores[RIO_INB_MBOX_RESOURCE],
 				      res);
-		अगर (rc < 0) अणु
-			kमुक्त(res);
-			जाओ out;
-		पूर्ण
+		if (rc < 0) {
+			kfree(res);
+			goto out;
+		}
 
 		mport->inb_msg[mbox].res = res;
 
 		/* Hook the inbound message callback */
 		mport->inb_msg[mbox].mcback = minb;
 
-		rc = mport->ops->खोलो_inb_mbox(mport, dev_id, mbox, entries);
-		अगर (rc) अणु
-			mport->inb_msg[mbox].mcback = शून्य;
-			mport->inb_msg[mbox].res = शून्य;
+		rc = mport->ops->open_inb_mbox(mport, dev_id, mbox, entries);
+		if (rc) {
+			mport->inb_msg[mbox].mcback = NULL;
+			mport->inb_msg[mbox].res = NULL;
 			release_resource(res);
-			kमुक्त(res);
-		पूर्ण
-	पूर्ण अन्यथा
+			kfree(res);
+		}
+	} else
 		rc = -ENOMEM;
 
       out:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 EXPORT_SYMBOL_GPL(rio_request_inb_mbox);
 
 /**
@@ -281,33 +280,33 @@ EXPORT_SYMBOL_GPL(rio_request_inb_mbox);
  * @mbox: Mailbox number to release
  *
  * Releases ownership of an inbound mailbox resource. Returns 0
- * अगर the request has been satisfied.
+ * if the request has been satisfied.
  */
-पूर्णांक rio_release_inb_mbox(काष्ठा rio_mport *mport, पूर्णांक mbox)
-अणु
-	पूर्णांक rc;
+int rio_release_inb_mbox(struct rio_mport *mport, int mbox)
+{
+	int rc;
 
-	अगर (!mport->ops->बंद_inb_mbox || !mport->inb_msg[mbox].res)
-		वापस -EINVAL;
+	if (!mport->ops->close_inb_mbox || !mport->inb_msg[mbox].res)
+		return -EINVAL;
 
-	mport->ops->बंद_inb_mbox(mport, mbox);
-	mport->inb_msg[mbox].mcback = शून्य;
+	mport->ops->close_inb_mbox(mport, mbox);
+	mport->inb_msg[mbox].mcback = NULL;
 
 	rc = release_resource(mport->inb_msg[mbox].res);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
-	kमुक्त(mport->inb_msg[mbox].res);
-	mport->inb_msg[mbox].res = शून्य;
+	kfree(mport->inb_msg[mbox].res);
+	mport->inb_msg[mbox].res = NULL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(rio_release_inb_mbox);
 
 /**
  * rio_request_outb_mbox - request outbound mailbox service
  * @mport: RIO master port from which to allocate the mailbox resource
- * @dev_id: Device specअगरic poपूर्णांकer to pass on event
+ * @dev_id: Device specific pointer to pass on event
  * @mbox: Mailbox number to claim
  * @entries: Number of entries in outbound mailbox queue
  * @moutb: Callback to execute when outbound message is sent
@@ -315,48 +314,48 @@ EXPORT_SYMBOL_GPL(rio_release_inb_mbox);
  * Requests ownership of an outbound mailbox resource and binds
  * a callback function to the resource. Returns 0 on success.
  */
-पूर्णांक rio_request_outb_mbox(काष्ठा rio_mport *mport,
-			  व्योम *dev_id,
-			  पूर्णांक mbox,
-			  पूर्णांक entries,
-			  व्योम (*moutb) (काष्ठा rio_mport * mport, व्योम *dev_id, पूर्णांक mbox, पूर्णांक slot))
-अणु
-	पूर्णांक rc = -ENOSYS;
-	काष्ठा resource *res;
+int rio_request_outb_mbox(struct rio_mport *mport,
+			  void *dev_id,
+			  int mbox,
+			  int entries,
+			  void (*moutb) (struct rio_mport * mport, void *dev_id, int mbox, int slot))
+{
+	int rc = -ENOSYS;
+	struct resource *res;
 
-	अगर (!mport->ops->खोलो_outb_mbox)
-		जाओ out;
+	if (!mport->ops->open_outb_mbox)
+		goto out;
 
-	res = kzalloc(माप(*res), GFP_KERNEL);
-	अगर (res) अणु
+	res = kzalloc(sizeof(*res), GFP_KERNEL);
+	if (res) {
 		rio_init_mbox_res(res, mbox, mbox);
 
 		/* Make sure this outbound mailbox isn't in use */
 		rc = request_resource(&mport->riores[RIO_OUTB_MBOX_RESOURCE],
 				      res);
-		अगर (rc < 0) अणु
-			kमुक्त(res);
-			जाओ out;
-		पूर्ण
+		if (rc < 0) {
+			kfree(res);
+			goto out;
+		}
 
 		mport->outb_msg[mbox].res = res;
 
 		/* Hook the inbound message callback */
 		mport->outb_msg[mbox].mcback = moutb;
 
-		rc = mport->ops->खोलो_outb_mbox(mport, dev_id, mbox, entries);
-		अगर (rc) अणु
-			mport->outb_msg[mbox].mcback = शून्य;
-			mport->outb_msg[mbox].res = शून्य;
+		rc = mport->ops->open_outb_mbox(mport, dev_id, mbox, entries);
+		if (rc) {
+			mport->outb_msg[mbox].mcback = NULL;
+			mport->outb_msg[mbox].res = NULL;
 			release_resource(res);
-			kमुक्त(res);
-		पूर्ण
-	पूर्ण अन्यथा
+			kfree(res);
+		}
+	} else
 		rc = -ENOMEM;
 
       out:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 EXPORT_SYMBOL_GPL(rio_request_outb_mbox);
 
 /**
@@ -365,49 +364,49 @@ EXPORT_SYMBOL_GPL(rio_request_outb_mbox);
  * @mbox: Mailbox number to release
  *
  * Releases ownership of an inbound mailbox resource. Returns 0
- * अगर the request has been satisfied.
+ * if the request has been satisfied.
  */
-पूर्णांक rio_release_outb_mbox(काष्ठा rio_mport *mport, पूर्णांक mbox)
-अणु
-	पूर्णांक rc;
+int rio_release_outb_mbox(struct rio_mport *mport, int mbox)
+{
+	int rc;
 
-	अगर (!mport->ops->बंद_outb_mbox || !mport->outb_msg[mbox].res)
-		वापस -EINVAL;
+	if (!mport->ops->close_outb_mbox || !mport->outb_msg[mbox].res)
+		return -EINVAL;
 
-	mport->ops->बंद_outb_mbox(mport, mbox);
-	mport->outb_msg[mbox].mcback = शून्य;
+	mport->ops->close_outb_mbox(mport, mbox);
+	mport->outb_msg[mbox].mcback = NULL;
 
 	rc = release_resource(mport->outb_msg[mbox].res);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
-	kमुक्त(mport->outb_msg[mbox].res);
-	mport->outb_msg[mbox].res = शून्य;
+	kfree(mport->outb_msg[mbox].res);
+	mport->outb_msg[mbox].res = NULL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(rio_release_outb_mbox);
 
 /**
- * rio_setup_inb_dbell - bind inbound करोorbell callback
- * @mport: RIO master port to bind the करोorbell callback
- * @dev_id: Device specअगरic poपूर्णांकer to pass on event
+ * rio_setup_inb_dbell - bind inbound doorbell callback
+ * @mport: RIO master port to bind the doorbell callback
+ * @dev_id: Device specific pointer to pass on event
  * @res: Doorbell message resource
- * @dinb: Callback to execute when करोorbell is received
+ * @dinb: Callback to execute when doorbell is received
  *
- * Adds a करोorbell resource/callback pair पूर्णांकo a port's
- * करोorbell event list. Returns 0 अगर the request has been
+ * Adds a doorbell resource/callback pair into a port's
+ * doorbell event list. Returns 0 if the request has been
  * satisfied.
  */
-अटल पूर्णांक
-rio_setup_inb_dbell(काष्ठा rio_mport *mport, व्योम *dev_id, काष्ठा resource *res,
-		    व्योम (*dinb) (काष्ठा rio_mport * mport, व्योम *dev_id, u16 src, u16 dst,
+static int
+rio_setup_inb_dbell(struct rio_mport *mport, void *dev_id, struct resource *res,
+		    void (*dinb) (struct rio_mport * mport, void *dev_id, u16 src, u16 dst,
 				  u16 info))
-अणु
-	काष्ठा rio_dbell *dbell = kदो_स्मृति(माप(*dbell), GFP_KERNEL);
+{
+	struct rio_dbell *dbell = kmalloc(sizeof(*dbell), GFP_KERNEL);
 
-	अगर (!dbell)
-		वापस -ENOMEM;
+	if (!dbell)
+		return -ENOMEM;
 
 	dbell->res = res;
 	dbell->dinb = dinb;
@@ -416,290 +415,290 @@ rio_setup_inb_dbell(काष्ठा rio_mport *mport, व्योम *dev_id
 	mutex_lock(&mport->lock);
 	list_add_tail(&dbell->node, &mport->dbells);
 	mutex_unlock(&mport->lock);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * rio_request_inb_dbell - request inbound करोorbell message service
- * @mport: RIO master port from which to allocate the करोorbell resource
- * @dev_id: Device specअगरic poपूर्णांकer to pass on event
+ * rio_request_inb_dbell - request inbound doorbell message service
+ * @mport: RIO master port from which to allocate the doorbell resource
+ * @dev_id: Device specific pointer to pass on event
  * @start: Doorbell info range start
  * @end: Doorbell info range end
- * @dinb: Callback to execute when करोorbell is received
+ * @dinb: Callback to execute when doorbell is received
  *
- * Requests ownership of an inbound करोorbell resource and binds
- * a callback function to the resource. Returns 0 अगर the request
+ * Requests ownership of an inbound doorbell resource and binds
+ * a callback function to the resource. Returns 0 if the request
  * has been satisfied.
  */
-पूर्णांक rio_request_inb_dbell(काष्ठा rio_mport *mport,
-			  व्योम *dev_id,
+int rio_request_inb_dbell(struct rio_mport *mport,
+			  void *dev_id,
 			  u16 start,
 			  u16 end,
-			  व्योम (*dinb) (काष्ठा rio_mport * mport, व्योम *dev_id, u16 src,
+			  void (*dinb) (struct rio_mport * mport, void *dev_id, u16 src,
 					u16 dst, u16 info))
-अणु
-	पूर्णांक rc;
-	काष्ठा resource *res = kzalloc(माप(*res), GFP_KERNEL);
+{
+	int rc;
+	struct resource *res = kzalloc(sizeof(*res), GFP_KERNEL);
 
-	अगर (res) अणु
+	if (res) {
 		rio_init_dbell_res(res, start, end);
 
-		/* Make sure these करोorbells aren't in use */
+		/* Make sure these doorbells aren't in use */
 		rc = request_resource(&mport->riores[RIO_DOORBELL_RESOURCE],
 				      res);
-		अगर (rc < 0) अणु
-			kमुक्त(res);
-			जाओ out;
-		पूर्ण
+		if (rc < 0) {
+			kfree(res);
+			goto out;
+		}
 
-		/* Hook the करोorbell callback */
+		/* Hook the doorbell callback */
 		rc = rio_setup_inb_dbell(mport, dev_id, res, dinb);
-	पूर्ण अन्यथा
+	} else
 		rc = -ENOMEM;
 
       out:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 EXPORT_SYMBOL_GPL(rio_request_inb_dbell);
 
 /**
- * rio_release_inb_dbell - release inbound करोorbell message service
- * @mport: RIO master port from which to release the करोorbell resource
+ * rio_release_inb_dbell - release inbound doorbell message service
+ * @mport: RIO master port from which to release the doorbell resource
  * @start: Doorbell info range start
  * @end: Doorbell info range end
  *
- * Releases ownership of an inbound करोorbell resource and हटाओs
- * callback from the करोorbell event list. Returns 0 अगर the request
+ * Releases ownership of an inbound doorbell resource and removes
+ * callback from the doorbell event list. Returns 0 if the request
  * has been satisfied.
  */
-पूर्णांक rio_release_inb_dbell(काष्ठा rio_mport *mport, u16 start, u16 end)
-अणु
-	पूर्णांक rc = 0, found = 0;
-	काष्ठा rio_dbell *dbell;
+int rio_release_inb_dbell(struct rio_mport *mport, u16 start, u16 end)
+{
+	int rc = 0, found = 0;
+	struct rio_dbell *dbell;
 
 	mutex_lock(&mport->lock);
-	list_क्रम_each_entry(dbell, &mport->dbells, node) अणु
-		अगर ((dbell->res->start == start) && (dbell->res->end == end)) अणु
+	list_for_each_entry(dbell, &mport->dbells, node) {
+		if ((dbell->res->start == start) && (dbell->res->end == end)) {
 			list_del(&dbell->node);
 			found = 1;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 	mutex_unlock(&mport->lock);
 
 	/* If we can't find an exact match, fail */
-	अगर (!found) अणु
+	if (!found) {
 		rc = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	/* Release the करोorbell resource */
+	/* Release the doorbell resource */
 	rc = release_resource(dbell->res);
 
-	/* Free the करोorbell event */
-	kमुक्त(dbell);
+	/* Free the doorbell event */
+	kfree(dbell);
 
       out:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 EXPORT_SYMBOL_GPL(rio_release_inb_dbell);
 
 /**
- * rio_request_outb_dbell - request outbound करोorbell message range
- * @rdev: RIO device from which to allocate the करोorbell resource
+ * rio_request_outb_dbell - request outbound doorbell message range
+ * @rdev: RIO device from which to allocate the doorbell resource
  * @start: Doorbell message range start
  * @end: Doorbell message range end
  *
- * Requests ownership of a करोorbell message range. Returns a resource
- * अगर the request has been satisfied or %शून्य on failure.
+ * Requests ownership of a doorbell message range. Returns a resource
+ * if the request has been satisfied or %NULL on failure.
  */
-काष्ठा resource *rio_request_outb_dbell(काष्ठा rio_dev *rdev, u16 start,
+struct resource *rio_request_outb_dbell(struct rio_dev *rdev, u16 start,
 					u16 end)
-अणु
-	काष्ठा resource *res = kzalloc(माप(काष्ठा resource), GFP_KERNEL);
+{
+	struct resource *res = kzalloc(sizeof(struct resource), GFP_KERNEL);
 
-	अगर (res) अणु
+	if (res) {
 		rio_init_dbell_res(res, start, end);
 
-		/* Make sure these करोorbells aren't in use */
-		अगर (request_resource(&rdev->riores[RIO_DOORBELL_RESOURCE], res)
-		    < 0) अणु
-			kमुक्त(res);
-			res = शून्य;
-		पूर्ण
-	पूर्ण
+		/* Make sure these doorbells aren't in use */
+		if (request_resource(&rdev->riores[RIO_DOORBELL_RESOURCE], res)
+		    < 0) {
+			kfree(res);
+			res = NULL;
+		}
+	}
 
-	वापस res;
-पूर्ण
+	return res;
+}
 EXPORT_SYMBOL_GPL(rio_request_outb_dbell);
 
 /**
- * rio_release_outb_dbell - release outbound करोorbell message range
- * @rdev: RIO device from which to release the करोorbell resource
- * @res: Doorbell resource to be मुक्तd
+ * rio_release_outb_dbell - release outbound doorbell message range
+ * @rdev: RIO device from which to release the doorbell resource
+ * @res: Doorbell resource to be freed
  *
- * Releases ownership of a करोorbell message range. Returns 0 अगर the
+ * Releases ownership of a doorbell message range. Returns 0 if the
  * request has been satisfied.
  */
-पूर्णांक rio_release_outb_dbell(काष्ठा rio_dev *rdev, काष्ठा resource *res)
-अणु
-	पूर्णांक rc = release_resource(res);
+int rio_release_outb_dbell(struct rio_dev *rdev, struct resource *res)
+{
+	int rc = release_resource(res);
 
-	kमुक्त(res);
+	kfree(res);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 EXPORT_SYMBOL_GPL(rio_release_outb_dbell);
 
 /**
- * rio_add_mport_pw_handler - add port-ग_लिखो message handler पूर्णांकo the list
- *                            of mport specअगरic pw handlers
- * @mport:   RIO master port to bind the portग_लिखो callback
- * @context: Handler specअगरic context to pass on event
- * @pwcback: Callback to execute when portग_लिखो is received
+ * rio_add_mport_pw_handler - add port-write message handler into the list
+ *                            of mport specific pw handlers
+ * @mport:   RIO master port to bind the portwrite callback
+ * @context: Handler specific context to pass on event
+ * @pwcback: Callback to execute when portwrite is received
  *
- * Returns 0 अगर the request has been satisfied.
+ * Returns 0 if the request has been satisfied.
  */
-पूर्णांक rio_add_mport_pw_handler(काष्ठा rio_mport *mport, व्योम *context,
-			     पूर्णांक (*pwcback)(काष्ठा rio_mport *mport,
-			     व्योम *context, जोड़ rio_pw_msg *msg, पूर्णांक step))
-अणु
-	काष्ठा rio_pग_लिखो *pग_लिखो = kzalloc(माप(*pग_लिखो), GFP_KERNEL);
+int rio_add_mport_pw_handler(struct rio_mport *mport, void *context,
+			     int (*pwcback)(struct rio_mport *mport,
+			     void *context, union rio_pw_msg *msg, int step))
+{
+	struct rio_pwrite *pwrite = kzalloc(sizeof(*pwrite), GFP_KERNEL);
 
-	अगर (!pग_लिखो)
-		वापस -ENOMEM;
+	if (!pwrite)
+		return -ENOMEM;
 
-	pग_लिखो->pwcback = pwcback;
-	pग_लिखो->context = context;
+	pwrite->pwcback = pwcback;
+	pwrite->context = context;
 	mutex_lock(&mport->lock);
-	list_add_tail(&pग_लिखो->node, &mport->pग_लिखोs);
+	list_add_tail(&pwrite->node, &mport->pwrites);
 	mutex_unlock(&mport->lock);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(rio_add_mport_pw_handler);
 
 /**
- * rio_del_mport_pw_handler - हटाओ port-ग_लिखो message handler from the list
- *                            of mport specअगरic pw handlers
- * @mport:   RIO master port to bind the portग_लिखो callback
- * @context: Registered handler specअगरic context to pass on event
+ * rio_del_mport_pw_handler - remove port-write message handler from the list
+ *                            of mport specific pw handlers
+ * @mport:   RIO master port to bind the portwrite callback
+ * @context: Registered handler specific context to pass on event
  * @pwcback: Registered callback function
  *
- * Returns 0 अगर the request has been satisfied.
+ * Returns 0 if the request has been satisfied.
  */
-पूर्णांक rio_del_mport_pw_handler(काष्ठा rio_mport *mport, व्योम *context,
-			     पूर्णांक (*pwcback)(काष्ठा rio_mport *mport,
-			     व्योम *context, जोड़ rio_pw_msg *msg, पूर्णांक step))
-अणु
-	पूर्णांक rc = -EINVAL;
-	काष्ठा rio_pग_लिखो *pग_लिखो;
+int rio_del_mport_pw_handler(struct rio_mport *mport, void *context,
+			     int (*pwcback)(struct rio_mport *mport,
+			     void *context, union rio_pw_msg *msg, int step))
+{
+	int rc = -EINVAL;
+	struct rio_pwrite *pwrite;
 
 	mutex_lock(&mport->lock);
-	list_क्रम_each_entry(pग_लिखो, &mport->pग_लिखोs, node) अणु
-		अगर (pग_लिखो->pwcback == pwcback && pग_लिखो->context == context) अणु
-			list_del(&pग_लिखो->node);
-			kमुक्त(pग_लिखो);
+	list_for_each_entry(pwrite, &mport->pwrites, node) {
+		if (pwrite->pwcback == pwcback && pwrite->context == context) {
+			list_del(&pwrite->node);
+			kfree(pwrite);
 			rc = 0;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 	mutex_unlock(&mport->lock);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 EXPORT_SYMBOL_GPL(rio_del_mport_pw_handler);
 
 /**
- * rio_request_inb_pग_लिखो - request inbound port-ग_लिखो message service क्रम
- *                          specअगरic RapidIO device
- * @rdev: RIO device to which रेजिस्टर inbound port-ग_लिखो callback routine
- * @pwcback: Callback routine to execute when port-ग_लिखो is received
+ * rio_request_inb_pwrite - request inbound port-write message service for
+ *                          specific RapidIO device
+ * @rdev: RIO device to which register inbound port-write callback routine
+ * @pwcback: Callback routine to execute when port-write is received
  *
- * Binds a port-ग_लिखो callback function to the RapidIO device.
- * Returns 0 अगर the request has been satisfied.
+ * Binds a port-write callback function to the RapidIO device.
+ * Returns 0 if the request has been satisfied.
  */
-पूर्णांक rio_request_inb_pग_लिखो(काष्ठा rio_dev *rdev,
-	पूर्णांक (*pwcback)(काष्ठा rio_dev *rdev, जोड़ rio_pw_msg *msg, पूर्णांक step))
-अणु
-	पूर्णांक rc = 0;
+int rio_request_inb_pwrite(struct rio_dev *rdev,
+	int (*pwcback)(struct rio_dev *rdev, union rio_pw_msg *msg, int step))
+{
+	int rc = 0;
 
 	spin_lock(&rio_global_list_lock);
-	अगर (rdev->pwcback)
+	if (rdev->pwcback)
 		rc = -ENOMEM;
-	अन्यथा
+	else
 		rdev->pwcback = pwcback;
 
 	spin_unlock(&rio_global_list_lock);
-	वापस rc;
-पूर्ण
-EXPORT_SYMBOL_GPL(rio_request_inb_pग_लिखो);
+	return rc;
+}
+EXPORT_SYMBOL_GPL(rio_request_inb_pwrite);
 
 /**
- * rio_release_inb_pग_लिखो - release inbound port-ग_लिखो message service
- *                          associated with specअगरic RapidIO device
- * @rdev: RIO device which रेजिस्टरed क्रम inbound port-ग_लिखो callback
+ * rio_release_inb_pwrite - release inbound port-write message service
+ *                          associated with specific RapidIO device
+ * @rdev: RIO device which registered for inbound port-write callback
  *
- * Removes callback from the rio_dev काष्ठाure. Returns 0 अगर the request
+ * Removes callback from the rio_dev structure. Returns 0 if the request
  * has been satisfied.
  */
-पूर्णांक rio_release_inb_pग_लिखो(काष्ठा rio_dev *rdev)
-अणु
-	पूर्णांक rc = -ENOMEM;
+int rio_release_inb_pwrite(struct rio_dev *rdev)
+{
+	int rc = -ENOMEM;
 
 	spin_lock(&rio_global_list_lock);
-	अगर (rdev->pwcback) अणु
-		rdev->pwcback = शून्य;
+	if (rdev->pwcback) {
+		rdev->pwcback = NULL;
 		rc = 0;
-	पूर्ण
+	}
 
 	spin_unlock(&rio_global_list_lock);
-	वापस rc;
-पूर्ण
-EXPORT_SYMBOL_GPL(rio_release_inb_pग_लिखो);
+	return rc;
+}
+EXPORT_SYMBOL_GPL(rio_release_inb_pwrite);
 
 /**
- * rio_pw_enable - Enables/disables port-ग_लिखो handling by a master port
- * @mport: Master port associated with port-ग_लिखो handling
+ * rio_pw_enable - Enables/disables port-write handling by a master port
+ * @mport: Master port associated with port-write handling
  * @enable:  1=enable,  0=disable
  */
-व्योम rio_pw_enable(काष्ठा rio_mport *mport, पूर्णांक enable)
-अणु
-	अगर (mport->ops->pwenable) अणु
+void rio_pw_enable(struct rio_mport *mport, int enable)
+{
+	if (mport->ops->pwenable) {
 		mutex_lock(&mport->lock);
 
-		अगर ((enable && ++mport->pwe_refcnt == 1) ||
+		if ((enable && ++mport->pwe_refcnt == 1) ||
 		    (!enable && mport->pwe_refcnt && --mport->pwe_refcnt == 0))
 			mport->ops->pwenable(mport, enable);
 		mutex_unlock(&mport->lock);
-	पूर्ण
-पूर्ण
+	}
+}
 EXPORT_SYMBOL_GPL(rio_pw_enable);
 
 /**
  * rio_map_inb_region -- Map inbound memory region.
  * @mport: Master port.
  * @local: physical address of memory region to be mapped
- * @rbase: RIO base address asचिन्हित to this winकरोw
+ * @rbase: RIO base address assigned to this window
  * @size: Size of the memory region
- * @rflags: Flags क्रम mapping.
+ * @rflags: Flags for mapping.
  *
  * Return: 0 -- Success.
  *
  * This function will create the mapping from RIO space to local memory.
  */
-पूर्णांक rio_map_inb_region(काष्ठा rio_mport *mport, dma_addr_t local,
+int rio_map_inb_region(struct rio_mport *mport, dma_addr_t local,
 			u64 rbase, u32 size, u32 rflags)
-अणु
-	पूर्णांक rc;
-	अचिन्हित दीर्घ flags;
+{
+	int rc;
+	unsigned long flags;
 
-	अगर (!mport->ops->map_inb)
-		वापस -1;
+	if (!mport->ops->map_inb)
+		return -1;
 	spin_lock_irqsave(&rio_mmap_lock, flags);
 	rc = mport->ops->map_inb(mport, local, rbase, size, rflags);
 	spin_unlock_irqrestore(&rio_mmap_lock, flags);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 EXPORT_SYMBOL_GPL(rio_map_inb_region);
 
 /**
@@ -707,181 +706,181 @@ EXPORT_SYMBOL_GPL(rio_map_inb_region);
  * @mport: Master port
  * @lstart: physical address of memory region to be unmapped
  */
-व्योम rio_unmap_inb_region(काष्ठा rio_mport *mport, dma_addr_t lstart)
-अणु
-	अचिन्हित दीर्घ flags;
-	अगर (!mport->ops->unmap_inb)
-		वापस;
+void rio_unmap_inb_region(struct rio_mport *mport, dma_addr_t lstart)
+{
+	unsigned long flags;
+	if (!mport->ops->unmap_inb)
+		return;
 	spin_lock_irqsave(&rio_mmap_lock, flags);
 	mport->ops->unmap_inb(mport, lstart);
 	spin_unlock_irqrestore(&rio_mmap_lock, flags);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(rio_unmap_inb_region);
 
 /**
  * rio_map_outb_region -- Map outbound memory region.
  * @mport: Master port.
- * @destid: destination id winकरोw poपूर्णांकs to
- * @rbase: RIO base address winकरोw translates to
+ * @destid: destination id window points to
+ * @rbase: RIO base address window translates to
  * @size: Size of the memory region
- * @rflags: Flags क्रम mapping.
+ * @rflags: Flags for mapping.
  * @local: physical address of memory region mapped
  *
  * Return: 0 -- Success.
  *
  * This function will create the mapping from RIO space to local memory.
  */
-पूर्णांक rio_map_outb_region(काष्ठा rio_mport *mport, u16 destid, u64 rbase,
+int rio_map_outb_region(struct rio_mport *mport, u16 destid, u64 rbase,
 			u32 size, u32 rflags, dma_addr_t *local)
-अणु
-	पूर्णांक rc;
-	अचिन्हित दीर्घ flags;
+{
+	int rc;
+	unsigned long flags;
 
-	अगर (!mport->ops->map_outb)
-		वापस -ENODEV;
+	if (!mport->ops->map_outb)
+		return -ENODEV;
 
 	spin_lock_irqsave(&rio_mmap_lock, flags);
 	rc = mport->ops->map_outb(mport, destid, rbase, size,
 		rflags, local);
 	spin_unlock_irqrestore(&rio_mmap_lock, flags);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 EXPORT_SYMBOL_GPL(rio_map_outb_region);
 
 /**
  * rio_unmap_outb_region -- Unmap the inbound memory region
  * @mport: Master port
- * @destid: destination id mapping poपूर्णांकs to
- * @rstart: RIO base address winकरोw translates to
+ * @destid: destination id mapping points to
+ * @rstart: RIO base address window translates to
  */
-व्योम rio_unmap_outb_region(काष्ठा rio_mport *mport, u16 destid, u64 rstart)
-अणु
-	अचिन्हित दीर्घ flags;
+void rio_unmap_outb_region(struct rio_mport *mport, u16 destid, u64 rstart)
+{
+	unsigned long flags;
 
-	अगर (!mport->ops->unmap_outb)
-		वापस;
+	if (!mport->ops->unmap_outb)
+		return;
 
 	spin_lock_irqsave(&rio_mmap_lock, flags);
 	mport->ops->unmap_outb(mport, destid, rstart);
 	spin_unlock_irqrestore(&rio_mmap_lock, flags);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(rio_unmap_outb_region);
 
 /**
- * rio_mport_get_physefb - Helper function that वापसs रेजिस्टर offset
- *                      क्रम Physical Layer Extended Features Block.
+ * rio_mport_get_physefb - Helper function that returns register offset
+ *                      for Physical Layer Extended Features Block.
  * @port: Master port to issue transaction
  * @local: Indicate a local master port or remote device access
  * @destid: Destination ID of the device
- * @hopcount: Number of चयन hops to the device
- * @rmap: poपूर्णांकer to location to store रेजिस्टर map type info
+ * @hopcount: Number of switch hops to the device
+ * @rmap: pointer to location to store register map type info
  */
 u32
-rio_mport_get_physefb(काष्ठा rio_mport *port, पूर्णांक local,
+rio_mport_get_physefb(struct rio_mport *port, int local,
 		      u16 destid, u8 hopcount, u32 *rmap)
-अणु
+{
 	u32 ext_ftr_ptr;
 	u32 ftr_header;
 
 	ext_ftr_ptr = rio_mport_get_efb(port, local, destid, hopcount, 0);
 
-	जबतक (ext_ftr_ptr)  अणु
-		अगर (local)
-			rio_local_पढ़ो_config_32(port, ext_ftr_ptr,
+	while (ext_ftr_ptr)  {
+		if (local)
+			rio_local_read_config_32(port, ext_ftr_ptr,
 						 &ftr_header);
-		अन्यथा
-			rio_mport_पढ़ो_config_32(port, destid, hopcount,
+		else
+			rio_mport_read_config_32(port, destid, hopcount,
 						 ext_ftr_ptr, &ftr_header);
 
 		ftr_header = RIO_GET_BLOCK_ID(ftr_header);
-		चयन (ftr_header) अणु
+		switch (ftr_header) {
 
-		हाल RIO_EFB_SER_EP_ID:
-		हाल RIO_EFB_SER_EP_REC_ID:
-		हाल RIO_EFB_SER_EP_FREE_ID:
-		हाल RIO_EFB_SER_EP_M1_ID:
-		हाल RIO_EFB_SER_EP_SW_M1_ID:
-		हाल RIO_EFB_SER_EPF_M1_ID:
-		हाल RIO_EFB_SER_EPF_SW_M1_ID:
+		case RIO_EFB_SER_EP_ID:
+		case RIO_EFB_SER_EP_REC_ID:
+		case RIO_EFB_SER_EP_FREE_ID:
+		case RIO_EFB_SER_EP_M1_ID:
+		case RIO_EFB_SER_EP_SW_M1_ID:
+		case RIO_EFB_SER_EPF_M1_ID:
+		case RIO_EFB_SER_EPF_SW_M1_ID:
 			*rmap = 1;
-			वापस ext_ftr_ptr;
+			return ext_ftr_ptr;
 
-		हाल RIO_EFB_SER_EP_M2_ID:
-		हाल RIO_EFB_SER_EP_SW_M2_ID:
-		हाल RIO_EFB_SER_EPF_M2_ID:
-		हाल RIO_EFB_SER_EPF_SW_M2_ID:
+		case RIO_EFB_SER_EP_M2_ID:
+		case RIO_EFB_SER_EP_SW_M2_ID:
+		case RIO_EFB_SER_EPF_M2_ID:
+		case RIO_EFB_SER_EPF_SW_M2_ID:
 			*rmap = 2;
-			वापस ext_ftr_ptr;
+			return ext_ftr_ptr;
 
-		शेष:
-			अवरोध;
-		पूर्ण
+		default:
+			break;
+		}
 
 		ext_ftr_ptr = rio_mport_get_efb(port, local, destid,
 						hopcount, ext_ftr_ptr);
-	पूर्ण
+	}
 
-	वापस ext_ftr_ptr;
-पूर्ण
+	return ext_ftr_ptr;
+}
 EXPORT_SYMBOL_GPL(rio_mport_get_physefb);
 
 /**
- * rio_get_comptag - Begin or जारी searching क्रम a RIO device by component tag
+ * rio_get_comptag - Begin or continue searching for a RIO device by component tag
  * @comp_tag: RIO component tag to match
- * @from: Previous RIO device found in search, or %शून्य क्रम new search
+ * @from: Previous RIO device found in search, or %NULL for new search
  *
  * Iterates through the list of known RIO devices. If a RIO device is
- * found with a matching @comp_tag, a poपूर्णांकer to its device
- * काष्ठाure is वापसed. Otherwise, %शून्य is वापसed. A new search
- * is initiated by passing %शून्य to the @from argument. Otherwise, अगर
- * @from is not %शून्य, searches जारी from next device on the global
+ * found with a matching @comp_tag, a pointer to its device
+ * structure is returned. Otherwise, %NULL is returned. A new search
+ * is initiated by passing %NULL to the @from argument. Otherwise, if
+ * @from is not %NULL, searches continue from next device on the global
  * list.
  */
-काष्ठा rio_dev *rio_get_comptag(u32 comp_tag, काष्ठा rio_dev *from)
-अणु
-	काष्ठा list_head *n;
-	काष्ठा rio_dev *rdev;
+struct rio_dev *rio_get_comptag(u32 comp_tag, struct rio_dev *from)
+{
+	struct list_head *n;
+	struct rio_dev *rdev;
 
 	spin_lock(&rio_global_list_lock);
 	n = from ? from->global_list.next : rio_devices.next;
 
-	जबतक (n && (n != &rio_devices)) अणु
+	while (n && (n != &rio_devices)) {
 		rdev = rio_dev_g(n);
-		अगर (rdev->comp_tag == comp_tag)
-			जाओ निकास;
+		if (rdev->comp_tag == comp_tag)
+			goto exit;
 		n = n->next;
-	पूर्ण
-	rdev = शून्य;
-निकास:
+	}
+	rdev = NULL;
+exit:
 	spin_unlock(&rio_global_list_lock);
-	वापस rdev;
-पूर्ण
+	return rdev;
+}
 EXPORT_SYMBOL_GPL(rio_get_comptag);
 
 /**
- * rio_set_port_lockout - Sets/clears LOCKOUT bit (RIO EM 1.3) क्रम a चयन port.
- * @rdev: Poपूर्णांकer to RIO device control काष्ठाure
+ * rio_set_port_lockout - Sets/clears LOCKOUT bit (RIO EM 1.3) for a switch port.
+ * @rdev: Pointer to RIO device control structure
  * @pnum: Switch port number to set LOCKOUT bit
  * @lock: Operation : set (=1) or clear (=0)
  */
-पूर्णांक rio_set_port_lockout(काष्ठा rio_dev *rdev, u32 pnum, पूर्णांक lock)
-अणु
+int rio_set_port_lockout(struct rio_dev *rdev, u32 pnum, int lock)
+{
 	u32 regval;
 
-	rio_पढ़ो_config_32(rdev,
+	rio_read_config_32(rdev,
 		RIO_DEV_PORT_N_CTL_CSR(rdev, pnum),
 		&regval);
-	अगर (lock)
+	if (lock)
 		regval |= RIO_PORT_N_CTL_LOCKOUT;
-	अन्यथा
+	else
 		regval &= ~RIO_PORT_N_CTL_LOCKOUT;
 
-	rio_ग_लिखो_config_32(rdev,
+	rio_write_config_32(rdev,
 		RIO_DEV_PORT_N_CTL_CSR(rdev, pnum),
 		regval);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(rio_set_port_lockout);
 
 /**
@@ -891,16 +890,16 @@ EXPORT_SYMBOL_GPL(rio_set_port_lockout);
  * @local: local=1 select local port otherwise a far device is reached
  * @destid: Destination ID of the device to check host bit
  * @hopcount: Number of hops to reach the target
- * @port_num: Port (-number on चयन) to enable on a far end device
+ * @port_num: Port (-number on switch) to enable on a far end device
  *
  * Returns 0 or 1 from on General Control Command and Status Register
  * (EXT_PTR+0x3C)
  */
-पूर्णांक rio_enable_rx_tx_port(काष्ठा rio_mport *port,
-			  पूर्णांक local, u16 destid,
+int rio_enable_rx_tx_port(struct rio_mport *port,
+			  int local, u16 destid,
 			  u8 hopcount, u8 port_num)
-अणु
-#अगर_घोषित CONFIG_RAPIDIO_ENABLE_RX_TX_PORTS
+{
+#ifdef CONFIG_RAPIDIO_ENABLE_RX_TX_PORTS
 	u32 regval;
 	u32 ext_ftr_ptr;
 	u32 rmap;
@@ -914,195 +913,195 @@ EXPORT_SYMBOL_GPL(rio_set_port_lockout);
 	ext_ftr_ptr = rio_mport_get_physefb(port, local, destid,
 					    hopcount, &rmap);
 
-	अगर (local) अणु
-		rio_local_पढ़ो_config_32(port,
+	if (local) {
+		rio_local_read_config_32(port,
 				ext_ftr_ptr + RIO_PORT_N_CTL_CSR(0, rmap),
 				&regval);
-	पूर्ण अन्यथा अणु
-		अगर (rio_mport_पढ़ो_config_32(port, destid, hopcount,
+	} else {
+		if (rio_mport_read_config_32(port, destid, hopcount,
 			ext_ftr_ptr + RIO_PORT_N_CTL_CSR(port_num, rmap),
 				&regval) < 0)
-			वापस -EIO;
-	पूर्ण
+			return -EIO;
+	}
 
 	regval = regval | RIO_PORT_N_CTL_EN_RX | RIO_PORT_N_CTL_EN_TX;
 
-	अगर (local) अणु
-		rio_local_ग_लिखो_config_32(port,
+	if (local) {
+		rio_local_write_config_32(port,
 			ext_ftr_ptr + RIO_PORT_N_CTL_CSR(0, rmap), regval);
-	पूर्ण अन्यथा अणु
-		अगर (rio_mport_ग_लिखो_config_32(port, destid, hopcount,
+	} else {
+		if (rio_mport_write_config_32(port, destid, hopcount,
 			ext_ftr_ptr + RIO_PORT_N_CTL_CSR(port_num, rmap),
 				regval) < 0)
-			वापस -EIO;
-	पूर्ण
-#पूर्ण_अगर
-	वापस 0;
-पूर्ण
+			return -EIO;
+	}
+#endif
+	return 0;
+}
 EXPORT_SYMBOL_GPL(rio_enable_rx_tx_port);
 
 
 /**
- * rio_chk_dev_route - Validate route to the specअगरied device.
+ * rio_chk_dev_route - Validate route to the specified device.
  * @rdev:  RIO device failed to respond
  * @nrdev: Last active device on the route to rdev
  * @npnum: nrdev's port number on the route to rdev
  *
- * Follows a route to the specअगरied RIO device to determine the last available
+ * Follows a route to the specified RIO device to determine the last available
  * device (and corresponding RIO port) on the route.
  */
-अटल पूर्णांक
-rio_chk_dev_route(काष्ठा rio_dev *rdev, काष्ठा rio_dev **nrdev, पूर्णांक *npnum)
-अणु
+static int
+rio_chk_dev_route(struct rio_dev *rdev, struct rio_dev **nrdev, int *npnum)
+{
 	u32 result;
-	पूर्णांक p_port, rc = -EIO;
-	काष्ठा rio_dev *prev = शून्य;
+	int p_port, rc = -EIO;
+	struct rio_dev *prev = NULL;
 
-	/* Find चयन with failed RIO link */
-	जबतक (rdev->prev && (rdev->prev->pef & RIO_PEF_SWITCH)) अणु
-		अगर (!rio_पढ़ो_config_32(rdev->prev, RIO_DEV_ID_CAR, &result)) अणु
+	/* Find switch with failed RIO link */
+	while (rdev->prev && (rdev->prev->pef & RIO_PEF_SWITCH)) {
+		if (!rio_read_config_32(rdev->prev, RIO_DEV_ID_CAR, &result)) {
 			prev = rdev->prev;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		rdev = rdev->prev;
-	पूर्ण
+	}
 
-	अगर (!prev)
-		जाओ err_out;
+	if (!prev)
+		goto err_out;
 
-	p_port = prev->rचयन->route_table[rdev->destid];
+	p_port = prev->rswitch->route_table[rdev->destid];
 
-	अगर (p_port != RIO_INVALID_ROUTE) अणु
+	if (p_port != RIO_INVALID_ROUTE) {
 		pr_debug("RIO: link failed on [%s]-P%d\n",
 			 rio_name(prev), p_port);
 		*nrdev = prev;
 		*npnum = p_port;
 		rc = 0;
-	पूर्ण अन्यथा
+	} else
 		pr_debug("RIO: failed to trace route to %s\n", rio_name(rdev));
 err_out:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /**
- * rio_mport_chk_dev_access - Validate access to the specअगरied device.
+ * rio_mport_chk_dev_access - Validate access to the specified device.
  * @mport: Master port to send transactions
  * @destid: Device destination ID in network
- * @hopcount: Number of hops पूर्णांकo the network
+ * @hopcount: Number of hops into the network
  */
-पूर्णांक
-rio_mport_chk_dev_access(काष्ठा rio_mport *mport, u16 destid, u8 hopcount)
-अणु
-	पूर्णांक i = 0;
-	u32 पंचांगp;
+int
+rio_mport_chk_dev_access(struct rio_mport *mport, u16 destid, u8 hopcount)
+{
+	int i = 0;
+	u32 tmp;
 
-	जबतक (rio_mport_पढ़ो_config_32(mport, destid, hopcount,
-					RIO_DEV_ID_CAR, &पंचांगp)) अणु
+	while (rio_mport_read_config_32(mport, destid, hopcount,
+					RIO_DEV_ID_CAR, &tmp)) {
 		i++;
-		अगर (i == RIO_MAX_CHK_RETRY)
-			वापस -EIO;
+		if (i == RIO_MAX_CHK_RETRY)
+			return -EIO;
 		mdelay(1);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(rio_mport_chk_dev_access);
 
 /**
- * rio_chk_dev_access - Validate access to the specअगरied device.
- * @rdev: Poपूर्णांकer to RIO device control काष्ठाure
+ * rio_chk_dev_access - Validate access to the specified device.
+ * @rdev: Pointer to RIO device control structure
  */
-अटल पूर्णांक rio_chk_dev_access(काष्ठा rio_dev *rdev)
-अणु
-	वापस rio_mport_chk_dev_access(rdev->net->hport,
+static int rio_chk_dev_access(struct rio_dev *rdev)
+{
+	return rio_mport_chk_dev_access(rdev->net->hport,
 					rdev->destid, rdev->hopcount);
-पूर्ण
+}
 
 /**
  * rio_get_input_status - Sends a Link-Request/Input-Status control symbol and
- *                        वापसs link-response (अगर requested).
+ *                        returns link-response (if requested).
  * @rdev: RIO devive to issue Input-status command
  * @pnum: Device port number to issue the command
  * @lnkresp: Response from a link partner
  */
-अटल पूर्णांक
-rio_get_input_status(काष्ठा rio_dev *rdev, पूर्णांक pnum, u32 *lnkresp)
-अणु
+static int
+rio_get_input_status(struct rio_dev *rdev, int pnum, u32 *lnkresp)
+{
 	u32 regval;
-	पूर्णांक checkcount;
+	int checkcount;
 
-	अगर (lnkresp) अणु
-		/* Read from link मुख्यtenance response रेजिस्टर
+	if (lnkresp) {
+		/* Read from link maintenance response register
 		 * to clear valid bit */
-		rio_पढ़ो_config_32(rdev,
+		rio_read_config_32(rdev,
 			RIO_DEV_PORT_N_MNT_RSP_CSR(rdev, pnum),
 			&regval);
 		udelay(50);
-	पूर्ण
+	}
 
 	/* Issue Input-status command */
-	rio_ग_लिखो_config_32(rdev,
+	rio_write_config_32(rdev,
 		RIO_DEV_PORT_N_MNT_REQ_CSR(rdev, pnum),
 		RIO_MNT_REQ_CMD_IS);
 
-	/* Exit अगर the response is not expected */
-	अगर (!lnkresp)
-		वापस 0;
+	/* Exit if the response is not expected */
+	if (!lnkresp)
+		return 0;
 
 	checkcount = 3;
-	जबतक (checkcount--) अणु
+	while (checkcount--) {
 		udelay(50);
-		rio_पढ़ो_config_32(rdev,
+		rio_read_config_32(rdev,
 			RIO_DEV_PORT_N_MNT_RSP_CSR(rdev, pnum),
 			&regval);
-		अगर (regval & RIO_PORT_N_MNT_RSP_RVAL) अणु
+		if (regval & RIO_PORT_N_MNT_RSP_RVAL) {
 			*lnkresp = regval;
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			return 0;
+		}
+	}
 
-	वापस -EIO;
-पूर्ण
+	return -EIO;
+}
 
 /**
  * rio_clr_err_stopped - Clears port Error-stopped states.
- * @rdev: Poपूर्णांकer to RIO device control काष्ठाure
+ * @rdev: Pointer to RIO device control structure
  * @pnum: Switch port number to clear errors
- * @err_status: port error status (अगर 0 पढ़ोs रेजिस्टर from device)
+ * @err_status: port error status (if 0 reads register from device)
  *
  * TODO: Currently this routine is not compatible with recovery process
- * specअगरied क्रम idt_gen3 RapidIO चयन devices. It has to be reviewed
+ * specified for idt_gen3 RapidIO switch devices. It has to be reviewed
  * to implement universal recovery process that is compatible full range
  * off available devices.
- * IDT gen3 चयन driver now implements HW-specअगरic error handler that
+ * IDT gen3 switch driver now implements HW-specific error handler that
  * issues soft port reset to the port to reset ERR_STOP bits and ackIDs.
  */
-अटल पूर्णांक rio_clr_err_stopped(काष्ठा rio_dev *rdev, u32 pnum, u32 err_status)
-अणु
-	काष्ठा rio_dev *nextdev = rdev->rचयन->nextdev[pnum];
+static int rio_clr_err_stopped(struct rio_dev *rdev, u32 pnum, u32 err_status)
+{
+	struct rio_dev *nextdev = rdev->rswitch->nextdev[pnum];
 	u32 regval;
 	u32 far_ackid, far_linkstat, near_ackid;
 
-	अगर (err_status == 0)
-		rio_पढ़ो_config_32(rdev,
+	if (err_status == 0)
+		rio_read_config_32(rdev,
 			RIO_DEV_PORT_N_ERR_STS_CSR(rdev, pnum),
 			&err_status);
 
-	अगर (err_status & RIO_PORT_N_ERR_STS_OUT_ES) अणु
+	if (err_status & RIO_PORT_N_ERR_STS_OUT_ES) {
 		pr_debug("RIO_EM: servicing Output Error-Stopped state\n");
 		/*
 		 * Send a Link-Request/Input-Status control symbol
 		 */
-		अगर (rio_get_input_status(rdev, pnum, &regval)) अणु
+		if (rio_get_input_status(rdev, pnum, &regval)) {
 			pr_debug("RIO_EM: Input-status response timeout\n");
-			जाओ rd_err;
-		पूर्ण
+			goto rd_err;
+		}
 
 		pr_debug("RIO_EM: SP%d Input-status response=0x%08x\n",
 			 pnum, regval);
 		far_ackid = (regval & RIO_PORT_N_MNT_RSP_ASTAT) >> 5;
 		far_linkstat = regval & RIO_PORT_N_MNT_RSP_LSTAT;
-		rio_पढ़ो_config_32(rdev,
+		rio_read_config_32(rdev,
 			RIO_DEV_PORT_N_ACK_STS_CSR(rdev, pnum),
 			&regval);
 		pr_debug("RIO_EM: SP%d_ACK_STS_CSR=0x%08x\n", pnum, regval);
@@ -1115,12 +1114,12 @@ rio_get_input_status(काष्ठा rio_dev *rdev, पूर्णांक 
 		 * If required, synchronize ackIDs of near and
 		 * far sides.
 		 */
-		अगर ((far_ackid != ((regval & RIO_PORT_N_ACK_OUTSTAND) >> 8)) ||
-		    (far_ackid != (regval & RIO_PORT_N_ACK_OUTBOUND))) अणु
+		if ((far_ackid != ((regval & RIO_PORT_N_ACK_OUTSTAND) >> 8)) ||
+		    (far_ackid != (regval & RIO_PORT_N_ACK_OUTBOUND))) {
 			/* Align near outstanding/outbound ackIDs with
 			 * far inbound.
 			 */
-			rio_ग_लिखो_config_32(rdev,
+			rio_write_config_32(rdev,
 				RIO_DEV_PORT_N_ACK_STS_CSR(rdev, pnum),
 				(near_ackid << 24) |
 					(far_ackid << 8) | far_ackid);
@@ -1128,1056 +1127,1056 @@ rio_get_input_status(काष्ठा rio_dev *rdev, पूर्णांक 
 			 * near inbound.
 			 */
 			far_ackid++;
-			अगर (!nextdev) अणु
+			if (!nextdev) {
 				pr_debug("RIO_EM: nextdev pointer == NULL\n");
-				जाओ rd_err;
-			पूर्ण
+				goto rd_err;
+			}
 
-			rio_ग_लिखो_config_32(nextdev,
+			rio_write_config_32(nextdev,
 				RIO_DEV_PORT_N_ACK_STS_CSR(nextdev,
 					RIO_GET_PORT_NUM(nextdev->swpinfo)),
 				(far_ackid << 24) |
 				(near_ackid << 8) | near_ackid);
-		पूर्ण
+		}
 rd_err:
-		rio_पढ़ो_config_32(rdev, RIO_DEV_PORT_N_ERR_STS_CSR(rdev, pnum),
+		rio_read_config_32(rdev, RIO_DEV_PORT_N_ERR_STS_CSR(rdev, pnum),
 				   &err_status);
 		pr_debug("RIO_EM: SP%d_ERR_STS_CSR=0x%08x\n", pnum, err_status);
-	पूर्ण
+	}
 
-	अगर ((err_status & RIO_PORT_N_ERR_STS_INP_ES) && nextdev) अणु
+	if ((err_status & RIO_PORT_N_ERR_STS_INP_ES) && nextdev) {
 		pr_debug("RIO_EM: servicing Input Error-Stopped state\n");
 		rio_get_input_status(nextdev,
-				     RIO_GET_PORT_NUM(nextdev->swpinfo), शून्य);
+				     RIO_GET_PORT_NUM(nextdev->swpinfo), NULL);
 		udelay(50);
 
-		rio_पढ़ो_config_32(rdev, RIO_DEV_PORT_N_ERR_STS_CSR(rdev, pnum),
+		rio_read_config_32(rdev, RIO_DEV_PORT_N_ERR_STS_CSR(rdev, pnum),
 				   &err_status);
 		pr_debug("RIO_EM: SP%d_ERR_STS_CSR=0x%08x\n", pnum, err_status);
-	पूर्ण
+	}
 
-	वापस (err_status & (RIO_PORT_N_ERR_STS_OUT_ES |
+	return (err_status & (RIO_PORT_N_ERR_STS_OUT_ES |
 			      RIO_PORT_N_ERR_STS_INP_ES)) ? 1 : 0;
-पूर्ण
+}
 
 /**
- * rio_inb_pग_लिखो_handler - inbound port-ग_लिखो message handler
- * @mport:  mport device associated with port-ग_लिखो
- * @pw_msg: poपूर्णांकer to inbound port-ग_लिखो message
+ * rio_inb_pwrite_handler - inbound port-write message handler
+ * @mport:  mport device associated with port-write
+ * @pw_msg: pointer to inbound port-write message
  *
- * Processes an inbound port-ग_लिखो message. Returns 0 अगर the request
+ * Processes an inbound port-write message. Returns 0 if the request
  * has been satisfied.
  */
-पूर्णांक rio_inb_pग_लिखो_handler(काष्ठा rio_mport *mport, जोड़ rio_pw_msg *pw_msg)
-अणु
-	काष्ठा rio_dev *rdev;
+int rio_inb_pwrite_handler(struct rio_mport *mport, union rio_pw_msg *pw_msg)
+{
+	struct rio_dev *rdev;
 	u32 err_status, em_perrdet, em_ltlerrdet;
-	पूर्णांक rc, portnum;
-	काष्ठा rio_pग_लिखो *pग_लिखो;
+	int rc, portnum;
+	struct rio_pwrite *pwrite;
 
-#अगर_घोषित DEBUG_PW
-	अणु
+#ifdef DEBUG_PW
+	{
 		u32 i;
 
 		pr_debug("%s: PW to mport_%d:\n", __func__, mport->id);
-		क्रम (i = 0; i < RIO_PW_MSG_SIZE / माप(u32); i = i + 4) अणु
+		for (i = 0; i < RIO_PW_MSG_SIZE / sizeof(u32); i = i + 4) {
 			pr_debug("0x%02x: %08x %08x %08x %08x\n",
 				i * 4, pw_msg->raw[i], pw_msg->raw[i + 1],
 				pw_msg->raw[i + 2], pw_msg->raw[i + 3]);
-		पूर्ण
-	पूर्ण
-#पूर्ण_अगर
+		}
+	}
+#endif
 
-	rdev = rio_get_comptag((pw_msg->em.comptag & RIO_CTAG_UDEVID), शून्य);
-	अगर (rdev) अणु
+	rdev = rio_get_comptag((pw_msg->em.comptag & RIO_CTAG_UDEVID), NULL);
+	if (rdev) {
 		pr_debug("RIO: Port-Write message from %s\n", rio_name(rdev));
-	पूर्ण अन्यथा अणु
+	} else {
 		pr_debug("RIO: %s No matching device for CTag 0x%08x\n",
 			__func__, pw_msg->em.comptag);
-	पूर्ण
+	}
 
-	/* Call a device-specअगरic handler (अगर it is रेजिस्टरed क्रम the device).
-	 * This may be the service क्रम endpoपूर्णांकs that send device-specअगरic
-	 * port-ग_लिखो messages. End-poपूर्णांक messages expected to be handled
-	 * completely by EP specअगरic device driver.
-	 * For चयनes rc==0 संकेतs that no standard processing required.
+	/* Call a device-specific handler (if it is registered for the device).
+	 * This may be the service for endpoints that send device-specific
+	 * port-write messages. End-point messages expected to be handled
+	 * completely by EP specific device driver.
+	 * For switches rc==0 signals that no standard processing required.
 	 */
-	अगर (rdev && rdev->pwcback) अणु
+	if (rdev && rdev->pwcback) {
 		rc = rdev->pwcback(rdev, pw_msg, 0);
-		अगर (rc == 0)
-			वापस 0;
-	पूर्ण
+		if (rc == 0)
+			return 0;
+	}
 
 	mutex_lock(&mport->lock);
-	list_क्रम_each_entry(pग_लिखो, &mport->pग_लिखोs, node)
-		pग_लिखो->pwcback(mport, pग_लिखो->context, pw_msg, 0);
+	list_for_each_entry(pwrite, &mport->pwrites, node)
+		pwrite->pwcback(mport, pwrite->context, pw_msg, 0);
 	mutex_unlock(&mport->lock);
 
-	अगर (!rdev)
-		वापस 0;
+	if (!rdev)
+		return 0;
 
 	/*
-	 * FIXME: The code below stays as it was beक्रमe क्रम now until we decide
-	 * how to करो शेष PW handling in combination with per-mport callbacks
+	 * FIXME: The code below stays as it was before for now until we decide
+	 * how to do default PW handling in combination with per-mport callbacks
 	 */
 
 	portnum = pw_msg->em.is_port & 0xFF;
 
-	/* Check अगर device and route to it are functional:
-	 * Someबार devices may send PW message(s) just beक्रमe being
-	 * घातered करोwn (or link being lost).
+	/* Check if device and route to it are functional:
+	 * Sometimes devices may send PW message(s) just before being
+	 * powered down (or link being lost).
 	 */
-	अगर (rio_chk_dev_access(rdev)) अणु
+	if (rio_chk_dev_access(rdev)) {
 		pr_debug("RIO: device access failed - get link partner\n");
-		/* Scan route to the device and identअगरy failed link.
+		/* Scan route to the device and identify failed link.
 		 * This will replace device and port reported in PW message.
-		 * PW message should not be used after this poपूर्णांक.
+		 * PW message should not be used after this point.
 		 */
-		अगर (rio_chk_dev_route(rdev, &rdev, &portnum)) अणु
+		if (rio_chk_dev_route(rdev, &rdev, &portnum)) {
 			pr_err("RIO: Route trace for %s failed\n",
 				rio_name(rdev));
-			वापस -EIO;
-		पूर्ण
-		pw_msg = शून्य;
-	पूर्ण
+			return -EIO;
+		}
+		pw_msg = NULL;
+	}
 
-	/* For End-poपूर्णांक devices processing stops here */
-	अगर (!(rdev->pef & RIO_PEF_SWITCH))
-		वापस 0;
+	/* For End-point devices processing stops here */
+	if (!(rdev->pef & RIO_PEF_SWITCH))
+		return 0;
 
-	अगर (rdev->phys_efptr == 0) अणु
+	if (rdev->phys_efptr == 0) {
 		pr_err("RIO_PW: Bad switch initialization for %s\n",
 			rio_name(rdev));
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	/*
-	 * Process the port-ग_लिखो notअगरication from चयन
+	 * Process the port-write notification from switch
 	 */
-	अगर (rdev->rचयन->ops && rdev->rचयन->ops->em_handle)
-		rdev->rचयन->ops->em_handle(rdev, portnum);
+	if (rdev->rswitch->ops && rdev->rswitch->ops->em_handle)
+		rdev->rswitch->ops->em_handle(rdev, portnum);
 
-	rio_पढ़ो_config_32(rdev, RIO_DEV_PORT_N_ERR_STS_CSR(rdev, portnum),
+	rio_read_config_32(rdev, RIO_DEV_PORT_N_ERR_STS_CSR(rdev, portnum),
 			   &err_status);
 	pr_debug("RIO_PW: SP%d_ERR_STS_CSR=0x%08x\n", portnum, err_status);
 
-	अगर (err_status & RIO_PORT_N_ERR_STS_PORT_OK) अणु
+	if (err_status & RIO_PORT_N_ERR_STS_PORT_OK) {
 
-		अगर (!(rdev->rचयन->port_ok & (1 << portnum))) अणु
-			rdev->rचयन->port_ok |= (1 << portnum);
+		if (!(rdev->rswitch->port_ok & (1 << portnum))) {
+			rdev->rswitch->port_ok |= (1 << portnum);
 			rio_set_port_lockout(rdev, portnum, 0);
 			/* Schedule Insertion Service */
 			pr_debug("RIO_PW: Device Insertion on [%s]-P%d\n",
 			       rio_name(rdev), portnum);
-		पूर्ण
+		}
 
-		/* Clear error-stopped states (अगर reported).
+		/* Clear error-stopped states (if reported).
 		 * Depending on the link partner state, two attempts
-		 * may be needed क्रम successful recovery.
+		 * may be needed for successful recovery.
 		 */
-		अगर (err_status & (RIO_PORT_N_ERR_STS_OUT_ES |
-				  RIO_PORT_N_ERR_STS_INP_ES)) अणु
-			अगर (rio_clr_err_stopped(rdev, portnum, err_status))
+		if (err_status & (RIO_PORT_N_ERR_STS_OUT_ES |
+				  RIO_PORT_N_ERR_STS_INP_ES)) {
+			if (rio_clr_err_stopped(rdev, portnum, err_status))
 				rio_clr_err_stopped(rdev, portnum, 0);
-		पूर्ण
-	पूर्ण  अन्यथा अणु /* अगर (err_status & RIO_PORT_N_ERR_STS_PORT_UNINIT) */
+		}
+	}  else { /* if (err_status & RIO_PORT_N_ERR_STS_PORT_UNINIT) */
 
-		अगर (rdev->rचयन->port_ok & (1 << portnum)) अणु
-			rdev->rचयन->port_ok &= ~(1 << portnum);
+		if (rdev->rswitch->port_ok & (1 << portnum)) {
+			rdev->rswitch->port_ok &= ~(1 << portnum);
 			rio_set_port_lockout(rdev, portnum, 1);
 
-			अगर (rdev->phys_rmap == 1) अणु
-			rio_ग_लिखो_config_32(rdev,
+			if (rdev->phys_rmap == 1) {
+			rio_write_config_32(rdev,
 				RIO_DEV_PORT_N_ACK_STS_CSR(rdev, portnum),
 				RIO_PORT_N_ACK_CLEAR);
-			पूर्ण अन्यथा अणु
-				rio_ग_लिखो_config_32(rdev,
+			} else {
+				rio_write_config_32(rdev,
 					RIO_DEV_PORT_N_OB_ACK_CSR(rdev, portnum),
 					RIO_PORT_N_OB_ACK_CLEAR);
-				rio_ग_लिखो_config_32(rdev,
+				rio_write_config_32(rdev,
 					RIO_DEV_PORT_N_IB_ACK_CSR(rdev, portnum),
 					0);
-			पूर्ण
+			}
 
 			/* Schedule Extraction Service */
 			pr_debug("RIO_PW: Device Extraction on [%s]-P%d\n",
 			       rio_name(rdev), portnum);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	rio_पढ़ो_config_32(rdev,
+	rio_read_config_32(rdev,
 		rdev->em_efptr + RIO_EM_PN_ERR_DETECT(portnum), &em_perrdet);
-	अगर (em_perrdet) अणु
+	if (em_perrdet) {
 		pr_debug("RIO_PW: RIO_EM_P%d_ERR_DETECT=0x%08x\n",
 			 portnum, em_perrdet);
 		/* Clear EM Port N Error Detect CSR */
-		rio_ग_लिखो_config_32(rdev,
+		rio_write_config_32(rdev,
 			rdev->em_efptr + RIO_EM_PN_ERR_DETECT(portnum), 0);
-	पूर्ण
+	}
 
-	rio_पढ़ो_config_32(rdev,
+	rio_read_config_32(rdev,
 		rdev->em_efptr + RIO_EM_LTL_ERR_DETECT, &em_ltlerrdet);
-	अगर (em_ltlerrdet) अणु
+	if (em_ltlerrdet) {
 		pr_debug("RIO_PW: RIO_EM_LTL_ERR_DETECT=0x%08x\n",
 			 em_ltlerrdet);
 		/* Clear EM L/T Layer Error Detect CSR */
-		rio_ग_लिखो_config_32(rdev,
+		rio_write_config_32(rdev,
 			rdev->em_efptr + RIO_EM_LTL_ERR_DETECT, 0);
-	पूर्ण
+	}
 
-	/* Clear reमुख्यing error bits and Port-Write Pending bit */
-	rio_ग_लिखो_config_32(rdev, RIO_DEV_PORT_N_ERR_STS_CSR(rdev, portnum),
+	/* Clear remaining error bits and Port-Write Pending bit */
+	rio_write_config_32(rdev, RIO_DEV_PORT_N_ERR_STS_CSR(rdev, portnum),
 			    err_status);
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(rio_inb_pग_लिखो_handler);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(rio_inb_pwrite_handler);
 
 /**
- * rio_mport_get_efb - get poपूर्णांकer to next extended features block
+ * rio_mport_get_efb - get pointer to next extended features block
  * @port: Master port to issue transaction
  * @local: Indicate a local master port or remote device access
  * @destid: Destination ID of the device
- * @hopcount: Number of चयन hops to the device
- * @from: Offset of  current Extended Feature block header (अगर 0 starts
+ * @hopcount: Number of switch hops to the device
+ * @from: Offset of  current Extended Feature block header (if 0 starts
  * from	ExtFeaturePtr)
  */
 u32
-rio_mport_get_efb(काष्ठा rio_mport *port, पूर्णांक local, u16 destid,
+rio_mport_get_efb(struct rio_mport *port, int local, u16 destid,
 		      u8 hopcount, u32 from)
-अणु
+{
 	u32 reg_val;
 
-	अगर (from == 0) अणु
-		अगर (local)
-			rio_local_पढ़ो_config_32(port, RIO_ASM_INFO_CAR,
+	if (from == 0) {
+		if (local)
+			rio_local_read_config_32(port, RIO_ASM_INFO_CAR,
 						 &reg_val);
-		अन्यथा
-			rio_mport_पढ़ो_config_32(port, destid, hopcount,
+		else
+			rio_mport_read_config_32(port, destid, hopcount,
 						 RIO_ASM_INFO_CAR, &reg_val);
-		वापस reg_val & RIO_EXT_FTR_PTR_MASK;
-	पूर्ण अन्यथा अणु
-		अगर (local)
-			rio_local_पढ़ो_config_32(port, from, &reg_val);
-		अन्यथा
-			rio_mport_पढ़ो_config_32(port, destid, hopcount,
+		return reg_val & RIO_EXT_FTR_PTR_MASK;
+	} else {
+		if (local)
+			rio_local_read_config_32(port, from, &reg_val);
+		else
+			rio_mport_read_config_32(port, destid, hopcount,
 						 from, &reg_val);
-		वापस RIO_GET_BLOCK_ID(reg_val);
-	पूर्ण
-पूर्ण
+		return RIO_GET_BLOCK_ID(reg_val);
+	}
+}
 EXPORT_SYMBOL_GPL(rio_mport_get_efb);
 
 /**
- * rio_mport_get_feature - query क्रम devices' extended features
+ * rio_mport_get_feature - query for devices' extended features
  * @port: Master port to issue transaction
  * @local: Indicate a local master port or remote device access
  * @destid: Destination ID of the device
- * @hopcount: Number of चयन hops to the device
+ * @hopcount: Number of switch hops to the device
  * @ftr: Extended feature code
  *
- * Tell अगर a device supports a given RapidIO capability.
+ * Tell if a device supports a given RapidIO capability.
  * Returns the offset of the requested extended feature
  * block within the device's RIO configuration space or
- * 0 in हाल the device करोes not support it.
+ * 0 in case the device does not support it.
  */
 u32
-rio_mport_get_feature(काष्ठा rio_mport * port, पूर्णांक local, u16 destid,
-		      u8 hopcount, पूर्णांक ftr)
-अणु
-	u32 यंत्र_info, ext_ftr_ptr, ftr_header;
+rio_mport_get_feature(struct rio_mport * port, int local, u16 destid,
+		      u8 hopcount, int ftr)
+{
+	u32 asm_info, ext_ftr_ptr, ftr_header;
 
-	अगर (local)
-		rio_local_पढ़ो_config_32(port, RIO_ASM_INFO_CAR, &यंत्र_info);
-	अन्यथा
-		rio_mport_पढ़ो_config_32(port, destid, hopcount,
-					 RIO_ASM_INFO_CAR, &यंत्र_info);
+	if (local)
+		rio_local_read_config_32(port, RIO_ASM_INFO_CAR, &asm_info);
+	else
+		rio_mport_read_config_32(port, destid, hopcount,
+					 RIO_ASM_INFO_CAR, &asm_info);
 
-	ext_ftr_ptr = यंत्र_info & RIO_EXT_FTR_PTR_MASK;
+	ext_ftr_ptr = asm_info & RIO_EXT_FTR_PTR_MASK;
 
-	जबतक (ext_ftr_ptr) अणु
-		अगर (local)
-			rio_local_पढ़ो_config_32(port, ext_ftr_ptr,
+	while (ext_ftr_ptr) {
+		if (local)
+			rio_local_read_config_32(port, ext_ftr_ptr,
 						 &ftr_header);
-		अन्यथा
-			rio_mport_पढ़ो_config_32(port, destid, hopcount,
+		else
+			rio_mport_read_config_32(port, destid, hopcount,
 						 ext_ftr_ptr, &ftr_header);
-		अगर (RIO_GET_BLOCK_ID(ftr_header) == ftr)
-			वापस ext_ftr_ptr;
+		if (RIO_GET_BLOCK_ID(ftr_header) == ftr)
+			return ext_ftr_ptr;
 
 		ext_ftr_ptr = RIO_GET_BLOCK_PTR(ftr_header);
-		अगर (!ext_ftr_ptr)
-			अवरोध;
-	पूर्ण
+		if (!ext_ftr_ptr)
+			break;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(rio_mport_get_feature);
 
 /**
- * rio_std_route_add_entry - Add चयन route table entry using standard
- *   रेजिस्टरs defined in RIO specअगरication rev.1.3
+ * rio_std_route_add_entry - Add switch route table entry using standard
+ *   registers defined in RIO specification rev.1.3
  * @mport: Master port to issue transaction
  * @destid: Destination ID of the device
- * @hopcount: Number of चयन hops to the device
- * @table: routing table ID (global or port-specअगरic)
+ * @hopcount: Number of switch hops to the device
+ * @table: routing table ID (global or port-specific)
  * @route_destid: destID entry in the RT
- * @route_port: destination port क्रम specअगरied destID
+ * @route_port: destination port for specified destID
  */
-अटल पूर्णांक
-rio_std_route_add_entry(काष्ठा rio_mport *mport, u16 destid, u8 hopcount,
+static int
+rio_std_route_add_entry(struct rio_mport *mport, u16 destid, u8 hopcount,
 			u16 table, u16 route_destid, u8 route_port)
-अणु
-	अगर (table == RIO_GLOBAL_TABLE) अणु
-		rio_mport_ग_लिखो_config_32(mport, destid, hopcount,
+{
+	if (table == RIO_GLOBAL_TABLE) {
+		rio_mport_write_config_32(mport, destid, hopcount,
 				RIO_STD_RTE_CONF_DESTID_SEL_CSR,
 				(u32)route_destid);
-		rio_mport_ग_लिखो_config_32(mport, destid, hopcount,
+		rio_mport_write_config_32(mport, destid, hopcount,
 				RIO_STD_RTE_CONF_PORT_SEL_CSR,
 				(u32)route_port);
-	पूर्ण
+	}
 
 	udelay(10);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * rio_std_route_get_entry - Read चयन route table entry (port number)
- *   associated with specअगरied destID using standard रेजिस्टरs defined in RIO
- *   specअगरication rev.1.3
+ * rio_std_route_get_entry - Read switch route table entry (port number)
+ *   associated with specified destID using standard registers defined in RIO
+ *   specification rev.1.3
  * @mport: Master port to issue transaction
  * @destid: Destination ID of the device
- * @hopcount: Number of चयन hops to the device
- * @table: routing table ID (global or port-specअगरic)
+ * @hopcount: Number of switch hops to the device
+ * @table: routing table ID (global or port-specific)
  * @route_destid: destID entry in the RT
- * @route_port: वापसed destination port क्रम specअगरied destID
+ * @route_port: returned destination port for specified destID
  */
-अटल पूर्णांक
-rio_std_route_get_entry(काष्ठा rio_mport *mport, u16 destid, u8 hopcount,
+static int
+rio_std_route_get_entry(struct rio_mport *mport, u16 destid, u8 hopcount,
 			u16 table, u16 route_destid, u8 *route_port)
-अणु
+{
 	u32 result;
 
-	अगर (table == RIO_GLOBAL_TABLE) अणु
-		rio_mport_ग_लिखो_config_32(mport, destid, hopcount,
+	if (table == RIO_GLOBAL_TABLE) {
+		rio_mport_write_config_32(mport, destid, hopcount,
 				RIO_STD_RTE_CONF_DESTID_SEL_CSR, route_destid);
-		rio_mport_पढ़ो_config_32(mport, destid, hopcount,
+		rio_mport_read_config_32(mport, destid, hopcount,
 				RIO_STD_RTE_CONF_PORT_SEL_CSR, &result);
 
 		*route_port = (u8)result;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * rio_std_route_clr_table - Clear swotch route table using standard रेजिस्टरs
- *   defined in RIO specअगरication rev.1.3.
+ * rio_std_route_clr_table - Clear swotch route table using standard registers
+ *   defined in RIO specification rev.1.3.
  * @mport: Master port to issue transaction
  * @destid: Destination ID of the device
- * @hopcount: Number of चयन hops to the device
- * @table: routing table ID (global or port-specअगरic)
+ * @hopcount: Number of switch hops to the device
+ * @table: routing table ID (global or port-specific)
  */
-अटल पूर्णांक
-rio_std_route_clr_table(काष्ठा rio_mport *mport, u16 destid, u8 hopcount,
+static int
+rio_std_route_clr_table(struct rio_mport *mport, u16 destid, u8 hopcount,
 			u16 table)
-अणु
+{
 	u32 max_destid = 0xff;
 	u32 i, pef, id_inc = 1, ext_cfg = 0;
 	u32 port_sel = RIO_INVALID_ROUTE;
 
-	अगर (table == RIO_GLOBAL_TABLE) अणु
-		rio_mport_पढ़ो_config_32(mport, destid, hopcount,
+	if (table == RIO_GLOBAL_TABLE) {
+		rio_mport_read_config_32(mport, destid, hopcount,
 					 RIO_PEF_CAR, &pef);
 
-		अगर (mport->sys_size) अणु
-			rio_mport_पढ़ो_config_32(mport, destid, hopcount,
+		if (mport->sys_size) {
+			rio_mport_read_config_32(mport, destid, hopcount,
 						 RIO_SWITCH_RT_LIMIT,
 						 &max_destid);
 			max_destid &= RIO_RT_MAX_DESTID;
-		पूर्ण
+		}
 
-		अगर (pef & RIO_PEF_EXT_RT) अणु
+		if (pef & RIO_PEF_EXT_RT) {
 			ext_cfg = 0x80000000;
 			id_inc = 4;
 			port_sel = (RIO_INVALID_ROUTE << 24) |
 				   (RIO_INVALID_ROUTE << 16) |
 				   (RIO_INVALID_ROUTE << 8) |
 				   RIO_INVALID_ROUTE;
-		पूर्ण
+		}
 
-		क्रम (i = 0; i <= max_destid;) अणु
-			rio_mport_ग_लिखो_config_32(mport, destid, hopcount,
+		for (i = 0; i <= max_destid;) {
+			rio_mport_write_config_32(mport, destid, hopcount,
 					RIO_STD_RTE_CONF_DESTID_SEL_CSR,
 					ext_cfg | i);
-			rio_mport_ग_लिखो_config_32(mport, destid, hopcount,
+			rio_mport_write_config_32(mport, destid, hopcount,
 					RIO_STD_RTE_CONF_PORT_SEL_CSR,
 					port_sel);
 			i += id_inc;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	udelay(10);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * rio_lock_device - Acquires host device lock क्रम specअगरied device
+ * rio_lock_device - Acquires host device lock for specified device
  * @port: Master port to send transaction
- * @destid: Destination ID क्रम device/चयन
- * @hopcount: Hopcount to reach चयन
- * @रुको_ms: Max रुको समय in msec (0 = no समयout)
+ * @destid: Destination ID for device/switch
+ * @hopcount: Hopcount to reach switch
+ * @wait_ms: Max wait time in msec (0 = no timeout)
  *
- * Attepts to acquire host device lock क्रम specअगरied device
- * Returns 0 अगर device lock acquired or EINVAL अगर समयout expires.
+ * Attepts to acquire host device lock for specified device
+ * Returns 0 if device lock acquired or EINVAL if timeout expires.
  */
-पूर्णांक rio_lock_device(काष्ठा rio_mport *port, u16 destid,
-		    u8 hopcount, पूर्णांक रुको_ms)
-अणु
+int rio_lock_device(struct rio_mport *port, u16 destid,
+		    u8 hopcount, int wait_ms)
+{
 	u32 result;
-	पूर्णांक tcnt = 0;
+	int tcnt = 0;
 
 	/* Attempt to acquire device lock */
-	rio_mport_ग_लिखो_config_32(port, destid, hopcount,
+	rio_mport_write_config_32(port, destid, hopcount,
 				  RIO_HOST_DID_LOCK_CSR, port->host_deviceid);
-	rio_mport_पढ़ो_config_32(port, destid, hopcount,
+	rio_mport_read_config_32(port, destid, hopcount,
 				 RIO_HOST_DID_LOCK_CSR, &result);
 
-	जबतक (result != port->host_deviceid) अणु
-		अगर (रुको_ms != 0 && tcnt == रुको_ms) अणु
+	while (result != port->host_deviceid) {
+		if (wait_ms != 0 && tcnt == wait_ms) {
 			pr_debug("RIO: timeout when locking device %x:%x\n",
 				destid, hopcount);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
 		/* Delay a bit */
 		mdelay(1);
 		tcnt++;
 		/* Try to acquire device lock again */
-		rio_mport_ग_लिखो_config_32(port, destid,
+		rio_mport_write_config_32(port, destid,
 			hopcount,
 			RIO_HOST_DID_LOCK_CSR,
 			port->host_deviceid);
-		rio_mport_पढ़ो_config_32(port, destid,
+		rio_mport_read_config_32(port, destid,
 			hopcount,
 			RIO_HOST_DID_LOCK_CSR, &result);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(rio_lock_device);
 
 /**
- * rio_unlock_device - Releases host device lock क्रम specअगरied device
+ * rio_unlock_device - Releases host device lock for specified device
  * @port: Master port to send transaction
- * @destid: Destination ID क्रम device/चयन
- * @hopcount: Hopcount to reach चयन
+ * @destid: Destination ID for device/switch
+ * @hopcount: Hopcount to reach switch
  *
- * Returns 0 अगर device lock released or EINVAL अगर fails.
+ * Returns 0 if device lock released or EINVAL if fails.
  */
-पूर्णांक rio_unlock_device(काष्ठा rio_mport *port, u16 destid, u8 hopcount)
-अणु
+int rio_unlock_device(struct rio_mport *port, u16 destid, u8 hopcount)
+{
 	u32 result;
 
 	/* Release device lock */
-	rio_mport_ग_लिखो_config_32(port, destid,
+	rio_mport_write_config_32(port, destid,
 				  hopcount,
 				  RIO_HOST_DID_LOCK_CSR,
 				  port->host_deviceid);
-	rio_mport_पढ़ो_config_32(port, destid, hopcount,
+	rio_mport_read_config_32(port, destid, hopcount,
 		RIO_HOST_DID_LOCK_CSR, &result);
-	अगर ((result & 0xffff) != 0xffff) अणु
+	if ((result & 0xffff) != 0xffff) {
 		pr_debug("RIO: badness when releasing device lock %x:%x\n",
 			 destid, hopcount);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(rio_unlock_device);
 
 /**
- * rio_route_add_entry- Add a route entry to a चयन routing table
+ * rio_route_add_entry- Add a route entry to a switch routing table
  * @rdev: RIO device
  * @table: Routing table ID
  * @route_destid: Destination ID to be routed
  * @route_port: Port number to be routed
- * @lock: apply a hardware lock on चयन device flag (1=lock, 0=no_lock)
+ * @lock: apply a hardware lock on switch device flag (1=lock, 0=no_lock)
  *
- * If available calls the चयन specअगरic add_entry() method to add a route
- * entry पूर्णांकo a चयन routing table. Otherwise uses standard RT update method
- * as defined by RapidIO specअगरication. A specअगरic routing table can be selected
- * using the @table argument अगर a चयन has per port routing tables or
+ * If available calls the switch specific add_entry() method to add a route
+ * entry into a switch routing table. Otherwise uses standard RT update method
+ * as defined by RapidIO specification. A specific routing table can be selected
+ * using the @table argument if a switch has per port routing tables or
  * the standard (or global) table may be used by passing
  * %RIO_GLOBAL_TABLE in @table.
  *
  * Returns %0 on success or %-EINVAL on failure.
  */
-पूर्णांक rio_route_add_entry(काष्ठा rio_dev *rdev,
-			u16 table, u16 route_destid, u8 route_port, पूर्णांक lock)
-अणु
-	पूर्णांक rc = -EINVAL;
-	काष्ठा rio_चयन_ops *ops = rdev->rचयन->ops;
+int rio_route_add_entry(struct rio_dev *rdev,
+			u16 table, u16 route_destid, u8 route_port, int lock)
+{
+	int rc = -EINVAL;
+	struct rio_switch_ops *ops = rdev->rswitch->ops;
 
-	अगर (lock) अणु
+	if (lock) {
 		rc = rio_lock_device(rdev->net->hport, rdev->destid,
 				     rdev->hopcount, 1000);
-		अगर (rc)
-			वापस rc;
-	पूर्ण
+		if (rc)
+			return rc;
+	}
 
-	spin_lock(&rdev->rचयन->lock);
+	spin_lock(&rdev->rswitch->lock);
 
-	अगर (!ops || !ops->add_entry) अणु
+	if (!ops || !ops->add_entry) {
 		rc = rio_std_route_add_entry(rdev->net->hport, rdev->destid,
 					     rdev->hopcount, table,
 					     route_destid, route_port);
-	पूर्ण अन्यथा अगर (try_module_get(ops->owner)) अणु
+	} else if (try_module_get(ops->owner)) {
 		rc = ops->add_entry(rdev->net->hport, rdev->destid,
 				    rdev->hopcount, table, route_destid,
 				    route_port);
 		module_put(ops->owner);
-	पूर्ण
+	}
 
-	spin_unlock(&rdev->rचयन->lock);
+	spin_unlock(&rdev->rswitch->lock);
 
-	अगर (lock)
+	if (lock)
 		rio_unlock_device(rdev->net->hport, rdev->destid,
 				  rdev->hopcount);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 EXPORT_SYMBOL_GPL(rio_route_add_entry);
 
 /**
- * rio_route_get_entry- Read an entry from a चयन routing table
+ * rio_route_get_entry- Read an entry from a switch routing table
  * @rdev: RIO device
  * @table: Routing table ID
  * @route_destid: Destination ID to be routed
- * @route_port: Poपूर्णांकer to पढ़ो port number पूर्णांकo
- * @lock: apply a hardware lock on चयन device flag (1=lock, 0=no_lock)
+ * @route_port: Pointer to read port number into
+ * @lock: apply a hardware lock on switch device flag (1=lock, 0=no_lock)
  *
- * If available calls the चयन specअगरic get_entry() method to fetch a route
- * entry from a चयन routing table. Otherwise uses standard RT पढ़ो method
- * as defined by RapidIO specअगरication. A specअगरic routing table can be selected
- * using the @table argument अगर a चयन has per port routing tables or
+ * If available calls the switch specific get_entry() method to fetch a route
+ * entry from a switch routing table. Otherwise uses standard RT read method
+ * as defined by RapidIO specification. A specific routing table can be selected
+ * using the @table argument if a switch has per port routing tables or
  * the standard (or global) table may be used by passing
  * %RIO_GLOBAL_TABLE in @table.
  *
  * Returns %0 on success or %-EINVAL on failure.
  */
-पूर्णांक rio_route_get_entry(काष्ठा rio_dev *rdev, u16 table,
-			u16 route_destid, u8 *route_port, पूर्णांक lock)
-अणु
-	पूर्णांक rc = -EINVAL;
-	काष्ठा rio_चयन_ops *ops = rdev->rचयन->ops;
+int rio_route_get_entry(struct rio_dev *rdev, u16 table,
+			u16 route_destid, u8 *route_port, int lock)
+{
+	int rc = -EINVAL;
+	struct rio_switch_ops *ops = rdev->rswitch->ops;
 
-	अगर (lock) अणु
+	if (lock) {
 		rc = rio_lock_device(rdev->net->hport, rdev->destid,
 				     rdev->hopcount, 1000);
-		अगर (rc)
-			वापस rc;
-	पूर्ण
+		if (rc)
+			return rc;
+	}
 
-	spin_lock(&rdev->rचयन->lock);
+	spin_lock(&rdev->rswitch->lock);
 
-	अगर (!ops || !ops->get_entry) अणु
+	if (!ops || !ops->get_entry) {
 		rc = rio_std_route_get_entry(rdev->net->hport, rdev->destid,
 					     rdev->hopcount, table,
 					     route_destid, route_port);
-	पूर्ण अन्यथा अगर (try_module_get(ops->owner)) अणु
+	} else if (try_module_get(ops->owner)) {
 		rc = ops->get_entry(rdev->net->hport, rdev->destid,
 				    rdev->hopcount, table, route_destid,
 				    route_port);
 		module_put(ops->owner);
-	पूर्ण
+	}
 
-	spin_unlock(&rdev->rचयन->lock);
+	spin_unlock(&rdev->rswitch->lock);
 
-	अगर (lock)
+	if (lock)
 		rio_unlock_device(rdev->net->hport, rdev->destid,
 				  rdev->hopcount);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 EXPORT_SYMBOL_GPL(rio_route_get_entry);
 
 /**
- * rio_route_clr_table - Clear a चयन routing table
+ * rio_route_clr_table - Clear a switch routing table
  * @rdev: RIO device
  * @table: Routing table ID
- * @lock: apply a hardware lock on चयन device flag (1=lock, 0=no_lock)
+ * @lock: apply a hardware lock on switch device flag (1=lock, 0=no_lock)
  *
- * If available calls the चयन specअगरic clr_table() method to clear a चयन
- * routing table. Otherwise uses standard RT ग_लिखो method as defined by RapidIO
- * specअगरication. A specअगरic routing table can be selected using the @table
- * argument अगर a चयन has per port routing tables or the standard (or global)
+ * If available calls the switch specific clr_table() method to clear a switch
+ * routing table. Otherwise uses standard RT write method as defined by RapidIO
+ * specification. A specific routing table can be selected using the @table
+ * argument if a switch has per port routing tables or the standard (or global)
  * table may be used by passing %RIO_GLOBAL_TABLE in @table.
  *
  * Returns %0 on success or %-EINVAL on failure.
  */
-पूर्णांक rio_route_clr_table(काष्ठा rio_dev *rdev, u16 table, पूर्णांक lock)
-अणु
-	पूर्णांक rc = -EINVAL;
-	काष्ठा rio_चयन_ops *ops = rdev->rचयन->ops;
+int rio_route_clr_table(struct rio_dev *rdev, u16 table, int lock)
+{
+	int rc = -EINVAL;
+	struct rio_switch_ops *ops = rdev->rswitch->ops;
 
-	अगर (lock) अणु
+	if (lock) {
 		rc = rio_lock_device(rdev->net->hport, rdev->destid,
 				     rdev->hopcount, 1000);
-		अगर (rc)
-			वापस rc;
-	पूर्ण
+		if (rc)
+			return rc;
+	}
 
-	spin_lock(&rdev->rचयन->lock);
+	spin_lock(&rdev->rswitch->lock);
 
-	अगर (!ops || !ops->clr_table) अणु
+	if (!ops || !ops->clr_table) {
 		rc = rio_std_route_clr_table(rdev->net->hport, rdev->destid,
 					     rdev->hopcount, table);
-	पूर्ण अन्यथा अगर (try_module_get(ops->owner)) अणु
+	} else if (try_module_get(ops->owner)) {
 		rc = ops->clr_table(rdev->net->hport, rdev->destid,
 				    rdev->hopcount, table);
 
 		module_put(ops->owner);
-	पूर्ण
+	}
 
-	spin_unlock(&rdev->rचयन->lock);
+	spin_unlock(&rdev->rswitch->lock);
 
-	अगर (lock)
+	if (lock)
 		rio_unlock_device(rdev->net->hport, rdev->destid,
 				  rdev->hopcount);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 EXPORT_SYMBOL_GPL(rio_route_clr_table);
 
-#अगर_घोषित CONFIG_RAPIDIO_DMA_ENGINE
+#ifdef CONFIG_RAPIDIO_DMA_ENGINE
 
-अटल bool rio_chan_filter(काष्ठा dma_chan *chan, व्योम *arg)
-अणु
-	काष्ठा rio_mport *mport = arg;
+static bool rio_chan_filter(struct dma_chan *chan, void *arg)
+{
+	struct rio_mport *mport = arg;
 
-	/* Check that DMA device beदीर्घs to the right MPORT */
-	वापस mport == container_of(chan->device, काष्ठा rio_mport, dma);
-पूर्ण
+	/* Check that DMA device belongs to the right MPORT */
+	return mport == container_of(chan->device, struct rio_mport, dma);
+}
 
 /**
  * rio_request_mport_dma - request RapidIO capable DMA channel associated
- *   with specअगरied local RapidIO mport device.
- * @mport: RIO mport to perक्रमm DMA data transfers
+ *   with specified local RapidIO mport device.
+ * @mport: RIO mport to perform DMA data transfers
  *
- * Returns poपूर्णांकer to allocated DMA channel or शून्य अगर failed.
+ * Returns pointer to allocated DMA channel or NULL if failed.
  */
-काष्ठा dma_chan *rio_request_mport_dma(काष्ठा rio_mport *mport)
-अणु
+struct dma_chan *rio_request_mport_dma(struct rio_mport *mport)
+{
 	dma_cap_mask_t mask;
 
 	dma_cap_zero(mask);
 	dma_cap_set(DMA_SLAVE, mask);
-	वापस dma_request_channel(mask, rio_chan_filter, mport);
-पूर्ण
+	return dma_request_channel(mask, rio_chan_filter, mport);
+}
 EXPORT_SYMBOL_GPL(rio_request_mport_dma);
 
 /**
  * rio_request_dma - request RapidIO capable DMA channel that supports
- *   specअगरied target RapidIO device.
+ *   specified target RapidIO device.
  * @rdev: RIO device associated with DMA transfer
  *
- * Returns poपूर्णांकer to allocated DMA channel or शून्य अगर failed.
+ * Returns pointer to allocated DMA channel or NULL if failed.
  */
-काष्ठा dma_chan *rio_request_dma(काष्ठा rio_dev *rdev)
-अणु
-	वापस rio_request_mport_dma(rdev->net->hport);
-पूर्ण
+struct dma_chan *rio_request_dma(struct rio_dev *rdev)
+{
+	return rio_request_mport_dma(rdev->net->hport);
+}
 EXPORT_SYMBOL_GPL(rio_request_dma);
 
 /**
- * rio_release_dma - release specअगरied DMA channel
+ * rio_release_dma - release specified DMA channel
  * @dchan: DMA channel to release
  */
-व्योम rio_release_dma(काष्ठा dma_chan *dchan)
-अणु
+void rio_release_dma(struct dma_chan *dchan)
+{
 	dma_release_channel(dchan);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(rio_release_dma);
 
 /**
- * rio_dma_prep_xfer - RapidIO specअगरic wrapper
- *   क्रम device_prep_slave_sg callback defined by DMAENGINE.
+ * rio_dma_prep_xfer - RapidIO specific wrapper
+ *   for device_prep_slave_sg callback defined by DMAENGINE.
  * @dchan: DMA channel to configure
  * @destid: target RapidIO device destination ID
- * @data: RIO specअगरic data descriptor
+ * @data: RIO specific data descriptor
  * @direction: DMA data transfer direction (TO or FROM the device)
  * @flags: dmaengine defined flags
  *
- * Initializes RapidIO capable DMA channel क्रम the specअगरied data transfer.
- * Uses DMA channel निजी extension to pass inक्रमmation related to remote
+ * Initializes RapidIO capable DMA channel for the specified data transfer.
+ * Uses DMA channel private extension to pass information related to remote
  * target RIO device.
  *
- * Returns: poपूर्णांकer to DMA transaction descriptor अगर successful,
- *          error-valued poपूर्णांकer or शून्य अगर failed.
+ * Returns: pointer to DMA transaction descriptor if successful,
+ *          error-valued pointer or NULL if failed.
  */
-काष्ठा dma_async_tx_descriptor *rio_dma_prep_xfer(काष्ठा dma_chan *dchan,
-	u16 destid, काष्ठा rio_dma_data *data,
-	क्रमागत dma_transfer_direction direction, अचिन्हित दीर्घ flags)
-अणु
-	काष्ठा rio_dma_ext rio_ext;
+struct dma_async_tx_descriptor *rio_dma_prep_xfer(struct dma_chan *dchan,
+	u16 destid, struct rio_dma_data *data,
+	enum dma_transfer_direction direction, unsigned long flags)
+{
+	struct rio_dma_ext rio_ext;
 
-	अगर (!dchan->device->device_prep_slave_sg) अणु
+	if (!dchan->device->device_prep_slave_sg) {
 		pr_err("%s: prep_rio_sg == NULL\n", __func__);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
 	rio_ext.destid = destid;
 	rio_ext.rio_addr_u = data->rio_addr_u;
 	rio_ext.rio_addr = data->rio_addr;
 	rio_ext.wr_type = data->wr_type;
 
-	वापस dmaengine_prep_rio_sg(dchan, data->sg, data->sg_len,
+	return dmaengine_prep_rio_sg(dchan, data->sg, data->sg_len,
 				     direction, flags, &rio_ext);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(rio_dma_prep_xfer);
 
 /**
- * rio_dma_prep_slave_sg - RapidIO specअगरic wrapper
- *   क्रम device_prep_slave_sg callback defined by DMAENGINE.
- * @rdev: RIO device control काष्ठाure
+ * rio_dma_prep_slave_sg - RapidIO specific wrapper
+ *   for device_prep_slave_sg callback defined by DMAENGINE.
+ * @rdev: RIO device control structure
  * @dchan: DMA channel to configure
- * @data: RIO specअगरic data descriptor
+ * @data: RIO specific data descriptor
  * @direction: DMA data transfer direction (TO or FROM the device)
  * @flags: dmaengine defined flags
  *
- * Initializes RapidIO capable DMA channel क्रम the specअगरied data transfer.
- * Uses DMA channel निजी extension to pass inक्रमmation related to remote
+ * Initializes RapidIO capable DMA channel for the specified data transfer.
+ * Uses DMA channel private extension to pass information related to remote
  * target RIO device.
  *
- * Returns: poपूर्णांकer to DMA transaction descriptor अगर successful,
- *          error-valued poपूर्णांकer or शून्य अगर failed.
+ * Returns: pointer to DMA transaction descriptor if successful,
+ *          error-valued pointer or NULL if failed.
  */
-काष्ठा dma_async_tx_descriptor *rio_dma_prep_slave_sg(काष्ठा rio_dev *rdev,
-	काष्ठा dma_chan *dchan, काष्ठा rio_dma_data *data,
-	क्रमागत dma_transfer_direction direction, अचिन्हित दीर्घ flags)
-अणु
-	वापस rio_dma_prep_xfer(dchan,	rdev->destid, data, direction, flags);
-पूर्ण
+struct dma_async_tx_descriptor *rio_dma_prep_slave_sg(struct rio_dev *rdev,
+	struct dma_chan *dchan, struct rio_dma_data *data,
+	enum dma_transfer_direction direction, unsigned long flags)
+{
+	return rio_dma_prep_xfer(dchan,	rdev->destid, data, direction, flags);
+}
 EXPORT_SYMBOL_GPL(rio_dma_prep_slave_sg);
 
-#पूर्ण_अगर /* CONFIG_RAPIDIO_DMA_ENGINE */
+#endif /* CONFIG_RAPIDIO_DMA_ENGINE */
 
 /**
  * rio_find_mport - find RIO mport by its ID
  * @mport_id: number (ID) of mport device
  *
  * Given a RIO mport number, the desired mport is located
- * in the global list of mports. If the mport is found, a poपूर्णांकer to its
- * data काष्ठाure is वापसed.  If no mport is found, %शून्य is वापसed.
+ * in the global list of mports. If the mport is found, a pointer to its
+ * data structure is returned.  If no mport is found, %NULL is returned.
  */
-काष्ठा rio_mport *rio_find_mport(पूर्णांक mport_id)
-अणु
-	काष्ठा rio_mport *port;
+struct rio_mport *rio_find_mport(int mport_id)
+{
+	struct rio_mport *port;
 
 	mutex_lock(&rio_mport_list_lock);
-	list_क्रम_each_entry(port, &rio_mports, node) अणु
-		अगर (port->id == mport_id)
-			जाओ found;
-	पूर्ण
-	port = शून्य;
+	list_for_each_entry(port, &rio_mports, node) {
+		if (port->id == mport_id)
+			goto found;
+	}
+	port = NULL;
 found:
 	mutex_unlock(&rio_mport_list_lock);
 
-	वापस port;
-पूर्ण
+	return port;
+}
 
 /**
- * rio_रेजिस्टर_scan - क्रमागतeration/discovery method registration पूर्णांकerface
- * @mport_id: mport device ID क्रम which fabric scan routine has to be set
- *            (RIO_MPORT_ANY = set क्रम all available mports)
- * @scan_ops: क्रमागतeration/discovery operations काष्ठाure
+ * rio_register_scan - enumeration/discovery method registration interface
+ * @mport_id: mport device ID for which fabric scan routine has to be set
+ *            (RIO_MPORT_ANY = set for all available mports)
+ * @scan_ops: enumeration/discovery operations structure
  *
- * Registers क्रमागतeration/discovery operations with RapidIO subप्रणाली and
- * attaches it to the specअगरied mport device (or all available mports
- * अगर RIO_MPORT_ANY is specअगरied).
+ * Registers enumeration/discovery operations with RapidIO subsystem and
+ * attaches it to the specified mport device (or all available mports
+ * if RIO_MPORT_ANY is specified).
  *
- * Returns error अगर the mport alपढ़ोy has an क्रमागतerator attached to it.
- * In हाल of RIO_MPORT_ANY skips mports with valid scan routines (no error).
+ * Returns error if the mport already has an enumerator attached to it.
+ * In case of RIO_MPORT_ANY skips mports with valid scan routines (no error).
  */
-पूर्णांक rio_रेजिस्टर_scan(पूर्णांक mport_id, काष्ठा rio_scan *scan_ops)
-अणु
-	काष्ठा rio_mport *port;
-	काष्ठा rio_scan_node *scan;
-	पूर्णांक rc = 0;
+int rio_register_scan(int mport_id, struct rio_scan *scan_ops)
+{
+	struct rio_mport *port;
+	struct rio_scan_node *scan;
+	int rc = 0;
 
 	pr_debug("RIO: %s for mport_id=%d\n", __func__, mport_id);
 
-	अगर ((mport_id != RIO_MPORT_ANY && mport_id >= RIO_MAX_MPORTS) ||
+	if ((mport_id != RIO_MPORT_ANY && mport_id >= RIO_MAX_MPORTS) ||
 	    !scan_ops)
-		वापस -EINVAL;
+		return -EINVAL;
 
 	mutex_lock(&rio_mport_list_lock);
 
 	/*
-	 * Check अगर there is another क्रमागतerator alपढ़ोy रेजिस्टरed क्रम
-	 * the same mport ID (including RIO_MPORT_ANY). Multiple क्रमागतerators
-	 * क्रम the same mport ID are not supported.
+	 * Check if there is another enumerator already registered for
+	 * the same mport ID (including RIO_MPORT_ANY). Multiple enumerators
+	 * for the same mport ID are not supported.
 	 */
-	list_क्रम_each_entry(scan, &rio_scans, node) अणु
-		अगर (scan->mport_id == mport_id) अणु
+	list_for_each_entry(scan, &rio_scans, node) {
+		if (scan->mport_id == mport_id) {
 			rc = -EBUSY;
-			जाओ err_out;
-		पूर्ण
-	पूर्ण
+			goto err_out;
+		}
+	}
 
 	/*
 	 * Allocate and initialize new scan registration node.
 	 */
-	scan = kzalloc(माप(*scan), GFP_KERNEL);
-	अगर (!scan) अणु
+	scan = kzalloc(sizeof(*scan), GFP_KERNEL);
+	if (!scan) {
 		rc = -ENOMEM;
-		जाओ err_out;
-	पूर्ण
+		goto err_out;
+	}
 
 	scan->mport_id = mport_id;
 	scan->ops = scan_ops;
 
 	/*
-	 * Traverse the list of रेजिस्टरed mports to attach this new scan.
+	 * Traverse the list of registered mports to attach this new scan.
 	 *
 	 * The new scan with matching mport ID overrides any previously attached
-	 * scan assuming that old scan (अगर any) is the शेष one (based on the
-	 * क्रमागतerator registration check above).
+	 * scan assuming that old scan (if any) is the default one (based on the
+	 * enumerator registration check above).
 	 * If the new scan is the global one, it will be attached only to mports
-	 * that करो not have their own inभागidual operations alपढ़ोy attached.
+	 * that do not have their own individual operations already attached.
 	 */
-	list_क्रम_each_entry(port, &rio_mports, node) अणु
-		अगर (port->id == mport_id) अणु
+	list_for_each_entry(port, &rio_mports, node) {
+		if (port->id == mport_id) {
 			port->nscan = scan_ops;
-			अवरोध;
-		पूर्ण अन्यथा अगर (mport_id == RIO_MPORT_ANY && !port->nscan)
+			break;
+		} else if (mport_id == RIO_MPORT_ANY && !port->nscan)
 			port->nscan = scan_ops;
-	पूर्ण
+	}
 
 	list_add_tail(&scan->node, &rio_scans);
 
 err_out:
 	mutex_unlock(&rio_mport_list_lock);
 
-	वापस rc;
-पूर्ण
-EXPORT_SYMBOL_GPL(rio_रेजिस्टर_scan);
+	return rc;
+}
+EXPORT_SYMBOL_GPL(rio_register_scan);
 
 /**
- * rio_unरेजिस्टर_scan - हटाओs क्रमागतeration/discovery method from mport
- * @mport_id: mport device ID क्रम which fabric scan routine has to be
- *            unरेजिस्टरed (RIO_MPORT_ANY = apply to all mports that use
- *            the specअगरied scan_ops)
- * @scan_ops: क्रमागतeration/discovery operations काष्ठाure
+ * rio_unregister_scan - removes enumeration/discovery method from mport
+ * @mport_id: mport device ID for which fabric scan routine has to be
+ *            unregistered (RIO_MPORT_ANY = apply to all mports that use
+ *            the specified scan_ops)
+ * @scan_ops: enumeration/discovery operations structure
  *
- * Removes क्रमागतeration or discovery method asचिन्हित to the specअगरied mport
- * device. If RIO_MPORT_ANY is specअगरied, हटाओs the specअगरied operations from
+ * Removes enumeration or discovery method assigned to the specified mport
+ * device. If RIO_MPORT_ANY is specified, removes the specified operations from
  * all mports that have them attached.
  */
-पूर्णांक rio_unरेजिस्टर_scan(पूर्णांक mport_id, काष्ठा rio_scan *scan_ops)
-अणु
-	काष्ठा rio_mport *port;
-	काष्ठा rio_scan_node *scan;
+int rio_unregister_scan(int mport_id, struct rio_scan *scan_ops)
+{
+	struct rio_mport *port;
+	struct rio_scan_node *scan;
 
 	pr_debug("RIO: %s for mport_id=%d\n", __func__, mport_id);
 
-	अगर (mport_id != RIO_MPORT_ANY && mport_id >= RIO_MAX_MPORTS)
-		वापस -EINVAL;
+	if (mport_id != RIO_MPORT_ANY && mport_id >= RIO_MAX_MPORTS)
+		return -EINVAL;
 
 	mutex_lock(&rio_mport_list_lock);
 
-	list_क्रम_each_entry(port, &rio_mports, node)
-		अगर (port->id == mport_id ||
+	list_for_each_entry(port, &rio_mports, node)
+		if (port->id == mport_id ||
 		    (mport_id == RIO_MPORT_ANY && port->nscan == scan_ops))
-			port->nscan = शून्य;
+			port->nscan = NULL;
 
-	list_क्रम_each_entry(scan, &rio_scans, node) अणु
-		अगर (scan->mport_id == mport_id) अणु
+	list_for_each_entry(scan, &rio_scans, node) {
+		if (scan->mport_id == mport_id) {
 			list_del(&scan->node);
-			kमुक्त(scan);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			kfree(scan);
+			break;
+		}
+	}
 
 	mutex_unlock(&rio_mport_list_lock);
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(rio_unरेजिस्टर_scan);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(rio_unregister_scan);
 
 /**
- * rio_mport_scan - execute क्रमागतeration/discovery on the specअगरied mport
+ * rio_mport_scan - execute enumeration/discovery on the specified mport
  * @mport_id: number (ID) of mport device
  */
-पूर्णांक rio_mport_scan(पूर्णांक mport_id)
-अणु
-	काष्ठा rio_mport *port = शून्य;
-	पूर्णांक rc;
+int rio_mport_scan(int mport_id)
+{
+	struct rio_mport *port = NULL;
+	int rc;
 
 	mutex_lock(&rio_mport_list_lock);
-	list_क्रम_each_entry(port, &rio_mports, node) अणु
-		अगर (port->id == mport_id)
-			जाओ found;
-	पूर्ण
+	list_for_each_entry(port, &rio_mports, node) {
+		if (port->id == mport_id)
+			goto found;
+	}
 	mutex_unlock(&rio_mport_list_lock);
-	वापस -ENODEV;
+	return -ENODEV;
 found:
-	अगर (!port->nscan) अणु
+	if (!port->nscan) {
 		mutex_unlock(&rio_mport_list_lock);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (!try_module_get(port->nscan->owner)) अणु
+	if (!try_module_get(port->nscan->owner)) {
 		mutex_unlock(&rio_mport_list_lock);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	mutex_unlock(&rio_mport_list_lock);
 
-	अगर (port->host_deviceid >= 0)
-		rc = port->nscan->क्रमागतerate(port, 0);
-	अन्यथा
+	if (port->host_deviceid >= 0)
+		rc = port->nscan->enumerate(port, 0);
+	else
 		rc = port->nscan->discover(port, RIO_SCAN_ENUM_NO_WAIT);
 
 	module_put(port->nscan->owner);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल काष्ठा workqueue_काष्ठा *rio_wq;
+static struct workqueue_struct *rio_wq;
 
-काष्ठा rio_disc_work अणु
-	काष्ठा work_काष्ठा	work;
-	काष्ठा rio_mport	*mport;
-पूर्ण;
+struct rio_disc_work {
+	struct work_struct	work;
+	struct rio_mport	*mport;
+};
 
-अटल व्योम disc_work_handler(काष्ठा work_काष्ठा *_work)
-अणु
-	काष्ठा rio_disc_work *work;
+static void disc_work_handler(struct work_struct *_work)
+{
+	struct rio_disc_work *work;
 
-	work = container_of(_work, काष्ठा rio_disc_work, work);
+	work = container_of(_work, struct rio_disc_work, work);
 	pr_debug("RIO: discovery work for mport %d %s\n",
 		 work->mport->id, work->mport->name);
-	अगर (try_module_get(work->mport->nscan->owner)) अणु
+	if (try_module_get(work->mport->nscan->owner)) {
 		work->mport->nscan->discover(work->mport, 0);
 		module_put(work->mport->nscan->owner);
-	पूर्ण
-पूर्ण
+	}
+}
 
-पूर्णांक rio_init_mports(व्योम)
-अणु
-	काष्ठा rio_mport *port;
-	काष्ठा rio_disc_work *work;
-	पूर्णांक n = 0;
+int rio_init_mports(void)
+{
+	struct rio_mport *port;
+	struct rio_disc_work *work;
+	int n = 0;
 
-	अगर (!next_portid)
-		वापस -ENODEV;
+	if (!next_portid)
+		return -ENODEV;
 
 	/*
-	 * First, run क्रमागतerations and check अगर we need to perक्रमm discovery
-	 * on any of the रेजिस्टरed mports.
+	 * First, run enumerations and check if we need to perform discovery
+	 * on any of the registered mports.
 	 */
 	mutex_lock(&rio_mport_list_lock);
-	list_क्रम_each_entry(port, &rio_mports, node) अणु
-		अगर (port->host_deviceid >= 0) अणु
-			अगर (port->nscan && try_module_get(port->nscan->owner)) अणु
-				port->nscan->क्रमागतerate(port, 0);
+	list_for_each_entry(port, &rio_mports, node) {
+		if (port->host_deviceid >= 0) {
+			if (port->nscan && try_module_get(port->nscan->owner)) {
+				port->nscan->enumerate(port, 0);
 				module_put(port->nscan->owner);
-			पूर्ण
-		पूर्ण अन्यथा
+			}
+		} else
 			n++;
-	पूर्ण
+	}
 	mutex_unlock(&rio_mport_list_lock);
 
-	अगर (!n)
-		जाओ no_disc;
+	if (!n)
+		goto no_disc;
 
 	/*
 	 * If we have mports that require discovery schedule a discovery work
-	 * क्रम each of them. If the code below fails to allocate needed
-	 * resources, निकास without error to keep results of क्रमागतeration
-	 * process (अगर any).
-	 * TODO: Implement restart of discovery process क्रम all or
-	 * inभागidual discovering mports.
+	 * for each of them. If the code below fails to allocate needed
+	 * resources, exit without error to keep results of enumeration
+	 * process (if any).
+	 * TODO: Implement restart of discovery process for all or
+	 * individual discovering mports.
 	 */
 	rio_wq = alloc_workqueue("riodisc", 0, 0);
-	अगर (!rio_wq) अणु
+	if (!rio_wq) {
 		pr_err("RIO: unable allocate rio_wq\n");
-		जाओ no_disc;
-	पूर्ण
+		goto no_disc;
+	}
 
-	work = kसुस्मृति(n, माप *work, GFP_KERNEL);
-	अगर (!work) अणु
+	work = kcalloc(n, sizeof *work, GFP_KERNEL);
+	if (!work) {
 		destroy_workqueue(rio_wq);
-		जाओ no_disc;
-	पूर्ण
+		goto no_disc;
+	}
 
 	n = 0;
 	mutex_lock(&rio_mport_list_lock);
-	list_क्रम_each_entry(port, &rio_mports, node) अणु
-		अगर (port->host_deviceid < 0 && port->nscan) अणु
+	list_for_each_entry(port, &rio_mports, node) {
+		if (port->host_deviceid < 0 && port->nscan) {
 			work[n].mport = port;
 			INIT_WORK(&work[n].work, disc_work_handler);
 			queue_work(rio_wq, &work[n].work);
 			n++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	flush_workqueue(rio_wq);
 	mutex_unlock(&rio_mport_list_lock);
 	pr_debug("RIO: destroy discovery workqueue\n");
 	destroy_workqueue(rio_wq);
-	kमुक्त(work);
+	kfree(work);
 
 no_disc:
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(rio_init_mports);
 
-अटल पूर्णांक rio_get_hdid(पूर्णांक index)
-अणु
-	अगर (ids_num == 0 || ids_num <= index || index >= RIO_MAX_MPORTS)
-		वापस -1;
+static int rio_get_hdid(int index)
+{
+	if (ids_num == 0 || ids_num <= index || index >= RIO_MAX_MPORTS)
+		return -1;
 
-	वापस hdid[index];
-पूर्ण
+	return hdid[index];
+}
 
-पूर्णांक rio_mport_initialize(काष्ठा rio_mport *mport)
-अणु
-	अगर (next_portid >= RIO_MAX_MPORTS) अणु
+int rio_mport_initialize(struct rio_mport *mport)
+{
+	if (next_portid >= RIO_MAX_MPORTS) {
 		pr_err("RIO: reached specified max number of mports\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	atomic_set(&mport->state, RIO_DEVICE_INITIALIZING);
 	mport->id = next_portid++;
 	mport->host_deviceid = rio_get_hdid(mport->id);
-	mport->nscan = शून्य;
+	mport->nscan = NULL;
 	mutex_init(&mport->lock);
 	mport->pwe_refcnt = 0;
-	INIT_LIST_HEAD(&mport->pग_लिखोs);
+	INIT_LIST_HEAD(&mport->pwrites);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(rio_mport_initialize);
 
-पूर्णांक rio_रेजिस्टर_mport(काष्ठा rio_mport *port)
-अणु
-	काष्ठा rio_scan_node *scan = शून्य;
-	पूर्णांक res = 0;
+int rio_register_mport(struct rio_mport *port)
+{
+	struct rio_scan_node *scan = NULL;
+	int res = 0;
 
 	mutex_lock(&rio_mport_list_lock);
 
 	/*
-	 * Check अगर there are any रेजिस्टरed क्रमागतeration/discovery operations
+	 * Check if there are any registered enumeration/discovery operations
 	 * that have to be attached to the added mport.
 	 */
-	list_क्रम_each_entry(scan, &rio_scans, node) अणु
-		अगर (port->id == scan->mport_id ||
-		    scan->mport_id == RIO_MPORT_ANY) अणु
+	list_for_each_entry(scan, &rio_scans, node) {
+		if (port->id == scan->mport_id ||
+		    scan->mport_id == RIO_MPORT_ANY) {
 			port->nscan = scan->ops;
-			अगर (port->id == scan->mport_id)
-				अवरोध;
-		पूर्ण
-	पूर्ण
+			if (port->id == scan->mport_id)
+				break;
+		}
+	}
 
 	list_add_tail(&port->node, &rio_mports);
 	mutex_unlock(&rio_mport_list_lock);
@@ -2186,62 +2185,62 @@ EXPORT_SYMBOL_GPL(rio_mport_initialize);
 	port->dev.class = &rio_mport_class;
 	atomic_set(&port->state, RIO_DEVICE_RUNNING);
 
-	res = device_रेजिस्टर(&port->dev);
-	अगर (res)
+	res = device_register(&port->dev);
+	if (res)
 		dev_err(&port->dev, "RIO: mport%d registration failed ERR=%d\n",
 			port->id, res);
-	अन्यथा
+	else
 		dev_dbg(&port->dev, "RIO: registered mport%d\n", port->id);
 
-	वापस res;
-पूर्ण
-EXPORT_SYMBOL_GPL(rio_रेजिस्टर_mport);
+	return res;
+}
+EXPORT_SYMBOL_GPL(rio_register_mport);
 
-अटल पूर्णांक rio_mport_cleanup_callback(काष्ठा device *dev, व्योम *data)
-अणु
-	काष्ठा rio_dev *rdev = to_rio_dev(dev);
+static int rio_mport_cleanup_callback(struct device *dev, void *data)
+{
+	struct rio_dev *rdev = to_rio_dev(dev);
 
-	अगर (dev->bus == &rio_bus_type)
+	if (dev->bus == &rio_bus_type)
 		rio_del_device(rdev, RIO_DEVICE_SHUTDOWN);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rio_net_हटाओ_children(काष्ठा rio_net *net)
-अणु
+static int rio_net_remove_children(struct rio_net *net)
+{
 	/*
-	 * Unरेजिस्टर all RapidIO devices residing on this net (this will
-	 * invoke notअगरication of रेजिस्टरed subप्रणाली पूर्णांकerfaces as well).
+	 * Unregister all RapidIO devices residing on this net (this will
+	 * invoke notification of registered subsystem interfaces as well).
 	 */
-	device_क्रम_each_child(&net->dev, शून्य, rio_mport_cleanup_callback);
-	वापस 0;
-पूर्ण
+	device_for_each_child(&net->dev, NULL, rio_mport_cleanup_callback);
+	return 0;
+}
 
-पूर्णांक rio_unरेजिस्टर_mport(काष्ठा rio_mport *port)
-अणु
+int rio_unregister_mport(struct rio_mport *port)
+{
 	pr_debug("RIO: %s %s id=%d\n", __func__, port->name, port->id);
 
 	/* Transition mport to the SHUTDOWN state */
-	अगर (atomic_cmpxchg(&port->state,
+	if (atomic_cmpxchg(&port->state,
 			   RIO_DEVICE_RUNNING,
-			   RIO_DEVICE_SHUTDOWN) != RIO_DEVICE_RUNNING) अणु
+			   RIO_DEVICE_SHUTDOWN) != RIO_DEVICE_RUNNING) {
 		pr_err("RIO: %s unexpected state transition for mport %s\n",
 			__func__, port->name);
-	पूर्ण
+	}
 
-	अगर (port->net && port->net->hport == port) अणु
-		rio_net_हटाओ_children(port->net);
-		rio_मुक्त_net(port->net);
-	पूर्ण
+	if (port->net && port->net->hport == port) {
+		rio_net_remove_children(port->net);
+		rio_free_net(port->net);
+	}
 
 	/*
-	 * Unरेजिस्टर all RapidIO devices attached to this mport (this will
-	 * invoke notअगरication of रेजिस्टरed subप्रणाली पूर्णांकerfaces as well).
+	 * Unregister all RapidIO devices attached to this mport (this will
+	 * invoke notification of registered subsystem interfaces as well).
 	 */
 	mutex_lock(&rio_mport_list_lock);
 	list_del(&port->node);
 	mutex_unlock(&rio_mport_list_lock);
-	device_unरेजिस्टर(&port->dev);
+	device_unregister(&port->dev);
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(rio_unरेजिस्टर_mport);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(rio_unregister_mport);

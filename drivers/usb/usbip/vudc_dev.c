@@ -1,82 +1,81 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
- * Copyright (C) 2015 Karol Kosik <karo9@पूर्णांकeria.eu>
+ * Copyright (C) 2015 Karol Kosik <karo9@interia.eu>
  * Copyright (C) 2015-2016 Samsung Electronics
  *               Igor Kotrasinski <i.kotrasinsk@samsung.com>
  *               Krzysztof Opasiak <k.opasiak@samsung.com>
  */
 
-#समावेश <linux/device.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/list.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/usb.h>
-#समावेश <linux/usb/gadget.h>
-#समावेश <linux/usb/hcd.h>
-#समावेश <linux/kthपढ़ो.h>
-#समावेश <linux/file.h>
-#समावेश <linux/byteorder/generic.h>
+#include <linux/device.h>
+#include <linux/kernel.h>
+#include <linux/list.h>
+#include <linux/platform_device.h>
+#include <linux/usb.h>
+#include <linux/usb/gadget.h>
+#include <linux/usb/hcd.h>
+#include <linux/kthread.h>
+#include <linux/file.h>
+#include <linux/byteorder/generic.h>
 
-#समावेश "usbip_common.h"
-#समावेश "vudc.h"
+#include "usbip_common.h"
+#include "vudc.h"
 
-#घोषणा VIRTUAL_ENDPOINTS (1 /* ep0 */ + 15 /* in eps */ + 15 /* out eps */)
+#define VIRTUAL_ENDPOINTS (1 /* ep0 */ + 15 /* in eps */ + 15 /* out eps */)
 
-/* urb-related काष्ठाures alloc / मुक्त */
+/* urb-related structures alloc / free */
 
 
-अटल व्योम मुक्त_urb(काष्ठा urb *urb)
-अणु
-	अगर (!urb)
-		वापस;
+static void free_urb(struct urb *urb)
+{
+	if (!urb)
+		return;
 
-	kमुक्त(urb->setup_packet);
-	urb->setup_packet = शून्य;
+	kfree(urb->setup_packet);
+	urb->setup_packet = NULL;
 
-	kमुक्त(urb->transfer_buffer);
-	urb->transfer_buffer = शून्य;
+	kfree(urb->transfer_buffer);
+	urb->transfer_buffer = NULL;
 
-	usb_मुक्त_urb(urb);
-पूर्ण
+	usb_free_urb(urb);
+}
 
-काष्ठा urbp *alloc_urbp(व्योम)
-अणु
-	काष्ठा urbp *urb_p;
+struct urbp *alloc_urbp(void)
+{
+	struct urbp *urb_p;
 
-	urb_p = kzalloc(माप(*urb_p), GFP_KERNEL);
-	अगर (!urb_p)
-		वापस urb_p;
+	urb_p = kzalloc(sizeof(*urb_p), GFP_KERNEL);
+	if (!urb_p)
+		return urb_p;
 
-	urb_p->urb = शून्य;
-	urb_p->ep = शून्य;
+	urb_p->urb = NULL;
+	urb_p->ep = NULL;
 	INIT_LIST_HEAD(&urb_p->urb_entry);
-	वापस urb_p;
-पूर्ण
+	return urb_p;
+}
 
-अटल व्योम मुक्त_urbp(काष्ठा urbp *urb_p)
-अणु
-	kमुक्त(urb_p);
-पूर्ण
+static void free_urbp(struct urbp *urb_p)
+{
+	kfree(urb_p);
+}
 
-व्योम मुक्त_urbp_and_urb(काष्ठा urbp *urb_p)
-अणु
-	अगर (!urb_p)
-		वापस;
-	मुक्त_urb(urb_p->urb);
-	मुक्त_urbp(urb_p);
-पूर्ण
+void free_urbp_and_urb(struct urbp *urb_p)
+{
+	if (!urb_p)
+		return;
+	free_urb(urb_p->urb);
+	free_urbp(urb_p);
+}
 
 
 /* utilities ; almost verbatim from dummy_hcd.c */
 
 /* called with spinlock held */
-अटल व्योम nuke(काष्ठा vudc *udc, काष्ठा vep *ep)
-अणु
-	काष्ठा vrequest	*req;
+static void nuke(struct vudc *udc, struct vep *ep)
+{
+	struct vrequest	*req;
 
-	जबतक (!list_empty(&ep->req_queue)) अणु
-		req = list_first_entry(&ep->req_queue, काष्ठा vrequest,
+	while (!list_empty(&ep->req_queue)) {
+		req = list_first_entry(&ep->req_queue, struct vrequest,
 				       req_entry);
 		list_del_init(&req->req_entry);
 		req->req.status = -ESHUTDOWN;
@@ -84,238 +83,238 @@
 		spin_unlock(&udc->lock);
 		usb_gadget_giveback_request(&ep->ep, &req->req);
 		spin_lock(&udc->lock);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /* caller must hold lock */
-अटल व्योम stop_activity(काष्ठा vudc *udc)
-अणु
-	पूर्णांक i;
-	काष्ठा urbp *urb_p, *पंचांगp;
+static void stop_activity(struct vudc *udc)
+{
+	int i;
+	struct urbp *urb_p, *tmp;
 
 	udc->address = 0;
 
-	क्रम (i = 0; i < VIRTUAL_ENDPOINTS; i++)
+	for (i = 0; i < VIRTUAL_ENDPOINTS; i++)
 		nuke(udc, &udc->ep[i]);
 
-	list_क्रम_each_entry_safe(urb_p, पंचांगp, &udc->urb_queue, urb_entry) अणु
+	list_for_each_entry_safe(urb_p, tmp, &udc->urb_queue, urb_entry) {
 		list_del(&urb_p->urb_entry);
-		मुक्त_urbp_and_urb(urb_p);
-	पूर्ण
-पूर्ण
+		free_urbp_and_urb(urb_p);
+	}
+}
 
-काष्ठा vep *vudc_find_endpoपूर्णांक(काष्ठा vudc *udc, u8 address)
-अणु
-	पूर्णांक i;
+struct vep *vudc_find_endpoint(struct vudc *udc, u8 address)
+{
+	int i;
 
-	अगर ((address & ~USB_सूची_IN) == 0)
-		वापस &udc->ep[0];
+	if ((address & ~USB_DIR_IN) == 0)
+		return &udc->ep[0];
 
-	क्रम (i = 1; i < VIRTUAL_ENDPOINTS; i++) अणु
-		काष्ठा vep *ep = &udc->ep[i];
+	for (i = 1; i < VIRTUAL_ENDPOINTS; i++) {
+		struct vep *ep = &udc->ep[i];
 
-		अगर (!ep->desc)
-			जारी;
-		अगर (ep->desc->bEndpoपूर्णांकAddress == address)
-			वापस ep;
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+		if (!ep->desc)
+			continue;
+		if (ep->desc->bEndpointAddress == address)
+			return ep;
+	}
+	return NULL;
+}
 
 /* gadget ops */
 
-अटल पूर्णांक vgadget_get_frame(काष्ठा usb_gadget *_gadget)
-अणु
-	काष्ठा बारpec64 now;
-	काष्ठा vudc *udc = usb_gadget_to_vudc(_gadget);
+static int vgadget_get_frame(struct usb_gadget *_gadget)
+{
+	struct timespec64 now;
+	struct vudc *udc = usb_gadget_to_vudc(_gadget);
 
-	kसमय_get_ts64(&now);
-	वापस ((now.tv_sec - udc->start_समय.tv_sec) * 1000 +
-		(now.tv_nsec - udc->start_समय.tv_nsec) / NSEC_PER_MSEC)
+	ktime_get_ts64(&now);
+	return ((now.tv_sec - udc->start_time.tv_sec) * 1000 +
+		(now.tv_nsec - udc->start_time.tv_nsec) / NSEC_PER_MSEC)
 			& 0x7FF;
-पूर्ण
+}
 
-अटल पूर्णांक vgadget_set_selfघातered(काष्ठा usb_gadget *_gadget, पूर्णांक value)
-अणु
-	काष्ठा vudc *udc = usb_gadget_to_vudc(_gadget);
+static int vgadget_set_selfpowered(struct usb_gadget *_gadget, int value)
+{
+	struct vudc *udc = usb_gadget_to_vudc(_gadget);
 
-	अगर (value)
+	if (value)
 		udc->devstatus |= (1 << USB_DEVICE_SELF_POWERED);
-	अन्यथा
+	else
 		udc->devstatus &= ~(1 << USB_DEVICE_SELF_POWERED);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक vgadget_pullup(काष्ठा usb_gadget *_gadget, पूर्णांक value)
-अणु
-	काष्ठा vudc *udc = usb_gadget_to_vudc(_gadget);
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret;
+static int vgadget_pullup(struct usb_gadget *_gadget, int value)
+{
+	struct vudc *udc = usb_gadget_to_vudc(_gadget);
+	unsigned long flags;
+	int ret;
 
 
 	spin_lock_irqsave(&udc->lock, flags);
 	value = !!value;
-	अगर (value == udc->pullup)
-		जाओ unlock;
+	if (value == udc->pullup)
+		goto unlock;
 
 	udc->pullup = value;
-	अगर (value) अणु
+	if (value) {
 		udc->gadget.speed = min_t(u8, USB_SPEED_HIGH,
 					   udc->driver->max_speed);
 		udc->ep[0].ep.maxpacket = 64;
 		/*
 		 * This is the first place where we can ask our
-		 * gadget driver क्रम descriptors.
+		 * gadget driver for descriptors.
 		 */
 		ret = get_gadget_descs(udc);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(&udc->gadget.dev, "Unable go get desc: %d", ret);
-			जाओ unlock;
-		पूर्ण
+			goto unlock;
+		}
 
 		spin_unlock_irqrestore(&udc->lock, flags);
 		usbip_start_eh(&udc->ud);
-	पूर्ण अन्यथा अणु
+	} else {
 		/* Invalidate descriptors */
 		udc->desc_cached = 0;
 
 		spin_unlock_irqrestore(&udc->lock, flags);
 		usbip_event_add(&udc->ud, VUDC_EVENT_REMOVED);
-		usbip_stop_eh(&udc->ud); /* Wait क्रम eh completion */
-	पूर्ण
+		usbip_stop_eh(&udc->ud); /* Wait for eh completion */
+	}
 
-	वापस 0;
+	return 0;
 
 unlock:
 	spin_unlock_irqrestore(&udc->lock, flags);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक vgadget_udc_start(काष्ठा usb_gadget *g,
-		काष्ठा usb_gadget_driver *driver)
-अणु
-	काष्ठा vudc *udc = usb_gadget_to_vudc(g);
-	अचिन्हित दीर्घ flags;
+static int vgadget_udc_start(struct usb_gadget *g,
+		struct usb_gadget_driver *driver)
+{
+	struct vudc *udc = usb_gadget_to_vudc(g);
+	unsigned long flags;
 
 	spin_lock_irqsave(&udc->lock, flags);
 	udc->driver = driver;
 	udc->pullup = udc->connected = udc->desc_cached = 0;
 	spin_unlock_irqrestore(&udc->lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक vgadget_udc_stop(काष्ठा usb_gadget *g)
-अणु
-	काष्ठा vudc *udc = usb_gadget_to_vudc(g);
-	अचिन्हित दीर्घ flags;
+static int vgadget_udc_stop(struct usb_gadget *g)
+{
+	struct vudc *udc = usb_gadget_to_vudc(g);
+	unsigned long flags;
 
 	spin_lock_irqsave(&udc->lock, flags);
-	udc->driver = शून्य;
+	udc->driver = NULL;
 	spin_unlock_irqrestore(&udc->lock, flags);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा usb_gadget_ops vgadget_ops = अणु
+static const struct usb_gadget_ops vgadget_ops = {
 	.get_frame	= vgadget_get_frame,
-	.set_selfघातered = vgadget_set_selfघातered,
+	.set_selfpowered = vgadget_set_selfpowered,
 	.pullup		= vgadget_pullup,
 	.udc_start	= vgadget_udc_start,
 	.udc_stop	= vgadget_udc_stop,
-पूर्ण;
+};
 
 
-/* endpoपूर्णांक ops */
+/* endpoint ops */
 
-अटल पूर्णांक vep_enable(काष्ठा usb_ep *_ep,
-		स्थिर काष्ठा usb_endpoपूर्णांक_descriptor *desc)
-अणु
-	काष्ठा vep	*ep;
-	काष्ठा vudc	*udc;
-	अचिन्हित पूर्णांक	maxp;
-	अचिन्हित दीर्घ	flags;
+static int vep_enable(struct usb_ep *_ep,
+		const struct usb_endpoint_descriptor *desc)
+{
+	struct vep	*ep;
+	struct vudc	*udc;
+	unsigned int	maxp;
+	unsigned long	flags;
 
 	ep = to_vep(_ep);
 	udc = ep_to_vudc(ep);
 
-	अगर (!_ep || !desc || ep->desc || _ep->caps.type_control
+	if (!_ep || !desc || ep->desc || _ep->caps.type_control
 			|| desc->bDescriptorType != USB_DT_ENDPOINT)
-		वापस -EINVAL;
+		return -EINVAL;
 
-	अगर (!udc->driver)
-		वापस -ESHUTDOWN;
+	if (!udc->driver)
+		return -ESHUTDOWN;
 
 	spin_lock_irqsave(&udc->lock, flags);
 
-	maxp = usb_endpoपूर्णांक_maxp(desc);
+	maxp = usb_endpoint_maxp(desc);
 	_ep->maxpacket = maxp;
 	ep->desc = desc;
-	ep->type = usb_endpoपूर्णांक_type(desc);
+	ep->type = usb_endpoint_type(desc);
 	ep->halted = ep->wedged = 0;
 
 	spin_unlock_irqrestore(&udc->lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक vep_disable(काष्ठा usb_ep *_ep)
-अणु
-	काष्ठा vep *ep;
-	काष्ठा vudc *udc;
-	अचिन्हित दीर्घ flags;
+static int vep_disable(struct usb_ep *_ep)
+{
+	struct vep *ep;
+	struct vudc *udc;
+	unsigned long flags;
 
 	ep = to_vep(_ep);
 	udc = ep_to_vudc(ep);
-	अगर (!_ep || !ep->desc || _ep->caps.type_control)
-		वापस -EINVAL;
+	if (!_ep || !ep->desc || _ep->caps.type_control)
+		return -EINVAL;
 
 	spin_lock_irqsave(&udc->lock, flags);
-	ep->desc = शून्य;
+	ep->desc = NULL;
 	nuke(udc, ep);
 	spin_unlock_irqrestore(&udc->lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा usb_request *vep_alloc_request(काष्ठा usb_ep *_ep,
+static struct usb_request *vep_alloc_request(struct usb_ep *_ep,
 		gfp_t mem_flags)
-अणु
-	काष्ठा vrequest *req;
+{
+	struct vrequest *req;
 
-	अगर (!_ep)
-		वापस शून्य;
+	if (!_ep)
+		return NULL;
 
-	req = kzalloc(माप(*req), mem_flags);
-	अगर (!req)
-		वापस शून्य;
+	req = kzalloc(sizeof(*req), mem_flags);
+	if (!req)
+		return NULL;
 
 	INIT_LIST_HEAD(&req->req_entry);
 
-	वापस &req->req;
-पूर्ण
+	return &req->req;
+}
 
-अटल व्योम vep_मुक्त_request(काष्ठा usb_ep *_ep, काष्ठा usb_request *_req)
-अणु
-	काष्ठा vrequest *req;
+static void vep_free_request(struct usb_ep *_ep, struct usb_request *_req)
+{
+	struct vrequest *req;
 
-	/* ep is always valid here - see usb_ep_मुक्त_request() */
-	अगर (!_req)
-		वापस;
+	/* ep is always valid here - see usb_ep_free_request() */
+	if (!_req)
+		return;
 
 	req = to_vrequest(_req);
-	kमुक्त(req);
-पूर्ण
+	kfree(req);
+}
 
-अटल पूर्णांक vep_queue(काष्ठा usb_ep *_ep, काष्ठा usb_request *_req,
+static int vep_queue(struct usb_ep *_ep, struct usb_request *_req,
 		gfp_t mem_flags)
-अणु
-	काष्ठा vep *ep;
-	काष्ठा vrequest *req;
-	काष्ठा vudc *udc;
-	अचिन्हित दीर्घ flags;
+{
+	struct vep *ep;
+	struct vrequest *req;
+	struct vudc *udc;
+	unsigned long flags;
 
-	अगर (!_ep || !_req)
-		वापस -EINVAL;
+	if (!_ep || !_req)
+		return -EINVAL;
 
 	ep = to_vep(_ep);
 	req = to_vrequest(_req);
@@ -328,212 +327,212 @@ unlock:
 	list_add_tail(&req->req_entry, &ep->req_queue);
 	spin_unlock_irqrestore(&udc->lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक vep_dequeue(काष्ठा usb_ep *_ep, काष्ठा usb_request *_req)
-अणु
-	काष्ठा vep *ep;
-	काष्ठा vrequest *req;
-	काष्ठा vudc *udc;
-	काष्ठा vrequest *lst;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret = -EINVAL;
+static int vep_dequeue(struct usb_ep *_ep, struct usb_request *_req)
+{
+	struct vep *ep;
+	struct vrequest *req;
+	struct vudc *udc;
+	struct vrequest *lst;
+	unsigned long flags;
+	int ret = -EINVAL;
 
-	अगर (!_ep || !_req)
-		वापस ret;
+	if (!_ep || !_req)
+		return ret;
 
 	ep = to_vep(_ep);
 	req = to_vrequest(_req);
 	udc = req->udc;
 
-	अगर (!udc->driver)
-		वापस -ESHUTDOWN;
+	if (!udc->driver)
+		return -ESHUTDOWN;
 
 	spin_lock_irqsave(&udc->lock, flags);
-	list_क्रम_each_entry(lst, &ep->req_queue, req_entry) अणु
-		अगर (&lst->req == _req) अणु
+	list_for_each_entry(lst, &ep->req_queue, req_entry) {
+		if (&lst->req == _req) {
 			list_del_init(&lst->req_entry);
 			_req->status = -ECONNRESET;
 			ret = 0;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 	spin_unlock_irqrestore(&udc->lock, flags);
 
-	अगर (ret == 0)
+	if (ret == 0)
 		usb_gadget_giveback_request(_ep, _req);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक
-vep_set_halt_and_wedge(काष्ठा usb_ep *_ep, पूर्णांक value, पूर्णांक wedged)
-अणु
-	काष्ठा vep *ep;
-	काष्ठा vudc *udc;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret = 0;
+static int
+vep_set_halt_and_wedge(struct usb_ep *_ep, int value, int wedged)
+{
+	struct vep *ep;
+	struct vudc *udc;
+	unsigned long flags;
+	int ret = 0;
 
 	ep = to_vep(_ep);
-	अगर (!_ep)
-		वापस -EINVAL;
+	if (!_ep)
+		return -EINVAL;
 
 	udc = ep_to_vudc(ep);
-	अगर (!udc->driver)
-		वापस -ESHUTDOWN;
+	if (!udc->driver)
+		return -ESHUTDOWN;
 
 	spin_lock_irqsave(&udc->lock, flags);
-	अगर (!value)
+	if (!value)
 		ep->halted = ep->wedged = 0;
-	अन्यथा अगर (ep->desc && (ep->desc->bEndpoपूर्णांकAddress & USB_सूची_IN) &&
+	else if (ep->desc && (ep->desc->bEndpointAddress & USB_DIR_IN) &&
 			!list_empty(&ep->req_queue))
 		ret = -EAGAIN;
-	अन्यथा अणु
+	else {
 		ep->halted = 1;
-		अगर (wedged)
+		if (wedged)
 			ep->wedged = 1;
-	पूर्ण
+	}
 
 	spin_unlock_irqrestore(&udc->lock, flags);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक
-vep_set_halt(काष्ठा usb_ep *_ep, पूर्णांक value)
-अणु
-	वापस vep_set_halt_and_wedge(_ep, value, 0);
-पूर्ण
+static int
+vep_set_halt(struct usb_ep *_ep, int value)
+{
+	return vep_set_halt_and_wedge(_ep, value, 0);
+}
 
-अटल पूर्णांक vep_set_wedge(काष्ठा usb_ep *_ep)
-अणु
-	वापस vep_set_halt_and_wedge(_ep, 1, 1);
-पूर्ण
+static int vep_set_wedge(struct usb_ep *_ep)
+{
+	return vep_set_halt_and_wedge(_ep, 1, 1);
+}
 
-अटल स्थिर काष्ठा usb_ep_ops vep_ops = अणु
+static const struct usb_ep_ops vep_ops = {
 	.enable		= vep_enable,
 	.disable	= vep_disable,
 
 	.alloc_request	= vep_alloc_request,
-	.मुक्त_request	= vep_मुक्त_request,
+	.free_request	= vep_free_request,
 
 	.queue		= vep_queue,
 	.dequeue	= vep_dequeue,
 
 	.set_halt	= vep_set_halt,
 	.set_wedge	= vep_set_wedge,
-पूर्ण;
+};
 
 
-/* shutकरोwn / reset / error handlers */
+/* shutdown / reset / error handlers */
 
-अटल व्योम vudc_shutकरोwn(काष्ठा usbip_device *ud)
-अणु
-	काष्ठा vudc *udc = container_of(ud, काष्ठा vudc, ud);
-	पूर्णांक call_disconnect = 0;
-	अचिन्हित दीर्घ flags;
+static void vudc_shutdown(struct usbip_device *ud)
+{
+	struct vudc *udc = container_of(ud, struct vudc, ud);
+	int call_disconnect = 0;
+	unsigned long flags;
 
 	dev_dbg(&udc->pdev->dev, "device shutdown");
-	अगर (ud->tcp_socket)
-		kernel_sock_shutकरोwn(ud->tcp_socket, SHUT_RDWR);
+	if (ud->tcp_socket)
+		kernel_sock_shutdown(ud->tcp_socket, SHUT_RDWR);
 
-	अगर (ud->tcp_rx) अणु
-		kthपढ़ो_stop_put(ud->tcp_rx);
-		ud->tcp_rx = शून्य;
-	पूर्ण
-	अगर (ud->tcp_tx) अणु
-		kthपढ़ो_stop_put(ud->tcp_tx);
-		ud->tcp_tx = शून्य;
-	पूर्ण
+	if (ud->tcp_rx) {
+		kthread_stop_put(ud->tcp_rx);
+		ud->tcp_rx = NULL;
+	}
+	if (ud->tcp_tx) {
+		kthread_stop_put(ud->tcp_tx);
+		ud->tcp_tx = NULL;
+	}
 
-	अगर (ud->tcp_socket) अणु
+	if (ud->tcp_socket) {
 		sockfd_put(ud->tcp_socket);
-		ud->tcp_socket = शून्य;
-	पूर्ण
+		ud->tcp_socket = NULL;
+	}
 
 	spin_lock_irqsave(&udc->lock, flags);
 	stop_activity(udc);
-	अगर (udc->connected && udc->driver->disconnect)
+	if (udc->connected && udc->driver->disconnect)
 		call_disconnect = 1;
 	udc->connected = 0;
 	spin_unlock_irqrestore(&udc->lock, flags);
-	अगर (call_disconnect)
+	if (call_disconnect)
 		udc->driver->disconnect(&udc->gadget);
-पूर्ण
+}
 
-अटल व्योम vudc_device_reset(काष्ठा usbip_device *ud)
-अणु
-	काष्ठा vudc *udc = container_of(ud, काष्ठा vudc, ud);
-	अचिन्हित दीर्घ flags;
+static void vudc_device_reset(struct usbip_device *ud)
+{
+	struct vudc *udc = container_of(ud, struct vudc, ud);
+	unsigned long flags;
 
 	dev_dbg(&udc->pdev->dev, "device reset");
 	spin_lock_irqsave(&udc->lock, flags);
 	stop_activity(udc);
 	spin_unlock_irqrestore(&udc->lock, flags);
-	अगर (udc->driver)
+	if (udc->driver)
 		usb_gadget_udc_reset(&udc->gadget, udc->driver);
 	spin_lock_irqsave(&ud->lock, flags);
 	ud->status = SDEV_ST_AVAILABLE;
 	spin_unlock_irqrestore(&ud->lock, flags);
-पूर्ण
+}
 
-अटल व्योम vudc_device_unusable(काष्ठा usbip_device *ud)
-अणु
-	अचिन्हित दीर्घ flags;
+static void vudc_device_unusable(struct usbip_device *ud)
+{
+	unsigned long flags;
 
 	spin_lock_irqsave(&ud->lock, flags);
 	ud->status = SDEV_ST_ERROR;
 	spin_unlock_irqrestore(&ud->lock, flags);
-पूर्ण
+}
 
 /* device setup / cleanup */
 
-काष्ठा vudc_device *alloc_vudc_device(पूर्णांक devid)
-अणु
-	काष्ठा vudc_device *udc_dev = शून्य;
+struct vudc_device *alloc_vudc_device(int devid)
+{
+	struct vudc_device *udc_dev = NULL;
 
-	udc_dev = kzalloc(माप(*udc_dev), GFP_KERNEL);
-	अगर (!udc_dev)
-		जाओ out;
+	udc_dev = kzalloc(sizeof(*udc_dev), GFP_KERNEL);
+	if (!udc_dev)
+		goto out;
 
 	INIT_LIST_HEAD(&udc_dev->dev_entry);
 
-	udc_dev->pdev = platक्रमm_device_alloc(GADGET_NAME, devid);
-	अगर (!udc_dev->pdev) अणु
-		kमुक्त(udc_dev);
-		udc_dev = शून्य;
-	पूर्ण
+	udc_dev->pdev = platform_device_alloc(GADGET_NAME, devid);
+	if (!udc_dev->pdev) {
+		kfree(udc_dev);
+		udc_dev = NULL;
+	}
 
 out:
-	वापस udc_dev;
-पूर्ण
+	return udc_dev;
+}
 
-व्योम put_vudc_device(काष्ठा vudc_device *udc_dev)
-अणु
-	platक्रमm_device_put(udc_dev->pdev);
-	kमुक्त(udc_dev);
-पूर्ण
+void put_vudc_device(struct vudc_device *udc_dev)
+{
+	platform_device_put(udc_dev->pdev);
+	kfree(udc_dev);
+}
 
-अटल पूर्णांक init_vudc_hw(काष्ठा vudc *udc)
-अणु
-	पूर्णांक i;
-	काष्ठा usbip_device *ud = &udc->ud;
-	काष्ठा vep *ep;
+static int init_vudc_hw(struct vudc *udc)
+{
+	int i;
+	struct usbip_device *ud = &udc->ud;
+	struct vep *ep;
 
-	udc->ep = kसुस्मृति(VIRTUAL_ENDPOINTS, माप(*udc->ep), GFP_KERNEL);
-	अगर (!udc->ep)
-		जाओ nomem_ep;
+	udc->ep = kcalloc(VIRTUAL_ENDPOINTS, sizeof(*udc->ep), GFP_KERNEL);
+	if (!udc->ep)
+		goto nomem_ep;
 
 	INIT_LIST_HEAD(&udc->gadget.ep_list);
 
 	/* create ep0 and 15 in, 15 out general purpose eps */
-	क्रम (i = 0; i < VIRTUAL_ENDPOINTS; ++i) अणु
-		पूर्णांक is_out = i % 2;
-		पूर्णांक num = (i + 1) / 2;
+	for (i = 0; i < VIRTUAL_ENDPOINTS; ++i) {
+		int is_out = i % 2;
+		int num = (i + 1) / 2;
 
 		ep = &udc->ep[i];
 
-		प्र_लिखो(ep->name, "ep%d%s", num,
+		sprintf(ep->name, "ep%d%s", num,
 			i ? (is_out ? "out" : "in") : "");
 		ep->ep.name = ep->name;
 
@@ -544,65 +543,65 @@ out:
 		ep->gadget = &udc->gadget;
 		INIT_LIST_HEAD(&ep->req_queue);
 
-		अगर (i == 0) अणु
+		if (i == 0) {
 			/* ep0 */
 			ep->ep.caps.type_control = true;
 			ep->ep.caps.dir_out = true;
 			ep->ep.caps.dir_in = true;
 
 			udc->gadget.ep0 = &ep->ep;
-		पूर्ण अन्यथा अणु
+		} else {
 			/* All other eps */
 			ep->ep.caps.type_iso = true;
-			ep->ep.caps.type_पूर्णांक = true;
+			ep->ep.caps.type_int = true;
 			ep->ep.caps.type_bulk = true;
 
-			अगर (is_out)
+			if (is_out)
 				ep->ep.caps.dir_out = true;
-			अन्यथा
+			else
 				ep->ep.caps.dir_in = true;
 
 			list_add_tail(&ep->ep.ep_list, &udc->gadget.ep_list);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	spin_lock_init(&udc->lock);
 	spin_lock_init(&udc->lock_tx);
 	INIT_LIST_HEAD(&udc->urb_queue);
 	INIT_LIST_HEAD(&udc->tx_queue);
-	init_रुकोqueue_head(&udc->tx_रुकोq);
+	init_waitqueue_head(&udc->tx_waitq);
 
 	spin_lock_init(&ud->lock);
 	mutex_init(&ud->sysfs_lock);
 	ud->status = SDEV_ST_AVAILABLE;
 	ud->side = USBIP_VUDC;
 
-	ud->eh_ops.shutकरोwn = vudc_shutकरोwn;
+	ud->eh_ops.shutdown = vudc_shutdown;
 	ud->eh_ops.reset    = vudc_device_reset;
 	ud->eh_ops.unusable = vudc_device_unusable;
 
-	v_init_समयr(udc);
-	वापस 0;
+	v_init_timer(udc);
+	return 0;
 
 nomem_ep:
-		वापस -ENOMEM;
-पूर्ण
+		return -ENOMEM;
+}
 
-अटल व्योम cleanup_vudc_hw(काष्ठा vudc *udc)
-अणु
-	kमुक्त(udc->ep);
-पूर्ण
+static void cleanup_vudc_hw(struct vudc *udc)
+{
+	kfree(udc->ep);
+}
 
-/* platक्रमm driver ops */
+/* platform driver ops */
 
-पूर्णांक vudc_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा vudc *udc;
-	पूर्णांक ret = -ENOMEM;
+int vudc_probe(struct platform_device *pdev)
+{
+	struct vudc *udc;
+	int ret = -ENOMEM;
 
-	udc = kzalloc(माप(*udc), GFP_KERNEL);
-	अगर (!udc)
-		जाओ out;
+	udc = kzalloc(sizeof(*udc), GFP_KERNEL);
+	if (!udc)
+		goto out;
 
 	udc->gadget.name = GADGET_NAME;
 	udc->gadget.ops = &vgadget_ops;
@@ -611,31 +610,31 @@ nomem_ep:
 	udc->pdev = pdev;
 
 	ret = init_vudc_hw(udc);
-	अगर (ret)
-		जाओ err_init_vudc_hw;
+	if (ret)
+		goto err_init_vudc_hw;
 
 	ret = usb_add_gadget_udc(&pdev->dev, &udc->gadget);
-	अगर (ret < 0)
-		जाओ err_add_udc;
+	if (ret < 0)
+		goto err_add_udc;
 
-	platक्रमm_set_drvdata(pdev, udc);
+	platform_set_drvdata(pdev, udc);
 
-	वापस ret;
+	return ret;
 
 err_add_udc:
 	cleanup_vudc_hw(udc);
 err_init_vudc_hw:
-	kमुक्त(udc);
+	kfree(udc);
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक vudc_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा vudc *udc = platक्रमm_get_drvdata(pdev);
+int vudc_remove(struct platform_device *pdev)
+{
+	struct vudc *udc = platform_get_drvdata(pdev);
 
 	usb_del_gadget_udc(&udc->gadget);
 	cleanup_vudc_hw(udc);
-	kमुक्त(udc);
-	वापस 0;
-पूर्ण
+	kfree(udc);
+	return 0;
+}

@@ -1,28 +1,27 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __ASM_GENERIC_EXTABLE_H
-#घोषणा __ASM_GENERIC_EXTABLE_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __ASM_GENERIC_EXTABLE_H
+#define __ASM_GENERIC_EXTABLE_H
 
 /*
  * The exception table consists of pairs of addresses: the first is the
- * address of an inकाष्ठाion that is allowed to fault, and the second is
- * the address at which the program should जारी.  No रेजिस्टरs are
- * modअगरied, so it is entirely up to the continuation code to figure out
- * what to करो.
+ * address of an instruction that is allowed to fault, and the second is
+ * the address at which the program should continue.  No registers are
+ * modified, so it is entirely up to the continuation code to figure out
+ * what to do.
  *
  * All the routines below use bits of fixup code that are out of line
- * with the मुख्य inकाष्ठाion path.  This means when everything is well,
- * we करोn't even have to jump over them.  Further, they करो not पूर्णांकrude
+ * with the main instruction path.  This means when everything is well,
+ * we don't even have to jump over them.  Further, they do not intrude
  * on our cache or tlb entries.
  */
 
-काष्ठा exception_table_entry
-अणु
-	अचिन्हित दीर्घ insn, fixup;
-पूर्ण;
+struct exception_table_entry
+{
+	unsigned long insn, fixup;
+};
 
 
-काष्ठा pt_regs;
-बाह्य पूर्णांक fixup_exception(काष्ठा pt_regs *regs);
+struct pt_regs;
+extern int fixup_exception(struct pt_regs *regs);
 
-#पूर्ण_अगर
+#endif

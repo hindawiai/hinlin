@@ -1,6 +1,5 @@
-<शैली गुरु>
 /*
- *   fs/cअगरs/file.c
+ *   fs/cifs/file.c
  *
  *   vfs operations that deal with files
  *
@@ -8,7 +7,7 @@
  *   Author(s): Steve French (sfrench@us.ibm.com)
  *              Jeremy Allison (jra@samba.org)
  *
- *   This library is मुक्त software; you can redistribute it and/or modअगरy
+ *   This library is free software; you can redistribute it and/or modify
  *   it under the terms of the GNU Lesser General Public License as published
  *   by the Free Software Foundation; either version 2.1 of the License, or
  *   (at your option) any later version.
@@ -16,303 +15,303 @@
  *   This library is distributed in the hope that it will be useful,
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of
  *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See
- *   the GNU Lesser General Public License क्रम more details.
+ *   the GNU Lesser General Public License for more details.
  *
  *   You should have received a copy of the GNU Lesser General Public License
- *   aदीर्घ with this library; अगर not, ग_लिखो to the Free Software
+ *   along with this library; if not, write to the Free Software
  *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-#समावेश <linux/fs.h>
-#समावेश <linux/backing-dev.h>
-#समावेश <linux/स्थिति.स>
-#समावेश <linux/fcntl.h>
-#समावेश <linux/pagemap.h>
-#समावेश <linux/pagevec.h>
-#समावेश <linux/ग_लिखोback.h>
-#समावेश <linux/task_io_accounting_ops.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/mount.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/swap.h>
-#समावेश <linux/mm.h>
-#समावेश <यंत्र/भाग64.h>
-#समावेश "cifsfs.h"
-#समावेश "cifspdu.h"
-#समावेश "cifsglob.h"
-#समावेश "cifsproto.h"
-#समावेश "cifs_unicode.h"
-#समावेश "cifs_debug.h"
-#समावेश "cifs_fs_sb.h"
-#समावेश "fscache.h"
-#समावेश "smbdirect.h"
-#समावेश "fs_context.h"
-#समावेश "cifs_ioctl.h"
+#include <linux/fs.h>
+#include <linux/backing-dev.h>
+#include <linux/stat.h>
+#include <linux/fcntl.h>
+#include <linux/pagemap.h>
+#include <linux/pagevec.h>
+#include <linux/writeback.h>
+#include <linux/task_io_accounting_ops.h>
+#include <linux/delay.h>
+#include <linux/mount.h>
+#include <linux/slab.h>
+#include <linux/swap.h>
+#include <linux/mm.h>
+#include <asm/div64.h>
+#include "cifsfs.h"
+#include "cifspdu.h"
+#include "cifsglob.h"
+#include "cifsproto.h"
+#include "cifs_unicode.h"
+#include "cifs_debug.h"
+#include "cifs_fs_sb.h"
+#include "fscache.h"
+#include "smbdirect.h"
+#include "fs_context.h"
+#include "cifs_ioctl.h"
 
-अटल अंतरभूत पूर्णांक cअगरs_convert_flags(अचिन्हित पूर्णांक flags)
-अणु
-	अगर ((flags & O_ACCMODE) == O_RDONLY)
-		वापस GENERIC_READ;
-	अन्यथा अगर ((flags & O_ACCMODE) == O_WRONLY)
-		वापस GENERIC_WRITE;
-	अन्यथा अगर ((flags & O_ACCMODE) == O_RDWR) अणु
+static inline int cifs_convert_flags(unsigned int flags)
+{
+	if ((flags & O_ACCMODE) == O_RDONLY)
+		return GENERIC_READ;
+	else if ((flags & O_ACCMODE) == O_WRONLY)
+		return GENERIC_WRITE;
+	else if ((flags & O_ACCMODE) == O_RDWR) {
 		/* GENERIC_ALL is too much permission to request
 		   can cause unnecessary access denied on create */
-		/* वापस GENERIC_ALL; */
-		वापस (GENERIC_READ | GENERIC_WRITE);
-	पूर्ण
+		/* return GENERIC_ALL; */
+		return (GENERIC_READ | GENERIC_WRITE);
+	}
 
-	वापस (READ_CONTROL | खाता_WRITE_ATTRIBUTES | खाता_READ_ATTRIBUTES |
-		खाता_WRITE_EA | खाता_APPEND_DATA | खाता_WRITE_DATA |
-		खाता_READ_DATA);
-पूर्ण
+	return (READ_CONTROL | FILE_WRITE_ATTRIBUTES | FILE_READ_ATTRIBUTES |
+		FILE_WRITE_EA | FILE_APPEND_DATA | FILE_WRITE_DATA |
+		FILE_READ_DATA);
+}
 
-अटल u32 cअगरs_posix_convert_flags(अचिन्हित पूर्णांक flags)
-अणु
+static u32 cifs_posix_convert_flags(unsigned int flags)
+{
 	u32 posix_flags = 0;
 
-	अगर ((flags & O_ACCMODE) == O_RDONLY)
+	if ((flags & O_ACCMODE) == O_RDONLY)
 		posix_flags = SMB_O_RDONLY;
-	अन्यथा अगर ((flags & O_ACCMODE) == O_WRONLY)
+	else if ((flags & O_ACCMODE) == O_WRONLY)
 		posix_flags = SMB_O_WRONLY;
-	अन्यथा अगर ((flags & O_ACCMODE) == O_RDWR)
+	else if ((flags & O_ACCMODE) == O_RDWR)
 		posix_flags = SMB_O_RDWR;
 
-	अगर (flags & O_CREAT) अणु
+	if (flags & O_CREAT) {
 		posix_flags |= SMB_O_CREAT;
-		अगर (flags & O_EXCL)
+		if (flags & O_EXCL)
 			posix_flags |= SMB_O_EXCL;
-	पूर्ण अन्यथा अगर (flags & O_EXCL)
-		cअगरs_dbg(FYI, "Application %s pid %d has incorrectly set O_EXCL flag but not O_CREAT on file open. Ignoring O_EXCL\n",
+	} else if (flags & O_EXCL)
+		cifs_dbg(FYI, "Application %s pid %d has incorrectly set O_EXCL flag but not O_CREAT on file open. Ignoring O_EXCL\n",
 			 current->comm, current->tgid);
 
-	अगर (flags & O_TRUNC)
+	if (flags & O_TRUNC)
 		posix_flags |= SMB_O_TRUNC;
-	/* be safe and imply O_SYNC क्रम O_DSYNC */
-	अगर (flags & O_DSYNC)
+	/* be safe and imply O_SYNC for O_DSYNC */
+	if (flags & O_DSYNC)
 		posix_flags |= SMB_O_SYNC;
-	अगर (flags & O_सूचीECTORY)
-		posix_flags |= SMB_O_सूचीECTORY;
-	अगर (flags & O_NOFOLLOW)
+	if (flags & O_DIRECTORY)
+		posix_flags |= SMB_O_DIRECTORY;
+	if (flags & O_NOFOLLOW)
 		posix_flags |= SMB_O_NOFOLLOW;
-	अगर (flags & O_सूचीECT)
-		posix_flags |= SMB_O_सूचीECT;
+	if (flags & O_DIRECT)
+		posix_flags |= SMB_O_DIRECT;
 
-	वापस posix_flags;
-पूर्ण
+	return posix_flags;
+}
 
-अटल अंतरभूत पूर्णांक cअगरs_get_disposition(अचिन्हित पूर्णांक flags)
-अणु
-	अगर ((flags & (O_CREAT | O_EXCL)) == (O_CREAT | O_EXCL))
-		वापस खाता_CREATE;
-	अन्यथा अगर ((flags & (O_CREAT | O_TRUNC)) == (O_CREAT | O_TRUNC))
-		वापस खाता_OVERWRITE_IF;
-	अन्यथा अगर ((flags & O_CREAT) == O_CREAT)
-		वापस खाता_OPEN_IF;
-	अन्यथा अगर ((flags & O_TRUNC) == O_TRUNC)
-		वापस खाता_OVERWRITE;
-	अन्यथा
-		वापस खाता_OPEN;
-पूर्ण
+static inline int cifs_get_disposition(unsigned int flags)
+{
+	if ((flags & (O_CREAT | O_EXCL)) == (O_CREAT | O_EXCL))
+		return FILE_CREATE;
+	else if ((flags & (O_CREAT | O_TRUNC)) == (O_CREAT | O_TRUNC))
+		return FILE_OVERWRITE_IF;
+	else if ((flags & O_CREAT) == O_CREAT)
+		return FILE_OPEN_IF;
+	else if ((flags & O_TRUNC) == O_TRUNC)
+		return FILE_OVERWRITE;
+	else
+		return FILE_OPEN;
+}
 
-पूर्णांक cअगरs_posix_खोलो(स्थिर अक्षर *full_path, काष्ठा inode **pinode,
-			काष्ठा super_block *sb, पूर्णांक mode, अचिन्हित पूर्णांक f_flags,
-			__u32 *poplock, __u16 *pnetfid, अचिन्हित पूर्णांक xid)
-अणु
-	पूर्णांक rc;
-	खाता_UNIX_BASIC_INFO *presp_data;
+int cifs_posix_open(const char *full_path, struct inode **pinode,
+			struct super_block *sb, int mode, unsigned int f_flags,
+			__u32 *poplock, __u16 *pnetfid, unsigned int xid)
+{
+	int rc;
+	FILE_UNIX_BASIC_INFO *presp_data;
 	__u32 posix_flags = 0;
-	काष्ठा cअगरs_sb_info *cअगरs_sb = CIFS_SB(sb);
-	काष्ठा cअगरs_fattr fattr;
-	काष्ठा tcon_link *tlink;
-	काष्ठा cअगरs_tcon *tcon;
+	struct cifs_sb_info *cifs_sb = CIFS_SB(sb);
+	struct cifs_fattr fattr;
+	struct tcon_link *tlink;
+	struct cifs_tcon *tcon;
 
-	cअगरs_dbg(FYI, "posix open %s\n", full_path);
+	cifs_dbg(FYI, "posix open %s\n", full_path);
 
-	presp_data = kzalloc(माप(खाता_UNIX_BASIC_INFO), GFP_KERNEL);
-	अगर (presp_data == शून्य)
-		वापस -ENOMEM;
+	presp_data = kzalloc(sizeof(FILE_UNIX_BASIC_INFO), GFP_KERNEL);
+	if (presp_data == NULL)
+		return -ENOMEM;
 
-	tlink = cअगरs_sb_tlink(cअगरs_sb);
-	अगर (IS_ERR(tlink)) अणु
+	tlink = cifs_sb_tlink(cifs_sb);
+	if (IS_ERR(tlink)) {
 		rc = PTR_ERR(tlink);
-		जाओ posix_खोलो_ret;
-	पूर्ण
+		goto posix_open_ret;
+	}
 
 	tcon = tlink_tcon(tlink);
 	mode &= ~current_umask();
 
-	posix_flags = cअगरs_posix_convert_flags(f_flags);
+	posix_flags = cifs_posix_convert_flags(f_flags);
 	rc = CIFSPOSIXCreate(xid, tcon, posix_flags, mode, pnetfid, presp_data,
-			     poplock, full_path, cअगरs_sb->local_nls,
-			     cअगरs_remap(cअगरs_sb));
-	cअगरs_put_tlink(tlink);
+			     poplock, full_path, cifs_sb->local_nls,
+			     cifs_remap(cifs_sb));
+	cifs_put_tlink(tlink);
 
-	अगर (rc)
-		जाओ posix_खोलो_ret;
+	if (rc)
+		goto posix_open_ret;
 
-	अगर (presp_data->Type == cpu_to_le32(-1))
-		जाओ posix_खोलो_ret; /* खोलो ok, caller करोes qpathinfo */
+	if (presp_data->Type == cpu_to_le32(-1))
+		goto posix_open_ret; /* open ok, caller does qpathinfo */
 
-	अगर (!pinode)
-		जाओ posix_खोलो_ret; /* caller करोes not need info */
+	if (!pinode)
+		goto posix_open_ret; /* caller does not need info */
 
-	cअगरs_unix_basic_to_fattr(&fattr, presp_data, cअगरs_sb);
+	cifs_unix_basic_to_fattr(&fattr, presp_data, cifs_sb);
 
 	/* get new inode and set it up */
-	अगर (*pinode == शून्य) अणु
-		cअगरs_fill_uniqueid(sb, &fattr);
-		*pinode = cअगरs_iget(sb, &fattr);
-		अगर (!*pinode) अणु
+	if (*pinode == NULL) {
+		cifs_fill_uniqueid(sb, &fattr);
+		*pinode = cifs_iget(sb, &fattr);
+		if (!*pinode) {
 			rc = -ENOMEM;
-			जाओ posix_खोलो_ret;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		cअगरs_revalidate_mapping(*pinode);
-		rc = cअगरs_fattr_to_inode(*pinode, &fattr);
-	पूर्ण
+			goto posix_open_ret;
+		}
+	} else {
+		cifs_revalidate_mapping(*pinode);
+		rc = cifs_fattr_to_inode(*pinode, &fattr);
+	}
 
-posix_खोलो_ret:
-	kमुक्त(presp_data);
-	वापस rc;
-पूर्ण
+posix_open_ret:
+	kfree(presp_data);
+	return rc;
+}
 
-अटल पूर्णांक
-cअगरs_nt_खोलो(स्थिर अक्षर *full_path, काष्ठा inode *inode, काष्ठा cअगरs_sb_info *cअगरs_sb,
-	     काष्ठा cअगरs_tcon *tcon, अचिन्हित पूर्णांक f_flags, __u32 *oplock,
-	     काष्ठा cअगरs_fid *fid, अचिन्हित पूर्णांक xid)
-अणु
-	पूर्णांक rc;
-	पूर्णांक desired_access;
-	पूर्णांक disposition;
-	पूर्णांक create_options = CREATE_NOT_सूची;
-	खाता_ALL_INFO *buf;
-	काष्ठा TCP_Server_Info *server = tcon->ses->server;
-	काष्ठा cअगरs_खोलो_parms oparms;
+static int
+cifs_nt_open(const char *full_path, struct inode *inode, struct cifs_sb_info *cifs_sb,
+	     struct cifs_tcon *tcon, unsigned int f_flags, __u32 *oplock,
+	     struct cifs_fid *fid, unsigned int xid)
+{
+	int rc;
+	int desired_access;
+	int disposition;
+	int create_options = CREATE_NOT_DIR;
+	FILE_ALL_INFO *buf;
+	struct TCP_Server_Info *server = tcon->ses->server;
+	struct cifs_open_parms oparms;
 
-	अगर (!server->ops->खोलो)
-		वापस -ENOSYS;
+	if (!server->ops->open)
+		return -ENOSYS;
 
-	desired_access = cअगरs_convert_flags(f_flags);
+	desired_access = cifs_convert_flags(f_flags);
 
 /*********************************************************************
- *  खोलो flag mapping table:
+ *  open flag mapping table:
  *
  *	POSIX Flag            CIFS Disposition
  *	----------            ----------------
- *	O_CREAT               खाता_OPEN_IF
- *	O_CREAT | O_EXCL      खाता_CREATE
- *	O_CREAT | O_TRUNC     खाता_OVERWRITE_IF
- *	O_TRUNC               खाता_OVERWRITE
- *	none of the above     खाता_OPEN
+ *	O_CREAT               FILE_OPEN_IF
+ *	O_CREAT | O_EXCL      FILE_CREATE
+ *	O_CREAT | O_TRUNC     FILE_OVERWRITE_IF
+ *	O_TRUNC               FILE_OVERWRITE
+ *	none of the above     FILE_OPEN
  *
  *	Note that there is not a direct match between disposition
- *	खाता_SUPERSEDE (ie create whether or not file exists although
+ *	FILE_SUPERSEDE (ie create whether or not file exists although
  *	O_CREAT | O_TRUNC is similar but truncates the existing
- *	file rather than creating a new file as खाता_SUPERSEDE करोes
- *	(which uses the attributes / metadata passed in on खोलो call)
+ *	file rather than creating a new file as FILE_SUPERSEDE does
+ *	(which uses the attributes / metadata passed in on open call)
  *?
- *?  O_SYNC is a reasonable match to CIFS ग_लिखोthrough flag
- *?  and the पढ़ो ग_लिखो flags match reasonably.  O_LARGEखाता
+ *?  O_SYNC is a reasonable match to CIFS writethrough flag
+ *?  and the read write flags match reasonably.  O_LARGEFILE
  *?  is irrelevant because largefile support is always used
- *?  by this client. Flags O_APPEND, O_सूचीECT, O_सूचीECTORY,
+ *?  by this client. Flags O_APPEND, O_DIRECT, O_DIRECTORY,
  *	 O_FASYNC, O_NOFOLLOW, O_NONBLOCK need further investigation
  *********************************************************************/
 
-	disposition = cअगरs_get_disposition(f_flags);
+	disposition = cifs_get_disposition(f_flags);
 
 	/* BB pass O_SYNC flag through on file attributes .. BB */
 
-	buf = kदो_स्मृति(माप(खाता_ALL_INFO), GFP_KERNEL);
-	अगर (!buf)
-		वापस -ENOMEM;
+	buf = kmalloc(sizeof(FILE_ALL_INFO), GFP_KERNEL);
+	if (!buf)
+		return -ENOMEM;
 
-	/* O_SYNC also has bit क्रम O_DSYNC so following check picks up either */
-	अगर (f_flags & O_SYNC)
+	/* O_SYNC also has bit for O_DSYNC so following check picks up either */
+	if (f_flags & O_SYNC)
 		create_options |= CREATE_WRITE_THROUGH;
 
-	अगर (f_flags & O_सूचीECT)
+	if (f_flags & O_DIRECT)
 		create_options |= CREATE_NO_BUFFER;
 
 	oparms.tcon = tcon;
-	oparms.cअगरs_sb = cअगरs_sb;
+	oparms.cifs_sb = cifs_sb;
 	oparms.desired_access = desired_access;
-	oparms.create_options = cअगरs_create_options(cअगरs_sb, create_options);
+	oparms.create_options = cifs_create_options(cifs_sb, create_options);
 	oparms.disposition = disposition;
 	oparms.path = full_path;
 	oparms.fid = fid;
 	oparms.reconnect = false;
 
-	rc = server->ops->खोलो(xid, &oparms, oplock, buf);
+	rc = server->ops->open(xid, &oparms, oplock, buf);
 
-	अगर (rc)
-		जाओ out;
+	if (rc)
+		goto out;
 
-	/* TODO: Add support क्रम calling posix query info but with passing in fid */
-	अगर (tcon->unix_ext)
-		rc = cअगरs_get_inode_info_unix(&inode, full_path, inode->i_sb,
+	/* TODO: Add support for calling posix query info but with passing in fid */
+	if (tcon->unix_ext)
+		rc = cifs_get_inode_info_unix(&inode, full_path, inode->i_sb,
 					      xid);
-	अन्यथा
-		rc = cअगरs_get_inode_info(&inode, full_path, buf, inode->i_sb,
+	else
+		rc = cifs_get_inode_info(&inode, full_path, buf, inode->i_sb,
 					 xid, fid);
 
-	अगर (rc) अणु
-		server->ops->बंद(xid, tcon, fid);
-		अगर (rc == -ESTALE)
+	if (rc) {
+		server->ops->close(xid, tcon, fid);
+		if (rc == -ESTALE)
 			rc = -EOPENSTALE;
-	पूर्ण
+	}
 
 out:
-	kमुक्त(buf);
-	वापस rc;
-पूर्ण
+	kfree(buf);
+	return rc;
+}
 
-अटल bool
-cअगरs_has_mand_locks(काष्ठा cअगरsInodeInfo *cinode)
-अणु
-	काष्ठा cअगरs_fid_locks *cur;
+static bool
+cifs_has_mand_locks(struct cifsInodeInfo *cinode)
+{
+	struct cifs_fid_locks *cur;
 	bool has_locks = false;
 
-	करोwn_पढ़ो(&cinode->lock_sem);
-	list_क्रम_each_entry(cur, &cinode->llist, llist) अणु
-		अगर (!list_empty(&cur->locks)) अणु
+	down_read(&cinode->lock_sem);
+	list_for_each_entry(cur, &cinode->llist, llist) {
+		if (!list_empty(&cur->locks)) {
 			has_locks = true;
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	up_पढ़ो(&cinode->lock_sem);
-	वापस has_locks;
-पूर्ण
+			break;
+		}
+	}
+	up_read(&cinode->lock_sem);
+	return has_locks;
+}
 
-व्योम
-cअगरs_करोwn_ग_लिखो(काष्ठा rw_semaphore *sem)
-अणु
-	जबतक (!करोwn_ग_लिखो_trylock(sem))
+void
+cifs_down_write(struct rw_semaphore *sem)
+{
+	while (!down_write_trylock(sem))
 		msleep(10);
-पूर्ण
+}
 
-अटल व्योम cअगरsFileInfo_put_work(काष्ठा work_काष्ठा *work);
+static void cifsFileInfo_put_work(struct work_struct *work);
 
-काष्ठा cअगरsFileInfo *
-cअगरs_new_fileinfo(काष्ठा cअगरs_fid *fid, काष्ठा file *file,
-		  काष्ठा tcon_link *tlink, __u32 oplock)
-अणु
-	काष्ठा dentry *dentry = file_dentry(file);
-	काष्ठा inode *inode = d_inode(dentry);
-	काष्ठा cअगरsInodeInfo *cinode = CIFS_I(inode);
-	काष्ठा cअगरsFileInfo *cfile;
-	काष्ठा cअगरs_fid_locks *fdlocks;
-	काष्ठा cअगरs_tcon *tcon = tlink_tcon(tlink);
-	काष्ठा TCP_Server_Info *server = tcon->ses->server;
+struct cifsFileInfo *
+cifs_new_fileinfo(struct cifs_fid *fid, struct file *file,
+		  struct tcon_link *tlink, __u32 oplock)
+{
+	struct dentry *dentry = file_dentry(file);
+	struct inode *inode = d_inode(dentry);
+	struct cifsInodeInfo *cinode = CIFS_I(inode);
+	struct cifsFileInfo *cfile;
+	struct cifs_fid_locks *fdlocks;
+	struct cifs_tcon *tcon = tlink_tcon(tlink);
+	struct TCP_Server_Info *server = tcon->ses->server;
 
-	cfile = kzalloc(माप(काष्ठा cअगरsFileInfo), GFP_KERNEL);
-	अगर (cfile == शून्य)
-		वापस cfile;
+	cfile = kzalloc(sizeof(struct cifsFileInfo), GFP_KERNEL);
+	if (cfile == NULL)
+		return cfile;
 
-	fdlocks = kzalloc(माप(काष्ठा cअगरs_fid_locks), GFP_KERNEL);
-	अगर (!fdlocks) अणु
-		kमुक्त(cfile);
-		वापस शून्य;
-	पूर्ण
+	fdlocks = kzalloc(sizeof(struct cifs_fid_locks), GFP_KERNEL);
+	if (!fdlocks) {
+		kfree(cfile);
+		return NULL;
+	}
 
 	INIT_LIST_HEAD(&fdlocks->locks);
 	fdlocks->cfile = cfile;
@@ -324,1340 +323,1340 @@ cअगरs_new_fileinfo(काष्ठा cअगरs_fid *fid, काष्�
 	cfile->dentry = dget(dentry);
 	cfile->f_flags = file->f_flags;
 	cfile->invalidHandle = false;
-	cfile->deferred_बंद_scheduled = false;
-	cfile->tlink = cअगरs_get_tlink(tlink);
-	INIT_WORK(&cfile->oplock_अवरोध, cअगरs_oplock_अवरोध);
-	INIT_WORK(&cfile->put, cअगरsFileInfo_put_work);
-	INIT_DELAYED_WORK(&cfile->deferred, smb2_deferred_work_बंद);
+	cfile->deferred_close_scheduled = false;
+	cfile->tlink = cifs_get_tlink(tlink);
+	INIT_WORK(&cfile->oplock_break, cifs_oplock_break);
+	INIT_WORK(&cfile->put, cifsFileInfo_put_work);
+	INIT_DELAYED_WORK(&cfile->deferred, smb2_deferred_work_close);
 	mutex_init(&cfile->fh_mutex);
 	spin_lock_init(&cfile->file_info_lock);
 
-	cअगरs_sb_active(inode->i_sb);
+	cifs_sb_active(inode->i_sb);
 
 	/*
-	 * If the server वापसed a पढ़ो oplock and we have mandatory brlocks,
+	 * If the server returned a read oplock and we have mandatory brlocks,
 	 * set oplock level to None.
 	 */
-	अगर (server->ops->is_पढ़ो_op(oplock) && cअगरs_has_mand_locks(cinode)) अणु
-		cअगरs_dbg(FYI, "Reset oplock val from read to None due to mand locks\n");
+	if (server->ops->is_read_op(oplock) && cifs_has_mand_locks(cinode)) {
+		cifs_dbg(FYI, "Reset oplock val from read to None due to mand locks\n");
 		oplock = 0;
-	पूर्ण
+	}
 
-	cअगरs_करोwn_ग_लिखो(&cinode->lock_sem);
+	cifs_down_write(&cinode->lock_sem);
 	list_add(&fdlocks->llist, &cinode->llist);
-	up_ग_लिखो(&cinode->lock_sem);
+	up_write(&cinode->lock_sem);
 
-	spin_lock(&tcon->खोलो_file_lock);
-	अगर (fid->pending_खोलो->oplock != CIFS_OPLOCK_NO_CHANGE && oplock)
-		oplock = fid->pending_खोलो->oplock;
-	list_del(&fid->pending_खोलो->olist);
+	spin_lock(&tcon->open_file_lock);
+	if (fid->pending_open->oplock != CIFS_OPLOCK_NO_CHANGE && oplock)
+		oplock = fid->pending_open->oplock;
+	list_del(&fid->pending_open->olist);
 
 	fid->purge_cache = false;
 	server->ops->set_fid(cfile, fid, oplock);
 
-	list_add(&cfile->tlist, &tcon->खोलोFileList);
-	atomic_inc(&tcon->num_local_खोलोs);
+	list_add(&cfile->tlist, &tcon->openFileList);
+	atomic_inc(&tcon->num_local_opens);
 
-	/* अगर पढ़ोable file instance put first in list*/
-	spin_lock(&cinode->खोलो_file_lock);
-	अगर (file->f_mode & FMODE_READ)
-		list_add(&cfile->flist, &cinode->खोलोFileList);
-	अन्यथा
-		list_add_tail(&cfile->flist, &cinode->खोलोFileList);
-	spin_unlock(&cinode->खोलो_file_lock);
-	spin_unlock(&tcon->खोलो_file_lock);
+	/* if readable file instance put first in list*/
+	spin_lock(&cinode->open_file_lock);
+	if (file->f_mode & FMODE_READ)
+		list_add(&cfile->flist, &cinode->openFileList);
+	else
+		list_add_tail(&cfile->flist, &cinode->openFileList);
+	spin_unlock(&cinode->open_file_lock);
+	spin_unlock(&tcon->open_file_lock);
 
-	अगर (fid->purge_cache)
-		cअगरs_zap_mapping(inode);
+	if (fid->purge_cache)
+		cifs_zap_mapping(inode);
 
-	file->निजी_data = cfile;
-	वापस cfile;
-पूर्ण
+	file->private_data = cfile;
+	return cfile;
+}
 
-काष्ठा cअगरsFileInfo *
-cअगरsFileInfo_get(काष्ठा cअगरsFileInfo *cअगरs_file)
-अणु
-	spin_lock(&cअगरs_file->file_info_lock);
-	cअगरsFileInfo_get_locked(cअगरs_file);
-	spin_unlock(&cअगरs_file->file_info_lock);
-	वापस cअगरs_file;
-पूर्ण
+struct cifsFileInfo *
+cifsFileInfo_get(struct cifsFileInfo *cifs_file)
+{
+	spin_lock(&cifs_file->file_info_lock);
+	cifsFileInfo_get_locked(cifs_file);
+	spin_unlock(&cifs_file->file_info_lock);
+	return cifs_file;
+}
 
-अटल व्योम cअगरsFileInfo_put_final(काष्ठा cअगरsFileInfo *cअगरs_file)
-अणु
-	काष्ठा inode *inode = d_inode(cअगरs_file->dentry);
-	काष्ठा cअगरsInodeInfo *cअगरsi = CIFS_I(inode);
-	काष्ठा cअगरsLockInfo *li, *पंचांगp;
-	काष्ठा super_block *sb = inode->i_sb;
+static void cifsFileInfo_put_final(struct cifsFileInfo *cifs_file)
+{
+	struct inode *inode = d_inode(cifs_file->dentry);
+	struct cifsInodeInfo *cifsi = CIFS_I(inode);
+	struct cifsLockInfo *li, *tmp;
+	struct super_block *sb = inode->i_sb;
 
 	/*
 	 * Delete any outstanding lock records. We'll lose them when the file
-	 * is बंदd anyway.
+	 * is closed anyway.
 	 */
-	cअगरs_करोwn_ग_लिखो(&cअगरsi->lock_sem);
-	list_क्रम_each_entry_safe(li, पंचांगp, &cअगरs_file->llist->locks, llist) अणु
+	cifs_down_write(&cifsi->lock_sem);
+	list_for_each_entry_safe(li, tmp, &cifs_file->llist->locks, llist) {
 		list_del(&li->llist);
-		cअगरs_del_lock_रुकोers(li);
-		kमुक्त(li);
-	पूर्ण
-	list_del(&cअगरs_file->llist->llist);
-	kमुक्त(cअगरs_file->llist);
-	up_ग_लिखो(&cअगरsi->lock_sem);
+		cifs_del_lock_waiters(li);
+		kfree(li);
+	}
+	list_del(&cifs_file->llist->llist);
+	kfree(cifs_file->llist);
+	up_write(&cifsi->lock_sem);
 
-	cअगरs_put_tlink(cअगरs_file->tlink);
-	dput(cअगरs_file->dentry);
-	cअगरs_sb_deactive(sb);
-	kमुक्त(cअगरs_file);
-पूर्ण
+	cifs_put_tlink(cifs_file->tlink);
+	dput(cifs_file->dentry);
+	cifs_sb_deactive(sb);
+	kfree(cifs_file);
+}
 
-अटल व्योम cअगरsFileInfo_put_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा cअगरsFileInfo *cअगरs_file = container_of(work,
-			काष्ठा cअगरsFileInfo, put);
+static void cifsFileInfo_put_work(struct work_struct *work)
+{
+	struct cifsFileInfo *cifs_file = container_of(work,
+			struct cifsFileInfo, put);
 
-	cअगरsFileInfo_put_final(cअगरs_file);
-पूर्ण
+	cifsFileInfo_put_final(cifs_file);
+}
 
 /**
- * cअगरsFileInfo_put - release a reference of file priv data
+ * cifsFileInfo_put - release a reference of file priv data
  *
- * Always potentially रुको क्रम oplock handler. See _cअगरsFileInfo_put().
+ * Always potentially wait for oplock handler. See _cifsFileInfo_put().
  *
- * @cअगरs_file:	cअगरs/smb3 specअगरic info (eg refcounts) क्रम an खोलो file
+ * @cifs_file:	cifs/smb3 specific info (eg refcounts) for an open file
  */
-व्योम cअगरsFileInfo_put(काष्ठा cअगरsFileInfo *cअगरs_file)
-अणु
-	_cअगरsFileInfo_put(cअगरs_file, true, true);
-पूर्ण
+void cifsFileInfo_put(struct cifsFileInfo *cifs_file)
+{
+	_cifsFileInfo_put(cifs_file, true, true);
+}
 
 /**
- * _cअगरsFileInfo_put - release a reference of file priv data
+ * _cifsFileInfo_put - release a reference of file priv data
  *
- * This may involve closing the filehandle @cअगरs_file out on the
- * server. Must be called without holding tcon->खोलो_file_lock,
- * cinode->खोलो_file_lock and cअगरs_file->file_info_lock.
+ * This may involve closing the filehandle @cifs_file out on the
+ * server. Must be called without holding tcon->open_file_lock,
+ * cinode->open_file_lock and cifs_file->file_info_lock.
  *
- * If @रुको_क्रम_oplock_handler is true and we are releasing the last
- * reference, रुको क्रम any running oplock अवरोध handler of the file
+ * If @wait_for_oplock_handler is true and we are releasing the last
+ * reference, wait for any running oplock break handler of the file
  * and cancel any pending one.
  *
- * @cअगरs_file:	cअगरs/smb3 specअगरic info (eg refcounts) क्रम an खोलो file
- * @रुको_oplock_handler: must be false अगर called from oplock_अवरोध_handler
- * @offload:	not offloaded on बंद and oplock अवरोधs
+ * @cifs_file:	cifs/smb3 specific info (eg refcounts) for an open file
+ * @wait_oplock_handler: must be false if called from oplock_break_handler
+ * @offload:	not offloaded on close and oplock breaks
  *
  */
-व्योम _cअगरsFileInfo_put(काष्ठा cअगरsFileInfo *cअगरs_file,
-		       bool रुको_oplock_handler, bool offload)
-अणु
-	काष्ठा inode *inode = d_inode(cअगरs_file->dentry);
-	काष्ठा cअगरs_tcon *tcon = tlink_tcon(cअगरs_file->tlink);
-	काष्ठा TCP_Server_Info *server = tcon->ses->server;
-	काष्ठा cअगरsInodeInfo *cअगरsi = CIFS_I(inode);
-	काष्ठा super_block *sb = inode->i_sb;
-	काष्ठा cअगरs_sb_info *cअगरs_sb = CIFS_SB(sb);
-	काष्ठा cअगरs_fid fid;
-	काष्ठा cअगरs_pending_खोलो खोलो;
-	bool oplock_अवरोध_cancelled;
+void _cifsFileInfo_put(struct cifsFileInfo *cifs_file,
+		       bool wait_oplock_handler, bool offload)
+{
+	struct inode *inode = d_inode(cifs_file->dentry);
+	struct cifs_tcon *tcon = tlink_tcon(cifs_file->tlink);
+	struct TCP_Server_Info *server = tcon->ses->server;
+	struct cifsInodeInfo *cifsi = CIFS_I(inode);
+	struct super_block *sb = inode->i_sb;
+	struct cifs_sb_info *cifs_sb = CIFS_SB(sb);
+	struct cifs_fid fid;
+	struct cifs_pending_open open;
+	bool oplock_break_cancelled;
 
-	spin_lock(&tcon->खोलो_file_lock);
-	spin_lock(&cअगरsi->खोलो_file_lock);
-	spin_lock(&cअगरs_file->file_info_lock);
-	अगर (--cअगरs_file->count > 0) अणु
-		spin_unlock(&cअगरs_file->file_info_lock);
-		spin_unlock(&cअगरsi->खोलो_file_lock);
-		spin_unlock(&tcon->खोलो_file_lock);
-		वापस;
-	पूर्ण
-	spin_unlock(&cअगरs_file->file_info_lock);
+	spin_lock(&tcon->open_file_lock);
+	spin_lock(&cifsi->open_file_lock);
+	spin_lock(&cifs_file->file_info_lock);
+	if (--cifs_file->count > 0) {
+		spin_unlock(&cifs_file->file_info_lock);
+		spin_unlock(&cifsi->open_file_lock);
+		spin_unlock(&tcon->open_file_lock);
+		return;
+	}
+	spin_unlock(&cifs_file->file_info_lock);
 
-	अगर (server->ops->get_lease_key)
+	if (server->ops->get_lease_key)
 		server->ops->get_lease_key(inode, &fid);
 
-	/* store खोलो in pending खोलोs to make sure we करोn't miss lease अवरोध */
-	cअगरs_add_pending_खोलो_locked(&fid, cअगरs_file->tlink, &खोलो);
+	/* store open in pending opens to make sure we don't miss lease break */
+	cifs_add_pending_open_locked(&fid, cifs_file->tlink, &open);
 
-	/* हटाओ it from the lists */
-	list_del(&cअगरs_file->flist);
-	list_del(&cअगरs_file->tlist);
-	atomic_dec(&tcon->num_local_खोलोs);
+	/* remove it from the lists */
+	list_del(&cifs_file->flist);
+	list_del(&cifs_file->tlist);
+	atomic_dec(&tcon->num_local_opens);
 
-	अगर (list_empty(&cअगरsi->खोलोFileList)) अणु
-		cअगरs_dbg(FYI, "closing last open instance for inode %p\n",
-			 d_inode(cअगरs_file->dentry));
+	if (list_empty(&cifsi->openFileList)) {
+		cifs_dbg(FYI, "closing last open instance for inode %p\n",
+			 d_inode(cifs_file->dentry));
 		/*
 		 * In strict cache mode we need invalidate mapping on the last
-		 * बंद  because it may cause a error when we खोलो this file
+		 * close  because it may cause a error when we open this file
 		 * again and get at least level II oplock.
 		 */
-		अगर (cअगरs_sb->mnt_cअगरs_flags & CIFS_MOUNT_STRICT_IO)
-			set_bit(CIFS_INO_INVALID_MAPPING, &cअगरsi->flags);
-		cअगरs_set_oplock_level(cअगरsi, 0);
-	पूर्ण
+		if (cifs_sb->mnt_cifs_flags & CIFS_MOUNT_STRICT_IO)
+			set_bit(CIFS_INO_INVALID_MAPPING, &cifsi->flags);
+		cifs_set_oplock_level(cifsi, 0);
+	}
 
-	spin_unlock(&cअगरsi->खोलो_file_lock);
-	spin_unlock(&tcon->खोलो_file_lock);
+	spin_unlock(&cifsi->open_file_lock);
+	spin_unlock(&tcon->open_file_lock);
 
-	oplock_अवरोध_cancelled = रुको_oplock_handler ?
-		cancel_work_sync(&cअगरs_file->oplock_अवरोध) : false;
+	oplock_break_cancelled = wait_oplock_handler ?
+		cancel_work_sync(&cifs_file->oplock_break) : false;
 
-	अगर (!tcon->need_reconnect && !cअगरs_file->invalidHandle) अणु
-		काष्ठा TCP_Server_Info *server = tcon->ses->server;
-		अचिन्हित पूर्णांक xid;
+	if (!tcon->need_reconnect && !cifs_file->invalidHandle) {
+		struct TCP_Server_Info *server = tcon->ses->server;
+		unsigned int xid;
 
 		xid = get_xid();
-		अगर (server->ops->बंद_getattr)
-			server->ops->बंद_getattr(xid, tcon, cअगरs_file);
-		अन्यथा अगर (server->ops->बंद)
-			server->ops->बंद(xid, tcon, &cअगरs_file->fid);
-		_मुक्त_xid(xid);
-	पूर्ण
+		if (server->ops->close_getattr)
+			server->ops->close_getattr(xid, tcon, cifs_file);
+		else if (server->ops->close)
+			server->ops->close(xid, tcon, &cifs_file->fid);
+		_free_xid(xid);
+	}
 
-	अगर (oplock_अवरोध_cancelled)
-		cअगरs_करोne_oplock_अवरोध(cअगरsi);
+	if (oplock_break_cancelled)
+		cifs_done_oplock_break(cifsi);
 
-	cअगरs_del_pending_खोलो(&खोलो);
+	cifs_del_pending_open(&open);
 
-	अगर (offload)
-		queue_work(fileinfo_put_wq, &cअगरs_file->put);
-	अन्यथा
-		cअगरsFileInfo_put_final(cअगरs_file);
-पूर्ण
+	if (offload)
+		queue_work(fileinfo_put_wq, &cifs_file->put);
+	else
+		cifsFileInfo_put_final(cifs_file);
+}
 
-पूर्णांक cअगरs_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+int cifs_open(struct inode *inode, struct file *file)
 
-अणु
-	पूर्णांक rc = -EACCES;
-	अचिन्हित पूर्णांक xid;
+{
+	int rc = -EACCES;
+	unsigned int xid;
 	__u32 oplock;
-	काष्ठा cअगरs_sb_info *cअगरs_sb;
-	काष्ठा TCP_Server_Info *server;
-	काष्ठा cअगरs_tcon *tcon;
-	काष्ठा tcon_link *tlink;
-	काष्ठा cअगरsFileInfo *cfile = शून्य;
-	व्योम *page;
-	स्थिर अक्षर *full_path;
-	bool posix_खोलो_ok = false;
-	काष्ठा cअगरs_fid fid;
-	काष्ठा cअगरs_pending_खोलो खोलो;
+	struct cifs_sb_info *cifs_sb;
+	struct TCP_Server_Info *server;
+	struct cifs_tcon *tcon;
+	struct tcon_link *tlink;
+	struct cifsFileInfo *cfile = NULL;
+	void *page;
+	const char *full_path;
+	bool posix_open_ok = false;
+	struct cifs_fid fid;
+	struct cifs_pending_open open;
 
 	xid = get_xid();
 
-	cअगरs_sb = CIFS_SB(inode->i_sb);
-	अगर (unlikely(cअगरs_क्रमced_shutकरोwn(cअगरs_sb))) अणु
-		मुक्त_xid(xid);
-		वापस -EIO;
-	पूर्ण
+	cifs_sb = CIFS_SB(inode->i_sb);
+	if (unlikely(cifs_forced_shutdown(cifs_sb))) {
+		free_xid(xid);
+		return -EIO;
+	}
 
-	tlink = cअगरs_sb_tlink(cअगरs_sb);
-	अगर (IS_ERR(tlink)) अणु
-		मुक्त_xid(xid);
-		वापस PTR_ERR(tlink);
-	पूर्ण
+	tlink = cifs_sb_tlink(cifs_sb);
+	if (IS_ERR(tlink)) {
+		free_xid(xid);
+		return PTR_ERR(tlink);
+	}
 	tcon = tlink_tcon(tlink);
 	server = tcon->ses->server;
 
 	page = alloc_dentry_path();
 	full_path = build_path_from_dentry(file_dentry(file), page);
-	अगर (IS_ERR(full_path)) अणु
+	if (IS_ERR(full_path)) {
 		rc = PTR_ERR(full_path);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	cअगरs_dbg(FYI, "inode = 0x%p file flags are 0x%x for %s\n",
+	cifs_dbg(FYI, "inode = 0x%p file flags are 0x%x for %s\n",
 		 inode, file->f_flags, full_path);
 
-	अगर (file->f_flags & O_सूचीECT &&
-	    cअगरs_sb->mnt_cअगरs_flags & CIFS_MOUNT_STRICT_IO) अणु
-		अगर (cअगरs_sb->mnt_cअगरs_flags & CIFS_MOUNT_NO_BRL)
-			file->f_op = &cअगरs_file_direct_nobrl_ops;
-		अन्यथा
-			file->f_op = &cअगरs_file_direct_ops;
-	पूर्ण
+	if (file->f_flags & O_DIRECT &&
+	    cifs_sb->mnt_cifs_flags & CIFS_MOUNT_STRICT_IO) {
+		if (cifs_sb->mnt_cifs_flags & CIFS_MOUNT_NO_BRL)
+			file->f_op = &cifs_file_direct_nobrl_ops;
+		else
+			file->f_op = &cifs_file_direct_ops;
+	}
 
-	/* Get the cached handle as SMB2 बंद is deferred */
-	rc = cअगरs_get_पढ़ोable_path(tcon, full_path, &cfile);
-	अगर (rc == 0) अणु
-		अगर (file->f_flags == cfile->f_flags) अणु
-			file->निजी_data = cfile;
+	/* Get the cached handle as SMB2 close is deferred */
+	rc = cifs_get_readable_path(tcon, full_path, &cfile);
+	if (rc == 0) {
+		if (file->f_flags == cfile->f_flags) {
+			file->private_data = cfile;
 			spin_lock(&CIFS_I(inode)->deferred_lock);
-			cअगरs_del_deferred_बंद(cfile);
+			cifs_del_deferred_close(cfile);
 			spin_unlock(&CIFS_I(inode)->deferred_lock);
-			जाओ out;
-		पूर्ण अन्यथा अणु
-			_cअगरsFileInfo_put(cfile, true, false);
-		पूर्ण
-	पूर्ण
+			goto out;
+		} else {
+			_cifsFileInfo_put(cfile, true, false);
+		}
+	}
 
-	अगर (server->oplocks)
+	if (server->oplocks)
 		oplock = REQ_OPLOCK;
-	अन्यथा
+	else
 		oplock = 0;
 
-	अगर (!tcon->broken_posix_खोलो && tcon->unix_ext &&
+	if (!tcon->broken_posix_open && tcon->unix_ext &&
 	    cap_unix(tcon->ses) && (CIFS_UNIX_POSIX_PATH_OPS_CAP &
-				le64_to_cpu(tcon->fsUnixInfo.Capability))) अणु
+				le64_to_cpu(tcon->fsUnixInfo.Capability))) {
 		/* can not refresh inode info since size could be stale */
-		rc = cअगरs_posix_खोलो(full_path, &inode, inode->i_sb,
-				cअगरs_sb->ctx->file_mode /* ignored */,
+		rc = cifs_posix_open(full_path, &inode, inode->i_sb,
+				cifs_sb->ctx->file_mode /* ignored */,
 				file->f_flags, &oplock, &fid.netfid, xid);
-		अगर (rc == 0) अणु
-			cअगरs_dbg(FYI, "posix open succeeded\n");
-			posix_खोलो_ok = true;
-		पूर्ण अन्यथा अगर ((rc == -EINVAL) || (rc == -EOPNOTSUPP)) अणु
-			अगर (tcon->ses->serverNOS)
-				cअगरs_dbg(VFS, "server %s of type %s returned unexpected error on SMB posix open, disabling posix open support. Check if server update available.\n",
+		if (rc == 0) {
+			cifs_dbg(FYI, "posix open succeeded\n");
+			posix_open_ok = true;
+		} else if ((rc == -EINVAL) || (rc == -EOPNOTSUPP)) {
+			if (tcon->ses->serverNOS)
+				cifs_dbg(VFS, "server %s of type %s returned unexpected error on SMB posix open, disabling posix open support. Check if server update available.\n",
 					 tcon->ses->ip_addr,
 					 tcon->ses->serverNOS);
-			tcon->broken_posix_खोलो = true;
-		पूर्ण अन्यथा अगर ((rc != -EIO) && (rc != -EREMOTE) &&
+			tcon->broken_posix_open = true;
+		} else if ((rc != -EIO) && (rc != -EREMOTE) &&
 			 (rc != -EOPNOTSUPP)) /* path not found or net err */
-			जाओ out;
+			goto out;
 		/*
-		 * Else fallthrough to retry खोलो the old way on network i/o
+		 * Else fallthrough to retry open the old way on network i/o
 		 * or DFS errors.
 		 */
-	पूर्ण
+	}
 
-	अगर (server->ops->get_lease_key)
+	if (server->ops->get_lease_key)
 		server->ops->get_lease_key(inode, &fid);
 
-	cअगरs_add_pending_खोलो(&fid, tlink, &खोलो);
+	cifs_add_pending_open(&fid, tlink, &open);
 
-	अगर (!posix_खोलो_ok) अणु
-		अगर (server->ops->get_lease_key)
+	if (!posix_open_ok) {
+		if (server->ops->get_lease_key)
 			server->ops->get_lease_key(inode, &fid);
 
-		rc = cअगरs_nt_खोलो(full_path, inode, cअगरs_sb, tcon,
+		rc = cifs_nt_open(full_path, inode, cifs_sb, tcon,
 				  file->f_flags, &oplock, &fid, xid);
-		अगर (rc) अणु
-			cअगरs_del_pending_खोलो(&खोलो);
-			जाओ out;
-		पूर्ण
-	पूर्ण
+		if (rc) {
+			cifs_del_pending_open(&open);
+			goto out;
+		}
+	}
 
-	cfile = cअगरs_new_fileinfo(&fid, file, tlink, oplock);
-	अगर (cfile == शून्य) अणु
-		अगर (server->ops->बंद)
-			server->ops->बंद(xid, tcon, &fid);
-		cअगरs_del_pending_खोलो(&खोलो);
+	cfile = cifs_new_fileinfo(&fid, file, tlink, oplock);
+	if (cfile == NULL) {
+		if (server->ops->close)
+			server->ops->close(xid, tcon, &fid);
+		cifs_del_pending_open(&open);
 		rc = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	cअगरs_fscache_set_inode_cookie(inode, file);
+	cifs_fscache_set_inode_cookie(inode, file);
 
-	अगर ((oplock & CIFS_CREATE_ACTION) && !posix_खोलो_ok && tcon->unix_ext) अणु
+	if ((oplock & CIFS_CREATE_ACTION) && !posix_open_ok && tcon->unix_ext) {
 		/*
 		 * Time to set mode which we can not set earlier due to
-		 * problems creating new पढ़ो-only files.
+		 * problems creating new read-only files.
 		 */
-		काष्ठा cअगरs_unix_set_info_args args = अणु
+		struct cifs_unix_set_info_args args = {
 			.mode	= inode->i_mode,
 			.uid	= INVALID_UID, /* no change */
 			.gid	= INVALID_GID, /* no change */
-			.स_समय	= NO_CHANGE_64,
-			.aसमय	= NO_CHANGE_64,
-			.mसमय	= NO_CHANGE_64,
+			.ctime	= NO_CHANGE_64,
+			.atime	= NO_CHANGE_64,
+			.mtime	= NO_CHANGE_64,
 			.device	= 0,
-		पूर्ण;
+		};
 		CIFSSMBUnixSetFileInfo(xid, tcon, &args, fid.netfid,
 				       cfile->pid);
-	पूर्ण
+	}
 
 out:
-	मुक्त_dentry_path(page);
-	मुक्त_xid(xid);
-	cअगरs_put_tlink(tlink);
-	वापस rc;
-पूर्ण
+	free_dentry_path(page);
+	free_xid(xid);
+	cifs_put_tlink(tlink);
+	return rc;
+}
 
-अटल पूर्णांक cअगरs_push_posix_locks(काष्ठा cअगरsFileInfo *cfile);
+static int cifs_push_posix_locks(struct cifsFileInfo *cfile);
 
 /*
  * Try to reacquire byte range locks that were released when session
  * to server was lost.
  */
-अटल पूर्णांक
-cअगरs_relock_file(काष्ठा cअगरsFileInfo *cfile)
-अणु
-	काष्ठा cअगरs_sb_info *cअगरs_sb = CIFS_SB(cfile->dentry->d_sb);
-	काष्ठा cअगरsInodeInfo *cinode = CIFS_I(d_inode(cfile->dentry));
-	काष्ठा cअगरs_tcon *tcon = tlink_tcon(cfile->tlink);
-	पूर्णांक rc = 0;
+static int
+cifs_relock_file(struct cifsFileInfo *cfile)
+{
+	struct cifs_sb_info *cifs_sb = CIFS_SB(cfile->dentry->d_sb);
+	struct cifsInodeInfo *cinode = CIFS_I(d_inode(cfile->dentry));
+	struct cifs_tcon *tcon = tlink_tcon(cfile->tlink);
+	int rc = 0;
 
-	करोwn_पढ़ो_nested(&cinode->lock_sem, SINGLE_DEPTH_NESTING);
-	अगर (cinode->can_cache_brlcks) अणु
+	down_read_nested(&cinode->lock_sem, SINGLE_DEPTH_NESTING);
+	if (cinode->can_cache_brlcks) {
 		/* can cache locks - no need to relock */
-		up_पढ़ो(&cinode->lock_sem);
-		वापस rc;
-	पूर्ण
+		up_read(&cinode->lock_sem);
+		return rc;
+	}
 
-	अगर (cap_unix(tcon->ses) &&
+	if (cap_unix(tcon->ses) &&
 	    (CIFS_UNIX_FCNTL_CAP & le64_to_cpu(tcon->fsUnixInfo.Capability)) &&
-	    ((cअगरs_sb->mnt_cअगरs_flags & CIFS_MOUNT_NOPOSIXBRL) == 0))
-		rc = cअगरs_push_posix_locks(cfile);
-	अन्यथा
+	    ((cifs_sb->mnt_cifs_flags & CIFS_MOUNT_NOPOSIXBRL) == 0))
+		rc = cifs_push_posix_locks(cfile);
+	else
 		rc = tcon->ses->server->ops->push_mand_locks(cfile);
 
-	up_पढ़ो(&cinode->lock_sem);
-	वापस rc;
-पूर्ण
+	up_read(&cinode->lock_sem);
+	return rc;
+}
 
-अटल पूर्णांक
-cअगरs_reखोलो_file(काष्ठा cअगरsFileInfo *cfile, bool can_flush)
-अणु
-	पूर्णांक rc = -EACCES;
-	अचिन्हित पूर्णांक xid;
+static int
+cifs_reopen_file(struct cifsFileInfo *cfile, bool can_flush)
+{
+	int rc = -EACCES;
+	unsigned int xid;
 	__u32 oplock;
-	काष्ठा cअगरs_sb_info *cअगरs_sb;
-	काष्ठा cअगरs_tcon *tcon;
-	काष्ठा TCP_Server_Info *server;
-	काष्ठा cअगरsInodeInfo *cinode;
-	काष्ठा inode *inode;
-	व्योम *page;
-	स्थिर अक्षर *full_path;
-	पूर्णांक desired_access;
-	पूर्णांक disposition = खाता_OPEN;
-	पूर्णांक create_options = CREATE_NOT_सूची;
-	काष्ठा cअगरs_खोलो_parms oparms;
+	struct cifs_sb_info *cifs_sb;
+	struct cifs_tcon *tcon;
+	struct TCP_Server_Info *server;
+	struct cifsInodeInfo *cinode;
+	struct inode *inode;
+	void *page;
+	const char *full_path;
+	int desired_access;
+	int disposition = FILE_OPEN;
+	int create_options = CREATE_NOT_DIR;
+	struct cifs_open_parms oparms;
 
 	xid = get_xid();
 	mutex_lock(&cfile->fh_mutex);
-	अगर (!cfile->invalidHandle) अणु
+	if (!cfile->invalidHandle) {
 		mutex_unlock(&cfile->fh_mutex);
-		मुक्त_xid(xid);
-		वापस 0;
-	पूर्ण
+		free_xid(xid);
+		return 0;
+	}
 
 	inode = d_inode(cfile->dentry);
-	cअगरs_sb = CIFS_SB(inode->i_sb);
+	cifs_sb = CIFS_SB(inode->i_sb);
 	tcon = tlink_tcon(cfile->tlink);
 	server = tcon->ses->server;
 
 	/*
-	 * Can not grab नाम sem here because various ops, including those
-	 * that alपढ़ोy have the नाम sem can end up causing ग_लिखोpage to get
-	 * called and अगर the server was करोwn that means we end up here, and we
-	 * can never tell अगर the caller alपढ़ोy has the नाम_sem.
+	 * Can not grab rename sem here because various ops, including those
+	 * that already have the rename sem can end up causing writepage to get
+	 * called and if the server was down that means we end up here, and we
+	 * can never tell if the caller already has the rename_sem.
 	 */
 	page = alloc_dentry_path();
 	full_path = build_path_from_dentry(cfile->dentry, page);
-	अगर (IS_ERR(full_path)) अणु
+	if (IS_ERR(full_path)) {
 		mutex_unlock(&cfile->fh_mutex);
-		मुक्त_dentry_path(page);
-		मुक्त_xid(xid);
-		वापस PTR_ERR(full_path);
-	पूर्ण
+		free_dentry_path(page);
+		free_xid(xid);
+		return PTR_ERR(full_path);
+	}
 
-	cअगरs_dbg(FYI, "inode = 0x%p file flags 0x%x for %s\n",
+	cifs_dbg(FYI, "inode = 0x%p file flags 0x%x for %s\n",
 		 inode, cfile->f_flags, full_path);
 
-	अगर (tcon->ses->server->oplocks)
+	if (tcon->ses->server->oplocks)
 		oplock = REQ_OPLOCK;
-	अन्यथा
+	else
 		oplock = 0;
 
-	अगर (tcon->unix_ext && cap_unix(tcon->ses) &&
+	if (tcon->unix_ext && cap_unix(tcon->ses) &&
 	    (CIFS_UNIX_POSIX_PATH_OPS_CAP &
-				le64_to_cpu(tcon->fsUnixInfo.Capability))) अणु
+				le64_to_cpu(tcon->fsUnixInfo.Capability))) {
 		/*
-		 * O_CREAT, O_EXCL and O_TRUNC alपढ़ोy had their effect on the
-		 * original खोलो. Must mask them off क्रम a reखोलो.
+		 * O_CREAT, O_EXCL and O_TRUNC already had their effect on the
+		 * original open. Must mask them off for a reopen.
 		 */
-		अचिन्हित पूर्णांक oflags = cfile->f_flags &
+		unsigned int oflags = cfile->f_flags &
 						~(O_CREAT | O_EXCL | O_TRUNC);
 
-		rc = cअगरs_posix_खोलो(full_path, शून्य, inode->i_sb,
-				     cअगरs_sb->ctx->file_mode /* ignored */,
+		rc = cifs_posix_open(full_path, NULL, inode->i_sb,
+				     cifs_sb->ctx->file_mode /* ignored */,
 				     oflags, &oplock, &cfile->fid.netfid, xid);
-		अगर (rc == 0) अणु
-			cअगरs_dbg(FYI, "posix reopen succeeded\n");
+		if (rc == 0) {
+			cifs_dbg(FYI, "posix reopen succeeded\n");
 			oparms.reconnect = true;
-			जाओ reखोलो_success;
-		पूर्ण
+			goto reopen_success;
+		}
 		/*
-		 * fallthrough to retry खोलो the old way on errors, especially
+		 * fallthrough to retry open the old way on errors, especially
 		 * in the reconnect path it is important to retry hard
 		 */
-	पूर्ण
+	}
 
-	desired_access = cअगरs_convert_flags(cfile->f_flags);
+	desired_access = cifs_convert_flags(cfile->f_flags);
 
-	/* O_SYNC also has bit क्रम O_DSYNC so following check picks up either */
-	अगर (cfile->f_flags & O_SYNC)
+	/* O_SYNC also has bit for O_DSYNC so following check picks up either */
+	if (cfile->f_flags & O_SYNC)
 		create_options |= CREATE_WRITE_THROUGH;
 
-	अगर (cfile->f_flags & O_सूचीECT)
+	if (cfile->f_flags & O_DIRECT)
 		create_options |= CREATE_NO_BUFFER;
 
-	अगर (server->ops->get_lease_key)
+	if (server->ops->get_lease_key)
 		server->ops->get_lease_key(inode, &cfile->fid);
 
 	oparms.tcon = tcon;
-	oparms.cअगरs_sb = cअगरs_sb;
+	oparms.cifs_sb = cifs_sb;
 	oparms.desired_access = desired_access;
-	oparms.create_options = cअगरs_create_options(cअगरs_sb, create_options);
+	oparms.create_options = cifs_create_options(cifs_sb, create_options);
 	oparms.disposition = disposition;
 	oparms.path = full_path;
 	oparms.fid = &cfile->fid;
 	oparms.reconnect = true;
 
 	/*
-	 * Can not refresh inode by passing in file_info buf to be वापसed by
-	 * ops->खोलो and then calling get_inode_info with वापसed buf since
-	 * file might have ग_लिखो behind data that needs to be flushed and server
-	 * version of file size can be stale. If we knew क्रम sure that inode was
-	 * not dirty locally we could करो this.
+	 * Can not refresh inode by passing in file_info buf to be returned by
+	 * ops->open and then calling get_inode_info with returned buf since
+	 * file might have write behind data that needs to be flushed and server
+	 * version of file size can be stale. If we knew for sure that inode was
+	 * not dirty locally we could do this.
 	 */
-	rc = server->ops->खोलो(xid, &oparms, &oplock, शून्य);
-	अगर (rc == -ENOENT && oparms.reconnect == false) अणु
-		/* durable handle समयout is expired - खोलो the file again */
-		rc = server->ops->खोलो(xid, &oparms, &oplock, शून्य);
+	rc = server->ops->open(xid, &oparms, &oplock, NULL);
+	if (rc == -ENOENT && oparms.reconnect == false) {
+		/* durable handle timeout is expired - open the file again */
+		rc = server->ops->open(xid, &oparms, &oplock, NULL);
 		/* indicate that we need to relock the file */
 		oparms.reconnect = true;
-	पूर्ण
+	}
 
-	अगर (rc) अणु
+	if (rc) {
 		mutex_unlock(&cfile->fh_mutex);
-		cअगरs_dbg(FYI, "cifs_reopen returned 0x%x\n", rc);
-		cअगरs_dbg(FYI, "oplock: %d\n", oplock);
-		जाओ reखोलो_error_निकास;
-	पूर्ण
+		cifs_dbg(FYI, "cifs_reopen returned 0x%x\n", rc);
+		cifs_dbg(FYI, "oplock: %d\n", oplock);
+		goto reopen_error_exit;
+	}
 
-reखोलो_success:
+reopen_success:
 	cfile->invalidHandle = false;
 	mutex_unlock(&cfile->fh_mutex);
 	cinode = CIFS_I(inode);
 
-	अगर (can_flush) अणु
-		rc = filemap_ग_लिखो_and_रुको(inode->i_mapping);
-		अगर (!is_पूर्णांकerrupt_error(rc))
+	if (can_flush) {
+		rc = filemap_write_and_wait(inode->i_mapping);
+		if (!is_interrupt_error(rc))
 			mapping_set_error(inode->i_mapping, rc);
 
-		अगर (tcon->posix_extensions)
+		if (tcon->posix_extensions)
 			rc = smb311_posix_get_inode_info(&inode, full_path, inode->i_sb, xid);
-		अन्यथा अगर (tcon->unix_ext)
-			rc = cअगरs_get_inode_info_unix(&inode, full_path,
+		else if (tcon->unix_ext)
+			rc = cifs_get_inode_info_unix(&inode, full_path,
 						      inode->i_sb, xid);
-		अन्यथा
-			rc = cअगरs_get_inode_info(&inode, full_path, शून्य,
-						 inode->i_sb, xid, शून्य);
-	पूर्ण
+		else
+			rc = cifs_get_inode_info(&inode, full_path, NULL,
+						 inode->i_sb, xid, NULL);
+	}
 	/*
-	 * Else we are writing out data to server alपढ़ोy and could deadlock अगर
-	 * we tried to flush data, and since we करो not know अगर we have data that
+	 * Else we are writing out data to server already and could deadlock if
+	 * we tried to flush data, and since we do not know if we have data that
 	 * would invalidate the current end of file on the server we can not go
 	 * to the server to get the new inode info.
 	 */
 
 	/*
-	 * If the server वापसed a पढ़ो oplock and we have mandatory brlocks,
+	 * If the server returned a read oplock and we have mandatory brlocks,
 	 * set oplock level to None.
 	 */
-	अगर (server->ops->is_पढ़ो_op(oplock) && cअगरs_has_mand_locks(cinode)) अणु
-		cअगरs_dbg(FYI, "Reset oplock val from read to None due to mand locks\n");
+	if (server->ops->is_read_op(oplock) && cifs_has_mand_locks(cinode)) {
+		cifs_dbg(FYI, "Reset oplock val from read to None due to mand locks\n");
 		oplock = 0;
-	पूर्ण
+	}
 
 	server->ops->set_fid(cfile, &cfile->fid, oplock);
-	अगर (oparms.reconnect)
-		cअगरs_relock_file(cfile);
+	if (oparms.reconnect)
+		cifs_relock_file(cfile);
 
-reखोलो_error_निकास:
-	मुक्त_dentry_path(page);
-	मुक्त_xid(xid);
-	वापस rc;
-पूर्ण
+reopen_error_exit:
+	free_dentry_path(page);
+	free_xid(xid);
+	return rc;
+}
 
-व्योम smb2_deferred_work_बंद(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा cअगरsFileInfo *cfile = container_of(work,
-			काष्ठा cअगरsFileInfo, deferred.work);
+void smb2_deferred_work_close(struct work_struct *work)
+{
+	struct cifsFileInfo *cfile = container_of(work,
+			struct cifsFileInfo, deferred.work);
 
 	spin_lock(&CIFS_I(d_inode(cfile->dentry))->deferred_lock);
-	cअगरs_del_deferred_बंद(cfile);
-	cfile->deferred_बंद_scheduled = false;
+	cifs_del_deferred_close(cfile);
+	cfile->deferred_close_scheduled = false;
 	spin_unlock(&CIFS_I(d_inode(cfile->dentry))->deferred_lock);
-	_cअगरsFileInfo_put(cfile, true, false);
-पूर्ण
+	_cifsFileInfo_put(cfile, true, false);
+}
 
-पूर्णांक cअगरs_बंद(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा cअगरsFileInfo *cfile;
-	काष्ठा cअगरsInodeInfo *cinode = CIFS_I(inode);
-	काष्ठा cअगरs_sb_info *cअगरs_sb = CIFS_SB(inode->i_sb);
-	काष्ठा cअगरs_deferred_बंद *dबंद;
+int cifs_close(struct inode *inode, struct file *file)
+{
+	struct cifsFileInfo *cfile;
+	struct cifsInodeInfo *cinode = CIFS_I(inode);
+	struct cifs_sb_info *cifs_sb = CIFS_SB(inode->i_sb);
+	struct cifs_deferred_close *dclose;
 
-	अगर (file->निजी_data != शून्य) अणु
-		cfile = file->निजी_data;
-		file->निजी_data = शून्य;
-		dबंद = kदो_स्मृति(माप(काष्ठा cअगरs_deferred_बंद), GFP_KERNEL);
-		अगर ((cinode->oplock == CIFS_CACHE_RHW_FLG) &&
+	if (file->private_data != NULL) {
+		cfile = file->private_data;
+		file->private_data = NULL;
+		dclose = kmalloc(sizeof(struct cifs_deferred_close), GFP_KERNEL);
+		if ((cinode->oplock == CIFS_CACHE_RHW_FLG) &&
 		    cinode->lease_granted &&
-		    dबंद) अणु
-			अगर (test_bit(CIFS_INO_MODIFIED_ATTR, &cinode->flags))
-				inode->i_स_समय = inode->i_mसमय = current_समय(inode);
+		    dclose) {
+			if (test_bit(CIFS_INO_MODIFIED_ATTR, &cinode->flags))
+				inode->i_ctime = inode->i_mtime = current_time(inode);
 			spin_lock(&cinode->deferred_lock);
-			cअगरs_add_deferred_बंद(cfile, dबंद);
-			अगर (cfile->deferred_बंद_scheduled &&
-			    delayed_work_pending(&cfile->deferred)) अणु
+			cifs_add_deferred_close(cfile, dclose);
+			if (cfile->deferred_close_scheduled &&
+			    delayed_work_pending(&cfile->deferred)) {
 				/*
 				 * If there is no pending work, mod_delayed_work queues new work.
-				 * So, Increase the ref count to aव्योम use-after-मुक्त.
+				 * So, Increase the ref count to avoid use-after-free.
 				 */
-				अगर (!mod_delayed_work(deferredबंद_wq,
-						&cfile->deferred, cअगरs_sb->ctx->acregmax))
-					cअगरsFileInfo_get(cfile);
-			पूर्ण अन्यथा अणु
-				/* Deferred बंद क्रम files */
-				queue_delayed_work(deferredबंद_wq,
-						&cfile->deferred, cअगरs_sb->ctx->acregmax);
-				cfile->deferred_बंद_scheduled = true;
+				if (!mod_delayed_work(deferredclose_wq,
+						&cfile->deferred, cifs_sb->ctx->acregmax))
+					cifsFileInfo_get(cfile);
+			} else {
+				/* Deferred close for files */
+				queue_delayed_work(deferredclose_wq,
+						&cfile->deferred, cifs_sb->ctx->acregmax);
+				cfile->deferred_close_scheduled = true;
 				spin_unlock(&cinode->deferred_lock);
-				वापस 0;
-			पूर्ण
+				return 0;
+			}
 			spin_unlock(&cinode->deferred_lock);
-			_cअगरsFileInfo_put(cfile, true, false);
-		पूर्ण अन्यथा अणु
-			_cअगरsFileInfo_put(cfile, true, false);
-			kमुक्त(dबंद);
-		पूर्ण
-	पूर्ण
+			_cifsFileInfo_put(cfile, true, false);
+		} else {
+			_cifsFileInfo_put(cfile, true, false);
+			kfree(dclose);
+		}
+	}
 
-	/* वापस code from the ->release op is always ignored */
-	वापस 0;
-पूर्ण
+	/* return code from the ->release op is always ignored */
+	return 0;
+}
 
-व्योम
-cअगरs_reखोलो_persistent_handles(काष्ठा cअगरs_tcon *tcon)
-अणु
-	काष्ठा cअगरsFileInfo *खोलो_file;
-	काष्ठा list_head *पंचांगp;
-	काष्ठा list_head *पंचांगp1;
-	काष्ठा list_head पंचांगp_list;
+void
+cifs_reopen_persistent_handles(struct cifs_tcon *tcon)
+{
+	struct cifsFileInfo *open_file;
+	struct list_head *tmp;
+	struct list_head *tmp1;
+	struct list_head tmp_list;
 
-	अगर (!tcon->use_persistent || !tcon->need_reखोलो_files)
-		वापस;
+	if (!tcon->use_persistent || !tcon->need_reopen_files)
+		return;
 
-	tcon->need_reखोलो_files = false;
+	tcon->need_reopen_files = false;
 
-	cअगरs_dbg(FYI, "Reopen persistent handles\n");
-	INIT_LIST_HEAD(&पंचांगp_list);
+	cifs_dbg(FYI, "Reopen persistent handles\n");
+	INIT_LIST_HEAD(&tmp_list);
 
-	/* list all files खोलो on tree connection, reखोलो resilient handles  */
-	spin_lock(&tcon->खोलो_file_lock);
-	list_क्रम_each(पंचांगp, &tcon->खोलोFileList) अणु
-		खोलो_file = list_entry(पंचांगp, काष्ठा cअगरsFileInfo, tlist);
-		अगर (!खोलो_file->invalidHandle)
-			जारी;
-		cअगरsFileInfo_get(खोलो_file);
-		list_add_tail(&खोलो_file->rlist, &पंचांगp_list);
-	पूर्ण
-	spin_unlock(&tcon->खोलो_file_lock);
+	/* list all files open on tree connection, reopen resilient handles  */
+	spin_lock(&tcon->open_file_lock);
+	list_for_each(tmp, &tcon->openFileList) {
+		open_file = list_entry(tmp, struct cifsFileInfo, tlist);
+		if (!open_file->invalidHandle)
+			continue;
+		cifsFileInfo_get(open_file);
+		list_add_tail(&open_file->rlist, &tmp_list);
+	}
+	spin_unlock(&tcon->open_file_lock);
 
-	list_क्रम_each_safe(पंचांगp, पंचांगp1, &पंचांगp_list) अणु
-		खोलो_file = list_entry(पंचांगp, काष्ठा cअगरsFileInfo, rlist);
-		अगर (cअगरs_reखोलो_file(खोलो_file, false /* करो not flush */))
-			tcon->need_reखोलो_files = true;
-		list_del_init(&खोलो_file->rlist);
-		cअगरsFileInfo_put(खोलो_file);
-	पूर्ण
-पूर्ण
+	list_for_each_safe(tmp, tmp1, &tmp_list) {
+		open_file = list_entry(tmp, struct cifsFileInfo, rlist);
+		if (cifs_reopen_file(open_file, false /* do not flush */))
+			tcon->need_reopen_files = true;
+		list_del_init(&open_file->rlist);
+		cifsFileInfo_put(open_file);
+	}
+}
 
-पूर्णांक cअगरs_बंद_सूची(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	पूर्णांक rc = 0;
-	अचिन्हित पूर्णांक xid;
-	काष्ठा cअगरsFileInfo *cfile = file->निजी_data;
-	काष्ठा cअगरs_tcon *tcon;
-	काष्ठा TCP_Server_Info *server;
-	अक्षर *buf;
+int cifs_closedir(struct inode *inode, struct file *file)
+{
+	int rc = 0;
+	unsigned int xid;
+	struct cifsFileInfo *cfile = file->private_data;
+	struct cifs_tcon *tcon;
+	struct TCP_Server_Info *server;
+	char *buf;
 
-	cअगरs_dbg(FYI, "Closedir inode = 0x%p\n", inode);
+	cifs_dbg(FYI, "Closedir inode = 0x%p\n", inode);
 
-	अगर (cfile == शून्य)
-		वापस rc;
+	if (cfile == NULL)
+		return rc;
 
 	xid = get_xid();
 	tcon = tlink_tcon(cfile->tlink);
 	server = tcon->ses->server;
 
-	cअगरs_dbg(FYI, "Freeing private data in close dir\n");
+	cifs_dbg(FYI, "Freeing private data in close dir\n");
 	spin_lock(&cfile->file_info_lock);
-	अगर (server->ops->dir_needs_बंद(cfile)) अणु
+	if (server->ops->dir_needs_close(cfile)) {
 		cfile->invalidHandle = true;
 		spin_unlock(&cfile->file_info_lock);
-		अगर (server->ops->बंद_dir)
-			rc = server->ops->बंद_dir(xid, tcon, &cfile->fid);
-		अन्यथा
+		if (server->ops->close_dir)
+			rc = server->ops->close_dir(xid, tcon, &cfile->fid);
+		else
 			rc = -ENOSYS;
-		cअगरs_dbg(FYI, "Closing uncompleted readdir with rc %d\n", rc);
-		/* not much we can करो अगर it fails anyway, ignore rc */
+		cifs_dbg(FYI, "Closing uncompleted readdir with rc %d\n", rc);
+		/* not much we can do if it fails anyway, ignore rc */
 		rc = 0;
-	पूर्ण अन्यथा
+	} else
 		spin_unlock(&cfile->file_info_lock);
 
 	buf = cfile->srch_inf.ntwrk_buf_start;
-	अगर (buf) अणु
-		cअगरs_dbg(FYI, "closedir free smb buf in srch struct\n");
-		cfile->srch_inf.ntwrk_buf_start = शून्य;
-		अगर (cfile->srch_inf.smallBuf)
-			cअगरs_small_buf_release(buf);
-		अन्यथा
-			cअगरs_buf_release(buf);
-	पूर्ण
+	if (buf) {
+		cifs_dbg(FYI, "closedir free smb buf in srch struct\n");
+		cfile->srch_inf.ntwrk_buf_start = NULL;
+		if (cfile->srch_inf.smallBuf)
+			cifs_small_buf_release(buf);
+		else
+			cifs_buf_release(buf);
+	}
 
-	cअगरs_put_tlink(cfile->tlink);
-	kमुक्त(file->निजी_data);
-	file->निजी_data = शून्य;
-	/* BB can we lock the fileकाष्ठा जबतक this is going on? */
-	मुक्त_xid(xid);
-	वापस rc;
-पूर्ण
+	cifs_put_tlink(cfile->tlink);
+	kfree(file->private_data);
+	file->private_data = NULL;
+	/* BB can we lock the filestruct while this is going on? */
+	free_xid(xid);
+	return rc;
+}
 
-अटल काष्ठा cअगरsLockInfo *
-cअगरs_lock_init(__u64 offset, __u64 length, __u8 type, __u16 flags)
-अणु
-	काष्ठा cअगरsLockInfo *lock =
-		kदो_स्मृति(माप(काष्ठा cअगरsLockInfo), GFP_KERNEL);
-	अगर (!lock)
-		वापस lock;
+static struct cifsLockInfo *
+cifs_lock_init(__u64 offset, __u64 length, __u8 type, __u16 flags)
+{
+	struct cifsLockInfo *lock =
+		kmalloc(sizeof(struct cifsLockInfo), GFP_KERNEL);
+	if (!lock)
+		return lock;
 	lock->offset = offset;
 	lock->length = length;
 	lock->type = type;
 	lock->pid = current->tgid;
 	lock->flags = flags;
 	INIT_LIST_HEAD(&lock->blist);
-	init_रुकोqueue_head(&lock->block_q);
-	वापस lock;
-पूर्ण
+	init_waitqueue_head(&lock->block_q);
+	return lock;
+}
 
-व्योम
-cअगरs_del_lock_रुकोers(काष्ठा cअगरsLockInfo *lock)
-अणु
-	काष्ठा cअगरsLockInfo *li, *पंचांगp;
-	list_क्रम_each_entry_safe(li, पंचांगp, &lock->blist, blist) अणु
+void
+cifs_del_lock_waiters(struct cifsLockInfo *lock)
+{
+	struct cifsLockInfo *li, *tmp;
+	list_for_each_entry_safe(li, tmp, &lock->blist, blist) {
 		list_del_init(&li->blist);
 		wake_up(&li->block_q);
-	पूर्ण
-पूर्ण
+	}
+}
 
-#घोषणा CIFS_LOCK_OP	0
-#घोषणा CIFS_READ_OP	1
-#घोषणा CIFS_WRITE_OP	2
+#define CIFS_LOCK_OP	0
+#define CIFS_READ_OP	1
+#define CIFS_WRITE_OP	2
 
-/* @rw_check : 0 - no op, 1 - पढ़ो, 2 - ग_लिखो */
-अटल bool
-cअगरs_find_fid_lock_conflict(काष्ठा cअगरs_fid_locks *fdlocks, __u64 offset,
+/* @rw_check : 0 - no op, 1 - read, 2 - write */
+static bool
+cifs_find_fid_lock_conflict(struct cifs_fid_locks *fdlocks, __u64 offset,
 			    __u64 length, __u8 type, __u16 flags,
-			    काष्ठा cअगरsFileInfo *cfile,
-			    काष्ठा cअगरsLockInfo **conf_lock, पूर्णांक rw_check)
-अणु
-	काष्ठा cअगरsLockInfo *li;
-	काष्ठा cअगरsFileInfo *cur_cfile = fdlocks->cfile;
-	काष्ठा TCP_Server_Info *server = tlink_tcon(cfile->tlink)->ses->server;
+			    struct cifsFileInfo *cfile,
+			    struct cifsLockInfo **conf_lock, int rw_check)
+{
+	struct cifsLockInfo *li;
+	struct cifsFileInfo *cur_cfile = fdlocks->cfile;
+	struct TCP_Server_Info *server = tlink_tcon(cfile->tlink)->ses->server;
 
-	list_क्रम_each_entry(li, &fdlocks->locks, llist) अणु
-		अगर (offset + length <= li->offset ||
+	list_for_each_entry(li, &fdlocks->locks, llist) {
+		if (offset + length <= li->offset ||
 		    offset >= li->offset + li->length)
-			जारी;
-		अगर (rw_check != CIFS_LOCK_OP && current->tgid == li->pid &&
-		    server->ops->compare_fids(cfile, cur_cfile)) अणु
-			/* shared lock prevents ग_लिखो op through the same fid */
-			अगर (!(li->type & server->vals->shared_lock_type) ||
+			continue;
+		if (rw_check != CIFS_LOCK_OP && current->tgid == li->pid &&
+		    server->ops->compare_fids(cfile, cur_cfile)) {
+			/* shared lock prevents write op through the same fid */
+			if (!(li->type & server->vals->shared_lock_type) ||
 			    rw_check != CIFS_WRITE_OP)
-				जारी;
-		पूर्ण
-		अगर ((type & server->vals->shared_lock_type) &&
+				continue;
+		}
+		if ((type & server->vals->shared_lock_type) &&
 		    ((server->ops->compare_fids(cfile, cur_cfile) &&
 		     current->tgid == li->pid) || type == li->type))
-			जारी;
-		अगर (rw_check == CIFS_LOCK_OP &&
+			continue;
+		if (rw_check == CIFS_LOCK_OP &&
 		    (flags & FL_OFDLCK) && (li->flags & FL_OFDLCK) &&
 		    server->ops->compare_fids(cfile, cur_cfile))
-			जारी;
-		अगर (conf_lock)
+			continue;
+		if (conf_lock)
 			*conf_lock = li;
-		वापस true;
-	पूर्ण
-	वापस false;
-पूर्ण
+		return true;
+	}
+	return false;
+}
 
 bool
-cअगरs_find_lock_conflict(काष्ठा cअगरsFileInfo *cfile, __u64 offset, __u64 length,
+cifs_find_lock_conflict(struct cifsFileInfo *cfile, __u64 offset, __u64 length,
 			__u8 type, __u16 flags,
-			काष्ठा cअगरsLockInfo **conf_lock, पूर्णांक rw_check)
-अणु
+			struct cifsLockInfo **conf_lock, int rw_check)
+{
 	bool rc = false;
-	काष्ठा cअगरs_fid_locks *cur;
-	काष्ठा cअगरsInodeInfo *cinode = CIFS_I(d_inode(cfile->dentry));
+	struct cifs_fid_locks *cur;
+	struct cifsInodeInfo *cinode = CIFS_I(d_inode(cfile->dentry));
 
-	list_क्रम_each_entry(cur, &cinode->llist, llist) अणु
-		rc = cअगरs_find_fid_lock_conflict(cur, offset, length, type,
+	list_for_each_entry(cur, &cinode->llist, llist) {
+		rc = cifs_find_fid_lock_conflict(cur, offset, length, type,
 						 flags, cfile, conf_lock,
 						 rw_check);
-		अगर (rc)
-			अवरोध;
-	पूर्ण
+		if (rc)
+			break;
+	}
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*
- * Check अगर there is another lock that prevents us to set the lock (mandatory
- * style). If such a lock exists, update the flock काष्ठाure with its
- * properties. Otherwise, set the flock type to F_UNLCK अगर we can cache brlocks
- * or leave it the same अगर we can't. Returns 0 if we don't need to request to
+ * Check if there is another lock that prevents us to set the lock (mandatory
+ * style). If such a lock exists, update the flock structure with its
+ * properties. Otherwise, set the flock type to F_UNLCK if we can cache brlocks
+ * or leave it the same if we can't. Returns 0 if we don't need to request to
  * the server or 1 otherwise.
  */
-अटल पूर्णांक
-cअगरs_lock_test(काष्ठा cअगरsFileInfo *cfile, __u64 offset, __u64 length,
-	       __u8 type, काष्ठा file_lock *flock)
-अणु
-	पूर्णांक rc = 0;
-	काष्ठा cअगरsLockInfo *conf_lock;
-	काष्ठा cअगरsInodeInfo *cinode = CIFS_I(d_inode(cfile->dentry));
-	काष्ठा TCP_Server_Info *server = tlink_tcon(cfile->tlink)->ses->server;
+static int
+cifs_lock_test(struct cifsFileInfo *cfile, __u64 offset, __u64 length,
+	       __u8 type, struct file_lock *flock)
+{
+	int rc = 0;
+	struct cifsLockInfo *conf_lock;
+	struct cifsInodeInfo *cinode = CIFS_I(d_inode(cfile->dentry));
+	struct TCP_Server_Info *server = tlink_tcon(cfile->tlink)->ses->server;
 	bool exist;
 
-	करोwn_पढ़ो(&cinode->lock_sem);
+	down_read(&cinode->lock_sem);
 
-	exist = cअगरs_find_lock_conflict(cfile, offset, length, type,
+	exist = cifs_find_lock_conflict(cfile, offset, length, type,
 					flock->fl_flags, &conf_lock,
 					CIFS_LOCK_OP);
-	अगर (exist) अणु
+	if (exist) {
 		flock->fl_start = conf_lock->offset;
 		flock->fl_end = conf_lock->offset + conf_lock->length - 1;
 		flock->fl_pid = conf_lock->pid;
-		अगर (conf_lock->type & server->vals->shared_lock_type)
+		if (conf_lock->type & server->vals->shared_lock_type)
 			flock->fl_type = F_RDLCK;
-		अन्यथा
+		else
 			flock->fl_type = F_WRLCK;
-	पूर्ण अन्यथा अगर (!cinode->can_cache_brlcks)
+	} else if (!cinode->can_cache_brlcks)
 		rc = 1;
-	अन्यथा
+	else
 		flock->fl_type = F_UNLCK;
 
-	up_पढ़ो(&cinode->lock_sem);
-	वापस rc;
-पूर्ण
+	up_read(&cinode->lock_sem);
+	return rc;
+}
 
-अटल व्योम
-cअगरs_lock_add(काष्ठा cअगरsFileInfo *cfile, काष्ठा cअगरsLockInfo *lock)
-अणु
-	काष्ठा cअगरsInodeInfo *cinode = CIFS_I(d_inode(cfile->dentry));
-	cअगरs_करोwn_ग_लिखो(&cinode->lock_sem);
+static void
+cifs_lock_add(struct cifsFileInfo *cfile, struct cifsLockInfo *lock)
+{
+	struct cifsInodeInfo *cinode = CIFS_I(d_inode(cfile->dentry));
+	cifs_down_write(&cinode->lock_sem);
 	list_add_tail(&lock->llist, &cfile->llist->locks);
-	up_ग_लिखो(&cinode->lock_sem);
-पूर्ण
+	up_write(&cinode->lock_sem);
+}
 
 /*
  * Set the byte-range lock (mandatory style). Returns:
- * 1) 0, अगर we set the lock and करोn't need to request to the server;
- * 2) 1, अगर no locks prevent us but we need to request to the server;
- * 3) -EACCES, अगर there is a lock that prevents us and रुको is false.
+ * 1) 0, if we set the lock and don't need to request to the server;
+ * 2) 1, if no locks prevent us but we need to request to the server;
+ * 3) -EACCES, if there is a lock that prevents us and wait is false.
  */
-अटल पूर्णांक
-cअगरs_lock_add_अगर(काष्ठा cअगरsFileInfo *cfile, काष्ठा cअगरsLockInfo *lock,
-		 bool रुको)
-अणु
-	काष्ठा cअगरsLockInfo *conf_lock;
-	काष्ठा cअगरsInodeInfo *cinode = CIFS_I(d_inode(cfile->dentry));
+static int
+cifs_lock_add_if(struct cifsFileInfo *cfile, struct cifsLockInfo *lock,
+		 bool wait)
+{
+	struct cifsLockInfo *conf_lock;
+	struct cifsInodeInfo *cinode = CIFS_I(d_inode(cfile->dentry));
 	bool exist;
-	पूर्णांक rc = 0;
+	int rc = 0;
 
 try_again:
 	exist = false;
-	cअगरs_करोwn_ग_लिखो(&cinode->lock_sem);
+	cifs_down_write(&cinode->lock_sem);
 
-	exist = cअगरs_find_lock_conflict(cfile, lock->offset, lock->length,
+	exist = cifs_find_lock_conflict(cfile, lock->offset, lock->length,
 					lock->type, lock->flags, &conf_lock,
 					CIFS_LOCK_OP);
-	अगर (!exist && cinode->can_cache_brlcks) अणु
+	if (!exist && cinode->can_cache_brlcks) {
 		list_add_tail(&lock->llist, &cfile->llist->locks);
-		up_ग_लिखो(&cinode->lock_sem);
-		वापस rc;
-	पूर्ण
+		up_write(&cinode->lock_sem);
+		return rc;
+	}
 
-	अगर (!exist)
+	if (!exist)
 		rc = 1;
-	अन्यथा अगर (!रुको)
+	else if (!wait)
 		rc = -EACCES;
-	अन्यथा अणु
+	else {
 		list_add_tail(&lock->blist, &conf_lock->blist);
-		up_ग_लिखो(&cinode->lock_sem);
-		rc = रुको_event_पूर्णांकerruptible(lock->block_q,
+		up_write(&cinode->lock_sem);
+		rc = wait_event_interruptible(lock->block_q,
 					(lock->blist.prev == &lock->blist) &&
 					(lock->blist.next == &lock->blist));
-		अगर (!rc)
-			जाओ try_again;
-		cअगरs_करोwn_ग_लिखो(&cinode->lock_sem);
+		if (!rc)
+			goto try_again;
+		cifs_down_write(&cinode->lock_sem);
 		list_del_init(&lock->blist);
-	पूर्ण
+	}
 
-	up_ग_लिखो(&cinode->lock_sem);
-	वापस rc;
-पूर्ण
+	up_write(&cinode->lock_sem);
+	return rc;
+}
 
 /*
- * Check अगर there is another lock that prevents us to set the lock (posix
- * style). If such a lock exists, update the flock काष्ठाure with its
- * properties. Otherwise, set the flock type to F_UNLCK अगर we can cache brlocks
- * or leave it the same अगर we can't. Returns 0 if we don't need to request to
+ * Check if there is another lock that prevents us to set the lock (posix
+ * style). If such a lock exists, update the flock structure with its
+ * properties. Otherwise, set the flock type to F_UNLCK if we can cache brlocks
+ * or leave it the same if we can't. Returns 0 if we don't need to request to
  * the server or 1 otherwise.
  */
-अटल पूर्णांक
-cअगरs_posix_lock_test(काष्ठा file *file, काष्ठा file_lock *flock)
-अणु
-	पूर्णांक rc = 0;
-	काष्ठा cअगरsInodeInfo *cinode = CIFS_I(file_inode(file));
-	अचिन्हित अक्षर saved_type = flock->fl_type;
+static int
+cifs_posix_lock_test(struct file *file, struct file_lock *flock)
+{
+	int rc = 0;
+	struct cifsInodeInfo *cinode = CIFS_I(file_inode(file));
+	unsigned char saved_type = flock->fl_type;
 
-	अगर ((flock->fl_flags & FL_POSIX) == 0)
-		वापस 1;
+	if ((flock->fl_flags & FL_POSIX) == 0)
+		return 1;
 
-	करोwn_पढ़ो(&cinode->lock_sem);
+	down_read(&cinode->lock_sem);
 	posix_test_lock(file, flock);
 
-	अगर (flock->fl_type == F_UNLCK && !cinode->can_cache_brlcks) अणु
+	if (flock->fl_type == F_UNLCK && !cinode->can_cache_brlcks) {
 		flock->fl_type = saved_type;
 		rc = 1;
-	पूर्ण
+	}
 
-	up_पढ़ो(&cinode->lock_sem);
-	वापस rc;
-पूर्ण
+	up_read(&cinode->lock_sem);
+	return rc;
+}
 
 /*
  * Set the byte-range lock (posix style). Returns:
- * 1) <0, अगर the error occurs जबतक setting the lock;
- * 2) 0, अगर we set the lock and करोn't need to request to the server;
- * 3) खाता_LOCK_DEFERRED, अगर we will रुको क्रम some other file_lock;
- * 4) खाता_LOCK_DEFERRED + 1, अगर we need to request to the server.
+ * 1) <0, if the error occurs while setting the lock;
+ * 2) 0, if we set the lock and don't need to request to the server;
+ * 3) FILE_LOCK_DEFERRED, if we will wait for some other file_lock;
+ * 4) FILE_LOCK_DEFERRED + 1, if we need to request to the server.
  */
-अटल पूर्णांक
-cअगरs_posix_lock_set(काष्ठा file *file, काष्ठा file_lock *flock)
-अणु
-	काष्ठा cअगरsInodeInfo *cinode = CIFS_I(file_inode(file));
-	पूर्णांक rc = खाता_LOCK_DEFERRED + 1;
+static int
+cifs_posix_lock_set(struct file *file, struct file_lock *flock)
+{
+	struct cifsInodeInfo *cinode = CIFS_I(file_inode(file));
+	int rc = FILE_LOCK_DEFERRED + 1;
 
-	अगर ((flock->fl_flags & FL_POSIX) == 0)
-		वापस rc;
+	if ((flock->fl_flags & FL_POSIX) == 0)
+		return rc;
 
-	cअगरs_करोwn_ग_लिखो(&cinode->lock_sem);
-	अगर (!cinode->can_cache_brlcks) अणु
-		up_ग_लिखो(&cinode->lock_sem);
-		वापस rc;
-	पूर्ण
+	cifs_down_write(&cinode->lock_sem);
+	if (!cinode->can_cache_brlcks) {
+		up_write(&cinode->lock_sem);
+		return rc;
+	}
 
-	rc = posix_lock_file(file, flock, शून्य);
-	up_ग_लिखो(&cinode->lock_sem);
-	वापस rc;
-पूर्ण
+	rc = posix_lock_file(file, flock, NULL);
+	up_write(&cinode->lock_sem);
+	return rc;
+}
 
-पूर्णांक
-cअगरs_push_mandatory_locks(काष्ठा cअगरsFileInfo *cfile)
-अणु
-	अचिन्हित पूर्णांक xid;
-	पूर्णांक rc = 0, stored_rc;
-	काष्ठा cअगरsLockInfo *li, *पंचांगp;
-	काष्ठा cअगरs_tcon *tcon;
-	अचिन्हित पूर्णांक num, max_num, max_buf;
+int
+cifs_push_mandatory_locks(struct cifsFileInfo *cfile)
+{
+	unsigned int xid;
+	int rc = 0, stored_rc;
+	struct cifsLockInfo *li, *tmp;
+	struct cifs_tcon *tcon;
+	unsigned int num, max_num, max_buf;
 	LOCKING_ANDX_RANGE *buf, *cur;
-	अटल स्थिर पूर्णांक types[] = अणु
-		LOCKING_ANDX_LARGE_खाताS,
-		LOCKING_ANDX_SHARED_LOCK | LOCKING_ANDX_LARGE_खाताS
-	पूर्ण;
-	पूर्णांक i;
+	static const int types[] = {
+		LOCKING_ANDX_LARGE_FILES,
+		LOCKING_ANDX_SHARED_LOCK | LOCKING_ANDX_LARGE_FILES
+	};
+	int i;
 
 	xid = get_xid();
 	tcon = tlink_tcon(cfile->tlink);
 
 	/*
-	 * Accessing maxBuf is racy with cअगरs_reconnect - need to store value
-	 * and check it beक्रमe using.
+	 * Accessing maxBuf is racy with cifs_reconnect - need to store value
+	 * and check it before using.
 	 */
 	max_buf = tcon->ses->server->maxBuf;
-	अगर (max_buf < (माप(काष्ठा smb_hdr) + माप(LOCKING_ANDX_RANGE))) अणु
-		मुक्त_xid(xid);
-		वापस -EINVAL;
-	पूर्ण
+	if (max_buf < (sizeof(struct smb_hdr) + sizeof(LOCKING_ANDX_RANGE))) {
+		free_xid(xid);
+		return -EINVAL;
+	}
 
-	BUILD_BUG_ON(माप(काष्ठा smb_hdr) + माप(LOCKING_ANDX_RANGE) >
+	BUILD_BUG_ON(sizeof(struct smb_hdr) + sizeof(LOCKING_ANDX_RANGE) >
 		     PAGE_SIZE);
-	max_buf = min_t(अचिन्हित पूर्णांक, max_buf - माप(काष्ठा smb_hdr),
+	max_buf = min_t(unsigned int, max_buf - sizeof(struct smb_hdr),
 			PAGE_SIZE);
-	max_num = (max_buf - माप(काष्ठा smb_hdr)) /
-						माप(LOCKING_ANDX_RANGE);
-	buf = kसुस्मृति(max_num, माप(LOCKING_ANDX_RANGE), GFP_KERNEL);
-	अगर (!buf) अणु
-		मुक्त_xid(xid);
-		वापस -ENOMEM;
-	पूर्ण
+	max_num = (max_buf - sizeof(struct smb_hdr)) /
+						sizeof(LOCKING_ANDX_RANGE);
+	buf = kcalloc(max_num, sizeof(LOCKING_ANDX_RANGE), GFP_KERNEL);
+	if (!buf) {
+		free_xid(xid);
+		return -ENOMEM;
+	}
 
-	क्रम (i = 0; i < 2; i++) अणु
+	for (i = 0; i < 2; i++) {
 		cur = buf;
 		num = 0;
-		list_क्रम_each_entry_safe(li, पंचांगp, &cfile->llist->locks, llist) अणु
-			अगर (li->type != types[i])
-				जारी;
+		list_for_each_entry_safe(li, tmp, &cfile->llist->locks, llist) {
+			if (li->type != types[i])
+				continue;
 			cur->Pid = cpu_to_le16(li->pid);
 			cur->LengthLow = cpu_to_le32((u32)li->length);
 			cur->LengthHigh = cpu_to_le32((u32)(li->length>>32));
 			cur->OffsetLow = cpu_to_le32((u32)li->offset);
 			cur->OffsetHigh = cpu_to_le32((u32)(li->offset>>32));
-			अगर (++num == max_num) अणु
-				stored_rc = cअगरs_lockv(xid, tcon,
+			if (++num == max_num) {
+				stored_rc = cifs_lockv(xid, tcon,
 						       cfile->fid.netfid,
 						       (__u8)li->type, 0, num,
 						       buf);
-				अगर (stored_rc)
+				if (stored_rc)
 					rc = stored_rc;
 				cur = buf;
 				num = 0;
-			पूर्ण अन्यथा
+			} else
 				cur++;
-		पूर्ण
+		}
 
-		अगर (num) अणु
-			stored_rc = cअगरs_lockv(xid, tcon, cfile->fid.netfid,
+		if (num) {
+			stored_rc = cifs_lockv(xid, tcon, cfile->fid.netfid,
 					       (__u8)types[i], 0, num, buf);
-			अगर (stored_rc)
+			if (stored_rc)
 				rc = stored_rc;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	kमुक्त(buf);
-	मुक्त_xid(xid);
-	वापस rc;
-पूर्ण
+	kfree(buf);
+	free_xid(xid);
+	return rc;
+}
 
-अटल __u32
+static __u32
 hash_lockowner(fl_owner_t owner)
-अणु
-	वापस cअगरs_lock_secret ^ hash32_ptr((स्थिर व्योम *)owner);
-पूर्ण
+{
+	return cifs_lock_secret ^ hash32_ptr((const void *)owner);
+}
 
-काष्ठा lock_to_push अणु
-	काष्ठा list_head llist;
+struct lock_to_push {
+	struct list_head llist;
 	__u64 offset;
 	__u64 length;
 	__u32 pid;
 	__u16 netfid;
 	__u8 type;
-पूर्ण;
+};
 
-अटल पूर्णांक
-cअगरs_push_posix_locks(काष्ठा cअगरsFileInfo *cfile)
-अणु
-	काष्ठा inode *inode = d_inode(cfile->dentry);
-	काष्ठा cअगरs_tcon *tcon = tlink_tcon(cfile->tlink);
-	काष्ठा file_lock *flock;
-	काष्ठा file_lock_context *flctx = inode->i_flctx;
-	अचिन्हित पूर्णांक count = 0, i;
-	पूर्णांक rc = 0, xid, type;
-	काष्ठा list_head locks_to_send, *el;
-	काष्ठा lock_to_push *lck, *पंचांगp;
+static int
+cifs_push_posix_locks(struct cifsFileInfo *cfile)
+{
+	struct inode *inode = d_inode(cfile->dentry);
+	struct cifs_tcon *tcon = tlink_tcon(cfile->tlink);
+	struct file_lock *flock;
+	struct file_lock_context *flctx = inode->i_flctx;
+	unsigned int count = 0, i;
+	int rc = 0, xid, type;
+	struct list_head locks_to_send, *el;
+	struct lock_to_push *lck, *tmp;
 	__u64 length;
 
 	xid = get_xid();
 
-	अगर (!flctx)
-		जाओ out;
+	if (!flctx)
+		goto out;
 
 	spin_lock(&flctx->flc_lock);
-	list_क्रम_each(el, &flctx->flc_posix) अणु
+	list_for_each(el, &flctx->flc_posix) {
 		count++;
-	पूर्ण
+	}
 	spin_unlock(&flctx->flc_lock);
 
 	INIT_LIST_HEAD(&locks_to_send);
 
 	/*
 	 * Allocating count locks is enough because no FL_POSIX locks can be
-	 * added to the list जबतक we are holding cinode->lock_sem that
+	 * added to the list while we are holding cinode->lock_sem that
 	 * protects locking operations of this inode.
 	 */
-	क्रम (i = 0; i < count; i++) अणु
-		lck = kदो_स्मृति(माप(काष्ठा lock_to_push), GFP_KERNEL);
-		अगर (!lck) अणु
+	for (i = 0; i < count; i++) {
+		lck = kmalloc(sizeof(struct lock_to_push), GFP_KERNEL);
+		if (!lck) {
 			rc = -ENOMEM;
-			जाओ err_out;
-		पूर्ण
+			goto err_out;
+		}
 		list_add_tail(&lck->llist, &locks_to_send);
-	पूर्ण
+	}
 
 	el = locks_to_send.next;
 	spin_lock(&flctx->flc_lock);
-	list_क्रम_each_entry(flock, &flctx->flc_posix, fl_list) अणु
-		अगर (el == &locks_to_send) अणु
+	list_for_each_entry(flock, &flctx->flc_posix, fl_list) {
+		if (el == &locks_to_send) {
 			/*
-			 * The list ended. We करोn't have enough allocated
-			 * काष्ठाures - something is really wrong.
+			 * The list ended. We don't have enough allocated
+			 * structures - something is really wrong.
 			 */
-			cअगरs_dbg(VFS, "Can't push all brlocks!\n");
-			अवरोध;
-		पूर्ण
+			cifs_dbg(VFS, "Can't push all brlocks!\n");
+			break;
+		}
 		length = 1 + flock->fl_end - flock->fl_start;
-		अगर (flock->fl_type == F_RDLCK || flock->fl_type == F_SHLCK)
+		if (flock->fl_type == F_RDLCK || flock->fl_type == F_SHLCK)
 			type = CIFS_RDLCK;
-		अन्यथा
+		else
 			type = CIFS_WRLCK;
-		lck = list_entry(el, काष्ठा lock_to_push, llist);
+		lck = list_entry(el, struct lock_to_push, llist);
 		lck->pid = hash_lockowner(flock->fl_owner);
 		lck->netfid = cfile->fid.netfid;
 		lck->length = length;
 		lck->type = type;
 		lck->offset = flock->fl_start;
-	पूर्ण
+	}
 	spin_unlock(&flctx->flc_lock);
 
-	list_क्रम_each_entry_safe(lck, पंचांगp, &locks_to_send, llist) अणु
-		पूर्णांक stored_rc;
+	list_for_each_entry_safe(lck, tmp, &locks_to_send, llist) {
+		int stored_rc;
 
 		stored_rc = CIFSSMBPosixLock(xid, tcon, lck->netfid, lck->pid,
-					     lck->offset, lck->length, शून्य,
+					     lck->offset, lck->length, NULL,
 					     lck->type, 0);
-		अगर (stored_rc)
+		if (stored_rc)
 			rc = stored_rc;
 		list_del(&lck->llist);
-		kमुक्त(lck);
-	पूर्ण
+		kfree(lck);
+	}
 
 out:
-	मुक्त_xid(xid);
-	वापस rc;
+	free_xid(xid);
+	return rc;
 err_out:
-	list_क्रम_each_entry_safe(lck, पंचांगp, &locks_to_send, llist) अणु
+	list_for_each_entry_safe(lck, tmp, &locks_to_send, llist) {
 		list_del(&lck->llist);
-		kमुक्त(lck);
-	पूर्ण
-	जाओ out;
-पूर्ण
+		kfree(lck);
+	}
+	goto out;
+}
 
-अटल पूर्णांक
-cअगरs_push_locks(काष्ठा cअगरsFileInfo *cfile)
-अणु
-	काष्ठा cअगरs_sb_info *cअगरs_sb = CIFS_SB(cfile->dentry->d_sb);
-	काष्ठा cअगरsInodeInfo *cinode = CIFS_I(d_inode(cfile->dentry));
-	काष्ठा cअगरs_tcon *tcon = tlink_tcon(cfile->tlink);
-	पूर्णांक rc = 0;
+static int
+cifs_push_locks(struct cifsFileInfo *cfile)
+{
+	struct cifs_sb_info *cifs_sb = CIFS_SB(cfile->dentry->d_sb);
+	struct cifsInodeInfo *cinode = CIFS_I(d_inode(cfile->dentry));
+	struct cifs_tcon *tcon = tlink_tcon(cfile->tlink);
+	int rc = 0;
 
-	/* we are going to update can_cache_brlcks here - need a ग_लिखो access */
-	cअगरs_करोwn_ग_लिखो(&cinode->lock_sem);
-	अगर (!cinode->can_cache_brlcks) अणु
-		up_ग_लिखो(&cinode->lock_sem);
-		वापस rc;
-	पूर्ण
+	/* we are going to update can_cache_brlcks here - need a write access */
+	cifs_down_write(&cinode->lock_sem);
+	if (!cinode->can_cache_brlcks) {
+		up_write(&cinode->lock_sem);
+		return rc;
+	}
 
-	अगर (cap_unix(tcon->ses) &&
+	if (cap_unix(tcon->ses) &&
 	    (CIFS_UNIX_FCNTL_CAP & le64_to_cpu(tcon->fsUnixInfo.Capability)) &&
-	    ((cअगरs_sb->mnt_cअगरs_flags & CIFS_MOUNT_NOPOSIXBRL) == 0))
-		rc = cअगरs_push_posix_locks(cfile);
-	अन्यथा
+	    ((cifs_sb->mnt_cifs_flags & CIFS_MOUNT_NOPOSIXBRL) == 0))
+		rc = cifs_push_posix_locks(cfile);
+	else
 		rc = tcon->ses->server->ops->push_mand_locks(cfile);
 
 	cinode->can_cache_brlcks = false;
-	up_ग_लिखो(&cinode->lock_sem);
-	वापस rc;
-पूर्ण
+	up_write(&cinode->lock_sem);
+	return rc;
+}
 
-अटल व्योम
-cअगरs_पढ़ो_flock(काष्ठा file_lock *flock, __u32 *type, पूर्णांक *lock, पूर्णांक *unlock,
-		bool *रुको_flag, काष्ठा TCP_Server_Info *server)
-अणु
-	अगर (flock->fl_flags & FL_POSIX)
-		cअगरs_dbg(FYI, "Posix\n");
-	अगर (flock->fl_flags & FL_FLOCK)
-		cअगरs_dbg(FYI, "Flock\n");
-	अगर (flock->fl_flags & FL_SLEEP) अणु
-		cअगरs_dbg(FYI, "Blocking lock\n");
-		*रुको_flag = true;
-	पूर्ण
-	अगर (flock->fl_flags & FL_ACCESS)
-		cअगरs_dbg(FYI, "Process suspended by mandatory locking - not implemented yet\n");
-	अगर (flock->fl_flags & FL_LEASE)
-		cअगरs_dbg(FYI, "Lease on file - not implemented yet\n");
-	अगर (flock->fl_flags &
+static void
+cifs_read_flock(struct file_lock *flock, __u32 *type, int *lock, int *unlock,
+		bool *wait_flag, struct TCP_Server_Info *server)
+{
+	if (flock->fl_flags & FL_POSIX)
+		cifs_dbg(FYI, "Posix\n");
+	if (flock->fl_flags & FL_FLOCK)
+		cifs_dbg(FYI, "Flock\n");
+	if (flock->fl_flags & FL_SLEEP) {
+		cifs_dbg(FYI, "Blocking lock\n");
+		*wait_flag = true;
+	}
+	if (flock->fl_flags & FL_ACCESS)
+		cifs_dbg(FYI, "Process suspended by mandatory locking - not implemented yet\n");
+	if (flock->fl_flags & FL_LEASE)
+		cifs_dbg(FYI, "Lease on file - not implemented yet\n");
+	if (flock->fl_flags &
 	    (~(FL_POSIX | FL_FLOCK | FL_SLEEP |
 	       FL_ACCESS | FL_LEASE | FL_CLOSE | FL_OFDLCK)))
-		cअगरs_dbg(FYI, "Unknown lock flags 0x%x\n", flock->fl_flags);
+		cifs_dbg(FYI, "Unknown lock flags 0x%x\n", flock->fl_flags);
 
 	*type = server->vals->large_lock_type;
-	अगर (flock->fl_type == F_WRLCK) अणु
-		cअगरs_dbg(FYI, "F_WRLCK\n");
+	if (flock->fl_type == F_WRLCK) {
+		cifs_dbg(FYI, "F_WRLCK\n");
 		*type |= server->vals->exclusive_lock_type;
 		*lock = 1;
-	पूर्ण अन्यथा अगर (flock->fl_type == F_UNLCK) अणु
-		cअगरs_dbg(FYI, "F_UNLCK\n");
+	} else if (flock->fl_type == F_UNLCK) {
+		cifs_dbg(FYI, "F_UNLCK\n");
 		*type |= server->vals->unlock_lock_type;
 		*unlock = 1;
-		/* Check अगर unlock includes more than one lock range */
-	पूर्ण अन्यथा अगर (flock->fl_type == F_RDLCK) अणु
-		cअगरs_dbg(FYI, "F_RDLCK\n");
+		/* Check if unlock includes more than one lock range */
+	} else if (flock->fl_type == F_RDLCK) {
+		cifs_dbg(FYI, "F_RDLCK\n");
 		*type |= server->vals->shared_lock_type;
 		*lock = 1;
-	पूर्ण अन्यथा अगर (flock->fl_type == F_EXLCK) अणु
-		cअगरs_dbg(FYI, "F_EXLCK\n");
+	} else if (flock->fl_type == F_EXLCK) {
+		cifs_dbg(FYI, "F_EXLCK\n");
 		*type |= server->vals->exclusive_lock_type;
 		*lock = 1;
-	पूर्ण अन्यथा अगर (flock->fl_type == F_SHLCK) अणु
-		cअगरs_dbg(FYI, "F_SHLCK\n");
+	} else if (flock->fl_type == F_SHLCK) {
+		cifs_dbg(FYI, "F_SHLCK\n");
 		*type |= server->vals->shared_lock_type;
 		*lock = 1;
-	पूर्ण अन्यथा
-		cअगरs_dbg(FYI, "Unknown type of lock\n");
-पूर्ण
+	} else
+		cifs_dbg(FYI, "Unknown type of lock\n");
+}
 
-अटल पूर्णांक
-cअगरs_getlk(काष्ठा file *file, काष्ठा file_lock *flock, __u32 type,
-	   bool रुको_flag, bool posix_lck, अचिन्हित पूर्णांक xid)
-अणु
-	पूर्णांक rc = 0;
+static int
+cifs_getlk(struct file *file, struct file_lock *flock, __u32 type,
+	   bool wait_flag, bool posix_lck, unsigned int xid)
+{
+	int rc = 0;
 	__u64 length = 1 + flock->fl_end - flock->fl_start;
-	काष्ठा cअगरsFileInfo *cfile = (काष्ठा cअगरsFileInfo *)file->निजी_data;
-	काष्ठा cअगरs_tcon *tcon = tlink_tcon(cfile->tlink);
-	काष्ठा TCP_Server_Info *server = tcon->ses->server;
+	struct cifsFileInfo *cfile = (struct cifsFileInfo *)file->private_data;
+	struct cifs_tcon *tcon = tlink_tcon(cfile->tlink);
+	struct TCP_Server_Info *server = tcon->ses->server;
 	__u16 netfid = cfile->fid.netfid;
 
-	अगर (posix_lck) अणु
-		पूर्णांक posix_lock_type;
+	if (posix_lck) {
+		int posix_lock_type;
 
-		rc = cअगरs_posix_lock_test(file, flock);
-		अगर (!rc)
-			वापस rc;
+		rc = cifs_posix_lock_test(file, flock);
+		if (!rc)
+			return rc;
 
-		अगर (type & server->vals->shared_lock_type)
+		if (type & server->vals->shared_lock_type)
 			posix_lock_type = CIFS_RDLCK;
-		अन्यथा
+		else
 			posix_lock_type = CIFS_WRLCK;
 		rc = CIFSSMBPosixLock(xid, tcon, netfid,
 				      hash_lockowner(flock->fl_owner),
 				      flock->fl_start, length, flock,
-				      posix_lock_type, रुको_flag);
-		वापस rc;
-	पूर्ण
+				      posix_lock_type, wait_flag);
+		return rc;
+	}
 
-	rc = cअगरs_lock_test(cfile, flock->fl_start, length, type, flock);
-	अगर (!rc)
-		वापस rc;
+	rc = cifs_lock_test(cfile, flock->fl_start, length, type, flock);
+	if (!rc)
+		return rc;
 
-	/* BB we could chain these पूर्णांकo one lock request BB */
+	/* BB we could chain these into one lock request BB */
 	rc = server->ops->mand_lock(xid, cfile, flock->fl_start, length, type,
 				    1, 0, false);
-	अगर (rc == 0) अणु
+	if (rc == 0) {
 		rc = server->ops->mand_lock(xid, cfile, flock->fl_start, length,
 					    type, 0, 1, false);
 		flock->fl_type = F_UNLCK;
-		अगर (rc != 0)
-			cअगरs_dbg(VFS, "Error unlocking previously locked range %d during test of lock\n",
+		if (rc != 0)
+			cifs_dbg(VFS, "Error unlocking previously locked range %d during test of lock\n",
 				 rc);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (type & server->vals->shared_lock_type) अणु
+	if (type & server->vals->shared_lock_type) {
 		flock->fl_type = F_WRLCK;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	type &= ~server->vals->exclusive_lock_type;
 
 	rc = server->ops->mand_lock(xid, cfile, flock->fl_start, length,
 				    type | server->vals->shared_lock_type,
 				    1, 0, false);
-	अगर (rc == 0) अणु
+	if (rc == 0) {
 		rc = server->ops->mand_lock(xid, cfile, flock->fl_start, length,
 			type | server->vals->shared_lock_type, 0, 1, false);
 		flock->fl_type = F_RDLCK;
-		अगर (rc != 0)
-			cअगरs_dbg(VFS, "Error unlocking previously locked range %d during test of lock\n",
+		if (rc != 0)
+			cifs_dbg(VFS, "Error unlocking previously locked range %d during test of lock\n",
 				 rc);
-	पूर्ण अन्यथा
+	} else
 		flock->fl_type = F_WRLCK;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम
-cअगरs_move_llist(काष्ठा list_head *source, काष्ठा list_head *dest)
-अणु
-	काष्ठा list_head *li, *पंचांगp;
-	list_क्रम_each_safe(li, पंचांगp, source)
+void
+cifs_move_llist(struct list_head *source, struct list_head *dest)
+{
+	struct list_head *li, *tmp;
+	list_for_each_safe(li, tmp, source)
 		list_move(li, dest);
-पूर्ण
+}
 
-व्योम
-cअगरs_मुक्त_llist(काष्ठा list_head *llist)
-अणु
-	काष्ठा cअगरsLockInfo *li, *पंचांगp;
-	list_क्रम_each_entry_safe(li, पंचांगp, llist, llist) अणु
-		cअगरs_del_lock_रुकोers(li);
+void
+cifs_free_llist(struct list_head *llist)
+{
+	struct cifsLockInfo *li, *tmp;
+	list_for_each_entry_safe(li, tmp, llist, llist) {
+		cifs_del_lock_waiters(li);
 		list_del(&li->llist);
-		kमुक्त(li);
-	पूर्ण
-पूर्ण
+		kfree(li);
+	}
+}
 
-पूर्णांक
-cअगरs_unlock_range(काष्ठा cअगरsFileInfo *cfile, काष्ठा file_lock *flock,
-		  अचिन्हित पूर्णांक xid)
-अणु
-	पूर्णांक rc = 0, stored_rc;
-	अटल स्थिर पूर्णांक types[] = अणु
-		LOCKING_ANDX_LARGE_खाताS,
-		LOCKING_ANDX_SHARED_LOCK | LOCKING_ANDX_LARGE_खाताS
-	पूर्ण;
-	अचिन्हित पूर्णांक i;
-	अचिन्हित पूर्णांक max_num, num, max_buf;
+int
+cifs_unlock_range(struct cifsFileInfo *cfile, struct file_lock *flock,
+		  unsigned int xid)
+{
+	int rc = 0, stored_rc;
+	static const int types[] = {
+		LOCKING_ANDX_LARGE_FILES,
+		LOCKING_ANDX_SHARED_LOCK | LOCKING_ANDX_LARGE_FILES
+	};
+	unsigned int i;
+	unsigned int max_num, num, max_buf;
 	LOCKING_ANDX_RANGE *buf, *cur;
-	काष्ठा cअगरs_tcon *tcon = tlink_tcon(cfile->tlink);
-	काष्ठा cअगरsInodeInfo *cinode = CIFS_I(d_inode(cfile->dentry));
-	काष्ठा cअगरsLockInfo *li, *पंचांगp;
+	struct cifs_tcon *tcon = tlink_tcon(cfile->tlink);
+	struct cifsInodeInfo *cinode = CIFS_I(d_inode(cfile->dentry));
+	struct cifsLockInfo *li, *tmp;
 	__u64 length = 1 + flock->fl_end - flock->fl_start;
-	काष्ठा list_head पंचांगp_llist;
+	struct list_head tmp_llist;
 
-	INIT_LIST_HEAD(&पंचांगp_llist);
+	INIT_LIST_HEAD(&tmp_llist);
 
 	/*
-	 * Accessing maxBuf is racy with cअगरs_reconnect - need to store value
-	 * and check it beक्रमe using.
+	 * Accessing maxBuf is racy with cifs_reconnect - need to store value
+	 * and check it before using.
 	 */
 	max_buf = tcon->ses->server->maxBuf;
-	अगर (max_buf < (माप(काष्ठा smb_hdr) + माप(LOCKING_ANDX_RANGE)))
-		वापस -EINVAL;
+	if (max_buf < (sizeof(struct smb_hdr) + sizeof(LOCKING_ANDX_RANGE)))
+		return -EINVAL;
 
-	BUILD_BUG_ON(माप(काष्ठा smb_hdr) + माप(LOCKING_ANDX_RANGE) >
+	BUILD_BUG_ON(sizeof(struct smb_hdr) + sizeof(LOCKING_ANDX_RANGE) >
 		     PAGE_SIZE);
-	max_buf = min_t(अचिन्हित पूर्णांक, max_buf - माप(काष्ठा smb_hdr),
+	max_buf = min_t(unsigned int, max_buf - sizeof(struct smb_hdr),
 			PAGE_SIZE);
-	max_num = (max_buf - माप(काष्ठा smb_hdr)) /
-						माप(LOCKING_ANDX_RANGE);
-	buf = kसुस्मृति(max_num, माप(LOCKING_ANDX_RANGE), GFP_KERNEL);
-	अगर (!buf)
-		वापस -ENOMEM;
+	max_num = (max_buf - sizeof(struct smb_hdr)) /
+						sizeof(LOCKING_ANDX_RANGE);
+	buf = kcalloc(max_num, sizeof(LOCKING_ANDX_RANGE), GFP_KERNEL);
+	if (!buf)
+		return -ENOMEM;
 
-	cअगरs_करोwn_ग_लिखो(&cinode->lock_sem);
-	क्रम (i = 0; i < 2; i++) अणु
+	cifs_down_write(&cinode->lock_sem);
+	for (i = 0; i < 2; i++) {
 		cur = buf;
 		num = 0;
-		list_क्रम_each_entry_safe(li, पंचांगp, &cfile->llist->locks, llist) अणु
-			अगर (flock->fl_start > li->offset ||
+		list_for_each_entry_safe(li, tmp, &cfile->llist->locks, llist) {
+			if (flock->fl_start > li->offset ||
 			    (flock->fl_start + length) <
 			    (li->offset + li->length))
-				जारी;
-			अगर (current->tgid != li->pid)
-				जारी;
-			अगर (types[i] != li->type)
-				जारी;
-			अगर (cinode->can_cache_brlcks) अणु
+				continue;
+			if (current->tgid != li->pid)
+				continue;
+			if (types[i] != li->type)
+				continue;
+			if (cinode->can_cache_brlcks) {
 				/*
-				 * We can cache brlock requests - simply हटाओ
+				 * We can cache brlock requests - simply remove
 				 * a lock from the file's list.
 				 */
 				list_del(&li->llist);
-				cअगरs_del_lock_रुकोers(li);
-				kमुक्त(li);
-				जारी;
-			पूर्ण
+				cifs_del_lock_waiters(li);
+				kfree(li);
+				continue;
+			}
 			cur->Pid = cpu_to_le16(li->pid);
 			cur->LengthLow = cpu_to_le32((u32)li->length);
 			cur->LengthHigh = cpu_to_le32((u32)(li->length>>32));
@@ -1665,1200 +1664,1200 @@ cअगरs_unlock_range(काष्ठा cअगरsFileInfo *cfile, का�
 			cur->OffsetHigh = cpu_to_le32((u32)(li->offset>>32));
 			/*
 			 * We need to save a lock here to let us add it again to
-			 * the file's list अगर the unlock range request fails on
+			 * the file's list if the unlock range request fails on
 			 * the server.
 			 */
-			list_move(&li->llist, &पंचांगp_llist);
-			अगर (++num == max_num) अणु
-				stored_rc = cअगरs_lockv(xid, tcon,
+			list_move(&li->llist, &tmp_llist);
+			if (++num == max_num) {
+				stored_rc = cifs_lockv(xid, tcon,
 						       cfile->fid.netfid,
 						       li->type, num, 0, buf);
-				अगर (stored_rc) अणु
+				if (stored_rc) {
 					/*
 					 * We failed on the unlock range
-					 * request - add all locks from the पंचांगp
+					 * request - add all locks from the tmp
 					 * list to the head of the file's list.
 					 */
-					cअगरs_move_llist(&पंचांगp_llist,
+					cifs_move_llist(&tmp_llist,
 							&cfile->llist->locks);
 					rc = stored_rc;
-				पूर्ण अन्यथा
+				} else
 					/*
 					 * The unlock range request succeed -
-					 * मुक्त the पंचांगp list.
+					 * free the tmp list.
 					 */
-					cअगरs_मुक्त_llist(&पंचांगp_llist);
+					cifs_free_llist(&tmp_llist);
 				cur = buf;
 				num = 0;
-			पूर्ण अन्यथा
+			} else
 				cur++;
-		पूर्ण
-		अगर (num) अणु
-			stored_rc = cअगरs_lockv(xid, tcon, cfile->fid.netfid,
+		}
+		if (num) {
+			stored_rc = cifs_lockv(xid, tcon, cfile->fid.netfid,
 					       types[i], num, 0, buf);
-			अगर (stored_rc) अणु
-				cअगरs_move_llist(&पंचांगp_llist,
+			if (stored_rc) {
+				cifs_move_llist(&tmp_llist,
 						&cfile->llist->locks);
 				rc = stored_rc;
-			पूर्ण अन्यथा
-				cअगरs_मुक्त_llist(&पंचांगp_llist);
-		पूर्ण
-	पूर्ण
+			} else
+				cifs_free_llist(&tmp_llist);
+		}
+	}
 
-	up_ग_लिखो(&cinode->lock_sem);
-	kमुक्त(buf);
-	वापस rc;
-पूर्ण
+	up_write(&cinode->lock_sem);
+	kfree(buf);
+	return rc;
+}
 
-अटल पूर्णांक
-cअगरs_setlk(काष्ठा file *file, काष्ठा file_lock *flock, __u32 type,
-	   bool रुको_flag, bool posix_lck, पूर्णांक lock, पूर्णांक unlock,
-	   अचिन्हित पूर्णांक xid)
-अणु
-	पूर्णांक rc = 0;
+static int
+cifs_setlk(struct file *file, struct file_lock *flock, __u32 type,
+	   bool wait_flag, bool posix_lck, int lock, int unlock,
+	   unsigned int xid)
+{
+	int rc = 0;
 	__u64 length = 1 + flock->fl_end - flock->fl_start;
-	काष्ठा cअगरsFileInfo *cfile = (काष्ठा cअगरsFileInfo *)file->निजी_data;
-	काष्ठा cअगरs_tcon *tcon = tlink_tcon(cfile->tlink);
-	काष्ठा TCP_Server_Info *server = tcon->ses->server;
-	काष्ठा inode *inode = d_inode(cfile->dentry);
+	struct cifsFileInfo *cfile = (struct cifsFileInfo *)file->private_data;
+	struct cifs_tcon *tcon = tlink_tcon(cfile->tlink);
+	struct TCP_Server_Info *server = tcon->ses->server;
+	struct inode *inode = d_inode(cfile->dentry);
 
-	अगर (posix_lck) अणु
-		पूर्णांक posix_lock_type;
+	if (posix_lck) {
+		int posix_lock_type;
 
-		rc = cअगरs_posix_lock_set(file, flock);
-		अगर (rc <= खाता_LOCK_DEFERRED)
-			वापस rc;
+		rc = cifs_posix_lock_set(file, flock);
+		if (rc <= FILE_LOCK_DEFERRED)
+			return rc;
 
-		अगर (type & server->vals->shared_lock_type)
+		if (type & server->vals->shared_lock_type)
 			posix_lock_type = CIFS_RDLCK;
-		अन्यथा
+		else
 			posix_lock_type = CIFS_WRLCK;
 
-		अगर (unlock == 1)
+		if (unlock == 1)
 			posix_lock_type = CIFS_UNLCK;
 
 		rc = CIFSSMBPosixLock(xid, tcon, cfile->fid.netfid,
 				      hash_lockowner(flock->fl_owner),
 				      flock->fl_start, length,
-				      शून्य, posix_lock_type, रुको_flag);
-		जाओ out;
-	पूर्ण
+				      NULL, posix_lock_type, wait_flag);
+		goto out;
+	}
 
-	अगर (lock) अणु
-		काष्ठा cअगरsLockInfo *lock;
+	if (lock) {
+		struct cifsLockInfo *lock;
 
-		lock = cअगरs_lock_init(flock->fl_start, length, type,
+		lock = cifs_lock_init(flock->fl_start, length, type,
 				      flock->fl_flags);
-		अगर (!lock)
-			वापस -ENOMEM;
+		if (!lock)
+			return -ENOMEM;
 
-		rc = cअगरs_lock_add_अगर(cfile, lock, रुको_flag);
-		अगर (rc < 0) अणु
-			kमुक्त(lock);
-			वापस rc;
-		पूर्ण
-		अगर (!rc)
-			जाओ out;
+		rc = cifs_lock_add_if(cfile, lock, wait_flag);
+		if (rc < 0) {
+			kfree(lock);
+			return rc;
+		}
+		if (!rc)
+			goto out;
 
 		/*
-		 * Winकरोws 7 server can delay अवरोधing lease from पढ़ो to None
-		 * अगर we set a byte-range lock on a file - अवरोध it explicitly
-		 * beक्रमe sending the lock to the server to be sure the next
-		 * पढ़ो won't conflict with non-overlapted locks due to
-		 * pageपढ़ोing.
+		 * Windows 7 server can delay breaking lease from read to None
+		 * if we set a byte-range lock on a file - break it explicitly
+		 * before sending the lock to the server to be sure the next
+		 * read won't conflict with non-overlapted locks due to
+		 * pagereading.
 		 */
-		अगर (!CIFS_CACHE_WRITE(CIFS_I(inode)) &&
-					CIFS_CACHE_READ(CIFS_I(inode))) अणु
-			cअगरs_zap_mapping(inode);
-			cअगरs_dbg(FYI, "Set no oplock for inode=%p due to mand locks\n",
+		if (!CIFS_CACHE_WRITE(CIFS_I(inode)) &&
+					CIFS_CACHE_READ(CIFS_I(inode))) {
+			cifs_zap_mapping(inode);
+			cifs_dbg(FYI, "Set no oplock for inode=%p due to mand locks\n",
 				 inode);
 			CIFS_I(inode)->oplock = 0;
-		पूर्ण
+		}
 
 		rc = server->ops->mand_lock(xid, cfile, flock->fl_start, length,
-					    type, 1, 0, रुको_flag);
-		अगर (rc) अणु
-			kमुक्त(lock);
-			वापस rc;
-		पूर्ण
+					    type, 1, 0, wait_flag);
+		if (rc) {
+			kfree(lock);
+			return rc;
+		}
 
-		cअगरs_lock_add(cfile, lock);
-	पूर्ण अन्यथा अगर (unlock)
+		cifs_lock_add(cfile, lock);
+	} else if (unlock)
 		rc = server->ops->mand_unlock_range(cfile, flock, xid);
 
 out:
-	अगर ((flock->fl_flags & FL_POSIX) || (flock->fl_flags & FL_FLOCK)) अणु
+	if ((flock->fl_flags & FL_POSIX) || (flock->fl_flags & FL_FLOCK)) {
 		/*
-		 * If this is a request to हटाओ all locks because we
-		 * are closing the file, it करोesn't matter अगर the
-		 * unlocking failed as both cअगरs.ko and the SMB server
-		 * हटाओ the lock on file बंद
+		 * If this is a request to remove all locks because we
+		 * are closing the file, it doesn't matter if the
+		 * unlocking failed as both cifs.ko and the SMB server
+		 * remove the lock on file close
 		 */
-		अगर (rc) अणु
-			cअगरs_dbg(VFS, "%s failed rc=%d\n", __func__, rc);
-			अगर (!(flock->fl_flags & FL_CLOSE))
-				वापस rc;
-		पूर्ण
-		rc = locks_lock_file_रुको(file, flock);
-	पूर्ण
-	वापस rc;
-पूर्ण
+		if (rc) {
+			cifs_dbg(VFS, "%s failed rc=%d\n", __func__, rc);
+			if (!(flock->fl_flags & FL_CLOSE))
+				return rc;
+		}
+		rc = locks_lock_file_wait(file, flock);
+	}
+	return rc;
+}
 
-पूर्णांक cअगरs_flock(काष्ठा file *file, पूर्णांक cmd, काष्ठा file_lock *fl)
-अणु
-	पूर्णांक rc, xid;
-	पूर्णांक lock = 0, unlock = 0;
-	bool रुको_flag = false;
+int cifs_flock(struct file *file, int cmd, struct file_lock *fl)
+{
+	int rc, xid;
+	int lock = 0, unlock = 0;
+	bool wait_flag = false;
 	bool posix_lck = false;
-	काष्ठा cअगरs_sb_info *cअगरs_sb;
-	काष्ठा cअगरs_tcon *tcon;
-	काष्ठा cअगरsFileInfo *cfile;
+	struct cifs_sb_info *cifs_sb;
+	struct cifs_tcon *tcon;
+	struct cifsFileInfo *cfile;
 	__u32 type;
 
 	rc = -EACCES;
 	xid = get_xid();
 
-	अगर (!(fl->fl_flags & FL_FLOCK))
-		वापस -ENOLCK;
+	if (!(fl->fl_flags & FL_FLOCK))
+		return -ENOLCK;
 
-	cfile = (काष्ठा cअगरsFileInfo *)file->निजी_data;
+	cfile = (struct cifsFileInfo *)file->private_data;
 	tcon = tlink_tcon(cfile->tlink);
 
-	cअगरs_पढ़ो_flock(fl, &type, &lock, &unlock, &रुको_flag,
+	cifs_read_flock(fl, &type, &lock, &unlock, &wait_flag,
 			tcon->ses->server);
-	cअगरs_sb = CIFS_खाता_SB(file);
+	cifs_sb = CIFS_FILE_SB(file);
 
-	अगर (cap_unix(tcon->ses) &&
+	if (cap_unix(tcon->ses) &&
 	    (CIFS_UNIX_FCNTL_CAP & le64_to_cpu(tcon->fsUnixInfo.Capability)) &&
-	    ((cअगरs_sb->mnt_cअगरs_flags & CIFS_MOUNT_NOPOSIXBRL) == 0))
+	    ((cifs_sb->mnt_cifs_flags & CIFS_MOUNT_NOPOSIXBRL) == 0))
 		posix_lck = true;
 
-	अगर (!lock && !unlock) अणु
+	if (!lock && !unlock) {
 		/*
-		 * अगर no lock or unlock then nothing to करो since we करो not
+		 * if no lock or unlock then nothing to do since we do not
 		 * know what it is
 		 */
-		मुक्त_xid(xid);
-		वापस -EOPNOTSUPP;
-	पूर्ण
+		free_xid(xid);
+		return -EOPNOTSUPP;
+	}
 
-	rc = cअगरs_setlk(file, fl, type, रुको_flag, posix_lck, lock, unlock,
+	rc = cifs_setlk(file, fl, type, wait_flag, posix_lck, lock, unlock,
 			xid);
-	मुक्त_xid(xid);
-	वापस rc;
+	free_xid(xid);
+	return rc;
 
 
-पूर्ण
+}
 
-पूर्णांक cअगरs_lock(काष्ठा file *file, पूर्णांक cmd, काष्ठा file_lock *flock)
-अणु
-	पूर्णांक rc, xid;
-	पूर्णांक lock = 0, unlock = 0;
-	bool रुको_flag = false;
+int cifs_lock(struct file *file, int cmd, struct file_lock *flock)
+{
+	int rc, xid;
+	int lock = 0, unlock = 0;
+	bool wait_flag = false;
 	bool posix_lck = false;
-	काष्ठा cअगरs_sb_info *cअगरs_sb;
-	काष्ठा cअगरs_tcon *tcon;
-	काष्ठा cअगरsFileInfo *cfile;
+	struct cifs_sb_info *cifs_sb;
+	struct cifs_tcon *tcon;
+	struct cifsFileInfo *cfile;
 	__u32 type;
 
 	rc = -EACCES;
 	xid = get_xid();
 
-	cअगरs_dbg(FYI, "Lock parm: 0x%x flockflags: 0x%x flocktype: 0x%x start: %lld end: %lld\n",
+	cifs_dbg(FYI, "Lock parm: 0x%x flockflags: 0x%x flocktype: 0x%x start: %lld end: %lld\n",
 		 cmd, flock->fl_flags, flock->fl_type,
 		 flock->fl_start, flock->fl_end);
 
-	cfile = (काष्ठा cअगरsFileInfo *)file->निजी_data;
+	cfile = (struct cifsFileInfo *)file->private_data;
 	tcon = tlink_tcon(cfile->tlink);
 
-	cअगरs_पढ़ो_flock(flock, &type, &lock, &unlock, &रुको_flag,
+	cifs_read_flock(flock, &type, &lock, &unlock, &wait_flag,
 			tcon->ses->server);
-	cअगरs_sb = CIFS_खाता_SB(file);
+	cifs_sb = CIFS_FILE_SB(file);
 
-	अगर (cap_unix(tcon->ses) &&
+	if (cap_unix(tcon->ses) &&
 	    (CIFS_UNIX_FCNTL_CAP & le64_to_cpu(tcon->fsUnixInfo.Capability)) &&
-	    ((cअगरs_sb->mnt_cअगरs_flags & CIFS_MOUNT_NOPOSIXBRL) == 0))
+	    ((cifs_sb->mnt_cifs_flags & CIFS_MOUNT_NOPOSIXBRL) == 0))
 		posix_lck = true;
 	/*
-	 * BB add code here to normalize offset and length to account क्रम
+	 * BB add code here to normalize offset and length to account for
 	 * negative length which we can not accept over the wire.
 	 */
-	अगर (IS_GETLK(cmd)) अणु
-		rc = cअगरs_getlk(file, flock, type, रुको_flag, posix_lck, xid);
-		मुक्त_xid(xid);
-		वापस rc;
-	पूर्ण
+	if (IS_GETLK(cmd)) {
+		rc = cifs_getlk(file, flock, type, wait_flag, posix_lck, xid);
+		free_xid(xid);
+		return rc;
+	}
 
-	अगर (!lock && !unlock) अणु
+	if (!lock && !unlock) {
 		/*
-		 * अगर no lock or unlock then nothing to करो since we करो not
+		 * if no lock or unlock then nothing to do since we do not
 		 * know what it is
 		 */
-		मुक्त_xid(xid);
-		वापस -EOPNOTSUPP;
-	पूर्ण
+		free_xid(xid);
+		return -EOPNOTSUPP;
+	}
 
-	rc = cअगरs_setlk(file, flock, type, रुको_flag, posix_lck, lock, unlock,
+	rc = cifs_setlk(file, flock, type, wait_flag, posix_lck, lock, unlock,
 			xid);
-	मुक्त_xid(xid);
-	वापस rc;
-पूर्ण
+	free_xid(xid);
+	return rc;
+}
 
 /*
- * update the file size (अगर needed) after a ग_लिखो. Should be called with
+ * update the file size (if needed) after a write. Should be called with
  * the inode->i_lock held
  */
-व्योम
-cअगरs_update_eof(काष्ठा cअगरsInodeInfo *cअगरsi, loff_t offset,
-		      अचिन्हित पूर्णांक bytes_written)
-अणु
-	loff_t end_of_ग_लिखो = offset + bytes_written;
+void
+cifs_update_eof(struct cifsInodeInfo *cifsi, loff_t offset,
+		      unsigned int bytes_written)
+{
+	loff_t end_of_write = offset + bytes_written;
 
-	अगर (end_of_ग_लिखो > cअगरsi->server_eof)
-		cअगरsi->server_eof = end_of_ग_लिखो;
-पूर्ण
+	if (end_of_write > cifsi->server_eof)
+		cifsi->server_eof = end_of_write;
+}
 
-अटल sमाप_प्रकार
-cअगरs_ग_लिखो(काष्ठा cअगरsFileInfo *खोलो_file, __u32 pid, स्थिर अक्षर *ग_लिखो_data,
-	   माप_प्रकार ग_लिखो_size, loff_t *offset)
-अणु
-	पूर्णांक rc = 0;
-	अचिन्हित पूर्णांक bytes_written = 0;
-	अचिन्हित पूर्णांक total_written;
-	काष्ठा cअगरs_tcon *tcon;
-	काष्ठा TCP_Server_Info *server;
-	अचिन्हित पूर्णांक xid;
-	काष्ठा dentry *dentry = खोलो_file->dentry;
-	काष्ठा cअगरsInodeInfo *cअगरsi = CIFS_I(d_inode(dentry));
-	काष्ठा cअगरs_io_parms io_parms = अणु0पूर्ण;
+static ssize_t
+cifs_write(struct cifsFileInfo *open_file, __u32 pid, const char *write_data,
+	   size_t write_size, loff_t *offset)
+{
+	int rc = 0;
+	unsigned int bytes_written = 0;
+	unsigned int total_written;
+	struct cifs_tcon *tcon;
+	struct TCP_Server_Info *server;
+	unsigned int xid;
+	struct dentry *dentry = open_file->dentry;
+	struct cifsInodeInfo *cifsi = CIFS_I(d_inode(dentry));
+	struct cifs_io_parms io_parms = {0};
 
-	cअगरs_dbg(FYI, "write %zd bytes to offset %lld of %pd\n",
-		 ग_लिखो_size, *offset, dentry);
+	cifs_dbg(FYI, "write %zd bytes to offset %lld of %pd\n",
+		 write_size, *offset, dentry);
 
-	tcon = tlink_tcon(खोलो_file->tlink);
+	tcon = tlink_tcon(open_file->tlink);
 	server = tcon->ses->server;
 
-	अगर (!server->ops->sync_ग_लिखो)
-		वापस -ENOSYS;
+	if (!server->ops->sync_write)
+		return -ENOSYS;
 
 	xid = get_xid();
 
-	क्रम (total_written = 0; ग_लिखो_size > total_written;
-	     total_written += bytes_written) अणु
+	for (total_written = 0; write_size > total_written;
+	     total_written += bytes_written) {
 		rc = -EAGAIN;
-		जबतक (rc == -EAGAIN) अणु
-			काष्ठा kvec iov[2];
-			अचिन्हित पूर्णांक len;
+		while (rc == -EAGAIN) {
+			struct kvec iov[2];
+			unsigned int len;
 
-			अगर (खोलो_file->invalidHandle) अणु
-				/* we could deadlock अगर we called
-				   filemap_fdataरुको from here so tell
-				   reखोलो_file not to flush data to
+			if (open_file->invalidHandle) {
+				/* we could deadlock if we called
+				   filemap_fdatawait from here so tell
+				   reopen_file not to flush data to
 				   server now */
-				rc = cअगरs_reखोलो_file(खोलो_file, false);
-				अगर (rc != 0)
-					अवरोध;
-			पूर्ण
+				rc = cifs_reopen_file(open_file, false);
+				if (rc != 0)
+					break;
+			}
 
 			len = min(server->ops->wp_retry_size(d_inode(dentry)),
-				  (अचिन्हित पूर्णांक)ग_लिखो_size - total_written);
-			/* iov[0] is reserved क्रम smb header */
-			iov[1].iov_base = (अक्षर *)ग_लिखो_data + total_written;
+				  (unsigned int)write_size - total_written);
+			/* iov[0] is reserved for smb header */
+			iov[1].iov_base = (char *)write_data + total_written;
 			iov[1].iov_len = len;
 			io_parms.pid = pid;
 			io_parms.tcon = tcon;
 			io_parms.offset = *offset;
 			io_parms.length = len;
-			rc = server->ops->sync_ग_लिखो(xid, &खोलो_file->fid,
+			rc = server->ops->sync_write(xid, &open_file->fid,
 					&io_parms, &bytes_written, iov, 1);
-		पूर्ण
-		अगर (rc || (bytes_written == 0)) अणु
-			अगर (total_written)
-				अवरोध;
-			अन्यथा अणु
-				मुक्त_xid(xid);
-				वापस rc;
-			पूर्ण
-		पूर्ण अन्यथा अणु
+		}
+		if (rc || (bytes_written == 0)) {
+			if (total_written)
+				break;
+			else {
+				free_xid(xid);
+				return rc;
+			}
+		} else {
 			spin_lock(&d_inode(dentry)->i_lock);
-			cअगरs_update_eof(cअगरsi, *offset, bytes_written);
+			cifs_update_eof(cifsi, *offset, bytes_written);
 			spin_unlock(&d_inode(dentry)->i_lock);
 			*offset += bytes_written;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	cअगरs_stats_bytes_written(tcon, total_written);
+	cifs_stats_bytes_written(tcon, total_written);
 
-	अगर (total_written > 0) अणु
+	if (total_written > 0) {
 		spin_lock(&d_inode(dentry)->i_lock);
-		अगर (*offset > d_inode(dentry)->i_size) अणु
-			i_size_ग_लिखो(d_inode(dentry), *offset);
+		if (*offset > d_inode(dentry)->i_size) {
+			i_size_write(d_inode(dentry), *offset);
 			d_inode(dentry)->i_blocks = (512 - 1 + *offset) >> 9;
-		पूर्ण
+		}
 		spin_unlock(&d_inode(dentry)->i_lock);
-	पूर्ण
+	}
 	mark_inode_dirty_sync(d_inode(dentry));
-	मुक्त_xid(xid);
-	वापस total_written;
-पूर्ण
+	free_xid(xid);
+	return total_written;
+}
 
-काष्ठा cअगरsFileInfo *find_पढ़ोable_file(काष्ठा cअगरsInodeInfo *cअगरs_inode,
+struct cifsFileInfo *find_readable_file(struct cifsInodeInfo *cifs_inode,
 					bool fsuid_only)
-अणु
-	काष्ठा cअगरsFileInfo *खोलो_file = शून्य;
-	काष्ठा cअगरs_sb_info *cअगरs_sb = CIFS_SB(cअगरs_inode->vfs_inode.i_sb);
+{
+	struct cifsFileInfo *open_file = NULL;
+	struct cifs_sb_info *cifs_sb = CIFS_SB(cifs_inode->vfs_inode.i_sb);
 
 	/* only filter by fsuid on multiuser mounts */
-	अगर (!(cअगरs_sb->mnt_cअगरs_flags & CIFS_MOUNT_MULTIUSER))
+	if (!(cifs_sb->mnt_cifs_flags & CIFS_MOUNT_MULTIUSER))
 		fsuid_only = false;
 
-	spin_lock(&cअगरs_inode->खोलो_file_lock);
-	/* we could simply get the first_list_entry since ग_लिखो-only entries
+	spin_lock(&cifs_inode->open_file_lock);
+	/* we could simply get the first_list_entry since write-only entries
 	   are always at the end of the list but since the first entry might
-	   have a बंद pending, we go through the whole list */
-	list_क्रम_each_entry(खोलो_file, &cअगरs_inode->खोलोFileList, flist) अणु
-		अगर (fsuid_only && !uid_eq(खोलो_file->uid, current_fsuid()))
-			जारी;
-		अगर (OPEN_FMODE(खोलो_file->f_flags) & FMODE_READ) अणु
-			अगर ((!खोलो_file->invalidHandle)) अणु
+	   have a close pending, we go through the whole list */
+	list_for_each_entry(open_file, &cifs_inode->openFileList, flist) {
+		if (fsuid_only && !uid_eq(open_file->uid, current_fsuid()))
+			continue;
+		if (OPEN_FMODE(open_file->f_flags) & FMODE_READ) {
+			if ((!open_file->invalidHandle)) {
 				/* found a good file */
-				/* lock it so it will not be बंदd on us */
-				cअगरsFileInfo_get(खोलो_file);
-				spin_unlock(&cअगरs_inode->खोलो_file_lock);
-				वापस खोलो_file;
-			पूर्ण /* अन्यथा might as well जारी, and look क्रम
-			     another, or simply have the caller reखोलो it
+				/* lock it so it will not be closed on us */
+				cifsFileInfo_get(open_file);
+				spin_unlock(&cifs_inode->open_file_lock);
+				return open_file;
+			} /* else might as well continue, and look for
+			     another, or simply have the caller reopen it
 			     again rather than trying to fix this handle */
-		पूर्ण अन्यथा /* ग_लिखो only file */
-			अवरोध; /* ग_लिखो only files are last so must be करोne */
-	पूर्ण
-	spin_unlock(&cअगरs_inode->खोलो_file_lock);
-	वापस शून्य;
-पूर्ण
+		} else /* write only file */
+			break; /* write only files are last so must be done */
+	}
+	spin_unlock(&cifs_inode->open_file_lock);
+	return NULL;
+}
 
-/* Return -EBADF अगर no handle is found and general rc otherwise */
-पूर्णांक
-cअगरs_get_writable_file(काष्ठा cअगरsInodeInfo *cअगरs_inode, पूर्णांक flags,
-		       काष्ठा cअगरsFileInfo **ret_file)
-अणु
-	काष्ठा cअगरsFileInfo *खोलो_file, *inv_file = शून्य;
-	काष्ठा cअगरs_sb_info *cअगरs_sb;
+/* Return -EBADF if no handle is found and general rc otherwise */
+int
+cifs_get_writable_file(struct cifsInodeInfo *cifs_inode, int flags,
+		       struct cifsFileInfo **ret_file)
+{
+	struct cifsFileInfo *open_file, *inv_file = NULL;
+	struct cifs_sb_info *cifs_sb;
 	bool any_available = false;
-	पूर्णांक rc = -EBADF;
-	अचिन्हित पूर्णांक refind = 0;
+	int rc = -EBADF;
+	unsigned int refind = 0;
 	bool fsuid_only = flags & FIND_WR_FSUID_ONLY;
 	bool with_delete = flags & FIND_WR_WITH_DELETE;
-	*ret_file = शून्य;
+	*ret_file = NULL;
 
 	/*
 	 * Having a null inode here (because mapping->host was set to zero by
 	 * the VFS or MM) should not happen but we had reports of on oops (due
-	 * to it being zero) during stress testहालs so we need to check क्रम it
+	 * to it being zero) during stress testcases so we need to check for it
 	 */
 
-	अगर (cअगरs_inode == शून्य) अणु
-		cअगरs_dbg(VFS, "Null inode passed to cifs_writeable_file\n");
+	if (cifs_inode == NULL) {
+		cifs_dbg(VFS, "Null inode passed to cifs_writeable_file\n");
 		dump_stack();
-		वापस rc;
-	पूर्ण
+		return rc;
+	}
 
-	cअगरs_sb = CIFS_SB(cअगरs_inode->vfs_inode.i_sb);
+	cifs_sb = CIFS_SB(cifs_inode->vfs_inode.i_sb);
 
 	/* only filter by fsuid on multiuser mounts */
-	अगर (!(cअगरs_sb->mnt_cअगरs_flags & CIFS_MOUNT_MULTIUSER))
+	if (!(cifs_sb->mnt_cifs_flags & CIFS_MOUNT_MULTIUSER))
 		fsuid_only = false;
 
-	spin_lock(&cअगरs_inode->खोलो_file_lock);
+	spin_lock(&cifs_inode->open_file_lock);
 refind_writable:
-	अगर (refind > MAX_REOPEN_ATT) अणु
-		spin_unlock(&cअगरs_inode->खोलो_file_lock);
-		वापस rc;
-	पूर्ण
-	list_क्रम_each_entry(खोलो_file, &cअगरs_inode->खोलोFileList, flist) अणु
-		अगर (!any_available && खोलो_file->pid != current->tgid)
-			जारी;
-		अगर (fsuid_only && !uid_eq(खोलो_file->uid, current_fsuid()))
-			जारी;
-		अगर (with_delete && !(खोलो_file->fid.access & DELETE))
-			जारी;
-		अगर (OPEN_FMODE(खोलो_file->f_flags) & FMODE_WRITE) अणु
-			अगर (!खोलो_file->invalidHandle) अणु
+	if (refind > MAX_REOPEN_ATT) {
+		spin_unlock(&cifs_inode->open_file_lock);
+		return rc;
+	}
+	list_for_each_entry(open_file, &cifs_inode->openFileList, flist) {
+		if (!any_available && open_file->pid != current->tgid)
+			continue;
+		if (fsuid_only && !uid_eq(open_file->uid, current_fsuid()))
+			continue;
+		if (with_delete && !(open_file->fid.access & DELETE))
+			continue;
+		if (OPEN_FMODE(open_file->f_flags) & FMODE_WRITE) {
+			if (!open_file->invalidHandle) {
 				/* found a good writable file */
-				cअगरsFileInfo_get(खोलो_file);
-				spin_unlock(&cअगरs_inode->खोलो_file_lock);
-				*ret_file = खोलो_file;
-				वापस 0;
-			पूर्ण अन्यथा अणु
-				अगर (!inv_file)
-					inv_file = खोलो_file;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				cifsFileInfo_get(open_file);
+				spin_unlock(&cifs_inode->open_file_lock);
+				*ret_file = open_file;
+				return 0;
+			} else {
+				if (!inv_file)
+					inv_file = open_file;
+			}
+		}
+	}
 	/* couldn't find useable FH with same pid, try any available */
-	अगर (!any_available) अणु
+	if (!any_available) {
 		any_available = true;
-		जाओ refind_writable;
-	पूर्ण
+		goto refind_writable;
+	}
 
-	अगर (inv_file) अणु
+	if (inv_file) {
 		any_available = false;
-		cअगरsFileInfo_get(inv_file);
-	पूर्ण
+		cifsFileInfo_get(inv_file);
+	}
 
-	spin_unlock(&cअगरs_inode->खोलो_file_lock);
+	spin_unlock(&cifs_inode->open_file_lock);
 
-	अगर (inv_file) अणु
-		rc = cअगरs_reखोलो_file(inv_file, false);
-		अगर (!rc) अणु
+	if (inv_file) {
+		rc = cifs_reopen_file(inv_file, false);
+		if (!rc) {
 			*ret_file = inv_file;
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 
-		spin_lock(&cअगरs_inode->खोलो_file_lock);
-		list_move_tail(&inv_file->flist, &cअगरs_inode->खोलोFileList);
-		spin_unlock(&cअगरs_inode->खोलो_file_lock);
-		cअगरsFileInfo_put(inv_file);
+		spin_lock(&cifs_inode->open_file_lock);
+		list_move_tail(&inv_file->flist, &cifs_inode->openFileList);
+		spin_unlock(&cifs_inode->open_file_lock);
+		cifsFileInfo_put(inv_file);
 		++refind;
-		inv_file = शून्य;
-		spin_lock(&cअगरs_inode->खोलो_file_lock);
-		जाओ refind_writable;
-	पूर्ण
+		inv_file = NULL;
+		spin_lock(&cifs_inode->open_file_lock);
+		goto refind_writable;
+	}
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-काष्ठा cअगरsFileInfo *
-find_writable_file(काष्ठा cअगरsInodeInfo *cअगरs_inode, पूर्णांक flags)
-अणु
-	काष्ठा cअगरsFileInfo *cfile;
-	पूर्णांक rc;
+struct cifsFileInfo *
+find_writable_file(struct cifsInodeInfo *cifs_inode, int flags)
+{
+	struct cifsFileInfo *cfile;
+	int rc;
 
-	rc = cअगरs_get_writable_file(cअगरs_inode, flags, &cfile);
-	अगर (rc)
-		cअगरs_dbg(FYI, "Couldn't find writable handle rc=%d\n", rc);
+	rc = cifs_get_writable_file(cifs_inode, flags, &cfile);
+	if (rc)
+		cifs_dbg(FYI, "Couldn't find writable handle rc=%d\n", rc);
 
-	वापस cfile;
-पूर्ण
+	return cfile;
+}
 
-पूर्णांक
-cअगरs_get_writable_path(काष्ठा cअगरs_tcon *tcon, स्थिर अक्षर *name,
-		       पूर्णांक flags,
-		       काष्ठा cअगरsFileInfo **ret_file)
-अणु
-	काष्ठा cअगरsFileInfo *cfile;
-	व्योम *page = alloc_dentry_path();
+int
+cifs_get_writable_path(struct cifs_tcon *tcon, const char *name,
+		       int flags,
+		       struct cifsFileInfo **ret_file)
+{
+	struct cifsFileInfo *cfile;
+	void *page = alloc_dentry_path();
 
-	*ret_file = शून्य;
+	*ret_file = NULL;
 
-	spin_lock(&tcon->खोलो_file_lock);
-	list_क्रम_each_entry(cfile, &tcon->खोलोFileList, tlist) अणु
-		काष्ठा cअगरsInodeInfo *cinode;
-		स्थिर अक्षर *full_path = build_path_from_dentry(cfile->dentry, page);
-		अगर (IS_ERR(full_path)) अणु
-			spin_unlock(&tcon->खोलो_file_lock);
-			मुक्त_dentry_path(page);
-			वापस PTR_ERR(full_path);
-		पूर्ण
-		अगर (म_भेद(full_path, name))
-			जारी;
-
-		cinode = CIFS_I(d_inode(cfile->dentry));
-		spin_unlock(&tcon->खोलो_file_lock);
-		मुक्त_dentry_path(page);
-		वापस cअगरs_get_writable_file(cinode, flags, ret_file);
-	पूर्ण
-
-	spin_unlock(&tcon->खोलो_file_lock);
-	मुक्त_dentry_path(page);
-	वापस -ENOENT;
-पूर्ण
-
-पूर्णांक
-cअगरs_get_पढ़ोable_path(काष्ठा cअगरs_tcon *tcon, स्थिर अक्षर *name,
-		       काष्ठा cअगरsFileInfo **ret_file)
-अणु
-	काष्ठा cअगरsFileInfo *cfile;
-	व्योम *page = alloc_dentry_path();
-
-	*ret_file = शून्य;
-
-	spin_lock(&tcon->खोलो_file_lock);
-	list_क्रम_each_entry(cfile, &tcon->खोलोFileList, tlist) अणु
-		काष्ठा cअगरsInodeInfo *cinode;
-		स्थिर अक्षर *full_path = build_path_from_dentry(cfile->dentry, page);
-		अगर (IS_ERR(full_path)) अणु
-			spin_unlock(&tcon->खोलो_file_lock);
-			मुक्त_dentry_path(page);
-			वापस PTR_ERR(full_path);
-		पूर्ण
-		अगर (म_भेद(full_path, name))
-			जारी;
+	spin_lock(&tcon->open_file_lock);
+	list_for_each_entry(cfile, &tcon->openFileList, tlist) {
+		struct cifsInodeInfo *cinode;
+		const char *full_path = build_path_from_dentry(cfile->dentry, page);
+		if (IS_ERR(full_path)) {
+			spin_unlock(&tcon->open_file_lock);
+			free_dentry_path(page);
+			return PTR_ERR(full_path);
+		}
+		if (strcmp(full_path, name))
+			continue;
 
 		cinode = CIFS_I(d_inode(cfile->dentry));
-		spin_unlock(&tcon->खोलो_file_lock);
-		मुक्त_dentry_path(page);
-		*ret_file = find_पढ़ोable_file(cinode, 0);
-		वापस *ret_file ? 0 : -ENOENT;
-	पूर्ण
+		spin_unlock(&tcon->open_file_lock);
+		free_dentry_path(page);
+		return cifs_get_writable_file(cinode, flags, ret_file);
+	}
 
-	spin_unlock(&tcon->खोलो_file_lock);
-	मुक्त_dentry_path(page);
-	वापस -ENOENT;
-पूर्ण
+	spin_unlock(&tcon->open_file_lock);
+	free_dentry_path(page);
+	return -ENOENT;
+}
 
-अटल पूर्णांक cअगरs_partialpageग_लिखो(काष्ठा page *page, अचिन्हित from, अचिन्हित to)
-अणु
-	काष्ठा address_space *mapping = page->mapping;
+int
+cifs_get_readable_path(struct cifs_tcon *tcon, const char *name,
+		       struct cifsFileInfo **ret_file)
+{
+	struct cifsFileInfo *cfile;
+	void *page = alloc_dentry_path();
+
+	*ret_file = NULL;
+
+	spin_lock(&tcon->open_file_lock);
+	list_for_each_entry(cfile, &tcon->openFileList, tlist) {
+		struct cifsInodeInfo *cinode;
+		const char *full_path = build_path_from_dentry(cfile->dentry, page);
+		if (IS_ERR(full_path)) {
+			spin_unlock(&tcon->open_file_lock);
+			free_dentry_path(page);
+			return PTR_ERR(full_path);
+		}
+		if (strcmp(full_path, name))
+			continue;
+
+		cinode = CIFS_I(d_inode(cfile->dentry));
+		spin_unlock(&tcon->open_file_lock);
+		free_dentry_path(page);
+		*ret_file = find_readable_file(cinode, 0);
+		return *ret_file ? 0 : -ENOENT;
+	}
+
+	spin_unlock(&tcon->open_file_lock);
+	free_dentry_path(page);
+	return -ENOENT;
+}
+
+static int cifs_partialpagewrite(struct page *page, unsigned from, unsigned to)
+{
+	struct address_space *mapping = page->mapping;
 	loff_t offset = (loff_t)page->index << PAGE_SHIFT;
-	अक्षर *ग_लिखो_data;
-	पूर्णांक rc = -EFAULT;
-	पूर्णांक bytes_written = 0;
-	काष्ठा inode *inode;
-	काष्ठा cअगरsFileInfo *खोलो_file;
+	char *write_data;
+	int rc = -EFAULT;
+	int bytes_written = 0;
+	struct inode *inode;
+	struct cifsFileInfo *open_file;
 
-	अगर (!mapping || !mapping->host)
-		वापस -EFAULT;
+	if (!mapping || !mapping->host)
+		return -EFAULT;
 
 	inode = page->mapping->host;
 
 	offset += (loff_t)from;
-	ग_लिखो_data = kmap(page);
-	ग_लिखो_data += from;
+	write_data = kmap(page);
+	write_data += from;
 
-	अगर ((to > PAGE_SIZE) || (from > to)) अणु
+	if ((to > PAGE_SIZE) || (from > to)) {
 		kunmap(page);
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
 	/* racing with truncate? */
-	अगर (offset > mapping->host->i_size) अणु
+	if (offset > mapping->host->i_size) {
 		kunmap(page);
-		वापस 0; /* करोn't care */
-	पूर्ण
+		return 0; /* don't care */
+	}
 
 	/* check to make sure that we are not extending the file */
-	अगर (mapping->host->i_size - offset < (loff_t)to)
-		to = (अचिन्हित)(mapping->host->i_size - offset);
+	if (mapping->host->i_size - offset < (loff_t)to)
+		to = (unsigned)(mapping->host->i_size - offset);
 
-	rc = cअगरs_get_writable_file(CIFS_I(mapping->host), FIND_WR_ANY,
-				    &खोलो_file);
-	अगर (!rc) अणु
-		bytes_written = cअगरs_ग_लिखो(खोलो_file, खोलो_file->pid,
-					   ग_लिखो_data, to - from, &offset);
-		cअगरsFileInfo_put(खोलो_file);
-		/* Does mm or vfs alपढ़ोy set बार? */
-		inode->i_aसमय = inode->i_mसमय = current_समय(inode);
-		अगर ((bytes_written > 0) && (offset))
+	rc = cifs_get_writable_file(CIFS_I(mapping->host), FIND_WR_ANY,
+				    &open_file);
+	if (!rc) {
+		bytes_written = cifs_write(open_file, open_file->pid,
+					   write_data, to - from, &offset);
+		cifsFileInfo_put(open_file);
+		/* Does mm or vfs already set times? */
+		inode->i_atime = inode->i_mtime = current_time(inode);
+		if ((bytes_written > 0) && (offset))
 			rc = 0;
-		अन्यथा अगर (bytes_written < 0)
+		else if (bytes_written < 0)
 			rc = bytes_written;
-		अन्यथा
+		else
 			rc = -EFAULT;
-	पूर्ण अन्यथा अणु
-		cअगरs_dbg(FYI, "No writable handle for write page rc=%d\n", rc);
-		अगर (!is_retryable_error(rc))
+	} else {
+		cifs_dbg(FYI, "No writable handle for write page rc=%d\n", rc);
+		if (!is_retryable_error(rc))
 			rc = -EIO;
-	पूर्ण
+	}
 
 	kunmap(page);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल काष्ठा cअगरs_ग_लिखोdata *
-wdata_alloc_and_fillpages(pgoff_t tofind, काष्ठा address_space *mapping,
+static struct cifs_writedata *
+wdata_alloc_and_fillpages(pgoff_t tofind, struct address_space *mapping,
 			  pgoff_t end, pgoff_t *index,
-			  अचिन्हित पूर्णांक *found_pages)
-अणु
-	काष्ठा cअगरs_ग_लिखोdata *wdata;
+			  unsigned int *found_pages)
+{
+	struct cifs_writedata *wdata;
 
-	wdata = cअगरs_ग_लिखोdata_alloc((अचिन्हित पूर्णांक)tofind,
-				     cअगरs_ग_लिखोv_complete);
-	अगर (!wdata)
-		वापस शून्य;
+	wdata = cifs_writedata_alloc((unsigned int)tofind,
+				     cifs_writev_complete);
+	if (!wdata)
+		return NULL;
 
 	*found_pages = find_get_pages_range_tag(mapping, index, end,
-				PAGECACHE_TAG_सूचीTY, tofind, wdata->pages);
-	वापस wdata;
-पूर्ण
+				PAGECACHE_TAG_DIRTY, tofind, wdata->pages);
+	return wdata;
+}
 
-अटल अचिन्हित पूर्णांक
-wdata_prepare_pages(काष्ठा cअगरs_ग_लिखोdata *wdata, अचिन्हित पूर्णांक found_pages,
-		    काष्ठा address_space *mapping,
-		    काष्ठा ग_लिखोback_control *wbc,
-		    pgoff_t end, pgoff_t *index, pgoff_t *next, bool *करोne)
-अणु
-	अचिन्हित पूर्णांक nr_pages = 0, i;
-	काष्ठा page *page;
+static unsigned int
+wdata_prepare_pages(struct cifs_writedata *wdata, unsigned int found_pages,
+		    struct address_space *mapping,
+		    struct writeback_control *wbc,
+		    pgoff_t end, pgoff_t *index, pgoff_t *next, bool *done)
+{
+	unsigned int nr_pages = 0, i;
+	struct page *page;
 
-	क्रम (i = 0; i < found_pages; i++) अणु
+	for (i = 0; i < found_pages; i++) {
 		page = wdata->pages[i];
 		/*
-		 * At this poपूर्णांक we hold neither the i_pages lock nor the
+		 * At this point we hold neither the i_pages lock nor the
 		 * page lock: the page may be truncated or invalidated
-		 * (changing page->mapping to शून्य), or even swizzled
-		 * back from swapper_space to पंचांगpfs file mapping
+		 * (changing page->mapping to NULL), or even swizzled
+		 * back from swapper_space to tmpfs file mapping
 		 */
 
-		अगर (nr_pages == 0)
+		if (nr_pages == 0)
 			lock_page(page);
-		अन्यथा अगर (!trylock_page(page))
-			अवरोध;
+		else if (!trylock_page(page))
+			break;
 
-		अगर (unlikely(page->mapping != mapping)) अणु
+		if (unlikely(page->mapping != mapping)) {
 			unlock_page(page);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (!wbc->range_cyclic && page->index > end) अणु
-			*करोne = true;
+		if (!wbc->range_cyclic && page->index > end) {
+			*done = true;
 			unlock_page(page);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (*next && (page->index != *next)) अणु
+		if (*next && (page->index != *next)) {
 			/* Not next consecutive page */
 			unlock_page(page);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (wbc->sync_mode != WB_SYNC_NONE)
-			रुको_on_page_ग_लिखोback(page);
+		if (wbc->sync_mode != WB_SYNC_NONE)
+			wait_on_page_writeback(page);
 
-		अगर (PageWriteback(page) ||
-				!clear_page_dirty_क्रम_io(page)) अणु
+		if (PageWriteback(page) ||
+				!clear_page_dirty_for_io(page)) {
 			unlock_page(page);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		/*
 		 * This actually clears the dirty bit in the radix tree.
-		 * See cअगरs_ग_लिखोpage() क्रम more commentary.
+		 * See cifs_writepage() for more commentary.
 		 */
-		set_page_ग_लिखोback(page);
-		अगर (page_offset(page) >= i_size_पढ़ो(mapping->host)) अणु
-			*करोne = true;
+		set_page_writeback(page);
+		if (page_offset(page) >= i_size_read(mapping->host)) {
+			*done = true;
 			unlock_page(page);
-			end_page_ग_लिखोback(page);
-			अवरोध;
-		पूर्ण
+			end_page_writeback(page);
+			break;
+		}
 
 		wdata->pages[i] = page;
 		*next = page->index + 1;
 		++nr_pages;
-	पूर्ण
+	}
 
 	/* reset index to refind any pages skipped */
-	अगर (nr_pages == 0)
+	if (nr_pages == 0)
 		*index = wdata->pages[0]->index + 1;
 
 	/* put any pages we aren't going to use */
-	क्रम (i = nr_pages; i < found_pages; i++) अणु
+	for (i = nr_pages; i < found_pages; i++) {
 		put_page(wdata->pages[i]);
-		wdata->pages[i] = शून्य;
-	पूर्ण
+		wdata->pages[i] = NULL;
+	}
 
-	वापस nr_pages;
-पूर्ण
+	return nr_pages;
+}
 
-अटल पूर्णांक
-wdata_send_pages(काष्ठा cअगरs_ग_लिखोdata *wdata, अचिन्हित पूर्णांक nr_pages,
-		 काष्ठा address_space *mapping, काष्ठा ग_लिखोback_control *wbc)
-अणु
-	पूर्णांक rc;
+static int
+wdata_send_pages(struct cifs_writedata *wdata, unsigned int nr_pages,
+		 struct address_space *mapping, struct writeback_control *wbc)
+{
+	int rc;
 
 	wdata->sync_mode = wbc->sync_mode;
 	wdata->nr_pages = nr_pages;
 	wdata->offset = page_offset(wdata->pages[0]);
 	wdata->pagesz = PAGE_SIZE;
-	wdata->tailsz = min(i_size_पढ़ो(mapping->host) -
+	wdata->tailsz = min(i_size_read(mapping->host) -
 			page_offset(wdata->pages[nr_pages - 1]),
 			(loff_t)PAGE_SIZE);
 	wdata->bytes = ((nr_pages - 1) * PAGE_SIZE) + wdata->tailsz;
 	wdata->pid = wdata->cfile->pid;
 
 	rc = adjust_credits(wdata->server, &wdata->credits, wdata->bytes);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
-	अगर (wdata->cfile->invalidHandle)
+	if (wdata->cfile->invalidHandle)
 		rc = -EAGAIN;
-	अन्यथा
-		rc = wdata->server->ops->async_ग_लिखोv(wdata,
-						      cअगरs_ग_लिखोdata_release);
+	else
+		rc = wdata->server->ops->async_writev(wdata,
+						      cifs_writedata_release);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक cअगरs_ग_लिखोpages(काष्ठा address_space *mapping,
-			   काष्ठा ग_लिखोback_control *wbc)
-अणु
-	काष्ठा inode *inode = mapping->host;
-	काष्ठा cअगरs_sb_info *cअगरs_sb = CIFS_SB(inode->i_sb);
-	काष्ठा TCP_Server_Info *server;
-	bool करोne = false, scanned = false, range_whole = false;
+static int cifs_writepages(struct address_space *mapping,
+			   struct writeback_control *wbc)
+{
+	struct inode *inode = mapping->host;
+	struct cifs_sb_info *cifs_sb = CIFS_SB(inode->i_sb);
+	struct TCP_Server_Info *server;
+	bool done = false, scanned = false, range_whole = false;
 	pgoff_t end, index;
-	काष्ठा cअगरs_ग_लिखोdata *wdata;
-	काष्ठा cअगरsFileInfo *cfile = शून्य;
-	पूर्णांक rc = 0;
-	पूर्णांक saved_rc = 0;
-	अचिन्हित पूर्णांक xid;
+	struct cifs_writedata *wdata;
+	struct cifsFileInfo *cfile = NULL;
+	int rc = 0;
+	int saved_rc = 0;
+	unsigned int xid;
 
 	/*
-	 * If wsize is smaller than the page cache size, शेष to writing
-	 * one page at a समय via cअगरs_ग_लिखोpage
+	 * If wsize is smaller than the page cache size, default to writing
+	 * one page at a time via cifs_writepage
 	 */
-	अगर (cअगरs_sb->ctx->wsize < PAGE_SIZE)
-		वापस generic_ग_लिखोpages(mapping, wbc);
+	if (cifs_sb->ctx->wsize < PAGE_SIZE)
+		return generic_writepages(mapping, wbc);
 
 	xid = get_xid();
-	अगर (wbc->range_cyclic) अणु
-		index = mapping->ग_लिखोback_index; /* Start from prev offset */
+	if (wbc->range_cyclic) {
+		index = mapping->writeback_index; /* Start from prev offset */
 		end = -1;
-	पूर्ण अन्यथा अणु
+	} else {
 		index = wbc->range_start >> PAGE_SHIFT;
 		end = wbc->range_end >> PAGE_SHIFT;
-		अगर (wbc->range_start == 0 && wbc->range_end == Lदीर्घ_उच्च)
+		if (wbc->range_start == 0 && wbc->range_end == LLONG_MAX)
 			range_whole = true;
 		scanned = true;
-	पूर्ण
-	server = cअगरs_pick_channel(cअगरs_sb_master_tcon(cअगरs_sb)->ses);
+	}
+	server = cifs_pick_channel(cifs_sb_master_tcon(cifs_sb)->ses);
 
 retry:
-	जबतक (!करोne && index <= end) अणु
-		अचिन्हित पूर्णांक i, nr_pages, found_pages, wsize;
+	while (!done && index <= end) {
+		unsigned int i, nr_pages, found_pages, wsize;
 		pgoff_t next = 0, tofind, saved_index = index;
-		काष्ठा cअगरs_credits credits_on_stack;
-		काष्ठा cअगरs_credits *credits = &credits_on_stack;
-		पूर्णांक get_file_rc = 0;
+		struct cifs_credits credits_on_stack;
+		struct cifs_credits *credits = &credits_on_stack;
+		int get_file_rc = 0;
 
-		अगर (cfile)
-			cअगरsFileInfo_put(cfile);
+		if (cfile)
+			cifsFileInfo_put(cfile);
 
-		rc = cअगरs_get_writable_file(CIFS_I(inode), FIND_WR_ANY, &cfile);
+		rc = cifs_get_writable_file(CIFS_I(inode), FIND_WR_ANY, &cfile);
 
-		/* in हाल of an error store it to वापस later */
-		अगर (rc)
+		/* in case of an error store it to return later */
+		if (rc)
 			get_file_rc = rc;
 
-		rc = server->ops->रुको_mtu_credits(server, cअगरs_sb->ctx->wsize,
+		rc = server->ops->wait_mtu_credits(server, cifs_sb->ctx->wsize,
 						   &wsize, credits);
-		अगर (rc != 0) अणु
-			करोne = true;
-			अवरोध;
-		पूर्ण
+		if (rc != 0) {
+			done = true;
+			break;
+		}
 
 		tofind = min((wsize / PAGE_SIZE) - 1, end - index) + 1;
 
 		wdata = wdata_alloc_and_fillpages(tofind, mapping, end, &index,
 						  &found_pages);
-		अगर (!wdata) अणु
+		if (!wdata) {
 			rc = -ENOMEM;
-			करोne = true;
-			add_credits_and_wake_अगर(server, credits, 0);
-			अवरोध;
-		पूर्ण
+			done = true;
+			add_credits_and_wake_if(server, credits, 0);
+			break;
+		}
 
-		अगर (found_pages == 0) अणु
-			kref_put(&wdata->refcount, cअगरs_ग_लिखोdata_release);
-			add_credits_and_wake_अगर(server, credits, 0);
-			अवरोध;
-		पूर्ण
+		if (found_pages == 0) {
+			kref_put(&wdata->refcount, cifs_writedata_release);
+			add_credits_and_wake_if(server, credits, 0);
+			break;
+		}
 
 		nr_pages = wdata_prepare_pages(wdata, found_pages, mapping, wbc,
-					       end, &index, &next, &करोne);
+					       end, &index, &next, &done);
 
-		/* nothing to ग_लिखो? */
-		अगर (nr_pages == 0) अणु
-			kref_put(&wdata->refcount, cअगरs_ग_लिखोdata_release);
-			add_credits_and_wake_अगर(server, credits, 0);
-			जारी;
-		पूर्ण
+		/* nothing to write? */
+		if (nr_pages == 0) {
+			kref_put(&wdata->refcount, cifs_writedata_release);
+			add_credits_and_wake_if(server, credits, 0);
+			continue;
+		}
 
 		wdata->credits = credits_on_stack;
 		wdata->cfile = cfile;
 		wdata->server = server;
-		cfile = शून्य;
+		cfile = NULL;
 
-		अगर (!wdata->cfile) अणु
-			cअगरs_dbg(VFS, "No writable handle in writepages rc=%d\n",
+		if (!wdata->cfile) {
+			cifs_dbg(VFS, "No writable handle in writepages rc=%d\n",
 				 get_file_rc);
-			अगर (is_retryable_error(get_file_rc))
+			if (is_retryable_error(get_file_rc))
 				rc = get_file_rc;
-			अन्यथा
+			else
 				rc = -EBADF;
-		पूर्ण अन्यथा
+		} else
 			rc = wdata_send_pages(wdata, nr_pages, mapping, wbc);
 
-		क्रम (i = 0; i < nr_pages; ++i)
+		for (i = 0; i < nr_pages; ++i)
 			unlock_page(wdata->pages[i]);
 
 		/* send failure -- clean up the mess */
-		अगर (rc != 0) अणु
-			add_credits_and_wake_अगर(server, &wdata->credits, 0);
-			क्रम (i = 0; i < nr_pages; ++i) अणु
-				अगर (is_retryable_error(rc))
-					redirty_page_क्रम_ग_लिखोpage(wbc,
+		if (rc != 0) {
+			add_credits_and_wake_if(server, &wdata->credits, 0);
+			for (i = 0; i < nr_pages; ++i) {
+				if (is_retryable_error(rc))
+					redirty_page_for_writepage(wbc,
 							   wdata->pages[i]);
-				अन्यथा
+				else
 					SetPageError(wdata->pages[i]);
-				end_page_ग_लिखोback(wdata->pages[i]);
+				end_page_writeback(wdata->pages[i]);
 				put_page(wdata->pages[i]);
-			पूर्ण
-			अगर (!is_retryable_error(rc))
+			}
+			if (!is_retryable_error(rc))
 				mapping_set_error(mapping, rc);
-		पूर्ण
-		kref_put(&wdata->refcount, cअगरs_ग_लिखोdata_release);
+		}
+		kref_put(&wdata->refcount, cifs_writedata_release);
 
-		अगर (wbc->sync_mode == WB_SYNC_ALL && rc == -EAGAIN) अणु
+		if (wbc->sync_mode == WB_SYNC_ALL && rc == -EAGAIN) {
 			index = saved_index;
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		/* Return immediately अगर we received a संकेत during writing */
-		अगर (is_पूर्णांकerrupt_error(rc)) अणु
-			करोne = true;
-			अवरोध;
-		पूर्ण
+		/* Return immediately if we received a signal during writing */
+		if (is_interrupt_error(rc)) {
+			done = true;
+			break;
+		}
 
-		अगर (rc != 0 && saved_rc == 0)
+		if (rc != 0 && saved_rc == 0)
 			saved_rc = rc;
 
-		wbc->nr_to_ग_लिखो -= nr_pages;
-		अगर (wbc->nr_to_ग_लिखो <= 0)
-			करोne = true;
+		wbc->nr_to_write -= nr_pages;
+		if (wbc->nr_to_write <= 0)
+			done = true;
 
 		index = next;
-	पूर्ण
+	}
 
-	अगर (!scanned && !करोne) अणु
+	if (!scanned && !done) {
 		/*
-		 * We hit the last page and there is more work to be करोne: wrap
+		 * We hit the last page and there is more work to be done: wrap
 		 * back to the start of the file
 		 */
 		scanned = true;
 		index = 0;
-		जाओ retry;
-	पूर्ण
+		goto retry;
+	}
 
-	अगर (saved_rc != 0)
+	if (saved_rc != 0)
 		rc = saved_rc;
 
-	अगर (wbc->range_cyclic || (range_whole && wbc->nr_to_ग_लिखो > 0))
-		mapping->ग_लिखोback_index = index;
+	if (wbc->range_cyclic || (range_whole && wbc->nr_to_write > 0))
+		mapping->writeback_index = index;
 
-	अगर (cfile)
-		cअगरsFileInfo_put(cfile);
-	मुक्त_xid(xid);
-	/* Indication to update स_समय and mसमय as बंद is deferred */
+	if (cfile)
+		cifsFileInfo_put(cfile);
+	free_xid(xid);
+	/* Indication to update ctime and mtime as close is deferred */
 	set_bit(CIFS_INO_MODIFIED_ATTR, &CIFS_I(inode)->flags);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक
-cअगरs_ग_लिखोpage_locked(काष्ठा page *page, काष्ठा ग_लिखोback_control *wbc)
-अणु
-	पूर्णांक rc;
-	अचिन्हित पूर्णांक xid;
+static int
+cifs_writepage_locked(struct page *page, struct writeback_control *wbc)
+{
+	int rc;
+	unsigned int xid;
 
 	xid = get_xid();
-/* BB add check क्रम wbc flags */
+/* BB add check for wbc flags */
 	get_page(page);
-	अगर (!PageUptodate(page))
-		cअगरs_dbg(FYI, "ppw - page not up to date\n");
+	if (!PageUptodate(page))
+		cifs_dbg(FYI, "ppw - page not up to date\n");
 
 	/*
 	 * Set the "writeback" flag, and clear "dirty" in the radix tree.
 	 *
-	 * A ग_लिखोpage() implementation always needs to करो either this,
+	 * A writepage() implementation always needs to do either this,
 	 * or re-dirty the page with "redirty_page_for_writepage()" in
-	 * the हाल of a failure.
+	 * the case of a failure.
 	 *
 	 * Just unlocking the page will cause the radix tree tag-bits
 	 * to fail to update with the state of the page correctly.
 	 */
-	set_page_ग_लिखोback(page);
-retry_ग_लिखो:
-	rc = cअगरs_partialpageग_लिखो(page, 0, PAGE_SIZE);
-	अगर (is_retryable_error(rc)) अणु
-		अगर (wbc->sync_mode == WB_SYNC_ALL && rc == -EAGAIN)
-			जाओ retry_ग_लिखो;
-		redirty_page_क्रम_ग_लिखोpage(wbc, page);
-	पूर्ण अन्यथा अगर (rc != 0) अणु
+	set_page_writeback(page);
+retry_write:
+	rc = cifs_partialpagewrite(page, 0, PAGE_SIZE);
+	if (is_retryable_error(rc)) {
+		if (wbc->sync_mode == WB_SYNC_ALL && rc == -EAGAIN)
+			goto retry_write;
+		redirty_page_for_writepage(wbc, page);
+	} else if (rc != 0) {
 		SetPageError(page);
 		mapping_set_error(page->mapping, rc);
-	पूर्ण अन्यथा अणु
+	} else {
 		SetPageUptodate(page);
-	पूर्ण
-	end_page_ग_लिखोback(page);
+	}
+	end_page_writeback(page);
 	put_page(page);
-	मुक्त_xid(xid);
-	वापस rc;
-पूर्ण
+	free_xid(xid);
+	return rc;
+}
 
-अटल पूर्णांक cअगरs_ग_लिखोpage(काष्ठा page *page, काष्ठा ग_लिखोback_control *wbc)
-अणु
-	पूर्णांक rc = cअगरs_ग_लिखोpage_locked(page, wbc);
+static int cifs_writepage(struct page *page, struct writeback_control *wbc)
+{
+	int rc = cifs_writepage_locked(page, wbc);
 	unlock_page(page);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक cअगरs_ग_लिखो_end(काष्ठा file *file, काष्ठा address_space *mapping,
-			loff_t pos, अचिन्हित len, अचिन्हित copied,
-			काष्ठा page *page, व्योम *fsdata)
-अणु
-	पूर्णांक rc;
-	काष्ठा inode *inode = mapping->host;
-	काष्ठा cअगरsFileInfo *cfile = file->निजी_data;
-	काष्ठा cअगरs_sb_info *cअगरs_sb = CIFS_SB(cfile->dentry->d_sb);
+static int cifs_write_end(struct file *file, struct address_space *mapping,
+			loff_t pos, unsigned len, unsigned copied,
+			struct page *page, void *fsdata)
+{
+	int rc;
+	struct inode *inode = mapping->host;
+	struct cifsFileInfo *cfile = file->private_data;
+	struct cifs_sb_info *cifs_sb = CIFS_SB(cfile->dentry->d_sb);
 	__u32 pid;
 
-	अगर (cअगरs_sb->mnt_cअगरs_flags & CIFS_MOUNT_RWPIDFORWARD)
+	if (cifs_sb->mnt_cifs_flags & CIFS_MOUNT_RWPIDFORWARD)
 		pid = cfile->pid;
-	अन्यथा
+	else
 		pid = current->tgid;
 
-	cअगरs_dbg(FYI, "write_end for page %p from pos %lld with %d bytes\n",
+	cifs_dbg(FYI, "write_end for page %p from pos %lld with %d bytes\n",
 		 page, pos, copied);
 
-	अगर (PageChecked(page)) अणु
-		अगर (copied == len)
+	if (PageChecked(page)) {
+		if (copied == len)
 			SetPageUptodate(page);
 		ClearPageChecked(page);
-	पूर्ण अन्यथा अगर (!PageUptodate(page) && copied == PAGE_SIZE)
+	} else if (!PageUptodate(page) && copied == PAGE_SIZE)
 		SetPageUptodate(page);
 
-	अगर (!PageUptodate(page)) अणु
-		अक्षर *page_data;
-		अचिन्हित offset = pos & (PAGE_SIZE - 1);
-		अचिन्हित पूर्णांक xid;
+	if (!PageUptodate(page)) {
+		char *page_data;
+		unsigned offset = pos & (PAGE_SIZE - 1);
+		unsigned int xid;
 
 		xid = get_xid();
 		/* this is probably better than directly calling
-		   partialpage_ग_लिखो since in this function the file handle is
+		   partialpage_write since in this function the file handle is
 		   known which we might as well	leverage */
-		/* BB check अगर anything अन्यथा missing out of ppw
-		   such as updating last ग_लिखो समय */
+		/* BB check if anything else missing out of ppw
+		   such as updating last write time */
 		page_data = kmap(page);
-		rc = cअगरs_ग_लिखो(cfile, pid, page_data + offset, copied, &pos);
-		/* अगर (rc < 0) should we set ग_लिखोbehind rc? */
+		rc = cifs_write(cfile, pid, page_data + offset, copied, &pos);
+		/* if (rc < 0) should we set writebehind rc? */
 		kunmap(page);
 
-		मुक्त_xid(xid);
-	पूर्ण अन्यथा अणु
+		free_xid(xid);
+	} else {
 		rc = copied;
 		pos += copied;
 		set_page_dirty(page);
-	पूर्ण
+	}
 
-	अगर (rc > 0) अणु
+	if (rc > 0) {
 		spin_lock(&inode->i_lock);
-		अगर (pos > inode->i_size) अणु
-			i_size_ग_लिखो(inode, pos);
+		if (pos > inode->i_size) {
+			i_size_write(inode, pos);
 			inode->i_blocks = (512 - 1 + pos) >> 9;
-		पूर्ण
+		}
 		spin_unlock(&inode->i_lock);
-	पूर्ण
+	}
 
 	unlock_page(page);
 	put_page(page);
-	/* Indication to update स_समय and mसमय as बंद is deferred */
+	/* Indication to update ctime and mtime as close is deferred */
 	set_bit(CIFS_INO_MODIFIED_ATTR, &CIFS_I(inode)->flags);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-पूर्णांक cअगरs_strict_fsync(काष्ठा file *file, loff_t start, loff_t end,
-		      पूर्णांक datasync)
-अणु
-	अचिन्हित पूर्णांक xid;
-	पूर्णांक rc = 0;
-	काष्ठा cअगरs_tcon *tcon;
-	काष्ठा TCP_Server_Info *server;
-	काष्ठा cअगरsFileInfo *smbfile = file->निजी_data;
-	काष्ठा inode *inode = file_inode(file);
-	काष्ठा cअगरs_sb_info *cअगरs_sb = CIFS_SB(inode->i_sb);
+int cifs_strict_fsync(struct file *file, loff_t start, loff_t end,
+		      int datasync)
+{
+	unsigned int xid;
+	int rc = 0;
+	struct cifs_tcon *tcon;
+	struct TCP_Server_Info *server;
+	struct cifsFileInfo *smbfile = file->private_data;
+	struct inode *inode = file_inode(file);
+	struct cifs_sb_info *cifs_sb = CIFS_SB(inode->i_sb);
 
-	rc = file_ग_लिखो_and_रुको_range(file, start, end);
-	अगर (rc) अणु
-		trace_cअगरs_fsync_err(inode->i_ino, rc);
-		वापस rc;
-	पूर्ण
-
-	xid = get_xid();
-
-	cअगरs_dbg(FYI, "Sync file - name: %pD datasync: 0x%x\n",
-		 file, datasync);
-
-	अगर (!CIFS_CACHE_READ(CIFS_I(inode))) अणु
-		rc = cअगरs_zap_mapping(inode);
-		अगर (rc) अणु
-			cअगरs_dbg(FYI, "rc: %d during invalidate phase\n", rc);
-			rc = 0; /* करोn't care about it in fsync */
-		पूर्ण
-	पूर्ण
-
-	tcon = tlink_tcon(smbfile->tlink);
-	अगर (!(cअगरs_sb->mnt_cअगरs_flags & CIFS_MOUNT_NOSSYNC)) अणु
-		server = tcon->ses->server;
-		अगर (server->ops->flush)
-			rc = server->ops->flush(xid, tcon, &smbfile->fid);
-		अन्यथा
-			rc = -ENOSYS;
-	पूर्ण
-
-	मुक्त_xid(xid);
-	वापस rc;
-पूर्ण
-
-पूर्णांक cअगरs_fsync(काष्ठा file *file, loff_t start, loff_t end, पूर्णांक datasync)
-अणु
-	अचिन्हित पूर्णांक xid;
-	पूर्णांक rc = 0;
-	काष्ठा cअगरs_tcon *tcon;
-	काष्ठा TCP_Server_Info *server;
-	काष्ठा cअगरsFileInfo *smbfile = file->निजी_data;
-	काष्ठा cअगरs_sb_info *cअगरs_sb = CIFS_खाता_SB(file);
-
-	rc = file_ग_लिखो_and_रुको_range(file, start, end);
-	अगर (rc) अणु
-		trace_cअगरs_fsync_err(file_inode(file)->i_ino, rc);
-		वापस rc;
-	पूर्ण
+	rc = file_write_and_wait_range(file, start, end);
+	if (rc) {
+		trace_cifs_fsync_err(inode->i_ino, rc);
+		return rc;
+	}
 
 	xid = get_xid();
 
-	cअगरs_dbg(FYI, "Sync file - name: %pD datasync: 0x%x\n",
+	cifs_dbg(FYI, "Sync file - name: %pD datasync: 0x%x\n",
+		 file, datasync);
+
+	if (!CIFS_CACHE_READ(CIFS_I(inode))) {
+		rc = cifs_zap_mapping(inode);
+		if (rc) {
+			cifs_dbg(FYI, "rc: %d during invalidate phase\n", rc);
+			rc = 0; /* don't care about it in fsync */
+		}
+	}
+
+	tcon = tlink_tcon(smbfile->tlink);
+	if (!(cifs_sb->mnt_cifs_flags & CIFS_MOUNT_NOSSYNC)) {
+		server = tcon->ses->server;
+		if (server->ops->flush)
+			rc = server->ops->flush(xid, tcon, &smbfile->fid);
+		else
+			rc = -ENOSYS;
+	}
+
+	free_xid(xid);
+	return rc;
+}
+
+int cifs_fsync(struct file *file, loff_t start, loff_t end, int datasync)
+{
+	unsigned int xid;
+	int rc = 0;
+	struct cifs_tcon *tcon;
+	struct TCP_Server_Info *server;
+	struct cifsFileInfo *smbfile = file->private_data;
+	struct cifs_sb_info *cifs_sb = CIFS_FILE_SB(file);
+
+	rc = file_write_and_wait_range(file, start, end);
+	if (rc) {
+		trace_cifs_fsync_err(file_inode(file)->i_ino, rc);
+		return rc;
+	}
+
+	xid = get_xid();
+
+	cifs_dbg(FYI, "Sync file - name: %pD datasync: 0x%x\n",
 		 file, datasync);
 
 	tcon = tlink_tcon(smbfile->tlink);
-	अगर (!(cअगरs_sb->mnt_cअगरs_flags & CIFS_MOUNT_NOSSYNC)) अणु
+	if (!(cifs_sb->mnt_cifs_flags & CIFS_MOUNT_NOSSYNC)) {
 		server = tcon->ses->server;
-		अगर (server->ops->flush)
+		if (server->ops->flush)
 			rc = server->ops->flush(xid, tcon, &smbfile->fid);
-		अन्यथा
+		else
 			rc = -ENOSYS;
-	पूर्ण
+	}
 
-	मुक्त_xid(xid);
-	वापस rc;
-पूर्ण
+	free_xid(xid);
+	return rc;
+}
 
 /*
- * As file बंदs, flush all cached ग_लिखो data क्रम this inode checking
- * क्रम ग_लिखो behind errors.
+ * As file closes, flush all cached write data for this inode checking
+ * for write behind errors.
  */
-पूर्णांक cअगरs_flush(काष्ठा file *file, fl_owner_t id)
-अणु
-	काष्ठा inode *inode = file_inode(file);
-	पूर्णांक rc = 0;
+int cifs_flush(struct file *file, fl_owner_t id)
+{
+	struct inode *inode = file_inode(file);
+	int rc = 0;
 
-	अगर (file->f_mode & FMODE_WRITE)
-		rc = filemap_ग_लिखो_and_रुको(inode->i_mapping);
+	if (file->f_mode & FMODE_WRITE)
+		rc = filemap_write_and_wait(inode->i_mapping);
 
-	cअगरs_dbg(FYI, "Flush inode %p file %p rc %d\n", inode, file, rc);
-	अगर (rc)
-		trace_cअगरs_flush_err(inode->i_ino, rc);
-	वापस rc;
-पूर्ण
+	cifs_dbg(FYI, "Flush inode %p file %p rc %d\n", inode, file, rc);
+	if (rc)
+		trace_cifs_flush_err(inode->i_ino, rc);
+	return rc;
+}
 
-अटल पूर्णांक
-cअगरs_ग_लिखो_allocate_pages(काष्ठा page **pages, अचिन्हित दीर्घ num_pages)
-अणु
-	पूर्णांक rc = 0;
-	अचिन्हित दीर्घ i;
+static int
+cifs_write_allocate_pages(struct page **pages, unsigned long num_pages)
+{
+	int rc = 0;
+	unsigned long i;
 
-	क्रम (i = 0; i < num_pages; i++) अणु
+	for (i = 0; i < num_pages; i++) {
 		pages[i] = alloc_page(GFP_KERNEL|__GFP_HIGHMEM);
-		अगर (!pages[i]) अणु
+		if (!pages[i]) {
 			/*
-			 * save number of pages we have alपढ़ोy allocated and
-			 * वापस with ENOMEM error
+			 * save number of pages we have already allocated and
+			 * return with ENOMEM error
 			 */
 			num_pages = i;
 			rc = -ENOMEM;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	अगर (rc) अणु
-		क्रम (i = 0; i < num_pages; i++)
+	if (rc) {
+		for (i = 0; i < num_pages; i++)
 			put_page(pages[i]);
-	पूर्ण
-	वापस rc;
-पूर्ण
+	}
+	return rc;
+}
 
-अटल अंतरभूत
-माप_प्रकार get_numpages(स्थिर माप_प्रकार wsize, स्थिर माप_प्रकार len, माप_प्रकार *cur_len)
-अणु
-	माप_प्रकार num_pages;
-	माप_प्रकार clen;
+static inline
+size_t get_numpages(const size_t wsize, const size_t len, size_t *cur_len)
+{
+	size_t num_pages;
+	size_t clen;
 
-	clen = min_t(स्थिर माप_प्रकार, len, wsize);
+	clen = min_t(const size_t, len, wsize);
 	num_pages = DIV_ROUND_UP(clen, PAGE_SIZE);
 
-	अगर (cur_len)
+	if (cur_len)
 		*cur_len = clen;
 
-	वापस num_pages;
-पूर्ण
+	return num_pages;
+}
 
-अटल व्योम
-cअगरs_uncached_ग_लिखोdata_release(काष्ठा kref *refcount)
-अणु
-	पूर्णांक i;
-	काष्ठा cअगरs_ग_लिखोdata *wdata = container_of(refcount,
-					काष्ठा cअगरs_ग_लिखोdata, refcount);
+static void
+cifs_uncached_writedata_release(struct kref *refcount)
+{
+	int i;
+	struct cifs_writedata *wdata = container_of(refcount,
+					struct cifs_writedata, refcount);
 
-	kref_put(&wdata->ctx->refcount, cअगरs_aio_ctx_release);
-	क्रम (i = 0; i < wdata->nr_pages; i++)
+	kref_put(&wdata->ctx->refcount, cifs_aio_ctx_release);
+	for (i = 0; i < wdata->nr_pages; i++)
 		put_page(wdata->pages[i]);
-	cअगरs_ग_लिखोdata_release(refcount);
-पूर्ण
+	cifs_writedata_release(refcount);
+}
 
-अटल व्योम collect_uncached_ग_लिखो_data(काष्ठा cअगरs_aio_ctx *ctx);
+static void collect_uncached_write_data(struct cifs_aio_ctx *ctx);
 
-अटल व्योम
-cअगरs_uncached_ग_लिखोv_complete(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा cअगरs_ग_लिखोdata *wdata = container_of(work,
-					काष्ठा cअगरs_ग_लिखोdata, work);
-	काष्ठा inode *inode = d_inode(wdata->cfile->dentry);
-	काष्ठा cअगरsInodeInfo *cअगरsi = CIFS_I(inode);
+static void
+cifs_uncached_writev_complete(struct work_struct *work)
+{
+	struct cifs_writedata *wdata = container_of(work,
+					struct cifs_writedata, work);
+	struct inode *inode = d_inode(wdata->cfile->dentry);
+	struct cifsInodeInfo *cifsi = CIFS_I(inode);
 
 	spin_lock(&inode->i_lock);
-	cअगरs_update_eof(cअगरsi, wdata->offset, wdata->bytes);
-	अगर (cअगरsi->server_eof > inode->i_size)
-		i_size_ग_लिखो(inode, cअगरsi->server_eof);
+	cifs_update_eof(cifsi, wdata->offset, wdata->bytes);
+	if (cifsi->server_eof > inode->i_size)
+		i_size_write(inode, cifsi->server_eof);
 	spin_unlock(&inode->i_lock);
 
-	complete(&wdata->करोne);
-	collect_uncached_ग_लिखो_data(wdata->ctx);
-	/* the below call can possibly मुक्त the last ref to aio ctx */
-	kref_put(&wdata->refcount, cअगरs_uncached_ग_लिखोdata_release);
-पूर्ण
+	complete(&wdata->done);
+	collect_uncached_write_data(wdata->ctx);
+	/* the below call can possibly free the last ref to aio ctx */
+	kref_put(&wdata->refcount, cifs_uncached_writedata_release);
+}
 
-अटल पूर्णांक
-wdata_fill_from_iovec(काष्ठा cअगरs_ग_लिखोdata *wdata, काष्ठा iov_iter *from,
-		      माप_प्रकार *len, अचिन्हित दीर्घ *num_pages)
-अणु
-	माप_प्रकार save_len, copied, bytes, cur_len = *len;
-	अचिन्हित दीर्घ i, nr_pages = *num_pages;
+static int
+wdata_fill_from_iovec(struct cifs_writedata *wdata, struct iov_iter *from,
+		      size_t *len, unsigned long *num_pages)
+{
+	size_t save_len, copied, bytes, cur_len = *len;
+	unsigned long i, nr_pages = *num_pages;
 
 	save_len = cur_len;
-	क्रम (i = 0; i < nr_pages; i++) अणु
-		bytes = min_t(स्थिर माप_प्रकार, cur_len, PAGE_SIZE);
+	for (i = 0; i < nr_pages; i++) {
+		bytes = min_t(const size_t, cur_len, PAGE_SIZE);
 		copied = copy_page_from_iter(wdata->pages[i], 0, bytes, from);
 		cur_len -= copied;
 		/*
 		 * If we didn't copy as much as we expected, then that
-		 * may mean we trod पूर्णांकo an unmapped area. Stop copying
-		 * at that poपूर्णांक. On the next pass through the big
+		 * may mean we trod into an unmapped area. Stop copying
+		 * at that point. On the next pass through the big
 		 * loop, we'll likely end up getting a zero-length
-		 * ग_लिखो and bailing out of it.
+		 * write and bailing out of it.
 		 */
-		अगर (copied < bytes)
-			अवरोध;
-	पूर्ण
+		if (copied < bytes)
+			break;
+	}
 	cur_len = save_len - cur_len;
 	*len = cur_len;
 
@@ -2866,164 +2865,164 @@ wdata_fill_from_iovec(काष्ठा cअगरs_ग_लिखोdata *wdata
 	 * If we have no data to send, then that probably means that
 	 * the copy above failed altogether. That's most likely because
 	 * the address in the iovec was bogus. Return -EFAULT and let
-	 * the caller मुक्त anything we allocated and bail out.
+	 * the caller free anything we allocated and bail out.
 	 */
-	अगर (!cur_len)
-		वापस -EFAULT;
+	if (!cur_len)
+		return -EFAULT;
 
 	/*
 	 * i + 1 now represents the number of pages we actually used in
 	 * the copy phase above.
 	 */
 	*num_pages = i + 1;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-cअगरs_resend_wdata(काष्ठा cअगरs_ग_लिखोdata *wdata, काष्ठा list_head *wdata_list,
-	काष्ठा cअगरs_aio_ctx *ctx)
-अणु
-	अचिन्हित पूर्णांक wsize;
-	काष्ठा cअगरs_credits credits;
-	पूर्णांक rc;
-	काष्ठा TCP_Server_Info *server = wdata->server;
+static int
+cifs_resend_wdata(struct cifs_writedata *wdata, struct list_head *wdata_list,
+	struct cifs_aio_ctx *ctx)
+{
+	unsigned int wsize;
+	struct cifs_credits credits;
+	int rc;
+	struct TCP_Server_Info *server = wdata->server;
 
-	करो अणु
-		अगर (wdata->cfile->invalidHandle) अणु
-			rc = cअगरs_reखोलो_file(wdata->cfile, false);
-			अगर (rc == -EAGAIN)
-				जारी;
-			अन्यथा अगर (rc)
-				अवरोध;
-		पूर्ण
+	do {
+		if (wdata->cfile->invalidHandle) {
+			rc = cifs_reopen_file(wdata->cfile, false);
+			if (rc == -EAGAIN)
+				continue;
+			else if (rc)
+				break;
+		}
 
 
 		/*
-		 * Wait क्रम credits to resend this wdata.
+		 * Wait for credits to resend this wdata.
 		 * Note: we are attempting to resend the whole wdata not in
 		 * segments
 		 */
-		करो अणु
-			rc = server->ops->रुको_mtu_credits(server, wdata->bytes,
+		do {
+			rc = server->ops->wait_mtu_credits(server, wdata->bytes,
 						&wsize, &credits);
-			अगर (rc)
-				जाओ fail;
+			if (rc)
+				goto fail;
 
-			अगर (wsize < wdata->bytes) अणु
-				add_credits_and_wake_अगर(server, &credits, 0);
+			if (wsize < wdata->bytes) {
+				add_credits_and_wake_if(server, &credits, 0);
 				msleep(1000);
-			पूर्ण
-		पूर्ण जबतक (wsize < wdata->bytes);
+			}
+		} while (wsize < wdata->bytes);
 		wdata->credits = credits;
 
 		rc = adjust_credits(server, &wdata->credits, wdata->bytes);
 
-		अगर (!rc) अणु
-			अगर (wdata->cfile->invalidHandle)
+		if (!rc) {
+			if (wdata->cfile->invalidHandle)
 				rc = -EAGAIN;
-			अन्यथा अणु
-#अगर_घोषित CONFIG_CIFS_SMB_सूचीECT
-				अगर (wdata->mr) अणु
+			else {
+#ifdef CONFIG_CIFS_SMB_DIRECT
+				if (wdata->mr) {
 					wdata->mr->need_invalidate = true;
-					smbd_deरेजिस्टर_mr(wdata->mr);
-					wdata->mr = शून्य;
-				पूर्ण
-#पूर्ण_अगर
-				rc = server->ops->async_ग_लिखोv(wdata,
-					cअगरs_uncached_ग_लिखोdata_release);
-			पूर्ण
-		पूर्ण
+					smbd_deregister_mr(wdata->mr);
+					wdata->mr = NULL;
+				}
+#endif
+				rc = server->ops->async_writev(wdata,
+					cifs_uncached_writedata_release);
+			}
+		}
 
-		/* If the ग_लिखो was successfully sent, we are करोne */
-		अगर (!rc) अणु
+		/* If the write was successfully sent, we are done */
+		if (!rc) {
 			list_add_tail(&wdata->list, wdata_list);
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 
-		/* Roll back credits and retry अगर needed */
-		add_credits_and_wake_अगर(server, &wdata->credits, 0);
-	पूर्ण जबतक (rc == -EAGAIN);
+		/* Roll back credits and retry if needed */
+		add_credits_and_wake_if(server, &wdata->credits, 0);
+	} while (rc == -EAGAIN);
 
 fail:
-	kref_put(&wdata->refcount, cअगरs_uncached_ग_लिखोdata_release);
-	वापस rc;
-पूर्ण
+	kref_put(&wdata->refcount, cifs_uncached_writedata_release);
+	return rc;
+}
 
-अटल पूर्णांक
-cअगरs_ग_लिखो_from_iter(loff_t offset, माप_प्रकार len, काष्ठा iov_iter *from,
-		     काष्ठा cअगरsFileInfo *खोलो_file,
-		     काष्ठा cअगरs_sb_info *cअगरs_sb, काष्ठा list_head *wdata_list,
-		     काष्ठा cअगरs_aio_ctx *ctx)
-अणु
-	पूर्णांक rc = 0;
-	माप_प्रकार cur_len;
-	अचिन्हित दीर्घ nr_pages, num_pages, i;
-	काष्ठा cअगरs_ग_लिखोdata *wdata;
-	काष्ठा iov_iter saved_from = *from;
+static int
+cifs_write_from_iter(loff_t offset, size_t len, struct iov_iter *from,
+		     struct cifsFileInfo *open_file,
+		     struct cifs_sb_info *cifs_sb, struct list_head *wdata_list,
+		     struct cifs_aio_ctx *ctx)
+{
+	int rc = 0;
+	size_t cur_len;
+	unsigned long nr_pages, num_pages, i;
+	struct cifs_writedata *wdata;
+	struct iov_iter saved_from = *from;
 	loff_t saved_offset = offset;
 	pid_t pid;
-	काष्ठा TCP_Server_Info *server;
-	काष्ठा page **pagevec;
-	माप_प्रकार start;
-	अचिन्हित पूर्णांक xid;
+	struct TCP_Server_Info *server;
+	struct page **pagevec;
+	size_t start;
+	unsigned int xid;
 
-	अगर (cअगरs_sb->mnt_cअगरs_flags & CIFS_MOUNT_RWPIDFORWARD)
-		pid = खोलो_file->pid;
-	अन्यथा
+	if (cifs_sb->mnt_cifs_flags & CIFS_MOUNT_RWPIDFORWARD)
+		pid = open_file->pid;
+	else
 		pid = current->tgid;
 
-	server = cअगरs_pick_channel(tlink_tcon(खोलो_file->tlink)->ses);
+	server = cifs_pick_channel(tlink_tcon(open_file->tlink)->ses);
 	xid = get_xid();
 
-	करो अणु
-		अचिन्हित पूर्णांक wsize;
-		काष्ठा cअगरs_credits credits_on_stack;
-		काष्ठा cअगरs_credits *credits = &credits_on_stack;
+	do {
+		unsigned int wsize;
+		struct cifs_credits credits_on_stack;
+		struct cifs_credits *credits = &credits_on_stack;
 
-		अगर (खोलो_file->invalidHandle) अणु
-			rc = cअगरs_reखोलो_file(खोलो_file, false);
-			अगर (rc == -EAGAIN)
-				जारी;
-			अन्यथा अगर (rc)
-				अवरोध;
-		पूर्ण
+		if (open_file->invalidHandle) {
+			rc = cifs_reopen_file(open_file, false);
+			if (rc == -EAGAIN)
+				continue;
+			else if (rc)
+				break;
+		}
 
-		rc = server->ops->रुको_mtu_credits(server, cअगरs_sb->ctx->wsize,
+		rc = server->ops->wait_mtu_credits(server, cifs_sb->ctx->wsize,
 						   &wsize, credits);
-		अगर (rc)
-			अवरोध;
+		if (rc)
+			break;
 
-		cur_len = min_t(स्थिर माप_प्रकार, len, wsize);
+		cur_len = min_t(const size_t, len, wsize);
 
-		अगर (ctx->direct_io) अणु
-			sमाप_प्रकार result;
+		if (ctx->direct_io) {
+			ssize_t result;
 
 			result = iov_iter_get_pages_alloc(
 				from, &pagevec, cur_len, &start);
-			अगर (result < 0) अणु
-				cअगरs_dbg(VFS,
+			if (result < 0) {
+				cifs_dbg(VFS,
 					 "direct_writev couldn't get user pages (rc=%zd) iter type %d iov_offset %zd count %zd\n",
 					 result, iov_iter_type(from),
 					 from->iov_offset, from->count);
 				dump_stack();
 
 				rc = result;
-				add_credits_and_wake_अगर(server, credits, 0);
-				अवरोध;
-			पूर्ण
-			cur_len = (माप_प्रकार)result;
+				add_credits_and_wake_if(server, credits, 0);
+				break;
+			}
+			cur_len = (size_t)result;
 			iov_iter_advance(from, cur_len);
 
 			nr_pages =
 				(cur_len + start + PAGE_SIZE - 1) / PAGE_SIZE;
 
-			wdata = cअगरs_ग_लिखोdata_direct_alloc(pagevec,
-					     cअगरs_uncached_ग_लिखोv_complete);
-			अगर (!wdata) अणु
+			wdata = cifs_writedata_direct_alloc(pagevec,
+					     cifs_uncached_writev_complete);
+			if (!wdata) {
 				rc = -ENOMEM;
-				add_credits_and_wake_अगर(server, credits, 0);
-				अवरोध;
-			पूर्ण
+				add_credits_and_wake_if(server, credits, 0);
+				break;
+			}
 
 
 			wdata->page_offset = start;
@@ -3032,50 +3031,50 @@ cअगरs_ग_लिखो_from_iter(loff_t offset, माप_प्रका�
 					cur_len - (PAGE_SIZE - start) -
 					(nr_pages - 2) * PAGE_SIZE :
 					cur_len;
-		पूर्ण अन्यथा अणु
+		} else {
 			nr_pages = get_numpages(wsize, len, &cur_len);
-			wdata = cअगरs_ग_लिखोdata_alloc(nr_pages,
-					     cअगरs_uncached_ग_लिखोv_complete);
-			अगर (!wdata) अणु
+			wdata = cifs_writedata_alloc(nr_pages,
+					     cifs_uncached_writev_complete);
+			if (!wdata) {
 				rc = -ENOMEM;
-				add_credits_and_wake_अगर(server, credits, 0);
-				अवरोध;
-			पूर्ण
+				add_credits_and_wake_if(server, credits, 0);
+				break;
+			}
 
-			rc = cअगरs_ग_लिखो_allocate_pages(wdata->pages, nr_pages);
-			अगर (rc) अणु
-				kvमुक्त(wdata->pages);
-				kमुक्त(wdata);
-				add_credits_and_wake_अगर(server, credits, 0);
-				अवरोध;
-			पूर्ण
+			rc = cifs_write_allocate_pages(wdata->pages, nr_pages);
+			if (rc) {
+				kvfree(wdata->pages);
+				kfree(wdata);
+				add_credits_and_wake_if(server, credits, 0);
+				break;
+			}
 
 			num_pages = nr_pages;
 			rc = wdata_fill_from_iovec(
 				wdata, from, &cur_len, &num_pages);
-			अगर (rc) अणु
-				क्रम (i = 0; i < nr_pages; i++)
+			if (rc) {
+				for (i = 0; i < nr_pages; i++)
 					put_page(wdata->pages[i]);
-				kvमुक्त(wdata->pages);
-				kमुक्त(wdata);
-				add_credits_and_wake_अगर(server, credits, 0);
-				अवरोध;
-			पूर्ण
+				kvfree(wdata->pages);
+				kfree(wdata);
+				add_credits_and_wake_if(server, credits, 0);
+				break;
+			}
 
 			/*
-			 * Bring nr_pages करोwn to the number of pages we
-			 * actually used, and मुक्त any pages that we didn't use.
+			 * Bring nr_pages down to the number of pages we
+			 * actually used, and free any pages that we didn't use.
 			 */
-			क्रम ( ; nr_pages > num_pages; nr_pages--)
+			for ( ; nr_pages > num_pages; nr_pages--)
 				put_page(wdata->pages[nr_pages - 1]);
 
 			wdata->tailsz = cur_len - ((nr_pages - 1) * PAGE_SIZE);
-		पूर्ण
+		}
 
 		wdata->sync_mode = WB_SYNC_ALL;
 		wdata->nr_pages = nr_pages;
 		wdata->offset = (__u64)offset;
-		wdata->cfile = cअगरsFileInfo_get(खोलो_file);
+		wdata->cfile = cifsFileInfo_get(open_file);
 		wdata->server = server;
 		wdata->pid = pid;
 		wdata->bytes = cur_len;
@@ -3086,654 +3085,654 @@ cअगरs_ग_लिखो_from_iter(loff_t offset, माप_प्रका�
 
 		rc = adjust_credits(server, &wdata->credits, wdata->bytes);
 
-		अगर (!rc) अणु
-			अगर (wdata->cfile->invalidHandle)
+		if (!rc) {
+			if (wdata->cfile->invalidHandle)
 				rc = -EAGAIN;
-			अन्यथा
-				rc = server->ops->async_ग_लिखोv(wdata,
-					cअगरs_uncached_ग_लिखोdata_release);
-		पूर्ण
+			else
+				rc = server->ops->async_writev(wdata,
+					cifs_uncached_writedata_release);
+		}
 
-		अगर (rc) अणु
-			add_credits_and_wake_अगर(server, &wdata->credits, 0);
+		if (rc) {
+			add_credits_and_wake_if(server, &wdata->credits, 0);
 			kref_put(&wdata->refcount,
-				 cअगरs_uncached_ग_लिखोdata_release);
-			अगर (rc == -EAGAIN) अणु
+				 cifs_uncached_writedata_release);
+			if (rc == -EAGAIN) {
 				*from = saved_from;
 				iov_iter_advance(from, offset - saved_offset);
-				जारी;
-			पूर्ण
-			अवरोध;
-		पूर्ण
+				continue;
+			}
+			break;
+		}
 
 		list_add_tail(&wdata->list, wdata_list);
 		offset += cur_len;
 		len -= cur_len;
-	पूर्ण जबतक (len > 0);
+	} while (len > 0);
 
-	मुक्त_xid(xid);
-	वापस rc;
-पूर्ण
+	free_xid(xid);
+	return rc;
+}
 
-अटल व्योम collect_uncached_ग_लिखो_data(काष्ठा cअगरs_aio_ctx *ctx)
-अणु
-	काष्ठा cअगरs_ग_लिखोdata *wdata, *पंचांगp;
-	काष्ठा cअगरs_tcon *tcon;
-	काष्ठा cअगरs_sb_info *cअगरs_sb;
-	काष्ठा dentry *dentry = ctx->cfile->dentry;
-	पूर्णांक rc;
+static void collect_uncached_write_data(struct cifs_aio_ctx *ctx)
+{
+	struct cifs_writedata *wdata, *tmp;
+	struct cifs_tcon *tcon;
+	struct cifs_sb_info *cifs_sb;
+	struct dentry *dentry = ctx->cfile->dentry;
+	int rc;
 
 	tcon = tlink_tcon(ctx->cfile->tlink);
-	cअगरs_sb = CIFS_SB(dentry->d_sb);
+	cifs_sb = CIFS_SB(dentry->d_sb);
 
 	mutex_lock(&ctx->aio_mutex);
 
-	अगर (list_empty(&ctx->list)) अणु
+	if (list_empty(&ctx->list)) {
 		mutex_unlock(&ctx->aio_mutex);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	rc = ctx->rc;
 	/*
-	 * Wait क्रम and collect replies क्रम any successful sends in order of
-	 * increasing offset. Once an error is hit, then वापस without रुकोing
-	 * क्रम any more replies.
+	 * Wait for and collect replies for any successful sends in order of
+	 * increasing offset. Once an error is hit, then return without waiting
+	 * for any more replies.
 	 */
 restart_loop:
-	list_क्रम_each_entry_safe(wdata, पंचांगp, &ctx->list, list) अणु
-		अगर (!rc) अणु
-			अगर (!try_रुको_क्रम_completion(&wdata->करोne)) अणु
+	list_for_each_entry_safe(wdata, tmp, &ctx->list, list) {
+		if (!rc) {
+			if (!try_wait_for_completion(&wdata->done)) {
 				mutex_unlock(&ctx->aio_mutex);
-				वापस;
-			पूर्ण
+				return;
+			}
 
-			अगर (wdata->result)
+			if (wdata->result)
 				rc = wdata->result;
-			अन्यथा
+			else
 				ctx->total_len += wdata->bytes;
 
-			/* resend call अगर it's a retryable error */
-			अगर (rc == -EAGAIN) अणु
-				काष्ठा list_head पंचांगp_list;
-				काष्ठा iov_iter पंचांगp_from = ctx->iter;
+			/* resend call if it's a retryable error */
+			if (rc == -EAGAIN) {
+				struct list_head tmp_list;
+				struct iov_iter tmp_from = ctx->iter;
 
-				INIT_LIST_HEAD(&पंचांगp_list);
+				INIT_LIST_HEAD(&tmp_list);
 				list_del_init(&wdata->list);
 
-				अगर (ctx->direct_io)
-					rc = cअगरs_resend_wdata(
-						wdata, &पंचांगp_list, ctx);
-				अन्यथा अणु
-					iov_iter_advance(&पंचांगp_from,
+				if (ctx->direct_io)
+					rc = cifs_resend_wdata(
+						wdata, &tmp_list, ctx);
+				else {
+					iov_iter_advance(&tmp_from,
 						 wdata->offset - ctx->pos);
 
-					rc = cअगरs_ग_लिखो_from_iter(wdata->offset,
-						wdata->bytes, &पंचांगp_from,
-						ctx->cfile, cअगरs_sb, &पंचांगp_list,
+					rc = cifs_write_from_iter(wdata->offset,
+						wdata->bytes, &tmp_from,
+						ctx->cfile, cifs_sb, &tmp_list,
 						ctx);
 
 					kref_put(&wdata->refcount,
-						cअगरs_uncached_ग_लिखोdata_release);
-				पूर्ण
+						cifs_uncached_writedata_release);
+				}
 
-				list_splice(&पंचांगp_list, &ctx->list);
-				जाओ restart_loop;
-			पूर्ण
-		पूर्ण
+				list_splice(&tmp_list, &ctx->list);
+				goto restart_loop;
+			}
+		}
 		list_del_init(&wdata->list);
-		kref_put(&wdata->refcount, cअगरs_uncached_ग_लिखोdata_release);
-	पूर्ण
+		kref_put(&wdata->refcount, cifs_uncached_writedata_release);
+	}
 
-	cअगरs_stats_bytes_written(tcon, ctx->total_len);
+	cifs_stats_bytes_written(tcon, ctx->total_len);
 	set_bit(CIFS_INO_INVALID_MAPPING, &CIFS_I(dentry->d_inode)->flags);
 
 	ctx->rc = (rc == 0) ? ctx->total_len : rc;
 
 	mutex_unlock(&ctx->aio_mutex);
 
-	अगर (ctx->iocb && ctx->iocb->ki_complete)
+	if (ctx->iocb && ctx->iocb->ki_complete)
 		ctx->iocb->ki_complete(ctx->iocb, ctx->rc, 0);
-	अन्यथा
-		complete(&ctx->करोne);
-पूर्ण
+	else
+		complete(&ctx->done);
+}
 
-अटल sमाप_प्रकार __cअगरs_ग_लिखोv(
-	काष्ठा kiocb *iocb, काष्ठा iov_iter *from, bool direct)
-अणु
-	काष्ठा file *file = iocb->ki_filp;
-	sमाप_प्रकार total_written = 0;
-	काष्ठा cअगरsFileInfo *cfile;
-	काष्ठा cअगरs_tcon *tcon;
-	काष्ठा cअगरs_sb_info *cअगरs_sb;
-	काष्ठा cअगरs_aio_ctx *ctx;
-	काष्ठा iov_iter saved_from = *from;
-	माप_प्रकार len = iov_iter_count(from);
-	पूर्णांक rc;
+static ssize_t __cifs_writev(
+	struct kiocb *iocb, struct iov_iter *from, bool direct)
+{
+	struct file *file = iocb->ki_filp;
+	ssize_t total_written = 0;
+	struct cifsFileInfo *cfile;
+	struct cifs_tcon *tcon;
+	struct cifs_sb_info *cifs_sb;
+	struct cifs_aio_ctx *ctx;
+	struct iov_iter saved_from = *from;
+	size_t len = iov_iter_count(from);
+	int rc;
 
 	/*
-	 * iov_iter_get_pages_alloc करोesn't work with ITER_KVEC.
-	 * In this हाल, fall back to non-direct ग_लिखो function.
+	 * iov_iter_get_pages_alloc doesn't work with ITER_KVEC.
+	 * In this case, fall back to non-direct write function.
 	 * this could be improved by getting pages directly in ITER_KVEC
 	 */
-	अगर (direct && iov_iter_is_kvec(from)) अणु
-		cअगरs_dbg(FYI, "use non-direct cifs_writev for kvec I/O\n");
+	if (direct && iov_iter_is_kvec(from)) {
+		cifs_dbg(FYI, "use non-direct cifs_writev for kvec I/O\n");
 		direct = false;
-	पूर्ण
+	}
 
-	rc = generic_ग_लिखो_checks(iocb, from);
-	अगर (rc <= 0)
-		वापस rc;
+	rc = generic_write_checks(iocb, from);
+	if (rc <= 0)
+		return rc;
 
-	cअगरs_sb = CIFS_खाता_SB(file);
-	cfile = file->निजी_data;
+	cifs_sb = CIFS_FILE_SB(file);
+	cfile = file->private_data;
 	tcon = tlink_tcon(cfile->tlink);
 
-	अगर (!tcon->ses->server->ops->async_ग_लिखोv)
-		वापस -ENOSYS;
+	if (!tcon->ses->server->ops->async_writev)
+		return -ENOSYS;
 
-	ctx = cअगरs_aio_ctx_alloc();
-	अगर (!ctx)
-		वापस -ENOMEM;
+	ctx = cifs_aio_ctx_alloc();
+	if (!ctx)
+		return -ENOMEM;
 
-	ctx->cfile = cअगरsFileInfo_get(cfile);
+	ctx->cfile = cifsFileInfo_get(cfile);
 
-	अगर (!is_sync_kiocb(iocb))
+	if (!is_sync_kiocb(iocb))
 		ctx->iocb = iocb;
 
 	ctx->pos = iocb->ki_pos;
 
-	अगर (direct) अणु
+	if (direct) {
 		ctx->direct_io = true;
 		ctx->iter = *from;
 		ctx->len = len;
-	पूर्ण अन्यथा अणु
+	} else {
 		rc = setup_aio_ctx_iter(ctx, from, WRITE);
-		अगर (rc) अणु
-			kref_put(&ctx->refcount, cअगरs_aio_ctx_release);
-			वापस rc;
-		पूर्ण
-	पूर्ण
+		if (rc) {
+			kref_put(&ctx->refcount, cifs_aio_ctx_release);
+			return rc;
+		}
+	}
 
-	/* grab a lock here due to पढ़ो response handlers can access ctx */
+	/* grab a lock here due to read response handlers can access ctx */
 	mutex_lock(&ctx->aio_mutex);
 
-	rc = cअगरs_ग_लिखो_from_iter(iocb->ki_pos, ctx->len, &saved_from,
-				  cfile, cअगरs_sb, &ctx->list, ctx);
+	rc = cifs_write_from_iter(iocb->ki_pos, ctx->len, &saved_from,
+				  cfile, cifs_sb, &ctx->list, ctx);
 
 	/*
-	 * If at least one ग_लिखो was successfully sent, then discard any rc
-	 * value from the later ग_लिखोs. If the other ग_लिखो succeeds, then
-	 * we'll end up वापसing whatever was written. If it fails, then
+	 * If at least one write was successfully sent, then discard any rc
+	 * value from the later writes. If the other write succeeds, then
+	 * we'll end up returning whatever was written. If it fails, then
 	 * we'll get a new rc value from that.
 	 */
-	अगर (!list_empty(&ctx->list))
+	if (!list_empty(&ctx->list))
 		rc = 0;
 
 	mutex_unlock(&ctx->aio_mutex);
 
-	अगर (rc) अणु
-		kref_put(&ctx->refcount, cअगरs_aio_ctx_release);
-		वापस rc;
-	पूर्ण
+	if (rc) {
+		kref_put(&ctx->refcount, cifs_aio_ctx_release);
+		return rc;
+	}
 
-	अगर (!is_sync_kiocb(iocb)) अणु
-		kref_put(&ctx->refcount, cअगरs_aio_ctx_release);
-		वापस -EIOCBQUEUED;
-	पूर्ण
+	if (!is_sync_kiocb(iocb)) {
+		kref_put(&ctx->refcount, cifs_aio_ctx_release);
+		return -EIOCBQUEUED;
+	}
 
-	rc = रुको_क्रम_completion_समाप्तable(&ctx->करोne);
-	अगर (rc) अणु
+	rc = wait_for_completion_killable(&ctx->done);
+	if (rc) {
 		mutex_lock(&ctx->aio_mutex);
 		ctx->rc = rc = -EINTR;
 		total_written = ctx->total_len;
 		mutex_unlock(&ctx->aio_mutex);
-	पूर्ण अन्यथा अणु
+	} else {
 		rc = ctx->rc;
 		total_written = ctx->total_len;
-	पूर्ण
+	}
 
-	kref_put(&ctx->refcount, cअगरs_aio_ctx_release);
+	kref_put(&ctx->refcount, cifs_aio_ctx_release);
 
-	अगर (unlikely(!total_written))
-		वापस rc;
+	if (unlikely(!total_written))
+		return rc;
 
 	iocb->ki_pos += total_written;
-	वापस total_written;
-पूर्ण
+	return total_written;
+}
 
-sमाप_प्रकार cअगरs_direct_ग_लिखोv(काष्ठा kiocb *iocb, काष्ठा iov_iter *from)
-अणु
-	वापस __cअगरs_ग_लिखोv(iocb, from, true);
-पूर्ण
+ssize_t cifs_direct_writev(struct kiocb *iocb, struct iov_iter *from)
+{
+	return __cifs_writev(iocb, from, true);
+}
 
-sमाप_प्रकार cअगरs_user_ग_लिखोv(काष्ठा kiocb *iocb, काष्ठा iov_iter *from)
-अणु
-	वापस __cअगरs_ग_लिखोv(iocb, from, false);
-पूर्ण
+ssize_t cifs_user_writev(struct kiocb *iocb, struct iov_iter *from)
+{
+	return __cifs_writev(iocb, from, false);
+}
 
-अटल sमाप_प्रकार
-cअगरs_ग_लिखोv(काष्ठा kiocb *iocb, काष्ठा iov_iter *from)
-अणु
-	काष्ठा file *file = iocb->ki_filp;
-	काष्ठा cअगरsFileInfo *cfile = (काष्ठा cअगरsFileInfo *)file->निजी_data;
-	काष्ठा inode *inode = file->f_mapping->host;
-	काष्ठा cअगरsInodeInfo *cinode = CIFS_I(inode);
-	काष्ठा TCP_Server_Info *server = tlink_tcon(cfile->tlink)->ses->server;
-	sमाप_प्रकार rc;
+static ssize_t
+cifs_writev(struct kiocb *iocb, struct iov_iter *from)
+{
+	struct file *file = iocb->ki_filp;
+	struct cifsFileInfo *cfile = (struct cifsFileInfo *)file->private_data;
+	struct inode *inode = file->f_mapping->host;
+	struct cifsInodeInfo *cinode = CIFS_I(inode);
+	struct TCP_Server_Info *server = tlink_tcon(cfile->tlink)->ses->server;
+	ssize_t rc;
 
 	inode_lock(inode);
 	/*
-	 * We need to hold the sem to be sure nobody modअगरies lock list
+	 * We need to hold the sem to be sure nobody modifies lock list
 	 * with a brlock that prevents writing.
 	 */
-	करोwn_पढ़ो(&cinode->lock_sem);
+	down_read(&cinode->lock_sem);
 
-	rc = generic_ग_लिखो_checks(iocb, from);
-	अगर (rc <= 0)
-		जाओ out;
+	rc = generic_write_checks(iocb, from);
+	if (rc <= 0)
+		goto out;
 
-	अगर (!cअगरs_find_lock_conflict(cfile, iocb->ki_pos, iov_iter_count(from),
+	if (!cifs_find_lock_conflict(cfile, iocb->ki_pos, iov_iter_count(from),
 				     server->vals->exclusive_lock_type, 0,
-				     शून्य, CIFS_WRITE_OP))
-		rc = __generic_file_ग_लिखो_iter(iocb, from);
-	अन्यथा
+				     NULL, CIFS_WRITE_OP))
+		rc = __generic_file_write_iter(iocb, from);
+	else
 		rc = -EACCES;
 out:
-	up_पढ़ो(&cinode->lock_sem);
+	up_read(&cinode->lock_sem);
 	inode_unlock(inode);
 
-	अगर (rc > 0)
-		rc = generic_ग_लिखो_sync(iocb, rc);
-	वापस rc;
-पूर्ण
+	if (rc > 0)
+		rc = generic_write_sync(iocb, rc);
+	return rc;
+}
 
-sमाप_प्रकार
-cअगरs_strict_ग_लिखोv(काष्ठा kiocb *iocb, काष्ठा iov_iter *from)
-अणु
-	काष्ठा inode *inode = file_inode(iocb->ki_filp);
-	काष्ठा cअगरsInodeInfo *cinode = CIFS_I(inode);
-	काष्ठा cअगरs_sb_info *cअगरs_sb = CIFS_SB(inode->i_sb);
-	काष्ठा cअगरsFileInfo *cfile = (काष्ठा cअगरsFileInfo *)
-						iocb->ki_filp->निजी_data;
-	काष्ठा cअगरs_tcon *tcon = tlink_tcon(cfile->tlink);
-	sमाप_प्रकार written;
+ssize_t
+cifs_strict_writev(struct kiocb *iocb, struct iov_iter *from)
+{
+	struct inode *inode = file_inode(iocb->ki_filp);
+	struct cifsInodeInfo *cinode = CIFS_I(inode);
+	struct cifs_sb_info *cifs_sb = CIFS_SB(inode->i_sb);
+	struct cifsFileInfo *cfile = (struct cifsFileInfo *)
+						iocb->ki_filp->private_data;
+	struct cifs_tcon *tcon = tlink_tcon(cfile->tlink);
+	ssize_t written;
 
-	written = cअगरs_get_ग_लिखोr(cinode);
-	अगर (written)
-		वापस written;
+	written = cifs_get_writer(cinode);
+	if (written)
+		return written;
 
-	अगर (CIFS_CACHE_WRITE(cinode)) अणु
-		अगर (cap_unix(tcon->ses) &&
+	if (CIFS_CACHE_WRITE(cinode)) {
+		if (cap_unix(tcon->ses) &&
 		(CIFS_UNIX_FCNTL_CAP & le64_to_cpu(tcon->fsUnixInfo.Capability))
-		  && ((cअगरs_sb->mnt_cअगरs_flags & CIFS_MOUNT_NOPOSIXBRL) == 0)) अणु
-			written = generic_file_ग_लिखो_iter(iocb, from);
-			जाओ out;
-		पूर्ण
-		written = cअगरs_ग_लिखोv(iocb, from);
-		जाओ out;
-	पूर्ण
+		  && ((cifs_sb->mnt_cifs_flags & CIFS_MOUNT_NOPOSIXBRL) == 0)) {
+			written = generic_file_write_iter(iocb, from);
+			goto out;
+		}
+		written = cifs_writev(iocb, from);
+		goto out;
+	}
 	/*
-	 * For non-oplocked files in strict cache mode we need to ग_लिखो the data
+	 * For non-oplocked files in strict cache mode we need to write the data
 	 * to the server exactly from the pos to pos+len-1 rather than flush all
 	 * affected pages because it may cause a error with mandatory locks on
 	 * these pages but not on the region from pos to ppos+len-1.
 	 */
-	written = cअगरs_user_ग_लिखोv(iocb, from);
-	अगर (CIFS_CACHE_READ(cinode)) अणु
+	written = cifs_user_writev(iocb, from);
+	if (CIFS_CACHE_READ(cinode)) {
 		/*
-		 * We have पढ़ो level caching and we have just sent a ग_लिखो
+		 * We have read level caching and we have just sent a write
 		 * request to the server thus making data in the cache stale.
-		 * Zap the cache and set oplock/lease level to NONE to aव्योम
-		 * पढ़ोing stale data from the cache. All subsequent पढ़ो
-		 * operations will पढ़ो new data from the server.
+		 * Zap the cache and set oplock/lease level to NONE to avoid
+		 * reading stale data from the cache. All subsequent read
+		 * operations will read new data from the server.
 		 */
-		cअगरs_zap_mapping(inode);
-		cअगरs_dbg(FYI, "Set Oplock/Lease to NONE for inode=%p after write\n",
+		cifs_zap_mapping(inode);
+		cifs_dbg(FYI, "Set Oplock/Lease to NONE for inode=%p after write\n",
 			 inode);
 		cinode->oplock = 0;
-	पूर्ण
+	}
 out:
-	cअगरs_put_ग_लिखोr(cinode);
-	वापस written;
-पूर्ण
+	cifs_put_writer(cinode);
+	return written;
+}
 
-अटल काष्ठा cअगरs_पढ़ोdata *
-cअगरs_पढ़ोdata_direct_alloc(काष्ठा page **pages, work_func_t complete)
-अणु
-	काष्ठा cअगरs_पढ़ोdata *rdata;
+static struct cifs_readdata *
+cifs_readdata_direct_alloc(struct page **pages, work_func_t complete)
+{
+	struct cifs_readdata *rdata;
 
-	rdata = kzalloc(माप(*rdata), GFP_KERNEL);
-	अगर (rdata != शून्य) अणु
+	rdata = kzalloc(sizeof(*rdata), GFP_KERNEL);
+	if (rdata != NULL) {
 		rdata->pages = pages;
 		kref_init(&rdata->refcount);
 		INIT_LIST_HEAD(&rdata->list);
-		init_completion(&rdata->करोne);
+		init_completion(&rdata->done);
 		INIT_WORK(&rdata->work, complete);
-	पूर्ण
+	}
 
-	वापस rdata;
-पूर्ण
+	return rdata;
+}
 
-अटल काष्ठा cअगरs_पढ़ोdata *
-cअगरs_पढ़ोdata_alloc(अचिन्हित पूर्णांक nr_pages, work_func_t complete)
-अणु
-	काष्ठा page **pages =
-		kसुस्मृति(nr_pages, माप(काष्ठा page *), GFP_KERNEL);
-	काष्ठा cअगरs_पढ़ोdata *ret = शून्य;
+static struct cifs_readdata *
+cifs_readdata_alloc(unsigned int nr_pages, work_func_t complete)
+{
+	struct page **pages =
+		kcalloc(nr_pages, sizeof(struct page *), GFP_KERNEL);
+	struct cifs_readdata *ret = NULL;
 
-	अगर (pages) अणु
-		ret = cअगरs_पढ़ोdata_direct_alloc(pages, complete);
-		अगर (!ret)
-			kमुक्त(pages);
-	पूर्ण
+	if (pages) {
+		ret = cifs_readdata_direct_alloc(pages, complete);
+		if (!ret)
+			kfree(pages);
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम
-cअगरs_पढ़ोdata_release(काष्ठा kref *refcount)
-अणु
-	काष्ठा cअगरs_पढ़ोdata *rdata = container_of(refcount,
-					काष्ठा cअगरs_पढ़ोdata, refcount);
-#अगर_घोषित CONFIG_CIFS_SMB_सूचीECT
-	अगर (rdata->mr) अणु
-		smbd_deरेजिस्टर_mr(rdata->mr);
-		rdata->mr = शून्य;
-	पूर्ण
-#पूर्ण_अगर
-	अगर (rdata->cfile)
-		cअगरsFileInfo_put(rdata->cfile);
+void
+cifs_readdata_release(struct kref *refcount)
+{
+	struct cifs_readdata *rdata = container_of(refcount,
+					struct cifs_readdata, refcount);
+#ifdef CONFIG_CIFS_SMB_DIRECT
+	if (rdata->mr) {
+		smbd_deregister_mr(rdata->mr);
+		rdata->mr = NULL;
+	}
+#endif
+	if (rdata->cfile)
+		cifsFileInfo_put(rdata->cfile);
 
-	kvमुक्त(rdata->pages);
-	kमुक्त(rdata);
-पूर्ण
+	kvfree(rdata->pages);
+	kfree(rdata);
+}
 
-अटल पूर्णांक
-cअगरs_पढ़ो_allocate_pages(काष्ठा cअगरs_पढ़ोdata *rdata, अचिन्हित पूर्णांक nr_pages)
-अणु
-	पूर्णांक rc = 0;
-	काष्ठा page *page;
-	अचिन्हित पूर्णांक i;
+static int
+cifs_read_allocate_pages(struct cifs_readdata *rdata, unsigned int nr_pages)
+{
+	int rc = 0;
+	struct page *page;
+	unsigned int i;
 
-	क्रम (i = 0; i < nr_pages; i++) अणु
+	for (i = 0; i < nr_pages; i++) {
 		page = alloc_page(GFP_KERNEL|__GFP_HIGHMEM);
-		अगर (!page) अणु
+		if (!page) {
 			rc = -ENOMEM;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		rdata->pages[i] = page;
-	पूर्ण
+	}
 
-	अगर (rc) अणु
-		अचिन्हित पूर्णांक nr_page_failed = i;
+	if (rc) {
+		unsigned int nr_page_failed = i;
 
-		क्रम (i = 0; i < nr_page_failed; i++) अणु
+		for (i = 0; i < nr_page_failed; i++) {
 			put_page(rdata->pages[i]);
-			rdata->pages[i] = शून्य;
-		पूर्ण
-	पूर्ण
-	वापस rc;
-पूर्ण
+			rdata->pages[i] = NULL;
+		}
+	}
+	return rc;
+}
 
-अटल व्योम
-cअगरs_uncached_पढ़ोdata_release(काष्ठा kref *refcount)
-अणु
-	काष्ठा cअगरs_पढ़ोdata *rdata = container_of(refcount,
-					काष्ठा cअगरs_पढ़ोdata, refcount);
-	अचिन्हित पूर्णांक i;
+static void
+cifs_uncached_readdata_release(struct kref *refcount)
+{
+	struct cifs_readdata *rdata = container_of(refcount,
+					struct cifs_readdata, refcount);
+	unsigned int i;
 
-	kref_put(&rdata->ctx->refcount, cअगरs_aio_ctx_release);
-	क्रम (i = 0; i < rdata->nr_pages; i++) अणु
+	kref_put(&rdata->ctx->refcount, cifs_aio_ctx_release);
+	for (i = 0; i < rdata->nr_pages; i++) {
 		put_page(rdata->pages[i]);
-	पूर्ण
-	cअगरs_पढ़ोdata_release(refcount);
-पूर्ण
+	}
+	cifs_readdata_release(refcount);
+}
 
 /**
- * cअगरs_पढ़ोdata_to_iov - copy data from pages in response to an iovec
- * @rdata:	the पढ़ोdata response with list of pages holding data
- * @iter:	destination क्रम our data
+ * cifs_readdata_to_iov - copy data from pages in response to an iovec
+ * @rdata:	the readdata response with list of pages holding data
+ * @iter:	destination for our data
  *
- * This function copies data from a list of pages in a पढ़ोdata response पूर्णांकo
+ * This function copies data from a list of pages in a readdata response into
  * an array of iovecs. It will first calculate where the data should go
- * based on the info in the पढ़ोdata and then copy the data पूर्णांकo that spot.
+ * based on the info in the readdata and then copy the data into that spot.
  */
-अटल पूर्णांक
-cअगरs_पढ़ोdata_to_iov(काष्ठा cअगरs_पढ़ोdata *rdata, काष्ठा iov_iter *iter)
-अणु
-	माप_प्रकार reमुख्यing = rdata->got_bytes;
-	अचिन्हित पूर्णांक i;
+static int
+cifs_readdata_to_iov(struct cifs_readdata *rdata, struct iov_iter *iter)
+{
+	size_t remaining = rdata->got_bytes;
+	unsigned int i;
 
-	क्रम (i = 0; i < rdata->nr_pages; i++) अणु
-		काष्ठा page *page = rdata->pages[i];
-		माप_प्रकार copy = min_t(माप_प्रकार, reमुख्यing, PAGE_SIZE);
-		माप_प्रकार written;
+	for (i = 0; i < rdata->nr_pages; i++) {
+		struct page *page = rdata->pages[i];
+		size_t copy = min_t(size_t, remaining, PAGE_SIZE);
+		size_t written;
 
-		अगर (unlikely(iov_iter_is_pipe(iter))) अणु
-			व्योम *addr = kmap_atomic(page);
+		if (unlikely(iov_iter_is_pipe(iter))) {
+			void *addr = kmap_atomic(page);
 
 			written = copy_to_iter(addr, copy, iter);
 			kunmap_atomic(addr);
-		पूर्ण अन्यथा
+		} else
 			written = copy_page_to_iter(page, 0, copy, iter);
-		reमुख्यing -= written;
-		अगर (written < copy && iov_iter_count(iter) > 0)
-			अवरोध;
-	पूर्ण
-	वापस reमुख्यing ? -EFAULT : 0;
-पूर्ण
+		remaining -= written;
+		if (written < copy && iov_iter_count(iter) > 0)
+			break;
+	}
+	return remaining ? -EFAULT : 0;
+}
 
-अटल व्योम collect_uncached_पढ़ो_data(काष्ठा cअगरs_aio_ctx *ctx);
+static void collect_uncached_read_data(struct cifs_aio_ctx *ctx);
 
-अटल व्योम
-cअगरs_uncached_पढ़ोv_complete(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा cअगरs_पढ़ोdata *rdata = container_of(work,
-						काष्ठा cअगरs_पढ़ोdata, work);
+static void
+cifs_uncached_readv_complete(struct work_struct *work)
+{
+	struct cifs_readdata *rdata = container_of(work,
+						struct cifs_readdata, work);
 
-	complete(&rdata->करोne);
-	collect_uncached_पढ़ो_data(rdata->ctx);
-	/* the below call can possibly मुक्त the last ref to aio ctx */
-	kref_put(&rdata->refcount, cअगरs_uncached_पढ़ोdata_release);
-पूर्ण
+	complete(&rdata->done);
+	collect_uncached_read_data(rdata->ctx);
+	/* the below call can possibly free the last ref to aio ctx */
+	kref_put(&rdata->refcount, cifs_uncached_readdata_release);
+}
 
-अटल पूर्णांक
-uncached_fill_pages(काष्ठा TCP_Server_Info *server,
-		    काष्ठा cअगरs_पढ़ोdata *rdata, काष्ठा iov_iter *iter,
-		    अचिन्हित पूर्णांक len)
-अणु
-	पूर्णांक result = 0;
-	अचिन्हित पूर्णांक i;
-	अचिन्हित पूर्णांक nr_pages = rdata->nr_pages;
-	अचिन्हित पूर्णांक page_offset = rdata->page_offset;
+static int
+uncached_fill_pages(struct TCP_Server_Info *server,
+		    struct cifs_readdata *rdata, struct iov_iter *iter,
+		    unsigned int len)
+{
+	int result = 0;
+	unsigned int i;
+	unsigned int nr_pages = rdata->nr_pages;
+	unsigned int page_offset = rdata->page_offset;
 
 	rdata->got_bytes = 0;
 	rdata->tailsz = PAGE_SIZE;
-	क्रम (i = 0; i < nr_pages; i++) अणु
-		काष्ठा page *page = rdata->pages[i];
-		माप_प्रकार n;
-		अचिन्हित पूर्णांक segment_size = rdata->pagesz;
+	for (i = 0; i < nr_pages; i++) {
+		struct page *page = rdata->pages[i];
+		size_t n;
+		unsigned int segment_size = rdata->pagesz;
 
-		अगर (i == 0)
+		if (i == 0)
 			segment_size -= page_offset;
-		अन्यथा
+		else
 			page_offset = 0;
 
 
-		अगर (len <= 0) अणु
+		if (len <= 0) {
 			/* no need to hold page hostage */
-			rdata->pages[i] = शून्य;
+			rdata->pages[i] = NULL;
 			rdata->nr_pages--;
 			put_page(page);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		n = len;
-		अगर (len >= segment_size)
+		if (len >= segment_size)
 			/* enough data to fill the page */
 			n = segment_size;
-		अन्यथा
+		else
 			rdata->tailsz = len;
 		len -= n;
 
-		अगर (iter)
+		if (iter)
 			result = copy_page_from_iter(
 					page, page_offset, n, iter);
-#अगर_घोषित CONFIG_CIFS_SMB_सूचीECT
-		अन्यथा अगर (rdata->mr)
+#ifdef CONFIG_CIFS_SMB_DIRECT
+		else if (rdata->mr)
 			result = n;
-#पूर्ण_अगर
-		अन्यथा
-			result = cअगरs_पढ़ो_page_from_socket(
+#endif
+		else
+			result = cifs_read_page_from_socket(
 					server, page, page_offset, n);
-		अगर (result < 0)
-			अवरोध;
+		if (result < 0)
+			break;
 
 		rdata->got_bytes += result;
-	पूर्ण
+	}
 
-	वापस rdata->got_bytes > 0 && result != -ECONNABORTED ?
+	return rdata->got_bytes > 0 && result != -ECONNABORTED ?
 						rdata->got_bytes : result;
-पूर्ण
+}
 
-अटल पूर्णांक
-cअगरs_uncached_पढ़ो_पूर्णांकo_pages(काष्ठा TCP_Server_Info *server,
-			      काष्ठा cअगरs_पढ़ोdata *rdata, अचिन्हित पूर्णांक len)
-अणु
-	वापस uncached_fill_pages(server, rdata, शून्य, len);
-पूर्ण
+static int
+cifs_uncached_read_into_pages(struct TCP_Server_Info *server,
+			      struct cifs_readdata *rdata, unsigned int len)
+{
+	return uncached_fill_pages(server, rdata, NULL, len);
+}
 
-अटल पूर्णांक
-cअगरs_uncached_copy_पूर्णांकo_pages(काष्ठा TCP_Server_Info *server,
-			      काष्ठा cअगरs_पढ़ोdata *rdata,
-			      काष्ठा iov_iter *iter)
-अणु
-	वापस uncached_fill_pages(server, rdata, iter, iter->count);
-पूर्ण
+static int
+cifs_uncached_copy_into_pages(struct TCP_Server_Info *server,
+			      struct cifs_readdata *rdata,
+			      struct iov_iter *iter)
+{
+	return uncached_fill_pages(server, rdata, iter, iter->count);
+}
 
-अटल पूर्णांक cअगरs_resend_rdata(काष्ठा cअगरs_पढ़ोdata *rdata,
-			काष्ठा list_head *rdata_list,
-			काष्ठा cअगरs_aio_ctx *ctx)
-अणु
-	अचिन्हित पूर्णांक rsize;
-	काष्ठा cअगरs_credits credits;
-	पूर्णांक rc;
-	काष्ठा TCP_Server_Info *server;
+static int cifs_resend_rdata(struct cifs_readdata *rdata,
+			struct list_head *rdata_list,
+			struct cifs_aio_ctx *ctx)
+{
+	unsigned int rsize;
+	struct cifs_credits credits;
+	int rc;
+	struct TCP_Server_Info *server;
 
 	/* XXX: should we pick a new channel here? */
 	server = rdata->server;
 
-	करो अणु
-		अगर (rdata->cfile->invalidHandle) अणु
-			rc = cअगरs_reखोलो_file(rdata->cfile, true);
-			अगर (rc == -EAGAIN)
-				जारी;
-			अन्यथा अगर (rc)
-				अवरोध;
-		पूर्ण
+	do {
+		if (rdata->cfile->invalidHandle) {
+			rc = cifs_reopen_file(rdata->cfile, true);
+			if (rc == -EAGAIN)
+				continue;
+			else if (rc)
+				break;
+		}
 
 		/*
-		 * Wait क्रम credits to resend this rdata.
+		 * Wait for credits to resend this rdata.
 		 * Note: we are attempting to resend the whole rdata not in
 		 * segments
 		 */
-		करो अणु
-			rc = server->ops->रुको_mtu_credits(server, rdata->bytes,
+		do {
+			rc = server->ops->wait_mtu_credits(server, rdata->bytes,
 						&rsize, &credits);
 
-			अगर (rc)
-				जाओ fail;
+			if (rc)
+				goto fail;
 
-			अगर (rsize < rdata->bytes) अणु
-				add_credits_and_wake_अगर(server, &credits, 0);
+			if (rsize < rdata->bytes) {
+				add_credits_and_wake_if(server, &credits, 0);
 				msleep(1000);
-			पूर्ण
-		पूर्ण जबतक (rsize < rdata->bytes);
+			}
+		} while (rsize < rdata->bytes);
 		rdata->credits = credits;
 
 		rc = adjust_credits(server, &rdata->credits, rdata->bytes);
-		अगर (!rc) अणु
-			अगर (rdata->cfile->invalidHandle)
+		if (!rc) {
+			if (rdata->cfile->invalidHandle)
 				rc = -EAGAIN;
-			अन्यथा अणु
-#अगर_घोषित CONFIG_CIFS_SMB_सूचीECT
-				अगर (rdata->mr) अणु
+			else {
+#ifdef CONFIG_CIFS_SMB_DIRECT
+				if (rdata->mr) {
 					rdata->mr->need_invalidate = true;
-					smbd_deरेजिस्टर_mr(rdata->mr);
-					rdata->mr = शून्य;
-				पूर्ण
-#पूर्ण_अगर
-				rc = server->ops->async_पढ़ोv(rdata);
-			पूर्ण
-		पूर्ण
+					smbd_deregister_mr(rdata->mr);
+					rdata->mr = NULL;
+				}
+#endif
+				rc = server->ops->async_readv(rdata);
+			}
+		}
 
-		/* If the पढ़ो was successfully sent, we are करोne */
-		अगर (!rc) अणु
+		/* If the read was successfully sent, we are done */
+		if (!rc) {
 			/* Add to aio pending list */
 			list_add_tail(&rdata->list, rdata_list);
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 
-		/* Roll back credits and retry अगर needed */
-		add_credits_and_wake_अगर(server, &rdata->credits, 0);
-	पूर्ण जबतक (rc == -EAGAIN);
+		/* Roll back credits and retry if needed */
+		add_credits_and_wake_if(server, &rdata->credits, 0);
+	} while (rc == -EAGAIN);
 
 fail:
-	kref_put(&rdata->refcount, cअगरs_uncached_पढ़ोdata_release);
-	वापस rc;
-पूर्ण
+	kref_put(&rdata->refcount, cifs_uncached_readdata_release);
+	return rc;
+}
 
-अटल पूर्णांक
-cअगरs_send_async_पढ़ो(loff_t offset, माप_प्रकार len, काष्ठा cअगरsFileInfo *खोलो_file,
-		     काष्ठा cअगरs_sb_info *cअगरs_sb, काष्ठा list_head *rdata_list,
-		     काष्ठा cअगरs_aio_ctx *ctx)
-अणु
-	काष्ठा cअगरs_पढ़ोdata *rdata;
-	अचिन्हित पूर्णांक npages, rsize;
-	काष्ठा cअगरs_credits credits_on_stack;
-	काष्ठा cअगरs_credits *credits = &credits_on_stack;
-	माप_प्रकार cur_len;
-	पूर्णांक rc;
+static int
+cifs_send_async_read(loff_t offset, size_t len, struct cifsFileInfo *open_file,
+		     struct cifs_sb_info *cifs_sb, struct list_head *rdata_list,
+		     struct cifs_aio_ctx *ctx)
+{
+	struct cifs_readdata *rdata;
+	unsigned int npages, rsize;
+	struct cifs_credits credits_on_stack;
+	struct cifs_credits *credits = &credits_on_stack;
+	size_t cur_len;
+	int rc;
 	pid_t pid;
-	काष्ठा TCP_Server_Info *server;
-	काष्ठा page **pagevec;
-	माप_प्रकार start;
-	काष्ठा iov_iter direct_iov = ctx->iter;
+	struct TCP_Server_Info *server;
+	struct page **pagevec;
+	size_t start;
+	struct iov_iter direct_iov = ctx->iter;
 
-	server = cअगरs_pick_channel(tlink_tcon(खोलो_file->tlink)->ses);
+	server = cifs_pick_channel(tlink_tcon(open_file->tlink)->ses);
 
-	अगर (cअगरs_sb->mnt_cअगरs_flags & CIFS_MOUNT_RWPIDFORWARD)
-		pid = खोलो_file->pid;
-	अन्यथा
+	if (cifs_sb->mnt_cifs_flags & CIFS_MOUNT_RWPIDFORWARD)
+		pid = open_file->pid;
+	else
 		pid = current->tgid;
 
-	अगर (ctx->direct_io)
+	if (ctx->direct_io)
 		iov_iter_advance(&direct_iov, offset - ctx->pos);
 
-	करो अणु
-		अगर (खोलो_file->invalidHandle) अणु
-			rc = cअगरs_reखोलो_file(खोलो_file, true);
-			अगर (rc == -EAGAIN)
-				जारी;
-			अन्यथा अगर (rc)
-				अवरोध;
-		पूर्ण
+	do {
+		if (open_file->invalidHandle) {
+			rc = cifs_reopen_file(open_file, true);
+			if (rc == -EAGAIN)
+				continue;
+			else if (rc)
+				break;
+		}
 
-		rc = server->ops->रुको_mtu_credits(server, cअगरs_sb->ctx->rsize,
+		rc = server->ops->wait_mtu_credits(server, cifs_sb->ctx->rsize,
 						   &rsize, credits);
-		अगर (rc)
-			अवरोध;
+		if (rc)
+			break;
 
-		cur_len = min_t(स्थिर माप_प्रकार, len, rsize);
+		cur_len = min_t(const size_t, len, rsize);
 
-		अगर (ctx->direct_io) अणु
-			sमाप_प्रकार result;
+		if (ctx->direct_io) {
+			ssize_t result;
 
 			result = iov_iter_get_pages_alloc(
 					&direct_iov, &pagevec,
 					cur_len, &start);
-			अगर (result < 0) अणु
-				cअगरs_dbg(VFS,
+			if (result < 0) {
+				cifs_dbg(VFS,
 					 "Couldn't get user pages (rc=%zd) iter type %d iov_offset %zd count %zd\n",
 					 result, iov_iter_type(&direct_iov),
 					 direct_iov.iov_offset,
@@ -3741,19 +3740,19 @@ cअगरs_send_async_पढ़ो(loff_t offset, माप_प्रकार 
 				dump_stack();
 
 				rc = result;
-				add_credits_and_wake_अगर(server, credits, 0);
-				अवरोध;
-			पूर्ण
-			cur_len = (माप_प्रकार)result;
+				add_credits_and_wake_if(server, credits, 0);
+				break;
+			}
+			cur_len = (size_t)result;
 			iov_iter_advance(&direct_iov, cur_len);
 
-			rdata = cअगरs_पढ़ोdata_direct_alloc(
-					pagevec, cअगरs_uncached_पढ़ोv_complete);
-			अगर (!rdata) अणु
-				add_credits_and_wake_अगर(server, credits, 0);
+			rdata = cifs_readdata_direct_alloc(
+					pagevec, cifs_uncached_readv_complete);
+			if (!rdata) {
+				add_credits_and_wake_if(server, credits, 0);
 				rc = -ENOMEM;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 
 			npages = (cur_len + start + PAGE_SIZE-1) / PAGE_SIZE;
 			rdata->page_offset = start;
@@ -3761,555 +3760,555 @@ cअगरs_send_async_पढ़ो(loff_t offset, माप_प्रकार 
 				cur_len-(PAGE_SIZE-start)-(npages-2)*PAGE_SIZE :
 				cur_len;
 
-		पूर्ण अन्यथा अणु
+		} else {
 
 			npages = DIV_ROUND_UP(cur_len, PAGE_SIZE);
-			/* allocate a पढ़ोdata काष्ठा */
-			rdata = cअगरs_पढ़ोdata_alloc(npages,
-					    cअगरs_uncached_पढ़ोv_complete);
-			अगर (!rdata) अणु
-				add_credits_and_wake_अगर(server, credits, 0);
+			/* allocate a readdata struct */
+			rdata = cifs_readdata_alloc(npages,
+					    cifs_uncached_readv_complete);
+			if (!rdata) {
+				add_credits_and_wake_if(server, credits, 0);
 				rc = -ENOMEM;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 
-			rc = cअगरs_पढ़ो_allocate_pages(rdata, npages);
-			अगर (rc) अणु
-				kvमुक्त(rdata->pages);
-				kमुक्त(rdata);
-				add_credits_and_wake_अगर(server, credits, 0);
-				अवरोध;
-			पूर्ण
+			rc = cifs_read_allocate_pages(rdata, npages);
+			if (rc) {
+				kvfree(rdata->pages);
+				kfree(rdata);
+				add_credits_and_wake_if(server, credits, 0);
+				break;
+			}
 
 			rdata->tailsz = PAGE_SIZE;
-		पूर्ण
+		}
 
 		rdata->server = server;
-		rdata->cfile = cअगरsFileInfo_get(खोलो_file);
+		rdata->cfile = cifsFileInfo_get(open_file);
 		rdata->nr_pages = npages;
 		rdata->offset = offset;
 		rdata->bytes = cur_len;
 		rdata->pid = pid;
 		rdata->pagesz = PAGE_SIZE;
-		rdata->पढ़ो_पूर्णांकo_pages = cअगरs_uncached_पढ़ो_पूर्णांकo_pages;
-		rdata->copy_पूर्णांकo_pages = cअगरs_uncached_copy_पूर्णांकo_pages;
+		rdata->read_into_pages = cifs_uncached_read_into_pages;
+		rdata->copy_into_pages = cifs_uncached_copy_into_pages;
 		rdata->credits = credits_on_stack;
 		rdata->ctx = ctx;
 		kref_get(&ctx->refcount);
 
 		rc = adjust_credits(server, &rdata->credits, rdata->bytes);
 
-		अगर (!rc) अणु
-			अगर (rdata->cfile->invalidHandle)
+		if (!rc) {
+			if (rdata->cfile->invalidHandle)
 				rc = -EAGAIN;
-			अन्यथा
-				rc = server->ops->async_पढ़ोv(rdata);
-		पूर्ण
+			else
+				rc = server->ops->async_readv(rdata);
+		}
 
-		अगर (rc) अणु
-			add_credits_and_wake_अगर(server, &rdata->credits, 0);
+		if (rc) {
+			add_credits_and_wake_if(server, &rdata->credits, 0);
 			kref_put(&rdata->refcount,
-				cअगरs_uncached_पढ़ोdata_release);
-			अगर (rc == -EAGAIN) अणु
+				cifs_uncached_readdata_release);
+			if (rc == -EAGAIN) {
 				iov_iter_revert(&direct_iov, cur_len);
-				जारी;
-			पूर्ण
-			अवरोध;
-		पूर्ण
+				continue;
+			}
+			break;
+		}
 
 		list_add_tail(&rdata->list, rdata_list);
 		offset += cur_len;
 		len -= cur_len;
-	पूर्ण जबतक (len > 0);
+	} while (len > 0);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल व्योम
-collect_uncached_पढ़ो_data(काष्ठा cअगरs_aio_ctx *ctx)
-अणु
-	काष्ठा cअगरs_पढ़ोdata *rdata, *पंचांगp;
-	काष्ठा iov_iter *to = &ctx->iter;
-	काष्ठा cअगरs_sb_info *cअगरs_sb;
-	पूर्णांक rc;
+static void
+collect_uncached_read_data(struct cifs_aio_ctx *ctx)
+{
+	struct cifs_readdata *rdata, *tmp;
+	struct iov_iter *to = &ctx->iter;
+	struct cifs_sb_info *cifs_sb;
+	int rc;
 
-	cअगरs_sb = CIFS_SB(ctx->cfile->dentry->d_sb);
+	cifs_sb = CIFS_SB(ctx->cfile->dentry->d_sb);
 
 	mutex_lock(&ctx->aio_mutex);
 
-	अगर (list_empty(&ctx->list)) अणु
+	if (list_empty(&ctx->list)) {
 		mutex_unlock(&ctx->aio_mutex);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	rc = ctx->rc;
 	/* the loop below should proceed in the order of increasing offsets */
 again:
-	list_क्रम_each_entry_safe(rdata, पंचांगp, &ctx->list, list) अणु
-		अगर (!rc) अणु
-			अगर (!try_रुको_क्रम_completion(&rdata->करोne)) अणु
+	list_for_each_entry_safe(rdata, tmp, &ctx->list, list) {
+		if (!rc) {
+			if (!try_wait_for_completion(&rdata->done)) {
 				mutex_unlock(&ctx->aio_mutex);
-				वापस;
-			पूर्ण
+				return;
+			}
 
-			अगर (rdata->result == -EAGAIN) अणु
-				/* resend call अगर it's a retryable error */
-				काष्ठा list_head पंचांगp_list;
-				अचिन्हित पूर्णांक got_bytes = rdata->got_bytes;
+			if (rdata->result == -EAGAIN) {
+				/* resend call if it's a retryable error */
+				struct list_head tmp_list;
+				unsigned int got_bytes = rdata->got_bytes;
 
 				list_del_init(&rdata->list);
-				INIT_LIST_HEAD(&पंचांगp_list);
+				INIT_LIST_HEAD(&tmp_list);
 
 				/*
 				 * Got a part of data and then reconnect has
-				 * happened -- fill the buffer and जारी
-				 * पढ़ोing.
+				 * happened -- fill the buffer and continue
+				 * reading.
 				 */
-				अगर (got_bytes && got_bytes < rdata->bytes) अणु
+				if (got_bytes && got_bytes < rdata->bytes) {
 					rc = 0;
-					अगर (!ctx->direct_io)
-						rc = cअगरs_पढ़ोdata_to_iov(rdata, to);
-					अगर (rc) अणु
+					if (!ctx->direct_io)
+						rc = cifs_readdata_to_iov(rdata, to);
+					if (rc) {
 						kref_put(&rdata->refcount,
-							cअगरs_uncached_पढ़ोdata_release);
-						जारी;
-					पूर्ण
-				पूर्ण
+							cifs_uncached_readdata_release);
+						continue;
+					}
+				}
 
-				अगर (ctx->direct_io) अणु
+				if (ctx->direct_io) {
 					/*
 					 * Re-use rdata as this is a
 					 * direct I/O
 					 */
-					rc = cअगरs_resend_rdata(
+					rc = cifs_resend_rdata(
 						rdata,
-						&पंचांगp_list, ctx);
-				पूर्ण अन्यथा अणु
-					rc = cअगरs_send_async_पढ़ो(
+						&tmp_list, ctx);
+				} else {
+					rc = cifs_send_async_read(
 						rdata->offset + got_bytes,
 						rdata->bytes - got_bytes,
-						rdata->cfile, cअगरs_sb,
-						&पंचांगp_list, ctx);
+						rdata->cfile, cifs_sb,
+						&tmp_list, ctx);
 
 					kref_put(&rdata->refcount,
-						cअगरs_uncached_पढ़ोdata_release);
-				पूर्ण
+						cifs_uncached_readdata_release);
+				}
 
-				list_splice(&पंचांगp_list, &ctx->list);
+				list_splice(&tmp_list, &ctx->list);
 
-				जाओ again;
-			पूर्ण अन्यथा अगर (rdata->result)
+				goto again;
+			} else if (rdata->result)
 				rc = rdata->result;
-			अन्यथा अगर (!ctx->direct_io)
-				rc = cअगरs_पढ़ोdata_to_iov(rdata, to);
+			else if (!ctx->direct_io)
+				rc = cifs_readdata_to_iov(rdata, to);
 
-			/* अगर there was a लघु पढ़ो -- discard anything left */
-			अगर (rdata->got_bytes && rdata->got_bytes < rdata->bytes)
+			/* if there was a short read -- discard anything left */
+			if (rdata->got_bytes && rdata->got_bytes < rdata->bytes)
 				rc = -ENODATA;
 
 			ctx->total_len += rdata->got_bytes;
-		पूर्ण
+		}
 		list_del_init(&rdata->list);
-		kref_put(&rdata->refcount, cअगरs_uncached_पढ़ोdata_release);
-	पूर्ण
+		kref_put(&rdata->refcount, cifs_uncached_readdata_release);
+	}
 
-	अगर (!ctx->direct_io)
+	if (!ctx->direct_io)
 		ctx->total_len = ctx->len - iov_iter_count(to);
 
-	/* mask nodata हाल */
-	अगर (rc == -ENODATA)
+	/* mask nodata case */
+	if (rc == -ENODATA)
 		rc = 0;
 
-	ctx->rc = (rc == 0) ? (sमाप_प्रकार)ctx->total_len : rc;
+	ctx->rc = (rc == 0) ? (ssize_t)ctx->total_len : rc;
 
 	mutex_unlock(&ctx->aio_mutex);
 
-	अगर (ctx->iocb && ctx->iocb->ki_complete)
+	if (ctx->iocb && ctx->iocb->ki_complete)
 		ctx->iocb->ki_complete(ctx->iocb, ctx->rc, 0);
-	अन्यथा
-		complete(&ctx->करोne);
-पूर्ण
+	else
+		complete(&ctx->done);
+}
 
-अटल sमाप_प्रकार __cअगरs_पढ़ोv(
-	काष्ठा kiocb *iocb, काष्ठा iov_iter *to, bool direct)
-अणु
-	माप_प्रकार len;
-	काष्ठा file *file = iocb->ki_filp;
-	काष्ठा cअगरs_sb_info *cअगरs_sb;
-	काष्ठा cअगरsFileInfo *cfile;
-	काष्ठा cअगरs_tcon *tcon;
-	sमाप_प्रकार rc, total_पढ़ो = 0;
+static ssize_t __cifs_readv(
+	struct kiocb *iocb, struct iov_iter *to, bool direct)
+{
+	size_t len;
+	struct file *file = iocb->ki_filp;
+	struct cifs_sb_info *cifs_sb;
+	struct cifsFileInfo *cfile;
+	struct cifs_tcon *tcon;
+	ssize_t rc, total_read = 0;
 	loff_t offset = iocb->ki_pos;
-	काष्ठा cअगरs_aio_ctx *ctx;
+	struct cifs_aio_ctx *ctx;
 
 	/*
-	 * iov_iter_get_pages_alloc() करोesn't work with ITER_KVEC,
-	 * fall back to data copy पढ़ो path
+	 * iov_iter_get_pages_alloc() doesn't work with ITER_KVEC,
+	 * fall back to data copy read path
 	 * this could be improved by getting pages directly in ITER_KVEC
 	 */
-	अगर (direct && iov_iter_is_kvec(to)) अणु
-		cअगरs_dbg(FYI, "use non-direct cifs_user_readv for kvec I/O\n");
+	if (direct && iov_iter_is_kvec(to)) {
+		cifs_dbg(FYI, "use non-direct cifs_user_readv for kvec I/O\n");
 		direct = false;
-	पूर्ण
+	}
 
 	len = iov_iter_count(to);
-	अगर (!len)
-		वापस 0;
+	if (!len)
+		return 0;
 
-	cअगरs_sb = CIFS_खाता_SB(file);
-	cfile = file->निजी_data;
+	cifs_sb = CIFS_FILE_SB(file);
+	cfile = file->private_data;
 	tcon = tlink_tcon(cfile->tlink);
 
-	अगर (!tcon->ses->server->ops->async_पढ़ोv)
-		वापस -ENOSYS;
+	if (!tcon->ses->server->ops->async_readv)
+		return -ENOSYS;
 
-	अगर ((file->f_flags & O_ACCMODE) == O_WRONLY)
-		cअगरs_dbg(FYI, "attempting read on write only file instance\n");
+	if ((file->f_flags & O_ACCMODE) == O_WRONLY)
+		cifs_dbg(FYI, "attempting read on write only file instance\n");
 
-	ctx = cअगरs_aio_ctx_alloc();
-	अगर (!ctx)
-		वापस -ENOMEM;
+	ctx = cifs_aio_ctx_alloc();
+	if (!ctx)
+		return -ENOMEM;
 
-	ctx->cfile = cअगरsFileInfo_get(cfile);
+	ctx->cfile = cifsFileInfo_get(cfile);
 
-	अगर (!is_sync_kiocb(iocb))
+	if (!is_sync_kiocb(iocb))
 		ctx->iocb = iocb;
 
-	अगर (iter_is_iovec(to))
+	if (iter_is_iovec(to))
 		ctx->should_dirty = true;
 
-	अगर (direct) अणु
+	if (direct) {
 		ctx->pos = offset;
 		ctx->direct_io = true;
 		ctx->iter = *to;
 		ctx->len = len;
-	पूर्ण अन्यथा अणु
+	} else {
 		rc = setup_aio_ctx_iter(ctx, to, READ);
-		अगर (rc) अणु
-			kref_put(&ctx->refcount, cअगरs_aio_ctx_release);
-			वापस rc;
-		पूर्ण
+		if (rc) {
+			kref_put(&ctx->refcount, cifs_aio_ctx_release);
+			return rc;
+		}
 		len = ctx->len;
-	पूर्ण
+	}
 
-	/* grab a lock here due to पढ़ो response handlers can access ctx */
+	/* grab a lock here due to read response handlers can access ctx */
 	mutex_lock(&ctx->aio_mutex);
 
-	rc = cअगरs_send_async_पढ़ो(offset, len, cfile, cअगरs_sb, &ctx->list, ctx);
+	rc = cifs_send_async_read(offset, len, cfile, cifs_sb, &ctx->list, ctx);
 
-	/* अगर at least one पढ़ो request send succeeded, then reset rc */
-	अगर (!list_empty(&ctx->list))
+	/* if at least one read request send succeeded, then reset rc */
+	if (!list_empty(&ctx->list))
 		rc = 0;
 
 	mutex_unlock(&ctx->aio_mutex);
 
-	अगर (rc) अणु
-		kref_put(&ctx->refcount, cअगरs_aio_ctx_release);
-		वापस rc;
-	पूर्ण
+	if (rc) {
+		kref_put(&ctx->refcount, cifs_aio_ctx_release);
+		return rc;
+	}
 
-	अगर (!is_sync_kiocb(iocb)) अणु
-		kref_put(&ctx->refcount, cअगरs_aio_ctx_release);
-		वापस -EIOCBQUEUED;
-	पूर्ण
+	if (!is_sync_kiocb(iocb)) {
+		kref_put(&ctx->refcount, cifs_aio_ctx_release);
+		return -EIOCBQUEUED;
+	}
 
-	rc = रुको_क्रम_completion_समाप्तable(&ctx->करोne);
-	अगर (rc) अणु
+	rc = wait_for_completion_killable(&ctx->done);
+	if (rc) {
 		mutex_lock(&ctx->aio_mutex);
 		ctx->rc = rc = -EINTR;
-		total_पढ़ो = ctx->total_len;
+		total_read = ctx->total_len;
 		mutex_unlock(&ctx->aio_mutex);
-	पूर्ण अन्यथा अणु
+	} else {
 		rc = ctx->rc;
-		total_पढ़ो = ctx->total_len;
-	पूर्ण
+		total_read = ctx->total_len;
+	}
 
-	kref_put(&ctx->refcount, cअगरs_aio_ctx_release);
+	kref_put(&ctx->refcount, cifs_aio_ctx_release);
 
-	अगर (total_पढ़ो) अणु
-		iocb->ki_pos += total_पढ़ो;
-		वापस total_पढ़ो;
-	पूर्ण
-	वापस rc;
-पूर्ण
+	if (total_read) {
+		iocb->ki_pos += total_read;
+		return total_read;
+	}
+	return rc;
+}
 
-sमाप_प्रकार cअगरs_direct_पढ़ोv(काष्ठा kiocb *iocb, काष्ठा iov_iter *to)
-अणु
-	वापस __cअगरs_पढ़ोv(iocb, to, true);
-पूर्ण
+ssize_t cifs_direct_readv(struct kiocb *iocb, struct iov_iter *to)
+{
+	return __cifs_readv(iocb, to, true);
+}
 
-sमाप_प्रकार cअगरs_user_पढ़ोv(काष्ठा kiocb *iocb, काष्ठा iov_iter *to)
-अणु
-	वापस __cअगरs_पढ़ोv(iocb, to, false);
-पूर्ण
+ssize_t cifs_user_readv(struct kiocb *iocb, struct iov_iter *to)
+{
+	return __cifs_readv(iocb, to, false);
+}
 
-sमाप_प्रकार
-cअगरs_strict_पढ़ोv(काष्ठा kiocb *iocb, काष्ठा iov_iter *to)
-अणु
-	काष्ठा inode *inode = file_inode(iocb->ki_filp);
-	काष्ठा cअगरsInodeInfo *cinode = CIFS_I(inode);
-	काष्ठा cअगरs_sb_info *cअगरs_sb = CIFS_SB(inode->i_sb);
-	काष्ठा cअगरsFileInfo *cfile = (काष्ठा cअगरsFileInfo *)
-						iocb->ki_filp->निजी_data;
-	काष्ठा cअगरs_tcon *tcon = tlink_tcon(cfile->tlink);
-	पूर्णांक rc = -EACCES;
+ssize_t
+cifs_strict_readv(struct kiocb *iocb, struct iov_iter *to)
+{
+	struct inode *inode = file_inode(iocb->ki_filp);
+	struct cifsInodeInfo *cinode = CIFS_I(inode);
+	struct cifs_sb_info *cifs_sb = CIFS_SB(inode->i_sb);
+	struct cifsFileInfo *cfile = (struct cifsFileInfo *)
+						iocb->ki_filp->private_data;
+	struct cifs_tcon *tcon = tlink_tcon(cfile->tlink);
+	int rc = -EACCES;
 
 	/*
-	 * In strict cache mode we need to पढ़ो from the server all the समय
-	 * अगर we करोn't have level II oplock because the server can delay mसमय
+	 * In strict cache mode we need to read from the server all the time
+	 * if we don't have level II oplock because the server can delay mtime
 	 * change - so we can't make a decision about inode invalidating.
-	 * And we can also fail with pageपढ़ोing अगर there are mandatory locks
-	 * on pages affected by this पढ़ो but not on the region from pos to
+	 * And we can also fail with pagereading if there are mandatory locks
+	 * on pages affected by this read but not on the region from pos to
 	 * pos+len-1.
 	 */
-	अगर (!CIFS_CACHE_READ(cinode))
-		वापस cअगरs_user_पढ़ोv(iocb, to);
+	if (!CIFS_CACHE_READ(cinode))
+		return cifs_user_readv(iocb, to);
 
-	अगर (cap_unix(tcon->ses) &&
+	if (cap_unix(tcon->ses) &&
 	    (CIFS_UNIX_FCNTL_CAP & le64_to_cpu(tcon->fsUnixInfo.Capability)) &&
-	    ((cअगरs_sb->mnt_cअगरs_flags & CIFS_MOUNT_NOPOSIXBRL) == 0))
-		वापस generic_file_पढ़ो_iter(iocb, to);
+	    ((cifs_sb->mnt_cifs_flags & CIFS_MOUNT_NOPOSIXBRL) == 0))
+		return generic_file_read_iter(iocb, to);
 
 	/*
-	 * We need to hold the sem to be sure nobody modअगरies lock list
-	 * with a brlock that prevents पढ़ोing.
+	 * We need to hold the sem to be sure nobody modifies lock list
+	 * with a brlock that prevents reading.
 	 */
-	करोwn_पढ़ो(&cinode->lock_sem);
-	अगर (!cअगरs_find_lock_conflict(cfile, iocb->ki_pos, iov_iter_count(to),
+	down_read(&cinode->lock_sem);
+	if (!cifs_find_lock_conflict(cfile, iocb->ki_pos, iov_iter_count(to),
 				     tcon->ses->server->vals->shared_lock_type,
-				     0, शून्य, CIFS_READ_OP))
-		rc = generic_file_पढ़ो_iter(iocb, to);
-	up_पढ़ो(&cinode->lock_sem);
-	वापस rc;
-पूर्ण
+				     0, NULL, CIFS_READ_OP))
+		rc = generic_file_read_iter(iocb, to);
+	up_read(&cinode->lock_sem);
+	return rc;
+}
 
-अटल sमाप_प्रकार
-cअगरs_पढ़ो(काष्ठा file *file, अक्षर *पढ़ो_data, माप_प्रकार पढ़ो_size, loff_t *offset)
-अणु
-	पूर्णांक rc = -EACCES;
-	अचिन्हित पूर्णांक bytes_पढ़ो = 0;
-	अचिन्हित पूर्णांक total_पढ़ो;
-	अचिन्हित पूर्णांक current_पढ़ो_size;
-	अचिन्हित पूर्णांक rsize;
-	काष्ठा cअगरs_sb_info *cअगरs_sb;
-	काष्ठा cअगरs_tcon *tcon;
-	काष्ठा TCP_Server_Info *server;
-	अचिन्हित पूर्णांक xid;
-	अक्षर *cur_offset;
-	काष्ठा cअगरsFileInfo *खोलो_file;
-	काष्ठा cअगरs_io_parms io_parms = अणु0पूर्ण;
-	पूर्णांक buf_type = CIFS_NO_BUFFER;
+static ssize_t
+cifs_read(struct file *file, char *read_data, size_t read_size, loff_t *offset)
+{
+	int rc = -EACCES;
+	unsigned int bytes_read = 0;
+	unsigned int total_read;
+	unsigned int current_read_size;
+	unsigned int rsize;
+	struct cifs_sb_info *cifs_sb;
+	struct cifs_tcon *tcon;
+	struct TCP_Server_Info *server;
+	unsigned int xid;
+	char *cur_offset;
+	struct cifsFileInfo *open_file;
+	struct cifs_io_parms io_parms = {0};
+	int buf_type = CIFS_NO_BUFFER;
 	__u32 pid;
 
 	xid = get_xid();
-	cअगरs_sb = CIFS_खाता_SB(file);
+	cifs_sb = CIFS_FILE_SB(file);
 
-	/* FIXME: set up handlers क्रम larger पढ़ोs and/or convert to async */
-	rsize = min_t(अचिन्हित पूर्णांक, cअगरs_sb->ctx->rsize, CIFSMaxBufSize);
+	/* FIXME: set up handlers for larger reads and/or convert to async */
+	rsize = min_t(unsigned int, cifs_sb->ctx->rsize, CIFSMaxBufSize);
 
-	अगर (file->निजी_data == शून्य) अणु
+	if (file->private_data == NULL) {
 		rc = -EBADF;
-		मुक्त_xid(xid);
-		वापस rc;
-	पूर्ण
-	खोलो_file = file->निजी_data;
-	tcon = tlink_tcon(खोलो_file->tlink);
-	server = cअगरs_pick_channel(tcon->ses);
+		free_xid(xid);
+		return rc;
+	}
+	open_file = file->private_data;
+	tcon = tlink_tcon(open_file->tlink);
+	server = cifs_pick_channel(tcon->ses);
 
-	अगर (!server->ops->sync_पढ़ो) अणु
-		मुक्त_xid(xid);
-		वापस -ENOSYS;
-	पूर्ण
+	if (!server->ops->sync_read) {
+		free_xid(xid);
+		return -ENOSYS;
+	}
 
-	अगर (cअगरs_sb->mnt_cअगरs_flags & CIFS_MOUNT_RWPIDFORWARD)
-		pid = खोलो_file->pid;
-	अन्यथा
+	if (cifs_sb->mnt_cifs_flags & CIFS_MOUNT_RWPIDFORWARD)
+		pid = open_file->pid;
+	else
 		pid = current->tgid;
 
-	अगर ((file->f_flags & O_ACCMODE) == O_WRONLY)
-		cअगरs_dbg(FYI, "attempting read on write only file instance\n");
+	if ((file->f_flags & O_ACCMODE) == O_WRONLY)
+		cifs_dbg(FYI, "attempting read on write only file instance\n");
 
-	क्रम (total_पढ़ो = 0, cur_offset = पढ़ो_data; पढ़ो_size > total_पढ़ो;
-	     total_पढ़ो += bytes_पढ़ो, cur_offset += bytes_पढ़ो) अणु
-		करो अणु
-			current_पढ़ो_size = min_t(uपूर्णांक, पढ़ो_size - total_पढ़ो,
+	for (total_read = 0, cur_offset = read_data; read_size > total_read;
+	     total_read += bytes_read, cur_offset += bytes_read) {
+		do {
+			current_read_size = min_t(uint, read_size - total_read,
 						  rsize);
 			/*
-			 * For winकरोws me and 9x we करो not want to request more
-			 * than it negotiated since it will refuse the पढ़ो
+			 * For windows me and 9x we do not want to request more
+			 * than it negotiated since it will refuse the read
 			 * then.
 			 */
-			अगर (!(tcon->ses->capabilities &
-				tcon->ses->server->vals->cap_large_files)) अणु
-				current_पढ़ो_size = min_t(uपूर्णांक,
-					current_पढ़ो_size, CIFSMaxBufSize);
-			पूर्ण
-			अगर (खोलो_file->invalidHandle) अणु
-				rc = cअगरs_reखोलो_file(खोलो_file, true);
-				अगर (rc != 0)
-					अवरोध;
-			पूर्ण
+			if (!(tcon->ses->capabilities &
+				tcon->ses->server->vals->cap_large_files)) {
+				current_read_size = min_t(uint,
+					current_read_size, CIFSMaxBufSize);
+			}
+			if (open_file->invalidHandle) {
+				rc = cifs_reopen_file(open_file, true);
+				if (rc != 0)
+					break;
+			}
 			io_parms.pid = pid;
 			io_parms.tcon = tcon;
 			io_parms.offset = *offset;
-			io_parms.length = current_पढ़ो_size;
+			io_parms.length = current_read_size;
 			io_parms.server = server;
-			rc = server->ops->sync_पढ़ो(xid, &खोलो_file->fid, &io_parms,
-						    &bytes_पढ़ो, &cur_offset,
+			rc = server->ops->sync_read(xid, &open_file->fid, &io_parms,
+						    &bytes_read, &cur_offset,
 						    &buf_type);
-		पूर्ण जबतक (rc == -EAGAIN);
+		} while (rc == -EAGAIN);
 
-		अगर (rc || (bytes_पढ़ो == 0)) अणु
-			अगर (total_पढ़ो) अणु
-				अवरोध;
-			पूर्ण अन्यथा अणु
-				मुक्त_xid(xid);
-				वापस rc;
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			cअगरs_stats_bytes_पढ़ो(tcon, total_पढ़ो);
-			*offset += bytes_पढ़ो;
-		पूर्ण
-	पूर्ण
-	मुक्त_xid(xid);
-	वापस total_पढ़ो;
-पूर्ण
+		if (rc || (bytes_read == 0)) {
+			if (total_read) {
+				break;
+			} else {
+				free_xid(xid);
+				return rc;
+			}
+		} else {
+			cifs_stats_bytes_read(tcon, total_read);
+			*offset += bytes_read;
+		}
+	}
+	free_xid(xid);
+	return total_read;
+}
 
 /*
  * If the page is mmap'ed into a process' page tables, then we need to make
- * sure that it करोesn't change जबतक being written back.
+ * sure that it doesn't change while being written back.
  */
-अटल vm_fault_t
-cअगरs_page_mkग_लिखो(काष्ठा vm_fault *vmf)
-अणु
-	काष्ठा page *page = vmf->page;
+static vm_fault_t
+cifs_page_mkwrite(struct vm_fault *vmf)
+{
+	struct page *page = vmf->page;
 
 	lock_page(page);
-	वापस VM_FAULT_LOCKED;
-पूर्ण
+	return VM_FAULT_LOCKED;
+}
 
-अटल स्थिर काष्ठा vm_operations_काष्ठा cअगरs_file_vm_ops = अणु
+static const struct vm_operations_struct cifs_file_vm_ops = {
 	.fault = filemap_fault,
 	.map_pages = filemap_map_pages,
-	.page_mkग_लिखो = cअगरs_page_mkग_लिखो,
-पूर्ण;
+	.page_mkwrite = cifs_page_mkwrite,
+};
 
-पूर्णांक cअगरs_file_strict_mmap(काष्ठा file *file, काष्ठा vm_area_काष्ठा *vma)
-अणु
-	पूर्णांक xid, rc = 0;
-	काष्ठा inode *inode = file_inode(file);
+int cifs_file_strict_mmap(struct file *file, struct vm_area_struct *vma)
+{
+	int xid, rc = 0;
+	struct inode *inode = file_inode(file);
 
 	xid = get_xid();
 
-	अगर (!CIFS_CACHE_READ(CIFS_I(inode)))
-		rc = cअगरs_zap_mapping(inode);
-	अगर (!rc)
+	if (!CIFS_CACHE_READ(CIFS_I(inode)))
+		rc = cifs_zap_mapping(inode);
+	if (!rc)
 		rc = generic_file_mmap(file, vma);
-	अगर (!rc)
-		vma->vm_ops = &cअगरs_file_vm_ops;
+	if (!rc)
+		vma->vm_ops = &cifs_file_vm_ops;
 
-	मुक्त_xid(xid);
-	वापस rc;
-पूर्ण
+	free_xid(xid);
+	return rc;
+}
 
-पूर्णांक cअगरs_file_mmap(काष्ठा file *file, काष्ठा vm_area_काष्ठा *vma)
-अणु
-	पूर्णांक rc, xid;
+int cifs_file_mmap(struct file *file, struct vm_area_struct *vma)
+{
+	int rc, xid;
 
 	xid = get_xid();
 
-	rc = cअगरs_revalidate_file(file);
-	अगर (rc)
-		cअगरs_dbg(FYI, "Validation prior to mmap failed, error=%d\n",
+	rc = cifs_revalidate_file(file);
+	if (rc)
+		cifs_dbg(FYI, "Validation prior to mmap failed, error=%d\n",
 			 rc);
-	अगर (!rc)
+	if (!rc)
 		rc = generic_file_mmap(file, vma);
-	अगर (!rc)
-		vma->vm_ops = &cअगरs_file_vm_ops;
+	if (!rc)
+		vma->vm_ops = &cifs_file_vm_ops;
 
-	मुक्त_xid(xid);
-	वापस rc;
-पूर्ण
+	free_xid(xid);
+	return rc;
+}
 
-अटल व्योम
-cअगरs_पढ़ोv_complete(काष्ठा work_काष्ठा *work)
-अणु
-	अचिन्हित पूर्णांक i, got_bytes;
-	काष्ठा cअगरs_पढ़ोdata *rdata = container_of(work,
-						काष्ठा cअगरs_पढ़ोdata, work);
+static void
+cifs_readv_complete(struct work_struct *work)
+{
+	unsigned int i, got_bytes;
+	struct cifs_readdata *rdata = container_of(work,
+						struct cifs_readdata, work);
 
 	got_bytes = rdata->got_bytes;
-	क्रम (i = 0; i < rdata->nr_pages; i++) अणु
-		काष्ठा page *page = rdata->pages[i];
+	for (i = 0; i < rdata->nr_pages; i++) {
+		struct page *page = rdata->pages[i];
 
 		lru_cache_add(page);
 
-		अगर (rdata->result == 0 ||
-		    (rdata->result == -EAGAIN && got_bytes)) अणु
+		if (rdata->result == 0 ||
+		    (rdata->result == -EAGAIN && got_bytes)) {
 			flush_dcache_page(page);
 			SetPageUptodate(page);
-		पूर्ण
+		}
 
 		unlock_page(page);
 
-		अगर (rdata->result == 0 ||
+		if (rdata->result == 0 ||
 		    (rdata->result == -EAGAIN && got_bytes))
-			cअगरs_पढ़ोpage_to_fscache(rdata->mapping->host, page);
+			cifs_readpage_to_fscache(rdata->mapping->host, page);
 
-		got_bytes -= min_t(अचिन्हित पूर्णांक, PAGE_SIZE, got_bytes);
+		got_bytes -= min_t(unsigned int, PAGE_SIZE, got_bytes);
 
 		put_page(page);
-		rdata->pages[i] = शून्य;
-	पूर्ण
-	kref_put(&rdata->refcount, cअगरs_पढ़ोdata_release);
-पूर्ण
+		rdata->pages[i] = NULL;
+	}
+	kref_put(&rdata->refcount, cifs_readdata_release);
+}
 
-अटल पूर्णांक
-पढ़ोpages_fill_pages(काष्ठा TCP_Server_Info *server,
-		     काष्ठा cअगरs_पढ़ोdata *rdata, काष्ठा iov_iter *iter,
-		     अचिन्हित पूर्णांक len)
-अणु
-	पूर्णांक result = 0;
-	अचिन्हित पूर्णांक i;
+static int
+readpages_fill_pages(struct TCP_Server_Info *server,
+		     struct cifs_readdata *rdata, struct iov_iter *iter,
+		     unsigned int len)
+{
+	int result = 0;
+	unsigned int i;
 	u64 eof;
 	pgoff_t eof_index;
-	अचिन्हित पूर्णांक nr_pages = rdata->nr_pages;
-	अचिन्हित पूर्णांक page_offset = rdata->page_offset;
+	unsigned int nr_pages = rdata->nr_pages;
+	unsigned int page_offset = rdata->page_offset;
 
 	/* determine the eof that the server (probably) has */
 	eof = CIFS_I(rdata->mapping->host)->server_eof;
 	eof_index = eof ? (eof - 1) >> PAGE_SHIFT : 0;
-	cअगरs_dbg(FYI, "eof=%llu eof_index=%lu\n", eof, eof_index);
+	cifs_dbg(FYI, "eof=%llu eof_index=%lu\n", eof, eof_index);
 
 	rdata->got_bytes = 0;
 	rdata->tailsz = PAGE_SIZE;
-	क्रम (i = 0; i < nr_pages; i++) अणु
-		काष्ठा page *page = rdata->pages[i];
-		अचिन्हित पूर्णांक to_पढ़ो = rdata->pagesz;
-		माप_प्रकार n;
+	for (i = 0; i < nr_pages; i++) {
+		struct page *page = rdata->pages[i];
+		unsigned int to_read = rdata->pagesz;
+		size_t n;
 
-		अगर (i == 0)
-			to_पढ़ो -= page_offset;
-		अन्यथा
+		if (i == 0)
+			to_read -= page_offset;
+		else
 			page_offset = 0;
 
-		n = to_पढ़ो;
+		n = to_read;
 
-		अगर (len >= to_पढ़ो) अणु
-			len -= to_पढ़ो;
-		पूर्ण अन्यथा अगर (len > 0) अणु
-			/* enough क्रम partial page, fill and zero the rest */
-			zero_user(page, len + page_offset, to_पढ़ो - len);
+		if (len >= to_read) {
+			len -= to_read;
+		} else if (len > 0) {
+			/* enough for partial page, fill and zero the rest */
+			zero_user(page, len + page_offset, to_read - len);
 			n = rdata->tailsz = len;
 			len = 0;
-		पूर्ण अन्यथा अगर (page->index > eof_index) अणु
+		} else if (page->index > eof_index) {
 			/*
-			 * The VFS will not try to करो पढ़ोahead past the
+			 * The VFS will not try to do readahead past the
 			 * i_size, but it's possible that we have outstanding
-			 * ग_लिखोs with gaps in the middle and the i_size hasn't
+			 * writes with gaps in the middle and the i_size hasn't
 			 * caught up yet. Populate those with zeroed out pages
 			 * to prevent the VFS from repeatedly attempting to
-			 * fill them until the ग_लिखोs are flushed.
+			 * fill them until the writes are flushed.
 			 */
 			zero_user(page, 0, PAGE_SIZE);
 			lru_cache_add(page);
@@ -4317,70 +4316,70 @@ cअगरs_पढ़ोv_complete(काष्ठा work_काष्ठा *w
 			SetPageUptodate(page);
 			unlock_page(page);
 			put_page(page);
-			rdata->pages[i] = शून्य;
+			rdata->pages[i] = NULL;
 			rdata->nr_pages--;
-			जारी;
-		पूर्ण अन्यथा अणु
+			continue;
+		} else {
 			/* no need to hold page hostage */
 			lru_cache_add(page);
 			unlock_page(page);
 			put_page(page);
-			rdata->pages[i] = शून्य;
+			rdata->pages[i] = NULL;
 			rdata->nr_pages--;
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		अगर (iter)
+		if (iter)
 			result = copy_page_from_iter(
 					page, page_offset, n, iter);
-#अगर_घोषित CONFIG_CIFS_SMB_सूचीECT
-		अन्यथा अगर (rdata->mr)
+#ifdef CONFIG_CIFS_SMB_DIRECT
+		else if (rdata->mr)
 			result = n;
-#पूर्ण_अगर
-		अन्यथा
-			result = cअगरs_पढ़ो_page_from_socket(
+#endif
+		else
+			result = cifs_read_page_from_socket(
 					server, page, page_offset, n);
-		अगर (result < 0)
-			अवरोध;
+		if (result < 0)
+			break;
 
 		rdata->got_bytes += result;
-	पूर्ण
+	}
 
-	वापस rdata->got_bytes > 0 && result != -ECONNABORTED ?
+	return rdata->got_bytes > 0 && result != -ECONNABORTED ?
 						rdata->got_bytes : result;
-पूर्ण
+}
 
-अटल पूर्णांक
-cअगरs_पढ़ोpages_पढ़ो_पूर्णांकo_pages(काष्ठा TCP_Server_Info *server,
-			       काष्ठा cअगरs_पढ़ोdata *rdata, अचिन्हित पूर्णांक len)
-अणु
-	वापस पढ़ोpages_fill_pages(server, rdata, शून्य, len);
-पूर्ण
+static int
+cifs_readpages_read_into_pages(struct TCP_Server_Info *server,
+			       struct cifs_readdata *rdata, unsigned int len)
+{
+	return readpages_fill_pages(server, rdata, NULL, len);
+}
 
-अटल पूर्णांक
-cअगरs_पढ़ोpages_copy_पूर्णांकo_pages(काष्ठा TCP_Server_Info *server,
-			       काष्ठा cअगरs_पढ़ोdata *rdata,
-			       काष्ठा iov_iter *iter)
-अणु
-	वापस पढ़ोpages_fill_pages(server, rdata, iter, iter->count);
-पूर्ण
+static int
+cifs_readpages_copy_into_pages(struct TCP_Server_Info *server,
+			       struct cifs_readdata *rdata,
+			       struct iov_iter *iter)
+{
+	return readpages_fill_pages(server, rdata, iter, iter->count);
+}
 
-अटल पूर्णांक
-पढ़ोpages_get_pages(काष्ठा address_space *mapping, काष्ठा list_head *page_list,
-		    अचिन्हित पूर्णांक rsize, काष्ठा list_head *पंचांगplist,
-		    अचिन्हित पूर्णांक *nr_pages, loff_t *offset, अचिन्हित पूर्णांक *bytes)
-अणु
-	काष्ठा page *page, *tpage;
-	अचिन्हित पूर्णांक expected_index;
-	पूर्णांक rc;
-	gfp_t gfp = पढ़ोahead_gfp_mask(mapping);
+static int
+readpages_get_pages(struct address_space *mapping, struct list_head *page_list,
+		    unsigned int rsize, struct list_head *tmplist,
+		    unsigned int *nr_pages, loff_t *offset, unsigned int *bytes)
+{
+	struct page *page, *tpage;
+	unsigned int expected_index;
+	int rc;
+	gfp_t gfp = readahead_gfp_mask(mapping);
 
-	INIT_LIST_HEAD(पंचांगplist);
+	INIT_LIST_HEAD(tmplist);
 
 	page = lru_to_page(page_list);
 
 	/*
-	 * Lock the page and put it in the cache. Since no one अन्यथा
+	 * Lock the page and put it in the cache. Since no one else
 	 * should have access to this page, we're safe to simply set
 	 * PG_locked without checking it first.
 	 */
@@ -4388,148 +4387,148 @@ cअगरs_पढ़ोpages_copy_पूर्णांकo_pages(काष्�
 	rc = add_to_page_cache_locked(page, mapping,
 				      page->index, gfp);
 
-	/* give up अगर we can't stick it in the cache */
-	अगर (rc) अणु
+	/* give up if we can't stick it in the cache */
+	if (rc) {
 		__ClearPageLocked(page);
-		वापस rc;
-	पूर्ण
+		return rc;
+	}
 
-	/* move first page to the पंचांगplist */
+	/* move first page to the tmplist */
 	*offset = (loff_t)page->index << PAGE_SHIFT;
 	*bytes = PAGE_SIZE;
 	*nr_pages = 1;
-	list_move_tail(&page->lru, पंचांगplist);
+	list_move_tail(&page->lru, tmplist);
 
 	/* now try and add more pages onto the request */
 	expected_index = page->index + 1;
-	list_क्रम_each_entry_safe_reverse(page, tpage, page_list, lru) अणु
+	list_for_each_entry_safe_reverse(page, tpage, page_list, lru) {
 		/* discontinuity ? */
-		अगर (page->index != expected_index)
-			अवरोध;
+		if (page->index != expected_index)
+			break;
 
-		/* would this page push the पढ़ो over the rsize? */
-		अगर (*bytes + PAGE_SIZE > rsize)
-			अवरोध;
+		/* would this page push the read over the rsize? */
+		if (*bytes + PAGE_SIZE > rsize)
+			break;
 
 		__SetPageLocked(page);
 		rc = add_to_page_cache_locked(page, mapping, page->index, gfp);
-		अगर (rc) अणु
+		if (rc) {
 			__ClearPageLocked(page);
-			अवरोध;
-		पूर्ण
-		list_move_tail(&page->lru, पंचांगplist);
+			break;
+		}
+		list_move_tail(&page->lru, tmplist);
 		(*bytes) += PAGE_SIZE;
 		expected_index++;
 		(*nr_pages)++;
-	पूर्ण
-	वापस rc;
-पूर्ण
+	}
+	return rc;
+}
 
-अटल पूर्णांक cअगरs_पढ़ोpages(काष्ठा file *file, काष्ठा address_space *mapping,
-	काष्ठा list_head *page_list, अचिन्हित num_pages)
-अणु
-	पूर्णांक rc;
-	पूर्णांक err = 0;
-	काष्ठा list_head पंचांगplist;
-	काष्ठा cअगरsFileInfo *खोलो_file = file->निजी_data;
-	काष्ठा cअगरs_sb_info *cअगरs_sb = CIFS_खाता_SB(file);
-	काष्ठा TCP_Server_Info *server;
+static int cifs_readpages(struct file *file, struct address_space *mapping,
+	struct list_head *page_list, unsigned num_pages)
+{
+	int rc;
+	int err = 0;
+	struct list_head tmplist;
+	struct cifsFileInfo *open_file = file->private_data;
+	struct cifs_sb_info *cifs_sb = CIFS_FILE_SB(file);
+	struct TCP_Server_Info *server;
 	pid_t pid;
-	अचिन्हित पूर्णांक xid;
+	unsigned int xid;
 
 	xid = get_xid();
 	/*
 	 * Reads as many pages as possible from fscache. Returns -ENOBUFS
-	 * immediately अगर the cookie is negative
+	 * immediately if the cookie is negative
 	 *
-	 * After this poपूर्णांक, every page in the list might have PG_fscache set,
-	 * so we will need to clean that up off of every page we करोn't use.
+	 * After this point, every page in the list might have PG_fscache set,
+	 * so we will need to clean that up off of every page we don't use.
 	 */
-	rc = cअगरs_पढ़ोpages_from_fscache(mapping->host, mapping, page_list,
+	rc = cifs_readpages_from_fscache(mapping->host, mapping, page_list,
 					 &num_pages);
-	अगर (rc == 0) अणु
-		मुक्त_xid(xid);
-		वापस rc;
-	पूर्ण
+	if (rc == 0) {
+		free_xid(xid);
+		return rc;
+	}
 
-	अगर (cअगरs_sb->mnt_cअगरs_flags & CIFS_MOUNT_RWPIDFORWARD)
-		pid = खोलो_file->pid;
-	अन्यथा
+	if (cifs_sb->mnt_cifs_flags & CIFS_MOUNT_RWPIDFORWARD)
+		pid = open_file->pid;
+	else
 		pid = current->tgid;
 
 	rc = 0;
-	server = cअगरs_pick_channel(tlink_tcon(खोलो_file->tlink)->ses);
+	server = cifs_pick_channel(tlink_tcon(open_file->tlink)->ses);
 
-	cअगरs_dbg(FYI, "%s: file=%p mapping=%p num_pages=%u\n",
+	cifs_dbg(FYI, "%s: file=%p mapping=%p num_pages=%u\n",
 		 __func__, file, mapping, num_pages);
 
 	/*
-	 * Start with the page at end of list and move it to निजी
+	 * Start with the page at end of list and move it to private
 	 * list. Do the same with any following pages until we hit
 	 * the rsize limit, hit an index discontinuity, or run out of
-	 * pages. Issue the async पढ़ो and then start the loop again
+	 * pages. Issue the async read and then start the loop again
 	 * until the list is empty.
 	 *
 	 * Note that list order is important. The page_list is in
 	 * the order of declining indexes. When we put the pages in
 	 * the rdata->pages, then we want them in increasing order.
 	 */
-	जबतक (!list_empty(page_list) && !err) अणु
-		अचिन्हित पूर्णांक i, nr_pages, bytes, rsize;
+	while (!list_empty(page_list) && !err) {
+		unsigned int i, nr_pages, bytes, rsize;
 		loff_t offset;
-		काष्ठा page *page, *tpage;
-		काष्ठा cअगरs_पढ़ोdata *rdata;
-		काष्ठा cअगरs_credits credits_on_stack;
-		काष्ठा cअगरs_credits *credits = &credits_on_stack;
+		struct page *page, *tpage;
+		struct cifs_readdata *rdata;
+		struct cifs_credits credits_on_stack;
+		struct cifs_credits *credits = &credits_on_stack;
 
-		अगर (खोलो_file->invalidHandle) अणु
-			rc = cअगरs_reखोलो_file(खोलो_file, true);
-			अगर (rc == -EAGAIN)
-				जारी;
-			अन्यथा अगर (rc)
-				अवरोध;
-		पूर्ण
+		if (open_file->invalidHandle) {
+			rc = cifs_reopen_file(open_file, true);
+			if (rc == -EAGAIN)
+				continue;
+			else if (rc)
+				break;
+		}
 
-		rc = server->ops->रुको_mtu_credits(server, cअगरs_sb->ctx->rsize,
+		rc = server->ops->wait_mtu_credits(server, cifs_sb->ctx->rsize,
 						   &rsize, credits);
-		अगर (rc)
-			अवरोध;
+		if (rc)
+			break;
 
 		/*
-		 * Give up immediately अगर rsize is too small to पढ़ो an entire
-		 * page. The VFS will fall back to पढ़ोpage. We should never
-		 * reach this poपूर्णांक however since we set ra_pages to 0 when the
+		 * Give up immediately if rsize is too small to read an entire
+		 * page. The VFS will fall back to readpage. We should never
+		 * reach this point however since we set ra_pages to 0 when the
 		 * rsize is smaller than a cache page.
 		 */
-		अगर (unlikely(rsize < PAGE_SIZE)) अणु
-			add_credits_and_wake_अगर(server, credits, 0);
-			मुक्त_xid(xid);
-			वापस 0;
-		पूर्ण
+		if (unlikely(rsize < PAGE_SIZE)) {
+			add_credits_and_wake_if(server, credits, 0);
+			free_xid(xid);
+			return 0;
+		}
 
 		nr_pages = 0;
-		err = पढ़ोpages_get_pages(mapping, page_list, rsize, &पंचांगplist,
+		err = readpages_get_pages(mapping, page_list, rsize, &tmplist,
 					 &nr_pages, &offset, &bytes);
-		अगर (!nr_pages) अणु
-			add_credits_and_wake_अगर(server, credits, 0);
-			अवरोध;
-		पूर्ण
+		if (!nr_pages) {
+			add_credits_and_wake_if(server, credits, 0);
+			break;
+		}
 
-		rdata = cअगरs_पढ़ोdata_alloc(nr_pages, cअगरs_पढ़ोv_complete);
-		अगर (!rdata) अणु
-			/* best to give up अगर we're out of mem */
-			list_क्रम_each_entry_safe(page, tpage, &पंचांगplist, lru) अणु
+		rdata = cifs_readdata_alloc(nr_pages, cifs_readv_complete);
+		if (!rdata) {
+			/* best to give up if we're out of mem */
+			list_for_each_entry_safe(page, tpage, &tmplist, lru) {
 				list_del(&page->lru);
 				lru_cache_add(page);
 				unlock_page(page);
 				put_page(page);
-			पूर्ण
+			}
 			rc = -ENOMEM;
-			add_credits_and_wake_अगर(server, credits, 0);
-			अवरोध;
-		पूर्ण
+			add_credits_and_wake_if(server, credits, 0);
+			break;
+		}
 
-		rdata->cfile = cअगरsFileInfo_get(खोलो_file);
+		rdata->cfile = cifsFileInfo_get(open_file);
 		rdata->server = server;
 		rdata->mapping = mapping;
 		rdata->offset = offset;
@@ -4537,88 +4536,88 @@ cअगरs_पढ़ोpages_copy_पूर्णांकo_pages(काष्�
 		rdata->pid = pid;
 		rdata->pagesz = PAGE_SIZE;
 		rdata->tailsz = PAGE_SIZE;
-		rdata->पढ़ो_पूर्णांकo_pages = cअगरs_पढ़ोpages_पढ़ो_पूर्णांकo_pages;
-		rdata->copy_पूर्णांकo_pages = cअगरs_पढ़ोpages_copy_पूर्णांकo_pages;
+		rdata->read_into_pages = cifs_readpages_read_into_pages;
+		rdata->copy_into_pages = cifs_readpages_copy_into_pages;
 		rdata->credits = credits_on_stack;
 
-		list_क्रम_each_entry_safe(page, tpage, &पंचांगplist, lru) अणु
+		list_for_each_entry_safe(page, tpage, &tmplist, lru) {
 			list_del(&page->lru);
 			rdata->pages[rdata->nr_pages++] = page;
-		पूर्ण
+		}
 
 		rc = adjust_credits(server, &rdata->credits, rdata->bytes);
 
-		अगर (!rc) अणु
-			अगर (rdata->cfile->invalidHandle)
+		if (!rc) {
+			if (rdata->cfile->invalidHandle)
 				rc = -EAGAIN;
-			अन्यथा
-				rc = server->ops->async_पढ़ोv(rdata);
-		पूर्ण
+			else
+				rc = server->ops->async_readv(rdata);
+		}
 
-		अगर (rc) अणु
-			add_credits_and_wake_अगर(server, &rdata->credits, 0);
-			क्रम (i = 0; i < rdata->nr_pages; i++) अणु
+		if (rc) {
+			add_credits_and_wake_if(server, &rdata->credits, 0);
+			for (i = 0; i < rdata->nr_pages; i++) {
 				page = rdata->pages[i];
 				lru_cache_add(page);
 				unlock_page(page);
 				put_page(page);
-			पूर्ण
-			/* Fallback to the पढ़ोpage in error/reconnect हालs */
-			kref_put(&rdata->refcount, cअगरs_पढ़ोdata_release);
-			अवरोध;
-		पूर्ण
+			}
+			/* Fallback to the readpage in error/reconnect cases */
+			kref_put(&rdata->refcount, cifs_readdata_release);
+			break;
+		}
 
-		kref_put(&rdata->refcount, cअगरs_पढ़ोdata_release);
-	पूर्ण
+		kref_put(&rdata->refcount, cifs_readdata_release);
+	}
 
 	/* Any pages that have been shown to fscache but didn't get added to
-	 * the pagecache must be uncached beक्रमe they get वापसed to the
+	 * the pagecache must be uncached before they get returned to the
 	 * allocator.
 	 */
-	cअगरs_fscache_पढ़ोpages_cancel(mapping->host, page_list);
-	मुक्त_xid(xid);
-	वापस rc;
-पूर्ण
+	cifs_fscache_readpages_cancel(mapping->host, page_list);
+	free_xid(xid);
+	return rc;
+}
 
 /*
- * cअगरs_पढ़ोpage_worker must be called with the page pinned
+ * cifs_readpage_worker must be called with the page pinned
  */
-अटल पूर्णांक cअगरs_पढ़ोpage_worker(काष्ठा file *file, काष्ठा page *page,
+static int cifs_readpage_worker(struct file *file, struct page *page,
 	loff_t *poffset)
-अणु
-	अक्षर *पढ़ो_data;
-	पूर्णांक rc;
+{
+	char *read_data;
+	int rc;
 
 	/* Is the page cached? */
-	rc = cअगरs_पढ़ोpage_from_fscache(file_inode(file), page);
-	अगर (rc == 0)
-		जाओ पढ़ो_complete;
+	rc = cifs_readpage_from_fscache(file_inode(file), page);
+	if (rc == 0)
+		goto read_complete;
 
-	पढ़ो_data = kmap(page);
-	/* क्रम पढ़ोs over a certain size could initiate async पढ़ो ahead */
+	read_data = kmap(page);
+	/* for reads over a certain size could initiate async read ahead */
 
-	rc = cअगरs_पढ़ो(file, पढ़ो_data, PAGE_SIZE, poffset);
+	rc = cifs_read(file, read_data, PAGE_SIZE, poffset);
 
-	अगर (rc < 0)
-		जाओ io_error;
-	अन्यथा
-		cअगरs_dbg(FYI, "Bytes read %d\n", rc);
+	if (rc < 0)
+		goto io_error;
+	else
+		cifs_dbg(FYI, "Bytes read %d\n", rc);
 
-	/* we करो not want aसमय to be less than mसमय, it broke some apps */
-	file_inode(file)->i_aसमय = current_समय(file_inode(file));
-	अगर (बारpec64_compare(&(file_inode(file)->i_aसमय), &(file_inode(file)->i_mसमय)))
-		file_inode(file)->i_aसमय = file_inode(file)->i_mसमय;
-	अन्यथा
-		file_inode(file)->i_aसमय = current_समय(file_inode(file));
+	/* we do not want atime to be less than mtime, it broke some apps */
+	file_inode(file)->i_atime = current_time(file_inode(file));
+	if (timespec64_compare(&(file_inode(file)->i_atime), &(file_inode(file)->i_mtime)))
+		file_inode(file)->i_atime = file_inode(file)->i_mtime;
+	else
+		file_inode(file)->i_atime = current_time(file_inode(file));
 
-	अगर (PAGE_SIZE > rc)
-		स_रखो(पढ़ो_data + rc, 0, PAGE_SIZE - rc);
+	if (PAGE_SIZE > rc)
+		memset(read_data + rc, 0, PAGE_SIZE - rc);
 
 	flush_dcache_page(page);
 	SetPageUptodate(page);
 
 	/* send this page to the cache */
-	cअगरs_पढ़ोpage_to_fscache(file_inode(file), page);
+	cifs_readpage_to_fscache(file_inode(file), page);
 
 	rc = 0;
 
@@ -4626,120 +4625,120 @@ io_error:
 	kunmap(page);
 	unlock_page(page);
 
-पढ़ो_complete:
-	वापस rc;
-पूर्ण
+read_complete:
+	return rc;
+}
 
-अटल पूर्णांक cअगरs_पढ़ोpage(काष्ठा file *file, काष्ठा page *page)
-अणु
+static int cifs_readpage(struct file *file, struct page *page)
+{
 	loff_t offset = (loff_t)page->index << PAGE_SHIFT;
-	पूर्णांक rc = -EACCES;
-	अचिन्हित पूर्णांक xid;
+	int rc = -EACCES;
+	unsigned int xid;
 
 	xid = get_xid();
 
-	अगर (file->निजी_data == शून्य) अणु
+	if (file->private_data == NULL) {
 		rc = -EBADF;
-		मुक्त_xid(xid);
-		वापस rc;
-	पूर्ण
+		free_xid(xid);
+		return rc;
+	}
 
-	cअगरs_dbg(FYI, "readpage %p at offset %d 0x%x\n",
-		 page, (पूर्णांक)offset, (पूर्णांक)offset);
+	cifs_dbg(FYI, "readpage %p at offset %d 0x%x\n",
+		 page, (int)offset, (int)offset);
 
-	rc = cअगरs_पढ़ोpage_worker(file, page, &offset);
+	rc = cifs_readpage_worker(file, page, &offset);
 
-	मुक्त_xid(xid);
-	वापस rc;
-पूर्ण
+	free_xid(xid);
+	return rc;
+}
 
-अटल पूर्णांक is_inode_writable(काष्ठा cअगरsInodeInfo *cअगरs_inode)
-अणु
-	काष्ठा cअगरsFileInfo *खोलो_file;
+static int is_inode_writable(struct cifsInodeInfo *cifs_inode)
+{
+	struct cifsFileInfo *open_file;
 
-	spin_lock(&cअगरs_inode->खोलो_file_lock);
-	list_क्रम_each_entry(खोलो_file, &cअगरs_inode->खोलोFileList, flist) अणु
-		अगर (OPEN_FMODE(खोलो_file->f_flags) & FMODE_WRITE) अणु
-			spin_unlock(&cअगरs_inode->खोलो_file_lock);
-			वापस 1;
-		पूर्ण
-	पूर्ण
-	spin_unlock(&cअगरs_inode->खोलो_file_lock);
-	वापस 0;
-पूर्ण
+	spin_lock(&cifs_inode->open_file_lock);
+	list_for_each_entry(open_file, &cifs_inode->openFileList, flist) {
+		if (OPEN_FMODE(open_file->f_flags) & FMODE_WRITE) {
+			spin_unlock(&cifs_inode->open_file_lock);
+			return 1;
+		}
+	}
+	spin_unlock(&cifs_inode->open_file_lock);
+	return 0;
+}
 
-/* We करो not want to update the file size from server क्रम inodes
-   खोलो क्रम ग_लिखो - to aव्योम races with ग_लिखोpage extending
+/* We do not want to update the file size from server for inodes
+   open for write - to avoid races with writepage extending
    the file - in the future we could consider allowing
    refreshing the inode only on increases in the file size
-   but this is tricky to करो without racing with ग_लिखोbehind
+   but this is tricky to do without racing with writebehind
    page caching in the current Linux kernel design */
-bool is_size_safe_to_change(काष्ठा cअगरsInodeInfo *cअगरsInode, __u64 end_of_file)
-अणु
-	अगर (!cअगरsInode)
-		वापस true;
+bool is_size_safe_to_change(struct cifsInodeInfo *cifsInode, __u64 end_of_file)
+{
+	if (!cifsInode)
+		return true;
 
-	अगर (is_inode_writable(cअगरsInode)) अणु
-		/* This inode is खोलो क्रम ग_लिखो at least once */
-		काष्ठा cअगरs_sb_info *cअगरs_sb;
+	if (is_inode_writable(cifsInode)) {
+		/* This inode is open for write at least once */
+		struct cifs_sb_info *cifs_sb;
 
-		cअगरs_sb = CIFS_SB(cअगरsInode->vfs_inode.i_sb);
-		अगर (cअगरs_sb->mnt_cअगरs_flags & CIFS_MOUNT_सूचीECT_IO) अणु
+		cifs_sb = CIFS_SB(cifsInode->vfs_inode.i_sb);
+		if (cifs_sb->mnt_cifs_flags & CIFS_MOUNT_DIRECT_IO) {
 			/* since no page cache to corrupt on directio
 			we can change size safely */
-			वापस true;
-		पूर्ण
+			return true;
+		}
 
-		अगर (i_size_पढ़ो(&cअगरsInode->vfs_inode) < end_of_file)
-			वापस true;
+		if (i_size_read(&cifsInode->vfs_inode) < end_of_file)
+			return true;
 
-		वापस false;
-	पूर्ण अन्यथा
-		वापस true;
-पूर्ण
+		return false;
+	} else
+		return true;
+}
 
-अटल पूर्णांक cअगरs_ग_लिखो_begin(काष्ठा file *file, काष्ठा address_space *mapping,
-			loff_t pos, अचिन्हित len, अचिन्हित flags,
-			काष्ठा page **pagep, व्योम **fsdata)
-अणु
-	पूर्णांक oncethru = 0;
+static int cifs_write_begin(struct file *file, struct address_space *mapping,
+			loff_t pos, unsigned len, unsigned flags,
+			struct page **pagep, void **fsdata)
+{
+	int oncethru = 0;
 	pgoff_t index = pos >> PAGE_SHIFT;
 	loff_t offset = pos & (PAGE_SIZE - 1);
 	loff_t page_start = pos & PAGE_MASK;
 	loff_t i_size;
-	काष्ठा page *page;
-	पूर्णांक rc = 0;
+	struct page *page;
+	int rc = 0;
 
-	cअगरs_dbg(FYI, "write_begin from %lld len %d\n", (दीर्घ दीर्घ)pos, len);
+	cifs_dbg(FYI, "write_begin from %lld len %d\n", (long long)pos, len);
 
 start:
-	page = grab_cache_page_ग_लिखो_begin(mapping, index, flags);
-	अगर (!page) अणु
+	page = grab_cache_page_write_begin(mapping, index, flags);
+	if (!page) {
 		rc = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (PageUptodate(page))
-		जाओ out;
+	if (PageUptodate(page))
+		goto out;
 
 	/*
-	 * If we ग_लिखो a full page it will be up to date, no need to पढ़ो from
-	 * the server. If the ग_लिखो is लघु, we'll end up करोing a sync ग_लिखो
+	 * If we write a full page it will be up to date, no need to read from
+	 * the server. If the write is short, we'll end up doing a sync write
 	 * instead.
 	 */
-	अगर (len == PAGE_SIZE)
-		जाओ out;
+	if (len == PAGE_SIZE)
+		goto out;
 
 	/*
-	 * optimize away the पढ़ो when we have an oplock, and we're not
-	 * expecting to use any of the data we'd be पढ़ोing in. That
-	 * is, when the page lies beyond the खातापूर्ण, or straddles the खातापूर्ण
-	 * and the ग_लिखो will cover all of the existing data.
+	 * optimize away the read when we have an oplock, and we're not
+	 * expecting to use any of the data we'd be reading in. That
+	 * is, when the page lies beyond the EOF, or straddles the EOF
+	 * and the write will cover all of the existing data.
 	 */
-	अगर (CIFS_CACHE_READ(CIFS_I(mapping->host))) अणु
-		i_size = i_size_पढ़ो(mapping->host);
-		अगर (page_start >= i_size ||
-		    (offset == 0 && (pos + len) >= i_size)) अणु
+	if (CIFS_CACHE_READ(CIFS_I(mapping->host))) {
+		i_size = i_size_read(mapping->host);
+		if (page_start >= i_size ||
+		    (offset == 0 && (pos + len) >= i_size)) {
 			zero_user_segments(page, 0, offset,
 					   offset + len,
 					   PAGE_SIZE);
@@ -4750,257 +4749,257 @@ start:
 			 * page, it can be set uptodate.
 			 */
 			SetPageChecked(page);
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 
-	अगर ((file->f_flags & O_ACCMODE) != O_WRONLY && !oncethru) अणु
+	if ((file->f_flags & O_ACCMODE) != O_WRONLY && !oncethru) {
 		/*
-		 * might as well पढ़ो a page, it is fast enough. If we get
-		 * an error, we करोn't need to वापस it. cअगरs_ग_लिखो_end will
-		 * करो a sync ग_लिखो instead since PG_uptodate isn't set.
+		 * might as well read a page, it is fast enough. If we get
+		 * an error, we don't need to return it. cifs_write_end will
+		 * do a sync write instead since PG_uptodate isn't set.
 		 */
-		cअगरs_पढ़ोpage_worker(file, page, &page_start);
+		cifs_readpage_worker(file, page, &page_start);
 		put_page(page);
 		oncethru = 1;
-		जाओ start;
-	पूर्ण अन्यथा अणु
-		/* we could try using another file handle अगर there is one -
-		   but how would we lock it to prevent बंद of that handle
-		   racing with this पढ़ो? In any हाल
-		   this will be written out by ग_लिखो_end so is fine */
-	पूर्ण
+		goto start;
+	} else {
+		/* we could try using another file handle if there is one -
+		   but how would we lock it to prevent close of that handle
+		   racing with this read? In any case
+		   this will be written out by write_end so is fine */
+	}
 out:
 	*pagep = page;
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक cअगरs_release_page(काष्ठा page *page, gfp_t gfp)
-अणु
-	अगर (PagePrivate(page))
-		वापस 0;
+static int cifs_release_page(struct page *page, gfp_t gfp)
+{
+	if (PagePrivate(page))
+		return 0;
 
-	वापस cअगरs_fscache_release_page(page, gfp);
-पूर्ण
+	return cifs_fscache_release_page(page, gfp);
+}
 
-अटल व्योम cअगरs_invalidate_page(काष्ठा page *page, अचिन्हित पूर्णांक offset,
-				 अचिन्हित पूर्णांक length)
-अणु
-	काष्ठा cअगरsInodeInfo *cअगरsi = CIFS_I(page->mapping->host);
+static void cifs_invalidate_page(struct page *page, unsigned int offset,
+				 unsigned int length)
+{
+	struct cifsInodeInfo *cifsi = CIFS_I(page->mapping->host);
 
-	अगर (offset == 0 && length == PAGE_SIZE)
-		cअगरs_fscache_invalidate_page(page, &cअगरsi->vfs_inode);
-पूर्ण
+	if (offset == 0 && length == PAGE_SIZE)
+		cifs_fscache_invalidate_page(page, &cifsi->vfs_inode);
+}
 
-अटल पूर्णांक cअगरs_launder_page(काष्ठा page *page)
-अणु
-	पूर्णांक rc = 0;
+static int cifs_launder_page(struct page *page)
+{
+	int rc = 0;
 	loff_t range_start = page_offset(page);
 	loff_t range_end = range_start + (loff_t)(PAGE_SIZE - 1);
-	काष्ठा ग_लिखोback_control wbc = अणु
+	struct writeback_control wbc = {
 		.sync_mode = WB_SYNC_ALL,
-		.nr_to_ग_लिखो = 0,
+		.nr_to_write = 0,
 		.range_start = range_start,
 		.range_end = range_end,
-	पूर्ण;
+	};
 
-	cअगरs_dbg(FYI, "Launder page: %p\n", page);
+	cifs_dbg(FYI, "Launder page: %p\n", page);
 
-	अगर (clear_page_dirty_क्रम_io(page))
-		rc = cअगरs_ग_लिखोpage_locked(page, &wbc);
+	if (clear_page_dirty_for_io(page))
+		rc = cifs_writepage_locked(page, &wbc);
 
-	cअगरs_fscache_invalidate_page(page, page->mapping->host);
-	वापस rc;
-पूर्ण
+	cifs_fscache_invalidate_page(page, page->mapping->host);
+	return rc;
+}
 
-व्योम cअगरs_oplock_अवरोध(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा cअगरsFileInfo *cfile = container_of(work, काष्ठा cअगरsFileInfo,
-						  oplock_अवरोध);
-	काष्ठा inode *inode = d_inode(cfile->dentry);
-	काष्ठा cअगरsInodeInfo *cinode = CIFS_I(inode);
-	काष्ठा cअगरs_tcon *tcon = tlink_tcon(cfile->tlink);
-	काष्ठा TCP_Server_Info *server = tcon->ses->server;
-	पूर्णांक rc = 0;
+void cifs_oplock_break(struct work_struct *work)
+{
+	struct cifsFileInfo *cfile = container_of(work, struct cifsFileInfo,
+						  oplock_break);
+	struct inode *inode = d_inode(cfile->dentry);
+	struct cifsInodeInfo *cinode = CIFS_I(inode);
+	struct cifs_tcon *tcon = tlink_tcon(cfile->tlink);
+	struct TCP_Server_Info *server = tcon->ses->server;
+	int rc = 0;
 	bool purge_cache = false;
 	bool is_deferred = false;
-	काष्ठा cअगरs_deferred_बंद *dबंद;
+	struct cifs_deferred_close *dclose;
 
-	रुको_on_bit(&cinode->flags, CIFS_INODE_PENDING_WRITERS,
+	wait_on_bit(&cinode->flags, CIFS_INODE_PENDING_WRITERS,
 			TASK_UNINTERRUPTIBLE);
 
-	server->ops->करोwngrade_oplock(server, cinode, cfile->oplock_level,
+	server->ops->downgrade_oplock(server, cinode, cfile->oplock_level,
 				      cfile->oplock_epoch, &purge_cache);
 
-	अगर (!CIFS_CACHE_WRITE(cinode) && CIFS_CACHE_READ(cinode) &&
-						cअगरs_has_mand_locks(cinode)) अणु
-		cअगरs_dbg(FYI, "Reset oplock to None for inode=%p due to mand locks\n",
+	if (!CIFS_CACHE_WRITE(cinode) && CIFS_CACHE_READ(cinode) &&
+						cifs_has_mand_locks(cinode)) {
+		cifs_dbg(FYI, "Reset oplock to None for inode=%p due to mand locks\n",
 			 inode);
 		cinode->oplock = 0;
-	पूर्ण
+	}
 
-	अगर (inode && S_ISREG(inode->i_mode)) अणु
-		अगर (CIFS_CACHE_READ(cinode))
-			अवरोध_lease(inode, O_RDONLY);
-		अन्यथा
-			अवरोध_lease(inode, O_WRONLY);
-		rc = filemap_fdataग_लिखो(inode->i_mapping);
-		अगर (!CIFS_CACHE_READ(cinode) || purge_cache) अणु
-			rc = filemap_fdataरुको(inode->i_mapping);
+	if (inode && S_ISREG(inode->i_mode)) {
+		if (CIFS_CACHE_READ(cinode))
+			break_lease(inode, O_RDONLY);
+		else
+			break_lease(inode, O_WRONLY);
+		rc = filemap_fdatawrite(inode->i_mapping);
+		if (!CIFS_CACHE_READ(cinode) || purge_cache) {
+			rc = filemap_fdatawait(inode->i_mapping);
 			mapping_set_error(inode->i_mapping, rc);
-			cअगरs_zap_mapping(inode);
-		पूर्ण
-		cअगरs_dbg(FYI, "Oplock flush inode %p rc %d\n", inode, rc);
-		अगर (CIFS_CACHE_WRITE(cinode))
-			जाओ oplock_अवरोध_ack;
-	पूर्ण
+			cifs_zap_mapping(inode);
+		}
+		cifs_dbg(FYI, "Oplock flush inode %p rc %d\n", inode, rc);
+		if (CIFS_CACHE_WRITE(cinode))
+			goto oplock_break_ack;
+	}
 
-	rc = cअगरs_push_locks(cfile);
-	अगर (rc)
-		cअगरs_dbg(VFS, "Push locks rc = %d\n", rc);
+	rc = cifs_push_locks(cfile);
+	if (rc)
+		cifs_dbg(VFS, "Push locks rc = %d\n", rc);
 
-oplock_अवरोध_ack:
+oplock_break_ack:
 	/*
 	 * releasing stale oplock after recent reconnect of smb session using
-	 * a now incorrect file handle is not a data पूर्णांकegrity issue but करो
-	 * not bother sending an oplock release अगर session to server still is
-	 * disconnected since oplock alपढ़ोy released by the server
+	 * a now incorrect file handle is not a data integrity issue but do
+	 * not bother sending an oplock release if session to server still is
+	 * disconnected since oplock already released by the server
 	 */
-	अगर (!cfile->oplock_अवरोध_cancelled) अणु
+	if (!cfile->oplock_break_cancelled) {
 		rc = tcon->ses->server->ops->oplock_response(tcon, &cfile->fid,
 							     cinode);
-		cअगरs_dbg(FYI, "Oplock release rc = %d\n", rc);
-	पूर्ण
+		cifs_dbg(FYI, "Oplock release rc = %d\n", rc);
+	}
 	/*
-	 * When oplock अवरोध is received and there are no active
-	 * file handles but cached, then schedule deferred बंद immediately.
-	 * So, new खोलो will not use cached handle.
+	 * When oplock break is received and there are no active
+	 * file handles but cached, then schedule deferred close immediately.
+	 * So, new open will not use cached handle.
 	 */
 	spin_lock(&CIFS_I(inode)->deferred_lock);
-	is_deferred = cअगरs_is_deferred_बंद(cfile, &dबंद);
-	अगर (is_deferred &&
-	    cfile->deferred_बंद_scheduled &&
-	    delayed_work_pending(&cfile->deferred)) अणु
+	is_deferred = cifs_is_deferred_close(cfile, &dclose);
+	if (is_deferred &&
+	    cfile->deferred_close_scheduled &&
+	    delayed_work_pending(&cfile->deferred)) {
 		/*
 		 * If there is no pending work, mod_delayed_work queues new work.
-		 * So, Increase the ref count to aव्योम use-after-मुक्त.
+		 * So, Increase the ref count to avoid use-after-free.
 		 */
-		अगर (!mod_delayed_work(deferredबंद_wq, &cfile->deferred, 0))
-			cअगरsFileInfo_get(cfile);
-	पूर्ण
+		if (!mod_delayed_work(deferredclose_wq, &cfile->deferred, 0))
+			cifsFileInfo_get(cfile);
+	}
 	spin_unlock(&CIFS_I(inode)->deferred_lock);
-	_cअगरsFileInfo_put(cfile, false /* करो not रुको क्रम ourself */, false);
-	cअगरs_करोne_oplock_अवरोध(cinode);
-पूर्ण
+	_cifsFileInfo_put(cfile, false /* do not wait for ourself */, false);
+	cifs_done_oplock_break(cinode);
+}
 
 /*
- * The presence of cअगरs_direct_io() in the address space ops vector
- * allowes खोलो() O_सूचीECT flags which would have failed otherwise.
+ * The presence of cifs_direct_io() in the address space ops vector
+ * allowes open() O_DIRECT flags which would have failed otherwise.
  *
- * In the non-cached mode (mount with cache=none), we shunt off direct पढ़ो and ग_लिखो requests
+ * In the non-cached mode (mount with cache=none), we shunt off direct read and write requests
  * so this method should never be called.
  *
  * Direct IO is not yet supported in the cached mode. 
  */
-अटल sमाप_प्रकार
-cअगरs_direct_io(काष्ठा kiocb *iocb, काष्ठा iov_iter *iter)
-अणु
+static ssize_t
+cifs_direct_io(struct kiocb *iocb, struct iov_iter *iter)
+{
         /*
          * FIXME
-         * Eventually need to support direct IO क्रम non क्रमcedirectio mounts
+         * Eventually need to support direct IO for non forcedirectio mounts
          */
-        वापस -EINVAL;
-पूर्ण
+        return -EINVAL;
+}
 
-अटल पूर्णांक cअगरs_swap_activate(काष्ठा swap_info_काष्ठा *sis,
-			      काष्ठा file *swap_file, sector_t *span)
-अणु
-	काष्ठा cअगरsFileInfo *cfile = swap_file->निजी_data;
-	काष्ठा inode *inode = swap_file->f_mapping->host;
-	अचिन्हित दीर्घ blocks;
-	दीर्घ दीर्घ isize;
+static int cifs_swap_activate(struct swap_info_struct *sis,
+			      struct file *swap_file, sector_t *span)
+{
+	struct cifsFileInfo *cfile = swap_file->private_data;
+	struct inode *inode = swap_file->f_mapping->host;
+	unsigned long blocks;
+	long long isize;
 
-	cअगरs_dbg(FYI, "swap activate\n");
+	cifs_dbg(FYI, "swap activate\n");
 
 	spin_lock(&inode->i_lock);
 	blocks = inode->i_blocks;
 	isize = inode->i_size;
 	spin_unlock(&inode->i_lock);
-	अगर (blocks*512 < isize) अणु
+	if (blocks*512 < isize) {
 		pr_warn("swap activate: swapfile has holes\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	*span = sis->pages;
 
 	pr_warn_once("Swap support over SMB3 is experimental\n");
 
 	/*
-	 * TODO: consider adding ACL (or करोcumenting how) to prevent other
-	 * users (on this or other प्रणालीs) from पढ़ोing it
+	 * TODO: consider adding ACL (or documenting how) to prevent other
+	 * users (on this or other systems) from reading it
 	 */
 
 
-	/* TODO: add sk_set_meदो_स्मृति(inet) or similar */
+	/* TODO: add sk_set_memalloc(inet) or similar */
 
-	अगर (cfile)
+	if (cfile)
 		cfile->swapfile = true;
 	/*
-	 * TODO: Since file alपढ़ोy खोलो, we can't खोलो with DENY_ALL here
+	 * TODO: Since file already open, we can't open with DENY_ALL here
 	 * but we could add call to grab a byte range lock to prevent others
-	 * from पढ़ोing or writing the file
+	 * from reading or writing the file
 	 */
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम cअगरs_swap_deactivate(काष्ठा file *file)
-अणु
-	काष्ठा cअगरsFileInfo *cfile = file->निजी_data;
+static void cifs_swap_deactivate(struct file *file)
+{
+	struct cifsFileInfo *cfile = file->private_data;
 
-	cअगरs_dbg(FYI, "swap deactivate\n");
+	cifs_dbg(FYI, "swap deactivate\n");
 
-	/* TODO: unकरो sk_set_meदो_स्मृति(inet) will eventually be needed */
+	/* TODO: undo sk_set_memalloc(inet) will eventually be needed */
 
-	अगर (cfile)
+	if (cfile)
 		cfile->swapfile = false;
 
-	/* करो we need to unpin (or unlock) the file */
-पूर्ण
+	/* do we need to unpin (or unlock) the file */
+}
 
-स्थिर काष्ठा address_space_operations cअगरs_addr_ops = अणु
-	.पढ़ोpage = cअगरs_पढ़ोpage,
-	.पढ़ोpages = cअगरs_पढ़ोpages,
-	.ग_लिखोpage = cअगरs_ग_लिखोpage,
-	.ग_लिखोpages = cअगरs_ग_लिखोpages,
-	.ग_लिखो_begin = cअगरs_ग_लिखो_begin,
-	.ग_लिखो_end = cअगरs_ग_लिखो_end,
+const struct address_space_operations cifs_addr_ops = {
+	.readpage = cifs_readpage,
+	.readpages = cifs_readpages,
+	.writepage = cifs_writepage,
+	.writepages = cifs_writepages,
+	.write_begin = cifs_write_begin,
+	.write_end = cifs_write_end,
 	.set_page_dirty = __set_page_dirty_nobuffers,
-	.releasepage = cअगरs_release_page,
-	.direct_IO = cअगरs_direct_io,
-	.invalidatepage = cअगरs_invalidate_page,
-	.launder_page = cअगरs_launder_page,
+	.releasepage = cifs_release_page,
+	.direct_IO = cifs_direct_io,
+	.invalidatepage = cifs_invalidate_page,
+	.launder_page = cifs_launder_page,
 	/*
-	 * TODO: investigate and अगर useful we could add an cअगरs_migratePage
+	 * TODO: investigate and if useful we could add an cifs_migratePage
 	 * helper (under an CONFIG_MIGRATION) in the future, and also
-	 * investigate and add an is_dirty_ग_लिखोback helper अगर needed
+	 * investigate and add an is_dirty_writeback helper if needed
 	 */
-	.swap_activate = cअगरs_swap_activate,
-	.swap_deactivate = cअगरs_swap_deactivate,
-पूर्ण;
+	.swap_activate = cifs_swap_activate,
+	.swap_deactivate = cifs_swap_deactivate,
+};
 
 /*
- * cअगरs_पढ़ोpages requires the server to support a buffer large enough to
+ * cifs_readpages requires the server to support a buffer large enough to
  * contain the header plus one complete page of data.  Otherwise, we need
- * to leave cअगरs_पढ़ोpages out of the address space operations.
+ * to leave cifs_readpages out of the address space operations.
  */
-स्थिर काष्ठा address_space_operations cअगरs_addr_ops_smallbuf = अणु
-	.पढ़ोpage = cअगरs_पढ़ोpage,
-	.ग_लिखोpage = cअगरs_ग_लिखोpage,
-	.ग_लिखोpages = cअगरs_ग_लिखोpages,
-	.ग_लिखो_begin = cअगरs_ग_लिखो_begin,
-	.ग_लिखो_end = cअगरs_ग_लिखो_end,
+const struct address_space_operations cifs_addr_ops_smallbuf = {
+	.readpage = cifs_readpage,
+	.writepage = cifs_writepage,
+	.writepages = cifs_writepages,
+	.write_begin = cifs_write_begin,
+	.write_end = cifs_write_end,
 	.set_page_dirty = __set_page_dirty_nobuffers,
-	.releasepage = cअगरs_release_page,
-	.invalidatepage = cअगरs_invalidate_page,
-	.launder_page = cअगरs_launder_page,
-पूर्ण;
+	.releasepage = cifs_release_page,
+	.invalidatepage = cifs_invalidate_page,
+	.launder_page = cifs_launder_page,
+};

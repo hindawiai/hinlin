@@ -1,313 +1,312 @@
-<शैली गुरु>
 /*
- * cpuidle.h - a generic framework क्रम CPU idle घातer management
+ * cpuidle.h - a generic framework for CPU idle power management
  *
- * (C) 2007 Venkatesh Pallipadi <venkatesh.pallipadi@पूर्णांकel.com>
- *          Shaohua Li <shaohua.li@पूर्णांकel.com>
+ * (C) 2007 Venkatesh Pallipadi <venkatesh.pallipadi@intel.com>
+ *          Shaohua Li <shaohua.li@intel.com>
  *          Adam Belay <abelay@novell.com>
  *
  * This code is licenced under the GPL.
  */
 
-#अगर_अघोषित _LINUX_CPUIDLE_H
-#घोषणा _LINUX_CPUIDLE_H
+#ifndef _LINUX_CPUIDLE_H
+#define _LINUX_CPUIDLE_H
 
-#समावेश <linux/percpu.h>
-#समावेश <linux/list.h>
-#समावेश <linux/hrसमयr.h>
+#include <linux/percpu.h>
+#include <linux/list.h>
+#include <linux/hrtimer.h>
 
-#घोषणा CPUIDLE_STATE_MAX	10
-#घोषणा CPUIDLE_NAME_LEN	16
-#घोषणा CPUIDLE_DESC_LEN	32
+#define CPUIDLE_STATE_MAX	10
+#define CPUIDLE_NAME_LEN	16
+#define CPUIDLE_DESC_LEN	32
 
-काष्ठा module;
+struct module;
 
-काष्ठा cpuidle_device;
-काष्ठा cpuidle_driver;
+struct cpuidle_device;
+struct cpuidle_driver;
 
 
 /****************************
  * CPUIDLE DEVICE INTERFACE *
  ****************************/
 
-#घोषणा CPUIDLE_STATE_DISABLED_BY_USER		BIT(0)
-#घोषणा CPUIDLE_STATE_DISABLED_BY_DRIVER	BIT(1)
+#define CPUIDLE_STATE_DISABLED_BY_USER		BIT(0)
+#define CPUIDLE_STATE_DISABLED_BY_DRIVER	BIT(1)
 
-काष्ठा cpuidle_state_usage अणु
-	अचिन्हित दीर्घ दीर्घ	disable;
-	अचिन्हित दीर्घ दीर्घ	usage;
-	u64			समय_ns;
-	अचिन्हित दीर्घ दीर्घ	above; /* Number of बार it's been too deep */
-	अचिन्हित दीर्घ दीर्घ	below; /* Number of बार it's been too shallow */
-	अचिन्हित दीर्घ दीर्घ	rejected; /* Number of बार idle entry was rejected */
-#अगर_घोषित CONFIG_SUSPEND
-	अचिन्हित दीर्घ दीर्घ	s2idle_usage;
-	अचिन्हित दीर्घ दीर्घ	s2idle_समय; /* in US */
-#पूर्ण_अगर
-पूर्ण;
+struct cpuidle_state_usage {
+	unsigned long long	disable;
+	unsigned long long	usage;
+	u64			time_ns;
+	unsigned long long	above; /* Number of times it's been too deep */
+	unsigned long long	below; /* Number of times it's been too shallow */
+	unsigned long long	rejected; /* Number of times idle entry was rejected */
+#ifdef CONFIG_SUSPEND
+	unsigned long long	s2idle_usage;
+	unsigned long long	s2idle_time; /* in US */
+#endif
+};
 
-काष्ठा cpuidle_state अणु
-	अक्षर		name[CPUIDLE_NAME_LEN];
-	अक्षर		desc[CPUIDLE_DESC_LEN];
+struct cpuidle_state {
+	char		name[CPUIDLE_NAME_LEN];
+	char		desc[CPUIDLE_DESC_LEN];
 
-	s64		निकास_latency_ns;
+	s64		exit_latency_ns;
 	s64		target_residency_ns;
-	अचिन्हित पूर्णांक	flags;
-	अचिन्हित पूर्णांक	निकास_latency; /* in US */
-	पूर्णांक		घातer_usage; /* in mW */
-	अचिन्हित पूर्णांक	target_residency; /* in US */
+	unsigned int	flags;
+	unsigned int	exit_latency; /* in US */
+	int		power_usage; /* in mW */
+	unsigned int	target_residency; /* in US */
 
-	पूर्णांक (*enter)	(काष्ठा cpuidle_device *dev,
-			काष्ठा cpuidle_driver *drv,
-			पूर्णांक index);
+	int (*enter)	(struct cpuidle_device *dev,
+			struct cpuidle_driver *drv,
+			int index);
 
-	पूर्णांक (*enter_dead) (काष्ठा cpuidle_device *dev, पूर्णांक index);
+	int (*enter_dead) (struct cpuidle_device *dev, int index);
 
 	/*
-	 * CPUs execute ->enter_s2idle with the local tick or entire समयkeeping
-	 * suspended, so it must not re-enable पूर्णांकerrupts at any poपूर्णांक (even
-	 * temporarily) or attempt to change states of घड़ी event devices.
+	 * CPUs execute ->enter_s2idle with the local tick or entire timekeeping
+	 * suspended, so it must not re-enable interrupts at any point (even
+	 * temporarily) or attempt to change states of clock event devices.
 	 *
-	 * This callback may poपूर्णांक to the same function as ->enter अगर all of
+	 * This callback may point to the same function as ->enter if all of
 	 * the above requirements are met by it.
 	 */
-	पूर्णांक (*enter_s2idle)(काष्ठा cpuidle_device *dev,
-			    काष्ठा cpuidle_driver *drv,
-			    पूर्णांक index);
-पूर्ण;
+	int (*enter_s2idle)(struct cpuidle_device *dev,
+			    struct cpuidle_driver *drv,
+			    int index);
+};
 
 /* Idle State Flags */
-#घोषणा CPUIDLE_FLAG_NONE       	(0x00)
-#घोषणा CPUIDLE_FLAG_POLLING		BIT(0) /* polling state */
-#घोषणा CPUIDLE_FLAG_COUPLED		BIT(1) /* state applies to multiple cpus */
-#घोषणा CPUIDLE_FLAG_TIMER_STOP 	BIT(2) /* समयr is stopped on this state */
-#घोषणा CPUIDLE_FLAG_UNUSABLE		BIT(3) /* aव्योम using this state */
-#घोषणा CPUIDLE_FLAG_OFF		BIT(4) /* disable this state by शेष */
-#घोषणा CPUIDLE_FLAG_TLB_FLUSHED	BIT(5) /* idle-state flushes TLBs */
-#घोषणा CPUIDLE_FLAG_RCU_IDLE		BIT(6) /* idle-state takes care of RCU */
+#define CPUIDLE_FLAG_NONE       	(0x00)
+#define CPUIDLE_FLAG_POLLING		BIT(0) /* polling state */
+#define CPUIDLE_FLAG_COUPLED		BIT(1) /* state applies to multiple cpus */
+#define CPUIDLE_FLAG_TIMER_STOP 	BIT(2) /* timer is stopped on this state */
+#define CPUIDLE_FLAG_UNUSABLE		BIT(3) /* avoid using this state */
+#define CPUIDLE_FLAG_OFF		BIT(4) /* disable this state by default */
+#define CPUIDLE_FLAG_TLB_FLUSHED	BIT(5) /* idle-state flushes TLBs */
+#define CPUIDLE_FLAG_RCU_IDLE		BIT(6) /* idle-state takes care of RCU */
 
-काष्ठा cpuidle_device_kobj;
-काष्ठा cpuidle_state_kobj;
-काष्ठा cpuidle_driver_kobj;
+struct cpuidle_device_kobj;
+struct cpuidle_state_kobj;
+struct cpuidle_driver_kobj;
 
-काष्ठा cpuidle_device अणु
-	अचिन्हित पूर्णांक		रेजिस्टरed:1;
-	अचिन्हित पूर्णांक		enabled:1;
-	अचिन्हित पूर्णांक		poll_समय_limit:1;
-	अचिन्हित पूर्णांक		cpu;
-	kसमय_प्रकार			next_hrसमयr;
+struct cpuidle_device {
+	unsigned int		registered:1;
+	unsigned int		enabled:1;
+	unsigned int		poll_time_limit:1;
+	unsigned int		cpu;
+	ktime_t			next_hrtimer;
 
-	पूर्णांक			last_state_idx;
+	int			last_state_idx;
 	u64			last_residency_ns;
 	u64			poll_limit_ns;
-	u64			क्रमced_idle_latency_limit_ns;
-	काष्ठा cpuidle_state_usage	states_usage[CPUIDLE_STATE_MAX];
-	काष्ठा cpuidle_state_kobj *kobjs[CPUIDLE_STATE_MAX];
-	काष्ठा cpuidle_driver_kobj *kobj_driver;
-	काष्ठा cpuidle_device_kobj *kobj_dev;
-	काष्ठा list_head 	device_list;
+	u64			forced_idle_latency_limit_ns;
+	struct cpuidle_state_usage	states_usage[CPUIDLE_STATE_MAX];
+	struct cpuidle_state_kobj *kobjs[CPUIDLE_STATE_MAX];
+	struct cpuidle_driver_kobj *kobj_driver;
+	struct cpuidle_device_kobj *kobj_dev;
+	struct list_head 	device_list;
 
-#अगर_घोषित CONFIG_ARCH_NEEDS_CPU_IDLE_COUPLED
+#ifdef CONFIG_ARCH_NEEDS_CPU_IDLE_COUPLED
 	cpumask_t		coupled_cpus;
-	काष्ठा cpuidle_coupled	*coupled;
-#पूर्ण_अगर
-पूर्ण;
+	struct cpuidle_coupled	*coupled;
+#endif
+};
 
-DECLARE_PER_CPU(काष्ठा cpuidle_device *, cpuidle_devices);
-DECLARE_PER_CPU(काष्ठा cpuidle_device, cpuidle_dev);
+DECLARE_PER_CPU(struct cpuidle_device *, cpuidle_devices);
+DECLARE_PER_CPU(struct cpuidle_device, cpuidle_dev);
 
 /****************************
  * CPUIDLE DRIVER INTERFACE *
  ****************************/
 
-काष्ठा cpuidle_driver अणु
-	स्थिर अक्षर		*name;
-	काष्ठा module 		*owner;
+struct cpuidle_driver {
+	const char		*name;
+	struct module 		*owner;
 
-        /* used by the cpuidle framework to setup the broadcast समयr */
-	अचिन्हित पूर्णांक            bस_समयr:1;
-	/* states array must be ordered in decreasing घातer consumption */
-	काष्ठा cpuidle_state	states[CPUIDLE_STATE_MAX];
-	पूर्णांक			state_count;
-	पूर्णांक			safe_state_index;
+        /* used by the cpuidle framework to setup the broadcast timer */
+	unsigned int            bctimer:1;
+	/* states array must be ordered in decreasing power consumption */
+	struct cpuidle_state	states[CPUIDLE_STATE_MAX];
+	int			state_count;
+	int			safe_state_index;
 
 	/* the driver handles the cpus in cpumask */
-	काष्ठा cpumask		*cpumask;
+	struct cpumask		*cpumask;
 
-	/* preferred governor to चयन at रेजिस्टर समय */
-	स्थिर अक्षर		*governor;
-पूर्ण;
+	/* preferred governor to switch at register time */
+	const char		*governor;
+};
 
-#अगर_घोषित CONFIG_CPU_IDLE
-बाह्य व्योम disable_cpuidle(व्योम);
-बाह्य bool cpuidle_not_available(काष्ठा cpuidle_driver *drv,
-				  काष्ठा cpuidle_device *dev);
+#ifdef CONFIG_CPU_IDLE
+extern void disable_cpuidle(void);
+extern bool cpuidle_not_available(struct cpuidle_driver *drv,
+				  struct cpuidle_device *dev);
 
-बाह्य पूर्णांक cpuidle_select(काष्ठा cpuidle_driver *drv,
-			  काष्ठा cpuidle_device *dev,
+extern int cpuidle_select(struct cpuidle_driver *drv,
+			  struct cpuidle_device *dev,
 			  bool *stop_tick);
-बाह्य पूर्णांक cpuidle_enter(काष्ठा cpuidle_driver *drv,
-			 काष्ठा cpuidle_device *dev, पूर्णांक index);
-बाह्य व्योम cpuidle_reflect(काष्ठा cpuidle_device *dev, पूर्णांक index);
-बाह्य u64 cpuidle_poll_समय(काष्ठा cpuidle_driver *drv,
-			     काष्ठा cpuidle_device *dev);
+extern int cpuidle_enter(struct cpuidle_driver *drv,
+			 struct cpuidle_device *dev, int index);
+extern void cpuidle_reflect(struct cpuidle_device *dev, int index);
+extern u64 cpuidle_poll_time(struct cpuidle_driver *drv,
+			     struct cpuidle_device *dev);
 
-बाह्य पूर्णांक cpuidle_रेजिस्टर_driver(काष्ठा cpuidle_driver *drv);
-बाह्य काष्ठा cpuidle_driver *cpuidle_get_driver(व्योम);
-बाह्य व्योम cpuidle_driver_state_disabled(काष्ठा cpuidle_driver *drv, पूर्णांक idx,
+extern int cpuidle_register_driver(struct cpuidle_driver *drv);
+extern struct cpuidle_driver *cpuidle_get_driver(void);
+extern void cpuidle_driver_state_disabled(struct cpuidle_driver *drv, int idx,
 					bool disable);
-बाह्य व्योम cpuidle_unरेजिस्टर_driver(काष्ठा cpuidle_driver *drv);
-बाह्य पूर्णांक cpuidle_रेजिस्टर_device(काष्ठा cpuidle_device *dev);
-बाह्य व्योम cpuidle_unरेजिस्टर_device(काष्ठा cpuidle_device *dev);
-बाह्य पूर्णांक cpuidle_रेजिस्टर(काष्ठा cpuidle_driver *drv,
-			    स्थिर काष्ठा cpumask *स्थिर coupled_cpus);
-बाह्य व्योम cpuidle_unरेजिस्टर(काष्ठा cpuidle_driver *drv);
-बाह्य व्योम cpuidle_छोड़ो_and_lock(व्योम);
-बाह्य व्योम cpuidle_resume_and_unlock(व्योम);
-बाह्य व्योम cpuidle_छोड़ो(व्योम);
-बाह्य व्योम cpuidle_resume(व्योम);
-बाह्य पूर्णांक cpuidle_enable_device(काष्ठा cpuidle_device *dev);
-बाह्य व्योम cpuidle_disable_device(काष्ठा cpuidle_device *dev);
-बाह्य पूर्णांक cpuidle_play_dead(व्योम);
+extern void cpuidle_unregister_driver(struct cpuidle_driver *drv);
+extern int cpuidle_register_device(struct cpuidle_device *dev);
+extern void cpuidle_unregister_device(struct cpuidle_device *dev);
+extern int cpuidle_register(struct cpuidle_driver *drv,
+			    const struct cpumask *const coupled_cpus);
+extern void cpuidle_unregister(struct cpuidle_driver *drv);
+extern void cpuidle_pause_and_lock(void);
+extern void cpuidle_resume_and_unlock(void);
+extern void cpuidle_pause(void);
+extern void cpuidle_resume(void);
+extern int cpuidle_enable_device(struct cpuidle_device *dev);
+extern void cpuidle_disable_device(struct cpuidle_device *dev);
+extern int cpuidle_play_dead(void);
 
-बाह्य काष्ठा cpuidle_driver *cpuidle_get_cpu_driver(काष्ठा cpuidle_device *dev);
-अटल अंतरभूत काष्ठा cpuidle_device *cpuidle_get_device(व्योम)
-अणुवापस __this_cpu_पढ़ो(cpuidle_devices); पूर्ण
-#अन्यथा
-अटल अंतरभूत व्योम disable_cpuidle(व्योम) अणु पूर्ण
-अटल अंतरभूत bool cpuidle_not_available(काष्ठा cpuidle_driver *drv,
-					 काष्ठा cpuidle_device *dev)
-अणुवापस true; पूर्ण
-अटल अंतरभूत पूर्णांक cpuidle_select(काष्ठा cpuidle_driver *drv,
-				 काष्ठा cpuidle_device *dev, bool *stop_tick)
-अणुवापस -ENODEV; पूर्ण
-अटल अंतरभूत पूर्णांक cpuidle_enter(काष्ठा cpuidle_driver *drv,
-				काष्ठा cpuidle_device *dev, पूर्णांक index)
-अणुवापस -ENODEV; पूर्ण
-अटल अंतरभूत व्योम cpuidle_reflect(काष्ठा cpuidle_device *dev, पूर्णांक index) अणु पूर्ण
-अटल अंतरभूत u64 cpuidle_poll_समय(काष्ठा cpuidle_driver *drv,
-			     काष्ठा cpuidle_device *dev)
-अणुवापस 0; पूर्ण
-अटल अंतरभूत पूर्णांक cpuidle_रेजिस्टर_driver(काष्ठा cpuidle_driver *drv)
-अणुवापस -ENODEV; पूर्ण
-अटल अंतरभूत काष्ठा cpuidle_driver *cpuidle_get_driver(व्योम) अणुवापस शून्य; पूर्ण
-अटल अंतरभूत व्योम cpuidle_driver_state_disabled(काष्ठा cpuidle_driver *drv,
-					       पूर्णांक idx, bool disable) अणु पूर्ण
-अटल अंतरभूत व्योम cpuidle_unरेजिस्टर_driver(काष्ठा cpuidle_driver *drv) अणु पूर्ण
-अटल अंतरभूत पूर्णांक cpuidle_रेजिस्टर_device(काष्ठा cpuidle_device *dev)
-अणुवापस -ENODEV; पूर्ण
-अटल अंतरभूत व्योम cpuidle_unरेजिस्टर_device(काष्ठा cpuidle_device *dev) अणु पूर्ण
-अटल अंतरभूत पूर्णांक cpuidle_रेजिस्टर(काष्ठा cpuidle_driver *drv,
-				   स्थिर काष्ठा cpumask *स्थिर coupled_cpus)
-अणुवापस -ENODEV; पूर्ण
-अटल अंतरभूत व्योम cpuidle_unरेजिस्टर(काष्ठा cpuidle_driver *drv) अणु पूर्ण
-अटल अंतरभूत व्योम cpuidle_छोड़ो_and_lock(व्योम) अणु पूर्ण
-अटल अंतरभूत व्योम cpuidle_resume_and_unlock(व्योम) अणु पूर्ण
-अटल अंतरभूत व्योम cpuidle_छोड़ो(व्योम) अणु पूर्ण
-अटल अंतरभूत व्योम cpuidle_resume(व्योम) अणु पूर्ण
-अटल अंतरभूत पूर्णांक cpuidle_enable_device(काष्ठा cpuidle_device *dev)
-अणुवापस -ENODEV; पूर्ण
-अटल अंतरभूत व्योम cpuidle_disable_device(काष्ठा cpuidle_device *dev) अणु पूर्ण
-अटल अंतरभूत पूर्णांक cpuidle_play_dead(व्योम) अणुवापस -ENODEV; पूर्ण
-अटल अंतरभूत काष्ठा cpuidle_driver *cpuidle_get_cpu_driver(
-	काष्ठा cpuidle_device *dev) अणुवापस शून्य; पूर्ण
-अटल अंतरभूत काष्ठा cpuidle_device *cpuidle_get_device(व्योम) अणुवापस शून्य; पूर्ण
-#पूर्ण_अगर
+extern struct cpuidle_driver *cpuidle_get_cpu_driver(struct cpuidle_device *dev);
+static inline struct cpuidle_device *cpuidle_get_device(void)
+{return __this_cpu_read(cpuidle_devices); }
+#else
+static inline void disable_cpuidle(void) { }
+static inline bool cpuidle_not_available(struct cpuidle_driver *drv,
+					 struct cpuidle_device *dev)
+{return true; }
+static inline int cpuidle_select(struct cpuidle_driver *drv,
+				 struct cpuidle_device *dev, bool *stop_tick)
+{return -ENODEV; }
+static inline int cpuidle_enter(struct cpuidle_driver *drv,
+				struct cpuidle_device *dev, int index)
+{return -ENODEV; }
+static inline void cpuidle_reflect(struct cpuidle_device *dev, int index) { }
+static inline u64 cpuidle_poll_time(struct cpuidle_driver *drv,
+			     struct cpuidle_device *dev)
+{return 0; }
+static inline int cpuidle_register_driver(struct cpuidle_driver *drv)
+{return -ENODEV; }
+static inline struct cpuidle_driver *cpuidle_get_driver(void) {return NULL; }
+static inline void cpuidle_driver_state_disabled(struct cpuidle_driver *drv,
+					       int idx, bool disable) { }
+static inline void cpuidle_unregister_driver(struct cpuidle_driver *drv) { }
+static inline int cpuidle_register_device(struct cpuidle_device *dev)
+{return -ENODEV; }
+static inline void cpuidle_unregister_device(struct cpuidle_device *dev) { }
+static inline int cpuidle_register(struct cpuidle_driver *drv,
+				   const struct cpumask *const coupled_cpus)
+{return -ENODEV; }
+static inline void cpuidle_unregister(struct cpuidle_driver *drv) { }
+static inline void cpuidle_pause_and_lock(void) { }
+static inline void cpuidle_resume_and_unlock(void) { }
+static inline void cpuidle_pause(void) { }
+static inline void cpuidle_resume(void) { }
+static inline int cpuidle_enable_device(struct cpuidle_device *dev)
+{return -ENODEV; }
+static inline void cpuidle_disable_device(struct cpuidle_device *dev) { }
+static inline int cpuidle_play_dead(void) {return -ENODEV; }
+static inline struct cpuidle_driver *cpuidle_get_cpu_driver(
+	struct cpuidle_device *dev) {return NULL; }
+static inline struct cpuidle_device *cpuidle_get_device(void) {return NULL; }
+#endif
 
-#अगर_घोषित CONFIG_CPU_IDLE
-बाह्य पूर्णांक cpuidle_find_deepest_state(काष्ठा cpuidle_driver *drv,
-				      काष्ठा cpuidle_device *dev,
+#ifdef CONFIG_CPU_IDLE
+extern int cpuidle_find_deepest_state(struct cpuidle_driver *drv,
+				      struct cpuidle_device *dev,
 				      u64 latency_limit_ns);
-बाह्य पूर्णांक cpuidle_enter_s2idle(काष्ठा cpuidle_driver *drv,
-				काष्ठा cpuidle_device *dev);
-बाह्य व्योम cpuidle_use_deepest_state(u64 latency_limit_ns);
-#अन्यथा
-अटल अंतरभूत पूर्णांक cpuidle_find_deepest_state(काष्ठा cpuidle_driver *drv,
-					     काष्ठा cpuidle_device *dev,
+extern int cpuidle_enter_s2idle(struct cpuidle_driver *drv,
+				struct cpuidle_device *dev);
+extern void cpuidle_use_deepest_state(u64 latency_limit_ns);
+#else
+static inline int cpuidle_find_deepest_state(struct cpuidle_driver *drv,
+					     struct cpuidle_device *dev,
 					     u64 latency_limit_ns)
-अणुवापस -ENODEV; पूर्ण
-अटल अंतरभूत पूर्णांक cpuidle_enter_s2idle(काष्ठा cpuidle_driver *drv,
-				       काष्ठा cpuidle_device *dev)
-अणुवापस -ENODEV; पूर्ण
-अटल अंतरभूत व्योम cpuidle_use_deepest_state(u64 latency_limit_ns)
-अणु
-पूर्ण
-#पूर्ण_अगर
+{return -ENODEV; }
+static inline int cpuidle_enter_s2idle(struct cpuidle_driver *drv,
+				       struct cpuidle_device *dev)
+{return -ENODEV; }
+static inline void cpuidle_use_deepest_state(u64 latency_limit_ns)
+{
+}
+#endif
 
 /* kernel/sched/idle.c */
-बाह्य व्योम sched_idle_set_state(काष्ठा cpuidle_state *idle_state);
-बाह्य व्योम शेष_idle_call(व्योम);
+extern void sched_idle_set_state(struct cpuidle_state *idle_state);
+extern void default_idle_call(void);
 
-#अगर_घोषित CONFIG_ARCH_NEEDS_CPU_IDLE_COUPLED
-व्योम cpuidle_coupled_parallel_barrier(काष्ठा cpuidle_device *dev, atomic_t *a);
-#अन्यथा
-अटल अंतरभूत व्योम cpuidle_coupled_parallel_barrier(काष्ठा cpuidle_device *dev, atomic_t *a)
-अणु
-पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_ARCH_NEEDS_CPU_IDLE_COUPLED
+void cpuidle_coupled_parallel_barrier(struct cpuidle_device *dev, atomic_t *a);
+#else
+static inline void cpuidle_coupled_parallel_barrier(struct cpuidle_device *dev, atomic_t *a)
+{
+}
+#endif
 
-#अगर defined(CONFIG_CPU_IDLE) && defined(CONFIG_ARCH_HAS_CPU_RELAX)
-व्योम cpuidle_poll_state_init(काष्ठा cpuidle_driver *drv);
-#अन्यथा
-अटल अंतरभूत व्योम cpuidle_poll_state_init(काष्ठा cpuidle_driver *drv) अणुपूर्ण
-#पूर्ण_अगर
+#if defined(CONFIG_CPU_IDLE) && defined(CONFIG_ARCH_HAS_CPU_RELAX)
+void cpuidle_poll_state_init(struct cpuidle_driver *drv);
+#else
+static inline void cpuidle_poll_state_init(struct cpuidle_driver *drv) {}
+#endif
 
 /******************************
  * CPUIDLE GOVERNOR INTERFACE *
  ******************************/
 
-काष्ठा cpuidle_governor अणु
-	अक्षर			name[CPUIDLE_NAME_LEN];
-	काष्ठा list_head 	governor_list;
-	अचिन्हित पूर्णांक		rating;
+struct cpuidle_governor {
+	char			name[CPUIDLE_NAME_LEN];
+	struct list_head 	governor_list;
+	unsigned int		rating;
 
-	पूर्णांक  (*enable)		(काष्ठा cpuidle_driver *drv,
-					काष्ठा cpuidle_device *dev);
-	व्योम (*disable)		(काष्ठा cpuidle_driver *drv,
-					काष्ठा cpuidle_device *dev);
+	int  (*enable)		(struct cpuidle_driver *drv,
+					struct cpuidle_device *dev);
+	void (*disable)		(struct cpuidle_driver *drv,
+					struct cpuidle_device *dev);
 
-	पूर्णांक  (*select)		(काष्ठा cpuidle_driver *drv,
-					काष्ठा cpuidle_device *dev,
+	int  (*select)		(struct cpuidle_driver *drv,
+					struct cpuidle_device *dev,
 					bool *stop_tick);
-	व्योम (*reflect)		(काष्ठा cpuidle_device *dev, पूर्णांक index);
-पूर्ण;
+	void (*reflect)		(struct cpuidle_device *dev, int index);
+};
 
-बाह्य पूर्णांक cpuidle_रेजिस्टर_governor(काष्ठा cpuidle_governor *gov);
-बाह्य s64 cpuidle_governor_latency_req(अचिन्हित पूर्णांक cpu);
+extern int cpuidle_register_governor(struct cpuidle_governor *gov);
+extern s64 cpuidle_governor_latency_req(unsigned int cpu);
 
-#घोषणा __CPU_PM_CPU_IDLE_ENTER(low_level_idle_enter,			\
+#define __CPU_PM_CPU_IDLE_ENTER(low_level_idle_enter,			\
 				idx,					\
 				state,					\
 				is_retention)				\
-(अणु									\
-	पूर्णांक __ret = 0;							\
+({									\
+	int __ret = 0;							\
 									\
-	अगर (!idx) अणु							\
-		cpu_करो_idle();						\
-		वापस idx;						\
-	पूर्ण								\
+	if (!idx) {							\
+		cpu_do_idle();						\
+		return idx;						\
+	}								\
 									\
-	अगर (!is_retention)						\
+	if (!is_retention)						\
 		__ret =  cpu_pm_enter();				\
-	अगर (!__ret) अणु							\
+	if (!__ret) {							\
 		__ret = low_level_idle_enter(state);			\
-		अगर (!is_retention)					\
-			cpu_pm_निकास();					\
-	पूर्ण								\
+		if (!is_retention)					\
+			cpu_pm_exit();					\
+	}								\
 									\
 	__ret ? -1 : idx;						\
-पूर्ण)
+})
 
-#घोषणा CPU_PM_CPU_IDLE_ENTER(low_level_idle_enter, idx)	\
+#define CPU_PM_CPU_IDLE_ENTER(low_level_idle_enter, idx)	\
 	__CPU_PM_CPU_IDLE_ENTER(low_level_idle_enter, idx, idx, 0)
 
-#घोषणा CPU_PM_CPU_IDLE_ENTER_RETENTION(low_level_idle_enter, idx)	\
+#define CPU_PM_CPU_IDLE_ENTER_RETENTION(low_level_idle_enter, idx)	\
 	__CPU_PM_CPU_IDLE_ENTER(low_level_idle_enter, idx, idx, 1)
 
-#घोषणा CPU_PM_CPU_IDLE_ENTER_PARAM(low_level_idle_enter, idx, state)	\
+#define CPU_PM_CPU_IDLE_ENTER_PARAM(low_level_idle_enter, idx, state)	\
 	__CPU_PM_CPU_IDLE_ENTER(low_level_idle_enter, idx, state, 0)
 
-#घोषणा CPU_PM_CPU_IDLE_ENTER_RETENTION_PARAM(low_level_idle_enter, idx, state)	\
+#define CPU_PM_CPU_IDLE_ENTER_RETENTION_PARAM(low_level_idle_enter, idx, state)	\
 	__CPU_PM_CPU_IDLE_ENTER(low_level_idle_enter, idx, state, 1)
 
-#पूर्ण_अगर /* _LINUX_CPUIDLE_H */
+#endif /* _LINUX_CPUIDLE_H */

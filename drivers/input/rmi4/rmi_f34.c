@@ -1,166 +1,165 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2007-2016, Synaptics Incorporated
  * Copyright (C) 2016 Zodiac Inflight Innovations
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/rmi.h>
-#समावेश <linux/firmware.h>
-#समावेश <यंत्र/unaligned.h>
-#समावेश <linux/bitops.h>
+#include <linux/kernel.h>
+#include <linux/rmi.h>
+#include <linux/firmware.h>
+#include <asm/unaligned.h>
+#include <linux/bitops.h>
 
-#समावेश "rmi_driver.h"
-#समावेश "rmi_f34.h"
+#include "rmi_driver.h"
+#include "rmi_f34.h"
 
-अटल पूर्णांक rmi_f34_ग_लिखो_bootloader_id(काष्ठा f34_data *f34)
-अणु
-	काष्ठा rmi_function *fn = f34->fn;
-	काष्ठा rmi_device *rmi_dev = fn->rmi_dev;
+static int rmi_f34_write_bootloader_id(struct f34_data *f34)
+{
+	struct rmi_function *fn = f34->fn;
+	struct rmi_device *rmi_dev = fn->rmi_dev;
 	u8 bootloader_id[F34_BOOTLOADER_ID_LEN];
-	पूर्णांक ret;
+	int ret;
 
-	ret = rmi_पढ़ो_block(rmi_dev, fn->fd.query_base_addr,
-			     bootloader_id, माप(bootloader_id));
-	अगर (ret) अणु
+	ret = rmi_read_block(rmi_dev, fn->fd.query_base_addr,
+			     bootloader_id, sizeof(bootloader_id));
+	if (ret) {
 		dev_err(&fn->dev, "%s: Reading bootloader ID failed: %d\n",
 				__func__, ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	rmi_dbg(RMI_DEBUG_FN, &fn->dev, "%s: writing bootloader id '%c%c'\n",
 			__func__, bootloader_id[0], bootloader_id[1]);
 
-	ret = rmi_ग_लिखो_block(rmi_dev,
+	ret = rmi_write_block(rmi_dev,
 			      fn->fd.data_base_addr + F34_BLOCK_DATA_OFFSET,
-			      bootloader_id, माप(bootloader_id));
-	अगर (ret) अणु
+			      bootloader_id, sizeof(bootloader_id));
+	if (ret) {
 		dev_err(&fn->dev, "Failed to write bootloader ID: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rmi_f34_command(काष्ठा f34_data *f34, u8 command,
-			   अचिन्हित पूर्णांक समयout, bool ग_लिखो_bl_id)
-अणु
-	काष्ठा rmi_function *fn = f34->fn;
-	काष्ठा rmi_device *rmi_dev = fn->rmi_dev;
-	पूर्णांक ret;
+static int rmi_f34_command(struct f34_data *f34, u8 command,
+			   unsigned int timeout, bool write_bl_id)
+{
+	struct rmi_function *fn = f34->fn;
+	struct rmi_device *rmi_dev = fn->rmi_dev;
+	int ret;
 
-	अगर (ग_लिखो_bl_id) अणु
-		ret = rmi_f34_ग_लिखो_bootloader_id(f34);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+	if (write_bl_id) {
+		ret = rmi_f34_write_bootloader_id(f34);
+		if (ret)
+			return ret;
+	}
 
-	init_completion(&f34->v5.cmd_करोne);
+	init_completion(&f34->v5.cmd_done);
 
-	ret = rmi_पढ़ो(rmi_dev, f34->v5.ctrl_address, &f34->v5.status);
-	अगर (ret) अणु
+	ret = rmi_read(rmi_dev, f34->v5.ctrl_address, &f34->v5.status);
+	if (ret) {
 		dev_err(&f34->fn->dev,
 			"%s: Failed to read cmd register: %d (command %#02x)\n",
 			__func__, ret, command);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	f34->v5.status |= command & 0x0f;
 
-	ret = rmi_ग_लिखो(rmi_dev, f34->v5.ctrl_address, f34->v5.status);
-	अगर (ret < 0) अणु
+	ret = rmi_write(rmi_dev, f34->v5.ctrl_address, f34->v5.status);
+	if (ret < 0) {
 		dev_err(&f34->fn->dev,
 			"Failed to write F34 command %#02x: %d\n",
 			command, ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	अगर (!रुको_क्रम_completion_समयout(&f34->v5.cmd_करोne,
-				msecs_to_jअगरfies(समयout))) अणु
+	if (!wait_for_completion_timeout(&f34->v5.cmd_done,
+				msecs_to_jiffies(timeout))) {
 
-		ret = rmi_पढ़ो(rmi_dev, f34->v5.ctrl_address, &f34->v5.status);
-		अगर (ret) अणु
+		ret = rmi_read(rmi_dev, f34->v5.ctrl_address, &f34->v5.status);
+		if (ret) {
 			dev_err(&f34->fn->dev,
 				"%s: cmd %#02x timed out: %d\n",
 				__func__, command, ret);
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 
-		अगर (f34->v5.status & 0x7f) अणु
+		if (f34->v5.status & 0x7f) {
 			dev_err(&f34->fn->dev,
 				"%s: cmd %#02x timed out, status: %#02x\n",
 				__func__, command, f34->v5.status);
-			वापस -ETIMEDOUT;
-		पूर्ण
-	पूर्ण
+			return -ETIMEDOUT;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल irqवापस_t rmi_f34_attention(पूर्णांक irq, व्योम *ctx)
-अणु
-	काष्ठा rmi_function *fn = ctx;
-	काष्ठा f34_data *f34 = dev_get_drvdata(&fn->dev);
-	पूर्णांक ret;
+static irqreturn_t rmi_f34_attention(int irq, void *ctx)
+{
+	struct rmi_function *fn = ctx;
+	struct f34_data *f34 = dev_get_drvdata(&fn->dev);
+	int ret;
 	u8 status;
 
-	अगर (f34->bl_version == 5) अणु
-		ret = rmi_पढ़ो(f34->fn->rmi_dev, f34->v5.ctrl_address,
+	if (f34->bl_version == 5) {
+		ret = rmi_read(f34->fn->rmi_dev, f34->v5.ctrl_address,
 			       &status);
 		rmi_dbg(RMI_DEBUG_FN, &fn->dev, "%s: status: %#02x, ret: %d\n",
 			__func__, status, ret);
 
-		अगर (!ret && !(status & 0x7f))
-			complete(&f34->v5.cmd_करोne);
-	पूर्ण अन्यथा अणु
-		ret = rmi_पढ़ो_block(f34->fn->rmi_dev,
+		if (!ret && !(status & 0x7f))
+			complete(&f34->v5.cmd_done);
+	} else {
+		ret = rmi_read_block(f34->fn->rmi_dev,
 				     f34->fn->fd.data_base_addr +
 						f34->v7.off.flash_status,
-				     &status, माप(status));
+				     &status, sizeof(status));
 		rmi_dbg(RMI_DEBUG_FN, &fn->dev, "%s: status: %#02x, ret: %d\n",
 			__func__, status, ret);
 
-		अगर (!ret && !(status & 0x1f))
-			complete(&f34->v7.cmd_करोne);
-	पूर्ण
+		if (!ret && !(status & 0x1f))
+			complete(&f34->v7.cmd_done);
+	}
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक rmi_f34_ग_लिखो_blocks(काष्ठा f34_data *f34, स्थिर व्योम *data,
-				पूर्णांक block_count, u8 command)
-अणु
-	काष्ठा rmi_function *fn = f34->fn;
-	काष्ठा rmi_device *rmi_dev = fn->rmi_dev;
+static int rmi_f34_write_blocks(struct f34_data *f34, const void *data,
+				int block_count, u8 command)
+{
+	struct rmi_function *fn = f34->fn;
+	struct rmi_device *rmi_dev = fn->rmi_dev;
 	u16 address = fn->fd.data_base_addr + F34_BLOCK_DATA_OFFSET;
-	u8 start_address[] = अणु 0, 0 पूर्ण;
-	पूर्णांक i;
-	पूर्णांक ret;
+	u8 start_address[] = { 0, 0 };
+	int i;
+	int ret;
 
-	ret = rmi_ग_लिखो_block(rmi_dev, fn->fd.data_base_addr,
-			      start_address, माप(start_address));
-	अगर (ret) अणु
+	ret = rmi_write_block(rmi_dev, fn->fd.data_base_addr,
+			      start_address, sizeof(start_address));
+	if (ret) {
 		dev_err(&fn->dev, "Failed to write initial zeros: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	क्रम (i = 0; i < block_count; i++) अणु
-		ret = rmi_ग_लिखो_block(rmi_dev, address,
+	for (i = 0; i < block_count; i++) {
+		ret = rmi_write_block(rmi_dev, address,
 				      data, f34->v5.block_size);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(&fn->dev,
 				"failed to write block #%d: %d\n", i, ret);
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 
 		ret = rmi_f34_command(f34, command, F34_IDLE_WAIT_MS, false);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(&fn->dev,
 				"Failed to write command for block #%d: %d\n",
 				i, ret);
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 
 		rmi_dbg(RMI_DEBUG_FN, &fn->dev, "wrote block %d of %d\n",
 			i + 1, block_count);
@@ -169,87 +168,87 @@
 		f34->update_progress += f34->v5.block_size;
 		f34->update_status = (f34->update_progress * 100) /
 			f34->update_size;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rmi_f34_ग_लिखो_firmware(काष्ठा f34_data *f34, स्थिर व्योम *data)
-अणु
-	वापस rmi_f34_ग_लिखो_blocks(f34, data, f34->v5.fw_blocks,
+static int rmi_f34_write_firmware(struct f34_data *f34, const void *data)
+{
+	return rmi_f34_write_blocks(f34, data, f34->v5.fw_blocks,
 				    F34_WRITE_FW_BLOCK);
-पूर्ण
+}
 
-अटल पूर्णांक rmi_f34_ग_लिखो_config(काष्ठा f34_data *f34, स्थिर व्योम *data)
-अणु
-	वापस rmi_f34_ग_लिखो_blocks(f34, data, f34->v5.config_blocks,
+static int rmi_f34_write_config(struct f34_data *f34, const void *data)
+{
+	return rmi_f34_write_blocks(f34, data, f34->v5.config_blocks,
 				    F34_WRITE_CONFIG_BLOCK);
-पूर्ण
+}
 
-अटल पूर्णांक rmi_f34_enable_flash(काष्ठा f34_data *f34)
-अणु
-	वापस rmi_f34_command(f34, F34_ENABLE_FLASH_PROG,
+static int rmi_f34_enable_flash(struct f34_data *f34)
+{
+	return rmi_f34_command(f34, F34_ENABLE_FLASH_PROG,
 			       F34_ENABLE_WAIT_MS, true);
-पूर्ण
+}
 
-अटल पूर्णांक rmi_f34_flash_firmware(काष्ठा f34_data *f34,
-				  स्थिर काष्ठा rmi_f34_firmware *syn_fw)
-अणु
-	काष्ठा rmi_function *fn = f34->fn;
+static int rmi_f34_flash_firmware(struct f34_data *f34,
+				  const struct rmi_f34_firmware *syn_fw)
+{
+	struct rmi_function *fn = f34->fn;
 	u32 image_size = le32_to_cpu(syn_fw->image_size);
 	u32 config_size = le32_to_cpu(syn_fw->config_size);
-	पूर्णांक ret;
+	int ret;
 
 	f34->update_progress = 0;
 	f34->update_size = image_size + config_size;
 
-	अगर (image_size) अणु
+	if (image_size) {
 		dev_info(&fn->dev, "Erasing firmware...\n");
 		ret = rmi_f34_command(f34, F34_ERASE_ALL,
 				      F34_ERASE_WAIT_MS, true);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
 		dev_info(&fn->dev, "Writing firmware (%d bytes)...\n",
 			 image_size);
-		ret = rmi_f34_ग_लिखो_firmware(f34, syn_fw->data);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		ret = rmi_f34_write_firmware(f34, syn_fw->data);
+		if (ret)
+			return ret;
+	}
 
-	अगर (config_size) अणु
+	if (config_size) {
 		/*
-		 * We only need to erase config अगर we haven't updated
+		 * We only need to erase config if we haven't updated
 		 * firmware.
 		 */
-		अगर (!image_size) अणु
+		if (!image_size) {
 			dev_info(&fn->dev, "Erasing config...\n");
 			ret = rmi_f34_command(f34, F34_ERASE_CONFIG,
 					      F34_ERASE_WAIT_MS, true);
-			अगर (ret)
-				वापस ret;
-		पूर्ण
+			if (ret)
+				return ret;
+		}
 
 		dev_info(&fn->dev, "Writing config (%d bytes)...\n",
 			 config_size);
-		ret = rmi_f34_ग_लिखो_config(f34, &syn_fw->data[image_size]);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		ret = rmi_f34_write_config(f34, &syn_fw->data[image_size]);
+		if (ret)
+			return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rmi_f34_update_firmware(काष्ठा f34_data *f34,
-				   स्थिर काष्ठा firmware *fw)
-अणु
-	स्थिर काष्ठा rmi_f34_firmware *syn_fw =
-				(स्थिर काष्ठा rmi_f34_firmware *)fw->data;
+static int rmi_f34_update_firmware(struct f34_data *f34,
+				   const struct firmware *fw)
+{
+	const struct rmi_f34_firmware *syn_fw =
+				(const struct rmi_f34_firmware *)fw->data;
 	u32 image_size = le32_to_cpu(syn_fw->image_size);
 	u32 config_size = le32_to_cpu(syn_fw->config_size);
-	पूर्णांक ret;
+	int ret;
 
-	BUILD_BUG_ON(दुरत्व(काष्ठा rmi_f34_firmware, data) !=
+	BUILD_BUG_ON(offsetof(struct rmi_f34_firmware, data) !=
 			F34_FW_IMAGE_OFFSET);
 
 	rmi_dbg(RMI_DEBUG_FN, &f34->fn->dev,
@@ -261,32 +260,32 @@
 	rmi_dbg(RMI_DEBUG_FN, &f34->fn->dev,
 		"FW bootloader_id:%02x, product_id:%.*s, info: %02x%02x\n",
 		syn_fw->bootloader_version,
-		(पूर्णांक)माप(syn_fw->product_id), syn_fw->product_id,
+		(int)sizeof(syn_fw->product_id), syn_fw->product_id,
 		syn_fw->product_info[0], syn_fw->product_info[1]);
 
-	अगर (image_size && image_size != f34->v5.fw_blocks * f34->v5.block_size) अणु
+	if (image_size && image_size != f34->v5.fw_blocks * f34->v5.block_size) {
 		dev_err(&f34->fn->dev,
 			"Bad firmware image: fw size %d, expected %d\n",
 			image_size, f34->v5.fw_blocks * f34->v5.block_size);
 		ret = -EILSEQ;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (config_size &&
-	    config_size != f34->v5.config_blocks * f34->v5.block_size) अणु
+	if (config_size &&
+	    config_size != f34->v5.config_blocks * f34->v5.block_size) {
 		dev_err(&f34->fn->dev,
 			"Bad firmware image: config size %d, expected %d\n",
 			config_size,
 			f34->v5.config_blocks * f34->v5.block_size);
 		ret = -EILSEQ;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (image_size && !config_size) अणु
+	if (image_size && !config_size) {
 		dev_err(&f34->fn->dev, "Bad firmware image: no config data\n");
 		ret = -EILSEQ;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	dev_info(&f34->fn->dev, "Firmware image OK\n");
 	mutex_lock(&f34->v5.flash_mutex);
@@ -296,188 +295,188 @@
 	mutex_unlock(&f34->v5.flash_mutex);
 
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक rmi_f34_status(काष्ठा rmi_function *fn)
-अणु
-	काष्ठा f34_data *f34 = dev_get_drvdata(&fn->dev);
+static int rmi_f34_status(struct rmi_function *fn)
+{
+	struct f34_data *f34 = dev_get_drvdata(&fn->dev);
 
 	/*
 	 * The status is the percentage complete, or once complete,
-	 * zero क्रम success or a negative वापस code.
+	 * zero for success or a negative return code.
 	 */
-	वापस f34->update_status;
-पूर्ण
+	return f34->update_status;
+}
 
-अटल sमाप_प्रकार rmi_driver_bootloader_id_show(काष्ठा device *dev,
-					     काष्ठा device_attribute *dattr,
-					     अक्षर *buf)
-अणु
-	काष्ठा rmi_driver_data *data = dev_get_drvdata(dev);
-	काष्ठा rmi_function *fn = data->f34_container;
-	काष्ठा f34_data *f34;
+static ssize_t rmi_driver_bootloader_id_show(struct device *dev,
+					     struct device_attribute *dattr,
+					     char *buf)
+{
+	struct rmi_driver_data *data = dev_get_drvdata(dev);
+	struct rmi_function *fn = data->f34_container;
+	struct f34_data *f34;
 
-	अगर (fn) अणु
+	if (fn) {
 		f34 = dev_get_drvdata(&fn->dev);
 
-		अगर (f34->bl_version == 5)
-			वापस scnम_लिखो(buf, PAGE_SIZE, "%c%c\n",
+		if (f34->bl_version == 5)
+			return scnprintf(buf, PAGE_SIZE, "%c%c\n",
 					 f34->bootloader_id[0],
 					 f34->bootloader_id[1]);
-		अन्यथा
-			वापस scnम_लिखो(buf, PAGE_SIZE, "V%d.%d\n",
+		else
+			return scnprintf(buf, PAGE_SIZE, "V%d.%d\n",
 					 f34->bootloader_id[1],
 					 f34->bootloader_id[0]);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल DEVICE_ATTR(bootloader_id, 0444, rmi_driver_bootloader_id_show, शून्य);
+static DEVICE_ATTR(bootloader_id, 0444, rmi_driver_bootloader_id_show, NULL);
 
-अटल sमाप_प्रकार rmi_driver_configuration_id_show(काष्ठा device *dev,
-						काष्ठा device_attribute *dattr,
-						अक्षर *buf)
-अणु
-	काष्ठा rmi_driver_data *data = dev_get_drvdata(dev);
-	काष्ठा rmi_function *fn = data->f34_container;
-	काष्ठा f34_data *f34;
+static ssize_t rmi_driver_configuration_id_show(struct device *dev,
+						struct device_attribute *dattr,
+						char *buf)
+{
+	struct rmi_driver_data *data = dev_get_drvdata(dev);
+	struct rmi_function *fn = data->f34_container;
+	struct f34_data *f34;
 
-	अगर (fn) अणु
+	if (fn) {
 		f34 = dev_get_drvdata(&fn->dev);
 
-		वापस scnम_लिखो(buf, PAGE_SIZE, "%s\n", f34->configuration_id);
-	पूर्ण
+		return scnprintf(buf, PAGE_SIZE, "%s\n", f34->configuration_id);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल DEVICE_ATTR(configuration_id, 0444,
-		   rmi_driver_configuration_id_show, शून्य);
+static DEVICE_ATTR(configuration_id, 0444,
+		   rmi_driver_configuration_id_show, NULL);
 
-अटल पूर्णांक rmi_firmware_update(काष्ठा rmi_driver_data *data,
-			       स्थिर काष्ठा firmware *fw)
-अणु
-	काष्ठा rmi_device *rmi_dev = data->rmi_dev;
-	काष्ठा device *dev = &rmi_dev->dev;
-	काष्ठा f34_data *f34;
-	पूर्णांक ret;
+static int rmi_firmware_update(struct rmi_driver_data *data,
+			       const struct firmware *fw)
+{
+	struct rmi_device *rmi_dev = data->rmi_dev;
+	struct device *dev = &rmi_dev->dev;
+	struct f34_data *f34;
+	int ret;
 
-	अगर (!data->f34_container) अणु
+	if (!data->f34_container) {
 		dev_warn(dev, "%s: No F34 present!\n", __func__);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	f34 = dev_get_drvdata(&data->f34_container->dev);
 
-	अगर (f34->bl_version == 7) अणु
-		अगर (data->pdt_props & HAS_BSR) अणु
+	if (f34->bl_version == 7) {
+		if (data->pdt_props & HAS_BSR) {
 			dev_err(dev, "%s: LTS not supported\n", __func__);
-			वापस -ENODEV;
-		पूर्ण
-	पूर्ण अन्यथा अगर (f34->bl_version != 5) अणु
+			return -ENODEV;
+		}
+	} else if (f34->bl_version != 5) {
 		dev_warn(dev, "F34 V%d not supported!\n",
 			 data->f34_container->fd.function_version);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	/* Enter flash mode */
-	अगर (f34->bl_version == 7)
+	if (f34->bl_version == 7)
 		ret = rmi_f34v7_start_reflash(f34, fw);
-	अन्यथा
+	else
 		ret = rmi_f34_enable_flash(f34);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	rmi_disable_irq(rmi_dev, false);
 
-	/* Tear करोwn functions and re-probe */
-	rmi_मुक्त_function_list(rmi_dev);
+	/* Tear down functions and re-probe */
+	rmi_free_function_list(rmi_dev);
 
-	ret = rmi_probe_पूर्णांकerrupts(data);
-	अगर (ret)
-		वापस ret;
+	ret = rmi_probe_interrupts(data);
+	if (ret)
+		return ret;
 
 	ret = rmi_init_functions(data);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (!data->bootloader_mode || !data->f34_container) अणु
+	if (!data->bootloader_mode || !data->f34_container) {
 		dev_warn(dev, "%s: No F34 present or not in bootloader!\n",
 				__func__);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	rmi_enable_irq(rmi_dev, false);
 
 	f34 = dev_get_drvdata(&data->f34_container->dev);
 
-	/* Perक्रमm firmware update */
-	अगर (f34->bl_version == 7)
-		ret = rmi_f34v7_करो_reflash(f34, fw);
-	अन्यथा
+	/* Perform firmware update */
+	if (f34->bl_version == 7)
+		ret = rmi_f34v7_do_reflash(f34, fw);
+	else
 		ret = rmi_f34_update_firmware(f34, fw);
 
-	अगर (ret) अणु
+	if (ret) {
 		f34->update_status = ret;
 		dev_err(&f34->fn->dev,
 			"Firmware update failed, status: %d\n", ret);
-	पूर्ण अन्यथा अणु
+	} else {
 		dev_info(&f34->fn->dev, "Firmware update complete\n");
-	पूर्ण
+	}
 
 	rmi_disable_irq(rmi_dev, false);
 
 	/* Re-probe */
 	rmi_dbg(RMI_DEBUG_FN, dev, "Re-probing device\n");
-	rmi_मुक्त_function_list(rmi_dev);
+	rmi_free_function_list(rmi_dev);
 
-	ret = rmi_scan_pdt(rmi_dev, शून्य, rmi_initial_reset);
-	अगर (ret < 0)
+	ret = rmi_scan_pdt(rmi_dev, NULL, rmi_initial_reset);
+	if (ret < 0)
 		dev_warn(dev, "RMI reset failed!\n");
 
-	ret = rmi_probe_पूर्णांकerrupts(data);
-	अगर (ret)
-		वापस ret;
+	ret = rmi_probe_interrupts(data);
+	if (ret)
+		return ret;
 
 	ret = rmi_init_functions(data);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	rmi_enable_irq(rmi_dev, false);
 
-	अगर (data->f01_container->dev.driver)
-		/* Driver alपढ़ोy bound, so enable ATTN now. */
-		वापस rmi_enable_sensor(rmi_dev);
+	if (data->f01_container->dev.driver)
+		/* Driver already bound, so enable ATTN now. */
+		return rmi_enable_sensor(rmi_dev);
 
 	rmi_dbg(RMI_DEBUG_FN, dev, "%s complete\n", __func__);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल sमाप_प्रकार rmi_driver_update_fw_store(काष्ठा device *dev,
-					  काष्ठा device_attribute *dattr,
-					  स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा rmi_driver_data *data = dev_get_drvdata(dev);
-	अक्षर fw_name[NAME_MAX];
-	स्थिर काष्ठा firmware *fw;
-	माप_प्रकार copy_count = count;
-	पूर्णांक ret;
+static ssize_t rmi_driver_update_fw_store(struct device *dev,
+					  struct device_attribute *dattr,
+					  const char *buf, size_t count)
+{
+	struct rmi_driver_data *data = dev_get_drvdata(dev);
+	char fw_name[NAME_MAX];
+	const struct firmware *fw;
+	size_t copy_count = count;
+	int ret;
 
-	अगर (count == 0 || count >= NAME_MAX)
-		वापस -EINVAL;
+	if (count == 0 || count >= NAME_MAX)
+		return -EINVAL;
 
-	अगर (buf[count - 1] == '\0' || buf[count - 1] == '\n')
+	if (buf[count - 1] == '\0' || buf[count - 1] == '\n')
 		copy_count -= 1;
 
-	म_नकलन(fw_name, buf, copy_count);
+	strncpy(fw_name, buf, copy_count);
 	fw_name[copy_count] = '\0';
 
 	ret = request_firmware(&fw, fw_name, dev);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	dev_info(dev, "Flashing %s\n", fw_name);
 
@@ -485,73 +484,73 @@ out:
 
 	release_firmware(fw);
 
-	वापस ret ?: count;
-पूर्ण
+	return ret ?: count;
+}
 
-अटल DEVICE_ATTR(update_fw, 0200, शून्य, rmi_driver_update_fw_store);
+static DEVICE_ATTR(update_fw, 0200, NULL, rmi_driver_update_fw_store);
 
-अटल sमाप_प्रकार rmi_driver_update_fw_status_show(काष्ठा device *dev,
-						काष्ठा device_attribute *dattr,
-						अक्षर *buf)
-अणु
-	काष्ठा rmi_driver_data *data = dev_get_drvdata(dev);
-	पूर्णांक update_status = 0;
+static ssize_t rmi_driver_update_fw_status_show(struct device *dev,
+						struct device_attribute *dattr,
+						char *buf)
+{
+	struct rmi_driver_data *data = dev_get_drvdata(dev);
+	int update_status = 0;
 
-	अगर (data->f34_container)
+	if (data->f34_container)
 		update_status = rmi_f34_status(data->f34_container);
 
-	वापस scnम_लिखो(buf, PAGE_SIZE, "%d\n", update_status);
-पूर्ण
+	return scnprintf(buf, PAGE_SIZE, "%d\n", update_status);
+}
 
-अटल DEVICE_ATTR(update_fw_status, 0444,
-		   rmi_driver_update_fw_status_show, शून्य);
+static DEVICE_ATTR(update_fw_status, 0444,
+		   rmi_driver_update_fw_status_show, NULL);
 
-अटल काष्ठा attribute *rmi_firmware_attrs[] = अणु
+static struct attribute *rmi_firmware_attrs[] = {
 	&dev_attr_bootloader_id.attr,
 	&dev_attr_configuration_id.attr,
 	&dev_attr_update_fw.attr,
 	&dev_attr_update_fw_status.attr,
-	शून्य
-पूर्ण;
+	NULL
+};
 
-अटल स्थिर काष्ठा attribute_group rmi_firmware_attr_group = अणु
+static const struct attribute_group rmi_firmware_attr_group = {
 	.attrs = rmi_firmware_attrs,
-पूर्ण;
+};
 
-अटल पूर्णांक rmi_f34_probe(काष्ठा rmi_function *fn)
-अणु
-	काष्ठा f34_data *f34;
-	अचिन्हित अक्षर f34_queries[9];
+static int rmi_f34_probe(struct rmi_function *fn)
+{
+	struct f34_data *f34;
+	unsigned char f34_queries[9];
 	bool has_config_id;
 	u8 version = fn->fd.function_version;
-	पूर्णांक ret;
+	int ret;
 
-	f34 = devm_kzalloc(&fn->dev, माप(काष्ठा f34_data), GFP_KERNEL);
-	अगर (!f34)
-		वापस -ENOMEM;
+	f34 = devm_kzalloc(&fn->dev, sizeof(struct f34_data), GFP_KERNEL);
+	if (!f34)
+		return -ENOMEM;
 
 	f34->fn = fn;
 	dev_set_drvdata(&fn->dev, f34);
 
 	/* v5 code only supported version 0, try V7 probe */
-	अगर (version > 0)
-		वापस rmi_f34v7_probe(f34);
+	if (version > 0)
+		return rmi_f34v7_probe(f34);
 
 	f34->bl_version = 5;
 
-	ret = rmi_पढ़ो_block(fn->rmi_dev, fn->fd.query_base_addr,
-			     f34_queries, माप(f34_queries));
-	अगर (ret) अणु
+	ret = rmi_read_block(fn->rmi_dev, fn->fd.query_base_addr,
+			     f34_queries, sizeof(f34_queries));
+	if (ret) {
 		dev_err(&fn->dev, "%s: Failed to query properties\n",
 			__func__);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	snम_लिखो(f34->bootloader_id, माप(f34->bootloader_id),
+	snprintf(f34->bootloader_id, sizeof(f34->bootloader_id),
 		 "%c%c", f34_queries[0], f34_queries[1]);
 
 	mutex_init(&f34->v5.flash_mutex);
-	init_completion(&f34->v5.cmd_करोne);
+	init_completion(&f34->v5.cmd_done);
 
 	f34->v5.block_size = get_unaligned_le16(&f34_queries[3]);
 	f34->v5.fw_blocks = get_unaligned_le16(&f34_queries[5]);
@@ -569,41 +568,41 @@ out:
 	rmi_dbg(RMI_DEBUG_FN, &fn->dev, "CFG blocks: %d\n",
 		f34->v5.config_blocks);
 
-	अगर (has_config_id) अणु
-		ret = rmi_पढ़ो_block(fn->rmi_dev, fn->fd.control_base_addr,
-				     f34_queries, माप(f34_queries));
-		अगर (ret) अणु
+	if (has_config_id) {
+		ret = rmi_read_block(fn->rmi_dev, fn->fd.control_base_addr,
+				     f34_queries, sizeof(f34_queries));
+		if (ret) {
 			dev_err(&fn->dev, "Failed to read F34 config ID\n");
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 
-		snम_लिखो(f34->configuration_id, माप(f34->configuration_id),
+		snprintf(f34->configuration_id, sizeof(f34->configuration_id),
 			 "%02x%02x%02x%02x",
 			 f34_queries[0], f34_queries[1],
 			 f34_queries[2], f34_queries[3]);
 
 		rmi_dbg(RMI_DEBUG_FN, &fn->dev, "Configuration ID: %s\n",
 			 f34->configuration_id);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक rmi_f34_create_sysfs(काष्ठा rmi_device *rmi_dev)
-अणु
-	वापस sysfs_create_group(&rmi_dev->dev.kobj, &rmi_firmware_attr_group);
-पूर्ण
+int rmi_f34_create_sysfs(struct rmi_device *rmi_dev)
+{
+	return sysfs_create_group(&rmi_dev->dev.kobj, &rmi_firmware_attr_group);
+}
 
-व्योम rmi_f34_हटाओ_sysfs(काष्ठा rmi_device *rmi_dev)
-अणु
-	sysfs_हटाओ_group(&rmi_dev->dev.kobj, &rmi_firmware_attr_group);
-पूर्ण
+void rmi_f34_remove_sysfs(struct rmi_device *rmi_dev)
+{
+	sysfs_remove_group(&rmi_dev->dev.kobj, &rmi_firmware_attr_group);
+}
 
-काष्ठा rmi_function_handler rmi_f34_handler = अणु
-	.driver = अणु
+struct rmi_function_handler rmi_f34_handler = {
+	.driver = {
 		.name = "rmi4_f34",
-	पूर्ण,
+	},
 	.func = 0x34,
 	.probe = rmi_f34_probe,
 	.attention = rmi_f34_attention,
-पूर्ण;
+};

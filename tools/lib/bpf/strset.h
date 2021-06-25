@@ -1,22 +1,21 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: (LGPL-2.1 OR BSD-2-Clause) */
+/* SPDX-License-Identifier: (LGPL-2.1 OR BSD-2-Clause) */
 
 /* Copyright (c) 2021 Facebook */
-#अगर_अघोषित __LIBBPF_STRSET_H
-#घोषणा __LIBBPF_STRSET_H
+#ifndef __LIBBPF_STRSET_H
+#define __LIBBPF_STRSET_H
 
-#समावेश <stdbool.h>
-#समावेश <मानकघोष.स>
+#include <stdbool.h>
+#include <stddef.h>
 
-काष्ठा strset;
+struct strset;
 
-काष्ठा strset *strset__new(माप_प्रकार max_data_sz, स्थिर अक्षर *init_data, माप_प्रकार init_data_sz);
-व्योम strset__मुक्त(काष्ठा strset *set);
+struct strset *strset__new(size_t max_data_sz, const char *init_data, size_t init_data_sz);
+void strset__free(struct strset *set);
 
-स्थिर अक्षर *strset__data(स्थिर काष्ठा strset *set);
-माप_प्रकार strset__data_size(स्थिर काष्ठा strset *set);
+const char *strset__data(const struct strset *set);
+size_t strset__data_size(const struct strset *set);
 
-पूर्णांक strset__find_str(काष्ठा strset *set, स्थिर अक्षर *s);
-पूर्णांक strset__add_str(काष्ठा strset *set, स्थिर अक्षर *s);
+int strset__find_str(struct strset *set, const char *s);
+int strset__add_str(struct strset *set, const char *s);
 
-#पूर्ण_अगर /* __LIBBPF_STRSET_H */
+#endif /* __LIBBPF_STRSET_H */

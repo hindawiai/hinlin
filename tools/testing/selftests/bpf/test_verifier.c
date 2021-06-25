@@ -1,155 +1,154 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Testsuite क्रम eBPF verअगरier
+ * Testsuite for eBPF verifier
  *
  * Copyright (c) 2014 PLUMgrid, http://plumgrid.com
  * Copyright (c) 2017 Facebook
  * Copyright (c) 2018 Covalent IO, Inc. http://covalent.io
  */
 
-#समावेश <endian.h>
-#समावेश <यंत्र/types.h>
-#समावेश <linux/types.h>
-#समावेश <मानक_निवेशt.h>
-#समावेश <मानकपन.स>
-#समावेश <मानककोष.स>
-#समावेश <unistd.h>
-#समावेश <त्रुटिसं.स>
-#समावेश <माला.स>
-#समावेश <मानकघोष.स>
-#समावेश <stdbool.h>
-#समावेश <sched.h>
-#समावेश <सीमा.स>
-#समावेश <निश्चित.स>
+#include <endian.h>
+#include <asm/types.h>
+#include <linux/types.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <errno.h>
+#include <string.h>
+#include <stddef.h>
+#include <stdbool.h>
+#include <sched.h>
+#include <limits.h>
+#include <assert.h>
 
-#समावेश <sys/capability.h>
+#include <sys/capability.h>
 
-#समावेश <linux/unistd.h>
-#समावेश <linux/filter.h>
-#समावेश <linux/bpf_perf_event.h>
-#समावेश <linux/bpf.h>
-#समावेश <linux/अगर_ether.h>
-#समावेश <linux/btf.h>
+#include <linux/unistd.h>
+#include <linux/filter.h>
+#include <linux/bpf_perf_event.h>
+#include <linux/bpf.h>
+#include <linux/if_ether.h>
+#include <linux/btf.h>
 
-#समावेश <bpf/bpf.h>
-#समावेश <bpf/libbpf.h>
+#include <bpf/bpf.h>
+#include <bpf/libbpf.h>
 
-#अगर_घोषित HAVE_GENHDR
+#ifdef HAVE_GENHDR
 # include "autoconf.h"
-#अन्यथा
-# अगर defined(__i386) || defined(__x86_64) || defined(__s390x__) || defined(__aarch64__)
+#else
+# if defined(__i386) || defined(__x86_64) || defined(__s390x__) || defined(__aarch64__)
 #  define CONFIG_HAVE_EFFICIENT_UNALIGNED_ACCESS 1
-# endअगर
-#पूर्ण_अगर
-#समावेश "bpf_rlimit.h"
-#समावेश "bpf_rand.h"
-#समावेश "bpf_util.h"
-#समावेश "test_btf.h"
-#समावेश "../../../include/linux/filter.h"
+# endif
+#endif
+#include "bpf_rlimit.h"
+#include "bpf_rand.h"
+#include "bpf_util.h"
+#include "test_btf.h"
+#include "../../../include/linux/filter.h"
 
-#घोषणा MAX_INSNS	BPF_MAXINSNS
-#घोषणा MAX_TEST_INSNS	1000000
-#घोषणा MAX_FIXUPS	8
-#घोषणा MAX_NR_MAPS	21
-#घोषणा MAX_TEST_RUNS	8
-#घोषणा POINTER_VALUE	0xcafe4all
-#घोषणा TEST_DATA_LEN	64
+#define MAX_INSNS	BPF_MAXINSNS
+#define MAX_TEST_INSNS	1000000
+#define MAX_FIXUPS	8
+#define MAX_NR_MAPS	21
+#define MAX_TEST_RUNS	8
+#define POINTER_VALUE	0xcafe4all
+#define TEST_DATA_LEN	64
 
-#घोषणा F_NEEDS_EFFICIENT_UNALIGNED_ACCESS	(1 << 0)
-#घोषणा F_LOAD_WITH_STRICT_ALIGNMENT		(1 << 1)
+#define F_NEEDS_EFFICIENT_UNALIGNED_ACCESS	(1 << 0)
+#define F_LOAD_WITH_STRICT_ALIGNMENT		(1 << 1)
 
-#घोषणा UNPRIV_SYSCTL "kernel/unprivileged_bpf_disabled"
-अटल bool unpriv_disabled = false;
-अटल पूर्णांक skips;
-अटल bool verbose = false;
+#define UNPRIV_SYSCTL "kernel/unprivileged_bpf_disabled"
+static bool unpriv_disabled = false;
+static int skips;
+static bool verbose = false;
 
-काष्ठा bpf_test अणु
-	स्थिर अक्षर *descr;
-	काष्ठा bpf_insn	insns[MAX_INSNS];
-	काष्ठा bpf_insn	*fill_insns;
-	पूर्णांक fixup_map_hash_8b[MAX_FIXUPS];
-	पूर्णांक fixup_map_hash_48b[MAX_FIXUPS];
-	पूर्णांक fixup_map_hash_16b[MAX_FIXUPS];
-	पूर्णांक fixup_map_array_48b[MAX_FIXUPS];
-	पूर्णांक fixup_map_sockmap[MAX_FIXUPS];
-	पूर्णांक fixup_map_sockhash[MAX_FIXUPS];
-	पूर्णांक fixup_map_xskmap[MAX_FIXUPS];
-	पूर्णांक fixup_map_stacktrace[MAX_FIXUPS];
-	पूर्णांक fixup_prog1[MAX_FIXUPS];
-	पूर्णांक fixup_prog2[MAX_FIXUPS];
-	पूर्णांक fixup_map_in_map[MAX_FIXUPS];
-	पूर्णांक fixup_cgroup_storage[MAX_FIXUPS];
-	पूर्णांक fixup_percpu_cgroup_storage[MAX_FIXUPS];
-	पूर्णांक fixup_map_spin_lock[MAX_FIXUPS];
-	पूर्णांक fixup_map_array_ro[MAX_FIXUPS];
-	पूर्णांक fixup_map_array_wo[MAX_FIXUPS];
-	पूर्णांक fixup_map_array_small[MAX_FIXUPS];
-	पूर्णांक fixup_sk_storage_map[MAX_FIXUPS];
-	पूर्णांक fixup_map_event_output[MAX_FIXUPS];
-	पूर्णांक fixup_map_reuseport_array[MAX_FIXUPS];
-	पूर्णांक fixup_map_ringbuf[MAX_FIXUPS];
-	/* Expected verअगरier log output क्रम result REJECT or VERBOSE_ACCEPT.
+struct bpf_test {
+	const char *descr;
+	struct bpf_insn	insns[MAX_INSNS];
+	struct bpf_insn	*fill_insns;
+	int fixup_map_hash_8b[MAX_FIXUPS];
+	int fixup_map_hash_48b[MAX_FIXUPS];
+	int fixup_map_hash_16b[MAX_FIXUPS];
+	int fixup_map_array_48b[MAX_FIXUPS];
+	int fixup_map_sockmap[MAX_FIXUPS];
+	int fixup_map_sockhash[MAX_FIXUPS];
+	int fixup_map_xskmap[MAX_FIXUPS];
+	int fixup_map_stacktrace[MAX_FIXUPS];
+	int fixup_prog1[MAX_FIXUPS];
+	int fixup_prog2[MAX_FIXUPS];
+	int fixup_map_in_map[MAX_FIXUPS];
+	int fixup_cgroup_storage[MAX_FIXUPS];
+	int fixup_percpu_cgroup_storage[MAX_FIXUPS];
+	int fixup_map_spin_lock[MAX_FIXUPS];
+	int fixup_map_array_ro[MAX_FIXUPS];
+	int fixup_map_array_wo[MAX_FIXUPS];
+	int fixup_map_array_small[MAX_FIXUPS];
+	int fixup_sk_storage_map[MAX_FIXUPS];
+	int fixup_map_event_output[MAX_FIXUPS];
+	int fixup_map_reuseport_array[MAX_FIXUPS];
+	int fixup_map_ringbuf[MAX_FIXUPS];
+	/* Expected verifier log output for result REJECT or VERBOSE_ACCEPT.
 	 * Can be a tab-separated sequence of expected strings. An empty string
-	 * means no log verअगरication.
+	 * means no log verification.
 	 */
-	स्थिर अक्षर *errstr;
-	स्थिर अक्षर *errstr_unpriv;
-	uपूर्णांक32_t insn_processed;
-	पूर्णांक prog_len;
-	क्रमागत अणु
+	const char *errstr;
+	const char *errstr_unpriv;
+	uint32_t insn_processed;
+	int prog_len;
+	enum {
 		UNDEF,
 		ACCEPT,
 		REJECT,
 		VERBOSE_ACCEPT,
-	पूर्ण result, result_unpriv;
-	क्रमागत bpf_prog_type prog_type;
-	uपूर्णांक8_t flags;
-	व्योम (*fill_helper)(काष्ठा bpf_test *self);
-	पूर्णांक runs;
-#घोषणा bpf_testdata_काष्ठा_t					\
-	काष्ठा अणु						\
-		uपूर्णांक32_t retval, retval_unpriv;			\
-		जोड़ अणु						\
+	} result, result_unpriv;
+	enum bpf_prog_type prog_type;
+	uint8_t flags;
+	void (*fill_helper)(struct bpf_test *self);
+	int runs;
+#define bpf_testdata_struct_t					\
+	struct {						\
+		uint32_t retval, retval_unpriv;			\
+		union {						\
 			__u8 data[TEST_DATA_LEN];		\
 			__u64 data64[TEST_DATA_LEN / 8];	\
-		पूर्ण;						\
-	पूर्ण
-	जोड़ अणु
-		bpf_testdata_काष्ठा_t;
-		bpf_testdata_काष्ठा_t retvals[MAX_TEST_RUNS];
-	पूर्ण;
-	क्रमागत bpf_attach_type expected_attach_type;
-	स्थिर अक्षर *kfunc;
-पूर्ण;
+		};						\
+	}
+	union {
+		bpf_testdata_struct_t;
+		bpf_testdata_struct_t retvals[MAX_TEST_RUNS];
+	};
+	enum bpf_attach_type expected_attach_type;
+	const char *kfunc;
+};
 
 /* Note we want this to be 64 bit aligned so that the end of our array is
- * actually the end of the काष्ठाure.
+ * actually the end of the structure.
  */
-#घोषणा MAX_ENTRIES 11
+#define MAX_ENTRIES 11
 
-काष्ठा test_val अणु
-	अचिन्हित पूर्णांक index;
-	पूर्णांक foo[MAX_ENTRIES];
-पूर्ण;
+struct test_val {
+	unsigned int index;
+	int foo[MAX_ENTRIES];
+};
 
-काष्ठा other_val अणु
-	दीर्घ दीर्घ foo;
-	दीर्घ दीर्घ bar;
-पूर्ण;
+struct other_val {
+	long long foo;
+	long long bar;
+};
 
-अटल व्योम bpf_fill_ld_असल_vlan_push_pop(काष्ठा bpf_test *self)
-अणु
-	/* test: अणुskb->data[0], vlan_pushपूर्ण x 51 + अणुskb->data[0], vlan_popपूर्ण x 51 */
-#घोषणा PUSH_CNT 51
-	/* jump range is limited to 16 bit. PUSH_CNT of ld_असल needs room */
-	अचिन्हित पूर्णांक len = (1 << 15) - PUSH_CNT * 2 * 5 * 6;
-	काष्ठा bpf_insn *insn = self->fill_insns;
-	पूर्णांक i = 0, j, k = 0;
+static void bpf_fill_ld_abs_vlan_push_pop(struct bpf_test *self)
+{
+	/* test: {skb->data[0], vlan_push} x 51 + {skb->data[0], vlan_pop} x 51 */
+#define PUSH_CNT 51
+	/* jump range is limited to 16 bit. PUSH_CNT of ld_abs needs room */
+	unsigned int len = (1 << 15) - PUSH_CNT * 2 * 5 * 6;
+	struct bpf_insn *insn = self->fill_insns;
+	int i = 0, j, k = 0;
 
 	insn[i++] = BPF_MOV64_REG(BPF_REG_6, BPF_REG_1);
 loop:
-	क्रम (j = 0; j < PUSH_CNT; j++) अणु
+	for (j = 0; j < PUSH_CNT; j++) {
 		insn[i++] = BPF_LD_ABS(BPF_B, 0);
 		/* jump to error label */
 		insn[i] = BPF_JMP32_IMM(BPF_JNE, BPF_REG_0, 0x34, len - i - 3);
@@ -161,9 +160,9 @@ loop:
 					 BPF_FUNC_skb_vlan_push),
 		insn[i] = BPF_JMP_IMM(BPF_JNE, BPF_REG_0, 0, len - i - 3);
 		i++;
-	पूर्ण
+	}
 
-	क्रम (j = 0; j < PUSH_CNT; j++) अणु
+	for (j = 0; j < PUSH_CNT; j++) {
 		insn[i++] = BPF_LD_ABS(BPF_B, 0);
 		insn[i] = BPF_JMP32_IMM(BPF_JNE, BPF_REG_0, 0x34, len - i - 3);
 		i++;
@@ -172,188 +171,188 @@ loop:
 					 BPF_FUNC_skb_vlan_pop),
 		insn[i] = BPF_JMP_IMM(BPF_JNE, BPF_REG_0, 0, len - i - 3);
 		i++;
-	पूर्ण
-	अगर (++k < 5)
-		जाओ loop;
+	}
+	if (++k < 5)
+		goto loop;
 
-	क्रम (; i < len - 3; i++)
+	for (; i < len - 3; i++)
 		insn[i] = BPF_ALU64_IMM(BPF_MOV, BPF_REG_0, 0xbef);
 	insn[len - 3] = BPF_JMP_A(1);
 	/* error label */
 	insn[len - 2] = BPF_MOV32_IMM(BPF_REG_0, 0);
 	insn[len - 1] = BPF_EXIT_INSN();
 	self->prog_len = len;
-पूर्ण
+}
 
-अटल व्योम bpf_fill_jump_around_ld_असल(काष्ठा bpf_test *self)
-अणु
-	काष्ठा bpf_insn *insn = self->fill_insns;
-	/* jump range is limited to 16 bit. every ld_असल is replaced by 6 insns,
+static void bpf_fill_jump_around_ld_abs(struct bpf_test *self)
+{
+	struct bpf_insn *insn = self->fill_insns;
+	/* jump range is limited to 16 bit. every ld_abs is replaced by 6 insns,
 	 * but on arches like arm, ppc etc, there will be one BPF_ZEXT inserted
-	 * to extend the error value of the अंतरभूतd ld_असल sequence which then
-	 * contains 7 insns. so, set the भागidend to 7 so the testहाल could
+	 * to extend the error value of the inlined ld_abs sequence which then
+	 * contains 7 insns. so, set the dividend to 7 so the testcase could
 	 * work on all arches.
 	 */
-	अचिन्हित पूर्णांक len = (1 << 15) / 7;
-	पूर्णांक i = 0;
+	unsigned int len = (1 << 15) / 7;
+	int i = 0;
 
 	insn[i++] = BPF_MOV64_REG(BPF_REG_6, BPF_REG_1);
 	insn[i++] = BPF_LD_ABS(BPF_B, 0);
 	insn[i] = BPF_JMP_IMM(BPF_JEQ, BPF_REG_0, 10, len - i - 2);
 	i++;
-	जबतक (i < len - 1)
+	while (i < len - 1)
 		insn[i++] = BPF_LD_ABS(BPF_B, 1);
 	insn[i] = BPF_EXIT_INSN();
 	self->prog_len = i + 1;
-पूर्ण
+}
 
-अटल व्योम bpf_fill_अक्रम_ld_dw(काष्ठा bpf_test *self)
-अणु
-	काष्ठा bpf_insn *insn = self->fill_insns;
-	uपूर्णांक64_t res = 0;
-	पूर्णांक i = 0;
+static void bpf_fill_rand_ld_dw(struct bpf_test *self)
+{
+	struct bpf_insn *insn = self->fill_insns;
+	uint64_t res = 0;
+	int i = 0;
 
 	insn[i++] = BPF_MOV32_IMM(BPF_REG_0, 0);
-	जबतक (i < self->retval) अणु
-		uपूर्णांक64_t val = bpf_semi_अक्रम_get();
-		काष्ठा bpf_insn पंचांगp[2] = अणु BPF_LD_IMM64(BPF_REG_1, val) पूर्ण;
+	while (i < self->retval) {
+		uint64_t val = bpf_semi_rand_get();
+		struct bpf_insn tmp[2] = { BPF_LD_IMM64(BPF_REG_1, val) };
 
 		res ^= val;
-		insn[i++] = पंचांगp[0];
-		insn[i++] = पंचांगp[1];
+		insn[i++] = tmp[0];
+		insn[i++] = tmp[1];
 		insn[i++] = BPF_ALU64_REG(BPF_XOR, BPF_REG_0, BPF_REG_1);
-	पूर्ण
+	}
 	insn[i++] = BPF_MOV64_REG(BPF_REG_1, BPF_REG_0);
 	insn[i++] = BPF_ALU64_IMM(BPF_RSH, BPF_REG_1, 32);
 	insn[i++] = BPF_ALU64_REG(BPF_XOR, BPF_REG_0, BPF_REG_1);
 	insn[i] = BPF_EXIT_INSN();
 	self->prog_len = i + 1;
 	res ^= (res >> 32);
-	self->retval = (uपूर्णांक32_t)res;
-पूर्ण
+	self->retval = (uint32_t)res;
+}
 
-#घोषणा MAX_JMP_SEQ 8192
+#define MAX_JMP_SEQ 8192
 
 /* test the sequence of 8k jumps */
-अटल व्योम bpf_fill_scale1(काष्ठा bpf_test *self)
-अणु
-	काष्ठा bpf_insn *insn = self->fill_insns;
-	पूर्णांक i = 0, k = 0;
+static void bpf_fill_scale1(struct bpf_test *self)
+{
+	struct bpf_insn *insn = self->fill_insns;
+	int i = 0, k = 0;
 
 	insn[i++] = BPF_MOV64_REG(BPF_REG_6, BPF_REG_1);
-	/* test to check that the दीर्घ sequence of jumps is acceptable */
-	जबतक (k++ < MAX_JMP_SEQ) अणु
+	/* test to check that the long sequence of jumps is acceptable */
+	while (k++ < MAX_JMP_SEQ) {
 		insn[i++] = BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0,
-					 BPF_FUNC_get_pअक्रमom_u32);
-		insn[i++] = BPF_JMP_IMM(BPF_JEQ, BPF_REG_0, bpf_semi_अक्रम_get(), 2);
+					 BPF_FUNC_get_prandom_u32);
+		insn[i++] = BPF_JMP_IMM(BPF_JEQ, BPF_REG_0, bpf_semi_rand_get(), 2);
 		insn[i++] = BPF_MOV64_REG(BPF_REG_1, BPF_REG_10);
 		insn[i++] = BPF_STX_MEM(BPF_DW, BPF_REG_1, BPF_REG_6,
 					-8 * (k % 64 + 1));
-	पूर्ण
-	/* is_state_visited() करोesn't allocate state क्रम pruning क्रम every jump.
+	}
+	/* is_state_visited() doesn't allocate state for pruning for every jump.
 	 * Hence multiply jmps by 4 to accommodate that heuristic
 	 */
-	जबतक (i < MAX_TEST_INSNS - MAX_JMP_SEQ * 4)
+	while (i < MAX_TEST_INSNS - MAX_JMP_SEQ * 4)
 		insn[i++] = BPF_ALU64_IMM(BPF_MOV, BPF_REG_0, 42);
 	insn[i] = BPF_EXIT_INSN();
 	self->prog_len = i + 1;
 	self->retval = 42;
-पूर्ण
+}
 
 /* test the sequence of 8k jumps in inner most function (function depth 8)*/
-अटल व्योम bpf_fill_scale2(काष्ठा bpf_test *self)
-अणु
-	काष्ठा bpf_insn *insn = self->fill_insns;
-	पूर्णांक i = 0, k = 0;
+static void bpf_fill_scale2(struct bpf_test *self)
+{
+	struct bpf_insn *insn = self->fill_insns;
+	int i = 0, k = 0;
 
-#घोषणा FUNC_NEST 7
-	क्रम (k = 0; k < FUNC_NEST; k++) अणु
+#define FUNC_NEST 7
+	for (k = 0; k < FUNC_NEST; k++) {
 		insn[i++] = BPF_CALL_REL(1);
 		insn[i++] = BPF_EXIT_INSN();
-	पूर्ण
+	}
 	insn[i++] = BPF_MOV64_REG(BPF_REG_6, BPF_REG_1);
-	/* test to check that the दीर्घ sequence of jumps is acceptable */
+	/* test to check that the long sequence of jumps is acceptable */
 	k = 0;
-	जबतक (k++ < MAX_JMP_SEQ) अणु
+	while (k++ < MAX_JMP_SEQ) {
 		insn[i++] = BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0,
-					 BPF_FUNC_get_pअक्रमom_u32);
-		insn[i++] = BPF_JMP_IMM(BPF_JEQ, BPF_REG_0, bpf_semi_अक्रम_get(), 2);
+					 BPF_FUNC_get_prandom_u32);
+		insn[i++] = BPF_JMP_IMM(BPF_JEQ, BPF_REG_0, bpf_semi_rand_get(), 2);
 		insn[i++] = BPF_MOV64_REG(BPF_REG_1, BPF_REG_10);
 		insn[i++] = BPF_STX_MEM(BPF_DW, BPF_REG_1, BPF_REG_6,
 					-8 * (k % (64 - 4 * FUNC_NEST) + 1));
-	पूर्ण
-	जबतक (i < MAX_TEST_INSNS - MAX_JMP_SEQ * 4)
+	}
+	while (i < MAX_TEST_INSNS - MAX_JMP_SEQ * 4)
 		insn[i++] = BPF_ALU64_IMM(BPF_MOV, BPF_REG_0, 42);
 	insn[i] = BPF_EXIT_INSN();
 	self->prog_len = i + 1;
 	self->retval = 42;
-पूर्ण
+}
 
-अटल व्योम bpf_fill_scale(काष्ठा bpf_test *self)
-अणु
-	चयन (self->retval) अणु
-	हाल 1:
-		वापस bpf_fill_scale1(self);
-	हाल 2:
-		वापस bpf_fill_scale2(self);
-	शेष:
+static void bpf_fill_scale(struct bpf_test *self)
+{
+	switch (self->retval) {
+	case 1:
+		return bpf_fill_scale1(self);
+	case 2:
+		return bpf_fill_scale2(self);
+	default:
 		self->prog_len = 0;
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-अटल पूर्णांक bpf_fill_torturous_jumps_insn_1(काष्ठा bpf_insn *insn)
-अणु
-	अचिन्हित पूर्णांक len = 259, hlen = 128;
-	पूर्णांक i;
+static int bpf_fill_torturous_jumps_insn_1(struct bpf_insn *insn)
+{
+	unsigned int len = 259, hlen = 128;
+	int i;
 
-	insn[0] = BPF_EMIT_CALL(BPF_FUNC_get_pअक्रमom_u32);
-	क्रम (i = 1; i <= hlen; i++) अणु
+	insn[0] = BPF_EMIT_CALL(BPF_FUNC_get_prandom_u32);
+	for (i = 1; i <= hlen; i++) {
 		insn[i]        = BPF_JMP_IMM(BPF_JEQ, BPF_REG_0, i, hlen);
 		insn[i + hlen] = BPF_JMP_A(hlen - i);
-	पूर्ण
+	}
 	insn[len - 2] = BPF_MOV64_IMM(BPF_REG_0, 1);
 	insn[len - 1] = BPF_EXIT_INSN();
 
-	वापस len;
-पूर्ण
+	return len;
+}
 
-अटल पूर्णांक bpf_fill_torturous_jumps_insn_2(काष्ठा bpf_insn *insn)
-अणु
-	अचिन्हित पूर्णांक len = 4100, jmp_off = 2048;
-	पूर्णांक i, j;
+static int bpf_fill_torturous_jumps_insn_2(struct bpf_insn *insn)
+{
+	unsigned int len = 4100, jmp_off = 2048;
+	int i, j;
 
-	insn[0] = BPF_EMIT_CALL(BPF_FUNC_get_pअक्रमom_u32);
-	क्रम (i = 1; i <= jmp_off; i++) अणु
+	insn[0] = BPF_EMIT_CALL(BPF_FUNC_get_prandom_u32);
+	for (i = 1; i <= jmp_off; i++) {
 		insn[i] = BPF_JMP_IMM(BPF_JEQ, BPF_REG_0, i, jmp_off);
-	पूर्ण
+	}
 	insn[i++] = BPF_JMP_A(jmp_off);
-	क्रम (; i <= jmp_off * 2 + 1; i+=16) अणु
-		क्रम (j = 0; j < 16; j++) अणु
+	for (; i <= jmp_off * 2 + 1; i+=16) {
+		for (j = 0; j < 16; j++) {
 			insn[i + j] = BPF_JMP_A(16 - j - 1);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	insn[len - 2] = BPF_MOV64_IMM(BPF_REG_0, 2);
 	insn[len - 1] = BPF_EXIT_INSN();
 
-	वापस len;
-पूर्ण
+	return len;
+}
 
-अटल व्योम bpf_fill_torturous_jumps(काष्ठा bpf_test *self)
-अणु
-	काष्ठा bpf_insn *insn = self->fill_insns;
-	पूर्णांक i = 0;
+static void bpf_fill_torturous_jumps(struct bpf_test *self)
+{
+	struct bpf_insn *insn = self->fill_insns;
+	int i = 0;
 
-	चयन (self->retval) अणु
-	हाल 1:
+	switch (self->retval) {
+	case 1:
 		self->prog_len = bpf_fill_torturous_jumps_insn_1(insn);
-		वापस;
-	हाल 2:
+		return;
+	case 2:
 		self->prog_len = bpf_fill_torturous_jumps_insn_2(insn);
-		वापस;
-	हाल 3:
-		/* मुख्य */
+		return;
+	case 3:
+		/* main */
 		insn[i++] = BPF_RAW_INSN(BPF_JMP|BPF_CALL, 0, 1, 0, 4);
 		insn[i++] = BPF_RAW_INSN(BPF_JMP|BPF_CALL, 0, 1, 0, 262);
 		insn[i++] = BPF_ST_MEM(BPF_B, BPF_REG_10, -32, 0);
@@ -367,16 +366,16 @@ loop:
 		i += bpf_fill_torturous_jumps_insn_2(insn + i);
 
 		self->prog_len = i;
-		वापस;
-	शेष:
+		return;
+	default:
 		self->prog_len = 0;
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-/* BPF_SK_LOOKUP contains 13 inकाष्ठाions, अगर you need to fix up maps */
-#घोषणा BPF_SK_LOOKUP(func)						\
-	/* काष्ठा bpf_sock_tuple tuple = अणुपूर्ण */				\
+/* BPF_SK_LOOKUP contains 13 instructions, if you need to fix up maps */
+#define BPF_SK_LOOKUP(func)						\
+	/* struct bpf_sock_tuple tuple = {} */				\
 	BPF_MOV64_IMM(BPF_REG_2, 0),					\
 	BPF_STX_MEM(BPF_W, BPF_REG_10, BPF_REG_2, -8),			\
 	BPF_STX_MEM(BPF_DW, BPF_REG_10, BPF_REG_2, -16),		\
@@ -384,270 +383,270 @@ loop:
 	BPF_STX_MEM(BPF_DW, BPF_REG_10, BPF_REG_2, -32),		\
 	BPF_STX_MEM(BPF_DW, BPF_REG_10, BPF_REG_2, -40),		\
 	BPF_STX_MEM(BPF_DW, BPF_REG_10, BPF_REG_2, -48),		\
-	/* sk = func(ctx, &tuple, माप tuple, 0, 0) */		\
+	/* sk = func(ctx, &tuple, sizeof tuple, 0, 0) */		\
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),				\
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -48),				\
-	BPF_MOV64_IMM(BPF_REG_3, माप(काष्ठा bpf_sock_tuple)),	\
+	BPF_MOV64_IMM(BPF_REG_3, sizeof(struct bpf_sock_tuple)),	\
 	BPF_MOV64_IMM(BPF_REG_4, 0),					\
 	BPF_MOV64_IMM(BPF_REG_5, 0),					\
 	BPF_EMIT_CALL(BPF_FUNC_ ## func)
 
-/* BPF_सूचीECT_PKT_R2 contains 7 inकाष्ठाions, it initializes शेष वापस
- * value पूर्णांकo 0 and करोes necessary preparation क्रम direct packet access
+/* BPF_DIRECT_PKT_R2 contains 7 instructions, it initializes default return
+ * value into 0 and does necessary preparation for direct packet access
  * through r2. The allowed access range is 8 bytes.
  */
-#घोषणा BPF_सूचीECT_PKT_R2						\
+#define BPF_DIRECT_PKT_R2						\
 	BPF_MOV64_IMM(BPF_REG_0, 0),					\
 	BPF_LDX_MEM(BPF_W, BPF_REG_2, BPF_REG_1,			\
-		    दुरत्व(काष्ठा __sk_buff, data)),			\
+		    offsetof(struct __sk_buff, data)),			\
 	BPF_LDX_MEM(BPF_W, BPF_REG_3, BPF_REG_1,			\
-		    दुरत्व(काष्ठा __sk_buff, data_end)),		\
+		    offsetof(struct __sk_buff, data_end)),		\
 	BPF_MOV64_REG(BPF_REG_4, BPF_REG_2),				\
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_4, 8),				\
 	BPF_JMP_REG(BPF_JLE, BPF_REG_4, BPF_REG_3, 1),			\
 	BPF_EXIT_INSN()
 
-/* BPF_RAND_UEXT_R7 contains 4 inकाष्ठाions, it initializes R7 पूर्णांकo a अक्रमom
- * positive u32, and zero-extend it पूर्णांकo 64-bit.
+/* BPF_RAND_UEXT_R7 contains 4 instructions, it initializes R7 into a random
+ * positive u32, and zero-extend it into 64-bit.
  */
-#घोषणा BPF_RAND_UEXT_R7						\
+#define BPF_RAND_UEXT_R7						\
 	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0,			\
-		     BPF_FUNC_get_pअक्रमom_u32),				\
+		     BPF_FUNC_get_prandom_u32),				\
 	BPF_MOV64_REG(BPF_REG_7, BPF_REG_0),				\
 	BPF_ALU64_IMM(BPF_LSH, BPF_REG_7, 33),				\
 	BPF_ALU64_IMM(BPF_RSH, BPF_REG_7, 33)
 
-/* BPF_RAND_SEXT_R7 contains 5 inकाष्ठाions, it initializes R7 पूर्णांकo a अक्रमom
- * negative u32, and sign-extend it पूर्णांकo 64-bit.
+/* BPF_RAND_SEXT_R7 contains 5 instructions, it initializes R7 into a random
+ * negative u32, and sign-extend it into 64-bit.
  */
-#घोषणा BPF_RAND_SEXT_R7						\
+#define BPF_RAND_SEXT_R7						\
 	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0,			\
-		     BPF_FUNC_get_pअक्रमom_u32),				\
+		     BPF_FUNC_get_prandom_u32),				\
 	BPF_MOV64_REG(BPF_REG_7, BPF_REG_0),				\
 	BPF_ALU64_IMM(BPF_OR, BPF_REG_7, 0x80000000),			\
 	BPF_ALU64_IMM(BPF_LSH, BPF_REG_7, 32),				\
 	BPF_ALU64_IMM(BPF_ARSH, BPF_REG_7, 32)
 
-अटल काष्ठा bpf_test tests[] = अणु
-#घोषणा FILL_ARRAY
-#समावेश <verअगरier/tests.h>
-#अघोषित FILL_ARRAY
-पूर्ण;
+static struct bpf_test tests[] = {
+#define FILL_ARRAY
+#include <verifier/tests.h>
+#undef FILL_ARRAY
+};
 
-अटल पूर्णांक probe_filter_length(स्थिर काष्ठा bpf_insn *fp)
-अणु
-	पूर्णांक len;
+static int probe_filter_length(const struct bpf_insn *fp)
+{
+	int len;
 
-	क्रम (len = MAX_INSNS - 1; len > 0; --len)
-		अगर (fp[len].code != 0 || fp[len].imm != 0)
-			अवरोध;
-	वापस len + 1;
-पूर्ण
+	for (len = MAX_INSNS - 1; len > 0; --len)
+		if (fp[len].code != 0 || fp[len].imm != 0)
+			break;
+	return len + 1;
+}
 
-अटल bool skip_unsupported_map(क्रमागत bpf_map_type map_type)
-अणु
-	अगर (!bpf_probe_map_type(map_type, 0)) अणु
-		म_लिखो("SKIP (unsupported map type %d)\n", map_type);
+static bool skip_unsupported_map(enum bpf_map_type map_type)
+{
+	if (!bpf_probe_map_type(map_type, 0)) {
+		printf("SKIP (unsupported map type %d)\n", map_type);
 		skips++;
-		वापस true;
-	पूर्ण
-	वापस false;
-पूर्ण
+		return true;
+	}
+	return false;
+}
 
-अटल पूर्णांक __create_map(uपूर्णांक32_t type, uपूर्णांक32_t size_key,
-			uपूर्णांक32_t size_value, uपूर्णांक32_t max_elem,
-			uपूर्णांक32_t extra_flags)
-अणु
-	पूर्णांक fd;
+static int __create_map(uint32_t type, uint32_t size_key,
+			uint32_t size_value, uint32_t max_elem,
+			uint32_t extra_flags)
+{
+	int fd;
 
 	fd = bpf_create_map(type, size_key, size_value, max_elem,
 			    (type == BPF_MAP_TYPE_HASH ?
 			     BPF_F_NO_PREALLOC : 0) | extra_flags);
-	अगर (fd < 0) अणु
-		अगर (skip_unsupported_map(type))
-			वापस -1;
-		म_लिखो("Failed to create hash map '%s'!\n", म_त्रुटि(त्रुटि_सं));
-	पूर्ण
+	if (fd < 0) {
+		if (skip_unsupported_map(type))
+			return -1;
+		printf("Failed to create hash map '%s'!\n", strerror(errno));
+	}
 
-	वापस fd;
-पूर्ण
+	return fd;
+}
 
-अटल पूर्णांक create_map(uपूर्णांक32_t type, uपूर्णांक32_t size_key,
-		      uपूर्णांक32_t size_value, uपूर्णांक32_t max_elem)
-अणु
-	वापस __create_map(type, size_key, size_value, max_elem, 0);
-पूर्ण
+static int create_map(uint32_t type, uint32_t size_key,
+		      uint32_t size_value, uint32_t max_elem)
+{
+	return __create_map(type, size_key, size_value, max_elem, 0);
+}
 
-अटल व्योम update_map(पूर्णांक fd, पूर्णांक index)
-अणु
-	काष्ठा test_val value = अणु
-		.index = (6 + 1) * माप(पूर्णांक),
+static void update_map(int fd, int index)
+{
+	struct test_val value = {
+		.index = (6 + 1) * sizeof(int),
 		.foo[6] = 0xabcdef12,
-	पूर्ण;
+	};
 
-	निश्चित(!bpf_map_update_elem(fd, &index, &value, 0));
-पूर्ण
+	assert(!bpf_map_update_elem(fd, &index, &value, 0));
+}
 
-अटल पूर्णांक create_prog_dummy_simple(क्रमागत bpf_prog_type prog_type, पूर्णांक ret)
-अणु
-	काष्ठा bpf_insn prog[] = अणु
+static int create_prog_dummy_simple(enum bpf_prog_type prog_type, int ret)
+{
+	struct bpf_insn prog[] = {
 		BPF_MOV64_IMM(BPF_REG_0, ret),
 		BPF_EXIT_INSN(),
-	पूर्ण;
+	};
 
-	वापस bpf_load_program(prog_type, prog,
-				ARRAY_SIZE(prog), "GPL", 0, शून्य, 0);
-पूर्ण
+	return bpf_load_program(prog_type, prog,
+				ARRAY_SIZE(prog), "GPL", 0, NULL, 0);
+}
 
-अटल पूर्णांक create_prog_dummy_loop(क्रमागत bpf_prog_type prog_type, पूर्णांक mfd,
-				  पूर्णांक idx, पूर्णांक ret)
-अणु
-	काष्ठा bpf_insn prog[] = अणु
+static int create_prog_dummy_loop(enum bpf_prog_type prog_type, int mfd,
+				  int idx, int ret)
+{
+	struct bpf_insn prog[] = {
 		BPF_MOV64_IMM(BPF_REG_3, idx),
 		BPF_LD_MAP_FD(BPF_REG_2, mfd),
 		BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0,
 			     BPF_FUNC_tail_call),
 		BPF_MOV64_IMM(BPF_REG_0, ret),
 		BPF_EXIT_INSN(),
-	पूर्ण;
+	};
 
-	वापस bpf_load_program(prog_type, prog,
-				ARRAY_SIZE(prog), "GPL", 0, शून्य, 0);
-पूर्ण
+	return bpf_load_program(prog_type, prog,
+				ARRAY_SIZE(prog), "GPL", 0, NULL, 0);
+}
 
-अटल पूर्णांक create_prog_array(क्रमागत bpf_prog_type prog_type, uपूर्णांक32_t max_elem,
-			     पूर्णांक p1key, पूर्णांक p2key, पूर्णांक p3key)
-अणु
-	पूर्णांक mfd, p1fd, p2fd, p3fd;
+static int create_prog_array(enum bpf_prog_type prog_type, uint32_t max_elem,
+			     int p1key, int p2key, int p3key)
+{
+	int mfd, p1fd, p2fd, p3fd;
 
-	mfd = bpf_create_map(BPF_MAP_TYPE_PROG_ARRAY, माप(पूर्णांक),
-			     माप(पूर्णांक), max_elem, 0);
-	अगर (mfd < 0) अणु
-		अगर (skip_unsupported_map(BPF_MAP_TYPE_PROG_ARRAY))
-			वापस -1;
-		म_लिखो("Failed to create prog array '%s'!\n", म_त्रुटि(त्रुटि_सं));
-		वापस -1;
-	पूर्ण
+	mfd = bpf_create_map(BPF_MAP_TYPE_PROG_ARRAY, sizeof(int),
+			     sizeof(int), max_elem, 0);
+	if (mfd < 0) {
+		if (skip_unsupported_map(BPF_MAP_TYPE_PROG_ARRAY))
+			return -1;
+		printf("Failed to create prog array '%s'!\n", strerror(errno));
+		return -1;
+	}
 
 	p1fd = create_prog_dummy_simple(prog_type, 42);
 	p2fd = create_prog_dummy_loop(prog_type, mfd, p2key, 41);
 	p3fd = create_prog_dummy_simple(prog_type, 24);
-	अगर (p1fd < 0 || p2fd < 0 || p3fd < 0)
-		जाओ err;
-	अगर (bpf_map_update_elem(mfd, &p1key, &p1fd, BPF_ANY) < 0)
-		जाओ err;
-	अगर (bpf_map_update_elem(mfd, &p2key, &p2fd, BPF_ANY) < 0)
-		जाओ err;
-	अगर (bpf_map_update_elem(mfd, &p3key, &p3fd, BPF_ANY) < 0) अणु
+	if (p1fd < 0 || p2fd < 0 || p3fd < 0)
+		goto err;
+	if (bpf_map_update_elem(mfd, &p1key, &p1fd, BPF_ANY) < 0)
+		goto err;
+	if (bpf_map_update_elem(mfd, &p2key, &p2fd, BPF_ANY) < 0)
+		goto err;
+	if (bpf_map_update_elem(mfd, &p3key, &p3fd, BPF_ANY) < 0) {
 err:
-		बंद(mfd);
+		close(mfd);
 		mfd = -1;
-	पूर्ण
-	बंद(p3fd);
-	बंद(p2fd);
-	बंद(p1fd);
-	वापस mfd;
-पूर्ण
+	}
+	close(p3fd);
+	close(p2fd);
+	close(p1fd);
+	return mfd;
+}
 
-अटल पूर्णांक create_map_in_map(व्योम)
-अणु
-	पूर्णांक inner_map_fd, outer_map_fd;
+static int create_map_in_map(void)
+{
+	int inner_map_fd, outer_map_fd;
 
-	inner_map_fd = bpf_create_map(BPF_MAP_TYPE_ARRAY, माप(पूर्णांक),
-				      माप(पूर्णांक), 1, 0);
-	अगर (inner_map_fd < 0) अणु
-		अगर (skip_unsupported_map(BPF_MAP_TYPE_ARRAY))
-			वापस -1;
-		म_लिखो("Failed to create array '%s'!\n", म_त्रुटि(त्रुटि_सं));
-		वापस inner_map_fd;
-	पूर्ण
+	inner_map_fd = bpf_create_map(BPF_MAP_TYPE_ARRAY, sizeof(int),
+				      sizeof(int), 1, 0);
+	if (inner_map_fd < 0) {
+		if (skip_unsupported_map(BPF_MAP_TYPE_ARRAY))
+			return -1;
+		printf("Failed to create array '%s'!\n", strerror(errno));
+		return inner_map_fd;
+	}
 
-	outer_map_fd = bpf_create_map_in_map(BPF_MAP_TYPE_ARRAY_OF_MAPS, शून्य,
-					     माप(पूर्णांक), inner_map_fd, 1, 0);
-	अगर (outer_map_fd < 0) अणु
-		अगर (skip_unsupported_map(BPF_MAP_TYPE_ARRAY_OF_MAPS))
-			वापस -1;
-		म_लिखो("Failed to create array of maps '%s'!\n",
-		       म_त्रुटि(त्रुटि_सं));
-	पूर्ण
+	outer_map_fd = bpf_create_map_in_map(BPF_MAP_TYPE_ARRAY_OF_MAPS, NULL,
+					     sizeof(int), inner_map_fd, 1, 0);
+	if (outer_map_fd < 0) {
+		if (skip_unsupported_map(BPF_MAP_TYPE_ARRAY_OF_MAPS))
+			return -1;
+		printf("Failed to create array of maps '%s'!\n",
+		       strerror(errno));
+	}
 
-	बंद(inner_map_fd);
+	close(inner_map_fd);
 
-	वापस outer_map_fd;
-पूर्ण
+	return outer_map_fd;
+}
 
-अटल पूर्णांक create_cgroup_storage(bool percpu)
-अणु
-	क्रमागत bpf_map_type type = percpu ? BPF_MAP_TYPE_PERCPU_CGROUP_STORAGE :
+static int create_cgroup_storage(bool percpu)
+{
+	enum bpf_map_type type = percpu ? BPF_MAP_TYPE_PERCPU_CGROUP_STORAGE :
 		BPF_MAP_TYPE_CGROUP_STORAGE;
-	पूर्णांक fd;
+	int fd;
 
-	fd = bpf_create_map(type, माप(काष्ठा bpf_cgroup_storage_key),
+	fd = bpf_create_map(type, sizeof(struct bpf_cgroup_storage_key),
 			    TEST_DATA_LEN, 0, 0);
-	अगर (fd < 0) अणु
-		अगर (skip_unsupported_map(type))
-			वापस -1;
-		म_लिखो("Failed to create cgroup storage '%s'!\n",
-		       म_त्रुटि(त्रुटि_सं));
-	पूर्ण
+	if (fd < 0) {
+		if (skip_unsupported_map(type))
+			return -1;
+		printf("Failed to create cgroup storage '%s'!\n",
+		       strerror(errno));
+	}
 
-	वापस fd;
-पूर्ण
+	return fd;
+}
 
-/* काष्ठा bpf_spin_lock अणु
- *   पूर्णांक val;
- * पूर्ण;
- * काष्ठा val अणु
- *   पूर्णांक cnt;
- *   काष्ठा bpf_spin_lock l;
- * पूर्ण;
+/* struct bpf_spin_lock {
+ *   int val;
+ * };
+ * struct val {
+ *   int cnt;
+ *   struct bpf_spin_lock l;
+ * };
  */
-अटल स्थिर अक्षर btf_str_sec[] = "\0bpf_spin_lock\0val\0cnt\0l";
-अटल __u32 btf_raw_types[] = अणु
-	/* पूर्णांक */
+static const char btf_str_sec[] = "\0bpf_spin_lock\0val\0cnt\0l";
+static __u32 btf_raw_types[] = {
+	/* int */
 	BTF_TYPE_INT_ENC(0, BTF_INT_SIGNED, 0, 32, 4),  /* [1] */
-	/* काष्ठा bpf_spin_lock */                      /* [2] */
+	/* struct bpf_spin_lock */                      /* [2] */
 	BTF_TYPE_ENC(1, BTF_INFO_ENC(BTF_KIND_STRUCT, 0, 1), 4),
-	BTF_MEMBER_ENC(15, 1, 0), /* पूर्णांक val; */
-	/* काष्ठा val */                                /* [3] */
+	BTF_MEMBER_ENC(15, 1, 0), /* int val; */
+	/* struct val */                                /* [3] */
 	BTF_TYPE_ENC(15, BTF_INFO_ENC(BTF_KIND_STRUCT, 0, 2), 8),
-	BTF_MEMBER_ENC(19, 1, 0), /* पूर्णांक cnt; */
-	BTF_MEMBER_ENC(23, 2, 32),/* काष्ठा bpf_spin_lock l; */
-पूर्ण;
+	BTF_MEMBER_ENC(19, 1, 0), /* int cnt; */
+	BTF_MEMBER_ENC(23, 2, 32),/* struct bpf_spin_lock l; */
+};
 
-अटल पूर्णांक load_btf(व्योम)
-अणु
-	काष्ठा btf_header hdr = अणु
+static int load_btf(void)
+{
+	struct btf_header hdr = {
 		.magic = BTF_MAGIC,
 		.version = BTF_VERSION,
-		.hdr_len = माप(काष्ठा btf_header),
-		.type_len = माप(btf_raw_types),
-		.str_off = माप(btf_raw_types),
-		.str_len = माप(btf_str_sec),
-	पूर्ण;
-	व्योम *ptr, *raw_btf;
-	पूर्णांक btf_fd;
+		.hdr_len = sizeof(struct btf_header),
+		.type_len = sizeof(btf_raw_types),
+		.str_off = sizeof(btf_raw_types),
+		.str_len = sizeof(btf_str_sec),
+	};
+	void *ptr, *raw_btf;
+	int btf_fd;
 
-	ptr = raw_btf = दो_स्मृति(माप(hdr) + माप(btf_raw_types) +
-			       माप(btf_str_sec));
+	ptr = raw_btf = malloc(sizeof(hdr) + sizeof(btf_raw_types) +
+			       sizeof(btf_str_sec));
 
-	स_नकल(ptr, &hdr, माप(hdr));
-	ptr += माप(hdr);
-	स_नकल(ptr, btf_raw_types, hdr.type_len);
+	memcpy(ptr, &hdr, sizeof(hdr));
+	ptr += sizeof(hdr);
+	memcpy(ptr, btf_raw_types, hdr.type_len);
 	ptr += hdr.type_len;
-	स_नकल(ptr, btf_str_sec, hdr.str_len);
+	memcpy(ptr, btf_str_sec, hdr.str_len);
 	ptr += hdr.str_len;
 
 	btf_fd = bpf_load_btf(raw_btf, ptr - raw_btf, 0, 0, 0);
-	मुक्त(raw_btf);
-	अगर (btf_fd < 0)
-		वापस -1;
-	वापस btf_fd;
-पूर्ण
+	free(raw_btf);
+	if (btf_fd < 0)
+		return -1;
+	return btf_fd;
+}
 
-अटल पूर्णांक create_map_spin_lock(व्योम)
-अणु
-	काष्ठा bpf_create_map_attr attr = अणु
+static int create_map_spin_lock(void)
+{
+	struct bpf_create_map_attr attr = {
 		.name = "test_map",
 		.map_type = BPF_MAP_TYPE_ARRAY,
 		.key_size = 4,
@@ -655,22 +654,22 @@ err:
 		.max_entries = 1,
 		.btf_key_type_id = 1,
 		.btf_value_type_id = 3,
-	पूर्ण;
-	पूर्णांक fd, btf_fd;
+	};
+	int fd, btf_fd;
 
 	btf_fd = load_btf();
-	अगर (btf_fd < 0)
-		वापस -1;
+	if (btf_fd < 0)
+		return -1;
 	attr.btf_fd = btf_fd;
 	fd = bpf_create_map_xattr(&attr);
-	अगर (fd < 0)
-		म_लिखो("Failed to create map with spin_lock\n");
-	वापस fd;
-पूर्ण
+	if (fd < 0)
+		printf("Failed to create map with spin_lock\n");
+	return fd;
+}
 
-अटल पूर्णांक create_sk_storage_map(व्योम)
-अणु
-	काष्ठा bpf_create_map_attr attr = अणु
+static int create_sk_storage_map(void)
+{
+	struct bpf_create_map_attr attr = {
 		.name = "test_map",
 		.map_type = BPF_MAP_TYPE_SK_STORAGE,
 		.key_size = 4,
@@ -679,681 +678,681 @@ err:
 		.map_flags = BPF_F_NO_PREALLOC,
 		.btf_key_type_id = 1,
 		.btf_value_type_id = 3,
-	पूर्ण;
-	पूर्णांक fd, btf_fd;
+	};
+	int fd, btf_fd;
 
 	btf_fd = load_btf();
-	अगर (btf_fd < 0)
-		वापस -1;
+	if (btf_fd < 0)
+		return -1;
 	attr.btf_fd = btf_fd;
 	fd = bpf_create_map_xattr(&attr);
-	बंद(attr.btf_fd);
-	अगर (fd < 0)
-		म_लिखो("Failed to create sk_storage_map\n");
-	वापस fd;
-पूर्ण
+	close(attr.btf_fd);
+	if (fd < 0)
+		printf("Failed to create sk_storage_map\n");
+	return fd;
+}
 
-अटल अक्षर bpf_vlog[अच_पूर्णांक_उच्च >> 8];
+static char bpf_vlog[UINT_MAX >> 8];
 
-अटल व्योम करो_test_fixup(काष्ठा bpf_test *test, क्रमागत bpf_prog_type prog_type,
-			  काष्ठा bpf_insn *prog, पूर्णांक *map_fds)
-अणु
-	पूर्णांक *fixup_map_hash_8b = test->fixup_map_hash_8b;
-	पूर्णांक *fixup_map_hash_48b = test->fixup_map_hash_48b;
-	पूर्णांक *fixup_map_hash_16b = test->fixup_map_hash_16b;
-	पूर्णांक *fixup_map_array_48b = test->fixup_map_array_48b;
-	पूर्णांक *fixup_map_sockmap = test->fixup_map_sockmap;
-	पूर्णांक *fixup_map_sockhash = test->fixup_map_sockhash;
-	पूर्णांक *fixup_map_xskmap = test->fixup_map_xskmap;
-	पूर्णांक *fixup_map_stacktrace = test->fixup_map_stacktrace;
-	पूर्णांक *fixup_prog1 = test->fixup_prog1;
-	पूर्णांक *fixup_prog2 = test->fixup_prog2;
-	पूर्णांक *fixup_map_in_map = test->fixup_map_in_map;
-	पूर्णांक *fixup_cgroup_storage = test->fixup_cgroup_storage;
-	पूर्णांक *fixup_percpu_cgroup_storage = test->fixup_percpu_cgroup_storage;
-	पूर्णांक *fixup_map_spin_lock = test->fixup_map_spin_lock;
-	पूर्णांक *fixup_map_array_ro = test->fixup_map_array_ro;
-	पूर्णांक *fixup_map_array_wo = test->fixup_map_array_wo;
-	पूर्णांक *fixup_map_array_small = test->fixup_map_array_small;
-	पूर्णांक *fixup_sk_storage_map = test->fixup_sk_storage_map;
-	पूर्णांक *fixup_map_event_output = test->fixup_map_event_output;
-	पूर्णांक *fixup_map_reuseport_array = test->fixup_map_reuseport_array;
-	पूर्णांक *fixup_map_ringbuf = test->fixup_map_ringbuf;
+static void do_test_fixup(struct bpf_test *test, enum bpf_prog_type prog_type,
+			  struct bpf_insn *prog, int *map_fds)
+{
+	int *fixup_map_hash_8b = test->fixup_map_hash_8b;
+	int *fixup_map_hash_48b = test->fixup_map_hash_48b;
+	int *fixup_map_hash_16b = test->fixup_map_hash_16b;
+	int *fixup_map_array_48b = test->fixup_map_array_48b;
+	int *fixup_map_sockmap = test->fixup_map_sockmap;
+	int *fixup_map_sockhash = test->fixup_map_sockhash;
+	int *fixup_map_xskmap = test->fixup_map_xskmap;
+	int *fixup_map_stacktrace = test->fixup_map_stacktrace;
+	int *fixup_prog1 = test->fixup_prog1;
+	int *fixup_prog2 = test->fixup_prog2;
+	int *fixup_map_in_map = test->fixup_map_in_map;
+	int *fixup_cgroup_storage = test->fixup_cgroup_storage;
+	int *fixup_percpu_cgroup_storage = test->fixup_percpu_cgroup_storage;
+	int *fixup_map_spin_lock = test->fixup_map_spin_lock;
+	int *fixup_map_array_ro = test->fixup_map_array_ro;
+	int *fixup_map_array_wo = test->fixup_map_array_wo;
+	int *fixup_map_array_small = test->fixup_map_array_small;
+	int *fixup_sk_storage_map = test->fixup_sk_storage_map;
+	int *fixup_map_event_output = test->fixup_map_event_output;
+	int *fixup_map_reuseport_array = test->fixup_map_reuseport_array;
+	int *fixup_map_ringbuf = test->fixup_map_ringbuf;
 
-	अगर (test->fill_helper) अणु
-		test->fill_insns = सुस्मृति(MAX_TEST_INSNS, माप(काष्ठा bpf_insn));
+	if (test->fill_helper) {
+		test->fill_insns = calloc(MAX_TEST_INSNS, sizeof(struct bpf_insn));
 		test->fill_helper(test);
-	पूर्ण
+	}
 
 	/* Allocating HTs with 1 elem is fine here, since we only test
-	 * क्रम verअगरier and not करो a runसमय lookup, so the only thing
-	 * that really matters is value size in this हाल.
+	 * for verifier and not do a runtime lookup, so the only thing
+	 * that really matters is value size in this case.
 	 */
-	अगर (*fixup_map_hash_8b) अणु
-		map_fds[0] = create_map(BPF_MAP_TYPE_HASH, माप(दीर्घ दीर्घ),
-					माप(दीर्घ दीर्घ), 1);
-		करो अणु
+	if (*fixup_map_hash_8b) {
+		map_fds[0] = create_map(BPF_MAP_TYPE_HASH, sizeof(long long),
+					sizeof(long long), 1);
+		do {
 			prog[*fixup_map_hash_8b].imm = map_fds[0];
 			fixup_map_hash_8b++;
-		पूर्ण जबतक (*fixup_map_hash_8b);
-	पूर्ण
+		} while (*fixup_map_hash_8b);
+	}
 
-	अगर (*fixup_map_hash_48b) अणु
-		map_fds[1] = create_map(BPF_MAP_TYPE_HASH, माप(दीर्घ दीर्घ),
-					माप(काष्ठा test_val), 1);
-		करो अणु
+	if (*fixup_map_hash_48b) {
+		map_fds[1] = create_map(BPF_MAP_TYPE_HASH, sizeof(long long),
+					sizeof(struct test_val), 1);
+		do {
 			prog[*fixup_map_hash_48b].imm = map_fds[1];
 			fixup_map_hash_48b++;
-		पूर्ण जबतक (*fixup_map_hash_48b);
-	पूर्ण
+		} while (*fixup_map_hash_48b);
+	}
 
-	अगर (*fixup_map_hash_16b) अणु
-		map_fds[2] = create_map(BPF_MAP_TYPE_HASH, माप(दीर्घ दीर्घ),
-					माप(काष्ठा other_val), 1);
-		करो अणु
+	if (*fixup_map_hash_16b) {
+		map_fds[2] = create_map(BPF_MAP_TYPE_HASH, sizeof(long long),
+					sizeof(struct other_val), 1);
+		do {
 			prog[*fixup_map_hash_16b].imm = map_fds[2];
 			fixup_map_hash_16b++;
-		पूर्ण जबतक (*fixup_map_hash_16b);
-	पूर्ण
+		} while (*fixup_map_hash_16b);
+	}
 
-	अगर (*fixup_map_array_48b) अणु
-		map_fds[3] = create_map(BPF_MAP_TYPE_ARRAY, माप(पूर्णांक),
-					माप(काष्ठा test_val), 1);
+	if (*fixup_map_array_48b) {
+		map_fds[3] = create_map(BPF_MAP_TYPE_ARRAY, sizeof(int),
+					sizeof(struct test_val), 1);
 		update_map(map_fds[3], 0);
-		करो अणु
+		do {
 			prog[*fixup_map_array_48b].imm = map_fds[3];
 			fixup_map_array_48b++;
-		पूर्ण जबतक (*fixup_map_array_48b);
-	पूर्ण
+		} while (*fixup_map_array_48b);
+	}
 
-	अगर (*fixup_prog1) अणु
+	if (*fixup_prog1) {
 		map_fds[4] = create_prog_array(prog_type, 4, 0, 1, 2);
-		करो अणु
+		do {
 			prog[*fixup_prog1].imm = map_fds[4];
 			fixup_prog1++;
-		पूर्ण जबतक (*fixup_prog1);
-	पूर्ण
+		} while (*fixup_prog1);
+	}
 
-	अगर (*fixup_prog2) अणु
+	if (*fixup_prog2) {
 		map_fds[5] = create_prog_array(prog_type, 8, 7, 1, 2);
-		करो अणु
+		do {
 			prog[*fixup_prog2].imm = map_fds[5];
 			fixup_prog2++;
-		पूर्ण जबतक (*fixup_prog2);
-	पूर्ण
+		} while (*fixup_prog2);
+	}
 
-	अगर (*fixup_map_in_map) अणु
+	if (*fixup_map_in_map) {
 		map_fds[6] = create_map_in_map();
-		करो अणु
+		do {
 			prog[*fixup_map_in_map].imm = map_fds[6];
 			fixup_map_in_map++;
-		पूर्ण जबतक (*fixup_map_in_map);
-	पूर्ण
+		} while (*fixup_map_in_map);
+	}
 
-	अगर (*fixup_cgroup_storage) अणु
+	if (*fixup_cgroup_storage) {
 		map_fds[7] = create_cgroup_storage(false);
-		करो अणु
+		do {
 			prog[*fixup_cgroup_storage].imm = map_fds[7];
 			fixup_cgroup_storage++;
-		पूर्ण जबतक (*fixup_cgroup_storage);
-	पूर्ण
+		} while (*fixup_cgroup_storage);
+	}
 
-	अगर (*fixup_percpu_cgroup_storage) अणु
+	if (*fixup_percpu_cgroup_storage) {
 		map_fds[8] = create_cgroup_storage(true);
-		करो अणु
+		do {
 			prog[*fixup_percpu_cgroup_storage].imm = map_fds[8];
 			fixup_percpu_cgroup_storage++;
-		पूर्ण जबतक (*fixup_percpu_cgroup_storage);
-	पूर्ण
-	अगर (*fixup_map_sockmap) अणु
-		map_fds[9] = create_map(BPF_MAP_TYPE_SOCKMAP, माप(पूर्णांक),
-					माप(पूर्णांक), 1);
-		करो अणु
+		} while (*fixup_percpu_cgroup_storage);
+	}
+	if (*fixup_map_sockmap) {
+		map_fds[9] = create_map(BPF_MAP_TYPE_SOCKMAP, sizeof(int),
+					sizeof(int), 1);
+		do {
 			prog[*fixup_map_sockmap].imm = map_fds[9];
 			fixup_map_sockmap++;
-		पूर्ण जबतक (*fixup_map_sockmap);
-	पूर्ण
-	अगर (*fixup_map_sockhash) अणु
-		map_fds[10] = create_map(BPF_MAP_TYPE_SOCKHASH, माप(पूर्णांक),
-					माप(पूर्णांक), 1);
-		करो अणु
+		} while (*fixup_map_sockmap);
+	}
+	if (*fixup_map_sockhash) {
+		map_fds[10] = create_map(BPF_MAP_TYPE_SOCKHASH, sizeof(int),
+					sizeof(int), 1);
+		do {
 			prog[*fixup_map_sockhash].imm = map_fds[10];
 			fixup_map_sockhash++;
-		पूर्ण जबतक (*fixup_map_sockhash);
-	पूर्ण
-	अगर (*fixup_map_xskmap) अणु
-		map_fds[11] = create_map(BPF_MAP_TYPE_XSKMAP, माप(पूर्णांक),
-					माप(पूर्णांक), 1);
-		करो अणु
+		} while (*fixup_map_sockhash);
+	}
+	if (*fixup_map_xskmap) {
+		map_fds[11] = create_map(BPF_MAP_TYPE_XSKMAP, sizeof(int),
+					sizeof(int), 1);
+		do {
 			prog[*fixup_map_xskmap].imm = map_fds[11];
 			fixup_map_xskmap++;
-		पूर्ण जबतक (*fixup_map_xskmap);
-	पूर्ण
-	अगर (*fixup_map_stacktrace) अणु
-		map_fds[12] = create_map(BPF_MAP_TYPE_STACK_TRACE, माप(u32),
-					 माप(u64), 1);
-		करो अणु
+		} while (*fixup_map_xskmap);
+	}
+	if (*fixup_map_stacktrace) {
+		map_fds[12] = create_map(BPF_MAP_TYPE_STACK_TRACE, sizeof(u32),
+					 sizeof(u64), 1);
+		do {
 			prog[*fixup_map_stacktrace].imm = map_fds[12];
 			fixup_map_stacktrace++;
-		पूर्ण जबतक (*fixup_map_stacktrace);
-	पूर्ण
-	अगर (*fixup_map_spin_lock) अणु
+		} while (*fixup_map_stacktrace);
+	}
+	if (*fixup_map_spin_lock) {
 		map_fds[13] = create_map_spin_lock();
-		करो अणु
+		do {
 			prog[*fixup_map_spin_lock].imm = map_fds[13];
 			fixup_map_spin_lock++;
-		पूर्ण जबतक (*fixup_map_spin_lock);
-	पूर्ण
-	अगर (*fixup_map_array_ro) अणु
-		map_fds[14] = __create_map(BPF_MAP_TYPE_ARRAY, माप(पूर्णांक),
-					   माप(काष्ठा test_val), 1,
+		} while (*fixup_map_spin_lock);
+	}
+	if (*fixup_map_array_ro) {
+		map_fds[14] = __create_map(BPF_MAP_TYPE_ARRAY, sizeof(int),
+					   sizeof(struct test_val), 1,
 					   BPF_F_RDONLY_PROG);
 		update_map(map_fds[14], 0);
-		करो अणु
+		do {
 			prog[*fixup_map_array_ro].imm = map_fds[14];
 			fixup_map_array_ro++;
-		पूर्ण जबतक (*fixup_map_array_ro);
-	पूर्ण
-	अगर (*fixup_map_array_wo) अणु
-		map_fds[15] = __create_map(BPF_MAP_TYPE_ARRAY, माप(पूर्णांक),
-					   माप(काष्ठा test_val), 1,
+		} while (*fixup_map_array_ro);
+	}
+	if (*fixup_map_array_wo) {
+		map_fds[15] = __create_map(BPF_MAP_TYPE_ARRAY, sizeof(int),
+					   sizeof(struct test_val), 1,
 					   BPF_F_WRONLY_PROG);
 		update_map(map_fds[15], 0);
-		करो अणु
+		do {
 			prog[*fixup_map_array_wo].imm = map_fds[15];
 			fixup_map_array_wo++;
-		पूर्ण जबतक (*fixup_map_array_wo);
-	पूर्ण
-	अगर (*fixup_map_array_small) अणु
-		map_fds[16] = __create_map(BPF_MAP_TYPE_ARRAY, माप(पूर्णांक),
+		} while (*fixup_map_array_wo);
+	}
+	if (*fixup_map_array_small) {
+		map_fds[16] = __create_map(BPF_MAP_TYPE_ARRAY, sizeof(int),
 					   1, 1, 0);
 		update_map(map_fds[16], 0);
-		करो अणु
+		do {
 			prog[*fixup_map_array_small].imm = map_fds[16];
 			fixup_map_array_small++;
-		पूर्ण जबतक (*fixup_map_array_small);
-	पूर्ण
-	अगर (*fixup_sk_storage_map) अणु
+		} while (*fixup_map_array_small);
+	}
+	if (*fixup_sk_storage_map) {
 		map_fds[17] = create_sk_storage_map();
-		करो अणु
+		do {
 			prog[*fixup_sk_storage_map].imm = map_fds[17];
 			fixup_sk_storage_map++;
-		पूर्ण जबतक (*fixup_sk_storage_map);
-	पूर्ण
-	अगर (*fixup_map_event_output) अणु
+		} while (*fixup_sk_storage_map);
+	}
+	if (*fixup_map_event_output) {
 		map_fds[18] = __create_map(BPF_MAP_TYPE_PERF_EVENT_ARRAY,
-					   माप(पूर्णांक), माप(पूर्णांक), 1, 0);
-		करो अणु
+					   sizeof(int), sizeof(int), 1, 0);
+		do {
 			prog[*fixup_map_event_output].imm = map_fds[18];
 			fixup_map_event_output++;
-		पूर्ण जबतक (*fixup_map_event_output);
-	पूर्ण
-	अगर (*fixup_map_reuseport_array) अणु
+		} while (*fixup_map_event_output);
+	}
+	if (*fixup_map_reuseport_array) {
 		map_fds[19] = __create_map(BPF_MAP_TYPE_REUSEPORT_SOCKARRAY,
-					   माप(u32), माप(u64), 1, 0);
-		करो अणु
+					   sizeof(u32), sizeof(u64), 1, 0);
+		do {
 			prog[*fixup_map_reuseport_array].imm = map_fds[19];
 			fixup_map_reuseport_array++;
-		पूर्ण जबतक (*fixup_map_reuseport_array);
-	पूर्ण
-	अगर (*fixup_map_ringbuf) अणु
+		} while (*fixup_map_reuseport_array);
+	}
+	if (*fixup_map_ringbuf) {
 		map_fds[20] = create_map(BPF_MAP_TYPE_RINGBUF, 0,
 					   0, 4096);
-		करो अणु
+		do {
 			prog[*fixup_map_ringbuf].imm = map_fds[20];
 			fixup_map_ringbuf++;
-		पूर्ण जबतक (*fixup_map_ringbuf);
-	पूर्ण
-पूर्ण
+		} while (*fixup_map_ringbuf);
+	}
+}
 
-काष्ठा libcap अणु
-	काष्ठा __user_cap_header_काष्ठा hdr;
-	काष्ठा __user_cap_data_काष्ठा data[2];
-पूर्ण;
+struct libcap {
+	struct __user_cap_header_struct hdr;
+	struct __user_cap_data_struct data[2];
+};
 
-अटल पूर्णांक set_admin(bool admin)
-अणु
+static int set_admin(bool admin)
+{
 	cap_t caps;
 	/* need CAP_BPF, CAP_NET_ADMIN, CAP_PERFMON to load progs */
-	स्थिर cap_value_t cap_net_admin = CAP_NET_ADMIN;
-	स्थिर cap_value_t cap_sys_admin = CAP_SYS_ADMIN;
-	काष्ठा libcap *cap;
-	पूर्णांक ret = -1;
+	const cap_value_t cap_net_admin = CAP_NET_ADMIN;
+	const cap_value_t cap_sys_admin = CAP_SYS_ADMIN;
+	struct libcap *cap;
+	int ret = -1;
 
 	caps = cap_get_proc();
-	अगर (!caps) अणु
-		लिखो_त्रुटि("cap_get_proc");
-		वापस -1;
-	पूर्ण
-	cap = (काष्ठा libcap *)caps;
-	अगर (cap_set_flag(caps, CAP_EFFECTIVE, 1, &cap_sys_admin, CAP_CLEAR)) अणु
-		लिखो_त्रुटि("cap_set_flag clear admin");
-		जाओ out;
-	पूर्ण
-	अगर (cap_set_flag(caps, CAP_EFFECTIVE, 1, &cap_net_admin,
-				admin ? CAP_SET : CAP_CLEAR)) अणु
-		लिखो_त्रुटि("cap_set_flag set_or_clear net");
-		जाओ out;
-	पूर्ण
+	if (!caps) {
+		perror("cap_get_proc");
+		return -1;
+	}
+	cap = (struct libcap *)caps;
+	if (cap_set_flag(caps, CAP_EFFECTIVE, 1, &cap_sys_admin, CAP_CLEAR)) {
+		perror("cap_set_flag clear admin");
+		goto out;
+	}
+	if (cap_set_flag(caps, CAP_EFFECTIVE, 1, &cap_net_admin,
+				admin ? CAP_SET : CAP_CLEAR)) {
+		perror("cap_set_flag set_or_clear net");
+		goto out;
+	}
 	/* libcap is likely old and simply ignores CAP_BPF and CAP_PERFMON,
 	 * so update effective bits manually
 	 */
-	अगर (admin) अणु
+	if (admin) {
 		cap->data[1].effective |= 1 << (38 /* CAP_PERFMON */ - 32);
 		cap->data[1].effective |= 1 << (39 /* CAP_BPF */ - 32);
-	पूर्ण अन्यथा अणु
+	} else {
 		cap->data[1].effective &= ~(1 << (38 - 32));
 		cap->data[1].effective &= ~(1 << (39 - 32));
-	पूर्ण
-	अगर (cap_set_proc(caps)) अणु
-		लिखो_त्रुटि("cap_set_proc");
-		जाओ out;
-	पूर्ण
+	}
+	if (cap_set_proc(caps)) {
+		perror("cap_set_proc");
+		goto out;
+	}
 	ret = 0;
 out:
-	अगर (cap_मुक्त(caps))
-		लिखो_त्रुटि("cap_free");
-	वापस ret;
-पूर्ण
+	if (cap_free(caps))
+		perror("cap_free");
+	return ret;
+}
 
-अटल पूर्णांक करो_prog_test_run(पूर्णांक fd_prog, bool unpriv, uपूर्णांक32_t expected_val,
-			    व्योम *data, माप_प्रकार size_data)
-अणु
-	__u8 पंचांगp[TEST_DATA_LEN << 2];
-	__u32 माप_प्रकारmp = माप(पंचांगp);
-	uपूर्णांक32_t retval;
-	पूर्णांक err, saved_त्रुटि_सं;
+static int do_prog_test_run(int fd_prog, bool unpriv, uint32_t expected_val,
+			    void *data, size_t size_data)
+{
+	__u8 tmp[TEST_DATA_LEN << 2];
+	__u32 size_tmp = sizeof(tmp);
+	uint32_t retval;
+	int err, saved_errno;
 
-	अगर (unpriv)
+	if (unpriv)
 		set_admin(true);
 	err = bpf_prog_test_run(fd_prog, 1, data, size_data,
-				पंचांगp, &माप_प्रकारmp, &retval, शून्य);
-	saved_त्रुटि_सं = त्रुटि_सं;
+				tmp, &size_tmp, &retval, NULL);
+	saved_errno = errno;
 
-	अगर (unpriv)
+	if (unpriv)
 		set_admin(false);
 
-	अगर (err) अणु
-		चयन (saved_त्रुटि_सं) अणु
-		हाल 524/*ENOTSUPP*/:
-			म_लिखो("Did not run the program (not supported) ");
-			वापस 0;
-		हाल EPERM:
-			अगर (unpriv) अणु
-				म_लिखो("Did not run the program (no permission) ");
-				वापस 0;
-			पूर्ण
+	if (err) {
+		switch (saved_errno) {
+		case 524/*ENOTSUPP*/:
+			printf("Did not run the program (not supported) ");
+			return 0;
+		case EPERM:
+			if (unpriv) {
+				printf("Did not run the program (no permission) ");
+				return 0;
+			}
 			/* fallthrough; */
-		शेष:
-			म_लिखो("FAIL: Unexpected bpf_prog_test_run error (%s) ",
-				म_त्रुटि(saved_त्रुटि_सं));
-			वापस err;
-		पूर्ण
-	पूर्ण
+		default:
+			printf("FAIL: Unexpected bpf_prog_test_run error (%s) ",
+				strerror(saved_errno));
+			return err;
+		}
+	}
 
-	अगर (retval != expected_val &&
-	    expected_val != POINTER_VALUE) अणु
-		म_लिखो("FAIL retval %d != %d ", retval, expected_val);
-		वापस 1;
-	पूर्ण
+	if (retval != expected_val &&
+	    expected_val != POINTER_VALUE) {
+		printf("FAIL retval %d != %d ", retval, expected_val);
+		return 1;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Returns true अगर every part of exp (tab-separated) appears in log, in order.
+/* Returns true if every part of exp (tab-separated) appears in log, in order.
  *
- * If exp is an empty string, वापसs true.
+ * If exp is an empty string, returns true.
  */
-अटल bool cmp_str_seq(स्थिर अक्षर *log, स्थिर अक्षर *exp)
-अणु
-	अक्षर needle[200];
-	स्थिर अक्षर *p, *q;
-	पूर्णांक len;
+static bool cmp_str_seq(const char *log, const char *exp)
+{
+	char needle[200];
+	const char *p, *q;
+	int len;
 
-	करो अणु
-		अगर (!म_माप(exp))
-			अवरोध;
-		p = म_अक्षर(exp, '\t');
-		अगर (!p)
-			p = exp + म_माप(exp);
+	do {
+		if (!strlen(exp))
+			break;
+		p = strchr(exp, '\t');
+		if (!p)
+			p = exp + strlen(exp);
 
 		len = p - exp;
-		अगर (len >= माप(needle) || !len) अणु
-			म_लिखो("FAIL\nTestcase bug\n");
-			वापस false;
-		पूर्ण
-		म_नकलन(needle, exp, len);
+		if (len >= sizeof(needle) || !len) {
+			printf("FAIL\nTestcase bug\n");
+			return false;
+		}
+		strncpy(needle, exp, len);
 		needle[len] = 0;
-		q = म_माला(log, needle);
-		अगर (!q) अणु
-			म_लिखो("FAIL\nUnexpected verifier log!\n"
+		q = strstr(log, needle);
+		if (!q) {
+			printf("FAIL\nUnexpected verifier log!\n"
 			       "EXP: %s\nRES:\n", needle);
-			वापस false;
-		पूर्ण
+			return false;
+		}
 		log = q + len;
 		exp = p + 1;
-	पूर्ण जबतक (*p);
-	वापस true;
-पूर्ण
+	} while (*p);
+	return true;
+}
 
-अटल व्योम करो_test_single(काष्ठा bpf_test *test, bool unpriv,
-			   पूर्णांक *passes, पूर्णांक *errors)
-अणु
-	पूर्णांक fd_prog, expected_ret, alignment_prevented_execution;
-	पूर्णांक prog_len, prog_type = test->prog_type;
-	काष्ठा bpf_insn *prog = test->insns;
-	काष्ठा bpf_load_program_attr attr;
-	पूर्णांक run_errs, run_successes;
-	पूर्णांक map_fds[MAX_NR_MAPS];
-	स्थिर अक्षर *expected_err;
-	पूर्णांक saved_त्रुटि_सं;
-	पूर्णांक fixup_skips;
+static void do_test_single(struct bpf_test *test, bool unpriv,
+			   int *passes, int *errors)
+{
+	int fd_prog, expected_ret, alignment_prevented_execution;
+	int prog_len, prog_type = test->prog_type;
+	struct bpf_insn *prog = test->insns;
+	struct bpf_load_program_attr attr;
+	int run_errs, run_successes;
+	int map_fds[MAX_NR_MAPS];
+	const char *expected_err;
+	int saved_errno;
+	int fixup_skips;
 	__u32 pflags;
-	पूर्णांक i, err;
+	int i, err;
 
-	क्रम (i = 0; i < MAX_NR_MAPS; i++)
+	for (i = 0; i < MAX_NR_MAPS; i++)
 		map_fds[i] = -1;
 
-	अगर (!prog_type)
+	if (!prog_type)
 		prog_type = BPF_PROG_TYPE_SOCKET_FILTER;
 	fixup_skips = skips;
-	करो_test_fixup(test, prog_type, prog, map_fds);
-	अगर (test->fill_insns) अणु
+	do_test_fixup(test, prog_type, prog, map_fds);
+	if (test->fill_insns) {
 		prog = test->fill_insns;
 		prog_len = test->prog_len;
-	पूर्ण अन्यथा अणु
+	} else {
 		prog_len = probe_filter_length(prog);
-	पूर्ण
+	}
 	/* If there were some map skips during fixup due to missing bpf
 	 * features, skip this test.
 	 */
-	अगर (fixup_skips != skips)
-		वापस;
+	if (fixup_skips != skips)
+		return;
 
 	pflags = BPF_F_TEST_RND_HI32;
-	अगर (test->flags & F_LOAD_WITH_STRICT_ALIGNMENT)
+	if (test->flags & F_LOAD_WITH_STRICT_ALIGNMENT)
 		pflags |= BPF_F_STRICT_ALIGNMENT;
-	अगर (test->flags & F_NEEDS_EFFICIENT_UNALIGNED_ACCESS)
+	if (test->flags & F_NEEDS_EFFICIENT_UNALIGNED_ACCESS)
 		pflags |= BPF_F_ANY_ALIGNMENT;
-	अगर (test->flags & ~3)
+	if (test->flags & ~3)
 		pflags |= test->flags;
 
 	expected_ret = unpriv && test->result_unpriv != UNDEF ?
 		       test->result_unpriv : test->result;
 	expected_err = unpriv && test->errstr_unpriv ?
 		       test->errstr_unpriv : test->errstr;
-	स_रखो(&attr, 0, माप(attr));
+	memset(&attr, 0, sizeof(attr));
 	attr.prog_type = prog_type;
 	attr.expected_attach_type = test->expected_attach_type;
 	attr.insns = prog;
 	attr.insns_cnt = prog_len;
 	attr.license = "GPL";
-	अगर (verbose)
+	if (verbose)
 		attr.log_level = 1;
-	अन्यथा अगर (expected_ret == VERBOSE_ACCEPT)
+	else if (expected_ret == VERBOSE_ACCEPT)
 		attr.log_level = 2;
-	अन्यथा
+	else
 		attr.log_level = 4;
 	attr.prog_flags = pflags;
 
-	अगर (prog_type == BPF_PROG_TYPE_TRACING && test->kfunc) अणु
+	if (prog_type == BPF_PROG_TYPE_TRACING && test->kfunc) {
 		attr.attach_btf_id = libbpf_find_vmlinux_btf_id(test->kfunc,
 						attr.expected_attach_type);
-		अगर (attr.attach_btf_id < 0) अणु
-			म_लिखो("FAIL\nFailed to find BTF ID for '%s'!\n",
+		if (attr.attach_btf_id < 0) {
+			printf("FAIL\nFailed to find BTF ID for '%s'!\n",
 				test->kfunc);
 			(*errors)++;
-			वापस;
-		पूर्ण
-	पूर्ण
+			return;
+		}
+	}
 
-	fd_prog = bpf_load_program_xattr(&attr, bpf_vlog, माप(bpf_vlog));
-	saved_त्रुटि_सं = त्रुटि_सं;
+	fd_prog = bpf_load_program_xattr(&attr, bpf_vlog, sizeof(bpf_vlog));
+	saved_errno = errno;
 
 	/* BPF_PROG_TYPE_TRACING requires more setup and
 	 * bpf_probe_prog_type won't give correct answer
 	 */
-	अगर (fd_prog < 0 && prog_type != BPF_PROG_TYPE_TRACING &&
-	    !bpf_probe_prog_type(prog_type, 0)) अणु
-		म_लिखो("SKIP (unsupported program type %d)\n", prog_type);
+	if (fd_prog < 0 && prog_type != BPF_PROG_TYPE_TRACING &&
+	    !bpf_probe_prog_type(prog_type, 0)) {
+		printf("SKIP (unsupported program type %d)\n", prog_type);
 		skips++;
-		जाओ बंद_fds;
-	पूर्ण
+		goto close_fds;
+	}
 
 	alignment_prevented_execution = 0;
 
-	अगर (expected_ret == ACCEPT || expected_ret == VERBOSE_ACCEPT) अणु
-		अगर (fd_prog < 0) अणु
-			म_लिखो("FAIL\nFailed to load prog '%s'!\n",
-			       म_त्रुटि(saved_त्रुटि_सं));
-			जाओ fail_log;
-		पूर्ण
-#अगर_अघोषित CONFIG_HAVE_EFFICIENT_UNALIGNED_ACCESS
-		अगर (fd_prog >= 0 &&
+	if (expected_ret == ACCEPT || expected_ret == VERBOSE_ACCEPT) {
+		if (fd_prog < 0) {
+			printf("FAIL\nFailed to load prog '%s'!\n",
+			       strerror(saved_errno));
+			goto fail_log;
+		}
+#ifndef CONFIG_HAVE_EFFICIENT_UNALIGNED_ACCESS
+		if (fd_prog >= 0 &&
 		    (test->flags & F_NEEDS_EFFICIENT_UNALIGNED_ACCESS))
 			alignment_prevented_execution = 1;
-#पूर्ण_अगर
-		अगर (expected_ret == VERBOSE_ACCEPT && !cmp_str_seq(bpf_vlog, expected_err)) अणु
-			जाओ fail_log;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		अगर (fd_prog >= 0) अणु
-			म_लिखो("FAIL\nUnexpected success to load!\n");
-			जाओ fail_log;
-		पूर्ण
-		अगर (!expected_err || !cmp_str_seq(bpf_vlog, expected_err)) अणु
-			म_लिखो("FAIL\nUnexpected error message!\n\tEXP: %s\n\tRES: %s\n",
+#endif
+		if (expected_ret == VERBOSE_ACCEPT && !cmp_str_seq(bpf_vlog, expected_err)) {
+			goto fail_log;
+		}
+	} else {
+		if (fd_prog >= 0) {
+			printf("FAIL\nUnexpected success to load!\n");
+			goto fail_log;
+		}
+		if (!expected_err || !cmp_str_seq(bpf_vlog, expected_err)) {
+			printf("FAIL\nUnexpected error message!\n\tEXP: %s\n\tRES: %s\n",
 			      expected_err, bpf_vlog);
-			जाओ fail_log;
-		पूर्ण
-	पूर्ण
+			goto fail_log;
+		}
+	}
 
-	अगर (!unpriv && test->insn_processed) अणु
-		uपूर्णांक32_t insn_processed;
-		अक्षर *proc;
+	if (!unpriv && test->insn_processed) {
+		uint32_t insn_processed;
+		char *proc;
 
-		proc = म_माला(bpf_vlog, "processed ");
-		insn_processed = म_से_प(proc + 10);
-		अगर (test->insn_processed != insn_processed) अणु
-			म_लिखो("FAIL\nUnexpected insn_processed %u vs %u\n",
+		proc = strstr(bpf_vlog, "processed ");
+		insn_processed = atoi(proc + 10);
+		if (test->insn_processed != insn_processed) {
+			printf("FAIL\nUnexpected insn_processed %u vs %u\n",
 			       insn_processed, test->insn_processed);
-			जाओ fail_log;
-		पूर्ण
-	पूर्ण
+			goto fail_log;
+		}
+	}
 
-	अगर (verbose)
-		म_लिखो(", verifier log:\n%s", bpf_vlog);
+	if (verbose)
+		printf(", verifier log:\n%s", bpf_vlog);
 
 	run_errs = 0;
 	run_successes = 0;
-	अगर (!alignment_prevented_execution && fd_prog >= 0 && test->runs >= 0) अणु
-		uपूर्णांक32_t expected_val;
-		पूर्णांक i;
+	if (!alignment_prevented_execution && fd_prog >= 0 && test->runs >= 0) {
+		uint32_t expected_val;
+		int i;
 
-		अगर (!test->runs)
+		if (!test->runs)
 			test->runs = 1;
 
-		क्रम (i = 0; i < test->runs; i++) अणु
-			अगर (unpriv && test->retvals[i].retval_unpriv)
+		for (i = 0; i < test->runs; i++) {
+			if (unpriv && test->retvals[i].retval_unpriv)
 				expected_val = test->retvals[i].retval_unpriv;
-			अन्यथा
+			else
 				expected_val = test->retvals[i].retval;
 
-			err = करो_prog_test_run(fd_prog, unpriv, expected_val,
+			err = do_prog_test_run(fd_prog, unpriv, expected_val,
 					       test->retvals[i].data,
-					       माप(test->retvals[i].data));
-			अगर (err) अणु
-				म_लिखो("(run %d/%d) ", i + 1, test->runs);
+					       sizeof(test->retvals[i].data));
+			if (err) {
+				printf("(run %d/%d) ", i + 1, test->runs);
 				run_errs++;
-			पूर्ण अन्यथा अणु
+			} else {
 				run_successes++;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
-	अगर (!run_errs) अणु
+	if (!run_errs) {
 		(*passes)++;
-		अगर (run_successes > 1)
-			म_लिखो("%d cases ", run_successes);
-		म_लिखो("OK");
-		अगर (alignment_prevented_execution)
-			म_लिखो(" (NOTE: not executed due to unknown alignment)");
-		म_लिखो("\n");
-	पूर्ण अन्यथा अणु
-		म_लिखो("\n");
-		जाओ fail_log;
-	पूर्ण
-बंद_fds:
-	अगर (test->fill_insns)
-		मुक्त(test->fill_insns);
-	बंद(fd_prog);
-	क्रम (i = 0; i < MAX_NR_MAPS; i++)
-		बंद(map_fds[i]);
+		if (run_successes > 1)
+			printf("%d cases ", run_successes);
+		printf("OK");
+		if (alignment_prevented_execution)
+			printf(" (NOTE: not executed due to unknown alignment)");
+		printf("\n");
+	} else {
+		printf("\n");
+		goto fail_log;
+	}
+close_fds:
+	if (test->fill_insns)
+		free(test->fill_insns);
+	close(fd_prog);
+	for (i = 0; i < MAX_NR_MAPS; i++)
+		close(map_fds[i]);
 	sched_yield();
-	वापस;
+	return;
 fail_log:
 	(*errors)++;
-	म_लिखो("%s", bpf_vlog);
-	जाओ बंद_fds;
-पूर्ण
+	printf("%s", bpf_vlog);
+	goto close_fds;
+}
 
-अटल bool is_admin(व्योम)
-अणु
+static bool is_admin(void)
+{
 	cap_flag_value_t net_priv = CAP_CLEAR;
 	bool perfmon_priv = false;
 	bool bpf_priv = false;
-	काष्ठा libcap *cap;
+	struct libcap *cap;
 	cap_t caps;
 
-#अगर_घोषित CAP_IS_SUPPORTED
-	अगर (!CAP_IS_SUPPORTED(CAP_SETFCAP)) अणु
-		लिखो_त्रुटि("cap_get_flag");
-		वापस false;
-	पूर्ण
-#पूर्ण_अगर
+#ifdef CAP_IS_SUPPORTED
+	if (!CAP_IS_SUPPORTED(CAP_SETFCAP)) {
+		perror("cap_get_flag");
+		return false;
+	}
+#endif
 	caps = cap_get_proc();
-	अगर (!caps) अणु
-		लिखो_त्रुटि("cap_get_proc");
-		वापस false;
-	पूर्ण
-	cap = (काष्ठा libcap *)caps;
+	if (!caps) {
+		perror("cap_get_proc");
+		return false;
+	}
+	cap = (struct libcap *)caps;
 	bpf_priv = cap->data[1].effective & (1 << (39/* CAP_BPF */ - 32));
 	perfmon_priv = cap->data[1].effective & (1 << (38/* CAP_PERFMON */ - 32));
-	अगर (cap_get_flag(caps, CAP_NET_ADMIN, CAP_EFFECTIVE, &net_priv))
-		लिखो_त्रुटि("cap_get_flag NET");
-	अगर (cap_मुक्त(caps))
-		लिखो_त्रुटि("cap_free");
-	वापस bpf_priv && perfmon_priv && net_priv == CAP_SET;
-पूर्ण
+	if (cap_get_flag(caps, CAP_NET_ADMIN, CAP_EFFECTIVE, &net_priv))
+		perror("cap_get_flag NET");
+	if (cap_free(caps))
+		perror("cap_free");
+	return bpf_priv && perfmon_priv && net_priv == CAP_SET;
+}
 
-अटल व्योम get_unpriv_disabled()
-अणु
-	अक्षर buf[2];
-	खाता *fd;
+static void get_unpriv_disabled()
+{
+	char buf[2];
+	FILE *fd;
 
-	fd = ख_खोलो("/proc/sys/"UNPRIV_SYSCTL, "r");
-	अगर (!fd) अणु
-		लिखो_त्रुटि("fopen /proc/sys/"UNPRIV_SYSCTL);
+	fd = fopen("/proc/sys/"UNPRIV_SYSCTL, "r");
+	if (!fd) {
+		perror("fopen /proc/sys/"UNPRIV_SYSCTL);
 		unpriv_disabled = true;
-		वापस;
-	पूर्ण
-	अगर (ख_माला_लो(buf, 2, fd) == buf && म_से_प(buf))
+		return;
+	}
+	if (fgets(buf, 2, fd) == buf && atoi(buf))
 		unpriv_disabled = true;
-	ख_बंद(fd);
-पूर्ण
+	fclose(fd);
+}
 
-अटल bool test_as_unpriv(काष्ठा bpf_test *test)
-अणु
-#अगर_अघोषित CONFIG_HAVE_EFFICIENT_UNALIGNED_ACCESS
+static bool test_as_unpriv(struct bpf_test *test)
+{
+#ifndef CONFIG_HAVE_EFFICIENT_UNALIGNED_ACCESS
 	/* Some architectures have strict alignment requirements. In
-	 * that हाल, the BPF verअगरier detects अगर a program has
+	 * that case, the BPF verifier detects if a program has
 	 * unaligned accesses and rejects them. A user can pass
 	 * BPF_F_ANY_ALIGNMENT to a program to override this
 	 * check. That, however, will only work when a privileged user
 	 * loads a program. An unprivileged user loading a program
 	 * with this flag will be rejected prior entering the
-	 * verअगरier.
+	 * verifier.
 	 */
-	अगर (test->flags & F_NEEDS_EFFICIENT_UNALIGNED_ACCESS)
-		वापस false;
-#पूर्ण_अगर
-	वापस !test->prog_type ||
+	if (test->flags & F_NEEDS_EFFICIENT_UNALIGNED_ACCESS)
+		return false;
+#endif
+	return !test->prog_type ||
 	       test->prog_type == BPF_PROG_TYPE_SOCKET_FILTER ||
 	       test->prog_type == BPF_PROG_TYPE_CGROUP_SKB;
-पूर्ण
+}
 
-अटल पूर्णांक करो_test(bool unpriv, अचिन्हित पूर्णांक from, अचिन्हित पूर्णांक to)
-अणु
-	पूर्णांक i, passes = 0, errors = 0;
+static int do_test(bool unpriv, unsigned int from, unsigned int to)
+{
+	int i, passes = 0, errors = 0;
 
-	क्रम (i = from; i < to; i++) अणु
-		काष्ठा bpf_test *test = &tests[i];
+	for (i = from; i < to; i++) {
+		struct bpf_test *test = &tests[i];
 
 		/* Program types that are not supported by non-root we
 		 * skip right away.
 		 */
-		अगर (test_as_unpriv(test) && unpriv_disabled) अणु
-			म_लिखो("#%d/u %s SKIP\n", i, test->descr);
+		if (test_as_unpriv(test) && unpriv_disabled) {
+			printf("#%d/u %s SKIP\n", i, test->descr);
 			skips++;
-		पूर्ण अन्यथा अगर (test_as_unpriv(test)) अणु
-			अगर (!unpriv)
+		} else if (test_as_unpriv(test)) {
+			if (!unpriv)
 				set_admin(false);
-			म_लिखो("#%d/u %s ", i, test->descr);
-			करो_test_single(test, true, &passes, &errors);
-			अगर (!unpriv)
+			printf("#%d/u %s ", i, test->descr);
+			do_test_single(test, true, &passes, &errors);
+			if (!unpriv)
 				set_admin(true);
-		पूर्ण
+		}
 
-		अगर (unpriv) अणु
-			म_लिखो("#%d/p %s SKIP\n", i, test->descr);
+		if (unpriv) {
+			printf("#%d/p %s SKIP\n", i, test->descr);
 			skips++;
-		पूर्ण अन्यथा अणु
-			म_लिखो("#%d/p %s ", i, test->descr);
-			करो_test_single(test, false, &passes, &errors);
-		पूर्ण
-	पूर्ण
+		} else {
+			printf("#%d/p %s ", i, test->descr);
+			do_test_single(test, false, &passes, &errors);
+		}
+	}
 
-	म_लिखो("Summary: %d PASSED, %d SKIPPED, %d FAILED\n", passes,
+	printf("Summary: %d PASSED, %d SKIPPED, %d FAILED\n", passes,
 	       skips, errors);
-	वापस errors ? निकास_त्रुटि : निकास_सफल;
-पूर्ण
+	return errors ? EXIT_FAILURE : EXIT_SUCCESS;
+}
 
-पूर्णांक मुख्य(पूर्णांक argc, अक्षर **argv)
-अणु
-	अचिन्हित पूर्णांक from = 0, to = ARRAY_SIZE(tests);
+int main(int argc, char **argv)
+{
+	unsigned int from = 0, to = ARRAY_SIZE(tests);
 	bool unpriv = !is_admin();
-	पूर्णांक arg = 1;
+	int arg = 1;
 
-	अगर (argc > 1 && म_भेद(argv[1], "-v") == 0) अणु
+	if (argc > 1 && strcmp(argv[1], "-v") == 0) {
 		arg++;
 		verbose = true;
 		argc--;
-	पूर्ण
+	}
 
-	अगर (argc == 3) अणु
-		अचिन्हित पूर्णांक l = म_से_प(argv[arg]);
-		अचिन्हित पूर्णांक u = म_से_प(argv[arg + 1]);
+	if (argc == 3) {
+		unsigned int l = atoi(argv[arg]);
+		unsigned int u = atoi(argv[arg + 1]);
 
-		अगर (l < to && u < to) अणु
+		if (l < to && u < to) {
 			from = l;
 			to   = u + 1;
-		पूर्ण
-	पूर्ण अन्यथा अगर (argc == 2) अणु
-		अचिन्हित पूर्णांक t = म_से_प(argv[arg]);
+		}
+	} else if (argc == 2) {
+		unsigned int t = atoi(argv[arg]);
 
-		अगर (t < to) अणु
+		if (t < to) {
 			from = t;
 			to   = t + 1;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	get_unpriv_disabled();
-	अगर (unpriv && unpriv_disabled) अणु
-		म_लिखो("Cannot run as unprivileged user with sysctl %s.\n",
+	if (unpriv && unpriv_disabled) {
+		printf("Cannot run as unprivileged user with sysctl %s.\n",
 		       UNPRIV_SYSCTL);
-		वापस निकास_त्रुटि;
-	पूर्ण
+		return EXIT_FAILURE;
+	}
 
-	bpf_semi_अक्रम_init();
-	वापस करो_test(unpriv, from, to);
-पूर्ण
+	bpf_semi_rand_init();
+	return do_test(unpriv, from, to);
+}

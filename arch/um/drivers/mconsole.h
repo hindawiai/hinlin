@@ -1,99 +1,98 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Copyright (C) 2001 Lennert Buytenhek (buytenh@gnu.org)
- * Copyright (C) 2001 - 2007 Jeff Dike (jdike@अणुaddtoit,linux.पूर्णांकelपूर्ण.com)
+ * Copyright (C) 2001 - 2007 Jeff Dike (jdike@{addtoit,linux.intel}.com)
  */
 
-#अगर_अघोषित __MCONSOLE_H__
-#घोषणा __MCONSOLE_H__
+#ifndef __MCONSOLE_H__
+#define __MCONSOLE_H__
 
-#अगर_घोषित __UM_HOST__
-#समावेश <मानक_निवेशt.h>
-#घोषणा u32 uपूर्णांक32_t
-#पूर्ण_अगर
+#ifdef __UM_HOST__
+#include <stdint.h>
+#define u32 uint32_t
+#endif
 
-#समावेश <sysdep/ptrace.h>
+#include <sysdep/ptrace.h>
 
-#घोषणा MCONSOLE_MAGIC (0xcafebabe)
-#घोषणा MCONSOLE_MAX_DATA (512)
-#घोषणा MCONSOLE_VERSION 2
+#define MCONSOLE_MAGIC (0xcafebabe)
+#define MCONSOLE_MAX_DATA (512)
+#define MCONSOLE_VERSION 2
 
-काष्ठा mconsole_request अणु
+struct mconsole_request {
 	u32 magic;
 	u32 version;
 	u32 len;
-	अक्षर data[MCONSOLE_MAX_DATA];
-पूर्ण;
+	char data[MCONSOLE_MAX_DATA];
+};
 
-काष्ठा mconsole_reply अणु
+struct mconsole_reply {
 	u32 err;
 	u32 more;
 	u32 len;
-	अक्षर data[MCONSOLE_MAX_DATA];
-पूर्ण;
+	char data[MCONSOLE_MAX_DATA];
+};
 
-काष्ठा mconsole_notअगरy अणु
+struct mconsole_notify {
 	u32 magic;
 	u32 version;
-	क्रमागत अणु MCONSOLE_SOCKET, MCONSOLE_PANIC, MCONSOLE_HANG,
-	       MCONSOLE_USER_NOTIFY पूर्ण type;
+	enum { MCONSOLE_SOCKET, MCONSOLE_PANIC, MCONSOLE_HANG,
+	       MCONSOLE_USER_NOTIFY } type;
 	u32 len;
-	अक्षर data[MCONSOLE_MAX_DATA];
-पूर्ण;
+	char data[MCONSOLE_MAX_DATA];
+};
 
-काष्ठा mc_request;
+struct mc_request;
 
-क्रमागत mc_context अणु MCONSOLE_INTR, MCONSOLE_PROC पूर्ण;
+enum mc_context { MCONSOLE_INTR, MCONSOLE_PROC };
 
-काष्ठा mconsole_command
-अणु
-	अक्षर *command;
-	व्योम (*handler)(काष्ठा mc_request *req);
-	क्रमागत mc_context context;
-पूर्ण;
+struct mconsole_command
+{
+	char *command;
+	void (*handler)(struct mc_request *req);
+	enum mc_context context;
+};
 
-काष्ठा mc_request
-अणु
-	पूर्णांक len;
-	पूर्णांक as_पूर्णांकerrupt;
+struct mc_request
+{
+	int len;
+	int as_interrupt;
 
-	पूर्णांक originating_fd;
-	अचिन्हित पूर्णांक originlen;
-	अचिन्हित अक्षर origin[128];			/* sockaddr_un */
+	int originating_fd;
+	unsigned int originlen;
+	unsigned char origin[128];			/* sockaddr_un */
 
-	काष्ठा mconsole_request request;
-	काष्ठा mconsole_command *cmd;
-	काष्ठा uml_pt_regs regs;
-पूर्ण;
+	struct mconsole_request request;
+	struct mconsole_command *cmd;
+	struct uml_pt_regs regs;
+};
 
-बाह्य अक्षर mconsole_socket_name[];
+extern char mconsole_socket_name[];
 
-बाह्य पूर्णांक mconsole_unlink_socket(व्योम);
-बाह्य पूर्णांक mconsole_reply_len(काष्ठा mc_request *req, स्थिर अक्षर *reply,
-			      पूर्णांक len, पूर्णांक err, पूर्णांक more);
-बाह्य पूर्णांक mconsole_reply(काष्ठा mc_request *req, स्थिर अक्षर *str, पूर्णांक err,
-			  पूर्णांक more);
+extern int mconsole_unlink_socket(void);
+extern int mconsole_reply_len(struct mc_request *req, const char *reply,
+			      int len, int err, int more);
+extern int mconsole_reply(struct mc_request *req, const char *str, int err,
+			  int more);
 
-बाह्य व्योम mconsole_version(काष्ठा mc_request *req);
-बाह्य व्योम mconsole_help(काष्ठा mc_request *req);
-बाह्य व्योम mconsole_halt(काष्ठा mc_request *req);
-बाह्य व्योम mconsole_reboot(काष्ठा mc_request *req);
-बाह्य व्योम mconsole_config(काष्ठा mc_request *req);
-बाह्य व्योम mconsole_हटाओ(काष्ठा mc_request *req);
-बाह्य व्योम mconsole_sysrq(काष्ठा mc_request *req);
-बाह्य व्योम mconsole_cad(काष्ठा mc_request *req);
-बाह्य व्योम mconsole_stop(काष्ठा mc_request *req);
-बाह्य व्योम mconsole_go(काष्ठा mc_request *req);
-बाह्य व्योम mconsole_log(काष्ठा mc_request *req);
-बाह्य व्योम mconsole_proc(काष्ठा mc_request *req);
-बाह्य व्योम mconsole_stack(काष्ठा mc_request *req);
+extern void mconsole_version(struct mc_request *req);
+extern void mconsole_help(struct mc_request *req);
+extern void mconsole_halt(struct mc_request *req);
+extern void mconsole_reboot(struct mc_request *req);
+extern void mconsole_config(struct mc_request *req);
+extern void mconsole_remove(struct mc_request *req);
+extern void mconsole_sysrq(struct mc_request *req);
+extern void mconsole_cad(struct mc_request *req);
+extern void mconsole_stop(struct mc_request *req);
+extern void mconsole_go(struct mc_request *req);
+extern void mconsole_log(struct mc_request *req);
+extern void mconsole_proc(struct mc_request *req);
+extern void mconsole_stack(struct mc_request *req);
 
-बाह्य पूर्णांक mconsole_get_request(पूर्णांक fd, काष्ठा mc_request *req);
-बाह्य पूर्णांक mconsole_notअगरy(अक्षर *sock_name, पूर्णांक type, स्थिर व्योम *data,
-			   पूर्णांक len);
-बाह्य अक्षर *mconsole_notअगरy_socket(व्योम);
-बाह्य व्योम lock_notअगरy(व्योम);
-बाह्य व्योम unlock_notअगरy(व्योम);
+extern int mconsole_get_request(int fd, struct mc_request *req);
+extern int mconsole_notify(char *sock_name, int type, const void *data,
+			   int len);
+extern char *mconsole_notify_socket(void);
+extern void lock_notify(void);
+extern void unlock_notify(void);
 
-#पूर्ण_अगर
+#endif

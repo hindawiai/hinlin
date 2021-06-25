@@ -1,89 +1,88 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Reset driver क्रम Axxia devices
+ * Reset driver for Axxia devices
  *
  * Copyright (C) 2014 LSI
  */
-#समावेश <linux/init.h>
-#समावेश <linux/err.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/mfd/syscon.h>
-#समावेश <linux/module.h>
-#समावेश <linux/notअगरier.h>
-#समावेश <linux/of.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/reboot.h>
-#समावेश <linux/regmap.h>
+#include <linux/init.h>
+#include <linux/err.h>
+#include <linux/io.h>
+#include <linux/kernel.h>
+#include <linux/mfd/syscon.h>
+#include <linux/module.h>
+#include <linux/notifier.h>
+#include <linux/of.h>
+#include <linux/platform_device.h>
+#include <linux/reboot.h>
+#include <linux/regmap.h>
 
-#घोषणा SC_CRIT_WRITE_KEY	0x1000
-#घोषणा SC_LATCH_ON_RESET	0x1004
-#घोषणा SC_RESET_CONTROL	0x1008
-#घोषणा   RSTCTL_RST_ZERO	(1<<3)
-#घोषणा   RSTCTL_RST_FAB	(1<<2)
-#घोषणा   RSTCTL_RST_CHIP	(1<<1)
-#घोषणा   RSTCTL_RST_SYS	(1<<0)
-#घोषणा SC_EFUSE_INT_STATUS	0x180c
-#घोषणा   EFUSE_READ_DONE	(1<<31)
+#define SC_CRIT_WRITE_KEY	0x1000
+#define SC_LATCH_ON_RESET	0x1004
+#define SC_RESET_CONTROL	0x1008
+#define   RSTCTL_RST_ZERO	(1<<3)
+#define   RSTCTL_RST_FAB	(1<<2)
+#define   RSTCTL_RST_CHIP	(1<<1)
+#define   RSTCTL_RST_SYS	(1<<0)
+#define SC_EFUSE_INT_STATUS	0x180c
+#define   EFUSE_READ_DONE	(1<<31)
 
-अटल काष्ठा regmap *syscon;
+static struct regmap *syscon;
 
-अटल पूर्णांक axxia_restart_handler(काष्ठा notअगरier_block *this,
-				 अचिन्हित दीर्घ mode, व्योम *cmd)
-अणु
+static int axxia_restart_handler(struct notifier_block *this,
+				 unsigned long mode, void *cmd)
+{
 	/* Access Key (0xab) */
-	regmap_ग_लिखो(syscon, SC_CRIT_WRITE_KEY, 0xab);
-	/* Select पूर्णांकernal boot from 0xffff0000 */
-	regmap_ग_लिखो(syscon, SC_LATCH_ON_RESET, 0x00000040);
-	/* Assert ResetReadDone (to aव्योम hanging in boot ROM) */
-	regmap_ग_लिखो(syscon, SC_EFUSE_INT_STATUS, EFUSE_READ_DONE);
+	regmap_write(syscon, SC_CRIT_WRITE_KEY, 0xab);
+	/* Select internal boot from 0xffff0000 */
+	regmap_write(syscon, SC_LATCH_ON_RESET, 0x00000040);
+	/* Assert ResetReadDone (to avoid hanging in boot ROM) */
+	regmap_write(syscon, SC_EFUSE_INT_STATUS, EFUSE_READ_DONE);
 	/* Assert chip reset */
 	regmap_update_bits(syscon, SC_RESET_CONTROL,
 			   RSTCTL_RST_CHIP, RSTCTL_RST_CHIP);
 
-	वापस NOTIFY_DONE;
-पूर्ण
+	return NOTIFY_DONE;
+}
 
-अटल काष्ठा notअगरier_block axxia_restart_nb = अणु
-	.notअगरier_call = axxia_restart_handler,
+static struct notifier_block axxia_restart_nb = {
+	.notifier_call = axxia_restart_handler,
 	.priority = 128,
-पूर्ण;
+};
 
-अटल पूर्णांक axxia_reset_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	पूर्णांक err;
+static int axxia_reset_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	int err;
 
 	syscon = syscon_regmap_lookup_by_phandle(dev->of_node, "syscon");
-	अगर (IS_ERR(syscon)) अणु
+	if (IS_ERR(syscon)) {
 		pr_err("%pOFn: syscon lookup failed\n", dev->of_node);
-		वापस PTR_ERR(syscon);
-	पूर्ण
+		return PTR_ERR(syscon);
+	}
 
-	err = रेजिस्टर_restart_handler(&axxia_restart_nb);
-	अगर (err)
+	err = register_restart_handler(&axxia_restart_nb);
+	if (err)
 		dev_err(dev, "cannot register restart handler (err=%d)\n", err);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल स्थिर काष्ठा of_device_id of_axxia_reset_match[] = अणु
-	अणु .compatible = "lsi,axm55xx-reset", पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct of_device_id of_axxia_reset_match[] = {
+	{ .compatible = "lsi,axm55xx-reset", },
+	{},
+};
 MODULE_DEVICE_TABLE(of, of_axxia_reset_match);
 
-अटल काष्ठा platक्रमm_driver axxia_reset_driver = अणु
+static struct platform_driver axxia_reset_driver = {
 	.probe = axxia_reset_probe,
-	.driver = अणु
+	.driver = {
 		.name = "axxia-reset",
 		.of_match_table = of_match_ptr(of_axxia_reset_match),
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक __init axxia_reset_init(व्योम)
-अणु
-	वापस platक्रमm_driver_रेजिस्टर(&axxia_reset_driver);
-पूर्ण
+static int __init axxia_reset_init(void)
+{
+	return platform_driver_register(&axxia_reset_driver);
+}
 device_initcall(axxia_reset_init);

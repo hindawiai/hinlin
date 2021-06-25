@@ -1,21 +1,20 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __LINUX_PIM_H
-#घोषणा __LINUX_PIM_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __LINUX_PIM_H
+#define __LINUX_PIM_H
 
-#समावेश <linux/skbuff.h>
-#समावेश <यंत्र/byteorder.h>
+#include <linux/skbuff.h>
+#include <asm/byteorder.h>
 
 /* Message types - V1 */
-#घोषणा PIM_V1_VERSION		cpu_to_be32(0x10000000)
-#घोषणा PIM_V1_REGISTER		1
+#define PIM_V1_VERSION		cpu_to_be32(0x10000000)
+#define PIM_V1_REGISTER		1
 
 /* Message types - V2 */
-#घोषणा PIM_VERSION		2
+#define PIM_VERSION		2
 
 /* RFC7761, sec 4.9:
  *  Type
- *        Types क्रम specअगरic PIM messages.  PIM Types are:
+ *        Types for specific PIM messages.  PIM Types are:
  *
  *  Message Type                          Destination
  *  ---------------------------------------------------------------------
@@ -29,9 +28,9 @@
  *  6 = Graft (used in PIM-DM only)       Unicast to RPF'(S)
  *  7 = Graft-Ack (used in PIM-DM only)   Unicast to source of Graft
  *                                        packet
- *  8 = Candidate-RP-Advertisement        Unicast to Doमुख्य's BSR
+ *  8 = Candidate-RP-Advertisement        Unicast to Domain's BSR
  */
-क्रमागत अणु
+enum {
 	PIM_TYPE_HELLO,
 	PIM_TYPE_REGISTER,
 	PIM_TYPE_REGISTER_STOP,
@@ -41,9 +40,9 @@
 	PIM_TYPE_GRAFT,
 	PIM_TYPE_GRAFT_ACK,
 	PIM_TYPE_CANDIDATE_RP_ADV
-पूर्ण;
+};
 
-#घोषणा PIM_शून्य_REGISTER	cpu_to_be32(0x40000000)
+#define PIM_NULL_REGISTER	cpu_to_be32(0x40000000)
 
 /* RFC7761, sec 4.9:
  * The PIM header common to all PIM messages is:
@@ -53,45 +52,45 @@
  *  |PIM Ver| Type  |   Reserved    |           Checksum            |
  *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  */
-काष्ठा pimhdr अणु
+struct pimhdr {
 	__u8	type;
 	__u8	reserved;
 	__be16	csum;
-पूर्ण;
+};
 
-/* PIMv2 रेजिस्टर message header layout (ietf-draft-idmr-pimvsm-v2-00.ps */
-काष्ठा pimreghdr अणु
+/* PIMv2 register message header layout (ietf-draft-idmr-pimvsm-v2-00.ps */
+struct pimreghdr {
 	__u8	type;
 	__u8	reserved;
 	__be16	csum;
 	__be32	flags;
-पूर्ण;
+};
 
-पूर्णांक pim_rcv_v1(काष्ठा sk_buff *skb);
+int pim_rcv_v1(struct sk_buff *skb);
 
-अटल अंतरभूत bool ipmr_pimsm_enabled(व्योम)
-अणु
-	वापस IS_BUILTIN(CONFIG_IP_PIMSM_V1) || IS_BUILTIN(CONFIG_IP_PIMSM_V2);
-पूर्ण
+static inline bool ipmr_pimsm_enabled(void)
+{
+	return IS_BUILTIN(CONFIG_IP_PIMSM_V1) || IS_BUILTIN(CONFIG_IP_PIMSM_V2);
+}
 
-अटल अंतरभूत काष्ठा pimhdr *pim_hdr(स्थिर काष्ठा sk_buff *skb)
-अणु
-	वापस (काष्ठा pimhdr *)skb_transport_header(skb);
-पूर्ण
+static inline struct pimhdr *pim_hdr(const struct sk_buff *skb)
+{
+	return (struct pimhdr *)skb_transport_header(skb);
+}
 
-अटल अंतरभूत u8 pim_hdr_version(स्थिर काष्ठा pimhdr *pimhdr)
-अणु
-	वापस pimhdr->type >> 4;
-पूर्ण
+static inline u8 pim_hdr_version(const struct pimhdr *pimhdr)
+{
+	return pimhdr->type >> 4;
+}
 
-अटल अंतरभूत u8 pim_hdr_type(स्थिर काष्ठा pimhdr *pimhdr)
-अणु
-	वापस pimhdr->type & 0xf;
-पूर्ण
+static inline u8 pim_hdr_type(const struct pimhdr *pimhdr)
+{
+	return pimhdr->type & 0xf;
+}
 
-/* check अगर the address is 224.0.0.13, RFC7761 sec 4.3.1 */
-अटल अंतरभूत bool pim_ipv4_all_pim_routers(__be32 addr)
-अणु
-	वापस addr == htonl(0xE000000D);
-पूर्ण
-#पूर्ण_अगर
+/* check if the address is 224.0.0.13, RFC7761 sec 4.3.1 */
+static inline bool pim_ipv4_all_pim_routers(__be32 addr)
+{
+	return addr == htonl(0xE000000D);
+}
+#endif

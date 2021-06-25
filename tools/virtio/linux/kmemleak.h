@@ -1,4 +1,3 @@
-<शैली गुरु>
-अटल अंतरभूत व्योम kmemleak_ignore(स्थिर व्योम *ptr)
-अणु
-पूर्ण
+static inline void kmemleak_ignore(const void *ptr)
+{
+}

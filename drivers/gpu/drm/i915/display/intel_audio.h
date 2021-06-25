@@ -1,25 +1,24 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: MIT */
+/* SPDX-License-Identifier: MIT */
 /*
- * Copyright तऊ 2019 Intel Corporation
+ * Copyright © 2019 Intel Corporation
  */
 
-#अगर_अघोषित __INTEL_AUDIO_H__
-#घोषणा __INTEL_AUDIO_H__
+#ifndef __INTEL_AUDIO_H__
+#define __INTEL_AUDIO_H__
 
-काष्ठा drm_connector_state;
-काष्ठा drm_i915_निजी;
-काष्ठा पूर्णांकel_crtc_state;
-काष्ठा पूर्णांकel_encoder;
+struct drm_connector_state;
+struct drm_i915_private;
+struct intel_crtc_state;
+struct intel_encoder;
 
-व्योम पूर्णांकel_init_audio_hooks(काष्ठा drm_i915_निजी *dev_priv);
-व्योम पूर्णांकel_audio_codec_enable(काष्ठा पूर्णांकel_encoder *encoder,
-			      स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state,
-			      स्थिर काष्ठा drm_connector_state *conn_state);
-व्योम पूर्णांकel_audio_codec_disable(काष्ठा पूर्णांकel_encoder *encoder,
-			       स्थिर काष्ठा पूर्णांकel_crtc_state *old_crtc_state,
-			       स्थिर काष्ठा drm_connector_state *old_conn_state);
-व्योम पूर्णांकel_audio_init(काष्ठा drm_i915_निजी *dev_priv);
-व्योम पूर्णांकel_audio_deinit(काष्ठा drm_i915_निजी *dev_priv);
+void intel_init_audio_hooks(struct drm_i915_private *dev_priv);
+void intel_audio_codec_enable(struct intel_encoder *encoder,
+			      const struct intel_crtc_state *crtc_state,
+			      const struct drm_connector_state *conn_state);
+void intel_audio_codec_disable(struct intel_encoder *encoder,
+			       const struct intel_crtc_state *old_crtc_state,
+			       const struct drm_connector_state *old_conn_state);
+void intel_audio_init(struct drm_i915_private *dev_priv);
+void intel_audio_deinit(struct drm_i915_private *dev_priv);
 
-#पूर्ण_अगर /* __INTEL_AUDIO_H__ */
+#endif /* __INTEL_AUDIO_H__ */

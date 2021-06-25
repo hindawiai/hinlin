@@ -1,39 +1,38 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _ASM_ARM_XEN_HYPERVISOR_H
-#घोषणा _ASM_ARM_XEN_HYPERVISOR_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _ASM_ARM_XEN_HYPERVISOR_H
+#define _ASM_ARM_XEN_HYPERVISOR_H
 
-#समावेश <linux/init.h>
+#include <linux/init.h>
 
-बाह्य काष्ठा shared_info *HYPERVISOR_shared_info;
-बाह्य काष्ठा start_info *xen_start_info;
+extern struct shared_info *HYPERVISOR_shared_info;
+extern struct start_info *xen_start_info;
 
-/* Lazy mode क्रम batching updates / context चयन */
-क्रमागत paravirt_lazy_mode अणु
+/* Lazy mode for batching updates / context switch */
+enum paravirt_lazy_mode {
 	PARAVIRT_LAZY_NONE,
 	PARAVIRT_LAZY_MMU,
 	PARAVIRT_LAZY_CPU,
-पूर्ण;
+};
 
-अटल अंतरभूत क्रमागत paravirt_lazy_mode paravirt_get_lazy_mode(व्योम)
-अणु
-	वापस PARAVIRT_LAZY_NONE;
-पूर्ण
+static inline enum paravirt_lazy_mode paravirt_get_lazy_mode(void)
+{
+	return PARAVIRT_LAZY_NONE;
+}
 
-#अगर_घोषित CONFIG_XEN
-व्योम __init xen_early_init(व्योम);
-#अन्यथा
-अटल अंतरभूत व्योम xen_early_init(व्योम) अणु वापस; पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_XEN
+void __init xen_early_init(void);
+#else
+static inline void xen_early_init(void) { return; }
+#endif
 
-#अगर_घोषित CONFIG_HOTPLUG_CPU
-अटल अंतरभूत व्योम xen_arch_रेजिस्टर_cpu(पूर्णांक num)
-अणु
-पूर्ण
+#ifdef CONFIG_HOTPLUG_CPU
+static inline void xen_arch_register_cpu(int num)
+{
+}
 
-अटल अंतरभूत व्योम xen_arch_unरेजिस्टर_cpu(पूर्णांक num)
-अणु
-पूर्ण
-#पूर्ण_अगर
+static inline void xen_arch_unregister_cpu(int num)
+{
+}
+#endif
 
-#पूर्ण_अगर /* _ASM_ARM_XEN_HYPERVISOR_H */
+#endif /* _ASM_ARM_XEN_HYPERVISOR_H */

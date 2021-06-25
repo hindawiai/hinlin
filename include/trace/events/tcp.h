@@ -1,63 +1,62 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अघोषित TRACE_SYSTEM
-#घोषणा TRACE_SYSTEM tcp
+/* SPDX-License-Identifier: GPL-2.0 */
+#undef TRACE_SYSTEM
+#define TRACE_SYSTEM tcp
 
-#अगर !defined(_TRACE_TCP_H) || defined(TRACE_HEADER_MULTI_READ)
-#घोषणा _TRACE_TCP_H
+#if !defined(_TRACE_TCP_H) || defined(TRACE_HEADER_MULTI_READ)
+#define _TRACE_TCP_H
 
-#समावेश <linux/ipv6.h>
-#समावेश <linux/tcp.h>
-#समावेश <linux/tracepoपूर्णांक.h>
-#समावेश <net/ipv6.h>
-#समावेश <net/tcp.h>
-#समावेश <linux/sock_diag.h>
+#include <linux/ipv6.h>
+#include <linux/tcp.h>
+#include <linux/tracepoint.h>
+#include <net/ipv6.h>
+#include <net/tcp.h>
+#include <linux/sock_diag.h>
 
-#घोषणा TP_STORE_V4MAPPED(__entry, saddr, daddr)		\
-	करो अणु							\
-		काष्ठा in6_addr *pin6;				\
+#define TP_STORE_V4MAPPED(__entry, saddr, daddr)		\
+	do {							\
+		struct in6_addr *pin6;				\
 								\
-		pin6 = (काष्ठा in6_addr *)__entry->saddr_v6;	\
+		pin6 = (struct in6_addr *)__entry->saddr_v6;	\
 		ipv6_addr_set_v4mapped(saddr, pin6);		\
-		pin6 = (काष्ठा in6_addr *)__entry->daddr_v6;	\
+		pin6 = (struct in6_addr *)__entry->daddr_v6;	\
 		ipv6_addr_set_v4mapped(daddr, pin6);		\
-	पूर्ण जबतक (0)
+	} while (0)
 
-#अगर IS_ENABLED(CONFIG_IPV6)
-#घोषणा TP_STORE_ADDRS(__entry, saddr, daddr, saddr6, daddr6)		\
-	करो अणु								\
-		अगर (sk->sk_family == AF_INET6) अणु			\
-			काष्ठा in6_addr *pin6;				\
+#if IS_ENABLED(CONFIG_IPV6)
+#define TP_STORE_ADDRS(__entry, saddr, daddr, saddr6, daddr6)		\
+	do {								\
+		if (sk->sk_family == AF_INET6) {			\
+			struct in6_addr *pin6;				\
 									\
-			pin6 = (काष्ठा in6_addr *)__entry->saddr_v6;	\
+			pin6 = (struct in6_addr *)__entry->saddr_v6;	\
 			*pin6 = saddr6;					\
-			pin6 = (काष्ठा in6_addr *)__entry->daddr_v6;	\
+			pin6 = (struct in6_addr *)__entry->daddr_v6;	\
 			*pin6 = daddr6;					\
-		पूर्ण अन्यथा अणु						\
+		} else {						\
 			TP_STORE_V4MAPPED(__entry, saddr, daddr);	\
-		पूर्ण							\
-	पूर्ण जबतक (0)
-#अन्यथा
-#घोषणा TP_STORE_ADDRS(__entry, saddr, daddr, saddr6, daddr6)	\
+		}							\
+	} while (0)
+#else
+#define TP_STORE_ADDRS(__entry, saddr, daddr, saddr6, daddr6)	\
 	TP_STORE_V4MAPPED(__entry, saddr, daddr)
-#पूर्ण_अगर
+#endif
 
 /*
  * tcp event with arguments sk and skb
  *
- * Note: this class requires a valid sk poपूर्णांकer; जबतक skb poपूर्णांकer could
- *       be शून्य.
+ * Note: this class requires a valid sk pointer; while skb pointer could
+ *       be NULL.
  */
 DECLARE_EVENT_CLASS(tcp_event_sk_skb,
 
-	TP_PROTO(स्थिर काष्ठा sock *sk, स्थिर काष्ठा sk_buff *skb),
+	TP_PROTO(const struct sock *sk, const struct sk_buff *skb),
 
 	TP_ARGS(sk, skb),
 
 	TP_STRUCT__entry(
-		__field(स्थिर व्योम *, skbaddr)
-		__field(स्थिर व्योम *, skaddr)
-		__field(पूर्णांक, state)
+		__field(const void *, skbaddr)
+		__field(const void *, skaddr)
+		__field(int, state)
 		__field(__u16, sport)
 		__field(__u16, dport)
 		__field(__u16, family)
@@ -68,7 +67,7 @@ DECLARE_EVENT_CLASS(tcp_event_sk_skb,
 	),
 
 	TP_fast_assign(
-		काष्ठा inet_sock *inet = inet_sk(sk);
+		struct inet_sock *inet = inet_sk(sk);
 		__be32 *p32;
 
 		__entry->skbaddr = skb;
@@ -89,7 +88,7 @@ DECLARE_EVENT_CLASS(tcp_event_sk_skb,
 			      sk->sk_v6_rcv_saddr, sk->sk_v6_daddr);
 	),
 
-	TP_prपूर्णांकk("family=%s sport=%hu dport=%hu saddr=%pI4 daddr=%pI4 saddrv6=%pI6c daddrv6=%pI6c state=%s",
+	TP_printk("family=%s sport=%hu dport=%hu saddr=%pI4 daddr=%pI4 saddrv6=%pI6c daddrv6=%pI6c state=%s",
 		  show_family_name(__entry->family),
 		  __entry->sport, __entry->dport, __entry->saddr, __entry->daddr,
 		  __entry->saddr_v6, __entry->daddr_v6,
@@ -98,18 +97,18 @@ DECLARE_EVENT_CLASS(tcp_event_sk_skb,
 
 DEFINE_EVENT(tcp_event_sk_skb, tcp_retransmit_skb,
 
-	TP_PROTO(स्थिर काष्ठा sock *sk, स्थिर काष्ठा sk_buff *skb),
+	TP_PROTO(const struct sock *sk, const struct sk_buff *skb),
 
 	TP_ARGS(sk, skb)
 );
 
 /*
- * skb of trace_tcp_send_reset is the skb that caused RST. In हाल of
- * active reset, skb should be शून्य
+ * skb of trace_tcp_send_reset is the skb that caused RST. In case of
+ * active reset, skb should be NULL
  */
 DEFINE_EVENT(tcp_event_sk_skb, tcp_send_reset,
 
-	TP_PROTO(स्थिर काष्ठा sock *sk, स्थिर काष्ठा sk_buff *skb),
+	TP_PROTO(const struct sock *sk, const struct sk_buff *skb),
 
 	TP_ARGS(sk, skb)
 );
@@ -117,16 +116,16 @@ DEFINE_EVENT(tcp_event_sk_skb, tcp_send_reset,
 /*
  * tcp event with arguments sk
  *
- * Note: this class requires a valid sk poपूर्णांकer.
+ * Note: this class requires a valid sk pointer.
  */
 DECLARE_EVENT_CLASS(tcp_event_sk,
 
-	TP_PROTO(काष्ठा sock *sk),
+	TP_PROTO(struct sock *sk),
 
 	TP_ARGS(sk),
 
 	TP_STRUCT__entry(
-		__field(स्थिर व्योम *, skaddr)
+		__field(const void *, skaddr)
 		__field(__u16, sport)
 		__field(__u16, dport)
 		__field(__u16, family)
@@ -138,7 +137,7 @@ DECLARE_EVENT_CLASS(tcp_event_sk,
 	),
 
 	TP_fast_assign(
-		काष्ठा inet_sock *inet = inet_sk(sk);
+		struct inet_sock *inet = inet_sk(sk);
 		__be32 *p32;
 
 		__entry->skaddr = sk;
@@ -159,7 +158,7 @@ DECLARE_EVENT_CLASS(tcp_event_sk,
 		__entry->sock_cookie = sock_gen_cookie(sk);
 	),
 
-	TP_prपूर्णांकk("family=%s sport=%hu dport=%hu saddr=%pI4 daddr=%pI4 saddrv6=%pI6c daddrv6=%pI6c sock_cookie=%llx",
+	TP_printk("family=%s sport=%hu dport=%hu saddr=%pI4 daddr=%pI4 saddrv6=%pI6c daddrv6=%pI6c sock_cookie=%llx",
 		  show_family_name(__entry->family),
 		  __entry->sport, __entry->dport,
 		  __entry->saddr, __entry->daddr,
@@ -169,34 +168,34 @@ DECLARE_EVENT_CLASS(tcp_event_sk,
 
 DEFINE_EVENT(tcp_event_sk, tcp_receive_reset,
 
-	TP_PROTO(काष्ठा sock *sk),
+	TP_PROTO(struct sock *sk),
 
 	TP_ARGS(sk)
 );
 
 DEFINE_EVENT(tcp_event_sk, tcp_destroy_sock,
 
-	TP_PROTO(काष्ठा sock *sk),
+	TP_PROTO(struct sock *sk),
 
 	TP_ARGS(sk)
 );
 
 DEFINE_EVENT(tcp_event_sk, tcp_rcv_space_adjust,
 
-	TP_PROTO(काष्ठा sock *sk),
+	TP_PROTO(struct sock *sk),
 
 	TP_ARGS(sk)
 );
 
 TRACE_EVENT(tcp_retransmit_synack,
 
-	TP_PROTO(स्थिर काष्ठा sock *sk, स्थिर काष्ठा request_sock *req),
+	TP_PROTO(const struct sock *sk, const struct request_sock *req),
 
 	TP_ARGS(sk, req),
 
 	TP_STRUCT__entry(
-		__field(स्थिर व्योम *, skaddr)
-		__field(स्थिर व्योम *, req)
+		__field(const void *, skaddr)
+		__field(const void *, req)
 		__field(__u16, sport)
 		__field(__u16, dport)
 		__field(__u16, family)
@@ -207,7 +206,7 @@ TRACE_EVENT(tcp_retransmit_synack,
 	),
 
 	TP_fast_assign(
-		काष्ठा inet_request_sock *ireq = inet_rsk(req);
+		struct inet_request_sock *ireq = inet_rsk(req);
 		__be32 *p32;
 
 		__entry->skaddr = sk;
@@ -227,25 +226,25 @@ TRACE_EVENT(tcp_retransmit_synack,
 			      ireq->ir_v6_loc_addr, ireq->ir_v6_rmt_addr);
 	),
 
-	TP_prपूर्णांकk("family=%s sport=%hu dport=%hu saddr=%pI4 daddr=%pI4 saddrv6=%pI6c daddrv6=%pI6c",
+	TP_printk("family=%s sport=%hu dport=%hu saddr=%pI4 daddr=%pI4 saddrv6=%pI6c daddrv6=%pI6c",
 		  show_family_name(__entry->family),
 		  __entry->sport, __entry->dport,
 		  __entry->saddr, __entry->daddr,
 		  __entry->saddr_v6, __entry->daddr_v6)
 );
 
-#समावेश <trace/events/net_probe_common.h>
+#include <trace/events/net_probe_common.h>
 
 TRACE_EVENT(tcp_probe,
 
-	TP_PROTO(काष्ठा sock *sk, काष्ठा sk_buff *skb),
+	TP_PROTO(struct sock *sk, struct sk_buff *skb),
 
 	TP_ARGS(sk, skb),
 
 	TP_STRUCT__entry(
 		/* sockaddr_in6 is always bigger than sockaddr_in */
-		__array(__u8, saddr, माप(काष्ठा sockaddr_in6))
-		__array(__u8, daddr, माप(काष्ठा sockaddr_in6))
+		__array(__u8, saddr, sizeof(struct sockaddr_in6))
+		__array(__u8, daddr, sizeof(struct sockaddr_in6))
 		__field(__u16, sport)
 		__field(__u16, dport)
 		__field(__u16, family)
@@ -262,12 +261,12 @@ TRACE_EVENT(tcp_probe,
 	),
 
 	TP_fast_assign(
-		स्थिर काष्ठा tcphdr *th = (स्थिर काष्ठा tcphdr *)skb->data;
-		स्थिर काष्ठा inet_sock *inet = inet_sk(sk);
-		स्थिर काष्ठा tcp_sock *tp = tcp_sk(sk);
+		const struct tcphdr *th = (const struct tcphdr *)skb->data;
+		const struct inet_sock *inet = inet_sk(sk);
+		const struct tcp_sock *tp = tcp_sk(sk);
 
-		स_रखो(__entry->saddr, 0, माप(काष्ठा sockaddr_in6));
-		स_रखो(__entry->daddr, 0, माप(काष्ठा sockaddr_in6));
+		memset(__entry->saddr, 0, sizeof(struct sockaddr_in6));
+		memset(__entry->daddr, 0, sizeof(struct sockaddr_in6));
 
 		TP_STORE_ADDR_PORTS(__entry, inet, sk);
 
@@ -288,7 +287,7 @@ TRACE_EVENT(tcp_probe,
 		__entry->sock_cookie = sock_gen_cookie(sk);
 	),
 
-	TP_prपूर्णांकk("family=%s src=%pISpc dest=%pISpc mark=%#x data_len=%d snd_nxt=%#x snd_una=%#x snd_cwnd=%u ssthresh=%u snd_wnd=%u srtt=%u rcv_wnd=%u sock_cookie=%llx",
+	TP_printk("family=%s src=%pISpc dest=%pISpc mark=%#x data_len=%d snd_nxt=%#x snd_una=%#x snd_cwnd=%u ssthresh=%u snd_wnd=%u srtt=%u rcv_wnd=%u sock_cookie=%llx",
 		  show_family_name(__entry->family),
 		  __entry->saddr, __entry->daddr, __entry->mark,
 		  __entry->data_len, __entry->snd_nxt, __entry->snd_una,
@@ -296,7 +295,7 @@ TRACE_EVENT(tcp_probe,
 		  __entry->srtt, __entry->rcv_wnd, __entry->sock_cookie)
 );
 
-#पूर्ण_अगर /* _TRACE_TCP_H */
+#endif /* _TRACE_TCP_H */
 
 /* This part must be outside protection */
-#समावेश <trace/define_trace.h>
+#include <trace/define_trace.h>

@@ -1,20 +1,19 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __LIBPERF_INTERNAL_CPUMAP_H
-#घोषणा __LIBPERF_INTERNAL_CPUMAP_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __LIBPERF_INTERNAL_CPUMAP_H
+#define __LIBPERF_INTERNAL_CPUMAP_H
 
-#समावेश <linux/refcount.h>
+#include <linux/refcount.h>
 
-काष्ठा perf_cpu_map अणु
+struct perf_cpu_map {
 	refcount_t	refcnt;
-	पूर्णांक		nr;
-	पूर्णांक		map[];
-पूर्ण;
+	int		nr;
+	int		map[];
+};
 
-#अगर_अघोषित MAX_NR_CPUS
-#घोषणा MAX_NR_CPUS	2048
-#पूर्ण_अगर
+#ifndef MAX_NR_CPUS
+#define MAX_NR_CPUS	2048
+#endif
 
-पूर्णांक perf_cpu_map__idx(काष्ठा perf_cpu_map *cpus, पूर्णांक cpu);
+int perf_cpu_map__idx(struct perf_cpu_map *cpus, int cpu);
 
-#पूर्ण_अगर /* __LIBPERF_INTERNAL_CPUMAP_H */
+#endif /* __LIBPERF_INTERNAL_CPUMAP_H */

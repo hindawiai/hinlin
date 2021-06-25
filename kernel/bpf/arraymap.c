@@ -1,146 +1,145 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /* Copyright (c) 2011-2014 PLUMgrid, http://plumgrid.com
  * Copyright (c) 2016,2017 Facebook
  */
-#समावेश <linux/bpf.h>
-#समावेश <linux/btf.h>
-#समावेश <linux/err.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/filter.h>
-#समावेश <linux/perf_event.h>
-#समावेश <uapi/linux/btf.h>
-#समावेश <linux/rcupdate_trace.h>
+#include <linux/bpf.h>
+#include <linux/btf.h>
+#include <linux/err.h>
+#include <linux/slab.h>
+#include <linux/mm.h>
+#include <linux/filter.h>
+#include <linux/perf_event.h>
+#include <uapi/linux/btf.h>
+#include <linux/rcupdate_trace.h>
 
-#समावेश "map_in_map.h"
+#include "map_in_map.h"
 
-#घोषणा ARRAY_CREATE_FLAG_MASK \
+#define ARRAY_CREATE_FLAG_MASK \
 	(BPF_F_NUMA_NODE | BPF_F_MMAPABLE | BPF_F_ACCESS_MASK | \
 	 BPF_F_PRESERVE_ELEMS | BPF_F_INNER_MAP)
 
-अटल व्योम bpf_array_मुक्त_percpu(काष्ठा bpf_array *array)
-अणु
-	पूर्णांक i;
+static void bpf_array_free_percpu(struct bpf_array *array)
+{
+	int i;
 
-	क्रम (i = 0; i < array->map.max_entries; i++) अणु
-		मुक्त_percpu(array->pptrs[i]);
+	for (i = 0; i < array->map.max_entries; i++) {
+		free_percpu(array->pptrs[i]);
 		cond_resched();
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक bpf_array_alloc_percpu(काष्ठा bpf_array *array)
-अणु
-	व्योम __percpu *ptr;
-	पूर्णांक i;
+static int bpf_array_alloc_percpu(struct bpf_array *array)
+{
+	void __percpu *ptr;
+	int i;
 
-	क्रम (i = 0; i < array->map.max_entries; i++) अणु
+	for (i = 0; i < array->map.max_entries; i++) {
 		ptr = bpf_map_alloc_percpu(&array->map, array->elem_size, 8,
 					   GFP_USER | __GFP_NOWARN);
-		अगर (!ptr) अणु
-			bpf_array_मुक्त_percpu(array);
-			वापस -ENOMEM;
-		पूर्ण
+		if (!ptr) {
+			bpf_array_free_percpu(array);
+			return -ENOMEM;
+		}
 		array->pptrs[i] = ptr;
 		cond_resched();
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* Called from syscall */
-पूर्णांक array_map_alloc_check(जोड़ bpf_attr *attr)
-अणु
+int array_map_alloc_check(union bpf_attr *attr)
+{
 	bool percpu = attr->map_type == BPF_MAP_TYPE_PERCPU_ARRAY;
-	पूर्णांक numa_node = bpf_map_attr_numa_node(attr);
+	int numa_node = bpf_map_attr_numa_node(attr);
 
 	/* check sanity of attributes */
-	अगर (attr->max_entries == 0 || attr->key_size != 4 ||
+	if (attr->max_entries == 0 || attr->key_size != 4 ||
 	    attr->value_size == 0 ||
 	    attr->map_flags & ~ARRAY_CREATE_FLAG_MASK ||
 	    !bpf_map_flags_access_ok(attr->map_flags) ||
 	    (percpu && numa_node != NUMA_NO_NODE))
-		वापस -EINVAL;
+		return -EINVAL;
 
-	अगर (attr->map_type != BPF_MAP_TYPE_ARRAY &&
+	if (attr->map_type != BPF_MAP_TYPE_ARRAY &&
 	    attr->map_flags & (BPF_F_MMAPABLE | BPF_F_INNER_MAP))
-		वापस -EINVAL;
+		return -EINVAL;
 
-	अगर (attr->map_type != BPF_MAP_TYPE_PERF_EVENT_ARRAY &&
+	if (attr->map_type != BPF_MAP_TYPE_PERF_EVENT_ARRAY &&
 	    attr->map_flags & BPF_F_PRESERVE_ELEMS)
-		वापस -EINVAL;
+		return -EINVAL;
 
-	अगर (attr->value_size > KMALLOC_MAX_SIZE)
-		/* अगर value_size is bigger, the user space won't be able to
+	if (attr->value_size > KMALLOC_MAX_SIZE)
+		/* if value_size is bigger, the user space won't be able to
 		 * access the elements.
 		 */
-		वापस -E2BIG;
+		return -E2BIG;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा bpf_map *array_map_alloc(जोड़ bpf_attr *attr)
-अणु
+static struct bpf_map *array_map_alloc(union bpf_attr *attr)
+{
 	bool percpu = attr->map_type == BPF_MAP_TYPE_PERCPU_ARRAY;
-	पूर्णांक numa_node = bpf_map_attr_numa_node(attr);
+	int numa_node = bpf_map_attr_numa_node(attr);
 	u32 elem_size, index_mask, max_entries;
 	bool bypass_spec_v1 = bpf_bypass_spec_v1();
 	u64 array_size, mask64;
-	काष्ठा bpf_array *array;
+	struct bpf_array *array;
 
 	elem_size = round_up(attr->value_size, 8);
 
 	max_entries = attr->max_entries;
 
-	/* On 32 bit archs roundup_घात_of_two() with max_entries that has
+	/* On 32 bit archs roundup_pow_of_two() with max_entries that has
 	 * upper most bit set in u32 space is undefined behavior due to
-	 * resulting 1U << 32, so करो it manually here in u64 space.
+	 * resulting 1U << 32, so do it manually here in u64 space.
 	 */
-	mask64 = fls_दीर्घ(max_entries - 1);
+	mask64 = fls_long(max_entries - 1);
 	mask64 = 1ULL << mask64;
 	mask64 -= 1;
 
 	index_mask = mask64;
-	अगर (!bypass_spec_v1) अणु
-		/* round up array size to nearest घातer of 2,
+	if (!bypass_spec_v1) {
+		/* round up array size to nearest power of 2,
 		 * since cpu will speculate within index_mask limits
 		 */
 		max_entries = index_mask + 1;
-		/* Check क्रम overflows. */
-		अगर (max_entries < attr->max_entries)
-			वापस ERR_PTR(-E2BIG);
-	पूर्ण
+		/* Check for overflows. */
+		if (max_entries < attr->max_entries)
+			return ERR_PTR(-E2BIG);
+	}
 
-	array_size = माप(*array);
-	अगर (percpu) अणु
-		array_size += (u64) max_entries * माप(व्योम *);
-	पूर्ण अन्यथा अणु
-		/* rely on vदो_स्मृति() to वापस page-aligned memory and
+	array_size = sizeof(*array);
+	if (percpu) {
+		array_size += (u64) max_entries * sizeof(void *);
+	} else {
+		/* rely on vmalloc() to return page-aligned memory and
 		 * ensure array->value is exactly page-aligned
 		 */
-		अगर (attr->map_flags & BPF_F_MMAPABLE) अणु
+		if (attr->map_flags & BPF_F_MMAPABLE) {
 			array_size = PAGE_ALIGN(array_size);
 			array_size += PAGE_ALIGN((u64) max_entries * elem_size);
-		पूर्ण अन्यथा अणु
+		} else {
 			array_size += (u64) max_entries * elem_size;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/* allocate all map elements and zero-initialize them */
-	अगर (attr->map_flags & BPF_F_MMAPABLE) अणु
-		व्योम *data;
+	if (attr->map_flags & BPF_F_MMAPABLE) {
+		void *data;
 
-		/* kदो_स्मृति'ed memory can't be mmap'ed, use explicit vदो_स्मृति */
+		/* kmalloc'ed memory can't be mmap'ed, use explicit vmalloc */
 		data = bpf_map_area_mmapable_alloc(array_size, numa_node);
-		अगर (!data)
-			वापस ERR_PTR(-ENOMEM);
-		array = data + PAGE_ALIGN(माप(काष्ठा bpf_array))
-			- दुरत्व(काष्ठा bpf_array, value);
-	पूर्ण अन्यथा अणु
+		if (!data)
+			return ERR_PTR(-ENOMEM);
+		array = data + PAGE_ALIGN(sizeof(struct bpf_array))
+			- offsetof(struct bpf_array, value);
+	} else {
 		array = bpf_map_area_alloc(array_size, numa_node);
-	पूर्ण
-	अगर (!array)
-		वापस ERR_PTR(-ENOMEM);
+	}
+	if (!array)
+		return ERR_PTR(-ENOMEM);
 	array->index_mask = index_mask;
 	array->map.bypass_spec_v1 = bypass_spec_v1;
 
@@ -148,526 +147,526 @@
 	bpf_map_init_from_attr(&array->map, attr);
 	array->elem_size = elem_size;
 
-	अगर (percpu && bpf_array_alloc_percpu(array)) अणु
-		bpf_map_area_मुक्त(array);
-		वापस ERR_PTR(-ENOMEM);
-	पूर्ण
+	if (percpu && bpf_array_alloc_percpu(array)) {
+		bpf_map_area_free(array);
+		return ERR_PTR(-ENOMEM);
+	}
 
-	वापस &array->map;
-पूर्ण
+	return &array->map;
+}
 
 /* Called from syscall or from eBPF program */
-अटल व्योम *array_map_lookup_elem(काष्ठा bpf_map *map, व्योम *key)
-अणु
-	काष्ठा bpf_array *array = container_of(map, काष्ठा bpf_array, map);
+static void *array_map_lookup_elem(struct bpf_map *map, void *key)
+{
+	struct bpf_array *array = container_of(map, struct bpf_array, map);
 	u32 index = *(u32 *)key;
 
-	अगर (unlikely(index >= array->map.max_entries))
-		वापस शून्य;
+	if (unlikely(index >= array->map.max_entries))
+		return NULL;
 
-	वापस array->value + array->elem_size * (index & array->index_mask);
-पूर्ण
+	return array->value + array->elem_size * (index & array->index_mask);
+}
 
-अटल पूर्णांक array_map_direct_value_addr(स्थिर काष्ठा bpf_map *map, u64 *imm,
+static int array_map_direct_value_addr(const struct bpf_map *map, u64 *imm,
 				       u32 off)
-अणु
-	काष्ठा bpf_array *array = container_of(map, काष्ठा bpf_array, map);
+{
+	struct bpf_array *array = container_of(map, struct bpf_array, map);
 
-	अगर (map->max_entries != 1)
-		वापस -ENOTSUPP;
-	अगर (off >= map->value_size)
-		वापस -EINVAL;
+	if (map->max_entries != 1)
+		return -ENOTSUPP;
+	if (off >= map->value_size)
+		return -EINVAL;
 
-	*imm = (अचिन्हित दीर्घ)array->value;
-	वापस 0;
-पूर्ण
+	*imm = (unsigned long)array->value;
+	return 0;
+}
 
-अटल पूर्णांक array_map_direct_value_meta(स्थिर काष्ठा bpf_map *map, u64 imm,
+static int array_map_direct_value_meta(const struct bpf_map *map, u64 imm,
 				       u32 *off)
-अणु
-	काष्ठा bpf_array *array = container_of(map, काष्ठा bpf_array, map);
-	u64 base = (अचिन्हित दीर्घ)array->value;
+{
+	struct bpf_array *array = container_of(map, struct bpf_array, map);
+	u64 base = (unsigned long)array->value;
 	u64 range = array->elem_size;
 
-	अगर (map->max_entries != 1)
-		वापस -ENOTSUPP;
-	अगर (imm < base || imm >= base + range)
-		वापस -ENOENT;
+	if (map->max_entries != 1)
+		return -ENOTSUPP;
+	if (imm < base || imm >= base + range)
+		return -ENOENT;
 
 	*off = imm - base;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* emit BPF inकाष्ठाions equivalent to C code of array_map_lookup_elem() */
-अटल पूर्णांक array_map_gen_lookup(काष्ठा bpf_map *map, काष्ठा bpf_insn *insn_buf)
-अणु
-	काष्ठा bpf_array *array = container_of(map, काष्ठा bpf_array, map);
-	काष्ठा bpf_insn *insn = insn_buf;
+/* emit BPF instructions equivalent to C code of array_map_lookup_elem() */
+static int array_map_gen_lookup(struct bpf_map *map, struct bpf_insn *insn_buf)
+{
+	struct bpf_array *array = container_of(map, struct bpf_array, map);
+	struct bpf_insn *insn = insn_buf;
 	u32 elem_size = round_up(map->value_size, 8);
-	स्थिर पूर्णांक ret = BPF_REG_0;
-	स्थिर पूर्णांक map_ptr = BPF_REG_1;
-	स्थिर पूर्णांक index = BPF_REG_2;
+	const int ret = BPF_REG_0;
+	const int map_ptr = BPF_REG_1;
+	const int index = BPF_REG_2;
 
-	अगर (map->map_flags & BPF_F_INNER_MAP)
-		वापस -EOPNOTSUPP;
+	if (map->map_flags & BPF_F_INNER_MAP)
+		return -EOPNOTSUPP;
 
-	*insn++ = BPF_ALU64_IMM(BPF_ADD, map_ptr, दुरत्व(काष्ठा bpf_array, value));
+	*insn++ = BPF_ALU64_IMM(BPF_ADD, map_ptr, offsetof(struct bpf_array, value));
 	*insn++ = BPF_LDX_MEM(BPF_W, ret, index, 0);
-	अगर (!map->bypass_spec_v1) अणु
+	if (!map->bypass_spec_v1) {
 		*insn++ = BPF_JMP_IMM(BPF_JGE, ret, map->max_entries, 4);
 		*insn++ = BPF_ALU32_IMM(BPF_AND, ret, array->index_mask);
-	पूर्ण अन्यथा अणु
+	} else {
 		*insn++ = BPF_JMP_IMM(BPF_JGE, ret, map->max_entries, 3);
-	पूर्ण
+	}
 
-	अगर (is_घातer_of_2(elem_size)) अणु
+	if (is_power_of_2(elem_size)) {
 		*insn++ = BPF_ALU64_IMM(BPF_LSH, ret, ilog2(elem_size));
-	पूर्ण अन्यथा अणु
+	} else {
 		*insn++ = BPF_ALU64_IMM(BPF_MUL, ret, elem_size);
-	पूर्ण
+	}
 	*insn++ = BPF_ALU64_REG(BPF_ADD, ret, map_ptr);
 	*insn++ = BPF_JMP_IMM(BPF_JA, 0, 0, 1);
 	*insn++ = BPF_MOV64_IMM(ret, 0);
-	वापस insn - insn_buf;
-पूर्ण
+	return insn - insn_buf;
+}
 
 /* Called from eBPF program */
-अटल व्योम *percpu_array_map_lookup_elem(काष्ठा bpf_map *map, व्योम *key)
-अणु
-	काष्ठा bpf_array *array = container_of(map, काष्ठा bpf_array, map);
+static void *percpu_array_map_lookup_elem(struct bpf_map *map, void *key)
+{
+	struct bpf_array *array = container_of(map, struct bpf_array, map);
 	u32 index = *(u32 *)key;
 
-	अगर (unlikely(index >= array->map.max_entries))
-		वापस शून्य;
+	if (unlikely(index >= array->map.max_entries))
+		return NULL;
 
-	वापस this_cpu_ptr(array->pptrs[index & array->index_mask]);
-पूर्ण
+	return this_cpu_ptr(array->pptrs[index & array->index_mask]);
+}
 
-पूर्णांक bpf_percpu_array_copy(काष्ठा bpf_map *map, व्योम *key, व्योम *value)
-अणु
-	काष्ठा bpf_array *array = container_of(map, काष्ठा bpf_array, map);
+int bpf_percpu_array_copy(struct bpf_map *map, void *key, void *value)
+{
+	struct bpf_array *array = container_of(map, struct bpf_array, map);
 	u32 index = *(u32 *)key;
-	व्योम __percpu *pptr;
-	पूर्णांक cpu, off = 0;
+	void __percpu *pptr;
+	int cpu, off = 0;
 	u32 size;
 
-	अगर (unlikely(index >= array->map.max_entries))
-		वापस -ENOENT;
+	if (unlikely(index >= array->map.max_entries))
+		return -ENOENT;
 
 	/* per_cpu areas are zero-filled and bpf programs can only
 	 * access 'value_size' of them, so copying rounded areas
 	 * will not leak any kernel data
 	 */
 	size = round_up(map->value_size, 8);
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	pptr = array->pptrs[index & array->index_mask];
-	क्रम_each_possible_cpu(cpu) अणु
-		bpf_दीर्घ_स_नकल(value + off, per_cpu_ptr(pptr, cpu), size);
+	for_each_possible_cpu(cpu) {
+		bpf_long_memcpy(value + off, per_cpu_ptr(pptr, cpu), size);
 		off += size;
-	पूर्ण
-	rcu_पढ़ो_unlock();
-	वापस 0;
-पूर्ण
+	}
+	rcu_read_unlock();
+	return 0;
+}
 
 /* Called from syscall */
-अटल पूर्णांक array_map_get_next_key(काष्ठा bpf_map *map, व्योम *key, व्योम *next_key)
-अणु
-	काष्ठा bpf_array *array = container_of(map, काष्ठा bpf_array, map);
+static int array_map_get_next_key(struct bpf_map *map, void *key, void *next_key)
+{
+	struct bpf_array *array = container_of(map, struct bpf_array, map);
 	u32 index = key ? *(u32 *)key : U32_MAX;
 	u32 *next = (u32 *)next_key;
 
-	अगर (index >= array->map.max_entries) अणु
+	if (index >= array->map.max_entries) {
 		*next = 0;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (index == array->map.max_entries - 1)
-		वापस -ENOENT;
+	if (index == array->map.max_entries - 1)
+		return -ENOENT;
 
 	*next = index + 1;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* Called from syscall or from eBPF program */
-अटल पूर्णांक array_map_update_elem(काष्ठा bpf_map *map, व्योम *key, व्योम *value,
+static int array_map_update_elem(struct bpf_map *map, void *key, void *value,
 				 u64 map_flags)
-अणु
-	काष्ठा bpf_array *array = container_of(map, काष्ठा bpf_array, map);
+{
+	struct bpf_array *array = container_of(map, struct bpf_array, map);
 	u32 index = *(u32 *)key;
-	अक्षर *val;
+	char *val;
 
-	अगर (unlikely((map_flags & ~BPF_F_LOCK) > BPF_EXIST))
+	if (unlikely((map_flags & ~BPF_F_LOCK) > BPF_EXIST))
 		/* unknown flags */
-		वापस -EINVAL;
+		return -EINVAL;
 
-	अगर (unlikely(index >= array->map.max_entries))
+	if (unlikely(index >= array->map.max_entries))
 		/* all elements were pre-allocated, cannot insert a new one */
-		वापस -E2BIG;
+		return -E2BIG;
 
-	अगर (unlikely(map_flags & BPF_NOEXIST))
-		/* all elements alपढ़ोy exist */
-		वापस -EEXIST;
+	if (unlikely(map_flags & BPF_NOEXIST))
+		/* all elements already exist */
+		return -EEXIST;
 
-	अगर (unlikely((map_flags & BPF_F_LOCK) &&
+	if (unlikely((map_flags & BPF_F_LOCK) &&
 		     !map_value_has_spin_lock(map)))
-		वापस -EINVAL;
+		return -EINVAL;
 
-	अगर (array->map.map_type == BPF_MAP_TYPE_PERCPU_ARRAY) अणु
-		स_नकल(this_cpu_ptr(array->pptrs[index & array->index_mask]),
+	if (array->map.map_type == BPF_MAP_TYPE_PERCPU_ARRAY) {
+		memcpy(this_cpu_ptr(array->pptrs[index & array->index_mask]),
 		       value, map->value_size);
-	पूर्ण अन्यथा अणु
+	} else {
 		val = array->value +
 			array->elem_size * (index & array->index_mask);
-		अगर (map_flags & BPF_F_LOCK)
+		if (map_flags & BPF_F_LOCK)
 			copy_map_value_locked(map, val, value, false);
-		अन्यथा
+		else
 			copy_map_value(map, val, value);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-पूर्णांक bpf_percpu_array_update(काष्ठा bpf_map *map, व्योम *key, व्योम *value,
+int bpf_percpu_array_update(struct bpf_map *map, void *key, void *value,
 			    u64 map_flags)
-अणु
-	काष्ठा bpf_array *array = container_of(map, काष्ठा bpf_array, map);
+{
+	struct bpf_array *array = container_of(map, struct bpf_array, map);
 	u32 index = *(u32 *)key;
-	व्योम __percpu *pptr;
-	पूर्णांक cpu, off = 0;
+	void __percpu *pptr;
+	int cpu, off = 0;
 	u32 size;
 
-	अगर (unlikely(map_flags > BPF_EXIST))
+	if (unlikely(map_flags > BPF_EXIST))
 		/* unknown flags */
-		वापस -EINVAL;
+		return -EINVAL;
 
-	अगर (unlikely(index >= array->map.max_entries))
+	if (unlikely(index >= array->map.max_entries))
 		/* all elements were pre-allocated, cannot insert a new one */
-		वापस -E2BIG;
+		return -E2BIG;
 
-	अगर (unlikely(map_flags == BPF_NOEXIST))
-		/* all elements alपढ़ोy exist */
-		वापस -EEXIST;
+	if (unlikely(map_flags == BPF_NOEXIST))
+		/* all elements already exist */
+		return -EEXIST;
 
 	/* the user space will provide round_up(value_size, 8) bytes that
-	 * will be copied पूर्णांकo per-cpu area. bpf programs can only access
+	 * will be copied into per-cpu area. bpf programs can only access
 	 * value_size of it. During lookup the same extra bytes will be
-	 * वापसed or zeros which were zero-filled by percpu_alloc,
+	 * returned or zeros which were zero-filled by percpu_alloc,
 	 * so no kernel data leaks possible
 	 */
 	size = round_up(map->value_size, 8);
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	pptr = array->pptrs[index & array->index_mask];
-	क्रम_each_possible_cpu(cpu) अणु
-		bpf_दीर्घ_स_नकल(per_cpu_ptr(pptr, cpu), value + off, size);
+	for_each_possible_cpu(cpu) {
+		bpf_long_memcpy(per_cpu_ptr(pptr, cpu), value + off, size);
 		off += size;
-	पूर्ण
-	rcu_पढ़ो_unlock();
-	वापस 0;
-पूर्ण
+	}
+	rcu_read_unlock();
+	return 0;
+}
 
 /* Called from syscall or from eBPF program */
-अटल पूर्णांक array_map_delete_elem(काष्ठा bpf_map *map, व्योम *key)
-अणु
-	वापस -EINVAL;
-पूर्ण
+static int array_map_delete_elem(struct bpf_map *map, void *key)
+{
+	return -EINVAL;
+}
 
-अटल व्योम *array_map_vदो_स्मृति_addr(काष्ठा bpf_array *array)
-अणु
-	वापस (व्योम *)round_करोwn((अचिन्हित दीर्घ)array, PAGE_SIZE);
-पूर्ण
+static void *array_map_vmalloc_addr(struct bpf_array *array)
+{
+	return (void *)round_down((unsigned long)array, PAGE_SIZE);
+}
 
 /* Called when map->refcnt goes to zero, either from workqueue or from syscall */
-अटल व्योम array_map_मुक्त(काष्ठा bpf_map *map)
-अणु
-	काष्ठा bpf_array *array = container_of(map, काष्ठा bpf_array, map);
+static void array_map_free(struct bpf_map *map)
+{
+	struct bpf_array *array = container_of(map, struct bpf_array, map);
 
-	अगर (array->map.map_type == BPF_MAP_TYPE_PERCPU_ARRAY)
-		bpf_array_मुक्त_percpu(array);
+	if (array->map.map_type == BPF_MAP_TYPE_PERCPU_ARRAY)
+		bpf_array_free_percpu(array);
 
-	अगर (array->map.map_flags & BPF_F_MMAPABLE)
-		bpf_map_area_मुक्त(array_map_vदो_स्मृति_addr(array));
-	अन्यथा
-		bpf_map_area_मुक्त(array);
-पूर्ण
+	if (array->map.map_flags & BPF_F_MMAPABLE)
+		bpf_map_area_free(array_map_vmalloc_addr(array));
+	else
+		bpf_map_area_free(array);
+}
 
-अटल व्योम array_map_seq_show_elem(काष्ठा bpf_map *map, व्योम *key,
-				    काष्ठा seq_file *m)
-अणु
-	व्योम *value;
+static void array_map_seq_show_elem(struct bpf_map *map, void *key,
+				    struct seq_file *m)
+{
+	void *value;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 
 	value = array_map_lookup_elem(map, key);
-	अगर (!value) अणु
-		rcu_पढ़ो_unlock();
-		वापस;
-	पूर्ण
+	if (!value) {
+		rcu_read_unlock();
+		return;
+	}
 
-	अगर (map->btf_key_type_id)
-		seq_म_लिखो(m, "%u: ", *(u32 *)key);
+	if (map->btf_key_type_id)
+		seq_printf(m, "%u: ", *(u32 *)key);
 	btf_type_seq_show(map->btf, map->btf_value_type_id, value, m);
-	seq_माला_दो(m, "\n");
+	seq_puts(m, "\n");
 
-	rcu_पढ़ो_unlock();
-पूर्ण
+	rcu_read_unlock();
+}
 
-अटल व्योम percpu_array_map_seq_show_elem(काष्ठा bpf_map *map, व्योम *key,
-					   काष्ठा seq_file *m)
-अणु
-	काष्ठा bpf_array *array = container_of(map, काष्ठा bpf_array, map);
+static void percpu_array_map_seq_show_elem(struct bpf_map *map, void *key,
+					   struct seq_file *m)
+{
+	struct bpf_array *array = container_of(map, struct bpf_array, map);
 	u32 index = *(u32 *)key;
-	व्योम __percpu *pptr;
-	पूर्णांक cpu;
+	void __percpu *pptr;
+	int cpu;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 
-	seq_म_लिखो(m, "%u: {\n", *(u32 *)key);
+	seq_printf(m, "%u: {\n", *(u32 *)key);
 	pptr = array->pptrs[index & array->index_mask];
-	क्रम_each_possible_cpu(cpu) अणु
-		seq_म_लिखो(m, "\tcpu%d: ", cpu);
+	for_each_possible_cpu(cpu) {
+		seq_printf(m, "\tcpu%d: ", cpu);
 		btf_type_seq_show(map->btf, map->btf_value_type_id,
 				  per_cpu_ptr(pptr, cpu), m);
-		seq_माला_दो(m, "\n");
-	पूर्ण
-	seq_माला_दो(m, "}\n");
+		seq_puts(m, "\n");
+	}
+	seq_puts(m, "}\n");
 
-	rcu_पढ़ो_unlock();
-पूर्ण
+	rcu_read_unlock();
+}
 
-अटल पूर्णांक array_map_check_btf(स्थिर काष्ठा bpf_map *map,
-			       स्थिर काष्ठा btf *btf,
-			       स्थिर काष्ठा btf_type *key_type,
-			       स्थिर काष्ठा btf_type *value_type)
-अणु
-	u32 पूर्णांक_data;
+static int array_map_check_btf(const struct bpf_map *map,
+			       const struct btf *btf,
+			       const struct btf_type *key_type,
+			       const struct btf_type *value_type)
+{
+	u32 int_data;
 
-	/* One exception क्रम keyless BTF: .bss/.data/.rodata map */
-	अगर (btf_type_is_व्योम(key_type)) अणु
-		अगर (map->map_type != BPF_MAP_TYPE_ARRAY ||
+	/* One exception for keyless BTF: .bss/.data/.rodata map */
+	if (btf_type_is_void(key_type)) {
+		if (map->map_type != BPF_MAP_TYPE_ARRAY ||
 		    map->max_entries != 1)
-			वापस -EINVAL;
+			return -EINVAL;
 
-		अगर (BTF_INFO_KIND(value_type->info) != BTF_KIND_DATASEC)
-			वापस -EINVAL;
+		if (BTF_INFO_KIND(value_type->info) != BTF_KIND_DATASEC)
+			return -EINVAL;
 
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (BTF_INFO_KIND(key_type->info) != BTF_KIND_INT)
-		वापस -EINVAL;
+	if (BTF_INFO_KIND(key_type->info) != BTF_KIND_INT)
+		return -EINVAL;
 
-	पूर्णांक_data = *(u32 *)(key_type + 1);
+	int_data = *(u32 *)(key_type + 1);
 	/* bpf array can only take a u32 key. This check makes sure
 	 * that the btf matches the attr used during map_create.
 	 */
-	अगर (BTF_INT_BITS(पूर्णांक_data) != 32 || BTF_INT_OFFSET(पूर्णांक_data))
-		वापस -EINVAL;
+	if (BTF_INT_BITS(int_data) != 32 || BTF_INT_OFFSET(int_data))
+		return -EINVAL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक array_map_mmap(काष्ठा bpf_map *map, काष्ठा vm_area_काष्ठा *vma)
-अणु
-	काष्ठा bpf_array *array = container_of(map, काष्ठा bpf_array, map);
-	pgoff_t pgoff = PAGE_ALIGN(माप(*array)) >> PAGE_SHIFT;
+static int array_map_mmap(struct bpf_map *map, struct vm_area_struct *vma)
+{
+	struct bpf_array *array = container_of(map, struct bpf_array, map);
+	pgoff_t pgoff = PAGE_ALIGN(sizeof(*array)) >> PAGE_SHIFT;
 
-	अगर (!(map->map_flags & BPF_F_MMAPABLE))
-		वापस -EINVAL;
+	if (!(map->map_flags & BPF_F_MMAPABLE))
+		return -EINVAL;
 
-	अगर (vma->vm_pgoff * PAGE_SIZE + (vma->vm_end - vma->vm_start) >
+	if (vma->vm_pgoff * PAGE_SIZE + (vma->vm_end - vma->vm_start) >
 	    PAGE_ALIGN((u64)array->map.max_entries * array->elem_size))
-		वापस -EINVAL;
+		return -EINVAL;
 
-	वापस remap_vदो_स्मृति_range(vma, array_map_vदो_स्मृति_addr(array),
+	return remap_vmalloc_range(vma, array_map_vmalloc_addr(array),
 				   vma->vm_pgoff + pgoff);
-पूर्ण
+}
 
-अटल bool array_map_meta_equal(स्थिर काष्ठा bpf_map *meta0,
-				 स्थिर काष्ठा bpf_map *meta1)
-अणु
-	अगर (!bpf_map_meta_equal(meta0, meta1))
-		वापस false;
-	वापस meta0->map_flags & BPF_F_INNER_MAP ? true :
+static bool array_map_meta_equal(const struct bpf_map *meta0,
+				 const struct bpf_map *meta1)
+{
+	if (!bpf_map_meta_equal(meta0, meta1))
+		return false;
+	return meta0->map_flags & BPF_F_INNER_MAP ? true :
 	       meta0->max_entries == meta1->max_entries;
-पूर्ण
+}
 
-काष्ठा bpf_iter_seq_array_map_info अणु
-	काष्ठा bpf_map *map;
-	व्योम *percpu_value_buf;
+struct bpf_iter_seq_array_map_info {
+	struct bpf_map *map;
+	void *percpu_value_buf;
 	u32 index;
-पूर्ण;
+};
 
-अटल व्योम *bpf_array_map_seq_start(काष्ठा seq_file *seq, loff_t *pos)
-अणु
-	काष्ठा bpf_iter_seq_array_map_info *info = seq->निजी;
-	काष्ठा bpf_map *map = info->map;
-	काष्ठा bpf_array *array;
+static void *bpf_array_map_seq_start(struct seq_file *seq, loff_t *pos)
+{
+	struct bpf_iter_seq_array_map_info *info = seq->private;
+	struct bpf_map *map = info->map;
+	struct bpf_array *array;
 	u32 index;
 
-	अगर (info->index >= map->max_entries)
-		वापस शून्य;
+	if (info->index >= map->max_entries)
+		return NULL;
 
-	अगर (*pos == 0)
+	if (*pos == 0)
 		++*pos;
-	array = container_of(map, काष्ठा bpf_array, map);
+	array = container_of(map, struct bpf_array, map);
 	index = info->index & array->index_mask;
-	अगर (info->percpu_value_buf)
-	       वापस array->pptrs[index];
-	वापस array->value + array->elem_size * index;
-पूर्ण
+	if (info->percpu_value_buf)
+	       return array->pptrs[index];
+	return array->value + array->elem_size * index;
+}
 
-अटल व्योम *bpf_array_map_seq_next(काष्ठा seq_file *seq, व्योम *v, loff_t *pos)
-अणु
-	काष्ठा bpf_iter_seq_array_map_info *info = seq->निजी;
-	काष्ठा bpf_map *map = info->map;
-	काष्ठा bpf_array *array;
+static void *bpf_array_map_seq_next(struct seq_file *seq, void *v, loff_t *pos)
+{
+	struct bpf_iter_seq_array_map_info *info = seq->private;
+	struct bpf_map *map = info->map;
+	struct bpf_array *array;
 	u32 index;
 
 	++*pos;
 	++info->index;
-	अगर (info->index >= map->max_entries)
-		वापस शून्य;
+	if (info->index >= map->max_entries)
+		return NULL;
 
-	array = container_of(map, काष्ठा bpf_array, map);
+	array = container_of(map, struct bpf_array, map);
 	index = info->index & array->index_mask;
-	अगर (info->percpu_value_buf)
-	       वापस array->pptrs[index];
-	वापस array->value + array->elem_size * index;
-पूर्ण
+	if (info->percpu_value_buf)
+	       return array->pptrs[index];
+	return array->value + array->elem_size * index;
+}
 
-अटल पूर्णांक __bpf_array_map_seq_show(काष्ठा seq_file *seq, व्योम *v)
-अणु
-	काष्ठा bpf_iter_seq_array_map_info *info = seq->निजी;
-	काष्ठा bpf_iter__bpf_map_elem ctx = अणुपूर्ण;
-	काष्ठा bpf_map *map = info->map;
-	काष्ठा bpf_iter_meta meta;
-	काष्ठा bpf_prog *prog;
-	पूर्णांक off = 0, cpu = 0;
-	व्योम __percpu **pptr;
+static int __bpf_array_map_seq_show(struct seq_file *seq, void *v)
+{
+	struct bpf_iter_seq_array_map_info *info = seq->private;
+	struct bpf_iter__bpf_map_elem ctx = {};
+	struct bpf_map *map = info->map;
+	struct bpf_iter_meta meta;
+	struct bpf_prog *prog;
+	int off = 0, cpu = 0;
+	void __percpu **pptr;
 	u32 size;
 
 	meta.seq = seq;
-	prog = bpf_iter_get_info(&meta, v == शून्य);
-	अगर (!prog)
-		वापस 0;
+	prog = bpf_iter_get_info(&meta, v == NULL);
+	if (!prog)
+		return 0;
 
 	ctx.meta = &meta;
 	ctx.map = info->map;
-	अगर (v) अणु
+	if (v) {
 		ctx.key = &info->index;
 
-		अगर (!info->percpu_value_buf) अणु
+		if (!info->percpu_value_buf) {
 			ctx.value = v;
-		पूर्ण अन्यथा अणु
+		} else {
 			pptr = v;
 			size = round_up(map->value_size, 8);
-			क्रम_each_possible_cpu(cpu) अणु
-				bpf_दीर्घ_स_नकल(info->percpu_value_buf + off,
+			for_each_possible_cpu(cpu) {
+				bpf_long_memcpy(info->percpu_value_buf + off,
 						per_cpu_ptr(pptr, cpu),
 						size);
 				off += size;
-			पूर्ण
+			}
 			ctx.value = info->percpu_value_buf;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस bpf_iter_run_prog(prog, &ctx);
-पूर्ण
+	return bpf_iter_run_prog(prog, &ctx);
+}
 
-अटल पूर्णांक bpf_array_map_seq_show(काष्ठा seq_file *seq, व्योम *v)
-अणु
-	वापस __bpf_array_map_seq_show(seq, v);
-पूर्ण
+static int bpf_array_map_seq_show(struct seq_file *seq, void *v)
+{
+	return __bpf_array_map_seq_show(seq, v);
+}
 
-अटल व्योम bpf_array_map_seq_stop(काष्ठा seq_file *seq, व्योम *v)
-अणु
-	अगर (!v)
-		(व्योम)__bpf_array_map_seq_show(seq, शून्य);
-पूर्ण
+static void bpf_array_map_seq_stop(struct seq_file *seq, void *v)
+{
+	if (!v)
+		(void)__bpf_array_map_seq_show(seq, NULL);
+}
 
-अटल पूर्णांक bpf_iter_init_array_map(व्योम *priv_data,
-				   काष्ठा bpf_iter_aux_info *aux)
-अणु
-	काष्ठा bpf_iter_seq_array_map_info *seq_info = priv_data;
-	काष्ठा bpf_map *map = aux->map;
-	व्योम *value_buf;
+static int bpf_iter_init_array_map(void *priv_data,
+				   struct bpf_iter_aux_info *aux)
+{
+	struct bpf_iter_seq_array_map_info *seq_info = priv_data;
+	struct bpf_map *map = aux->map;
+	void *value_buf;
 	u32 buf_size;
 
-	अगर (map->map_type == BPF_MAP_TYPE_PERCPU_ARRAY) अणु
+	if (map->map_type == BPF_MAP_TYPE_PERCPU_ARRAY) {
 		buf_size = round_up(map->value_size, 8) * num_possible_cpus();
-		value_buf = kदो_स्मृति(buf_size, GFP_USER | __GFP_NOWARN);
-		अगर (!value_buf)
-			वापस -ENOMEM;
+		value_buf = kmalloc(buf_size, GFP_USER | __GFP_NOWARN);
+		if (!value_buf)
+			return -ENOMEM;
 
 		seq_info->percpu_value_buf = value_buf;
-	पूर्ण
+	}
 
 	seq_info->map = map;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम bpf_iter_fini_array_map(व्योम *priv_data)
-अणु
-	काष्ठा bpf_iter_seq_array_map_info *seq_info = priv_data;
+static void bpf_iter_fini_array_map(void *priv_data)
+{
+	struct bpf_iter_seq_array_map_info *seq_info = priv_data;
 
-	kमुक्त(seq_info->percpu_value_buf);
-पूर्ण
+	kfree(seq_info->percpu_value_buf);
+}
 
-अटल स्थिर काष्ठा seq_operations bpf_array_map_seq_ops = अणु
+static const struct seq_operations bpf_array_map_seq_ops = {
 	.start	= bpf_array_map_seq_start,
 	.next	= bpf_array_map_seq_next,
 	.stop	= bpf_array_map_seq_stop,
 	.show	= bpf_array_map_seq_show,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा bpf_iter_seq_info iter_seq_info = अणु
+static const struct bpf_iter_seq_info iter_seq_info = {
 	.seq_ops		= &bpf_array_map_seq_ops,
-	.init_seq_निजी	= bpf_iter_init_array_map,
-	.fini_seq_निजी	= bpf_iter_fini_array_map,
-	.seq_priv_size		= माप(काष्ठा bpf_iter_seq_array_map_info),
-पूर्ण;
+	.init_seq_private	= bpf_iter_init_array_map,
+	.fini_seq_private	= bpf_iter_fini_array_map,
+	.seq_priv_size		= sizeof(struct bpf_iter_seq_array_map_info),
+};
 
-अटल पूर्णांक bpf_क्रम_each_array_elem(काष्ठा bpf_map *map, व्योम *callback_fn,
-				   व्योम *callback_ctx, u64 flags)
-अणु
+static int bpf_for_each_array_elem(struct bpf_map *map, void *callback_fn,
+				   void *callback_ctx, u64 flags)
+{
 	u32 i, key, num_elems = 0;
-	काष्ठा bpf_array *array;
+	struct bpf_array *array;
 	bool is_percpu;
 	u64 ret = 0;
-	व्योम *val;
+	void *val;
 
-	अगर (flags != 0)
-		वापस -EINVAL;
+	if (flags != 0)
+		return -EINVAL;
 
 	is_percpu = map->map_type == BPF_MAP_TYPE_PERCPU_ARRAY;
-	array = container_of(map, काष्ठा bpf_array, map);
-	अगर (is_percpu)
+	array = container_of(map, struct bpf_array, map);
+	if (is_percpu)
 		migrate_disable();
-	क्रम (i = 0; i < map->max_entries; i++) अणु
-		अगर (is_percpu)
+	for (i = 0; i < map->max_entries; i++) {
+		if (is_percpu)
 			val = this_cpu_ptr(array->pptrs[i]);
-		अन्यथा
+		else
 			val = array->value + array->elem_size * i;
 		num_elems++;
 		key = i;
-		ret = BPF_CAST_CALL(callback_fn)((u64)(दीर्घ)map,
-					(u64)(दीर्घ)&key, (u64)(दीर्घ)val,
-					(u64)(दीर्घ)callback_ctx, 0);
-		/* वापस value: 0 - जारी, 1 - stop and वापस */
-		अगर (ret)
-			अवरोध;
-	पूर्ण
+		ret = BPF_CAST_CALL(callback_fn)((u64)(long)map,
+					(u64)(long)&key, (u64)(long)val,
+					(u64)(long)callback_ctx, 0);
+		/* return value: 0 - continue, 1 - stop and return */
+		if (ret)
+			break;
+	}
 
-	अगर (is_percpu)
+	if (is_percpu)
 		migrate_enable();
-	वापस num_elems;
-पूर्ण
+	return num_elems;
+}
 
-अटल पूर्णांक array_map_btf_id;
-स्थिर काष्ठा bpf_map_ops array_map_ops = अणु
+static int array_map_btf_id;
+const struct bpf_map_ops array_map_ops = {
 	.map_meta_equal = array_map_meta_equal,
 	.map_alloc_check = array_map_alloc_check,
 	.map_alloc = array_map_alloc,
-	.map_मुक्त = array_map_मुक्त,
+	.map_free = array_map_free,
 	.map_get_next_key = array_map_get_next_key,
 	.map_lookup_elem = array_map_lookup_elem,
 	.map_update_elem = array_map_update_elem,
@@ -680,19 +679,19 @@
 	.map_check_btf = array_map_check_btf,
 	.map_lookup_batch = generic_map_lookup_batch,
 	.map_update_batch = generic_map_update_batch,
-	.map_set_क्रम_each_callback_args = map_set_क्रम_each_callback_args,
-	.map_क्रम_each_callback = bpf_क्रम_each_array_elem,
+	.map_set_for_each_callback_args = map_set_for_each_callback_args,
+	.map_for_each_callback = bpf_for_each_array_elem,
 	.map_btf_name = "bpf_array",
 	.map_btf_id = &array_map_btf_id,
 	.iter_seq_info = &iter_seq_info,
-पूर्ण;
+};
 
-अटल पूर्णांक percpu_array_map_btf_id;
-स्थिर काष्ठा bpf_map_ops percpu_array_map_ops = अणु
+static int percpu_array_map_btf_id;
+const struct bpf_map_ops percpu_array_map_ops = {
 	.map_meta_equal = bpf_map_meta_equal,
 	.map_alloc_check = array_map_alloc_check,
 	.map_alloc = array_map_alloc,
-	.map_मुक्त = array_map_मुक्त,
+	.map_free = array_map_free,
 	.map_get_next_key = array_map_get_next_key,
 	.map_lookup_elem = percpu_array_map_lookup_elem,
 	.map_update_elem = array_map_update_elem,
@@ -701,208 +700,208 @@
 	.map_check_btf = array_map_check_btf,
 	.map_lookup_batch = generic_map_lookup_batch,
 	.map_update_batch = generic_map_update_batch,
-	.map_set_क्रम_each_callback_args = map_set_क्रम_each_callback_args,
-	.map_क्रम_each_callback = bpf_क्रम_each_array_elem,
+	.map_set_for_each_callback_args = map_set_for_each_callback_args,
+	.map_for_each_callback = bpf_for_each_array_elem,
 	.map_btf_name = "bpf_array",
 	.map_btf_id = &percpu_array_map_btf_id,
 	.iter_seq_info = &iter_seq_info,
-पूर्ण;
+};
 
-अटल पूर्णांक fd_array_map_alloc_check(जोड़ bpf_attr *attr)
-अणु
+static int fd_array_map_alloc_check(union bpf_attr *attr)
+{
 	/* only file descriptors can be stored in this type of map */
-	अगर (attr->value_size != माप(u32))
-		वापस -EINVAL;
-	/* Program पढ़ो-only/ग_लिखो-only not supported क्रम special maps yet. */
-	अगर (attr->map_flags & (BPF_F_RDONLY_PROG | BPF_F_WRONLY_PROG))
-		वापस -EINVAL;
-	वापस array_map_alloc_check(attr);
-पूर्ण
+	if (attr->value_size != sizeof(u32))
+		return -EINVAL;
+	/* Program read-only/write-only not supported for special maps yet. */
+	if (attr->map_flags & (BPF_F_RDONLY_PROG | BPF_F_WRONLY_PROG))
+		return -EINVAL;
+	return array_map_alloc_check(attr);
+}
 
-अटल व्योम fd_array_map_मुक्त(काष्ठा bpf_map *map)
-अणु
-	काष्ठा bpf_array *array = container_of(map, काष्ठा bpf_array, map);
-	पूर्णांक i;
+static void fd_array_map_free(struct bpf_map *map)
+{
+	struct bpf_array *array = container_of(map, struct bpf_array, map);
+	int i;
 
 	/* make sure it's empty */
-	क्रम (i = 0; i < array->map.max_entries; i++)
-		BUG_ON(array->ptrs[i] != शून्य);
+	for (i = 0; i < array->map.max_entries; i++)
+		BUG_ON(array->ptrs[i] != NULL);
 
-	bpf_map_area_मुक्त(array);
-पूर्ण
+	bpf_map_area_free(array);
+}
 
-अटल व्योम *fd_array_map_lookup_elem(काष्ठा bpf_map *map, व्योम *key)
-अणु
-	वापस ERR_PTR(-EOPNOTSUPP);
-पूर्ण
+static void *fd_array_map_lookup_elem(struct bpf_map *map, void *key)
+{
+	return ERR_PTR(-EOPNOTSUPP);
+}
 
 /* only called from syscall */
-पूर्णांक bpf_fd_array_map_lookup_elem(काष्ठा bpf_map *map, व्योम *key, u32 *value)
-अणु
-	व्योम **elem, *ptr;
-	पूर्णांक ret =  0;
+int bpf_fd_array_map_lookup_elem(struct bpf_map *map, void *key, u32 *value)
+{
+	void **elem, *ptr;
+	int ret =  0;
 
-	अगर (!map->ops->map_fd_sys_lookup_elem)
-		वापस -ENOTSUPP;
+	if (!map->ops->map_fd_sys_lookup_elem)
+		return -ENOTSUPP;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	elem = array_map_lookup_elem(map, key);
-	अगर (elem && (ptr = READ_ONCE(*elem)))
+	if (elem && (ptr = READ_ONCE(*elem)))
 		*value = map->ops->map_fd_sys_lookup_elem(ptr);
-	अन्यथा
+	else
 		ret = -ENOENT;
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /* only called from syscall */
-पूर्णांक bpf_fd_array_map_update_elem(काष्ठा bpf_map *map, काष्ठा file *map_file,
-				 व्योम *key, व्योम *value, u64 map_flags)
-अणु
-	काष्ठा bpf_array *array = container_of(map, काष्ठा bpf_array, map);
-	व्योम *new_ptr, *old_ptr;
+int bpf_fd_array_map_update_elem(struct bpf_map *map, struct file *map_file,
+				 void *key, void *value, u64 map_flags)
+{
+	struct bpf_array *array = container_of(map, struct bpf_array, map);
+	void *new_ptr, *old_ptr;
 	u32 index = *(u32 *)key, ufd;
 
-	अगर (map_flags != BPF_ANY)
-		वापस -EINVAL;
+	if (map_flags != BPF_ANY)
+		return -EINVAL;
 
-	अगर (index >= array->map.max_entries)
-		वापस -E2BIG;
+	if (index >= array->map.max_entries)
+		return -E2BIG;
 
 	ufd = *(u32 *)value;
 	new_ptr = map->ops->map_fd_get_ptr(map, map_file, ufd);
-	अगर (IS_ERR(new_ptr))
-		वापस PTR_ERR(new_ptr);
+	if (IS_ERR(new_ptr))
+		return PTR_ERR(new_ptr);
 
-	अगर (map->ops->map_poke_run) अणु
+	if (map->ops->map_poke_run) {
 		mutex_lock(&array->aux->poke_mutex);
 		old_ptr = xchg(array->ptrs + index, new_ptr);
 		map->ops->map_poke_run(map, index, old_ptr, new_ptr);
 		mutex_unlock(&array->aux->poke_mutex);
-	पूर्ण अन्यथा अणु
+	} else {
 		old_ptr = xchg(array->ptrs + index, new_ptr);
-	पूर्ण
+	}
 
-	अगर (old_ptr)
+	if (old_ptr)
 		map->ops->map_fd_put_ptr(old_ptr);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक fd_array_map_delete_elem(काष्ठा bpf_map *map, व्योम *key)
-अणु
-	काष्ठा bpf_array *array = container_of(map, काष्ठा bpf_array, map);
-	व्योम *old_ptr;
+static int fd_array_map_delete_elem(struct bpf_map *map, void *key)
+{
+	struct bpf_array *array = container_of(map, struct bpf_array, map);
+	void *old_ptr;
 	u32 index = *(u32 *)key;
 
-	अगर (index >= array->map.max_entries)
-		वापस -E2BIG;
+	if (index >= array->map.max_entries)
+		return -E2BIG;
 
-	अगर (map->ops->map_poke_run) अणु
+	if (map->ops->map_poke_run) {
 		mutex_lock(&array->aux->poke_mutex);
-		old_ptr = xchg(array->ptrs + index, शून्य);
-		map->ops->map_poke_run(map, index, old_ptr, शून्य);
+		old_ptr = xchg(array->ptrs + index, NULL);
+		map->ops->map_poke_run(map, index, old_ptr, NULL);
 		mutex_unlock(&array->aux->poke_mutex);
-	पूर्ण अन्यथा अणु
-		old_ptr = xchg(array->ptrs + index, शून्य);
-	पूर्ण
+	} else {
+		old_ptr = xchg(array->ptrs + index, NULL);
+	}
 
-	अगर (old_ptr) अणु
+	if (old_ptr) {
 		map->ops->map_fd_put_ptr(old_ptr);
-		वापस 0;
-	पूर्ण अन्यथा अणु
-		वापस -ENOENT;
-	पूर्ण
-पूर्ण
+		return 0;
+	} else {
+		return -ENOENT;
+	}
+}
 
-अटल व्योम *prog_fd_array_get_ptr(काष्ठा bpf_map *map,
-				   काष्ठा file *map_file, पूर्णांक fd)
-अणु
-	काष्ठा bpf_array *array = container_of(map, काष्ठा bpf_array, map);
-	काष्ठा bpf_prog *prog = bpf_prog_get(fd);
+static void *prog_fd_array_get_ptr(struct bpf_map *map,
+				   struct file *map_file, int fd)
+{
+	struct bpf_array *array = container_of(map, struct bpf_array, map);
+	struct bpf_prog *prog = bpf_prog_get(fd);
 
-	अगर (IS_ERR(prog))
-		वापस prog;
+	if (IS_ERR(prog))
+		return prog;
 
-	अगर (!bpf_prog_array_compatible(array, prog)) अणु
+	if (!bpf_prog_array_compatible(array, prog)) {
 		bpf_prog_put(prog);
-		वापस ERR_PTR(-EINVAL);
-	पूर्ण
+		return ERR_PTR(-EINVAL);
+	}
 
-	वापस prog;
-पूर्ण
+	return prog;
+}
 
-अटल व्योम prog_fd_array_put_ptr(व्योम *ptr)
-अणु
+static void prog_fd_array_put_ptr(void *ptr)
+{
 	bpf_prog_put(ptr);
-पूर्ण
+}
 
-अटल u32 prog_fd_array_sys_lookup_elem(व्योम *ptr)
-अणु
-	वापस ((काष्ठा bpf_prog *)ptr)->aux->id;
-पूर्ण
+static u32 prog_fd_array_sys_lookup_elem(void *ptr)
+{
+	return ((struct bpf_prog *)ptr)->aux->id;
+}
 
 /* decrement refcnt of all bpf_progs that are stored in this map */
-अटल व्योम bpf_fd_array_map_clear(काष्ठा bpf_map *map)
-अणु
-	काष्ठा bpf_array *array = container_of(map, काष्ठा bpf_array, map);
-	पूर्णांक i;
+static void bpf_fd_array_map_clear(struct bpf_map *map)
+{
+	struct bpf_array *array = container_of(map, struct bpf_array, map);
+	int i;
 
-	क्रम (i = 0; i < array->map.max_entries; i++)
+	for (i = 0; i < array->map.max_entries; i++)
 		fd_array_map_delete_elem(map, &i);
-पूर्ण
+}
 
-अटल व्योम prog_array_map_seq_show_elem(काष्ठा bpf_map *map, व्योम *key,
-					 काष्ठा seq_file *m)
-अणु
-	व्योम **elem, *ptr;
+static void prog_array_map_seq_show_elem(struct bpf_map *map, void *key,
+					 struct seq_file *m)
+{
+	void **elem, *ptr;
 	u32 prog_id;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 
 	elem = array_map_lookup_elem(map, key);
-	अगर (elem) अणु
+	if (elem) {
 		ptr = READ_ONCE(*elem);
-		अगर (ptr) अणु
-			seq_म_लिखो(m, "%u: ", *(u32 *)key);
+		if (ptr) {
+			seq_printf(m, "%u: ", *(u32 *)key);
 			prog_id = prog_fd_array_sys_lookup_elem(ptr);
 			btf_type_seq_show(map->btf, map->btf_value_type_id,
 					  &prog_id, m);
-			seq_माला_दो(m, "\n");
-		पूर्ण
-	पूर्ण
+			seq_puts(m, "\n");
+		}
+	}
 
-	rcu_पढ़ो_unlock();
-पूर्ण
+	rcu_read_unlock();
+}
 
-काष्ठा prog_poke_elem अणु
-	काष्ठा list_head list;
-	काष्ठा bpf_prog_aux *aux;
-पूर्ण;
+struct prog_poke_elem {
+	struct list_head list;
+	struct bpf_prog_aux *aux;
+};
 
-अटल पूर्णांक prog_array_map_poke_track(काष्ठा bpf_map *map,
-				     काष्ठा bpf_prog_aux *prog_aux)
-अणु
-	काष्ठा prog_poke_elem *elem;
-	काष्ठा bpf_array_aux *aux;
-	पूर्णांक ret = 0;
+static int prog_array_map_poke_track(struct bpf_map *map,
+				     struct bpf_prog_aux *prog_aux)
+{
+	struct prog_poke_elem *elem;
+	struct bpf_array_aux *aux;
+	int ret = 0;
 
-	aux = container_of(map, काष्ठा bpf_array, map)->aux;
+	aux = container_of(map, struct bpf_array, map)->aux;
 	mutex_lock(&aux->poke_mutex);
-	list_क्रम_each_entry(elem, &aux->poke_progs, list) अणु
-		अगर (elem->aux == prog_aux)
-			जाओ out;
-	पूर्ण
+	list_for_each_entry(elem, &aux->poke_progs, list) {
+		if (elem->aux == prog_aux)
+			goto out;
+	}
 
-	elem = kदो_स्मृति(माप(*elem), GFP_KERNEL);
-	अगर (!elem) अणु
+	elem = kmalloc(sizeof(*elem), GFP_KERNEL);
+	if (!elem) {
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	INIT_LIST_HEAD(&elem->list);
-	/* We must track the program's aux info at this poपूर्णांक in समय
-	 * since the program poपूर्णांकer itself may not be stable yet, see
+	/* We must track the program's aux info at this point in time
+	 * since the program pointer itself may not be stable yet, see
 	 * also comment in prog_array_map_poke_run().
 	 */
 	elem->aux = prog_aux;
@@ -910,100 +909,100 @@
 	list_add_tail(&elem->list, &aux->poke_progs);
 out:
 	mutex_unlock(&aux->poke_mutex);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम prog_array_map_poke_untrack(काष्ठा bpf_map *map,
-					काष्ठा bpf_prog_aux *prog_aux)
-अणु
-	काष्ठा prog_poke_elem *elem, *पंचांगp;
-	काष्ठा bpf_array_aux *aux;
+static void prog_array_map_poke_untrack(struct bpf_map *map,
+					struct bpf_prog_aux *prog_aux)
+{
+	struct prog_poke_elem *elem, *tmp;
+	struct bpf_array_aux *aux;
 
-	aux = container_of(map, काष्ठा bpf_array, map)->aux;
+	aux = container_of(map, struct bpf_array, map)->aux;
 	mutex_lock(&aux->poke_mutex);
-	list_क्रम_each_entry_safe(elem, पंचांगp, &aux->poke_progs, list) अणु
-		अगर (elem->aux == prog_aux) अणु
+	list_for_each_entry_safe(elem, tmp, &aux->poke_progs, list) {
+		if (elem->aux == prog_aux) {
 			list_del_init(&elem->list);
-			kमुक्त(elem);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			kfree(elem);
+			break;
+		}
+	}
 	mutex_unlock(&aux->poke_mutex);
-पूर्ण
+}
 
-अटल व्योम prog_array_map_poke_run(काष्ठा bpf_map *map, u32 key,
-				    काष्ठा bpf_prog *old,
-				    काष्ठा bpf_prog *new)
-अणु
+static void prog_array_map_poke_run(struct bpf_map *map, u32 key,
+				    struct bpf_prog *old,
+				    struct bpf_prog *new)
+{
 	u8 *old_addr, *new_addr, *old_bypass_addr;
-	काष्ठा prog_poke_elem *elem;
-	काष्ठा bpf_array_aux *aux;
+	struct prog_poke_elem *elem;
+	struct bpf_array_aux *aux;
 
-	aux = container_of(map, काष्ठा bpf_array, map)->aux;
+	aux = container_of(map, struct bpf_array, map)->aux;
 	WARN_ON_ONCE(!mutex_is_locked(&aux->poke_mutex));
 
-	list_क्रम_each_entry(elem, &aux->poke_progs, list) अणु
-		काष्ठा bpf_jit_poke_descriptor *poke;
-		पूर्णांक i, ret;
+	list_for_each_entry(elem, &aux->poke_progs, list) {
+		struct bpf_jit_poke_descriptor *poke;
+		int i, ret;
 
-		क्रम (i = 0; i < elem->aux->size_poke_tab; i++) अणु
+		for (i = 0; i < elem->aux->size_poke_tab; i++) {
 			poke = &elem->aux->poke_tab[i];
 
 			/* Few things to be aware of:
 			 *
 			 * 1) We can only ever access aux in this context, but
 			 *    not aux->prog since it might not be stable yet and
-			 *    there could be danger of use after मुक्त otherwise.
+			 *    there could be danger of use after free otherwise.
 			 * 2) Initially when we start tracking aux, the program
-			 *    is not JITed yet and also करोes not have a kallsyms
+			 *    is not JITed yet and also does not have a kallsyms
 			 *    entry. We skip these as poke->tailcall_target_stable
-			 *    is not active yet. The JIT will करो the final fixup
-			 *    beक्रमe setting it stable. The various
+			 *    is not active yet. The JIT will do the final fixup
+			 *    before setting it stable. The various
 			 *    poke->tailcall_target_stable are successively
 			 *    activated, so tail call updates can arrive from here
-			 *    जबतक JIT is still finishing its final fixup क्रम
+			 *    while JIT is still finishing its final fixup for
 			 *    non-activated poke entries.
-			 * 3) On program tearकरोwn, the program's kallsym entry माला_लो
-			 *    हटाओd out of RCU callback, but we can only untrack
-			 *    from sleepable context, thereक्रमe bpf_arch_text_poke()
+			 * 3) On program teardown, the program's kallsym entry gets
+			 *    removed out of RCU callback, but we can only untrack
+			 *    from sleepable context, therefore bpf_arch_text_poke()
 			 *    might not see that this is in BPF text section and
 			 *    bails out with -EINVAL. As these are unreachable since
-			 *    RCU grace period alपढ़ोy passed, we simply skip them.
-			 * 4) Also programs reaching refcount of zero जबतक patching
-			 *    is in progress is okay since we're रक्षित under
-			 *    poke_mutex and untrack the programs beक्रमe the JIT
-			 *    buffer is मुक्तd. When we're still in the middle of
+			 *    RCU grace period already passed, we simply skip them.
+			 * 4) Also programs reaching refcount of zero while patching
+			 *    is in progress is okay since we're protected under
+			 *    poke_mutex and untrack the programs before the JIT
+			 *    buffer is freed. When we're still in the middle of
 			 *    patching and suddenly kallsyms entry of the program
-			 *    माला_लो evicted, we just skip the rest which is fine due
-			 *    to poपूर्णांक 3).
+			 *    gets evicted, we just skip the rest which is fine due
+			 *    to point 3).
 			 * 5) Any other error happening below from bpf_arch_text_poke()
 			 *    is a unexpected bug.
 			 */
-			अगर (!READ_ONCE(poke->tailcall_target_stable))
-				जारी;
-			अगर (poke->reason != BPF_POKE_REASON_TAIL_CALL)
-				जारी;
-			अगर (poke->tail_call.map != map ||
+			if (!READ_ONCE(poke->tailcall_target_stable))
+				continue;
+			if (poke->reason != BPF_POKE_REASON_TAIL_CALL)
+				continue;
+			if (poke->tail_call.map != map ||
 			    poke->tail_call.key != key)
-				जारी;
+				continue;
 
-			old_bypass_addr = old ? शून्य : poke->bypass_addr;
-			old_addr = old ? (u8 *)old->bpf_func + poke->adj_off : शून्य;
-			new_addr = new ? (u8 *)new->bpf_func + poke->adj_off : शून्य;
+			old_bypass_addr = old ? NULL : poke->bypass_addr;
+			old_addr = old ? (u8 *)old->bpf_func + poke->adj_off : NULL;
+			new_addr = new ? (u8 *)new->bpf_func + poke->adj_off : NULL;
 
-			अगर (new) अणु
+			if (new) {
 				ret = bpf_arch_text_poke(poke->tailcall_target,
 							 BPF_MOD_JUMP,
 							 old_addr, new_addr);
 				BUG_ON(ret < 0 && ret != -EINVAL);
-				अगर (!old) अणु
+				if (!old) {
 					ret = bpf_arch_text_poke(poke->tailcall_bypass,
 								 BPF_MOD_JUMP,
 								 poke->bypass_addr,
-								 शून्य);
+								 NULL);
 					BUG_ON(ret < 0 && ret != -EINVAL);
-				पूर्ण
-			पूर्ण अन्यथा अणु
+				}
+			} else {
 				ret = bpf_arch_text_poke(poke->tailcall_bypass,
 							 BPF_MOD_JUMP,
 							 old_bypass_addr,
@@ -1013,82 +1012,82 @@ out:
 				 * so that it will not possible to expose them
 				 * to invalid nop, stack unwind, nop state
 				 */
-				अगर (!ret)
+				if (!ret)
 					synchronize_rcu();
 				ret = bpf_arch_text_poke(poke->tailcall_target,
 							 BPF_MOD_JUMP,
-							 old_addr, शून्य);
+							 old_addr, NULL);
 				BUG_ON(ret < 0 && ret != -EINVAL);
-			पूर्ण
-		पूर्ण
-	पूर्ण
-पूर्ण
+			}
+		}
+	}
+}
 
-अटल व्योम prog_array_map_clear_deferred(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा bpf_map *map = container_of(work, काष्ठा bpf_array_aux,
+static void prog_array_map_clear_deferred(struct work_struct *work)
+{
+	struct bpf_map *map = container_of(work, struct bpf_array_aux,
 					   work)->map;
 	bpf_fd_array_map_clear(map);
 	bpf_map_put(map);
-पूर्ण
+}
 
-अटल व्योम prog_array_map_clear(काष्ठा bpf_map *map)
-अणु
-	काष्ठा bpf_array_aux *aux = container_of(map, काष्ठा bpf_array,
+static void prog_array_map_clear(struct bpf_map *map)
+{
+	struct bpf_array_aux *aux = container_of(map, struct bpf_array,
 						 map)->aux;
 	bpf_map_inc(map);
 	schedule_work(&aux->work);
-पूर्ण
+}
 
-अटल काष्ठा bpf_map *prog_array_map_alloc(जोड़ bpf_attr *attr)
-अणु
-	काष्ठा bpf_array_aux *aux;
-	काष्ठा bpf_map *map;
+static struct bpf_map *prog_array_map_alloc(union bpf_attr *attr)
+{
+	struct bpf_array_aux *aux;
+	struct bpf_map *map;
 
-	aux = kzalloc(माप(*aux), GFP_KERNEL_ACCOUNT);
-	अगर (!aux)
-		वापस ERR_PTR(-ENOMEM);
+	aux = kzalloc(sizeof(*aux), GFP_KERNEL_ACCOUNT);
+	if (!aux)
+		return ERR_PTR(-ENOMEM);
 
 	INIT_WORK(&aux->work, prog_array_map_clear_deferred);
 	INIT_LIST_HEAD(&aux->poke_progs);
 	mutex_init(&aux->poke_mutex);
 
 	map = array_map_alloc(attr);
-	अगर (IS_ERR(map)) अणु
-		kमुक्त(aux);
-		वापस map;
-	पूर्ण
+	if (IS_ERR(map)) {
+		kfree(aux);
+		return map;
+	}
 
-	container_of(map, काष्ठा bpf_array, map)->aux = aux;
+	container_of(map, struct bpf_array, map)->aux = aux;
 	aux->map = map;
 
-	वापस map;
-पूर्ण
+	return map;
+}
 
-अटल व्योम prog_array_map_मुक्त(काष्ठा bpf_map *map)
-अणु
-	काष्ठा prog_poke_elem *elem, *पंचांगp;
-	काष्ठा bpf_array_aux *aux;
+static void prog_array_map_free(struct bpf_map *map)
+{
+	struct prog_poke_elem *elem, *tmp;
+	struct bpf_array_aux *aux;
 
-	aux = container_of(map, काष्ठा bpf_array, map)->aux;
-	list_क्रम_each_entry_safe(elem, पंचांगp, &aux->poke_progs, list) अणु
+	aux = container_of(map, struct bpf_array, map)->aux;
+	list_for_each_entry_safe(elem, tmp, &aux->poke_progs, list) {
 		list_del_init(&elem->list);
-		kमुक्त(elem);
-	पूर्ण
-	kमुक्त(aux);
-	fd_array_map_मुक्त(map);
-पूर्ण
+		kfree(elem);
+	}
+	kfree(aux);
+	fd_array_map_free(map);
+}
 
-/* prog_array->aux->अणुtype,jitedपूर्ण is a runसमय binding.
- * Doing अटल check alone in the verअगरier is not enough.
+/* prog_array->aux->{type,jited} is a runtime binding.
+ * Doing static check alone in the verifier is not enough.
  * Thus, prog_array_map cannot be used as an inner_map
  * and map_meta_equal is not implemented.
  */
-अटल पूर्णांक prog_array_map_btf_id;
-स्थिर काष्ठा bpf_map_ops prog_array_map_ops = अणु
+static int prog_array_map_btf_id;
+const struct bpf_map_ops prog_array_map_ops = {
 	.map_alloc_check = fd_array_map_alloc_check,
 	.map_alloc = prog_array_map_alloc,
-	.map_मुक्त = prog_array_map_मुक्त,
+	.map_free = prog_array_map_free,
 	.map_poke_track = prog_array_map_poke_track,
 	.map_poke_untrack = prog_array_map_poke_untrack,
 	.map_poke_run = prog_array_map_poke_run,
@@ -1102,100 +1101,100 @@ out:
 	.map_seq_show_elem = prog_array_map_seq_show_elem,
 	.map_btf_name = "bpf_array",
 	.map_btf_id = &prog_array_map_btf_id,
-पूर्ण;
+};
 
-अटल काष्ठा bpf_event_entry *bpf_event_entry_gen(काष्ठा file *perf_file,
-						   काष्ठा file *map_file)
-अणु
-	काष्ठा bpf_event_entry *ee;
+static struct bpf_event_entry *bpf_event_entry_gen(struct file *perf_file,
+						   struct file *map_file)
+{
+	struct bpf_event_entry *ee;
 
-	ee = kzalloc(माप(*ee), GFP_ATOMIC);
-	अगर (ee) अणु
-		ee->event = perf_file->निजी_data;
+	ee = kzalloc(sizeof(*ee), GFP_ATOMIC);
+	if (ee) {
+		ee->event = perf_file->private_data;
 		ee->perf_file = perf_file;
 		ee->map_file = map_file;
-	पूर्ण
+	}
 
-	वापस ee;
-पूर्ण
+	return ee;
+}
 
-अटल व्योम __bpf_event_entry_मुक्त(काष्ठा rcu_head *rcu)
-अणु
-	काष्ठा bpf_event_entry *ee;
+static void __bpf_event_entry_free(struct rcu_head *rcu)
+{
+	struct bpf_event_entry *ee;
 
-	ee = container_of(rcu, काष्ठा bpf_event_entry, rcu);
+	ee = container_of(rcu, struct bpf_event_entry, rcu);
 	fput(ee->perf_file);
-	kमुक्त(ee);
-पूर्ण
+	kfree(ee);
+}
 
-अटल व्योम bpf_event_entry_मुक्त_rcu(काष्ठा bpf_event_entry *ee)
-अणु
-	call_rcu(&ee->rcu, __bpf_event_entry_मुक्त);
-पूर्ण
+static void bpf_event_entry_free_rcu(struct bpf_event_entry *ee)
+{
+	call_rcu(&ee->rcu, __bpf_event_entry_free);
+}
 
-अटल व्योम *perf_event_fd_array_get_ptr(काष्ठा bpf_map *map,
-					 काष्ठा file *map_file, पूर्णांक fd)
-अणु
-	काष्ठा bpf_event_entry *ee;
-	काष्ठा perf_event *event;
-	काष्ठा file *perf_file;
+static void *perf_event_fd_array_get_ptr(struct bpf_map *map,
+					 struct file *map_file, int fd)
+{
+	struct bpf_event_entry *ee;
+	struct perf_event *event;
+	struct file *perf_file;
 	u64 value;
 
 	perf_file = perf_event_get(fd);
-	अगर (IS_ERR(perf_file))
-		वापस perf_file;
+	if (IS_ERR(perf_file))
+		return perf_file;
 
 	ee = ERR_PTR(-EOPNOTSUPP);
-	event = perf_file->निजी_data;
-	अगर (perf_event_पढ़ो_local(event, &value, शून्य, शून्य) == -EOPNOTSUPP)
-		जाओ err_out;
+	event = perf_file->private_data;
+	if (perf_event_read_local(event, &value, NULL, NULL) == -EOPNOTSUPP)
+		goto err_out;
 
 	ee = bpf_event_entry_gen(perf_file, map_file);
-	अगर (ee)
-		वापस ee;
+	if (ee)
+		return ee;
 	ee = ERR_PTR(-ENOMEM);
 err_out:
 	fput(perf_file);
-	वापस ee;
-पूर्ण
+	return ee;
+}
 
-अटल व्योम perf_event_fd_array_put_ptr(व्योम *ptr)
-अणु
-	bpf_event_entry_मुक्त_rcu(ptr);
-पूर्ण
+static void perf_event_fd_array_put_ptr(void *ptr)
+{
+	bpf_event_entry_free_rcu(ptr);
+}
 
-अटल व्योम perf_event_fd_array_release(काष्ठा bpf_map *map,
-					काष्ठा file *map_file)
-अणु
-	काष्ठा bpf_array *array = container_of(map, काष्ठा bpf_array, map);
-	काष्ठा bpf_event_entry *ee;
-	पूर्णांक i;
+static void perf_event_fd_array_release(struct bpf_map *map,
+					struct file *map_file)
+{
+	struct bpf_array *array = container_of(map, struct bpf_array, map);
+	struct bpf_event_entry *ee;
+	int i;
 
-	अगर (map->map_flags & BPF_F_PRESERVE_ELEMS)
-		वापस;
+	if (map->map_flags & BPF_F_PRESERVE_ELEMS)
+		return;
 
-	rcu_पढ़ो_lock();
-	क्रम (i = 0; i < array->map.max_entries; i++) अणु
+	rcu_read_lock();
+	for (i = 0; i < array->map.max_entries; i++) {
 		ee = READ_ONCE(array->ptrs[i]);
-		अगर (ee && ee->map_file == map_file)
+		if (ee && ee->map_file == map_file)
 			fd_array_map_delete_elem(map, &i);
-	पूर्ण
-	rcu_पढ़ो_unlock();
-पूर्ण
+	}
+	rcu_read_unlock();
+}
 
-अटल व्योम perf_event_fd_array_map_मुक्त(काष्ठा bpf_map *map)
-अणु
-	अगर (map->map_flags & BPF_F_PRESERVE_ELEMS)
+static void perf_event_fd_array_map_free(struct bpf_map *map)
+{
+	if (map->map_flags & BPF_F_PRESERVE_ELEMS)
 		bpf_fd_array_map_clear(map);
-	fd_array_map_मुक्त(map);
-पूर्ण
+	fd_array_map_free(map);
+}
 
-अटल पूर्णांक perf_event_array_map_btf_id;
-स्थिर काष्ठा bpf_map_ops perf_event_array_map_ops = अणु
+static int perf_event_array_map_btf_id;
+const struct bpf_map_ops perf_event_array_map_ops = {
 	.map_meta_equal = bpf_map_meta_equal,
 	.map_alloc_check = fd_array_map_alloc_check,
 	.map_alloc = array_map_alloc,
-	.map_मुक्त = perf_event_fd_array_map_मुक्त,
+	.map_free = perf_event_fd_array_map_free,
 	.map_get_next_key = array_map_get_next_key,
 	.map_lookup_elem = fd_array_map_lookup_elem,
 	.map_delete_elem = fd_array_map_delete_elem,
@@ -1205,34 +1204,34 @@ err_out:
 	.map_check_btf = map_check_no_btf,
 	.map_btf_name = "bpf_array",
 	.map_btf_id = &perf_event_array_map_btf_id,
-पूर्ण;
+};
 
-#अगर_घोषित CONFIG_CGROUPS
-अटल व्योम *cgroup_fd_array_get_ptr(काष्ठा bpf_map *map,
-				     काष्ठा file *map_file /* not used */,
-				     पूर्णांक fd)
-अणु
-	वापस cgroup_get_from_fd(fd);
-पूर्ण
+#ifdef CONFIG_CGROUPS
+static void *cgroup_fd_array_get_ptr(struct bpf_map *map,
+				     struct file *map_file /* not used */,
+				     int fd)
+{
+	return cgroup_get_from_fd(fd);
+}
 
-अटल व्योम cgroup_fd_array_put_ptr(व्योम *ptr)
-अणु
-	/* cgroup_put मुक्त cgrp after a rcu grace period */
+static void cgroup_fd_array_put_ptr(void *ptr)
+{
+	/* cgroup_put free cgrp after a rcu grace period */
 	cgroup_put(ptr);
-पूर्ण
+}
 
-अटल व्योम cgroup_fd_array_मुक्त(काष्ठा bpf_map *map)
-अणु
+static void cgroup_fd_array_free(struct bpf_map *map)
+{
 	bpf_fd_array_map_clear(map);
-	fd_array_map_मुक्त(map);
-पूर्ण
+	fd_array_map_free(map);
+}
 
-अटल पूर्णांक cgroup_array_map_btf_id;
-स्थिर काष्ठा bpf_map_ops cgroup_array_map_ops = अणु
+static int cgroup_array_map_btf_id;
+const struct bpf_map_ops cgroup_array_map_ops = {
 	.map_meta_equal = bpf_map_meta_equal,
 	.map_alloc_check = fd_array_map_alloc_check,
 	.map_alloc = array_map_alloc,
-	.map_मुक्त = cgroup_fd_array_मुक्त,
+	.map_free = cgroup_fd_array_free,
 	.map_get_next_key = array_map_get_next_key,
 	.map_lookup_elem = fd_array_map_lookup_elem,
 	.map_delete_elem = fd_array_map_delete_elem,
@@ -1241,69 +1240,69 @@ err_out:
 	.map_check_btf = map_check_no_btf,
 	.map_btf_name = "bpf_array",
 	.map_btf_id = &cgroup_array_map_btf_id,
-पूर्ण;
-#पूर्ण_अगर
+};
+#endif
 
-अटल काष्ठा bpf_map *array_of_map_alloc(जोड़ bpf_attr *attr)
-अणु
-	काष्ठा bpf_map *map, *inner_map_meta;
+static struct bpf_map *array_of_map_alloc(union bpf_attr *attr)
+{
+	struct bpf_map *map, *inner_map_meta;
 
 	inner_map_meta = bpf_map_meta_alloc(attr->inner_map_fd);
-	अगर (IS_ERR(inner_map_meta))
-		वापस inner_map_meta;
+	if (IS_ERR(inner_map_meta))
+		return inner_map_meta;
 
 	map = array_map_alloc(attr);
-	अगर (IS_ERR(map)) अणु
-		bpf_map_meta_मुक्त(inner_map_meta);
-		वापस map;
-	पूर्ण
+	if (IS_ERR(map)) {
+		bpf_map_meta_free(inner_map_meta);
+		return map;
+	}
 
 	map->inner_map_meta = inner_map_meta;
 
-	वापस map;
-पूर्ण
+	return map;
+}
 
-अटल व्योम array_of_map_मुक्त(काष्ठा bpf_map *map)
-अणु
+static void array_of_map_free(struct bpf_map *map)
+{
 	/* map->inner_map_meta is only accessed by syscall which
-	 * is रक्षित by fdget/fdput.
+	 * is protected by fdget/fdput.
 	 */
-	bpf_map_meta_मुक्त(map->inner_map_meta);
+	bpf_map_meta_free(map->inner_map_meta);
 	bpf_fd_array_map_clear(map);
-	fd_array_map_मुक्त(map);
-पूर्ण
+	fd_array_map_free(map);
+}
 
-अटल व्योम *array_of_map_lookup_elem(काष्ठा bpf_map *map, व्योम *key)
-अणु
-	काष्ठा bpf_map **inner_map = array_map_lookup_elem(map, key);
+static void *array_of_map_lookup_elem(struct bpf_map *map, void *key)
+{
+	struct bpf_map **inner_map = array_map_lookup_elem(map, key);
 
-	अगर (!inner_map)
-		वापस शून्य;
+	if (!inner_map)
+		return NULL;
 
-	वापस READ_ONCE(*inner_map);
-पूर्ण
+	return READ_ONCE(*inner_map);
+}
 
-अटल पूर्णांक array_of_map_gen_lookup(काष्ठा bpf_map *map,
-				   काष्ठा bpf_insn *insn_buf)
-अणु
-	काष्ठा bpf_array *array = container_of(map, काष्ठा bpf_array, map);
+static int array_of_map_gen_lookup(struct bpf_map *map,
+				   struct bpf_insn *insn_buf)
+{
+	struct bpf_array *array = container_of(map, struct bpf_array, map);
 	u32 elem_size = round_up(map->value_size, 8);
-	काष्ठा bpf_insn *insn = insn_buf;
-	स्थिर पूर्णांक ret = BPF_REG_0;
-	स्थिर पूर्णांक map_ptr = BPF_REG_1;
-	स्थिर पूर्णांक index = BPF_REG_2;
+	struct bpf_insn *insn = insn_buf;
+	const int ret = BPF_REG_0;
+	const int map_ptr = BPF_REG_1;
+	const int index = BPF_REG_2;
 
-	*insn++ = BPF_ALU64_IMM(BPF_ADD, map_ptr, दुरत्व(काष्ठा bpf_array, value));
+	*insn++ = BPF_ALU64_IMM(BPF_ADD, map_ptr, offsetof(struct bpf_array, value));
 	*insn++ = BPF_LDX_MEM(BPF_W, ret, index, 0);
-	अगर (!map->bypass_spec_v1) अणु
+	if (!map->bypass_spec_v1) {
 		*insn++ = BPF_JMP_IMM(BPF_JGE, ret, map->max_entries, 6);
 		*insn++ = BPF_ALU32_IMM(BPF_AND, ret, array->index_mask);
-	पूर्ण अन्यथा अणु
+	} else {
 		*insn++ = BPF_JMP_IMM(BPF_JGE, ret, map->max_entries, 5);
-	पूर्ण
-	अगर (is_घातer_of_2(elem_size))
+	}
+	if (is_power_of_2(elem_size))
 		*insn++ = BPF_ALU64_IMM(BPF_LSH, ret, ilog2(elem_size));
-	अन्यथा
+	else
 		*insn++ = BPF_ALU64_IMM(BPF_MUL, ret, elem_size);
 	*insn++ = BPF_ALU64_REG(BPF_ADD, ret, map_ptr);
 	*insn++ = BPF_LDX_MEM(BPF_DW, ret, ret, 0);
@@ -1311,14 +1310,14 @@ err_out:
 	*insn++ = BPF_JMP_IMM(BPF_JA, 0, 0, 1);
 	*insn++ = BPF_MOV64_IMM(ret, 0);
 
-	वापस insn - insn_buf;
-पूर्ण
+	return insn - insn_buf;
+}
 
-अटल पूर्णांक array_of_maps_map_btf_id;
-स्थिर काष्ठा bpf_map_ops array_of_maps_map_ops = अणु
+static int array_of_maps_map_btf_id;
+const struct bpf_map_ops array_of_maps_map_ops = {
 	.map_alloc_check = fd_array_map_alloc_check,
 	.map_alloc = array_of_map_alloc,
-	.map_मुक्त = array_of_map_मुक्त,
+	.map_free = array_of_map_free,
 	.map_get_next_key = array_map_get_next_key,
 	.map_lookup_elem = array_of_map_lookup_elem,
 	.map_delete_elem = fd_array_map_delete_elem,
@@ -1329,4 +1328,4 @@ err_out:
 	.map_check_btf = map_check_no_btf,
 	.map_btf_name = "bpf_array",
 	.map_btf_id = &array_of_maps_map_btf_id,
-पूर्ण;
+};

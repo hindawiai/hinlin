@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * RapidIO mport अक्षरacter device
+ * RapidIO mport character device
  *
  * Copyright 2014-2015 Integrated Device Technology, Inc.
  *    Alexandre Bounine <alexandre.bounine@idt.com>
@@ -11,73 +10,73 @@
  * Copyright (C) 2014 Texas Instruments Incorporated
  *    Aurelien Jacquiot <a-jacquiot@ti.com>
  */
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/cdev.h>
-#समावेश <linux/ioctl.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/list.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/err.h>
-#समावेश <linux/net.h>
-#समावेश <linux/poll.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/kfअगरo.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/cdev.h>
+#include <linux/ioctl.h>
+#include <linux/uaccess.h>
+#include <linux/list.h>
+#include <linux/fs.h>
+#include <linux/err.h>
+#include <linux/net.h>
+#include <linux/poll.h>
+#include <linux/spinlock.h>
+#include <linux/sched.h>
+#include <linux/kfifo.h>
 
-#समावेश <linux/mm.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/vदो_स्मृति.h>
-#समावेश <linux/mman.h>
+#include <linux/mm.h>
+#include <linux/slab.h>
+#include <linux/vmalloc.h>
+#include <linux/mman.h>
 
-#समावेश <linux/dma-mapping.h>
-#अगर_घोषित CONFIG_RAPIDIO_DMA_ENGINE
-#समावेश <linux/dmaengine.h>
-#पूर्ण_अगर
+#include <linux/dma-mapping.h>
+#ifdef CONFIG_RAPIDIO_DMA_ENGINE
+#include <linux/dmaengine.h>
+#endif
 
-#समावेश <linux/rपन.स>
-#समावेश <linux/rio_ids.h>
-#समावेश <linux/rio_drv.h>
-#समावेश <linux/rio_mport_cdev.h>
+#include <linux/rio.h>
+#include <linux/rio_ids.h>
+#include <linux/rio_drv.h>
+#include <linux/rio_mport_cdev.h>
 
-#समावेश "../rio.h"
+#include "../rio.h"
 
-#घोषणा DRV_NAME	"rio_mport"
-#घोषणा DRV_PREFIX	DRV_NAME ": "
-#घोषणा DEV_NAME	"rio_mport"
-#घोषणा DRV_VERSION     "1.0.0"
+#define DRV_NAME	"rio_mport"
+#define DRV_PREFIX	DRV_NAME ": "
+#define DEV_NAME	"rio_mport"
+#define DRV_VERSION     "1.0.0"
 
 /* Debug output filtering masks */
-क्रमागत अणु
+enum {
 	DBG_NONE	= 0,
 	DBG_INIT	= BIT(0), /* driver init */
-	DBG_EXIT	= BIT(1), /* driver निकास */
-	DBG_MPORT	= BIT(2), /* mport add/हटाओ */
-	DBG_RDEV	= BIT(3), /* RapidIO device add/हटाओ */
+	DBG_EXIT	= BIT(1), /* driver exit */
+	DBG_MPORT	= BIT(2), /* mport add/remove */
+	DBG_RDEV	= BIT(3), /* RapidIO device add/remove */
 	DBG_DMA		= BIT(4), /* DMA transfer messages */
 	DBG_MMAP	= BIT(5), /* mapping messages */
-	DBG_IBW		= BIT(6), /* inbound winकरोw */
+	DBG_IBW		= BIT(6), /* inbound window */
 	DBG_EVENT	= BIT(7), /* event handling messages */
-	DBG_OBW		= BIT(8), /* outbound winकरोw messages */
-	DBG_DBELL	= BIT(9), /* करोorbell messages */
+	DBG_OBW		= BIT(8), /* outbound window messages */
+	DBG_DBELL	= BIT(9), /* doorbell messages */
 	DBG_ALL		= ~0,
-पूर्ण;
+};
 
-#अगर_घोषित DEBUG
-#घोषणा rmcd_debug(level, fmt, arg...)		\
-	करो अणु					\
-		अगर (DBG_##level & dbg_level)	\
+#ifdef DEBUG
+#define rmcd_debug(level, fmt, arg...)		\
+	do {					\
+		if (DBG_##level & dbg_level)	\
 			pr_debug(DRV_PREFIX "%s: " fmt "\n", __func__, ##arg); \
-	पूर्ण जबतक (0)
-#अन्यथा
-#घोषणा rmcd_debug(level, fmt, arg...) \
-		no_prपूर्णांकk(KERN_DEBUG pr_fmt(DRV_PREFIX fmt "\n"), ##arg)
-#पूर्ण_अगर
+	} while (0)
+#else
+#define rmcd_debug(level, fmt, arg...) \
+		no_printk(KERN_DEBUG pr_fmt(DRV_PREFIX fmt "\n"), ##arg)
+#endif
 
-#घोषणा rmcd_warn(fmt, arg...) \
+#define rmcd_warn(fmt, arg...) \
 	pr_warn(DRV_PREFIX "%s WARNING " fmt "\n", __func__, ##arg)
 
-#घोषणा rmcd_error(fmt, arg...) \
+#define rmcd_error(fmt, arg...) \
 	pr_err(DRV_PREFIX "%s ERROR " fmt "\n", __func__, ##arg)
 
 MODULE_AUTHOR("Jerry Jacobs <jerry.jacobs@prodrive-technologies.com>");
@@ -88,292 +87,292 @@ MODULE_DESCRIPTION("RapidIO mport character device driver");
 MODULE_LICENSE("GPL");
 MODULE_VERSION(DRV_VERSION);
 
-अटल पूर्णांक dma_समयout = 3000; /* DMA transfer समयout in msec */
-module_param(dma_समयout, पूर्णांक, S_IRUGO);
-MODULE_PARM_DESC(dma_समयout, "DMA Transfer Timeout in msec (default: 3000)");
+static int dma_timeout = 3000; /* DMA transfer timeout in msec */
+module_param(dma_timeout, int, S_IRUGO);
+MODULE_PARM_DESC(dma_timeout, "DMA Transfer Timeout in msec (default: 3000)");
 
-#अगर_घोषित DEBUG
-अटल u32 dbg_level = DBG_NONE;
-module_param(dbg_level, uपूर्णांक, S_IWUSR | S_IWGRP | S_IRUGO);
+#ifdef DEBUG
+static u32 dbg_level = DBG_NONE;
+module_param(dbg_level, uint, S_IWUSR | S_IWGRP | S_IRUGO);
 MODULE_PARM_DESC(dbg_level, "Debugging output level (default 0 = none)");
-#पूर्ण_अगर
+#endif
 
 /*
- * An पूर्णांकernal DMA coherent buffer
+ * An internal DMA coherent buffer
  */
-काष्ठा mport_dma_buf अणु
-	व्योम		*ib_base;
+struct mport_dma_buf {
+	void		*ib_base;
 	dma_addr_t	ib_phys;
 	u32		ib_size;
 	u64		ib_rio_base;
 	bool		ib_map;
-	काष्ठा file	*filp;
-पूर्ण;
+	struct file	*filp;
+};
 
 /*
- * Internal memory mapping काष्ठाure
+ * Internal memory mapping structure
  */
-क्रमागत rio_mport_map_dir अणु
+enum rio_mport_map_dir {
 	MAP_INBOUND,
 	MAP_OUTBOUND,
 	MAP_DMA,
-पूर्ण;
+};
 
-काष्ठा rio_mport_mapping अणु
-	काष्ठा list_head node;
-	काष्ठा mport_dev *md;
-	क्रमागत rio_mport_map_dir dir;
+struct rio_mport_mapping {
+	struct list_head node;
+	struct mport_dev *md;
+	enum rio_mport_map_dir dir;
 	u16 rioid;
 	u64 rio_addr;
-	dma_addr_t phys_addr; /* क्रम mmap */
-	व्योम *virt_addr; /* kernel address, क्रम dma_मुक्त_coherent */
+	dma_addr_t phys_addr; /* for mmap */
+	void *virt_addr; /* kernel address, for dma_free_coherent */
 	u64 size;
-	काष्ठा kref ref; /* refcount of vmas sharing the mapping */
-	काष्ठा file *filp;
-पूर्ण;
+	struct kref ref; /* refcount of vmas sharing the mapping */
+	struct file *filp;
+};
 
-काष्ठा rio_mport_dma_map अणु
-	पूर्णांक valid;
+struct rio_mport_dma_map {
+	int valid;
 	u64 length;
-	व्योम *vaddr;
+	void *vaddr;
 	dma_addr_t paddr;
-पूर्ण;
+};
 
-#घोषणा MPORT_MAX_DMA_BUFS	16
-#घोषणा MPORT_EVENT_DEPTH	10
+#define MPORT_MAX_DMA_BUFS	16
+#define MPORT_EVENT_DEPTH	10
 
 /*
- * mport_dev  driver-specअगरic काष्ठाure that represents mport device
+ * mport_dev  driver-specific structure that represents mport device
  * @active    mport device status flag
- * @node      list node to मुख्यtain list of रेजिस्टरed mports
- * @cdev      अक्षरacter device
+ * @node      list node to maintain list of registered mports
+ * @cdev      character device
  * @dev       associated device object
- * @mport     associated subप्रणाली's master port device object
- * @buf_mutex lock क्रम buffer handling
- * @file_mutex - lock क्रम खोलो files list
- * @file_list  - list of खोलो files on given mport
+ * @mport     associated subsystem's master port device object
+ * @buf_mutex lock for buffer handling
+ * @file_mutex - lock for open files list
+ * @file_list  - list of open files on given mport
  * @properties properties of this mport
- * @portग_लिखोs queue of inbound portग_लिखोs
- * @pw_lock    lock क्रम port ग_लिखो queue
- * @mappings   queue क्रम memory mappings
+ * @portwrites queue of inbound portwrites
+ * @pw_lock    lock for port write queue
+ * @mappings   queue for memory mappings
  * @dma_chan   DMA channels associated with this device
  * @dma_ref:
  * @comp:
  */
-काष्ठा mport_dev अणु
+struct mport_dev {
 	atomic_t		active;
-	काष्ठा list_head	node;
-	काष्ठा cdev		cdev;
-	काष्ठा device		dev;
-	काष्ठा rio_mport	*mport;
-	काष्ठा mutex		buf_mutex;
-	काष्ठा mutex		file_mutex;
-	काष्ठा list_head	file_list;
-	काष्ठा rio_mport_properties	properties;
-	काष्ठा list_head		करोorbells;
+	struct list_head	node;
+	struct cdev		cdev;
+	struct device		dev;
+	struct rio_mport	*mport;
+	struct mutex		buf_mutex;
+	struct mutex		file_mutex;
+	struct list_head	file_list;
+	struct rio_mport_properties	properties;
+	struct list_head		doorbells;
 	spinlock_t			db_lock;
-	काष्ठा list_head		portग_लिखोs;
+	struct list_head		portwrites;
 	spinlock_t			pw_lock;
-	काष्ठा list_head	mappings;
-#अगर_घोषित CONFIG_RAPIDIO_DMA_ENGINE
-	काष्ठा dma_chan *dma_chan;
-	काष्ठा kref	dma_ref;
-	काष्ठा completion comp;
-#पूर्ण_अगर
-पूर्ण;
+	struct list_head	mappings;
+#ifdef CONFIG_RAPIDIO_DMA_ENGINE
+	struct dma_chan *dma_chan;
+	struct kref	dma_ref;
+	struct completion comp;
+#endif
+};
 
 /*
- * mport_cdev_priv - data काष्ठाure specअगरic to inभागidual file object
- *                   associated with an खोलो device
- * @md    master port अक्षरacter device object
- * @async_queue - asynchronous notअगरication queue
+ * mport_cdev_priv - data structure specific to individual file object
+ *                   associated with an open device
+ * @md    master port character device object
+ * @async_queue - asynchronous notification queue
  * @list - file objects tracking list
- * @db_filters    inbound करोorbell filters क्रम this descriptor
- * @pw_filters    portग_लिखो filters क्रम this descriptor
- * @event_fअगरo    event fअगरo क्रम this descriptor
- * @event_rx_रुको रुको queue क्रम this descriptor
- * @fअगरo_lock     lock क्रम event_fअगरo
- * @event_mask    event mask क्रम this descriptor
- * @dmach DMA engine channel allocated क्रम specअगरic file object
+ * @db_filters    inbound doorbell filters for this descriptor
+ * @pw_filters    portwrite filters for this descriptor
+ * @event_fifo    event fifo for this descriptor
+ * @event_rx_wait wait queue for this descriptor
+ * @fifo_lock     lock for event_fifo
+ * @event_mask    event mask for this descriptor
+ * @dmach DMA engine channel allocated for specific file object
  */
-काष्ठा mport_cdev_priv अणु
-	काष्ठा mport_dev	*md;
-	काष्ठा fasync_काष्ठा	*async_queue;
-	काष्ठा list_head	list;
-	काष्ठा list_head	db_filters;
-	काष्ठा list_head        pw_filters;
-	काष्ठा kfअगरo            event_fअगरo;
-	रुको_queue_head_t       event_rx_रुको;
-	spinlock_t              fअगरo_lock;
+struct mport_cdev_priv {
+	struct mport_dev	*md;
+	struct fasync_struct	*async_queue;
+	struct list_head	list;
+	struct list_head	db_filters;
+	struct list_head        pw_filters;
+	struct kfifo            event_fifo;
+	wait_queue_head_t       event_rx_wait;
+	spinlock_t              fifo_lock;
 	u32			event_mask; /* RIO_DOORBELL, RIO_PORTWRITE */
-#अगर_घोषित CONFIG_RAPIDIO_DMA_ENGINE
-	काष्ठा dma_chan		*dmach;
-	काष्ठा list_head	async_list;
+#ifdef CONFIG_RAPIDIO_DMA_ENGINE
+	struct dma_chan		*dmach;
+	struct list_head	async_list;
 	spinlock_t              req_lock;
-	काष्ठा mutex		dma_lock;
-	काष्ठा kref		dma_ref;
-	काष्ठा completion	comp;
-#पूर्ण_अगर
-पूर्ण;
+	struct mutex		dma_lock;
+	struct kref		dma_ref;
+	struct completion	comp;
+#endif
+};
 
 /*
- * rio_mport_pw_filter - काष्ठाure to describe a portग_लिखो filter
+ * rio_mport_pw_filter - structure to describe a portwrite filter
  * md_node   node in mport device's list
- * priv_node node in निजी file object's list
- * priv      reference to निजी data
- * filter    actual portग_लिखो filter
+ * priv_node node in private file object's list
+ * priv      reference to private data
+ * filter    actual portwrite filter
  */
-काष्ठा rio_mport_pw_filter अणु
-	काष्ठा list_head md_node;
-	काष्ठा list_head priv_node;
-	काष्ठा mport_cdev_priv *priv;
-	काष्ठा rio_pw_filter filter;
-पूर्ण;
+struct rio_mport_pw_filter {
+	struct list_head md_node;
+	struct list_head priv_node;
+	struct mport_cdev_priv *priv;
+	struct rio_pw_filter filter;
+};
 
 /*
- * rio_mport_db_filter - काष्ठाure to describe a करोorbell filter
+ * rio_mport_db_filter - structure to describe a doorbell filter
  * @data_node reference to device node
- * @priv_node node in निजी data
- * @priv      reference to निजी data
- * @filter    actual करोorbell filter
+ * @priv_node node in private data
+ * @priv      reference to private data
+ * @filter    actual doorbell filter
  */
-काष्ठा rio_mport_db_filter अणु
-	काष्ठा list_head data_node;
-	काष्ठा list_head priv_node;
-	काष्ठा mport_cdev_priv *priv;
-	काष्ठा rio_करोorbell_filter filter;
-पूर्ण;
+struct rio_mport_db_filter {
+	struct list_head data_node;
+	struct list_head priv_node;
+	struct mport_cdev_priv *priv;
+	struct rio_doorbell_filter filter;
+};
 
-अटल LIST_HEAD(mport_devs);
-अटल DEFINE_MUTEX(mport_devs_lock);
+static LIST_HEAD(mport_devs);
+static DEFINE_MUTEX(mport_devs_lock);
 
-#अगर (0) /* used by commented out portion of poll function : FIXME */
-अटल DECLARE_WAIT_QUEUE_HEAD(mport_cdev_रुको);
-#पूर्ण_अगर
+#if (0) /* used by commented out portion of poll function : FIXME */
+static DECLARE_WAIT_QUEUE_HEAD(mport_cdev_wait);
+#endif
 
-अटल काष्ठा class *dev_class;
-अटल dev_t dev_number;
+static struct class *dev_class;
+static dev_t dev_number;
 
-अटल व्योम mport_release_mapping(काष्ठा kref *ref);
+static void mport_release_mapping(struct kref *ref);
 
-अटल पूर्णांक rio_mport_मुख्यt_rd(काष्ठा mport_cdev_priv *priv, व्योम __user *arg,
-			      पूर्णांक local)
-अणु
-	काष्ठा rio_mport *mport = priv->md->mport;
-	काष्ठा rio_mport_मुख्यt_io मुख्यt_io;
+static int rio_mport_maint_rd(struct mport_cdev_priv *priv, void __user *arg,
+			      int local)
+{
+	struct rio_mport *mport = priv->md->mport;
+	struct rio_mport_maint_io maint_io;
 	u32 *buffer;
 	u32 offset;
-	माप_प्रकार length;
-	पूर्णांक ret, i;
+	size_t length;
+	int ret, i;
 
-	अगर (unlikely(copy_from_user(&मुख्यt_io, arg, माप(मुख्यt_io))))
-		वापस -EFAULT;
+	if (unlikely(copy_from_user(&maint_io, arg, sizeof(maint_io))))
+		return -EFAULT;
 
-	अगर ((मुख्यt_io.offset % 4) ||
-	    (मुख्यt_io.length == 0) || (मुख्यt_io.length % 4) ||
-	    (मुख्यt_io.length + मुख्यt_io.offset) > RIO_MAINT_SPACE_SZ)
-		वापस -EINVAL;
+	if ((maint_io.offset % 4) ||
+	    (maint_io.length == 0) || (maint_io.length % 4) ||
+	    (maint_io.length + maint_io.offset) > RIO_MAINT_SPACE_SZ)
+		return -EINVAL;
 
-	buffer = vदो_स्मृति(मुख्यt_io.length);
-	अगर (buffer == शून्य)
-		वापस -ENOMEM;
-	length = मुख्यt_io.length/माप(u32);
-	offset = मुख्यt_io.offset;
+	buffer = vmalloc(maint_io.length);
+	if (buffer == NULL)
+		return -ENOMEM;
+	length = maint_io.length/sizeof(u32);
+	offset = maint_io.offset;
 
-	क्रम (i = 0; i < length; i++) अणु
-		अगर (local)
-			ret = __rio_local_पढ़ो_config_32(mport,
+	for (i = 0; i < length; i++) {
+		if (local)
+			ret = __rio_local_read_config_32(mport,
 				offset, &buffer[i]);
-		अन्यथा
-			ret = rio_mport_पढ़ो_config_32(mport, मुख्यt_io.rioid,
-				मुख्यt_पन.सopcount, offset, &buffer[i]);
-		अगर (ret)
-			जाओ out;
+		else
+			ret = rio_mport_read_config_32(mport, maint_io.rioid,
+				maint_io.hopcount, offset, &buffer[i]);
+		if (ret)
+			goto out;
 
 		offset += 4;
-	पूर्ण
+	}
 
-	अगर (unlikely(copy_to_user((व्योम __user *)(uपूर्णांकptr_t)मुख्यt_io.buffer,
-				   buffer, मुख्यt_io.length)))
+	if (unlikely(copy_to_user((void __user *)(uintptr_t)maint_io.buffer,
+				   buffer, maint_io.length)))
 		ret = -EFAULT;
 out:
-	vमुक्त(buffer);
-	वापस ret;
-पूर्ण
+	vfree(buffer);
+	return ret;
+}
 
-अटल पूर्णांक rio_mport_मुख्यt_wr(काष्ठा mport_cdev_priv *priv, व्योम __user *arg,
-			      पूर्णांक local)
-अणु
-	काष्ठा rio_mport *mport = priv->md->mport;
-	काष्ठा rio_mport_मुख्यt_io मुख्यt_io;
+static int rio_mport_maint_wr(struct mport_cdev_priv *priv, void __user *arg,
+			      int local)
+{
+	struct rio_mport *mport = priv->md->mport;
+	struct rio_mport_maint_io maint_io;
 	u32 *buffer;
 	u32 offset;
-	माप_प्रकार length;
-	पूर्णांक ret = -EINVAL, i;
+	size_t length;
+	int ret = -EINVAL, i;
 
-	अगर (unlikely(copy_from_user(&मुख्यt_io, arg, माप(मुख्यt_io))))
-		वापस -EFAULT;
+	if (unlikely(copy_from_user(&maint_io, arg, sizeof(maint_io))))
+		return -EFAULT;
 
-	अगर ((मुख्यt_io.offset % 4) ||
-	    (मुख्यt_io.length == 0) || (मुख्यt_io.length % 4) ||
-	    (मुख्यt_io.length + मुख्यt_io.offset) > RIO_MAINT_SPACE_SZ)
-		वापस -EINVAL;
+	if ((maint_io.offset % 4) ||
+	    (maint_io.length == 0) || (maint_io.length % 4) ||
+	    (maint_io.length + maint_io.offset) > RIO_MAINT_SPACE_SZ)
+		return -EINVAL;
 
-	buffer = vदो_स्मृति(मुख्यt_io.length);
-	अगर (buffer == शून्य)
-		वापस -ENOMEM;
-	length = मुख्यt_io.length;
+	buffer = vmalloc(maint_io.length);
+	if (buffer == NULL)
+		return -ENOMEM;
+	length = maint_io.length;
 
-	अगर (unlikely(copy_from_user(buffer,
-			(व्योम __user *)(uपूर्णांकptr_t)मुख्यt_io.buffer, length))) अणु
+	if (unlikely(copy_from_user(buffer,
+			(void __user *)(uintptr_t)maint_io.buffer, length))) {
 		ret = -EFAULT;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	offset = मुख्यt_io.offset;
-	length /= माप(u32);
+	offset = maint_io.offset;
+	length /= sizeof(u32);
 
-	क्रम (i = 0; i < length; i++) अणु
-		अगर (local)
-			ret = __rio_local_ग_लिखो_config_32(mport,
+	for (i = 0; i < length; i++) {
+		if (local)
+			ret = __rio_local_write_config_32(mport,
 							  offset, buffer[i]);
-		अन्यथा
-			ret = rio_mport_ग_लिखो_config_32(mport, मुख्यt_io.rioid,
-							मुख्यt_पन.सopcount,
+		else
+			ret = rio_mport_write_config_32(mport, maint_io.rioid,
+							maint_io.hopcount,
 							offset, buffer[i]);
-		अगर (ret)
-			जाओ out;
+		if (ret)
+			goto out;
 
 		offset += 4;
-	पूर्ण
+	}
 
 out:
-	vमुक्त(buffer);
-	वापस ret;
-पूर्ण
+	vfree(buffer);
+	return ret;
+}
 
 
 /*
  * Inbound/outbound memory mapping functions
  */
-अटल पूर्णांक
-rio_mport_create_outbound_mapping(काष्ठा mport_dev *md, काष्ठा file *filp,
+static int
+rio_mport_create_outbound_mapping(struct mport_dev *md, struct file *filp,
 				  u16 rioid, u64 raddr, u32 size,
 				  dma_addr_t *paddr)
-अणु
-	काष्ठा rio_mport *mport = md->mport;
-	काष्ठा rio_mport_mapping *map;
-	पूर्णांक ret;
+{
+	struct rio_mport *mport = md->mport;
+	struct rio_mport_mapping *map;
+	int ret;
 
 	rmcd_debug(OBW, "did=%d ra=0x%llx sz=0x%x", rioid, raddr, size);
 
-	map = kzalloc(माप(*map), GFP_KERNEL);
-	अगर (map == शून्य)
-		वापस -ENOMEM;
+	map = kzalloc(sizeof(*map), GFP_KERNEL);
+	if (map == NULL)
+		return -ENOMEM;
 
 	ret = rio_map_outb_region(mport, rioid, raddr, size, 0, paddr);
-	अगर (ret < 0)
-		जाओ err_map_outb;
+	if (ret < 0)
+		goto err_map_outb;
 
 	map->dir = MAP_OUTBOUND;
 	map->rioid = rioid;
@@ -384,122 +383,122 @@ rio_mport_create_outbound_mapping(काष्ठा mport_dev *md, काष्
 	map->md = md;
 	kref_init(&map->ref);
 	list_add_tail(&map->node, &md->mappings);
-	वापस 0;
+	return 0;
 err_map_outb:
-	kमुक्त(map);
-	वापस ret;
-पूर्ण
+	kfree(map);
+	return ret;
+}
 
-अटल पूर्णांक
-rio_mport_get_outbound_mapping(काष्ठा mport_dev *md, काष्ठा file *filp,
+static int
+rio_mport_get_outbound_mapping(struct mport_dev *md, struct file *filp,
 			       u16 rioid, u64 raddr, u32 size,
 			       dma_addr_t *paddr)
-अणु
-	काष्ठा rio_mport_mapping *map;
-	पूर्णांक err = -ENOMEM;
+{
+	struct rio_mport_mapping *map;
+	int err = -ENOMEM;
 
 	mutex_lock(&md->buf_mutex);
-	list_क्रम_each_entry(map, &md->mappings, node) अणु
-		अगर (map->dir != MAP_OUTBOUND)
-			जारी;
-		अगर (rioid == map->rioid &&
-		    raddr == map->rio_addr && size == map->size) अणु
+	list_for_each_entry(map, &md->mappings, node) {
+		if (map->dir != MAP_OUTBOUND)
+			continue;
+		if (rioid == map->rioid &&
+		    raddr == map->rio_addr && size == map->size) {
 			*paddr = map->phys_addr;
 			err = 0;
-			अवरोध;
-		पूर्ण अन्यथा अगर (rioid == map->rioid &&
+			break;
+		} else if (rioid == map->rioid &&
 			   raddr < (map->rio_addr + map->size - 1) &&
-			   (raddr + size) > map->rio_addr) अणु
+			   (raddr + size) > map->rio_addr) {
 			err = -EBUSY;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
 	/* If not found, create new */
-	अगर (err == -ENOMEM)
+	if (err == -ENOMEM)
 		err = rio_mport_create_outbound_mapping(md, filp, rioid, raddr,
 						size, paddr);
 	mutex_unlock(&md->buf_mutex);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक rio_mport_obw_map(काष्ठा file *filp, व्योम __user *arg)
-अणु
-	काष्ठा mport_cdev_priv *priv = filp->निजी_data;
-	काष्ठा mport_dev *data = priv->md;
-	काष्ठा rio_mmap map;
+static int rio_mport_obw_map(struct file *filp, void __user *arg)
+{
+	struct mport_cdev_priv *priv = filp->private_data;
+	struct mport_dev *data = priv->md;
+	struct rio_mmap map;
 	dma_addr_t paddr;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (unlikely(copy_from_user(&map, arg, माप(map))))
-		वापस -EFAULT;
+	if (unlikely(copy_from_user(&map, arg, sizeof(map))))
+		return -EFAULT;
 
 	rmcd_debug(OBW, "did=%d ra=0x%llx sz=0x%llx",
 		   map.rioid, map.rio_addr, map.length);
 
 	ret = rio_mport_get_outbound_mapping(data, filp, map.rioid,
 					     map.rio_addr, map.length, &paddr);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		rmcd_error("Failed to set OBW err= %d", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	map.handle = paddr;
 
-	अगर (unlikely(copy_to_user(arg, &map, माप(map))))
-		वापस -EFAULT;
-	वापस 0;
-पूर्ण
+	if (unlikely(copy_to_user(arg, &map, sizeof(map))))
+		return -EFAULT;
+	return 0;
+}
 
 /*
- * rio_mport_obw_मुक्त() - unmap an OutBound Winकरोw from RapidIO address space
+ * rio_mport_obw_free() - unmap an OutBound Window from RapidIO address space
  *
- * @priv: driver निजी data
- * @arg:  buffer handle वापसed by allocation routine
+ * @priv: driver private data
+ * @arg:  buffer handle returned by allocation routine
  */
-अटल पूर्णांक rio_mport_obw_मुक्त(काष्ठा file *filp, व्योम __user *arg)
-अणु
-	काष्ठा mport_cdev_priv *priv = filp->निजी_data;
-	काष्ठा mport_dev *md = priv->md;
+static int rio_mport_obw_free(struct file *filp, void __user *arg)
+{
+	struct mport_cdev_priv *priv = filp->private_data;
+	struct mport_dev *md = priv->md;
 	u64 handle;
-	काष्ठा rio_mport_mapping *map, *_map;
+	struct rio_mport_mapping *map, *_map;
 
-	अगर (!md->mport->ops->unmap_outb)
-		वापस -EPROTONOSUPPORT;
+	if (!md->mport->ops->unmap_outb)
+		return -EPROTONOSUPPORT;
 
-	अगर (copy_from_user(&handle, arg, माप(handle)))
-		वापस -EFAULT;
+	if (copy_from_user(&handle, arg, sizeof(handle)))
+		return -EFAULT;
 
 	rmcd_debug(OBW, "h=0x%llx", handle);
 
 	mutex_lock(&md->buf_mutex);
-	list_क्रम_each_entry_safe(map, _map, &md->mappings, node) अणु
-		अगर (map->dir == MAP_OUTBOUND && map->phys_addr == handle) अणु
-			अगर (map->filp == filp) अणु
+	list_for_each_entry_safe(map, _map, &md->mappings, node) {
+		if (map->dir == MAP_OUTBOUND && map->phys_addr == handle) {
+			if (map->filp == filp) {
 				rmcd_debug(OBW, "kref_put h=0x%llx", handle);
-				map->filp = शून्य;
+				map->filp = NULL;
 				kref_put(&map->ref, mport_release_mapping);
-			पूर्ण
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			}
+			break;
+		}
+	}
 	mutex_unlock(&md->buf_mutex);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * मुख्यt_hdid_set() - Set the host Device ID
- * @priv: driver निजी data
+ * maint_hdid_set() - Set the host Device ID
+ * @priv: driver private data
  * @arg:	Device Id
  */
-अटल पूर्णांक मुख्यt_hdid_set(काष्ठा mport_cdev_priv *priv, व्योम __user *arg)
-अणु
-	काष्ठा mport_dev *md = priv->md;
+static int maint_hdid_set(struct mport_cdev_priv *priv, void __user *arg)
+{
+	struct mport_dev *md = priv->md;
 	u16 hdid;
 
-	अगर (copy_from_user(&hdid, arg, माप(hdid)))
-		वापस -EFAULT;
+	if (copy_from_user(&hdid, arg, sizeof(hdid)))
+		return -EFAULT;
 
 	md->mport->host_deviceid = hdid;
 	md->properties.hdid = hdid;
@@ -507,201 +506,201 @@ rio_mport_get_outbound_mapping(काष्ठा mport_dev *md, काष्ठ
 
 	rmcd_debug(MPORT, "Set host device Id to %d", hdid);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * मुख्यt_comptag_set() - Set the host Component Tag
- * @priv: driver निजी data
+ * maint_comptag_set() - Set the host Component Tag
+ * @priv: driver private data
  * @arg:	Component Tag
  */
-अटल पूर्णांक मुख्यt_comptag_set(काष्ठा mport_cdev_priv *priv, व्योम __user *arg)
-अणु
-	काष्ठा mport_dev *md = priv->md;
+static int maint_comptag_set(struct mport_cdev_priv *priv, void __user *arg)
+{
+	struct mport_dev *md = priv->md;
 	u32 comptag;
 
-	अगर (copy_from_user(&comptag, arg, माप(comptag)))
-		वापस -EFAULT;
+	if (copy_from_user(&comptag, arg, sizeof(comptag)))
+		return -EFAULT;
 
-	rio_local_ग_लिखो_config_32(md->mport, RIO_COMPONENT_TAG_CSR, comptag);
+	rio_local_write_config_32(md->mport, RIO_COMPONENT_TAG_CSR, comptag);
 
 	rmcd_debug(MPORT, "Set host Component Tag to %d", comptag);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_RAPIDIO_DMA_ENGINE
+#ifdef CONFIG_RAPIDIO_DMA_ENGINE
 
-काष्ठा mport_dma_req अणु
-	काष्ठा kref refcount;
-	काष्ठा list_head node;
-	काष्ठा file *filp;
-	काष्ठा mport_cdev_priv *priv;
-	क्रमागत rio_transfer_sync sync;
-	काष्ठा sg_table sgt;
-	काष्ठा page **page_list;
-	अचिन्हित पूर्णांक nr_pages;
-	काष्ठा rio_mport_mapping *map;
-	काष्ठा dma_chan *dmach;
-	क्रमागत dma_data_direction dir;
+struct mport_dma_req {
+	struct kref refcount;
+	struct list_head node;
+	struct file *filp;
+	struct mport_cdev_priv *priv;
+	enum rio_transfer_sync sync;
+	struct sg_table sgt;
+	struct page **page_list;
+	unsigned int nr_pages;
+	struct rio_mport_mapping *map;
+	struct dma_chan *dmach;
+	enum dma_data_direction dir;
 	dma_cookie_t cookie;
-	क्रमागत dma_status	status;
-	काष्ठा completion req_comp;
-पूर्ण;
+	enum dma_status	status;
+	struct completion req_comp;
+};
 
-अटल व्योम mport_release_def_dma(काष्ठा kref *dma_ref)
-अणु
-	काष्ठा mport_dev *md =
-			container_of(dma_ref, काष्ठा mport_dev, dma_ref);
+static void mport_release_def_dma(struct kref *dma_ref)
+{
+	struct mport_dev *md =
+			container_of(dma_ref, struct mport_dev, dma_ref);
 
 	rmcd_debug(EXIT, "DMA_%d", md->dma_chan->chan_id);
 	rio_release_dma(md->dma_chan);
-	md->dma_chan = शून्य;
-पूर्ण
+	md->dma_chan = NULL;
+}
 
-अटल व्योम mport_release_dma(काष्ठा kref *dma_ref)
-अणु
-	काष्ठा mport_cdev_priv *priv =
-			container_of(dma_ref, काष्ठा mport_cdev_priv, dma_ref);
+static void mport_release_dma(struct kref *dma_ref)
+{
+	struct mport_cdev_priv *priv =
+			container_of(dma_ref, struct mport_cdev_priv, dma_ref);
 
 	rmcd_debug(EXIT, "DMA_%d", priv->dmach->chan_id);
 	complete(&priv->comp);
-पूर्ण
+}
 
-अटल व्योम dma_req_मुक्त(काष्ठा kref *ref)
-अणु
-	काष्ठा mport_dma_req *req = container_of(ref, काष्ठा mport_dma_req,
+static void dma_req_free(struct kref *ref)
+{
+	struct mport_dma_req *req = container_of(ref, struct mport_dma_req,
 			refcount);
-	काष्ठा mport_cdev_priv *priv = req->priv;
+	struct mport_cdev_priv *priv = req->priv;
 
 	dma_unmap_sg(req->dmach->device->dev,
 		     req->sgt.sgl, req->sgt.nents, req->dir);
-	sg_मुक्त_table(&req->sgt);
-	अगर (req->page_list) अणु
+	sg_free_table(&req->sgt);
+	if (req->page_list) {
 		unpin_user_pages(req->page_list, req->nr_pages);
-		kमुक्त(req->page_list);
-	पूर्ण
+		kfree(req->page_list);
+	}
 
-	अगर (req->map) अणु
+	if (req->map) {
 		mutex_lock(&req->map->md->buf_mutex);
 		kref_put(&req->map->ref, mport_release_mapping);
 		mutex_unlock(&req->map->md->buf_mutex);
-	पूर्ण
+	}
 
 	kref_put(&priv->dma_ref, mport_release_dma);
 
-	kमुक्त(req);
-पूर्ण
+	kfree(req);
+}
 
-अटल व्योम dma_xfer_callback(व्योम *param)
-अणु
-	काष्ठा mport_dma_req *req = (काष्ठा mport_dma_req *)param;
-	काष्ठा mport_cdev_priv *priv = req->priv;
+static void dma_xfer_callback(void *param)
+{
+	struct mport_dma_req *req = (struct mport_dma_req *)param;
+	struct mport_cdev_priv *priv = req->priv;
 
 	req->status = dma_async_is_tx_complete(priv->dmach, req->cookie,
-					       शून्य, शून्य);
+					       NULL, NULL);
 	complete(&req->req_comp);
-	kref_put(&req->refcount, dma_req_मुक्त);
-पूर्ण
+	kref_put(&req->refcount, dma_req_free);
+}
 
 /*
  * prep_dma_xfer() - Configure and send request to DMAengine to prepare DMA
  *                   transfer object.
- * Returns poपूर्णांकer to DMA transaction descriptor allocated by DMA driver on
- * success or ERR_PTR (and/or शून्य) अगर failed. Caller must check वापसed
- * non-शून्य poपूर्णांकer using IS_ERR macro.
+ * Returns pointer to DMA transaction descriptor allocated by DMA driver on
+ * success or ERR_PTR (and/or NULL) if failed. Caller must check returned
+ * non-NULL pointer using IS_ERR macro.
  */
-अटल काष्ठा dma_async_tx_descriptor
-*prep_dma_xfer(काष्ठा dma_chan *chan, काष्ठा rio_transfer_io *transfer,
-	काष्ठा sg_table *sgt, पूर्णांक nents, क्रमागत dma_transfer_direction dir,
-	क्रमागत dma_ctrl_flags flags)
-अणु
-	काष्ठा rio_dma_data tx_data;
+static struct dma_async_tx_descriptor
+*prep_dma_xfer(struct dma_chan *chan, struct rio_transfer_io *transfer,
+	struct sg_table *sgt, int nents, enum dma_transfer_direction dir,
+	enum dma_ctrl_flags flags)
+{
+	struct rio_dma_data tx_data;
 
 	tx_data.sg = sgt->sgl;
 	tx_data.sg_len = nents;
 	tx_data.rio_addr_u = 0;
 	tx_data.rio_addr = transfer->rio_addr;
-	अगर (dir == DMA_MEM_TO_DEV) अणु
-		चयन (transfer->method) अणु
-		हाल RIO_EXCHANGE_NWRITE:
+	if (dir == DMA_MEM_TO_DEV) {
+		switch (transfer->method) {
+		case RIO_EXCHANGE_NWRITE:
 			tx_data.wr_type = RDW_ALL_NWRITE;
-			अवरोध;
-		हाल RIO_EXCHANGE_NWRITE_R_ALL:
+			break;
+		case RIO_EXCHANGE_NWRITE_R_ALL:
 			tx_data.wr_type = RDW_ALL_NWRITE_R;
-			अवरोध;
-		हाल RIO_EXCHANGE_NWRITE_R:
+			break;
+		case RIO_EXCHANGE_NWRITE_R:
 			tx_data.wr_type = RDW_LAST_NWRITE_R;
-			अवरोध;
-		हाल RIO_EXCHANGE_DEFAULT:
+			break;
+		case RIO_EXCHANGE_DEFAULT:
 			tx_data.wr_type = RDW_DEFAULT;
-			अवरोध;
-		शेष:
-			वापस ERR_PTR(-EINVAL);
-		पूर्ण
-	पूर्ण
+			break;
+		default:
+			return ERR_PTR(-EINVAL);
+		}
+	}
 
-	वापस rio_dma_prep_xfer(chan, transfer->rioid, &tx_data, dir, flags);
-पूर्ण
+	return rio_dma_prep_xfer(chan, transfer->rioid, &tx_data, dir, flags);
+}
 
 /* Request DMA channel associated with this mport device.
- * Try to request DMA channel क्रम every new process that खोलोed given
- * mport. If a new DMA channel is not available use शेष channel
- * which is the first DMA channel खोलोed on mport device.
+ * Try to request DMA channel for every new process that opened given
+ * mport. If a new DMA channel is not available use default channel
+ * which is the first DMA channel opened on mport device.
  */
-अटल पूर्णांक get_dma_channel(काष्ठा mport_cdev_priv *priv)
-अणु
+static int get_dma_channel(struct mport_cdev_priv *priv)
+{
 	mutex_lock(&priv->dma_lock);
-	अगर (!priv->dmach) अणु
+	if (!priv->dmach) {
 		priv->dmach = rio_request_mport_dma(priv->md->mport);
-		अगर (!priv->dmach) अणु
-			/* Use शेष DMA channel अगर available */
-			अगर (priv->md->dma_chan) अणु
+		if (!priv->dmach) {
+			/* Use default DMA channel if available */
+			if (priv->md->dma_chan) {
 				priv->dmach = priv->md->dma_chan;
 				kref_get(&priv->md->dma_ref);
-			पूर्ण अन्यथा अणु
+			} else {
 				rmcd_error("Failed to get DMA channel");
 				mutex_unlock(&priv->dma_lock);
-				वापस -ENODEV;
-			पूर्ण
-		पूर्ण अन्यथा अगर (!priv->md->dma_chan) अणु
-			/* Register शेष DMA channel अगर we करो not have one */
+				return -ENODEV;
+			}
+		} else if (!priv->md->dma_chan) {
+			/* Register default DMA channel if we do not have one */
 			priv->md->dma_chan = priv->dmach;
 			kref_init(&priv->md->dma_ref);
 			rmcd_debug(DMA, "Register DMA_chan %d as default",
 				   priv->dmach->chan_id);
-		पूर्ण
+		}
 
 		kref_init(&priv->dma_ref);
 		init_completion(&priv->comp);
-	पूर्ण
+	}
 
 	kref_get(&priv->dma_ref);
 	mutex_unlock(&priv->dma_lock);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम put_dma_channel(काष्ठा mport_cdev_priv *priv)
-अणु
+static void put_dma_channel(struct mport_cdev_priv *priv)
+{
 	kref_put(&priv->dma_ref, mport_release_dma);
-पूर्ण
+}
 
 /*
  * DMA transfer functions
  */
-अटल पूर्णांक करो_dma_request(काष्ठा mport_dma_req *req,
-			  काष्ठा rio_transfer_io *xfer,
-			  क्रमागत rio_transfer_sync sync, पूर्णांक nents)
-अणु
-	काष्ठा mport_cdev_priv *priv;
-	काष्ठा sg_table *sgt;
-	काष्ठा dma_chan *chan;
-	काष्ठा dma_async_tx_descriptor *tx;
+static int do_dma_request(struct mport_dma_req *req,
+			  struct rio_transfer_io *xfer,
+			  enum rio_transfer_sync sync, int nents)
+{
+	struct mport_cdev_priv *priv;
+	struct sg_table *sgt;
+	struct dma_chan *chan;
+	struct dma_async_tx_descriptor *tx;
 	dma_cookie_t cookie;
-	अचिन्हित दीर्घ पंचांगo = msecs_to_jअगरfies(dma_समयout);
-	क्रमागत dma_transfer_direction dir;
-	दीर्घ wret;
-	पूर्णांक ret = 0;
+	unsigned long tmo = msecs_to_jiffies(dma_timeout);
+	enum dma_transfer_direction dir;
+	long wret;
+	int ret = 0;
 
 	priv = req->priv;
 	sgt = &req->sgt;
@@ -718,19 +717,19 @@ rio_mport_get_outbound_mapping(काष्ठा mport_dev *md, काष्ठ
 	tx = prep_dma_xfer(chan, xfer, sgt, nents, dir,
 			   DMA_CTRL_ACK | DMA_PREP_INTERRUPT);
 
-	अगर (!tx) अणु
+	if (!tx) {
 		rmcd_debug(DMA, "prep error for %s A:0x%llx L:0x%llx",
 			(dir == DMA_DEV_TO_MEM)?"READ":"WRITE",
 			xfer->rio_addr, xfer->length);
 		ret = -EIO;
-		जाओ err_out;
-	पूर्ण अन्यथा अगर (IS_ERR(tx)) अणु
+		goto err_out;
+	} else if (IS_ERR(tx)) {
 		ret = PTR_ERR(tx);
 		rmcd_debug(DMA, "prep error %d for %s A:0x%llx L:0x%llx", ret,
 			(dir == DMA_DEV_TO_MEM)?"READ":"WRITE",
 			xfer->rio_addr, xfer->length);
-		जाओ err_out;
-	पूर्ण
+		goto err_out;
+	}
 
 	tx->callback = dma_xfer_callback;
 	tx->callback_param = req;
@@ -744,90 +743,90 @@ rio_mport_get_outbound_mapping(काष्ठा mport_dev *md, काष्ठ
 	rmcd_debug(DMA, "pid=%d DMA_%s tx_cookie = %d", task_pid_nr(current),
 		   (dir == DMA_DEV_TO_MEM)?"READ":"WRITE", cookie);
 
-	अगर (dma_submit_error(cookie)) अणु
+	if (dma_submit_error(cookie)) {
 		rmcd_error("submit err=%d (addr:0x%llx len:0x%llx)",
 			   cookie, xfer->rio_addr, xfer->length);
-		kref_put(&req->refcount, dma_req_मुक्त);
+		kref_put(&req->refcount, dma_req_free);
 		ret = -EIO;
-		जाओ err_out;
-	पूर्ण
+		goto err_out;
+	}
 
 	dma_async_issue_pending(chan);
 
-	अगर (sync == RIO_TRANSFER_ASYNC) अणु
+	if (sync == RIO_TRANSFER_ASYNC) {
 		spin_lock(&priv->req_lock);
 		list_add_tail(&req->node, &priv->async_list);
 		spin_unlock(&priv->req_lock);
-		वापस cookie;
-	पूर्ण अन्यथा अगर (sync == RIO_TRANSFER_FAF)
-		वापस 0;
+		return cookie;
+	} else if (sync == RIO_TRANSFER_FAF)
+		return 0;
 
-	wret = रुको_क्रम_completion_पूर्णांकerruptible_समयout(&req->req_comp, पंचांगo);
+	wret = wait_for_completion_interruptible_timeout(&req->req_comp, tmo);
 
-	अगर (wret == 0) अणु
-		/* Timeout on रुको occurred */
+	if (wret == 0) {
+		/* Timeout on wait occurred */
 		rmcd_error("%s(%d) timed out waiting for DMA_%s %d",
 		       current->comm, task_pid_nr(current),
 		       (dir == DMA_DEV_TO_MEM)?"READ":"WRITE", cookie);
-		वापस -ETIMEDOUT;
-	पूर्ण अन्यथा अगर (wret == -ERESTARTSYS) अणु
-		/* Wait_क्रम_completion was पूर्णांकerrupted by a संकेत but DMA may
+		return -ETIMEDOUT;
+	} else if (wret == -ERESTARTSYS) {
+		/* Wait_for_completion was interrupted by a signal but DMA may
 		 * be in progress
 		 */
 		rmcd_error("%s(%d) wait for DMA_%s %d was interrupted",
 			current->comm, task_pid_nr(current),
 			(dir == DMA_DEV_TO_MEM)?"READ":"WRITE", cookie);
-		वापस -EINTR;
-	पूर्ण
+		return -EINTR;
+	}
 
-	अगर (req->status != DMA_COMPLETE) अणु
-		/* DMA transaction completion was संकेतed with error */
+	if (req->status != DMA_COMPLETE) {
+		/* DMA transaction completion was signaled with error */
 		rmcd_error("%s(%d) DMA_%s %d completed with status %d (ret=%d)",
 			current->comm, task_pid_nr(current),
 			(dir == DMA_DEV_TO_MEM)?"READ":"WRITE",
 			cookie, req->status, ret);
 		ret = -EIO;
-	पूर्ण
+	}
 
 err_out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * rio_dma_transfer() - Perक्रमm RapidIO DMA data transfer to/from
+ * rio_dma_transfer() - Perform RapidIO DMA data transfer to/from
  *                      the remote RapidIO device
- * @filp: file poपूर्णांकer associated with the call
+ * @filp: file pointer associated with the call
  * @transfer_mode: DMA transfer mode
  * @sync: synchronization mode
- * @dir: DMA transfer direction (DMA_MEM_TO_DEV = ग_लिखो OR
- *                               DMA_DEV_TO_MEM = पढ़ो)
- * @xfer: data transfer descriptor काष्ठाure
+ * @dir: DMA transfer direction (DMA_MEM_TO_DEV = write OR
+ *                               DMA_DEV_TO_MEM = read)
+ * @xfer: data transfer descriptor structure
  */
-अटल पूर्णांक
-rio_dma_transfer(काष्ठा file *filp, u32 transfer_mode,
-		 क्रमागत rio_transfer_sync sync, क्रमागत dma_data_direction dir,
-		 काष्ठा rio_transfer_io *xfer)
-अणु
-	काष्ठा mport_cdev_priv *priv = filp->निजी_data;
-	अचिन्हित दीर्घ nr_pages = 0;
-	काष्ठा page **page_list = शून्य;
-	काष्ठा mport_dma_req *req;
-	काष्ठा mport_dev *md = priv->md;
-	काष्ठा dma_chan *chan;
-	पूर्णांक ret;
-	पूर्णांक nents;
+static int
+rio_dma_transfer(struct file *filp, u32 transfer_mode,
+		 enum rio_transfer_sync sync, enum dma_data_direction dir,
+		 struct rio_transfer_io *xfer)
+{
+	struct mport_cdev_priv *priv = filp->private_data;
+	unsigned long nr_pages = 0;
+	struct page **page_list = NULL;
+	struct mport_dma_req *req;
+	struct mport_dev *md = priv->md;
+	struct dma_chan *chan;
+	int ret;
+	int nents;
 
-	अगर (xfer->length == 0)
-		वापस -EINVAL;
-	req = kzalloc(माप(*req), GFP_KERNEL);
-	अगर (!req)
-		वापस -ENOMEM;
+	if (xfer->length == 0)
+		return -EINVAL;
+	req = kzalloc(sizeof(*req), GFP_KERNEL);
+	if (!req)
+		return -ENOMEM;
 
 	ret = get_dma_channel(priv);
-	अगर (ret) अणु
-		kमुक्त(req);
-		वापस ret;
-	पूर्ण
+	if (ret) {
+		kfree(req);
+		return ret;
+	}
 	chan = priv->dmach;
 
 	kref_init(&req->refcount);
@@ -839,40 +838,40 @@ rio_dma_transfer(काष्ठा file *filp, u32 transfer_mode,
 	req->sync = sync;
 
 	/*
-	 * If parameter loc_addr != शून्य, we are transferring data from/to
+	 * If parameter loc_addr != NULL, we are transferring data from/to
 	 * data buffer allocated in user-space: lock in memory user-space
-	 * buffer pages and build an SG table क्रम DMA transfer request
+	 * buffer pages and build an SG table for DMA transfer request
 	 *
-	 * Otherwise (loc_addr == शून्य) contiguous kernel-space buffer is
-	 * used क्रम DMA data transfers: build single entry SG table using
-	 * offset within the पूर्णांकernal buffer specअगरied by handle parameter.
+	 * Otherwise (loc_addr == NULL) contiguous kernel-space buffer is
+	 * used for DMA data transfers: build single entry SG table using
+	 * offset within the internal buffer specified by handle parameter.
 	 */
-	अगर (xfer->loc_addr) अणु
-		अचिन्हित पूर्णांक offset;
-		दीर्घ pinned;
+	if (xfer->loc_addr) {
+		unsigned int offset;
+		long pinned;
 
 		offset = lower_32_bits(offset_in_page(xfer->loc_addr));
 		nr_pages = PAGE_ALIGN(xfer->length + offset) >> PAGE_SHIFT;
 
-		page_list = kदो_स्मृति_array(nr_pages,
-					  माप(*page_list), GFP_KERNEL);
-		अगर (page_list == शून्य) अणु
+		page_list = kmalloc_array(nr_pages,
+					  sizeof(*page_list), GFP_KERNEL);
+		if (page_list == NULL) {
 			ret = -ENOMEM;
-			जाओ err_req;
-		पूर्ण
+			goto err_req;
+		}
 
 		pinned = pin_user_pages_fast(
-				(अचिन्हित दीर्घ)xfer->loc_addr & PAGE_MASK,
+				(unsigned long)xfer->loc_addr & PAGE_MASK,
 				nr_pages,
 				dir == DMA_FROM_DEVICE ? FOLL_WRITE : 0,
 				page_list);
 
-		अगर (pinned != nr_pages) अणु
-			अगर (pinned < 0) अणु
+		if (pinned != nr_pages) {
+			if (pinned < 0) {
 				rmcd_error("pin_user_pages_fast err=%ld",
 					   pinned);
 				nr_pages = 0;
-			पूर्ण अन्यथा अणु
+			} else {
 				rmcd_error("pinned %ld out of %ld pages",
 					   pinned, nr_pages);
 				/*
@@ -880,224 +879,224 @@ rio_dma_transfer(काष्ठा file *filp, u32 transfer_mode,
 				 * the error handler:
 				 */
 				nr_pages = pinned;
-			पूर्ण
+			}
 			ret = -EFAULT;
-			जाओ err_pg;
-		पूर्ण
+			goto err_pg;
+		}
 
 		ret = sg_alloc_table_from_pages(&req->sgt, page_list, nr_pages,
 					offset, xfer->length, GFP_KERNEL);
-		अगर (ret) अणु
+		if (ret) {
 			rmcd_error("sg_alloc_table failed with err=%d", ret);
-			जाओ err_pg;
-		पूर्ण
+			goto err_pg;
+		}
 
 		req->page_list = page_list;
 		req->nr_pages = nr_pages;
-	पूर्ण अन्यथा अणु
+	} else {
 		dma_addr_t baddr;
-		काष्ठा rio_mport_mapping *map;
+		struct rio_mport_mapping *map;
 
 		baddr = (dma_addr_t)xfer->handle;
 
 		mutex_lock(&md->buf_mutex);
-		list_क्रम_each_entry(map, &md->mappings, node) अणु
-			अगर (baddr >= map->phys_addr &&
-			    baddr < (map->phys_addr + map->size)) अणु
+		list_for_each_entry(map, &md->mappings, node) {
+			if (baddr >= map->phys_addr &&
+			    baddr < (map->phys_addr + map->size)) {
 				kref_get(&map->ref);
 				req->map = map;
-				अवरोध;
-			पूर्ण
-		पूर्ण
+				break;
+			}
+		}
 		mutex_unlock(&md->buf_mutex);
 
-		अगर (req->map == शून्य) अणु
+		if (req->map == NULL) {
 			ret = -ENOMEM;
-			जाओ err_req;
-		पूर्ण
+			goto err_req;
+		}
 
-		अगर (xfer->length + xfer->offset > map->size) अणु
+		if (xfer->length + xfer->offset > map->size) {
 			ret = -EINVAL;
-			जाओ err_req;
-		पूर्ण
+			goto err_req;
+		}
 
 		ret = sg_alloc_table(&req->sgt, 1, GFP_KERNEL);
-		अगर (unlikely(ret)) अणु
+		if (unlikely(ret)) {
 			rmcd_error("sg_alloc_table failed for internal buf");
-			जाओ err_req;
-		पूर्ण
+			goto err_req;
+		}
 
 		sg_set_buf(req->sgt.sgl,
 			   map->virt_addr + (baddr - map->phys_addr) +
 				xfer->offset, xfer->length);
-	पूर्ण
+	}
 
 	nents = dma_map_sg(chan->device->dev,
 			   req->sgt.sgl, req->sgt.nents, dir);
-	अगर (nents == 0) अणु
+	if (nents == 0) {
 		rmcd_error("Failed to map SG list");
 		ret = -EFAULT;
-		जाओ err_pg;
-	पूर्ण
+		goto err_pg;
+	}
 
-	ret = करो_dma_request(req, xfer, sync, nents);
+	ret = do_dma_request(req, xfer, sync, nents);
 
-	अगर (ret >= 0) अणु
-		अगर (sync == RIO_TRANSFER_ASYNC)
-			वापस ret; /* वापस ASYNC cookie */
-	पूर्ण अन्यथा अणु
+	if (ret >= 0) {
+		if (sync == RIO_TRANSFER_ASYNC)
+			return ret; /* return ASYNC cookie */
+	} else {
 		rmcd_debug(DMA, "do_dma_request failed with err=%d", ret);
-	पूर्ण
+	}
 
 err_pg:
-	अगर (!req->page_list) अणु
+	if (!req->page_list) {
 		unpin_user_pages(page_list, nr_pages);
-		kमुक्त(page_list);
-	पूर्ण
+		kfree(page_list);
+	}
 err_req:
-	kref_put(&req->refcount, dma_req_मुक्त);
-	वापस ret;
-पूर्ण
+	kref_put(&req->refcount, dma_req_free);
+	return ret;
+}
 
-अटल पूर्णांक rio_mport_transfer_ioctl(काष्ठा file *filp, व्योम __user *arg)
-अणु
-	काष्ठा mport_cdev_priv *priv = filp->निजी_data;
-	काष्ठा rio_transaction transaction;
-	काष्ठा rio_transfer_io *transfer;
-	क्रमागत dma_data_direction dir;
-	पूर्णांक i, ret = 0;
+static int rio_mport_transfer_ioctl(struct file *filp, void __user *arg)
+{
+	struct mport_cdev_priv *priv = filp->private_data;
+	struct rio_transaction transaction;
+	struct rio_transfer_io *transfer;
+	enum dma_data_direction dir;
+	int i, ret = 0;
 
-	अगर (unlikely(copy_from_user(&transaction, arg, माप(transaction))))
-		वापस -EFAULT;
+	if (unlikely(copy_from_user(&transaction, arg, sizeof(transaction))))
+		return -EFAULT;
 
-	अगर (transaction.count != 1) /* only single transfer क्रम now */
-		वापस -EINVAL;
+	if (transaction.count != 1) /* only single transfer for now */
+		return -EINVAL;
 
-	अगर ((transaction.transfer_mode &
+	if ((transaction.transfer_mode &
 	     priv->md->properties.transfer_mode) == 0)
-		वापस -ENODEV;
+		return -ENODEV;
 
-	transfer = vदो_स्मृति(array_size(माप(*transfer), transaction.count));
-	अगर (!transfer)
-		वापस -ENOMEM;
+	transfer = vmalloc(array_size(sizeof(*transfer), transaction.count));
+	if (!transfer)
+		return -ENOMEM;
 
-	अगर (unlikely(copy_from_user(transfer,
-				    (व्योम __user *)(uपूर्णांकptr_t)transaction.block,
-				    array_size(माप(*transfer), transaction.count)))) अणु
+	if (unlikely(copy_from_user(transfer,
+				    (void __user *)(uintptr_t)transaction.block,
+				    array_size(sizeof(*transfer), transaction.count)))) {
 		ret = -EFAULT;
-		जाओ out_मुक्त;
-	पूर्ण
+		goto out_free;
+	}
 
-	dir = (transaction.dir == RIO_TRANSFER_सूची_READ) ?
+	dir = (transaction.dir == RIO_TRANSFER_DIR_READ) ?
 					DMA_FROM_DEVICE : DMA_TO_DEVICE;
-	क्रम (i = 0; i < transaction.count && ret == 0; i++)
+	for (i = 0; i < transaction.count && ret == 0; i++)
 		ret = rio_dma_transfer(filp, transaction.transfer_mode,
 			transaction.sync, dir, &transfer[i]);
 
-	अगर (unlikely(copy_to_user((व्योम __user *)(uपूर्णांकptr_t)transaction.block,
+	if (unlikely(copy_to_user((void __user *)(uintptr_t)transaction.block,
 				  transfer,
-				  array_size(माप(*transfer), transaction.count))))
+				  array_size(sizeof(*transfer), transaction.count))))
 		ret = -EFAULT;
 
-out_मुक्त:
-	vमुक्त(transfer);
+out_free:
+	vfree(transfer);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक rio_mport_रुको_क्रम_async_dma(काष्ठा file *filp, व्योम __user *arg)
-अणु
-	काष्ठा mport_cdev_priv *priv;
-	काष्ठा rio_async_tx_रुको w_param;
-	काष्ठा mport_dma_req *req;
+static int rio_mport_wait_for_async_dma(struct file *filp, void __user *arg)
+{
+	struct mport_cdev_priv *priv;
+	struct rio_async_tx_wait w_param;
+	struct mport_dma_req *req;
 	dma_cookie_t cookie;
-	अचिन्हित दीर्घ पंचांगo;
-	दीर्घ wret;
-	पूर्णांक found = 0;
-	पूर्णांक ret;
+	unsigned long tmo;
+	long wret;
+	int found = 0;
+	int ret;
 
-	priv = (काष्ठा mport_cdev_priv *)filp->निजी_data;
+	priv = (struct mport_cdev_priv *)filp->private_data;
 
-	अगर (unlikely(copy_from_user(&w_param, arg, माप(w_param))))
-		वापस -EFAULT;
+	if (unlikely(copy_from_user(&w_param, arg, sizeof(w_param))))
+		return -EFAULT;
 
 	cookie = w_param.token;
-	अगर (w_param.समयout)
-		पंचांगo = msecs_to_jअगरfies(w_param.समयout);
-	अन्यथा /* Use शेष DMA समयout */
-		पंचांगo = msecs_to_jअगरfies(dma_समयout);
+	if (w_param.timeout)
+		tmo = msecs_to_jiffies(w_param.timeout);
+	else /* Use default DMA timeout */
+		tmo = msecs_to_jiffies(dma_timeout);
 
 	spin_lock(&priv->req_lock);
-	list_क्रम_each_entry(req, &priv->async_list, node) अणु
-		अगर (req->cookie == cookie) अणु
+	list_for_each_entry(req, &priv->async_list, node) {
+		if (req->cookie == cookie) {
 			list_del(&req->node);
 			found = 1;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 	spin_unlock(&priv->req_lock);
 
-	अगर (!found)
-		वापस -EAGAIN;
+	if (!found)
+		return -EAGAIN;
 
-	wret = रुको_क्रम_completion_पूर्णांकerruptible_समयout(&req->req_comp, पंचांगo);
+	wret = wait_for_completion_interruptible_timeout(&req->req_comp, tmo);
 
-	अगर (wret == 0) अणु
-		/* Timeout on रुको occurred */
+	if (wret == 0) {
+		/* Timeout on wait occurred */
 		rmcd_error("%s(%d) timed out waiting for ASYNC DMA_%s",
 		       current->comm, task_pid_nr(current),
 		       (req->dir == DMA_FROM_DEVICE)?"READ":"WRITE");
 		ret = -ETIMEDOUT;
-		जाओ err_पंचांगo;
-	पूर्ण अन्यथा अगर (wret == -ERESTARTSYS) अणु
-		/* Wait_क्रम_completion was पूर्णांकerrupted by a संकेत but DMA may
+		goto err_tmo;
+	} else if (wret == -ERESTARTSYS) {
+		/* Wait_for_completion was interrupted by a signal but DMA may
 		 * be still in progress
 		 */
 		rmcd_error("%s(%d) wait for ASYNC DMA_%s was interrupted",
 			current->comm, task_pid_nr(current),
 			(req->dir == DMA_FROM_DEVICE)?"READ":"WRITE");
 		ret = -EINTR;
-		जाओ err_पंचांगo;
-	पूर्ण
+		goto err_tmo;
+	}
 
-	अगर (req->status != DMA_COMPLETE) अणु
-		/* DMA transaction completion संकेतed with transfer error */
+	if (req->status != DMA_COMPLETE) {
+		/* DMA transaction completion signaled with transfer error */
 		rmcd_error("%s(%d) ASYNC DMA_%s completion with status %d",
 			current->comm, task_pid_nr(current),
 			(req->dir == DMA_FROM_DEVICE)?"READ":"WRITE",
 			req->status);
 		ret = -EIO;
-	पूर्ण अन्यथा
+	} else
 		ret = 0;
 
-	अगर (req->status != DMA_IN_PROGRESS && req->status != DMA_PAUSED)
-		kref_put(&req->refcount, dma_req_मुक्त);
+	if (req->status != DMA_IN_PROGRESS && req->status != DMA_PAUSED)
+		kref_put(&req->refcount, dma_req_free);
 
-	वापस ret;
+	return ret;
 
-err_पंचांगo:
-	/* Return request back पूर्णांकo async queue */
+err_tmo:
+	/* Return request back into async queue */
 	spin_lock(&priv->req_lock);
 	list_add_tail(&req->node, &priv->async_list);
 	spin_unlock(&priv->req_lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक rio_mport_create_dma_mapping(काष्ठा mport_dev *md, काष्ठा file *filp,
-			u64 size, काष्ठा rio_mport_mapping **mapping)
-अणु
-	काष्ठा rio_mport_mapping *map;
+static int rio_mport_create_dma_mapping(struct mport_dev *md, struct file *filp,
+			u64 size, struct rio_mport_mapping **mapping)
+{
+	struct rio_mport_mapping *map;
 
-	map = kzalloc(माप(*map), GFP_KERNEL);
-	अगर (map == शून्य)
-		वापस -ENOMEM;
+	map = kzalloc(sizeof(*map), GFP_KERNEL);
+	if (map == NULL)
+		return -ENOMEM;
 
 	map->virt_addr = dma_alloc_coherent(md->mport->dev.parent, size,
 					    &map->phys_addr, GFP_KERNEL);
-	अगर (map->virt_addr == शून्य) अणु
-		kमुक्त(map);
-		वापस -ENOMEM;
-	पूर्ण
+	if (map->virt_addr == NULL) {
+		kfree(map);
+		return -ENOMEM;
+	}
 
 	map->dir = MAP_DMA;
 	map->size = size;
@@ -1109,121 +1108,121 @@ err_पंचांगo:
 	mutex_unlock(&md->buf_mutex);
 	*mapping = map;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rio_mport_alloc_dma(काष्ठा file *filp, व्योम __user *arg)
-अणु
-	काष्ठा mport_cdev_priv *priv = filp->निजी_data;
-	काष्ठा mport_dev *md = priv->md;
-	काष्ठा rio_dma_mem map;
-	काष्ठा rio_mport_mapping *mapping = शून्य;
-	पूर्णांक ret;
+static int rio_mport_alloc_dma(struct file *filp, void __user *arg)
+{
+	struct mport_cdev_priv *priv = filp->private_data;
+	struct mport_dev *md = priv->md;
+	struct rio_dma_mem map;
+	struct rio_mport_mapping *mapping = NULL;
+	int ret;
 
-	अगर (unlikely(copy_from_user(&map, arg, माप(map))))
-		वापस -EFAULT;
+	if (unlikely(copy_from_user(&map, arg, sizeof(map))))
+		return -EFAULT;
 
 	ret = rio_mport_create_dma_mapping(md, filp, map.length, &mapping);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	map.dma_handle = mapping->phys_addr;
 
-	अगर (unlikely(copy_to_user(arg, &map, माप(map)))) अणु
+	if (unlikely(copy_to_user(arg, &map, sizeof(map)))) {
 		mutex_lock(&md->buf_mutex);
 		kref_put(&mapping->ref, mport_release_mapping);
 		mutex_unlock(&md->buf_mutex);
-		वापस -EFAULT;
-	पूर्ण
+		return -EFAULT;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rio_mport_मुक्त_dma(काष्ठा file *filp, व्योम __user *arg)
-अणु
-	काष्ठा mport_cdev_priv *priv = filp->निजी_data;
-	काष्ठा mport_dev *md = priv->md;
+static int rio_mport_free_dma(struct file *filp, void __user *arg)
+{
+	struct mport_cdev_priv *priv = filp->private_data;
+	struct mport_dev *md = priv->md;
 	u64 handle;
-	पूर्णांक ret = -EFAULT;
-	काष्ठा rio_mport_mapping *map, *_map;
+	int ret = -EFAULT;
+	struct rio_mport_mapping *map, *_map;
 
-	अगर (copy_from_user(&handle, arg, माप(handle)))
-		वापस -EFAULT;
+	if (copy_from_user(&handle, arg, sizeof(handle)))
+		return -EFAULT;
 	rmcd_debug(EXIT, "filp=%p", filp);
 
 	mutex_lock(&md->buf_mutex);
-	list_क्रम_each_entry_safe(map, _map, &md->mappings, node) अणु
-		अगर (map->dir == MAP_DMA && map->phys_addr == handle &&
-		    map->filp == filp) अणु
+	list_for_each_entry_safe(map, _map, &md->mappings, node) {
+		if (map->dir == MAP_DMA && map->phys_addr == handle &&
+		    map->filp == filp) {
 			kref_put(&map->ref, mport_release_mapping);
 			ret = 0;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 	mutex_unlock(&md->buf_mutex);
 
-	अगर (ret == -EFAULT) अणु
+	if (ret == -EFAULT) {
 		rmcd_debug(DMA, "ERR no matching mapping");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
-#अन्यथा
-अटल पूर्णांक rio_mport_transfer_ioctl(काष्ठा file *filp, व्योम *arg)
-अणु
-	वापस -ENODEV;
-पूर्ण
+	return 0;
+}
+#else
+static int rio_mport_transfer_ioctl(struct file *filp, void *arg)
+{
+	return -ENODEV;
+}
 
-अटल पूर्णांक rio_mport_रुको_क्रम_async_dma(काष्ठा file *filp, व्योम __user *arg)
-अणु
-	वापस -ENODEV;
-पूर्ण
+static int rio_mport_wait_for_async_dma(struct file *filp, void __user *arg)
+{
+	return -ENODEV;
+}
 
-अटल पूर्णांक rio_mport_alloc_dma(काष्ठा file *filp, व्योम __user *arg)
-अणु
-	वापस -ENODEV;
-पूर्ण
+static int rio_mport_alloc_dma(struct file *filp, void __user *arg)
+{
+	return -ENODEV;
+}
 
-अटल पूर्णांक rio_mport_मुक्त_dma(काष्ठा file *filp, व्योम __user *arg)
-अणु
-	वापस -ENODEV;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_RAPIDIO_DMA_ENGINE */
+static int rio_mport_free_dma(struct file *filp, void __user *arg)
+{
+	return -ENODEV;
+}
+#endif /* CONFIG_RAPIDIO_DMA_ENGINE */
 
 /*
  * Inbound/outbound memory mapping functions
  */
 
-अटल पूर्णांक
-rio_mport_create_inbound_mapping(काष्ठा mport_dev *md, काष्ठा file *filp,
+static int
+rio_mport_create_inbound_mapping(struct mport_dev *md, struct file *filp,
 				u64 raddr, u64 size,
-				काष्ठा rio_mport_mapping **mapping)
-अणु
-	काष्ठा rio_mport *mport = md->mport;
-	काष्ठा rio_mport_mapping *map;
-	पूर्णांक ret;
+				struct rio_mport_mapping **mapping)
+{
+	struct rio_mport *mport = md->mport;
+	struct rio_mport_mapping *map;
+	int ret;
 
 	/* rio_map_inb_region() accepts u32 size */
-	अगर (size > 0xffffffff)
-		वापस -EINVAL;
+	if (size > 0xffffffff)
+		return -EINVAL;
 
-	map = kzalloc(माप(*map), GFP_KERNEL);
-	अगर (map == शून्य)
-		वापस -ENOMEM;
+	map = kzalloc(sizeof(*map), GFP_KERNEL);
+	if (map == NULL)
+		return -ENOMEM;
 
 	map->virt_addr = dma_alloc_coherent(mport->dev.parent, size,
 					    &map->phys_addr, GFP_KERNEL);
-	अगर (map->virt_addr == शून्य) अणु
+	if (map->virt_addr == NULL) {
 		ret = -ENOMEM;
-		जाओ err_dma_alloc;
-	पूर्ण
+		goto err_dma_alloc;
+	}
 
-	अगर (raddr == RIO_MAP_ANY_ADDR)
+	if (raddr == RIO_MAP_ANY_ADDR)
 		raddr = map->phys_addr;
 	ret = rio_map_inb_region(mport, map->phys_addr, raddr, (u32)size, 0);
-	अगर (ret < 0)
-		जाओ err_map_inb;
+	if (ret < 0)
+		goto err_map_inb;
 
 	map->dir = MAP_INBOUND;
 	map->rio_addr = raddr;
@@ -1235,502 +1234,502 @@ rio_mport_create_inbound_mapping(काष्ठा mport_dev *md, काष्�
 	list_add_tail(&map->node, &md->mappings);
 	mutex_unlock(&md->buf_mutex);
 	*mapping = map;
-	वापस 0;
+	return 0;
 
 err_map_inb:
-	dma_मुक्त_coherent(mport->dev.parent, size,
+	dma_free_coherent(mport->dev.parent, size,
 			  map->virt_addr, map->phys_addr);
 err_dma_alloc:
-	kमुक्त(map);
-	वापस ret;
-पूर्ण
+	kfree(map);
+	return ret;
+}
 
-अटल पूर्णांक
-rio_mport_get_inbound_mapping(काष्ठा mport_dev *md, काष्ठा file *filp,
+static int
+rio_mport_get_inbound_mapping(struct mport_dev *md, struct file *filp,
 			      u64 raddr, u64 size,
-			      काष्ठा rio_mport_mapping **mapping)
-अणु
-	काष्ठा rio_mport_mapping *map;
-	पूर्णांक err = -ENOMEM;
+			      struct rio_mport_mapping **mapping)
+{
+	struct rio_mport_mapping *map;
+	int err = -ENOMEM;
 
-	अगर (raddr == RIO_MAP_ANY_ADDR)
-		जाओ get_new;
+	if (raddr == RIO_MAP_ANY_ADDR)
+		goto get_new;
 
 	mutex_lock(&md->buf_mutex);
-	list_क्रम_each_entry(map, &md->mappings, node) अणु
-		अगर (map->dir != MAP_INBOUND)
-			जारी;
-		अगर (raddr == map->rio_addr && size == map->size) अणु
+	list_for_each_entry(map, &md->mappings, node) {
+		if (map->dir != MAP_INBOUND)
+			continue;
+		if (raddr == map->rio_addr && size == map->size) {
 			/* allow exact match only */
 			*mapping = map;
 			err = 0;
-			अवरोध;
-		पूर्ण अन्यथा अगर (raddr < (map->rio_addr + map->size - 1) &&
-			   (raddr + size) > map->rio_addr) अणु
+			break;
+		} else if (raddr < (map->rio_addr + map->size - 1) &&
+			   (raddr + size) > map->rio_addr) {
 			err = -EBUSY;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 	mutex_unlock(&md->buf_mutex);
 
-	अगर (err != -ENOMEM)
-		वापस err;
+	if (err != -ENOMEM)
+		return err;
 get_new:
 	/* not found, create new */
-	वापस rio_mport_create_inbound_mapping(md, filp, raddr, size, mapping);
-पूर्ण
+	return rio_mport_create_inbound_mapping(md, filp, raddr, size, mapping);
+}
 
-अटल पूर्णांक rio_mport_map_inbound(काष्ठा file *filp, व्योम __user *arg)
-अणु
-	काष्ठा mport_cdev_priv *priv = filp->निजी_data;
-	काष्ठा mport_dev *md = priv->md;
-	काष्ठा rio_mmap map;
-	काष्ठा rio_mport_mapping *mapping = शून्य;
-	पूर्णांक ret;
+static int rio_mport_map_inbound(struct file *filp, void __user *arg)
+{
+	struct mport_cdev_priv *priv = filp->private_data;
+	struct mport_dev *md = priv->md;
+	struct rio_mmap map;
+	struct rio_mport_mapping *mapping = NULL;
+	int ret;
 
-	अगर (!md->mport->ops->map_inb)
-		वापस -EPROTONOSUPPORT;
-	अगर (unlikely(copy_from_user(&map, arg, माप(map))))
-		वापस -EFAULT;
+	if (!md->mport->ops->map_inb)
+		return -EPROTONOSUPPORT;
+	if (unlikely(copy_from_user(&map, arg, sizeof(map))))
+		return -EFAULT;
 
 	rmcd_debug(IBW, "%s filp=%p", dev_name(&priv->md->dev), filp);
 
 	ret = rio_mport_get_inbound_mapping(md, filp, map.rio_addr,
 					    map.length, &mapping);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	map.handle = mapping->phys_addr;
 	map.rio_addr = mapping->rio_addr;
 
-	अगर (unlikely(copy_to_user(arg, &map, माप(map)))) अणु
-		/* Delete mapping अगर it was created by this request */
-		अगर (ret == 0 && mapping->filp == filp) अणु
+	if (unlikely(copy_to_user(arg, &map, sizeof(map)))) {
+		/* Delete mapping if it was created by this request */
+		if (ret == 0 && mapping->filp == filp) {
 			mutex_lock(&md->buf_mutex);
 			kref_put(&mapping->ref, mport_release_mapping);
 			mutex_unlock(&md->buf_mutex);
-		पूर्ण
-		वापस -EFAULT;
-	पूर्ण
+		}
+		return -EFAULT;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * rio_mport_inbound_मुक्त() - unmap from RapidIO address space and मुक्त
+ * rio_mport_inbound_free() - unmap from RapidIO address space and free
  *                    previously allocated inbound DMA coherent buffer
- * @priv: driver निजी data
- * @arg:  buffer handle वापसed by allocation routine
+ * @priv: driver private data
+ * @arg:  buffer handle returned by allocation routine
  */
-अटल पूर्णांक rio_mport_inbound_मुक्त(काष्ठा file *filp, व्योम __user *arg)
-अणु
-	काष्ठा mport_cdev_priv *priv = filp->निजी_data;
-	काष्ठा mport_dev *md = priv->md;
+static int rio_mport_inbound_free(struct file *filp, void __user *arg)
+{
+	struct mport_cdev_priv *priv = filp->private_data;
+	struct mport_dev *md = priv->md;
 	u64 handle;
-	काष्ठा rio_mport_mapping *map, *_map;
+	struct rio_mport_mapping *map, *_map;
 
 	rmcd_debug(IBW, "%s filp=%p", dev_name(&priv->md->dev), filp);
 
-	अगर (!md->mport->ops->unmap_inb)
-		वापस -EPROTONOSUPPORT;
+	if (!md->mport->ops->unmap_inb)
+		return -EPROTONOSUPPORT;
 
-	अगर (copy_from_user(&handle, arg, माप(handle)))
-		वापस -EFAULT;
+	if (copy_from_user(&handle, arg, sizeof(handle)))
+		return -EFAULT;
 
 	mutex_lock(&md->buf_mutex);
-	list_क्रम_each_entry_safe(map, _map, &md->mappings, node) अणु
-		अगर (map->dir == MAP_INBOUND && map->phys_addr == handle) अणु
-			अगर (map->filp == filp) अणु
-				map->filp = शून्य;
+	list_for_each_entry_safe(map, _map, &md->mappings, node) {
+		if (map->dir == MAP_INBOUND && map->phys_addr == handle) {
+			if (map->filp == filp) {
+				map->filp = NULL;
 				kref_put(&map->ref, mport_release_mapping);
-			पूर्ण
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			}
+			break;
+		}
+	}
 	mutex_unlock(&md->buf_mutex);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * मुख्यt_port_idx_get() - Get the port index of the mport instance
- * @priv: driver निजी data
+ * maint_port_idx_get() - Get the port index of the mport instance
+ * @priv: driver private data
  * @arg:  port index
  */
-अटल पूर्णांक मुख्यt_port_idx_get(काष्ठा mport_cdev_priv *priv, व्योम __user *arg)
-अणु
-	काष्ठा mport_dev *md = priv->md;
+static int maint_port_idx_get(struct mport_cdev_priv *priv, void __user *arg)
+{
+	struct mport_dev *md = priv->md;
 	u32 port_idx = md->mport->index;
 
 	rmcd_debug(MPORT, "port_index=%d", port_idx);
 
-	अगर (copy_to_user(arg, &port_idx, माप(port_idx)))
-		वापस -EFAULT;
+	if (copy_to_user(arg, &port_idx, sizeof(port_idx)))
+		return -EFAULT;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rio_mport_add_event(काष्ठा mport_cdev_priv *priv,
-			       काष्ठा rio_event *event)
-अणु
-	पूर्णांक overflow;
+static int rio_mport_add_event(struct mport_cdev_priv *priv,
+			       struct rio_event *event)
+{
+	int overflow;
 
-	अगर (!(priv->event_mask & event->header))
-		वापस -EACCES;
+	if (!(priv->event_mask & event->header))
+		return -EACCES;
 
-	spin_lock(&priv->fअगरo_lock);
-	overflow = kfअगरo_avail(&priv->event_fअगरo) < माप(*event)
-		|| kfअगरo_in(&priv->event_fअगरo, (अचिन्हित अक्षर *)event,
-			माप(*event)) != माप(*event);
-	spin_unlock(&priv->fअगरo_lock);
+	spin_lock(&priv->fifo_lock);
+	overflow = kfifo_avail(&priv->event_fifo) < sizeof(*event)
+		|| kfifo_in(&priv->event_fifo, (unsigned char *)event,
+			sizeof(*event)) != sizeof(*event);
+	spin_unlock(&priv->fifo_lock);
 
-	wake_up_पूर्णांकerruptible(&priv->event_rx_रुको);
+	wake_up_interruptible(&priv->event_rx_wait);
 
-	अगर (overflow) अणु
+	if (overflow) {
 		dev_warn(&priv->md->dev, DRV_NAME ": event fifo overflow\n");
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम rio_mport_करोorbell_handler(काष्ठा rio_mport *mport, व्योम *dev_id,
+static void rio_mport_doorbell_handler(struct rio_mport *mport, void *dev_id,
 				       u16 src, u16 dst, u16 info)
-अणु
-	काष्ठा mport_dev *data = dev_id;
-	काष्ठा mport_cdev_priv *priv;
-	काष्ठा rio_mport_db_filter *db_filter;
-	काष्ठा rio_event event;
-	पूर्णांक handled;
+{
+	struct mport_dev *data = dev_id;
+	struct mport_cdev_priv *priv;
+	struct rio_mport_db_filter *db_filter;
+	struct rio_event event;
+	int handled;
 
 	event.header = RIO_DOORBELL;
-	event.u.करोorbell.rioid = src;
-	event.u.करोorbell.payload = info;
+	event.u.doorbell.rioid = src;
+	event.u.doorbell.payload = info;
 
 	handled = 0;
 	spin_lock(&data->db_lock);
-	list_क्रम_each_entry(db_filter, &data->करोorbells, data_node) अणु
-		अगर (((db_filter->filter.rioid == RIO_INVALID_DESTID ||
+	list_for_each_entry(db_filter, &data->doorbells, data_node) {
+		if (((db_filter->filter.rioid == RIO_INVALID_DESTID ||
 		      db_filter->filter.rioid == src)) &&
 		      info >= db_filter->filter.low &&
-		      info <= db_filter->filter.high) अणु
+		      info <= db_filter->filter.high) {
 			priv = db_filter->priv;
 			rio_mport_add_event(priv, &event);
 			handled = 1;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	spin_unlock(&data->db_lock);
 
-	अगर (!handled)
+	if (!handled)
 		dev_warn(&data->dev,
 			"%s: spurious DB received from 0x%x, info=0x%04x\n",
 			__func__, src, info);
-पूर्ण
+}
 
-अटल पूर्णांक rio_mport_add_db_filter(काष्ठा mport_cdev_priv *priv,
-				   व्योम __user *arg)
-अणु
-	काष्ठा mport_dev *md = priv->md;
-	काष्ठा rio_mport_db_filter *db_filter;
-	काष्ठा rio_करोorbell_filter filter;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret;
+static int rio_mport_add_db_filter(struct mport_cdev_priv *priv,
+				   void __user *arg)
+{
+	struct mport_dev *md = priv->md;
+	struct rio_mport_db_filter *db_filter;
+	struct rio_doorbell_filter filter;
+	unsigned long flags;
+	int ret;
 
-	अगर (copy_from_user(&filter, arg, माप(filter)))
-		वापस -EFAULT;
+	if (copy_from_user(&filter, arg, sizeof(filter)))
+		return -EFAULT;
 
-	अगर (filter.low > filter.high)
-		वापस -EINVAL;
+	if (filter.low > filter.high)
+		return -EINVAL;
 
 	ret = rio_request_inb_dbell(md->mport, md, filter.low, filter.high,
-				    rio_mport_करोorbell_handler);
-	अगर (ret) अणु
+				    rio_mport_doorbell_handler);
+	if (ret) {
 		rmcd_error("%s failed to register IBDB, err=%d",
 			   dev_name(&md->dev), ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	db_filter = kzalloc(माप(*db_filter), GFP_KERNEL);
-	अगर (db_filter == शून्य) अणु
+	db_filter = kzalloc(sizeof(*db_filter), GFP_KERNEL);
+	if (db_filter == NULL) {
 		rio_release_inb_dbell(md->mport, filter.low, filter.high);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	db_filter->filter = filter;
 	db_filter->priv = priv;
 	spin_lock_irqsave(&md->db_lock, flags);
 	list_add_tail(&db_filter->priv_node, &priv->db_filters);
-	list_add_tail(&db_filter->data_node, &md->करोorbells);
+	list_add_tail(&db_filter->data_node, &md->doorbells);
 	spin_unlock_irqrestore(&md->db_lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम rio_mport_delete_db_filter(काष्ठा rio_mport_db_filter *db_filter)
-अणु
+static void rio_mport_delete_db_filter(struct rio_mport_db_filter *db_filter)
+{
 	list_del(&db_filter->data_node);
 	list_del(&db_filter->priv_node);
-	kमुक्त(db_filter);
-पूर्ण
+	kfree(db_filter);
+}
 
-अटल पूर्णांक rio_mport_हटाओ_db_filter(काष्ठा mport_cdev_priv *priv,
-				      व्योम __user *arg)
-अणु
-	काष्ठा rio_mport_db_filter *db_filter;
-	काष्ठा rio_करोorbell_filter filter;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret = -EINVAL;
+static int rio_mport_remove_db_filter(struct mport_cdev_priv *priv,
+				      void __user *arg)
+{
+	struct rio_mport_db_filter *db_filter;
+	struct rio_doorbell_filter filter;
+	unsigned long flags;
+	int ret = -EINVAL;
 
-	अगर (copy_from_user(&filter, arg, माप(filter)))
-		वापस -EFAULT;
+	if (copy_from_user(&filter, arg, sizeof(filter)))
+		return -EFAULT;
 
-	अगर (filter.low > filter.high)
-		वापस -EINVAL;
+	if (filter.low > filter.high)
+		return -EINVAL;
 
 	spin_lock_irqsave(&priv->md->db_lock, flags);
-	list_क्रम_each_entry(db_filter, &priv->db_filters, priv_node) अणु
-		अगर (db_filter->filter.rioid == filter.rioid &&
+	list_for_each_entry(db_filter, &priv->db_filters, priv_node) {
+		if (db_filter->filter.rioid == filter.rioid &&
 		    db_filter->filter.low == filter.low &&
-		    db_filter->filter.high == filter.high) अणु
+		    db_filter->filter.high == filter.high) {
 			rio_mport_delete_db_filter(db_filter);
 			ret = 0;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 	spin_unlock_irqrestore(&priv->md->db_lock, flags);
 
-	अगर (!ret)
+	if (!ret)
 		rio_release_inb_dbell(priv->md->mport, filter.low, filter.high);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक rio_mport_match_pw(जोड़ rio_pw_msg *msg,
-			      काष्ठा rio_pw_filter *filter)
-अणु
-	अगर ((msg->em.comptag & filter->mask) < filter->low ||
+static int rio_mport_match_pw(union rio_pw_msg *msg,
+			      struct rio_pw_filter *filter)
+{
+	if ((msg->em.comptag & filter->mask) < filter->low ||
 		(msg->em.comptag & filter->mask) > filter->high)
-		वापस 0;
-	वापस 1;
-पूर्ण
+		return 0;
+	return 1;
+}
 
-अटल पूर्णांक rio_mport_pw_handler(काष्ठा rio_mport *mport, व्योम *context,
-				जोड़ rio_pw_msg *msg, पूर्णांक step)
-अणु
-	काष्ठा mport_dev *md = context;
-	काष्ठा mport_cdev_priv *priv;
-	काष्ठा rio_mport_pw_filter *pw_filter;
-	काष्ठा rio_event event;
-	पूर्णांक handled;
+static int rio_mport_pw_handler(struct rio_mport *mport, void *context,
+				union rio_pw_msg *msg, int step)
+{
+	struct mport_dev *md = context;
+	struct mport_cdev_priv *priv;
+	struct rio_mport_pw_filter *pw_filter;
+	struct rio_event event;
+	int handled;
 
 	event.header = RIO_PORTWRITE;
-	स_नकल(event.u.portग_लिखो.payload, msg->raw, RIO_PW_MSG_SIZE);
+	memcpy(event.u.portwrite.payload, msg->raw, RIO_PW_MSG_SIZE);
 
 	handled = 0;
 	spin_lock(&md->pw_lock);
-	list_क्रम_each_entry(pw_filter, &md->portग_लिखोs, md_node) अणु
-		अगर (rio_mport_match_pw(msg, &pw_filter->filter)) अणु
+	list_for_each_entry(pw_filter, &md->portwrites, md_node) {
+		if (rio_mport_match_pw(msg, &pw_filter->filter)) {
 			priv = pw_filter->priv;
 			rio_mport_add_event(priv, &event);
 			handled = 1;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	spin_unlock(&md->pw_lock);
 
-	अगर (!handled) अणु
-		prपूर्णांकk_ratelimited(KERN_WARNING DRV_NAME
+	if (!handled) {
+		printk_ratelimited(KERN_WARNING DRV_NAME
 			": mport%d received spurious PW from 0x%08x\n",
 			mport->id, msg->em.comptag);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rio_mport_add_pw_filter(काष्ठा mport_cdev_priv *priv,
-				   व्योम __user *arg)
-अणु
-	काष्ठा mport_dev *md = priv->md;
-	काष्ठा rio_mport_pw_filter *pw_filter;
-	काष्ठा rio_pw_filter filter;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक hadd = 0;
+static int rio_mport_add_pw_filter(struct mport_cdev_priv *priv,
+				   void __user *arg)
+{
+	struct mport_dev *md = priv->md;
+	struct rio_mport_pw_filter *pw_filter;
+	struct rio_pw_filter filter;
+	unsigned long flags;
+	int hadd = 0;
 
-	अगर (copy_from_user(&filter, arg, माप(filter)))
-		वापस -EFAULT;
+	if (copy_from_user(&filter, arg, sizeof(filter)))
+		return -EFAULT;
 
-	pw_filter = kzalloc(माप(*pw_filter), GFP_KERNEL);
-	अगर (pw_filter == शून्य)
-		वापस -ENOMEM;
+	pw_filter = kzalloc(sizeof(*pw_filter), GFP_KERNEL);
+	if (pw_filter == NULL)
+		return -ENOMEM;
 
 	pw_filter->filter = filter;
 	pw_filter->priv = priv;
 	spin_lock_irqsave(&md->pw_lock, flags);
-	अगर (list_empty(&md->portग_लिखोs))
+	if (list_empty(&md->portwrites))
 		hadd = 1;
 	list_add_tail(&pw_filter->priv_node, &priv->pw_filters);
-	list_add_tail(&pw_filter->md_node, &md->portग_लिखोs);
+	list_add_tail(&pw_filter->md_node, &md->portwrites);
 	spin_unlock_irqrestore(&md->pw_lock, flags);
 
-	अगर (hadd) अणु
-		पूर्णांक ret;
+	if (hadd) {
+		int ret;
 
 		ret = rio_add_mport_pw_handler(md->mport, md,
 					       rio_mport_pw_handler);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(&md->dev,
 				"%s: failed to add IB_PW handler, err=%d\n",
 				__func__, ret);
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 		rio_pw_enable(md->mport, 1);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम rio_mport_delete_pw_filter(काष्ठा rio_mport_pw_filter *pw_filter)
-अणु
+static void rio_mport_delete_pw_filter(struct rio_mport_pw_filter *pw_filter)
+{
 	list_del(&pw_filter->md_node);
 	list_del(&pw_filter->priv_node);
-	kमुक्त(pw_filter);
-पूर्ण
+	kfree(pw_filter);
+}
 
-अटल पूर्णांक rio_mport_match_pw_filter(काष्ठा rio_pw_filter *a,
-				     काष्ठा rio_pw_filter *b)
-अणु
-	अगर ((a->mask == b->mask) && (a->low == b->low) && (a->high == b->high))
-		वापस 1;
-	वापस 0;
-पूर्ण
+static int rio_mport_match_pw_filter(struct rio_pw_filter *a,
+				     struct rio_pw_filter *b)
+{
+	if ((a->mask == b->mask) && (a->low == b->low) && (a->high == b->high))
+		return 1;
+	return 0;
+}
 
-अटल पूर्णांक rio_mport_हटाओ_pw_filter(काष्ठा mport_cdev_priv *priv,
-				      व्योम __user *arg)
-अणु
-	काष्ठा mport_dev *md = priv->md;
-	काष्ठा rio_mport_pw_filter *pw_filter;
-	काष्ठा rio_pw_filter filter;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret = -EINVAL;
-	पूर्णांक hdel = 0;
+static int rio_mport_remove_pw_filter(struct mport_cdev_priv *priv,
+				      void __user *arg)
+{
+	struct mport_dev *md = priv->md;
+	struct rio_mport_pw_filter *pw_filter;
+	struct rio_pw_filter filter;
+	unsigned long flags;
+	int ret = -EINVAL;
+	int hdel = 0;
 
-	अगर (copy_from_user(&filter, arg, माप(filter)))
-		वापस -EFAULT;
+	if (copy_from_user(&filter, arg, sizeof(filter)))
+		return -EFAULT;
 
 	spin_lock_irqsave(&md->pw_lock, flags);
-	list_क्रम_each_entry(pw_filter, &priv->pw_filters, priv_node) अणु
-		अगर (rio_mport_match_pw_filter(&pw_filter->filter, &filter)) अणु
+	list_for_each_entry(pw_filter, &priv->pw_filters, priv_node) {
+		if (rio_mport_match_pw_filter(&pw_filter->filter, &filter)) {
 			rio_mport_delete_pw_filter(pw_filter);
 			ret = 0;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	अगर (list_empty(&md->portग_लिखोs))
+	if (list_empty(&md->portwrites))
 		hdel = 1;
 	spin_unlock_irqrestore(&md->pw_lock, flags);
 
-	अगर (hdel) अणु
+	if (hdel) {
 		rio_del_mport_pw_handler(md->mport, priv->md,
 					 rio_mport_pw_handler);
 		rio_pw_enable(md->mport, 0);
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * rio_release_dev - release routine क्रम kernel RIO device object
- * @dev: kernel device object associated with a RIO device काष्ठाure
+ * rio_release_dev - release routine for kernel RIO device object
+ * @dev: kernel device object associated with a RIO device structure
  *
- * Frees a RIO device काष्ठा associated a RIO device काष्ठा.
- * The RIO device काष्ठा is मुक्तd.
+ * Frees a RIO device struct associated a RIO device struct.
+ * The RIO device struct is freed.
  */
-अटल व्योम rio_release_dev(काष्ठा device *dev)
-अणु
-	काष्ठा rio_dev *rdev;
+static void rio_release_dev(struct device *dev)
+{
+	struct rio_dev *rdev;
 
 	rdev = to_rio_dev(dev);
 	pr_info(DRV_PREFIX "%s: %s\n", __func__, rio_name(rdev));
-	kमुक्त(rdev);
-पूर्ण
+	kfree(rdev);
+}
 
 
-अटल व्योम rio_release_net(काष्ठा device *dev)
-अणु
-	काष्ठा rio_net *net;
+static void rio_release_net(struct device *dev)
+{
+	struct rio_net *net;
 
 	net = to_rio_net(dev);
 	rmcd_debug(RDEV, "net_%d", net->id);
-	kमुक्त(net);
-पूर्ण
+	kfree(net);
+}
 
 
 /*
  * rio_mport_add_riodev - creates a kernel RIO device object
  *
- * Allocates a RIO device data काष्ठाure and initializes required fields based
+ * Allocates a RIO device data structure and initializes required fields based
  * on device's configuration space contents.
- * If the device has चयन capabilities, then a चयन specअगरic portion is
+ * If the device has switch capabilities, then a switch specific portion is
  * allocated and configured.
  */
-अटल पूर्णांक rio_mport_add_riodev(काष्ठा mport_cdev_priv *priv,
-				   व्योम __user *arg)
-अणु
-	काष्ठा mport_dev *md = priv->md;
-	काष्ठा rio_rdev_info dev_info;
-	काष्ठा rio_dev *rdev;
-	काष्ठा rio_चयन *rचयन = शून्य;
-	काष्ठा rio_mport *mport;
-	काष्ठा device *dev;
-	माप_प्रकार size;
+static int rio_mport_add_riodev(struct mport_cdev_priv *priv,
+				   void __user *arg)
+{
+	struct mport_dev *md = priv->md;
+	struct rio_rdev_info dev_info;
+	struct rio_dev *rdev;
+	struct rio_switch *rswitch = NULL;
+	struct rio_mport *mport;
+	struct device *dev;
+	size_t size;
 	u32 rval;
 	u32 swpinfo = 0;
 	u16 destid;
 	u8 hopcount;
-	पूर्णांक err;
+	int err;
 
-	अगर (copy_from_user(&dev_info, arg, माप(dev_info)))
-		वापस -EFAULT;
-	dev_info.name[माप(dev_info.name) - 1] = '\0';
+	if (copy_from_user(&dev_info, arg, sizeof(dev_info)))
+		return -EFAULT;
+	dev_info.name[sizeof(dev_info.name) - 1] = '\0';
 
 	rmcd_debug(RDEV, "name:%s ct:0x%x did:0x%x hc:0x%x", dev_info.name,
 		   dev_info.comptag, dev_info.destid, dev_info.hopcount);
 
-	dev = bus_find_device_by_name(&rio_bus_type, शून्य, dev_info.name);
-	अगर (dev) अणु
+	dev = bus_find_device_by_name(&rio_bus_type, NULL, dev_info.name);
+	if (dev) {
 		rmcd_debug(RDEV, "device %s already exists", dev_info.name);
 		put_device(dev);
-		वापस -EEXIST;
-	पूर्ण
+		return -EEXIST;
+	}
 
-	size = माप(*rdev);
+	size = sizeof(*rdev);
 	mport = md->mport;
 	destid = dev_info.destid;
 	hopcount = dev_info.hopcount;
 
-	अगर (rio_mport_पढ़ो_config_32(mport, destid, hopcount,
+	if (rio_mport_read_config_32(mport, destid, hopcount,
 				     RIO_PEF_CAR, &rval))
-		वापस -EIO;
+		return -EIO;
 
-	अगर (rval & RIO_PEF_SWITCH) अणु
-		rio_mport_पढ़ो_config_32(mport, destid, hopcount,
+	if (rval & RIO_PEF_SWITCH) {
+		rio_mport_read_config_32(mport, destid, hopcount,
 					 RIO_SWP_INFO_CAR, &swpinfo);
-		size += काष्ठा_size(rचयन, nextdev, RIO_GET_TOTAL_PORTS(swpinfo));
-	पूर्ण
+		size += struct_size(rswitch, nextdev, RIO_GET_TOTAL_PORTS(swpinfo));
+	}
 
 	rdev = kzalloc(size, GFP_KERNEL);
-	अगर (rdev == शून्य)
-		वापस -ENOMEM;
+	if (rdev == NULL)
+		return -ENOMEM;
 
-	अगर (mport->net == शून्य) अणु
-		काष्ठा rio_net *net;
+	if (mport->net == NULL) {
+		struct rio_net *net;
 
 		net = rio_alloc_net(mport);
-		अगर (!net) अणु
+		if (!net) {
 			err = -ENOMEM;
 			rmcd_debug(RDEV, "failed to allocate net object");
-			जाओ cleanup;
-		पूर्ण
+			goto cleanup;
+		}
 
 		net->id = mport->id;
 		net->hport = mport;
@@ -1738,60 +1737,60 @@ get_new:
 		net->dev.parent = &mport->dev;
 		net->dev.release = rio_release_net;
 		err = rio_add_net(net);
-		अगर (err) अणु
+		if (err) {
 			rmcd_debug(RDEV, "failed to register net, err=%d", err);
-			kमुक्त(net);
-			जाओ cleanup;
-		पूर्ण
-	पूर्ण
+			kfree(net);
+			goto cleanup;
+		}
+	}
 
 	rdev->net = mport->net;
 	rdev->pef = rval;
 	rdev->swpinfo = swpinfo;
-	rio_mport_पढ़ो_config_32(mport, destid, hopcount,
+	rio_mport_read_config_32(mport, destid, hopcount,
 				 RIO_DEV_ID_CAR, &rval);
 	rdev->did = rval >> 16;
 	rdev->vid = rval & 0xffff;
-	rio_mport_पढ़ो_config_32(mport, destid, hopcount, RIO_DEV_INFO_CAR,
+	rio_mport_read_config_32(mport, destid, hopcount, RIO_DEV_INFO_CAR,
 				 &rdev->device_rev);
-	rio_mport_पढ़ो_config_32(mport, destid, hopcount, RIO_ASM_ID_CAR,
+	rio_mport_read_config_32(mport, destid, hopcount, RIO_ASM_ID_CAR,
 				 &rval);
-	rdev->यंत्र_did = rval >> 16;
-	rdev->यंत्र_vid = rval & 0xffff;
-	rio_mport_पढ़ो_config_32(mport, destid, hopcount, RIO_ASM_INFO_CAR,
+	rdev->asm_did = rval >> 16;
+	rdev->asm_vid = rval & 0xffff;
+	rio_mport_read_config_32(mport, destid, hopcount, RIO_ASM_INFO_CAR,
 				 &rval);
-	rdev->यंत्र_rev = rval >> 16;
+	rdev->asm_rev = rval >> 16;
 
-	अगर (rdev->pef & RIO_PEF_EXT_FEATURES) अणु
+	if (rdev->pef & RIO_PEF_EXT_FEATURES) {
 		rdev->efptr = rval & 0xffff;
 		rdev->phys_efptr = rio_mport_get_physefb(mport, 0, destid,
 						hopcount, &rdev->phys_rmap);
 
 		rdev->em_efptr = rio_mport_get_feature(mport, 0, destid,
 						hopcount, RIO_EFB_ERR_MGMNT);
-	पूर्ण
+	}
 
-	rio_mport_पढ़ो_config_32(mport, destid, hopcount, RIO_SRC_OPS_CAR,
+	rio_mport_read_config_32(mport, destid, hopcount, RIO_SRC_OPS_CAR,
 				 &rdev->src_ops);
-	rio_mport_पढ़ो_config_32(mport, destid, hopcount, RIO_DST_OPS_CAR,
+	rio_mport_read_config_32(mport, destid, hopcount, RIO_DST_OPS_CAR,
 				 &rdev->dst_ops);
 
 	rdev->comp_tag = dev_info.comptag;
 	rdev->destid = destid;
-	/* hopcount is stored as specअगरied by a caller, regardles of EP or SW */
+	/* hopcount is stored as specified by a caller, regardles of EP or SW */
 	rdev->hopcount = hopcount;
 
-	अगर (rdev->pef & RIO_PEF_SWITCH) अणु
-		rचयन = rdev->rचयन;
-		rचयन->route_table = शून्य;
-	पूर्ण
+	if (rdev->pef & RIO_PEF_SWITCH) {
+		rswitch = rdev->rswitch;
+		rswitch->route_table = NULL;
+	}
 
-	अगर (म_माप(dev_info.name))
+	if (strlen(dev_info.name))
 		dev_set_name(&rdev->dev, "%s", dev_info.name);
-	अन्यथा अगर (rdev->pef & RIO_PEF_SWITCH)
+	else if (rdev->pef & RIO_PEF_SWITCH)
 		dev_set_name(&rdev->dev, "%02x:s:%04x", mport->id,
 			     rdev->comp_tag & RIO_CTAG_UDEVID);
-	अन्यथा
+	else
 		dev_set_name(&rdev->dev, "%02x:e:%04x", mport->id,
 			     rdev->comp_tag & RIO_CTAG_UDEVID);
 
@@ -1800,104 +1799,104 @@ get_new:
 	rio_attach_device(rdev);
 	rdev->dev.release = rio_release_dev;
 
-	अगर (rdev->dst_ops & RIO_DST_OPS_DOORBELL)
+	if (rdev->dst_ops & RIO_DST_OPS_DOORBELL)
 		rio_init_dbell_res(&rdev->riores[RIO_DOORBELL_RESOURCE],
 				   0, 0xffff);
 	err = rio_add_device(rdev);
-	अगर (err)
-		जाओ cleanup;
+	if (err)
+		goto cleanup;
 	rio_dev_get(rdev);
 
-	वापस 0;
+	return 0;
 cleanup:
-	kमुक्त(rdev);
-	वापस err;
-पूर्ण
+	kfree(rdev);
+	return err;
+}
 
-अटल पूर्णांक rio_mport_del_riodev(काष्ठा mport_cdev_priv *priv, व्योम __user *arg)
-अणु
-	काष्ठा rio_rdev_info dev_info;
-	काष्ठा rio_dev *rdev = शून्य;
-	काष्ठा device  *dev;
-	काष्ठा rio_mport *mport;
-	काष्ठा rio_net *net;
+static int rio_mport_del_riodev(struct mport_cdev_priv *priv, void __user *arg)
+{
+	struct rio_rdev_info dev_info;
+	struct rio_dev *rdev = NULL;
+	struct device  *dev;
+	struct rio_mport *mport;
+	struct rio_net *net;
 
-	अगर (copy_from_user(&dev_info, arg, माप(dev_info)))
-		वापस -EFAULT;
-	dev_info.name[माप(dev_info.name) - 1] = '\0';
+	if (copy_from_user(&dev_info, arg, sizeof(dev_info)))
+		return -EFAULT;
+	dev_info.name[sizeof(dev_info.name) - 1] = '\0';
 
 	mport = priv->md->mport;
 
-	/* If device name is specअगरied, removal by name has priority */
-	अगर (म_माप(dev_info.name)) अणु
-		dev = bus_find_device_by_name(&rio_bus_type, शून्य,
+	/* If device name is specified, removal by name has priority */
+	if (strlen(dev_info.name)) {
+		dev = bus_find_device_by_name(&rio_bus_type, NULL,
 					      dev_info.name);
-		अगर (dev)
+		if (dev)
 			rdev = to_rio_dev(dev);
-	पूर्ण अन्यथा अणु
-		करो अणु
+	} else {
+		do {
 			rdev = rio_get_comptag(dev_info.comptag, rdev);
-			अगर (rdev && rdev->dev.parent == &mport->net->dev &&
+			if (rdev && rdev->dev.parent == &mport->net->dev &&
 			    rdev->destid == dev_info.destid &&
 			    rdev->hopcount == dev_info.hopcount)
-				अवरोध;
-		पूर्ण जबतक (rdev);
-	पूर्ण
+				break;
+		} while (rdev);
+	}
 
-	अगर (!rdev) अणु
+	if (!rdev) {
 		rmcd_debug(RDEV,
 			"device name:%s ct:0x%x did:0x%x hc:0x%x not found",
 			dev_info.name, dev_info.comptag, dev_info.destid,
 			dev_info.hopcount);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	net = rdev->net;
 	rio_dev_put(rdev);
 	rio_del_device(rdev, RIO_DEVICE_SHUTDOWN);
 
-	अगर (list_empty(&net->devices)) अणु
-		rio_मुक्त_net(net);
-		mport->net = शून्य;
-	पूर्ण
+	if (list_empty(&net->devices)) {
+		rio_free_net(net);
+		mport->net = NULL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Mport cdev management
  */
 
 /*
- * mport_cdev_खोलो() - Open अक्षरacter device (mport)
+ * mport_cdev_open() - Open character device (mport)
  */
-अटल पूर्णांक mport_cdev_खोलो(काष्ठा inode *inode, काष्ठा file *filp)
-अणु
-	पूर्णांक ret;
-	पूर्णांक minor = iminor(inode);
-	काष्ठा mport_dev *chdev;
-	काष्ठा mport_cdev_priv *priv;
+static int mport_cdev_open(struct inode *inode, struct file *filp)
+{
+	int ret;
+	int minor = iminor(inode);
+	struct mport_dev *chdev;
+	struct mport_cdev_priv *priv;
 
-	/* Test क्रम valid device */
-	अगर (minor >= RIO_MAX_MPORTS) अणु
+	/* Test for valid device */
+	if (minor >= RIO_MAX_MPORTS) {
 		rmcd_error("Invalid minor device number");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	chdev = container_of(inode->i_cdev, काष्ठा mport_dev, cdev);
+	chdev = container_of(inode->i_cdev, struct mport_dev, cdev);
 
 	rmcd_debug(INIT, "%s filp=%p", dev_name(&chdev->dev), filp);
 
-	अगर (atomic_पढ़ो(&chdev->active) == 0)
-		वापस -ENODEV;
+	if (atomic_read(&chdev->active) == 0)
+		return -ENODEV;
 
 	get_device(&chdev->dev);
 
-	priv = kzalloc(माप(*priv), GFP_KERNEL);
-	अगर (!priv) अणु
+	priv = kzalloc(sizeof(*priv), GFP_KERNEL);
+	if (!priv) {
 		put_device(&chdev->dev);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	priv->md = chdev;
 
@@ -1907,111 +1906,111 @@ cleanup:
 
 	INIT_LIST_HEAD(&priv->db_filters);
 	INIT_LIST_HEAD(&priv->pw_filters);
-	spin_lock_init(&priv->fअगरo_lock);
-	init_रुकोqueue_head(&priv->event_rx_रुको);
-	ret = kfअगरo_alloc(&priv->event_fअगरo,
-			  माप(काष्ठा rio_event) * MPORT_EVENT_DEPTH,
+	spin_lock_init(&priv->fifo_lock);
+	init_waitqueue_head(&priv->event_rx_wait);
+	ret = kfifo_alloc(&priv->event_fifo,
+			  sizeof(struct rio_event) * MPORT_EVENT_DEPTH,
 			  GFP_KERNEL);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(&chdev->dev, DRV_NAME ": kfifo_alloc failed\n");
 		ret = -ENOMEM;
-		जाओ err_fअगरo;
-	पूर्ण
+		goto err_fifo;
+	}
 
-#अगर_घोषित CONFIG_RAPIDIO_DMA_ENGINE
+#ifdef CONFIG_RAPIDIO_DMA_ENGINE
 	INIT_LIST_HEAD(&priv->async_list);
 	spin_lock_init(&priv->req_lock);
 	mutex_init(&priv->dma_lock);
-#पूर्ण_अगर
+#endif
 
-	filp->निजी_data = priv;
-	जाओ out;
-err_fअगरo:
-	kमुक्त(priv);
+	filp->private_data = priv;
+	goto out;
+err_fifo:
+	kfree(priv);
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक mport_cdev_fasync(पूर्णांक fd, काष्ठा file *filp, पूर्णांक mode)
-अणु
-	काष्ठा mport_cdev_priv *priv = filp->निजी_data;
+static int mport_cdev_fasync(int fd, struct file *filp, int mode)
+{
+	struct mport_cdev_priv *priv = filp->private_data;
 
-	वापस fasync_helper(fd, filp, mode, &priv->async_queue);
-पूर्ण
+	return fasync_helper(fd, filp, mode, &priv->async_queue);
+}
 
-#अगर_घोषित CONFIG_RAPIDIO_DMA_ENGINE
-अटल व्योम mport_cdev_release_dma(काष्ठा file *filp)
-अणु
-	काष्ठा mport_cdev_priv *priv = filp->निजी_data;
-	काष्ठा mport_dev *md;
-	काष्ठा mport_dma_req *req, *req_next;
-	अचिन्हित दीर्घ पंचांगo = msecs_to_jअगरfies(dma_समयout);
-	दीर्घ wret;
+#ifdef CONFIG_RAPIDIO_DMA_ENGINE
+static void mport_cdev_release_dma(struct file *filp)
+{
+	struct mport_cdev_priv *priv = filp->private_data;
+	struct mport_dev *md;
+	struct mport_dma_req *req, *req_next;
+	unsigned long tmo = msecs_to_jiffies(dma_timeout);
+	long wret;
 	LIST_HEAD(list);
 
 	rmcd_debug(EXIT, "from filp=%p %s(%d)",
 		   filp, current->comm, task_pid_nr(current));
 
-	अगर (!priv->dmach) अणु
+	if (!priv->dmach) {
 		rmcd_debug(EXIT, "No DMA channel for filp=%p", filp);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	md = priv->md;
 
 	spin_lock(&priv->req_lock);
-	अगर (!list_empty(&priv->async_list)) अणु
+	if (!list_empty(&priv->async_list)) {
 		rmcd_debug(EXIT, "async list not empty filp=%p %s(%d)",
 			   filp, current->comm, task_pid_nr(current));
 		list_splice_init(&priv->async_list, &list);
-	पूर्ण
+	}
 	spin_unlock(&priv->req_lock);
 
-	अगर (!list_empty(&list)) अणु
+	if (!list_empty(&list)) {
 		rmcd_debug(EXIT, "temp list not empty");
-		list_क्रम_each_entry_safe(req, req_next, &list, node) अणु
+		list_for_each_entry_safe(req, req_next, &list, node) {
 			rmcd_debug(EXIT, "free req->filp=%p cookie=%d compl=%s",
 				   req->filp, req->cookie,
-				   completion_करोne(&req->req_comp)?"yes":"no");
+				   completion_done(&req->req_comp)?"yes":"no");
 			list_del(&req->node);
-			kref_put(&req->refcount, dma_req_मुक्त);
-		पूर्ण
-	पूर्ण
+			kref_put(&req->refcount, dma_req_free);
+		}
+	}
 
 	put_dma_channel(priv);
-	wret = रुको_क्रम_completion_पूर्णांकerruptible_समयout(&priv->comp, पंचांगo);
+	wret = wait_for_completion_interruptible_timeout(&priv->comp, tmo);
 
-	अगर (wret <= 0) अणु
+	if (wret <= 0) {
 		rmcd_error("%s(%d) failed waiting for DMA release err=%ld",
 			current->comm, task_pid_nr(current), wret);
-	पूर्ण
+	}
 
-	अगर (priv->dmach != priv->md->dma_chan) अणु
+	if (priv->dmach != priv->md->dma_chan) {
 		rmcd_debug(EXIT, "Release DMA channel for filp=%p %s(%d)",
 			   filp, current->comm, task_pid_nr(current));
 		rio_release_dma(priv->dmach);
-	पूर्ण अन्यथा अणु
+	} else {
 		rmcd_debug(EXIT, "Adjust default DMA channel refcount");
 		kref_put(&md->dma_ref, mport_release_def_dma);
-	पूर्ण
+	}
 
-	priv->dmach = शून्य;
-पूर्ण
-#अन्यथा
-#घोषणा mport_cdev_release_dma(priv) करो अणुपूर्ण जबतक (0)
-#पूर्ण_अगर
+	priv->dmach = NULL;
+}
+#else
+#define mport_cdev_release_dma(priv) do {} while (0)
+#endif
 
 /*
- * mport_cdev_release() - Release अक्षरacter device
+ * mport_cdev_release() - Release character device
  */
-अटल पूर्णांक mport_cdev_release(काष्ठा inode *inode, काष्ठा file *filp)
-अणु
-	काष्ठा mport_cdev_priv *priv = filp->निजी_data;
-	काष्ठा mport_dev *chdev;
-	काष्ठा rio_mport_pw_filter *pw_filter, *pw_filter_next;
-	काष्ठा rio_mport_db_filter *db_filter, *db_filter_next;
-	काष्ठा rio_mport_mapping *map, *_map;
-	अचिन्हित दीर्घ flags;
+static int mport_cdev_release(struct inode *inode, struct file *filp)
+{
+	struct mport_cdev_priv *priv = filp->private_data;
+	struct mport_dev *chdev;
+	struct rio_mport_pw_filter *pw_filter, *pw_filter_next;
+	struct rio_mport_db_filter *db_filter, *db_filter_next;
+	struct rio_mport_mapping *map, *_map;
+	unsigned long flags;
 
 	rmcd_debug(EXIT, "%s filp=%p", dev_name(&priv->md->dev), filp);
 
@@ -2021,130 +2020,130 @@ out:
 	priv->event_mask = 0;
 
 	spin_lock_irqsave(&chdev->pw_lock, flags);
-	अगर (!list_empty(&priv->pw_filters)) अणु
-		list_क्रम_each_entry_safe(pw_filter, pw_filter_next,
+	if (!list_empty(&priv->pw_filters)) {
+		list_for_each_entry_safe(pw_filter, pw_filter_next,
 					 &priv->pw_filters, priv_node)
 			rio_mport_delete_pw_filter(pw_filter);
-	पूर्ण
+	}
 	spin_unlock_irqrestore(&chdev->pw_lock, flags);
 
 	spin_lock_irqsave(&chdev->db_lock, flags);
-	list_क्रम_each_entry_safe(db_filter, db_filter_next,
-				 &priv->db_filters, priv_node) अणु
+	list_for_each_entry_safe(db_filter, db_filter_next,
+				 &priv->db_filters, priv_node) {
 		rio_mport_delete_db_filter(db_filter);
-	पूर्ण
+	}
 	spin_unlock_irqrestore(&chdev->db_lock, flags);
 
-	kfअगरo_मुक्त(&priv->event_fअगरo);
+	kfifo_free(&priv->event_fifo);
 
 	mutex_lock(&chdev->buf_mutex);
-	list_क्रम_each_entry_safe(map, _map, &chdev->mappings, node) अणु
-		अगर (map->filp == filp) अणु
+	list_for_each_entry_safe(map, _map, &chdev->mappings, node) {
+		if (map->filp == filp) {
 			rmcd_debug(EXIT, "release mapping %p filp=%p",
 				   map->virt_addr, filp);
 			kref_put(&map->ref, mport_release_mapping);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	mutex_unlock(&chdev->buf_mutex);
 
 	mport_cdev_fasync(-1, filp, 0);
-	filp->निजी_data = शून्य;
+	filp->private_data = NULL;
 	mutex_lock(&chdev->file_mutex);
 	list_del(&priv->list);
 	mutex_unlock(&chdev->file_mutex);
 	put_device(&chdev->dev);
-	kमुक्त(priv);
-	वापस 0;
-पूर्ण
+	kfree(priv);
+	return 0;
+}
 
 /*
- * mport_cdev_ioctl() - IOCTLs क्रम अक्षरacter device
+ * mport_cdev_ioctl() - IOCTLs for character device
  */
-अटल दीर्घ mport_cdev_ioctl(काष्ठा file *filp,
-		अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
-अणु
-	पूर्णांक err = -EINVAL;
-	काष्ठा mport_cdev_priv *data = filp->निजी_data;
-	काष्ठा mport_dev *md = data->md;
+static long mport_cdev_ioctl(struct file *filp,
+		unsigned int cmd, unsigned long arg)
+{
+	int err = -EINVAL;
+	struct mport_cdev_priv *data = filp->private_data;
+	struct mport_dev *md = data->md;
 
-	अगर (atomic_पढ़ो(&md->active) == 0)
-		वापस -ENODEV;
+	if (atomic_read(&md->active) == 0)
+		return -ENODEV;
 
-	चयन (cmd) अणु
-	हाल RIO_MPORT_MAINT_READ_LOCAL:
-		वापस rio_mport_मुख्यt_rd(data, (व्योम __user *)arg, 1);
-	हाल RIO_MPORT_MAINT_WRITE_LOCAL:
-		वापस rio_mport_मुख्यt_wr(data, (व्योम __user *)arg, 1);
-	हाल RIO_MPORT_MAINT_READ_REMOTE:
-		वापस rio_mport_मुख्यt_rd(data, (व्योम __user *)arg, 0);
-	हाल RIO_MPORT_MAINT_WRITE_REMOTE:
-		वापस rio_mport_मुख्यt_wr(data, (व्योम __user *)arg, 0);
-	हाल RIO_MPORT_MAINT_HDID_SET:
-		वापस मुख्यt_hdid_set(data, (व्योम __user *)arg);
-	हाल RIO_MPORT_MAINT_COMPTAG_SET:
-		वापस मुख्यt_comptag_set(data, (व्योम __user *)arg);
-	हाल RIO_MPORT_MAINT_PORT_IDX_GET:
-		वापस मुख्यt_port_idx_get(data, (व्योम __user *)arg);
-	हाल RIO_MPORT_GET_PROPERTIES:
+	switch (cmd) {
+	case RIO_MPORT_MAINT_READ_LOCAL:
+		return rio_mport_maint_rd(data, (void __user *)arg, 1);
+	case RIO_MPORT_MAINT_WRITE_LOCAL:
+		return rio_mport_maint_wr(data, (void __user *)arg, 1);
+	case RIO_MPORT_MAINT_READ_REMOTE:
+		return rio_mport_maint_rd(data, (void __user *)arg, 0);
+	case RIO_MPORT_MAINT_WRITE_REMOTE:
+		return rio_mport_maint_wr(data, (void __user *)arg, 0);
+	case RIO_MPORT_MAINT_HDID_SET:
+		return maint_hdid_set(data, (void __user *)arg);
+	case RIO_MPORT_MAINT_COMPTAG_SET:
+		return maint_comptag_set(data, (void __user *)arg);
+	case RIO_MPORT_MAINT_PORT_IDX_GET:
+		return maint_port_idx_get(data, (void __user *)arg);
+	case RIO_MPORT_GET_PROPERTIES:
 		md->properties.hdid = md->mport->host_deviceid;
-		अगर (copy_to_user((व्योम __user *)arg, &(md->properties),
-				 माप(md->properties)))
-			वापस -EFAULT;
-		वापस 0;
-	हाल RIO_ENABLE_DOORBELL_RANGE:
-		वापस rio_mport_add_db_filter(data, (व्योम __user *)arg);
-	हाल RIO_DISABLE_DOORBELL_RANGE:
-		वापस rio_mport_हटाओ_db_filter(data, (व्योम __user *)arg);
-	हाल RIO_ENABLE_PORTWRITE_RANGE:
-		वापस rio_mport_add_pw_filter(data, (व्योम __user *)arg);
-	हाल RIO_DISABLE_PORTWRITE_RANGE:
-		वापस rio_mport_हटाओ_pw_filter(data, (व्योम __user *)arg);
-	हाल RIO_SET_EVENT_MASK:
+		if (copy_to_user((void __user *)arg, &(md->properties),
+				 sizeof(md->properties)))
+			return -EFAULT;
+		return 0;
+	case RIO_ENABLE_DOORBELL_RANGE:
+		return rio_mport_add_db_filter(data, (void __user *)arg);
+	case RIO_DISABLE_DOORBELL_RANGE:
+		return rio_mport_remove_db_filter(data, (void __user *)arg);
+	case RIO_ENABLE_PORTWRITE_RANGE:
+		return rio_mport_add_pw_filter(data, (void __user *)arg);
+	case RIO_DISABLE_PORTWRITE_RANGE:
+		return rio_mport_remove_pw_filter(data, (void __user *)arg);
+	case RIO_SET_EVENT_MASK:
 		data->event_mask = (u32)arg;
-		वापस 0;
-	हाल RIO_GET_EVENT_MASK:
-		अगर (copy_to_user((व्योम __user *)arg, &data->event_mask,
-				    माप(u32)))
-			वापस -EFAULT;
-		वापस 0;
-	हाल RIO_MAP_OUTBOUND:
-		वापस rio_mport_obw_map(filp, (व्योम __user *)arg);
-	हाल RIO_MAP_INBOUND:
-		वापस rio_mport_map_inbound(filp, (व्योम __user *)arg);
-	हाल RIO_UNMAP_OUTBOUND:
-		वापस rio_mport_obw_मुक्त(filp, (व्योम __user *)arg);
-	हाल RIO_UNMAP_INBOUND:
-		वापस rio_mport_inbound_मुक्त(filp, (व्योम __user *)arg);
-	हाल RIO_ALLOC_DMA:
-		वापस rio_mport_alloc_dma(filp, (व्योम __user *)arg);
-	हाल RIO_FREE_DMA:
-		वापस rio_mport_मुक्त_dma(filp, (व्योम __user *)arg);
-	हाल RIO_WAIT_FOR_ASYNC:
-		वापस rio_mport_रुको_क्रम_async_dma(filp, (व्योम __user *)arg);
-	हाल RIO_TRANSFER:
-		वापस rio_mport_transfer_ioctl(filp, (व्योम __user *)arg);
-	हाल RIO_DEV_ADD:
-		वापस rio_mport_add_riodev(data, (व्योम __user *)arg);
-	हाल RIO_DEV_DEL:
-		वापस rio_mport_del_riodev(data, (व्योम __user *)arg);
-	शेष:
-		अवरोध;
-	पूर्ण
+		return 0;
+	case RIO_GET_EVENT_MASK:
+		if (copy_to_user((void __user *)arg, &data->event_mask,
+				    sizeof(u32)))
+			return -EFAULT;
+		return 0;
+	case RIO_MAP_OUTBOUND:
+		return rio_mport_obw_map(filp, (void __user *)arg);
+	case RIO_MAP_INBOUND:
+		return rio_mport_map_inbound(filp, (void __user *)arg);
+	case RIO_UNMAP_OUTBOUND:
+		return rio_mport_obw_free(filp, (void __user *)arg);
+	case RIO_UNMAP_INBOUND:
+		return rio_mport_inbound_free(filp, (void __user *)arg);
+	case RIO_ALLOC_DMA:
+		return rio_mport_alloc_dma(filp, (void __user *)arg);
+	case RIO_FREE_DMA:
+		return rio_mport_free_dma(filp, (void __user *)arg);
+	case RIO_WAIT_FOR_ASYNC:
+		return rio_mport_wait_for_async_dma(filp, (void __user *)arg);
+	case RIO_TRANSFER:
+		return rio_mport_transfer_ioctl(filp, (void __user *)arg);
+	case RIO_DEV_ADD:
+		return rio_mport_add_riodev(data, (void __user *)arg);
+	case RIO_DEV_DEL:
+		return rio_mport_del_riodev(data, (void __user *)arg);
+	default:
+		break;
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /*
- * mport_release_mapping - मुक्त mapping resources and info काष्ठाure
- * @ref: a poपूर्णांकer to the kref within काष्ठा rio_mport_mapping
+ * mport_release_mapping - free mapping resources and info structure
+ * @ref: a pointer to the kref within struct rio_mport_mapping
  *
- * NOTE: Shall be called जबतक holding buf_mutex.
+ * NOTE: Shall be called while holding buf_mutex.
  */
-अटल व्योम mport_release_mapping(काष्ठा kref *ref)
-अणु
-	काष्ठा rio_mport_mapping *map =
-			container_of(ref, काष्ठा rio_mport_mapping, ref);
-	काष्ठा rio_mport *mport = map->md->mport;
+static void mport_release_mapping(struct kref *ref)
+{
+	struct rio_mport_mapping *map =
+			container_of(ref, struct rio_mport_mapping, ref);
+	struct rio_mport *mport = map->md->mport;
 
 	rmcd_debug(MMAP, "type %d mapping @ %p (phys = %pad) for %s",
 		   map->dir, map->virt_addr,
@@ -2152,222 +2151,222 @@ out:
 
 	list_del(&map->node);
 
-	चयन (map->dir) अणु
-	हाल MAP_INBOUND:
+	switch (map->dir) {
+	case MAP_INBOUND:
 		rio_unmap_inb_region(mport, map->phys_addr);
 		fallthrough;
-	हाल MAP_DMA:
-		dma_मुक्त_coherent(mport->dev.parent, map->size,
+	case MAP_DMA:
+		dma_free_coherent(mport->dev.parent, map->size,
 				  map->virt_addr, map->phys_addr);
-		अवरोध;
-	हाल MAP_OUTBOUND:
+		break;
+	case MAP_OUTBOUND:
 		rio_unmap_outb_region(mport, map->rioid, map->rio_addr);
-		अवरोध;
-	पूर्ण
-	kमुक्त(map);
-पूर्ण
+		break;
+	}
+	kfree(map);
+}
 
-अटल व्योम mport_mm_खोलो(काष्ठा vm_area_काष्ठा *vma)
-अणु
-	काष्ठा rio_mport_mapping *map = vma->vm_निजी_data;
+static void mport_mm_open(struct vm_area_struct *vma)
+{
+	struct rio_mport_mapping *map = vma->vm_private_data;
 
 	rmcd_debug(MMAP, "%pad", &map->phys_addr);
 	kref_get(&map->ref);
-पूर्ण
+}
 
-अटल व्योम mport_mm_बंद(काष्ठा vm_area_काष्ठा *vma)
-अणु
-	काष्ठा rio_mport_mapping *map = vma->vm_निजी_data;
+static void mport_mm_close(struct vm_area_struct *vma)
+{
+	struct rio_mport_mapping *map = vma->vm_private_data;
 
 	rmcd_debug(MMAP, "%pad", &map->phys_addr);
 	mutex_lock(&map->md->buf_mutex);
 	kref_put(&map->ref, mport_release_mapping);
 	mutex_unlock(&map->md->buf_mutex);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा vm_operations_काष्ठा vm_ops = अणु
-	.खोलो =	mport_mm_खोलो,
-	.बंद = mport_mm_बंद,
-पूर्ण;
+static const struct vm_operations_struct vm_ops = {
+	.open =	mport_mm_open,
+	.close = mport_mm_close,
+};
 
-अटल पूर्णांक mport_cdev_mmap(काष्ठा file *filp, काष्ठा vm_area_काष्ठा *vma)
-अणु
-	काष्ठा mport_cdev_priv *priv = filp->निजी_data;
-	काष्ठा mport_dev *md;
-	माप_प्रकार size = vma->vm_end - vma->vm_start;
+static int mport_cdev_mmap(struct file *filp, struct vm_area_struct *vma)
+{
+	struct mport_cdev_priv *priv = filp->private_data;
+	struct mport_dev *md;
+	size_t size = vma->vm_end - vma->vm_start;
 	dma_addr_t baddr;
-	अचिन्हित दीर्घ offset;
-	पूर्णांक found = 0, ret;
-	काष्ठा rio_mport_mapping *map;
+	unsigned long offset;
+	int found = 0, ret;
+	struct rio_mport_mapping *map;
 
 	rmcd_debug(MMAP, "0x%x bytes at offset 0x%lx",
-		   (अचिन्हित पूर्णांक)size, vma->vm_pgoff);
+		   (unsigned int)size, vma->vm_pgoff);
 
 	md = priv->md;
 	baddr = ((dma_addr_t)vma->vm_pgoff << PAGE_SHIFT);
 
 	mutex_lock(&md->buf_mutex);
-	list_क्रम_each_entry(map, &md->mappings, node) अणु
-		अगर (baddr >= map->phys_addr &&
-		    baddr < (map->phys_addr + map->size)) अणु
+	list_for_each_entry(map, &md->mappings, node) {
+		if (baddr >= map->phys_addr &&
+		    baddr < (map->phys_addr + map->size)) {
 			found = 1;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 	mutex_unlock(&md->buf_mutex);
 
-	अगर (!found)
-		वापस -ENOMEM;
+	if (!found)
+		return -ENOMEM;
 
 	offset = baddr - map->phys_addr;
 
-	अगर (size + offset > map->size)
-		वापस -EINVAL;
+	if (size + offset > map->size)
+		return -EINVAL;
 
 	vma->vm_pgoff = offset >> PAGE_SHIFT;
 	rmcd_debug(MMAP, "MMAP adjusted offset = 0x%lx", vma->vm_pgoff);
 
-	अगर (map->dir == MAP_INBOUND || map->dir == MAP_DMA)
+	if (map->dir == MAP_INBOUND || map->dir == MAP_DMA)
 		ret = dma_mmap_coherent(md->mport->dev.parent, vma,
 				map->virt_addr, map->phys_addr, map->size);
-	अन्यथा अगर (map->dir == MAP_OUTBOUND) अणु
+	else if (map->dir == MAP_OUTBOUND) {
 		vma->vm_page_prot = pgprot_noncached(vma->vm_page_prot);
 		ret = vm_iomap_memory(vma, map->phys_addr, map->size);
-	पूर्ण अन्यथा अणु
+	} else {
 		rmcd_error("Attempt to mmap unsupported mapping type");
 		ret = -EIO;
-	पूर्ण
+	}
 
-	अगर (!ret) अणु
-		vma->vm_निजी_data = map;
+	if (!ret) {
+		vma->vm_private_data = map;
 		vma->vm_ops = &vm_ops;
-		mport_mm_खोलो(vma);
-	पूर्ण अन्यथा अणु
+		mport_mm_open(vma);
+	} else {
 		rmcd_error("MMAP exit with err=%d", ret);
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल __poll_t mport_cdev_poll(काष्ठा file *filp, poll_table *रुको)
-अणु
-	काष्ठा mport_cdev_priv *priv = filp->निजी_data;
+static __poll_t mport_cdev_poll(struct file *filp, poll_table *wait)
+{
+	struct mport_cdev_priv *priv = filp->private_data;
 
-	poll_रुको(filp, &priv->event_rx_रुको, रुको);
-	अगर (kfअगरo_len(&priv->event_fअगरo))
-		वापस EPOLLIN | EPOLLRDNORM;
+	poll_wait(filp, &priv->event_rx_wait, wait);
+	if (kfifo_len(&priv->event_fifo))
+		return EPOLLIN | EPOLLRDNORM;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल sमाप_प्रकार mport_पढ़ो(काष्ठा file *filp, अक्षर __user *buf, माप_प्रकार count,
+static ssize_t mport_read(struct file *filp, char __user *buf, size_t count,
 			loff_t *ppos)
-अणु
-	काष्ठा mport_cdev_priv *priv = filp->निजी_data;
-	पूर्णांक copied;
-	sमाप_प्रकार ret;
+{
+	struct mport_cdev_priv *priv = filp->private_data;
+	int copied;
+	ssize_t ret;
 
-	अगर (!count)
-		वापस 0;
+	if (!count)
+		return 0;
 
-	अगर (kfअगरo_is_empty(&priv->event_fअगरo) &&
+	if (kfifo_is_empty(&priv->event_fifo) &&
 	    (filp->f_flags & O_NONBLOCK))
-		वापस -EAGAIN;
+		return -EAGAIN;
 
-	अगर (count % माप(काष्ठा rio_event))
-		वापस -EINVAL;
+	if (count % sizeof(struct rio_event))
+		return -EINVAL;
 
-	ret = रुको_event_पूर्णांकerruptible(priv->event_rx_रुको,
-					kfअगरo_len(&priv->event_fअगरo) != 0);
-	अगर (ret)
-		वापस ret;
+	ret = wait_event_interruptible(priv->event_rx_wait,
+					kfifo_len(&priv->event_fifo) != 0);
+	if (ret)
+		return ret;
 
-	जबतक (ret < count) अणु
-		अगर (kfअगरo_to_user(&priv->event_fअगरo, buf,
-		      माप(काष्ठा rio_event), &copied))
-			वापस -EFAULT;
+	while (ret < count) {
+		if (kfifo_to_user(&priv->event_fifo, buf,
+		      sizeof(struct rio_event), &copied))
+			return -EFAULT;
 		ret += copied;
 		buf += copied;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल sमाप_प्रकार mport_ग_लिखो(काष्ठा file *filp, स्थिर अक्षर __user *buf,
-			 माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा mport_cdev_priv *priv = filp->निजी_data;
-	काष्ठा rio_mport *mport = priv->md->mport;
-	काष्ठा rio_event event;
-	पूर्णांक len, ret;
+static ssize_t mport_write(struct file *filp, const char __user *buf,
+			 size_t count, loff_t *ppos)
+{
+	struct mport_cdev_priv *priv = filp->private_data;
+	struct rio_mport *mport = priv->md->mport;
+	struct rio_event event;
+	int len, ret;
 
-	अगर (!count)
-		वापस 0;
+	if (!count)
+		return 0;
 
-	अगर (count % माप(event))
-		वापस -EINVAL;
+	if (count % sizeof(event))
+		return -EINVAL;
 
 	len = 0;
-	जबतक ((count - len) >= (पूर्णांक)माप(event)) अणु
-		अगर (copy_from_user(&event, buf, माप(event)))
-			वापस -EFAULT;
+	while ((count - len) >= (int)sizeof(event)) {
+		if (copy_from_user(&event, buf, sizeof(event)))
+			return -EFAULT;
 
-		अगर (event.header != RIO_DOORBELL)
-			वापस -EINVAL;
+		if (event.header != RIO_DOORBELL)
+			return -EINVAL;
 
-		ret = rio_mport_send_करोorbell(mport,
-					      event.u.करोorbell.rioid,
-					      event.u.करोorbell.payload);
-		अगर (ret < 0)
-			वापस ret;
+		ret = rio_mport_send_doorbell(mport,
+					      event.u.doorbell.rioid,
+					      event.u.doorbell.payload);
+		if (ret < 0)
+			return ret;
 
-		len += माप(event);
-		buf += माप(event);
-	पूर्ण
+		len += sizeof(event);
+		buf += sizeof(event);
+	}
 
-	वापस len;
-पूर्ण
+	return len;
+}
 
-अटल स्थिर काष्ठा file_operations mport_fops = अणु
+static const struct file_operations mport_fops = {
 	.owner		= THIS_MODULE,
-	.खोलो		= mport_cdev_खोलो,
+	.open		= mport_cdev_open,
 	.release	= mport_cdev_release,
 	.poll		= mport_cdev_poll,
-	.पढ़ो		= mport_पढ़ो,
-	.ग_लिखो		= mport_ग_लिखो,
+	.read		= mport_read,
+	.write		= mport_write,
 	.mmap		= mport_cdev_mmap,
 	.fasync		= mport_cdev_fasync,
 	.unlocked_ioctl = mport_cdev_ioctl
-पूर्ण;
+};
 
 /*
  * Character device management
  */
 
-अटल व्योम mport_device_release(काष्ठा device *dev)
-अणु
-	काष्ठा mport_dev *md;
+static void mport_device_release(struct device *dev)
+{
+	struct mport_dev *md;
 
 	rmcd_debug(EXIT, "%s", dev_name(dev));
-	md = container_of(dev, काष्ठा mport_dev, dev);
-	kमुक्त(md);
-पूर्ण
+	md = container_of(dev, struct mport_dev, dev);
+	kfree(md);
+}
 
 /*
  * mport_cdev_add() - Create mport_dev from rio_mport
  * @mport:	RapidIO master port
  */
-अटल काष्ठा mport_dev *mport_cdev_add(काष्ठा rio_mport *mport)
-अणु
-	पूर्णांक ret = 0;
-	काष्ठा mport_dev *md;
-	काष्ठा rio_mport_attr attr;
+static struct mport_dev *mport_cdev_add(struct rio_mport *mport)
+{
+	int ret = 0;
+	struct mport_dev *md;
+	struct rio_mport_attr attr;
 
-	md = kzalloc(माप(*md), GFP_KERNEL);
-	अगर (!md) अणु
+	md = kzalloc(sizeof(*md), GFP_KERNEL);
+	if (!md) {
 		rmcd_error("Unable allocate a device object");
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
 	md->mport = mport;
 	mutex_init(&md->buf_mutex);
@@ -2385,9 +2384,9 @@ out:
 	cdev_init(&md->cdev, &mport_fops);
 	md->cdev.owner = THIS_MODULE;
 
-	INIT_LIST_HEAD(&md->करोorbells);
+	INIT_LIST_HEAD(&md->doorbells);
 	spin_lock_init(&md->db_lock);
-	INIT_LIST_HEAD(&md->portग_लिखोs);
+	INIT_LIST_HEAD(&md->portwrites);
 	spin_lock_init(&md->pw_lock);
 	INIT_LIST_HEAD(&md->mappings);
 
@@ -2396,23 +2395,23 @@ out:
 	md->properties.hdid = mport->host_deviceid;
 	md->properties.index = mport->index;
 
-	/* The transfer_mode property will be वापसed through mport query
-	 * पूर्णांकerface
+	/* The transfer_mode property will be returned through mport query
+	 * interface
 	 */
-#अगर_घोषित CONFIG_FSL_RIO /* क्रम now: only on Freescale's SoCs */
+#ifdef CONFIG_FSL_RIO /* for now: only on Freescale's SoCs */
 	md->properties.transfer_mode |= RIO_TRANSFER_MODE_MAPPED;
-#अन्यथा
+#else
 	md->properties.transfer_mode |= RIO_TRANSFER_MODE_TRANSFER;
-#पूर्ण_अगर
+#endif
 
 	ret = cdev_device_add(&md->cdev, &md->dev);
-	अगर (ret) अणु
+	if (ret) {
 		rmcd_error("Failed to register mport %d (err=%d)",
 		       mport->id, ret);
-		जाओ err_cdev;
-	पूर्ण
+		goto err_cdev;
+	}
 	ret = rio_query_mport(mport, &attr);
-	अगर (!ret) अणु
+	if (!ret) {
 		md->properties.flags = attr.flags;
 		md->properties.link_speed = attr.link_speed;
 		md->properties.link_width = attr.link_width;
@@ -2422,7 +2421,7 @@ out:
 		md->properties.cap_sys_size = 0;
 		md->properties.cap_transfer_mode = 0;
 		md->properties.cap_addr_size = 0;
-	पूर्ण अन्यथा
+	} else
 		pr_info(DRV_PREFIX "Failed to obtain info for %s cdev(%d:%d)\n",
 			mport->name, MAJOR(dev_number), mport->id);
 
@@ -2433,160 +2432,160 @@ out:
 	pr_info(DRV_PREFIX "Added %s cdev(%d:%d)\n",
 		mport->name, MAJOR(dev_number), mport->id);
 
-	वापस md;
+	return md;
 
 err_cdev:
 	put_device(&md->dev);
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
 /*
  * mport_cdev_terminate_dma() - Stop all active DMA data transfers and release
  *                              associated DMA channels.
  */
-अटल व्योम mport_cdev_terminate_dma(काष्ठा mport_dev *md)
-अणु
-#अगर_घोषित CONFIG_RAPIDIO_DMA_ENGINE
-	काष्ठा mport_cdev_priv *client;
+static void mport_cdev_terminate_dma(struct mport_dev *md)
+{
+#ifdef CONFIG_RAPIDIO_DMA_ENGINE
+	struct mport_cdev_priv *client;
 
 	rmcd_debug(DMA, "%s", dev_name(&md->dev));
 
 	mutex_lock(&md->file_mutex);
-	list_क्रम_each_entry(client, &md->file_list, list) अणु
-		अगर (client->dmach) अणु
+	list_for_each_entry(client, &md->file_list, list) {
+		if (client->dmach) {
 			dmaengine_terminate_all(client->dmach);
 			rio_release_dma(client->dmach);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	mutex_unlock(&md->file_mutex);
 
-	अगर (md->dma_chan) अणु
+	if (md->dma_chan) {
 		dmaengine_terminate_all(md->dma_chan);
 		rio_release_dma(md->dma_chan);
-		md->dma_chan = शून्य;
-	पूर्ण
-#पूर्ण_अगर
-पूर्ण
+		md->dma_chan = NULL;
+	}
+#endif
+}
 
 
 /*
- * mport_cdev_समाप्त_fasync() - Send SIGIO संकेत to all processes with खोलो
+ * mport_cdev_kill_fasync() - Send SIGIO signal to all processes with open
  *                            mport_cdev files.
  */
-अटल पूर्णांक mport_cdev_समाप्त_fasync(काष्ठा mport_dev *md)
-अणु
-	अचिन्हित पूर्णांक files = 0;
-	काष्ठा mport_cdev_priv *client;
+static int mport_cdev_kill_fasync(struct mport_dev *md)
+{
+	unsigned int files = 0;
+	struct mport_cdev_priv *client;
 
 	mutex_lock(&md->file_mutex);
-	list_क्रम_each_entry(client, &md->file_list, list) अणु
-		अगर (client->async_queue)
-			समाप्त_fasync(&client->async_queue, SIGIO, POLL_HUP);
+	list_for_each_entry(client, &md->file_list, list) {
+		if (client->async_queue)
+			kill_fasync(&client->async_queue, SIGIO, POLL_HUP);
 		files++;
-	पूर्ण
+	}
 	mutex_unlock(&md->file_mutex);
-	वापस files;
-पूर्ण
+	return files;
+}
 
 /*
- * mport_cdev_हटाओ() - Remove mport अक्षरacter device
- * @dev:	Mport device to हटाओ
+ * mport_cdev_remove() - Remove mport character device
+ * @dev:	Mport device to remove
  */
-अटल व्योम mport_cdev_हटाओ(काष्ठा mport_dev *md)
-अणु
-	काष्ठा rio_mport_mapping *map, *_map;
+static void mport_cdev_remove(struct mport_dev *md)
+{
+	struct rio_mport_mapping *map, *_map;
 
 	rmcd_debug(EXIT, "Remove %s cdev", md->mport->name);
 	atomic_set(&md->active, 0);
 	mport_cdev_terminate_dma(md);
 	rio_del_mport_pw_handler(md->mport, md, rio_mport_pw_handler);
 	cdev_device_del(&md->cdev, &md->dev);
-	mport_cdev_समाप्त_fasync(md);
+	mport_cdev_kill_fasync(md);
 
-	/* TODO: करो we need to give clients some समय to बंद file
-	 * descriptors? Simple रुको क्रम XX, or kref?
+	/* TODO: do we need to give clients some time to close file
+	 * descriptors? Simple wait for XX, or kref?
 	 */
 
 	/*
-	 * Release DMA buffers allocated क्रम the mport device.
-	 * Disable associated inbound Rapidio requests mapping अगर applicable.
+	 * Release DMA buffers allocated for the mport device.
+	 * Disable associated inbound Rapidio requests mapping if applicable.
 	 */
 	mutex_lock(&md->buf_mutex);
-	list_क्रम_each_entry_safe(map, _map, &md->mappings, node) अणु
+	list_for_each_entry_safe(map, _map, &md->mappings, node) {
 		kref_put(&map->ref, mport_release_mapping);
-	पूर्ण
+	}
 	mutex_unlock(&md->buf_mutex);
 
-	अगर (!list_empty(&md->mappings))
+	if (!list_empty(&md->mappings))
 		rmcd_warn("WARNING: %s pending mappings on removal",
 			  md->mport->name);
 
 	rio_release_inb_dbell(md->mport, 0, 0x0fff);
 
 	put_device(&md->dev);
-पूर्ण
+}
 
 /*
- * RIO rio_mport_पूर्णांकerface driver
+ * RIO rio_mport_interface driver
  */
 
 /*
- * mport_add_mport() - Add rio_mport from LDM device काष्ठा
- * @dev:		Linux device model काष्ठा
- * @class_पूर्णांकf:	Linux class_पूर्णांकerface
+ * mport_add_mport() - Add rio_mport from LDM device struct
+ * @dev:		Linux device model struct
+ * @class_intf:	Linux class_interface
  */
-अटल पूर्णांक mport_add_mport(काष्ठा device *dev,
-		काष्ठा class_पूर्णांकerface *class_पूर्णांकf)
-अणु
-	काष्ठा rio_mport *mport = शून्य;
-	काष्ठा mport_dev *chdev = शून्य;
+static int mport_add_mport(struct device *dev,
+		struct class_interface *class_intf)
+{
+	struct rio_mport *mport = NULL;
+	struct mport_dev *chdev = NULL;
 
 	mport = to_rio_mport(dev);
-	अगर (!mport)
-		वापस -ENODEV;
+	if (!mport)
+		return -ENODEV;
 
 	chdev = mport_cdev_add(mport);
-	अगर (!chdev)
-		वापस -ENODEV;
+	if (!chdev)
+		return -ENODEV;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * mport_हटाओ_mport() - Remove rio_mport from global list
- * TODO हटाओ device from global mport_dev list
+ * mport_remove_mport() - Remove rio_mport from global list
+ * TODO remove device from global mport_dev list
  */
-अटल व्योम mport_हटाओ_mport(काष्ठा device *dev,
-		काष्ठा class_पूर्णांकerface *class_पूर्णांकf)
-अणु
-	काष्ठा rio_mport *mport = शून्य;
-	काष्ठा mport_dev *chdev;
-	पूर्णांक found = 0;
+static void mport_remove_mport(struct device *dev,
+		struct class_interface *class_intf)
+{
+	struct rio_mport *mport = NULL;
+	struct mport_dev *chdev;
+	int found = 0;
 
 	mport = to_rio_mport(dev);
 	rmcd_debug(EXIT, "Remove %s", mport->name);
 
 	mutex_lock(&mport_devs_lock);
-	list_क्रम_each_entry(chdev, &mport_devs, node) अणु
-		अगर (chdev->mport->id == mport->id) अणु
+	list_for_each_entry(chdev, &mport_devs, node) {
+		if (chdev->mport->id == mport->id) {
 			atomic_set(&chdev->active, 0);
 			list_del(&chdev->node);
 			found = 1;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 	mutex_unlock(&mport_devs_lock);
 
-	अगर (found)
-		mport_cdev_हटाओ(chdev);
-पूर्ण
+	if (found)
+		mport_cdev_remove(chdev);
+}
 
-/* the rio_mport_पूर्णांकerface is used to handle local mport devices */
-अटल काष्ठा class_पूर्णांकerface rio_mport_पूर्णांकerface __refdata = अणु
+/* the rio_mport_interface is used to handle local mport devices */
+static struct class_interface rio_mport_interface __refdata = {
 	.class		= &rio_mport_class,
 	.add_dev	= mport_add_mport,
-	.हटाओ_dev	= mport_हटाओ_mport,
-पूर्ण;
+	.remove_dev	= mport_remove_mport,
+};
 
 /*
  * Linux kernel module
@@ -2595,48 +2594,48 @@ err_cdev:
 /*
  * mport_init - Driver module loading
  */
-अटल पूर्णांक __init mport_init(व्योम)
-अणु
-	पूर्णांक ret;
+static int __init mport_init(void)
+{
+	int ret;
 
 	/* Create device class needed by udev */
 	dev_class = class_create(THIS_MODULE, DRV_NAME);
-	अगर (IS_ERR(dev_class)) अणु
+	if (IS_ERR(dev_class)) {
 		rmcd_error("Unable to create " DRV_NAME " class");
-		वापस PTR_ERR(dev_class);
-	पूर्ण
+		return PTR_ERR(dev_class);
+	}
 
 	ret = alloc_chrdev_region(&dev_number, 0, RIO_MAX_MPORTS, DRV_NAME);
-	अगर (ret < 0)
-		जाओ err_chr;
+	if (ret < 0)
+		goto err_chr;
 
 	rmcd_debug(INIT, "Registered class with major=%d", MAJOR(dev_number));
 
-	/* Register to rio_mport_पूर्णांकerface */
-	ret = class_पूर्णांकerface_रेजिस्टर(&rio_mport_पूर्णांकerface);
-	अगर (ret) अणु
+	/* Register to rio_mport_interface */
+	ret = class_interface_register(&rio_mport_interface);
+	if (ret) {
 		rmcd_error("class_interface_register() failed, err=%d", ret);
-		जाओ err_cli;
-	पूर्ण
+		goto err_cli;
+	}
 
-	वापस 0;
+	return 0;
 
 err_cli:
-	unरेजिस्टर_chrdev_region(dev_number, RIO_MAX_MPORTS);
+	unregister_chrdev_region(dev_number, RIO_MAX_MPORTS);
 err_chr:
 	class_destroy(dev_class);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * mport_निकास - Driver module unloading
+ * mport_exit - Driver module unloading
  */
-अटल व्योम __निकास mport_निकास(व्योम)
-अणु
-	class_पूर्णांकerface_unरेजिस्टर(&rio_mport_पूर्णांकerface);
+static void __exit mport_exit(void)
+{
+	class_interface_unregister(&rio_mport_interface);
 	class_destroy(dev_class);
-	unरेजिस्टर_chrdev_region(dev_number, RIO_MAX_MPORTS);
-पूर्ण
+	unregister_chrdev_region(dev_number, RIO_MAX_MPORTS);
+}
 
 module_init(mport_init);
-module_निकास(mport_निकास);
+module_exit(mport_exit);

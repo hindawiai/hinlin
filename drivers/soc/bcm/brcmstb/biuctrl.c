@@ -1,141 +1,140 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Broadcom STB SoCs Bus Unit Interface controls
  *
  * Copyright (C) 2015, Broadcom Corporation
  */
 
-#घोषणा pr_fmt(fmt)	"brcmstb: " KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt)	"brcmstb: " KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/of_address.h>
-#समावेश <linux/syscore_ops.h>
-#समावेश <linux/soc/brcmstb/brcmstb.h>
+#include <linux/kernel.h>
+#include <linux/io.h>
+#include <linux/of_address.h>
+#include <linux/syscore_ops.h>
+#include <linux/soc/brcmstb/brcmstb.h>
 
-#घोषणा RACENPREF_MASK			0x3
-#घोषणा RACPREFINST_SHIFT		0
-#घोषणा RACENINST_SHIFT			2
-#घोषणा RACPREFDATA_SHIFT		4
-#घोषणा RACENDATA_SHIFT			6
-#घोषणा RAC_CPU_SHIFT			8
-#घोषणा RACCFG_MASK			0xff
-#घोषणा DPREF_LINE_2_SHIFT		24
-#घोषणा DPREF_LINE_2_MASK		0xff
+#define RACENPREF_MASK			0x3
+#define RACPREFINST_SHIFT		0
+#define RACENINST_SHIFT			2
+#define RACPREFDATA_SHIFT		4
+#define RACENDATA_SHIFT			6
+#define RAC_CPU_SHIFT			8
+#define RACCFG_MASK			0xff
+#define DPREF_LINE_2_SHIFT		24
+#define DPREF_LINE_2_MASK		0xff
 
-/* Biपंचांगask to enable inकाष्ठाion and data prefetching with a 256-bytes stride */
-#घोषणा RAC_DATA_INST_EN_MASK		(1 << RACPREFINST_SHIFT | \
+/* Bitmask to enable instruction and data prefetching with a 256-bytes stride */
+#define RAC_DATA_INST_EN_MASK		(1 << RACPREFINST_SHIFT | \
 					 RACENPREF_MASK << RACENINST_SHIFT | \
 					 1 << RACPREFDATA_SHIFT | \
 					 RACENPREF_MASK << RACENDATA_SHIFT)
 
-#घोषणा  CPU_CREDIT_REG_MCPx_WR_PAIRING_EN_MASK	0x70000000
-#घोषणा CPU_CREDIT_REG_MCPx_READ_CRED_MASK	0xf
-#घोषणा CPU_CREDIT_REG_MCPx_WRITE_CRED_MASK	0xf
-#घोषणा CPU_CREDIT_REG_MCPx_READ_CRED_SHIFT(x)	((x) * 8)
-#घोषणा CPU_CREDIT_REG_MCPx_WRITE_CRED_SHIFT(x)	(((x) * 8) + 4)
+#define  CPU_CREDIT_REG_MCPx_WR_PAIRING_EN_MASK	0x70000000
+#define CPU_CREDIT_REG_MCPx_READ_CRED_MASK	0xf
+#define CPU_CREDIT_REG_MCPx_WRITE_CRED_MASK	0xf
+#define CPU_CREDIT_REG_MCPx_READ_CRED_SHIFT(x)	((x) * 8)
+#define CPU_CREDIT_REG_MCPx_WRITE_CRED_SHIFT(x)	(((x) * 8) + 4)
 
-#घोषणा CPU_MCP_FLOW_REG_MCPx_RDBUFF_CRED_SHIFT(x)	((x) * 8)
-#घोषणा CPU_MCP_FLOW_REG_MCPx_RDBUFF_CRED_MASK		0xff
+#define CPU_MCP_FLOW_REG_MCPx_RDBUFF_CRED_SHIFT(x)	((x) * 8)
+#define CPU_MCP_FLOW_REG_MCPx_RDBUFF_CRED_MASK		0xff
 
-#घोषणा CPU_WRITEBACK_CTRL_REG_WB_THROTTLE_THRESHOLD_MASK	0xf
-#घोषणा CPU_WRITEBACK_CTRL_REG_WB_THROTTLE_TIMEOUT_MASK		0xf
-#घोषणा CPU_WRITEBACK_CTRL_REG_WB_THROTTLE_TIMEOUT_SHIFT	4
-#घोषणा CPU_WRITEBACK_CTRL_REG_WB_THROTTLE_ENABLE		BIT(8)
+#define CPU_WRITEBACK_CTRL_REG_WB_THROTTLE_THRESHOLD_MASK	0xf
+#define CPU_WRITEBACK_CTRL_REG_WB_THROTTLE_TIMEOUT_MASK		0xf
+#define CPU_WRITEBACK_CTRL_REG_WB_THROTTLE_TIMEOUT_SHIFT	4
+#define CPU_WRITEBACK_CTRL_REG_WB_THROTTLE_ENABLE		BIT(8)
 
-अटल व्योम __iomem *cpubiuctrl_base;
-अटल bool mcp_wr_pairing_en;
-अटल स्थिर पूर्णांक *cpubiuctrl_regs;
+static void __iomem *cpubiuctrl_base;
+static bool mcp_wr_pairing_en;
+static const int *cpubiuctrl_regs;
 
-क्रमागत cpubiuctrl_regs अणु
+enum cpubiuctrl_regs {
 	CPU_CREDIT_REG = 0,
 	CPU_MCP_FLOW_REG,
 	CPU_WRITEBACK_CTRL_REG,
 	RAC_CONFIG0_REG,
 	RAC_CONFIG1_REG,
 	NUM_CPU_BIUCTRL_REGS,
-पूर्ण;
+};
 
-अटल अंतरभूत u32 cbc_पढ़ोl(पूर्णांक reg)
-अणु
-	पूर्णांक offset = cpubiuctrl_regs[reg];
+static inline u32 cbc_readl(int reg)
+{
+	int offset = cpubiuctrl_regs[reg];
 
-	अगर (offset == -1 ||
+	if (offset == -1 ||
 	    (IS_ENABLED(CONFIG_CACHE_B15_RAC) && reg >= RAC_CONFIG0_REG))
-		वापस (u32)-1;
+		return (u32)-1;
 
-	वापस पढ़ोl_relaxed(cpubiuctrl_base + offset);
-पूर्ण
+	return readl_relaxed(cpubiuctrl_base + offset);
+}
 
-अटल अंतरभूत व्योम cbc_ग_लिखोl(u32 val, पूर्णांक reg)
-अणु
-	पूर्णांक offset = cpubiuctrl_regs[reg];
+static inline void cbc_writel(u32 val, int reg)
+{
+	int offset = cpubiuctrl_regs[reg];
 
-	अगर (offset == -1 ||
+	if (offset == -1 ||
 	    (IS_ENABLED(CONFIG_CACHE_B15_RAC) && reg >= RAC_CONFIG0_REG))
-		वापस;
+		return;
 
-	ग_लिखोl(val, cpubiuctrl_base + offset);
-पूर्ण
+	writel(val, cpubiuctrl_base + offset);
+}
 
-अटल स्थिर पूर्णांक b15_cpubiuctrl_regs[] = अणु
+static const int b15_cpubiuctrl_regs[] = {
 	[CPU_CREDIT_REG] = 0x184,
 	[CPU_MCP_FLOW_REG] = -1,
 	[CPU_WRITEBACK_CTRL_REG] = -1,
 	[RAC_CONFIG0_REG] = -1,
 	[RAC_CONFIG1_REG] = -1,
-पूर्ण;
+};
 
-/* Odd हालs, e.g: 7260A0 */
-अटल स्थिर पूर्णांक b53_cpubiuctrl_no_wb_regs[] = अणु
+/* Odd cases, e.g: 7260A0 */
+static const int b53_cpubiuctrl_no_wb_regs[] = {
 	[CPU_CREDIT_REG] = 0x0b0,
 	[CPU_MCP_FLOW_REG] = 0x0b4,
 	[CPU_WRITEBACK_CTRL_REG] = -1,
 	[RAC_CONFIG0_REG] = 0x78,
 	[RAC_CONFIG1_REG] = 0x7c,
-पूर्ण;
+};
 
-अटल स्थिर पूर्णांक b53_cpubiuctrl_regs[] = अणु
+static const int b53_cpubiuctrl_regs[] = {
 	[CPU_CREDIT_REG] = 0x0b0,
 	[CPU_MCP_FLOW_REG] = 0x0b4,
 	[CPU_WRITEBACK_CTRL_REG] = 0x22c,
 	[RAC_CONFIG0_REG] = 0x78,
 	[RAC_CONFIG1_REG] = 0x7c,
-पूर्ण;
+};
 
-अटल स्थिर पूर्णांक a72_cpubiuctrl_regs[] = अणु
+static const int a72_cpubiuctrl_regs[] = {
 	[CPU_CREDIT_REG] = 0x18,
 	[CPU_MCP_FLOW_REG] = 0x1c,
 	[CPU_WRITEBACK_CTRL_REG] = 0x20,
 	[RAC_CONFIG0_REG] = 0x08,
 	[RAC_CONFIG1_REG] = 0x0c,
-पूर्ण;
+};
 
-अटल पूर्णांक __init mcp_ग_लिखो_pairing_set(व्योम)
-अणु
+static int __init mcp_write_pairing_set(void)
+{
 	u32 creds = 0;
 
-	अगर (!cpubiuctrl_base)
-		वापस -1;
+	if (!cpubiuctrl_base)
+		return -1;
 
-	creds = cbc_पढ़ोl(CPU_CREDIT_REG);
-	अगर (mcp_wr_pairing_en) अणु
+	creds = cbc_readl(CPU_CREDIT_REG);
+	if (mcp_wr_pairing_en) {
 		pr_info("MCP: Enabling write pairing\n");
-		cbc_ग_लिखोl(creds | CPU_CREDIT_REG_MCPx_WR_PAIRING_EN_MASK,
+		cbc_writel(creds | CPU_CREDIT_REG_MCPx_WR_PAIRING_EN_MASK,
 			   CPU_CREDIT_REG);
-	पूर्ण अन्यथा अगर (creds & CPU_CREDIT_REG_MCPx_WR_PAIRING_EN_MASK) अणु
+	} else if (creds & CPU_CREDIT_REG_MCPx_WR_PAIRING_EN_MASK) {
 		pr_info("MCP: Disabling write pairing\n");
-		cbc_ग_लिखोl(creds & ~CPU_CREDIT_REG_MCPx_WR_PAIRING_EN_MASK,
+		cbc_writel(creds & ~CPU_CREDIT_REG_MCPx_WR_PAIRING_EN_MASK,
 			   CPU_CREDIT_REG);
-	पूर्ण अन्यथा अणु
+	} else {
 		pr_info("MCP: Write pairing already disabled\n");
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर u32 a72_b53_mach_compat[] = अणु
+static const u32 a72_b53_mach_compat[] = {
 	0x7211,
 	0x7216,
 	0x72164,
@@ -145,213 +144,213 @@
 	0x7268,
 	0x7271,
 	0x7278,
-पूर्ण;
+};
 
-/* The पढ़ो-ahead cache present in the Brahma-B53 CPU is a special piece of
- * hardware after the पूर्णांकegrated L2 cache of the B53 CPU complex whose purpose
- * is to prefetch inकाष्ठाion and/or data with a line size of either 64 bytes
- * or 256 bytes. The rationale is that the data-bus of the CPU पूर्णांकerface is
- * optimized क्रम 256-byte transactions, and enabling the पढ़ो-ahead cache
- * provides a signअगरicant perक्रमmance boost (typically twice the perक्रमmance
- * क्रम a स_नकल benchmark application).
+/* The read-ahead cache present in the Brahma-B53 CPU is a special piece of
+ * hardware after the integrated L2 cache of the B53 CPU complex whose purpose
+ * is to prefetch instruction and/or data with a line size of either 64 bytes
+ * or 256 bytes. The rationale is that the data-bus of the CPU interface is
+ * optimized for 256-byte transactions, and enabling the read-ahead cache
+ * provides a significant performance boost (typically twice the performance
+ * for a memcpy benchmark application).
  *
- * The पढ़ो-ahead cache is transparent क्रम Virtual Address cache मुख्यtenance
+ * The read-ahead cache is transparent for Virtual Address cache maintenance
  * operations: IC IVAU, DC IVAC, DC CVAC, DC CVAU and DC CIVAC.  So no special
- * handling is needed क्रम the DMA API above and beyond what is included in the
+ * handling is needed for the DMA API above and beyond what is included in the
  * arm64 implementation.
  *
- * In addition, since the Poपूर्णांक of Unअगरication is typically between L1 and L2
- * क्रम the Brahma-B53 processor no special पढ़ो-ahead cache handling is needed
- * क्रम the IC IALLU and IC IALLUIS cache मुख्यtenance operations.
+ * In addition, since the Point of Unification is typically between L1 and L2
+ * for the Brahma-B53 processor no special read-ahead cache handling is needed
+ * for the IC IALLU and IC IALLUIS cache maintenance operations.
  *
- * However, it is not possible to specअगरy the cache level (L3) क्रम the cache
- * मुख्यtenance inकाष्ठाions operating by set/way to operate on the पढ़ो-ahead
- * cache.  The पढ़ो-ahead cache will मुख्यtain coherency when inner cache lines
- * are cleaned by set/way, but अगर it is necessary to invalidate inner cache
- * lines by set/way to मुख्यtain coherency with प्रणाली masters operating on
- * shared memory that करोes not have hardware support क्रम coherency, then it
- * will also be necessary to explicitly invalidate the पढ़ो-ahead cache.
+ * However, it is not possible to specify the cache level (L3) for the cache
+ * maintenance instructions operating by set/way to operate on the read-ahead
+ * cache.  The read-ahead cache will maintain coherency when inner cache lines
+ * are cleaned by set/way, but if it is necessary to invalidate inner cache
+ * lines by set/way to maintain coherency with system masters operating on
+ * shared memory that does not have hardware support for coherency, then it
+ * will also be necessary to explicitly invalidate the read-ahead cache.
  */
-अटल व्योम __init a72_b53_rac_enable_all(काष्ठा device_node *np)
-अणु
-	अचिन्हित पूर्णांक cpu;
-	u32 enable = 0, pref_dist, shअगरt;
+static void __init a72_b53_rac_enable_all(struct device_node *np)
+{
+	unsigned int cpu;
+	u32 enable = 0, pref_dist, shift;
 
-	अगर (IS_ENABLED(CONFIG_CACHE_B15_RAC))
-		वापस;
+	if (IS_ENABLED(CONFIG_CACHE_B15_RAC))
+		return;
 
-	अगर (WARN(num_possible_cpus() > 4, "RAC only supports 4 CPUs\n"))
-		वापस;
+	if (WARN(num_possible_cpus() > 4, "RAC only supports 4 CPUs\n"))
+		return;
 
-	pref_dist = cbc_पढ़ोl(RAC_CONFIG1_REG);
-	क्रम_each_possible_cpu(cpu) अणु
-		shअगरt = cpu * RAC_CPU_SHIFT + RACPREFDATA_SHIFT;
+	pref_dist = cbc_readl(RAC_CONFIG1_REG);
+	for_each_possible_cpu(cpu) {
+		shift = cpu * RAC_CPU_SHIFT + RACPREFDATA_SHIFT;
 		enable |= RAC_DATA_INST_EN_MASK << (cpu * RAC_CPU_SHIFT);
-		अगर (cpubiuctrl_regs == a72_cpubiuctrl_regs) अणु
-			enable &= ~(RACENPREF_MASK << shअगरt);
-			enable |= 3 << shअगरt;
+		if (cpubiuctrl_regs == a72_cpubiuctrl_regs) {
+			enable &= ~(RACENPREF_MASK << shift);
+			enable |= 3 << shift;
 			pref_dist |= 1 << (cpu + DPREF_LINE_2_SHIFT);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	cbc_ग_लिखोl(enable, RAC_CONFIG0_REG);
-	cbc_ग_लिखोl(pref_dist, RAC_CONFIG1_REG);
+	cbc_writel(enable, RAC_CONFIG0_REG);
+	cbc_writel(pref_dist, RAC_CONFIG1_REG);
 
 	pr_info("%pOF: Broadcom %s read-ahead cache\n",
 		np, cpubiuctrl_regs == a72_cpubiuctrl_regs ?
 		"Cortex-A72" : "Brahma-B53");
-पूर्ण
+}
 
-अटल व्योम __init mcp_a72_b53_set(व्योम)
-अणु
-	अचिन्हित पूर्णांक i;
+static void __init mcp_a72_b53_set(void)
+{
+	unsigned int i;
 	u32 reg;
 
 	reg = brcmstb_get_family_id();
 
-	क्रम (i = 0; i < ARRAY_SIZE(a72_b53_mach_compat); i++) अणु
-		अगर (BRCM_ID(reg) == a72_b53_mach_compat[i])
-			अवरोध;
-	पूर्ण
+	for (i = 0; i < ARRAY_SIZE(a72_b53_mach_compat); i++) {
+		if (BRCM_ID(reg) == a72_b53_mach_compat[i])
+			break;
+	}
 
-	अगर (i == ARRAY_SIZE(a72_b53_mach_compat))
-		वापस;
+	if (i == ARRAY_SIZE(a72_b53_mach_compat))
+		return;
 
-	/* Set all 3 MCP पूर्णांकerfaces to 8 credits */
-	reg = cbc_पढ़ोl(CPU_CREDIT_REG);
-	क्रम (i = 0; i < 3; i++) अणु
+	/* Set all 3 MCP interfaces to 8 credits */
+	reg = cbc_readl(CPU_CREDIT_REG);
+	for (i = 0; i < 3; i++) {
 		reg &= ~(CPU_CREDIT_REG_MCPx_WRITE_CRED_MASK <<
 			 CPU_CREDIT_REG_MCPx_WRITE_CRED_SHIFT(i));
 		reg &= ~(CPU_CREDIT_REG_MCPx_READ_CRED_MASK <<
 			 CPU_CREDIT_REG_MCPx_READ_CRED_SHIFT(i));
 		reg |= 8 << CPU_CREDIT_REG_MCPx_WRITE_CRED_SHIFT(i);
 		reg |= 8 << CPU_CREDIT_REG_MCPx_READ_CRED_SHIFT(i);
-	पूर्ण
-	cbc_ग_लिखोl(reg, CPU_CREDIT_REG);
+	}
+	cbc_writel(reg, CPU_CREDIT_REG);
 
-	/* Max out the number of in-flight Jwords पढ़ोs on the MCP पूर्णांकerface */
-	reg = cbc_पढ़ोl(CPU_MCP_FLOW_REG);
-	क्रम (i = 0; i < 3; i++)
+	/* Max out the number of in-flight Jwords reads on the MCP interface */
+	reg = cbc_readl(CPU_MCP_FLOW_REG);
+	for (i = 0; i < 3; i++)
 		reg |= CPU_MCP_FLOW_REG_MCPx_RDBUFF_CRED_MASK <<
 			CPU_MCP_FLOW_REG_MCPx_RDBUFF_CRED_SHIFT(i);
-	cbc_ग_लिखोl(reg, CPU_MCP_FLOW_REG);
+	cbc_writel(reg, CPU_MCP_FLOW_REG);
 
-	/* Enable ग_लिखोback throttling, set समयout to 128 cycles, 256 cycles
+	/* Enable writeback throttling, set timeout to 128 cycles, 256 cycles
 	 * threshold
 	 */
-	reg = cbc_पढ़ोl(CPU_WRITEBACK_CTRL_REG);
+	reg = cbc_readl(CPU_WRITEBACK_CTRL_REG);
 	reg |= CPU_WRITEBACK_CTRL_REG_WB_THROTTLE_ENABLE;
 	reg &= ~CPU_WRITEBACK_CTRL_REG_WB_THROTTLE_THRESHOLD_MASK;
 	reg &= ~(CPU_WRITEBACK_CTRL_REG_WB_THROTTLE_TIMEOUT_MASK <<
 		 CPU_WRITEBACK_CTRL_REG_WB_THROTTLE_TIMEOUT_SHIFT);
 	reg |= 8;
 	reg |= 7 << CPU_WRITEBACK_CTRL_REG_WB_THROTTLE_TIMEOUT_SHIFT;
-	cbc_ग_लिखोl(reg, CPU_WRITEBACK_CTRL_REG);
-पूर्ण
+	cbc_writel(reg, CPU_WRITEBACK_CTRL_REG);
+}
 
-अटल पूर्णांक __init setup_hअगरcpubiuctrl_regs(काष्ठा device_node *np)
-अणु
-	काष्ठा device_node *cpu_dn;
+static int __init setup_hifcpubiuctrl_regs(struct device_node *np)
+{
+	struct device_node *cpu_dn;
 	u32 family_id;
-	पूर्णांक ret = 0;
+	int ret = 0;
 
 	cpubiuctrl_base = of_iomap(np, 0);
-	अगर (!cpubiuctrl_base) अणु
+	if (!cpubiuctrl_base) {
 		pr_err("failed to remap BIU control base\n");
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	mcp_wr_pairing_en = of_property_पढ़ो_bool(np, "brcm,write-pairing");
+	mcp_wr_pairing_en = of_property_read_bool(np, "brcm,write-pairing");
 
-	cpu_dn = of_get_cpu_node(0, शून्य);
-	अगर (!cpu_dn) अणु
+	cpu_dn = of_get_cpu_node(0, NULL);
+	if (!cpu_dn) {
 		pr_err("failed to obtain CPU device node\n");
 		ret = -ENODEV;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (of_device_is_compatible(cpu_dn, "brcm,brahma-b15"))
+	if (of_device_is_compatible(cpu_dn, "brcm,brahma-b15"))
 		cpubiuctrl_regs = b15_cpubiuctrl_regs;
-	अन्यथा अगर (of_device_is_compatible(cpu_dn, "brcm,brahma-b53"))
+	else if (of_device_is_compatible(cpu_dn, "brcm,brahma-b53"))
 		cpubiuctrl_regs = b53_cpubiuctrl_regs;
-	अन्यथा अगर (of_device_is_compatible(cpu_dn, "arm,cortex-a72"))
+	else if (of_device_is_compatible(cpu_dn, "arm,cortex-a72"))
 		cpubiuctrl_regs = a72_cpubiuctrl_regs;
-	अन्यथा अणु
+	else {
 		pr_err("unsupported CPU\n");
 		ret = -EINVAL;
-	पूर्ण
+	}
 	of_node_put(cpu_dn);
 
 	family_id = brcmstb_get_family_id();
-	अगर (BRCM_ID(family_id) == 0x7260 && BRCM_REV(family_id) == 0)
+	if (BRCM_ID(family_id) == 0x7260 && BRCM_REV(family_id) == 0)
 		cpubiuctrl_regs = b53_cpubiuctrl_no_wb_regs;
 out:
 	of_node_put(np);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-#अगर_घोषित CONFIG_PM_SLEEP
-अटल u32 cpubiuctrl_reg_save[NUM_CPU_BIUCTRL_REGS];
+#ifdef CONFIG_PM_SLEEP
+static u32 cpubiuctrl_reg_save[NUM_CPU_BIUCTRL_REGS];
 
-अटल पूर्णांक brcmstb_cpu_credit_reg_suspend(व्योम)
-अणु
-	अचिन्हित पूर्णांक i;
+static int brcmstb_cpu_credit_reg_suspend(void)
+{
+	unsigned int i;
 
-	अगर (!cpubiuctrl_base)
-		वापस 0;
+	if (!cpubiuctrl_base)
+		return 0;
 
-	क्रम (i = 0; i < NUM_CPU_BIUCTRL_REGS; i++)
-		cpubiuctrl_reg_save[i] = cbc_पढ़ोl(i);
+	for (i = 0; i < NUM_CPU_BIUCTRL_REGS; i++)
+		cpubiuctrl_reg_save[i] = cbc_readl(i);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम brcmstb_cpu_credit_reg_resume(व्योम)
-अणु
-	अचिन्हित पूर्णांक i;
+static void brcmstb_cpu_credit_reg_resume(void)
+{
+	unsigned int i;
 
-	अगर (!cpubiuctrl_base)
-		वापस;
+	if (!cpubiuctrl_base)
+		return;
 
-	क्रम (i = 0; i < NUM_CPU_BIUCTRL_REGS; i++)
-		cbc_ग_लिखोl(cpubiuctrl_reg_save[i], i);
-पूर्ण
+	for (i = 0; i < NUM_CPU_BIUCTRL_REGS; i++)
+		cbc_writel(cpubiuctrl_reg_save[i], i);
+}
 
-अटल काष्ठा syscore_ops brcmstb_cpu_credit_syscore_ops = अणु
+static struct syscore_ops brcmstb_cpu_credit_syscore_ops = {
 	.suspend = brcmstb_cpu_credit_reg_suspend,
 	.resume = brcmstb_cpu_credit_reg_resume,
-पूर्ण;
-#पूर्ण_अगर
+};
+#endif
 
 
-अटल पूर्णांक __init brcmstb_biuctrl_init(व्योम)
-अणु
-	काष्ठा device_node *np;
-	पूर्णांक ret;
+static int __init brcmstb_biuctrl_init(void)
+{
+	struct device_node *np;
+	int ret;
 
-	/* We might be running on a multi-platक्रमm kernel, करोn't make this a
+	/* We might be running on a multi-platform kernel, don't make this a
 	 * fatal error, just bail out early
 	 */
-	np = of_find_compatible_node(शून्य, शून्य, "brcm,brcmstb-cpu-biu-ctrl");
-	अगर (!np)
-		वापस 0;
+	np = of_find_compatible_node(NULL, NULL, "brcm,brcmstb-cpu-biu-ctrl");
+	if (!np)
+		return 0;
 
-	ret = setup_hअगरcpubiuctrl_regs(np);
-	अगर (ret)
-		वापस ret;
+	ret = setup_hifcpubiuctrl_regs(np);
+	if (ret)
+		return ret;
 
-	ret = mcp_ग_लिखो_pairing_set();
-	अगर (ret) अणु
+	ret = mcp_write_pairing_set();
+	if (ret) {
 		pr_err("MCP: Unable to disable write pairing!\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	a72_b53_rac_enable_all(np);
 	mcp_a72_b53_set();
-#अगर_घोषित CONFIG_PM_SLEEP
-	रेजिस्टर_syscore_ops(&brcmstb_cpu_credit_syscore_ops);
-#पूर्ण_अगर
-	वापस 0;
-पूर्ण
+#ifdef CONFIG_PM_SLEEP
+	register_syscore_ops(&brcmstb_cpu_credit_syscore_ops);
+#endif
+	return 0;
+}
 early_initcall(brcmstb_biuctrl_init);

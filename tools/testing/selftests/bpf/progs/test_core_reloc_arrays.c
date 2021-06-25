@@ -1,59 +1,58 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 // Copyright (c) 2019 Facebook
 
-#समावेश <linux/bpf.h>
-#समावेश <मानक_निवेशt.h>
-#समावेश <bpf/bpf_helpers.h>
-#समावेश <bpf/bpf_core_पढ़ो.h>
+#include <linux/bpf.h>
+#include <stdint.h>
+#include <bpf/bpf_helpers.h>
+#include <bpf/bpf_core_read.h>
 
-अक्षर _license[] SEC("license") = "GPL";
+char _license[] SEC("license") = "GPL";
 
-काष्ठा अणु
-	अक्षर in[256];
-	अक्षर out[256];
-पूर्ण data = अणुपूर्ण;
+struct {
+	char in[256];
+	char out[256];
+} data = {};
 
-काष्ठा core_reloc_arrays_output अणु
-	पूर्णांक a2;
-	अक्षर b123;
-	पूर्णांक c1c;
-	पूर्णांक d00d;
-	पूर्णांक f01c;
-पूर्ण;
+struct core_reloc_arrays_output {
+	int a2;
+	char b123;
+	int c1c;
+	int d00d;
+	int f01c;
+};
 
-काष्ठा core_reloc_arrays_subकाष्ठा अणु
-	पूर्णांक c;
-	पूर्णांक d;
-पूर्ण;
+struct core_reloc_arrays_substruct {
+	int c;
+	int d;
+};
 
-काष्ठा core_reloc_arrays अणु
-	पूर्णांक a[5];
-	अक्षर b[2][3][4];
-	काष्ठा core_reloc_arrays_subकाष्ठा c[3];
-	काष्ठा core_reloc_arrays_subकाष्ठा d[1][2];
-	काष्ठा core_reloc_arrays_subकाष्ठा f[][2];
-पूर्ण;
+struct core_reloc_arrays {
+	int a[5];
+	char b[2][3][4];
+	struct core_reloc_arrays_substruct c[3];
+	struct core_reloc_arrays_substruct d[1][2];
+	struct core_reloc_arrays_substruct f[][2];
+};
 
-#घोषणा CORE_READ(dst, src) bpf_core_पढ़ो(dst, माप(*(dst)), src)
+#define CORE_READ(dst, src) bpf_core_read(dst, sizeof(*(dst)), src)
 
 SEC("raw_tracepoint/sys_enter")
-पूर्णांक test_core_arrays(व्योम *ctx)
-अणु
-	काष्ठा core_reloc_arrays *in = (व्योम *)&data.in;
-	काष्ठा core_reloc_arrays_output *out = (व्योम *)&data.out;
+int test_core_arrays(void *ctx)
+{
+	struct core_reloc_arrays *in = (void *)&data.in;
+	struct core_reloc_arrays_output *out = (void *)&data.out;
 
-	अगर (CORE_READ(&out->a2, &in->a[2]))
-		वापस 1;
-	अगर (CORE_READ(&out->b123, &in->b[1][2][3]))
-		वापस 1;
-	अगर (CORE_READ(&out->c1c, &in->c[1].c))
-		वापस 1;
-	अगर (CORE_READ(&out->d00d, &in->d[0][0].d))
-		वापस 1;
-	अगर (CORE_READ(&out->f01c, &in->f[0][1].c))
-		वापस 1;
+	if (CORE_READ(&out->a2, &in->a[2]))
+		return 1;
+	if (CORE_READ(&out->b123, &in->b[1][2][3]))
+		return 1;
+	if (CORE_READ(&out->c1c, &in->c[1].c))
+		return 1;
+	if (CORE_READ(&out->d00d, &in->d[0][0].d))
+		return 1;
+	if (CORE_READ(&out->f01c, &in->f[0][1].c))
+		return 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 

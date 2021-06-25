@@ -1,49 +1,48 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * sc-rm7k.c: RM7000 cache management functions.
  *
  * Copyright (C) 1997, 2001, 2003, 2004 Ralf Baechle (ralf@linux-mips.org)
  */
 
-#अघोषित DEBUG
+#undef DEBUG
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/bitops.h>
+#include <linux/kernel.h>
+#include <linux/mm.h>
+#include <linux/bitops.h>
 
-#समावेश <यंत्र/addrspace.h>
-#समावेश <यंत्र/bcache.h>
-#समावेश <यंत्र/cacheops.h>
-#समावेश <यंत्र/mipsregs.h>
-#समावेश <यंत्र/processor.h>
-#समावेश <यंत्र/sections.h>
-#समावेश <यंत्र/cacheflush.h> /* क्रम run_uncached() */
+#include <asm/addrspace.h>
+#include <asm/bcache.h>
+#include <asm/cacheops.h>
+#include <asm/mipsregs.h>
+#include <asm/processor.h>
+#include <asm/sections.h>
+#include <asm/cacheflush.h> /* for run_uncached() */
 
 /* Primary cache parameters. */
-#घोषणा sc_lsize	32
-#घोषणा tc_pagesize	(32*128)
+#define sc_lsize	32
+#define tc_pagesize	(32*128)
 
 /* Secondary cache parameters. */
-#घोषणा scache_size	(256*1024)	/* Fixed to 256KiB on RM7000 */
+#define scache_size	(256*1024)	/* Fixed to 256KiB on RM7000 */
 
 /* Tertiary cache parameters */
-#घोषणा tc_lsize	32
+#define tc_lsize	32
 
-बाह्य अचिन्हित दीर्घ icache_way_size, dcache_way_size;
-अटल अचिन्हित दीर्घ tcache_size;
+extern unsigned long icache_way_size, dcache_way_size;
+static unsigned long tcache_size;
 
-#समावेश <यंत्र/r4kcache.h>
+#include <asm/r4kcache.h>
 
-अटल पूर्णांक rm7k_tcache_init;
+static int rm7k_tcache_init;
 
 /*
- * Writeback and invalidate the primary cache dcache beक्रमe DMA.
+ * Writeback and invalidate the primary cache dcache before DMA.
  * (XXX These need to be fixed ...)
  */
-अटल व्योम rm7k_sc_wback_inv(अचिन्हित दीर्घ addr, अचिन्हित दीर्घ size)
-अणु
-	अचिन्हित दीर्घ end, a;
+static void rm7k_sc_wback_inv(unsigned long addr, unsigned long size)
+{
+	unsigned long end, a;
 
 	pr_debug("rm7k_sc_wback_inv[%08lx,%08lx]", addr, size);
 
@@ -52,22 +51,22 @@
 
 	blast_scache_range(addr, addr + size);
 
-	अगर (!rm7k_tcache_init)
-		वापस;
+	if (!rm7k_tcache_init)
+		return;
 
 	a = addr & ~(tc_pagesize - 1);
 	end = (addr + size - 1) & ~(tc_pagesize - 1);
-	जबतक(1) अणु
+	while(1) {
 		invalidate_tcache_page(a);	/* Page_Invalidate_T */
-		अगर (a == end)
-			अवरोध;
+		if (a == end)
+			break;
 		a += tc_pagesize;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम rm7k_sc_inv(अचिन्हित दीर्घ addr, अचिन्हित दीर्घ size)
-अणु
-	अचिन्हित दीर्घ end, a;
+static void rm7k_sc_inv(unsigned long addr, unsigned long size)
+{
+	unsigned long end, a;
 
 	pr_debug("rm7k_sc_inv[%08lx,%08lx]", addr, size);
 
@@ -76,120 +75,120 @@
 
 	blast_inv_scache_range(addr, addr + size);
 
-	अगर (!rm7k_tcache_init)
-		वापस;
+	if (!rm7k_tcache_init)
+		return;
 
 	a = addr & ~(tc_pagesize - 1);
 	end = (addr + size - 1) & ~(tc_pagesize - 1);
-	जबतक(1) अणु
+	while(1) {
 		invalidate_tcache_page(a);	/* Page_Invalidate_T */
-		अगर (a == end)
-			अवरोध;
+		if (a == end)
+			break;
 		a += tc_pagesize;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम blast_rm7k_tcache(व्योम)
-अणु
-	अचिन्हित दीर्घ start = CKSEG0ADDR(0);
-	अचिन्हित दीर्घ end = start + tcache_size;
+static void blast_rm7k_tcache(void)
+{
+	unsigned long start = CKSEG0ADDR(0);
+	unsigned long end = start + tcache_size;
 
-	ग_लिखो_c0_taglo(0);
+	write_c0_taglo(0);
 
-	जबतक (start < end) अणु
+	while (start < end) {
 		cache_op(Page_Invalidate_T, start);
 		start += tc_pagesize;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
  * This function is executed in uncached address space.
  */
-अटल व्योम __rm7k_tc_enable(व्योम)
-अणु
-	पूर्णांक i;
+static void __rm7k_tc_enable(void)
+{
+	int i;
 
 	set_c0_config(RM7K_CONF_TE);
 
-	ग_लिखो_c0_taglo(0);
-	ग_लिखो_c0_taghi(0);
+	write_c0_taglo(0);
+	write_c0_taghi(0);
 
-	क्रम (i = 0; i < tcache_size; i += tc_lsize)
+	for (i = 0; i < tcache_size; i += tc_lsize)
 		cache_op(Index_Store_Tag_T, CKSEG0ADDR(i));
-पूर्ण
+}
 
-अटल व्योम rm7k_tc_enable(व्योम)
-अणु
-	अगर (पढ़ो_c0_config() & RM7K_CONF_TE)
-		वापस;
+static void rm7k_tc_enable(void)
+{
+	if (read_c0_config() & RM7K_CONF_TE)
+		return;
 
 	BUG_ON(tcache_size == 0);
 
 	run_uncached(__rm7k_tc_enable);
-पूर्ण
+}
 
 /*
  * This function is executed in uncached address space.
  */
-अटल व्योम __rm7k_sc_enable(व्योम)
-अणु
-	पूर्णांक i;
+static void __rm7k_sc_enable(void)
+{
+	int i;
 
 	set_c0_config(RM7K_CONF_SE);
 
-	ग_लिखो_c0_taglo(0);
-	ग_लिखो_c0_taghi(0);
+	write_c0_taglo(0);
+	write_c0_taghi(0);
 
-	क्रम (i = 0; i < scache_size; i += sc_lsize)
+	for (i = 0; i < scache_size; i += sc_lsize)
 		cache_op(Index_Store_Tag_SD, CKSEG0ADDR(i));
-पूर्ण
+}
 
-अटल व्योम rm7k_sc_enable(व्योम)
-अणु
-	अगर (पढ़ो_c0_config() & RM7K_CONF_SE)
-		वापस;
+static void rm7k_sc_enable(void)
+{
+	if (read_c0_config() & RM7K_CONF_SE)
+		return;
 
 	pr_info("Enabling secondary cache...\n");
 	run_uncached(__rm7k_sc_enable);
 
-	अगर (rm7k_tcache_init)
+	if (rm7k_tcache_init)
 		rm7k_tc_enable();
-पूर्ण
+}
 
-अटल व्योम rm7k_tc_disable(व्योम)
-अणु
-	अचिन्हित दीर्घ flags;
+static void rm7k_tc_disable(void)
+{
+	unsigned long flags;
 
 	local_irq_save(flags);
 	blast_rm7k_tcache();
 	clear_c0_config(RM7K_CONF_TE);
 	local_irq_restore(flags);
-पूर्ण
+}
 
-अटल व्योम rm7k_sc_disable(व्योम)
-अणु
+static void rm7k_sc_disable(void)
+{
 	clear_c0_config(RM7K_CONF_SE);
 
-	अगर (rm7k_tcache_init)
+	if (rm7k_tcache_init)
 		rm7k_tc_disable();
-पूर्ण
+}
 
-अटल काष्ठा bcache_ops rm7k_sc_ops = अणु
+static struct bcache_ops rm7k_sc_ops = {
 	.bc_enable = rm7k_sc_enable,
 	.bc_disable = rm7k_sc_disable,
 	.bc_wback_inv = rm7k_sc_wback_inv,
 	.bc_inv = rm7k_sc_inv
-पूर्ण;
+};
 
 /*
- * This is a probing function like the one found in c-r4k.c, we look क्रम the
- * wrap around poपूर्णांक with dअगरferent addresses.
+ * This is a probing function like the one found in c-r4k.c, we look for the
+ * wrap around point with different addresses.
  */
-अटल व्योम __probe_tcache(व्योम)
-अणु
-	अचिन्हित दीर्घ flags, addr, begin, end, घात2;
+static void __probe_tcache(void)
+{
+	unsigned long flags, addr, begin, end, pow2;
 
-	begin = (अचिन्हित दीर्घ) &_stext;
+	begin = (unsigned long) &_stext;
 	begin  &= ~((8 * 1024 * 1024) - 1);
 	end = begin + (8 * 1024 * 1024);
 
@@ -198,26 +197,26 @@
 	set_c0_config(RM7K_CONF_TE);
 
 	/* Fill size-multiple lines with a valid tag */
-	घात2 = (256 * 1024);
-	क्रम (addr = begin; addr <= end; addr = (begin + घात2)) अणु
-		अचिन्हित दीर्घ *p = (अचिन्हित दीर्घ *) addr;
-		__यंत्र__ __अस्थिर__("nop" : : "r" (*p));
-		घात2 <<= 1;
-	पूर्ण
+	pow2 = (256 * 1024);
+	for (addr = begin; addr <= end; addr = (begin + pow2)) {
+		unsigned long *p = (unsigned long *) addr;
+		__asm__ __volatile__("nop" : : "r" (*p));
+		pow2 <<= 1;
+	}
 
 	/* Load first line with a 0 tag, to check after */
-	ग_लिखो_c0_taglo(0);
-	ग_लिखो_c0_taghi(0);
+	write_c0_taglo(0);
+	write_c0_taghi(0);
 	cache_op(Index_Store_Tag_T, begin);
 
-	/* Look क्रम the wrap-around */
-	घात2 = (512 * 1024);
-	क्रम (addr = begin + (512 * 1024); addr <= end; addr = begin + घात2) अणु
+	/* Look for the wrap-around */
+	pow2 = (512 * 1024);
+	for (addr = begin + (512 * 1024); addr <= end; addr = begin + pow2) {
 		cache_op(Index_Load_Tag_T, addr);
-		अगर (!पढ़ो_c0_taglo())
-			अवरोध;
-		घात2 <<= 1;
-	पूर्ण
+		if (!read_c0_taglo())
+			break;
+		pow2 <<= 1;
+	}
 
 	addr -= begin;
 	tcache_size = addr;
@@ -225,25 +224,25 @@
 	clear_c0_config(RM7K_CONF_TE);
 
 	local_irq_restore(flags);
-पूर्ण
+}
 
-व्योम rm7k_sc_init(व्योम)
-अणु
-	काष्ठा cpuinfo_mips *c = &current_cpu_data;
-	अचिन्हित पूर्णांक config = पढ़ो_c0_config();
+void rm7k_sc_init(void)
+{
+	struct cpuinfo_mips *c = &current_cpu_data;
+	unsigned int config = read_c0_config();
 
-	अगर ((config & RM7K_CONF_SC))
-		वापस;
+	if ((config & RM7K_CONF_SC))
+		return;
 
 	c->scache.linesz = sc_lsize;
 	c->scache.ways = 4;
 	c->scache.waybit= __ffs(scache_size / c->scache.ways);
 	c->scache.waysize = scache_size / c->scache.ways;
 	c->scache.sets = scache_size / (c->scache.linesz * c->scache.ways);
-	prपूर्णांकk(KERN_INFO "Secondary cache size %dK, linesize %d bytes.\n",
+	printk(KERN_INFO "Secondary cache size %dK, linesize %d bytes.\n",
 	       (scache_size >> 10), sc_lsize);
 
-	अगर (!(config & RM7K_CONF_SE))
+	if (!(config & RM7K_CONF_SE))
 		rm7k_sc_enable();
 
 	bcops = &rm7k_sc_ops;
@@ -255,12 +254,12 @@
 	rm7k_tcache_init = 0;
 	tcache_size = 0;
 
-	अगर (config & RM7K_CONF_TC)
-		वापस;
+	if (config & RM7K_CONF_TC)
+		return;
 
 	/*
-	 * No efficient way to ask the hardware क्रम the size of the tcache,
-	 * so must probe क्रम it.
+	 * No efficient way to ask the hardware for the size of the tcache,
+	 * so must probe for it.
 	 */
 	run_uncached(__probe_tcache);
 	rm7k_tc_enable();
@@ -268,4 +267,4 @@
 	c->tcache.linesz = tc_lsize;
 	c->tcache.ways = 1;
 	pr_info("Tertiary cache size %ldK.\n", (tcache_size >> 10));
-पूर्ण
+}

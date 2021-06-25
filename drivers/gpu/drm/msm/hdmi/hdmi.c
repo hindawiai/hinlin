@@ -1,45 +1,44 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2014 The Linux Foundation. All rights reserved.
  * Copyright (C) 2013 Red Hat
  * Author: Rob Clark <robdclark@gmail.com>
  */
 
-#समावेश <linux/of_irq.h>
-#समावेश <linux/of_gpपन.स>
+#include <linux/of_irq.h>
+#include <linux/of_gpio.h>
 
-#समावेश <sound/hdmi-codec.h>
-#समावेश "hdmi.h"
+#include <sound/hdmi-codec.h>
+#include "hdmi.h"
 
-व्योम msm_hdmi_set_mode(काष्ठा hdmi *hdmi, bool घातer_on)
-अणु
-	uपूर्णांक32_t ctrl = 0;
-	अचिन्हित दीर्घ flags;
+void msm_hdmi_set_mode(struct hdmi *hdmi, bool power_on)
+{
+	uint32_t ctrl = 0;
+	unsigned long flags;
 
 	spin_lock_irqsave(&hdmi->reg_lock, flags);
-	अगर (घातer_on) अणु
+	if (power_on) {
 		ctrl |= HDMI_CTRL_ENABLE;
-		अगर (!hdmi->hdmi_mode) अणु
+		if (!hdmi->hdmi_mode) {
 			ctrl |= HDMI_CTRL_HDMI;
-			hdmi_ग_लिखो(hdmi, REG_HDMI_CTRL, ctrl);
+			hdmi_write(hdmi, REG_HDMI_CTRL, ctrl);
 			ctrl &= ~HDMI_CTRL_HDMI;
-		पूर्ण अन्यथा अणु
+		} else {
 			ctrl |= HDMI_CTRL_HDMI;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		ctrl = HDMI_CTRL_HDMI;
-	पूर्ण
+	}
 
-	hdmi_ग_लिखो(hdmi, REG_HDMI_CTRL, ctrl);
+	hdmi_write(hdmi, REG_HDMI_CTRL, ctrl);
 	spin_unlock_irqrestore(&hdmi->reg_lock, flags);
 	DBG("HDMI Core: %s, HDMI_CTRL=0x%08x",
-			घातer_on ? "Enable" : "Disable", ctrl);
-पूर्ण
+			power_on ? "Enable" : "Disable", ctrl);
+}
 
-अटल irqवापस_t msm_hdmi_irq(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा hdmi *hdmi = dev_id;
+static irqreturn_t msm_hdmi_irq(int irq, void *dev_id)
+{
+	struct hdmi *hdmi = dev_id;
 
 	/* Process HPD: */
 	msm_hdmi_connector_irq(hdmi->connector);
@@ -48,242 +47,242 @@
 	msm_hdmi_i2c_irq(hdmi->i2c);
 
 	/* Process HDCP: */
-	अगर (hdmi->hdcp_ctrl)
+	if (hdmi->hdcp_ctrl)
 		msm_hdmi_hdcp_irq(hdmi->hdcp_ctrl);
 
 	/* TODO audio.. */
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल व्योम msm_hdmi_destroy(काष्ठा hdmi *hdmi)
-अणु
+static void msm_hdmi_destroy(struct hdmi *hdmi)
+{
 	/*
-	 * at this poपूर्णांक, hpd has been disabled,
+	 * at this point, hpd has been disabled,
 	 * after flush workq, it's safe to deinit hdcp
 	 */
-	अगर (hdmi->workq) अणु
+	if (hdmi->workq) {
 		flush_workqueue(hdmi->workq);
 		destroy_workqueue(hdmi->workq);
-	पूर्ण
+	}
 	msm_hdmi_hdcp_destroy(hdmi);
 
-	अगर (hdmi->phy_dev) अणु
+	if (hdmi->phy_dev) {
 		put_device(hdmi->phy_dev);
-		hdmi->phy = शून्य;
-		hdmi->phy_dev = शून्य;
-	पूर्ण
+		hdmi->phy = NULL;
+		hdmi->phy_dev = NULL;
+	}
 
-	अगर (hdmi->i2c)
+	if (hdmi->i2c)
 		msm_hdmi_i2c_destroy(hdmi->i2c);
 
-	platक्रमm_set_drvdata(hdmi->pdev, शून्य);
-पूर्ण
+	platform_set_drvdata(hdmi->pdev, NULL);
+}
 
-अटल पूर्णांक msm_hdmi_get_phy(काष्ठा hdmi *hdmi)
-अणु
-	काष्ठा platक्रमm_device *pdev = hdmi->pdev;
-	काष्ठा platक्रमm_device *phy_pdev;
-	काष्ठा device_node *phy_node;
+static int msm_hdmi_get_phy(struct hdmi *hdmi)
+{
+	struct platform_device *pdev = hdmi->pdev;
+	struct platform_device *phy_pdev;
+	struct device_node *phy_node;
 
 	phy_node = of_parse_phandle(pdev->dev.of_node, "phys", 0);
-	अगर (!phy_node) अणु
+	if (!phy_node) {
 		DRM_DEV_ERROR(&pdev->dev, "cannot find phy device\n");
-		वापस -ENXIO;
-	पूर्ण
+		return -ENXIO;
+	}
 
 	phy_pdev = of_find_device_by_node(phy_node);
-	अगर (phy_pdev)
-		hdmi->phy = platक्रमm_get_drvdata(phy_pdev);
+	if (phy_pdev)
+		hdmi->phy = platform_get_drvdata(phy_pdev);
 
 	of_node_put(phy_node);
 
-	अगर (!phy_pdev || !hdmi->phy) अणु
+	if (!phy_pdev || !hdmi->phy) {
 		DRM_DEV_ERROR(&pdev->dev, "phy driver is not ready\n");
-		वापस -EPROBE_DEFER;
-	पूर्ण
+		return -EPROBE_DEFER;
+	}
 
 	hdmi->phy_dev = get_device(&phy_pdev->dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* स्थिरruct hdmi at bind/probe समय, grab all the resources.  If
- * we are to EPROBE_DEFER we want to करो it here, rather than later
- * at modeset_init() समय
+/* construct hdmi at bind/probe time, grab all the resources.  If
+ * we are to EPROBE_DEFER we want to do it here, rather than later
+ * at modeset_init() time
  */
-अटल काष्ठा hdmi *msm_hdmi_init(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा hdmi_platक्रमm_config *config = pdev->dev.platक्रमm_data;
-	काष्ठा hdmi *hdmi = शून्य;
-	काष्ठा resource *res;
-	पूर्णांक i, ret;
+static struct hdmi *msm_hdmi_init(struct platform_device *pdev)
+{
+	struct hdmi_platform_config *config = pdev->dev.platform_data;
+	struct hdmi *hdmi = NULL;
+	struct resource *res;
+	int i, ret;
 
-	hdmi = devm_kzalloc(&pdev->dev, माप(*hdmi), GFP_KERNEL);
-	अगर (!hdmi) अणु
+	hdmi = devm_kzalloc(&pdev->dev, sizeof(*hdmi), GFP_KERNEL);
+	if (!hdmi) {
 		ret = -ENOMEM;
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
 	hdmi->pdev = pdev;
 	hdmi->config = config;
 	spin_lock_init(&hdmi->reg_lock);
 
 	hdmi->mmio = msm_ioremap(pdev, config->mmio_name, "HDMI");
-	अगर (IS_ERR(hdmi->mmio)) अणु
+	if (IS_ERR(hdmi->mmio)) {
 		ret = PTR_ERR(hdmi->mmio);
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
-	/* HDCP needs physical address of hdmi रेजिस्टर */
-	res = platक्रमm_get_resource_byname(pdev, IORESOURCE_MEM,
+	/* HDCP needs physical address of hdmi register */
+	res = platform_get_resource_byname(pdev, IORESOURCE_MEM,
 		config->mmio_name);
 	hdmi->mmio_phy_addr = res->start;
 
 	hdmi->qfprom_mmio = msm_ioremap(pdev,
 		config->qfprom_mmio_name, "HDMI_QFPROM");
-	अगर (IS_ERR(hdmi->qfprom_mmio)) अणु
+	if (IS_ERR(hdmi->qfprom_mmio)) {
 		DRM_DEV_INFO(&pdev->dev, "can't find qfprom resource\n");
-		hdmi->qfprom_mmio = शून्य;
-	पूर्ण
+		hdmi->qfprom_mmio = NULL;
+	}
 
-	hdmi->hpd_regs = devm_kसुस्मृति(&pdev->dev,
+	hdmi->hpd_regs = devm_kcalloc(&pdev->dev,
 				      config->hpd_reg_cnt,
-				      माप(hdmi->hpd_regs[0]),
+				      sizeof(hdmi->hpd_regs[0]),
 				      GFP_KERNEL);
-	अगर (!hdmi->hpd_regs) अणु
+	if (!hdmi->hpd_regs) {
 		ret = -ENOMEM;
-		जाओ fail;
-	पूर्ण
-	क्रम (i = 0; i < config->hpd_reg_cnt; i++) अणु
-		काष्ठा regulator *reg;
+		goto fail;
+	}
+	for (i = 0; i < config->hpd_reg_cnt; i++) {
+		struct regulator *reg;
 
 		reg = devm_regulator_get(&pdev->dev,
 				config->hpd_reg_names[i]);
-		अगर (IS_ERR(reg)) अणु
+		if (IS_ERR(reg)) {
 			ret = PTR_ERR(reg);
 			DRM_DEV_ERROR(&pdev->dev, "failed to get hpd regulator: %s (%d)\n",
 					config->hpd_reg_names[i], ret);
-			जाओ fail;
-		पूर्ण
+			goto fail;
+		}
 
 		hdmi->hpd_regs[i] = reg;
-	पूर्ण
+	}
 
-	hdmi->pwr_regs = devm_kसुस्मृति(&pdev->dev,
+	hdmi->pwr_regs = devm_kcalloc(&pdev->dev,
 				      config->pwr_reg_cnt,
-				      माप(hdmi->pwr_regs[0]),
+				      sizeof(hdmi->pwr_regs[0]),
 				      GFP_KERNEL);
-	अगर (!hdmi->pwr_regs) अणु
+	if (!hdmi->pwr_regs) {
 		ret = -ENOMEM;
-		जाओ fail;
-	पूर्ण
-	क्रम (i = 0; i < config->pwr_reg_cnt; i++) अणु
-		काष्ठा regulator *reg;
+		goto fail;
+	}
+	for (i = 0; i < config->pwr_reg_cnt; i++) {
+		struct regulator *reg;
 
 		reg = devm_regulator_get(&pdev->dev,
 				config->pwr_reg_names[i]);
-		अगर (IS_ERR(reg)) अणु
+		if (IS_ERR(reg)) {
 			ret = PTR_ERR(reg);
 			DRM_DEV_ERROR(&pdev->dev, "failed to get pwr regulator: %s (%d)\n",
 					config->pwr_reg_names[i], ret);
-			जाओ fail;
-		पूर्ण
+			goto fail;
+		}
 
 		hdmi->pwr_regs[i] = reg;
-	पूर्ण
+	}
 
-	hdmi->hpd_clks = devm_kसुस्मृति(&pdev->dev,
+	hdmi->hpd_clks = devm_kcalloc(&pdev->dev,
 				      config->hpd_clk_cnt,
-				      माप(hdmi->hpd_clks[0]),
+				      sizeof(hdmi->hpd_clks[0]),
 				      GFP_KERNEL);
-	अगर (!hdmi->hpd_clks) अणु
+	if (!hdmi->hpd_clks) {
 		ret = -ENOMEM;
-		जाओ fail;
-	पूर्ण
-	क्रम (i = 0; i < config->hpd_clk_cnt; i++) अणु
-		काष्ठा clk *clk;
+		goto fail;
+	}
+	for (i = 0; i < config->hpd_clk_cnt; i++) {
+		struct clk *clk;
 
 		clk = msm_clk_get(pdev, config->hpd_clk_names[i]);
-		अगर (IS_ERR(clk)) अणु
+		if (IS_ERR(clk)) {
 			ret = PTR_ERR(clk);
 			DRM_DEV_ERROR(&pdev->dev, "failed to get hpd clk: %s (%d)\n",
 					config->hpd_clk_names[i], ret);
-			जाओ fail;
-		पूर्ण
+			goto fail;
+		}
 
 		hdmi->hpd_clks[i] = clk;
-	पूर्ण
+	}
 
-	hdmi->pwr_clks = devm_kसुस्मृति(&pdev->dev,
+	hdmi->pwr_clks = devm_kcalloc(&pdev->dev,
 				      config->pwr_clk_cnt,
-				      माप(hdmi->pwr_clks[0]),
+				      sizeof(hdmi->pwr_clks[0]),
 				      GFP_KERNEL);
-	अगर (!hdmi->pwr_clks) अणु
+	if (!hdmi->pwr_clks) {
 		ret = -ENOMEM;
-		जाओ fail;
-	पूर्ण
-	क्रम (i = 0; i < config->pwr_clk_cnt; i++) अणु
-		काष्ठा clk *clk;
+		goto fail;
+	}
+	for (i = 0; i < config->pwr_clk_cnt; i++) {
+		struct clk *clk;
 
 		clk = msm_clk_get(pdev, config->pwr_clk_names[i]);
-		अगर (IS_ERR(clk)) अणु
+		if (IS_ERR(clk)) {
 			ret = PTR_ERR(clk);
 			DRM_DEV_ERROR(&pdev->dev, "failed to get pwr clk: %s (%d)\n",
 					config->pwr_clk_names[i], ret);
-			जाओ fail;
-		पूर्ण
+			goto fail;
+		}
 
 		hdmi->pwr_clks[i] = clk;
-	पूर्ण
+	}
 
-	pm_runसमय_enable(&pdev->dev);
+	pm_runtime_enable(&pdev->dev);
 
 	hdmi->workq = alloc_ordered_workqueue("msm_hdmi", 0);
 
 	hdmi->i2c = msm_hdmi_i2c_init(hdmi);
-	अगर (IS_ERR(hdmi->i2c)) अणु
+	if (IS_ERR(hdmi->i2c)) {
 		ret = PTR_ERR(hdmi->i2c);
 		DRM_DEV_ERROR(&pdev->dev, "failed to get i2c: %d\n", ret);
-		hdmi->i2c = शून्य;
-		जाओ fail;
-	पूर्ण
+		hdmi->i2c = NULL;
+		goto fail;
+	}
 
 	ret = msm_hdmi_get_phy(hdmi);
-	अगर (ret) अणु
+	if (ret) {
 		DRM_DEV_ERROR(&pdev->dev, "failed to get phy\n");
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
 	hdmi->hdcp_ctrl = msm_hdmi_hdcp_init(hdmi);
-	अगर (IS_ERR(hdmi->hdcp_ctrl)) अणु
+	if (IS_ERR(hdmi->hdcp_ctrl)) {
 		dev_warn(&pdev->dev, "failed to init hdcp: disabled\n");
-		hdmi->hdcp_ctrl = शून्य;
-	पूर्ण
+		hdmi->hdcp_ctrl = NULL;
+	}
 
-	वापस hdmi;
+	return hdmi;
 
 fail:
-	अगर (hdmi)
+	if (hdmi)
 		msm_hdmi_destroy(hdmi);
 
-	वापस ERR_PTR(ret);
-पूर्ण
+	return ERR_PTR(ret);
+}
 
 /* Second part of initialization, the drm/kms level modeset_init,
- * स्थिरructs/initializes mode objects, etc, is called from master
+ * constructs/initializes mode objects, etc, is called from master
  * driver (not hdmi sub-device's probe/bind!)
  *
  * Any resource (regulator/clk/etc) which could be missing at boot
  * should be handled in msm_hdmi_init() so that failure happens from
  * hdmi sub-device's probe.
  */
-पूर्णांक msm_hdmi_modeset_init(काष्ठा hdmi *hdmi,
-		काष्ठा drm_device *dev, काष्ठा drm_encoder *encoder)
-अणु
-	काष्ठा msm_drm_निजी *priv = dev->dev_निजी;
-	काष्ठा platक्रमm_device *pdev = hdmi->pdev;
-	पूर्णांक ret;
+int msm_hdmi_modeset_init(struct hdmi *hdmi,
+		struct drm_device *dev, struct drm_encoder *encoder)
+{
+	struct msm_drm_private *priv = dev->dev_private;
+	struct platform_device *pdev = hdmi->pdev;
+	int ret;
 
 	hdmi->dev = dev;
 	hdmi->encoder = encoder;
@@ -291,372 +290,372 @@ fail:
 	hdmi_audio_infoframe_init(&hdmi->audio.infoframe);
 
 	hdmi->bridge = msm_hdmi_bridge_init(hdmi);
-	अगर (IS_ERR(hdmi->bridge)) अणु
+	if (IS_ERR(hdmi->bridge)) {
 		ret = PTR_ERR(hdmi->bridge);
 		DRM_DEV_ERROR(dev->dev, "failed to create HDMI bridge: %d\n", ret);
-		hdmi->bridge = शून्य;
-		जाओ fail;
-	पूर्ण
+		hdmi->bridge = NULL;
+		goto fail;
+	}
 
 	hdmi->connector = msm_hdmi_connector_init(hdmi);
-	अगर (IS_ERR(hdmi->connector)) अणु
+	if (IS_ERR(hdmi->connector)) {
 		ret = PTR_ERR(hdmi->connector);
 		DRM_DEV_ERROR(dev->dev, "failed to create HDMI connector: %d\n", ret);
-		hdmi->connector = शून्य;
-		जाओ fail;
-	पूर्ण
+		hdmi->connector = NULL;
+		goto fail;
+	}
 
 	hdmi->irq = irq_of_parse_and_map(pdev->dev.of_node, 0);
-	अगर (hdmi->irq < 0) अणु
+	if (hdmi->irq < 0) {
 		ret = hdmi->irq;
 		DRM_DEV_ERROR(dev->dev, "failed to get irq: %d\n", ret);
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
 	ret = devm_request_irq(&pdev->dev, hdmi->irq,
 			msm_hdmi_irq, IRQF_TRIGGER_HIGH | IRQF_ONESHOT,
 			"hdmi_isr", hdmi);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		DRM_DEV_ERROR(dev->dev, "failed to request IRQ%u: %d\n",
 				hdmi->irq, ret);
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
 	ret = msm_hdmi_hpd_enable(hdmi->connector);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		DRM_DEV_ERROR(&hdmi->pdev->dev, "failed to enable HPD: %d\n", ret);
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
 	priv->bridges[priv->num_bridges++]       = hdmi->bridge;
 	priv->connectors[priv->num_connectors++] = hdmi->connector;
 
-	platक्रमm_set_drvdata(pdev, hdmi);
+	platform_set_drvdata(pdev, hdmi);
 
-	वापस 0;
+	return 0;
 
 fail:
 	/* bridge is normally destroyed by drm: */
-	अगर (hdmi->bridge) अणु
+	if (hdmi->bridge) {
 		msm_hdmi_bridge_destroy(hdmi->bridge);
-		hdmi->bridge = शून्य;
-	पूर्ण
-	अगर (hdmi->connector) अणु
+		hdmi->bridge = NULL;
+	}
+	if (hdmi->connector) {
 		hdmi->connector->funcs->destroy(hdmi->connector);
-		hdmi->connector = शून्य;
-	पूर्ण
+		hdmi->connector = NULL;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
  * The hdmi device:
  */
 
-#घोषणा HDMI_CFG(item, entry) \
+#define HDMI_CFG(item, entry) \
 	.item ## _names = item ##_names_ ## entry, \
 	.item ## _cnt   = ARRAY_SIZE(item ## _names_ ## entry)
 
-अटल स्थिर अक्षर *pwr_reg_names_none[] = अणुपूर्ण;
-अटल स्थिर अक्षर *hpd_reg_names_none[] = अणुपूर्ण;
+static const char *pwr_reg_names_none[] = {};
+static const char *hpd_reg_names_none[] = {};
 
-अटल काष्ठा hdmi_platक्रमm_config hdmi_tx_8660_config;
+static struct hdmi_platform_config hdmi_tx_8660_config;
 
-अटल स्थिर अक्षर *hpd_reg_names_8960[] = अणु"core-vdda", "hdmi-mux"पूर्ण;
-अटल स्थिर अक्षर *hpd_clk_names_8960[] = अणु"core", "master_iface", "slave_iface"पूर्ण;
+static const char *hpd_reg_names_8960[] = {"core-vdda", "hdmi-mux"};
+static const char *hpd_clk_names_8960[] = {"core", "master_iface", "slave_iface"};
 
-अटल काष्ठा hdmi_platक्रमm_config hdmi_tx_8960_config = अणु
+static struct hdmi_platform_config hdmi_tx_8960_config = {
 		HDMI_CFG(hpd_reg, 8960),
 		HDMI_CFG(hpd_clk, 8960),
-पूर्ण;
+};
 
-अटल स्थिर अक्षर *pwr_reg_names_8x74[] = अणु"core-vdda", "core-vcc"पूर्ण;
-अटल स्थिर अक्षर *hpd_reg_names_8x74[] = अणु"hpd-gdsc", "hpd-5v"पूर्ण;
-अटल स्थिर अक्षर *pwr_clk_names_8x74[] = अणु"extp", "alt_iface"पूर्ण;
-अटल स्थिर अक्षर *hpd_clk_names_8x74[] = अणु"iface", "core", "mdp_core"पूर्ण;
-अटल अचिन्हित दीर्घ hpd_clk_freq_8x74[] = अणु0, 19200000, 0पूर्ण;
+static const char *pwr_reg_names_8x74[] = {"core-vdda", "core-vcc"};
+static const char *hpd_reg_names_8x74[] = {"hpd-gdsc", "hpd-5v"};
+static const char *pwr_clk_names_8x74[] = {"extp", "alt_iface"};
+static const char *hpd_clk_names_8x74[] = {"iface", "core", "mdp_core"};
+static unsigned long hpd_clk_freq_8x74[] = {0, 19200000, 0};
 
-अटल काष्ठा hdmi_platक्रमm_config hdmi_tx_8974_config = अणु
+static struct hdmi_platform_config hdmi_tx_8974_config = {
 		HDMI_CFG(pwr_reg, 8x74),
 		HDMI_CFG(hpd_reg, 8x74),
 		HDMI_CFG(pwr_clk, 8x74),
 		HDMI_CFG(hpd_clk, 8x74),
 		.hpd_freq      = hpd_clk_freq_8x74,
-पूर्ण;
+};
 
-अटल स्थिर अक्षर *hpd_reg_names_8084[] = अणु"hpd-gdsc", "hpd-5v", "hpd-5v-en"पूर्ण;
+static const char *hpd_reg_names_8084[] = {"hpd-gdsc", "hpd-5v", "hpd-5v-en"};
 
-अटल काष्ठा hdmi_platक्रमm_config hdmi_tx_8084_config = अणु
+static struct hdmi_platform_config hdmi_tx_8084_config = {
 		HDMI_CFG(pwr_reg, 8x74),
 		HDMI_CFG(hpd_reg, 8084),
 		HDMI_CFG(pwr_clk, 8x74),
 		HDMI_CFG(hpd_clk, 8x74),
 		.hpd_freq      = hpd_clk_freq_8x74,
-पूर्ण;
+};
 
-अटल काष्ठा hdmi_platक्रमm_config hdmi_tx_8994_config = अणु
+static struct hdmi_platform_config hdmi_tx_8994_config = {
 		HDMI_CFG(pwr_reg, 8x74),
 		HDMI_CFG(hpd_reg, none),
 		HDMI_CFG(pwr_clk, 8x74),
 		HDMI_CFG(hpd_clk, 8x74),
 		.hpd_freq      = hpd_clk_freq_8x74,
-पूर्ण;
+};
 
-अटल काष्ठा hdmi_platक्रमm_config hdmi_tx_8996_config = अणु
+static struct hdmi_platform_config hdmi_tx_8996_config = {
 		HDMI_CFG(pwr_reg, none),
 		HDMI_CFG(hpd_reg, none),
 		HDMI_CFG(pwr_clk, 8x74),
 		HDMI_CFG(hpd_clk, 8x74),
 		.hpd_freq      = hpd_clk_freq_8x74,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा अणु
-	स्थिर अक्षर *name;
-	स्थिर bool output;
-	स्थिर पूर्णांक value;
-	स्थिर अक्षर *label;
-पूर्ण msm_hdmi_gpio_pdata[] = अणु
-	अणु "qcom,hdmi-tx-ddc-clk", true, 1, "HDMI_DDC_CLK" पूर्ण,
-	अणु "qcom,hdmi-tx-ddc-data", true, 1, "HDMI_DDC_DATA" पूर्ण,
-	अणु "qcom,hdmi-tx-hpd", false, 1, "HDMI_HPD" पूर्ण,
-	अणु "qcom,hdmi-tx-mux-en", true, 1, "HDMI_MUX_EN" पूर्ण,
-	अणु "qcom,hdmi-tx-mux-sel", true, 0, "HDMI_MUX_SEL" पूर्ण,
-	अणु "qcom,hdmi-tx-mux-lpm", true, 1, "HDMI_MUX_LPM" पूर्ण,
-पूर्ण;
+static const struct {
+	const char *name;
+	const bool output;
+	const int value;
+	const char *label;
+} msm_hdmi_gpio_pdata[] = {
+	{ "qcom,hdmi-tx-ddc-clk", true, 1, "HDMI_DDC_CLK" },
+	{ "qcom,hdmi-tx-ddc-data", true, 1, "HDMI_DDC_DATA" },
+	{ "qcom,hdmi-tx-hpd", false, 1, "HDMI_HPD" },
+	{ "qcom,hdmi-tx-mux-en", true, 1, "HDMI_MUX_EN" },
+	{ "qcom,hdmi-tx-mux-sel", true, 0, "HDMI_MUX_SEL" },
+	{ "qcom,hdmi-tx-mux-lpm", true, 1, "HDMI_MUX_LPM" },
+};
 
 /*
  * HDMI audio codec callbacks
  */
-अटल पूर्णांक msm_hdmi_audio_hw_params(काष्ठा device *dev, व्योम *data,
-				    काष्ठा hdmi_codec_daअगरmt *daअगरmt,
-				    काष्ठा hdmi_codec_params *params)
-अणु
-	काष्ठा hdmi *hdmi = dev_get_drvdata(dev);
-	अचिन्हित पूर्णांक chan;
-	अचिन्हित पूर्णांक channel_allocation = 0;
-	अचिन्हित पूर्णांक rate;
-	अचिन्हित पूर्णांक level_shअगरt  = 0; /* 0dB */
-	bool करोwn_mix = false;
+static int msm_hdmi_audio_hw_params(struct device *dev, void *data,
+				    struct hdmi_codec_daifmt *daifmt,
+				    struct hdmi_codec_params *params)
+{
+	struct hdmi *hdmi = dev_get_drvdata(dev);
+	unsigned int chan;
+	unsigned int channel_allocation = 0;
+	unsigned int rate;
+	unsigned int level_shift  = 0; /* 0dB */
+	bool down_mix = false;
 
 	DRM_DEV_DEBUG(dev, "%u Hz, %d bit, %d channels\n", params->sample_rate,
 		 params->sample_width, params->cea.channels);
 
-	चयन (params->cea.channels) अणु
-	हाल 2:
+	switch (params->cea.channels) {
+	case 2:
 		/* FR and FL speakers */
 		channel_allocation  = 0;
 		chan = MSM_HDMI_AUDIO_CHANNEL_2;
-		अवरोध;
-	हाल 4:
+		break;
+	case 4:
 		/* FC, LFE, FR and FL speakers */
 		channel_allocation  = 0x3;
 		chan = MSM_HDMI_AUDIO_CHANNEL_4;
-		अवरोध;
-	हाल 6:
+		break;
+	case 6:
 		/* RR, RL, FC, LFE, FR and FL speakers */
 		channel_allocation  = 0x0B;
 		chan = MSM_HDMI_AUDIO_CHANNEL_6;
-		अवरोध;
-	हाल 8:
+		break;
+	case 8:
 		/* FRC, FLC, RR, RL, FC, LFE, FR and FL speakers */
 		channel_allocation  = 0x1F;
 		chan = MSM_HDMI_AUDIO_CHANNEL_8;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	चयन (params->sample_rate) अणु
-	हाल 32000:
+	switch (params->sample_rate) {
+	case 32000:
 		rate = HDMI_SAMPLE_RATE_32KHZ;
-		अवरोध;
-	हाल 44100:
+		break;
+	case 44100:
 		rate = HDMI_SAMPLE_RATE_44_1KHZ;
-		अवरोध;
-	हाल 48000:
+		break;
+	case 48000:
 		rate = HDMI_SAMPLE_RATE_48KHZ;
-		अवरोध;
-	हाल 88200:
+		break;
+	case 88200:
 		rate = HDMI_SAMPLE_RATE_88_2KHZ;
-		अवरोध;
-	हाल 96000:
+		break;
+	case 96000:
 		rate = HDMI_SAMPLE_RATE_96KHZ;
-		अवरोध;
-	हाल 176400:
+		break;
+	case 176400:
 		rate = HDMI_SAMPLE_RATE_176_4KHZ;
-		अवरोध;
-	हाल 192000:
+		break;
+	case 192000:
 		rate = HDMI_SAMPLE_RATE_192KHZ;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		DRM_DEV_ERROR(dev, "rate[%d] not supported!\n",
 			params->sample_rate);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	msm_hdmi_audio_set_sample_rate(hdmi, rate);
 	msm_hdmi_audio_info_setup(hdmi, 1, chan, channel_allocation,
-			      level_shअगरt, करोwn_mix);
+			      level_shift, down_mix);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम msm_hdmi_audio_shutकरोwn(काष्ठा device *dev, व्योम *data)
-अणु
-	काष्ठा hdmi *hdmi = dev_get_drvdata(dev);
+static void msm_hdmi_audio_shutdown(struct device *dev, void *data)
+{
+	struct hdmi *hdmi = dev_get_drvdata(dev);
 
 	msm_hdmi_audio_info_setup(hdmi, 0, 0, 0, 0, 0);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा hdmi_codec_ops msm_hdmi_audio_codec_ops = अणु
+static const struct hdmi_codec_ops msm_hdmi_audio_codec_ops = {
 	.hw_params = msm_hdmi_audio_hw_params,
-	.audio_shutकरोwn = msm_hdmi_audio_shutकरोwn,
-पूर्ण;
+	.audio_shutdown = msm_hdmi_audio_shutdown,
+};
 
-अटल काष्ठा hdmi_codec_pdata codec_data = अणु
+static struct hdmi_codec_pdata codec_data = {
 	.ops = &msm_hdmi_audio_codec_ops,
 	.max_i2s_channels = 8,
 	.i2s = 1,
-पूर्ण;
+};
 
-अटल पूर्णांक msm_hdmi_रेजिस्टर_audio_driver(काष्ठा hdmi *hdmi, काष्ठा device *dev)
-अणु
-	hdmi->audio_pdev = platक्रमm_device_रेजिस्टर_data(dev,
+static int msm_hdmi_register_audio_driver(struct hdmi *hdmi, struct device *dev)
+{
+	hdmi->audio_pdev = platform_device_register_data(dev,
 							 HDMI_CODEC_DRV_NAME,
 							 PLATFORM_DEVID_AUTO,
 							 &codec_data,
-							 माप(codec_data));
-	वापस PTR_ERR_OR_ZERO(hdmi->audio_pdev);
-पूर्ण
+							 sizeof(codec_data));
+	return PTR_ERR_OR_ZERO(hdmi->audio_pdev);
+}
 
-अटल पूर्णांक msm_hdmi_bind(काष्ठा device *dev, काष्ठा device *master, व्योम *data)
-अणु
-	काष्ठा drm_device *drm = dev_get_drvdata(master);
-	काष्ठा msm_drm_निजी *priv = drm->dev_निजी;
-	काष्ठा hdmi_platक्रमm_config *hdmi_cfg;
-	काष्ठा hdmi *hdmi;
-	काष्ठा device_node *of_node = dev->of_node;
-	पूर्णांक i, err;
+static int msm_hdmi_bind(struct device *dev, struct device *master, void *data)
+{
+	struct drm_device *drm = dev_get_drvdata(master);
+	struct msm_drm_private *priv = drm->dev_private;
+	struct hdmi_platform_config *hdmi_cfg;
+	struct hdmi *hdmi;
+	struct device_node *of_node = dev->of_node;
+	int i, err;
 
-	hdmi_cfg = (काष्ठा hdmi_platक्रमm_config *)
+	hdmi_cfg = (struct hdmi_platform_config *)
 			of_device_get_match_data(dev);
-	अगर (!hdmi_cfg) अणु
+	if (!hdmi_cfg) {
 		DRM_DEV_ERROR(dev, "unknown hdmi_cfg: %pOFn\n", of_node);
-		वापस -ENXIO;
-	पूर्ण
+		return -ENXIO;
+	}
 
 	hdmi_cfg->mmio_name     = "core_physical";
 	hdmi_cfg->qfprom_mmio_name = "qfprom_physical";
 
-	क्रम (i = 0; i < HDMI_MAX_NUM_GPIO; i++) अणु
-		स्थिर अक्षर *name = msm_hdmi_gpio_pdata[i].name;
-		काष्ठा gpio_desc *gpiod;
+	for (i = 0; i < HDMI_MAX_NUM_GPIO; i++) {
+		const char *name = msm_hdmi_gpio_pdata[i].name;
+		struct gpio_desc *gpiod;
 
 		/*
 		 * We are fetching the GPIO lines "as is" since the connector
-		 * code is enabling and disabling the lines. Until that poपूर्णांक
-		 * the घातer-on शेष value will be kept.
+		 * code is enabling and disabling the lines. Until that point
+		 * the power-on default value will be kept.
 		 */
 		gpiod = devm_gpiod_get_optional(dev, name, GPIOD_ASIS);
 		/* This will catch e.g. -PROBE_DEFER */
-		अगर (IS_ERR(gpiod))
-			वापस PTR_ERR(gpiod);
-		अगर (!gpiod) अणु
-			/* Try a second समय, stripping करोwn the name */
-			अक्षर name3[32];
+		if (IS_ERR(gpiod))
+			return PTR_ERR(gpiod);
+		if (!gpiod) {
+			/* Try a second time, stripping down the name */
+			char name3[32];
 
 			/*
 			 * Try again after stripping out the "qcom,hdmi-tx"
-			 * prefix. This is मुख्यly to match "hpd-gpios" used
+			 * prefix. This is mainly to match "hpd-gpios" used
 			 * in the upstream bindings.
 			 */
-			अगर (माला_पूछो(name, "qcom,hdmi-tx-%s", name3))
+			if (sscanf(name, "qcom,hdmi-tx-%s", name3))
 				gpiod = devm_gpiod_get_optional(dev, name3, GPIOD_ASIS);
-			अगर (IS_ERR(gpiod))
-				वापस PTR_ERR(gpiod);
-			अगर (!gpiod)
+			if (IS_ERR(gpiod))
+				return PTR_ERR(gpiod);
+			if (!gpiod)
 				DBG("failed to get gpio: %s", name);
-		पूर्ण
+		}
 		hdmi_cfg->gpios[i].gpiod = gpiod;
-		अगर (gpiod)
+		if (gpiod)
 			gpiod_set_consumer_name(gpiod, msm_hdmi_gpio_pdata[i].label);
 		hdmi_cfg->gpios[i].output = msm_hdmi_gpio_pdata[i].output;
 		hdmi_cfg->gpios[i].value = msm_hdmi_gpio_pdata[i].value;
-	पूर्ण
+	}
 
-	dev->platक्रमm_data = hdmi_cfg;
+	dev->platform_data = hdmi_cfg;
 
-	hdmi = msm_hdmi_init(to_platक्रमm_device(dev));
-	अगर (IS_ERR(hdmi))
-		वापस PTR_ERR(hdmi);
+	hdmi = msm_hdmi_init(to_platform_device(dev));
+	if (IS_ERR(hdmi))
+		return PTR_ERR(hdmi);
 	priv->hdmi = hdmi;
 
-	err = msm_hdmi_रेजिस्टर_audio_driver(hdmi, dev);
-	अगर (err) अणु
+	err = msm_hdmi_register_audio_driver(hdmi, dev);
+	if (err) {
 		DRM_ERROR("Failed to attach an audio codec %d\n", err);
-		hdmi->audio_pdev = शून्य;
-	पूर्ण
+		hdmi->audio_pdev = NULL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम msm_hdmi_unbind(काष्ठा device *dev, काष्ठा device *master,
-		व्योम *data)
-अणु
-	काष्ठा drm_device *drm = dev_get_drvdata(master);
-	काष्ठा msm_drm_निजी *priv = drm->dev_निजी;
-	अगर (priv->hdmi) अणु
-		अगर (priv->hdmi->audio_pdev)
-			platक्रमm_device_unरेजिस्टर(priv->hdmi->audio_pdev);
+static void msm_hdmi_unbind(struct device *dev, struct device *master,
+		void *data)
+{
+	struct drm_device *drm = dev_get_drvdata(master);
+	struct msm_drm_private *priv = drm->dev_private;
+	if (priv->hdmi) {
+		if (priv->hdmi->audio_pdev)
+			platform_device_unregister(priv->hdmi->audio_pdev);
 
 		msm_hdmi_destroy(priv->hdmi);
-		priv->hdmi = शून्य;
-	पूर्ण
-पूर्ण
+		priv->hdmi = NULL;
+	}
+}
 
-अटल स्थिर काष्ठा component_ops msm_hdmi_ops = अणु
+static const struct component_ops msm_hdmi_ops = {
 		.bind   = msm_hdmi_bind,
 		.unbind = msm_hdmi_unbind,
-पूर्ण;
+};
 
-अटल पूर्णांक msm_hdmi_dev_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	वापस component_add(&pdev->dev, &msm_hdmi_ops);
-पूर्ण
+static int msm_hdmi_dev_probe(struct platform_device *pdev)
+{
+	return component_add(&pdev->dev, &msm_hdmi_ops);
+}
 
-अटल पूर्णांक msm_hdmi_dev_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
+static int msm_hdmi_dev_remove(struct platform_device *pdev)
+{
 	component_del(&pdev->dev, &msm_hdmi_ops);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id msm_hdmi_dt_match[] = अणु
-	अणु .compatible = "qcom,hdmi-tx-8996", .data = &hdmi_tx_8996_config पूर्ण,
-	अणु .compatible = "qcom,hdmi-tx-8994", .data = &hdmi_tx_8994_config पूर्ण,
-	अणु .compatible = "qcom,hdmi-tx-8084", .data = &hdmi_tx_8084_config पूर्ण,
-	अणु .compatible = "qcom,hdmi-tx-8974", .data = &hdmi_tx_8974_config पूर्ण,
-	अणु .compatible = "qcom,hdmi-tx-8960", .data = &hdmi_tx_8960_config पूर्ण,
-	अणु .compatible = "qcom,hdmi-tx-8660", .data = &hdmi_tx_8660_config पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct of_device_id msm_hdmi_dt_match[] = {
+	{ .compatible = "qcom,hdmi-tx-8996", .data = &hdmi_tx_8996_config },
+	{ .compatible = "qcom,hdmi-tx-8994", .data = &hdmi_tx_8994_config },
+	{ .compatible = "qcom,hdmi-tx-8084", .data = &hdmi_tx_8084_config },
+	{ .compatible = "qcom,hdmi-tx-8974", .data = &hdmi_tx_8974_config },
+	{ .compatible = "qcom,hdmi-tx-8960", .data = &hdmi_tx_8960_config },
+	{ .compatible = "qcom,hdmi-tx-8660", .data = &hdmi_tx_8660_config },
+	{}
+};
 
-अटल काष्ठा platक्रमm_driver msm_hdmi_driver = अणु
+static struct platform_driver msm_hdmi_driver = {
 	.probe = msm_hdmi_dev_probe,
-	.हटाओ = msm_hdmi_dev_हटाओ,
-	.driver = अणु
+	.remove = msm_hdmi_dev_remove,
+	.driver = {
 		.name = "hdmi_msm",
 		.of_match_table = msm_hdmi_dt_match,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-व्योम __init msm_hdmi_रेजिस्टर(व्योम)
-अणु
-	msm_hdmi_phy_driver_रेजिस्टर();
-	platक्रमm_driver_रेजिस्टर(&msm_hdmi_driver);
-पूर्ण
+void __init msm_hdmi_register(void)
+{
+	msm_hdmi_phy_driver_register();
+	platform_driver_register(&msm_hdmi_driver);
+}
 
-व्योम __निकास msm_hdmi_unरेजिस्टर(व्योम)
-अणु
-	platक्रमm_driver_unरेजिस्टर(&msm_hdmi_driver);
-	msm_hdmi_phy_driver_unरेजिस्टर();
-पूर्ण
+void __exit msm_hdmi_unregister(void)
+{
+	platform_driver_unregister(&msm_hdmi_driver);
+	msm_hdmi_phy_driver_unregister();
+}

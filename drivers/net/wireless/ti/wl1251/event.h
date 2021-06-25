@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * This file is part of wl1251
  *
@@ -7,22 +6,22 @@
  * Copyright (C) 2008 Nokia Corporation
  */
 
-#अगर_अघोषित __WL1251_EVENT_H__
-#घोषणा __WL1251_EVENT_H__
+#ifndef __WL1251_EVENT_H__
+#define __WL1251_EVENT_H__
 
 /*
  * Mbox events
  *
  * The event mechanism is based on a pair of event buffers (buffers A and
  * B) at fixed locations in the target's memory. The host processes one
- * buffer जबतक the other buffer जारीs to collect events. If the host
- * is not processing events, an पूर्णांकerrupt is issued to संकेत that a buffer
- * is पढ़ोy. Once the host is करोne with processing events from one buffer,
- * it संकेतs the target (with an ACK पूर्णांकerrupt) that the event buffer is
- * मुक्त.
+ * buffer while the other buffer continues to collect events. If the host
+ * is not processing events, an interrupt is issued to signal that a buffer
+ * is ready. Once the host is done with processing events from one buffer,
+ * it signals the target (with an ACK interrupt) that the event buffer is
+ * free.
  */
 
-क्रमागत अणु
+enum {
 	RESERVED1_EVENT_ID                       = BIT(0),
 	RESERVED2_EVENT_ID                       = BIT(1),
 	MEASUREMENT_START_EVENT_ID               = BIT(2),
@@ -58,26 +57,26 @@
 	PLT_RX_CALIBRATION_COMPLETE_EVENT_ID     = BIT(30),
 
 	EVENT_MBOX_ALL_EVENT_ID                  = 0x7fffffff,
-पूर्ण;
+};
 
-काष्ठा event_debug_report अणु
+struct event_debug_report {
 	u8 debug_event_id;
 	u8 num_params;
 	u16 pad;
 	u32 report_1;
 	u32 report_2;
 	u32 report_3;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा event_mailbox अणु
+struct event_mailbox {
 	u32 events_vector;
 	u32 events_mask;
 	u32 reserved_1;
 	u32 reserved_2;
 
-	अक्षर average_rssi_level;
+	char average_rssi_level;
 	u8 ps_status;
-	u8 channel_चयन_status;
+	u8 channel_switch_status;
 	u8 scheduled_scan_status;
 
 	/* Channels scanned by the scheduled scan */
@@ -94,21 +93,21 @@
 	/* Number of FCS errors since last event */
 	u32 fcs_err_counter;
 
-	काष्ठा event_debug_report report;
+	struct event_debug_report report;
 	u8 average_snr_level;
 	u8 padding[19];
-पूर्ण __packed;
+} __packed;
 
-क्रमागत अणु
+enum {
 	EVENT_ENTER_POWER_SAVE_FAIL = 0,
 	EVENT_ENTER_POWER_SAVE_SUCCESS,
 	EVENT_EXIT_POWER_SAVE_FAIL,
 	EVENT_EXIT_POWER_SAVE_SUCCESS,
-पूर्ण;
+};
 
-पूर्णांक wl1251_event_unmask(काष्ठा wl1251 *wl);
-व्योम wl1251_event_mbox_config(काष्ठा wl1251 *wl);
-पूर्णांक wl1251_event_handle(काष्ठा wl1251 *wl, u8 mbox);
-पूर्णांक wl1251_event_रुको(काष्ठा wl1251 *wl, u32 mask, पूर्णांक समयout_ms);
+int wl1251_event_unmask(struct wl1251 *wl);
+void wl1251_event_mbox_config(struct wl1251 *wl);
+int wl1251_event_handle(struct wl1251 *wl, u8 mbox);
+int wl1251_event_wait(struct wl1251 *wl, u32 mask, int timeout_ms);
 
-#पूर्ण_अगर
+#endif

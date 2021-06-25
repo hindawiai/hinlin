@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2014 Martin Peres
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,34 +21,34 @@
  *
  * Authors: Martin Peres
  */
-#समावेश "priv.h"
+#include "priv.h"
 
 u32
-nvkm_fuse_पढ़ो(काष्ठा nvkm_fuse *fuse, u32 addr)
-अणु
-	वापस fuse->func->पढ़ो(fuse, addr);
-पूर्ण
+nvkm_fuse_read(struct nvkm_fuse *fuse, u32 addr)
+{
+	return fuse->func->read(fuse, addr);
+}
 
-अटल व्योम *
-nvkm_fuse_dtor(काष्ठा nvkm_subdev *subdev)
-अणु
-	वापस nvkm_fuse(subdev);
-पूर्ण
+static void *
+nvkm_fuse_dtor(struct nvkm_subdev *subdev)
+{
+	return nvkm_fuse(subdev);
+}
 
-अटल स्थिर काष्ठा nvkm_subdev_func
-nvkm_fuse = अणु
+static const struct nvkm_subdev_func
+nvkm_fuse = {
 	.dtor = nvkm_fuse_dtor,
-पूर्ण;
+};
 
-पूर्णांक
-nvkm_fuse_new_(स्थिर काष्ठा nvkm_fuse_func *func, काष्ठा nvkm_device *device,
-	       क्रमागत nvkm_subdev_type type, पूर्णांक inst, काष्ठा nvkm_fuse **pfuse)
-अणु
-	काष्ठा nvkm_fuse *fuse;
-	अगर (!(fuse = *pfuse = kzalloc(माप(*fuse), GFP_KERNEL)))
-		वापस -ENOMEM;
+int
+nvkm_fuse_new_(const struct nvkm_fuse_func *func, struct nvkm_device *device,
+	       enum nvkm_subdev_type type, int inst, struct nvkm_fuse **pfuse)
+{
+	struct nvkm_fuse *fuse;
+	if (!(fuse = *pfuse = kzalloc(sizeof(*fuse), GFP_KERNEL)))
+		return -ENOMEM;
 	nvkm_subdev_ctor(&nvkm_fuse, device, type, inst, &fuse->subdev);
 	fuse->func = func;
 	spin_lock_init(&fuse->lock);
-	वापस 0;
-पूर्ण
+	return 0;
+}

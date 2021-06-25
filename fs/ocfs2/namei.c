@@ -1,9 +1,8 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * namei.c
  *
- * Create and नाम file, directory, symlinks
+ * Create and rename file, directory, symlinks
  *
  * Copyright (C) 2002, 2004 Oracle.  All rights reserved.
  *
@@ -11,7 +10,7 @@
  *
  *  Copyright (C) 1992, 1993, 1994, 1995
  *  Remy Card (card@masi.ibp.fr)
- *  Laborम_से_पre MASI - Institut Blaise pascal
+ *  Laboratoire MASI - Institut Blaise pascal
  *  Universite Pierre et Marie Curie (Paris VI)
  *
  *   from
@@ -21,121 +20,121 @@
  *   Copyright (C) 1991, 1992 Linux Torvalds
  */
 
-#समावेश <linux/fs.h>
-#समावेश <linux/types.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/highस्मृति.स>
-#समावेश <linux/quotaops.h>
-#समावेश <linux/iversion.h>
+#include <linux/fs.h>
+#include <linux/types.h>
+#include <linux/slab.h>
+#include <linux/highmem.h>
+#include <linux/quotaops.h>
+#include <linux/iversion.h>
 
-#समावेश <cluster/masklog.h>
+#include <cluster/masklog.h>
 
-#समावेश "ocfs2.h"
+#include "ocfs2.h"
 
-#समावेश "alloc.h"
-#समावेश "dcache.h"
-#समावेश "dir.h"
-#समावेश "dlmglue.h"
-#समावेश "extent_map.h"
-#समावेश "file.h"
-#समावेश "inode.h"
-#समावेश "journal.h"
-#समावेश "namei.h"
-#समावेश "suballoc.h"
-#समावेश "super.h"
-#समावेश "symlink.h"
-#समावेश "sysfile.h"
-#समावेश "uptodate.h"
-#समावेश "xattr.h"
-#समावेश "acl.h"
-#समावेश "ocfs2_trace.h"
-#समावेश "ioctl.h"
+#include "alloc.h"
+#include "dcache.h"
+#include "dir.h"
+#include "dlmglue.h"
+#include "extent_map.h"
+#include "file.h"
+#include "inode.h"
+#include "journal.h"
+#include "namei.h"
+#include "suballoc.h"
+#include "super.h"
+#include "symlink.h"
+#include "sysfile.h"
+#include "uptodate.h"
+#include "xattr.h"
+#include "acl.h"
+#include "ocfs2_trace.h"
+#include "ioctl.h"
 
-#समावेश "buffer_head_io.h"
+#include "buffer_head_io.h"
 
-अटल पूर्णांक ocfs2_mknod_locked(काष्ठा ocfs2_super *osb,
-			      काष्ठा inode *dir,
-			      काष्ठा inode *inode,
+static int ocfs2_mknod_locked(struct ocfs2_super *osb,
+			      struct inode *dir,
+			      struct inode *inode,
 			      dev_t dev,
-			      काष्ठा buffer_head **new_fe_bh,
-			      काष्ठा buffer_head *parent_fe_bh,
+			      struct buffer_head **new_fe_bh,
+			      struct buffer_head *parent_fe_bh,
 			      handle_t *handle,
-			      काष्ठा ocfs2_alloc_context *inode_ac);
+			      struct ocfs2_alloc_context *inode_ac);
 
-अटल पूर्णांक ocfs2_prepare_orphan_dir(काष्ठा ocfs2_super *osb,
-				    काष्ठा inode **ret_orphan_dir,
+static int ocfs2_prepare_orphan_dir(struct ocfs2_super *osb,
+				    struct inode **ret_orphan_dir,
 				    u64 blkno,
-				    अक्षर *name,
-				    काष्ठा ocfs2_dir_lookup_result *lookup,
+				    char *name,
+				    struct ocfs2_dir_lookup_result *lookup,
 				    bool dio);
 
-अटल पूर्णांक ocfs2_orphan_add(काष्ठा ocfs2_super *osb,
+static int ocfs2_orphan_add(struct ocfs2_super *osb,
 			    handle_t *handle,
-			    काष्ठा inode *inode,
-			    काष्ठा buffer_head *fe_bh,
-			    अक्षर *name,
-			    काष्ठा ocfs2_dir_lookup_result *lookup,
-			    काष्ठा inode *orphan_dir_inode,
+			    struct inode *inode,
+			    struct buffer_head *fe_bh,
+			    char *name,
+			    struct ocfs2_dir_lookup_result *lookup,
+			    struct inode *orphan_dir_inode,
 			    bool dio);
 
-अटल पूर्णांक ocfs2_create_symlink_data(काष्ठा ocfs2_super *osb,
+static int ocfs2_create_symlink_data(struct ocfs2_super *osb,
 				     handle_t *handle,
-				     काष्ठा inode *inode,
-				     स्थिर अक्षर *symname);
+				     struct inode *inode,
+				     const char *symname);
 
-अटल पूर्णांक ocfs2_द्विगुन_lock(काष्ठा ocfs2_super *osb,
-			     काष्ठा buffer_head **bh1,
-			     काष्ठा inode *inode1,
-			     काष्ठा buffer_head **bh2,
-			     काष्ठा inode *inode2,
-			     पूर्णांक नाम);
+static int ocfs2_double_lock(struct ocfs2_super *osb,
+			     struct buffer_head **bh1,
+			     struct inode *inode1,
+			     struct buffer_head **bh2,
+			     struct inode *inode2,
+			     int rename);
 
-अटल व्योम ocfs2_द्विगुन_unlock(काष्ठा inode *inode1, काष्ठा inode *inode2);
-/* An orphan dir name is an 8 byte value, prपूर्णांकed as a hex string */
-#घोषणा OCFS2_ORPHAN_NAMELEN ((पूर्णांक)(2 * माप(u64)))
+static void ocfs2_double_unlock(struct inode *inode1, struct inode *inode2);
+/* An orphan dir name is an 8 byte value, printed as a hex string */
+#define OCFS2_ORPHAN_NAMELEN ((int)(2 * sizeof(u64)))
 
-अटल काष्ठा dentry *ocfs2_lookup(काष्ठा inode *dir, काष्ठा dentry *dentry,
-				   अचिन्हित पूर्णांक flags)
-अणु
-	पूर्णांक status;
+static struct dentry *ocfs2_lookup(struct inode *dir, struct dentry *dentry,
+				   unsigned int flags)
+{
+	int status;
 	u64 blkno;
-	काष्ठा inode *inode = शून्य;
-	काष्ठा dentry *ret;
-	काष्ठा ocfs2_inode_info *oi;
+	struct inode *inode = NULL;
+	struct dentry *ret;
+	struct ocfs2_inode_info *oi;
 
 	trace_ocfs2_lookup(dir, dentry, dentry->d_name.len,
 			   dentry->d_name.name,
-			   (अचिन्हित दीर्घ दीर्घ)OCFS2_I(dir)->ip_blkno, 0);
+			   (unsigned long long)OCFS2_I(dir)->ip_blkno, 0);
 
-	अगर (dentry->d_name.len > OCFS2_MAX_खाताNAME_LEN) अणु
+	if (dentry->d_name.len > OCFS2_MAX_FILENAME_LEN) {
 		ret = ERR_PTR(-ENAMETOOLONG);
-		जाओ bail;
-	पूर्ण
+		goto bail;
+	}
 
-	status = ocfs2_inode_lock_nested(dir, शून्य, 0, OI_LS_PARENT);
-	अगर (status < 0) अणु
-		अगर (status != -ENOENT)
-			mlog_त्रुटि_सं(status);
+	status = ocfs2_inode_lock_nested(dir, NULL, 0, OI_LS_PARENT);
+	if (status < 0) {
+		if (status != -ENOENT)
+			mlog_errno(status);
 		ret = ERR_PTR(status);
-		जाओ bail;
-	पूर्ण
+		goto bail;
+	}
 
 	status = ocfs2_lookup_ino_from_name(dir, dentry->d_name.name,
 					    dentry->d_name.len, &blkno);
-	अगर (status < 0)
-		जाओ bail_add;
+	if (status < 0)
+		goto bail_add;
 
 	inode = ocfs2_iget(OCFS2_SB(dir->i_sb), blkno, 0, 0);
-	अगर (IS_ERR(inode)) अणु
+	if (IS_ERR(inode)) {
 		ret = ERR_PTR(-EACCES);
-		जाओ bail_unlock;
-	पूर्ण
+		goto bail_unlock;
+	}
 
 	oi = OCFS2_I(inode);
 	/* Clear any orphaned state... If we were able to look up the
 	 * inode from a directory, it certainly can't be orphaned. We
-	 * might have the bad state from a node which पूर्णांकended to
-	 * orphan this inode but crashed beक्रमe it could commit the
+	 * might have the bad state from a node which intended to
+	 * orphan this inode but crashed before it could commit the
 	 * unlink. */
 	spin_lock(&oi->ip_lock);
 	oi->ip_flags &= ~OCFS2_INODE_MAYBE_ORPHANED;
@@ -144,376 +143,376 @@
 bail_add:
 	ret = d_splice_alias(inode, dentry);
 
-	अगर (inode) अणु
+	if (inode) {
 		/*
 		 * If d_splice_alias() finds a DCACHE_DISCONNECTED
 		 * dentry, it will d_move() it on top of ourse. The
-		 * वापस value will indicate this however, so in
-		 * those हालs, we चयन them around क्रम the locking
+		 * return value will indicate this however, so in
+		 * those cases, we switch them around for the locking
 		 * code.
 		 *
-		 * NOTE: This dentry alपढ़ोy has ->d_op set from
+		 * NOTE: This dentry already has ->d_op set from
 		 * ocfs2_get_parent() and ocfs2_get_dentry()
 		 */
-		अगर (!IS_ERR_OR_शून्य(ret))
+		if (!IS_ERR_OR_NULL(ret))
 			dentry = ret;
 
 		status = ocfs2_dentry_attach_lock(dentry, inode,
 						  OCFS2_I(dir)->ip_blkno);
-		अगर (status) अणु
-			mlog_त्रुटि_सं(status);
+		if (status) {
+			mlog_errno(status);
 			ret = ERR_PTR(status);
-			जाओ bail_unlock;
-		पूर्ण
-	पूर्ण अन्यथा
+			goto bail_unlock;
+		}
+	} else
 		ocfs2_dentry_attach_gen(dentry);
 
 bail_unlock:
 	/* Don't drop the cluster lock until *after* the d_add --
-	 * unlink on another node will message us to हटाओ that
+	 * unlink on another node will message us to remove that
 	 * dentry under this lock so otherwise we can race this with
-	 * the करोwnconvert thपढ़ो and have a stale dentry. */
+	 * the downconvert thread and have a stale dentry. */
 	ocfs2_inode_unlock(dir, 0);
 
 bail:
 
 	trace_ocfs2_lookup_ret(ret);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल काष्ठा inode *ocfs2_get_init_inode(काष्ठा inode *dir, umode_t mode)
-अणु
-	काष्ठा inode *inode;
-	पूर्णांक status;
+static struct inode *ocfs2_get_init_inode(struct inode *dir, umode_t mode)
+{
+	struct inode *inode;
+	int status;
 
 	inode = new_inode(dir->i_sb);
-	अगर (!inode) अणु
+	if (!inode) {
 		mlog(ML_ERROR, "new_inode failed!\n");
-		वापस ERR_PTR(-ENOMEM);
-	पूर्ण
+		return ERR_PTR(-ENOMEM);
+	}
 
 	/* populate as many fields early on as possible - many of
 	 * these are used by the support functions here and in
 	 * callers. */
-	अगर (S_ISसूची(mode))
+	if (S_ISDIR(mode))
 		set_nlink(inode, 2);
 	inode_init_owner(&init_user_ns, inode, dir, mode);
 	status = dquot_initialize(inode);
-	अगर (status)
-		वापस ERR_PTR(status);
+	if (status)
+		return ERR_PTR(status);
 
-	वापस inode;
-पूर्ण
+	return inode;
+}
 
-अटल व्योम ocfs2_cleanup_add_entry_failure(काष्ठा ocfs2_super *osb,
-		काष्ठा dentry *dentry, काष्ठा inode *inode)
-अणु
-	काष्ठा ocfs2_dentry_lock *dl = dentry->d_fsdata;
+static void ocfs2_cleanup_add_entry_failure(struct ocfs2_super *osb,
+		struct dentry *dentry, struct inode *inode)
+{
+	struct ocfs2_dentry_lock *dl = dentry->d_fsdata;
 
 	ocfs2_simple_drop_lockres(osb, &dl->dl_lockres);
-	ocfs2_lock_res_मुक्त(&dl->dl_lockres);
+	ocfs2_lock_res_free(&dl->dl_lockres);
 	BUG_ON(dl->dl_count != 1);
 	spin_lock(&dentry_attach_lock);
-	dentry->d_fsdata = शून्य;
+	dentry->d_fsdata = NULL;
 	spin_unlock(&dentry_attach_lock);
-	kमुक्त(dl);
+	kfree(dl);
 	iput(inode);
-पूर्ण
+}
 
-अटल पूर्णांक ocfs2_mknod(काष्ठा user_namespace *mnt_userns,
-		       काष्ठा inode *dir,
-		       काष्ठा dentry *dentry,
+static int ocfs2_mknod(struct user_namespace *mnt_userns,
+		       struct inode *dir,
+		       struct dentry *dentry,
 		       umode_t mode,
 		       dev_t dev)
-अणु
-	पूर्णांक status = 0;
-	काष्ठा buffer_head *parent_fe_bh = शून्य;
-	handle_t *handle = शून्य;
-	काष्ठा ocfs2_super *osb;
-	काष्ठा ocfs2_dinode *dirfe;
-	काष्ठा buffer_head *new_fe_bh = शून्य;
-	काष्ठा inode *inode = शून्य;
-	काष्ठा ocfs2_alloc_context *inode_ac = शून्य;
-	काष्ठा ocfs2_alloc_context *data_ac = शून्य;
-	काष्ठा ocfs2_alloc_context *meta_ac = शून्य;
-	पूर्णांक want_clusters = 0;
-	पूर्णांक want_meta = 0;
-	पूर्णांक xattr_credits = 0;
-	काष्ठा ocfs2_security_xattr_info si = अणु
+{
+	int status = 0;
+	struct buffer_head *parent_fe_bh = NULL;
+	handle_t *handle = NULL;
+	struct ocfs2_super *osb;
+	struct ocfs2_dinode *dirfe;
+	struct buffer_head *new_fe_bh = NULL;
+	struct inode *inode = NULL;
+	struct ocfs2_alloc_context *inode_ac = NULL;
+	struct ocfs2_alloc_context *data_ac = NULL;
+	struct ocfs2_alloc_context *meta_ac = NULL;
+	int want_clusters = 0;
+	int want_meta = 0;
+	int xattr_credits = 0;
+	struct ocfs2_security_xattr_info si = {
 		.enable = 1,
-	पूर्ण;
-	पूर्णांक did_quota_inode = 0;
-	काष्ठा ocfs2_dir_lookup_result lookup = अणु शून्य, पूर्ण;
+	};
+	int did_quota_inode = 0;
+	struct ocfs2_dir_lookup_result lookup = { NULL, };
 	sigset_t oldset;
-	पूर्णांक did_block_संकेतs = 0;
-	काष्ठा ocfs2_dentry_lock *dl = शून्य;
+	int did_block_signals = 0;
+	struct ocfs2_dentry_lock *dl = NULL;
 
 	trace_ocfs2_mknod(dir, dentry, dentry->d_name.len, dentry->d_name.name,
-			  (अचिन्हित दीर्घ दीर्घ)OCFS2_I(dir)->ip_blkno,
-			  (अचिन्हित दीर्घ)dev, mode);
+			  (unsigned long long)OCFS2_I(dir)->ip_blkno,
+			  (unsigned long)dev, mode);
 
 	status = dquot_initialize(dir);
-	अगर (status) अणु
-		mlog_त्रुटि_सं(status);
-		वापस status;
-	पूर्ण
+	if (status) {
+		mlog_errno(status);
+		return status;
+	}
 
 	/* get our super block */
 	osb = OCFS2_SB(dir->i_sb);
 
 	status = ocfs2_inode_lock(dir, &parent_fe_bh, 1);
-	अगर (status < 0) अणु
-		अगर (status != -ENOENT)
-			mlog_त्रुटि_सं(status);
-		वापस status;
-	पूर्ण
+	if (status < 0) {
+		if (status != -ENOENT)
+			mlog_errno(status);
+		return status;
+	}
 
-	अगर (S_ISसूची(mode) && (dir->i_nlink >= ocfs2_link_max(osb))) अणु
+	if (S_ISDIR(mode) && (dir->i_nlink >= ocfs2_link_max(osb))) {
 		status = -EMLINK;
-		जाओ leave;
-	पूर्ण
+		goto leave;
+	}
 
-	dirfe = (काष्ठा ocfs2_dinode *) parent_fe_bh->b_data;
-	अगर (!ocfs2_पढ़ो_links_count(dirfe)) अणु
+	dirfe = (struct ocfs2_dinode *) parent_fe_bh->b_data;
+	if (!ocfs2_read_links_count(dirfe)) {
 		/* can't make a file in a deleted directory. */
 		status = -ENOENT;
-		जाओ leave;
-	पूर्ण
+		goto leave;
+	}
 
-	status = ocfs2_check_dir_क्रम_entry(dir, dentry->d_name.name,
+	status = ocfs2_check_dir_for_entry(dir, dentry->d_name.name,
 					   dentry->d_name.len);
-	अगर (status)
-		जाओ leave;
+	if (status)
+		goto leave;
 
 	/* get a spot inside the dir. */
-	status = ocfs2_prepare_dir_क्रम_insert(osb, dir, parent_fe_bh,
+	status = ocfs2_prepare_dir_for_insert(osb, dir, parent_fe_bh,
 					      dentry->d_name.name,
 					      dentry->d_name.len, &lookup);
-	अगर (status < 0) अणु
-		mlog_त्रुटि_सं(status);
-		जाओ leave;
-	पूर्ण
+	if (status < 0) {
+		mlog_errno(status);
+		goto leave;
+	}
 
 	/* reserve an inode spot */
 	status = ocfs2_reserve_new_inode(osb, &inode_ac);
-	अगर (status < 0) अणु
-		अगर (status != -ENOSPC)
-			mlog_त्रुटि_सं(status);
-		जाओ leave;
-	पूर्ण
+	if (status < 0) {
+		if (status != -ENOSPC)
+			mlog_errno(status);
+		goto leave;
+	}
 
 	inode = ocfs2_get_init_inode(dir, mode);
-	अगर (IS_ERR(inode)) अणु
+	if (IS_ERR(inode)) {
 		status = PTR_ERR(inode);
-		inode = शून्य;
-		mlog_त्रुटि_सं(status);
-		जाओ leave;
-	पूर्ण
+		inode = NULL;
+		mlog_errno(status);
+		goto leave;
+	}
 
 	/* get security xattr */
 	status = ocfs2_init_security_get(inode, dir, &dentry->d_name, &si);
-	अगर (status) अणु
-		अगर (status == -EOPNOTSUPP)
+	if (status) {
+		if (status == -EOPNOTSUPP)
 			si.enable = 0;
-		अन्यथा अणु
-			mlog_त्रुटि_सं(status);
-			जाओ leave;
-		पूर्ण
-	पूर्ण
+		else {
+			mlog_errno(status);
+			goto leave;
+		}
+	}
 
-	/* calculate meta data/clusters क्रम setting security and acl xattr */
+	/* calculate meta data/clusters for setting security and acl xattr */
 	status = ocfs2_calc_xattr_init(dir, parent_fe_bh, mode,
 				       &si, &want_clusters,
 				       &xattr_credits, &want_meta);
-	अगर (status < 0) अणु
-		mlog_त्रुटि_सं(status);
-		जाओ leave;
-	पूर्ण
+	if (status < 0) {
+		mlog_errno(status);
+		goto leave;
+	}
 
-	/* Reserve a cluster अगर creating an extent based directory. */
-	अगर (S_ISसूची(mode) && !ocfs2_supports_अंतरभूत_data(osb)) अणु
+	/* Reserve a cluster if creating an extent based directory. */
+	if (S_ISDIR(mode) && !ocfs2_supports_inline_data(osb)) {
 		want_clusters += 1;
 
 		/* Dir indexing requires extra space as well */
-		अगर (ocfs2_supports_indexed_dirs(osb))
+		if (ocfs2_supports_indexed_dirs(osb))
 			want_meta++;
-	पूर्ण
+	}
 
 	status = ocfs2_reserve_new_metadata_blocks(osb, want_meta, &meta_ac);
-	अगर (status < 0) अणु
-		अगर (status != -ENOSPC)
-			mlog_त्रुटि_सं(status);
-		जाओ leave;
-	पूर्ण
+	if (status < 0) {
+		if (status != -ENOSPC)
+			mlog_errno(status);
+		goto leave;
+	}
 
 	status = ocfs2_reserve_clusters(osb, want_clusters, &data_ac);
-	अगर (status < 0) अणु
-		अगर (status != -ENOSPC)
-			mlog_त्रुटि_सं(status);
-		जाओ leave;
-	पूर्ण
+	if (status < 0) {
+		if (status != -ENOSPC)
+			mlog_errno(status);
+		goto leave;
+	}
 
 	handle = ocfs2_start_trans(osb, ocfs2_mknod_credits(osb->sb,
-							    S_ISसूची(mode),
+							    S_ISDIR(mode),
 							    xattr_credits));
-	अगर (IS_ERR(handle)) अणु
+	if (IS_ERR(handle)) {
 		status = PTR_ERR(handle);
-		handle = शून्य;
-		mlog_त्रुटि_सं(status);
-		जाओ leave;
-	पूर्ण
+		handle = NULL;
+		mlog_errno(status);
+		goto leave;
+	}
 
-	/* Starting to change things, restart is no दीर्घer possible. */
-	ocfs2_block_संकेतs(&oldset);
-	did_block_संकेतs = 1;
+	/* Starting to change things, restart is no longer possible. */
+	ocfs2_block_signals(&oldset);
+	did_block_signals = 1;
 
 	status = dquot_alloc_inode(inode);
-	अगर (status)
-		जाओ leave;
+	if (status)
+		goto leave;
 	did_quota_inode = 1;
 
-	/* करो the real work now. */
+	/* do the real work now. */
 	status = ocfs2_mknod_locked(osb, dir, inode, dev,
 				    &new_fe_bh, parent_fe_bh, handle,
 				    inode_ac);
-	अगर (status < 0) अणु
-		mlog_त्रुटि_सं(status);
-		जाओ leave;
-	पूर्ण
+	if (status < 0) {
+		mlog_errno(status);
+		goto leave;
+	}
 
-	अगर (S_ISसूची(mode)) अणु
+	if (S_ISDIR(mode)) {
 		status = ocfs2_fill_new_dir(osb, handle, dir, inode,
 					    new_fe_bh, data_ac, meta_ac);
-		अगर (status < 0) अणु
-			mlog_त्रुटि_सं(status);
-			जाओ leave;
-		पूर्ण
+		if (status < 0) {
+			mlog_errno(status);
+			goto leave;
+		}
 
 		status = ocfs2_journal_access_di(handle, INODE_CACHE(dir),
 						 parent_fe_bh,
 						 OCFS2_JOURNAL_ACCESS_WRITE);
-		अगर (status < 0) अणु
-			mlog_त्रुटि_सं(status);
-			जाओ leave;
-		पूर्ण
+		if (status < 0) {
+			mlog_errno(status);
+			goto leave;
+		}
 		ocfs2_add_links_count(dirfe, 1);
 		ocfs2_journal_dirty(handle, parent_fe_bh);
 		inc_nlink(dir);
-	पूर्ण
+	}
 
 	status = ocfs2_init_acl(handle, inode, dir, new_fe_bh, parent_fe_bh,
 			 meta_ac, data_ac);
 
-	अगर (status < 0) अणु
-		mlog_त्रुटि_सं(status);
-		जाओ roll_back;
-	पूर्ण
+	if (status < 0) {
+		mlog_errno(status);
+		goto roll_back;
+	}
 
-	अगर (si.enable) अणु
+	if (si.enable) {
 		status = ocfs2_init_security_set(handle, inode, new_fe_bh, &si,
 						 meta_ac, data_ac);
-		अगर (status < 0) अणु
-			mlog_त्रुटि_सं(status);
-			जाओ roll_back;
-		पूर्ण
-	पूर्ण
+		if (status < 0) {
+			mlog_errno(status);
+			goto roll_back;
+		}
+	}
 
 	/*
-	 * Do this beक्रमe adding the entry to the directory. We add
+	 * Do this before adding the entry to the directory. We add
 	 * also set d_op after success so that ->d_iput() will cleanup
-	 * the dentry lock even अगर ocfs2_add_entry() fails below.
+	 * the dentry lock even if ocfs2_add_entry() fails below.
 	 */
 	status = ocfs2_dentry_attach_lock(dentry, inode,
 					  OCFS2_I(dir)->ip_blkno);
-	अगर (status) अणु
-		mlog_त्रुटि_सं(status);
-		जाओ roll_back;
-	पूर्ण
+	if (status) {
+		mlog_errno(status);
+		goto roll_back;
+	}
 
 	dl = dentry->d_fsdata;
 
 	status = ocfs2_add_entry(handle, dentry, inode,
 				 OCFS2_I(inode)->ip_blkno, parent_fe_bh,
 				 &lookup);
-	अगर (status < 0) अणु
-		mlog_त्रुटि_सं(status);
-		जाओ roll_back;
-	पूर्ण
+	if (status < 0) {
+		mlog_errno(status);
+		goto roll_back;
+	}
 
 	insert_inode_hash(inode);
 	d_instantiate(dentry, inode);
 	status = 0;
 
 roll_back:
-	अगर (status < 0 && S_ISसूची(mode)) अणु
+	if (status < 0 && S_ISDIR(mode)) {
 		ocfs2_add_links_count(dirfe, -1);
 		drop_nlink(dir);
-	पूर्ण
+	}
 
 leave:
-	अगर (status < 0 && did_quota_inode)
-		dquot_मुक्त_inode(inode);
-	अगर (handle)
+	if (status < 0 && did_quota_inode)
+		dquot_free_inode(inode);
+	if (handle)
 		ocfs2_commit_trans(osb, handle);
 
 	ocfs2_inode_unlock(dir, 1);
-	अगर (did_block_संकेतs)
-		ocfs2_unblock_संकेतs(&oldset);
+	if (did_block_signals)
+		ocfs2_unblock_signals(&oldset);
 
-	brअन्यथा(new_fe_bh);
-	brअन्यथा(parent_fe_bh);
-	kमुक्त(si.value);
+	brelse(new_fe_bh);
+	brelse(parent_fe_bh);
+	kfree(si.value);
 
-	ocfs2_मुक्त_dir_lookup_result(&lookup);
+	ocfs2_free_dir_lookup_result(&lookup);
 
-	अगर (inode_ac)
-		ocfs2_मुक्त_alloc_context(inode_ac);
+	if (inode_ac)
+		ocfs2_free_alloc_context(inode_ac);
 
-	अगर (data_ac)
-		ocfs2_मुक्त_alloc_context(data_ac);
+	if (data_ac)
+		ocfs2_free_alloc_context(data_ac);
 
-	अगर (meta_ac)
-		ocfs2_मुक्त_alloc_context(meta_ac);
+	if (meta_ac)
+		ocfs2_free_alloc_context(meta_ac);
 
 	/*
-	 * We should call iput after the i_mutex of the biपंचांगap been
-	 * unlocked in ocfs2_मुक्त_alloc_context, or the
+	 * We should call iput after the i_mutex of the bitmap been
+	 * unlocked in ocfs2_free_alloc_context, or the
 	 * ocfs2_delete_inode will mutex_lock again.
 	 */
-	अगर ((status < 0) && inode) अणु
-		अगर (dl)
+	if ((status < 0) && inode) {
+		if (dl)
 			ocfs2_cleanup_add_entry_failure(osb, dentry, inode);
 
-		OCFS2_I(inode)->ip_flags |= OCFS2_INODE_SKIP_ORPHAN_सूची;
+		OCFS2_I(inode)->ip_flags |= OCFS2_INODE_SKIP_ORPHAN_DIR;
 		clear_nlink(inode);
 		iput(inode);
-	पूर्ण
+	}
 
-	अगर (status)
-		mlog_त्रुटि_सं(status);
+	if (status)
+		mlog_errno(status);
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल पूर्णांक __ocfs2_mknod_locked(काष्ठा inode *dir,
-				काष्ठा inode *inode,
+static int __ocfs2_mknod_locked(struct inode *dir,
+				struct inode *inode,
 				dev_t dev,
-				काष्ठा buffer_head **new_fe_bh,
-				काष्ठा buffer_head *parent_fe_bh,
+				struct buffer_head **new_fe_bh,
+				struct buffer_head *parent_fe_bh,
 				handle_t *handle,
-				काष्ठा ocfs2_alloc_context *inode_ac,
+				struct ocfs2_alloc_context *inode_ac,
 				u64 fe_blkno, u64 suballoc_loc, u16 suballoc_bit)
-अणु
-	पूर्णांक status = 0;
-	काष्ठा ocfs2_super *osb = OCFS2_SB(dir->i_sb);
-	काष्ठा ocfs2_dinode *fe = शून्य;
-	काष्ठा ocfs2_extent_list *fel;
+{
+	int status = 0;
+	struct ocfs2_super *osb = OCFS2_SB(dir->i_sb);
+	struct ocfs2_dinode *fe = NULL;
+	struct ocfs2_extent_list *fel;
 	u16 feat;
-	काष्ठा ocfs2_inode_info *oi = OCFS2_I(inode);
-	काष्ठा बारpec64 ts;
+	struct ocfs2_inode_info *oi = OCFS2_I(inode);
+	struct timespec64 ts;
 
-	*new_fe_bh = शून्य;
+	*new_fe_bh = NULL;
 
 	/* populate as many fields early on as possible - many of
 	 * these are used by the support functions here and in
@@ -525,23 +524,23 @@ leave:
 	spin_unlock(&osb->osb_lock);
 
 	*new_fe_bh = sb_getblk(osb->sb, fe_blkno);
-	अगर (!*new_fe_bh) अणु
+	if (!*new_fe_bh) {
 		status = -ENOMEM;
-		mlog_त्रुटि_सं(status);
-		जाओ leave;
-	पूर्ण
+		mlog_errno(status);
+		goto leave;
+	}
 	ocfs2_set_new_buffer_uptodate(INODE_CACHE(inode), *new_fe_bh);
 
 	status = ocfs2_journal_access_di(handle, INODE_CACHE(inode),
 					 *new_fe_bh,
 					 OCFS2_JOURNAL_ACCESS_CREATE);
-	अगर (status < 0) अणु
-		mlog_त्रुटि_सं(status);
-		जाओ leave;
-	पूर्ण
+	if (status < 0) {
+		mlog_errno(status);
+		goto leave;
+	}
 
-	fe = (काष्ठा ocfs2_dinode *) (*new_fe_bh)->b_data;
-	स_रखो(fe, 0, osb->sb->s_blocksize);
+	fe = (struct ocfs2_dinode *) (*new_fe_bh)->b_data;
+	memset(fe, 0, osb->sb->s_blocksize);
 
 	fe->i_generation = cpu_to_le32(inode->i_generation);
 	fe->i_fs_generation = cpu_to_le32(osb->fs_generation);
@@ -549,712 +548,712 @@ leave:
 	fe->i_suballoc_loc = cpu_to_le64(suballoc_loc);
 	fe->i_suballoc_bit = cpu_to_le16(suballoc_bit);
 	fe->i_suballoc_slot = cpu_to_le16(inode_ac->ac_alloc_slot);
-	fe->i_uid = cpu_to_le32(i_uid_पढ़ो(inode));
-	fe->i_gid = cpu_to_le32(i_gid_पढ़ो(inode));
+	fe->i_uid = cpu_to_le32(i_uid_read(inode));
+	fe->i_gid = cpu_to_le32(i_gid_read(inode));
 	fe->i_mode = cpu_to_le16(inode->i_mode);
-	अगर (S_ISCHR(inode->i_mode) || S_ISBLK(inode->i_mode))
+	if (S_ISCHR(inode->i_mode) || S_ISBLK(inode->i_mode))
 		fe->id1.dev1.i_rdev = cpu_to_le64(huge_encode_dev(dev));
 
 	ocfs2_set_links_count(fe, inode->i_nlink);
 
 	fe->i_last_eb_blk = 0;
-	म_नकल(fe->i_signature, OCFS2_INODE_SIGNATURE);
+	strcpy(fe->i_signature, OCFS2_INODE_SIGNATURE);
 	fe->i_flags |= cpu_to_le32(OCFS2_VALID_FL);
-	kसमय_get_real_ts64(&ts);
-	fe->i_aसमय = fe->i_स_समय = fe->i_mसमय =
+	ktime_get_real_ts64(&ts);
+	fe->i_atime = fe->i_ctime = fe->i_mtime =
 		cpu_to_le64(ts.tv_sec);
-	fe->i_mसमय_nsec = fe->i_स_समय_nsec = fe->i_aसमय_nsec =
+	fe->i_mtime_nsec = fe->i_ctime_nsec = fe->i_atime_nsec =
 		cpu_to_le32(ts.tv_nsec);
-	fe->i_dसमय = 0;
+	fe->i_dtime = 0;
 
 	/*
-	 * If supported, directories start with अंतरभूत data. If अंतरभूत
+	 * If supported, directories start with inline data. If inline
 	 * isn't supported, but indexing is, we start them as indexed.
 	 */
 	feat = le16_to_cpu(fe->i_dyn_features);
-	अगर (S_ISसूची(inode->i_mode) && ocfs2_supports_अंतरभूत_data(osb)) अणु
+	if (S_ISDIR(inode->i_mode) && ocfs2_supports_inline_data(osb)) {
 		fe->i_dyn_features = cpu_to_le16(feat | OCFS2_INLINE_DATA_FL);
 
 		fe->id2.i_data.id_count = cpu_to_le16(
-				ocfs2_max_अंतरभूत_data_with_xattr(osb->sb, fe));
-	पूर्ण अन्यथा अणु
+				ocfs2_max_inline_data_with_xattr(osb->sb, fe));
+	} else {
 		fel = &fe->id2.i_list;
 		fel->l_tree_depth = 0;
-		fel->l_next_मुक्त_rec = 0;
+		fel->l_next_free_rec = 0;
 		fel->l_count = cpu_to_le16(ocfs2_extent_recs_per_inode(osb->sb));
-	पूर्ण
+	}
 
 	ocfs2_journal_dirty(handle, *new_fe_bh);
 
 	ocfs2_populate_inode(inode, fe, 1);
 	ocfs2_ci_set_new(osb, INODE_CACHE(inode));
-	अगर (!ocfs2_mount_local(osb)) अणु
+	if (!ocfs2_mount_local(osb)) {
 		status = ocfs2_create_new_inode_locks(inode);
-		अगर (status < 0)
-			mlog_त्रुटि_सं(status);
-	पूर्ण
+		if (status < 0)
+			mlog_errno(status);
+	}
 
 	ocfs2_update_inode_fsync_trans(handle, inode, 1);
 
 leave:
-	अगर (status < 0) अणु
-		अगर (*new_fe_bh) अणु
-			brअन्यथा(*new_fe_bh);
-			*new_fe_bh = शून्य;
-		पूर्ण
-	पूर्ण
+	if (status < 0) {
+		if (*new_fe_bh) {
+			brelse(*new_fe_bh);
+			*new_fe_bh = NULL;
+		}
+	}
 
-	अगर (status)
-		mlog_त्रुटि_सं(status);
-	वापस status;
-पूर्ण
+	if (status)
+		mlog_errno(status);
+	return status;
+}
 
-अटल पूर्णांक ocfs2_mknod_locked(काष्ठा ocfs2_super *osb,
-			      काष्ठा inode *dir,
-			      काष्ठा inode *inode,
+static int ocfs2_mknod_locked(struct ocfs2_super *osb,
+			      struct inode *dir,
+			      struct inode *inode,
 			      dev_t dev,
-			      काष्ठा buffer_head **new_fe_bh,
-			      काष्ठा buffer_head *parent_fe_bh,
+			      struct buffer_head **new_fe_bh,
+			      struct buffer_head *parent_fe_bh,
 			      handle_t *handle,
-			      काष्ठा ocfs2_alloc_context *inode_ac)
-अणु
-	पूर्णांक status = 0;
+			      struct ocfs2_alloc_context *inode_ac)
+{
+	int status = 0;
 	u64 suballoc_loc, fe_blkno = 0;
 	u16 suballoc_bit;
 
-	*new_fe_bh = शून्य;
+	*new_fe_bh = NULL;
 
 	status = ocfs2_claim_new_inode(handle, dir, parent_fe_bh,
 				       inode_ac, &suballoc_loc,
 				       &suballoc_bit, &fe_blkno);
-	अगर (status < 0) अणु
-		mlog_त्रुटि_सं(status);
-		वापस status;
-	पूर्ण
+	if (status < 0) {
+		mlog_errno(status);
+		return status;
+	}
 
 	status = __ocfs2_mknod_locked(dir, inode, dev, new_fe_bh,
 				    parent_fe_bh, handle, inode_ac,
 				    fe_blkno, suballoc_loc, suballoc_bit);
-	अगर (status < 0) अणु
+	if (status < 0) {
 		u64 bg_blkno = ocfs2_which_suballoc_group(fe_blkno, suballoc_bit);
-		पूर्णांक पंचांगp = ocfs2_मुक्त_suballoc_bits(handle, inode_ac->ac_inode,
+		int tmp = ocfs2_free_suballoc_bits(handle, inode_ac->ac_inode,
 				inode_ac->ac_bh, suballoc_bit, bg_blkno, 1);
-		अगर (पंचांगp)
-			mlog_त्रुटि_सं(पंचांगp);
-	पूर्ण
+		if (tmp)
+			mlog_errno(tmp);
+	}
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल पूर्णांक ocfs2_सूची_गढ़ो(काष्ठा user_namespace *mnt_userns,
-		       काष्ठा inode *dir,
-		       काष्ठा dentry *dentry,
+static int ocfs2_mkdir(struct user_namespace *mnt_userns,
+		       struct inode *dir,
+		       struct dentry *dentry,
 		       umode_t mode)
-अणु
-	पूर्णांक ret;
+{
+	int ret;
 
-	trace_ocfs2_सूची_गढ़ो(dir, dentry, dentry->d_name.len, dentry->d_name.name,
+	trace_ocfs2_mkdir(dir, dentry, dentry->d_name.len, dentry->d_name.name,
 			  OCFS2_I(dir)->ip_blkno, mode);
-	ret = ocfs2_mknod(&init_user_ns, dir, dentry, mode | S_IFसूची, 0);
-	अगर (ret)
-		mlog_त्रुटि_सं(ret);
+	ret = ocfs2_mknod(&init_user_ns, dir, dentry, mode | S_IFDIR, 0);
+	if (ret)
+		mlog_errno(ret);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक ocfs2_create(काष्ठा user_namespace *mnt_userns,
-			काष्ठा inode *dir,
-			काष्ठा dentry *dentry,
+static int ocfs2_create(struct user_namespace *mnt_userns,
+			struct inode *dir,
+			struct dentry *dentry,
 			umode_t mode,
 			bool excl)
-अणु
-	पूर्णांक ret;
+{
+	int ret;
 
 	trace_ocfs2_create(dir, dentry, dentry->d_name.len, dentry->d_name.name,
-			   (अचिन्हित दीर्घ दीर्घ)OCFS2_I(dir)->ip_blkno, mode);
+			   (unsigned long long)OCFS2_I(dir)->ip_blkno, mode);
 	ret = ocfs2_mknod(&init_user_ns, dir, dentry, mode | S_IFREG, 0);
-	अगर (ret)
-		mlog_त्रुटि_सं(ret);
+	if (ret)
+		mlog_errno(ret);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक ocfs2_link(काष्ठा dentry *old_dentry,
-		      काष्ठा inode *dir,
-		      काष्ठा dentry *dentry)
-अणु
+static int ocfs2_link(struct dentry *old_dentry,
+		      struct inode *dir,
+		      struct dentry *dentry)
+{
 	handle_t *handle;
-	काष्ठा inode *inode = d_inode(old_dentry);
-	काष्ठा inode *old_dir = d_inode(old_dentry->d_parent);
-	पूर्णांक err;
-	काष्ठा buffer_head *fe_bh = शून्य;
-	काष्ठा buffer_head *old_dir_bh = शून्य;
-	काष्ठा buffer_head *parent_fe_bh = शून्य;
-	काष्ठा ocfs2_dinode *fe = शून्य;
-	काष्ठा ocfs2_super *osb = OCFS2_SB(dir->i_sb);
-	काष्ठा ocfs2_dir_lookup_result lookup = अणु शून्य, पूर्ण;
+	struct inode *inode = d_inode(old_dentry);
+	struct inode *old_dir = d_inode(old_dentry->d_parent);
+	int err;
+	struct buffer_head *fe_bh = NULL;
+	struct buffer_head *old_dir_bh = NULL;
+	struct buffer_head *parent_fe_bh = NULL;
+	struct ocfs2_dinode *fe = NULL;
+	struct ocfs2_super *osb = OCFS2_SB(dir->i_sb);
+	struct ocfs2_dir_lookup_result lookup = { NULL, };
 	sigset_t oldset;
 	u64 old_de_ino;
 
-	trace_ocfs2_link((अचिन्हित दीर्घ दीर्घ)OCFS2_I(inode)->ip_blkno,
+	trace_ocfs2_link((unsigned long long)OCFS2_I(inode)->ip_blkno,
 			 old_dentry->d_name.len, old_dentry->d_name.name,
 			 dentry->d_name.len, dentry->d_name.name);
 
-	अगर (S_ISसूची(inode->i_mode))
-		वापस -EPERM;
+	if (S_ISDIR(inode->i_mode))
+		return -EPERM;
 
 	err = dquot_initialize(dir);
-	अगर (err) अणु
-		mlog_त्रुटि_सं(err);
-		वापस err;
-	पूर्ण
+	if (err) {
+		mlog_errno(err);
+		return err;
+	}
 
-	err = ocfs2_द्विगुन_lock(osb, &old_dir_bh, old_dir,
+	err = ocfs2_double_lock(osb, &old_dir_bh, old_dir,
 			&parent_fe_bh, dir, 0);
-	अगर (err < 0) अणु
-		अगर (err != -ENOENT)
-			mlog_त्रुटि_सं(err);
-		वापस err;
-	पूर्ण
+	if (err < 0) {
+		if (err != -ENOENT)
+			mlog_errno(err);
+		return err;
+	}
 
 	/* make sure both dirs have bhs
-	 * get an extra ref on old_dir_bh अगर old==new */
-	अगर (!parent_fe_bh) अणु
-		अगर (old_dir_bh) अणु
+	 * get an extra ref on old_dir_bh if old==new */
+	if (!parent_fe_bh) {
+		if (old_dir_bh) {
 			parent_fe_bh = old_dir_bh;
 			get_bh(parent_fe_bh);
-		पूर्ण अन्यथा अणु
+		} else {
 			mlog(ML_ERROR, "%s: no old_dir_bh!\n", osb->uuid_str);
 			err = -EIO;
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 
-	अगर (!dir->i_nlink) अणु
+	if (!dir->i_nlink) {
 		err = -ENOENT;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	err = ocfs2_lookup_ino_from_name(old_dir, old_dentry->d_name.name,
 			old_dentry->d_name.len, &old_de_ino);
-	अगर (err) अणु
+	if (err) {
 		err = -ENOENT;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/*
-	 * Check whether another node हटाओd the source inode जबतक we
+	 * Check whether another node removed the source inode while we
 	 * were in the vfs.
 	 */
-	अगर (old_de_ino != OCFS2_I(inode)->ip_blkno) अणु
+	if (old_de_ino != OCFS2_I(inode)->ip_blkno) {
 		err = -ENOENT;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	err = ocfs2_check_dir_क्रम_entry(dir, dentry->d_name.name,
+	err = ocfs2_check_dir_for_entry(dir, dentry->d_name.name,
 					dentry->d_name.len);
-	अगर (err)
-		जाओ out;
+	if (err)
+		goto out;
 
-	err = ocfs2_prepare_dir_क्रम_insert(osb, dir, parent_fe_bh,
+	err = ocfs2_prepare_dir_for_insert(osb, dir, parent_fe_bh,
 					   dentry->d_name.name,
 					   dentry->d_name.len, &lookup);
-	अगर (err < 0) अणु
-		mlog_त्रुटि_सं(err);
-		जाओ out;
-	पूर्ण
+	if (err < 0) {
+		mlog_errno(err);
+		goto out;
+	}
 
 	err = ocfs2_inode_lock(inode, &fe_bh, 1);
-	अगर (err < 0) अणु
-		अगर (err != -ENOENT)
-			mlog_त्रुटि_सं(err);
-		जाओ out;
-	पूर्ण
+	if (err < 0) {
+		if (err != -ENOENT)
+			mlog_errno(err);
+		goto out;
+	}
 
-	fe = (काष्ठा ocfs2_dinode *) fe_bh->b_data;
-	अगर (ocfs2_पढ़ो_links_count(fe) >= ocfs2_link_max(osb)) अणु
+	fe = (struct ocfs2_dinode *) fe_bh->b_data;
+	if (ocfs2_read_links_count(fe) >= ocfs2_link_max(osb)) {
 		err = -EMLINK;
-		जाओ out_unlock_inode;
-	पूर्ण
+		goto out_unlock_inode;
+	}
 
 	handle = ocfs2_start_trans(osb, ocfs2_link_credits(osb->sb));
-	अगर (IS_ERR(handle)) अणु
+	if (IS_ERR(handle)) {
 		err = PTR_ERR(handle);
-		handle = शून्य;
-		mlog_त्रुटि_सं(err);
-		जाओ out_unlock_inode;
-	पूर्ण
+		handle = NULL;
+		mlog_errno(err);
+		goto out_unlock_inode;
+	}
 
-	/* Starting to change things, restart is no दीर्घer possible. */
-	ocfs2_block_संकेतs(&oldset);
+	/* Starting to change things, restart is no longer possible. */
+	ocfs2_block_signals(&oldset);
 
 	err = ocfs2_journal_access_di(handle, INODE_CACHE(inode), fe_bh,
 				      OCFS2_JOURNAL_ACCESS_WRITE);
-	अगर (err < 0) अणु
-		mlog_त्रुटि_सं(err);
-		जाओ out_commit;
-	पूर्ण
+	if (err < 0) {
+		mlog_errno(err);
+		goto out_commit;
+	}
 
 	inc_nlink(inode);
-	inode->i_स_समय = current_समय(inode);
+	inode->i_ctime = current_time(inode);
 	ocfs2_set_links_count(fe, inode->i_nlink);
-	fe->i_स_समय = cpu_to_le64(inode->i_स_समय.tv_sec);
-	fe->i_स_समय_nsec = cpu_to_le32(inode->i_स_समय.tv_nsec);
+	fe->i_ctime = cpu_to_le64(inode->i_ctime.tv_sec);
+	fe->i_ctime_nsec = cpu_to_le32(inode->i_ctime.tv_nsec);
 	ocfs2_journal_dirty(handle, fe_bh);
 
 	err = ocfs2_add_entry(handle, dentry, inode,
 			      OCFS2_I(inode)->ip_blkno,
 			      parent_fe_bh, &lookup);
-	अगर (err) अणु
+	if (err) {
 		ocfs2_add_links_count(fe, -1);
 		drop_nlink(inode);
-		mlog_त्रुटि_सं(err);
-		जाओ out_commit;
-	पूर्ण
+		mlog_errno(err);
+		goto out_commit;
+	}
 
 	err = ocfs2_dentry_attach_lock(dentry, inode, OCFS2_I(dir)->ip_blkno);
-	अगर (err) अणु
-		mlog_त्रुटि_सं(err);
-		जाओ out_commit;
-	पूर्ण
+	if (err) {
+		mlog_errno(err);
+		goto out_commit;
+	}
 
 	ihold(inode);
 	d_instantiate(dentry, inode);
 
 out_commit:
 	ocfs2_commit_trans(osb, handle);
-	ocfs2_unblock_संकेतs(&oldset);
+	ocfs2_unblock_signals(&oldset);
 out_unlock_inode:
 	ocfs2_inode_unlock(inode, 1);
 
 out:
-	ocfs2_द्विगुन_unlock(old_dir, dir);
+	ocfs2_double_unlock(old_dir, dir);
 
-	brअन्यथा(fe_bh);
-	brअन्यथा(parent_fe_bh);
-	brअन्यथा(old_dir_bh);
+	brelse(fe_bh);
+	brelse(parent_fe_bh);
+	brelse(old_dir_bh);
 
-	ocfs2_मुक्त_dir_lookup_result(&lookup);
+	ocfs2_free_dir_lookup_result(&lookup);
 
-	अगर (err)
-		mlog_त्रुटि_सं(err);
+	if (err)
+		mlog_errno(err);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /*
  * Takes and drops an exclusive lock on the given dentry. This will
- * क्रमce other nodes to drop it.
+ * force other nodes to drop it.
  */
-अटल पूर्णांक ocfs2_remote_dentry_delete(काष्ठा dentry *dentry)
-अणु
-	पूर्णांक ret;
+static int ocfs2_remote_dentry_delete(struct dentry *dentry)
+{
+	int ret;
 
 	ret = ocfs2_dentry_lock(dentry, 1);
-	अगर (ret)
-		mlog_त्रुटि_सं(ret);
-	अन्यथा
+	if (ret)
+		mlog_errno(ret);
+	else
 		ocfs2_dentry_unlock(dentry, 1);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल अंतरभूत पूर्णांक ocfs2_inode_is_unlinkable(काष्ठा inode *inode)
-अणु
-	अगर (S_ISसूची(inode->i_mode)) अणु
-		अगर (inode->i_nlink == 2)
-			वापस 1;
-		वापस 0;
-	पूर्ण
+static inline int ocfs2_inode_is_unlinkable(struct inode *inode)
+{
+	if (S_ISDIR(inode->i_mode)) {
+		if (inode->i_nlink == 2)
+			return 1;
+		return 0;
+	}
 
-	अगर (inode->i_nlink == 1)
-		वापस 1;
-	वापस 0;
-पूर्ण
+	if (inode->i_nlink == 1)
+		return 1;
+	return 0;
+}
 
-अटल पूर्णांक ocfs2_unlink(काष्ठा inode *dir,
-			काष्ठा dentry *dentry)
-अणु
-	पूर्णांक status;
-	पूर्णांक child_locked = 0;
+static int ocfs2_unlink(struct inode *dir,
+			struct dentry *dentry)
+{
+	int status;
+	int child_locked = 0;
 	bool is_unlinkable = false;
-	काष्ठा inode *inode = d_inode(dentry);
-	काष्ठा inode *orphan_dir = शून्य;
-	काष्ठा ocfs2_super *osb = OCFS2_SB(dir->i_sb);
+	struct inode *inode = d_inode(dentry);
+	struct inode *orphan_dir = NULL;
+	struct ocfs2_super *osb = OCFS2_SB(dir->i_sb);
 	u64 blkno;
-	काष्ठा ocfs2_dinode *fe = शून्य;
-	काष्ठा buffer_head *fe_bh = शून्य;
-	काष्ठा buffer_head *parent_node_bh = शून्य;
-	handle_t *handle = शून्य;
-	अक्षर orphan_name[OCFS2_ORPHAN_NAMELEN + 1];
-	काष्ठा ocfs2_dir_lookup_result lookup = अणु शून्य, पूर्ण;
-	काष्ठा ocfs2_dir_lookup_result orphan_insert = अणु शून्य, पूर्ण;
+	struct ocfs2_dinode *fe = NULL;
+	struct buffer_head *fe_bh = NULL;
+	struct buffer_head *parent_node_bh = NULL;
+	handle_t *handle = NULL;
+	char orphan_name[OCFS2_ORPHAN_NAMELEN + 1];
+	struct ocfs2_dir_lookup_result lookup = { NULL, };
+	struct ocfs2_dir_lookup_result orphan_insert = { NULL, };
 
 	trace_ocfs2_unlink(dir, dentry, dentry->d_name.len,
 			   dentry->d_name.name,
-			   (अचिन्हित दीर्घ दीर्घ)OCFS2_I(dir)->ip_blkno,
-			   (अचिन्हित दीर्घ दीर्घ)OCFS2_I(inode)->ip_blkno);
+			   (unsigned long long)OCFS2_I(dir)->ip_blkno,
+			   (unsigned long long)OCFS2_I(inode)->ip_blkno);
 
 	status = dquot_initialize(dir);
-	अगर (status) अणु
-		mlog_त्रुटि_सं(status);
-		वापस status;
-	पूर्ण
+	if (status) {
+		mlog_errno(status);
+		return status;
+	}
 
 	BUG_ON(d_inode(dentry->d_parent) != dir);
 
-	अगर (inode == osb->root_inode)
-		वापस -EPERM;
+	if (inode == osb->root_inode)
+		return -EPERM;
 
 	status = ocfs2_inode_lock_nested(dir, &parent_node_bh, 1,
 					 OI_LS_PARENT);
-	अगर (status < 0) अणु
-		अगर (status != -ENOENT)
-			mlog_त्रुटि_सं(status);
-		वापस status;
-	पूर्ण
+	if (status < 0) {
+		if (status != -ENOENT)
+			mlog_errno(status);
+		return status;
+	}
 
 	status = ocfs2_find_files_on_disk(dentry->d_name.name,
 					  dentry->d_name.len, &blkno, dir,
 					  &lookup);
-	अगर (status < 0) अणु
-		अगर (status != -ENOENT)
-			mlog_त्रुटि_सं(status);
-		जाओ leave;
-	पूर्ण
+	if (status < 0) {
+		if (status != -ENOENT)
+			mlog_errno(status);
+		goto leave;
+	}
 
-	अगर (OCFS2_I(inode)->ip_blkno != blkno) अणु
+	if (OCFS2_I(inode)->ip_blkno != blkno) {
 		status = -ENOENT;
 
 		trace_ocfs2_unlink_noent(
-				(अचिन्हित दीर्घ दीर्घ)OCFS2_I(inode)->ip_blkno,
-				(अचिन्हित दीर्घ दीर्घ)blkno,
+				(unsigned long long)OCFS2_I(inode)->ip_blkno,
+				(unsigned long long)blkno,
 				OCFS2_I(inode)->ip_flags);
-		जाओ leave;
-	पूर्ण
+		goto leave;
+	}
 
 	status = ocfs2_inode_lock(inode, &fe_bh, 1);
-	अगर (status < 0) अणु
-		अगर (status != -ENOENT)
-			mlog_त्रुटि_सं(status);
-		जाओ leave;
-	पूर्ण
+	if (status < 0) {
+		if (status != -ENOENT)
+			mlog_errno(status);
+		goto leave;
+	}
 	child_locked = 1;
 
-	अगर (S_ISसूची(inode->i_mode)) अणु
-		अगर (inode->i_nlink != 2 || !ocfs2_empty_dir(inode)) अणु
+	if (S_ISDIR(inode->i_mode)) {
+		if (inode->i_nlink != 2 || !ocfs2_empty_dir(inode)) {
 			status = -ENOTEMPTY;
-			जाओ leave;
-		पूर्ण
-	पूर्ण
+			goto leave;
+		}
+	}
 
 	status = ocfs2_remote_dentry_delete(dentry);
-	अगर (status < 0) अणु
+	if (status < 0) {
 		/* This remote delete should succeed under all normal
 		 * circumstances. */
-		mlog_त्रुटि_सं(status);
-		जाओ leave;
-	पूर्ण
+		mlog_errno(status);
+		goto leave;
+	}
 
-	अगर (ocfs2_inode_is_unlinkable(inode)) अणु
+	if (ocfs2_inode_is_unlinkable(inode)) {
 		status = ocfs2_prepare_orphan_dir(osb, &orphan_dir,
 						  OCFS2_I(inode)->ip_blkno,
 						  orphan_name, &orphan_insert,
 						  false);
-		अगर (status < 0) अणु
-			mlog_त्रुटि_सं(status);
-			जाओ leave;
-		पूर्ण
+		if (status < 0) {
+			mlog_errno(status);
+			goto leave;
+		}
 		is_unlinkable = true;
-	पूर्ण
+	}
 
 	handle = ocfs2_start_trans(osb, ocfs2_unlink_credits(osb->sb));
-	अगर (IS_ERR(handle)) अणु
+	if (IS_ERR(handle)) {
 		status = PTR_ERR(handle);
-		handle = शून्य;
-		mlog_त्रुटि_सं(status);
-		जाओ leave;
-	पूर्ण
+		handle = NULL;
+		mlog_errno(status);
+		goto leave;
+	}
 
 	status = ocfs2_journal_access_di(handle, INODE_CACHE(inode), fe_bh,
 					 OCFS2_JOURNAL_ACCESS_WRITE);
-	अगर (status < 0) अणु
-		mlog_त्रुटि_सं(status);
-		जाओ leave;
-	पूर्ण
+	if (status < 0) {
+		mlog_errno(status);
+		goto leave;
+	}
 
-	fe = (काष्ठा ocfs2_dinode *) fe_bh->b_data;
+	fe = (struct ocfs2_dinode *) fe_bh->b_data;
 
 	/* delete the name from the parent dir */
 	status = ocfs2_delete_entry(handle, dir, &lookup);
-	अगर (status < 0) अणु
-		mlog_त्रुटि_सं(status);
-		जाओ leave;
-	पूर्ण
+	if (status < 0) {
+		mlog_errno(status);
+		goto leave;
+	}
 
-	अगर (S_ISसूची(inode->i_mode))
+	if (S_ISDIR(inode->i_mode))
 		drop_nlink(inode);
 	drop_nlink(inode);
 	ocfs2_set_links_count(fe, inode->i_nlink);
 	ocfs2_journal_dirty(handle, fe_bh);
 
-	dir->i_स_समय = dir->i_mसमय = current_समय(dir);
-	अगर (S_ISसूची(inode->i_mode))
+	dir->i_ctime = dir->i_mtime = current_time(dir);
+	if (S_ISDIR(inode->i_mode))
 		drop_nlink(dir);
 
 	status = ocfs2_mark_inode_dirty(handle, dir, parent_node_bh);
-	अगर (status < 0) अणु
-		mlog_त्रुटि_सं(status);
-		अगर (S_ISसूची(inode->i_mode))
+	if (status < 0) {
+		mlog_errno(status);
+		if (S_ISDIR(inode->i_mode))
 			inc_nlink(dir);
-		जाओ leave;
-	पूर्ण
+		goto leave;
+	}
 
-	अगर (is_unlinkable) अणु
+	if (is_unlinkable) {
 		status = ocfs2_orphan_add(osb, handle, inode, fe_bh,
 				orphan_name, &orphan_insert, orphan_dir, false);
-		अगर (status < 0)
-			mlog_त्रुटि_सं(status);
-	पूर्ण
+		if (status < 0)
+			mlog_errno(status);
+	}
 
 leave:
-	अगर (handle)
+	if (handle)
 		ocfs2_commit_trans(osb, handle);
 
-	अगर (orphan_dir) अणु
-		/* This was locked क्रम us in ocfs2_prepare_orphan_dir() */
+	if (orphan_dir) {
+		/* This was locked for us in ocfs2_prepare_orphan_dir() */
 		ocfs2_inode_unlock(orphan_dir, 1);
 		inode_unlock(orphan_dir);
 		iput(orphan_dir);
-	पूर्ण
+	}
 
-	अगर (child_locked)
+	if (child_locked)
 		ocfs2_inode_unlock(inode, 1);
 
 	ocfs2_inode_unlock(dir, 1);
 
-	brअन्यथा(fe_bh);
-	brअन्यथा(parent_node_bh);
+	brelse(fe_bh);
+	brelse(parent_node_bh);
 
-	ocfs2_मुक्त_dir_lookup_result(&orphan_insert);
-	ocfs2_मुक्त_dir_lookup_result(&lookup);
+	ocfs2_free_dir_lookup_result(&orphan_insert);
+	ocfs2_free_dir_lookup_result(&lookup);
 
-	अगर (status && (status != -ENOTEMPTY) && (status != -ENOENT))
-		mlog_त्रुटि_सं(status);
+	if (status && (status != -ENOTEMPTY) && (status != -ENOENT))
+		mlog_errno(status);
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल पूर्णांक ocfs2_check_अगर_ancestor(काष्ठा ocfs2_super *osb,
+static int ocfs2_check_if_ancestor(struct ocfs2_super *osb,
 		u64 src_inode_no, u64 dest_inode_no)
-अणु
-	पूर्णांक ret = 0, i = 0;
+{
+	int ret = 0, i = 0;
 	u64 parent_inode_no = 0;
 	u64 child_inode_no = src_inode_no;
-	काष्ठा inode *child_inode;
+	struct inode *child_inode;
 
-#घोषणा MAX_LOOKUP_TIMES 32
-	जबतक (1) अणु
+#define MAX_LOOKUP_TIMES 32
+	while (1) {
 		child_inode = ocfs2_iget(osb, child_inode_no, 0, 0);
-		अगर (IS_ERR(child_inode)) अणु
+		if (IS_ERR(child_inode)) {
 			ret = PTR_ERR(child_inode);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		ret = ocfs2_inode_lock(child_inode, शून्य, 0);
-		अगर (ret < 0) अणु
+		ret = ocfs2_inode_lock(child_inode, NULL, 0);
+		if (ret < 0) {
 			iput(child_inode);
-			अगर (ret != -ENOENT)
-				mlog_त्रुटि_सं(ret);
-			अवरोध;
-		पूर्ण
+			if (ret != -ENOENT)
+				mlog_errno(ret);
+			break;
+		}
 
 		ret = ocfs2_lookup_ino_from_name(child_inode, "..", 2,
 				&parent_inode_no);
 		ocfs2_inode_unlock(child_inode, 0);
 		iput(child_inode);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			ret = -ENOENT;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (parent_inode_no == dest_inode_no) अणु
+		if (parent_inode_no == dest_inode_no) {
 			ret = 1;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (parent_inode_no == osb->root_inode->i_ino) अणु
+		if (parent_inode_no == osb->root_inode->i_ino) {
 			ret = 0;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		child_inode_no = parent_inode_no;
 
-		अगर (++i >= MAX_LOOKUP_TIMES) अणु
+		if (++i >= MAX_LOOKUP_TIMES) {
 			mlog_ratelimited(ML_NOTICE, "max lookup times reached, "
 					"filesystem may have nested directories, "
 					"src inode: %llu, dest inode: %llu.\n",
-					(अचिन्हित दीर्घ दीर्घ)src_inode_no,
-					(अचिन्हित दीर्घ दीर्घ)dest_inode_no);
+					(unsigned long long)src_inode_no,
+					(unsigned long long)dest_inode_no);
 			ret = 0;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * The only place this should be used is नाम and link!
- * अगर they have the same id, then the 1st one is the only one locked.
+ * The only place this should be used is rename and link!
+ * if they have the same id, then the 1st one is the only one locked.
  */
-अटल पूर्णांक ocfs2_द्विगुन_lock(काष्ठा ocfs2_super *osb,
-			     काष्ठा buffer_head **bh1,
-			     काष्ठा inode *inode1,
-			     काष्ठा buffer_head **bh2,
-			     काष्ठा inode *inode2,
-			     पूर्णांक नाम)
-अणु
-	पूर्णांक status;
-	पूर्णांक inode1_is_ancestor, inode2_is_ancestor;
-	काष्ठा ocfs2_inode_info *oi1 = OCFS2_I(inode1);
-	काष्ठा ocfs2_inode_info *oi2 = OCFS2_I(inode2);
+static int ocfs2_double_lock(struct ocfs2_super *osb,
+			     struct buffer_head **bh1,
+			     struct inode *inode1,
+			     struct buffer_head **bh2,
+			     struct inode *inode2,
+			     int rename)
+{
+	int status;
+	int inode1_is_ancestor, inode2_is_ancestor;
+	struct ocfs2_inode_info *oi1 = OCFS2_I(inode1);
+	struct ocfs2_inode_info *oi2 = OCFS2_I(inode2);
 
-	trace_ocfs2_द्विगुन_lock((अचिन्हित दीर्घ दीर्घ)oi1->ip_blkno,
-				(अचिन्हित दीर्घ दीर्घ)oi2->ip_blkno);
+	trace_ocfs2_double_lock((unsigned long long)oi1->ip_blkno,
+				(unsigned long long)oi2->ip_blkno);
 
-	अगर (*bh1)
-		*bh1 = शून्य;
-	अगर (*bh2)
-		*bh2 = शून्य;
+	if (*bh1)
+		*bh1 = NULL;
+	if (*bh2)
+		*bh2 = NULL;
 
 	/* we always want to lock the one with the lower lockid first.
-	 * and अगर they are nested, we lock ancestor first */
-	अगर (oi1->ip_blkno != oi2->ip_blkno) अणु
-		inode1_is_ancestor = ocfs2_check_अगर_ancestor(osb, oi2->ip_blkno,
+	 * and if they are nested, we lock ancestor first */
+	if (oi1->ip_blkno != oi2->ip_blkno) {
+		inode1_is_ancestor = ocfs2_check_if_ancestor(osb, oi2->ip_blkno,
 				oi1->ip_blkno);
-		अगर (inode1_is_ancestor < 0) अणु
+		if (inode1_is_ancestor < 0) {
 			status = inode1_is_ancestor;
-			जाओ bail;
-		पूर्ण
+			goto bail;
+		}
 
-		inode2_is_ancestor = ocfs2_check_अगर_ancestor(osb, oi1->ip_blkno,
+		inode2_is_ancestor = ocfs2_check_if_ancestor(osb, oi1->ip_blkno,
 				oi2->ip_blkno);
-		अगर (inode2_is_ancestor < 0) अणु
+		if (inode2_is_ancestor < 0) {
 			status = inode2_is_ancestor;
-			जाओ bail;
-		पूर्ण
+			goto bail;
+		}
 
-		अगर ((inode1_is_ancestor == 1) ||
+		if ((inode1_is_ancestor == 1) ||
 				(oi1->ip_blkno < oi2->ip_blkno &&
-				inode2_is_ancestor == 0)) अणु
-			/* चयन id1 and id2 around */
+				inode2_is_ancestor == 0)) {
+			/* switch id1 and id2 around */
 			swap(bh2, bh1);
 			swap(inode2, inode1);
-		पूर्ण
+		}
 		/* lock id2 */
 		status = ocfs2_inode_lock_nested(inode2, bh2, 1,
-				नाम == 1 ? OI_LS_RENAME1 : OI_LS_PARENT);
-		अगर (status < 0) अणु
-			अगर (status != -ENOENT)
-				mlog_त्रुटि_सं(status);
-			जाओ bail;
-		पूर्ण
-	पूर्ण
+				rename == 1 ? OI_LS_RENAME1 : OI_LS_PARENT);
+		if (status < 0) {
+			if (status != -ENOENT)
+				mlog_errno(status);
+			goto bail;
+		}
+	}
 
 	/* lock id1 */
 	status = ocfs2_inode_lock_nested(inode1, bh1, 1,
-			नाम == 1 ?  OI_LS_RENAME2 : OI_LS_PARENT);
-	अगर (status < 0) अणु
+			rename == 1 ?  OI_LS_RENAME2 : OI_LS_PARENT);
+	if (status < 0) {
 		/*
-		 * An error वापस must mean that no cluster locks
-		 * were held on function निकास.
+		 * An error return must mean that no cluster locks
+		 * were held on function exit.
 		 */
-		अगर (oi1->ip_blkno != oi2->ip_blkno) अणु
+		if (oi1->ip_blkno != oi2->ip_blkno) {
 			ocfs2_inode_unlock(inode2, 1);
-			brअन्यथा(*bh2);
-			*bh2 = शून्य;
-		पूर्ण
+			brelse(*bh2);
+			*bh2 = NULL;
+		}
 
-		अगर (status != -ENOENT)
-			mlog_त्रुटि_सं(status);
-	पूर्ण
+		if (status != -ENOENT)
+			mlog_errno(status);
+	}
 
-	trace_ocfs2_द्विगुन_lock_end(
-			(अचिन्हित दीर्घ दीर्घ)oi1->ip_blkno,
-			(अचिन्हित दीर्घ दीर्घ)oi2->ip_blkno);
+	trace_ocfs2_double_lock_end(
+			(unsigned long long)oi1->ip_blkno,
+			(unsigned long long)oi2->ip_blkno);
 
 bail:
-	अगर (status)
-		mlog_त्रुटि_सं(status);
-	वापस status;
-पूर्ण
+	if (status)
+		mlog_errno(status);
+	return status;
+}
 
-अटल व्योम ocfs2_द्विगुन_unlock(काष्ठा inode *inode1, काष्ठा inode *inode2)
-अणु
+static void ocfs2_double_unlock(struct inode *inode1, struct inode *inode2)
+{
 	ocfs2_inode_unlock(inode1, 1);
 
-	अगर (inode1 != inode2)
+	if (inode1 != inode2)
 		ocfs2_inode_unlock(inode2, 1);
-पूर्ण
+}
 
-अटल पूर्णांक ocfs2_नाम(काष्ठा user_namespace *mnt_userns,
-			काष्ठा inode *old_dir,
-			काष्ठा dentry *old_dentry,
-			काष्ठा inode *new_dir,
-			काष्ठा dentry *new_dentry,
-			अचिन्हित पूर्णांक flags)
-अणु
-	पूर्णांक status = 0, नाम_lock = 0, parents_locked = 0, target_exists = 0;
-	पूर्णांक old_child_locked = 0, new_child_locked = 0, update_करोt_करोt = 0;
-	काष्ठा inode *old_inode = d_inode(old_dentry);
-	काष्ठा inode *new_inode = d_inode(new_dentry);
-	काष्ठा inode *orphan_dir = शून्य;
-	काष्ठा ocfs2_dinode *newfe = शून्य;
-	अक्षर orphan_name[OCFS2_ORPHAN_NAMELEN + 1];
-	काष्ठा buffer_head *newfe_bh = शून्य;
-	काष्ठा buffer_head *old_inode_bh = शून्य;
-	काष्ठा ocfs2_super *osb = शून्य;
+static int ocfs2_rename(struct user_namespace *mnt_userns,
+			struct inode *old_dir,
+			struct dentry *old_dentry,
+			struct inode *new_dir,
+			struct dentry *new_dentry,
+			unsigned int flags)
+{
+	int status = 0, rename_lock = 0, parents_locked = 0, target_exists = 0;
+	int old_child_locked = 0, new_child_locked = 0, update_dot_dot = 0;
+	struct inode *old_inode = d_inode(old_dentry);
+	struct inode *new_inode = d_inode(new_dentry);
+	struct inode *orphan_dir = NULL;
+	struct ocfs2_dinode *newfe = NULL;
+	char orphan_name[OCFS2_ORPHAN_NAMELEN + 1];
+	struct buffer_head *newfe_bh = NULL;
+	struct buffer_head *old_inode_bh = NULL;
+	struct ocfs2_super *osb = NULL;
 	u64 newfe_blkno, old_de_ino;
-	handle_t *handle = शून्य;
-	काष्ठा buffer_head *old_dir_bh = शून्य;
-	काष्ठा buffer_head *new_dir_bh = शून्य;
+	handle_t *handle = NULL;
+	struct buffer_head *old_dir_bh = NULL;
+	struct buffer_head *new_dir_bh = NULL;
 	u32 old_dir_nlink = old_dir->i_nlink;
-	काष्ठा ocfs2_dinode *old_di;
-	काष्ठा ocfs2_dir_lookup_result old_inode_करोt_करोt_res = अणु शून्य, पूर्ण;
-	काष्ठा ocfs2_dir_lookup_result target_lookup_res = अणु शून्य, पूर्ण;
-	काष्ठा ocfs2_dir_lookup_result old_entry_lookup = अणु शून्य, पूर्ण;
-	काष्ठा ocfs2_dir_lookup_result orphan_insert = अणु शून्य, पूर्ण;
-	काष्ठा ocfs2_dir_lookup_result target_insert = अणु शून्य, पूर्ण;
+	struct ocfs2_dinode *old_di;
+	struct ocfs2_dir_lookup_result old_inode_dot_dot_res = { NULL, };
+	struct ocfs2_dir_lookup_result target_lookup_res = { NULL, };
+	struct ocfs2_dir_lookup_result old_entry_lookup = { NULL, };
+	struct ocfs2_dir_lookup_result orphan_insert = { NULL, };
+	struct ocfs2_dir_lookup_result target_insert = { NULL, };
 	bool should_add_orphan = false;
 
-	अगर (flags)
-		वापस -EINVAL;
+	if (flags)
+		return -EINVAL;
 
-	/* At some poपूर्णांक it might be nice to अवरोध this function up a
+	/* At some point it might be nice to break this function up a
 	 * bit. */
 
-	trace_ocfs2_नाम(old_dir, old_dentry, new_dir, new_dentry,
+	trace_ocfs2_rename(old_dir, old_dentry, new_dir, new_dentry,
 			   old_dentry->d_name.len, old_dentry->d_name.name,
 			   new_dentry->d_name.len, new_dentry->d_name.name);
 
 	status = dquot_initialize(old_dir);
-	अगर (status) अणु
-		mlog_त्रुटि_सं(status);
-		जाओ bail;
-	पूर्ण
+	if (status) {
+		mlog_errno(status);
+		goto bail;
+	}
 	status = dquot_initialize(new_dir);
-	अगर (status) अणु
-		mlog_त्रुटि_सं(status);
-		जाओ bail;
-	पूर्ण
+	if (status) {
+		mlog_errno(status);
+		goto bail;
+	}
 
 	osb = OCFS2_SB(old_dir->i_sb);
 
-	अगर (new_inode) अणु
-		अगर (!igrab(new_inode))
+	if (new_inode) {
+		if (!igrab(new_inode))
 			BUG();
-	पूर्ण
+	}
 
 	/* Assume a directory hierarchy thusly:
 	 * a/b/c
@@ -1265,124 +1264,124 @@ bail:
 	 * node1: mv b/c d
 	 * node2: mv d   b/c
 	 *
-	 * And that's why, just like the VFS, we need a file प्रणाली
-	 * नाम lock. */
-	अगर (old_dir != new_dir && S_ISसूची(old_inode->i_mode)) अणु
-		status = ocfs2_नाम_lock(osb);
-		अगर (status < 0) अणु
-			mlog_त्रुटि_सं(status);
-			जाओ bail;
-		पूर्ण
-		नाम_lock = 1;
+	 * And that's why, just like the VFS, we need a file system
+	 * rename lock. */
+	if (old_dir != new_dir && S_ISDIR(old_inode->i_mode)) {
+		status = ocfs2_rename_lock(osb);
+		if (status < 0) {
+			mlog_errno(status);
+			goto bail;
+		}
+		rename_lock = 1;
 
 		/* here we cannot guarantee the inodes haven't just been
-		 * changed, so check अगर they are nested again */
-		status = ocfs2_check_अगर_ancestor(osb, new_dir->i_ino,
+		 * changed, so check if they are nested again */
+		status = ocfs2_check_if_ancestor(osb, new_dir->i_ino,
 				old_inode->i_ino);
-		अगर (status < 0) अणु
-			mlog_त्रुटि_सं(status);
-			जाओ bail;
-		पूर्ण अन्यथा अगर (status == 1) अणु
+		if (status < 0) {
+			mlog_errno(status);
+			goto bail;
+		} else if (status == 1) {
 			status = -EPERM;
-			trace_ocfs2_नाम_not_permitted(
-					(अचिन्हित दीर्घ दीर्घ)old_inode->i_ino,
-					(अचिन्हित दीर्घ दीर्घ)new_dir->i_ino);
-			जाओ bail;
-		पूर्ण
-	पूर्ण
+			trace_ocfs2_rename_not_permitted(
+					(unsigned long long)old_inode->i_ino,
+					(unsigned long long)new_dir->i_ino);
+			goto bail;
+		}
+	}
 
-	/* अगर old and new are the same, this'll just करो one lock. */
-	status = ocfs2_द्विगुन_lock(osb, &old_dir_bh, old_dir,
+	/* if old and new are the same, this'll just do one lock. */
+	status = ocfs2_double_lock(osb, &old_dir_bh, old_dir,
 				   &new_dir_bh, new_dir, 1);
-	अगर (status < 0) अणु
-		mlog_त्रुटि_सं(status);
-		जाओ bail;
-	पूर्ण
+	if (status < 0) {
+		mlog_errno(status);
+		goto bail;
+	}
 	parents_locked = 1;
 
-	अगर (!new_dir->i_nlink) अणु
+	if (!new_dir->i_nlink) {
 		status = -EACCES;
-		जाओ bail;
-	पूर्ण
+		goto bail;
+	}
 
 	/* make sure both dirs have bhs
-	 * get an extra ref on old_dir_bh अगर old==new */
-	अगर (!new_dir_bh) अणु
-		अगर (old_dir_bh) अणु
+	 * get an extra ref on old_dir_bh if old==new */
+	if (!new_dir_bh) {
+		if (old_dir_bh) {
 			new_dir_bh = old_dir_bh;
 			get_bh(new_dir_bh);
-		पूर्ण अन्यथा अणु
+		} else {
 			mlog(ML_ERROR, "no old_dir_bh!\n");
 			status = -EIO;
-			जाओ bail;
-		पूर्ण
-	पूर्ण
+			goto bail;
+		}
+	}
 
 	/*
 	 * Aside from allowing a meta data update, the locking here
-	 * also ensures that the करोwnconvert thपढ़ो on other nodes
-	 * won't have to concurrently करोwnconvert the inode and the
+	 * also ensures that the downconvert thread on other nodes
+	 * won't have to concurrently downconvert the inode and the
 	 * dentry locks.
 	 */
 	status = ocfs2_inode_lock_nested(old_inode, &old_inode_bh, 1,
 					 OI_LS_PARENT);
-	अगर (status < 0) अणु
-		अगर (status != -ENOENT)
-			mlog_त्रुटि_सं(status);
-		जाओ bail;
-	पूर्ण
+	if (status < 0) {
+		if (status != -ENOENT)
+			mlog_errno(status);
+		goto bail;
+	}
 	old_child_locked = 1;
 
 	status = ocfs2_remote_dentry_delete(old_dentry);
-	अगर (status < 0) अणु
-		mlog_त्रुटि_सं(status);
-		जाओ bail;
-	पूर्ण
+	if (status < 0) {
+		mlog_errno(status);
+		goto bail;
+	}
 
-	अगर (S_ISसूची(old_inode->i_mode)) अणु
+	if (S_ISDIR(old_inode->i_mode)) {
 		u64 old_inode_parent;
 
-		update_करोt_करोt = 1;
+		update_dot_dot = 1;
 		status = ocfs2_find_files_on_disk("..", 2, &old_inode_parent,
 						  old_inode,
-						  &old_inode_करोt_करोt_res);
-		अगर (status) अणु
+						  &old_inode_dot_dot_res);
+		if (status) {
 			status = -EIO;
-			जाओ bail;
-		पूर्ण
+			goto bail;
+		}
 
-		अगर (old_inode_parent != OCFS2_I(old_dir)->ip_blkno) अणु
+		if (old_inode_parent != OCFS2_I(old_dir)->ip_blkno) {
 			status = -EIO;
-			जाओ bail;
-		पूर्ण
+			goto bail;
+		}
 
-		अगर (!new_inode && new_dir != old_dir &&
-		    new_dir->i_nlink >= ocfs2_link_max(osb)) अणु
+		if (!new_inode && new_dir != old_dir &&
+		    new_dir->i_nlink >= ocfs2_link_max(osb)) {
 			status = -EMLINK;
-			जाओ bail;
-		पूर्ण
-	पूर्ण
+			goto bail;
+		}
+	}
 
 	status = ocfs2_lookup_ino_from_name(old_dir, old_dentry->d_name.name,
 					    old_dentry->d_name.len,
 					    &old_de_ino);
-	अगर (status) अणु
+	if (status) {
 		status = -ENOENT;
-		जाओ bail;
-	पूर्ण
+		goto bail;
+	}
 
 	/*
-	 *  Check क्रम inode number is _not_ due to possible IO errors.
-	 *  We might सूची_हटाओ the source, keep it as pwd of some process
-	 *  and merrily समाप्त the link to whatever was created under the
+	 *  Check for inode number is _not_ due to possible IO errors.
+	 *  We might rmdir the source, keep it as pwd of some process
+	 *  and merrily kill the link to whatever was created under the
 	 *  same name. Goodbye sticky bit ;-<
 	 */
-	अगर (old_de_ino != OCFS2_I(old_inode)->ip_blkno) अणु
+	if (old_de_ino != OCFS2_I(old_inode)->ip_blkno) {
 		status = -ENOENT;
-		जाओ bail;
-	पूर्ण
+		goto bail;
+	}
 
-	/* check अगर the target alपढ़ोy exists (in which हाल we need
+	/* check if the target already exists (in which case we need
 	 * to delete it */
 	status = ocfs2_find_files_on_disk(new_dentry->d_name.name,
 					  new_dentry->d_name.len,
@@ -1390,788 +1389,788 @@ bail:
 					  &target_lookup_res);
 	/* The only error we allow here is -ENOENT because the new
 	 * file not existing is perfectly valid. */
-	अगर ((status < 0) && (status != -ENOENT)) अणु
-		/* If we cannot find the file specअगरied we should just */
-		/* वापस the error... */
-		mlog_त्रुटि_सं(status);
-		जाओ bail;
-	पूर्ण
-	अगर (status == 0)
+	if ((status < 0) && (status != -ENOENT)) {
+		/* If we cannot find the file specified we should just */
+		/* return the error... */
+		mlog_errno(status);
+		goto bail;
+	}
+	if (status == 0)
 		target_exists = 1;
 
-	अगर (!target_exists && new_inode) अणु
+	if (!target_exists && new_inode) {
 		/*
-		 * Target was unlinked by another node जबतक we were
-		 * रुकोing to get to ocfs2_नाम(). There isn't
-		 * anything we can करो here to help the situation, so
+		 * Target was unlinked by another node while we were
+		 * waiting to get to ocfs2_rename(). There isn't
+		 * anything we can do here to help the situation, so
 		 * bubble up the appropriate error.
 		 */
 		status = -ENOENT;
-		जाओ bail;
-	पूर्ण
+		goto bail;
+	}
 
-	/* In हाल we need to overग_लिखो an existing file, we blow it
+	/* In case we need to overwrite an existing file, we blow it
 	 * away first */
-	अगर (target_exists) अणु
+	if (target_exists) {
 		/* VFS didn't think there existed an inode here, but
-		 * someone अन्यथा in the cluster must have raced our
-		 * नाम to create one. Today we error cleanly, in
+		 * someone else in the cluster must have raced our
+		 * rename to create one. Today we error cleanly, in
 		 * the future we should consider calling iget to build
-		 * a new काष्ठा inode क्रम this entry. */
-		अगर (!new_inode) अणु
+		 * a new struct inode for this entry. */
+		if (!new_inode) {
 			status = -EACCES;
 
-			trace_ocfs2_नाम_target_exists(new_dentry->d_name.len,
+			trace_ocfs2_rename_target_exists(new_dentry->d_name.len,
 						new_dentry->d_name.name);
-			जाओ bail;
-		पूर्ण
+			goto bail;
+		}
 
-		अगर (OCFS2_I(new_inode)->ip_blkno != newfe_blkno) अणु
+		if (OCFS2_I(new_inode)->ip_blkno != newfe_blkno) {
 			status = -EACCES;
 
-			trace_ocfs2_नाम_disagree(
-			     (अचिन्हित दीर्घ दीर्घ)OCFS2_I(new_inode)->ip_blkno,
-			     (अचिन्हित दीर्घ दीर्घ)newfe_blkno,
+			trace_ocfs2_rename_disagree(
+			     (unsigned long long)OCFS2_I(new_inode)->ip_blkno,
+			     (unsigned long long)newfe_blkno,
 			     OCFS2_I(new_inode)->ip_flags);
-			जाओ bail;
-		पूर्ण
+			goto bail;
+		}
 
 		status = ocfs2_inode_lock(new_inode, &newfe_bh, 1);
-		अगर (status < 0) अणु
-			अगर (status != -ENOENT)
-				mlog_त्रुटि_सं(status);
-			जाओ bail;
-		पूर्ण
+		if (status < 0) {
+			if (status != -ENOENT)
+				mlog_errno(status);
+			goto bail;
+		}
 		new_child_locked = 1;
 
 		status = ocfs2_remote_dentry_delete(new_dentry);
-		अगर (status < 0) अणु
-			mlog_त्रुटि_सं(status);
-			जाओ bail;
-		पूर्ण
+		if (status < 0) {
+			mlog_errno(status);
+			goto bail;
+		}
 
-		newfe = (काष्ठा ocfs2_dinode *) newfe_bh->b_data;
+		newfe = (struct ocfs2_dinode *) newfe_bh->b_data;
 
-		trace_ocfs2_नाम_over_existing(
-		     (अचिन्हित दीर्घ दीर्घ)newfe_blkno, newfe_bh, newfe_bh ?
-		     (अचिन्हित दीर्घ दीर्घ)newfe_bh->b_blocknr : 0ULL);
+		trace_ocfs2_rename_over_existing(
+		     (unsigned long long)newfe_blkno, newfe_bh, newfe_bh ?
+		     (unsigned long long)newfe_bh->b_blocknr : 0ULL);
 
-		अगर (S_ISसूची(new_inode->i_mode) || (new_inode->i_nlink == 1)) अणु
+		if (S_ISDIR(new_inode->i_mode) || (new_inode->i_nlink == 1)) {
 			status = ocfs2_prepare_orphan_dir(osb, &orphan_dir,
 						OCFS2_I(new_inode)->ip_blkno,
 						orphan_name, &orphan_insert,
 						false);
-			अगर (status < 0) अणु
-				mlog_त्रुटि_सं(status);
-				जाओ bail;
-			पूर्ण
+			if (status < 0) {
+				mlog_errno(status);
+				goto bail;
+			}
 			should_add_orphan = true;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		BUG_ON(d_inode(new_dentry->d_parent) != new_dir);
 
-		status = ocfs2_check_dir_क्रम_entry(new_dir,
+		status = ocfs2_check_dir_for_entry(new_dir,
 						   new_dentry->d_name.name,
 						   new_dentry->d_name.len);
-		अगर (status)
-			जाओ bail;
+		if (status)
+			goto bail;
 
-		status = ocfs2_prepare_dir_क्रम_insert(osb, new_dir, new_dir_bh,
+		status = ocfs2_prepare_dir_for_insert(osb, new_dir, new_dir_bh,
 						      new_dentry->d_name.name,
 						      new_dentry->d_name.len,
 						      &target_insert);
-		अगर (status < 0) अणु
-			mlog_त्रुटि_सं(status);
-			जाओ bail;
-		पूर्ण
-	पूर्ण
+		if (status < 0) {
+			mlog_errno(status);
+			goto bail;
+		}
+	}
 
-	handle = ocfs2_start_trans(osb, ocfs2_नाम_credits(osb->sb));
-	अगर (IS_ERR(handle)) अणु
+	handle = ocfs2_start_trans(osb, ocfs2_rename_credits(osb->sb));
+	if (IS_ERR(handle)) {
 		status = PTR_ERR(handle);
-		handle = शून्य;
-		mlog_त्रुटि_सं(status);
-		जाओ bail;
-	पूर्ण
+		handle = NULL;
+		mlog_errno(status);
+		goto bail;
+	}
 
-	अगर (target_exists) अणु
-		अगर (S_ISसूची(new_inode->i_mode)) अणु
-			अगर (new_inode->i_nlink != 2 ||
-			    !ocfs2_empty_dir(new_inode)) अणु
+	if (target_exists) {
+		if (S_ISDIR(new_inode->i_mode)) {
+			if (new_inode->i_nlink != 2 ||
+			    !ocfs2_empty_dir(new_inode)) {
 				status = -ENOTEMPTY;
-				जाओ bail;
-			पूर्ण
-		पूर्ण
+				goto bail;
+			}
+		}
 		status = ocfs2_journal_access_di(handle, INODE_CACHE(new_inode),
 						 newfe_bh,
 						 OCFS2_JOURNAL_ACCESS_WRITE);
-		अगर (status < 0) अणु
-			mlog_त्रुटि_सं(status);
-			जाओ bail;
-		पूर्ण
+		if (status < 0) {
+			mlog_errno(status);
+			goto bail;
+		}
 
-		/* change the dirent to poपूर्णांक to the correct inode */
+		/* change the dirent to point to the correct inode */
 		status = ocfs2_update_entry(new_dir, handle, &target_lookup_res,
 					    old_inode);
-		अगर (status < 0) अणु
-			mlog_त्रुटि_सं(status);
-			जाओ bail;
-		पूर्ण
+		if (status < 0) {
+			mlog_errno(status);
+			goto bail;
+		}
 		inode_inc_iversion(new_dir);
 
-		अगर (S_ISसूची(new_inode->i_mode))
+		if (S_ISDIR(new_inode->i_mode))
 			ocfs2_set_links_count(newfe, 0);
-		अन्यथा
+		else
 			ocfs2_add_links_count(newfe, -1);
 		ocfs2_journal_dirty(handle, newfe_bh);
-		अगर (should_add_orphan) अणु
+		if (should_add_orphan) {
 			status = ocfs2_orphan_add(osb, handle, new_inode,
 					newfe_bh, orphan_name,
 					&orphan_insert, orphan_dir, false);
-			अगर (status < 0) अणु
-				mlog_त्रुटि_सं(status);
-				जाओ bail;
-			पूर्ण
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		/* अगर the name was not found in new_dir, add it now */
+			if (status < 0) {
+				mlog_errno(status);
+				goto bail;
+			}
+		}
+	} else {
+		/* if the name was not found in new_dir, add it now */
 		status = ocfs2_add_entry(handle, new_dentry, old_inode,
 					 OCFS2_I(old_inode)->ip_blkno,
 					 new_dir_bh, &target_insert);
-	पूर्ण
+	}
 
-	old_inode->i_स_समय = current_समय(old_inode);
+	old_inode->i_ctime = current_time(old_inode);
 	mark_inode_dirty(old_inode);
 
 	status = ocfs2_journal_access_di(handle, INODE_CACHE(old_inode),
 					 old_inode_bh,
 					 OCFS2_JOURNAL_ACCESS_WRITE);
-	अगर (status >= 0) अणु
-		old_di = (काष्ठा ocfs2_dinode *) old_inode_bh->b_data;
+	if (status >= 0) {
+		old_di = (struct ocfs2_dinode *) old_inode_bh->b_data;
 
-		old_di->i_स_समय = cpu_to_le64(old_inode->i_स_समय.tv_sec);
-		old_di->i_स_समय_nsec = cpu_to_le32(old_inode->i_स_समय.tv_nsec);
+		old_di->i_ctime = cpu_to_le64(old_inode->i_ctime.tv_sec);
+		old_di->i_ctime_nsec = cpu_to_le32(old_inode->i_ctime.tv_nsec);
 		ocfs2_journal_dirty(handle, old_inode_bh);
-	पूर्ण अन्यथा
-		mlog_त्रुटि_सं(status);
+	} else
+		mlog_errno(status);
 
 	/*
-	 * Now that the name has been added to new_dir, हटाओ the old name.
+	 * Now that the name has been added to new_dir, remove the old name.
 	 *
-	 * We करोn't keep any directory entry context around until now
+	 * We don't keep any directory entry context around until now
 	 * because the insert might have changed the type of directory
 	 * we're dealing with.
 	 */
 	status = ocfs2_find_entry(old_dentry->d_name.name,
 				  old_dentry->d_name.len, old_dir,
 				  &old_entry_lookup);
-	अगर (status) अणु
-		अगर (!is_journal_पातed(osb->journal->j_journal)) अणु
+	if (status) {
+		if (!is_journal_aborted(osb->journal->j_journal)) {
 			ocfs2_error(osb->sb, "new entry %.*s is added, but old entry %.*s "
 					"is not deleted.",
 					new_dentry->d_name.len, new_dentry->d_name.name,
 					old_dentry->d_name.len, old_dentry->d_name.name);
-		पूर्ण
-		जाओ bail;
-	पूर्ण
+		}
+		goto bail;
+	}
 
 	status = ocfs2_delete_entry(handle, old_dir, &old_entry_lookup);
-	अगर (status < 0) अणु
-		mlog_त्रुटि_सं(status);
-		अगर (!is_journal_पातed(osb->journal->j_journal)) अणु
+	if (status < 0) {
+		mlog_errno(status);
+		if (!is_journal_aborted(osb->journal->j_journal)) {
 			ocfs2_error(osb->sb, "new entry %.*s is added, but old entry %.*s "
 					"is not deleted.",
 					new_dentry->d_name.len, new_dentry->d_name.name,
 					old_dentry->d_name.len, old_dentry->d_name.name);
-		पूर्ण
-		जाओ bail;
-	पूर्ण
+		}
+		goto bail;
+	}
 
-	अगर (new_inode) अणु
+	if (new_inode) {
 		drop_nlink(new_inode);
-		new_inode->i_स_समय = current_समय(new_inode);
-	पूर्ण
-	old_dir->i_स_समय = old_dir->i_mसमय = current_समय(old_dir);
+		new_inode->i_ctime = current_time(new_inode);
+	}
+	old_dir->i_ctime = old_dir->i_mtime = current_time(old_dir);
 
-	अगर (update_करोt_करोt) अणु
+	if (update_dot_dot) {
 		status = ocfs2_update_entry(old_inode, handle,
-					    &old_inode_करोt_करोt_res, new_dir);
+					    &old_inode_dot_dot_res, new_dir);
 		drop_nlink(old_dir);
-		अगर (new_inode) अणु
+		if (new_inode) {
 			drop_nlink(new_inode);
-		पूर्ण अन्यथा अणु
+		} else {
 			inc_nlink(new_dir);
 			mark_inode_dirty(new_dir);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	mark_inode_dirty(old_dir);
 	ocfs2_mark_inode_dirty(handle, old_dir, old_dir_bh);
-	अगर (new_inode) अणु
+	if (new_inode) {
 		mark_inode_dirty(new_inode);
 		ocfs2_mark_inode_dirty(handle, new_inode, newfe_bh);
-	पूर्ण
+	}
 
-	अगर (old_dir != new_dir) अणु
-		/* Keep the same बार on both directories.*/
-		new_dir->i_स_समय = new_dir->i_mसमय = old_dir->i_स_समय;
+	if (old_dir != new_dir) {
+		/* Keep the same times on both directories.*/
+		new_dir->i_ctime = new_dir->i_mtime = old_dir->i_ctime;
 
 		/*
 		 * This will also pick up the i_nlink change from the
 		 * block above.
 		 */
 		ocfs2_mark_inode_dirty(handle, new_dir, new_dir_bh);
-	पूर्ण
+	}
 
-	अगर (old_dir_nlink != old_dir->i_nlink) अणु
-		अगर (!old_dir_bh) अणु
+	if (old_dir_nlink != old_dir->i_nlink) {
+		if (!old_dir_bh) {
 			mlog(ML_ERROR, "need to change nlink for old dir "
 			     "%llu from %d to %d but bh is NULL!\n",
-			     (अचिन्हित दीर्घ दीर्घ)OCFS2_I(old_dir)->ip_blkno,
-			     (पूर्णांक)old_dir_nlink, old_dir->i_nlink);
-		पूर्ण अन्यथा अणु
-			काष्ठा ocfs2_dinode *fe;
+			     (unsigned long long)OCFS2_I(old_dir)->ip_blkno,
+			     (int)old_dir_nlink, old_dir->i_nlink);
+		} else {
+			struct ocfs2_dinode *fe;
 			status = ocfs2_journal_access_di(handle,
 							 INODE_CACHE(old_dir),
 							 old_dir_bh,
 							 OCFS2_JOURNAL_ACCESS_WRITE);
-			fe = (काष्ठा ocfs2_dinode *) old_dir_bh->b_data;
+			fe = (struct ocfs2_dinode *) old_dir_bh->b_data;
 			ocfs2_set_links_count(fe, old_dir->i_nlink);
 			ocfs2_journal_dirty(handle, old_dir_bh);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	ocfs2_dentry_move(old_dentry, new_dentry, old_dir, new_dir);
 	status = 0;
 bail:
-	अगर (handle)
+	if (handle)
 		ocfs2_commit_trans(osb, handle);
 
-	अगर (orphan_dir) अणु
-		/* This was locked क्रम us in ocfs2_prepare_orphan_dir() */
+	if (orphan_dir) {
+		/* This was locked for us in ocfs2_prepare_orphan_dir() */
 		ocfs2_inode_unlock(orphan_dir, 1);
 		inode_unlock(orphan_dir);
 		iput(orphan_dir);
-	पूर्ण
+	}
 
-	अगर (new_child_locked)
+	if (new_child_locked)
 		ocfs2_inode_unlock(new_inode, 1);
 
-	अगर (old_child_locked)
+	if (old_child_locked)
 		ocfs2_inode_unlock(old_inode, 1);
 
-	अगर (parents_locked)
-		ocfs2_द्विगुन_unlock(old_dir, new_dir);
+	if (parents_locked)
+		ocfs2_double_unlock(old_dir, new_dir);
 
-	अगर (नाम_lock)
-		ocfs2_नाम_unlock(osb);
+	if (rename_lock)
+		ocfs2_rename_unlock(osb);
 
-	अगर (new_inode)
+	if (new_inode)
 		sync_mapping_buffers(old_inode->i_mapping);
 
 	iput(new_inode);
 
-	ocfs2_मुक्त_dir_lookup_result(&target_lookup_res);
-	ocfs2_मुक्त_dir_lookup_result(&old_entry_lookup);
-	ocfs2_मुक्त_dir_lookup_result(&old_inode_करोt_करोt_res);
-	ocfs2_मुक्त_dir_lookup_result(&orphan_insert);
-	ocfs2_मुक्त_dir_lookup_result(&target_insert);
+	ocfs2_free_dir_lookup_result(&target_lookup_res);
+	ocfs2_free_dir_lookup_result(&old_entry_lookup);
+	ocfs2_free_dir_lookup_result(&old_inode_dot_dot_res);
+	ocfs2_free_dir_lookup_result(&orphan_insert);
+	ocfs2_free_dir_lookup_result(&target_insert);
 
-	brअन्यथा(newfe_bh);
-	brअन्यथा(old_inode_bh);
-	brअन्यथा(old_dir_bh);
-	brअन्यथा(new_dir_bh);
+	brelse(newfe_bh);
+	brelse(old_inode_bh);
+	brelse(old_dir_bh);
+	brelse(new_dir_bh);
 
-	अगर (status)
-		mlog_त्रुटि_सं(status);
+	if (status)
+		mlog_errno(status);
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /*
- * we expect i_size = म_माप(symname). Copy symname पूर्णांकo the file
+ * we expect i_size = strlen(symname). Copy symname into the file
  * data, including the null terminator.
  */
-अटल पूर्णांक ocfs2_create_symlink_data(काष्ठा ocfs2_super *osb,
+static int ocfs2_create_symlink_data(struct ocfs2_super *osb,
 				     handle_t *handle,
-				     काष्ठा inode *inode,
-				     स्थिर अक्षर *symname)
-अणु
-	काष्ठा buffer_head **bhs = शून्य;
-	स्थिर अक्षर *c;
-	काष्ठा super_block *sb = osb->sb;
+				     struct inode *inode,
+				     const char *symname)
+{
+	struct buffer_head **bhs = NULL;
+	const char *c;
+	struct super_block *sb = osb->sb;
 	u64 p_blkno, p_blocks;
-	पूर्णांक भव, blocks, status, i, bytes_left;
+	int virtual, blocks, status, i, bytes_left;
 
-	bytes_left = i_size_पढ़ो(inode) + 1;
+	bytes_left = i_size_read(inode) + 1;
 	/* we can't trust i_blocks because we're actually going to
-	 * ग_लिखो i_size + 1 bytes. */
+	 * write i_size + 1 bytes. */
 	blocks = (bytes_left + sb->s_blocksize - 1) >> sb->s_blocksize_bits;
 
-	trace_ocfs2_create_symlink_data((अचिन्हित दीर्घ दीर्घ)inode->i_blocks,
-					i_size_पढ़ो(inode), blocks);
+	trace_ocfs2_create_symlink_data((unsigned long long)inode->i_blocks,
+					i_size_read(inode), blocks);
 
 	/* Sanity check -- make sure we're going to fit. */
-	अगर (bytes_left >
-	    ocfs2_clusters_to_bytes(sb, OCFS2_I(inode)->ip_clusters)) अणु
+	if (bytes_left >
+	    ocfs2_clusters_to_bytes(sb, OCFS2_I(inode)->ip_clusters)) {
 		status = -EIO;
-		mlog_त्रुटि_सं(status);
-		जाओ bail;
-	पूर्ण
+		mlog_errno(status);
+		goto bail;
+	}
 
-	bhs = kसुस्मृति(blocks, माप(काष्ठा buffer_head *), GFP_KERNEL);
-	अगर (!bhs) अणु
+	bhs = kcalloc(blocks, sizeof(struct buffer_head *), GFP_KERNEL);
+	if (!bhs) {
 		status = -ENOMEM;
-		mlog_त्रुटि_सं(status);
-		जाओ bail;
-	पूर्ण
+		mlog_errno(status);
+		goto bail;
+	}
 
 	status = ocfs2_extent_map_get_blocks(inode, 0, &p_blkno, &p_blocks,
-					     शून्य);
-	अगर (status < 0) अणु
-		mlog_त्रुटि_सं(status);
-		जाओ bail;
-	पूर्ण
+					     NULL);
+	if (status < 0) {
+		mlog_errno(status);
+		goto bail;
+	}
 
 	/* links can never be larger than one cluster so we know this
-	 * is all going to be contiguous, but करो a sanity check
+	 * is all going to be contiguous, but do a sanity check
 	 * anyway. */
-	अगर ((p_blocks << sb->s_blocksize_bits) < bytes_left) अणु
+	if ((p_blocks << sb->s_blocksize_bits) < bytes_left) {
 		status = -EIO;
-		mlog_त्रुटि_सं(status);
-		जाओ bail;
-	पूर्ण
+		mlog_errno(status);
+		goto bail;
+	}
 
-	भव = 0;
-	जबतक(bytes_left > 0) अणु
-		c = &symname[भव * sb->s_blocksize];
+	virtual = 0;
+	while(bytes_left > 0) {
+		c = &symname[virtual * sb->s_blocksize];
 
-		bhs[भव] = sb_getblk(sb, p_blkno);
-		अगर (!bhs[भव]) अणु
+		bhs[virtual] = sb_getblk(sb, p_blkno);
+		if (!bhs[virtual]) {
 			status = -ENOMEM;
-			mlog_त्रुटि_सं(status);
-			जाओ bail;
-		पूर्ण
+			mlog_errno(status);
+			goto bail;
+		}
 		ocfs2_set_new_buffer_uptodate(INODE_CACHE(inode),
-					      bhs[भव]);
+					      bhs[virtual]);
 
 		status = ocfs2_journal_access(handle, INODE_CACHE(inode),
-					      bhs[भव],
+					      bhs[virtual],
 					      OCFS2_JOURNAL_ACCESS_CREATE);
-		अगर (status < 0) अणु
-			mlog_त्रुटि_सं(status);
-			जाओ bail;
-		पूर्ण
+		if (status < 0) {
+			mlog_errno(status);
+			goto bail;
+		}
 
-		स_रखो(bhs[भव]->b_data, 0, sb->s_blocksize);
+		memset(bhs[virtual]->b_data, 0, sb->s_blocksize);
 
-		स_नकल(bhs[भव]->b_data, c,
+		memcpy(bhs[virtual]->b_data, c,
 		       (bytes_left > sb->s_blocksize) ? sb->s_blocksize :
 		       bytes_left);
 
-		ocfs2_journal_dirty(handle, bhs[भव]);
+		ocfs2_journal_dirty(handle, bhs[virtual]);
 
-		भव++;
+		virtual++;
 		p_blkno++;
 		bytes_left -= sb->s_blocksize;
-	पूर्ण
+	}
 
 	status = 0;
 bail:
 
-	अगर (bhs) अणु
-		क्रम(i = 0; i < blocks; i++)
-			brअन्यथा(bhs[i]);
-		kमुक्त(bhs);
-	पूर्ण
+	if (bhs) {
+		for(i = 0; i < blocks; i++)
+			brelse(bhs[i]);
+		kfree(bhs);
+	}
 
-	अगर (status)
-		mlog_त्रुटि_सं(status);
-	वापस status;
-पूर्ण
+	if (status)
+		mlog_errno(status);
+	return status;
+}
 
-अटल पूर्णांक ocfs2_symlink(काष्ठा user_namespace *mnt_userns,
-			 काष्ठा inode *dir,
-			 काष्ठा dentry *dentry,
-			 स्थिर अक्षर *symname)
-अणु
-	पूर्णांक status, l, credits;
+static int ocfs2_symlink(struct user_namespace *mnt_userns,
+			 struct inode *dir,
+			 struct dentry *dentry,
+			 const char *symname)
+{
+	int status, l, credits;
 	u64 newsize;
-	काष्ठा ocfs2_super *osb = शून्य;
-	काष्ठा inode *inode = शून्य;
-	काष्ठा super_block *sb;
-	काष्ठा buffer_head *new_fe_bh = शून्य;
-	काष्ठा buffer_head *parent_fe_bh = शून्य;
-	काष्ठा ocfs2_dinode *fe = शून्य;
-	काष्ठा ocfs2_dinode *dirfe;
-	handle_t *handle = शून्य;
-	काष्ठा ocfs2_alloc_context *inode_ac = शून्य;
-	काष्ठा ocfs2_alloc_context *data_ac = शून्य;
-	काष्ठा ocfs2_alloc_context *xattr_ac = शून्य;
-	पूर्णांक want_clusters = 0;
-	पूर्णांक xattr_credits = 0;
-	काष्ठा ocfs2_security_xattr_info si = अणु
+	struct ocfs2_super *osb = NULL;
+	struct inode *inode = NULL;
+	struct super_block *sb;
+	struct buffer_head *new_fe_bh = NULL;
+	struct buffer_head *parent_fe_bh = NULL;
+	struct ocfs2_dinode *fe = NULL;
+	struct ocfs2_dinode *dirfe;
+	handle_t *handle = NULL;
+	struct ocfs2_alloc_context *inode_ac = NULL;
+	struct ocfs2_alloc_context *data_ac = NULL;
+	struct ocfs2_alloc_context *xattr_ac = NULL;
+	int want_clusters = 0;
+	int xattr_credits = 0;
+	struct ocfs2_security_xattr_info si = {
 		.enable = 1,
-	पूर्ण;
-	पूर्णांक did_quota = 0, did_quota_inode = 0;
-	काष्ठा ocfs2_dir_lookup_result lookup = अणु शून्य, पूर्ण;
+	};
+	int did_quota = 0, did_quota_inode = 0;
+	struct ocfs2_dir_lookup_result lookup = { NULL, };
 	sigset_t oldset;
-	पूर्णांक did_block_संकेतs = 0;
-	काष्ठा ocfs2_dentry_lock *dl = शून्य;
+	int did_block_signals = 0;
+	struct ocfs2_dentry_lock *dl = NULL;
 
 	trace_ocfs2_symlink_begin(dir, dentry, symname,
 				  dentry->d_name.len, dentry->d_name.name);
 
 	status = dquot_initialize(dir);
-	अगर (status) अणु
-		mlog_त्रुटि_सं(status);
-		जाओ bail;
-	पूर्ण
+	if (status) {
+		mlog_errno(status);
+		goto bail;
+	}
 
 	sb = dir->i_sb;
 	osb = OCFS2_SB(sb);
 
-	l = म_माप(symname) + 1;
+	l = strlen(symname) + 1;
 
 	credits = ocfs2_calc_symlink_credits(sb);
 
 	/* lock the parent directory */
 	status = ocfs2_inode_lock(dir, &parent_fe_bh, 1);
-	अगर (status < 0) अणु
-		अगर (status != -ENOENT)
-			mlog_त्रुटि_सं(status);
-		वापस status;
-	पूर्ण
+	if (status < 0) {
+		if (status != -ENOENT)
+			mlog_errno(status);
+		return status;
+	}
 
-	dirfe = (काष्ठा ocfs2_dinode *) parent_fe_bh->b_data;
-	अगर (!ocfs2_पढ़ो_links_count(dirfe)) अणु
+	dirfe = (struct ocfs2_dinode *) parent_fe_bh->b_data;
+	if (!ocfs2_read_links_count(dirfe)) {
 		/* can't make a file in a deleted directory. */
 		status = -ENOENT;
-		जाओ bail;
-	पूर्ण
+		goto bail;
+	}
 
-	status = ocfs2_check_dir_क्रम_entry(dir, dentry->d_name.name,
+	status = ocfs2_check_dir_for_entry(dir, dentry->d_name.name,
 					   dentry->d_name.len);
-	अगर (status)
-		जाओ bail;
+	if (status)
+		goto bail;
 
-	status = ocfs2_prepare_dir_क्रम_insert(osb, dir, parent_fe_bh,
+	status = ocfs2_prepare_dir_for_insert(osb, dir, parent_fe_bh,
 					      dentry->d_name.name,
 					      dentry->d_name.len, &lookup);
-	अगर (status < 0) अणु
-		mlog_त्रुटि_सं(status);
-		जाओ bail;
-	पूर्ण
+	if (status < 0) {
+		mlog_errno(status);
+		goto bail;
+	}
 
 	status = ocfs2_reserve_new_inode(osb, &inode_ac);
-	अगर (status < 0) अणु
-		अगर (status != -ENOSPC)
-			mlog_त्रुटि_सं(status);
-		जाओ bail;
-	पूर्ण
+	if (status < 0) {
+		if (status != -ENOSPC)
+			mlog_errno(status);
+		goto bail;
+	}
 
 	inode = ocfs2_get_init_inode(dir, S_IFLNK | S_IRWXUGO);
-	अगर (IS_ERR(inode)) अणु
+	if (IS_ERR(inode)) {
 		status = PTR_ERR(inode);
-		inode = शून्य;
-		mlog_त्रुटि_सं(status);
-		जाओ bail;
-	पूर्ण
+		inode = NULL;
+		mlog_errno(status);
+		goto bail;
+	}
 
 	/* get security xattr */
 	status = ocfs2_init_security_get(inode, dir, &dentry->d_name, &si);
-	अगर (status) अणु
-		अगर (status == -EOPNOTSUPP)
+	if (status) {
+		if (status == -EOPNOTSUPP)
 			si.enable = 0;
-		अन्यथा अणु
-			mlog_त्रुटि_सं(status);
-			जाओ bail;
-		पूर्ण
-	पूर्ण
+		else {
+			mlog_errno(status);
+			goto bail;
+		}
+	}
 
-	/* calculate meta data/clusters क्रम setting security xattr */
-	अगर (si.enable) अणु
+	/* calculate meta data/clusters for setting security xattr */
+	if (si.enable) {
 		status = ocfs2_calc_security_init(dir, &si, &want_clusters,
 						  &xattr_credits, &xattr_ac);
-		अगर (status < 0) अणु
-			mlog_त्रुटि_सं(status);
-			जाओ bail;
-		पूर्ण
-	पूर्ण
+		if (status < 0) {
+			mlog_errno(status);
+			goto bail;
+		}
+	}
 
-	/* करोn't reserve biपंचांगap space क्रम fast symlinks. */
-	अगर (l > ocfs2_fast_symlink_अक्षरs(sb))
+	/* don't reserve bitmap space for fast symlinks. */
+	if (l > ocfs2_fast_symlink_chars(sb))
 		want_clusters += 1;
 
 	status = ocfs2_reserve_clusters(osb, want_clusters, &data_ac);
-	अगर (status < 0) अणु
-		अगर (status != -ENOSPC)
-			mlog_त्रुटि_सं(status);
-		जाओ bail;
-	पूर्ण
+	if (status < 0) {
+		if (status != -ENOSPC)
+			mlog_errno(status);
+		goto bail;
+	}
 
 	handle = ocfs2_start_trans(osb, credits + xattr_credits);
-	अगर (IS_ERR(handle)) अणु
+	if (IS_ERR(handle)) {
 		status = PTR_ERR(handle);
-		handle = शून्य;
-		mlog_त्रुटि_सं(status);
-		जाओ bail;
-	पूर्ण
+		handle = NULL;
+		mlog_errno(status);
+		goto bail;
+	}
 
-	/* Starting to change things, restart is no दीर्घer possible. */
-	ocfs2_block_संकेतs(&oldset);
-	did_block_संकेतs = 1;
+	/* Starting to change things, restart is no longer possible. */
+	ocfs2_block_signals(&oldset);
+	did_block_signals = 1;
 
 	status = dquot_alloc_inode(inode);
-	अगर (status)
-		जाओ bail;
+	if (status)
+		goto bail;
 	did_quota_inode = 1;
 
 	trace_ocfs2_symlink_create(dir, dentry, dentry->d_name.len,
 				   dentry->d_name.name,
-				   (अचिन्हित दीर्घ दीर्घ)OCFS2_I(dir)->ip_blkno,
+				   (unsigned long long)OCFS2_I(dir)->ip_blkno,
 				   inode->i_mode);
 
 	status = ocfs2_mknod_locked(osb, dir, inode,
 				    0, &new_fe_bh, parent_fe_bh, handle,
 				    inode_ac);
-	अगर (status < 0) अणु
-		mlog_त्रुटि_सं(status);
-		जाओ bail;
-	पूर्ण
+	if (status < 0) {
+		mlog_errno(status);
+		goto bail;
+	}
 
-	fe = (काष्ठा ocfs2_dinode *) new_fe_bh->b_data;
+	fe = (struct ocfs2_dinode *) new_fe_bh->b_data;
 	inode->i_rdev = 0;
 	newsize = l - 1;
 	inode->i_op = &ocfs2_symlink_inode_operations;
 	inode_nohighmem(inode);
-	अगर (l > ocfs2_fast_symlink_अक्षरs(sb)) अणु
+	if (l > ocfs2_fast_symlink_chars(sb)) {
 		u32 offset = 0;
 
 		status = dquot_alloc_space_nodirty(inode,
 		    ocfs2_clusters_to_bytes(osb->sb, 1));
-		अगर (status)
-			जाओ bail;
+		if (status)
+			goto bail;
 		did_quota = 1;
 		inode->i_mapping->a_ops = &ocfs2_aops;
 		status = ocfs2_add_inode_data(osb, inode, &offset, 1, 0,
 					      new_fe_bh,
-					      handle, data_ac, शून्य,
-					      शून्य);
-		अगर (status < 0) अणु
-			अगर (status != -ENOSPC && status != -EINTR) अणु
+					      handle, data_ac, NULL,
+					      NULL);
+		if (status < 0) {
+			if (status != -ENOSPC && status != -EINTR) {
 				mlog(ML_ERROR,
 				     "Failed to extend file to %llu\n",
-				     (अचिन्हित दीर्घ दीर्घ)newsize);
-				mlog_त्रुटि_सं(status);
+				     (unsigned long long)newsize);
+				mlog_errno(status);
 				status = -ENOSPC;
-			पूर्ण
-			जाओ bail;
-		पूर्ण
-		i_size_ग_लिखो(inode, newsize);
+			}
+			goto bail;
+		}
+		i_size_write(inode, newsize);
 		inode->i_blocks = ocfs2_inode_sector_count(inode);
-	पूर्ण अन्यथा अणु
+	} else {
 		inode->i_mapping->a_ops = &ocfs2_fast_symlink_aops;
-		स_नकल((अक्षर *) fe->id2.i_symlink, symname, l);
-		i_size_ग_लिखो(inode, newsize);
+		memcpy((char *) fe->id2.i_symlink, symname, l);
+		i_size_write(inode, newsize);
 		inode->i_blocks = 0;
-	पूर्ण
+	}
 
 	status = ocfs2_mark_inode_dirty(handle, inode, new_fe_bh);
-	अगर (status < 0) अणु
-		mlog_त्रुटि_सं(status);
-		जाओ bail;
-	पूर्ण
+	if (status < 0) {
+		mlog_errno(status);
+		goto bail;
+	}
 
-	अगर (!ocfs2_inode_is_fast_symlink(inode)) अणु
+	if (!ocfs2_inode_is_fast_symlink(inode)) {
 		status = ocfs2_create_symlink_data(osb, handle, inode,
 						   symname);
-		अगर (status < 0) अणु
-			mlog_त्रुटि_सं(status);
-			जाओ bail;
-		पूर्ण
-	पूर्ण
+		if (status < 0) {
+			mlog_errno(status);
+			goto bail;
+		}
+	}
 
-	अगर (si.enable) अणु
+	if (si.enable) {
 		status = ocfs2_init_security_set(handle, inode, new_fe_bh, &si,
 						 xattr_ac, data_ac);
-		अगर (status < 0) अणु
-			mlog_त्रुटि_सं(status);
-			जाओ bail;
-		पूर्ण
-	पूर्ण
+		if (status < 0) {
+			mlog_errno(status);
+			goto bail;
+		}
+	}
 
 	/*
-	 * Do this beक्रमe adding the entry to the directory. We add
+	 * Do this before adding the entry to the directory. We add
 	 * also set d_op after success so that ->d_iput() will cleanup
-	 * the dentry lock even अगर ocfs2_add_entry() fails below.
+	 * the dentry lock even if ocfs2_add_entry() fails below.
 	 */
 	status = ocfs2_dentry_attach_lock(dentry, inode, OCFS2_I(dir)->ip_blkno);
-	अगर (status) अणु
-		mlog_त्रुटि_सं(status);
-		जाओ bail;
-	पूर्ण
+	if (status) {
+		mlog_errno(status);
+		goto bail;
+	}
 
 	dl = dentry->d_fsdata;
 
 	status = ocfs2_add_entry(handle, dentry, inode,
 				 le64_to_cpu(fe->i_blkno), parent_fe_bh,
 				 &lookup);
-	अगर (status < 0) अणु
-		mlog_त्रुटि_सं(status);
-		जाओ bail;
-	पूर्ण
+	if (status < 0) {
+		mlog_errno(status);
+		goto bail;
+	}
 
 	insert_inode_hash(inode);
 	d_instantiate(dentry, inode);
 bail:
-	अगर (status < 0 && did_quota)
-		dquot_मुक्त_space_nodirty(inode,
+	if (status < 0 && did_quota)
+		dquot_free_space_nodirty(inode,
 					ocfs2_clusters_to_bytes(osb->sb, 1));
-	अगर (status < 0 && did_quota_inode)
-		dquot_मुक्त_inode(inode);
-	अगर (handle)
+	if (status < 0 && did_quota_inode)
+		dquot_free_inode(inode);
+	if (handle)
 		ocfs2_commit_trans(osb, handle);
 
 	ocfs2_inode_unlock(dir, 1);
-	अगर (did_block_संकेतs)
-		ocfs2_unblock_संकेतs(&oldset);
+	if (did_block_signals)
+		ocfs2_unblock_signals(&oldset);
 
-	brअन्यथा(new_fe_bh);
-	brअन्यथा(parent_fe_bh);
-	kमुक्त(si.value);
-	ocfs2_मुक्त_dir_lookup_result(&lookup);
-	अगर (inode_ac)
-		ocfs2_मुक्त_alloc_context(inode_ac);
-	अगर (data_ac)
-		ocfs2_मुक्त_alloc_context(data_ac);
-	अगर (xattr_ac)
-		ocfs2_मुक्त_alloc_context(xattr_ac);
-	अगर ((status < 0) && inode) अणु
-		अगर (dl)
+	brelse(new_fe_bh);
+	brelse(parent_fe_bh);
+	kfree(si.value);
+	ocfs2_free_dir_lookup_result(&lookup);
+	if (inode_ac)
+		ocfs2_free_alloc_context(inode_ac);
+	if (data_ac)
+		ocfs2_free_alloc_context(data_ac);
+	if (xattr_ac)
+		ocfs2_free_alloc_context(xattr_ac);
+	if ((status < 0) && inode) {
+		if (dl)
 			ocfs2_cleanup_add_entry_failure(osb, dentry, inode);
 
-		OCFS2_I(inode)->ip_flags |= OCFS2_INODE_SKIP_ORPHAN_सूची;
+		OCFS2_I(inode)->ip_flags |= OCFS2_INODE_SKIP_ORPHAN_DIR;
 		clear_nlink(inode);
 		iput(inode);
-	पूर्ण
+	}
 
-	अगर (status)
-		mlog_त्रुटि_सं(status);
+	if (status)
+		mlog_errno(status);
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल पूर्णांक ocfs2_blkno_stringअगरy(u64 blkno, अक्षर *name)
-अणु
-	पूर्णांक status, namelen;
+static int ocfs2_blkno_stringify(u64 blkno, char *name)
+{
+	int status, namelen;
 
-	namelen = snम_लिखो(name, OCFS2_ORPHAN_NAMELEN + 1, "%016llx",
-			   (दीर्घ दीर्घ)blkno);
-	अगर (namelen <= 0) अणु
-		अगर (namelen)
+	namelen = snprintf(name, OCFS2_ORPHAN_NAMELEN + 1, "%016llx",
+			   (long long)blkno);
+	if (namelen <= 0) {
+		if (namelen)
 			status = namelen;
-		अन्यथा
+		else
 			status = -EINVAL;
-		mlog_त्रुटि_सं(status);
-		जाओ bail;
-	पूर्ण
-	अगर (namelen != OCFS2_ORPHAN_NAMELEN) अणु
+		mlog_errno(status);
+		goto bail;
+	}
+	if (namelen != OCFS2_ORPHAN_NAMELEN) {
 		status = -EINVAL;
-		mlog_त्रुटि_सं(status);
-		जाओ bail;
-	पूर्ण
+		mlog_errno(status);
+		goto bail;
+	}
 
-	trace_ocfs2_blkno_stringअगरy(blkno, name, namelen);
+	trace_ocfs2_blkno_stringify(blkno, name, namelen);
 
 	status = 0;
 bail:
-	अगर (status < 0)
-		mlog_त्रुटि_सं(status);
-	वापस status;
-पूर्ण
+	if (status < 0)
+		mlog_errno(status);
+	return status;
+}
 
-अटल पूर्णांक ocfs2_lookup_lock_orphan_dir(काष्ठा ocfs2_super *osb,
-					काष्ठा inode **ret_orphan_dir,
-					काष्ठा buffer_head **ret_orphan_dir_bh)
-अणु
-	काष्ठा inode *orphan_dir_inode;
-	काष्ठा buffer_head *orphan_dir_bh = शून्य;
-	पूर्णांक ret = 0;
+static int ocfs2_lookup_lock_orphan_dir(struct ocfs2_super *osb,
+					struct inode **ret_orphan_dir,
+					struct buffer_head **ret_orphan_dir_bh)
+{
+	struct inode *orphan_dir_inode;
+	struct buffer_head *orphan_dir_bh = NULL;
+	int ret = 0;
 
-	orphan_dir_inode = ocfs2_get_प्रणाली_file_inode(osb,
-						       ORPHAN_सूची_SYSTEM_INODE,
+	orphan_dir_inode = ocfs2_get_system_file_inode(osb,
+						       ORPHAN_DIR_SYSTEM_INODE,
 						       osb->slot_num);
-	अगर (!orphan_dir_inode) अणु
+	if (!orphan_dir_inode) {
 		ret = -ENOENT;
-		mlog_त्रुटि_सं(ret);
-		वापस ret;
-	पूर्ण
+		mlog_errno(ret);
+		return ret;
+	}
 
 	inode_lock(orphan_dir_inode);
 
 	ret = ocfs2_inode_lock(orphan_dir_inode, &orphan_dir_bh, 1);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		inode_unlock(orphan_dir_inode);
 		iput(orphan_dir_inode);
 
-		mlog_त्रुटि_सं(ret);
-		वापस ret;
-	पूर्ण
+		mlog_errno(ret);
+		return ret;
+	}
 
 	*ret_orphan_dir = orphan_dir_inode;
 	*ret_orphan_dir_bh = orphan_dir_bh;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __ocfs2_prepare_orphan_dir(काष्ठा inode *orphan_dir_inode,
-				      काष्ठा buffer_head *orphan_dir_bh,
+static int __ocfs2_prepare_orphan_dir(struct inode *orphan_dir_inode,
+				      struct buffer_head *orphan_dir_bh,
 				      u64 blkno,
-				      अक्षर *name,
-				      काष्ठा ocfs2_dir_lookup_result *lookup,
+				      char *name,
+				      struct ocfs2_dir_lookup_result *lookup,
 				      bool dio)
-अणु
-	पूर्णांक ret;
-	काष्ठा ocfs2_super *osb = OCFS2_SB(orphan_dir_inode->i_sb);
-	पूर्णांक namelen = dio ?
+{
+	int ret;
+	struct ocfs2_super *osb = OCFS2_SB(orphan_dir_inode->i_sb);
+	int namelen = dio ?
 			(OCFS2_DIO_ORPHAN_PREFIX_LEN + OCFS2_ORPHAN_NAMELEN) :
 			OCFS2_ORPHAN_NAMELEN;
 
-	अगर (dio) अणु
-		ret = snम_लिखो(name, OCFS2_DIO_ORPHAN_PREFIX_LEN + 1, "%s",
+	if (dio) {
+		ret = snprintf(name, OCFS2_DIO_ORPHAN_PREFIX_LEN + 1, "%s",
 				OCFS2_DIO_ORPHAN_PREFIX);
-		अगर (ret != OCFS2_DIO_ORPHAN_PREFIX_LEN) अणु
+		if (ret != OCFS2_DIO_ORPHAN_PREFIX_LEN) {
 			ret = -EINVAL;
-			mlog_त्रुटि_सं(ret);
-			वापस ret;
-		पूर्ण
+			mlog_errno(ret);
+			return ret;
+		}
 
-		ret = ocfs2_blkno_stringअगरy(blkno,
+		ret = ocfs2_blkno_stringify(blkno,
 				name + OCFS2_DIO_ORPHAN_PREFIX_LEN);
-	पूर्ण अन्यथा
-		ret = ocfs2_blkno_stringअगरy(blkno, name);
-	अगर (ret < 0) अणु
-		mlog_त्रुटि_सं(ret);
-		वापस ret;
-	पूर्ण
+	} else
+		ret = ocfs2_blkno_stringify(blkno, name);
+	if (ret < 0) {
+		mlog_errno(ret);
+		return ret;
+	}
 
-	ret = ocfs2_prepare_dir_क्रम_insert(osb, orphan_dir_inode,
+	ret = ocfs2_prepare_dir_for_insert(osb, orphan_dir_inode,
 					   orphan_dir_bh, name,
 					   namelen, lookup);
-	अगर (ret < 0) अणु
-		mlog_त्रुटि_सं(ret);
-		वापस ret;
-	पूर्ण
+	if (ret < 0) {
+		mlog_errno(ret);
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * ocfs2_prepare_orphan_dir() - Prepare an orphan directory क्रम
+ * ocfs2_prepare_orphan_dir() - Prepare an orphan directory for
  * insertion of an orphan.
- * @osb: ocfs2 file प्रणाली
- * @ret_orphan_dir: Orphan dir inode - वापसed locked!
- * @blkno: Actual block number of the inode to be inserted पूर्णांकo orphan dir.
- * @lookup: dir lookup result, to be passed back पूर्णांकo functions like
+ * @osb: ocfs2 file system
+ * @ret_orphan_dir: Orphan dir inode - returned locked!
+ * @blkno: Actual block number of the inode to be inserted into orphan dir.
+ * @lookup: dir lookup result, to be passed back into functions like
  *          ocfs2_orphan_add
  *
  * Returns zero on success and the ret_orphan_dir, name and lookup
@@ -2179,240 +2178,240 @@ bail:
  *
  * Returns non-zero on failure. 
  */
-अटल पूर्णांक ocfs2_prepare_orphan_dir(काष्ठा ocfs2_super *osb,
-				    काष्ठा inode **ret_orphan_dir,
+static int ocfs2_prepare_orphan_dir(struct ocfs2_super *osb,
+				    struct inode **ret_orphan_dir,
 				    u64 blkno,
-				    अक्षर *name,
-				    काष्ठा ocfs2_dir_lookup_result *lookup,
+				    char *name,
+				    struct ocfs2_dir_lookup_result *lookup,
 				    bool dio)
-अणु
-	काष्ठा inode *orphan_dir_inode = शून्य;
-	काष्ठा buffer_head *orphan_dir_bh = शून्य;
-	पूर्णांक ret = 0;
+{
+	struct inode *orphan_dir_inode = NULL;
+	struct buffer_head *orphan_dir_bh = NULL;
+	int ret = 0;
 
 	ret = ocfs2_lookup_lock_orphan_dir(osb, &orphan_dir_inode,
 					   &orphan_dir_bh);
-	अगर (ret < 0) अणु
-		mlog_त्रुटि_सं(ret);
-		वापस ret;
-	पूर्ण
+	if (ret < 0) {
+		mlog_errno(ret);
+		return ret;
+	}
 
 	ret = __ocfs2_prepare_orphan_dir(orphan_dir_inode, orphan_dir_bh,
 					 blkno, name, lookup, dio);
-	अगर (ret < 0) अणु
-		mlog_त्रुटि_सं(ret);
-		जाओ out;
-	पूर्ण
+	if (ret < 0) {
+		mlog_errno(ret);
+		goto out;
+	}
 
 	*ret_orphan_dir = orphan_dir_inode;
 
 out:
-	brअन्यथा(orphan_dir_bh);
+	brelse(orphan_dir_bh);
 
-	अगर (ret) अणु
+	if (ret) {
 		ocfs2_inode_unlock(orphan_dir_inode, 1);
 		inode_unlock(orphan_dir_inode);
 		iput(orphan_dir_inode);
-	पूर्ण
+	}
 
-	अगर (ret)
-		mlog_त्रुटि_सं(ret);
-	वापस ret;
-पूर्ण
+	if (ret)
+		mlog_errno(ret);
+	return ret;
+}
 
-अटल पूर्णांक ocfs2_orphan_add(काष्ठा ocfs2_super *osb,
+static int ocfs2_orphan_add(struct ocfs2_super *osb,
 			    handle_t *handle,
-			    काष्ठा inode *inode,
-			    काष्ठा buffer_head *fe_bh,
-			    अक्षर *name,
-			    काष्ठा ocfs2_dir_lookup_result *lookup,
-			    काष्ठा inode *orphan_dir_inode,
+			    struct inode *inode,
+			    struct buffer_head *fe_bh,
+			    char *name,
+			    struct ocfs2_dir_lookup_result *lookup,
+			    struct inode *orphan_dir_inode,
 			    bool dio)
-अणु
-	काष्ठा buffer_head *orphan_dir_bh = शून्य;
-	पूर्णांक status = 0;
-	काष्ठा ocfs2_dinode *orphan_fe;
-	काष्ठा ocfs2_dinode *fe = (काष्ठा ocfs2_dinode *) fe_bh->b_data;
-	पूर्णांक namelen = dio ?
+{
+	struct buffer_head *orphan_dir_bh = NULL;
+	int status = 0;
+	struct ocfs2_dinode *orphan_fe;
+	struct ocfs2_dinode *fe = (struct ocfs2_dinode *) fe_bh->b_data;
+	int namelen = dio ?
 			(OCFS2_DIO_ORPHAN_PREFIX_LEN + OCFS2_ORPHAN_NAMELEN) :
 			OCFS2_ORPHAN_NAMELEN;
 
 	trace_ocfs2_orphan_add_begin(
-				(अचिन्हित दीर्घ दीर्घ)OCFS2_I(inode)->ip_blkno);
+				(unsigned long long)OCFS2_I(inode)->ip_blkno);
 
-	status = ocfs2_पढ़ो_inode_block(orphan_dir_inode, &orphan_dir_bh);
-	अगर (status < 0) अणु
-		mlog_त्रुटि_सं(status);
-		जाओ leave;
-	पूर्ण
+	status = ocfs2_read_inode_block(orphan_dir_inode, &orphan_dir_bh);
+	if (status < 0) {
+		mlog_errno(status);
+		goto leave;
+	}
 
 	status = ocfs2_journal_access_di(handle,
 					 INODE_CACHE(orphan_dir_inode),
 					 orphan_dir_bh,
 					 OCFS2_JOURNAL_ACCESS_WRITE);
-	अगर (status < 0) अणु
-		mlog_त्रुटि_सं(status);
-		जाओ leave;
-	पूर्ण
+	if (status < 0) {
+		mlog_errno(status);
+		goto leave;
+	}
 
 	/*
 	 * We're going to journal the change of i_flags and i_orphaned_slot.
 	 * It's safe anyway, though some callers may duplicate the journaling.
 	 * Journaling within the func just make the logic look more
-	 * straightक्रमward.
+	 * straightforward.
 	 */
 	status = ocfs2_journal_access_di(handle,
 					 INODE_CACHE(inode),
 					 fe_bh,
 					 OCFS2_JOURNAL_ACCESS_WRITE);
-	अगर (status < 0) अणु
-		mlog_त्रुटि_सं(status);
-		जाओ leave;
-	पूर्ण
+	if (status < 0) {
+		mlog_errno(status);
+		goto leave;
+	}
 
 	/* we're a cluster, and nlink can change on disk from
 	 * underneath us... */
-	orphan_fe = (काष्ठा ocfs2_dinode *) orphan_dir_bh->b_data;
-	अगर (S_ISसूची(inode->i_mode))
+	orphan_fe = (struct ocfs2_dinode *) orphan_dir_bh->b_data;
+	if (S_ISDIR(inode->i_mode))
 		ocfs2_add_links_count(orphan_fe, 1);
-	set_nlink(orphan_dir_inode, ocfs2_पढ़ो_links_count(orphan_fe));
+	set_nlink(orphan_dir_inode, ocfs2_read_links_count(orphan_fe));
 	ocfs2_journal_dirty(handle, orphan_dir_bh);
 
 	status = __ocfs2_add_entry(handle, orphan_dir_inode, name,
 				   namelen, inode,
 				   OCFS2_I(inode)->ip_blkno,
 				   orphan_dir_bh, lookup);
-	अगर (status < 0) अणु
-		mlog_त्रुटि_सं(status);
-		जाओ rollback;
-	पूर्ण
+	if (status < 0) {
+		mlog_errno(status);
+		goto rollback;
+	}
 
-	अगर (dio) अणु
+	if (dio) {
 		/* Update flag OCFS2_DIO_ORPHANED_FL and record the orphan
 		 * slot.
 		 */
 		fe->i_flags |= cpu_to_le32(OCFS2_DIO_ORPHANED_FL);
 		fe->i_dio_orphaned_slot = cpu_to_le16(osb->slot_num);
-	पूर्ण अन्यथा अणु
+	} else {
 		fe->i_flags |= cpu_to_le32(OCFS2_ORPHANED_FL);
-		OCFS2_I(inode)->ip_flags &= ~OCFS2_INODE_SKIP_ORPHAN_सूची;
+		OCFS2_I(inode)->ip_flags &= ~OCFS2_INODE_SKIP_ORPHAN_DIR;
 
 		/* Record which orphan dir our inode now resides
 		 * in. delete_inode will use this to determine which orphan
 		 * dir to lock. */
 		fe->i_orphaned_slot = cpu_to_le16(osb->slot_num);
-	पूर्ण
+	}
 
 	ocfs2_journal_dirty(handle, fe_bh);
 
-	trace_ocfs2_orphan_add_end((अचिन्हित दीर्घ दीर्घ)OCFS2_I(inode)->ip_blkno,
+	trace_ocfs2_orphan_add_end((unsigned long long)OCFS2_I(inode)->ip_blkno,
 				   osb->slot_num);
 
 rollback:
-	अगर (status < 0) अणु
-		अगर (S_ISसूची(inode->i_mode))
+	if (status < 0) {
+		if (S_ISDIR(inode->i_mode))
 			ocfs2_add_links_count(orphan_fe, -1);
-		set_nlink(orphan_dir_inode, ocfs2_पढ़ो_links_count(orphan_fe));
-	पूर्ण
+		set_nlink(orphan_dir_inode, ocfs2_read_links_count(orphan_fe));
+	}
 
 leave:
-	brअन्यथा(orphan_dir_bh);
+	brelse(orphan_dir_bh);
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
-/* unlike orphan_add, we expect the orphan dir to alपढ़ोy be locked here. */
-पूर्णांक ocfs2_orphan_del(काष्ठा ocfs2_super *osb,
+/* unlike orphan_add, we expect the orphan dir to already be locked here. */
+int ocfs2_orphan_del(struct ocfs2_super *osb,
 		     handle_t *handle,
-		     काष्ठा inode *orphan_dir_inode,
-		     काष्ठा inode *inode,
-		     काष्ठा buffer_head *orphan_dir_bh,
+		     struct inode *orphan_dir_inode,
+		     struct inode *inode,
+		     struct buffer_head *orphan_dir_bh,
 		     bool dio)
-अणु
-	अक्षर name[OCFS2_DIO_ORPHAN_PREFIX_LEN + OCFS2_ORPHAN_NAMELEN + 1];
-	काष्ठा ocfs2_dinode *orphan_fe;
-	पूर्णांक status = 0;
-	काष्ठा ocfs2_dir_lookup_result lookup = अणु शून्य, पूर्ण;
+{
+	char name[OCFS2_DIO_ORPHAN_PREFIX_LEN + OCFS2_ORPHAN_NAMELEN + 1];
+	struct ocfs2_dinode *orphan_fe;
+	int status = 0;
+	struct ocfs2_dir_lookup_result lookup = { NULL, };
 
-	अगर (dio) अणु
-		status = snम_लिखो(name, OCFS2_DIO_ORPHAN_PREFIX_LEN + 1, "%s",
+	if (dio) {
+		status = snprintf(name, OCFS2_DIO_ORPHAN_PREFIX_LEN + 1, "%s",
 				OCFS2_DIO_ORPHAN_PREFIX);
-		अगर (status != OCFS2_DIO_ORPHAN_PREFIX_LEN) अणु
+		if (status != OCFS2_DIO_ORPHAN_PREFIX_LEN) {
 			status = -EINVAL;
-			mlog_त्रुटि_सं(status);
-			वापस status;
-		पूर्ण
+			mlog_errno(status);
+			return status;
+		}
 
-		status = ocfs2_blkno_stringअगरy(OCFS2_I(inode)->ip_blkno,
+		status = ocfs2_blkno_stringify(OCFS2_I(inode)->ip_blkno,
 				name + OCFS2_DIO_ORPHAN_PREFIX_LEN);
-	पूर्ण अन्यथा
-		status = ocfs2_blkno_stringअगरy(OCFS2_I(inode)->ip_blkno, name);
-	अगर (status < 0) अणु
-		mlog_त्रुटि_सं(status);
-		जाओ leave;
-	पूर्ण
+	} else
+		status = ocfs2_blkno_stringify(OCFS2_I(inode)->ip_blkno, name);
+	if (status < 0) {
+		mlog_errno(status);
+		goto leave;
+	}
 
 	trace_ocfs2_orphan_del(
-	     (अचिन्हित दीर्घ दीर्घ)OCFS2_I(orphan_dir_inode)->ip_blkno,
-	     name, म_माप(name));
+	     (unsigned long long)OCFS2_I(orphan_dir_inode)->ip_blkno,
+	     name, strlen(name));
 
 	status = ocfs2_journal_access_di(handle,
 					 INODE_CACHE(orphan_dir_inode),
 					 orphan_dir_bh,
 					 OCFS2_JOURNAL_ACCESS_WRITE);
-	अगर (status < 0) अणु
-		mlog_त्रुटि_सं(status);
-		जाओ leave;
-	पूर्ण
+	if (status < 0) {
+		mlog_errno(status);
+		goto leave;
+	}
 
 	/* find it's spot in the orphan directory */
-	status = ocfs2_find_entry(name, म_माप(name), orphan_dir_inode,
+	status = ocfs2_find_entry(name, strlen(name), orphan_dir_inode,
 				  &lookup);
-	अगर (status) अणु
-		mlog_त्रुटि_सं(status);
-		जाओ leave;
-	पूर्ण
+	if (status) {
+		mlog_errno(status);
+		goto leave;
+	}
 
-	/* हटाओ it from the orphan directory */
+	/* remove it from the orphan directory */
 	status = ocfs2_delete_entry(handle, orphan_dir_inode, &lookup);
-	अगर (status < 0) अणु
-		mlog_त्रुटि_सं(status);
-		जाओ leave;
-	पूर्ण
+	if (status < 0) {
+		mlog_errno(status);
+		goto leave;
+	}
 
-	/* करो the i_nlink dance! :) */
-	orphan_fe = (काष्ठा ocfs2_dinode *) orphan_dir_bh->b_data;
-	अगर (S_ISसूची(inode->i_mode))
+	/* do the i_nlink dance! :) */
+	orphan_fe = (struct ocfs2_dinode *) orphan_dir_bh->b_data;
+	if (S_ISDIR(inode->i_mode))
 		ocfs2_add_links_count(orphan_fe, -1);
-	set_nlink(orphan_dir_inode, ocfs2_पढ़ो_links_count(orphan_fe));
+	set_nlink(orphan_dir_inode, ocfs2_read_links_count(orphan_fe));
 	ocfs2_journal_dirty(handle, orphan_dir_bh);
 
 leave:
-	ocfs2_मुक्त_dir_lookup_result(&lookup);
+	ocfs2_free_dir_lookup_result(&lookup);
 
-	अगर (status)
-		mlog_त्रुटि_सं(status);
-	वापस status;
-पूर्ण
+	if (status)
+		mlog_errno(status);
+	return status;
+}
 
 /**
  * ocfs2_prep_new_orphaned_file() - Prepare the orphan dir to receive a newly
- * allocated file. This is dअगरferent from the typical 'add to orphan dir'
- * operation in that the inode करोes not yet exist. This is a problem because
- * the orphan dir stringअगरies the inode block number to come up with it's
- * dirent. Obviously अगर the inode करोes not yet exist we have a chicken and egg
- * problem. This function works around it by calling deeper पूर्णांकo the orphan
+ * allocated file. This is different from the typical 'add to orphan dir'
+ * operation in that the inode does not yet exist. This is a problem because
+ * the orphan dir stringifies the inode block number to come up with it's
+ * dirent. Obviously if the inode does not yet exist we have a chicken and egg
+ * problem. This function works around it by calling deeper into the orphan
  * and suballoc code than other callers. Use this only by necessity.
  * @dir: The directory which this inode will ultimately wind up under - not the
  * orphan dir!
  * @dir_bh: buffer_head the @dir inode block
  * @orphan_name: string of length (CFS2_ORPHAN_NAMELEN + 1). Will be filled
- * with the string to be used क्रम orphan dirent. Pass back to the orphan dir
+ * with the string to be used for orphan dirent. Pass back to the orphan dir
  * code.
- * @ret_orphan_dir: orphan dir inode वापसed to be passed back पूर्णांकo orphan
+ * @ret_orphan_dir: orphan dir inode returned to be passed back into orphan
  * dir code.
  * @ret_di_blkno: block number where the new inode will be allocated.
- * @orphan_insert: Dir insert context to be passed back पूर्णांकo orphan dir code.
+ * @orphan_insert: Dir insert context to be passed back into orphan dir code.
  * @ret_inode_ac: Inode alloc context to be passed back to the allocator.
  *
  * Returns zero on success and the ret_orphan_dir, name and lookup
@@ -2420,252 +2419,252 @@ leave:
  *
  * Returns non-zero on failure. 
  */
-अटल पूर्णांक ocfs2_prep_new_orphaned_file(काष्ठा inode *dir,
-					काष्ठा buffer_head *dir_bh,
-					अक्षर *orphan_name,
-					काष्ठा inode **ret_orphan_dir,
+static int ocfs2_prep_new_orphaned_file(struct inode *dir,
+					struct buffer_head *dir_bh,
+					char *orphan_name,
+					struct inode **ret_orphan_dir,
 					u64 *ret_di_blkno,
-					काष्ठा ocfs2_dir_lookup_result *orphan_insert,
-					काष्ठा ocfs2_alloc_context **ret_inode_ac)
-अणु
-	पूर्णांक ret;
+					struct ocfs2_dir_lookup_result *orphan_insert,
+					struct ocfs2_alloc_context **ret_inode_ac)
+{
+	int ret;
 	u64 di_blkno;
-	काष्ठा ocfs2_super *osb = OCFS2_SB(dir->i_sb);
-	काष्ठा inode *orphan_dir = शून्य;
-	काष्ठा buffer_head *orphan_dir_bh = शून्य;
-	काष्ठा ocfs2_alloc_context *inode_ac = शून्य;
+	struct ocfs2_super *osb = OCFS2_SB(dir->i_sb);
+	struct inode *orphan_dir = NULL;
+	struct buffer_head *orphan_dir_bh = NULL;
+	struct ocfs2_alloc_context *inode_ac = NULL;
 
 	ret = ocfs2_lookup_lock_orphan_dir(osb, &orphan_dir, &orphan_dir_bh);
-	अगर (ret < 0) अणु
-		mlog_त्रुटि_सं(ret);
-		वापस ret;
-	पूर्ण
+	if (ret < 0) {
+		mlog_errno(ret);
+		return ret;
+	}
 
 	/* reserve an inode spot */
 	ret = ocfs2_reserve_new_inode(osb, &inode_ac);
-	अगर (ret < 0) अणु
-		अगर (ret != -ENOSPC)
-			mlog_त्रुटि_सं(ret);
-		जाओ out;
-	पूर्ण
+	if (ret < 0) {
+		if (ret != -ENOSPC)
+			mlog_errno(ret);
+		goto out;
+	}
 
 	ret = ocfs2_find_new_inode_loc(dir, dir_bh, inode_ac,
 				       &di_blkno);
-	अगर (ret) अणु
-		mlog_त्रुटि_सं(ret);
-		जाओ out;
-	पूर्ण
+	if (ret) {
+		mlog_errno(ret);
+		goto out;
+	}
 
 	ret = __ocfs2_prepare_orphan_dir(orphan_dir, orphan_dir_bh,
 					 di_blkno, orphan_name, orphan_insert,
 					 false);
-	अगर (ret < 0) अणु
-		mlog_त्रुटि_सं(ret);
-		जाओ out;
-	पूर्ण
+	if (ret < 0) {
+		mlog_errno(ret);
+		goto out;
+	}
 
 out:
-	अगर (ret == 0) अणु
+	if (ret == 0) {
 		*ret_orphan_dir = orphan_dir;
 		*ret_di_blkno = di_blkno;
 		*ret_inode_ac = inode_ac;
 		/*
-		 * orphan_name and orphan_insert are alपढ़ोy up to
+		 * orphan_name and orphan_insert are already up to
 		 * date via prepare_orphan_dir
 		 */
-	पूर्ण अन्यथा अणु
+	} else {
 		/* Unroll reserve_new_inode* */
-		अगर (inode_ac)
-			ocfs2_मुक्त_alloc_context(inode_ac);
+		if (inode_ac)
+			ocfs2_free_alloc_context(inode_ac);
 
 		/* Unroll orphan dir locking */
 		inode_unlock(orphan_dir);
 		ocfs2_inode_unlock(orphan_dir, 1);
 		iput(orphan_dir);
-	पूर्ण
+	}
 
-	brअन्यथा(orphan_dir_bh);
+	brelse(orphan_dir_bh);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक ocfs2_create_inode_in_orphan(काष्ठा inode *dir,
-				 पूर्णांक mode,
-				 काष्ठा inode **new_inode)
-अणु
-	पूर्णांक status, did_quota_inode = 0;
-	काष्ठा inode *inode = शून्य;
-	काष्ठा inode *orphan_dir = शून्य;
-	काष्ठा ocfs2_super *osb = OCFS2_SB(dir->i_sb);
-	handle_t *handle = शून्य;
-	अक्षर orphan_name[OCFS2_ORPHAN_NAMELEN + 1];
-	काष्ठा buffer_head *parent_di_bh = शून्य;
-	काष्ठा buffer_head *new_di_bh = शून्य;
-	काष्ठा ocfs2_alloc_context *inode_ac = शून्य;
-	काष्ठा ocfs2_dir_lookup_result orphan_insert = अणु शून्य, पूर्ण;
+int ocfs2_create_inode_in_orphan(struct inode *dir,
+				 int mode,
+				 struct inode **new_inode)
+{
+	int status, did_quota_inode = 0;
+	struct inode *inode = NULL;
+	struct inode *orphan_dir = NULL;
+	struct ocfs2_super *osb = OCFS2_SB(dir->i_sb);
+	handle_t *handle = NULL;
+	char orphan_name[OCFS2_ORPHAN_NAMELEN + 1];
+	struct buffer_head *parent_di_bh = NULL;
+	struct buffer_head *new_di_bh = NULL;
+	struct ocfs2_alloc_context *inode_ac = NULL;
+	struct ocfs2_dir_lookup_result orphan_insert = { NULL, };
 	u64 di_blkno, suballoc_loc;
 	u16 suballoc_bit;
 
 	status = ocfs2_inode_lock(dir, &parent_di_bh, 1);
-	अगर (status < 0) अणु
-		अगर (status != -ENOENT)
-			mlog_त्रुटि_सं(status);
-		वापस status;
-	पूर्ण
+	if (status < 0) {
+		if (status != -ENOENT)
+			mlog_errno(status);
+		return status;
+	}
 
 	status = ocfs2_prep_new_orphaned_file(dir, parent_di_bh,
 					      orphan_name, &orphan_dir,
 					      &di_blkno, &orphan_insert, &inode_ac);
-	अगर (status < 0) अणु
-		अगर (status != -ENOSPC)
-			mlog_त्रुटि_सं(status);
-		जाओ leave;
-	पूर्ण
+	if (status < 0) {
+		if (status != -ENOSPC)
+			mlog_errno(status);
+		goto leave;
+	}
 
 	inode = ocfs2_get_init_inode(dir, mode);
-	अगर (IS_ERR(inode)) अणु
+	if (IS_ERR(inode)) {
 		status = PTR_ERR(inode);
-		inode = शून्य;
-		mlog_त्रुटि_सं(status);
-		जाओ leave;
-	पूर्ण
+		inode = NULL;
+		mlog_errno(status);
+		goto leave;
+	}
 
 	handle = ocfs2_start_trans(osb, ocfs2_mknod_credits(osb->sb, 0, 0));
-	अगर (IS_ERR(handle)) अणु
+	if (IS_ERR(handle)) {
 		status = PTR_ERR(handle);
-		handle = शून्य;
-		mlog_त्रुटि_सं(status);
-		जाओ leave;
-	पूर्ण
+		handle = NULL;
+		mlog_errno(status);
+		goto leave;
+	}
 
 	status = dquot_alloc_inode(inode);
-	अगर (status)
-		जाओ leave;
+	if (status)
+		goto leave;
 	did_quota_inode = 1;
 
 	status = ocfs2_claim_new_inode_at_loc(handle, dir, inode_ac,
 					      &suballoc_loc,
 					      &suballoc_bit, di_blkno);
-	अगर (status < 0) अणु
-		mlog_त्रुटि_सं(status);
-		जाओ leave;
-	पूर्ण
+	if (status < 0) {
+		mlog_errno(status);
+		goto leave;
+	}
 
 	clear_nlink(inode);
-	/* करो the real work now. */
+	/* do the real work now. */
 	status = __ocfs2_mknod_locked(dir, inode,
 				      0, &new_di_bh, parent_di_bh, handle,
 				      inode_ac, di_blkno, suballoc_loc,
 				      suballoc_bit);
-	अगर (status < 0) अणु
-		mlog_त्रुटि_सं(status);
-		जाओ leave;
-	पूर्ण
+	if (status < 0) {
+		mlog_errno(status);
+		goto leave;
+	}
 
 	status = ocfs2_orphan_add(osb, handle, inode, new_di_bh, orphan_name,
 				  &orphan_insert, orphan_dir, false);
-	अगर (status < 0) अणु
-		mlog_त्रुटि_सं(status);
-		जाओ leave;
-	पूर्ण
+	if (status < 0) {
+		mlog_errno(status);
+		goto leave;
+	}
 
-	/* get खोलो lock so that only nodes can't हटाओ it from orphan dir. */
-	status = ocfs2_खोलो_lock(inode);
-	अगर (status < 0)
-		mlog_त्रुटि_सं(status);
+	/* get open lock so that only nodes can't remove it from orphan dir. */
+	status = ocfs2_open_lock(inode);
+	if (status < 0)
+		mlog_errno(status);
 
 	insert_inode_hash(inode);
 leave:
-	अगर (status < 0 && did_quota_inode)
-		dquot_मुक्त_inode(inode);
-	अगर (handle)
+	if (status < 0 && did_quota_inode)
+		dquot_free_inode(inode);
+	if (handle)
 		ocfs2_commit_trans(osb, handle);
 
-	अगर (orphan_dir) अणु
-		/* This was locked क्रम us in ocfs2_prepare_orphan_dir() */
+	if (orphan_dir) {
+		/* This was locked for us in ocfs2_prepare_orphan_dir() */
 		ocfs2_inode_unlock(orphan_dir, 1);
 		inode_unlock(orphan_dir);
 		iput(orphan_dir);
-	पूर्ण
+	}
 
-	अगर ((status < 0) && inode) अणु
+	if ((status < 0) && inode) {
 		clear_nlink(inode);
 		iput(inode);
-	पूर्ण
+	}
 
-	अगर (inode_ac)
-		ocfs2_मुक्त_alloc_context(inode_ac);
+	if (inode_ac)
+		ocfs2_free_alloc_context(inode_ac);
 
-	brअन्यथा(new_di_bh);
+	brelse(new_di_bh);
 
-	अगर (!status)
+	if (!status)
 		*new_inode = inode;
 
-	ocfs2_मुक्त_dir_lookup_result(&orphan_insert);
+	ocfs2_free_dir_lookup_result(&orphan_insert);
 
 	ocfs2_inode_unlock(dir, 1);
-	brअन्यथा(parent_di_bh);
-	वापस status;
-पूर्ण
+	brelse(parent_di_bh);
+	return status;
+}
 
-पूर्णांक ocfs2_add_inode_to_orphan(काष्ठा ocfs2_super *osb,
-	काष्ठा inode *inode)
-अणु
-	अक्षर orphan_name[OCFS2_DIO_ORPHAN_PREFIX_LEN + OCFS2_ORPHAN_NAMELEN + 1];
-	काष्ठा inode *orphan_dir_inode = शून्य;
-	काष्ठा ocfs2_dir_lookup_result orphan_insert = अणु शून्य, पूर्ण;
-	काष्ठा buffer_head *di_bh = शून्य;
-	पूर्णांक status = 0;
-	handle_t *handle = शून्य;
-	काष्ठा ocfs2_dinode *di = शून्य;
+int ocfs2_add_inode_to_orphan(struct ocfs2_super *osb,
+	struct inode *inode)
+{
+	char orphan_name[OCFS2_DIO_ORPHAN_PREFIX_LEN + OCFS2_ORPHAN_NAMELEN + 1];
+	struct inode *orphan_dir_inode = NULL;
+	struct ocfs2_dir_lookup_result orphan_insert = { NULL, };
+	struct buffer_head *di_bh = NULL;
+	int status = 0;
+	handle_t *handle = NULL;
+	struct ocfs2_dinode *di = NULL;
 
 	status = ocfs2_inode_lock(inode, &di_bh, 1);
-	अगर (status < 0) अणु
-		mlog_त्रुटि_सं(status);
-		जाओ bail;
-	पूर्ण
+	if (status < 0) {
+		mlog_errno(status);
+		goto bail;
+	}
 
-	di = (काष्ठा ocfs2_dinode *) di_bh->b_data;
+	di = (struct ocfs2_dinode *) di_bh->b_data;
 	/*
 	 * Another append dio crashed?
 	 * If so, manually recover it first.
 	 */
-	अगर (unlikely(di->i_flags & cpu_to_le32(OCFS2_DIO_ORPHANED_FL))) अणु
-		status = ocfs2_truncate_file(inode, di_bh, i_size_पढ़ो(inode));
-		अगर (status < 0) अणु
-			अगर (status != -ENOSPC)
-				mlog_त्रुटि_सं(status);
-			जाओ bail_unlock_inode;
-		पूर्ण
+	if (unlikely(di->i_flags & cpu_to_le32(OCFS2_DIO_ORPHANED_FL))) {
+		status = ocfs2_truncate_file(inode, di_bh, i_size_read(inode));
+		if (status < 0) {
+			if (status != -ENOSPC)
+				mlog_errno(status);
+			goto bail_unlock_inode;
+		}
 
 		status = ocfs2_del_inode_from_orphan(osb, inode, di_bh, 0, 0);
-		अगर (status < 0) अणु
-			mlog_त्रुटि_सं(status);
-			जाओ bail_unlock_inode;
-		पूर्ण
-	पूर्ण
+		if (status < 0) {
+			mlog_errno(status);
+			goto bail_unlock_inode;
+		}
+	}
 
 	status = ocfs2_prepare_orphan_dir(osb, &orphan_dir_inode,
 			OCFS2_I(inode)->ip_blkno,
 			orphan_name,
 			&orphan_insert,
 			true);
-	अगर (status < 0) अणु
-		mlog_त्रुटि_सं(status);
-		जाओ bail_unlock_inode;
-	पूर्ण
+	if (status < 0) {
+		mlog_errno(status);
+		goto bail_unlock_inode;
+	}
 
 	handle = ocfs2_start_trans(osb,
 			OCFS2_INODE_ADD_TO_ORPHAN_CREDITS);
-	अगर (IS_ERR(handle)) अणु
+	if (IS_ERR(handle)) {
 		status = PTR_ERR(handle);
-		जाओ bail_unlock_orphan;
-	पूर्ण
+		goto bail_unlock_orphan;
+	}
 
 	status = ocfs2_orphan_add(osb, handle, inode, di_bh, orphan_name,
 			&orphan_insert, orphan_dir_inode, true);
-	अगर (status)
-		mlog_त्रुटि_सं(status);
+	if (status)
+		mlog_errno(status);
 
 	ocfs2_commit_trans(osb, handle);
 
@@ -2674,77 +2673,77 @@ bail_unlock_orphan:
 	inode_unlock(orphan_dir_inode);
 	iput(orphan_dir_inode);
 
-	ocfs2_मुक्त_dir_lookup_result(&orphan_insert);
+	ocfs2_free_dir_lookup_result(&orphan_insert);
 
 bail_unlock_inode:
 	ocfs2_inode_unlock(inode, 1);
-	brअन्यथा(di_bh);
+	brelse(di_bh);
 
 bail:
-	वापस status;
-पूर्ण
+	return status;
+}
 
-पूर्णांक ocfs2_del_inode_from_orphan(काष्ठा ocfs2_super *osb,
-		काष्ठा inode *inode, काष्ठा buffer_head *di_bh,
-		पूर्णांक update_isize, loff_t end)
-अणु
-	काष्ठा inode *orphan_dir_inode = शून्य;
-	काष्ठा buffer_head *orphan_dir_bh = शून्य;
-	काष्ठा ocfs2_dinode *di = (काष्ठा ocfs2_dinode *)di_bh->b_data;
-	handle_t *handle = शून्य;
-	पूर्णांक status = 0;
+int ocfs2_del_inode_from_orphan(struct ocfs2_super *osb,
+		struct inode *inode, struct buffer_head *di_bh,
+		int update_isize, loff_t end)
+{
+	struct inode *orphan_dir_inode = NULL;
+	struct buffer_head *orphan_dir_bh = NULL;
+	struct ocfs2_dinode *di = (struct ocfs2_dinode *)di_bh->b_data;
+	handle_t *handle = NULL;
+	int status = 0;
 
-	orphan_dir_inode = ocfs2_get_प्रणाली_file_inode(osb,
-			ORPHAN_सूची_SYSTEM_INODE,
+	orphan_dir_inode = ocfs2_get_system_file_inode(osb,
+			ORPHAN_DIR_SYSTEM_INODE,
 			le16_to_cpu(di->i_dio_orphaned_slot));
-	अगर (!orphan_dir_inode) अणु
+	if (!orphan_dir_inode) {
 		status = -ENOENT;
-		mlog_त्रुटि_सं(status);
-		जाओ bail;
-	पूर्ण
+		mlog_errno(status);
+		goto bail;
+	}
 
 	inode_lock(orphan_dir_inode);
 	status = ocfs2_inode_lock(orphan_dir_inode, &orphan_dir_bh, 1);
-	अगर (status < 0) अणु
+	if (status < 0) {
 		inode_unlock(orphan_dir_inode);
 		iput(orphan_dir_inode);
-		mlog_त्रुटि_सं(status);
-		जाओ bail;
-	पूर्ण
+		mlog_errno(status);
+		goto bail;
+	}
 
 	handle = ocfs2_start_trans(osb,
 			OCFS2_INODE_DEL_FROM_ORPHAN_CREDITS);
-	अगर (IS_ERR(handle)) अणु
+	if (IS_ERR(handle)) {
 		status = PTR_ERR(handle);
-		जाओ bail_unlock_orphan;
-	पूर्ण
+		goto bail_unlock_orphan;
+	}
 
 	BUG_ON(!(di->i_flags & cpu_to_le32(OCFS2_DIO_ORPHANED_FL)));
 
 	status = ocfs2_orphan_del(osb, handle, orphan_dir_inode,
 				inode, orphan_dir_bh, true);
-	अगर (status < 0) अणु
-		mlog_त्रुटि_सं(status);
-		जाओ bail_commit;
-	पूर्ण
+	if (status < 0) {
+		mlog_errno(status);
+		goto bail_commit;
+	}
 
 	status = ocfs2_journal_access_di(handle,
 			INODE_CACHE(inode),
 			di_bh,
 			OCFS2_JOURNAL_ACCESS_WRITE);
-	अगर (status < 0) अणु
-		mlog_त्रुटि_सं(status);
-		जाओ bail_commit;
-	पूर्ण
+	if (status < 0) {
+		mlog_errno(status);
+		goto bail_commit;
+	}
 
 	di->i_flags &= ~cpu_to_le32(OCFS2_DIO_ORPHANED_FL);
 	di->i_dio_orphaned_slot = 0;
 
-	अगर (update_isize) अणु
+	if (update_isize) {
 		status = ocfs2_set_inode_size(handle, inode, di_bh, end);
-		अगर (status)
-			mlog_त्रुटि_सं(status);
-	पूर्ण अन्यथा
+		if (status)
+			mlog_errno(status);
+	} else
 		ocfs2_journal_dirty(handle, di_bh);
 
 bail_commit:
@@ -2753,108 +2752,108 @@ bail_commit:
 bail_unlock_orphan:
 	ocfs2_inode_unlock(orphan_dir_inode, 1);
 	inode_unlock(orphan_dir_inode);
-	brअन्यथा(orphan_dir_bh);
+	brelse(orphan_dir_bh);
 	iput(orphan_dir_inode);
 
 bail:
-	वापस status;
-पूर्ण
+	return status;
+}
 
-पूर्णांक ocfs2_mv_orphaned_inode_to_new(काष्ठा inode *dir,
-				   काष्ठा inode *inode,
-				   काष्ठा dentry *dentry)
-अणु
-	पूर्णांक status = 0;
-	काष्ठा buffer_head *parent_di_bh = शून्य;
-	handle_t *handle = शून्य;
-	काष्ठा ocfs2_super *osb = OCFS2_SB(dir->i_sb);
-	काष्ठा ocfs2_dinode *dir_di, *di;
-	काष्ठा inode *orphan_dir_inode = शून्य;
-	काष्ठा buffer_head *orphan_dir_bh = शून्य;
-	काष्ठा buffer_head *di_bh = शून्य;
-	काष्ठा ocfs2_dir_lookup_result lookup = अणु शून्य, पूर्ण;
+int ocfs2_mv_orphaned_inode_to_new(struct inode *dir,
+				   struct inode *inode,
+				   struct dentry *dentry)
+{
+	int status = 0;
+	struct buffer_head *parent_di_bh = NULL;
+	handle_t *handle = NULL;
+	struct ocfs2_super *osb = OCFS2_SB(dir->i_sb);
+	struct ocfs2_dinode *dir_di, *di;
+	struct inode *orphan_dir_inode = NULL;
+	struct buffer_head *orphan_dir_bh = NULL;
+	struct buffer_head *di_bh = NULL;
+	struct ocfs2_dir_lookup_result lookup = { NULL, };
 
 	trace_ocfs2_mv_orphaned_inode_to_new(dir, dentry,
 				dentry->d_name.len, dentry->d_name.name,
-				(अचिन्हित दीर्घ दीर्घ)OCFS2_I(dir)->ip_blkno,
-				(अचिन्हित दीर्घ दीर्घ)OCFS2_I(inode)->ip_blkno);
+				(unsigned long long)OCFS2_I(dir)->ip_blkno,
+				(unsigned long long)OCFS2_I(inode)->ip_blkno);
 
 	status = ocfs2_inode_lock(dir, &parent_di_bh, 1);
-	अगर (status < 0) अणु
-		अगर (status != -ENOENT)
-			mlog_त्रुटि_सं(status);
-		वापस status;
-	पूर्ण
+	if (status < 0) {
+		if (status != -ENOENT)
+			mlog_errno(status);
+		return status;
+	}
 
-	dir_di = (काष्ठा ocfs2_dinode *) parent_di_bh->b_data;
-	अगर (!dir_di->i_links_count) अणु
+	dir_di = (struct ocfs2_dinode *) parent_di_bh->b_data;
+	if (!dir_di->i_links_count) {
 		/* can't make a file in a deleted directory. */
 		status = -ENOENT;
-		जाओ leave;
-	पूर्ण
+		goto leave;
+	}
 
-	status = ocfs2_check_dir_क्रम_entry(dir, dentry->d_name.name,
+	status = ocfs2_check_dir_for_entry(dir, dentry->d_name.name,
 					   dentry->d_name.len);
-	अगर (status)
-		जाओ leave;
+	if (status)
+		goto leave;
 
 	/* get a spot inside the dir. */
-	status = ocfs2_prepare_dir_क्रम_insert(osb, dir, parent_di_bh,
+	status = ocfs2_prepare_dir_for_insert(osb, dir, parent_di_bh,
 					      dentry->d_name.name,
 					      dentry->d_name.len, &lookup);
-	अगर (status < 0) अणु
-		mlog_त्रुटि_सं(status);
-		जाओ leave;
-	पूर्ण
+	if (status < 0) {
+		mlog_errno(status);
+		goto leave;
+	}
 
-	orphan_dir_inode = ocfs2_get_प्रणाली_file_inode(osb,
-						       ORPHAN_सूची_SYSTEM_INODE,
+	orphan_dir_inode = ocfs2_get_system_file_inode(osb,
+						       ORPHAN_DIR_SYSTEM_INODE,
 						       osb->slot_num);
-	अगर (!orphan_dir_inode) अणु
+	if (!orphan_dir_inode) {
 		status = -ENOENT;
-		mlog_त्रुटि_सं(status);
-		जाओ leave;
-	पूर्ण
+		mlog_errno(status);
+		goto leave;
+	}
 
 	inode_lock(orphan_dir_inode);
 
 	status = ocfs2_inode_lock(orphan_dir_inode, &orphan_dir_bh, 1);
-	अगर (status < 0) अणु
-		mlog_त्रुटि_सं(status);
+	if (status < 0) {
+		mlog_errno(status);
 		inode_unlock(orphan_dir_inode);
 		iput(orphan_dir_inode);
-		जाओ leave;
-	पूर्ण
+		goto leave;
+	}
 
-	status = ocfs2_पढ़ो_inode_block(inode, &di_bh);
-	अगर (status < 0) अणु
-		mlog_त्रुटि_सं(status);
-		जाओ orphan_unlock;
-	पूर्ण
+	status = ocfs2_read_inode_block(inode, &di_bh);
+	if (status < 0) {
+		mlog_errno(status);
+		goto orphan_unlock;
+	}
 
-	handle = ocfs2_start_trans(osb, ocfs2_नाम_credits(osb->sb));
-	अगर (IS_ERR(handle)) अणु
+	handle = ocfs2_start_trans(osb, ocfs2_rename_credits(osb->sb));
+	if (IS_ERR(handle)) {
 		status = PTR_ERR(handle);
-		handle = शून्य;
-		mlog_त्रुटि_सं(status);
-		जाओ orphan_unlock;
-	पूर्ण
+		handle = NULL;
+		mlog_errno(status);
+		goto orphan_unlock;
+	}
 
 	status = ocfs2_journal_access_di(handle, INODE_CACHE(inode),
 					 di_bh, OCFS2_JOURNAL_ACCESS_WRITE);
-	अगर (status < 0) अणु
-		mlog_त्रुटि_सं(status);
-		जाओ out_commit;
-	पूर्ण
+	if (status < 0) {
+		mlog_errno(status);
+		goto out_commit;
+	}
 
 	status = ocfs2_orphan_del(osb, handle, orphan_dir_inode, inode,
 				  orphan_dir_bh, false);
-	अगर (status < 0) अणु
-		mlog_त्रुटि_सं(status);
-		जाओ out_commit;
-	पूर्ण
+	if (status < 0) {
+		mlog_errno(status);
+		goto out_commit;
+	}
 
-	di = (काष्ठा ocfs2_dinode *)di_bh->b_data;
+	di = (struct ocfs2_dinode *)di_bh->b_data;
 	di->i_flags &= ~cpu_to_le32(OCFS2_ORPHANED_FL);
 	di->i_orphaned_slot = 0;
 	set_nlink(inode, 1);
@@ -2865,17 +2864,17 @@ bail:
 	status = ocfs2_add_entry(handle, dentry, inode,
 				 OCFS2_I(inode)->ip_blkno, parent_di_bh,
 				 &lookup);
-	अगर (status < 0) अणु
-		mlog_त्रुटि_सं(status);
-		जाओ out_commit;
-	पूर्ण
+	if (status < 0) {
+		mlog_errno(status);
+		goto out_commit;
+	}
 
 	status = ocfs2_dentry_attach_lock(dentry, inode,
 					  OCFS2_I(dir)->ip_blkno);
-	अगर (status) अणु
-		mlog_त्रुटि_सं(status);
-		जाओ out_commit;
-	पूर्ण
+	if (status) {
+		mlog_errno(status);
+		goto out_commit;
+	}
 
 	d_instantiate(dentry, inode);
 	status = 0;
@@ -2889,28 +2888,28 @@ leave:
 
 	ocfs2_inode_unlock(dir, 1);
 
-	brअन्यथा(di_bh);
-	brअन्यथा(parent_di_bh);
-	brअन्यथा(orphan_dir_bh);
+	brelse(di_bh);
+	brelse(parent_di_bh);
+	brelse(orphan_dir_bh);
 
-	ocfs2_मुक्त_dir_lookup_result(&lookup);
+	ocfs2_free_dir_lookup_result(&lookup);
 
-	अगर (status)
-		mlog_त्रुटि_सं(status);
+	if (status)
+		mlog_errno(status);
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
-स्थिर काष्ठा inode_operations ocfs2_dir_iops = अणु
+const struct inode_operations ocfs2_dir_iops = {
 	.create		= ocfs2_create,
 	.lookup		= ocfs2_lookup,
 	.link		= ocfs2_link,
 	.unlink		= ocfs2_unlink,
-	.सूची_हटाओ		= ocfs2_unlink,
+	.rmdir		= ocfs2_unlink,
 	.symlink	= ocfs2_symlink,
-	.सूची_गढ़ो		= ocfs2_सूची_गढ़ो,
+	.mkdir		= ocfs2_mkdir,
 	.mknod		= ocfs2_mknod,
-	.नाम		= ocfs2_नाम,
+	.rename		= ocfs2_rename,
 	.setattr	= ocfs2_setattr,
 	.getattr	= ocfs2_getattr,
 	.permission	= ocfs2_permission,
@@ -2920,4 +2919,4 @@ leave:
 	.set_acl	= ocfs2_iop_set_acl,
 	.fileattr_get	= ocfs2_fileattr_get,
 	.fileattr_set	= ocfs2_fileattr_set,
-पूर्ण;
+};

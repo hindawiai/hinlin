@@ -1,49 +1,48 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Allwinner A64 Display Engine 2.0 Bus Driver
  *
  * Copyright (C) 2018 Icenowy Zheng <icenowy@aosc.io>
  */
 
-#समावेश <linux/of_platक्रमm.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/soc/sunxi/sunxi_sram.h>
+#include <linux/of_platform.h>
+#include <linux/platform_device.h>
+#include <linux/soc/sunxi/sunxi_sram.h>
 
-अटल पूर्णांक sun50i_de2_bus_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device_node *np = pdev->dev.of_node;
-	पूर्णांक ret;
+static int sun50i_de2_bus_probe(struct platform_device *pdev)
+{
+	struct device_node *np = pdev->dev.of_node;
+	int ret;
 
 	ret = sunxi_sram_claim(&pdev->dev);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&pdev->dev, "Error couldn't map SRAM to device\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	of_platक्रमm_populate(np, शून्य, शून्य, &pdev->dev);
+	of_platform_populate(np, NULL, NULL, &pdev->dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sun50i_de2_bus_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
+static int sun50i_de2_bus_remove(struct platform_device *pdev)
+{
 	sunxi_sram_release(&pdev->dev);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id sun50i_de2_bus_of_match[] = अणु
-	अणु .compatible = "allwinner,sun50i-a64-de2", पूर्ण,
-	अणु /* sentinel */ पूर्ण
-पूर्ण;
+static const struct of_device_id sun50i_de2_bus_of_match[] = {
+	{ .compatible = "allwinner,sun50i-a64-de2", },
+	{ /* sentinel */ }
+};
 
-अटल काष्ठा platक्रमm_driver sun50i_de2_bus_driver = अणु
+static struct platform_driver sun50i_de2_bus_driver = {
 	.probe = sun50i_de2_bus_probe,
-	.हटाओ = sun50i_de2_bus_हटाओ,
-	.driver = अणु
+	.remove = sun50i_de2_bus_remove,
+	.driver = {
 		.name = "sun50i-de2-bus",
 		.of_match_table = sun50i_de2_bus_of_match,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-builtin_platक्रमm_driver(sun50i_de2_bus_driver);
+builtin_platform_driver(sun50i_de2_bus_driver);

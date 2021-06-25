@@ -1,8 +1,7 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 
 /*
- * media_device_खोलो.c - Media Controller Device Open Test
+ * media_device_open.c - Media Controller Device Open Test
  *
  * Copyright (c) 2016 Shuah Khan <shuahkh@osg.samsung.com>
  * Copyright (c) 2016 Samsung Electronics Co., Ltd.
@@ -10,74 +9,74 @@
  */
 
 /*
- * This file adds a test क्रम Media Controller API.
+ * This file adds a test for Media Controller API.
  * This test should be run as root and should not be
  * included in the Kselftest run. This test should be
  * run when hardware and driver that makes use Media
- * Controller API are present in the प्रणाली.
+ * Controller API are present in the system.
  *
- * This test खोलोs user specअगरied Media Device and calls
- * MEDIA_IOC_DEVICE_INFO ioctl, बंदs the file, and निकासs.
+ * This test opens user specified Media Device and calls
+ * MEDIA_IOC_DEVICE_INFO ioctl, closes the file, and exits.
  *
  * Usage:
- *	suकरो ./media_device_खोलो -d /dev/mediaX
+ *	sudo ./media_device_open -d /dev/mediaX
  *
  *	Run this test is a loop and run bind/unbind on the driver.
 */
 
-#समावेश <मानकपन.स>
-#समावेश <unistd.h>
-#समावेश <मानककोष.स>
-#समावेश <त्रुटिसं.स>
-#समावेश <माला.स>
-#समावेश <fcntl.h>
-#समावेश <sys/ioctl.h>
-#समावेश <sys/स्थिति.स>
-#समावेश <linux/media.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <errno.h>
+#include <string.h>
+#include <fcntl.h>
+#include <sys/ioctl.h>
+#include <sys/stat.h>
+#include <linux/media.h>
 
-#समावेश "../kselftest.h"
+#include "../kselftest.h"
 
-पूर्णांक मुख्य(पूर्णांक argc, अक्षर **argv)
-अणु
-	पूर्णांक opt;
-	अक्षर media_device[256];
-	पूर्णांक count = 0;
-	काष्ठा media_device_info mdi;
-	पूर्णांक ret;
-	पूर्णांक fd;
+int main(int argc, char **argv)
+{
+	int opt;
+	char media_device[256];
+	int count = 0;
+	struct media_device_info mdi;
+	int ret;
+	int fd;
 
-	अगर (argc < 2) अणु
-		म_लिखो("Usage: %s [-d </dev/mediaX>]\n", argv[0]);
-		निकास(-1);
-	पूर्ण
+	if (argc < 2) {
+		printf("Usage: %s [-d </dev/mediaX>]\n", argv[0]);
+		exit(-1);
+	}
 
 	/* Process arguments */
-	जबतक ((opt = getopt(argc, argv, "d:")) != -1) अणु
-		चयन (opt) अणु
-		हाल 'd':
-			म_नकलन(media_device, optarg, माप(media_device) - 1);
-			media_device[माप(media_device)-1] = '\0';
-			अवरोध;
-		शेष:
-			म_लिखो("Usage: %s [-d </dev/mediaX>]\n", argv[0]);
-			निकास(-1);
-		पूर्ण
-	पूर्ण
+	while ((opt = getopt(argc, argv, "d:")) != -1) {
+		switch (opt) {
+		case 'd':
+			strncpy(media_device, optarg, sizeof(media_device) - 1);
+			media_device[sizeof(media_device)-1] = '\0';
+			break;
+		default:
+			printf("Usage: %s [-d </dev/mediaX>]\n", argv[0]);
+			exit(-1);
+		}
+	}
 
-	अगर (getuid() != 0)
-		ksft_निकास_skip("Please run the test as root - Exiting.\n");
+	if (getuid() != 0)
+		ksft_exit_skip("Please run the test as root - Exiting.\n");
 
-	/* Open Media device and keep it खोलो */
-	fd = खोलो(media_device, O_RDWR);
-	अगर (fd == -1) अणु
-		म_लिखो("Media Device open errno %s\n", म_त्रुटि(त्रुटि_सं));
-		निकास(-1);
-	पूर्ण
+	/* Open Media device and keep it open */
+	fd = open(media_device, O_RDWR);
+	if (fd == -1) {
+		printf("Media Device open errno %s\n", strerror(errno));
+		exit(-1);
+	}
 
 	ret = ioctl(fd, MEDIA_IOC_DEVICE_INFO, &mdi);
-	अगर (ret < 0)
-		म_लिखो("Media Device Info errno %s\n", म_त्रुटि(त्रुटि_सं));
-	अन्यथा
-		म_लिखो("Media device model %s driver %s\n",
+	if (ret < 0)
+		printf("Media Device Info errno %s\n", strerror(errno));
+	else
+		printf("Media device model %s driver %s\n",
 			mdi.model, mdi.driver);
-पूर्ण
+}

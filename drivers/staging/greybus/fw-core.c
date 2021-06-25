@@ -1,310 +1,309 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Greybus Firmware Core Bundle Driver.
  *
  * Copyright 2016 Google Inc.
  * Copyright 2016 Linaro Ltd.
  */
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/firmware.h>
-#समावेश <linux/greybus.h>
-#समावेश "firmware.h"
-#समावेश "spilib.h"
+#include <linux/firmware.h>
+#include <linux/greybus.h>
+#include "firmware.h"
+#include "spilib.h"
 
-काष्ठा gb_fw_core अणु
-	काष्ठा gb_connection	*करोwnload_connection;
-	काष्ठा gb_connection	*mgmt_connection;
-	काष्ठा gb_connection	*spi_connection;
-	काष्ठा gb_connection	*cap_connection;
-पूर्ण;
+struct gb_fw_core {
+	struct gb_connection	*download_connection;
+	struct gb_connection	*mgmt_connection;
+	struct gb_connection	*spi_connection;
+	struct gb_connection	*cap_connection;
+};
 
-अटल काष्ठा spilib_ops *spilib_ops;
+static struct spilib_ops *spilib_ops;
 
-काष्ठा gb_connection *to_fw_mgmt_connection(काष्ठा device *dev)
-अणु
-	काष्ठा gb_fw_core *fw_core = dev_get_drvdata(dev);
+struct gb_connection *to_fw_mgmt_connection(struct device *dev)
+{
+	struct gb_fw_core *fw_core = dev_get_drvdata(dev);
 
-	वापस fw_core->mgmt_connection;
-पूर्ण
+	return fw_core->mgmt_connection;
+}
 
-अटल पूर्णांक gb_fw_spi_connection_init(काष्ठा gb_connection *connection)
-अणु
-	पूर्णांक ret;
+static int gb_fw_spi_connection_init(struct gb_connection *connection)
+{
+	int ret;
 
-	अगर (!connection)
-		वापस 0;
+	if (!connection)
+		return 0;
 
 	ret = gb_connection_enable(connection);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = gb_spilib_master_init(connection, &connection->bundle->dev,
 				    spilib_ops);
-	अगर (ret) अणु
+	if (ret) {
 		gb_connection_disable(connection);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम gb_fw_spi_connection_निकास(काष्ठा gb_connection *connection)
-अणु
-	अगर (!connection)
-		वापस;
+static void gb_fw_spi_connection_exit(struct gb_connection *connection)
+{
+	if (!connection)
+		return;
 
-	gb_spilib_master_निकास(connection);
+	gb_spilib_master_exit(connection);
 	gb_connection_disable(connection);
-पूर्ण
+}
 
-अटल पूर्णांक gb_fw_core_probe(काष्ठा gb_bundle *bundle,
-			    स्थिर काष्ठा greybus_bundle_id *id)
-अणु
-	काष्ठा greybus_descriptor_cport *cport_desc;
-	काष्ठा gb_connection *connection;
-	काष्ठा gb_fw_core *fw_core;
-	पूर्णांक ret, i;
+static int gb_fw_core_probe(struct gb_bundle *bundle,
+			    const struct greybus_bundle_id *id)
+{
+	struct greybus_descriptor_cport *cport_desc;
+	struct gb_connection *connection;
+	struct gb_fw_core *fw_core;
+	int ret, i;
 	u16 cport_id;
 	u8 protocol_id;
 
-	fw_core = kzalloc(माप(*fw_core), GFP_KERNEL);
-	अगर (!fw_core)
-		वापस -ENOMEM;
+	fw_core = kzalloc(sizeof(*fw_core), GFP_KERNEL);
+	if (!fw_core)
+		return -ENOMEM;
 
 	/* Parse CPorts and create connections */
-	क्रम (i = 0; i < bundle->num_cports; i++) अणु
+	for (i = 0; i < bundle->num_cports; i++) {
 		cport_desc = &bundle->cport_desc[i];
 		cport_id = le16_to_cpu(cport_desc->id);
 		protocol_id = cport_desc->protocol_id;
 
-		चयन (protocol_id) अणु
-		हाल GREYBUS_PROTOCOL_FW_MANAGEMENT:
+		switch (protocol_id) {
+		case GREYBUS_PROTOCOL_FW_MANAGEMENT:
 			/* Disallow multiple Firmware Management CPorts */
-			अगर (fw_core->mgmt_connection) अणु
+			if (fw_core->mgmt_connection) {
 				dev_err(&bundle->dev,
 					"multiple management CPorts found\n");
 				ret = -EINVAL;
-				जाओ err_destroy_connections;
-			पूर्ण
+				goto err_destroy_connections;
+			}
 
 			connection = gb_connection_create(bundle, cport_id,
 						gb_fw_mgmt_request_handler);
-			अगर (IS_ERR(connection)) अणु
+			if (IS_ERR(connection)) {
 				ret = PTR_ERR(connection);
 				dev_err(&bundle->dev,
 					"failed to create management connection (%d)\n",
 					ret);
-				जाओ err_destroy_connections;
-			पूर्ण
+				goto err_destroy_connections;
+			}
 
 			fw_core->mgmt_connection = connection;
-			अवरोध;
-		हाल GREYBUS_PROTOCOL_FW_DOWNLOAD:
+			break;
+		case GREYBUS_PROTOCOL_FW_DOWNLOAD:
 			/* Disallow multiple Firmware Download CPorts */
-			अगर (fw_core->करोwnload_connection) अणु
+			if (fw_core->download_connection) {
 				dev_err(&bundle->dev,
 					"multiple download CPorts found\n");
 				ret = -EINVAL;
-				जाओ err_destroy_connections;
-			पूर्ण
+				goto err_destroy_connections;
+			}
 
 			connection = gb_connection_create(bundle, cport_id,
-						gb_fw_करोwnload_request_handler);
-			अगर (IS_ERR(connection)) अणु
+						gb_fw_download_request_handler);
+			if (IS_ERR(connection)) {
 				dev_err(&bundle->dev, "failed to create download connection (%ld)\n",
 					PTR_ERR(connection));
-			पूर्ण अन्यथा अणु
-				fw_core->करोwnload_connection = connection;
-			पूर्ण
+			} else {
+				fw_core->download_connection = connection;
+			}
 
-			अवरोध;
-		हाल GREYBUS_PROTOCOL_SPI:
+			break;
+		case GREYBUS_PROTOCOL_SPI:
 			/* Disallow multiple SPI CPorts */
-			अगर (fw_core->spi_connection) अणु
+			if (fw_core->spi_connection) {
 				dev_err(&bundle->dev,
 					"multiple SPI CPorts found\n");
 				ret = -EINVAL;
-				जाओ err_destroy_connections;
-			पूर्ण
+				goto err_destroy_connections;
+			}
 
 			connection = gb_connection_create(bundle, cport_id,
-							  शून्य);
-			अगर (IS_ERR(connection)) अणु
+							  NULL);
+			if (IS_ERR(connection)) {
 				dev_err(&bundle->dev, "failed to create SPI connection (%ld)\n",
 					PTR_ERR(connection));
-			पूर्ण अन्यथा अणु
+			} else {
 				fw_core->spi_connection = connection;
-			पूर्ण
+			}
 
-			अवरोध;
-		हाल GREYBUS_PROTOCOL_AUTHENTICATION:
+			break;
+		case GREYBUS_PROTOCOL_AUTHENTICATION:
 			/* Disallow multiple CAP CPorts */
-			अगर (fw_core->cap_connection) अणु
+			if (fw_core->cap_connection) {
 				dev_err(&bundle->dev, "multiple Authentication CPorts found\n");
 				ret = -EINVAL;
-				जाओ err_destroy_connections;
-			पूर्ण
+				goto err_destroy_connections;
+			}
 
 			connection = gb_connection_create(bundle, cport_id,
-							  शून्य);
-			अगर (IS_ERR(connection)) अणु
+							  NULL);
+			if (IS_ERR(connection)) {
 				dev_err(&bundle->dev, "failed to create Authentication connection (%ld)\n",
 					PTR_ERR(connection));
-			पूर्ण अन्यथा अणु
+			} else {
 				fw_core->cap_connection = connection;
-			पूर्ण
+			}
 
-			अवरोध;
-		शेष:
+			break;
+		default:
 			dev_err(&bundle->dev, "invalid protocol id (0x%02x)\n",
 				protocol_id);
 			ret = -EINVAL;
-			जाओ err_destroy_connections;
-		पूर्ण
-	पूर्ण
+			goto err_destroy_connections;
+		}
+	}
 
 	/* Firmware Management connection is mandatory */
-	अगर (!fw_core->mgmt_connection) अणु
+	if (!fw_core->mgmt_connection) {
 		dev_err(&bundle->dev, "missing management connection\n");
 		ret = -ENODEV;
-		जाओ err_destroy_connections;
-	पूर्ण
+		goto err_destroy_connections;
+	}
 
-	ret = gb_fw_करोwnload_connection_init(fw_core->करोwnload_connection);
-	अगर (ret) अणु
+	ret = gb_fw_download_connection_init(fw_core->download_connection);
+	if (ret) {
 		/* We may still be able to work with the Interface */
 		dev_err(&bundle->dev, "failed to initialize firmware download connection, disable it (%d)\n",
 			ret);
-		gb_connection_destroy(fw_core->करोwnload_connection);
-		fw_core->करोwnload_connection = शून्य;
-	पूर्ण
+		gb_connection_destroy(fw_core->download_connection);
+		fw_core->download_connection = NULL;
+	}
 
 	ret = gb_fw_spi_connection_init(fw_core->spi_connection);
-	अगर (ret) अणु
+	if (ret) {
 		/* We may still be able to work with the Interface */
 		dev_err(&bundle->dev, "failed to initialize SPI connection, disable it (%d)\n",
 			ret);
 		gb_connection_destroy(fw_core->spi_connection);
-		fw_core->spi_connection = शून्य;
-	पूर्ण
+		fw_core->spi_connection = NULL;
+	}
 
 	ret = gb_cap_connection_init(fw_core->cap_connection);
-	अगर (ret) अणु
+	if (ret) {
 		/* We may still be able to work with the Interface */
 		dev_err(&bundle->dev, "failed to initialize CAP connection, disable it (%d)\n",
 			ret);
 		gb_connection_destroy(fw_core->cap_connection);
-		fw_core->cap_connection = शून्य;
-	पूर्ण
+		fw_core->cap_connection = NULL;
+	}
 
 	ret = gb_fw_mgmt_connection_init(fw_core->mgmt_connection);
-	अगर (ret) अणु
+	if (ret) {
 		/* We may still be able to work with the Interface */
 		dev_err(&bundle->dev, "failed to initialize firmware management connection, disable it (%d)\n",
 			ret);
-		जाओ err_निकास_connections;
-	पूर्ण
+		goto err_exit_connections;
+	}
 
 	greybus_set_drvdata(bundle, fw_core);
 
-	/* FIXME: Remove this after S2 Loader माला_लो runसमय PM support */
-	अगर (!(bundle->पूर्णांकf->quirks & GB_INTERFACE_QUIRK_NO_PM))
-		gb_pm_runसमय_put_स्वतःsuspend(bundle);
+	/* FIXME: Remove this after S2 Loader gets runtime PM support */
+	if (!(bundle->intf->quirks & GB_INTERFACE_QUIRK_NO_PM))
+		gb_pm_runtime_put_autosuspend(bundle);
 
-	वापस 0;
+	return 0;
 
-err_निकास_connections:
-	gb_cap_connection_निकास(fw_core->cap_connection);
-	gb_fw_spi_connection_निकास(fw_core->spi_connection);
-	gb_fw_करोwnload_connection_निकास(fw_core->करोwnload_connection);
+err_exit_connections:
+	gb_cap_connection_exit(fw_core->cap_connection);
+	gb_fw_spi_connection_exit(fw_core->spi_connection);
+	gb_fw_download_connection_exit(fw_core->download_connection);
 err_destroy_connections:
 	gb_connection_destroy(fw_core->mgmt_connection);
 	gb_connection_destroy(fw_core->cap_connection);
 	gb_connection_destroy(fw_core->spi_connection);
-	gb_connection_destroy(fw_core->करोwnload_connection);
-	kमुक्त(fw_core);
+	gb_connection_destroy(fw_core->download_connection);
+	kfree(fw_core);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम gb_fw_core_disconnect(काष्ठा gb_bundle *bundle)
-अणु
-	काष्ठा gb_fw_core *fw_core = greybus_get_drvdata(bundle);
-	पूर्णांक ret;
+static void gb_fw_core_disconnect(struct gb_bundle *bundle)
+{
+	struct gb_fw_core *fw_core = greybus_get_drvdata(bundle);
+	int ret;
 
-	/* FIXME: Remove this after S2 Loader माला_लो runसमय PM support */
-	अगर (!(bundle->पूर्णांकf->quirks & GB_INTERFACE_QUIRK_NO_PM)) अणु
-		ret = gb_pm_runसमय_get_sync(bundle);
-		अगर (ret)
-			gb_pm_runसमय_get_noresume(bundle);
-	पूर्ण
+	/* FIXME: Remove this after S2 Loader gets runtime PM support */
+	if (!(bundle->intf->quirks & GB_INTERFACE_QUIRK_NO_PM)) {
+		ret = gb_pm_runtime_get_sync(bundle);
+		if (ret)
+			gb_pm_runtime_get_noresume(bundle);
+	}
 
-	gb_fw_mgmt_connection_निकास(fw_core->mgmt_connection);
-	gb_cap_connection_निकास(fw_core->cap_connection);
-	gb_fw_spi_connection_निकास(fw_core->spi_connection);
-	gb_fw_करोwnload_connection_निकास(fw_core->करोwnload_connection);
+	gb_fw_mgmt_connection_exit(fw_core->mgmt_connection);
+	gb_cap_connection_exit(fw_core->cap_connection);
+	gb_fw_spi_connection_exit(fw_core->spi_connection);
+	gb_fw_download_connection_exit(fw_core->download_connection);
 
 	gb_connection_destroy(fw_core->mgmt_connection);
 	gb_connection_destroy(fw_core->cap_connection);
 	gb_connection_destroy(fw_core->spi_connection);
-	gb_connection_destroy(fw_core->करोwnload_connection);
+	gb_connection_destroy(fw_core->download_connection);
 
-	kमुक्त(fw_core);
-पूर्ण
+	kfree(fw_core);
+}
 
-अटल स्थिर काष्ठा greybus_bundle_id gb_fw_core_id_table[] = अणु
-	अणु GREYBUS_DEVICE_CLASS(GREYBUS_CLASS_FW_MANAGEMENT) पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct greybus_bundle_id gb_fw_core_id_table[] = {
+	{ GREYBUS_DEVICE_CLASS(GREYBUS_CLASS_FW_MANAGEMENT) },
+	{ }
+};
 
-अटल काष्ठा greybus_driver gb_fw_core_driver = अणु
+static struct greybus_driver gb_fw_core_driver = {
 	.name		= "gb-firmware",
 	.probe		= gb_fw_core_probe,
 	.disconnect	= gb_fw_core_disconnect,
 	.id_table	= gb_fw_core_id_table,
-पूर्ण;
+};
 
-अटल पूर्णांक fw_core_init(व्योम)
-अणु
-	पूर्णांक ret;
+static int fw_core_init(void)
+{
+	int ret;
 
 	ret = fw_mgmt_init();
-	अगर (ret) अणु
+	if (ret) {
 		pr_err("Failed to initialize fw-mgmt core (%d)\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	ret = cap_init();
-	अगर (ret) अणु
+	if (ret) {
 		pr_err("Failed to initialize component authentication core (%d)\n",
 		       ret);
-		जाओ fw_mgmt_निकास;
-	पूर्ण
+		goto fw_mgmt_exit;
+	}
 
-	ret = greybus_रेजिस्टर(&gb_fw_core_driver);
-	अगर (ret)
-		जाओ cap_निकास;
+	ret = greybus_register(&gb_fw_core_driver);
+	if (ret)
+		goto cap_exit;
 
-	वापस 0;
+	return 0;
 
-cap_निकास:
-	cap_निकास();
-fw_mgmt_निकास:
-	fw_mgmt_निकास();
+cap_exit:
+	cap_exit();
+fw_mgmt_exit:
+	fw_mgmt_exit();
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 module_init(fw_core_init);
 
-अटल व्योम __निकास fw_core_निकास(व्योम)
-अणु
-	greybus_deरेजिस्टर(&gb_fw_core_driver);
-	cap_निकास();
-	fw_mgmt_निकास();
-पूर्ण
-module_निकास(fw_core_निकास);
+static void __exit fw_core_exit(void)
+{
+	greybus_deregister(&gb_fw_core_driver);
+	cap_exit();
+	fw_mgmt_exit();
+}
+module_exit(fw_core_exit);
 
 MODULE_ALIAS("greybus:firmware");
 MODULE_AUTHOR("Viresh Kumar <viresh.kumar@linaro.org>");

@@ -1,65 +1,64 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (C) 2020 BAIKAL ELECTRONICS, JSC
  *
- * Baikal-T1 CCU PLL पूर्णांकerface driver
+ * Baikal-T1 CCU PLL interface driver
  */
-#अगर_अघोषित __CLK_BT1_CCU_PLL_H__
-#घोषणा __CLK_BT1_CCU_PLL_H__
+#ifndef __CLK_BT1_CCU_PLL_H__
+#define __CLK_BT1_CCU_PLL_H__
 
-#समावेश <linux/clk-provider.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/bits.h>
-#समावेश <linux/of.h>
+#include <linux/clk-provider.h>
+#include <linux/spinlock.h>
+#include <linux/regmap.h>
+#include <linux/bits.h>
+#include <linux/of.h>
 
 /*
- * काष्ठा ccu_pll_init_data - CCU PLL initialization data
- * @id: Clock निजी identअगरier.
+ * struct ccu_pll_init_data - CCU PLL initialization data
+ * @id: Clock private identifier.
  * @name: Clocks name.
  * @parent_name: Clocks parent name in a fw node.
- * @base: PLL रेजिस्टरs base address with respect to the sys_regs base.
- * @sys_regs: Baikal-T1 System Controller रेजिस्टरs map.
- * @np: Poपूर्णांकer to the node describing the CCU PLLs.
- * @flags: PLL घड़ी flags.
+ * @base: PLL registers base address with respect to the sys_regs base.
+ * @sys_regs: Baikal-T1 System Controller registers map.
+ * @np: Pointer to the node describing the CCU PLLs.
+ * @flags: PLL clock flags.
  */
-काष्ठा ccu_pll_init_data अणु
-	अचिन्हित पूर्णांक id;
-	स्थिर अक्षर *name;
-	स्थिर अक्षर *parent_name;
-	अचिन्हित पूर्णांक base;
-	काष्ठा regmap *sys_regs;
-	काष्ठा device_node *np;
-	अचिन्हित दीर्घ flags;
-पूर्ण;
+struct ccu_pll_init_data {
+	unsigned int id;
+	const char *name;
+	const char *parent_name;
+	unsigned int base;
+	struct regmap *sys_regs;
+	struct device_node *np;
+	unsigned long flags;
+};
 
 /*
- * काष्ठा ccu_pll - CCU PLL descriptor
+ * struct ccu_pll - CCU PLL descriptor
  * @hw: clk_hw of the PLL.
- * @id: Clock निजी identअगरier.
- * @reg_ctl: PLL control रेजिस्टर base.
- * @reg_ctl1: PLL control1 रेजिस्टर base.
- * @sys_regs: Baikal-T1 System Controller रेजिस्टरs map.
+ * @id: Clock private identifier.
+ * @reg_ctl: PLL control register base.
+ * @reg_ctl1: PLL control1 register base.
+ * @sys_regs: Baikal-T1 System Controller registers map.
  * @lock: PLL state change spin-lock.
  */
-काष्ठा ccu_pll अणु
-	काष्ठा clk_hw hw;
-	अचिन्हित पूर्णांक id;
-	अचिन्हित पूर्णांक reg_ctl;
-	अचिन्हित पूर्णांक reg_ctl1;
-	काष्ठा regmap *sys_regs;
+struct ccu_pll {
+	struct clk_hw hw;
+	unsigned int id;
+	unsigned int reg_ctl;
+	unsigned int reg_ctl1;
+	struct regmap *sys_regs;
 	spinlock_t lock;
-पूर्ण;
-#घोषणा to_ccu_pll(_hw) container_of(_hw, काष्ठा ccu_pll, hw)
+};
+#define to_ccu_pll(_hw) container_of(_hw, struct ccu_pll, hw)
 
-अटल अंतरभूत काष्ठा clk_hw *ccu_pll_get_clk_hw(काष्ठा ccu_pll *pll)
-अणु
-	वापस pll ? &pll->hw : शून्य;
-पूर्ण
+static inline struct clk_hw *ccu_pll_get_clk_hw(struct ccu_pll *pll)
+{
+	return pll ? &pll->hw : NULL;
+}
 
-काष्ठा ccu_pll *ccu_pll_hw_रेजिस्टर(स्थिर काष्ठा ccu_pll_init_data *init);
+struct ccu_pll *ccu_pll_hw_register(const struct ccu_pll_init_data *init);
 
-व्योम ccu_pll_hw_unरेजिस्टर(काष्ठा ccu_pll *pll);
+void ccu_pll_hw_unregister(struct ccu_pll *pll);
 
-#पूर्ण_अगर /* __CLK_BT1_CCU_PLL_H__ */
+#endif /* __CLK_BT1_CCU_PLL_H__ */

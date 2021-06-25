@@ -1,26 +1,25 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
- *  arch/arm/include/यंत्र/prom.h
+ *  arch/arm/include/asm/prom.h
  *
  *  Copyright (C) 2009 Canonical Ltd. <jeremy.kerr@canonical.com>
  */
-#अगर_अघोषित __ASMARM_PROM_H
-#घोषणा __ASMARM_PROM_H
+#ifndef __ASMARM_PROM_H
+#define __ASMARM_PROM_H
 
-#अगर_घोषित CONFIG_OF
+#ifdef CONFIG_OF
 
-बाह्य स्थिर काष्ठा machine_desc *setup_machine_fdt(व्योम *dt_virt);
-बाह्य व्योम __init arm_dt_init_cpu_maps(व्योम);
+extern const struct machine_desc *setup_machine_fdt(void *dt_virt);
+extern void __init arm_dt_init_cpu_maps(void);
 
-#अन्यथा /* CONFIG_OF */
+#else /* CONFIG_OF */
 
-अटल अंतरभूत स्थिर काष्ठा machine_desc *setup_machine_fdt(व्योम *dt_virt)
-अणु
-	वापस शून्य;
-पूर्ण
+static inline const struct machine_desc *setup_machine_fdt(void *dt_virt)
+{
+	return NULL;
+}
 
-अटल अंतरभूत व्योम arm_dt_init_cpu_maps(व्योम) अणु पूर्ण
+static inline void arm_dt_init_cpu_maps(void) { }
 
-#पूर्ण_अगर /* CONFIG_OF */
-#पूर्ण_अगर /* ASMARM_PROM_H */
+#endif /* CONFIG_OF */
+#endif /* ASMARM_PROM_H */

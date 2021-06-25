@@ -1,99 +1,98 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _MOTOROLA_PGALLOC_H
-#घोषणा _MOTOROLA_PGALLOC_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _MOTOROLA_PGALLOC_H
+#define _MOTOROLA_PGALLOC_H
 
-#समावेश <यंत्र/tlb.h>
-#समावेश <यंत्र/tlbflush.h>
+#include <asm/tlb.h>
+#include <asm/tlbflush.h>
 
-बाह्य व्योम mmu_page_ctor(व्योम *page);
-बाह्य व्योम mmu_page_dtor(व्योम *page);
+extern void mmu_page_ctor(void *page);
+extern void mmu_page_dtor(void *page);
 
-क्रमागत m68k_table_types अणु
+enum m68k_table_types {
 	TABLE_PGD = 0,
 	TABLE_PMD = 0, /* same size as PGD */
 	TABLE_PTE = 1,
-पूर्ण;
+};
 
-बाह्य व्योम init_poपूर्णांकer_table(व्योम *table, पूर्णांक type);
-बाह्य व्योम *get_poपूर्णांकer_table(पूर्णांक type);
-बाह्य पूर्णांक मुक्त_poपूर्णांकer_table(व्योम *table, पूर्णांक type);
+extern void init_pointer_table(void *table, int type);
+extern void *get_pointer_table(int type);
+extern int free_pointer_table(void *table, int type);
 
 /*
- * Allocate and मुक्त page tables. The xxx_kernel() versions are
+ * Allocate and free page tables. The xxx_kernel() versions are
  * used to allocate a kernel page table - this turns on ASN bits
- * अगर any.
+ * if any.
  */
 
-अटल अंतरभूत pte_t *pte_alloc_one_kernel(काष्ठा mm_काष्ठा *mm)
-अणु
-	वापस get_poपूर्णांकer_table(TABLE_PTE);
-पूर्ण
+static inline pte_t *pte_alloc_one_kernel(struct mm_struct *mm)
+{
+	return get_pointer_table(TABLE_PTE);
+}
 
-अटल अंतरभूत व्योम pte_मुक्त_kernel(काष्ठा mm_काष्ठा *mm, pte_t *pte)
-अणु
-	मुक्त_poपूर्णांकer_table(pte, TABLE_PTE);
-पूर्ण
+static inline void pte_free_kernel(struct mm_struct *mm, pte_t *pte)
+{
+	free_pointer_table(pte, TABLE_PTE);
+}
 
-अटल अंतरभूत pgtable_t pte_alloc_one(काष्ठा mm_काष्ठा *mm)
-अणु
-	वापस get_poपूर्णांकer_table(TABLE_PTE);
-पूर्ण
+static inline pgtable_t pte_alloc_one(struct mm_struct *mm)
+{
+	return get_pointer_table(TABLE_PTE);
+}
 
-अटल अंतरभूत व्योम pte_मुक्त(काष्ठा mm_काष्ठा *mm, pgtable_t pgtable)
-अणु
-	मुक्त_poपूर्णांकer_table(pgtable, TABLE_PTE);
-पूर्ण
+static inline void pte_free(struct mm_struct *mm, pgtable_t pgtable)
+{
+	free_pointer_table(pgtable, TABLE_PTE);
+}
 
-अटल अंतरभूत व्योम __pte_मुक्त_tlb(काष्ठा mmu_gather *tlb, pgtable_t pgtable,
-				  अचिन्हित दीर्घ address)
-अणु
-	मुक्त_poपूर्णांकer_table(pgtable, TABLE_PTE);
-पूर्ण
-
-
-अटल अंतरभूत pmd_t *pmd_alloc_one(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ address)
-अणु
-	वापस get_poपूर्णांकer_table(TABLE_PMD);
-पूर्ण
-
-अटल अंतरभूत पूर्णांक pmd_मुक्त(काष्ठा mm_काष्ठा *mm, pmd_t *pmd)
-अणु
-	वापस मुक्त_poपूर्णांकer_table(pmd, TABLE_PMD);
-पूर्ण
-
-अटल अंतरभूत पूर्णांक __pmd_मुक्त_tlb(काष्ठा mmu_gather *tlb, pmd_t *pmd,
-				 अचिन्हित दीर्घ address)
-अणु
-	वापस मुक्त_poपूर्णांकer_table(pmd, TABLE_PMD);
-पूर्ण
+static inline void __pte_free_tlb(struct mmu_gather *tlb, pgtable_t pgtable,
+				  unsigned long address)
+{
+	free_pointer_table(pgtable, TABLE_PTE);
+}
 
 
-अटल अंतरभूत व्योम pgd_मुक्त(काष्ठा mm_काष्ठा *mm, pgd_t *pgd)
-अणु
-	मुक्त_poपूर्णांकer_table(pgd, TABLE_PGD);
-पूर्ण
+static inline pmd_t *pmd_alloc_one(struct mm_struct *mm, unsigned long address)
+{
+	return get_pointer_table(TABLE_PMD);
+}
 
-अटल अंतरभूत pgd_t *pgd_alloc(काष्ठा mm_काष्ठा *mm)
-अणु
-	वापस get_poपूर्णांकer_table(TABLE_PGD);
-पूर्ण
+static inline int pmd_free(struct mm_struct *mm, pmd_t *pmd)
+{
+	return free_pointer_table(pmd, TABLE_PMD);
+}
+
+static inline int __pmd_free_tlb(struct mmu_gather *tlb, pmd_t *pmd,
+				 unsigned long address)
+{
+	return free_pointer_table(pmd, TABLE_PMD);
+}
 
 
-अटल अंतरभूत व्योम pmd_populate_kernel(काष्ठा mm_काष्ठा *mm, pmd_t *pmd, pte_t *pte)
-अणु
+static inline void pgd_free(struct mm_struct *mm, pgd_t *pgd)
+{
+	free_pointer_table(pgd, TABLE_PGD);
+}
+
+static inline pgd_t *pgd_alloc(struct mm_struct *mm)
+{
+	return get_pointer_table(TABLE_PGD);
+}
+
+
+static inline void pmd_populate_kernel(struct mm_struct *mm, pmd_t *pmd, pte_t *pte)
+{
 	pmd_set(pmd, pte);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम pmd_populate(काष्ठा mm_काष्ठा *mm, pmd_t *pmd, pgtable_t page)
-अणु
+static inline void pmd_populate(struct mm_struct *mm, pmd_t *pmd, pgtable_t page)
+{
 	pmd_set(pmd, page);
-पूर्ण
-#घोषणा pmd_pgtable(pmd) ((pgtable_t)pmd_page_vaddr(pmd))
+}
+#define pmd_pgtable(pmd) ((pgtable_t)pmd_page_vaddr(pmd))
 
-अटल अंतरभूत व्योम pud_populate(काष्ठा mm_काष्ठा *mm, pud_t *pud, pmd_t *pmd)
-अणु
+static inline void pud_populate(struct mm_struct *mm, pud_t *pud, pmd_t *pmd)
+{
 	pud_set(pud, pmd);
-पूर्ण
+}
 
-#पूर्ण_अगर /* _MOTOROLA_PGALLOC_H */
+#endif /* _MOTOROLA_PGALLOC_H */

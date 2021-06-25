@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * Hisilicon घड़ी driver
+ * Hisilicon clock driver
  *
  * Copyright (c) 2012-2013 Hisilicon Limited.
  * Copyright (c) 2012-2013 Linaro Limited.
@@ -10,335 +9,335 @@
  *	   Xin Li <li.xin@linaro.org>
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/clkdev.h>
-#समावेश <linux/clk-provider.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/of.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/slab.h>
+#include <linux/kernel.h>
+#include <linux/clkdev.h>
+#include <linux/clk-provider.h>
+#include <linux/delay.h>
+#include <linux/io.h>
+#include <linux/of.h>
+#include <linux/of_address.h>
+#include <linux/of_device.h>
+#include <linux/slab.h>
 
-#समावेश "clk.h"
+#include "clk.h"
 
-अटल DEFINE_SPINLOCK(hisi_clk_lock);
+static DEFINE_SPINLOCK(hisi_clk_lock);
 
-काष्ठा hisi_घड़ी_data *hisi_clk_alloc(काष्ठा platक्रमm_device *pdev,
-						पूर्णांक nr_clks)
-अणु
-	काष्ठा hisi_घड़ी_data *clk_data;
-	काष्ठा resource *res;
-	काष्ठा clk **clk_table;
+struct hisi_clock_data *hisi_clk_alloc(struct platform_device *pdev,
+						int nr_clks)
+{
+	struct hisi_clock_data *clk_data;
+	struct resource *res;
+	struct clk **clk_table;
 
-	clk_data = devm_kदो_स्मृति(&pdev->dev, माप(*clk_data), GFP_KERNEL);
-	अगर (!clk_data)
-		वापस शून्य;
+	clk_data = devm_kmalloc(&pdev->dev, sizeof(*clk_data), GFP_KERNEL);
+	if (!clk_data)
+		return NULL;
 
-	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
-	अगर (!res)
-		वापस शून्य;
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	if (!res)
+		return NULL;
 	clk_data->base = devm_ioremap(&pdev->dev,
 				res->start, resource_size(res));
-	अगर (!clk_data->base)
-		वापस शून्य;
+	if (!clk_data->base)
+		return NULL;
 
-	clk_table = devm_kदो_स्मृति_array(&pdev->dev, nr_clks,
-				       माप(*clk_table),
+	clk_table = devm_kmalloc_array(&pdev->dev, nr_clks,
+				       sizeof(*clk_table),
 				       GFP_KERNEL);
-	अगर (!clk_table)
-		वापस शून्य;
+	if (!clk_table)
+		return NULL;
 
 	clk_data->clk_data.clks = clk_table;
 	clk_data->clk_data.clk_num = nr_clks;
 
-	वापस clk_data;
-पूर्ण
+	return clk_data;
+}
 EXPORT_SYMBOL_GPL(hisi_clk_alloc);
 
-काष्ठा hisi_घड़ी_data *hisi_clk_init(काष्ठा device_node *np,
-					     पूर्णांक nr_clks)
-अणु
-	काष्ठा hisi_घड़ी_data *clk_data;
-	काष्ठा clk **clk_table;
-	व्योम __iomem *base;
+struct hisi_clock_data *hisi_clk_init(struct device_node *np,
+					     int nr_clks)
+{
+	struct hisi_clock_data *clk_data;
+	struct clk **clk_table;
+	void __iomem *base;
 
 	base = of_iomap(np, 0);
-	अगर (!base) अणु
+	if (!base) {
 		pr_err("%s: failed to map clock registers\n", __func__);
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	clk_data = kzalloc(माप(*clk_data), GFP_KERNEL);
-	अगर (!clk_data)
-		जाओ err;
+	clk_data = kzalloc(sizeof(*clk_data), GFP_KERNEL);
+	if (!clk_data)
+		goto err;
 
 	clk_data->base = base;
-	clk_table = kसुस्मृति(nr_clks, माप(*clk_table), GFP_KERNEL);
-	अगर (!clk_table)
-		जाओ err_data;
+	clk_table = kcalloc(nr_clks, sizeof(*clk_table), GFP_KERNEL);
+	if (!clk_table)
+		goto err_data;
 
 	clk_data->clk_data.clks = clk_table;
 	clk_data->clk_data.clk_num = nr_clks;
 	of_clk_add_provider(np, of_clk_src_onecell_get, &clk_data->clk_data);
-	वापस clk_data;
+	return clk_data;
 err_data:
-	kमुक्त(clk_data);
+	kfree(clk_data);
 err:
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 EXPORT_SYMBOL_GPL(hisi_clk_init);
 
-पूर्णांक hisi_clk_रेजिस्टर_fixed_rate(स्थिर काष्ठा hisi_fixed_rate_घड़ी *clks,
-					 पूर्णांक nums, काष्ठा hisi_घड़ी_data *data)
-अणु
-	काष्ठा clk *clk;
-	पूर्णांक i;
+int hisi_clk_register_fixed_rate(const struct hisi_fixed_rate_clock *clks,
+					 int nums, struct hisi_clock_data *data)
+{
+	struct clk *clk;
+	int i;
 
-	क्रम (i = 0; i < nums; i++) अणु
-		clk = clk_रेजिस्टर_fixed_rate(शून्य, clks[i].name,
+	for (i = 0; i < nums; i++) {
+		clk = clk_register_fixed_rate(NULL, clks[i].name,
 					      clks[i].parent_name,
 					      clks[i].flags,
 					      clks[i].fixed_rate);
-		अगर (IS_ERR(clk)) अणु
+		if (IS_ERR(clk)) {
 			pr_err("%s: failed to register clock %s\n",
 			       __func__, clks[i].name);
-			जाओ err;
-		पूर्ण
+			goto err;
+		}
 		data->clk_data.clks[clks[i].id] = clk;
-	पूर्ण
+	}
 
-	वापस 0;
+	return 0;
 
 err:
-	जबतक (i--)
-		clk_unरेजिस्टर_fixed_rate(data->clk_data.clks[clks[i].id]);
+	while (i--)
+		clk_unregister_fixed_rate(data->clk_data.clks[clks[i].id]);
 
-	वापस PTR_ERR(clk);
-पूर्ण
-EXPORT_SYMBOL_GPL(hisi_clk_रेजिस्टर_fixed_rate);
+	return PTR_ERR(clk);
+}
+EXPORT_SYMBOL_GPL(hisi_clk_register_fixed_rate);
 
-पूर्णांक hisi_clk_रेजिस्टर_fixed_factor(स्थिर काष्ठा hisi_fixed_factor_घड़ी *clks,
-					   पूर्णांक nums,
-					   काष्ठा hisi_घड़ी_data *data)
-अणु
-	काष्ठा clk *clk;
-	पूर्णांक i;
+int hisi_clk_register_fixed_factor(const struct hisi_fixed_factor_clock *clks,
+					   int nums,
+					   struct hisi_clock_data *data)
+{
+	struct clk *clk;
+	int i;
 
-	क्रम (i = 0; i < nums; i++) अणु
-		clk = clk_रेजिस्टर_fixed_factor(शून्य, clks[i].name,
+	for (i = 0; i < nums; i++) {
+		clk = clk_register_fixed_factor(NULL, clks[i].name,
 						clks[i].parent_name,
 						clks[i].flags, clks[i].mult,
-						clks[i].भाग);
-		अगर (IS_ERR(clk)) अणु
+						clks[i].div);
+		if (IS_ERR(clk)) {
 			pr_err("%s: failed to register clock %s\n",
 			       __func__, clks[i].name);
-			जाओ err;
-		पूर्ण
+			goto err;
+		}
 		data->clk_data.clks[clks[i].id] = clk;
-	पूर्ण
+	}
 
-	वापस 0;
+	return 0;
 
 err:
-	जबतक (i--)
-		clk_unरेजिस्टर_fixed_factor(data->clk_data.clks[clks[i].id]);
+	while (i--)
+		clk_unregister_fixed_factor(data->clk_data.clks[clks[i].id]);
 
-	वापस PTR_ERR(clk);
-पूर्ण
-EXPORT_SYMBOL_GPL(hisi_clk_रेजिस्टर_fixed_factor);
+	return PTR_ERR(clk);
+}
+EXPORT_SYMBOL_GPL(hisi_clk_register_fixed_factor);
 
-पूर्णांक hisi_clk_रेजिस्टर_mux(स्थिर काष्ठा hisi_mux_घड़ी *clks,
-				  पूर्णांक nums, काष्ठा hisi_घड़ी_data *data)
-अणु
-	काष्ठा clk *clk;
-	व्योम __iomem *base = data->base;
-	पूर्णांक i;
+int hisi_clk_register_mux(const struct hisi_mux_clock *clks,
+				  int nums, struct hisi_clock_data *data)
+{
+	struct clk *clk;
+	void __iomem *base = data->base;
+	int i;
 
-	क्रम (i = 0; i < nums; i++) अणु
+	for (i = 0; i < nums; i++) {
 		u32 mask = BIT(clks[i].width) - 1;
 
-		clk = clk_रेजिस्टर_mux_table(शून्य, clks[i].name,
+		clk = clk_register_mux_table(NULL, clks[i].name,
 					clks[i].parent_names,
 					clks[i].num_parents, clks[i].flags,
-					base + clks[i].offset, clks[i].shअगरt,
+					base + clks[i].offset, clks[i].shift,
 					mask, clks[i].mux_flags,
 					clks[i].table, &hisi_clk_lock);
-		अगर (IS_ERR(clk)) अणु
+		if (IS_ERR(clk)) {
 			pr_err("%s: failed to register clock %s\n",
 			       __func__, clks[i].name);
-			जाओ err;
-		पूर्ण
+			goto err;
+		}
 
-		अगर (clks[i].alias)
-			clk_रेजिस्टर_clkdev(clk, clks[i].alias, शून्य);
+		if (clks[i].alias)
+			clk_register_clkdev(clk, clks[i].alias, NULL);
 
 		data->clk_data.clks[clks[i].id] = clk;
-	पूर्ण
+	}
 
-	वापस 0;
+	return 0;
 
 err:
-	जबतक (i--)
-		clk_unरेजिस्टर_mux(data->clk_data.clks[clks[i].id]);
+	while (i--)
+		clk_unregister_mux(data->clk_data.clks[clks[i].id]);
 
-	वापस PTR_ERR(clk);
-पूर्ण
-EXPORT_SYMBOL_GPL(hisi_clk_रेजिस्टर_mux);
+	return PTR_ERR(clk);
+}
+EXPORT_SYMBOL_GPL(hisi_clk_register_mux);
 
-पूर्णांक hisi_clk_रेजिस्टर_phase(काष्ठा device *dev,
-			    स्थिर काष्ठा hisi_phase_घड़ी *clks,
-			    पूर्णांक nums, काष्ठा hisi_घड़ी_data *data)
-अणु
-	व्योम __iomem *base = data->base;
-	काष्ठा clk *clk;
-	पूर्णांक i;
+int hisi_clk_register_phase(struct device *dev,
+			    const struct hisi_phase_clock *clks,
+			    int nums, struct hisi_clock_data *data)
+{
+	void __iomem *base = data->base;
+	struct clk *clk;
+	int i;
 
-	क्रम (i = 0; i < nums; i++) अणु
-		clk = clk_रेजिस्टर_hisi_phase(dev, &clks[i], base,
+	for (i = 0; i < nums; i++) {
+		clk = clk_register_hisi_phase(dev, &clks[i], base,
 					      &hisi_clk_lock);
-		अगर (IS_ERR(clk)) अणु
+		if (IS_ERR(clk)) {
 			pr_err("%s: failed to register clock %s\n", __func__,
 			       clks[i].name);
-			वापस PTR_ERR(clk);
-		पूर्ण
+			return PTR_ERR(clk);
+		}
 
 		data->clk_data.clks[clks[i].id] = clk;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(hisi_clk_रेजिस्टर_phase);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(hisi_clk_register_phase);
 
-पूर्णांक hisi_clk_रेजिस्टर_भागider(स्थिर काष्ठा hisi_भागider_घड़ी *clks,
-				      पूर्णांक nums, काष्ठा hisi_घड़ी_data *data)
-अणु
-	काष्ठा clk *clk;
-	व्योम __iomem *base = data->base;
-	पूर्णांक i;
+int hisi_clk_register_divider(const struct hisi_divider_clock *clks,
+				      int nums, struct hisi_clock_data *data)
+{
+	struct clk *clk;
+	void __iomem *base = data->base;
+	int i;
 
-	क्रम (i = 0; i < nums; i++) अणु
-		clk = clk_रेजिस्टर_भागider_table(शून्य, clks[i].name,
+	for (i = 0; i < nums; i++) {
+		clk = clk_register_divider_table(NULL, clks[i].name,
 						 clks[i].parent_name,
 						 clks[i].flags,
 						 base + clks[i].offset,
-						 clks[i].shअगरt, clks[i].width,
-						 clks[i].भाग_flags,
+						 clks[i].shift, clks[i].width,
+						 clks[i].div_flags,
 						 clks[i].table,
 						 &hisi_clk_lock);
-		अगर (IS_ERR(clk)) अणु
+		if (IS_ERR(clk)) {
 			pr_err("%s: failed to register clock %s\n",
 			       __func__, clks[i].name);
-			जाओ err;
-		पूर्ण
+			goto err;
+		}
 
-		अगर (clks[i].alias)
-			clk_रेजिस्टर_clkdev(clk, clks[i].alias, शून्य);
+		if (clks[i].alias)
+			clk_register_clkdev(clk, clks[i].alias, NULL);
 
 		data->clk_data.clks[clks[i].id] = clk;
-	पूर्ण
+	}
 
-	वापस 0;
+	return 0;
 
 err:
-	जबतक (i--)
-		clk_unरेजिस्टर_भागider(data->clk_data.clks[clks[i].id]);
+	while (i--)
+		clk_unregister_divider(data->clk_data.clks[clks[i].id]);
 
-	वापस PTR_ERR(clk);
-पूर्ण
-EXPORT_SYMBOL_GPL(hisi_clk_रेजिस्टर_भागider);
+	return PTR_ERR(clk);
+}
+EXPORT_SYMBOL_GPL(hisi_clk_register_divider);
 
-पूर्णांक hisi_clk_रेजिस्टर_gate(स्थिर काष्ठा hisi_gate_घड़ी *clks,
-				       पूर्णांक nums, काष्ठा hisi_घड़ी_data *data)
-अणु
-	काष्ठा clk *clk;
-	व्योम __iomem *base = data->base;
-	पूर्णांक i;
+int hisi_clk_register_gate(const struct hisi_gate_clock *clks,
+				       int nums, struct hisi_clock_data *data)
+{
+	struct clk *clk;
+	void __iomem *base = data->base;
+	int i;
 
-	क्रम (i = 0; i < nums; i++) अणु
-		clk = clk_रेजिस्टर_gate(शून्य, clks[i].name,
+	for (i = 0; i < nums; i++) {
+		clk = clk_register_gate(NULL, clks[i].name,
 						clks[i].parent_name,
 						clks[i].flags,
 						base + clks[i].offset,
 						clks[i].bit_idx,
 						clks[i].gate_flags,
 						&hisi_clk_lock);
-		अगर (IS_ERR(clk)) अणु
+		if (IS_ERR(clk)) {
 			pr_err("%s: failed to register clock %s\n",
 			       __func__, clks[i].name);
-			जाओ err;
-		पूर्ण
+			goto err;
+		}
 
-		अगर (clks[i].alias)
-			clk_रेजिस्टर_clkdev(clk, clks[i].alias, शून्य);
+		if (clks[i].alias)
+			clk_register_clkdev(clk, clks[i].alias, NULL);
 
 		data->clk_data.clks[clks[i].id] = clk;
-	पूर्ण
+	}
 
-	वापस 0;
+	return 0;
 
 err:
-	जबतक (i--)
-		clk_unरेजिस्टर_gate(data->clk_data.clks[clks[i].id]);
+	while (i--)
+		clk_unregister_gate(data->clk_data.clks[clks[i].id]);
 
-	वापस PTR_ERR(clk);
-पूर्ण
-EXPORT_SYMBOL_GPL(hisi_clk_रेजिस्टर_gate);
+	return PTR_ERR(clk);
+}
+EXPORT_SYMBOL_GPL(hisi_clk_register_gate);
 
-व्योम hisi_clk_रेजिस्टर_gate_sep(स्थिर काष्ठा hisi_gate_घड़ी *clks,
-				       पूर्णांक nums, काष्ठा hisi_घड़ी_data *data)
-अणु
-	काष्ठा clk *clk;
-	व्योम __iomem *base = data->base;
-	पूर्णांक i;
+void hisi_clk_register_gate_sep(const struct hisi_gate_clock *clks,
+				       int nums, struct hisi_clock_data *data)
+{
+	struct clk *clk;
+	void __iomem *base = data->base;
+	int i;
 
-	क्रम (i = 0; i < nums; i++) अणु
-		clk = hisi_रेजिस्टर_clkgate_sep(शून्य, clks[i].name,
+	for (i = 0; i < nums; i++) {
+		clk = hisi_register_clkgate_sep(NULL, clks[i].name,
 						clks[i].parent_name,
 						clks[i].flags,
 						base + clks[i].offset,
 						clks[i].bit_idx,
 						clks[i].gate_flags,
 						&hisi_clk_lock);
-		अगर (IS_ERR(clk)) अणु
+		if (IS_ERR(clk)) {
 			pr_err("%s: failed to register clock %s\n",
 			       __func__, clks[i].name);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		अगर (clks[i].alias)
-			clk_रेजिस्टर_clkdev(clk, clks[i].alias, शून्य);
+		if (clks[i].alias)
+			clk_register_clkdev(clk, clks[i].alias, NULL);
 
 		data->clk_data.clks[clks[i].id] = clk;
-	पूर्ण
-पूर्ण
-EXPORT_SYMBOL_GPL(hisi_clk_रेजिस्टर_gate_sep);
+	}
+}
+EXPORT_SYMBOL_GPL(hisi_clk_register_gate_sep);
 
-व्योम __init hi6220_clk_रेजिस्टर_भागider(स्थिर काष्ठा hi6220_भागider_घड़ी *clks,
-					पूर्णांक nums, काष्ठा hisi_घड़ी_data *data)
-अणु
-	काष्ठा clk *clk;
-	व्योम __iomem *base = data->base;
-	पूर्णांक i;
+void __init hi6220_clk_register_divider(const struct hi6220_divider_clock *clks,
+					int nums, struct hisi_clock_data *data)
+{
+	struct clk *clk;
+	void __iomem *base = data->base;
+	int i;
 
-	क्रम (i = 0; i < nums; i++) अणु
-		clk = hi6220_रेजिस्टर_clkभाग(शून्य, clks[i].name,
+	for (i = 0; i < nums; i++) {
+		clk = hi6220_register_clkdiv(NULL, clks[i].name,
 						clks[i].parent_name,
 						clks[i].flags,
 						base + clks[i].offset,
-						clks[i].shअगरt,
+						clks[i].shift,
 						clks[i].width,
 						clks[i].mask_bit,
 						&hisi_clk_lock);
-		अगर (IS_ERR(clk)) अणु
+		if (IS_ERR(clk)) {
 			pr_err("%s: failed to register clock %s\n",
 			       __func__, clks[i].name);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		अगर (clks[i].alias)
-			clk_रेजिस्टर_clkdev(clk, clks[i].alias, शून्य);
+		if (clks[i].alias)
+			clk_register_clkdev(clk, clks[i].alias, NULL);
 
 		data->clk_data.clks[clks[i].id] = clk;
-	पूर्ण
-पूर्ण
+	}
+}

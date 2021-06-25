@@ -1,29 +1,28 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
- *  HID driver क्रम ViewSonic devices not fully compliant with HID standard
+ *  HID driver for ViewSonic devices not fully compliant with HID standard
  *
  *  Copyright (c) 2017 Nikolai Kondrashov
  */
 
 /*
- * This program is मुक्त software; you can redistribute it and/or modअगरy it
+ * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
  * Software Foundation; either version 2 of the License, or (at your option)
  * any later version.
  */
 
-#समावेश <linux/device.h>
-#समावेश <linux/hid.h>
-#समावेश <linux/module.h>
+#include <linux/device.h>
+#include <linux/hid.h>
+#include <linux/module.h>
 
-#समावेश "hid-ids.h"
+#include "hid-ids.h"
 
 /* Size of the original descriptor of PD1011 signature pad */
-#घोषणा PD1011_RDESC_ORIG_SIZE	408
+#define PD1011_RDESC_ORIG_SIZE	408
 
 /* Fixed report descriptor of PD1011 signature pad */
-अटल __u8 pd1011_rdesc_fixed[] = अणु
+static __u8 pd1011_rdesc_fixed[] = {
 	0x05, 0x0D,             /*  Usage Page (Digitizer),             */
 	0x09, 0x02,             /*  Usage (Pen),                        */
 	0xA1, 0x01,             /*  Collection (Application),           */
@@ -69,38 +68,38 @@
 	0x81, 0x03,             /*          Input (Constant, Variable), */
 	0xC0,                   /*      End Collection,                 */
 	0xC0                    /*  End Collection                      */
-पूर्ण;
+};
 
-अटल __u8 *viewsonic_report_fixup(काष्ठा hid_device *hdev, __u8 *rdesc,
-				    अचिन्हित पूर्णांक *rsize)
-अणु
-	चयन (hdev->product) अणु
-	हाल USB_DEVICE_ID_VIEWSONIC_PD1011:
-	हाल USB_DEVICE_ID_SIGNOTEC_VIEWSONIC_PD1011:
-		अगर (*rsize == PD1011_RDESC_ORIG_SIZE) अणु
+static __u8 *viewsonic_report_fixup(struct hid_device *hdev, __u8 *rdesc,
+				    unsigned int *rsize)
+{
+	switch (hdev->product) {
+	case USB_DEVICE_ID_VIEWSONIC_PD1011:
+	case USB_DEVICE_ID_SIGNOTEC_VIEWSONIC_PD1011:
+		if (*rsize == PD1011_RDESC_ORIG_SIZE) {
 			rdesc = pd1011_rdesc_fixed;
-			*rsize = माप(pd1011_rdesc_fixed);
-		पूर्ण
-		अवरोध;
-	पूर्ण
+			*rsize = sizeof(pd1011_rdesc_fixed);
+		}
+		break;
+	}
 
-	वापस rdesc;
-पूर्ण
+	return rdesc;
+}
 
-अटल स्थिर काष्ठा hid_device_id viewsonic_devices[] = अणु
-	अणु HID_USB_DEVICE(USB_VENDOR_ID_VIEWSONIC,
-				USB_DEVICE_ID_VIEWSONIC_PD1011) पूर्ण,
-	अणु HID_USB_DEVICE(USB_VENDOR_ID_SIGNOTEC,
-				USB_DEVICE_ID_SIGNOTEC_VIEWSONIC_PD1011) पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct hid_device_id viewsonic_devices[] = {
+	{ HID_USB_DEVICE(USB_VENDOR_ID_VIEWSONIC,
+				USB_DEVICE_ID_VIEWSONIC_PD1011) },
+	{ HID_USB_DEVICE(USB_VENDOR_ID_SIGNOTEC,
+				USB_DEVICE_ID_SIGNOTEC_VIEWSONIC_PD1011) },
+	{ }
+};
 MODULE_DEVICE_TABLE(hid, viewsonic_devices);
 
-अटल काष्ठा hid_driver viewsonic_driver = अणु
+static struct hid_driver viewsonic_driver = {
 	.name = "viewsonic",
 	.id_table = viewsonic_devices,
 	.report_fixup = viewsonic_report_fixup,
-पूर्ण;
+};
 module_hid_driver(viewsonic_driver);
 
 MODULE_LICENSE("GPL");

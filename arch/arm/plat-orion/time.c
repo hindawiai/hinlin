@@ -1,239 +1,238 @@
-<शैली गुरु>
 /*
- * arch/arm/plat-orion/समय.c
+ * arch/arm/plat-orion/time.c
  *
- * Marvell Orion SoC समयr handling.
+ * Marvell Orion SoC timer handling.
  *
  * This file is licensed under the terms of the GNU General Public
  * License version 2.  This program is licensed "as is" without any
  * warranty of any kind, whether express or implied.
  *
- * Timer 0 is used as मुक्त-running घड़ीsource, जबतक समयr 1 is
- * used as घड़ी_event_device.
+ * Timer 0 is used as free-running clocksource, while timer 1 is
+ * used as clock_event_device.
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/समयr.h>
-#समावेश <linux/घड़ीchips.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/sched_घड़ी.h>
-#समावेश <plat/समय.स>
-#समावेश <यंत्र/delay.h>
+#include <linux/kernel.h>
+#include <linux/timer.h>
+#include <linux/clockchips.h>
+#include <linux/interrupt.h>
+#include <linux/irq.h>
+#include <linux/sched_clock.h>
+#include <plat/time.h>
+#include <asm/delay.h>
 
 /*
- * MBus bridge block रेजिस्टरs.
+ * MBus bridge block registers.
  */
-#घोषणा BRIDGE_CAUSE_OFF	0x0110
-#घोषणा BRIDGE_MASK_OFF		0x0114
-#घोषणा  BRIDGE_INT_TIMER0	 0x0002
-#घोषणा  BRIDGE_INT_TIMER1	 0x0004
-
-
-/*
- * Timer block रेजिस्टरs.
- */
-#घोषणा TIMER_CTRL_OFF		0x0000
-#घोषणा  TIMER0_EN		 0x0001
-#घोषणा  TIMER0_RELOAD_EN	 0x0002
-#घोषणा  TIMER1_EN		 0x0004
-#घोषणा  TIMER1_RELOAD_EN	 0x0008
-#घोषणा TIMER0_RELOAD_OFF	0x0010
-#घोषणा TIMER0_VAL_OFF		0x0014
-#घोषणा TIMER1_RELOAD_OFF	0x0018
-#घोषणा TIMER1_VAL_OFF		0x001c
+#define BRIDGE_CAUSE_OFF	0x0110
+#define BRIDGE_MASK_OFF		0x0114
+#define  BRIDGE_INT_TIMER0	 0x0002
+#define  BRIDGE_INT_TIMER1	 0x0004
 
 
 /*
- * SoC-specअगरic data.
+ * Timer block registers.
  */
-अटल व्योम __iomem *bridge_base;
-अटल u32 bridge_समयr1_clr_mask;
-अटल व्योम __iomem *समयr_base;
+#define TIMER_CTRL_OFF		0x0000
+#define  TIMER0_EN		 0x0001
+#define  TIMER0_RELOAD_EN	 0x0002
+#define  TIMER1_EN		 0x0004
+#define  TIMER1_RELOAD_EN	 0x0008
+#define TIMER0_RELOAD_OFF	0x0010
+#define TIMER0_VAL_OFF		0x0014
+#define TIMER1_RELOAD_OFF	0x0018
+#define TIMER1_VAL_OFF		0x001c
 
 
 /*
- * Number of समयr ticks per jअगरfy.
+ * SoC-specific data.
  */
-अटल u32 ticks_per_jअगरfy;
+static void __iomem *bridge_base;
+static u32 bridge_timer1_clr_mask;
+static void __iomem *timer_base;
 
 
 /*
- * Orion's sched_घड़ी implementation. It has a resolution of
+ * Number of timer ticks per jiffy.
+ */
+static u32 ticks_per_jiffy;
+
+
+/*
+ * Orion's sched_clock implementation. It has a resolution of
  * at least 7.5ns (133MHz TCLK).
  */
 
-अटल u64 notrace orion_पढ़ो_sched_घड़ी(व्योम)
-अणु
-	वापस ~पढ़ोl(समयr_base + TIMER0_VAL_OFF);
-पूर्ण
+static u64 notrace orion_read_sched_clock(void)
+{
+	return ~readl(timer_base + TIMER0_VAL_OFF);
+}
 
 /*
  * Clockevent handling.
  */
-अटल पूर्णांक
-orion_clkevt_next_event(अचिन्हित दीर्घ delta, काष्ठा घड़ी_event_device *dev)
-अणु
-	अचिन्हित दीर्घ flags;
+static int
+orion_clkevt_next_event(unsigned long delta, struct clock_event_device *dev)
+{
+	unsigned long flags;
 	u32 u;
 
-	अगर (delta == 0)
-		वापस -ETIME;
+	if (delta == 0)
+		return -ETIME;
 
 	local_irq_save(flags);
 
 	/*
-	 * Clear and enable घड़ीevent समयr पूर्णांकerrupt.
+	 * Clear and enable clockevent timer interrupt.
 	 */
-	ग_लिखोl(bridge_समयr1_clr_mask, bridge_base + BRIDGE_CAUSE_OFF);
+	writel(bridge_timer1_clr_mask, bridge_base + BRIDGE_CAUSE_OFF);
 
-	u = पढ़ोl(bridge_base + BRIDGE_MASK_OFF);
+	u = readl(bridge_base + BRIDGE_MASK_OFF);
 	u |= BRIDGE_INT_TIMER1;
-	ग_लिखोl(u, bridge_base + BRIDGE_MASK_OFF);
+	writel(u, bridge_base + BRIDGE_MASK_OFF);
 
 	/*
-	 * Setup new घड़ीevent समयr value.
+	 * Setup new clockevent timer value.
 	 */
-	ग_लिखोl(delta, समयr_base + TIMER1_VAL_OFF);
+	writel(delta, timer_base + TIMER1_VAL_OFF);
 
 	/*
-	 * Enable the समयr.
+	 * Enable the timer.
 	 */
-	u = पढ़ोl(समयr_base + TIMER_CTRL_OFF);
+	u = readl(timer_base + TIMER_CTRL_OFF);
 	u = (u & ~TIMER1_RELOAD_EN) | TIMER1_EN;
-	ग_लिखोl(u, समयr_base + TIMER_CTRL_OFF);
+	writel(u, timer_base + TIMER_CTRL_OFF);
 
 	local_irq_restore(flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक orion_clkevt_shutकरोwn(काष्ठा घड़ी_event_device *evt)
-अणु
-	अचिन्हित दीर्घ flags;
+static int orion_clkevt_shutdown(struct clock_event_device *evt)
+{
+	unsigned long flags;
 	u32 u;
 
 	local_irq_save(flags);
 
-	/* Disable समयr */
-	u = पढ़ोl(समयr_base + TIMER_CTRL_OFF);
-	ग_लिखोl(u & ~TIMER1_EN, समयr_base + TIMER_CTRL_OFF);
+	/* Disable timer */
+	u = readl(timer_base + TIMER_CTRL_OFF);
+	writel(u & ~TIMER1_EN, timer_base + TIMER_CTRL_OFF);
 
-	/* Disable समयr पूर्णांकerrupt */
-	u = पढ़ोl(bridge_base + BRIDGE_MASK_OFF);
-	ग_लिखोl(u & ~BRIDGE_INT_TIMER1, bridge_base + BRIDGE_MASK_OFF);
+	/* Disable timer interrupt */
+	u = readl(bridge_base + BRIDGE_MASK_OFF);
+	writel(u & ~BRIDGE_INT_TIMER1, bridge_base + BRIDGE_MASK_OFF);
 
-	/* ACK pending समयr पूर्णांकerrupt */
-	ग_लिखोl(bridge_समयr1_clr_mask, bridge_base + BRIDGE_CAUSE_OFF);
+	/* ACK pending timer interrupt */
+	writel(bridge_timer1_clr_mask, bridge_base + BRIDGE_CAUSE_OFF);
 
 	local_irq_restore(flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक orion_clkevt_set_periodic(काष्ठा घड़ी_event_device *evt)
-अणु
-	अचिन्हित दीर्घ flags;
+static int orion_clkevt_set_periodic(struct clock_event_device *evt)
+{
+	unsigned long flags;
 	u32 u;
 
 	local_irq_save(flags);
 
-	/* Setup समयr to fire at 1/HZ पूर्णांकervals */
-	ग_लिखोl(ticks_per_jअगरfy - 1, समयr_base + TIMER1_RELOAD_OFF);
-	ग_लिखोl(ticks_per_jअगरfy - 1, समयr_base + TIMER1_VAL_OFF);
+	/* Setup timer to fire at 1/HZ intervals */
+	writel(ticks_per_jiffy - 1, timer_base + TIMER1_RELOAD_OFF);
+	writel(ticks_per_jiffy - 1, timer_base + TIMER1_VAL_OFF);
 
-	/* Enable समयr पूर्णांकerrupt */
-	u = पढ़ोl(bridge_base + BRIDGE_MASK_OFF);
-	ग_लिखोl(u | BRIDGE_INT_TIMER1, bridge_base + BRIDGE_MASK_OFF);
+	/* Enable timer interrupt */
+	u = readl(bridge_base + BRIDGE_MASK_OFF);
+	writel(u | BRIDGE_INT_TIMER1, bridge_base + BRIDGE_MASK_OFF);
 
-	/* Enable समयr */
-	u = पढ़ोl(समयr_base + TIMER_CTRL_OFF);
-	ग_लिखोl(u | TIMER1_EN | TIMER1_RELOAD_EN, समयr_base + TIMER_CTRL_OFF);
+	/* Enable timer */
+	u = readl(timer_base + TIMER_CTRL_OFF);
+	writel(u | TIMER1_EN | TIMER1_RELOAD_EN, timer_base + TIMER_CTRL_OFF);
 
 	local_irq_restore(flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा घड़ी_event_device orion_clkevt = अणु
+static struct clock_event_device orion_clkevt = {
 	.name			= "orion_tick",
 	.features		= CLOCK_EVT_FEAT_ONESHOT |
 				  CLOCK_EVT_FEAT_PERIODIC,
 	.rating			= 300,
 	.set_next_event		= orion_clkevt_next_event,
-	.set_state_shutकरोwn	= orion_clkevt_shutकरोwn,
+	.set_state_shutdown	= orion_clkevt_shutdown,
 	.set_state_periodic	= orion_clkevt_set_periodic,
-	.set_state_oneshot	= orion_clkevt_shutकरोwn,
-	.tick_resume		= orion_clkevt_shutकरोwn,
-पूर्ण;
+	.set_state_oneshot	= orion_clkevt_shutdown,
+	.tick_resume		= orion_clkevt_shutdown,
+};
 
-अटल irqवापस_t orion_समयr_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
-अणु
+static irqreturn_t orion_timer_interrupt(int irq, void *dev_id)
+{
 	/*
-	 * ACK समयr पूर्णांकerrupt and call event handler.
+	 * ACK timer interrupt and call event handler.
 	 */
-	ग_लिखोl(bridge_समयr1_clr_mask, bridge_base + BRIDGE_CAUSE_OFF);
+	writel(bridge_timer1_clr_mask, bridge_base + BRIDGE_CAUSE_OFF);
 	orion_clkevt.event_handler(&orion_clkevt);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-व्योम __init
-orion_समय_set_base(व्योम __iomem *_समयr_base)
-अणु
-	समयr_base = _समयr_base;
-पूर्ण
+void __init
+orion_time_set_base(void __iomem *_timer_base)
+{
+	timer_base = _timer_base;
+}
 
-अटल अचिन्हित दीर्घ orion_delay_समयr_पढ़ो(व्योम)
-अणु
-	वापस ~पढ़ोl(समयr_base + TIMER0_VAL_OFF);
-पूर्ण
+static unsigned long orion_delay_timer_read(void)
+{
+	return ~readl(timer_base + TIMER0_VAL_OFF);
+}
 
-अटल काष्ठा delay_समयr orion_delay_समयr = अणु
-	.पढ़ो_current_समयr = orion_delay_समयr_पढ़ो,
-पूर्ण;
+static struct delay_timer orion_delay_timer = {
+	.read_current_timer = orion_delay_timer_read,
+};
 
-व्योम __init
-orion_समय_init(व्योम __iomem *_bridge_base, u32 _bridge_समयr1_clr_mask,
-		अचिन्हित पूर्णांक irq, अचिन्हित पूर्णांक tclk)
-अणु
+void __init
+orion_time_init(void __iomem *_bridge_base, u32 _bridge_timer1_clr_mask,
+		unsigned int irq, unsigned int tclk)
+{
 	u32 u;
 
 	/*
-	 * Set SoC-specअगरic data.
+	 * Set SoC-specific data.
 	 */
 	bridge_base = _bridge_base;
-	bridge_समयr1_clr_mask = _bridge_समयr1_clr_mask;
+	bridge_timer1_clr_mask = _bridge_timer1_clr_mask;
 
-	ticks_per_jअगरfy = (tclk + HZ/2) / HZ;
+	ticks_per_jiffy = (tclk + HZ/2) / HZ;
 
-	orion_delay_समयr.freq = tclk;
-	रेजिस्टर_current_समयr_delay(&orion_delay_समयr);
+	orion_delay_timer.freq = tclk;
+	register_current_timer_delay(&orion_delay_timer);
 
 	/*
-	 * Set scale and समयr क्रम sched_घड़ी.
+	 * Set scale and timer for sched_clock.
 	 */
-	sched_घड़ी_रेजिस्टर(orion_पढ़ो_sched_घड़ी, 32, tclk);
+	sched_clock_register(orion_read_sched_clock, 32, tclk);
 
 	/*
-	 * Setup मुक्त-running घड़ीsource समयr (पूर्णांकerrupts
+	 * Setup free-running clocksource timer (interrupts
 	 * disabled).
 	 */
-	ग_लिखोl(0xffffffff, समयr_base + TIMER0_VAL_OFF);
-	ग_लिखोl(0xffffffff, समयr_base + TIMER0_RELOAD_OFF);
-	u = पढ़ोl(bridge_base + BRIDGE_MASK_OFF);
-	ग_लिखोl(u & ~BRIDGE_INT_TIMER0, bridge_base + BRIDGE_MASK_OFF);
-	u = पढ़ोl(समयr_base + TIMER_CTRL_OFF);
-	ग_लिखोl(u | TIMER0_EN | TIMER0_RELOAD_EN, समयr_base + TIMER_CTRL_OFF);
-	घड़ीsource_mmio_init(समयr_base + TIMER0_VAL_OFF, "orion_clocksource",
-		tclk, 300, 32, घड़ीsource_mmio_पढ़ोl_करोwn);
+	writel(0xffffffff, timer_base + TIMER0_VAL_OFF);
+	writel(0xffffffff, timer_base + TIMER0_RELOAD_OFF);
+	u = readl(bridge_base + BRIDGE_MASK_OFF);
+	writel(u & ~BRIDGE_INT_TIMER0, bridge_base + BRIDGE_MASK_OFF);
+	u = readl(timer_base + TIMER_CTRL_OFF);
+	writel(u | TIMER0_EN | TIMER0_RELOAD_EN, timer_base + TIMER_CTRL_OFF);
+	clocksource_mmio_init(timer_base + TIMER0_VAL_OFF, "orion_clocksource",
+		tclk, 300, 32, clocksource_mmio_readl_down);
 
 	/*
-	 * Setup घड़ीevent समयr (पूर्णांकerrupt-driven).
+	 * Setup clockevent timer (interrupt-driven).
 	 */
-	अगर (request_irq(irq, orion_समयr_पूर्णांकerrupt, IRQF_TIMER, "orion_tick",
-			शून्य))
+	if (request_irq(irq, orion_timer_interrupt, IRQF_TIMER, "orion_tick",
+			NULL))
 		pr_err("Failed to request irq %u (orion_tick)\n", irq);
 	orion_clkevt.cpumask = cpumask_of(0);
-	घड़ीevents_config_and_रेजिस्टर(&orion_clkevt, tclk, 1, 0xfffffffe);
-पूर्ण
+	clockevents_config_and_register(&orion_clkevt, tclk, 1, 0xfffffffe);
+}

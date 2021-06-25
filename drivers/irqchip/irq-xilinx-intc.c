@@ -1,262 +1,261 @@
-<शैली गुरु>
 /*
  * Copyright (C) 2007-2013 Michal Simek <monstr@monstr.eu>
  * Copyright (C) 2012-2013 Xilinx, Inc.
  * Copyright (C) 2007-2009 PetaLogix
- * Copyright (C) 2006 Aपंचांगark Techno, Inc.
+ * Copyright (C) 2006 Atmark Techno, Inc.
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License. See the file "COPYING" in the मुख्य directory of this archive
- * क्रम more details.
+ * License. See the file "COPYING" in the main directory of this archive
+ * for more details.
  */
 
-#समावेश <linux/irqकरोमुख्य.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/irqchip.h>
-#समावेश <linux/irqchip/chained_irq.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/jump_label.h>
-#समावेश <linux/bug.h>
-#समावेश <linux/of_irq.h>
+#include <linux/irqdomain.h>
+#include <linux/irq.h>
+#include <linux/irqchip.h>
+#include <linux/irqchip/chained_irq.h>
+#include <linux/of_address.h>
+#include <linux/io.h>
+#include <linux/jump_label.h>
+#include <linux/bug.h>
+#include <linux/of_irq.h>
 
-/* No one अन्यथा should require these स्थिरants, so define them locally here. */
-#घोषणा ISR 0x00			/* Interrupt Status Register */
-#घोषणा IPR 0x04			/* Interrupt Pending Register */
-#घोषणा IER 0x08			/* Interrupt Enable Register */
-#घोषणा IAR 0x0c			/* Interrupt Acknowledge Register */
-#घोषणा SIE 0x10			/* Set Interrupt Enable bits */
-#घोषणा CIE 0x14			/* Clear Interrupt Enable bits */
-#घोषणा IVR 0x18			/* Interrupt Vector Register */
-#घोषणा MER 0x1c			/* Master Enable Register */
+/* No one else should require these constants, so define them locally here. */
+#define ISR 0x00			/* Interrupt Status Register */
+#define IPR 0x04			/* Interrupt Pending Register */
+#define IER 0x08			/* Interrupt Enable Register */
+#define IAR 0x0c			/* Interrupt Acknowledge Register */
+#define SIE 0x10			/* Set Interrupt Enable bits */
+#define CIE 0x14			/* Clear Interrupt Enable bits */
+#define IVR 0x18			/* Interrupt Vector Register */
+#define MER 0x1c			/* Master Enable Register */
 
-#घोषणा MER_ME (1<<0)
-#घोषणा MER_HIE (1<<1)
+#define MER_ME (1<<0)
+#define MER_HIE (1<<1)
 
-अटल DEFINE_STATIC_KEY_FALSE(xपूर्णांकc_is_be);
+static DEFINE_STATIC_KEY_FALSE(xintc_is_be);
 
-काष्ठा xपूर्णांकc_irq_chip अणु
-	व्योम		__iomem *base;
-	काष्ठा		irq_करोमुख्य *root_करोमुख्य;
-	u32		पूर्णांकr_mask;
+struct xintc_irq_chip {
+	void		__iomem *base;
+	struct		irq_domain *root_domain;
+	u32		intr_mask;
 	u32		nr_irq;
-पूर्ण;
+};
 
-अटल काष्ठा xपूर्णांकc_irq_chip *primary_पूर्णांकc;
+static struct xintc_irq_chip *primary_intc;
 
-अटल व्योम xपूर्णांकc_ग_लिखो(काष्ठा xपूर्णांकc_irq_chip *irqc, पूर्णांक reg, u32 data)
-अणु
-	अगर (अटल_branch_unlikely(&xपूर्णांकc_is_be))
-		ioग_लिखो32be(data, irqc->base + reg);
-	अन्यथा
-		ioग_लिखो32(data, irqc->base + reg);
-पूर्ण
+static void xintc_write(struct xintc_irq_chip *irqc, int reg, u32 data)
+{
+	if (static_branch_unlikely(&xintc_is_be))
+		iowrite32be(data, irqc->base + reg);
+	else
+		iowrite32(data, irqc->base + reg);
+}
 
-अटल u32 xपूर्णांकc_पढ़ो(काष्ठा xपूर्णांकc_irq_chip *irqc, पूर्णांक reg)
-अणु
-	अगर (अटल_branch_unlikely(&xपूर्णांकc_is_be))
-		वापस ioपढ़ो32be(irqc->base + reg);
-	अन्यथा
-		वापस ioपढ़ो32(irqc->base + reg);
-पूर्ण
+static u32 xintc_read(struct xintc_irq_chip *irqc, int reg)
+{
+	if (static_branch_unlikely(&xintc_is_be))
+		return ioread32be(irqc->base + reg);
+	else
+		return ioread32(irqc->base + reg);
+}
 
-अटल व्योम पूर्णांकc_enable_or_unmask(काष्ठा irq_data *d)
-अणु
-	काष्ठा xपूर्णांकc_irq_chip *irqc = irq_data_get_irq_chip_data(d);
-	अचिन्हित दीर्घ mask = BIT(d->hwirq);
+static void intc_enable_or_unmask(struct irq_data *d)
+{
+	struct xintc_irq_chip *irqc = irq_data_get_irq_chip_data(d);
+	unsigned long mask = BIT(d->hwirq);
 
 	pr_debug("irq-xilinx: enable_or_unmask: %ld\n", d->hwirq);
 
 	/* ack level irqs because they can't be acked during
 	 * ack function since the handle_level_irq function
-	 * acks the irq beक्रमe calling the पूर्णांकerrupt handler
+	 * acks the irq before calling the interrupt handler
 	 */
-	अगर (irqd_is_level_type(d))
-		xपूर्णांकc_ग_लिखो(irqc, IAR, mask);
+	if (irqd_is_level_type(d))
+		xintc_write(irqc, IAR, mask);
 
-	xपूर्णांकc_ग_लिखो(irqc, SIE, mask);
-पूर्ण
+	xintc_write(irqc, SIE, mask);
+}
 
-अटल व्योम पूर्णांकc_disable_or_mask(काष्ठा irq_data *d)
-अणु
-	काष्ठा xपूर्णांकc_irq_chip *irqc = irq_data_get_irq_chip_data(d);
+static void intc_disable_or_mask(struct irq_data *d)
+{
+	struct xintc_irq_chip *irqc = irq_data_get_irq_chip_data(d);
 
 	pr_debug("irq-xilinx: disable: %ld\n", d->hwirq);
-	xपूर्णांकc_ग_लिखो(irqc, CIE, BIT(d->hwirq));
-पूर्ण
+	xintc_write(irqc, CIE, BIT(d->hwirq));
+}
 
-अटल व्योम पूर्णांकc_ack(काष्ठा irq_data *d)
-अणु
-	काष्ठा xपूर्णांकc_irq_chip *irqc = irq_data_get_irq_chip_data(d);
+static void intc_ack(struct irq_data *d)
+{
+	struct xintc_irq_chip *irqc = irq_data_get_irq_chip_data(d);
 
 	pr_debug("irq-xilinx: ack: %ld\n", d->hwirq);
-	xपूर्णांकc_ग_लिखो(irqc, IAR, BIT(d->hwirq));
-पूर्ण
+	xintc_write(irqc, IAR, BIT(d->hwirq));
+}
 
-अटल व्योम पूर्णांकc_mask_ack(काष्ठा irq_data *d)
-अणु
-	काष्ठा xपूर्णांकc_irq_chip *irqc = irq_data_get_irq_chip_data(d);
-	अचिन्हित दीर्घ mask = BIT(d->hwirq);
+static void intc_mask_ack(struct irq_data *d)
+{
+	struct xintc_irq_chip *irqc = irq_data_get_irq_chip_data(d);
+	unsigned long mask = BIT(d->hwirq);
 
 	pr_debug("irq-xilinx: disable_and_ack: %ld\n", d->hwirq);
-	xपूर्णांकc_ग_लिखो(irqc, CIE, mask);
-	xपूर्णांकc_ग_लिखो(irqc, IAR, mask);
-पूर्ण
+	xintc_write(irqc, CIE, mask);
+	xintc_write(irqc, IAR, mask);
+}
 
-अटल काष्ठा irq_chip पूर्णांकc_dev = अणु
+static struct irq_chip intc_dev = {
 	.name = "Xilinx INTC",
-	.irq_unmask = पूर्णांकc_enable_or_unmask,
-	.irq_mask = पूर्णांकc_disable_or_mask,
-	.irq_ack = पूर्णांकc_ack,
-	.irq_mask_ack = पूर्णांकc_mask_ack,
-पूर्ण;
+	.irq_unmask = intc_enable_or_unmask,
+	.irq_mask = intc_disable_or_mask,
+	.irq_ack = intc_ack,
+	.irq_mask_ack = intc_mask_ack,
+};
 
-अटल अचिन्हित पूर्णांक xपूर्णांकc_get_irq_local(काष्ठा xपूर्णांकc_irq_chip *irqc)
-अणु
-	अचिन्हित पूर्णांक irq = 0;
+static unsigned int xintc_get_irq_local(struct xintc_irq_chip *irqc)
+{
+	unsigned int irq = 0;
 	u32 hwirq;
 
-	hwirq = xपूर्णांकc_पढ़ो(irqc, IVR);
-	अगर (hwirq != -1U)
-		irq = irq_find_mapping(irqc->root_करोमुख्य, hwirq);
+	hwirq = xintc_read(irqc, IVR);
+	if (hwirq != -1U)
+		irq = irq_find_mapping(irqc->root_domain, hwirq);
 
 	pr_debug("irq-xilinx: hwirq=%d, irq=%d\n", hwirq, irq);
 
-	वापस irq;
-पूर्ण
+	return irq;
+}
 
-अचिन्हित पूर्णांक xपूर्णांकc_get_irq(व्योम)
-अणु
-	अचिन्हित पूर्णांक irq = -1;
+unsigned int xintc_get_irq(void)
+{
+	unsigned int irq = -1;
 	u32 hwirq;
 
-	hwirq = xपूर्णांकc_पढ़ो(primary_पूर्णांकc, IVR);
-	अगर (hwirq != -1U)
-		irq = irq_find_mapping(primary_पूर्णांकc->root_करोमुख्य, hwirq);
+	hwirq = xintc_read(primary_intc, IVR);
+	if (hwirq != -1U)
+		irq = irq_find_mapping(primary_intc->root_domain, hwirq);
 
 	pr_debug("irq-xilinx: hwirq=%d, irq=%d\n", hwirq, irq);
 
-	वापस irq;
-पूर्ण
+	return irq;
+}
 
-अटल पूर्णांक xपूर्णांकc_map(काष्ठा irq_करोमुख्य *d, अचिन्हित पूर्णांक irq, irq_hw_number_t hw)
-अणु
-	काष्ठा xपूर्णांकc_irq_chip *irqc = d->host_data;
+static int xintc_map(struct irq_domain *d, unsigned int irq, irq_hw_number_t hw)
+{
+	struct xintc_irq_chip *irqc = d->host_data;
 
-	अगर (irqc->पूर्णांकr_mask & BIT(hw)) अणु
-		irq_set_chip_and_handler_name(irq, &पूर्णांकc_dev,
+	if (irqc->intr_mask & BIT(hw)) {
+		irq_set_chip_and_handler_name(irq, &intc_dev,
 					      handle_edge_irq, "edge");
 		irq_clear_status_flags(irq, IRQ_LEVEL);
-	पूर्ण अन्यथा अणु
-		irq_set_chip_and_handler_name(irq, &पूर्णांकc_dev,
+	} else {
+		irq_set_chip_and_handler_name(irq, &intc_dev,
 					      handle_level_irq, "level");
 		irq_set_status_flags(irq, IRQ_LEVEL);
-	पूर्ण
+	}
 	irq_set_chip_data(irq, irqc);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा irq_करोमुख्य_ops xपूर्णांकc_irq_करोमुख्य_ops = अणु
-	.xlate = irq_करोमुख्य_xlate_onetwocell,
-	.map = xपूर्णांकc_map,
-पूर्ण;
+static const struct irq_domain_ops xintc_irq_domain_ops = {
+	.xlate = irq_domain_xlate_onetwocell,
+	.map = xintc_map,
+};
 
-अटल व्योम xil_पूर्णांकc_irq_handler(काष्ठा irq_desc *desc)
-अणु
-	काष्ठा irq_chip *chip = irq_desc_get_chip(desc);
-	काष्ठा xपूर्णांकc_irq_chip *irqc;
+static void xil_intc_irq_handler(struct irq_desc *desc)
+{
+	struct irq_chip *chip = irq_desc_get_chip(desc);
+	struct xintc_irq_chip *irqc;
 	u32 pending;
 
 	irqc = irq_data_get_irq_handler_data(&desc->irq_data);
 	chained_irq_enter(chip, desc);
-	करो अणु
-		pending = xपूर्णांकc_get_irq_local(irqc);
-		अगर (pending == 0)
-			अवरोध;
+	do {
+		pending = xintc_get_irq_local(irqc);
+		if (pending == 0)
+			break;
 		generic_handle_irq(pending);
-	पूर्ण जबतक (true);
-	chained_irq_निकास(chip, desc);
-पूर्ण
+	} while (true);
+	chained_irq_exit(chip, desc);
+}
 
-अटल पूर्णांक __init xilinx_पूर्णांकc_of_init(काष्ठा device_node *पूर्णांकc,
-					     काष्ठा device_node *parent)
-अणु
-	काष्ठा xपूर्णांकc_irq_chip *irqc;
-	पूर्णांक ret, irq;
+static int __init xilinx_intc_of_init(struct device_node *intc,
+					     struct device_node *parent)
+{
+	struct xintc_irq_chip *irqc;
+	int ret, irq;
 
-	irqc = kzalloc(माप(*irqc), GFP_KERNEL);
-	अगर (!irqc)
-		वापस -ENOMEM;
-	irqc->base = of_iomap(पूर्णांकc, 0);
+	irqc = kzalloc(sizeof(*irqc), GFP_KERNEL);
+	if (!irqc)
+		return -ENOMEM;
+	irqc->base = of_iomap(intc, 0);
 	BUG_ON(!irqc->base);
 
-	ret = of_property_पढ़ो_u32(पूर्णांकc, "xlnx,num-intr-inputs", &irqc->nr_irq);
-	अगर (ret < 0) अणु
+	ret = of_property_read_u32(intc, "xlnx,num-intr-inputs", &irqc->nr_irq);
+	if (ret < 0) {
 		pr_err("irq-xilinx: unable to read xlnx,num-intr-inputs\n");
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
-	ret = of_property_पढ़ो_u32(पूर्णांकc, "xlnx,kind-of-intr", &irqc->पूर्णांकr_mask);
-	अगर (ret < 0) अणु
+	ret = of_property_read_u32(intc, "xlnx,kind-of-intr", &irqc->intr_mask);
+	if (ret < 0) {
 		pr_warn("irq-xilinx: unable to read xlnx,kind-of-intr\n");
-		irqc->पूर्णांकr_mask = 0;
-	पूर्ण
+		irqc->intr_mask = 0;
+	}
 
-	अगर (irqc->पूर्णांकr_mask >> irqc->nr_irq)
+	if (irqc->intr_mask >> irqc->nr_irq)
 		pr_warn("irq-xilinx: mismatch in kind-of-intr param\n");
 
 	pr_info("irq-xilinx: %pOF: num_irq=%d, edge=0x%x\n",
-		पूर्णांकc, irqc->nr_irq, irqc->पूर्णांकr_mask);
+		intc, irqc->nr_irq, irqc->intr_mask);
 
 
 	/*
-	 * Disable all बाह्यal पूर्णांकerrupts until they are
+	 * Disable all external interrupts until they are
 	 * explicitly requested.
 	 */
-	xपूर्णांकc_ग_लिखो(irqc, IER, 0);
+	xintc_write(irqc, IER, 0);
 
-	/* Acknowledge any pending पूर्णांकerrupts just in हाल. */
-	xपूर्णांकc_ग_लिखो(irqc, IAR, 0xffffffff);
+	/* Acknowledge any pending interrupts just in case. */
+	xintc_write(irqc, IAR, 0xffffffff);
 
 	/* Turn on the Master Enable. */
-	xपूर्णांकc_ग_लिखो(irqc, MER, MER_HIE | MER_ME);
-	अगर (xपूर्णांकc_पढ़ो(irqc, MER) != (MER_HIE | MER_ME)) अणु
-		अटल_branch_enable(&xपूर्णांकc_is_be);
-		xपूर्णांकc_ग_लिखो(irqc, MER, MER_HIE | MER_ME);
-	पूर्ण
+	xintc_write(irqc, MER, MER_HIE | MER_ME);
+	if (xintc_read(irqc, MER) != (MER_HIE | MER_ME)) {
+		static_branch_enable(&xintc_is_be);
+		xintc_write(irqc, MER, MER_HIE | MER_ME);
+	}
 
-	irqc->root_करोमुख्य = irq_करोमुख्य_add_linear(पूर्णांकc, irqc->nr_irq,
-						  &xपूर्णांकc_irq_करोमुख्य_ops, irqc);
-	अगर (!irqc->root_करोमुख्य) अणु
+	irqc->root_domain = irq_domain_add_linear(intc, irqc->nr_irq,
+						  &xintc_irq_domain_ops, irqc);
+	if (!irqc->root_domain) {
 		pr_err("irq-xilinx: Unable to create IRQ domain\n");
 		ret = -EINVAL;
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
-	अगर (parent) अणु
-		irq = irq_of_parse_and_map(पूर्णांकc, 0);
-		अगर (irq) अणु
+	if (parent) {
+		irq = irq_of_parse_and_map(intc, 0);
+		if (irq) {
 			irq_set_chained_handler_and_data(irq,
-							 xil_पूर्णांकc_irq_handler,
+							 xil_intc_irq_handler,
 							 irqc);
-		पूर्ण अन्यथा अणु
+		} else {
 			pr_err("irq-xilinx: interrupts property not in DT\n");
 			ret = -EINVAL;
-			जाओ error;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		primary_पूर्णांकc = irqc;
-		irq_set_शेष_host(primary_पूर्णांकc->root_करोमुख्य);
-	पूर्ण
+			goto error;
+		}
+	} else {
+		primary_intc = irqc;
+		irq_set_default_host(primary_intc->root_domain);
+	}
 
-	वापस 0;
+	return 0;
 
 error:
 	iounmap(irqc->base);
-	kमुक्त(irqc);
-	वापस ret;
+	kfree(irqc);
+	return ret;
 
-पूर्ण
+}
 
-IRQCHIP_DECLARE(xilinx_पूर्णांकc_xps, "xlnx,xps-intc-1.00.a", xilinx_पूर्णांकc_of_init);
-IRQCHIP_DECLARE(xilinx_पूर्णांकc_opb, "xlnx,opb-intc-1.00.c", xilinx_पूर्णांकc_of_init);
+IRQCHIP_DECLARE(xilinx_intc_xps, "xlnx,xps-intc-1.00.a", xilinx_intc_of_init);
+IRQCHIP_DECLARE(xilinx_intc_opb, "xlnx,opb-intc-1.00.c", xilinx_intc_of_init);

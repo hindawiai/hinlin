@@ -1,6 +1,5 @@
-<शैली गुरु>
-#अगर_अघोषित _QIB_KERNEL_H
-#घोषणा _QIB_KERNEL_H
+#ifndef _QIB_KERNEL_H
+#define _QIB_KERNEL_H
 /*
  * Copyright (c) 2012 - 2017 Intel Corporation.  All rights reserved.
  * Copyright (c) 2006 - 2012 QLogic Corporation. All rights reserved.
@@ -9,20 +8,20 @@
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the मुख्य directory of this source tree, or the
+ * COPYING in the main directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary क्रमms, with or
- *     without modअगरication, are permitted provided that the following
+ *     Redistribution and use in source and binary forms, with or
+ *     without modification, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary क्रमm must reproduce the above
+ *      - Redistributions in binary form must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the करोcumentation and/or other materials
+ *        disclaimer in the documentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -36,101 +35,101 @@
  */
 
 /*
- * This header file is the base header file क्रम qlogic_ib kernel code
- * qib_user.h serves a similar purpose क्रम user code.
+ * This header file is the base header file for qlogic_ib kernel code
+ * qib_user.h serves a similar purpose for user code.
  */
 
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/list.h>
-#समावेश <linux/scatterlist.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/fs.h>
-#समावेश <linux/completion.h>
-#समावेश <linux/kref.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/kthपढ़ो.h>
-#समावेश <linux/xarray.h>
-#समावेश <rdma/ib_hdrs.h>
-#समावेश <rdma/rdma_vt.h>
+#include <linux/interrupt.h>
+#include <linux/pci.h>
+#include <linux/dma-mapping.h>
+#include <linux/mutex.h>
+#include <linux/list.h>
+#include <linux/scatterlist.h>
+#include <linux/slab.h>
+#include <linux/io.h>
+#include <linux/fs.h>
+#include <linux/completion.h>
+#include <linux/kref.h>
+#include <linux/sched.h>
+#include <linux/kthread.h>
+#include <linux/xarray.h>
+#include <rdma/ib_hdrs.h>
+#include <rdma/rdma_vt.h>
 
-#समावेश "qib_common.h"
-#समावेश "qib_verbs.h"
+#include "qib_common.h"
+#include "qib_verbs.h"
 
 /* only s/w major version of QLogic_IB we can handle */
-#घोषणा QIB_CHIP_VERS_MAJ 2U
+#define QIB_CHIP_VERS_MAJ 2U
 
-/* करोn't care about this except prपूर्णांकing */
-#घोषणा QIB_CHIP_VERS_MIN 0U
+/* don't care about this except printing */
+#define QIB_CHIP_VERS_MIN 0U
 
-/* The Organization Unique Identअगरier (Mfg code), and its position in GUID */
-#घोषणा QIB_OUI 0x001175
-#घोषणा QIB_OUI_LSB 40
+/* The Organization Unique Identifier (Mfg code), and its position in GUID */
+#define QIB_OUI 0x001175
+#define QIB_OUI_LSB 40
 
 /*
- * per driver stats, either not device nor port-specअगरic, or
+ * per driver stats, either not device nor port-specific, or
  * summed over all of the devices and ports.
- * They are described by name via ipathfs fileप्रणाली, so layout
- * and number of elements can change without अवरोधing compatibility.
+ * They are described by name via ipathfs filesystem, so layout
+ * and number of elements can change without breaking compatibility.
  * If members are added or deleted qib_statnames[] in qib_fs.c must
  * change to match.
  */
-काष्ठा qlogic_ib_stats अणु
-	__u64 sps_पूर्णांकs; /* number of पूर्णांकerrupts handled */
-	__u64 sps_errपूर्णांकs; /* number of error पूर्णांकerrupts */
+struct qlogic_ib_stats {
+	__u64 sps_ints; /* number of interrupts handled */
+	__u64 sps_errints; /* number of error interrupts */
 	__u64 sps_txerrs; /* tx-related packet errors */
 	__u64 sps_rcverrs; /* non-crc rcv packet errors */
 	__u64 sps_hwerrs; /* hardware errors reported (parity, etc.) */
 	__u64 sps_nopiobufs; /* no pio bufs avail from kernel */
-	__u64 sps_ctxts; /* number of contexts currently खोलो */
+	__u64 sps_ctxts; /* number of contexts currently open */
 	__u64 sps_lenerrs; /* number of kernel packets where RHF != LRH len */
 	__u64 sps_buffull;
 	__u64 sps_hdrfull;
-पूर्ण;
+};
 
-बाह्य काष्ठा qlogic_ib_stats qib_stats;
-बाह्य स्थिर काष्ठा pci_error_handlers qib_pci_err_handler;
+extern struct qlogic_ib_stats qib_stats;
+extern const struct pci_error_handlers qib_pci_err_handler;
 
-#घोषणा QIB_CHIP_SWVERSION QIB_CHIP_VERS_MAJ
+#define QIB_CHIP_SWVERSION QIB_CHIP_VERS_MAJ
 /*
- * First-cut critierion क्रम "device is active" is
+ * First-cut critierion for "device is active" is
  * two thousand dwords combined Tx, Rx traffic per
- * 5-second पूर्णांकerval. SMA packets are 64 dwords,
+ * 5-second interval. SMA packets are 64 dwords,
  * and occur "a few per second", presumably each way.
  */
-#घोषणा QIB_TRAFFIC_ACTIVE_THRESHOLD (2000)
+#define QIB_TRAFFIC_ACTIVE_THRESHOLD (2000)
 
 /*
- * Below contains all data related to a single context (क्रमmerly called port).
+ * Below contains all data related to a single context (formerly called port).
  */
 
-#अगर_घोषित CONFIG_DEBUG_FS
-काष्ठा qib_opcode_stats_perctx;
-#पूर्ण_अगर
+#ifdef CONFIG_DEBUG_FS
+struct qib_opcode_stats_perctx;
+#endif
 
-काष्ठा qib_ctxtdata अणु
-	व्योम **rcvegrbuf;
+struct qib_ctxtdata {
+	void **rcvegrbuf;
 	dma_addr_t *rcvegrbuf_phys;
-	/* rcvhdrq base, needs mmap beक्रमe useful */
-	व्योम *rcvhdrq;
-	/* kernel भव address where hdrqtail is updated */
-	व्योम *rcvhdrtail_kvaddr;
+	/* rcvhdrq base, needs mmap before useful */
+	void *rcvhdrq;
+	/* kernel virtual address where hdrqtail is updated */
+	void *rcvhdrtail_kvaddr;
 	/*
-	 * temp buffer क्रम expected send setup, allocated at खोलो, instead
+	 * temp buffer for expected send setup, allocated at open, instead
 	 * of each setup call
 	 */
-	व्योम *tid_pg_list;
+	void *tid_pg_list;
 	/*
-	 * Shared page क्रम kernel to संकेत user processes that send buffers
+	 * Shared page for kernel to signal user processes that send buffers
 	 * need disarming.  The process should call QIB_CMD_DISARM_BUFS
 	 * or QIB_CMD_ACK_EVENT with IPATH_EVENT_DISARM_BUFS set.
 	 */
-	अचिन्हित दीर्घ *user_event_mask;
-	/* when रुकोing क्रम rcv or pioavail */
-	रुको_queue_head_t रुको;
+	unsigned long *user_event_mask;
+	/* when waiting for rcv or pioavail */
+	wait_queue_head_t wait;
 	/*
 	 * rcvegr bufs base, physical, must fit
 	 * in 44 bits so 32 bit programs mmap64 44 bit works)
@@ -141,327 +140,327 @@
 	dma_addr_t rcvhdrqtailaddr_phys;
 
 	/*
-	 * number of खोलोs (including slave sub-contexts) on this instance
-	 * (ignoring विभाजनs, dup, etc. क्रम now)
+	 * number of opens (including slave sub-contexts) on this instance
+	 * (ignoring forks, dup, etc. for now)
 	 */
-	पूर्णांक cnt;
+	int cnt;
 	/*
-	 * how much space to leave at start of eager TID entries क्रम
+	 * how much space to leave at start of eager TID entries for
 	 * protocol use, on each TID
 	 */
 	/* instead of calculating it */
-	अचिन्हित ctxt;
+	unsigned ctxt;
 	/* local node of context */
-	पूर्णांक node_id;
-	/* non-zero अगर ctxt is being shared. */
+	int node_id;
+	/* non-zero if ctxt is being shared. */
 	u16 subctxt_cnt;
-	/* non-zero अगर ctxt is being shared. */
+	/* non-zero if ctxt is being shared. */
 	u16 subctxt_id;
 	/* number of eager TID entries. */
 	u16 rcvegrcnt;
 	/* index of first eager TID entry. */
 	u16 rcvegr_tid_base;
-	/* number of pio bufs क्रम this ctxt (all procs, अगर shared) */
+	/* number of pio bufs for this ctxt (all procs, if shared) */
 	u32 piocnt;
-	/* first pio buffer क्रम this ctxt */
+	/* first pio buffer for this ctxt */
 	u32 pio_base;
-	/* chip offset of PIO buffers क्रम this ctxt */
+	/* chip offset of PIO buffers for this ctxt */
 	u32 piobufs;
 	/* how many alloc_pages() chunks in rcvegrbuf_pages */
 	u32 rcvegrbuf_chunks;
 	/* how many egrbufs per chunk */
 	u16 rcvegrbufs_perchunk;
 	/* ilog2 of above */
-	u16 rcvegrbufs_perchunk_shअगरt;
-	/* order क्रम rcvegrbuf_pages */
-	माप_प्रकार rcvegrbuf_size;
-	/* rcvhdrq size (क्रम मुक्तing) */
-	माप_प्रकार rcvhdrq_size;
-	/* per-context flags क्रम fileops/पूर्णांकr communication */
-	अचिन्हित दीर्घ flag;
-	/* next expected TID to check when looking क्रम मुक्त */
+	u16 rcvegrbufs_perchunk_shift;
+	/* order for rcvegrbuf_pages */
+	size_t rcvegrbuf_size;
+	/* rcvhdrq size (for freeing) */
+	size_t rcvhdrq_size;
+	/* per-context flags for fileops/intr communication */
+	unsigned long flag;
+	/* next expected TID to check when looking for free */
 	u32 tidcursor;
-	/* WAIT_RCV that समयd out, no पूर्णांकerrupt */
-	u32 rcvरुको_to;
-	/* WAIT_PIO that समयd out, no पूर्णांकerrupt */
-	u32 pioरुको_to;
-	/* WAIT_RCV alपढ़ोy happened, no रुको */
-	u32 rcvnoरुको;
-	/* WAIT_PIO alपढ़ोy happened, no रुको */
-	u32 pionoरुको;
+	/* WAIT_RCV that timed out, no interrupt */
+	u32 rcvwait_to;
+	/* WAIT_PIO that timed out, no interrupt */
+	u32 piowait_to;
+	/* WAIT_RCV already happened, no wait */
+	u32 rcvnowait;
+	/* WAIT_PIO already happened, no wait */
+	u32 pionowait;
 	/* total number of polled urgent packets */
 	u32 urgent;
-	/* saved total number of polled urgent packets क्रम poll edge trigger */
+	/* saved total number of polled urgent packets for poll edge trigger */
 	u32 urgent_poll;
 	/* pid of process using this ctxt */
 	pid_t pid;
 	pid_t subpid[QLOGIC_IB_MAX_SUBCTXT];
-	/* same size as task_काष्ठा .comm[], command that खोलोed context */
-	अक्षर comm[16];
+	/* same size as task_struct .comm[], command that opened context */
+	char comm[16];
 	/* pkeys set by this use of this ctxt */
 	u16 pkeys[4];
 	/* so file ops can get at unit */
-	काष्ठा qib_devdata *dd;
+	struct qib_devdata *dd;
 	/* so funcs that need physical port can get it easily */
-	काष्ठा qib_pportdata *ppd;
-	/* A page of memory क्रम rcvhdrhead, rcvegrhead, rcvegrtail * N */
-	व्योम *subctxt_uregbase;
-	/* An array of pages क्रम the eager receive buffers * N */
-	व्योम *subctxt_rcvegrbuf;
-	/* An array of pages क्रम the eager header queue entries * N */
-	व्योम *subctxt_rcvhdr_base;
-	/* The version of the library which खोलोed this ctxt */
+	struct qib_pportdata *ppd;
+	/* A page of memory for rcvhdrhead, rcvegrhead, rcvegrtail * N */
+	void *subctxt_uregbase;
+	/* An array of pages for the eager receive buffers * N */
+	void *subctxt_rcvegrbuf;
+	/* An array of pages for the eager header queue entries * N */
+	void *subctxt_rcvhdr_base;
+	/* The version of the library which opened this ctxt */
 	u32 userversion;
-	/* Biपंचांगask of active slaves */
+	/* Bitmask of active slaves */
 	u32 active_slaves;
-	/* Type of packets or conditions we want to poll क्रम */
+	/* Type of packets or conditions we want to poll for */
 	u16 poll_type;
 	/* receive packet sequence counter */
 	u8 seq_cnt;
 	u8 redirect_seq_cnt;
 	/* ctxt rcvhdrq head offset */
 	u32 head;
-	/* QPs रुकोing क्रम context processing */
-	काष्ठा list_head qp_रुको_list;
-#अगर_घोषित CONFIG_DEBUG_FS
+	/* QPs waiting for context processing */
+	struct list_head qp_wait_list;
+#ifdef CONFIG_DEBUG_FS
 	/* verbs stats per CTX */
-	काष्ठा qib_opcode_stats_perctx *opstats;
-#पूर्ण_अगर
-पूर्ण;
+	struct qib_opcode_stats_perctx *opstats;
+#endif
+};
 
-काष्ठा rvt_sge_state;
+struct rvt_sge_state;
 
-काष्ठा qib_sdma_txreq अणु
-	पूर्णांक                 flags;
-	पूर्णांक                 sg_count;
+struct qib_sdma_txreq {
+	int                 flags;
+	int                 sg_count;
 	dma_addr_t          addr;
-	व्योम              (*callback)(काष्ठा qib_sdma_txreq *, पूर्णांक);
-	u16                 start_idx;  /* sdma निजी */
-	u16                 next_descq_idx;  /* sdma निजी */
-	काष्ठा list_head    list;       /* sdma निजी */
-पूर्ण;
+	void              (*callback)(struct qib_sdma_txreq *, int);
+	u16                 start_idx;  /* sdma private */
+	u16                 next_descq_idx;  /* sdma private */
+	struct list_head    list;       /* sdma private */
+};
 
-काष्ठा qib_sdma_desc अणु
+struct qib_sdma_desc {
 	__le64 qw[2];
-पूर्ण;
+};
 
-काष्ठा qib_verbs_txreq अणु
-	काष्ठा qib_sdma_txreq   txreq;
-	काष्ठा rvt_qp           *qp;
-	काष्ठा rvt_swqe         *wqe;
+struct qib_verbs_txreq {
+	struct qib_sdma_txreq   txreq;
+	struct rvt_qp           *qp;
+	struct rvt_swqe         *wqe;
 	u32                     dwords;
 	u16                     hdr_dwords;
 	u16                     hdr_inx;
-	काष्ठा qib_pio_header	*align_buf;
-	काष्ठा rvt_mregion	*mr;
-	काष्ठा rvt_sge_state    *ss;
-पूर्ण;
+	struct qib_pio_header	*align_buf;
+	struct rvt_mregion	*mr;
+	struct rvt_sge_state    *ss;
+};
 
-#घोषणा QIB_SDMA_TXREQ_F_USELARGEBUF  0x1
-#घोषणा QIB_SDMA_TXREQ_F_HEADTOHOST   0x2
-#घोषणा QIB_SDMA_TXREQ_F_INTREQ       0x4
-#घोषणा QIB_SDMA_TXREQ_F_FREEBUF      0x8
-#घोषणा QIB_SDMA_TXREQ_F_FREEDESC     0x10
+#define QIB_SDMA_TXREQ_F_USELARGEBUF  0x1
+#define QIB_SDMA_TXREQ_F_HEADTOHOST   0x2
+#define QIB_SDMA_TXREQ_F_INTREQ       0x4
+#define QIB_SDMA_TXREQ_F_FREEBUF      0x8
+#define QIB_SDMA_TXREQ_F_FREEDESC     0x10
 
-#घोषणा QIB_SDMA_TXREQ_S_OK        0
-#घोषणा QIB_SDMA_TXREQ_S_SENDERROR 1
-#घोषणा QIB_SDMA_TXREQ_S_ABORTED   2
-#घोषणा QIB_SDMA_TXREQ_S_SHUTDOWN  3
+#define QIB_SDMA_TXREQ_S_OK        0
+#define QIB_SDMA_TXREQ_S_SENDERROR 1
+#define QIB_SDMA_TXREQ_S_ABORTED   2
+#define QIB_SDMA_TXREQ_S_SHUTDOWN  3
 
 /*
- * Get/Set IB link-level config parameters क्रम f_get/set_ib_cfg()
- * Mostly क्रम MADs that set or query link parameters, also ipath
- * config पूर्णांकerfaces
+ * Get/Set IB link-level config parameters for f_get/set_ib_cfg()
+ * Mostly for MADs that set or query link parameters, also ipath
+ * config interfaces
  */
-#घोषणा QIB_IB_CFG_LIDLMC 0 /* LID (LS16b) and Mask (MS16b) */
-#घोषणा QIB_IB_CFG_LWID_ENB 2 /* allowed Link-width */
-#घोषणा QIB_IB_CFG_LWID 3 /* currently active Link-width */
-#घोषणा QIB_IB_CFG_SPD_ENB 4 /* allowed Link speeds */
-#घोषणा QIB_IB_CFG_SPD 5 /* current Link spd */
-#घोषणा QIB_IB_CFG_RXPOL_ENB 6 /* Auto-RX-polarity enable */
-#घोषणा QIB_IB_CFG_LREV_ENB 7 /* Auto-Lane-reversal enable */
-#घोषणा QIB_IB_CFG_LINKLATENCY 8 /* Link Latency (IB1.2 only) */
-#घोषणा QIB_IB_CFG_HRTBT 9 /* IB heartbeat off/enable/स्वतः; DDR/QDR only */
-#घोषणा QIB_IB_CFG_OP_VLS 10 /* operational VLs */
-#घोषणा QIB_IB_CFG_VL_HIGH_CAP 11 /* num of VL high priority weights */
-#घोषणा QIB_IB_CFG_VL_LOW_CAP 12 /* num of VL low priority weights */
-#घोषणा QIB_IB_CFG_OVERRUN_THRESH 13 /* IB overrun threshold */
-#घोषणा QIB_IB_CFG_PHYERR_THRESH 14 /* IB PHY error threshold */
-#घोषणा QIB_IB_CFG_LINKDEFAULT 15 /* IB link शेष (sleep/poll) */
-#घोषणा QIB_IB_CFG_PKEYS 16 /* update partition keys */
-#घोषणा QIB_IB_CFG_MTU 17 /* update MTU in IBC */
-#घोषणा QIB_IB_CFG_LSTATE 18 /* update linkcmd and linkinitcmd in IBC */
-#घोषणा QIB_IB_CFG_VL_HIGH_LIMIT 19
-#घोषणा QIB_IB_CFG_PMA_TICKS 20 /* PMA sample tick resolution */
-#घोषणा QIB_IB_CFG_PORT 21 /* चयन port we are connected to */
+#define QIB_IB_CFG_LIDLMC 0 /* LID (LS16b) and Mask (MS16b) */
+#define QIB_IB_CFG_LWID_ENB 2 /* allowed Link-width */
+#define QIB_IB_CFG_LWID 3 /* currently active Link-width */
+#define QIB_IB_CFG_SPD_ENB 4 /* allowed Link speeds */
+#define QIB_IB_CFG_SPD 5 /* current Link spd */
+#define QIB_IB_CFG_RXPOL_ENB 6 /* Auto-RX-polarity enable */
+#define QIB_IB_CFG_LREV_ENB 7 /* Auto-Lane-reversal enable */
+#define QIB_IB_CFG_LINKLATENCY 8 /* Link Latency (IB1.2 only) */
+#define QIB_IB_CFG_HRTBT 9 /* IB heartbeat off/enable/auto; DDR/QDR only */
+#define QIB_IB_CFG_OP_VLS 10 /* operational VLs */
+#define QIB_IB_CFG_VL_HIGH_CAP 11 /* num of VL high priority weights */
+#define QIB_IB_CFG_VL_LOW_CAP 12 /* num of VL low priority weights */
+#define QIB_IB_CFG_OVERRUN_THRESH 13 /* IB overrun threshold */
+#define QIB_IB_CFG_PHYERR_THRESH 14 /* IB PHY error threshold */
+#define QIB_IB_CFG_LINKDEFAULT 15 /* IB link default (sleep/poll) */
+#define QIB_IB_CFG_PKEYS 16 /* update partition keys */
+#define QIB_IB_CFG_MTU 17 /* update MTU in IBC */
+#define QIB_IB_CFG_LSTATE 18 /* update linkcmd and linkinitcmd in IBC */
+#define QIB_IB_CFG_VL_HIGH_LIMIT 19
+#define QIB_IB_CFG_PMA_TICKS 20 /* PMA sample tick resolution */
+#define QIB_IB_CFG_PORT 21 /* switch port we are connected to */
 
 /*
- * क्रम CFG_LSTATE: LINKCMD in upper 16 bits, LINKINITCMD in lower 16
- * IB_LINKINITCMD_POLL and SLEEP are also used as set/get values क्रम
+ * for CFG_LSTATE: LINKCMD in upper 16 bits, LINKINITCMD in lower 16
+ * IB_LINKINITCMD_POLL and SLEEP are also used as set/get values for
  * QIB_IB_CFG_LINKDEFAULT cmd
  */
-#घोषणा   IB_LINKCMD_DOWN   (0 << 16)
-#घोषणा   IB_LINKCMD_ARMED  (1 << 16)
-#घोषणा   IB_LINKCMD_ACTIVE (2 << 16)
-#घोषणा   IB_LINKINITCMD_NOP     0
-#घोषणा   IB_LINKINITCMD_POLL    1
-#घोषणा   IB_LINKINITCMD_SLEEP   2
-#घोषणा   IB_LINKINITCMD_DISABLE 3
+#define   IB_LINKCMD_DOWN   (0 << 16)
+#define   IB_LINKCMD_ARMED  (1 << 16)
+#define   IB_LINKCMD_ACTIVE (2 << 16)
+#define   IB_LINKINITCMD_NOP     0
+#define   IB_LINKINITCMD_POLL    1
+#define   IB_LINKINITCMD_SLEEP   2
+#define   IB_LINKINITCMD_DISABLE 3
 
 /*
  * valid states passed to qib_set_linkstate() user call
  */
-#घोषणा QIB_IB_LINKDOWN         0
-#घोषणा QIB_IB_LINKARM          1
-#घोषणा QIB_IB_LINKACTIVE       2
-#घोषणा QIB_IB_LINKDOWN_ONLY    3
-#घोषणा QIB_IB_LINKDOWN_SLEEP   4
-#घोषणा QIB_IB_LINKDOWN_DISABLE 5
+#define QIB_IB_LINKDOWN         0
+#define QIB_IB_LINKARM          1
+#define QIB_IB_LINKACTIVE       2
+#define QIB_IB_LINKDOWN_ONLY    3
+#define QIB_IB_LINKDOWN_SLEEP   4
+#define QIB_IB_LINKDOWN_DISABLE 5
 
 /*
- * These 7 values (SDR, DDR, and QDR may be ORed क्रम स्वतः-speed
- * negotiation) are used क्रम the 3rd argument to path_f_set_ib_cfg
+ * These 7 values (SDR, DDR, and QDR may be ORed for auto-speed
+ * negotiation) are used for the 3rd argument to path_f_set_ib_cfg
  * with cmd QIB_IB_CFG_SPD_ENB, by direct calls or via sysfs.  They
- * are also the the possible values क्रम qib_link_speed_enabled and active
+ * are also the the possible values for qib_link_speed_enabled and active
  * The values were chosen to match values used within the IB spec.
  */
-#घोषणा QIB_IB_SDR 1
-#घोषणा QIB_IB_DDR 2
-#घोषणा QIB_IB_QDR 4
+#define QIB_IB_SDR 1
+#define QIB_IB_DDR 2
+#define QIB_IB_QDR 4
 
-#घोषणा QIB_DEFAULT_MTU 4096
+#define QIB_DEFAULT_MTU 4096
 
 /* max number of IB ports supported per HCA */
-#घोषणा QIB_MAX_IB_PORTS 2
+#define QIB_MAX_IB_PORTS 2
 
 /*
- * Possible IB config parameters क्रम f_get/set_ib_table()
+ * Possible IB config parameters for f_get/set_ib_table()
  */
-#घोषणा QIB_IB_TBL_VL_HIGH_ARB 1 /* Get/set VL high priority weights */
-#घोषणा QIB_IB_TBL_VL_LOW_ARB 2 /* Get/set VL low priority weights */
+#define QIB_IB_TBL_VL_HIGH_ARB 1 /* Get/set VL high priority weights */
+#define QIB_IB_TBL_VL_LOW_ARB 2 /* Get/set VL low priority weights */
 
 /*
- * Possible "operations" क्रम f_rcvctrl(ppd, op, ctxt)
+ * Possible "operations" for f_rcvctrl(ppd, op, ctxt)
  * these are bits so they can be combined, e.g.
  * QIB_RCVCTRL_INTRAVAIL_ENB | QIB_RCVCTRL_CTXT_ENB
  */
-#घोषणा QIB_RCVCTRL_TAILUPD_ENB 0x01
-#घोषणा QIB_RCVCTRL_TAILUPD_DIS 0x02
-#घोषणा QIB_RCVCTRL_CTXT_ENB 0x04
-#घोषणा QIB_RCVCTRL_CTXT_DIS 0x08
-#घोषणा QIB_RCVCTRL_INTRAVAIL_ENB 0x10
-#घोषणा QIB_RCVCTRL_INTRAVAIL_DIS 0x20
-#घोषणा QIB_RCVCTRL_PKEY_ENB 0x40  /* Note, शेष is enabled */
-#घोषणा QIB_RCVCTRL_PKEY_DIS 0x80
-#घोषणा QIB_RCVCTRL_BP_ENB 0x0100
-#घोषणा QIB_RCVCTRL_BP_DIS 0x0200
-#घोषणा QIB_RCVCTRL_TIDFLOW_ENB 0x0400
-#घोषणा QIB_RCVCTRL_TIDFLOW_DIS 0x0800
+#define QIB_RCVCTRL_TAILUPD_ENB 0x01
+#define QIB_RCVCTRL_TAILUPD_DIS 0x02
+#define QIB_RCVCTRL_CTXT_ENB 0x04
+#define QIB_RCVCTRL_CTXT_DIS 0x08
+#define QIB_RCVCTRL_INTRAVAIL_ENB 0x10
+#define QIB_RCVCTRL_INTRAVAIL_DIS 0x20
+#define QIB_RCVCTRL_PKEY_ENB 0x40  /* Note, default is enabled */
+#define QIB_RCVCTRL_PKEY_DIS 0x80
+#define QIB_RCVCTRL_BP_ENB 0x0100
+#define QIB_RCVCTRL_BP_DIS 0x0200
+#define QIB_RCVCTRL_TIDFLOW_ENB 0x0400
+#define QIB_RCVCTRL_TIDFLOW_DIS 0x0800
 
 /*
- * Possible "operations" क्रम f_sendctrl(ppd, op, var)
+ * Possible "operations" for f_sendctrl(ppd, op, var)
  * these are bits so they can be combined, e.g.
  * QIB_SENDCTRL_BUFAVAIL_ENB | QIB_SENDCTRL_ENB
  * Some operations (e.g. DISARM, ABORT) are known to
- * be "one-shot", so करो not modअगरy shaकरोw.
+ * be "one-shot", so do not modify shadow.
  */
-#घोषणा QIB_SENDCTRL_DISARM       (0x1000)
-#घोषणा QIB_SENDCTRL_DISARM_BUF(bufn) ((bufn) | QIB_SENDCTRL_DISARM)
+#define QIB_SENDCTRL_DISARM       (0x1000)
+#define QIB_SENDCTRL_DISARM_BUF(bufn) ((bufn) | QIB_SENDCTRL_DISARM)
 	/* available (0x2000) */
-#घोषणा QIB_SENDCTRL_AVAIL_DIS    (0x4000)
-#घोषणा QIB_SENDCTRL_AVAIL_ENB    (0x8000)
-#घोषणा QIB_SENDCTRL_AVAIL_BLIP  (0x10000)
-#घोषणा QIB_SENDCTRL_SEND_DIS    (0x20000)
-#घोषणा QIB_SENDCTRL_SEND_ENB    (0x40000)
-#घोषणा QIB_SENDCTRL_FLUSH       (0x80000)
-#घोषणा QIB_SENDCTRL_CLEAR      (0x100000)
-#घोषणा QIB_SENDCTRL_DISARM_ALL (0x200000)
+#define QIB_SENDCTRL_AVAIL_DIS    (0x4000)
+#define QIB_SENDCTRL_AVAIL_ENB    (0x8000)
+#define QIB_SENDCTRL_AVAIL_BLIP  (0x10000)
+#define QIB_SENDCTRL_SEND_DIS    (0x20000)
+#define QIB_SENDCTRL_SEND_ENB    (0x40000)
+#define QIB_SENDCTRL_FLUSH       (0x80000)
+#define QIB_SENDCTRL_CLEAR      (0x100000)
+#define QIB_SENDCTRL_DISARM_ALL (0x200000)
 
 /*
- * These are the generic indices क्रम requesting per-port
+ * These are the generic indices for requesting per-port
  * counter values via the f_portcntr function.  They
- * are always वापसed as 64 bit values, although most
+ * are always returned as 64 bit values, although most
  * are 32 bit counters.
  */
 /* send-related counters */
-#घोषणा QIBPORTCNTR_PKTSEND         0U
-#घोषणा QIBPORTCNTR_WORDSEND        1U
-#घोषणा QIBPORTCNTR_PSXMITDATA      2U
-#घोषणा QIBPORTCNTR_PSXMITPKTS      3U
-#घोषणा QIBPORTCNTR_PSXMITWAIT      4U
-#घोषणा QIBPORTCNTR_SENDSTALL       5U
+#define QIBPORTCNTR_PKTSEND         0U
+#define QIBPORTCNTR_WORDSEND        1U
+#define QIBPORTCNTR_PSXMITDATA      2U
+#define QIBPORTCNTR_PSXMITPKTS      3U
+#define QIBPORTCNTR_PSXMITWAIT      4U
+#define QIBPORTCNTR_SENDSTALL       5U
 /* receive-related counters */
-#घोषणा QIBPORTCNTR_PKTRCV          6U
-#घोषणा QIBPORTCNTR_PSRCVDATA       7U
-#घोषणा QIBPORTCNTR_PSRCVPKTS       8U
-#घोषणा QIBPORTCNTR_RCVEBP          9U
-#घोषणा QIBPORTCNTR_RCVOVFL         10U
-#घोषणा QIBPORTCNTR_WORDRCV         11U
+#define QIBPORTCNTR_PKTRCV          6U
+#define QIBPORTCNTR_PSRCVDATA       7U
+#define QIBPORTCNTR_PSRCVPKTS       8U
+#define QIBPORTCNTR_RCVEBP          9U
+#define QIBPORTCNTR_RCVOVFL         10U
+#define QIBPORTCNTR_WORDRCV         11U
 /* IB link related error counters */
-#घोषणा QIBPORTCNTR_RXLOCALPHYERR   12U
-#घोषणा QIBPORTCNTR_RXVLERR         13U
-#घोषणा QIBPORTCNTR_ERRICRC         14U
-#घोषणा QIBPORTCNTR_ERRVCRC         15U
-#घोषणा QIBPORTCNTR_ERRLPCRC        16U
-#घोषणा QIBPORTCNTR_BADFORMAT       17U
-#घोषणा QIBPORTCNTR_ERR_RLEN        18U
-#घोषणा QIBPORTCNTR_IBSYMBOLERR     19U
-#घोषणा QIBPORTCNTR_INVALIDRLEN     20U
-#घोषणा QIBPORTCNTR_UNSUPVL         21U
-#घोषणा QIBPORTCNTR_EXCESSBUFOVFL   22U
-#घोषणा QIBPORTCNTR_ERRLINK         23U
-#घोषणा QIBPORTCNTR_IBLINKDOWN      24U
-#घोषणा QIBPORTCNTR_IBLINKERRRECOV  25U
-#घोषणा QIBPORTCNTR_LLI             26U
+#define QIBPORTCNTR_RXLOCALPHYERR   12U
+#define QIBPORTCNTR_RXVLERR         13U
+#define QIBPORTCNTR_ERRICRC         14U
+#define QIBPORTCNTR_ERRVCRC         15U
+#define QIBPORTCNTR_ERRLPCRC        16U
+#define QIBPORTCNTR_BADFORMAT       17U
+#define QIBPORTCNTR_ERR_RLEN        18U
+#define QIBPORTCNTR_IBSYMBOLERR     19U
+#define QIBPORTCNTR_INVALIDRLEN     20U
+#define QIBPORTCNTR_UNSUPVL         21U
+#define QIBPORTCNTR_EXCESSBUFOVFL   22U
+#define QIBPORTCNTR_ERRLINK         23U
+#define QIBPORTCNTR_IBLINKDOWN      24U
+#define QIBPORTCNTR_IBLINKERRRECOV  25U
+#define QIBPORTCNTR_LLI             26U
 /* other error counters */
-#घोषणा QIBPORTCNTR_RXDROPPKT       27U
-#घोषणा QIBPORTCNTR_VL15PKTDROP     28U
-#घोषणा QIBPORTCNTR_ERRPKEY         29U
-#घोषणा QIBPORTCNTR_KHDROVFL        30U
-/* sampling counters (these are actually control रेजिस्टरs) */
-#घोषणा QIBPORTCNTR_PSINTERVAL      31U
-#घोषणा QIBPORTCNTR_PSSTART         32U
-#घोषणा QIBPORTCNTR_PSSTAT          33U
+#define QIBPORTCNTR_RXDROPPKT       27U
+#define QIBPORTCNTR_VL15PKTDROP     28U
+#define QIBPORTCNTR_ERRPKEY         29U
+#define QIBPORTCNTR_KHDROVFL        30U
+/* sampling counters (these are actually control registers) */
+#define QIBPORTCNTR_PSINTERVAL      31U
+#define QIBPORTCNTR_PSSTART         32U
+#define QIBPORTCNTR_PSSTAT          33U
 
-/* how often we check क्रम packet activity क्रम "घातer on hours (in seconds) */
-#घोषणा ACTIVITY_TIMER 5
+/* how often we check for packet activity for "power on hours (in seconds) */
+#define ACTIVITY_TIMER 5
 
-#घोषणा MAX_NAME_SIZE 64
+#define MAX_NAME_SIZE 64
 
-#अगर_घोषित CONFIG_INFINIBAND_QIB_DCA
-काष्ठा qib_irq_notअगरy;
-#पूर्ण_अगर
+#ifdef CONFIG_INFINIBAND_QIB_DCA
+struct qib_irq_notify;
+#endif
 
-काष्ठा qib_msix_entry अणु
-	व्योम *arg;
-#अगर_घोषित CONFIG_INFINIBAND_QIB_DCA
-	पूर्णांक dca;
-	पूर्णांक rcv;
-	काष्ठा qib_irq_notअगरy *notअगरier;
-#पूर्ण_अगर
+struct qib_msix_entry {
+	void *arg;
+#ifdef CONFIG_INFINIBAND_QIB_DCA
+	int dca;
+	int rcv;
+	struct qib_irq_notify *notifier;
+#endif
 	cpumask_var_t mask;
-पूर्ण;
+};
 
-/* Below is an opaque काष्ठा. Each chip (device) can मुख्यtain
- * निजी data needed क्रम its operation, but not germane to the
+/* Below is an opaque struct. Each chip (device) can maintain
+ * private data needed for its operation, but not germane to the
  * rest of the driver.  For convenience, we define another that
- * is chip-specअगरic, per-port
+ * is chip-specific, per-port
  */
-काष्ठा qib_chip_specअगरic;
-काष्ठा qib_chipport_specअगरic;
+struct qib_chip_specific;
+struct qib_chipport_specific;
 
-क्रमागत qib_sdma_states अणु
-	qib_sdma_state_s00_hw_करोwn,
-	qib_sdma_state_s10_hw_start_up_रुको,
+enum qib_sdma_states {
+	qib_sdma_state_s00_hw_down,
+	qib_sdma_state_s10_hw_start_up_wait,
 	qib_sdma_state_s20_idle,
-	qib_sdma_state_s30_sw_clean_up_रुको,
-	qib_sdma_state_s40_hw_clean_up_रुको,
-	qib_sdma_state_s50_hw_halt_रुको,
+	qib_sdma_state_s30_sw_clean_up_wait,
+	qib_sdma_state_s40_hw_clean_up_wait,
+	qib_sdma_state_s50_hw_halt_wait,
 	qib_sdma_state_s99_running,
-पूर्ण;
+};
 
-क्रमागत qib_sdma_events अणु
-	qib_sdma_event_e00_go_hw_करोwn,
+enum qib_sdma_events {
+	qib_sdma_event_e00_go_hw_down,
 	qib_sdma_event_e10_go_hw_start,
 	qib_sdma_event_e20_hw_started,
 	qib_sdma_event_e30_go_running,
@@ -471,151 +470,151 @@
 	qib_sdma_event_e70_go_idle,
 	qib_sdma_event_e7220_err_halted,
 	qib_sdma_event_e7322_err_halted,
-	qib_sdma_event_e90_समयr_tick,
-पूर्ण;
+	qib_sdma_event_e90_timer_tick,
+};
 
-काष्ठा sdma_set_state_action अणु
-	अचिन्हित op_enable:1;
-	अचिन्हित op_पूर्णांकenable:1;
-	अचिन्हित op_halt:1;
-	अचिन्हित op_drain:1;
-	अचिन्हित go_s99_running_tofalse:1;
-	अचिन्हित go_s99_running_totrue:1;
-पूर्ण;
+struct sdma_set_state_action {
+	unsigned op_enable:1;
+	unsigned op_intenable:1;
+	unsigned op_halt:1;
+	unsigned op_drain:1;
+	unsigned go_s99_running_tofalse:1;
+	unsigned go_s99_running_totrue:1;
+};
 
-काष्ठा qib_sdma_state अणु
-	काष्ठा kref          kref;
-	काष्ठा completion    comp;
-	क्रमागत qib_sdma_states current_state;
-	काष्ठा sdma_set_state_action *set_state_action;
-	अचिन्हित             current_op;
-	अचिन्हित             go_s99_running;
-	अचिन्हित             first_sendbuf;
-	अचिन्हित             last_sendbuf; /* really last +1 */
+struct qib_sdma_state {
+	struct kref          kref;
+	struct completion    comp;
+	enum qib_sdma_states current_state;
+	struct sdma_set_state_action *set_state_action;
+	unsigned             current_op;
+	unsigned             go_s99_running;
+	unsigned             first_sendbuf;
+	unsigned             last_sendbuf; /* really last +1 */
 	/* debugging/devel */
-	क्रमागत qib_sdma_states previous_state;
-	अचिन्हित             previous_op;
-	क्रमागत qib_sdma_events last_event;
-पूर्ण;
+	enum qib_sdma_states previous_state;
+	unsigned             previous_op;
+	enum qib_sdma_events last_event;
+};
 
-काष्ठा xmit_रुको अणु
-	काष्ठा समयr_list समयr;
+struct xmit_wait {
+	struct timer_list timer;
 	u64 counter;
 	u8 flags;
-	काष्ठा cache अणु
+	struct cache {
 		u64 psxmitdata;
 		u64 psrcvdata;
 		u64 psxmitpkts;
 		u64 psrcvpkts;
-		u64 psxmitरुको;
-	पूर्ण counter_cache;
-पूर्ण;
+		u64 psxmitwait;
+	} counter_cache;
+};
 
 /*
- * The काष्ठाure below encapsulates data relevant to a physical IB Port.
+ * The structure below encapsulates data relevant to a physical IB Port.
  * Current chips support only one such port, but the separation
- * clarअगरies things a bit. Note that to conक्रमm to IB conventions,
+ * clarifies things a bit. Note that to conform to IB conventions,
  * port-numbers are one-based. The first or only port is port1.
  */
-काष्ठा qib_pportdata अणु
-	काष्ठा qib_ibport ibport_data;
+struct qib_pportdata {
+	struct qib_ibport ibport_data;
 
-	काष्ठा qib_devdata *dd;
-	काष्ठा qib_chippport_specअगरic *cpspec; /* chip-specअगरic per-port */
-	काष्ठा kobject pport_kobj;
-	काष्ठा kobject pport_cc_kobj;
-	काष्ठा kobject sl2vl_kobj;
-	काष्ठा kobject diagc_kobj;
+	struct qib_devdata *dd;
+	struct qib_chippport_specific *cpspec; /* chip-specific per-port */
+	struct kobject pport_kobj;
+	struct kobject pport_cc_kobj;
+	struct kobject sl2vl_kobj;
+	struct kobject diagc_kobj;
 
-	/* GUID क्रम this पूर्णांकerface, in network order */
+	/* GUID for this interface, in network order */
 	__be64 guid;
 
-	/* QIB_POLL, etc. link-state specअगरic flags, per port */
+	/* QIB_POLL, etc. link-state specific flags, per port */
 	u32 lflags;
-	/* qib_lflags driver is रुकोing क्रम */
+	/* qib_lflags driver is waiting for */
 	u32 state_wanted;
 	spinlock_t lflags_lock;
 
-	/* ref count क्रम each pkey */
+	/* ref count for each pkey */
 	atomic_t pkeyrefs[4];
 
 	/*
-	 * this address is mapped पढ़ोonly पूर्णांकo user processes so they can
+	 * this address is mapped readonly into user processes so they can
 	 * get status cheaply, whenever they want.  One qword of status per port
 	 */
 	u64 *statusp;
 
 	/* SendDMA related entries */
 
-	/* पढ़ो mostly */
-	काष्ठा qib_sdma_desc *sdma_descq;
-	काष्ठा workqueue_काष्ठा *qib_wq;
-	काष्ठा qib_sdma_state sdma_state;
+	/* read mostly */
+	struct qib_sdma_desc *sdma_descq;
+	struct workqueue_struct *qib_wq;
+	struct qib_sdma_state sdma_state;
 	dma_addr_t       sdma_descq_phys;
-	अस्थिर __le64 *sdma_head_dma; /* DMA'ed by chip */
+	volatile __le64 *sdma_head_dma; /* DMA'ed by chip */
 	dma_addr_t       sdma_head_phys;
 	u16                   sdma_descq_cnt;
 
-	/* पढ़ो/ग_लिखो using lock */
+	/* read/write using lock */
 	spinlock_t            sdma_lock ____cacheline_aligned_in_smp;
-	काष्ठा list_head      sdma_activelist;
-	काष्ठा list_head      sdma_userpending;
+	struct list_head      sdma_activelist;
+	struct list_head      sdma_userpending;
 	u64                   sdma_descq_added;
-	u64                   sdma_descq_हटाओd;
+	u64                   sdma_descq_removed;
 	u16                   sdma_descq_tail;
 	u16                   sdma_descq_head;
 	u8                    sdma_generation;
-	u8                    sdma_पूर्णांकrequest;
+	u8                    sdma_intrequest;
 
-	काष्ठा tasklet_काष्ठा sdma_sw_clean_up_task
+	struct tasklet_struct sdma_sw_clean_up_task
 		____cacheline_aligned_in_smp;
 
-	रुको_queue_head_t state_रुको; /* क्रम state_wanted */
+	wait_queue_head_t state_wait; /* for state_wanted */
 
-	/* HoL blocking क्रम SMP replies */
-	अचिन्हित          hol_state;
-	काष्ठा समयr_list hol_समयr;
+	/* HoL blocking for SMP replies */
+	unsigned          hol_state;
+	struct timer_list hol_timer;
 
 	/*
-	 * Shaकरोw copies of रेजिस्टरs; size indicates पढ़ो access size.
-	 * Most of them are पढ़ोonly, but some are ग_लिखो-only रेजिस्टर,
-	 * where we manipulate the bits in the shaकरोw copy, and then ग_लिखो
-	 * the shaकरोw copy to qlogic_ib.
+	 * Shadow copies of registers; size indicates read access size.
+	 * Most of them are readonly, but some are write-only register,
+	 * where we manipulate the bits in the shadow copy, and then write
+	 * the shadow copy to qlogic_ib.
 	 *
 	 * We deliberately make most of these 32 bits, since they have
-	 * restricted range.  For any that we पढ़ो, we won't to generate 32
+	 * restricted range.  For any that we read, we won't to generate 32
 	 * bit accesses, since Opteron will generate 2 separate 32 bit HT
-	 * transactions क्रम a 64 bit पढ़ो, and we want to aव्योम unnecessary
+	 * transactions for a 64 bit read, and we want to avoid unnecessary
 	 * bus transactions.
 	 */
 
 	/* This is the 64 bit group */
-	/* last ibcstatus.  opaque outside chip-specअगरic code */
+	/* last ibcstatus.  opaque outside chip-specific code */
 	u64 lastibcstat;
 
 	/* these are the "32 bit" regs */
 
 	/*
-	 * the following two are 32-bit biपंचांगasks, but अणुtest,clear,setपूर्ण_bit
+	 * the following two are 32-bit bitmasks, but {test,clear,set}_bit
 	 * all expect bit fields to be "unsigned long"
 	 */
-	अचिन्हित दीर्घ p_rcvctrl; /* shaकरोw per-port rcvctrl */
-	अचिन्हित दीर्घ p_sendctrl; /* shaकरोw per-port sendctrl */
+	unsigned long p_rcvctrl; /* shadow per-port rcvctrl */
+	unsigned long p_sendctrl; /* shadow per-port sendctrl */
 
-	u32 ibmtu; /* The MTU programmed क्रम this unit */
+	u32 ibmtu; /* The MTU programmed for this unit */
 	/*
 	 * Current max size IB packet (in bytes) including IB headers, that
 	 * we can send. Changes when ibmtu changes.
 	 */
 	u32 ibmaxlen;
 	/*
-	 * ibmaxlen at init समय, limited by chip and by receive buffer
+	 * ibmaxlen at init time, limited by chip and by receive buffer
 	 * size.  Not changed after init.
 	 */
 	u32 init_ibmaxlen;
-	/* LID programmed क्रम this instance */
+	/* LID programmed for this instance */
 	u16 lid;
-	/* list of pkeys programmed; 0 अगर not set */
+	/* list of pkeys programmed; 0 if not set */
 	u16 pkeys[4];
 	/* LID mask control */
 	u8 lmc;
@@ -627,40 +626,40 @@
 	u16 link_speed_active;
 	u8 vls_supported;
 	u8 vls_operational;
-	/* Rx Polarity inversion (compensate क्रम ~tx on partner) */
+	/* Rx Polarity inversion (compensate for ~tx on partner) */
 	u8 rx_pol_inv;
 
 	u8 hw_pidx;     /* physical port index */
-	u32 port;        /* IB port number and index पूर्णांकo dd->pports - 1 */
+	u32 port;        /* IB port number and index into dd->pports - 1 */
 
 	u8 delay_mult;
 
 	/* used to override LED behavior */
-	u8 led_override;  /* Substituted क्रम normal value, अगर non-zero */
-	u16 led_override_समयoff; /* delta to next समयr event */
+	u8 led_override;  /* Substituted for normal value, if non-zero */
+	u16 led_override_timeoff; /* delta to next timer event */
 	u8 led_override_vals[2]; /* Alternates per blink-frame */
 	u8 led_override_phase; /* Just counts, LSB picks from vals[] */
-	atomic_t led_override_समयr_active;
+	atomic_t led_override_timer_active;
 	/* Used to flash LEDs in override mode */
-	काष्ठा समयr_list led_override_समयr;
-	काष्ठा xmit_रुको cong_stats;
-	काष्ठा समयr_list symerr_clear_समयr;
+	struct timer_list led_override_timer;
+	struct xmit_wait cong_stats;
+	struct timer_list symerr_clear_timer;
 
-	/* Synchronize access between driver ग_लिखोs and sysfs पढ़ोs */
-	spinlock_t cc_shaकरोw_lock
+	/* Synchronize access between driver writes and sysfs reads */
+	spinlock_t cc_shadow_lock
 		____cacheline_aligned_in_smp;
 
-	/* Shaकरोw copy of the congestion control table */
-	काष्ठा cc_table_shaकरोw *ccti_entries_shaकरोw;
+	/* Shadow copy of the congestion control table */
+	struct cc_table_shadow *ccti_entries_shadow;
 
-	/* Shaकरोw copy of the congestion control entries */
-	काष्ठा ib_cc_congestion_setting_attr_shaकरोw *congestion_entries_shaकरोw;
+	/* Shadow copy of the congestion control entries */
+	struct ib_cc_congestion_setting_attr_shadow *congestion_entries_shadow;
 
 	/* List of congestion control table entries */
-	काष्ठा ib_cc_table_entry_shaकरोw *ccti_entries;
+	struct ib_cc_table_entry_shadow *ccti_entries;
 
 	/* 16 congestion entries with each entry corresponding to a SL */
-	काष्ठा ib_cc_congestion_entry_shaकरोw *congestion_entries;
+	struct ib_cc_congestion_entry_shadow *congestion_entries;
 
 	/* Maximum number of congestion control entries that the agent expects
 	 * the manager to send.
@@ -670,7 +669,7 @@
 	/* Total number of congestion control table entries */
 	u16 total_cct_entry;
 
-	/* Bit map identअगरying service level */
+	/* Bit map identifying service level */
 	u16 cc_sl_control_map;
 
 	/* maximum congestion control table index */
@@ -678,188 +677,188 @@
 
 	/* CA's max number of 64 entry units in the congestion control table */
 	u8 cc_max_table_entries;
-पूर्ण;
+};
 
 /* Observers. Not to be taken lightly, possibly not to ship. */
 /*
- * If a diag पढ़ो or ग_लिखो is to (bottom <= offset <= top),
- * the "hoook" is called, allowing, e.g. shaकरोws to be
- * updated in sync with the driver. काष्ठा diag_observer
+ * If a diag read or write is to (bottom <= offset <= top),
+ * the "hoook" is called, allowing, e.g. shadows to be
+ * updated in sync with the driver. struct diag_observer
  * is the "visible" part.
  */
-काष्ठा diag_observer;
+struct diag_observer;
 
-प्रकार पूर्णांक (*diag_hook) (काष्ठा qib_devdata *dd,
-	स्थिर काष्ठा diag_observer *op,
-	u32 offs, u64 *data, u64 mask, पूर्णांक only_32);
+typedef int (*diag_hook) (struct qib_devdata *dd,
+	const struct diag_observer *op,
+	u32 offs, u64 *data, u64 mask, int only_32);
 
-काष्ठा diag_observer अणु
+struct diag_observer {
 	diag_hook hook;
 	u32 bottom;
 	u32 top;
-पूर्ण;
+};
 
-बाह्य पूर्णांक qib_रेजिस्टर_observer(काष्ठा qib_devdata *dd,
-	स्थिर काष्ठा diag_observer *op);
+extern int qib_register_observer(struct qib_devdata *dd,
+	const struct diag_observer *op);
 
 /* Only declared here, not defined. Private to diags */
-काष्ठा diag_observer_list_elt;
+struct diag_observer_list_elt;
 
-/* device data काष्ठा now contains only "general per-device" info.
- * fields related to a physical IB port are in a qib_pportdata काष्ठा,
- * described above) जबतक fields only used by a particular chip-type are in
- * a qib_chipdata काष्ठा, whose contents are opaque to this file.
+/* device data struct now contains only "general per-device" info.
+ * fields related to a physical IB port are in a qib_pportdata struct,
+ * described above) while fields only used by a particular chip-type are in
+ * a qib_chipdata struct, whose contents are opaque to this file.
  */
-काष्ठा qib_devdata अणु
-	काष्ठा qib_ibdev verbs_dev;     /* must be first */
-	काष्ठा list_head list;
-	/* poपूर्णांकers to related काष्ठाs क्रम this device */
-	/* pci access data काष्ठाure */
-	काष्ठा pci_dev *pcidev;
-	काष्ठा cdev *user_cdev;
-	काष्ठा cdev *diag_cdev;
-	काष्ठा device *user_device;
-	काष्ठा device *diag_device;
+struct qib_devdata {
+	struct qib_ibdev verbs_dev;     /* must be first */
+	struct list_head list;
+	/* pointers to related structs for this device */
+	/* pci access data structure */
+	struct pci_dev *pcidev;
+	struct cdev *user_cdev;
+	struct cdev *diag_cdev;
+	struct device *user_device;
+	struct device *diag_device;
 
-	/* mem-mapped poपूर्णांकer to base of chip regs */
+	/* mem-mapped pointer to base of chip regs */
 	u64 __iomem *kregbase;
 	/* end of mem-mapped chip space excluding sendbuf and user regs */
 	u64 __iomem *kregend;
-	/* physical address of chip क्रम io_remap, etc. */
-	resource_माप_प्रकार physaddr;
-	/* qib_cfgctxts poपूर्णांकers */
-	काष्ठा qib_ctxtdata **rcd; /* Receive Context Data */
+	/* physical address of chip for io_remap, etc. */
+	resource_size_t physaddr;
+	/* qib_cfgctxts pointers */
+	struct qib_ctxtdata **rcd; /* Receive Context Data */
 
-	/* qib_pportdata, poपूर्णांकs to array of (physical) port-specअगरic
-	 * data काष्ठाs, indexed by pidx (0..n-1)
+	/* qib_pportdata, points to array of (physical) port-specific
+	 * data structs, indexed by pidx (0..n-1)
 	 */
-	काष्ठा qib_pportdata *pport;
-	काष्ठा qib_chip_specअगरic *cspec; /* chip-specअगरic */
+	struct qib_pportdata *pport;
+	struct qib_chip_specific *cspec; /* chip-specific */
 
 	/* kvirt address of 1st 2k pio buffer */
-	व्योम __iomem *pio2kbase;
+	void __iomem *pio2kbase;
 	/* kvirt address of 1st 4k pio buffer */
-	व्योम __iomem *pio4kbase;
-	/* mem-mapped poपूर्णांकer to base of PIO buffers (अगर using WC PAT) */
-	व्योम __iomem *piobase;
-	/* mem-mapped poपूर्णांकer to base of user chip regs (अगर using WC PAT) */
+	void __iomem *pio4kbase;
+	/* mem-mapped pointer to base of PIO buffers (if using WC PAT) */
+	void __iomem *piobase;
+	/* mem-mapped pointer to base of user chip regs (if using WC PAT) */
 	u64 __iomem *userbase;
-	व्योम __iomem *piovl15base; /* base of VL15 buffers, अगर not WC */
+	void __iomem *piovl15base; /* base of VL15 buffers, if not WC */
 	/*
-	 * poपूर्णांकs to area where PIOavail रेजिस्टरs will be DMA'ed.
+	 * points to area where PIOavail registers will be DMA'ed.
 	 * Has to be on a page of it's own, because the page will be
-	 * mapped पूर्णांकo user program space.  This copy is *ONLY* ever
+	 * mapped into user program space.  This copy is *ONLY* ever
 	 * written by DMA, not by the driver!  Need a copy per device
 	 * when we get to multiple devices
 	 */
-	अस्थिर __le64 *pioavailregs_dma; /* DMA'ed by chip */
+	volatile __le64 *pioavailregs_dma; /* DMA'ed by chip */
 	/* physical address where updates occur */
 	dma_addr_t pioavailregs_phys;
 
-	/* device-specअगरic implementations of functions needed by
+	/* device-specific implementations of functions needed by
 	 * common code. Contrary to previous consensus, we can't
-	 * really just poपूर्णांक to a device-specअगरic table, because we
+	 * really just point to a device-specific table, because we
 	 * may need to "bend", e.g. *_f_put_tid
 	 */
-	/* fallback to alternate पूर्णांकerrupt type अगर possible */
-	पूर्णांक (*f_पूर्णांकr_fallback)(काष्ठा qib_devdata *);
+	/* fallback to alternate interrupt type if possible */
+	int (*f_intr_fallback)(struct qib_devdata *);
 	/* hard reset chip */
-	पूर्णांक (*f_reset)(काष्ठा qib_devdata *);
-	व्योम (*f_quiet_serdes)(काष्ठा qib_pportdata *);
-	पूर्णांक (*f_bringup_serdes)(काष्ठा qib_pportdata *);
-	पूर्णांक (*f_early_init)(काष्ठा qib_devdata *);
-	व्योम (*f_clear_tids)(काष्ठा qib_devdata *, काष्ठा qib_ctxtdata *);
-	व्योम (*f_put_tid)(काष्ठा qib_devdata *, u64 __iomem*,
-				u32, अचिन्हित दीर्घ);
-	व्योम (*f_cleanup)(काष्ठा qib_devdata *);
-	व्योम (*f_setextled)(काष्ठा qib_pportdata *, u32);
-	/* fill out chip-specअगरic fields */
-	पूर्णांक (*f_get_base_info)(काष्ठा qib_ctxtdata *, काष्ठा qib_base_info *);
-	/* मुक्त irq */
-	व्योम (*f_मुक्त_irq)(काष्ठा qib_devdata *);
-	काष्ठा qib_message_header *(*f_get_msgheader)
-					(काष्ठा qib_devdata *, __le32 *);
-	व्योम (*f_config_ctxts)(काष्ठा qib_devdata *);
-	पूर्णांक (*f_get_ib_cfg)(काष्ठा qib_pportdata *, पूर्णांक);
-	पूर्णांक (*f_set_ib_cfg)(काष्ठा qib_pportdata *, पूर्णांक, u32);
-	पूर्णांक (*f_set_ib_loopback)(काष्ठा qib_pportdata *, स्थिर अक्षर *);
-	पूर्णांक (*f_get_ib_table)(काष्ठा qib_pportdata *, पूर्णांक, व्योम *);
-	पूर्णांक (*f_set_ib_table)(काष्ठा qib_pportdata *, पूर्णांक, व्योम *);
+	int (*f_reset)(struct qib_devdata *);
+	void (*f_quiet_serdes)(struct qib_pportdata *);
+	int (*f_bringup_serdes)(struct qib_pportdata *);
+	int (*f_early_init)(struct qib_devdata *);
+	void (*f_clear_tids)(struct qib_devdata *, struct qib_ctxtdata *);
+	void (*f_put_tid)(struct qib_devdata *, u64 __iomem*,
+				u32, unsigned long);
+	void (*f_cleanup)(struct qib_devdata *);
+	void (*f_setextled)(struct qib_pportdata *, u32);
+	/* fill out chip-specific fields */
+	int (*f_get_base_info)(struct qib_ctxtdata *, struct qib_base_info *);
+	/* free irq */
+	void (*f_free_irq)(struct qib_devdata *);
+	struct qib_message_header *(*f_get_msgheader)
+					(struct qib_devdata *, __le32 *);
+	void (*f_config_ctxts)(struct qib_devdata *);
+	int (*f_get_ib_cfg)(struct qib_pportdata *, int);
+	int (*f_set_ib_cfg)(struct qib_pportdata *, int, u32);
+	int (*f_set_ib_loopback)(struct qib_pportdata *, const char *);
+	int (*f_get_ib_table)(struct qib_pportdata *, int, void *);
+	int (*f_set_ib_table)(struct qib_pportdata *, int, void *);
 	u32 (*f_iblink_state)(u64);
 	u8 (*f_ibphys_portstate)(u64);
-	व्योम (*f_xgxs_reset)(काष्ठा qib_pportdata *);
-	/* per chip actions needed क्रम IB Link up/करोwn changes */
-	पूर्णांक (*f_ib_upकरोwn)(काष्ठा qib_pportdata *, पूर्णांक, u64);
-	u32 __iomem *(*f_माला_लोendbuf)(काष्ठा qib_pportdata *, u64, u32 *);
-	/* Read/modअगरy/ग_लिखो of GPIO pins (potentially chip-specअगरic */
-	पूर्णांक (*f_gpio_mod)(काष्ठा qib_devdata *dd, u32 out, u32 dir,
+	void (*f_xgxs_reset)(struct qib_pportdata *);
+	/* per chip actions needed for IB Link up/down changes */
+	int (*f_ib_updown)(struct qib_pportdata *, int, u64);
+	u32 __iomem *(*f_getsendbuf)(struct qib_pportdata *, u64, u32 *);
+	/* Read/modify/write of GPIO pins (potentially chip-specific */
+	int (*f_gpio_mod)(struct qib_devdata *dd, u32 out, u32 dir,
 		u32 mask);
-	/* Enable ग_लिखोs to config EEPROM (अगर supported) */
-	पूर्णांक (*f_eeprom_wen)(काष्ठा qib_devdata *dd, पूर्णांक wen);
+	/* Enable writes to config EEPROM (if supported) */
+	int (*f_eeprom_wen)(struct qib_devdata *dd, int wen);
 	/*
-	 * modअगरy rcvctrl shaकरोw[s] and ग_लिखो to appropriate chip-regs.
-	 * see above QIB_RCVCTRL_xxx_ENB/DIS क्रम operations.
-	 * (ctxt == -1) means "all contexts", only meaningful क्रम
-	 * clearing. Could हटाओ अगर chip_spec shutकरोwn properly करोne.
+	 * modify rcvctrl shadow[s] and write to appropriate chip-regs.
+	 * see above QIB_RCVCTRL_xxx_ENB/DIS for operations.
+	 * (ctxt == -1) means "all contexts", only meaningful for
+	 * clearing. Could remove if chip_spec shutdown properly done.
 	 */
-	व्योम (*f_rcvctrl)(काष्ठा qib_pportdata *, अचिन्हित पूर्णांक op,
-		पूर्णांक ctxt);
-	/* Read/modअगरy/ग_लिखो sendctrl appropriately क्रम op and port. */
-	व्योम (*f_sendctrl)(काष्ठा qib_pportdata *, u32 op);
-	व्योम (*f_set_पूर्णांकr_state)(काष्ठा qib_devdata *, u32);
-	व्योम (*f_set_armlaunch)(काष्ठा qib_devdata *, u32);
-	व्योम (*f_wantpiobuf_पूर्णांकr)(काष्ठा qib_devdata *, u32);
-	पूर्णांक (*f_late_initreg)(काष्ठा qib_devdata *);
-	पूर्णांक (*f_init_sdma_regs)(काष्ठा qib_pportdata *);
-	u16 (*f_sdma_gethead)(काष्ठा qib_pportdata *);
-	पूर्णांक (*f_sdma_busy)(काष्ठा qib_pportdata *);
-	व्योम (*f_sdma_update_tail)(काष्ठा qib_pportdata *, u16);
-	व्योम (*f_sdma_set_desc_cnt)(काष्ठा qib_pportdata *, अचिन्हित);
-	व्योम (*f_sdma_sendctrl)(काष्ठा qib_pportdata *, अचिन्हित);
-	व्योम (*f_sdma_hw_clean_up)(काष्ठा qib_pportdata *);
-	व्योम (*f_sdma_hw_start_up)(काष्ठा qib_pportdata *);
-	व्योम (*f_sdma_init_early)(काष्ठा qib_pportdata *);
-	व्योम (*f_set_cntr_sample)(काष्ठा qib_pportdata *, u32, u32);
-	व्योम (*f_update_usrhead)(काष्ठा qib_ctxtdata *, u64, u32, u32, u32);
-	u32 (*f_hdrqempty)(काष्ठा qib_ctxtdata *);
-	u64 (*f_portcntr)(काष्ठा qib_pportdata *, u32);
-	u32 (*f_पढ़ो_cntrs)(काष्ठा qib_devdata *, loff_t, अक्षर **,
+	void (*f_rcvctrl)(struct qib_pportdata *, unsigned int op,
+		int ctxt);
+	/* Read/modify/write sendctrl appropriately for op and port. */
+	void (*f_sendctrl)(struct qib_pportdata *, u32 op);
+	void (*f_set_intr_state)(struct qib_devdata *, u32);
+	void (*f_set_armlaunch)(struct qib_devdata *, u32);
+	void (*f_wantpiobuf_intr)(struct qib_devdata *, u32);
+	int (*f_late_initreg)(struct qib_devdata *);
+	int (*f_init_sdma_regs)(struct qib_pportdata *);
+	u16 (*f_sdma_gethead)(struct qib_pportdata *);
+	int (*f_sdma_busy)(struct qib_pportdata *);
+	void (*f_sdma_update_tail)(struct qib_pportdata *, u16);
+	void (*f_sdma_set_desc_cnt)(struct qib_pportdata *, unsigned);
+	void (*f_sdma_sendctrl)(struct qib_pportdata *, unsigned);
+	void (*f_sdma_hw_clean_up)(struct qib_pportdata *);
+	void (*f_sdma_hw_start_up)(struct qib_pportdata *);
+	void (*f_sdma_init_early)(struct qib_pportdata *);
+	void (*f_set_cntr_sample)(struct qib_pportdata *, u32, u32);
+	void (*f_update_usrhead)(struct qib_ctxtdata *, u64, u32, u32, u32);
+	u32 (*f_hdrqempty)(struct qib_ctxtdata *);
+	u64 (*f_portcntr)(struct qib_pportdata *, u32);
+	u32 (*f_read_cntrs)(struct qib_devdata *, loff_t, char **,
 		u64 **);
-	u32 (*f_पढ़ो_portcntrs)(काष्ठा qib_devdata *, loff_t, u32,
-		अक्षर **, u64 **);
-	u32 (*f_setpbc_control)(काष्ठा qib_pportdata *, u32, u8, u8);
-	व्योम (*f_initvl15_bufs)(काष्ठा qib_devdata *);
-	व्योम (*f_init_ctxt)(काष्ठा qib_ctxtdata *);
-	व्योम (*f_txchk_change)(काष्ठा qib_devdata *, u32, u32, u32,
-		काष्ठा qib_ctxtdata *);
-	व्योम (*f_ग_लिखोscratch)(काष्ठा qib_devdata *, u32);
-	पूर्णांक (*f_tempsense_rd)(काष्ठा qib_devdata *, पूर्णांक regnum);
-#अगर_घोषित CONFIG_INFINIBAND_QIB_DCA
-	पूर्णांक (*f_notअगरy_dca)(काष्ठा qib_devdata *, अचिन्हित दीर्घ event);
-#पूर्ण_अगर
+	u32 (*f_read_portcntrs)(struct qib_devdata *, loff_t, u32,
+		char **, u64 **);
+	u32 (*f_setpbc_control)(struct qib_pportdata *, u32, u8, u8);
+	void (*f_initvl15_bufs)(struct qib_devdata *);
+	void (*f_init_ctxt)(struct qib_ctxtdata *);
+	void (*f_txchk_change)(struct qib_devdata *, u32, u32, u32,
+		struct qib_ctxtdata *);
+	void (*f_writescratch)(struct qib_devdata *, u32);
+	int (*f_tempsense_rd)(struct qib_devdata *, int regnum);
+#ifdef CONFIG_INFINIBAND_QIB_DCA
+	int (*f_notify_dca)(struct qib_devdata *, unsigned long event);
+#endif
 
-	अक्षर *boardname; /* human पढ़ोable board info */
+	char *boardname; /* human readable board info */
 
-	/* ढाँचा क्रम writing TIDs  */
-	u64 tidढाँचा;
-	/* value to ग_लिखो to मुक्त TIDs */
+	/* template for writing TIDs  */
+	u64 tidtemplate;
+	/* value to write to free TIDs */
 	u64 tidinvalid;
 
-	/* number of रेजिस्टरs used क्रम pioavail */
+	/* number of registers used for pioavail */
 	u32 pioavregs;
 	/* device (not port) flags, basically device capabilities */
 	u32 flags;
-	/* last buffer क्रम user use */
+	/* last buffer for user use */
 	u32 lastctxt_piobuf;
 
 	/* reset value */
-	u64 z_पूर्णांक_counter;
-	/* percpu पूर्णांकcounter */
-	u64 __percpu *पूर्णांक_counter;
+	u64 z_int_counter;
+	/* percpu intcounter */
+	u64 __percpu *int_counter;
 
 	/* pio bufs allocated per ctxt */
 	u32 pbufsctxt;
-	/* अगर reमुख्यder on bufs/ctxt, ctxts < extrabuf get 1 extra */
+	/* if remainder on bufs/ctxt, ctxts < extrabuf get 1 extra */
 	u32 ctxts_extrabuf;
 	/*
 	 * number of ctxts configured as max; zero is set to number chip
@@ -867,60 +866,60 @@
 	 */
 	u32 cfgctxts;
 	/*
-	 * number of ctxts available क्रम PSM खोलो
+	 * number of ctxts available for PSM open
 	 */
-	u32 मुक्तctxts;
+	u32 freectxts;
 
 	/*
-	 * hपूर्णांक that we should update pioavailshaकरोw beक्रमe
-	 * looking क्रम a PIO buffer
+	 * hint that we should update pioavailshadow before
+	 * looking for a PIO buffer
 	 */
-	u32 upd_pio_shaकरोw;
+	u32 upd_pio_shadow;
 
-	/* पूर्णांकernal debugging stats */
+	/* internal debugging stats */
 	u32 maxpkts_call;
 	u32 avgpkts_call;
 	u64 nopiobufs;
 
-	/* PCI Venकरोr ID (here क्रम NodeInfo) */
-	u16 venकरोrid;
-	/* PCI Device ID (here क्रम NodeInfo) */
+	/* PCI Vendor ID (here for NodeInfo) */
+	u16 vendorid;
+	/* PCI Device ID (here for NodeInfo) */
 	u16 deviceid;
-	/* क्रम ग_लिखो combining settings */
-	पूर्णांक wc_cookie;
-	अचिन्हित दीर्घ wc_base;
-	अचिन्हित दीर्घ wc_len;
+	/* for write combining settings */
+	int wc_cookie;
+	unsigned long wc_base;
+	unsigned long wc_len;
 
-	/* shaकरोw copy of काष्ठा page *'s क्रम exp tid pages */
-	काष्ठा page **pageshaकरोw;
-	/* shaकरोw copy of dma handles क्रम exp tid pages */
-	dma_addr_t *physshaकरोw;
+	/* shadow copy of struct page *'s for exp tid pages */
+	struct page **pageshadow;
+	/* shadow copy of dma handles for exp tid pages */
+	dma_addr_t *physshadow;
 	u64 __iomem *egrtidbase;
-	spinlock_t sendctrl_lock; /* protect changes to sendctrl shaकरोw */
-	/* around rcd and (user ctxts) ctxt_cnt use (पूर्णांकr vs मुक्त) */
+	spinlock_t sendctrl_lock; /* protect changes to sendctrl shadow */
+	/* around rcd and (user ctxts) ctxt_cnt use (intr vs free) */
 	spinlock_t uctxt_lock; /* rcd and user context changes */
 	/*
 	 * per unit status, see also portdata statusp
-	 * mapped पढ़ोonly पूर्णांकo user processes so they can get unit and
+	 * mapped readonly into user processes so they can get unit and
 	 * IB link status cheaply
 	 */
 	u64 *devstatusp;
-	अक्षर *मुक्तzemsg; /* मुक्तze msg अगर hw error put chip in मुक्तze */
-	u32 मुक्तzelen; /* max length of मुक्तzemsg */
-	/* समयr used to prevent stats overflow, error throttling, etc. */
-	काष्ठा समयr_list stats_समयr;
+	char *freezemsg; /* freeze msg if hw error put chip in freeze */
+	u32 freezelen; /* max length of freezemsg */
+	/* timer used to prevent stats overflow, error throttling, etc. */
+	struct timer_list stats_timer;
 
-	/* समयr to verअगरy पूर्णांकerrupts work, and fallback अगर possible */
-	काष्ठा समयr_list पूर्णांकrchk_समयr;
-	अचिन्हित दीर्घ ureg_align; /* user रेजिस्टर alignment */
+	/* timer to verify interrupts work, and fallback if possible */
+	struct timer_list intrchk_timer;
+	unsigned long ureg_align; /* user register alignment */
 
 	/*
-	 * Protects pioavailshaकरोw, pioavailkernel, pio_need_disarm, and
+	 * Protects pioavailshadow, pioavailkernel, pio_need_disarm, and
 	 * pio_writing.
 	 */
 	spinlock_t pioavail_lock;
 	/*
-	 * index of last buffer to optimize search क्रम next
+	 * index of last buffer to optimize search for next
 	 */
 	u32 last_pio;
 	/*
@@ -928,30 +927,30 @@
 	 */
 	u32 min_kernel_pio;
 	/*
-	 * Shaकरोw copies of रेजिस्टरs; size indicates पढ़ो access size.
-	 * Most of them are पढ़ोonly, but some are ग_लिखो-only रेजिस्टर,
-	 * where we manipulate the bits in the shaकरोw copy, and then ग_लिखो
-	 * the shaकरोw copy to qlogic_ib.
+	 * Shadow copies of registers; size indicates read access size.
+	 * Most of them are readonly, but some are write-only register,
+	 * where we manipulate the bits in the shadow copy, and then write
+	 * the shadow copy to qlogic_ib.
 	 *
 	 * We deliberately make most of these 32 bits, since they have
-	 * restricted range.  For any that we पढ़ो, we won't to generate 32
+	 * restricted range.  For any that we read, we won't to generate 32
 	 * bit accesses, since Opteron will generate 2 separate 32 bit HT
-	 * transactions क्रम a 64 bit पढ़ो, and we want to aव्योम unnecessary
+	 * transactions for a 64 bit read, and we want to avoid unnecessary
 	 * bus transactions.
 	 */
 
 	/* This is the 64 bit group */
 
-	अचिन्हित दीर्घ pioavailshaकरोw[6];
-	/* biपंचांगap of send buffers available क्रम the kernel to use with PIO. */
-	अचिन्हित दीर्घ pioavailkernel[6];
-	/* biपंचांगap of send buffers which need to be disarmed. */
-	अचिन्हित दीर्घ pio_need_disarm[3];
-	/* biपंचांगap of send buffers which are being written to. */
-	अचिन्हित दीर्घ pio_writing[3];
-	/* kr_revision shaकरोw */
+	unsigned long pioavailshadow[6];
+	/* bitmap of send buffers available for the kernel to use with PIO. */
+	unsigned long pioavailkernel[6];
+	/* bitmap of send buffers which need to be disarmed. */
+	unsigned long pio_need_disarm[3];
+	/* bitmap of send buffers which are being written to. */
+	unsigned long pio_writing[3];
+	/* kr_revision shadow */
 	u64 revision;
-	/* Base GUID क्रम device (from eeprom, network order) */
+	/* Base GUID for device (from eeprom, network order) */
 	__be64 base_guid;
 
 	/*
@@ -963,14 +962,14 @@
 
 	/* these are the "32 bit" regs */
 
-	/* number of GUIDs in the flash क्रम this पूर्णांकerface */
+	/* number of GUIDs in the flash for this interface */
 	u32 nguid;
 	/*
-	 * the following two are 32-bit biपंचांगasks, but अणुtest,clear,setपूर्ण_bit
+	 * the following two are 32-bit bitmasks, but {test,clear,set}_bit
 	 * all expect bit fields to be "unsigned long"
 	 */
-	अचिन्हित दीर्घ rcvctrl; /* shaकरोw per device rcvctrl */
-	अचिन्हित दीर्घ sendctrl; /* shaकरोw per device sendctrl */
+	unsigned long rcvctrl; /* shadow per device rcvctrl */
+	unsigned long sendctrl; /* shadow per device sendctrl */
 
 	/* value we put in kr_rcvhdrcnt */
 	u32 rcvhdrcnt;
@@ -986,7 +985,7 @@
 	u32 piobcnt2k;
 	/* size in bytes of "2KB" PIO buffers */
 	u32 piosize2k;
-	/* max usable size in dwords of a "2KB" PIO buffer beक्रमe going "4KB" */
+	/* max usable size in dwords of a "2KB" PIO buffer before going "4KB" */
 	u32 piosize2kmax_dwords;
 	/* number of "4KB" PIO buffers */
 	u32 piobcnt4k;
@@ -1000,7 +999,7 @@
 	u32 rcvtidcnt;
 	/* kr_userregbase */
 	u32 uregbase;
-	/* shaकरोw the control रेजिस्टर contents */
+	/* shadow the control register contents */
 	u32 control;
 
 	/* chip address space used by 4k pio buffers */
@@ -1008,40 +1007,40 @@
 	/* size of each rcvegrbuffer */
 	u16 rcvegrbufsize;
 	/* log2 of above */
-	u16 rcvegrbufsize_shअगरt;
+	u16 rcvegrbufsize_shift;
 	/* localbus width (1, 2,4,8,16,32) from config space  */
 	u32 lbus_width;
 	/* localbus speed in MHz */
 	u32 lbus_speed;
-	पूर्णांक unit; /* unit # of this chip */
+	int unit; /* unit # of this chip */
 
 	/* start of CHIP_SPEC move to chipspec, but need code changes */
 	/* low and high portions of MSI capability/vector */
 	u32 msi_lo;
-	/* saved after PCIe init क्रम restore after reset */
+	/* saved after PCIe init for restore after reset */
 	u32 msi_hi;
-	/* MSI data (vector) saved क्रम restore */
+	/* MSI data (vector) saved for restore */
 	u16 msi_data;
-	/* so we can reग_लिखो it after a chip reset */
+	/* so we can rewrite it after a chip reset */
 	u32 pcibar0;
-	/* so we can reग_लिखो it after a chip reset */
+	/* so we can rewrite it after a chip reset */
 	u32 pcibar1;
-	u64 rhdrhead_पूर्णांकr_off;
+	u64 rhdrhead_intr_off;
 
 	/*
-	 * ASCII serial number, from flash, large enough क्रम original
-	 * all digit strings, and दीर्घer QLogic serial number क्रमmat
+	 * ASCII serial number, from flash, large enough for original
+	 * all digit strings, and longer QLogic serial number format
 	 */
 	u8 serial[16];
-	/* human पढ़ोable board version */
+	/* human readable board version */
 	u8 boardversion[96];
-	u8 lbus_info[32]; /* human पढ़ोable localbus info */
+	u8 lbus_info[32]; /* human readable localbus info */
 	/* chip major rev, from qib_revision */
 	u8 majrev;
 	/* chip minor rev, from qib_revision */
 	u8 minrev;
 
-	/* Misc small पूर्णांकs */
+	/* Misc small ints */
 	/* Number of physical ports available */
 	u8 num_pports;
 	/* Lowest context number which can be used by user processes */
@@ -1053,448 +1052,448 @@
 	u16 rhf_offset; /* offset of RHF within receive header entry */
 
 	/*
-	 * GPIO pins क्रम twsi-connected devices, and device code क्रम eeprom
+	 * GPIO pins for twsi-connected devices, and device code for eeprom
 	 */
 	u8 gpio_sda_num;
 	u8 gpio_scl_num;
 	u8 twsi_eeprom_dev;
 	u8 board_atten;
 
-	/* Support (including locks) क्रम EEPROM logging of errors and समय */
-	/* control access to actual counters, समयr */
+	/* Support (including locks) for EEPROM logging of errors and time */
+	/* control access to actual counters, timer */
 	spinlock_t eep_st_lock;
 	/* control high-level access to EEPROM */
-	काष्ठा mutex eep_lock;
-	uपूर्णांक64_t traffic_wds;
-	काष्ठा qib_diag_client *diag_client;
+	struct mutex eep_lock;
+	uint64_t traffic_wds;
+	struct qib_diag_client *diag_client;
 	spinlock_t qib_diag_trans_lock; /* protect diag observer ops */
-	काष्ठा diag_observer_list_elt *diag_observer_list;
+	struct diag_observer_list_elt *diag_observer_list;
 
-	u8 psxmitरुको_supported;
+	u8 psxmitwait_supported;
 	/* cycle length of PS* counters in HW (in picoseconds) */
-	u16 psxmitरुको_check_rate;
+	u16 psxmitwait_check_rate;
 	/* high volume overflow errors defered to tasklet */
-	काष्ठा tasklet_काष्ठा error_tasklet;
+	struct tasklet_struct error_tasklet;
 
-	पूर्णांक asचिन्हित_node_id; /* NUMA node बंदst to HCA */
-पूर्ण;
+	int assigned_node_id; /* NUMA node closest to HCA */
+};
 
 /* hol_state values */
-#घोषणा QIB_HOL_UP       0
-#घोषणा QIB_HOL_INIT     1
+#define QIB_HOL_UP       0
+#define QIB_HOL_INIT     1
 
-#घोषणा QIB_SDMA_SENDCTRL_OP_ENABLE    (1U << 0)
-#घोषणा QIB_SDMA_SENDCTRL_OP_INTENABLE (1U << 1)
-#घोषणा QIB_SDMA_SENDCTRL_OP_HALT      (1U << 2)
-#घोषणा QIB_SDMA_SENDCTRL_OP_CLEANUP   (1U << 3)
-#घोषणा QIB_SDMA_SENDCTRL_OP_DRAIN     (1U << 4)
+#define QIB_SDMA_SENDCTRL_OP_ENABLE    (1U << 0)
+#define QIB_SDMA_SENDCTRL_OP_INTENABLE (1U << 1)
+#define QIB_SDMA_SENDCTRL_OP_HALT      (1U << 2)
+#define QIB_SDMA_SENDCTRL_OP_CLEANUP   (1U << 3)
+#define QIB_SDMA_SENDCTRL_OP_DRAIN     (1U << 4)
 
-/* operation types क्रम f_txchk_change() */
-#घोषणा TXCHK_CHG_TYPE_DIS1  3
-#घोषणा TXCHK_CHG_TYPE_ENAB1 2
-#घोषणा TXCHK_CHG_TYPE_KERN  1
-#घोषणा TXCHK_CHG_TYPE_USER  0
+/* operation types for f_txchk_change() */
+#define TXCHK_CHG_TYPE_DIS1  3
+#define TXCHK_CHG_TYPE_ENAB1 2
+#define TXCHK_CHG_TYPE_KERN  1
+#define TXCHK_CHG_TYPE_USER  0
 
-#घोषणा QIB_CHASE_TIME msecs_to_jअगरfies(145)
-#घोषणा QIB_CHASE_DIS_TIME msecs_to_jअगरfies(160)
+#define QIB_CHASE_TIME msecs_to_jiffies(145)
+#define QIB_CHASE_DIS_TIME msecs_to_jiffies(160)
 
-/* Private data क्रम file operations */
-काष्ठा qib_filedata अणु
-	काष्ठा qib_ctxtdata *rcd;
-	अचिन्हित subctxt;
-	अचिन्हित tidcursor;
-	काष्ठा qib_user_sdma_queue *pq;
-	पूर्णांक rec_cpu_num; /* क्रम cpu affinity; -1 अगर none */
-पूर्ण;
+/* Private data for file operations */
+struct qib_filedata {
+	struct qib_ctxtdata *rcd;
+	unsigned subctxt;
+	unsigned tidcursor;
+	struct qib_user_sdma_queue *pq;
+	int rec_cpu_num; /* for cpu affinity; -1 if none */
+};
 
-बाह्य काष्ठा xarray qib_dev_table;
-बाह्य काष्ठा qib_devdata *qib_lookup(पूर्णांक unit);
-बाह्य u32 qib_cpulist_count;
-बाह्य अचिन्हित दीर्घ *qib_cpulist;
-बाह्य अचिन्हित qib_cc_table_size;
+extern struct xarray qib_dev_table;
+extern struct qib_devdata *qib_lookup(int unit);
+extern u32 qib_cpulist_count;
+extern unsigned long *qib_cpulist;
+extern unsigned qib_cc_table_size;
 
-पूर्णांक qib_init(काष्ठा qib_devdata *, पूर्णांक);
-पूर्णांक init_chip_wc_pat(काष्ठा qib_devdata *dd, u32);
-पूर्णांक qib_enable_wc(काष्ठा qib_devdata *dd);
-व्योम qib_disable_wc(काष्ठा qib_devdata *dd);
-पूर्णांक qib_count_units(पूर्णांक *npresentp, पूर्णांक *nupp);
-पूर्णांक qib_count_active_units(व्योम);
+int qib_init(struct qib_devdata *, int);
+int init_chip_wc_pat(struct qib_devdata *dd, u32);
+int qib_enable_wc(struct qib_devdata *dd);
+void qib_disable_wc(struct qib_devdata *dd);
+int qib_count_units(int *npresentp, int *nupp);
+int qib_count_active_units(void);
 
-पूर्णांक qib_cdev_init(पूर्णांक minor, स्थिर अक्षर *name,
-		  स्थिर काष्ठा file_operations *fops,
-		  काष्ठा cdev **cdevp, काष्ठा device **devp);
-व्योम qib_cdev_cleanup(काष्ठा cdev **cdevp, काष्ठा device **devp);
-पूर्णांक qib_dev_init(व्योम);
-व्योम qib_dev_cleanup(व्योम);
+int qib_cdev_init(int minor, const char *name,
+		  const struct file_operations *fops,
+		  struct cdev **cdevp, struct device **devp);
+void qib_cdev_cleanup(struct cdev **cdevp, struct device **devp);
+int qib_dev_init(void);
+void qib_dev_cleanup(void);
 
-पूर्णांक qib_diag_add(काष्ठा qib_devdata *);
-व्योम qib_diag_हटाओ(काष्ठा qib_devdata *);
-व्योम qib_handle_e_ibstatuschanged(काष्ठा qib_pportdata *, u64);
-व्योम qib_sdma_update_tail(काष्ठा qib_pportdata *, u16); /* hold sdma_lock */
+int qib_diag_add(struct qib_devdata *);
+void qib_diag_remove(struct qib_devdata *);
+void qib_handle_e_ibstatuschanged(struct qib_pportdata *, u64);
+void qib_sdma_update_tail(struct qib_pportdata *, u16); /* hold sdma_lock */
 
-पूर्णांक qib_decode_err(काष्ठा qib_devdata *dd, अक्षर *buf, माप_प्रकार blen, u64 err);
-व्योम qib_bad_पूर्णांकrstatus(काष्ठा qib_devdata *);
-व्योम qib_handle_urcv(काष्ठा qib_devdata *, u64);
+int qib_decode_err(struct qib_devdata *dd, char *buf, size_t blen, u64 err);
+void qib_bad_intrstatus(struct qib_devdata *);
+void qib_handle_urcv(struct qib_devdata *, u64);
 
-/* clean up any per-chip chip-specअगरic stuff */
-व्योम qib_chip_cleanup(काष्ठा qib_devdata *);
-/* clean up any chip type-specअगरic stuff */
-व्योम qib_chip_करोne(व्योम);
+/* clean up any per-chip chip-specific stuff */
+void qib_chip_cleanup(struct qib_devdata *);
+/* clean up any chip type-specific stuff */
+void qib_chip_done(void);
 
-/* check to see अगर we have to क्रमce ordering क्रम ग_लिखो combining */
-पूर्णांक qib_unordered_wc(व्योम);
-व्योम qib_pio_copy(व्योम __iomem *to, स्थिर व्योम *from, माप_प्रकार count);
+/* check to see if we have to force ordering for write combining */
+int qib_unordered_wc(void);
+void qib_pio_copy(void __iomem *to, const void *from, size_t count);
 
-व्योम qib_disarm_piobufs(काष्ठा qib_devdata *, अचिन्हित, अचिन्हित);
-पूर्णांक qib_disarm_piobufs_अगरneeded(काष्ठा qib_ctxtdata *);
-व्योम qib_disarm_piobufs_set(काष्ठा qib_devdata *, अचिन्हित दीर्घ *, अचिन्हित);
-व्योम qib_cancel_sends(काष्ठा qib_pportdata *);
+void qib_disarm_piobufs(struct qib_devdata *, unsigned, unsigned);
+int qib_disarm_piobufs_ifneeded(struct qib_ctxtdata *);
+void qib_disarm_piobufs_set(struct qib_devdata *, unsigned long *, unsigned);
+void qib_cancel_sends(struct qib_pportdata *);
 
-पूर्णांक qib_create_rcvhdrq(काष्ठा qib_devdata *, काष्ठा qib_ctxtdata *);
-पूर्णांक qib_setup_eagerbufs(काष्ठा qib_ctxtdata *);
-व्योम qib_set_ctxtcnt(काष्ठा qib_devdata *);
-पूर्णांक qib_create_ctxts(काष्ठा qib_devdata *dd);
-काष्ठा qib_ctxtdata *qib_create_ctxtdata(काष्ठा qib_pportdata *, u32, पूर्णांक);
-पूर्णांक qib_init_pportdata(काष्ठा qib_pportdata *, काष्ठा qib_devdata *, u8, u8);
-व्योम qib_मुक्त_ctxtdata(काष्ठा qib_devdata *, काष्ठा qib_ctxtdata *);
+int qib_create_rcvhdrq(struct qib_devdata *, struct qib_ctxtdata *);
+int qib_setup_eagerbufs(struct qib_ctxtdata *);
+void qib_set_ctxtcnt(struct qib_devdata *);
+int qib_create_ctxts(struct qib_devdata *dd);
+struct qib_ctxtdata *qib_create_ctxtdata(struct qib_pportdata *, u32, int);
+int qib_init_pportdata(struct qib_pportdata *, struct qib_devdata *, u8, u8);
+void qib_free_ctxtdata(struct qib_devdata *, struct qib_ctxtdata *);
 
-u32 qib_kreceive(काष्ठा qib_ctxtdata *, u32 *, u32 *);
-पूर्णांक qib_reset_device(पूर्णांक);
-पूर्णांक qib_रुको_linkstate(काष्ठा qib_pportdata *, u32, पूर्णांक);
-पूर्णांक qib_set_linkstate(काष्ठा qib_pportdata *, u8);
-पूर्णांक qib_set_mtu(काष्ठा qib_pportdata *, u16);
-पूर्णांक qib_set_lid(काष्ठा qib_pportdata *, u32, u8);
-व्योम qib_hol_करोwn(काष्ठा qib_pportdata *);
-व्योम qib_hol_init(काष्ठा qib_pportdata *);
-व्योम qib_hol_up(काष्ठा qib_pportdata *);
-व्योम qib_hol_event(काष्ठा समयr_list *);
-व्योम qib_disable_after_error(काष्ठा qib_devdata *);
-पूर्णांक qib_set_uevent_bits(काष्ठा qib_pportdata *, स्थिर पूर्णांक);
+u32 qib_kreceive(struct qib_ctxtdata *, u32 *, u32 *);
+int qib_reset_device(int);
+int qib_wait_linkstate(struct qib_pportdata *, u32, int);
+int qib_set_linkstate(struct qib_pportdata *, u8);
+int qib_set_mtu(struct qib_pportdata *, u16);
+int qib_set_lid(struct qib_pportdata *, u32, u8);
+void qib_hol_down(struct qib_pportdata *);
+void qib_hol_init(struct qib_pportdata *);
+void qib_hol_up(struct qib_pportdata *);
+void qib_hol_event(struct timer_list *);
+void qib_disable_after_error(struct qib_devdata *);
+int qib_set_uevent_bits(struct qib_pportdata *, const int);
 
-/* क्रम use in प्रणाली calls, where we want to know device type, etc. */
-#घोषणा ctxt_fp(fp) \
-	(((काष्ठा qib_filedata *)(fp)->निजी_data)->rcd)
-#घोषणा subctxt_fp(fp) \
-	(((काष्ठा qib_filedata *)(fp)->निजी_data)->subctxt)
-#घोषणा tidcursor_fp(fp) \
-	(((काष्ठा qib_filedata *)(fp)->निजी_data)->tidcursor)
-#घोषणा user_sdma_queue_fp(fp) \
-	(((काष्ठा qib_filedata *)(fp)->निजी_data)->pq)
+/* for use in system calls, where we want to know device type, etc. */
+#define ctxt_fp(fp) \
+	(((struct qib_filedata *)(fp)->private_data)->rcd)
+#define subctxt_fp(fp) \
+	(((struct qib_filedata *)(fp)->private_data)->subctxt)
+#define tidcursor_fp(fp) \
+	(((struct qib_filedata *)(fp)->private_data)->tidcursor)
+#define user_sdma_queue_fp(fp) \
+	(((struct qib_filedata *)(fp)->private_data)->pq)
 
-अटल अंतरभूत काष्ठा qib_devdata *dd_from_ppd(काष्ठा qib_pportdata *ppd)
-अणु
-	वापस ppd->dd;
-पूर्ण
+static inline struct qib_devdata *dd_from_ppd(struct qib_pportdata *ppd)
+{
+	return ppd->dd;
+}
 
-अटल अंतरभूत काष्ठा qib_devdata *dd_from_dev(काष्ठा qib_ibdev *dev)
-अणु
-	वापस container_of(dev, काष्ठा qib_devdata, verbs_dev);
-पूर्ण
+static inline struct qib_devdata *dd_from_dev(struct qib_ibdev *dev)
+{
+	return container_of(dev, struct qib_devdata, verbs_dev);
+}
 
-अटल अंतरभूत काष्ठा qib_devdata *dd_from_ibdev(काष्ठा ib_device *ibdev)
-अणु
-	वापस dd_from_dev(to_idev(ibdev));
-पूर्ण
+static inline struct qib_devdata *dd_from_ibdev(struct ib_device *ibdev)
+{
+	return dd_from_dev(to_idev(ibdev));
+}
 
-अटल अंतरभूत काष्ठा qib_pportdata *ppd_from_ibp(काष्ठा qib_ibport *ibp)
-अणु
-	वापस container_of(ibp, काष्ठा qib_pportdata, ibport_data);
-पूर्ण
+static inline struct qib_pportdata *ppd_from_ibp(struct qib_ibport *ibp)
+{
+	return container_of(ibp, struct qib_pportdata, ibport_data);
+}
 
-अटल अंतरभूत काष्ठा qib_ibport *to_iport(काष्ठा ib_device *ibdev, u32 port)
-अणु
-	काष्ठा qib_devdata *dd = dd_from_ibdev(ibdev);
+static inline struct qib_ibport *to_iport(struct ib_device *ibdev, u32 port)
+{
+	struct qib_devdata *dd = dd_from_ibdev(ibdev);
 	u32 pidx = port - 1; /* IB number port from 1, hdw from 0 */
 
 	WARN_ON(pidx >= dd->num_pports);
-	वापस &dd->pport[pidx].ibport_data;
-पूर्ण
+	return &dd->pport[pidx].ibport_data;
+}
 
 /*
- * values क्रम dd->flags (_device_ related flags) and
+ * values for dd->flags (_device_ related flags) and
  */
-#घोषणा QIB_HAS_LINK_LATENCY  0x1 /* supports link latency (IB 1.2) */
-#घोषणा QIB_INITTED           0x2 /* chip and driver up and initted */
-#घोषणा QIB_DOING_RESET       0x4  /* in the middle of करोing chip reset */
-#घोषणा QIB_PRESENT           0x8  /* chip accesses can be करोne */
-#घोषणा QIB_PIO_FLUSH_WC      0x10 /* Needs Write combining flush क्रम PIO */
-#घोषणा QIB_HAS_THRESH_UPDATE 0x40
-#घोषणा QIB_HAS_SDMA_TIMEOUT  0x80
-#घोषणा QIB_USE_SPCL_TRIG     0x100 /* SpecialTrigger launch enabled */
-#घोषणा QIB_NODMA_RTAIL       0x200 /* rcvhdrtail रेजिस्टर DMA enabled */
-#घोषणा QIB_HAS_INTX          0x800 /* Supports INTx पूर्णांकerrupts */
-#घोषणा QIB_HAS_SEND_DMA      0x1000 /* Supports Send DMA */
-#घोषणा QIB_HAS_VLSUPP        0x2000 /* Supports multiple VLs; PBC dअगरferent */
-#घोषणा QIB_HAS_HDRSUPP       0x4000 /* Supports header suppression */
-#घोषणा QIB_BADINTR           0x8000 /* severe पूर्णांकerrupt problems */
-#घोषणा QIB_DCA_ENABLED       0x10000 /* Direct Cache Access enabled */
-#घोषणा QIB_HAS_QSFP          0x20000 /* device (card instance) has QSFP */
-#घोषणा QIB_SHUTDOWN          0x40000 /* device is shutting करोwn */
+#define QIB_HAS_LINK_LATENCY  0x1 /* supports link latency (IB 1.2) */
+#define QIB_INITTED           0x2 /* chip and driver up and initted */
+#define QIB_DOING_RESET       0x4  /* in the middle of doing chip reset */
+#define QIB_PRESENT           0x8  /* chip accesses can be done */
+#define QIB_PIO_FLUSH_WC      0x10 /* Needs Write combining flush for PIO */
+#define QIB_HAS_THRESH_UPDATE 0x40
+#define QIB_HAS_SDMA_TIMEOUT  0x80
+#define QIB_USE_SPCL_TRIG     0x100 /* SpecialTrigger launch enabled */
+#define QIB_NODMA_RTAIL       0x200 /* rcvhdrtail register DMA enabled */
+#define QIB_HAS_INTX          0x800 /* Supports INTx interrupts */
+#define QIB_HAS_SEND_DMA      0x1000 /* Supports Send DMA */
+#define QIB_HAS_VLSUPP        0x2000 /* Supports multiple VLs; PBC different */
+#define QIB_HAS_HDRSUPP       0x4000 /* Supports header suppression */
+#define QIB_BADINTR           0x8000 /* severe interrupt problems */
+#define QIB_DCA_ENABLED       0x10000 /* Direct Cache Access enabled */
+#define QIB_HAS_QSFP          0x20000 /* device (card instance) has QSFP */
+#define QIB_SHUTDOWN          0x40000 /* device is shutting down */
 
 /*
- * values क्रम ppd->lflags (_ib_port_ related flags)
+ * values for ppd->lflags (_ib_port_ related flags)
  */
-#घोषणा QIBL_LINKV             0x1 /* IB link state valid */
-#घोषणा QIBL_LINKDOWN          0x8 /* IB link is करोwn */
-#घोषणा QIBL_LINKINIT          0x10 /* IB link level is up */
-#घोषणा QIBL_LINKARMED         0x20 /* IB link is ARMED */
-#घोषणा QIBL_LINKACTIVE        0x40 /* IB link is ACTIVE */
-/* leave a gap क्रम more IB-link state */
-#घोषणा QIBL_IB_AUTONEG_INPROG 0x1000 /* non-IBTA DDR/QDR neg active */
-#घोषणा QIBL_IB_AUTONEG_FAILED 0x2000 /* non-IBTA DDR/QDR neg failed */
-#घोषणा QIBL_IB_LINK_DISABLED  0x4000 /* Linkकरोwn-disable क्रमced,
+#define QIBL_LINKV             0x1 /* IB link state valid */
+#define QIBL_LINKDOWN          0x8 /* IB link is down */
+#define QIBL_LINKINIT          0x10 /* IB link level is up */
+#define QIBL_LINKARMED         0x20 /* IB link is ARMED */
+#define QIBL_LINKACTIVE        0x40 /* IB link is ACTIVE */
+/* leave a gap for more IB-link state */
+#define QIBL_IB_AUTONEG_INPROG 0x1000 /* non-IBTA DDR/QDR neg active */
+#define QIBL_IB_AUTONEG_FAILED 0x2000 /* non-IBTA DDR/QDR neg failed */
+#define QIBL_IB_LINK_DISABLED  0x4000 /* Linkdown-disable forced,
 				       * Do not try to bring up */
-#घोषणा QIBL_IB_FORCE_NOTIFY   0x8000 /* क्रमce notअगरy on next ib change */
+#define QIBL_IB_FORCE_NOTIFY   0x8000 /* force notify on next ib change */
 
-/* IB dword length mask in PBC (lower 11 bits); same क्रम all chips */
-#घोषणा QIB_PBC_LENGTH_MASK                     ((1 << 11) - 1)
+/* IB dword length mask in PBC (lower 11 bits); same for all chips */
+#define QIB_PBC_LENGTH_MASK                     ((1 << 11) - 1)
 
 
 /* ctxt_flag bit offsets */
-		/* रुकोing क्रम a packet to arrive */
-#घोषणा QIB_CTXT_WAITING_RCV   2
+		/* waiting for a packet to arrive */
+#define QIB_CTXT_WAITING_RCV   2
 		/* master has not finished initializing */
-#घोषणा QIB_CTXT_MASTER_UNINIT 4
-		/* रुकोing क्रम an urgent packet to arrive */
-#घोषणा QIB_CTXT_WAITING_URG 5
+#define QIB_CTXT_MASTER_UNINIT 4
+		/* waiting for an urgent packet to arrive */
+#define QIB_CTXT_WAITING_URG 5
 
-/* मुक्त up any allocated data at बंदs */
-व्योम qib_मुक्त_data(काष्ठा qib_ctxtdata *dd);
-व्योम qib_chg_pioavailkernel(काष्ठा qib_devdata *, अचिन्हित, अचिन्हित,
-			    u32, काष्ठा qib_ctxtdata *);
-काष्ठा qib_devdata *qib_init_iba7322_funcs(काष्ठा pci_dev *,
-					   स्थिर काष्ठा pci_device_id *);
-काष्ठा qib_devdata *qib_init_iba7220_funcs(काष्ठा pci_dev *,
-					   स्थिर काष्ठा pci_device_id *);
-काष्ठा qib_devdata *qib_init_iba6120_funcs(काष्ठा pci_dev *,
-					   स्थिर काष्ठा pci_device_id *);
-व्योम qib_मुक्त_devdata(काष्ठा qib_devdata *);
-काष्ठा qib_devdata *qib_alloc_devdata(काष्ठा pci_dev *pdev, माप_प्रकार extra);
+/* free up any allocated data at closes */
+void qib_free_data(struct qib_ctxtdata *dd);
+void qib_chg_pioavailkernel(struct qib_devdata *, unsigned, unsigned,
+			    u32, struct qib_ctxtdata *);
+struct qib_devdata *qib_init_iba7322_funcs(struct pci_dev *,
+					   const struct pci_device_id *);
+struct qib_devdata *qib_init_iba7220_funcs(struct pci_dev *,
+					   const struct pci_device_id *);
+struct qib_devdata *qib_init_iba6120_funcs(struct pci_dev *,
+					   const struct pci_device_id *);
+void qib_free_devdata(struct qib_devdata *);
+struct qib_devdata *qib_alloc_devdata(struct pci_dev *pdev, size_t extra);
 
-#घोषणा QIB_TWSI_NO_DEV 0xFF
+#define QIB_TWSI_NO_DEV 0xFF
 /* Below qib_twsi_ functions must be called with eep_lock held */
-पूर्णांक qib_twsi_reset(काष्ठा qib_devdata *dd);
-पूर्णांक qib_twsi_blk_rd(काष्ठा qib_devdata *dd, पूर्णांक dev, पूर्णांक addr, व्योम *buffer,
-		    पूर्णांक len);
-पूर्णांक qib_twsi_blk_wr(काष्ठा qib_devdata *dd, पूर्णांक dev, पूर्णांक addr,
-		    स्थिर व्योम *buffer, पूर्णांक len);
-व्योम qib_get_eeprom_info(काष्ठा qib_devdata *);
-व्योम qib_dump_lookup_output_queue(काष्ठा qib_devdata *);
-व्योम qib_क्रमce_pio_avail_update(काष्ठा qib_devdata *);
-व्योम qib_clear_symerror_on_linkup(काष्ठा समयr_list *t);
+int qib_twsi_reset(struct qib_devdata *dd);
+int qib_twsi_blk_rd(struct qib_devdata *dd, int dev, int addr, void *buffer,
+		    int len);
+int qib_twsi_blk_wr(struct qib_devdata *dd, int dev, int addr,
+		    const void *buffer, int len);
+void qib_get_eeprom_info(struct qib_devdata *);
+void qib_dump_lookup_output_queue(struct qib_devdata *);
+void qib_force_pio_avail_update(struct qib_devdata *);
+void qib_clear_symerror_on_linkup(struct timer_list *t);
 
 /*
  * Set LED override, only the two LSBs have "public" meaning, but
- * any non-zero value substitutes them क्रम the Link and LinkTrain
+ * any non-zero value substitutes them for the Link and LinkTrain
  * LED states.
  */
-#घोषणा QIB_LED_PHYS 1 /* Physical (linktraining) GREEN LED */
-#घोषणा QIB_LED_LOG 2  /* Logical (link) YELLOW LED */
-व्योम qib_set_led_override(काष्ठा qib_pportdata *ppd, अचिन्हित पूर्णांक val);
+#define QIB_LED_PHYS 1 /* Physical (linktraining) GREEN LED */
+#define QIB_LED_LOG 2  /* Logical (link) YELLOW LED */
+void qib_set_led_override(struct qib_pportdata *ppd, unsigned int val);
 
 /* send dma routines */
-पूर्णांक qib_setup_sdma(काष्ठा qib_pportdata *);
-व्योम qib_tearकरोwn_sdma(काष्ठा qib_pportdata *);
-व्योम __qib_sdma_पूर्णांकr(काष्ठा qib_pportdata *);
-व्योम qib_sdma_पूर्णांकr(काष्ठा qib_pportdata *);
-व्योम qib_user_sdma_send_desc(काष्ठा qib_pportdata *dd,
-			काष्ठा list_head *pktlist);
-पूर्णांक qib_sdma_verbs_send(काष्ठा qib_pportdata *, काष्ठा rvt_sge_state *,
-			u32, काष्ठा qib_verbs_txreq *);
-/* ppd->sdma_lock should be locked beक्रमe calling this. */
-पूर्णांक qib_sdma_make_progress(काष्ठा qib_pportdata *dd);
+int qib_setup_sdma(struct qib_pportdata *);
+void qib_teardown_sdma(struct qib_pportdata *);
+void __qib_sdma_intr(struct qib_pportdata *);
+void qib_sdma_intr(struct qib_pportdata *);
+void qib_user_sdma_send_desc(struct qib_pportdata *dd,
+			struct list_head *pktlist);
+int qib_sdma_verbs_send(struct qib_pportdata *, struct rvt_sge_state *,
+			u32, struct qib_verbs_txreq *);
+/* ppd->sdma_lock should be locked before calling this. */
+int qib_sdma_make_progress(struct qib_pportdata *dd);
 
 /* must be called under qib_sdma_lock */
-अटल अंतरभूत u16 qib_sdma_descq_मुक्तcnt(स्थिर काष्ठा qib_pportdata *ppd)
-अणु
-	वापस ppd->sdma_descq_cnt -
-		(ppd->sdma_descq_added - ppd->sdma_descq_हटाओd) - 1;
-पूर्ण
+static inline u16 qib_sdma_descq_freecnt(const struct qib_pportdata *ppd)
+{
+	return ppd->sdma_descq_cnt -
+		(ppd->sdma_descq_added - ppd->sdma_descq_removed) - 1;
+}
 
-अटल अंतरभूत पूर्णांक __qib_sdma_running(काष्ठा qib_pportdata *ppd)
-अणु
-	वापस ppd->sdma_state.current_state == qib_sdma_state_s99_running;
-पूर्ण
-पूर्णांक qib_sdma_running(काष्ठा qib_pportdata *);
-व्योम dump_sdma_state(काष्ठा qib_pportdata *ppd);
-व्योम __qib_sdma_process_event(काष्ठा qib_pportdata *, क्रमागत qib_sdma_events);
-व्योम qib_sdma_process_event(काष्ठा qib_pportdata *, क्रमागत qib_sdma_events);
+static inline int __qib_sdma_running(struct qib_pportdata *ppd)
+{
+	return ppd->sdma_state.current_state == qib_sdma_state_s99_running;
+}
+int qib_sdma_running(struct qib_pportdata *);
+void dump_sdma_state(struct qib_pportdata *ppd);
+void __qib_sdma_process_event(struct qib_pportdata *, enum qib_sdma_events);
+void qib_sdma_process_event(struct qib_pportdata *, enum qib_sdma_events);
 
 /*
- * number of words used क्रम protocol header अगर not set by qib_userinit();
+ * number of words used for protocol header if not set by qib_userinit();
  */
-#घोषणा QIB_DFLT_RCVHDRSIZE 9
+#define QIB_DFLT_RCVHDRSIZE 9
 
 /*
  * We need to be able to handle an IB header of at least 24 dwords.
  * We need the rcvhdrq large enough to handle largest IB header, but
- * still have room क्रम a 2KB MTU standard IB packet.
+ * still have room for a 2KB MTU standard IB packet.
  * Additionally, some processor/memory controller combinations
  * benefit quite strongly from having the DMA'ed data be cacheline
  * aligned and a cacheline multiple, so we set the size to 32 dwords
- * (2 64-byte primary cachelines क्रम pretty much all processors of
- * पूर्णांकerest).  The alignment hurts nothing, other than using somewhat
+ * (2 64-byte primary cachelines for pretty much all processors of
+ * interest).  The alignment hurts nothing, other than using somewhat
  * more memory.
  */
-#घोषणा QIB_RCVHDR_ENTSIZE 32
+#define QIB_RCVHDR_ENTSIZE 32
 
-पूर्णांक qib_get_user_pages(अचिन्हित दीर्घ, माप_प्रकार, काष्ठा page **);
-व्योम qib_release_user_pages(काष्ठा page **, माप_प्रकार);
-पूर्णांक qib_eeprom_पढ़ो(काष्ठा qib_devdata *, u8, व्योम *, पूर्णांक);
-पूर्णांक qib_eeprom_ग_लिखो(काष्ठा qib_devdata *, u8, स्थिर व्योम *, पूर्णांक);
-u32 __iomem *qib_माला_लोendbuf_range(काष्ठा qib_devdata *, u32 *, u32, u32);
-व्योम qib_sendbuf_करोne(काष्ठा qib_devdata *, अचिन्हित);
+int qib_get_user_pages(unsigned long, size_t, struct page **);
+void qib_release_user_pages(struct page **, size_t);
+int qib_eeprom_read(struct qib_devdata *, u8, void *, int);
+int qib_eeprom_write(struct qib_devdata *, u8, const void *, int);
+u32 __iomem *qib_getsendbuf_range(struct qib_devdata *, u32 *, u32, u32);
+void qib_sendbuf_done(struct qib_devdata *, unsigned);
 
-अटल अंतरभूत व्योम qib_clear_rcvhdrtail(स्थिर काष्ठा qib_ctxtdata *rcd)
-अणु
+static inline void qib_clear_rcvhdrtail(const struct qib_ctxtdata *rcd)
+{
 	*((u64 *) rcd->rcvhdrtail_kvaddr) = 0ULL;
-पूर्ण
+}
 
-अटल अंतरभूत u32 qib_get_rcvhdrtail(स्थिर काष्ठा qib_ctxtdata *rcd)
-अणु
+static inline u32 qib_get_rcvhdrtail(const struct qib_ctxtdata *rcd)
+{
 	/*
-	 * अस्थिर because it's a DMA target from the chip, routine is
-	 * अंतरभूतd, and करोn't want रेजिस्टर caching or reordering.
+	 * volatile because it's a DMA target from the chip, routine is
+	 * inlined, and don't want register caching or reordering.
 	 */
-	वापस (u32) le64_to_cpu(
-		*((अस्थिर __le64 *)rcd->rcvhdrtail_kvaddr)); /* DMA'ed */
-पूर्ण
+	return (u32) le64_to_cpu(
+		*((volatile __le64 *)rcd->rcvhdrtail_kvaddr)); /* DMA'ed */
+}
 
 /*
- * sysfs पूर्णांकerface.
+ * sysfs interface.
  */
 
-बाह्य स्थिर अक्षर ib_qib_version[];
-बाह्य स्थिर काष्ठा attribute_group qib_attr_group;
+extern const char ib_qib_version[];
+extern const struct attribute_group qib_attr_group;
 
-पूर्णांक qib_device_create(काष्ठा qib_devdata *);
-व्योम qib_device_हटाओ(काष्ठा qib_devdata *);
+int qib_device_create(struct qib_devdata *);
+void qib_device_remove(struct qib_devdata *);
 
-पूर्णांक qib_create_port_files(काष्ठा ib_device *ibdev, u32 port_num,
-			  काष्ठा kobject *kobj);
-व्योम qib_verbs_unरेजिस्टर_sysfs(काष्ठा qib_devdata *);
-/* Hook क्रम sysfs पढ़ो of QSFP */
-बाह्य पूर्णांक qib_qsfp_dump(काष्ठा qib_pportdata *ppd, अक्षर *buf, पूर्णांक len);
+int qib_create_port_files(struct ib_device *ibdev, u32 port_num,
+			  struct kobject *kobj);
+void qib_verbs_unregister_sysfs(struct qib_devdata *);
+/* Hook for sysfs read of QSFP */
+extern int qib_qsfp_dump(struct qib_pportdata *ppd, char *buf, int len);
 
-पूर्णांक __init qib_init_qibfs(व्योम);
-पूर्णांक __निकास qib_निकास_qibfs(व्योम);
+int __init qib_init_qibfs(void);
+int __exit qib_exit_qibfs(void);
 
-पूर्णांक qibfs_add(काष्ठा qib_devdata *);
-पूर्णांक qibfs_हटाओ(काष्ठा qib_devdata *);
+int qibfs_add(struct qib_devdata *);
+int qibfs_remove(struct qib_devdata *);
 
-पूर्णांक qib_pcie_init(काष्ठा pci_dev *, स्थिर काष्ठा pci_device_id *);
-पूर्णांक qib_pcie_ddinit(काष्ठा qib_devdata *, काष्ठा pci_dev *,
-		    स्थिर काष्ठा pci_device_id *);
-व्योम qib_pcie_ddcleanup(काष्ठा qib_devdata *);
-पूर्णांक qib_pcie_params(काष्ठा qib_devdata *dd, u32 minw, u32 *nent);
-व्योम qib_मुक्त_irq(काष्ठा qib_devdata *dd);
-पूर्णांक qib_reinit_पूर्णांकr(काष्ठा qib_devdata *dd);
-व्योम qib_pcie_अ_लोmd(काष्ठा qib_devdata *, u16 *, u8 *, u8 *);
-व्योम qib_pcie_reenable(काष्ठा qib_devdata *, u16, u8, u8);
-/* पूर्णांकerrupts क्रम device */
-u64 qib_पूर्णांक_counter(काष्ठा qib_devdata *);
-/* पूर्णांकerrupt क्रम all devices */
-u64 qib_sps_पूर्णांकs(व्योम);
+int qib_pcie_init(struct pci_dev *, const struct pci_device_id *);
+int qib_pcie_ddinit(struct qib_devdata *, struct pci_dev *,
+		    const struct pci_device_id *);
+void qib_pcie_ddcleanup(struct qib_devdata *);
+int qib_pcie_params(struct qib_devdata *dd, u32 minw, u32 *nent);
+void qib_free_irq(struct qib_devdata *dd);
+int qib_reinit_intr(struct qib_devdata *dd);
+void qib_pcie_getcmd(struct qib_devdata *, u16 *, u8 *, u8 *);
+void qib_pcie_reenable(struct qib_devdata *, u16, u8, u8);
+/* interrupts for device */
+u64 qib_int_counter(struct qib_devdata *);
+/* interrupt for all devices */
+u64 qib_sps_ints(void);
 
 /*
- * dma_addr wrappers - all 0's invalid क्रम hw
+ * dma_addr wrappers - all 0's invalid for hw
  */
-पूर्णांक qib_map_page(काष्ठा pci_dev *d, काष्ठा page *p, dma_addr_t *daddr);
-काष्ठा pci_dev *qib_get_pci_dev(काष्ठा rvt_dev_info *rdi);
+int qib_map_page(struct pci_dev *d, struct page *p, dma_addr_t *daddr);
+struct pci_dev *qib_get_pci_dev(struct rvt_dev_info *rdi);
 
 /*
- * Flush ग_लिखो combining store buffers (अगर present) and perक्रमm a ग_लिखो
+ * Flush write combining store buffers (if present) and perform a write
  * barrier.
  */
-अटल अंतरभूत व्योम qib_flush_wc(व्योम)
-अणु
-#अगर defined(CONFIG_X86_64)
-	यंत्र अस्थिर("sfence" : : : "memory");
-#अन्यथा
+static inline void qib_flush_wc(void)
+{
+#if defined(CONFIG_X86_64)
+	asm volatile("sfence" : : : "memory");
+#else
 	wmb(); /* no reorder around wc flush */
-#पूर्ण_अगर
-पूर्ण
+#endif
+}
 
 /* global module parameter variables */
-बाह्य अचिन्हित qib_ibmtu;
-बाह्य uलघु qib_cfgctxts;
-बाह्य uलघु qib_num_cfg_vls;
-बाह्य uलघु qib_mini_init; /* If set, करो few (ideally 0) ग_लिखोs to chip */
-बाह्य अचिन्हित qib_n_krcv_queues;
-बाह्य अचिन्हित qib_sdma_fetch_arb;
-बाह्य अचिन्हित qib_compat_ddr_negotiate;
-बाह्य पूर्णांक qib_special_trigger;
-बाह्य अचिन्हित qib_numa_aware;
+extern unsigned qib_ibmtu;
+extern ushort qib_cfgctxts;
+extern ushort qib_num_cfg_vls;
+extern ushort qib_mini_init; /* If set, do few (ideally 0) writes to chip */
+extern unsigned qib_n_krcv_queues;
+extern unsigned qib_sdma_fetch_arb;
+extern unsigned qib_compat_ddr_negotiate;
+extern int qib_special_trigger;
+extern unsigned qib_numa_aware;
 
-बाह्य काष्ठा mutex qib_mutex;
+extern struct mutex qib_mutex;
 
-/* Number of seconds beक्रमe our card status check...  */
-#घोषणा STATUS_TIMEOUT 60
+/* Number of seconds before our card status check...  */
+#define STATUS_TIMEOUT 60
 
-#घोषणा QIB_DRV_NAME            "ib_qib"
-#घोषणा QIB_USER_MINOR_BASE     0
-#घोषणा QIB_TRACE_MINOR         127
-#घोषणा QIB_DIAGPKT_MINOR       128
-#घोषणा QIB_DIAG_MINOR_BASE     129
-#घोषणा QIB_NMINORS             255
+#define QIB_DRV_NAME            "ib_qib"
+#define QIB_USER_MINOR_BASE     0
+#define QIB_TRACE_MINOR         127
+#define QIB_DIAGPKT_MINOR       128
+#define QIB_DIAG_MINOR_BASE     129
+#define QIB_NMINORS             255
 
-#घोषणा PCI_VENDOR_ID_PATHSCALE 0x1fc1
-#घोषणा PCI_VENDOR_ID_QLOGIC 0x1077
-#घोषणा PCI_DEVICE_ID_QLOGIC_IB_6120 0x10
-#घोषणा PCI_DEVICE_ID_QLOGIC_IB_7220 0x7220
-#घोषणा PCI_DEVICE_ID_QLOGIC_IB_7322 0x7322
+#define PCI_VENDOR_ID_PATHSCALE 0x1fc1
+#define PCI_VENDOR_ID_QLOGIC 0x1077
+#define PCI_DEVICE_ID_QLOGIC_IB_6120 0x10
+#define PCI_DEVICE_ID_QLOGIC_IB_7220 0x7220
+#define PCI_DEVICE_ID_QLOGIC_IB_7322 0x7322
 
 /*
- * qib_early_err is used (only!) to prपूर्णांक early errors beक्रमe devdata is
+ * qib_early_err is used (only!) to print early errors before devdata is
  * allocated, or when dd->pcidev may not be valid, and at the tail end of
- * cleanup when devdata may have been मुक्तd, etc.  qib_dev_porterr is
+ * cleanup when devdata may have been freed, etc.  qib_dev_porterr is
  * the same as qib_dev_err, but is used when the message really needs
  * the IB port# to be definitive as to what's happening..
- * All of these go to the trace log, and the trace log entry is करोne
- * first to aव्योम possible serial port delays from prपूर्णांकk.
+ * All of these go to the trace log, and the trace log entry is done
+ * first to avoid possible serial port delays from printk.
  */
-#घोषणा qib_early_err(dev, fmt, ...) \
+#define qib_early_err(dev, fmt, ...) \
 	dev_err(dev, fmt, ##__VA_ARGS__)
 
-#घोषणा qib_dev_err(dd, fmt, ...) \
+#define qib_dev_err(dd, fmt, ...) \
 	dev_err(&(dd)->pcidev->dev, "%s: " fmt, \
 		rvt_get_ibdev_name(&(dd)->verbs_dev.rdi), ##__VA_ARGS__)
 
-#घोषणा qib_dev_warn(dd, fmt, ...) \
+#define qib_dev_warn(dd, fmt, ...) \
 	dev_warn(&(dd)->pcidev->dev, "%s: " fmt, \
 		 rvt_get_ibdev_name(&(dd)->verbs_dev.rdi), ##__VA_ARGS__)
 
-#घोषणा qib_dev_porterr(dd, port, fmt, ...) \
+#define qib_dev_porterr(dd, port, fmt, ...) \
 	dev_err(&(dd)->pcidev->dev, "%s: IB%u:%u " fmt, \
 		rvt_get_ibdev_name(&(dd)->verbs_dev.rdi), (dd)->unit, (port), \
 		##__VA_ARGS__)
 
-#घोषणा qib_devinfo(pcidev, fmt, ...) \
+#define qib_devinfo(pcidev, fmt, ...) \
 	dev_info(&(pcidev)->dev, fmt, ##__VA_ARGS__)
 
 /*
- * this is used क्रम क्रमmatting hw error messages...
+ * this is used for formatting hw error messages...
  */
-काष्ठा qib_hwerror_msgs अणु
+struct qib_hwerror_msgs {
 	u64 mask;
-	स्थिर अक्षर *msg;
-	माप_प्रकार sz;
-पूर्ण;
+	const char *msg;
+	size_t sz;
+};
 
-#घोषणा QLOGIC_IB_HWE_MSG(a, b) अणु .mask = a, .msg = b पूर्ण
+#define QLOGIC_IB_HWE_MSG(a, b) { .mask = a, .msg = b }
 
-/* in qib_पूर्णांकr.c... */
-व्योम qib_क्रमmat_hwerrors(u64 hwerrs,
-			 स्थिर काष्ठा qib_hwerror_msgs *hwerrmsgs,
-			 माप_प्रकार nhwerrmsgs, अक्षर *msg, माप_प्रकार lmsg);
+/* in qib_intr.c... */
+void qib_format_hwerrors(u64 hwerrs,
+			 const struct qib_hwerror_msgs *hwerrmsgs,
+			 size_t nhwerrmsgs, char *msg, size_t lmsg);
 
-व्योम qib_stop_send_queue(काष्ठा rvt_qp *qp);
-व्योम qib_quiesce_qp(काष्ठा rvt_qp *qp);
-व्योम qib_flush_qp_रुकोers(काष्ठा rvt_qp *qp);
-पूर्णांक qib_mtu_to_path_mtu(u32 mtu);
-u32 qib_mtu_from_qp(काष्ठा rvt_dev_info *rdi, काष्ठा rvt_qp *qp, u32 pmtu);
-व्योम qib_notअगरy_error_qp(काष्ठा rvt_qp *qp);
-पूर्णांक qib_get_pmtu_from_attr(काष्ठा rvt_dev_info *rdi, काष्ठा rvt_qp *qp,
-			   काष्ठा ib_qp_attr *attr);
+void qib_stop_send_queue(struct rvt_qp *qp);
+void qib_quiesce_qp(struct rvt_qp *qp);
+void qib_flush_qp_waiters(struct rvt_qp *qp);
+int qib_mtu_to_path_mtu(u32 mtu);
+u32 qib_mtu_from_qp(struct rvt_dev_info *rdi, struct rvt_qp *qp, u32 pmtu);
+void qib_notify_error_qp(struct rvt_qp *qp);
+int qib_get_pmtu_from_attr(struct rvt_dev_info *rdi, struct rvt_qp *qp,
+			   struct ib_qp_attr *attr);
 
-#पूर्ण_अगर                          /* _QIB_KERNEL_H */
+#endif                          /* _QIB_KERNEL_H */

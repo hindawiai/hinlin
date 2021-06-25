@@ -1,8 +1,7 @@
-<शैली गुरु>
 /*
  * Copyright 2014 Cisco Systems, Inc.  All rights reserved.
  *
- * This program is मुक्त software; you may redistribute it and/or modअगरy
+ * This program is free software; you may redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; version 2 of the License.
  *
@@ -16,48 +15,48 @@
  * SOFTWARE.
  */
 
-#अगर_अघोषित _VNIC_CQ_FW_H_
-#घोषणा _VNIC_CQ_FW_H_
+#ifndef _VNIC_CQ_FW_H_
+#define _VNIC_CQ_FW_H_
 
-#समावेश "snic_fwint.h"
+#include "snic_fwint.h"
 
-अटल अंतरभूत अचिन्हित पूर्णांक
-vnic_cq_fw_service(काष्ठा vnic_cq *cq,
-		   पूर्णांक (*q_service)(काष्ठा vnic_dev *vdev,
-				    अचिन्हित पूर्णांक index,
-				    काष्ठा snic_fw_req *desc),
-		   अचिन्हित पूर्णांक work_to_करो)
+static inline unsigned int
+vnic_cq_fw_service(struct vnic_cq *cq,
+		   int (*q_service)(struct vnic_dev *vdev,
+				    unsigned int index,
+				    struct snic_fw_req *desc),
+		   unsigned int work_to_do)
 
-अणु
-	काष्ठा snic_fw_req *desc;
-	अचिन्हित पूर्णांक work_करोne = 0;
+{
+	struct snic_fw_req *desc;
+	unsigned int work_done = 0;
 	u8 color;
 
-	desc = (काष्ठा snic_fw_req *)((u8 *)cq->ring.descs +
+	desc = (struct snic_fw_req *)((u8 *)cq->ring.descs +
 		cq->ring.desc_size * cq->to_clean);
 	snic_color_dec(desc, &color);
 
-	जबतक (color != cq->last_color) अणु
+	while (color != cq->last_color) {
 
-		अगर ((*q_service)(cq->vdev, cq->index, desc))
-			अवरोध;
+		if ((*q_service)(cq->vdev, cq->index, desc))
+			break;
 
 		cq->to_clean++;
-		अगर (cq->to_clean == cq->ring.desc_count) अणु
+		if (cq->to_clean == cq->ring.desc_count) {
 			cq->to_clean = 0;
 			cq->last_color = cq->last_color ? 0 : 1;
-		पूर्ण
+		}
 
-		desc = (काष्ठा snic_fw_req *)((u8 *)cq->ring.descs +
+		desc = (struct snic_fw_req *)((u8 *)cq->ring.descs +
 			cq->ring.desc_size * cq->to_clean);
 		snic_color_dec(desc, &color);
 
-		work_करोne++;
-		अगर (work_करोne >= work_to_करो)
-			अवरोध;
-	पूर्ण
+		work_done++;
+		if (work_done >= work_to_do)
+			break;
+	}
 
-	वापस work_करोne;
-पूर्ण
+	return work_done;
+}
 
-#पूर्ण_अगर /* _VNIC_CQ_FW_H_ */
+#endif /* _VNIC_CQ_FW_H_ */

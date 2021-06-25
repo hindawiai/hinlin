@@ -1,68 +1,67 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/gpio_keys.h>
-#समावेश <linux/input.h>
-#समावेश <linux/leds.h>
+// SPDX-License-Identifier: GPL-2.0
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/platform_device.h>
+#include <linux/gpio_keys.h>
+#include <linux/input.h>
+#include <linux/leds.h>
 
-#समावेश <यंत्र/mach-types.h>
+#include <asm/mach-types.h>
 
-अटल काष्ठा gpio_keys_button csb701_buttons[] = अणु
-	अणु
+static struct gpio_keys_button csb701_buttons[] = {
+	{
 		.code	= 0x7,
 		.gpio	= 1,
 		.active_low = 1,
 		.desc	= "SW2",
 		.type	= EV_SW,
 		.wakeup = 1,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल काष्ठा gpio_keys_platक्रमm_data csb701_gpio_keys_data = अणु
+static struct gpio_keys_platform_data csb701_gpio_keys_data = {
 	.buttons = csb701_buttons,
 	.nbuttons = ARRAY_SIZE(csb701_buttons),
-पूर्ण;
+};
 
-अटल काष्ठा gpio_led csb701_leds[] = अणु
-	अणु
+static struct gpio_led csb701_leds[] = {
+	{
 		.name	= "csb701:yellow:heartbeat",
-		.शेष_trigger = "heartbeat",
+		.default_trigger = "heartbeat",
 		.gpio	= 11,
 		.active_low = 1,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल काष्ठा platक्रमm_device csb701_gpio_keys = अणु
+static struct platform_device csb701_gpio_keys = {
 	.name		= "gpio-keys",
 	.id		= -1,
-	.dev.platक्रमm_data = &csb701_gpio_keys_data,
-पूर्ण;
+	.dev.platform_data = &csb701_gpio_keys_data,
+};
 
-अटल काष्ठा gpio_led_platक्रमm_data csb701_leds_gpio_data = अणु
+static struct gpio_led_platform_data csb701_leds_gpio_data = {
 	.leds		= csb701_leds,
 	.num_leds	= ARRAY_SIZE(csb701_leds),
-पूर्ण;
+};
 
-अटल काष्ठा platक्रमm_device csb701_leds_gpio = अणु
+static struct platform_device csb701_leds_gpio = {
 	.name		= "leds-gpio",
 	.id		= -1,
-	.dev.platक्रमm_data = &csb701_leds_gpio_data,
-पूर्ण;
+	.dev.platform_data = &csb701_leds_gpio_data,
+};
 
-अटल काष्ठा platक्रमm_device *devices[] __initdata = अणु
+static struct platform_device *devices[] __initdata = {
 	&csb701_gpio_keys,
 	&csb701_leds_gpio,
-पूर्ण;
+};
 
-अटल पूर्णांक __init csb701_init(व्योम)
-अणु
-	अगर (!machine_is_csb726())
-		वापस -ENODEV;
+static int __init csb701_init(void)
+{
+	if (!machine_is_csb726())
+		return -ENODEV;
 
-	वापस platक्रमm_add_devices(devices, ARRAY_SIZE(devices));
-पूर्ण
+	return platform_add_devices(devices, ARRAY_SIZE(devices));
+}
 
 module_init(csb701_init);
 

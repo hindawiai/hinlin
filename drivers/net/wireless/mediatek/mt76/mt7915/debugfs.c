@@ -1,385 +1,384 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: ISC
+// SPDX-License-Identifier: ISC
 /* Copyright (C) 2020 MediaTek Inc. */
 
-#समावेश "mt7915.h"
-#समावेश "eeprom.h"
+#include "mt7915.h"
+#include "eeprom.h"
 
 /** global debugfs **/
 
-अटल पूर्णांक
-mt7915_implicit_txbf_set(व्योम *data, u64 val)
-अणु
-	काष्ठा mt7915_dev *dev = data;
+static int
+mt7915_implicit_txbf_set(void *data, u64 val)
+{
+	struct mt7915_dev *dev = data;
 
-	अगर (test_bit(MT76_STATE_RUNNING, &dev->mphy.state))
-		वापस -EBUSY;
+	if (test_bit(MT76_STATE_RUNNING, &dev->mphy.state))
+		return -EBUSY;
 
 	dev->ibf = !!val;
 
-	वापस mt7915_mcu_set_txbf_type(dev);
-पूर्ण
+	return mt7915_mcu_set_txbf_type(dev);
+}
 
-अटल पूर्णांक
-mt7915_implicit_txbf_get(व्योम *data, u64 *val)
-अणु
-	काष्ठा mt7915_dev *dev = data;
+static int
+mt7915_implicit_txbf_get(void *data, u64 *val)
+{
+	struct mt7915_dev *dev = data;
 
 	*val = dev->ibf;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 DEFINE_DEBUGFS_ATTRIBUTE(fops_implicit_txbf, mt7915_implicit_txbf_get,
 			 mt7915_implicit_txbf_set, "%lld\n");
 
-/* test knob of प्रणाली layer 1/2 error recovery */
-अटल पूर्णांक mt7915_ser_trigger_set(व्योम *data, u64 val)
-अणु
-	क्रमागत अणु
+/* test knob of system layer 1/2 error recovery */
+static int mt7915_ser_trigger_set(void *data, u64 val)
+{
+	enum {
 		SER_SET_RECOVER_L1 = 1,
 		SER_SET_RECOVER_L2,
 		SER_ENABLE = 2,
 		SER_RECOVER
-	पूर्ण;
-	काष्ठा mt7915_dev *dev = data;
-	पूर्णांक ret = 0;
+	};
+	struct mt7915_dev *dev = data;
+	int ret = 0;
 
-	चयन (val) अणु
-	हाल SER_SET_RECOVER_L1:
-	हाल SER_SET_RECOVER_L2:
+	switch (val) {
+	case SER_SET_RECOVER_L1:
+	case SER_SET_RECOVER_L2:
 		ret = mt7915_mcu_set_ser(dev, SER_ENABLE, BIT(val), 0);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
-		वापस mt7915_mcu_set_ser(dev, SER_RECOVER, val, 0);
-	शेष:
-		अवरोध;
-	पूर्ण
+		return mt7915_mcu_set_ser(dev, SER_RECOVER, val, 0);
+	default:
+		break;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-DEFINE_DEBUGFS_ATTRIBUTE(fops_ser_trigger, शून्य,
+DEFINE_DEBUGFS_ATTRIBUTE(fops_ser_trigger, NULL,
 			 mt7915_ser_trigger_set, "%lld\n");
 
-अटल पूर्णांक
-mt7915_radar_trigger(व्योम *data, u64 val)
-अणु
-	काष्ठा mt7915_dev *dev = data;
+static int
+mt7915_radar_trigger(void *data, u64 val)
+{
+	struct mt7915_dev *dev = data;
 
-	वापस mt7915_mcu_rdd_cmd(dev, RDD_RADAR_EMULATE, 1, 0, 0);
-पूर्ण
+	return mt7915_mcu_rdd_cmd(dev, RDD_RADAR_EMULATE, 1, 0, 0);
+}
 
-DEFINE_DEBUGFS_ATTRIBUTE(fops_radar_trigger, शून्य,
+DEFINE_DEBUGFS_ATTRIBUTE(fops_radar_trigger, NULL,
 			 mt7915_radar_trigger, "%lld\n");
 
-अटल पूर्णांक
-mt7915_fw_debug_set(व्योम *data, u64 val)
-अणु
-	काष्ठा mt7915_dev *dev = data;
-	क्रमागत अणु
+static int
+mt7915_fw_debug_set(void *data, u64 val)
+{
+	struct mt7915_dev *dev = data;
+	enum {
 		DEBUG_TXCMD = 62,
 		DEBUG_CMD_RPT_TX,
 		DEBUG_CMD_RPT_TRIG,
 		DEBUG_SPL,
 		DEBUG_RPT_RX,
-	पूर्ण debug;
+	} debug;
 
 	dev->fw_debug = !!val;
 
 	mt7915_mcu_fw_log_2_host(dev, dev->fw_debug ? 2 : 0);
 
-	क्रम (debug = DEBUG_TXCMD; debug <= DEBUG_RPT_RX; debug++)
+	for (debug = DEBUG_TXCMD; debug <= DEBUG_RPT_RX; debug++)
 		mt7915_mcu_fw_dbg_ctrl(dev, debug, dev->fw_debug);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-mt7915_fw_debug_get(व्योम *data, u64 *val)
-अणु
-	काष्ठा mt7915_dev *dev = data;
+static int
+mt7915_fw_debug_get(void *data, u64 *val)
+{
+	struct mt7915_dev *dev = data;
 
 	*val = dev->fw_debug;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 DEFINE_DEBUGFS_ATTRIBUTE(fops_fw_debug, mt7915_fw_debug_get,
 			 mt7915_fw_debug_set, "%lld\n");
 
-अटल व्योम
-mt7915_ampdu_stat_पढ़ो_phy(काष्ठा mt7915_phy *phy,
-			   काष्ठा seq_file *file)
-अणु
-	काष्ठा mt7915_dev *dev = file->निजी;
+static void
+mt7915_ampdu_stat_read_phy(struct mt7915_phy *phy,
+			   struct seq_file *file)
+{
+	struct mt7915_dev *dev = file->private;
 	bool ext_phy = phy != &dev->phy;
-	पूर्णांक bound[15], range[4], i, n;
+	int bound[15], range[4], i, n;
 
-	अगर (!phy)
-		वापस;
+	if (!phy)
+		return;
 
 	/* Tx ampdu stat */
-	क्रम (i = 0; i < ARRAY_SIZE(range); i++)
+	for (i = 0; i < ARRAY_SIZE(range); i++)
 		range[i] = mt76_rr(dev, MT_MIB_ARNG(ext_phy, i));
 
-	क्रम (i = 0; i < ARRAY_SIZE(bound); i++)
+	for (i = 0; i < ARRAY_SIZE(bound); i++)
 		bound[i] = MT_MIB_ARNCR_RANGE(range[i / 4], i % 4) + 1;
 
-	seq_म_लिखो(file, "\nPhy %d\n", ext_phy);
+	seq_printf(file, "\nPhy %d\n", ext_phy);
 
-	seq_म_लिखो(file, "Length: %8d | ", bound[0]);
-	क्रम (i = 0; i < ARRAY_SIZE(bound) - 1; i++)
-		seq_म_लिखो(file, "%3d -%3d | ",
+	seq_printf(file, "Length: %8d | ", bound[0]);
+	for (i = 0; i < ARRAY_SIZE(bound) - 1; i++)
+		seq_printf(file, "%3d -%3d | ",
 			   bound[i] + 1, bound[i + 1]);
 
-	seq_माला_दो(file, "\nCount:  ");
+	seq_puts(file, "\nCount:  ");
 	n = ext_phy ? ARRAY_SIZE(dev->mt76.aggr_stats) / 2 : 0;
-	क्रम (i = 0; i < ARRAY_SIZE(bound); i++)
-		seq_म_लिखो(file, "%8d | ", dev->mt76.aggr_stats[i + n]);
-	seq_माला_दो(file, "\n");
+	for (i = 0; i < ARRAY_SIZE(bound); i++)
+		seq_printf(file, "%8d | ", dev->mt76.aggr_stats[i + n]);
+	seq_puts(file, "\n");
 
-	seq_म_लिखो(file, "BA miss count: %d\n", phy->mib.ba_miss_cnt);
-पूर्ण
+	seq_printf(file, "BA miss count: %d\n", phy->mib.ba_miss_cnt);
+}
 
-अटल व्योम
-mt7915_txbf_stat_पढ़ो_phy(काष्ठा mt7915_phy *phy, काष्ठा seq_file *s)
-अणु
-	काष्ठा mt7915_dev *dev = s->निजी;
+static void
+mt7915_txbf_stat_read_phy(struct mt7915_phy *phy, struct seq_file *s)
+{
+	struct mt7915_dev *dev = s->private;
 	bool ext_phy = phy != &dev->phy;
-	पूर्णांक cnt;
+	int cnt;
 
-	अगर (!phy)
-		वापस;
+	if (!phy)
+		return;
 
-	/* Tx Beamक्रमmer monitor */
-	seq_माला_दो(s, "\nTx Beamformer applied PPDU counts: ");
+	/* Tx Beamformer monitor */
+	seq_puts(s, "\nTx Beamformer applied PPDU counts: ");
 
 	cnt = mt76_rr(dev, MT_ETBF_TX_APP_CNT(ext_phy));
-	seq_म_लिखो(s, "iBF: %ld, eBF: %ld\n",
+	seq_printf(s, "iBF: %ld, eBF: %ld\n",
 		   FIELD_GET(MT_ETBF_TX_IBF_CNT, cnt),
 		   FIELD_GET(MT_ETBF_TX_EBF_CNT, cnt));
 
-	/* Tx Beamक्रमmer Rx feedback monitor */
-	seq_माला_दो(s, "Tx Beamformer Rx feedback statistics: ");
+	/* Tx Beamformer Rx feedback monitor */
+	seq_puts(s, "Tx Beamformer Rx feedback statistics: ");
 
 	cnt = mt76_rr(dev, MT_ETBF_RX_FB_CNT(ext_phy));
-	seq_म_लिखो(s, "All: %ld, HE: %ld, VHT: %ld, HT: %ld\n",
+	seq_printf(s, "All: %ld, HE: %ld, VHT: %ld, HT: %ld\n",
 		   FIELD_GET(MT_ETBF_RX_FB_ALL, cnt),
 		   FIELD_GET(MT_ETBF_RX_FB_HE, cnt),
 		   FIELD_GET(MT_ETBF_RX_FB_VHT, cnt),
 		   FIELD_GET(MT_ETBF_RX_FB_HT, cnt));
 
-	/* Tx Beamक्रमmee Rx NDPA & Tx feedback report */
+	/* Tx Beamformee Rx NDPA & Tx feedback report */
 	cnt = mt76_rr(dev, MT_ETBF_TX_NDP_BFRP(ext_phy));
-	seq_म_लिखो(s, "Tx Beamformee successful feedback frames: %ld\n",
+	seq_printf(s, "Tx Beamformee successful feedback frames: %ld\n",
 		   FIELD_GET(MT_ETBF_TX_FB_CPL, cnt));
-	seq_म_लिखो(s, "Tx Beamformee feedback triggered counts: %ld\n",
+	seq_printf(s, "Tx Beamformee feedback triggered counts: %ld\n",
 		   FIELD_GET(MT_ETBF_TX_FB_TRI, cnt));
 
 	/* Tx SU & MU counters */
 	cnt = mt76_rr(dev, MT_MIB_SDR34(ext_phy));
-	seq_म_लिखो(s, "Tx multi-user Beamforming counts: %ld\n",
+	seq_printf(s, "Tx multi-user Beamforming counts: %ld\n",
 		   FIELD_GET(MT_MIB_MU_BF_TX_CNT, cnt));
 	cnt = mt76_rr(dev, MT_MIB_DR8(ext_phy));
-	seq_म_लिखो(s, "Tx multi-user MPDU counts: %d\n", cnt);
+	seq_printf(s, "Tx multi-user MPDU counts: %d\n", cnt);
 	cnt = mt76_rr(dev, MT_MIB_DR9(ext_phy));
-	seq_म_लिखो(s, "Tx multi-user successful MPDU counts: %d\n", cnt);
+	seq_printf(s, "Tx multi-user successful MPDU counts: %d\n", cnt);
 	cnt = mt76_rr(dev, MT_MIB_DR11(ext_phy));
-	seq_म_लिखो(s, "Tx single-user successful MPDU counts: %d\n", cnt);
+	seq_printf(s, "Tx single-user successful MPDU counts: %d\n", cnt);
 
-	seq_माला_दो(s, "\n");
-पूर्ण
+	seq_puts(s, "\n");
+}
 
-अटल पूर्णांक
-mt7915_tx_stats_show(काष्ठा seq_file *file, व्योम *data)
-अणु
-	काष्ठा mt7915_dev *dev = file->निजी;
-	पूर्णांक stat[8], i, n;
+static int
+mt7915_tx_stats_show(struct seq_file *file, void *data)
+{
+	struct mt7915_dev *dev = file->private;
+	int stat[8], i, n;
 
-	mt7915_ampdu_stat_पढ़ो_phy(&dev->phy, file);
-	mt7915_txbf_stat_पढ़ो_phy(&dev->phy, file);
+	mt7915_ampdu_stat_read_phy(&dev->phy, file);
+	mt7915_txbf_stat_read_phy(&dev->phy, file);
 
-	mt7915_ampdu_stat_पढ़ो_phy(mt7915_ext_phy(dev), file);
-	mt7915_txbf_stat_पढ़ो_phy(mt7915_ext_phy(dev), file);
+	mt7915_ampdu_stat_read_phy(mt7915_ext_phy(dev), file);
+	mt7915_txbf_stat_read_phy(mt7915_ext_phy(dev), file);
 
 	/* Tx amsdu info */
-	seq_माला_दो(file, "Tx MSDU stat:\n");
-	क्रम (i = 0, n = 0; i < ARRAY_SIZE(stat); i++) अणु
+	seq_puts(file, "Tx MSDU stat:\n");
+	for (i = 0, n = 0; i < ARRAY_SIZE(stat); i++) {
 		stat[i] = mt76_rr(dev,  MT_PLE_AMSDU_PACK_MSDU_CNT(i));
 		n += stat[i];
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < ARRAY_SIZE(stat); i++) अणु
-		seq_म_लिखो(file, "AMSDU pack count of %d MSDU in TXD: 0x%x ",
+	for (i = 0; i < ARRAY_SIZE(stat); i++) {
+		seq_printf(file, "AMSDU pack count of %d MSDU in TXD: 0x%x ",
 			   i + 1, stat[i]);
-		अगर (n != 0)
-			seq_म_लिखो(file, "(%d%%)\n", stat[i] * 100 / n);
-		अन्यथा
-			seq_माला_दो(file, "\n");
-	पूर्ण
+		if (n != 0)
+			seq_printf(file, "(%d%%)\n", stat[i] * 100 / n);
+		else
+			seq_puts(file, "\n");
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 DEFINE_SHOW_ATTRIBUTE(mt7915_tx_stats);
 
-अटल पूर्णांक mt7915_पढ़ो_temperature(काष्ठा seq_file *s, व्योम *data)
-अणु
-	काष्ठा mt7915_dev *dev = dev_get_drvdata(s->निजी);
-	पूर्णांक temp;
+static int mt7915_read_temperature(struct seq_file *s, void *data)
+{
+	struct mt7915_dev *dev = dev_get_drvdata(s->private);
+	int temp;
 
 	/* cpu */
 	temp = mt7915_mcu_get_temperature(dev, 0);
-	seq_म_लिखो(s, "Temperature: %d\n", temp);
+	seq_printf(s, "Temperature: %d\n", temp);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-mt7915_queues_acq(काष्ठा seq_file *s, व्योम *data)
-अणु
-	काष्ठा mt7915_dev *dev = dev_get_drvdata(s->निजी);
-	पूर्णांक i;
+static int
+mt7915_queues_acq(struct seq_file *s, void *data)
+{
+	struct mt7915_dev *dev = dev_get_drvdata(s->private);
+	int i;
 
-	क्रम (i = 0; i < 16; i++) अणु
-		पूर्णांक j, acs = i / 4, index = i % 4;
+	for (i = 0; i < 16; i++) {
+		int j, acs = i / 4, index = i % 4;
 		u32 ctrl, val, qlen = 0;
 
 		val = mt76_rr(dev, MT_PLE_AC_QEMPTY(acs, index));
 		ctrl = BIT(31) | BIT(15) | (acs << 8);
 
-		क्रम (j = 0; j < 32; j++) अणु
-			अगर (val & BIT(j))
-				जारी;
+		for (j = 0; j < 32; j++) {
+			if (val & BIT(j))
+				continue;
 
 			mt76_wr(dev, MT_PLE_FL_Q0_CTRL,
 				ctrl | (j + (index << 5)));
 			qlen += mt76_get_field(dev, MT_PLE_FL_Q3_CTRL,
 					       GENMASK(11, 0));
-		पूर्ण
-		seq_म_लिखो(s, "AC%d%d: queued=%d\n", acs, index, qlen);
-	पूर्ण
+		}
+		seq_printf(s, "AC%d%d: queued=%d\n", acs, index, qlen);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-mt7915_queues_पढ़ो(काष्ठा seq_file *s, व्योम *data)
-अणु
-	काष्ठा mt7915_dev *dev = dev_get_drvdata(s->निजी);
-	काष्ठा mt76_phy *mphy_ext = dev->mt76.phy2;
-	काष्ठा mt76_queue *ext_q = mphy_ext ? mphy_ext->q_tx[MT_TXQ_BE] : शून्य;
-	काष्ठा अणु
-		काष्ठा mt76_queue *q;
-		अक्षर *queue;
-	पूर्ण queue_map[] = अणु
-		अणु dev->mphy.q_tx[MT_TXQ_BE],	 "WFDMA0" पूर्ण,
-		अणु ext_q,			 "WFDMA1" पूर्ण,
-		अणु dev->mphy.q_tx[MT_TXQ_BE],	 "WFDMA0" पूर्ण,
-		अणु dev->mt76.q_mcu[MT_MCUQ_WM],	 "MCUWM"  पूर्ण,
-		अणु dev->mt76.q_mcu[MT_MCUQ_WA],	 "MCUWA"  पूर्ण,
-		अणु dev->mt76.q_mcu[MT_MCUQ_FWDL], "MCUFWQ" पूर्ण,
-	पूर्ण;
-	पूर्णांक i;
+static int
+mt7915_queues_read(struct seq_file *s, void *data)
+{
+	struct mt7915_dev *dev = dev_get_drvdata(s->private);
+	struct mt76_phy *mphy_ext = dev->mt76.phy2;
+	struct mt76_queue *ext_q = mphy_ext ? mphy_ext->q_tx[MT_TXQ_BE] : NULL;
+	struct {
+		struct mt76_queue *q;
+		char *queue;
+	} queue_map[] = {
+		{ dev->mphy.q_tx[MT_TXQ_BE],	 "WFDMA0" },
+		{ ext_q,			 "WFDMA1" },
+		{ dev->mphy.q_tx[MT_TXQ_BE],	 "WFDMA0" },
+		{ dev->mt76.q_mcu[MT_MCUQ_WM],	 "MCUWM"  },
+		{ dev->mt76.q_mcu[MT_MCUQ_WA],	 "MCUWA"  },
+		{ dev->mt76.q_mcu[MT_MCUQ_FWDL], "MCUFWQ" },
+	};
+	int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(queue_map); i++) अणु
-		काष्ठा mt76_queue *q = queue_map[i].q;
+	for (i = 0; i < ARRAY_SIZE(queue_map); i++) {
+		struct mt76_queue *q = queue_map[i].q;
 
-		अगर (!q)
-			जारी;
+		if (!q)
+			continue;
 
-		seq_म_लिखो(s,
+		seq_printf(s,
 			   "%s:	queued=%d head=%d tail=%d\n",
 			   queue_map[i].queue, q->queued, q->head,
 			   q->tail);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम
-mt7915_माला_दो_rate_txघातer(काष्ठा seq_file *s, काष्ठा mt7915_phy *phy)
-अणु
-	अटल स्थिर अक्षर * स्थिर sku_group_name[] = अणु
+static void
+mt7915_puts_rate_txpower(struct seq_file *s, struct mt7915_phy *phy)
+{
+	static const char * const sku_group_name[] = {
 		"CCK", "OFDM", "HT20", "HT40",
 		"VHT20", "VHT40", "VHT80", "VHT160",
 		"RU26", "RU52", "RU106", "RU242/SU20",
 		"RU484/SU40", "RU996/SU80", "RU2x996/SU160"
-	पूर्ण;
-	काष्ठा mt7915_dev *dev = dev_get_drvdata(s->निजी);
+	};
+	struct mt7915_dev *dev = dev_get_drvdata(s->private);
 	bool ext_phy = phy != &dev->phy;
 	u32 reg_base;
-	पूर्णांक i, idx = 0;
+	int i, idx = 0;
 
-	अगर (!phy)
-		वापस;
+	if (!phy)
+		return;
 
 	reg_base = MT_TMAC_FP0R0(ext_phy);
-	seq_म_लिखो(s, "\nBand %d\n", ext_phy);
+	seq_printf(s, "\nBand %d\n", ext_phy);
 
-	क्रम (i = 0; i < ARRAY_SIZE(mt7915_sku_group_len); i++) अणु
+	for (i = 0; i < ARRAY_SIZE(mt7915_sku_group_len); i++) {
 		u8 cnt, mcs_num = mt7915_sku_group_len[i];
-		s8 txघातer[12];
-		पूर्णांक j;
+		s8 txpower[12];
+		int j;
 
-		अगर (i == SKU_HT_BW20 || i == SKU_HT_BW40) अणु
+		if (i == SKU_HT_BW20 || i == SKU_HT_BW40) {
 			mcs_num = 8;
-		पूर्ण अन्यथा अगर (i >= SKU_VHT_BW20 && i <= SKU_VHT_BW160) अणु
+		} else if (i >= SKU_VHT_BW20 && i <= SKU_VHT_BW160) {
 			mcs_num = 10;
-		पूर्ण अन्यथा अगर (i == SKU_HE_RU26) अणु
+		} else if (i == SKU_HE_RU26) {
 			reg_base = MT_TMAC_FP0R18(ext_phy);
 			idx = 0;
-		पूर्ण
+		}
 
-		क्रम (j = 0, cnt = 0; j < DIV_ROUND_UP(mcs_num, 4); j++) अणु
+		for (j = 0, cnt = 0; j < DIV_ROUND_UP(mcs_num, 4); j++) {
 			u32 val;
 
-			अगर (i == SKU_VHT_BW160 && idx == 60) अणु
+			if (i == SKU_VHT_BW160 && idx == 60) {
 				reg_base = MT_TMAC_FP0R15(ext_phy);
 				idx = 0;
-			पूर्ण
+			}
 
 			val = mt76_rr(dev, reg_base + (idx / 4) * 4);
 
-			अगर (idx && idx % 4)
+			if (idx && idx % 4)
 				val >>= (idx % 4) * 8;
 
-			जबतक (val > 0 && cnt < mcs_num) अणु
+			while (val > 0 && cnt < mcs_num) {
 				s8 pwr = FIELD_GET(MT_TMAC_FP_MASK, val);
 
-				txघातer[cnt++] = pwr;
+				txpower[cnt++] = pwr;
 				val >>= 8;
 				idx++;
-			पूर्ण
-		पूर्ण
+			}
+		}
 
-		mt76_seq_माला_दो_array(s, sku_group_name[i], txघातer, mcs_num);
-	पूर्ण
-पूर्ण
+		mt76_seq_puts_array(s, sku_group_name[i], txpower, mcs_num);
+	}
+}
 
-अटल पूर्णांक
-mt7915_पढ़ो_rate_txघातer(काष्ठा seq_file *s, व्योम *data)
-अणु
-	काष्ठा mt7915_dev *dev = dev_get_drvdata(s->निजी);
+static int
+mt7915_read_rate_txpower(struct seq_file *s, void *data)
+{
+	struct mt7915_dev *dev = dev_get_drvdata(s->private);
 
-	mt7915_माला_दो_rate_txघातer(s, &dev->phy);
-	mt7915_माला_दो_rate_txघातer(s, mt7915_ext_phy(dev));
+	mt7915_puts_rate_txpower(s, &dev->phy);
+	mt7915_puts_rate_txpower(s, mt7915_ext_phy(dev));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक mt7915_init_debugfs(काष्ठा mt7915_dev *dev)
-अणु
-	काष्ठा dentry *dir;
+int mt7915_init_debugfs(struct mt7915_dev *dev)
+{
+	struct dentry *dir;
 
-	dir = mt76_रेजिस्टर_debugfs(&dev->mt76);
-	अगर (!dir)
-		वापस -ENOMEM;
+	dir = mt76_register_debugfs(&dev->mt76);
+	if (!dir)
+		return -ENOMEM;
 
 	debugfs_create_devm_seqfile(dev->mt76.dev, "queues", dir,
-				    mt7915_queues_पढ़ो);
+				    mt7915_queues_read);
 	debugfs_create_devm_seqfile(dev->mt76.dev, "acq", dir,
 				    mt7915_queues_acq);
 	debugfs_create_file("tx_stats", 0400, dir, dev, &mt7915_tx_stats_fops);
@@ -392,78 +391,78 @@ mt7915_पढ़ो_rate_txघातer(काष्ठा seq_file *s, व्य
 			    &fops_radar_trigger);
 	debugfs_create_file("ser_trigger", 0200, dir, dev, &fops_ser_trigger);
 	debugfs_create_devm_seqfile(dev->mt76.dev, "temperature", dir,
-				    mt7915_पढ़ो_temperature);
+				    mt7915_read_temperature);
 	debugfs_create_devm_seqfile(dev->mt76.dev, "txpower_sku", dir,
-				    mt7915_पढ़ो_rate_txघातer);
+				    mt7915_read_rate_txpower);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_MAC80211_DEBUGFS
+#ifdef CONFIG_MAC80211_DEBUGFS
 /** per-station debugfs **/
 
 /* usage: <tx mode> <ldpc> <stbc> <bw> <gi> <nss> <mcs> */
-अटल पूर्णांक mt7915_sta_fixed_rate_set(व्योम *data, u64 rate)
-अणु
-	काष्ठा ieee80211_sta *sta = data;
-	काष्ठा mt7915_sta *msta = (काष्ठा mt7915_sta *)sta->drv_priv;
+static int mt7915_sta_fixed_rate_set(void *data, u64 rate)
+{
+	struct ieee80211_sta *sta = data;
+	struct mt7915_sta *msta = (struct mt7915_sta *)sta->drv_priv;
 
-	वापस mt7915_mcu_set_fixed_rate(msta->vअगर->phy->dev, sta, rate);
-पूर्ण
+	return mt7915_mcu_set_fixed_rate(msta->vif->phy->dev, sta, rate);
+}
 
-DEFINE_DEBUGFS_ATTRIBUTE(fops_fixed_rate, शून्य,
+DEFINE_DEBUGFS_ATTRIBUTE(fops_fixed_rate, NULL,
 			 mt7915_sta_fixed_rate_set, "%llx\n");
 
-अटल पूर्णांक
-mt7915_sta_stats_show(काष्ठा seq_file *s, व्योम *data)
-अणु
-	काष्ठा ieee80211_sta *sta = s->निजी;
-	काष्ठा mt7915_sta *msta = (काष्ठा mt7915_sta *)sta->drv_priv;
-	काष्ठा mt7915_sta_stats *stats = &msta->stats;
-	काष्ठा rate_info *rate = &stats->prob_rate;
-	अटल स्थिर अक्षर * स्थिर bw[] = अणु
+static int
+mt7915_sta_stats_show(struct seq_file *s, void *data)
+{
+	struct ieee80211_sta *sta = s->private;
+	struct mt7915_sta *msta = (struct mt7915_sta *)sta->drv_priv;
+	struct mt7915_sta_stats *stats = &msta->stats;
+	struct rate_info *rate = &stats->prob_rate;
+	static const char * const bw[] = {
 		"BW20", "BW5", "BW10", "BW40",
 		"BW80", "BW160", "BW_HE_RU"
-	पूर्ण;
+	};
 
-	अगर (!rate->legacy && !rate->flags)
-		वापस 0;
+	if (!rate->legacy && !rate->flags)
+		return 0;
 
-	seq_माला_दो(s, "Probing rate - ");
-	अगर (rate->flags & RATE_INFO_FLAGS_MCS)
-		seq_माला_दो(s, "HT ");
-	अन्यथा अगर (rate->flags & RATE_INFO_FLAGS_VHT_MCS)
-		seq_माला_दो(s, "VHT ");
-	अन्यथा अगर (rate->flags & RATE_INFO_FLAGS_HE_MCS)
-		seq_माला_दो(s, "HE ");
-	अन्यथा
-		seq_म_लिखो(s, "Bitrate %d\n", rate->legacy);
+	seq_puts(s, "Probing rate - ");
+	if (rate->flags & RATE_INFO_FLAGS_MCS)
+		seq_puts(s, "HT ");
+	else if (rate->flags & RATE_INFO_FLAGS_VHT_MCS)
+		seq_puts(s, "VHT ");
+	else if (rate->flags & RATE_INFO_FLAGS_HE_MCS)
+		seq_puts(s, "HE ");
+	else
+		seq_printf(s, "Bitrate %d\n", rate->legacy);
 
-	अगर (rate->flags) अणु
-		seq_म_लिखो(s, "%s NSS%d MCS%d ",
+	if (rate->flags) {
+		seq_printf(s, "%s NSS%d MCS%d ",
 			   bw[rate->bw], rate->nss, rate->mcs);
 
-		अगर (rate->flags & RATE_INFO_FLAGS_SHORT_GI)
-			seq_माला_दो(s, "SGI ");
-		अन्यथा अगर (rate->he_gi)
-			seq_माला_दो(s, "HE GI ");
+		if (rate->flags & RATE_INFO_FLAGS_SHORT_GI)
+			seq_puts(s, "SGI ");
+		else if (rate->he_gi)
+			seq_puts(s, "HE GI ");
 
-		अगर (rate->he_dcm)
-			seq_माला_दो(s, "DCM ");
-	पूर्ण
+		if (rate->he_dcm)
+			seq_puts(s, "DCM ");
+	}
 
-	seq_म_लिखो(s, "\nPPDU PER: %ld.%1ld%%\n",
+	seq_printf(s, "\nPPDU PER: %ld.%1ld%%\n",
 		   stats->per / 10, stats->per % 10);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 DEFINE_SHOW_ATTRIBUTE(mt7915_sta_stats);
 
-व्योम mt7915_sta_add_debugfs(काष्ठा ieee80211_hw *hw, काष्ठा ieee80211_vअगर *vअगर,
-			    काष्ठा ieee80211_sta *sta, काष्ठा dentry *dir)
-अणु
+void mt7915_sta_add_debugfs(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
+			    struct ieee80211_sta *sta, struct dentry *dir)
+{
 	debugfs_create_file("fixed_rate", 0600, dir, sta, &fops_fixed_rate);
 	debugfs_create_file("stats", 0400, dir, sta, &mt7915_sta_stats_fops);
-पूर्ण
-#पूर्ण_अगर
+}
+#endif

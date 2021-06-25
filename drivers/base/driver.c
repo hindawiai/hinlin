@@ -1,228 +1,227 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * driver.c - centralized device driver management
  *
  * Copyright (c) 2002-3 Patrick Mochel
- * Copyright (c) 2002-3 Open Source Development Lअसल
- * Copyright (c) 2007 Greg Kroah-Harपंचांगan <gregkh@suse.de>
+ * Copyright (c) 2002-3 Open Source Development Labs
+ * Copyright (c) 2007 Greg Kroah-Hartman <gregkh@suse.de>
  * Copyright (c) 2007 Novell Inc.
  */
 
-#समावेश <linux/device/driver.h>
-#समावेश <linux/device.h>
-#समावेश <linux/module.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/slab.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/sysfs.h>
-#समावेश "base.h"
+#include <linux/device/driver.h>
+#include <linux/device.h>
+#include <linux/module.h>
+#include <linux/errno.h>
+#include <linux/slab.h>
+#include <linux/string.h>
+#include <linux/sysfs.h>
+#include "base.h"
 
-अटल काष्ठा device *next_device(काष्ठा klist_iter *i)
-अणु
-	काष्ठा klist_node *n = klist_next(i);
-	काष्ठा device *dev = शून्य;
-	काष्ठा device_निजी *dev_prv;
+static struct device *next_device(struct klist_iter *i)
+{
+	struct klist_node *n = klist_next(i);
+	struct device *dev = NULL;
+	struct device_private *dev_prv;
 
-	अगर (n) अणु
-		dev_prv = to_device_निजी_driver(n);
+	if (n) {
+		dev_prv = to_device_private_driver(n);
 		dev = dev_prv->device;
-	पूर्ण
-	वापस dev;
-पूर्ण
+	}
+	return dev;
+}
 
 /**
- * driver_क्रम_each_device - Iterator क्रम devices bound to a driver.
+ * driver_for_each_device - Iterator for devices bound to a driver.
  * @drv: Driver we're iterating.
  * @start: Device to begin with
  * @data: Data to pass to the callback.
- * @fn: Function to call क्रम each device.
+ * @fn: Function to call for each device.
  *
- * Iterate over the @drv's list of devices calling @fn क्रम each one.
+ * Iterate over the @drv's list of devices calling @fn for each one.
  */
-पूर्णांक driver_क्रम_each_device(काष्ठा device_driver *drv, काष्ठा device *start,
-			   व्योम *data, पूर्णांक (*fn)(काष्ठा device *, व्योम *))
-अणु
-	काष्ठा klist_iter i;
-	काष्ठा device *dev;
-	पूर्णांक error = 0;
+int driver_for_each_device(struct device_driver *drv, struct device *start,
+			   void *data, int (*fn)(struct device *, void *))
+{
+	struct klist_iter i;
+	struct device *dev;
+	int error = 0;
 
-	अगर (!drv)
-		वापस -EINVAL;
+	if (!drv)
+		return -EINVAL;
 
 	klist_iter_init_node(&drv->p->klist_devices, &i,
-			     start ? &start->p->knode_driver : शून्य);
-	जबतक (!error && (dev = next_device(&i)))
+			     start ? &start->p->knode_driver : NULL);
+	while (!error && (dev = next_device(&i)))
 		error = fn(dev, data);
-	klist_iter_निकास(&i);
-	वापस error;
-पूर्ण
-EXPORT_SYMBOL_GPL(driver_क्रम_each_device);
+	klist_iter_exit(&i);
+	return error;
+}
+EXPORT_SYMBOL_GPL(driver_for_each_device);
 
 /**
- * driver_find_device - device iterator क्रम locating a particular device.
+ * driver_find_device - device iterator for locating a particular device.
  * @drv: The device's driver
  * @start: Device to begin with
  * @data: Data to pass to match function
  * @match: Callback function to check device
  *
- * This is similar to the driver_क्रम_each_device() function above, but
- * it वापसs a reference to a device that is 'found' क्रम later use, as
+ * This is similar to the driver_for_each_device() function above, but
+ * it returns a reference to a device that is 'found' for later use, as
  * determined by the @match callback.
  *
- * The callback should वापस 0 अगर the device करोesn't match and non-zero
- * अगर it करोes.  If the callback वापसs non-zero, this function will
- * वापस to the caller and not iterate over any more devices.
+ * The callback should return 0 if the device doesn't match and non-zero
+ * if it does.  If the callback returns non-zero, this function will
+ * return to the caller and not iterate over any more devices.
  */
-काष्ठा device *driver_find_device(काष्ठा device_driver *drv,
-				  काष्ठा device *start, स्थिर व्योम *data,
-				  पूर्णांक (*match)(काष्ठा device *dev, स्थिर व्योम *data))
-अणु
-	काष्ठा klist_iter i;
-	काष्ठा device *dev;
+struct device *driver_find_device(struct device_driver *drv,
+				  struct device *start, const void *data,
+				  int (*match)(struct device *dev, const void *data))
+{
+	struct klist_iter i;
+	struct device *dev;
 
-	अगर (!drv || !drv->p)
-		वापस शून्य;
+	if (!drv || !drv->p)
+		return NULL;
 
 	klist_iter_init_node(&drv->p->klist_devices, &i,
-			     (start ? &start->p->knode_driver : शून्य));
-	जबतक ((dev = next_device(&i)))
-		अगर (match(dev, data) && get_device(dev))
-			अवरोध;
-	klist_iter_निकास(&i);
-	वापस dev;
-पूर्ण
+			     (start ? &start->p->knode_driver : NULL));
+	while ((dev = next_device(&i)))
+		if (match(dev, data) && get_device(dev))
+			break;
+	klist_iter_exit(&i);
+	return dev;
+}
 EXPORT_SYMBOL_GPL(driver_find_device);
 
 /**
- * driver_create_file - create sysfs file क्रम driver.
+ * driver_create_file - create sysfs file for driver.
  * @drv: driver.
  * @attr: driver attribute descriptor.
  */
-पूर्णांक driver_create_file(काष्ठा device_driver *drv,
-		       स्थिर काष्ठा driver_attribute *attr)
-अणु
-	पूर्णांक error;
+int driver_create_file(struct device_driver *drv,
+		       const struct driver_attribute *attr)
+{
+	int error;
 
-	अगर (drv)
+	if (drv)
 		error = sysfs_create_file(&drv->p->kobj, &attr->attr);
-	अन्यथा
+	else
 		error = -EINVAL;
-	वापस error;
-पूर्ण
+	return error;
+}
 EXPORT_SYMBOL_GPL(driver_create_file);
 
 /**
- * driver_हटाओ_file - हटाओ sysfs file क्रम driver.
+ * driver_remove_file - remove sysfs file for driver.
  * @drv: driver.
  * @attr: driver attribute descriptor.
  */
-व्योम driver_हटाओ_file(काष्ठा device_driver *drv,
-			स्थिर काष्ठा driver_attribute *attr)
-अणु
-	अगर (drv)
-		sysfs_हटाओ_file(&drv->p->kobj, &attr->attr);
-पूर्ण
-EXPORT_SYMBOL_GPL(driver_हटाओ_file);
+void driver_remove_file(struct device_driver *drv,
+			const struct driver_attribute *attr)
+{
+	if (drv)
+		sysfs_remove_file(&drv->p->kobj, &attr->attr);
+}
+EXPORT_SYMBOL_GPL(driver_remove_file);
 
-पूर्णांक driver_add_groups(काष्ठा device_driver *drv,
-		      स्थिर काष्ठा attribute_group **groups)
-अणु
-	वापस sysfs_create_groups(&drv->p->kobj, groups);
-पूर्ण
+int driver_add_groups(struct device_driver *drv,
+		      const struct attribute_group **groups)
+{
+	return sysfs_create_groups(&drv->p->kobj, groups);
+}
 
-व्योम driver_हटाओ_groups(काष्ठा device_driver *drv,
-			  स्थिर काष्ठा attribute_group **groups)
-अणु
-	sysfs_हटाओ_groups(&drv->p->kobj, groups);
-पूर्ण
+void driver_remove_groups(struct device_driver *drv,
+			  const struct attribute_group **groups)
+{
+	sysfs_remove_groups(&drv->p->kobj, groups);
+}
 
 /**
- * driver_रेजिस्टर - रेजिस्टर driver with bus
- * @drv: driver to रेजिस्टर
+ * driver_register - register driver with bus
+ * @drv: driver to register
  *
  * We pass off most of the work to the bus_add_driver() call,
- * since most of the things we have to करो deal with the bus
- * काष्ठाures.
+ * since most of the things we have to do deal with the bus
+ * structures.
  */
-पूर्णांक driver_रेजिस्टर(काष्ठा device_driver *drv)
-अणु
-	पूर्णांक ret;
-	काष्ठा device_driver *other;
+int driver_register(struct device_driver *drv)
+{
+	int ret;
+	struct device_driver *other;
 
-	अगर (!drv->bus->p) अणु
+	if (!drv->bus->p) {
 		pr_err("Driver '%s' was unable to register with bus_type '%s' because the bus was not initialized.\n",
 			   drv->name, drv->bus->name);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर ((drv->bus->probe && drv->probe) ||
-	    (drv->bus->हटाओ && drv->हटाओ) ||
-	    (drv->bus->shutकरोwn && drv->shutकरोwn))
+	if ((drv->bus->probe && drv->probe) ||
+	    (drv->bus->remove && drv->remove) ||
+	    (drv->bus->shutdown && drv->shutdown))
 		pr_warn("Driver '%s' needs updating - please use "
 			"bus_type methods\n", drv->name);
 
 	other = driver_find(drv->name, drv->bus);
-	अगर (other) अणु
+	if (other) {
 		pr_err("Error: Driver '%s' is already registered, "
 			"aborting...\n", drv->name);
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
 	ret = bus_add_driver(drv);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 	ret = driver_add_groups(drv, drv->groups);
-	अगर (ret) अणु
-		bus_हटाओ_driver(drv);
-		वापस ret;
-	पूर्ण
+	if (ret) {
+		bus_remove_driver(drv);
+		return ret;
+	}
 	kobject_uevent(&drv->p->kobj, KOBJ_ADD);
 
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(driver_रेजिस्टर);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(driver_register);
 
 /**
- * driver_unरेजिस्टर - हटाओ driver from प्रणाली.
+ * driver_unregister - remove driver from system.
  * @drv: driver.
  *
  * Again, we pass off most of the work to the bus-level call.
  */
-व्योम driver_unरेजिस्टर(काष्ठा device_driver *drv)
-अणु
-	अगर (!drv || !drv->p) अणु
+void driver_unregister(struct device_driver *drv)
+{
+	if (!drv || !drv->p) {
 		WARN(1, "Unexpected driver unregister!\n");
-		वापस;
-	पूर्ण
-	driver_हटाओ_groups(drv, drv->groups);
-	bus_हटाओ_driver(drv);
-पूर्ण
-EXPORT_SYMBOL_GPL(driver_unरेजिस्टर);
+		return;
+	}
+	driver_remove_groups(drv, drv->groups);
+	bus_remove_driver(drv);
+}
+EXPORT_SYMBOL_GPL(driver_unregister);
 
 /**
  * driver_find - locate driver on a bus by its name.
  * @name: name of the driver.
- * @bus: bus to scan क्रम the driver.
+ * @bus: bus to scan for the driver.
  *
  * Call kset_find_obj() to iterate over list of drivers on
- * a bus to find driver by name. Return driver अगर found.
+ * a bus to find driver by name. Return driver if found.
  *
- * This routine provides no locking to prevent the driver it वापसs
- * from being unरेजिस्टरed or unloaded जबतक the caller is using it.
- * The caller is responsible क्रम preventing this.
+ * This routine provides no locking to prevent the driver it returns
+ * from being unregistered or unloaded while the caller is using it.
+ * The caller is responsible for preventing this.
  */
-काष्ठा device_driver *driver_find(स्थिर अक्षर *name, काष्ठा bus_type *bus)
-अणु
-	काष्ठा kobject *k = kset_find_obj(bus->p->drivers_kset, name);
-	काष्ठा driver_निजी *priv;
+struct device_driver *driver_find(const char *name, struct bus_type *bus)
+{
+	struct kobject *k = kset_find_obj(bus->p->drivers_kset, name);
+	struct driver_private *priv;
 
-	अगर (k) अणु
+	if (k) {
 		/* Drop reference added by kset_find_obj() */
 		kobject_put(k);
 		priv = to_driver(k);
-		वापस priv->driver;
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+		return priv->driver;
+	}
+	return NULL;
+}
 EXPORT_SYMBOL_GPL(driver_find);

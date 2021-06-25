@@ -1,222 +1,221 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  *  Copyright (c) by Jaroslav Kysela <perex@perex.cz>
  *                   Uros Bizjak <uros@kss-loka.si>
  *
- *  Lowlevel routines क्रम control of Sound Blaster cards
+ *  Lowlevel routines for control of Sound Blaster cards
  */
 
-#समावेश <linux/delay.h>
-#समावेश <linux/init.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/ioport.h>
-#समावेश <linux/module.h>
-#समावेश <linux/पन.स>
-#समावेश <sound/core.h>
-#समावेश <sound/sb.h>
-#समावेश <sound/initval.h>
+#include <linux/delay.h>
+#include <linux/init.h>
+#include <linux/interrupt.h>
+#include <linux/slab.h>
+#include <linux/ioport.h>
+#include <linux/module.h>
+#include <linux/io.h>
+#include <sound/core.h>
+#include <sound/sb.h>
+#include <sound/initval.h>
 
-#समावेश <यंत्र/dma.h>
+#include <asm/dma.h>
 
 MODULE_AUTHOR("Jaroslav Kysela <perex@perex.cz>");
 MODULE_DESCRIPTION("ALSA lowlevel driver for Sound Blaster cards");
 MODULE_LICENSE("GPL");
 
-#घोषणा BUSY_LOOPS 100000
+#define BUSY_LOOPS 100000
 
-#अघोषित IO_DEBUG
+#undef IO_DEBUG
 
-पूर्णांक snd_sbdsp_command(काष्ठा snd_sb *chip, अचिन्हित अक्षर val)
-अणु
-	पूर्णांक i;
-#अगर_घोषित IO_DEBUG
-	snd_prपूर्णांकk(KERN_DEBUG "command 0x%x\n", val);
-#पूर्ण_अगर
-	क्रम (i = BUSY_LOOPS; i; i--)
-		अगर ((inb(SBP(chip, STATUS)) & 0x80) == 0) अणु
+int snd_sbdsp_command(struct snd_sb *chip, unsigned char val)
+{
+	int i;
+#ifdef IO_DEBUG
+	snd_printk(KERN_DEBUG "command 0x%x\n", val);
+#endif
+	for (i = BUSY_LOOPS; i; i--)
+		if ((inb(SBP(chip, STATUS)) & 0x80) == 0) {
 			outb(val, SBP(chip, COMMAND));
-			वापस 1;
-		पूर्ण
-	snd_prपूर्णांकd("%s [0x%lx]: timeout (0x%x)\n", __func__, chip->port, val);
-	वापस 0;
-पूर्ण
+			return 1;
+		}
+	snd_printd("%s [0x%lx]: timeout (0x%x)\n", __func__, chip->port, val);
+	return 0;
+}
 
-पूर्णांक snd_sbdsp_get_byte(काष्ठा snd_sb *chip)
-अणु
-	पूर्णांक val;
-	पूर्णांक i;
-	क्रम (i = BUSY_LOOPS; i; i--) अणु
-		अगर (inb(SBP(chip, DATA_AVAIL)) & 0x80) अणु
+int snd_sbdsp_get_byte(struct snd_sb *chip)
+{
+	int val;
+	int i;
+	for (i = BUSY_LOOPS; i; i--) {
+		if (inb(SBP(chip, DATA_AVAIL)) & 0x80) {
 			val = inb(SBP(chip, READ));
-#अगर_घोषित IO_DEBUG
-			snd_prपूर्णांकk(KERN_DEBUG "get_byte 0x%x\n", val);
-#पूर्ण_अगर
-			वापस val;
-		पूर्ण
-	पूर्ण
-	snd_prपूर्णांकd("%s [0x%lx]: timeout\n", __func__, chip->port);
-	वापस -ENODEV;
-पूर्ण
+#ifdef IO_DEBUG
+			snd_printk(KERN_DEBUG "get_byte 0x%x\n", val);
+#endif
+			return val;
+		}
+	}
+	snd_printd("%s [0x%lx]: timeout\n", __func__, chip->port);
+	return -ENODEV;
+}
 
-पूर्णांक snd_sbdsp_reset(काष्ठा snd_sb *chip)
-अणु
-	पूर्णांक i;
+int snd_sbdsp_reset(struct snd_sb *chip)
+{
+	int i;
 
 	outb(1, SBP(chip, RESET));
 	udelay(10);
 	outb(0, SBP(chip, RESET));
 	udelay(30);
-	क्रम (i = BUSY_LOOPS; i; i--)
-		अगर (inb(SBP(chip, DATA_AVAIL)) & 0x80) अणु
-			अगर (inb(SBP(chip, READ)) == 0xaa)
-				वापस 0;
-			अन्यथा
-				अवरोध;
-		पूर्ण
-	snd_prपूर्णांकdd("%s [0x%lx] failed...\n", __func__, chip->port);
-	वापस -ENODEV;
-पूर्ण
+	for (i = BUSY_LOOPS; i; i--)
+		if (inb(SBP(chip, DATA_AVAIL)) & 0x80) {
+			if (inb(SBP(chip, READ)) == 0xaa)
+				return 0;
+			else
+				break;
+		}
+	snd_printdd("%s [0x%lx] failed...\n", __func__, chip->port);
+	return -ENODEV;
+}
 
-अटल पूर्णांक snd_sbdsp_version(काष्ठा snd_sb * chip)
-अणु
-	अचिन्हित पूर्णांक result;
+static int snd_sbdsp_version(struct snd_sb * chip)
+{
+	unsigned int result;
 
 	snd_sbdsp_command(chip, SB_DSP_GET_VERSION);
-	result = (लघु) snd_sbdsp_get_byte(chip) << 8;
-	result |= (लघु) snd_sbdsp_get_byte(chip);
-	वापस result;
-पूर्ण
+	result = (short) snd_sbdsp_get_byte(chip) << 8;
+	result |= (short) snd_sbdsp_get_byte(chip);
+	return result;
+}
 
-अटल पूर्णांक snd_sbdsp_probe(काष्ठा snd_sb * chip)
-अणु
-	पूर्णांक version;
-	पूर्णांक major, minor;
-	अक्षर *str;
-	अचिन्हित दीर्घ flags;
+static int snd_sbdsp_probe(struct snd_sb * chip)
+{
+	int version;
+	int major, minor;
+	char *str;
+	unsigned long flags;
 
 	/*
 	 *  initialization sequence
 	 */
 
 	spin_lock_irqsave(&chip->reg_lock, flags);
-	अगर (snd_sbdsp_reset(chip) < 0) अणु
+	if (snd_sbdsp_reset(chip) < 0) {
 		spin_unlock_irqrestore(&chip->reg_lock, flags);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 	version = snd_sbdsp_version(chip);
-	अगर (version < 0) अणु
+	if (version < 0) {
 		spin_unlock_irqrestore(&chip->reg_lock, flags);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 	spin_unlock_irqrestore(&chip->reg_lock, flags);
 	major = version >> 8;
 	minor = version & 0xff;
-	snd_prपूर्णांकdd("SB [0x%lx]: DSP chip found, version = %i.%i\n",
+	snd_printdd("SB [0x%lx]: DSP chip found, version = %i.%i\n",
 		    chip->port, major, minor);
 
-	चयन (chip->hardware) अणु
-	हाल SB_HW_AUTO:
-		चयन (major) अणु
-		हाल 1:
+	switch (chip->hardware) {
+	case SB_HW_AUTO:
+		switch (major) {
+		case 1:
 			chip->hardware = SB_HW_10;
 			str = "1.0";
-			अवरोध;
-		हाल 2:
-			अगर (minor) अणु
+			break;
+		case 2:
+			if (minor) {
 				chip->hardware = SB_HW_201;
 				str = "2.01+";
-			पूर्ण अन्यथा अणु
+			} else {
 				chip->hardware = SB_HW_20;
 				str = "2.0";
-			पूर्ण
-			अवरोध;
-		हाल 3:
+			}
+			break;
+		case 3:
 			chip->hardware = SB_HW_PRO;
 			str = "Pro";
-			अवरोध;
-		हाल 4:
+			break;
+		case 4:
 			chip->hardware = SB_HW_16;
 			str = "16";
-			अवरोध;
-		शेष:
-			snd_prपूर्णांकk(KERN_INFO "SB [0x%lx]: unknown DSP chip version %i.%i\n",
+			break;
+		default:
+			snd_printk(KERN_INFO "SB [0x%lx]: unknown DSP chip version %i.%i\n",
 				   chip->port, major, minor);
-			वापस -ENODEV;
-		पूर्ण
-		अवरोध;
-	हाल SB_HW_ALS100:
+			return -ENODEV;
+		}
+		break;
+	case SB_HW_ALS100:
 		str = "16 (ALS-100)";
-		अवरोध;
-	हाल SB_HW_ALS4000:
+		break;
+	case SB_HW_ALS4000:
 		str = "16 (ALS-4000)";
-		अवरोध;
-	हाल SB_HW_DT019X:
+		break;
+	case SB_HW_DT019X:
 		str = "(DT019X/ALS007)";
-		अवरोध;
-	हाल SB_HW_CS5530:
+		break;
+	case SB_HW_CS5530:
 		str = "16 (CS5530)";
-		अवरोध;
-	हाल SB_HW_JAZZ16:
+		break;
+	case SB_HW_JAZZ16:
 		str = "Pro (Jazz16)";
-		अवरोध;
-	शेष:
-		वापस -ENODEV;
-	पूर्ण
-	प्र_लिखो(chip->name, "Sound Blaster %s", str);
+		break;
+	default:
+		return -ENODEV;
+	}
+	sprintf(chip->name, "Sound Blaster %s", str);
 	chip->version = (major << 8) | minor;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक snd_sbdsp_मुक्त(काष्ठा snd_sb *chip)
-अणु
-	release_and_मुक्त_resource(chip->res_port);
-	अगर (chip->irq >= 0)
-		मुक्त_irq(chip->irq, (व्योम *) chip);
-#अगर_घोषित CONFIG_ISA
-	अगर (chip->dma8 >= 0) अणु
+static int snd_sbdsp_free(struct snd_sb *chip)
+{
+	release_and_free_resource(chip->res_port);
+	if (chip->irq >= 0)
+		free_irq(chip->irq, (void *) chip);
+#ifdef CONFIG_ISA
+	if (chip->dma8 >= 0) {
 		disable_dma(chip->dma8);
-		मुक्त_dma(chip->dma8);
-	पूर्ण
-	अगर (chip->dma16 >= 0 && chip->dma16 != chip->dma8) अणु
+		free_dma(chip->dma8);
+	}
+	if (chip->dma16 >= 0 && chip->dma16 != chip->dma8) {
 		disable_dma(chip->dma16);
-		मुक्त_dma(chip->dma16);
-	पूर्ण
-#पूर्ण_अगर
-	kमुक्त(chip);
-	वापस 0;
-पूर्ण
+		free_dma(chip->dma16);
+	}
+#endif
+	kfree(chip);
+	return 0;
+}
 
-अटल पूर्णांक snd_sbdsp_dev_मुक्त(काष्ठा snd_device *device)
-अणु
-	काष्ठा snd_sb *chip = device->device_data;
-	वापस snd_sbdsp_मुक्त(chip);
-पूर्ण
+static int snd_sbdsp_dev_free(struct snd_device *device)
+{
+	struct snd_sb *chip = device->device_data;
+	return snd_sbdsp_free(chip);
+}
 
-पूर्णांक snd_sbdsp_create(काष्ठा snd_card *card,
-		     अचिन्हित दीर्घ port,
-		     पूर्णांक irq,
+int snd_sbdsp_create(struct snd_card *card,
+		     unsigned long port,
+		     int irq,
 		     irq_handler_t irq_handler,
-		     पूर्णांक dma8,
-		     पूर्णांक dma16,
-		     अचिन्हित लघु hardware,
-		     काष्ठा snd_sb **r_chip)
-अणु
-	काष्ठा snd_sb *chip;
-	पूर्णांक err;
-	अटल स्थिर काष्ठा snd_device_ops ops = अणु
-		.dev_मुक्त =	snd_sbdsp_dev_मुक्त,
-	पूर्ण;
+		     int dma8,
+		     int dma16,
+		     unsigned short hardware,
+		     struct snd_sb **r_chip)
+{
+	struct snd_sb *chip;
+	int err;
+	static const struct snd_device_ops ops = {
+		.dev_free =	snd_sbdsp_dev_free,
+	};
 
-	अगर (snd_BUG_ON(!r_chip))
-		वापस -EINVAL;
-	*r_chip = शून्य;
-	chip = kzalloc(माप(*chip), GFP_KERNEL);
-	अगर (chip == शून्य)
-		वापस -ENOMEM;
+	if (snd_BUG_ON(!r_chip))
+		return -EINVAL;
+	*r_chip = NULL;
+	chip = kzalloc(sizeof(*chip), GFP_KERNEL);
+	if (chip == NULL)
+		return -ENOMEM;
 	spin_lock_init(&chip->reg_lock);
-	spin_lock_init(&chip->खोलो_lock);
+	spin_lock_init(&chip->open_lock);
 	spin_lock_init(&chip->midi_input_lock);
 	spin_lock_init(&chip->mixer_lock);
 	chip->irq = -1;
@@ -224,72 +223,72 @@ MODULE_LICENSE("GPL");
 	chip->dma16 = -1;
 	chip->port = port;
 	
-	अगर (request_irq(irq, irq_handler,
+	if (request_irq(irq, irq_handler,
 			(hardware == SB_HW_ALS4000 ||
 			 hardware == SB_HW_CS5530) ?
 			IRQF_SHARED : 0,
-			"SoundBlaster", (व्योम *) chip)) अणु
-		snd_prपूर्णांकk(KERN_ERR "sb: can't grab irq %d\n", irq);
-		snd_sbdsp_मुक्त(chip);
-		वापस -EBUSY;
-	पूर्ण
+			"SoundBlaster", (void *) chip)) {
+		snd_printk(KERN_ERR "sb: can't grab irq %d\n", irq);
+		snd_sbdsp_free(chip);
+		return -EBUSY;
+	}
 	chip->irq = irq;
 	card->sync_irq = chip->irq;
 
-	अगर (hardware == SB_HW_ALS4000)
-		जाओ __skip_allocation;
+	if (hardware == SB_HW_ALS4000)
+		goto __skip_allocation;
 	
-	अगर ((chip->res_port = request_region(port, 16, "SoundBlaster")) == शून्य) अणु
-		snd_prपूर्णांकk(KERN_ERR "sb: can't grab port 0x%lx\n", port);
-		snd_sbdsp_मुक्त(chip);
-		वापस -EBUSY;
-	पूर्ण
+	if ((chip->res_port = request_region(port, 16, "SoundBlaster")) == NULL) {
+		snd_printk(KERN_ERR "sb: can't grab port 0x%lx\n", port);
+		snd_sbdsp_free(chip);
+		return -EBUSY;
+	}
 
-#अगर_घोषित CONFIG_ISA
-	अगर (dma8 >= 0 && request_dma(dma8, "SoundBlaster - 8bit")) अणु
-		snd_prपूर्णांकk(KERN_ERR "sb: can't grab DMA8 %d\n", dma8);
-		snd_sbdsp_मुक्त(chip);
-		वापस -EBUSY;
-	पूर्ण
+#ifdef CONFIG_ISA
+	if (dma8 >= 0 && request_dma(dma8, "SoundBlaster - 8bit")) {
+		snd_printk(KERN_ERR "sb: can't grab DMA8 %d\n", dma8);
+		snd_sbdsp_free(chip);
+		return -EBUSY;
+	}
 	chip->dma8 = dma8;
-	अगर (dma16 >= 0) अणु
-		अगर (hardware != SB_HW_ALS100 && (dma16 < 5 || dma16 > 7)) अणु
+	if (dma16 >= 0) {
+		if (hardware != SB_HW_ALS100 && (dma16 < 5 || dma16 > 7)) {
 			/* no duplex */
 			dma16 = -1;
-		पूर्ण अन्यथा अगर (request_dma(dma16, "SoundBlaster - 16bit")) अणु
-			snd_prपूर्णांकk(KERN_ERR "sb: can't grab DMA16 %d\n", dma16);
-			snd_sbdsp_मुक्त(chip);
-			वापस -EBUSY;
-		पूर्ण
-	पूर्ण
+		} else if (request_dma(dma16, "SoundBlaster - 16bit")) {
+			snd_printk(KERN_ERR "sb: can't grab DMA16 %d\n", dma16);
+			snd_sbdsp_free(chip);
+			return -EBUSY;
+		}
+	}
 	chip->dma16 = dma16;
-#पूर्ण_अगर
+#endif
 
       __skip_allocation:
 	chip->card = card;
 	chip->hardware = hardware;
-	अगर ((err = snd_sbdsp_probe(chip)) < 0) अणु
-		snd_sbdsp_मुक्त(chip);
-		वापस err;
-	पूर्ण
-	अगर ((err = snd_device_new(card, SNDRV_DEV_LOWLEVEL, chip, &ops)) < 0) अणु
-		snd_sbdsp_मुक्त(chip);
-		वापस err;
-	पूर्ण
+	if ((err = snd_sbdsp_probe(chip)) < 0) {
+		snd_sbdsp_free(chip);
+		return err;
+	}
+	if ((err = snd_device_new(card, SNDRV_DEV_LOWLEVEL, chip, &ops)) < 0) {
+		snd_sbdsp_free(chip);
+		return err;
+	}
 	*r_chip = chip;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 EXPORT_SYMBOL(snd_sbdsp_command);
 EXPORT_SYMBOL(snd_sbdsp_get_byte);
 EXPORT_SYMBOL(snd_sbdsp_reset);
 EXPORT_SYMBOL(snd_sbdsp_create);
 /* sb_mixer.c */
-EXPORT_SYMBOL(snd_sbmixer_ग_लिखो);
-EXPORT_SYMBOL(snd_sbmixer_पढ़ो);
+EXPORT_SYMBOL(snd_sbmixer_write);
+EXPORT_SYMBOL(snd_sbmixer_read);
 EXPORT_SYMBOL(snd_sbmixer_new);
 EXPORT_SYMBOL(snd_sbmixer_add_ctl);
-#अगर_घोषित CONFIG_PM
+#ifdef CONFIG_PM
 EXPORT_SYMBOL(snd_sbmixer_suspend);
 EXPORT_SYMBOL(snd_sbmixer_resume);
-#पूर्ण_अगर
+#endif

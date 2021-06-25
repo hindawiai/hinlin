@@ -1,62 +1,61 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: LGPL-2.1
+// SPDX-License-Identifier: LGPL-2.1
 /*
  * Copyright (C) 2010 Red Hat Inc, Steven Rostedt <srostedt@redhat.com>
  */
-#समावेश <मानकपन.स>
-#समावेश <मानककोष.स>
-#समावेश <माला.स>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
-#समावेश "event-parse.h"
-#समावेश "trace-seq.h"
+#include "event-parse.h"
+#include "trace-seq.h"
 
-#घोषणा MINORBITS	20
-#घोषणा MINORMASK	((1U << MINORBITS) - 1)
+#define MINORBITS	20
+#define MINORMASK	((1U << MINORBITS) - 1)
 
-#घोषणा MAJOR(dev)	((अचिन्हित पूर्णांक) ((dev) >> MINORBITS))
-#घोषणा MINOR(dev)	((अचिन्हित पूर्णांक) ((dev) & MINORMASK))
+#define MAJOR(dev)	((unsigned int) ((dev) >> MINORBITS))
+#define MINOR(dev)	((unsigned int) ((dev) & MINORMASK))
 
-अटल अचिन्हित दीर्घ दीर्घ
-process_jbd2_dev_to_name(काष्ठा trace_seq *s, अचिन्हित दीर्घ दीर्घ *args)
-अणु
-	अचिन्हित पूर्णांक dev = args[0];
+static unsigned long long
+process_jbd2_dev_to_name(struct trace_seq *s, unsigned long long *args)
+{
+	unsigned int dev = args[0];
 
-	trace_seq_म_लिखो(s, "%d:%d", MAJOR(dev), MINOR(dev));
-	वापस 0;
-पूर्ण
+	trace_seq_printf(s, "%d:%d", MAJOR(dev), MINOR(dev));
+	return 0;
+}
 
-अटल अचिन्हित दीर्घ दीर्घ
-process_jअगरfies_to_msecs(काष्ठा trace_seq *s, अचिन्हित दीर्घ दीर्घ *args)
-अणु
-	अचिन्हित दीर्घ दीर्घ jअगरfies = args[0];
+static unsigned long long
+process_jiffies_to_msecs(struct trace_seq *s, unsigned long long *args)
+{
+	unsigned long long jiffies = args[0];
 
-	trace_seq_म_लिखो(s, "%lld", jअगरfies);
-	वापस jअगरfies;
-पूर्ण
+	trace_seq_printf(s, "%lld", jiffies);
+	return jiffies;
+}
 
-पूर्णांक TEP_PLUGIN_LOADER(काष्ठा tep_handle *tep)
-अणु
-	tep_रेजिस्टर_prपूर्णांक_function(tep,
+int TEP_PLUGIN_LOADER(struct tep_handle *tep)
+{
+	tep_register_print_function(tep,
 				    process_jbd2_dev_to_name,
 				    TEP_FUNC_ARG_STRING,
 				    "jbd2_dev_to_name",
 				    TEP_FUNC_ARG_INT,
 				    TEP_FUNC_ARG_VOID);
 
-	tep_रेजिस्टर_prपूर्णांक_function(tep,
-				    process_jअगरfies_to_msecs,
+	tep_register_print_function(tep,
+				    process_jiffies_to_msecs,
 				    TEP_FUNC_ARG_LONG,
 				    "jiffies_to_msecs",
 				    TEP_FUNC_ARG_LONG,
 				    TEP_FUNC_ARG_VOID);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम TEP_PLUGIN_UNLOADER(काष्ठा tep_handle *tep)
-अणु
-	tep_unरेजिस्टर_prपूर्णांक_function(tep, process_jbd2_dev_to_name,
+void TEP_PLUGIN_UNLOADER(struct tep_handle *tep)
+{
+	tep_unregister_print_function(tep, process_jbd2_dev_to_name,
 				      "jbd2_dev_to_name");
 
-	tep_unरेजिस्टर_prपूर्णांक_function(tep, process_jअगरfies_to_msecs,
+	tep_unregister_print_function(tep, process_jiffies_to_msecs,
 				      "jiffies_to_msecs");
-पूर्ण
+}

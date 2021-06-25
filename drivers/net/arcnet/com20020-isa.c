@@ -1,4 +1,3 @@
-<शैली गुरु>
 /*
  * Linux ARCnet driver - COM20020 chipset support
  *
@@ -8,7 +7,7 @@
  * Derived from skeleton.c by Donald Becker.
  *
  * Special thanks to Contemporary Controls, Inc. (www.ccontrols.com)
- *  क्रम sponsoring the further development of this driver.
+ *  for sponsoring the further development of this driver.
  *
  * **********************
  *
@@ -18,7 +17,7 @@
  * Copyright 1993 United States Government as represented by the
  * Director, National Security Agency.  This software may only be used
  * and distributed according to the terms of the GNU General Public License as
- * modअगरied by SRC, incorporated herein by reference.
+ * modified by SRC, incorporated herein by reference.
  *
  * **********************
  *
@@ -27,63 +26,63 @@
  * **********************
  */
 
-#घोषणा pr_fmt(fmt) "arcnet:" KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) "arcnet:" KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/module.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/types.h>
-#समावेश <linux/ioport.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/delay.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/init.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/memblock.h>
-#समावेश <linux/पन.स>
+#include <linux/module.h>
+#include <linux/moduleparam.h>
+#include <linux/kernel.h>
+#include <linux/types.h>
+#include <linux/ioport.h>
+#include <linux/errno.h>
+#include <linux/delay.h>
+#include <linux/netdevice.h>
+#include <linux/init.h>
+#include <linux/interrupt.h>
+#include <linux/memblock.h>
+#include <linux/io.h>
 
-#समावेश "arcdevice.h"
-#समावेश "com20020.h"
+#include "arcdevice.h"
+#include "com20020.h"
 
-/* We cannot (yet) probe क्रम an IO mapped card, although we can check that
- * it's where we were told it was, and even करो स्वतःirq.
+/* We cannot (yet) probe for an IO mapped card, although we can check that
+ * it's where we were told it was, and even do autoirq.
  */
-अटल पूर्णांक __init com20020isa_probe(काष्ठा net_device *dev)
-अणु
-	पूर्णांक ioaddr;
-	अचिन्हित दीर्घ airqmask;
-	काष्ठा arcnet_local *lp = netdev_priv(dev);
-	पूर्णांक err;
+static int __init com20020isa_probe(struct net_device *dev)
+{
+	int ioaddr;
+	unsigned long airqmask;
+	struct arcnet_local *lp = netdev_priv(dev);
+	int err;
 
-	अगर (BUGLVL(D_NORMAL))
+	if (BUGLVL(D_NORMAL))
 		pr_info("%s\n", "COM20020 ISA support (by David Woodhouse et al.)");
 
 	ioaddr = dev->base_addr;
-	अगर (!ioaddr) अणु
-		arc_prपूर्णांकk(D_NORMAL, dev, "No autoprobe (yet) for IO mapped cards; you must specify the base address!\n");
-		वापस -ENODEV;
-	पूर्ण
-	अगर (!request_region(ioaddr, ARCNET_TOTAL_SIZE, "arcnet (COM20020)")) अणु
-		arc_prपूर्णांकk(D_NORMAL, dev, "IO region %xh-%xh already allocated.\n",
+	if (!ioaddr) {
+		arc_printk(D_NORMAL, dev, "No autoprobe (yet) for IO mapped cards; you must specify the base address!\n");
+		return -ENODEV;
+	}
+	if (!request_region(ioaddr, ARCNET_TOTAL_SIZE, "arcnet (COM20020)")) {
+		arc_printk(D_NORMAL, dev, "IO region %xh-%xh already allocated.\n",
 			   ioaddr, ioaddr + ARCNET_TOTAL_SIZE - 1);
-		वापस -ENXIO;
-	पूर्ण
-	अगर (arcnet_inb(ioaddr, COM20020_REG_R_STATUS) == 0xFF) अणु
-		arc_prपूर्णांकk(D_NORMAL, dev, "IO address %x empty\n", ioaddr);
+		return -ENXIO;
+	}
+	if (arcnet_inb(ioaddr, COM20020_REG_R_STATUS) == 0xFF) {
+		arc_printk(D_NORMAL, dev, "IO address %x empty\n", ioaddr);
 		err = -ENODEV;
-		जाओ out;
-	पूर्ण
-	अगर (com20020_check(dev)) अणु
+		goto out;
+	}
+	if (com20020_check(dev)) {
 		err = -ENODEV;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (!dev->irq) अणु
-		/* अगर we करो this, we're sure to get an IRQ since the
+	if (!dev->irq) {
+		/* if we do this, we're sure to get an IRQ since the
 		 * card has just reset and the NORXflag is on until
 		 * we tell it to start receiving.
 		 */
-		arc_prपूर्णांकk(D_INIT_REASONS, dev, "intmask was %02Xh\n",
+		arc_printk(D_INIT_REASONS, dev, "intmask was %02Xh\n",
 			   arcnet_inb(ioaddr, COM20020_REG_R_STATUS));
 		arcnet_outb(0, ioaddr, COM20020_REG_W_INTMASK);
 		airqmask = probe_irq_on();
@@ -92,139 +91,139 @@
 		arcnet_outb(0, ioaddr, COM20020_REG_W_INTMASK);
 		dev->irq = probe_irq_off(airqmask);
 
-		अगर ((पूर्णांक)dev->irq <= 0) अणु
-			arc_prपूर्णांकk(D_INIT_REASONS, dev, "Autoprobe IRQ failed first time\n");
+		if ((int)dev->irq <= 0) {
+			arc_printk(D_INIT_REASONS, dev, "Autoprobe IRQ failed first time\n");
 			airqmask = probe_irq_on();
 			arcnet_outb(NORXflag, ioaddr, COM20020_REG_W_INTMASK);
 			udelay(5);
 			arcnet_outb(0, ioaddr, COM20020_REG_W_INTMASK);
 			dev->irq = probe_irq_off(airqmask);
-			अगर ((पूर्णांक)dev->irq <= 0) अणु
-				arc_prपूर्णांकk(D_NORMAL, dev, "Autoprobe IRQ failed.\n");
+			if ((int)dev->irq <= 0) {
+				arc_printk(D_NORMAL, dev, "Autoprobe IRQ failed.\n");
 				err = -ENODEV;
-				जाओ out;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				goto out;
+			}
+		}
+	}
 
 	lp->card_name = "ISA COM20020";
 
 	err = com20020_found(dev, 0);
-	अगर (err != 0)
-		जाओ out;
+	if (err != 0)
+		goto out;
 
-	वापस 0;
+	return 0;
 
 out:
 	release_region(ioaddr, ARCNET_TOTAL_SIZE);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक node = 0;
-अटल पूर्णांक io = 0x0;		/* <--- EDIT THESE LINES FOR YOUR CONFIGURATION */
-अटल पूर्णांक irq = 0;		/* or use the insmod io= irq= shmem= options */
-अटल अक्षर device[9];		/* use eg. device="arc1" to change name */
-अटल पूर्णांक समयout = 3;
-अटल पूर्णांक backplane = 0;
-अटल पूर्णांक घड़ीp = 0;
-अटल पूर्णांक घड़ीm = 0;
+static int node = 0;
+static int io = 0x0;		/* <--- EDIT THESE LINES FOR YOUR CONFIGURATION */
+static int irq = 0;		/* or use the insmod io= irq= shmem= options */
+static char device[9];		/* use eg. device="arc1" to change name */
+static int timeout = 3;
+static int backplane = 0;
+static int clockp = 0;
+static int clockm = 0;
 
-module_param(node, पूर्णांक, 0);
-module_param_hw(io, पूर्णांक, ioport, 0);
-module_param_hw(irq, पूर्णांक, irq, 0);
-module_param_string(device, device, माप(device), 0);
-module_param(समयout, पूर्णांक, 0);
-module_param(backplane, पूर्णांक, 0);
-module_param(घड़ीp, पूर्णांक, 0);
-module_param(घड़ीm, पूर्णांक, 0);
+module_param(node, int, 0);
+module_param_hw(io, int, ioport, 0);
+module_param_hw(irq, int, irq, 0);
+module_param_string(device, device, sizeof(device), 0);
+module_param(timeout, int, 0);
+module_param(backplane, int, 0);
+module_param(clockp, int, 0);
+module_param(clockm, int, 0);
 
 MODULE_LICENSE("GPL");
 
-अटल काष्ठा net_device *my_dev;
+static struct net_device *my_dev;
 
-अटल पूर्णांक __init com20020_init(व्योम)
-अणु
-	काष्ठा net_device *dev;
-	काष्ठा arcnet_local *lp;
+static int __init com20020_init(void)
+{
+	struct net_device *dev;
+	struct arcnet_local *lp;
 
 	dev = alloc_arcdev(device);
-	अगर (!dev)
-		वापस -ENOMEM;
+	if (!dev)
+		return -ENOMEM;
 
-	अगर (node && node != 0xff)
+	if (node && node != 0xff)
 		dev->dev_addr[0] = node;
 
 	dev->netdev_ops = &com20020_netdev_ops;
 
 	lp = netdev_priv(dev);
 	lp->backplane = backplane;
-	lp->घड़ीp = घड़ीp & 7;
-	lp->घड़ीm = घड़ीm & 3;
-	lp->समयout = समयout & 3;
+	lp->clockp = clockp & 7;
+	lp->clockm = clockm & 3;
+	lp->timeout = timeout & 3;
 	lp->hw.owner = THIS_MODULE;
 
 	dev->base_addr = io;
 	dev->irq = irq;
 
-	अगर (dev->irq == 2)
+	if (dev->irq == 2)
 		dev->irq = 9;
 
-	अगर (com20020isa_probe(dev)) अणु
-		मुक्त_arcdev(dev);
-		वापस -EIO;
-	पूर्ण
+	if (com20020isa_probe(dev)) {
+		free_arcdev(dev);
+		return -EIO;
+	}
 
 	my_dev = dev;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम __निकास com20020_निकास(व्योम)
-अणु
-	unरेजिस्टर_netdev(my_dev);
-	मुक्त_irq(my_dev->irq, my_dev);
+static void __exit com20020_exit(void)
+{
+	unregister_netdev(my_dev);
+	free_irq(my_dev->irq, my_dev);
 	release_region(my_dev->base_addr, ARCNET_TOTAL_SIZE);
-	मुक्त_arcdev(my_dev);
-पूर्ण
+	free_arcdev(my_dev);
+}
 
-#अगर_अघोषित MODULE
-अटल पूर्णांक __init com20020isa_setup(अक्षर *s)
-अणु
-	पूर्णांक पूर्णांकs[8];
+#ifndef MODULE
+static int __init com20020isa_setup(char *s)
+{
+	int ints[8];
 
-	s = get_options(s, 8, पूर्णांकs);
-	अगर (!पूर्णांकs[0])
-		वापस 1;
+	s = get_options(s, 8, ints);
+	if (!ints[0])
+		return 1;
 
-	चयन (पूर्णांकs[0]) अणु
-	शेष:		/* ERROR */
+	switch (ints[0]) {
+	default:		/* ERROR */
 		pr_info("Too many arguments\n");
 		fallthrough;
-	हाल 6:		/* Timeout */
-		समयout = पूर्णांकs[6];
+	case 6:		/* Timeout */
+		timeout = ints[6];
 		fallthrough;
-	हाल 5:		/* CKP value */
-		घड़ीp = पूर्णांकs[5];
+	case 5:		/* CKP value */
+		clockp = ints[5];
 		fallthrough;
-	हाल 4:		/* Backplane flag */
-		backplane = पूर्णांकs[4];
+	case 4:		/* Backplane flag */
+		backplane = ints[4];
 		fallthrough;
-	हाल 3:		/* Node ID */
-		node = पूर्णांकs[3];
+	case 3:		/* Node ID */
+		node = ints[3];
 		fallthrough;
-	हाल 2:		/* IRQ */
-		irq = पूर्णांकs[2];
+	case 2:		/* IRQ */
+		irq = ints[2];
 		fallthrough;
-	हाल 1:		/* IO address */
-		io = पूर्णांकs[1];
-	पूर्ण
-	अगर (*s)
-		snम_लिखो(device, माप(device), "%s", s);
-	वापस 1;
-पूर्ण
+	case 1:		/* IO address */
+		io = ints[1];
+	}
+	if (*s)
+		snprintf(device, sizeof(device), "%s", s);
+	return 1;
+}
 
 __setup("com20020=", com20020isa_setup);
 
-#पूर्ण_अगर				/* MODULE */
+#endif				/* MODULE */
 
 module_init(com20020_init)
-module_निकास(com20020_निकास)
+module_exit(com20020_exit)

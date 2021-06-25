@@ -1,433 +1,432 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- *  linux/amiga/amअगरlop.c
+ *  linux/amiga/amiflop.c
  *
  *  Copyright (C) 1993  Greg Harp
  *  Portions of this driver are based on code contributed by Brad Pepers
  *  
  *  revised 28.5.95 by Joerg Dorchain
- *  - now no bugs(?) any more क्रम both HD & DD
- *  - added support क्रम 40 Track 5.25" drives, 80-track hopefully behaves
+ *  - now no bugs(?) any more for both HD & DD
+ *  - added support for 40 Track 5.25" drives, 80-track hopefully behaves
  *    like 3.5" dd (no way to test - are there any 5.25" drives out there
  *    that work on an A4000?)
- *  - wrote क्रमmatting routine (maybe dirty, but works)
+ *  - wrote formatting routine (maybe dirty, but works)
  *
- *  june/july 1995 added ms-करोs support by Joerg Dorchain
- *  (portions based on messyकरोs.device and various contributors)
+ *  june/july 1995 added ms-dos support by Joerg Dorchain
+ *  (portions based on messydos.device and various contributors)
  *  - currently only 9 and 18 sector disks
  *
- *  - fixed a bug with the पूर्णांकernal trackbuffer when using multiple 
- *    disks the same समय
- *  - made क्रमmatting a bit safer
- *  - added command line and machine based शेष क्रम "silent" df0
+ *  - fixed a bug with the internal trackbuffer when using multiple 
+ *    disks the same time
+ *  - made formatting a bit safer
+ *  - added command line and machine based default for "silent" df0
  *
- *  december 1995 adapted क्रम 1.2.13pl4 by Joerg Dorchain
- *  - works but I think it's inefficient. (look in reकरो_fd_request)
+ *  december 1995 adapted for 1.2.13pl4 by Joerg Dorchain
+ *  - works but I think it's inefficient. (look in redo_fd_request)
  *    But the changes were very efficient. (only three and a half lines)
  *
- *  january 1996 added special ioctl क्रम tracking करोwn पढ़ो/ग_लिखो problems
+ *  january 1996 added special ioctl for tracking down read/write problems
  *  - usage ioctl(d, RAW_TRACK, ptr); the raw track buffer (MFM-encoded data
  *    is copied to area. (area should be large enough since no checking is
- *    करोne - 30K is currently sufficient). वापस the actual size of the
+ *    done - 30K is currently sufficient). return the actual size of the
  *    trackbuffer
- *  - replaced udelays() by a समयr (CIAA समयr B) क्रम the रुकोs 
- *    needed क्रम the disk mechanic.
+ *  - replaced udelays() by a timer (CIAA timer B) for the waits 
+ *    needed for the disk mechanic.
  *
  *  february 1996 fixed error recovery and multiple disk access
- *  - both got broken the first समय I tampered with the driver :-(
- *  - still not safe, but better than beक्रमe
+ *  - both got broken the first time I tampered with the driver :-(
+ *  - still not safe, but better than before
  *
- *  revised Marts 3rd, 1996 by Jes Sorensen क्रम use in the 1.3.28 kernel.
+ *  revised Marts 3rd, 1996 by Jes Sorensen for use in the 1.3.28 kernel.
  *  - Minor changes to accept the kdev_t.
  *  - Replaced some more udelays with ms_delays. Udelay is just a loop,
- *    and so the delay will be dअगरferent depending on the given
+ *    and so the delay will be different depending on the given
  *    processor :-(
  *  - The driver could use a major cleanup because of the new
- *    major/minor handling that came with kdev_t. It seems to work क्रम
- *    the समय being, but I can't guarantee that it will stay like
+ *    major/minor handling that came with kdev_t. It seems to work for
+ *    the time being, but I can't guarantee that it will stay like
  *    that when we start using 16 (24?) bit minors.
  *
- * reकाष्ठाured jan 1997 by Joerg Dorchain
+ * restructured jan 1997 by Joerg Dorchain
  * - Fixed Bug accessing multiple disks
  * - some code cleanup
- * - added trackbuffer क्रम each drive to speed things up
+ * - added trackbuffer for each drive to speed things up
  * - fixed some race conditions (who finds the next may send it to me ;-)
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
+#include <linux/module.h>
+#include <linux/slab.h>
 
-#समावेश <linux/fd.h>
-#समावेश <linux/hdreg.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/init.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/blk-mq.h>
-#समावेश <linux/elevator.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/platक्रमm_device.h>
+#include <linux/fd.h>
+#include <linux/hdreg.h>
+#include <linux/delay.h>
+#include <linux/init.h>
+#include <linux/mutex.h>
+#include <linux/fs.h>
+#include <linux/blk-mq.h>
+#include <linux/elevator.h>
+#include <linux/interrupt.h>
+#include <linux/platform_device.h>
 
-#समावेश <यंत्र/setup.h>
-#समावेश <linux/uaccess.h>
-#समावेश <यंत्र/amigahw.h>
-#समावेश <यंत्र/amigaपूर्णांकs.h>
-#समावेश <यंत्र/irq.h>
+#include <asm/setup.h>
+#include <linux/uaccess.h>
+#include <asm/amigahw.h>
+#include <asm/amigaints.h>
+#include <asm/irq.h>
 
-#अघोषित DEBUG /* prपूर्णांक _LOTS_ of infos */
+#undef DEBUG /* print _LOTS_ of infos */
 
-#घोषणा RAW_IOCTL
-#अगर_घोषित RAW_IOCTL
-#घोषणा IOCTL_RAW_TRACK 0x5254524B  /* 'RTRK' */
-#पूर्ण_अगर
+#define RAW_IOCTL
+#ifdef RAW_IOCTL
+#define IOCTL_RAW_TRACK 0x5254524B  /* 'RTRK' */
+#endif
 
 /*
  *  Defines
  */
 
 /*
- * CIAAPRA bits (पढ़ो only)
+ * CIAAPRA bits (read only)
  */
 
-#घोषणा DSKRDY      (0x1<<5)        /* disk पढ़ोy when low */
-#घोषणा DSKTRACK0   (0x1<<4)        /* head at track zero when low */
-#घोषणा DSKPROT     (0x1<<3)        /* disk रक्षित when low */
-#घोषणा DSKCHANGE   (0x1<<2)        /* low when disk हटाओd */
+#define DSKRDY      (0x1<<5)        /* disk ready when low */
+#define DSKTRACK0   (0x1<<4)        /* head at track zero when low */
+#define DSKPROT     (0x1<<3)        /* disk protected when low */
+#define DSKCHANGE   (0x1<<2)        /* low when disk removed */
 
 /*
- * CIAAPRB bits (पढ़ो/ग_लिखो)
+ * CIAAPRB bits (read/write)
  */
 
-#घोषणा DSKMOTOR    (0x1<<7)        /* motor on when low */
-#घोषणा DSKSEL3     (0x1<<6)        /* select drive 3 when low */
-#घोषणा DSKSEL2     (0x1<<5)        /* select drive 2 when low */
-#घोषणा DSKSEL1     (0x1<<4)        /* select drive 1 when low */
-#घोषणा DSKSEL0     (0x1<<3)        /* select drive 0 when low */
-#घोषणा DSKSIDE     (0x1<<2)        /* side selection: 0 = upper, 1 = lower */
-#घोषणा DSKसूचीEC    (0x1<<1)        /* step direction: 0=in, 1=out (to trk 0) */
-#घोषणा DSKSTEP     (0x1)           /* pulse low to step head 1 track */
+#define DSKMOTOR    (0x1<<7)        /* motor on when low */
+#define DSKSEL3     (0x1<<6)        /* select drive 3 when low */
+#define DSKSEL2     (0x1<<5)        /* select drive 2 when low */
+#define DSKSEL1     (0x1<<4)        /* select drive 1 when low */
+#define DSKSEL0     (0x1<<3)        /* select drive 0 when low */
+#define DSKSIDE     (0x1<<2)        /* side selection: 0 = upper, 1 = lower */
+#define DSKDIREC    (0x1<<1)        /* step direction: 0=in, 1=out (to trk 0) */
+#define DSKSTEP     (0x1)           /* pulse low to step head 1 track */
 
 /*
- * DSKBYTR bits (पढ़ो only)
+ * DSKBYTR bits (read only)
  */
 
-#घोषणा DSKBYT      (1<<15)         /* रेजिस्टर contains valid byte when set */
-#घोषणा DMAON       (1<<14)         /* disk DMA enabled */
-#घोषणा DISKWRITE   (1<<13)         /* disk ग_लिखो bit in DSKLEN enabled */
-#घोषणा WORDEQUAL   (1<<12)         /* DSKSYNC रेजिस्टर match when true */
+#define DSKBYT      (1<<15)         /* register contains valid byte when set */
+#define DMAON       (1<<14)         /* disk DMA enabled */
+#define DISKWRITE   (1<<13)         /* disk write bit in DSKLEN enabled */
+#define WORDEQUAL   (1<<12)         /* DSKSYNC register match when true */
 /* bits 7-0 are data */
 
 /*
  * ADKCON/ADKCONR bits
  */
 
-#अगर_अघोषित SETCLR
-#घोषणा ADK_SETCLR      (1<<15)     /* control bit */
-#पूर्ण_अगर
-#घोषणा ADK_PRECOMP1    (1<<14)     /* precompensation selection */
-#घोषणा ADK_PRECOMP0    (1<<13)     /* 00=none, 01=140ns, 10=280ns, 11=500ns */
-#घोषणा ADK_MFMPREC     (1<<12)     /* 0=GCR precomp., 1=MFM precomp. */
-#घोषणा ADK_WORDSYNC    (1<<10)     /* enable DSKSYNC स्वतः DMA */
-#घोषणा ADK_MSBSYNC     (1<<9)      /* when 1, enable sync on MSbit (क्रम GCR) */
-#घोषणा ADK_FAST        (1<<8)      /* bit cell: 0=2us (GCR), 1=1us (MFM) */
+#ifndef SETCLR
+#define ADK_SETCLR      (1<<15)     /* control bit */
+#endif
+#define ADK_PRECOMP1    (1<<14)     /* precompensation selection */
+#define ADK_PRECOMP0    (1<<13)     /* 00=none, 01=140ns, 10=280ns, 11=500ns */
+#define ADK_MFMPREC     (1<<12)     /* 0=GCR precomp., 1=MFM precomp. */
+#define ADK_WORDSYNC    (1<<10)     /* enable DSKSYNC auto DMA */
+#define ADK_MSBSYNC     (1<<9)      /* when 1, enable sync on MSbit (for GCR) */
+#define ADK_FAST        (1<<8)      /* bit cell: 0=2us (GCR), 1=1us (MFM) */
 
 /*
  * DSKLEN bits
  */
 
-#घोषणा DSKLEN_DMAEN    (1<<15)
-#घोषणा DSKLEN_WRITE    (1<<14)
+#define DSKLEN_DMAEN    (1<<15)
+#define DSKLEN_WRITE    (1<<14)
 
 /*
  * INTENA/INTREQ bits
  */
 
-#घोषणा DSKINDEX    (0x1<<4)        /* DSKINDEX bit */
+#define DSKINDEX    (0x1<<4)        /* DSKINDEX bit */
 
 /*
  * Misc
  */
 
-#घोषणा MFM_SYNC    0x4489          /* standard MFM sync value */
+#define MFM_SYNC    0x4489          /* standard MFM sync value */
 
-/* Values क्रम FD_COMMAND */
-#घोषणा FD_RECALIBRATE		0x07	/* move to track 0 */
-#घोषणा FD_SEEK			0x0F	/* seek track */
-#घोषणा FD_READ			0xE6	/* पढ़ो with MT, MFM, SKip deleted */
-#घोषणा FD_WRITE		0xC5	/* ग_लिखो with MT, MFM */
-#घोषणा FD_SENSEI		0x08	/* Sense Interrupt Status */
-#घोषणा FD_SPECIFY		0x03	/* specअगरy HUT etc */
-#घोषणा FD_FORMAT		0x4D	/* क्रमmat one track */
-#घोषणा FD_VERSION		0x10	/* get version code */
-#घोषणा FD_CONFIGURE		0x13	/* configure FIFO operation */
-#घोषणा FD_PERPENDICULAR	0x12	/* perpendicular r/w mode */
+/* Values for FD_COMMAND */
+#define FD_RECALIBRATE		0x07	/* move to track 0 */
+#define FD_SEEK			0x0F	/* seek track */
+#define FD_READ			0xE6	/* read with MT, MFM, SKip deleted */
+#define FD_WRITE		0xC5	/* write with MT, MFM */
+#define FD_SENSEI		0x08	/* Sense Interrupt Status */
+#define FD_SPECIFY		0x03	/* specify HUT etc */
+#define FD_FORMAT		0x4D	/* format one track */
+#define FD_VERSION		0x10	/* get version code */
+#define FD_CONFIGURE		0x13	/* configure FIFO operation */
+#define FD_PERPENDICULAR	0x12	/* perpendicular r/w mode */
 
-#घोषणा FD_MAX_UNITS    4	/* Max. Number of drives */
-#घोषणा FLOPPY_MAX_SECTORS	22	/* Max. Number of sectors per track */
+#define FD_MAX_UNITS    4	/* Max. Number of drives */
+#define FLOPPY_MAX_SECTORS	22	/* Max. Number of sectors per track */
 
-काष्ठा fd_data_type अणु
-	अक्षर *name;		/* description of data type */
-	पूर्णांक sects;		/* sectors per track */
-	पूर्णांक (*पढ़ो_fkt)(पूर्णांक);	/* पढ़ो whole track */
-	व्योम (*ग_लिखो_fkt)(पूर्णांक);	/* ग_लिखो whole track */
-पूर्ण;
+struct fd_data_type {
+	char *name;		/* description of data type */
+	int sects;		/* sectors per track */
+	int (*read_fkt)(int);	/* read whole track */
+	void (*write_fkt)(int);	/* write whole track */
+};
 
-काष्ठा fd_drive_type अणु
-	अचिन्हित दीर्घ code;		/* code वापसed from drive */
-	अक्षर *name;			/* description of drive */
-	अचिन्हित पूर्णांक tracks;	/* number of tracks */
-	अचिन्हित पूर्णांक heads;		/* number of heads */
-	अचिन्हित पूर्णांक पढ़ो_size;	/* raw पढ़ो size क्रम one track */
-	अचिन्हित पूर्णांक ग_लिखो_size;	/* raw ग_लिखो size क्रम one track */
-	अचिन्हित पूर्णांक sect_mult;	/* sectors and gap multiplier (HD = 2) */
-	अचिन्हित पूर्णांक precomp1;	/* start track क्रम precomp 1 */
-	अचिन्हित पूर्णांक precomp2;	/* start track क्रम precomp 2 */
-	अचिन्हित पूर्णांक step_delay;	/* समय (in ms) क्रम delay after step */
-	अचिन्हित पूर्णांक settle_समय;	/* समय to settle after dir change */
-	अचिन्हित पूर्णांक side_समय;	/* समय needed to change sides */
-पूर्ण;
+struct fd_drive_type {
+	unsigned long code;		/* code returned from drive */
+	char *name;			/* description of drive */
+	unsigned int tracks;	/* number of tracks */
+	unsigned int heads;		/* number of heads */
+	unsigned int read_size;	/* raw read size for one track */
+	unsigned int write_size;	/* raw write size for one track */
+	unsigned int sect_mult;	/* sectors and gap multiplier (HD = 2) */
+	unsigned int precomp1;	/* start track for precomp 1 */
+	unsigned int precomp2;	/* start track for precomp 2 */
+	unsigned int step_delay;	/* time (in ms) for delay after step */
+	unsigned int settle_time;	/* time to settle after dir change */
+	unsigned int side_time;	/* time needed to change sides */
+};
 
-काष्ठा amiga_floppy_काष्ठा अणु
-	काष्ठा fd_drive_type *type;	/* type of floppy क्रम this unit */
-	काष्ठा fd_data_type *dtype;	/* type of floppy क्रम this unit */
-	पूर्णांक track;			/* current track (-1 == unknown) */
-	अचिन्हित अक्षर *trackbuf;	/* current track (kmaloc()'d */
+struct amiga_floppy_struct {
+	struct fd_drive_type *type;	/* type of floppy for this unit */
+	struct fd_data_type *dtype;	/* type of floppy for this unit */
+	int track;			/* current track (-1 == unknown) */
+	unsigned char *trackbuf;	/* current track (kmaloc()'d */
 
-	पूर्णांक blocks;			/* total # blocks on disk */
+	int blocks;			/* total # blocks on disk */
 
-	पूर्णांक changed;			/* true when not known */
-	पूर्णांक disk;			/* disk in drive (-1 == unknown) */
-	पूर्णांक motor;			/* true when motor is at speed */
-	पूर्णांक busy;			/* true when drive is active */
-	पूर्णांक dirty;			/* true when trackbuf is not on disk */
-	पूर्णांक status;			/* current error code क्रम unit */
-	काष्ठा gendisk *gendisk[2];
-	काष्ठा blk_mq_tag_set tag_set;
-पूर्ण;
+	int changed;			/* true when not known */
+	int disk;			/* disk in drive (-1 == unknown) */
+	int motor;			/* true when motor is at speed */
+	int busy;			/* true when drive is active */
+	int dirty;			/* true when trackbuf is not on disk */
+	int status;			/* current error code for unit */
+	struct gendisk *gendisk[2];
+	struct blk_mq_tag_set tag_set;
+};
 
 /*
  *  Error codes
  */
-#घोषणा FD_OK		0	/* operation succeeded */
-#घोषणा FD_ERROR	-1	/* general error (seek, पढ़ो, ग_लिखो, etc) */
-#घोषणा FD_NOUNIT	1	/* unit करोes not exist */
-#घोषणा FD_UNITBUSY	2	/* unit alपढ़ोy active */
-#घोषणा FD_NOTACTIVE	3	/* unit is not active */
-#घोषणा FD_NOTREADY	4	/* unit is not पढ़ोy (motor not on/no disk) */
+#define FD_OK		0	/* operation succeeded */
+#define FD_ERROR	-1	/* general error (seek, read, write, etc) */
+#define FD_NOUNIT	1	/* unit does not exist */
+#define FD_UNITBUSY	2	/* unit already active */
+#define FD_NOTACTIVE	3	/* unit is not active */
+#define FD_NOTREADY	4	/* unit is not ready (motor not on/no disk) */
 
-#घोषणा MFM_NOSYNC	1
-#घोषणा MFM_HEADER	2
-#घोषणा MFM_DATA	3
-#घोषणा MFM_TRACK	4
+#define MFM_NOSYNC	1
+#define MFM_HEADER	2
+#define MFM_DATA	3
+#define MFM_TRACK	4
 
 /*
  *  Floppy ID values
  */
-#घोषणा FD_NODRIVE	0x00000000  /* response when no unit is present */
-#घोषणा FD_DD_3 	0xffffffff  /* द्विगुन-density 3.5" (880K) drive */
-#घोषणा FD_HD_3 	0x55555555  /* high-density 3.5" (1760K) drive */
-#घोषणा FD_DD_5 	0xaaaaaaaa  /* द्विगुन-density 5.25" (440K) drive */
+#define FD_NODRIVE	0x00000000  /* response when no unit is present */
+#define FD_DD_3 	0xffffffff  /* double-density 3.5" (880K) drive */
+#define FD_HD_3 	0x55555555  /* high-density 3.5" (1760K) drive */
+#define FD_DD_5 	0xaaaaaaaa  /* double-density 5.25" (440K) drive */
 
-अटल DEFINE_MUTEX(amअगरlop_mutex);
-अटल अचिन्हित दीर्घ पूर्णांक fd_def_df0 = FD_DD_3;     /* शेष क्रम df0 अगर it करोesn't identअगरy */
+static DEFINE_MUTEX(amiflop_mutex);
+static unsigned long int fd_def_df0 = FD_DD_3;     /* default for df0 if it doesn't identify */
 
-module_param(fd_def_df0, uदीर्घ, 0);
+module_param(fd_def_df0, ulong, 0);
 MODULE_LICENSE("GPL");
 
 /*
  *  Macros
  */
-#घोषणा MOTOR_ON	(ciab.prb &= ~DSKMOTOR)
-#घोषणा MOTOR_OFF	(ciab.prb |= DSKMOTOR)
-#घोषणा SELECT(mask)    (ciab.prb &= ~mask)
-#घोषणा DESELECT(mask)  (ciab.prb |= mask)
-#घोषणा SELMASK(drive)  (1 << (3 + (drive & 3)))
+#define MOTOR_ON	(ciab.prb &= ~DSKMOTOR)
+#define MOTOR_OFF	(ciab.prb |= DSKMOTOR)
+#define SELECT(mask)    (ciab.prb &= ~mask)
+#define DESELECT(mask)  (ciab.prb |= mask)
+#define SELMASK(drive)  (1 << (3 + (drive & 3)))
 
-अटल काष्ठा fd_drive_type drive_types[] = अणु
+static struct fd_drive_type drive_types[] = {
 /*  code	name	   tr he   rdsz   wrsz sm pc1 pc2 sd  st st*/
-/*  warning: बार are now in milliseconds (ms)                    */
-अणु FD_DD_3,	"DD 3.5",  80, 2, 14716, 13630, 1, 80,161, 3, 18, 1पूर्ण,
-अणु FD_HD_3,	"HD 3.5",  80, 2, 28344, 27258, 2, 80,161, 3, 18, 1पूर्ण,
-अणु FD_DD_5,	"DD 5.25", 40, 2, 14716, 13630, 1, 40, 81, 6, 30, 2पूर्ण,
-अणु FD_NODRIVE, "No Drive", 0, 0,     0,     0, 0,  0,  0,  0,  0, 0पूर्ण
-पूर्ण;
-अटल पूर्णांक num_dr_types = ARRAY_SIZE(drive_types);
+/*  warning: times are now in milliseconds (ms)                    */
+{ FD_DD_3,	"DD 3.5",  80, 2, 14716, 13630, 1, 80,161, 3, 18, 1},
+{ FD_HD_3,	"HD 3.5",  80, 2, 28344, 27258, 2, 80,161, 3, 18, 1},
+{ FD_DD_5,	"DD 5.25", 40, 2, 14716, 13630, 1, 40, 81, 6, 30, 2},
+{ FD_NODRIVE, "No Drive", 0, 0,     0,     0, 0,  0,  0,  0,  0, 0}
+};
+static int num_dr_types = ARRAY_SIZE(drive_types);
 
-अटल पूर्णांक amiga_पढ़ो(पूर्णांक), करोs_पढ़ो(पूर्णांक);
-अटल व्योम amiga_ग_लिखो(पूर्णांक), करोs_ग_लिखो(पूर्णांक);
-अटल काष्ठा fd_data_type data_types[] = अणु
-	अणु "Amiga", 11 , amiga_पढ़ो, amiga_ग_लिखोपूर्ण,
-	अणु "MS-Dos", 9, करोs_पढ़ो, करोs_ग_लिखोपूर्ण
-पूर्ण;
+static int amiga_read(int), dos_read(int);
+static void amiga_write(int), dos_write(int);
+static struct fd_data_type data_types[] = {
+	{ "Amiga", 11 , amiga_read, amiga_write},
+	{ "MS-Dos", 9, dos_read, dos_write}
+};
 
 /* current info on each unit */
-अटल काष्ठा amiga_floppy_काष्ठा unit[FD_MAX_UNITS];
+static struct amiga_floppy_struct unit[FD_MAX_UNITS];
 
-अटल काष्ठा समयr_list flush_track_समयr[FD_MAX_UNITS];
-अटल काष्ठा समयr_list post_ग_लिखो_समयr;
-अटल अचिन्हित दीर्घ post_ग_लिखो_समयr_drive;
-अटल काष्ठा समयr_list motor_on_समयr;
-अटल काष्ठा समयr_list motor_off_समयr[FD_MAX_UNITS];
-अटल पूर्णांक on_attempts;
+static struct timer_list flush_track_timer[FD_MAX_UNITS];
+static struct timer_list post_write_timer;
+static unsigned long post_write_timer_drive;
+static struct timer_list motor_on_timer;
+static struct timer_list motor_off_timer[FD_MAX_UNITS];
+static int on_attempts;
 
 /* Synchronization of FDC access */
 /* request loop (trackbuffer) */
-अटल अस्थिर पूर्णांक fdc_busy = -1;
-अटल अस्थिर पूर्णांक fdc_nested;
-अटल DECLARE_WAIT_QUEUE_HEAD(fdc_रुको);
+static volatile int fdc_busy = -1;
+static volatile int fdc_nested;
+static DECLARE_WAIT_QUEUE_HEAD(fdc_wait);
  
-अटल DECLARE_COMPLETION(motor_on_completion);
+static DECLARE_COMPLETION(motor_on_completion);
 
-अटल अस्थिर पूर्णांक selected = -1;	/* currently selected drive */
+static volatile int selected = -1;	/* currently selected drive */
 
-अटल पूर्णांक ग_लिखोpending;
-अटल पूर्णांक ग_लिखोfromपूर्णांक;
-अटल अक्षर *raw_buf;
+static int writepending;
+static int writefromint;
+static char *raw_buf;
 
-अटल DEFINE_SPINLOCK(amअगरlop_lock);
+static DEFINE_SPINLOCK(amiflop_lock);
 
-#घोषणा RAW_BUF_SIZE 30000  /* size of raw disk data */
+#define RAW_BUF_SIZE 30000  /* size of raw disk data */
 
 /*
  * These are global variables, as that's the easiest way to give
- * inक्रमmation to पूर्णांकerrupts. They are the data used क्रम the current
+ * information to interrupts. They are the data used for the current
  * request.
  */
-अटल अस्थिर अक्षर block_flag;
-अटल DECLARE_WAIT_QUEUE_HEAD(रुको_fd_block);
+static volatile char block_flag;
+static DECLARE_WAIT_QUEUE_HEAD(wait_fd_block);
 
 /* MS-Dos MFM Coding tables (should go quick and easy) */
-अटल अचिन्हित अक्षर mfmencode[16]=अणु
+static unsigned char mfmencode[16]={
 	0x2a, 0x29, 0x24, 0x25, 0x12, 0x11, 0x14, 0x15,
 	0x4a, 0x49, 0x44, 0x45, 0x52, 0x51, 0x54, 0x55
-पूर्ण;
-अटल अचिन्हित अक्षर mfmdecode[128];
+};
+static unsigned char mfmdecode[128];
 
-/* floppy पूर्णांकernal millisecond समयr stuff */
-अटल DECLARE_COMPLETION(ms_रुको_completion);
-#घोषणा MS_TICKS ((amiga_eघड़ी+50)/1000)
+/* floppy internal millisecond timer stuff */
+static DECLARE_COMPLETION(ms_wait_completion);
+#define MS_TICKS ((amiga_eclock+50)/1000)
 
 /*
- * Note that MAX_ERRORS=X करोesn't imply that we retry every bad पढ़ो
- * max X बार - some types of errors increase the errorcount by 2 or
- * even 3, so we might actually retry only X/2 बार beक्रमe giving up.
+ * Note that MAX_ERRORS=X doesn't imply that we retry every bad read
+ * max X times - some types of errors increase the errorcount by 2 or
+ * even 3, so we might actually retry only X/2 times before giving up.
  */
-#घोषणा MAX_ERRORS 12
+#define MAX_ERRORS 12
 
-#घोषणा custom amiga_custom
+#define custom amiga_custom
 
 /* Prevent "aliased" accesses. */
-अटल पूर्णांक fd_ref[4] = अणु 0,0,0,0 पूर्ण;
-अटल पूर्णांक fd_device[4] = अणु 0, 0, 0, 0 पूर्ण;
+static int fd_ref[4] = { 0,0,0,0 };
+static int fd_device[4] = { 0, 0, 0, 0 };
 
 /*
  * Here come the actual hardware access and helper functions.
- * They are not reentrant and single thपढ़ोed because all drives
+ * They are not reentrant and single threaded because all drives
  * share the same hardware and the same trackbuffer.
  */
 
-/* Milliseconds समयr */
+/* Milliseconds timer */
 
-अटल irqवापस_t ms_isr(पूर्णांक irq, व्योम *dummy)
-अणु
-	complete(&ms_रुको_completion);
-	वापस IRQ_HANDLED;
-पूर्ण
+static irqreturn_t ms_isr(int irq, void *dummy)
+{
+	complete(&ms_wait_completion);
+	return IRQ_HANDLED;
+}
 
-/* all रुकोs are queued up 
-   A more generic routine would करो a schedule a la समयr.device */
-अटल व्योम ms_delay(पूर्णांक ms)
-अणु
-	पूर्णांक ticks;
-	अटल DEFINE_MUTEX(mutex);
+/* all waits are queued up 
+   A more generic routine would do a schedule a la timer.device */
+static void ms_delay(int ms)
+{
+	int ticks;
+	static DEFINE_MUTEX(mutex);
 
-	अगर (ms > 0) अणु
+	if (ms > 0) {
 		mutex_lock(&mutex);
 		ticks = MS_TICKS*ms-1;
 		ciaa.tblo=ticks%256;
 		ciaa.tbhi=ticks/256;
-		ciaa.crb=0x19; /*count eघड़ी, क्रमce load, one-shoot, start */
-		रुको_क्रम_completion(&ms_रुको_completion);
+		ciaa.crb=0x19; /*count eclock, force load, one-shoot, start */
+		wait_for_completion(&ms_wait_completion);
 		mutex_unlock(&mutex);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /* Hardware semaphore */
 
-/* वापसs true when we would get the semaphore */
-अटल अंतरभूत पूर्णांक try_fdc(पूर्णांक drive)
-अणु
+/* returns true when we would get the semaphore */
+static inline int try_fdc(int drive)
+{
 	drive &= 3;
-	वापस ((fdc_busy < 0) || (fdc_busy == drive));
-पूर्ण
+	return ((fdc_busy < 0) || (fdc_busy == drive));
+}
 
-अटल व्योम get_fdc(पूर्णांक drive)
-अणु
-	अचिन्हित दीर्घ flags;
+static void get_fdc(int drive)
+{
+	unsigned long flags;
 
 	drive &= 3;
-#अगर_घोषित DEBUG
-	prपूर्णांकk("get_fdc: drive %d  fdc_busy %d  fdc_nested %d\n",drive,fdc_busy,fdc_nested);
-#पूर्ण_अगर
+#ifdef DEBUG
+	printk("get_fdc: drive %d  fdc_busy %d  fdc_nested %d\n",drive,fdc_busy,fdc_nested);
+#endif
 	local_irq_save(flags);
-	रुको_event(fdc_रुको, try_fdc(drive));
+	wait_event(fdc_wait, try_fdc(drive));
 	fdc_busy = drive;
 	fdc_nested++;
 	local_irq_restore(flags);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम rel_fdc(व्योम)
-अणु
-#अगर_घोषित DEBUG
-	अगर (fdc_nested == 0)
-		prपूर्णांकk("fd: unmatched rel_fdc\n");
-	prपूर्णांकk("rel_fdc: fdc_busy %d fdc_nested %d\n",fdc_busy,fdc_nested);
-#पूर्ण_अगर
+static inline void rel_fdc(void)
+{
+#ifdef DEBUG
+	if (fdc_nested == 0)
+		printk("fd: unmatched rel_fdc\n");
+	printk("rel_fdc: fdc_busy %d fdc_nested %d\n",fdc_busy,fdc_nested);
+#endif
 	fdc_nested--;
-	अगर (fdc_nested == 0) अणु
+	if (fdc_nested == 0) {
 		fdc_busy = -1;
-		wake_up(&fdc_रुको);
-	पूर्ण
-पूर्ण
+		wake_up(&fdc_wait);
+	}
+}
 
-अटल व्योम fd_select (पूर्णांक drive)
-अणु
-	अचिन्हित अक्षर prb = ~0;
+static void fd_select (int drive)
+{
+	unsigned char prb = ~0;
 
 	drive&=3;
-#अगर_घोषित DEBUG
-	prपूर्णांकk("selecting %d\n",drive);
-#पूर्ण_अगर
-	अगर (drive == selected)
-		वापस;
+#ifdef DEBUG
+	printk("selecting %d\n",drive);
+#endif
+	if (drive == selected)
+		return;
 	get_fdc(drive);
 	selected = drive;
 
-	अगर (unit[drive].track % 2 != 0)
+	if (unit[drive].track % 2 != 0)
 		prb &= ~DSKSIDE;
-	अगर (unit[drive].motor == 1)
+	if (unit[drive].motor == 1)
 		prb &= ~DSKMOTOR;
 	ciab.prb |= (SELMASK(0)|SELMASK(1)|SELMASK(2)|SELMASK(3));
 	ciab.prb = prb;
 	prb &= ~SELMASK(drive);
 	ciab.prb = prb;
 	rel_fdc();
-पूर्ण
+}
 
-अटल व्योम fd_deselect (पूर्णांक drive)
-अणु
-	अचिन्हित अक्षर prb;
-	अचिन्हित दीर्घ flags;
+static void fd_deselect (int drive)
+{
+	unsigned char prb;
+	unsigned long flags;
 
 	drive&=3;
-#अगर_घोषित DEBUG
-	prपूर्णांकk("deselecting %d\n",drive);
-#पूर्ण_अगर
-	अगर (drive != selected) अणु
-		prपूर्णांकk(KERN_WARNING "Deselecting drive %d while %d was selected!\n",drive,selected);
-		वापस;
-	पूर्ण
+#ifdef DEBUG
+	printk("deselecting %d\n",drive);
+#endif
+	if (drive != selected) {
+		printk(KERN_WARNING "Deselecting drive %d while %d was selected!\n",drive,selected);
+		return;
+	}
 
 	get_fdc(drive);
 	local_irq_save(flags);
@@ -441,194 +440,194 @@ MODULE_LICENSE("GPL");
 	local_irq_restore (flags);
 	rel_fdc();
 
-पूर्ण
+}
 
-अटल व्योम motor_on_callback(काष्ठा समयr_list *unused)
-अणु
-	अगर (!(ciaa.pra & DSKRDY) || --on_attempts == 0) अणु
+static void motor_on_callback(struct timer_list *unused)
+{
+	if (!(ciaa.pra & DSKRDY) || --on_attempts == 0) {
 		complete_all(&motor_on_completion);
-	पूर्ण अन्यथा अणु
-		motor_on_समयr.expires = jअगरfies + HZ/10;
-		add_समयr(&motor_on_समयr);
-	पूर्ण
-पूर्ण
+	} else {
+		motor_on_timer.expires = jiffies + HZ/10;
+		add_timer(&motor_on_timer);
+	}
+}
 
-अटल पूर्णांक fd_motor_on(पूर्णांक nr)
-अणु
+static int fd_motor_on(int nr)
+{
 	nr &= 3;
 
-	del_समयr(motor_off_समयr + nr);
+	del_timer(motor_off_timer + nr);
 
-	अगर (!unit[nr].motor) अणु
+	if (!unit[nr].motor) {
 		unit[nr].motor = 1;
 		fd_select(nr);
 
 		reinit_completion(&motor_on_completion);
-		mod_समयr(&motor_on_समयr, jअगरfies + HZ/2);
+		mod_timer(&motor_on_timer, jiffies + HZ/2);
 
 		on_attempts = 10;
-		रुको_क्रम_completion(&motor_on_completion);
+		wait_for_completion(&motor_on_completion);
 		fd_deselect(nr);
-	पूर्ण
+	}
 
-	अगर (on_attempts == 0) अणु
+	if (on_attempts == 0) {
 		on_attempts = -1;
-#अगर 0
-		prपूर्णांकk (KERN_ERR "motor_on failed, turning motor off\n");
-		fd_motor_off (motor_off_समयr + nr);
-		वापस 0;
-#अन्यथा
-		prपूर्णांकk (KERN_WARNING "DSKRDY not set after 1.5 seconds - assuming drive is spinning notwithstanding\n");
-#पूर्ण_अगर
-	पूर्ण
+#if 0
+		printk (KERN_ERR "motor_on failed, turning motor off\n");
+		fd_motor_off (motor_off_timer + nr);
+		return 0;
+#else
+		printk (KERN_WARNING "DSKRDY not set after 1.5 seconds - assuming drive is spinning notwithstanding\n");
+#endif
+	}
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल व्योम fd_motor_off(काष्ठा समयr_list *समयr)
-अणु
-	अचिन्हित दीर्घ drive = ((अचिन्हित दीर्घ)समयr -
-			       (अचिन्हित दीर्घ)&motor_off_समयr[0]) /
-					माप(motor_off_समयr[0]);
+static void fd_motor_off(struct timer_list *timer)
+{
+	unsigned long drive = ((unsigned long)timer -
+			       (unsigned long)&motor_off_timer[0]) /
+					sizeof(motor_off_timer[0]);
 
 	drive&=3;
-	अगर (!try_fdc(drive)) अणु
-		/* We would be blocked in an पूर्णांकerrupt, so try again later */
-		समयr->expires = jअगरfies + 1;
-		add_समयr(समयr);
-		वापस;
-	पूर्ण
+	if (!try_fdc(drive)) {
+		/* We would be blocked in an interrupt, so try again later */
+		timer->expires = jiffies + 1;
+		add_timer(timer);
+		return;
+	}
 	unit[drive].motor = 0;
 	fd_select(drive);
 	udelay (1);
 	fd_deselect(drive);
-पूर्ण
+}
 
-अटल व्योम floppy_off (अचिन्हित पूर्णांक nr)
-अणु
-	पूर्णांक drive;
+static void floppy_off (unsigned int nr)
+{
+	int drive;
 
 	drive = nr & 3;
-	mod_समयr(motor_off_समयr + drive, jअगरfies + 3*HZ);
-पूर्ण
+	mod_timer(motor_off_timer + drive, jiffies + 3*HZ);
+}
 
-अटल पूर्णांक fd_calibrate(पूर्णांक drive)
-अणु
-	अचिन्हित अक्षर prb;
-	पूर्णांक n;
+static int fd_calibrate(int drive)
+{
+	unsigned char prb;
+	int n;
 
 	drive &= 3;
 	get_fdc(drive);
-	अगर (!fd_motor_on (drive))
-		वापस 0;
+	if (!fd_motor_on (drive))
+		return 0;
 	fd_select (drive);
 	prb = ciab.prb;
 	prb |= DSKSIDE;
-	prb &= ~DSKसूचीEC;
+	prb &= ~DSKDIREC;
 	ciab.prb = prb;
-	क्रम (n = unit[drive].type->tracks/2; n != 0; --n) अणु
-		अगर (ciaa.pra & DSKTRACK0)
-			अवरोध;
+	for (n = unit[drive].type->tracks/2; n != 0; --n) {
+		if (ciaa.pra & DSKTRACK0)
+			break;
 		prb &= ~DSKSTEP;
 		ciab.prb = prb;
 		prb |= DSKSTEP;
 		udelay (2);
 		ciab.prb = prb;
 		ms_delay(unit[drive].type->step_delay);
-	पूर्ण
-	ms_delay (unit[drive].type->settle_समय);
-	prb |= DSKसूचीEC;
+	}
+	ms_delay (unit[drive].type->settle_time);
+	prb |= DSKDIREC;
 	n = unit[drive].type->tracks + 20;
-	क्रम (;;) अणु
+	for (;;) {
 		prb &= ~DSKSTEP;
 		ciab.prb = prb;
 		prb |= DSKSTEP;
 		udelay (2);
 		ciab.prb = prb;
 		ms_delay(unit[drive].type->step_delay + 1);
-		अगर ((ciaa.pra & DSKTRACK0) == 0)
-			अवरोध;
-		अगर (--n == 0) अणु
-			prपूर्णांकk (KERN_ERR "fd%d: calibrate failed, turning motor off\n", drive);
-			fd_motor_off (motor_off_समयr + drive);
+		if ((ciaa.pra & DSKTRACK0) == 0)
+			break;
+		if (--n == 0) {
+			printk (KERN_ERR "fd%d: calibrate failed, turning motor off\n", drive);
+			fd_motor_off (motor_off_timer + drive);
 			unit[drive].track = -1;
 			rel_fdc();
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			return 0;
+		}
+	}
 	unit[drive].track = 0;
-	ms_delay(unit[drive].type->settle_समय);
+	ms_delay(unit[drive].type->settle_time);
 
 	rel_fdc();
 	fd_deselect(drive);
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल पूर्णांक fd_seek(पूर्णांक drive, पूर्णांक track)
-अणु
-	अचिन्हित अक्षर prb;
-	पूर्णांक cnt;
+static int fd_seek(int drive, int track)
+{
+	unsigned char prb;
+	int cnt;
 
-#अगर_घोषित DEBUG
-	prपूर्णांकk("seeking drive %d to track %d\n",drive,track);
-#पूर्ण_अगर
+#ifdef DEBUG
+	printk("seeking drive %d to track %d\n",drive,track);
+#endif
 	drive &= 3;
 	get_fdc(drive);
-	अगर (unit[drive].track == track) अणु
+	if (unit[drive].track == track) {
 		rel_fdc();
-		वापस 1;
-	पूर्ण
-	अगर (!fd_motor_on(drive)) अणु
+		return 1;
+	}
+	if (!fd_motor_on(drive)) {
 		rel_fdc();
-		वापस 0;
-	पूर्ण
-	अगर (unit[drive].track < 0 && !fd_calibrate(drive)) अणु
+		return 0;
+	}
+	if (unit[drive].track < 0 && !fd_calibrate(drive)) {
 		rel_fdc();
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	fd_select (drive);
 	cnt = unit[drive].track/2 - track/2;
 	prb = ciab.prb;
-	prb |= DSKSIDE | DSKसूचीEC;
-	अगर (track % 2 != 0)
+	prb |= DSKSIDE | DSKDIREC;
+	if (track % 2 != 0)
 		prb &= ~DSKSIDE;
-	अगर (cnt < 0) अणु
+	if (cnt < 0) {
 		cnt = - cnt;
-		prb &= ~DSKसूचीEC;
-	पूर्ण
+		prb &= ~DSKDIREC;
+	}
 	ciab.prb = prb;
-	अगर (track % 2 != unit[drive].track % 2)
-		ms_delay (unit[drive].type->side_समय);
+	if (track % 2 != unit[drive].track % 2)
+		ms_delay (unit[drive].type->side_time);
 	unit[drive].track = track;
-	अगर (cnt == 0) अणु
+	if (cnt == 0) {
 		rel_fdc();
 		fd_deselect(drive);
-		वापस 1;
-	पूर्ण
-	करो अणु
+		return 1;
+	}
+	do {
 		prb &= ~DSKSTEP;
 		ciab.prb = prb;
 		prb |= DSKSTEP;
 		udelay (1);
 		ciab.prb = prb;
 		ms_delay (unit[drive].type->step_delay);
-	पूर्ण जबतक (--cnt != 0);
-	ms_delay (unit[drive].type->settle_समय);
+	} while (--cnt != 0);
+	ms_delay (unit[drive].type->settle_time);
 
 	rel_fdc();
 	fd_deselect(drive);
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल अचिन्हित दीर्घ fd_get_drive_id(पूर्णांक drive)
-अणु
-	पूर्णांक i;
-	uदीर्घ id = 0;
+static unsigned long fd_get_drive_id(int drive)
+{
+	int i;
+	ulong id = 0;
 
   	drive&=3;
   	get_fdc(drive);
-	/* set up क्रम ID */
+	/* set up for ID */
 	MOTOR_ON;
 	udelay(2);
 	SELECT(SELMASK(drive));
@@ -642,58 +641,58 @@ MODULE_LICENSE("GPL");
 	DESELECT(SELMASK(drive));
 	udelay(2);
 
-	/* loop and पढ़ो disk ID */
-	क्रम (i=0; i<32; i++) अणु
+	/* loop and read disk ID */
+	for (i=0; i<32; i++) {
 		SELECT(SELMASK(drive));
 		udelay(2);
 
-		/* पढ़ो and store value of DSKRDY */
+		/* read and store value of DSKRDY */
 		id <<= 1;
 		id |= (ciaa.pra & DSKRDY) ? 0 : 1;	/* cia regs are low-active! */
 
 		DESELECT(SELMASK(drive));
-	पूर्ण
+	}
 
 	rel_fdc();
 
         /*
-         * RB: At least A500/A2000's df0: don't identअगरy themselves.
+         * RB: At least A500/A2000's df0: don't identify themselves.
          * As every (real) Amiga has at least a 3.5" DD drive as df0:
-         * we शेष to that अगर df0: करोesn't identअगरy as a certain
+         * we default to that if df0: doesn't identify as a certain
          * type.
          */
-        अगर(drive == 0 && id == FD_NODRIVE)
-	अणु
+        if(drive == 0 && id == FD_NODRIVE)
+	{
                 id = fd_def_df0;
-                prपूर्णांकk(KERN_NOTICE "fd: drive 0 didn't identify, setting default %08lx\n", (uदीर्घ)fd_def_df0);
-	पूर्ण
-	/* वापस the ID value */
-	वापस (id);
-पूर्ण
+                printk(KERN_NOTICE "fd: drive 0 didn't identify, setting default %08lx\n", (ulong)fd_def_df0);
+	}
+	/* return the ID value */
+	return (id);
+}
 
-अटल irqवापस_t fd_block_करोne(पूर्णांक irq, व्योम *dummy)
-अणु
-	अगर (block_flag)
+static irqreturn_t fd_block_done(int irq, void *dummy)
+{
+	if (block_flag)
 		custom.dsklen = 0x4000;
 
-	अगर (block_flag == 2) अणु /* writing */
-		ग_लिखोpending = 2;
-		post_ग_लिखो_समयr.expires = jअगरfies + 1; /* at least 2 ms */
-		post_ग_लिखो_समयr_drive = selected;
-		add_समयr(&post_ग_लिखो_समयr);
-	पूर्ण
-	अन्यथा अणु                /* पढ़ोing */
+	if (block_flag == 2) { /* writing */
+		writepending = 2;
+		post_write_timer.expires = jiffies + 1; /* at least 2 ms */
+		post_write_timer_drive = selected;
+		add_timer(&post_write_timer);
+	}
+	else {                /* reading */
 		block_flag = 0;
-		wake_up (&रुको_fd_block);
-	पूर्ण
-	वापस IRQ_HANDLED;
-पूर्ण
+		wake_up (&wait_fd_block);
+	}
+	return IRQ_HANDLED;
+}
 
-अटल व्योम raw_पढ़ो(पूर्णांक drive)
-अणु
+static void raw_read(int drive)
+{
 	drive&=3;
 	get_fdc(drive);
-	रुको_event(रुको_fd_block, !block_flag);
+	wait_event(wait_fd_block, !block_flag);
 	fd_select(drive);
 	/* setup adkcon bits correctly */
 	custom.adkcon = ADK_MSBSYNC;
@@ -702,237 +701,237 @@ MODULE_LICENSE("GPL");
 	custom.dsksync = MFM_SYNC;
 
 	custom.dsklen = 0;
-	custom.dskptr = (u_अक्षर *)ZTWO_PADDR((u_अक्षर *)raw_buf);
-	custom.dsklen = unit[drive].type->पढ़ो_size/माप(लघु) | DSKLEN_DMAEN;
-	custom.dsklen = unit[drive].type->पढ़ो_size/माप(लघु) | DSKLEN_DMAEN;
+	custom.dskptr = (u_char *)ZTWO_PADDR((u_char *)raw_buf);
+	custom.dsklen = unit[drive].type->read_size/sizeof(short) | DSKLEN_DMAEN;
+	custom.dsklen = unit[drive].type->read_size/sizeof(short) | DSKLEN_DMAEN;
 
 	block_flag = 1;
 
-	रुको_event(रुको_fd_block, !block_flag);
+	wait_event(wait_fd_block, !block_flag);
 
 	custom.dsklen = 0;
 	fd_deselect(drive);
 	rel_fdc();
-पूर्ण
+}
 
-अटल पूर्णांक raw_ग_लिखो(पूर्णांक drive)
-अणु
-	uलघु adk;
+static int raw_write(int drive)
+{
+	ushort adk;
 
 	drive&=3;
-	get_fdc(drive); /* corresponds to rel_fdc() in post_ग_लिखो() */
-	अगर ((ciaa.pra & DSKPROT) == 0) अणु
+	get_fdc(drive); /* corresponds to rel_fdc() in post_write() */
+	if ((ciaa.pra & DSKPROT) == 0) {
 		rel_fdc();
-		वापस 0;
-	पूर्ण
-	रुको_event(रुको_fd_block, !block_flag);
+		return 0;
+	}
+	wait_event(wait_fd_block, !block_flag);
 	fd_select(drive);
 	/* clear adkcon bits */
 	custom.adkcon = ADK_PRECOMP1|ADK_PRECOMP0|ADK_WORDSYNC|ADK_MSBSYNC;
 	/* set appropriate adkcon bits */
 	adk = ADK_SETCLR|ADK_FAST;
-	अगर ((uदीर्घ)unit[drive].track >= unit[drive].type->precomp2)
+	if ((ulong)unit[drive].track >= unit[drive].type->precomp2)
 		adk |= ADK_PRECOMP1;
-	अन्यथा अगर ((uदीर्घ)unit[drive].track >= unit[drive].type->precomp1)
+	else if ((ulong)unit[drive].track >= unit[drive].type->precomp1)
 		adk |= ADK_PRECOMP0;
 	custom.adkcon = adk;
 
 	custom.dsklen = DSKLEN_WRITE;
-	custom.dskptr = (u_अक्षर *)ZTWO_PADDR((u_अक्षर *)raw_buf);
-	custom.dsklen = unit[drive].type->ग_लिखो_size/माप(लघु) | DSKLEN_DMAEN|DSKLEN_WRITE;
-	custom.dsklen = unit[drive].type->ग_लिखो_size/माप(लघु) | DSKLEN_DMAEN|DSKLEN_WRITE;
+	custom.dskptr = (u_char *)ZTWO_PADDR((u_char *)raw_buf);
+	custom.dsklen = unit[drive].type->write_size/sizeof(short) | DSKLEN_DMAEN|DSKLEN_WRITE;
+	custom.dsklen = unit[drive].type->write_size/sizeof(short) | DSKLEN_DMAEN|DSKLEN_WRITE;
 
 	block_flag = 2;
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
 /*
- * to be called at least 2ms after the ग_लिखो has finished but beक्रमe any
+ * to be called at least 2ms after the write has finished but before any
  * other access to the hardware.
  */
-अटल व्योम post_ग_लिखो (अचिन्हित दीर्घ drive)
-अणु
-#अगर_घोषित DEBUG
-	prपूर्णांकk("post_write for drive %ld\n",drive);
-#पूर्ण_अगर
+static void post_write (unsigned long drive)
+{
+#ifdef DEBUG
+	printk("post_write for drive %ld\n",drive);
+#endif
 	drive &= 3;
 	custom.dsklen = 0;
 	block_flag = 0;
-	ग_लिखोpending = 0;
-	ग_लिखोfromपूर्णांक = 0;
+	writepending = 0;
+	writefromint = 0;
 	unit[drive].dirty = 0;
-	wake_up(&रुको_fd_block);
+	wake_up(&wait_fd_block);
 	fd_deselect(drive);
-	rel_fdc(); /* corresponds to get_fdc() in raw_ग_लिखो */
-पूर्ण
+	rel_fdc(); /* corresponds to get_fdc() in raw_write */
+}
 
-अटल व्योम post_ग_लिखो_callback(काष्ठा समयr_list *समयr)
-अणु
-	post_ग_लिखो(post_ग_लिखो_समयr_drive);
-पूर्ण
+static void post_write_callback(struct timer_list *timer)
+{
+	post_write(post_write_timer_drive);
+}
 
 /*
- * The following functions are to convert the block contents पूर्णांकo raw data
+ * The following functions are to convert the block contents into raw data
  * written to disk and vice versa.
- * (Add other क्रमmats here ;-))
+ * (Add other formats here ;-))
  */
 
-अटल अचिन्हित दीर्घ scan_sync(अचिन्हित दीर्घ raw, अचिन्हित दीर्घ end)
-अणु
-	uलघु *ptr = (uलघु *)raw, *endp = (uलघु *)end;
+static unsigned long scan_sync(unsigned long raw, unsigned long end)
+{
+	ushort *ptr = (ushort *)raw, *endp = (ushort *)end;
 
-	जबतक (ptr < endp && *ptr++ != 0x4489)
+	while (ptr < endp && *ptr++ != 0x4489)
 		;
-	अगर (ptr < endp) अणु
-		जबतक (*ptr == 0x4489 && ptr < endp)
+	if (ptr < endp) {
+		while (*ptr == 0x4489 && ptr < endp)
 			ptr++;
-		वापस (uदीर्घ)ptr;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return (ulong)ptr;
+	}
+	return 0;
+}
 
-अटल अंतरभूत अचिन्हित दीर्घ checksum(अचिन्हित दीर्घ *addr, पूर्णांक len)
-अणु
-	अचिन्हित दीर्घ csum = 0;
+static inline unsigned long checksum(unsigned long *addr, int len)
+{
+	unsigned long csum = 0;
 
-	len /= माप(*addr);
-	जबतक (len-- > 0)
+	len /= sizeof(*addr);
+	while (len-- > 0)
 		csum ^= *addr++;
 	csum = ((csum>>1) & 0x55555555)  ^  (csum & 0x55555555);
 
-	वापस csum;
-पूर्ण
+	return csum;
+}
 
-अटल अचिन्हित दीर्घ decode (अचिन्हित दीर्घ *data, अचिन्हित दीर्घ *raw,
-			     पूर्णांक len)
-अणु
-	uदीर्घ *odd, *even;
+static unsigned long decode (unsigned long *data, unsigned long *raw,
+			     int len)
+{
+	ulong *odd, *even;
 
-	/* convert length from bytes to दीर्घwords */
+	/* convert length from bytes to longwords */
 	len >>= 2;
 	odd = raw;
 	even = odd + len;
 
-	/* prepare वापस poपूर्णांकer */
+	/* prepare return pointer */
 	raw += len * 2;
 
-	करो अणु
+	do {
 		*data++ = ((*odd++ & 0x55555555) << 1) | (*even++ & 0x55555555);
-	पूर्ण जबतक (--len != 0);
+	} while (--len != 0);
 
-	वापस (uदीर्घ)raw;
-पूर्ण
+	return (ulong)raw;
+}
 
-काष्ठा header अणु
-	अचिन्हित अक्षर magic;
-	अचिन्हित अक्षर track;
-	अचिन्हित अक्षर sect;
-	अचिन्हित अक्षर ord;
-	अचिन्हित अक्षर labels[16];
-	अचिन्हित दीर्घ hdrchk;
-	अचिन्हित दीर्घ datachk;
-पूर्ण;
+struct header {
+	unsigned char magic;
+	unsigned char track;
+	unsigned char sect;
+	unsigned char ord;
+	unsigned char labels[16];
+	unsigned long hdrchk;
+	unsigned long datachk;
+};
 
-अटल पूर्णांक amiga_पढ़ो(पूर्णांक drive)
-अणु
-	अचिन्हित दीर्घ raw;
-	अचिन्हित दीर्घ end;
-	पूर्णांक scnt;
-	अचिन्हित दीर्घ csum;
-	काष्ठा header hdr;
+static int amiga_read(int drive)
+{
+	unsigned long raw;
+	unsigned long end;
+	int scnt;
+	unsigned long csum;
+	struct header hdr;
 
 	drive&=3;
-	raw = (दीर्घ) raw_buf;
-	end = raw + unit[drive].type->पढ़ो_size;
+	raw = (long) raw_buf;
+	end = raw + unit[drive].type->read_size;
 
-	क्रम (scnt = 0;scnt < unit[drive].dtype->sects * unit[drive].type->sect_mult; scnt++) अणु
-		अगर (!(raw = scan_sync(raw, end))) अणु
-			prपूर्णांकk (KERN_INFO "can't find sync for sector %d\n", scnt);
-			वापस MFM_NOSYNC;
-		पूर्ण
+	for (scnt = 0;scnt < unit[drive].dtype->sects * unit[drive].type->sect_mult; scnt++) {
+		if (!(raw = scan_sync(raw, end))) {
+			printk (KERN_INFO "can't find sync for sector %d\n", scnt);
+			return MFM_NOSYNC;
+		}
 
-		raw = decode ((uदीर्घ *)&hdr.magic, (uदीर्घ *)raw, 4);
-		raw = decode ((uदीर्घ *)&hdr.labels, (uदीर्घ *)raw, 16);
-		raw = decode ((uदीर्घ *)&hdr.hdrchk, (uदीर्घ *)raw, 4);
-		raw = decode ((uदीर्घ *)&hdr.datachk, (uदीर्घ *)raw, 4);
-		csum = checksum((uदीर्घ *)&hdr,
-				(अक्षर *)&hdr.hdrchk-(अक्षर *)&hdr);
+		raw = decode ((ulong *)&hdr.magic, (ulong *)raw, 4);
+		raw = decode ((ulong *)&hdr.labels, (ulong *)raw, 16);
+		raw = decode ((ulong *)&hdr.hdrchk, (ulong *)raw, 4);
+		raw = decode ((ulong *)&hdr.datachk, (ulong *)raw, 4);
+		csum = checksum((ulong *)&hdr,
+				(char *)&hdr.hdrchk-(char *)&hdr);
 
-#अगर_घोषित DEBUG
-		prपूर्णांकk ("(%x,%d,%d,%d) (%lx,%lx,%lx,%lx) %lx %lx\n",
+#ifdef DEBUG
+		printk ("(%x,%d,%d,%d) (%lx,%lx,%lx,%lx) %lx %lx\n",
 			hdr.magic, hdr.track, hdr.sect, hdr.ord,
-			*(uदीर्घ *)&hdr.labels[0], *(uदीर्घ *)&hdr.labels[4],
-			*(uदीर्घ *)&hdr.labels[8], *(uदीर्घ *)&hdr.labels[12],
+			*(ulong *)&hdr.labels[0], *(ulong *)&hdr.labels[4],
+			*(ulong *)&hdr.labels[8], *(ulong *)&hdr.labels[12],
 			hdr.hdrchk, hdr.datachk);
-#पूर्ण_अगर
+#endif
 
-		अगर (hdr.hdrchk != csum) अणु
-			prपूर्णांकk(KERN_INFO "MFM_HEADER: %08lx,%08lx\n", hdr.hdrchk, csum);
-			वापस MFM_HEADER;
-		पूर्ण
+		if (hdr.hdrchk != csum) {
+			printk(KERN_INFO "MFM_HEADER: %08lx,%08lx\n", hdr.hdrchk, csum);
+			return MFM_HEADER;
+		}
 
-		/* verअगरy track */
-		अगर (hdr.track != unit[drive].track) अणु
-			prपूर्णांकk(KERN_INFO "MFM_TRACK: %d, %d\n", hdr.track, unit[drive].track);
-			वापस MFM_TRACK;
-		पूर्ण
+		/* verify track */
+		if (hdr.track != unit[drive].track) {
+			printk(KERN_INFO "MFM_TRACK: %d, %d\n", hdr.track, unit[drive].track);
+			return MFM_TRACK;
+		}
 
-		raw = decode ((uदीर्घ *)(unit[drive].trackbuf + hdr.sect*512),
-			      (uदीर्घ *)raw, 512);
-		csum = checksum((uदीर्घ *)(unit[drive].trackbuf + hdr.sect*512), 512);
+		raw = decode ((ulong *)(unit[drive].trackbuf + hdr.sect*512),
+			      (ulong *)raw, 512);
+		csum = checksum((ulong *)(unit[drive].trackbuf + hdr.sect*512), 512);
 
-		अगर (hdr.datachk != csum) अणु
-			prपूर्णांकk(KERN_INFO "MFM_DATA: (%x:%d:%d:%d) sc=%d %lx, %lx\n",
+		if (hdr.datachk != csum) {
+			printk(KERN_INFO "MFM_DATA: (%x:%d:%d:%d) sc=%d %lx, %lx\n",
 			       hdr.magic, hdr.track, hdr.sect, hdr.ord, scnt,
 			       hdr.datachk, csum);
-			prपूर्णांकk (KERN_INFO "data=(%lx,%lx,%lx,%lx)\n",
-				((uदीर्घ *)(unit[drive].trackbuf+hdr.sect*512))[0],
-				((uदीर्घ *)(unit[drive].trackbuf+hdr.sect*512))[1],
-				((uदीर्घ *)(unit[drive].trackbuf+hdr.sect*512))[2],
-				((uदीर्घ *)(unit[drive].trackbuf+hdr.sect*512))[3]);
-			वापस MFM_DATA;
-		पूर्ण
-	पूर्ण
+			printk (KERN_INFO "data=(%lx,%lx,%lx,%lx)\n",
+				((ulong *)(unit[drive].trackbuf+hdr.sect*512))[0],
+				((ulong *)(unit[drive].trackbuf+hdr.sect*512))[1],
+				((ulong *)(unit[drive].trackbuf+hdr.sect*512))[2],
+				((ulong *)(unit[drive].trackbuf+hdr.sect*512))[3]);
+			return MFM_DATA;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम encode(अचिन्हित दीर्घ data, अचिन्हित दीर्घ *dest)
-अणु
-	अचिन्हित दीर्घ data2;
+static void encode(unsigned long data, unsigned long *dest)
+{
+	unsigned long data2;
 
 	data &= 0x55555555;
 	data2 = data ^ 0x55555555;
 	data |= ((data2 >> 1) | 0x80000000) & (data2 << 1);
 
-	अगर (*(dest - 1) & 0x00000001)
+	if (*(dest - 1) & 0x00000001)
 		data &= 0x7FFFFFFF;
 
 	*dest = data;
-पूर्ण
+}
 
-अटल व्योम encode_block(अचिन्हित दीर्घ *dest, अचिन्हित दीर्घ *src, पूर्णांक len)
-अणु
-	पूर्णांक cnt, to_cnt = 0;
-	अचिन्हित दीर्घ data;
+static void encode_block(unsigned long *dest, unsigned long *src, int len)
+{
+	int cnt, to_cnt = 0;
+	unsigned long data;
 
 	/* odd bits */
-	क्रम (cnt = 0; cnt < len / 4; cnt++) अणु
+	for (cnt = 0; cnt < len / 4; cnt++) {
 		data = src[cnt] >> 1;
 		encode(data, dest + to_cnt++);
-	पूर्ण
+	}
 
 	/* even bits */
-	क्रम (cnt = 0; cnt < len / 4; cnt++) अणु
+	for (cnt = 0; cnt < len / 4; cnt++) {
 		data = src[cnt];
 		encode(data, dest + to_cnt++);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल अचिन्हित दीर्घ *माला_दोec(पूर्णांक disk, अचिन्हित दीर्घ *raw, पूर्णांक cnt)
-अणु
-	काष्ठा header hdr;
-	पूर्णांक i;
+static unsigned long *putsec(int disk, unsigned long *raw, int cnt)
+{
+	struct header hdr;
+	int i;
 
 	disk&=3;
 	*raw = (raw[-1]&1) ? 0x2AAAAAAA : 0xAAAAAAAA;
@@ -943,95 +942,95 @@ MODULE_LICENSE("GPL");
 	hdr.track = unit[disk].track;
 	hdr.sect = cnt;
 	hdr.ord = unit[disk].dtype->sects * unit[disk].type->sect_mult - cnt;
-	क्रम (i = 0; i < 16; i++)
+	for (i = 0; i < 16; i++)
 		hdr.labels[i] = 0;
-	hdr.hdrchk = checksum((uदीर्घ *)&hdr,
-			      (अक्षर *)&hdr.hdrchk-(अक्षर *)&hdr);
-	hdr.datachk = checksum((uदीर्घ *)(unit[disk].trackbuf+cnt*512), 512);
+	hdr.hdrchk = checksum((ulong *)&hdr,
+			      (char *)&hdr.hdrchk-(char *)&hdr);
+	hdr.datachk = checksum((ulong *)(unit[disk].trackbuf+cnt*512), 512);
 
-	encode_block(raw, (uदीर्घ *)&hdr.magic, 4);
+	encode_block(raw, (ulong *)&hdr.magic, 4);
 	raw += 2;
-	encode_block(raw, (uदीर्घ *)&hdr.labels, 16);
+	encode_block(raw, (ulong *)&hdr.labels, 16);
 	raw += 8;
-	encode_block(raw, (uदीर्घ *)&hdr.hdrchk, 4);
+	encode_block(raw, (ulong *)&hdr.hdrchk, 4);
 	raw += 2;
-	encode_block(raw, (uदीर्घ *)&hdr.datachk, 4);
+	encode_block(raw, (ulong *)&hdr.datachk, 4);
 	raw += 2;
-	encode_block(raw, (uदीर्घ *)(unit[disk].trackbuf+cnt*512), 512);
+	encode_block(raw, (ulong *)(unit[disk].trackbuf+cnt*512), 512);
 	raw += 256;
 
-	वापस raw;
-पूर्ण
+	return raw;
+}
 
-अटल व्योम amiga_ग_लिखो(पूर्णांक disk)
-अणु
-	अचिन्हित पूर्णांक cnt;
-	अचिन्हित दीर्घ *ptr = (अचिन्हित दीर्घ *)raw_buf;
+static void amiga_write(int disk)
+{
+	unsigned int cnt;
+	unsigned long *ptr = (unsigned long *)raw_buf;
 
 	disk&=3;
 	/* gap space */
-	क्रम (cnt = 0; cnt < 415 * unit[disk].type->sect_mult; cnt++)
+	for (cnt = 0; cnt < 415 * unit[disk].type->sect_mult; cnt++)
 		*ptr++ = 0xaaaaaaaa;
 
 	/* sectors */
-	क्रम (cnt = 0; cnt < unit[disk].dtype->sects * unit[disk].type->sect_mult; cnt++)
-		ptr = माला_दोec (disk, ptr, cnt);
-	*(uलघु *)ptr = (ptr[-1]&1) ? 0x2AA8 : 0xAAA8;
-पूर्ण
+	for (cnt = 0; cnt < unit[disk].dtype->sects * unit[disk].type->sect_mult; cnt++)
+		ptr = putsec (disk, ptr, cnt);
+	*(ushort *)ptr = (ptr[-1]&1) ? 0x2AA8 : 0xAAA8;
+}
 
 
-काष्ठा करोs_header अणु
-	अचिन्हित अक्षर track,   /* 0-80 */
+struct dos_header {
+	unsigned char track,   /* 0-80 */
 		side,    /* 0-1 */
 		sec,     /* 0-...*/
 		len_desc;/* 2 */
-	अचिन्हित लघु crc;     /* on 68000 we got an alignment problem, 
+	unsigned short crc;     /* on 68000 we got an alignment problem, 
 				   but this compiler solves it  by adding silently 
 				   adding a pad byte so data won't fit
 				   and this took about 3h to discover.... */
-	अचिन्हित अक्षर gap1[22];     /* क्रम दीर्घword-alignedness (0x4e) */
-पूर्ण;
+	unsigned char gap1[22];     /* for longword-alignedness (0x4e) */
+};
 
-/* crc routines are borrowed from the messyकरोs-handler  */
+/* crc routines are borrowed from the messydos-handler  */
 
-/* excerpt from the messyकरोs-device           
+/* excerpt from the messydos-device           
 ; The CRC is computed not only over the actual data, but including
 ; the SYNC mark (3 * $a1) and the 'ID/DATA - Address Mark' ($fe/$fb).
-; As we करोn't पढ़ो or encode these fields पूर्णांकo our buffers, we have to
-; preload the रेजिस्टरs containing the CRC with the values they would have
+; As we don't read or encode these fields into our buffers, we have to
+; preload the registers containing the CRC with the values they would have
 ; after stepping over these fields.
 ;
 ; How CRCs "really" work:
 ;
 ; First, you should regard a bitstring as a series of coefficients of
 ; polynomials. We calculate with these polynomials in modulo-2
-; arithmetic, in which both add and subtract are करोne the same as
-; exclusive-or. Now, we modअगरy our data (a very दीर्घ polynomial) in
-; such a way that it becomes भागisible by the CCITT-standard 16-bit
+; arithmetic, in which both add and subtract are done the same as
+; exclusive-or. Now, we modify our data (a very long polynomial) in
+; such a way that it becomes divisible by the CCITT-standard 16-bit
 ;		 16   12   5
 ; polynomial:	x  + x	+ x + 1, represented by $11021. The easiest
-; way to करो this would be to multiply (using proper arithmetic) our
+; way to do this would be to multiply (using proper arithmetic) our
 ; datablock with $11021. So we have:
 ;   data * $11021		 =
 ;   data * ($10000 + $1021)      =
 ;   data * $10000 + data * $1021
 ; The left part of this is simple: Just add two 0 bytes. But then
-; the right part (data $1021) reमुख्यs dअगरficult and even could have
-; a carry पूर्णांकo the left part. The solution is to use a modअगरied
+; the right part (data $1021) remains difficult and even could have
+; a carry into the left part. The solution is to use a modified
 ; multiplication, which has a result that is not correct, but with
-; a dअगरference of any multiple of $11021. We then only need to keep
-; the 16 least signअगरicant bits of the result.
+; a difference of any multiple of $11021. We then only need to keep
+; the 16 least significant bits of the result.
 ;
-; The following algorithm करोes this क्रम us:
+; The following algorithm does this for us:
 ;
-;   अचिन्हित अक्षर *data, c, crclo, crchi;
-;   जबतक (not करोne) अणु
+;   unsigned char *data, c, crclo, crchi;
+;   while (not done) {
 ;	c = *data++ + crchi;
 ;	crchi = (@ c) >> 8 + crclo;
 ;	crclo = @ c;
-;   पूर्ण
+;   }
 ;
-; Remember, + is करोne with EOR, the @ चालक is in two tables (high
+; Remember, + is done with EOR, the @ operator is in two tables (high
 ; and low byte separately), which is calculated as
 ;
 ;      $1021 * (c & $F0)
@@ -1039,7 +1038,7 @@ MODULE_LICENSE("GPL");
 ;  xor $1021 * (c >> 4)         (* is regular multiplication)
 ;
 ;
-; Anyway, the end result is the same as the reमुख्यder of the भागision of
+; Anyway, the end result is the same as the remainder of the division of
 ; the data by $11021. I am afraid I need to study theory a bit more...
 
 
@@ -1047,9 +1046,9 @@ my only works was to code this from manx to C....
 
 */
 
-अटल uलघु करोs_crc(व्योम * data_a3, पूर्णांक data_d0, पूर्णांक data_d1, पूर्णांक data_d3)
-अणु
-	अटल अचिन्हित अक्षर CRCTable1[] = अणु
+static ushort dos_crc(void * data_a3, int data_d0, int data_d1, int data_d3)
+{
+	static unsigned char CRCTable1[] = {
 		0x00,0x10,0x20,0x30,0x40,0x50,0x60,0x70,0x81,0x91,0xa1,0xb1,0xc1,0xd1,0xe1,0xf1,
 		0x12,0x02,0x32,0x22,0x52,0x42,0x72,0x62,0x93,0x83,0xb3,0xa3,0xd3,0xc3,0xf3,0xe3,
 		0x24,0x34,0x04,0x14,0x64,0x74,0x44,0x54,0xa5,0xb5,0x85,0x95,0xe5,0xf5,0xc5,0xd5,
@@ -1066,9 +1065,9 @@ my only works was to code this from manx to C....
 		0xcb,0xdb,0xeb,0xfb,0x8b,0x9b,0xab,0xbb,0x4a,0x5a,0x6a,0x7a,0x0a,0x1a,0x2a,0x3a,
 		0xfd,0xed,0xdd,0xcd,0xbd,0xad,0x9d,0x8d,0x7c,0x6c,0x5c,0x4c,0x3c,0x2c,0x1c,0x0c,
 		0xef,0xff,0xcf,0xdf,0xaf,0xbf,0x8f,0x9f,0x6e,0x7e,0x4e,0x5e,0x2e,0x3e,0x0e,0x1e
-	पूर्ण;
+	};
 
-	अटल अचिन्हित अक्षर CRCTable2[] = अणु
+	static unsigned char CRCTable2[] = {
 		0x00,0x21,0x42,0x63,0x84,0xa5,0xc6,0xe7,0x08,0x29,0x4a,0x6b,0x8c,0xad,0xce,0xef,
 		0x31,0x10,0x73,0x52,0xb5,0x94,0xf7,0xd6,0x39,0x18,0x7b,0x5a,0xbd,0x9c,0xff,0xde,
 		0x62,0x43,0x20,0x01,0xe6,0xc7,0xa4,0x85,0x6a,0x4b,0x28,0x09,0xee,0xcf,0xac,0x8d,
@@ -1085,40 +1084,40 @@ my only works was to code this from manx to C....
 		0x7d,0x5c,0x3f,0x1e,0xf9,0xd8,0xbb,0x9a,0x75,0x54,0x37,0x16,0xf1,0xd0,0xb3,0x92,
 		0x2e,0x0f,0x6c,0x4d,0xaa,0x8b,0xe8,0xc9,0x26,0x07,0x64,0x45,0xa2,0x83,0xe0,0xc1,
 		0x1f,0x3e,0x5d,0x7c,0x9b,0xba,0xd9,0xf8,0x17,0x36,0x55,0x74,0x93,0xb2,0xd1,0xf0
-	पूर्ण;
+	};
 
-/* look at the यंत्र-code - what looks in C a bit strange is almost as good as handmade */
-	रेजिस्टर पूर्णांक i;
-	रेजिस्टर अचिन्हित अक्षर *CRCT1, *CRCT2, *data, c, crch, crcl;
+/* look at the asm-code - what looks in C a bit strange is almost as good as handmade */
+	register int i;
+	register unsigned char *CRCT1, *CRCT2, *data, c, crch, crcl;
 
 	CRCT1=CRCTable1;
 	CRCT2=CRCTable2;
 	data=data_a3;
 	crcl=data_d1;
 	crch=data_d0;
-	क्रम (i=data_d3; i>=0; i--) अणु
+	for (i=data_d3; i>=0; i--) {
 		c = (*data++) ^ crch;
 		crch = CRCT1[c] ^ crcl;
 		crcl = CRCT2[c];
-	पूर्ण
-	वापस (crch<<8)|crcl;
-पूर्ण
+	}
+	return (crch<<8)|crcl;
+}
 
-अटल अंतरभूत uलघु करोs_hdr_crc (काष्ठा करोs_header *hdr)
-अणु
-	वापस करोs_crc(&(hdr->track), 0xb2, 0x30, 3); /* precomputed magic */
-पूर्ण
+static inline ushort dos_hdr_crc (struct dos_header *hdr)
+{
+	return dos_crc(&(hdr->track), 0xb2, 0x30, 3); /* precomputed magic */
+}
 
-अटल अंतरभूत uलघु करोs_data_crc(अचिन्हित अक्षर *data)
-अणु
-	वापस करोs_crc(data, 0xe2, 0x95 ,511); /* precomputed magic */
-पूर्ण
+static inline ushort dos_data_crc(unsigned char *data)
+{
+	return dos_crc(data, 0xe2, 0x95 ,511); /* precomputed magic */
+}
 
-अटल अंतरभूत अचिन्हित अक्षर करोs_decode_byte(uलघु word)
-अणु
-	रेजिस्टर uलघु w2;
-	रेजिस्टर अचिन्हित अक्षर byte;
-	रेजिस्टर अचिन्हित अक्षर *dec = mfmdecode;
+static inline unsigned char dos_decode_byte(ushort word)
+{
+	register ushort w2;
+	register unsigned char byte;
+	register unsigned char *dec = mfmdecode;
 
 	w2=word;
 	w2>>=8;
@@ -1127,159 +1126,159 @@ my only works was to code this from manx to C....
 	byte <<= 4;
 	w2 = word & 127;
 	byte |= dec[w2];
-	वापस byte;
-पूर्ण
+	return byte;
+}
 
-अटल अचिन्हित दीर्घ करोs_decode(अचिन्हित अक्षर *data, अचिन्हित लघु *raw, पूर्णांक len)
-अणु
-	पूर्णांक i;
+static unsigned long dos_decode(unsigned char *data, unsigned short *raw, int len)
+{
+	int i;
 
-	क्रम (i = 0; i < len; i++)
-		*data++=करोs_decode_byte(*raw++);
-	वापस ((uदीर्घ)raw);
-पूर्ण
+	for (i = 0; i < len; i++)
+		*data++=dos_decode_byte(*raw++);
+	return ((ulong)raw);
+}
 
-#अगर_घोषित DEBUG
-अटल व्योम dbg(अचिन्हित दीर्घ ptr)
-अणु
-	prपूर्णांकk("raw data @%08lx: %08lx, %08lx ,%08lx, %08lx\n", ptr,
-	       ((uदीर्घ *)ptr)[0], ((uदीर्घ *)ptr)[1],
-	       ((uदीर्घ *)ptr)[2], ((uदीर्घ *)ptr)[3]);
-पूर्ण
-#पूर्ण_अगर
+#ifdef DEBUG
+static void dbg(unsigned long ptr)
+{
+	printk("raw data @%08lx: %08lx, %08lx ,%08lx, %08lx\n", ptr,
+	       ((ulong *)ptr)[0], ((ulong *)ptr)[1],
+	       ((ulong *)ptr)[2], ((ulong *)ptr)[3]);
+}
+#endif
 
-अटल पूर्णांक करोs_पढ़ो(पूर्णांक drive)
-अणु
-	अचिन्हित दीर्घ end;
-	अचिन्हित दीर्घ raw;
-	पूर्णांक scnt;
-	अचिन्हित लघु crc,data_crc[2];
-	काष्ठा करोs_header hdr;
+static int dos_read(int drive)
+{
+	unsigned long end;
+	unsigned long raw;
+	int scnt;
+	unsigned short crc,data_crc[2];
+	struct dos_header hdr;
 
 	drive&=3;
-	raw = (दीर्घ) raw_buf;
-	end = raw + unit[drive].type->पढ़ो_size;
+	raw = (long) raw_buf;
+	end = raw + unit[drive].type->read_size;
 
-	क्रम (scnt=0; scnt < unit[drive].dtype->sects * unit[drive].type->sect_mult; scnt++) अणु
-		करो अणु /* search क्रम the right sync of each sec-hdr */
-			अगर (!(raw = scan_sync (raw, end))) अणु
-				prपूर्णांकk(KERN_INFO "dos_read: no hdr sync on "
+	for (scnt=0; scnt < unit[drive].dtype->sects * unit[drive].type->sect_mult; scnt++) {
+		do { /* search for the right sync of each sec-hdr */
+			if (!(raw = scan_sync (raw, end))) {
+				printk(KERN_INFO "dos_read: no hdr sync on "
 				       "track %d, unit %d for sector %d\n",
 				       unit[drive].track,drive,scnt);
-				वापस MFM_NOSYNC;
-			पूर्ण
-#अगर_घोषित DEBUG
+				return MFM_NOSYNC;
+			}
+#ifdef DEBUG
 			dbg(raw);
-#पूर्ण_अगर
-		पूर्ण जबतक (*((uलघु *)raw)!=0x5554); /* loop usually only once करोne */
+#endif
+		} while (*((ushort *)raw)!=0x5554); /* loop usually only once done */
 		raw+=2; /* skip over headermark */
-		raw = करोs_decode((अचिन्हित अक्षर *)&hdr,(uलघु *) raw,8);
-		crc = करोs_hdr_crc(&hdr);
+		raw = dos_decode((unsigned char *)&hdr,(ushort *) raw,8);
+		crc = dos_hdr_crc(&hdr);
 
-#अगर_घोषित DEBUG
-		prपूर्णांकk("(%3d,%d,%2d,%d) %x\n", hdr.track, hdr.side,
+#ifdef DEBUG
+		printk("(%3d,%d,%2d,%d) %x\n", hdr.track, hdr.side,
 		       hdr.sec, hdr.len_desc, hdr.crc);
-#पूर्ण_अगर
+#endif
 
-		अगर (crc != hdr.crc) अणु
-			prपूर्णांकk(KERN_INFO "dos_read: MFM_HEADER %04x,%04x\n",
+		if (crc != hdr.crc) {
+			printk(KERN_INFO "dos_read: MFM_HEADER %04x,%04x\n",
 			       hdr.crc, crc);
-			वापस MFM_HEADER;
-		पूर्ण
-		अगर (hdr.track != unit[drive].track/unit[drive].type->heads) अणु
-			prपूर्णांकk(KERN_INFO "dos_read: MFM_TRACK %d, %d\n",
+			return MFM_HEADER;
+		}
+		if (hdr.track != unit[drive].track/unit[drive].type->heads) {
+			printk(KERN_INFO "dos_read: MFM_TRACK %d, %d\n",
 			       hdr.track,
 			       unit[drive].track/unit[drive].type->heads);
-			वापस MFM_TRACK;
-		पूर्ण
+			return MFM_TRACK;
+		}
 
-		अगर (hdr.side != unit[drive].track%unit[drive].type->heads) अणु
-			prपूर्णांकk(KERN_INFO "dos_read: MFM_SIDE %d, %d\n",
+		if (hdr.side != unit[drive].track%unit[drive].type->heads) {
+			printk(KERN_INFO "dos_read: MFM_SIDE %d, %d\n",
 			       hdr.side,
 			       unit[drive].track%unit[drive].type->heads);
-			वापस MFM_TRACK;
-		पूर्ण
+			return MFM_TRACK;
+		}
 
-		अगर (hdr.len_desc != 2) अणु
-			prपूर्णांकk(KERN_INFO "dos_read: unknown sector len "
+		if (hdr.len_desc != 2) {
+			printk(KERN_INFO "dos_read: unknown sector len "
 			       "descriptor %d\n", hdr.len_desc);
-			वापस MFM_DATA;
-		पूर्ण
-#अगर_घोषित DEBUG
-		prपूर्णांकk("hdr accepted\n");
-#पूर्ण_अगर
-		अगर (!(raw = scan_sync (raw, end))) अणु
-			prपूर्णांकk(KERN_INFO "dos_read: no data sync on track "
+			return MFM_DATA;
+		}
+#ifdef DEBUG
+		printk("hdr accepted\n");
+#endif
+		if (!(raw = scan_sync (raw, end))) {
+			printk(KERN_INFO "dos_read: no data sync on track "
 			       "%d, unit %d for sector%d, disk sector %d\n",
 			       unit[drive].track, drive, scnt, hdr.sec);
-			वापस MFM_NOSYNC;
-		पूर्ण
-#अगर_घोषित DEBUG
+			return MFM_NOSYNC;
+		}
+#ifdef DEBUG
 		dbg(raw);
-#पूर्ण_अगर
+#endif
 
-		अगर (*((uलघु *)raw)!=0x5545) अणु
-			prपूर्णांकk(KERN_INFO "dos_read: no data mark after "
+		if (*((ushort *)raw)!=0x5545) {
+			printk(KERN_INFO "dos_read: no data mark after "
 			       "sync (%d,%d,%d,%d) sc=%d\n",
 			       hdr.track,hdr.side,hdr.sec,hdr.len_desc,scnt);
-			वापस MFM_NOSYNC;
-		पूर्ण
+			return MFM_NOSYNC;
+		}
 
 		raw+=2;  /* skip data mark (included in checksum) */
-		raw = करोs_decode((अचिन्हित अक्षर *)(unit[drive].trackbuf + (hdr.sec - 1) * 512), (uलघु *) raw, 512);
-		raw = करोs_decode((अचिन्हित अक्षर  *)data_crc,(uलघु *) raw,4);
-		crc = करोs_data_crc(unit[drive].trackbuf + (hdr.sec - 1) * 512);
+		raw = dos_decode((unsigned char *)(unit[drive].trackbuf + (hdr.sec - 1) * 512), (ushort *) raw, 512);
+		raw = dos_decode((unsigned char  *)data_crc,(ushort *) raw,4);
+		crc = dos_data_crc(unit[drive].trackbuf + (hdr.sec - 1) * 512);
 
-		अगर (crc != data_crc[0]) अणु
-			prपूर्णांकk(KERN_INFO "dos_read: MFM_DATA (%d,%d,%d,%d) "
+		if (crc != data_crc[0]) {
+			printk(KERN_INFO "dos_read: MFM_DATA (%d,%d,%d,%d) "
 			       "sc=%d, %x %x\n", hdr.track, hdr.side,
 			       hdr.sec, hdr.len_desc, scnt,data_crc[0], crc);
-			prपूर्णांकk(KERN_INFO "data=(%lx,%lx,%lx,%lx,...)\n",
-			       ((uदीर्घ *)(unit[drive].trackbuf+(hdr.sec-1)*512))[0],
-			       ((uदीर्घ *)(unit[drive].trackbuf+(hdr.sec-1)*512))[1],
-			       ((uदीर्घ *)(unit[drive].trackbuf+(hdr.sec-1)*512))[2],
-			       ((uदीर्घ *)(unit[drive].trackbuf+(hdr.sec-1)*512))[3]);
-			वापस MFM_DATA;
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+			printk(KERN_INFO "data=(%lx,%lx,%lx,%lx,...)\n",
+			       ((ulong *)(unit[drive].trackbuf+(hdr.sec-1)*512))[0],
+			       ((ulong *)(unit[drive].trackbuf+(hdr.sec-1)*512))[1],
+			       ((ulong *)(unit[drive].trackbuf+(hdr.sec-1)*512))[2],
+			       ((ulong *)(unit[drive].trackbuf+(hdr.sec-1)*512))[3]);
+			return MFM_DATA;
+		}
+	}
+	return 0;
+}
 
-अटल अंतरभूत uलघु करोs_encode_byte(अचिन्हित अक्षर byte)
-अणु
-	रेजिस्टर अचिन्हित अक्षर *enc, b2, b1;
-	रेजिस्टर uलघु word;
+static inline ushort dos_encode_byte(unsigned char byte)
+{
+	register unsigned char *enc, b2, b1;
+	register ushort word;
 
 	enc=mfmencode;
 	b1=byte;
 	b2=b1>>4;
 	b1&=15;
 	word=enc[b2] <<8 | enc [b1];
-	वापस (word|((word&(256|64)) ? 0: 128));
-पूर्ण
+	return (word|((word&(256|64)) ? 0: 128));
+}
 
-अटल व्योम करोs_encode_block(uलघु *dest, अचिन्हित अक्षर *src, पूर्णांक len)
-अणु
-	पूर्णांक i;
+static void dos_encode_block(ushort *dest, unsigned char *src, int len)
+{
+	int i;
 
-	क्रम (i = 0; i < len; i++) अणु
-		*dest=करोs_encode_byte(*src++);
+	for (i = 0; i < len; i++) {
+		*dest=dos_encode_byte(*src++);
 		*dest|=((dest[-1]&1)||(*dest&0x4000))? 0: 0x8000;
 		dest++;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल अचिन्हित दीर्घ *ms_माला_दोec(पूर्णांक drive, अचिन्हित दीर्घ *raw, पूर्णांक cnt)
-अणु
-	अटल काष्ठा करोs_header hdr=अणु0,0,0,2,0,
-	  अणु78,78,78,78,78,78,78,78,78,78,78,78,78,78,78,78,78,78,78,78,78,78पूर्णपूर्ण;
-	पूर्णांक i;
-	अटल uलघु crc[2]=अणु0,0x4e4eपूर्ण;
+static unsigned long *ms_putsec(int drive, unsigned long *raw, int cnt)
+{
+	static struct dos_header hdr={0,0,0,2,0,
+	  {78,78,78,78,78,78,78,78,78,78,78,78,78,78,78,78,78,78,78,78,78,78}};
+	int i;
+	static ushort crc[2]={0,0x4e4e};
 
 	drive&=3;
 /* id gap 1 */
-/* the MFM word beक्रमe is always 9254 */
-	क्रम(i=0;i<6;i++)
+/* the MFM word before is always 9254 */
+	for(i=0;i<6;i++)
 		*raw++=0xaaaaaaaa;
 /* 3 sync + 1 headermark */
 	*raw++=0x44894489;
@@ -1289,14 +1288,14 @@ my only works was to code this from manx to C....
 	hdr.track=unit[drive].track/unit[drive].type->heads;
 	hdr.side=unit[drive].track%unit[drive].type->heads;
 	hdr.sec=cnt+1;
-	hdr.crc=करोs_hdr_crc(&hdr);
+	hdr.crc=dos_hdr_crc(&hdr);
 
 /* header (without "magic") and id gap 2*/
-	करोs_encode_block((uलघु *)raw,(अचिन्हित अक्षर *) &hdr.track,28);
+	dos_encode_block((ushort *)raw,(unsigned char *) &hdr.track,28);
 	raw+=14;
 
 /*id gap 3 */
-	क्रम(i=0;i<6;i++)
+	for(i=0;i<6;i++)
 		*raw++=0xaaaaaaaa;
 
 /* 3 syncs and 1 datamark */
@@ -1304,342 +1303,342 @@ my only works was to code this from manx to C....
 	*raw++=0x44895545;
 
 /* data */
-	करोs_encode_block((uलघु *)raw,
-			 (अचिन्हित अक्षर *)unit[drive].trackbuf+cnt*512,512);
+	dos_encode_block((ushort *)raw,
+			 (unsigned char *)unit[drive].trackbuf+cnt*512,512);
 	raw+=256;
 
-/*data crc + jd's special gap (दीर्घ words :-/) */
-	crc[0]=करोs_data_crc(unit[drive].trackbuf+cnt*512);
-	करोs_encode_block((uलघु *) raw,(अचिन्हित अक्षर *)crc,4);
+/*data crc + jd's special gap (long words :-/) */
+	crc[0]=dos_data_crc(unit[drive].trackbuf+cnt*512);
+	dos_encode_block((ushort *) raw,(unsigned char *)crc,4);
 	raw+=2;
 
 /* data gap */
-	क्रम(i=0;i<38;i++)
+	for(i=0;i<38;i++)
 		*raw++=0x92549254;
 
-	वापस raw; /* wrote 652 MFM words */
-पूर्ण
+	return raw; /* wrote 652 MFM words */
+}
 
-अटल व्योम करोs_ग_लिखो(पूर्णांक disk)
-अणु
-	पूर्णांक cnt;
-	अचिन्हित दीर्घ raw = (अचिन्हित दीर्घ) raw_buf;
-	अचिन्हित दीर्घ *ptr=(अचिन्हित दीर्घ *)raw;
+static void dos_write(int disk)
+{
+	int cnt;
+	unsigned long raw = (unsigned long) raw_buf;
+	unsigned long *ptr=(unsigned long *)raw;
 
 	disk&=3;
-/* really gap4 + indexgap , but we ग_लिखो it first and round it up */
-	क्रम (cnt=0;cnt<425;cnt++)
+/* really gap4 + indexgap , but we write it first and round it up */
+	for (cnt=0;cnt<425;cnt++)
 		*ptr++=0x92549254;
 
 /* the following is just guessed */
-	अगर (unit[disk].type->sect_mult==2)  /* check क्रम HD-Disks */
-		क्रम(cnt=0;cnt<473;cnt++)
+	if (unit[disk].type->sect_mult==2)  /* check for HD-Disks */
+		for(cnt=0;cnt<473;cnt++)
 			*ptr++=0x92549254;
 
 /* now the index marks...*/
-	क्रम (cnt=0;cnt<20;cnt++)
+	for (cnt=0;cnt<20;cnt++)
 		*ptr++=0x92549254;
-	क्रम (cnt=0;cnt<6;cnt++)
+	for (cnt=0;cnt<6;cnt++)
 		*ptr++=0xaaaaaaaa;
 	*ptr++=0x52245224;
 	*ptr++=0x52245552;
-	क्रम (cnt=0;cnt<20;cnt++)
+	for (cnt=0;cnt<20;cnt++)
 		*ptr++=0x92549254;
 
 /* sectors */
-	क्रम(cnt = 0; cnt < unit[disk].dtype->sects * unit[disk].type->sect_mult; cnt++)
-		ptr=ms_माला_दोec(disk,ptr,cnt);
+	for(cnt = 0; cnt < unit[disk].dtype->sects * unit[disk].type->sect_mult; cnt++)
+		ptr=ms_putsec(disk,ptr,cnt);
 
-	*(uलघु *)ptr = 0xaaa8; /* MFM word beक्रमe is always 0x9254 */
-पूर्ण
+	*(ushort *)ptr = 0xaaa8; /* MFM word before is always 0x9254 */
+}
 
 /*
- * Here comes the high level stuff (i.e. the fileप्रणाली पूर्णांकerface)
+ * Here comes the high level stuff (i.e. the filesystem interface)
  * and helper functions.
  * Normally this should be the only part that has to be adapted to
- * dअगरferent kernel versions.
+ * different kernel versions.
  */
 
 /* FIXME: this assumes the drive is still spinning -
- * which is only true अगर we complete writing a track within three seconds
+ * which is only true if we complete writing a track within three seconds
  */
-अटल व्योम flush_track_callback(काष्ठा समयr_list *समयr)
-अणु
-	अचिन्हित दीर्घ nr = ((अचिन्हित दीर्घ)समयr -
-			       (अचिन्हित दीर्घ)&flush_track_समयr[0]) /
-					माप(flush_track_समयr[0]);
+static void flush_track_callback(struct timer_list *timer)
+{
+	unsigned long nr = ((unsigned long)timer -
+			       (unsigned long)&flush_track_timer[0]) /
+					sizeof(flush_track_timer[0]);
 
 	nr&=3;
-	ग_लिखोfromपूर्णांक = 1;
-	अगर (!try_fdc(nr)) अणु
-		/* we might block in an पूर्णांकerrupt, so try again later */
-		flush_track_समयr[nr].expires = jअगरfies + 1;
-		add_समयr(flush_track_समयr + nr);
-		वापस;
-	पूर्ण
+	writefromint = 1;
+	if (!try_fdc(nr)) {
+		/* we might block in an interrupt, so try again later */
+		flush_track_timer[nr].expires = jiffies + 1;
+		add_timer(flush_track_timer + nr);
+		return;
+	}
 	get_fdc(nr);
-	(*unit[nr].dtype->ग_लिखो_fkt)(nr);
-	अगर (!raw_ग_लिखो(nr)) अणु
-		prपूर्णांकk (KERN_NOTICE "floppy disk write protected\n");
-		ग_लिखोfromपूर्णांक = 0;
-		ग_लिखोpending = 0;
-	पूर्ण
+	(*unit[nr].dtype->write_fkt)(nr);
+	if (!raw_write(nr)) {
+		printk (KERN_NOTICE "floppy disk write protected\n");
+		writefromint = 0;
+		writepending = 0;
+	}
 	rel_fdc();
-पूर्ण
+}
 
-अटल पूर्णांक non_पूर्णांक_flush_track (अचिन्हित दीर्घ nr)
-अणु
-	अचिन्हित दीर्घ flags;
+static int non_int_flush_track (unsigned long nr)
+{
+	unsigned long flags;
 
 	nr&=3;
-	ग_लिखोfromपूर्णांक = 0;
-	del_समयr(&post_ग_लिखो_समयr);
+	writefromint = 0;
+	del_timer(&post_write_timer);
 	get_fdc(nr);
-	अगर (!fd_motor_on(nr)) अणु
-		ग_लिखोpending = 0;
+	if (!fd_motor_on(nr)) {
+		writepending = 0;
 		rel_fdc();
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 	local_irq_save(flags);
-	अगर (ग_लिखोpending != 2) अणु
+	if (writepending != 2) {
 		local_irq_restore(flags);
-		(*unit[nr].dtype->ग_लिखो_fkt)(nr);
-		अगर (!raw_ग_लिखो(nr)) अणु
-			prपूर्णांकk (KERN_NOTICE "floppy disk write protected "
+		(*unit[nr].dtype->write_fkt)(nr);
+		if (!raw_write(nr)) {
+			printk (KERN_NOTICE "floppy disk write protected "
 				"in write!\n");
-			ग_लिखोpending = 0;
-			वापस 0;
-		पूर्ण
-		रुको_event(रुको_fd_block, block_flag != 2);
-	पूर्ण
-	अन्यथा अणु
+			writepending = 0;
+			return 0;
+		}
+		wait_event(wait_fd_block, block_flag != 2);
+	}
+	else {
 		local_irq_restore(flags);
-		ms_delay(2); /* 2 ms post_ग_लिखो delay */
-		post_ग_लिखो(nr);
-	पूर्ण
+		ms_delay(2); /* 2 ms post_write delay */
+		post_write(nr);
+	}
 	rel_fdc();
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल पूर्णांक get_track(पूर्णांक drive, पूर्णांक track)
-अणु
-	पूर्णांक error, errcnt;
+static int get_track(int drive, int track)
+{
+	int error, errcnt;
 
 	drive&=3;
-	अगर (unit[drive].track == track)
-		वापस 0;
+	if (unit[drive].track == track)
+		return 0;
 	get_fdc(drive);
-	अगर (!fd_motor_on(drive)) अणु
+	if (!fd_motor_on(drive)) {
 		rel_fdc();
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	अगर (unit[drive].dirty == 1) अणु
-		del_समयr (flush_track_समयr + drive);
-		non_पूर्णांक_flush_track (drive);
-	पूर्ण
+	if (unit[drive].dirty == 1) {
+		del_timer (flush_track_timer + drive);
+		non_int_flush_track (drive);
+	}
 	errcnt = 0;
-	जबतक (errcnt < MAX_ERRORS) अणु
-		अगर (!fd_seek(drive, track))
-			वापस -1;
-		raw_पढ़ो(drive);
-		error = (*unit[drive].dtype->पढ़ो_fkt)(drive);
-		अगर (error == 0) अणु
+	while (errcnt < MAX_ERRORS) {
+		if (!fd_seek(drive, track))
+			return -1;
+		raw_read(drive);
+		error = (*unit[drive].dtype->read_fkt)(drive);
+		if (error == 0) {
 			rel_fdc();
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 		/* Read Error Handling: recalibrate and try again */
 		unit[drive].track = -1;
 		errcnt++;
-	पूर्ण
+	}
 	rel_fdc();
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
-अटल blk_status_t amअगरlop_rw_cur_segment(काष्ठा amiga_floppy_काष्ठा *floppy,
-					   काष्ठा request *rq)
-अणु
-	पूर्णांक drive = floppy - unit;
-	अचिन्हित पूर्णांक cnt, block, track, sector;
-	अक्षर *data;
+static blk_status_t amiflop_rw_cur_segment(struct amiga_floppy_struct *floppy,
+					   struct request *rq)
+{
+	int drive = floppy - unit;
+	unsigned int cnt, block, track, sector;
+	char *data;
 
-	क्रम (cnt = 0; cnt < blk_rq_cur_sectors(rq); cnt++) अणु
-#अगर_घोषित DEBUG
-		prपूर्णांकk("fd: sector %ld + %d requested for %s\n",
+	for (cnt = 0; cnt < blk_rq_cur_sectors(rq); cnt++) {
+#ifdef DEBUG
+		printk("fd: sector %ld + %d requested for %s\n",
 		       blk_rq_pos(rq), cnt,
 		       (rq_data_dir(rq) == READ) ? "read" : "write");
-#पूर्ण_अगर
+#endif
 		block = blk_rq_pos(rq) + cnt;
 		track = block / (floppy->dtype->sects * floppy->type->sect_mult);
 		sector = block % (floppy->dtype->sects * floppy->type->sect_mult);
 		data = bio_data(rq->bio) + 512 * cnt;
-#अगर_घोषित DEBUG
-		prपूर्णांकk("access to track %d, sector %d, with buffer at "
+#ifdef DEBUG
+		printk("access to track %d, sector %d, with buffer at "
 		       "0x%08lx\n", track, sector, data);
-#पूर्ण_अगर
+#endif
 
-		अगर (get_track(drive, track) == -1)
-			वापस BLK_STS_IOERR;
+		if (get_track(drive, track) == -1)
+			return BLK_STS_IOERR;
 
-		अगर (rq_data_dir(rq) == READ) अणु
-			स_नकल(data, floppy->trackbuf + sector * 512, 512);
-		पूर्ण अन्यथा अणु
-			स_नकल(floppy->trackbuf + sector * 512, data, 512);
+		if (rq_data_dir(rq) == READ) {
+			memcpy(data, floppy->trackbuf + sector * 512, 512);
+		} else {
+			memcpy(floppy->trackbuf + sector * 512, data, 512);
 
-			/* keep the drive spinning जबतक ग_लिखोs are scheduled */
-			अगर (!fd_motor_on(drive))
-				वापस BLK_STS_IOERR;
+			/* keep the drive spinning while writes are scheduled */
+			if (!fd_motor_on(drive))
+				return BLK_STS_IOERR;
 			/*
-			 * setup a callback to ग_लिखो the track buffer
-			 * after a लघु (1 tick) delay.
+			 * setup a callback to write the track buffer
+			 * after a short (1 tick) delay.
 			 */
 			floppy->dirty = 1;
-		        /* reset the समयr */
-			mod_समयr (flush_track_समयr + drive, jअगरfies + 1);
-		पूर्ण
-	पूर्ण
+		        /* reset the timer */
+			mod_timer (flush_track_timer + drive, jiffies + 1);
+		}
+	}
 
-	वापस BLK_STS_OK;
-पूर्ण
+	return BLK_STS_OK;
+}
 
-अटल blk_status_t amअगरlop_queue_rq(काष्ठा blk_mq_hw_ctx *hctx,
-				     स्थिर काष्ठा blk_mq_queue_data *bd)
-अणु
-	काष्ठा request *rq = bd->rq;
-	काष्ठा amiga_floppy_काष्ठा *floppy = rq->rq_disk->निजी_data;
+static blk_status_t amiflop_queue_rq(struct blk_mq_hw_ctx *hctx,
+				     const struct blk_mq_queue_data *bd)
+{
+	struct request *rq = bd->rq;
+	struct amiga_floppy_struct *floppy = rq->rq_disk->private_data;
 	blk_status_t err;
 
-	अगर (!spin_trylock_irq(&amअगरlop_lock))
-		वापस BLK_STS_DEV_RESOURCE;
+	if (!spin_trylock_irq(&amiflop_lock))
+		return BLK_STS_DEV_RESOURCE;
 
 	blk_mq_start_request(rq);
 
-	करो अणु
-		err = amअगरlop_rw_cur_segment(floppy, rq);
-	पूर्ण जबतक (blk_update_request(rq, err, blk_rq_cur_bytes(rq)));
+	do {
+		err = amiflop_rw_cur_segment(floppy, rq);
+	} while (blk_update_request(rq, err, blk_rq_cur_bytes(rq)));
 	blk_mq_end_request(rq, err);
 
-	spin_unlock_irq(&amअगरlop_lock);
-	वापस BLK_STS_OK;
-पूर्ण
+	spin_unlock_irq(&amiflop_lock);
+	return BLK_STS_OK;
+}
 
-अटल पूर्णांक fd_getgeo(काष्ठा block_device *bdev, काष्ठा hd_geometry *geo)
-अणु
-	पूर्णांक drive = MINOR(bdev->bd_dev) & 3;
+static int fd_getgeo(struct block_device *bdev, struct hd_geometry *geo)
+{
+	int drive = MINOR(bdev->bd_dev) & 3;
 
 	geo->heads = unit[drive].type->heads;
 	geo->sectors = unit[drive].dtype->sects * unit[drive].type->sect_mult;
 	geo->cylinders = unit[drive].type->tracks;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक fd_locked_ioctl(काष्ठा block_device *bdev, भ_शेषe_t mode,
-		    अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ param)
-अणु
-	काष्ठा amiga_floppy_काष्ठा *p = bdev->bd_disk->निजी_data;
-	पूर्णांक drive = p - unit;
-	अटल काष्ठा floppy_काष्ठा getprm;
-	व्योम __user *argp = (व्योम __user *)param;
+static int fd_locked_ioctl(struct block_device *bdev, fmode_t mode,
+		    unsigned int cmd, unsigned long param)
+{
+	struct amiga_floppy_struct *p = bdev->bd_disk->private_data;
+	int drive = p - unit;
+	static struct floppy_struct getprm;
+	void __user *argp = (void __user *)param;
 
-	चयन(cmd)अणु
-	हाल FDFMTBEG:
+	switch(cmd){
+	case FDFMTBEG:
 		get_fdc(drive);
-		अगर (fd_ref[drive] > 1) अणु
+		if (fd_ref[drive] > 1) {
 			rel_fdc();
-			वापस -EBUSY;
-		पूर्ण
+			return -EBUSY;
+		}
 		fsync_bdev(bdev);
-		अगर (fd_motor_on(drive) == 0) अणु
+		if (fd_motor_on(drive) == 0) {
 			rel_fdc();
-			वापस -ENODEV;
-		पूर्ण
-		अगर (fd_calibrate(drive) == 0) अणु
+			return -ENODEV;
+		}
+		if (fd_calibrate(drive) == 0) {
 			rel_fdc();
-			वापस -ENXIO;
-		पूर्ण
+			return -ENXIO;
+		}
 		floppy_off(drive);
 		rel_fdc();
-		अवरोध;
-	हाल FDFMTTRK:
-		अगर (param < p->type->tracks * p->type->heads)
-		अणु
+		break;
+	case FDFMTTRK:
+		if (param < p->type->tracks * p->type->heads)
+		{
 			get_fdc(drive);
-			अगर (fd_seek(drive,param) != 0)अणु
-				स_रखो(p->trackbuf, FD_FILL_BYTE,
+			if (fd_seek(drive,param) != 0){
+				memset(p->trackbuf, FD_FILL_BYTE,
 				       p->dtype->sects * p->type->sect_mult * 512);
-				non_पूर्णांक_flush_track(drive);
-			पूर्ण
+				non_int_flush_track(drive);
+			}
 			floppy_off(drive);
 			rel_fdc();
-		पूर्ण
-		अन्यथा
-			वापस -EINVAL;
-		अवरोध;
-	हाल FDFMTEND:
+		}
+		else
+			return -EINVAL;
+		break;
+	case FDFMTEND:
 		floppy_off(drive);
 		invalidate_bdev(bdev);
-		अवरोध;
-	हाल FDGETPRM:
-		स_रखो((व्योम *)&getprm, 0, माप (getprm));
+		break;
+	case FDGETPRM:
+		memset((void *)&getprm, 0, sizeof (getprm));
 		getprm.track=p->type->tracks;
 		getprm.head=p->type->heads;
 		getprm.sect=p->dtype->sects * p->type->sect_mult;
 		getprm.size=p->blocks;
-		अगर (copy_to_user(argp, &getprm, माप(काष्ठा floppy_काष्ठा)))
-			वापस -EFAULT;
-		अवरोध;
-	हाल FDSETPRM:
-	हाल FDDEFPRM:
-		वापस -EINVAL;
-	हाल FDFLUSH: /* unconditionally, even अगर not needed */
-		del_समयr (flush_track_समयr + drive);
-		non_पूर्णांक_flush_track(drive);
-		अवरोध;
-#अगर_घोषित RAW_IOCTL
-	हाल IOCTL_RAW_TRACK:
-		अगर (copy_to_user(argp, raw_buf, p->type->पढ़ो_size))
-			वापस -EFAULT;
-		अन्यथा
-			वापस p->type->पढ़ो_size;
-#पूर्ण_अगर
-	शेष:
-		वापस -ENOSYS;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		if (copy_to_user(argp, &getprm, sizeof(struct floppy_struct)))
+			return -EFAULT;
+		break;
+	case FDSETPRM:
+	case FDDEFPRM:
+		return -EINVAL;
+	case FDFLUSH: /* unconditionally, even if not needed */
+		del_timer (flush_track_timer + drive);
+		non_int_flush_track(drive);
+		break;
+#ifdef RAW_IOCTL
+	case IOCTL_RAW_TRACK:
+		if (copy_to_user(argp, raw_buf, p->type->read_size))
+			return -EFAULT;
+		else
+			return p->type->read_size;
+#endif
+	default:
+		return -ENOSYS;
+	}
+	return 0;
+}
 
-अटल पूर्णांक fd_ioctl(काष्ठा block_device *bdev, भ_शेषe_t mode,
-			     अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ param)
-अणु
-	पूर्णांक ret;
+static int fd_ioctl(struct block_device *bdev, fmode_t mode,
+			     unsigned int cmd, unsigned long param)
+{
+	int ret;
 
-	mutex_lock(&amअगरlop_mutex);
+	mutex_lock(&amiflop_mutex);
 	ret = fd_locked_ioctl(bdev, mode, cmd, param);
-	mutex_unlock(&amअगरlop_mutex);
+	mutex_unlock(&amiflop_mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम fd_probe(पूर्णांक dev)
-अणु
-	अचिन्हित दीर्घ code;
-	पूर्णांक type;
-	पूर्णांक drive;
+static void fd_probe(int dev)
+{
+	unsigned long code;
+	int type;
+	int drive;
 
 	drive = dev & 3;
 	code = fd_get_drive_id(drive);
 
 	/* get drive type */
-	क्रम (type = 0; type < num_dr_types; type++)
-		अगर (drive_types[type].code == code)
-			अवरोध;
+	for (type = 0; type < num_dr_types; type++)
+		if (drive_types[type].code == code)
+			break;
 
-	अगर (type >= num_dr_types) अणु
-		prपूर्णांकk(KERN_WARNING "fd_probe: unsupported drive type "
+	if (type >= num_dr_types) {
+		printk(KERN_WARNING "fd_probe: unsupported drive type "
 		       "%08lx found\n", code);
 		unit[drive].type = &drive_types[num_dr_types-1]; /* FD_NODRIVE */
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	unit[drive].type = drive_types + type;
 	unit[drive].track = -1;
@@ -1648,37 +1647,37 @@ my only works was to code this from manx to C....
 	unit[drive].motor = 0;
 	unit[drive].busy = 0;
 	unit[drive].status = -1;
-पूर्ण
+}
 
 /*
- * floppy_खोलो check क्रम aliasing (/dev/fd0 can be the same as
+ * floppy_open check for aliasing (/dev/fd0 can be the same as
  * /dev/PS0 etc), and disallows simultaneous access to the same
- * drive with dअगरferent device numbers.
+ * drive with different device numbers.
  */
-अटल पूर्णांक floppy_खोलो(काष्ठा block_device *bdev, भ_शेषe_t mode)
-अणु
-	पूर्णांक drive = MINOR(bdev->bd_dev) & 3;
-	पूर्णांक प्रणाली =  (MINOR(bdev->bd_dev) & 4) >> 2;
-	पूर्णांक old_dev;
-	अचिन्हित दीर्घ flags;
+static int floppy_open(struct block_device *bdev, fmode_t mode)
+{
+	int drive = MINOR(bdev->bd_dev) & 3;
+	int system =  (MINOR(bdev->bd_dev) & 4) >> 2;
+	int old_dev;
+	unsigned long flags;
 
-	mutex_lock(&amअगरlop_mutex);
+	mutex_lock(&amiflop_mutex);
 	old_dev = fd_device[drive];
 
-	अगर (fd_ref[drive] && old_dev != प्रणाली) अणु
-		mutex_unlock(&amअगरlop_mutex);
-		वापस -EBUSY;
-	पूर्ण
+	if (fd_ref[drive] && old_dev != system) {
+		mutex_unlock(&amiflop_mutex);
+		return -EBUSY;
+	}
 
-	अगर (unit[drive].type->code == FD_NODRIVE) अणु
-		mutex_unlock(&amअगरlop_mutex);
-		वापस -ENXIO;
-	पूर्ण
+	if (unit[drive].type->code == FD_NODRIVE) {
+		mutex_unlock(&amiflop_mutex);
+		return -ENXIO;
+	}
 
-	अगर (mode & (FMODE_READ|FMODE_WRITE)) अणु
+	if (mode & (FMODE_READ|FMODE_WRITE)) {
 		bdev_check_media_change(bdev);
-		अगर (mode & FMODE_WRITE) अणु
-			पूर्णांक wrprot;
+		if (mode & FMODE_WRITE) {
+			int wrprot;
 
 			get_fdc(drive);
 			fd_select (drive);
@@ -1686,285 +1685,285 @@ my only works was to code this from manx to C....
 			fd_deselect (drive);
 			rel_fdc();
 
-			अगर (wrprot) अणु
-				mutex_unlock(&amअगरlop_mutex);
-				वापस -EROFS;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			if (wrprot) {
+				mutex_unlock(&amiflop_mutex);
+				return -EROFS;
+			}
+		}
+	}
 
 	local_irq_save(flags);
 	fd_ref[drive]++;
-	fd_device[drive] = प्रणाली;
+	fd_device[drive] = system;
 	local_irq_restore(flags);
 
-	unit[drive].dtype=&data_types[प्रणाली];
+	unit[drive].dtype=&data_types[system];
 	unit[drive].blocks=unit[drive].type->heads*unit[drive].type->tracks*
-		data_types[प्रणाली].sects*unit[drive].type->sect_mult;
-	set_capacity(unit[drive].gendisk[प्रणाली], unit[drive].blocks);
+		data_types[system].sects*unit[drive].type->sect_mult;
+	set_capacity(unit[drive].gendisk[system], unit[drive].blocks);
 
-	prपूर्णांकk(KERN_INFO "fd%d: accessing %s-disk with %s-layout\n",drive,
-	       unit[drive].type->name, data_types[प्रणाली].name);
+	printk(KERN_INFO "fd%d: accessing %s-disk with %s-layout\n",drive,
+	       unit[drive].type->name, data_types[system].name);
 
-	mutex_unlock(&amअगरlop_mutex);
-	वापस 0;
-पूर्ण
+	mutex_unlock(&amiflop_mutex);
+	return 0;
+}
 
-अटल व्योम floppy_release(काष्ठा gendisk *disk, भ_शेषe_t mode)
-अणु
-	काष्ठा amiga_floppy_काष्ठा *p = disk->निजी_data;
-	पूर्णांक drive = p - unit;
+static void floppy_release(struct gendisk *disk, fmode_t mode)
+{
+	struct amiga_floppy_struct *p = disk->private_data;
+	int drive = p - unit;
 
-	mutex_lock(&amअगरlop_mutex);
-	अगर (unit[drive].dirty == 1) अणु
-		del_समयr (flush_track_समयr + drive);
-		non_पूर्णांक_flush_track (drive);
-	पूर्ण
+	mutex_lock(&amiflop_mutex);
+	if (unit[drive].dirty == 1) {
+		del_timer (flush_track_timer + drive);
+		non_int_flush_track (drive);
+	}
   
-	अगर (!fd_ref[drive]--) अणु
-		prपूर्णांकk(KERN_CRIT "floppy_release with fd_ref == 0");
+	if (!fd_ref[drive]--) {
+		printk(KERN_CRIT "floppy_release with fd_ref == 0");
 		fd_ref[drive] = 0;
-	पूर्ण
-#अगर_घोषित MODULE
+	}
+#ifdef MODULE
 	floppy_off (drive);
-#पूर्ण_अगर
-	mutex_unlock(&amअगरlop_mutex);
-पूर्ण
+#endif
+	mutex_unlock(&amiflop_mutex);
+}
 
 /*
- * check_events is never called from an पूर्णांकerrupt, so we can relax a bit
- * here, sleep etc. Note that floppy-on tries to set current_DOR to poपूर्णांक
- * to the desired drive, but it will probably not survive the sleep अगर
- * several floppies are used at the same समय: thus the loop.
+ * check_events is never called from an interrupt, so we can relax a bit
+ * here, sleep etc. Note that floppy-on tries to set current_DOR to point
+ * to the desired drive, but it will probably not survive the sleep if
+ * several floppies are used at the same time: thus the loop.
  */
-अटल अचिन्हित amiga_check_events(काष्ठा gendisk *disk, अचिन्हित पूर्णांक clearing)
-अणु
-	काष्ठा amiga_floppy_काष्ठा *p = disk->निजी_data;
-	पूर्णांक drive = p - unit;
-	पूर्णांक changed;
-	अटल पूर्णांक first_समय = 1;
+static unsigned amiga_check_events(struct gendisk *disk, unsigned int clearing)
+{
+	struct amiga_floppy_struct *p = disk->private_data;
+	int drive = p - unit;
+	int changed;
+	static int first_time = 1;
 
-	अगर (first_समय)
-		changed = first_समय--;
-	अन्यथा अणु
+	if (first_time)
+		changed = first_time--;
+	else {
 		get_fdc(drive);
 		fd_select (drive);
 		changed = !(ciaa.pra & DSKCHANGE);
 		fd_deselect (drive);
 		rel_fdc();
-	पूर्ण
+	}
 
-	अगर (changed) अणु
+	if (changed) {
 		fd_probe(drive);
 		p->track = -1;
 		p->dirty = 0;
-		ग_लिखोpending = 0; /* अगर this was true beक्रमe, too bad! */
-		ग_लिखोfromपूर्णांक = 0;
-		वापस DISK_EVENT_MEDIA_CHANGE;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		writepending = 0; /* if this was true before, too bad! */
+		writefromint = 0;
+		return DISK_EVENT_MEDIA_CHANGE;
+	}
+	return 0;
+}
 
-अटल स्थिर काष्ठा block_device_operations floppy_fops = अणु
+static const struct block_device_operations floppy_fops = {
 	.owner		= THIS_MODULE,
-	.खोलो		= floppy_खोलो,
+	.open		= floppy_open,
 	.release	= floppy_release,
 	.ioctl		= fd_ioctl,
 	.getgeo		= fd_getgeo,
 	.check_events	= amiga_check_events,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा blk_mq_ops amअगरlop_mq_ops = अणु
-	.queue_rq = amअगरlop_queue_rq,
-पूर्ण;
+static const struct blk_mq_ops amiflop_mq_ops = {
+	.queue_rq = amiflop_queue_rq,
+};
 
-अटल पूर्णांक fd_alloc_disk(पूर्णांक drive, पूर्णांक प्रणाली)
-अणु
-	काष्ठा gendisk *disk;
+static int fd_alloc_disk(int drive, int system)
+{
+	struct gendisk *disk;
 
 	disk = alloc_disk(1);
-	अगर (!disk)
-		जाओ out;
+	if (!disk)
+		goto out;
 	disk->queue = blk_mq_init_queue(&unit[drive].tag_set);
-	अगर (IS_ERR(disk->queue))
-		जाओ out_put_disk;
+	if (IS_ERR(disk->queue))
+		goto out_put_disk;
 
 	disk->major = FLOPPY_MAJOR;
-	disk->first_minor = drive + प्रणाली;
+	disk->first_minor = drive + system;
 	disk->fops = &floppy_fops;
 	disk->events = DISK_EVENT_MEDIA_CHANGE;
-	अगर (प्रणाली)
-		प्र_लिखो(disk->disk_name, "fd%d_msdos", drive);
-	अन्यथा
-		प्र_लिखो(disk->disk_name, "fd%d", drive);
-	disk->निजी_data = &unit[drive];
+	if (system)
+		sprintf(disk->disk_name, "fd%d_msdos", drive);
+	else
+		sprintf(disk->disk_name, "fd%d", drive);
+	disk->private_data = &unit[drive];
 	set_capacity(disk, 880 * 2);
 
-	unit[drive].gendisk[प्रणाली] = disk;
+	unit[drive].gendisk[system] = disk;
 	add_disk(disk);
-	वापस 0;
+	return 0;
 
 out_put_disk:
-	disk->queue = शून्य;
+	disk->queue = NULL;
 	put_disk(disk);
 out:
-	वापस -ENOMEM;
-पूर्ण
+	return -ENOMEM;
+}
 
-अटल पूर्णांक fd_alloc_drive(पूर्णांक drive)
-अणु
-	unit[drive].trackbuf = kदो_स्मृति(FLOPPY_MAX_SECTORS * 512, GFP_KERNEL);
-	अगर (!unit[drive].trackbuf)
-		जाओ out;
+static int fd_alloc_drive(int drive)
+{
+	unit[drive].trackbuf = kmalloc(FLOPPY_MAX_SECTORS * 512, GFP_KERNEL);
+	if (!unit[drive].trackbuf)
+		goto out;
 
-	स_रखो(&unit[drive].tag_set, 0, माप(unit[drive].tag_set));
-	unit[drive].tag_set.ops = &amअगरlop_mq_ops;
+	memset(&unit[drive].tag_set, 0, sizeof(unit[drive].tag_set));
+	unit[drive].tag_set.ops = &amiflop_mq_ops;
 	unit[drive].tag_set.nr_hw_queues = 1;
 	unit[drive].tag_set.nr_maps = 1;
 	unit[drive].tag_set.queue_depth = 2;
 	unit[drive].tag_set.numa_node = NUMA_NO_NODE;
 	unit[drive].tag_set.flags = BLK_MQ_F_SHOULD_MERGE;
-	अगर (blk_mq_alloc_tag_set(&unit[drive].tag_set))
-		जाओ out_cleanup_trackbuf;
+	if (blk_mq_alloc_tag_set(&unit[drive].tag_set))
+		goto out_cleanup_trackbuf;
 
 	pr_cont(" fd%d", drive);
 
-	अगर (fd_alloc_disk(drive, 0) || fd_alloc_disk(drive, 1))
-		जाओ out_cleanup_tagset;
-	वापस 0;
+	if (fd_alloc_disk(drive, 0) || fd_alloc_disk(drive, 1))
+		goto out_cleanup_tagset;
+	return 0;
 
 out_cleanup_tagset:
-	blk_mq_मुक्त_tag_set(&unit[drive].tag_set);
+	blk_mq_free_tag_set(&unit[drive].tag_set);
 out_cleanup_trackbuf:
-	kमुक्त(unit[drive].trackbuf);
+	kfree(unit[drive].trackbuf);
 out:
 	unit[drive].type->code = FD_NODRIVE;
-	वापस -ENOMEM;
-पूर्ण
+	return -ENOMEM;
+}
 
-अटल पूर्णांक __init fd_probe_drives(व्योम)
-अणु
-	पूर्णांक drive,drives,nomem;
+static int __init fd_probe_drives(void)
+{
+	int drive,drives,nomem;
 
 	pr_info("FD: probing units\nfound");
 	drives=0;
 	nomem=0;
-	क्रम(drive=0;drive<FD_MAX_UNITS;drive++) अणु
+	for(drive=0;drive<FD_MAX_UNITS;drive++) {
 		fd_probe(drive);
-		अगर (unit[drive].type->code == FD_NODRIVE)
-			जारी;
+		if (unit[drive].type->code == FD_NODRIVE)
+			continue;
 
-		अगर (fd_alloc_drive(drive) < 0) अणु
+		if (fd_alloc_drive(drive) < 0) {
 			pr_cont(" no mem for fd%d", drive);
 			nomem = 1;
-			जारी;
-		पूर्ण
+			continue;
+		}
 		drives++;
-	पूर्ण
-	अगर ((drives > 0) || (nomem == 0)) अणु
-		अगर (drives == 0)
+	}
+	if ((drives > 0) || (nomem == 0)) {
+		if (drives == 0)
 			pr_cont(" no drives");
 		pr_cont("\n");
-		वापस drives;
-	पूर्ण
+		return drives;
+	}
 	pr_cont("\n");
-	वापस -ENOMEM;
-पूर्ण
+	return -ENOMEM;
+}
  
-अटल पूर्णांक __init amiga_floppy_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	पूर्णांक i, ret;
+static int __init amiga_floppy_probe(struct platform_device *pdev)
+{
+	int i, ret;
 
-	अगर (रेजिस्टर_blkdev(FLOPPY_MAJOR,"fd"))
-		वापस -EBUSY;
+	if (register_blkdev(FLOPPY_MAJOR,"fd"))
+		return -EBUSY;
 
 	ret = -ENOMEM;
 	raw_buf = amiga_chip_alloc(RAW_BUF_SIZE, "Floppy");
-	अगर (!raw_buf) अणु
-		prपूर्णांकk("fd: cannot get chip mem buffer\n");
-		जाओ out_blkdev;
-	पूर्ण
+	if (!raw_buf) {
+		printk("fd: cannot get chip mem buffer\n");
+		goto out_blkdev;
+	}
 
 	ret = -EBUSY;
-	अगर (request_irq(IRQ_AMIGA_DSKBLK, fd_block_करोne, 0, "floppy_dma", शून्य)) अणु
-		prपूर्णांकk("fd: cannot get irq for dma\n");
-		जाओ out_irq;
-	पूर्ण
+	if (request_irq(IRQ_AMIGA_DSKBLK, fd_block_done, 0, "floppy_dma", NULL)) {
+		printk("fd: cannot get irq for dma\n");
+		goto out_irq;
+	}
 
-	अगर (request_irq(IRQ_AMIGA_CIAA_TB, ms_isr, 0, "floppy_timer", शून्य)) अणु
-		prपूर्णांकk("fd: cannot get irq for timer\n");
-		जाओ out_irq2;
-	पूर्ण
+	if (request_irq(IRQ_AMIGA_CIAA_TB, ms_isr, 0, "floppy_timer", NULL)) {
+		printk("fd: cannot get irq for timer\n");
+		goto out_irq2;
+	}
 
 	ret = -ENODEV;
-	अगर (fd_probe_drives() < 1) /* No usable drives */
-		जाओ out_probe;
+	if (fd_probe_drives() < 1) /* No usable drives */
+		goto out_probe;
 
 	/* initialize variables */
-	समयr_setup(&motor_on_समयr, motor_on_callback, 0);
-	motor_on_समयr.expires = 0;
-	क्रम (i = 0; i < FD_MAX_UNITS; i++) अणु
-		समयr_setup(&motor_off_समयr[i], fd_motor_off, 0);
-		motor_off_समयr[i].expires = 0;
-		समयr_setup(&flush_track_समयr[i], flush_track_callback, 0);
-		flush_track_समयr[i].expires = 0;
+	timer_setup(&motor_on_timer, motor_on_callback, 0);
+	motor_on_timer.expires = 0;
+	for (i = 0; i < FD_MAX_UNITS; i++) {
+		timer_setup(&motor_off_timer[i], fd_motor_off, 0);
+		motor_off_timer[i].expires = 0;
+		timer_setup(&flush_track_timer[i], flush_track_callback, 0);
+		flush_track_timer[i].expires = 0;
 
 		unit[i].track = -1;
-	पूर्ण
+	}
 
-	समयr_setup(&post_ग_लिखो_समयr, post_ग_लिखो_callback, 0);
-	post_ग_लिखो_समयr.expires = 0;
+	timer_setup(&post_write_timer, post_write_callback, 0);
+	post_write_timer.expires = 0;
   
-	क्रम (i = 0; i < 128; i++)
+	for (i = 0; i < 128; i++)
 		mfmdecode[i]=255;
-	क्रम (i = 0; i < 16; i++)
+	for (i = 0; i < 16; i++)
 		mfmdecode[mfmencode[i]]=i;
 
 	/* make sure that disk DMA is enabled */
 	custom.dmacon = DMAF_SETCLR | DMAF_DISK;
 
-	/* init ms समयr */
+	/* init ms timer */
 	ciaa.crb = 8; /* one-shot, stop */
-	वापस 0;
+	return 0;
 
 out_probe:
-	मुक्त_irq(IRQ_AMIGA_CIAA_TB, शून्य);
+	free_irq(IRQ_AMIGA_CIAA_TB, NULL);
 out_irq2:
-	मुक्त_irq(IRQ_AMIGA_DSKBLK, शून्य);
+	free_irq(IRQ_AMIGA_DSKBLK, NULL);
 out_irq:
-	amiga_chip_मुक्त(raw_buf);
+	amiga_chip_free(raw_buf);
 out_blkdev:
-	unरेजिस्टर_blkdev(FLOPPY_MAJOR,"fd");
-	वापस ret;
-पूर्ण
+	unregister_blkdev(FLOPPY_MAJOR,"fd");
+	return ret;
+}
 
-अटल काष्ठा platक्रमm_driver amiga_floppy_driver = अणु
-	.driver   = अणु
+static struct platform_driver amiga_floppy_driver = {
+	.driver   = {
 		.name	= "amiga-floppy",
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक __init amiga_floppy_init(व्योम)
-अणु
-	वापस platक्रमm_driver_probe(&amiga_floppy_driver, amiga_floppy_probe);
-पूर्ण
+static int __init amiga_floppy_init(void)
+{
+	return platform_driver_probe(&amiga_floppy_driver, amiga_floppy_probe);
+}
 
 module_init(amiga_floppy_init);
 
-#अगर_अघोषित MODULE
-अटल पूर्णांक __init amiga_floppy_setup (अक्षर *str)
-अणु
-	पूर्णांक n;
-	अगर (!MACH_IS_AMIGA)
-		वापस 0;
-	अगर (!get_option(&str, &n))
-		वापस 0;
-	prपूर्णांकk (KERN_INFO "amiflop: Setting default df0 to %x\n", n);
+#ifndef MODULE
+static int __init amiga_floppy_setup (char *str)
+{
+	int n;
+	if (!MACH_IS_AMIGA)
+		return 0;
+	if (!get_option(&str, &n))
+		return 0;
+	printk (KERN_INFO "amiflop: Setting default df0 to %x\n", n);
 	fd_def_df0 = n;
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
 __setup("floppy=", amiga_floppy_setup);
-#पूर्ण_अगर
+#endif
 
 MODULE_ALIAS("platform:amiga-floppy");

@@ -1,104 +1,103 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _SYSTBLS_H
-#घोषणा _SYSTBLS_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _SYSTBLS_H
+#define _SYSTBLS_H
 
-#समावेश <linux/संकेत.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/compat.h>
-#समावेश <linux/types.h>
+#include <linux/signal.h>
+#include <linux/kernel.h>
+#include <linux/compat.h>
+#include <linux/types.h>
 
-#समावेश <यंत्र/utrap.h>
+#include <asm/utrap.h>
 
-यंत्रlinkage दीर्घ sys_getpagesize(व्योम);
-यंत्रlinkage दीर्घ sys_sparc_pipe(व्योम);
-यंत्रlinkage दीर्घ sys_nis_syscall(व्योम);
-यंत्रlinkage दीर्घ sys_getकरोमुख्यname(अक्षर __user *name, पूर्णांक len);
-व्योम करो_rt_sigवापस(काष्ठा pt_regs *regs);
-यंत्रlinkage दीर्घ sys_mmap(अचिन्हित दीर्घ addr, अचिन्हित दीर्घ len,
-			 अचिन्हित दीर्घ prot, अचिन्हित दीर्घ flags,
-			 अचिन्हित दीर्घ fd, अचिन्हित दीर्घ off);
-यंत्रlinkage व्योम sparc_अवरोधpoपूर्णांक(काष्ठा pt_regs *regs);
+asmlinkage long sys_getpagesize(void);
+asmlinkage long sys_sparc_pipe(void);
+asmlinkage long sys_nis_syscall(void);
+asmlinkage long sys_getdomainname(char __user *name, int len);
+void do_rt_sigreturn(struct pt_regs *regs);
+asmlinkage long sys_mmap(unsigned long addr, unsigned long len,
+			 unsigned long prot, unsigned long flags,
+			 unsigned long fd, unsigned long off);
+asmlinkage void sparc_breakpoint(struct pt_regs *regs);
 
-#अगर_घोषित CONFIG_SPARC32
-यंत्रlinkage दीर्घ sys_mmap2(अचिन्हित दीर्घ addr, अचिन्हित दीर्घ len,
-			  अचिन्हित दीर्घ prot, अचिन्हित दीर्घ flags,
-			  अचिन्हित दीर्घ fd, अचिन्हित दीर्घ pgoff);
-दीर्घ sys_sparc_remap_file_pages(अचिन्हित दीर्घ start, अचिन्हित दीर्घ size,
-			    अचिन्हित दीर्घ prot, अचिन्हित दीर्घ pgoff,
-			    अचिन्हित दीर्घ flags);
+#ifdef CONFIG_SPARC32
+asmlinkage long sys_mmap2(unsigned long addr, unsigned long len,
+			  unsigned long prot, unsigned long flags,
+			  unsigned long fd, unsigned long pgoff);
+long sys_sparc_remap_file_pages(unsigned long start, unsigned long size,
+			    unsigned long prot, unsigned long pgoff,
+			    unsigned long flags);
 
-#पूर्ण_अगर /* CONFIG_SPARC32 */
+#endif /* CONFIG_SPARC32 */
 
-#अगर_घोषित CONFIG_SPARC64
-यंत्रlinkage दीर्घ sys_sparc_ipc(अचिन्हित पूर्णांक call, पूर्णांक first,
-			      अचिन्हित दीर्घ second,
-			      अचिन्हित दीर्घ third,
-			      व्योम __user *ptr, दीर्घ fअगरth);
-यंत्रlinkage दीर्घ sparc64_personality(अचिन्हित दीर्घ personality);
-यंत्रlinkage दीर्घ sys64_munmap(अचिन्हित दीर्घ addr, माप_प्रकार len);
-यंत्रlinkage अचिन्हित दीर्घ sys64_mremap(अचिन्हित दीर्घ addr,
-				      अचिन्हित दीर्घ old_len,
-				      अचिन्हित दीर्घ new_len,
-				      अचिन्हित दीर्घ flags,
-				      अचिन्हित दीर्घ new_addr);
-यंत्रlinkage दीर्घ sys_utrap_install(utrap_entry_t type,
+#ifdef CONFIG_SPARC64
+asmlinkage long sys_sparc_ipc(unsigned int call, int first,
+			      unsigned long second,
+			      unsigned long third,
+			      void __user *ptr, long fifth);
+asmlinkage long sparc64_personality(unsigned long personality);
+asmlinkage long sys64_munmap(unsigned long addr, size_t len);
+asmlinkage unsigned long sys64_mremap(unsigned long addr,
+				      unsigned long old_len,
+				      unsigned long new_len,
+				      unsigned long flags,
+				      unsigned long new_addr);
+asmlinkage long sys_utrap_install(utrap_entry_t type,
 				  utrap_handler_t new_p,
 				  utrap_handler_t new_d,
 				  utrap_handler_t __user *old_p,
 				  utrap_handler_t __user *old_d);
-यंत्रlinkage दीर्घ sys_memory_ordering(अचिन्हित दीर्घ model);
-यंत्रlinkage व्योम sparc64_set_context(काष्ठा pt_regs *regs);
-यंत्रlinkage व्योम sparc64_get_context(काष्ठा pt_regs *regs);
-यंत्रlinkage दीर्घ compat_sys_truncate64(स्थिर अक्षर __user * path,
+asmlinkage long sys_memory_ordering(unsigned long model);
+asmlinkage void sparc64_set_context(struct pt_regs *regs);
+asmlinkage void sparc64_get_context(struct pt_regs *regs);
+asmlinkage long compat_sys_truncate64(const char __user * path,
 				 u32 high,
 				 u32 low);
-यंत्रlinkage दीर्घ compat_sys_ftruncate64(अचिन्हित पूर्णांक fd,
+asmlinkage long compat_sys_ftruncate64(unsigned int fd,
 				  u32 high,
 				  u32 low);
-काष्ठा compat_stat64;
-यंत्रlinkage दीर्घ compat_sys_stat64(स्थिर अक्षर __user * filename,
-				  काष्ठा compat_stat64 __user *statbuf);
-यंत्रlinkage दीर्घ compat_sys_lstat64(स्थिर अक्षर __user * filename,
-				   काष्ठा compat_stat64 __user *statbuf);
-यंत्रlinkage दीर्घ compat_sys_ख_स्थिति64(अचिन्हित पूर्णांक fd,
-				   काष्ठा compat_stat64 __user * statbuf);
-यंत्रlinkage दीर्घ compat_sys_ख_स्थितिat64(अचिन्हित पूर्णांक dfd,
-				     स्थिर अक्षर __user *filename,
-				     काष्ठा compat_stat64 __user * statbuf, पूर्णांक flag);
-यंत्रlinkage दीर्घ compat_sys_pपढ़ो64(अचिन्हित पूर्णांक fd,
-					अक्षर __user *ubuf,
-					compat_माप_प्रकार count,
+struct compat_stat64;
+asmlinkage long compat_sys_stat64(const char __user * filename,
+				  struct compat_stat64 __user *statbuf);
+asmlinkage long compat_sys_lstat64(const char __user * filename,
+				   struct compat_stat64 __user *statbuf);
+asmlinkage long compat_sys_fstat64(unsigned int fd,
+				   struct compat_stat64 __user * statbuf);
+asmlinkage long compat_sys_fstatat64(unsigned int dfd,
+				     const char __user *filename,
+				     struct compat_stat64 __user * statbuf, int flag);
+asmlinkage long compat_sys_pread64(unsigned int fd,
+					char __user *ubuf,
+					compat_size_t count,
 					u32 poshi,
 					u32 poslo);
-यंत्रlinkage दीर्घ compat_sys_pग_लिखो64(अचिन्हित पूर्णांक fd,
-					 अक्षर __user *ubuf,
-					 compat_माप_प्रकार count,
+asmlinkage long compat_sys_pwrite64(unsigned int fd,
+					 char __user *ubuf,
+					 compat_size_t count,
 					 u32 poshi,
 					 u32 poslo);
-यंत्रlinkage दीर्घ compat_sys_पढ़ोahead(पूर्णांक fd,
-				     अचिन्हित offhi,
-				     अचिन्हित offlo,
-				     compat_माप_प्रकार count);
-दीर्घ compat_sys_fadvise64(पूर्णांक fd,
-			  अचिन्हित offhi,
-			  अचिन्हित offlo,
-			  compat_माप_प्रकार len, पूर्णांक advice);
-दीर्घ compat_sys_fadvise64_64(पूर्णांक fd,
-			     अचिन्हित offhi, अचिन्हित offlo,
-			     अचिन्हित lenhi, अचिन्हित lenlo,
-			     पूर्णांक advice);
-दीर्घ compat_sys_sync_file_range(अचिन्हित पूर्णांक fd,
-			   अचिन्हित off_high, अचिन्हित off_low,
-			   अचिन्हित nb_high, अचिन्हित nb_low,
-			   अचिन्हित पूर्णांक flags);
-यंत्रlinkage दीर्घ compat_sys_fallocate(पूर्णांक fd, पूर्णांक mode, u32 offhi, u32 offlo,
+asmlinkage long compat_sys_readahead(int fd,
+				     unsigned offhi,
+				     unsigned offlo,
+				     compat_size_t count);
+long compat_sys_fadvise64(int fd,
+			  unsigned offhi,
+			  unsigned offlo,
+			  compat_size_t len, int advice);
+long compat_sys_fadvise64_64(int fd,
+			     unsigned offhi, unsigned offlo,
+			     unsigned lenhi, unsigned lenlo,
+			     int advice);
+long compat_sys_sync_file_range(unsigned int fd,
+			   unsigned off_high, unsigned off_low,
+			   unsigned nb_high, unsigned nb_low,
+			   unsigned int flags);
+asmlinkage long compat_sys_fallocate(int fd, int mode, u32 offhi, u32 offlo,
 				     u32 lenhi, u32 lenlo);
-यंत्रlinkage दीर्घ compat_sys_ख_स्थिति64(अचिन्हित पूर्णांक fd,
-				   काष्ठा compat_stat64 __user * statbuf);
-यंत्रlinkage दीर्घ compat_sys_ख_स्थितिat64(अचिन्हित पूर्णांक dfd,
-				     स्थिर अक्षर __user *filename,
-				     काष्ठा compat_stat64 __user * statbuf,
-				     पूर्णांक flag);
-#पूर्ण_अगर /* CONFIG_SPARC64 */
-#पूर्ण_अगर /* _SYSTBLS_H */
+asmlinkage long compat_sys_fstat64(unsigned int fd,
+				   struct compat_stat64 __user * statbuf);
+asmlinkage long compat_sys_fstatat64(unsigned int dfd,
+				     const char __user *filename,
+				     struct compat_stat64 __user * statbuf,
+				     int flag);
+#endif /* CONFIG_SPARC64 */
+#endif /* _SYSTBLS_H */

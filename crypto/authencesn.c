@@ -1,145 +1,144 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * authencesn.c - AEAD wrapper क्रम IPsec with extended sequence numbers,
+ * authencesn.c - AEAD wrapper for IPsec with extended sequence numbers,
  *                 derived from authenc.c
  *
  * Copyright (C) 2010 secunet Security Networks AG
- * Copyright (C) 2010 Steffen Klनिश्चित <steffen.klनिश्चित@secunet.com>
- * Copyright (c) 2015 Herbert Xu <herbert@gonकरोr.apana.org.au>
+ * Copyright (C) 2010 Steffen Klassert <steffen.klassert@secunet.com>
+ * Copyright (c) 2015 Herbert Xu <herbert@gondor.apana.org.au>
  */
 
-#समावेश <crypto/पूर्णांकernal/aead.h>
-#समावेश <crypto/पूर्णांकernal/hash.h>
-#समावेश <crypto/पूर्णांकernal/skcipher.h>
-#समावेश <crypto/authenc.h>
-#समावेश <crypto/null.h>
-#समावेश <crypto/scatterwalk.h>
-#समावेश <linux/err.h>
-#समावेश <linux/init.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/rtnetlink.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/spinlock.h>
+#include <crypto/internal/aead.h>
+#include <crypto/internal/hash.h>
+#include <crypto/internal/skcipher.h>
+#include <crypto/authenc.h>
+#include <crypto/null.h>
+#include <crypto/scatterwalk.h>
+#include <linux/err.h>
+#include <linux/init.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/rtnetlink.h>
+#include <linux/slab.h>
+#include <linux/spinlock.h>
 
-काष्ठा authenc_esn_instance_ctx अणु
-	काष्ठा crypto_ahash_spawn auth;
-	काष्ठा crypto_skcipher_spawn enc;
-पूर्ण;
+struct authenc_esn_instance_ctx {
+	struct crypto_ahash_spawn auth;
+	struct crypto_skcipher_spawn enc;
+};
 
-काष्ठा crypto_authenc_esn_ctx अणु
-	अचिन्हित पूर्णांक reqoff;
-	काष्ठा crypto_ahash *auth;
-	काष्ठा crypto_skcipher *enc;
-	काष्ठा crypto_sync_skcipher *null;
-पूर्ण;
+struct crypto_authenc_esn_ctx {
+	unsigned int reqoff;
+	struct crypto_ahash *auth;
+	struct crypto_skcipher *enc;
+	struct crypto_sync_skcipher *null;
+};
 
-काष्ठा authenc_esn_request_ctx अणु
-	काष्ठा scatterlist src[2];
-	काष्ठा scatterlist dst[2];
-	अक्षर tail[];
-पूर्ण;
+struct authenc_esn_request_ctx {
+	struct scatterlist src[2];
+	struct scatterlist dst[2];
+	char tail[];
+};
 
-अटल व्योम authenc_esn_request_complete(काष्ठा aead_request *req, पूर्णांक err)
-अणु
-	अगर (err != -EINPROGRESS)
+static void authenc_esn_request_complete(struct aead_request *req, int err)
+{
+	if (err != -EINPROGRESS)
 		aead_request_complete(req, err);
-पूर्ण
+}
 
-अटल पूर्णांक crypto_authenc_esn_setauthsize(काष्ठा crypto_aead *authenc_esn,
-					  अचिन्हित पूर्णांक authsize)
-अणु
-	अगर (authsize > 0 && authsize < 4)
-		वापस -EINVAL;
+static int crypto_authenc_esn_setauthsize(struct crypto_aead *authenc_esn,
+					  unsigned int authsize)
+{
+	if (authsize > 0 && authsize < 4)
+		return -EINVAL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक crypto_authenc_esn_setkey(काष्ठा crypto_aead *authenc_esn, स्थिर u8 *key,
-				     अचिन्हित पूर्णांक keylen)
-अणु
-	काष्ठा crypto_authenc_esn_ctx *ctx = crypto_aead_ctx(authenc_esn);
-	काष्ठा crypto_ahash *auth = ctx->auth;
-	काष्ठा crypto_skcipher *enc = ctx->enc;
-	काष्ठा crypto_authenc_keys keys;
-	पूर्णांक err = -EINVAL;
+static int crypto_authenc_esn_setkey(struct crypto_aead *authenc_esn, const u8 *key,
+				     unsigned int keylen)
+{
+	struct crypto_authenc_esn_ctx *ctx = crypto_aead_ctx(authenc_esn);
+	struct crypto_ahash *auth = ctx->auth;
+	struct crypto_skcipher *enc = ctx->enc;
+	struct crypto_authenc_keys keys;
+	int err = -EINVAL;
 
-	अगर (crypto_authenc_extractkeys(&keys, key, keylen) != 0)
-		जाओ out;
+	if (crypto_authenc_extractkeys(&keys, key, keylen) != 0)
+		goto out;
 
 	crypto_ahash_clear_flags(auth, CRYPTO_TFM_REQ_MASK);
 	crypto_ahash_set_flags(auth, crypto_aead_get_flags(authenc_esn) &
 				     CRYPTO_TFM_REQ_MASK);
 	err = crypto_ahash_setkey(auth, keys.authkey, keys.authkeylen);
-	अगर (err)
-		जाओ out;
+	if (err)
+		goto out;
 
 	crypto_skcipher_clear_flags(enc, CRYPTO_TFM_REQ_MASK);
 	crypto_skcipher_set_flags(enc, crypto_aead_get_flags(authenc_esn) &
 					 CRYPTO_TFM_REQ_MASK);
 	err = crypto_skcipher_setkey(enc, keys.enckey, keys.enckeylen);
 out:
-	memzero_explicit(&keys, माप(keys));
-	वापस err;
-पूर्ण
+	memzero_explicit(&keys, sizeof(keys));
+	return err;
+}
 
-अटल पूर्णांक crypto_authenc_esn_genicv_tail(काष्ठा aead_request *req,
-					  अचिन्हित पूर्णांक flags)
-अणु
-	काष्ठा crypto_aead *authenc_esn = crypto_aead_reqtfm(req);
-	काष्ठा crypto_authenc_esn_ctx *ctx = crypto_aead_ctx(authenc_esn);
-	काष्ठा authenc_esn_request_ctx *areq_ctx = aead_request_ctx(req);
-	काष्ठा crypto_ahash *auth = ctx->auth;
+static int crypto_authenc_esn_genicv_tail(struct aead_request *req,
+					  unsigned int flags)
+{
+	struct crypto_aead *authenc_esn = crypto_aead_reqtfm(req);
+	struct crypto_authenc_esn_ctx *ctx = crypto_aead_ctx(authenc_esn);
+	struct authenc_esn_request_ctx *areq_ctx = aead_request_ctx(req);
+	struct crypto_ahash *auth = ctx->auth;
 	u8 *hash = PTR_ALIGN((u8 *)areq_ctx->tail,
 			     crypto_ahash_alignmask(auth) + 1);
-	अचिन्हित पूर्णांक authsize = crypto_aead_authsize(authenc_esn);
-	अचिन्हित पूर्णांक assoclen = req->assoclen;
-	अचिन्हित पूर्णांक cryptlen = req->cryptlen;
-	काष्ठा scatterlist *dst = req->dst;
-	u32 पंचांगp[2];
+	unsigned int authsize = crypto_aead_authsize(authenc_esn);
+	unsigned int assoclen = req->assoclen;
+	unsigned int cryptlen = req->cryptlen;
+	struct scatterlist *dst = req->dst;
+	u32 tmp[2];
 
 	/* Move high-order bits of sequence number back. */
-	scatterwalk_map_and_copy(पंचांगp, dst, 4, 4, 0);
-	scatterwalk_map_and_copy(पंचांगp + 1, dst, assoclen + cryptlen, 4, 0);
-	scatterwalk_map_and_copy(पंचांगp, dst, 0, 8, 1);
+	scatterwalk_map_and_copy(tmp, dst, 4, 4, 0);
+	scatterwalk_map_and_copy(tmp + 1, dst, assoclen + cryptlen, 4, 0);
+	scatterwalk_map_and_copy(tmp, dst, 0, 8, 1);
 
 	scatterwalk_map_and_copy(hash, dst, assoclen + cryptlen, authsize, 1);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम authenc_esn_geniv_ahash_करोne(काष्ठा crypto_async_request *areq,
-					 पूर्णांक err)
-अणु
-	काष्ठा aead_request *req = areq->data;
+static void authenc_esn_geniv_ahash_done(struct crypto_async_request *areq,
+					 int err)
+{
+	struct aead_request *req = areq->data;
 
 	err = err ?: crypto_authenc_esn_genicv_tail(req, 0);
 	aead_request_complete(req, err);
-पूर्ण
+}
 
-अटल पूर्णांक crypto_authenc_esn_genicv(काष्ठा aead_request *req,
-				     अचिन्हित पूर्णांक flags)
-अणु
-	काष्ठा crypto_aead *authenc_esn = crypto_aead_reqtfm(req);
-	काष्ठा authenc_esn_request_ctx *areq_ctx = aead_request_ctx(req);
-	काष्ठा crypto_authenc_esn_ctx *ctx = crypto_aead_ctx(authenc_esn);
-	काष्ठा crypto_ahash *auth = ctx->auth;
+static int crypto_authenc_esn_genicv(struct aead_request *req,
+				     unsigned int flags)
+{
+	struct crypto_aead *authenc_esn = crypto_aead_reqtfm(req);
+	struct authenc_esn_request_ctx *areq_ctx = aead_request_ctx(req);
+	struct crypto_authenc_esn_ctx *ctx = crypto_aead_ctx(authenc_esn);
+	struct crypto_ahash *auth = ctx->auth;
 	u8 *hash = PTR_ALIGN((u8 *)areq_ctx->tail,
 			     crypto_ahash_alignmask(auth) + 1);
-	काष्ठा ahash_request *ahreq = (व्योम *)(areq_ctx->tail + ctx->reqoff);
-	अचिन्हित पूर्णांक authsize = crypto_aead_authsize(authenc_esn);
-	अचिन्हित पूर्णांक assoclen = req->assoclen;
-	अचिन्हित पूर्णांक cryptlen = req->cryptlen;
-	काष्ठा scatterlist *dst = req->dst;
-	u32 पंचांगp[2];
+	struct ahash_request *ahreq = (void *)(areq_ctx->tail + ctx->reqoff);
+	unsigned int authsize = crypto_aead_authsize(authenc_esn);
+	unsigned int assoclen = req->assoclen;
+	unsigned int cryptlen = req->cryptlen;
+	struct scatterlist *dst = req->dst;
+	u32 tmp[2];
 
-	अगर (!authsize)
-		वापस 0;
+	if (!authsize)
+		return 0;
 
 	/* Move high-order bits of sequence number to the end. */
-	scatterwalk_map_and_copy(पंचांगp, dst, 0, 8, 0);
-	scatterwalk_map_and_copy(पंचांगp, dst, 4, 4, 1);
-	scatterwalk_map_and_copy(पंचांगp + 1, dst, assoclen + cryptlen, 4, 1);
+	scatterwalk_map_and_copy(tmp, dst, 0, 8, 0);
+	scatterwalk_map_and_copy(tmp, dst, 4, 4, 1);
+	scatterwalk_map_and_copy(tmp + 1, dst, assoclen + cryptlen, 4, 1);
 
 	sg_init_table(areq_ctx->dst, 2);
 	dst = scatterwalk_ffwd(areq_ctx->dst, dst, 4);
@@ -147,104 +146,104 @@ out:
 	ahash_request_set_tfm(ahreq, auth);
 	ahash_request_set_crypt(ahreq, dst, hash, assoclen + cryptlen);
 	ahash_request_set_callback(ahreq, flags,
-				   authenc_esn_geniv_ahash_करोne, req);
+				   authenc_esn_geniv_ahash_done, req);
 
-	वापस crypto_ahash_digest(ahreq) ?:
+	return crypto_ahash_digest(ahreq) ?:
 	       crypto_authenc_esn_genicv_tail(req, aead_request_flags(req));
-पूर्ण
+}
 
 
-अटल व्योम crypto_authenc_esn_encrypt_करोne(काष्ठा crypto_async_request *req,
-					    पूर्णांक err)
-अणु
-	काष्ठा aead_request *areq = req->data;
+static void crypto_authenc_esn_encrypt_done(struct crypto_async_request *req,
+					    int err)
+{
+	struct aead_request *areq = req->data;
 
-	अगर (!err)
+	if (!err)
 		err = crypto_authenc_esn_genicv(areq, 0);
 
 	authenc_esn_request_complete(areq, err);
-पूर्ण
+}
 
-अटल पूर्णांक crypto_authenc_esn_copy(काष्ठा aead_request *req, अचिन्हित पूर्णांक len)
-अणु
-	काष्ठा crypto_aead *authenc_esn = crypto_aead_reqtfm(req);
-	काष्ठा crypto_authenc_esn_ctx *ctx = crypto_aead_ctx(authenc_esn);
+static int crypto_authenc_esn_copy(struct aead_request *req, unsigned int len)
+{
+	struct crypto_aead *authenc_esn = crypto_aead_reqtfm(req);
+	struct crypto_authenc_esn_ctx *ctx = crypto_aead_ctx(authenc_esn);
 	SYNC_SKCIPHER_REQUEST_ON_STACK(skreq, ctx->null);
 
 	skcipher_request_set_sync_tfm(skreq, ctx->null);
 	skcipher_request_set_callback(skreq, aead_request_flags(req),
-				      शून्य, शून्य);
-	skcipher_request_set_crypt(skreq, req->src, req->dst, len, शून्य);
+				      NULL, NULL);
+	skcipher_request_set_crypt(skreq, req->src, req->dst, len, NULL);
 
-	वापस crypto_skcipher_encrypt(skreq);
-पूर्ण
+	return crypto_skcipher_encrypt(skreq);
+}
 
-अटल पूर्णांक crypto_authenc_esn_encrypt(काष्ठा aead_request *req)
-अणु
-	काष्ठा crypto_aead *authenc_esn = crypto_aead_reqtfm(req);
-	काष्ठा authenc_esn_request_ctx *areq_ctx = aead_request_ctx(req);
-	काष्ठा crypto_authenc_esn_ctx *ctx = crypto_aead_ctx(authenc_esn);
-	काष्ठा skcipher_request *skreq = (व्योम *)(areq_ctx->tail +
+static int crypto_authenc_esn_encrypt(struct aead_request *req)
+{
+	struct crypto_aead *authenc_esn = crypto_aead_reqtfm(req);
+	struct authenc_esn_request_ctx *areq_ctx = aead_request_ctx(req);
+	struct crypto_authenc_esn_ctx *ctx = crypto_aead_ctx(authenc_esn);
+	struct skcipher_request *skreq = (void *)(areq_ctx->tail +
 						  ctx->reqoff);
-	काष्ठा crypto_skcipher *enc = ctx->enc;
-	अचिन्हित पूर्णांक assoclen = req->assoclen;
-	अचिन्हित पूर्णांक cryptlen = req->cryptlen;
-	काष्ठा scatterlist *src, *dst;
-	पूर्णांक err;
+	struct crypto_skcipher *enc = ctx->enc;
+	unsigned int assoclen = req->assoclen;
+	unsigned int cryptlen = req->cryptlen;
+	struct scatterlist *src, *dst;
+	int err;
 
 	sg_init_table(areq_ctx->src, 2);
 	src = scatterwalk_ffwd(areq_ctx->src, req->src, assoclen);
 	dst = src;
 
-	अगर (req->src != req->dst) अणु
+	if (req->src != req->dst) {
 		err = crypto_authenc_esn_copy(req, assoclen);
-		अगर (err)
-			वापस err;
+		if (err)
+			return err;
 
 		sg_init_table(areq_ctx->dst, 2);
 		dst = scatterwalk_ffwd(areq_ctx->dst, req->dst, assoclen);
-	पूर्ण
+	}
 
 	skcipher_request_set_tfm(skreq, enc);
 	skcipher_request_set_callback(skreq, aead_request_flags(req),
-				      crypto_authenc_esn_encrypt_करोne, req);
+				      crypto_authenc_esn_encrypt_done, req);
 	skcipher_request_set_crypt(skreq, src, dst, cryptlen, req->iv);
 
 	err = crypto_skcipher_encrypt(skreq);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	वापस crypto_authenc_esn_genicv(req, aead_request_flags(req));
-पूर्ण
+	return crypto_authenc_esn_genicv(req, aead_request_flags(req));
+}
 
-अटल पूर्णांक crypto_authenc_esn_decrypt_tail(काष्ठा aead_request *req,
-					   अचिन्हित पूर्णांक flags)
-अणु
-	काष्ठा crypto_aead *authenc_esn = crypto_aead_reqtfm(req);
-	अचिन्हित पूर्णांक authsize = crypto_aead_authsize(authenc_esn);
-	काष्ठा authenc_esn_request_ctx *areq_ctx = aead_request_ctx(req);
-	काष्ठा crypto_authenc_esn_ctx *ctx = crypto_aead_ctx(authenc_esn);
-	काष्ठा skcipher_request *skreq = (व्योम *)(areq_ctx->tail +
+static int crypto_authenc_esn_decrypt_tail(struct aead_request *req,
+					   unsigned int flags)
+{
+	struct crypto_aead *authenc_esn = crypto_aead_reqtfm(req);
+	unsigned int authsize = crypto_aead_authsize(authenc_esn);
+	struct authenc_esn_request_ctx *areq_ctx = aead_request_ctx(req);
+	struct crypto_authenc_esn_ctx *ctx = crypto_aead_ctx(authenc_esn);
+	struct skcipher_request *skreq = (void *)(areq_ctx->tail +
 						  ctx->reqoff);
-	काष्ठा crypto_ahash *auth = ctx->auth;
+	struct crypto_ahash *auth = ctx->auth;
 	u8 *ohash = PTR_ALIGN((u8 *)areq_ctx->tail,
 			      crypto_ahash_alignmask(auth) + 1);
-	अचिन्हित पूर्णांक cryptlen = req->cryptlen - authsize;
-	अचिन्हित पूर्णांक assoclen = req->assoclen;
-	काष्ठा scatterlist *dst = req->dst;
+	unsigned int cryptlen = req->cryptlen - authsize;
+	unsigned int assoclen = req->assoclen;
+	struct scatterlist *dst = req->dst;
 	u8 *ihash = ohash + crypto_ahash_digestsize(auth);
-	u32 पंचांगp[2];
+	u32 tmp[2];
 
-	अगर (!authsize)
-		जाओ decrypt;
+	if (!authsize)
+		goto decrypt;
 
 	/* Move high-order bits of sequence number back. */
-	scatterwalk_map_and_copy(पंचांगp, dst, 4, 4, 0);
-	scatterwalk_map_and_copy(पंचांगp + 1, dst, assoclen + cryptlen, 4, 0);
-	scatterwalk_map_and_copy(पंचांगp, dst, 0, 8, 1);
+	scatterwalk_map_and_copy(tmp, dst, 4, 4, 0);
+	scatterwalk_map_and_copy(tmp + 1, dst, assoclen + cryptlen, 4, 0);
+	scatterwalk_map_and_copy(tmp, dst, 0, 8, 1);
 
-	अगर (crypto_memneq(ihash, ohash, authsize))
-		वापस -EBADMSG;
+	if (crypto_memneq(ihash, ohash, authsize))
+		return -EBADMSG;
 
 decrypt:
 
@@ -256,53 +255,53 @@ decrypt:
 				      req->base.complete, req->base.data);
 	skcipher_request_set_crypt(skreq, dst, dst, cryptlen, req->iv);
 
-	वापस crypto_skcipher_decrypt(skreq);
-पूर्ण
+	return crypto_skcipher_decrypt(skreq);
+}
 
-अटल व्योम authenc_esn_verअगरy_ahash_करोne(काष्ठा crypto_async_request *areq,
-					  पूर्णांक err)
-अणु
-	काष्ठा aead_request *req = areq->data;
+static void authenc_esn_verify_ahash_done(struct crypto_async_request *areq,
+					  int err)
+{
+	struct aead_request *req = areq->data;
 
 	err = err ?: crypto_authenc_esn_decrypt_tail(req, 0);
 	authenc_esn_request_complete(req, err);
-पूर्ण
+}
 
-अटल पूर्णांक crypto_authenc_esn_decrypt(काष्ठा aead_request *req)
-अणु
-	काष्ठा crypto_aead *authenc_esn = crypto_aead_reqtfm(req);
-	काष्ठा authenc_esn_request_ctx *areq_ctx = aead_request_ctx(req);
-	काष्ठा crypto_authenc_esn_ctx *ctx = crypto_aead_ctx(authenc_esn);
-	काष्ठा ahash_request *ahreq = (व्योम *)(areq_ctx->tail + ctx->reqoff);
-	अचिन्हित पूर्णांक authsize = crypto_aead_authsize(authenc_esn);
-	काष्ठा crypto_ahash *auth = ctx->auth;
+static int crypto_authenc_esn_decrypt(struct aead_request *req)
+{
+	struct crypto_aead *authenc_esn = crypto_aead_reqtfm(req);
+	struct authenc_esn_request_ctx *areq_ctx = aead_request_ctx(req);
+	struct crypto_authenc_esn_ctx *ctx = crypto_aead_ctx(authenc_esn);
+	struct ahash_request *ahreq = (void *)(areq_ctx->tail + ctx->reqoff);
+	unsigned int authsize = crypto_aead_authsize(authenc_esn);
+	struct crypto_ahash *auth = ctx->auth;
 	u8 *ohash = PTR_ALIGN((u8 *)areq_ctx->tail,
 			      crypto_ahash_alignmask(auth) + 1);
-	अचिन्हित पूर्णांक assoclen = req->assoclen;
-	अचिन्हित पूर्णांक cryptlen = req->cryptlen;
+	unsigned int assoclen = req->assoclen;
+	unsigned int cryptlen = req->cryptlen;
 	u8 *ihash = ohash + crypto_ahash_digestsize(auth);
-	काष्ठा scatterlist *dst = req->dst;
-	u32 पंचांगp[2];
-	पूर्णांक err;
+	struct scatterlist *dst = req->dst;
+	u32 tmp[2];
+	int err;
 
 	cryptlen -= authsize;
 
-	अगर (req->src != dst) अणु
+	if (req->src != dst) {
 		err = crypto_authenc_esn_copy(req, assoclen + cryptlen);
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 
 	scatterwalk_map_and_copy(ihash, req->src, assoclen + cryptlen,
 				 authsize, 0);
 
-	अगर (!authsize)
-		जाओ tail;
+	if (!authsize)
+		goto tail;
 
 	/* Move high-order bits of sequence number to the end. */
-	scatterwalk_map_and_copy(पंचांगp, dst, 0, 8, 0);
-	scatterwalk_map_and_copy(पंचांगp, dst, 4, 4, 1);
-	scatterwalk_map_and_copy(पंचांगp + 1, dst, assoclen + cryptlen, 4, 1);
+	scatterwalk_map_and_copy(tmp, dst, 0, 8, 0);
+	scatterwalk_map_and_copy(tmp, dst, 4, 4, 1);
+	scatterwalk_map_and_copy(tmp + 1, dst, assoclen + cryptlen, 4, 1);
 
 	sg_init_table(areq_ctx->dst, 2);
 	dst = scatterwalk_ffwd(areq_ctx->dst, dst, 4);
@@ -310,39 +309,39 @@ decrypt:
 	ahash_request_set_tfm(ahreq, auth);
 	ahash_request_set_crypt(ahreq, dst, ohash, assoclen + cryptlen);
 	ahash_request_set_callback(ahreq, aead_request_flags(req),
-				   authenc_esn_verअगरy_ahash_करोne, req);
+				   authenc_esn_verify_ahash_done, req);
 
 	err = crypto_ahash_digest(ahreq);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 tail:
-	वापस crypto_authenc_esn_decrypt_tail(req, aead_request_flags(req));
-पूर्ण
+	return crypto_authenc_esn_decrypt_tail(req, aead_request_flags(req));
+}
 
-अटल पूर्णांक crypto_authenc_esn_init_tfm(काष्ठा crypto_aead *tfm)
-अणु
-	काष्ठा aead_instance *inst = aead_alg_instance(tfm);
-	काष्ठा authenc_esn_instance_ctx *ictx = aead_instance_ctx(inst);
-	काष्ठा crypto_authenc_esn_ctx *ctx = crypto_aead_ctx(tfm);
-	काष्ठा crypto_ahash *auth;
-	काष्ठा crypto_skcipher *enc;
-	काष्ठा crypto_sync_skcipher *null;
-	पूर्णांक err;
+static int crypto_authenc_esn_init_tfm(struct crypto_aead *tfm)
+{
+	struct aead_instance *inst = aead_alg_instance(tfm);
+	struct authenc_esn_instance_ctx *ictx = aead_instance_ctx(inst);
+	struct crypto_authenc_esn_ctx *ctx = crypto_aead_ctx(tfm);
+	struct crypto_ahash *auth;
+	struct crypto_skcipher *enc;
+	struct crypto_sync_skcipher *null;
+	int err;
 
 	auth = crypto_spawn_ahash(&ictx->auth);
-	अगर (IS_ERR(auth))
-		वापस PTR_ERR(auth);
+	if (IS_ERR(auth))
+		return PTR_ERR(auth);
 
 	enc = crypto_spawn_skcipher(&ictx->enc);
 	err = PTR_ERR(enc);
-	अगर (IS_ERR(enc))
-		जाओ err_मुक्त_ahash;
+	if (IS_ERR(enc))
+		goto err_free_ahash;
 
-	null = crypto_get_शेष_null_skcipher();
+	null = crypto_get_default_null_skcipher();
 	err = PTR_ERR(null);
-	अगर (IS_ERR(null))
-		जाओ err_मुक्त_skcipher;
+	if (IS_ERR(null))
+		goto err_free_skcipher;
 
 	ctx->auth = auth;
 	ctx->enc = enc;
@@ -353,132 +352,132 @@ tail:
 
 	crypto_aead_set_reqsize(
 		tfm,
-		माप(काष्ठा authenc_esn_request_ctx) +
+		sizeof(struct authenc_esn_request_ctx) +
 		ctx->reqoff +
-		max_t(अचिन्हित पूर्णांक,
+		max_t(unsigned int,
 		      crypto_ahash_reqsize(auth) +
-		      माप(काष्ठा ahash_request),
-		      माप(काष्ठा skcipher_request) +
+		      sizeof(struct ahash_request),
+		      sizeof(struct skcipher_request) +
 		      crypto_skcipher_reqsize(enc)));
 
-	वापस 0;
+	return 0;
 
-err_मुक्त_skcipher:
-	crypto_मुक्त_skcipher(enc);
-err_मुक्त_ahash:
-	crypto_मुक्त_ahash(auth);
-	वापस err;
-पूर्ण
+err_free_skcipher:
+	crypto_free_skcipher(enc);
+err_free_ahash:
+	crypto_free_ahash(auth);
+	return err;
+}
 
-अटल व्योम crypto_authenc_esn_निकास_tfm(काष्ठा crypto_aead *tfm)
-अणु
-	काष्ठा crypto_authenc_esn_ctx *ctx = crypto_aead_ctx(tfm);
+static void crypto_authenc_esn_exit_tfm(struct crypto_aead *tfm)
+{
+	struct crypto_authenc_esn_ctx *ctx = crypto_aead_ctx(tfm);
 
-	crypto_मुक्त_ahash(ctx->auth);
-	crypto_मुक्त_skcipher(ctx->enc);
-	crypto_put_शेष_null_skcipher();
-पूर्ण
+	crypto_free_ahash(ctx->auth);
+	crypto_free_skcipher(ctx->enc);
+	crypto_put_default_null_skcipher();
+}
 
-अटल व्योम crypto_authenc_esn_मुक्त(काष्ठा aead_instance *inst)
-अणु
-	काष्ठा authenc_esn_instance_ctx *ctx = aead_instance_ctx(inst);
+static void crypto_authenc_esn_free(struct aead_instance *inst)
+{
+	struct authenc_esn_instance_ctx *ctx = aead_instance_ctx(inst);
 
 	crypto_drop_skcipher(&ctx->enc);
 	crypto_drop_ahash(&ctx->auth);
-	kमुक्त(inst);
-पूर्ण
+	kfree(inst);
+}
 
-अटल पूर्णांक crypto_authenc_esn_create(काष्ठा crypto_ढाँचा *पंचांगpl,
-				     काष्ठा rtattr **tb)
-अणु
+static int crypto_authenc_esn_create(struct crypto_template *tmpl,
+				     struct rtattr **tb)
+{
 	u32 mask;
-	काष्ठा aead_instance *inst;
-	काष्ठा authenc_esn_instance_ctx *ctx;
-	काष्ठा hash_alg_common *auth;
-	काष्ठा crypto_alg *auth_base;
-	काष्ठा skcipher_alg *enc;
-	पूर्णांक err;
+	struct aead_instance *inst;
+	struct authenc_esn_instance_ctx *ctx;
+	struct hash_alg_common *auth;
+	struct crypto_alg *auth_base;
+	struct skcipher_alg *enc;
+	int err;
 
 	err = crypto_check_attr_type(tb, CRYPTO_ALG_TYPE_AEAD, &mask);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	inst = kzalloc(माप(*inst) + माप(*ctx), GFP_KERNEL);
-	अगर (!inst)
-		वापस -ENOMEM;
+	inst = kzalloc(sizeof(*inst) + sizeof(*ctx), GFP_KERNEL);
+	if (!inst)
+		return -ENOMEM;
 	ctx = aead_instance_ctx(inst);
 
 	err = crypto_grab_ahash(&ctx->auth, aead_crypto_instance(inst),
 				crypto_attr_alg_name(tb[1]), 0, mask);
-	अगर (err)
-		जाओ err_मुक्त_inst;
+	if (err)
+		goto err_free_inst;
 	auth = crypto_spawn_ahash_alg(&ctx->auth);
 	auth_base = &auth->base;
 
 	err = crypto_grab_skcipher(&ctx->enc, aead_crypto_instance(inst),
 				   crypto_attr_alg_name(tb[2]), 0, mask);
-	अगर (err)
-		जाओ err_मुक्त_inst;
+	if (err)
+		goto err_free_inst;
 	enc = crypto_spawn_skcipher_alg(&ctx->enc);
 
 	err = -ENAMETOOLONG;
-	अगर (snम_लिखो(inst->alg.base.cra_name, CRYPTO_MAX_ALG_NAME,
+	if (snprintf(inst->alg.base.cra_name, CRYPTO_MAX_ALG_NAME,
 		     "authencesn(%s,%s)", auth_base->cra_name,
 		     enc->base.cra_name) >= CRYPTO_MAX_ALG_NAME)
-		जाओ err_मुक्त_inst;
+		goto err_free_inst;
 
-	अगर (snम_लिखो(inst->alg.base.cra_driver_name, CRYPTO_MAX_ALG_NAME,
+	if (snprintf(inst->alg.base.cra_driver_name, CRYPTO_MAX_ALG_NAME,
 		     "authencesn(%s,%s)", auth_base->cra_driver_name,
 		     enc->base.cra_driver_name) >= CRYPTO_MAX_ALG_NAME)
-		जाओ err_मुक्त_inst;
+		goto err_free_inst;
 
 	inst->alg.base.cra_priority = enc->base.cra_priority * 10 +
 				      auth_base->cra_priority;
 	inst->alg.base.cra_blocksize = enc->base.cra_blocksize;
 	inst->alg.base.cra_alignmask = auth_base->cra_alignmask |
 				       enc->base.cra_alignmask;
-	inst->alg.base.cra_ctxsize = माप(काष्ठा crypto_authenc_esn_ctx);
+	inst->alg.base.cra_ctxsize = sizeof(struct crypto_authenc_esn_ctx);
 
 	inst->alg.ivsize = crypto_skcipher_alg_ivsize(enc);
 	inst->alg.chunksize = crypto_skcipher_alg_chunksize(enc);
 	inst->alg.maxauthsize = auth->digestsize;
 
 	inst->alg.init = crypto_authenc_esn_init_tfm;
-	inst->alg.निकास = crypto_authenc_esn_निकास_tfm;
+	inst->alg.exit = crypto_authenc_esn_exit_tfm;
 
 	inst->alg.setkey = crypto_authenc_esn_setkey;
 	inst->alg.setauthsize = crypto_authenc_esn_setauthsize;
 	inst->alg.encrypt = crypto_authenc_esn_encrypt;
 	inst->alg.decrypt = crypto_authenc_esn_decrypt;
 
-	inst->मुक्त = crypto_authenc_esn_मुक्त;
+	inst->free = crypto_authenc_esn_free;
 
-	err = aead_रेजिस्टर_instance(पंचांगpl, inst);
-	अगर (err) अणु
-err_मुक्त_inst:
-		crypto_authenc_esn_मुक्त(inst);
-	पूर्ण
-	वापस err;
-पूर्ण
+	err = aead_register_instance(tmpl, inst);
+	if (err) {
+err_free_inst:
+		crypto_authenc_esn_free(inst);
+	}
+	return err;
+}
 
-अटल काष्ठा crypto_ढाँचा crypto_authenc_esn_पंचांगpl = अणु
+static struct crypto_template crypto_authenc_esn_tmpl = {
 	.name = "authencesn",
 	.create = crypto_authenc_esn_create,
 	.module = THIS_MODULE,
-पूर्ण;
+};
 
-अटल पूर्णांक __init crypto_authenc_esn_module_init(व्योम)
-अणु
-	वापस crypto_रेजिस्टर_ढाँचा(&crypto_authenc_esn_पंचांगpl);
-पूर्ण
+static int __init crypto_authenc_esn_module_init(void)
+{
+	return crypto_register_template(&crypto_authenc_esn_tmpl);
+}
 
-अटल व्योम __निकास crypto_authenc_esn_module_निकास(व्योम)
-अणु
-	crypto_unरेजिस्टर_ढाँचा(&crypto_authenc_esn_पंचांगpl);
-पूर्ण
+static void __exit crypto_authenc_esn_module_exit(void)
+{
+	crypto_unregister_template(&crypto_authenc_esn_tmpl);
+}
 
 subsys_initcall(crypto_authenc_esn_module_init);
-module_निकास(crypto_authenc_esn_module_निकास);
+module_exit(crypto_authenc_esn_module_exit);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Steffen Klassert <steffen.klassert@secunet.com>");

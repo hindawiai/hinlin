@@ -1,4 +1,3 @@
-<शैली गुरु>
 /*
  * Copyright (C) 2003 Sistina Software.
  * Copyright (C) 2004 Red Hat, Inc. All rights reserved.
@@ -10,132 +9,132 @@
  * Path selector registration.
  */
 
-#समावेश <linux/device-mapper.h>
-#समावेश <linux/module.h>
+#include <linux/device-mapper.h>
+#include <linux/module.h>
 
-#समावेश "dm-path-selector.h"
+#include "dm-path-selector.h"
 
-#समावेश <linux/slab.h>
+#include <linux/slab.h>
 
-काष्ठा ps_पूर्णांकernal अणु
-	काष्ठा path_selector_type pst;
-	काष्ठा list_head list;
-पूर्ण;
+struct ps_internal {
+	struct path_selector_type pst;
+	struct list_head list;
+};
 
-#घोषणा pst_to_psi(__pst) container_of((__pst), काष्ठा ps_पूर्णांकernal, pst)
+#define pst_to_psi(__pst) container_of((__pst), struct ps_internal, pst)
 
-अटल LIST_HEAD(_path_selectors);
-अटल DECLARE_RWSEM(_ps_lock);
+static LIST_HEAD(_path_selectors);
+static DECLARE_RWSEM(_ps_lock);
 
-अटल काष्ठा ps_पूर्णांकernal *__find_path_selector_type(स्थिर अक्षर *name)
-अणु
-	काष्ठा ps_पूर्णांकernal *psi;
+static struct ps_internal *__find_path_selector_type(const char *name)
+{
+	struct ps_internal *psi;
 
-	list_क्रम_each_entry(psi, &_path_selectors, list) अणु
-		अगर (!म_भेद(name, psi->pst.name))
-			वापस psi;
-	पूर्ण
+	list_for_each_entry(psi, &_path_selectors, list) {
+		if (!strcmp(name, psi->pst.name))
+			return psi;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल काष्ठा ps_पूर्णांकernal *get_path_selector(स्थिर अक्षर *name)
-अणु
-	काष्ठा ps_पूर्णांकernal *psi;
+static struct ps_internal *get_path_selector(const char *name)
+{
+	struct ps_internal *psi;
 
-	करोwn_पढ़ो(&_ps_lock);
+	down_read(&_ps_lock);
 	psi = __find_path_selector_type(name);
-	अगर (psi && !try_module_get(psi->pst.module))
-		psi = शून्य;
-	up_पढ़ो(&_ps_lock);
+	if (psi && !try_module_get(psi->pst.module))
+		psi = NULL;
+	up_read(&_ps_lock);
 
-	वापस psi;
-पूर्ण
+	return psi;
+}
 
-काष्ठा path_selector_type *dm_get_path_selector(स्थिर अक्षर *name)
-अणु
-	काष्ठा ps_पूर्णांकernal *psi;
+struct path_selector_type *dm_get_path_selector(const char *name)
+{
+	struct ps_internal *psi;
 
-	अगर (!name)
-		वापस शून्य;
+	if (!name)
+		return NULL;
 
 	psi = get_path_selector(name);
-	अगर (!psi) अणु
+	if (!psi) {
 		request_module("dm-%s", name);
 		psi = get_path_selector(name);
-	पूर्ण
+	}
 
-	वापस psi ? &psi->pst : शून्य;
-पूर्ण
+	return psi ? &psi->pst : NULL;
+}
 
-व्योम dm_put_path_selector(काष्ठा path_selector_type *pst)
-अणु
-	काष्ठा ps_पूर्णांकernal *psi;
+void dm_put_path_selector(struct path_selector_type *pst)
+{
+	struct ps_internal *psi;
 
-	अगर (!pst)
-		वापस;
+	if (!pst)
+		return;
 
-	करोwn_पढ़ो(&_ps_lock);
+	down_read(&_ps_lock);
 	psi = __find_path_selector_type(pst->name);
-	अगर (!psi)
-		जाओ out;
+	if (!psi)
+		goto out;
 
 	module_put(psi->pst.module);
 out:
-	up_पढ़ो(&_ps_lock);
-पूर्ण
+	up_read(&_ps_lock);
+}
 
-अटल काष्ठा ps_पूर्णांकernal *_alloc_path_selector(काष्ठा path_selector_type *pst)
-अणु
-	काष्ठा ps_पूर्णांकernal *psi = kzalloc(माप(*psi), GFP_KERNEL);
+static struct ps_internal *_alloc_path_selector(struct path_selector_type *pst)
+{
+	struct ps_internal *psi = kzalloc(sizeof(*psi), GFP_KERNEL);
 
-	अगर (psi)
+	if (psi)
 		psi->pst = *pst;
 
-	वापस psi;
-पूर्ण
+	return psi;
+}
 
-पूर्णांक dm_रेजिस्टर_path_selector(काष्ठा path_selector_type *pst)
-अणु
-	पूर्णांक r = 0;
-	काष्ठा ps_पूर्णांकernal *psi = _alloc_path_selector(pst);
+int dm_register_path_selector(struct path_selector_type *pst)
+{
+	int r = 0;
+	struct ps_internal *psi = _alloc_path_selector(pst);
 
-	अगर (!psi)
-		वापस -ENOMEM;
+	if (!psi)
+		return -ENOMEM;
 
-	करोwn_ग_लिखो(&_ps_lock);
+	down_write(&_ps_lock);
 
-	अगर (__find_path_selector_type(pst->name)) अणु
-		kमुक्त(psi);
+	if (__find_path_selector_type(pst->name)) {
+		kfree(psi);
 		r = -EEXIST;
-	पूर्ण अन्यथा
+	} else
 		list_add(&psi->list, &_path_selectors);
 
-	up_ग_लिखो(&_ps_lock);
+	up_write(&_ps_lock);
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-पूर्णांक dm_unरेजिस्टर_path_selector(काष्ठा path_selector_type *pst)
-अणु
-	काष्ठा ps_पूर्णांकernal *psi;
+int dm_unregister_path_selector(struct path_selector_type *pst)
+{
+	struct ps_internal *psi;
 
-	करोwn_ग_लिखो(&_ps_lock);
+	down_write(&_ps_lock);
 
 	psi = __find_path_selector_type(pst->name);
-	अगर (!psi) अणु
-		up_ग_लिखो(&_ps_lock);
-		वापस -EINVAL;
-	पूर्ण
+	if (!psi) {
+		up_write(&_ps_lock);
+		return -EINVAL;
+	}
 
 	list_del(&psi->list);
 
-	up_ग_लिखो(&_ps_lock);
+	up_write(&_ps_lock);
 
-	kमुक्त(psi);
+	kfree(psi);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-EXPORT_SYMBOL_GPL(dm_रेजिस्टर_path_selector);
-EXPORT_SYMBOL_GPL(dm_unरेजिस्टर_path_selector);
+EXPORT_SYMBOL_GPL(dm_register_path_selector);
+EXPORT_SYMBOL_GPL(dm_unregister_path_selector);

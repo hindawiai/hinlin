@@ -1,12 +1,11 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _ASM_SOCKET_H
-#घोषणा _ASM_SOCKET_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _ASM_SOCKET_H
+#define _ASM_SOCKET_H
 
-#समावेश <uapi/यंत्र/socket.h>
+#include <uapi/asm/socket.h>
 
-/* O_NONBLOCK clashes with the bits used क्रम socket types.  Thereक्रमe we
- * have to define SOCK_NONBLOCK to a dअगरferent value here.
+/* O_NONBLOCK clashes with the bits used for socket types.  Therefore we
+ * have to define SOCK_NONBLOCK to a different value here.
  */
-#घोषणा SOCK_NONBLOCK	0x40000000
-#पूर्ण_अगर /* _ASM_SOCKET_H */
+#define SOCK_NONBLOCK	0x40000000
+#endif /* _ASM_SOCKET_H */

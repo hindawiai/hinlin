@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * omap_irq.h -- OMAP DRM IRQ Handling
  *
@@ -7,24 +6,24 @@
  * Author: Rob Clark <rob@ti.com>
  */
 
-#अगर_अघोषित __OMAPDRM_IRQ_H__
-#घोषणा __OMAPDRM_IRQ_H__
+#ifndef __OMAPDRM_IRQ_H__
+#define __OMAPDRM_IRQ_H__
 
-#समावेश <linux/types.h>
+#include <linux/types.h>
 
-काष्ठा drm_crtc;
-काष्ठा drm_device;
-काष्ठा omap_irq_रुको;
+struct drm_crtc;
+struct drm_device;
+struct omap_irq_wait;
 
-पूर्णांक omap_irq_enable_vblank(काष्ठा drm_crtc *crtc);
-पूर्णांक omap_irq_enable_frameकरोne(काष्ठा drm_crtc *crtc, bool enable);
-व्योम omap_irq_disable_vblank(काष्ठा drm_crtc *crtc);
-व्योम omap_drm_irq_uninstall(काष्ठा drm_device *dev);
-पूर्णांक omap_drm_irq_install(काष्ठा drm_device *dev);
+int omap_irq_enable_vblank(struct drm_crtc *crtc);
+int omap_irq_enable_framedone(struct drm_crtc *crtc, bool enable);
+void omap_irq_disable_vblank(struct drm_crtc *crtc);
+void omap_drm_irq_uninstall(struct drm_device *dev);
+int omap_drm_irq_install(struct drm_device *dev);
 
-काष्ठा omap_irq_रुको *omap_irq_रुको_init(काष्ठा drm_device *dev,
-		u32 irqmask, पूर्णांक count);
-पूर्णांक omap_irq_रुको(काष्ठा drm_device *dev, काष्ठा omap_irq_रुको *रुको,
-		अचिन्हित दीर्घ समयout);
+struct omap_irq_wait *omap_irq_wait_init(struct drm_device *dev,
+		u32 irqmask, int count);
+int omap_irq_wait(struct drm_device *dev, struct omap_irq_wait *wait,
+		unsigned long timeout);
 
-#पूर्ण_अगर /* __OMAPDRM_IRQ_H__ */
+#endif /* __OMAPDRM_IRQ_H__ */

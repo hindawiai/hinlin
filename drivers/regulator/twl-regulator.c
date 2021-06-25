@@ -1,410 +1,409 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * twl-regulator.c -- support regulators in twl4030/twl6030 family chips
  *
  * Copyright (C) 2008 David Brownell
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/slab.h>
-#समावेश <linux/init.h>
-#समावेश <linux/err.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/regulator/driver.h>
-#समावेश <linux/regulator/machine.h>
-#समावेश <linux/regulator/of_regulator.h>
-#समावेश <linux/mfd/twl.h>
-#समावेश <linux/delay.h>
+#include <linux/module.h>
+#include <linux/string.h>
+#include <linux/slab.h>
+#include <linux/init.h>
+#include <linux/err.h>
+#include <linux/platform_device.h>
+#include <linux/of.h>
+#include <linux/of_device.h>
+#include <linux/regulator/driver.h>
+#include <linux/regulator/machine.h>
+#include <linux/regulator/of_regulator.h>
+#include <linux/mfd/twl.h>
+#include <linux/delay.h>
 
 /*
- * The TWL4030/TW5030/TPS659x0 family chips include घातer management, a
+ * The TWL4030/TW5030/TPS659x0 family chips include power management, a
  * USB OTG transceiver, an RTC, ADC, PWM, and lots more.  Some versions
- * include an audio codec, battery अक्षरger, and more voltage regulators.
- * These chips are often used in OMAP-based प्रणालीs.
+ * include an audio codec, battery charger, and more voltage regulators.
+ * These chips are often used in OMAP-based systems.
  *
- * This driver implements software-based resource control क्रम various
+ * This driver implements software-based resource control for various
  * voltage regulators.  This is usually augmented with state machine
  * based control.
  */
 
-काष्ठा twlreg_info अणु
-	/* start of regulator's PM_RECEIVER control रेजिस्टर bank */
+struct twlreg_info {
+	/* start of regulator's PM_RECEIVER control register bank */
 	u8			base;
 
-	/* twl resource ID, क्रम resource control state machine */
+	/* twl resource ID, for resource control state machine */
 	u8			id;
 
-	/* voltage in mV = table[VSEL]; table_len must be a घातer-of-two */
+	/* voltage in mV = table[VSEL]; table_len must be a power-of-two */
 	u8			table_len;
-	स्थिर u16		*table;
+	const u16		*table;
 
-	/* State REMAP शेष configuration */
+	/* State REMAP default configuration */
 	u8			remap;
 
 	/* used by regulator core */
-	काष्ठा regulator_desc	desc;
+	struct regulator_desc	desc;
 
-	/* chip specअगरic features */
-	अचिन्हित दीर्घ		features;
+	/* chip specific features */
+	unsigned long		features;
 
-	/* data passed from board क्रम बाह्यal get/set voltage */
-	व्योम			*data;
-पूर्ण;
+	/* data passed from board for external get/set voltage */
+	void			*data;
+};
 
 
-/* LDO control रेजिस्टरs ... offset is from the base of its रेजिस्टर bank.
- * The first three रेजिस्टरs of all घातer resource banks help hardware to
+/* LDO control registers ... offset is from the base of its register bank.
+ * The first three registers of all power resource banks help hardware to
  * manage the various resource groups.
  */
 /* Common offset in TWL4030/6030 */
-#घोषणा VREG_GRP		0
-/* TWL4030 रेजिस्टर offsets */
-#घोषणा VREG_TYPE		1
-#घोषणा VREG_REMAP		2
-#घोषणा VREG_DEDICATED		3	/* LDO control */
-#घोषणा VREG_VOLTAGE_SMPS_4030	9
-/* TWL6030 रेजिस्टर offsets */
-#घोषणा VREG_TRANS		1
-#घोषणा VREG_STATE		2
-#घोषणा VREG_VOLTAGE		3
-#घोषणा VREG_VOLTAGE_SMPS	4
+#define VREG_GRP		0
+/* TWL4030 register offsets */
+#define VREG_TYPE		1
+#define VREG_REMAP		2
+#define VREG_DEDICATED		3	/* LDO control */
+#define VREG_VOLTAGE_SMPS_4030	9
+/* TWL6030 register offsets */
+#define VREG_TRANS		1
+#define VREG_STATE		2
+#define VREG_VOLTAGE		3
+#define VREG_VOLTAGE_SMPS	4
 
-अटल अंतरभूत पूर्णांक
-twlreg_पढ़ो(काष्ठा twlreg_info *info, अचिन्हित slave_subgp, अचिन्हित offset)
-अणु
+static inline int
+twlreg_read(struct twlreg_info *info, unsigned slave_subgp, unsigned offset)
+{
 	u8 value;
-	पूर्णांक status;
+	int status;
 
-	status = twl_i2c_पढ़ो_u8(slave_subgp,
+	status = twl_i2c_read_u8(slave_subgp,
 			&value, info->base + offset);
-	वापस (status < 0) ? status : value;
-पूर्ण
+	return (status < 0) ? status : value;
+}
 
-अटल अंतरभूत पूर्णांक
-twlreg_ग_लिखो(काष्ठा twlreg_info *info, अचिन्हित slave_subgp, अचिन्हित offset,
+static inline int
+twlreg_write(struct twlreg_info *info, unsigned slave_subgp, unsigned offset,
 						 u8 value)
-अणु
-	वापस twl_i2c_ग_लिखो_u8(slave_subgp,
+{
+	return twl_i2c_write_u8(slave_subgp,
 			value, info->base + offset);
-पूर्ण
+}
 
 /*----------------------------------------------------------------------*/
 
-/* generic घातer resource operations, which work on all regulators */
+/* generic power resource operations, which work on all regulators */
 
-अटल पूर्णांक twlreg_grp(काष्ठा regulator_dev *rdev)
-अणु
-	वापस twlreg_पढ़ो(rdev_get_drvdata(rdev), TWL_MODULE_PM_RECEIVER,
+static int twlreg_grp(struct regulator_dev *rdev)
+{
+	return twlreg_read(rdev_get_drvdata(rdev), TWL_MODULE_PM_RECEIVER,
 								 VREG_GRP);
-पूर्ण
+}
 
 /*
  * Enable/disable regulators by joining/leaving the P1 (processor) group.
- * We assume nobody अन्यथा is updating the DEV_GRP रेजिस्टरs.
+ * We assume nobody else is updating the DEV_GRP registers.
  */
-/* definition क्रम 4030 family */
-#घोषणा P3_GRP_4030	BIT(7)		/* "peripherals" */
-#घोषणा P2_GRP_4030	BIT(6)		/* secondary processor, modem, etc */
-#घोषणा P1_GRP_4030	BIT(5)		/* CPU/Linux */
-/* definition क्रम 6030 family */
-#घोषणा P3_GRP_6030	BIT(2)		/* secondary processor, modem, etc */
-#घोषणा P2_GRP_6030	BIT(1)		/* "peripherals" */
-#घोषणा P1_GRP_6030	BIT(0)		/* CPU/Linux */
+/* definition for 4030 family */
+#define P3_GRP_4030	BIT(7)		/* "peripherals" */
+#define P2_GRP_4030	BIT(6)		/* secondary processor, modem, etc */
+#define P1_GRP_4030	BIT(5)		/* CPU/Linux */
+/* definition for 6030 family */
+#define P3_GRP_6030	BIT(2)		/* secondary processor, modem, etc */
+#define P2_GRP_6030	BIT(1)		/* "peripherals" */
+#define P1_GRP_6030	BIT(0)		/* CPU/Linux */
 
-अटल पूर्णांक twl4030reg_is_enabled(काष्ठा regulator_dev *rdev)
-अणु
-	पूर्णांक	state = twlreg_grp(rdev);
+static int twl4030reg_is_enabled(struct regulator_dev *rdev)
+{
+	int	state = twlreg_grp(rdev);
 
-	अगर (state < 0)
-		वापस state;
+	if (state < 0)
+		return state;
 
-	वापस state & P1_GRP_4030;
-पूर्ण
+	return state & P1_GRP_4030;
+}
 
-#घोषणा PB_I2C_BUSY	BIT(0)
-#घोषणा PB_I2C_BWEN	BIT(1)
+#define PB_I2C_BUSY	BIT(0)
+#define PB_I2C_BWEN	BIT(1)
 
-/* Wait until buffer empty/पढ़ोy to send a word on घातer bus. */
-अटल पूर्णांक twl4030_रुको_pb_पढ़ोy(व्योम)
-अणु
+/* Wait until buffer empty/ready to send a word on power bus. */
+static int twl4030_wait_pb_ready(void)
+{
 
-	पूर्णांक	ret;
-	पूर्णांक	समयout = 10;
+	int	ret;
+	int	timeout = 10;
 	u8	val;
 
-	करो अणु
-		ret = twl_i2c_पढ़ो_u8(TWL_MODULE_PM_MASTER, &val,
+	do {
+		ret = twl_i2c_read_u8(TWL_MODULE_PM_MASTER, &val,
 				      TWL4030_PM_MASTER_PB_CFG);
-		अगर (ret < 0)
-			वापस ret;
+		if (ret < 0)
+			return ret;
 
-		अगर (!(val & PB_I2C_BUSY))
-			वापस 0;
+		if (!(val & PB_I2C_BUSY))
+			return 0;
 
 		mdelay(1);
-		समयout--;
-	पूर्ण जबतक (समयout);
+		timeout--;
+	} while (timeout);
 
-	वापस -ETIMEDOUT;
-पूर्ण
+	return -ETIMEDOUT;
+}
 
-/* Send a word over the घातerbus */
-अटल पूर्णांक twl4030_send_pb_msg(अचिन्हित msg)
-अणु
+/* Send a word over the powerbus */
+static int twl4030_send_pb_msg(unsigned msg)
+{
 	u8	val;
-	पूर्णांक	ret;
+	int	ret;
 
-	/* save घातerbus configuration */
-	ret = twl_i2c_पढ़ो_u8(TWL_MODULE_PM_MASTER, &val,
+	/* save powerbus configuration */
+	ret = twl_i2c_read_u8(TWL_MODULE_PM_MASTER, &val,
 			      TWL4030_PM_MASTER_PB_CFG);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	/* Enable i2c access to घातerbus */
-	ret = twl_i2c_ग_लिखो_u8(TWL_MODULE_PM_MASTER, val | PB_I2C_BWEN,
+	/* Enable i2c access to powerbus */
+	ret = twl_i2c_write_u8(TWL_MODULE_PM_MASTER, val | PB_I2C_BWEN,
 			       TWL4030_PM_MASTER_PB_CFG);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	ret = twl4030_रुको_pb_पढ़ोy();
-	अगर (ret < 0)
-		वापस ret;
+	ret = twl4030_wait_pb_ready();
+	if (ret < 0)
+		return ret;
 
-	ret = twl_i2c_ग_लिखो_u8(TWL_MODULE_PM_MASTER, msg >> 8,
+	ret = twl_i2c_write_u8(TWL_MODULE_PM_MASTER, msg >> 8,
 			       TWL4030_PM_MASTER_PB_WORD_MSB);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	ret = twl_i2c_ग_लिखो_u8(TWL_MODULE_PM_MASTER, msg & 0xff,
+	ret = twl_i2c_write_u8(TWL_MODULE_PM_MASTER, msg & 0xff,
 			       TWL4030_PM_MASTER_PB_WORD_LSB);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	ret = twl4030_रुको_pb_पढ़ोy();
-	अगर (ret < 0)
-		वापस ret;
+	ret = twl4030_wait_pb_ready();
+	if (ret < 0)
+		return ret;
 
-	/* Restore घातerbus configuration */
-	वापस twl_i2c_ग_लिखो_u8(TWL_MODULE_PM_MASTER, val,
+	/* Restore powerbus configuration */
+	return twl_i2c_write_u8(TWL_MODULE_PM_MASTER, val,
 				TWL4030_PM_MASTER_PB_CFG);
-पूर्ण
+}
 
-अटल पूर्णांक twl4030reg_enable(काष्ठा regulator_dev *rdev)
-अणु
-	काष्ठा twlreg_info	*info = rdev_get_drvdata(rdev);
-	पूर्णांक			grp;
-	पूर्णांक			ret;
+static int twl4030reg_enable(struct regulator_dev *rdev)
+{
+	struct twlreg_info	*info = rdev_get_drvdata(rdev);
+	int			grp;
+	int			ret;
 
 	grp = twlreg_grp(rdev);
-	अगर (grp < 0)
-		वापस grp;
+	if (grp < 0)
+		return grp;
 
 	grp |= P1_GRP_4030;
 
-	ret = twlreg_ग_लिखो(info, TWL_MODULE_PM_RECEIVER, VREG_GRP, grp);
+	ret = twlreg_write(info, TWL_MODULE_PM_RECEIVER, VREG_GRP, grp);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक twl4030reg_disable(काष्ठा regulator_dev *rdev)
-अणु
-	काष्ठा twlreg_info	*info = rdev_get_drvdata(rdev);
-	पूर्णांक			grp;
-	पूर्णांक			ret;
+static int twl4030reg_disable(struct regulator_dev *rdev)
+{
+	struct twlreg_info	*info = rdev_get_drvdata(rdev);
+	int			grp;
+	int			ret;
 
 	grp = twlreg_grp(rdev);
-	अगर (grp < 0)
-		वापस grp;
+	if (grp < 0)
+		return grp;
 
 	grp &= ~(P1_GRP_4030 | P2_GRP_4030 | P3_GRP_4030);
 
-	ret = twlreg_ग_लिखो(info, TWL_MODULE_PM_RECEIVER, VREG_GRP, grp);
+	ret = twlreg_write(info, TWL_MODULE_PM_RECEIVER, VREG_GRP, grp);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक twl4030reg_get_status(काष्ठा regulator_dev *rdev)
-अणु
-	पूर्णांक	state = twlreg_grp(rdev);
+static int twl4030reg_get_status(struct regulator_dev *rdev)
+{
+	int	state = twlreg_grp(rdev);
 
-	अगर (state < 0)
-		वापस state;
+	if (state < 0)
+		return state;
 	state &= 0x0f;
 
 	/* assume state != WARM_RESET; we'd not be running...  */
-	अगर (!state)
-		वापस REGULATOR_STATUS_OFF;
-	वापस (state & BIT(3))
+	if (!state)
+		return REGULATOR_STATUS_OFF;
+	return (state & BIT(3))
 		? REGULATOR_STATUS_NORMAL
 		: REGULATOR_STATUS_STANDBY;
-पूर्ण
+}
 
-अटल पूर्णांक twl4030reg_set_mode(काष्ठा regulator_dev *rdev, अचिन्हित mode)
-अणु
-	काष्ठा twlreg_info	*info = rdev_get_drvdata(rdev);
-	अचिन्हित		message;
+static int twl4030reg_set_mode(struct regulator_dev *rdev, unsigned mode)
+{
+	struct twlreg_info	*info = rdev_get_drvdata(rdev);
+	unsigned		message;
 
 	/* We can only set the mode through state machine commands... */
-	चयन (mode) अणु
-	हाल REGULATOR_MODE_NORMAL:
+	switch (mode) {
+	case REGULATOR_MODE_NORMAL:
 		message = MSG_SINGULAR(DEV_GRP_P1, info->id, RES_STATE_ACTIVE);
-		अवरोध;
-	हाल REGULATOR_MODE_STANDBY:
+		break;
+	case REGULATOR_MODE_STANDBY:
 		message = MSG_SINGULAR(DEV_GRP_P1, info->id, RES_STATE_SLEEP);
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	वापस twl4030_send_pb_msg(message);
-पूर्ण
+	return twl4030_send_pb_msg(message);
+}
 
-अटल अंतरभूत अचिन्हित पूर्णांक twl4030reg_map_mode(अचिन्हित पूर्णांक mode)
-अणु
-	चयन (mode) अणु
-	हाल RES_STATE_ACTIVE:
-		वापस REGULATOR_MODE_NORMAL;
-	हाल RES_STATE_SLEEP:
-		वापस REGULATOR_MODE_STANDBY;
-	शेष:
-		वापस REGULATOR_MODE_INVALID;
-	पूर्ण
-पूर्ण
+static inline unsigned int twl4030reg_map_mode(unsigned int mode)
+{
+	switch (mode) {
+	case RES_STATE_ACTIVE:
+		return REGULATOR_MODE_NORMAL;
+	case RES_STATE_SLEEP:
+		return REGULATOR_MODE_STANDBY;
+	default:
+		return REGULATOR_MODE_INVALID;
+	}
+}
 
 /*----------------------------------------------------------------------*/
 
 /*
- * Support क्रम adjustable-voltage LDOs uses a four bit (or less) voltage
- * select field in its control रेजिस्टर.   We use tables indexed by VSEL
+ * Support for adjustable-voltage LDOs uses a four bit (or less) voltage
+ * select field in its control register.   We use tables indexed by VSEL
  * to record voltages in milliVolts.  (Accuracy is about three percent.)
  *
- * Note that VSEL values क्रम VAUX2 changed in twl5030 and newer silicon;
- * currently handled by listing two slightly dअगरferent VAUX2 regulators,
+ * Note that VSEL values for VAUX2 changed in twl5030 and newer silicon;
+ * currently handled by listing two slightly different VAUX2 regulators,
  * only one of which will be configured.
  *
- * VSEL values करोcumented as "TI cannot support these values" are flagged
+ * VSEL values documented as "TI cannot support these values" are flagged
  * in these tables as UNSUP() values; we normally won't assign them.
  *
  * VAUX3 at 3V is incorrectly listed in some TI manuals as unsupported.
  * TI are revising the twl5030/tps659x0 specs to support that 3.0V setting.
  */
-#घोषणा UNSUP_MASK	0x8000
+#define UNSUP_MASK	0x8000
 
-#घोषणा UNSUP(x)	(UNSUP_MASK | (x))
-#घोषणा IS_UNSUP(info, x)			\
+#define UNSUP(x)	(UNSUP_MASK | (x))
+#define IS_UNSUP(info, x)			\
 	((UNSUP_MASK & (x)) &&			\
 	 !((info)->features & TWL4030_ALLOW_UNSUPPORTED))
-#घोषणा LDO_MV(x)	(~UNSUP_MASK & (x))
+#define LDO_MV(x)	(~UNSUP_MASK & (x))
 
 
-अटल स्थिर u16 VAUX1_VSEL_table[] = अणु
+static const u16 VAUX1_VSEL_table[] = {
 	UNSUP(1500), UNSUP(1800), 2500, 2800,
 	3000, 3000, 3000, 3000,
-पूर्ण;
-अटल स्थिर u16 VAUX2_4030_VSEL_table[] = अणु
+};
+static const u16 VAUX2_4030_VSEL_table[] = {
 	UNSUP(1000), UNSUP(1000), UNSUP(1200), 1300,
 	1500, 1800, UNSUP(1850), 2500,
 	UNSUP(2600), 2800, UNSUP(2850), UNSUP(3000),
 	UNSUP(3150), UNSUP(3150), UNSUP(3150), UNSUP(3150),
-पूर्ण;
-अटल स्थिर u16 VAUX2_VSEL_table[] = अणु
+};
+static const u16 VAUX2_VSEL_table[] = {
 	1700, 1700, 1900, 1300,
 	1500, 1800, 2000, 2500,
 	2100, 2800, 2200, 2300,
 	2400, 2400, 2400, 2400,
-पूर्ण;
-अटल स्थिर u16 VAUX3_VSEL_table[] = अणु
+};
+static const u16 VAUX3_VSEL_table[] = {
 	1500, 1800, 2500, 2800,
 	3000, 3000, 3000, 3000,
-पूर्ण;
-अटल स्थिर u16 VAUX4_VSEL_table[] = अणु
+};
+static const u16 VAUX4_VSEL_table[] = {
 	700, 1000, 1200, UNSUP(1300),
 	1500, 1800, UNSUP(1850), 2500,
 	UNSUP(2600), 2800, UNSUP(2850), UNSUP(3000),
 	UNSUP(3150), UNSUP(3150), UNSUP(3150), UNSUP(3150),
-पूर्ण;
-अटल स्थिर u16 VMMC1_VSEL_table[] = अणु
+};
+static const u16 VMMC1_VSEL_table[] = {
 	1850, 2850, 3000, 3150,
-पूर्ण;
-अटल स्थिर u16 VMMC2_VSEL_table[] = अणु
+};
+static const u16 VMMC2_VSEL_table[] = {
 	UNSUP(1000), UNSUP(1000), UNSUP(1200), UNSUP(1300),
 	UNSUP(1500), UNSUP(1800), 1850, UNSUP(2500),
 	2600, 2800, 2850, 3000,
 	3150, 3150, 3150, 3150,
-पूर्ण;
-अटल स्थिर u16 VPLL1_VSEL_table[] = अणु
+};
+static const u16 VPLL1_VSEL_table[] = {
 	1000, 1200, 1300, 1800,
 	UNSUP(2800), UNSUP(3000), UNSUP(3000), UNSUP(3000),
-पूर्ण;
-अटल स्थिर u16 VPLL2_VSEL_table[] = अणु
+};
+static const u16 VPLL2_VSEL_table[] = {
 	700, 1000, 1200, 1300,
 	UNSUP(1500), 1800, UNSUP(1850), UNSUP(2500),
 	UNSUP(2600), UNSUP(2800), UNSUP(2850), UNSUP(3000),
 	UNSUP(3150), UNSUP(3150), UNSUP(3150), UNSUP(3150),
-पूर्ण;
-अटल स्थिर u16 VSIM_VSEL_table[] = अणु
+};
+static const u16 VSIM_VSEL_table[] = {
 	UNSUP(1000), UNSUP(1200), UNSUP(1300), 1800,
 	2800, 3000, 3000, 3000,
-पूर्ण;
-अटल स्थिर u16 VDAC_VSEL_table[] = अणु
+};
+static const u16 VDAC_VSEL_table[] = {
 	1200, 1300, 1800, 1800,
-पूर्ण;
-अटल स्थिर u16 VIO_VSEL_table[] = अणु
+};
+static const u16 VIO_VSEL_table[] = {
 	1800, 1850,
-पूर्ण;
-अटल स्थिर u16 VINTANA2_VSEL_table[] = अणु
+};
+static const u16 VINTANA2_VSEL_table[] = {
 	2500, 2750,
-पूर्ण;
+};
 
 /* 600mV to 1450mV in 12.5 mV steps */
-अटल स्थिर काष्ठा linear_range VDD1_ranges[] = अणु
+static const struct linear_range VDD1_ranges[] = {
 	REGULATOR_LINEAR_RANGE(600000, 0, 68, 12500)
-पूर्ण;
+};
 
 /* 600mV to 1450mV in 12.5 mV steps, everything above = 1500mV */
-अटल स्थिर काष्ठा linear_range VDD2_ranges[] = अणु
+static const struct linear_range VDD2_ranges[] = {
 	REGULATOR_LINEAR_RANGE(600000, 0, 68, 12500),
 	REGULATOR_LINEAR_RANGE(1500000, 69, 69, 12500)
-पूर्ण;
+};
 
-अटल पूर्णांक twl4030lकरो_list_voltage(काष्ठा regulator_dev *rdev, अचिन्हित index)
-अणु
-	काष्ठा twlreg_info	*info = rdev_get_drvdata(rdev);
-	पूर्णांक			mV = info->table[index];
+static int twl4030ldo_list_voltage(struct regulator_dev *rdev, unsigned index)
+{
+	struct twlreg_info	*info = rdev_get_drvdata(rdev);
+	int			mV = info->table[index];
 
-	वापस IS_UNSUP(info, mV) ? 0 : (LDO_MV(mV) * 1000);
-पूर्ण
+	return IS_UNSUP(info, mV) ? 0 : (LDO_MV(mV) * 1000);
+}
 
-अटल पूर्णांक
-twl4030lकरो_set_voltage_sel(काष्ठा regulator_dev *rdev, अचिन्हित selector)
-अणु
-	काष्ठा twlreg_info	*info = rdev_get_drvdata(rdev);
+static int
+twl4030ldo_set_voltage_sel(struct regulator_dev *rdev, unsigned selector)
+{
+	struct twlreg_info	*info = rdev_get_drvdata(rdev);
 
-	वापस twlreg_ग_लिखो(info, TWL_MODULE_PM_RECEIVER, VREG_VOLTAGE,
+	return twlreg_write(info, TWL_MODULE_PM_RECEIVER, VREG_VOLTAGE,
 			    selector);
-पूर्ण
+}
 
-अटल पूर्णांक twl4030lकरो_get_voltage_sel(काष्ठा regulator_dev *rdev)
-अणु
-	काष्ठा twlreg_info	*info = rdev_get_drvdata(rdev);
-	पूर्णांक vsel = twlreg_पढ़ो(info, TWL_MODULE_PM_RECEIVER, VREG_VOLTAGE);
+static int twl4030ldo_get_voltage_sel(struct regulator_dev *rdev)
+{
+	struct twlreg_info	*info = rdev_get_drvdata(rdev);
+	int vsel = twlreg_read(info, TWL_MODULE_PM_RECEIVER, VREG_VOLTAGE);
 
-	अगर (vsel < 0)
-		वापस vsel;
+	if (vsel < 0)
+		return vsel;
 
 	vsel &= info->table_len - 1;
-	वापस vsel;
-पूर्ण
+	return vsel;
+}
 
-अटल स्थिर काष्ठा regulator_ops twl4030lकरो_ops = अणु
-	.list_voltage	= twl4030lकरो_list_voltage,
+static const struct regulator_ops twl4030ldo_ops = {
+	.list_voltage	= twl4030ldo_list_voltage,
 
-	.set_voltage_sel = twl4030lकरो_set_voltage_sel,
-	.get_voltage_sel = twl4030lकरो_get_voltage_sel,
+	.set_voltage_sel = twl4030ldo_set_voltage_sel,
+	.get_voltage_sel = twl4030ldo_get_voltage_sel,
 
 	.enable		= twl4030reg_enable,
 	.disable	= twl4030reg_disable,
@@ -413,41 +412,41 @@ twl4030lकरो_set_voltage_sel(काष्ठा regulator_dev *rdev, अच
 	.set_mode	= twl4030reg_set_mode,
 
 	.get_status	= twl4030reg_get_status,
-पूर्ण;
+};
 
-अटल पूर्णांक
-twl4030smps_set_voltage(काष्ठा regulator_dev *rdev, पूर्णांक min_uV, पूर्णांक max_uV,
-			अचिन्हित *selector)
-अणु
-	काष्ठा twlreg_info *info = rdev_get_drvdata(rdev);
-	पूर्णांक vsel = DIV_ROUND_UP(min_uV - 600000, 12500);
+static int
+twl4030smps_set_voltage(struct regulator_dev *rdev, int min_uV, int max_uV,
+			unsigned *selector)
+{
+	struct twlreg_info *info = rdev_get_drvdata(rdev);
+	int vsel = DIV_ROUND_UP(min_uV - 600000, 12500);
 
-	twlreg_ग_लिखो(info, TWL_MODULE_PM_RECEIVER, VREG_VOLTAGE_SMPS_4030, vsel);
+	twlreg_write(info, TWL_MODULE_PM_RECEIVER, VREG_VOLTAGE_SMPS_4030, vsel);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक twl4030smps_get_voltage(काष्ठा regulator_dev *rdev)
-अणु
-	काष्ठा twlreg_info *info = rdev_get_drvdata(rdev);
-	पूर्णांक vsel;
+static int twl4030smps_get_voltage(struct regulator_dev *rdev)
+{
+	struct twlreg_info *info = rdev_get_drvdata(rdev);
+	int vsel;
 
-	vsel = twlreg_पढ़ो(info, TWL_MODULE_PM_RECEIVER,
+	vsel = twlreg_read(info, TWL_MODULE_PM_RECEIVER,
 		VREG_VOLTAGE_SMPS_4030);
 
-	वापस vsel * 12500 + 600000;
-पूर्ण
+	return vsel * 12500 + 600000;
+}
 
-अटल स्थिर काष्ठा regulator_ops twl4030smps_ops = अणु
+static const struct regulator_ops twl4030smps_ops = {
 	.list_voltage   = regulator_list_voltage_linear_range,
 
 	.set_voltage	= twl4030smps_set_voltage,
 	.get_voltage	= twl4030smps_get_voltage,
-पूर्ण;
+};
 
 /*----------------------------------------------------------------------*/
 
-अटल स्थिर काष्ठा regulator_ops twl4030fixed_ops = अणु
+static const struct regulator_ops twl4030fixed_ops = {
 	.list_voltage	= regulator_list_voltage_linear,
 
 	.enable		= twl4030reg_enable,
@@ -457,56 +456,56 @@ twl4030smps_set_voltage(काष्ठा regulator_dev *rdev, पूर्ण�
 	.set_mode	= twl4030reg_set_mode,
 
 	.get_status	= twl4030reg_get_status,
-पूर्ण;
+};
 
 /*----------------------------------------------------------------------*/
 
-#घोषणा TWL4030_ADJUSTABLE_LDO(label, offset, num, turnon_delay, remap_conf) \
-अटल स्थिर काष्ठा twlreg_info TWL4030_INFO_##label = अणु \
+#define TWL4030_ADJUSTABLE_LDO(label, offset, num, turnon_delay, remap_conf) \
+static const struct twlreg_info TWL4030_INFO_##label = { \
 	.base = offset, \
 	.id = num, \
 	.table_len = ARRAY_SIZE(label##_VSEL_table), \
 	.table = label##_VSEL_table, \
 	.remap = remap_conf, \
-	.desc = अणु \
+	.desc = { \
 		.name = #label, \
 		.id = TWL4030_REG_##label, \
 		.n_voltages = ARRAY_SIZE(label##_VSEL_table), \
-		.ops = &twl4030lकरो_ops, \
+		.ops = &twl4030ldo_ops, \
 		.type = REGULATOR_VOLTAGE, \
 		.owner = THIS_MODULE, \
-		.enable_समय = turnon_delay, \
+		.enable_time = turnon_delay, \
 		.of_map_mode = twl4030reg_map_mode, \
-		पूर्ण, \
-	पूर्ण
+		}, \
+	}
 
-#घोषणा TWL4030_ADJUSTABLE_SMPS(label, offset, num, turnon_delay, remap_conf, \
+#define TWL4030_ADJUSTABLE_SMPS(label, offset, num, turnon_delay, remap_conf, \
 		n_volt) \
-अटल स्थिर काष्ठा twlreg_info TWL4030_INFO_##label = अणु \
+static const struct twlreg_info TWL4030_INFO_##label = { \
 	.base = offset, \
 	.id = num, \
 	.remap = remap_conf, \
-	.desc = अणु \
+	.desc = { \
 		.name = #label, \
 		.id = TWL4030_REG_##label, \
 		.ops = &twl4030smps_ops, \
 		.type = REGULATOR_VOLTAGE, \
 		.owner = THIS_MODULE, \
-		.enable_समय = turnon_delay, \
+		.enable_time = turnon_delay, \
 		.of_map_mode = twl4030reg_map_mode, \
 		.n_voltages = n_volt, \
 		.n_linear_ranges = ARRAY_SIZE(label ## _ranges), \
 		.linear_ranges = label ## _ranges, \
-		पूर्ण, \
-	पूर्ण
+		}, \
+	}
 
-#घोषणा TWL4030_FIXED_LDO(label, offset, mVolts, num, turnon_delay, \
+#define TWL4030_FIXED_LDO(label, offset, mVolts, num, turnon_delay, \
 			remap_conf) \
-अटल स्थिर काष्ठा twlreg_info TWLFIXED_INFO_##label = अणु \
+static const struct twlreg_info TWLFIXED_INFO_##label = { \
 	.base = offset, \
 	.id = num, \
 	.remap = remap_conf, \
-	.desc = अणु \
+	.desc = { \
 		.name = #label, \
 		.id = TWL4030##_REG_##label, \
 		.n_voltages = 1, \
@@ -514,13 +513,13 @@ twl4030smps_set_voltage(काष्ठा regulator_dev *rdev, पूर्ण�
 		.type = REGULATOR_VOLTAGE, \
 		.owner = THIS_MODULE, \
 		.min_uV = mVolts * 1000, \
-		.enable_समय = turnon_delay, \
+		.enable_time = turnon_delay, \
 		.of_map_mode = twl4030reg_map_mode, \
-		पूर्ण, \
-	पूर्ण
+		}, \
+	}
 
 /*
- * We list regulators here अगर प्रणालीs need some level of
+ * We list regulators here if systems need some level of
  * software control over them after boot.
  */
 TWL4030_ADJUSTABLE_LDO(VAUX1, 0x17, 1, 100, 0x08);
@@ -545,19 +544,19 @@ TWL4030_FIXED_LDO(VUSB1V5, 0x71, 1500, 17, 100, 0x08);
 TWL4030_FIXED_LDO(VUSB1V8, 0x74, 1800, 18, 100, 0x08);
 TWL4030_FIXED_LDO(VUSB3V1, 0x77, 3100, 19, 150, 0x08);
 
-#घोषणा TWL_OF_MATCH(comp, family, label) \
-	अणु \
+#define TWL_OF_MATCH(comp, family, label) \
+	{ \
 		.compatible = comp, \
 		.data = &family##_INFO_##label, \
-	पूर्ण
+	}
 
-#घोषणा TWL4030_OF_MATCH(comp, label) TWL_OF_MATCH(comp, TWL4030, label)
-#घोषणा TWL6030_OF_MATCH(comp, label) TWL_OF_MATCH(comp, TWL6030, label)
-#घोषणा TWL6032_OF_MATCH(comp, label) TWL_OF_MATCH(comp, TWL6032, label)
-#घोषणा TWLFIXED_OF_MATCH(comp, label) TWL_OF_MATCH(comp, TWLFIXED, label)
-#घोषणा TWLSMPS_OF_MATCH(comp, label) TWL_OF_MATCH(comp, TWLSMPS, label)
+#define TWL4030_OF_MATCH(comp, label) TWL_OF_MATCH(comp, TWL4030, label)
+#define TWL6030_OF_MATCH(comp, label) TWL_OF_MATCH(comp, TWL6030, label)
+#define TWL6032_OF_MATCH(comp, label) TWL_OF_MATCH(comp, TWL6032, label)
+#define TWLFIXED_OF_MATCH(comp, label) TWL_OF_MATCH(comp, TWLFIXED, label)
+#define TWLSMPS_OF_MATCH(comp, label) TWL_OF_MATCH(comp, TWLSMPS, label)
 
-अटल स्थिर काष्ठा of_device_id twl_of_match[] = अणु
+static const struct of_device_id twl_of_match[] = {
 	TWL4030_OF_MATCH("ti,twl4030-vaux1", VAUX1),
 	TWL4030_OF_MATCH("ti,twl4030-vaux2", VAUX2_4030),
 	TWL4030_OF_MATCH("ti,twl5030-vaux2", VAUX2),
@@ -578,106 +577,106 @@ TWL4030_FIXED_LDO(VUSB3V1, 0x77, 3100, 19, 150, 0x08);
 	TWLFIXED_OF_MATCH("ti,twl4030-vusb1v5", VUSB1V5),
 	TWLFIXED_OF_MATCH("ti,twl4030-vusb1v8", VUSB1V8),
 	TWLFIXED_OF_MATCH("ti,twl4030-vusb3v1", VUSB3V1),
-	अणुपूर्ण,
-पूर्ण;
+	{},
+};
 MODULE_DEVICE_TABLE(of, twl_of_match);
 
-अटल पूर्णांक twlreg_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	पूर्णांक id;
-	काष्ठा twlreg_info		*info;
-	स्थिर काष्ठा twlreg_info	*ढाँचा;
-	काष्ठा regulator_init_data	*initdata;
-	काष्ठा regulation_स्थिरraपूर्णांकs	*c;
-	काष्ठा regulator_dev		*rdev;
-	काष्ठा regulator_config		config = अणु पूर्ण;
+static int twlreg_probe(struct platform_device *pdev)
+{
+	int id;
+	struct twlreg_info		*info;
+	const struct twlreg_info	*template;
+	struct regulator_init_data	*initdata;
+	struct regulation_constraints	*c;
+	struct regulator_dev		*rdev;
+	struct regulator_config		config = { };
 
-	ढाँचा = of_device_get_match_data(&pdev->dev);
-	अगर (!ढाँचा)
-		वापस -ENODEV;
+	template = of_device_get_match_data(&pdev->dev);
+	if (!template)
+		return -ENODEV;
 
-	id = ढाँचा->desc.id;
+	id = template->desc.id;
 	initdata = of_get_regulator_init_data(&pdev->dev, pdev->dev.of_node,
-						&ढाँचा->desc);
-	अगर (!initdata)
-		वापस -EINVAL;
+						&template->desc);
+	if (!initdata)
+		return -EINVAL;
 
-	info = devm_kmemdup(&pdev->dev, ढाँचा, माप(*info), GFP_KERNEL);
-	अगर (!info)
-		वापस -ENOMEM;
+	info = devm_kmemdup(&pdev->dev, template, sizeof(*info), GFP_KERNEL);
+	if (!info)
+		return -ENOMEM;
 
-	/* Constrain board-specअगरic capabilities according to what
-	 * this driver and the chip itself can actually करो.
+	/* Constrain board-specific capabilities according to what
+	 * this driver and the chip itself can actually do.
 	 */
-	c = &initdata->स्थिरraपूर्णांकs;
+	c = &initdata->constraints;
 	c->valid_modes_mask &= REGULATOR_MODE_NORMAL | REGULATOR_MODE_STANDBY;
 	c->valid_ops_mask &= REGULATOR_CHANGE_VOLTAGE
 				| REGULATOR_CHANGE_MODE
 				| REGULATOR_CHANGE_STATUS;
-	चयन (id) अणु
-	हाल TWL4030_REG_VIO:
-	हाल TWL4030_REG_VDD1:
-	हाल TWL4030_REG_VDD2:
-	हाल TWL4030_REG_VPLL1:
-	हाल TWL4030_REG_VINTANA1:
-	हाल TWL4030_REG_VINTANA2:
-	हाल TWL4030_REG_VINTDIG:
+	switch (id) {
+	case TWL4030_REG_VIO:
+	case TWL4030_REG_VDD1:
+	case TWL4030_REG_VDD2:
+	case TWL4030_REG_VPLL1:
+	case TWL4030_REG_VINTANA1:
+	case TWL4030_REG_VINTANA2:
+	case TWL4030_REG_VINTDIG:
 		c->always_on = true;
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+		break;
+	default:
+		break;
+	}
 
 	config.dev = &pdev->dev;
 	config.init_data = initdata;
 	config.driver_data = info;
 	config.of_node = pdev->dev.of_node;
 
-	rdev = devm_regulator_रेजिस्टर(&pdev->dev, &info->desc, &config);
-	अगर (IS_ERR(rdev)) अणु
+	rdev = devm_regulator_register(&pdev->dev, &info->desc, &config);
+	if (IS_ERR(rdev)) {
 		dev_err(&pdev->dev, "can't register %s, %ld\n",
 				info->desc.name, PTR_ERR(rdev));
-		वापस PTR_ERR(rdev);
-	पूर्ण
-	platक्रमm_set_drvdata(pdev, rdev);
+		return PTR_ERR(rdev);
+	}
+	platform_set_drvdata(pdev, rdev);
 
-	twlreg_ग_लिखो(info, TWL_MODULE_PM_RECEIVER, VREG_REMAP, info->remap);
+	twlreg_write(info, TWL_MODULE_PM_RECEIVER, VREG_REMAP, info->remap);
 
-	/* NOTE:  many regulators support लघु-circuit IRQs (presentable
-	 * as REGULATOR_OVER_CURRENT notअगरications?) configured via:
+	/* NOTE:  many regulators support short-circuit IRQs (presentable
+	 * as REGULATOR_OVER_CURRENT notifications?) configured via:
 	 *  - SC_CONFIG
-	 *  - SC_DETECT1 (vपूर्णांकana2, vmmc1/2, vaux1/2/3/4)
+	 *  - SC_DETECT1 (vintana2, vmmc1/2, vaux1/2/3/4)
 	 *  - SC_DETECT2 (vusb, vdac, vio, vdd1/2, vpll2)
 	 *  - IT_CONFIG
 	 */
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 MODULE_ALIAS("platform:twl4030_reg");
 
-अटल काष्ठा platक्रमm_driver twlreg_driver = अणु
+static struct platform_driver twlreg_driver = {
 	.probe		= twlreg_probe,
-	/* NOTE: लघु name, to work around driver model truncation of
-	 * "twl_regulator.12" (and मित्रs) to "twl_regulator.1".
+	/* NOTE: short name, to work around driver model truncation of
+	 * "twl_regulator.12" (and friends) to "twl_regulator.1".
 	 */
-	.driver  = अणु
+	.driver  = {
 		.name  = "twl4030_reg",
 		.of_match_table = of_match_ptr(twl_of_match),
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक __init twlreg_init(व्योम)
-अणु
-	वापस platक्रमm_driver_रेजिस्टर(&twlreg_driver);
-पूर्ण
+static int __init twlreg_init(void)
+{
+	return platform_driver_register(&twlreg_driver);
+}
 subsys_initcall(twlreg_init);
 
-अटल व्योम __निकास twlreg_निकास(व्योम)
-अणु
-	platक्रमm_driver_unरेजिस्टर(&twlreg_driver);
-पूर्ण
-module_निकास(twlreg_निकास)
+static void __exit twlreg_exit(void)
+{
+	platform_driver_unregister(&twlreg_driver);
+}
+module_exit(twlreg_exit)
 
 MODULE_DESCRIPTION("TWL4030 regulator driver");
 MODULE_LICENSE("GPL");

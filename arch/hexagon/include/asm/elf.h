@@ -1,19 +1,18 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * ELF definitions क्रम the Hexagon architecture
+ * ELF definitions for the Hexagon architecture
  *
  * Copyright (c) 2010-2013, The Linux Foundation. All rights reserved.
  */
 
-#अगर_अघोषित __ASM_ELF_H
-#घोषणा __ASM_ELF_H
+#ifndef __ASM_ELF_H
+#define __ASM_ELF_H
 
-#समावेश <यंत्र/ptrace.h>
-#समावेश <यंत्र/user.h>
-#समावेश <linux/elf-em.h>
+#include <asm/ptrace.h>
+#include <asm/user.h>
+#include <linux/elf-em.h>
 
-काष्ठा elf32_hdr;
+struct elf32_hdr;
 
 /*
  * ELF header e_flags defines.
@@ -23,83 +22,83 @@
 
 /* Hexagon relocations */
   /* V2 */
-#घोषणा R_HEXAGON_NONE           0
-#घोषणा R_HEXAGON_B22_PCREL      1
-#घोषणा R_HEXAGON_B15_PCREL      2
-#घोषणा R_HEXAGON_B7_PCREL       3
-#घोषणा R_HEXAGON_LO16           4
-#घोषणा R_HEXAGON_HI16           5
-#घोषणा R_HEXAGON_32             6
-#घोषणा R_HEXAGON_16             7
-#घोषणा R_HEXAGON_8              8
-#घोषणा R_HEXAGON_GPREL16_0      9
-#घोषणा R_HEXAGON_GPREL16_1     10
-#घोषणा R_HEXAGON_GPREL16_2     11
-#घोषणा R_HEXAGON_GPREL16_3     12
-#घोषणा R_HEXAGON_HL16          13
+#define R_HEXAGON_NONE           0
+#define R_HEXAGON_B22_PCREL      1
+#define R_HEXAGON_B15_PCREL      2
+#define R_HEXAGON_B7_PCREL       3
+#define R_HEXAGON_LO16           4
+#define R_HEXAGON_HI16           5
+#define R_HEXAGON_32             6
+#define R_HEXAGON_16             7
+#define R_HEXAGON_8              8
+#define R_HEXAGON_GPREL16_0      9
+#define R_HEXAGON_GPREL16_1     10
+#define R_HEXAGON_GPREL16_2     11
+#define R_HEXAGON_GPREL16_3     12
+#define R_HEXAGON_HL16          13
   /* V3 */
-#घोषणा R_HEXAGON_B13_PCREL     14
+#define R_HEXAGON_B13_PCREL     14
   /* V4 */
-#घोषणा R_HEXAGON_B9_PCREL      15
+#define R_HEXAGON_B9_PCREL      15
   /* V4 (extenders) */
-#घोषणा R_HEXAGON_B32_PCREL_X   16
-#घोषणा R_HEXAGON_32_6_X        17
+#define R_HEXAGON_B32_PCREL_X   16
+#define R_HEXAGON_32_6_X        17
   /* V4 (extended) */
-#घोषणा R_HEXAGON_B22_PCREL_X   18
-#घोषणा R_HEXAGON_B15_PCREL_X   19
-#घोषणा R_HEXAGON_B13_PCREL_X   20
-#घोषणा R_HEXAGON_B9_PCREL_X    21
-#घोषणा R_HEXAGON_B7_PCREL_X    22
-#घोषणा R_HEXAGON_16_X          23
-#घोषणा R_HEXAGON_12_X          24
-#घोषणा R_HEXAGON_11_X          25
-#घोषणा R_HEXAGON_10_X          26
-#घोषणा R_HEXAGON_9_X           27
-#घोषणा R_HEXAGON_8_X           28
-#घोषणा R_HEXAGON_7_X           29
-#घोषणा R_HEXAGON_6_X           30
+#define R_HEXAGON_B22_PCREL_X   18
+#define R_HEXAGON_B15_PCREL_X   19
+#define R_HEXAGON_B13_PCREL_X   20
+#define R_HEXAGON_B9_PCREL_X    21
+#define R_HEXAGON_B7_PCREL_X    22
+#define R_HEXAGON_16_X          23
+#define R_HEXAGON_12_X          24
+#define R_HEXAGON_11_X          25
+#define R_HEXAGON_10_X          26
+#define R_HEXAGON_9_X           27
+#define R_HEXAGON_8_X           28
+#define R_HEXAGON_7_X           29
+#define R_HEXAGON_6_X           30
   /* V2 PIC */
-#घोषणा R_HEXAGON_32_PCREL      31
-#घोषणा R_HEXAGON_COPY          32
-#घोषणा R_HEXAGON_GLOB_DAT      33
-#घोषणा R_HEXAGON_JMP_SLOT      34
-#घोषणा R_HEXAGON_RELATIVE      35
-#घोषणा R_HEXAGON_PLT_B22_PCREL 36
-#घोषणा R_HEXAGON_GOTOFF_LO16   37
-#घोषणा R_HEXAGON_GOTOFF_HI16   38
-#घोषणा R_HEXAGON_GOTOFF_32     39
-#घोषणा R_HEXAGON_GOT_LO16      40
-#घोषणा R_HEXAGON_GOT_HI16      41
-#घोषणा R_HEXAGON_GOT_32        42
-#घोषणा R_HEXAGON_GOT_16        43
+#define R_HEXAGON_32_PCREL      31
+#define R_HEXAGON_COPY          32
+#define R_HEXAGON_GLOB_DAT      33
+#define R_HEXAGON_JMP_SLOT      34
+#define R_HEXAGON_RELATIVE      35
+#define R_HEXAGON_PLT_B22_PCREL 36
+#define R_HEXAGON_GOTOFF_LO16   37
+#define R_HEXAGON_GOTOFF_HI16   38
+#define R_HEXAGON_GOTOFF_32     39
+#define R_HEXAGON_GOT_LO16      40
+#define R_HEXAGON_GOT_HI16      41
+#define R_HEXAGON_GOT_32        42
+#define R_HEXAGON_GOT_16        43
 
 /*
- * ELF रेजिस्टर definitions..
+ * ELF register definitions..
  */
-प्रकार अचिन्हित दीर्घ elf_greg_t;
+typedef unsigned long elf_greg_t;
 
-प्रकार काष्ठा user_regs_काष्ठा elf_gregset_t;
-#घोषणा ELF_NGREG (माप(elf_gregset_t)/माप(अचिन्हित दीर्घ))
+typedef struct user_regs_struct elf_gregset_t;
+#define ELF_NGREG (sizeof(elf_gregset_t)/sizeof(unsigned long))
 
 /*  Placeholder  */
-प्रकार अचिन्हित दीर्घ elf_fpregset_t;
+typedef unsigned long elf_fpregset_t;
 
 /*
- * Bypass the whole "regsets" thing क्रम now and use the define.
+ * Bypass the whole "regsets" thing for now and use the define.
  */
 
-#अगर CONFIG_HEXAGON_ARCH_VERSION >= 4
-#घोषणा CS_COPYREGS(DEST,REGS) \
-करो अणु\
+#if CONFIG_HEXAGON_ARCH_VERSION >= 4
+#define CS_COPYREGS(DEST,REGS) \
+do {\
 	DEST.cs0 = REGS->cs0;\
 	DEST.cs1 = REGS->cs1;\
-पूर्ण जबतक (0)
-#अन्यथा
-#घोषणा CS_COPYREGS(DEST,REGS)
-#पूर्ण_अगर
+} while (0)
+#else
+#define CS_COPYREGS(DEST,REGS)
+#endif
 
-#घोषणा ELF_CORE_COPY_REGS(DEST, REGS)	\
-करो अणु					\
+#define ELF_CORE_COPY_REGS(DEST, REGS)	\
+do {					\
 	DEST.r0 = REGS->r00;		\
 	DEST.r1 = REGS->r01;		\
 	DEST.r2 = REGS->r02;		\
@@ -146,72 +145,72 @@
 	DEST.pc = pt_elr(REGS);		\
 	DEST.cause = pt_cause(REGS);	\
 	DEST.badva = pt_badva(REGS);	\
-पूर्ण जबतक (0);
+} while (0);
 
 /*
- * This is used to ensure we करोn't load something क्रम the wrong architecture.
+ * This is used to ensure we don't load something for the wrong architecture.
  * Checks the machine and ABI type.
  */
-#घोषणा elf_check_arch(hdr)	((hdr)->e_machine == EM_HEXAGON)
+#define elf_check_arch(hdr)	((hdr)->e_machine == EM_HEXAGON)
 
 /*
  * These are used to set parameters in the core dumps.
  */
-#घोषणा ELF_CLASS	ELFCLASS32
-#घोषणा ELF_DATA	ELFDATA2LSB
-#घोषणा ELF_ARCH	EM_HEXAGON
+#define ELF_CLASS	ELFCLASS32
+#define ELF_DATA	ELFDATA2LSB
+#define ELF_ARCH	EM_HEXAGON
 
-#अगर CONFIG_HEXAGON_ARCH_VERSION == 2
-#घोषणा ELF_CORE_EFLAGS 0x1
-#पूर्ण_अगर
+#if CONFIG_HEXAGON_ARCH_VERSION == 2
+#define ELF_CORE_EFLAGS 0x1
+#endif
 
-#अगर CONFIG_HEXAGON_ARCH_VERSION == 3
-#घोषणा ELF_CORE_EFLAGS 0x2
-#पूर्ण_अगर
+#if CONFIG_HEXAGON_ARCH_VERSION == 3
+#define ELF_CORE_EFLAGS 0x2
+#endif
 
-#अगर CONFIG_HEXAGON_ARCH_VERSION == 4
-#घोषणा ELF_CORE_EFLAGS 0x3
-#पूर्ण_अगर
+#if CONFIG_HEXAGON_ARCH_VERSION == 4
+#define ELF_CORE_EFLAGS 0x3
+#endif
 
 /*
- * Some architectures have ld.so set up a poपूर्णांकer to a function
- * to be रेजिस्टरed using निकास_पर, to facilitate cleanup.  So that
- * अटल executables will be well-behaved, we would null the रेजिस्टर
- * in question here, in the pt_regs काष्ठाure passed.  For now,
+ * Some architectures have ld.so set up a pointer to a function
+ * to be registered using atexit, to facilitate cleanup.  So that
+ * static executables will be well-behaved, we would null the register
+ * in question here, in the pt_regs structure passed.  For now,
  * leave it a null macro.
  */
-#घोषणा ELF_PLAT_INIT(regs, load_addr) करो अणु पूर्ण जबतक (0)
+#define ELF_PLAT_INIT(regs, load_addr) do { } while (0)
 
-#घोषणा CORE_DUMP_USE_REGSET
+#define CORE_DUMP_USE_REGSET
 
-/* Hrm is this going to cause problems क्रम changing PAGE_SIZE?  */
-#घोषणा ELF_EXEC_PAGESIZE	PAGE_SIZE
+/* Hrm is this going to cause problems for changing PAGE_SIZE?  */
+#define ELF_EXEC_PAGESIZE	PAGE_SIZE
 
 /*
- * This is the location that an ET_DYN program is loaded अगर exec'ed.  Typical
+ * This is the location that an ET_DYN program is loaded if exec'ed.  Typical
  * use of this is to invoke "./ld.so someprog" to test out a new version of
  * the loader.  We need to make sure that it is out of the way of the program
- * that it will "exec", and that there is sufficient room क्रम the brk.
+ * that it will "exec", and that there is sufficient room for the brk.
  */
-#घोषणा ELF_ET_DYN_BASE         0x08000000UL
+#define ELF_ET_DYN_BASE         0x08000000UL
 
 /*
  * This yields a mask that user programs can use to figure out what
- * inकाष्ठाion set this cpu supports.
+ * instruction set this cpu supports.
  */
-#घोषणा ELF_HWCAP	(0)
+#define ELF_HWCAP	(0)
 
 /*
  * This yields a string that ld.so will use to load implementation
- * specअगरic libraries क्रम optimization.  This is more specअगरic in
- * पूर्णांकent than poking at uname or /proc/cpuinfo.
+ * specific libraries for optimization.  This is more specific in
+ * intent than poking at uname or /proc/cpuinfo.
  */
-#घोषणा ELF_PLATFORM  (शून्य)
+#define ELF_PLATFORM  (NULL)
 
-#घोषणा ARCH_HAS_SETUP_ADDITIONAL_PAGES 1
-काष्ठा linux_binprm;
-बाह्य पूर्णांक arch_setup_additional_pages(काष्ठा linux_binprm *bprm,
-				       पूर्णांक uses_पूर्णांकerp);
+#define ARCH_HAS_SETUP_ADDITIONAL_PAGES 1
+struct linux_binprm;
+extern int arch_setup_additional_pages(struct linux_binprm *bprm,
+				       int uses_interp);
 
 
-#पूर्ण_अगर
+#endif

@@ -1,32 +1,31 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#अगर_अघोषित __LINUX_KBUILD_H
+// SPDX-License-Identifier: GPL-2.0
+#ifndef __LINUX_KBUILD_H
 # error "Please do not build this file directly, build asm-offsets.c instead"
-#पूर्ण_अगर
+#endif
 
-#समावेश <यंत्र/ia32.h>
+#include <asm/ia32.h>
 
-#अगर defined(CONFIG_KVM_GUEST) && defined(CONFIG_PARAVIRT_SPINLOCKS)
-#समावेश <यंत्र/kvm_para.h>
-#पूर्ण_अगर
+#if defined(CONFIG_KVM_GUEST) && defined(CONFIG_PARAVIRT_SPINLOCKS)
+#include <asm/kvm_para.h>
+#endif
 
-पूर्णांक मुख्य(व्योम)
-अणु
-#अगर_घोषित CONFIG_PARAVIRT
-#अगर_घोषित CONFIG_PARAVIRT_XXL
-#अगर_घोषित CONFIG_DEBUG_ENTRY
-	OFFSET(PV_IRQ_save_fl, paravirt_patch_ढाँचा, irq.save_fl);
-#पूर्ण_अगर
-#पूर्ण_अगर
+int main(void)
+{
+#ifdef CONFIG_PARAVIRT
+#ifdef CONFIG_PARAVIRT_XXL
+#ifdef CONFIG_DEBUG_ENTRY
+	OFFSET(PV_IRQ_save_fl, paravirt_patch_template, irq.save_fl);
+#endif
+#endif
 	BLANK();
-#पूर्ण_अगर
+#endif
 
-#अगर defined(CONFIG_KVM_GUEST) && defined(CONFIG_PARAVIRT_SPINLOCKS)
-	OFFSET(KVM_STEAL_TIME_preempted, kvm_steal_समय, preempted);
+#if defined(CONFIG_KVM_GUEST) && defined(CONFIG_PARAVIRT_SPINLOCKS)
+	OFFSET(KVM_STEAL_TIME_preempted, kvm_steal_time, preempted);
 	BLANK();
-#पूर्ण_अगर
+#endif
 
-#घोषणा ENTRY(entry) OFFSET(pt_regs_ ## entry, pt_regs, entry)
+#define ENTRY(entry) OFFSET(pt_regs_ ## entry, pt_regs, entry)
 	ENTRY(bx);
 	ENTRY(cx);
 	ENTRY(dx);
@@ -44,22 +43,22 @@
 	ENTRY(r15);
 	ENTRY(flags);
 	BLANK();
-#अघोषित ENTRY
+#undef ENTRY
 
-#घोषणा ENTRY(entry) OFFSET(saved_context_ ## entry, saved_context, entry)
+#define ENTRY(entry) OFFSET(saved_context_ ## entry, saved_context, entry)
 	ENTRY(cr0);
 	ENTRY(cr2);
 	ENTRY(cr3);
 	ENTRY(cr4);
 	ENTRY(gdt_desc);
 	BLANK();
-#अघोषित ENTRY
+#undef ENTRY
 
 	BLANK();
 
-#अगर_घोषित CONFIG_STACKPROTECTOR
-	DEFINE(stack_canary_offset, दुरत्व(काष्ठा fixed_percpu_data, stack_canary));
+#ifdef CONFIG_STACKPROTECTOR
+	DEFINE(stack_canary_offset, offsetof(struct fixed_percpu_data, stack_canary));
 	BLANK();
-#पूर्ण_अगर
-	वापस 0;
-पूर्ण
+#endif
+	return 0;
+}

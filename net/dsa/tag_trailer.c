@@ -1,19 +1,18 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
- * net/dsa/tag_trailer.c - Trailer tag क्रमmat handling
+ * net/dsa/tag_trailer.c - Trailer tag format handling
  * Copyright (c) 2008-2009 Marvell Semiconductor
  */
 
-#समावेश <linux/etherdevice.h>
-#समावेश <linux/list.h>
-#समावेश <linux/slab.h>
+#include <linux/etherdevice.h>
+#include <linux/list.h>
+#include <linux/slab.h>
 
-#समावेश "dsa_priv.h"
+#include "dsa_priv.h"
 
-अटल काष्ठा sk_buff *trailer_xmit(काष्ठा sk_buff *skb, काष्ठा net_device *dev)
-अणु
-	काष्ठा dsa_port *dp = dsa_slave_to_port(dev);
+static struct sk_buff *trailer_xmit(struct sk_buff *skb, struct net_device *dev)
+{
+	struct dsa_port *dp = dsa_slave_to_port(dev);
 	u8 *trailer;
 
 	trailer = skb_put(skb, 4);
@@ -22,43 +21,43 @@
 	trailer[2] = 0x10;
 	trailer[3] = 0x00;
 
-	वापस skb;
-पूर्ण
+	return skb;
+}
 
-अटल काष्ठा sk_buff *trailer_rcv(काष्ठा sk_buff *skb, काष्ठा net_device *dev,
-				   काष्ठा packet_type *pt)
-अणु
+static struct sk_buff *trailer_rcv(struct sk_buff *skb, struct net_device *dev,
+				   struct packet_type *pt)
+{
 	u8 *trailer;
-	पूर्णांक source_port;
+	int source_port;
 
-	अगर (skb_linearize(skb))
-		वापस शून्य;
+	if (skb_linearize(skb))
+		return NULL;
 
-	trailer = skb_tail_poपूर्णांकer(skb) - 4;
-	अगर (trailer[0] != 0x80 || (trailer[1] & 0xf8) != 0x00 ||
+	trailer = skb_tail_pointer(skb) - 4;
+	if (trailer[0] != 0x80 || (trailer[1] & 0xf8) != 0x00 ||
 	    (trailer[2] & 0xef) != 0x00 || trailer[3] != 0x00)
-		वापस शून्य;
+		return NULL;
 
 	source_port = trailer[1] & 7;
 
 	skb->dev = dsa_master_find_slave(dev, 0, source_port);
-	अगर (!skb->dev)
-		वापस शून्य;
+	if (!skb->dev)
+		return NULL;
 
-	अगर (pskb_trim_rcsum(skb, skb->len - 4))
-		वापस शून्य;
+	if (pskb_trim_rcsum(skb, skb->len - 4))
+		return NULL;
 
-	वापस skb;
-पूर्ण
+	return skb;
+}
 
-अटल स्थिर काष्ठा dsa_device_ops trailer_netdev_ops = अणु
+static const struct dsa_device_ops trailer_netdev_ops = {
 	.name	= "trailer",
 	.proto	= DSA_TAG_PROTO_TRAILER,
 	.xmit	= trailer_xmit,
 	.rcv	= trailer_rcv,
 	.overhead = 4,
 	.tail_tag = true,
-पूर्ण;
+};
 
 MODULE_LICENSE("GPL");
 MODULE_ALIAS_DSA_TAG_DRIVER(DSA_TAG_PROTO_TRAILER);

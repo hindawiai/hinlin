@@ -1,169 +1,168 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Test backward bit in event attribute, पढ़ो ring buffer from end to
+ * Test backward bit in event attribute, read ring buffer from end to
  * beginning
  */
 
-#समावेश <evlist.h>
-#समावेश <sys/prctl.h>
-#समावेश "record.h"
-#समावेश "tests.h"
-#समावेश "debug.h"
-#समावेश "parse-events.h"
-#समावेश "util/mmap.h"
-#समावेश <त्रुटिसं.स>
-#समावेश <linux/माला.स>
-#समावेश <perf/mmap.h>
+#include <evlist.h>
+#include <sys/prctl.h>
+#include "record.h"
+#include "tests.h"
+#include "debug.h"
+#include "parse-events.h"
+#include "util/mmap.h"
+#include <errno.h>
+#include <linux/string.h>
+#include <perf/mmap.h>
 
-#घोषणा NR_ITERS 111
+#define NR_ITERS 111
 
-अटल व्योम testहाल(व्योम)
-अणु
-	पूर्णांक i;
+static void testcase(void)
+{
+	int i;
 
-	क्रम (i = 0; i < NR_ITERS; i++) अणु
-		अक्षर proc_name[15];
+	for (i = 0; i < NR_ITERS; i++) {
+		char proc_name[15];
 
-		snम_लिखो(proc_name, माप(proc_name), "p:%d\n", i);
+		snprintf(proc_name, sizeof(proc_name), "p:%d\n", i);
 		prctl(PR_SET_NAME, proc_name);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक count_samples(काष्ठा evlist *evlist, पूर्णांक *sample_count,
-			 पूर्णांक *comm_count)
-अणु
-	पूर्णांक i;
+static int count_samples(struct evlist *evlist, int *sample_count,
+			 int *comm_count)
+{
+	int i;
 
-	क्रम (i = 0; i < evlist->core.nr_mmaps; i++) अणु
-		काष्ठा mmap *map = &evlist->overग_लिखो_mmap[i];
-		जोड़ perf_event *event;
+	for (i = 0; i < evlist->core.nr_mmaps; i++) {
+		struct mmap *map = &evlist->overwrite_mmap[i];
+		union perf_event *event;
 
-		perf_mmap__पढ़ो_init(&map->core);
-		जबतक ((event = perf_mmap__पढ़ो_event(&map->core)) != शून्य) अणु
-			स्थिर u32 type = event->header.type;
+		perf_mmap__read_init(&map->core);
+		while ((event = perf_mmap__read_event(&map->core)) != NULL) {
+			const u32 type = event->header.type;
 
-			चयन (type) अणु
-			हाल PERF_RECORD_SAMPLE:
+			switch (type) {
+			case PERF_RECORD_SAMPLE:
 				(*sample_count)++;
-				अवरोध;
-			हाल PERF_RECORD_COMM:
+				break;
+			case PERF_RECORD_COMM:
 				(*comm_count)++;
-				अवरोध;
-			शेष:
+				break;
+			default:
 				pr_err("Unexpected record of type %d\n", type);
-				वापस TEST_FAIL;
-			पूर्ण
-		पूर्ण
-		perf_mmap__पढ़ो_करोne(&map->core);
-	पूर्ण
-	वापस TEST_OK;
-पूर्ण
+				return TEST_FAIL;
+			}
+		}
+		perf_mmap__read_done(&map->core);
+	}
+	return TEST_OK;
+}
 
-अटल पूर्णांक करो_test(काष्ठा evlist *evlist, पूर्णांक mmap_pages,
-		   पूर्णांक *sample_count, पूर्णांक *comm_count)
-अणु
-	पूर्णांक err;
-	अक्षर sbuf[STRERR_बफ_मानE];
+static int do_test(struct evlist *evlist, int mmap_pages,
+		   int *sample_count, int *comm_count)
+{
+	int err;
+	char sbuf[STRERR_BUFSIZE];
 
 	err = evlist__mmap(evlist, mmap_pages);
-	अगर (err < 0) अणु
+	if (err < 0) {
 		pr_debug("evlist__mmap: %s\n",
-			 str_error_r(त्रुटि_सं, sbuf, माप(sbuf)));
-		वापस TEST_FAIL;
-	पूर्ण
+			 str_error_r(errno, sbuf, sizeof(sbuf)));
+		return TEST_FAIL;
+	}
 
 	evlist__enable(evlist);
-	testहाल();
+	testcase();
 	evlist__disable(evlist);
 
 	err = count_samples(evlist, sample_count, comm_count);
 	evlist__munmap(evlist);
-	वापस err;
-पूर्ण
+	return err;
+}
 
 
-पूर्णांक test__backward_ring_buffer(काष्ठा test *test __maybe_unused, पूर्णांक subtest __maybe_unused)
-अणु
-	पूर्णांक ret = TEST_SKIP, err, sample_count = 0, comm_count = 0;
-	अक्षर pid[16], sbuf[STRERR_बफ_मानE];
-	काष्ठा evlist *evlist;
-	काष्ठा evsel *evsel __maybe_unused;
-	काष्ठा parse_events_error parse_error;
-	काष्ठा record_opts opts = अणु
-		.target = अणु
-			.uid = अच_पूर्णांक_उच्च,
+int test__backward_ring_buffer(struct test *test __maybe_unused, int subtest __maybe_unused)
+{
+	int ret = TEST_SKIP, err, sample_count = 0, comm_count = 0;
+	char pid[16], sbuf[STRERR_BUFSIZE];
+	struct evlist *evlist;
+	struct evsel *evsel __maybe_unused;
+	struct parse_events_error parse_error;
+	struct record_opts opts = {
+		.target = {
+			.uid = UINT_MAX,
 			.uses_mmap = true,
-		पूर्ण,
+		},
 		.freq	      = 0,
 		.mmap_pages   = 256,
-		.शेष_पूर्णांकerval = 1,
-	पूर्ण;
+		.default_interval = 1,
+	};
 
-	snम_लिखो(pid, माप(pid), "%d", getpid());
-	pid[माप(pid) - 1] = '\0';
+	snprintf(pid, sizeof(pid), "%d", getpid());
+	pid[sizeof(pid) - 1] = '\0';
 	opts.target.tid = opts.target.pid = pid;
 
 	evlist = evlist__new();
-	अगर (!evlist) अणु
+	if (!evlist) {
 		pr_debug("Not enough memory to create evlist\n");
-		वापस TEST_FAIL;
-	पूर्ण
+		return TEST_FAIL;
+	}
 
 	err = evlist__create_maps(evlist, &opts.target);
-	अगर (err < 0) अणु
+	if (err < 0) {
 		pr_debug("Not enough memory to create thread/cpu maps\n");
-		जाओ out_delete_evlist;
-	पूर्ण
+		goto out_delete_evlist;
+	}
 
-	bzero(&parse_error, माप(parse_error));
+	bzero(&parse_error, sizeof(parse_error));
 	/*
 	 * Set backward bit, ring buffer should be writing from end. Record
 	 * it in aux evlist
 	 */
 	err = parse_events(evlist, "syscalls:sys_enter_prctl/overwrite/", &parse_error);
-	अगर (err) अणु
+	if (err) {
 		pr_debug("Failed to parse tracepoint event, try use root\n");
 		ret = TEST_SKIP;
-		जाओ out_delete_evlist;
-	पूर्ण
+		goto out_delete_evlist;
+	}
 
-	evlist__config(evlist, &opts, शून्य);
+	evlist__config(evlist, &opts, NULL);
 
-	err = evlist__खोलो(evlist);
-	अगर (err < 0) अणु
+	err = evlist__open(evlist);
+	if (err < 0) {
 		pr_debug("perf_evlist__open: %s\n",
-			 str_error_r(त्रुटि_सं, sbuf, माप(sbuf)));
-		जाओ out_delete_evlist;
-	पूर्ण
+			 str_error_r(errno, sbuf, sizeof(sbuf)));
+		goto out_delete_evlist;
+	}
 
 	ret = TEST_FAIL;
-	err = करो_test(evlist, opts.mmap_pages, &sample_count,
+	err = do_test(evlist, opts.mmap_pages, &sample_count,
 		      &comm_count);
-	अगर (err != TEST_OK)
-		जाओ out_delete_evlist;
+	if (err != TEST_OK)
+		goto out_delete_evlist;
 
-	अगर ((sample_count != NR_ITERS) || (comm_count != NR_ITERS)) अणु
+	if ((sample_count != NR_ITERS) || (comm_count != NR_ITERS)) {
 		pr_err("Unexpected counter: sample_count=%d, comm_count=%d\n",
 		       sample_count, comm_count);
-		जाओ out_delete_evlist;
-	पूर्ण
+		goto out_delete_evlist;
+	}
 
-	evlist__बंद(evlist);
+	evlist__close(evlist);
 
-	err = evlist__खोलो(evlist);
-	अगर (err < 0) अणु
+	err = evlist__open(evlist);
+	if (err < 0) {
 		pr_debug("perf_evlist__open: %s\n",
-			 str_error_r(त्रुटि_सं, sbuf, माप(sbuf)));
-		जाओ out_delete_evlist;
-	पूर्ण
+			 str_error_r(errno, sbuf, sizeof(sbuf)));
+		goto out_delete_evlist;
+	}
 
-	err = करो_test(evlist, 1, &sample_count, &comm_count);
-	अगर (err != TEST_OK)
-		जाओ out_delete_evlist;
+	err = do_test(evlist, 1, &sample_count, &comm_count);
+	if (err != TEST_OK)
+		goto out_delete_evlist;
 
 	ret = TEST_OK;
 out_delete_evlist:
 	evlist__delete(evlist);
-	वापस ret;
-पूर्ण
+	return ret;
+}

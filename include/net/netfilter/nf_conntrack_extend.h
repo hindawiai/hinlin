@@ -1,91 +1,90 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _NF_CONNTRACK_EXTEND_H
-#घोषणा _NF_CONNTRACK_EXTEND_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _NF_CONNTRACK_EXTEND_H
+#define _NF_CONNTRACK_EXTEND_H
 
-#समावेश <linux/slab.h>
+#include <linux/slab.h>
 
-#समावेश <net/netfilter/nf_conntrack.h>
+#include <net/netfilter/nf_conntrack.h>
 
-क्रमागत nf_ct_ext_id अणु
+enum nf_ct_ext_id {
 	NF_CT_EXT_HELPER,
-#अगर IS_ENABLED(CONFIG_NF_NAT)
+#if IS_ENABLED(CONFIG_NF_NAT)
 	NF_CT_EXT_NAT,
-#पूर्ण_अगर
+#endif
 	NF_CT_EXT_SEQADJ,
 	NF_CT_EXT_ACCT,
-#अगर_घोषित CONFIG_NF_CONNTRACK_EVENTS
+#ifdef CONFIG_NF_CONNTRACK_EVENTS
 	NF_CT_EXT_ECACHE,
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_NF_CONNTRACK_TIMESTAMP
+#endif
+#ifdef CONFIG_NF_CONNTRACK_TIMESTAMP
 	NF_CT_EXT_TSTAMP,
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_NF_CONNTRACK_TIMEOUT
+#endif
+#ifdef CONFIG_NF_CONNTRACK_TIMEOUT
 	NF_CT_EXT_TIMEOUT,
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_NF_CONNTRACK_LABELS
+#endif
+#ifdef CONFIG_NF_CONNTRACK_LABELS
 	NF_CT_EXT_LABELS,
-#पूर्ण_अगर
-#अगर IS_ENABLED(CONFIG_NETFILTER_SYNPROXY)
+#endif
+#if IS_ENABLED(CONFIG_NETFILTER_SYNPROXY)
 	NF_CT_EXT_SYNPROXY,
-#पूर्ण_अगर
+#endif
 	NF_CT_EXT_NUM,
-पूर्ण;
+};
 
-#घोषणा NF_CT_EXT_HELPER_TYPE काष्ठा nf_conn_help
-#घोषणा NF_CT_EXT_NAT_TYPE काष्ठा nf_conn_nat
-#घोषणा NF_CT_EXT_SEQADJ_TYPE काष्ठा nf_conn_seqadj
-#घोषणा NF_CT_EXT_ACCT_TYPE काष्ठा nf_conn_acct
-#घोषणा NF_CT_EXT_ECACHE_TYPE काष्ठा nf_conntrack_ecache
-#घोषणा NF_CT_EXT_TSTAMP_TYPE काष्ठा nf_conn_tstamp
-#घोषणा NF_CT_EXT_TIMEOUT_TYPE काष्ठा nf_conn_समयout
-#घोषणा NF_CT_EXT_LABELS_TYPE काष्ठा nf_conn_labels
-#घोषणा NF_CT_EXT_SYNPROXY_TYPE काष्ठा nf_conn_synproxy
+#define NF_CT_EXT_HELPER_TYPE struct nf_conn_help
+#define NF_CT_EXT_NAT_TYPE struct nf_conn_nat
+#define NF_CT_EXT_SEQADJ_TYPE struct nf_conn_seqadj
+#define NF_CT_EXT_ACCT_TYPE struct nf_conn_acct
+#define NF_CT_EXT_ECACHE_TYPE struct nf_conntrack_ecache
+#define NF_CT_EXT_TSTAMP_TYPE struct nf_conn_tstamp
+#define NF_CT_EXT_TIMEOUT_TYPE struct nf_conn_timeout
+#define NF_CT_EXT_LABELS_TYPE struct nf_conn_labels
+#define NF_CT_EXT_SYNPROXY_TYPE struct nf_conn_synproxy
 
-/* Extensions: optional stuff which isn't permanently in काष्ठा. */
-काष्ठा nf_ct_ext अणु
+/* Extensions: optional stuff which isn't permanently in struct. */
+struct nf_ct_ext {
 	u8 offset[NF_CT_EXT_NUM];
 	u8 len;
-	अक्षर data[];
-पूर्ण;
+	char data[];
+};
 
-अटल अंतरभूत bool __nf_ct_ext_exist(स्थिर काष्ठा nf_ct_ext *ext, u8 id)
-अणु
-	वापस !!ext->offset[id];
-पूर्ण
+static inline bool __nf_ct_ext_exist(const struct nf_ct_ext *ext, u8 id)
+{
+	return !!ext->offset[id];
+}
 
-अटल अंतरभूत bool nf_ct_ext_exist(स्थिर काष्ठा nf_conn *ct, u8 id)
-अणु
-	वापस (ct->ext && __nf_ct_ext_exist(ct->ext, id));
-पूर्ण
+static inline bool nf_ct_ext_exist(const struct nf_conn *ct, u8 id)
+{
+	return (ct->ext && __nf_ct_ext_exist(ct->ext, id));
+}
 
-अटल अंतरभूत व्योम *__nf_ct_ext_find(स्थिर काष्ठा nf_conn *ct, u8 id)
-अणु
-	अगर (!nf_ct_ext_exist(ct, id))
-		वापस शून्य;
+static inline void *__nf_ct_ext_find(const struct nf_conn *ct, u8 id)
+{
+	if (!nf_ct_ext_exist(ct, id))
+		return NULL;
 
-	वापस (व्योम *)ct->ext + ct->ext->offset[id];
-पूर्ण
-#घोषणा nf_ct_ext_find(ext, id)	\
+	return (void *)ct->ext + ct->ext->offset[id];
+}
+#define nf_ct_ext_find(ext, id)	\
 	((id##_TYPE *)__nf_ct_ext_find((ext), (id)))
 
 /* Destroy all relationships */
-व्योम nf_ct_ext_destroy(काष्ठा nf_conn *ct);
+void nf_ct_ext_destroy(struct nf_conn *ct);
 
-/* Add this type, वापसs poपूर्णांकer to data or शून्य. */
-व्योम *nf_ct_ext_add(काष्ठा nf_conn *ct, क्रमागत nf_ct_ext_id id, gfp_t gfp);
+/* Add this type, returns pointer to data or NULL. */
+void *nf_ct_ext_add(struct nf_conn *ct, enum nf_ct_ext_id id, gfp_t gfp);
 
-काष्ठा nf_ct_ext_type अणु
-	/* Destroys relationships (can be शून्य). */
-	व्योम (*destroy)(काष्ठा nf_conn *ct);
+struct nf_ct_ext_type {
+	/* Destroys relationships (can be NULL). */
+	void (*destroy)(struct nf_conn *ct);
 
-	क्रमागत nf_ct_ext_id id;
+	enum nf_ct_ext_id id;
 
 	/* Length and min alignment. */
 	u8 len;
 	u8 align;
-पूर्ण;
+};
 
-पूर्णांक nf_ct_extend_रेजिस्टर(स्थिर काष्ठा nf_ct_ext_type *type);
-व्योम nf_ct_extend_unरेजिस्टर(स्थिर काष्ठा nf_ct_ext_type *type);
-#पूर्ण_अगर /* _NF_CONNTRACK_EXTEND_H */
+int nf_ct_extend_register(const struct nf_ct_ext_type *type);
+void nf_ct_extend_unregister(const struct nf_ct_ext_type *type);
+#endif /* _NF_CONNTRACK_EXTEND_H */

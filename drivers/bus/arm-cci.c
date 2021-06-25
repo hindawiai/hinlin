@@ -1,152 +1,151 @@
-<शैली गुरु>
 /*
- * CCI cache coherent पूर्णांकerconnect driver
+ * CCI cache coherent interconnect driver
  *
  * Copyright (C) 2013 ARM Ltd.
  * Author: Lorenzo Pieralisi <lorenzo.pieralisi@arm.com>
  *
- * This program is मुक्त software; you can redistribute it and/or modअगरy
+ * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation.
  *
  * This program is distributed "as is" WITHOUT ANY WARRANTY of any
  * kind, whether express or implied; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License क्रम more details.
+ * GNU General Public License for more details.
  */
 
-#समावेश <linux/arm-cci.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/module.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/of_platक्रमm.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/slab.h>
+#include <linux/arm-cci.h>
+#include <linux/io.h>
+#include <linux/module.h>
+#include <linux/of_address.h>
+#include <linux/of_platform.h>
+#include <linux/platform_device.h>
+#include <linux/slab.h>
 
-#समावेश <यंत्र/cacheflush.h>
-#समावेश <यंत्र/smp_plat.h>
+#include <asm/cacheflush.h>
+#include <asm/smp_plat.h>
 
-अटल व्योम __iomem *cci_ctrl_base __ro_after_init;
-अटल अचिन्हित दीर्घ cci_ctrl_phys __ro_after_init;
+static void __iomem *cci_ctrl_base __ro_after_init;
+static unsigned long cci_ctrl_phys __ro_after_init;
 
-#अगर_घोषित CONFIG_ARM_CCI400_PORT_CTRL
-काष्ठा cci_nb_ports अणु
-	अचिन्हित पूर्णांक nb_ace;
-	अचिन्हित पूर्णांक nb_ace_lite;
-पूर्ण;
+#ifdef CONFIG_ARM_CCI400_PORT_CTRL
+struct cci_nb_ports {
+	unsigned int nb_ace;
+	unsigned int nb_ace_lite;
+};
 
-अटल स्थिर काष्ठा cci_nb_ports cci400_ports = अणु
+static const struct cci_nb_ports cci400_ports = {
 	.nb_ace = 2,
 	.nb_ace_lite = 3
-पूर्ण;
+};
 
-#घोषणा CCI400_PORTS_DATA	(&cci400_ports)
-#अन्यथा
-#घोषणा CCI400_PORTS_DATA	(शून्य)
-#पूर्ण_अगर
+#define CCI400_PORTS_DATA	(&cci400_ports)
+#else
+#define CCI400_PORTS_DATA	(NULL)
+#endif
 
-अटल स्थिर काष्ठा of_device_id arm_cci_matches[] = अणु
-#अगर_घोषित CONFIG_ARM_CCI400_COMMON
-	अणु.compatible = "arm,cci-400", .data = CCI400_PORTS_DATA पूर्ण,
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_ARM_CCI5xx_PMU
-	अणु .compatible = "arm,cci-500", पूर्ण,
-	अणु .compatible = "arm,cci-550", पूर्ण,
-#पूर्ण_अगर
-	अणुपूर्ण,
-पूर्ण;
+static const struct of_device_id arm_cci_matches[] = {
+#ifdef CONFIG_ARM_CCI400_COMMON
+	{.compatible = "arm,cci-400", .data = CCI400_PORTS_DATA },
+#endif
+#ifdef CONFIG_ARM_CCI5xx_PMU
+	{ .compatible = "arm,cci-500", },
+	{ .compatible = "arm,cci-550", },
+#endif
+	{},
+};
 
-अटल स्थिर काष्ठा of_dev_auxdata arm_cci_auxdata[] = अणु
-	OF_DEV_AUXDATA("arm,cci-400-pmu", 0, शून्य, &cci_ctrl_base),
-	OF_DEV_AUXDATA("arm,cci-400-pmu,r0", 0, शून्य, &cci_ctrl_base),
-	OF_DEV_AUXDATA("arm,cci-400-pmu,r1", 0, शून्य, &cci_ctrl_base),
-	OF_DEV_AUXDATA("arm,cci-500-pmu,r0", 0, शून्य, &cci_ctrl_base),
-	OF_DEV_AUXDATA("arm,cci-550-pmu,r0", 0, शून्य, &cci_ctrl_base),
-	अणुपूर्ण
-पूर्ण;
+static const struct of_dev_auxdata arm_cci_auxdata[] = {
+	OF_DEV_AUXDATA("arm,cci-400-pmu", 0, NULL, &cci_ctrl_base),
+	OF_DEV_AUXDATA("arm,cci-400-pmu,r0", 0, NULL, &cci_ctrl_base),
+	OF_DEV_AUXDATA("arm,cci-400-pmu,r1", 0, NULL, &cci_ctrl_base),
+	OF_DEV_AUXDATA("arm,cci-500-pmu,r0", 0, NULL, &cci_ctrl_base),
+	OF_DEV_AUXDATA("arm,cci-550-pmu,r0", 0, NULL, &cci_ctrl_base),
+	{}
+};
 
-#घोषणा DRIVER_NAME		"ARM-CCI"
+#define DRIVER_NAME		"ARM-CCI"
 
-अटल पूर्णांक cci_platक्रमm_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	अगर (!cci_probed())
-		वापस -ENODEV;
+static int cci_platform_probe(struct platform_device *pdev)
+{
+	if (!cci_probed())
+		return -ENODEV;
 
-	वापस of_platक्रमm_populate(pdev->dev.of_node, शून्य,
+	return of_platform_populate(pdev->dev.of_node, NULL,
 				    arm_cci_auxdata, &pdev->dev);
-पूर्ण
+}
 
-अटल काष्ठा platक्रमm_driver cci_platक्रमm_driver = अणु
-	.driver = अणु
+static struct platform_driver cci_platform_driver = {
+	.driver = {
 		   .name = DRIVER_NAME,
 		   .of_match_table = arm_cci_matches,
-		  पूर्ण,
-	.probe = cci_platक्रमm_probe,
-पूर्ण;
+		  },
+	.probe = cci_platform_probe,
+};
 
-अटल पूर्णांक __init cci_platक्रमm_init(व्योम)
-अणु
-	वापस platक्रमm_driver_रेजिस्टर(&cci_platक्रमm_driver);
-पूर्ण
+static int __init cci_platform_init(void)
+{
+	return platform_driver_register(&cci_platform_driver);
+}
 
-#अगर_घोषित CONFIG_ARM_CCI400_PORT_CTRL
+#ifdef CONFIG_ARM_CCI400_PORT_CTRL
 
-#घोषणा CCI_PORT_CTRL		0x0
-#घोषणा CCI_CTRL_STATUS		0xc
+#define CCI_PORT_CTRL		0x0
+#define CCI_CTRL_STATUS		0xc
 
-#घोषणा CCI_ENABLE_SNOOP_REQ	0x1
-#घोषणा CCI_ENABLE_DVM_REQ	0x2
-#घोषणा CCI_ENABLE_REQ		(CCI_ENABLE_SNOOP_REQ | CCI_ENABLE_DVM_REQ)
+#define CCI_ENABLE_SNOOP_REQ	0x1
+#define CCI_ENABLE_DVM_REQ	0x2
+#define CCI_ENABLE_REQ		(CCI_ENABLE_SNOOP_REQ | CCI_ENABLE_DVM_REQ)
 
-क्रमागत cci_ace_port_type अणु
+enum cci_ace_port_type {
 	ACE_INVALID_PORT = 0x0,
 	ACE_PORT,
 	ACE_LITE_PORT,
-पूर्ण;
+};
 
-काष्ठा cci_ace_port अणु
-	व्योम __iomem *base;
-	अचिन्हित दीर्घ phys;
-	क्रमागत cci_ace_port_type type;
-	काष्ठा device_node *dn;
-पूर्ण;
+struct cci_ace_port {
+	void __iomem *base;
+	unsigned long phys;
+	enum cci_ace_port_type type;
+	struct device_node *dn;
+};
 
-अटल काष्ठा cci_ace_port *ports;
-अटल अचिन्हित पूर्णांक nb_cci_ports;
+static struct cci_ace_port *ports;
+static unsigned int nb_cci_ports;
 
-काष्ठा cpu_port अणु
+struct cpu_port {
 	u64 mpidr;
 	u32 port;
-पूर्ण;
+};
 
 /*
- * Use the port MSB as valid flag, shअगरt can be made dynamic
- * by computing number of bits required क्रम port indexes.
+ * Use the port MSB as valid flag, shift can be made dynamic
+ * by computing number of bits required for port indexes.
  * Code disabling CCI cpu ports runs with D-cache invalidated
  * and SCTLR bit clear so data accesses must be kept to a minimum
- * to improve perक्रमmance; क्रम now shअगरt is left अटल to
- * aव्योम one more data access जबतक disabling the CCI port.
+ * to improve performance; for now shift is left static to
+ * avoid one more data access while disabling the CCI port.
  */
-#घोषणा PORT_VALID_SHIFT	31
-#घोषणा PORT_VALID		(0x1 << PORT_VALID_SHIFT)
+#define PORT_VALID_SHIFT	31
+#define PORT_VALID		(0x1 << PORT_VALID_SHIFT)
 
-अटल अंतरभूत व्योम init_cpu_port(काष्ठा cpu_port *port, u32 index, u64 mpidr)
-अणु
+static inline void init_cpu_port(struct cpu_port *port, u32 index, u64 mpidr)
+{
 	port->port = PORT_VALID | index;
 	port->mpidr = mpidr;
-पूर्ण
+}
 
-अटल अंतरभूत bool cpu_port_is_valid(काष्ठा cpu_port *port)
-अणु
-	वापस !!(port->port & PORT_VALID);
-पूर्ण
+static inline bool cpu_port_is_valid(struct cpu_port *port)
+{
+	return !!(port->port & PORT_VALID);
+}
 
-अटल अंतरभूत bool cpu_port_match(काष्ठा cpu_port *port, u64 mpidr)
-अणु
-	वापस port->mpidr == (mpidr & MPIDR_HWID_BITMASK);
-पूर्ण
+static inline bool cpu_port_match(struct cpu_port *port, u64 mpidr)
+{
+	return port->mpidr == (mpidr & MPIDR_HWID_BITMASK);
+}
 
-अटल काष्ठा cpu_port cpu_port[NR_CPUS];
+static struct cpu_port cpu_port[NR_CPUS];
 
 /**
  * __cci_ace_get_port - Function to retrieve the port index connected to
@@ -156,67 +155,67 @@
  * @type: port type
  *
  * Return value:
- *	- CCI port index अगर success
- *	- -ENODEV अगर failure
+ *	- CCI port index if success
+ *	- -ENODEV if failure
  */
-अटल पूर्णांक __cci_ace_get_port(काष्ठा device_node *dn, पूर्णांक type)
-अणु
-	पूर्णांक i;
+static int __cci_ace_get_port(struct device_node *dn, int type)
+{
+	int i;
 	bool ace_match;
-	काष्ठा device_node *cci_portn;
+	struct device_node *cci_portn;
 
 	cci_portn = of_parse_phandle(dn, "cci-control-port", 0);
-	क्रम (i = 0; i < nb_cci_ports; i++) अणु
+	for (i = 0; i < nb_cci_ports; i++) {
 		ace_match = ports[i].type == type;
-		अगर (ace_match && cci_portn == ports[i].dn)
-			वापस i;
-	पूर्ण
-	वापस -ENODEV;
-पूर्ण
+		if (ace_match && cci_portn == ports[i].dn)
+			return i;
+	}
+	return -ENODEV;
+}
 
-पूर्णांक cci_ace_get_port(काष्ठा device_node *dn)
-अणु
-	वापस __cci_ace_get_port(dn, ACE_LITE_PORT);
-पूर्ण
+int cci_ace_get_port(struct device_node *dn)
+{
+	return __cci_ace_get_port(dn, ACE_LITE_PORT);
+}
 EXPORT_SYMBOL_GPL(cci_ace_get_port);
 
-अटल व्योम cci_ace_init_ports(व्योम)
-अणु
-	पूर्णांक port, cpu;
-	काष्ठा device_node *cpun;
+static void cci_ace_init_ports(void)
+{
+	int port, cpu;
+	struct device_node *cpun;
 
 	/*
 	 * Port index look-up speeds up the function disabling ports by CPU,
-	 * since the logical to port index mapping is करोne once and करोes
-	 * not change after प्रणाली boot.
-	 * The stashed index array is initialized क्रम all possible CPUs
-	 * at probe समय.
+	 * since the logical to port index mapping is done once and does
+	 * not change after system boot.
+	 * The stashed index array is initialized for all possible CPUs
+	 * at probe time.
 	 */
-	क्रम_each_possible_cpu(cpu) अणु
+	for_each_possible_cpu(cpu) {
 		/* too early to use cpu->of_node */
-		cpun = of_get_cpu_node(cpu, शून्य);
+		cpun = of_get_cpu_node(cpu, NULL);
 
-		अगर (WARN(!cpun, "Missing cpu device node\n"))
-			जारी;
+		if (WARN(!cpun, "Missing cpu device node\n"))
+			continue;
 
 		port = __cci_ace_get_port(cpun, ACE_PORT);
-		अगर (port < 0)
-			जारी;
+		if (port < 0)
+			continue;
 
 		init_cpu_port(&cpu_port[cpu], port, cpu_logical_map(cpu));
-	पूर्ण
+	}
 
-	क्रम_each_possible_cpu(cpu) अणु
+	for_each_possible_cpu(cpu) {
 		WARN(!cpu_port_is_valid(&cpu_port[cpu]),
 			"CPU %u does not have an associated CCI port\n",
 			cpu);
-	पूर्ण
-पूर्ण
+	}
+}
 /*
- * Functions to enable/disable a CCI पूर्णांकerconnect slave port
+ * Functions to enable/disable a CCI interconnect slave port
  *
- * They are called by low-level घातer management code to disable slave
- * पूर्णांकerfaces snoops and DVM broadcast.
+ * They are called by low-level power management code to disable slave
+ * interfaces snoops and DVM broadcast.
  * Since they may execute with cache data allocation disabled and
  * after the caches have been cleaned and invalidated the functions provide
  * no explicit locking since they may run with D-cache disabled, so normal
@@ -229,24 +228,24 @@ EXPORT_SYMBOL_GPL(cci_ace_get_port);
  * cci_port_control() - function to control a CCI port
  *
  * @port: index of the port to setup
- * @enable: अगर true enables the port, अगर false disables it
+ * @enable: if true enables the port, if false disables it
  */
-अटल व्योम notrace cci_port_control(अचिन्हित पूर्णांक port, bool enable)
-अणु
-	व्योम __iomem *base = ports[port].base;
+static void notrace cci_port_control(unsigned int port, bool enable)
+{
+	void __iomem *base = ports[port].base;
 
-	ग_लिखोl_relaxed(enable ? CCI_ENABLE_REQ : 0, base + CCI_PORT_CTRL);
+	writel_relaxed(enable ? CCI_ENABLE_REQ : 0, base + CCI_PORT_CTRL);
 	/*
-	 * This function is called from घातer करोwn procedures
-	 * and must not execute any inकाष्ठाion that might
+	 * This function is called from power down procedures
+	 * and must not execute any instruction that might
 	 * cause the processor to be put in a quiescent state
 	 * (eg wfi). Hence, cpu_relax() can not be added to this
-	 * पढ़ो loop to optimize घातer, since it might hide possibly
+	 * read loop to optimize power, since it might hide possibly
 	 * disruptive operations.
 	 */
-	जबतक (पढ़ोl_relaxed(cci_ctrl_base + CCI_CTRL_STATUS) & 0x1)
+	while (readl_relaxed(cci_ctrl_base + CCI_CTRL_STATUS) & 0x1)
 			;
-पूर्ण
+}
 
 /**
  * cci_disable_port_by_cpu() - function to disable a CCI port by CPU
@@ -254,67 +253,67 @@ EXPORT_SYMBOL_GPL(cci_ace_get_port);
  *
  * @mpidr: mpidr of the CPU whose CCI port should be disabled
  *
- * Disabling a CCI port क्रम a CPU implies disabling the CCI port
+ * Disabling a CCI port for a CPU implies disabling the CCI port
  * controlling that CPU cluster. Code disabling CPU CCI ports
  * must make sure that the CPU running the code is the last active CPU
- * in the cluster ie all other CPUs are quiescent in a low घातer state.
+ * in the cluster ie all other CPUs are quiescent in a low power state.
  *
  * Return:
  *	0 on success
  *	-ENODEV on port look-up failure
  */
-पूर्णांक notrace cci_disable_port_by_cpu(u64 mpidr)
-अणु
-	पूर्णांक cpu;
+int notrace cci_disable_port_by_cpu(u64 mpidr)
+{
+	int cpu;
 	bool is_valid;
-	क्रम (cpu = 0; cpu < nr_cpu_ids; cpu++) अणु
+	for (cpu = 0; cpu < nr_cpu_ids; cpu++) {
 		is_valid = cpu_port_is_valid(&cpu_port[cpu]);
-		अगर (is_valid && cpu_port_match(&cpu_port[cpu], mpidr)) अणु
+		if (is_valid && cpu_port_match(&cpu_port[cpu], mpidr)) {
 			cci_port_control(cpu_port[cpu].port, false);
-			वापस 0;
-		पूर्ण
-	पूर्ण
-	वापस -ENODEV;
-पूर्ण
+			return 0;
+		}
+	}
+	return -ENODEV;
+}
 EXPORT_SYMBOL_GPL(cci_disable_port_by_cpu);
 
 /**
- * cci_enable_port_क्रम_self() - enable a CCI port क्रम calling CPU
+ * cci_enable_port_for_self() - enable a CCI port for calling CPU
  *
- * Enabling a CCI port क्रम the calling CPU implies enabling the CCI
+ * Enabling a CCI port for the calling CPU implies enabling the CCI
  * port controlling that CPU's cluster. Caller must make sure that the
  * CPU running the code is the first active CPU in the cluster and all
- * other CPUs are quiescent in a low घातer state  or रुकोing क्रम this CPU
+ * other CPUs are quiescent in a low power state  or waiting for this CPU
  * to complete the CCI initialization.
  *
  * Because this is called when the MMU is still off and with no stack,
  * the code must be position independent and ideally rely on callee
- * clobbered रेजिस्टरs only.  To achieve this we must code this function
+ * clobbered registers only.  To achieve this we must code this function
  * entirely in assembler.
  *
- * On success this वापसs with the proper CCI port enabled.  In हाल of
- * any failure this never वापसs as the inability to enable the CCI is
+ * On success this returns with the proper CCI port enabled.  In case of
+ * any failure this never returns as the inability to enable the CCI is
  * fatal and there is no possible recovery at this stage.
  */
-यंत्रlinkage व्योम __naked cci_enable_port_क्रम_self(व्योम)
-अणु
-	यंत्र अस्थिर ("\n"
+asmlinkage void __naked cci_enable_port_for_self(void)
+{
+	asm volatile ("\n"
 "	.arch armv7-a\n"
 "	mrc	p15, 0, r0, c0, c0, 5	@ get MPIDR value \n"
-"	and	r0, r0, #"__stringअगरy(MPIDR_HWID_BITMASK)" \n"
+"	and	r0, r0, #"__stringify(MPIDR_HWID_BITMASK)" \n"
 "	adr	r1, 5f \n"
 "	ldr	r2, [r1] \n"
 "	add	r1, r1, r2		@ &cpu_port \n"
 "	add	ip, r1, %[sizeof_cpu_port] \n"
 
-	/* Loop over the cpu_port array looking क्रम a matching MPIDR */
+	/* Loop over the cpu_port array looking for a matching MPIDR */
 "1:	ldr	r2, [r1, %[offsetof_cpu_port_mpidr_lsb]] \n"
 "	cmp	r2, r0 			@ compare MPIDR \n"
 "	bne	2f \n"
 
 	/* Found a match, now test port validity */
 "	ldr	r3, [r1, %[offsetof_cpu_port_port]] \n"
-"	tst	r3, #"__stringअगरy(PORT_VALID)" \n"
+"	tst	r3, #"__stringify(PORT_VALID)" \n"
 "	bne	3f \n"
 
 	/* no match, loop with the next cpu_port entry */
@@ -329,7 +328,7 @@ EXPORT_SYMBOL_GPL(cci_disable_port_by_cpu);
 "	b	cci_port_not_found \n"
 
 	/* Use matched port index to look up the corresponding ports entry */
-"3:	bic	r3, r3, #"__stringअगरy(PORT_VALID)" \n"
+"3:	bic	r3, r3, #"__stringify(PORT_VALID)" \n"
 "	adr	r0, 6f \n"
 "	ldmia	r0, {r1, r2} \n"
 "	sub	r1, r1, r0 		@ virt - phys \n"
@@ -341,13 +340,13 @@ EXPORT_SYMBOL_GPL(cci_disable_port_by_cpu);
 	/* Enable the CCI port */
 "	ldr	r0, [r0, %[offsetof_port_phys]] \n"
 "	mov	r3, %[cci_enable_req]\n"		   
-"	str	r3, [r0, #"__stringअगरy(CCI_PORT_CTRL)"] \n"
+"	str	r3, [r0, #"__stringify(CCI_PORT_CTRL)"] \n"
 
-	/* poll the status reg क्रम completion */
+	/* poll the status reg for completion */
 "	adr	r1, 7f \n"
 "	ldr	r0, [r1] \n"
 "	ldr	r0, [r0, r1]		@ cci_ctrl_base \n"
-"4:	ldr	r1, [r0, #"__stringअगरy(CCI_CTRL_STATUS)"] \n"
+"4:	ldr	r1, [r0, #"__stringify(CCI_CTRL_STATUS)"] \n"
 "	tst	r1, %[cci_control_status_bits] \n"			
 "	bne	4b \n"
 
@@ -360,229 +359,229 @@ EXPORT_SYMBOL_GPL(cci_disable_port_by_cpu);
 "	.word	ports - 6b \n"
 "7:	.word	cci_ctrl_phys - . \n"
 	: :
-	[माप_cpu_port] "i" (माप(cpu_port)),
+	[sizeof_cpu_port] "i" (sizeof(cpu_port)),
 	[cci_enable_req] "i" cpu_to_le32(CCI_ENABLE_REQ),
 	[cci_control_status_bits] "i" cpu_to_le32(1),
-#अगर_अघोषित __ARMEB__
-	[दुरत्व_cpu_port_mpidr_lsb] "i" (दुरत्व(काष्ठा cpu_port, mpidr)),
-#अन्यथा
-	[दुरत्व_cpu_port_mpidr_lsb] "i" (दुरत्व(काष्ठा cpu_port, mpidr)+4),
-#पूर्ण_अगर
-	[दुरत्व_cpu_port_port] "i" (दुरत्व(काष्ठा cpu_port, port)),
-	[माप_काष्ठा_cpu_port] "i" (माप(काष्ठा cpu_port)),
-	[माप_काष्ठा_ace_port] "i" (माप(काष्ठा cci_ace_port)),
-	[दुरत्व_port_phys] "i" (दुरत्व(काष्ठा cci_ace_port, phys)) );
-पूर्ण
+#ifndef __ARMEB__
+	[offsetof_cpu_port_mpidr_lsb] "i" (offsetof(struct cpu_port, mpidr)),
+#else
+	[offsetof_cpu_port_mpidr_lsb] "i" (offsetof(struct cpu_port, mpidr)+4),
+#endif
+	[offsetof_cpu_port_port] "i" (offsetof(struct cpu_port, port)),
+	[sizeof_struct_cpu_port] "i" (sizeof(struct cpu_port)),
+	[sizeof_struct_ace_port] "i" (sizeof(struct cci_ace_port)),
+	[offsetof_port_phys] "i" (offsetof(struct cci_ace_port, phys)) );
+}
 
 /**
  * __cci_control_port_by_device() - function to control a CCI port by device
  *				    reference
  *
- * @dn: device node poपूर्णांकer of the device whose CCI port should be
+ * @dn: device node pointer of the device whose CCI port should be
  *      controlled
- * @enable: अगर true enables the port, अगर false disables it
+ * @enable: if true enables the port, if false disables it
  *
  * Return:
  *	0 on success
  *	-ENODEV on port look-up failure
  */
-पूर्णांक notrace __cci_control_port_by_device(काष्ठा device_node *dn, bool enable)
-अणु
-	पूर्णांक port;
+int notrace __cci_control_port_by_device(struct device_node *dn, bool enable)
+{
+	int port;
 
-	अगर (!dn)
-		वापस -ENODEV;
+	if (!dn)
+		return -ENODEV;
 
 	port = __cci_ace_get_port(dn, ACE_LITE_PORT);
-	अगर (WARN_ONCE(port < 0, "node %pOF ACE lite port look-up failure\n",
+	if (WARN_ONCE(port < 0, "node %pOF ACE lite port look-up failure\n",
 				dn))
-		वापस -ENODEV;
+		return -ENODEV;
 	cci_port_control(port, enable);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(__cci_control_port_by_device);
 
 /**
  * __cci_control_port_by_index() - function to control a CCI port by port index
  *
  * @port: port index previously retrieved with cci_ace_get_port()
- * @enable: अगर true enables the port, अगर false disables it
+ * @enable: if true enables the port, if false disables it
  *
  * Return:
  *	0 on success
  *	-ENODEV on port index out of range
- *	-EPERM अगर operation carried out on an ACE PORT
+ *	-EPERM if operation carried out on an ACE PORT
  */
-पूर्णांक notrace __cci_control_port_by_index(u32 port, bool enable)
-अणु
-	अगर (port >= nb_cci_ports || ports[port].type == ACE_INVALID_PORT)
-		वापस -ENODEV;
+int notrace __cci_control_port_by_index(u32 port, bool enable)
+{
+	if (port >= nb_cci_ports || ports[port].type == ACE_INVALID_PORT)
+		return -ENODEV;
 	/*
-	 * CCI control क्रम ports connected to CPUS is extremely fragile
-	 * and must be made to go through a specअगरic and controlled
-	 * पूर्णांकerface (ie cci_disable_port_by_cpu(); control by general purpose
-	 * indexing is thereक्रमe disabled क्रम ACE ports.
+	 * CCI control for ports connected to CPUS is extremely fragile
+	 * and must be made to go through a specific and controlled
+	 * interface (ie cci_disable_port_by_cpu(); control by general purpose
+	 * indexing is therefore disabled for ACE ports.
 	 */
-	अगर (ports[port].type == ACE_PORT)
-		वापस -EPERM;
+	if (ports[port].type == ACE_PORT)
+		return -EPERM;
 
 	cci_port_control(port, enable);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(__cci_control_port_by_index);
 
-अटल स्थिर काष्ठा of_device_id arm_cci_ctrl_अगर_matches[] = अणु
-	अणु.compatible = "arm,cci-400-ctrl-if", पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct of_device_id arm_cci_ctrl_if_matches[] = {
+	{.compatible = "arm,cci-400-ctrl-if", },
+	{},
+};
 
-अटल पूर्णांक cci_probe_ports(काष्ठा device_node *np)
-अणु
-	काष्ठा cci_nb_ports स्थिर *cci_config;
-	पूर्णांक ret, i, nb_ace = 0, nb_ace_lite = 0;
-	काष्ठा device_node *cp;
-	काष्ठा resource res;
-	स्थिर अक्षर *match_str;
+static int cci_probe_ports(struct device_node *np)
+{
+	struct cci_nb_ports const *cci_config;
+	int ret, i, nb_ace = 0, nb_ace_lite = 0;
+	struct device_node *cp;
+	struct resource res;
+	const char *match_str;
 	bool is_ace;
 
 
 	cci_config = of_match_node(arm_cci_matches, np)->data;
-	अगर (!cci_config)
-		वापस -ENODEV;
+	if (!cci_config)
+		return -ENODEV;
 
 	nb_cci_ports = cci_config->nb_ace + cci_config->nb_ace_lite;
 
-	ports = kसुस्मृति(nb_cci_ports, माप(*ports), GFP_KERNEL);
-	अगर (!ports)
-		वापस -ENOMEM;
+	ports = kcalloc(nb_cci_ports, sizeof(*ports), GFP_KERNEL);
+	if (!ports)
+		return -ENOMEM;
 
-	क्रम_each_available_child_of_node(np, cp) अणु
-		अगर (!of_match_node(arm_cci_ctrl_अगर_matches, cp))
-			जारी;
+	for_each_available_child_of_node(np, cp) {
+		if (!of_match_node(arm_cci_ctrl_if_matches, cp))
+			continue;
 
 		i = nb_ace + nb_ace_lite;
 
-		अगर (i >= nb_cci_ports)
-			अवरोध;
+		if (i >= nb_cci_ports)
+			break;
 
-		अगर (of_property_पढ़ो_string(cp, "interface-type",
-					&match_str)) अणु
+		if (of_property_read_string(cp, "interface-type",
+					&match_str)) {
 			WARN(1, "node %pOF missing interface-type property\n",
 				  cp);
-			जारी;
-		पूर्ण
-		is_ace = म_भेद(match_str, "ace") == 0;
-		अगर (!is_ace && म_भेद(match_str, "ace-lite")) अणु
+			continue;
+		}
+		is_ace = strcmp(match_str, "ace") == 0;
+		if (!is_ace && strcmp(match_str, "ace-lite")) {
 			WARN(1, "node %pOF containing invalid interface-type property, skipping it\n",
 					cp);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		ret = of_address_to_resource(cp, 0, &res);
-		अगर (!ret) अणु
+		if (!ret) {
 			ports[i].base = ioremap(res.start, resource_size(&res));
 			ports[i].phys = res.start;
-		पूर्ण
-		अगर (ret || !ports[i].base) अणु
+		}
+		if (ret || !ports[i].base) {
 			WARN(1, "unable to ioremap CCI port %d\n", i);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		अगर (is_ace) अणु
-			अगर (WARN_ON(nb_ace >= cci_config->nb_ace))
-				जारी;
+		if (is_ace) {
+			if (WARN_ON(nb_ace >= cci_config->nb_ace))
+				continue;
 			ports[i].type = ACE_PORT;
 			++nb_ace;
-		पूर्ण अन्यथा अणु
-			अगर (WARN_ON(nb_ace_lite >= cci_config->nb_ace_lite))
-				जारी;
+		} else {
+			if (WARN_ON(nb_ace_lite >= cci_config->nb_ace_lite))
+				continue;
 			ports[i].type = ACE_LITE_PORT;
 			++nb_ace_lite;
-		पूर्ण
+		}
 		ports[i].dn = cp;
-	पूर्ण
+	}
 
 	/*
 	 * If there is no CCI port that is under kernel control
-	 * वापस early and report probe status.
+	 * return early and report probe status.
 	 */
-	अगर (!nb_ace && !nb_ace_lite)
-		वापस -ENODEV;
+	if (!nb_ace && !nb_ace_lite)
+		return -ENODEV;
 
 	 /* initialize a stashed array of ACE ports to speed-up look-up */
 	cci_ace_init_ports();
 
 	/*
-	 * Multi-cluster प्रणालीs may need this data when non-coherent, during
-	 * cluster घातer-up/घातer-करोwn. Make sure it reaches मुख्य memory.
+	 * Multi-cluster systems may need this data when non-coherent, during
+	 * cluster power-up/power-down. Make sure it reaches main memory.
 	 */
 	sync_cache_w(&cci_ctrl_base);
 	sync_cache_w(&cci_ctrl_phys);
 	sync_cache_w(&ports);
 	sync_cache_w(&cpu_port);
-	__sync_cache_range_w(ports, माप(*ports) * nb_cci_ports);
+	__sync_cache_range_w(ports, sizeof(*ports) * nb_cci_ports);
 	pr_info("ARM CCI driver probed\n");
 
-	वापस 0;
-पूर्ण
-#अन्यथा /* !CONFIG_ARM_CCI400_PORT_CTRL */
-अटल अंतरभूत पूर्णांक cci_probe_ports(काष्ठा device_node *np)
-अणु
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_ARM_CCI400_PORT_CTRL */
+	return 0;
+}
+#else /* !CONFIG_ARM_CCI400_PORT_CTRL */
+static inline int cci_probe_ports(struct device_node *np)
+{
+	return 0;
+}
+#endif /* CONFIG_ARM_CCI400_PORT_CTRL */
 
-अटल पूर्णांक cci_probe(व्योम)
-अणु
-	पूर्णांक ret;
-	काष्ठा device_node *np;
-	काष्ठा resource res;
+static int cci_probe(void)
+{
+	int ret;
+	struct device_node *np;
+	struct resource res;
 
-	np = of_find_matching_node(शून्य, arm_cci_matches);
-	अगर (!of_device_is_available(np))
-		वापस -ENODEV;
+	np = of_find_matching_node(NULL, arm_cci_matches);
+	if (!of_device_is_available(np))
+		return -ENODEV;
 
 	ret = of_address_to_resource(np, 0, &res);
-	अगर (!ret) अणु
+	if (!ret) {
 		cci_ctrl_base = ioremap(res.start, resource_size(&res));
 		cci_ctrl_phys =	res.start;
-	पूर्ण
-	अगर (ret || !cci_ctrl_base) अणु
+	}
+	if (ret || !cci_ctrl_base) {
 		WARN(1, "unable to ioremap CCI ctrl\n");
-		वापस -ENXIO;
-	पूर्ण
+		return -ENXIO;
+	}
 
-	वापस cci_probe_ports(np);
-पूर्ण
+	return cci_probe_ports(np);
+}
 
-अटल पूर्णांक cci_init_status = -EAGAIN;
-अटल DEFINE_MUTEX(cci_probing);
+static int cci_init_status = -EAGAIN;
+static DEFINE_MUTEX(cci_probing);
 
-अटल पूर्णांक cci_init(व्योम)
-अणु
-	अगर (cci_init_status != -EAGAIN)
-		वापस cci_init_status;
+static int cci_init(void)
+{
+	if (cci_init_status != -EAGAIN)
+		return cci_init_status;
 
 	mutex_lock(&cci_probing);
-	अगर (cci_init_status == -EAGAIN)
+	if (cci_init_status == -EAGAIN)
 		cci_init_status = cci_probe();
 	mutex_unlock(&cci_probing);
-	वापस cci_init_status;
-पूर्ण
+	return cci_init_status;
+}
 
 /*
  * To sort out early init calls ordering a helper function is provided to
- * check अगर the CCI driver has beed initialized. Function check अगर the driver
- * has been initialized, अगर not it calls the init function that probes
- * the driver and updates the वापस value.
+ * check if the CCI driver has beed initialized. Function check if the driver
+ * has been initialized, if not it calls the init function that probes
+ * the driver and updates the return value.
  */
-bool cci_probed(व्योम)
-अणु
-	वापस cci_init() == 0;
-पूर्ण
+bool cci_probed(void)
+{
+	return cci_init() == 0;
+}
 EXPORT_SYMBOL_GPL(cci_probed);
 
 early_initcall(cci_init);
-core_initcall(cci_platक्रमm_init);
+core_initcall(cci_platform_init);
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("ARM CCI support");

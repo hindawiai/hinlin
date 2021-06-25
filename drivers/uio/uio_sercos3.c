@@ -1,155 +1,154 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-/* sercos3: UIO driver क्रम the Automata Sercos III PCI card
+// SPDX-License-Identifier: GPL-2.0
+/* sercos3: UIO driver for the Automata Sercos III PCI card
 
    Copyright (C) 2008 Linutronix GmbH
      Author: John Ogness <john.ogness@linutronix.de>
 
-   This is a straight-क्रमward UIO driver, where पूर्णांकerrupts are disabled
-   by the पूर्णांकerrupt handler and re-enabled via a ग_लिखो to the UIO device
+   This is a straight-forward UIO driver, where interrupts are disabled
+   by the interrupt handler and re-enabled via a write to the UIO device
    by the userspace-part.
 
    The only part that may seem odd is the use of a logical OR when
-   storing and restoring enabled पूर्णांकerrupts. This is करोne because the
-   userspace-part could directly modअगरy the Interrupt Enable Register
-   at any समय. To reduce possible conflicts, the kernel driver uses
+   storing and restoring enabled interrupts. This is done because the
+   userspace-part could directly modify the Interrupt Enable Register
+   at any time. To reduce possible conflicts, the kernel driver uses
    a logical OR to make more controlled changes (rather than blindly
    overwriting previous values).
 
-   Race conditions exist अगर the userspace-part directly modअगरies the
-   Interrupt Enable Register जबतक in operation. The consequences are
-   that certain पूर्णांकerrupts would fail to be enabled or disabled. For
-   this reason, the userspace-part should only directly modअगरy the
+   Race conditions exist if the userspace-part directly modifies the
+   Interrupt Enable Register while in operation. The consequences are
+   that certain interrupts would fail to be enabled or disabled. For
+   this reason, the userspace-part should only directly modify the
    Interrupt Enable Register at the beginning (to get things going).
-   The userspace-part can safely disable पूर्णांकerrupts at any समय using
-   a ग_लिखो to the UIO device.
+   The userspace-part can safely disable interrupts at any time using
+   a write to the UIO device.
 */
 
-#समावेश <linux/device.h>
-#समावेश <linux/module.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/uio_driver.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/slab.h>
+#include <linux/device.h>
+#include <linux/module.h>
+#include <linux/pci.h>
+#include <linux/uio_driver.h>
+#include <linux/io.h>
+#include <linux/slab.h>
 
-/* ID's क्रम SERCOS III PCI card (PLX 9030) */
-#घोषणा SERCOS_SUB_VENDOR_ID  0x1971
-#घोषणा SERCOS_SUB_SYSID_3530 0x3530
-#घोषणा SERCOS_SUB_SYSID_3535 0x3535
-#घोषणा SERCOS_SUB_SYSID_3780 0x3780
+/* ID's for SERCOS III PCI card (PLX 9030) */
+#define SERCOS_SUB_VENDOR_ID  0x1971
+#define SERCOS_SUB_SYSID_3530 0x3530
+#define SERCOS_SUB_SYSID_3535 0x3535
+#define SERCOS_SUB_SYSID_3780 0x3780
 
 /* Interrupt Enable Register */
-#घोषणा IER0_OFFSET 0x08
+#define IER0_OFFSET 0x08
 
 /* Interrupt Status Register */
-#घोषणा ISR0_OFFSET 0x18
+#define ISR0_OFFSET 0x18
 
-काष्ठा sercos3_priv अणु
+struct sercos3_priv {
 	u32 ier0_cache;
 	spinlock_t ier0_cache_lock;
-पूर्ण;
+};
 
 /* this function assumes ier0_cache_lock is locked! */
-अटल व्योम sercos3_disable_पूर्णांकerrupts(काष्ठा uio_info *info,
-				       काष्ठा sercos3_priv *priv)
-अणु
-	व्योम __iomem *ier0 = info->mem[3].पूर्णांकernal_addr + IER0_OFFSET;
+static void sercos3_disable_interrupts(struct uio_info *info,
+				       struct sercos3_priv *priv)
+{
+	void __iomem *ier0 = info->mem[3].internal_addr + IER0_OFFSET;
 
-	/* add enabled पूर्णांकerrupts to cache */
-	priv->ier0_cache |= ioपढ़ो32(ier0);
+	/* add enabled interrupts to cache */
+	priv->ier0_cache |= ioread32(ier0);
 
-	/* disable पूर्णांकerrupts */
-	ioग_लिखो32(0, ier0);
-पूर्ण
+	/* disable interrupts */
+	iowrite32(0, ier0);
+}
 
 /* this function assumes ier0_cache_lock is locked! */
-अटल व्योम sercos3_enable_पूर्णांकerrupts(काष्ठा uio_info *info,
-				      काष्ठा sercos3_priv *priv)
-अणु
-	व्योम __iomem *ier0 = info->mem[3].पूर्णांकernal_addr + IER0_OFFSET;
+static void sercos3_enable_interrupts(struct uio_info *info,
+				      struct sercos3_priv *priv)
+{
+	void __iomem *ier0 = info->mem[3].internal_addr + IER0_OFFSET;
 
-	/* restore previously enabled पूर्णांकerrupts */
-	ioग_लिखो32(ioपढ़ो32(ier0) | priv->ier0_cache, ier0);
+	/* restore previously enabled interrupts */
+	iowrite32(ioread32(ier0) | priv->ier0_cache, ier0);
 	priv->ier0_cache = 0;
-पूर्ण
+}
 
-अटल irqवापस_t sercos3_handler(पूर्णांक irq, काष्ठा uio_info *info)
-अणु
-	काष्ठा sercos3_priv *priv = info->priv;
-	व्योम __iomem *isr0 = info->mem[3].पूर्णांकernal_addr + ISR0_OFFSET;
-	व्योम __iomem *ier0 = info->mem[3].पूर्णांकernal_addr + IER0_OFFSET;
+static irqreturn_t sercos3_handler(int irq, struct uio_info *info)
+{
+	struct sercos3_priv *priv = info->priv;
+	void __iomem *isr0 = info->mem[3].internal_addr + ISR0_OFFSET;
+	void __iomem *ier0 = info->mem[3].internal_addr + IER0_OFFSET;
 
-	अगर (!(ioपढ़ो32(isr0) & ioपढ़ो32(ier0)))
-		वापस IRQ_NONE;
+	if (!(ioread32(isr0) & ioread32(ier0)))
+		return IRQ_NONE;
 
 	spin_lock(&priv->ier0_cache_lock);
-	sercos3_disable_पूर्णांकerrupts(info, priv);
+	sercos3_disable_interrupts(info, priv);
 	spin_unlock(&priv->ier0_cache_lock);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक sercos3_irqcontrol(काष्ठा uio_info *info, s32 irq_on)
-अणु
-	काष्ठा sercos3_priv *priv = info->priv;
+static int sercos3_irqcontrol(struct uio_info *info, s32 irq_on)
+{
+	struct sercos3_priv *priv = info->priv;
 
 	spin_lock_irq(&priv->ier0_cache_lock);
-	अगर (irq_on)
-		sercos3_enable_पूर्णांकerrupts(info, priv);
-	अन्यथा
-		sercos3_disable_पूर्णांकerrupts(info, priv);
+	if (irq_on)
+		sercos3_enable_interrupts(info, priv);
+	else
+		sercos3_disable_interrupts(info, priv);
 	spin_unlock_irq(&priv->ier0_cache_lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sercos3_setup_iomem(काष्ठा pci_dev *dev, काष्ठा uio_info *info,
-			       पूर्णांक n, पूर्णांक pci_bar)
-अणु
+static int sercos3_setup_iomem(struct pci_dev *dev, struct uio_info *info,
+			       int n, int pci_bar)
+{
 	info->mem[n].addr = pci_resource_start(dev, pci_bar);
-	अगर (!info->mem[n].addr)
-		वापस -1;
-	info->mem[n].पूर्णांकernal_addr = ioremap(pci_resource_start(dev, pci_bar),
+	if (!info->mem[n].addr)
+		return -1;
+	info->mem[n].internal_addr = ioremap(pci_resource_start(dev, pci_bar),
 					     pci_resource_len(dev, pci_bar));
-	अगर (!info->mem[n].पूर्णांकernal_addr)
-		वापस -1;
+	if (!info->mem[n].internal_addr)
+		return -1;
 	info->mem[n].size = pci_resource_len(dev, pci_bar);
 	info->mem[n].memtype = UIO_MEM_PHYS;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sercos3_pci_probe(काष्ठा pci_dev *dev,
-				       स्थिर काष्ठा pci_device_id *id)
-अणु
-	काष्ठा uio_info *info;
-	काष्ठा sercos3_priv *priv;
-	पूर्णांक i;
+static int sercos3_pci_probe(struct pci_dev *dev,
+				       const struct pci_device_id *id)
+{
+	struct uio_info *info;
+	struct sercos3_priv *priv;
+	int i;
 
-	info = devm_kzalloc(&dev->dev, माप(काष्ठा uio_info), GFP_KERNEL);
-	अगर (!info)
-		वापस -ENOMEM;
+	info = devm_kzalloc(&dev->dev, sizeof(struct uio_info), GFP_KERNEL);
+	if (!info)
+		return -ENOMEM;
 
-	priv = devm_kzalloc(&dev->dev, माप(काष्ठा sercos3_priv), GFP_KERNEL);
-	अगर (!priv)
-		वापस -ENOMEM;
+	priv = devm_kzalloc(&dev->dev, sizeof(struct sercos3_priv), GFP_KERNEL);
+	if (!priv)
+		return -ENOMEM;
 
-	अगर (pci_enable_device(dev))
-		वापस -ENODEV;
+	if (pci_enable_device(dev))
+		return -ENODEV;
 
-	अगर (pci_request_regions(dev, "sercos3"))
-		जाओ out_disable;
+	if (pci_request_regions(dev, "sercos3"))
+		goto out_disable;
 
 	/* we only need PCI BAR's 0, 2, 3, 4, 5 */
-	अगर (sercos3_setup_iomem(dev, info, 0, 0))
-		जाओ out_unmap;
-	अगर (sercos3_setup_iomem(dev, info, 1, 2))
-		जाओ out_unmap;
-	अगर (sercos3_setup_iomem(dev, info, 2, 3))
-		जाओ out_unmap;
-	अगर (sercos3_setup_iomem(dev, info, 3, 4))
-		जाओ out_unmap;
-	अगर (sercos3_setup_iomem(dev, info, 4, 5))
-		जाओ out_unmap;
+	if (sercos3_setup_iomem(dev, info, 0, 0))
+		goto out_unmap;
+	if (sercos3_setup_iomem(dev, info, 1, 2))
+		goto out_unmap;
+	if (sercos3_setup_iomem(dev, info, 2, 3))
+		goto out_unmap;
+	if (sercos3_setup_iomem(dev, info, 3, 4))
+		goto out_unmap;
+	if (sercos3_setup_iomem(dev, info, 4, 5))
+		goto out_unmap;
 
 	spin_lock_init(&priv->ier0_cache_lock);
 	info->priv = priv;
@@ -162,64 +161,64 @@
 
 	pci_set_drvdata(dev, info);
 
-	अगर (uio_रेजिस्टर_device(&dev->dev, info))
-		जाओ out_unmap;
+	if (uio_register_device(&dev->dev, info))
+		goto out_unmap;
 
-	वापस 0;
+	return 0;
 
 out_unmap:
-	क्रम (i = 0; i < 5; i++) अणु
-		अगर (info->mem[i].पूर्णांकernal_addr)
-			iounmap(info->mem[i].पूर्णांकernal_addr);
-	पूर्ण
+	for (i = 0; i < 5; i++) {
+		if (info->mem[i].internal_addr)
+			iounmap(info->mem[i].internal_addr);
+	}
 	pci_release_regions(dev);
 out_disable:
 	pci_disable_device(dev);
-	वापस -ENODEV;
-पूर्ण
+	return -ENODEV;
+}
 
-अटल व्योम sercos3_pci_हटाओ(काष्ठा pci_dev *dev)
-अणु
-	काष्ठा uio_info *info = pci_get_drvdata(dev);
-	पूर्णांक i;
+static void sercos3_pci_remove(struct pci_dev *dev)
+{
+	struct uio_info *info = pci_get_drvdata(dev);
+	int i;
 
-	uio_unरेजिस्टर_device(info);
+	uio_unregister_device(info);
 	pci_release_regions(dev);
 	pci_disable_device(dev);
-	क्रम (i = 0; i < 5; i++) अणु
-		अगर (info->mem[i].पूर्णांकernal_addr)
-			iounmap(info->mem[i].पूर्णांकernal_addr);
-	पूर्ण
-पूर्ण
+	for (i = 0; i < 5; i++) {
+		if (info->mem[i].internal_addr)
+			iounmap(info->mem[i].internal_addr);
+	}
+}
 
-अटल काष्ठा pci_device_id sercos3_pci_ids[] = अणु
-	अणु
-		.venकरोr =       PCI_VENDOR_ID_PLX,
+static struct pci_device_id sercos3_pci_ids[] = {
+	{
+		.vendor =       PCI_VENDOR_ID_PLX,
 		.device =       PCI_DEVICE_ID_PLX_9030,
-		.subvenकरोr =    SERCOS_SUB_VENDOR_ID,
+		.subvendor =    SERCOS_SUB_VENDOR_ID,
 		.subdevice =    SERCOS_SUB_SYSID_3530,
-	पूर्ण,
-	अणु
-		.venकरोr =       PCI_VENDOR_ID_PLX,
+	},
+	{
+		.vendor =       PCI_VENDOR_ID_PLX,
 		.device =       PCI_DEVICE_ID_PLX_9030,
-		.subvenकरोr =    SERCOS_SUB_VENDOR_ID,
+		.subvendor =    SERCOS_SUB_VENDOR_ID,
 		.subdevice =    SERCOS_SUB_SYSID_3535,
-	पूर्ण,
-	अणु
-		.venकरोr =       PCI_VENDOR_ID_PLX,
+	},
+	{
+		.vendor =       PCI_VENDOR_ID_PLX,
 		.device =       PCI_DEVICE_ID_PLX_9030,
-		.subvenकरोr =    SERCOS_SUB_VENDOR_ID,
+		.subvendor =    SERCOS_SUB_VENDOR_ID,
 		.subdevice =    SERCOS_SUB_SYSID_3780,
-	पूर्ण,
-	अणु 0, पूर्ण
-पूर्ण;
+	},
+	{ 0, }
+};
 
-अटल काष्ठा pci_driver sercos3_pci_driver = अणु
+static struct pci_driver sercos3_pci_driver = {
 	.name = "sercos3",
 	.id_table = sercos3_pci_ids,
 	.probe = sercos3_pci_probe,
-	.हटाओ = sercos3_pci_हटाओ,
-पूर्ण;
+	.remove = sercos3_pci_remove,
+};
 
 module_pci_driver(sercos3_pci_driver);
 MODULE_DESCRIPTION("UIO driver for the Automata Sercos III PCI card");

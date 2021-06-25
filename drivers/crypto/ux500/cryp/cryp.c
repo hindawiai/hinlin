@@ -1,172 +1,171 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (C) ST-Ericsson SA 2010
- * Author: Shujuan Chen <shujuan.chen@stericsson.com> क्रम ST-Ericsson.
- * Author: Jonas Linde <jonas.linde@stericsson.com> क्रम ST-Ericsson.
- * Author: Niklas Hernaeus <niklas.hernaeus@stericsson.com> क्रम ST-Ericsson.
- * Author: Joakim Bech <joakim.xx.bech@stericsson.com> क्रम ST-Ericsson.
- * Author: Berne Hebark <berne.herbark@stericsson.com> क्रम ST-Ericsson.
+ * Author: Shujuan Chen <shujuan.chen@stericsson.com> for ST-Ericsson.
+ * Author: Jonas Linde <jonas.linde@stericsson.com> for ST-Ericsson.
+ * Author: Niklas Hernaeus <niklas.hernaeus@stericsson.com> for ST-Ericsson.
+ * Author: Joakim Bech <joakim.xx.bech@stericsson.com> for ST-Ericsson.
+ * Author: Berne Hebark <berne.herbark@stericsson.com> for ST-Ericsson.
  */
 
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/types.h>
+#include <linux/errno.h>
+#include <linux/kernel.h>
+#include <linux/types.h>
 
-#समावेश "cryp_p.h"
-#समावेश "cryp.h"
+#include "cryp_p.h"
+#include "cryp.h"
 
 /*
- * cryp_रुको_until_करोne - रुको until the device logic is not busy
+ * cryp_wait_until_done - wait until the device logic is not busy
  */
-व्योम cryp_रुको_until_करोne(काष्ठा cryp_device_data *device_data)
-अणु
-	जबतक (cryp_is_logic_busy(device_data))
+void cryp_wait_until_done(struct cryp_device_data *device_data)
+{
+	while (cryp_is_logic_busy(device_data))
 		cpu_relax();
-पूर्ण
+}
 
 /**
  * cryp_check - This routine checks Peripheral and PCell Id
- * @device_data: Poपूर्णांकer to the device data काष्ठा क्रम base address.
+ * @device_data: Pointer to the device data struct for base address.
  */
-पूर्णांक cryp_check(काष्ठा cryp_device_data *device_data)
-अणु
-	पूर्णांक peripheralid2 = 0;
+int cryp_check(struct cryp_device_data *device_data)
+{
+	int peripheralid2 = 0;
 
-	अगर (शून्य == device_data)
-		वापस -EINVAL;
+	if (NULL == device_data)
+		return -EINVAL;
 
-	peripheralid2 = पढ़ोl_relaxed(&device_data->base->periphId2);
+	peripheralid2 = readl_relaxed(&device_data->base->periphId2);
 
-	अगर (peripheralid2 != CRYP_PERIPHERAL_ID2_DB8500)
-		वापस -EPERM;
+	if (peripheralid2 != CRYP_PERIPHERAL_ID2_DB8500)
+		return -EPERM;
 
-	/* Check Peripheral and Pcell Id Register क्रम CRYP */
-	अगर ((CRYP_PERIPHERAL_ID0 ==
-		पढ़ोl_relaxed(&device_data->base->periphId0))
+	/* Check Peripheral and Pcell Id Register for CRYP */
+	if ((CRYP_PERIPHERAL_ID0 ==
+		readl_relaxed(&device_data->base->periphId0))
 	    && (CRYP_PERIPHERAL_ID1 ==
-		    पढ़ोl_relaxed(&device_data->base->periphId1))
+		    readl_relaxed(&device_data->base->periphId1))
 	    && (CRYP_PERIPHERAL_ID3 ==
-		    पढ़ोl_relaxed(&device_data->base->periphId3))
+		    readl_relaxed(&device_data->base->periphId3))
 	    && (CRYP_PCELL_ID0 ==
-		    पढ़ोl_relaxed(&device_data->base->pcellId0))
+		    readl_relaxed(&device_data->base->pcellId0))
 	    && (CRYP_PCELL_ID1 ==
-		    पढ़ोl_relaxed(&device_data->base->pcellId1))
+		    readl_relaxed(&device_data->base->pcellId1))
 	    && (CRYP_PCELL_ID2 ==
-		    पढ़ोl_relaxed(&device_data->base->pcellId2))
+		    readl_relaxed(&device_data->base->pcellId2))
 	    && (CRYP_PCELL_ID3 ==
-		    पढ़ोl_relaxed(&device_data->base->pcellId3))) अणु
-		वापस 0;
-	पूर्ण
+		    readl_relaxed(&device_data->base->pcellId3))) {
+		return 0;
+	}
 
-	वापस -EPERM;
-पूर्ण
+	return -EPERM;
+}
 
 /**
  * cryp_activity - This routine enables/disable the cryptography function.
- * @device_data: Poपूर्णांकer to the device data काष्ठा क्रम base address.
+ * @device_data: Pointer to the device data struct for base address.
  * @cryp_crypen: Enable/Disable functionality
  */
-व्योम cryp_activity(काष्ठा cryp_device_data *device_data,
-		   क्रमागत cryp_crypen cryp_crypen)
-अणु
+void cryp_activity(struct cryp_device_data *device_data,
+		   enum cryp_crypen cryp_crypen)
+{
 	CRYP_PUT_BITS(&device_data->base->cr,
 		      cryp_crypen,
 		      CRYP_CR_CRYPEN_POS,
 		      CRYP_CR_CRYPEN_MASK);
-पूर्ण
+}
 
 /**
- * cryp_flush_inoutfअगरo - Resets both the input and the output FIFOs
- * @device_data: Poपूर्णांकer to the device data काष्ठा क्रम base address.
+ * cryp_flush_inoutfifo - Resets both the input and the output FIFOs
+ * @device_data: Pointer to the device data struct for base address.
  */
-व्योम cryp_flush_inoutfअगरo(काष्ठा cryp_device_data *device_data)
-अणु
+void cryp_flush_inoutfifo(struct cryp_device_data *device_data)
+{
 	/*
-	 * We always need to disable the hardware beक्रमe trying to flush the
+	 * We always need to disable the hardware before trying to flush the
 	 * FIFO. This is something that isn't written in the design
-	 * specअगरication, but we have been inक्रमmed by the hardware designers
-	 * that this must be करोne.
+	 * specification, but we have been informed by the hardware designers
+	 * that this must be done.
 	 */
 	cryp_activity(device_data, CRYP_CRYPEN_DISABLE);
-	cryp_रुको_until_करोne(device_data);
+	cryp_wait_until_done(device_data);
 
 	CRYP_SET_BITS(&device_data->base->cr, CRYP_CR_FFLUSH_MASK);
 	/*
 	 * CRYP_SR_INFIFO_READY_MASK is the expected value on the status
-	 * रेजिस्टर when starting a new calculation, which means Input FIFO is
+	 * register when starting a new calculation, which means Input FIFO is
 	 * not full and input FIFO is empty.
 	 */
-	जबतक (पढ़ोl_relaxed(&device_data->base->sr) !=
+	while (readl_relaxed(&device_data->base->sr) !=
 	       CRYP_SR_INFIFO_READY_MASK)
 		cpu_relax();
-पूर्ण
+}
 
 /**
  * cryp_set_configuration - This routine set the cr CRYP IP
- * @device_data: Poपूर्णांकer to the device data काष्ठा क्रम base address.
- * @cryp_config: Poपूर्णांकer to the configuration parameter
- * @control_रेजिस्टर: The control रेजिस्टर to be written later on.
+ * @device_data: Pointer to the device data struct for base address.
+ * @cryp_config: Pointer to the configuration parameter
+ * @control_register: The control register to be written later on.
  */
-पूर्णांक cryp_set_configuration(काष्ठा cryp_device_data *device_data,
-			   काष्ठा cryp_config *cryp_config,
-			   u32 *control_रेजिस्टर)
-अणु
-	u32 cr_क्रम_kse;
+int cryp_set_configuration(struct cryp_device_data *device_data,
+			   struct cryp_config *cryp_config,
+			   u32 *control_register)
+{
+	u32 cr_for_kse;
 
-	अगर (शून्य == device_data || शून्य == cryp_config)
-		वापस -EINVAL;
+	if (NULL == device_data || NULL == cryp_config)
+		return -EINVAL;
 
-	*control_रेजिस्टर |= (cryp_config->keysize << CRYP_CR_KEYSIZE_POS);
+	*control_register |= (cryp_config->keysize << CRYP_CR_KEYSIZE_POS);
 
-	/* Prepare key क्रम decryption in AES_ECB and AES_CBC mode. */
-	अगर ((CRYP_ALGORITHM_DECRYPT == cryp_config->algodir) &&
+	/* Prepare key for decryption in AES_ECB and AES_CBC mode. */
+	if ((CRYP_ALGORITHM_DECRYPT == cryp_config->algodir) &&
 	    ((CRYP_ALGO_AES_ECB == cryp_config->algomode) ||
-	     (CRYP_ALGO_AES_CBC == cryp_config->algomode))) अणु
-		cr_क्रम_kse = *control_रेजिस्टर;
+	     (CRYP_ALGO_AES_CBC == cryp_config->algomode))) {
+		cr_for_kse = *control_register;
 		/*
 		 * This seems a bit odd, but it is indeed needed to set this to
-		 * encrypt even though it is a decryption that we are करोing. It
-		 * also mentioned in the design spec that you need to करो this.
-		 * After the keyprepartion क्रम decrypting is करोne you should set
-		 * algodir back to decryption, which is करोne outside this अगर
+		 * encrypt even though it is a decryption that we are doing. It
+		 * also mentioned in the design spec that you need to do this.
+		 * After the keyprepartion for decrypting is done you should set
+		 * algodir back to decryption, which is done outside this if
 		 * statement.
 		 *
-		 * According to design specअगरication we should set mode ECB
+		 * According to design specification we should set mode ECB
 		 * during key preparation even though we might be running CBC
 		 * when enter this function.
 		 *
 		 * Writing to KSE_ENABLED will drop CRYPEN when key preparation
-		 * is करोne. Thereक्रमe we need to set CRYPEN again outside this
-		 * अगर statement when running decryption.
+		 * is done. Therefore we need to set CRYPEN again outside this
+		 * if statement when running decryption.
 		 */
-		cr_क्रम_kse |= ((CRYP_ALGORITHM_ENCRYPT << CRYP_CR_ALGOसूची_POS) |
+		cr_for_kse |= ((CRYP_ALGORITHM_ENCRYPT << CRYP_CR_ALGODIR_POS) |
 			       (CRYP_ALGO_AES_ECB << CRYP_CR_ALGOMODE_POS) |
 			       (CRYP_CRYPEN_ENABLE << CRYP_CR_CRYPEN_POS) |
 			       (KSE_ENABLED << CRYP_CR_KSE_POS));
 
-		ग_लिखोl_relaxed(cr_क्रम_kse, &device_data->base->cr);
-		cryp_रुको_until_करोne(device_data);
-	पूर्ण
+		writel_relaxed(cr_for_kse, &device_data->base->cr);
+		cryp_wait_until_done(device_data);
+	}
 
-	*control_रेजिस्टर |=
+	*control_register |=
 		((cryp_config->algomode << CRYP_CR_ALGOMODE_POS) |
-		 (cryp_config->algodir << CRYP_CR_ALGOसूची_POS));
+		 (cryp_config->algodir << CRYP_CR_ALGODIR_POS));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * cryp_configure_protection - set the protection bits in the CRYP logic.
- * @device_data: Poपूर्णांकer to the device data काष्ठा क्रम base address.
- * @p_protect_config:	Poपूर्णांकer to the protection mode and
+ * @device_data: Pointer to the device data struct for base address.
+ * @p_protect_config:	Pointer to the protection mode and
  *			secure mode configuration
  */
-पूर्णांक cryp_configure_protection(काष्ठा cryp_device_data *device_data,
-			      काष्ठा cryp_protection_config *p_protect_config)
-अणु
-	अगर (शून्य == p_protect_config)
-		वापस -EINVAL;
+int cryp_configure_protection(struct cryp_device_data *device_data,
+			      struct cryp_protection_config *p_protect_config)
+{
+	if (NULL == p_protect_config)
+		return -EINVAL;
 
 	CRYP_WRITE_BIT(&device_data->base->cr,
 		       (u32) p_protect_config->secure_access,
@@ -176,220 +175,220 @@
 		      CRYP_CR_PRLG_POS,
 		      CRYP_CR_PRLG_MASK);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * cryp_is_logic_busy - वापसs the busy status of the CRYP logic
- * @device_data: Poपूर्णांकer to the device data काष्ठा क्रम base address.
+ * cryp_is_logic_busy - returns the busy status of the CRYP logic
+ * @device_data: Pointer to the device data struct for base address.
  */
-पूर्णांक cryp_is_logic_busy(काष्ठा cryp_device_data *device_data)
-अणु
-	वापस CRYP_TEST_BITS(&device_data->base->sr,
+int cryp_is_logic_busy(struct cryp_device_data *device_data)
+{
+	return CRYP_TEST_BITS(&device_data->base->sr,
 			      CRYP_SR_BUSY_MASK);
-पूर्ण
+}
 
 /**
- * cryp_configure_क्रम_dma - configures the CRYP IP क्रम DMA operation
- * @device_data: Poपूर्णांकer to the device data काष्ठा क्रम base address.
- * @dma_req: Specअगरies the DMA request type value.
+ * cryp_configure_for_dma - configures the CRYP IP for DMA operation
+ * @device_data: Pointer to the device data struct for base address.
+ * @dma_req: Specifies the DMA request type value.
  */
-व्योम cryp_configure_क्रम_dma(काष्ठा cryp_device_data *device_data,
-			    क्रमागत cryp_dma_req_type dma_req)
-अणु
+void cryp_configure_for_dma(struct cryp_device_data *device_data,
+			    enum cryp_dma_req_type dma_req)
+{
 	CRYP_SET_BITS(&device_data->base->dmacr,
 		      (u32) dma_req);
-पूर्ण
+}
 
 /**
- * cryp_configure_key_values - configures the key values क्रम CRYP operations
- * @device_data: Poपूर्णांकer to the device data काष्ठा क्रम base address.
- * @key_reg_index: Key value index रेजिस्टर
- * @key_value: The key value काष्ठा
+ * cryp_configure_key_values - configures the key values for CRYP operations
+ * @device_data: Pointer to the device data struct for base address.
+ * @key_reg_index: Key value index register
+ * @key_value: The key value struct
  */
-पूर्णांक cryp_configure_key_values(काष्ठा cryp_device_data *device_data,
-			      क्रमागत cryp_key_reg_index key_reg_index,
-			      काष्ठा cryp_key_value key_value)
-अणु
-	जबतक (cryp_is_logic_busy(device_data))
+int cryp_configure_key_values(struct cryp_device_data *device_data,
+			      enum cryp_key_reg_index key_reg_index,
+			      struct cryp_key_value key_value)
+{
+	while (cryp_is_logic_busy(device_data))
 		cpu_relax();
 
-	चयन (key_reg_index) अणु
-	हाल CRYP_KEY_REG_1:
-		ग_लिखोl_relaxed(key_value.key_value_left,
+	switch (key_reg_index) {
+	case CRYP_KEY_REG_1:
+		writel_relaxed(key_value.key_value_left,
 				&device_data->base->key_1_l);
-		ग_लिखोl_relaxed(key_value.key_value_right,
+		writel_relaxed(key_value.key_value_right,
 				&device_data->base->key_1_r);
-		अवरोध;
-	हाल CRYP_KEY_REG_2:
-		ग_लिखोl_relaxed(key_value.key_value_left,
+		break;
+	case CRYP_KEY_REG_2:
+		writel_relaxed(key_value.key_value_left,
 				&device_data->base->key_2_l);
-		ग_लिखोl_relaxed(key_value.key_value_right,
+		writel_relaxed(key_value.key_value_right,
 				&device_data->base->key_2_r);
-		अवरोध;
-	हाल CRYP_KEY_REG_3:
-		ग_लिखोl_relaxed(key_value.key_value_left,
+		break;
+	case CRYP_KEY_REG_3:
+		writel_relaxed(key_value.key_value_left,
 				&device_data->base->key_3_l);
-		ग_लिखोl_relaxed(key_value.key_value_right,
+		writel_relaxed(key_value.key_value_right,
 				&device_data->base->key_3_r);
-		अवरोध;
-	हाल CRYP_KEY_REG_4:
-		ग_लिखोl_relaxed(key_value.key_value_left,
+		break;
+	case CRYP_KEY_REG_4:
+		writel_relaxed(key_value.key_value_left,
 				&device_data->base->key_4_l);
-		ग_लिखोl_relaxed(key_value.key_value_right,
+		writel_relaxed(key_value.key_value_right,
 				&device_data->base->key_4_r);
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * cryp_configure_init_vector - configures the initialization vector रेजिस्टर
- * @device_data: Poपूर्णांकer to the device data काष्ठा क्रम base address.
- * @init_vector_index: Specअगरies the index of the init vector.
- * @init_vector_value: Specअगरies the value क्रम the init vector.
+ * cryp_configure_init_vector - configures the initialization vector register
+ * @device_data: Pointer to the device data struct for base address.
+ * @init_vector_index: Specifies the index of the init vector.
+ * @init_vector_value: Specifies the value for the init vector.
  */
-पूर्णांक cryp_configure_init_vector(काष्ठा cryp_device_data *device_data,
-			       क्रमागत cryp_init_vector_index
+int cryp_configure_init_vector(struct cryp_device_data *device_data,
+			       enum cryp_init_vector_index
 			       init_vector_index,
-			       काष्ठा cryp_init_vector_value
+			       struct cryp_init_vector_value
 			       init_vector_value)
-अणु
-	जबतक (cryp_is_logic_busy(device_data))
+{
+	while (cryp_is_logic_busy(device_data))
 		cpu_relax();
 
-	चयन (init_vector_index) अणु
-	हाल CRYP_INIT_VECTOR_INDEX_0:
-		ग_लिखोl_relaxed(init_vector_value.init_value_left,
+	switch (init_vector_index) {
+	case CRYP_INIT_VECTOR_INDEX_0:
+		writel_relaxed(init_vector_value.init_value_left,
 		       &device_data->base->init_vect_0_l);
-		ग_लिखोl_relaxed(init_vector_value.init_value_right,
+		writel_relaxed(init_vector_value.init_value_right,
 		       &device_data->base->init_vect_0_r);
-		अवरोध;
-	हाल CRYP_INIT_VECTOR_INDEX_1:
-		ग_लिखोl_relaxed(init_vector_value.init_value_left,
+		break;
+	case CRYP_INIT_VECTOR_INDEX_1:
+		writel_relaxed(init_vector_value.init_value_left,
 		       &device_data->base->init_vect_1_l);
-		ग_लिखोl_relaxed(init_vector_value.init_value_right,
+		writel_relaxed(init_vector_value.init_value_right,
 		       &device_data->base->init_vect_1_r);
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * cryp_save_device_context -	Store hardware रेजिस्टरs and
+ * cryp_save_device_context -	Store hardware registers and
  *				other device context parameter
- * @device_data: Poपूर्णांकer to the device data काष्ठा क्रम base address.
+ * @device_data: Pointer to the device data struct for base address.
  * @ctx: Crypto device context
  * @cryp_mode: Mode: Polling, Interrupt or DMA
  */
-व्योम cryp_save_device_context(काष्ठा cryp_device_data *device_data,
-			      काष्ठा cryp_device_context *ctx,
-			      पूर्णांक cryp_mode)
-अणु
-	क्रमागत cryp_algo_mode algomode;
-	काष्ठा cryp_रेजिस्टर __iomem *src_reg = device_data->base;
-	काष्ठा cryp_config *config =
-		(काष्ठा cryp_config *)device_data->current_ctx;
+void cryp_save_device_context(struct cryp_device_data *device_data,
+			      struct cryp_device_context *ctx,
+			      int cryp_mode)
+{
+	enum cryp_algo_mode algomode;
+	struct cryp_register __iomem *src_reg = device_data->base;
+	struct cryp_config *config =
+		(struct cryp_config *)device_data->current_ctx;
 
 	/*
-	 * Always start by disable the hardware and रुको क्रम it to finish the
-	 * ongoing calculations beक्रमe trying to reprogram it.
+	 * Always start by disable the hardware and wait for it to finish the
+	 * ongoing calculations before trying to reprogram it.
 	 */
 	cryp_activity(device_data, CRYP_CRYPEN_DISABLE);
-	cryp_रुको_until_करोne(device_data);
+	cryp_wait_until_done(device_data);
 
-	अगर (cryp_mode == CRYP_MODE_DMA)
-		cryp_configure_क्रम_dma(device_data, CRYP_DMA_DISABLE_BOTH);
+	if (cryp_mode == CRYP_MODE_DMA)
+		cryp_configure_for_dma(device_data, CRYP_DMA_DISABLE_BOTH);
 
-	अगर (CRYP_TEST_BITS(&src_reg->sr, CRYP_SR_IFEM_MASK) == 0)
-		ctx->din = पढ़ोl_relaxed(&src_reg->din);
+	if (CRYP_TEST_BITS(&src_reg->sr, CRYP_SR_IFEM_MASK) == 0)
+		ctx->din = readl_relaxed(&src_reg->din);
 
-	ctx->cr = पढ़ोl_relaxed(&src_reg->cr) & CRYP_CR_CONTEXT_SAVE_MASK;
+	ctx->cr = readl_relaxed(&src_reg->cr) & CRYP_CR_CONTEXT_SAVE_MASK;
 
-	चयन (config->keysize) अणु
-	हाल CRYP_KEY_SIZE_256:
-		ctx->key_4_l = पढ़ोl_relaxed(&src_reg->key_4_l);
-		ctx->key_4_r = पढ़ोl_relaxed(&src_reg->key_4_r);
+	switch (config->keysize) {
+	case CRYP_KEY_SIZE_256:
+		ctx->key_4_l = readl_relaxed(&src_reg->key_4_l);
+		ctx->key_4_r = readl_relaxed(&src_reg->key_4_r);
 		fallthrough;
 
-	हाल CRYP_KEY_SIZE_192:
-		ctx->key_3_l = पढ़ोl_relaxed(&src_reg->key_3_l);
-		ctx->key_3_r = पढ़ोl_relaxed(&src_reg->key_3_r);
+	case CRYP_KEY_SIZE_192:
+		ctx->key_3_l = readl_relaxed(&src_reg->key_3_l);
+		ctx->key_3_r = readl_relaxed(&src_reg->key_3_r);
 		fallthrough;
 
-	हाल CRYP_KEY_SIZE_128:
-		ctx->key_2_l = पढ़ोl_relaxed(&src_reg->key_2_l);
-		ctx->key_2_r = पढ़ोl_relaxed(&src_reg->key_2_r);
+	case CRYP_KEY_SIZE_128:
+		ctx->key_2_l = readl_relaxed(&src_reg->key_2_l);
+		ctx->key_2_r = readl_relaxed(&src_reg->key_2_r);
 		fallthrough;
 
-	शेष:
-		ctx->key_1_l = पढ़ोl_relaxed(&src_reg->key_1_l);
-		ctx->key_1_r = पढ़ोl_relaxed(&src_reg->key_1_r);
-	पूर्ण
+	default:
+		ctx->key_1_l = readl_relaxed(&src_reg->key_1_l);
+		ctx->key_1_r = readl_relaxed(&src_reg->key_1_r);
+	}
 
-	/* Save IV क्रम CBC mode क्रम both AES and DES. */
+	/* Save IV for CBC mode for both AES and DES. */
 	algomode = ((ctx->cr & CRYP_CR_ALGOMODE_MASK) >> CRYP_CR_ALGOMODE_POS);
-	अगर (algomode == CRYP_ALGO_TDES_CBC ||
+	if (algomode == CRYP_ALGO_TDES_CBC ||
 	    algomode == CRYP_ALGO_DES_CBC ||
-	    algomode == CRYP_ALGO_AES_CBC) अणु
-		ctx->init_vect_0_l = पढ़ोl_relaxed(&src_reg->init_vect_0_l);
-		ctx->init_vect_0_r = पढ़ोl_relaxed(&src_reg->init_vect_0_r);
-		ctx->init_vect_1_l = पढ़ोl_relaxed(&src_reg->init_vect_1_l);
-		ctx->init_vect_1_r = पढ़ोl_relaxed(&src_reg->init_vect_1_r);
-	पूर्ण
-पूर्ण
+	    algomode == CRYP_ALGO_AES_CBC) {
+		ctx->init_vect_0_l = readl_relaxed(&src_reg->init_vect_0_l);
+		ctx->init_vect_0_r = readl_relaxed(&src_reg->init_vect_0_r);
+		ctx->init_vect_1_l = readl_relaxed(&src_reg->init_vect_1_l);
+		ctx->init_vect_1_r = readl_relaxed(&src_reg->init_vect_1_r);
+	}
+}
 
 /**
- * cryp_restore_device_context -	Restore hardware रेजिस्टरs and
+ * cryp_restore_device_context -	Restore hardware registers and
  *					other device context parameter
- * @device_data: Poपूर्णांकer to the device data काष्ठा क्रम base address.
+ * @device_data: Pointer to the device data struct for base address.
  * @ctx: Crypto device context
  */
-व्योम cryp_restore_device_context(काष्ठा cryp_device_data *device_data,
-				 काष्ठा cryp_device_context *ctx)
-अणु
-	काष्ठा cryp_रेजिस्टर __iomem *reg = device_data->base;
-	काष्ठा cryp_config *config =
-		(काष्ठा cryp_config *)device_data->current_ctx;
+void cryp_restore_device_context(struct cryp_device_data *device_data,
+				 struct cryp_device_context *ctx)
+{
+	struct cryp_register __iomem *reg = device_data->base;
+	struct cryp_config *config =
+		(struct cryp_config *)device_data->current_ctx;
 
 	/*
-	 * Fall through क्रम all items in चयन statement. DES is captured in
-	 * the शेष.
+	 * Fall through for all items in switch statement. DES is captured in
+	 * the default.
 	 */
-	चयन (config->keysize) अणु
-	हाल CRYP_KEY_SIZE_256:
-		ग_लिखोl_relaxed(ctx->key_4_l, &reg->key_4_l);
-		ग_लिखोl_relaxed(ctx->key_4_r, &reg->key_4_r);
+	switch (config->keysize) {
+	case CRYP_KEY_SIZE_256:
+		writel_relaxed(ctx->key_4_l, &reg->key_4_l);
+		writel_relaxed(ctx->key_4_r, &reg->key_4_r);
 		fallthrough;
 
-	हाल CRYP_KEY_SIZE_192:
-		ग_लिखोl_relaxed(ctx->key_3_l, &reg->key_3_l);
-		ग_लिखोl_relaxed(ctx->key_3_r, &reg->key_3_r);
+	case CRYP_KEY_SIZE_192:
+		writel_relaxed(ctx->key_3_l, &reg->key_3_l);
+		writel_relaxed(ctx->key_3_r, &reg->key_3_r);
 		fallthrough;
 
-	हाल CRYP_KEY_SIZE_128:
-		ग_लिखोl_relaxed(ctx->key_2_l, &reg->key_2_l);
-		ग_लिखोl_relaxed(ctx->key_2_r, &reg->key_2_r);
+	case CRYP_KEY_SIZE_128:
+		writel_relaxed(ctx->key_2_l, &reg->key_2_l);
+		writel_relaxed(ctx->key_2_r, &reg->key_2_r);
 		fallthrough;
 
-	शेष:
-		ग_लिखोl_relaxed(ctx->key_1_l, &reg->key_1_l);
-		ग_लिखोl_relaxed(ctx->key_1_r, &reg->key_1_r);
-	पूर्ण
+	default:
+		writel_relaxed(ctx->key_1_l, &reg->key_1_l);
+		writel_relaxed(ctx->key_1_r, &reg->key_1_r);
+	}
 
-	/* Restore IV क्रम CBC mode क्रम AES and DES. */
-	अगर (config->algomode == CRYP_ALGO_TDES_CBC ||
+	/* Restore IV for CBC mode for AES and DES. */
+	if (config->algomode == CRYP_ALGO_TDES_CBC ||
 	    config->algomode == CRYP_ALGO_DES_CBC ||
-	    config->algomode == CRYP_ALGO_AES_CBC) अणु
-		ग_लिखोl_relaxed(ctx->init_vect_0_l, &reg->init_vect_0_l);
-		ग_लिखोl_relaxed(ctx->init_vect_0_r, &reg->init_vect_0_r);
-		ग_लिखोl_relaxed(ctx->init_vect_1_l, &reg->init_vect_1_l);
-		ग_लिखोl_relaxed(ctx->init_vect_1_r, &reg->init_vect_1_r);
-	पूर्ण
-पूर्ण
+	    config->algomode == CRYP_ALGO_AES_CBC) {
+		writel_relaxed(ctx->init_vect_0_l, &reg->init_vect_0_l);
+		writel_relaxed(ctx->init_vect_0_r, &reg->init_vect_0_r);
+		writel_relaxed(ctx->init_vect_1_l, &reg->init_vect_1_l);
+		writel_relaxed(ctx->init_vect_1_r, &reg->init_vect_1_r);
+	}
+}

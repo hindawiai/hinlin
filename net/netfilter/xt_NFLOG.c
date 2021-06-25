@@ -1,16 +1,15 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2006 Patrick McHardy <kaber@trash.net>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/init.h>
-#समावेश <linux/skbuff.h>
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/skbuff.h>
 
-#समावेश <linux/netfilter/x_tables.h>
-#समावेश <linux/netfilter/xt_NFLOG.h>
-#समावेश <net/netfilter/nf_log.h>
+#include <linux/netfilter/x_tables.h>
+#include <linux/netfilter/xt_NFLOG.h>
+#include <net/netfilter/nf_log.h>
 
 MODULE_AUTHOR("Patrick McHardy <kaber@trash.net>");
 MODULE_DESCRIPTION("Xtables: packet logging to netlink using NFLOG");
@@ -18,12 +17,12 @@ MODULE_LICENSE("GPL");
 MODULE_ALIAS("ipt_NFLOG");
 MODULE_ALIAS("ip6t_NFLOG");
 
-अटल अचिन्हित पूर्णांक
-nflog_tg(काष्ठा sk_buff *skb, स्थिर काष्ठा xt_action_param *par)
-अणु
-	स्थिर काष्ठा xt_nflog_info *info = par->targinfo;
-	काष्ठा net *net = xt_net(par);
-	काष्ठा nf_loginfo li;
+static unsigned int
+nflog_tg(struct sk_buff *skb, const struct xt_action_param *par)
+{
+	const struct xt_nflog_info *info = par->targinfo;
+	struct net *net = xt_net(par);
+	struct nf_loginfo li;
 
 	li.type		     = NF_LOG_TYPE_ULOG;
 	li.u.ulog.copy_len   = info->len;
@@ -31,53 +30,53 @@ nflog_tg(काष्ठा sk_buff *skb, स्थिर काष्ठा xt_
 	li.u.ulog.qthreshold = info->threshold;
 	li.u.ulog.flags	     = 0;
 
-	अगर (info->flags & XT_NFLOG_F_COPY_LEN)
+	if (info->flags & XT_NFLOG_F_COPY_LEN)
 		li.u.ulog.flags |= NF_LOG_F_COPY_LEN;
 
 	nf_log_packet(net, xt_family(par), xt_hooknum(par), skb, xt_in(par),
 		      xt_out(par), &li, "%s", info->prefix);
 
-	वापस XT_CONTINUE;
-पूर्ण
+	return XT_CONTINUE;
+}
 
-अटल पूर्णांक nflog_tg_check(स्थिर काष्ठा xt_tgchk_param *par)
-अणु
-	स्थिर काष्ठा xt_nflog_info *info = par->targinfo;
+static int nflog_tg_check(const struct xt_tgchk_param *par)
+{
+	const struct xt_nflog_info *info = par->targinfo;
 
-	अगर (info->flags & ~XT_NFLOG_MASK)
-		वापस -EINVAL;
-	अगर (info->prefix[माप(info->prefix) - 1] != '\0')
-		वापस -EINVAL;
+	if (info->flags & ~XT_NFLOG_MASK)
+		return -EINVAL;
+	if (info->prefix[sizeof(info->prefix) - 1] != '\0')
+		return -EINVAL;
 
-	वापस nf_logger_find_get(par->family, NF_LOG_TYPE_ULOG);
-पूर्ण
+	return nf_logger_find_get(par->family, NF_LOG_TYPE_ULOG);
+}
 
-अटल व्योम nflog_tg_destroy(स्थिर काष्ठा xt_tgdtor_param *par)
-अणु
+static void nflog_tg_destroy(const struct xt_tgdtor_param *par)
+{
 	nf_logger_put(par->family, NF_LOG_TYPE_ULOG);
-पूर्ण
+}
 
-अटल काष्ठा xt_target nflog_tg_reg __पढ़ो_mostly = अणु
+static struct xt_target nflog_tg_reg __read_mostly = {
 	.name       = "NFLOG",
 	.revision   = 0,
 	.family     = NFPROTO_UNSPEC,
 	.checkentry = nflog_tg_check,
 	.destroy    = nflog_tg_destroy,
 	.target     = nflog_tg,
-	.tarमाला_लोize = माप(काष्ठा xt_nflog_info),
+	.targetsize = sizeof(struct xt_nflog_info),
 	.me         = THIS_MODULE,
-पूर्ण;
+};
 
-अटल पूर्णांक __init nflog_tg_init(व्योम)
-अणु
-	वापस xt_रेजिस्टर_target(&nflog_tg_reg);
-पूर्ण
+static int __init nflog_tg_init(void)
+{
+	return xt_register_target(&nflog_tg_reg);
+}
 
-अटल व्योम __निकास nflog_tg_निकास(व्योम)
-अणु
-	xt_unरेजिस्टर_target(&nflog_tg_reg);
-पूर्ण
+static void __exit nflog_tg_exit(void)
+{
+	xt_unregister_target(&nflog_tg_reg);
+}
 
 module_init(nflog_tg_init);
-module_निकास(nflog_tg_निकास);
+module_exit(nflog_tg_exit);
 MODULE_SOFTDEP("pre: nfnetlink_log");

@@ -1,100 +1,99 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * PTP 1588 घड़ी support - User space test program
+ * PTP 1588 clock support - User space test program
  *
  * Copyright (C) 2010 OMICRON electronics GmbH
  */
-#घोषणा _GNU_SOURCE
-#घोषणा __SANE_USERSPACE_TYPES__        /* For PPC64, to get LL64 types */
-#समावेश <त्रुटिसं.स>
-#समावेश <fcntl.h>
-#समावेश <पूर्णांकtypes.h>
-#समावेश <गणित.स>
-#समावेश <संकेत.स>
-#समावेश <मानकपन.स>
-#समावेश <मानककोष.स>
-#समावेश <माला.स>
-#समावेश <sys/ioctl.h>
-#समावेश <sys/mman.h>
-#समावेश <sys/स्थिति.स>
-#समावेश <sys/समय.स>
-#समावेश <sys/समयx.h>
-#समावेश <sys/types.h>
-#समावेश <समय.स>
-#समावेश <unistd.h>
+#define _GNU_SOURCE
+#define __SANE_USERSPACE_TYPES__        /* For PPC64, to get LL64 types */
+#include <errno.h>
+#include <fcntl.h>
+#include <inttypes.h>
+#include <math.h>
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/ioctl.h>
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <sys/time.h>
+#include <sys/timex.h>
+#include <sys/types.h>
+#include <time.h>
+#include <unistd.h>
 
-#समावेश <linux/ptp_घड़ी.h>
+#include <linux/ptp_clock.h>
 
-#घोषणा DEVICE "/dev/ptp0"
+#define DEVICE "/dev/ptp0"
 
-#अगर_अघोषित ADJ_SETOFFSET
-#घोषणा ADJ_SETOFFSET 0x0100
-#पूर्ण_अगर
+#ifndef ADJ_SETOFFSET
+#define ADJ_SETOFFSET 0x0100
+#endif
 
-#अगर_अघोषित CLOCK_INVALID
-#घोषणा CLOCK_INVALID -1
-#पूर्ण_अगर
+#ifndef CLOCK_INVALID
+#define CLOCK_INVALID -1
+#endif
 
-#घोषणा NSEC_PER_SEC 1000000000LL
+#define NSEC_PER_SEC 1000000000LL
 
-/* घड़ी_adjसमय is not available in GLIBC < 2.14 */
-#अगर !__GLIBC_PREREQ(2, 14)
-#समावेश <sys/syscall.h>
-अटल पूर्णांक घड़ी_adjसमय(घड़ीid_t id, काष्ठा समयx *tx)
-अणु
-	वापस syscall(__NR_घड़ी_adjसमय, id, tx);
-पूर्ण
-#पूर्ण_अगर
+/* clock_adjtime is not available in GLIBC < 2.14 */
+#if !__GLIBC_PREREQ(2, 14)
+#include <sys/syscall.h>
+static int clock_adjtime(clockid_t id, struct timex *tx)
+{
+	return syscall(__NR_clock_adjtime, id, tx);
+}
+#endif
 
-अटल व्योम show_flag_test(पूर्णांक rq_index, अचिन्हित पूर्णांक flags, पूर्णांक err)
-अणु
-	म_लिखो("PTP_EXTTS_REQUEST%c flags 0x%08x : (%d) %s\n",
+static void show_flag_test(int rq_index, unsigned int flags, int err)
+{
+	printf("PTP_EXTTS_REQUEST%c flags 0x%08x : (%d) %s\n",
 	       rq_index ? '1' + rq_index : ' ',
-	       flags, err, म_त्रुटि(त्रुटि_सं));
+	       flags, err, strerror(errno));
 	/* sigh, uClibc ... */
-	त्रुटि_सं = 0;
-पूर्ण
+	errno = 0;
+}
 
-अटल व्योम करो_flag_test(पूर्णांक fd, अचिन्हित पूर्णांक index)
-अणु
-	काष्ठा ptp_extts_request extts_request;
-	अचिन्हित दीर्घ request[2] = अणु
+static void do_flag_test(int fd, unsigned int index)
+{
+	struct ptp_extts_request extts_request;
+	unsigned long request[2] = {
 		PTP_EXTTS_REQUEST,
 		PTP_EXTTS_REQUEST2,
-	पूर्ण;
-	अचिन्हित पूर्णांक enable_flags[5] = अणु
+	};
+	unsigned int enable_flags[5] = {
 		PTP_ENABLE_FEATURE,
 		PTP_ENABLE_FEATURE | PTP_RISING_EDGE,
 		PTP_ENABLE_FEATURE | PTP_FALLING_EDGE,
 		PTP_ENABLE_FEATURE | PTP_RISING_EDGE | PTP_FALLING_EDGE,
 		PTP_ENABLE_FEATURE | (PTP_EXTTS_VALID_FLAGS + 1),
-	पूर्ण;
-	पूर्णांक err, i, j;
+	};
+	int err, i, j;
 
-	स_रखो(&extts_request, 0, माप(extts_request));
+	memset(&extts_request, 0, sizeof(extts_request));
 	extts_request.index = index;
 
-	क्रम (i = 0; i < 2; i++) अणु
-		क्रम (j = 0; j < 5; j++) अणु
+	for (i = 0; i < 2; i++) {
+		for (j = 0; j < 5; j++) {
 			extts_request.flags = enable_flags[j];
 			err = ioctl(fd, request[i], &extts_request);
 			show_flag_test(i, extts_request.flags, err);
 
 			extts_request.flags = 0;
 			err = ioctl(fd, request[i], &extts_request);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल घड़ीid_t get_घड़ीid(पूर्णांक fd)
-अणु
-#घोषणा CLOCKFD 3
-	वापस (((अचिन्हित पूर्णांक) ~fd) << 3) | CLOCKFD;
-पूर्ण
+static clockid_t get_clockid(int fd)
+{
+#define CLOCKFD 3
+	return (((unsigned int) ~fd) << 3) | CLOCKFD;
+}
 
-अटल दीर्घ ppb_to_scaled_ppm(पूर्णांक ppb)
-अणु
+static long ppb_to_scaled_ppm(int ppb)
+{
 	/*
 	 * The 'freq' field in the 'struct timex' is in parts per
 	 * million, but with a 16 bit binary fractional field.
@@ -103,20 +102,20 @@
 	 *    scaled_ppm = (ppb / 1000) << 16  [1]
 	 *    scaled_ppm = (ppb << 16) / 1000  [2]
 	 *
-	 * we simply use द्विगुन precision math, in order to aव्योम the
+	 * we simply use double precision math, in order to avoid the
 	 * truncation in [1] and the possible overflow in [2].
 	 */
-	वापस (दीर्घ) (ppb * 65.536);
-पूर्ण
+	return (long) (ppb * 65.536);
+}
 
-अटल पूर्णांक64_t pctns(काष्ठा ptp_घड़ी_प्रकारime *t)
-अणु
-	वापस t->sec * 1000000000LL + t->nsec;
-पूर्ण
+static int64_t pctns(struct ptp_clock_time *t)
+{
+	return t->sec * 1000000000LL + t->nsec;
+}
 
-अटल व्योम usage(अक्षर *progname)
-अणु
-	ख_लिखो(मानक_त्रुटि,
+static void usage(char *progname)
+{
+	fprintf(stderr,
 		"usage: %s [options]\n"
 		" -c         query the ptp clock's capabilities\n"
 		" -d name    device to open\n"
@@ -144,138 +143,138 @@
 		" -T val     set the ptp clock time to 'val' seconds\n"
 		" -z         test combinations of rising/falling external time stamp flags\n",
 		progname);
-पूर्ण
+}
 
-पूर्णांक मुख्य(पूर्णांक argc, अक्षर *argv[])
-अणु
-	काष्ठा ptp_घड़ी_caps caps;
-	काष्ठा ptp_extts_event event;
-	काष्ठा ptp_extts_request extts_request;
-	काष्ठा ptp_perout_request perout_request;
-	काष्ठा ptp_pin_desc desc;
-	काष्ठा बारpec ts;
-	काष्ठा समयx tx;
-	काष्ठा ptp_घड़ी_प्रकारime *pct;
-	काष्ठा ptp_sys_offset *sysoff;
+int main(int argc, char *argv[])
+{
+	struct ptp_clock_caps caps;
+	struct ptp_extts_event event;
+	struct ptp_extts_request extts_request;
+	struct ptp_perout_request perout_request;
+	struct ptp_pin_desc desc;
+	struct timespec ts;
+	struct timex tx;
+	struct ptp_clock_time *pct;
+	struct ptp_sys_offset *sysoff;
 
-	अक्षर *progname;
-	अचिन्हित पूर्णांक i;
-	पूर्णांक c, cnt, fd;
+	char *progname;
+	unsigned int i;
+	int c, cnt, fd;
 
-	अक्षर *device = DEVICE;
-	घड़ीid_t clkid;
-	पूर्णांक adjfreq = 0x7fffffff;
-	पूर्णांक adjसमय = 0;
-	पूर्णांक capabilities = 0;
-	पूर्णांक extts = 0;
-	पूर्णांक flagtest = 0;
-	पूर्णांक समय_लो = 0;
-	पूर्णांक index = 0;
-	पूर्णांक list_pins = 0;
-	पूर्णांक pct_offset = 0;
-	पूर्णांक n_samples = 0;
-	पूर्णांक pin_index = -1, pin_func;
-	पूर्णांक pps = -1;
-	पूर्णांक seconds = 0;
-	पूर्णांक समय_रखो = 0;
+	char *device = DEVICE;
+	clockid_t clkid;
+	int adjfreq = 0x7fffffff;
+	int adjtime = 0;
+	int capabilities = 0;
+	int extts = 0;
+	int flagtest = 0;
+	int gettime = 0;
+	int index = 0;
+	int list_pins = 0;
+	int pct_offset = 0;
+	int n_samples = 0;
+	int pin_index = -1, pin_func;
+	int pps = -1;
+	int seconds = 0;
+	int settime = 0;
 
-	पूर्णांक64_t t1, t2, tp;
-	पूर्णांक64_t पूर्णांकerval, offset;
-	पूर्णांक64_t perout_phase = -1;
-	पूर्णांक64_t pulsewidth = -1;
-	पूर्णांक64_t perout = -1;
+	int64_t t1, t2, tp;
+	int64_t interval, offset;
+	int64_t perout_phase = -1;
+	int64_t pulsewidth = -1;
+	int64_t perout = -1;
 
-	progname = म_खोजप(argv[0], '/');
+	progname = strrchr(argv[0], '/');
 	progname = progname ? 1+progname : argv[0];
-	जबतक (खातापूर्ण != (c = getopt(argc, argv, "cd:e:f:ghH:i:k:lL:p:P:sSt:T:w:z"))) अणु
-		चयन (c) अणु
-		हाल 'c':
+	while (EOF != (c = getopt(argc, argv, "cd:e:f:ghH:i:k:lL:p:P:sSt:T:w:z"))) {
+		switch (c) {
+		case 'c':
 			capabilities = 1;
-			अवरोध;
-		हाल 'd':
+			break;
+		case 'd':
 			device = optarg;
-			अवरोध;
-		हाल 'e':
-			extts = म_से_प(optarg);
-			अवरोध;
-		हाल 'f':
-			adjfreq = म_से_प(optarg);
-			अवरोध;
-		हाल 'g':
-			समय_लो = 1;
-			अवरोध;
-		हाल 'H':
-			perout_phase = म_से_दl(optarg);
-			अवरोध;
-		हाल 'i':
-			index = म_से_प(optarg);
-			अवरोध;
-		हाल 'k':
+			break;
+		case 'e':
+			extts = atoi(optarg);
+			break;
+		case 'f':
+			adjfreq = atoi(optarg);
+			break;
+		case 'g':
+			gettime = 1;
+			break;
+		case 'H':
+			perout_phase = atoll(optarg);
+			break;
+		case 'i':
+			index = atoi(optarg);
+			break;
+		case 'k':
 			pct_offset = 1;
-			n_samples = म_से_प(optarg);
-			अवरोध;
-		हाल 'l':
+			n_samples = atoi(optarg);
+			break;
+		case 'l':
 			list_pins = 1;
-			अवरोध;
-		हाल 'L':
-			cnt = माला_पूछो(optarg, "%d,%d", &pin_index, &pin_func);
-			अगर (cnt != 2) अणु
+			break;
+		case 'L':
+			cnt = sscanf(optarg, "%d,%d", &pin_index, &pin_func);
+			if (cnt != 2) {
 				usage(progname);
-				वापस -1;
-			पूर्ण
-			अवरोध;
-		हाल 'p':
-			perout = म_से_दl(optarg);
-			अवरोध;
-		हाल 'P':
-			pps = म_से_प(optarg);
-			अवरोध;
-		हाल 's':
-			समय_रखो = 1;
-			अवरोध;
-		हाल 'S':
-			समय_रखो = 2;
-			अवरोध;
-		हाल 't':
-			adjसमय = म_से_प(optarg);
-			अवरोध;
-		हाल 'T':
-			समय_रखो = 3;
-			seconds = म_से_प(optarg);
-			अवरोध;
-		हाल 'w':
-			pulsewidth = म_से_प(optarg);
-			अवरोध;
-		हाल 'z':
+				return -1;
+			}
+			break;
+		case 'p':
+			perout = atoll(optarg);
+			break;
+		case 'P':
+			pps = atoi(optarg);
+			break;
+		case 's':
+			settime = 1;
+			break;
+		case 'S':
+			settime = 2;
+			break;
+		case 't':
+			adjtime = atoi(optarg);
+			break;
+		case 'T':
+			settime = 3;
+			seconds = atoi(optarg);
+			break;
+		case 'w':
+			pulsewidth = atoi(optarg);
+			break;
+		case 'z':
 			flagtest = 1;
-			अवरोध;
-		हाल 'h':
+			break;
+		case 'h':
 			usage(progname);
-			वापस 0;
-		हाल '?':
-		शेष:
+			return 0;
+		case '?':
+		default:
 			usage(progname);
-			वापस -1;
-		पूर्ण
-	पूर्ण
+			return -1;
+		}
+	}
 
-	fd = खोलो(device, O_RDWR);
-	अगर (fd < 0) अणु
-		ख_लिखो(मानक_त्रुटि, "opening %s: %s\n", device, म_त्रुटि(त्रुटि_सं));
-		वापस -1;
-	पूर्ण
+	fd = open(device, O_RDWR);
+	if (fd < 0) {
+		fprintf(stderr, "opening %s: %s\n", device, strerror(errno));
+		return -1;
+	}
 
-	clkid = get_घड़ीid(fd);
-	अगर (CLOCK_INVALID == clkid) अणु
-		ख_लिखो(मानक_त्रुटि, "failed to read clock id\n");
-		वापस -1;
-	पूर्ण
+	clkid = get_clockid(fd);
+	if (CLOCK_INVALID == clkid) {
+		fprintf(stderr, "failed to read clock id\n");
+		return -1;
+	}
 
-	अगर (capabilities) अणु
-		अगर (ioctl(fd, PTP_CLOCK_GETCAPS, &caps)) अणु
-			लिखो_त्रुटि("PTP_CLOCK_GETCAPS");
-		पूर्ण अन्यथा अणु
-			म_लिखो("capabilities:\n"
+	if (capabilities) {
+		if (ioctl(fd, PTP_CLOCK_GETCAPS, &caps)) {
+			perror("PTP_CLOCK_GETCAPS");
+		} else {
+			printf("capabilities:\n"
 			       "  %d maximum frequency adjustment (ppb)\n"
 			       "  %d programmable alarms\n"
 			       "  %d external time stamp channels\n"
@@ -290,223 +289,223 @@
 			       caps.n_per_out,
 			       caps.pps,
 			       caps.n_pins,
-			       caps.cross_बारtamping,
+			       caps.cross_timestamping,
 			       caps.adjust_phase);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (0x7fffffff != adjfreq) अणु
-		स_रखो(&tx, 0, माप(tx));
+	if (0x7fffffff != adjfreq) {
+		memset(&tx, 0, sizeof(tx));
 		tx.modes = ADJ_FREQUENCY;
 		tx.freq = ppb_to_scaled_ppm(adjfreq);
-		अगर (घड़ी_adjसमय(clkid, &tx)) अणु
-			लिखो_त्रुटि("clock_adjtime");
-		पूर्ण अन्यथा अणु
-			माला_दो("frequency adjustment okay");
-		पूर्ण
-	पूर्ण
+		if (clock_adjtime(clkid, &tx)) {
+			perror("clock_adjtime");
+		} else {
+			puts("frequency adjustment okay");
+		}
+	}
 
-	अगर (adjसमय) अणु
-		स_रखो(&tx, 0, माप(tx));
+	if (adjtime) {
+		memset(&tx, 0, sizeof(tx));
 		tx.modes = ADJ_SETOFFSET;
-		tx.समय.tv_sec = adjसमय;
-		tx.समय.tv_usec = 0;
-		अगर (घड़ी_adjसमय(clkid, &tx) < 0) अणु
-			लिखो_त्रुटि("clock_adjtime");
-		पूर्ण अन्यथा अणु
-			माला_दो("time shift okay");
-		पूर्ण
-	पूर्ण
+		tx.time.tv_sec = adjtime;
+		tx.time.tv_usec = 0;
+		if (clock_adjtime(clkid, &tx) < 0) {
+			perror("clock_adjtime");
+		} else {
+			puts("time shift okay");
+		}
+	}
 
-	अगर (समय_लो) अणु
-		अगर (घड़ी_समय_लो(clkid, &ts)) अणु
-			लिखो_त्रुटि("clock_gettime");
-		पूर्ण अन्यथा अणु
-			म_लिखो("clock time: %ld.%09ld or %s",
-			       ts.tv_sec, ts.tv_nsec, स_समय(&ts.tv_sec));
-		पूर्ण
-	पूर्ण
+	if (gettime) {
+		if (clock_gettime(clkid, &ts)) {
+			perror("clock_gettime");
+		} else {
+			printf("clock time: %ld.%09ld or %s",
+			       ts.tv_sec, ts.tv_nsec, ctime(&ts.tv_sec));
+		}
+	}
 
-	अगर (समय_रखो == 1) अणु
-		घड़ी_समय_लो(CLOCK_REALTIME, &ts);
-		अगर (घड़ी_समय_रखो(clkid, &ts)) अणु
-			लिखो_त्रुटि("clock_settime");
-		पूर्ण अन्यथा अणु
-			माला_दो("set time okay");
-		पूर्ण
-	पूर्ण
+	if (settime == 1) {
+		clock_gettime(CLOCK_REALTIME, &ts);
+		if (clock_settime(clkid, &ts)) {
+			perror("clock_settime");
+		} else {
+			puts("set time okay");
+		}
+	}
 
-	अगर (समय_रखो == 2) अणु
-		घड़ी_समय_लो(clkid, &ts);
-		अगर (घड़ी_समय_रखो(CLOCK_REALTIME, &ts)) अणु
-			लिखो_त्रुटि("clock_settime");
-		पूर्ण अन्यथा अणु
-			माला_दो("set time okay");
-		पूर्ण
-	पूर्ण
+	if (settime == 2) {
+		clock_gettime(clkid, &ts);
+		if (clock_settime(CLOCK_REALTIME, &ts)) {
+			perror("clock_settime");
+		} else {
+			puts("set time okay");
+		}
+	}
 
-	अगर (समय_रखो == 3) अणु
+	if (settime == 3) {
 		ts.tv_sec = seconds;
 		ts.tv_nsec = 0;
-		अगर (घड़ी_समय_रखो(clkid, &ts)) अणु
-			लिखो_त्रुटि("clock_settime");
-		पूर्ण अन्यथा अणु
-			माला_दो("set time okay");
-		पूर्ण
-	पूर्ण
+		if (clock_settime(clkid, &ts)) {
+			perror("clock_settime");
+		} else {
+			puts("set time okay");
+		}
+	}
 
-	अगर (extts) अणु
-		स_रखो(&extts_request, 0, माप(extts_request));
+	if (extts) {
+		memset(&extts_request, 0, sizeof(extts_request));
 		extts_request.index = index;
 		extts_request.flags = PTP_ENABLE_FEATURE;
-		अगर (ioctl(fd, PTP_EXTTS_REQUEST, &extts_request)) अणु
-			लिखो_त्रुटि("PTP_EXTTS_REQUEST");
+		if (ioctl(fd, PTP_EXTTS_REQUEST, &extts_request)) {
+			perror("PTP_EXTTS_REQUEST");
 			extts = 0;
-		पूर्ण अन्यथा अणु
-			माला_दो("external time stamp request okay");
-		पूर्ण
-		क्रम (; extts; extts--) अणु
-			cnt = पढ़ो(fd, &event, माप(event));
-			अगर (cnt != माप(event)) अणु
-				लिखो_त्रुटि("read");
-				अवरोध;
-			पूर्ण
-			म_लिखो("event index %u at %lld.%09u\n", event.index,
+		} else {
+			puts("external time stamp request okay");
+		}
+		for (; extts; extts--) {
+			cnt = read(fd, &event, sizeof(event));
+			if (cnt != sizeof(event)) {
+				perror("read");
+				break;
+			}
+			printf("event index %u at %lld.%09u\n", event.index,
 			       event.t.sec, event.t.nsec);
-			ख_साफ(मानक_निकास);
-		पूर्ण
+			fflush(stdout);
+		}
 		/* Disable the feature again. */
 		extts_request.flags = 0;
-		अगर (ioctl(fd, PTP_EXTTS_REQUEST, &extts_request)) अणु
-			लिखो_त्रुटि("PTP_EXTTS_REQUEST");
-		पूर्ण
-	पूर्ण
+		if (ioctl(fd, PTP_EXTTS_REQUEST, &extts_request)) {
+			perror("PTP_EXTTS_REQUEST");
+		}
+	}
 
-	अगर (flagtest) अणु
-		करो_flag_test(fd, index);
-	पूर्ण
+	if (flagtest) {
+		do_flag_test(fd, index);
+	}
 
-	अगर (list_pins) अणु
-		पूर्णांक n_pins = 0;
-		अगर (ioctl(fd, PTP_CLOCK_GETCAPS, &caps)) अणु
-			लिखो_त्रुटि("PTP_CLOCK_GETCAPS");
-		पूर्ण अन्यथा अणु
+	if (list_pins) {
+		int n_pins = 0;
+		if (ioctl(fd, PTP_CLOCK_GETCAPS, &caps)) {
+			perror("PTP_CLOCK_GETCAPS");
+		} else {
 			n_pins = caps.n_pins;
-		पूर्ण
-		क्रम (i = 0; i < n_pins; i++) अणु
+		}
+		for (i = 0; i < n_pins; i++) {
 			desc.index = i;
-			अगर (ioctl(fd, PTP_PIN_GETFUNC, &desc)) अणु
-				लिखो_त्रुटि("PTP_PIN_GETFUNC");
-				अवरोध;
-			पूर्ण
-			म_लिखो("name %s index %u func %u chan %u\n",
+			if (ioctl(fd, PTP_PIN_GETFUNC, &desc)) {
+				perror("PTP_PIN_GETFUNC");
+				break;
+			}
+			printf("name %s index %u func %u chan %u\n",
 			       desc.name, desc.index, desc.func, desc.chan);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (pulsewidth >= 0 && perout < 0) अणु
-		माला_दो("-w can only be specified together with -p");
-		वापस -1;
-	पूर्ण
+	if (pulsewidth >= 0 && perout < 0) {
+		puts("-w can only be specified together with -p");
+		return -1;
+	}
 
-	अगर (perout_phase >= 0 && perout < 0) अणु
-		माला_दो("-H can only be specified together with -p");
-		वापस -1;
-	पूर्ण
+	if (perout_phase >= 0 && perout < 0) {
+		puts("-H can only be specified together with -p");
+		return -1;
+	}
 
-	अगर (perout >= 0) अणु
-		अगर (घड़ी_समय_लो(clkid, &ts)) अणु
-			लिखो_त्रुटि("clock_gettime");
-			वापस -1;
-		पूर्ण
-		स_रखो(&perout_request, 0, माप(perout_request));
+	if (perout >= 0) {
+		if (clock_gettime(clkid, &ts)) {
+			perror("clock_gettime");
+			return -1;
+		}
+		memset(&perout_request, 0, sizeof(perout_request));
 		perout_request.index = index;
 		perout_request.period.sec = perout / NSEC_PER_SEC;
 		perout_request.period.nsec = perout % NSEC_PER_SEC;
 		perout_request.flags = 0;
-		अगर (pulsewidth >= 0) अणु
+		if (pulsewidth >= 0) {
 			perout_request.flags |= PTP_PEROUT_DUTY_CYCLE;
 			perout_request.on.sec = pulsewidth / NSEC_PER_SEC;
 			perout_request.on.nsec = pulsewidth % NSEC_PER_SEC;
-		पूर्ण
-		अगर (perout_phase >= 0) अणु
+		}
+		if (perout_phase >= 0) {
 			perout_request.flags |= PTP_PEROUT_PHASE;
 			perout_request.phase.sec = perout_phase / NSEC_PER_SEC;
 			perout_request.phase.nsec = perout_phase % NSEC_PER_SEC;
-		पूर्ण अन्यथा अणु
+		} else {
 			perout_request.start.sec = ts.tv_sec + 2;
 			perout_request.start.nsec = 0;
-		पूर्ण
+		}
 
-		अगर (ioctl(fd, PTP_PEROUT_REQUEST2, &perout_request)) अणु
-			लिखो_त्रुटि("PTP_PEROUT_REQUEST");
-		पूर्ण अन्यथा अणु
-			माला_दो("periodic output request okay");
-		पूर्ण
-	पूर्ण
+		if (ioctl(fd, PTP_PEROUT_REQUEST2, &perout_request)) {
+			perror("PTP_PEROUT_REQUEST");
+		} else {
+			puts("periodic output request okay");
+		}
+	}
 
-	अगर (pin_index >= 0) अणु
-		स_रखो(&desc, 0, माप(desc));
+	if (pin_index >= 0) {
+		memset(&desc, 0, sizeof(desc));
 		desc.index = pin_index;
 		desc.func = pin_func;
 		desc.chan = index;
-		अगर (ioctl(fd, PTP_PIN_SETFUNC, &desc)) अणु
-			लिखो_त्रुटि("PTP_PIN_SETFUNC");
-		पूर्ण अन्यथा अणु
-			माला_दो("set pin function okay");
-		पूर्ण
-	पूर्ण
+		if (ioctl(fd, PTP_PIN_SETFUNC, &desc)) {
+			perror("PTP_PIN_SETFUNC");
+		} else {
+			puts("set pin function okay");
+		}
+	}
 
-	अगर (pps != -1) अणु
-		पूर्णांक enable = pps ? 1 : 0;
-		अगर (ioctl(fd, PTP_ENABLE_PPS, enable)) अणु
-			लिखो_त्रुटि("PTP_ENABLE_PPS");
-		पूर्ण अन्यथा अणु
-			माला_दो("pps for system time request okay");
-		पूर्ण
-	पूर्ण
+	if (pps != -1) {
+		int enable = pps ? 1 : 0;
+		if (ioctl(fd, PTP_ENABLE_PPS, enable)) {
+			perror("PTP_ENABLE_PPS");
+		} else {
+			puts("pps for system time request okay");
+		}
+	}
 
-	अगर (pct_offset) अणु
-		अगर (n_samples <= 0 || n_samples > 25) अणु
-			माला_दो("n_samples should be between 1 and 25");
+	if (pct_offset) {
+		if (n_samples <= 0 || n_samples > 25) {
+			puts("n_samples should be between 1 and 25");
 			usage(progname);
-			वापस -1;
-		पूर्ण
+			return -1;
+		}
 
-		sysoff = सुस्मृति(1, माप(*sysoff));
-		अगर (!sysoff) अणु
-			लिखो_त्रुटि("calloc");
-			वापस -1;
-		पूर्ण
+		sysoff = calloc(1, sizeof(*sysoff));
+		if (!sysoff) {
+			perror("calloc");
+			return -1;
+		}
 		sysoff->n_samples = n_samples;
 
-		अगर (ioctl(fd, PTP_SYS_OFFSET, sysoff))
-			लिखो_त्रुटि("PTP_SYS_OFFSET");
-		अन्यथा
-			माला_दो("system and phc clock time offset request okay");
+		if (ioctl(fd, PTP_SYS_OFFSET, sysoff))
+			perror("PTP_SYS_OFFSET");
+		else
+			puts("system and phc clock time offset request okay");
 
 		pct = &sysoff->ts[0];
-		क्रम (i = 0; i < sysoff->n_samples; i++) अणु
+		for (i = 0; i < sysoff->n_samples; i++) {
 			t1 = pctns(pct+2*i);
 			tp = pctns(pct+2*i+1);
 			t2 = pctns(pct+2*i+2);
-			पूर्णांकerval = t2 - t1;
+			interval = t2 - t1;
 			offset = (t2 + t1) / 2 - tp;
 
-			म_लिखो("system time: %lld.%u\n",
+			printf("system time: %lld.%u\n",
 				(pct+2*i)->sec, (pct+2*i)->nsec);
-			म_लिखो("phc    time: %lld.%u\n",
+			printf("phc    time: %lld.%u\n",
 				(pct+2*i+1)->sec, (pct+2*i+1)->nsec);
-			म_लिखो("system time: %lld.%u\n",
+			printf("system time: %lld.%u\n",
 				(pct+2*i+2)->sec, (pct+2*i+2)->nsec);
-			म_लिखो("system/phc clock time offset is %" PRId64 " ns\n"
+			printf("system/phc clock time offset is %" PRId64 " ns\n"
 			       "system     clock time delay  is %" PRId64 " ns\n",
-				offset, पूर्णांकerval);
-		पूर्ण
+				offset, interval);
+		}
 
-		मुक्त(sysoff);
-	पूर्ण
+		free(sysoff);
+	}
 
-	बंद(fd);
-	वापस 0;
-पूर्ण
+	close(fd);
+	return 0;
+}

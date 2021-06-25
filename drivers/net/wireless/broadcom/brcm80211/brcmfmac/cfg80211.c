@@ -1,115 +1,114 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: ISC
+// SPDX-License-Identifier: ISC
 /*
  * Copyright (c) 2010 Broadcom Corporation
  */
 
-/* Toplevel file. Relies on dhd_linux.c to send commands to the करोngle. */
+/* Toplevel file. Relies on dhd_linux.c to send commands to the dongle. */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/etherdevice.h>
-#समावेश <linux/module.h>
-#समावेश <linux/vदो_स्मृति.h>
-#समावेश <net/cfg80211.h>
-#समावेश <net/netlink.h>
-#समावेश <uapi/linux/अगर_arp.h>
+#include <linux/kernel.h>
+#include <linux/etherdevice.h>
+#include <linux/module.h>
+#include <linux/vmalloc.h>
+#include <net/cfg80211.h>
+#include <net/netlink.h>
+#include <uapi/linux/if_arp.h>
 
-#समावेश <brcmu_utils.h>
-#समावेश <defs.h>
-#समावेश <brcmu_wअगरi.h>
-#समावेश "core.h"
-#समावेश "debug.h"
-#समावेश "tracepoint.h"
-#समावेश "fwil_types.h"
-#समावेश "p2p.h"
-#समावेश "btcoex.h"
-#समावेश "pno.h"
-#समावेश "fwsignal.h"
-#समावेश "cfg80211.h"
-#समावेश "feature.h"
-#समावेश "fwil.h"
-#समावेश "proto.h"
-#समावेश "vendor.h"
-#समावेश "bus.h"
-#समावेश "common.h"
+#include <brcmu_utils.h>
+#include <defs.h>
+#include <brcmu_wifi.h>
+#include "core.h"
+#include "debug.h"
+#include "tracepoint.h"
+#include "fwil_types.h"
+#include "p2p.h"
+#include "btcoex.h"
+#include "pno.h"
+#include "fwsignal.h"
+#include "cfg80211.h"
+#include "feature.h"
+#include "fwil.h"
+#include "proto.h"
+#include "vendor.h"
+#include "bus.h"
+#include "common.h"
 
-#घोषणा BRCMF_SCAN_IE_LEN_MAX		2048
+#define BRCMF_SCAN_IE_LEN_MAX		2048
 
-#घोषणा WPA_OUI				"\x00\x50\xF2"	/* WPA OUI */
-#घोषणा WPA_OUI_TYPE			1
-#घोषणा RSN_OUI				"\x00\x0F\xAC"	/* RSN OUI */
-#घोषणा	WME_OUI_TYPE			2
-#घोषणा WPS_OUI_TYPE			4
+#define WPA_OUI				"\x00\x50\xF2"	/* WPA OUI */
+#define WPA_OUI_TYPE			1
+#define RSN_OUI				"\x00\x0F\xAC"	/* RSN OUI */
+#define	WME_OUI_TYPE			2
+#define WPS_OUI_TYPE			4
 
-#घोषणा VS_IE_FIXED_HDR_LEN		6
-#घोषणा WPA_IE_VERSION_LEN		2
-#घोषणा WPA_IE_MIN_OUI_LEN		4
-#घोषणा WPA_IE_SUITE_COUNT_LEN		2
+#define VS_IE_FIXED_HDR_LEN		6
+#define WPA_IE_VERSION_LEN		2
+#define WPA_IE_MIN_OUI_LEN		4
+#define WPA_IE_SUITE_COUNT_LEN		2
 
-#घोषणा WPA_CIPHER_NONE			0	/* None */
-#घोषणा WPA_CIPHER_WEP_40		1	/* WEP (40-bit) */
-#घोषणा WPA_CIPHER_TKIP			2	/* TKIP: शेष क्रम WPA */
-#घोषणा WPA_CIPHER_AES_CCM		4	/* AES (CCM) */
-#घोषणा WPA_CIPHER_WEP_104		5	/* WEP (104-bit) */
+#define WPA_CIPHER_NONE			0	/* None */
+#define WPA_CIPHER_WEP_40		1	/* WEP (40-bit) */
+#define WPA_CIPHER_TKIP			2	/* TKIP: default for WPA */
+#define WPA_CIPHER_AES_CCM		4	/* AES (CCM) */
+#define WPA_CIPHER_WEP_104		5	/* WEP (104-bit) */
 
-#घोषणा RSN_AKM_NONE			0	/* None (IBSS) */
-#घोषणा RSN_AKM_UNSPECIFIED		1	/* Over 802.1x */
-#घोषणा RSN_AKM_PSK			2	/* Pre-shared Key */
-#घोषणा RSN_AKM_SHA256_1X		5	/* SHA256, 802.1X */
-#घोषणा RSN_AKM_SHA256_PSK		6	/* SHA256, Pre-shared Key */
-#घोषणा RSN_AKM_SAE			8	/* SAE */
-#घोषणा RSN_CAP_LEN			2	/* Length of RSN capabilities */
-#घोषणा RSN_CAP_PTK_REPLAY_CNTR_MASK	(BIT(2) | BIT(3))
-#घोषणा RSN_CAP_MFPR_MASK		BIT(6)
-#घोषणा RSN_CAP_MFPC_MASK		BIT(7)
-#घोषणा RSN_PMKID_COUNT_LEN		2
+#define RSN_AKM_NONE			0	/* None (IBSS) */
+#define RSN_AKM_UNSPECIFIED		1	/* Over 802.1x */
+#define RSN_AKM_PSK			2	/* Pre-shared Key */
+#define RSN_AKM_SHA256_1X		5	/* SHA256, 802.1X */
+#define RSN_AKM_SHA256_PSK		6	/* SHA256, Pre-shared Key */
+#define RSN_AKM_SAE			8	/* SAE */
+#define RSN_CAP_LEN			2	/* Length of RSN capabilities */
+#define RSN_CAP_PTK_REPLAY_CNTR_MASK	(BIT(2) | BIT(3))
+#define RSN_CAP_MFPR_MASK		BIT(6)
+#define RSN_CAP_MFPC_MASK		BIT(7)
+#define RSN_PMKID_COUNT_LEN		2
 
-#घोषणा VNDR_IE_CMD_LEN			4	/* length of the set command
+#define VNDR_IE_CMD_LEN			4	/* length of the set command
 						 * string :"add", "del" (+ NUL)
 						 */
-#घोषणा VNDR_IE_COUNT_OFFSET		4
-#घोषणा VNDR_IE_PKTFLAG_OFFSET		8
-#घोषणा VNDR_IE_VSIE_OFFSET		12
-#घोषणा VNDR_IE_HDR_SIZE		12
-#घोषणा VNDR_IE_PARSE_LIMIT		5
+#define VNDR_IE_COUNT_OFFSET		4
+#define VNDR_IE_PKTFLAG_OFFSET		8
+#define VNDR_IE_VSIE_OFFSET		12
+#define VNDR_IE_HDR_SIZE		12
+#define VNDR_IE_PARSE_LIMIT		5
 
-#घोषणा	DOT11_MGMT_HDR_LEN		24	/* d11 management header len */
-#घोषणा	DOT11_BCN_PRB_FIXED_LEN		12	/* beacon/probe fixed length */
+#define	DOT11_MGMT_HDR_LEN		24	/* d11 management header len */
+#define	DOT11_BCN_PRB_FIXED_LEN		12	/* beacon/probe fixed length */
 
-#घोषणा BRCMF_SCAN_JOIN_ACTIVE_DWELL_TIME_MS	320
-#घोषणा BRCMF_SCAN_JOIN_PASSIVE_DWELL_TIME_MS	400
-#घोषणा BRCMF_SCAN_JOIN_PROBE_INTERVAL_MS	20
+#define BRCMF_SCAN_JOIN_ACTIVE_DWELL_TIME_MS	320
+#define BRCMF_SCAN_JOIN_PASSIVE_DWELL_TIME_MS	400
+#define BRCMF_SCAN_JOIN_PROBE_INTERVAL_MS	20
 
-#घोषणा BRCMF_SCAN_CHANNEL_TIME		40
-#घोषणा BRCMF_SCAN_UNASSOC_TIME		40
-#घोषणा BRCMF_SCAN_PASSIVE_TIME		120
+#define BRCMF_SCAN_CHANNEL_TIME		40
+#define BRCMF_SCAN_UNASSOC_TIME		40
+#define BRCMF_SCAN_PASSIVE_TIME		120
 
-#घोषणा BRCMF_ND_INFO_TIMEOUT		msecs_to_jअगरfies(2000)
+#define BRCMF_ND_INFO_TIMEOUT		msecs_to_jiffies(2000)
 
-#घोषणा BRCMF_PS_MAX_TIMEOUT_MS		2000
+#define BRCMF_PS_MAX_TIMEOUT_MS		2000
 
-#घोषणा BRCMF_ASSOC_PARAMS_FIXED_SIZE \
-	(माप(काष्ठा brcmf_assoc_params_le) - माप(u16))
+#define BRCMF_ASSOC_PARAMS_FIXED_SIZE \
+	(sizeof(struct brcmf_assoc_params_le) - sizeof(u16))
 
-अटल bool check_vअगर_up(काष्ठा brcmf_cfg80211_vअगर *vअगर)
-अणु
-	अगर (!test_bit(BRCMF_VIF_STATUS_READY, &vअगर->sme_state)) अणु
+static bool check_vif_up(struct brcmf_cfg80211_vif *vif)
+{
+	if (!test_bit(BRCMF_VIF_STATUS_READY, &vif->sme_state)) {
 		brcmf_dbg(INFO, "device is not ready : status (%lu)\n",
-			  vअगर->sme_state);
-		वापस false;
-	पूर्ण
-	वापस true;
-पूर्ण
+			  vif->sme_state);
+		return false;
+	}
+	return true;
+}
 
-#घोषणा RATE_TO_BASE100KBPS(rate)   (((rate) * 10) / 2)
-#घोषणा RATETAB_ENT(_rateid, _flags) \
-	अणु                                                               \
+#define RATE_TO_BASE100KBPS(rate)   (((rate) * 10) / 2)
+#define RATETAB_ENT(_rateid, _flags) \
+	{                                                               \
 		.bitrate        = RATE_TO_BASE100KBPS(_rateid),     \
 		.hw_value       = (_rateid),                            \
 		.flags          = (_flags),                             \
-	पूर्ण
+	}
 
-अटल काष्ठा ieee80211_rate __wl_rates[] = अणु
+static struct ieee80211_rate __wl_rates[] = {
 	RATETAB_ENT(BRCM_RATE_1M, 0),
 	RATETAB_ENT(BRCM_RATE_2M, IEEE80211_RATE_SHORT_PREAMBLE),
 	RATETAB_ENT(BRCM_RATE_5M5, IEEE80211_RATE_SHORT_PREAMBLE),
@@ -122,341 +121,341 @@
 	RATETAB_ENT(BRCM_RATE_36M, 0),
 	RATETAB_ENT(BRCM_RATE_48M, 0),
 	RATETAB_ENT(BRCM_RATE_54M, 0),
-पूर्ण;
+};
 
-#घोषणा wl_g_rates		(__wl_rates + 0)
-#घोषणा wl_g_rates_size		ARRAY_SIZE(__wl_rates)
-#घोषणा wl_a_rates		(__wl_rates + 4)
-#घोषणा wl_a_rates_size		(wl_g_rates_size - 4)
+#define wl_g_rates		(__wl_rates + 0)
+#define wl_g_rates_size		ARRAY_SIZE(__wl_rates)
+#define wl_a_rates		(__wl_rates + 4)
+#define wl_a_rates_size		(wl_g_rates_size - 4)
 
-#घोषणा CHAN2G(_channel, _freq) अणु				\
+#define CHAN2G(_channel, _freq) {				\
 	.band			= NL80211_BAND_2GHZ,		\
 	.center_freq		= (_freq),			\
 	.hw_value		= (_channel),			\
 	.max_antenna_gain	= 0,				\
-	.max_घातer		= 30,				\
-पूर्ण
+	.max_power		= 30,				\
+}
 
-#घोषणा CHAN5G(_channel) अणु					\
+#define CHAN5G(_channel) {					\
 	.band			= NL80211_BAND_5GHZ,		\
 	.center_freq		= 5000 + (5 * (_channel)),	\
 	.hw_value		= (_channel),			\
 	.max_antenna_gain	= 0,				\
-	.max_घातer		= 30,				\
-पूर्ण
+	.max_power		= 30,				\
+}
 
-अटल काष्ठा ieee80211_channel __wl_2ghz_channels[] = अणु
+static struct ieee80211_channel __wl_2ghz_channels[] = {
 	CHAN2G(1, 2412), CHAN2G(2, 2417), CHAN2G(3, 2422), CHAN2G(4, 2427),
 	CHAN2G(5, 2432), CHAN2G(6, 2437), CHAN2G(7, 2442), CHAN2G(8, 2447),
 	CHAN2G(9, 2452), CHAN2G(10, 2457), CHAN2G(11, 2462), CHAN2G(12, 2467),
 	CHAN2G(13, 2472), CHAN2G(14, 2484)
-पूर्ण;
+};
 
-अटल काष्ठा ieee80211_channel __wl_5ghz_channels[] = अणु
+static struct ieee80211_channel __wl_5ghz_channels[] = {
 	CHAN5G(34), CHAN5G(36), CHAN5G(38), CHAN5G(40), CHAN5G(42),
 	CHAN5G(44), CHAN5G(46), CHAN5G(48), CHAN5G(52), CHAN5G(56),
 	CHAN5G(60), CHAN5G(64), CHAN5G(100), CHAN5G(104), CHAN5G(108),
 	CHAN5G(112), CHAN5G(116), CHAN5G(120), CHAN5G(124), CHAN5G(128),
 	CHAN5G(132), CHAN5G(136), CHAN5G(140), CHAN5G(144), CHAN5G(149),
 	CHAN5G(153), CHAN5G(157), CHAN5G(161), CHAN5G(165)
-पूर्ण;
+};
 
-/* Band ढाँचाs duplicated per wiphy. The channel info
+/* Band templates duplicated per wiphy. The channel info
  * above is added to the band during setup.
  */
-अटल स्थिर काष्ठा ieee80211_supported_band __wl_band_2ghz = अणु
+static const struct ieee80211_supported_band __wl_band_2ghz = {
 	.band = NL80211_BAND_2GHZ,
 	.bitrates = wl_g_rates,
 	.n_bitrates = wl_g_rates_size,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा ieee80211_supported_band __wl_band_5ghz = अणु
+static const struct ieee80211_supported_band __wl_band_5ghz = {
 	.band = NL80211_BAND_5GHZ,
 	.bitrates = wl_a_rates,
 	.n_bitrates = wl_a_rates_size,
-पूर्ण;
+};
 
-/* This is to override regulatory करोमुख्यs defined in cfg80211 module (reg.c)
- * By शेष world regulatory करोमुख्य defined in reg.c माला_दो the flags
- * NL80211_RRF_NO_IR क्रम 5GHz channels (क्रम * 36..48 and 149..165).
- * With respect to these flags, wpa_supplicant करोesn't * start p2p
+/* This is to override regulatory domains defined in cfg80211 module (reg.c)
+ * By default world regulatory domain defined in reg.c puts the flags
+ * NL80211_RRF_NO_IR for 5GHz channels (for * 36..48 and 149..165).
+ * With respect to these flags, wpa_supplicant doesn't * start p2p
  * operations on 5GHz channels. All the changes in world regulatory
- * करोमुख्य are to be करोne here.
+ * domain are to be done here.
  */
-अटल स्थिर काष्ठा ieee80211_regकरोमुख्य brcmf_regकरोm = अणु
+static const struct ieee80211_regdomain brcmf_regdom = {
 	.n_reg_rules = 4,
 	.alpha2 =  "99",
-	.reg_rules = अणु
+	.reg_rules = {
 		/* IEEE 802.11b/g, channels 1..11 */
 		REG_RULE(2412-10, 2472+10, 40, 6, 20, 0),
 		/* If any */
 		/* IEEE 802.11 channel 14 - Only JP enables
-		 * this and क्रम 802.11b only
+		 * this and for 802.11b only
 		 */
 		REG_RULE(2484-10, 2484+10, 20, 6, 20, 0),
 		/* IEEE 802.11a, channel 36..64 */
 		REG_RULE(5150-10, 5350+10, 160, 6, 20, 0),
 		/* IEEE 802.11a, channel 100..165 */
-		REG_RULE(5470-10, 5850+10, 160, 6, 20, 0), पूर्ण
-पूर्ण;
+		REG_RULE(5470-10, 5850+10, 160, 6, 20, 0), }
+};
 
-/* Note: brcmf_cipher_suites is an array of पूर्णांक defining which cipher suites
- * are supported. A poपूर्णांकer to this array and the number of entries is passed
+/* Note: brcmf_cipher_suites is an array of int defining which cipher suites
+ * are supported. A pointer to this array and the number of entries is passed
  * on to upper layers. AES_CMAC defines whether or not the driver supports MFP.
  * So the cipher suite AES_CMAC has to be the last one in the array, and when
- * device करोes not support MFP then the number of suites will be decreased by 1
+ * device does not support MFP then the number of suites will be decreased by 1
  */
-अटल स्थिर u32 brcmf_cipher_suites[] = अणु
+static const u32 brcmf_cipher_suites[] = {
 	WLAN_CIPHER_SUITE_WEP40,
 	WLAN_CIPHER_SUITE_WEP104,
 	WLAN_CIPHER_SUITE_TKIP,
 	WLAN_CIPHER_SUITE_CCMP,
 	/* Keep as last entry: */
 	WLAN_CIPHER_SUITE_AES_CMAC
-पूर्ण;
+};
 
-/* Venकरोr specअगरic ie. id = 221, oui and type defines exact ie */
-काष्ठा brcmf_vs_tlv अणु
+/* Vendor specific ie. id = 221, oui and type defines exact ie */
+struct brcmf_vs_tlv {
 	u8 id;
 	u8 len;
 	u8 oui[3];
 	u8 oui_type;
-पूर्ण;
+};
 
-काष्ठा parsed_vndr_ie_info अणु
+struct parsed_vndr_ie_info {
 	u8 *ie_ptr;
 	u32 ie_len;	/* total length including id & length field */
-	काष्ठा brcmf_vs_tlv vndrie;
-पूर्ण;
+	struct brcmf_vs_tlv vndrie;
+};
 
-काष्ठा parsed_vndr_ies अणु
+struct parsed_vndr_ies {
 	u32 count;
-	काष्ठा parsed_vndr_ie_info ie_info[VNDR_IE_PARSE_LIMIT];
-पूर्ण;
+	struct parsed_vndr_ie_info ie_info[VNDR_IE_PARSE_LIMIT];
+};
 
-अटल u8 nl80211_band_to_fwil(क्रमागत nl80211_band band)
-अणु
-	चयन (band) अणु
-	हाल NL80211_BAND_2GHZ:
-		वापस WLC_BAND_2G;
-	हाल NL80211_BAND_5GHZ:
-		वापस WLC_BAND_5G;
-	शेष:
+static u8 nl80211_band_to_fwil(enum nl80211_band band)
+{
+	switch (band) {
+	case NL80211_BAND_2GHZ:
+		return WLC_BAND_2G;
+	case NL80211_BAND_5GHZ:
+		return WLC_BAND_5G;
+	default:
 		WARN_ON(1);
-		अवरोध;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		break;
+	}
+	return 0;
+}
 
-अटल u16 chandef_to_chanspec(काष्ठा brcmu_d11inf *d11inf,
-			       काष्ठा cfg80211_chan_def *ch)
-अणु
-	काष्ठा brcmu_chan ch_inf;
+static u16 chandef_to_chanspec(struct brcmu_d11inf *d11inf,
+			       struct cfg80211_chan_def *ch)
+{
+	struct brcmu_chan ch_inf;
 	s32 primary_offset;
 
 	brcmf_dbg(TRACE, "chandef: control %d center %d width %d\n",
 		  ch->chan->center_freq, ch->center_freq1, ch->width);
 	ch_inf.chnum = ieee80211_frequency_to_channel(ch->center_freq1);
 	primary_offset = ch->chan->center_freq - ch->center_freq1;
-	चयन (ch->width) अणु
-	हाल NL80211_CHAN_WIDTH_20:
-	हाल NL80211_CHAN_WIDTH_20_NOHT:
+	switch (ch->width) {
+	case NL80211_CHAN_WIDTH_20:
+	case NL80211_CHAN_WIDTH_20_NOHT:
 		ch_inf.bw = BRCMU_CHAN_BW_20;
 		WARN_ON(primary_offset != 0);
-		अवरोध;
-	हाल NL80211_CHAN_WIDTH_40:
+		break;
+	case NL80211_CHAN_WIDTH_40:
 		ch_inf.bw = BRCMU_CHAN_BW_40;
-		अगर (primary_offset > 0)
+		if (primary_offset > 0)
 			ch_inf.sb = BRCMU_CHAN_SB_U;
-		अन्यथा
+		else
 			ch_inf.sb = BRCMU_CHAN_SB_L;
-		अवरोध;
-	हाल NL80211_CHAN_WIDTH_80:
+		break;
+	case NL80211_CHAN_WIDTH_80:
 		ch_inf.bw = BRCMU_CHAN_BW_80;
-		अगर (primary_offset == -30)
+		if (primary_offset == -30)
 			ch_inf.sb = BRCMU_CHAN_SB_LL;
-		अन्यथा अगर (primary_offset == -10)
+		else if (primary_offset == -10)
 			ch_inf.sb = BRCMU_CHAN_SB_LU;
-		अन्यथा अगर (primary_offset == 10)
+		else if (primary_offset == 10)
 			ch_inf.sb = BRCMU_CHAN_SB_UL;
-		अन्यथा
+		else
 			ch_inf.sb = BRCMU_CHAN_SB_UU;
-		अवरोध;
-	हाल NL80211_CHAN_WIDTH_160:
+		break;
+	case NL80211_CHAN_WIDTH_160:
 		ch_inf.bw = BRCMU_CHAN_BW_160;
-		अगर (primary_offset == -70)
+		if (primary_offset == -70)
 			ch_inf.sb = BRCMU_CHAN_SB_LLL;
-		अन्यथा अगर (primary_offset == -50)
+		else if (primary_offset == -50)
 			ch_inf.sb = BRCMU_CHAN_SB_LLU;
-		अन्यथा अगर (primary_offset == -30)
+		else if (primary_offset == -30)
 			ch_inf.sb = BRCMU_CHAN_SB_LUL;
-		अन्यथा अगर (primary_offset == -10)
+		else if (primary_offset == -10)
 			ch_inf.sb = BRCMU_CHAN_SB_LUU;
-		अन्यथा अगर (primary_offset == 10)
+		else if (primary_offset == 10)
 			ch_inf.sb = BRCMU_CHAN_SB_ULL;
-		अन्यथा अगर (primary_offset == 30)
+		else if (primary_offset == 30)
 			ch_inf.sb = BRCMU_CHAN_SB_ULU;
-		अन्यथा अगर (primary_offset == 50)
+		else if (primary_offset == 50)
 			ch_inf.sb = BRCMU_CHAN_SB_UUL;
-		अन्यथा
+		else
 			ch_inf.sb = BRCMU_CHAN_SB_UUU;
-		अवरोध;
-	हाल NL80211_CHAN_WIDTH_80P80:
-	हाल NL80211_CHAN_WIDTH_5:
-	हाल NL80211_CHAN_WIDTH_10:
-	शेष:
+		break;
+	case NL80211_CHAN_WIDTH_80P80:
+	case NL80211_CHAN_WIDTH_5:
+	case NL80211_CHAN_WIDTH_10:
+	default:
 		WARN_ON_ONCE(1);
-	पूर्ण
-	चयन (ch->chan->band) अणु
-	हाल NL80211_BAND_2GHZ:
+	}
+	switch (ch->chan->band) {
+	case NL80211_BAND_2GHZ:
 		ch_inf.band = BRCMU_CHAN_BAND_2G;
-		अवरोध;
-	हाल NL80211_BAND_5GHZ:
+		break;
+	case NL80211_BAND_5GHZ:
 		ch_inf.band = BRCMU_CHAN_BAND_5G;
-		अवरोध;
-	हाल NL80211_BAND_60GHZ:
-	शेष:
+		break;
+	case NL80211_BAND_60GHZ:
+	default:
 		WARN_ON_ONCE(1);
-	पूर्ण
+	}
 	d11inf->encchspec(&ch_inf);
 
 	brcmf_dbg(TRACE, "chanspec: 0x%x\n", ch_inf.chspec);
-	वापस ch_inf.chspec;
-पूर्ण
+	return ch_inf.chspec;
+}
 
-u16 channel_to_chanspec(काष्ठा brcmu_d11inf *d11inf,
-			काष्ठा ieee80211_channel *ch)
-अणु
-	काष्ठा brcmu_chan ch_inf;
+u16 channel_to_chanspec(struct brcmu_d11inf *d11inf,
+			struct ieee80211_channel *ch)
+{
+	struct brcmu_chan ch_inf;
 
 	ch_inf.chnum = ieee80211_frequency_to_channel(ch->center_freq);
 	ch_inf.bw = BRCMU_CHAN_BW_20;
 	d11inf->encchspec(&ch_inf);
 
-	वापस ch_inf.chspec;
-पूर्ण
+	return ch_inf.chspec;
+}
 
 /* Traverse a string of 1-byte tag/1-byte length/variable-length value
- * triples, वापसing a poपूर्णांकer to the substring whose first element
+ * triples, returning a pointer to the substring whose first element
  * matches tag
  */
-अटल स्थिर काष्ठा brcmf_tlv *
-brcmf_parse_tlvs(स्थिर व्योम *buf, पूर्णांक buflen, uपूर्णांक key)
-अणु
-	स्थिर काष्ठा brcmf_tlv *elt = buf;
-	पूर्णांक totlen = buflen;
+static const struct brcmf_tlv *
+brcmf_parse_tlvs(const void *buf, int buflen, uint key)
+{
+	const struct brcmf_tlv *elt = buf;
+	int totlen = buflen;
 
 	/* find tagged parameter */
-	जबतक (totlen >= TLV_HDR_LEN) अणु
-		पूर्णांक len = elt->len;
+	while (totlen >= TLV_HDR_LEN) {
+		int len = elt->len;
 
-		/* validate reमुख्यing totlen */
-		अगर ((elt->id == key) && (totlen >= (len + TLV_HDR_LEN)))
-			वापस elt;
+		/* validate remaining totlen */
+		if ((elt->id == key) && (totlen >= (len + TLV_HDR_LEN)))
+			return elt;
 
-		elt = (काष्ठा brcmf_tlv *)((u8 *)elt + (len + TLV_HDR_LEN));
+		elt = (struct brcmf_tlv *)((u8 *)elt + (len + TLV_HDR_LEN));
 		totlen -= (len + TLV_HDR_LEN);
-	पूर्ण
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
 /* Is any of the tlvs the expected entry? If
- * not update the tlvs buffer poपूर्णांकer/length.
+ * not update the tlvs buffer pointer/length.
  */
-अटल bool
-brcmf_tlv_has_ie(स्थिर u8 *ie, स्थिर u8 **tlvs, u32 *tlvs_len,
-		 स्थिर u8 *oui, u32 oui_len, u8 type)
-अणु
+static bool
+brcmf_tlv_has_ie(const u8 *ie, const u8 **tlvs, u32 *tlvs_len,
+		 const u8 *oui, u32 oui_len, u8 type)
+{
 	/* If the contents match the OUI and the type */
-	अगर (ie[TLV_LEN_OFF] >= oui_len + 1 &&
-	    !स_भेद(&ie[TLV_BODY_OFF], oui, oui_len) &&
-	    type == ie[TLV_BODY_OFF + oui_len]) अणु
-		वापस true;
-	पूर्ण
+	if (ie[TLV_LEN_OFF] >= oui_len + 1 &&
+	    !memcmp(&ie[TLV_BODY_OFF], oui, oui_len) &&
+	    type == ie[TLV_BODY_OFF + oui_len]) {
+		return true;
+	}
 
-	अगर (tlvs == शून्य)
-		वापस false;
-	/* poपूर्णांक to the next ie */
+	if (tlvs == NULL)
+		return false;
+	/* point to the next ie */
 	ie += ie[TLV_LEN_OFF] + TLV_HDR_LEN;
 	/* calculate the length of the rest of the buffer */
-	*tlvs_len -= (पूर्णांक)(ie - *tlvs);
-	/* update the poपूर्णांकer to the start of the buffer */
+	*tlvs_len -= (int)(ie - *tlvs);
+	/* update the pointer to the start of the buffer */
 	*tlvs = ie;
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल काष्ठा brcmf_vs_tlv *
-brcmf_find_wpaie(स्थिर u8 *parse, u32 len)
-अणु
-	स्थिर काष्ठा brcmf_tlv *ie;
+static struct brcmf_vs_tlv *
+brcmf_find_wpaie(const u8 *parse, u32 len)
+{
+	const struct brcmf_tlv *ie;
 
-	जबतक ((ie = brcmf_parse_tlvs(parse, len, WLAN_EID_VENDOR_SPECIFIC))) अणु
-		अगर (brcmf_tlv_has_ie((स्थिर u8 *)ie, &parse, &len,
+	while ((ie = brcmf_parse_tlvs(parse, len, WLAN_EID_VENDOR_SPECIFIC))) {
+		if (brcmf_tlv_has_ie((const u8 *)ie, &parse, &len,
 				     WPA_OUI, TLV_OUI_LEN, WPA_OUI_TYPE))
-			वापस (काष्ठा brcmf_vs_tlv *)ie;
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+			return (struct brcmf_vs_tlv *)ie;
+	}
+	return NULL;
+}
 
-अटल काष्ठा brcmf_vs_tlv *
-brcmf_find_wpsie(स्थिर u8 *parse, u32 len)
-अणु
-	स्थिर काष्ठा brcmf_tlv *ie;
+static struct brcmf_vs_tlv *
+brcmf_find_wpsie(const u8 *parse, u32 len)
+{
+	const struct brcmf_tlv *ie;
 
-	जबतक ((ie = brcmf_parse_tlvs(parse, len, WLAN_EID_VENDOR_SPECIFIC))) अणु
-		अगर (brcmf_tlv_has_ie((u8 *)ie, &parse, &len,
+	while ((ie = brcmf_parse_tlvs(parse, len, WLAN_EID_VENDOR_SPECIFIC))) {
+		if (brcmf_tlv_has_ie((u8 *)ie, &parse, &len,
 				     WPA_OUI, TLV_OUI_LEN, WPS_OUI_TYPE))
-			वापस (काष्ठा brcmf_vs_tlv *)ie;
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+			return (struct brcmf_vs_tlv *)ie;
+	}
+	return NULL;
+}
 
-अटल पूर्णांक brcmf_vअगर_change_validate(काष्ठा brcmf_cfg80211_info *cfg,
-				     काष्ठा brcmf_cfg80211_vअगर *vअगर,
-				     क्रमागत nl80211_अगरtype new_type)
-अणु
-	काष्ठा brcmf_cfg80211_vअगर *pos;
+static int brcmf_vif_change_validate(struct brcmf_cfg80211_info *cfg,
+				     struct brcmf_cfg80211_vif *vif,
+				     enum nl80211_iftype new_type)
+{
+	struct brcmf_cfg80211_vif *pos;
 	bool check_combos = false;
-	पूर्णांक ret = 0;
-	काष्ठा अगरace_combination_params params = अणु
-		.num_dअगरferent_channels = 1,
-	पूर्ण;
+	int ret = 0;
+	struct iface_combination_params params = {
+		.num_different_channels = 1,
+	};
 
-	list_क्रम_each_entry(pos, &cfg->vअगर_list, list)
-		अगर (pos == vअगर) अणु
-			params.अगरtype_num[new_type]++;
-		पूर्ण अन्यथा अणु
-			/* concurrent पूर्णांकerfaces so need check combinations */
+	list_for_each_entry(pos, &cfg->vif_list, list)
+		if (pos == vif) {
+			params.iftype_num[new_type]++;
+		} else {
+			/* concurrent interfaces so need check combinations */
 			check_combos = true;
-			params.अगरtype_num[pos->wdev.अगरtype]++;
-		पूर्ण
+			params.iftype_num[pos->wdev.iftype]++;
+		}
 
-	अगर (check_combos)
+	if (check_combos)
 		ret = cfg80211_check_combinations(cfg->wiphy, &params);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक brcmf_vअगर_add_validate(काष्ठा brcmf_cfg80211_info *cfg,
-				  क्रमागत nl80211_अगरtype new_type)
-अणु
-	काष्ठा brcmf_cfg80211_vअगर *pos;
-	काष्ठा अगरace_combination_params params = अणु
-		.num_dअगरferent_channels = 1,
-	पूर्ण;
+static int brcmf_vif_add_validate(struct brcmf_cfg80211_info *cfg,
+				  enum nl80211_iftype new_type)
+{
+	struct brcmf_cfg80211_vif *pos;
+	struct iface_combination_params params = {
+		.num_different_channels = 1,
+	};
 
-	list_क्रम_each_entry(pos, &cfg->vअगर_list, list)
-		params.अगरtype_num[pos->wdev.अगरtype]++;
+	list_for_each_entry(pos, &cfg->vif_list, list)
+		params.iftype_num[pos->wdev.iftype]++;
 
-	params.अगरtype_num[new_type]++;
-	वापस cfg80211_check_combinations(cfg->wiphy, &params);
-पूर्ण
+	params.iftype_num[new_type]++;
+	return cfg80211_check_combinations(cfg->wiphy, &params);
+}
 
-अटल व्योम convert_key_from_CPU(काष्ठा brcmf_wsec_key *key,
-				 काष्ठा brcmf_wsec_key_le *key_le)
-अणु
+static void convert_key_from_CPU(struct brcmf_wsec_key *key,
+				 struct brcmf_wsec_key_le *key_le)
+{
 	key_le->index = cpu_to_le32(key->index);
 	key_le->len = cpu_to_le32(key->len);
 	key_le->algo = cpu_to_le32(key->algo);
@@ -464,743 +463,743 @@ brcmf_find_wpsie(स्थिर u8 *parse, u32 len)
 	key_le->rxiv.hi = cpu_to_le32(key->rxiv.hi);
 	key_le->rxiv.lo = cpu_to_le16(key->rxiv.lo);
 	key_le->iv_initialized = cpu_to_le32(key->iv_initialized);
-	स_नकल(key_le->data, key->data, माप(key->data));
-	स_नकल(key_le->ea, key->ea, माप(key->ea));
-पूर्ण
+	memcpy(key_le->data, key->data, sizeof(key->data));
+	memcpy(key_le->ea, key->ea, sizeof(key->ea));
+}
 
-अटल पूर्णांक
-send_key_to_करोngle(काष्ठा brcmf_अगर *अगरp, काष्ठा brcmf_wsec_key *key)
-अणु
-	काष्ठा brcmf_pub *drvr = अगरp->drvr;
-	पूर्णांक err;
-	काष्ठा brcmf_wsec_key_le key_le;
+static int
+send_key_to_dongle(struct brcmf_if *ifp, struct brcmf_wsec_key *key)
+{
+	struct brcmf_pub *drvr = ifp->drvr;
+	int err;
+	struct brcmf_wsec_key_le key_le;
 
 	convert_key_from_CPU(key, &key_le);
 
-	brcmf_netdev_रुको_pend8021x(अगरp);
+	brcmf_netdev_wait_pend8021x(ifp);
 
-	err = brcmf_fil_bsscfg_data_set(अगरp, "wsec_key", &key_le,
-					माप(key_le));
+	err = brcmf_fil_bsscfg_data_set(ifp, "wsec_key", &key_le,
+					sizeof(key_le));
 
-	अगर (err)
+	if (err)
 		bphy_err(drvr, "wsec_key error (%d)\n", err);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम
-brcmf_cfg80211_update_proto_addr_mode(काष्ठा wireless_dev *wdev)
-अणु
-	काष्ठा brcmf_cfg80211_vअगर *vअगर;
-	काष्ठा brcmf_अगर *अगरp;
+static void
+brcmf_cfg80211_update_proto_addr_mode(struct wireless_dev *wdev)
+{
+	struct brcmf_cfg80211_vif *vif;
+	struct brcmf_if *ifp;
 
-	vअगर = container_of(wdev, काष्ठा brcmf_cfg80211_vअगर, wdev);
-	अगरp = vअगर->अगरp;
+	vif = container_of(wdev, struct brcmf_cfg80211_vif, wdev);
+	ifp = vif->ifp;
 
-	अगर ((wdev->अगरtype == NL80211_IFTYPE_ADHOC) ||
-	    (wdev->अगरtype == NL80211_IFTYPE_AP) ||
-	    (wdev->अगरtype == NL80211_IFTYPE_P2P_GO))
-		brcmf_proto_configure_addr_mode(अगरp->drvr, अगरp->अगरidx,
-						ADDR_सूचीECT);
-	अन्यथा
-		brcmf_proto_configure_addr_mode(अगरp->drvr, अगरp->अगरidx,
-						ADDR_INसूचीECT);
-पूर्ण
+	if ((wdev->iftype == NL80211_IFTYPE_ADHOC) ||
+	    (wdev->iftype == NL80211_IFTYPE_AP) ||
+	    (wdev->iftype == NL80211_IFTYPE_P2P_GO))
+		brcmf_proto_configure_addr_mode(ifp->drvr, ifp->ifidx,
+						ADDR_DIRECT);
+	else
+		brcmf_proto_configure_addr_mode(ifp->drvr, ifp->ifidx,
+						ADDR_INDIRECT);
+}
 
-अटल पूर्णांक brcmf_get_first_मुक्त_bsscfgidx(काष्ठा brcmf_pub *drvr)
-अणु
-	पूर्णांक bsscfgidx;
+static int brcmf_get_first_free_bsscfgidx(struct brcmf_pub *drvr)
+{
+	int bsscfgidx;
 
-	क्रम (bsscfgidx = 0; bsscfgidx < BRCMF_MAX_IFS; bsscfgidx++) अणु
-		/* bsscfgidx 1 is reserved क्रम legacy P2P */
-		अगर (bsscfgidx == 1)
-			जारी;
-		अगर (!drvr->अगरlist[bsscfgidx])
-			वापस bsscfgidx;
-	पूर्ण
+	for (bsscfgidx = 0; bsscfgidx < BRCMF_MAX_IFS; bsscfgidx++) {
+		/* bsscfgidx 1 is reserved for legacy P2P */
+		if (bsscfgidx == 1)
+			continue;
+		if (!drvr->iflist[bsscfgidx])
+			return bsscfgidx;
+	}
 
-	वापस -ENOMEM;
-पूर्ण
+	return -ENOMEM;
+}
 
-अटल पूर्णांक brcmf_cfg80211_request_ap_अगर(काष्ठा brcmf_अगर *अगरp)
-अणु
-	काष्ठा brcmf_pub *drvr = अगरp->drvr;
-	काष्ठा brcmf_mbss_ssid_le mbss_ssid_le;
-	पूर्णांक bsscfgidx;
-	पूर्णांक err;
+static int brcmf_cfg80211_request_ap_if(struct brcmf_if *ifp)
+{
+	struct brcmf_pub *drvr = ifp->drvr;
+	struct brcmf_mbss_ssid_le mbss_ssid_le;
+	int bsscfgidx;
+	int err;
 
-	स_रखो(&mbss_ssid_le, 0, माप(mbss_ssid_le));
-	bsscfgidx = brcmf_get_first_मुक्त_bsscfgidx(अगरp->drvr);
-	अगर (bsscfgidx < 0)
-		वापस bsscfgidx;
+	memset(&mbss_ssid_le, 0, sizeof(mbss_ssid_le));
+	bsscfgidx = brcmf_get_first_free_bsscfgidx(ifp->drvr);
+	if (bsscfgidx < 0)
+		return bsscfgidx;
 
 	mbss_ssid_le.bsscfgidx = cpu_to_le32(bsscfgidx);
 	mbss_ssid_le.SSID_len = cpu_to_le32(5);
-	प्र_लिखो(mbss_ssid_le.SSID, "ssid%d" , bsscfgidx);
+	sprintf(mbss_ssid_le.SSID, "ssid%d" , bsscfgidx);
 
-	err = brcmf_fil_bsscfg_data_set(अगरp, "bsscfg:ssid", &mbss_ssid_le,
-					माप(mbss_ssid_le));
-	अगर (err < 0)
+	err = brcmf_fil_bsscfg_data_set(ifp, "bsscfg:ssid", &mbss_ssid_le,
+					sizeof(mbss_ssid_le));
+	if (err < 0)
 		bphy_err(drvr, "setting ssid failed %d\n", err);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /**
- * brcmf_ap_add_vअगर() - create a new AP भव पूर्णांकerface क्रम multiple BSS
+ * brcmf_ap_add_vif() - create a new AP virtual interface for multiple BSS
  *
- * @wiphy: wiphy device of new पूर्णांकerface.
- * @name: name of the new पूर्णांकerface.
- * @params: contains mac address क्रम AP device.
+ * @wiphy: wiphy device of new interface.
+ * @name: name of the new interface.
+ * @params: contains mac address for AP device.
  */
-अटल
-काष्ठा wireless_dev *brcmf_ap_add_vअगर(काष्ठा wiphy *wiphy, स्थिर अक्षर *name,
-				      काष्ठा vअगर_params *params)
-अणु
-	काष्ठा brcmf_cfg80211_info *cfg = wiphy_to_cfg(wiphy);
-	काष्ठा brcmf_अगर *अगरp = netdev_priv(cfg_to_ndev(cfg));
-	काष्ठा brcmf_pub *drvr = cfg->pub;
-	काष्ठा brcmf_cfg80211_vअगर *vअगर;
-	पूर्णांक err;
+static
+struct wireless_dev *brcmf_ap_add_vif(struct wiphy *wiphy, const char *name,
+				      struct vif_params *params)
+{
+	struct brcmf_cfg80211_info *cfg = wiphy_to_cfg(wiphy);
+	struct brcmf_if *ifp = netdev_priv(cfg_to_ndev(cfg));
+	struct brcmf_pub *drvr = cfg->pub;
+	struct brcmf_cfg80211_vif *vif;
+	int err;
 
-	अगर (brcmf_cfg80211_vअगर_event_armed(cfg))
-		वापस ERR_PTR(-EBUSY);
+	if (brcmf_cfg80211_vif_event_armed(cfg))
+		return ERR_PTR(-EBUSY);
 
 	brcmf_dbg(INFO, "Adding vif \"%s\"\n", name);
 
-	vअगर = brcmf_alloc_vअगर(cfg, NL80211_IFTYPE_AP);
-	अगर (IS_ERR(vअगर))
-		वापस (काष्ठा wireless_dev *)vअगर;
+	vif = brcmf_alloc_vif(cfg, NL80211_IFTYPE_AP);
+	if (IS_ERR(vif))
+		return (struct wireless_dev *)vif;
 
-	brcmf_cfg80211_arm_vअगर_event(cfg, vअगर);
+	brcmf_cfg80211_arm_vif_event(cfg, vif);
 
-	err = brcmf_cfg80211_request_ap_अगर(अगरp);
-	अगर (err) अणु
-		brcmf_cfg80211_arm_vअगर_event(cfg, शून्य);
-		जाओ fail;
-	पूर्ण
+	err = brcmf_cfg80211_request_ap_if(ifp);
+	if (err) {
+		brcmf_cfg80211_arm_vif_event(cfg, NULL);
+		goto fail;
+	}
 
-	/* रुको क्रम firmware event */
-	err = brcmf_cfg80211_रुको_vअगर_event(cfg, BRCMF_E_IF_ADD,
+	/* wait for firmware event */
+	err = brcmf_cfg80211_wait_vif_event(cfg, BRCMF_E_IF_ADD,
 					    BRCMF_VIF_EVENT_TIMEOUT);
-	brcmf_cfg80211_arm_vअगर_event(cfg, शून्य);
-	अगर (!err) अणु
+	brcmf_cfg80211_arm_vif_event(cfg, NULL);
+	if (!err) {
 		bphy_err(drvr, "timeout occurred\n");
 		err = -EIO;
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
-	/* पूर्णांकerface created in firmware */
-	अगरp = vअगर->अगरp;
-	अगर (!अगरp) अणु
+	/* interface created in firmware */
+	ifp = vif->ifp;
+	if (!ifp) {
 		bphy_err(drvr, "no if pointer provided\n");
 		err = -ENOENT;
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
-	म_नकलन(अगरp->ndev->name, name, माप(अगरp->ndev->name) - 1);
-	err = brcmf_net_attach(अगरp, true);
-	अगर (err) अणु
+	strncpy(ifp->ndev->name, name, sizeof(ifp->ndev->name) - 1);
+	err = brcmf_net_attach(ifp, true);
+	if (err) {
 		bphy_err(drvr, "Registering netdevice failed\n");
-		मुक्त_netdev(अगरp->ndev);
-		जाओ fail;
-	पूर्ण
+		free_netdev(ifp->ndev);
+		goto fail;
+	}
 
-	वापस &अगरp->vअगर->wdev;
+	return &ifp->vif->wdev;
 
 fail:
-	brcmf_मुक्त_vअगर(vअगर);
-	वापस ERR_PTR(err);
-पूर्ण
+	brcmf_free_vif(vif);
+	return ERR_PTR(err);
+}
 
-अटल bool brcmf_is_apmode(काष्ठा brcmf_cfg80211_vअगर *vअगर)
-अणु
-	क्रमागत nl80211_अगरtype अगरtype;
+static bool brcmf_is_apmode(struct brcmf_cfg80211_vif *vif)
+{
+	enum nl80211_iftype iftype;
 
-	अगरtype = vअगर->wdev.अगरtype;
-	वापस अगरtype == NL80211_IFTYPE_AP || अगरtype == NL80211_IFTYPE_P2P_GO;
-पूर्ण
+	iftype = vif->wdev.iftype;
+	return iftype == NL80211_IFTYPE_AP || iftype == NL80211_IFTYPE_P2P_GO;
+}
 
-अटल bool brcmf_is_ibssmode(काष्ठा brcmf_cfg80211_vअगर *vअगर)
-अणु
-	वापस vअगर->wdev.अगरtype == NL80211_IFTYPE_ADHOC;
-पूर्ण
+static bool brcmf_is_ibssmode(struct brcmf_cfg80211_vif *vif)
+{
+	return vif->wdev.iftype == NL80211_IFTYPE_ADHOC;
+}
 
 /**
- * brcmf_mon_add_vअगर() - create monitor mode भव पूर्णांकerface
+ * brcmf_mon_add_vif() - create monitor mode virtual interface
  *
- * @wiphy: wiphy device of new पूर्णांकerface.
- * @name: name of the new पूर्णांकerface.
+ * @wiphy: wiphy device of new interface.
+ * @name: name of the new interface.
  */
-अटल काष्ठा wireless_dev *brcmf_mon_add_vअगर(काष्ठा wiphy *wiphy,
-					      स्थिर अक्षर *name)
-अणु
-	काष्ठा brcmf_cfg80211_info *cfg = wiphy_to_cfg(wiphy);
-	काष्ठा brcmf_cfg80211_vअगर *vअगर;
-	काष्ठा net_device *ndev;
-	काष्ठा brcmf_अगर *अगरp;
-	पूर्णांक err;
+static struct wireless_dev *brcmf_mon_add_vif(struct wiphy *wiphy,
+					      const char *name)
+{
+	struct brcmf_cfg80211_info *cfg = wiphy_to_cfg(wiphy);
+	struct brcmf_cfg80211_vif *vif;
+	struct net_device *ndev;
+	struct brcmf_if *ifp;
+	int err;
 
-	अगर (cfg->pub->mon_अगर) अणु
+	if (cfg->pub->mon_if) {
 		err = -EEXIST;
-		जाओ err_out;
-	पूर्ण
+		goto err_out;
+	}
 
-	vअगर = brcmf_alloc_vअगर(cfg, NL80211_IFTYPE_MONITOR);
-	अगर (IS_ERR(vअगर)) अणु
-		err = PTR_ERR(vअगर);
-		जाओ err_out;
-	पूर्ण
+	vif = brcmf_alloc_vif(cfg, NL80211_IFTYPE_MONITOR);
+	if (IS_ERR(vif)) {
+		err = PTR_ERR(vif);
+		goto err_out;
+	}
 
-	ndev = alloc_netdev(माप(*अगरp), name, NET_NAME_UNKNOWN, ether_setup);
-	अगर (!ndev) अणु
+	ndev = alloc_netdev(sizeof(*ifp), name, NET_NAME_UNKNOWN, ether_setup);
+	if (!ndev) {
 		err = -ENOMEM;
-		जाओ err_मुक्त_vअगर;
-	पूर्ण
+		goto err_free_vif;
+	}
 	ndev->type = ARPHRD_IEEE80211_RADIOTAP;
-	ndev->ieee80211_ptr = &vअगर->wdev;
-	ndev->needs_मुक्त_netdev = true;
-	ndev->priv_deकाष्ठाor = brcmf_cfg80211_मुक्त_netdev;
+	ndev->ieee80211_ptr = &vif->wdev;
+	ndev->needs_free_netdev = true;
+	ndev->priv_destructor = brcmf_cfg80211_free_netdev;
 	SET_NETDEV_DEV(ndev, wiphy_dev(cfg->wiphy));
 
-	अगरp = netdev_priv(ndev);
-	अगरp->vअगर = vअगर;
-	अगरp->ndev = ndev;
-	अगरp->drvr = cfg->pub;
+	ifp = netdev_priv(ndev);
+	ifp->vif = vif;
+	ifp->ndev = ndev;
+	ifp->drvr = cfg->pub;
 
-	vअगर->अगरp = अगरp;
-	vअगर->wdev.netdev = ndev;
+	vif->ifp = ifp;
+	vif->wdev.netdev = ndev;
 
-	err = brcmf_net_mon_attach(अगरp);
-	अगर (err) अणु
+	err = brcmf_net_mon_attach(ifp);
+	if (err) {
 		brcmf_err("Failed to attach %s device\n", ndev->name);
-		मुक्त_netdev(ndev);
-		जाओ err_मुक्त_vअगर;
-	पूर्ण
+		free_netdev(ndev);
+		goto err_free_vif;
+	}
 
-	cfg->pub->mon_अगर = अगरp;
+	cfg->pub->mon_if = ifp;
 
-	वापस &vअगर->wdev;
+	return &vif->wdev;
 
-err_मुक्त_vअगर:
-	brcmf_मुक्त_vअगर(vअगर);
+err_free_vif:
+	brcmf_free_vif(vif);
 err_out:
-	वापस ERR_PTR(err);
-पूर्ण
+	return ERR_PTR(err);
+}
 
-अटल पूर्णांक brcmf_mon_del_vअगर(काष्ठा wiphy *wiphy, काष्ठा wireless_dev *wdev)
-अणु
-	काष्ठा brcmf_cfg80211_info *cfg = wiphy_to_cfg(wiphy);
-	काष्ठा net_device *ndev = wdev->netdev;
+static int brcmf_mon_del_vif(struct wiphy *wiphy, struct wireless_dev *wdev)
+{
+	struct brcmf_cfg80211_info *cfg = wiphy_to_cfg(wiphy);
+	struct net_device *ndev = wdev->netdev;
 
-	ndev->netdev_ops->nकरो_stop(ndev);
+	ndev->netdev_ops->ndo_stop(ndev);
 
 	brcmf_net_detach(ndev, true);
 
-	cfg->pub->mon_अगर = शून्य;
+	cfg->pub->mon_if = NULL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा wireless_dev *brcmf_cfg80211_add_अगरace(काष्ठा wiphy *wiphy,
-						     स्थिर अक्षर *name,
-						     अचिन्हित अक्षर name_assign_type,
-						     क्रमागत nl80211_अगरtype type,
-						     काष्ठा vअगर_params *params)
-अणु
-	काष्ठा brcmf_cfg80211_info *cfg = wiphy_to_cfg(wiphy);
-	काष्ठा brcmf_pub *drvr = cfg->pub;
-	काष्ठा wireless_dev *wdev;
-	पूर्णांक err;
+static struct wireless_dev *brcmf_cfg80211_add_iface(struct wiphy *wiphy,
+						     const char *name,
+						     unsigned char name_assign_type,
+						     enum nl80211_iftype type,
+						     struct vif_params *params)
+{
+	struct brcmf_cfg80211_info *cfg = wiphy_to_cfg(wiphy);
+	struct brcmf_pub *drvr = cfg->pub;
+	struct wireless_dev *wdev;
+	int err;
 
 	brcmf_dbg(TRACE, "enter: %s type %d\n", name, type);
-	err = brcmf_vअगर_add_validate(wiphy_to_cfg(wiphy), type);
-	अगर (err) अणु
+	err = brcmf_vif_add_validate(wiphy_to_cfg(wiphy), type);
+	if (err) {
 		bphy_err(drvr, "iface validation failed: err=%d\n", err);
-		वापस ERR_PTR(err);
-	पूर्ण
-	चयन (type) अणु
-	हाल NL80211_IFTYPE_ADHOC:
-	हाल NL80211_IFTYPE_STATION:
-	हाल NL80211_IFTYPE_AP_VLAN:
-	हाल NL80211_IFTYPE_WDS:
-	हाल NL80211_IFTYPE_MESH_POINT:
-		वापस ERR_PTR(-EOPNOTSUPP);
-	हाल NL80211_IFTYPE_MONITOR:
-		वापस brcmf_mon_add_vअगर(wiphy, name);
-	हाल NL80211_IFTYPE_AP:
-		wdev = brcmf_ap_add_vअगर(wiphy, name, params);
-		अवरोध;
-	हाल NL80211_IFTYPE_P2P_CLIENT:
-	हाल NL80211_IFTYPE_P2P_GO:
-	हाल NL80211_IFTYPE_P2P_DEVICE:
-		wdev = brcmf_p2p_add_vअगर(wiphy, name, name_assign_type, type, params);
-		अवरोध;
-	हाल NL80211_IFTYPE_UNSPECIFIED:
-	शेष:
-		वापस ERR_PTR(-EINVAL);
-	पूर्ण
+		return ERR_PTR(err);
+	}
+	switch (type) {
+	case NL80211_IFTYPE_ADHOC:
+	case NL80211_IFTYPE_STATION:
+	case NL80211_IFTYPE_AP_VLAN:
+	case NL80211_IFTYPE_WDS:
+	case NL80211_IFTYPE_MESH_POINT:
+		return ERR_PTR(-EOPNOTSUPP);
+	case NL80211_IFTYPE_MONITOR:
+		return brcmf_mon_add_vif(wiphy, name);
+	case NL80211_IFTYPE_AP:
+		wdev = brcmf_ap_add_vif(wiphy, name, params);
+		break;
+	case NL80211_IFTYPE_P2P_CLIENT:
+	case NL80211_IFTYPE_P2P_GO:
+	case NL80211_IFTYPE_P2P_DEVICE:
+		wdev = brcmf_p2p_add_vif(wiphy, name, name_assign_type, type, params);
+		break;
+	case NL80211_IFTYPE_UNSPECIFIED:
+	default:
+		return ERR_PTR(-EINVAL);
+	}
 
-	अगर (IS_ERR(wdev))
+	if (IS_ERR(wdev))
 		bphy_err(drvr, "add iface %s type %d failed: err=%d\n", name,
-			 type, (पूर्णांक)PTR_ERR(wdev));
-	अन्यथा
+			 type, (int)PTR_ERR(wdev));
+	else
 		brcmf_cfg80211_update_proto_addr_mode(wdev);
 
-	वापस wdev;
-पूर्ण
+	return wdev;
+}
 
-अटल व्योम brcmf_scan_config_mpc(काष्ठा brcmf_अगर *अगरp, पूर्णांक mpc)
-अणु
-	अगर (brcmf_feat_is_quirk_enabled(अगरp, BRCMF_FEAT_QUIRK_NEED_MPC))
-		brcmf_set_mpc(अगरp, mpc);
-पूर्ण
+static void brcmf_scan_config_mpc(struct brcmf_if *ifp, int mpc)
+{
+	if (brcmf_feat_is_quirk_enabled(ifp, BRCMF_FEAT_QUIRK_NEED_MPC))
+		brcmf_set_mpc(ifp, mpc);
+}
 
-व्योम brcmf_set_mpc(काष्ठा brcmf_अगर *अगरp, पूर्णांक mpc)
-अणु
-	काष्ठा brcmf_pub *drvr = अगरp->drvr;
+void brcmf_set_mpc(struct brcmf_if *ifp, int mpc)
+{
+	struct brcmf_pub *drvr = ifp->drvr;
 	s32 err = 0;
 
-	अगर (check_vअगर_up(अगरp->vअगर)) अणु
-		err = brcmf_fil_iovar_पूर्णांक_set(अगरp, "mpc", mpc);
-		अगर (err) अणु
+	if (check_vif_up(ifp->vif)) {
+		err = brcmf_fil_iovar_int_set(ifp, "mpc", mpc);
+		if (err) {
 			bphy_err(drvr, "fail to set mpc\n");
-			वापस;
-		पूर्ण
+			return;
+		}
 		brcmf_dbg(INFO, "MPC : %d\n", mpc);
-	पूर्ण
-पूर्ण
+	}
+}
 
-s32 brcmf_notअगरy_escan_complete(काष्ठा brcmf_cfg80211_info *cfg,
-				काष्ठा brcmf_अगर *अगरp, bool पातed,
-				bool fw_पात)
-अणु
-	काष्ठा brcmf_pub *drvr = cfg->pub;
-	काष्ठा brcmf_scan_params_le params_le;
-	काष्ठा cfg80211_scan_request *scan_request;
+s32 brcmf_notify_escan_complete(struct brcmf_cfg80211_info *cfg,
+				struct brcmf_if *ifp, bool aborted,
+				bool fw_abort)
+{
+	struct brcmf_pub *drvr = cfg->pub;
+	struct brcmf_scan_params_le params_le;
+	struct cfg80211_scan_request *scan_request;
 	u64 reqid;
 	u32 bucket;
 	s32 err = 0;
 
 	brcmf_dbg(SCAN, "Enter\n");
 
-	/* clear scan request, because the FW पात can cause a second call */
-	/* to this functon and might cause a द्विगुन cfg80211_scan_करोne      */
+	/* clear scan request, because the FW abort can cause a second call */
+	/* to this functon and might cause a double cfg80211_scan_done      */
 	scan_request = cfg->scan_request;
-	cfg->scan_request = शून्य;
+	cfg->scan_request = NULL;
 
-	अगर (समयr_pending(&cfg->escan_समयout))
-		del_समयr_sync(&cfg->escan_समयout);
+	if (timer_pending(&cfg->escan_timeout))
+		del_timer_sync(&cfg->escan_timeout);
 
-	अगर (fw_पात) अणु
-		/* Do a scan पात to stop the driver's scan engine */
+	if (fw_abort) {
+		/* Do a scan abort to stop the driver's scan engine */
 		brcmf_dbg(SCAN, "ABORT scan in firmware\n");
-		स_रखो(&params_le, 0, माप(params_le));
+		memset(&params_le, 0, sizeof(params_le));
 		eth_broadcast_addr(params_le.bssid);
 		params_le.bss_type = DOT11_BSSTYPE_ANY;
 		params_le.scan_type = 0;
 		params_le.channel_num = cpu_to_le32(1);
 		params_le.nprobes = cpu_to_le32(1);
-		params_le.active_समय = cpu_to_le32(-1);
-		params_le.passive_समय = cpu_to_le32(-1);
-		params_le.home_समय = cpu_to_le32(-1);
-		/* Scan is पातed by setting channel_list[0] to -1 */
+		params_le.active_time = cpu_to_le32(-1);
+		params_le.passive_time = cpu_to_le32(-1);
+		params_le.home_time = cpu_to_le32(-1);
+		/* Scan is aborted by setting channel_list[0] to -1 */
 		params_le.channel_list[0] = cpu_to_le16(-1);
-		/* E-Scan (or anyother type) can be पातed by SCAN */
-		err = brcmf_fil_cmd_data_set(अगरp, BRCMF_C_SCAN,
-					     &params_le, माप(params_le));
-		अगर (err)
+		/* E-Scan (or anyother type) can be aborted by SCAN */
+		err = brcmf_fil_cmd_data_set(ifp, BRCMF_C_SCAN,
+					     &params_le, sizeof(params_le));
+		if (err)
 			bphy_err(drvr, "Scan abort failed\n");
-	पूर्ण
+	}
 
-	brcmf_scan_config_mpc(अगरp, 1);
+	brcmf_scan_config_mpc(ifp, 1);
 
 	/*
-	 * e-scan can be initiated पूर्णांकernally
+	 * e-scan can be initiated internally
 	 * which takes precedence.
 	 */
-	अगर (cfg->पूर्णांक_escan_map) अणु
+	if (cfg->int_escan_map) {
 		brcmf_dbg(SCAN, "scheduled scan completed (%x)\n",
-			  cfg->पूर्णांक_escan_map);
-		जबतक (cfg->पूर्णांक_escan_map) अणु
-			bucket = __ffs(cfg->पूर्णांक_escan_map);
-			cfg->पूर्णांक_escan_map &= ~BIT(bucket);
+			  cfg->int_escan_map);
+		while (cfg->int_escan_map) {
+			bucket = __ffs(cfg->int_escan_map);
+			cfg->int_escan_map &= ~BIT(bucket);
 			reqid = brcmf_pno_find_reqid_by_bucket(cfg->pno,
 							       bucket);
-			अगर (!पातed) अणु
+			if (!aborted) {
 				brcmf_dbg(SCAN, "report results: reqid=%llu\n",
 					  reqid);
 				cfg80211_sched_scan_results(cfg_to_wiphy(cfg),
 							    reqid);
-			पूर्ण
-		पूर्ण
-	पूर्ण अन्यथा अगर (scan_request) अणु
-		काष्ठा cfg80211_scan_info info = अणु
-			.पातed = पातed,
-		पूर्ण;
+			}
+		}
+	} else if (scan_request) {
+		struct cfg80211_scan_info info = {
+			.aborted = aborted,
+		};
 
 		brcmf_dbg(SCAN, "ESCAN Completed scan: %s\n",
-			  पातed ? "Aborted" : "Done");
-		cfg80211_scan_करोne(scan_request, &info);
-	पूर्ण
-	अगर (!test_and_clear_bit(BRCMF_SCAN_STATUS_BUSY, &cfg->scan_status))
+			  aborted ? "Aborted" : "Done");
+		cfg80211_scan_done(scan_request, &info);
+	}
+	if (!test_and_clear_bit(BRCMF_SCAN_STATUS_BUSY, &cfg->scan_status))
 		brcmf_dbg(SCAN, "Scan complete, probably P2P scan\n");
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक brcmf_cfg80211_del_ap_अगरace(काष्ठा wiphy *wiphy,
-				       काष्ठा wireless_dev *wdev)
-अणु
-	काष्ठा brcmf_cfg80211_info *cfg = wiphy_to_cfg(wiphy);
-	काष्ठा net_device *ndev = wdev->netdev;
-	काष्ठा brcmf_अगर *अगरp = netdev_priv(ndev);
-	काष्ठा brcmf_pub *drvr = cfg->pub;
-	पूर्णांक ret;
-	पूर्णांक err;
+static int brcmf_cfg80211_del_ap_iface(struct wiphy *wiphy,
+				       struct wireless_dev *wdev)
+{
+	struct brcmf_cfg80211_info *cfg = wiphy_to_cfg(wiphy);
+	struct net_device *ndev = wdev->netdev;
+	struct brcmf_if *ifp = netdev_priv(ndev);
+	struct brcmf_pub *drvr = cfg->pub;
+	int ret;
+	int err;
 
-	brcmf_cfg80211_arm_vअगर_event(cfg, अगरp->vअगर);
+	brcmf_cfg80211_arm_vif_event(cfg, ifp->vif);
 
-	err = brcmf_fil_bsscfg_data_set(अगरp, "interface_remove", शून्य, 0);
-	अगर (err) अणु
+	err = brcmf_fil_bsscfg_data_set(ifp, "interface_remove", NULL, 0);
+	if (err) {
 		bphy_err(drvr, "interface_remove failed %d\n", err);
-		जाओ err_unarm;
-	पूर्ण
+		goto err_unarm;
+	}
 
-	/* रुको क्रम firmware event */
-	ret = brcmf_cfg80211_रुको_vअगर_event(cfg, BRCMF_E_IF_DEL,
+	/* wait for firmware event */
+	ret = brcmf_cfg80211_wait_vif_event(cfg, BRCMF_E_IF_DEL,
 					    BRCMF_VIF_EVENT_TIMEOUT);
-	अगर (!ret) अणु
+	if (!ret) {
 		bphy_err(drvr, "timeout occurred\n");
 		err = -EIO;
-		जाओ err_unarm;
-	पूर्ण
+		goto err_unarm;
+	}
 
-	brcmf_हटाओ_पूर्णांकerface(अगरp, true);
+	brcmf_remove_interface(ifp, true);
 
 err_unarm:
-	brcmf_cfg80211_arm_vअगर_event(cfg, शून्य);
-	वापस err;
-पूर्ण
+	brcmf_cfg80211_arm_vif_event(cfg, NULL);
+	return err;
+}
 
-अटल
-पूर्णांक brcmf_cfg80211_del_अगरace(काष्ठा wiphy *wiphy, काष्ठा wireless_dev *wdev)
-अणु
-	काष्ठा brcmf_cfg80211_info *cfg = wiphy_to_cfg(wiphy);
-	काष्ठा net_device *ndev = wdev->netdev;
+static
+int brcmf_cfg80211_del_iface(struct wiphy *wiphy, struct wireless_dev *wdev)
+{
+	struct brcmf_cfg80211_info *cfg = wiphy_to_cfg(wiphy);
+	struct net_device *ndev = wdev->netdev;
 
-	अगर (ndev && ndev == cfg_to_ndev(cfg))
-		वापस -ENOTSUPP;
+	if (ndev && ndev == cfg_to_ndev(cfg))
+		return -ENOTSUPP;
 
-	/* vअगर event pending in firmware */
-	अगर (brcmf_cfg80211_vअगर_event_armed(cfg))
-		वापस -EBUSY;
+	/* vif event pending in firmware */
+	if (brcmf_cfg80211_vif_event_armed(cfg))
+		return -EBUSY;
 
-	अगर (ndev) अणु
-		अगर (test_bit(BRCMF_SCAN_STATUS_BUSY, &cfg->scan_status) &&
-		    cfg->escan_info.अगरp == netdev_priv(ndev))
-			brcmf_notअगरy_escan_complete(cfg, netdev_priv(ndev),
+	if (ndev) {
+		if (test_bit(BRCMF_SCAN_STATUS_BUSY, &cfg->scan_status) &&
+		    cfg->escan_info.ifp == netdev_priv(ndev))
+			brcmf_notify_escan_complete(cfg, netdev_priv(ndev),
 						    true, true);
 
-		brcmf_fil_iovar_पूर्णांक_set(netdev_priv(ndev), "mpc", 1);
-	पूर्ण
+		brcmf_fil_iovar_int_set(netdev_priv(ndev), "mpc", 1);
+	}
 
-	चयन (wdev->अगरtype) अणु
-	हाल NL80211_IFTYPE_ADHOC:
-	हाल NL80211_IFTYPE_STATION:
-	हाल NL80211_IFTYPE_AP_VLAN:
-	हाल NL80211_IFTYPE_WDS:
-	हाल NL80211_IFTYPE_MESH_POINT:
-		वापस -EOPNOTSUPP;
-	हाल NL80211_IFTYPE_MONITOR:
-		वापस brcmf_mon_del_vअगर(wiphy, wdev);
-	हाल NL80211_IFTYPE_AP:
-		वापस brcmf_cfg80211_del_ap_अगरace(wiphy, wdev);
-	हाल NL80211_IFTYPE_P2P_CLIENT:
-	हाल NL80211_IFTYPE_P2P_GO:
-	हाल NL80211_IFTYPE_P2P_DEVICE:
-		वापस brcmf_p2p_del_vअगर(wiphy, wdev);
-	हाल NL80211_IFTYPE_UNSPECIFIED:
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-	वापस -EOPNOTSUPP;
-पूर्ण
+	switch (wdev->iftype) {
+	case NL80211_IFTYPE_ADHOC:
+	case NL80211_IFTYPE_STATION:
+	case NL80211_IFTYPE_AP_VLAN:
+	case NL80211_IFTYPE_WDS:
+	case NL80211_IFTYPE_MESH_POINT:
+		return -EOPNOTSUPP;
+	case NL80211_IFTYPE_MONITOR:
+		return brcmf_mon_del_vif(wiphy, wdev);
+	case NL80211_IFTYPE_AP:
+		return brcmf_cfg80211_del_ap_iface(wiphy, wdev);
+	case NL80211_IFTYPE_P2P_CLIENT:
+	case NL80211_IFTYPE_P2P_GO:
+	case NL80211_IFTYPE_P2P_DEVICE:
+		return brcmf_p2p_del_vif(wiphy, wdev);
+	case NL80211_IFTYPE_UNSPECIFIED:
+	default:
+		return -EINVAL;
+	}
+	return -EOPNOTSUPP;
+}
 
-अटल s32
-brcmf_cfg80211_change_अगरace(काष्ठा wiphy *wiphy, काष्ठा net_device *ndev,
-			 क्रमागत nl80211_अगरtype type,
-			 काष्ठा vअगर_params *params)
-अणु
-	काष्ठा brcmf_cfg80211_info *cfg = wiphy_to_cfg(wiphy);
-	काष्ठा brcmf_अगर *अगरp = netdev_priv(ndev);
-	काष्ठा brcmf_cfg80211_vअगर *vअगर = अगरp->vअगर;
-	काष्ठा brcmf_pub *drvr = cfg->pub;
+static s32
+brcmf_cfg80211_change_iface(struct wiphy *wiphy, struct net_device *ndev,
+			 enum nl80211_iftype type,
+			 struct vif_params *params)
+{
+	struct brcmf_cfg80211_info *cfg = wiphy_to_cfg(wiphy);
+	struct brcmf_if *ifp = netdev_priv(ndev);
+	struct brcmf_cfg80211_vif *vif = ifp->vif;
+	struct brcmf_pub *drvr = cfg->pub;
 	s32 infra = 0;
 	s32 ap = 0;
 	s32 err = 0;
 
-	brcmf_dbg(TRACE, "Enter, bsscfgidx=%d, type=%d\n", अगरp->bsscfgidx,
+	brcmf_dbg(TRACE, "Enter, bsscfgidx=%d, type=%d\n", ifp->bsscfgidx,
 		  type);
 
-	/* WAR: There are a number of p2p पूर्णांकerface related problems which
-	 * need to be handled initially (beक्रमe करोing the validate).
-	 * wpa_supplicant tends to करो अगरace changes on p2p device/client/go
-	 * which are not always possible/allowed. However we need to वापस
-	 * OK otherwise the wpa_supplicant wont start. The situation dअगरfers
+	/* WAR: There are a number of p2p interface related problems which
+	 * need to be handled initially (before doing the validate).
+	 * wpa_supplicant tends to do iface changes on p2p device/client/go
+	 * which are not always possible/allowed. However we need to return
+	 * OK otherwise the wpa_supplicant wont start. The situation differs
 	 * on configuration and setup (p2pon=1 module param). The first check
-	 * is to see अगर the request is a change to station क्रम p2p अगरace.
+	 * is to see if the request is a change to station for p2p iface.
 	 */
-	अगर ((type == NL80211_IFTYPE_STATION) &&
-	    ((vअगर->wdev.अगरtype == NL80211_IFTYPE_P2P_CLIENT) ||
-	     (vअगर->wdev.अगरtype == NL80211_IFTYPE_P2P_GO) ||
-	     (vअगर->wdev.अगरtype == NL80211_IFTYPE_P2P_DEVICE))) अणु
+	if ((type == NL80211_IFTYPE_STATION) &&
+	    ((vif->wdev.iftype == NL80211_IFTYPE_P2P_CLIENT) ||
+	     (vif->wdev.iftype == NL80211_IFTYPE_P2P_GO) ||
+	     (vif->wdev.iftype == NL80211_IFTYPE_P2P_DEVICE))) {
 		brcmf_dbg(TRACE, "Ignoring cmd for p2p if\n");
 		/* Now depending on whether module param p2pon=1 was used the
 		 * response needs to be either 0 or EOPNOTSUPP. The reason is
-		 * that अगर p2pon=1 is used, but a newer supplicant is used then
-		 * we should वापस an error, as this combination wont work.
-		 * In other situations 0 is वापसed and supplicant will start
+		 * that if p2pon=1 is used, but a newer supplicant is used then
+		 * we should return an error, as this combination wont work.
+		 * In other situations 0 is returned and supplicant will start
 		 * normally. It will give a trace in cfg80211, but it is the
-		 * only way to get it working. Unक्रमtunately this will result
+		 * only way to get it working. Unfortunately this will result
 		 * in situation where we wont support new supplicant in
 		 * combination with module param p2pon=1, but that is the way
 		 * it is. If the user tries this then unloading of driver might
 		 * fail/lock.
 		 */
-		अगर (cfg->p2p.p2pdev_dynamically)
-			वापस -EOPNOTSUPP;
-		अन्यथा
-			वापस 0;
-	पूर्ण
-	err = brcmf_vअगर_change_validate(wiphy_to_cfg(wiphy), vअगर, type);
-	अगर (err) अणु
+		if (cfg->p2p.p2pdev_dynamically)
+			return -EOPNOTSUPP;
+		else
+			return 0;
+	}
+	err = brcmf_vif_change_validate(wiphy_to_cfg(wiphy), vif, type);
+	if (err) {
 		bphy_err(drvr, "iface validation failed: err=%d\n", err);
-		वापस err;
-	पूर्ण
-	चयन (type) अणु
-	हाल NL80211_IFTYPE_MONITOR:
-	हाल NL80211_IFTYPE_WDS:
+		return err;
+	}
+	switch (type) {
+	case NL80211_IFTYPE_MONITOR:
+	case NL80211_IFTYPE_WDS:
 		bphy_err(drvr, "type (%d) : currently we do not support this type\n",
 			 type);
-		वापस -EOPNOTSUPP;
-	हाल NL80211_IFTYPE_ADHOC:
+		return -EOPNOTSUPP;
+	case NL80211_IFTYPE_ADHOC:
 		infra = 0;
-		अवरोध;
-	हाल NL80211_IFTYPE_STATION:
+		break;
+	case NL80211_IFTYPE_STATION:
 		infra = 1;
-		अवरोध;
-	हाल NL80211_IFTYPE_AP:
-	हाल NL80211_IFTYPE_P2P_GO:
+		break;
+	case NL80211_IFTYPE_AP:
+	case NL80211_IFTYPE_P2P_GO:
 		ap = 1;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		err = -EINVAL;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	अगर (ap) अणु
-		अगर (type == NL80211_IFTYPE_P2P_GO) अणु
+	if (ap) {
+		if (type == NL80211_IFTYPE_P2P_GO) {
 			brcmf_dbg(INFO, "IF Type = P2P GO\n");
-			err = brcmf_p2p_अगरchange(cfg, BRCMF_FIL_P2P_IF_GO);
-		पूर्ण
-		अगर (!err) अणु
+			err = brcmf_p2p_ifchange(cfg, BRCMF_FIL_P2P_IF_GO);
+		}
+		if (!err) {
 			brcmf_dbg(INFO, "IF Type = AP\n");
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		err = brcmf_fil_cmd_पूर्णांक_set(अगरp, BRCMF_C_SET_INFRA, infra);
-		अगर (err) अणु
+		}
+	} else {
+		err = brcmf_fil_cmd_int_set(ifp, BRCMF_C_SET_INFRA, infra);
+		if (err) {
 			bphy_err(drvr, "WLC_SET_INFRA error (%d)\n", err);
 			err = -EAGAIN;
-			जाओ करोne;
-		पूर्ण
-		brcmf_dbg(INFO, "IF Type = %s\n", brcmf_is_ibssmode(vअगर) ?
+			goto done;
+		}
+		brcmf_dbg(INFO, "IF Type = %s\n", brcmf_is_ibssmode(vif) ?
 			  "Adhoc" : "Infra");
-	पूर्ण
-	ndev->ieee80211_ptr->अगरtype = type;
+	}
+	ndev->ieee80211_ptr->iftype = type;
 
-	brcmf_cfg80211_update_proto_addr_mode(&vअगर->wdev);
+	brcmf_cfg80211_update_proto_addr_mode(&vif->wdev);
 
-करोne:
+done:
 	brcmf_dbg(TRACE, "Exit\n");
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम brcmf_escan_prep(काष्ठा brcmf_cfg80211_info *cfg,
-			     काष्ठा brcmf_scan_params_le *params_le,
-			     काष्ठा cfg80211_scan_request *request)
-अणु
+static void brcmf_escan_prep(struct brcmf_cfg80211_info *cfg,
+			     struct brcmf_scan_params_le *params_le,
+			     struct cfg80211_scan_request *request)
+{
 	u32 n_ssids;
 	u32 n_channels;
 	s32 i;
 	s32 offset;
 	u16 chanspec;
-	अक्षर *ptr;
-	काष्ठा brcmf_ssid_le ssid_le;
+	char *ptr;
+	struct brcmf_ssid_le ssid_le;
 
 	eth_broadcast_addr(params_le->bssid);
 	params_le->bss_type = DOT11_BSSTYPE_ANY;
 	params_le->scan_type = BRCMF_SCANTYPE_ACTIVE;
 	params_le->channel_num = 0;
 	params_le->nprobes = cpu_to_le32(-1);
-	params_le->active_समय = cpu_to_le32(-1);
-	params_le->passive_समय = cpu_to_le32(-1);
-	params_le->home_समय = cpu_to_le32(-1);
-	स_रखो(&params_le->ssid_le, 0, माप(params_le->ssid_le));
+	params_le->active_time = cpu_to_le32(-1);
+	params_le->passive_time = cpu_to_le32(-1);
+	params_le->home_time = cpu_to_le32(-1);
+	memset(&params_le->ssid_le, 0, sizeof(params_le->ssid_le));
 
 	n_ssids = request->n_ssids;
 	n_channels = request->n_channels;
 
-	/* Copy channel array अगर applicable */
+	/* Copy channel array if applicable */
 	brcmf_dbg(SCAN, "### List of channelspecs to scan ### %d\n",
 		  n_channels);
-	अगर (n_channels > 0) अणु
-		क्रम (i = 0; i < n_channels; i++) अणु
+	if (n_channels > 0) {
+		for (i = 0; i < n_channels; i++) {
 			chanspec = channel_to_chanspec(&cfg->d11inf,
 						       request->channels[i]);
 			brcmf_dbg(SCAN, "Chan : %d, Channel spec: %x\n",
 				  request->channels[i]->hw_value, chanspec);
 			params_le->channel_list[i] = cpu_to_le16(chanspec);
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		brcmf_dbg(SCAN, "Scanning all channels\n");
-	पूर्ण
-	/* Copy ssid array अगर applicable */
+	}
+	/* Copy ssid array if applicable */
 	brcmf_dbg(SCAN, "### List of SSIDs to scan ### %d\n", n_ssids);
-	अगर (n_ssids > 0) अणु
-		offset = दुरत्व(काष्ठा brcmf_scan_params_le, channel_list) +
-				n_channels * माप(u16);
-		offset = roundup(offset, माप(u32));
-		ptr = (अक्षर *)params_le + offset;
-		क्रम (i = 0; i < n_ssids; i++) अणु
-			स_रखो(&ssid_le, 0, माप(ssid_le));
+	if (n_ssids > 0) {
+		offset = offsetof(struct brcmf_scan_params_le, channel_list) +
+				n_channels * sizeof(u16);
+		offset = roundup(offset, sizeof(u32));
+		ptr = (char *)params_le + offset;
+		for (i = 0; i < n_ssids; i++) {
+			memset(&ssid_le, 0, sizeof(ssid_le));
 			ssid_le.SSID_len =
 					cpu_to_le32(request->ssids[i].ssid_len);
-			स_नकल(ssid_le.SSID, request->ssids[i].ssid,
+			memcpy(ssid_le.SSID, request->ssids[i].ssid,
 			       request->ssids[i].ssid_len);
-			अगर (!ssid_le.SSID_len)
+			if (!ssid_le.SSID_len)
 				brcmf_dbg(SCAN, "%d: Broadcast scan\n", i);
-			अन्यथा
+			else
 				brcmf_dbg(SCAN, "%d: scan for  %.32s size=%d\n",
 					  i, ssid_le.SSID, ssid_le.SSID_len);
-			स_नकल(ptr, &ssid_le, माप(ssid_le));
-			ptr += माप(ssid_le);
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			memcpy(ptr, &ssid_le, sizeof(ssid_le));
+			ptr += sizeof(ssid_le);
+		}
+	} else {
 		brcmf_dbg(SCAN, "Performing passive scan\n");
 		params_le->scan_type = BRCMF_SCANTYPE_PASSIVE;
-	पूर्ण
+	}
 	/* Adding mask to channel numbers */
 	params_le->channel_num =
 		cpu_to_le32((n_ssids << BRCMF_SCAN_PARAMS_NSSID_SHIFT) |
 			(n_channels & BRCMF_SCAN_PARAMS_COUNT_MASK));
-पूर्ण
+}
 
-अटल s32
-brcmf_run_escan(काष्ठा brcmf_cfg80211_info *cfg, काष्ठा brcmf_अगर *अगरp,
-		काष्ठा cfg80211_scan_request *request)
-अणु
-	काष्ठा brcmf_pub *drvr = cfg->pub;
+static s32
+brcmf_run_escan(struct brcmf_cfg80211_info *cfg, struct brcmf_if *ifp,
+		struct cfg80211_scan_request *request)
+{
+	struct brcmf_pub *drvr = cfg->pub;
 	s32 params_size = BRCMF_SCAN_PARAMS_FIXED_SIZE +
-			  दुरत्व(काष्ठा brcmf_escan_params_le, params_le);
-	काष्ठा brcmf_escan_params_le *params;
+			  offsetof(struct brcmf_escan_params_le, params_le);
+	struct brcmf_escan_params_le *params;
 	s32 err = 0;
 
 	brcmf_dbg(SCAN, "E-SCAN START\n");
 
-	अगर (request != शून्य) अणु
-		/* Allocate space क्रम populating ssids in काष्ठा */
-		params_size += माप(u32) * ((request->n_channels + 1) / 2);
+	if (request != NULL) {
+		/* Allocate space for populating ssids in struct */
+		params_size += sizeof(u32) * ((request->n_channels + 1) / 2);
 
-		/* Allocate space क्रम populating ssids in काष्ठा */
-		params_size += माप(काष्ठा brcmf_ssid_le) * request->n_ssids;
-	पूर्ण
+		/* Allocate space for populating ssids in struct */
+		params_size += sizeof(struct brcmf_ssid_le) * request->n_ssids;
+	}
 
 	params = kzalloc(params_size, GFP_KERNEL);
-	अगर (!params) अणु
+	if (!params) {
 		err = -ENOMEM;
-		जाओ निकास;
-	पूर्ण
-	BUG_ON(params_size + माप("escan") >= BRCMF_DCMD_MEDLEN);
+		goto exit;
+	}
+	BUG_ON(params_size + sizeof("escan") >= BRCMF_DCMD_MEDLEN);
 	brcmf_escan_prep(cfg, &params->params_le, request);
 	params->version = cpu_to_le32(BRCMF_ESCAN_REQ_VERSION);
 	params->action = cpu_to_le16(WL_ESCAN_ACTION_START);
 	params->sync_id = cpu_to_le16(0x1234);
 
-	err = brcmf_fil_iovar_data_set(अगरp, "escan", params, params_size);
-	अगर (err) अणु
-		अगर (err == -EBUSY)
+	err = brcmf_fil_iovar_data_set(ifp, "escan", params, params_size);
+	if (err) {
+		if (err == -EBUSY)
 			brcmf_dbg(INFO, "system busy : escan canceled\n");
-		अन्यथा
+		else
 			bphy_err(drvr, "error (%d)\n", err);
-	पूर्ण
+	}
 
-	kमुक्त(params);
-निकास:
-	वापस err;
-पूर्ण
+	kfree(params);
+exit:
+	return err;
+}
 
-अटल s32
-brcmf_करो_escan(काष्ठा brcmf_अगर *अगरp, काष्ठा cfg80211_scan_request *request)
-अणु
-	काष्ठा brcmf_cfg80211_info *cfg = अगरp->drvr->config;
+static s32
+brcmf_do_escan(struct brcmf_if *ifp, struct cfg80211_scan_request *request)
+{
+	struct brcmf_cfg80211_info *cfg = ifp->drvr->config;
 	s32 err;
-	काष्ठा brcmf_scan_results *results;
-	काष्ठा escan_info *escan = &cfg->escan_info;
+	struct brcmf_scan_results *results;
+	struct escan_info *escan = &cfg->escan_info;
 
 	brcmf_dbg(SCAN, "Enter\n");
-	escan->अगरp = अगरp;
+	escan->ifp = ifp;
 	escan->wiphy = cfg->wiphy;
 	escan->escan_state = WL_ESCAN_STATE_SCANNING;
 
-	brcmf_scan_config_mpc(अगरp, 0);
-	results = (काष्ठा brcmf_scan_results *)cfg->escan_info.escan_buf;
+	brcmf_scan_config_mpc(ifp, 0);
+	results = (struct brcmf_scan_results *)cfg->escan_info.escan_buf;
 	results->version = 0;
 	results->count = 0;
 	results->buflen = WL_ESCAN_RESULTS_FIXED_SIZE;
 
-	err = escan->run(cfg, अगरp, request);
-	अगर (err)
-		brcmf_scan_config_mpc(अगरp, 1);
-	वापस err;
-पूर्ण
+	err = escan->run(cfg, ifp, request);
+	if (err)
+		brcmf_scan_config_mpc(ifp, 1);
+	return err;
+}
 
-अटल s32
-brcmf_cfg80211_scan(काष्ठा wiphy *wiphy, काष्ठा cfg80211_scan_request *request)
-अणु
-	काष्ठा brcmf_cfg80211_info *cfg = wiphy_to_cfg(wiphy);
-	काष्ठा brcmf_pub *drvr = cfg->pub;
-	काष्ठा brcmf_cfg80211_vअगर *vअगर;
+static s32
+brcmf_cfg80211_scan(struct wiphy *wiphy, struct cfg80211_scan_request *request)
+{
+	struct brcmf_cfg80211_info *cfg = wiphy_to_cfg(wiphy);
+	struct brcmf_pub *drvr = cfg->pub;
+	struct brcmf_cfg80211_vif *vif;
 	s32 err = 0;
 
 	brcmf_dbg(TRACE, "Enter\n");
-	vअगर = container_of(request->wdev, काष्ठा brcmf_cfg80211_vअगर, wdev);
-	अगर (!check_vअगर_up(vअगर))
-		वापस -EIO;
+	vif = container_of(request->wdev, struct brcmf_cfg80211_vif, wdev);
+	if (!check_vif_up(vif))
+		return -EIO;
 
-	अगर (test_bit(BRCMF_SCAN_STATUS_BUSY, &cfg->scan_status)) अणु
+	if (test_bit(BRCMF_SCAN_STATUS_BUSY, &cfg->scan_status)) {
 		bphy_err(drvr, "Scanning already: status (%lu)\n",
 			 cfg->scan_status);
-		वापस -EAGAIN;
-	पूर्ण
-	अगर (test_bit(BRCMF_SCAN_STATUS_ABORT, &cfg->scan_status)) अणु
+		return -EAGAIN;
+	}
+	if (test_bit(BRCMF_SCAN_STATUS_ABORT, &cfg->scan_status)) {
 		bphy_err(drvr, "Scanning being aborted: status (%lu)\n",
 			 cfg->scan_status);
-		वापस -EAGAIN;
-	पूर्ण
-	अगर (test_bit(BRCMF_SCAN_STATUS_SUPPRESS, &cfg->scan_status)) अणु
+		return -EAGAIN;
+	}
+	if (test_bit(BRCMF_SCAN_STATUS_SUPPRESS, &cfg->scan_status)) {
 		bphy_err(drvr, "Scanning suppressed: status (%lu)\n",
 			 cfg->scan_status);
-		वापस -EAGAIN;
-	पूर्ण
-	अगर (test_bit(BRCMF_VIF_STATUS_CONNECTING, &vअगर->sme_state)) अणु
-		bphy_err(drvr, "Connecting: status (%lu)\n", vअगर->sme_state);
-		वापस -EAGAIN;
-	पूर्ण
+		return -EAGAIN;
+	}
+	if (test_bit(BRCMF_VIF_STATUS_CONNECTING, &vif->sme_state)) {
+		bphy_err(drvr, "Connecting: status (%lu)\n", vif->sme_state);
+		return -EAGAIN;
+	}
 
-	/* If scan req comes क्रम p2p0, send it over primary I/F */
-	अगर (vअगर == cfg->p2p.bss_idx[P2PAPI_BSSCFG_DEVICE].vअगर)
-		vअगर = cfg->p2p.bss_idx[P2PAPI_BSSCFG_PRIMARY].vअगर;
+	/* If scan req comes for p2p0, send it over primary I/F */
+	if (vif == cfg->p2p.bss_idx[P2PAPI_BSSCFG_DEVICE].vif)
+		vif = cfg->p2p.bss_idx[P2PAPI_BSSCFG_PRIMARY].vif;
 
 	brcmf_dbg(SCAN, "START ESCAN\n");
 
@@ -1208,235 +1207,235 @@ brcmf_cfg80211_scan(काष्ठा wiphy *wiphy, काष्ठा cfg80211
 	set_bit(BRCMF_SCAN_STATUS_BUSY, &cfg->scan_status);
 
 	cfg->escan_info.run = brcmf_run_escan;
-	err = brcmf_p2p_scan_prep(wiphy, request, vअगर);
-	अगर (err)
-		जाओ scan_out;
+	err = brcmf_p2p_scan_prep(wiphy, request, vif);
+	if (err)
+		goto scan_out;
 
-	err = brcmf_vअगर_set_mgmt_ie(vअगर, BRCMF_VNDR_IE_PRBREQ_FLAG,
+	err = brcmf_vif_set_mgmt_ie(vif, BRCMF_VNDR_IE_PRBREQ_FLAG,
 				    request->ie, request->ie_len);
-	अगर (err)
-		जाओ scan_out;
+	if (err)
+		goto scan_out;
 
-	err = brcmf_करो_escan(vअगर->अगरp, request);
-	अगर (err)
-		जाओ scan_out;
+	err = brcmf_do_escan(vif->ifp, request);
+	if (err)
+		goto scan_out;
 
-	/* Arm scan समयout समयr */
-	mod_समयr(&cfg->escan_समयout,
-		  jअगरfies + msecs_to_jअगरfies(BRCMF_ESCAN_TIMER_INTERVAL_MS));
+	/* Arm scan timeout timer */
+	mod_timer(&cfg->escan_timeout,
+		  jiffies + msecs_to_jiffies(BRCMF_ESCAN_TIMER_INTERVAL_MS));
 
-	वापस 0;
+	return 0;
 
 scan_out:
 	bphy_err(drvr, "scan error (%d)\n", err);
 	clear_bit(BRCMF_SCAN_STATUS_BUSY, &cfg->scan_status);
-	cfg->scan_request = शून्य;
-	वापस err;
-पूर्ण
+	cfg->scan_request = NULL;
+	return err;
+}
 
-अटल s32 brcmf_set_rts(काष्ठा net_device *ndev, u32 rts_threshold)
-अणु
-	काष्ठा brcmf_अगर *अगरp = netdev_priv(ndev);
-	काष्ठा brcmf_pub *drvr = अगरp->drvr;
+static s32 brcmf_set_rts(struct net_device *ndev, u32 rts_threshold)
+{
+	struct brcmf_if *ifp = netdev_priv(ndev);
+	struct brcmf_pub *drvr = ifp->drvr;
 	s32 err = 0;
 
-	err = brcmf_fil_iovar_पूर्णांक_set(अगरp, "rtsthresh", rts_threshold);
-	अगर (err)
+	err = brcmf_fil_iovar_int_set(ifp, "rtsthresh", rts_threshold);
+	if (err)
 		bphy_err(drvr, "Error (%d)\n", err);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल s32 brcmf_set_frag(काष्ठा net_device *ndev, u32 frag_threshold)
-अणु
-	काष्ठा brcmf_अगर *अगरp = netdev_priv(ndev);
-	काष्ठा brcmf_pub *drvr = अगरp->drvr;
+static s32 brcmf_set_frag(struct net_device *ndev, u32 frag_threshold)
+{
+	struct brcmf_if *ifp = netdev_priv(ndev);
+	struct brcmf_pub *drvr = ifp->drvr;
 	s32 err = 0;
 
-	err = brcmf_fil_iovar_पूर्णांक_set(अगरp, "fragthresh",
+	err = brcmf_fil_iovar_int_set(ifp, "fragthresh",
 				      frag_threshold);
-	अगर (err)
+	if (err)
 		bphy_err(drvr, "Error (%d)\n", err);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल s32 brcmf_set_retry(काष्ठा net_device *ndev, u32 retry, bool l)
-अणु
-	काष्ठा brcmf_अगर *अगरp = netdev_priv(ndev);
-	काष्ठा brcmf_pub *drvr = अगरp->drvr;
+static s32 brcmf_set_retry(struct net_device *ndev, u32 retry, bool l)
+{
+	struct brcmf_if *ifp = netdev_priv(ndev);
+	struct brcmf_pub *drvr = ifp->drvr;
 	s32 err = 0;
 	u32 cmd = (l ? BRCMF_C_SET_LRL : BRCMF_C_SET_SRL);
 
-	err = brcmf_fil_cmd_पूर्णांक_set(अगरp, cmd, retry);
-	अगर (err) अणु
+	err = brcmf_fil_cmd_int_set(ifp, cmd, retry);
+	if (err) {
 		bphy_err(drvr, "cmd (%d) , error (%d)\n", cmd, err);
-		वापस err;
-	पूर्ण
-	वापस err;
-पूर्ण
+		return err;
+	}
+	return err;
+}
 
-अटल s32 brcmf_cfg80211_set_wiphy_params(काष्ठा wiphy *wiphy, u32 changed)
-अणु
-	काष्ठा brcmf_cfg80211_info *cfg = wiphy_to_cfg(wiphy);
-	काष्ठा net_device *ndev = cfg_to_ndev(cfg);
-	काष्ठा brcmf_अगर *अगरp = netdev_priv(ndev);
+static s32 brcmf_cfg80211_set_wiphy_params(struct wiphy *wiphy, u32 changed)
+{
+	struct brcmf_cfg80211_info *cfg = wiphy_to_cfg(wiphy);
+	struct net_device *ndev = cfg_to_ndev(cfg);
+	struct brcmf_if *ifp = netdev_priv(ndev);
 	s32 err = 0;
 
 	brcmf_dbg(TRACE, "Enter\n");
-	अगर (!check_vअगर_up(अगरp->vअगर))
-		वापस -EIO;
+	if (!check_vif_up(ifp->vif))
+		return -EIO;
 
-	अगर (changed & WIPHY_PARAM_RTS_THRESHOLD &&
-	    (cfg->conf->rts_threshold != wiphy->rts_threshold)) अणु
+	if (changed & WIPHY_PARAM_RTS_THRESHOLD &&
+	    (cfg->conf->rts_threshold != wiphy->rts_threshold)) {
 		cfg->conf->rts_threshold = wiphy->rts_threshold;
 		err = brcmf_set_rts(ndev, cfg->conf->rts_threshold);
-		अगर (!err)
-			जाओ करोne;
-	पूर्ण
-	अगर (changed & WIPHY_PARAM_FRAG_THRESHOLD &&
-	    (cfg->conf->frag_threshold != wiphy->frag_threshold)) अणु
+		if (!err)
+			goto done;
+	}
+	if (changed & WIPHY_PARAM_FRAG_THRESHOLD &&
+	    (cfg->conf->frag_threshold != wiphy->frag_threshold)) {
 		cfg->conf->frag_threshold = wiphy->frag_threshold;
 		err = brcmf_set_frag(ndev, cfg->conf->frag_threshold);
-		अगर (!err)
-			जाओ करोne;
-	पूर्ण
-	अगर (changed & WIPHY_PARAM_RETRY_LONG
-	    && (cfg->conf->retry_दीर्घ != wiphy->retry_दीर्घ)) अणु
-		cfg->conf->retry_दीर्घ = wiphy->retry_दीर्घ;
-		err = brcmf_set_retry(ndev, cfg->conf->retry_दीर्घ, true);
-		अगर (!err)
-			जाओ करोne;
-	पूर्ण
-	अगर (changed & WIPHY_PARAM_RETRY_SHORT
-	    && (cfg->conf->retry_लघु != wiphy->retry_लघु)) अणु
-		cfg->conf->retry_लघु = wiphy->retry_लघु;
-		err = brcmf_set_retry(ndev, cfg->conf->retry_लघु, false);
-		अगर (!err)
-			जाओ करोne;
-	पूर्ण
+		if (!err)
+			goto done;
+	}
+	if (changed & WIPHY_PARAM_RETRY_LONG
+	    && (cfg->conf->retry_long != wiphy->retry_long)) {
+		cfg->conf->retry_long = wiphy->retry_long;
+		err = brcmf_set_retry(ndev, cfg->conf->retry_long, true);
+		if (!err)
+			goto done;
+	}
+	if (changed & WIPHY_PARAM_RETRY_SHORT
+	    && (cfg->conf->retry_short != wiphy->retry_short)) {
+		cfg->conf->retry_short = wiphy->retry_short;
+		err = brcmf_set_retry(ndev, cfg->conf->retry_short, false);
+		if (!err)
+			goto done;
+	}
 
-करोne:
+done:
 	brcmf_dbg(TRACE, "Exit\n");
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम brcmf_init_prof(काष्ठा brcmf_cfg80211_profile *prof)
-अणु
-	स_रखो(prof, 0, माप(*prof));
-पूर्ण
+static void brcmf_init_prof(struct brcmf_cfg80211_profile *prof)
+{
+	memset(prof, 0, sizeof(*prof));
+}
 
-अटल u16 brcmf_map_fw_linkकरोwn_reason(स्थिर काष्ठा brcmf_event_msg *e)
-अणु
+static u16 brcmf_map_fw_linkdown_reason(const struct brcmf_event_msg *e)
+{
 	u16 reason;
 
-	चयन (e->event_code) अणु
-	हाल BRCMF_E_DEAUTH:
-	हाल BRCMF_E_DEAUTH_IND:
-	हाल BRCMF_E_DISASSOC_IND:
+	switch (e->event_code) {
+	case BRCMF_E_DEAUTH:
+	case BRCMF_E_DEAUTH_IND:
+	case BRCMF_E_DISASSOC_IND:
 		reason = e->reason;
-		अवरोध;
-	हाल BRCMF_E_LINK:
-	शेष:
+		break;
+	case BRCMF_E_LINK:
+	default:
 		reason = 0;
-		अवरोध;
-	पूर्ण
-	वापस reason;
-पूर्ण
+		break;
+	}
+	return reason;
+}
 
-अटल पूर्णांक brcmf_set_pmk(काष्ठा brcmf_अगर *अगरp, स्थिर u8 *pmk_data, u16 pmk_len)
-अणु
-	काष्ठा brcmf_pub *drvr = अगरp->drvr;
-	काष्ठा brcmf_wsec_pmk_le pmk;
-	पूर्णांक i, err;
+static int brcmf_set_pmk(struct brcmf_if *ifp, const u8 *pmk_data, u16 pmk_len)
+{
+	struct brcmf_pub *drvr = ifp->drvr;
+	struct brcmf_wsec_pmk_le pmk;
+	int i, err;
 
-	/* convert to firmware key क्रमmat */
+	/* convert to firmware key format */
 	pmk.key_len = cpu_to_le16(pmk_len << 1);
 	pmk.flags = cpu_to_le16(BRCMF_WSEC_PASSPHRASE);
-	क्रम (i = 0; i < pmk_len; i++)
-		snम_लिखो(&pmk.key[2 * i], 3, "%02x", pmk_data[i]);
+	for (i = 0; i < pmk_len; i++)
+		snprintf(&pmk.key[2 * i], 3, "%02x", pmk_data[i]);
 
 	/* store psk in firmware */
-	err = brcmf_fil_cmd_data_set(अगरp, BRCMF_C_SET_WSEC_PMK,
-				     &pmk, माप(pmk));
-	अगर (err < 0)
+	err = brcmf_fil_cmd_data_set(ifp, BRCMF_C_SET_WSEC_PMK,
+				     &pmk, sizeof(pmk));
+	if (err < 0)
 		bphy_err(drvr, "failed to change PSK in firmware (len=%u)\n",
 			 pmk_len);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक brcmf_set_sae_password(काष्ठा brcmf_अगर *अगरp, स्थिर u8 *pwd_data,
+static int brcmf_set_sae_password(struct brcmf_if *ifp, const u8 *pwd_data,
 				  u16 pwd_len)
-अणु
-	काष्ठा brcmf_pub *drvr = अगरp->drvr;
-	काष्ठा brcmf_wsec_sae_pwd_le sae_pwd;
-	पूर्णांक err;
+{
+	struct brcmf_pub *drvr = ifp->drvr;
+	struct brcmf_wsec_sae_pwd_le sae_pwd;
+	int err;
 
-	अगर (pwd_len > BRCMF_WSEC_MAX_SAE_PASSWORD_LEN) अणु
+	if (pwd_len > BRCMF_WSEC_MAX_SAE_PASSWORD_LEN) {
 		bphy_err(drvr, "sae_password must be less than %d\n",
 			 BRCMF_WSEC_MAX_SAE_PASSWORD_LEN);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	sae_pwd.key_len = cpu_to_le16(pwd_len);
-	स_नकल(sae_pwd.key, pwd_data, pwd_len);
+	memcpy(sae_pwd.key, pwd_data, pwd_len);
 
-	err = brcmf_fil_iovar_data_set(अगरp, "sae_password", &sae_pwd,
-				       माप(sae_pwd));
-	अगर (err < 0)
+	err = brcmf_fil_iovar_data_set(ifp, "sae_password", &sae_pwd,
+				       sizeof(sae_pwd));
+	if (err < 0)
 		bphy_err(drvr, "failed to set SAE password in firmware (len=%u)\n",
 			 pwd_len);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम brcmf_link_करोwn(काष्ठा brcmf_cfg80211_vअगर *vअगर, u16 reason,
+static void brcmf_link_down(struct brcmf_cfg80211_vif *vif, u16 reason,
 			    bool locally_generated)
-अणु
-	काष्ठा brcmf_cfg80211_info *cfg = wiphy_to_cfg(vअगर->wdev.wiphy);
-	काष्ठा brcmf_pub *drvr = cfg->pub;
-	bool bus_up = drvr->bus_अगर->state == BRCMF_BUS_UP;
+{
+	struct brcmf_cfg80211_info *cfg = wiphy_to_cfg(vif->wdev.wiphy);
+	struct brcmf_pub *drvr = cfg->pub;
+	bool bus_up = drvr->bus_if->state == BRCMF_BUS_UP;
 	s32 err = 0;
 
 	brcmf_dbg(TRACE, "Enter\n");
 
-	अगर (test_and_clear_bit(BRCMF_VIF_STATUS_CONNECTED, &vअगर->sme_state)) अणु
-		अगर (bus_up) अणु
+	if (test_and_clear_bit(BRCMF_VIF_STATUS_CONNECTED, &vif->sme_state)) {
+		if (bus_up) {
 			brcmf_dbg(INFO, "Call WLC_DISASSOC to stop excess roaming\n");
-			err = brcmf_fil_cmd_data_set(vअगर->अगरp,
-						     BRCMF_C_DISASSOC, शून्य, 0);
-			अगर (err)
+			err = brcmf_fil_cmd_data_set(vif->ifp,
+						     BRCMF_C_DISASSOC, NULL, 0);
+			if (err)
 				bphy_err(drvr, "WLC_DISASSOC failed (%d)\n",
 					 err);
-		पूर्ण
+		}
 
-		अगर ((vअगर->wdev.अगरtype == NL80211_IFTYPE_STATION) ||
-		    (vअगर->wdev.अगरtype == NL80211_IFTYPE_P2P_CLIENT))
-			cfg80211_disconnected(vअगर->wdev.netdev, reason, शून्य, 0,
+		if ((vif->wdev.iftype == NL80211_IFTYPE_STATION) ||
+		    (vif->wdev.iftype == NL80211_IFTYPE_P2P_CLIENT))
+			cfg80211_disconnected(vif->wdev.netdev, reason, NULL, 0,
 					      locally_generated, GFP_KERNEL);
-	पूर्ण
-	clear_bit(BRCMF_VIF_STATUS_CONNECTING, &vअगर->sme_state);
+	}
+	clear_bit(BRCMF_VIF_STATUS_CONNECTING, &vif->sme_state);
 	clear_bit(BRCMF_SCAN_STATUS_SUPPRESS, &cfg->scan_status);
-	brcmf_btcoex_set_mode(vअगर, BRCMF_BTCOEX_ENABLED, 0);
-	अगर (vअगर->profile.use_fwsup != BRCMF_PROखाता_FWSUP_NONE) अणु
-		अगर (bus_up)
-			brcmf_set_pmk(vअगर->अगरp, शून्य, 0);
-		vअगर->profile.use_fwsup = BRCMF_PROखाता_FWSUP_NONE;
-	पूर्ण
+	brcmf_btcoex_set_mode(vif, BRCMF_BTCOEX_ENABLED, 0);
+	if (vif->profile.use_fwsup != BRCMF_PROFILE_FWSUP_NONE) {
+		if (bus_up)
+			brcmf_set_pmk(vif->ifp, NULL, 0);
+		vif->profile.use_fwsup = BRCMF_PROFILE_FWSUP_NONE;
+	}
 	brcmf_dbg(TRACE, "Exit\n");
-पूर्ण
+}
 
-अटल s32
-brcmf_cfg80211_join_ibss(काष्ठा wiphy *wiphy, काष्ठा net_device *ndev,
-		      काष्ठा cfg80211_ibss_params *params)
-अणु
-	काष्ठा brcmf_cfg80211_info *cfg = wiphy_to_cfg(wiphy);
-	काष्ठा brcmf_अगर *अगरp = netdev_priv(ndev);
-	काष्ठा brcmf_cfg80211_profile *profile = &अगरp->vअगर->profile;
-	काष्ठा brcmf_pub *drvr = cfg->pub;
-	काष्ठा brcmf_join_params join_params;
-	माप_प्रकार join_params_size = 0;
+static s32
+brcmf_cfg80211_join_ibss(struct wiphy *wiphy, struct net_device *ndev,
+		      struct cfg80211_ibss_params *params)
+{
+	struct brcmf_cfg80211_info *cfg = wiphy_to_cfg(wiphy);
+	struct brcmf_if *ifp = netdev_priv(ndev);
+	struct brcmf_cfg80211_profile *profile = &ifp->vif->profile;
+	struct brcmf_pub *drvr = cfg->pub;
+	struct brcmf_join_params join_params;
+	size_t join_params_size = 0;
 	s32 err = 0;
 	s32 wsec = 0;
 	s32 bcnprd;
@@ -1444,993 +1443,993 @@ brcmf_cfg80211_join_ibss(काष्ठा wiphy *wiphy, काष्ठा net
 	u32 ssid_len;
 
 	brcmf_dbg(TRACE, "Enter\n");
-	अगर (!check_vअगर_up(अगरp->vअगर))
-		वापस -EIO;
+	if (!check_vif_up(ifp->vif))
+		return -EIO;
 
-	अगर (params->ssid)
+	if (params->ssid)
 		brcmf_dbg(CONN, "SSID: %s\n", params->ssid);
-	अन्यथा अणु
+	else {
 		brcmf_dbg(CONN, "SSID: NULL, Not supported\n");
-		वापस -EOPNOTSUPP;
-	पूर्ण
+		return -EOPNOTSUPP;
+	}
 
-	set_bit(BRCMF_VIF_STATUS_CONNECTING, &अगरp->vअगर->sme_state);
+	set_bit(BRCMF_VIF_STATUS_CONNECTING, &ifp->vif->sme_state);
 
-	अगर (params->bssid)
+	if (params->bssid)
 		brcmf_dbg(CONN, "BSSID: %pM\n", params->bssid);
-	अन्यथा
+	else
 		brcmf_dbg(CONN, "No BSSID specified\n");
 
-	अगर (params->chandef.chan)
+	if (params->chandef.chan)
 		brcmf_dbg(CONN, "channel: %d\n",
 			  params->chandef.chan->center_freq);
-	अन्यथा
+	else
 		brcmf_dbg(CONN, "no channel specified\n");
 
-	अगर (params->channel_fixed)
+	if (params->channel_fixed)
 		brcmf_dbg(CONN, "fixed channel required\n");
-	अन्यथा
+	else
 		brcmf_dbg(CONN, "no fixed channel required\n");
 
-	अगर (params->ie && params->ie_len)
+	if (params->ie && params->ie_len)
 		brcmf_dbg(CONN, "ie len: %d\n", params->ie_len);
-	अन्यथा
+	else
 		brcmf_dbg(CONN, "no ie specified\n");
 
-	अगर (params->beacon_पूर्णांकerval)
+	if (params->beacon_interval)
 		brcmf_dbg(CONN, "beacon interval: %d\n",
-			  params->beacon_पूर्णांकerval);
-	अन्यथा
+			  params->beacon_interval);
+	else
 		brcmf_dbg(CONN, "no beacon interval specified\n");
 
-	अगर (params->basic_rates)
+	if (params->basic_rates)
 		brcmf_dbg(CONN, "basic rates: %08X\n", params->basic_rates);
-	अन्यथा
+	else
 		brcmf_dbg(CONN, "no basic rates specified\n");
 
-	अगर (params->privacy)
+	if (params->privacy)
 		brcmf_dbg(CONN, "privacy required\n");
-	अन्यथा
+	else
 		brcmf_dbg(CONN, "no privacy required\n");
 
-	/* Configure Privacy क्रम starter */
-	अगर (params->privacy)
+	/* Configure Privacy for starter */
+	if (params->privacy)
 		wsec |= WEP_ENABLED;
 
-	err = brcmf_fil_iovar_पूर्णांक_set(अगरp, "wsec", wsec);
-	अगर (err) अणु
+	err = brcmf_fil_iovar_int_set(ifp, "wsec", wsec);
+	if (err) {
 		bphy_err(drvr, "wsec failed (%d)\n", err);
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	/* Configure Beacon Interval क्रम starter */
-	अगर (params->beacon_पूर्णांकerval)
-		bcnprd = params->beacon_पूर्णांकerval;
-	अन्यथा
+	/* Configure Beacon Interval for starter */
+	if (params->beacon_interval)
+		bcnprd = params->beacon_interval;
+	else
 		bcnprd = 100;
 
-	err = brcmf_fil_cmd_पूर्णांक_set(अगरp, BRCMF_C_SET_BCNPRD, bcnprd);
-	अगर (err) अणु
+	err = brcmf_fil_cmd_int_set(ifp, BRCMF_C_SET_BCNPRD, bcnprd);
+	if (err) {
 		bphy_err(drvr, "WLC_SET_BCNPRD failed (%d)\n", err);
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
 	/* Configure required join parameter */
-	स_रखो(&join_params, 0, माप(काष्ठा brcmf_join_params));
+	memset(&join_params, 0, sizeof(struct brcmf_join_params));
 
 	/* SSID */
 	ssid_len = min_t(u32, params->ssid_len, IEEE80211_MAX_SSID_LEN);
-	स_नकल(join_params.ssid_le.SSID, params->ssid, ssid_len);
+	memcpy(join_params.ssid_le.SSID, params->ssid, ssid_len);
 	join_params.ssid_le.SSID_len = cpu_to_le32(ssid_len);
-	join_params_size = माप(join_params.ssid_le);
+	join_params_size = sizeof(join_params.ssid_le);
 
 	/* BSSID */
-	अगर (params->bssid) अणु
-		स_नकल(join_params.params_le.bssid, params->bssid, ETH_ALEN);
+	if (params->bssid) {
+		memcpy(join_params.params_le.bssid, params->bssid, ETH_ALEN);
 		join_params_size += BRCMF_ASSOC_PARAMS_FIXED_SIZE;
-		स_नकल(profile->bssid, params->bssid, ETH_ALEN);
-	पूर्ण अन्यथा अणु
+		memcpy(profile->bssid, params->bssid, ETH_ALEN);
+	} else {
 		eth_broadcast_addr(join_params.params_le.bssid);
 		eth_zero_addr(profile->bssid);
-	पूर्ण
+	}
 
 	/* Channel */
-	अगर (params->chandef.chan) अणु
+	if (params->chandef.chan) {
 		u32 target_channel;
 
 		cfg->channel =
 			ieee80211_frequency_to_channel(
 				params->chandef.chan->center_freq);
-		अगर (params->channel_fixed) अणु
+		if (params->channel_fixed) {
 			/* adding chanspec */
 			chanspec = chandef_to_chanspec(&cfg->d11inf,
 						       &params->chandef);
 			join_params.params_le.chanspec_list[0] =
 				cpu_to_le16(chanspec);
 			join_params.params_le.chanspec_num = cpu_to_le32(1);
-			join_params_size += माप(join_params.params_le);
-		पूर्ण
+			join_params_size += sizeof(join_params.params_le);
+		}
 
-		/* set channel क्रम starter */
+		/* set channel for starter */
 		target_channel = cfg->channel;
-		err = brcmf_fil_cmd_पूर्णांक_set(अगरp, BRCMF_C_SET_CHANNEL,
+		err = brcmf_fil_cmd_int_set(ifp, BRCMF_C_SET_CHANNEL,
 					    target_channel);
-		अगर (err) अणु
+		if (err) {
 			bphy_err(drvr, "WLC_SET_CHANNEL failed (%d)\n", err);
-			जाओ करोne;
-		पूर्ण
-	पूर्ण अन्यथा
+			goto done;
+		}
+	} else
 		cfg->channel = 0;
 
 	cfg->ibss_starter = false;
 
 
-	err = brcmf_fil_cmd_data_set(अगरp, BRCMF_C_SET_SSID,
+	err = brcmf_fil_cmd_data_set(ifp, BRCMF_C_SET_SSID,
 				     &join_params, join_params_size);
-	अगर (err) अणु
+	if (err) {
 		bphy_err(drvr, "WLC_SET_SSID failed (%d)\n", err);
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-करोne:
-	अगर (err)
-		clear_bit(BRCMF_VIF_STATUS_CONNECTING, &अगरp->vअगर->sme_state);
+done:
+	if (err)
+		clear_bit(BRCMF_VIF_STATUS_CONNECTING, &ifp->vif->sme_state);
 	brcmf_dbg(TRACE, "Exit\n");
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल s32
-brcmf_cfg80211_leave_ibss(काष्ठा wiphy *wiphy, काष्ठा net_device *ndev)
-अणु
-	काष्ठा brcmf_अगर *अगरp = netdev_priv(ndev);
+static s32
+brcmf_cfg80211_leave_ibss(struct wiphy *wiphy, struct net_device *ndev)
+{
+	struct brcmf_if *ifp = netdev_priv(ndev);
 
 	brcmf_dbg(TRACE, "Enter\n");
-	अगर (!check_vअगर_up(अगरp->vअगर)) अणु
+	if (!check_vif_up(ifp->vif)) {
 		/* When driver is being unloaded, it can end up here. If an
-		 * error is वापसed then later on a debug trace in the wireless
-		 * core module will be prपूर्णांकed. To aव्योम this 0 is वापसed.
+		 * error is returned then later on a debug trace in the wireless
+		 * core module will be printed. To avoid this 0 is returned.
 		 */
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	brcmf_link_करोwn(अगरp->vअगर, WLAN_REASON_DEAUTH_LEAVING, true);
-	brcmf_net_setcarrier(अगरp, false);
+	brcmf_link_down(ifp->vif, WLAN_REASON_DEAUTH_LEAVING, true);
+	brcmf_net_setcarrier(ifp, false);
 
 	brcmf_dbg(TRACE, "Exit\n");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल s32 brcmf_set_wpa_version(काष्ठा net_device *ndev,
-				 काष्ठा cfg80211_connect_params *sme)
-अणु
-	काष्ठा brcmf_अगर *अगरp = netdev_priv(ndev);
-	काष्ठा brcmf_cfg80211_profile *profile = ndev_to_prof(ndev);
-	काष्ठा brcmf_pub *drvr = अगरp->drvr;
-	काष्ठा brcmf_cfg80211_security *sec;
+static s32 brcmf_set_wpa_version(struct net_device *ndev,
+				 struct cfg80211_connect_params *sme)
+{
+	struct brcmf_if *ifp = netdev_priv(ndev);
+	struct brcmf_cfg80211_profile *profile = ndev_to_prof(ndev);
+	struct brcmf_pub *drvr = ifp->drvr;
+	struct brcmf_cfg80211_security *sec;
 	s32 val = 0;
 	s32 err = 0;
 
-	अगर (sme->crypto.wpa_versions & NL80211_WPA_VERSION_1)
+	if (sme->crypto.wpa_versions & NL80211_WPA_VERSION_1)
 		val = WPA_AUTH_PSK | WPA_AUTH_UNSPECIFIED;
-	अन्यथा अगर (sme->crypto.wpa_versions & NL80211_WPA_VERSION_2)
+	else if (sme->crypto.wpa_versions & NL80211_WPA_VERSION_2)
 		val = WPA2_AUTH_PSK | WPA2_AUTH_UNSPECIFIED;
-	अन्यथा अगर (sme->crypto.wpa_versions & NL80211_WPA_VERSION_3)
+	else if (sme->crypto.wpa_versions & NL80211_WPA_VERSION_3)
 		val = WPA3_AUTH_SAE_PSK;
-	अन्यथा
+	else
 		val = WPA_AUTH_DISABLED;
 	brcmf_dbg(CONN, "setting wpa_auth to 0x%0x\n", val);
-	err = brcmf_fil_bsscfg_पूर्णांक_set(अगरp, "wpa_auth", val);
-	अगर (err) अणु
+	err = brcmf_fil_bsscfg_int_set(ifp, "wpa_auth", val);
+	if (err) {
 		bphy_err(drvr, "set wpa_auth failed (%d)\n", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 	sec = &profile->sec;
 	sec->wpa_versions = sme->crypto.wpa_versions;
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल s32 brcmf_set_auth_type(काष्ठा net_device *ndev,
-			       काष्ठा cfg80211_connect_params *sme)
-अणु
-	काष्ठा brcmf_अगर *अगरp = netdev_priv(ndev);
-	काष्ठा brcmf_cfg80211_profile *profile = ndev_to_prof(ndev);
-	काष्ठा brcmf_pub *drvr = अगरp->drvr;
-	काष्ठा brcmf_cfg80211_security *sec;
+static s32 brcmf_set_auth_type(struct net_device *ndev,
+			       struct cfg80211_connect_params *sme)
+{
+	struct brcmf_if *ifp = netdev_priv(ndev);
+	struct brcmf_cfg80211_profile *profile = ndev_to_prof(ndev);
+	struct brcmf_pub *drvr = ifp->drvr;
+	struct brcmf_cfg80211_security *sec;
 	s32 val = 0;
 	s32 err = 0;
 
-	चयन (sme->auth_type) अणु
-	हाल NL80211_AUTHTYPE_OPEN_SYSTEM:
+	switch (sme->auth_type) {
+	case NL80211_AUTHTYPE_OPEN_SYSTEM:
 		val = 0;
 		brcmf_dbg(CONN, "open system\n");
-		अवरोध;
-	हाल NL80211_AUTHTYPE_SHARED_KEY:
+		break;
+	case NL80211_AUTHTYPE_SHARED_KEY:
 		val = 1;
 		brcmf_dbg(CONN, "shared key\n");
-		अवरोध;
-	हाल NL80211_AUTHTYPE_SAE:
+		break;
+	case NL80211_AUTHTYPE_SAE:
 		val = 3;
 		brcmf_dbg(CONN, "SAE authentication\n");
-		अवरोध;
-	शेष:
+		break;
+	default:
 		val = 2;
 		brcmf_dbg(CONN, "automatic, auth type (%d)\n", sme->auth_type);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	err = brcmf_fil_bsscfg_पूर्णांक_set(अगरp, "auth", val);
-	अगर (err) अणु
+	err = brcmf_fil_bsscfg_int_set(ifp, "auth", val);
+	if (err) {
 		bphy_err(drvr, "set auth failed (%d)\n", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 	sec = &profile->sec;
 	sec->auth_type = sme->auth_type;
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल s32
-brcmf_set_wsec_mode(काष्ठा net_device *ndev,
-		    काष्ठा cfg80211_connect_params *sme)
-अणु
-	काष्ठा brcmf_अगर *अगरp = netdev_priv(ndev);
-	काष्ठा brcmf_cfg80211_profile *profile = ndev_to_prof(ndev);
-	काष्ठा brcmf_pub *drvr = अगरp->drvr;
-	काष्ठा brcmf_cfg80211_security *sec;
+static s32
+brcmf_set_wsec_mode(struct net_device *ndev,
+		    struct cfg80211_connect_params *sme)
+{
+	struct brcmf_if *ifp = netdev_priv(ndev);
+	struct brcmf_cfg80211_profile *profile = ndev_to_prof(ndev);
+	struct brcmf_pub *drvr = ifp->drvr;
+	struct brcmf_cfg80211_security *sec;
 	s32 pval = 0;
 	s32 gval = 0;
 	s32 wsec;
 	s32 err = 0;
 
-	अगर (sme->crypto.n_ciphers_pairwise) अणु
-		चयन (sme->crypto.ciphers_pairwise[0]) अणु
-		हाल WLAN_CIPHER_SUITE_WEP40:
-		हाल WLAN_CIPHER_SUITE_WEP104:
+	if (sme->crypto.n_ciphers_pairwise) {
+		switch (sme->crypto.ciphers_pairwise[0]) {
+		case WLAN_CIPHER_SUITE_WEP40:
+		case WLAN_CIPHER_SUITE_WEP104:
 			pval = WEP_ENABLED;
-			अवरोध;
-		हाल WLAN_CIPHER_SUITE_TKIP:
+			break;
+		case WLAN_CIPHER_SUITE_TKIP:
 			pval = TKIP_ENABLED;
-			अवरोध;
-		हाल WLAN_CIPHER_SUITE_CCMP:
+			break;
+		case WLAN_CIPHER_SUITE_CCMP:
 			pval = AES_ENABLED;
-			अवरोध;
-		हाल WLAN_CIPHER_SUITE_AES_CMAC:
+			break;
+		case WLAN_CIPHER_SUITE_AES_CMAC:
 			pval = AES_ENABLED;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			bphy_err(drvr, "invalid cipher pairwise (%d)\n",
 				 sme->crypto.ciphers_pairwise[0]);
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
-	अगर (sme->crypto.cipher_group) अणु
-		चयन (sme->crypto.cipher_group) अणु
-		हाल WLAN_CIPHER_SUITE_WEP40:
-		हाल WLAN_CIPHER_SUITE_WEP104:
+			return -EINVAL;
+		}
+	}
+	if (sme->crypto.cipher_group) {
+		switch (sme->crypto.cipher_group) {
+		case WLAN_CIPHER_SUITE_WEP40:
+		case WLAN_CIPHER_SUITE_WEP104:
 			gval = WEP_ENABLED;
-			अवरोध;
-		हाल WLAN_CIPHER_SUITE_TKIP:
+			break;
+		case WLAN_CIPHER_SUITE_TKIP:
 			gval = TKIP_ENABLED;
-			अवरोध;
-		हाल WLAN_CIPHER_SUITE_CCMP:
+			break;
+		case WLAN_CIPHER_SUITE_CCMP:
 			gval = AES_ENABLED;
-			अवरोध;
-		हाल WLAN_CIPHER_SUITE_AES_CMAC:
+			break;
+		case WLAN_CIPHER_SUITE_AES_CMAC:
 			gval = AES_ENABLED;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			bphy_err(drvr, "invalid cipher group (%d)\n",
 				 sme->crypto.cipher_group);
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 
 	brcmf_dbg(CONN, "pval (%d) gval (%d)\n", pval, gval);
-	/* In हाल of privacy, but no security and WPS then simulate */
+	/* In case of privacy, but no security and WPS then simulate */
 	/* setting AES. WPS-2.0 allows no security                   */
-	अगर (brcmf_find_wpsie(sme->ie, sme->ie_len) && !pval && !gval &&
+	if (brcmf_find_wpsie(sme->ie, sme->ie_len) && !pval && !gval &&
 	    sme->privacy)
 		pval = AES_ENABLED;
 
 	wsec = pval | gval;
-	err = brcmf_fil_bsscfg_पूर्णांक_set(अगरp, "wsec", wsec);
-	अगर (err) अणु
+	err = brcmf_fil_bsscfg_int_set(ifp, "wsec", wsec);
+	if (err) {
 		bphy_err(drvr, "error (%d)\n", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	sec = &profile->sec;
 	sec->cipher_pairwise = sme->crypto.ciphers_pairwise[0];
 	sec->cipher_group = sme->crypto.cipher_group;
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल s32
-brcmf_set_key_mgmt(काष्ठा net_device *ndev, काष्ठा cfg80211_connect_params *sme)
-अणु
-	काष्ठा brcmf_अगर *अगरp = netdev_priv(ndev);
-	काष्ठा brcmf_cfg80211_profile *profile = &अगरp->vअगर->profile;
-	काष्ठा brcmf_pub *drvr = अगरp->drvr;
+static s32
+brcmf_set_key_mgmt(struct net_device *ndev, struct cfg80211_connect_params *sme)
+{
+	struct brcmf_if *ifp = netdev_priv(ndev);
+	struct brcmf_cfg80211_profile *profile = &ifp->vif->profile;
+	struct brcmf_pub *drvr = ifp->drvr;
 	s32 val;
 	s32 err;
-	स्थिर काष्ठा brcmf_tlv *rsn_ie;
-	स्थिर u8 *ie;
+	const struct brcmf_tlv *rsn_ie;
+	const u8 *ie;
 	u32 ie_len;
 	u32 offset;
 	u16 rsn_cap;
 	u32 mfp;
 	u16 count;
 
-	profile->use_fwsup = BRCMF_PROखाता_FWSUP_NONE;
+	profile->use_fwsup = BRCMF_PROFILE_FWSUP_NONE;
 	profile->is_ft = false;
 
-	अगर (!sme->crypto.n_akm_suites)
-		वापस 0;
+	if (!sme->crypto.n_akm_suites)
+		return 0;
 
-	err = brcmf_fil_bsscfg_पूर्णांक_get(netdev_priv(ndev), "wpa_auth", &val);
-	अगर (err) अणु
+	err = brcmf_fil_bsscfg_int_get(netdev_priv(ndev), "wpa_auth", &val);
+	if (err) {
 		bphy_err(drvr, "could not get wpa_auth (%d)\n", err);
-		वापस err;
-	पूर्ण
-	अगर (val & (WPA_AUTH_PSK | WPA_AUTH_UNSPECIFIED)) अणु
-		चयन (sme->crypto.akm_suites[0]) अणु
-		हाल WLAN_AKM_SUITE_8021X:
+		return err;
+	}
+	if (val & (WPA_AUTH_PSK | WPA_AUTH_UNSPECIFIED)) {
+		switch (sme->crypto.akm_suites[0]) {
+		case WLAN_AKM_SUITE_8021X:
 			val = WPA_AUTH_UNSPECIFIED;
-			अगर (sme->want_1x)
-				profile->use_fwsup = BRCMF_PROखाता_FWSUP_1X;
-			अवरोध;
-		हाल WLAN_AKM_SUITE_PSK:
+			if (sme->want_1x)
+				profile->use_fwsup = BRCMF_PROFILE_FWSUP_1X;
+			break;
+		case WLAN_AKM_SUITE_PSK:
 			val = WPA_AUTH_PSK;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			bphy_err(drvr, "invalid cipher group (%d)\n",
 				 sme->crypto.cipher_group);
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण अन्यथा अगर (val & (WPA2_AUTH_PSK | WPA2_AUTH_UNSPECIFIED)) अणु
-		चयन (sme->crypto.akm_suites[0]) अणु
-		हाल WLAN_AKM_SUITE_8021X:
+			return -EINVAL;
+		}
+	} else if (val & (WPA2_AUTH_PSK | WPA2_AUTH_UNSPECIFIED)) {
+		switch (sme->crypto.akm_suites[0]) {
+		case WLAN_AKM_SUITE_8021X:
 			val = WPA2_AUTH_UNSPECIFIED;
-			अगर (sme->want_1x)
-				profile->use_fwsup = BRCMF_PROखाता_FWSUP_1X;
-			अवरोध;
-		हाल WLAN_AKM_SUITE_8021X_SHA256:
+			if (sme->want_1x)
+				profile->use_fwsup = BRCMF_PROFILE_FWSUP_1X;
+			break;
+		case WLAN_AKM_SUITE_8021X_SHA256:
 			val = WPA2_AUTH_1X_SHA256;
-			अगर (sme->want_1x)
-				profile->use_fwsup = BRCMF_PROखाता_FWSUP_1X;
-			अवरोध;
-		हाल WLAN_AKM_SUITE_PSK_SHA256:
+			if (sme->want_1x)
+				profile->use_fwsup = BRCMF_PROFILE_FWSUP_1X;
+			break;
+		case WLAN_AKM_SUITE_PSK_SHA256:
 			val = WPA2_AUTH_PSK_SHA256;
-			अवरोध;
-		हाल WLAN_AKM_SUITE_PSK:
+			break;
+		case WLAN_AKM_SUITE_PSK:
 			val = WPA2_AUTH_PSK;
-			अवरोध;
-		हाल WLAN_AKM_SUITE_FT_8021X:
+			break;
+		case WLAN_AKM_SUITE_FT_8021X:
 			val = WPA2_AUTH_UNSPECIFIED | WPA2_AUTH_FT;
 			profile->is_ft = true;
-			अगर (sme->want_1x)
-				profile->use_fwsup = BRCMF_PROखाता_FWSUP_1X;
-			अवरोध;
-		हाल WLAN_AKM_SUITE_FT_PSK:
+			if (sme->want_1x)
+				profile->use_fwsup = BRCMF_PROFILE_FWSUP_1X;
+			break;
+		case WLAN_AKM_SUITE_FT_PSK:
 			val = WPA2_AUTH_PSK | WPA2_AUTH_FT;
 			profile->is_ft = true;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			bphy_err(drvr, "invalid cipher group (%d)\n",
 				 sme->crypto.cipher_group);
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण अन्यथा अगर (val & WPA3_AUTH_SAE_PSK) अणु
-		चयन (sme->crypto.akm_suites[0]) अणु
-		हाल WLAN_AKM_SUITE_SAE:
+			return -EINVAL;
+		}
+	} else if (val & WPA3_AUTH_SAE_PSK) {
+		switch (sme->crypto.akm_suites[0]) {
+		case WLAN_AKM_SUITE_SAE:
 			val = WPA3_AUTH_SAE_PSK;
-			अगर (sme->crypto.sae_pwd) अणु
+			if (sme->crypto.sae_pwd) {
 				brcmf_dbg(INFO, "using SAE offload\n");
-				profile->use_fwsup = BRCMF_PROखाता_FWSUP_SAE;
-			पूर्ण
-			अवरोध;
-		शेष:
+				profile->use_fwsup = BRCMF_PROFILE_FWSUP_SAE;
+			}
+			break;
+		default:
 			bphy_err(drvr, "invalid cipher group (%d)\n",
 				 sme->crypto.cipher_group);
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 
-	अगर (profile->use_fwsup == BRCMF_PROखाता_FWSUP_1X)
+	if (profile->use_fwsup == BRCMF_PROFILE_FWSUP_1X)
 		brcmf_dbg(INFO, "using 1X offload\n");
 
-	अगर (!brcmf_feat_is_enabled(अगरp, BRCMF_FEAT_MFP))
-		जाओ skip_mfp_config;
+	if (!brcmf_feat_is_enabled(ifp, BRCMF_FEAT_MFP))
+		goto skip_mfp_config;
 	/* The MFP mode (1 or 2) needs to be determined, parse IEs. The
-	 * IE will not be verअगरied, just a quick search क्रम MFP config
+	 * IE will not be verified, just a quick search for MFP config
 	 */
-	rsn_ie = brcmf_parse_tlvs((स्थिर u8 *)sme->ie, sme->ie_len,
+	rsn_ie = brcmf_parse_tlvs((const u8 *)sme->ie, sme->ie_len,
 				  WLAN_EID_RSN);
-	अगर (!rsn_ie)
-		जाओ skip_mfp_config;
-	ie = (स्थिर u8 *)rsn_ie;
+	if (!rsn_ie)
+		goto skip_mfp_config;
+	ie = (const u8 *)rsn_ie;
 	ie_len = rsn_ie->len + TLV_HDR_LEN;
 	/* Skip unicast suite */
 	offset = TLV_HDR_LEN + WPA_IE_VERSION_LEN + WPA_IE_MIN_OUI_LEN;
-	अगर (offset + WPA_IE_SUITE_COUNT_LEN >= ie_len)
-		जाओ skip_mfp_config;
+	if (offset + WPA_IE_SUITE_COUNT_LEN >= ie_len)
+		goto skip_mfp_config;
 	/* Skip multicast suite */
 	count = ie[offset] + (ie[offset + 1] << 8);
 	offset += WPA_IE_SUITE_COUNT_LEN + (count * WPA_IE_MIN_OUI_LEN);
-	अगर (offset + WPA_IE_SUITE_COUNT_LEN >= ie_len)
-		जाओ skip_mfp_config;
+	if (offset + WPA_IE_SUITE_COUNT_LEN >= ie_len)
+		goto skip_mfp_config;
 	/* Skip auth key management suite(s) */
 	count = ie[offset] + (ie[offset + 1] << 8);
 	offset += WPA_IE_SUITE_COUNT_LEN + (count * WPA_IE_MIN_OUI_LEN);
-	अगर (offset + WPA_IE_SUITE_COUNT_LEN > ie_len)
-		जाओ skip_mfp_config;
-	/* Ready to पढ़ो capabilities */
+	if (offset + WPA_IE_SUITE_COUNT_LEN > ie_len)
+		goto skip_mfp_config;
+	/* Ready to read capabilities */
 	mfp = BRCMF_MFP_NONE;
 	rsn_cap = ie[offset] + (ie[offset + 1] << 8);
-	अगर (rsn_cap & RSN_CAP_MFPR_MASK)
+	if (rsn_cap & RSN_CAP_MFPR_MASK)
 		mfp = BRCMF_MFP_REQUIRED;
-	अन्यथा अगर (rsn_cap & RSN_CAP_MFPC_MASK)
+	else if (rsn_cap & RSN_CAP_MFPC_MASK)
 		mfp = BRCMF_MFP_CAPABLE;
-	brcmf_fil_bsscfg_पूर्णांक_set(netdev_priv(ndev), "mfp", mfp);
+	brcmf_fil_bsscfg_int_set(netdev_priv(ndev), "mfp", mfp);
 
 skip_mfp_config:
 	brcmf_dbg(CONN, "setting wpa_auth to %d\n", val);
-	err = brcmf_fil_bsscfg_पूर्णांक_set(netdev_priv(ndev), "wpa_auth", val);
-	अगर (err) अणु
+	err = brcmf_fil_bsscfg_int_set(netdev_priv(ndev), "wpa_auth", val);
+	if (err) {
 		bphy_err(drvr, "could not set wpa_auth (%d)\n", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल s32
-brcmf_set_sharedkey(काष्ठा net_device *ndev,
-		    काष्ठा cfg80211_connect_params *sme)
-अणु
-	काष्ठा brcmf_अगर *अगरp = netdev_priv(ndev);
-	काष्ठा brcmf_pub *drvr = अगरp->drvr;
-	काष्ठा brcmf_cfg80211_profile *profile = ndev_to_prof(ndev);
-	काष्ठा brcmf_cfg80211_security *sec;
-	काष्ठा brcmf_wsec_key key;
+static s32
+brcmf_set_sharedkey(struct net_device *ndev,
+		    struct cfg80211_connect_params *sme)
+{
+	struct brcmf_if *ifp = netdev_priv(ndev);
+	struct brcmf_pub *drvr = ifp->drvr;
+	struct brcmf_cfg80211_profile *profile = ndev_to_prof(ndev);
+	struct brcmf_cfg80211_security *sec;
+	struct brcmf_wsec_key key;
 	s32 val;
 	s32 err = 0;
 
 	brcmf_dbg(CONN, "key len (%d)\n", sme->key_len);
 
-	अगर (sme->key_len == 0)
-		वापस 0;
+	if (sme->key_len == 0)
+		return 0;
 
 	sec = &profile->sec;
 	brcmf_dbg(CONN, "wpa_versions 0x%x cipher_pairwise 0x%x\n",
 		  sec->wpa_versions, sec->cipher_pairwise);
 
-	अगर (sec->wpa_versions & (NL80211_WPA_VERSION_1 | NL80211_WPA_VERSION_2 |
+	if (sec->wpa_versions & (NL80211_WPA_VERSION_1 | NL80211_WPA_VERSION_2 |
 				 NL80211_WPA_VERSION_3))
-		वापस 0;
+		return 0;
 
-	अगर (!(sec->cipher_pairwise &
+	if (!(sec->cipher_pairwise &
 	    (WLAN_CIPHER_SUITE_WEP40 | WLAN_CIPHER_SUITE_WEP104)))
-		वापस 0;
+		return 0;
 
-	स_रखो(&key, 0, माप(key));
+	memset(&key, 0, sizeof(key));
 	key.len = (u32) sme->key_len;
 	key.index = (u32) sme->key_idx;
-	अगर (key.len > माप(key.data)) अणु
+	if (key.len > sizeof(key.data)) {
 		bphy_err(drvr, "Too long key length (%u)\n", key.len);
-		वापस -EINVAL;
-	पूर्ण
-	स_नकल(key.data, sme->key, key.len);
+		return -EINVAL;
+	}
+	memcpy(key.data, sme->key, key.len);
 	key.flags = BRCMF_PRIMARY_KEY;
-	चयन (sec->cipher_pairwise) अणु
-	हाल WLAN_CIPHER_SUITE_WEP40:
+	switch (sec->cipher_pairwise) {
+	case WLAN_CIPHER_SUITE_WEP40:
 		key.algo = CRYPTO_ALGO_WEP1;
-		अवरोध;
-	हाल WLAN_CIPHER_SUITE_WEP104:
+		break;
+	case WLAN_CIPHER_SUITE_WEP104:
 		key.algo = CRYPTO_ALGO_WEP128;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		bphy_err(drvr, "Invalid algorithm (%d)\n",
 			 sme->crypto.ciphers_pairwise[0]);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	/* Set the new key/index */
 	brcmf_dbg(CONN, "key length (%d) key index (%d) algo (%d)\n",
 		  key.len, key.index, key.algo);
 	brcmf_dbg(CONN, "key \"%s\"\n", key.data);
-	err = send_key_to_करोngle(अगरp, &key);
-	अगर (err)
-		वापस err;
+	err = send_key_to_dongle(ifp, &key);
+	if (err)
+		return err;
 
-	अगर (sec->auth_type == NL80211_AUTHTYPE_SHARED_KEY) अणु
+	if (sec->auth_type == NL80211_AUTHTYPE_SHARED_KEY) {
 		brcmf_dbg(CONN, "set auth_type to shared key\n");
 		val = WL_AUTH_SHARED_KEY;	/* shared key */
-		err = brcmf_fil_bsscfg_पूर्णांक_set(अगरp, "auth", val);
-		अगर (err)
+		err = brcmf_fil_bsscfg_int_set(ifp, "auth", val);
+		if (err)
 			bphy_err(drvr, "set auth failed (%d)\n", err);
-	पूर्ण
-	वापस err;
-पूर्ण
+	}
+	return err;
+}
 
-अटल
-क्रमागत nl80211_auth_type brcmf_war_auth_type(काष्ठा brcmf_अगर *अगरp,
-					   क्रमागत nl80211_auth_type type)
-अणु
-	अगर (type == NL80211_AUTHTYPE_AUTOMATIC &&
-	    brcmf_feat_is_quirk_enabled(अगरp, BRCMF_FEAT_QUIRK_AUTO_AUTH)) अणु
+static
+enum nl80211_auth_type brcmf_war_auth_type(struct brcmf_if *ifp,
+					   enum nl80211_auth_type type)
+{
+	if (type == NL80211_AUTHTYPE_AUTOMATIC &&
+	    brcmf_feat_is_quirk_enabled(ifp, BRCMF_FEAT_QUIRK_AUTO_AUTH)) {
 		brcmf_dbg(CONN, "WAR: use OPEN instead of AUTO\n");
 		type = NL80211_AUTHTYPE_OPEN_SYSTEM;
-	पूर्ण
-	वापस type;
-पूर्ण
+	}
+	return type;
+}
 
-अटल व्योम brcmf_set_join_pref(काष्ठा brcmf_अगर *अगरp,
-				काष्ठा cfg80211_bss_selection *bss_select)
-अणु
-	काष्ठा brcmf_pub *drvr = अगरp->drvr;
-	काष्ठा brcmf_join_pref_params join_pref_params[2];
-	क्रमागत nl80211_band band;
-	पूर्णांक err, i = 0;
+static void brcmf_set_join_pref(struct brcmf_if *ifp,
+				struct cfg80211_bss_selection *bss_select)
+{
+	struct brcmf_pub *drvr = ifp->drvr;
+	struct brcmf_join_pref_params join_pref_params[2];
+	enum nl80211_band band;
+	int err, i = 0;
 
 	join_pref_params[i].len = 2;
 	join_pref_params[i].rssi_gain = 0;
 
-	अगर (bss_select->behaviour != NL80211_BSS_SELECT_ATTR_BAND_PREF)
-		brcmf_fil_cmd_पूर्णांक_set(अगरp, BRCMF_C_SET_ASSOC_PREFER, WLC_BAND_AUTO);
+	if (bss_select->behaviour != NL80211_BSS_SELECT_ATTR_BAND_PREF)
+		brcmf_fil_cmd_int_set(ifp, BRCMF_C_SET_ASSOC_PREFER, WLC_BAND_AUTO);
 
-	चयन (bss_select->behaviour) अणु
-	हाल __NL80211_BSS_SELECT_ATTR_INVALID:
-		brcmf_c_set_joinpref_शेष(अगरp);
-		वापस;
-	हाल NL80211_BSS_SELECT_ATTR_BAND_PREF:
+	switch (bss_select->behaviour) {
+	case __NL80211_BSS_SELECT_ATTR_INVALID:
+		brcmf_c_set_joinpref_default(ifp);
+		return;
+	case NL80211_BSS_SELECT_ATTR_BAND_PREF:
 		join_pref_params[i].type = BRCMF_JOIN_PREF_BAND;
 		band = bss_select->param.band_pref;
 		join_pref_params[i].band = nl80211_band_to_fwil(band);
 		i++;
-		अवरोध;
-	हाल NL80211_BSS_SELECT_ATTR_RSSI_ADJUST:
+		break;
+	case NL80211_BSS_SELECT_ATTR_RSSI_ADJUST:
 		join_pref_params[i].type = BRCMF_JOIN_PREF_RSSI_DELTA;
 		band = bss_select->param.adjust.band;
 		join_pref_params[i].band = nl80211_band_to_fwil(band);
 		join_pref_params[i].rssi_gain = bss_select->param.adjust.delta;
 		i++;
-		अवरोध;
-	हाल NL80211_BSS_SELECT_ATTR_RSSI:
-	शेष:
-		अवरोध;
-	पूर्ण
+		break;
+	case NL80211_BSS_SELECT_ATTR_RSSI:
+	default:
+		break;
+	}
 	join_pref_params[i].type = BRCMF_JOIN_PREF_RSSI;
 	join_pref_params[i].len = 2;
 	join_pref_params[i].rssi_gain = 0;
 	join_pref_params[i].band = 0;
-	err = brcmf_fil_iovar_data_set(अगरp, "join_pref", join_pref_params,
-				       माप(join_pref_params));
-	अगर (err)
+	err = brcmf_fil_iovar_data_set(ifp, "join_pref", join_pref_params,
+				       sizeof(join_pref_params));
+	if (err)
 		bphy_err(drvr, "Set join_pref error (%d)\n", err);
-पूर्ण
+}
 
-अटल s32
-brcmf_cfg80211_connect(काष्ठा wiphy *wiphy, काष्ठा net_device *ndev,
-		       काष्ठा cfg80211_connect_params *sme)
-अणु
-	काष्ठा brcmf_cfg80211_info *cfg = wiphy_to_cfg(wiphy);
-	काष्ठा brcmf_अगर *अगरp = netdev_priv(ndev);
-	काष्ठा brcmf_cfg80211_profile *profile = &अगरp->vअगर->profile;
-	काष्ठा ieee80211_channel *chan = sme->channel;
-	काष्ठा brcmf_pub *drvr = अगरp->drvr;
-	काष्ठा brcmf_join_params join_params;
-	माप_प्रकार join_params_size;
-	स्थिर काष्ठा brcmf_tlv *rsn_ie;
-	स्थिर काष्ठा brcmf_vs_tlv *wpa_ie;
-	स्थिर व्योम *ie;
+static s32
+brcmf_cfg80211_connect(struct wiphy *wiphy, struct net_device *ndev,
+		       struct cfg80211_connect_params *sme)
+{
+	struct brcmf_cfg80211_info *cfg = wiphy_to_cfg(wiphy);
+	struct brcmf_if *ifp = netdev_priv(ndev);
+	struct brcmf_cfg80211_profile *profile = &ifp->vif->profile;
+	struct ieee80211_channel *chan = sme->channel;
+	struct brcmf_pub *drvr = ifp->drvr;
+	struct brcmf_join_params join_params;
+	size_t join_params_size;
+	const struct brcmf_tlv *rsn_ie;
+	const struct brcmf_vs_tlv *wpa_ie;
+	const void *ie;
 	u32 ie_len;
-	काष्ठा brcmf_ext_join_params_le *ext_join_params;
+	struct brcmf_ext_join_params_le *ext_join_params;
 	u16 chanspec;
 	s32 err = 0;
 	u32 ssid_len;
 
 	brcmf_dbg(TRACE, "Enter\n");
-	अगर (!check_vअगर_up(अगरp->vअगर))
-		वापस -EIO;
+	if (!check_vif_up(ifp->vif))
+		return -EIO;
 
-	अगर (!sme->ssid) अणु
+	if (!sme->ssid) {
 		bphy_err(drvr, "Invalid ssid\n");
-		वापस -EOPNOTSUPP;
-	पूर्ण
+		return -EOPNOTSUPP;
+	}
 
-	अगर (अगरp->vअगर == cfg->p2p.bss_idx[P2PAPI_BSSCFG_PRIMARY].vअगर) अणु
+	if (ifp->vif == cfg->p2p.bss_idx[P2PAPI_BSSCFG_PRIMARY].vif) {
 		/* A normal (non P2P) connection request setup. */
-		ie = शून्य;
+		ie = NULL;
 		ie_len = 0;
 		/* find the WPA_IE */
 		wpa_ie = brcmf_find_wpaie((u8 *)sme->ie, sme->ie_len);
-		अगर (wpa_ie) अणु
+		if (wpa_ie) {
 			ie = wpa_ie;
 			ie_len = wpa_ie->len + TLV_HDR_LEN;
-		पूर्ण अन्यथा अणु
+		} else {
 			/* find the RSN_IE */
-			rsn_ie = brcmf_parse_tlvs((स्थिर u8 *)sme->ie,
+			rsn_ie = brcmf_parse_tlvs((const u8 *)sme->ie,
 						  sme->ie_len,
 						  WLAN_EID_RSN);
-			अगर (rsn_ie) अणु
+			if (rsn_ie) {
 				ie = rsn_ie;
 				ie_len = rsn_ie->len + TLV_HDR_LEN;
-			पूर्ण
-		पूर्ण
-		brcmf_fil_iovar_data_set(अगरp, "wpaie", ie, ie_len);
-	पूर्ण
+			}
+		}
+		brcmf_fil_iovar_data_set(ifp, "wpaie", ie, ie_len);
+	}
 
-	err = brcmf_vअगर_set_mgmt_ie(अगरp->vअगर, BRCMF_VNDR_IE_ASSOCREQ_FLAG,
+	err = brcmf_vif_set_mgmt_ie(ifp->vif, BRCMF_VNDR_IE_ASSOCREQ_FLAG,
 				    sme->ie, sme->ie_len);
-	अगर (err)
+	if (err)
 		bphy_err(drvr, "Set Assoc REQ IE Failed\n");
-	अन्यथा
+	else
 		brcmf_dbg(TRACE, "Applied Vndr IEs for Assoc request\n");
 
-	set_bit(BRCMF_VIF_STATUS_CONNECTING, &अगरp->vअगर->sme_state);
+	set_bit(BRCMF_VIF_STATUS_CONNECTING, &ifp->vif->sme_state);
 
-	अगर (chan) अणु
+	if (chan) {
 		cfg->channel =
 			ieee80211_frequency_to_channel(chan->center_freq);
 		chanspec = channel_to_chanspec(&cfg->d11inf, chan);
 		brcmf_dbg(CONN, "channel=%d, center_req=%d, chanspec=0x%04x\n",
 			  cfg->channel, chan->center_freq, chanspec);
-	पूर्ण अन्यथा अणु
+	} else {
 		cfg->channel = 0;
 		chanspec = 0;
-	पूर्ण
+	}
 
 	brcmf_dbg(INFO, "ie (%p), ie_len (%zd)\n", sme->ie, sme->ie_len);
 
 	err = brcmf_set_wpa_version(ndev, sme);
-	अगर (err) अणु
+	if (err) {
 		bphy_err(drvr, "wl_set_wpa_version failed (%d)\n", err);
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	sme->auth_type = brcmf_war_auth_type(अगरp, sme->auth_type);
+	sme->auth_type = brcmf_war_auth_type(ifp, sme->auth_type);
 	err = brcmf_set_auth_type(ndev, sme);
-	अगर (err) अणु
+	if (err) {
 		bphy_err(drvr, "wl_set_auth_type failed (%d)\n", err);
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
 	err = brcmf_set_wsec_mode(ndev, sme);
-	अगर (err) अणु
+	if (err) {
 		bphy_err(drvr, "wl_set_set_cipher failed (%d)\n", err);
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
 	err = brcmf_set_key_mgmt(ndev, sme);
-	अगर (err) अणु
+	if (err) {
 		bphy_err(drvr, "wl_set_key_mgmt failed (%d)\n", err);
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
 	err = brcmf_set_sharedkey(ndev, sme);
-	अगर (err) अणु
+	if (err) {
 		bphy_err(drvr, "brcmf_set_sharedkey failed (%d)\n", err);
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	अगर (sme->crypto.psk &&
-	    profile->use_fwsup != BRCMF_PROखाता_FWSUP_SAE) अणु
-		अगर (WARN_ON(profile->use_fwsup != BRCMF_PROखाता_FWSUP_NONE)) अणु
+	if (sme->crypto.psk &&
+	    profile->use_fwsup != BRCMF_PROFILE_FWSUP_SAE) {
+		if (WARN_ON(profile->use_fwsup != BRCMF_PROFILE_FWSUP_NONE)) {
 			err = -EINVAL;
-			जाओ करोne;
-		पूर्ण
+			goto done;
+		}
 		brcmf_dbg(INFO, "using PSK offload\n");
-		profile->use_fwsup = BRCMF_PROखाता_FWSUP_PSK;
-	पूर्ण
+		profile->use_fwsup = BRCMF_PROFILE_FWSUP_PSK;
+	}
 
-	अगर (profile->use_fwsup != BRCMF_PROखाता_FWSUP_NONE) अणु
-		/* enable firmware supplicant क्रम this पूर्णांकerface */
-		err = brcmf_fil_iovar_पूर्णांक_set(अगरp, "sup_wpa", 1);
-		अगर (err < 0) अणु
+	if (profile->use_fwsup != BRCMF_PROFILE_FWSUP_NONE) {
+		/* enable firmware supplicant for this interface */
+		err = brcmf_fil_iovar_int_set(ifp, "sup_wpa", 1);
+		if (err < 0) {
 			bphy_err(drvr, "failed to enable fw supplicant\n");
-			जाओ करोne;
-		पूर्ण
-	पूर्ण
+			goto done;
+		}
+	}
 
-	अगर (profile->use_fwsup == BRCMF_PROखाता_FWSUP_PSK)
-		err = brcmf_set_pmk(अगरp, sme->crypto.psk,
+	if (profile->use_fwsup == BRCMF_PROFILE_FWSUP_PSK)
+		err = brcmf_set_pmk(ifp, sme->crypto.psk,
 				    BRCMF_WSEC_MAX_PSK_LEN);
-	अन्यथा अगर (profile->use_fwsup == BRCMF_PROखाता_FWSUP_SAE) अणु
+	else if (profile->use_fwsup == BRCMF_PROFILE_FWSUP_SAE) {
 		/* clean up user-space RSNE */
-		err = brcmf_fil_iovar_data_set(अगरp, "wpaie", शून्य, 0);
-		अगर (err) अणु
+		err = brcmf_fil_iovar_data_set(ifp, "wpaie", NULL, 0);
+		if (err) {
 			bphy_err(drvr, "failed to clean up user-space RSNE\n");
-			जाओ करोne;
-		पूर्ण
-		err = brcmf_set_sae_password(अगरp, sme->crypto.sae_pwd,
+			goto done;
+		}
+		err = brcmf_set_sae_password(ifp, sme->crypto.sae_pwd,
 					     sme->crypto.sae_pwd_len);
-		अगर (!err && sme->crypto.psk)
-			err = brcmf_set_pmk(अगरp, sme->crypto.psk,
+		if (!err && sme->crypto.psk)
+			err = brcmf_set_pmk(ifp, sme->crypto.psk,
 					    BRCMF_WSEC_MAX_PSK_LEN);
-	पूर्ण
-	अगर (err)
-		जाओ करोne;
+	}
+	if (err)
+		goto done;
 
-	/* Join with specअगरic BSSID and cached SSID
+	/* Join with specific BSSID and cached SSID
 	 * If SSID is zero join based on BSSID only
 	 */
-	join_params_size = दुरत्व(काष्ठा brcmf_ext_join_params_le, assoc_le) +
-		दुरत्व(काष्ठा brcmf_assoc_params_le, chanspec_list);
-	अगर (cfg->channel)
-		join_params_size += माप(u16);
+	join_params_size = offsetof(struct brcmf_ext_join_params_le, assoc_le) +
+		offsetof(struct brcmf_assoc_params_le, chanspec_list);
+	if (cfg->channel)
+		join_params_size += sizeof(u16);
 	ext_join_params = kzalloc(join_params_size, GFP_KERNEL);
-	अगर (ext_join_params == शून्य) अणु
+	if (ext_join_params == NULL) {
 		err = -ENOMEM;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 	ssid_len = min_t(u32, sme->ssid_len, IEEE80211_MAX_SSID_LEN);
 	ext_join_params->ssid_le.SSID_len = cpu_to_le32(ssid_len);
-	स_नकल(&ext_join_params->ssid_le.SSID, sme->ssid, ssid_len);
-	अगर (ssid_len < IEEE80211_MAX_SSID_LEN)
+	memcpy(&ext_join_params->ssid_le.SSID, sme->ssid, ssid_len);
+	if (ssid_len < IEEE80211_MAX_SSID_LEN)
 		brcmf_dbg(CONN, "SSID \"%s\", len (%d)\n",
 			  ext_join_params->ssid_le.SSID, ssid_len);
 
 	/* Set up join scan parameters */
 	ext_join_params->scan_le.scan_type = -1;
-	ext_join_params->scan_le.home_समय = cpu_to_le32(-1);
+	ext_join_params->scan_le.home_time = cpu_to_le32(-1);
 
-	अगर (sme->bssid)
-		स_नकल(&ext_join_params->assoc_le.bssid, sme->bssid, ETH_ALEN);
-	अन्यथा
+	if (sme->bssid)
+		memcpy(&ext_join_params->assoc_le.bssid, sme->bssid, ETH_ALEN);
+	else
 		eth_broadcast_addr(ext_join_params->assoc_le.bssid);
 
-	अगर (cfg->channel) अणु
+	if (cfg->channel) {
 		ext_join_params->assoc_le.chanspec_num = cpu_to_le32(1);
 
 		ext_join_params->assoc_le.chanspec_list[0] =
 			cpu_to_le16(chanspec);
-		/* Increase dwell समय to receive probe response or detect
+		/* Increase dwell time to receive probe response or detect
 		 * beacon from target AP at a noisy air only during connect
 		 * command.
 		 */
-		ext_join_params->scan_le.active_समय =
+		ext_join_params->scan_le.active_time =
 			cpu_to_le32(BRCMF_SCAN_JOIN_ACTIVE_DWELL_TIME_MS);
-		ext_join_params->scan_le.passive_समय =
+		ext_join_params->scan_le.passive_time =
 			cpu_to_le32(BRCMF_SCAN_JOIN_PASSIVE_DWELL_TIME_MS);
 		/* To sync with presence period of VSDB GO send probe request
-		 * more frequently. Probe request will be stopped when it माला_लो
+		 * more frequently. Probe request will be stopped when it gets
 		 * probe response from target AP/GO.
 		 */
 		ext_join_params->scan_le.nprobes =
 			cpu_to_le32(BRCMF_SCAN_JOIN_ACTIVE_DWELL_TIME_MS /
 				    BRCMF_SCAN_JOIN_PROBE_INTERVAL_MS);
-	पूर्ण अन्यथा अणु
-		ext_join_params->scan_le.active_समय = cpu_to_le32(-1);
-		ext_join_params->scan_le.passive_समय = cpu_to_le32(-1);
+	} else {
+		ext_join_params->scan_le.active_time = cpu_to_le32(-1);
+		ext_join_params->scan_le.passive_time = cpu_to_le32(-1);
 		ext_join_params->scan_le.nprobes = cpu_to_le32(-1);
-	पूर्ण
+	}
 
-	brcmf_set_join_pref(अगरp, &sme->bss_select);
+	brcmf_set_join_pref(ifp, &sme->bss_select);
 
-	err  = brcmf_fil_bsscfg_data_set(अगरp, "join", ext_join_params,
+	err  = brcmf_fil_bsscfg_data_set(ifp, "join", ext_join_params,
 					 join_params_size);
-	kमुक्त(ext_join_params);
-	अगर (!err)
-		/* This is it. join command worked, we are करोne */
-		जाओ करोne;
+	kfree(ext_join_params);
+	if (!err)
+		/* This is it. join command worked, we are done */
+		goto done;
 
 	/* join command failed, fallback to set ssid */
-	स_रखो(&join_params, 0, माप(join_params));
-	join_params_size = माप(join_params.ssid_le);
+	memset(&join_params, 0, sizeof(join_params));
+	join_params_size = sizeof(join_params.ssid_le);
 
-	स_नकल(&join_params.ssid_le.SSID, sme->ssid, ssid_len);
+	memcpy(&join_params.ssid_le.SSID, sme->ssid, ssid_len);
 	join_params.ssid_le.SSID_len = cpu_to_le32(ssid_len);
 
-	अगर (sme->bssid)
-		स_नकल(join_params.params_le.bssid, sme->bssid, ETH_ALEN);
-	अन्यथा
+	if (sme->bssid)
+		memcpy(join_params.params_le.bssid, sme->bssid, ETH_ALEN);
+	else
 		eth_broadcast_addr(join_params.params_le.bssid);
 
-	अगर (cfg->channel) अणु
+	if (cfg->channel) {
 		join_params.params_le.chanspec_list[0] = cpu_to_le16(chanspec);
 		join_params.params_le.chanspec_num = cpu_to_le32(1);
-		join_params_size += माप(join_params.params_le);
-	पूर्ण
-	err = brcmf_fil_cmd_data_set(अगरp, BRCMF_C_SET_SSID,
+		join_params_size += sizeof(join_params.params_le);
+	}
+	err = brcmf_fil_cmd_data_set(ifp, BRCMF_C_SET_SSID,
 				     &join_params, join_params_size);
-	अगर (err)
+	if (err)
 		bphy_err(drvr, "BRCMF_C_SET_SSID failed (%d)\n", err);
 
-करोne:
-	अगर (err)
-		clear_bit(BRCMF_VIF_STATUS_CONNECTING, &अगरp->vअगर->sme_state);
+done:
+	if (err)
+		clear_bit(BRCMF_VIF_STATUS_CONNECTING, &ifp->vif->sme_state);
 	brcmf_dbg(TRACE, "Exit\n");
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल s32
-brcmf_cfg80211_disconnect(काष्ठा wiphy *wiphy, काष्ठा net_device *ndev,
+static s32
+brcmf_cfg80211_disconnect(struct wiphy *wiphy, struct net_device *ndev,
 		       u16 reason_code)
-अणु
-	काष्ठा brcmf_cfg80211_info *cfg = wiphy_to_cfg(wiphy);
-	काष्ठा brcmf_अगर *अगरp = netdev_priv(ndev);
-	काष्ठा brcmf_cfg80211_profile *profile = &अगरp->vअगर->profile;
-	काष्ठा brcmf_pub *drvr = cfg->pub;
-	काष्ठा brcmf_scb_val_le scbval;
+{
+	struct brcmf_cfg80211_info *cfg = wiphy_to_cfg(wiphy);
+	struct brcmf_if *ifp = netdev_priv(ndev);
+	struct brcmf_cfg80211_profile *profile = &ifp->vif->profile;
+	struct brcmf_pub *drvr = cfg->pub;
+	struct brcmf_scb_val_le scbval;
 	s32 err = 0;
 
 	brcmf_dbg(TRACE, "Enter. Reason code = %d\n", reason_code);
-	अगर (!check_vअगर_up(अगरp->vअगर))
-		वापस -EIO;
+	if (!check_vif_up(ifp->vif))
+		return -EIO;
 
-	clear_bit(BRCMF_VIF_STATUS_CONNECTED, &अगरp->vअगर->sme_state);
-	clear_bit(BRCMF_VIF_STATUS_CONNECTING, &अगरp->vअगर->sme_state);
-	cfg80211_disconnected(ndev, reason_code, शून्य, 0, true, GFP_KERNEL);
+	clear_bit(BRCMF_VIF_STATUS_CONNECTED, &ifp->vif->sme_state);
+	clear_bit(BRCMF_VIF_STATUS_CONNECTING, &ifp->vif->sme_state);
+	cfg80211_disconnected(ndev, reason_code, NULL, 0, true, GFP_KERNEL);
 
-	स_नकल(&scbval.ea, &profile->bssid, ETH_ALEN);
+	memcpy(&scbval.ea, &profile->bssid, ETH_ALEN);
 	scbval.val = cpu_to_le32(reason_code);
-	err = brcmf_fil_cmd_data_set(अगरp, BRCMF_C_DISASSOC,
-				     &scbval, माप(scbval));
-	अगर (err)
+	err = brcmf_fil_cmd_data_set(ifp, BRCMF_C_DISASSOC,
+				     &scbval, sizeof(scbval));
+	if (err)
 		bphy_err(drvr, "error (%d)\n", err);
 
 	brcmf_dbg(TRACE, "Exit\n");
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल s32
-brcmf_cfg80211_set_tx_घातer(काष्ठा wiphy *wiphy, काष्ठा wireless_dev *wdev,
-			    क्रमागत nl80211_tx_घातer_setting type, s32 mbm)
-अणु
-	काष्ठा brcmf_cfg80211_info *cfg = wiphy_to_cfg(wiphy);
-	काष्ठा net_device *ndev = cfg_to_ndev(cfg);
-	काष्ठा brcmf_अगर *अगरp = netdev_priv(ndev);
-	काष्ठा brcmf_pub *drvr = cfg->pub;
+static s32
+brcmf_cfg80211_set_tx_power(struct wiphy *wiphy, struct wireless_dev *wdev,
+			    enum nl80211_tx_power_setting type, s32 mbm)
+{
+	struct brcmf_cfg80211_info *cfg = wiphy_to_cfg(wiphy);
+	struct net_device *ndev = cfg_to_ndev(cfg);
+	struct brcmf_if *ifp = netdev_priv(ndev);
+	struct brcmf_pub *drvr = cfg->pub;
 	s32 err;
 	s32 disable;
 	u32 qdbm = 127;
 
 	brcmf_dbg(TRACE, "Enter %d %d\n", type, mbm);
-	अगर (!check_vअगर_up(अगरp->vअगर))
-		वापस -EIO;
+	if (!check_vif_up(ifp->vif))
+		return -EIO;
 
-	चयन (type) अणु
-	हाल NL80211_TX_POWER_AUTOMATIC:
-		अवरोध;
-	हाल NL80211_TX_POWER_LIMITED:
-	हाल NL80211_TX_POWER_FIXED:
-		अगर (mbm < 0) अणु
+	switch (type) {
+	case NL80211_TX_POWER_AUTOMATIC:
+		break;
+	case NL80211_TX_POWER_LIMITED:
+	case NL80211_TX_POWER_FIXED:
+		if (mbm < 0) {
 			bphy_err(drvr, "TX_POWER_FIXED - dbm is negative\n");
 			err = -EINVAL;
-			जाओ करोne;
-		पूर्ण
+			goto done;
+		}
 		qdbm =  MBM_TO_DBM(4 * mbm);
-		अगर (qdbm > 127)
+		if (qdbm > 127)
 			qdbm = 127;
 		qdbm |= WL_TXPWR_OVERRIDE;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		bphy_err(drvr, "Unsupported type %d\n", type);
 		err = -EINVAL;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 	/* Make sure radio is off or on as far as software is concerned */
 	disable = WL_RADIO_SW_DISABLE << 16;
-	err = brcmf_fil_cmd_पूर्णांक_set(अगरp, BRCMF_C_SET_RADIO, disable);
-	अगर (err)
+	err = brcmf_fil_cmd_int_set(ifp, BRCMF_C_SET_RADIO, disable);
+	if (err)
 		bphy_err(drvr, "WLC_SET_RADIO error (%d)\n", err);
 
-	err = brcmf_fil_iovar_पूर्णांक_set(अगरp, "qtxpower", qdbm);
-	अगर (err)
+	err = brcmf_fil_iovar_int_set(ifp, "qtxpower", qdbm);
+	if (err)
 		bphy_err(drvr, "qtxpower error (%d)\n", err);
 
-करोne:
+done:
 	brcmf_dbg(TRACE, "Exit %d (qdbm)\n", qdbm & ~WL_TXPWR_OVERRIDE);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल s32
-brcmf_cfg80211_get_tx_घातer(काष्ठा wiphy *wiphy, काष्ठा wireless_dev *wdev,
+static s32
+brcmf_cfg80211_get_tx_power(struct wiphy *wiphy, struct wireless_dev *wdev,
 			    s32 *dbm)
-अणु
-	काष्ठा brcmf_cfg80211_info *cfg = wiphy_to_cfg(wiphy);
-	काष्ठा brcmf_cfg80211_vअगर *vअगर = wdev_to_vअगर(wdev);
-	काष्ठा brcmf_pub *drvr = cfg->pub;
+{
+	struct brcmf_cfg80211_info *cfg = wiphy_to_cfg(wiphy);
+	struct brcmf_cfg80211_vif *vif = wdev_to_vif(wdev);
+	struct brcmf_pub *drvr = cfg->pub;
 	s32 qdbm = 0;
 	s32 err;
 
 	brcmf_dbg(TRACE, "Enter\n");
-	अगर (!check_vअगर_up(vअगर))
-		वापस -EIO;
+	if (!check_vif_up(vif))
+		return -EIO;
 
-	err = brcmf_fil_iovar_पूर्णांक_get(vअगर->अगरp, "qtxpower", &qdbm);
-	अगर (err) अणु
+	err = brcmf_fil_iovar_int_get(vif->ifp, "qtxpower", &qdbm);
+	if (err) {
 		bphy_err(drvr, "error (%d)\n", err);
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 	*dbm = (qdbm & ~WL_TXPWR_OVERRIDE) / 4;
 
-करोne:
+done:
 	brcmf_dbg(TRACE, "Exit (0x%x %d)\n", qdbm, *dbm);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल s32
-brcmf_cfg80211_config_शेष_key(काष्ठा wiphy *wiphy, काष्ठा net_device *ndev,
+static s32
+brcmf_cfg80211_config_default_key(struct wiphy *wiphy, struct net_device *ndev,
 				  u8 key_idx, bool unicast, bool multicast)
-अणु
-	काष्ठा brcmf_अगर *अगरp = netdev_priv(ndev);
-	काष्ठा brcmf_pub *drvr = अगरp->drvr;
+{
+	struct brcmf_if *ifp = netdev_priv(ndev);
+	struct brcmf_pub *drvr = ifp->drvr;
 	u32 index;
 	u32 wsec;
 	s32 err = 0;
 
 	brcmf_dbg(TRACE, "Enter\n");
 	brcmf_dbg(CONN, "key index (%d)\n", key_idx);
-	अगर (!check_vअगर_up(अगरp->vअगर))
-		वापस -EIO;
+	if (!check_vif_up(ifp->vif))
+		return -EIO;
 
-	err = brcmf_fil_bsscfg_पूर्णांक_get(अगरp, "wsec", &wsec);
-	अगर (err) अणु
+	err = brcmf_fil_bsscfg_int_get(ifp, "wsec", &wsec);
+	if (err) {
 		bphy_err(drvr, "WLC_GET_WSEC error (%d)\n", err);
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	अगर (wsec & WEP_ENABLED) अणु
+	if (wsec & WEP_ENABLED) {
 		/* Just select a new current key */
 		index = key_idx;
-		err = brcmf_fil_cmd_पूर्णांक_set(अगरp,
+		err = brcmf_fil_cmd_int_set(ifp,
 					    BRCMF_C_SET_KEY_PRIMARY, index);
-		अगर (err)
+		if (err)
 			bphy_err(drvr, "error (%d)\n", err);
-	पूर्ण
-करोne:
+	}
+done:
 	brcmf_dbg(TRACE, "Exit\n");
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल s32
-brcmf_cfg80211_del_key(काष्ठा wiphy *wiphy, काष्ठा net_device *ndev,
-		       u8 key_idx, bool pairwise, स्थिर u8 *mac_addr)
-अणु
-	काष्ठा brcmf_अगर *अगरp = netdev_priv(ndev);
-	काष्ठा brcmf_wsec_key *key;
+static s32
+brcmf_cfg80211_del_key(struct wiphy *wiphy, struct net_device *ndev,
+		       u8 key_idx, bool pairwise, const u8 *mac_addr)
+{
+	struct brcmf_if *ifp = netdev_priv(ndev);
+	struct brcmf_wsec_key *key;
 	s32 err;
 
 	brcmf_dbg(TRACE, "Enter\n");
 	brcmf_dbg(CONN, "key index (%d)\n", key_idx);
 
-	अगर (!check_vअगर_up(अगरp->vअगर))
-		वापस -EIO;
+	if (!check_vif_up(ifp->vif))
+		return -EIO;
 
-	अगर (key_idx >= BRCMF_MAX_DEFAULT_KEYS) अणु
-		/* we ignore this key index in this हाल */
-		वापस -EINVAL;
-	पूर्ण
+	if (key_idx >= BRCMF_MAX_DEFAULT_KEYS) {
+		/* we ignore this key index in this case */
+		return -EINVAL;
+	}
 
-	key = &अगरp->vअगर->profile.key[key_idx];
+	key = &ifp->vif->profile.key[key_idx];
 
-	अगर (key->algo == CRYPTO_ALGO_OFF) अणु
+	if (key->algo == CRYPTO_ALGO_OFF) {
 		brcmf_dbg(CONN, "Ignore clearing of (never configured) key\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	स_रखो(key, 0, माप(*key));
+	memset(key, 0, sizeof(*key));
 	key->index = (u32)key_idx;
 	key->flags = BRCMF_PRIMARY_KEY;
 
 	/* Clear the key/index */
-	err = send_key_to_करोngle(अगरp, key);
+	err = send_key_to_dongle(ifp, key);
 
 	brcmf_dbg(TRACE, "Exit\n");
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल s32
-brcmf_cfg80211_add_key(काष्ठा wiphy *wiphy, काष्ठा net_device *ndev,
-		       u8 key_idx, bool pairwise, स्थिर u8 *mac_addr,
-		       काष्ठा key_params *params)
-अणु
-	काष्ठा brcmf_cfg80211_info *cfg = wiphy_to_cfg(wiphy);
-	काष्ठा brcmf_अगर *अगरp = netdev_priv(ndev);
-	काष्ठा brcmf_pub *drvr = cfg->pub;
-	काष्ठा brcmf_wsec_key *key;
+static s32
+brcmf_cfg80211_add_key(struct wiphy *wiphy, struct net_device *ndev,
+		       u8 key_idx, bool pairwise, const u8 *mac_addr,
+		       struct key_params *params)
+{
+	struct brcmf_cfg80211_info *cfg = wiphy_to_cfg(wiphy);
+	struct brcmf_if *ifp = netdev_priv(ndev);
+	struct brcmf_pub *drvr = cfg->pub;
+	struct brcmf_wsec_key *key;
 	s32 val;
 	s32 wsec;
 	s32 err;
@@ -2439,42 +2438,42 @@ brcmf_cfg80211_add_key(काष्ठा wiphy *wiphy, काष्ठा net_d
 
 	brcmf_dbg(TRACE, "Enter\n");
 	brcmf_dbg(CONN, "key index (%d)\n", key_idx);
-	अगर (!check_vअगर_up(अगरp->vअगर))
-		वापस -EIO;
+	if (!check_vif_up(ifp->vif))
+		return -EIO;
 
-	अगर (key_idx >= BRCMF_MAX_DEFAULT_KEYS) अणु
-		/* we ignore this key index in this हाल */
+	if (key_idx >= BRCMF_MAX_DEFAULT_KEYS) {
+		/* we ignore this key index in this case */
 		bphy_err(drvr, "invalid key index (%d)\n", key_idx);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (params->key_len == 0)
-		वापस brcmf_cfg80211_del_key(wiphy, ndev, key_idx, pairwise,
+	if (params->key_len == 0)
+		return brcmf_cfg80211_del_key(wiphy, ndev, key_idx, pairwise,
 					      mac_addr);
 
-	अगर (params->key_len > माप(key->data)) अणु
+	if (params->key_len > sizeof(key->data)) {
 		bphy_err(drvr, "Too long key length (%u)\n", params->key_len);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	ext_key = false;
-	अगर (mac_addr && (params->cipher != WLAN_CIPHER_SUITE_WEP40) &&
-	    (params->cipher != WLAN_CIPHER_SUITE_WEP104)) अणु
+	if (mac_addr && (params->cipher != WLAN_CIPHER_SUITE_WEP40) &&
+	    (params->cipher != WLAN_CIPHER_SUITE_WEP104)) {
 		brcmf_dbg(TRACE, "Ext key, mac %pM", mac_addr);
 		ext_key = true;
-	पूर्ण
+	}
 
-	key = &अगरp->vअगर->profile.key[key_idx];
-	स_रखो(key, 0, माप(*key));
-	अगर ((ext_key) && (!is_multicast_ether_addr(mac_addr)))
-		स_नकल((अक्षर *)&key->ea, (व्योम *)mac_addr, ETH_ALEN);
+	key = &ifp->vif->profile.key[key_idx];
+	memset(key, 0, sizeof(*key));
+	if ((ext_key) && (!is_multicast_ether_addr(mac_addr)))
+		memcpy((char *)&key->ea, (void *)mac_addr, ETH_ALEN);
 	key->len = params->key_len;
 	key->index = key_idx;
-	स_नकल(key->data, params->key, key->len);
-	अगर (!ext_key)
+	memcpy(key->data, params->key, key->len);
+	if (!ext_key)
 		key->flags = BRCMF_PRIMARY_KEY;
 
-	अगर (params->seq && params->seq_len == 6) अणु
+	if (params->seq && params->seq_len == 6) {
 		/* rx iv */
 		u8 *ivptr;
 
@@ -2483,176 +2482,176 @@ brcmf_cfg80211_add_key(काष्ठा wiphy *wiphy, काष्ठा net_d
 			(ivptr[3] << 8) | ivptr[2];
 		key->rxiv.lo = (ivptr[1] << 8) | ivptr[0];
 		key->iv_initialized = true;
-	पूर्ण
+	}
 
-	चयन (params->cipher) अणु
-	हाल WLAN_CIPHER_SUITE_WEP40:
+	switch (params->cipher) {
+	case WLAN_CIPHER_SUITE_WEP40:
 		key->algo = CRYPTO_ALGO_WEP1;
 		val = WEP_ENABLED;
 		brcmf_dbg(CONN, "WLAN_CIPHER_SUITE_WEP40\n");
-		अवरोध;
-	हाल WLAN_CIPHER_SUITE_WEP104:
+		break;
+	case WLAN_CIPHER_SUITE_WEP104:
 		key->algo = CRYPTO_ALGO_WEP128;
 		val = WEP_ENABLED;
 		brcmf_dbg(CONN, "WLAN_CIPHER_SUITE_WEP104\n");
-		अवरोध;
-	हाल WLAN_CIPHER_SUITE_TKIP:
-		अगर (!brcmf_is_apmode(अगरp->vअगर)) अणु
+		break;
+	case WLAN_CIPHER_SUITE_TKIP:
+		if (!brcmf_is_apmode(ifp->vif)) {
 			brcmf_dbg(CONN, "Swapping RX/TX MIC key\n");
-			स_नकल(keybuf, &key->data[24], माप(keybuf));
-			स_नकल(&key->data[24], &key->data[16], माप(keybuf));
-			स_नकल(&key->data[16], keybuf, माप(keybuf));
-		पूर्ण
+			memcpy(keybuf, &key->data[24], sizeof(keybuf));
+			memcpy(&key->data[24], &key->data[16], sizeof(keybuf));
+			memcpy(&key->data[16], keybuf, sizeof(keybuf));
+		}
 		key->algo = CRYPTO_ALGO_TKIP;
 		val = TKIP_ENABLED;
 		brcmf_dbg(CONN, "WLAN_CIPHER_SUITE_TKIP\n");
-		अवरोध;
-	हाल WLAN_CIPHER_SUITE_AES_CMAC:
+		break;
+	case WLAN_CIPHER_SUITE_AES_CMAC:
 		key->algo = CRYPTO_ALGO_AES_CCM;
 		val = AES_ENABLED;
 		brcmf_dbg(CONN, "WLAN_CIPHER_SUITE_AES_CMAC\n");
-		अवरोध;
-	हाल WLAN_CIPHER_SUITE_CCMP:
+		break;
+	case WLAN_CIPHER_SUITE_CCMP:
 		key->algo = CRYPTO_ALGO_AES_CCM;
 		val = AES_ENABLED;
 		brcmf_dbg(CONN, "WLAN_CIPHER_SUITE_CCMP\n");
-		अवरोध;
-	शेष:
+		break;
+	default:
 		bphy_err(drvr, "Invalid cipher (0x%x)\n", params->cipher);
 		err = -EINVAL;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	err = send_key_to_करोngle(अगरp, key);
-	अगर (ext_key || err)
-		जाओ करोne;
+	err = send_key_to_dongle(ifp, key);
+	if (ext_key || err)
+		goto done;
 
-	err = brcmf_fil_bsscfg_पूर्णांक_get(अगरp, "wsec", &wsec);
-	अगर (err) अणु
+	err = brcmf_fil_bsscfg_int_get(ifp, "wsec", &wsec);
+	if (err) {
 		bphy_err(drvr, "get wsec error (%d)\n", err);
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 	wsec |= val;
-	err = brcmf_fil_bsscfg_पूर्णांक_set(अगरp, "wsec", wsec);
-	अगर (err) अणु
+	err = brcmf_fil_bsscfg_int_set(ifp, "wsec", wsec);
+	if (err) {
 		bphy_err(drvr, "set wsec error (%d)\n", err);
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-करोne:
+done:
 	brcmf_dbg(TRACE, "Exit\n");
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल s32
-brcmf_cfg80211_get_key(काष्ठा wiphy *wiphy, काष्ठा net_device *ndev, u8 key_idx,
-		       bool pairwise, स्थिर u8 *mac_addr, व्योम *cookie,
-		       व्योम (*callback)(व्योम *cookie,
-					काष्ठा key_params *params))
-अणु
-	काष्ठा brcmf_cfg80211_info *cfg = wiphy_to_cfg(wiphy);
-	काष्ठा key_params params;
-	काष्ठा brcmf_अगर *अगरp = netdev_priv(ndev);
-	काष्ठा brcmf_cfg80211_profile *profile = &अगरp->vअगर->profile;
-	काष्ठा brcmf_pub *drvr = cfg->pub;
-	काष्ठा brcmf_cfg80211_security *sec;
+static s32
+brcmf_cfg80211_get_key(struct wiphy *wiphy, struct net_device *ndev, u8 key_idx,
+		       bool pairwise, const u8 *mac_addr, void *cookie,
+		       void (*callback)(void *cookie,
+					struct key_params *params))
+{
+	struct brcmf_cfg80211_info *cfg = wiphy_to_cfg(wiphy);
+	struct key_params params;
+	struct brcmf_if *ifp = netdev_priv(ndev);
+	struct brcmf_cfg80211_profile *profile = &ifp->vif->profile;
+	struct brcmf_pub *drvr = cfg->pub;
+	struct brcmf_cfg80211_security *sec;
 	s32 wsec;
 	s32 err = 0;
 
 	brcmf_dbg(TRACE, "Enter\n");
 	brcmf_dbg(CONN, "key index (%d)\n", key_idx);
-	अगर (!check_vअगर_up(अगरp->vअगर))
-		वापस -EIO;
+	if (!check_vif_up(ifp->vif))
+		return -EIO;
 
-	स_रखो(&params, 0, माप(params));
+	memset(&params, 0, sizeof(params));
 
-	err = brcmf_fil_bsscfg_पूर्णांक_get(अगरp, "wsec", &wsec);
-	अगर (err) अणु
+	err = brcmf_fil_bsscfg_int_get(ifp, "wsec", &wsec);
+	if (err) {
 		bphy_err(drvr, "WLC_GET_WSEC error (%d)\n", err);
 		/* Ignore this error, may happen during DISASSOC */
 		err = -EAGAIN;
-		जाओ करोne;
-	पूर्ण
-	अगर (wsec & WEP_ENABLED) अणु
+		goto done;
+	}
+	if (wsec & WEP_ENABLED) {
 		sec = &profile->sec;
-		अगर (sec->cipher_pairwise & WLAN_CIPHER_SUITE_WEP40) अणु
+		if (sec->cipher_pairwise & WLAN_CIPHER_SUITE_WEP40) {
 			params.cipher = WLAN_CIPHER_SUITE_WEP40;
 			brcmf_dbg(CONN, "WLAN_CIPHER_SUITE_WEP40\n");
-		पूर्ण अन्यथा अगर (sec->cipher_pairwise & WLAN_CIPHER_SUITE_WEP104) अणु
+		} else if (sec->cipher_pairwise & WLAN_CIPHER_SUITE_WEP104) {
 			params.cipher = WLAN_CIPHER_SUITE_WEP104;
 			brcmf_dbg(CONN, "WLAN_CIPHER_SUITE_WEP104\n");
-		पूर्ण
-	पूर्ण अन्यथा अगर (wsec & TKIP_ENABLED) अणु
+		}
+	} else if (wsec & TKIP_ENABLED) {
 		params.cipher = WLAN_CIPHER_SUITE_TKIP;
 		brcmf_dbg(CONN, "WLAN_CIPHER_SUITE_TKIP\n");
-	पूर्ण अन्यथा अगर (wsec & AES_ENABLED) अणु
+	} else if (wsec & AES_ENABLED) {
 		params.cipher = WLAN_CIPHER_SUITE_AES_CMAC;
 		brcmf_dbg(CONN, "WLAN_CIPHER_SUITE_AES_CMAC\n");
-	पूर्ण अन्यथा  अणु
+	} else  {
 		bphy_err(drvr, "Invalid algo (0x%x)\n", wsec);
 		err = -EINVAL;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 	callback(cookie, &params);
 
-करोne:
+done:
 	brcmf_dbg(TRACE, "Exit\n");
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल s32
-brcmf_cfg80211_config_शेष_mgmt_key(काष्ठा wiphy *wiphy,
-				       काष्ठा net_device *ndev, u8 key_idx)
-अणु
-	काष्ठा brcmf_अगर *अगरp = netdev_priv(ndev);
+static s32
+brcmf_cfg80211_config_default_mgmt_key(struct wiphy *wiphy,
+				       struct net_device *ndev, u8 key_idx)
+{
+	struct brcmf_if *ifp = netdev_priv(ndev);
 
 	brcmf_dbg(TRACE, "Enter key_idx %d\n", key_idx);
 
-	अगर (brcmf_feat_is_enabled(अगरp, BRCMF_FEAT_MFP))
-		वापस 0;
+	if (brcmf_feat_is_enabled(ifp, BRCMF_FEAT_MFP))
+		return 0;
 
 	brcmf_dbg(INFO, "Not supported\n");
 
-	वापस -EOPNOTSUPP;
-पूर्ण
+	return -EOPNOTSUPP;
+}
 
-अटल व्योम
-brcmf_cfg80211_reconfigure_wep(काष्ठा brcmf_अगर *अगरp)
-अणु
-	काष्ठा brcmf_pub *drvr = अगरp->drvr;
+static void
+brcmf_cfg80211_reconfigure_wep(struct brcmf_if *ifp)
+{
+	struct brcmf_pub *drvr = ifp->drvr;
 	s32 err;
 	u8 key_idx;
-	काष्ठा brcmf_wsec_key *key;
+	struct brcmf_wsec_key *key;
 	s32 wsec;
 
-	क्रम (key_idx = 0; key_idx < BRCMF_MAX_DEFAULT_KEYS; key_idx++) अणु
-		key = &अगरp->vअगर->profile.key[key_idx];
-		अगर ((key->algo == CRYPTO_ALGO_WEP1) ||
+	for (key_idx = 0; key_idx < BRCMF_MAX_DEFAULT_KEYS; key_idx++) {
+		key = &ifp->vif->profile.key[key_idx];
+		if ((key->algo == CRYPTO_ALGO_WEP1) ||
 		    (key->algo == CRYPTO_ALGO_WEP128))
-			अवरोध;
-	पूर्ण
-	अगर (key_idx == BRCMF_MAX_DEFAULT_KEYS)
-		वापस;
+			break;
+	}
+	if (key_idx == BRCMF_MAX_DEFAULT_KEYS)
+		return;
 
-	err = send_key_to_करोngle(अगरp, key);
-	अगर (err) अणु
+	err = send_key_to_dongle(ifp, key);
+	if (err) {
 		bphy_err(drvr, "Setting WEP key failed (%d)\n", err);
-		वापस;
-	पूर्ण
-	err = brcmf_fil_bsscfg_पूर्णांक_get(अगरp, "wsec", &wsec);
-	अगर (err) अणु
+		return;
+	}
+	err = brcmf_fil_bsscfg_int_get(ifp, "wsec", &wsec);
+	if (err) {
 		bphy_err(drvr, "get wsec error (%d)\n", err);
-		वापस;
-	पूर्ण
+		return;
+	}
 	wsec |= WEP_ENABLED;
-	err = brcmf_fil_bsscfg_पूर्णांक_set(अगरp, "wsec", wsec);
-	अगर (err)
+	err = brcmf_fil_bsscfg_int_set(ifp, "wsec", wsec);
+	if (err)
 		bphy_err(drvr, "set wsec error (%d)\n", err);
-पूर्ण
+}
 
-अटल व्योम brcmf_convert_sta_flags(u32 fw_sta_flags, काष्ठा station_info *si)
-अणु
-	काष्ठा nl80211_sta_flag_update *sfu;
+static void brcmf_convert_sta_flags(u32 fw_sta_flags, struct station_info *si)
+{
+	struct nl80211_sta_flag_update *sfu;
 
 	brcmf_dbg(TRACE, "flags %08x\n", fw_sta_flags);
 	si->filled |= BIT_ULL(NL80211_STA_INFO_STA_FLAGS);
@@ -2661,89 +2660,89 @@ brcmf_cfg80211_reconfigure_wep(काष्ठा brcmf_अगर *अगरp)
 		    BIT(NL80211_STA_FLAG_AUTHENTICATED) |
 		    BIT(NL80211_STA_FLAG_ASSOCIATED) |
 		    BIT(NL80211_STA_FLAG_AUTHORIZED);
-	अगर (fw_sta_flags & BRCMF_STA_WME)
+	if (fw_sta_flags & BRCMF_STA_WME)
 		sfu->set |= BIT(NL80211_STA_FLAG_WME);
-	अगर (fw_sta_flags & BRCMF_STA_AUTHE)
+	if (fw_sta_flags & BRCMF_STA_AUTHE)
 		sfu->set |= BIT(NL80211_STA_FLAG_AUTHENTICATED);
-	अगर (fw_sta_flags & BRCMF_STA_ASSOC)
+	if (fw_sta_flags & BRCMF_STA_ASSOC)
 		sfu->set |= BIT(NL80211_STA_FLAG_ASSOCIATED);
-	अगर (fw_sta_flags & BRCMF_STA_AUTHO)
+	if (fw_sta_flags & BRCMF_STA_AUTHO)
 		sfu->set |= BIT(NL80211_STA_FLAG_AUTHORIZED);
-पूर्ण
+}
 
-अटल व्योम brcmf_fill_bss_param(काष्ठा brcmf_अगर *अगरp, काष्ठा station_info *si)
-अणु
-	काष्ठा brcmf_pub *drvr = अगरp->drvr;
-	काष्ठा अणु
+static void brcmf_fill_bss_param(struct brcmf_if *ifp, struct station_info *si)
+{
+	struct brcmf_pub *drvr = ifp->drvr;
+	struct {
 		__le32 len;
-		काष्ठा brcmf_bss_info_le bss_le;
-	पूर्ण *buf;
+		struct brcmf_bss_info_le bss_le;
+	} *buf;
 	u16 capability;
-	पूर्णांक err;
+	int err;
 
 	buf = kzalloc(WL_BSS_INFO_MAX, GFP_KERNEL);
-	अगर (!buf)
-		वापस;
+	if (!buf)
+		return;
 
 	buf->len = cpu_to_le32(WL_BSS_INFO_MAX);
-	err = brcmf_fil_cmd_data_get(अगरp, BRCMF_C_GET_BSS_INFO, buf,
+	err = brcmf_fil_cmd_data_get(ifp, BRCMF_C_GET_BSS_INFO, buf,
 				     WL_BSS_INFO_MAX);
-	अगर (err) अणु
+	if (err) {
 		bphy_err(drvr, "Failed to get bss info (%d)\n", err);
-		जाओ out_kमुक्त;
-	पूर्ण
+		goto out_kfree;
+	}
 	si->filled |= BIT_ULL(NL80211_STA_INFO_BSS_PARAM);
-	si->bss_param.beacon_पूर्णांकerval = le16_to_cpu(buf->bss_le.beacon_period);
+	si->bss_param.beacon_interval = le16_to_cpu(buf->bss_le.beacon_period);
 	si->bss_param.dtim_period = buf->bss_le.dtim_period;
 	capability = le16_to_cpu(buf->bss_le.capability);
-	अगर (capability & IEEE80211_HT_STBC_PARAM_DUAL_CTS_PROT)
+	if (capability & IEEE80211_HT_STBC_PARAM_DUAL_CTS_PROT)
 		si->bss_param.flags |= BSS_PARAM_FLAGS_CTS_PROT;
-	अगर (capability & WLAN_CAPABILITY_SHORT_PREAMBLE)
+	if (capability & WLAN_CAPABILITY_SHORT_PREAMBLE)
 		si->bss_param.flags |= BSS_PARAM_FLAGS_SHORT_PREAMBLE;
-	अगर (capability & WLAN_CAPABILITY_SHORT_SLOT_TIME)
+	if (capability & WLAN_CAPABILITY_SHORT_SLOT_TIME)
 		si->bss_param.flags |= BSS_PARAM_FLAGS_SHORT_SLOT_TIME;
 
-out_kमुक्त:
-	kमुक्त(buf);
-पूर्ण
+out_kfree:
+	kfree(buf);
+}
 
-अटल s32
-brcmf_cfg80211_get_station_ibss(काष्ठा brcmf_अगर *अगरp,
-				काष्ठा station_info *sinfo)
-अणु
-	काष्ठा brcmf_pub *drvr = अगरp->drvr;
-	काष्ठा brcmf_scb_val_le scbval;
-	काष्ठा brcmf_pktcnt_le pktcnt;
+static s32
+brcmf_cfg80211_get_station_ibss(struct brcmf_if *ifp,
+				struct station_info *sinfo)
+{
+	struct brcmf_pub *drvr = ifp->drvr;
+	struct brcmf_scb_val_le scbval;
+	struct brcmf_pktcnt_le pktcnt;
 	s32 err;
 	u32 rate;
 	u32 rssi;
 
 	/* Get the current tx rate */
-	err = brcmf_fil_cmd_पूर्णांक_get(अगरp, BRCMF_C_GET_RATE, &rate);
-	अगर (err < 0) अणु
+	err = brcmf_fil_cmd_int_get(ifp, BRCMF_C_GET_RATE, &rate);
+	if (err < 0) {
 		bphy_err(drvr, "BRCMF_C_GET_RATE error (%d)\n", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 	sinfo->filled |= BIT_ULL(NL80211_STA_INFO_TX_BITRATE);
 	sinfo->txrate.legacy = rate * 5;
 
-	स_रखो(&scbval, 0, माप(scbval));
-	err = brcmf_fil_cmd_data_get(अगरp, BRCMF_C_GET_RSSI, &scbval,
-				     माप(scbval));
-	अगर (err) अणु
+	memset(&scbval, 0, sizeof(scbval));
+	err = brcmf_fil_cmd_data_get(ifp, BRCMF_C_GET_RSSI, &scbval,
+				     sizeof(scbval));
+	if (err) {
 		bphy_err(drvr, "BRCMF_C_GET_RSSI error (%d)\n", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 	rssi = le32_to_cpu(scbval.val);
 	sinfo->filled |= BIT_ULL(NL80211_STA_INFO_SIGNAL);
-	sinfo->संकेत = rssi;
+	sinfo->signal = rssi;
 
-	err = brcmf_fil_cmd_data_get(अगरp, BRCMF_C_GET_GET_PKTCNTS, &pktcnt,
-				     माप(pktcnt));
-	अगर (err) अणु
+	err = brcmf_fil_cmd_data_get(ifp, BRCMF_C_GET_GET_PKTCNTS, &pktcnt,
+				     sizeof(pktcnt));
+	if (err) {
 		bphy_err(drvr, "BRCMF_C_GET_GET_PKTCNTS error (%d)\n", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 	sinfo->filled |= BIT_ULL(NL80211_STA_INFO_RX_PACKETS) |
 			 BIT_ULL(NL80211_STA_INFO_RX_DROP_MISC) |
 			 BIT_ULL(NL80211_STA_INFO_TX_PACKETS) |
@@ -2753,64 +2752,64 @@ brcmf_cfg80211_get_station_ibss(काष्ठा brcmf_अगर *अगरp,
 	sinfo->tx_packets = le32_to_cpu(pktcnt.tx_good_pkt);
 	sinfo->tx_failed  = le32_to_cpu(pktcnt.tx_bad_pkt);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल s32
-brcmf_cfg80211_get_station(काष्ठा wiphy *wiphy, काष्ठा net_device *ndev,
-			   स्थिर u8 *mac, काष्ठा station_info *sinfo)
-अणु
-	काष्ठा brcmf_cfg80211_info *cfg = wiphy_to_cfg(wiphy);
-	काष्ठा brcmf_अगर *अगरp = netdev_priv(ndev);
-	काष्ठा brcmf_pub *drvr = cfg->pub;
-	काष्ठा brcmf_scb_val_le scb_val;
+static s32
+brcmf_cfg80211_get_station(struct wiphy *wiphy, struct net_device *ndev,
+			   const u8 *mac, struct station_info *sinfo)
+{
+	struct brcmf_cfg80211_info *cfg = wiphy_to_cfg(wiphy);
+	struct brcmf_if *ifp = netdev_priv(ndev);
+	struct brcmf_pub *drvr = cfg->pub;
+	struct brcmf_scb_val_le scb_val;
 	s32 err = 0;
-	काष्ठा brcmf_sta_info_le sta_info_le;
+	struct brcmf_sta_info_le sta_info_le;
 	u32 sta_flags;
 	u32 is_tdls_peer;
 	s32 total_rssi;
 	s32 count_rssi;
-	पूर्णांक rssi;
+	int rssi;
 	u32 i;
 
 	brcmf_dbg(TRACE, "Enter, MAC %pM\n", mac);
-	अगर (!check_vअगर_up(अगरp->vअगर))
-		वापस -EIO;
+	if (!check_vif_up(ifp->vif))
+		return -EIO;
 
-	अगर (brcmf_is_ibssmode(अगरp->vअगर))
-		वापस brcmf_cfg80211_get_station_ibss(अगरp, sinfo);
+	if (brcmf_is_ibssmode(ifp->vif))
+		return brcmf_cfg80211_get_station_ibss(ifp, sinfo);
 
-	स_रखो(&sta_info_le, 0, माप(sta_info_le));
-	स_नकल(&sta_info_le, mac, ETH_ALEN);
-	err = brcmf_fil_iovar_data_get(अगरp, "tdls_sta_info",
+	memset(&sta_info_le, 0, sizeof(sta_info_le));
+	memcpy(&sta_info_le, mac, ETH_ALEN);
+	err = brcmf_fil_iovar_data_get(ifp, "tdls_sta_info",
 				       &sta_info_le,
-				       माप(sta_info_le));
+				       sizeof(sta_info_le));
 	is_tdls_peer = !err;
-	अगर (err) अणु
-		err = brcmf_fil_iovar_data_get(अगरp, "sta_info",
+	if (err) {
+		err = brcmf_fil_iovar_data_get(ifp, "sta_info",
 					       &sta_info_le,
-					       माप(sta_info_le));
-		अगर (err < 0) अणु
+					       sizeof(sta_info_le));
+		if (err < 0) {
 			bphy_err(drvr, "GET STA INFO failed, %d\n", err);
-			जाओ करोne;
-		पूर्ण
-	पूर्ण
+			goto done;
+		}
+	}
 	brcmf_dbg(TRACE, "version %d\n", le16_to_cpu(sta_info_le.ver));
 	sinfo->filled = BIT_ULL(NL80211_STA_INFO_INACTIVE_TIME);
-	sinfo->inactive_समय = le32_to_cpu(sta_info_le.idle) * 1000;
+	sinfo->inactive_time = le32_to_cpu(sta_info_le.idle) * 1000;
 	sta_flags = le32_to_cpu(sta_info_le.flags);
 	brcmf_convert_sta_flags(sta_flags, sinfo);
 	sinfo->sta_flags.mask |= BIT(NL80211_STA_FLAG_TDLS_PEER);
-	अगर (is_tdls_peer)
+	if (is_tdls_peer)
 		sinfo->sta_flags.set |= BIT(NL80211_STA_FLAG_TDLS_PEER);
-	अन्यथा
+	else
 		sinfo->sta_flags.set &= ~BIT(NL80211_STA_FLAG_TDLS_PEER);
-	अगर (sta_flags & BRCMF_STA_ASSOC) अणु
+	if (sta_flags & BRCMF_STA_ASSOC) {
 		sinfo->filled |= BIT_ULL(NL80211_STA_INFO_CONNECTED_TIME);
-		sinfo->connected_समय = le32_to_cpu(sta_info_le.in);
-		brcmf_fill_bss_param(अगरp, sinfo);
-	पूर्ण
-	अगर (sta_flags & BRCMF_STA_SCBSTATS) अणु
+		sinfo->connected_time = le32_to_cpu(sta_info_le.in);
+		brcmf_fill_bss_param(ifp, sinfo);
+	}
+	if (sta_flags & BRCMF_STA_SCBSTATS) {
 		sinfo->filled |= BIT_ULL(NL80211_STA_INFO_TX_FAILED);
 		sinfo->tx_failed = le32_to_cpu(sta_info_le.tx_failures);
 		sinfo->filled |= BIT_ULL(NL80211_STA_INFO_TX_PACKETS);
@@ -2819,697 +2818,697 @@ brcmf_cfg80211_get_station(काष्ठा wiphy *wiphy, काष्ठा n
 		sinfo->filled |= BIT_ULL(NL80211_STA_INFO_RX_PACKETS);
 		sinfo->rx_packets = le32_to_cpu(sta_info_le.rx_ucast_pkts);
 		sinfo->rx_packets += le32_to_cpu(sta_info_le.rx_mcast_pkts);
-		अगर (sinfo->tx_packets) अणु
+		if (sinfo->tx_packets) {
 			sinfo->filled |= BIT_ULL(NL80211_STA_INFO_TX_BITRATE);
 			sinfo->txrate.legacy =
 				le32_to_cpu(sta_info_le.tx_rate) / 100;
-		पूर्ण
-		अगर (sinfo->rx_packets) अणु
+		}
+		if (sinfo->rx_packets) {
 			sinfo->filled |= BIT_ULL(NL80211_STA_INFO_RX_BITRATE);
 			sinfo->rxrate.legacy =
 				le32_to_cpu(sta_info_le.rx_rate) / 100;
-		पूर्ण
-		अगर (le16_to_cpu(sta_info_le.ver) >= 4) अणु
+		}
+		if (le16_to_cpu(sta_info_le.ver) >= 4) {
 			sinfo->filled |= BIT_ULL(NL80211_STA_INFO_TX_BYTES);
 			sinfo->tx_bytes = le64_to_cpu(sta_info_le.tx_tot_bytes);
 			sinfo->filled |= BIT_ULL(NL80211_STA_INFO_RX_BYTES);
 			sinfo->rx_bytes = le64_to_cpu(sta_info_le.rx_tot_bytes);
-		पूर्ण
+		}
 		total_rssi = 0;
 		count_rssi = 0;
-		क्रम (i = 0; i < BRCMF_ANT_MAX; i++) अणु
-			अगर (sta_info_le.rssi[i]) अणु
-				sinfo->chain_संकेत_avg[count_rssi] =
+		for (i = 0; i < BRCMF_ANT_MAX; i++) {
+			if (sta_info_le.rssi[i]) {
+				sinfo->chain_signal_avg[count_rssi] =
 					sta_info_le.rssi[i];
-				sinfo->chain_संकेत[count_rssi] =
+				sinfo->chain_signal[count_rssi] =
 					sta_info_le.rssi[i];
 				total_rssi += sta_info_le.rssi[i];
 				count_rssi++;
-			पूर्ण
-		पूर्ण
-		अगर (count_rssi) अणु
+			}
+		}
+		if (count_rssi) {
 			sinfo->filled |= BIT_ULL(NL80211_STA_INFO_CHAIN_SIGNAL);
 			sinfo->chains = count_rssi;
 
 			sinfo->filled |= BIT_ULL(NL80211_STA_INFO_SIGNAL);
 			total_rssi /= count_rssi;
-			sinfo->संकेत = total_rssi;
-		पूर्ण अन्यथा अगर (test_bit(BRCMF_VIF_STATUS_CONNECTED,
-			&अगरp->vअगर->sme_state)) अणु
-			स_रखो(&scb_val, 0, माप(scb_val));
-			err = brcmf_fil_cmd_data_get(अगरp, BRCMF_C_GET_RSSI,
-						     &scb_val, माप(scb_val));
-			अगर (err) अणु
+			sinfo->signal = total_rssi;
+		} else if (test_bit(BRCMF_VIF_STATUS_CONNECTED,
+			&ifp->vif->sme_state)) {
+			memset(&scb_val, 0, sizeof(scb_val));
+			err = brcmf_fil_cmd_data_get(ifp, BRCMF_C_GET_RSSI,
+						     &scb_val, sizeof(scb_val));
+			if (err) {
 				bphy_err(drvr, "Could not get rssi (%d)\n",
 					 err);
-				जाओ करोne;
-			पूर्ण अन्यथा अणु
+				goto done;
+			} else {
 				rssi = le32_to_cpu(scb_val.val);
 				sinfo->filled |= BIT_ULL(NL80211_STA_INFO_SIGNAL);
-				sinfo->संकेत = rssi;
+				sinfo->signal = rssi;
 				brcmf_dbg(CONN, "RSSI %d dBm\n", rssi);
-			पूर्ण
-		पूर्ण
-	पूर्ण
-करोne:
+			}
+		}
+	}
+done:
 	brcmf_dbg(TRACE, "Exit\n");
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक
-brcmf_cfg80211_dump_station(काष्ठा wiphy *wiphy, काष्ठा net_device *ndev,
-			    पूर्णांक idx, u8 *mac, काष्ठा station_info *sinfo)
-अणु
-	काष्ठा brcmf_cfg80211_info *cfg = wiphy_to_cfg(wiphy);
-	काष्ठा brcmf_अगर *अगरp = netdev_priv(ndev);
-	काष्ठा brcmf_pub *drvr = cfg->pub;
+static int
+brcmf_cfg80211_dump_station(struct wiphy *wiphy, struct net_device *ndev,
+			    int idx, u8 *mac, struct station_info *sinfo)
+{
+	struct brcmf_cfg80211_info *cfg = wiphy_to_cfg(wiphy);
+	struct brcmf_if *ifp = netdev_priv(ndev);
+	struct brcmf_pub *drvr = cfg->pub;
 	s32 err;
 
 	brcmf_dbg(TRACE, "Enter, idx %d\n", idx);
 
-	अगर (idx == 0) अणु
+	if (idx == 0) {
 		cfg->assoclist.count = cpu_to_le32(BRCMF_MAX_ASSOCLIST);
-		err = brcmf_fil_cmd_data_get(अगरp, BRCMF_C_GET_ASSOCLIST,
+		err = brcmf_fil_cmd_data_get(ifp, BRCMF_C_GET_ASSOCLIST,
 					     &cfg->assoclist,
-					     माप(cfg->assoclist));
-		अगर (err) अणु
+					     sizeof(cfg->assoclist));
+		if (err) {
 			bphy_err(drvr, "BRCMF_C_GET_ASSOCLIST unsupported, err=%d\n",
 				 err);
 			cfg->assoclist.count = 0;
-			वापस -EOPNOTSUPP;
-		पूर्ण
-	पूर्ण
-	अगर (idx < le32_to_cpu(cfg->assoclist.count)) अणु
-		स_नकल(mac, cfg->assoclist.mac[idx], ETH_ALEN);
-		वापस brcmf_cfg80211_get_station(wiphy, ndev, mac, sinfo);
-	पूर्ण
-	वापस -ENOENT;
-पूर्ण
+			return -EOPNOTSUPP;
+		}
+	}
+	if (idx < le32_to_cpu(cfg->assoclist.count)) {
+		memcpy(mac, cfg->assoclist.mac[idx], ETH_ALEN);
+		return brcmf_cfg80211_get_station(wiphy, ndev, mac, sinfo);
+	}
+	return -ENOENT;
+}
 
-अटल s32
-brcmf_cfg80211_set_घातer_mgmt(काष्ठा wiphy *wiphy, काष्ठा net_device *ndev,
-			   bool enabled, s32 समयout)
-अणु
+static s32
+brcmf_cfg80211_set_power_mgmt(struct wiphy *wiphy, struct net_device *ndev,
+			   bool enabled, s32 timeout)
+{
 	s32 pm;
 	s32 err = 0;
-	काष्ठा brcmf_cfg80211_info *cfg = wiphy_to_cfg(wiphy);
-	काष्ठा brcmf_अगर *अगरp = netdev_priv(ndev);
-	काष्ठा brcmf_pub *drvr = cfg->pub;
+	struct brcmf_cfg80211_info *cfg = wiphy_to_cfg(wiphy);
+	struct brcmf_if *ifp = netdev_priv(ndev);
+	struct brcmf_pub *drvr = cfg->pub;
 
 	brcmf_dbg(TRACE, "Enter\n");
 
 	/*
 	 * Powersave enable/disable request is coming from the
-	 * cfg80211 even beक्रमe the पूर्णांकerface is up. In that
-	 * scenario, driver will be storing the घातer save
-	 * preference in cfg काष्ठा to apply this to
-	 * FW later जबतक initializing the करोngle
+	 * cfg80211 even before the interface is up. In that
+	 * scenario, driver will be storing the power save
+	 * preference in cfg struct to apply this to
+	 * FW later while initializing the dongle
 	 */
 	cfg->pwr_save = enabled;
-	अगर (!check_vअगर_up(अगरp->vअगर)) अणु
+	if (!check_vif_up(ifp->vif)) {
 
 		brcmf_dbg(INFO, "Device is not ready, storing the value in cfg_info struct\n");
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
 	pm = enabled ? PM_FAST : PM_OFF;
-	/* Do not enable the घातer save after assoc अगर it is a p2p पूर्णांकerface */
-	अगर (अगरp->vअगर->wdev.अगरtype == NL80211_IFTYPE_P2P_CLIENT) अणु
+	/* Do not enable the power save after assoc if it is a p2p interface */
+	if (ifp->vif->wdev.iftype == NL80211_IFTYPE_P2P_CLIENT) {
 		brcmf_dbg(INFO, "Do not enable power save for P2P clients\n");
 		pm = PM_OFF;
-	पूर्ण
+	}
 	brcmf_dbg(INFO, "power save %s\n", (pm ? "enabled" : "disabled"));
 
-	err = brcmf_fil_cmd_पूर्णांक_set(अगरp, BRCMF_C_SET_PM, pm);
-	अगर (err) अणु
-		अगर (err == -ENODEV)
+	err = brcmf_fil_cmd_int_set(ifp, BRCMF_C_SET_PM, pm);
+	if (err) {
+		if (err == -ENODEV)
 			bphy_err(drvr, "net_device is not ready yet\n");
-		अन्यथा
+		else
 			bphy_err(drvr, "error (%d)\n", err);
-	पूर्ण
+	}
 
-	err = brcmf_fil_iovar_पूर्णांक_set(अगरp, "pm2_sleep_ret",
-				min_t(u32, समयout, BRCMF_PS_MAX_TIMEOUT_MS));
-	अगर (err)
+	err = brcmf_fil_iovar_int_set(ifp, "pm2_sleep_ret",
+				min_t(u32, timeout, BRCMF_PS_MAX_TIMEOUT_MS));
+	if (err)
 		bphy_err(drvr, "Unable to set pm timeout, (%d)\n", err);
 
-करोne:
+done:
 	brcmf_dbg(TRACE, "Exit\n");
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल s32 brcmf_inक्रमm_single_bss(काष्ठा brcmf_cfg80211_info *cfg,
-				   काष्ठा brcmf_bss_info_le *bi)
-अणु
-	काष्ठा wiphy *wiphy = cfg_to_wiphy(cfg);
-	काष्ठा brcmf_pub *drvr = cfg->pub;
-	काष्ठा cfg80211_bss *bss;
-	क्रमागत nl80211_band band;
-	काष्ठा brcmu_chan ch;
+static s32 brcmf_inform_single_bss(struct brcmf_cfg80211_info *cfg,
+				   struct brcmf_bss_info_le *bi)
+{
+	struct wiphy *wiphy = cfg_to_wiphy(cfg);
+	struct brcmf_pub *drvr = cfg->pub;
+	struct cfg80211_bss *bss;
+	enum nl80211_band band;
+	struct brcmu_chan ch;
 	u16 channel;
 	u32 freq;
-	u16 notअगरy_capability;
-	u16 notअगरy_पूर्णांकerval;
-	u8 *notअगरy_ie;
-	माप_प्रकार notअगरy_ielen;
-	काष्ठा cfg80211_inक्रमm_bss bss_data = अणुपूर्ण;
+	u16 notify_capability;
+	u16 notify_interval;
+	u8 *notify_ie;
+	size_t notify_ielen;
+	struct cfg80211_inform_bss bss_data = {};
 
-	अगर (le32_to_cpu(bi->length) > WL_BSS_INFO_MAX) अणु
+	if (le32_to_cpu(bi->length) > WL_BSS_INFO_MAX) {
 		bphy_err(drvr, "Bss info is larger than buffer. Discarding\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (!bi->ctl_ch) अणु
+	if (!bi->ctl_ch) {
 		ch.chspec = le16_to_cpu(bi->chanspec);
 		cfg->d11inf.decchspec(&ch);
 		bi->ctl_ch = ch.control_ch_num;
-	पूर्ण
+	}
 	channel = bi->ctl_ch;
 
-	अगर (channel <= CH_MAX_2G_CHANNEL)
+	if (channel <= CH_MAX_2G_CHANNEL)
 		band = NL80211_BAND_2GHZ;
-	अन्यथा
+	else
 		band = NL80211_BAND_5GHZ;
 
 	freq = ieee80211_channel_to_frequency(channel, band);
 	bss_data.chan = ieee80211_get_channel(wiphy, freq);
 	bss_data.scan_width = NL80211_BSS_CHAN_WIDTH_20;
-	bss_data.bootसमय_ns = kसमय_प्रकारo_ns(kसमय_get_bootसमय());
+	bss_data.boottime_ns = ktime_to_ns(ktime_get_boottime());
 
-	notअगरy_capability = le16_to_cpu(bi->capability);
-	notअगरy_पूर्णांकerval = le16_to_cpu(bi->beacon_period);
-	notअगरy_ie = (u8 *)bi + le16_to_cpu(bi->ie_offset);
-	notअगरy_ielen = le32_to_cpu(bi->ie_length);
-	bss_data.संकेत = (s16)le16_to_cpu(bi->RSSI) * 100;
+	notify_capability = le16_to_cpu(bi->capability);
+	notify_interval = le16_to_cpu(bi->beacon_period);
+	notify_ie = (u8 *)bi + le16_to_cpu(bi->ie_offset);
+	notify_ielen = le32_to_cpu(bi->ie_length);
+	bss_data.signal = (s16)le16_to_cpu(bi->RSSI) * 100;
 
 	brcmf_dbg(CONN, "bssid: %pM\n", bi->BSSID);
 	brcmf_dbg(CONN, "Channel: %d(%d)\n", channel, freq);
-	brcmf_dbg(CONN, "Capability: %X\n", notअगरy_capability);
-	brcmf_dbg(CONN, "Beacon interval: %d\n", notअगरy_पूर्णांकerval);
-	brcmf_dbg(CONN, "Signal: %d\n", bss_data.संकेत);
+	brcmf_dbg(CONN, "Capability: %X\n", notify_capability);
+	brcmf_dbg(CONN, "Beacon interval: %d\n", notify_interval);
+	brcmf_dbg(CONN, "Signal: %d\n", bss_data.signal);
 
-	bss = cfg80211_inक्रमm_bss_data(wiphy, &bss_data,
+	bss = cfg80211_inform_bss_data(wiphy, &bss_data,
 				       CFG80211_BSS_FTYPE_UNKNOWN,
-				       (स्थिर u8 *)bi->BSSID,
-				       0, notअगरy_capability,
-				       notअगरy_पूर्णांकerval, notअगरy_ie,
-				       notअगरy_ielen, GFP_KERNEL);
+				       (const u8 *)bi->BSSID,
+				       0, notify_capability,
+				       notify_interval, notify_ie,
+				       notify_ielen, GFP_KERNEL);
 
-	अगर (!bss)
-		वापस -ENOMEM;
+	if (!bss)
+		return -ENOMEM;
 
 	cfg80211_put_bss(wiphy, bss);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा brcmf_bss_info_le *
-next_bss_le(काष्ठा brcmf_scan_results *list, काष्ठा brcmf_bss_info_le *bss)
-अणु
-	अगर (bss == शून्य)
-		वापस list->bss_info_le;
-	वापस (काष्ठा brcmf_bss_info_le *)((अचिन्हित दीर्घ)bss +
+static struct brcmf_bss_info_le *
+next_bss_le(struct brcmf_scan_results *list, struct brcmf_bss_info_le *bss)
+{
+	if (bss == NULL)
+		return list->bss_info_le;
+	return (struct brcmf_bss_info_le *)((unsigned long)bss +
 					    le32_to_cpu(bss->length));
-पूर्ण
+}
 
-अटल s32 brcmf_inक्रमm_bss(काष्ठा brcmf_cfg80211_info *cfg)
-अणु
-	काष्ठा brcmf_pub *drvr = cfg->pub;
-	काष्ठा brcmf_scan_results *bss_list;
-	काष्ठा brcmf_bss_info_le *bi = शून्य;	/* must be initialized */
+static s32 brcmf_inform_bss(struct brcmf_cfg80211_info *cfg)
+{
+	struct brcmf_pub *drvr = cfg->pub;
+	struct brcmf_scan_results *bss_list;
+	struct brcmf_bss_info_le *bi = NULL;	/* must be initialized */
 	s32 err = 0;
-	पूर्णांक i;
+	int i;
 
-	bss_list = (काष्ठा brcmf_scan_results *)cfg->escan_info.escan_buf;
-	अगर (bss_list->count != 0 &&
-	    bss_list->version != BRCMF_BSS_INFO_VERSION) अणु
+	bss_list = (struct brcmf_scan_results *)cfg->escan_info.escan_buf;
+	if (bss_list->count != 0 &&
+	    bss_list->version != BRCMF_BSS_INFO_VERSION) {
 		bphy_err(drvr, "Version %d != WL_BSS_INFO_VERSION\n",
 			 bss_list->version);
-		वापस -EOPNOTSUPP;
-	पूर्ण
+		return -EOPNOTSUPP;
+	}
 	brcmf_dbg(SCAN, "scanned AP count (%d)\n", bss_list->count);
-	क्रम (i = 0; i < bss_list->count; i++) अणु
+	for (i = 0; i < bss_list->count; i++) {
 		bi = next_bss_le(bss_list, bi);
-		err = brcmf_inक्रमm_single_bss(cfg, bi);
-		अगर (err)
-			अवरोध;
-	पूर्ण
-	वापस err;
-पूर्ण
+		err = brcmf_inform_single_bss(cfg, bi);
+		if (err)
+			break;
+	}
+	return err;
+}
 
-अटल s32 brcmf_inक्रमm_ibss(काष्ठा brcmf_cfg80211_info *cfg,
-			     काष्ठा net_device *ndev, स्थिर u8 *bssid)
-अणु
-	काष्ठा wiphy *wiphy = cfg_to_wiphy(cfg);
-	काष्ठा brcmf_pub *drvr = cfg->pub;
-	काष्ठा ieee80211_channel *notअगरy_channel;
-	काष्ठा brcmf_bss_info_le *bi = शून्य;
-	काष्ठा ieee80211_supported_band *band;
-	काष्ठा cfg80211_bss *bss;
-	काष्ठा brcmu_chan ch;
-	u8 *buf = शून्य;
+static s32 brcmf_inform_ibss(struct brcmf_cfg80211_info *cfg,
+			     struct net_device *ndev, const u8 *bssid)
+{
+	struct wiphy *wiphy = cfg_to_wiphy(cfg);
+	struct brcmf_pub *drvr = cfg->pub;
+	struct ieee80211_channel *notify_channel;
+	struct brcmf_bss_info_le *bi = NULL;
+	struct ieee80211_supported_band *band;
+	struct cfg80211_bss *bss;
+	struct brcmu_chan ch;
+	u8 *buf = NULL;
 	s32 err = 0;
 	u32 freq;
-	u16 notअगरy_capability;
-	u16 notअगरy_पूर्णांकerval;
-	u8 *notअगरy_ie;
-	माप_प्रकार notअगरy_ielen;
-	s32 notअगरy_संकेत;
+	u16 notify_capability;
+	u16 notify_interval;
+	u8 *notify_ie;
+	size_t notify_ielen;
+	s32 notify_signal;
 
 	brcmf_dbg(TRACE, "Enter\n");
 
 	buf = kzalloc(WL_BSS_INFO_MAX, GFP_KERNEL);
-	अगर (buf == शून्य) अणु
+	if (buf == NULL) {
 		err = -ENOMEM;
-		जाओ CleanUp;
-	पूर्ण
+		goto CleanUp;
+	}
 
 	*(__le32 *)buf = cpu_to_le32(WL_BSS_INFO_MAX);
 
 	err = brcmf_fil_cmd_data_get(netdev_priv(ndev), BRCMF_C_GET_BSS_INFO,
 				     buf, WL_BSS_INFO_MAX);
-	अगर (err) अणु
+	if (err) {
 		bphy_err(drvr, "WLC_GET_BSS_INFO failed: %d\n", err);
-		जाओ CleanUp;
-	पूर्ण
+		goto CleanUp;
+	}
 
-	bi = (काष्ठा brcmf_bss_info_le *)(buf + 4);
+	bi = (struct brcmf_bss_info_le *)(buf + 4);
 
 	ch.chspec = le16_to_cpu(bi->chanspec);
 	cfg->d11inf.decchspec(&ch);
 
-	अगर (ch.band == BRCMU_CHAN_BAND_2G)
+	if (ch.band == BRCMU_CHAN_BAND_2G)
 		band = wiphy->bands[NL80211_BAND_2GHZ];
-	अन्यथा
+	else
 		band = wiphy->bands[NL80211_BAND_5GHZ];
 
 	freq = ieee80211_channel_to_frequency(ch.control_ch_num, band->band);
 	cfg->channel = freq;
-	notअगरy_channel = ieee80211_get_channel(wiphy, freq);
+	notify_channel = ieee80211_get_channel(wiphy, freq);
 
-	notअगरy_capability = le16_to_cpu(bi->capability);
-	notअगरy_पूर्णांकerval = le16_to_cpu(bi->beacon_period);
-	notअगरy_ie = (u8 *)bi + le16_to_cpu(bi->ie_offset);
-	notअगरy_ielen = le32_to_cpu(bi->ie_length);
-	notअगरy_संकेत = (s16)le16_to_cpu(bi->RSSI) * 100;
+	notify_capability = le16_to_cpu(bi->capability);
+	notify_interval = le16_to_cpu(bi->beacon_period);
+	notify_ie = (u8 *)bi + le16_to_cpu(bi->ie_offset);
+	notify_ielen = le32_to_cpu(bi->ie_length);
+	notify_signal = (s16)le16_to_cpu(bi->RSSI) * 100;
 
 	brcmf_dbg(CONN, "channel: %d(%d)\n", ch.control_ch_num, freq);
-	brcmf_dbg(CONN, "capability: %X\n", notअगरy_capability);
-	brcmf_dbg(CONN, "beacon interval: %d\n", notअगरy_पूर्णांकerval);
-	brcmf_dbg(CONN, "signal: %d\n", notअगरy_संकेत);
+	brcmf_dbg(CONN, "capability: %X\n", notify_capability);
+	brcmf_dbg(CONN, "beacon interval: %d\n", notify_interval);
+	brcmf_dbg(CONN, "signal: %d\n", notify_signal);
 
-	bss = cfg80211_inक्रमm_bss(wiphy, notअगरy_channel,
+	bss = cfg80211_inform_bss(wiphy, notify_channel,
 				  CFG80211_BSS_FTYPE_UNKNOWN, bssid, 0,
-				  notअगरy_capability, notअगरy_पूर्णांकerval,
-				  notअगरy_ie, notअगरy_ielen, notअगरy_संकेत,
+				  notify_capability, notify_interval,
+				  notify_ie, notify_ielen, notify_signal,
 				  GFP_KERNEL);
 
-	अगर (!bss) अणु
+	if (!bss) {
 		err = -ENOMEM;
-		जाओ CleanUp;
-	पूर्ण
+		goto CleanUp;
+	}
 
 	cfg80211_put_bss(wiphy, bss);
 
 CleanUp:
 
-	kमुक्त(buf);
+	kfree(buf);
 
 	brcmf_dbg(TRACE, "Exit\n");
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल s32 brcmf_update_bss_info(काष्ठा brcmf_cfg80211_info *cfg,
-				 काष्ठा brcmf_अगर *अगरp)
-अणु
-	काष्ठा brcmf_pub *drvr = cfg->pub;
-	काष्ठा brcmf_bss_info_le *bi;
-	स्थिर काष्ठा brcmf_tlv *tim;
-	माप_प्रकार ie_len;
+static s32 brcmf_update_bss_info(struct brcmf_cfg80211_info *cfg,
+				 struct brcmf_if *ifp)
+{
+	struct brcmf_pub *drvr = cfg->pub;
+	struct brcmf_bss_info_le *bi;
+	const struct brcmf_tlv *tim;
+	size_t ie_len;
 	u8 *ie;
 	s32 err = 0;
 
 	brcmf_dbg(TRACE, "Enter\n");
-	अगर (brcmf_is_ibssmode(अगरp->vअगर))
-		वापस err;
+	if (brcmf_is_ibssmode(ifp->vif))
+		return err;
 
 	*(__le32 *)cfg->extra_buf = cpu_to_le32(WL_EXTRA_BUF_MAX);
-	err = brcmf_fil_cmd_data_get(अगरp, BRCMF_C_GET_BSS_INFO,
+	err = brcmf_fil_cmd_data_get(ifp, BRCMF_C_GET_BSS_INFO,
 				     cfg->extra_buf, WL_EXTRA_BUF_MAX);
-	अगर (err) अणु
+	if (err) {
 		bphy_err(drvr, "Could not get bss info %d\n", err);
-		जाओ update_bss_info_out;
-	पूर्ण
+		goto update_bss_info_out;
+	}
 
-	bi = (काष्ठा brcmf_bss_info_le *)(cfg->extra_buf + 4);
-	err = brcmf_inक्रमm_single_bss(cfg, bi);
-	अगर (err)
-		जाओ update_bss_info_out;
+	bi = (struct brcmf_bss_info_le *)(cfg->extra_buf + 4);
+	err = brcmf_inform_single_bss(cfg, bi);
+	if (err)
+		goto update_bss_info_out;
 
 	ie = ((u8 *)bi) + le16_to_cpu(bi->ie_offset);
 	ie_len = le32_to_cpu(bi->ie_length);
 
 	tim = brcmf_parse_tlvs(ie, ie_len, WLAN_EID_TIM);
-	अगर (!tim) अणु
+	if (!tim) {
 		/*
-		* active scan was करोne so we could not get dtim
-		* inक्रमmation out of probe response.
-		* so we speficially query dtim inक्रमmation to करोngle.
+		* active scan was done so we could not get dtim
+		* information out of probe response.
+		* so we speficially query dtim information to dongle.
 		*/
 		u32 var;
-		err = brcmf_fil_iovar_पूर्णांक_get(अगरp, "dtim_assoc", &var);
-		अगर (err) अणु
+		err = brcmf_fil_iovar_int_get(ifp, "dtim_assoc", &var);
+		if (err) {
 			bphy_err(drvr, "wl dtim_assoc failed (%d)\n", err);
-			जाओ update_bss_info_out;
-		पूर्ण
-	पूर्ण
+			goto update_bss_info_out;
+		}
+	}
 
 update_bss_info_out:
 	brcmf_dbg(TRACE, "Exit");
-	वापस err;
-पूर्ण
+	return err;
+}
 
-व्योम brcmf_पात_scanning(काष्ठा brcmf_cfg80211_info *cfg)
-अणु
-	काष्ठा escan_info *escan = &cfg->escan_info;
+void brcmf_abort_scanning(struct brcmf_cfg80211_info *cfg)
+{
+	struct escan_info *escan = &cfg->escan_info;
 
 	set_bit(BRCMF_SCAN_STATUS_ABORT, &cfg->scan_status);
-	अगर (cfg->पूर्णांक_escan_map || cfg->scan_request) अणु
+	if (cfg->int_escan_map || cfg->scan_request) {
 		escan->escan_state = WL_ESCAN_STATE_IDLE;
-		brcmf_notअगरy_escan_complete(cfg, escan->अगरp, true, true);
-	पूर्ण
+		brcmf_notify_escan_complete(cfg, escan->ifp, true, true);
+	}
 	clear_bit(BRCMF_SCAN_STATUS_BUSY, &cfg->scan_status);
 	clear_bit(BRCMF_SCAN_STATUS_ABORT, &cfg->scan_status);
-पूर्ण
+}
 
-अटल व्योम brcmf_cfg80211_escan_समयout_worker(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा brcmf_cfg80211_info *cfg =
-			container_of(work, काष्ठा brcmf_cfg80211_info,
-				     escan_समयout_work);
+static void brcmf_cfg80211_escan_timeout_worker(struct work_struct *work)
+{
+	struct brcmf_cfg80211_info *cfg =
+			container_of(work, struct brcmf_cfg80211_info,
+				     escan_timeout_work);
 
-	brcmf_inक्रमm_bss(cfg);
-	brcmf_notअगरy_escan_complete(cfg, cfg->escan_info.अगरp, true, true);
-पूर्ण
+	brcmf_inform_bss(cfg);
+	brcmf_notify_escan_complete(cfg, cfg->escan_info.ifp, true, true);
+}
 
-अटल व्योम brcmf_escan_समयout(काष्ठा समयr_list *t)
-अणु
-	काष्ठा brcmf_cfg80211_info *cfg =
-			from_समयr(cfg, t, escan_समयout);
-	काष्ठा brcmf_pub *drvr = cfg->pub;
+static void brcmf_escan_timeout(struct timer_list *t)
+{
+	struct brcmf_cfg80211_info *cfg =
+			from_timer(cfg, t, escan_timeout);
+	struct brcmf_pub *drvr = cfg->pub;
 
-	अगर (cfg->पूर्णांक_escan_map || cfg->scan_request) अणु
+	if (cfg->int_escan_map || cfg->scan_request) {
 		bphy_err(drvr, "timer expired\n");
-		schedule_work(&cfg->escan_समयout_work);
-	पूर्ण
-पूर्ण
+		schedule_work(&cfg->escan_timeout_work);
+	}
+}
 
-अटल s32
-brcmf_compare_update_same_bss(काष्ठा brcmf_cfg80211_info *cfg,
-			      काष्ठा brcmf_bss_info_le *bss,
-			      काष्ठा brcmf_bss_info_le *bss_info_le)
-अणु
-	काष्ठा brcmu_chan ch_bss, ch_bss_info_le;
+static s32
+brcmf_compare_update_same_bss(struct brcmf_cfg80211_info *cfg,
+			      struct brcmf_bss_info_le *bss,
+			      struct brcmf_bss_info_le *bss_info_le)
+{
+	struct brcmu_chan ch_bss, ch_bss_info_le;
 
 	ch_bss.chspec = le16_to_cpu(bss->chanspec);
 	cfg->d11inf.decchspec(&ch_bss);
 	ch_bss_info_le.chspec = le16_to_cpu(bss_info_le->chanspec);
 	cfg->d11inf.decchspec(&ch_bss_info_le);
 
-	अगर (!स_भेद(&bss_info_le->BSSID, &bss->BSSID, ETH_ALEN) &&
+	if (!memcmp(&bss_info_le->BSSID, &bss->BSSID, ETH_ALEN) &&
 		ch_bss.band == ch_bss_info_le.band &&
 		bss_info_le->SSID_len == bss->SSID_len &&
-		!स_भेद(bss_info_le->SSID, bss->SSID, bss_info_le->SSID_len)) अणु
-		अगर ((bss->flags & BRCMF_BSS_RSSI_ON_CHANNEL) ==
-			(bss_info_le->flags & BRCMF_BSS_RSSI_ON_CHANNEL)) अणु
+		!memcmp(bss_info_le->SSID, bss->SSID, bss_info_le->SSID_len)) {
+		if ((bss->flags & BRCMF_BSS_RSSI_ON_CHANNEL) ==
+			(bss_info_le->flags & BRCMF_BSS_RSSI_ON_CHANNEL)) {
 			s16 bss_rssi = le16_to_cpu(bss->RSSI);
 			s16 bss_info_rssi = le16_to_cpu(bss_info_le->RSSI);
 
-			/* preserve max RSSI अगर the measurements are
+			/* preserve max RSSI if the measurements are
 			* both on-channel or both off-channel
 			*/
-			अगर (bss_info_rssi > bss_rssi)
+			if (bss_info_rssi > bss_rssi)
 				bss->RSSI = bss_info_le->RSSI;
-		पूर्ण अन्यथा अगर ((bss->flags & BRCMF_BSS_RSSI_ON_CHANNEL) &&
-			(bss_info_le->flags & BRCMF_BSS_RSSI_ON_CHANNEL) == 0) अणु
+		} else if ((bss->flags & BRCMF_BSS_RSSI_ON_CHANNEL) &&
+			(bss_info_le->flags & BRCMF_BSS_RSSI_ON_CHANNEL) == 0) {
 			/* preserve the on-channel rssi measurement
-			* अगर the new measurement is off channel
+			* if the new measurement is off channel
 			*/
 			bss->RSSI = bss_info_le->RSSI;
 			bss->flags |= BRCMF_BSS_RSSI_ON_CHANNEL;
-		पूर्ण
-		वापस 1;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		}
+		return 1;
+	}
+	return 0;
+}
 
-अटल s32
-brcmf_cfg80211_escan_handler(काष्ठा brcmf_अगर *अगरp,
-			     स्थिर काष्ठा brcmf_event_msg *e, व्योम *data)
-अणु
-	काष्ठा brcmf_pub *drvr = अगरp->drvr;
-	काष्ठा brcmf_cfg80211_info *cfg = drvr->config;
+static s32
+brcmf_cfg80211_escan_handler(struct brcmf_if *ifp,
+			     const struct brcmf_event_msg *e, void *data)
+{
+	struct brcmf_pub *drvr = ifp->drvr;
+	struct brcmf_cfg80211_info *cfg = drvr->config;
 	s32 status;
-	काष्ठा brcmf_escan_result_le *escan_result_le;
+	struct brcmf_escan_result_le *escan_result_le;
 	u32 escan_buflen;
-	काष्ठा brcmf_bss_info_le *bss_info_le;
-	काष्ठा brcmf_bss_info_le *bss = शून्य;
+	struct brcmf_bss_info_le *bss_info_le;
+	struct brcmf_bss_info_le *bss = NULL;
 	u32 bi_length;
-	काष्ठा brcmf_scan_results *list;
+	struct brcmf_scan_results *list;
 	u32 i;
-	bool पातed;
+	bool aborted;
 
 	status = e->status;
 
-	अगर (status == BRCMF_E_STATUS_ABORT)
-		जाओ निकास;
+	if (status == BRCMF_E_STATUS_ABORT)
+		goto exit;
 
-	अगर (!test_bit(BRCMF_SCAN_STATUS_BUSY, &cfg->scan_status)) अणु
+	if (!test_bit(BRCMF_SCAN_STATUS_BUSY, &cfg->scan_status)) {
 		bphy_err(drvr, "scan not ready, bsscfgidx=%d\n",
-			 अगरp->bsscfgidx);
-		वापस -EPERM;
-	पूर्ण
+			 ifp->bsscfgidx);
+		return -EPERM;
+	}
 
-	अगर (status == BRCMF_E_STATUS_PARTIAL) अणु
+	if (status == BRCMF_E_STATUS_PARTIAL) {
 		brcmf_dbg(SCAN, "ESCAN Partial result\n");
-		अगर (e->datalen < माप(*escan_result_le)) अणु
+		if (e->datalen < sizeof(*escan_result_le)) {
 			bphy_err(drvr, "invalid event data length\n");
-			जाओ निकास;
-		पूर्ण
-		escan_result_le = (काष्ठा brcmf_escan_result_le *) data;
-		अगर (!escan_result_le) अणु
+			goto exit;
+		}
+		escan_result_le = (struct brcmf_escan_result_le *) data;
+		if (!escan_result_le) {
 			bphy_err(drvr, "Invalid escan result (NULL pointer)\n");
-			जाओ निकास;
-		पूर्ण
+			goto exit;
+		}
 		escan_buflen = le32_to_cpu(escan_result_le->buflen);
-		अगर (escan_buflen > BRCMF_ESCAN_BUF_SIZE ||
+		if (escan_buflen > BRCMF_ESCAN_BUF_SIZE ||
 		    escan_buflen > e->datalen ||
-		    escan_buflen < माप(*escan_result_le)) अणु
+		    escan_buflen < sizeof(*escan_result_le)) {
 			bphy_err(drvr, "Invalid escan buffer length: %d\n",
 				 escan_buflen);
-			जाओ निकास;
-		पूर्ण
-		अगर (le16_to_cpu(escan_result_le->bss_count) != 1) अणु
+			goto exit;
+		}
+		if (le16_to_cpu(escan_result_le->bss_count) != 1) {
 			bphy_err(drvr, "Invalid bss_count %d: ignoring\n",
 				 escan_result_le->bss_count);
-			जाओ निकास;
-		पूर्ण
+			goto exit;
+		}
 		bss_info_le = &escan_result_le->bss_info_le;
 
-		अगर (brcmf_p2p_scan_finding_common_channel(cfg, bss_info_le))
-			जाओ निकास;
+		if (brcmf_p2p_scan_finding_common_channel(cfg, bss_info_le))
+			goto exit;
 
-		अगर (!cfg->पूर्णांक_escan_map && !cfg->scan_request) अणु
+		if (!cfg->int_escan_map && !cfg->scan_request) {
 			brcmf_dbg(SCAN, "result without cfg80211 request\n");
-			जाओ निकास;
-		पूर्ण
+			goto exit;
+		}
 
 		bi_length = le32_to_cpu(bss_info_le->length);
-		अगर (bi_length != escan_buflen -	WL_ESCAN_RESULTS_FIXED_SIZE) अणु
+		if (bi_length != escan_buflen -	WL_ESCAN_RESULTS_FIXED_SIZE) {
 			bphy_err(drvr, "Ignoring invalid bss_info length: %d\n",
 				 bi_length);
-			जाओ निकास;
-		पूर्ण
+			goto exit;
+		}
 
-		अगर (!(cfg_to_wiphy(cfg)->पूर्णांकerface_modes &
-					BIT(NL80211_IFTYPE_ADHOC))) अणु
-			अगर (le16_to_cpu(bss_info_le->capability) &
-						WLAN_CAPABILITY_IBSS) अणु
+		if (!(cfg_to_wiphy(cfg)->interface_modes &
+					BIT(NL80211_IFTYPE_ADHOC))) {
+			if (le16_to_cpu(bss_info_le->capability) &
+						WLAN_CAPABILITY_IBSS) {
 				bphy_err(drvr, "Ignoring IBSS result\n");
-				जाओ निकास;
-			पूर्ण
-		पूर्ण
+				goto exit;
+			}
+		}
 
-		list = (काष्ठा brcmf_scan_results *)
+		list = (struct brcmf_scan_results *)
 				cfg->escan_info.escan_buf;
-		अगर (bi_length > BRCMF_ESCAN_BUF_SIZE - list->buflen) अणु
+		if (bi_length > BRCMF_ESCAN_BUF_SIZE - list->buflen) {
 			bphy_err(drvr, "Buffer is too small: ignoring\n");
-			जाओ निकास;
-		पूर्ण
+			goto exit;
+		}
 
-		क्रम (i = 0; i < list->count; i++) अणु
-			bss = bss ? (काष्ठा brcmf_bss_info_le *)
-				((अचिन्हित अक्षर *)bss +
+		for (i = 0; i < list->count; i++) {
+			bss = bss ? (struct brcmf_bss_info_le *)
+				((unsigned char *)bss +
 				le32_to_cpu(bss->length)) : list->bss_info_le;
-			अगर (brcmf_compare_update_same_bss(cfg, bss,
+			if (brcmf_compare_update_same_bss(cfg, bss,
 							  bss_info_le))
-				जाओ निकास;
-		पूर्ण
-		स_नकल(&cfg->escan_info.escan_buf[list->buflen], bss_info_le,
+				goto exit;
+		}
+		memcpy(&cfg->escan_info.escan_buf[list->buflen], bss_info_le,
 		       bi_length);
 		list->version = le32_to_cpu(bss_info_le->version);
 		list->buflen += bi_length;
 		list->count++;
-	पूर्ण अन्यथा अणु
+	} else {
 		cfg->escan_info.escan_state = WL_ESCAN_STATE_IDLE;
-		अगर (brcmf_p2p_scan_finding_common_channel(cfg, शून्य))
-			जाओ निकास;
-		अगर (cfg->पूर्णांक_escan_map || cfg->scan_request) अणु
-			brcmf_inक्रमm_bss(cfg);
-			पातed = status != BRCMF_E_STATUS_SUCCESS;
-			brcmf_notअगरy_escan_complete(cfg, अगरp, पातed, false);
-		पूर्ण अन्यथा
+		if (brcmf_p2p_scan_finding_common_channel(cfg, NULL))
+			goto exit;
+		if (cfg->int_escan_map || cfg->scan_request) {
+			brcmf_inform_bss(cfg);
+			aborted = status != BRCMF_E_STATUS_SUCCESS;
+			brcmf_notify_escan_complete(cfg, ifp, aborted, false);
+		} else
 			brcmf_dbg(SCAN, "Ignored scan complete result 0x%x\n",
 				  status);
-	पूर्ण
-निकास:
-	वापस 0;
-पूर्ण
+	}
+exit:
+	return 0;
+}
 
-अटल व्योम brcmf_init_escan(काष्ठा brcmf_cfg80211_info *cfg)
-अणु
-	brcmf_fweh_रेजिस्टर(cfg->pub, BRCMF_E_ESCAN_RESULT,
+static void brcmf_init_escan(struct brcmf_cfg80211_info *cfg)
+{
+	brcmf_fweh_register(cfg->pub, BRCMF_E_ESCAN_RESULT,
 			    brcmf_cfg80211_escan_handler);
 	cfg->escan_info.escan_state = WL_ESCAN_STATE_IDLE;
-	/* Init scan_समयout समयr */
-	समयr_setup(&cfg->escan_समयout, brcmf_escan_समयout, 0);
-	INIT_WORK(&cfg->escan_समयout_work,
-		  brcmf_cfg80211_escan_समयout_worker);
-पूर्ण
+	/* Init scan_timeout timer */
+	timer_setup(&cfg->escan_timeout, brcmf_escan_timeout, 0);
+	INIT_WORK(&cfg->escan_timeout_work,
+		  brcmf_cfg80211_escan_timeout_worker);
+}
 
-अटल काष्ठा cfg80211_scan_request *
-brcmf_alloc_पूर्णांकernal_escan_request(काष्ठा wiphy *wiphy, u32 n_netinfo) अणु
-	काष्ठा cfg80211_scan_request *req;
-	माप_प्रकार req_size;
+static struct cfg80211_scan_request *
+brcmf_alloc_internal_escan_request(struct wiphy *wiphy, u32 n_netinfo) {
+	struct cfg80211_scan_request *req;
+	size_t req_size;
 
-	req_size = माप(*req) +
-		   n_netinfo * माप(req->channels[0]) +
-		   n_netinfo * माप(*req->ssids);
+	req_size = sizeof(*req) +
+		   n_netinfo * sizeof(req->channels[0]) +
+		   n_netinfo * sizeof(*req->ssids);
 
 	req = kzalloc(req_size, GFP_KERNEL);
-	अगर (req) अणु
+	if (req) {
 		req->wiphy = wiphy;
-		req->ssids = (व्योम *)(&req->channels[0]) +
-			     n_netinfo * माप(req->channels[0]);
-	पूर्ण
-	वापस req;
-पूर्ण
+		req->ssids = (void *)(&req->channels[0]) +
+			     n_netinfo * sizeof(req->channels[0]);
+	}
+	return req;
+}
 
-अटल पूर्णांक brcmf_पूर्णांकernal_escan_add_info(काष्ठा cfg80211_scan_request *req,
+static int brcmf_internal_escan_add_info(struct cfg80211_scan_request *req,
 					 u8 *ssid, u8 ssid_len, u8 channel)
-अणु
-	काष्ठा ieee80211_channel *chan;
-	क्रमागत nl80211_band band;
-	पूर्णांक freq, i;
+{
+	struct ieee80211_channel *chan;
+	enum nl80211_band band;
+	int freq, i;
 
-	अगर (channel <= CH_MAX_2G_CHANNEL)
+	if (channel <= CH_MAX_2G_CHANNEL)
 		band = NL80211_BAND_2GHZ;
-	अन्यथा
+	else
 		band = NL80211_BAND_5GHZ;
 
 	freq = ieee80211_channel_to_frequency(channel, band);
-	अगर (!freq)
-		वापस -EINVAL;
+	if (!freq)
+		return -EINVAL;
 
 	chan = ieee80211_get_channel(req->wiphy, freq);
-	अगर (!chan)
-		वापस -EINVAL;
+	if (!chan)
+		return -EINVAL;
 
-	क्रम (i = 0; i < req->n_channels; i++) अणु
-		अगर (req->channels[i] == chan)
-			अवरोध;
-	पूर्ण
-	अगर (i == req->n_channels)
+	for (i = 0; i < req->n_channels; i++) {
+		if (req->channels[i] == chan)
+			break;
+	}
+	if (i == req->n_channels)
 		req->channels[req->n_channels++] = chan;
 
-	क्रम (i = 0; i < req->n_ssids; i++) अणु
-		अगर (req->ssids[i].ssid_len == ssid_len &&
-		    !स_भेद(req->ssids[i].ssid, ssid, ssid_len))
-			अवरोध;
-	पूर्ण
-	अगर (i == req->n_ssids) अणु
-		स_नकल(req->ssids[req->n_ssids].ssid, ssid, ssid_len);
+	for (i = 0; i < req->n_ssids; i++) {
+		if (req->ssids[i].ssid_len == ssid_len &&
+		    !memcmp(req->ssids[i].ssid, ssid, ssid_len))
+			break;
+	}
+	if (i == req->n_ssids) {
+		memcpy(req->ssids[req->n_ssids].ssid, ssid, ssid_len);
 		req->ssids[req->n_ssids++].ssid_len = ssid_len;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल पूर्णांक brcmf_start_पूर्णांकernal_escan(काष्ठा brcmf_अगर *अगरp, u32 fwmap,
-				      काष्ठा cfg80211_scan_request *request)
-अणु
-	काष्ठा brcmf_cfg80211_info *cfg = अगरp->drvr->config;
-	पूर्णांक err;
+static int brcmf_start_internal_escan(struct brcmf_if *ifp, u32 fwmap,
+				      struct cfg80211_scan_request *request)
+{
+	struct brcmf_cfg80211_info *cfg = ifp->drvr->config;
+	int err;
 
-	अगर (test_bit(BRCMF_SCAN_STATUS_BUSY, &cfg->scan_status)) अणु
-		अगर (cfg->पूर्णांक_escan_map)
+	if (test_bit(BRCMF_SCAN_STATUS_BUSY, &cfg->scan_status)) {
+		if (cfg->int_escan_map)
 			brcmf_dbg(SCAN, "aborting internal scan: map=%u\n",
-				  cfg->पूर्णांक_escan_map);
+				  cfg->int_escan_map);
 		/* Abort any on-going scan */
-		brcmf_पात_scanning(cfg);
-	पूर्ण
+		brcmf_abort_scanning(cfg);
+	}
 
 	brcmf_dbg(SCAN, "start internal scan: map=%u\n", fwmap);
 	set_bit(BRCMF_SCAN_STATUS_BUSY, &cfg->scan_status);
 	cfg->escan_info.run = brcmf_run_escan;
-	err = brcmf_करो_escan(अगरp, request);
-	अगर (err) अणु
+	err = brcmf_do_escan(ifp, request);
+	if (err) {
 		clear_bit(BRCMF_SCAN_STATUS_BUSY, &cfg->scan_status);
-		वापस err;
-	पूर्ण
-	cfg->पूर्णांक_escan_map = fwmap;
-	वापस 0;
-पूर्ण
+		return err;
+	}
+	cfg->int_escan_map = fwmap;
+	return 0;
+}
 
-अटल काष्ठा brcmf_pno_net_info_le *
-brcmf_get_netinfo_array(काष्ठा brcmf_pno_scanresults_le *pfn_v1)
-अणु
-	काष्ठा brcmf_pno_scanresults_v2_le *pfn_v2;
-	काष्ठा brcmf_pno_net_info_le *netinfo;
+static struct brcmf_pno_net_info_le *
+brcmf_get_netinfo_array(struct brcmf_pno_scanresults_le *pfn_v1)
+{
+	struct brcmf_pno_scanresults_v2_le *pfn_v2;
+	struct brcmf_pno_net_info_le *netinfo;
 
-	चयन (pfn_v1->version) अणु
-	शेष:
+	switch (pfn_v1->version) {
+	default:
 		WARN_ON(1);
 		fallthrough;
-	हाल cpu_to_le32(1):
-		netinfo = (काष्ठा brcmf_pno_net_info_le *)(pfn_v1 + 1);
-		अवरोध;
-	हाल cpu_to_le32(2):
-		pfn_v2 = (काष्ठा brcmf_pno_scanresults_v2_le *)pfn_v1;
-		netinfo = (काष्ठा brcmf_pno_net_info_le *)(pfn_v2 + 1);
-		अवरोध;
-	पूर्ण
+	case cpu_to_le32(1):
+		netinfo = (struct brcmf_pno_net_info_le *)(pfn_v1 + 1);
+		break;
+	case cpu_to_le32(2):
+		pfn_v2 = (struct brcmf_pno_scanresults_v2_le *)pfn_v1;
+		netinfo = (struct brcmf_pno_net_info_le *)(pfn_v2 + 1);
+		break;
+	}
 
-	वापस netinfo;
-पूर्ण
+	return netinfo;
+}
 
-/* PFN result करोesn't have all the info which are required by the supplicant
+/* PFN result doesn't have all the info which are required by the supplicant
  * (For e.g IEs) Do a target Escan so that sched scan results are reported
- * via wl_inक्रमm_single_bss in the required क्रमmat. Escan करोes require the
- * scan request in the क्रमm of cfg80211_scan_request. For समयbeing, create
+ * via wl_inform_single_bss in the required format. Escan does require the
+ * scan request in the form of cfg80211_scan_request. For timebeing, create
  * cfg80211_scan_request one out of the received PNO event.
  */
-अटल s32
-brcmf_notअगरy_sched_scan_results(काष्ठा brcmf_अगर *अगरp,
-				स्थिर काष्ठा brcmf_event_msg *e, व्योम *data)
-अणु
-	काष्ठा brcmf_pub *drvr = अगरp->drvr;
-	काष्ठा brcmf_cfg80211_info *cfg = drvr->config;
-	काष्ठा brcmf_pno_net_info_le *netinfo, *netinfo_start;
-	काष्ठा cfg80211_scan_request *request = शून्य;
-	काष्ठा wiphy *wiphy = cfg_to_wiphy(cfg);
-	पूर्णांक i, err = 0;
-	काष्ठा brcmf_pno_scanresults_le *pfn_result;
+static s32
+brcmf_notify_sched_scan_results(struct brcmf_if *ifp,
+				const struct brcmf_event_msg *e, void *data)
+{
+	struct brcmf_pub *drvr = ifp->drvr;
+	struct brcmf_cfg80211_info *cfg = drvr->config;
+	struct brcmf_pno_net_info_le *netinfo, *netinfo_start;
+	struct cfg80211_scan_request *request = NULL;
+	struct wiphy *wiphy = cfg_to_wiphy(cfg);
+	int i, err = 0;
+	struct brcmf_pno_scanresults_le *pfn_result;
 	u32 bucket_map;
 	u32 result_count;
 	u32 status;
@@ -3517,17 +3516,17 @@ brcmf_notअगरy_sched_scan_results(काष्ठा brcmf_अगर *अ�
 
 	brcmf_dbg(SCAN, "Enter\n");
 
-	अगर (e->datalen < (माप(*pfn_result) + माप(*netinfo))) अणु
+	if (e->datalen < (sizeof(*pfn_result) + sizeof(*netinfo))) {
 		brcmf_dbg(SCAN, "Event data to small. Ignore\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (e->event_code == BRCMF_E_PFN_NET_LOST) अणु
+	if (e->event_code == BRCMF_E_PFN_NET_LOST) {
 		brcmf_dbg(SCAN, "PFN NET LOST event. Do Nothing\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	pfn_result = (काष्ठा brcmf_pno_scanresults_le *)data;
+	pfn_result = (struct brcmf_pno_scanresults_le *)data;
 	result_count = le32_to_cpu(pfn_result->count);
 	status = le32_to_cpu(pfn_result->status);
 
@@ -3536,111 +3535,111 @@ brcmf_notअगरy_sched_scan_results(काष्ठा brcmf_अगर *अ�
 	 */
 	WARN_ON(status != BRCMF_PNO_SCAN_COMPLETE);
 	brcmf_dbg(SCAN, "PFN NET FOUND event. count: %d\n", result_count);
-	अगर (!result_count) अणु
+	if (!result_count) {
 		bphy_err(drvr, "FALSE PNO Event. (pfn_count == 0)\n");
-		जाओ out_err;
-	पूर्ण
+		goto out_err;
+	}
 
 	netinfo_start = brcmf_get_netinfo_array(pfn_result);
-	datalen = e->datalen - ((व्योम *)netinfo_start - (व्योम *)pfn_result);
-	अगर (datalen < result_count * माप(*netinfo)) अणु
+	datalen = e->datalen - ((void *)netinfo_start - (void *)pfn_result);
+	if (datalen < result_count * sizeof(*netinfo)) {
 		bphy_err(drvr, "insufficient event data\n");
-		जाओ out_err;
-	पूर्ण
+		goto out_err;
+	}
 
-	request = brcmf_alloc_पूर्णांकernal_escan_request(wiphy,
+	request = brcmf_alloc_internal_escan_request(wiphy,
 						     result_count);
-	अगर (!request) अणु
+	if (!request) {
 		err = -ENOMEM;
-		जाओ out_err;
-	पूर्ण
+		goto out_err;
+	}
 
 	bucket_map = 0;
-	क्रम (i = 0; i < result_count; i++) अणु
+	for (i = 0; i < result_count; i++) {
 		netinfo = &netinfo_start[i];
 
-		अगर (netinfo->SSID_len > IEEE80211_MAX_SSID_LEN)
+		if (netinfo->SSID_len > IEEE80211_MAX_SSID_LEN)
 			netinfo->SSID_len = IEEE80211_MAX_SSID_LEN;
 		brcmf_dbg(SCAN, "SSID:%.32s Channel:%d\n",
 			  netinfo->SSID, netinfo->channel);
 		bucket_map |= brcmf_pno_get_bucket_map(cfg->pno, netinfo);
-		err = brcmf_पूर्णांकernal_escan_add_info(request,
+		err = brcmf_internal_escan_add_info(request,
 						    netinfo->SSID,
 						    netinfo->SSID_len,
 						    netinfo->channel);
-		अगर (err)
-			जाओ out_err;
-	पूर्ण
+		if (err)
+			goto out_err;
+	}
 
-	अगर (!bucket_map)
-		जाओ मुक्त_req;
+	if (!bucket_map)
+		goto free_req;
 
-	err = brcmf_start_पूर्णांकernal_escan(अगरp, bucket_map, request);
-	अगर (!err)
-		जाओ मुक्त_req;
+	err = brcmf_start_internal_escan(ifp, bucket_map, request);
+	if (!err)
+		goto free_req;
 
 out_err:
 	cfg80211_sched_scan_stopped(wiphy, 0);
-मुक्त_req:
-	kमुक्त(request);
-	वापस err;
-पूर्ण
+free_req:
+	kfree(request);
+	return err;
+}
 
-अटल पूर्णांक
-brcmf_cfg80211_sched_scan_start(काष्ठा wiphy *wiphy,
-				काष्ठा net_device *ndev,
-				काष्ठा cfg80211_sched_scan_request *req)
-अणु
-	काष्ठा brcmf_cfg80211_info *cfg = wiphy_to_cfg(wiphy);
-	काष्ठा brcmf_अगर *अगरp = netdev_priv(ndev);
-	काष्ठा brcmf_pub *drvr = cfg->pub;
+static int
+brcmf_cfg80211_sched_scan_start(struct wiphy *wiphy,
+				struct net_device *ndev,
+				struct cfg80211_sched_scan_request *req)
+{
+	struct brcmf_cfg80211_info *cfg = wiphy_to_cfg(wiphy);
+	struct brcmf_if *ifp = netdev_priv(ndev);
+	struct brcmf_pub *drvr = cfg->pub;
 
 	brcmf_dbg(SCAN, "Enter: n_match_sets=%d n_ssids=%d\n",
 		  req->n_match_sets, req->n_ssids);
 
-	अगर (test_bit(BRCMF_SCAN_STATUS_SUPPRESS, &cfg->scan_status)) अणु
+	if (test_bit(BRCMF_SCAN_STATUS_SUPPRESS, &cfg->scan_status)) {
 		bphy_err(drvr, "Scanning suppressed: status=%lu\n",
 			 cfg->scan_status);
-		वापस -EAGAIN;
-	पूर्ण
+		return -EAGAIN;
+	}
 
-	अगर (req->n_match_sets <= 0) अणु
+	if (req->n_match_sets <= 0) {
 		brcmf_dbg(SCAN, "invalid number of matchsets specified: %d\n",
 			  req->n_match_sets);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस brcmf_pno_start_sched_scan(अगरp, req);
-पूर्ण
+	return brcmf_pno_start_sched_scan(ifp, req);
+}
 
-अटल पूर्णांक brcmf_cfg80211_sched_scan_stop(काष्ठा wiphy *wiphy,
-					  काष्ठा net_device *ndev, u64 reqid)
-अणु
-	काष्ठा brcmf_cfg80211_info *cfg = wiphy_to_cfg(wiphy);
-	काष्ठा brcmf_अगर *अगरp = netdev_priv(ndev);
+static int brcmf_cfg80211_sched_scan_stop(struct wiphy *wiphy,
+					  struct net_device *ndev, u64 reqid)
+{
+	struct brcmf_cfg80211_info *cfg = wiphy_to_cfg(wiphy);
+	struct brcmf_if *ifp = netdev_priv(ndev);
 
 	brcmf_dbg(SCAN, "enter\n");
-	brcmf_pno_stop_sched_scan(अगरp, reqid);
-	अगर (cfg->पूर्णांक_escan_map)
-		brcmf_notअगरy_escan_complete(cfg, अगरp, true, true);
-	वापस 0;
-पूर्ण
+	brcmf_pno_stop_sched_scan(ifp, reqid);
+	if (cfg->int_escan_map)
+		brcmf_notify_escan_complete(cfg, ifp, true, true);
+	return 0;
+}
 
-अटल __always_अंतरभूत व्योम brcmf_delay(u32 ms)
-अणु
-	अगर (ms < 1000 / HZ) अणु
+static __always_inline void brcmf_delay(u32 ms)
+{
+	if (ms < 1000 / HZ) {
 		cond_resched();
 		mdelay(ms);
-	पूर्ण अन्यथा अणु
+	} else {
 		msleep(ms);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल s32 brcmf_config_wowl_pattern(काष्ठा brcmf_अगर *अगरp, u8 cmd[4],
+static s32 brcmf_config_wowl_pattern(struct brcmf_if *ifp, u8 cmd[4],
 				     u8 *pattern, u32 patternsize, u8 *mask,
 				     u32 packet_offset)
-अणु
-	काष्ठा brcmf_fil_wowl_pattern_le *filter;
+{
+	struct brcmf_fil_wowl_pattern_le *filter;
 	u32 masksize;
 	u32 patternoffset;
 	u8 *buf;
@@ -3648,65 +3647,65 @@ brcmf_cfg80211_sched_scan_start(काष्ठा wiphy *wiphy,
 	s32 ret;
 
 	masksize = (patternsize + 7) / 8;
-	patternoffset = माप(*filter) - माप(filter->cmd) + masksize;
+	patternoffset = sizeof(*filter) - sizeof(filter->cmd) + masksize;
 
-	bufsize = माप(*filter) + patternsize + masksize;
+	bufsize = sizeof(*filter) + patternsize + masksize;
 	buf = kzalloc(bufsize, GFP_KERNEL);
-	अगर (!buf)
-		वापस -ENOMEM;
-	filter = (काष्ठा brcmf_fil_wowl_pattern_le *)buf;
+	if (!buf)
+		return -ENOMEM;
+	filter = (struct brcmf_fil_wowl_pattern_le *)buf;
 
-	स_नकल(filter->cmd, cmd, 4);
+	memcpy(filter->cmd, cmd, 4);
 	filter->masksize = cpu_to_le32(masksize);
 	filter->offset = cpu_to_le32(packet_offset);
 	filter->patternoffset = cpu_to_le32(patternoffset);
 	filter->patternsize = cpu_to_le32(patternsize);
 	filter->type = cpu_to_le32(BRCMF_WOWL_PATTERN_TYPE_BITMAP);
 
-	अगर ((mask) && (masksize))
-		स_नकल(buf + माप(*filter), mask, masksize);
-	अगर ((pattern) && (patternsize))
-		स_नकल(buf + माप(*filter) + masksize, pattern, patternsize);
+	if ((mask) && (masksize))
+		memcpy(buf + sizeof(*filter), mask, masksize);
+	if ((pattern) && (patternsize))
+		memcpy(buf + sizeof(*filter) + masksize, pattern, patternsize);
 
-	ret = brcmf_fil_iovar_data_set(अगरp, "wowl_pattern", buf, bufsize);
+	ret = brcmf_fil_iovar_data_set(ifp, "wowl_pattern", buf, bufsize);
 
-	kमुक्त(buf);
-	वापस ret;
-पूर्ण
+	kfree(buf);
+	return ret;
+}
 
-अटल s32
-brcmf_wowl_nd_results(काष्ठा brcmf_अगर *अगरp, स्थिर काष्ठा brcmf_event_msg *e,
-		      व्योम *data)
-अणु
-	काष्ठा brcmf_pub *drvr = अगरp->drvr;
-	काष्ठा brcmf_cfg80211_info *cfg = drvr->config;
-	काष्ठा brcmf_pno_scanresults_le *pfn_result;
-	काष्ठा brcmf_pno_net_info_le *netinfo;
+static s32
+brcmf_wowl_nd_results(struct brcmf_if *ifp, const struct brcmf_event_msg *e,
+		      void *data)
+{
+	struct brcmf_pub *drvr = ifp->drvr;
+	struct brcmf_cfg80211_info *cfg = drvr->config;
+	struct brcmf_pno_scanresults_le *pfn_result;
+	struct brcmf_pno_net_info_le *netinfo;
 
 	brcmf_dbg(SCAN, "Enter\n");
 
-	अगर (e->datalen < (माप(*pfn_result) + माप(*netinfo))) अणु
+	if (e->datalen < (sizeof(*pfn_result) + sizeof(*netinfo))) {
 		brcmf_dbg(SCAN, "Event data to small. Ignore\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	pfn_result = (काष्ठा brcmf_pno_scanresults_le *)data;
+	pfn_result = (struct brcmf_pno_scanresults_le *)data;
 
-	अगर (e->event_code == BRCMF_E_PFN_NET_LOST) अणु
+	if (e->event_code == BRCMF_E_PFN_NET_LOST) {
 		brcmf_dbg(SCAN, "PFN NET LOST event. Ignore\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (le32_to_cpu(pfn_result->count) < 1) अणु
+	if (le32_to_cpu(pfn_result->count) < 1) {
 		bphy_err(drvr, "Invalid result count, expected 1 (%d)\n",
 			 le32_to_cpu(pfn_result->count));
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	netinfo = brcmf_get_netinfo_array(pfn_result);
-	अगर (netinfo->SSID_len > IEEE80211_MAX_SSID_LEN)
+	if (netinfo->SSID_len > IEEE80211_MAX_SSID_LEN)
 		netinfo->SSID_len = IEEE80211_MAX_SSID_LEN;
-	स_नकल(cfg->wowl.nd->ssid.ssid, netinfo->SSID, netinfo->SSID_len);
+	memcpy(cfg->wowl.nd->ssid.ssid, netinfo->SSID, netinfo->SSID_len);
 	cfg->wowl.nd->ssid.ssid_len = netinfo->SSID_len;
 	cfg->wowl.nd->n_channels = 1;
 	cfg->wowl.nd->channels[0] =
@@ -3716,236 +3715,236 @@ brcmf_wowl_nd_results(काष्ठा brcmf_अगर *अगरp, स्थ�
 	cfg->wowl.nd_info->n_matches = 1;
 	cfg->wowl.nd_info->matches[0] = cfg->wowl.nd;
 
-	/* Inक्रमm (the resume task) that the net detect inक्रमmation was recvd */
+	/* Inform (the resume task) that the net detect information was recvd */
 	cfg->wowl.nd_data_completed = true;
-	wake_up(&cfg->wowl.nd_data_रुको);
+	wake_up(&cfg->wowl.nd_data_wait);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_PM
+#ifdef CONFIG_PM
 
-अटल व्योम brcmf_report_wowl_wakeind(काष्ठा wiphy *wiphy, काष्ठा brcmf_अगर *अगरp)
-अणु
-	काष्ठा brcmf_cfg80211_info *cfg = wiphy_to_cfg(wiphy);
-	काष्ठा brcmf_pub *drvr = cfg->pub;
-	काष्ठा brcmf_wowl_wakeind_le wake_ind_le;
-	काष्ठा cfg80211_wowlan_wakeup wakeup_data;
-	काष्ठा cfg80211_wowlan_wakeup *wakeup;
+static void brcmf_report_wowl_wakeind(struct wiphy *wiphy, struct brcmf_if *ifp)
+{
+	struct brcmf_cfg80211_info *cfg = wiphy_to_cfg(wiphy);
+	struct brcmf_pub *drvr = cfg->pub;
+	struct brcmf_wowl_wakeind_le wake_ind_le;
+	struct cfg80211_wowlan_wakeup wakeup_data;
+	struct cfg80211_wowlan_wakeup *wakeup;
 	u32 wakeind;
 	s32 err;
-	पूर्णांक समयout;
+	int timeout;
 
-	err = brcmf_fil_iovar_data_get(अगरp, "wowl_wakeind", &wake_ind_le,
-				       माप(wake_ind_le));
-	अगर (err) अणु
+	err = brcmf_fil_iovar_data_get(ifp, "wowl_wakeind", &wake_ind_le,
+				       sizeof(wake_ind_le));
+	if (err) {
 		bphy_err(drvr, "Get wowl_wakeind failed, err = %d\n", err);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	wakeind = le32_to_cpu(wake_ind_le.ucode_wakeind);
-	अगर (wakeind & (BRCMF_WOWL_MAGIC | BRCMF_WOWL_DIS | BRCMF_WOWL_BCN |
+	if (wakeind & (BRCMF_WOWL_MAGIC | BRCMF_WOWL_DIS | BRCMF_WOWL_BCN |
 		       BRCMF_WOWL_RETR | BRCMF_WOWL_NET |
-		       BRCMF_WOWL_PFN_FOUND)) अणु
+		       BRCMF_WOWL_PFN_FOUND)) {
 		wakeup = &wakeup_data;
-		स_रखो(&wakeup_data, 0, माप(wakeup_data));
+		memset(&wakeup_data, 0, sizeof(wakeup_data));
 		wakeup_data.pattern_idx = -1;
 
-		अगर (wakeind & BRCMF_WOWL_MAGIC) अणु
+		if (wakeind & BRCMF_WOWL_MAGIC) {
 			brcmf_dbg(INFO, "WOWL Wake indicator: BRCMF_WOWL_MAGIC\n");
 			wakeup_data.magic_pkt = true;
-		पूर्ण
-		अगर (wakeind & BRCMF_WOWL_DIS) अणु
+		}
+		if (wakeind & BRCMF_WOWL_DIS) {
 			brcmf_dbg(INFO, "WOWL Wake indicator: BRCMF_WOWL_DIS\n");
 			wakeup_data.disconnect = true;
-		पूर्ण
-		अगर (wakeind & BRCMF_WOWL_BCN) अणु
+		}
+		if (wakeind & BRCMF_WOWL_BCN) {
 			brcmf_dbg(INFO, "WOWL Wake indicator: BRCMF_WOWL_BCN\n");
 			wakeup_data.disconnect = true;
-		पूर्ण
-		अगर (wakeind & BRCMF_WOWL_RETR) अणु
+		}
+		if (wakeind & BRCMF_WOWL_RETR) {
 			brcmf_dbg(INFO, "WOWL Wake indicator: BRCMF_WOWL_RETR\n");
 			wakeup_data.disconnect = true;
-		पूर्ण
-		अगर (wakeind & BRCMF_WOWL_NET) अणु
+		}
+		if (wakeind & BRCMF_WOWL_NET) {
 			brcmf_dbg(INFO, "WOWL Wake indicator: BRCMF_WOWL_NET\n");
 			/* For now always map to pattern 0, no API to get
-			 * correct inक्रमmation available at the moment.
+			 * correct information available at the moment.
 			 */
 			wakeup_data.pattern_idx = 0;
-		पूर्ण
-		अगर (wakeind & BRCMF_WOWL_PFN_FOUND) अणु
+		}
+		if (wakeind & BRCMF_WOWL_PFN_FOUND) {
 			brcmf_dbg(INFO, "WOWL Wake indicator: BRCMF_WOWL_PFN_FOUND\n");
-			समयout = रुको_event_समयout(cfg->wowl.nd_data_रुको,
+			timeout = wait_event_timeout(cfg->wowl.nd_data_wait,
 				cfg->wowl.nd_data_completed,
 				BRCMF_ND_INFO_TIMEOUT);
-			अगर (!समयout)
+			if (!timeout)
 				bphy_err(drvr, "No result for wowl net detect\n");
-			अन्यथा
+			else
 				wakeup_data.net_detect = cfg->wowl.nd_info;
-		पूर्ण
-		अगर (wakeind & BRCMF_WOWL_GTK_FAILURE) अणु
+		}
+		if (wakeind & BRCMF_WOWL_GTK_FAILURE) {
 			brcmf_dbg(INFO, "WOWL Wake indicator: BRCMF_WOWL_GTK_FAILURE\n");
 			wakeup_data.gtk_rekey_failure = true;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		wakeup = शून्य;
-	पूर्ण
-	cfg80211_report_wowlan_wakeup(&अगरp->vअगर->wdev, wakeup, GFP_KERNEL);
-पूर्ण
+		}
+	} else {
+		wakeup = NULL;
+	}
+	cfg80211_report_wowlan_wakeup(&ifp->vif->wdev, wakeup, GFP_KERNEL);
+}
 
-#अन्यथा
+#else
 
-अटल व्योम brcmf_report_wowl_wakeind(काष्ठा wiphy *wiphy, काष्ठा brcmf_अगर *अगरp)
-अणु
-पूर्ण
+static void brcmf_report_wowl_wakeind(struct wiphy *wiphy, struct brcmf_if *ifp)
+{
+}
 
-#पूर्ण_अगर /* CONFIG_PM */
+#endif /* CONFIG_PM */
 
-अटल s32 brcmf_cfg80211_resume(काष्ठा wiphy *wiphy)
-अणु
-	काष्ठा brcmf_cfg80211_info *cfg = wiphy_to_cfg(wiphy);
-	काष्ठा net_device *ndev = cfg_to_ndev(cfg);
-	काष्ठा brcmf_अगर *अगरp = netdev_priv(ndev);
+static s32 brcmf_cfg80211_resume(struct wiphy *wiphy)
+{
+	struct brcmf_cfg80211_info *cfg = wiphy_to_cfg(wiphy);
+	struct net_device *ndev = cfg_to_ndev(cfg);
+	struct brcmf_if *ifp = netdev_priv(ndev);
 
 	brcmf_dbg(TRACE, "Enter\n");
 
-	अगर (cfg->wowl.active) अणु
-		brcmf_report_wowl_wakeind(wiphy, अगरp);
-		brcmf_fil_iovar_पूर्णांक_set(अगरp, "wowl_clear", 0);
-		brcmf_config_wowl_pattern(अगरp, "clr", शून्य, 0, शून्य, 0);
-		अगर (!brcmf_feat_is_enabled(अगरp, BRCMF_FEAT_WOWL_ARP_ND))
-			brcmf_configure_arp_nd_offload(अगरp, true);
-		brcmf_fil_cmd_पूर्णांक_set(अगरp, BRCMF_C_SET_PM,
+	if (cfg->wowl.active) {
+		brcmf_report_wowl_wakeind(wiphy, ifp);
+		brcmf_fil_iovar_int_set(ifp, "wowl_clear", 0);
+		brcmf_config_wowl_pattern(ifp, "clr", NULL, 0, NULL, 0);
+		if (!brcmf_feat_is_enabled(ifp, BRCMF_FEAT_WOWL_ARP_ND))
+			brcmf_configure_arp_nd_offload(ifp, true);
+		brcmf_fil_cmd_int_set(ifp, BRCMF_C_SET_PM,
 				      cfg->wowl.pre_pmmode);
 		cfg->wowl.active = false;
-		अगर (cfg->wowl.nd_enabled) अणु
-			brcmf_cfg80211_sched_scan_stop(cfg->wiphy, अगरp->ndev, 0);
-			brcmf_fweh_unरेजिस्टर(cfg->pub, BRCMF_E_PFN_NET_FOUND);
-			brcmf_fweh_रेजिस्टर(cfg->pub, BRCMF_E_PFN_NET_FOUND,
-					    brcmf_notअगरy_sched_scan_results);
+		if (cfg->wowl.nd_enabled) {
+			brcmf_cfg80211_sched_scan_stop(cfg->wiphy, ifp->ndev, 0);
+			brcmf_fweh_unregister(cfg->pub, BRCMF_E_PFN_NET_FOUND);
+			brcmf_fweh_register(cfg->pub, BRCMF_E_PFN_NET_FOUND,
+					    brcmf_notify_sched_scan_results);
 			cfg->wowl.nd_enabled = false;
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+		}
+	}
+	return 0;
+}
 
-अटल व्योम brcmf_configure_wowl(काष्ठा brcmf_cfg80211_info *cfg,
-				 काष्ठा brcmf_अगर *अगरp,
-				 काष्ठा cfg80211_wowlan *wowl)
-अणु
+static void brcmf_configure_wowl(struct brcmf_cfg80211_info *cfg,
+				 struct brcmf_if *ifp,
+				 struct cfg80211_wowlan *wowl)
+{
 	u32 wowl_config;
-	काष्ठा brcmf_wowl_wakeind_le wowl_wakeind;
+	struct brcmf_wowl_wakeind_le wowl_wakeind;
 	u32 i;
 
 	brcmf_dbg(TRACE, "Suspend, wowl config.\n");
 
-	अगर (!brcmf_feat_is_enabled(अगरp, BRCMF_FEAT_WOWL_ARP_ND))
-		brcmf_configure_arp_nd_offload(अगरp, false);
-	brcmf_fil_cmd_पूर्णांक_get(अगरp, BRCMF_C_GET_PM, &cfg->wowl.pre_pmmode);
-	brcmf_fil_cmd_पूर्णांक_set(अगरp, BRCMF_C_SET_PM, PM_MAX);
+	if (!brcmf_feat_is_enabled(ifp, BRCMF_FEAT_WOWL_ARP_ND))
+		brcmf_configure_arp_nd_offload(ifp, false);
+	brcmf_fil_cmd_int_get(ifp, BRCMF_C_GET_PM, &cfg->wowl.pre_pmmode);
+	brcmf_fil_cmd_int_set(ifp, BRCMF_C_SET_PM, PM_MAX);
 
 	wowl_config = 0;
-	अगर (wowl->disconnect)
+	if (wowl->disconnect)
 		wowl_config = BRCMF_WOWL_DIS | BRCMF_WOWL_BCN | BRCMF_WOWL_RETR;
-	अगर (wowl->magic_pkt)
+	if (wowl->magic_pkt)
 		wowl_config |= BRCMF_WOWL_MAGIC;
-	अगर ((wowl->patterns) && (wowl->n_patterns)) अणु
+	if ((wowl->patterns) && (wowl->n_patterns)) {
 		wowl_config |= BRCMF_WOWL_NET;
-		क्रम (i = 0; i < wowl->n_patterns; i++) अणु
-			brcmf_config_wowl_pattern(अगरp, "add",
+		for (i = 0; i < wowl->n_patterns; i++) {
+			brcmf_config_wowl_pattern(ifp, "add",
 				(u8 *)wowl->patterns[i].pattern,
 				wowl->patterns[i].pattern_len,
 				(u8 *)wowl->patterns[i].mask,
 				wowl->patterns[i].pkt_offset);
-		पूर्ण
-	पूर्ण
-	अगर (wowl->nd_config) अणु
-		brcmf_cfg80211_sched_scan_start(cfg->wiphy, अगरp->ndev,
+		}
+	}
+	if (wowl->nd_config) {
+		brcmf_cfg80211_sched_scan_start(cfg->wiphy, ifp->ndev,
 						wowl->nd_config);
 		wowl_config |= BRCMF_WOWL_PFN_FOUND;
 
 		cfg->wowl.nd_data_completed = false;
 		cfg->wowl.nd_enabled = true;
-		/* Now reroute the event क्रम PFN to the wowl function. */
-		brcmf_fweh_unरेजिस्टर(cfg->pub, BRCMF_E_PFN_NET_FOUND);
-		brcmf_fweh_रेजिस्टर(cfg->pub, BRCMF_E_PFN_NET_FOUND,
+		/* Now reroute the event for PFN to the wowl function. */
+		brcmf_fweh_unregister(cfg->pub, BRCMF_E_PFN_NET_FOUND);
+		brcmf_fweh_register(cfg->pub, BRCMF_E_PFN_NET_FOUND,
 				    brcmf_wowl_nd_results);
-	पूर्ण
-	अगर (wowl->gtk_rekey_failure)
+	}
+	if (wowl->gtk_rekey_failure)
 		wowl_config |= BRCMF_WOWL_GTK_FAILURE;
-	अगर (!test_bit(BRCMF_VIF_STATUS_CONNECTED, &अगरp->vअगर->sme_state))
+	if (!test_bit(BRCMF_VIF_STATUS_CONNECTED, &ifp->vif->sme_state))
 		wowl_config |= BRCMF_WOWL_UNASSOC;
 
-	स_नकल(&wowl_wakeind, "clear", 6);
-	brcmf_fil_iovar_data_set(अगरp, "wowl_wakeind", &wowl_wakeind,
-				 माप(wowl_wakeind));
-	brcmf_fil_iovar_पूर्णांक_set(अगरp, "wowl", wowl_config);
-	brcmf_fil_iovar_पूर्णांक_set(अगरp, "wowl_activate", 1);
-	brcmf_bus_wowl_config(cfg->pub->bus_अगर, true);
+	memcpy(&wowl_wakeind, "clear", 6);
+	brcmf_fil_iovar_data_set(ifp, "wowl_wakeind", &wowl_wakeind,
+				 sizeof(wowl_wakeind));
+	brcmf_fil_iovar_int_set(ifp, "wowl", wowl_config);
+	brcmf_fil_iovar_int_set(ifp, "wowl_activate", 1);
+	brcmf_bus_wowl_config(cfg->pub->bus_if, true);
 	cfg->wowl.active = true;
-पूर्ण
+}
 
-अटल s32 brcmf_cfg80211_suspend(काष्ठा wiphy *wiphy,
-				  काष्ठा cfg80211_wowlan *wowl)
-अणु
-	काष्ठा brcmf_cfg80211_info *cfg = wiphy_to_cfg(wiphy);
-	काष्ठा net_device *ndev = cfg_to_ndev(cfg);
-	काष्ठा brcmf_अगर *अगरp = netdev_priv(ndev);
-	काष्ठा brcmf_cfg80211_vअगर *vअगर;
+static s32 brcmf_cfg80211_suspend(struct wiphy *wiphy,
+				  struct cfg80211_wowlan *wowl)
+{
+	struct brcmf_cfg80211_info *cfg = wiphy_to_cfg(wiphy);
+	struct net_device *ndev = cfg_to_ndev(cfg);
+	struct brcmf_if *ifp = netdev_priv(ndev);
+	struct brcmf_cfg80211_vif *vif;
 
 	brcmf_dbg(TRACE, "Enter\n");
 
-	/* अगर the primary net_device is not READY there is nothing
-	 * we can करो but pray resume goes smoothly.
+	/* if the primary net_device is not READY there is nothing
+	 * we can do but pray resume goes smoothly.
 	 */
-	अगर (!check_vअगर_up(अगरp->vअगर))
-		जाओ निकास;
+	if (!check_vif_up(ifp->vif))
+		goto exit;
 
 	/* Stop scheduled scan */
-	अगर (brcmf_feat_is_enabled(अगरp, BRCMF_FEAT_PNO))
+	if (brcmf_feat_is_enabled(ifp, BRCMF_FEAT_PNO))
 		brcmf_cfg80211_sched_scan_stop(wiphy, ndev, 0);
 
 	/* end any scanning */
-	अगर (test_bit(BRCMF_SCAN_STATUS_BUSY, &cfg->scan_status))
-		brcmf_पात_scanning(cfg);
+	if (test_bit(BRCMF_SCAN_STATUS_BUSY, &cfg->scan_status))
+		brcmf_abort_scanning(cfg);
 
-	अगर (wowl == शून्य) अणु
-		brcmf_bus_wowl_config(cfg->pub->bus_अगर, false);
-		list_क्रम_each_entry(vअगर, &cfg->vअगर_list, list) अणु
-			अगर (!test_bit(BRCMF_VIF_STATUS_READY, &vअगर->sme_state))
-				जारी;
-			/* While going to suspend अगर associated with AP
-			 * disassociate from AP to save घातer जबतक प्रणाली is
+	if (wowl == NULL) {
+		brcmf_bus_wowl_config(cfg->pub->bus_if, false);
+		list_for_each_entry(vif, &cfg->vif_list, list) {
+			if (!test_bit(BRCMF_VIF_STATUS_READY, &vif->sme_state))
+				continue;
+			/* While going to suspend if associated with AP
+			 * disassociate from AP to save power while system is
 			 * in suspended state
 			 */
-			brcmf_link_करोwn(vअगर, WLAN_REASON_UNSPECIFIED, true);
+			brcmf_link_down(vif, WLAN_REASON_UNSPECIFIED, true);
 			/* Make sure WPA_Supplicant receives all the event
 			 * generated due to DISASSOC call to the fw to keep
 			 * the state fw and WPA_Supplicant state consistent
 			 */
 			brcmf_delay(500);
-		पूर्ण
+		}
 		/* Configure MPC */
-		brcmf_set_mpc(अगरp, 1);
+		brcmf_set_mpc(ifp, 1);
 
-	पूर्ण अन्यथा अणु
+	} else {
 		/* Configure WOWL paramaters */
-		brcmf_configure_wowl(cfg, अगरp, wowl);
-	पूर्ण
+		brcmf_configure_wowl(cfg, ifp, wowl);
+	}
 
-निकास:
+exit:
 	brcmf_dbg(TRACE, "Exit\n");
 	/* clear any scanning activity */
 	cfg->scan_status = 0;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल __used s32
-brcmf_update_pmklist(काष्ठा brcmf_cfg80211_info *cfg, काष्ठा brcmf_अगर *अगरp)
-अणु
-	काष्ठा brcmf_pmk_list_le *pmk_list;
-	पूर्णांक i;
+static __used s32
+brcmf_update_pmklist(struct brcmf_cfg80211_info *cfg, struct brcmf_if *ifp)
+{
+	struct brcmf_pmk_list_le *pmk_list;
+	int i;
 	u32 npmk;
 	s32 err;
 
@@ -3953,163 +3952,163 @@ brcmf_update_pmklist(काष्ठा brcmf_cfg80211_info *cfg, काष्�
 	npmk = le32_to_cpu(pmk_list->npmk);
 
 	brcmf_dbg(CONN, "No of elements %d\n", npmk);
-	क्रम (i = 0; i < npmk; i++)
+	for (i = 0; i < npmk; i++)
 		brcmf_dbg(CONN, "PMK[%d]: %pM\n", i, &pmk_list->pmk[i].bssid);
 
-	err = brcmf_fil_iovar_data_set(अगरp, "pmkid_info", pmk_list,
-				       माप(*pmk_list));
+	err = brcmf_fil_iovar_data_set(ifp, "pmkid_info", pmk_list,
+				       sizeof(*pmk_list));
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल s32
-brcmf_cfg80211_set_pmksa(काष्ठा wiphy *wiphy, काष्ठा net_device *ndev,
-			 काष्ठा cfg80211_pmksa *pmksa)
-अणु
-	काष्ठा brcmf_cfg80211_info *cfg = wiphy_to_cfg(wiphy);
-	काष्ठा brcmf_अगर *अगरp = netdev_priv(ndev);
-	काष्ठा brcmf_pmksa *pmk = &cfg->pmk_list.pmk[0];
-	काष्ठा brcmf_pub *drvr = cfg->pub;
+static s32
+brcmf_cfg80211_set_pmksa(struct wiphy *wiphy, struct net_device *ndev,
+			 struct cfg80211_pmksa *pmksa)
+{
+	struct brcmf_cfg80211_info *cfg = wiphy_to_cfg(wiphy);
+	struct brcmf_if *ifp = netdev_priv(ndev);
+	struct brcmf_pmksa *pmk = &cfg->pmk_list.pmk[0];
+	struct brcmf_pub *drvr = cfg->pub;
 	s32 err;
 	u32 npmk, i;
 
 	brcmf_dbg(TRACE, "Enter\n");
-	अगर (!check_vअगर_up(अगरp->vअगर))
-		वापस -EIO;
+	if (!check_vif_up(ifp->vif))
+		return -EIO;
 
 	npmk = le32_to_cpu(cfg->pmk_list.npmk);
-	क्रम (i = 0; i < npmk; i++)
-		अगर (!स_भेद(pmksa->bssid, pmk[i].bssid, ETH_ALEN))
-			अवरोध;
-	अगर (i < BRCMF_MAXPMKID) अणु
-		स_नकल(pmk[i].bssid, pmksa->bssid, ETH_ALEN);
-		स_नकल(pmk[i].pmkid, pmksa->pmkid, WLAN_PMKID_LEN);
-		अगर (i == npmk) अणु
+	for (i = 0; i < npmk; i++)
+		if (!memcmp(pmksa->bssid, pmk[i].bssid, ETH_ALEN))
+			break;
+	if (i < BRCMF_MAXPMKID) {
+		memcpy(pmk[i].bssid, pmksa->bssid, ETH_ALEN);
+		memcpy(pmk[i].pmkid, pmksa->pmkid, WLAN_PMKID_LEN);
+		if (i == npmk) {
 			npmk++;
 			cfg->pmk_list.npmk = cpu_to_le32(npmk);
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		bphy_err(drvr, "Too many PMKSA entries cached %d\n", npmk);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	brcmf_dbg(CONN, "set_pmksa - PMK bssid: %pM =\n", pmk[npmk].bssid);
 	brcmf_dbg(CONN, "%*ph\n", WLAN_PMKID_LEN, pmk[npmk].pmkid);
 
-	err = brcmf_update_pmklist(cfg, अगरp);
+	err = brcmf_update_pmklist(cfg, ifp);
 
 	brcmf_dbg(TRACE, "Exit\n");
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल s32
-brcmf_cfg80211_del_pmksa(काष्ठा wiphy *wiphy, काष्ठा net_device *ndev,
-			 काष्ठा cfg80211_pmksa *pmksa)
-अणु
-	काष्ठा brcmf_cfg80211_info *cfg = wiphy_to_cfg(wiphy);
-	काष्ठा brcmf_अगर *अगरp = netdev_priv(ndev);
-	काष्ठा brcmf_pmksa *pmk = &cfg->pmk_list.pmk[0];
-	काष्ठा brcmf_pub *drvr = cfg->pub;
+static s32
+brcmf_cfg80211_del_pmksa(struct wiphy *wiphy, struct net_device *ndev,
+			 struct cfg80211_pmksa *pmksa)
+{
+	struct brcmf_cfg80211_info *cfg = wiphy_to_cfg(wiphy);
+	struct brcmf_if *ifp = netdev_priv(ndev);
+	struct brcmf_pmksa *pmk = &cfg->pmk_list.pmk[0];
+	struct brcmf_pub *drvr = cfg->pub;
 	s32 err;
 	u32 npmk, i;
 
 	brcmf_dbg(TRACE, "Enter\n");
-	अगर (!check_vअगर_up(अगरp->vअगर))
-		वापस -EIO;
+	if (!check_vif_up(ifp->vif))
+		return -EIO;
 
 	brcmf_dbg(CONN, "del_pmksa - PMK bssid = %pM\n", pmksa->bssid);
 
 	npmk = le32_to_cpu(cfg->pmk_list.npmk);
-	क्रम (i = 0; i < npmk; i++)
-		अगर (!स_भेद(pmksa->bssid, pmk[i].bssid, ETH_ALEN))
-			अवरोध;
+	for (i = 0; i < npmk; i++)
+		if (!memcmp(pmksa->bssid, pmk[i].bssid, ETH_ALEN))
+			break;
 
-	अगर ((npmk > 0) && (i < npmk)) अणु
-		क्रम (; i < (npmk - 1); i++) अणु
-			स_नकल(&pmk[i].bssid, &pmk[i + 1].bssid, ETH_ALEN);
-			स_नकल(&pmk[i].pmkid, &pmk[i + 1].pmkid,
+	if ((npmk > 0) && (i < npmk)) {
+		for (; i < (npmk - 1); i++) {
+			memcpy(&pmk[i].bssid, &pmk[i + 1].bssid, ETH_ALEN);
+			memcpy(&pmk[i].pmkid, &pmk[i + 1].pmkid,
 			       WLAN_PMKID_LEN);
-		पूर्ण
-		स_रखो(&pmk[i], 0, माप(*pmk));
+		}
+		memset(&pmk[i], 0, sizeof(*pmk));
 		cfg->pmk_list.npmk = cpu_to_le32(npmk - 1);
-	पूर्ण अन्यथा अणु
+	} else {
 		bphy_err(drvr, "Cache entry not found\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	err = brcmf_update_pmklist(cfg, अगरp);
+	err = brcmf_update_pmklist(cfg, ifp);
 
 	brcmf_dbg(TRACE, "Exit\n");
-	वापस err;
+	return err;
 
-पूर्ण
+}
 
-अटल s32
-brcmf_cfg80211_flush_pmksa(काष्ठा wiphy *wiphy, काष्ठा net_device *ndev)
-अणु
-	काष्ठा brcmf_cfg80211_info *cfg = wiphy_to_cfg(wiphy);
-	काष्ठा brcmf_अगर *अगरp = netdev_priv(ndev);
+static s32
+brcmf_cfg80211_flush_pmksa(struct wiphy *wiphy, struct net_device *ndev)
+{
+	struct brcmf_cfg80211_info *cfg = wiphy_to_cfg(wiphy);
+	struct brcmf_if *ifp = netdev_priv(ndev);
 	s32 err;
 
 	brcmf_dbg(TRACE, "Enter\n");
-	अगर (!check_vअगर_up(अगरp->vअगर))
-		वापस -EIO;
+	if (!check_vif_up(ifp->vif))
+		return -EIO;
 
-	स_रखो(&cfg->pmk_list, 0, माप(cfg->pmk_list));
-	err = brcmf_update_pmklist(cfg, अगरp);
+	memset(&cfg->pmk_list, 0, sizeof(cfg->pmk_list));
+	err = brcmf_update_pmklist(cfg, ifp);
 
 	brcmf_dbg(TRACE, "Exit\n");
-	वापस err;
+	return err;
 
-पूर्ण
+}
 
-अटल s32 brcmf_configure_खोलोsecurity(काष्ठा brcmf_अगर *अगरp)
-अणु
-	काष्ठा brcmf_pub *drvr = अगरp->drvr;
+static s32 brcmf_configure_opensecurity(struct brcmf_if *ifp)
+{
+	struct brcmf_pub *drvr = ifp->drvr;
 	s32 err;
 	s32 wpa_val;
 
 	/* set auth */
-	err = brcmf_fil_bsscfg_पूर्णांक_set(अगरp, "auth", 0);
-	अगर (err < 0) अणु
+	err = brcmf_fil_bsscfg_int_set(ifp, "auth", 0);
+	if (err < 0) {
 		bphy_err(drvr, "auth error %d\n", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 	/* set wsec */
-	err = brcmf_fil_bsscfg_पूर्णांक_set(अगरp, "wsec", 0);
-	अगर (err < 0) अणु
+	err = brcmf_fil_bsscfg_int_set(ifp, "wsec", 0);
+	if (err < 0) {
 		bphy_err(drvr, "wsec error %d\n", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 	/* set upper-layer auth */
-	अगर (brcmf_is_ibssmode(अगरp->vअगर))
+	if (brcmf_is_ibssmode(ifp->vif))
 		wpa_val = WPA_AUTH_NONE;
-	अन्यथा
+	else
 		wpa_val = WPA_AUTH_DISABLED;
-	err = brcmf_fil_bsscfg_पूर्णांक_set(अगरp, "wpa_auth", wpa_val);
-	अगर (err < 0) अणु
+	err = brcmf_fil_bsscfg_int_set(ifp, "wpa_auth", wpa_val);
+	if (err < 0) {
 		bphy_err(drvr, "wpa_auth error %d\n", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल bool brcmf_valid_wpa_oui(u8 *oui, bool is_rsn_ie)
-अणु
-	अगर (is_rsn_ie)
-		वापस (स_भेद(oui, RSN_OUI, TLV_OUI_LEN) == 0);
+static bool brcmf_valid_wpa_oui(u8 *oui, bool is_rsn_ie)
+{
+	if (is_rsn_ie)
+		return (memcmp(oui, RSN_OUI, TLV_OUI_LEN) == 0);
 
-	वापस (स_भेद(oui, WPA_OUI, TLV_OUI_LEN) == 0);
-पूर्ण
+	return (memcmp(oui, WPA_OUI, TLV_OUI_LEN) == 0);
+}
 
-अटल s32
-brcmf_configure_wpaie(काष्ठा brcmf_अगर *अगरp,
-		      स्थिर काष्ठा brcmf_vs_tlv *wpa_ie,
+static s32
+brcmf_configure_wpaie(struct brcmf_if *ifp,
+		      const struct brcmf_vs_tlv *wpa_ie,
 		      bool is_rsn_ie)
-अणु
-	काष्ठा brcmf_pub *drvr = अगरp->drvr;
-	u32 auth = 0; /* d11 खोलो authentication */
+{
+	struct brcmf_pub *drvr = ifp->drvr;
+	u32 auth = 0; /* d11 open authentication */
 	u16 count;
 	s32 err = 0;
 	s32 len;
@@ -4125,266 +4124,266 @@ brcmf_configure_wpaie(काष्ठा brcmf_अगर *अगरp,
 	u32 mfp;
 
 	brcmf_dbg(TRACE, "Enter\n");
-	अगर (wpa_ie == शून्य)
-		जाओ निकास;
+	if (wpa_ie == NULL)
+		goto exit;
 
 	len = wpa_ie->len + TLV_HDR_LEN;
 	data = (u8 *)wpa_ie;
 	offset = TLV_HDR_LEN;
-	अगर (!is_rsn_ie)
+	if (!is_rsn_ie)
 		offset += VS_IE_FIXED_HDR_LEN;
-	अन्यथा
+	else
 		offset += WPA_IE_VERSION_LEN;
 
-	/* check क्रम multicast cipher suite */
-	अगर (offset + WPA_IE_MIN_OUI_LEN > len) अणु
+	/* check for multicast cipher suite */
+	if (offset + WPA_IE_MIN_OUI_LEN > len) {
 		err = -EINVAL;
 		bphy_err(drvr, "no multicast cipher suite\n");
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
-	अगर (!brcmf_valid_wpa_oui(&data[offset], is_rsn_ie)) अणु
+	if (!brcmf_valid_wpa_oui(&data[offset], is_rsn_ie)) {
 		err = -EINVAL;
 		bphy_err(drvr, "ivalid OUI\n");
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 	offset += TLV_OUI_LEN;
 
 	/* pick up multicast cipher */
-	चयन (data[offset]) अणु
-	हाल WPA_CIPHER_NONE:
+	switch (data[offset]) {
+	case WPA_CIPHER_NONE:
 		gval = 0;
-		अवरोध;
-	हाल WPA_CIPHER_WEP_40:
-	हाल WPA_CIPHER_WEP_104:
+		break;
+	case WPA_CIPHER_WEP_40:
+	case WPA_CIPHER_WEP_104:
 		gval = WEP_ENABLED;
-		अवरोध;
-	हाल WPA_CIPHER_TKIP:
+		break;
+	case WPA_CIPHER_TKIP:
 		gval = TKIP_ENABLED;
-		अवरोध;
-	हाल WPA_CIPHER_AES_CCM:
+		break;
+	case WPA_CIPHER_AES_CCM:
 		gval = AES_ENABLED;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		err = -EINVAL;
 		bphy_err(drvr, "Invalid multi cast cipher info\n");
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
 	offset++;
 	/* walk thru unicast cipher list and pick up what we recognize */
 	count = data[offset] + (data[offset + 1] << 8);
 	offset += WPA_IE_SUITE_COUNT_LEN;
-	/* Check क्रम unicast suite(s) */
-	अगर (offset + (WPA_IE_MIN_OUI_LEN * count) > len) अणु
+	/* Check for unicast suite(s) */
+	if (offset + (WPA_IE_MIN_OUI_LEN * count) > len) {
 		err = -EINVAL;
 		bphy_err(drvr, "no unicast cipher suite\n");
-		जाओ निकास;
-	पूर्ण
-	क्रम (i = 0; i < count; i++) अणु
-		अगर (!brcmf_valid_wpa_oui(&data[offset], is_rsn_ie)) अणु
+		goto exit;
+	}
+	for (i = 0; i < count; i++) {
+		if (!brcmf_valid_wpa_oui(&data[offset], is_rsn_ie)) {
 			err = -EINVAL;
 			bphy_err(drvr, "ivalid OUI\n");
-			जाओ निकास;
-		पूर्ण
+			goto exit;
+		}
 		offset += TLV_OUI_LEN;
-		चयन (data[offset]) अणु
-		हाल WPA_CIPHER_NONE:
-			अवरोध;
-		हाल WPA_CIPHER_WEP_40:
-		हाल WPA_CIPHER_WEP_104:
+		switch (data[offset]) {
+		case WPA_CIPHER_NONE:
+			break;
+		case WPA_CIPHER_WEP_40:
+		case WPA_CIPHER_WEP_104:
 			pval |= WEP_ENABLED;
-			अवरोध;
-		हाल WPA_CIPHER_TKIP:
+			break;
+		case WPA_CIPHER_TKIP:
 			pval |= TKIP_ENABLED;
-			अवरोध;
-		हाल WPA_CIPHER_AES_CCM:
+			break;
+		case WPA_CIPHER_AES_CCM:
 			pval |= AES_ENABLED;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			bphy_err(drvr, "Invalid unicast security info\n");
-		पूर्ण
+		}
 		offset++;
-	पूर्ण
+	}
 	/* walk thru auth management suite list and pick up what we recognize */
 	count = data[offset] + (data[offset + 1] << 8);
 	offset += WPA_IE_SUITE_COUNT_LEN;
-	/* Check क्रम auth key management suite(s) */
-	अगर (offset + (WPA_IE_MIN_OUI_LEN * count) > len) अणु
+	/* Check for auth key management suite(s) */
+	if (offset + (WPA_IE_MIN_OUI_LEN * count) > len) {
 		err = -EINVAL;
 		bphy_err(drvr, "no auth key mgmt suite\n");
-		जाओ निकास;
-	पूर्ण
-	क्रम (i = 0; i < count; i++) अणु
-		अगर (!brcmf_valid_wpa_oui(&data[offset], is_rsn_ie)) अणु
+		goto exit;
+	}
+	for (i = 0; i < count; i++) {
+		if (!brcmf_valid_wpa_oui(&data[offset], is_rsn_ie)) {
 			err = -EINVAL;
 			bphy_err(drvr, "ivalid OUI\n");
-			जाओ निकास;
-		पूर्ण
+			goto exit;
+		}
 		offset += TLV_OUI_LEN;
-		चयन (data[offset]) अणु
-		हाल RSN_AKM_NONE:
+		switch (data[offset]) {
+		case RSN_AKM_NONE:
 			brcmf_dbg(TRACE, "RSN_AKM_NONE\n");
 			wpa_auth |= WPA_AUTH_NONE;
-			अवरोध;
-		हाल RSN_AKM_UNSPECIFIED:
+			break;
+		case RSN_AKM_UNSPECIFIED:
 			brcmf_dbg(TRACE, "RSN_AKM_UNSPECIFIED\n");
 			is_rsn_ie ? (wpa_auth |= WPA2_AUTH_UNSPECIFIED) :
 				    (wpa_auth |= WPA_AUTH_UNSPECIFIED);
-			अवरोध;
-		हाल RSN_AKM_PSK:
+			break;
+		case RSN_AKM_PSK:
 			brcmf_dbg(TRACE, "RSN_AKM_PSK\n");
 			is_rsn_ie ? (wpa_auth |= WPA2_AUTH_PSK) :
 				    (wpa_auth |= WPA_AUTH_PSK);
-			अवरोध;
-		हाल RSN_AKM_SHA256_PSK:
+			break;
+		case RSN_AKM_SHA256_PSK:
 			brcmf_dbg(TRACE, "RSN_AKM_MFP_PSK\n");
 			wpa_auth |= WPA2_AUTH_PSK_SHA256;
-			अवरोध;
-		हाल RSN_AKM_SHA256_1X:
+			break;
+		case RSN_AKM_SHA256_1X:
 			brcmf_dbg(TRACE, "RSN_AKM_MFP_1X\n");
 			wpa_auth |= WPA2_AUTH_1X_SHA256;
-			अवरोध;
-		हाल RSN_AKM_SAE:
+			break;
+		case RSN_AKM_SAE:
 			brcmf_dbg(TRACE, "RSN_AKM_SAE\n");
 			wpa_auth |= WPA3_AUTH_SAE_PSK;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			bphy_err(drvr, "Invalid key mgmt info\n");
-		पूर्ण
+		}
 		offset++;
-	पूर्ण
+	}
 
 	mfp = BRCMF_MFP_NONE;
-	अगर (is_rsn_ie) अणु
+	if (is_rsn_ie) {
 		wme_bss_disable = 1;
-		अगर ((offset + RSN_CAP_LEN) <= len) अणु
+		if ((offset + RSN_CAP_LEN) <= len) {
 			rsn_cap = data[offset] + (data[offset + 1] << 8);
-			अगर (rsn_cap & RSN_CAP_PTK_REPLAY_CNTR_MASK)
+			if (rsn_cap & RSN_CAP_PTK_REPLAY_CNTR_MASK)
 				wme_bss_disable = 0;
-			अगर (rsn_cap & RSN_CAP_MFPR_MASK) अणु
+			if (rsn_cap & RSN_CAP_MFPR_MASK) {
 				brcmf_dbg(TRACE, "MFP Required\n");
 				mfp = BRCMF_MFP_REQUIRED;
 				/* Firmware only supports mfp required in
 				 * combination with WPA2_AUTH_PSK_SHA256,
 				 * WPA2_AUTH_1X_SHA256, or WPA3_AUTH_SAE_PSK.
 				 */
-				अगर (!(wpa_auth & (WPA2_AUTH_PSK_SHA256 |
+				if (!(wpa_auth & (WPA2_AUTH_PSK_SHA256 |
 						  WPA2_AUTH_1X_SHA256 |
-						  WPA3_AUTH_SAE_PSK))) अणु
+						  WPA3_AUTH_SAE_PSK))) {
 					err = -EINVAL;
-					जाओ निकास;
-				पूर्ण
+					goto exit;
+				}
 				/* Firmware has requirement that WPA2_AUTH_PSK/
-				 * WPA2_AUTH_UNSPECIFIED be set, अगर SHA256 OUI
+				 * WPA2_AUTH_UNSPECIFIED be set, if SHA256 OUI
 				 * is to be included in the rsn ie.
 				 */
-				अगर (wpa_auth & WPA2_AUTH_PSK_SHA256)
+				if (wpa_auth & WPA2_AUTH_PSK_SHA256)
 					wpa_auth |= WPA2_AUTH_PSK;
-				अन्यथा अगर (wpa_auth & WPA2_AUTH_1X_SHA256)
+				else if (wpa_auth & WPA2_AUTH_1X_SHA256)
 					wpa_auth |= WPA2_AUTH_UNSPECIFIED;
-			पूर्ण अन्यथा अगर (rsn_cap & RSN_CAP_MFPC_MASK) अणु
+			} else if (rsn_cap & RSN_CAP_MFPC_MASK) {
 				brcmf_dbg(TRACE, "MFP Capable\n");
 				mfp = BRCMF_MFP_CAPABLE;
-			पूर्ण
-		पूर्ण
+			}
+		}
 		offset += RSN_CAP_LEN;
 		/* set wme_bss_disable to sync RSN Capabilities */
-		err = brcmf_fil_bsscfg_पूर्णांक_set(अगरp, "wme_bss_disable",
+		err = brcmf_fil_bsscfg_int_set(ifp, "wme_bss_disable",
 					       wme_bss_disable);
-		अगर (err < 0) अणु
+		if (err < 0) {
 			bphy_err(drvr, "wme_bss_disable error %d\n", err);
-			जाओ निकास;
-		पूर्ण
+			goto exit;
+		}
 
-		/* Skip PMKID cnt as it is know to be 0 क्रम AP. */
+		/* Skip PMKID cnt as it is know to be 0 for AP. */
 		offset += RSN_PMKID_COUNT_LEN;
 
-		/* See अगर there is BIP wpa suite left क्रम MFP */
-		अगर (brcmf_feat_is_enabled(अगरp, BRCMF_FEAT_MFP) &&
-		    ((offset + WPA_IE_MIN_OUI_LEN) <= len)) अणु
-			err = brcmf_fil_bsscfg_data_set(अगरp, "bip",
+		/* See if there is BIP wpa suite left for MFP */
+		if (brcmf_feat_is_enabled(ifp, BRCMF_FEAT_MFP) &&
+		    ((offset + WPA_IE_MIN_OUI_LEN) <= len)) {
+			err = brcmf_fil_bsscfg_data_set(ifp, "bip",
 							&data[offset],
 							WPA_IE_MIN_OUI_LEN);
-			अगर (err < 0) अणु
+			if (err < 0) {
 				bphy_err(drvr, "bip error %d\n", err);
-				जाओ निकास;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				goto exit;
+			}
+		}
+	}
 	/* FOR WPS , set SES_OW_ENABLED */
 	wsec = (pval | gval | SES_OW_ENABLED);
 
 	/* set auth */
-	err = brcmf_fil_bsscfg_पूर्णांक_set(अगरp, "auth", auth);
-	अगर (err < 0) अणु
+	err = brcmf_fil_bsscfg_int_set(ifp, "auth", auth);
+	if (err < 0) {
 		bphy_err(drvr, "auth error %d\n", err);
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 	/* set wsec */
-	err = brcmf_fil_bsscfg_पूर्णांक_set(अगरp, "wsec", wsec);
-	अगर (err < 0) अणु
+	err = brcmf_fil_bsscfg_int_set(ifp, "wsec", wsec);
+	if (err < 0) {
 		bphy_err(drvr, "wsec error %d\n", err);
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 	/* Configure MFP, this needs to go after wsec otherwise the wsec command
-	 * will overग_लिखो the values set by MFP
+	 * will overwrite the values set by MFP
 	 */
-	अगर (brcmf_feat_is_enabled(अगरp, BRCMF_FEAT_MFP)) अणु
-		err = brcmf_fil_bsscfg_पूर्णांक_set(अगरp, "mfp", mfp);
-		अगर (err < 0) अणु
+	if (brcmf_feat_is_enabled(ifp, BRCMF_FEAT_MFP)) {
+		err = brcmf_fil_bsscfg_int_set(ifp, "mfp", mfp);
+		if (err < 0) {
 			bphy_err(drvr, "mfp error %d\n", err);
-			जाओ निकास;
-		पूर्ण
-	पूर्ण
+			goto exit;
+		}
+	}
 	/* set upper-layer auth */
-	err = brcmf_fil_bsscfg_पूर्णांक_set(अगरp, "wpa_auth", wpa_auth);
-	अगर (err < 0) अणु
+	err = brcmf_fil_bsscfg_int_set(ifp, "wpa_auth", wpa_auth);
+	if (err < 0) {
 		bphy_err(drvr, "wpa_auth error %d\n", err);
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
-निकास:
-	वापस err;
-पूर्ण
+exit:
+	return err;
+}
 
-अटल s32
-brcmf_parse_vndr_ies(स्थिर u8 *vndr_ie_buf, u32 vndr_ie_len,
-		     काष्ठा parsed_vndr_ies *vndr_ies)
-अणु
-	काष्ठा brcmf_vs_tlv *vndrie;
-	काष्ठा brcmf_tlv *ie;
-	काष्ठा parsed_vndr_ie_info *parsed_info;
-	s32 reमुख्यing_len;
+static s32
+brcmf_parse_vndr_ies(const u8 *vndr_ie_buf, u32 vndr_ie_len,
+		     struct parsed_vndr_ies *vndr_ies)
+{
+	struct brcmf_vs_tlv *vndrie;
+	struct brcmf_tlv *ie;
+	struct parsed_vndr_ie_info *parsed_info;
+	s32 remaining_len;
 
-	reमुख्यing_len = (s32)vndr_ie_len;
-	स_रखो(vndr_ies, 0, माप(*vndr_ies));
+	remaining_len = (s32)vndr_ie_len;
+	memset(vndr_ies, 0, sizeof(*vndr_ies));
 
-	ie = (काष्ठा brcmf_tlv *)vndr_ie_buf;
-	जबतक (ie) अणु
-		अगर (ie->id != WLAN_EID_VENDOR_SPECIFIC)
-			जाओ next;
-		vndrie = (काष्ठा brcmf_vs_tlv *)ie;
+	ie = (struct brcmf_tlv *)vndr_ie_buf;
+	while (ie) {
+		if (ie->id != WLAN_EID_VENDOR_SPECIFIC)
+			goto next;
+		vndrie = (struct brcmf_vs_tlv *)ie;
 		/* len should be bigger than OUI length + one */
-		अगर (vndrie->len < (VS_IE_FIXED_HDR_LEN - TLV_HDR_LEN + 1)) अणु
+		if (vndrie->len < (VS_IE_FIXED_HDR_LEN - TLV_HDR_LEN + 1)) {
 			brcmf_err("invalid vndr ie. length is too small %d\n",
 				  vndrie->len);
-			जाओ next;
-		पूर्ण
-		/* अगर wpa or wme ie, करो not add ie */
-		अगर (!स_भेद(vndrie->oui, (u8 *)WPA_OUI, TLV_OUI_LEN) &&
+			goto next;
+		}
+		/* if wpa or wme ie, do not add ie */
+		if (!memcmp(vndrie->oui, (u8 *)WPA_OUI, TLV_OUI_LEN) &&
 		    ((vndrie->oui_type == WPA_OUI_TYPE) ||
-		    (vndrie->oui_type == WME_OUI_TYPE))) अणु
+		    (vndrie->oui_type == WME_OUI_TYPE))) {
 			brcmf_dbg(TRACE, "Found WPA/WME oui. Do not add it\n");
-			जाओ next;
-		पूर्ण
+			goto next;
+		}
 
 		parsed_info = &vndr_ies->ie_info[vndr_ies->count];
 
-		/* save vndr ie inक्रमmation */
-		parsed_info->ie_ptr = (अक्षर *)vndrie;
+		/* save vndr ie information */
+		parsed_info->ie_ptr = (char *)vndrie;
 		parsed_info->ie_len = vndrie->len + TLV_HDR_LEN;
-		स_नकल(&parsed_info->vndrie, vndrie, माप(*vndrie));
+		memcpy(&parsed_info->vndrie, vndrie, sizeof(*vndrie));
 
 		vndr_ies->count++;
 
@@ -4392,130 +4391,130 @@ brcmf_parse_vndr_ies(स्थिर u8 *vndr_ie_buf, u32 vndr_ie_len,
 			  parsed_info->vndrie.oui,
 			  parsed_info->vndrie.oui_type);
 
-		अगर (vndr_ies->count >= VNDR_IE_PARSE_LIMIT)
-			अवरोध;
+		if (vndr_ies->count >= VNDR_IE_PARSE_LIMIT)
+			break;
 next:
-		reमुख्यing_len -= (ie->len + TLV_HDR_LEN);
-		अगर (reमुख्यing_len <= TLV_HDR_LEN)
-			ie = शून्य;
-		अन्यथा
-			ie = (काष्ठा brcmf_tlv *)(((u8 *)ie) + ie->len +
+		remaining_len -= (ie->len + TLV_HDR_LEN);
+		if (remaining_len <= TLV_HDR_LEN)
+			ie = NULL;
+		else
+			ie = (struct brcmf_tlv *)(((u8 *)ie) + ie->len +
 				TLV_HDR_LEN);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल u32
+static u32
 brcmf_vndr_ie(u8 *iebuf, s32 pktflag, u8 *ie_ptr, u32 ie_len, s8 *add_del_cmd)
-अणु
+{
 	strscpy(iebuf, add_del_cmd, VNDR_IE_CMD_LEN);
 
 	put_unaligned_le32(1, &iebuf[VNDR_IE_COUNT_OFFSET]);
 
 	put_unaligned_le32(pktflag, &iebuf[VNDR_IE_PKTFLAG_OFFSET]);
 
-	स_नकल(&iebuf[VNDR_IE_VSIE_OFFSET], ie_ptr, ie_len);
+	memcpy(&iebuf[VNDR_IE_VSIE_OFFSET], ie_ptr, ie_len);
 
-	वापस ie_len + VNDR_IE_HDR_SIZE;
-पूर्ण
+	return ie_len + VNDR_IE_HDR_SIZE;
+}
 
-s32 brcmf_vअगर_set_mgmt_ie(काष्ठा brcmf_cfg80211_vअगर *vअगर, s32 pktflag,
-			  स्थिर u8 *vndr_ie_buf, u32 vndr_ie_len)
-अणु
-	काष्ठा brcmf_pub *drvr;
-	काष्ठा brcmf_अगर *अगरp;
-	काष्ठा vअगर_saved_ie *saved_ie;
+s32 brcmf_vif_set_mgmt_ie(struct brcmf_cfg80211_vif *vif, s32 pktflag,
+			  const u8 *vndr_ie_buf, u32 vndr_ie_len)
+{
+	struct brcmf_pub *drvr;
+	struct brcmf_if *ifp;
+	struct vif_saved_ie *saved_ie;
 	s32 err = 0;
 	u8  *iovar_ie_buf;
 	u8  *curr_ie_buf;
-	u8  *mgmt_ie_buf = शून्य;
-	पूर्णांक mgmt_ie_buf_len;
+	u8  *mgmt_ie_buf = NULL;
+	int mgmt_ie_buf_len;
 	u32 *mgmt_ie_len;
 	u32 del_add_ie_buf_len = 0;
 	u32 total_ie_buf_len = 0;
 	u32 parsed_ie_buf_len = 0;
-	काष्ठा parsed_vndr_ies old_vndr_ies;
-	काष्ठा parsed_vndr_ies new_vndr_ies;
-	काष्ठा parsed_vndr_ie_info *vndrie_info;
+	struct parsed_vndr_ies old_vndr_ies;
+	struct parsed_vndr_ies new_vndr_ies;
+	struct parsed_vndr_ie_info *vndrie_info;
 	s32 i;
 	u8 *ptr;
-	पूर्णांक reमुख्यed_buf_len;
+	int remained_buf_len;
 
-	अगर (!vअगर)
-		वापस -ENODEV;
-	अगरp = vअगर->अगरp;
-	drvr = अगरp->drvr;
-	saved_ie = &vअगर->saved_ie;
+	if (!vif)
+		return -ENODEV;
+	ifp = vif->ifp;
+	drvr = ifp->drvr;
+	saved_ie = &vif->saved_ie;
 
-	brcmf_dbg(TRACE, "bsscfgidx %d, pktflag : 0x%02X\n", अगरp->bsscfgidx,
+	brcmf_dbg(TRACE, "bsscfgidx %d, pktflag : 0x%02X\n", ifp->bsscfgidx,
 		  pktflag);
 	iovar_ie_buf = kzalloc(WL_EXTRA_BUF_MAX, GFP_KERNEL);
-	अगर (!iovar_ie_buf)
-		वापस -ENOMEM;
+	if (!iovar_ie_buf)
+		return -ENOMEM;
 	curr_ie_buf = iovar_ie_buf;
-	चयन (pktflag) अणु
-	हाल BRCMF_VNDR_IE_PRBREQ_FLAG:
+	switch (pktflag) {
+	case BRCMF_VNDR_IE_PRBREQ_FLAG:
 		mgmt_ie_buf = saved_ie->probe_req_ie;
 		mgmt_ie_len = &saved_ie->probe_req_ie_len;
-		mgmt_ie_buf_len = माप(saved_ie->probe_req_ie);
-		अवरोध;
-	हाल BRCMF_VNDR_IE_PRBRSP_FLAG:
+		mgmt_ie_buf_len = sizeof(saved_ie->probe_req_ie);
+		break;
+	case BRCMF_VNDR_IE_PRBRSP_FLAG:
 		mgmt_ie_buf = saved_ie->probe_res_ie;
 		mgmt_ie_len = &saved_ie->probe_res_ie_len;
-		mgmt_ie_buf_len = माप(saved_ie->probe_res_ie);
-		अवरोध;
-	हाल BRCMF_VNDR_IE_BEACON_FLAG:
+		mgmt_ie_buf_len = sizeof(saved_ie->probe_res_ie);
+		break;
+	case BRCMF_VNDR_IE_BEACON_FLAG:
 		mgmt_ie_buf = saved_ie->beacon_ie;
 		mgmt_ie_len = &saved_ie->beacon_ie_len;
-		mgmt_ie_buf_len = माप(saved_ie->beacon_ie);
-		अवरोध;
-	हाल BRCMF_VNDR_IE_ASSOCREQ_FLAG:
+		mgmt_ie_buf_len = sizeof(saved_ie->beacon_ie);
+		break;
+	case BRCMF_VNDR_IE_ASSOCREQ_FLAG:
 		mgmt_ie_buf = saved_ie->assoc_req_ie;
 		mgmt_ie_len = &saved_ie->assoc_req_ie_len;
-		mgmt_ie_buf_len = माप(saved_ie->assoc_req_ie);
-		अवरोध;
-	हाल BRCMF_VNDR_IE_ASSOCRSP_FLAG:
+		mgmt_ie_buf_len = sizeof(saved_ie->assoc_req_ie);
+		break;
+	case BRCMF_VNDR_IE_ASSOCRSP_FLAG:
 		mgmt_ie_buf = saved_ie->assoc_res_ie;
 		mgmt_ie_len = &saved_ie->assoc_res_ie_len;
-		mgmt_ie_buf_len = माप(saved_ie->assoc_res_ie);
-		अवरोध;
-	शेष:
+		mgmt_ie_buf_len = sizeof(saved_ie->assoc_res_ie);
+		break;
+	default:
 		err = -EPERM;
 		bphy_err(drvr, "not suitable type\n");
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
-	अगर (vndr_ie_len > mgmt_ie_buf_len) अणु
+	if (vndr_ie_len > mgmt_ie_buf_len) {
 		err = -ENOMEM;
 		bphy_err(drvr, "extra IE size too big\n");
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
-	/* parse and save new vndr_ie in curr_ie_buff beक्रमe comparing it */
-	अगर (vndr_ie_buf && vndr_ie_len && curr_ie_buf) अणु
+	/* parse and save new vndr_ie in curr_ie_buff before comparing it */
+	if (vndr_ie_buf && vndr_ie_len && curr_ie_buf) {
 		ptr = curr_ie_buf;
 		brcmf_parse_vndr_ies(vndr_ie_buf, vndr_ie_len, &new_vndr_ies);
-		क्रम (i = 0; i < new_vndr_ies.count; i++) अणु
+		for (i = 0; i < new_vndr_ies.count; i++) {
 			vndrie_info = &new_vndr_ies.ie_info[i];
-			स_नकल(ptr + parsed_ie_buf_len, vndrie_info->ie_ptr,
+			memcpy(ptr + parsed_ie_buf_len, vndrie_info->ie_ptr,
 			       vndrie_info->ie_len);
 			parsed_ie_buf_len += vndrie_info->ie_len;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (mgmt_ie_buf && *mgmt_ie_len) अणु
-		अगर (parsed_ie_buf_len && (parsed_ie_buf_len == *mgmt_ie_len) &&
-		    (स_भेद(mgmt_ie_buf, curr_ie_buf,
-			    parsed_ie_buf_len) == 0)) अणु
+	if (mgmt_ie_buf && *mgmt_ie_len) {
+		if (parsed_ie_buf_len && (parsed_ie_buf_len == *mgmt_ie_len) &&
+		    (memcmp(mgmt_ie_buf, curr_ie_buf,
+			    parsed_ie_buf_len) == 0)) {
 			brcmf_dbg(TRACE, "Previous mgmt IE equals to current IE\n");
-			जाओ निकास;
-		पूर्ण
+			goto exit;
+		}
 
 		/* parse old vndr_ie */
 		brcmf_parse_vndr_ies(mgmt_ie_buf, *mgmt_ie_len, &old_vndr_ies);
 
 		/* make a command to delete old ie */
-		क्रम (i = 0; i < old_vndr_ies.count; i++) अणु
+		for (i = 0; i < old_vndr_ies.count; i++) {
 			vndrie_info = &old_vndr_ies.ie_info[i];
 
 			brcmf_dbg(TRACE, "DEL ID : %d, Len: %d , OUI:%3ph\n",
@@ -4529,28 +4528,28 @@ s32 brcmf_vअगर_set_mgmt_ie(काष्ठा brcmf_cfg80211_vअगर *v
 							   "del");
 			curr_ie_buf += del_add_ie_buf_len;
 			total_ie_buf_len += del_add_ie_buf_len;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	*mgmt_ie_len = 0;
-	/* Add अगर there is any extra IE */
-	अगर (mgmt_ie_buf && parsed_ie_buf_len) अणु
+	/* Add if there is any extra IE */
+	if (mgmt_ie_buf && parsed_ie_buf_len) {
 		ptr = mgmt_ie_buf;
 
-		reमुख्यed_buf_len = mgmt_ie_buf_len;
+		remained_buf_len = mgmt_ie_buf_len;
 
 		/* make a command to add new ie */
-		क्रम (i = 0; i < new_vndr_ies.count; i++) अणु
+		for (i = 0; i < new_vndr_ies.count; i++) {
 			vndrie_info = &new_vndr_ies.ie_info[i];
 
-			/* verअगरy reमुख्यed buf size beक्रमe copy data */
-			अगर (reमुख्यed_buf_len < (vndrie_info->vndrie.len +
-							VNDR_IE_VSIE_OFFSET)) अणु
+			/* verify remained buf size before copy data */
+			if (remained_buf_len < (vndrie_info->vndrie.len +
+							VNDR_IE_VSIE_OFFSET)) {
 				bphy_err(drvr, "no space in mgmt_ie_buf: len left %d",
-					 reमुख्यed_buf_len);
-				अवरोध;
-			पूर्ण
-			reमुख्यed_buf_len -= (vndrie_info->ie_len +
+					 remained_buf_len);
+				break;
+			}
+			remained_buf_len -= (vndrie_info->ie_len +
 					     VNDR_IE_VSIE_OFFSET);
 
 			brcmf_dbg(TRACE, "ADDED ID : %d, Len: %d, OUI:%3ph\n",
@@ -4563,87 +4562,87 @@ s32 brcmf_vअगर_set_mgmt_ie(काष्ठा brcmf_cfg80211_vअगर *v
 							   vndrie_info->ie_len,
 							   "add");
 
-			/* save the parsed IE in wl काष्ठा */
-			स_नकल(ptr + (*mgmt_ie_len), vndrie_info->ie_ptr,
+			/* save the parsed IE in wl struct */
+			memcpy(ptr + (*mgmt_ie_len), vndrie_info->ie_ptr,
 			       vndrie_info->ie_len);
 			*mgmt_ie_len += vndrie_info->ie_len;
 
 			curr_ie_buf += del_add_ie_buf_len;
 			total_ie_buf_len += del_add_ie_buf_len;
-		पूर्ण
-	पूर्ण
-	अगर (total_ie_buf_len) अणु
-		err  = brcmf_fil_bsscfg_data_set(अगरp, "vndr_ie", iovar_ie_buf,
+		}
+	}
+	if (total_ie_buf_len) {
+		err  = brcmf_fil_bsscfg_data_set(ifp, "vndr_ie", iovar_ie_buf,
 						 total_ie_buf_len);
-		अगर (err)
+		if (err)
 			bphy_err(drvr, "vndr ie set error : %d\n", err);
-	पूर्ण
+	}
 
-निकास:
-	kमुक्त(iovar_ie_buf);
-	वापस err;
-पूर्ण
+exit:
+	kfree(iovar_ie_buf);
+	return err;
+}
 
-s32 brcmf_vअगर_clear_mgmt_ies(काष्ठा brcmf_cfg80211_vअगर *vअगर)
-अणु
-	s32 pktflags[] = अणु
+s32 brcmf_vif_clear_mgmt_ies(struct brcmf_cfg80211_vif *vif)
+{
+	s32 pktflags[] = {
 		BRCMF_VNDR_IE_PRBREQ_FLAG,
 		BRCMF_VNDR_IE_PRBRSP_FLAG,
 		BRCMF_VNDR_IE_BEACON_FLAG
-	पूर्ण;
-	पूर्णांक i;
+	};
+	int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(pktflags); i++)
-		brcmf_vअगर_set_mgmt_ie(vअगर, pktflags[i], शून्य, 0);
+	for (i = 0; i < ARRAY_SIZE(pktflags); i++)
+		brcmf_vif_set_mgmt_ie(vif, pktflags[i], NULL, 0);
 
-	स_रखो(&vअगर->saved_ie, 0, माप(vअगर->saved_ie));
-	वापस 0;
-पूर्ण
+	memset(&vif->saved_ie, 0, sizeof(vif->saved_ie));
+	return 0;
+}
 
-अटल s32
-brcmf_config_ap_mgmt_ie(काष्ठा brcmf_cfg80211_vअगर *vअगर,
-			काष्ठा cfg80211_beacon_data *beacon)
-अणु
-	काष्ठा brcmf_pub *drvr = vअगर->अगरp->drvr;
+static s32
+brcmf_config_ap_mgmt_ie(struct brcmf_cfg80211_vif *vif,
+			struct cfg80211_beacon_data *beacon)
+{
+	struct brcmf_pub *drvr = vif->ifp->drvr;
 	s32 err;
 
 	/* Set Beacon IEs to FW */
-	err = brcmf_vअगर_set_mgmt_ie(vअगर, BRCMF_VNDR_IE_BEACON_FLAG,
+	err = brcmf_vif_set_mgmt_ie(vif, BRCMF_VNDR_IE_BEACON_FLAG,
 				    beacon->tail, beacon->tail_len);
-	अगर (err) अणु
+	if (err) {
 		bphy_err(drvr, "Set Beacon IE Failed\n");
-		वापस err;
-	पूर्ण
+		return err;
+	}
 	brcmf_dbg(TRACE, "Applied Vndr IEs for Beacon\n");
 
 	/* Set Probe Response IEs to FW */
-	err = brcmf_vअगर_set_mgmt_ie(vअगर, BRCMF_VNDR_IE_PRBRSP_FLAG,
+	err = brcmf_vif_set_mgmt_ie(vif, BRCMF_VNDR_IE_PRBRSP_FLAG,
 				    beacon->proberesp_ies,
 				    beacon->proberesp_ies_len);
-	अगर (err)
+	if (err)
 		bphy_err(drvr, "Set Probe Resp IE Failed\n");
-	अन्यथा
+	else
 		brcmf_dbg(TRACE, "Applied Vndr IEs for Probe Resp\n");
 
 	/* Set Assoc Response IEs to FW */
-	err = brcmf_vअगर_set_mgmt_ie(vअगर, BRCMF_VNDR_IE_ASSOCRSP_FLAG,
+	err = brcmf_vif_set_mgmt_ie(vif, BRCMF_VNDR_IE_ASSOCRSP_FLAG,
 				    beacon->assocresp_ies,
 				    beacon->assocresp_ies_len);
-	अगर (err)
+	if (err)
 		brcmf_err("Set Assoc Resp IE Failed\n");
-	अन्यथा
+	else
 		brcmf_dbg(TRACE, "Applied Vndr IEs for Assoc Resp\n");
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल s32
-brcmf_parse_configure_security(काष्ठा brcmf_अगर *अगरp,
-			       काष्ठा cfg80211_ap_settings *settings,
-			       क्रमागत nl80211_अगरtype dev_role)
-अणु
-	स्थिर काष्ठा brcmf_tlv *rsn_ie;
-	स्थिर काष्ठा brcmf_vs_tlv *wpa_ie;
+static s32
+brcmf_parse_configure_security(struct brcmf_if *ifp,
+			       struct cfg80211_ap_settings *settings,
+			       enum nl80211_iftype dev_role)
+{
+	const struct brcmf_tlv *rsn_ie;
+	const struct brcmf_vs_tlv *wpa_ie;
 	s32 err = 0;
 
 	/* find the RSN_IE */
@@ -4654,457 +4653,457 @@ brcmf_parse_configure_security(काष्ठा brcmf_अगर *अगरp,
 	wpa_ie = brcmf_find_wpaie((u8 *)settings->beacon.tail,
 				  settings->beacon.tail_len);
 
-	अगर (wpa_ie || rsn_ie) अणु
+	if (wpa_ie || rsn_ie) {
 		brcmf_dbg(TRACE, "WPA(2) IE is found\n");
-		अगर (wpa_ie) अणु
+		if (wpa_ie) {
 			/* WPA IE */
-			err = brcmf_configure_wpaie(अगरp, wpa_ie, false);
-			अगर (err < 0)
-				वापस err;
-		पूर्ण अन्यथा अणु
-			काष्ठा brcmf_vs_tlv *पंचांगp_ie;
+			err = brcmf_configure_wpaie(ifp, wpa_ie, false);
+			if (err < 0)
+				return err;
+		} else {
+			struct brcmf_vs_tlv *tmp_ie;
 
-			पंचांगp_ie = (काष्ठा brcmf_vs_tlv *)rsn_ie;
+			tmp_ie = (struct brcmf_vs_tlv *)rsn_ie;
 
 			/* RSN IE */
-			err = brcmf_configure_wpaie(अगरp, पंचांगp_ie, true);
-			अगर (err < 0)
-				वापस err;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			err = brcmf_configure_wpaie(ifp, tmp_ie, true);
+			if (err < 0)
+				return err;
+		}
+	} else {
 		brcmf_dbg(TRACE, "No WPA(2) IEs found\n");
-		brcmf_configure_खोलोsecurity(अगरp);
-	पूर्ण
+		brcmf_configure_opensecurity(ifp);
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल s32
-brcmf_cfg80211_start_ap(काष्ठा wiphy *wiphy, काष्ठा net_device *ndev,
-			काष्ठा cfg80211_ap_settings *settings)
-अणु
+static s32
+brcmf_cfg80211_start_ap(struct wiphy *wiphy, struct net_device *ndev,
+			struct cfg80211_ap_settings *settings)
+{
 	s32 ie_offset;
-	काष्ठा brcmf_cfg80211_info *cfg = wiphy_to_cfg(wiphy);
-	काष्ठा brcmf_अगर *अगरp = netdev_priv(ndev);
-	काष्ठा brcmf_pub *drvr = cfg->pub;
-	काष्ठा brcmf_cfg80211_profile *profile = &अगरp->vअगर->profile;
-	काष्ठा cfg80211_crypto_settings *crypto = &settings->crypto;
-	स्थिर काष्ठा brcmf_tlv *ssid_ie;
-	स्थिर काष्ठा brcmf_tlv *country_ie;
-	काष्ठा brcmf_ssid_le ssid_le;
+	struct brcmf_cfg80211_info *cfg = wiphy_to_cfg(wiphy);
+	struct brcmf_if *ifp = netdev_priv(ndev);
+	struct brcmf_pub *drvr = cfg->pub;
+	struct brcmf_cfg80211_profile *profile = &ifp->vif->profile;
+	struct cfg80211_crypto_settings *crypto = &settings->crypto;
+	const struct brcmf_tlv *ssid_ie;
+	const struct brcmf_tlv *country_ie;
+	struct brcmf_ssid_le ssid_le;
 	s32 err = -EPERM;
-	काष्ठा brcmf_join_params join_params;
-	क्रमागत nl80211_अगरtype dev_role;
-	काष्ठा brcmf_fil_bss_enable_le bss_enable;
+	struct brcmf_join_params join_params;
+	enum nl80211_iftype dev_role;
+	struct brcmf_fil_bss_enable_le bss_enable;
 	u16 chanspec = chandef_to_chanspec(&cfg->d11inf, &settings->chandef);
 	bool mbss;
-	पूर्णांक is_11d;
+	int is_11d;
 	bool supports_11d;
 
 	brcmf_dbg(TRACE, "ctrlchn=%d, center=%d, bw=%d, beacon_interval=%d, dtim_period=%d,\n",
 		  settings->chandef.chan->hw_value,
 		  settings->chandef.center_freq1, settings->chandef.width,
-		  settings->beacon_पूर्णांकerval, settings->dtim_period);
+		  settings->beacon_interval, settings->dtim_period);
 	brcmf_dbg(TRACE, "ssid=%s(%zu), auth_type=%d, inactivity_timeout=%d\n",
 		  settings->ssid, settings->ssid_len, settings->auth_type,
-		  settings->inactivity_समयout);
-	dev_role = अगरp->vअगर->wdev.अगरtype;
-	mbss = अगरp->vअगर->mbss;
+		  settings->inactivity_timeout);
+	dev_role = ifp->vif->wdev.iftype;
+	mbss = ifp->vif->mbss;
 
 	/* store current 11d setting */
-	अगर (brcmf_fil_cmd_पूर्णांक_get(अगरp, BRCMF_C_GET_REGULATORY,
-				  &अगरp->vअगर->is_11d)) अणु
+	if (brcmf_fil_cmd_int_get(ifp, BRCMF_C_GET_REGULATORY,
+				  &ifp->vif->is_11d)) {
 		is_11d = supports_11d = false;
-	पूर्ण अन्यथा अणु
+	} else {
 		country_ie = brcmf_parse_tlvs((u8 *)settings->beacon.tail,
 					      settings->beacon.tail_len,
 					      WLAN_EID_COUNTRY);
 		is_11d = country_ie ? 1 : 0;
 		supports_11d = true;
-	पूर्ण
+	}
 
-	स_रखो(&ssid_le, 0, माप(ssid_le));
-	अगर (settings->ssid == शून्य || settings->ssid_len == 0) अणु
+	memset(&ssid_le, 0, sizeof(ssid_le));
+	if (settings->ssid == NULL || settings->ssid_len == 0) {
 		ie_offset = DOT11_MGMT_HDR_LEN + DOT11_BCN_PRB_FIXED_LEN;
 		ssid_ie = brcmf_parse_tlvs(
 				(u8 *)&settings->beacon.head[ie_offset],
 				settings->beacon.head_len - ie_offset,
 				WLAN_EID_SSID);
-		अगर (!ssid_ie || ssid_ie->len > IEEE80211_MAX_SSID_LEN)
-			वापस -EINVAL;
+		if (!ssid_ie || ssid_ie->len > IEEE80211_MAX_SSID_LEN)
+			return -EINVAL;
 
-		स_नकल(ssid_le.SSID, ssid_ie->data, ssid_ie->len);
+		memcpy(ssid_le.SSID, ssid_ie->data, ssid_ie->len);
 		ssid_le.SSID_len = cpu_to_le32(ssid_ie->len);
 		brcmf_dbg(TRACE, "SSID is (%s) in Head\n", ssid_le.SSID);
-	पूर्ण अन्यथा अणु
-		स_नकल(ssid_le.SSID, settings->ssid, settings->ssid_len);
+	} else {
+		memcpy(ssid_le.SSID, settings->ssid, settings->ssid_len);
 		ssid_le.SSID_len = cpu_to_le32((u32)settings->ssid_len);
-	पूर्ण
+	}
 
-	अगर (!mbss) अणु
-		brcmf_set_mpc(अगरp, 0);
-		brcmf_configure_arp_nd_offload(अगरp, false);
-	पूर्ण
+	if (!mbss) {
+		brcmf_set_mpc(ifp, 0);
+		brcmf_configure_arp_nd_offload(ifp, false);
+	}
 
-	/* Parameters shared by all radio पूर्णांकerfaces */
-	अगर (!mbss) अणु
-		अगर ((supports_11d) && (is_11d != अगरp->vअगर->is_11d)) अणु
-			err = brcmf_fil_cmd_पूर्णांक_set(अगरp, BRCMF_C_SET_REGULATORY,
+	/* Parameters shared by all radio interfaces */
+	if (!mbss) {
+		if ((supports_11d) && (is_11d != ifp->vif->is_11d)) {
+			err = brcmf_fil_cmd_int_set(ifp, BRCMF_C_SET_REGULATORY,
 						    is_11d);
-			अगर (err < 0) अणु
+			if (err < 0) {
 				bphy_err(drvr, "Regulatory Set Error, %d\n",
 					 err);
-				जाओ निकास;
-			पूर्ण
-		पूर्ण
-		अगर (settings->beacon_पूर्णांकerval) अणु
-			err = brcmf_fil_cmd_पूर्णांक_set(अगरp, BRCMF_C_SET_BCNPRD,
-						    settings->beacon_पूर्णांकerval);
-			अगर (err < 0) अणु
+				goto exit;
+			}
+		}
+		if (settings->beacon_interval) {
+			err = brcmf_fil_cmd_int_set(ifp, BRCMF_C_SET_BCNPRD,
+						    settings->beacon_interval);
+			if (err < 0) {
 				bphy_err(drvr, "Beacon Interval Set Error, %d\n",
 					 err);
-				जाओ निकास;
-			पूर्ण
-		पूर्ण
-		अगर (settings->dtim_period) अणु
-			err = brcmf_fil_cmd_पूर्णांक_set(अगरp, BRCMF_C_SET_DTIMPRD,
+				goto exit;
+			}
+		}
+		if (settings->dtim_period) {
+			err = brcmf_fil_cmd_int_set(ifp, BRCMF_C_SET_DTIMPRD,
 						    settings->dtim_period);
-			अगर (err < 0) अणु
+			if (err < 0) {
 				bphy_err(drvr, "DTIM Interval Set Error, %d\n",
 					 err);
-				जाओ निकास;
-			पूर्ण
-		पूर्ण
+				goto exit;
+			}
+		}
 
-		अगर ((dev_role == NL80211_IFTYPE_AP) &&
-		    ((अगरp->अगरidx == 0) ||
-		     (!brcmf_feat_is_enabled(अगरp, BRCMF_FEAT_RSDB) &&
-		      !brcmf_feat_is_enabled(अगरp, BRCMF_FEAT_MCHAN)))) अणु
-			err = brcmf_fil_cmd_पूर्णांक_set(अगरp, BRCMF_C_DOWN, 1);
-			अगर (err < 0) अणु
+		if ((dev_role == NL80211_IFTYPE_AP) &&
+		    ((ifp->ifidx == 0) ||
+		     (!brcmf_feat_is_enabled(ifp, BRCMF_FEAT_RSDB) &&
+		      !brcmf_feat_is_enabled(ifp, BRCMF_FEAT_MCHAN)))) {
+			err = brcmf_fil_cmd_int_set(ifp, BRCMF_C_DOWN, 1);
+			if (err < 0) {
 				bphy_err(drvr, "BRCMF_C_DOWN error %d\n",
 					 err);
-				जाओ निकास;
-			पूर्ण
-			brcmf_fil_iovar_पूर्णांक_set(अगरp, "apsta", 0);
-		पूर्ण
+				goto exit;
+			}
+			brcmf_fil_iovar_int_set(ifp, "apsta", 0);
+		}
 
-		err = brcmf_fil_cmd_पूर्णांक_set(अगरp, BRCMF_C_SET_INFRA, 1);
-		अगर (err < 0) अणु
+		err = brcmf_fil_cmd_int_set(ifp, BRCMF_C_SET_INFRA, 1);
+		if (err < 0) {
 			bphy_err(drvr, "SET INFRA error %d\n", err);
-			जाओ निकास;
-		पूर्ण
-	पूर्ण अन्यथा अगर (WARN_ON(supports_11d && (is_11d != अगरp->vअगर->is_11d))) अणु
+			goto exit;
+		}
+	} else if (WARN_ON(supports_11d && (is_11d != ifp->vif->is_11d))) {
 		/* Multiple-BSS should use same 11d configuration */
 		err = -EINVAL;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
-	/* Interface specअगरic setup */
-	अगर (dev_role == NL80211_IFTYPE_AP) अणु
-		अगर ((brcmf_feat_is_enabled(अगरp, BRCMF_FEAT_MBSS)) && (!mbss))
-			brcmf_fil_iovar_पूर्णांक_set(अगरp, "mbss", 1);
+	/* Interface specific setup */
+	if (dev_role == NL80211_IFTYPE_AP) {
+		if ((brcmf_feat_is_enabled(ifp, BRCMF_FEAT_MBSS)) && (!mbss))
+			brcmf_fil_iovar_int_set(ifp, "mbss", 1);
 
-		err = brcmf_fil_cmd_पूर्णांक_set(अगरp, BRCMF_C_SET_AP, 1);
-		अगर (err < 0) अणु
+		err = brcmf_fil_cmd_int_set(ifp, BRCMF_C_SET_AP, 1);
+		if (err < 0) {
 			bphy_err(drvr, "setting AP mode failed %d\n",
 				 err);
-			जाओ निकास;
-		पूर्ण
-		अगर (!mbss) अणु
+			goto exit;
+		}
+		if (!mbss) {
 			/* Firmware 10.x requires setting channel after enabling
-			 * AP and beक्रमe bringing पूर्णांकerface up.
+			 * AP and before bringing interface up.
 			 */
-			err = brcmf_fil_iovar_पूर्णांक_set(अगरp, "chanspec", chanspec);
-			अगर (err < 0) अणु
+			err = brcmf_fil_iovar_int_set(ifp, "chanspec", chanspec);
+			if (err < 0) {
 				bphy_err(drvr, "Set Channel failed: chspec=%d, %d\n",
 					 chanspec, err);
-				जाओ निकास;
-			पूर्ण
-		पूर्ण
-		err = brcmf_fil_cmd_पूर्णांक_set(अगरp, BRCMF_C_UP, 1);
-		अगर (err < 0) अणु
+				goto exit;
+			}
+		}
+		err = brcmf_fil_cmd_int_set(ifp, BRCMF_C_UP, 1);
+		if (err < 0) {
 			bphy_err(drvr, "BRCMF_C_UP error (%d)\n", err);
-			जाओ निकास;
-		पूर्ण
+			goto exit;
+		}
 
-		अगर (crypto->psk) अणु
+		if (crypto->psk) {
 			brcmf_dbg(INFO, "using PSK offload\n");
-			profile->use_fwauth |= BIT(BRCMF_PROखाता_FWAUTH_PSK);
-			err = brcmf_set_pmk(अगरp, crypto->psk,
+			profile->use_fwauth |= BIT(BRCMF_PROFILE_FWAUTH_PSK);
+			err = brcmf_set_pmk(ifp, crypto->psk,
 					    BRCMF_WSEC_MAX_PSK_LEN);
-			अगर (err < 0)
-				जाओ निकास;
-		पूर्ण
-		अगर (crypto->sae_pwd) अणु
+			if (err < 0)
+				goto exit;
+		}
+		if (crypto->sae_pwd) {
 			brcmf_dbg(INFO, "using SAE offload\n");
-			profile->use_fwauth |= BIT(BRCMF_PROखाता_FWAUTH_SAE);
-			err = brcmf_set_sae_password(अगरp, crypto->sae_pwd,
+			profile->use_fwauth |= BIT(BRCMF_PROFILE_FWAUTH_SAE);
+			err = brcmf_set_sae_password(ifp, crypto->sae_pwd,
 						     crypto->sae_pwd_len);
-			अगर (err < 0)
-				जाओ निकास;
-		पूर्ण
-		अगर (profile->use_fwauth == 0)
-			profile->use_fwauth = BIT(BRCMF_PROखाता_FWAUTH_NONE);
+			if (err < 0)
+				goto exit;
+		}
+		if (profile->use_fwauth == 0)
+			profile->use_fwauth = BIT(BRCMF_PROFILE_FWAUTH_NONE);
 
-		err = brcmf_parse_configure_security(अगरp, settings,
+		err = brcmf_parse_configure_security(ifp, settings,
 						     NL80211_IFTYPE_AP);
-		अगर (err < 0) अणु
+		if (err < 0) {
 			bphy_err(drvr, "brcmf_parse_configure_security error\n");
-			जाओ निकास;
-		पूर्ण
+			goto exit;
+		}
 
-		/* On DOWN the firmware हटाओs the WEP keys, reconfigure
-		 * them अगर they were set.
+		/* On DOWN the firmware removes the WEP keys, reconfigure
+		 * them if they were set.
 		 */
-		brcmf_cfg80211_reconfigure_wep(अगरp);
+		brcmf_cfg80211_reconfigure_wep(ifp);
 
-		स_रखो(&join_params, 0, माप(join_params));
+		memset(&join_params, 0, sizeof(join_params));
 		/* join parameters starts with ssid */
-		स_नकल(&join_params.ssid_le, &ssid_le, माप(ssid_le));
+		memcpy(&join_params.ssid_le, &ssid_le, sizeof(ssid_le));
 		/* create softap */
-		err = brcmf_fil_cmd_data_set(अगरp, BRCMF_C_SET_SSID,
-					     &join_params, माप(join_params));
-		अगर (err < 0) अणु
+		err = brcmf_fil_cmd_data_set(ifp, BRCMF_C_SET_SSID,
+					     &join_params, sizeof(join_params));
+		if (err < 0) {
 			bphy_err(drvr, "SET SSID error (%d)\n", err);
-			जाओ निकास;
-		पूर्ण
+			goto exit;
+		}
 
-		err = brcmf_fil_iovar_पूर्णांक_set(अगरp, "closednet",
+		err = brcmf_fil_iovar_int_set(ifp, "closednet",
 					      settings->hidden_ssid);
-		अगर (err) अणु
+		if (err) {
 			bphy_err(drvr, "%s closednet error (%d)\n",
 				 settings->hidden_ssid ?
 				 "enabled" : "disabled",
 				 err);
-			जाओ निकास;
-		पूर्ण
+			goto exit;
+		}
 
 		brcmf_dbg(TRACE, "AP mode configuration complete\n");
-	पूर्ण अन्यथा अगर (dev_role == NL80211_IFTYPE_P2P_GO) अणु
-		err = brcmf_fil_iovar_पूर्णांक_set(अगरp, "chanspec", chanspec);
-		अगर (err < 0) अणु
+	} else if (dev_role == NL80211_IFTYPE_P2P_GO) {
+		err = brcmf_fil_iovar_int_set(ifp, "chanspec", chanspec);
+		if (err < 0) {
 			bphy_err(drvr, "Set Channel failed: chspec=%d, %d\n",
 				 chanspec, err);
-			जाओ निकास;
-		पूर्ण
+			goto exit;
+		}
 
-		err = brcmf_parse_configure_security(अगरp, settings,
+		err = brcmf_parse_configure_security(ifp, settings,
 						     NL80211_IFTYPE_P2P_GO);
-		अगर (err < 0) अणु
+		if (err < 0) {
 			brcmf_err("brcmf_parse_configure_security error\n");
-			जाओ निकास;
-		पूर्ण
+			goto exit;
+		}
 
-		err = brcmf_fil_bsscfg_data_set(अगरp, "ssid", &ssid_le,
-						माप(ssid_le));
-		अगर (err < 0) अणु
+		err = brcmf_fil_bsscfg_data_set(ifp, "ssid", &ssid_le,
+						sizeof(ssid_le));
+		if (err < 0) {
 			bphy_err(drvr, "setting ssid failed %d\n", err);
-			जाओ निकास;
-		पूर्ण
-		bss_enable.bsscfgidx = cpu_to_le32(अगरp->bsscfgidx);
+			goto exit;
+		}
+		bss_enable.bsscfgidx = cpu_to_le32(ifp->bsscfgidx);
 		bss_enable.enable = cpu_to_le32(1);
-		err = brcmf_fil_iovar_data_set(अगरp, "bss", &bss_enable,
-					       माप(bss_enable));
-		अगर (err < 0) अणु
+		err = brcmf_fil_iovar_data_set(ifp, "bss", &bss_enable,
+					       sizeof(bss_enable));
+		if (err < 0) {
 			bphy_err(drvr, "bss_enable config failed %d\n", err);
-			जाओ निकास;
-		पूर्ण
+			goto exit;
+		}
 
 		brcmf_dbg(TRACE, "GO mode configuration complete\n");
-	पूर्ण अन्यथा अणु
+	} else {
 		WARN_ON(1);
-	पूर्ण
+	}
 
-	brcmf_config_ap_mgmt_ie(अगरp->vअगर, &settings->beacon);
-	set_bit(BRCMF_VIF_STATUS_AP_CREATED, &अगरp->vअगर->sme_state);
-	brcmf_net_setcarrier(अगरp, true);
+	brcmf_config_ap_mgmt_ie(ifp->vif, &settings->beacon);
+	set_bit(BRCMF_VIF_STATUS_AP_CREATED, &ifp->vif->sme_state);
+	brcmf_net_setcarrier(ifp, true);
 
-निकास:
-	अगर ((err) && (!mbss)) अणु
-		brcmf_set_mpc(अगरp, 1);
-		brcmf_configure_arp_nd_offload(अगरp, true);
-	पूर्ण
-	वापस err;
-पूर्ण
+exit:
+	if ((err) && (!mbss)) {
+		brcmf_set_mpc(ifp, 1);
+		brcmf_configure_arp_nd_offload(ifp, true);
+	}
+	return err;
+}
 
-अटल पूर्णांक brcmf_cfg80211_stop_ap(काष्ठा wiphy *wiphy, काष्ठा net_device *ndev)
-अणु
-	काष्ठा brcmf_cfg80211_info *cfg = wiphy_to_cfg(wiphy);
-	काष्ठा brcmf_अगर *अगरp = netdev_priv(ndev);
-	काष्ठा brcmf_pub *drvr = cfg->pub;
-	काष्ठा brcmf_cfg80211_profile *profile = &अगरp->vअगर->profile;
+static int brcmf_cfg80211_stop_ap(struct wiphy *wiphy, struct net_device *ndev)
+{
+	struct brcmf_cfg80211_info *cfg = wiphy_to_cfg(wiphy);
+	struct brcmf_if *ifp = netdev_priv(ndev);
+	struct brcmf_pub *drvr = cfg->pub;
+	struct brcmf_cfg80211_profile *profile = &ifp->vif->profile;
 	s32 err;
-	काष्ठा brcmf_fil_bss_enable_le bss_enable;
-	काष्ठा brcmf_join_params join_params;
+	struct brcmf_fil_bss_enable_le bss_enable;
+	struct brcmf_join_params join_params;
 
 	brcmf_dbg(TRACE, "Enter\n");
 
-	अगर (अगरp->vअगर->wdev.अगरtype == NL80211_IFTYPE_AP) अणु
+	if (ifp->vif->wdev.iftype == NL80211_IFTYPE_AP) {
 		/* Due to most likely deauths outstanding we sleep */
 		/* first to make sure they get processed by fw. */
 		msleep(400);
 
-		अगर (profile->use_fwauth != BIT(BRCMF_PROखाता_FWAUTH_NONE)) अणु
-			अगर (profile->use_fwauth & BIT(BRCMF_PROखाता_FWAUTH_PSK))
-				brcmf_set_pmk(अगरp, शून्य, 0);
-			अगर (profile->use_fwauth & BIT(BRCMF_PROखाता_FWAUTH_SAE))
-				brcmf_set_sae_password(अगरp, शून्य, 0);
-			profile->use_fwauth = BIT(BRCMF_PROखाता_FWAUTH_NONE);
-		पूर्ण
+		if (profile->use_fwauth != BIT(BRCMF_PROFILE_FWAUTH_NONE)) {
+			if (profile->use_fwauth & BIT(BRCMF_PROFILE_FWAUTH_PSK))
+				brcmf_set_pmk(ifp, NULL, 0);
+			if (profile->use_fwauth & BIT(BRCMF_PROFILE_FWAUTH_SAE))
+				brcmf_set_sae_password(ifp, NULL, 0);
+			profile->use_fwauth = BIT(BRCMF_PROFILE_FWAUTH_NONE);
+		}
 
-		अगर (अगरp->vअगर->mbss) अणु
-			err = brcmf_fil_cmd_पूर्णांक_set(अगरp, BRCMF_C_DOWN, 1);
-			वापस err;
-		पूर्ण
+		if (ifp->vif->mbss) {
+			err = brcmf_fil_cmd_int_set(ifp, BRCMF_C_DOWN, 1);
+			return err;
+		}
 
-		/* First BSS करोesn't get a full reset */
-		अगर (अगरp->bsscfgidx == 0)
-			brcmf_fil_iovar_पूर्णांक_set(अगरp, "closednet", 0);
+		/* First BSS doesn't get a full reset */
+		if (ifp->bsscfgidx == 0)
+			brcmf_fil_iovar_int_set(ifp, "closednet", 0);
 
-		स_रखो(&join_params, 0, माप(join_params));
-		err = brcmf_fil_cmd_data_set(अगरp, BRCMF_C_SET_SSID,
-					     &join_params, माप(join_params));
-		अगर (err < 0)
+		memset(&join_params, 0, sizeof(join_params));
+		err = brcmf_fil_cmd_data_set(ifp, BRCMF_C_SET_SSID,
+					     &join_params, sizeof(join_params));
+		if (err < 0)
 			bphy_err(drvr, "SET SSID error (%d)\n", err);
-		err = brcmf_fil_cmd_पूर्णांक_set(अगरp, BRCMF_C_DOWN, 1);
-		अगर (err < 0)
+		err = brcmf_fil_cmd_int_set(ifp, BRCMF_C_DOWN, 1);
+		if (err < 0)
 			bphy_err(drvr, "BRCMF_C_DOWN error %d\n", err);
-		err = brcmf_fil_cmd_पूर्णांक_set(अगरp, BRCMF_C_SET_AP, 0);
-		अगर (err < 0)
+		err = brcmf_fil_cmd_int_set(ifp, BRCMF_C_SET_AP, 0);
+		if (err < 0)
 			bphy_err(drvr, "setting AP mode failed %d\n", err);
-		अगर (brcmf_feat_is_enabled(अगरp, BRCMF_FEAT_MBSS))
-			brcmf_fil_iovar_पूर्णांक_set(अगरp, "mbss", 0);
-		brcmf_fil_cmd_पूर्णांक_set(अगरp, BRCMF_C_SET_REGULATORY,
-				      अगरp->vअगर->is_11d);
+		if (brcmf_feat_is_enabled(ifp, BRCMF_FEAT_MBSS))
+			brcmf_fil_iovar_int_set(ifp, "mbss", 0);
+		brcmf_fil_cmd_int_set(ifp, BRCMF_C_SET_REGULATORY,
+				      ifp->vif->is_11d);
 		/* Bring device back up so it can be used again */
-		err = brcmf_fil_cmd_पूर्णांक_set(अगरp, BRCMF_C_UP, 1);
-		अगर (err < 0)
+		err = brcmf_fil_cmd_int_set(ifp, BRCMF_C_UP, 1);
+		if (err < 0)
 			bphy_err(drvr, "BRCMF_C_UP error %d\n", err);
 
-		brcmf_vअगर_clear_mgmt_ies(अगरp->vअगर);
-	पूर्ण अन्यथा अणु
-		bss_enable.bsscfgidx = cpu_to_le32(अगरp->bsscfgidx);
+		brcmf_vif_clear_mgmt_ies(ifp->vif);
+	} else {
+		bss_enable.bsscfgidx = cpu_to_le32(ifp->bsscfgidx);
 		bss_enable.enable = cpu_to_le32(0);
-		err = brcmf_fil_iovar_data_set(अगरp, "bss", &bss_enable,
-					       माप(bss_enable));
-		अगर (err < 0)
+		err = brcmf_fil_iovar_data_set(ifp, "bss", &bss_enable,
+					       sizeof(bss_enable));
+		if (err < 0)
 			bphy_err(drvr, "bss_enable config failed %d\n", err);
-	पूर्ण
-	brcmf_set_mpc(अगरp, 1);
-	brcmf_configure_arp_nd_offload(अगरp, true);
-	clear_bit(BRCMF_VIF_STATUS_AP_CREATED, &अगरp->vअगर->sme_state);
-	brcmf_net_setcarrier(अगरp, false);
+	}
+	brcmf_set_mpc(ifp, 1);
+	brcmf_configure_arp_nd_offload(ifp, true);
+	clear_bit(BRCMF_VIF_STATUS_AP_CREATED, &ifp->vif->sme_state);
+	brcmf_net_setcarrier(ifp, false);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल s32
-brcmf_cfg80211_change_beacon(काष्ठा wiphy *wiphy, काष्ठा net_device *ndev,
-			     काष्ठा cfg80211_beacon_data *info)
-अणु
-	काष्ठा brcmf_अगर *अगरp = netdev_priv(ndev);
+static s32
+brcmf_cfg80211_change_beacon(struct wiphy *wiphy, struct net_device *ndev,
+			     struct cfg80211_beacon_data *info)
+{
+	struct brcmf_if *ifp = netdev_priv(ndev);
 	s32 err;
 
 	brcmf_dbg(TRACE, "Enter\n");
 
-	err = brcmf_config_ap_mgmt_ie(अगरp->vअगर, info);
+	err = brcmf_config_ap_mgmt_ie(ifp->vif, info);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक
-brcmf_cfg80211_del_station(काष्ठा wiphy *wiphy, काष्ठा net_device *ndev,
-			   काष्ठा station_del_parameters *params)
-अणु
-	काष्ठा brcmf_cfg80211_info *cfg = wiphy_to_cfg(wiphy);
-	काष्ठा brcmf_pub *drvr = cfg->pub;
-	काष्ठा brcmf_scb_val_le scbval;
-	काष्ठा brcmf_अगर *अगरp = netdev_priv(ndev);
+static int
+brcmf_cfg80211_del_station(struct wiphy *wiphy, struct net_device *ndev,
+			   struct station_del_parameters *params)
+{
+	struct brcmf_cfg80211_info *cfg = wiphy_to_cfg(wiphy);
+	struct brcmf_pub *drvr = cfg->pub;
+	struct brcmf_scb_val_le scbval;
+	struct brcmf_if *ifp = netdev_priv(ndev);
 	s32 err;
 
-	अगर (!params->mac)
-		वापस -EFAULT;
+	if (!params->mac)
+		return -EFAULT;
 
 	brcmf_dbg(TRACE, "Enter %pM\n", params->mac);
 
-	अगर (अगरp->vअगर == cfg->p2p.bss_idx[P2PAPI_BSSCFG_DEVICE].vअगर)
-		अगरp = cfg->p2p.bss_idx[P2PAPI_BSSCFG_PRIMARY].vअगर->अगरp;
-	अगर (!check_vअगर_up(अगरp->vअगर))
-		वापस -EIO;
+	if (ifp->vif == cfg->p2p.bss_idx[P2PAPI_BSSCFG_DEVICE].vif)
+		ifp = cfg->p2p.bss_idx[P2PAPI_BSSCFG_PRIMARY].vif->ifp;
+	if (!check_vif_up(ifp->vif))
+		return -EIO;
 
-	स_नकल(&scbval.ea, params->mac, ETH_ALEN);
+	memcpy(&scbval.ea, params->mac, ETH_ALEN);
 	scbval.val = cpu_to_le32(params->reason_code);
-	err = brcmf_fil_cmd_data_set(अगरp, BRCMF_C_SCB_DEAUTHENTICATE_FOR_REASON,
-				     &scbval, माप(scbval));
-	अगर (err)
+	err = brcmf_fil_cmd_data_set(ifp, BRCMF_C_SCB_DEAUTHENTICATE_FOR_REASON,
+				     &scbval, sizeof(scbval));
+	if (err)
 		bphy_err(drvr, "SCB_DEAUTHENTICATE_FOR_REASON failed %d\n",
 			 err);
 
 	brcmf_dbg(TRACE, "Exit\n");
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक
-brcmf_cfg80211_change_station(काष्ठा wiphy *wiphy, काष्ठा net_device *ndev,
-			      स्थिर u8 *mac, काष्ठा station_parameters *params)
-अणु
-	काष्ठा brcmf_cfg80211_info *cfg = wiphy_to_cfg(wiphy);
-	काष्ठा brcmf_pub *drvr = cfg->pub;
-	काष्ठा brcmf_अगर *अगरp = netdev_priv(ndev);
+static int
+brcmf_cfg80211_change_station(struct wiphy *wiphy, struct net_device *ndev,
+			      const u8 *mac, struct station_parameters *params)
+{
+	struct brcmf_cfg80211_info *cfg = wiphy_to_cfg(wiphy);
+	struct brcmf_pub *drvr = cfg->pub;
+	struct brcmf_if *ifp = netdev_priv(ndev);
 	s32 err;
 
 	brcmf_dbg(TRACE, "Enter, MAC %pM, mask 0x%04x set 0x%04x\n", mac,
 		  params->sta_flags_mask, params->sta_flags_set);
 
 	/* Ignore all 00 MAC */
-	अगर (is_zero_ether_addr(mac))
-		वापस 0;
+	if (is_zero_ether_addr(mac))
+		return 0;
 
-	अगर (!(params->sta_flags_mask & BIT(NL80211_STA_FLAG_AUTHORIZED)))
-		वापस 0;
+	if (!(params->sta_flags_mask & BIT(NL80211_STA_FLAG_AUTHORIZED)))
+		return 0;
 
-	अगर (params->sta_flags_set & BIT(NL80211_STA_FLAG_AUTHORIZED))
-		err = brcmf_fil_cmd_data_set(अगरp, BRCMF_C_SET_SCB_AUTHORIZE,
-					     (व्योम *)mac, ETH_ALEN);
-	अन्यथा
-		err = brcmf_fil_cmd_data_set(अगरp, BRCMF_C_SET_SCB_DEAUTHORIZE,
-					     (व्योम *)mac, ETH_ALEN);
-	अगर (err < 0)
+	if (params->sta_flags_set & BIT(NL80211_STA_FLAG_AUTHORIZED))
+		err = brcmf_fil_cmd_data_set(ifp, BRCMF_C_SET_SCB_AUTHORIZE,
+					     (void *)mac, ETH_ALEN);
+	else
+		err = brcmf_fil_cmd_data_set(ifp, BRCMF_C_SET_SCB_DEAUTHORIZE,
+					     (void *)mac, ETH_ALEN);
+	if (err < 0)
 		bphy_err(drvr, "Setting SCB (de-)authorize failed, %d\n", err);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम
-brcmf_cfg80211_update_mgmt_frame_registrations(काष्ठा wiphy *wiphy,
-					       काष्ठा wireless_dev *wdev,
-					       काष्ठा mgmt_frame_regs *upd)
-अणु
-	काष्ठा brcmf_cfg80211_vअगर *vअगर;
+static void
+brcmf_cfg80211_update_mgmt_frame_registrations(struct wiphy *wiphy,
+					       struct wireless_dev *wdev,
+					       struct mgmt_frame_regs *upd)
+{
+	struct brcmf_cfg80211_vif *vif;
 
-	vअगर = container_of(wdev, काष्ठा brcmf_cfg80211_vअगर, wdev);
+	vif = container_of(wdev, struct brcmf_cfg80211_vif, wdev);
 
-	vअगर->mgmt_rx_reg = upd->पूर्णांकerface_stypes;
-पूर्ण
+	vif->mgmt_rx_reg = upd->interface_stypes;
+}
 
 
-अटल पूर्णांक
-brcmf_cfg80211_mgmt_tx(काष्ठा wiphy *wiphy, काष्ठा wireless_dev *wdev,
-		       काष्ठा cfg80211_mgmt_tx_params *params, u64 *cookie)
-अणु
-	काष्ठा brcmf_cfg80211_info *cfg = wiphy_to_cfg(wiphy);
-	काष्ठा ieee80211_channel *chan = params->chan;
-	काष्ठा brcmf_pub *drvr = cfg->pub;
-	स्थिर u8 *buf = params->buf;
-	माप_प्रकार len = params->len;
-	स्थिर काष्ठा ieee80211_mgmt *mgmt;
-	काष्ठा brcmf_cfg80211_vअगर *vअगर;
+static int
+brcmf_cfg80211_mgmt_tx(struct wiphy *wiphy, struct wireless_dev *wdev,
+		       struct cfg80211_mgmt_tx_params *params, u64 *cookie)
+{
+	struct brcmf_cfg80211_info *cfg = wiphy_to_cfg(wiphy);
+	struct ieee80211_channel *chan = params->chan;
+	struct brcmf_pub *drvr = cfg->pub;
+	const u8 *buf = params->buf;
+	size_t len = params->len;
+	const struct ieee80211_mgmt *mgmt;
+	struct brcmf_cfg80211_vif *vif;
 	s32 err = 0;
 	s32 ie_offset;
 	s32 ie_len;
-	काष्ठा brcmf_fil_action_frame_le *action_frame;
-	काष्ठा brcmf_fil_af_params_le *af_params;
+	struct brcmf_fil_action_frame_le *action_frame;
+	struct brcmf_fil_af_params_le *af_params;
 	bool ack;
 	s32 chan_nr;
 	u32 freq;
@@ -5113,70 +5112,70 @@ brcmf_cfg80211_mgmt_tx(काष्ठा wiphy *wiphy, काष्ठा wirel
 
 	*cookie = 0;
 
-	mgmt = (स्थिर काष्ठा ieee80211_mgmt *)buf;
+	mgmt = (const struct ieee80211_mgmt *)buf;
 
-	अगर (!ieee80211_is_mgmt(mgmt->frame_control)) अणु
+	if (!ieee80211_is_mgmt(mgmt->frame_control)) {
 		bphy_err(drvr, "Driver only allows MGMT packet type\n");
-		वापस -EPERM;
-	पूर्ण
+		return -EPERM;
+	}
 
-	vअगर = container_of(wdev, काष्ठा brcmf_cfg80211_vअगर, wdev);
+	vif = container_of(wdev, struct brcmf_cfg80211_vif, wdev);
 
-	अगर (ieee80211_is_probe_resp(mgmt->frame_control)) अणु
+	if (ieee80211_is_probe_resp(mgmt->frame_control)) {
 		/* Right now the only reason to get a probe response */
-		/* is क्रम p2p listen response or क्रम p2p GO from     */
-		/* wpa_supplicant. Unक्रमtunately the probe is send   */
-		/* on primary ndev, जबतक करोngle wants it on the p2p */
-		/* vअगर. Since this is only reason क्रम a probe        */
-		/* response to be sent, the vअगर is taken from cfg.   */
-		/* If ever desired to send proberesp क्रम non p2p     */
-		/* response then data should be checked क्रम          */
+		/* is for p2p listen response or for p2p GO from     */
+		/* wpa_supplicant. Unfortunately the probe is send   */
+		/* on primary ndev, while dongle wants it on the p2p */
+		/* vif. Since this is only reason for a probe        */
+		/* response to be sent, the vif is taken from cfg.   */
+		/* If ever desired to send proberesp for non p2p     */
+		/* response then data should be checked for          */
 		/* "DIRECT-". Note in future supplicant will take    */
-		/* dedicated p2p wdev to करो this and then this 'hack'*/
+		/* dedicated p2p wdev to do this and then this 'hack'*/
 		/* is not needed anymore.                            */
 		ie_offset =  DOT11_MGMT_HDR_LEN +
 			     DOT11_BCN_PRB_FIXED_LEN;
 		ie_len = len - ie_offset;
-		अगर (vअगर == cfg->p2p.bss_idx[P2PAPI_BSSCFG_PRIMARY].vअगर)
-			vअगर = cfg->p2p.bss_idx[P2PAPI_BSSCFG_DEVICE].vअगर;
-		err = brcmf_vअगर_set_mgmt_ie(vअगर,
+		if (vif == cfg->p2p.bss_idx[P2PAPI_BSSCFG_PRIMARY].vif)
+			vif = cfg->p2p.bss_idx[P2PAPI_BSSCFG_DEVICE].vif;
+		err = brcmf_vif_set_mgmt_ie(vif,
 					    BRCMF_VNDR_IE_PRBRSP_FLAG,
 					    &buf[ie_offset],
 					    ie_len);
 		cfg80211_mgmt_tx_status(wdev, *cookie, buf, len, true,
 					GFP_KERNEL);
-	पूर्ण अन्यथा अगर (ieee80211_is_action(mgmt->frame_control)) अणु
-		अगर (len > BRCMF_FIL_ACTION_FRAME_SIZE + DOT11_MGMT_HDR_LEN) अणु
+	} else if (ieee80211_is_action(mgmt->frame_control)) {
+		if (len > BRCMF_FIL_ACTION_FRAME_SIZE + DOT11_MGMT_HDR_LEN) {
 			bphy_err(drvr, "invalid action frame length\n");
 			err = -EINVAL;
-			जाओ निकास;
-		पूर्ण
-		af_params = kzalloc(माप(*af_params), GFP_KERNEL);
-		अगर (af_params == शून्य) अणु
+			goto exit;
+		}
+		af_params = kzalloc(sizeof(*af_params), GFP_KERNEL);
+		if (af_params == NULL) {
 			bphy_err(drvr, "unable to allocate frame\n");
 			err = -ENOMEM;
-			जाओ निकास;
-		पूर्ण
+			goto exit;
+		}
 		action_frame = &af_params->action_frame;
 		/* Add the packet Id */
 		action_frame->packet_id = cpu_to_le32(*cookie);
 		/* Add BSSID */
-		स_नकल(&action_frame->da[0], &mgmt->da[0], ETH_ALEN);
-		स_नकल(&af_params->bssid[0], &mgmt->bssid[0], ETH_ALEN);
-		/* Add the length exepted क्रम 802.11 header  */
+		memcpy(&action_frame->da[0], &mgmt->da[0], ETH_ALEN);
+		memcpy(&af_params->bssid[0], &mgmt->bssid[0], ETH_ALEN);
+		/* Add the length exepted for 802.11 header  */
 		action_frame->len = cpu_to_le16(len - DOT11_MGMT_HDR_LEN);
-		/* Add the channel. Use the one specअगरied as parameter अगर any or
+		/* Add the channel. Use the one specified as parameter if any or
 		 * the current one (got from the firmware) otherwise
 		 */
-		अगर (chan)
+		if (chan)
 			freq = chan->center_freq;
-		अन्यथा
-			brcmf_fil_cmd_पूर्णांक_get(vअगर->अगरp, BRCMF_C_GET_CHANNEL,
+		else
+			brcmf_fil_cmd_int_get(vif->ifp, BRCMF_C_GET_CHANNEL,
 					      &freq);
 		chan_nr = ieee80211_frequency_to_channel(freq);
 		af_params->channel = cpu_to_le32(chan_nr);
-		af_params->dwell_समय = cpu_to_le32(params->रुको);
-		स_नकल(action_frame->data, &buf[DOT11_MGMT_HDR_LEN],
+		af_params->dwell_time = cpu_to_le32(params->wait);
+		memcpy(action_frame->data, &buf[DOT11_MGMT_HDR_LEN],
 		       le16_to_cpu(action_frame->len));
 
 		brcmf_dbg(TRACE, "Action frame, cookie=%lld, len=%d, freq=%d\n",
@@ -5187,133 +5186,133 @@ brcmf_cfg80211_mgmt_tx(काष्ठा wiphy *wiphy, काष्ठा wirel
 
 		cfg80211_mgmt_tx_status(wdev, *cookie, buf, len, ack,
 					GFP_KERNEL);
-		kमुक्त(af_params);
-	पूर्ण अन्यथा अणु
+		kfree(af_params);
+	} else {
 		brcmf_dbg(TRACE, "Unhandled, fc=%04x!!\n", mgmt->frame_control);
 		brcmf_dbg_hex_dump(true, buf, len, "payload, len=%zu\n", len);
-	पूर्ण
+	}
 
-निकास:
-	वापस err;
-पूर्ण
+exit:
+	return err;
+}
 
-अटल पूर्णांक brcmf_cfg80211_set_cqm_rssi_range_config(काष्ठा wiphy *wiphy,
-						    काष्ठा net_device *ndev,
+static int brcmf_cfg80211_set_cqm_rssi_range_config(struct wiphy *wiphy,
+						    struct net_device *ndev,
 						    s32 rssi_low, s32 rssi_high)
-अणु
-	काष्ठा brcmf_cfg80211_vअगर *vअगर;
-	काष्ठा brcmf_अगर *अगरp;
-	पूर्णांक err = 0;
+{
+	struct brcmf_cfg80211_vif *vif;
+	struct brcmf_if *ifp;
+	int err = 0;
 
 	brcmf_dbg(TRACE, "low=%d high=%d", rssi_low, rssi_high);
 
-	अगरp = netdev_priv(ndev);
-	vअगर = अगरp->vअगर;
+	ifp = netdev_priv(ndev);
+	vif = ifp->vif;
 
-	अगर (rssi_low != vअगर->cqm_rssi_low || rssi_high != vअगर->cqm_rssi_high) अणु
+	if (rssi_low != vif->cqm_rssi_low || rssi_high != vif->cqm_rssi_high) {
 		/* The firmware will send an event when the RSSI is less than or
 		 * equal to a configured level and the previous RSSI event was
-		 * less than or equal to a dअगरferent level. Set a third level
+		 * less than or equal to a different level. Set a third level
 		 * so that we also detect the transition from rssi <= rssi_high
 		 * to rssi > rssi_high.
 		 */
-		काष्ठा brcmf_rssi_event_le config = अणु
+		struct brcmf_rssi_event_le config = {
 			.rate_limit_msec = cpu_to_le32(0),
 			.rssi_level_num = 3,
-			.rssi_levels = अणु
+			.rssi_levels = {
 				clamp_val(rssi_low, S8_MIN, S8_MAX - 2),
 				clamp_val(rssi_high, S8_MIN + 1, S8_MAX - 1),
 				S8_MAX,
-			पूर्ण,
-		पूर्ण;
+			},
+		};
 
-		err = brcmf_fil_iovar_data_set(अगरp, "rssi_event", &config,
-					       माप(config));
-		अगर (err) अणु
+		err = brcmf_fil_iovar_data_set(ifp, "rssi_event", &config,
+					       sizeof(config));
+		if (err) {
 			err = -EINVAL;
-		पूर्ण अन्यथा अणु
-			vअगर->cqm_rssi_low = rssi_low;
-			vअगर->cqm_rssi_high = rssi_high;
-		पूर्ण
-	पूर्ण
+		} else {
+			vif->cqm_rssi_low = rssi_low;
+			vif->cqm_rssi_high = rssi_high;
+		}
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक
-brcmf_cfg80211_cancel_reमुख्य_on_channel(काष्ठा wiphy *wiphy,
-					काष्ठा wireless_dev *wdev,
+static int
+brcmf_cfg80211_cancel_remain_on_channel(struct wiphy *wiphy,
+					struct wireless_dev *wdev,
 					u64 cookie)
-अणु
-	काष्ठा brcmf_cfg80211_info *cfg = wiphy_to_cfg(wiphy);
-	काष्ठा brcmf_pub *drvr = cfg->pub;
-	काष्ठा brcmf_cfg80211_vअगर *vअगर;
-	पूर्णांक err = 0;
+{
+	struct brcmf_cfg80211_info *cfg = wiphy_to_cfg(wiphy);
+	struct brcmf_pub *drvr = cfg->pub;
+	struct brcmf_cfg80211_vif *vif;
+	int err = 0;
 
 	brcmf_dbg(TRACE, "Enter p2p listen cancel\n");
 
-	vअगर = cfg->p2p.bss_idx[P2PAPI_BSSCFG_DEVICE].vअगर;
-	अगर (vअगर == शून्य) अणु
+	vif = cfg->p2p.bss_idx[P2PAPI_BSSCFG_DEVICE].vif;
+	if (vif == NULL) {
 		bphy_err(drvr, "No p2p device available for probe response\n");
 		err = -ENODEV;
-		जाओ निकास;
-	पूर्ण
-	brcmf_p2p_cancel_reमुख्य_on_channel(vअगर->अगरp);
-निकास:
-	वापस err;
-पूर्ण
+		goto exit;
+	}
+	brcmf_p2p_cancel_remain_on_channel(vif->ifp);
+exit:
+	return err;
+}
 
-अटल पूर्णांक brcmf_cfg80211_get_channel(काष्ठा wiphy *wiphy,
-				      काष्ठा wireless_dev *wdev,
-				      काष्ठा cfg80211_chan_def *chandef)
-अणु
-	काष्ठा brcmf_cfg80211_info *cfg = wiphy_to_cfg(wiphy);
-	काष्ठा net_device *ndev = wdev->netdev;
-	काष्ठा brcmf_pub *drvr = cfg->pub;
-	काष्ठा brcmu_chan ch;
-	क्रमागत nl80211_band band = 0;
-	क्रमागत nl80211_chan_width width = 0;
+static int brcmf_cfg80211_get_channel(struct wiphy *wiphy,
+				      struct wireless_dev *wdev,
+				      struct cfg80211_chan_def *chandef)
+{
+	struct brcmf_cfg80211_info *cfg = wiphy_to_cfg(wiphy);
+	struct net_device *ndev = wdev->netdev;
+	struct brcmf_pub *drvr = cfg->pub;
+	struct brcmu_chan ch;
+	enum nl80211_band band = 0;
+	enum nl80211_chan_width width = 0;
 	u32 chanspec;
-	पूर्णांक freq, err;
+	int freq, err;
 
-	अगर (!ndev || drvr->bus_अगर->state != BRCMF_BUS_UP)
-		वापस -ENODEV;
+	if (!ndev || drvr->bus_if->state != BRCMF_BUS_UP)
+		return -ENODEV;
 
-	err = brcmf_fil_iovar_पूर्णांक_get(netdev_priv(ndev), "chanspec", &chanspec);
-	अगर (err) अणु
+	err = brcmf_fil_iovar_int_get(netdev_priv(ndev), "chanspec", &chanspec);
+	if (err) {
 		bphy_err(drvr, "chanspec failed (%d)\n", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	ch.chspec = chanspec;
 	cfg->d11inf.decchspec(&ch);
 
-	चयन (ch.band) अणु
-	हाल BRCMU_CHAN_BAND_2G:
+	switch (ch.band) {
+	case BRCMU_CHAN_BAND_2G:
 		band = NL80211_BAND_2GHZ;
-		अवरोध;
-	हाल BRCMU_CHAN_BAND_5G:
+		break;
+	case BRCMU_CHAN_BAND_5G:
 		band = NL80211_BAND_5GHZ;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	चयन (ch.bw) अणु
-	हाल BRCMU_CHAN_BW_80:
+	switch (ch.bw) {
+	case BRCMU_CHAN_BW_80:
 		width = NL80211_CHAN_WIDTH_80;
-		अवरोध;
-	हाल BRCMU_CHAN_BW_40:
+		break;
+	case BRCMU_CHAN_BW_40:
 		width = NL80211_CHAN_WIDTH_40;
-		अवरोध;
-	हाल BRCMU_CHAN_BW_20:
+		break;
+	case BRCMU_CHAN_BW_20:
 		width = NL80211_CHAN_WIDTH_20;
-		अवरोध;
-	हाल BRCMU_CHAN_BW_80P80:
+		break;
+	case BRCMU_CHAN_BW_80P80:
 		width = NL80211_CHAN_WIDTH_80P80;
-		अवरोध;
-	हाल BRCMU_CHAN_BW_160:
+		break;
+	case BRCMU_CHAN_BW_160:
 		width = NL80211_CHAN_WIDTH_160;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	freq = ieee80211_channel_to_frequency(ch.control_ch_num, band);
 	chandef->chan = ieee80211_get_channel(wiphy, freq);
@@ -5321,213 +5320,213 @@ brcmf_cfg80211_cancel_reमुख्य_on_channel(काष्ठा wiphy *wip
 	chandef->center_freq1 = ieee80211_channel_to_frequency(ch.chnum, band);
 	chandef->center_freq2 = 0;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक brcmf_cfg80211_crit_proto_start(काष्ठा wiphy *wiphy,
-					   काष्ठा wireless_dev *wdev,
-					   क्रमागत nl80211_crit_proto_id proto,
+static int brcmf_cfg80211_crit_proto_start(struct wiphy *wiphy,
+					   struct wireless_dev *wdev,
+					   enum nl80211_crit_proto_id proto,
 					   u16 duration)
-अणु
-	काष्ठा brcmf_cfg80211_info *cfg = wiphy_to_cfg(wiphy);
-	काष्ठा brcmf_cfg80211_vअगर *vअगर;
+{
+	struct brcmf_cfg80211_info *cfg = wiphy_to_cfg(wiphy);
+	struct brcmf_cfg80211_vif *vif;
 
-	vअगर = container_of(wdev, काष्ठा brcmf_cfg80211_vअगर, wdev);
+	vif = container_of(wdev, struct brcmf_cfg80211_vif, wdev);
 
-	/* only DHCP support क्रम now */
-	अगर (proto != NL80211_CRIT_PROTO_DHCP)
-		वापस -EINVAL;
+	/* only DHCP support for now */
+	if (proto != NL80211_CRIT_PROTO_DHCP)
+		return -EINVAL;
 
-	/* suppress and पात scanning */
+	/* suppress and abort scanning */
 	set_bit(BRCMF_SCAN_STATUS_SUPPRESS, &cfg->scan_status);
-	brcmf_पात_scanning(cfg);
+	brcmf_abort_scanning(cfg);
 
-	वापस brcmf_btcoex_set_mode(vअगर, BRCMF_BTCOEX_DISABLED, duration);
-पूर्ण
+	return brcmf_btcoex_set_mode(vif, BRCMF_BTCOEX_DISABLED, duration);
+}
 
-अटल व्योम brcmf_cfg80211_crit_proto_stop(काष्ठा wiphy *wiphy,
-					   काष्ठा wireless_dev *wdev)
-अणु
-	काष्ठा brcmf_cfg80211_info *cfg = wiphy_to_cfg(wiphy);
-	काष्ठा brcmf_cfg80211_vअगर *vअगर;
+static void brcmf_cfg80211_crit_proto_stop(struct wiphy *wiphy,
+					   struct wireless_dev *wdev)
+{
+	struct brcmf_cfg80211_info *cfg = wiphy_to_cfg(wiphy);
+	struct brcmf_cfg80211_vif *vif;
 
-	vअगर = container_of(wdev, काष्ठा brcmf_cfg80211_vअगर, wdev);
+	vif = container_of(wdev, struct brcmf_cfg80211_vif, wdev);
 
-	brcmf_btcoex_set_mode(vअगर, BRCMF_BTCOEX_ENABLED, 0);
+	brcmf_btcoex_set_mode(vif, BRCMF_BTCOEX_ENABLED, 0);
 	clear_bit(BRCMF_SCAN_STATUS_SUPPRESS, &cfg->scan_status);
-पूर्ण
+}
 
-अटल s32
-brcmf_notअगरy_tdls_peer_event(काष्ठा brcmf_अगर *अगरp,
-			     स्थिर काष्ठा brcmf_event_msg *e, व्योम *data)
-अणु
-	चयन (e->reason) अणु
-	हाल BRCMF_E_REASON_TDLS_PEER_DISCOVERED:
+static s32
+brcmf_notify_tdls_peer_event(struct brcmf_if *ifp,
+			     const struct brcmf_event_msg *e, void *data)
+{
+	switch (e->reason) {
+	case BRCMF_E_REASON_TDLS_PEER_DISCOVERED:
 		brcmf_dbg(TRACE, "TDLS Peer Discovered\n");
-		अवरोध;
-	हाल BRCMF_E_REASON_TDLS_PEER_CONNECTED:
+		break;
+	case BRCMF_E_REASON_TDLS_PEER_CONNECTED:
 		brcmf_dbg(TRACE, "TDLS Peer Connected\n");
-		brcmf_proto_add_tdls_peer(अगरp->drvr, अगरp->अगरidx, (u8 *)e->addr);
-		अवरोध;
-	हाल BRCMF_E_REASON_TDLS_PEER_DISCONNECTED:
+		brcmf_proto_add_tdls_peer(ifp->drvr, ifp->ifidx, (u8 *)e->addr);
+		break;
+	case BRCMF_E_REASON_TDLS_PEER_DISCONNECTED:
 		brcmf_dbg(TRACE, "TDLS Peer Disconnected\n");
-		brcmf_proto_delete_peer(अगरp->drvr, अगरp->अगरidx, (u8 *)e->addr);
-		अवरोध;
-	पूर्ण
+		brcmf_proto_delete_peer(ifp->drvr, ifp->ifidx, (u8 *)e->addr);
+		break;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक brcmf_convert_nl80211_tdls_oper(क्रमागत nl80211_tdls_operation oper)
-अणु
-	पूर्णांक ret;
+static int brcmf_convert_nl80211_tdls_oper(enum nl80211_tdls_operation oper)
+{
+	int ret;
 
-	चयन (oper) अणु
-	हाल NL80211_TDLS_DISCOVERY_REQ:
+	switch (oper) {
+	case NL80211_TDLS_DISCOVERY_REQ:
 		ret = BRCMF_TDLS_MANUAL_EP_DISCOVERY;
-		अवरोध;
-	हाल NL80211_TDLS_SETUP:
+		break;
+	case NL80211_TDLS_SETUP:
 		ret = BRCMF_TDLS_MANUAL_EP_CREATE;
-		अवरोध;
-	हाल NL80211_TDLS_TEARDOWN:
+		break;
+	case NL80211_TDLS_TEARDOWN:
 		ret = BRCMF_TDLS_MANUAL_EP_DELETE;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		brcmf_err("unsupported operation: %d\n", oper);
 		ret = -EOPNOTSUPP;
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 
-अटल पूर्णांक brcmf_cfg80211_tdls_oper(काष्ठा wiphy *wiphy,
-				    काष्ठा net_device *ndev, स्थिर u8 *peer,
-				    क्रमागत nl80211_tdls_operation oper)
-अणु
-	काष्ठा brcmf_cfg80211_info *cfg = wiphy_to_cfg(wiphy);
-	काष्ठा brcmf_pub *drvr = cfg->pub;
-	काष्ठा brcmf_अगर *अगरp;
-	काष्ठा brcmf_tdls_iovar_le info;
-	पूर्णांक ret = 0;
+static int brcmf_cfg80211_tdls_oper(struct wiphy *wiphy,
+				    struct net_device *ndev, const u8 *peer,
+				    enum nl80211_tdls_operation oper)
+{
+	struct brcmf_cfg80211_info *cfg = wiphy_to_cfg(wiphy);
+	struct brcmf_pub *drvr = cfg->pub;
+	struct brcmf_if *ifp;
+	struct brcmf_tdls_iovar_le info;
+	int ret = 0;
 
 	ret = brcmf_convert_nl80211_tdls_oper(oper);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	अगरp = netdev_priv(ndev);
-	स_रखो(&info, 0, माप(info));
+	ifp = netdev_priv(ndev);
+	memset(&info, 0, sizeof(info));
 	info.mode = (u8)ret;
-	अगर (peer)
-		स_नकल(info.ea, peer, ETH_ALEN);
+	if (peer)
+		memcpy(info.ea, peer, ETH_ALEN);
 
-	ret = brcmf_fil_iovar_data_set(अगरp, "tdls_endpoint",
-				       &info, माप(info));
-	अगर (ret < 0)
+	ret = brcmf_fil_iovar_data_set(ifp, "tdls_endpoint",
+				       &info, sizeof(info));
+	if (ret < 0)
 		bphy_err(drvr, "tdls_endpoint iovar failed: ret=%d\n", ret);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक
-brcmf_cfg80211_update_conn_params(काष्ठा wiphy *wiphy,
-				  काष्ठा net_device *ndev,
-				  काष्ठा cfg80211_connect_params *sme,
+static int
+brcmf_cfg80211_update_conn_params(struct wiphy *wiphy,
+				  struct net_device *ndev,
+				  struct cfg80211_connect_params *sme,
 				  u32 changed)
-अणु
-	काष्ठा brcmf_cfg80211_info *cfg = wiphy_to_cfg(wiphy);
-	काष्ठा brcmf_pub *drvr = cfg->pub;
-	काष्ठा brcmf_अगर *अगरp;
-	पूर्णांक err;
+{
+	struct brcmf_cfg80211_info *cfg = wiphy_to_cfg(wiphy);
+	struct brcmf_pub *drvr = cfg->pub;
+	struct brcmf_if *ifp;
+	int err;
 
-	अगर (!(changed & UPDATE_ASSOC_IES))
-		वापस 0;
+	if (!(changed & UPDATE_ASSOC_IES))
+		return 0;
 
-	अगरp = netdev_priv(ndev);
-	err = brcmf_vअगर_set_mgmt_ie(अगरp->vअगर, BRCMF_VNDR_IE_ASSOCREQ_FLAG,
+	ifp = netdev_priv(ndev);
+	err = brcmf_vif_set_mgmt_ie(ifp->vif, BRCMF_VNDR_IE_ASSOCREQ_FLAG,
 				    sme->ie, sme->ie_len);
-	अगर (err)
+	if (err)
 		bphy_err(drvr, "Set Assoc REQ IE Failed\n");
-	अन्यथा
+	else
 		brcmf_dbg(TRACE, "Applied Vndr IEs for Assoc request\n");
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-#अगर_घोषित CONFIG_PM
-अटल पूर्णांक
-brcmf_cfg80211_set_rekey_data(काष्ठा wiphy *wiphy, काष्ठा net_device *ndev,
-			      काष्ठा cfg80211_gtk_rekey_data *gtk)
-अणु
-	काष्ठा brcmf_cfg80211_info *cfg = wiphy_to_cfg(wiphy);
-	काष्ठा brcmf_pub *drvr = cfg->pub;
-	काष्ठा brcmf_अगर *अगरp = netdev_priv(ndev);
-	काष्ठा brcmf_gtk_keyinfo_le gtk_le;
-	पूर्णांक ret;
+#ifdef CONFIG_PM
+static int
+brcmf_cfg80211_set_rekey_data(struct wiphy *wiphy, struct net_device *ndev,
+			      struct cfg80211_gtk_rekey_data *gtk)
+{
+	struct brcmf_cfg80211_info *cfg = wiphy_to_cfg(wiphy);
+	struct brcmf_pub *drvr = cfg->pub;
+	struct brcmf_if *ifp = netdev_priv(ndev);
+	struct brcmf_gtk_keyinfo_le gtk_le;
+	int ret;
 
-	brcmf_dbg(TRACE, "Enter, bssidx=%d\n", अगरp->bsscfgidx);
+	brcmf_dbg(TRACE, "Enter, bssidx=%d\n", ifp->bsscfgidx);
 
-	स_नकल(gtk_le.kck, gtk->kck, माप(gtk_le.kck));
-	स_नकल(gtk_le.kek, gtk->kek, माप(gtk_le.kek));
-	स_नकल(gtk_le.replay_counter, gtk->replay_ctr,
-	       माप(gtk_le.replay_counter));
+	memcpy(gtk_le.kck, gtk->kck, sizeof(gtk_le.kck));
+	memcpy(gtk_le.kek, gtk->kek, sizeof(gtk_le.kek));
+	memcpy(gtk_le.replay_counter, gtk->replay_ctr,
+	       sizeof(gtk_le.replay_counter));
 
-	ret = brcmf_fil_iovar_data_set(अगरp, "gtk_key_info", &gtk_le,
-				       माप(gtk_le));
-	अगर (ret < 0)
+	ret = brcmf_fil_iovar_data_set(ifp, "gtk_key_info", &gtk_le,
+				       sizeof(gtk_le));
+	if (ret < 0)
 		bphy_err(drvr, "gtk_key_info iovar failed: ret=%d\n", ret);
 
-	वापस ret;
-पूर्ण
-#पूर्ण_अगर
+	return ret;
+}
+#endif
 
-अटल पूर्णांक brcmf_cfg80211_set_pmk(काष्ठा wiphy *wiphy, काष्ठा net_device *dev,
-				  स्थिर काष्ठा cfg80211_pmk_conf *conf)
-अणु
-	काष्ठा brcmf_अगर *अगरp;
-
-	brcmf_dbg(TRACE, "enter\n");
-
-	/* expect using firmware supplicant क्रम 1X */
-	अगरp = netdev_priv(dev);
-	अगर (WARN_ON(अगरp->vअगर->profile.use_fwsup != BRCMF_PROखाता_FWSUP_1X))
-		वापस -EINVAL;
-
-	अगर (conf->pmk_len > BRCMF_WSEC_MAX_PSK_LEN)
-		वापस -दुस्फल;
-
-	वापस brcmf_set_pmk(अगरp, conf->pmk, conf->pmk_len);
-पूर्ण
-
-अटल पूर्णांक brcmf_cfg80211_del_pmk(काष्ठा wiphy *wiphy, काष्ठा net_device *dev,
-				  स्थिर u8 *aa)
-अणु
-	काष्ठा brcmf_अगर *अगरp;
+static int brcmf_cfg80211_set_pmk(struct wiphy *wiphy, struct net_device *dev,
+				  const struct cfg80211_pmk_conf *conf)
+{
+	struct brcmf_if *ifp;
 
 	brcmf_dbg(TRACE, "enter\n");
-	अगरp = netdev_priv(dev);
-	अगर (WARN_ON(अगरp->vअगर->profile.use_fwsup != BRCMF_PROखाता_FWSUP_1X))
-		वापस -EINVAL;
 
-	वापस brcmf_set_pmk(अगरp, शून्य, 0);
-पूर्ण
+	/* expect using firmware supplicant for 1X */
+	ifp = netdev_priv(dev);
+	if (WARN_ON(ifp->vif->profile.use_fwsup != BRCMF_PROFILE_FWSUP_1X))
+		return -EINVAL;
 
-अटल काष्ठा cfg80211_ops brcmf_cfg80211_ops = अणु
-	.add_भव_पूर्णांकf = brcmf_cfg80211_add_अगरace,
-	.del_भव_पूर्णांकf = brcmf_cfg80211_del_अगरace,
-	.change_भव_पूर्णांकf = brcmf_cfg80211_change_अगरace,
+	if (conf->pmk_len > BRCMF_WSEC_MAX_PSK_LEN)
+		return -ERANGE;
+
+	return brcmf_set_pmk(ifp, conf->pmk, conf->pmk_len);
+}
+
+static int brcmf_cfg80211_del_pmk(struct wiphy *wiphy, struct net_device *dev,
+				  const u8 *aa)
+{
+	struct brcmf_if *ifp;
+
+	brcmf_dbg(TRACE, "enter\n");
+	ifp = netdev_priv(dev);
+	if (WARN_ON(ifp->vif->profile.use_fwsup != BRCMF_PROFILE_FWSUP_1X))
+		return -EINVAL;
+
+	return brcmf_set_pmk(ifp, NULL, 0);
+}
+
+static struct cfg80211_ops brcmf_cfg80211_ops = {
+	.add_virtual_intf = brcmf_cfg80211_add_iface,
+	.del_virtual_intf = brcmf_cfg80211_del_iface,
+	.change_virtual_intf = brcmf_cfg80211_change_iface,
 	.scan = brcmf_cfg80211_scan,
 	.set_wiphy_params = brcmf_cfg80211_set_wiphy_params,
 	.join_ibss = brcmf_cfg80211_join_ibss,
 	.leave_ibss = brcmf_cfg80211_leave_ibss,
 	.get_station = brcmf_cfg80211_get_station,
 	.dump_station = brcmf_cfg80211_dump_station,
-	.set_tx_घातer = brcmf_cfg80211_set_tx_घातer,
-	.get_tx_घातer = brcmf_cfg80211_get_tx_घातer,
+	.set_tx_power = brcmf_cfg80211_set_tx_power,
+	.get_tx_power = brcmf_cfg80211_get_tx_power,
 	.add_key = brcmf_cfg80211_add_key,
 	.del_key = brcmf_cfg80211_del_key,
 	.get_key = brcmf_cfg80211_get_key,
-	.set_शेष_key = brcmf_cfg80211_config_शेष_key,
-	.set_शेष_mgmt_key = brcmf_cfg80211_config_शेष_mgmt_key,
-	.set_घातer_mgmt = brcmf_cfg80211_set_घातer_mgmt,
+	.set_default_key = brcmf_cfg80211_config_default_key,
+	.set_default_mgmt_key = brcmf_cfg80211_config_default_mgmt_key,
+	.set_power_mgmt = brcmf_cfg80211_set_power_mgmt,
 	.connect = brcmf_cfg80211_connect,
 	.disconnect = brcmf_cfg80211_disconnect,
 	.suspend = brcmf_cfg80211_suspend,
@@ -5546,8 +5545,8 @@ brcmf_cfg80211_set_rekey_data(काष्ठा wiphy *wiphy, काष्ठ�
 		brcmf_cfg80211_update_mgmt_frame_registrations,
 	.mgmt_tx = brcmf_cfg80211_mgmt_tx,
 	.set_cqm_rssi_range_config = brcmf_cfg80211_set_cqm_rssi_range_config,
-	.reमुख्य_on_channel = brcmf_p2p_reमुख्य_on_channel,
-	.cancel_reमुख्य_on_channel = brcmf_cfg80211_cancel_reमुख्य_on_channel,
+	.remain_on_channel = brcmf_p2p_remain_on_channel,
+	.cancel_remain_on_channel = brcmf_cfg80211_cancel_remain_on_channel,
 	.get_channel = brcmf_cfg80211_get_channel,
 	.start_p2p_device = brcmf_p2p_start_device,
 	.stop_p2p_device = brcmf_p2p_stop_device,
@@ -5557,200 +5556,200 @@ brcmf_cfg80211_set_rekey_data(काष्ठा wiphy *wiphy, काष्ठ�
 	.update_connect_params = brcmf_cfg80211_update_conn_params,
 	.set_pmk = brcmf_cfg80211_set_pmk,
 	.del_pmk = brcmf_cfg80211_del_pmk,
-पूर्ण;
+};
 
-काष्ठा cfg80211_ops *brcmf_cfg80211_get_ops(काष्ठा brcmf_mp_device *settings)
-अणु
-	काष्ठा cfg80211_ops *ops;
+struct cfg80211_ops *brcmf_cfg80211_get_ops(struct brcmf_mp_device *settings)
+{
+	struct cfg80211_ops *ops;
 
-	ops = kmemdup(&brcmf_cfg80211_ops, माप(brcmf_cfg80211_ops),
+	ops = kmemdup(&brcmf_cfg80211_ops, sizeof(brcmf_cfg80211_ops),
 		       GFP_KERNEL);
 
-	अगर (ops && settings->roamoff)
-		ops->update_connect_params = शून्य;
+	if (ops && settings->roamoff)
+		ops->update_connect_params = NULL;
 
-	वापस ops;
-पूर्ण
+	return ops;
+}
 
-काष्ठा brcmf_cfg80211_vअगर *brcmf_alloc_vअगर(काष्ठा brcmf_cfg80211_info *cfg,
-					   क्रमागत nl80211_अगरtype type)
-अणु
-	काष्ठा brcmf_cfg80211_vअगर *vअगर_walk;
-	काष्ठा brcmf_cfg80211_vअगर *vअगर;
+struct brcmf_cfg80211_vif *brcmf_alloc_vif(struct brcmf_cfg80211_info *cfg,
+					   enum nl80211_iftype type)
+{
+	struct brcmf_cfg80211_vif *vif_walk;
+	struct brcmf_cfg80211_vif *vif;
 	bool mbss;
-	काष्ठा brcmf_अगर *अगरp = brcmf_get_अगरp(cfg->pub, 0);
+	struct brcmf_if *ifp = brcmf_get_ifp(cfg->pub, 0);
 
 	brcmf_dbg(TRACE, "allocating virtual interface (size=%zu)\n",
-		  माप(*vअगर));
-	vअगर = kzalloc(माप(*vअगर), GFP_KERNEL);
-	अगर (!vअगर)
-		वापस ERR_PTR(-ENOMEM);
+		  sizeof(*vif));
+	vif = kzalloc(sizeof(*vif), GFP_KERNEL);
+	if (!vif)
+		return ERR_PTR(-ENOMEM);
 
-	vअगर->wdev.wiphy = cfg->wiphy;
-	vअगर->wdev.अगरtype = type;
+	vif->wdev.wiphy = cfg->wiphy;
+	vif->wdev.iftype = type;
 
-	brcmf_init_prof(&vअगर->profile);
+	brcmf_init_prof(&vif->profile);
 
-	अगर (type == NL80211_IFTYPE_AP &&
-	    brcmf_feat_is_enabled(अगरp, BRCMF_FEAT_MBSS)) अणु
+	if (type == NL80211_IFTYPE_AP &&
+	    brcmf_feat_is_enabled(ifp, BRCMF_FEAT_MBSS)) {
 		mbss = false;
-		list_क्रम_each_entry(vअगर_walk, &cfg->vअगर_list, list) अणु
-			अगर (vअगर_walk->wdev.अगरtype == NL80211_IFTYPE_AP) अणु
+		list_for_each_entry(vif_walk, &cfg->vif_list, list) {
+			if (vif_walk->wdev.iftype == NL80211_IFTYPE_AP) {
 				mbss = true;
-				अवरोध;
-			पूर्ण
-		पूर्ण
-		vअगर->mbss = mbss;
-	पूर्ण
+				break;
+			}
+		}
+		vif->mbss = mbss;
+	}
 
-	list_add_tail(&vअगर->list, &cfg->vअगर_list);
-	वापस vअगर;
-पूर्ण
+	list_add_tail(&vif->list, &cfg->vif_list);
+	return vif;
+}
 
-व्योम brcmf_मुक्त_vअगर(काष्ठा brcmf_cfg80211_vअगर *vअगर)
-अणु
-	list_del(&vअगर->list);
-	kमुक्त(vअगर);
-पूर्ण
+void brcmf_free_vif(struct brcmf_cfg80211_vif *vif)
+{
+	list_del(&vif->list);
+	kfree(vif);
+}
 
-व्योम brcmf_cfg80211_मुक्त_netdev(काष्ठा net_device *ndev)
-अणु
-	काष्ठा brcmf_cfg80211_vअगर *vअगर;
-	काष्ठा brcmf_अगर *अगरp;
+void brcmf_cfg80211_free_netdev(struct net_device *ndev)
+{
+	struct brcmf_cfg80211_vif *vif;
+	struct brcmf_if *ifp;
 
-	अगरp = netdev_priv(ndev);
-	vअगर = अगरp->vअगर;
+	ifp = netdev_priv(ndev);
+	vif = ifp->vif;
 
-	अगर (vअगर)
-		brcmf_मुक्त_vअगर(vअगर);
-पूर्ण
+	if (vif)
+		brcmf_free_vif(vif);
+}
 
-अटल bool brcmf_is_linkup(काष्ठा brcmf_cfg80211_vअगर *vअगर,
-			    स्थिर काष्ठा brcmf_event_msg *e)
-अणु
+static bool brcmf_is_linkup(struct brcmf_cfg80211_vif *vif,
+			    const struct brcmf_event_msg *e)
+{
 	u32 event = e->event_code;
 	u32 status = e->status;
 
-	अगर ((vअगर->profile.use_fwsup == BRCMF_PROखाता_FWSUP_PSK ||
-	     vअगर->profile.use_fwsup == BRCMF_PROखाता_FWSUP_SAE) &&
+	if ((vif->profile.use_fwsup == BRCMF_PROFILE_FWSUP_PSK ||
+	     vif->profile.use_fwsup == BRCMF_PROFILE_FWSUP_SAE) &&
 	    event == BRCMF_E_PSK_SUP &&
 	    status == BRCMF_E_STATUS_FWSUP_COMPLETED)
-		set_bit(BRCMF_VIF_STATUS_EAP_SUCCESS, &vअगर->sme_state);
-	अगर (event == BRCMF_E_SET_SSID && status == BRCMF_E_STATUS_SUCCESS) अणु
+		set_bit(BRCMF_VIF_STATUS_EAP_SUCCESS, &vif->sme_state);
+	if (event == BRCMF_E_SET_SSID && status == BRCMF_E_STATUS_SUCCESS) {
 		brcmf_dbg(CONN, "Processing set ssid\n");
-		स_नकल(vअगर->profile.bssid, e->addr, ETH_ALEN);
-		अगर (vअगर->profile.use_fwsup != BRCMF_PROखाता_FWSUP_PSK &&
-		    vअगर->profile.use_fwsup != BRCMF_PROखाता_FWSUP_SAE)
-			वापस true;
+		memcpy(vif->profile.bssid, e->addr, ETH_ALEN);
+		if (vif->profile.use_fwsup != BRCMF_PROFILE_FWSUP_PSK &&
+		    vif->profile.use_fwsup != BRCMF_PROFILE_FWSUP_SAE)
+			return true;
 
-		set_bit(BRCMF_VIF_STATUS_ASSOC_SUCCESS, &vअगर->sme_state);
-	पूर्ण
+		set_bit(BRCMF_VIF_STATUS_ASSOC_SUCCESS, &vif->sme_state);
+	}
 
-	अगर (test_bit(BRCMF_VIF_STATUS_EAP_SUCCESS, &vअगर->sme_state) &&
-	    test_bit(BRCMF_VIF_STATUS_ASSOC_SUCCESS, &vअगर->sme_state)) अणु
-		clear_bit(BRCMF_VIF_STATUS_EAP_SUCCESS, &vअगर->sme_state);
-		clear_bit(BRCMF_VIF_STATUS_ASSOC_SUCCESS, &vअगर->sme_state);
-		वापस true;
-	पूर्ण
-	वापस false;
-पूर्ण
+	if (test_bit(BRCMF_VIF_STATUS_EAP_SUCCESS, &vif->sme_state) &&
+	    test_bit(BRCMF_VIF_STATUS_ASSOC_SUCCESS, &vif->sme_state)) {
+		clear_bit(BRCMF_VIF_STATUS_EAP_SUCCESS, &vif->sme_state);
+		clear_bit(BRCMF_VIF_STATUS_ASSOC_SUCCESS, &vif->sme_state);
+		return true;
+	}
+	return false;
+}
 
-अटल bool brcmf_is_linkकरोwn(काष्ठा brcmf_cfg80211_vअगर *vअगर,
-			    स्थिर काष्ठा brcmf_event_msg *e)
-अणु
+static bool brcmf_is_linkdown(struct brcmf_cfg80211_vif *vif,
+			    const struct brcmf_event_msg *e)
+{
 	u32 event = e->event_code;
 	u16 flags = e->flags;
 
-	अगर ((event == BRCMF_E_DEAUTH) || (event == BRCMF_E_DEAUTH_IND) ||
+	if ((event == BRCMF_E_DEAUTH) || (event == BRCMF_E_DEAUTH_IND) ||
 	    (event == BRCMF_E_DISASSOC_IND) ||
-	    ((event == BRCMF_E_LINK) && (!(flags & BRCMF_EVENT_MSG_LINK)))) अणु
+	    ((event == BRCMF_E_LINK) && (!(flags & BRCMF_EVENT_MSG_LINK)))) {
 		brcmf_dbg(CONN, "Processing link down\n");
-		clear_bit(BRCMF_VIF_STATUS_EAP_SUCCESS, &vअगर->sme_state);
-		clear_bit(BRCMF_VIF_STATUS_ASSOC_SUCCESS, &vअगर->sme_state);
-		वापस true;
-	पूर्ण
-	वापस false;
-पूर्ण
+		clear_bit(BRCMF_VIF_STATUS_EAP_SUCCESS, &vif->sme_state);
+		clear_bit(BRCMF_VIF_STATUS_ASSOC_SUCCESS, &vif->sme_state);
+		return true;
+	}
+	return false;
+}
 
-अटल bool brcmf_is_nonetwork(काष्ठा brcmf_cfg80211_info *cfg,
-			       स्थिर काष्ठा brcmf_event_msg *e)
-अणु
+static bool brcmf_is_nonetwork(struct brcmf_cfg80211_info *cfg,
+			       const struct brcmf_event_msg *e)
+{
 	u32 event = e->event_code;
 	u32 status = e->status;
 
-	अगर (event == BRCMF_E_LINK && status == BRCMF_E_STATUS_NO_NETWORKS) अणु
+	if (event == BRCMF_E_LINK && status == BRCMF_E_STATUS_NO_NETWORKS) {
 		brcmf_dbg(CONN, "Processing Link %s & no network found\n",
 			  e->flags & BRCMF_EVENT_MSG_LINK ? "up" : "down");
-		वापस true;
-	पूर्ण
+		return true;
+	}
 
-	अगर (event == BRCMF_E_SET_SSID && status != BRCMF_E_STATUS_SUCCESS) अणु
+	if (event == BRCMF_E_SET_SSID && status != BRCMF_E_STATUS_SUCCESS) {
 		brcmf_dbg(CONN, "Processing connecting & no network found\n");
-		वापस true;
-	पूर्ण
+		return true;
+	}
 
-	अगर (event == BRCMF_E_PSK_SUP &&
-	    status != BRCMF_E_STATUS_FWSUP_COMPLETED) अणु
+	if (event == BRCMF_E_PSK_SUP &&
+	    status != BRCMF_E_STATUS_FWSUP_COMPLETED) {
 		brcmf_dbg(CONN, "Processing failed supplicant state: %u\n",
 			  status);
-		वापस true;
-	पूर्ण
+		return true;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल व्योम brcmf_clear_assoc_ies(काष्ठा brcmf_cfg80211_info *cfg)
-अणु
-	काष्ठा brcmf_cfg80211_connect_info *conn_info = cfg_to_conn(cfg);
+static void brcmf_clear_assoc_ies(struct brcmf_cfg80211_info *cfg)
+{
+	struct brcmf_cfg80211_connect_info *conn_info = cfg_to_conn(cfg);
 
-	kमुक्त(conn_info->req_ie);
-	conn_info->req_ie = शून्य;
+	kfree(conn_info->req_ie);
+	conn_info->req_ie = NULL;
 	conn_info->req_ie_len = 0;
-	kमुक्त(conn_info->resp_ie);
-	conn_info->resp_ie = शून्य;
+	kfree(conn_info->resp_ie);
+	conn_info->resp_ie = NULL;
 	conn_info->resp_ie_len = 0;
-पूर्ण
+}
 
-u8 brcmf_map_prio_to_prec(व्योम *config, u8 prio)
-अणु
-	काष्ठा brcmf_cfg80211_info *cfg = (काष्ठा brcmf_cfg80211_info *)config;
+u8 brcmf_map_prio_to_prec(void *config, u8 prio)
+{
+	struct brcmf_cfg80211_info *cfg = (struct brcmf_cfg80211_info *)config;
 
-	अगर (!cfg)
-		वापस (prio == PRIO_8021D_NONE || prio == PRIO_8021D_BE) ?
+	if (!cfg)
+		return (prio == PRIO_8021D_NONE || prio == PRIO_8021D_BE) ?
 		       (prio ^ 2) : prio;
 
 	/* For those AC(s) with ACM flag set to 1, convert its 4-level priority
 	 * to an 8-level precedence which is the same as BE's
 	 */
-	अगर (prio > PRIO_8021D_EE &&
+	if (prio > PRIO_8021D_EE &&
 	    cfg->ac_priority[prio] == cfg->ac_priority[PRIO_8021D_BE])
-		वापस cfg->ac_priority[prio] * 2;
+		return cfg->ac_priority[prio] * 2;
 
 	/* Conversion of 4-level priority to 8-level precedence */
-	अगर (prio == PRIO_8021D_BE || prio == PRIO_8021D_BK ||
+	if (prio == PRIO_8021D_BE || prio == PRIO_8021D_BK ||
 	    prio == PRIO_8021D_CL || prio == PRIO_8021D_VO)
-		वापस cfg->ac_priority[prio] * 2;
-	अन्यथा
-		वापस cfg->ac_priority[prio] * 2 + 1;
-पूर्ण
+		return cfg->ac_priority[prio] * 2;
+	else
+		return cfg->ac_priority[prio] * 2 + 1;
+}
 
-u8 brcmf_map_prio_to_aci(व्योम *config, u8 prio)
-अणु
+u8 brcmf_map_prio_to_aci(void *config, u8 prio)
+{
 	/* Prio here refers to the 802.1d priority in range of 0 to 7.
 	 * ACI here refers to the WLAN AC Index in range of 0 to 3.
-	 * This function will वापस ACI corresponding to input prio.
+	 * This function will return ACI corresponding to input prio.
 	 */
-	काष्ठा brcmf_cfg80211_info *cfg = (काष्ठा brcmf_cfg80211_info *)config;
+	struct brcmf_cfg80211_info *cfg = (struct brcmf_cfg80211_info *)config;
 
-	अगर (cfg)
-		वापस cfg->ac_priority[prio];
+	if (cfg)
+		return cfg->ac_priority[prio];
 
-	वापस prio;
-पूर्ण
+	return prio;
+}
 
-अटल व्योम brcmf_init_wmm_prio(u8 *priority)
-अणु
-	/* Initialize AC priority array to शेष
+static void brcmf_init_wmm_prio(u8 *priority)
+{
+	/* Initialize AC priority array to default
 	 * 802.1d priority as per following table:
 	 * 802.1d prio 0,3 maps to BE
 	 * 802.1d prio 1,2 maps to BK
@@ -5765,13 +5764,13 @@ u8 brcmf_map_prio_to_aci(व्योम *config, u8 prio)
 	priority[5] = BRCMF_FWS_FIFO_AC_VI;
 	priority[6] = BRCMF_FWS_FIFO_AC_VO;
 	priority[7] = BRCMF_FWS_FIFO_AC_VO;
-पूर्ण
+}
 
-अटल व्योम brcmf_wअगरi_prioritize_acparams(स्थिर
-	काष्ठा brcmf_cfg80211_edcf_acparam *acp, u8 *priority)
-अणु
+static void brcmf_wifi_prioritize_acparams(const
+	struct brcmf_cfg80211_edcf_acparam *acp, u8 *priority)
+{
 	u8 aci;
-	u8 aअगरsn;
+	u8 aifsn;
 	u8 ecwmin;
 	u8 ecwmax;
 	u8 acm;
@@ -5779,49 +5778,49 @@ u8 brcmf_map_prio_to_aci(व्योम *config, u8 prio)
 	u8 aci_prio[EDCF_AC_COUNT]; /* AC_BE, AC_BK, AC_VI, AC_VO */
 	u8 index;
 
-	क्रम (aci = 0; aci < EDCF_AC_COUNT; aci++, acp++) अणु
-		aअगरsn  = acp->ACI & EDCF_AIFSN_MASK;
+	for (aci = 0; aci < EDCF_AC_COUNT; aci++, acp++) {
+		aifsn  = acp->ACI & EDCF_AIFSN_MASK;
 		acm = (acp->ACI & EDCF_ACM_MASK) ? 1 : 0;
 		ecwmin = acp->ECW & EDCF_ECWMIN_MASK;
 		ecwmax = (acp->ECW & EDCF_ECWMAX_MASK) >> EDCF_ECWMAX_SHIFT;
 		brcmf_dbg(CONN, "ACI %d aifsn %d acm %d ecwmin %d ecwmax %d\n",
-			  aci, aअगरsn, acm, ecwmin, ecwmax);
+			  aci, aifsn, acm, ecwmin, ecwmax);
 		/* Default AC_VO will be the lowest ranking value */
-		ranking_basis[aci] = aअगरsn + ecwmin + ecwmax;
+		ranking_basis[aci] = aifsn + ecwmin + ecwmax;
 		/* Initialise priority starting at 0 (AC_BE) */
 		aci_prio[aci] = 0;
 
 		/* If ACM is set, STA can't use this AC as per 802.11.
 		 * Change the ranking to BE
 		 */
-		अगर (aci != AC_BE && aci != AC_BK && acm == 1)
+		if (aci != AC_BE && aci != AC_BK && acm == 1)
 			ranking_basis[aci] = ranking_basis[AC_BE];
-	पूर्ण
+	}
 
-	/* Ranking method which works क्रम AC priority
-	 * swapping when values क्रम cwmin, cwmax and aअगरsn are varied
+	/* Ranking method which works for AC priority
+	 * swapping when values for cwmin, cwmax and aifsn are varied
 	 * Compare each aci_prio against each other aci_prio
 	 */
-	क्रम (aci = 0; aci < EDCF_AC_COUNT; aci++) अणु
-		क्रम (index = 0; index < EDCF_AC_COUNT; index++) अणु
-			अगर (index != aci) अणु
+	for (aci = 0; aci < EDCF_AC_COUNT; aci++) {
+		for (index = 0; index < EDCF_AC_COUNT; index++) {
+			if (index != aci) {
 				/* Smaller ranking value has higher priority,
-				 * so increment priority क्रम each ACI which has
+				 * so increment priority for each ACI which has
 				 * a higher ranking value
 				 */
-				अगर (ranking_basis[aci] < ranking_basis[index])
+				if (ranking_basis[aci] < ranking_basis[index])
 					aci_prio[aci]++;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
 	/* By now, aci_prio[] will be in range of 0 to 3.
-	 * Use ACI prio to get the new priority value क्रम
+	 * Use ACI prio to get the new priority value for
 	 * each 802.1d traffic type, in this range.
 	 */
-	अगर (!(aci_prio[AC_BE] == aci_prio[AC_BK] &&
+	if (!(aci_prio[AC_BE] == aci_prio[AC_BK] &&
 	      aci_prio[AC_BK] == aci_prio[AC_VI] &&
-	      aci_prio[AC_VI] == aci_prio[AC_VO])) अणु
+	      aci_prio[AC_VI] == aci_prio[AC_VO])) {
 		/* 802.1d 0,3 maps to BE */
 		priority[0] = aci_prio[AC_BE];
 		priority[3] = aci_prio[AC_BE];
@@ -5837,148 +5836,148 @@ u8 brcmf_map_prio_to_aci(व्योम *config, u8 prio)
 		/* 802.1d 6,7 maps to VO */
 		priority[6] = aci_prio[AC_VO];
 		priority[7] = aci_prio[AC_VO];
-	पूर्ण अन्यथा अणु
-		/* Initialize to शेष priority */
+	} else {
+		/* Initialize to default priority */
 		brcmf_init_wmm_prio(priority);
-	पूर्ण
+	}
 
 	brcmf_dbg(CONN, "Adj prio BE 0->%d, BK 1->%d, BK 2->%d, BE 3->%d\n",
 		  priority[0], priority[1], priority[2], priority[3]);
 
 	brcmf_dbg(CONN, "Adj prio VI 4->%d, VI 5->%d, VO 6->%d, VO 7->%d\n",
 		  priority[4], priority[5], priority[6], priority[7]);
-पूर्ण
+}
 
-अटल s32 brcmf_get_assoc_ies(काष्ठा brcmf_cfg80211_info *cfg,
-			       काष्ठा brcmf_अगर *अगरp)
-अणु
-	काष्ठा brcmf_pub *drvr = cfg->pub;
-	काष्ठा brcmf_cfg80211_assoc_ielen_le *assoc_info;
-	काष्ठा brcmf_cfg80211_connect_info *conn_info = cfg_to_conn(cfg);
-	काष्ठा brcmf_cfg80211_edcf_acparam edcf_acparam_info[EDCF_AC_COUNT];
+static s32 brcmf_get_assoc_ies(struct brcmf_cfg80211_info *cfg,
+			       struct brcmf_if *ifp)
+{
+	struct brcmf_pub *drvr = cfg->pub;
+	struct brcmf_cfg80211_assoc_ielen_le *assoc_info;
+	struct brcmf_cfg80211_connect_info *conn_info = cfg_to_conn(cfg);
+	struct brcmf_cfg80211_edcf_acparam edcf_acparam_info[EDCF_AC_COUNT];
 	u32 req_len;
 	u32 resp_len;
 	s32 err = 0;
 
 	brcmf_clear_assoc_ies(cfg);
 
-	err = brcmf_fil_iovar_data_get(अगरp, "assoc_info",
+	err = brcmf_fil_iovar_data_get(ifp, "assoc_info",
 				       cfg->extra_buf, WL_ASSOC_INFO_MAX);
-	अगर (err) अणु
+	if (err) {
 		bphy_err(drvr, "could not get assoc info (%d)\n", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 	assoc_info =
-		(काष्ठा brcmf_cfg80211_assoc_ielen_le *)cfg->extra_buf;
+		(struct brcmf_cfg80211_assoc_ielen_le *)cfg->extra_buf;
 	req_len = le32_to_cpu(assoc_info->req_len);
 	resp_len = le32_to_cpu(assoc_info->resp_len);
-	अगर (req_len) अणु
-		err = brcmf_fil_iovar_data_get(अगरp, "assoc_req_ies",
+	if (req_len) {
+		err = brcmf_fil_iovar_data_get(ifp, "assoc_req_ies",
 					       cfg->extra_buf,
 					       WL_ASSOC_INFO_MAX);
-		अगर (err) अणु
+		if (err) {
 			bphy_err(drvr, "could not get assoc req (%d)\n", err);
-			वापस err;
-		पूर्ण
+			return err;
+		}
 		conn_info->req_ie_len = req_len;
 		conn_info->req_ie =
 		    kmemdup(cfg->extra_buf, conn_info->req_ie_len,
 			    GFP_KERNEL);
-		अगर (!conn_info->req_ie)
+		if (!conn_info->req_ie)
 			conn_info->req_ie_len = 0;
-	पूर्ण अन्यथा अणु
+	} else {
 		conn_info->req_ie_len = 0;
-		conn_info->req_ie = शून्य;
-	पूर्ण
-	अगर (resp_len) अणु
-		err = brcmf_fil_iovar_data_get(अगरp, "assoc_resp_ies",
+		conn_info->req_ie = NULL;
+	}
+	if (resp_len) {
+		err = brcmf_fil_iovar_data_get(ifp, "assoc_resp_ies",
 					       cfg->extra_buf,
 					       WL_ASSOC_INFO_MAX);
-		अगर (err) अणु
+		if (err) {
 			bphy_err(drvr, "could not get assoc resp (%d)\n", err);
-			वापस err;
-		पूर्ण
+			return err;
+		}
 		conn_info->resp_ie_len = resp_len;
 		conn_info->resp_ie =
 		    kmemdup(cfg->extra_buf, conn_info->resp_ie_len,
 			    GFP_KERNEL);
-		अगर (!conn_info->resp_ie)
+		if (!conn_info->resp_ie)
 			conn_info->resp_ie_len = 0;
 
-		err = brcmf_fil_iovar_data_get(अगरp, "wme_ac_sta",
+		err = brcmf_fil_iovar_data_get(ifp, "wme_ac_sta",
 					       edcf_acparam_info,
-					       माप(edcf_acparam_info));
-		अगर (err) अणु
+					       sizeof(edcf_acparam_info));
+		if (err) {
 			brcmf_err("could not get wme_ac_sta (%d)\n", err);
-			वापस err;
-		पूर्ण
+			return err;
+		}
 
-		brcmf_wअगरi_prioritize_acparams(edcf_acparam_info,
+		brcmf_wifi_prioritize_acparams(edcf_acparam_info,
 					       cfg->ac_priority);
-	पूर्ण अन्यथा अणु
+	} else {
 		conn_info->resp_ie_len = 0;
-		conn_info->resp_ie = शून्य;
-	पूर्ण
+		conn_info->resp_ie = NULL;
+	}
 	brcmf_dbg(CONN, "req len (%d) resp len (%d)\n",
 		  conn_info->req_ie_len, conn_info->resp_ie_len);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल s32
-brcmf_bss_roaming_करोne(काष्ठा brcmf_cfg80211_info *cfg,
-		       काष्ठा net_device *ndev,
-		       स्थिर काष्ठा brcmf_event_msg *e)
-अणु
-	काष्ठा brcmf_अगर *अगरp = netdev_priv(ndev);
-	काष्ठा brcmf_cfg80211_profile *profile = &अगरp->vअगर->profile;
-	काष्ठा brcmf_cfg80211_connect_info *conn_info = cfg_to_conn(cfg);
-	काष्ठा wiphy *wiphy = cfg_to_wiphy(cfg);
-	काष्ठा ieee80211_channel *notअगरy_channel = शून्य;
-	काष्ठा ieee80211_supported_band *band;
-	काष्ठा brcmf_bss_info_le *bi;
-	काष्ठा brcmu_chan ch;
-	काष्ठा cfg80211_roam_info roam_info = अणुपूर्ण;
+static s32
+brcmf_bss_roaming_done(struct brcmf_cfg80211_info *cfg,
+		       struct net_device *ndev,
+		       const struct brcmf_event_msg *e)
+{
+	struct brcmf_if *ifp = netdev_priv(ndev);
+	struct brcmf_cfg80211_profile *profile = &ifp->vif->profile;
+	struct brcmf_cfg80211_connect_info *conn_info = cfg_to_conn(cfg);
+	struct wiphy *wiphy = cfg_to_wiphy(cfg);
+	struct ieee80211_channel *notify_channel = NULL;
+	struct ieee80211_supported_band *band;
+	struct brcmf_bss_info_le *bi;
+	struct brcmu_chan ch;
+	struct cfg80211_roam_info roam_info = {};
 	u32 freq;
 	s32 err = 0;
 	u8 *buf;
 
 	brcmf_dbg(TRACE, "Enter\n");
 
-	brcmf_get_assoc_ies(cfg, अगरp);
-	स_नकल(profile->bssid, e->addr, ETH_ALEN);
-	brcmf_update_bss_info(cfg, अगरp);
+	brcmf_get_assoc_ies(cfg, ifp);
+	memcpy(profile->bssid, e->addr, ETH_ALEN);
+	brcmf_update_bss_info(cfg, ifp);
 
 	buf = kzalloc(WL_BSS_INFO_MAX, GFP_KERNEL);
-	अगर (buf == शून्य) अणु
+	if (buf == NULL) {
 		err = -ENOMEM;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	/* data sent to करोngle has to be little endian */
+	/* data sent to dongle has to be little endian */
 	*(__le32 *)buf = cpu_to_le32(WL_BSS_INFO_MAX);
-	err = brcmf_fil_cmd_data_get(अगरp, BRCMF_C_GET_BSS_INFO,
+	err = brcmf_fil_cmd_data_get(ifp, BRCMF_C_GET_BSS_INFO,
 				     buf, WL_BSS_INFO_MAX);
 
-	अगर (err)
-		जाओ करोne;
+	if (err)
+		goto done;
 
-	bi = (काष्ठा brcmf_bss_info_le *)(buf + 4);
+	bi = (struct brcmf_bss_info_le *)(buf + 4);
 	ch.chspec = le16_to_cpu(bi->chanspec);
 	cfg->d11inf.decchspec(&ch);
 
-	अगर (ch.band == BRCMU_CHAN_BAND_2G)
+	if (ch.band == BRCMU_CHAN_BAND_2G)
 		band = wiphy->bands[NL80211_BAND_2GHZ];
-	अन्यथा
+	else
 		band = wiphy->bands[NL80211_BAND_5GHZ];
 
 	freq = ieee80211_channel_to_frequency(ch.control_ch_num, band->band);
-	notअगरy_channel = ieee80211_get_channel(wiphy, freq);
+	notify_channel = ieee80211_get_channel(wiphy, freq);
 
-करोne:
-	kमुक्त(buf);
+done:
+	kfree(buf);
 
-	roam_info.channel = notअगरy_channel;
+	roam_info.channel = notify_channel;
 	roam_info.bssid = profile->bssid;
 	roam_info.req_ie = conn_info->req_ie;
 	roam_info.req_ie_len = conn_info->req_ie_len;
@@ -5988,83 +5987,83 @@ brcmf_bss_roaming_करोne(काष्ठा brcmf_cfg80211_info *cfg,
 	cfg80211_roamed(ndev, &roam_info, GFP_KERNEL);
 	brcmf_dbg(CONN, "Report roaming result\n");
 
-	अगर (profile->use_fwsup == BRCMF_PROखाता_FWSUP_1X && profile->is_ft) अणु
+	if (profile->use_fwsup == BRCMF_PROFILE_FWSUP_1X && profile->is_ft) {
 		cfg80211_port_authorized(ndev, profile->bssid, GFP_KERNEL);
 		brcmf_dbg(CONN, "Report port authorized\n");
-	पूर्ण
+	}
 
-	set_bit(BRCMF_VIF_STATUS_CONNECTED, &अगरp->vअगर->sme_state);
+	set_bit(BRCMF_VIF_STATUS_CONNECTED, &ifp->vif->sme_state);
 	brcmf_dbg(TRACE, "Exit\n");
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल s32
-brcmf_bss_connect_करोne(काष्ठा brcmf_cfg80211_info *cfg,
-		       काष्ठा net_device *ndev, स्थिर काष्ठा brcmf_event_msg *e,
+static s32
+brcmf_bss_connect_done(struct brcmf_cfg80211_info *cfg,
+		       struct net_device *ndev, const struct brcmf_event_msg *e,
 		       bool completed)
-अणु
-	काष्ठा brcmf_अगर *अगरp = netdev_priv(ndev);
-	काष्ठा brcmf_cfg80211_profile *profile = &अगरp->vअगर->profile;
-	काष्ठा brcmf_cfg80211_connect_info *conn_info = cfg_to_conn(cfg);
-	काष्ठा cfg80211_connect_resp_params conn_params;
+{
+	struct brcmf_if *ifp = netdev_priv(ndev);
+	struct brcmf_cfg80211_profile *profile = &ifp->vif->profile;
+	struct brcmf_cfg80211_connect_info *conn_info = cfg_to_conn(cfg);
+	struct cfg80211_connect_resp_params conn_params;
 
 	brcmf_dbg(TRACE, "Enter\n");
 
-	अगर (test_and_clear_bit(BRCMF_VIF_STATUS_CONNECTING,
-			       &अगरp->vअगर->sme_state)) अणु
-		स_रखो(&conn_params, 0, माप(conn_params));
-		अगर (completed) अणु
-			brcmf_get_assoc_ies(cfg, अगरp);
-			brcmf_update_bss_info(cfg, अगरp);
+	if (test_and_clear_bit(BRCMF_VIF_STATUS_CONNECTING,
+			       &ifp->vif->sme_state)) {
+		memset(&conn_params, 0, sizeof(conn_params));
+		if (completed) {
+			brcmf_get_assoc_ies(cfg, ifp);
+			brcmf_update_bss_info(cfg, ifp);
 			set_bit(BRCMF_VIF_STATUS_CONNECTED,
-				&अगरp->vअगर->sme_state);
+				&ifp->vif->sme_state);
 			conn_params.status = WLAN_STATUS_SUCCESS;
-		पूर्ण अन्यथा अणु
+		} else {
 			conn_params.status = WLAN_STATUS_AUTH_TIMEOUT;
-		पूर्ण
+		}
 		conn_params.bssid = profile->bssid;
 		conn_params.req_ie = conn_info->req_ie;
 		conn_params.req_ie_len = conn_info->req_ie_len;
 		conn_params.resp_ie = conn_info->resp_ie;
 		conn_params.resp_ie_len = conn_info->resp_ie_len;
-		cfg80211_connect_करोne(ndev, &conn_params, GFP_KERNEL);
+		cfg80211_connect_done(ndev, &conn_params, GFP_KERNEL);
 		brcmf_dbg(CONN, "Report connect result - connection %s\n",
 			  completed ? "succeeded" : "failed");
-	पूर्ण
+	}
 	brcmf_dbg(TRACE, "Exit\n");
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल s32
-brcmf_notअगरy_connect_status_ap(काष्ठा brcmf_cfg80211_info *cfg,
-			       काष्ठा net_device *ndev,
-			       स्थिर काष्ठा brcmf_event_msg *e, व्योम *data)
-अणु
-	काष्ठा brcmf_pub *drvr = cfg->pub;
-	अटल पूर्णांक generation;
+static s32
+brcmf_notify_connect_status_ap(struct brcmf_cfg80211_info *cfg,
+			       struct net_device *ndev,
+			       const struct brcmf_event_msg *e, void *data)
+{
+	struct brcmf_pub *drvr = cfg->pub;
+	static int generation;
 	u32 event = e->event_code;
 	u32 reason = e->reason;
-	काष्ठा station_info *sinfo;
+	struct station_info *sinfo;
 
 	brcmf_dbg(CONN, "event %s (%u), reason %d\n",
 		  brcmf_fweh_event_name(event), event, reason);
-	अगर (event == BRCMF_E_LINK && reason == BRCMF_E_REASON_LINK_BSSCFG_DIS &&
-	    ndev != cfg_to_ndev(cfg)) अणु
+	if (event == BRCMF_E_LINK && reason == BRCMF_E_REASON_LINK_BSSCFG_DIS &&
+	    ndev != cfg_to_ndev(cfg)) {
 		brcmf_dbg(CONN, "AP mode link down\n");
-		complete(&cfg->vअगर_disabled);
-		वापस 0;
-	पूर्ण
+		complete(&cfg->vif_disabled);
+		return 0;
+	}
 
-	अगर (((event == BRCMF_E_ASSOC_IND) || (event == BRCMF_E_REASSOC_IND)) &&
-	    (reason == BRCMF_E_STATUS_SUCCESS)) अणु
-		अगर (!data) अणु
+	if (((event == BRCMF_E_ASSOC_IND) || (event == BRCMF_E_REASSOC_IND)) &&
+	    (reason == BRCMF_E_STATUS_SUCCESS)) {
+		if (!data) {
 			bphy_err(drvr, "No IEs present in ASSOC/REASSOC_IND\n");
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
-		sinfo = kzalloc(माप(*sinfo), GFP_KERNEL);
-		अगर (!sinfo)
-			वापस -ENOMEM;
+		sinfo = kzalloc(sizeof(*sinfo), GFP_KERNEL);
+		if (!sinfo)
+			return -ENOMEM;
 
 		sinfo->assoc_req_ies = data;
 		sinfo->assoc_req_ies_len = e->datalen;
@@ -6072,447 +6071,447 @@ brcmf_notअगरy_connect_status_ap(काष्ठा brcmf_cfg80211_info *cf
 		sinfo->generation = generation;
 		cfg80211_new_sta(ndev, e->addr, sinfo, GFP_KERNEL);
 
-		kमुक्त(sinfo);
-	पूर्ण अन्यथा अगर ((event == BRCMF_E_DISASSOC_IND) ||
+		kfree(sinfo);
+	} else if ((event == BRCMF_E_DISASSOC_IND) ||
 		   (event == BRCMF_E_DEAUTH_IND) ||
-		   (event == BRCMF_E_DEAUTH)) अणु
+		   (event == BRCMF_E_DEAUTH)) {
 		cfg80211_del_sta(ndev, e->addr, GFP_KERNEL);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल s32
-brcmf_notअगरy_connect_status(काष्ठा brcmf_अगर *अगरp,
-			    स्थिर काष्ठा brcmf_event_msg *e, व्योम *data)
-अणु
-	काष्ठा brcmf_cfg80211_info *cfg = अगरp->drvr->config;
-	काष्ठा net_device *ndev = अगरp->ndev;
-	काष्ठा brcmf_cfg80211_profile *profile = &अगरp->vअगर->profile;
-	काष्ठा ieee80211_channel *chan;
+static s32
+brcmf_notify_connect_status(struct brcmf_if *ifp,
+			    const struct brcmf_event_msg *e, void *data)
+{
+	struct brcmf_cfg80211_info *cfg = ifp->drvr->config;
+	struct net_device *ndev = ifp->ndev;
+	struct brcmf_cfg80211_profile *profile = &ifp->vif->profile;
+	struct ieee80211_channel *chan;
 	s32 err = 0;
 
-	अगर ((e->event_code == BRCMF_E_DEAUTH) ||
+	if ((e->event_code == BRCMF_E_DEAUTH) ||
 	    (e->event_code == BRCMF_E_DEAUTH_IND) ||
 	    (e->event_code == BRCMF_E_DISASSOC_IND) ||
-	    ((e->event_code == BRCMF_E_LINK) && (!e->flags))) अणु
-		brcmf_proto_delete_peer(अगरp->drvr, अगरp->अगरidx, (u8 *)e->addr);
-	पूर्ण
+	    ((e->event_code == BRCMF_E_LINK) && (!e->flags))) {
+		brcmf_proto_delete_peer(ifp->drvr, ifp->ifidx, (u8 *)e->addr);
+	}
 
-	अगर (brcmf_is_apmode(अगरp->vअगर)) अणु
-		err = brcmf_notअगरy_connect_status_ap(cfg, ndev, e, data);
-	पूर्ण अन्यथा अगर (brcmf_is_linkup(अगरp->vअगर, e)) अणु
+	if (brcmf_is_apmode(ifp->vif)) {
+		err = brcmf_notify_connect_status_ap(cfg, ndev, e, data);
+	} else if (brcmf_is_linkup(ifp->vif, e)) {
 		brcmf_dbg(CONN, "Linkup\n");
-		अगर (brcmf_is_ibssmode(अगरp->vअगर)) अणु
-			brcmf_inक्रमm_ibss(cfg, ndev, e->addr);
+		if (brcmf_is_ibssmode(ifp->vif)) {
+			brcmf_inform_ibss(cfg, ndev, e->addr);
 			chan = ieee80211_get_channel(cfg->wiphy, cfg->channel);
-			स_नकल(profile->bssid, e->addr, ETH_ALEN);
+			memcpy(profile->bssid, e->addr, ETH_ALEN);
 			cfg80211_ibss_joined(ndev, e->addr, chan, GFP_KERNEL);
 			clear_bit(BRCMF_VIF_STATUS_CONNECTING,
-				  &अगरp->vअगर->sme_state);
+				  &ifp->vif->sme_state);
 			set_bit(BRCMF_VIF_STATUS_CONNECTED,
-				&अगरp->vअगर->sme_state);
-		पूर्ण अन्यथा
-			brcmf_bss_connect_करोne(cfg, ndev, e, true);
-		brcmf_net_setcarrier(अगरp, true);
-	पूर्ण अन्यथा अगर (brcmf_is_linkकरोwn(अगरp->vअगर, e)) अणु
+				&ifp->vif->sme_state);
+		} else
+			brcmf_bss_connect_done(cfg, ndev, e, true);
+		brcmf_net_setcarrier(ifp, true);
+	} else if (brcmf_is_linkdown(ifp->vif, e)) {
 		brcmf_dbg(CONN, "Linkdown\n");
-		अगर (!brcmf_is_ibssmode(अगरp->vअगर) &&
+		if (!brcmf_is_ibssmode(ifp->vif) &&
 		    test_bit(BRCMF_VIF_STATUS_CONNECTED,
-			     &अगरp->vअगर->sme_state)) अणु
-			अगर (स_भेद(profile->bssid, e->addr, ETH_ALEN))
-				वापस err;
+			     &ifp->vif->sme_state)) {
+			if (memcmp(profile->bssid, e->addr, ETH_ALEN))
+				return err;
 
-			brcmf_bss_connect_करोne(cfg, ndev, e, false);
-			brcmf_link_करोwn(अगरp->vअगर,
-					brcmf_map_fw_linkकरोwn_reason(e),
+			brcmf_bss_connect_done(cfg, ndev, e, false);
+			brcmf_link_down(ifp->vif,
+					brcmf_map_fw_linkdown_reason(e),
 					e->event_code &
 					(BRCMF_E_DEAUTH_IND |
 					BRCMF_E_DISASSOC_IND)
 					? false : true);
 			brcmf_init_prof(ndev_to_prof(ndev));
-			अगर (ndev != cfg_to_ndev(cfg))
-				complete(&cfg->vअगर_disabled);
-			brcmf_net_setcarrier(अगरp, false);
-		पूर्ण
-	पूर्ण अन्यथा अगर (brcmf_is_nonetwork(cfg, e)) अणु
-		अगर (brcmf_is_ibssmode(अगरp->vअगर))
+			if (ndev != cfg_to_ndev(cfg))
+				complete(&cfg->vif_disabled);
+			brcmf_net_setcarrier(ifp, false);
+		}
+	} else if (brcmf_is_nonetwork(cfg, e)) {
+		if (brcmf_is_ibssmode(ifp->vif))
 			clear_bit(BRCMF_VIF_STATUS_CONNECTING,
-				  &अगरp->vअगर->sme_state);
-		अन्यथा
-			brcmf_bss_connect_करोne(cfg, ndev, e, false);
-	पूर्ण
+				  &ifp->vif->sme_state);
+		else
+			brcmf_bss_connect_done(cfg, ndev, e, false);
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल s32
-brcmf_notअगरy_roaming_status(काष्ठा brcmf_अगर *अगरp,
-			    स्थिर काष्ठा brcmf_event_msg *e, व्योम *data)
-अणु
-	काष्ठा brcmf_cfg80211_info *cfg = अगरp->drvr->config;
+static s32
+brcmf_notify_roaming_status(struct brcmf_if *ifp,
+			    const struct brcmf_event_msg *e, void *data)
+{
+	struct brcmf_cfg80211_info *cfg = ifp->drvr->config;
 	u32 event = e->event_code;
 	u32 status = e->status;
 
-	अगर (event == BRCMF_E_ROAM && status == BRCMF_E_STATUS_SUCCESS) अणु
-		अगर (test_bit(BRCMF_VIF_STATUS_CONNECTED,
-			     &अगरp->vअगर->sme_state)) अणु
-			brcmf_bss_roaming_करोne(cfg, अगरp->ndev, e);
-		पूर्ण अन्यथा अणु
-			brcmf_bss_connect_करोne(cfg, अगरp->ndev, e, true);
-			brcmf_net_setcarrier(अगरp, true);
-		पूर्ण
-	पूर्ण
+	if (event == BRCMF_E_ROAM && status == BRCMF_E_STATUS_SUCCESS) {
+		if (test_bit(BRCMF_VIF_STATUS_CONNECTED,
+			     &ifp->vif->sme_state)) {
+			brcmf_bss_roaming_done(cfg, ifp->ndev, e);
+		} else {
+			brcmf_bss_connect_done(cfg, ifp->ndev, e, true);
+			brcmf_net_setcarrier(ifp, true);
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल s32
-brcmf_notअगरy_mic_status(काष्ठा brcmf_अगर *अगरp,
-			स्थिर काष्ठा brcmf_event_msg *e, व्योम *data)
-अणु
+static s32
+brcmf_notify_mic_status(struct brcmf_if *ifp,
+			const struct brcmf_event_msg *e, void *data)
+{
 	u16 flags = e->flags;
-	क्रमागत nl80211_key_type key_type;
+	enum nl80211_key_type key_type;
 
-	अगर (flags & BRCMF_EVENT_MSG_GROUP)
+	if (flags & BRCMF_EVENT_MSG_GROUP)
 		key_type = NL80211_KEYTYPE_GROUP;
-	अन्यथा
+	else
 		key_type = NL80211_KEYTYPE_PAIRWISE;
 
-	cfg80211_michael_mic_failure(अगरp->ndev, (u8 *)&e->addr, key_type, -1,
-				     शून्य, GFP_KERNEL);
+	cfg80211_michael_mic_failure(ifp->ndev, (u8 *)&e->addr, key_type, -1,
+				     NULL, GFP_KERNEL);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल s32 brcmf_notअगरy_rssi(काष्ठा brcmf_अगर *अगरp,
-			     स्थिर काष्ठा brcmf_event_msg *e, व्योम *data)
-अणु
-	काष्ठा brcmf_cfg80211_vअगर *vअगर = अगरp->vअगर;
-	काष्ठा brcmf_rssi_be *info = data;
+static s32 brcmf_notify_rssi(struct brcmf_if *ifp,
+			     const struct brcmf_event_msg *e, void *data)
+{
+	struct brcmf_cfg80211_vif *vif = ifp->vif;
+	struct brcmf_rssi_be *info = data;
 	s32 rssi, snr, noise;
 	s32 low, high, last;
 
-	अगर (e->datalen < माप(*info)) अणु
+	if (e->datalen < sizeof(*info)) {
 		brcmf_err("insufficient RSSI event data\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	rssi = be32_to_cpu(info->rssi);
 	snr = be32_to_cpu(info->snr);
 	noise = be32_to_cpu(info->noise);
 
-	low = vअगर->cqm_rssi_low;
-	high = vअगर->cqm_rssi_high;
-	last = vअगर->cqm_rssi_last;
+	low = vif->cqm_rssi_low;
+	high = vif->cqm_rssi_high;
+	last = vif->cqm_rssi_last;
 
 	brcmf_dbg(TRACE, "rssi=%d snr=%d noise=%d low=%d high=%d last=%d\n",
 		  rssi, snr, noise, low, high, last);
 
-	vअगर->cqm_rssi_last = rssi;
+	vif->cqm_rssi_last = rssi;
 
-	अगर (rssi <= low || rssi == 0) अणु
+	if (rssi <= low || rssi == 0) {
 		brcmf_dbg(INFO, "LOW rssi=%d\n", rssi);
-		cfg80211_cqm_rssi_notअगरy(अगरp->ndev,
+		cfg80211_cqm_rssi_notify(ifp->ndev,
 					 NL80211_CQM_RSSI_THRESHOLD_EVENT_LOW,
 					 rssi, GFP_KERNEL);
-	पूर्ण अन्यथा अगर (rssi > high) अणु
+	} else if (rssi > high) {
 		brcmf_dbg(INFO, "HIGH rssi=%d\n", rssi);
-		cfg80211_cqm_rssi_notअगरy(अगरp->ndev,
+		cfg80211_cqm_rssi_notify(ifp->ndev,
 					 NL80211_CQM_RSSI_THRESHOLD_EVENT_HIGH,
 					 rssi, GFP_KERNEL);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल s32 brcmf_notअगरy_vअगर_event(काष्ठा brcmf_अगर *अगरp,
-				  स्थिर काष्ठा brcmf_event_msg *e, व्योम *data)
-अणु
-	काष्ठा brcmf_cfg80211_info *cfg = अगरp->drvr->config;
-	काष्ठा brcmf_अगर_event *अगरevent = (काष्ठा brcmf_अगर_event *)data;
-	काष्ठा brcmf_cfg80211_vअगर_event *event = &cfg->vअगर_event;
-	काष्ठा brcmf_cfg80211_vअगर *vअगर;
+static s32 brcmf_notify_vif_event(struct brcmf_if *ifp,
+				  const struct brcmf_event_msg *e, void *data)
+{
+	struct brcmf_cfg80211_info *cfg = ifp->drvr->config;
+	struct brcmf_if_event *ifevent = (struct brcmf_if_event *)data;
+	struct brcmf_cfg80211_vif_event *event = &cfg->vif_event;
+	struct brcmf_cfg80211_vif *vif;
 
 	brcmf_dbg(TRACE, "Enter: action %u flags %u ifidx %u bsscfgidx %u\n",
-		  अगरevent->action, अगरevent->flags, अगरevent->अगरidx,
-		  अगरevent->bsscfgidx);
+		  ifevent->action, ifevent->flags, ifevent->ifidx,
+		  ifevent->bsscfgidx);
 
-	spin_lock(&event->vअगर_event_lock);
-	event->action = अगरevent->action;
-	vअगर = event->vअगर;
+	spin_lock(&event->vif_event_lock);
+	event->action = ifevent->action;
+	vif = event->vif;
 
-	चयन (अगरevent->action) अणु
-	हाल BRCMF_E_IF_ADD:
-		/* रुकोing process may have समयd out */
-		अगर (!cfg->vअगर_event.vअगर) अणु
-			spin_unlock(&event->vअगर_event_lock);
-			वापस -EBADF;
-		पूर्ण
+	switch (ifevent->action) {
+	case BRCMF_E_IF_ADD:
+		/* waiting process may have timed out */
+		if (!cfg->vif_event.vif) {
+			spin_unlock(&event->vif_event_lock);
+			return -EBADF;
+		}
 
-		अगरp->vअगर = vअगर;
-		vअगर->अगरp = अगरp;
-		अगर (अगरp->ndev) अणु
-			vअगर->wdev.netdev = अगरp->ndev;
-			अगरp->ndev->ieee80211_ptr = &vअगर->wdev;
-			SET_NETDEV_DEV(अगरp->ndev, wiphy_dev(cfg->wiphy));
-		पूर्ण
-		spin_unlock(&event->vअगर_event_lock);
-		wake_up(&event->vअगर_wq);
-		वापस 0;
+		ifp->vif = vif;
+		vif->ifp = ifp;
+		if (ifp->ndev) {
+			vif->wdev.netdev = ifp->ndev;
+			ifp->ndev->ieee80211_ptr = &vif->wdev;
+			SET_NETDEV_DEV(ifp->ndev, wiphy_dev(cfg->wiphy));
+		}
+		spin_unlock(&event->vif_event_lock);
+		wake_up(&event->vif_wq);
+		return 0;
 
-	हाल BRCMF_E_IF_DEL:
-		spin_unlock(&event->vअगर_event_lock);
+	case BRCMF_E_IF_DEL:
+		spin_unlock(&event->vif_event_lock);
 		/* event may not be upon user request */
-		अगर (brcmf_cfg80211_vअगर_event_armed(cfg))
-			wake_up(&event->vअगर_wq);
-		वापस 0;
+		if (brcmf_cfg80211_vif_event_armed(cfg))
+			wake_up(&event->vif_wq);
+		return 0;
 
-	हाल BRCMF_E_IF_CHANGE:
-		spin_unlock(&event->vअगर_event_lock);
-		wake_up(&event->vअगर_wq);
-		वापस 0;
+	case BRCMF_E_IF_CHANGE:
+		spin_unlock(&event->vif_event_lock);
+		wake_up(&event->vif_wq);
+		return 0;
 
-	शेष:
-		spin_unlock(&event->vअगर_event_lock);
-		अवरोध;
-	पूर्ण
-	वापस -EINVAL;
-पूर्ण
+	default:
+		spin_unlock(&event->vif_event_lock);
+		break;
+	}
+	return -EINVAL;
+}
 
-अटल व्योम brcmf_init_conf(काष्ठा brcmf_cfg80211_conf *conf)
-अणु
+static void brcmf_init_conf(struct brcmf_cfg80211_conf *conf)
+{
 	conf->frag_threshold = (u32)-1;
 	conf->rts_threshold = (u32)-1;
-	conf->retry_लघु = (u32)-1;
-	conf->retry_दीर्घ = (u32)-1;
-पूर्ण
+	conf->retry_short = (u32)-1;
+	conf->retry_long = (u32)-1;
+}
 
-अटल व्योम brcmf_रेजिस्टर_event_handlers(काष्ठा brcmf_cfg80211_info *cfg)
-अणु
-	brcmf_fweh_रेजिस्टर(cfg->pub, BRCMF_E_LINK,
-			    brcmf_notअगरy_connect_status);
-	brcmf_fweh_रेजिस्टर(cfg->pub, BRCMF_E_DEAUTH_IND,
-			    brcmf_notअगरy_connect_status);
-	brcmf_fweh_रेजिस्टर(cfg->pub, BRCMF_E_DEAUTH,
-			    brcmf_notअगरy_connect_status);
-	brcmf_fweh_रेजिस्टर(cfg->pub, BRCMF_E_DISASSOC_IND,
-			    brcmf_notअगरy_connect_status);
-	brcmf_fweh_रेजिस्टर(cfg->pub, BRCMF_E_ASSOC_IND,
-			    brcmf_notअगरy_connect_status);
-	brcmf_fweh_रेजिस्टर(cfg->pub, BRCMF_E_REASSOC_IND,
-			    brcmf_notअगरy_connect_status);
-	brcmf_fweh_रेजिस्टर(cfg->pub, BRCMF_E_ROAM,
-			    brcmf_notअगरy_roaming_status);
-	brcmf_fweh_रेजिस्टर(cfg->pub, BRCMF_E_MIC_ERROR,
-			    brcmf_notअगरy_mic_status);
-	brcmf_fweh_रेजिस्टर(cfg->pub, BRCMF_E_SET_SSID,
-			    brcmf_notअगरy_connect_status);
-	brcmf_fweh_रेजिस्टर(cfg->pub, BRCMF_E_PFN_NET_FOUND,
-			    brcmf_notअगरy_sched_scan_results);
-	brcmf_fweh_रेजिस्टर(cfg->pub, BRCMF_E_IF,
-			    brcmf_notअगरy_vअगर_event);
-	brcmf_fweh_रेजिस्टर(cfg->pub, BRCMF_E_P2P_PROBEREQ_MSG,
-			    brcmf_p2p_notअगरy_rx_mgmt_p2p_probereq);
-	brcmf_fweh_रेजिस्टर(cfg->pub, BRCMF_E_P2P_DISC_LISTEN_COMPLETE,
-			    brcmf_p2p_notअगरy_listen_complete);
-	brcmf_fweh_रेजिस्टर(cfg->pub, BRCMF_E_ACTION_FRAME_RX,
-			    brcmf_p2p_notअगरy_action_frame_rx);
-	brcmf_fweh_रेजिस्टर(cfg->pub, BRCMF_E_ACTION_FRAME_COMPLETE,
-			    brcmf_p2p_notअगरy_action_tx_complete);
-	brcmf_fweh_रेजिस्टर(cfg->pub, BRCMF_E_ACTION_FRAME_OFF_CHAN_COMPLETE,
-			    brcmf_p2p_notअगरy_action_tx_complete);
-	brcmf_fweh_रेजिस्टर(cfg->pub, BRCMF_E_PSK_SUP,
-			    brcmf_notअगरy_connect_status);
-	brcmf_fweh_रेजिस्टर(cfg->pub, BRCMF_E_RSSI, brcmf_notअगरy_rssi);
-पूर्ण
+static void brcmf_register_event_handlers(struct brcmf_cfg80211_info *cfg)
+{
+	brcmf_fweh_register(cfg->pub, BRCMF_E_LINK,
+			    brcmf_notify_connect_status);
+	brcmf_fweh_register(cfg->pub, BRCMF_E_DEAUTH_IND,
+			    brcmf_notify_connect_status);
+	brcmf_fweh_register(cfg->pub, BRCMF_E_DEAUTH,
+			    brcmf_notify_connect_status);
+	brcmf_fweh_register(cfg->pub, BRCMF_E_DISASSOC_IND,
+			    brcmf_notify_connect_status);
+	brcmf_fweh_register(cfg->pub, BRCMF_E_ASSOC_IND,
+			    brcmf_notify_connect_status);
+	brcmf_fweh_register(cfg->pub, BRCMF_E_REASSOC_IND,
+			    brcmf_notify_connect_status);
+	brcmf_fweh_register(cfg->pub, BRCMF_E_ROAM,
+			    brcmf_notify_roaming_status);
+	brcmf_fweh_register(cfg->pub, BRCMF_E_MIC_ERROR,
+			    brcmf_notify_mic_status);
+	brcmf_fweh_register(cfg->pub, BRCMF_E_SET_SSID,
+			    brcmf_notify_connect_status);
+	brcmf_fweh_register(cfg->pub, BRCMF_E_PFN_NET_FOUND,
+			    brcmf_notify_sched_scan_results);
+	brcmf_fweh_register(cfg->pub, BRCMF_E_IF,
+			    brcmf_notify_vif_event);
+	brcmf_fweh_register(cfg->pub, BRCMF_E_P2P_PROBEREQ_MSG,
+			    brcmf_p2p_notify_rx_mgmt_p2p_probereq);
+	brcmf_fweh_register(cfg->pub, BRCMF_E_P2P_DISC_LISTEN_COMPLETE,
+			    brcmf_p2p_notify_listen_complete);
+	brcmf_fweh_register(cfg->pub, BRCMF_E_ACTION_FRAME_RX,
+			    brcmf_p2p_notify_action_frame_rx);
+	brcmf_fweh_register(cfg->pub, BRCMF_E_ACTION_FRAME_COMPLETE,
+			    brcmf_p2p_notify_action_tx_complete);
+	brcmf_fweh_register(cfg->pub, BRCMF_E_ACTION_FRAME_OFF_CHAN_COMPLETE,
+			    brcmf_p2p_notify_action_tx_complete);
+	brcmf_fweh_register(cfg->pub, BRCMF_E_PSK_SUP,
+			    brcmf_notify_connect_status);
+	brcmf_fweh_register(cfg->pub, BRCMF_E_RSSI, brcmf_notify_rssi);
+}
 
-अटल व्योम brcmf_deinit_priv_mem(काष्ठा brcmf_cfg80211_info *cfg)
-अणु
-	kमुक्त(cfg->conf);
-	cfg->conf = शून्य;
-	kमुक्त(cfg->extra_buf);
-	cfg->extra_buf = शून्य;
-	kमुक्त(cfg->wowl.nd);
-	cfg->wowl.nd = शून्य;
-	kमुक्त(cfg->wowl.nd_info);
-	cfg->wowl.nd_info = शून्य;
-	kमुक्त(cfg->escan_info.escan_buf);
-	cfg->escan_info.escan_buf = शून्य;
-पूर्ण
+static void brcmf_deinit_priv_mem(struct brcmf_cfg80211_info *cfg)
+{
+	kfree(cfg->conf);
+	cfg->conf = NULL;
+	kfree(cfg->extra_buf);
+	cfg->extra_buf = NULL;
+	kfree(cfg->wowl.nd);
+	cfg->wowl.nd = NULL;
+	kfree(cfg->wowl.nd_info);
+	cfg->wowl.nd_info = NULL;
+	kfree(cfg->escan_info.escan_buf);
+	cfg->escan_info.escan_buf = NULL;
+}
 
-अटल s32 brcmf_init_priv_mem(काष्ठा brcmf_cfg80211_info *cfg)
-अणु
-	cfg->conf = kzalloc(माप(*cfg->conf), GFP_KERNEL);
-	अगर (!cfg->conf)
-		जाओ init_priv_mem_out;
+static s32 brcmf_init_priv_mem(struct brcmf_cfg80211_info *cfg)
+{
+	cfg->conf = kzalloc(sizeof(*cfg->conf), GFP_KERNEL);
+	if (!cfg->conf)
+		goto init_priv_mem_out;
 	cfg->extra_buf = kzalloc(WL_EXTRA_BUF_MAX, GFP_KERNEL);
-	अगर (!cfg->extra_buf)
-		जाओ init_priv_mem_out;
-	cfg->wowl.nd = kzalloc(माप(*cfg->wowl.nd) + माप(u32), GFP_KERNEL);
-	अगर (!cfg->wowl.nd)
-		जाओ init_priv_mem_out;
-	cfg->wowl.nd_info = kzalloc(माप(*cfg->wowl.nd_info) +
-				    माप(काष्ठा cfg80211_wowlan_nd_match *),
+	if (!cfg->extra_buf)
+		goto init_priv_mem_out;
+	cfg->wowl.nd = kzalloc(sizeof(*cfg->wowl.nd) + sizeof(u32), GFP_KERNEL);
+	if (!cfg->wowl.nd)
+		goto init_priv_mem_out;
+	cfg->wowl.nd_info = kzalloc(sizeof(*cfg->wowl.nd_info) +
+				    sizeof(struct cfg80211_wowlan_nd_match *),
 				    GFP_KERNEL);
-	अगर (!cfg->wowl.nd_info)
-		जाओ init_priv_mem_out;
+	if (!cfg->wowl.nd_info)
+		goto init_priv_mem_out;
 	cfg->escan_info.escan_buf = kzalloc(BRCMF_ESCAN_BUF_SIZE, GFP_KERNEL);
-	अगर (!cfg->escan_info.escan_buf)
-		जाओ init_priv_mem_out;
+	if (!cfg->escan_info.escan_buf)
+		goto init_priv_mem_out;
 
-	वापस 0;
+	return 0;
 
 init_priv_mem_out:
 	brcmf_deinit_priv_mem(cfg);
 
-	वापस -ENOMEM;
-पूर्ण
+	return -ENOMEM;
+}
 
-अटल s32 wl_init_priv(काष्ठा brcmf_cfg80211_info *cfg)
-अणु
+static s32 wl_init_priv(struct brcmf_cfg80211_info *cfg)
+{
 	s32 err = 0;
 
-	cfg->scan_request = शून्य;
+	cfg->scan_request = NULL;
 	cfg->pwr_save = true;
-	cfg->करोngle_up = false;		/* करोngle is not up yet */
+	cfg->dongle_up = false;		/* dongle is not up yet */
 	err = brcmf_init_priv_mem(cfg);
-	अगर (err)
-		वापस err;
-	brcmf_रेजिस्टर_event_handlers(cfg);
+	if (err)
+		return err;
+	brcmf_register_event_handlers(cfg);
 	mutex_init(&cfg->usr_sync);
 	brcmf_init_escan(cfg);
 	brcmf_init_conf(cfg->conf);
 	brcmf_init_wmm_prio(cfg->ac_priority);
-	init_completion(&cfg->vअगर_disabled);
-	वापस err;
-पूर्ण
+	init_completion(&cfg->vif_disabled);
+	return err;
+}
 
-अटल व्योम wl_deinit_priv(काष्ठा brcmf_cfg80211_info *cfg)
-अणु
-	cfg->करोngle_up = false;	/* करोngle करोwn */
-	brcmf_पात_scanning(cfg);
+static void wl_deinit_priv(struct brcmf_cfg80211_info *cfg)
+{
+	cfg->dongle_up = false;	/* dongle down */
+	brcmf_abort_scanning(cfg);
 	brcmf_deinit_priv_mem(cfg);
-पूर्ण
+}
 
-अटल व्योम init_vअगर_event(काष्ठा brcmf_cfg80211_vअगर_event *event)
-अणु
-	init_रुकोqueue_head(&event->vअगर_wq);
-	spin_lock_init(&event->vअगर_event_lock);
-पूर्ण
+static void init_vif_event(struct brcmf_cfg80211_vif_event *event)
+{
+	init_waitqueue_head(&event->vif_wq);
+	spin_lock_init(&event->vif_event_lock);
+}
 
-अटल s32 brcmf_करोngle_roam(काष्ठा brcmf_अगर *अगरp)
-अणु
-	काष्ठा brcmf_pub *drvr = अगरp->drvr;
+static s32 brcmf_dongle_roam(struct brcmf_if *ifp)
+{
+	struct brcmf_pub *drvr = ifp->drvr;
 	s32 err;
-	u32 bcn_समयout;
+	u32 bcn_timeout;
 	__le32 roamtrigger[2];
 	__le32 roam_delta[2];
 
-	/* Configure beacon समयout value based upon roaming setting */
-	अगर (अगरp->drvr->settings->roamoff)
-		bcn_समयout = BRCMF_DEFAULT_BCN_TIMEOUT_ROAM_OFF;
-	अन्यथा
-		bcn_समयout = BRCMF_DEFAULT_BCN_TIMEOUT_ROAM_ON;
-	err = brcmf_fil_iovar_पूर्णांक_set(अगरp, "bcn_timeout", bcn_समयout);
-	अगर (err) अणु
+	/* Configure beacon timeout value based upon roaming setting */
+	if (ifp->drvr->settings->roamoff)
+		bcn_timeout = BRCMF_DEFAULT_BCN_TIMEOUT_ROAM_OFF;
+	else
+		bcn_timeout = BRCMF_DEFAULT_BCN_TIMEOUT_ROAM_ON;
+	err = brcmf_fil_iovar_int_set(ifp, "bcn_timeout", bcn_timeout);
+	if (err) {
 		bphy_err(drvr, "bcn_timeout error (%d)\n", err);
-		जाओ roam_setup_करोne;
-	पूर्ण
+		goto roam_setup_done;
+	}
 
 	/* Enable/Disable built-in roaming to allow supplicant to take care of
 	 * roaming.
 	 */
 	brcmf_dbg(INFO, "Internal Roaming = %s\n",
-		  अगरp->drvr->settings->roamoff ? "Off" : "On");
-	err = brcmf_fil_iovar_पूर्णांक_set(अगरp, "roam_off",
-				      अगरp->drvr->settings->roamoff);
-	अगर (err) अणु
+		  ifp->drvr->settings->roamoff ? "Off" : "On");
+	err = brcmf_fil_iovar_int_set(ifp, "roam_off",
+				      ifp->drvr->settings->roamoff);
+	if (err) {
 		bphy_err(drvr, "roam_off error (%d)\n", err);
-		जाओ roam_setup_करोne;
-	पूर्ण
+		goto roam_setup_done;
+	}
 
 	roamtrigger[0] = cpu_to_le32(WL_ROAM_TRIGGER_LEVEL);
 	roamtrigger[1] = cpu_to_le32(BRCM_BAND_ALL);
-	err = brcmf_fil_cmd_data_set(अगरp, BRCMF_C_SET_ROAM_TRIGGER,
-				     (व्योम *)roamtrigger, माप(roamtrigger));
-	अगर (err)
+	err = brcmf_fil_cmd_data_set(ifp, BRCMF_C_SET_ROAM_TRIGGER,
+				     (void *)roamtrigger, sizeof(roamtrigger));
+	if (err)
 		bphy_err(drvr, "WLC_SET_ROAM_TRIGGER error (%d)\n", err);
 
 	roam_delta[0] = cpu_to_le32(WL_ROAM_DELTA);
 	roam_delta[1] = cpu_to_le32(BRCM_BAND_ALL);
-	err = brcmf_fil_cmd_data_set(अगरp, BRCMF_C_SET_ROAM_DELTA,
-				     (व्योम *)roam_delta, माप(roam_delta));
-	अगर (err)
+	err = brcmf_fil_cmd_data_set(ifp, BRCMF_C_SET_ROAM_DELTA,
+				     (void *)roam_delta, sizeof(roam_delta));
+	if (err)
 		bphy_err(drvr, "WLC_SET_ROAM_DELTA error (%d)\n", err);
 
-	वापस 0;
+	return 0;
 
-roam_setup_करोne:
-	वापस err;
-पूर्ण
+roam_setup_done:
+	return err;
+}
 
-अटल s32
-brcmf_करोngle_scanसमय(काष्ठा brcmf_अगर *अगरp)
-अणु
-	काष्ठा brcmf_pub *drvr = अगरp->drvr;
+static s32
+brcmf_dongle_scantime(struct brcmf_if *ifp)
+{
+	struct brcmf_pub *drvr = ifp->drvr;
 	s32 err = 0;
 
-	err = brcmf_fil_cmd_पूर्णांक_set(अगरp, BRCMF_C_SET_SCAN_CHANNEL_TIME,
+	err = brcmf_fil_cmd_int_set(ifp, BRCMF_C_SET_SCAN_CHANNEL_TIME,
 				    BRCMF_SCAN_CHANNEL_TIME);
-	अगर (err) अणु
+	if (err) {
 		bphy_err(drvr, "Scan assoc time error (%d)\n", err);
-		जाओ करोngle_scanसमय_out;
-	पूर्ण
-	err = brcmf_fil_cmd_पूर्णांक_set(अगरp, BRCMF_C_SET_SCAN_UNASSOC_TIME,
+		goto dongle_scantime_out;
+	}
+	err = brcmf_fil_cmd_int_set(ifp, BRCMF_C_SET_SCAN_UNASSOC_TIME,
 				    BRCMF_SCAN_UNASSOC_TIME);
-	अगर (err) अणु
+	if (err) {
 		bphy_err(drvr, "Scan unassoc time error (%d)\n", err);
-		जाओ करोngle_scanसमय_out;
-	पूर्ण
+		goto dongle_scantime_out;
+	}
 
-	err = brcmf_fil_cmd_पूर्णांक_set(अगरp, BRCMF_C_SET_SCAN_PASSIVE_TIME,
+	err = brcmf_fil_cmd_int_set(ifp, BRCMF_C_SET_SCAN_PASSIVE_TIME,
 				    BRCMF_SCAN_PASSIVE_TIME);
-	अगर (err) अणु
+	if (err) {
 		bphy_err(drvr, "Scan passive time error (%d)\n", err);
-		जाओ करोngle_scanसमय_out;
-	पूर्ण
+		goto dongle_scantime_out;
+	}
 
-करोngle_scanसमय_out:
-	वापस err;
-पूर्ण
+dongle_scantime_out:
+	return err;
+}
 
-अटल व्योम brcmf_update_bw40_channel_flag(काष्ठा ieee80211_channel *channel,
-					   काष्ठा brcmu_chan *ch)
-अणु
+static void brcmf_update_bw40_channel_flag(struct ieee80211_channel *channel,
+					   struct brcmu_chan *ch)
+{
 	u32 ht40_flag;
 
 	ht40_flag = channel->flags & IEEE80211_CHAN_NO_HT40;
-	अगर (ch->sb == BRCMU_CHAN_SB_U) अणु
-		अगर (ht40_flag == IEEE80211_CHAN_NO_HT40)
+	if (ch->sb == BRCMU_CHAN_SB_U) {
+		if (ht40_flag == IEEE80211_CHAN_NO_HT40)
 			channel->flags &= ~IEEE80211_CHAN_NO_HT40;
 		channel->flags |= IEEE80211_CHAN_NO_HT40PLUS;
-	पूर्ण अन्यथा अणु
+	} else {
 		/* It should be one of
 		 * IEEE80211_CHAN_NO_HT40 or
 		 * IEEE80211_CHAN_NO_HT40PLUS
 		 */
 		channel->flags &= ~IEEE80211_CHAN_NO_HT40;
-		अगर (ht40_flag == IEEE80211_CHAN_NO_HT40)
+		if (ht40_flag == IEEE80211_CHAN_NO_HT40)
 			channel->flags |= IEEE80211_CHAN_NO_HT40MINUS;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक brcmf_स्थिरruct_chaninfo(काष्ठा brcmf_cfg80211_info *cfg,
+static int brcmf_construct_chaninfo(struct brcmf_cfg80211_info *cfg,
 				    u32 bw_cap[])
-अणु
-	काष्ठा wiphy *wiphy = cfg_to_wiphy(cfg);
-	काष्ठा brcmf_pub *drvr = cfg->pub;
-	काष्ठा brcmf_अगर *अगरp = brcmf_get_अगरp(drvr, 0);
-	काष्ठा ieee80211_supported_band *band;
-	काष्ठा ieee80211_channel *channel;
-	काष्ठा brcmf_chanspec_list *list;
-	काष्ठा brcmu_chan ch;
-	पूर्णांक err;
+{
+	struct wiphy *wiphy = cfg_to_wiphy(cfg);
+	struct brcmf_pub *drvr = cfg->pub;
+	struct brcmf_if *ifp = brcmf_get_ifp(drvr, 0);
+	struct ieee80211_supported_band *band;
+	struct ieee80211_channel *channel;
+	struct brcmf_chanspec_list *list;
+	struct brcmu_chan ch;
+	int err;
 	u8 *pbuf;
 	u32 i, j;
 	u32 total;
@@ -6520,90 +6519,90 @@ brcmf_करोngle_scanसमय(काष्ठा brcmf_अगर *अगरp
 
 	pbuf = kzalloc(BRCMF_DCMD_MEDLEN, GFP_KERNEL);
 
-	अगर (pbuf == शून्य)
-		वापस -ENOMEM;
+	if (pbuf == NULL)
+		return -ENOMEM;
 
-	list = (काष्ठा brcmf_chanspec_list *)pbuf;
+	list = (struct brcmf_chanspec_list *)pbuf;
 
-	err = brcmf_fil_iovar_data_get(अगरp, "chanspecs", pbuf,
+	err = brcmf_fil_iovar_data_get(ifp, "chanspecs", pbuf,
 				       BRCMF_DCMD_MEDLEN);
-	अगर (err) अणु
+	if (err) {
 		bphy_err(drvr, "get chanspecs error (%d)\n", err);
-		जाओ fail_pbuf;
-	पूर्ण
+		goto fail_pbuf;
+	}
 
 	band = wiphy->bands[NL80211_BAND_2GHZ];
-	अगर (band)
-		क्रम (i = 0; i < band->n_channels; i++)
+	if (band)
+		for (i = 0; i < band->n_channels; i++)
 			band->channels[i].flags = IEEE80211_CHAN_DISABLED;
 	band = wiphy->bands[NL80211_BAND_5GHZ];
-	अगर (band)
-		क्रम (i = 0; i < band->n_channels; i++)
+	if (band)
+		for (i = 0; i < band->n_channels; i++)
 			band->channels[i].flags = IEEE80211_CHAN_DISABLED;
 
 	total = le32_to_cpu(list->count);
-	क्रम (i = 0; i < total; i++) अणु
+	for (i = 0; i < total; i++) {
 		ch.chspec = (u16)le32_to_cpu(list->element[i]);
 		cfg->d11inf.decchspec(&ch);
 
-		अगर (ch.band == BRCMU_CHAN_BAND_2G) अणु
+		if (ch.band == BRCMU_CHAN_BAND_2G) {
 			band = wiphy->bands[NL80211_BAND_2GHZ];
-		पूर्ण अन्यथा अगर (ch.band == BRCMU_CHAN_BAND_5G) अणु
+		} else if (ch.band == BRCMU_CHAN_BAND_5G) {
 			band = wiphy->bands[NL80211_BAND_5GHZ];
-		पूर्ण अन्यथा अणु
+		} else {
 			bphy_err(drvr, "Invalid channel Spec. 0x%x.\n",
 				 ch.chspec);
-			जारी;
-		पूर्ण
-		अगर (!band)
-			जारी;
-		अगर (!(bw_cap[band->band] & WLC_BW_40MHZ_BIT) &&
+			continue;
+		}
+		if (!band)
+			continue;
+		if (!(bw_cap[band->band] & WLC_BW_40MHZ_BIT) &&
 		    ch.bw == BRCMU_CHAN_BW_40)
-			जारी;
-		अगर (!(bw_cap[band->band] & WLC_BW_80MHZ_BIT) &&
+			continue;
+		if (!(bw_cap[band->band] & WLC_BW_80MHZ_BIT) &&
 		    ch.bw == BRCMU_CHAN_BW_80)
-			जारी;
+			continue;
 
-		channel = शून्य;
-		क्रम (j = 0; j < band->n_channels; j++) अणु
-			अगर (band->channels[j].hw_value == ch.control_ch_num) अणु
+		channel = NULL;
+		for (j = 0; j < band->n_channels; j++) {
+			if (band->channels[j].hw_value == ch.control_ch_num) {
 				channel = &band->channels[j];
-				अवरोध;
-			पूर्ण
-		पूर्ण
-		अगर (!channel) अणु
+				break;
+			}
+		}
+		if (!channel) {
 			/* It seems firmware supports some channel we never
 			 * considered. Something new in IEEE standard?
 			 */
 			bphy_err(drvr, "Ignoring unexpected firmware channel %d\n",
 				 ch.control_ch_num);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		अगर (channel->orig_flags & IEEE80211_CHAN_DISABLED)
-			जारी;
+		if (channel->orig_flags & IEEE80211_CHAN_DISABLED)
+			continue;
 
 		/* assuming the chanspecs order is HT20,
 		 * HT40 upper, HT40 lower, and VHT80.
 		 */
-		चयन (ch.bw) अणु
-		हाल BRCMU_CHAN_BW_160:
+		switch (ch.bw) {
+		case BRCMU_CHAN_BW_160:
 			channel->flags &= ~IEEE80211_CHAN_NO_160MHZ;
-			अवरोध;
-		हाल BRCMU_CHAN_BW_80:
+			break;
+		case BRCMU_CHAN_BW_80:
 			channel->flags &= ~IEEE80211_CHAN_NO_80MHZ;
-			अवरोध;
-		हाल BRCMU_CHAN_BW_40:
+			break;
+		case BRCMU_CHAN_BW_40:
 			brcmf_update_bw40_channel_flag(channel, &ch);
-			अवरोध;
-		शेष:
+			break;
+		default:
 			wiphy_warn(wiphy, "Firmware reported unsupported bandwidth %d\n",
 				   ch.bw);
 			fallthrough;
-		हाल BRCMU_CHAN_BW_20:
+		case BRCMU_CHAN_BW_20:
 			/* enable the channel and disable other bandwidths
-			 * क्रम now as mentioned order assure they are enabled
-			 * क्रम subsequent chanspecs.
+			 * for now as mentioned order assure they are enabled
+			 * for subsequent chanspecs.
 			 */
 			channel->flags = IEEE80211_CHAN_NO_HT40 |
 					 IEEE80211_CHAN_NO_80MHZ |
@@ -6611,61 +6610,61 @@ brcmf_करोngle_scanसमय(काष्ठा brcmf_अगर *अगरp
 			ch.bw = BRCMU_CHAN_BW_20;
 			cfg->d11inf.encchspec(&ch);
 			chaninfo = ch.chspec;
-			err = brcmf_fil_bsscfg_पूर्णांक_get(अगरp, "per_chan_info",
+			err = brcmf_fil_bsscfg_int_get(ifp, "per_chan_info",
 						       &chaninfo);
-			अगर (!err) अणु
-				अगर (chaninfo & WL_CHAN_RADAR)
+			if (!err) {
+				if (chaninfo & WL_CHAN_RADAR)
 					channel->flags |=
 						(IEEE80211_CHAN_RADAR |
 						 IEEE80211_CHAN_NO_IR);
-				अगर (chaninfo & WL_CHAN_PASSIVE)
+				if (chaninfo & WL_CHAN_PASSIVE)
 					channel->flags |=
 						IEEE80211_CHAN_NO_IR;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
 fail_pbuf:
-	kमुक्त(pbuf);
-	वापस err;
-पूर्ण
+	kfree(pbuf);
+	return err;
+}
 
-अटल पूर्णांक brcmf_enable_bw40_2g(काष्ठा brcmf_cfg80211_info *cfg)
-अणु
-	काष्ठा brcmf_pub *drvr = cfg->pub;
-	काष्ठा brcmf_अगर *अगरp = brcmf_get_अगरp(drvr, 0);
-	काष्ठा ieee80211_supported_band *band;
-	काष्ठा brcmf_fil_bwcap_le band_bwcap;
-	काष्ठा brcmf_chanspec_list *list;
+static int brcmf_enable_bw40_2g(struct brcmf_cfg80211_info *cfg)
+{
+	struct brcmf_pub *drvr = cfg->pub;
+	struct brcmf_if *ifp = brcmf_get_ifp(drvr, 0);
+	struct ieee80211_supported_band *band;
+	struct brcmf_fil_bwcap_le band_bwcap;
+	struct brcmf_chanspec_list *list;
 	u8 *pbuf;
 	u32 val;
-	पूर्णांक err;
-	काष्ठा brcmu_chan ch;
+	int err;
+	struct brcmu_chan ch;
 	u32 num_chan;
-	पूर्णांक i, j;
+	int i, j;
 
-	/* verअगरy support क्रम bw_cap command */
+	/* verify support for bw_cap command */
 	val = WLC_BAND_5G;
-	err = brcmf_fil_iovar_पूर्णांक_get(अगरp, "bw_cap", &val);
+	err = brcmf_fil_iovar_int_get(ifp, "bw_cap", &val);
 
-	अगर (!err) अणु
+	if (!err) {
 		/* only set 2G bandwidth using bw_cap command */
 		band_bwcap.band = cpu_to_le32(WLC_BAND_2G);
 		band_bwcap.bw_cap = cpu_to_le32(WLC_BW_CAP_40MHZ);
-		err = brcmf_fil_iovar_data_set(अगरp, "bw_cap", &band_bwcap,
-					       माप(band_bwcap));
-	पूर्ण अन्यथा अणु
+		err = brcmf_fil_iovar_data_set(ifp, "bw_cap", &band_bwcap,
+					       sizeof(band_bwcap));
+	} else {
 		brcmf_dbg(INFO, "fallback to mimo_bw_cap\n");
 		val = WLC_N_BW_40ALL;
-		err = brcmf_fil_iovar_पूर्णांक_set(अगरp, "mimo_bw_cap", val);
-	पूर्ण
+		err = brcmf_fil_iovar_int_set(ifp, "mimo_bw_cap", val);
+	}
 
-	अगर (!err) अणु
+	if (!err) {
 		/* update channel info in 2G band */
 		pbuf = kzalloc(BRCMF_DCMD_MEDLEN, GFP_KERNEL);
 
-		अगर (pbuf == शून्य)
-			वापस -ENOMEM;
+		if (pbuf == NULL)
+			return -ENOMEM;
 
 		ch.band = BRCMU_CHAN_BAND_2G;
 		ch.bw = BRCMU_CHAN_BW_40;
@@ -6676,229 +6675,229 @@ fail_pbuf:
 		/* pass encoded chanspec in query */
 		*(__le16 *)pbuf = cpu_to_le16(ch.chspec);
 
-		err = brcmf_fil_iovar_data_get(अगरp, "chanspecs", pbuf,
+		err = brcmf_fil_iovar_data_get(ifp, "chanspecs", pbuf,
 					       BRCMF_DCMD_MEDLEN);
-		अगर (err) अणु
+		if (err) {
 			bphy_err(drvr, "get chanspecs error (%d)\n", err);
-			kमुक्त(pbuf);
-			वापस err;
-		पूर्ण
+			kfree(pbuf);
+			return err;
+		}
 
 		band = cfg_to_wiphy(cfg)->bands[NL80211_BAND_2GHZ];
-		list = (काष्ठा brcmf_chanspec_list *)pbuf;
+		list = (struct brcmf_chanspec_list *)pbuf;
 		num_chan = le32_to_cpu(list->count);
-		क्रम (i = 0; i < num_chan; i++) अणु
+		for (i = 0; i < num_chan; i++) {
 			ch.chspec = (u16)le32_to_cpu(list->element[i]);
 			cfg->d11inf.decchspec(&ch);
-			अगर (WARN_ON(ch.band != BRCMU_CHAN_BAND_2G))
-				जारी;
-			अगर (WARN_ON(ch.bw != BRCMU_CHAN_BW_40))
-				जारी;
-			क्रम (j = 0; j < band->n_channels; j++) अणु
-				अगर (band->channels[j].hw_value == ch.control_ch_num)
-					अवरोध;
-			पूर्ण
-			अगर (WARN_ON(j == band->n_channels))
-				जारी;
+			if (WARN_ON(ch.band != BRCMU_CHAN_BAND_2G))
+				continue;
+			if (WARN_ON(ch.bw != BRCMU_CHAN_BW_40))
+				continue;
+			for (j = 0; j < band->n_channels; j++) {
+				if (band->channels[j].hw_value == ch.control_ch_num)
+					break;
+			}
+			if (WARN_ON(j == band->n_channels))
+				continue;
 
 			brcmf_update_bw40_channel_flag(&band->channels[j], &ch);
-		पूर्ण
-		kमुक्त(pbuf);
-	पूर्ण
-	वापस err;
-पूर्ण
+		}
+		kfree(pbuf);
+	}
+	return err;
+}
 
-अटल व्योम brcmf_get_bwcap(काष्ठा brcmf_अगर *अगरp, u32 bw_cap[])
-अणु
-	काष्ठा brcmf_pub *drvr = अगरp->drvr;
+static void brcmf_get_bwcap(struct brcmf_if *ifp, u32 bw_cap[])
+{
+	struct brcmf_pub *drvr = ifp->drvr;
 	u32 band, mimo_bwcap;
-	पूर्णांक err;
+	int err;
 
 	band = WLC_BAND_2G;
-	err = brcmf_fil_iovar_पूर्णांक_get(अगरp, "bw_cap", &band);
-	अगर (!err) अणु
+	err = brcmf_fil_iovar_int_get(ifp, "bw_cap", &band);
+	if (!err) {
 		bw_cap[NL80211_BAND_2GHZ] = band;
 		band = WLC_BAND_5G;
-		err = brcmf_fil_iovar_पूर्णांक_get(अगरp, "bw_cap", &band);
-		अगर (!err) अणु
+		err = brcmf_fil_iovar_int_get(ifp, "bw_cap", &band);
+		if (!err) {
 			bw_cap[NL80211_BAND_5GHZ] = band;
-			वापस;
-		पूर्ण
+			return;
+		}
 		WARN_ON(1);
-		वापस;
-	पूर्ण
+		return;
+	}
 	brcmf_dbg(INFO, "fallback to mimo_bw_cap info\n");
 	mimo_bwcap = 0;
-	err = brcmf_fil_iovar_पूर्णांक_get(अगरp, "mimo_bw_cap", &mimo_bwcap);
-	अगर (err)
-		/* assume 20MHz अगर firmware करोes not give a clue */
+	err = brcmf_fil_iovar_int_get(ifp, "mimo_bw_cap", &mimo_bwcap);
+	if (err)
+		/* assume 20MHz if firmware does not give a clue */
 		mimo_bwcap = WLC_N_BW_20ALL;
 
-	चयन (mimo_bwcap) अणु
-	हाल WLC_N_BW_40ALL:
+	switch (mimo_bwcap) {
+	case WLC_N_BW_40ALL:
 		bw_cap[NL80211_BAND_2GHZ] |= WLC_BW_40MHZ_BIT;
 		fallthrough;
-	हाल WLC_N_BW_20IN2G_40IN5G:
+	case WLC_N_BW_20IN2G_40IN5G:
 		bw_cap[NL80211_BAND_5GHZ] |= WLC_BW_40MHZ_BIT;
 		fallthrough;
-	हाल WLC_N_BW_20ALL:
+	case WLC_N_BW_20ALL:
 		bw_cap[NL80211_BAND_2GHZ] |= WLC_BW_20MHZ_BIT;
 		bw_cap[NL80211_BAND_5GHZ] |= WLC_BW_20MHZ_BIT;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		bphy_err(drvr, "invalid mimo_bw_cap value\n");
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम brcmf_update_ht_cap(काष्ठा ieee80211_supported_band *band,
+static void brcmf_update_ht_cap(struct ieee80211_supported_band *band,
 				u32 bw_cap[2], u32 nchain)
-अणु
+{
 	band->ht_cap.ht_supported = true;
-	अगर (bw_cap[band->band] & WLC_BW_40MHZ_BIT) अणु
+	if (bw_cap[band->band] & WLC_BW_40MHZ_BIT) {
 		band->ht_cap.cap |= IEEE80211_HT_CAP_SGI_40;
 		band->ht_cap.cap |= IEEE80211_HT_CAP_SUP_WIDTH_20_40;
-	पूर्ण
+	}
 	band->ht_cap.cap |= IEEE80211_HT_CAP_SGI_20;
 	band->ht_cap.cap |= IEEE80211_HT_CAP_DSSSCCK40;
 	band->ht_cap.ampdu_factor = IEEE80211_HT_MAX_AMPDU_64K;
 	band->ht_cap.ampdu_density = IEEE80211_HT_MPDU_DENSITY_16;
-	स_रखो(band->ht_cap.mcs.rx_mask, 0xff, nchain);
+	memset(band->ht_cap.mcs.rx_mask, 0xff, nchain);
 	band->ht_cap.mcs.tx_params = IEEE80211_HT_MCS_TX_DEFINED;
-पूर्ण
+}
 
-अटल __le16 brcmf_get_mcs_map(u32 nchain, क्रमागत ieee80211_vht_mcs_support supp)
-अणु
+static __le16 brcmf_get_mcs_map(u32 nchain, enum ieee80211_vht_mcs_support supp)
+{
 	u16 mcs_map;
-	पूर्णांक i;
+	int i;
 
-	क्रम (i = 0, mcs_map = 0xFFFF; i < nchain; i++)
+	for (i = 0, mcs_map = 0xFFFF; i < nchain; i++)
 		mcs_map = (mcs_map << 2) | supp;
 
-	वापस cpu_to_le16(mcs_map);
-पूर्ण
+	return cpu_to_le16(mcs_map);
+}
 
-अटल व्योम brcmf_update_vht_cap(काष्ठा ieee80211_supported_band *band,
+static void brcmf_update_vht_cap(struct ieee80211_supported_band *band,
 				 u32 bw_cap[2], u32 nchain, u32 txstreams,
 				 u32 txbf_bfe_cap, u32 txbf_bfr_cap)
-अणु
+{
 	__le16 mcs_map;
 
 	/* not allowed in 2.4G band */
-	अगर (band->band == NL80211_BAND_2GHZ)
-		वापस;
+	if (band->band == NL80211_BAND_2GHZ)
+		return;
 
 	band->vht_cap.vht_supported = true;
 	/* 80MHz is mandatory */
 	band->vht_cap.cap |= IEEE80211_VHT_CAP_SHORT_GI_80;
-	अगर (bw_cap[band->band] & WLC_BW_160MHZ_BIT) अणु
+	if (bw_cap[band->band] & WLC_BW_160MHZ_BIT) {
 		band->vht_cap.cap |= IEEE80211_VHT_CAP_SUPP_CHAN_WIDTH_160MHZ;
 		band->vht_cap.cap |= IEEE80211_VHT_CAP_SHORT_GI_160;
-	पूर्ण
+	}
 	/* all support 256-QAM */
 	mcs_map = brcmf_get_mcs_map(nchain, IEEE80211_VHT_MCS_SUPPORT_0_9);
 	band->vht_cap.vht_mcs.rx_mcs_map = mcs_map;
 	band->vht_cap.vht_mcs.tx_mcs_map = mcs_map;
 
-	/* Beamक्रमming support inक्रमmation */
-	अगर (txbf_bfe_cap & BRCMF_TXBF_SU_BFE_CAP)
+	/* Beamforming support information */
+	if (txbf_bfe_cap & BRCMF_TXBF_SU_BFE_CAP)
 		band->vht_cap.cap |= IEEE80211_VHT_CAP_SU_BEAMFORMEE_CAPABLE;
-	अगर (txbf_bfe_cap & BRCMF_TXBF_MU_BFE_CAP)
+	if (txbf_bfe_cap & BRCMF_TXBF_MU_BFE_CAP)
 		band->vht_cap.cap |= IEEE80211_VHT_CAP_MU_BEAMFORMEE_CAPABLE;
-	अगर (txbf_bfr_cap & BRCMF_TXBF_SU_BFR_CAP)
+	if (txbf_bfr_cap & BRCMF_TXBF_SU_BFR_CAP)
 		band->vht_cap.cap |= IEEE80211_VHT_CAP_SU_BEAMFORMER_CAPABLE;
-	अगर (txbf_bfr_cap & BRCMF_TXBF_MU_BFR_CAP)
+	if (txbf_bfr_cap & BRCMF_TXBF_MU_BFR_CAP)
 		band->vht_cap.cap |= IEEE80211_VHT_CAP_MU_BEAMFORMER_CAPABLE;
 
-	अगर ((txbf_bfe_cap || txbf_bfr_cap) && (txstreams > 1)) अणु
+	if ((txbf_bfe_cap || txbf_bfr_cap) && (txstreams > 1)) {
 		band->vht_cap.cap |=
 			(2 << IEEE80211_VHT_CAP_BEAMFORMEE_STS_SHIFT);
 		band->vht_cap.cap |= ((txstreams - 1) <<
 				IEEE80211_VHT_CAP_SOUNDING_DIMENSIONS_SHIFT);
 		band->vht_cap.cap |=
 			IEEE80211_VHT_CAP_VHT_LINK_ADAPTATION_VHT_MRQ_MFB;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक brcmf_setup_wiphybands(काष्ठा brcmf_cfg80211_info *cfg)
-अणु
-	काष्ठा brcmf_pub *drvr = cfg->pub;
-	काष्ठा brcmf_अगर *अगरp = brcmf_get_अगरp(drvr, 0);
-	काष्ठा wiphy *wiphy = cfg_to_wiphy(cfg);
+static int brcmf_setup_wiphybands(struct brcmf_cfg80211_info *cfg)
+{
+	struct brcmf_pub *drvr = cfg->pub;
+	struct brcmf_if *ifp = brcmf_get_ifp(drvr, 0);
+	struct wiphy *wiphy = cfg_to_wiphy(cfg);
 	u32 nmode = 0;
-	u32 vhपंचांगode = 0;
-	u32 bw_cap[2] = अणु WLC_BW_20MHZ_BIT, WLC_BW_20MHZ_BIT पूर्ण;
+	u32 vhtmode = 0;
+	u32 bw_cap[2] = { WLC_BW_20MHZ_BIT, WLC_BW_20MHZ_BIT };
 	u32 rxchain;
 	u32 nchain;
-	पूर्णांक err;
+	int err;
 	s32 i;
-	काष्ठा ieee80211_supported_band *band;
+	struct ieee80211_supported_band *band;
 	u32 txstreams = 0;
 	u32 txbf_bfe_cap = 0;
 	u32 txbf_bfr_cap = 0;
 
-	(व्योम)brcmf_fil_iovar_पूर्णांक_get(अगरp, "vhtmode", &vhपंचांगode);
-	err = brcmf_fil_iovar_पूर्णांक_get(अगरp, "nmode", &nmode);
-	अगर (err) अणु
+	(void)brcmf_fil_iovar_int_get(ifp, "vhtmode", &vhtmode);
+	err = brcmf_fil_iovar_int_get(ifp, "nmode", &nmode);
+	if (err) {
 		bphy_err(drvr, "nmode error (%d)\n", err);
-	पूर्ण अन्यथा अणु
-		brcmf_get_bwcap(अगरp, bw_cap);
-	पूर्ण
+	} else {
+		brcmf_get_bwcap(ifp, bw_cap);
+	}
 	brcmf_dbg(INFO, "nmode=%d, vhtmode=%d, bw_cap=(%d, %d)\n",
-		  nmode, vhपंचांगode, bw_cap[NL80211_BAND_2GHZ],
+		  nmode, vhtmode, bw_cap[NL80211_BAND_2GHZ],
 		  bw_cap[NL80211_BAND_5GHZ]);
 
-	err = brcmf_fil_iovar_पूर्णांक_get(अगरp, "rxchain", &rxchain);
-	अगर (err) अणु
+	err = brcmf_fil_iovar_int_get(ifp, "rxchain", &rxchain);
+	if (err) {
 		bphy_err(drvr, "rxchain error (%d)\n", err);
 		nchain = 1;
-	पूर्ण अन्यथा अणु
-		क्रम (nchain = 0; rxchain; nchain++)
+	} else {
+		for (nchain = 0; rxchain; nchain++)
 			rxchain = rxchain & (rxchain - 1);
-	पूर्ण
+	}
 	brcmf_dbg(INFO, "nchain=%d\n", nchain);
 
-	err = brcmf_स्थिरruct_chaninfo(cfg, bw_cap);
-	अगर (err) अणु
+	err = brcmf_construct_chaninfo(cfg, bw_cap);
+	if (err) {
 		bphy_err(drvr, "brcmf_construct_chaninfo failed (%d)\n", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	अगर (vhपंचांगode) अणु
-		(व्योम)brcmf_fil_iovar_पूर्णांक_get(अगरp, "txstreams", &txstreams);
-		(व्योम)brcmf_fil_iovar_पूर्णांक_get(अगरp, "txbf_bfe_cap",
+	if (vhtmode) {
+		(void)brcmf_fil_iovar_int_get(ifp, "txstreams", &txstreams);
+		(void)brcmf_fil_iovar_int_get(ifp, "txbf_bfe_cap",
 					      &txbf_bfe_cap);
-		(व्योम)brcmf_fil_iovar_पूर्णांक_get(अगरp, "txbf_bfr_cap",
+		(void)brcmf_fil_iovar_int_get(ifp, "txbf_bfr_cap",
 					      &txbf_bfr_cap);
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < ARRAY_SIZE(wiphy->bands); i++) अणु
+	for (i = 0; i < ARRAY_SIZE(wiphy->bands); i++) {
 		band = wiphy->bands[i];
-		अगर (band == शून्य)
-			जारी;
+		if (band == NULL)
+			continue;
 
-		अगर (nmode)
+		if (nmode)
 			brcmf_update_ht_cap(band, bw_cap, nchain);
-		अगर (vhपंचांगode)
+		if (vhtmode)
 			brcmf_update_vht_cap(band, bw_cap, nchain, txstreams,
 					     txbf_bfe_cap, txbf_bfr_cap);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा ieee80211_txrx_stypes
-brcmf_txrx_stypes[NUM_NL80211_IFTYPES] = अणु
-	[NL80211_IFTYPE_STATION] = अणु
+static const struct ieee80211_txrx_stypes
+brcmf_txrx_stypes[NUM_NL80211_IFTYPES] = {
+	[NL80211_IFTYPE_STATION] = {
 		.tx = 0xffff,
 		.rx = BIT(IEEE80211_STYPE_ACTION >> 4) |
 		      BIT(IEEE80211_STYPE_PROBE_REQ >> 4)
-	पूर्ण,
-	[NL80211_IFTYPE_P2P_CLIENT] = अणु
+	},
+	[NL80211_IFTYPE_P2P_CLIENT] = {
 		.tx = 0xffff,
 		.rx = BIT(IEEE80211_STYPE_ACTION >> 4) |
 		      BIT(IEEE80211_STYPE_PROBE_REQ >> 4)
-	पूर्ण,
-	[NL80211_IFTYPE_P2P_GO] = अणु
+	},
+	[NL80211_IFTYPE_P2P_GO] = {
 		.tx = 0xffff,
 		.rx = BIT(IEEE80211_STYPE_ASSOC_REQ >> 4) |
 		      BIT(IEEE80211_STYPE_REASSOC_REQ >> 4) |
@@ -6907,13 +6906,13 @@ brcmf_txrx_stypes[NUM_NL80211_IFTYPES] = अणु
 		      BIT(IEEE80211_STYPE_AUTH >> 4) |
 		      BIT(IEEE80211_STYPE_DEAUTH >> 4) |
 		      BIT(IEEE80211_STYPE_ACTION >> 4)
-	पूर्ण,
-	[NL80211_IFTYPE_P2P_DEVICE] = अणु
+	},
+	[NL80211_IFTYPE_P2P_DEVICE] = {
 		.tx = 0xffff,
 		.rx = BIT(IEEE80211_STYPE_ACTION >> 4) |
 		      BIT(IEEE80211_STYPE_PROBE_REQ >> 4)
-	पूर्ण,
-	[NL80211_IFTYPE_AP] = अणु
+	},
+	[NL80211_IFTYPE_AP] = {
 		.tx = 0xffff,
 		.rx = BIT(IEEE80211_STYPE_ASSOC_REQ >> 4) |
 		      BIT(IEEE80211_STYPE_REASSOC_REQ >> 4) |
@@ -6922,16 +6921,16 @@ brcmf_txrx_stypes[NUM_NL80211_IFTYPES] = अणु
 		      BIT(IEEE80211_STYPE_AUTH >> 4) |
 		      BIT(IEEE80211_STYPE_DEAUTH >> 4) |
 		      BIT(IEEE80211_STYPE_ACTION >> 4)
-	पूर्ण
-पूर्ण;
+	}
+};
 
 /**
- * brcmf_setup_अगरmodes() - determine पूर्णांकerface modes and combinations.
+ * brcmf_setup_ifmodes() - determine interface modes and combinations.
  *
  * @wiphy: wiphy object.
- * @अगरp: पूर्णांकerface object needed क्रम feat module api.
+ * @ifp: interface object needed for feat module api.
  *
- * The पूर्णांकerface modes and combinations are determined dynamically here
+ * The interface modes and combinations are determined dynamically here
  * based on firmware functionality.
  *
  * no p2p and no mbss:
@@ -6948,95 +6947,95 @@ brcmf_txrx_stypes[NUM_NL80211_IFTYPES] = अणु
  *
  * p2p, no mchan, and mbss:
  *
- *	#STA <= 1, #P2P-DEV <= 1, #अणुP2P-CL, P2P-GOपूर्ण <= 1, channels = 1, 3 total
+ *	#STA <= 1, #P2P-DEV <= 1, #{P2P-CL, P2P-GO} <= 1, channels = 1, 3 total
  *	#STA <= 1, #P2P-DEV <= 1, #AP <= 1, #P2P-CL <= 1, channels = 1, 4 total
  *	#AP <= 4, matching BI, channels = 1, 4 total
  *
  * p2p, mchan, and mbss:
  *
- *	#STA <= 1, #P2P-DEV <= 1, #अणुP2P-CL, P2P-GOपूर्ण <= 1, channels = 2, 3 total
+ *	#STA <= 1, #P2P-DEV <= 1, #{P2P-CL, P2P-GO} <= 1, channels = 2, 3 total
  *	#STA <= 1, #P2P-DEV <= 1, #AP <= 1, #P2P-CL <= 1, channels = 1, 4 total
  *	#AP <= 4, matching BI, channels = 1, 4 total
  *
  * p2p, rsdb, and no mbss:
- *	#STA <= 1, #P2P-DEV <= 1, #अणुP2P-CL, P2P-GOपूर्ण <= 2, AP <= 2,
+ *	#STA <= 1, #P2P-DEV <= 1, #{P2P-CL, P2P-GO} <= 2, AP <= 2,
  *	 channels = 2, 4 total
  */
-अटल पूर्णांक brcmf_setup_अगरmodes(काष्ठा wiphy *wiphy, काष्ठा brcmf_अगर *अगरp)
-अणु
-	काष्ठा ieee80211_अगरace_combination *combo = शून्य;
-	काष्ठा ieee80211_अगरace_limit *c0_limits = शून्य;
-	काष्ठा ieee80211_अगरace_limit *p2p_limits = शून्य;
-	काष्ठा ieee80211_अगरace_limit *mbss_limits = शून्य;
+static int brcmf_setup_ifmodes(struct wiphy *wiphy, struct brcmf_if *ifp)
+{
+	struct ieee80211_iface_combination *combo = NULL;
+	struct ieee80211_iface_limit *c0_limits = NULL;
+	struct ieee80211_iface_limit *p2p_limits = NULL;
+	struct ieee80211_iface_limit *mbss_limits = NULL;
 	bool mon_flag, mbss, p2p, rsdb, mchan;
-	पूर्णांक i, c, n_combos, n_limits;
+	int i, c, n_combos, n_limits;
 
-	mon_flag = brcmf_feat_is_enabled(अगरp, BRCMF_FEAT_MONITOR_FLAG);
-	mbss = brcmf_feat_is_enabled(अगरp, BRCMF_FEAT_MBSS);
-	p2p = brcmf_feat_is_enabled(अगरp, BRCMF_FEAT_P2P);
-	rsdb = brcmf_feat_is_enabled(अगरp, BRCMF_FEAT_RSDB);
-	mchan = brcmf_feat_is_enabled(अगरp, BRCMF_FEAT_MCHAN);
+	mon_flag = brcmf_feat_is_enabled(ifp, BRCMF_FEAT_MONITOR_FLAG);
+	mbss = brcmf_feat_is_enabled(ifp, BRCMF_FEAT_MBSS);
+	p2p = brcmf_feat_is_enabled(ifp, BRCMF_FEAT_P2P);
+	rsdb = brcmf_feat_is_enabled(ifp, BRCMF_FEAT_RSDB);
+	mchan = brcmf_feat_is_enabled(ifp, BRCMF_FEAT_MCHAN);
 
 	n_combos = 1 + !!(p2p && !rsdb) + !!mbss;
-	combo = kसुस्मृति(n_combos, माप(*combo), GFP_KERNEL);
-	अगर (!combo)
-		जाओ err;
+	combo = kcalloc(n_combos, sizeof(*combo), GFP_KERNEL);
+	if (!combo)
+		goto err;
 
-	wiphy->पूर्णांकerface_modes = BIT(NL80211_IFTYPE_STATION) |
+	wiphy->interface_modes = BIT(NL80211_IFTYPE_STATION) |
 				 BIT(NL80211_IFTYPE_ADHOC) |
 				 BIT(NL80211_IFTYPE_AP);
-	अगर (mon_flag)
-		wiphy->पूर्णांकerface_modes |= BIT(NL80211_IFTYPE_MONITOR);
-	अगर (p2p)
-		wiphy->पूर्णांकerface_modes |= BIT(NL80211_IFTYPE_P2P_CLIENT) |
+	if (mon_flag)
+		wiphy->interface_modes |= BIT(NL80211_IFTYPE_MONITOR);
+	if (p2p)
+		wiphy->interface_modes |= BIT(NL80211_IFTYPE_P2P_CLIENT) |
 					  BIT(NL80211_IFTYPE_P2P_GO) |
 					  BIT(NL80211_IFTYPE_P2P_DEVICE);
 
 	c = 0;
 	i = 0;
 	n_limits = 1 + mon_flag + (p2p ? 2 : 0) + (rsdb || !p2p);
-	c0_limits = kसुस्मृति(n_limits, माप(*c0_limits), GFP_KERNEL);
-	अगर (!c0_limits)
-		जाओ err;
+	c0_limits = kcalloc(n_limits, sizeof(*c0_limits), GFP_KERNEL);
+	if (!c0_limits)
+		goto err;
 
-	combo[c].num_dअगरferent_channels = 1 + (rsdb || (p2p && mchan));
+	combo[c].num_different_channels = 1 + (rsdb || (p2p && mchan));
 	c0_limits[i].max = 1;
 	c0_limits[i++].types = BIT(NL80211_IFTYPE_STATION);
-	अगर (mon_flag) अणु
+	if (mon_flag) {
 		c0_limits[i].max = 1;
 		c0_limits[i++].types = BIT(NL80211_IFTYPE_MONITOR);
-	पूर्ण
-	अगर (p2p) अणु
+	}
+	if (p2p) {
 		c0_limits[i].max = 1;
 		c0_limits[i++].types = BIT(NL80211_IFTYPE_P2P_DEVICE);
 		c0_limits[i].max = 1 + rsdb;
 		c0_limits[i++].types = BIT(NL80211_IFTYPE_P2P_CLIENT) |
 				       BIT(NL80211_IFTYPE_P2P_GO);
-	पूर्ण
-	अगर (p2p && rsdb) अणु
+	}
+	if (p2p && rsdb) {
 		c0_limits[i].max = 2;
 		c0_limits[i++].types = BIT(NL80211_IFTYPE_AP);
-		combo[c].max_पूर्णांकerfaces = 4;
-	पूर्ण अन्यथा अगर (p2p) अणु
-		combo[c].max_पूर्णांकerfaces = i;
-	पूर्ण अन्यथा अगर (rsdb) अणु
+		combo[c].max_interfaces = 4;
+	} else if (p2p) {
+		combo[c].max_interfaces = i;
+	} else if (rsdb) {
 		c0_limits[i].max = 2;
 		c0_limits[i++].types = BIT(NL80211_IFTYPE_AP);
-		combo[c].max_पूर्णांकerfaces = 3;
-	पूर्ण अन्यथा अणु
+		combo[c].max_interfaces = 3;
+	} else {
 		c0_limits[i].max = 1;
 		c0_limits[i++].types = BIT(NL80211_IFTYPE_AP);
-		combo[c].max_पूर्णांकerfaces = i;
-	पूर्ण
+		combo[c].max_interfaces = i;
+	}
 	combo[c].n_limits = i;
 	combo[c].limits = c0_limits;
 
-	अगर (p2p && !rsdb) अणु
+	if (p2p && !rsdb) {
 		c++;
 		i = 0;
-		p2p_limits = kसुस्मृति(4, माप(*p2p_limits), GFP_KERNEL);
-		अगर (!p2p_limits)
-			जाओ err;
+		p2p_limits = kcalloc(4, sizeof(*p2p_limits), GFP_KERNEL);
+		if (!p2p_limits)
+			goto err;
 		p2p_limits[i].max = 1;
 		p2p_limits[i++].types = BIT(NL80211_IFTYPE_STATION);
 		p2p_limits[i].max = 1;
@@ -7045,127 +7044,127 @@ brcmf_txrx_stypes[NUM_NL80211_IFTYPES] = अणु
 		p2p_limits[i++].types = BIT(NL80211_IFTYPE_P2P_CLIENT);
 		p2p_limits[i].max = 1;
 		p2p_limits[i++].types = BIT(NL80211_IFTYPE_P2P_DEVICE);
-		combo[c].num_dअगरferent_channels = 1;
-		combo[c].max_पूर्णांकerfaces = i;
+		combo[c].num_different_channels = 1;
+		combo[c].max_interfaces = i;
 		combo[c].n_limits = i;
 		combo[c].limits = p2p_limits;
-	पूर्ण
+	}
 
-	अगर (mbss) अणु
+	if (mbss) {
 		c++;
 		i = 0;
 		n_limits = 1 + mon_flag;
-		mbss_limits = kसुस्मृति(n_limits, माप(*mbss_limits),
+		mbss_limits = kcalloc(n_limits, sizeof(*mbss_limits),
 				      GFP_KERNEL);
-		अगर (!mbss_limits)
-			जाओ err;
+		if (!mbss_limits)
+			goto err;
 		mbss_limits[i].max = 4;
 		mbss_limits[i++].types = BIT(NL80211_IFTYPE_AP);
-		अगर (mon_flag) अणु
+		if (mon_flag) {
 			mbss_limits[i].max = 1;
 			mbss_limits[i++].types = BIT(NL80211_IFTYPE_MONITOR);
-		पूर्ण
-		combo[c].beacon_पूर्णांक_infra_match = true;
-		combo[c].num_dअगरferent_channels = 1;
-		combo[c].max_पूर्णांकerfaces = 4 + mon_flag;
+		}
+		combo[c].beacon_int_infra_match = true;
+		combo[c].num_different_channels = 1;
+		combo[c].max_interfaces = 4 + mon_flag;
 		combo[c].n_limits = i;
 		combo[c].limits = mbss_limits;
-	पूर्ण
+	}
 
-	wiphy->n_अगरace_combinations = n_combos;
-	wiphy->अगरace_combinations = combo;
-	वापस 0;
+	wiphy->n_iface_combinations = n_combos;
+	wiphy->iface_combinations = combo;
+	return 0;
 
 err:
-	kमुक्त(c0_limits);
-	kमुक्त(p2p_limits);
-	kमुक्त(mbss_limits);
-	kमुक्त(combo);
-	वापस -ENOMEM;
-पूर्ण
+	kfree(c0_limits);
+	kfree(p2p_limits);
+	kfree(mbss_limits);
+	kfree(combo);
+	return -ENOMEM;
+}
 
-#अगर_घोषित CONFIG_PM
-अटल स्थिर काष्ठा wiphy_wowlan_support brcmf_wowlan_support = अणु
+#ifdef CONFIG_PM
+static const struct wiphy_wowlan_support brcmf_wowlan_support = {
 	.flags = WIPHY_WOWLAN_MAGIC_PKT | WIPHY_WOWLAN_DISCONNECT,
 	.n_patterns = BRCMF_WOWL_MAXPATTERNS,
 	.pattern_max_len = BRCMF_WOWL_MAXPATTERNSIZE,
 	.pattern_min_len = 1,
 	.max_pkt_offset = 1500,
-पूर्ण;
-#पूर्ण_अगर
+};
+#endif
 
-अटल व्योम brcmf_wiphy_wowl_params(काष्ठा wiphy *wiphy, काष्ठा brcmf_अगर *अगरp)
-अणु
-#अगर_घोषित CONFIG_PM
-	काष्ठा brcmf_cfg80211_info *cfg = wiphy_to_cfg(wiphy);
-	काष्ठा brcmf_pub *drvr = cfg->pub;
-	काष्ठा wiphy_wowlan_support *wowl;
+static void brcmf_wiphy_wowl_params(struct wiphy *wiphy, struct brcmf_if *ifp)
+{
+#ifdef CONFIG_PM
+	struct brcmf_cfg80211_info *cfg = wiphy_to_cfg(wiphy);
+	struct brcmf_pub *drvr = cfg->pub;
+	struct wiphy_wowlan_support *wowl;
 
-	wowl = kmemdup(&brcmf_wowlan_support, माप(brcmf_wowlan_support),
+	wowl = kmemdup(&brcmf_wowlan_support, sizeof(brcmf_wowlan_support),
 		       GFP_KERNEL);
-	अगर (!wowl) अणु
+	if (!wowl) {
 		bphy_err(drvr, "only support basic wowlan features\n");
 		wiphy->wowlan = &brcmf_wowlan_support;
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (brcmf_feat_is_enabled(अगरp, BRCMF_FEAT_PNO)) अणु
-		अगर (brcmf_feat_is_enabled(अगरp, BRCMF_FEAT_WOWL_ND)) अणु
+	if (brcmf_feat_is_enabled(ifp, BRCMF_FEAT_PNO)) {
+		if (brcmf_feat_is_enabled(ifp, BRCMF_FEAT_WOWL_ND)) {
 			wowl->flags |= WIPHY_WOWLAN_NET_DETECT;
 			wowl->max_nd_match_sets = BRCMF_PNO_MAX_PFN_COUNT;
-			init_रुकोqueue_head(&cfg->wowl.nd_data_रुको);
-		पूर्ण
-	पूर्ण
-	अगर (brcmf_feat_is_enabled(अगरp, BRCMF_FEAT_WOWL_GTK)) अणु
+			init_waitqueue_head(&cfg->wowl.nd_data_wait);
+		}
+	}
+	if (brcmf_feat_is_enabled(ifp, BRCMF_FEAT_WOWL_GTK)) {
 		wowl->flags |= WIPHY_WOWLAN_SUPPORTS_GTK_REKEY;
 		wowl->flags |= WIPHY_WOWLAN_GTK_REKEY_FAILURE;
-	पूर्ण
+	}
 
 	wiphy->wowlan = wowl;
-#पूर्ण_अगर
-पूर्ण
+#endif
+}
 
-अटल पूर्णांक brcmf_setup_wiphy(काष्ठा wiphy *wiphy, काष्ठा brcmf_अगर *अगरp)
-अणु
-	काष्ठा brcmf_pub *drvr = अगरp->drvr;
-	स्थिर काष्ठा ieee80211_अगरace_combination *combo;
-	काष्ठा ieee80211_supported_band *band;
-	u16 max_पूर्णांकerfaces = 0;
+static int brcmf_setup_wiphy(struct wiphy *wiphy, struct brcmf_if *ifp)
+{
+	struct brcmf_pub *drvr = ifp->drvr;
+	const struct ieee80211_iface_combination *combo;
+	struct ieee80211_supported_band *band;
+	u16 max_interfaces = 0;
 	bool gscan;
 	__le32 bandlist[3];
 	u32 n_bands;
-	पूर्णांक err, i;
+	int err, i;
 
 	wiphy->max_scan_ssids = WL_NUM_SCAN_MAX;
 	wiphy->max_scan_ie_len = BRCMF_SCAN_IE_LEN_MAX;
 	wiphy->max_num_pmkids = BRCMF_MAXPMKID;
 
-	err = brcmf_setup_अगरmodes(wiphy, अगरp);
-	अगर (err)
-		वापस err;
+	err = brcmf_setup_ifmodes(wiphy, ifp);
+	if (err)
+		return err;
 
-	क्रम (i = 0, combo = wiphy->अगरace_combinations;
-	     i < wiphy->n_अगरace_combinations; i++, combo++) अणु
-		max_पूर्णांकerfaces = max(max_पूर्णांकerfaces, combo->max_पूर्णांकerfaces);
-	पूर्ण
+	for (i = 0, combo = wiphy->iface_combinations;
+	     i < wiphy->n_iface_combinations; i++, combo++) {
+		max_interfaces = max(max_interfaces, combo->max_interfaces);
+	}
 
-	क्रम (i = 0; i < max_पूर्णांकerfaces && i < ARRAY_SIZE(drvr->addresses);
-	     i++) अणु
+	for (i = 0; i < max_interfaces && i < ARRAY_SIZE(drvr->addresses);
+	     i++) {
 		u8 *addr = drvr->addresses[i].addr;
 
-		स_नकल(addr, drvr->mac, ETH_ALEN);
-		अगर (i) अणु
+		memcpy(addr, drvr->mac, ETH_ALEN);
+		if (i) {
 			addr[0] |= BIT(1);
 			addr[ETH_ALEN - 1] ^= i;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	wiphy->addresses = drvr->addresses;
 	wiphy->n_addresses = i;
 
-	wiphy->संकेत_type = CFG80211_SIGNAL_TYPE_MBM;
+	wiphy->signal_type = CFG80211_SIGNAL_TYPE_MBM;
 	wiphy->cipher_suites = brcmf_cipher_suites;
 	wiphy->n_cipher_suites = ARRAY_SIZE(brcmf_cipher_suites);
-	अगर (!brcmf_feat_is_enabled(अगरp, BRCMF_FEAT_MFP))
+	if (!brcmf_feat_is_enabled(ifp, BRCMF_FEAT_MFP))
 		wiphy->n_cipher_suites--;
 	wiphy->bss_select_support = BIT(NL80211_BSS_SELECT_ATTR_RSSI) |
 				    BIT(NL80211_BSS_SELECT_ATTR_BAND_PREF) |
@@ -7176,566 +7175,566 @@ err:
 			WIPHY_FLAG_HAVE_AP_SME |
 			WIPHY_FLAG_OFFCHAN_TX |
 			WIPHY_FLAG_HAS_REMAIN_ON_CHANNEL;
-	अगर (brcmf_feat_is_enabled(अगरp, BRCMF_FEAT_TDLS))
+	if (brcmf_feat_is_enabled(ifp, BRCMF_FEAT_TDLS))
 		wiphy->flags |= WIPHY_FLAG_SUPPORTS_TDLS;
-	अगर (!अगरp->drvr->settings->roamoff)
+	if (!ifp->drvr->settings->roamoff)
 		wiphy->flags |= WIPHY_FLAG_SUPPORTS_FW_ROAM;
-	अगर (brcmf_feat_is_enabled(अगरp, BRCMF_FEAT_FWSUP)) अणु
+	if (brcmf_feat_is_enabled(ifp, BRCMF_FEAT_FWSUP)) {
 		wiphy_ext_feature_set(wiphy,
 				      NL80211_EXT_FEATURE_4WAY_HANDSHAKE_STA_PSK);
 		wiphy_ext_feature_set(wiphy,
 				      NL80211_EXT_FEATURE_4WAY_HANDSHAKE_STA_1X);
-		अगर (brcmf_feat_is_enabled(अगरp, BRCMF_FEAT_SAE))
+		if (brcmf_feat_is_enabled(ifp, BRCMF_FEAT_SAE))
 			wiphy_ext_feature_set(wiphy,
 					      NL80211_EXT_FEATURE_SAE_OFFLOAD);
-	पूर्ण
-	अगर (brcmf_feat_is_enabled(अगरp, BRCMF_FEAT_FWAUTH)) अणु
+	}
+	if (brcmf_feat_is_enabled(ifp, BRCMF_FEAT_FWAUTH)) {
 		wiphy_ext_feature_set(wiphy,
 				      NL80211_EXT_FEATURE_4WAY_HANDSHAKE_AP_PSK);
-		अगर (brcmf_feat_is_enabled(अगरp, BRCMF_FEAT_SAE))
+		if (brcmf_feat_is_enabled(ifp, BRCMF_FEAT_SAE))
 			wiphy_ext_feature_set(wiphy,
 					      NL80211_EXT_FEATURE_SAE_OFFLOAD_AP);
-	पूर्ण
+	}
 	wiphy->mgmt_stypes = brcmf_txrx_stypes;
-	wiphy->max_reमुख्य_on_channel_duration = 5000;
-	अगर (brcmf_feat_is_enabled(अगरp, BRCMF_FEAT_PNO)) अणु
-		gscan = brcmf_feat_is_enabled(अगरp, BRCMF_FEAT_GSCAN);
+	wiphy->max_remain_on_channel_duration = 5000;
+	if (brcmf_feat_is_enabled(ifp, BRCMF_FEAT_PNO)) {
+		gscan = brcmf_feat_is_enabled(ifp, BRCMF_FEAT_GSCAN);
 		brcmf_pno_wiphy_params(wiphy, gscan);
-	पूर्ण
-	/* venकरोr commands/events support */
-	wiphy->venकरोr_commands = brcmf_venकरोr_cmds;
-	wiphy->n_venकरोr_commands = BRCMF_VNDR_CMDS_LAST - 1;
+	}
+	/* vendor commands/events support */
+	wiphy->vendor_commands = brcmf_vendor_cmds;
+	wiphy->n_vendor_commands = BRCMF_VNDR_CMDS_LAST - 1;
 
-	अगर (brcmf_feat_is_enabled(अगरp, BRCMF_FEAT_WOWL))
-		brcmf_wiphy_wowl_params(wiphy, अगरp);
-	err = brcmf_fil_cmd_data_get(अगरp, BRCMF_C_GET_BANDLIST, &bandlist,
-				     माप(bandlist));
-	अगर (err) अणु
+	if (brcmf_feat_is_enabled(ifp, BRCMF_FEAT_WOWL))
+		brcmf_wiphy_wowl_params(wiphy, ifp);
+	err = brcmf_fil_cmd_data_get(ifp, BRCMF_C_GET_BANDLIST, &bandlist,
+				     sizeof(bandlist));
+	if (err) {
 		bphy_err(drvr, "could not obtain band info: err=%d\n", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 	/* first entry in bandlist is number of bands */
 	n_bands = le32_to_cpu(bandlist[0]);
-	क्रम (i = 1; i <= n_bands && i < ARRAY_SIZE(bandlist); i++) अणु
-		अगर (bandlist[i] == cpu_to_le32(WLC_BAND_2G)) अणु
-			band = kmemdup(&__wl_band_2ghz, माप(__wl_band_2ghz),
+	for (i = 1; i <= n_bands && i < ARRAY_SIZE(bandlist); i++) {
+		if (bandlist[i] == cpu_to_le32(WLC_BAND_2G)) {
+			band = kmemdup(&__wl_band_2ghz, sizeof(__wl_band_2ghz),
 				       GFP_KERNEL);
-			अगर (!band)
-				वापस -ENOMEM;
+			if (!band)
+				return -ENOMEM;
 
 			band->channels = kmemdup(&__wl_2ghz_channels,
-						 माप(__wl_2ghz_channels),
+						 sizeof(__wl_2ghz_channels),
 						 GFP_KERNEL);
-			अगर (!band->channels) अणु
-				kमुक्त(band);
-				वापस -ENOMEM;
-			पूर्ण
+			if (!band->channels) {
+				kfree(band);
+				return -ENOMEM;
+			}
 
 			band->n_channels = ARRAY_SIZE(__wl_2ghz_channels);
 			wiphy->bands[NL80211_BAND_2GHZ] = band;
-		पूर्ण
-		अगर (bandlist[i] == cpu_to_le32(WLC_BAND_5G)) अणु
-			band = kmemdup(&__wl_band_5ghz, माप(__wl_band_5ghz),
+		}
+		if (bandlist[i] == cpu_to_le32(WLC_BAND_5G)) {
+			band = kmemdup(&__wl_band_5ghz, sizeof(__wl_band_5ghz),
 				       GFP_KERNEL);
-			अगर (!band)
-				वापस -ENOMEM;
+			if (!band)
+				return -ENOMEM;
 
 			band->channels = kmemdup(&__wl_5ghz_channels,
-						 माप(__wl_5ghz_channels),
+						 sizeof(__wl_5ghz_channels),
 						 GFP_KERNEL);
-			अगर (!band->channels) अणु
-				kमुक्त(band);
-				वापस -ENOMEM;
-			पूर्ण
+			if (!band->channels) {
+				kfree(band);
+				return -ENOMEM;
+			}
 
 			band->n_channels = ARRAY_SIZE(__wl_5ghz_channels);
 			wiphy->bands[NL80211_BAND_5GHZ] = band;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (wiphy->bands[NL80211_BAND_5GHZ] &&
-	    brcmf_feat_is_enabled(अगरp, BRCMF_FEAT_DOT11H))
+	if (wiphy->bands[NL80211_BAND_5GHZ] &&
+	    brcmf_feat_is_enabled(ifp, BRCMF_FEAT_DOT11H))
 		wiphy_ext_feature_set(wiphy,
 				      NL80211_EXT_FEATURE_DFS_OFFLOAD);
 
 	wiphy_ext_feature_set(wiphy, NL80211_EXT_FEATURE_CQM_RSSI_LIST);
 
-	wiphy_पढ़ो_of_freq_limits(wiphy);
+	wiphy_read_of_freq_limits(wiphy);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल s32 brcmf_config_करोngle(काष्ठा brcmf_cfg80211_info *cfg)
-अणु
-	काष्ठा brcmf_pub *drvr = cfg->pub;
-	काष्ठा net_device *ndev;
-	काष्ठा wireless_dev *wdev;
-	काष्ठा brcmf_अगर *अगरp;
-	s32 घातer_mode;
+static s32 brcmf_config_dongle(struct brcmf_cfg80211_info *cfg)
+{
+	struct brcmf_pub *drvr = cfg->pub;
+	struct net_device *ndev;
+	struct wireless_dev *wdev;
+	struct brcmf_if *ifp;
+	s32 power_mode;
 	s32 err = 0;
 
-	अगर (cfg->करोngle_up)
-		वापस err;
+	if (cfg->dongle_up)
+		return err;
 
 	ndev = cfg_to_ndev(cfg);
 	wdev = ndev->ieee80211_ptr;
-	अगरp = netdev_priv(ndev);
+	ifp = netdev_priv(ndev);
 
-	/* make sure RF is पढ़ोy क्रम work */
-	brcmf_fil_cmd_पूर्णांक_set(अगरp, BRCMF_C_UP, 0);
+	/* make sure RF is ready for work */
+	brcmf_fil_cmd_int_set(ifp, BRCMF_C_UP, 0);
 
-	brcmf_करोngle_scanसमय(अगरp);
+	brcmf_dongle_scantime(ifp);
 
-	घातer_mode = cfg->pwr_save ? PM_FAST : PM_OFF;
-	err = brcmf_fil_cmd_पूर्णांक_set(अगरp, BRCMF_C_SET_PM, घातer_mode);
-	अगर (err)
-		जाओ शेष_conf_out;
+	power_mode = cfg->pwr_save ? PM_FAST : PM_OFF;
+	err = brcmf_fil_cmd_int_set(ifp, BRCMF_C_SET_PM, power_mode);
+	if (err)
+		goto default_conf_out;
 	brcmf_dbg(INFO, "power save set to %s\n",
-		  (घातer_mode ? "enabled" : "disabled"));
+		  (power_mode ? "enabled" : "disabled"));
 
-	err = brcmf_करोngle_roam(अगरp);
-	अगर (err)
-		जाओ शेष_conf_out;
-	err = brcmf_cfg80211_change_अगरace(wdev->wiphy, ndev, wdev->अगरtype,
-					  शून्य);
-	अगर (err)
-		जाओ शेष_conf_out;
+	err = brcmf_dongle_roam(ifp);
+	if (err)
+		goto default_conf_out;
+	err = brcmf_cfg80211_change_iface(wdev->wiphy, ndev, wdev->iftype,
+					  NULL);
+	if (err)
+		goto default_conf_out;
 
-	brcmf_configure_arp_nd_offload(अगरp, true);
+	brcmf_configure_arp_nd_offload(ifp, true);
 
-	err = brcmf_fil_cmd_पूर्णांक_set(अगरp, BRCMF_C_SET_FAKEFRAG, 1);
-	अगर (err) अणु
+	err = brcmf_fil_cmd_int_set(ifp, BRCMF_C_SET_FAKEFRAG, 1);
+	if (err) {
 		bphy_err(drvr, "failed to set frameburst mode\n");
-		जाओ शेष_conf_out;
-	पूर्ण
+		goto default_conf_out;
+	}
 
-	cfg->करोngle_up = true;
-शेष_conf_out:
+	cfg->dongle_up = true;
+default_conf_out:
 
-	वापस err;
+	return err;
 
-पूर्ण
+}
 
-अटल s32 __brcmf_cfg80211_up(काष्ठा brcmf_अगर *अगरp)
-अणु
-	set_bit(BRCMF_VIF_STATUS_READY, &अगरp->vअगर->sme_state);
+static s32 __brcmf_cfg80211_up(struct brcmf_if *ifp)
+{
+	set_bit(BRCMF_VIF_STATUS_READY, &ifp->vif->sme_state);
 
-	वापस brcmf_config_करोngle(अगरp->drvr->config);
-पूर्ण
+	return brcmf_config_dongle(ifp->drvr->config);
+}
 
-अटल s32 __brcmf_cfg80211_करोwn(काष्ठा brcmf_अगर *अगरp)
-अणु
-	काष्ठा brcmf_cfg80211_info *cfg = अगरp->drvr->config;
+static s32 __brcmf_cfg80211_down(struct brcmf_if *ifp)
+{
+	struct brcmf_cfg80211_info *cfg = ifp->drvr->config;
 
 	/*
-	 * While going करोwn, अगर associated with AP disassociate
-	 * from AP to save घातer
+	 * While going down, if associated with AP disassociate
+	 * from AP to save power
 	 */
-	अगर (check_vअगर_up(अगरp->vअगर)) अणु
-		brcmf_link_करोwn(अगरp->vअगर, WLAN_REASON_UNSPECIFIED, true);
+	if (check_vif_up(ifp->vif)) {
+		brcmf_link_down(ifp->vif, WLAN_REASON_UNSPECIFIED, true);
 
 		/* Make sure WPA_Supplicant receives all the event
 		   generated due to DISASSOC call to the fw to keep
 		   the state fw and WPA_Supplicant state consistent
 		 */
 		brcmf_delay(500);
-	पूर्ण
+	}
 
-	brcmf_पात_scanning(cfg);
-	clear_bit(BRCMF_VIF_STATUS_READY, &अगरp->vअगर->sme_state);
+	brcmf_abort_scanning(cfg);
+	clear_bit(BRCMF_VIF_STATUS_READY, &ifp->vif->sme_state);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-s32 brcmf_cfg80211_up(काष्ठा net_device *ndev)
-अणु
-	काष्ठा brcmf_अगर *अगरp = netdev_priv(ndev);
-	काष्ठा brcmf_cfg80211_info *cfg = अगरp->drvr->config;
+s32 brcmf_cfg80211_up(struct net_device *ndev)
+{
+	struct brcmf_if *ifp = netdev_priv(ndev);
+	struct brcmf_cfg80211_info *cfg = ifp->drvr->config;
 	s32 err = 0;
 
 	mutex_lock(&cfg->usr_sync);
-	err = __brcmf_cfg80211_up(अगरp);
+	err = __brcmf_cfg80211_up(ifp);
 	mutex_unlock(&cfg->usr_sync);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-s32 brcmf_cfg80211_करोwn(काष्ठा net_device *ndev)
-अणु
-	काष्ठा brcmf_अगर *अगरp = netdev_priv(ndev);
-	काष्ठा brcmf_cfg80211_info *cfg = अगरp->drvr->config;
+s32 brcmf_cfg80211_down(struct net_device *ndev)
+{
+	struct brcmf_if *ifp = netdev_priv(ndev);
+	struct brcmf_cfg80211_info *cfg = ifp->drvr->config;
 	s32 err = 0;
 
 	mutex_lock(&cfg->usr_sync);
-	err = __brcmf_cfg80211_करोwn(अगरp);
+	err = __brcmf_cfg80211_down(ifp);
 	mutex_unlock(&cfg->usr_sync);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-क्रमागत nl80211_अगरtype brcmf_cfg80211_get_अगरtype(काष्ठा brcmf_अगर *अगरp)
-अणु
-	काष्ठा wireless_dev *wdev = &अगरp->vअगर->wdev;
+enum nl80211_iftype brcmf_cfg80211_get_iftype(struct brcmf_if *ifp)
+{
+	struct wireless_dev *wdev = &ifp->vif->wdev;
 
-	वापस wdev->अगरtype;
-पूर्ण
+	return wdev->iftype;
+}
 
-bool brcmf_get_vअगर_state_any(काष्ठा brcmf_cfg80211_info *cfg,
-			     अचिन्हित दीर्घ state)
-अणु
-	काष्ठा brcmf_cfg80211_vअगर *vअगर;
+bool brcmf_get_vif_state_any(struct brcmf_cfg80211_info *cfg,
+			     unsigned long state)
+{
+	struct brcmf_cfg80211_vif *vif;
 
-	list_क्रम_each_entry(vअगर, &cfg->vअगर_list, list) अणु
-		अगर (test_bit(state, &vअगर->sme_state))
-			वापस true;
-	पूर्ण
-	वापस false;
-पूर्ण
+	list_for_each_entry(vif, &cfg->vif_list, list) {
+		if (test_bit(state, &vif->sme_state))
+			return true;
+	}
+	return false;
+}
 
-अटल अंतरभूत bool vअगर_event_equals(काष्ठा brcmf_cfg80211_vअगर_event *event,
+static inline bool vif_event_equals(struct brcmf_cfg80211_vif_event *event,
 				    u8 action)
-अणु
+{
 	u8 evt_action;
 
-	spin_lock(&event->vअगर_event_lock);
+	spin_lock(&event->vif_event_lock);
 	evt_action = event->action;
-	spin_unlock(&event->vअगर_event_lock);
-	वापस evt_action == action;
-पूर्ण
+	spin_unlock(&event->vif_event_lock);
+	return evt_action == action;
+}
 
-व्योम brcmf_cfg80211_arm_vअगर_event(काष्ठा brcmf_cfg80211_info *cfg,
-				  काष्ठा brcmf_cfg80211_vअगर *vअगर)
-अणु
-	काष्ठा brcmf_cfg80211_vअगर_event *event = &cfg->vअगर_event;
+void brcmf_cfg80211_arm_vif_event(struct brcmf_cfg80211_info *cfg,
+				  struct brcmf_cfg80211_vif *vif)
+{
+	struct brcmf_cfg80211_vif_event *event = &cfg->vif_event;
 
-	spin_lock(&event->vअगर_event_lock);
-	event->vअगर = vअगर;
+	spin_lock(&event->vif_event_lock);
+	event->vif = vif;
 	event->action = 0;
-	spin_unlock(&event->vअगर_event_lock);
-पूर्ण
+	spin_unlock(&event->vif_event_lock);
+}
 
-bool brcmf_cfg80211_vअगर_event_armed(काष्ठा brcmf_cfg80211_info *cfg)
-अणु
-	काष्ठा brcmf_cfg80211_vअगर_event *event = &cfg->vअगर_event;
+bool brcmf_cfg80211_vif_event_armed(struct brcmf_cfg80211_info *cfg)
+{
+	struct brcmf_cfg80211_vif_event *event = &cfg->vif_event;
 	bool armed;
 
-	spin_lock(&event->vअगर_event_lock);
-	armed = event->vअगर != शून्य;
-	spin_unlock(&event->vअगर_event_lock);
+	spin_lock(&event->vif_event_lock);
+	armed = event->vif != NULL;
+	spin_unlock(&event->vif_event_lock);
 
-	वापस armed;
-पूर्ण
+	return armed;
+}
 
-पूर्णांक brcmf_cfg80211_रुको_vअगर_event(काष्ठा brcmf_cfg80211_info *cfg,
-				  u8 action, uदीर्घ समयout)
-अणु
-	काष्ठा brcmf_cfg80211_vअगर_event *event = &cfg->vअगर_event;
+int brcmf_cfg80211_wait_vif_event(struct brcmf_cfg80211_info *cfg,
+				  u8 action, ulong timeout)
+{
+	struct brcmf_cfg80211_vif_event *event = &cfg->vif_event;
 
-	वापस रुको_event_समयout(event->vअगर_wq,
-				  vअगर_event_equals(event, action), समयout);
-पूर्ण
+	return wait_event_timeout(event->vif_wq,
+				  vif_event_equals(event, action), timeout);
+}
 
-अटल s32 brcmf_translate_country_code(काष्ठा brcmf_pub *drvr, अक्षर alpha2[2],
-					काष्ठा brcmf_fil_country_le *ccreq)
-अणु
-	काष्ठा brcmfmac_pd_cc *country_codes;
-	काष्ठा brcmfmac_pd_cc_entry *cc;
+static s32 brcmf_translate_country_code(struct brcmf_pub *drvr, char alpha2[2],
+					struct brcmf_fil_country_le *ccreq)
+{
+	struct brcmfmac_pd_cc *country_codes;
+	struct brcmfmac_pd_cc_entry *cc;
 	s32 found_index;
-	पूर्णांक i;
+	int i;
 
 	country_codes = drvr->settings->country_codes;
-	अगर (!country_codes) अणु
+	if (!country_codes) {
 		brcmf_dbg(TRACE, "No country codes configured for device\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर ((alpha2[0] == ccreq->country_abbrev[0]) &&
-	    (alpha2[1] == ccreq->country_abbrev[1])) अणु
+	if ((alpha2[0] == ccreq->country_abbrev[0]) &&
+	    (alpha2[1] == ccreq->country_abbrev[1])) {
 		brcmf_dbg(TRACE, "Country code already set\n");
-		वापस -EAGAIN;
-	पूर्ण
+		return -EAGAIN;
+	}
 
 	found_index = -1;
-	क्रम (i = 0; i < country_codes->table_size; i++) अणु
+	for (i = 0; i < country_codes->table_size; i++) {
 		cc = &country_codes->table[i];
-		अगर ((cc->iso3166[0] == '\0') && (found_index == -1))
+		if ((cc->iso3166[0] == '\0') && (found_index == -1))
 			found_index = i;
-		अगर ((cc->iso3166[0] == alpha2[0]) &&
-		    (cc->iso3166[1] == alpha2[1])) अणु
+		if ((cc->iso3166[0] == alpha2[0]) &&
+		    (cc->iso3166[1] == alpha2[1])) {
 			found_index = i;
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	अगर (found_index == -1) अणु
+			break;
+		}
+	}
+	if (found_index == -1) {
 		brcmf_dbg(TRACE, "No country code match found\n");
-		वापस -EINVAL;
-	पूर्ण
-	स_रखो(ccreq, 0, माप(*ccreq));
+		return -EINVAL;
+	}
+	memset(ccreq, 0, sizeof(*ccreq));
 	ccreq->rev = cpu_to_le32(country_codes->table[found_index].rev);
-	स_नकल(ccreq->ccode, country_codes->table[found_index].cc,
+	memcpy(ccreq->ccode, country_codes->table[found_index].cc,
 	       BRCMF_COUNTRY_BUF_SZ);
 	ccreq->country_abbrev[0] = alpha2[0];
 	ccreq->country_abbrev[1] = alpha2[1];
 	ccreq->country_abbrev[2] = 0;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम brcmf_cfg80211_reg_notअगरier(काष्ठा wiphy *wiphy,
-					काष्ठा regulatory_request *req)
-अणु
-	काष्ठा brcmf_cfg80211_info *cfg = wiphy_to_cfg(wiphy);
-	काष्ठा brcmf_अगर *अगरp = brcmf_get_अगरp(cfg->pub, 0);
-	काष्ठा brcmf_pub *drvr = cfg->pub;
-	काष्ठा brcmf_fil_country_le ccreq;
+static void brcmf_cfg80211_reg_notifier(struct wiphy *wiphy,
+					struct regulatory_request *req)
+{
+	struct brcmf_cfg80211_info *cfg = wiphy_to_cfg(wiphy);
+	struct brcmf_if *ifp = brcmf_get_ifp(cfg->pub, 0);
+	struct brcmf_pub *drvr = cfg->pub;
+	struct brcmf_fil_country_le ccreq;
 	s32 err;
-	पूर्णांक i;
+	int i;
 
-	/* The country code माला_लो set to "00" by शेष at boot, ignore */
-	अगर (req->alpha2[0] == '0' && req->alpha2[1] == '0')
-		वापस;
+	/* The country code gets set to "00" by default at boot, ignore */
+	if (req->alpha2[0] == '0' && req->alpha2[1] == '0')
+		return;
 
 	/* ignore non-ISO3166 country codes */
-	क्रम (i = 0; i < 2; i++)
-		अगर (req->alpha2[i] < 'A' || req->alpha2[i] > 'Z') अणु
+	for (i = 0; i < 2; i++)
+		if (req->alpha2[i] < 'A' || req->alpha2[i] > 'Z') {
 			bphy_err(drvr, "not an ISO3166 code (0x%02x 0x%02x)\n",
 				 req->alpha2[0], req->alpha2[1]);
-			वापस;
-		पूर्ण
+			return;
+		}
 
 	brcmf_dbg(TRACE, "Enter: initiator=%d, alpha=%c%c\n", req->initiator,
 		  req->alpha2[0], req->alpha2[1]);
 
-	err = brcmf_fil_iovar_data_get(अगरp, "country", &ccreq, माप(ccreq));
-	अगर (err) अणु
+	err = brcmf_fil_iovar_data_get(ifp, "country", &ccreq, sizeof(ccreq));
+	if (err) {
 		bphy_err(drvr, "Country code iovar returned err = %d\n", err);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	err = brcmf_translate_country_code(अगरp->drvr, req->alpha2, &ccreq);
-	अगर (err)
-		वापस;
+	err = brcmf_translate_country_code(ifp->drvr, req->alpha2, &ccreq);
+	if (err)
+		return;
 
-	err = brcmf_fil_iovar_data_set(अगरp, "country", &ccreq, माप(ccreq));
-	अगर (err) अणु
+	err = brcmf_fil_iovar_data_set(ifp, "country", &ccreq, sizeof(ccreq));
+	if (err) {
 		bphy_err(drvr, "Firmware rejected country setting\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 	brcmf_setup_wiphybands(cfg);
-पूर्ण
+}
 
-अटल व्योम brcmf_मुक्त_wiphy(काष्ठा wiphy *wiphy)
-अणु
-	पूर्णांक i;
+static void brcmf_free_wiphy(struct wiphy *wiphy)
+{
+	int i;
 
-	अगर (!wiphy)
-		वापस;
+	if (!wiphy)
+		return;
 
-	अगर (wiphy->अगरace_combinations) अणु
-		क्रम (i = 0; i < wiphy->n_अगरace_combinations; i++)
-			kमुक्त(wiphy->अगरace_combinations[i].limits);
-	पूर्ण
-	kमुक्त(wiphy->अगरace_combinations);
-	अगर (wiphy->bands[NL80211_BAND_2GHZ]) अणु
-		kमुक्त(wiphy->bands[NL80211_BAND_2GHZ]->channels);
-		kमुक्त(wiphy->bands[NL80211_BAND_2GHZ]);
-	पूर्ण
-	अगर (wiphy->bands[NL80211_BAND_5GHZ]) अणु
-		kमुक्त(wiphy->bands[NL80211_BAND_5GHZ]->channels);
-		kमुक्त(wiphy->bands[NL80211_BAND_5GHZ]);
-	पूर्ण
-#अगर IS_ENABLED(CONFIG_PM)
-	अगर (wiphy->wowlan != &brcmf_wowlan_support)
-		kमुक्त(wiphy->wowlan);
-#पूर्ण_अगर
-पूर्ण
+	if (wiphy->iface_combinations) {
+		for (i = 0; i < wiphy->n_iface_combinations; i++)
+			kfree(wiphy->iface_combinations[i].limits);
+	}
+	kfree(wiphy->iface_combinations);
+	if (wiphy->bands[NL80211_BAND_2GHZ]) {
+		kfree(wiphy->bands[NL80211_BAND_2GHZ]->channels);
+		kfree(wiphy->bands[NL80211_BAND_2GHZ]);
+	}
+	if (wiphy->bands[NL80211_BAND_5GHZ]) {
+		kfree(wiphy->bands[NL80211_BAND_5GHZ]->channels);
+		kfree(wiphy->bands[NL80211_BAND_5GHZ]);
+	}
+#if IS_ENABLED(CONFIG_PM)
+	if (wiphy->wowlan != &brcmf_wowlan_support)
+		kfree(wiphy->wowlan);
+#endif
+}
 
-काष्ठा brcmf_cfg80211_info *brcmf_cfg80211_attach(काष्ठा brcmf_pub *drvr,
-						  काष्ठा cfg80211_ops *ops,
-						  bool p2pdev_क्रमced)
-अणु
-	काष्ठा wiphy *wiphy = drvr->wiphy;
-	काष्ठा net_device *ndev = brcmf_get_अगरp(drvr, 0)->ndev;
-	काष्ठा brcmf_cfg80211_info *cfg;
-	काष्ठा brcmf_cfg80211_vअगर *vअगर;
-	काष्ठा brcmf_अगर *अगरp;
+struct brcmf_cfg80211_info *brcmf_cfg80211_attach(struct brcmf_pub *drvr,
+						  struct cfg80211_ops *ops,
+						  bool p2pdev_forced)
+{
+	struct wiphy *wiphy = drvr->wiphy;
+	struct net_device *ndev = brcmf_get_ifp(drvr, 0)->ndev;
+	struct brcmf_cfg80211_info *cfg;
+	struct brcmf_cfg80211_vif *vif;
+	struct brcmf_if *ifp;
 	s32 err = 0;
 	s32 io_type;
-	u16 *cap = शून्य;
+	u16 *cap = NULL;
 
-	अगर (!ndev) अणु
+	if (!ndev) {
 		bphy_err(drvr, "ndev is invalid\n");
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	cfg = kzalloc(माप(*cfg), GFP_KERNEL);
-	अगर (!cfg) अणु
+	cfg = kzalloc(sizeof(*cfg), GFP_KERNEL);
+	if (!cfg) {
 		bphy_err(drvr, "Could not allocate wiphy device\n");
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
 	cfg->wiphy = wiphy;
 	cfg->pub = drvr;
-	init_vअगर_event(&cfg->vअगर_event);
-	INIT_LIST_HEAD(&cfg->vअगर_list);
+	init_vif_event(&cfg->vif_event);
+	INIT_LIST_HEAD(&cfg->vif_list);
 
-	vअगर = brcmf_alloc_vअगर(cfg, NL80211_IFTYPE_STATION);
-	अगर (IS_ERR(vअगर))
-		जाओ wiphy_out;
+	vif = brcmf_alloc_vif(cfg, NL80211_IFTYPE_STATION);
+	if (IS_ERR(vif))
+		goto wiphy_out;
 
-	अगरp = netdev_priv(ndev);
-	vअगर->अगरp = अगरp;
-	vअगर->wdev.netdev = ndev;
-	ndev->ieee80211_ptr = &vअगर->wdev;
+	ifp = netdev_priv(ndev);
+	vif->ifp = ifp;
+	vif->wdev.netdev = ndev;
+	ndev->ieee80211_ptr = &vif->wdev;
 	SET_NETDEV_DEV(ndev, wiphy_dev(cfg->wiphy));
 
 	err = wl_init_priv(cfg);
-	अगर (err) अणु
+	if (err) {
 		bphy_err(drvr, "Failed to init iwm_priv (%d)\n", err);
-		brcmf_मुक्त_vअगर(vअगर);
-		जाओ wiphy_out;
-	पूर्ण
-	अगरp->vअगर = vअगर;
+		brcmf_free_vif(vif);
+		goto wiphy_out;
+	}
+	ifp->vif = vif;
 
-	/* determine d11 io type beक्रमe wiphy setup */
-	err = brcmf_fil_cmd_पूर्णांक_get(अगरp, BRCMF_C_GET_VERSION, &io_type);
-	अगर (err) अणु
+	/* determine d11 io type before wiphy setup */
+	err = brcmf_fil_cmd_int_get(ifp, BRCMF_C_GET_VERSION, &io_type);
+	if (err) {
 		bphy_err(drvr, "Failed to get D11 version (%d)\n", err);
-		जाओ priv_out;
-	पूर्ण
+		goto priv_out;
+	}
 	cfg->d11inf.io_type = (u8)io_type;
 	brcmu_d11_attach(&cfg->d11inf);
 
-	/* regulatory notअगरer below needs access to cfg so
+	/* regulatory notifer below needs access to cfg so
 	 * assign it now.
 	 */
 	drvr->config = cfg;
 
-	err = brcmf_setup_wiphy(wiphy, अगरp);
-	अगर (err < 0)
-		जाओ priv_out;
+	err = brcmf_setup_wiphy(wiphy, ifp);
+	if (err < 0)
+		goto priv_out;
 
 	brcmf_dbg(INFO, "Registering custom regulatory\n");
-	wiphy->reg_notअगरier = brcmf_cfg80211_reg_notअगरier;
+	wiphy->reg_notifier = brcmf_cfg80211_reg_notifier;
 	wiphy->regulatory_flags |= REGULATORY_CUSTOM_REG;
-	wiphy_apply_custom_regulatory(wiphy, &brcmf_regकरोm);
+	wiphy_apply_custom_regulatory(wiphy, &brcmf_regdom);
 
-	/* firmware शेषs to 40MHz disabled in 2G band. We संकेत
-	 * cfg80211 here that we करो and have it decide we can enable
-	 * it. But first check अगर device करोes support 2G operation.
+	/* firmware defaults to 40MHz disabled in 2G band. We signal
+	 * cfg80211 here that we do and have it decide we can enable
+	 * it. But first check if device does support 2G operation.
 	 */
-	अगर (wiphy->bands[NL80211_BAND_2GHZ]) अणु
+	if (wiphy->bands[NL80211_BAND_2GHZ]) {
 		cap = &wiphy->bands[NL80211_BAND_2GHZ]->ht_cap.cap;
 		*cap |= IEEE80211_HT_CAP_SUP_WIDTH_20_40;
-	पूर्ण
-#अगर_घोषित CONFIG_PM
-	अगर (brcmf_feat_is_enabled(अगरp, BRCMF_FEAT_WOWL_GTK))
+	}
+#ifdef CONFIG_PM
+	if (brcmf_feat_is_enabled(ifp, BRCMF_FEAT_WOWL_GTK))
 		ops->set_rekey_data = brcmf_cfg80211_set_rekey_data;
-#पूर्ण_अगर
-	err = wiphy_रेजिस्टर(wiphy);
-	अगर (err < 0) अणु
+#endif
+	err = wiphy_register(wiphy);
+	if (err < 0) {
 		bphy_err(drvr, "Could not register wiphy device (%d)\n", err);
-		जाओ priv_out;
-	पूर्ण
+		goto priv_out;
+	}
 
 	err = brcmf_setup_wiphybands(cfg);
-	अगर (err) अणु
+	if (err) {
 		bphy_err(drvr, "Setting wiphy bands failed (%d)\n", err);
-		जाओ wiphy_unreg_out;
-	पूर्ण
+		goto wiphy_unreg_out;
+	}
 
-	/* If cfg80211 didn't disable 40MHz HT CAP in wiphy_रेजिस्टर(),
+	/* If cfg80211 didn't disable 40MHz HT CAP in wiphy_register(),
 	 * setup 40MHz in 2GHz band and enable OBSS scanning.
 	 */
-	अगर (cap && (*cap & IEEE80211_HT_CAP_SUP_WIDTH_20_40)) अणु
+	if (cap && (*cap & IEEE80211_HT_CAP_SUP_WIDTH_20_40)) {
 		err = brcmf_enable_bw40_2g(cfg);
-		अगर (!err)
-			err = brcmf_fil_iovar_पूर्णांक_set(अगरp, "obss_coex",
+		if (!err)
+			err = brcmf_fil_iovar_int_set(ifp, "obss_coex",
 						      BRCMF_OBSS_COEX_AUTO);
-		अन्यथा
+		else
 			*cap &= ~IEEE80211_HT_CAP_SUP_WIDTH_20_40;
-	पूर्ण
+	}
 
-	err = brcmf_fweh_activate_events(अगरp);
-	अगर (err) अणु
+	err = brcmf_fweh_activate_events(ifp);
+	if (err) {
 		bphy_err(drvr, "FWEH activation failed (%d)\n", err);
-		जाओ wiphy_unreg_out;
-	पूर्ण
+		goto wiphy_unreg_out;
+	}
 
-	err = brcmf_p2p_attach(cfg, p2pdev_क्रमced);
-	अगर (err) अणु
+	err = brcmf_p2p_attach(cfg, p2pdev_forced);
+	if (err) {
 		bphy_err(drvr, "P2P initialisation failed (%d)\n", err);
-		जाओ wiphy_unreg_out;
-	पूर्ण
+		goto wiphy_unreg_out;
+	}
 	err = brcmf_btcoex_attach(cfg);
-	अगर (err) अणु
+	if (err) {
 		bphy_err(drvr, "BT-coex initialisation failed (%d)\n", err);
 		brcmf_p2p_detach(&cfg->p2p);
-		जाओ wiphy_unreg_out;
-	पूर्ण
+		goto wiphy_unreg_out;
+	}
 	err = brcmf_pno_attach(cfg);
-	अगर (err) अणु
+	if (err) {
 		bphy_err(drvr, "PNO initialisation failed (%d)\n", err);
 		brcmf_btcoex_detach(cfg);
 		brcmf_p2p_detach(&cfg->p2p);
-		जाओ wiphy_unreg_out;
-	पूर्ण
+		goto wiphy_unreg_out;
+	}
 
-	अगर (brcmf_feat_is_enabled(अगरp, BRCMF_FEAT_TDLS)) अणु
-		err = brcmf_fil_iovar_पूर्णांक_set(अगरp, "tdls_enable", 1);
-		अगर (err) अणु
+	if (brcmf_feat_is_enabled(ifp, BRCMF_FEAT_TDLS)) {
+		err = brcmf_fil_iovar_int_set(ifp, "tdls_enable", 1);
+		if (err) {
 			brcmf_dbg(INFO, "TDLS not enabled (%d)\n", err);
 			wiphy->flags &= ~WIPHY_FLAG_SUPPORTS_TDLS;
-		पूर्ण अन्यथा अणु
-			brcmf_fweh_रेजिस्टर(cfg->pub, BRCMF_E_TDLS_PEER_EVENT,
-					    brcmf_notअगरy_tdls_peer_event);
-		पूर्ण
-	पूर्ण
+		} else {
+			brcmf_fweh_register(cfg->pub, BRCMF_E_TDLS_PEER_EVENT,
+					    brcmf_notify_tdls_peer_event);
+		}
+	}
 
 	/* (re-) activate FWEH event handling */
-	err = brcmf_fweh_activate_events(अगरp);
-	अगर (err) अणु
+	err = brcmf_fweh_activate_events(ifp);
+	if (err) {
 		bphy_err(drvr, "FWEH activation failed (%d)\n", err);
-		जाओ detach;
-	पूर्ण
+		goto detach;
+	}
 
 	/* Fill in some of the advertised nl80211 supported features */
-	अगर (brcmf_feat_is_enabled(अगरp, BRCMF_FEAT_SCAN_RANDOM_MAC)) अणु
+	if (brcmf_feat_is_enabled(ifp, BRCMF_FEAT_SCAN_RANDOM_MAC)) {
 		wiphy->features |= NL80211_FEATURE_SCHED_SCAN_RANDOM_MAC_ADDR;
-#अगर_घोषित CONFIG_PM
-		अगर (wiphy->wowlan &&
+#ifdef CONFIG_PM
+		if (wiphy->wowlan &&
 		    wiphy->wowlan->flags & WIPHY_WOWLAN_NET_DETECT)
 			wiphy->features |= NL80211_FEATURE_ND_RANDOM_MAC_ADDR;
-#पूर्ण_अगर
-	पूर्ण
+#endif
+	}
 
-	वापस cfg;
+	return cfg;
 
 detach:
 	brcmf_pno_detach(cfg);
 	brcmf_btcoex_detach(cfg);
 	brcmf_p2p_detach(&cfg->p2p);
 wiphy_unreg_out:
-	wiphy_unरेजिस्टर(cfg->wiphy);
+	wiphy_unregister(cfg->wiphy);
 priv_out:
 	wl_deinit_priv(cfg);
-	brcmf_मुक्त_vअगर(vअगर);
-	अगरp->vअगर = शून्य;
+	brcmf_free_vif(vif);
+	ifp->vif = NULL;
 wiphy_out:
-	brcmf_मुक्त_wiphy(wiphy);
-	kमुक्त(cfg);
-	वापस शून्य;
-पूर्ण
+	brcmf_free_wiphy(wiphy);
+	kfree(cfg);
+	return NULL;
+}
 
-व्योम brcmf_cfg80211_detach(काष्ठा brcmf_cfg80211_info *cfg)
-अणु
-	अगर (!cfg)
-		वापस;
+void brcmf_cfg80211_detach(struct brcmf_cfg80211_info *cfg)
+{
+	if (!cfg)
+		return;
 
 	brcmf_pno_detach(cfg);
 	brcmf_btcoex_detach(cfg);
-	wiphy_unरेजिस्टर(cfg->wiphy);
+	wiphy_unregister(cfg->wiphy);
 	wl_deinit_priv(cfg);
-	brcmf_मुक्त_wiphy(cfg->wiphy);
-	kमुक्त(cfg);
-पूर्ण
+	brcmf_free_wiphy(cfg->wiphy);
+	kfree(cfg);
+}

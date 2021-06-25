@@ -1,79 +1,78 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * Support क्रम Intel Camera Imaging ISP subप्रणाली.
+ * Support for Intel Camera Imaging ISP subsystem.
  * Copyright (c) 2015, Intel Corporation.
  *
- * This program is मुक्त software; you can redistribute it and/or modअगरy it
+ * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
  * version 2, as published by the Free Software Foundation.
  *
  * This program is distributed in the hope it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License क्रम
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
  * more details.
  */
 
-#अगर_अघोषित __EVENT_FIFO_PRIVATE_H
-#घोषणा __EVENT_FIFO_PRIVATE_H
+#ifndef __EVENT_FIFO_PRIVATE_H
+#define __EVENT_FIFO_PRIVATE_H
 
-#समावेश "event_fifo_public.h"
+#include "event_fifo_public.h"
 
-#समावेश "device_access.h"
+#include "device_access.h"
 
-#समावेश "assert_support.h"
+#include "assert_support.h"
 
-#समावेश <bits.h>			/* _hrt_get_bits() */
+#include <bits.h>			/* _hrt_get_bits() */
 
-STORAGE_CLASS_EVENT_C व्योम event_रुको_क्रम(स्थिर event_ID_t ID)
-अणु
-	निश्चित(ID < N_EVENT_ID);
-	निश्चित(event_source_addr[ID] != ((hrt_address) - 1));
-	(व्योम)ia_css_device_load_uपूर्णांक32(event_source_addr[ID]);
-	वापस;
-पूर्ण
+STORAGE_CLASS_EVENT_C void event_wait_for(const event_ID_t ID)
+{
+	assert(ID < N_EVENT_ID);
+	assert(event_source_addr[ID] != ((hrt_address) - 1));
+	(void)ia_css_device_load_uint32(event_source_addr[ID]);
+	return;
+}
 
-STORAGE_CLASS_EVENT_C व्योम cnd_event_रुको_क्रम(स्थिर event_ID_t ID,
-	स्थिर bool cnd)
-अणु
-	अगर (cnd) अणु
-		event_रुको_क्रम(ID);
-	पूर्ण
-पूर्ण
+STORAGE_CLASS_EVENT_C void cnd_event_wait_for(const event_ID_t ID,
+	const bool cnd)
+{
+	if (cnd) {
+		event_wait_for(ID);
+	}
+}
 
-STORAGE_CLASS_EVENT_C hrt_data event_receive_token(स्थिर event_ID_t ID)
-अणु
-	निश्चित(ID < N_EVENT_ID);
-	निश्चित(event_source_addr[ID] != ((hrt_address) - 1));
-	वापस ia_css_device_load_uपूर्णांक32(event_source_addr[ID]);
-पूर्ण
+STORAGE_CLASS_EVENT_C hrt_data event_receive_token(const event_ID_t ID)
+{
+	assert(ID < N_EVENT_ID);
+	assert(event_source_addr[ID] != ((hrt_address) - 1));
+	return ia_css_device_load_uint32(event_source_addr[ID]);
+}
 
-STORAGE_CLASS_EVENT_C व्योम event_send_token(स्थिर event_ID_t ID,
-	स्थिर hrt_data token)
-अणु
-	निश्चित(ID < N_EVENT_ID);
-	निश्चित(event_sink_addr[ID] != ((hrt_address) - 1));
-	ia_css_device_store_uपूर्णांक32(event_sink_addr[ID], token);
-पूर्ण
+STORAGE_CLASS_EVENT_C void event_send_token(const event_ID_t ID,
+	const hrt_data token)
+{
+	assert(ID < N_EVENT_ID);
+	assert(event_sink_addr[ID] != ((hrt_address) - 1));
+	ia_css_device_store_uint32(event_sink_addr[ID], token);
+}
 
-STORAGE_CLASS_EVENT_C bool is_event_pending(स्थिर event_ID_t ID)
-अणु
+STORAGE_CLASS_EVENT_C bool is_event_pending(const event_ID_t ID)
+{
 	hrt_data	value;
 
-	निश्चित(ID < N_EVENT_ID);
-	निश्चित(event_source_query_addr[ID] != ((hrt_address) - 1));
-	value = ia_css_device_load_uपूर्णांक32(event_source_query_addr[ID]);
-	वापस !_hrt_get_bit(value, EVENT_QUERY_BIT);
-पूर्ण
+	assert(ID < N_EVENT_ID);
+	assert(event_source_query_addr[ID] != ((hrt_address) - 1));
+	value = ia_css_device_load_uint32(event_source_query_addr[ID]);
+	return !_hrt_get_bit(value, EVENT_QUERY_BIT);
+}
 
-STORAGE_CLASS_EVENT_C bool can_event_send_token(स्थिर event_ID_t ID)
-अणु
+STORAGE_CLASS_EVENT_C bool can_event_send_token(const event_ID_t ID)
+{
 	hrt_data	value;
 
-	निश्चित(ID < N_EVENT_ID);
-	निश्चित(event_sink_query_addr[ID] != ((hrt_address) - 1));
-	value = ia_css_device_load_uपूर्णांक32(event_sink_query_addr[ID]);
-	वापस !_hrt_get_bit(value, EVENT_QUERY_BIT);
-पूर्ण
+	assert(ID < N_EVENT_ID);
+	assert(event_sink_query_addr[ID] != ((hrt_address) - 1));
+	value = ia_css_device_load_uint32(event_sink_query_addr[ID]);
+	return !_hrt_get_bit(value, EVENT_QUERY_BIT);
+}
 
-#पूर्ण_अगर /* __EVENT_FIFO_PRIVATE_H */
+#endif /* __EVENT_FIFO_PRIVATE_H */

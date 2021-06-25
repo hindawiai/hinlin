@@ -1,11 +1,10 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _ALPHA_HARसूचीQ_H
-#घोषणा _ALPHA_HARसूचीQ_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _ALPHA_HARDIRQ_H
+#define _ALPHA_HARDIRQ_H
 
-व्योम ack_bad_irq(अचिन्हित पूर्णांक irq);
-#घोषणा ack_bad_irq ack_bad_irq
+void ack_bad_irq(unsigned int irq);
+#define ack_bad_irq ack_bad_irq
 
-#समावेश <यंत्र-generic/hardirq.h>
+#include <asm-generic/hardirq.h>
 
-#पूर्ण_अगर /* _ALPHA_HARसूचीQ_H */
+#endif /* _ALPHA_HARDIRQ_H */

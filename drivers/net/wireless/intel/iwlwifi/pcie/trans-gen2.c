@@ -1,46 +1,45 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0 OR BSD-3-Clause
+// SPDX-License-Identifier: GPL-2.0 OR BSD-3-Clause
 /*
  * Copyright (C) 2017 Intel Deutschland GmbH
  * Copyright (C) 2018-2021 Intel Corporation
  */
-#समावेश "iwl-trans.h"
-#समावेश "iwl-prph.h"
-#समावेश "iwl-context-info.h"
-#समावेश "iwl-context-info-gen3.h"
-#समावेश "internal.h"
-#समावेश "fw/dbg.h"
+#include "iwl-trans.h"
+#include "iwl-prph.h"
+#include "iwl-context-info.h"
+#include "iwl-context-info-gen3.h"
+#include "internal.h"
+#include "fw/dbg.h"
 
-#घोषणा FW_RESET_TIMEOUT (HZ / 5)
+#define FW_RESET_TIMEOUT (HZ / 5)
 
 /*
  * Start up NIC's basic functionality after it has been reset
- * (e.g. after platक्रमm boot, or shutकरोwn via iwl_pcie_apm_stop())
- * NOTE:  This करोes not load uCode nor start the embedded processor
+ * (e.g. after platform boot, or shutdown via iwl_pcie_apm_stop())
+ * NOTE:  This does not load uCode nor start the embedded processor
  */
-पूर्णांक iwl_pcie_gen2_apm_init(काष्ठा iwl_trans *trans)
-अणु
-	पूर्णांक ret = 0;
+int iwl_pcie_gen2_apm_init(struct iwl_trans *trans)
+{
+	int ret = 0;
 
 	IWL_DEBUG_INFO(trans, "Init card's basic functions\n");
 
 	/*
 	 * Use "set_bit" below rather than "write", to preserve any hardware
-	 * bits alपढ़ोy set by शेष after reset.
+	 * bits already set by default after reset.
 	 */
 
 	/*
 	 * Disable L0s without affecting L1;
-	 * करोn't रुको क्रम ICH L0s (ICH bug W/A)
+	 * don't wait for ICH L0s (ICH bug W/A)
 	 */
 	iwl_set_bit(trans, CSR_GIO_CHICKEN_BITS,
 		    CSR_GIO_CHICKEN_BITS_REG_BIT_L1A_NO_L0S_RX);
 
-	/* Set FH रुको threshold to maximum (HW error during stress W/A) */
+	/* Set FH wait threshold to maximum (HW error during stress W/A) */
 	iwl_set_bit(trans, CSR_DBG_HPET_MEM_REG, CSR_DBG_HPET_MEM_REG_VAL);
 
 	/*
-	 * Enable HAP INTA (पूर्णांकerrupt from management bus) to
+	 * Enable HAP INTA (interrupt from management bus) to
 	 * wake device's PCI Express link L1a -> L0s
 	 */
 	iwl_set_bit(trans, CSR_HW_IF_CONFIG_REG,
@@ -49,23 +48,23 @@
 	iwl_pcie_apm_config(trans);
 
 	ret = iwl_finish_nic_init(trans, trans->trans_cfg);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	set_bit(STATUS_DEVICE_ENABLED, &trans->status);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम iwl_pcie_gen2_apm_stop(काष्ठा iwl_trans *trans, bool op_mode_leave)
-अणु
+static void iwl_pcie_gen2_apm_stop(struct iwl_trans *trans, bool op_mode_leave)
+{
 	IWL_DEBUG_INFO(trans, "Stop card, put in low power state\n");
 
-	अगर (op_mode_leave) अणु
-		अगर (!test_bit(STATUS_DEVICE_ENABLED, &trans->status))
+	if (op_mode_leave) {
+		if (!test_bit(STATUS_DEVICE_ENABLED, &trans->status))
 			iwl_pcie_gen2_apm_init(trans);
 
-		/* inक्रमm ME that we are leaving */
+		/* inform ME that we are leaving */
 		iwl_set_bit(trans, CSR_DBG_LINK_PWR_MGMT_REG,
 			    CSR_RESET_LINK_PWR_MGMT_DISABLED);
 		iwl_set_bit(trans, CSR_HW_IF_CONFIG_REG,
@@ -75,7 +74,7 @@
 		iwl_clear_bit(trans, CSR_DBG_LINK_PWR_MGMT_REG,
 			      CSR_RESET_LINK_PWR_MGMT_DISABLED);
 		mdelay(5);
-	पूर्ण
+	}
 
 	clear_bit(STATUS_DEVICE_ENABLED, &trans->status);
 
@@ -86,100 +85,100 @@
 
 	/*
 	 * Clear "initialization complete" bit to move adapter from
-	 * D0A* (घातered-up Active) --> D0U* (Uninitialized) state.
+	 * D0A* (powered-up Active) --> D0U* (Uninitialized) state.
 	 */
 	iwl_clear_bit(trans, CSR_GP_CNTRL, CSR_GP_CNTRL_REG_FLAG_INIT_DONE);
-पूर्ण
+}
 
-अटल व्योम iwl_trans_pcie_fw_reset_handshake(काष्ठा iwl_trans *trans)
-अणु
-	काष्ठा iwl_trans_pcie *trans_pcie = IWL_TRANS_GET_PCIE_TRANS(trans);
-	पूर्णांक ret;
+static void iwl_trans_pcie_fw_reset_handshake(struct iwl_trans *trans)
+{
+	struct iwl_trans_pcie *trans_pcie = IWL_TRANS_GET_PCIE_TRANS(trans);
+	int ret;
 
-	trans_pcie->fw_reset_करोne = false;
+	trans_pcie->fw_reset_done = false;
 
-	अगर (trans->trans_cfg->device_family < IWL_DEVICE_FAMILY_AX210)
-		iwl_ग_लिखो_umac_prph(trans, UREG_NIC_SET_NMI_DRIVER,
+	if (trans->trans_cfg->device_family < IWL_DEVICE_FAMILY_AX210)
+		iwl_write_umac_prph(trans, UREG_NIC_SET_NMI_DRIVER,
 				    UREG_NIC_SET_NMI_DRIVER_RESET_HANDSHAKE);
-	अन्यथा
-		iwl_ग_लिखो_umac_prph(trans, UREG_DOORBELL_TO_ISR6,
+	else
+		iwl_write_umac_prph(trans, UREG_DOORBELL_TO_ISR6,
 				    UREG_DOORBELL_TO_ISR6_RESET_HANDSHAKE);
 
-	/* रुको 200ms */
-	ret = रुको_event_समयout(trans_pcie->fw_reset_रुकोq,
-				 trans_pcie->fw_reset_करोne, FW_RESET_TIMEOUT);
-	अगर (!ret)
+	/* wait 200ms */
+	ret = wait_event_timeout(trans_pcie->fw_reset_waitq,
+				 trans_pcie->fw_reset_done, FW_RESET_TIMEOUT);
+	if (!ret)
 		IWL_INFO(trans,
 			 "firmware didn't ACK the reset - continue anyway\n");
-पूर्ण
+}
 
-व्योम _iwl_trans_pcie_gen2_stop_device(काष्ठा iwl_trans *trans)
-अणु
-	काष्ठा iwl_trans_pcie *trans_pcie = IWL_TRANS_GET_PCIE_TRANS(trans);
+void _iwl_trans_pcie_gen2_stop_device(struct iwl_trans *trans)
+{
+	struct iwl_trans_pcie *trans_pcie = IWL_TRANS_GET_PCIE_TRANS(trans);
 
-	lockdep_निश्चित_held(&trans_pcie->mutex);
+	lockdep_assert_held(&trans_pcie->mutex);
 
-	अगर (trans_pcie->is_करोwn)
-		वापस;
+	if (trans_pcie->is_down)
+		return;
 
-	अगर (trans_pcie->fw_reset_handshake &&
+	if (trans_pcie->fw_reset_handshake &&
 	    trans->state >= IWL_TRANS_FW_STARTED)
 		iwl_trans_pcie_fw_reset_handshake(trans);
 
-	trans_pcie->is_करोwn = true;
+	trans_pcie->is_down = true;
 
-	/* tell the device to stop sending पूर्णांकerrupts */
-	iwl_disable_पूर्णांकerrupts(trans);
+	/* tell the device to stop sending interrupts */
+	iwl_disable_interrupts(trans);
 
-	/* device going करोwn, Stop using ICT table */
+	/* device going down, Stop using ICT table */
 	iwl_pcie_disable_ict(trans);
 
 	/*
 	 * If a HW restart happens during firmware loading,
 	 * then the firmware loading might call this function
 	 * and later it might be called again due to the
-	 * restart. So करोn't process again अगर the device is
-	 * alपढ़ोy dead.
+	 * restart. So don't process again if the device is
+	 * already dead.
 	 */
-	अगर (test_and_clear_bit(STATUS_DEVICE_ENABLED, &trans->status)) अणु
+	if (test_and_clear_bit(STATUS_DEVICE_ENABLED, &trans->status)) {
 		IWL_DEBUG_INFO(trans,
 			       "DEVICE_ENABLED bit was set and is now cleared\n");
-		iwl_txq_gen2_tx_मुक्त(trans);
+		iwl_txq_gen2_tx_free(trans);
 		iwl_pcie_rx_stop(trans);
-	पूर्ण
+	}
 
-	iwl_pcie_ctxt_info_मुक्त_paging(trans);
-	अगर (trans->trans_cfg->device_family >= IWL_DEVICE_FAMILY_AX210)
-		iwl_pcie_ctxt_info_gen3_मुक्त(trans);
-	अन्यथा
-		iwl_pcie_ctxt_info_मुक्त(trans);
+	iwl_pcie_ctxt_info_free_paging(trans);
+	if (trans->trans_cfg->device_family >= IWL_DEVICE_FAMILY_AX210)
+		iwl_pcie_ctxt_info_gen3_free(trans);
+	else
+		iwl_pcie_ctxt_info_free(trans);
 
 	/* Make sure (redundant) we've released our request to stay awake */
 	iwl_clear_bit(trans, CSR_GP_CNTRL,
 		      CSR_GP_CNTRL_REG_FLAG_MAC_ACCESS_REQ);
 
-	/* Stop the device, and put it in low घातer state */
+	/* Stop the device, and put it in low power state */
 	iwl_pcie_gen2_apm_stop(trans, false);
 
 	iwl_trans_sw_reset(trans);
 
 	/*
-	 * Upon stop, the IVAR table माला_लो erased, so msi-x won't
-	 * work. This causes a bug in RF-KILL flows, since the पूर्णांकerrupt
+	 * Upon stop, the IVAR table gets erased, so msi-x won't
+	 * work. This causes a bug in RF-KILL flows, since the interrupt
 	 * that enables radio won't fire on the correct irq, and the
-	 * driver won't be able to handle the पूर्णांकerrupt.
+	 * driver won't be able to handle the interrupt.
 	 * Configure the IVAR table again after reset.
 	 */
 	iwl_pcie_conf_msix_hw(trans_pcie);
 
 	/*
-	 * Upon stop, the APM issues an पूर्णांकerrupt अगर HW RF समाप्त is set.
+	 * Upon stop, the APM issues an interrupt if HW RF kill is set.
 	 * This is a bug in certain verions of the hardware.
-	 * Certain devices also keep sending HW RF समाप्त पूर्णांकerrupt all
-	 * the समय, unless the पूर्णांकerrupt is ACKed even अगर the पूर्णांकerrupt
-	 * should be masked. Re-ACK all the पूर्णांकerrupts here.
+	 * Certain devices also keep sending HW RF kill interrupt all
+	 * the time, unless the interrupt is ACKed even if the interrupt
+	 * should be masked. Re-ACK all the interrupts here.
 	 */
-	iwl_disable_पूर्णांकerrupts(trans);
+	iwl_disable_interrupts(trans);
 
 	/* clear all status bits */
 	clear_bit(STATUS_SYNC_HCMD_ACTIVE, &trans->status);
@@ -187,88 +186,88 @@
 	clear_bit(STATUS_TPOWER_PMI, &trans->status);
 
 	/*
-	 * Even अगर we stop the HW, we still want the RF समाप्त
-	 * पूर्णांकerrupt
+	 * Even if we stop the HW, we still want the RF kill
+	 * interrupt
 	 */
-	iwl_enable_rfसमाप्त_पूर्णांक(trans);
+	iwl_enable_rfkill_int(trans);
 
 	/* re-take ownership to prevent other users from stealing the device */
 	iwl_pcie_prepare_card_hw(trans);
-पूर्ण
+}
 
-व्योम iwl_trans_pcie_gen2_stop_device(काष्ठा iwl_trans *trans)
-अणु
-	काष्ठा iwl_trans_pcie *trans_pcie = IWL_TRANS_GET_PCIE_TRANS(trans);
-	bool was_in_rfसमाप्त;
+void iwl_trans_pcie_gen2_stop_device(struct iwl_trans *trans)
+{
+	struct iwl_trans_pcie *trans_pcie = IWL_TRANS_GET_PCIE_TRANS(trans);
+	bool was_in_rfkill;
 
-	iwl_op_mode_समय_poपूर्णांक(trans->op_mode,
+	iwl_op_mode_time_point(trans->op_mode,
 			       IWL_FW_INI_TIME_POINT_HOST_DEVICE_DISABLE,
-			       शून्य);
+			       NULL);
 
 	mutex_lock(&trans_pcie->mutex);
-	trans_pcie->opmode_करोwn = true;
-	was_in_rfसमाप्त = test_bit(STATUS_RFKILL_OPMODE, &trans->status);
+	trans_pcie->opmode_down = true;
+	was_in_rfkill = test_bit(STATUS_RFKILL_OPMODE, &trans->status);
 	_iwl_trans_pcie_gen2_stop_device(trans);
-	iwl_trans_pcie_handle_stop_rfसमाप्त(trans, was_in_rfसमाप्त);
+	iwl_trans_pcie_handle_stop_rfkill(trans, was_in_rfkill);
 	mutex_unlock(&trans_pcie->mutex);
-पूर्ण
+}
 
-अटल पूर्णांक iwl_pcie_gen2_nic_init(काष्ठा iwl_trans *trans)
-अणु
-	काष्ठा iwl_trans_pcie *trans_pcie = IWL_TRANS_GET_PCIE_TRANS(trans);
-	पूर्णांक queue_size = max_t(u32, IWL_CMD_QUEUE_SIZE,
+static int iwl_pcie_gen2_nic_init(struct iwl_trans *trans)
+{
+	struct iwl_trans_pcie *trans_pcie = IWL_TRANS_GET_PCIE_TRANS(trans);
+	int queue_size = max_t(u32, IWL_CMD_QUEUE_SIZE,
 			       trans->cfg->min_txq_size);
 
-	/* TODO: most of the logic can be हटाओd in A0 - but not in Z0 */
+	/* TODO: most of the logic can be removed in A0 - but not in Z0 */
 	spin_lock_bh(&trans_pcie->irq_lock);
 	iwl_pcie_gen2_apm_init(trans);
 	spin_unlock_bh(&trans_pcie->irq_lock);
 
 	iwl_op_mode_nic_config(trans->op_mode);
 
-	/* Allocate the RX queue, or reset अगर it is alपढ़ोy allocated */
-	अगर (iwl_pcie_gen2_rx_init(trans))
-		वापस -ENOMEM;
+	/* Allocate the RX queue, or reset if it is already allocated */
+	if (iwl_pcie_gen2_rx_init(trans))
+		return -ENOMEM;
 
 	/* Allocate or reset and init all Tx and Command queues */
-	अगर (iwl_txq_gen2_init(trans, trans->txqs.cmd.q_id, queue_size))
-		वापस -ENOMEM;
+	if (iwl_txq_gen2_init(trans, trans->txqs.cmd.q_id, queue_size))
+		return -ENOMEM;
 
-	/* enable shaकरोw regs in HW */
+	/* enable shadow regs in HW */
 	iwl_set_bit(trans, CSR_MAC_SHADOW_REG_CTRL, 0x800FFFFF);
 	IWL_DEBUG_INFO(trans, "Enabling shadow registers in device\n");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम iwl_trans_pcie_gen2_fw_alive(काष्ठा iwl_trans *trans, u32 scd_addr)
-अणु
-	काष्ठा iwl_trans_pcie *trans_pcie = IWL_TRANS_GET_PCIE_TRANS(trans);
+void iwl_trans_pcie_gen2_fw_alive(struct iwl_trans *trans, u32 scd_addr)
+{
+	struct iwl_trans_pcie *trans_pcie = IWL_TRANS_GET_PCIE_TRANS(trans);
 
 	iwl_pcie_reset_ict(trans);
 
 	/* make sure all queue are not stopped/used */
-	स_रखो(trans->txqs.queue_stopped, 0,
-	       माप(trans->txqs.queue_stopped));
-	स_रखो(trans->txqs.queue_used, 0, माप(trans->txqs.queue_used));
+	memset(trans->txqs.queue_stopped, 0,
+	       sizeof(trans->txqs.queue_stopped));
+	memset(trans->txqs.queue_used, 0, sizeof(trans->txqs.queue_used));
 
-	/* now that we got alive we can मुक्त the fw image & the context info.
-	 * paging memory cannot be मुक्तd included since FW will still use it
+	/* now that we got alive we can free the fw image & the context info.
+	 * paging memory cannot be freed included since FW will still use it
 	 */
-	iwl_pcie_ctxt_info_मुक्त(trans);
+	iwl_pcie_ctxt_info_free(trans);
 
 	/*
-	 * Re-enable all the पूर्णांकerrupts, including the RF-Kill one, now that
+	 * Re-enable all the interrupts, including the RF-Kill one, now that
 	 * the firmware is alive.
 	 */
-	iwl_enable_पूर्णांकerrupts(trans);
+	iwl_enable_interrupts(trans);
 	mutex_lock(&trans_pcie->mutex);
-	iwl_pcie_check_hw_rf_समाप्त(trans);
+	iwl_pcie_check_hw_rf_kill(trans);
 	mutex_unlock(&trans_pcie->mutex);
-पूर्ण
+}
 
-अटल व्योम iwl_pcie_set_ltr(काष्ठा iwl_trans *trans)
-अणु
+static void iwl_pcie_set_ltr(struct iwl_trans *trans)
+{
 	u32 ltr_val = CSR_LTR_LONG_VAL_AD_NO_SNOOP_REQ |
 		      u32_encode_bits(CSR_LTR_LONG_VAL_AD_SCALE_USEC,
 				      CSR_LTR_LONG_VAL_AD_NO_SNOOP_SCALE) |
@@ -284,96 +283,96 @@
 	 * initialize the LTR to ~250 usec (see ltr_val above).
 	 * The firmware initializes this again later (to a smaller value).
 	 */
-	अगर ((trans->trans_cfg->device_family == IWL_DEVICE_FAMILY_AX210 ||
+	if ((trans->trans_cfg->device_family == IWL_DEVICE_FAMILY_AX210 ||
 	     trans->trans_cfg->device_family == IWL_DEVICE_FAMILY_22000) &&
-	    !trans->trans_cfg->पूर्णांकegrated) अणु
-		iwl_ग_लिखो32(trans, CSR_LTR_LONG_VAL_AD, ltr_val);
-	पूर्ण अन्यथा अगर (trans->trans_cfg->पूर्णांकegrated &&
-		   trans->trans_cfg->device_family == IWL_DEVICE_FAMILY_22000) अणु
-		iwl_ग_लिखो_prph(trans, HPM_MAC_LTR_CSR, HPM_MAC_LRT_ENABLE_ALL);
-		iwl_ग_लिखो_prph(trans, HPM_UMAC_LTR, ltr_val);
-	पूर्ण
-पूर्ण
+	    !trans->trans_cfg->integrated) {
+		iwl_write32(trans, CSR_LTR_LONG_VAL_AD, ltr_val);
+	} else if (trans->trans_cfg->integrated &&
+		   trans->trans_cfg->device_family == IWL_DEVICE_FAMILY_22000) {
+		iwl_write_prph(trans, HPM_MAC_LTR_CSR, HPM_MAC_LRT_ENABLE_ALL);
+		iwl_write_prph(trans, HPM_UMAC_LTR, ltr_val);
+	}
+}
 
-पूर्णांक iwl_trans_pcie_gen2_start_fw(काष्ठा iwl_trans *trans,
-				 स्थिर काष्ठा fw_img *fw, bool run_in_rfसमाप्त)
-अणु
-	काष्ठा iwl_trans_pcie *trans_pcie = IWL_TRANS_GET_PCIE_TRANS(trans);
-	bool hw_rfसमाप्त;
-	पूर्णांक ret;
+int iwl_trans_pcie_gen2_start_fw(struct iwl_trans *trans,
+				 const struct fw_img *fw, bool run_in_rfkill)
+{
+	struct iwl_trans_pcie *trans_pcie = IWL_TRANS_GET_PCIE_TRANS(trans);
+	bool hw_rfkill;
+	int ret;
 
-	/* This may fail अगर AMT took ownership of the device */
-	अगर (iwl_pcie_prepare_card_hw(trans)) अणु
+	/* This may fail if AMT took ownership of the device */
+	if (iwl_pcie_prepare_card_hw(trans)) {
 		IWL_WARN(trans, "Exit HW not ready\n");
 		ret = -EIO;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	iwl_enable_rfसमाप्त_पूर्णांक(trans);
+	iwl_enable_rfkill_int(trans);
 
-	iwl_ग_लिखो32(trans, CSR_INT, 0xFFFFFFFF);
+	iwl_write32(trans, CSR_INT, 0xFFFFFFFF);
 
 	/*
-	 * We enabled the RF-Kill पूर्णांकerrupt and the handler may very
-	 * well be running. Disable the पूर्णांकerrupts to make sure no other
-	 * पूर्णांकerrupt can be fired.
+	 * We enabled the RF-Kill interrupt and the handler may very
+	 * well be running. Disable the interrupts to make sure no other
+	 * interrupt can be fired.
 	 */
-	iwl_disable_पूर्णांकerrupts(trans);
+	iwl_disable_interrupts(trans);
 
 	/* Make sure it finished running */
 	iwl_pcie_synchronize_irqs(trans);
 
 	mutex_lock(&trans_pcie->mutex);
 
-	/* If platक्रमm's RF_KILL चयन is NOT set to KILL */
-	hw_rfसमाप्त = iwl_pcie_check_hw_rf_समाप्त(trans);
-	अगर (hw_rfसमाप्त && !run_in_rfसमाप्त) अणु
+	/* If platform's RF_KILL switch is NOT set to KILL */
+	hw_rfkill = iwl_pcie_check_hw_rf_kill(trans);
+	if (hw_rfkill && !run_in_rfkill) {
 		ret = -ERFKILL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	/* Someone called stop_device, करोn't try to start_fw */
-	अगर (trans_pcie->is_करोwn) अणु
+	/* Someone called stop_device, don't try to start_fw */
+	if (trans_pcie->is_down) {
 		IWL_WARN(trans,
 			 "Can't start_fw since the HW hasn't been started\n");
 		ret = -EIO;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	/* make sure rfसमाप्त handshake bits are cleared */
-	iwl_ग_लिखो32(trans, CSR_UCODE_DRV_GP1_CLR, CSR_UCODE_SW_BIT_RFKILL);
-	iwl_ग_लिखो32(trans, CSR_UCODE_DRV_GP1_CLR,
+	/* make sure rfkill handshake bits are cleared */
+	iwl_write32(trans, CSR_UCODE_DRV_GP1_CLR, CSR_UCODE_SW_BIT_RFKILL);
+	iwl_write32(trans, CSR_UCODE_DRV_GP1_CLR,
 		    CSR_UCODE_DRV_GP1_BIT_CMD_BLOCKED);
 
-	/* clear (again), then enable host पूर्णांकerrupts */
-	iwl_ग_लिखो32(trans, CSR_INT, 0xFFFFFFFF);
+	/* clear (again), then enable host interrupts */
+	iwl_write32(trans, CSR_INT, 0xFFFFFFFF);
 
 	ret = iwl_pcie_gen2_nic_init(trans);
-	अगर (ret) अणु
+	if (ret) {
 		IWL_ERR(trans, "Unable to init nic\n");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (trans->trans_cfg->device_family >= IWL_DEVICE_FAMILY_AX210)
+	if (trans->trans_cfg->device_family >= IWL_DEVICE_FAMILY_AX210)
 		ret = iwl_pcie_ctxt_info_gen3_init(trans, fw);
-	अन्यथा
+	else
 		ret = iwl_pcie_ctxt_info_init(trans, fw);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
 	iwl_pcie_set_ltr(trans);
 
-	अगर (trans->trans_cfg->device_family >= IWL_DEVICE_FAMILY_AX210)
-		iwl_ग_लिखो_umac_prph(trans, UREG_CPU_INIT_RUN, 1);
-	अन्यथा
-		iwl_ग_लिखो_prph(trans, UREG_CPU_INIT_RUN, 1);
+	if (trans->trans_cfg->device_family >= IWL_DEVICE_FAMILY_AX210)
+		iwl_write_umac_prph(trans, UREG_CPU_INIT_RUN, 1);
+	else
+		iwl_write_prph(trans, UREG_CPU_INIT_RUN, 1);
 
-	/* re-check RF-Kill state since we may have missed the पूर्णांकerrupt */
-	hw_rfसमाप्त = iwl_pcie_check_hw_rf_समाप्त(trans);
-	अगर (hw_rfसमाप्त && !run_in_rfसमाप्त)
+	/* re-check RF-Kill state since we may have missed the interrupt */
+	hw_rfkill = iwl_pcie_check_hw_rf_kill(trans);
+	if (hw_rfkill && !run_in_rfkill)
 		ret = -ERFKILL;
 
 out:
 	mutex_unlock(&trans_pcie->mutex);
-	वापस ret;
-पूर्ण
+	return ret;
+}

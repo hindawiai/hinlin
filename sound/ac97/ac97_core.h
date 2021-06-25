@@ -1,14 +1,13 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (C) 2016 Robert Jarzmik <robert.jarzmik@मुक्त.fr>
+ * Copyright (C) 2016 Robert Jarzmik <robert.jarzmik@free.fr>
  */
 
-अचिन्हित पूर्णांक snd_ac97_bus_scan_one(काष्ठा ac97_controller *adrv,
-				   अचिन्हित पूर्णांक codec_num);
+unsigned int snd_ac97_bus_scan_one(struct ac97_controller *adrv,
+				   unsigned int codec_num);
 
-अटल अंतरभूत bool ac97_ids_match(अचिन्हित पूर्णांक id1, अचिन्हित पूर्णांक id2,
-				  अचिन्हित पूर्णांक mask)
-अणु
-	वापस (id1 & mask) == (id2 & mask);
-पूर्ण
+static inline bool ac97_ids_match(unsigned int id1, unsigned int id2,
+				  unsigned int mask)
+{
+	return (id1 & mask) == (id2 & mask);
+}

@@ -1,45 +1,44 @@
-<शैली गुरु>
 /*
- * SPDX-License-Identअगरier: MIT
+ * SPDX-License-Identifier: MIT
  *
- * Copyright तऊ 2017 Intel Corporation
+ * Copyright © 2017 Intel Corporation
  */
 
-#समावेश <linux/fs.h>
-#समावेश <linux/mount.h>
-#समावेश <linux/pagemap.h>
+#include <linux/fs.h>
+#include <linux/mount.h>
+#include <linux/pagemap.h>
 
-#समावेश "i915_drv.h"
-#समावेश "i915_gemfs.h"
+#include "i915_drv.h"
+#include "i915_gemfs.h"
 
-पूर्णांक i915_gemfs_init(काष्ठा drm_i915_निजी *i915)
-अणु
-	काष्ठा file_प्रणाली_type *type;
-	काष्ठा vfsmount *gemfs;
+int i915_gemfs_init(struct drm_i915_private *i915)
+{
+	struct file_system_type *type;
+	struct vfsmount *gemfs;
 
 	type = get_fs_type("tmpfs");
-	अगर (!type)
-		वापस -ENODEV;
+	if (!type)
+		return -ENODEV;
 
 	/*
-	 * By creating our own shmemfs mountpoपूर्णांक, we can pass in
-	 * mount flags that better match our useहाल.
+	 * By creating our own shmemfs mountpoint, we can pass in
+	 * mount flags that better match our usecase.
 	 *
 	 * One example, although it is probably better with a per-file
 	 * control, is selecting huge page allocations ("huge=within_size").
-	 * Currently unused due to bandwidth issues (slow पढ़ोs) on Broadwell+.
+	 * Currently unused due to bandwidth issues (slow reads) on Broadwell+.
 	 */
 
 	gemfs = kern_mount(type);
-	अगर (IS_ERR(gemfs))
-		वापस PTR_ERR(gemfs);
+	if (IS_ERR(gemfs))
+		return PTR_ERR(gemfs);
 
 	i915->mm.gemfs = gemfs;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम i915_gemfs_fini(काष्ठा drm_i915_निजी *i915)
-अणु
+void i915_gemfs_fini(struct drm_i915_private *i915)
+{
 	kern_unmount(i915->mm.gemfs);
-पूर्ण
+}

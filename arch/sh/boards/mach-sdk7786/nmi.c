@@ -1,81 +1,80 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * SDK7786 FPGA NMI Support.
  *
  * Copyright (C) 2010  Paul Mundt
  */
-#समावेश <linux/init.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/माला.स>
-#समावेश <mach/fpga.h>
+#include <linux/init.h>
+#include <linux/kernel.h>
+#include <linux/string.h>
+#include <mach/fpga.h>
 
-क्रमागत अणु
+enum {
 	NMI_MODE_MANUAL,
 	NMI_MODE_AUX,
 	NMI_MODE_MASKED,
 	NMI_MODE_ANY,
 	NMI_MODE_UNKNOWN,
-पूर्ण;
+};
 
 /*
- * Default to the manual NMI चयन.
+ * Default to the manual NMI switch.
  */
-अटल अचिन्हित पूर्णांक __initdata nmi_mode = NMI_MODE_ANY;
+static unsigned int __initdata nmi_mode = NMI_MODE_ANY;
 
-अटल पूर्णांक __init nmi_mode_setup(अक्षर *str)
-अणु
-	अगर (!str)
-		वापस 0;
+static int __init nmi_mode_setup(char *str)
+{
+	if (!str)
+		return 0;
 
-	अगर (म_भेद(str, "manual") == 0)
+	if (strcmp(str, "manual") == 0)
 		nmi_mode = NMI_MODE_MANUAL;
-	अन्यथा अगर (म_भेद(str, "aux") == 0)
+	else if (strcmp(str, "aux") == 0)
 		nmi_mode = NMI_MODE_AUX;
-	अन्यथा अगर (म_भेद(str, "masked") == 0)
+	else if (strcmp(str, "masked") == 0)
 		nmi_mode = NMI_MODE_MASKED;
-	अन्यथा अगर (म_भेद(str, "any") == 0)
+	else if (strcmp(str, "any") == 0)
 		nmi_mode = NMI_MODE_ANY;
-	अन्यथा अणु
+	else {
 		nmi_mode = NMI_MODE_UNKNOWN;
 		pr_warn("Unknown NMI mode %s\n", str);
-	पूर्ण
+	}
 
-	prपूर्णांकk("Set NMI mode to %d\n", nmi_mode);
-	वापस 0;
-पूर्ण
+	printk("Set NMI mode to %d\n", nmi_mode);
+	return 0;
+}
 early_param("nmi_mode", nmi_mode_setup);
 
-व्योम __init sdk7786_nmi_init(व्योम)
-अणु
-	अचिन्हित पूर्णांक source, mask, पंचांगp;
+void __init sdk7786_nmi_init(void)
+{
+	unsigned int source, mask, tmp;
 
-	चयन (nmi_mode) अणु
-	हाल NMI_MODE_MANUAL:
+	switch (nmi_mode) {
+	case NMI_MODE_MANUAL:
 		source = NMISR_MAN_NMI;
 		mask = NMIMR_MAN_NMIM;
-		अवरोध;
-	हाल NMI_MODE_AUX:
+		break;
+	case NMI_MODE_AUX:
 		source = NMISR_AUX_NMI;
 		mask = NMIMR_AUX_NMIM;
-		अवरोध;
-	हाल NMI_MODE_ANY:
+		break;
+	case NMI_MODE_ANY:
 		source = NMISR_MAN_NMI | NMISR_AUX_NMI;
 		mask = NMIMR_MAN_NMIM | NMIMR_AUX_NMIM;
-		अवरोध;
-	हाल NMI_MODE_MASKED:
-	हाल NMI_MODE_UNKNOWN:
-	शेष:
+		break;
+	case NMI_MODE_MASKED:
+	case NMI_MODE_UNKNOWN:
+	default:
 		source = mask = 0;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	/* Set the NMI source */
-	पंचांगp = fpga_पढ़ो_reg(NMISR);
-	पंचांगp &= ~NMISR_MASK;
-	पंचांगp |= source;
-	fpga_ग_लिखो_reg(पंचांगp, NMISR);
+	tmp = fpga_read_reg(NMISR);
+	tmp &= ~NMISR_MASK;
+	tmp |= source;
+	fpga_write_reg(tmp, NMISR);
 
 	/* And the IRQ masking */
-	fpga_ग_लिखो_reg(NMIMR_MASK ^ mask, NMIMR);
-पूर्ण
+	fpga_write_reg(NMIMR_MASK ^ mask, NMIMR);
+}

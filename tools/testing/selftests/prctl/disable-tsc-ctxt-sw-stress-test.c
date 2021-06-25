@@ -1,99 +1,98 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Tests क्रम prctl(PR_GET_TSC, ...) / prctl(PR_SET_TSC, ...)
+ * Tests for prctl(PR_GET_TSC, ...) / prctl(PR_SET_TSC, ...)
  *
- * Tests अगर the control रेजिस्टर is updated correctly
- * at context चयनes
+ * Tests if the control register is updated correctly
+ * at context switches
  *
- * Warning: this test will cause a very high load क्रम a few seconds
+ * Warning: this test will cause a very high load for a few seconds
  *
  */
 
-#समावेश <मानकपन.स>
-#समावेश <मानककोष.स>
-#समावेश <unistd.h>
-#समावेश <संकेत.स>
-#समावेश <पूर्णांकtypes.h>
-#समावेश <रुको.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <signal.h>
+#include <inttypes.h>
+#include <wait.h>
 
 
-#समावेश <sys/prctl.h>
-#समावेश <linux/prctl.h>
+#include <sys/prctl.h>
+#include <linux/prctl.h>
 
-/* Get/set the process' ability to use the बारtamp counter inकाष्ठाion */
-#अगर_अघोषित PR_GET_TSC
-#घोषणा PR_GET_TSC 25
-#घोषणा PR_SET_TSC 26
-# define PR_TSC_ENABLE		1   /* allow the use of the बारtamp counter */
-# define PR_TSC_संक_अंश		2   /* throw a संक_अंश instead of पढ़ोing the TSC */
-#पूर्ण_अगर
+/* Get/set the process' ability to use the timestamp counter instruction */
+#ifndef PR_GET_TSC
+#define PR_GET_TSC 25
+#define PR_SET_TSC 26
+# define PR_TSC_ENABLE		1   /* allow the use of the timestamp counter */
+# define PR_TSC_SIGSEGV		2   /* throw a SIGSEGV instead of reading the TSC */
+#endif
 
-अटल uपूर्णांक64_t rdtsc(व्योम)
-अणु
-uपूर्णांक32_t lo, hi;
+static uint64_t rdtsc(void)
+{
+uint32_t lo, hi;
 /* We cannot use "=A", since this would use %rax on x86_64 */
-__यंत्र__ __अस्थिर__ ("rdtsc" : "=a" (lo), "=d" (hi));
-वापस (uपूर्णांक64_t)hi << 32 | lo;
-पूर्ण
+__asm__ __volatile__ ("rdtsc" : "=a" (lo), "=d" (hi));
+return (uint64_t)hi << 32 | lo;
+}
 
-अटल व्योम sigsegv_expect(पूर्णांक sig)
-अणु
+static void sigsegv_expect(int sig)
+{
 	/* */
-पूर्ण
+}
 
-अटल व्योम segvtask(व्योम)
-अणु
-	अगर (prctl(PR_SET_TSC, PR_TSC_संक_अंश) < 0)
-	अणु
-		लिखो_त्रुटि("prctl");
-		निकास(0);
-	पूर्ण
-	संकेत(संक_अंश, sigsegv_expect);
+static void segvtask(void)
+{
+	if (prctl(PR_SET_TSC, PR_TSC_SIGSEGV) < 0)
+	{
+		perror("prctl");
+		exit(0);
+	}
+	signal(SIGSEGV, sigsegv_expect);
 	alarm(10);
 	rdtsc();
-	ख_लिखो(मानक_त्रुटि, "FATAL ERROR, rdtsc() succeeded while disabled\n");
-	निकास(0);
-पूर्ण
+	fprintf(stderr, "FATAL ERROR, rdtsc() succeeded while disabled\n");
+	exit(0);
+}
 
 
-अटल व्योम sigsegv_fail(पूर्णांक sig)
-अणु
-	ख_लिखो(मानक_त्रुटि, "FATAL ERROR, rdtsc() failed while enabled\n");
-	निकास(0);
-पूर्ण
+static void sigsegv_fail(int sig)
+{
+	fprintf(stderr, "FATAL ERROR, rdtsc() failed while enabled\n");
+	exit(0);
+}
 
-अटल व्योम rdtsctask(व्योम)
-अणु
-	अगर (prctl(PR_SET_TSC, PR_TSC_ENABLE) < 0)
-	अणु
-		लिखो_त्रुटि("prctl");
-		निकास(0);
-	पूर्ण
-	संकेत(संक_अंश, sigsegv_fail);
+static void rdtsctask(void)
+{
+	if (prctl(PR_SET_TSC, PR_TSC_ENABLE) < 0)
+	{
+		perror("prctl");
+		exit(0);
+	}
+	signal(SIGSEGV, sigsegv_fail);
 	alarm(10);
-	क्रम(;;) rdtsc();
-पूर्ण
+	for(;;) rdtsc();
+}
 
 
-पूर्णांक मुख्य(व्योम)
-अणु
-	पूर्णांक n_tasks = 100, i;
+int main(void)
+{
+	int n_tasks = 100, i;
 
-	ख_लिखो(मानक_त्रुटि, "[No further output means we're allright]\n");
+	fprintf(stderr, "[No further output means we're allright]\n");
 
-	क्रम (i=0; i<n_tasks; i++)
-		अगर (विभाजन() == 0)
-		अणु
-			अगर (i & 1)
+	for (i=0; i<n_tasks; i++)
+		if (fork() == 0)
+		{
+			if (i & 1)
 				segvtask();
-			अन्यथा
+			else
 				rdtsctask();
-		पूर्ण
+		}
 
-	क्रम (i=0; i<n_tasks; i++)
-		रुको(शून्य);
+	for (i=0; i<n_tasks; i++)
+		wait(NULL);
 
-	निकास(0);
-पूर्ण
+	exit(0);
+}
 

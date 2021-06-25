@@ -1,8 +1,7 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
- * This पूर्णांकerface is used क्रम compatibility with old U-boots *ONLY*.
- * Please करो not imitate or extend this.
+ * This interface is used for compatibility with old U-boots *ONLY*.
+ * Please do not imitate or extend this.
  */
 
 /*
@@ -10,87 +9,87 @@
  * Wolfgang Denk, DENX Software Engineering, wd@denx.de.
  */
 
-#अगर_अघोषित __PPCBOOT_H__
-#घोषणा __PPCBOOT_H__
+#ifndef __PPCBOOT_H__
+#define __PPCBOOT_H__
 
 /*
- * Board inक्रमmation passed to kernel from PPCBoot
+ * Board information passed to kernel from PPCBoot
  *
- * include/यंत्र-ppc/ppcboot.h
+ * include/asm-ppc/ppcboot.h
  */
 
-#समावेश "types.h"
+#include "types.h"
 
-प्रकार काष्ठा bd_info अणु
-	अचिन्हित दीर्घ	bi_memstart;	/* start of DRAM memory */
-	अचिन्हित दीर्घ	bi_memsize;	/* size	 of DRAM memory in bytes */
-	अचिन्हित दीर्घ	bi_flashstart;	/* start of FLASH memory */
-	अचिन्हित दीर्घ	bi_flashsize;	/* size	 of FLASH memory */
-	अचिन्हित दीर्घ	bi_flashoffset; /* reserved area क्रम startup monitor */
-	अचिन्हित दीर्घ	bi_sramstart;	/* start of SRAM memory */
-	अचिन्हित दीर्घ	bi_sramsize;	/* size	 of SRAM memory */
-#अगर defined(TARGET_8xx) || defined(TARGET_CPM2) || defined(TARGET_85xx) ||\
+typedef struct bd_info {
+	unsigned long	bi_memstart;	/* start of DRAM memory */
+	unsigned long	bi_memsize;	/* size	 of DRAM memory in bytes */
+	unsigned long	bi_flashstart;	/* start of FLASH memory */
+	unsigned long	bi_flashsize;	/* size	 of FLASH memory */
+	unsigned long	bi_flashoffset; /* reserved area for startup monitor */
+	unsigned long	bi_sramstart;	/* start of SRAM memory */
+	unsigned long	bi_sramsize;	/* size	 of SRAM memory */
+#if defined(TARGET_8xx) || defined(TARGET_CPM2) || defined(TARGET_85xx) ||\
 	defined(TARGET_83xx) || defined(TARGET_86xx)
-	अचिन्हित दीर्घ	bi_immr_base;	/* base of IMMR रेजिस्टर */
-#पूर्ण_अगर
-#अगर defined(TARGET_PPC_MPC52xx)
-	अचिन्हित दीर्घ   bi_mbar_base;   /* base of पूर्णांकernal रेजिस्टरs */
-#पूर्ण_अगर
-	अचिन्हित दीर्घ	bi_bootflags;	/* boot / reboot flag (क्रम LynxOS) */
-	अचिन्हित दीर्घ	bi_ip_addr;	/* IP Address */
-	अचिन्हित अक्षर	bi_enetaddr[6];	/* Ethernet address */
-	अचिन्हित लघु	bi_ethspeed;	/* Ethernet speed in Mbps */
-	अचिन्हित दीर्घ	bi_पूर्णांकfreq;	/* Internal Freq, in MHz */
-	अचिन्हित दीर्घ	bi_busfreq;	/* Bus Freq, in MHz */
-#अगर defined(TARGET_CPM2)
-	अचिन्हित दीर्घ	bi_cpmfreq;	/* CPM_CLK Freq, in MHz */
-	अचिन्हित दीर्घ	bi_brgfreq;	/* BRG_CLK Freq, in MHz */
-	अचिन्हित दीर्घ	bi_sccfreq;	/* SCC_CLK Freq, in MHz */
-	अचिन्हित दीर्घ	bi_vco;		/* VCO Out from PLL, in MHz */
-#पूर्ण_अगर
-#अगर defined(TARGET_PPC_MPC52xx)
-	अचिन्हित दीर्घ   bi_ipbfreq;     /* IPB Bus Freq, in MHz */
-	अचिन्हित दीर्घ   bi_pcअगरreq;     /* PCI Bus Freq, in MHz */
-#पूर्ण_अगर
-	अचिन्हित दीर्घ	bi_baudrate;	/* Console Baudrate */
-#अगर defined(TARGET_4xx)
-	अचिन्हित अक्षर	bi_s_version[4];	/* Version of this काष्ठाure */
-	अचिन्हित अक्षर	bi_r_version[32];	/* Version of the ROM (IBM) */
-	अचिन्हित पूर्णांक	bi_procfreq;	/* CPU (Internal) Freq, in Hz */
-	अचिन्हित पूर्णांक	bi_plb_busfreq;	/* PLB Bus speed, in Hz */
-	अचिन्हित पूर्णांक	bi_pci_busfreq;	/* PCI Bus speed, in Hz */
-	अचिन्हित अक्षर	bi_pci_enetaddr[6];	/* PCI Ethernet MAC address */
-#पूर्ण_अगर
-#अगर defined(TARGET_HYMOD)
-	hymod_conf_t	bi_hymod_conf;	/* hymod configuration inक्रमmation */
-#पूर्ण_अगर
-#अगर defined(TARGET_EVB64260) || defined(TARGET_405EP) || defined(TARGET_44x) || \
+	unsigned long	bi_immr_base;	/* base of IMMR register */
+#endif
+#if defined(TARGET_PPC_MPC52xx)
+	unsigned long   bi_mbar_base;   /* base of internal registers */
+#endif
+	unsigned long	bi_bootflags;	/* boot / reboot flag (for LynxOS) */
+	unsigned long	bi_ip_addr;	/* IP Address */
+	unsigned char	bi_enetaddr[6];	/* Ethernet address */
+	unsigned short	bi_ethspeed;	/* Ethernet speed in Mbps */
+	unsigned long	bi_intfreq;	/* Internal Freq, in MHz */
+	unsigned long	bi_busfreq;	/* Bus Freq, in MHz */
+#if defined(TARGET_CPM2)
+	unsigned long	bi_cpmfreq;	/* CPM_CLK Freq, in MHz */
+	unsigned long	bi_brgfreq;	/* BRG_CLK Freq, in MHz */
+	unsigned long	bi_sccfreq;	/* SCC_CLK Freq, in MHz */
+	unsigned long	bi_vco;		/* VCO Out from PLL, in MHz */
+#endif
+#if defined(TARGET_PPC_MPC52xx)
+	unsigned long   bi_ipbfreq;     /* IPB Bus Freq, in MHz */
+	unsigned long   bi_pcifreq;     /* PCI Bus Freq, in MHz */
+#endif
+	unsigned long	bi_baudrate;	/* Console Baudrate */
+#if defined(TARGET_4xx)
+	unsigned char	bi_s_version[4];	/* Version of this structure */
+	unsigned char	bi_r_version[32];	/* Version of the ROM (IBM) */
+	unsigned int	bi_procfreq;	/* CPU (Internal) Freq, in Hz */
+	unsigned int	bi_plb_busfreq;	/* PLB Bus speed, in Hz */
+	unsigned int	bi_pci_busfreq;	/* PCI Bus speed, in Hz */
+	unsigned char	bi_pci_enetaddr[6];	/* PCI Ethernet MAC address */
+#endif
+#if defined(TARGET_HYMOD)
+	hymod_conf_t	bi_hymod_conf;	/* hymod configuration information */
+#endif
+#if defined(TARGET_EVB64260) || defined(TARGET_405EP) || defined(TARGET_44x) || \
 	defined(TARGET_85xx) ||	defined(TARGET_83xx) || defined(TARGET_HAS_ETH1)
 	/* second onboard ethernet port */
-	अचिन्हित अक्षर	bi_enet1addr[6];
-#घोषणा HAVE_ENET1ADDR
-#पूर्ण_अगर
-#अगर defined(TARGET_EVB64260) || defined(TARGET_440GX) || \
+	unsigned char	bi_enet1addr[6];
+#define HAVE_ENET1ADDR
+#endif
+#if defined(TARGET_EVB64260) || defined(TARGET_440GX) || \
     defined(TARGET_85xx) || defined(TARGET_HAS_ETH2)
 	/* third onboard ethernet ports */
-	अचिन्हित अक्षर	bi_enet2addr[6];
-#घोषणा HAVE_ENET2ADDR
-#पूर्ण_अगर
-#अगर defined(TARGET_440GX) || defined(TARGET_HAS_ETH3)
+	unsigned char	bi_enet2addr[6];
+#define HAVE_ENET2ADDR
+#endif
+#if defined(TARGET_440GX) || defined(TARGET_HAS_ETH3)
 	/* fourth onboard ethernet ports */
-	अचिन्हित अक्षर	bi_enet3addr[6];
-#घोषणा HAVE_ENET3ADDR
-#पूर्ण_अगर
-#अगर defined(TARGET_4xx)
-	अचिन्हित पूर्णांक	bi_opbfreq;		/* OB घड़ी in Hz */
-	पूर्णांक		bi_iic_fast[2];		/* Use fast i2c mode */
-#पूर्ण_अगर
-#अगर defined(TARGET_440GX)
-	पूर्णांक		bi_phynum[4];		/* phy mapping */
-	पूर्णांक		bi_phymode[4];		/* phy mode */
-#पूर्ण_अगर
-पूर्ण bd_t;
+	unsigned char	bi_enet3addr[6];
+#define HAVE_ENET3ADDR
+#endif
+#if defined(TARGET_4xx)
+	unsigned int	bi_opbfreq;		/* OB clock in Hz */
+	int		bi_iic_fast[2];		/* Use fast i2c mode */
+#endif
+#if defined(TARGET_440GX)
+	int		bi_phynum[4];		/* phy mapping */
+	int		bi_phymode[4];		/* phy mode */
+#endif
+} bd_t;
 
-#घोषणा bi_tbfreq	bi_पूर्णांकfreq
+#define bi_tbfreq	bi_intfreq
 
-#पूर्ण_अगर	/* __PPCBOOT_H__ */
+#endif	/* __PPCBOOT_H__ */

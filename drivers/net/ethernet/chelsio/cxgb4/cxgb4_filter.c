@@ -1,26 +1,25 @@
-<शैली गुरु>
 /*
- * This file is part of the Chelsio T4 Ethernet driver क्रम Linux.
+ * This file is part of the Chelsio T4 Ethernet driver for Linux.
  *
  * Copyright (c) 2003-2016 Chelsio Communications, Inc. All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the मुख्य directory of this source tree, or the
+ * COPYING in the main directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary क्रमms, with or
- *     without modअगरication, are permitted provided that the following
+ *     Redistribution and use in source and binary forms, with or
+ *     without modification, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary क्रमm must reproduce the above
+ *      - Redistributions in binary form must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the करोcumentation and/or other materials
+ *        disclaimer in the documentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -32,145 +31,145 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#समावेश <net/ipv6.h>
+#include <net/ipv6.h>
 
-#समावेश "cxgb4.h"
-#समावेश "t4_regs.h"
-#समावेश "t4_tcb.h"
-#समावेश "t4_values.h"
-#समावेश "clip_tbl.h"
-#समावेश "l2t.h"
-#समावेश "smt.h"
-#समावेश "t4fw_api.h"
-#समावेश "cxgb4_filter.h"
+#include "cxgb4.h"
+#include "t4_regs.h"
+#include "t4_tcb.h"
+#include "t4_values.h"
+#include "clip_tbl.h"
+#include "l2t.h"
+#include "smt.h"
+#include "t4fw_api.h"
+#include "cxgb4_filter.h"
 
-अटल अंतरभूत bool is_field_set(u32 val, u32 mask)
-अणु
-	वापस val || mask;
-पूर्ण
+static inline bool is_field_set(u32 val, u32 mask)
+{
+	return val || mask;
+}
 
-अटल अंतरभूत bool unsupported(u32 conf, u32 conf_mask, u32 val, u32 mask)
-अणु
-	वापस !(conf & conf_mask) && is_field_set(val, mask);
-पूर्ण
+static inline bool unsupported(u32 conf, u32 conf_mask, u32 val, u32 mask)
+{
+	return !(conf & conf_mask) && is_field_set(val, mask);
+}
 
-अटल पूर्णांक set_tcb_field(काष्ठा adapter *adap, काष्ठा filter_entry *f,
-			 अचिन्हित पूर्णांक ftid,  u16 word, u64 mask, u64 val,
-			 पूर्णांक no_reply)
-अणु
-	काष्ठा cpl_set_tcb_field *req;
-	काष्ठा sk_buff *skb;
+static int set_tcb_field(struct adapter *adap, struct filter_entry *f,
+			 unsigned int ftid,  u16 word, u64 mask, u64 val,
+			 int no_reply)
+{
+	struct cpl_set_tcb_field *req;
+	struct sk_buff *skb;
 
-	skb = alloc_skb(माप(काष्ठा cpl_set_tcb_field), GFP_ATOMIC);
-	अगर (!skb)
-		वापस -ENOMEM;
+	skb = alloc_skb(sizeof(struct cpl_set_tcb_field), GFP_ATOMIC);
+	if (!skb)
+		return -ENOMEM;
 
-	req = (काष्ठा cpl_set_tcb_field *)__skb_put_zero(skb, माप(*req));
+	req = (struct cpl_set_tcb_field *)__skb_put_zero(skb, sizeof(*req));
 	INIT_TP_WR_CPL(req, CPL_SET_TCB_FIELD, ftid);
 	req->reply_ctrl = htons(REPLY_CHAN_V(0) |
-				QUEUENO_V(adap->sge.fw_evtq.असल_id) |
+				QUEUENO_V(adap->sge.fw_evtq.abs_id) |
 				NO_REPLY_V(no_reply));
 	req->word_cookie = htons(TCB_WORD_V(word) | TCB_COOKIE_V(ftid));
 	req->mask = cpu_to_be64(mask);
 	req->val = cpu_to_be64(val);
 	set_wr_txq(skb, CPL_PRIORITY_CONTROL, f->fs.val.iport & 0x3);
 	t4_ofld_send(adap, skb);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* Set one of the t_flags bits in the TCB.
  */
-अटल पूर्णांक set_tcb_tflag(काष्ठा adapter *adap, काष्ठा filter_entry *f,
-			 अचिन्हित पूर्णांक ftid, अचिन्हित पूर्णांक bit_pos,
-			 अचिन्हित पूर्णांक val, पूर्णांक no_reply)
-अणु
-	वापस set_tcb_field(adap, f, ftid,  TCB_T_FLAGS_W, 1ULL << bit_pos,
-			     (अचिन्हित दीर्घ दीर्घ)val << bit_pos, no_reply);
-पूर्ण
+static int set_tcb_tflag(struct adapter *adap, struct filter_entry *f,
+			 unsigned int ftid, unsigned int bit_pos,
+			 unsigned int val, int no_reply)
+{
+	return set_tcb_field(adap, f, ftid,  TCB_T_FLAGS_W, 1ULL << bit_pos,
+			     (unsigned long long)val << bit_pos, no_reply);
+}
 
-अटल व्योम mk_पात_req_ulp(काष्ठा cpl_पात_req *पात_req, अचिन्हित पूर्णांक tid)
-अणु
-	काष्ठा ulp_txpkt *txpkt = (काष्ठा ulp_txpkt *)पात_req;
-	काष्ठा ulptx_idata *sc = (काष्ठा ulptx_idata *)(txpkt + 1);
-
-	txpkt->cmd_dest = htonl(ULPTX_CMD_V(ULP_TX_PKT) | ULP_TXPKT_DEST_V(0));
-	txpkt->len = htonl(DIV_ROUND_UP(माप(*पात_req), 16));
-	sc->cmd_more = htonl(ULPTX_CMD_V(ULP_TX_SC_IMM));
-	sc->len = htonl(माप(*पात_req) - माप(काष्ठा work_request_hdr));
-	OPCODE_TID(पात_req) = htonl(MK_OPCODE_TID(CPL_ABORT_REQ, tid));
-	पात_req->rsvd0 = htonl(0);
-	पात_req->rsvd1 = 0;
-	पात_req->cmd = CPL_ABORT_NO_RST;
-पूर्ण
-
-अटल व्योम mk_पात_rpl_ulp(काष्ठा cpl_पात_rpl *पात_rpl, अचिन्हित पूर्णांक tid)
-अणु
-	काष्ठा ulp_txpkt *txpkt = (काष्ठा ulp_txpkt *)पात_rpl;
-	काष्ठा ulptx_idata *sc = (काष्ठा ulptx_idata *)(txpkt + 1);
+static void mk_abort_req_ulp(struct cpl_abort_req *abort_req, unsigned int tid)
+{
+	struct ulp_txpkt *txpkt = (struct ulp_txpkt *)abort_req;
+	struct ulptx_idata *sc = (struct ulptx_idata *)(txpkt + 1);
 
 	txpkt->cmd_dest = htonl(ULPTX_CMD_V(ULP_TX_PKT) | ULP_TXPKT_DEST_V(0));
-	txpkt->len = htonl(DIV_ROUND_UP(माप(*पात_rpl), 16));
+	txpkt->len = htonl(DIV_ROUND_UP(sizeof(*abort_req), 16));
 	sc->cmd_more = htonl(ULPTX_CMD_V(ULP_TX_SC_IMM));
-	sc->len = htonl(माप(*पात_rpl) - माप(काष्ठा work_request_hdr));
-	OPCODE_TID(पात_rpl) = htonl(MK_OPCODE_TID(CPL_ABORT_RPL, tid));
-	पात_rpl->rsvd0 = htonl(0);
-	पात_rpl->rsvd1 = 0;
-	पात_rpl->cmd = CPL_ABORT_NO_RST;
-पूर्ण
+	sc->len = htonl(sizeof(*abort_req) - sizeof(struct work_request_hdr));
+	OPCODE_TID(abort_req) = htonl(MK_OPCODE_TID(CPL_ABORT_REQ, tid));
+	abort_req->rsvd0 = htonl(0);
+	abort_req->rsvd1 = 0;
+	abort_req->cmd = CPL_ABORT_NO_RST;
+}
 
-अटल व्योम mk_set_tcb_ulp(काष्ठा filter_entry *f,
-			   काष्ठा cpl_set_tcb_field *req,
-			   अचिन्हित पूर्णांक word, u64 mask, u64 val,
-			   u8 cookie, पूर्णांक no_reply)
-अणु
-	काष्ठा ulp_txpkt *txpkt = (काष्ठा ulp_txpkt *)req;
-	काष्ठा ulptx_idata *sc = (काष्ठा ulptx_idata *)(txpkt + 1);
+static void mk_abort_rpl_ulp(struct cpl_abort_rpl *abort_rpl, unsigned int tid)
+{
+	struct ulp_txpkt *txpkt = (struct ulp_txpkt *)abort_rpl;
+	struct ulptx_idata *sc = (struct ulptx_idata *)(txpkt + 1);
 
 	txpkt->cmd_dest = htonl(ULPTX_CMD_V(ULP_TX_PKT) | ULP_TXPKT_DEST_V(0));
-	txpkt->len = htonl(DIV_ROUND_UP(माप(*req), 16));
+	txpkt->len = htonl(DIV_ROUND_UP(sizeof(*abort_rpl), 16));
 	sc->cmd_more = htonl(ULPTX_CMD_V(ULP_TX_SC_IMM));
-	sc->len = htonl(माप(*req) - माप(काष्ठा work_request_hdr));
+	sc->len = htonl(sizeof(*abort_rpl) - sizeof(struct work_request_hdr));
+	OPCODE_TID(abort_rpl) = htonl(MK_OPCODE_TID(CPL_ABORT_RPL, tid));
+	abort_rpl->rsvd0 = htonl(0);
+	abort_rpl->rsvd1 = 0;
+	abort_rpl->cmd = CPL_ABORT_NO_RST;
+}
+
+static void mk_set_tcb_ulp(struct filter_entry *f,
+			   struct cpl_set_tcb_field *req,
+			   unsigned int word, u64 mask, u64 val,
+			   u8 cookie, int no_reply)
+{
+	struct ulp_txpkt *txpkt = (struct ulp_txpkt *)req;
+	struct ulptx_idata *sc = (struct ulptx_idata *)(txpkt + 1);
+
+	txpkt->cmd_dest = htonl(ULPTX_CMD_V(ULP_TX_PKT) | ULP_TXPKT_DEST_V(0));
+	txpkt->len = htonl(DIV_ROUND_UP(sizeof(*req), 16));
+	sc->cmd_more = htonl(ULPTX_CMD_V(ULP_TX_SC_IMM));
+	sc->len = htonl(sizeof(*req) - sizeof(struct work_request_hdr));
 	OPCODE_TID(req) = htonl(MK_OPCODE_TID(CPL_SET_TCB_FIELD, f->tid));
 	req->reply_ctrl = htons(NO_REPLY_V(no_reply) | REPLY_CHAN_V(0) |
 				QUEUENO_V(0));
 	req->word_cookie = htons(TCB_WORD_V(word) | TCB_COOKIE_V(cookie));
 	req->mask = cpu_to_be64(mask);
 	req->val = cpu_to_be64(val);
-	sc = (काष्ठा ulptx_idata *)(req + 1);
+	sc = (struct ulptx_idata *)(req + 1);
 	sc->cmd_more = htonl(ULPTX_CMD_V(ULP_TX_SC_NOOP));
 	sc->len = htonl(0);
-पूर्ण
+}
 
-अटल पूर्णांक configure_filter_smac(काष्ठा adapter *adap, काष्ठा filter_entry *f)
-अणु
-	पूर्णांक err;
+static int configure_filter_smac(struct adapter *adap, struct filter_entry *f)
+{
+	int err;
 
-	/* करो a set-tcb क्रम smac-sel and CWR bit.. */
+	/* do a set-tcb for smac-sel and CWR bit.. */
 	err = set_tcb_field(adap, f, f->tid, TCB_SMAC_SEL_W,
 			    TCB_SMAC_SEL_V(TCB_SMAC_SEL_M),
 			    TCB_SMAC_SEL_V(f->smt->idx), 1);
-	अगर (err)
-		जाओ smac_err;
+	if (err)
+		goto smac_err;
 
 	err = set_tcb_tflag(adap, f, f->tid, TF_CCTRL_CWR_S, 1, 1);
-	अगर (!err)
-		वापस 0;
+	if (!err)
+		return 0;
 
 smac_err:
 	dev_err(adap->pdev_dev, "filter %u smac config failed with error %u\n",
 		f->tid, err);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम set_nat_params(काष्ठा adapter *adap, काष्ठा filter_entry *f,
-			   अचिन्हित पूर्णांक tid, bool dip, bool sip, bool dp,
+static void set_nat_params(struct adapter *adap, struct filter_entry *f,
+			   unsigned int tid, bool dip, bool sip, bool dp,
 			   bool sp)
-अणु
+{
 	u8 *nat_lp = (u8 *)&f->fs.nat_lport;
 	u8 *nat_fp = (u8 *)&f->fs.nat_fport;
 
-	अगर (dip) अणु
-		अगर (f->fs.type) अणु
+	if (dip) {
+		if (f->fs.type) {
 			set_tcb_field(adap, f, tid, TCB_SND_UNA_RAW_W,
 				      WORD_MASK, f->fs.nat_lip[15] |
 				      f->fs.nat_lip[14] << 8 |
@@ -194,17 +193,17 @@ smac_err:
 				      f->fs.nat_lip[2] << 8 |
 				      f->fs.nat_lip[1] << 16 |
 				      (u64)f->fs.nat_lip[0] << 24, 1);
-		पूर्ण अन्यथा अणु
+		} else {
 			set_tcb_field(adap, f, tid, TCB_RX_FRAG3_LEN_RAW_W,
 				      WORD_MASK, f->fs.nat_lip[3] |
 				      f->fs.nat_lip[2] << 8 |
 				      f->fs.nat_lip[1] << 16 |
 				      (u64)f->fs.nat_lip[0] << 24, 1);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (sip) अणु
-		अगर (f->fs.type) अणु
+	if (sip) {
+		if (f->fs.type) {
 			set_tcb_field(adap, f, tid, TCB_RX_FRAG2_PTR_RAW_W,
 				      WORD_MASK, f->fs.nat_fip[15] |
 				      f->fs.nat_fip[14] << 8 |
@@ -229,35 +228,35 @@ smac_err:
 				      f->fs.nat_fip[1] << 16 |
 				      (u64)f->fs.nat_fip[0] << 24, 1);
 
-		पूर्ण अन्यथा अणु
+		} else {
 			set_tcb_field(adap, f, tid,
 				      TCB_RX_FRAG3_START_IDX_OFFSET_RAW_W,
 				      WORD_MASK, f->fs.nat_fip[3] |
 				      f->fs.nat_fip[2] << 8 |
 				      f->fs.nat_fip[1] << 16 |
 				      (u64)f->fs.nat_fip[0] << 24, 1);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	set_tcb_field(adap, f, tid, TCB_PDU_HDR_LEN_W, WORD_MASK,
 		      (dp ? (nat_lp[1] | nat_lp[0] << 8) : 0) |
 		      (sp ? (nat_fp[1] << 16 | (u64)nat_fp[0] << 24) : 0),
 		      1);
-पूर्ण
+}
 
-/* Validate filter spec against configuration करोne on the card. */
-अटल पूर्णांक validate_filter(काष्ठा net_device *dev,
-			   काष्ठा ch_filter_specअगरication *fs)
-अणु
-	काष्ठा adapter *adapter = netdev2adap(dev);
+/* Validate filter spec against configuration done on the card. */
+static int validate_filter(struct net_device *dev,
+			   struct ch_filter_specification *fs)
+{
+	struct adapter *adapter = netdev2adap(dev);
 	u32 fconf, iconf;
 
-	/* Check क्रम unconfigured fields being used. */
+	/* Check for unconfigured fields being used. */
 	iconf = adapter->params.tp.ingress_config;
 	fconf = fs->hash ? adapter->params.tp.filter_mask :
 			   adapter->params.tp.vlan_pri_map;
 
-	अगर (unsupported(fconf, FCOE_F, fs->val.fcoe, fs->mask.fcoe) ||
+	if (unsupported(fconf, FCOE_F, fs->val.fcoe, fs->mask.fcoe) ||
 	    unsupported(fconf, PORT_F, fs->val.iport, fs->mask.iport) ||
 	    unsupported(fconf, TOS_F, fs->val.tos, fs->mask.tos) ||
 	    unsupported(fconf, ETHERTYPE_F, fs->val.ethtype,
@@ -274,28 +273,28 @@ smac_err:
 	    unsupported(fconf, VNIC_ID_F, fs->val.encap_vld,
 			fs->mask.encap_vld) ||
 	    unsupported(fconf, VLAN_F, fs->val.ivlan_vld, fs->mask.ivlan_vld))
-		वापस -EOPNOTSUPP;
+		return -EOPNOTSUPP;
 
-	/* T4 inconveniently uses the same FT_VNIC_ID_W bits क्रम both the Outer
+	/* T4 inconveniently uses the same FT_VNIC_ID_W bits for both the Outer
 	 * VLAN Tag and PF/VF/VFvld fields based on VNIC_F being set
 	 * in TP_INGRESS_CONFIG.  Hense the somewhat crazy checks
-	 * below.  Additionally, since the T4 firmware पूर्णांकerface also
+	 * below.  Additionally, since the T4 firmware interface also
 	 * carries that overlap, we need to translate any PF/VF
-	 * specअगरication पूर्णांकo that पूर्णांकernal क्रमmat below.
+	 * specification into that internal format below.
 	 */
-	अगर ((is_field_set(fs->val.pfvf_vld, fs->mask.pfvf_vld) &&
+	if ((is_field_set(fs->val.pfvf_vld, fs->mask.pfvf_vld) &&
 	     is_field_set(fs->val.ovlan_vld, fs->mask.ovlan_vld)) ||
 	    (is_field_set(fs->val.pfvf_vld, fs->mask.pfvf_vld) &&
 	     is_field_set(fs->val.encap_vld, fs->mask.encap_vld)) ||
 	    (is_field_set(fs->val.ovlan_vld, fs->mask.ovlan_vld) &&
 	     is_field_set(fs->val.encap_vld, fs->mask.encap_vld)))
-		वापस -EOPNOTSUPP;
-	अगर (unsupported(iconf, VNIC_F, fs->val.pfvf_vld, fs->mask.pfvf_vld) ||
+		return -EOPNOTSUPP;
+	if (unsupported(iconf, VNIC_F, fs->val.pfvf_vld, fs->mask.pfvf_vld) ||
 	    (is_field_set(fs->val.ovlan_vld, fs->mask.ovlan_vld) &&
 	     (iconf & VNIC_F)))
-		वापस -EOPNOTSUPP;
-	अगर (fs->val.pf > 0x7 || fs->val.vf > 0x7f)
-		वापस -दुस्फल;
+		return -EOPNOTSUPP;
+	if (fs->val.pf > 0x7 || fs->val.vf > 0x7f)
+		return -ERANGE;
 	fs->mask.pf &= 0x7;
 	fs->mask.vf &= 0x7f;
 
@@ -303,153 +302,153 @@ smac_err:
 	 * matching packets back out one of our ports, make sure that
 	 * the egress port is in range.
 	 */
-	अगर (fs->action == FILTER_SWITCH &&
+	if (fs->action == FILTER_SWITCH &&
 	    fs->eport >= adapter->params.nports)
-		वापस -दुस्फल;
+		return -ERANGE;
 
 	/* Don't allow various trivially obvious bogus out-of-range values... */
-	अगर (fs->val.iport >= adapter->params.nports)
-		वापस -दुस्फल;
+	if (fs->val.iport >= adapter->params.nports)
+		return -ERANGE;
 
-	/* T4 करोesn't support removing VLAN Tags क्रम loop back filters. */
-	अगर (is_t4(adapter->params.chip) &&
+	/* T4 doesn't support removing VLAN Tags for loop back filters. */
+	if (is_t4(adapter->params.chip) &&
 	    fs->action == FILTER_SWITCH &&
 	    (fs->newvlan == VLAN_REMOVE ||
 	     fs->newvlan == VLAN_REWRITE))
-		वापस -EOPNOTSUPP;
+		return -EOPNOTSUPP;
 
-	अगर (fs->val.encap_vld &&
+	if (fs->val.encap_vld &&
 	    CHELSIO_CHIP_VERSION(adapter->params.chip) < CHELSIO_T6)
-		वापस -EOPNOTSUPP;
-	वापस 0;
-पूर्ण
+		return -EOPNOTSUPP;
+	return 0;
+}
 
-अटल पूर्णांक get_filter_steerq(काष्ठा net_device *dev,
-			     काष्ठा ch_filter_specअगरication *fs)
-अणु
-	काष्ठा adapter *adapter = netdev2adap(dev);
-	पूर्णांक iq;
+static int get_filter_steerq(struct net_device *dev,
+			     struct ch_filter_specification *fs)
+{
+	struct adapter *adapter = netdev2adap(dev);
+	int iq;
 
 	/* If the user has requested steering matching Ingress Packets
-	 * to a specअगरic Queue Set, we need to make sure it's in range
-	 * क्रम the port and map that पूर्णांकo the Absolute Queue ID of the
+	 * to a specific Queue Set, we need to make sure it's in range
+	 * for the port and map that into the Absolute Queue ID of the
 	 * Queue Set's Response Queue.
 	 */
-	अगर (!fs->dirsteer) अणु
-		अगर (fs->iq)
-			वापस -EINVAL;
+	if (!fs->dirsteer) {
+		if (fs->iq)
+			return -EINVAL;
 		iq = 0;
-	पूर्ण अन्यथा अणु
-		काष्ठा port_info *pi = netdev_priv(dev);
+	} else {
+		struct port_info *pi = netdev_priv(dev);
 
 		/* If the iq id is greater than the number of qsets,
-		 * then assume it is an असलolute qid.
+		 * then assume it is an absolute qid.
 		 */
-		अगर (fs->iq < pi->nqsets)
+		if (fs->iq < pi->nqsets)
 			iq = adapter->sge.ethrxq[pi->first_qset +
-						 fs->iq].rspq.असल_id;
-		अन्यथा
+						 fs->iq].rspq.abs_id;
+		else
 			iq = fs->iq;
-	पूर्ण
+	}
 
-	वापस iq;
-पूर्ण
+	return iq;
+}
 
-अटल पूर्णांक get_filter_count(काष्ठा adapter *adapter, अचिन्हित पूर्णांक fidx,
+static int get_filter_count(struct adapter *adapter, unsigned int fidx,
 			    u64 *pkts, u64 *bytes, bool hash)
-अणु
-	अचिन्हित पूर्णांक tcb_base, tcbaddr;
-	अचिन्हित पूर्णांक word_offset;
-	काष्ठा filter_entry *f;
+{
+	unsigned int tcb_base, tcbaddr;
+	unsigned int word_offset;
+	struct filter_entry *f;
 	__be64 be64_byte_count;
-	पूर्णांक ret;
+	int ret;
 
-	tcb_base = t4_पढ़ो_reg(adapter, TP_CMM_TCB_BASE_A);
-	अगर (is_hashfilter(adapter) && hash) अणु
-		अगर (tid_out_of_range(&adapter->tids, fidx))
-			वापस -E2BIG;
+	tcb_base = t4_read_reg(adapter, TP_CMM_TCB_BASE_A);
+	if (is_hashfilter(adapter) && hash) {
+		if (tid_out_of_range(&adapter->tids, fidx))
+			return -E2BIG;
 		f = adapter->tids.tid_tab[fidx - adapter->tids.tid_base];
-		अगर (!f)
-			वापस -EINVAL;
-	पूर्ण अन्यथा अणु
-		अगर ((fidx != (adapter->tids.nftids + adapter->tids.nsftids +
+		if (!f)
+			return -EINVAL;
+	} else {
+		if ((fidx != (adapter->tids.nftids + adapter->tids.nsftids +
 			      adapter->tids.nhpftids - 1)) &&
 		    fidx >= (adapter->tids.nftids + adapter->tids.nhpftids))
-			वापस -E2BIG;
+			return -E2BIG;
 
-		अगर (fidx < adapter->tids.nhpftids)
+		if (fidx < adapter->tids.nhpftids)
 			f = &adapter->tids.hpftid_tab[fidx];
-		अन्यथा
+		else
 			f = &adapter->tids.ftid_tab[fidx -
 						    adapter->tids.nhpftids];
-		अगर (!f->valid)
-			वापस -EINVAL;
-	पूर्ण
+		if (!f->valid)
+			return -EINVAL;
+	}
 	tcbaddr = tcb_base + f->tid * TCB_SIZE;
 
 	spin_lock(&adapter->win0_lock);
-	अगर (is_t4(adapter->params.chip)) अणु
+	if (is_t4(adapter->params.chip)) {
 		__be64 be64_count;
 
-		/* T4 करोesn't मुख्यtain byte counts in hw */
+		/* T4 doesn't maintain byte counts in hw */
 		*bytes = 0;
 
 		/* Get pkts */
 		word_offset = 4;
 		ret = t4_memory_rw(adapter, MEMWIN_NIC, MEM_EDC0,
-				   tcbaddr + (word_offset * माप(__be32)),
-				   माप(be64_count),
+				   tcbaddr + (word_offset * sizeof(__be32)),
+				   sizeof(be64_count),
 				   (__be32 *)&be64_count,
 				   T4_MEMORY_READ);
-		अगर (ret < 0)
-			जाओ out;
+		if (ret < 0)
+			goto out;
 		*pkts = be64_to_cpu(be64_count);
-	पूर्ण अन्यथा अणु
+	} else {
 		__be32 be32_count;
 
 		/* Get bytes */
 		word_offset = 4;
 		ret = t4_memory_rw(adapter, MEMWIN_NIC, MEM_EDC0,
-				   tcbaddr + (word_offset * माप(__be32)),
-				   माप(be64_byte_count),
+				   tcbaddr + (word_offset * sizeof(__be32)),
+				   sizeof(be64_byte_count),
 				   &be64_byte_count,
 				   T4_MEMORY_READ);
-		अगर (ret < 0)
-			जाओ out;
+		if (ret < 0)
+			goto out;
 		*bytes = be64_to_cpu(be64_byte_count);
 
 		/* Get pkts */
 		word_offset = 6;
 		ret = t4_memory_rw(adapter, MEMWIN_NIC, MEM_EDC0,
-				   tcbaddr + (word_offset * माप(__be32)),
-				   माप(be32_count),
+				   tcbaddr + (word_offset * sizeof(__be32)),
+				   sizeof(be32_count),
 				   &be32_count,
 				   T4_MEMORY_READ);
-		अगर (ret < 0)
-			जाओ out;
+		if (ret < 0)
+			goto out;
 		*pkts = (u64)be32_to_cpu(be32_count);
-	पूर्ण
+	}
 
 out:
 	spin_unlock(&adapter->win0_lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक cxgb4_get_filter_counters(काष्ठा net_device *dev, अचिन्हित पूर्णांक fidx,
+int cxgb4_get_filter_counters(struct net_device *dev, unsigned int fidx,
 			      u64 *hitcnt, u64 *bytecnt, bool hash)
-अणु
-	काष्ठा adapter *adapter = netdev2adap(dev);
+{
+	struct adapter *adapter = netdev2adap(dev);
 
-	वापस get_filter_count(adapter, fidx, hitcnt, bytecnt, hash);
-पूर्ण
+	return get_filter_count(adapter, fidx, hitcnt, bytecnt, hash);
+}
 
-अटल bool cxgb4_filter_prio_in_range(काष्ठा tid_info *t, u32 idx, u8 nslots,
+static bool cxgb4_filter_prio_in_range(struct tid_info *t, u32 idx, u8 nslots,
 				       u32 prio)
-अणु
-	काष्ठा filter_entry *prev_tab, *next_tab, *prev_fe, *next_fe;
+{
+	struct filter_entry *prev_tab, *next_tab, *prev_fe, *next_fe;
 	u32 prev_ftid, next_ftid;
 
-	/* Only insert the rule अगर both of the following conditions
+	/* Only insert the rule if both of the following conditions
 	 * are met:
 	 * 1. The immediate previous rule has priority <= @prio.
 	 * 2. The immediate next rule has priority >= @prio.
@@ -459,112 +458,112 @@ out:
 	 * than normal FILTER region. So, all rules in HPFILTER region
 	 * must have prio value <= rules in normal FILTER region.
 	 */
-	अगर (idx < t->nhpftids) अणु
-		/* Don't insert if there's a rule alपढ़ोy present at @idx
+	if (idx < t->nhpftids) {
+		/* Don't insert if there's a rule already present at @idx
 		 * in HPFILTER region.
 		 */
-		अगर (test_bit(idx, t->hpftid_bmap))
-			वापस false;
+		if (test_bit(idx, t->hpftid_bmap))
+			return false;
 
 		next_tab = t->hpftid_tab;
 		next_ftid = find_next_bit(t->hpftid_bmap, t->nhpftids, idx);
-		अगर (next_ftid >= t->nhpftids) अणु
+		if (next_ftid >= t->nhpftids) {
 			/* No next entry found in HPFILTER region.
-			 * See अगर there's any next entry in normal
+			 * See if there's any next entry in normal
 			 * FILTER region.
 			 */
 			next_ftid = find_first_bit(t->ftid_bmap, t->nftids);
-			अगर (next_ftid >= t->nftids)
+			if (next_ftid >= t->nftids)
 				next_ftid = idx;
-			अन्यथा
+			else
 				next_tab = t->ftid_tab;
-		पूर्ण
+		}
 
-		/* Search क्रम the बंदst previous filter entry in HPFILTER
+		/* Search for the closest previous filter entry in HPFILTER
 		 * region. No need to search in normal FILTER region because
 		 * there can never be any entry in normal FILTER region whose
 		 * prio value is < last entry in HPFILTER region.
 		 */
 		prev_ftid = find_last_bit(t->hpftid_bmap, idx);
-		अगर (prev_ftid >= idx)
+		if (prev_ftid >= idx)
 			prev_ftid = idx;
 
 		prev_tab = t->hpftid_tab;
-	पूर्ण अन्यथा अणु
+	} else {
 		idx -= t->nhpftids;
 
-		/* Don't insert if there's a rule alपढ़ोy present at @idx
+		/* Don't insert if there's a rule already present at @idx
 		 * in normal FILTER region.
 		 */
-		अगर (test_bit(idx, t->ftid_bmap))
-			वापस false;
+		if (test_bit(idx, t->ftid_bmap))
+			return false;
 
 		prev_tab = t->ftid_tab;
 		prev_ftid = find_last_bit(t->ftid_bmap, idx);
-		अगर (prev_ftid >= idx) अणु
+		if (prev_ftid >= idx) {
 			/* No previous entry found in normal FILTER
-			 * region. See अगर there's any previous entry
+			 * region. See if there's any previous entry
 			 * in HPFILTER region.
 			 */
 			prev_ftid = find_last_bit(t->hpftid_bmap, t->nhpftids);
-			अगर (prev_ftid >= t->nhpftids)
+			if (prev_ftid >= t->nhpftids)
 				prev_ftid = idx;
-			अन्यथा
+			else
 				prev_tab = t->hpftid_tab;
-		पूर्ण
+		}
 
-		/* Search क्रम the बंदst next filter entry in normal
+		/* Search for the closest next filter entry in normal
 		 * FILTER region. No need to search in HPFILTER region
 		 * because there can never be any entry in HPFILTER
 		 * region whose prio value is > first entry in normal
 		 * FILTER region.
 		 */
 		next_ftid = find_next_bit(t->ftid_bmap, t->nftids, idx);
-		अगर (next_ftid >= t->nftids)
+		if (next_ftid >= t->nftids)
 			next_ftid = idx;
 
 		next_tab = t->ftid_tab;
-	पूर्ण
+	}
 
 	next_fe = &next_tab[next_ftid];
 
-	/* See अगर the filter entry beदीर्घs to an IPv6 rule, which
+	/* See if the filter entry belongs to an IPv6 rule, which
 	 * occupy 4 slots on T5 and 2 slots on T6. Adjust the
 	 * reference to the previously inserted filter entry
 	 * accordingly.
 	 */
 	prev_fe = &prev_tab[prev_ftid & ~(nslots - 1)];
-	अगर (!prev_fe->fs.type)
+	if (!prev_fe->fs.type)
 		prev_fe = &prev_tab[prev_ftid];
 
-	अगर ((prev_fe->valid && prev_fe->fs.tc_prio > prio) ||
+	if ((prev_fe->valid && prev_fe->fs.tc_prio > prio) ||
 	    (next_fe->valid && next_fe->fs.tc_prio < prio))
-		वापस false;
+		return false;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-पूर्णांक cxgb4_get_मुक्त_ftid(काष्ठा net_device *dev, u8 family, bool hash_en,
+int cxgb4_get_free_ftid(struct net_device *dev, u8 family, bool hash_en,
 			u32 tc_prio)
-अणु
-	काष्ठा adapter *adap = netdev2adap(dev);
-	काष्ठा tid_info *t = &adap->tids;
+{
+	struct adapter *adap = netdev2adap(dev);
+	struct tid_info *t = &adap->tids;
 	u32 bmap_ftid, max_ftid;
-	काष्ठा filter_entry *f;
-	अचिन्हित दीर्घ *bmap;
+	struct filter_entry *f;
+	unsigned long *bmap;
 	bool found = false;
 	u8 i, cnt, n;
-	पूर्णांक ftid = 0;
+	int ftid = 0;
 
 	/* IPv4 occupy 1 slot. IPv6 occupy 2 slots on T6 and 4 slots
 	 * on T5.
 	 */
 	n = 1;
-	अगर (family == PF_INET6) अणु
+	if (family == PF_INET6) {
 		n++;
-		अगर (CHELSIO_CHIP_VERSION(adap->params.chip) < CHELSIO_T6)
+		if (CHELSIO_CHIP_VERSION(adap->params.chip) < CHELSIO_T6)
 			n += 2;
-	पूर्ण
+	}
 
 	/* There are 3 filter regions available in hardware in
 	 * following order of priority:
@@ -580,17 +579,17 @@ out:
 	 *
 	 * All HASH region entries have same priority. The set of
 	 * fields to match in headers are pre-determined. The same
-	 * set of header match fields must be compulsorily specअगरied
+	 * set of header match fields must be compulsorily specified
 	 * in all the rules wanting to get inserted in HASH region.
 	 * Hence, HASH region is an exact-match region. A HASH is
-	 * generated क्रम a rule based on the values in the
+	 * generated for a rule based on the values in the
 	 * pre-determined set of header match fields. The generated
-	 * HASH serves as an index पूर्णांकo the HASH region. There can
+	 * HASH serves as an index into the HASH region. There can
 	 * never be 2 rules having the same HASH. Hardware will
-	 * compute a HASH क्रम every incoming packet based on the
+	 * compute a HASH for every incoming packet based on the
 	 * values in the pre-determined set of header match fields
-	 * and uses it as an index to check अगर there's a rule
-	 * inserted in the HASH region at the specअगरied index. If
+	 * and uses it as an index to check if there's a rule
+	 * inserted in the HASH region at the specified index. If
 	 * there's a rule inserted, then it's considered as a filter
 	 * hit. Otherwise, it's a filter miss and normal FILTER region
 	 * is scanned afterwards.
@@ -600,256 +599,256 @@ out:
 
 	ftid = (tc_prio <= t->nhpftids) ? 0 : t->nhpftids;
 	max_ftid = t->nftids + t->nhpftids;
-	जबतक (ftid < max_ftid) अणु
-		अगर (ftid < t->nhpftids) अणु
-			/* If the new rule wants to get inserted पूर्णांकo
+	while (ftid < max_ftid) {
+		if (ftid < t->nhpftids) {
+			/* If the new rule wants to get inserted into
 			 * HPFILTER region, but its prio is greater
 			 * than the rule with the highest prio in HASH
-			 * region, or अगर there's not enough slots
+			 * region, or if there's not enough slots
 			 * available in HPFILTER region, then skip
-			 * trying to insert this rule पूर्णांकo HPFILTER
+			 * trying to insert this rule into HPFILTER
 			 * region and directly go to the next region.
 			 */
-			अगर ((t->tc_hash_tids_max_prio &&
+			if ((t->tc_hash_tids_max_prio &&
 			     tc_prio > t->tc_hash_tids_max_prio) ||
-			     (ftid + n) > t->nhpftids) अणु
+			     (ftid + n) > t->nhpftids) {
 				ftid = t->nhpftids;
-				जारी;
-			पूर्ण
+				continue;
+			}
 
 			bmap = t->hpftid_bmap;
 			bmap_ftid = ftid;
-		पूर्ण अन्यथा अगर (hash_en) अणु
+		} else if (hash_en) {
 			/* Ensure priority is >= last rule in HPFILTER
 			 * region.
 			 */
 			ftid = find_last_bit(t->hpftid_bmap, t->nhpftids);
-			अगर (ftid < t->nhpftids) अणु
+			if (ftid < t->nhpftids) {
 				f = &t->hpftid_tab[ftid];
-				अगर (f->valid && tc_prio < f->fs.tc_prio)
-					अवरोध;
-			पूर्ण
+				if (f->valid && tc_prio < f->fs.tc_prio)
+					break;
+			}
 
 			/* Ensure priority is <= first rule in normal
 			 * FILTER region.
 			 */
 			ftid = find_first_bit(t->ftid_bmap, t->nftids);
-			अगर (ftid < t->nftids) अणु
+			if (ftid < t->nftids) {
 				f = &t->ftid_tab[ftid];
-				अगर (f->valid && tc_prio > f->fs.tc_prio)
-					अवरोध;
-			पूर्ण
+				if (f->valid && tc_prio > f->fs.tc_prio)
+					break;
+			}
 
 			found = true;
 			ftid = t->nhpftids;
-			जाओ out_unlock;
-		पूर्ण अन्यथा अणु
-			/* If the new rule wants to get inserted पूर्णांकo
+			goto out_unlock;
+		} else {
+			/* If the new rule wants to get inserted into
 			 * normal FILTER region, but its prio is less
 			 * than the rule with the highest prio in HASH
 			 * region, then reject the rule.
 			 */
-			अगर (t->tc_hash_tids_max_prio &&
+			if (t->tc_hash_tids_max_prio &&
 			    tc_prio < t->tc_hash_tids_max_prio)
-				अवरोध;
+				break;
 
-			अगर (ftid + n > max_ftid)
-				अवरोध;
+			if (ftid + n > max_ftid)
+				break;
 
 			bmap = t->ftid_bmap;
 			bmap_ftid = ftid - t->nhpftids;
-		पूर्ण
+		}
 
 		cnt = 0;
-		क्रम (i = 0; i < n; i++) अणु
-			अगर (test_bit(bmap_ftid + i, bmap))
-				अवरोध;
+		for (i = 0; i < n; i++) {
+			if (test_bit(bmap_ftid + i, bmap))
+				break;
 			cnt++;
-		पूर्ण
+		}
 
-		अगर (cnt == n) अणु
+		if (cnt == n) {
 			/* Ensure the new rule's prio doesn't conflict
 			 * with existing rules.
 			 */
-			अगर (cxgb4_filter_prio_in_range(t, ftid, n,
-						       tc_prio)) अणु
+			if (cxgb4_filter_prio_in_range(t, ftid, n,
+						       tc_prio)) {
 				ftid &= ~(n - 1);
 				found = true;
-				अवरोध;
-			पूर्ण
-		पूर्ण
+				break;
+			}
+		}
 
 		ftid += n;
-	पूर्ण
+	}
 
 out_unlock:
 	spin_unlock_bh(&t->ftid_lock);
-	वापस found ? ftid : -ENOMEM;
-पूर्ण
+	return found ? ftid : -ENOMEM;
+}
 
-अटल पूर्णांक cxgb4_set_ftid(काष्ठा tid_info *t, पूर्णांक fidx, पूर्णांक family,
-			  अचिन्हित पूर्णांक chip_ver)
-अणु
+static int cxgb4_set_ftid(struct tid_info *t, int fidx, int family,
+			  unsigned int chip_ver)
+{
 	spin_lock_bh(&t->ftid_lock);
 
-	अगर (test_bit(fidx, t->ftid_bmap)) अणु
+	if (test_bit(fidx, t->ftid_bmap)) {
 		spin_unlock_bh(&t->ftid_lock);
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
-	अगर (family == PF_INET) अणु
+	if (family == PF_INET) {
 		__set_bit(fidx, t->ftid_bmap);
-	पूर्ण अन्यथा अणु
-		अगर (chip_ver < CHELSIO_T6)
-			biपंचांगap_allocate_region(t->ftid_bmap, fidx, 2);
-		अन्यथा
-			biपंचांगap_allocate_region(t->ftid_bmap, fidx, 1);
-	पूर्ण
+	} else {
+		if (chip_ver < CHELSIO_T6)
+			bitmap_allocate_region(t->ftid_bmap, fidx, 2);
+		else
+			bitmap_allocate_region(t->ftid_bmap, fidx, 1);
+	}
 
 	spin_unlock_bh(&t->ftid_lock);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक cxgb4_set_hpftid(काष्ठा tid_info *t, पूर्णांक fidx, पूर्णांक family)
-अणु
+static int cxgb4_set_hpftid(struct tid_info *t, int fidx, int family)
+{
 	spin_lock_bh(&t->ftid_lock);
 
-	अगर (test_bit(fidx, t->hpftid_bmap)) अणु
+	if (test_bit(fidx, t->hpftid_bmap)) {
 		spin_unlock_bh(&t->ftid_lock);
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
-	अगर (family == PF_INET)
+	if (family == PF_INET)
 		__set_bit(fidx, t->hpftid_bmap);
-	अन्यथा
-		biपंचांगap_allocate_region(t->hpftid_bmap, fidx, 1);
+	else
+		bitmap_allocate_region(t->hpftid_bmap, fidx, 1);
 
 	spin_unlock_bh(&t->ftid_lock);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम cxgb4_clear_ftid(काष्ठा tid_info *t, पूर्णांक fidx, पूर्णांक family,
-			     अचिन्हित पूर्णांक chip_ver)
-अणु
+static void cxgb4_clear_ftid(struct tid_info *t, int fidx, int family,
+			     unsigned int chip_ver)
+{
 	spin_lock_bh(&t->ftid_lock);
-	अगर (family == PF_INET) अणु
+	if (family == PF_INET) {
 		__clear_bit(fidx, t->ftid_bmap);
-	पूर्ण अन्यथा अणु
-		अगर (chip_ver < CHELSIO_T6)
-			biपंचांगap_release_region(t->ftid_bmap, fidx, 2);
-		अन्यथा
-			biपंचांगap_release_region(t->ftid_bmap, fidx, 1);
-	पूर्ण
+	} else {
+		if (chip_ver < CHELSIO_T6)
+			bitmap_release_region(t->ftid_bmap, fidx, 2);
+		else
+			bitmap_release_region(t->ftid_bmap, fidx, 1);
+	}
 	spin_unlock_bh(&t->ftid_lock);
-पूर्ण
+}
 
-अटल व्योम cxgb4_clear_hpftid(काष्ठा tid_info *t, पूर्णांक fidx, पूर्णांक family)
-अणु
+static void cxgb4_clear_hpftid(struct tid_info *t, int fidx, int family)
+{
 	spin_lock_bh(&t->ftid_lock);
 
-	अगर (family == PF_INET)
+	if (family == PF_INET)
 		__clear_bit(fidx, t->hpftid_bmap);
-	अन्यथा
-		biपंचांगap_release_region(t->hpftid_bmap, fidx, 1);
+	else
+		bitmap_release_region(t->hpftid_bmap, fidx, 1);
 
 	spin_unlock_bh(&t->ftid_lock);
-पूर्ण
+}
 
-/* Delete the filter at a specअगरied index. */
-अटल पूर्णांक del_filter_wr(काष्ठा adapter *adapter, पूर्णांक fidx)
-अणु
-	काष्ठा fw_filter_wr *fwr;
-	काष्ठा filter_entry *f;
-	काष्ठा sk_buff *skb;
-	अचिन्हित पूर्णांक len;
+/* Delete the filter at a specified index. */
+static int del_filter_wr(struct adapter *adapter, int fidx)
+{
+	struct fw_filter_wr *fwr;
+	struct filter_entry *f;
+	struct sk_buff *skb;
+	unsigned int len;
 
-	अगर (fidx < adapter->tids.nhpftids)
+	if (fidx < adapter->tids.nhpftids)
 		f = &adapter->tids.hpftid_tab[fidx];
-	अन्यथा
+	else
 		f = &adapter->tids.ftid_tab[fidx - adapter->tids.nhpftids];
 
-	len = माप(*fwr);
+	len = sizeof(*fwr);
 
 	skb = alloc_skb(len, GFP_KERNEL);
-	अगर (!skb)
-		वापस -ENOMEM;
+	if (!skb)
+		return -ENOMEM;
 
 	fwr = __skb_put(skb, len);
-	t4_mk_filtdelwr(f->tid, fwr, adapter->sge.fw_evtq.असल_id);
+	t4_mk_filtdelwr(f->tid, fwr, adapter->sge.fw_evtq.abs_id);
 
 	/* Mark the filter as "pending" and ship off the Filter Work Request.
 	 * When we get the Work Request Reply we'll clear the pending status.
 	 */
 	f->pending = 1;
 	t4_mgmt_tx(adapter, skb);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Send a Work Request to ग_लिखो the filter at a specअगरied index.  We स्थिरruct
- * a Firmware Filter Work Request to have the work करोne and put the indicated
- * filter पूर्णांकo "pending" mode which will prevent any further actions against
+/* Send a Work Request to write the filter at a specified index.  We construct
+ * a Firmware Filter Work Request to have the work done and put the indicated
+ * filter into "pending" mode which will prevent any further actions against
  * it till we get a reply from the firmware on the completion status of the
  * request.
  */
-पूर्णांक set_filter_wr(काष्ठा adapter *adapter, पूर्णांक fidx)
-अणु
-	काष्ठा fw_filter2_wr *fwr;
-	काष्ठा filter_entry *f;
-	काष्ठा sk_buff *skb;
+int set_filter_wr(struct adapter *adapter, int fidx)
+{
+	struct fw_filter2_wr *fwr;
+	struct filter_entry *f;
+	struct sk_buff *skb;
 
-	अगर (fidx < adapter->tids.nhpftids)
+	if (fidx < adapter->tids.nhpftids)
 		f = &adapter->tids.hpftid_tab[fidx];
-	अन्यथा
+	else
 		f = &adapter->tids.ftid_tab[fidx - adapter->tids.nhpftids];
 
-	skb = alloc_skb(माप(*fwr), GFP_KERNEL);
-	अगर (!skb)
-		वापस -ENOMEM;
+	skb = alloc_skb(sizeof(*fwr), GFP_KERNEL);
+	if (!skb)
+		return -ENOMEM;
 
 	/* If the new filter requires loopback Destination MAC and/or VLAN
-	 * rewriting then we need to allocate a Layer 2 Table (L2T) entry क्रम
+	 * rewriting then we need to allocate a Layer 2 Table (L2T) entry for
 	 * the filter.
 	 */
-	अगर (f->fs.newdmac || f->fs.newvlan) अणु
-		/* allocate L2T entry क्रम new filter */
-		f->l2t = t4_l2t_alloc_चयनing(adapter, f->fs.vlan,
+	if (f->fs.newdmac || f->fs.newvlan) {
+		/* allocate L2T entry for new filter */
+		f->l2t = t4_l2t_alloc_switching(adapter, f->fs.vlan,
 						f->fs.eport, f->fs.dmac);
-		अगर (!f->l2t) अणु
-			kमुक्त_skb(skb);
-			वापस -ENOMEM;
-		पूर्ण
-	पूर्ण
+		if (!f->l2t) {
+			kfree_skb(skb);
+			return -ENOMEM;
+		}
+	}
 
 	/* If the new filter requires loopback Source MAC rewriting then
-	 * we need to allocate a SMT entry क्रम the filter.
+	 * we need to allocate a SMT entry for the filter.
 	 */
-	अगर (f->fs.newsmac) अणु
-		f->smt = cxgb4_smt_alloc_चयनing(f->dev, f->fs.smac);
-		अगर (!f->smt) अणु
-			अगर (f->l2t) अणु
+	if (f->fs.newsmac) {
+		f->smt = cxgb4_smt_alloc_switching(f->dev, f->fs.smac);
+		if (!f->smt) {
+			if (f->l2t) {
 				cxgb4_l2t_release(f->l2t);
-				f->l2t = शून्य;
-			पूर्ण
-			kमुक्त_skb(skb);
-			वापस -ENOMEM;
-		पूर्ण
-	पूर्ण
+				f->l2t = NULL;
+			}
+			kfree_skb(skb);
+			return -ENOMEM;
+		}
+	}
 
-	fwr = __skb_put_zero(skb, माप(*fwr));
+	fwr = __skb_put_zero(skb, sizeof(*fwr));
 
 	/* It would be nice to put most of the following in t4_hw.c but most
-	 * of the work is translating the cxgbtool ch_filter_specअगरication
-	 * पूर्णांकo the Work Request and the definition of that काष्ठाure is
-	 * currently in cxgbtool.h which isn't appropriate to pull पूर्णांकo the
+	 * of the work is translating the cxgbtool ch_filter_specification
+	 * into the Work Request and the definition of that structure is
+	 * currently in cxgbtool.h which isn't appropriate to pull into the
 	 * common code.  We may eventually try to come up with a more neutral
-	 * filter specअगरication काष्ठाure but क्रम now it's easiest to simply
+	 * filter specification structure but for now it's easiest to simply
 	 * put this fairly direct code in line ...
 	 */
-	अगर (adapter->params.filter2_wr_support)
+	if (adapter->params.filter2_wr_support)
 		fwr->op_pkd = htonl(FW_WR_OP_V(FW_FILTER2_WR));
-	अन्यथा
+	else
 		fwr->op_pkd = htonl(FW_WR_OP_V(FW_FILTER_WR));
-	fwr->len16_pkd = htonl(FW_WR_LEN16_V(माप(*fwr) / 16));
+	fwr->len16_pkd = htonl(FW_WR_LEN16_V(sizeof(*fwr) / 16));
 	fwr->tid_to_iq =
 		htonl(FW_FILTER_WR_TID_V(f->tid) |
 		      FW_FILTER_WR_RQTYPE_V(f->fs.type) |
@@ -858,9 +857,9 @@ out_unlock:
 	fwr->del_filter_to_l2tix =
 		htonl(FW_FILTER_WR_RPTTID_V(f->fs.rpttid) |
 		      FW_FILTER_WR_DROP_V(f->fs.action == FILTER_DROP) |
-		      FW_FILTER_WR_सूचीSTEER_V(f->fs.dirsteer) |
+		      FW_FILTER_WR_DIRSTEER_V(f->fs.dirsteer) |
 		      FW_FILTER_WR_MASKHASH_V(f->fs.maskhash) |
-		      FW_FILTER_WR_सूचीSTEERHASH_V(f->fs.dirsteerhash) |
+		      FW_FILTER_WR_DIRSTEERHASH_V(f->fs.dirsteerhash) |
 		      FW_FILTER_WR_LPBK_V(f->fs.action == FILTER_SWITCH) |
 		      FW_FILTER_WR_DMAC_V(f->fs.newdmac) |
 		      FW_FILTER_WR_SMAC_V(f->fs.newsmac) |
@@ -881,11 +880,11 @@ out_unlock:
 		 FW_FILTER_WR_OVLAN_VLD_V(f->fs.val.ovlan_vld) |
 		 FW_FILTER_WR_IVLAN_VLDM_V(f->fs.mask.ivlan_vld) |
 		 FW_FILTER_WR_OVLAN_VLDM_V(f->fs.mask.ovlan_vld));
-	अगर (f->fs.newsmac)
+	if (f->fs.newsmac)
 		fwr->smac_sel = f->smt->idx;
 	fwr->rx_chan_rx_rpl_iq =
 		htons(FW_FILTER_WR_RX_CHAN_V(0) |
-		      FW_FILTER_WR_RX_RPL_IQ_V(adapter->sge.fw_evtq.असल_id));
+		      FW_FILTER_WR_RX_RPL_IQ_V(adapter->sge.fw_evtq.abs_id));
 	fwr->maci_to_matchtypem =
 		htonl(FW_FILTER_WR_MACI_V(f->fs.val.macidx) |
 		      FW_FILTER_WR_MACIM_V(f->fs.mask.macidx) |
@@ -903,29 +902,29 @@ out_unlock:
 	fwr->ivlanm = htons(f->fs.mask.ivlan);
 	fwr->ovlan = htons(f->fs.val.ovlan);
 	fwr->ovlanm = htons(f->fs.mask.ovlan);
-	स_नकल(fwr->lip, f->fs.val.lip, माप(fwr->lip));
-	स_नकल(fwr->lipm, f->fs.mask.lip, माप(fwr->lipm));
-	स_नकल(fwr->fip, f->fs.val.fip, माप(fwr->fip));
-	स_नकल(fwr->fipm, f->fs.mask.fip, माप(fwr->fipm));
+	memcpy(fwr->lip, f->fs.val.lip, sizeof(fwr->lip));
+	memcpy(fwr->lipm, f->fs.mask.lip, sizeof(fwr->lipm));
+	memcpy(fwr->fip, f->fs.val.fip, sizeof(fwr->fip));
+	memcpy(fwr->fipm, f->fs.mask.fip, sizeof(fwr->fipm));
 	fwr->lp = htons(f->fs.val.lport);
 	fwr->lpm = htons(f->fs.mask.lport);
 	fwr->fp = htons(f->fs.val.fport);
 	fwr->fpm = htons(f->fs.mask.fport);
 
-	अगर (adapter->params.filter2_wr_support) अणु
+	if (adapter->params.filter2_wr_support) {
 		u8 *nat_lp = (u8 *)&f->fs.nat_lport;
 		u8 *nat_fp = (u8 *)&f->fs.nat_fport;
 
-		fwr->naपंचांगode_to_ulp_type =
+		fwr->natmode_to_ulp_type =
 			FW_FILTER2_WR_ULP_TYPE_V(f->fs.nat_mode ?
 						 ULP_MODE_TCPDDP :
 						 ULP_MODE_NONE) |
 			FW_FILTER2_WR_NATMODE_V(f->fs.nat_mode);
-		स_नकल(fwr->newlip, f->fs.nat_lip, माप(fwr->newlip));
-		स_नकल(fwr->newfip, f->fs.nat_fip, माप(fwr->newfip));
+		memcpy(fwr->newlip, f->fs.nat_lip, sizeof(fwr->newlip));
+		memcpy(fwr->newfip, f->fs.nat_fip, sizeof(fwr->newfip));
 		fwr->newlport = htons(nat_lp[1] | nat_lp[0] << 8);
 		fwr->newfport = htons(nat_fp[1] | nat_fp[0] << 8);
-	पूर्ण
+	}
 
 	/* Mark the filter as "pending" and ship off the Filter Work Request.
 	 * When we get the Work Request Reply we'll clear the pending status.
@@ -933,374 +932,374 @@ out_unlock:
 	f->pending = 1;
 	set_wr_txq(skb, CPL_PRIORITY_CONTROL, f->fs.val.iport & 0x3);
 	t4_ofld_send(adapter, skb);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Return an error number अगर the indicated filter isn't writable ... */
-पूर्णांक writable_filter(काष्ठा filter_entry *f)
-अणु
-	अगर (f->locked)
-		वापस -EPERM;
-	अगर (f->pending)
-		वापस -EBUSY;
+/* Return an error number if the indicated filter isn't writable ... */
+int writable_filter(struct filter_entry *f)
+{
+	if (f->locked)
+		return -EPERM;
+	if (f->pending)
+		return -EBUSY;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Delete the filter at the specअगरied index (अगर valid).  The checks क्रम all
- * the common problems with करोing this like the filter being locked, currently
+/* Delete the filter at the specified index (if valid).  The checks for all
+ * the common problems with doing this like the filter being locked, currently
  * pending in another operation, etc.
  */
-पूर्णांक delete_filter(काष्ठा adapter *adapter, अचिन्हित पूर्णांक fidx)
-अणु
-	काष्ठा filter_entry *f;
-	पूर्णांक ret;
+int delete_filter(struct adapter *adapter, unsigned int fidx)
+{
+	struct filter_entry *f;
+	int ret;
 
-	अगर (fidx >= adapter->tids.nftids + adapter->tids.nsftids +
+	if (fidx >= adapter->tids.nftids + adapter->tids.nsftids +
 		    adapter->tids.nhpftids)
-		वापस -EINVAL;
+		return -EINVAL;
 
-	अगर (fidx < adapter->tids.nhpftids)
+	if (fidx < adapter->tids.nhpftids)
 		f = &adapter->tids.hpftid_tab[fidx];
-	अन्यथा
+	else
 		f = &adapter->tids.ftid_tab[fidx - adapter->tids.nhpftids];
 	ret = writable_filter(f);
-	अगर (ret)
-		वापस ret;
-	अगर (f->valid)
-		वापस del_filter_wr(adapter, fidx);
+	if (ret)
+		return ret;
+	if (f->valid)
+		return del_filter_wr(adapter, fidx);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* Clear a filter and release any of its resources that we own.  This also
  * clears the filter's "pending" status.
  */
-व्योम clear_filter(काष्ठा adapter *adap, काष्ठा filter_entry *f)
-अणु
-	काष्ठा port_info *pi = netdev_priv(f->dev);
+void clear_filter(struct adapter *adap, struct filter_entry *f)
+{
+	struct port_info *pi = netdev_priv(f->dev);
 
 	/* If the new or old filter have loopback rewriting rules then we'll
-	 * need to मुक्त any existing L2T, SMT, CLIP entries of filter
+	 * need to free any existing L2T, SMT, CLIP entries of filter
 	 * rule.
 	 */
-	अगर (f->l2t)
+	if (f->l2t)
 		cxgb4_l2t_release(f->l2t);
 
-	अगर (f->smt)
+	if (f->smt)
 		cxgb4_smt_release(f->smt);
 
-	अगर (f->fs.val.encap_vld && f->fs.val.ovlan_vld)
-		t4_मुक्त_encap_mac_filt(adap, pi->viid,
+	if (f->fs.val.encap_vld && f->fs.val.ovlan_vld)
+		t4_free_encap_mac_filt(adap, pi->viid,
 				       f->fs.val.ovlan & 0x1ff, 0);
 
-	अगर ((f->fs.hash || is_t6(adap->params.chip)) && f->fs.type)
-		cxgb4_clip_release(f->dev, (स्थिर u32 *)&f->fs.val.lip, 1);
+	if ((f->fs.hash || is_t6(adap->params.chip)) && f->fs.type)
+		cxgb4_clip_release(f->dev, (const u32 *)&f->fs.val.lip, 1);
 
 	/* The zeroing of the filter rule below clears the filter valid,
-	 * pending, locked flags, l2t poपूर्णांकer, etc. so it's all we need क्रम
+	 * pending, locked flags, l2t pointer, etc. so it's all we need for
 	 * this operation.
 	 */
-	स_रखो(f, 0, माप(*f));
-पूर्ण
+	memset(f, 0, sizeof(*f));
+}
 
-व्योम clear_all_filters(काष्ठा adapter *adapter)
-अणु
-	काष्ठा net_device *dev = adapter->port[0];
-	अचिन्हित पूर्णांक i;
+void clear_all_filters(struct adapter *adapter)
+{
+	struct net_device *dev = adapter->port[0];
+	unsigned int i;
 
-	अगर (adapter->tids.hpftid_tab) अणु
-		काष्ठा filter_entry *f = &adapter->tids.hpftid_tab[0];
+	if (adapter->tids.hpftid_tab) {
+		struct filter_entry *f = &adapter->tids.hpftid_tab[0];
 
-		क्रम (i = 0; i < adapter->tids.nhpftids; i++, f++)
-			अगर (f->valid || f->pending)
+		for (i = 0; i < adapter->tids.nhpftids; i++, f++)
+			if (f->valid || f->pending)
 				cxgb4_del_filter(dev, i, &f->fs);
-	पूर्ण
+	}
 
-	अगर (adapter->tids.ftid_tab) अणु
-		काष्ठा filter_entry *f = &adapter->tids.ftid_tab[0];
-		अचिन्हित पूर्णांक max_ftid = adapter->tids.nftids +
+	if (adapter->tids.ftid_tab) {
+		struct filter_entry *f = &adapter->tids.ftid_tab[0];
+		unsigned int max_ftid = adapter->tids.nftids +
 					adapter->tids.nsftids +
 					adapter->tids.nhpftids;
 
 		/* Clear all TCAM filters */
-		क्रम (i = adapter->tids.nhpftids; i < max_ftid; i++, f++)
-			अगर (f->valid || f->pending)
+		for (i = adapter->tids.nhpftids; i < max_ftid; i++, f++)
+			if (f->valid || f->pending)
 				cxgb4_del_filter(dev, i, &f->fs);
-	पूर्ण
+	}
 
 	/* Clear all hash filters */
-	अगर (is_hashfilter(adapter) && adapter->tids.tid_tab) अणु
-		काष्ठा filter_entry *f;
-		अचिन्हित पूर्णांक sb;
+	if (is_hashfilter(adapter) && adapter->tids.tid_tab) {
+		struct filter_entry *f;
+		unsigned int sb;
 
-		क्रम (i = adapter->tids.hash_base;
-		     i <= adapter->tids.ntids; i++) अणु
-			f = (काष्ठा filter_entry *)
+		for (i = adapter->tids.hash_base;
+		     i <= adapter->tids.ntids; i++) {
+			f = (struct filter_entry *)
 				adapter->tids.tid_tab[i];
 
-			अगर (f && (f->valid || f->pending))
+			if (f && (f->valid || f->pending))
 				cxgb4_del_filter(dev, f->tid, &f->fs);
-		पूर्ण
+		}
 
 		sb = adapter->tids.stid_base;
-		क्रम (i = 0; i < sb; i++) अणु
-			f = (काष्ठा filter_entry *)adapter->tids.tid_tab[i];
+		for (i = 0; i < sb; i++) {
+			f = (struct filter_entry *)adapter->tids.tid_tab[i];
 
-			अगर (f && (f->valid || f->pending))
+			if (f && (f->valid || f->pending))
 				cxgb4_del_filter(dev, f->tid, &f->fs);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-/* Fill up शेष masks क्रम set match fields. */
-अटल व्योम fill_शेष_mask(काष्ठा ch_filter_specअगरication *fs)
-अणु
-	अचिन्हित पूर्णांक lip = 0, lip_mask = 0;
-	अचिन्हित पूर्णांक fip = 0, fip_mask = 0;
-	अचिन्हित पूर्णांक i;
+/* Fill up default masks for set match fields. */
+static void fill_default_mask(struct ch_filter_specification *fs)
+{
+	unsigned int lip = 0, lip_mask = 0;
+	unsigned int fip = 0, fip_mask = 0;
+	unsigned int i;
 
-	अगर (fs->val.iport && !fs->mask.iport)
+	if (fs->val.iport && !fs->mask.iport)
 		fs->mask.iport |= ~0;
-	अगर (fs->val.fcoe && !fs->mask.fcoe)
+	if (fs->val.fcoe && !fs->mask.fcoe)
 		fs->mask.fcoe |= ~0;
-	अगर (fs->val.matchtype && !fs->mask.matchtype)
+	if (fs->val.matchtype && !fs->mask.matchtype)
 		fs->mask.matchtype |= ~0;
-	अगर (fs->val.macidx && !fs->mask.macidx)
+	if (fs->val.macidx && !fs->mask.macidx)
 		fs->mask.macidx |= ~0;
-	अगर (fs->val.ethtype && !fs->mask.ethtype)
+	if (fs->val.ethtype && !fs->mask.ethtype)
 		fs->mask.ethtype |= ~0;
-	अगर (fs->val.ivlan && !fs->mask.ivlan)
+	if (fs->val.ivlan && !fs->mask.ivlan)
 		fs->mask.ivlan |= ~0;
-	अगर (fs->val.ovlan && !fs->mask.ovlan)
+	if (fs->val.ovlan && !fs->mask.ovlan)
 		fs->mask.ovlan |= ~0;
-	अगर (fs->val.frag && !fs->mask.frag)
+	if (fs->val.frag && !fs->mask.frag)
 		fs->mask.frag |= ~0;
-	अगर (fs->val.tos && !fs->mask.tos)
+	if (fs->val.tos && !fs->mask.tos)
 		fs->mask.tos |= ~0;
-	अगर (fs->val.proto && !fs->mask.proto)
+	if (fs->val.proto && !fs->mask.proto)
 		fs->mask.proto |= ~0;
-	अगर (fs->val.pfvf_vld && !fs->mask.pfvf_vld)
+	if (fs->val.pfvf_vld && !fs->mask.pfvf_vld)
 		fs->mask.pfvf_vld |= ~0;
-	अगर (fs->val.pf && !fs->mask.pf)
+	if (fs->val.pf && !fs->mask.pf)
 		fs->mask.pf |= ~0;
-	अगर (fs->val.vf && !fs->mask.vf)
+	if (fs->val.vf && !fs->mask.vf)
 		fs->mask.vf |= ~0;
 
-	क्रम (i = 0; i < ARRAY_SIZE(fs->val.lip); i++) अणु
+	for (i = 0; i < ARRAY_SIZE(fs->val.lip); i++) {
 		lip |= fs->val.lip[i];
 		lip_mask |= fs->mask.lip[i];
 		fip |= fs->val.fip[i];
 		fip_mask |= fs->mask.fip[i];
-	पूर्ण
+	}
 
-	अगर (lip && !lip_mask)
-		स_रखो(fs->mask.lip, ~0, माप(fs->mask.lip));
+	if (lip && !lip_mask)
+		memset(fs->mask.lip, ~0, sizeof(fs->mask.lip));
 
-	अगर (fip && !fip_mask)
-		स_रखो(fs->mask.fip, ~0, माप(fs->mask.lip));
+	if (fip && !fip_mask)
+		memset(fs->mask.fip, ~0, sizeof(fs->mask.lip));
 
-	अगर (fs->val.lport && !fs->mask.lport)
+	if (fs->val.lport && !fs->mask.lport)
 		fs->mask.lport = ~0;
-	अगर (fs->val.fport && !fs->mask.fport)
+	if (fs->val.fport && !fs->mask.fport)
 		fs->mask.fport = ~0;
-पूर्ण
+}
 
-अटल bool is_addr_all_mask(u8 *ipmask, पूर्णांक family)
-अणु
-	अगर (family == AF_INET) अणु
-		काष्ठा in_addr *addr;
+static bool is_addr_all_mask(u8 *ipmask, int family)
+{
+	if (family == AF_INET) {
+		struct in_addr *addr;
 
-		addr = (काष्ठा in_addr *)ipmask;
-		अगर (addr->s_addr == htonl(0xffffffff))
-			वापस true;
-	पूर्ण अन्यथा अगर (family == AF_INET6) अणु
-		काष्ठा in6_addr *addr6;
+		addr = (struct in_addr *)ipmask;
+		if (addr->s_addr == htonl(0xffffffff))
+			return true;
+	} else if (family == AF_INET6) {
+		struct in6_addr *addr6;
 
-		addr6 = (काष्ठा in6_addr *)ipmask;
-		अगर (addr6->s6_addr32[0] == htonl(0xffffffff) &&
+		addr6 = (struct in6_addr *)ipmask;
+		if (addr6->s6_addr32[0] == htonl(0xffffffff) &&
 		    addr6->s6_addr32[1] == htonl(0xffffffff) &&
 		    addr6->s6_addr32[2] == htonl(0xffffffff) &&
 		    addr6->s6_addr32[3] == htonl(0xffffffff))
-			वापस true;
-	पूर्ण
-	वापस false;
-पूर्ण
+			return true;
+	}
+	return false;
+}
 
-अटल bool is_inaddr_any(u8 *ip, पूर्णांक family)
-अणु
-	पूर्णांक addr_type;
+static bool is_inaddr_any(u8 *ip, int family)
+{
+	int addr_type;
 
-	अगर (family == AF_INET) अणु
-		काष्ठा in_addr *addr;
+	if (family == AF_INET) {
+		struct in_addr *addr;
 
-		addr = (काष्ठा in_addr *)ip;
-		अगर (addr->s_addr == htonl(INADDR_ANY))
-			वापस true;
-	पूर्ण अन्यथा अगर (family == AF_INET6) अणु
-		काष्ठा in6_addr *addr6;
+		addr = (struct in_addr *)ip;
+		if (addr->s_addr == htonl(INADDR_ANY))
+			return true;
+	} else if (family == AF_INET6) {
+		struct in6_addr *addr6;
 
-		addr6 = (काष्ठा in6_addr *)ip;
-		addr_type = ipv6_addr_type((स्थिर काष्ठा in6_addr *)
+		addr6 = (struct in6_addr *)ip;
+		addr_type = ipv6_addr_type((const struct in6_addr *)
 					   &addr6);
-		अगर (addr_type == IPV6_ADDR_ANY)
-			वापस true;
-	पूर्ण
-	वापस false;
-पूर्ण
+		if (addr_type == IPV6_ADDR_ANY)
+			return true;
+	}
+	return false;
+}
 
-bool is_filter_exact_match(काष्ठा adapter *adap,
-			   काष्ठा ch_filter_specअगरication *fs)
-अणु
-	काष्ठा tp_params *tp = &adap->params.tp;
+bool is_filter_exact_match(struct adapter *adap,
+			   struct ch_filter_specification *fs)
+{
+	struct tp_params *tp = &adap->params.tp;
 	u64 hash_filter_mask = tp->hash_filter_mask;
 	u64 ntuple_mask = 0;
 
-	अगर (!is_hashfilter(adap))
-		वापस false;
+	if (!is_hashfilter(adap))
+		return false;
 
-	अगर ((atomic_पढ़ो(&adap->tids.hash_tids_in_use) +
-	     atomic_पढ़ो(&adap->tids.tids_in_use)) >=
+	if ((atomic_read(&adap->tids.hash_tids_in_use) +
+	     atomic_read(&adap->tids.tids_in_use)) >=
 	    (adap->tids.nhash + (adap->tids.stid_base - adap->tids.tid_base)))
-		वापस false;
+		return false;
 
-	 /* Keep tunnel VNI match disabled क्रम hash-filters क्रम now */
-	अगर (fs->mask.encap_vld)
-		वापस false;
+	 /* Keep tunnel VNI match disabled for hash-filters for now */
+	if (fs->mask.encap_vld)
+		return false;
 
-	अगर (fs->type) अणु
-		अगर (is_inaddr_any(fs->val.fip, AF_INET6) ||
+	if (fs->type) {
+		if (is_inaddr_any(fs->val.fip, AF_INET6) ||
 		    !is_addr_all_mask(fs->mask.fip, AF_INET6))
-			वापस false;
+			return false;
 
-		अगर (is_inaddr_any(fs->val.lip, AF_INET6) ||
+		if (is_inaddr_any(fs->val.lip, AF_INET6) ||
 		    !is_addr_all_mask(fs->mask.lip, AF_INET6))
-			वापस false;
-	पूर्ण अन्यथा अणु
-		अगर (is_inaddr_any(fs->val.fip, AF_INET) ||
+			return false;
+	} else {
+		if (is_inaddr_any(fs->val.fip, AF_INET) ||
 		    !is_addr_all_mask(fs->mask.fip, AF_INET))
-			वापस false;
+			return false;
 
-		अगर (is_inaddr_any(fs->val.lip, AF_INET) ||
+		if (is_inaddr_any(fs->val.lip, AF_INET) ||
 		    !is_addr_all_mask(fs->mask.lip, AF_INET))
-			वापस false;
-	पूर्ण
+			return false;
+	}
 
-	अगर (!fs->val.lport || fs->mask.lport != 0xffff)
-		वापस false;
+	if (!fs->val.lport || fs->mask.lport != 0xffff)
+		return false;
 
-	अगर (!fs->val.fport || fs->mask.fport != 0xffff)
-		वापस false;
+	if (!fs->val.fport || fs->mask.fport != 0xffff)
+		return false;
 
 	/* calculate tuple mask and compare with mask configured in hw */
-	अगर (tp->fcoe_shअगरt >= 0)
-		ntuple_mask |= (u64)fs->mask.fcoe << tp->fcoe_shअगरt;
+	if (tp->fcoe_shift >= 0)
+		ntuple_mask |= (u64)fs->mask.fcoe << tp->fcoe_shift;
 
-	अगर (tp->port_shअगरt >= 0)
-		ntuple_mask |= (u64)fs->mask.iport << tp->port_shअगरt;
+	if (tp->port_shift >= 0)
+		ntuple_mask |= (u64)fs->mask.iport << tp->port_shift;
 
-	अगर (tp->vnic_shअगरt >= 0) अणु
-		अगर ((adap->params.tp.ingress_config & VNIC_F))
-			ntuple_mask |= (u64)fs->mask.pfvf_vld << tp->vnic_shअगरt;
-		अन्यथा
+	if (tp->vnic_shift >= 0) {
+		if ((adap->params.tp.ingress_config & VNIC_F))
+			ntuple_mask |= (u64)fs->mask.pfvf_vld << tp->vnic_shift;
+		else
 			ntuple_mask |= (u64)fs->mask.ovlan_vld <<
-				tp->vnic_shअगरt;
-	पूर्ण
+				tp->vnic_shift;
+	}
 
-	अगर (tp->vlan_shअगरt >= 0)
-		ntuple_mask |= (u64)fs->mask.ivlan << tp->vlan_shअगरt;
+	if (tp->vlan_shift >= 0)
+		ntuple_mask |= (u64)fs->mask.ivlan << tp->vlan_shift;
 
-	अगर (tp->tos_shअगरt >= 0)
-		ntuple_mask |= (u64)fs->mask.tos << tp->tos_shअगरt;
+	if (tp->tos_shift >= 0)
+		ntuple_mask |= (u64)fs->mask.tos << tp->tos_shift;
 
-	अगर (tp->protocol_shअगरt >= 0)
-		ntuple_mask |= (u64)fs->mask.proto << tp->protocol_shअगरt;
+	if (tp->protocol_shift >= 0)
+		ntuple_mask |= (u64)fs->mask.proto << tp->protocol_shift;
 
-	अगर (tp->ethertype_shअगरt >= 0)
-		ntuple_mask |= (u64)fs->mask.ethtype << tp->ethertype_shअगरt;
+	if (tp->ethertype_shift >= 0)
+		ntuple_mask |= (u64)fs->mask.ethtype << tp->ethertype_shift;
 
-	अगर (tp->macmatch_shअगरt >= 0)
-		ntuple_mask |= (u64)fs->mask.macidx << tp->macmatch_shअगरt;
+	if (tp->macmatch_shift >= 0)
+		ntuple_mask |= (u64)fs->mask.macidx << tp->macmatch_shift;
 
-	अगर (tp->matchtype_shअगरt >= 0)
-		ntuple_mask |= (u64)fs->mask.matchtype << tp->matchtype_shअगरt;
+	if (tp->matchtype_shift >= 0)
+		ntuple_mask |= (u64)fs->mask.matchtype << tp->matchtype_shift;
 
-	अगर (tp->frag_shअगरt >= 0)
-		ntuple_mask |= (u64)fs->mask.frag << tp->frag_shअगरt;
+	if (tp->frag_shift >= 0)
+		ntuple_mask |= (u64)fs->mask.frag << tp->frag_shift;
 
-	अगर (ntuple_mask != hash_filter_mask)
-		वापस false;
+	if (ntuple_mask != hash_filter_mask)
+		return false;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल u64 hash_filter_ntuple(काष्ठा ch_filter_specअगरication *fs,
-			      काष्ठा net_device *dev)
-अणु
-	काष्ठा adapter *adap = netdev2adap(dev);
-	काष्ठा tp_params *tp = &adap->params.tp;
+static u64 hash_filter_ntuple(struct ch_filter_specification *fs,
+			      struct net_device *dev)
+{
+	struct adapter *adap = netdev2adap(dev);
+	struct tp_params *tp = &adap->params.tp;
 	u64 ntuple = 0;
 
 	/* Initialize each of the fields which we care about which are present
 	 * in the Compressed Filter Tuple.
 	 */
-	अगर (tp->vlan_shअगरt >= 0 && fs->mask.ivlan)
-		ntuple |= (FT_VLAN_VLD_F | fs->val.ivlan) << tp->vlan_shअगरt;
+	if (tp->vlan_shift >= 0 && fs->mask.ivlan)
+		ntuple |= (FT_VLAN_VLD_F | fs->val.ivlan) << tp->vlan_shift;
 
-	अगर (tp->port_shअगरt >= 0 && fs->mask.iport)
-		ntuple |= (u64)fs->val.iport << tp->port_shअगरt;
+	if (tp->port_shift >= 0 && fs->mask.iport)
+		ntuple |= (u64)fs->val.iport << tp->port_shift;
 
-	अगर (tp->protocol_shअगरt >= 0) अणु
-		अगर (!fs->val.proto)
-			ntuple |= (u64)IPPROTO_TCP << tp->protocol_shअगरt;
-		अन्यथा
-			ntuple |= (u64)fs->val.proto << tp->protocol_shअगरt;
-	पूर्ण
+	if (tp->protocol_shift >= 0) {
+		if (!fs->val.proto)
+			ntuple |= (u64)IPPROTO_TCP << tp->protocol_shift;
+		else
+			ntuple |= (u64)fs->val.proto << tp->protocol_shift;
+	}
 
-	अगर (tp->tos_shअगरt >= 0 && fs->mask.tos)
-		ntuple |= (u64)(fs->val.tos) << tp->tos_shअगरt;
+	if (tp->tos_shift >= 0 && fs->mask.tos)
+		ntuple |= (u64)(fs->val.tos) << tp->tos_shift;
 
-	अगर (tp->vnic_shअगरt >= 0) अणु
-		अगर ((adap->params.tp.ingress_config & USE_ENC_IDX_F) &&
+	if (tp->vnic_shift >= 0) {
+		if ((adap->params.tp.ingress_config & USE_ENC_IDX_F) &&
 		    fs->mask.encap_vld)
 			ntuple |= (u64)((fs->val.encap_vld << 16) |
-					(fs->val.ovlan)) << tp->vnic_shअगरt;
-		अन्यथा अगर ((adap->params.tp.ingress_config & VNIC_F) &&
+					(fs->val.ovlan)) << tp->vnic_shift;
+		else if ((adap->params.tp.ingress_config & VNIC_F) &&
 			 fs->mask.pfvf_vld)
 			ntuple |= (u64)((fs->val.pfvf_vld << 16) |
 					(fs->val.pf << 13) |
-					(fs->val.vf)) << tp->vnic_shअगरt;
-		अन्यथा
+					(fs->val.vf)) << tp->vnic_shift;
+		else
 			ntuple |= (u64)((fs->val.ovlan_vld << 16) |
-					(fs->val.ovlan)) << tp->vnic_shअगरt;
-	पूर्ण
+					(fs->val.ovlan)) << tp->vnic_shift;
+	}
 
-	अगर (tp->macmatch_shअगरt >= 0 && fs->mask.macidx)
-		ntuple |= (u64)(fs->val.macidx) << tp->macmatch_shअगरt;
+	if (tp->macmatch_shift >= 0 && fs->mask.macidx)
+		ntuple |= (u64)(fs->val.macidx) << tp->macmatch_shift;
 
-	अगर (tp->ethertype_shअगरt >= 0 && fs->mask.ethtype)
-		ntuple |= (u64)(fs->val.ethtype) << tp->ethertype_shअगरt;
+	if (tp->ethertype_shift >= 0 && fs->mask.ethtype)
+		ntuple |= (u64)(fs->val.ethtype) << tp->ethertype_shift;
 
-	अगर (tp->matchtype_shअगरt >= 0 && fs->mask.matchtype)
-		ntuple |= (u64)(fs->val.matchtype) << tp->matchtype_shअगरt;
+	if (tp->matchtype_shift >= 0 && fs->mask.matchtype)
+		ntuple |= (u64)(fs->val.matchtype) << tp->matchtype_shift;
 
-	अगर (tp->frag_shअगरt >= 0 && fs->mask.frag)
-		ntuple |= (u64)(fs->val.frag) << tp->frag_shअगरt;
+	if (tp->frag_shift >= 0 && fs->mask.frag)
+		ntuple |= (u64)(fs->val.frag) << tp->frag_shift;
 
-	अगर (tp->fcoe_shअगरt >= 0 && fs->mask.fcoe)
-		ntuple |= (u64)(fs->val.fcoe) << tp->fcoe_shअगरt;
-	वापस ntuple;
-पूर्ण
+	if (tp->fcoe_shift >= 0 && fs->mask.fcoe)
+		ntuple |= (u64)(fs->val.fcoe) << tp->fcoe_shift;
+	return ntuple;
+}
 
-अटल व्योम mk_act_खोलो_req6(काष्ठा filter_entry *f, काष्ठा sk_buff *skb,
-			     अचिन्हित पूर्णांक qid_filterid, काष्ठा adapter *adap)
-अणु
-	काष्ठा cpl_t6_act_खोलो_req6 *t6req = शून्य;
-	काष्ठा cpl_act_खोलो_req6 *req = शून्य;
+static void mk_act_open_req6(struct filter_entry *f, struct sk_buff *skb,
+			     unsigned int qid_filterid, struct adapter *adap)
+{
+	struct cpl_t6_act_open_req6 *t6req = NULL;
+	struct cpl_act_open_req6 *req = NULL;
 
-	t6req = (काष्ठा cpl_t6_act_खोलो_req6 *)__skb_put(skb, माप(*t6req));
+	t6req = (struct cpl_t6_act_open_req6 *)__skb_put(skb, sizeof(*t6req));
 	INIT_TP_WR(t6req, 0);
-	req = (काष्ठा cpl_act_खोलो_req6 *)t6req;
+	req = (struct cpl_act_open_req6 *)t6req;
 	OPCODE_TID(req) = htonl(MK_OPCODE_TID(CPL_ACT_OPEN_REQ6, qid_filterid));
 	req->local_port = cpu_to_be16(f->fs.val.lport);
 	req->peer_port = cpu_to_be16(f->fs.val.fport);
@@ -1328,22 +1327,22 @@ bool is_filter_exact_match(काष्ठा adapter *adap,
 			    RX_CHANNEL_V(cxgb4_port_e2cchan(f->dev)) |
 			    PACE_V((f->fs.maskhash) |
 				   ((f->fs.dirsteerhash) << 1)));
-पूर्ण
+}
 
-अटल व्योम mk_act_खोलो_req(काष्ठा filter_entry *f, काष्ठा sk_buff *skb,
-			    अचिन्हित पूर्णांक qid_filterid, काष्ठा adapter *adap)
-अणु
-	काष्ठा cpl_t6_act_खोलो_req *t6req = शून्य;
-	काष्ठा cpl_act_खोलो_req *req = शून्य;
+static void mk_act_open_req(struct filter_entry *f, struct sk_buff *skb,
+			    unsigned int qid_filterid, struct adapter *adap)
+{
+	struct cpl_t6_act_open_req *t6req = NULL;
+	struct cpl_act_open_req *req = NULL;
 
-	t6req = (काष्ठा cpl_t6_act_खोलो_req *)__skb_put(skb, माप(*t6req));
+	t6req = (struct cpl_t6_act_open_req *)__skb_put(skb, sizeof(*t6req));
 	INIT_TP_WR(t6req, 0);
-	req = (काष्ठा cpl_act_खोलो_req *)t6req;
+	req = (struct cpl_act_open_req *)t6req;
 	OPCODE_TID(req) = htonl(MK_OPCODE_TID(CPL_ACT_OPEN_REQ, qid_filterid));
 	req->local_port = cpu_to_be16(f->fs.val.lport);
 	req->peer_port = cpu_to_be16(f->fs.val.fport);
-	स_नकल(&req->local_ip, f->fs.val.lip, 4);
-	स_नकल(&req->peer_ip, f->fs.val.fip, 4);
+	memcpy(&req->local_ip, f->fs.val.lip, 4);
+	memcpy(&req->peer_ip, f->fs.val.fip, 4);
 	req->opt0 = cpu_to_be64(NAGLE_V(f->fs.newvlan == VLAN_REMOVE ||
 					f->fs.newvlan == VLAN_REWRITE) |
 				DELACK_V(f->fs.hitcnts) |
@@ -1365,33 +1364,33 @@ bool is_filter_exact_match(काष्ठा adapter *adap,
 			    RX_CHANNEL_V(cxgb4_port_e2cchan(f->dev)) |
 			    PACE_V((f->fs.maskhash) |
 				   ((f->fs.dirsteerhash) << 1)));
-पूर्ण
+}
 
-अटल पूर्णांक cxgb4_set_hash_filter(काष्ठा net_device *dev,
-				 काष्ठा ch_filter_specअगरication *fs,
-				 काष्ठा filter_ctx *ctx)
-अणु
-	काष्ठा adapter *adapter = netdev2adap(dev);
-	काष्ठा port_info *pi = netdev_priv(dev);
-	काष्ठा tid_info *t = &adapter->tids;
-	काष्ठा filter_entry *f;
-	काष्ठा sk_buff *skb;
-	पूर्णांक iq, atid, size;
-	पूर्णांक ret = 0;
+static int cxgb4_set_hash_filter(struct net_device *dev,
+				 struct ch_filter_specification *fs,
+				 struct filter_ctx *ctx)
+{
+	struct adapter *adapter = netdev2adap(dev);
+	struct port_info *pi = netdev_priv(dev);
+	struct tid_info *t = &adapter->tids;
+	struct filter_entry *f;
+	struct sk_buff *skb;
+	int iq, atid, size;
+	int ret = 0;
 	u32 iconf;
 
-	fill_शेष_mask(fs);
+	fill_default_mask(fs);
 	ret = validate_filter(dev, fs);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	iq = get_filter_steerq(dev, fs);
-	अगर (iq < 0)
-		वापस iq;
+	if (iq < 0)
+		return iq;
 
-	f = kzalloc(माप(*f), GFP_KERNEL);
-	अगर (!f)
-		वापस -ENOMEM;
+	f = kzalloc(sizeof(*f), GFP_KERNEL);
+	if (!f)
+		return -ENOMEM;
 
 	f->fs = *fs;
 	f->ctx = ctx;
@@ -1399,50 +1398,50 @@ bool is_filter_exact_match(काष्ठा adapter *adap,
 	f->fs.iq = iq;
 
 	/* If the new filter requires loopback Destination MAC and/or VLAN
-	 * rewriting then we need to allocate a Layer 2 Table (L2T) entry क्रम
+	 * rewriting then we need to allocate a Layer 2 Table (L2T) entry for
 	 * the filter.
 	 */
-	अगर (f->fs.newdmac || f->fs.newvlan) अणु
-		/* allocate L2T entry क्रम new filter */
-		f->l2t = t4_l2t_alloc_चयनing(adapter, f->fs.vlan,
+	if (f->fs.newdmac || f->fs.newvlan) {
+		/* allocate L2T entry for new filter */
+		f->l2t = t4_l2t_alloc_switching(adapter, f->fs.vlan,
 						f->fs.eport, f->fs.dmac);
-		अगर (!f->l2t) अणु
+		if (!f->l2t) {
 			ret = -ENOMEM;
-			जाओ out_err;
-		पूर्ण
-	पूर्ण
+			goto out_err;
+		}
+	}
 
 	/* If the new filter requires loopback Source MAC rewriting then
-	 * we need to allocate a SMT entry क्रम the filter.
+	 * we need to allocate a SMT entry for the filter.
 	 */
-	अगर (f->fs.newsmac) अणु
-		f->smt = cxgb4_smt_alloc_चयनing(f->dev, f->fs.smac);
-		अगर (!f->smt) अणु
-			अगर (f->l2t) अणु
+	if (f->fs.newsmac) {
+		f->smt = cxgb4_smt_alloc_switching(f->dev, f->fs.smac);
+		if (!f->smt) {
+			if (f->l2t) {
 				cxgb4_l2t_release(f->l2t);
-				f->l2t = शून्य;
-			पूर्ण
+				f->l2t = NULL;
+			}
 			ret = -ENOMEM;
-			जाओ मुक्त_l2t;
-		पूर्ण
-	पूर्ण
+			goto free_l2t;
+		}
+	}
 
 	atid = cxgb4_alloc_atid(t, f);
-	अगर (atid < 0) अणु
+	if (atid < 0) {
 		ret = atid;
-		जाओ मुक्त_smt;
-	पूर्ण
+		goto free_smt;
+	}
 
 	iconf = adapter->params.tp.ingress_config;
-	अगर (iconf & VNIC_F) अणु
+	if (iconf & VNIC_F) {
 		f->fs.val.ovlan = (fs->val.pf << 13) | fs->val.vf;
 		f->fs.mask.ovlan = (fs->mask.pf << 13) | fs->mask.vf;
 		f->fs.val.ovlan_vld = fs->val.pfvf_vld;
 		f->fs.mask.ovlan_vld = fs->mask.pfvf_vld;
-	पूर्ण अन्यथा अगर (iconf & USE_ENC_IDX_F) अणु
-		अगर (f->fs.val.encap_vld) अणु
-			काष्ठा port_info *pi = netdev_priv(f->dev);
-			u8 match_all_mac[] = अणु 0, 0, 0, 0, 0, 0 पूर्ण;
+	} else if (iconf & USE_ENC_IDX_F) {
+		if (f->fs.val.encap_vld) {
+			struct port_info *pi = netdev_priv(f->dev);
+			u8 match_all_mac[] = { 0, 0, 0, 0, 0, 0 };
 
 			/* allocate MPS TCAM entry */
 			ret = t4_alloc_encap_mac_filt(adapter, pi->viid,
@@ -1451,130 +1450,130 @@ bool is_filter_exact_match(काष्ठा adapter *adap,
 						      f->fs.val.vni,
 						      f->fs.mask.vni,
 						      0, 1, 1);
-			अगर (ret < 0)
-				जाओ मुक्त_atid;
+			if (ret < 0)
+				goto free_atid;
 
 			f->fs.val.ovlan = ret;
 			f->fs.mask.ovlan = 0xffff;
 			f->fs.val.ovlan_vld = 1;
 			f->fs.mask.ovlan_vld = 1;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	size = माप(काष्ठा cpl_t6_act_खोलो_req);
-	अगर (f->fs.type) अणु
-		ret = cxgb4_clip_get(f->dev, (स्थिर u32 *)&f->fs.val.lip, 1);
-		अगर (ret)
-			जाओ मुक्त_mps;
+	size = sizeof(struct cpl_t6_act_open_req);
+	if (f->fs.type) {
+		ret = cxgb4_clip_get(f->dev, (const u32 *)&f->fs.val.lip, 1);
+		if (ret)
+			goto free_mps;
 
 		skb = alloc_skb(size, GFP_KERNEL);
-		अगर (!skb) अणु
+		if (!skb) {
 			ret = -ENOMEM;
-			जाओ मुक्त_clip;
-		पूर्ण
+			goto free_clip;
+		}
 
-		mk_act_खोलो_req6(f, skb,
-				 ((adapter->sge.fw_evtq.असल_id << 14) | atid),
+		mk_act_open_req6(f, skb,
+				 ((adapter->sge.fw_evtq.abs_id << 14) | atid),
 				 adapter);
-	पूर्ण अन्यथा अणु
+	} else {
 		skb = alloc_skb(size, GFP_KERNEL);
-		अगर (!skb) अणु
+		if (!skb) {
 			ret = -ENOMEM;
-			जाओ मुक्त_mps;
-		पूर्ण
+			goto free_mps;
+		}
 
-		mk_act_खोलो_req(f, skb,
-				((adapter->sge.fw_evtq.असल_id << 14) | atid),
+		mk_act_open_req(f, skb,
+				((adapter->sge.fw_evtq.abs_id << 14) | atid),
 				adapter);
-	पूर्ण
+	}
 
 	f->pending = 1;
 	set_wr_txq(skb, CPL_PRIORITY_SETUP, f->fs.val.iport & 0x3);
 	t4_ofld_send(adapter, skb);
-	वापस 0;
+	return 0;
 
-मुक्त_clip:
-	cxgb4_clip_release(f->dev, (स्थिर u32 *)&f->fs.val.lip, 1);
+free_clip:
+	cxgb4_clip_release(f->dev, (const u32 *)&f->fs.val.lip, 1);
 
-मुक्त_mps:
-	अगर (f->fs.val.encap_vld && f->fs.val.ovlan_vld)
-		t4_मुक्त_encap_mac_filt(adapter, pi->viid, f->fs.val.ovlan, 1);
+free_mps:
+	if (f->fs.val.encap_vld && f->fs.val.ovlan_vld)
+		t4_free_encap_mac_filt(adapter, pi->viid, f->fs.val.ovlan, 1);
 
-मुक्त_atid:
-	cxgb4_मुक्त_atid(t, atid);
+free_atid:
+	cxgb4_free_atid(t, atid);
 
-मुक्त_smt:
-	अगर (f->smt) अणु
+free_smt:
+	if (f->smt) {
 		cxgb4_smt_release(f->smt);
-		f->smt = शून्य;
-	पूर्ण
+		f->smt = NULL;
+	}
 
-मुक्त_l2t:
-	अगर (f->l2t) अणु
+free_l2t:
+	if (f->l2t) {
 		cxgb4_l2t_release(f->l2t);
-		f->l2t = शून्य;
-	पूर्ण
+		f->l2t = NULL;
+	}
 
 out_err:
-	kमुक्त(f);
-	वापस ret;
-पूर्ण
+	kfree(f);
+	return ret;
+}
 
-/* Check a Chelsio Filter Request क्रम validity, convert it पूर्णांकo our पूर्णांकernal
- * क्रमmat and send it to the hardware.  Return 0 on success, an error number
- * otherwise.  We attach any provided filter operation context to the पूर्णांकernal
- * filter specअगरication in order to facilitate संकेतing completion of the
+/* Check a Chelsio Filter Request for validity, convert it into our internal
+ * format and send it to the hardware.  Return 0 on success, an error number
+ * otherwise.  We attach any provided filter operation context to the internal
+ * filter specification in order to facilitate signaling completion of the
  * operation.
  */
-पूर्णांक __cxgb4_set_filter(काष्ठा net_device *dev, पूर्णांक ftid,
-		       काष्ठा ch_filter_specअगरication *fs,
-		       काष्ठा filter_ctx *ctx)
-अणु
-	काष्ठा adapter *adapter = netdev2adap(dev);
-	अचिन्हित पूर्णांक max_fidx, fidx, chip_ver;
-	पूर्णांक iq, ret, filter_id = ftid;
-	काष्ठा filter_entry *f, *tab;
+int __cxgb4_set_filter(struct net_device *dev, int ftid,
+		       struct ch_filter_specification *fs,
+		       struct filter_ctx *ctx)
+{
+	struct adapter *adapter = netdev2adap(dev);
+	unsigned int max_fidx, fidx, chip_ver;
+	int iq, ret, filter_id = ftid;
+	struct filter_entry *f, *tab;
 	u32 iconf;
 
 	chip_ver = CHELSIO_CHIP_VERSION(adapter->params.chip);
-	अगर (fs->hash) अणु
-		अगर (is_hashfilter(adapter))
-			वापस cxgb4_set_hash_filter(dev, fs, ctx);
+	if (fs->hash) {
+		if (is_hashfilter(adapter))
+			return cxgb4_set_hash_filter(dev, fs, ctx);
 		netdev_err(dev, "%s: Exact-match filters only supported with Hash Filter configuration\n",
 			   __func__);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	max_fidx = adapter->tids.nftids + adapter->tids.nhpftids;
-	अगर (filter_id != (max_fidx + adapter->tids.nsftids - 1) &&
+	if (filter_id != (max_fidx + adapter->tids.nsftids - 1) &&
 	    filter_id >= max_fidx)
-		वापस -E2BIG;
+		return -E2BIG;
 
-	fill_शेष_mask(fs);
+	fill_default_mask(fs);
 
 	ret = validate_filter(dev, fs);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	iq = get_filter_steerq(dev, fs);
-	अगर (iq < 0)
-		वापस iq;
+	if (iq < 0)
+		return iq;
 
-	अगर (fs->prio) अणु
+	if (fs->prio) {
 		tab = &adapter->tids.hpftid_tab[0];
-	पूर्ण अन्यथा अणु
+	} else {
 		tab = &adapter->tids.ftid_tab[0];
 		filter_id = ftid - adapter->tids.nhpftids;
-	पूर्ण
+	}
 
 	/* IPv6 filters occupy four slots and must be aligned on
 	 * four-slot boundaries.  IPv4 filters only occupy a single
 	 * slot and have no alignment requirements but writing a new
-	 * IPv4 filter पूर्णांकo the middle of an existing IPv6 filter
+	 * IPv4 filter into the middle of an existing IPv6 filter
 	 * requires clearing the old IPv6 filter and hence we prevent
 	 * insertion.
 	 */
-	अगर (fs->type == 0) अणु /* IPv4 */
+	if (fs->type == 0) { /* IPv4 */
 		/* For T6, If our IPv4 filter isn't being written to a
 		 * multiple of two filter index and there's an IPv6
 		 * filter at the multiple of 2 base slot, then we need
@@ -1582,114 +1581,114 @@ out_err:
 		 * For adapters below T6, IPv6 filter occupies 4 entries.
 		 * Hence we need to delete the filter in multiple of 4 slot.
 		 */
-		अगर (chip_ver < CHELSIO_T6)
+		if (chip_ver < CHELSIO_T6)
 			fidx = filter_id & ~0x3;
-		अन्यथा
+		else
 			fidx = filter_id & ~0x1;
 
-		अगर (fidx != filter_id && tab[fidx].fs.type) अणु
+		if (fidx != filter_id && tab[fidx].fs.type) {
 			f = &tab[fidx];
-			अगर (f->valid) अणु
+			if (f->valid) {
 				dev_err(adapter->pdev_dev,
 					"Invalid location. IPv6 requires 4 slots and is occupying slots %u to %u\n",
 					fidx, fidx + 3);
-				वापस -EINVAL;
-			पूर्ण
-		पूर्ण
-	पूर्ण अन्यथा अणु /* IPv6 */
-		अगर (chip_ver < CHELSIO_T6) अणु
+				return -EINVAL;
+			}
+		}
+	} else { /* IPv6 */
+		if (chip_ver < CHELSIO_T6) {
 			/* Ensure that the IPv6 filter is aligned on a
 			 * multiple of 4 boundary.
 			 */
-			अगर (filter_id & 0x3) अणु
+			if (filter_id & 0x3) {
 				dev_err(adapter->pdev_dev,
 					"Invalid location. IPv6 must be aligned on a 4-slot boundary\n");
-				वापस -EINVAL;
-			पूर्ण
+				return -EINVAL;
+			}
 
 			/* Check all except the base overlapping IPv4 filter
 			 * slots.
 			 */
-			क्रम (fidx = filter_id + 1; fidx < filter_id + 4;
-			     fidx++) अणु
+			for (fidx = filter_id + 1; fidx < filter_id + 4;
+			     fidx++) {
 				f = &tab[fidx];
-				अगर (f->valid) अणु
+				if (f->valid) {
 					dev_err(adapter->pdev_dev,
 						"Invalid location.  IPv6 requires 4 slots and an IPv4 filter exists at %u\n",
 						fidx);
-					वापस -EBUSY;
-				पूर्ण
-			पूर्ण
-		पूर्ण अन्यथा अणु
+					return -EBUSY;
+				}
+			}
+		} else {
 			/* For T6, CLIP being enabled, IPv6 filter would occupy
 			 * 2 entries.
 			 */
-			अगर (filter_id & 0x1)
-				वापस -EINVAL;
+			if (filter_id & 0x1)
+				return -EINVAL;
 			/* Check overlapping IPv4 filter slot */
 			fidx = filter_id + 1;
 			f = &tab[fidx];
-			अगर (f->valid) अणु
+			if (f->valid) {
 				pr_err("%s: IPv6 filter requires 2 indices. IPv4 filter already present at %d. Please remove IPv4 filter first.\n",
 				       __func__, fidx);
-				वापस -EBUSY;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				return -EBUSY;
+			}
+		}
+	}
 
 	/* Check to make sure that provided filter index is not
-	 * alपढ़ोy in use by someone अन्यथा
+	 * already in use by someone else
 	 */
 	f = &tab[filter_id];
-	अगर (f->valid)
-		वापस -EBUSY;
+	if (f->valid)
+		return -EBUSY;
 
-	अगर (fs->prio) अणु
+	if (fs->prio) {
 		fidx = filter_id + adapter->tids.hpftid_base;
 		ret = cxgb4_set_hpftid(&adapter->tids, filter_id,
 				       fs->type ? PF_INET6 : PF_INET);
-	पूर्ण अन्यथा अणु
+	} else {
 		fidx = filter_id + adapter->tids.ftid_base;
 		ret = cxgb4_set_ftid(&adapter->tids, filter_id,
 				     fs->type ? PF_INET6 : PF_INET,
 				     chip_ver);
-	पूर्ण
+	}
 
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	/* Check t  make sure the filter requested is writable ... */
 	ret = writable_filter(f);
-	अगर (ret)
-		जाओ मुक्त_tid;
+	if (ret)
+		goto free_tid;
 
-	अगर (is_t6(adapter->params.chip) && fs->type &&
-	    ipv6_addr_type((स्थिर काष्ठा in6_addr *)fs->val.lip) !=
-	    IPV6_ADDR_ANY) अणु
-		ret = cxgb4_clip_get(dev, (स्थिर u32 *)&fs->val.lip, 1);
-		अगर (ret)
-			जाओ मुक्त_tid;
-	पूर्ण
+	if (is_t6(adapter->params.chip) && fs->type &&
+	    ipv6_addr_type((const struct in6_addr *)fs->val.lip) !=
+	    IPV6_ADDR_ANY) {
+		ret = cxgb4_clip_get(dev, (const u32 *)&fs->val.lip, 1);
+		if (ret)
+			goto free_tid;
+	}
 
-	/* Convert the filter specअगरication पूर्णांकo our पूर्णांकernal क्रमmat.
-	 * We copy the PF/VF specअगरication पूर्णांकo the Outer VLAN field
-	 * here so the rest of the code -- including the पूर्णांकerface to
-	 * the firmware -- करोesn't have to स्थिरantly करो these checks.
+	/* Convert the filter specification into our internal format.
+	 * We copy the PF/VF specification into the Outer VLAN field
+	 * here so the rest of the code -- including the interface to
+	 * the firmware -- doesn't have to constantly do these checks.
 	 */
 	f->fs = *fs;
 	f->fs.iq = iq;
 	f->dev = dev;
 
 	iconf = adapter->params.tp.ingress_config;
-	अगर (iconf & VNIC_F) अणु
+	if (iconf & VNIC_F) {
 		f->fs.val.ovlan = (fs->val.pf << 13) | fs->val.vf;
 		f->fs.mask.ovlan = (fs->mask.pf << 13) | fs->mask.vf;
 		f->fs.val.ovlan_vld = fs->val.pfvf_vld;
 		f->fs.mask.ovlan_vld = fs->mask.pfvf_vld;
-	पूर्ण अन्यथा अगर (iconf & USE_ENC_IDX_F) अणु
-		अगर (f->fs.val.encap_vld) अणु
-			काष्ठा port_info *pi = netdev_priv(f->dev);
-			u8 match_all_mac[] = अणु 0, 0, 0, 0, 0, 0 पूर्ण;
+	} else if (iconf & USE_ENC_IDX_F) {
+		if (f->fs.val.encap_vld) {
+			struct port_info *pi = netdev_priv(f->dev);
+			u8 match_all_mac[] = { 0, 0, 0, 0, 0, 0 };
 
 			/* allocate MPS TCAM entry */
 			ret = t4_alloc_encap_mac_filt(adapter, pi->viid,
@@ -1698,214 +1697,214 @@ out_err:
 						      f->fs.val.vni,
 						      f->fs.mask.vni,
 						      0, 1, 1);
-			अगर (ret < 0)
-				जाओ मुक्त_tid;
+			if (ret < 0)
+				goto free_tid;
 
 			f->fs.val.ovlan = ret;
 			f->fs.mask.ovlan = 0x1ff;
 			f->fs.val.ovlan_vld = 1;
 			f->fs.mask.ovlan_vld = 1;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	/* Attempt to set the filter.  If we करोn't succeed, we clear
-	 * it and वापस the failure.
+	/* Attempt to set the filter.  If we don't succeed, we clear
+	 * it and return the failure.
 	 */
 	f->ctx = ctx;
 	f->tid = fidx; /* Save the actual tid */
 	ret = set_filter_wr(adapter, ftid);
-	अगर (ret)
-		जाओ मुक्त_tid;
+	if (ret)
+		goto free_tid;
 
-	वापस ret;
+	return ret;
 
-मुक्त_tid:
-	अगर (f->fs.prio)
+free_tid:
+	if (f->fs.prio)
 		cxgb4_clear_hpftid(&adapter->tids, filter_id,
 				   fs->type ? PF_INET6 : PF_INET);
-	अन्यथा
+	else
 		cxgb4_clear_ftid(&adapter->tids, filter_id,
 				 fs->type ? PF_INET6 : PF_INET,
 				 chip_ver);
 
 	clear_filter(adapter, f);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक cxgb4_del_hash_filter(काष्ठा net_device *dev, पूर्णांक filter_id,
-				 काष्ठा filter_ctx *ctx)
-अणु
-	काष्ठा adapter *adapter = netdev2adap(dev);
-	काष्ठा tid_info *t = &adapter->tids;
-	काष्ठा cpl_पात_req *पात_req;
-	काष्ठा cpl_पात_rpl *पात_rpl;
-	काष्ठा cpl_set_tcb_field *req;
-	काष्ठा ulptx_idata *aligner;
-	काष्ठा work_request_hdr *wr;
-	काष्ठा filter_entry *f;
-	काष्ठा sk_buff *skb;
-	अचिन्हित पूर्णांक wrlen;
-	पूर्णांक ret;
+static int cxgb4_del_hash_filter(struct net_device *dev, int filter_id,
+				 struct filter_ctx *ctx)
+{
+	struct adapter *adapter = netdev2adap(dev);
+	struct tid_info *t = &adapter->tids;
+	struct cpl_abort_req *abort_req;
+	struct cpl_abort_rpl *abort_rpl;
+	struct cpl_set_tcb_field *req;
+	struct ulptx_idata *aligner;
+	struct work_request_hdr *wr;
+	struct filter_entry *f;
+	struct sk_buff *skb;
+	unsigned int wrlen;
+	int ret;
 
 	netdev_dbg(dev, "%s: filter_id = %d ; nftids = %d\n",
 		   __func__, filter_id, adapter->tids.nftids);
 
-	अगर (tid_out_of_range(t, filter_id))
-		वापस -E2BIG;
+	if (tid_out_of_range(t, filter_id))
+		return -E2BIG;
 
 	f = lookup_tid(t, filter_id);
-	अगर (!f) अणु
+	if (!f) {
 		netdev_err(dev, "%s: no filter entry for filter_id = %d",
 			   __func__, filter_id);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	ret = writable_filter(f);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (!f->valid)
-		वापस -EINVAL;
+	if (!f->valid)
+		return -EINVAL;
 
 	f->ctx = ctx;
 	f->pending = 1;
-	wrlen = roundup(माप(*wr) + (माप(*req) + माप(*aligner))
-			+ माप(*पात_req) + माप(*पात_rpl), 16);
+	wrlen = roundup(sizeof(*wr) + (sizeof(*req) + sizeof(*aligner))
+			+ sizeof(*abort_req) + sizeof(*abort_rpl), 16);
 	skb = alloc_skb(wrlen, GFP_KERNEL);
-	अगर (!skb) अणु
+	if (!skb) {
 		netdev_err(dev, "%s: could not allocate skb ..\n", __func__);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 	set_wr_txq(skb, CPL_PRIORITY_CONTROL, f->fs.val.iport & 0x3);
-	req = (काष्ठा cpl_set_tcb_field *)__skb_put(skb, wrlen);
+	req = (struct cpl_set_tcb_field *)__skb_put(skb, wrlen);
 	INIT_ULPTX_WR(req, wrlen, 0, 0);
-	wr = (काष्ठा work_request_hdr *)req;
+	wr = (struct work_request_hdr *)req;
 	wr++;
-	req = (काष्ठा cpl_set_tcb_field *)wr;
+	req = (struct cpl_set_tcb_field *)wr;
 	mk_set_tcb_ulp(f, req, TCB_RSS_INFO_W, TCB_RSS_INFO_V(TCB_RSS_INFO_M),
-		       TCB_RSS_INFO_V(adapter->sge.fw_evtq.असल_id), 0, 1);
-	aligner = (काष्ठा ulptx_idata *)(req + 1);
-	पात_req = (काष्ठा cpl_पात_req *)(aligner + 1);
-	mk_पात_req_ulp(पात_req, f->tid);
-	पात_rpl = (काष्ठा cpl_पात_rpl *)(पात_req + 1);
-	mk_पात_rpl_ulp(पात_rpl, f->tid);
+		       TCB_RSS_INFO_V(adapter->sge.fw_evtq.abs_id), 0, 1);
+	aligner = (struct ulptx_idata *)(req + 1);
+	abort_req = (struct cpl_abort_req *)(aligner + 1);
+	mk_abort_req_ulp(abort_req, f->tid);
+	abort_rpl = (struct cpl_abort_rpl *)(abort_req + 1);
+	mk_abort_rpl_ulp(abort_rpl, f->tid);
 	t4_ofld_send(adapter, skb);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Check a delete filter request क्रम validity and send it to the hardware.
+/* Check a delete filter request for validity and send it to the hardware.
  * Return 0 on success, an error number otherwise.  We attach any provided
- * filter operation context to the पूर्णांकernal filter specअगरication in order to
- * facilitate संकेतing completion of the operation.
+ * filter operation context to the internal filter specification in order to
+ * facilitate signaling completion of the operation.
  */
-पूर्णांक __cxgb4_del_filter(काष्ठा net_device *dev, पूर्णांक filter_id,
-		       काष्ठा ch_filter_specअगरication *fs,
-		       काष्ठा filter_ctx *ctx)
-अणु
-	काष्ठा adapter *adapter = netdev2adap(dev);
-	अचिन्हित पूर्णांक max_fidx, chip_ver;
-	काष्ठा filter_entry *f;
-	पूर्णांक ret;
+int __cxgb4_del_filter(struct net_device *dev, int filter_id,
+		       struct ch_filter_specification *fs,
+		       struct filter_ctx *ctx)
+{
+	struct adapter *adapter = netdev2adap(dev);
+	unsigned int max_fidx, chip_ver;
+	struct filter_entry *f;
+	int ret;
 
 	chip_ver = CHELSIO_CHIP_VERSION(adapter->params.chip);
-	अगर (fs && fs->hash) अणु
-		अगर (is_hashfilter(adapter))
-			वापस cxgb4_del_hash_filter(dev, filter_id, ctx);
+	if (fs && fs->hash) {
+		if (is_hashfilter(adapter))
+			return cxgb4_del_hash_filter(dev, filter_id, ctx);
 		netdev_err(dev, "%s: Exact-match filters only supported with Hash Filter configuration\n",
 			   __func__);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	max_fidx = adapter->tids.nftids + adapter->tids.nhpftids;
-	अगर (filter_id != (max_fidx + adapter->tids.nsftids - 1) &&
+	if (filter_id != (max_fidx + adapter->tids.nsftids - 1) &&
 	    filter_id >= max_fidx)
-		वापस -E2BIG;
+		return -E2BIG;
 
-	अगर (filter_id < adapter->tids.nhpftids)
+	if (filter_id < adapter->tids.nhpftids)
 		f = &adapter->tids.hpftid_tab[filter_id];
-	अन्यथा
+	else
 		f = &adapter->tids.ftid_tab[filter_id - adapter->tids.nhpftids];
 
 	ret = writable_filter(f);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (f->valid) अणु
+	if (f->valid) {
 		f->ctx = ctx;
-		अगर (f->fs.prio)
+		if (f->fs.prio)
 			cxgb4_clear_hpftid(&adapter->tids,
 					   f->tid - adapter->tids.hpftid_base,
 					   f->fs.type ? PF_INET6 : PF_INET);
-		अन्यथा
+		else
 			cxgb4_clear_ftid(&adapter->tids,
 					 f->tid - adapter->tids.ftid_base,
 					 f->fs.type ? PF_INET6 : PF_INET,
 					 chip_ver);
-		वापस del_filter_wr(adapter, filter_id);
-	पूर्ण
+		return del_filter_wr(adapter, filter_id);
+	}
 
 	/* If the caller has passed in a Completion Context then we need to
-	 * mark it as a successful completion so they करोn't stall रुकोing
-	 * क्रम it.
+	 * mark it as a successful completion so they don't stall waiting
+	 * for it.
 	 */
-	अगर (ctx) अणु
+	if (ctx) {
 		ctx->result = 0;
 		complete(&ctx->completion);
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 
-पूर्णांक cxgb4_set_filter(काष्ठा net_device *dev, पूर्णांक filter_id,
-		     काष्ठा ch_filter_specअगरication *fs)
-अणु
-	काष्ठा filter_ctx ctx;
-	पूर्णांक ret;
+int cxgb4_set_filter(struct net_device *dev, int filter_id,
+		     struct ch_filter_specification *fs)
+{
+	struct filter_ctx ctx;
+	int ret;
 
 	init_completion(&ctx.completion);
 
 	ret = __cxgb4_set_filter(dev, filter_id, fs, &ctx);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
-	/* Wait क्रम reply */
-	ret = रुको_क्रम_completion_समयout(&ctx.completion, 10 * HZ);
-	अगर (!ret)
-		वापस -ETIMEDOUT;
+	/* Wait for reply */
+	ret = wait_for_completion_timeout(&ctx.completion, 10 * HZ);
+	if (!ret)
+		return -ETIMEDOUT;
 
 	ret = ctx.result;
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक cxgb4_del_filter(काष्ठा net_device *dev, पूर्णांक filter_id,
-		     काष्ठा ch_filter_specअगरication *fs)
-अणु
-	काष्ठा filter_ctx ctx;
-	पूर्णांक ret;
+int cxgb4_del_filter(struct net_device *dev, int filter_id,
+		     struct ch_filter_specification *fs)
+{
+	struct filter_ctx ctx;
+	int ret;
 
-	अगर (netdev2adap(dev)->flags & CXGB4_SHUTTING_DOWN)
-		वापस 0;
+	if (netdev2adap(dev)->flags & CXGB4_SHUTTING_DOWN)
+		return 0;
 
 	init_completion(&ctx.completion);
 
 	ret = __cxgb4_del_filter(dev, filter_id, fs, &ctx);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
-	/* Wait क्रम reply */
-	ret = रुको_क्रम_completion_समयout(&ctx.completion, 10 * HZ);
-	अगर (!ret)
-		वापस -ETIMEDOUT;
+	/* Wait for reply */
+	ret = wait_for_completion_timeout(&ctx.completion, 10 * HZ);
+	if (!ret)
+		return -ETIMEDOUT;
 
 	ret = ctx.result;
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक configure_filter_tcb(काष्ठा adapter *adap, अचिन्हित पूर्णांक tid,
-				काष्ठा filter_entry *f)
-अणु
-	अगर (f->fs.hitcnts) अणु
+static int configure_filter_tcb(struct adapter *adap, unsigned int tid,
+				struct filter_entry *f)
+{
+	if (f->fs.hitcnts) {
 		set_tcb_field(adap, f, tid, TCB_TIMESTAMP_W,
 			      TCB_TIMESTAMP_V(TCB_TIMESTAMP_M),
 			      TCB_TIMESTAMP_V(0ULL),
@@ -1914,262 +1913,262 @@ out:
 			      TCB_RTT_TS_RECENT_AGE_V(TCB_RTT_TS_RECENT_AGE_M),
 			      TCB_RTT_TS_RECENT_AGE_V(0ULL),
 			      1);
-	पूर्ण
+	}
 
-	अगर (f->fs.newdmac)
+	if (f->fs.newdmac)
 		set_tcb_tflag(adap, f, tid, TF_CCTRL_ECE_S, 1,
 			      1);
 
-	अगर (f->fs.newvlan == VLAN_INSERT ||
+	if (f->fs.newvlan == VLAN_INSERT ||
 	    f->fs.newvlan == VLAN_REWRITE)
 		set_tcb_tflag(adap, f, tid, TF_CCTRL_RFR_S, 1,
 			      1);
-	अगर (f->fs.newsmac)
+	if (f->fs.newsmac)
 		configure_filter_smac(adap, f);
 
-	अगर (f->fs.nat_mode) अणु
-		चयन (f->fs.nat_mode) अणु
-		हाल NAT_MODE_DIP:
+	if (f->fs.nat_mode) {
+		switch (f->fs.nat_mode) {
+		case NAT_MODE_DIP:
 			set_nat_params(adap, f, tid, true, false, false, false);
-			अवरोध;
+			break;
 
-		हाल NAT_MODE_DIP_DP:
+		case NAT_MODE_DIP_DP:
 			set_nat_params(adap, f, tid, true, false, true, false);
-			अवरोध;
+			break;
 
-		हाल NAT_MODE_DIP_DP_SIP:
+		case NAT_MODE_DIP_DP_SIP:
 			set_nat_params(adap, f, tid, true, true, true, false);
-			अवरोध;
-		हाल NAT_MODE_DIP_DP_SP:
+			break;
+		case NAT_MODE_DIP_DP_SP:
 			set_nat_params(adap, f, tid, true, false, true, true);
-			अवरोध;
+			break;
 
-		हाल NAT_MODE_SIP_SP:
+		case NAT_MODE_SIP_SP:
 			set_nat_params(adap, f, tid, false, true, false, true);
-			अवरोध;
+			break;
 
-		हाल NAT_MODE_DIP_SIP_SP:
+		case NAT_MODE_DIP_SIP_SP:
 			set_nat_params(adap, f, tid, true, true, false, true);
-			अवरोध;
+			break;
 
-		हाल NAT_MODE_ALL:
+		case NAT_MODE_ALL:
 			set_nat_params(adap, f, tid, true, true, true, true);
-			अवरोध;
+			break;
 
-		शेष:
+		default:
 			pr_err("%s: Invalid NAT mode: %d\n",
 			       __func__, f->fs.nat_mode);
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+			return -EINVAL;
+		}
+	}
+	return 0;
+}
 
-व्योम hash_del_filter_rpl(काष्ठा adapter *adap,
-			 स्थिर काष्ठा cpl_पात_rpl_rss *rpl)
-अणु
-	अचिन्हित पूर्णांक status = rpl->status;
-	काष्ठा tid_info *t = &adap->tids;
-	अचिन्हित पूर्णांक tid = GET_TID(rpl);
-	काष्ठा filter_ctx *ctx = शून्य;
-	काष्ठा filter_entry *f;
+void hash_del_filter_rpl(struct adapter *adap,
+			 const struct cpl_abort_rpl_rss *rpl)
+{
+	unsigned int status = rpl->status;
+	struct tid_info *t = &adap->tids;
+	unsigned int tid = GET_TID(rpl);
+	struct filter_ctx *ctx = NULL;
+	struct filter_entry *f;
 
 	dev_dbg(adap->pdev_dev, "%s: status = %u; tid = %u\n",
 		__func__, status, tid);
 
 	f = lookup_tid(t, tid);
-	अगर (!f) अणु
+	if (!f) {
 		dev_err(adap->pdev_dev, "%s:could not find filter entry",
 			__func__);
-		वापस;
-	पूर्ण
+		return;
+	}
 	ctx = f->ctx;
-	f->ctx = शून्य;
+	f->ctx = NULL;
 	clear_filter(adap, f);
-	cxgb4_हटाओ_tid(t, 0, tid, 0);
-	kमुक्त(f);
-	अगर (ctx) अणु
+	cxgb4_remove_tid(t, 0, tid, 0);
+	kfree(f);
+	if (ctx) {
 		ctx->result = 0;
 		complete(&ctx->completion);
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम hash_filter_rpl(काष्ठा adapter *adap, स्थिर काष्ठा cpl_act_खोलो_rpl *rpl)
-अणु
-	अचिन्हित पूर्णांक ftid = TID_TID_G(AOPEN_ATID_G(ntohl(rpl->atid_status)));
-	अचिन्हित पूर्णांक status  = AOPEN_STATUS_G(ntohl(rpl->atid_status));
-	काष्ठा tid_info *t = &adap->tids;
-	अचिन्हित पूर्णांक tid = GET_TID(rpl);
-	काष्ठा filter_ctx *ctx = शून्य;
-	काष्ठा filter_entry *f;
+void hash_filter_rpl(struct adapter *adap, const struct cpl_act_open_rpl *rpl)
+{
+	unsigned int ftid = TID_TID_G(AOPEN_ATID_G(ntohl(rpl->atid_status)));
+	unsigned int status  = AOPEN_STATUS_G(ntohl(rpl->atid_status));
+	struct tid_info *t = &adap->tids;
+	unsigned int tid = GET_TID(rpl);
+	struct filter_ctx *ctx = NULL;
+	struct filter_entry *f;
 
 	dev_dbg(adap->pdev_dev, "%s: tid = %u; atid = %u; status = %u\n",
 		__func__, tid, ftid, status);
 
 	f = lookup_atid(t, ftid);
-	अगर (!f) अणु
+	if (!f) {
 		dev_err(adap->pdev_dev, "%s:could not find filter entry",
 			__func__);
-		वापस;
-	पूर्ण
+		return;
+	}
 	ctx = f->ctx;
-	f->ctx = शून्य;
+	f->ctx = NULL;
 
-	चयन (status) अणु
-	हाल CPL_ERR_NONE:
+	switch (status) {
+	case CPL_ERR_NONE:
 		f->tid = tid;
 		f->pending = 0;
 		f->valid = 1;
 		cxgb4_insert_tid(t, f, f->tid, 0);
-		cxgb4_मुक्त_atid(t, ftid);
-		अगर (ctx) अणु
+		cxgb4_free_atid(t, ftid);
+		if (ctx) {
 			ctx->tid = f->tid;
 			ctx->result = 0;
-		पूर्ण
-		अगर (configure_filter_tcb(adap, tid, f)) अणु
+		}
+		if (configure_filter_tcb(adap, tid, f)) {
 			clear_filter(adap, f);
-			cxgb4_हटाओ_tid(t, 0, tid, 0);
-			kमुक्त(f);
-			अगर (ctx) अणु
+			cxgb4_remove_tid(t, 0, tid, 0);
+			kfree(f);
+			if (ctx) {
 				ctx->result = -EINVAL;
 				complete(&ctx->completion);
-			पूर्ण
-			वापस;
-		पूर्ण
-		चयन (f->fs.action) अणु
-		हाल FILTER_PASS:
-			अगर (f->fs.dirsteer)
+			}
+			return;
+		}
+		switch (f->fs.action) {
+		case FILTER_PASS:
+			if (f->fs.dirsteer)
 				set_tcb_tflag(adap, f, tid,
-					      TF_सूचीECT_STEER_S, 1, 1);
-			अवरोध;
-		हाल FILTER_DROP:
+					      TF_DIRECT_STEER_S, 1, 1);
+			break;
+		case FILTER_DROP:
 			set_tcb_tflag(adap, f, tid, TF_DROP_S, 1, 1);
-			अवरोध;
-		हाल FILTER_SWITCH:
+			break;
+		case FILTER_SWITCH:
 			set_tcb_tflag(adap, f, tid, TF_LPBK_S, 1, 1);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अवरोध;
+		break;
 
-	शेष:
-		अगर (status != CPL_ERR_TCAM_FULL)
+	default:
+		if (status != CPL_ERR_TCAM_FULL)
 			dev_err(adap->pdev_dev, "%s: filter creation PROBLEM; status = %u\n",
 				__func__, status);
 
-		अगर (ctx) अणु
-			अगर (status == CPL_ERR_TCAM_FULL)
+		if (ctx) {
+			if (status == CPL_ERR_TCAM_FULL)
 				ctx->result = -ENOSPC;
-			अन्यथा
+			else
 				ctx->result = -EINVAL;
-		पूर्ण
+		}
 		clear_filter(adap, f);
-		cxgb4_मुक्त_atid(t, ftid);
-		kमुक्त(f);
-	पूर्ण
-	अगर (ctx)
+		cxgb4_free_atid(t, ftid);
+		kfree(f);
+	}
+	if (ctx)
 		complete(&ctx->completion);
-पूर्ण
+}
 
-/* Handle a filter ग_लिखो/deletion reply. */
-व्योम filter_rpl(काष्ठा adapter *adap, स्थिर काष्ठा cpl_set_tcb_rpl *rpl)
-अणु
-	अचिन्हित पूर्णांक tid = GET_TID(rpl);
-	काष्ठा filter_entry *f = शून्य;
-	अचिन्हित पूर्णांक max_fidx;
-	पूर्णांक idx;
+/* Handle a filter write/deletion reply. */
+void filter_rpl(struct adapter *adap, const struct cpl_set_tcb_rpl *rpl)
+{
+	unsigned int tid = GET_TID(rpl);
+	struct filter_entry *f = NULL;
+	unsigned int max_fidx;
+	int idx;
 
 	max_fidx = adap->tids.nftids + adap->tids.nsftids;
-	/* Get the corresponding filter entry क्रम this tid */
-	अगर (adap->tids.ftid_tab) अणु
+	/* Get the corresponding filter entry for this tid */
+	if (adap->tids.ftid_tab) {
 		idx = tid - adap->tids.hpftid_base;
-		अगर (idx < adap->tids.nhpftids) अणु
+		if (idx < adap->tids.nhpftids) {
 			f = &adap->tids.hpftid_tab[idx];
-		पूर्ण अन्यथा अणु
+		} else {
 			/* Check this in normal filter region */
 			idx = tid - adap->tids.ftid_base;
-			अगर (idx >= max_fidx)
-				वापस;
+			if (idx >= max_fidx)
+				return;
 			f = &adap->tids.ftid_tab[idx];
 			idx += adap->tids.nhpftids;
-		पूर्ण
+		}
 
-		अगर (f->tid != tid)
-			वापस;
-	पूर्ण
+		if (f->tid != tid)
+			return;
+	}
 
-	/* We found the filter entry क्रम this tid */
-	अगर (f) अणु
-		अचिन्हित पूर्णांक ret = TCB_COOKIE_G(rpl->cookie);
-		काष्ठा filter_ctx *ctx;
+	/* We found the filter entry for this tid */
+	if (f) {
+		unsigned int ret = TCB_COOKIE_G(rpl->cookie);
+		struct filter_ctx *ctx;
 
 		/* Pull off any filter operation context attached to the
 		 * filter.
 		 */
 		ctx = f->ctx;
-		f->ctx = शून्य;
+		f->ctx = NULL;
 
-		अगर (ret == FW_FILTER_WR_FLT_DELETED) अणु
+		if (ret == FW_FILTER_WR_FLT_DELETED) {
 			/* Clear the filter when we get confirmation from the
 			 * hardware that the filter has been deleted.
 			 */
 			clear_filter(adap, f);
-			अगर (ctx)
+			if (ctx)
 				ctx->result = 0;
-		पूर्ण अन्यथा अगर (ret == FW_FILTER_WR_FLT_ADDED) अणु
+		} else if (ret == FW_FILTER_WR_FLT_ADDED) {
 			f->pending = 0;  /* async setup completed */
 			f->valid = 1;
-			अगर (ctx) अणु
+			if (ctx) {
 				ctx->result = 0;
 				ctx->tid = idx;
-			पूर्ण
-		पूर्ण अन्यथा अणु
+			}
+		} else {
 			/* Something went wrong.  Issue a warning about the
 			 * problem and clear everything out.
 			 */
 			dev_err(adap->pdev_dev, "filter %u setup failed with error %u\n",
 				idx, ret);
 			clear_filter(adap, f);
-			अगर (ctx)
+			if (ctx)
 				ctx->result = -EINVAL;
-		पूर्ण
-		अगर (ctx)
+		}
+		if (ctx)
 			complete(&ctx->completion);
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम init_hash_filter(काष्ठा adapter *adap)
-अणु
+void init_hash_filter(struct adapter *adap)
+{
 	u32 reg;
 
-	/* On T6, verअगरy the necessary रेजिस्टर configs and warn the user in
-	 * हाल of improper config
+	/* On T6, verify the necessary register configs and warn the user in
+	 * case of improper config
 	 */
-	अगर (is_t6(adap->params.chip)) अणु
-		अगर (is_offload(adap)) अणु
-			अगर (!(t4_पढ़ो_reg(adap, TP_GLOBAL_CONFIG_A)
-			   & ACTIVEFILTERCOUNTS_F)) अणु
+	if (is_t6(adap->params.chip)) {
+		if (is_offload(adap)) {
+			if (!(t4_read_reg(adap, TP_GLOBAL_CONFIG_A)
+			   & ACTIVEFILTERCOUNTS_F)) {
 				dev_err(adap->pdev_dev, "Invalid hash filter + ofld config\n");
-				वापस;
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			reg = t4_पढ़ो_reg(adap, LE_DB_RSP_CODE_0_A);
-			अगर (TCAM_ACTV_HIT_G(reg) != 4) अणु
+				return;
+			}
+		} else {
+			reg = t4_read_reg(adap, LE_DB_RSP_CODE_0_A);
+			if (TCAM_ACTV_HIT_G(reg) != 4) {
 				dev_err(adap->pdev_dev, "Invalid hash filter config\n");
-				वापस;
-			पूर्ण
+				return;
+			}
 
-			reg = t4_पढ़ो_reg(adap, LE_DB_RSP_CODE_1_A);
-			अगर (HASH_ACTV_HIT_G(reg) != 4) अणु
+			reg = t4_read_reg(adap, LE_DB_RSP_CODE_1_A);
+			if (HASH_ACTV_HIT_G(reg) != 4) {
 				dev_err(adap->pdev_dev, "Invalid hash filter config\n");
-				वापस;
-			पूर्ण
-		पूर्ण
+				return;
+			}
+		}
 
-	पूर्ण अन्यथा अणु
+	} else {
 		dev_err(adap->pdev_dev, "Hash filter supported only on T6\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	adap->params.hash_filter = 1;
-पूर्ण
+}

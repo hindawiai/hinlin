@@ -1,29 +1,28 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (C) 2015  ARM Limited
  * Author: Dave Martin <Dave.Martin@arm.com>
  */
 
-#अगर_अघोषित _ARCH_ARM64_ASM_BUG_H
-#घोषणा _ARCH_ARM64_ASM_BUG_H
+#ifndef _ARCH_ARM64_ASM_BUG_H
+#define _ARCH_ARM64_ASM_BUG_H
 
-#समावेश <linux/stringअगरy.h>
+#include <linux/stringify.h>
 
-#समावेश <यंत्र/यंत्र-bug.h>
+#include <asm/asm-bug.h>
 
-#घोषणा __BUG_FLAGS(flags)				\
-	यंत्र अस्थिर (__stringअगरy(ASM_BUG_FLAGS(flags)));
+#define __BUG_FLAGS(flags)				\
+	asm volatile (__stringify(ASM_BUG_FLAGS(flags)));
 
-#घोषणा BUG() करो अणु					\
+#define BUG() do {					\
 	__BUG_FLAGS(0);					\
 	unreachable();					\
-पूर्ण जबतक (0)
+} while (0)
 
-#घोषणा __WARN_FLAGS(flags) __BUG_FLAGS(BUGFLAG_WARNING|(flags))
+#define __WARN_FLAGS(flags) __BUG_FLAGS(BUGFLAG_WARNING|(flags))
 
-#घोषणा HAVE_ARCH_BUG
+#define HAVE_ARCH_BUG
 
-#समावेश <यंत्र-generic/bug.h>
+#include <asm-generic/bug.h>
 
-#पूर्ण_अगर /* ! _ARCH_ARM64_ASM_BUG_H */
+#endif /* ! _ARCH_ARM64_ASM_BUG_H */

@@ -1,445 +1,444 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
    Copyright (c) 2010,2011 Code Aurora Forum.  All rights reserved.
    Copyright (c) 2011,2012 Intel Corp.
 
 */
 
-#समावेश <net/bluetooth/bluetooth.h>
-#समावेश <net/bluetooth/hci_core.h>
-#समावेश <net/bluetooth/l2cap.h>
+#include <net/bluetooth/bluetooth.h>
+#include <net/bluetooth/hci_core.h>
+#include <net/bluetooth/l2cap.h>
 
-#समावेश "hci_request.h"
-#समावेश "a2mp.h"
-#समावेश "amp.h"
+#include "hci_request.h"
+#include "a2mp.h"
+#include "amp.h"
 
-#घोषणा A2MP_FEAT_EXT	0x8000
+#define A2MP_FEAT_EXT	0x8000
 
 /* Global AMP Manager list */
-अटल LIST_HEAD(amp_mgr_list);
-अटल DEFINE_MUTEX(amp_mgr_list_lock);
+static LIST_HEAD(amp_mgr_list);
+static DEFINE_MUTEX(amp_mgr_list_lock);
 
 /* A2MP build & send command helper functions */
-अटल काष्ठा a2mp_cmd *__a2mp_build(u8 code, u8 ident, u16 len, व्योम *data)
-अणु
-	काष्ठा a2mp_cmd *cmd;
-	पूर्णांक plen;
+static struct a2mp_cmd *__a2mp_build(u8 code, u8 ident, u16 len, void *data)
+{
+	struct a2mp_cmd *cmd;
+	int plen;
 
-	plen = माप(*cmd) + len;
+	plen = sizeof(*cmd) + len;
 	cmd = kzalloc(plen, GFP_KERNEL);
-	अगर (!cmd)
-		वापस शून्य;
+	if (!cmd)
+		return NULL;
 
 	cmd->code = code;
 	cmd->ident = ident;
 	cmd->len = cpu_to_le16(len);
 
-	स_नकल(cmd->data, data, len);
+	memcpy(cmd->data, data, len);
 
-	वापस cmd;
-पूर्ण
+	return cmd;
+}
 
-अटल व्योम a2mp_send(काष्ठा amp_mgr *mgr, u8 code, u8 ident, u16 len, व्योम *data)
-अणु
-	काष्ठा l2cap_chan *chan = mgr->a2mp_chan;
-	काष्ठा a2mp_cmd *cmd;
-	u16 total_len = len + माप(*cmd);
-	काष्ठा kvec iv;
-	काष्ठा msghdr msg;
+static void a2mp_send(struct amp_mgr *mgr, u8 code, u8 ident, u16 len, void *data)
+{
+	struct l2cap_chan *chan = mgr->a2mp_chan;
+	struct a2mp_cmd *cmd;
+	u16 total_len = len + sizeof(*cmd);
+	struct kvec iv;
+	struct msghdr msg;
 
 	cmd = __a2mp_build(code, ident, len, data);
-	अगर (!cmd)
-		वापस;
+	if (!cmd)
+		return;
 
 	iv.iov_base = cmd;
 	iv.iov_len = total_len;
 
-	स_रखो(&msg, 0, माप(msg));
+	memset(&msg, 0, sizeof(msg));
 
 	iov_iter_kvec(&msg.msg_iter, WRITE, &iv, 1, total_len);
 
 	l2cap_chan_send(chan, &msg, total_len);
 
-	kमुक्त(cmd);
-पूर्ण
+	kfree(cmd);
+}
 
-अटल u8 __next_ident(काष्ठा amp_mgr *mgr)
-अणु
-	अगर (++mgr->ident == 0)
+static u8 __next_ident(struct amp_mgr *mgr)
+{
+	if (++mgr->ident == 0)
 		mgr->ident = 1;
 
-	वापस mgr->ident;
-पूर्ण
+	return mgr->ident;
+}
 
-अटल काष्ठा amp_mgr *amp_mgr_lookup_by_state(u8 state)
-अणु
-	काष्ठा amp_mgr *mgr;
+static struct amp_mgr *amp_mgr_lookup_by_state(u8 state)
+{
+	struct amp_mgr *mgr;
 
 	mutex_lock(&amp_mgr_list_lock);
-	list_क्रम_each_entry(mgr, &amp_mgr_list, list) अणु
-		अगर (test_and_clear_bit(state, &mgr->state)) अणु
+	list_for_each_entry(mgr, &amp_mgr_list, list) {
+		if (test_and_clear_bit(state, &mgr->state)) {
 			amp_mgr_get(mgr);
 			mutex_unlock(&amp_mgr_list_lock);
-			वापस mgr;
-		पूर्ण
-	पूर्ण
+			return mgr;
+		}
+	}
 	mutex_unlock(&amp_mgr_list_lock);
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
 /* hci_dev_list shall be locked */
-अटल व्योम __a2mp_add_cl(काष्ठा amp_mgr *mgr, काष्ठा a2mp_cl *cl)
-अणु
-	काष्ठा hci_dev *hdev;
-	पूर्णांक i = 1;
+static void __a2mp_add_cl(struct amp_mgr *mgr, struct a2mp_cl *cl)
+{
+	struct hci_dev *hdev;
+	int i = 1;
 
 	cl[0].id = AMP_ID_BREDR;
 	cl[0].type = AMP_TYPE_BREDR;
 	cl[0].status = AMP_STATUS_BLUETOOTH_ONLY;
 
-	list_क्रम_each_entry(hdev, &hci_dev_list, list) अणु
-		अगर (hdev->dev_type == HCI_AMP) अणु
+	list_for_each_entry(hdev, &hci_dev_list, list) {
+		if (hdev->dev_type == HCI_AMP) {
 			cl[i].id = hdev->id;
 			cl[i].type = hdev->amp_type;
-			अगर (test_bit(HCI_UP, &hdev->flags))
+			if (test_bit(HCI_UP, &hdev->flags))
 				cl[i].status = hdev->amp_status;
-			अन्यथा
+			else
 				cl[i].status = AMP_STATUS_POWERED_DOWN;
 			i++;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
 /* Processing A2MP messages */
-अटल पूर्णांक a2mp_command_rej(काष्ठा amp_mgr *mgr, काष्ठा sk_buff *skb,
-			    काष्ठा a2mp_cmd *hdr)
-अणु
-	काष्ठा a2mp_cmd_rej *rej = (व्योम *) skb->data;
+static int a2mp_command_rej(struct amp_mgr *mgr, struct sk_buff *skb,
+			    struct a2mp_cmd *hdr)
+{
+	struct a2mp_cmd_rej *rej = (void *) skb->data;
 
-	अगर (le16_to_cpu(hdr->len) < माप(*rej))
-		वापस -EINVAL;
+	if (le16_to_cpu(hdr->len) < sizeof(*rej))
+		return -EINVAL;
 
 	BT_DBG("ident %d reason %d", hdr->ident, le16_to_cpu(rej->reason));
 
-	skb_pull(skb, माप(*rej));
+	skb_pull(skb, sizeof(*rej));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक a2mp_discover_req(काष्ठा amp_mgr *mgr, काष्ठा sk_buff *skb,
-			     काष्ठा a2mp_cmd *hdr)
-अणु
-	काष्ठा a2mp_discov_req *req = (व्योम *) skb->data;
+static int a2mp_discover_req(struct amp_mgr *mgr, struct sk_buff *skb,
+			     struct a2mp_cmd *hdr)
+{
+	struct a2mp_discov_req *req = (void *) skb->data;
 	u16 len = le16_to_cpu(hdr->len);
-	काष्ठा a2mp_discov_rsp *rsp;
+	struct a2mp_discov_rsp *rsp;
 	u16 ext_feat;
 	u8 num_ctrl;
-	काष्ठा hci_dev *hdev;
+	struct hci_dev *hdev;
 
-	अगर (len < माप(*req))
-		वापस -EINVAL;
+	if (len < sizeof(*req))
+		return -EINVAL;
 
-	skb_pull(skb, माप(*req));
+	skb_pull(skb, sizeof(*req));
 
 	ext_feat = le16_to_cpu(req->ext_feat);
 
 	BT_DBG("mtu %d efm 0x%4.4x", le16_to_cpu(req->mtu), ext_feat);
 
-	/* check that packet is not broken क्रम now */
-	जबतक (ext_feat & A2MP_FEAT_EXT) अणु
-		अगर (len < माप(ext_feat))
-			वापस -EINVAL;
+	/* check that packet is not broken for now */
+	while (ext_feat & A2MP_FEAT_EXT) {
+		if (len < sizeof(ext_feat))
+			return -EINVAL;
 
 		ext_feat = get_unaligned_le16(skb->data);
 		BT_DBG("efm 0x%4.4x", ext_feat);
-		len -= माप(ext_feat);
-		skb_pull(skb, माप(ext_feat));
-	पूर्ण
+		len -= sizeof(ext_feat);
+		skb_pull(skb, sizeof(ext_feat));
+	}
 
-	पढ़ो_lock(&hci_dev_list_lock);
+	read_lock(&hci_dev_list_lock);
 
 	/* at minimum the BR/EDR needs to be listed */
 	num_ctrl = 1;
 
-	list_क्रम_each_entry(hdev, &hci_dev_list, list) अणु
-		अगर (hdev->dev_type == HCI_AMP)
+	list_for_each_entry(hdev, &hci_dev_list, list) {
+		if (hdev->dev_type == HCI_AMP)
 			num_ctrl++;
-	पूर्ण
+	}
 
-	len = काष्ठा_size(rsp, cl, num_ctrl);
-	rsp = kदो_स्मृति(len, GFP_ATOMIC);
-	अगर (!rsp) अणु
-		पढ़ो_unlock(&hci_dev_list_lock);
-		वापस -ENOMEM;
-	पूर्ण
+	len = struct_size(rsp, cl, num_ctrl);
+	rsp = kmalloc(len, GFP_ATOMIC);
+	if (!rsp) {
+		read_unlock(&hci_dev_list_lock);
+		return -ENOMEM;
+	}
 
 	rsp->mtu = cpu_to_le16(L2CAP_A2MP_DEFAULT_MTU);
 	rsp->ext_feat = 0;
 
 	__a2mp_add_cl(mgr, rsp->cl);
 
-	पढ़ो_unlock(&hci_dev_list_lock);
+	read_unlock(&hci_dev_list_lock);
 
 	a2mp_send(mgr, A2MP_DISCOVER_RSP, hdr->ident, len, rsp);
 
-	kमुक्त(rsp);
-	वापस 0;
-पूर्ण
+	kfree(rsp);
+	return 0;
+}
 
-अटल पूर्णांक a2mp_discover_rsp(काष्ठा amp_mgr *mgr, काष्ठा sk_buff *skb,
-			     काष्ठा a2mp_cmd *hdr)
-अणु
-	काष्ठा a2mp_discov_rsp *rsp = (व्योम *) skb->data;
+static int a2mp_discover_rsp(struct amp_mgr *mgr, struct sk_buff *skb,
+			     struct a2mp_cmd *hdr)
+{
+	struct a2mp_discov_rsp *rsp = (void *) skb->data;
 	u16 len = le16_to_cpu(hdr->len);
-	काष्ठा a2mp_cl *cl;
+	struct a2mp_cl *cl;
 	u16 ext_feat;
 	bool found = false;
 
-	अगर (len < माप(*rsp))
-		वापस -EINVAL;
+	if (len < sizeof(*rsp))
+		return -EINVAL;
 
-	len -= माप(*rsp);
-	skb_pull(skb, माप(*rsp));
+	len -= sizeof(*rsp);
+	skb_pull(skb, sizeof(*rsp));
 
 	ext_feat = le16_to_cpu(rsp->ext_feat);
 
 	BT_DBG("mtu %d efm 0x%4.4x", le16_to_cpu(rsp->mtu), ext_feat);
 
-	/* check that packet is not broken क्रम now */
-	जबतक (ext_feat & A2MP_FEAT_EXT) अणु
-		अगर (len < माप(ext_feat))
-			वापस -EINVAL;
+	/* check that packet is not broken for now */
+	while (ext_feat & A2MP_FEAT_EXT) {
+		if (len < sizeof(ext_feat))
+			return -EINVAL;
 
 		ext_feat = get_unaligned_le16(skb->data);
 		BT_DBG("efm 0x%4.4x", ext_feat);
-		len -= माप(ext_feat);
-		skb_pull(skb, माप(ext_feat));
-	पूर्ण
+		len -= sizeof(ext_feat);
+		skb_pull(skb, sizeof(ext_feat));
+	}
 
-	cl = (व्योम *) skb->data;
-	जबतक (len >= माप(*cl)) अणु
+	cl = (void *) skb->data;
+	while (len >= sizeof(*cl)) {
 		BT_DBG("Remote AMP id %d type %d status %d", cl->id, cl->type,
 		       cl->status);
 
-		अगर (cl->id != AMP_ID_BREDR && cl->type != AMP_TYPE_BREDR) अणु
-			काष्ठा a2mp_info_req req;
+		if (cl->id != AMP_ID_BREDR && cl->type != AMP_TYPE_BREDR) {
+			struct a2mp_info_req req;
 
 			found = true;
 
-			स_रखो(&req, 0, माप(req));
+			memset(&req, 0, sizeof(req));
 
 			req.id = cl->id;
 			a2mp_send(mgr, A2MP_GETINFO_REQ, __next_ident(mgr),
-				  माप(req), &req);
-		पूर्ण
+				  sizeof(req), &req);
+		}
 
-		len -= माप(*cl);
-		cl = skb_pull(skb, माप(*cl));
-	पूर्ण
+		len -= sizeof(*cl);
+		cl = skb_pull(skb, sizeof(*cl));
+	}
 
 	/* Fall back to L2CAP init sequence */
-	अगर (!found) अणु
-		काष्ठा l2cap_conn *conn = mgr->l2cap_conn;
-		काष्ठा l2cap_chan *chan;
+	if (!found) {
+		struct l2cap_conn *conn = mgr->l2cap_conn;
+		struct l2cap_chan *chan;
 
 		mutex_lock(&conn->chan_lock);
 
-		list_क्रम_each_entry(chan, &conn->chan_l, list) अणु
+		list_for_each_entry(chan, &conn->chan_l, list) {
 
 			BT_DBG("chan %p state %s", chan,
 			       state_to_string(chan->state));
 
-			अगर (chan->scid == L2CAP_CID_A2MP)
-				जारी;
+			if (chan->scid == L2CAP_CID_A2MP)
+				continue;
 
 			l2cap_chan_lock(chan);
 
-			अगर (chan->state == BT_CONNECT)
+			if (chan->state == BT_CONNECT)
 				l2cap_send_conn_req(chan);
 
 			l2cap_chan_unlock(chan);
-		पूर्ण
+		}
 
 		mutex_unlock(&conn->chan_lock);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक a2mp_change_notअगरy(काष्ठा amp_mgr *mgr, काष्ठा sk_buff *skb,
-			      काष्ठा a2mp_cmd *hdr)
-अणु
-	काष्ठा a2mp_cl *cl = (व्योम *) skb->data;
+static int a2mp_change_notify(struct amp_mgr *mgr, struct sk_buff *skb,
+			      struct a2mp_cmd *hdr)
+{
+	struct a2mp_cl *cl = (void *) skb->data;
 
-	जबतक (skb->len >= माप(*cl)) अणु
+	while (skb->len >= sizeof(*cl)) {
 		BT_DBG("Controller id %d type %d status %d", cl->id, cl->type,
 		       cl->status);
-		cl = skb_pull(skb, माप(*cl));
-	पूर्ण
+		cl = skb_pull(skb, sizeof(*cl));
+	}
 
 	/* TODO send A2MP_CHANGE_RSP */
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम पढ़ो_local_amp_info_complete(काष्ठा hci_dev *hdev, u8 status,
+static void read_local_amp_info_complete(struct hci_dev *hdev, u8 status,
 					 u16 opcode)
-अणु
+{
 	BT_DBG("%s status 0x%2.2x", hdev->name, status);
 
 	a2mp_send_getinfo_rsp(hdev);
-पूर्ण
+}
 
-अटल पूर्णांक a2mp_getinfo_req(काष्ठा amp_mgr *mgr, काष्ठा sk_buff *skb,
-			    काष्ठा a2mp_cmd *hdr)
-अणु
-	काष्ठा a2mp_info_req *req  = (व्योम *) skb->data;
-	काष्ठा hci_dev *hdev;
-	काष्ठा hci_request hreq;
-	पूर्णांक err = 0;
+static int a2mp_getinfo_req(struct amp_mgr *mgr, struct sk_buff *skb,
+			    struct a2mp_cmd *hdr)
+{
+	struct a2mp_info_req *req  = (void *) skb->data;
+	struct hci_dev *hdev;
+	struct hci_request hreq;
+	int err = 0;
 
-	अगर (le16_to_cpu(hdr->len) < माप(*req))
-		वापस -EINVAL;
+	if (le16_to_cpu(hdr->len) < sizeof(*req))
+		return -EINVAL;
 
 	BT_DBG("id %d", req->id);
 
 	hdev = hci_dev_get(req->id);
-	अगर (!hdev || hdev->dev_type != HCI_AMP) अणु
-		काष्ठा a2mp_info_rsp rsp;
+	if (!hdev || hdev->dev_type != HCI_AMP) {
+		struct a2mp_info_rsp rsp;
 
-		स_रखो(&rsp, 0, माप(rsp));
+		memset(&rsp, 0, sizeof(rsp));
 
 		rsp.id = req->id;
 		rsp.status = A2MP_STATUS_INVALID_CTRL_ID;
 
-		a2mp_send(mgr, A2MP_GETINFO_RSP, hdr->ident, माप(rsp),
+		a2mp_send(mgr, A2MP_GETINFO_RSP, hdr->ident, sizeof(rsp),
 			  &rsp);
 
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
 	set_bit(READ_LOC_AMP_INFO, &mgr->state);
 	hci_req_init(&hreq, hdev);
-	hci_req_add(&hreq, HCI_OP_READ_LOCAL_AMP_INFO, 0, शून्य);
-	err = hci_req_run(&hreq, पढ़ो_local_amp_info_complete);
-	अगर (err < 0)
+	hci_req_add(&hreq, HCI_OP_READ_LOCAL_AMP_INFO, 0, NULL);
+	err = hci_req_run(&hreq, read_local_amp_info_complete);
+	if (err < 0)
 		a2mp_send_getinfo_rsp(hdev);
 
-करोne:
-	अगर (hdev)
+done:
+	if (hdev)
 		hci_dev_put(hdev);
 
-	skb_pull(skb, माप(*req));
-	वापस 0;
-पूर्ण
+	skb_pull(skb, sizeof(*req));
+	return 0;
+}
 
-अटल पूर्णांक a2mp_getinfo_rsp(काष्ठा amp_mgr *mgr, काष्ठा sk_buff *skb,
-			    काष्ठा a2mp_cmd *hdr)
-अणु
-	काष्ठा a2mp_info_rsp *rsp = (काष्ठा a2mp_info_rsp *) skb->data;
-	काष्ठा a2mp_amp_assoc_req req;
-	काष्ठा amp_ctrl *ctrl;
+static int a2mp_getinfo_rsp(struct amp_mgr *mgr, struct sk_buff *skb,
+			    struct a2mp_cmd *hdr)
+{
+	struct a2mp_info_rsp *rsp = (struct a2mp_info_rsp *) skb->data;
+	struct a2mp_amp_assoc_req req;
+	struct amp_ctrl *ctrl;
 
-	अगर (le16_to_cpu(hdr->len) < माप(*rsp))
-		वापस -EINVAL;
+	if (le16_to_cpu(hdr->len) < sizeof(*rsp))
+		return -EINVAL;
 
 	BT_DBG("id %d status 0x%2.2x", rsp->id, rsp->status);
 
-	अगर (rsp->status)
-		वापस -EINVAL;
+	if (rsp->status)
+		return -EINVAL;
 
 	ctrl = amp_ctrl_add(mgr, rsp->id);
-	अगर (!ctrl)
-		वापस -ENOMEM;
+	if (!ctrl)
+		return -ENOMEM;
 
-	स_रखो(&req, 0, माप(req));
+	memset(&req, 0, sizeof(req));
 
 	req.id = rsp->id;
-	a2mp_send(mgr, A2MP_GETAMPASSOC_REQ, __next_ident(mgr), माप(req),
+	a2mp_send(mgr, A2MP_GETAMPASSOC_REQ, __next_ident(mgr), sizeof(req),
 		  &req);
 
-	skb_pull(skb, माप(*rsp));
-	वापस 0;
-पूर्ण
+	skb_pull(skb, sizeof(*rsp));
+	return 0;
+}
 
-अटल पूर्णांक a2mp_getampassoc_req(काष्ठा amp_mgr *mgr, काष्ठा sk_buff *skb,
-				काष्ठा a2mp_cmd *hdr)
-अणु
-	काष्ठा a2mp_amp_assoc_req *req = (व्योम *) skb->data;
-	काष्ठा hci_dev *hdev;
-	काष्ठा amp_mgr *पंचांगp;
+static int a2mp_getampassoc_req(struct amp_mgr *mgr, struct sk_buff *skb,
+				struct a2mp_cmd *hdr)
+{
+	struct a2mp_amp_assoc_req *req = (void *) skb->data;
+	struct hci_dev *hdev;
+	struct amp_mgr *tmp;
 
-	अगर (le16_to_cpu(hdr->len) < माप(*req))
-		वापस -EINVAL;
+	if (le16_to_cpu(hdr->len) < sizeof(*req))
+		return -EINVAL;
 
 	BT_DBG("id %d", req->id);
 
 	/* Make sure that other request is not processed */
-	पंचांगp = amp_mgr_lookup_by_state(READ_LOC_AMP_ASSOC);
+	tmp = amp_mgr_lookup_by_state(READ_LOC_AMP_ASSOC);
 
 	hdev = hci_dev_get(req->id);
-	अगर (!hdev || hdev->amp_type == AMP_TYPE_BREDR || पंचांगp) अणु
-		काष्ठा a2mp_amp_assoc_rsp rsp;
+	if (!hdev || hdev->amp_type == AMP_TYPE_BREDR || tmp) {
+		struct a2mp_amp_assoc_rsp rsp;
 
-		स_रखो(&rsp, 0, माप(rsp));
+		memset(&rsp, 0, sizeof(rsp));
 		rsp.id = req->id;
 
-		अगर (पंचांगp) अणु
+		if (tmp) {
 			rsp.status = A2MP_STATUS_COLLISION_OCCURED;
-			amp_mgr_put(पंचांगp);
-		पूर्ण अन्यथा अणु
+			amp_mgr_put(tmp);
+		} else {
 			rsp.status = A2MP_STATUS_INVALID_CTRL_ID;
-		पूर्ण
+		}
 
-		a2mp_send(mgr, A2MP_GETAMPASSOC_RSP, hdr->ident, माप(rsp),
+		a2mp_send(mgr, A2MP_GETAMPASSOC_RSP, hdr->ident, sizeof(rsp),
 			  &rsp);
 
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	amp_पढ़ो_loc_assoc(hdev, mgr);
+	amp_read_loc_assoc(hdev, mgr);
 
-करोne:
-	अगर (hdev)
+done:
+	if (hdev)
 		hci_dev_put(hdev);
 
-	skb_pull(skb, माप(*req));
-	वापस 0;
-पूर्ण
+	skb_pull(skb, sizeof(*req));
+	return 0;
+}
 
-अटल पूर्णांक a2mp_getampassoc_rsp(काष्ठा amp_mgr *mgr, काष्ठा sk_buff *skb,
-				काष्ठा a2mp_cmd *hdr)
-अणु
-	काष्ठा a2mp_amp_assoc_rsp *rsp = (व्योम *) skb->data;
+static int a2mp_getampassoc_rsp(struct amp_mgr *mgr, struct sk_buff *skb,
+				struct a2mp_cmd *hdr)
+{
+	struct a2mp_amp_assoc_rsp *rsp = (void *) skb->data;
 	u16 len = le16_to_cpu(hdr->len);
-	काष्ठा hci_dev *hdev;
-	काष्ठा amp_ctrl *ctrl;
-	काष्ठा hci_conn *hcon;
-	माप_प्रकार assoc_len;
+	struct hci_dev *hdev;
+	struct amp_ctrl *ctrl;
+	struct hci_conn *hcon;
+	size_t assoc_len;
 
-	अगर (len < माप(*rsp))
-		वापस -EINVAL;
+	if (len < sizeof(*rsp))
+		return -EINVAL;
 
-	assoc_len = len - माप(*rsp);
+	assoc_len = len - sizeof(*rsp);
 
 	BT_DBG("id %d status 0x%2.2x assoc len %zu", rsp->id, rsp->status,
 	       assoc_len);
 
-	अगर (rsp->status)
-		वापस -EINVAL;
+	if (rsp->status)
+		return -EINVAL;
 
 	/* Save remote ASSOC data */
 	ctrl = amp_ctrl_lookup(mgr, rsp->id);
-	अगर (ctrl) अणु
+	if (ctrl) {
 		u8 *assoc;
 
 		assoc = kmemdup(rsp->amp_assoc, assoc_len, GFP_KERNEL);
-		अगर (!assoc) अणु
+		if (!assoc) {
 			amp_ctrl_put(ctrl);
-			वापस -ENOMEM;
-		पूर्ण
+			return -ENOMEM;
+		}
 
 		ctrl->assoc = assoc;
 		ctrl->assoc_len = assoc_len;
@@ -447,16 +446,16 @@
 		ctrl->assoc_len_so_far = 0;
 
 		amp_ctrl_put(ctrl);
-	पूर्ण
+	}
 
 	/* Create Phys Link */
 	hdev = hci_dev_get(rsp->id);
-	अगर (!hdev)
-		वापस -EINVAL;
+	if (!hdev)
+		return -EINVAL;
 
 	hcon = phylink_add(hdev, mgr, rsp->id, true);
-	अगर (!hcon)
-		जाओ करोne;
+	if (!hcon)
+		goto done;
 
 	BT_DBG("Created hcon %p: loc:%d -> rem:%d", hcon, hdev->id, rsp->id);
 
@@ -464,58 +463,58 @@
 
 	amp_create_phylink(hdev, mgr, hcon);
 
-करोne:
+done:
 	hci_dev_put(hdev);
 	skb_pull(skb, len);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक a2mp_createphyslink_req(काष्ठा amp_mgr *mgr, काष्ठा sk_buff *skb,
-				   काष्ठा a2mp_cmd *hdr)
-अणु
-	काष्ठा a2mp_physlink_req *req = (व्योम *) skb->data;
-	काष्ठा a2mp_physlink_rsp rsp;
-	काष्ठा hci_dev *hdev;
-	काष्ठा hci_conn *hcon;
-	काष्ठा amp_ctrl *ctrl;
+static int a2mp_createphyslink_req(struct amp_mgr *mgr, struct sk_buff *skb,
+				   struct a2mp_cmd *hdr)
+{
+	struct a2mp_physlink_req *req = (void *) skb->data;
+	struct a2mp_physlink_rsp rsp;
+	struct hci_dev *hdev;
+	struct hci_conn *hcon;
+	struct amp_ctrl *ctrl;
 
-	अगर (le16_to_cpu(hdr->len) < माप(*req))
-		वापस -EINVAL;
+	if (le16_to_cpu(hdr->len) < sizeof(*req))
+		return -EINVAL;
 
 	BT_DBG("local_id %d, remote_id %d", req->local_id, req->remote_id);
 
-	स_रखो(&rsp, 0, माप(rsp));
+	memset(&rsp, 0, sizeof(rsp));
 
 	rsp.local_id = req->remote_id;
 	rsp.remote_id = req->local_id;
 
 	hdev = hci_dev_get(req->remote_id);
-	अगर (!hdev || hdev->amp_type == AMP_TYPE_BREDR) अणु
+	if (!hdev || hdev->amp_type == AMP_TYPE_BREDR) {
 		rsp.status = A2MP_STATUS_INVALID_CTRL_ID;
-		जाओ send_rsp;
-	पूर्ण
+		goto send_rsp;
+	}
 
 	ctrl = amp_ctrl_lookup(mgr, rsp.remote_id);
-	अगर (!ctrl) अणु
+	if (!ctrl) {
 		ctrl = amp_ctrl_add(mgr, rsp.remote_id);
-		अगर (ctrl) अणु
+		if (ctrl) {
 			amp_ctrl_get(ctrl);
-		पूर्ण अन्यथा अणु
+		} else {
 			rsp.status = A2MP_STATUS_UNABLE_START_LINK_CREATION;
-			जाओ send_rsp;
-		पूर्ण
-	पूर्ण
+			goto send_rsp;
+		}
+	}
 
-	अगर (ctrl) अणु
-		माप_प्रकार assoc_len = le16_to_cpu(hdr->len) - माप(*req);
+	if (ctrl) {
+		size_t assoc_len = le16_to_cpu(hdr->len) - sizeof(*req);
 		u8 *assoc;
 
 		assoc = kmemdup(req->amp_assoc, assoc_len, GFP_KERNEL);
-		अगर (!assoc) अणु
+		if (!assoc) {
 			amp_ctrl_put(ctrl);
 			hci_dev_put(hdev);
-			वापस -ENOMEM;
-		पूर्ण
+			return -ENOMEM;
+		}
 
 		ctrl->assoc = assoc;
 		ctrl->assoc_len = assoc_len;
@@ -523,67 +522,67 @@
 		ctrl->assoc_len_so_far = 0;
 
 		amp_ctrl_put(ctrl);
-	पूर्ण
+	}
 
 	hcon = phylink_add(hdev, mgr, req->local_id, false);
-	अगर (hcon) अणु
+	if (hcon) {
 		amp_accept_phylink(hdev, mgr, hcon);
 		rsp.status = A2MP_STATUS_SUCCESS;
-	पूर्ण अन्यथा अणु
+	} else {
 		rsp.status = A2MP_STATUS_UNABLE_START_LINK_CREATION;
-	पूर्ण
+	}
 
 send_rsp:
-	अगर (hdev)
+	if (hdev)
 		hci_dev_put(hdev);
 
 	/* Reply error now and success after HCI Write Remote AMP Assoc
 	   command complete with success status
 	 */
-	अगर (rsp.status != A2MP_STATUS_SUCCESS) अणु
+	if (rsp.status != A2MP_STATUS_SUCCESS) {
 		a2mp_send(mgr, A2MP_CREATEPHYSLINK_RSP, hdr->ident,
-			  माप(rsp), &rsp);
-	पूर्ण अन्यथा अणु
+			  sizeof(rsp), &rsp);
+	} else {
 		set_bit(WRITE_REMOTE_AMP_ASSOC, &mgr->state);
 		mgr->ident = hdr->ident;
-	पूर्ण
+	}
 
 	skb_pull(skb, le16_to_cpu(hdr->len));
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक a2mp_discphyslink_req(काष्ठा amp_mgr *mgr, काष्ठा sk_buff *skb,
-				 काष्ठा a2mp_cmd *hdr)
-अणु
-	काष्ठा a2mp_physlink_req *req = (व्योम *) skb->data;
-	काष्ठा a2mp_physlink_rsp rsp;
-	काष्ठा hci_dev *hdev;
-	काष्ठा hci_conn *hcon;
+static int a2mp_discphyslink_req(struct amp_mgr *mgr, struct sk_buff *skb,
+				 struct a2mp_cmd *hdr)
+{
+	struct a2mp_physlink_req *req = (void *) skb->data;
+	struct a2mp_physlink_rsp rsp;
+	struct hci_dev *hdev;
+	struct hci_conn *hcon;
 
-	अगर (le16_to_cpu(hdr->len) < माप(*req))
-		वापस -EINVAL;
+	if (le16_to_cpu(hdr->len) < sizeof(*req))
+		return -EINVAL;
 
 	BT_DBG("local_id %d remote_id %d", req->local_id, req->remote_id);
 
-	स_रखो(&rsp, 0, माप(rsp));
+	memset(&rsp, 0, sizeof(rsp));
 
 	rsp.local_id = req->remote_id;
 	rsp.remote_id = req->local_id;
 	rsp.status = A2MP_STATUS_SUCCESS;
 
 	hdev = hci_dev_get(req->remote_id);
-	अगर (!hdev) अणु
+	if (!hdev) {
 		rsp.status = A2MP_STATUS_INVALID_CTRL_ID;
-		जाओ send_rsp;
-	पूर्ण
+		goto send_rsp;
+	}
 
 	hcon = hci_conn_hash_lookup_ba(hdev, AMP_LINK,
 				       &mgr->l2cap_conn->hcon->dst);
-	अगर (!hcon) अणु
+	if (!hcon) {
 		bt_dev_err(hdev, "no phys link exist");
 		rsp.status = A2MP_STATUS_NO_PHYSICAL_LINK_EXISTS;
-		जाओ clean;
-	पूर्ण
+		goto clean;
+	}
 
 	/* TODO Disconnect Phys Link here */
 
@@ -591,187 +590,187 @@ clean:
 	hci_dev_put(hdev);
 
 send_rsp:
-	a2mp_send(mgr, A2MP_DISCONNPHYSLINK_RSP, hdr->ident, माप(rsp), &rsp);
+	a2mp_send(mgr, A2MP_DISCONNPHYSLINK_RSP, hdr->ident, sizeof(rsp), &rsp);
 
-	skb_pull(skb, माप(*req));
-	वापस 0;
-पूर्ण
+	skb_pull(skb, sizeof(*req));
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक a2mp_cmd_rsp(काष्ठा amp_mgr *mgr, काष्ठा sk_buff *skb,
-			       काष्ठा a2mp_cmd *hdr)
-अणु
+static inline int a2mp_cmd_rsp(struct amp_mgr *mgr, struct sk_buff *skb,
+			       struct a2mp_cmd *hdr)
+{
 	BT_DBG("ident %d code 0x%2.2x", hdr->ident, hdr->code);
 
 	skb_pull(skb, le16_to_cpu(hdr->len));
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Handle A2MP संकेतling */
-अटल पूर्णांक a2mp_chan_recv_cb(काष्ठा l2cap_chan *chan, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा a2mp_cmd *hdr;
-	काष्ठा amp_mgr *mgr = chan->data;
-	पूर्णांक err = 0;
+/* Handle A2MP signalling */
+static int a2mp_chan_recv_cb(struct l2cap_chan *chan, struct sk_buff *skb)
+{
+	struct a2mp_cmd *hdr;
+	struct amp_mgr *mgr = chan->data;
+	int err = 0;
 
 	amp_mgr_get(mgr);
 
-	जबतक (skb->len >= माप(*hdr)) अणु
+	while (skb->len >= sizeof(*hdr)) {
 		u16 len;
 
-		hdr = (व्योम *) skb->data;
+		hdr = (void *) skb->data;
 		len = le16_to_cpu(hdr->len);
 
 		BT_DBG("code 0x%2.2x id %d len %u", hdr->code, hdr->ident, len);
 
-		skb_pull(skb, माप(*hdr));
+		skb_pull(skb, sizeof(*hdr));
 
-		अगर (len > skb->len || !hdr->ident) अणु
+		if (len > skb->len || !hdr->ident) {
 			err = -EINVAL;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		mgr->ident = hdr->ident;
 
-		चयन (hdr->code) अणु
-		हाल A2MP_COMMAND_REJ:
+		switch (hdr->code) {
+		case A2MP_COMMAND_REJ:
 			a2mp_command_rej(mgr, skb, hdr);
-			अवरोध;
+			break;
 
-		हाल A2MP_DISCOVER_REQ:
+		case A2MP_DISCOVER_REQ:
 			err = a2mp_discover_req(mgr, skb, hdr);
-			अवरोध;
+			break;
 
-		हाल A2MP_CHANGE_NOTIFY:
-			err = a2mp_change_notअगरy(mgr, skb, hdr);
-			अवरोध;
+		case A2MP_CHANGE_NOTIFY:
+			err = a2mp_change_notify(mgr, skb, hdr);
+			break;
 
-		हाल A2MP_GETINFO_REQ:
+		case A2MP_GETINFO_REQ:
 			err = a2mp_getinfo_req(mgr, skb, hdr);
-			अवरोध;
+			break;
 
-		हाल A2MP_GETAMPASSOC_REQ:
+		case A2MP_GETAMPASSOC_REQ:
 			err = a2mp_getampassoc_req(mgr, skb, hdr);
-			अवरोध;
+			break;
 
-		हाल A2MP_CREATEPHYSLINK_REQ:
+		case A2MP_CREATEPHYSLINK_REQ:
 			err = a2mp_createphyslink_req(mgr, skb, hdr);
-			अवरोध;
+			break;
 
-		हाल A2MP_DISCONNPHYSLINK_REQ:
+		case A2MP_DISCONNPHYSLINK_REQ:
 			err = a2mp_discphyslink_req(mgr, skb, hdr);
-			अवरोध;
+			break;
 
-		हाल A2MP_DISCOVER_RSP:
+		case A2MP_DISCOVER_RSP:
 			err = a2mp_discover_rsp(mgr, skb, hdr);
-			अवरोध;
+			break;
 
-		हाल A2MP_GETINFO_RSP:
+		case A2MP_GETINFO_RSP:
 			err = a2mp_getinfo_rsp(mgr, skb, hdr);
-			अवरोध;
+			break;
 
-		हाल A2MP_GETAMPASSOC_RSP:
+		case A2MP_GETAMPASSOC_RSP:
 			err = a2mp_getampassoc_rsp(mgr, skb, hdr);
-			अवरोध;
+			break;
 
-		हाल A2MP_CHANGE_RSP:
-		हाल A2MP_CREATEPHYSLINK_RSP:
-		हाल A2MP_DISCONNPHYSLINK_RSP:
+		case A2MP_CHANGE_RSP:
+		case A2MP_CREATEPHYSLINK_RSP:
+		case A2MP_DISCONNPHYSLINK_RSP:
 			err = a2mp_cmd_rsp(mgr, skb, hdr);
-			अवरोध;
+			break;
 
-		शेष:
+		default:
 			BT_ERR("Unknown A2MP sig cmd 0x%2.2x", hdr->code);
 			err = -EINVAL;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	अगर (err) अणु
-		काष्ठा a2mp_cmd_rej rej;
+	if (err) {
+		struct a2mp_cmd_rej rej;
 
-		स_रखो(&rej, 0, माप(rej));
+		memset(&rej, 0, sizeof(rej));
 
 		rej.reason = cpu_to_le16(0);
-		hdr = (व्योम *) skb->data;
+		hdr = (void *) skb->data;
 
 		BT_DBG("Send A2MP Rej: cmd 0x%2.2x err %d", hdr->code, err);
 
-		a2mp_send(mgr, A2MP_COMMAND_REJ, hdr->ident, माप(rej),
+		a2mp_send(mgr, A2MP_COMMAND_REJ, hdr->ident, sizeof(rej),
 			  &rej);
-	पूर्ण
+	}
 
-	/* Always मुक्त skb and वापस success error code to prevent
+	/* Always free skb and return success error code to prevent
 	   from sending L2CAP Disconnect over A2MP channel */
-	kमुक्त_skb(skb);
+	kfree_skb(skb);
 
 	amp_mgr_put(mgr);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम a2mp_chan_बंद_cb(काष्ठा l2cap_chan *chan)
-अणु
+static void a2mp_chan_close_cb(struct l2cap_chan *chan)
+{
 	l2cap_chan_put(chan);
-पूर्ण
+}
 
-अटल व्योम a2mp_chan_state_change_cb(काष्ठा l2cap_chan *chan, पूर्णांक state,
-				      पूर्णांक err)
-अणु
-	काष्ठा amp_mgr *mgr = chan->data;
+static void a2mp_chan_state_change_cb(struct l2cap_chan *chan, int state,
+				      int err)
+{
+	struct amp_mgr *mgr = chan->data;
 
-	अगर (!mgr)
-		वापस;
+	if (!mgr)
+		return;
 
 	BT_DBG("chan %p state %s", chan, state_to_string(state));
 
 	chan->state = state;
 
-	चयन (state) अणु
-	हाल BT_CLOSED:
-		अगर (mgr)
+	switch (state) {
+	case BT_CLOSED:
+		if (mgr)
 			amp_mgr_put(mgr);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-अटल काष्ठा sk_buff *a2mp_chan_alloc_skb_cb(काष्ठा l2cap_chan *chan,
-					      अचिन्हित दीर्घ hdr_len,
-					      अचिन्हित दीर्घ len, पूर्णांक nb)
-अणु
-	काष्ठा sk_buff *skb;
+static struct sk_buff *a2mp_chan_alloc_skb_cb(struct l2cap_chan *chan,
+					      unsigned long hdr_len,
+					      unsigned long len, int nb)
+{
+	struct sk_buff *skb;
 
 	skb = bt_skb_alloc(hdr_len + len, GFP_KERNEL);
-	अगर (!skb)
-		वापस ERR_PTR(-ENOMEM);
+	if (!skb)
+		return ERR_PTR(-ENOMEM);
 
-	वापस skb;
-पूर्ण
+	return skb;
+}
 
-अटल स्थिर काष्ठा l2cap_ops a2mp_chan_ops = अणु
+static const struct l2cap_ops a2mp_chan_ops = {
 	.name = "L2CAP A2MP channel",
 	.recv = a2mp_chan_recv_cb,
-	.बंद = a2mp_chan_बंद_cb,
+	.close = a2mp_chan_close_cb,
 	.state_change = a2mp_chan_state_change_cb,
 	.alloc_skb = a2mp_chan_alloc_skb_cb,
 
-	/* Not implemented क्रम A2MP */
+	/* Not implemented for A2MP */
 	.new_connection = l2cap_chan_no_new_connection,
-	.tearकरोwn = l2cap_chan_no_tearकरोwn,
-	.पढ़ोy = l2cap_chan_no_पढ़ोy,
+	.teardown = l2cap_chan_no_teardown,
+	.ready = l2cap_chan_no_ready,
 	.defer = l2cap_chan_no_defer,
 	.resume = l2cap_chan_no_resume,
-	.set_shutकरोwn = l2cap_chan_no_set_shutकरोwn,
-	.get_sndसमयo = l2cap_chan_no_get_sndसमयo,
-पूर्ण;
+	.set_shutdown = l2cap_chan_no_set_shutdown,
+	.get_sndtimeo = l2cap_chan_no_get_sndtimeo,
+};
 
-अटल काष्ठा l2cap_chan *a2mp_chan_खोलो(काष्ठा l2cap_conn *conn, bool locked)
-अणु
-	काष्ठा l2cap_chan *chan;
-	पूर्णांक err;
+static struct l2cap_chan *a2mp_chan_open(struct l2cap_conn *conn, bool locked)
+{
+	struct l2cap_chan *chan;
+	int err;
 
 	chan = l2cap_chan_create();
-	अगर (!chan)
-		वापस शून्य;
+	if (!chan)
+		return NULL;
 
 	BT_DBG("chan %p", chan);
 
@@ -784,28 +783,28 @@ send_rsp:
 
 	chan->ops = &a2mp_chan_ops;
 
-	l2cap_chan_set_शेषs(chan);
+	l2cap_chan_set_defaults(chan);
 	chan->remote_max_tx = chan->max_tx;
 	chan->remote_tx_win = chan->tx_win;
 
-	chan->retrans_समयout = L2CAP_DEFAULT_RETRANS_TO;
-	chan->monitor_समयout = L2CAP_DEFAULT_MONITOR_TO;
+	chan->retrans_timeout = L2CAP_DEFAULT_RETRANS_TO;
+	chan->monitor_timeout = L2CAP_DEFAULT_MONITOR_TO;
 
 	skb_queue_head_init(&chan->tx_q);
 
 	chan->mode = L2CAP_MODE_ERTM;
 
-	err = l2cap_erपंचांग_init(chan);
-	अगर (err < 0) अणु
+	err = l2cap_ertm_init(chan);
+	if (err < 0) {
 		l2cap_chan_del(chan, 0);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
 	chan->conf_state = 0;
 
-	अगर (locked)
+	if (locked)
 		__l2cap_chan_add(conn, chan);
-	अन्यथा
+	else
 		l2cap_chan_add(conn, chan);
 
 	chan->remote_mps = chan->omtu;
@@ -813,22 +812,22 @@ send_rsp:
 
 	chan->state = BT_CONNECTED;
 
-	वापस chan;
-पूर्ण
+	return chan;
+}
 
 /* AMP Manager functions */
-काष्ठा amp_mgr *amp_mgr_get(काष्ठा amp_mgr *mgr)
-अणु
-	BT_DBG("mgr %p orig refcnt %d", mgr, kref_पढ़ो(&mgr->kref));
+struct amp_mgr *amp_mgr_get(struct amp_mgr *mgr)
+{
+	BT_DBG("mgr %p orig refcnt %d", mgr, kref_read(&mgr->kref));
 
 	kref_get(&mgr->kref);
 
-	वापस mgr;
-पूर्ण
+	return mgr;
+}
 
-अटल व्योम amp_mgr_destroy(काष्ठा kref *kref)
-अणु
-	काष्ठा amp_mgr *mgr = container_of(kref, काष्ठा amp_mgr, kref);
+static void amp_mgr_destroy(struct kref *kref)
+{
+	struct amp_mgr *mgr = container_of(kref, struct amp_mgr, kref);
 
 	BT_DBG("mgr %p", mgr);
 
@@ -837,34 +836,34 @@ send_rsp:
 	mutex_unlock(&amp_mgr_list_lock);
 
 	amp_ctrl_list_flush(mgr);
-	kमुक्त(mgr);
-पूर्ण
+	kfree(mgr);
+}
 
-पूर्णांक amp_mgr_put(काष्ठा amp_mgr *mgr)
-अणु
-	BT_DBG("mgr %p orig refcnt %d", mgr, kref_पढ़ो(&mgr->kref));
+int amp_mgr_put(struct amp_mgr *mgr)
+{
+	BT_DBG("mgr %p orig refcnt %d", mgr, kref_read(&mgr->kref));
 
-	वापस kref_put(&mgr->kref, &amp_mgr_destroy);
-पूर्ण
+	return kref_put(&mgr->kref, &amp_mgr_destroy);
+}
 
-अटल काष्ठा amp_mgr *amp_mgr_create(काष्ठा l2cap_conn *conn, bool locked)
-अणु
-	काष्ठा amp_mgr *mgr;
-	काष्ठा l2cap_chan *chan;
+static struct amp_mgr *amp_mgr_create(struct l2cap_conn *conn, bool locked)
+{
+	struct amp_mgr *mgr;
+	struct l2cap_chan *chan;
 
-	mgr = kzalloc(माप(*mgr), GFP_KERNEL);
-	अगर (!mgr)
-		वापस शून्य;
+	mgr = kzalloc(sizeof(*mgr), GFP_KERNEL);
+	if (!mgr)
+		return NULL;
 
 	BT_DBG("conn %p mgr %p", conn, mgr);
 
 	mgr->l2cap_conn = conn;
 
-	chan = a2mp_chan_खोलो(conn, locked);
-	अगर (!chan) अणु
-		kमुक्त(mgr);
-		वापस शून्य;
-	पूर्ण
+	chan = a2mp_chan_open(conn, locked);
+	if (!chan) {
+		kfree(mgr);
+		return NULL;
+	}
 
 	mgr->a2mp_chan = chan;
 	chan->data = mgr;
@@ -881,175 +880,175 @@ send_rsp:
 	list_add(&mgr->list, &amp_mgr_list);
 	mutex_unlock(&amp_mgr_list_lock);
 
-	वापस mgr;
-पूर्ण
+	return mgr;
+}
 
-काष्ठा l2cap_chan *a2mp_channel_create(काष्ठा l2cap_conn *conn,
-				       काष्ठा sk_buff *skb)
-अणु
-	काष्ठा amp_mgr *mgr;
+struct l2cap_chan *a2mp_channel_create(struct l2cap_conn *conn,
+				       struct sk_buff *skb)
+{
+	struct amp_mgr *mgr;
 
-	अगर (conn->hcon->type != ACL_LINK)
-		वापस शून्य;
+	if (conn->hcon->type != ACL_LINK)
+		return NULL;
 
 	mgr = amp_mgr_create(conn, false);
-	अगर (!mgr) अणु
+	if (!mgr) {
 		BT_ERR("Could not create AMP manager");
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
 	BT_DBG("mgr: %p chan %p", mgr, mgr->a2mp_chan);
 
-	वापस mgr->a2mp_chan;
-पूर्ण
+	return mgr->a2mp_chan;
+}
 
-व्योम a2mp_send_getinfo_rsp(काष्ठा hci_dev *hdev)
-अणु
-	काष्ठा amp_mgr *mgr;
-	काष्ठा a2mp_info_rsp rsp;
+void a2mp_send_getinfo_rsp(struct hci_dev *hdev)
+{
+	struct amp_mgr *mgr;
+	struct a2mp_info_rsp rsp;
 
 	mgr = amp_mgr_lookup_by_state(READ_LOC_AMP_INFO);
-	अगर (!mgr)
-		वापस;
+	if (!mgr)
+		return;
 
 	BT_DBG("%s mgr %p", hdev->name, mgr);
 
-	स_रखो(&rsp, 0, माप(rsp));
+	memset(&rsp, 0, sizeof(rsp));
 
 	rsp.id = hdev->id;
 	rsp.status = A2MP_STATUS_INVALID_CTRL_ID;
 
-	अगर (hdev->amp_type != AMP_TYPE_BREDR) अणु
+	if (hdev->amp_type != AMP_TYPE_BREDR) {
 		rsp.status = 0;
 		rsp.total_bw = cpu_to_le32(hdev->amp_total_bw);
 		rsp.max_bw = cpu_to_le32(hdev->amp_max_bw);
 		rsp.min_latency = cpu_to_le32(hdev->amp_min_latency);
 		rsp.pal_cap = cpu_to_le16(hdev->amp_pal_cap);
 		rsp.assoc_size = cpu_to_le16(hdev->amp_assoc_size);
-	पूर्ण
+	}
 
-	a2mp_send(mgr, A2MP_GETINFO_RSP, mgr->ident, माप(rsp), &rsp);
+	a2mp_send(mgr, A2MP_GETINFO_RSP, mgr->ident, sizeof(rsp), &rsp);
 	amp_mgr_put(mgr);
-पूर्ण
+}
 
-व्योम a2mp_send_getampassoc_rsp(काष्ठा hci_dev *hdev, u8 status)
-अणु
-	काष्ठा amp_mgr *mgr;
-	काष्ठा amp_assoc *loc_assoc = &hdev->loc_assoc;
-	काष्ठा a2mp_amp_assoc_rsp *rsp;
-	माप_प्रकार len;
+void a2mp_send_getampassoc_rsp(struct hci_dev *hdev, u8 status)
+{
+	struct amp_mgr *mgr;
+	struct amp_assoc *loc_assoc = &hdev->loc_assoc;
+	struct a2mp_amp_assoc_rsp *rsp;
+	size_t len;
 
 	mgr = amp_mgr_lookup_by_state(READ_LOC_AMP_ASSOC);
-	अगर (!mgr)
-		वापस;
+	if (!mgr)
+		return;
 
 	BT_DBG("%s mgr %p", hdev->name, mgr);
 
-	len = माप(काष्ठा a2mp_amp_assoc_rsp) + loc_assoc->len;
+	len = sizeof(struct a2mp_amp_assoc_rsp) + loc_assoc->len;
 	rsp = kzalloc(len, GFP_KERNEL);
-	अगर (!rsp) अणु
+	if (!rsp) {
 		amp_mgr_put(mgr);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	rsp->id = hdev->id;
 
-	अगर (status) अणु
+	if (status) {
 		rsp->status = A2MP_STATUS_INVALID_CTRL_ID;
-	पूर्ण अन्यथा अणु
+	} else {
 		rsp->status = A2MP_STATUS_SUCCESS;
-		स_नकल(rsp->amp_assoc, loc_assoc->data, loc_assoc->len);
-	पूर्ण
+		memcpy(rsp->amp_assoc, loc_assoc->data, loc_assoc->len);
+	}
 
 	a2mp_send(mgr, A2MP_GETAMPASSOC_RSP, mgr->ident, len, rsp);
 	amp_mgr_put(mgr);
-	kमुक्त(rsp);
-पूर्ण
+	kfree(rsp);
+}
 
-व्योम a2mp_send_create_phy_link_req(काष्ठा hci_dev *hdev, u8 status)
-अणु
-	काष्ठा amp_mgr *mgr;
-	काष्ठा amp_assoc *loc_assoc = &hdev->loc_assoc;
-	काष्ठा a2mp_physlink_req *req;
-	काष्ठा l2cap_chan *bredr_chan;
-	माप_प्रकार len;
+void a2mp_send_create_phy_link_req(struct hci_dev *hdev, u8 status)
+{
+	struct amp_mgr *mgr;
+	struct amp_assoc *loc_assoc = &hdev->loc_assoc;
+	struct a2mp_physlink_req *req;
+	struct l2cap_chan *bredr_chan;
+	size_t len;
 
 	mgr = amp_mgr_lookup_by_state(READ_LOC_AMP_ASSOC_FINAL);
-	अगर (!mgr)
-		वापस;
+	if (!mgr)
+		return;
 
-	len = माप(*req) + loc_assoc->len;
+	len = sizeof(*req) + loc_assoc->len;
 
 	BT_DBG("%s mgr %p assoc_len %zu", hdev->name, mgr, len);
 
 	req = kzalloc(len, GFP_KERNEL);
-	अगर (!req) अणु
+	if (!req) {
 		amp_mgr_put(mgr);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	bredr_chan = mgr->bredr_chan;
-	अगर (!bredr_chan)
-		जाओ clean;
+	if (!bredr_chan)
+		goto clean;
 
 	req->local_id = hdev->id;
 	req->remote_id = bredr_chan->remote_amp_id;
-	स_नकल(req->amp_assoc, loc_assoc->data, loc_assoc->len);
+	memcpy(req->amp_assoc, loc_assoc->data, loc_assoc->len);
 
 	a2mp_send(mgr, A2MP_CREATEPHYSLINK_REQ, __next_ident(mgr), len, req);
 
 clean:
 	amp_mgr_put(mgr);
-	kमुक्त(req);
-पूर्ण
+	kfree(req);
+}
 
-व्योम a2mp_send_create_phy_link_rsp(काष्ठा hci_dev *hdev, u8 status)
-अणु
-	काष्ठा amp_mgr *mgr;
-	काष्ठा a2mp_physlink_rsp rsp;
-	काष्ठा hci_conn *hs_hcon;
+void a2mp_send_create_phy_link_rsp(struct hci_dev *hdev, u8 status)
+{
+	struct amp_mgr *mgr;
+	struct a2mp_physlink_rsp rsp;
+	struct hci_conn *hs_hcon;
 
 	mgr = amp_mgr_lookup_by_state(WRITE_REMOTE_AMP_ASSOC);
-	अगर (!mgr)
-		वापस;
+	if (!mgr)
+		return;
 
-	स_रखो(&rsp, 0, माप(rsp));
+	memset(&rsp, 0, sizeof(rsp));
 
 	hs_hcon = hci_conn_hash_lookup_state(hdev, AMP_LINK, BT_CONNECT);
-	अगर (!hs_hcon) अणु
+	if (!hs_hcon) {
 		rsp.status = A2MP_STATUS_UNABLE_START_LINK_CREATION;
-	पूर्ण अन्यथा अणु
+	} else {
 		rsp.remote_id = hs_hcon->remote_id;
 		rsp.status = A2MP_STATUS_SUCCESS;
-	पूर्ण
+	}
 
 	BT_DBG("%s mgr %p hs_hcon %p status %u", hdev->name, mgr, hs_hcon,
 	       status);
 
 	rsp.local_id = hdev->id;
-	a2mp_send(mgr, A2MP_CREATEPHYSLINK_RSP, mgr->ident, माप(rsp), &rsp);
+	a2mp_send(mgr, A2MP_CREATEPHYSLINK_RSP, mgr->ident, sizeof(rsp), &rsp);
 	amp_mgr_put(mgr);
-पूर्ण
+}
 
-व्योम a2mp_discover_amp(काष्ठा l2cap_chan *chan)
-अणु
-	काष्ठा l2cap_conn *conn = chan->conn;
-	काष्ठा amp_mgr *mgr = conn->hcon->amp_mgr;
-	काष्ठा a2mp_discov_req req;
+void a2mp_discover_amp(struct l2cap_chan *chan)
+{
+	struct l2cap_conn *conn = chan->conn;
+	struct amp_mgr *mgr = conn->hcon->amp_mgr;
+	struct a2mp_discov_req req;
 
 	BT_DBG("chan %p conn %p mgr %p", chan, conn, mgr);
 
-	अगर (!mgr) अणु
+	if (!mgr) {
 		mgr = amp_mgr_create(conn, true);
-		अगर (!mgr)
-			वापस;
-	पूर्ण
+		if (!mgr)
+			return;
+	}
 
 	mgr->bredr_chan = chan;
 
-	स_रखो(&req, 0, माप(req));
+	memset(&req, 0, sizeof(req));
 
 	req.mtu = cpu_to_le16(L2CAP_A2MP_DEFAULT_MTU);
 	req.ext_feat = 0;
-	a2mp_send(mgr, A2MP_DISCOVER_REQ, 1, माप(req), &req);
-पूर्ण
+	a2mp_send(mgr, A2MP_DISCOVER_REQ, 1, sizeof(req), &req);
+}

@@ -1,57 +1,56 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 
-/* From यंत्र-compat.h */
-#घोषणा __stringअगरy_in_c(...)	#__VA_ARGS__
-#घोषणा stringअगरy_in_c(...)	__stringअगरy_in_c(__VA_ARGS__) " "
+/* From asm-compat.h */
+#define __stringify_in_c(...)	#__VA_ARGS__
+#define stringify_in_c(...)	__stringify_in_c(__VA_ARGS__) " "
 
 /*
- * Macros taken from arch/घातerpc/include/यंत्र/ppc-opcode.h and other
+ * Macros taken from arch/powerpc/include/asm/ppc-opcode.h and other
  * header files.
  */
-#घोषणा ___PPC_RA(a)    (((a) & 0x1f) << 16)
-#घोषणा ___PPC_RB(b)    (((b) & 0x1f) << 11)
+#define ___PPC_RA(a)    (((a) & 0x1f) << 16)
+#define ___PPC_RB(b)    (((b) & 0x1f) << 11)
 
-#घोषणा PPC_INST_COPY                   0x7c20060c
-#घोषणा PPC_INST_PASTE                  0x7c20070d
+#define PPC_INST_COPY                   0x7c20060c
+#define PPC_INST_PASTE                  0x7c20070d
 
-#घोषणा PPC_COPY(a, b)          stringअगरy_in_c(.दीर्घ PPC_INST_COPY | \
+#define PPC_COPY(a, b)          stringify_in_c(.long PPC_INST_COPY | \
 						___PPC_RA(a) | ___PPC_RB(b))
-#घोषणा PPC_PASTE(a, b)         stringअगरy_in_c(.दीर्घ PPC_INST_PASTE | \
+#define PPC_PASTE(a, b)         stringify_in_c(.long PPC_INST_PASTE | \
 						___PPC_RA(a) | ___PPC_RB(b))
-#घोषणा CR0_SHIFT	28
-#घोषणा CR0_MASK	0xF
+#define CR0_SHIFT	28
+#define CR0_MASK	0xF
 /*
- * Copy/paste inकाष्ठाions:
+ * Copy/paste instructions:
  *
  *	copy RA,RB
  *		Copy contents of address (RA) + effective_address(RB)
- *		to पूर्णांकernal copy-buffer.
+ *		to internal copy-buffer.
  *
  *	paste RA,RB
- *		Paste contents of पूर्णांकernal copy-buffer to the address
+ *		Paste contents of internal copy-buffer to the address
  *		(RA) + effective_address(RB)
  */
-अटल अंतरभूत पूर्णांक vas_copy(व्योम *crb, पूर्णांक offset)
-अणु
-	यंत्र अस्थिर(PPC_COPY(%0, %1)";"
+static inline int vas_copy(void *crb, int offset)
+{
+	asm volatile(PPC_COPY(%0, %1)";"
 		:
 		: "b" (offset), "b" (crb)
 		: "memory");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक vas_paste(व्योम *paste_address, पूर्णांक offset)
-अणु
+static inline int vas_paste(void *paste_address, int offset)
+{
 	__u32 cr;
 
 	cr = 0;
-	यंत्र अस्थिर(PPC_PASTE(%1, %2)";"
+	asm volatile(PPC_PASTE(%1, %2)";"
 		"mfocrf %0, 0x80;"
 		: "=r" (cr)
 		: "b" (offset), "b" (paste_address)
 		: "memory", "cr0");
 
-	वापस (cr >> CR0_SHIFT) & CR0_MASK;
-पूर्ण
+	return (cr >> CR0_SHIFT) & CR0_MASK;
+}

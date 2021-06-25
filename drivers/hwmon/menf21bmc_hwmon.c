@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  *  MEN 14F021P00 Board Management Controller (BMC) hwmon driver.
  *
@@ -10,153 +9,153 @@
  *  Copyright (C) 2014 MEN Mikro Elektronik Nuernberg GmbH
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/hwmon.h>
-#समावेश <linux/hwmon-sysfs.h>
-#समावेश <linux/jअगरfies.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/err.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/platform_device.h>
+#include <linux/hwmon.h>
+#include <linux/hwmon-sysfs.h>
+#include <linux/jiffies.h>
+#include <linux/slab.h>
+#include <linux/i2c.h>
+#include <linux/err.h>
 
-#घोषणा DRV_NAME  "menf21bmc_hwmon"
+#define DRV_NAME  "menf21bmc_hwmon"
 
-#घोषणा BMC_VOLT_COUNT	5
-#घोषणा MENF21BMC_V33	0
-#घोषणा MENF21BMC_V5	1
-#घोषणा MENF21BMC_V12	2
-#घोषणा MENF21BMC_V5_SB	3
-#घोषणा MENF21BMC_VBAT	4
+#define BMC_VOLT_COUNT	5
+#define MENF21BMC_V33	0
+#define MENF21BMC_V5	1
+#define MENF21BMC_V12	2
+#define MENF21BMC_V5_SB	3
+#define MENF21BMC_VBAT	4
 
-#घोषणा IDX_TO_VOLT_MIN_CMD(idx) (0x40 + idx)
-#घोषणा IDX_TO_VOLT_MAX_CMD(idx) (0x50 + idx)
-#घोषणा IDX_TO_VOLT_INP_CMD(idx) (0x60 + idx)
+#define IDX_TO_VOLT_MIN_CMD(idx) (0x40 + idx)
+#define IDX_TO_VOLT_MAX_CMD(idx) (0x50 + idx)
+#define IDX_TO_VOLT_INP_CMD(idx) (0x60 + idx)
 
-काष्ठा menf21bmc_hwmon अणु
+struct menf21bmc_hwmon {
 	bool valid;
-	काष्ठा i2c_client *i2c_client;
-	अचिन्हित दीर्घ last_update;
-	पूर्णांक in_val[BMC_VOLT_COUNT];
-	पूर्णांक in_min[BMC_VOLT_COUNT];
-	पूर्णांक in_max[BMC_VOLT_COUNT];
-पूर्ण;
+	struct i2c_client *i2c_client;
+	unsigned long last_update;
+	int in_val[BMC_VOLT_COUNT];
+	int in_min[BMC_VOLT_COUNT];
+	int in_max[BMC_VOLT_COUNT];
+};
 
-अटल स्थिर अक्षर *स्थिर input_names[] = अणु
+static const char *const input_names[] = {
 	[MENF21BMC_V33]		= "MON_3_3V",
 	[MENF21BMC_V5]		= "MON_5V",
 	[MENF21BMC_V12]		= "MON_12V",
 	[MENF21BMC_V5_SB]	= "5V_STANDBY",
 	[MENF21BMC_VBAT]	= "VBAT"
-पूर्ण;
+};
 
-अटल काष्ठा menf21bmc_hwmon *menf21bmc_hwmon_update(काष्ठा device *dev)
-अणु
-	पूर्णांक i;
-	पूर्णांक val;
-	काष्ठा menf21bmc_hwmon *drv_data = dev_get_drvdata(dev);
-	काष्ठा menf21bmc_hwmon *data_ret = drv_data;
+static struct menf21bmc_hwmon *menf21bmc_hwmon_update(struct device *dev)
+{
+	int i;
+	int val;
+	struct menf21bmc_hwmon *drv_data = dev_get_drvdata(dev);
+	struct menf21bmc_hwmon *data_ret = drv_data;
 
-	अगर (समय_after(jअगरfies, drv_data->last_update + HZ)
-	    || !drv_data->valid) अणु
-		क्रम (i = 0; i < BMC_VOLT_COUNT; i++) अणु
-			val = i2c_smbus_पढ़ो_word_data(drv_data->i2c_client,
+	if (time_after(jiffies, drv_data->last_update + HZ)
+	    || !drv_data->valid) {
+		for (i = 0; i < BMC_VOLT_COUNT; i++) {
+			val = i2c_smbus_read_word_data(drv_data->i2c_client,
 						       IDX_TO_VOLT_INP_CMD(i));
-			अगर (val < 0) अणु
+			if (val < 0) {
 				data_ret = ERR_PTR(val);
-				जाओ पात;
-			पूर्ण
+				goto abort;
+			}
 			drv_data->in_val[i] = val;
-		पूर्ण
-		drv_data->last_update = jअगरfies;
+		}
+		drv_data->last_update = jiffies;
 		drv_data->valid = true;
-	पूर्ण
-पात:
-	वापस data_ret;
-पूर्ण
+	}
+abort:
+	return data_ret;
+}
 
-अटल पूर्णांक menf21bmc_hwmon_get_volt_limits(काष्ठा menf21bmc_hwmon *drv_data)
-अणु
-	पूर्णांक i, val;
+static int menf21bmc_hwmon_get_volt_limits(struct menf21bmc_hwmon *drv_data)
+{
+	int i, val;
 
-	क्रम (i = 0; i < BMC_VOLT_COUNT; i++) अणु
-		val = i2c_smbus_पढ़ो_word_data(drv_data->i2c_client,
+	for (i = 0; i < BMC_VOLT_COUNT; i++) {
+		val = i2c_smbus_read_word_data(drv_data->i2c_client,
 					       IDX_TO_VOLT_MIN_CMD(i));
-		अगर (val < 0)
-			वापस val;
+		if (val < 0)
+			return val;
 
 		drv_data->in_min[i] = val;
 
-		val = i2c_smbus_पढ़ो_word_data(drv_data->i2c_client,
+		val = i2c_smbus_read_word_data(drv_data->i2c_client,
 					       IDX_TO_VOLT_MAX_CMD(i));
-		अगर (val < 0)
-			वापस val;
+		if (val < 0)
+			return val;
 
 		drv_data->in_max[i] = val;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल sमाप_प्रकार
-label_show(काष्ठा device *dev, काष्ठा device_attribute *devattr, अक्षर *buf)
-अणु
-	काष्ठा sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
+static ssize_t
+label_show(struct device *dev, struct device_attribute *devattr, char *buf)
+{
+	struct sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
 
-	वापस प्र_लिखो(buf, "%s\n", input_names[attr->index]);
-पूर्ण
+	return sprintf(buf, "%s\n", input_names[attr->index]);
+}
 
-अटल sमाप_प्रकार
-in_show(काष्ठा device *dev, काष्ठा device_attribute *devattr, अक्षर *buf)
-अणु
-	काष्ठा sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
-	काष्ठा menf21bmc_hwmon *drv_data = menf21bmc_hwmon_update(dev);
+static ssize_t
+in_show(struct device *dev, struct device_attribute *devattr, char *buf)
+{
+	struct sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
+	struct menf21bmc_hwmon *drv_data = menf21bmc_hwmon_update(dev);
 
-	अगर (IS_ERR(drv_data))
-		वापस PTR_ERR(drv_data);
+	if (IS_ERR(drv_data))
+		return PTR_ERR(drv_data);
 
-	वापस प्र_लिखो(buf, "%d\n", drv_data->in_val[attr->index]);
-पूर्ण
+	return sprintf(buf, "%d\n", drv_data->in_val[attr->index]);
+}
 
-अटल sमाप_प्रकार
-min_show(काष्ठा device *dev, काष्ठा device_attribute *devattr, अक्षर *buf)
-अणु
-	काष्ठा sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
-	काष्ठा menf21bmc_hwmon *drv_data = dev_get_drvdata(dev);
+static ssize_t
+min_show(struct device *dev, struct device_attribute *devattr, char *buf)
+{
+	struct sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
+	struct menf21bmc_hwmon *drv_data = dev_get_drvdata(dev);
 
-	वापस प्र_लिखो(buf, "%d\n", drv_data->in_min[attr->index]);
-पूर्ण
+	return sprintf(buf, "%d\n", drv_data->in_min[attr->index]);
+}
 
-अटल sमाप_प्रकार
-max_show(काष्ठा device *dev, काष्ठा device_attribute *devattr, अक्षर *buf)
-अणु
-	काष्ठा sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
-	काष्ठा menf21bmc_hwmon *drv_data = dev_get_drvdata(dev);
+static ssize_t
+max_show(struct device *dev, struct device_attribute *devattr, char *buf)
+{
+	struct sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
+	struct menf21bmc_hwmon *drv_data = dev_get_drvdata(dev);
 
-	वापस प्र_लिखो(buf, "%d\n", drv_data->in_max[attr->index]);
-पूर्ण
+	return sprintf(buf, "%d\n", drv_data->in_max[attr->index]);
+}
 
-अटल SENSOR_DEVICE_ATTR_RO(in0_input, in, 0);
-अटल SENSOR_DEVICE_ATTR_RO(in0_min, min, 0);
-अटल SENSOR_DEVICE_ATTR_RO(in0_max, max, 0);
-अटल SENSOR_DEVICE_ATTR_RO(in0_label, label, 0);
-अटल SENSOR_DEVICE_ATTR_RO(in1_input, in, 1);
-अटल SENSOR_DEVICE_ATTR_RO(in1_min, min, 1);
-अटल SENSOR_DEVICE_ATTR_RO(in1_max, max, 1);
-अटल SENSOR_DEVICE_ATTR_RO(in1_label, label, 1);
-अटल SENSOR_DEVICE_ATTR_RO(in2_input, in, 2);
-अटल SENSOR_DEVICE_ATTR_RO(in2_min, min, 2);
-अटल SENSOR_DEVICE_ATTR_RO(in2_max, max, 2);
-अटल SENSOR_DEVICE_ATTR_RO(in2_label, label, 2);
-अटल SENSOR_DEVICE_ATTR_RO(in3_input, in, 3);
-अटल SENSOR_DEVICE_ATTR_RO(in3_min, min, 3);
-अटल SENSOR_DEVICE_ATTR_RO(in3_max, max, 3);
-अटल SENSOR_DEVICE_ATTR_RO(in3_label, label, 3);
-अटल SENSOR_DEVICE_ATTR_RO(in4_input, in, 4);
-अटल SENSOR_DEVICE_ATTR_RO(in4_min, min, 4);
-अटल SENSOR_DEVICE_ATTR_RO(in4_max, max, 4);
-अटल SENSOR_DEVICE_ATTR_RO(in4_label, label, 4);
+static SENSOR_DEVICE_ATTR_RO(in0_input, in, 0);
+static SENSOR_DEVICE_ATTR_RO(in0_min, min, 0);
+static SENSOR_DEVICE_ATTR_RO(in0_max, max, 0);
+static SENSOR_DEVICE_ATTR_RO(in0_label, label, 0);
+static SENSOR_DEVICE_ATTR_RO(in1_input, in, 1);
+static SENSOR_DEVICE_ATTR_RO(in1_min, min, 1);
+static SENSOR_DEVICE_ATTR_RO(in1_max, max, 1);
+static SENSOR_DEVICE_ATTR_RO(in1_label, label, 1);
+static SENSOR_DEVICE_ATTR_RO(in2_input, in, 2);
+static SENSOR_DEVICE_ATTR_RO(in2_min, min, 2);
+static SENSOR_DEVICE_ATTR_RO(in2_max, max, 2);
+static SENSOR_DEVICE_ATTR_RO(in2_label, label, 2);
+static SENSOR_DEVICE_ATTR_RO(in3_input, in, 3);
+static SENSOR_DEVICE_ATTR_RO(in3_min, min, 3);
+static SENSOR_DEVICE_ATTR_RO(in3_max, max, 3);
+static SENSOR_DEVICE_ATTR_RO(in3_label, label, 3);
+static SENSOR_DEVICE_ATTR_RO(in4_input, in, 4);
+static SENSOR_DEVICE_ATTR_RO(in4_min, min, 4);
+static SENSOR_DEVICE_ATTR_RO(in4_max, max, 4);
+static SENSOR_DEVICE_ATTR_RO(in4_label, label, 4);
 
-अटल काष्ठा attribute *menf21bmc_hwmon_attrs[] = अणु
+static struct attribute *menf21bmc_hwmon_attrs[] = {
 	&sensor_dev_attr_in0_input.dev_attr.attr,
 	&sensor_dev_attr_in0_min.dev_attr.attr,
 	&sensor_dev_attr_in0_max.dev_attr.attr,
@@ -181,50 +180,50 @@ max_show(काष्ठा device *dev, काष्ठा device_attribute *de
 	&sensor_dev_attr_in4_min.dev_attr.attr,
 	&sensor_dev_attr_in4_max.dev_attr.attr,
 	&sensor_dev_attr_in4_label.dev_attr.attr,
-	शून्य
-पूर्ण;
+	NULL
+};
 
 ATTRIBUTE_GROUPS(menf21bmc_hwmon);
 
-अटल पूर्णांक menf21bmc_hwmon_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	पूर्णांक ret;
-	काष्ठा menf21bmc_hwmon *drv_data;
-	काष्ठा i2c_client *i2c_client = to_i2c_client(pdev->dev.parent);
-	काष्ठा device *hwmon_dev;
+static int menf21bmc_hwmon_probe(struct platform_device *pdev)
+{
+	int ret;
+	struct menf21bmc_hwmon *drv_data;
+	struct i2c_client *i2c_client = to_i2c_client(pdev->dev.parent);
+	struct device *hwmon_dev;
 
-	drv_data = devm_kzalloc(&pdev->dev, माप(काष्ठा menf21bmc_hwmon),
+	drv_data = devm_kzalloc(&pdev->dev, sizeof(struct menf21bmc_hwmon),
 				GFP_KERNEL);
-	अगर (!drv_data)
-		वापस -ENOMEM;
+	if (!drv_data)
+		return -ENOMEM;
 
 	drv_data->i2c_client = i2c_client;
 
 	ret = menf21bmc_hwmon_get_volt_limits(drv_data);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&pdev->dev, "failed to read sensor limits");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	hwmon_dev = devm_hwmon_device_रेजिस्टर_with_groups(&pdev->dev,
+	hwmon_dev = devm_hwmon_device_register_with_groups(&pdev->dev,
 						   "menf21bmc", drv_data,
 						   menf21bmc_hwmon_groups);
-	अगर (IS_ERR(hwmon_dev))
-		वापस PTR_ERR(hwmon_dev);
+	if (IS_ERR(hwmon_dev))
+		return PTR_ERR(hwmon_dev);
 
 	dev_info(&pdev->dev, "MEN 14F021P00 BMC hwmon device enabled");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver menf21bmc_hwmon = अणु
+static struct platform_driver menf21bmc_hwmon = {
 	.probe		= menf21bmc_hwmon_probe,
-	.driver		= अणु
+	.driver		= {
 		.name		= DRV_NAME,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver(menf21bmc_hwmon);
+module_platform_driver(menf21bmc_hwmon);
 
 MODULE_AUTHOR("Andreas Werner <andreas.werner@men.de>");
 MODULE_DESCRIPTION("MEN 14F021P00 BMC hwmon");

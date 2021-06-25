@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * Copyright (C) 2010 ST-Ericsson AB
  * Mian Yousaf Kaukab <mian.yousaf.kaukab@stericsson.com>
@@ -7,67 +6,67 @@
  * Based on omap2430.c
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/err.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/of.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/usb/musb-ux500.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/clk.h>
+#include <linux/err.h>
+#include <linux/io.h>
+#include <linux/of.h>
+#include <linux/platform_device.h>
+#include <linux/usb/musb-ux500.h>
 
-#समावेश "musb_core.h"
+#include "musb_core.h"
 
-अटल स्थिर काष्ठा musb_hdrc_config ux500_musb_hdrc_config = अणु
-	.multipoपूर्णांक	= true,
-	.dyn_fअगरo	= true,
+static const struct musb_hdrc_config ux500_musb_hdrc_config = {
+	.multipoint	= true,
+	.dyn_fifo	= true,
 	.num_eps	= 16,
 	.ram_bits	= 16,
-पूर्ण;
+};
 
-काष्ठा ux500_glue अणु
-	काष्ठा device		*dev;
-	काष्ठा platक्रमm_device	*musb;
-	काष्ठा clk		*clk;
-पूर्ण;
-#घोषणा glue_to_musb(g)	platक्रमm_get_drvdata(g->musb)
+struct ux500_glue {
+	struct device		*dev;
+	struct platform_device	*musb;
+	struct clk		*clk;
+};
+#define glue_to_musb(g)	platform_get_drvdata(g->musb)
 
-अटल व्योम ux500_musb_set_vbus(काष्ठा musb *musb, पूर्णांक is_on)
-अणु
+static void ux500_musb_set_vbus(struct musb *musb, int is_on)
+{
 	u8            devctl;
-	अचिन्हित दीर्घ समयout = jअगरfies + msecs_to_jअगरfies(1000);
+	unsigned long timeout = jiffies + msecs_to_jiffies(1000);
 	/* HDRC controls CPEN, but beware current surges during device
 	 * connect.  They can trigger transient overcurrent conditions
 	 * that must be ignored.
 	 */
 
-	devctl = musb_पढ़ोb(musb->mregs, MUSB_DEVCTL);
+	devctl = musb_readb(musb->mregs, MUSB_DEVCTL);
 
-	अगर (is_on) अणु
-		अगर (musb->xceiv->otg->state == OTG_STATE_A_IDLE) अणु
+	if (is_on) {
+		if (musb->xceiv->otg->state == OTG_STATE_A_IDLE) {
 			/* start the session */
 			devctl |= MUSB_DEVCTL_SESSION;
-			musb_ग_लिखोb(musb->mregs, MUSB_DEVCTL, devctl);
+			musb_writeb(musb->mregs, MUSB_DEVCTL, devctl);
 			/*
-			 * Wait क्रम the musb to set as A device to enable the
+			 * Wait for the musb to set as A device to enable the
 			 * VBUS
 			 */
-			जबतक (musb_पढ़ोb(musb->mregs, MUSB_DEVCTL) & 0x80) अणु
+			while (musb_readb(musb->mregs, MUSB_DEVCTL) & 0x80) {
 
-				अगर (समय_after(jअगरfies, समयout)) अणु
+				if (time_after(jiffies, timeout)) {
 					dev_err(musb->controller,
 					"configured as A device timeout");
-					अवरोध;
-				पूर्ण
-			पूर्ण
+					break;
+				}
+			}
 
-		पूर्ण अन्यथा अणु
+		} else {
 			musb->is_active = 1;
 			musb->xceiv->otg->state = OTG_STATE_A_WAIT_VRISE;
 			devctl |= MUSB_DEVCTL_SESSION;
 			MUSB_HST_MODE(musb);
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		musb->is_active = 0;
 
 		/* NOTE: we're skipping A_WAIT_VFALL -> A_IDLE and jumping
@@ -75,191 +74,191 @@
 		 */
 		devctl &= ~MUSB_DEVCTL_SESSION;
 		MUSB_DEV_MODE(musb);
-	पूर्ण
-	musb_ग_लिखोb(musb->mregs, MUSB_DEVCTL, devctl);
+	}
+	musb_writeb(musb->mregs, MUSB_DEVCTL, devctl);
 
 	/*
 	 * Devctl values will be updated after vbus goes below
-	 * session_valid. The समय taken depends on the capacitance
-	 * on VBUS line. The max disअक्षरge समय can be upto 1 sec
-	 * as per the spec. Typically on our platक्रमm, it is 200ms
+	 * session_valid. The time taken depends on the capacitance
+	 * on VBUS line. The max discharge time can be upto 1 sec
+	 * as per the spec. Typically on our platform, it is 200ms
 	 */
-	अगर (!is_on)
+	if (!is_on)
 		mdelay(200);
 
 	dev_dbg(musb->controller, "VBUS %s, devctl %02x\n",
 		usb_otg_state_string(musb->xceiv->otg->state),
-		musb_पढ़ोb(musb->mregs, MUSB_DEVCTL));
-पूर्ण
+		musb_readb(musb->mregs, MUSB_DEVCTL));
+}
 
-अटल पूर्णांक musb_otg_notअगरications(काष्ठा notअगरier_block *nb,
-		अचिन्हित दीर्घ event, व्योम *unused)
-अणु
-	काष्ठा musb *musb = container_of(nb, काष्ठा musb, nb);
+static int musb_otg_notifications(struct notifier_block *nb,
+		unsigned long event, void *unused)
+{
+	struct musb *musb = container_of(nb, struct musb, nb);
 
 	dev_dbg(musb->controller, "musb_otg_notifications %ld %s\n",
 			event, usb_otg_state_string(musb->xceiv->otg->state));
 
-	चयन (event) अणु
-	हाल UX500_MUSB_ID:
+	switch (event) {
+	case UX500_MUSB_ID:
 		dev_dbg(musb->controller, "ID GND\n");
 		ux500_musb_set_vbus(musb, 1);
-		अवरोध;
-	हाल UX500_MUSB_VBUS:
+		break;
+	case UX500_MUSB_VBUS:
 		dev_dbg(musb->controller, "VBUS Connect\n");
-		अवरोध;
-	हाल UX500_MUSB_NONE:
+		break;
+	case UX500_MUSB_NONE:
 		dev_dbg(musb->controller, "VBUS Disconnect\n");
-		अगर (is_host_active(musb))
+		if (is_host_active(musb))
 			ux500_musb_set_vbus(musb, 0);
-		अन्यथा
+		else
 			musb->xceiv->otg->state = OTG_STATE_B_IDLE;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		dev_dbg(musb->controller, "ID float\n");
-		वापस NOTIFY_DONE;
-	पूर्ण
-	वापस NOTIFY_OK;
-पूर्ण
+		return NOTIFY_DONE;
+	}
+	return NOTIFY_OK;
+}
 
-अटल irqवापस_t ux500_musb_पूर्णांकerrupt(पूर्णांक irq, व्योम *__hci)
-अणु
-	अचिन्हित दीर्घ   flags;
-	irqवापस_t     retval = IRQ_NONE;
-	काष्ठा musb     *musb = __hci;
+static irqreturn_t ux500_musb_interrupt(int irq, void *__hci)
+{
+	unsigned long   flags;
+	irqreturn_t     retval = IRQ_NONE;
+	struct musb     *musb = __hci;
 
 	spin_lock_irqsave(&musb->lock, flags);
 
-	musb->पूर्णांक_usb = musb_पढ़ोb(musb->mregs, MUSB_INTRUSB);
-	musb->पूर्णांक_tx = musb_पढ़ोw(musb->mregs, MUSB_INTRTX);
-	musb->पूर्णांक_rx = musb_पढ़ोw(musb->mregs, MUSB_INTRRX);
+	musb->int_usb = musb_readb(musb->mregs, MUSB_INTRUSB);
+	musb->int_tx = musb_readw(musb->mregs, MUSB_INTRTX);
+	musb->int_rx = musb_readw(musb->mregs, MUSB_INTRRX);
 
-	अगर (musb->पूर्णांक_usb || musb->पूर्णांक_tx || musb->पूर्णांक_rx)
-		retval = musb_पूर्णांकerrupt(musb);
+	if (musb->int_usb || musb->int_tx || musb->int_rx)
+		retval = musb_interrupt(musb);
 
 	spin_unlock_irqrestore(&musb->lock, flags);
 
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-अटल पूर्णांक ux500_musb_init(काष्ठा musb *musb)
-अणु
-	पूर्णांक status;
+static int ux500_musb_init(struct musb *musb)
+{
+	int status;
 
 	musb->xceiv = usb_get_phy(USB_PHY_TYPE_USB2);
-	अगर (IS_ERR_OR_शून्य(musb->xceiv)) अणु
+	if (IS_ERR_OR_NULL(musb->xceiv)) {
 		pr_err("HS USB OTG: no transceiver configured\n");
-		वापस -EPROBE_DEFER;
-	पूर्ण
+		return -EPROBE_DEFER;
+	}
 
-	musb->nb.notअगरier_call = musb_otg_notअगरications;
-	status = usb_रेजिस्टर_notअगरier(musb->xceiv, &musb->nb);
-	अगर (status < 0) अणु
+	musb->nb.notifier_call = musb_otg_notifications;
+	status = usb_register_notifier(musb->xceiv, &musb->nb);
+	if (status < 0) {
 		dev_dbg(musb->controller, "notification register failed\n");
-		वापस status;
-	पूर्ण
+		return status;
+	}
 
-	musb->isr = ux500_musb_पूर्णांकerrupt;
+	musb->isr = ux500_musb_interrupt;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ux500_musb_निकास(काष्ठा musb *musb)
-अणु
-	usb_unरेजिस्टर_notअगरier(musb->xceiv, &musb->nb);
+static int ux500_musb_exit(struct musb *musb)
+{
+	usb_unregister_notifier(musb->xceiv, &musb->nb);
 
 	usb_put_phy(musb->xceiv);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा musb_platक्रमm_ops ux500_ops = अणु
+static const struct musb_platform_ops ux500_ops = {
 	.quirks		= MUSB_DMA_UX500 | MUSB_INDEXED_EP,
-#अगर_घोषित CONFIG_USB_UX500_DMA
+#ifdef CONFIG_USB_UX500_DMA
 	.dma_init	= ux500_dma_controller_create,
-	.dma_निकास	= ux500_dma_controller_destroy,
-#पूर्ण_अगर
+	.dma_exit	= ux500_dma_controller_destroy,
+#endif
 	.init		= ux500_musb_init,
-	.निकास		= ux500_musb_निकास,
-	.fअगरo_mode	= 5,
+	.exit		= ux500_musb_exit,
+	.fifo_mode	= 5,
 
 	.set_vbus	= ux500_musb_set_vbus,
-पूर्ण;
+};
 
-अटल काष्ठा musb_hdrc_platक्रमm_data *
-ux500_of_probe(काष्ठा platक्रमm_device *pdev, काष्ठा device_node *np)
-अणु
-	काष्ठा musb_hdrc_platक्रमm_data *pdata;
-	स्थिर अक्षर *mode;
-	पूर्णांक म_माप;
+static struct musb_hdrc_platform_data *
+ux500_of_probe(struct platform_device *pdev, struct device_node *np)
+{
+	struct musb_hdrc_platform_data *pdata;
+	const char *mode;
+	int strlen;
 
-	pdata = devm_kzalloc(&pdev->dev, माप(*pdata), GFP_KERNEL);
-	अगर (!pdata)
-		वापस शून्य;
+	pdata = devm_kzalloc(&pdev->dev, sizeof(*pdata), GFP_KERNEL);
+	if (!pdata)
+		return NULL;
 
-	mode = of_get_property(np, "dr_mode", &म_माप);
-	अगर (!mode) अणु
+	mode = of_get_property(np, "dr_mode", &strlen);
+	if (!mode) {
 		dev_err(&pdev->dev, "No 'dr_mode' property found\n");
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	अगर (म_माप > 0) अणु
-		अगर (!म_भेद(mode, "host"))
+	if (strlen > 0) {
+		if (!strcmp(mode, "host"))
 			pdata->mode = MUSB_HOST;
-		अगर (!म_भेद(mode, "otg"))
+		if (!strcmp(mode, "otg"))
 			pdata->mode = MUSB_OTG;
-		अगर (!म_भेद(mode, "peripheral"))
+		if (!strcmp(mode, "peripheral"))
 			pdata->mode = MUSB_PERIPHERAL;
-	पूर्ण
+	}
 
-	वापस pdata;
-पूर्ण
+	return pdata;
+}
 
-अटल पूर्णांक ux500_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा resource musb_resources[2];
-	काष्ठा musb_hdrc_platक्रमm_data	*pdata = dev_get_platdata(&pdev->dev);
-	काष्ठा device_node		*np = pdev->dev.of_node;
-	काष्ठा platक्रमm_device		*musb;
-	काष्ठा ux500_glue		*glue;
-	काष्ठा clk			*clk;
-	पूर्णांक				ret = -ENOMEM;
+static int ux500_probe(struct platform_device *pdev)
+{
+	struct resource musb_resources[2];
+	struct musb_hdrc_platform_data	*pdata = dev_get_platdata(&pdev->dev);
+	struct device_node		*np = pdev->dev.of_node;
+	struct platform_device		*musb;
+	struct ux500_glue		*glue;
+	struct clk			*clk;
+	int				ret = -ENOMEM;
 
-	अगर (!pdata) अणु
-		अगर (np) अणु
+	if (!pdata) {
+		if (np) {
 			pdata = ux500_of_probe(pdev, np);
-			अगर (!pdata)
-				जाओ err0;
+			if (!pdata)
+				goto err0;
 
-			pdev->dev.platक्रमm_data = pdata;
-		पूर्ण अन्यथा अणु
+			pdev->dev.platform_data = pdata;
+		} else {
 			dev_err(&pdev->dev, "no pdata or device tree found\n");
-			जाओ err0;
-		पूर्ण
-	पूर्ण
+			goto err0;
+		}
+	}
 
-	glue = devm_kzalloc(&pdev->dev, माप(*glue), GFP_KERNEL);
-	अगर (!glue)
-		जाओ err0;
+	glue = devm_kzalloc(&pdev->dev, sizeof(*glue), GFP_KERNEL);
+	if (!glue)
+		goto err0;
 
-	musb = platक्रमm_device_alloc("musb-hdrc", PLATFORM_DEVID_AUTO);
-	अगर (!musb) अणु
+	musb = platform_device_alloc("musb-hdrc", PLATFORM_DEVID_AUTO);
+	if (!musb) {
 		dev_err(&pdev->dev, "failed to allocate musb device\n");
-		जाओ err0;
-	पूर्ण
+		goto err0;
+	}
 
-	clk = devm_clk_get(&pdev->dev, शून्य);
-	अगर (IS_ERR(clk)) अणु
+	clk = devm_clk_get(&pdev->dev, NULL);
+	if (IS_ERR(clk)) {
 		dev_err(&pdev->dev, "failed to get clock\n");
 		ret = PTR_ERR(clk);
-		जाओ err1;
-	पूर्ण
+		goto err1;
+	}
 
 	ret = clk_prepare_enable(clk);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&pdev->dev, "failed to enable clock\n");
-		जाओ err1;
-	पूर्ण
+		goto err1;
+	}
 
 	musb->dev.parent		= &pdev->dev;
 	musb->dev.dma_mask		= &pdev->dev.coherent_dma_mask;
@@ -269,12 +268,12 @@ ux500_of_probe(काष्ठा platक्रमm_device *pdev, काष्�
 	glue->musb			= musb;
 	glue->clk			= clk;
 
-	pdata->platक्रमm_ops		= &ux500_ops;
+	pdata->platform_ops		= &ux500_ops;
 	pdata->config 			= &ux500_musb_hdrc_config;
 
-	platक्रमm_set_drvdata(pdev, glue);
+	platform_set_drvdata(pdev, glue);
 
-	स_रखो(musb_resources, 0x00, माप(*musb_resources) *
+	memset(musb_resources, 0x00, sizeof(*musb_resources) *
 			ARRAY_SIZE(musb_resources));
 
 	musb_resources[0].name = pdev->resource[0].name;
@@ -287,100 +286,100 @@ ux500_of_probe(काष्ठा platक्रमm_device *pdev, काष्�
 	musb_resources[1].end = pdev->resource[1].end;
 	musb_resources[1].flags = pdev->resource[1].flags;
 
-	ret = platक्रमm_device_add_resources(musb, musb_resources,
+	ret = platform_device_add_resources(musb, musb_resources,
 			ARRAY_SIZE(musb_resources));
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&pdev->dev, "failed to add resources\n");
-		जाओ err2;
-	पूर्ण
+		goto err2;
+	}
 
-	ret = platक्रमm_device_add_data(musb, pdata, माप(*pdata));
-	अगर (ret) अणु
+	ret = platform_device_add_data(musb, pdata, sizeof(*pdata));
+	if (ret) {
 		dev_err(&pdev->dev, "failed to add platform_data\n");
-		जाओ err2;
-	पूर्ण
+		goto err2;
+	}
 
-	ret = platक्रमm_device_add(musb);
-	अगर (ret) अणु
+	ret = platform_device_add(musb);
+	if (ret) {
 		dev_err(&pdev->dev, "failed to register musb device\n");
-		जाओ err2;
-	पूर्ण
+		goto err2;
+	}
 
-	वापस 0;
+	return 0;
 
 err2:
 	clk_disable_unprepare(clk);
 
 err1:
-	platक्रमm_device_put(musb);
+	platform_device_put(musb);
 
 err0:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक ux500_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा ux500_glue	*glue = platक्रमm_get_drvdata(pdev);
+static int ux500_remove(struct platform_device *pdev)
+{
+	struct ux500_glue	*glue = platform_get_drvdata(pdev);
 
-	platक्रमm_device_unरेजिस्टर(glue->musb);
+	platform_device_unregister(glue->musb);
 	clk_disable_unprepare(glue->clk);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_PM_SLEEP
-अटल पूर्णांक ux500_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा ux500_glue	*glue = dev_get_drvdata(dev);
-	काष्ठा musb		*musb = glue_to_musb(glue);
+#ifdef CONFIG_PM_SLEEP
+static int ux500_suspend(struct device *dev)
+{
+	struct ux500_glue	*glue = dev_get_drvdata(dev);
+	struct musb		*musb = glue_to_musb(glue);
 
-	अगर (musb)
+	if (musb)
 		usb_phy_set_suspend(musb->xceiv, 1);
 
 	clk_disable_unprepare(glue->clk);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ux500_resume(काष्ठा device *dev)
-अणु
-	काष्ठा ux500_glue	*glue = dev_get_drvdata(dev);
-	काष्ठा musb		*musb = glue_to_musb(glue);
-	पूर्णांक			ret;
+static int ux500_resume(struct device *dev)
+{
+	struct ux500_glue	*glue = dev_get_drvdata(dev);
+	struct musb		*musb = glue_to_musb(glue);
+	int			ret;
 
 	ret = clk_prepare_enable(glue->clk);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "failed to enable clock\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	अगर (musb)
+	if (musb)
 		usb_phy_set_suspend(musb->xceiv, 0);
 
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+	return 0;
+}
+#endif
 
-अटल SIMPLE_DEV_PM_OPS(ux500_pm_ops, ux500_suspend, ux500_resume);
+static SIMPLE_DEV_PM_OPS(ux500_pm_ops, ux500_suspend, ux500_resume);
 
-अटल स्थिर काष्ठा of_device_id ux500_match[] = अणु
-        अणु .compatible = "stericsson,db8500-musb", पूर्ण,
-        अणुपूर्ण
-पूर्ण;
+static const struct of_device_id ux500_match[] = {
+        { .compatible = "stericsson,db8500-musb", },
+        {}
+};
 
 MODULE_DEVICE_TABLE(of, ux500_match);
 
-अटल काष्ठा platक्रमm_driver ux500_driver = अणु
+static struct platform_driver ux500_driver = {
 	.probe		= ux500_probe,
-	.हटाओ		= ux500_हटाओ,
-	.driver		= अणु
+	.remove		= ux500_remove,
+	.driver		= {
 		.name	= "musb-ux500",
 		.pm	= &ux500_pm_ops,
 		.of_match_table = ux500_match,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
 MODULE_DESCRIPTION("UX500 MUSB Glue Layer");
 MODULE_AUTHOR("Mian Yousaf Kaukab <mian.yousaf.kaukab@stericsson.com>");
 MODULE_LICENSE("GPL v2");
-module_platक्रमm_driver(ux500_driver);
+module_platform_driver(ux500_driver);

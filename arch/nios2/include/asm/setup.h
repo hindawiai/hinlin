@@ -1,24 +1,23 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * Copyright (C) 2011 Tobias Klauser <tklauser@distanz.ch>
  */
 
-#अगर_अघोषित _ASM_NIOS2_SETUP_H
-#घोषणा _ASM_NIOS2_SETUP_H
+#ifndef _ASM_NIOS2_SETUP_H
+#define _ASM_NIOS2_SETUP_H
 
-#समावेश <यंत्र-generic/setup.h>
+#include <asm-generic/setup.h>
 
-#अगर_अघोषित __ASSEMBLY__
-#अगर_घोषित __KERNEL__
+#ifndef __ASSEMBLY__
+#ifdef __KERNEL__
 
-बाह्य अक्षर exception_handler_hook[];
-बाह्य अक्षर fast_handler[];
-बाह्य अक्षर fast_handler_end[];
+extern char exception_handler_hook[];
+extern char fast_handler[];
+extern char fast_handler_end[];
 
-बाह्य व्योम pagetable_init(व्योम);
+extern void pagetable_init(void);
 
-#पूर्ण_अगर/* __KERNEL__ */
-#पूर्ण_अगर /* __ASSEMBLY__ */
+#endif/* __KERNEL__ */
+#endif /* __ASSEMBLY__ */
 
-#पूर्ण_अगर /* _ASM_NIOS2_SETUP_H */
+#endif /* _ASM_NIOS2_SETUP_H */

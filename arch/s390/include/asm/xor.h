@@ -1,22 +1,21 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Optimited xor routines
  *
  * Copyright IBM Corp. 2016
  * Author(s): Martin Schwidefsky <schwidefsky@de.ibm.com>
  */
-#अगर_अघोषित _ASM_S390_XOR_H
-#घोषणा _ASM_S390_XOR_H
+#ifndef _ASM_S390_XOR_H
+#define _ASM_S390_XOR_H
 
-बाह्य काष्ठा xor_block_ढाँचा xor_block_xc;
+extern struct xor_block_template xor_block_xc;
 
-#अघोषित XOR_TRY_TEMPLATES
-#घोषणा XOR_TRY_TEMPLATES				\
-करो अणु							\
+#undef XOR_TRY_TEMPLATES
+#define XOR_TRY_TEMPLATES				\
+do {							\
 	xor_speed(&xor_block_xc);			\
-पूर्ण जबतक (0)
+} while (0)
 
-#घोषणा XOR_SELECT_TEMPLATE(FASTEST)	(&xor_block_xc)
+#define XOR_SELECT_TEMPLATE(FASTEST)	(&xor_block_xc)
 
-#पूर्ण_अगर /* _ASM_S390_XOR_H */
+#endif /* _ASM_S390_XOR_H */

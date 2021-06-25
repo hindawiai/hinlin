@@ -1,15 +1,14 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /******************************************************************************
  *
  * Copyright(c) 2007 - 2011 Realtek Corporation. All rights reserved.
  *
  ******************************************************************************/
 
-#समावेश "odm_precomp.h"
+#include "odm_precomp.h"
 
-व्योम ODM_InitDebugSetting(काष्ठा dm_odm_t *pDM_Odm)
-अणु
+void ODM_InitDebugSetting(struct dm_odm_t *pDM_Odm)
+{
 	pDM_Odm->DebugLevel = ODM_DBG_LOUD;
 
 	pDM_Odm->DebugComponents =
@@ -42,4 +41,4 @@
 /* 		ODM_COMP_INIT					| */
 /* 		ODM_COMP_PSD					| */
 0;
-पूर्ण
+}

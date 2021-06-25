@@ -1,72 +1,71 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 
-#अगर_अघोषित _LINUX_ETHTOOL_NETLINK_H_
-#घोषणा _LINUX_ETHTOOL_NETLINK_H_
+#ifndef _LINUX_ETHTOOL_NETLINK_H_
+#define _LINUX_ETHTOOL_NETLINK_H_
 
-#समावेश <uapi/linux/ethtool_netlink.h>
-#समावेश <linux/ethtool.h>
-#समावेश <linux/netdevice.h>
+#include <uapi/linux/ethtool_netlink.h>
+#include <linux/ethtool.h>
+#include <linux/netdevice.h>
 
-#घोषणा __ETHTOOL_LINK_MODE_MASK_NWORDS \
+#define __ETHTOOL_LINK_MODE_MASK_NWORDS \
 	DIV_ROUND_UP(__ETHTOOL_LINK_MODE_MASK_NBITS, 32)
 
-क्रमागत ethtool_multicast_groups अणु
+enum ethtool_multicast_groups {
 	ETHNL_MCGRP_MONITOR,
-पूर्ण;
+};
 
-काष्ठा phy_device;
+struct phy_device;
 
-#अगर IS_ENABLED(CONFIG_ETHTOOL_NETLINK)
-पूर्णांक ethnl_cable_test_alloc(काष्ठा phy_device *phydev, u8 cmd);
-व्योम ethnl_cable_test_मुक्त(काष्ठा phy_device *phydev);
-व्योम ethnl_cable_test_finished(काष्ठा phy_device *phydev);
-पूर्णांक ethnl_cable_test_result(काष्ठा phy_device *phydev, u8 pair, u8 result);
-पूर्णांक ethnl_cable_test_fault_length(काष्ठा phy_device *phydev, u8 pair, u32 cm);
-पूर्णांक ethnl_cable_test_amplitude(काष्ठा phy_device *phydev, u8 pair, s16 mV);
-पूर्णांक ethnl_cable_test_pulse(काष्ठा phy_device *phydev, u16 mV);
-पूर्णांक ethnl_cable_test_step(काष्ठा phy_device *phydev, u32 first, u32 last,
+#if IS_ENABLED(CONFIG_ETHTOOL_NETLINK)
+int ethnl_cable_test_alloc(struct phy_device *phydev, u8 cmd);
+void ethnl_cable_test_free(struct phy_device *phydev);
+void ethnl_cable_test_finished(struct phy_device *phydev);
+int ethnl_cable_test_result(struct phy_device *phydev, u8 pair, u8 result);
+int ethnl_cable_test_fault_length(struct phy_device *phydev, u8 pair, u32 cm);
+int ethnl_cable_test_amplitude(struct phy_device *phydev, u8 pair, s16 mV);
+int ethnl_cable_test_pulse(struct phy_device *phydev, u16 mV);
+int ethnl_cable_test_step(struct phy_device *phydev, u32 first, u32 last,
 			  u32 step);
-#अन्यथा
-अटल अंतरभूत पूर्णांक ethnl_cable_test_alloc(काष्ठा phy_device *phydev, u8 cmd)
-अणु
-	वापस -EOPNOTSUPP;
-पूर्ण
+#else
+static inline int ethnl_cable_test_alloc(struct phy_device *phydev, u8 cmd)
+{
+	return -EOPNOTSUPP;
+}
 
-अटल अंतरभूत व्योम ethnl_cable_test_मुक्त(काष्ठा phy_device *phydev)
-अणु
-पूर्ण
+static inline void ethnl_cable_test_free(struct phy_device *phydev)
+{
+}
 
-अटल अंतरभूत व्योम ethnl_cable_test_finished(काष्ठा phy_device *phydev)
-अणु
-पूर्ण
-अटल अंतरभूत पूर्णांक ethnl_cable_test_result(काष्ठा phy_device *phydev, u8 pair,
+static inline void ethnl_cable_test_finished(struct phy_device *phydev)
+{
+}
+static inline int ethnl_cable_test_result(struct phy_device *phydev, u8 pair,
 					  u8 result)
-अणु
-	वापस -EOPNOTSUPP;
-पूर्ण
+{
+	return -EOPNOTSUPP;
+}
 
-अटल अंतरभूत पूर्णांक ethnl_cable_test_fault_length(काष्ठा phy_device *phydev,
+static inline int ethnl_cable_test_fault_length(struct phy_device *phydev,
 						u8 pair, u32 cm)
-अणु
-	वापस -EOPNOTSUPP;
-पूर्ण
+{
+	return -EOPNOTSUPP;
+}
 
-अटल अंतरभूत पूर्णांक ethnl_cable_test_amplitude(काष्ठा phy_device *phydev,
+static inline int ethnl_cable_test_amplitude(struct phy_device *phydev,
 					     u8 pair, s16 mV)
-अणु
-	वापस -EOPNOTSUPP;
-पूर्ण
+{
+	return -EOPNOTSUPP;
+}
 
-अटल अंतरभूत पूर्णांक ethnl_cable_test_pulse(काष्ठा phy_device *phydev, u16 mV)
-अणु
-	वापस -EOPNOTSUPP;
-पूर्ण
+static inline int ethnl_cable_test_pulse(struct phy_device *phydev, u16 mV)
+{
+	return -EOPNOTSUPP;
+}
 
-अटल अंतरभूत पूर्णांक ethnl_cable_test_step(काष्ठा phy_device *phydev, u32 first,
+static inline int ethnl_cable_test_step(struct phy_device *phydev, u32 first,
 					u32 last, u32 step)
-अणु
-	वापस -EOPNOTSUPP;
-पूर्ण
-#पूर्ण_अगर /* IS_ENABLED(CONFIG_ETHTOOL_NETLINK) */
-#पूर्ण_अगर /* _LINUX_ETHTOOL_NETLINK_H_ */
+{
+	return -EOPNOTSUPP;
+}
+#endif /* IS_ENABLED(CONFIG_ETHTOOL_NETLINK) */
+#endif /* _LINUX_ETHTOOL_NETLINK_H_ */

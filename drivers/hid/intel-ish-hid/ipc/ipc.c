@@ -1,242 +1,241 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * H/W layer of ISHTP provider device (ISH)
  *
  * Copyright (c) 2014-2016, Intel Corporation.
  */
 
-#समावेश <linux/sched.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/jअगरfies.h>
-#समावेश "client.h"
-#समावेश "hw-ish.h"
-#समावेश "hbm.h"
+#include <linux/sched.h>
+#include <linux/spinlock.h>
+#include <linux/delay.h>
+#include <linux/jiffies.h>
+#include "client.h"
+#include "hw-ish.h"
+#include "hbm.h"
 
 /* For FW reset flow */
-अटल काष्ठा work_काष्ठा fw_reset_work;
-अटल काष्ठा ishtp_device *ishtp_dev;
+static struct work_struct fw_reset_work;
+static struct ishtp_device *ishtp_dev;
 
 /**
- * ish_reg_पढ़ो() - Read रेजिस्टर
- * @dev: ISHTP device poपूर्णांकer
+ * ish_reg_read() - Read register
+ * @dev: ISHTP device pointer
  * @offset: Register offset
  *
- * Read 32 bit रेजिस्टर at a given offset
+ * Read 32 bit register at a given offset
  *
- * Return: Read रेजिस्टर value
+ * Return: Read register value
  */
-अटल अंतरभूत uपूर्णांक32_t ish_reg_पढ़ो(स्थिर काष्ठा ishtp_device *dev,
-	अचिन्हित दीर्घ offset)
-अणु
-	काष्ठा ish_hw *hw = to_ish_hw(dev);
+static inline uint32_t ish_reg_read(const struct ishtp_device *dev,
+	unsigned long offset)
+{
+	struct ish_hw *hw = to_ish_hw(dev);
 
-	वापस पढ़ोl(hw->mem_addr + offset);
-पूर्ण
+	return readl(hw->mem_addr + offset);
+}
 
 /**
- * ish_reg_ग_लिखो() - Write रेजिस्टर
- * @dev: ISHTP device poपूर्णांकer
+ * ish_reg_write() - Write register
+ * @dev: ISHTP device pointer
  * @offset: Register offset
- * @value: Value to ग_लिखो
+ * @value: Value to write
  *
- * Writes 32 bit रेजिस्टर at a give offset
+ * Writes 32 bit register at a give offset
  */
-अटल अंतरभूत व्योम ish_reg_ग_लिखो(काष्ठा ishtp_device *dev,
-				 अचिन्हित दीर्घ offset,
-				 uपूर्णांक32_t value)
-अणु
-	काष्ठा ish_hw *hw = to_ish_hw(dev);
+static inline void ish_reg_write(struct ishtp_device *dev,
+				 unsigned long offset,
+				 uint32_t value)
+{
+	struct ish_hw *hw = to_ish_hw(dev);
 
-	ग_लिखोl(value, hw->mem_addr + offset);
-पूर्ण
+	writel(value, hw->mem_addr + offset);
+}
 
 /**
- * _ish_पढ़ो_fw_sts_reg() - Read FW status रेजिस्टर
- * @dev: ISHTP device poपूर्णांकer
+ * _ish_read_fw_sts_reg() - Read FW status register
+ * @dev: ISHTP device pointer
  *
- * Read FW status रेजिस्टर
+ * Read FW status register
  *
- * Return: Read रेजिस्टर value
+ * Return: Read register value
  */
-अटल अंतरभूत uपूर्णांक32_t _ish_पढ़ो_fw_sts_reg(काष्ठा ishtp_device *dev)
-अणु
-	वापस ish_reg_पढ़ो(dev, IPC_REG_ISH_HOST_FWSTS);
-पूर्ण
+static inline uint32_t _ish_read_fw_sts_reg(struct ishtp_device *dev)
+{
+	return ish_reg_read(dev, IPC_REG_ISH_HOST_FWSTS);
+}
 
 /**
- * check_generated_पूर्णांकerrupt() - Check अगर ISH पूर्णांकerrupt
- * @dev: ISHTP device poपूर्णांकer
+ * check_generated_interrupt() - Check if ISH interrupt
+ * @dev: ISHTP device pointer
  *
- * Check अगर an पूर्णांकerrupt was generated क्रम ISH
+ * Check if an interrupt was generated for ISH
  *
  * Return: Read true or false
  */
-अटल bool check_generated_पूर्णांकerrupt(काष्ठा ishtp_device *dev)
-अणु
-	bool पूर्णांकerrupt_generated = true;
-	uपूर्णांक32_t pisr_val = 0;
+static bool check_generated_interrupt(struct ishtp_device *dev)
+{
+	bool interrupt_generated = true;
+	uint32_t pisr_val = 0;
 
-	अगर (dev->pdev->device == CHV_DEVICE_ID) अणु
-		pisr_val = ish_reg_पढ़ो(dev, IPC_REG_PISR_CHV_AB);
-		पूर्णांकerrupt_generated =
+	if (dev->pdev->device == CHV_DEVICE_ID) {
+		pisr_val = ish_reg_read(dev, IPC_REG_PISR_CHV_AB);
+		interrupt_generated =
 			IPC_INT_FROM_ISH_TO_HOST_CHV_AB(pisr_val);
-	पूर्ण अन्यथा अणु
-		pisr_val = ish_reg_पढ़ो(dev, IPC_REG_PISR_BXT);
-		पूर्णांकerrupt_generated = !!pisr_val;
+	} else {
+		pisr_val = ish_reg_read(dev, IPC_REG_PISR_BXT);
+		interrupt_generated = !!pisr_val;
 		/* only busy-clear bit is RW, others are RO */
-		अगर (pisr_val)
-			ish_reg_ग_लिखो(dev, IPC_REG_PISR_BXT, pisr_val);
-	पूर्ण
+		if (pisr_val)
+			ish_reg_write(dev, IPC_REG_PISR_BXT, pisr_val);
+	}
 
-	वापस पूर्णांकerrupt_generated;
-पूर्ण
+	return interrupt_generated;
+}
 
 /**
- * ish_is_input_पढ़ोy() - Check अगर FW पढ़ोy क्रम RX
- * @dev: ISHTP device poपूर्णांकer
+ * ish_is_input_ready() - Check if FW ready for RX
+ * @dev: ISHTP device pointer
  *
- * Check अगर ISH FW is पढ़ोy क्रम receiving data
+ * Check if ISH FW is ready for receiving data
  *
  * Return: Read true or false
  */
-अटल bool ish_is_input_पढ़ोy(काष्ठा ishtp_device *dev)
-अणु
-	uपूर्णांक32_t करोorbell_val;
+static bool ish_is_input_ready(struct ishtp_device *dev)
+{
+	uint32_t doorbell_val;
 
-	करोorbell_val = ish_reg_पढ़ो(dev, IPC_REG_HOST2ISH_DRBL);
-	वापस !IPC_IS_BUSY(करोorbell_val);
-पूर्ण
+	doorbell_val = ish_reg_read(dev, IPC_REG_HOST2ISH_DRBL);
+	return !IPC_IS_BUSY(doorbell_val);
+}
 
 /**
- * set_host_पढ़ोy() - Indicate host पढ़ोy
- * @dev: ISHTP device poपूर्णांकer
+ * set_host_ready() - Indicate host ready
+ * @dev: ISHTP device pointer
  *
- * Set host पढ़ोy indication to FW
+ * Set host ready indication to FW
  */
-अटल व्योम set_host_पढ़ोy(काष्ठा ishtp_device *dev)
-अणु
-	अगर (dev->pdev->device == CHV_DEVICE_ID) अणु
-		अगर (dev->pdev->revision == REVISION_ID_CHT_A0 ||
+static void set_host_ready(struct ishtp_device *dev)
+{
+	if (dev->pdev->device == CHV_DEVICE_ID) {
+		if (dev->pdev->revision == REVISION_ID_CHT_A0 ||
 				(dev->pdev->revision & REVISION_ID_SI_MASK) ==
 				REVISION_ID_CHT_Ax_SI)
-			ish_reg_ग_लिखो(dev, IPC_REG_HOST_COMM, 0x81);
-		अन्यथा अगर (dev->pdev->revision == REVISION_ID_CHT_B0 ||
+			ish_reg_write(dev, IPC_REG_HOST_COMM, 0x81);
+		else if (dev->pdev->revision == REVISION_ID_CHT_B0 ||
 				(dev->pdev->revision & REVISION_ID_SI_MASK) ==
 				REVISION_ID_CHT_Bx_SI ||
 				(dev->pdev->revision & REVISION_ID_SI_MASK) ==
 				REVISION_ID_CHT_Kx_SI ||
 				(dev->pdev->revision & REVISION_ID_SI_MASK) ==
-				REVISION_ID_CHT_Dx_SI) अणु
-			uपूर्णांक32_t host_comm_val;
+				REVISION_ID_CHT_Dx_SI) {
+			uint32_t host_comm_val;
 
-			host_comm_val = ish_reg_पढ़ो(dev, IPC_REG_HOST_COMM);
+			host_comm_val = ish_reg_read(dev, IPC_REG_HOST_COMM);
 			host_comm_val |= IPC_HOSTCOMM_INT_EN_BIT_CHV_AB | 0x81;
-			ish_reg_ग_लिखो(dev, IPC_REG_HOST_COMM, host_comm_val);
-		पूर्ण
-	पूर्ण अन्यथा अणु
-			uपूर्णांक32_t host_pimr_val;
+			ish_reg_write(dev, IPC_REG_HOST_COMM, host_comm_val);
+		}
+	} else {
+			uint32_t host_pimr_val;
 
-			host_pimr_val = ish_reg_पढ़ो(dev, IPC_REG_PIMR_BXT);
+			host_pimr_val = ish_reg_read(dev, IPC_REG_PIMR_BXT);
 			host_pimr_val |= IPC_PIMR_INT_EN_BIT_BXT;
 			/*
-			 * disable पूर्णांकerrupt generated instead of
+			 * disable interrupt generated instead of
 			 * RX_complete_msg
 			 */
 			host_pimr_val &= ~IPC_HOST2ISH_BUSYCLEAR_MASK_BIT;
 
-			ish_reg_ग_लिखो(dev, IPC_REG_PIMR_BXT, host_pimr_val);
-	पूर्ण
-पूर्ण
+			ish_reg_write(dev, IPC_REG_PIMR_BXT, host_pimr_val);
+	}
+}
 
 /**
- * ishtp_fw_is_पढ़ोy() - Check अगर FW पढ़ोy
- * @dev: ISHTP device poपूर्णांकer
+ * ishtp_fw_is_ready() - Check if FW ready
+ * @dev: ISHTP device pointer
  *
- * Check अगर ISH FW is पढ़ोy
+ * Check if ISH FW is ready
  *
  * Return: Read true or false
  */
-अटल bool ishtp_fw_is_पढ़ोy(काष्ठा ishtp_device *dev)
-अणु
-	uपूर्णांक32_t ish_status = _ish_पढ़ो_fw_sts_reg(dev);
+static bool ishtp_fw_is_ready(struct ishtp_device *dev)
+{
+	uint32_t ish_status = _ish_read_fw_sts_reg(dev);
 
-	वापस IPC_IS_ISH_ILUP(ish_status) &&
+	return IPC_IS_ISH_ILUP(ish_status) &&
 		IPC_IS_ISH_ISHTP_READY(ish_status);
-पूर्ण
+}
 
 /**
- * ish_set_host_rdy() - Indicate host पढ़ोy
- * @dev: ISHTP device poपूर्णांकer
+ * ish_set_host_rdy() - Indicate host ready
+ * @dev: ISHTP device pointer
  *
- * Set host पढ़ोy indication to FW
+ * Set host ready indication to FW
  */
-अटल व्योम ish_set_host_rdy(काष्ठा ishtp_device *dev)
-अणु
-	uपूर्णांक32_t host_status = ish_reg_पढ़ो(dev, IPC_REG_HOST_COMM);
+static void ish_set_host_rdy(struct ishtp_device *dev)
+{
+	uint32_t host_status = ish_reg_read(dev, IPC_REG_HOST_COMM);
 
 	IPC_SET_HOST_READY(host_status);
-	ish_reg_ग_लिखो(dev, IPC_REG_HOST_COMM, host_status);
-पूर्ण
+	ish_reg_write(dev, IPC_REG_HOST_COMM, host_status);
+}
 
 /**
- * ish_clr_host_rdy() - Indicate host not पढ़ोy
- * @dev: ISHTP device poपूर्णांकer
+ * ish_clr_host_rdy() - Indicate host not ready
+ * @dev: ISHTP device pointer
  *
- * Send host not पढ़ोy indication to FW
+ * Send host not ready indication to FW
  */
-अटल व्योम ish_clr_host_rdy(काष्ठा ishtp_device *dev)
-अणु
-	uपूर्णांक32_t host_status = ish_reg_पढ़ो(dev, IPC_REG_HOST_COMM);
+static void ish_clr_host_rdy(struct ishtp_device *dev)
+{
+	uint32_t host_status = ish_reg_read(dev, IPC_REG_HOST_COMM);
 
 	IPC_CLEAR_HOST_READY(host_status);
-	ish_reg_ग_लिखो(dev, IPC_REG_HOST_COMM, host_status);
-पूर्ण
+	ish_reg_write(dev, IPC_REG_HOST_COMM, host_status);
+}
 
-अटल bool ish_chk_host_rdy(काष्ठा ishtp_device *dev)
-अणु
-	uपूर्णांक32_t host_status = ish_reg_पढ़ो(dev, IPC_REG_HOST_COMM);
+static bool ish_chk_host_rdy(struct ishtp_device *dev)
+{
+	uint32_t host_status = ish_reg_read(dev, IPC_REG_HOST_COMM);
 
-	वापस (host_status & IPC_HOSTCOMM_READY_BIT);
-पूर्ण
+	return (host_status & IPC_HOSTCOMM_READY_BIT);
+}
 
 /**
- * ish_set_host_पढ़ोy() - reconfig ipc host रेजिस्टरs
- * @dev: ishtp device poपूर्णांकer
+ * ish_set_host_ready() - reconfig ipc host registers
+ * @dev: ishtp device pointer
  *
- * Set host to पढ़ोy state
- * This API is called in some हाल:
- *    fw is still on, but ipc is घातered करोwn.
- *    such as OOB हाल.
+ * Set host to ready state
+ * This API is called in some case:
+ *    fw is still on, but ipc is powered down.
+ *    such as OOB case.
  *
- * Return: 0 क्रम success अन्यथा error fault code
+ * Return: 0 for success else error fault code
  */
-व्योम ish_set_host_पढ़ोy(काष्ठा ishtp_device *dev)
-अणु
-	अगर (ish_chk_host_rdy(dev))
-		वापस;
+void ish_set_host_ready(struct ishtp_device *dev)
+{
+	if (ish_chk_host_rdy(dev))
+		return;
 
 	ish_set_host_rdy(dev);
-	set_host_पढ़ोy(dev);
-पूर्ण
+	set_host_ready(dev);
+}
 
 /**
- * _ishtp_पढ़ो_hdr() - Read message header
- * @dev: ISHTP device poपूर्णांकer
+ * _ishtp_read_hdr() - Read message header
+ * @dev: ISHTP device pointer
  *
  * Read header of 32bit length
  *
- * Return: Read रेजिस्टर value
+ * Return: Read register value
  */
-अटल uपूर्णांक32_t _ishtp_पढ़ो_hdr(स्थिर काष्ठा ishtp_device *dev)
-अणु
-	वापस ish_reg_पढ़ो(dev, IPC_REG_ISH2HOST_MSG);
-पूर्ण
+static uint32_t _ishtp_read_hdr(const struct ishtp_device *dev)
+{
+	return ish_reg_read(dev, IPC_REG_ISH2HOST_MSG);
+}
 
 /**
- * _ishtp_पढ़ो - Read message
- * @dev: ISHTP device poपूर्णांकer
+ * _ishtp_read - Read message
+ * @dev: ISHTP device pointer
  * @buffer: message buffer
  * @buffer_length: length of message buffer
  *
@@ -244,305 +243,305 @@
  *
  * Return: Always 0
  */
-अटल पूर्णांक _ishtp_पढ़ो(काष्ठा ishtp_device *dev, अचिन्हित अक्षर *buffer,
-	अचिन्हित दीर्घ buffer_length)
-अणु
-	uपूर्णांक32_t	i;
-	uपूर्णांक32_t	*r_buf = (uपूर्णांक32_t *)buffer;
-	uपूर्णांक32_t	msg_offs;
+static int _ishtp_read(struct ishtp_device *dev, unsigned char *buffer,
+	unsigned long buffer_length)
+{
+	uint32_t	i;
+	uint32_t	*r_buf = (uint32_t *)buffer;
+	uint32_t	msg_offs;
 
-	msg_offs = IPC_REG_ISH2HOST_MSG + माप(काष्ठा ishtp_msg_hdr);
-	क्रम (i = 0; i < buffer_length; i += माप(uपूर्णांक32_t))
-		*r_buf++ = ish_reg_पढ़ो(dev, msg_offs + i);
+	msg_offs = IPC_REG_ISH2HOST_MSG + sizeof(struct ishtp_msg_hdr);
+	for (i = 0; i < buffer_length; i += sizeof(uint32_t))
+		*r_buf++ = ish_reg_read(dev, msg_offs + i);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * ग_लिखो_ipc_from_queue() - try to ग_लिखो ipc msg from Tx queue to device
- * @dev: ishtp device poपूर्णांकer
+ * write_ipc_from_queue() - try to write ipc msg from Tx queue to device
+ * @dev: ishtp device pointer
  *
- * Check अगर DRBL is cleared. अगर it is - ग_लिखो the first IPC msg,  then call
- * the callback function (unless it's शून्य)
+ * Check if DRBL is cleared. if it is - write the first IPC msg,  then call
+ * the callback function (unless it's NULL)
  *
- * Return: 0 क्रम success अन्यथा failure code
+ * Return: 0 for success else failure code
  */
-अटल पूर्णांक ग_लिखो_ipc_from_queue(काष्ठा ishtp_device *dev)
-अणु
-	काष्ठा wr_msg_ctl_info	*ipc_link;
-	अचिन्हित दीर्घ	length;
-	अचिन्हित दीर्घ	rem;
-	अचिन्हित दीर्घ	flags;
-	uपूर्णांक32_t	करोorbell_val;
-	uपूर्णांक32_t	*r_buf;
-	uपूर्णांक32_t	reg_addr;
-	पूर्णांक	i;
-	व्योम	(*ipc_send_compl)(व्योम *);
-	व्योम	*ipc_send_compl_prm;
+static int write_ipc_from_queue(struct ishtp_device *dev)
+{
+	struct wr_msg_ctl_info	*ipc_link;
+	unsigned long	length;
+	unsigned long	rem;
+	unsigned long	flags;
+	uint32_t	doorbell_val;
+	uint32_t	*r_buf;
+	uint32_t	reg_addr;
+	int	i;
+	void	(*ipc_send_compl)(void *);
+	void	*ipc_send_compl_prm;
 
-	अगर (dev->dev_state == ISHTP_DEV_DISABLED)
-		वापस -EINVAL;
+	if (dev->dev_state == ISHTP_DEV_DISABLED)
+		return -EINVAL;
 
 	spin_lock_irqsave(&dev->wr_processing_spinlock, flags);
-	अगर (!ish_is_input_पढ़ोy(dev)) अणु
+	if (!ish_is_input_ready(dev)) {
 		spin_unlock_irqrestore(&dev->wr_processing_spinlock, flags);
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
 	/*
-	 * अगर tx send list is empty - वापस 0;
-	 * may happen, as RX_COMPLETE handler करोesn't check list emptiness.
+	 * if tx send list is empty - return 0;
+	 * may happen, as RX_COMPLETE handler doesn't check list emptiness.
 	 */
-	अगर (list_empty(&dev->wr_processing_list)) अणु
+	if (list_empty(&dev->wr_processing_list)) {
 		spin_unlock_irqrestore(&dev->wr_processing_spinlock, flags);
-		वापस	0;
-	पूर्ण
+		return	0;
+	}
 
 	ipc_link = list_first_entry(&dev->wr_processing_list,
-				    काष्ठा wr_msg_ctl_info, link);
-	/* first 4 bytes of the data is the करोorbell value (IPC header) */
-	length = ipc_link->length - माप(uपूर्णांक32_t);
-	करोorbell_val = *(uपूर्णांक32_t *)ipc_link->अंतरभूत_data;
-	r_buf = (uपूर्णांक32_t *)(ipc_link->अंतरभूत_data + माप(uपूर्णांक32_t));
+				    struct wr_msg_ctl_info, link);
+	/* first 4 bytes of the data is the doorbell value (IPC header) */
+	length = ipc_link->length - sizeof(uint32_t);
+	doorbell_val = *(uint32_t *)ipc_link->inline_data;
+	r_buf = (uint32_t *)(ipc_link->inline_data + sizeof(uint32_t));
 
-	/* If sending MNG_SYNC_FW_CLOCK, update घड़ी again */
-	अगर (IPC_HEADER_GET_PROTOCOL(करोorbell_val) == IPC_PROTOCOL_MNG &&
-		IPC_HEADER_GET_MNG_CMD(करोorbell_val) == MNG_SYNC_FW_CLOCK) अणु
-		uपूर्णांक64_t usec_प्रणाली, usec_utc;
-		काष्ठा ipc_समय_update_msg समय_update;
-		काष्ठा समय_sync_क्रमmat ts_क्रमmat;
+	/* If sending MNG_SYNC_FW_CLOCK, update clock again */
+	if (IPC_HEADER_GET_PROTOCOL(doorbell_val) == IPC_PROTOCOL_MNG &&
+		IPC_HEADER_GET_MNG_CMD(doorbell_val) == MNG_SYNC_FW_CLOCK) {
+		uint64_t usec_system, usec_utc;
+		struct ipc_time_update_msg time_update;
+		struct time_sync_format ts_format;
 
-		usec_प्रणाली = kसमय_प्रकारo_us(kसमय_get_bootसमय());
-		usec_utc = kसमय_प्रकारo_us(kसमय_get_real());
-		ts_क्रमmat.ts1_source = HOST_SYSTEM_TIME_USEC;
-		ts_क्रमmat.ts2_source = HOST_UTC_TIME_USEC;
-		ts_क्रमmat.reserved = 0;
+		usec_system = ktime_to_us(ktime_get_boottime());
+		usec_utc = ktime_to_us(ktime_get_real());
+		ts_format.ts1_source = HOST_SYSTEM_TIME_USEC;
+		ts_format.ts2_source = HOST_UTC_TIME_USEC;
+		ts_format.reserved = 0;
 
-		समय_update.primary_host_समय = usec_प्रणाली;
-		समय_update.secondary_host_समय = usec_utc;
-		समय_update.sync_info = ts_क्रमmat;
+		time_update.primary_host_time = usec_system;
+		time_update.secondary_host_time = usec_utc;
+		time_update.sync_info = ts_format;
 
-		स_नकल(r_buf, &समय_update,
-		       माप(काष्ठा ipc_समय_update_msg));
-	पूर्ण
+		memcpy(r_buf, &time_update,
+		       sizeof(struct ipc_time_update_msg));
+	}
 
-	क्रम (i = 0, reg_addr = IPC_REG_HOST2ISH_MSG; i < length >> 2; i++,
+	for (i = 0, reg_addr = IPC_REG_HOST2ISH_MSG; i < length >> 2; i++,
 			reg_addr += 4)
-		ish_reg_ग_लिखो(dev, reg_addr, r_buf[i]);
+		ish_reg_write(dev, reg_addr, r_buf[i]);
 
 	rem = length & 0x3;
-	अगर (rem > 0) अणु
-		uपूर्णांक32_t reg = 0;
+	if (rem > 0) {
+		uint32_t reg = 0;
 
-		स_नकल(&reg, &r_buf[length >> 2], rem);
-		ish_reg_ग_लिखो(dev, reg_addr, reg);
-	पूर्ण
-	ish_reg_ग_लिखो(dev, IPC_REG_HOST2ISH_DRBL, करोorbell_val);
+		memcpy(&reg, &r_buf[length >> 2], rem);
+		ish_reg_write(dev, reg_addr, reg);
+	}
+	ish_reg_write(dev, IPC_REG_HOST2ISH_DRBL, doorbell_val);
 
-	/* Flush ग_लिखोs to msg रेजिस्टरs and करोorbell */
-	ish_reg_पढ़ो(dev, IPC_REG_ISH_HOST_FWSTS);
+	/* Flush writes to msg registers and doorbell */
+	ish_reg_read(dev, IPC_REG_ISH_HOST_FWSTS);
 
 	/* Update IPC counters */
 	++dev->ipc_tx_cnt;
-	dev->ipc_tx_bytes_cnt += IPC_HEADER_GET_LENGTH(करोorbell_val);
+	dev->ipc_tx_bytes_cnt += IPC_HEADER_GET_LENGTH(doorbell_val);
 
 	ipc_send_compl = ipc_link->ipc_send_compl;
 	ipc_send_compl_prm = ipc_link->ipc_send_compl_prm;
 	list_del_init(&ipc_link->link);
-	list_add(&ipc_link->link, &dev->wr_मुक्त_list);
+	list_add(&ipc_link->link, &dev->wr_free_list);
 	spin_unlock_irqrestore(&dev->wr_processing_spinlock, flags);
 
 	/*
 	 * callback will be called out of spinlock,
-	 * after ipc_link वापसed to मुक्त list
+	 * after ipc_link returned to free list
 	 */
-	अगर (ipc_send_compl)
+	if (ipc_send_compl)
 		ipc_send_compl(ipc_send_compl_prm);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * ग_लिखो_ipc_to_queue() - ग_लिखो ipc msg to Tx queue
+ * write_ipc_to_queue() - write ipc msg to Tx queue
  * @dev: ishtp device instance
  * @ipc_send_compl: Send complete callback
  * @ipc_send_compl_prm:	Parameter to send in complete callback
- * @msg: Poपूर्णांकer to message
+ * @msg: Pointer to message
  * @length: Length of message
  *
  * Recived msg with IPC (and upper protocol) header  and add it to the device
- *  Tx-to-ग_लिखो list then try to send the first IPC रुकोing msg
- *  (अगर DRBL is cleared)
- * This function वापसs negative value क्रम failure (means मुक्त list
- *  is empty, or msg too दीर्घ) and 0 क्रम success.
+ *  Tx-to-write list then try to send the first IPC waiting msg
+ *  (if DRBL is cleared)
+ * This function returns negative value for failure (means free list
+ *  is empty, or msg too long) and 0 for success.
  *
- * Return: 0 क्रम success अन्यथा failure code
+ * Return: 0 for success else failure code
  */
-अटल पूर्णांक ग_लिखो_ipc_to_queue(काष्ठा ishtp_device *dev,
-	व्योम (*ipc_send_compl)(व्योम *), व्योम *ipc_send_compl_prm,
-	अचिन्हित अक्षर *msg, पूर्णांक length)
-अणु
-	काष्ठा wr_msg_ctl_info *ipc_link;
-	अचिन्हित दीर्घ flags;
+static int write_ipc_to_queue(struct ishtp_device *dev,
+	void (*ipc_send_compl)(void *), void *ipc_send_compl_prm,
+	unsigned char *msg, int length)
+{
+	struct wr_msg_ctl_info *ipc_link;
+	unsigned long flags;
 
-	अगर (length > IPC_FULL_MSG_SIZE)
-		वापस -EMSGSIZE;
+	if (length > IPC_FULL_MSG_SIZE)
+		return -EMSGSIZE;
 
 	spin_lock_irqsave(&dev->wr_processing_spinlock, flags);
-	अगर (list_empty(&dev->wr_मुक्त_list)) अणु
+	if (list_empty(&dev->wr_free_list)) {
 		spin_unlock_irqrestore(&dev->wr_processing_spinlock, flags);
-		वापस -ENOMEM;
-	पूर्ण
-	ipc_link = list_first_entry(&dev->wr_मुक्त_list,
-				    काष्ठा wr_msg_ctl_info, link);
+		return -ENOMEM;
+	}
+	ipc_link = list_first_entry(&dev->wr_free_list,
+				    struct wr_msg_ctl_info, link);
 	list_del_init(&ipc_link->link);
 
 	ipc_link->ipc_send_compl = ipc_send_compl;
 	ipc_link->ipc_send_compl_prm = ipc_send_compl_prm;
 	ipc_link->length = length;
-	स_नकल(ipc_link->अंतरभूत_data, msg, length);
+	memcpy(ipc_link->inline_data, msg, length);
 
 	list_add_tail(&ipc_link->link, &dev->wr_processing_list);
 	spin_unlock_irqrestore(&dev->wr_processing_spinlock, flags);
 
-	ग_लिखो_ipc_from_queue(dev);
+	write_ipc_from_queue(dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * ipc_send_mng_msg() - Send management message
  * @dev: ishtp device instance
  * @msg_code: Message code
- * @msg: Poपूर्णांकer to message
+ * @msg: Pointer to message
  * @size: Length of message
  *
  * Send management message to FW
  *
- * Return: 0 क्रम success अन्यथा failure code
+ * Return: 0 for success else failure code
  */
-अटल पूर्णांक ipc_send_mng_msg(काष्ठा ishtp_device *dev, uपूर्णांक32_t msg_code,
-	व्योम *msg, माप_प्रकार size)
-अणु
-	अचिन्हित अक्षर	ipc_msg[IPC_FULL_MSG_SIZE];
-	uपूर्णांक32_t	drbl_val = IPC_BUILD_MNG_MSG(msg_code, size);
+static int ipc_send_mng_msg(struct ishtp_device *dev, uint32_t msg_code,
+	void *msg, size_t size)
+{
+	unsigned char	ipc_msg[IPC_FULL_MSG_SIZE];
+	uint32_t	drbl_val = IPC_BUILD_MNG_MSG(msg_code, size);
 
-	स_नकल(ipc_msg, &drbl_val, माप(uपूर्णांक32_t));
-	स_नकल(ipc_msg + माप(uपूर्णांक32_t), msg, size);
-	वापस	ग_लिखो_ipc_to_queue(dev, शून्य, शून्य, ipc_msg,
-		माप(uपूर्णांक32_t) + size);
-पूर्ण
+	memcpy(ipc_msg, &drbl_val, sizeof(uint32_t));
+	memcpy(ipc_msg + sizeof(uint32_t), msg, size);
+	return	write_ipc_to_queue(dev, NULL, NULL, ipc_msg,
+		sizeof(uint32_t) + size);
+}
 
-#घोषणा WAIT_FOR_FW_RDY			0x1
-#घोषणा WAIT_FOR_INPUT_RDY		0x2
+#define WAIT_FOR_FW_RDY			0x1
+#define WAIT_FOR_INPUT_RDY		0x2
 
 /**
- * समयd_रुको_क्रम_समयout() - रुको special event with समयout
- * @dev: ISHTP device poपूर्णांकer
- * @condition: indicate the condition क्रम रुकोing
- * @समयinc: समय slice क्रम every रुको cycle, in ms
- * @समयout: समय in ms क्रम समयout
+ * timed_wait_for_timeout() - wait special event with timeout
+ * @dev: ISHTP device pointer
+ * @condition: indicate the condition for waiting
+ * @timeinc: time slice for every wait cycle, in ms
+ * @timeout: time in ms for timeout
  *
- * This function will check special event to be पढ़ोy in a loop, the loop
- * period is specअगरicd in समयinc. Wait समयout will causes failure.
+ * This function will check special event to be ready in a loop, the loop
+ * period is specificd in timeinc. Wait timeout will causes failure.
  *
- * Return: 0 क्रम success अन्यथा failure code
+ * Return: 0 for success else failure code
  */
-अटल पूर्णांक समयd_रुको_क्रम_समयout(काष्ठा ishtp_device *dev, पूर्णांक condition,
-				अचिन्हित पूर्णांक समयinc, अचिन्हित पूर्णांक समयout)
-अणु
+static int timed_wait_for_timeout(struct ishtp_device *dev, int condition,
+				unsigned int timeinc, unsigned int timeout)
+{
 	bool complete = false;
-	पूर्णांक ret;
+	int ret;
 
-	करो अणु
-		अगर (condition == WAIT_FOR_FW_RDY) अणु
-			complete = ishtp_fw_is_पढ़ोy(dev);
-		पूर्ण अन्यथा अगर (condition == WAIT_FOR_INPUT_RDY) अणु
-			complete = ish_is_input_पढ़ोy(dev);
-		पूर्ण अन्यथा अणु
+	do {
+		if (condition == WAIT_FOR_FW_RDY) {
+			complete = ishtp_fw_is_ready(dev);
+		} else if (condition == WAIT_FOR_INPUT_RDY) {
+			complete = ish_is_input_ready(dev);
+		} else {
 			ret = -EINVAL;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
-		अगर (!complete) अणु
-			अचिन्हित दीर्घ left_समय;
+		if (!complete) {
+			unsigned long left_time;
 
-			left_समय = msleep_पूर्णांकerruptible(समयinc);
-			समयout -= (समयinc - left_समय);
-		पूर्ण
-	पूर्ण जबतक (!complete && समयout > 0);
+			left_time = msleep_interruptible(timeinc);
+			timeout -= (timeinc - left_time);
+		}
+	} while (!complete && timeout > 0);
 
-	अगर (complete)
+	if (complete)
 		ret = 0;
-	अन्यथा
+	else
 		ret = -EBUSY;
 
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-#घोषणा TIME_SLICE_FOR_FW_RDY_MS		100
-#घोषणा TIME_SLICE_FOR_INPUT_RDY_MS		100
-#घोषणा TIMEOUT_FOR_FW_RDY_MS			2000
-#घोषणा TIMEOUT_FOR_INPUT_RDY_MS		2000
+#define TIME_SLICE_FOR_FW_RDY_MS		100
+#define TIME_SLICE_FOR_INPUT_RDY_MS		100
+#define TIMEOUT_FOR_FW_RDY_MS			2000
+#define TIMEOUT_FOR_INPUT_RDY_MS		2000
 
 /**
  * ish_fw_reset_handler() - FW reset handler
- * @dev: ishtp device poपूर्णांकer
+ * @dev: ishtp device pointer
  *
  * Handle FW reset
  *
- * Return: 0 क्रम success अन्यथा failure code
+ * Return: 0 for success else failure code
  */
-अटल पूर्णांक ish_fw_reset_handler(काष्ठा ishtp_device *dev)
-अणु
-	uपूर्णांक32_t	reset_id;
-	अचिन्हित दीर्घ	flags;
+static int ish_fw_reset_handler(struct ishtp_device *dev)
+{
+	uint32_t	reset_id;
+	unsigned long	flags;
 
 	/* Read reset ID */
-	reset_id = ish_reg_पढ़ो(dev, IPC_REG_ISH2HOST_MSG) & 0xFFFF;
+	reset_id = ish_reg_read(dev, IPC_REG_ISH2HOST_MSG) & 0xFFFF;
 
 	/* Clear IPC output queue */
 	spin_lock_irqsave(&dev->wr_processing_spinlock, flags);
-	list_splice_init(&dev->wr_processing_list, &dev->wr_मुक्त_list);
+	list_splice_init(&dev->wr_processing_list, &dev->wr_free_list);
 	spin_unlock_irqrestore(&dev->wr_processing_spinlock, flags);
 
-	/* ISHTP notअगरication in IPC_RESET */
+	/* ISHTP notification in IPC_RESET */
 	ishtp_reset_handler(dev);
 
-	अगर (!ish_is_input_पढ़ोy(dev))
-		समयd_रुको_क्रम_समयout(dev, WAIT_FOR_INPUT_RDY,
+	if (!ish_is_input_ready(dev))
+		timed_wait_for_timeout(dev, WAIT_FOR_INPUT_RDY,
 			TIME_SLICE_FOR_INPUT_RDY_MS, TIMEOUT_FOR_INPUT_RDY_MS);
 
 	/* ISH FW is dead */
-	अगर (!ish_is_input_पढ़ोy(dev))
-		वापस	-EPIPE;
+	if (!ish_is_input_ready(dev))
+		return	-EPIPE;
 	/*
 	 * Set HOST2ISH.ILUP. Apparently we need this BEFORE sending
-	 * RESET_NOTIFY_ACK - FW will be checking क्रम it
+	 * RESET_NOTIFY_ACK - FW will be checking for it
 	 */
 	ish_set_host_rdy(dev);
 	/* Send RESET_NOTIFY_ACK (with reset_id) */
 	ipc_send_mng_msg(dev, MNG_RESET_NOTIFY_ACK, &reset_id,
-			 माप(uपूर्णांक32_t));
+			 sizeof(uint32_t));
 
-	/* Wait क्रम ISH FW'es ILUP and ISHTP_READY */
-	समयd_रुको_क्रम_समयout(dev, WAIT_FOR_FW_RDY,
+	/* Wait for ISH FW'es ILUP and ISHTP_READY */
+	timed_wait_for_timeout(dev, WAIT_FOR_FW_RDY,
 			TIME_SLICE_FOR_FW_RDY_MS, TIMEOUT_FOR_FW_RDY_MS);
-	अगर (!ishtp_fw_is_पढ़ोy(dev)) अणु
+	if (!ishtp_fw_is_ready(dev)) {
 		/* ISH FW is dead */
-		uपूर्णांक32_t	ish_status;
+		uint32_t	ish_status;
 
-		ish_status = _ish_पढ़ो_fw_sts_reg(dev);
+		ish_status = _ish_read_fw_sts_reg(dev);
 		dev_err(dev->devc,
 			"[ishtp-ish]: completed reset, ISH is dead (FWSTS = %08X)\n",
 			ish_status);
-		वापस -ENODEV;
-	पूर्ण
-	वापस	0;
-पूर्ण
+		return -ENODEV;
+	}
+	return	0;
+}
 
-#घोषणा TIMEOUT_FOR_HW_RDY_MS			300
+#define TIMEOUT_FOR_HW_RDY_MS			300
 
 /**
  * ish_fw_reset_work_fn() - FW reset worker function
@@ -550,356 +549,356 @@ out:
  *
  * Call ish_fw_reset_handler to complete FW reset
  */
-अटल व्योम fw_reset_work_fn(काष्ठा work_काष्ठा *unused)
-अणु
-	पूर्णांक	rv;
+static void fw_reset_work_fn(struct work_struct *unused)
+{
+	int	rv;
 
 	rv = ish_fw_reset_handler(ishtp_dev);
-	अगर (!rv) अणु
-		/* ISH is ILUP & ISHTP-पढ़ोy. Restart ISHTP */
-		msleep_पूर्णांकerruptible(TIMEOUT_FOR_HW_RDY_MS);
-		ishtp_dev->recvd_hw_पढ़ोy = 1;
-		wake_up_पूर्णांकerruptible(&ishtp_dev->रुको_hw_पढ़ोy);
+	if (!rv) {
+		/* ISH is ILUP & ISHTP-ready. Restart ISHTP */
+		msleep_interruptible(TIMEOUT_FOR_HW_RDY_MS);
+		ishtp_dev->recvd_hw_ready = 1;
+		wake_up_interruptible(&ishtp_dev->wait_hw_ready);
 
-		/* ISHTP notअगरication in IPC_RESET sequence completion */
+		/* ISHTP notification in IPC_RESET sequence completion */
 		ishtp_reset_compl_handler(ishtp_dev);
-	पूर्ण अन्यथा
+	} else
 		dev_err(ishtp_dev->devc, "[ishtp-ish]: FW reset failed (%d)\n",
 			rv);
-पूर्ण
+}
 
 /**
- * _ish_sync_fw_घड़ी() -Sync FW घड़ी with the OS घड़ी
- * @dev: ishtp device poपूर्णांकer
+ * _ish_sync_fw_clock() -Sync FW clock with the OS clock
+ * @dev: ishtp device pointer
  *
- * Sync FW and OS समय
+ * Sync FW and OS time
  */
-अटल व्योम _ish_sync_fw_घड़ी(काष्ठा ishtp_device *dev)
-अणु
-	अटल अचिन्हित दीर्घ	prev_sync;
-	uपूर्णांक64_t	usec;
+static void _ish_sync_fw_clock(struct ishtp_device *dev)
+{
+	static unsigned long	prev_sync;
+	uint64_t	usec;
 
-	अगर (prev_sync && jअगरfies - prev_sync < 20 * HZ)
-		वापस;
+	if (prev_sync && jiffies - prev_sync < 20 * HZ)
+		return;
 
-	prev_sync = jअगरfies;
-	usec = kसमय_प्रकारo_us(kसमय_get_bootसमय());
-	ipc_send_mng_msg(dev, MNG_SYNC_FW_CLOCK, &usec, माप(uपूर्णांक64_t));
-पूर्ण
+	prev_sync = jiffies;
+	usec = ktime_to_us(ktime_get_boottime());
+	ipc_send_mng_msg(dev, MNG_SYNC_FW_CLOCK, &usec, sizeof(uint64_t));
+}
 
 /**
  * recv_ipc() - Receive and process IPC management messages
  * @dev: ishtp device instance
- * @करोorbell_val: करोorbell value
+ * @doorbell_val: doorbell value
  *
  * This function runs in ISR context.
- * NOTE: Any other mng command than reset_notअगरy and reset_notअगरy_ack
+ * NOTE: Any other mng command than reset_notify and reset_notify_ack
  * won't wake BH handler
  */
-अटल व्योम	recv_ipc(काष्ठा ishtp_device *dev, uपूर्णांक32_t करोorbell_val)
-अणु
-	uपूर्णांक32_t	mng_cmd;
+static void	recv_ipc(struct ishtp_device *dev, uint32_t doorbell_val)
+{
+	uint32_t	mng_cmd;
 
-	mng_cmd = IPC_HEADER_GET_MNG_CMD(करोorbell_val);
+	mng_cmd = IPC_HEADER_GET_MNG_CMD(doorbell_val);
 
-	चयन (mng_cmd) अणु
-	शेष:
-		अवरोध;
+	switch (mng_cmd) {
+	default:
+		break;
 
-	हाल MNG_RX_CMPL_INDICATION:
-		अगर (dev->suspend_flag) अणु
+	case MNG_RX_CMPL_INDICATION:
+		if (dev->suspend_flag) {
 			dev->suspend_flag = 0;
-			wake_up_पूर्णांकerruptible(&dev->suspend_रुको);
-		पूर्ण
-		अगर (dev->resume_flag) अणु
+			wake_up_interruptible(&dev->suspend_wait);
+		}
+		if (dev->resume_flag) {
 			dev->resume_flag = 0;
-			wake_up_पूर्णांकerruptible(&dev->resume_रुको);
-		पूर्ण
+			wake_up_interruptible(&dev->resume_wait);
+		}
 
-		ग_लिखो_ipc_from_queue(dev);
-		अवरोध;
+		write_ipc_from_queue(dev);
+		break;
 
-	हाल MNG_RESET_NOTIFY:
-		अगर (!ishtp_dev) अणु
+	case MNG_RESET_NOTIFY:
+		if (!ishtp_dev) {
 			ishtp_dev = dev;
 			INIT_WORK(&fw_reset_work, fw_reset_work_fn);
-		पूर्ण
+		}
 		schedule_work(&fw_reset_work);
-		अवरोध;
+		break;
 
-	हाल MNG_RESET_NOTIFY_ACK:
-		dev->recvd_hw_पढ़ोy = 1;
-		wake_up_पूर्णांकerruptible(&dev->रुको_hw_पढ़ोy);
-		अवरोध;
-	पूर्ण
-पूर्ण
+	case MNG_RESET_NOTIFY_ACK:
+		dev->recvd_hw_ready = 1;
+		wake_up_interruptible(&dev->wait_hw_ready);
+		break;
+	}
+}
 
 /**
  * ish_irq_handler() - ISH IRQ handler
  * @irq: irq number
- * @dev_id: ishtp device poपूर्णांकer
+ * @dev_id: ishtp device pointer
  *
- * ISH IRQ handler. If पूर्णांकerrupt is generated and is क्रम ISH it will process
- * the पूर्णांकerrupt.
+ * ISH IRQ handler. If interrupt is generated and is for ISH it will process
+ * the interrupt.
  */
-irqवापस_t ish_irq_handler(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा ishtp_device	*dev = dev_id;
-	uपूर्णांक32_t	करोorbell_val;
-	bool	पूर्णांकerrupt_generated;
+irqreturn_t ish_irq_handler(int irq, void *dev_id)
+{
+	struct ishtp_device	*dev = dev_id;
+	uint32_t	doorbell_val;
+	bool	interrupt_generated;
 
-	/* Check that it's पूर्णांकerrupt from ISH (may be shared) */
-	पूर्णांकerrupt_generated = check_generated_पूर्णांकerrupt(dev);
+	/* Check that it's interrupt from ISH (may be shared) */
+	interrupt_generated = check_generated_interrupt(dev);
 
-	अगर (!पूर्णांकerrupt_generated)
-		वापस IRQ_NONE;
+	if (!interrupt_generated)
+		return IRQ_NONE;
 
-	करोorbell_val = ish_reg_पढ़ो(dev, IPC_REG_ISH2HOST_DRBL);
-	अगर (!IPC_IS_BUSY(करोorbell_val))
-		वापस IRQ_HANDLED;
+	doorbell_val = ish_reg_read(dev, IPC_REG_ISH2HOST_DRBL);
+	if (!IPC_IS_BUSY(doorbell_val))
+		return IRQ_HANDLED;
 
-	अगर (dev->dev_state == ISHTP_DEV_DISABLED)
-		वापस	IRQ_HANDLED;
+	if (dev->dev_state == ISHTP_DEV_DISABLED)
+		return	IRQ_HANDLED;
 
 	/* Sanity check: IPC dgram length in header */
-	अगर (IPC_HEADER_GET_LENGTH(करोorbell_val) > IPC_PAYLOAD_SIZE) अणु
+	if (IPC_HEADER_GET_LENGTH(doorbell_val) > IPC_PAYLOAD_SIZE) {
 		dev_err(dev->devc,
 			"IPC hdr - bad length: %u; dropped\n",
-			(अचिन्हित पूर्णांक)IPC_HEADER_GET_LENGTH(करोorbell_val));
-		जाओ	eoi;
-	पूर्ण
+			(unsigned int)IPC_HEADER_GET_LENGTH(doorbell_val));
+		goto	eoi;
+	}
 
-	चयन (IPC_HEADER_GET_PROTOCOL(करोorbell_val)) अणु
-	शेष:
-		अवरोध;
-	हाल IPC_PROTOCOL_MNG:
-		recv_ipc(dev, करोorbell_val);
-		अवरोध;
-	हाल IPC_PROTOCOL_ISHTP:
+	switch (IPC_HEADER_GET_PROTOCOL(doorbell_val)) {
+	default:
+		break;
+	case IPC_PROTOCOL_MNG:
+		recv_ipc(dev, doorbell_val);
+		break;
+	case IPC_PROTOCOL_ISHTP:
 		ishtp_recv(dev);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 eoi:
 	/* Update IPC counters */
 	++dev->ipc_rx_cnt;
-	dev->ipc_rx_bytes_cnt += IPC_HEADER_GET_LENGTH(करोorbell_val);
+	dev->ipc_rx_bytes_cnt += IPC_HEADER_GET_LENGTH(doorbell_val);
 
-	ish_reg_ग_लिखो(dev, IPC_REG_ISH2HOST_DRBL, 0);
-	/* Flush ग_लिखो to करोorbell */
-	ish_reg_पढ़ो(dev, IPC_REG_ISH_HOST_FWSTS);
+	ish_reg_write(dev, IPC_REG_ISH2HOST_DRBL, 0);
+	/* Flush write to doorbell */
+	ish_reg_read(dev, IPC_REG_ISH_HOST_FWSTS);
 
-	वापस	IRQ_HANDLED;
-पूर्ण
+	return	IRQ_HANDLED;
+}
 
 /**
  * ish_disable_dma() - disable dma communication between host and ISHFW
- * @dev: ishtp device poपूर्णांकer
+ * @dev: ishtp device pointer
  *
- * Clear the dma enable bit and रुको क्रम dma inactive.
+ * Clear the dma enable bit and wait for dma inactive.
  *
- * Return: 0 क्रम success अन्यथा error code.
+ * Return: 0 for success else error code.
  */
-पूर्णांक ish_disable_dma(काष्ठा ishtp_device *dev)
-अणु
-	अचिन्हित पूर्णांक	dma_delay;
+int ish_disable_dma(struct ishtp_device *dev)
+{
+	unsigned int	dma_delay;
 
 	/* Clear the dma enable bit */
-	ish_reg_ग_लिखो(dev, IPC_REG_ISH_RMP2, 0);
+	ish_reg_write(dev, IPC_REG_ISH_RMP2, 0);
 
-	/* रुको क्रम dma inactive */
-	क्रम (dma_delay = 0; dma_delay < MAX_DMA_DELAY &&
-		_ish_पढ़ो_fw_sts_reg(dev) & (IPC_ISH_IN_DMA);
+	/* wait for dma inactive */
+	for (dma_delay = 0; dma_delay < MAX_DMA_DELAY &&
+		_ish_read_fw_sts_reg(dev) & (IPC_ISH_IN_DMA);
 		dma_delay += 5)
 		mdelay(5);
 
-	अगर (dma_delay >= MAX_DMA_DELAY) अणु
+	if (dma_delay >= MAX_DMA_DELAY) {
 		dev_err(dev->devc,
 			"Wait for DMA inactive timeout\n");
-		वापस	-EBUSY;
-	पूर्ण
+		return	-EBUSY;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * ish_wakeup() - wakeup ishfw from रुकोing-क्रम-host state
- * @dev: ishtp device poपूर्णांकer
+ * ish_wakeup() - wakeup ishfw from waiting-for-host state
+ * @dev: ishtp device pointer
  *
- * Set the dma enable bit and send a व्योम message to FW,
- * it wil wakeup FW from रुकोing-क्रम-host state.
+ * Set the dma enable bit and send a void message to FW,
+ * it wil wakeup FW from waiting-for-host state.
  */
-अटल व्योम ish_wakeup(काष्ठा ishtp_device *dev)
-अणु
+static void ish_wakeup(struct ishtp_device *dev)
+{
 	/* Set dma enable bit */
-	ish_reg_ग_लिखो(dev, IPC_REG_ISH_RMP2, IPC_RMP2_DMA_ENABLED);
+	ish_reg_write(dev, IPC_REG_ISH_RMP2, IPC_RMP2_DMA_ENABLED);
 
 	/*
-	 * Send 0 IPC message so that ISH FW wakes up अगर it was alपढ़ोy
+	 * Send 0 IPC message so that ISH FW wakes up if it was already
 	 * asleep.
 	 */
-	ish_reg_ग_लिखो(dev, IPC_REG_HOST2ISH_DRBL, IPC_DRBL_BUSY_BIT);
+	ish_reg_write(dev, IPC_REG_HOST2ISH_DRBL, IPC_DRBL_BUSY_BIT);
 
-	/* Flush ग_लिखोs to करोorbell and REMAP2 */
-	ish_reg_पढ़ो(dev, IPC_REG_ISH_HOST_FWSTS);
-पूर्ण
+	/* Flush writes to doorbell and REMAP2 */
+	ish_reg_read(dev, IPC_REG_ISH_HOST_FWSTS);
+}
 
 /**
  * _ish_hw_reset() - HW reset
- * @dev: ishtp device poपूर्णांकer
+ * @dev: ishtp device pointer
  *
- * Reset ISH HW to recover अगर any error
+ * Reset ISH HW to recover if any error
  *
- * Return: 0 क्रम success अन्यथा error fault code
+ * Return: 0 for success else error fault code
  */
-अटल पूर्णांक _ish_hw_reset(काष्ठा ishtp_device *dev)
-अणु
-	काष्ठा pci_dev *pdev = dev->pdev;
-	पूर्णांक	rv;
-	uपूर्णांक16_t csr;
+static int _ish_hw_reset(struct ishtp_device *dev)
+{
+	struct pci_dev *pdev = dev->pdev;
+	int	rv;
+	uint16_t csr;
 
-	अगर (!pdev)
-		वापस	-ENODEV;
+	if (!pdev)
+		return	-ENODEV;
 
 	rv = pci_reset_function(pdev);
-	अगर (!rv)
+	if (!rv)
 		dev->dev_state = ISHTP_DEV_RESETTING;
 
-	अगर (!pdev->pm_cap) अणु
+	if (!pdev->pm_cap) {
 		dev_err(&pdev->dev, "Can't reset - no PM caps\n");
-		वापस	-EINVAL;
-	पूर्ण
+		return	-EINVAL;
+	}
 
 	/* Disable dma communication between FW and host */
-	अगर (ish_disable_dma(dev)) अणु
+	if (ish_disable_dma(dev)) {
 		dev_err(&pdev->dev,
 			"Can't reset - stuck with DMA in-progress\n");
-		वापस	-EBUSY;
-	पूर्ण
+		return	-EBUSY;
+	}
 
-	pci_पढ़ो_config_word(pdev, pdev->pm_cap + PCI_PM_CTRL, &csr);
+	pci_read_config_word(pdev, pdev->pm_cap + PCI_PM_CTRL, &csr);
 
 	csr &= ~PCI_PM_CTRL_STATE_MASK;
 	csr |= PCI_D3hot;
-	pci_ग_लिखो_config_word(pdev, pdev->pm_cap + PCI_PM_CTRL, csr);
+	pci_write_config_word(pdev, pdev->pm_cap + PCI_PM_CTRL, csr);
 
 	mdelay(pdev->d3hot_delay);
 
 	csr &= ~PCI_PM_CTRL_STATE_MASK;
 	csr |= PCI_D0;
-	pci_ग_लिखो_config_word(pdev, pdev->pm_cap + PCI_PM_CTRL, csr);
+	pci_write_config_word(pdev, pdev->pm_cap + PCI_PM_CTRL, csr);
 
 	/* Now we can enable ISH DMA operation and wakeup ISHFW */
 	ish_wakeup(dev);
 
-	वापस	0;
-पूर्ण
+	return	0;
+}
 
 /**
  * _ish_ipc_reset() - IPC reset
- * @dev: ishtp device poपूर्णांकer
+ * @dev: ishtp device pointer
  *
  * Resets host and fw IPC and upper layers
  *
- * Return: 0 क्रम success अन्यथा error fault code
+ * Return: 0 for success else error fault code
  */
-अटल पूर्णांक _ish_ipc_reset(काष्ठा ishtp_device *dev)
-अणु
-	काष्ठा ipc_rst_payload_type ipc_mng_msg;
-	पूर्णांक	rv = 0;
+static int _ish_ipc_reset(struct ishtp_device *dev)
+{
+	struct ipc_rst_payload_type ipc_mng_msg;
+	int	rv = 0;
 
 	ipc_mng_msg.reset_id = 1;
 	ipc_mng_msg.reserved = 0;
 
-	set_host_पढ़ोy(dev);
+	set_host_ready(dev);
 
-	/* Clear the incoming करोorbell */
-	ish_reg_ग_लिखो(dev, IPC_REG_ISH2HOST_DRBL, 0);
-	/* Flush ग_लिखो to करोorbell */
-	ish_reg_पढ़ो(dev, IPC_REG_ISH_HOST_FWSTS);
+	/* Clear the incoming doorbell */
+	ish_reg_write(dev, IPC_REG_ISH2HOST_DRBL, 0);
+	/* Flush write to doorbell */
+	ish_reg_read(dev, IPC_REG_ISH_HOST_FWSTS);
 
-	dev->recvd_hw_पढ़ोy = 0;
+	dev->recvd_hw_ready = 0;
 
 	/* send message */
 	rv = ipc_send_mng_msg(dev, MNG_RESET_NOTIFY, &ipc_mng_msg,
-		माप(काष्ठा ipc_rst_payload_type));
-	अगर (rv) अणु
+		sizeof(struct ipc_rst_payload_type));
+	if (rv) {
 		dev_err(dev->devc, "Failed to send IPC MNG_RESET_NOTIFY\n");
-		वापस	rv;
-	पूर्ण
+		return	rv;
+	}
 
-	रुको_event_पूर्णांकerruptible_समयout(dev->रुको_hw_पढ़ोy,
-					 dev->recvd_hw_पढ़ोy, 2 * HZ);
-	अगर (!dev->recvd_hw_पढ़ोy) अणु
+	wait_event_interruptible_timeout(dev->wait_hw_ready,
+					 dev->recvd_hw_ready, 2 * HZ);
+	if (!dev->recvd_hw_ready) {
 		dev_err(dev->devc, "Timed out waiting for HW ready\n");
 		rv = -ENODEV;
-	पूर्ण
+	}
 
-	वापस rv;
-पूर्ण
+	return rv;
+}
 
 /**
  * ish_hw_start() -Start ISH HW
- * @dev: ishtp device poपूर्णांकer
+ * @dev: ishtp device pointer
  *
- * Set host to पढ़ोy state and रुको क्रम FW reset
+ * Set host to ready state and wait for FW reset
  *
- * Return: 0 क्रम success अन्यथा error fault code
+ * Return: 0 for success else error fault code
  */
-पूर्णांक ish_hw_start(काष्ठा ishtp_device *dev)
-अणु
+int ish_hw_start(struct ishtp_device *dev)
+{
 	ish_set_host_rdy(dev);
 
-	set_host_पढ़ोy(dev);
+	set_host_ready(dev);
 
 	/* After that we can enable ISH DMA operation and wakeup ISHFW */
 	ish_wakeup(dev);
 
-	/* रुको क्रम FW-initiated reset flow */
-	अगर (!dev->recvd_hw_पढ़ोy)
-		रुको_event_पूर्णांकerruptible_समयout(dev->रुको_hw_पढ़ोy,
-						 dev->recvd_hw_पढ़ोy,
+	/* wait for FW-initiated reset flow */
+	if (!dev->recvd_hw_ready)
+		wait_event_interruptible_timeout(dev->wait_hw_ready,
+						 dev->recvd_hw_ready,
 						 10 * HZ);
 
-	अगर (!dev->recvd_hw_पढ़ोy) अणु
+	if (!dev->recvd_hw_ready) {
 		dev_err(dev->devc,
 			"[ishtp-ish]: Timed out waiting for FW-initiated reset\n");
-		वापस	-ENODEV;
-	पूर्ण
+		return	-ENODEV;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * ish_ipc_get_header() -Get करोorbell value
- * @dev: ishtp device poपूर्णांकer
+ * ish_ipc_get_header() -Get doorbell value
+ * @dev: ishtp device pointer
  * @length: length of message
  * @busy: busy status
  *
- * Get करोor bell value from message header
+ * Get door bell value from message header
  *
- * Return: करोor bell value
+ * Return: door bell value
  */
-अटल uपूर्णांक32_t ish_ipc_get_header(काष्ठा ishtp_device *dev, पूर्णांक length,
-				   पूर्णांक busy)
-अणु
-	uपूर्णांक32_t drbl_val;
+static uint32_t ish_ipc_get_header(struct ishtp_device *dev, int length,
+				   int busy)
+{
+	uint32_t drbl_val;
 
 	drbl_val = IPC_BUILD_HEADER(length, IPC_PROTOCOL_ISHTP, busy);
 
-	वापस drbl_val;
-पूर्ण
+	return drbl_val;
+}
 
-अटल स्थिर काष्ठा ishtp_hw_ops ish_hw_ops = अणु
+static const struct ishtp_hw_ops ish_hw_ops = {
 	.hw_reset = _ish_hw_reset,
 	.ipc_reset = _ish_ipc_reset,
 	.ipc_get_header = ish_ipc_get_header,
-	.ishtp_पढ़ो = _ishtp_पढ़ो,
-	.ग_लिखो = ग_लिखो_ipc_to_queue,
-	.get_fw_status = _ish_पढ़ो_fw_sts_reg,
-	.sync_fw_घड़ी = _ish_sync_fw_घड़ी,
-	.ishtp_पढ़ो_hdr = _ishtp_पढ़ो_hdr
-पूर्ण;
+	.ishtp_read = _ishtp_read,
+	.write = write_ipc_to_queue,
+	.get_fw_status = _ish_read_fw_sts_reg,
+	.sync_fw_clock = _ish_sync_fw_clock,
+	.ishtp_read_hdr = _ishtp_read_hdr
+};
 
 /**
  * ish_dev_init() -Initialize ISH devoce
@@ -907,35 +906,35 @@ eoi:
  *
  * Allocate ISHTP device and initialize IPC processing
  *
- * Return: ISHTP device instance on success अन्यथा शून्य
+ * Return: ISHTP device instance on success else NULL
  */
-काष्ठा ishtp_device *ish_dev_init(काष्ठा pci_dev *pdev)
-अणु
-	काष्ठा ishtp_device *dev;
-	पूर्णांक	i;
+struct ishtp_device *ish_dev_init(struct pci_dev *pdev)
+{
+	struct ishtp_device *dev;
+	int	i;
 
 	dev = devm_kzalloc(&pdev->dev,
-			   माप(काष्ठा ishtp_device) + माप(काष्ठा ish_hw),
+			   sizeof(struct ishtp_device) + sizeof(struct ish_hw),
 			   GFP_KERNEL);
-	अगर (!dev)
-		वापस शून्य;
+	if (!dev)
+		return NULL;
 
 	ishtp_device_init(dev);
 
-	init_रुकोqueue_head(&dev->रुको_hw_पढ़ोy);
+	init_waitqueue_head(&dev->wait_hw_ready);
 
 	spin_lock_init(&dev->wr_processing_spinlock);
 
-	/* Init IPC processing and मुक्त lists */
+	/* Init IPC processing and free lists */
 	INIT_LIST_HEAD(&dev->wr_processing_list);
-	INIT_LIST_HEAD(&dev->wr_मुक्त_list);
-	क्रम (i = 0; i < IPC_TX_FIFO_SIZE; i++) अणु
-		काष्ठा wr_msg_ctl_info	*tx_buf;
+	INIT_LIST_HEAD(&dev->wr_free_list);
+	for (i = 0; i < IPC_TX_FIFO_SIZE; i++) {
+		struct wr_msg_ctl_info	*tx_buf;
 
 		tx_buf = devm_kzalloc(&pdev->dev,
-				      माप(काष्ठा wr_msg_ctl_info),
+				      sizeof(struct wr_msg_ctl_info),
 				      GFP_KERNEL);
-		अगर (!tx_buf) अणु
+		if (!tx_buf) {
 			/*
 			 * IPC buffers may be limited or not available
 			 * at all - although this shouldn't happen
@@ -943,40 +942,40 @@ eoi:
 			dev_err(dev->devc,
 				"[ishtp-ish]: failure in Tx FIFO allocations (%d)\n",
 				i);
-			अवरोध;
-		पूर्ण
-		list_add_tail(&tx_buf->link, &dev->wr_मुक्त_list);
-	पूर्ण
+			break;
+		}
+		list_add_tail(&tx_buf->link, &dev->wr_free_list);
+	}
 
 	dev->ops = &ish_hw_ops;
 	dev->devc = &pdev->dev;
-	dev->mtu = IPC_PAYLOAD_SIZE - माप(काष्ठा ishtp_msg_hdr);
-	वापस dev;
-पूर्ण
+	dev->mtu = IPC_PAYLOAD_SIZE - sizeof(struct ishtp_msg_hdr);
+	return dev;
+}
 
 /**
  * ish_device_disable() - Disable ISH device
- * @dev: ISHTP device poपूर्णांकer
+ * @dev: ISHTP device pointer
  *
- * Disable ISH by clearing host पढ़ोy to inक्रमm firmware.
+ * Disable ISH by clearing host ready to inform firmware.
  */
-व्योम	ish_device_disable(काष्ठा ishtp_device *dev)
-अणु
-	काष्ठा pci_dev *pdev = dev->pdev;
+void	ish_device_disable(struct ishtp_device *dev)
+{
+	struct pci_dev *pdev = dev->pdev;
 
-	अगर (!pdev)
-		वापस;
+	if (!pdev)
+		return;
 
 	/* Disable dma communication between FW and host */
-	अगर (ish_disable_dma(dev)) अणु
+	if (ish_disable_dma(dev)) {
 		dev_err(&pdev->dev,
 			"Can't reset - stuck with DMA in-progress\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	/* Put ISH to D3hot state क्रम घातer saving */
-	pci_set_घातer_state(pdev, PCI_D3hot);
+	/* Put ISH to D3hot state for power saving */
+	pci_set_power_state(pdev, PCI_D3hot);
 
 	dev->dev_state = ISHTP_DEV_DISABLED;
 	ish_clr_host_rdy(dev);
-पूर्ण
+}

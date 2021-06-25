@@ -1,46 +1,45 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * linux/sound/wm8993.h -- Platक्रमm data क्रम WM8993
+ * linux/sound/wm8993.h -- Platform data for WM8993
  *
  * Copyright 2009 Wolfson Microelectronics. PLC.
  */
 
-#अगर_अघोषित __LINUX_SND_WM8993_H
-#घोषणा __LINUX_SND_WM8993_H
+#ifndef __LINUX_SND_WM8993_H
+#define __LINUX_SND_WM8993_H
 
 /* Note that EQ1 only contains the enable/disable bit so will be
-   ignored but is included क्रम simplicity.
+   ignored but is included for simplicity.
  */
-काष्ठा wm8993_retune_mobile_setting अणु
-	स्थिर अक्षर *name;
-	अचिन्हित पूर्णांक rate;
+struct wm8993_retune_mobile_setting {
+	const char *name;
+	unsigned int rate;
 	u16 config[24];
-पूर्ण;
+};
 
-काष्ठा wm8993_platक्रमm_data अणु
-	काष्ठा wm8993_retune_mobile_setting *retune_configs;
-	पूर्णांक num_retune_configs;
+struct wm8993_platform_data {
+	struct wm8993_retune_mobile_setting *retune_configs;
+	int num_retune_configs;
 
-	/* LINEOUT can be dअगरferential or single ended */
-	अचिन्हित पूर्णांक lineout1_dअगरf:1;
-	अचिन्हित पूर्णांक lineout2_dअगरf:1;
+	/* LINEOUT can be differential or single ended */
+	unsigned int lineout1_diff:1;
+	unsigned int lineout2_diff:1;
 
 	/* Common mode feedback */
-	अचिन्हित पूर्णांक lineout1fb:1;
-	अचिन्हित पूर्णांक lineout2fb:1;
+	unsigned int lineout1fb:1;
+	unsigned int lineout2fb:1;
 
-	/* Delay to add क्रम microphones to stabalise after घातer up */
-	पूर्णांक micbias1_delay;
-	पूर्णांक micbias2_delay;
+	/* Delay to add for microphones to stabalise after power up */
+	int micbias1_delay;
+	int micbias2_delay;
 
 	/* Microphone biases: 0=0.9*AVDD1 1=0.65*AVVD1 */
-	अचिन्हित पूर्णांक micbias1_lvl:1;
-	अचिन्हित पूर्णांक micbias2_lvl:1;
+	unsigned int micbias1_lvl:1;
+	unsigned int micbias2_lvl:1;
 
-	/* Jack detect threshold levels, see datasheet क्रम values */
-	अचिन्हित पूर्णांक jd_scthr:2;
-	अचिन्हित पूर्णांक jd_thr:2;
-पूर्ण;
+	/* Jack detect threshold levels, see datasheet for values */
+	unsigned int jd_scthr:2;
+	unsigned int jd_thr:2;
+};
 
-#पूर्ण_अगर
+#endif

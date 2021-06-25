@@ -1,15 +1,14 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अघोषित TRACE_SYSTEM
-#घोषणा TRACE_SYSTEM tlb
+/* SPDX-License-Identifier: GPL-2.0 */
+#undef TRACE_SYSTEM
+#define TRACE_SYSTEM tlb
 
-#अगर !defined(_TRACE_TLB_H) || defined(TRACE_HEADER_MULTI_READ)
-#घोषणा _TRACE_TLB_H
+#if !defined(_TRACE_TLB_H) || defined(TRACE_HEADER_MULTI_READ)
+#define _TRACE_TLB_H
 
-#समावेश <linux/mm_types.h>
-#समावेश <linux/tracepoपूर्णांक.h>
+#include <linux/mm_types.h>
+#include <linux/tracepoint.h>
 
-#घोषणा TLB_FLUSH_REASON						\
+#define TLB_FLUSH_REASON						\
 	EM(  TLB_FLUSH_ON_TASK_SWITCH,	"flush on task switch" )	\
 	EM(  TLB_REMOTE_SHOOTDOWN,	"remote shootdown" )		\
 	EM(  TLB_LOCAL_SHOOTDOWN,	"local shootdown" )		\
@@ -17,33 +16,33 @@
 	EMe( TLB_REMOTE_SEND_IPI,	"remote ipi send" )
 
 /*
- * First define the क्रमागतs in TLB_FLUSH_REASON to be exported to userspace
+ * First define the enums in TLB_FLUSH_REASON to be exported to userspace
  * via TRACE_DEFINE_ENUM().
  */
-#अघोषित EM
-#अघोषित EMe
-#घोषणा EM(a,b)		TRACE_DEFINE_ENUM(a);
-#घोषणा EMe(a,b)	TRACE_DEFINE_ENUM(a);
+#undef EM
+#undef EMe
+#define EM(a,b)		TRACE_DEFINE_ENUM(a);
+#define EMe(a,b)	TRACE_DEFINE_ENUM(a);
 
 TLB_FLUSH_REASON
 
 /*
- * Now redefine the EM() and EMe() macros to map the क्रमागतs to the strings
- * that will be prपूर्णांकed in the output.
+ * Now redefine the EM() and EMe() macros to map the enums to the strings
+ * that will be printed in the output.
  */
-#अघोषित EM
-#अघोषित EMe
-#घोषणा EM(a,b)		अणु a, b पूर्ण,
-#घोषणा EMe(a,b)	अणु a, b पूर्ण
+#undef EM
+#undef EMe
+#define EM(a,b)		{ a, b },
+#define EMe(a,b)	{ a, b }
 
 TRACE_EVENT(tlb_flush,
 
-	TP_PROTO(पूर्णांक reason, अचिन्हित दीर्घ pages),
+	TP_PROTO(int reason, unsigned long pages),
 	TP_ARGS(reason, pages),
 
 	TP_STRUCT__entry(
-		__field(	  पूर्णांक, reason)
-		__field(अचिन्हित दीर्घ,  pages)
+		__field(	  int, reason)
+		__field(unsigned long,  pages)
 	),
 
 	TP_fast_assign(
@@ -51,13 +50,13 @@ TRACE_EVENT(tlb_flush,
 		__entry->pages  = pages;
 	),
 
-	TP_prपूर्णांकk("pages:%ld reason:%s (%d)",
+	TP_printk("pages:%ld reason:%s (%d)",
 		__entry->pages,
-		__prपूर्णांक_symbolic(__entry->reason, TLB_FLUSH_REASON),
+		__print_symbolic(__entry->reason, TLB_FLUSH_REASON),
 		__entry->reason)
 );
 
-#पूर्ण_अगर /* _TRACE_TLB_H */
+#endif /* _TRACE_TLB_H */
 
 /* This part must be outside protection */
-#समावेश <trace/define_trace.h>
+#include <trace/define_trace.h>

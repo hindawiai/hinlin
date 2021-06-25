@@ -1,19 +1,18 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  *	linux/arch/alpha/kernel/es1888.c
  *
  * Init the built-in ES1888 sound chip (SB16 compatible)
  */
 
-#समावेश <linux/init.h>
-#समावेश <यंत्र/पन.स>
-#समावेश "proto.h"
+#include <linux/init.h>
+#include <asm/io.h>
+#include "proto.h"
 
-व्योम __init
-es1888_init(व्योम)
-अणु
-	/* Sequence of IO पढ़ोs to init the audio controller */
+void __init
+es1888_init(void)
+{
+	/* Sequence of IO reads to init the audio controller */
 	inb(0x0229);
 	inb(0x0229);
 	inb(0x0229);
@@ -28,24 +27,24 @@ es1888_init(व्योम)
 
 	/* Sequence to set DMA channels */
 	outb(0x01, 0x0226);		/* reset */
-	inb(0x0226);			/* छोड़ो */
+	inb(0x0226);			/* pause */
 	outb(0x00, 0x0226);		/* release reset */
-	जबतक (!(inb(0x022e) & 0x80))	/* रुको क्रम bit 7 to निश्चित*/
-		जारी;
-	inb(0x022a);			/* छोड़ो */
+	while (!(inb(0x022e) & 0x80))	/* wait for bit 7 to assert*/
+		continue;
+	inb(0x022a);			/* pause */
 	outb(0xc6, 0x022c);		/* enable extended mode */
-	inb(0x022a);			/* छोड़ो, also क्रमces the ग_लिखो */
-	जबतक (inb(0x022c) & 0x80)	/* रुको क्रम bit 7 to deनिश्चित */
-		जारी;
-	outb(0xb1, 0x022c);		/* setup क्रम ग_लिखो to Interrupt CR */
-	जबतक (inb(0x022c) & 0x80)	/* रुको क्रम bit 7 to deनिश्चित */
-		जारी;
+	inb(0x022a);			/* pause, also forces the write */
+	while (inb(0x022c) & 0x80)	/* wait for bit 7 to deassert */
+		continue;
+	outb(0xb1, 0x022c);		/* setup for write to Interrupt CR */
+	while (inb(0x022c) & 0x80)	/* wait for bit 7 to deassert */
+		continue;
 	outb(0x14, 0x022c);		/* set IRQ 5 */
-	जबतक (inb(0x022c) & 0x80)	/* रुको क्रम bit 7 to deनिश्चित */
-		जारी;
-	outb(0xb2, 0x022c);		/* setup क्रम ग_लिखो to DMA CR */
-	जबतक (inb(0x022c) & 0x80)	/* रुको क्रम bit 7 to deनिश्चित */
-		जारी;
+	while (inb(0x022c) & 0x80)	/* wait for bit 7 to deassert */
+		continue;
+	outb(0xb2, 0x022c);		/* setup for write to DMA CR */
+	while (inb(0x022c) & 0x80)	/* wait for bit 7 to deassert */
+		continue;
 	outb(0x18, 0x022c);		/* set DMA channel 1 */
-	inb(0x022c);			/* क्रमce the ग_लिखो */
-पूर्ण
+	inb(0x022c);			/* force the write */
+}

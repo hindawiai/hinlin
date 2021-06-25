@@ -1,9 +1,8 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * drivers/media/i2c/ad5820.c
  *
- * AD5820 DAC driver क्रम camera voice coil focus.
+ * AD5820 DAC driver for camera voice coil focus.
  *
  * Copyright (C) 2008 Nokia Corporation
  * Copyright (C) 2007 Texas Instruments
@@ -15,55 +14,55 @@
  * Based on af_d88.c by Texas Instruments.
  */
 
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/i2c.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/regulator/consumer.h>
-#समावेश <linux/gpio/consumer.h>
+#include <linux/errno.h>
+#include <linux/i2c.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/regulator/consumer.h>
+#include <linux/gpio/consumer.h>
 
-#समावेश <media/v4l2-ctrls.h>
-#समावेश <media/v4l2-device.h>
-#समावेश <media/v4l2-subdev.h>
+#include <media/v4l2-ctrls.h>
+#include <media/v4l2-device.h>
+#include <media/v4l2-subdev.h>
 
 /* Register definitions */
-#घोषणा AD5820_POWER_DOWN		(1 << 15)
-#घोषणा AD5820_DAC_SHIFT		4
-#घोषणा AD5820_RAMP_MODE_LINEAR		(0 << 3)
-#घोषणा AD5820_RAMP_MODE_64_16		(1 << 3)
+#define AD5820_POWER_DOWN		(1 << 15)
+#define AD5820_DAC_SHIFT		4
+#define AD5820_RAMP_MODE_LINEAR		(0 << 3)
+#define AD5820_RAMP_MODE_64_16		(1 << 3)
 
-#घोषणा CODE_TO_RAMP_US(s)	((s) == 0 ? 0 : (1 << ((s) - 1)) * 50)
-#घोषणा RAMP_US_TO_CODE(c)	fls(((c) + ((c)>>1)) / 50)
+#define CODE_TO_RAMP_US(s)	((s) == 0 ? 0 : (1 << ((s) - 1)) * 50)
+#define RAMP_US_TO_CODE(c)	fls(((c) + ((c)>>1)) / 50)
 
-#घोषणा to_ad5820_device(sd)	container_of(sd, काष्ठा ad5820_device, subdev)
+#define to_ad5820_device(sd)	container_of(sd, struct ad5820_device, subdev)
 
-काष्ठा ad5820_device अणु
-	काष्ठा v4l2_subdev subdev;
-	काष्ठा ad5820_platक्रमm_data *platक्रमm_data;
-	काष्ठा regulator *vana;
+struct ad5820_device {
+	struct v4l2_subdev subdev;
+	struct ad5820_platform_data *platform_data;
+	struct regulator *vana;
 
-	काष्ठा v4l2_ctrl_handler ctrls;
-	u32 focus_असलolute;
-	u32 focus_ramp_समय;
+	struct v4l2_ctrl_handler ctrls;
+	u32 focus_absolute;
+	u32 focus_ramp_time;
 	u32 focus_ramp_mode;
 
-	काष्ठा gpio_desc *enable_gpio;
+	struct gpio_desc *enable_gpio;
 
-	काष्ठा mutex घातer_lock;
-	पूर्णांक घातer_count;
+	struct mutex power_lock;
+	int power_count;
 
 	bool standby;
-पूर्ण;
+};
 
-अटल पूर्णांक ad5820_ग_लिखो(काष्ठा ad5820_device *coil, u16 data)
-अणु
-	काष्ठा i2c_client *client = v4l2_get_subdevdata(&coil->subdev);
-	काष्ठा i2c_msg msg;
+static int ad5820_write(struct ad5820_device *coil, u16 data)
+{
+	struct i2c_client *client = v4l2_get_subdevdata(&coil->subdev);
+	struct i2c_msg msg;
 	__be16 be_data;
-	पूर्णांक r;
+	int r;
 
-	अगर (!client->adapter)
-		वापस -ENODEV;
+	if (!client->adapter)
+		return -ENODEV;
 
 	be_data = cpu_to_be16(data);
 	msg.addr  = client->addr;
@@ -72,317 +71,317 @@
 	msg.buf   = (u8 *)&be_data;
 
 	r = i2c_transfer(client->adapter, &msg, 1);
-	अगर (r < 0) अणु
+	if (r < 0) {
 		dev_err(&client->dev, "write failed, error %d\n", r);
-		वापस r;
-	पूर्ण
+		return r;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Calculate status word and ग_लिखो it to the device based on current
+ * Calculate status word and write it to the device based on current
  * values of V4L2 controls. It is assumed that the stored V4L2 control
  * values are properly limited and rounded.
  */
-अटल पूर्णांक ad5820_update_hw(काष्ठा ad5820_device *coil)
-अणु
+static int ad5820_update_hw(struct ad5820_device *coil)
+{
 	u16 status;
 
-	status = RAMP_US_TO_CODE(coil->focus_ramp_समय);
+	status = RAMP_US_TO_CODE(coil->focus_ramp_time);
 	status |= coil->focus_ramp_mode
 		? AD5820_RAMP_MODE_64_16 : AD5820_RAMP_MODE_LINEAR;
-	status |= coil->focus_असलolute << AD5820_DAC_SHIFT;
+	status |= coil->focus_absolute << AD5820_DAC_SHIFT;
 
-	अगर (coil->standby)
+	if (coil->standby)
 		status |= AD5820_POWER_DOWN;
 
-	वापस ad5820_ग_लिखो(coil, status);
-पूर्ण
+	return ad5820_write(coil, status);
+}
 
 /*
  * Power handling
  */
-अटल पूर्णांक ad5820_घातer_off(काष्ठा ad5820_device *coil, bool standby)
-अणु
-	पूर्णांक ret = 0, ret2;
+static int ad5820_power_off(struct ad5820_device *coil, bool standby)
+{
+	int ret = 0, ret2;
 
 	/*
-	 * Go to standby first as real घातer off my be denied by the hardware
-	 * (single घातer line control क्रम both coil and sensor).
+	 * Go to standby first as real power off my be denied by the hardware
+	 * (single power line control for both coil and sensor).
 	 */
-	अगर (standby) अणु
+	if (standby) {
 		coil->standby = true;
 		ret = ad5820_update_hw(coil);
-	पूर्ण
+	}
 
 	gpiod_set_value_cansleep(coil->enable_gpio, 0);
 
 	ret2 = regulator_disable(coil->vana);
-	अगर (ret)
-		वापस ret;
-	वापस ret2;
-पूर्ण
+	if (ret)
+		return ret;
+	return ret2;
+}
 
-अटल पूर्णांक ad5820_घातer_on(काष्ठा ad5820_device *coil, bool restore)
-अणु
-	पूर्णांक ret;
+static int ad5820_power_on(struct ad5820_device *coil, bool restore)
+{
+	int ret;
 
 	ret = regulator_enable(coil->vana);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	gpiod_set_value_cansleep(coil->enable_gpio, 1);
 
-	अगर (restore) अणु
+	if (restore) {
 		/* Restore the hardware settings. */
 		coil->standby = false;
 		ret = ad5820_update_hw(coil);
-		अगर (ret)
-			जाओ fail;
-	पूर्ण
-	वापस 0;
+		if (ret)
+			goto fail;
+	}
+	return 0;
 
 fail:
 	gpiod_set_value_cansleep(coil->enable_gpio, 0);
 	coil->standby = true;
 	regulator_disable(coil->vana);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
  * V4L2 controls
  */
-अटल पूर्णांक ad5820_set_ctrl(काष्ठा v4l2_ctrl *ctrl)
-अणु
-	काष्ठा ad5820_device *coil =
-		container_of(ctrl->handler, काष्ठा ad5820_device, ctrls);
+static int ad5820_set_ctrl(struct v4l2_ctrl *ctrl)
+{
+	struct ad5820_device *coil =
+		container_of(ctrl->handler, struct ad5820_device, ctrls);
 
-	चयन (ctrl->id) अणु
-	हाल V4L2_CID_FOCUS_ABSOLUTE:
-		coil->focus_असलolute = ctrl->val;
-		वापस ad5820_update_hw(coil);
-	पूर्ण
+	switch (ctrl->id) {
+	case V4L2_CID_FOCUS_ABSOLUTE:
+		coil->focus_absolute = ctrl->val;
+		return ad5820_update_hw(coil);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा v4l2_ctrl_ops ad5820_ctrl_ops = अणु
+static const struct v4l2_ctrl_ops ad5820_ctrl_ops = {
 	.s_ctrl = ad5820_set_ctrl,
-पूर्ण;
+};
 
 
-अटल पूर्णांक ad5820_init_controls(काष्ठा ad5820_device *coil)
-अणु
+static int ad5820_init_controls(struct ad5820_device *coil)
+{
 	v4l2_ctrl_handler_init(&coil->ctrls, 1);
 
 	/*
 	 * V4L2_CID_FOCUS_ABSOLUTE
 	 *
 	 * Minimum current is 0 mA, maximum is 100 mA. Thus, 1 code is
-	 * equivalent to 100/1023 = 0.0978 mA. Nevertheless, we करो not use [mA]
-	 * क्रम focus position, because it is meaningless क्रम user. Meaningful
+	 * equivalent to 100/1023 = 0.0978 mA. Nevertheless, we do not use [mA]
+	 * for focus position, because it is meaningless for user. Meaningful
 	 * would be to use focus distance or even its inverse, but since the
-	 * driver करोesn't have sufficiently knowledge to करो the conversion, we
-	 * will just use असलtract codes here. In any हाल, smaller value = focus
-	 * position farther from camera. The शेष zero value means focus at
+	 * driver doesn't have sufficiently knowledge to do the conversion, we
+	 * will just use abstract codes here. In any case, smaller value = focus
+	 * position farther from camera. The default zero value means focus at
 	 * infinity, and also least current consumption.
 	 */
 	v4l2_ctrl_new_std(&coil->ctrls, &ad5820_ctrl_ops,
 			  V4L2_CID_FOCUS_ABSOLUTE, 0, 1023, 1, 0);
 
-	अगर (coil->ctrls.error)
-		वापस coil->ctrls.error;
+	if (coil->ctrls.error)
+		return coil->ctrls.error;
 
-	coil->focus_असलolute = 0;
-	coil->focus_ramp_समय = 0;
+	coil->focus_absolute = 0;
+	coil->focus_ramp_time = 0;
 	coil->focus_ramp_mode = 0;
 
 	coil->subdev.ctrl_handler = &coil->ctrls;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * V4L2 subdev operations
  */
-अटल पूर्णांक ad5820_रेजिस्टरed(काष्ठा v4l2_subdev *subdev)
-अणु
-	काष्ठा ad5820_device *coil = to_ad5820_device(subdev);
+static int ad5820_registered(struct v4l2_subdev *subdev)
+{
+	struct ad5820_device *coil = to_ad5820_device(subdev);
 
-	वापस ad5820_init_controls(coil);
-पूर्ण
+	return ad5820_init_controls(coil);
+}
 
-अटल पूर्णांक
-ad5820_set_घातer(काष्ठा v4l2_subdev *subdev, पूर्णांक on)
-अणु
-	काष्ठा ad5820_device *coil = to_ad5820_device(subdev);
-	पूर्णांक ret = 0;
+static int
+ad5820_set_power(struct v4l2_subdev *subdev, int on)
+{
+	struct ad5820_device *coil = to_ad5820_device(subdev);
+	int ret = 0;
 
-	mutex_lock(&coil->घातer_lock);
+	mutex_lock(&coil->power_lock);
 
 	/*
-	 * If the घातer count is modअगरied from 0 to != 0 or from != 0 to 0,
-	 * update the घातer state.
+	 * If the power count is modified from 0 to != 0 or from != 0 to 0,
+	 * update the power state.
 	 */
-	अगर (coil->घातer_count == !on) अणु
-		ret = on ? ad5820_घातer_on(coil, true) :
-			ad5820_घातer_off(coil, true);
-		अगर (ret < 0)
-			जाओ करोne;
-	पूर्ण
+	if (coil->power_count == !on) {
+		ret = on ? ad5820_power_on(coil, true) :
+			ad5820_power_off(coil, true);
+		if (ret < 0)
+			goto done;
+	}
 
-	/* Update the घातer count. */
-	coil->घातer_count += on ? 1 : -1;
-	WARN_ON(coil->घातer_count < 0);
+	/* Update the power count. */
+	coil->power_count += on ? 1 : -1;
+	WARN_ON(coil->power_count < 0);
 
-करोne:
-	mutex_unlock(&coil->घातer_lock);
-	वापस ret;
-पूर्ण
+done:
+	mutex_unlock(&coil->power_lock);
+	return ret;
+}
 
-अटल पूर्णांक ad5820_खोलो(काष्ठा v4l2_subdev *sd, काष्ठा v4l2_subdev_fh *fh)
-अणु
-	वापस ad5820_set_घातer(sd, 1);
-पूर्ण
+static int ad5820_open(struct v4l2_subdev *sd, struct v4l2_subdev_fh *fh)
+{
+	return ad5820_set_power(sd, 1);
+}
 
-अटल पूर्णांक ad5820_बंद(काष्ठा v4l2_subdev *sd, काष्ठा v4l2_subdev_fh *fh)
-अणु
-	वापस ad5820_set_घातer(sd, 0);
-पूर्ण
+static int ad5820_close(struct v4l2_subdev *sd, struct v4l2_subdev_fh *fh)
+{
+	return ad5820_set_power(sd, 0);
+}
 
-अटल स्थिर काष्ठा v4l2_subdev_core_ops ad5820_core_ops = अणु
-	.s_घातer = ad5820_set_घातer,
-पूर्ण;
+static const struct v4l2_subdev_core_ops ad5820_core_ops = {
+	.s_power = ad5820_set_power,
+};
 
-अटल स्थिर काष्ठा v4l2_subdev_ops ad5820_ops = अणु
+static const struct v4l2_subdev_ops ad5820_ops = {
 	.core = &ad5820_core_ops,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा v4l2_subdev_पूर्णांकernal_ops ad5820_पूर्णांकernal_ops = अणु
-	.रेजिस्टरed = ad5820_रेजिस्टरed,
-	.खोलो = ad5820_खोलो,
-	.बंद = ad5820_बंद,
-पूर्ण;
+static const struct v4l2_subdev_internal_ops ad5820_internal_ops = {
+	.registered = ad5820_registered,
+	.open = ad5820_open,
+	.close = ad5820_close,
+};
 
 /*
  * I2C driver
  */
-अटल पूर्णांक __maybe_unused ad5820_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा v4l2_subdev *subdev = dev_get_drvdata(dev);
-	काष्ठा ad5820_device *coil = to_ad5820_device(subdev);
+static int __maybe_unused ad5820_suspend(struct device *dev)
+{
+	struct v4l2_subdev *subdev = dev_get_drvdata(dev);
+	struct ad5820_device *coil = to_ad5820_device(subdev);
 
-	अगर (!coil->घातer_count)
-		वापस 0;
+	if (!coil->power_count)
+		return 0;
 
-	वापस ad5820_घातer_off(coil, false);
-पूर्ण
+	return ad5820_power_off(coil, false);
+}
 
-अटल पूर्णांक __maybe_unused ad5820_resume(काष्ठा device *dev)
-अणु
-	काष्ठा v4l2_subdev *subdev = dev_get_drvdata(dev);
-	काष्ठा ad5820_device *coil = to_ad5820_device(subdev);
+static int __maybe_unused ad5820_resume(struct device *dev)
+{
+	struct v4l2_subdev *subdev = dev_get_drvdata(dev);
+	struct ad5820_device *coil = to_ad5820_device(subdev);
 
-	अगर (!coil->घातer_count)
-		वापस 0;
+	if (!coil->power_count)
+		return 0;
 
-	वापस ad5820_घातer_on(coil, true);
-पूर्ण
+	return ad5820_power_on(coil, true);
+}
 
-अटल पूर्णांक ad5820_probe(काष्ठा i2c_client *client,
-			स्थिर काष्ठा i2c_device_id *devid)
-अणु
-	काष्ठा ad5820_device *coil;
-	पूर्णांक ret;
+static int ad5820_probe(struct i2c_client *client,
+			const struct i2c_device_id *devid)
+{
+	struct ad5820_device *coil;
+	int ret;
 
-	coil = devm_kzalloc(&client->dev, माप(*coil), GFP_KERNEL);
-	अगर (!coil)
-		वापस -ENOMEM;
+	coil = devm_kzalloc(&client->dev, sizeof(*coil), GFP_KERNEL);
+	if (!coil)
+		return -ENOMEM;
 
 	coil->vana = devm_regulator_get(&client->dev, "VANA");
-	अगर (IS_ERR(coil->vana)) अणु
+	if (IS_ERR(coil->vana)) {
 		ret = PTR_ERR(coil->vana);
-		अगर (ret != -EPROBE_DEFER)
+		if (ret != -EPROBE_DEFER)
 			dev_err(&client->dev, "could not get regulator for vana\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	coil->enable_gpio = devm_gpiod_get_optional(&client->dev, "enable",
 						    GPIOD_OUT_LOW);
-	अगर (IS_ERR(coil->enable_gpio)) अणु
+	if (IS_ERR(coil->enable_gpio)) {
 		ret = PTR_ERR(coil->enable_gpio);
-		अगर (ret != -EPROBE_DEFER)
+		if (ret != -EPROBE_DEFER)
 			dev_err(&client->dev, "could not get enable gpio\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	mutex_init(&coil->घातer_lock);
+	mutex_init(&coil->power_lock);
 
 	v4l2_i2c_subdev_init(&coil->subdev, client, &ad5820_ops);
 	coil->subdev.flags |= V4L2_SUBDEV_FL_HAS_DEVNODE;
-	coil->subdev.पूर्णांकernal_ops = &ad5820_पूर्णांकernal_ops;
+	coil->subdev.internal_ops = &ad5820_internal_ops;
 	coil->subdev.entity.function = MEDIA_ENT_F_LENS;
-	strscpy(coil->subdev.name, "ad5820 focus", माप(coil->subdev.name));
+	strscpy(coil->subdev.name, "ad5820 focus", sizeof(coil->subdev.name));
 
-	ret = media_entity_pads_init(&coil->subdev.entity, 0, शून्य);
-	अगर (ret < 0)
-		जाओ cleanup2;
+	ret = media_entity_pads_init(&coil->subdev.entity, 0, NULL);
+	if (ret < 0)
+		goto cleanup2;
 
-	ret = v4l2_async_रेजिस्टर_subdev(&coil->subdev);
-	अगर (ret < 0)
-		जाओ cleanup;
+	ret = v4l2_async_register_subdev(&coil->subdev);
+	if (ret < 0)
+		goto cleanup;
 
-	वापस ret;
+	return ret;
 
 cleanup2:
-	mutex_destroy(&coil->घातer_lock);
+	mutex_destroy(&coil->power_lock);
 cleanup:
 	media_entity_cleanup(&coil->subdev.entity);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक ad5820_हटाओ(काष्ठा i2c_client *client)
-अणु
-	काष्ठा v4l2_subdev *subdev = i2c_get_clientdata(client);
-	काष्ठा ad5820_device *coil = to_ad5820_device(subdev);
+static int ad5820_remove(struct i2c_client *client)
+{
+	struct v4l2_subdev *subdev = i2c_get_clientdata(client);
+	struct ad5820_device *coil = to_ad5820_device(subdev);
 
-	v4l2_async_unरेजिस्टर_subdev(&coil->subdev);
-	v4l2_ctrl_handler_मुक्त(&coil->ctrls);
+	v4l2_async_unregister_subdev(&coil->subdev);
+	v4l2_ctrl_handler_free(&coil->ctrls);
 	media_entity_cleanup(&coil->subdev.entity);
-	mutex_destroy(&coil->घातer_lock);
-	वापस 0;
-पूर्ण
+	mutex_destroy(&coil->power_lock);
+	return 0;
+}
 
-अटल स्थिर काष्ठा i2c_device_id ad5820_id_table[] = अणु
-	अणु "ad5820", 0 पूर्ण,
-	अणु "ad5821", 0 पूर्ण,
-	अणु "ad5823", 0 पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct i2c_device_id ad5820_id_table[] = {
+	{ "ad5820", 0 },
+	{ "ad5821", 0 },
+	{ "ad5823", 0 },
+	{ }
+};
 MODULE_DEVICE_TABLE(i2c, ad5820_id_table);
 
-अटल स्थिर काष्ठा of_device_id ad5820_of_table[] = अणु
-	अणु .compatible = "adi,ad5820" पूर्ण,
-	अणु .compatible = "adi,ad5821" पूर्ण,
-	अणु .compatible = "adi,ad5823" पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct of_device_id ad5820_of_table[] = {
+	{ .compatible = "adi,ad5820" },
+	{ .compatible = "adi,ad5821" },
+	{ .compatible = "adi,ad5823" },
+	{ }
+};
 MODULE_DEVICE_TABLE(of, ad5820_of_table);
 
-अटल SIMPLE_DEV_PM_OPS(ad5820_pm, ad5820_suspend, ad5820_resume);
+static SIMPLE_DEV_PM_OPS(ad5820_pm, ad5820_suspend, ad5820_resume);
 
-अटल काष्ठा i2c_driver ad5820_i2c_driver = अणु
-	.driver		= अणु
+static struct i2c_driver ad5820_i2c_driver = {
+	.driver		= {
 		.name	= "ad5820",
 		.pm	= &ad5820_pm,
 		.of_match_table = ad5820_of_table,
-	पूर्ण,
+	},
 	.probe		= ad5820_probe,
-	.हटाओ		= ad5820_हटाओ,
+	.remove		= ad5820_remove,
 	.id_table	= ad5820_id_table,
-पूर्ण;
+};
 
 module_i2c_driver(ad5820_i2c_driver);
 

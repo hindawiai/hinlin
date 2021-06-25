@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Firmware I/O code क्रम mac80211 ST-Ericsson CW1200 drivers
+ * Firmware I/O code for mac80211 ST-Ericsson CW1200 drivers
  *
  * Copyright (c) 2010, ST-Ericsson
  * Author: Dmitry Tarnyagin <dmitry.tarnyagin@lockless.no>
@@ -12,124 +11,124 @@
  * Author: Ajitpal Singh <ajitpal.singh@stericsson.com>
  */
 
-#समावेश <linux/vदो_स्मृति.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/firmware.h>
+#include <linux/vmalloc.h>
+#include <linux/sched.h>
+#include <linux/firmware.h>
 
-#समावेश "cw1200.h"
-#समावेश "fwio.h"
-#समावेश "hwio.h"
-#समावेश "hwbus.h"
-#समावेश "bh.h"
+#include "cw1200.h"
+#include "fwio.h"
+#include "hwio.h"
+#include "hwbus.h"
+#include "bh.h"
 
-अटल पूर्णांक cw1200_get_hw_type(u32 config_reg_val, पूर्णांक *major_revision)
-अणु
-	पूर्णांक hw_type = -1;
+static int cw1200_get_hw_type(u32 config_reg_val, int *major_revision)
+{
+	int hw_type = -1;
 	u32 silicon_type = (config_reg_val >> 24) & 0x7;
 	u32 silicon_vers = (config_reg_val >> 31) & 0x1;
 
-	चयन (silicon_type) अणु
-	हाल 0x00:
+	switch (silicon_type) {
+	case 0x00:
 		*major_revision = 1;
 		hw_type = HIF_9000_SILICON_VERSATILE;
-		अवरोध;
-	हाल 0x01:
-	हाल 0x02: /* CW1x00 */
-	हाल 0x04: /* CW1x60 */
+		break;
+	case 0x01:
+	case 0x02: /* CW1x00 */
+	case 0x04: /* CW1x60 */
 		*major_revision = silicon_type;
-		अगर (silicon_vers)
+		if (silicon_vers)
 			hw_type = HIF_8601_VERSATILE;
-		अन्यथा
+		else
 			hw_type = HIF_8601_SILICON;
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+		break;
+	default:
+		break;
+	}
 
-	वापस hw_type;
-पूर्ण
+	return hw_type;
+}
 
-अटल पूर्णांक cw1200_load_firmware_cw1200(काष्ठा cw1200_common *priv)
-अणु
-	पूर्णांक ret, block, num_blocks;
-	अचिन्हित i;
+static int cw1200_load_firmware_cw1200(struct cw1200_common *priv)
+{
+	int ret, block, num_blocks;
+	unsigned i;
 	u32 val32;
 	u32 put = 0, get = 0;
-	u8 *buf = शून्य;
-	स्थिर अक्षर *fw_path;
-	स्थिर काष्ठा firmware *firmware = शून्य;
+	u8 *buf = NULL;
+	const char *fw_path;
+	const struct firmware *firmware = NULL;
 
 	/* Macroses are local. */
-#घोषणा APB_WRITE(reg, val) \
-	करो अणु \
-		ret = cw1200_apb_ग_लिखो_32(priv, CW1200_APB(reg), (val)); \
-		अगर (ret < 0) \
-			जाओ निकास; \
-	पूर्ण जबतक (0)
-#घोषणा APB_WRITE2(reg, val) \
-	करो अणु \
-		ret = cw1200_apb_ग_लिखो_32(priv, CW1200_APB(reg), (val)); \
-		अगर (ret < 0) \
-			जाओ मुक्त_buffer; \
-	पूर्ण जबतक (0)
-#घोषणा APB_READ(reg, val) \
-	करो अणु \
-		ret = cw1200_apb_पढ़ो_32(priv, CW1200_APB(reg), &(val)); \
-		अगर (ret < 0) \
-			जाओ मुक्त_buffer; \
-	पूर्ण जबतक (0)
-#घोषणा REG_WRITE(reg, val) \
-	करो अणु \
-		ret = cw1200_reg_ग_लिखो_32(priv, (reg), (val)); \
-		अगर (ret < 0) \
-			जाओ निकास; \
-	पूर्ण जबतक (0)
-#घोषणा REG_READ(reg, val) \
-	करो अणु \
-		ret = cw1200_reg_पढ़ो_32(priv, (reg), &(val)); \
-		अगर (ret < 0) \
-			जाओ निकास; \
-	पूर्ण जबतक (0)
+#define APB_WRITE(reg, val) \
+	do { \
+		ret = cw1200_apb_write_32(priv, CW1200_APB(reg), (val)); \
+		if (ret < 0) \
+			goto exit; \
+	} while (0)
+#define APB_WRITE2(reg, val) \
+	do { \
+		ret = cw1200_apb_write_32(priv, CW1200_APB(reg), (val)); \
+		if (ret < 0) \
+			goto free_buffer; \
+	} while (0)
+#define APB_READ(reg, val) \
+	do { \
+		ret = cw1200_apb_read_32(priv, CW1200_APB(reg), &(val)); \
+		if (ret < 0) \
+			goto free_buffer; \
+	} while (0)
+#define REG_WRITE(reg, val) \
+	do { \
+		ret = cw1200_reg_write_32(priv, (reg), (val)); \
+		if (ret < 0) \
+			goto exit; \
+	} while (0)
+#define REG_READ(reg, val) \
+	do { \
+		ret = cw1200_reg_read_32(priv, (reg), &(val)); \
+		if (ret < 0) \
+			goto exit; \
+	} while (0)
 
-	चयन (priv->hw_revision) अणु
-	हाल CW1200_HW_REV_CUT10:
+	switch (priv->hw_revision) {
+	case CW1200_HW_REV_CUT10:
 		fw_path = FIRMWARE_CUT10;
-		अगर (!priv->sdd_path)
-			priv->sdd_path = SDD_खाता_10;
-		अवरोध;
-	हाल CW1200_HW_REV_CUT11:
+		if (!priv->sdd_path)
+			priv->sdd_path = SDD_FILE_10;
+		break;
+	case CW1200_HW_REV_CUT11:
 		fw_path = FIRMWARE_CUT11;
-		अगर (!priv->sdd_path)
-			priv->sdd_path = SDD_खाता_11;
-		अवरोध;
-	हाल CW1200_HW_REV_CUT20:
+		if (!priv->sdd_path)
+			priv->sdd_path = SDD_FILE_11;
+		break;
+	case CW1200_HW_REV_CUT20:
 		fw_path = FIRMWARE_CUT20;
-		अगर (!priv->sdd_path)
-			priv->sdd_path = SDD_खाता_20;
-		अवरोध;
-	हाल CW1200_HW_REV_CUT22:
+		if (!priv->sdd_path)
+			priv->sdd_path = SDD_FILE_20;
+		break;
+	case CW1200_HW_REV_CUT22:
 		fw_path = FIRMWARE_CUT22;
-		अगर (!priv->sdd_path)
-			priv->sdd_path = SDD_खाता_22;
-		अवरोध;
-	हाल CW1X60_HW_REV:
+		if (!priv->sdd_path)
+			priv->sdd_path = SDD_FILE_22;
+		break;
+	case CW1X60_HW_REV:
 		fw_path = FIRMWARE_CW1X60;
-		अगर (!priv->sdd_path)
-			priv->sdd_path = SDD_खाता_CW1X60;
-		अवरोध;
-	शेष:
+		if (!priv->sdd_path)
+			priv->sdd_path = SDD_FILE_CW1X60;
+		break;
+	default:
 		pr_err("Invalid silicon revision %d.\n", priv->hw_revision);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	/* Initialize common रेजिस्टरs */
+	/* Initialize common registers */
 	APB_WRITE(DOWNLOAD_IMAGE_SIZE_REG, DOWNLOAD_ARE_YOU_HERE);
 	APB_WRITE(DOWNLOAD_PUT_REG, 0);
 	APB_WRITE(DOWNLOAD_GET_REG, 0);
 	APB_WRITE(DOWNLOAD_STATUS_REG, DOWNLOAD_PENDING);
 	APB_WRITE(DOWNLOAD_FLAGS_REG, 0);
 
-	/* Write the NOP Inकाष्ठाion */
+	/* Write the NOP Instruction */
 	REG_WRITE(ST90TDS_SRAM_BASE_ADDR_REG_ID, 0xFFF20000);
 	REG_WRITE(ST90TDS_AHB_DPORT_REG_ID, 0xEAFFFFFE);
 
@@ -144,381 +143,381 @@
 
 	/* Load a firmware file */
 	ret = request_firmware(&firmware, fw_path, priv->pdev);
-	अगर (ret) अणु
+	if (ret) {
 		pr_err("Can't load firmware file %s.\n", fw_path);
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
-	buf = kदो_स्मृति(DOWNLOAD_BLOCK_SIZE, GFP_KERNEL | GFP_DMA);
-	अगर (!buf) अणु
+	buf = kmalloc(DOWNLOAD_BLOCK_SIZE, GFP_KERNEL | GFP_DMA);
+	if (!buf) {
 		pr_err("Can't allocate firmware load buffer.\n");
 		ret = -ENOMEM;
-		जाओ firmware_release;
-	पूर्ण
+		goto firmware_release;
+	}
 
-	/* Check अगर the bootloader is पढ़ोy */
-	क्रम (i = 0; i < 100; i += 1 + i / 2) अणु
+	/* Check if the bootloader is ready */
+	for (i = 0; i < 100; i += 1 + i / 2) {
 		APB_READ(DOWNLOAD_IMAGE_SIZE_REG, val32);
-		अगर (val32 == DOWNLOAD_I_AM_HERE)
-			अवरोध;
+		if (val32 == DOWNLOAD_I_AM_HERE)
+			break;
 		mdelay(i);
-	पूर्ण /* End of क्रम loop */
+	} /* End of for loop */
 
-	अगर (val32 != DOWNLOAD_I_AM_HERE) अणु
+	if (val32 != DOWNLOAD_I_AM_HERE) {
 		pr_err("Bootloader is not ready.\n");
 		ret = -ETIMEDOUT;
-		जाओ मुक्त_buffer;
-	पूर्ण
+		goto free_buffer;
+	}
 
-	/* Calculcate number of करोwnload blocks */
+	/* Calculcate number of download blocks */
 	num_blocks = (firmware->size - 1) / DOWNLOAD_BLOCK_SIZE + 1;
 
 	/* Updating the length in Download Ctrl Area */
-	val32 = firmware->size; /* Explicit cast from माप_प्रकार to u32 */
+	val32 = firmware->size; /* Explicit cast from size_t to u32 */
 	APB_WRITE2(DOWNLOAD_IMAGE_SIZE_REG, val32);
 
-	/* Firmware करोwnloading loop */
-	क्रम (block = 0; block < num_blocks; block++) अणु
-		माप_प्रकार tx_size;
-		माप_प्रकार block_size;
+	/* Firmware downloading loop */
+	for (block = 0; block < num_blocks; block++) {
+		size_t tx_size;
+		size_t block_size;
 
-		/* check the करोwnload status */
+		/* check the download status */
 		APB_READ(DOWNLOAD_STATUS_REG, val32);
-		अगर (val32 != DOWNLOAD_PENDING) अणु
+		if (val32 != DOWNLOAD_PENDING) {
 			pr_err("Bootloader reported error %d.\n", val32);
 			ret = -EIO;
-			जाओ मुक्त_buffer;
-		पूर्ण
+			goto free_buffer;
+		}
 
 		/* loop until put - get <= 24K */
-		क्रम (i = 0; i < 100; i++) अणु
+		for (i = 0; i < 100; i++) {
 			APB_READ(DOWNLOAD_GET_REG, get);
-			अगर ((put - get) <=
+			if ((put - get) <=
 			    (DOWNLOAD_FIFO_SIZE - DOWNLOAD_BLOCK_SIZE))
-				अवरोध;
+				break;
 			mdelay(i);
-		पूर्ण
+		}
 
-		अगर ((put - get) > (DOWNLOAD_FIFO_SIZE - DOWNLOAD_BLOCK_SIZE)) अणु
+		if ((put - get) > (DOWNLOAD_FIFO_SIZE - DOWNLOAD_BLOCK_SIZE)) {
 			pr_err("Timeout waiting for FIFO.\n");
 			ret = -ETIMEDOUT;
-			जाओ मुक्त_buffer;
-		पूर्ण
+			goto free_buffer;
+		}
 
 		/* calculate the block size */
-		tx_size = block_size = min_t(माप_प्रकार, firmware->size - put,
+		tx_size = block_size = min_t(size_t, firmware->size - put,
 					DOWNLOAD_BLOCK_SIZE);
 
-		स_नकल(buf, &firmware->data[put], block_size);
-		अगर (block_size < DOWNLOAD_BLOCK_SIZE) अणु
-			स_रखो(&buf[block_size], 0,
+		memcpy(buf, &firmware->data[put], block_size);
+		if (block_size < DOWNLOAD_BLOCK_SIZE) {
+			memset(&buf[block_size], 0,
 			       DOWNLOAD_BLOCK_SIZE - block_size);
 			tx_size = DOWNLOAD_BLOCK_SIZE;
-		पूर्ण
+		}
 
 		/* send the block to sram */
-		ret = cw1200_apb_ग_लिखो(priv,
+		ret = cw1200_apb_write(priv,
 			CW1200_APB(DOWNLOAD_FIFO_OFFSET +
 				   (put & (DOWNLOAD_FIFO_SIZE - 1))),
 			buf, tx_size);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			pr_err("Can't write firmware block @ %d!\n",
 			       put & (DOWNLOAD_FIFO_SIZE - 1));
-			जाओ मुक्त_buffer;
-		पूर्ण
+			goto free_buffer;
+		}
 
-		/* update the put रेजिस्टर */
+		/* update the put register */
 		put += block_size;
 		APB_WRITE2(DOWNLOAD_PUT_REG, put);
-	पूर्ण /* End of firmware करोwnload loop */
+	} /* End of firmware download loop */
 
-	/* Wait क्रम the करोwnload completion */
-	क्रम (i = 0; i < 300; i += 1 + i / 2) अणु
+	/* Wait for the download completion */
+	for (i = 0; i < 300; i += 1 + i / 2) {
 		APB_READ(DOWNLOAD_STATUS_REG, val32);
-		अगर (val32 != DOWNLOAD_PENDING)
-			अवरोध;
+		if (val32 != DOWNLOAD_PENDING)
+			break;
 		mdelay(i);
-	पूर्ण
-	अगर (val32 != DOWNLOAD_SUCCESS) अणु
+	}
+	if (val32 != DOWNLOAD_SUCCESS) {
 		pr_err("Wait for download completion failed: 0x%.8X\n", val32);
 		ret = -ETIMEDOUT;
-		जाओ मुक्त_buffer;
-	पूर्ण अन्यथा अणु
+		goto free_buffer;
+	} else {
 		pr_info("Firmware download completed.\n");
 		ret = 0;
-	पूर्ण
+	}
 
-मुक्त_buffer:
-	kमुक्त(buf);
+free_buffer:
+	kfree(buf);
 firmware_release:
 	release_firmware(firmware);
-निकास:
-	वापस ret;
+exit:
+	return ret;
 
-#अघोषित APB_WRITE
-#अघोषित APB_WRITE2
-#अघोषित APB_READ
-#अघोषित REG_WRITE
-#अघोषित REG_READ
-पूर्ण
+#undef APB_WRITE
+#undef APB_WRITE2
+#undef APB_READ
+#undef REG_WRITE
+#undef REG_READ
+}
 
 
-अटल पूर्णांक config_reg_पढ़ो(काष्ठा cw1200_common *priv, u32 *val)
-अणु
-	चयन (priv->hw_type) अणु
-	हाल HIF_9000_SILICON_VERSATILE: अणु
+static int config_reg_read(struct cw1200_common *priv, u32 *val)
+{
+	switch (priv->hw_type) {
+	case HIF_9000_SILICON_VERSATILE: {
 		u16 val16;
-		पूर्णांक ret = cw1200_reg_पढ़ो_16(priv,
+		int ret = cw1200_reg_read_16(priv,
 					     ST90TDS_CONFIG_REG_ID,
 					     &val16);
-		अगर (ret < 0)
-			वापस ret;
+		if (ret < 0)
+			return ret;
 		*val = val16;
-		वापस 0;
-	पूर्ण
-	हाल HIF_8601_VERSATILE:
-	हाल HIF_8601_SILICON:
-	शेष:
-		cw1200_reg_पढ़ो_32(priv, ST90TDS_CONFIG_REG_ID, val);
-		अवरोध;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return 0;
+	}
+	case HIF_8601_VERSATILE:
+	case HIF_8601_SILICON:
+	default:
+		cw1200_reg_read_32(priv, ST90TDS_CONFIG_REG_ID, val);
+		break;
+	}
+	return 0;
+}
 
-अटल पूर्णांक config_reg_ग_लिखो(काष्ठा cw1200_common *priv, u32 val)
-अणु
-	चयन (priv->hw_type) अणु
-	हाल HIF_9000_SILICON_VERSATILE:
-		वापस cw1200_reg_ग_लिखो_16(priv,
+static int config_reg_write(struct cw1200_common *priv, u32 val)
+{
+	switch (priv->hw_type) {
+	case HIF_9000_SILICON_VERSATILE:
+		return cw1200_reg_write_16(priv,
 					   ST90TDS_CONFIG_REG_ID,
 					   (u16)val);
-	हाल HIF_8601_VERSATILE:
-	हाल HIF_8601_SILICON:
-	शेष:
-		वापस cw1200_reg_ग_लिखो_32(priv, ST90TDS_CONFIG_REG_ID, val);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	case HIF_8601_VERSATILE:
+	case HIF_8601_SILICON:
+	default:
+		return cw1200_reg_write_32(priv, ST90TDS_CONFIG_REG_ID, val);
+	}
+	return 0;
+}
 
-पूर्णांक cw1200_load_firmware(काष्ठा cw1200_common *priv)
-अणु
-	पूर्णांक ret;
-	पूर्णांक i;
+int cw1200_load_firmware(struct cw1200_common *priv)
+{
+	int ret;
+	int i;
 	u32 val32;
 	u16 val16;
-	पूर्णांक major_revision = -1;
+	int major_revision = -1;
 
 	/* Read CONFIG Register */
-	ret = cw1200_reg_पढ़ो_32(priv, ST90TDS_CONFIG_REG_ID, &val32);
-	अगर (ret < 0) अणु
+	ret = cw1200_reg_read_32(priv, ST90TDS_CONFIG_REG_ID, &val32);
+	if (ret < 0) {
 		pr_err("Can't read config register.\n");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (val32 == 0 || val32 == 0xffffffff) अणु
+	if (val32 == 0 || val32 == 0xffffffff) {
 		pr_err("Bad config register value (0x%08x)\n", val32);
 		ret = -EIO;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	ret = cw1200_get_hw_type(val32, &major_revision);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		pr_err("Can't deduce hardware type.\n");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	priv->hw_type = ret;
 
-	/* Set DPLL Reg value, and पढ़ो back to confirm ग_लिखोs work */
-	ret = cw1200_reg_ग_लिखो_32(priv, ST90TDS_TSET_GEN_R_W_REG_ID,
+	/* Set DPLL Reg value, and read back to confirm writes work */
+	ret = cw1200_reg_write_32(priv, ST90TDS_TSET_GEN_R_W_REG_ID,
 				  cw1200_dpll_from_clk(priv->hw_refclk));
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		pr_err("Can't write DPLL register.\n");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	msleep(20);
 
-	ret = cw1200_reg_पढ़ो_32(priv,
+	ret = cw1200_reg_read_32(priv,
 		ST90TDS_TSET_GEN_R_W_REG_ID, &val32);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		pr_err("Can't read DPLL register.\n");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (val32 != cw1200_dpll_from_clk(priv->hw_refclk)) अणु
+	if (val32 != cw1200_dpll_from_clk(priv->hw_refclk)) {
 		pr_err("Unable to initialise DPLL register. Wrote 0x%.8X, Read 0x%.8X.\n",
 		       cw1200_dpll_from_clk(priv->hw_refclk), val32);
 		ret = -EIO;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/* Set wakeup bit in device */
-	ret = cw1200_reg_पढ़ो_16(priv, ST90TDS_CONTROL_REG_ID, &val16);
-	अगर (ret < 0) अणु
+	ret = cw1200_reg_read_16(priv, ST90TDS_CONTROL_REG_ID, &val16);
+	if (ret < 0) {
 		pr_err("set_wakeup: can't read control register.\n");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	ret = cw1200_reg_ग_लिखो_16(priv, ST90TDS_CONTROL_REG_ID,
+	ret = cw1200_reg_write_16(priv, ST90TDS_CONTROL_REG_ID,
 		val16 | ST90TDS_CONT_WUP_BIT);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		pr_err("set_wakeup: can't write control register.\n");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	/* Wait क्रम wakeup */
-	क्रम (i = 0; i < 300; i += (1 + i / 2)) अणु
-		ret = cw1200_reg_पढ़ो_16(priv,
+	/* Wait for wakeup */
+	for (i = 0; i < 300; i += (1 + i / 2)) {
+		ret = cw1200_reg_read_16(priv,
 			ST90TDS_CONTROL_REG_ID, &val16);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			pr_err("wait_for_wakeup: can't read control register.\n");
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
-		अगर (val16 & ST90TDS_CONT_RDY_BIT)
-			अवरोध;
+		if (val16 & ST90TDS_CONT_RDY_BIT)
+			break;
 
 		msleep(i);
-	पूर्ण
+	}
 
-	अगर ((val16 & ST90TDS_CONT_RDY_BIT) == 0) अणु
+	if ((val16 & ST90TDS_CONT_RDY_BIT) == 0) {
 		pr_err("wait_for_wakeup: device is not responding.\n");
 		ret = -ETIMEDOUT;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	चयन (major_revision) अणु
-	हाल 1:
-		/* CW1200 Hardware detection logic : Check क्रम CUT1.1 */
-		ret = cw1200_ahb_पढ़ो_32(priv, CW1200_CUT_ID_ADDR, &val32);
-		अगर (ret) अणु
+	switch (major_revision) {
+	case 1:
+		/* CW1200 Hardware detection logic : Check for CUT1.1 */
+		ret = cw1200_ahb_read_32(priv, CW1200_CUT_ID_ADDR, &val32);
+		if (ret) {
 			pr_err("HW detection: can't read CUT ID.\n");
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
-		चयन (val32) अणु
-		हाल CW1200_CUT_11_ID_STR:
+		switch (val32) {
+		case CW1200_CUT_11_ID_STR:
 			pr_info("CW1x00 Cut 1.1 silicon detected.\n");
 			priv->hw_revision = CW1200_HW_REV_CUT11;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			pr_info("CW1x00 Cut 1.0 silicon detected.\n");
 			priv->hw_revision = CW1200_HW_REV_CUT10;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		/* According to ST-E, CUT<2.0 has busted BA TID0-3.
 		   Just disable it entirely...
 		*/
 		priv->ba_rx_tid_mask = 0;
 		priv->ba_tx_tid_mask = 0;
-		अवरोध;
-	हाल 2: अणु
+		break;
+	case 2: {
 		u32 ar1, ar2, ar3;
-		ret = cw1200_ahb_पढ़ो_32(priv, CW1200_CUT2_ID_ADDR, &ar1);
-		अगर (ret) अणु
+		ret = cw1200_ahb_read_32(priv, CW1200_CUT2_ID_ADDR, &ar1);
+		if (ret) {
 			pr_err("(1) HW detection: can't read CUT ID\n");
-			जाओ out;
-		पूर्ण
-		ret = cw1200_ahb_पढ़ो_32(priv, CW1200_CUT2_ID_ADDR + 4, &ar2);
-		अगर (ret) अणु
+			goto out;
+		}
+		ret = cw1200_ahb_read_32(priv, CW1200_CUT2_ID_ADDR + 4, &ar2);
+		if (ret) {
 			pr_err("(2) HW detection: can't read CUT ID.\n");
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
-		ret = cw1200_ahb_पढ़ो_32(priv, CW1200_CUT2_ID_ADDR + 8, &ar3);
-		अगर (ret) अणु
+		ret = cw1200_ahb_read_32(priv, CW1200_CUT2_ID_ADDR + 8, &ar3);
+		if (ret) {
 			pr_err("(3) HW detection: can't read CUT ID.\n");
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
-		अगर (ar1 == CW1200_CUT_22_ID_STR1 &&
+		if (ar1 == CW1200_CUT_22_ID_STR1 &&
 		    ar2 == CW1200_CUT_22_ID_STR2 &&
-		    ar3 == CW1200_CUT_22_ID_STR3) अणु
+		    ar3 == CW1200_CUT_22_ID_STR3) {
 			pr_info("CW1x00 Cut 2.2 silicon detected.\n");
 			priv->hw_revision = CW1200_HW_REV_CUT22;
-		पूर्ण अन्यथा अणु
+		} else {
 			pr_info("CW1x00 Cut 2.0 silicon detected.\n");
 			priv->hw_revision = CW1200_HW_REV_CUT20;
-		पूर्ण
-		अवरोध;
-	पूर्ण
-	हाल 4:
+		}
+		break;
+	}
+	case 4:
 		pr_info("CW1x60 silicon detected.\n");
 		priv->hw_revision = CW1X60_HW_REV;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		pr_err("Unsupported silicon major revision %d.\n",
 		       major_revision);
 		ret = -ENOTSUPP;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	/* Checking क्रम access mode */
-	ret = config_reg_पढ़ो(priv, &val32);
-	अगर (ret < 0) अणु
+	/* Checking for access mode */
+	ret = config_reg_read(priv, &val32);
+	if (ret < 0) {
 		pr_err("Can't read config register.\n");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (!(val32 & ST90TDS_CONFIG_ACCESS_MODE_BIT)) अणु
+	if (!(val32 & ST90TDS_CONFIG_ACCESS_MODE_BIT)) {
 		pr_err("Device is already in QUEUE mode!\n");
 		ret = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	चयन (priv->hw_type)  अणु
-	हाल HIF_8601_SILICON:
-		अगर (priv->hw_revision == CW1X60_HW_REV) अणु
+	switch (priv->hw_type)  {
+	case HIF_8601_SILICON:
+		if (priv->hw_revision == CW1X60_HW_REV) {
 			pr_err("Can't handle CW1160/1260 firmware load yet.\n");
 			ret = -ENOTSUPP;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		ret = cw1200_load_firmware_cw1200(priv);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		pr_err("Can't perform firmware load for hw type %d.\n",
 		       priv->hw_type);
 		ret = -ENOTSUPP;
-		जाओ out;
-	पूर्ण
-	अगर (ret < 0) अणु
+		goto out;
+	}
+	if (ret < 0) {
 		pr_err("Firmware load error.\n");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	/* Enable पूर्णांकerrupt संकेतling */
+	/* Enable interrupt signalling */
 	priv->hwbus_ops->lock(priv->hwbus_priv);
 	ret = __cw1200_irq_enable(priv, 1);
 	priv->hwbus_ops->unlock(priv->hwbus_priv);
-	अगर (ret < 0)
-		जाओ unsubscribe;
+	if (ret < 0)
+		goto unsubscribe;
 
-	/* Configure device क्रम MESSSAGE MODE */
-	ret = config_reg_पढ़ो(priv, &val32);
-	अगर (ret < 0) अणु
+	/* Configure device for MESSSAGE MODE */
+	ret = config_reg_read(priv, &val32);
+	if (ret < 0) {
 		pr_err("Can't read config register.\n");
-		जाओ unsubscribe;
-	पूर्ण
-	ret = config_reg_ग_लिखो(priv, val32 & ~ST90TDS_CONFIG_ACCESS_MODE_BIT);
-	अगर (ret < 0) अणु
+		goto unsubscribe;
+	}
+	ret = config_reg_write(priv, val32 & ~ST90TDS_CONFIG_ACCESS_MODE_BIT);
+	if (ret < 0) {
 		pr_err("Can't write config register.\n");
-		जाओ unsubscribe;
-	पूर्ण
+		goto unsubscribe;
+	}
 
-	/* Unless we पढ़ो the CONFIG Register we are
-	 * not able to get an पूर्णांकerrupt
+	/* Unless we read the CONFIG Register we are
+	 * not able to get an interrupt
 	 */
 	mdelay(10);
-	config_reg_पढ़ो(priv, &val32);
+	config_reg_read(priv, &val32);
 
 out:
-	वापस ret;
+	return ret;
 
 unsubscribe:
-	/* Disable पूर्णांकerrupt संकेतling */
+	/* Disable interrupt signalling */
 	priv->hwbus_ops->lock(priv->hwbus_priv);
 	ret = __cw1200_irq_enable(priv, 0);
 	priv->hwbus_ops->unlock(priv->hwbus_priv);
-	वापस ret;
-पूर्ण
+	return ret;
+}

@@ -1,95 +1,94 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-/* leon_pmc.c: LEON Power-करोwn cpu_idle() handler
+// SPDX-License-Identifier: GPL-2.0
+/* leon_pmc.c: LEON Power-down cpu_idle() handler
  *
  * Copyright (C) 2011 Daniel Hellstrom (daniel@gaisler.com) Aeroflex Gaisler AB
  */
 
-#समावेश <linux/init.h>
-#समावेश <linux/pm.h>
+#include <linux/init.h>
+#include <linux/pm.h>
 
-#समावेश <यंत्र/leon_amba.h>
-#समावेश <यंत्र/cpu_type.h>
-#समावेश <यंत्र/leon.h>
-#समावेश <यंत्र/processor.h>
+#include <asm/leon_amba.h>
+#include <asm/cpu_type.h>
+#include <asm/leon.h>
+#include <asm/processor.h>
 
-/* List of Systems that need fixup inकाष्ठाions around घातer-करोwn inकाष्ठाion */
-अटल अचिन्हित पूर्णांक pmc_leon_fixup_ids[] = अणु
+/* List of Systems that need fixup instructions around power-down instruction */
+static unsigned int pmc_leon_fixup_ids[] = {
 	AEROFLEX_UT699,
 	GAISLER_GR712RC,
 	LEON4_NEXTREME1,
 	0
-पूर्ण;
+};
 
-अटल पूर्णांक pmc_leon_need_fixup(व्योम)
-अणु
-	अचिन्हित पूर्णांक प्रणालीid = amba_प्रणाली_id >> 16;
-	अचिन्हित पूर्णांक *id;
+static int pmc_leon_need_fixup(void)
+{
+	unsigned int systemid = amba_system_id >> 16;
+	unsigned int *id;
 
 	id = &pmc_leon_fixup_ids[0];
-	जबतक (*id != 0) अणु
-		अगर (*id == प्रणालीid)
-			वापस 1;
+	while (*id != 0) {
+		if (*id == systemid)
+			return 1;
 		id++;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * CPU idle callback function क्रम प्रणालीs that need some extra handling
+ * CPU idle callback function for systems that need some extra handling
  * See .../arch/sparc/kernel/process.c
  */
-अटल व्योम pmc_leon_idle_fixup(व्योम)
-अणु
+static void pmc_leon_idle_fixup(void)
+{
 	/* Prepare an address to a non-cachable region. APB is always
-	 * none-cachable. One inकाष्ठाion is executed after the Sleep
-	 * inकाष्ठाion, we make sure to पढ़ो the bus and throw away the
+	 * none-cachable. One instruction is executed after the Sleep
+	 * instruction, we make sure to read the bus and throw away the
 	 * value by accessing a non-cachable area, also we make sure the
-	 * MMU करोes not get a TLB miss here by using the MMU BYPASS ASI.
+	 * MMU does not get a TLB miss here by using the MMU BYPASS ASI.
 	 */
-	रेजिस्टर अचिन्हित पूर्णांक address = (अचिन्हित पूर्णांक)leon3_irqctrl_regs;
+	register unsigned int address = (unsigned int)leon3_irqctrl_regs;
 
 	/* Interrupts need to be enabled to not hang the CPU */
 	raw_local_irq_enable();
 
-	__यंत्र__ __अस्थिर__ (
+	__asm__ __volatile__ (
 		"wr	%%g0, %%asr19\n"
 		"lda	[%0] %1, %%g0\n"
 		:
 		: "r"(address), "i"(ASI_LEON_BYPASS));
-पूर्ण
+}
 
 /*
  * CPU idle callback function
  * See .../arch/sparc/kernel/process.c
  */
-अटल व्योम pmc_leon_idle(व्योम)
-अणु
+static void pmc_leon_idle(void)
+{
 	/* Interrupts need to be enabled to not hang the CPU */
 	raw_local_irq_enable();
 
-	/* For प्रणालीs without घातer-करोwn, this will be no-op */
-	__यंत्र__ __अस्थिर__ ("wr	%g0, %asr19\n\t");
-पूर्ण
+	/* For systems without power-down, this will be no-op */
+	__asm__ __volatile__ ("wr	%g0, %asr19\n\t");
+}
 
 /* Install LEON Power Down function */
-अटल पूर्णांक __init leon_pmc_install(व्योम)
-अणु
-	अगर (sparc_cpu_model == sparc_leon) अणु
-		/* Assign घातer management IDLE handler */
-		अगर (pmc_leon_need_fixup())
+static int __init leon_pmc_install(void)
+{
+	if (sparc_cpu_model == sparc_leon) {
+		/* Assign power management IDLE handler */
+		if (pmc_leon_need_fixup())
 			sparc_idle = pmc_leon_idle_fixup;
-		अन्यथा
+		else
 			sparc_idle = pmc_leon_idle;
 
-		prपूर्णांकk(KERN_INFO "leon: power management initialized\n");
-	पूर्ण
+		printk(KERN_INFO "leon: power management initialized\n");
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* This driver is not critical to the boot process, करोn't care
- * अगर initialized late.
+/* This driver is not critical to the boot process, don't care
+ * if initialized late.
  */
 late_initcall(leon_pmc_install);

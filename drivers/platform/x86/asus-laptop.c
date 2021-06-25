@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  *  asus-laptop.c - Asus Laptop Support
  *
@@ -7,47 +6,47 @@
  *  Copyright (C) 2006-2007 Corentin Chary
  *  Copyright (C) 2011 Wind River Systems
  *
- *  The development page क्रम this driver is located at
- *  http://sourceक्रमge.net/projects/acpi4asus/
+ *  The development page for this driver is located at
+ *  http://sourceforge.net/projects/acpi4asus/
  *
  *  Credits:
  *  Pontus Fuchs   - Helper functions, cleanup
  *  Johann Wiesner - Small compile fixes
- *  John Belmonte  - ACPI code क्रम Toshiba laptop was a good starting poपूर्णांक.
- *  Eric Burghard  - LED display support क्रम W1N
+ *  John Belmonte  - ACPI code for Toshiba laptop was a good starting point.
+ *  Eric Burghard  - LED display support for W1N
  *  Josh Green     - Light Sens support
- *  Thomas Tuttle  - His first patch क्रम led support was very helpful
+ *  Thomas Tuttle  - His first patch for led support was very helpful
  *  Sam Lin        - GPS support
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/init.h>
-#समावेश <linux/types.h>
-#समावेश <linux/err.h>
-#समावेश <linux/proc_fs.h>
-#समावेश <linux/backlight.h>
-#समावेश <linux/fb.h>
-#समावेश <linux/leds.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/input.h>
-#समावेश <linux/input/sparse-keymap.h>
-#समावेश <linux/rfसमाप्त.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/dmi.h>
-#समावेश <linux/acpi.h>
-#समावेश <acpi/video.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/types.h>
+#include <linux/err.h>
+#include <linux/proc_fs.h>
+#include <linux/backlight.h>
+#include <linux/fb.h>
+#include <linux/leds.h>
+#include <linux/platform_device.h>
+#include <linux/uaccess.h>
+#include <linux/input.h>
+#include <linux/input/sparse-keymap.h>
+#include <linux/rfkill.h>
+#include <linux/slab.h>
+#include <linux/dmi.h>
+#include <linux/acpi.h>
+#include <acpi/video.h>
 
-#घोषणा ASUS_LAPTOP_VERSION	"0.42"
+#define ASUS_LAPTOP_VERSION	"0.42"
 
-#घोषणा ASUS_LAPTOP_NAME	"Asus Laptop Support"
-#घोषणा ASUS_LAPTOP_CLASS	"hotkey"
-#घोषणा ASUS_LAPTOP_DEVICE_NAME	"Hotkey"
-#घोषणा ASUS_LAPTOP_खाता	KBUILD_MODNAME
-#घोषणा ASUS_LAPTOP_PREFIX	"\\_SB.ATKD."
+#define ASUS_LAPTOP_NAME	"Asus Laptop Support"
+#define ASUS_LAPTOP_CLASS	"hotkey"
+#define ASUS_LAPTOP_DEVICE_NAME	"Hotkey"
+#define ASUS_LAPTOP_FILE	KBUILD_MODNAME
+#define ASUS_LAPTOP_PREFIX	"\\_SB.ATKD."
 
 MODULE_AUTHOR("Julien Lerouge, Karol Kozimor, Corentin Chary");
 MODULE_DESCRIPTION(ASUS_LAPTOP_NAME);
@@ -55,616 +54,616 @@ MODULE_LICENSE("GPL");
 
 /*
  * WAPF defines the behavior of the Fn+Fx wlan key
- * The signअगरicance of values is yet to be found, but
- * most of the समय:
+ * The significance of values is yet to be found, but
+ * most of the time:
  * Bit | Bluetooth | WLAN
  *  0  | Hardware  | Hardware
  *  1  | Hardware  | Software
  *  4  | Software  | Software
  */
-अटल uपूर्णांक wapf = 1;
-module_param(wapf, uपूर्णांक, 0444);
+static uint wapf = 1;
+module_param(wapf, uint, 0444);
 MODULE_PARM_DESC(wapf, "WAPF value");
 
-अटल अक्षर *wled_type = "unknown";
-अटल अक्षर *bled_type = "unknown";
+static char *wled_type = "unknown";
+static char *bled_type = "unknown";
 
-module_param(wled_type, अक्षरp, 0444);
+module_param(wled_type, charp, 0444);
 MODULE_PARM_DESC(wled_type, "Set the wled type on boot "
 		 "(unknown, led or rfkill). "
 		 "default is unknown");
 
-module_param(bled_type, अक्षरp, 0444);
+module_param(bled_type, charp, 0444);
 MODULE_PARM_DESC(bled_type, "Set the bled type on boot "
 		 "(unknown, led or rfkill). "
 		 "default is unknown");
 
-अटल पूर्णांक wlan_status = 1;
-अटल पूर्णांक bluetooth_status = 1;
-अटल पूर्णांक wimax_status = -1;
-अटल पूर्णांक wwan_status = -1;
-अटल पूर्णांक als_status;
+static int wlan_status = 1;
+static int bluetooth_status = 1;
+static int wimax_status = -1;
+static int wwan_status = -1;
+static int als_status;
 
-module_param(wlan_status, पूर्णांक, 0444);
+module_param(wlan_status, int, 0444);
 MODULE_PARM_DESC(wlan_status, "Set the wireless status on boot "
 		 "(0 = disabled, 1 = enabled, -1 = don't do anything). "
 		 "default is -1");
 
-module_param(bluetooth_status, पूर्णांक, 0444);
+module_param(bluetooth_status, int, 0444);
 MODULE_PARM_DESC(bluetooth_status, "Set the wireless status on boot "
 		 "(0 = disabled, 1 = enabled, -1 = don't do anything). "
 		 "default is -1");
 
-module_param(wimax_status, पूर्णांक, 0444);
+module_param(wimax_status, int, 0444);
 MODULE_PARM_DESC(wimax_status, "Set the wireless status on boot "
 		 "(0 = disabled, 1 = enabled, -1 = don't do anything). "
 		 "default is -1");
 
-module_param(wwan_status, पूर्णांक, 0444);
+module_param(wwan_status, int, 0444);
 MODULE_PARM_DESC(wwan_status, "Set the wireless status on boot "
 		 "(0 = disabled, 1 = enabled, -1 = don't do anything). "
 		 "default is -1");
 
-module_param(als_status, पूर्णांक, 0444);
+module_param(als_status, int, 0444);
 MODULE_PARM_DESC(als_status, "Set the ALS status on boot "
 		 "(0 = disabled, 1 = enabled). "
 		 "default is 0");
 
 /*
- * Some events we use, same क्रम all Asus
+ * Some events we use, same for all Asus
  */
-#घोषणा ATKD_BRNUP_MIN		0x10
-#घोषणा ATKD_BRNUP_MAX		0x1f
-#घोषणा ATKD_BRNDOWN_MIN	0x20
-#घोषणा ATKD_BRNDOWN_MAX	0x2f
-#घोषणा ATKD_BRNDOWN		0x20
-#घोषणा ATKD_BRNUP		0x2f
-#घोषणा ATKD_LCD_ON	0x33
-#घोषणा ATKD_LCD_OFF	0x34
+#define ATKD_BRNUP_MIN		0x10
+#define ATKD_BRNUP_MAX		0x1f
+#define ATKD_BRNDOWN_MIN	0x20
+#define ATKD_BRNDOWN_MAX	0x2f
+#define ATKD_BRNDOWN		0x20
+#define ATKD_BRNUP		0x2f
+#define ATKD_LCD_ON	0x33
+#define ATKD_LCD_OFF	0x34
 
 /*
- * Known bits वापसed by \_SB.ATKD.HWRS
+ * Known bits returned by \_SB.ATKD.HWRS
  */
-#घोषणा WL_HWRS		0x80
-#घोषणा BT_HWRS		0x100
+#define WL_HWRS		0x80
+#define BT_HWRS		0x100
 
 /*
- * Flags क्रम hotk status
- * WL_ON and BT_ON are also used क्रम wireless_status()
+ * Flags for hotk status
+ * WL_ON and BT_ON are also used for wireless_status()
  */
-#घोषणा WL_RSTS		0x01	/* पूर्णांकernal Wअगरi */
-#घोषणा BT_RSTS		0x02	/* पूर्णांकernal Bluetooth */
-#घोषणा WM_RSTS		0x08    /* पूर्णांकernal wimax */
-#घोषणा WW_RSTS		0x20    /* पूर्णांकernal wwan */
+#define WL_RSTS		0x01	/* internal Wifi */
+#define BT_RSTS		0x02	/* internal Bluetooth */
+#define WM_RSTS		0x08    /* internal wimax */
+#define WW_RSTS		0x20    /* internal wwan */
 
 /* WLED and BLED type */
-#घोषणा TYPE_UNKNOWN	0
-#घोषणा TYPE_LED	1
-#घोषणा TYPE_RFKILL	2
+#define TYPE_UNKNOWN	0
+#define TYPE_LED	1
+#define TYPE_RFKILL	2
 
 /* LED */
-#घोषणा METHOD_MLED		"MLED"
-#घोषणा METHOD_TLED		"TLED"
-#घोषणा METHOD_RLED		"RLED"	/* W1JC */
-#घोषणा METHOD_PLED		"PLED"	/* A7J */
-#घोषणा METHOD_GLED		"GLED"	/* G1, G2 (probably) */
+#define METHOD_MLED		"MLED"
+#define METHOD_TLED		"TLED"
+#define METHOD_RLED		"RLED"	/* W1JC */
+#define METHOD_PLED		"PLED"	/* A7J */
+#define METHOD_GLED		"GLED"	/* G1, G2 (probably) */
 
 /* LEDD */
-#घोषणा METHOD_LEDD		"SLCM"
+#define METHOD_LEDD		"SLCM"
 
 /*
  * Bluetooth and WLAN
  * WLED and BLED are not handled like other XLED, because in some dsdt
  * they also control the WLAN/Bluetooth device.
  */
-#घोषणा METHOD_WLAN		"WLED"
-#घोषणा METHOD_BLUETOOTH	"BLED"
+#define METHOD_WLAN		"WLED"
+#define METHOD_BLUETOOTH	"BLED"
 
 /* WWAN and WIMAX */
-#घोषणा METHOD_WWAN		"GSMC"
-#घोषणा METHOD_WIMAX		"WMXC"
+#define METHOD_WWAN		"GSMC"
+#define METHOD_WIMAX		"WMXC"
 
-#घोषणा METHOD_WL_STATUS	"RSTS"
+#define METHOD_WL_STATUS	"RSTS"
 
 /* Brightness */
-#घोषणा METHOD_BRIGHTNESS_SET	"SPLV"
-#घोषणा METHOD_BRIGHTNESS_GET	"GPLV"
+#define METHOD_BRIGHTNESS_SET	"SPLV"
+#define METHOD_BRIGHTNESS_GET	"GPLV"
 
 /* Display */
-#घोषणा METHOD_SWITCH_DISPLAY	"SDSP"
+#define METHOD_SWITCH_DISPLAY	"SDSP"
 
-#घोषणा METHOD_ALS_CONTROL	"ALSC" /* Z71A Z71V */
-#घोषणा METHOD_ALS_LEVEL	"ALSL" /* Z71A Z71V */
+#define METHOD_ALS_CONTROL	"ALSC" /* Z71A Z71V */
+#define METHOD_ALS_LEVEL	"ALSL" /* Z71A Z71V */
 
 /* GPS */
-/* R2H use dअगरferent handle क्रम GPS on/off */
-#घोषणा METHOD_GPS_ON		"SDON"
-#घोषणा METHOD_GPS_OFF		"SDOF"
-#घोषणा METHOD_GPS_STATUS	"GPST"
+/* R2H use different handle for GPS on/off */
+#define METHOD_GPS_ON		"SDON"
+#define METHOD_GPS_OFF		"SDOF"
+#define METHOD_GPS_STATUS	"GPST"
 
 /* Keyboard light */
-#घोषणा METHOD_KBD_LIGHT_SET	"SLKB"
-#घोषणा METHOD_KBD_LIGHT_GET	"GLKB"
+#define METHOD_KBD_LIGHT_SET	"SLKB"
+#define METHOD_KBD_LIGHT_GET	"GLKB"
 
 /* For Pegatron Lucid tablet */
-#घोषणा DEVICE_NAME_PEGA	"Lucid"
+#define DEVICE_NAME_PEGA	"Lucid"
 
-#घोषणा METHOD_PEGA_ENABLE	"ENPR"
-#घोषणा METHOD_PEGA_DISABLE	"DAPR"
-#घोषणा PEGA_WLAN	0x00
-#घोषणा PEGA_BLUETOOTH	0x01
-#घोषणा PEGA_WWAN	0x02
-#घोषणा PEGA_ALS	0x04
-#घोषणा PEGA_ALS_POWER	0x05
+#define METHOD_PEGA_ENABLE	"ENPR"
+#define METHOD_PEGA_DISABLE	"DAPR"
+#define PEGA_WLAN	0x00
+#define PEGA_BLUETOOTH	0x01
+#define PEGA_WWAN	0x02
+#define PEGA_ALS	0x04
+#define PEGA_ALS_POWER	0x05
 
-#घोषणा METHOD_PEGA_READ	"RDLN"
-#घोषणा PEGA_READ_ALS_H	0x02
-#घोषणा PEGA_READ_ALS_L	0x03
+#define METHOD_PEGA_READ	"RDLN"
+#define PEGA_READ_ALS_H	0x02
+#define PEGA_READ_ALS_L	0x03
 
-#घोषणा PEGA_ACCEL_NAME "pega_accel"
-#घोषणा PEGA_ACCEL_DESC "Pegatron Lucid Tablet Accelerometer"
-#घोषणा METHOD_XLRX "XLRX"
-#घोषणा METHOD_XLRY "XLRY"
-#घोषणा METHOD_XLRZ "XLRZ"
-#घोषणा PEGA_ACC_CLAMP 512 /* 1G accel is reported as ~256, so clamp to 2G */
-#घोषणा PEGA_ACC_RETRIES 3
-
-/*
- * Define a specअगरic led काष्ठाure to keep the मुख्य काष्ठाure clean
- */
-काष्ठा asus_led अणु
-	पूर्णांक wk;
-	काष्ठा work_काष्ठा work;
-	काष्ठा led_classdev led;
-	काष्ठा asus_laptop *asus;
-	स्थिर अक्षर *method;
-पूर्ण;
+#define PEGA_ACCEL_NAME "pega_accel"
+#define PEGA_ACCEL_DESC "Pegatron Lucid Tablet Accelerometer"
+#define METHOD_XLRX "XLRX"
+#define METHOD_XLRY "XLRY"
+#define METHOD_XLRZ "XLRZ"
+#define PEGA_ACC_CLAMP 512 /* 1G accel is reported as ~256, so clamp to 2G */
+#define PEGA_ACC_RETRIES 3
 
 /*
- * Same thing क्रम rfसमाप्त
+ * Define a specific led structure to keep the main structure clean
  */
-काष्ठा asus_rfसमाप्त अणु
+struct asus_led {
+	int wk;
+	struct work_struct work;
+	struct led_classdev led;
+	struct asus_laptop *asus;
+	const char *method;
+};
+
+/*
+ * Same thing for rfkill
+ */
+struct asus_rfkill {
 	/* type of control. Maps to PEGA_* values or *_RSTS  */
-	पूर्णांक control_id;
-	काष्ठा rfसमाप्त *rfसमाप्त;
-	काष्ठा asus_laptop *asus;
-पूर्ण;
+	int control_id;
+	struct rfkill *rfkill;
+	struct asus_laptop *asus;
+};
 
 /*
- * This is the मुख्य काष्ठाure, we can use it to store anything पूर्णांकeresting
+ * This is the main structure, we can use it to store anything interesting
  * about the hotk device
  */
-काष्ठा asus_laptop अणु
-	अक्षर *name;		/* laptop name */
+struct asus_laptop {
+	char *name;		/* laptop name */
 
-	काष्ठा acpi_table_header *dsdt_info;
-	काष्ठा platक्रमm_device *platक्रमm_device;
-	काष्ठा acpi_device *device;		/* the device we are in */
-	काष्ठा backlight_device *backlight_device;
+	struct acpi_table_header *dsdt_info;
+	struct platform_device *platform_device;
+	struct acpi_device *device;		/* the device we are in */
+	struct backlight_device *backlight_device;
 
-	काष्ठा input_dev *inputdev;
-	काष्ठा key_entry *keymap;
-	काष्ठा input_dev *pega_accel_poll;
+	struct input_dev *inputdev;
+	struct key_entry *keymap;
+	struct input_dev *pega_accel_poll;
 
-	काष्ठा asus_led wled;
-	काष्ठा asus_led bled;
-	काष्ठा asus_led mled;
-	काष्ठा asus_led tled;
-	काष्ठा asus_led rled;
-	काष्ठा asus_led pled;
-	काष्ठा asus_led gled;
-	काष्ठा asus_led kled;
-	काष्ठा workqueue_काष्ठा *led_workqueue;
+	struct asus_led wled;
+	struct asus_led bled;
+	struct asus_led mled;
+	struct asus_led tled;
+	struct asus_led rled;
+	struct asus_led pled;
+	struct asus_led gled;
+	struct asus_led kled;
+	struct workqueue_struct *led_workqueue;
 
-	पूर्णांक wled_type;
-	पूर्णांक bled_type;
-	पूर्णांक wireless_status;
+	int wled_type;
+	int bled_type;
+	int wireless_status;
 	bool have_rsts;
 	bool is_pega_lucid;
 	bool pega_acc_live;
-	पूर्णांक pega_acc_x;
-	पूर्णांक pega_acc_y;
-	पूर्णांक pega_acc_z;
+	int pega_acc_x;
+	int pega_acc_y;
+	int pega_acc_z;
 
-	काष्ठा asus_rfसमाप्त wlan;
-	काष्ठा asus_rfसमाप्त bluetooth;
-	काष्ठा asus_rfसमाप्त wwan;
-	काष्ठा asus_rfसमाप्त wimax;
-	काष्ठा asus_rfसमाप्त gps;
+	struct asus_rfkill wlan;
+	struct asus_rfkill bluetooth;
+	struct asus_rfkill wwan;
+	struct asus_rfkill wimax;
+	struct asus_rfkill gps;
 
 	acpi_handle handle;	/* the handle of the hotk device */
 	u32 ledd_status;	/* status of the LED display */
 	u8 light_level;		/* light sensor level */
-	u8 light_चयन;	/* light sensor चयन value */
-	u16 event_count[128];	/* count क्रम each event TODO make this better */
-पूर्ण;
+	u8 light_switch;	/* light sensor switch value */
+	u16 event_count[128];	/* count for each event TODO make this better */
+};
 
-अटल स्थिर काष्ठा key_entry asus_keymap[] = अणु
-	/* Lenovo SL Specअगरic keycodes */
-	अणुKE_KEY, 0x02, अणु KEY_SCREENLOCK पूर्ण पूर्ण,
-	अणुKE_KEY, 0x05, अणु KEY_WLAN पूर्ण पूर्ण,
-	अणुKE_KEY, 0x08, अणु KEY_F13 पूर्ण पूर्ण,
-	अणुKE_KEY, 0x09, अणु KEY_PROG2 पूर्ण पूर्ण, /* Dock */
-	अणुKE_KEY, 0x17, अणु KEY_ZOOM पूर्ण पूर्ण,
-	अणुKE_KEY, 0x1f, अणु KEY_BATTERY पूर्ण पूर्ण,
-	/* End of Lenovo SL Specअगरic keycodes */
-	अणुKE_KEY, ATKD_BRNDOWN, अणु KEY_BRIGHTNESSDOWN पूर्ण पूर्ण,
-	अणुKE_KEY, ATKD_BRNUP, अणु KEY_BRIGHTNESSUP पूर्ण पूर्ण,
-	अणुKE_KEY, 0x30, अणु KEY_VOLUMEUP पूर्ण पूर्ण,
-	अणुKE_KEY, 0x31, अणु KEY_VOLUMEDOWN पूर्ण पूर्ण,
-	अणुKE_KEY, 0x32, अणु KEY_MUTE पूर्ण पूर्ण,
-	अणुKE_KEY, 0x33, अणु KEY_DISPLAYTOGGLE पूर्ण पूर्ण, /* LCD on */
-	अणुKE_KEY, 0x34, अणु KEY_DISPLAY_OFF पूर्ण पूर्ण, /* LCD off */
-	अणुKE_KEY, 0x40, अणु KEY_PREVIOUSSONG पूर्ण पूर्ण,
-	अणुKE_KEY, 0x41, अणु KEY_NEXTSONG पूर्ण पूर्ण,
-	अणुKE_KEY, 0x43, अणु KEY_STOPCD पूर्ण पूर्ण, /* Stop/Eject */
-	अणुKE_KEY, 0x45, अणु KEY_PLAYPAUSE पूर्ण पूर्ण,
-	अणुKE_KEY, 0x4c, अणु KEY_MEDIA पूर्ण पूर्ण, /* WMP Key */
-	अणुKE_KEY, 0x50, अणु KEY_EMAIL पूर्ण पूर्ण,
-	अणुKE_KEY, 0x51, अणु KEY_WWW पूर्ण पूर्ण,
-	अणुKE_KEY, 0x55, अणु KEY_CALC पूर्ण पूर्ण,
-	अणुKE_IGNORE, 0x57, पूर्ण,  /* Battery mode */
-	अणुKE_IGNORE, 0x58, पूर्ण,  /* AC mode */
-	अणुKE_KEY, 0x5C, अणु KEY_SCREENLOCK पूर्ण पूर्ण,  /* Screenlock */
-	अणुKE_KEY, 0x5D, अणु KEY_WLAN पूर्ण पूर्ण, /* WLAN Toggle */
-	अणुKE_KEY, 0x5E, अणु KEY_WLAN पूर्ण पूर्ण, /* WLAN Enable */
-	अणुKE_KEY, 0x5F, अणु KEY_WLAN पूर्ण पूर्ण, /* WLAN Disable */
-	अणुKE_KEY, 0x60, अणु KEY_TOUCHPAD_ON पूर्ण पूर्ण,
-	अणुKE_KEY, 0x61, अणु KEY_SWITCHVIDEOMODE पूर्ण पूर्ण, /* SDSP LCD only */
-	अणुKE_KEY, 0x62, अणु KEY_SWITCHVIDEOMODE पूर्ण पूर्ण, /* SDSP CRT only */
-	अणुKE_KEY, 0x63, अणु KEY_SWITCHVIDEOMODE पूर्ण पूर्ण, /* SDSP LCD + CRT */
-	अणुKE_KEY, 0x64, अणु KEY_SWITCHVIDEOMODE पूर्ण पूर्ण, /* SDSP TV */
-	अणुKE_KEY, 0x65, अणु KEY_SWITCHVIDEOMODE पूर्ण पूर्ण, /* SDSP LCD + TV */
-	अणुKE_KEY, 0x66, अणु KEY_SWITCHVIDEOMODE पूर्ण पूर्ण, /* SDSP CRT + TV */
-	अणुKE_KEY, 0x67, अणु KEY_SWITCHVIDEOMODE पूर्ण पूर्ण, /* SDSP LCD + CRT + TV */
-	अणुKE_KEY, 0x6A, अणु KEY_TOUCHPAD_TOGGLE पूर्ण पूर्ण, /* Lock Touchpad Fn + F9 */
-	अणुKE_KEY, 0x6B, अणु KEY_TOUCHPAD_TOGGLE पूर्ण पूर्ण, /* Lock Touchpad */
-	अणुKE_KEY, 0x6C, अणु KEY_SLEEP पूर्ण पूर्ण, /* Suspend */
-	अणुKE_KEY, 0x6D, अणु KEY_SLEEP पूर्ण पूर्ण, /* Hibernate */
-	अणुKE_IGNORE, 0x6E, पूर्ण,  /* Low Battery notअगरication */
-	अणुKE_KEY, 0x7D, अणु KEY_BLUETOOTH पूर्ण पूर्ण, /* Bluetooth Enable */
-	अणुKE_KEY, 0x7E, अणु KEY_BLUETOOTH पूर्ण पूर्ण, /* Bluetooth Disable */
-	अणुKE_KEY, 0x82, अणु KEY_CAMERA पूर्ण पूर्ण,
-	अणुKE_KEY, 0x88, अणु KEY_RFKILL  पूर्ण पूर्ण, /* Radio Toggle Key */
-	अणुKE_KEY, 0x8A, अणु KEY_PROG1 पूर्ण पूर्ण, /* Color enhancement mode */
-	अणुKE_KEY, 0x8C, अणु KEY_SWITCHVIDEOMODE पूर्ण पूर्ण, /* SDSP DVI only */
-	अणुKE_KEY, 0x8D, अणु KEY_SWITCHVIDEOMODE पूर्ण पूर्ण, /* SDSP LCD + DVI */
-	अणुKE_KEY, 0x8E, अणु KEY_SWITCHVIDEOMODE पूर्ण पूर्ण, /* SDSP CRT + DVI */
-	अणुKE_KEY, 0x8F, अणु KEY_SWITCHVIDEOMODE पूर्ण पूर्ण, /* SDSP TV + DVI */
-	अणुKE_KEY, 0x90, अणु KEY_SWITCHVIDEOMODE पूर्ण पूर्ण, /* SDSP LCD + CRT + DVI */
-	अणुKE_KEY, 0x91, अणु KEY_SWITCHVIDEOMODE पूर्ण पूर्ण, /* SDSP LCD + TV + DVI */
-	अणुKE_KEY, 0x92, अणु KEY_SWITCHVIDEOMODE पूर्ण पूर्ण, /* SDSP CRT + TV + DVI */
-	अणुKE_KEY, 0x93, अणु KEY_SWITCHVIDEOMODE पूर्ण पूर्ण, /* SDSP LCD + CRT + TV + DVI */
-	अणुKE_KEY, 0x95, अणु KEY_MEDIA पूर्ण पूर्ण,
-	अणुKE_KEY, 0x99, अणु KEY_PHONE पूर्ण पूर्ण,
-	अणुKE_KEY, 0xA0, अणु KEY_SWITCHVIDEOMODE पूर्ण पूर्ण, /* SDSP HDMI only */
-	अणुKE_KEY, 0xA1, अणु KEY_SWITCHVIDEOMODE पूर्ण पूर्ण, /* SDSP LCD + HDMI */
-	अणुKE_KEY, 0xA2, अणु KEY_SWITCHVIDEOMODE पूर्ण पूर्ण, /* SDSP CRT + HDMI */
-	अणुKE_KEY, 0xA3, अणु KEY_SWITCHVIDEOMODE पूर्ण पूर्ण, /* SDSP TV + HDMI */
-	अणुKE_KEY, 0xA4, अणु KEY_SWITCHVIDEOMODE पूर्ण पूर्ण, /* SDSP LCD + CRT + HDMI */
-	अणुKE_KEY, 0xA5, अणु KEY_SWITCHVIDEOMODE पूर्ण पूर्ण, /* SDSP LCD + TV + HDMI */
-	अणुKE_KEY, 0xA6, अणु KEY_SWITCHVIDEOMODE पूर्ण पूर्ण, /* SDSP CRT + TV + HDMI */
-	अणुKE_KEY, 0xA7, अणु KEY_SWITCHVIDEOMODE पूर्ण पूर्ण, /* SDSP LCD + CRT + TV + HDMI */
-	अणुKE_KEY, 0xB5, अणु KEY_CALC पूर्ण पूर्ण,
-	अणुKE_KEY, 0xC4, अणु KEY_KBDILLUMUP पूर्ण पूर्ण,
-	अणुKE_KEY, 0xC5, अणु KEY_KBDILLUMDOWN पूर्ण पूर्ण,
-	अणुKE_END, 0पूर्ण,
-पूर्ण;
+static const struct key_entry asus_keymap[] = {
+	/* Lenovo SL Specific keycodes */
+	{KE_KEY, 0x02, { KEY_SCREENLOCK } },
+	{KE_KEY, 0x05, { KEY_WLAN } },
+	{KE_KEY, 0x08, { KEY_F13 } },
+	{KE_KEY, 0x09, { KEY_PROG2 } }, /* Dock */
+	{KE_KEY, 0x17, { KEY_ZOOM } },
+	{KE_KEY, 0x1f, { KEY_BATTERY } },
+	/* End of Lenovo SL Specific keycodes */
+	{KE_KEY, ATKD_BRNDOWN, { KEY_BRIGHTNESSDOWN } },
+	{KE_KEY, ATKD_BRNUP, { KEY_BRIGHTNESSUP } },
+	{KE_KEY, 0x30, { KEY_VOLUMEUP } },
+	{KE_KEY, 0x31, { KEY_VOLUMEDOWN } },
+	{KE_KEY, 0x32, { KEY_MUTE } },
+	{KE_KEY, 0x33, { KEY_DISPLAYTOGGLE } }, /* LCD on */
+	{KE_KEY, 0x34, { KEY_DISPLAY_OFF } }, /* LCD off */
+	{KE_KEY, 0x40, { KEY_PREVIOUSSONG } },
+	{KE_KEY, 0x41, { KEY_NEXTSONG } },
+	{KE_KEY, 0x43, { KEY_STOPCD } }, /* Stop/Eject */
+	{KE_KEY, 0x45, { KEY_PLAYPAUSE } },
+	{KE_KEY, 0x4c, { KEY_MEDIA } }, /* WMP Key */
+	{KE_KEY, 0x50, { KEY_EMAIL } },
+	{KE_KEY, 0x51, { KEY_WWW } },
+	{KE_KEY, 0x55, { KEY_CALC } },
+	{KE_IGNORE, 0x57, },  /* Battery mode */
+	{KE_IGNORE, 0x58, },  /* AC mode */
+	{KE_KEY, 0x5C, { KEY_SCREENLOCK } },  /* Screenlock */
+	{KE_KEY, 0x5D, { KEY_WLAN } }, /* WLAN Toggle */
+	{KE_KEY, 0x5E, { KEY_WLAN } }, /* WLAN Enable */
+	{KE_KEY, 0x5F, { KEY_WLAN } }, /* WLAN Disable */
+	{KE_KEY, 0x60, { KEY_TOUCHPAD_ON } },
+	{KE_KEY, 0x61, { KEY_SWITCHVIDEOMODE } }, /* SDSP LCD only */
+	{KE_KEY, 0x62, { KEY_SWITCHVIDEOMODE } }, /* SDSP CRT only */
+	{KE_KEY, 0x63, { KEY_SWITCHVIDEOMODE } }, /* SDSP LCD + CRT */
+	{KE_KEY, 0x64, { KEY_SWITCHVIDEOMODE } }, /* SDSP TV */
+	{KE_KEY, 0x65, { KEY_SWITCHVIDEOMODE } }, /* SDSP LCD + TV */
+	{KE_KEY, 0x66, { KEY_SWITCHVIDEOMODE } }, /* SDSP CRT + TV */
+	{KE_KEY, 0x67, { KEY_SWITCHVIDEOMODE } }, /* SDSP LCD + CRT + TV */
+	{KE_KEY, 0x6A, { KEY_TOUCHPAD_TOGGLE } }, /* Lock Touchpad Fn + F9 */
+	{KE_KEY, 0x6B, { KEY_TOUCHPAD_TOGGLE } }, /* Lock Touchpad */
+	{KE_KEY, 0x6C, { KEY_SLEEP } }, /* Suspend */
+	{KE_KEY, 0x6D, { KEY_SLEEP } }, /* Hibernate */
+	{KE_IGNORE, 0x6E, },  /* Low Battery notification */
+	{KE_KEY, 0x7D, { KEY_BLUETOOTH } }, /* Bluetooth Enable */
+	{KE_KEY, 0x7E, { KEY_BLUETOOTH } }, /* Bluetooth Disable */
+	{KE_KEY, 0x82, { KEY_CAMERA } },
+	{KE_KEY, 0x88, { KEY_RFKILL  } }, /* Radio Toggle Key */
+	{KE_KEY, 0x8A, { KEY_PROG1 } }, /* Color enhancement mode */
+	{KE_KEY, 0x8C, { KEY_SWITCHVIDEOMODE } }, /* SDSP DVI only */
+	{KE_KEY, 0x8D, { KEY_SWITCHVIDEOMODE } }, /* SDSP LCD + DVI */
+	{KE_KEY, 0x8E, { KEY_SWITCHVIDEOMODE } }, /* SDSP CRT + DVI */
+	{KE_KEY, 0x8F, { KEY_SWITCHVIDEOMODE } }, /* SDSP TV + DVI */
+	{KE_KEY, 0x90, { KEY_SWITCHVIDEOMODE } }, /* SDSP LCD + CRT + DVI */
+	{KE_KEY, 0x91, { KEY_SWITCHVIDEOMODE } }, /* SDSP LCD + TV + DVI */
+	{KE_KEY, 0x92, { KEY_SWITCHVIDEOMODE } }, /* SDSP CRT + TV + DVI */
+	{KE_KEY, 0x93, { KEY_SWITCHVIDEOMODE } }, /* SDSP LCD + CRT + TV + DVI */
+	{KE_KEY, 0x95, { KEY_MEDIA } },
+	{KE_KEY, 0x99, { KEY_PHONE } },
+	{KE_KEY, 0xA0, { KEY_SWITCHVIDEOMODE } }, /* SDSP HDMI only */
+	{KE_KEY, 0xA1, { KEY_SWITCHVIDEOMODE } }, /* SDSP LCD + HDMI */
+	{KE_KEY, 0xA2, { KEY_SWITCHVIDEOMODE } }, /* SDSP CRT + HDMI */
+	{KE_KEY, 0xA3, { KEY_SWITCHVIDEOMODE } }, /* SDSP TV + HDMI */
+	{KE_KEY, 0xA4, { KEY_SWITCHVIDEOMODE } }, /* SDSP LCD + CRT + HDMI */
+	{KE_KEY, 0xA5, { KEY_SWITCHVIDEOMODE } }, /* SDSP LCD + TV + HDMI */
+	{KE_KEY, 0xA6, { KEY_SWITCHVIDEOMODE } }, /* SDSP CRT + TV + HDMI */
+	{KE_KEY, 0xA7, { KEY_SWITCHVIDEOMODE } }, /* SDSP LCD + CRT + TV + HDMI */
+	{KE_KEY, 0xB5, { KEY_CALC } },
+	{KE_KEY, 0xC4, { KEY_KBDILLUMUP } },
+	{KE_KEY, 0xC5, { KEY_KBDILLUMDOWN } },
+	{KE_END, 0},
+};
 
 
 /*
- * This function evaluates an ACPI method, given an पूर्णांक as parameter, the
- * method is searched within the scope of the handle, can be शून्य. The output
- * of the method is written is output, which can also be शून्य
+ * This function evaluates an ACPI method, given an int as parameter, the
+ * method is searched within the scope of the handle, can be NULL. The output
+ * of the method is written is output, which can also be NULL
  *
- * वापसs 0 अगर ग_लिखो is successful, -1 अन्यथा.
+ * returns 0 if write is successful, -1 else.
  */
-अटल पूर्णांक ग_लिखो_acpi_पूर्णांक_ret(acpi_handle handle, स्थिर अक्षर *method, पूर्णांक val,
-			      काष्ठा acpi_buffer *output)
-अणु
-	काष्ठा acpi_object_list params;	/* list of input parameters (an पूर्णांक) */
-	जोड़ acpi_object in_obj;	/* the only param we use */
+static int write_acpi_int_ret(acpi_handle handle, const char *method, int val,
+			      struct acpi_buffer *output)
+{
+	struct acpi_object_list params;	/* list of input parameters (an int) */
+	union acpi_object in_obj;	/* the only param we use */
 	acpi_status status;
 
-	अगर (!handle)
-		वापस -1;
+	if (!handle)
+		return -1;
 
 	params.count = 1;
-	params.poपूर्णांकer = &in_obj;
+	params.pointer = &in_obj;
 	in_obj.type = ACPI_TYPE_INTEGER;
-	in_obj.पूर्णांकeger.value = val;
+	in_obj.integer.value = val;
 
-	status = acpi_evaluate_object(handle, (अक्षर *)method, &params, output);
-	अगर (status == AE_OK)
-		वापस 0;
-	अन्यथा
-		वापस -1;
-पूर्ण
+	status = acpi_evaluate_object(handle, (char *)method, &params, output);
+	if (status == AE_OK)
+		return 0;
+	else
+		return -1;
+}
 
-अटल पूर्णांक ग_लिखो_acpi_पूर्णांक(acpi_handle handle, स्थिर अक्षर *method, पूर्णांक val)
-अणु
-	वापस ग_लिखो_acpi_पूर्णांक_ret(handle, method, val, शून्य);
-पूर्ण
+static int write_acpi_int(acpi_handle handle, const char *method, int val)
+{
+	return write_acpi_int_ret(handle, method, val, NULL);
+}
 
-अटल पूर्णांक acpi_check_handle(acpi_handle handle, स्थिर अक्षर *method,
+static int acpi_check_handle(acpi_handle handle, const char *method,
 			     acpi_handle *ret)
-अणु
+{
 	acpi_status status;
 
-	अगर (method == शून्य)
-		वापस -ENODEV;
+	if (method == NULL)
+		return -ENODEV;
 
-	अगर (ret)
-		status = acpi_get_handle(handle, (अक्षर *)method,
+	if (ret)
+		status = acpi_get_handle(handle, (char *)method,
 					 ret);
-	अन्यथा अणु
+	else {
 		acpi_handle dummy;
 
-		status = acpi_get_handle(handle, (अक्षर *)method,
+		status = acpi_get_handle(handle, (char *)method,
 					 &dummy);
-	पूर्ण
+	}
 
-	अगर (status != AE_OK) अणु
-		अगर (ret)
+	if (status != AE_OK) {
+		if (ret)
 			pr_warn("Error finding %s\n", method);
-		वापस -ENODEV;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return -ENODEV;
+	}
+	return 0;
+}
 
-अटल bool asus_check_pega_lucid(काष्ठा asus_laptop *asus)
-अणु
-	वापस !म_भेद(asus->name, DEVICE_NAME_PEGA) &&
-	   !acpi_check_handle(asus->handle, METHOD_PEGA_ENABLE, शून्य) &&
-	   !acpi_check_handle(asus->handle, METHOD_PEGA_DISABLE, शून्य) &&
-	   !acpi_check_handle(asus->handle, METHOD_PEGA_READ, शून्य);
-पूर्ण
+static bool asus_check_pega_lucid(struct asus_laptop *asus)
+{
+	return !strcmp(asus->name, DEVICE_NAME_PEGA) &&
+	   !acpi_check_handle(asus->handle, METHOD_PEGA_ENABLE, NULL) &&
+	   !acpi_check_handle(asus->handle, METHOD_PEGA_DISABLE, NULL) &&
+	   !acpi_check_handle(asus->handle, METHOD_PEGA_READ, NULL);
+}
 
-अटल पूर्णांक asus_pega_lucid_set(काष्ठा asus_laptop *asus, पूर्णांक unit, bool enable)
-अणु
-	अक्षर *method = enable ? METHOD_PEGA_ENABLE : METHOD_PEGA_DISABLE;
-	वापस ग_लिखो_acpi_पूर्णांक(asus->handle, method, unit);
-पूर्ण
+static int asus_pega_lucid_set(struct asus_laptop *asus, int unit, bool enable)
+{
+	char *method = enable ? METHOD_PEGA_ENABLE : METHOD_PEGA_DISABLE;
+	return write_acpi_int(asus->handle, method, unit);
+}
 
-अटल पूर्णांक pega_acc_axis(काष्ठा asus_laptop *asus, पूर्णांक curr, अक्षर *method)
-अणु
-	पूर्णांक i, delta;
-	अचिन्हित दीर्घ दीर्घ val;
-	क्रम (i = 0; i < PEGA_ACC_RETRIES; i++) अणु
-		acpi_evaluate_पूर्णांकeger(asus->handle, method, शून्य, &val);
+static int pega_acc_axis(struct asus_laptop *asus, int curr, char *method)
+{
+	int i, delta;
+	unsigned long long val;
+	for (i = 0; i < PEGA_ACC_RETRIES; i++) {
+		acpi_evaluate_integer(asus->handle, method, NULL, &val);
 
-		/* The output is noisy.  From पढ़ोing the ASL
-		 * dissassembly, समयout errors are वापसed with 1's
+		/* The output is noisy.  From reading the ASL
+		 * dissassembly, timeout errors are returned with 1's
 		 * in the high word, and the lack of locking around
-		 * thei hi/lo byte पढ़ोs means that a transition
-		 * between (क्रम example) -1 and 0 could be पढ़ो as
+		 * thei hi/lo byte reads means that a transition
+		 * between (for example) -1 and 0 could be read as
 		 * 0xff00 or 0x00ff. */
-		delta = असल(curr - (लघु)val);
-		अगर (delta < 128 && !(val & ~0xffff))
-			अवरोध;
-	पूर्ण
-	वापस clamp_val((लघु)val, -PEGA_ACC_CLAMP, PEGA_ACC_CLAMP);
-पूर्ण
+		delta = abs(curr - (short)val);
+		if (delta < 128 && !(val & ~0xffff))
+			break;
+	}
+	return clamp_val((short)val, -PEGA_ACC_CLAMP, PEGA_ACC_CLAMP);
+}
 
-अटल व्योम pega_accel_poll(काष्ठा input_dev *input)
-अणु
-	काष्ठा device *parent = input->dev.parent;
-	काष्ठा asus_laptop *asus = dev_get_drvdata(parent);
+static void pega_accel_poll(struct input_dev *input)
+{
+	struct device *parent = input->dev.parent;
+	struct asus_laptop *asus = dev_get_drvdata(parent);
 
-	/* In some हालs, the very first call to poll causes a
+	/* In some cases, the very first call to poll causes a
 	 * recursive fault under the polldev worker.  This is
 	 * apparently related to very early userspace access to the
 	 * device, and perhaps a firmware bug. Fake the first report. */
-	अगर (!asus->pega_acc_live) अणु
+	if (!asus->pega_acc_live) {
 		asus->pega_acc_live = true;
-		input_report_असल(input, ABS_X, 0);
-		input_report_असल(input, ABS_Y, 0);
-		input_report_असल(input, ABS_Z, 0);
+		input_report_abs(input, ABS_X, 0);
+		input_report_abs(input, ABS_Y, 0);
+		input_report_abs(input, ABS_Z, 0);
 		input_sync(input);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	asus->pega_acc_x = pega_acc_axis(asus, asus->pega_acc_x, METHOD_XLRX);
 	asus->pega_acc_y = pega_acc_axis(asus, asus->pega_acc_y, METHOD_XLRY);
 	asus->pega_acc_z = pega_acc_axis(asus, asus->pega_acc_z, METHOD_XLRZ);
 
-	/* Note transक्रमm, convert to "right/up/out" in the native
+	/* Note transform, convert to "right/up/out" in the native
 	 * landscape orientation (i.e. the vector is the direction of
 	 * "real up" in the device's cartiesian coordinates). */
-	input_report_असल(input, ABS_X, -asus->pega_acc_x);
-	input_report_असल(input, ABS_Y, -asus->pega_acc_y);
-	input_report_असल(input, ABS_Z,  asus->pega_acc_z);
+	input_report_abs(input, ABS_X, -asus->pega_acc_x);
+	input_report_abs(input, ABS_Y, -asus->pega_acc_y);
+	input_report_abs(input, ABS_Z,  asus->pega_acc_z);
 	input_sync(input);
-पूर्ण
+}
 
-अटल व्योम pega_accel_निकास(काष्ठा asus_laptop *asus)
-अणु
-	अगर (asus->pega_accel_poll) अणु
-		input_unरेजिस्टर_device(asus->pega_accel_poll);
-		asus->pega_accel_poll = शून्य;
-	पूर्ण
-पूर्ण
+static void pega_accel_exit(struct asus_laptop *asus)
+{
+	if (asus->pega_accel_poll) {
+		input_unregister_device(asus->pega_accel_poll);
+		asus->pega_accel_poll = NULL;
+	}
+}
 
-अटल पूर्णांक pega_accel_init(काष्ठा asus_laptop *asus)
-अणु
-	पूर्णांक err;
-	काष्ठा input_dev *input;
+static int pega_accel_init(struct asus_laptop *asus)
+{
+	int err;
+	struct input_dev *input;
 
-	अगर (!asus->is_pega_lucid)
-		वापस -ENODEV;
+	if (!asus->is_pega_lucid)
+		return -ENODEV;
 
-	अगर (acpi_check_handle(asus->handle, METHOD_XLRX, शून्य) ||
-	    acpi_check_handle(asus->handle, METHOD_XLRY, शून्य) ||
-	    acpi_check_handle(asus->handle, METHOD_XLRZ, शून्य))
-		वापस -ENODEV;
+	if (acpi_check_handle(asus->handle, METHOD_XLRX, NULL) ||
+	    acpi_check_handle(asus->handle, METHOD_XLRY, NULL) ||
+	    acpi_check_handle(asus->handle, METHOD_XLRZ, NULL))
+		return -ENODEV;
 
 	input = input_allocate_device();
-	अगर (!input)
-		वापस -ENOMEM;
+	if (!input)
+		return -ENOMEM;
 
 	input->name = PEGA_ACCEL_DESC;
 	input->phys = PEGA_ACCEL_NAME "/input0";
-	input->dev.parent = &asus->platक्रमm_device->dev;
+	input->dev.parent = &asus->platform_device->dev;
 	input->id.bustype = BUS_HOST;
 
-	input_set_असल_params(input, ABS_X,
+	input_set_abs_params(input, ABS_X,
 			     -PEGA_ACC_CLAMP, PEGA_ACC_CLAMP, 0, 0);
-	input_set_असल_params(input, ABS_Y,
+	input_set_abs_params(input, ABS_Y,
 			     -PEGA_ACC_CLAMP, PEGA_ACC_CLAMP, 0, 0);
-	input_set_असल_params(input, ABS_Z,
+	input_set_abs_params(input, ABS_Z,
 			     -PEGA_ACC_CLAMP, PEGA_ACC_CLAMP, 0, 0);
 
 	err = input_setup_polling(input, pega_accel_poll);
-	अगर (err)
-		जाओ निकास;
+	if (err)
+		goto exit;
 
-	input_set_poll_पूर्णांकerval(input, 125);
-	input_set_min_poll_पूर्णांकerval(input, 50);
-	input_set_max_poll_पूर्णांकerval(input, 2000);
+	input_set_poll_interval(input, 125);
+	input_set_min_poll_interval(input, 50);
+	input_set_max_poll_interval(input, 2000);
 
-	err = input_रेजिस्टर_device(input);
-	अगर (err)
-		जाओ निकास;
+	err = input_register_device(input);
+	if (err)
+		goto exit;
 
 	asus->pega_accel_poll = input;
-	वापस 0;
+	return 0;
 
-निकास:
-	input_मुक्त_device(input);
-	वापस err;
-पूर्ण
+exit:
+	input_free_device(input);
+	return err;
+}
 
 /* Generic LED function */
-अटल पूर्णांक asus_led_set(काष्ठा asus_laptop *asus, स्थिर अक्षर *method,
-			 पूर्णांक value)
-अणु
-	अगर (!म_भेद(method, METHOD_MLED))
+static int asus_led_set(struct asus_laptop *asus, const char *method,
+			 int value)
+{
+	if (!strcmp(method, METHOD_MLED))
 		value = !value;
-	अन्यथा अगर (!म_भेद(method, METHOD_GLED))
+	else if (!strcmp(method, METHOD_GLED))
 		value = !value + 1;
-	अन्यथा
+	else
 		value = !!value;
 
-	वापस ग_लिखो_acpi_पूर्णांक(asus->handle, method, value);
-पूर्ण
+	return write_acpi_int(asus->handle, method, value);
+}
 
 /*
  * LEDs
  */
 /* /sys/class/led handlers */
-अटल व्योम asus_led_cdev_set(काष्ठा led_classdev *led_cdev,
-			 क्रमागत led_brightness value)
-अणु
-	काष्ठा asus_led *led = container_of(led_cdev, काष्ठा asus_led, led);
-	काष्ठा asus_laptop *asus = led->asus;
+static void asus_led_cdev_set(struct led_classdev *led_cdev,
+			 enum led_brightness value)
+{
+	struct asus_led *led = container_of(led_cdev, struct asus_led, led);
+	struct asus_laptop *asus = led->asus;
 
 	led->wk = !!value;
 	queue_work(asus->led_workqueue, &led->work);
-पूर्ण
+}
 
-अटल व्योम asus_led_cdev_update(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा asus_led *led = container_of(work, काष्ठा asus_led, work);
-	काष्ठा asus_laptop *asus = led->asus;
+static void asus_led_cdev_update(struct work_struct *work)
+{
+	struct asus_led *led = container_of(work, struct asus_led, work);
+	struct asus_laptop *asus = led->asus;
 
 	asus_led_set(asus, led->method, led->wk);
-पूर्ण
+}
 
-अटल क्रमागत led_brightness asus_led_cdev_get(काष्ठा led_classdev *led_cdev)
-अणु
-	वापस led_cdev->brightness;
-पूर्ण
+static enum led_brightness asus_led_cdev_get(struct led_classdev *led_cdev)
+{
+	return led_cdev->brightness;
+}
 
 /*
  * Keyboard backlight (also a LED)
  */
-अटल पूर्णांक asus_kled_lvl(काष्ठा asus_laptop *asus)
-अणु
-	अचिन्हित दीर्घ दीर्घ kblv;
-	काष्ठा acpi_object_list params;
-	जोड़ acpi_object in_obj;
+static int asus_kled_lvl(struct asus_laptop *asus)
+{
+	unsigned long long kblv;
+	struct acpi_object_list params;
+	union acpi_object in_obj;
 	acpi_status rv;
 
 	params.count = 1;
-	params.poपूर्णांकer = &in_obj;
+	params.pointer = &in_obj;
 	in_obj.type = ACPI_TYPE_INTEGER;
-	in_obj.पूर्णांकeger.value = 2;
+	in_obj.integer.value = 2;
 
-	rv = acpi_evaluate_पूर्णांकeger(asus->handle, METHOD_KBD_LIGHT_GET,
+	rv = acpi_evaluate_integer(asus->handle, METHOD_KBD_LIGHT_GET,
 				   &params, &kblv);
-	अगर (ACPI_FAILURE(rv)) अणु
+	if (ACPI_FAILURE(rv)) {
 		pr_warn("Error reading kled level\n");
-		वापस -ENODEV;
-	पूर्ण
-	वापस kblv;
-पूर्ण
+		return -ENODEV;
+	}
+	return kblv;
+}
 
-अटल पूर्णांक asus_kled_set(काष्ठा asus_laptop *asus, पूर्णांक kblv)
-अणु
-	अगर (kblv > 0)
+static int asus_kled_set(struct asus_laptop *asus, int kblv)
+{
+	if (kblv > 0)
 		kblv = (1 << 7) | (kblv & 0x7F);
-	अन्यथा
+	else
 		kblv = 0;
 
-	अगर (ग_लिखो_acpi_पूर्णांक(asus->handle, METHOD_KBD_LIGHT_SET, kblv)) अणु
+	if (write_acpi_int(asus->handle, METHOD_KBD_LIGHT_SET, kblv)) {
 		pr_warn("Keyboard LED display write failed\n");
-		वापस -EINVAL;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return -EINVAL;
+	}
+	return 0;
+}
 
-अटल व्योम asus_kled_cdev_set(काष्ठा led_classdev *led_cdev,
-			      क्रमागत led_brightness value)
-अणु
-	काष्ठा asus_led *led = container_of(led_cdev, काष्ठा asus_led, led);
-	काष्ठा asus_laptop *asus = led->asus;
+static void asus_kled_cdev_set(struct led_classdev *led_cdev,
+			      enum led_brightness value)
+{
+	struct asus_led *led = container_of(led_cdev, struct asus_led, led);
+	struct asus_laptop *asus = led->asus;
 
 	led->wk = value;
 	queue_work(asus->led_workqueue, &led->work);
-पूर्ण
+}
 
-अटल व्योम asus_kled_cdev_update(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा asus_led *led = container_of(work, काष्ठा asus_led, work);
-	काष्ठा asus_laptop *asus = led->asus;
+static void asus_kled_cdev_update(struct work_struct *work)
+{
+	struct asus_led *led = container_of(work, struct asus_led, work);
+	struct asus_laptop *asus = led->asus;
 
 	asus_kled_set(asus, led->wk);
-पूर्ण
+}
 
-अटल क्रमागत led_brightness asus_kled_cdev_get(काष्ठा led_classdev *led_cdev)
-अणु
-	काष्ठा asus_led *led = container_of(led_cdev, काष्ठा asus_led, led);
-	काष्ठा asus_laptop *asus = led->asus;
+static enum led_brightness asus_kled_cdev_get(struct led_classdev *led_cdev)
+{
+	struct asus_led *led = container_of(led_cdev, struct asus_led, led);
+	struct asus_laptop *asus = led->asus;
 
-	वापस asus_kled_lvl(asus);
-पूर्ण
+	return asus_kled_lvl(asus);
+}
 
-अटल व्योम asus_led_निकास(काष्ठा asus_laptop *asus)
-अणु
-	led_classdev_unरेजिस्टर(&asus->wled.led);
-	led_classdev_unरेजिस्टर(&asus->bled.led);
-	led_classdev_unरेजिस्टर(&asus->mled.led);
-	led_classdev_unरेजिस्टर(&asus->tled.led);
-	led_classdev_unरेजिस्टर(&asus->pled.led);
-	led_classdev_unरेजिस्टर(&asus->rled.led);
-	led_classdev_unरेजिस्टर(&asus->gled.led);
-	led_classdev_unरेजिस्टर(&asus->kled.led);
+static void asus_led_exit(struct asus_laptop *asus)
+{
+	led_classdev_unregister(&asus->wled.led);
+	led_classdev_unregister(&asus->bled.led);
+	led_classdev_unregister(&asus->mled.led);
+	led_classdev_unregister(&asus->tled.led);
+	led_classdev_unregister(&asus->pled.led);
+	led_classdev_unregister(&asus->rled.led);
+	led_classdev_unregister(&asus->gled.led);
+	led_classdev_unregister(&asus->kled.led);
 
-	अगर (asus->led_workqueue) अणु
+	if (asus->led_workqueue) {
 		destroy_workqueue(asus->led_workqueue);
-		asus->led_workqueue = शून्य;
-	पूर्ण
-पूर्ण
+		asus->led_workqueue = NULL;
+	}
+}
 
 /*  Ugly macro, need to fix that later */
-अटल पूर्णांक asus_led_रेजिस्टर(काष्ठा asus_laptop *asus,
-			     काष्ठा asus_led *led,
-			     स्थिर अक्षर *name, स्थिर अक्षर *method)
-अणु
-	काष्ठा led_classdev *led_cdev = &led->led;
+static int asus_led_register(struct asus_laptop *asus,
+			     struct asus_led *led,
+			     const char *name, const char *method)
+{
+	struct led_classdev *led_cdev = &led->led;
 
-	अगर (!method || acpi_check_handle(asus->handle, method, शून्य))
-		वापस 0; /* Led not present */
+	if (!method || acpi_check_handle(asus->handle, method, NULL))
+		return 0; /* Led not present */
 
 	led->asus = asus;
 	led->method = method;
@@ -674,59 +673,59 @@ MODULE_PARM_DESC(als_status, "Set the ALS status on boot "
 	led_cdev->brightness_set = asus_led_cdev_set;
 	led_cdev->brightness_get = asus_led_cdev_get;
 	led_cdev->max_brightness = 1;
-	वापस led_classdev_रेजिस्टर(&asus->platक्रमm_device->dev, led_cdev);
-पूर्ण
+	return led_classdev_register(&asus->platform_device->dev, led_cdev);
+}
 
-अटल पूर्णांक asus_led_init(काष्ठा asus_laptop *asus)
-अणु
-	पूर्णांक r = 0;
+static int asus_led_init(struct asus_laptop *asus)
+{
+	int r = 0;
 
 	/*
 	 * The Pegatron Lucid has no physical leds, but all methods are
 	 * available in the DSDT...
 	 */
-	अगर (asus->is_pega_lucid)
-		वापस 0;
+	if (asus->is_pega_lucid)
+		return 0;
 
 	/*
 	 * Functions that actually update the LED's are called from a
-	 * workqueue. By करोing this as separate work rather than when the LED
-	 * subप्रणाली asks, we aव्योम messing with the Asus ACPI stuff during a
-	 * potentially bad समय, such as a समयr पूर्णांकerrupt.
+	 * workqueue. By doing this as separate work rather than when the LED
+	 * subsystem asks, we avoid messing with the Asus ACPI stuff during a
+	 * potentially bad time, such as a timer interrupt.
 	 */
-	asus->led_workqueue = create_singlethपढ़ो_workqueue("led_workqueue");
-	अगर (!asus->led_workqueue)
-		वापस -ENOMEM;
+	asus->led_workqueue = create_singlethread_workqueue("led_workqueue");
+	if (!asus->led_workqueue)
+		return -ENOMEM;
 
-	अगर (asus->wled_type == TYPE_LED)
-		r = asus_led_रेजिस्टर(asus, &asus->wled, "asus::wlan",
+	if (asus->wled_type == TYPE_LED)
+		r = asus_led_register(asus, &asus->wled, "asus::wlan",
 				      METHOD_WLAN);
-	अगर (r)
-		जाओ error;
-	अगर (asus->bled_type == TYPE_LED)
-		r = asus_led_रेजिस्टर(asus, &asus->bled, "asus::bluetooth",
+	if (r)
+		goto error;
+	if (asus->bled_type == TYPE_LED)
+		r = asus_led_register(asus, &asus->bled, "asus::bluetooth",
 				      METHOD_BLUETOOTH);
-	अगर (r)
-		जाओ error;
-	r = asus_led_रेजिस्टर(asus, &asus->mled, "asus::mail", METHOD_MLED);
-	अगर (r)
-		जाओ error;
-	r = asus_led_रेजिस्टर(asus, &asus->tled, "asus::touchpad", METHOD_TLED);
-	अगर (r)
-		जाओ error;
-	r = asus_led_रेजिस्टर(asus, &asus->rled, "asus::record", METHOD_RLED);
-	अगर (r)
-		जाओ error;
-	r = asus_led_रेजिस्टर(asus, &asus->pled, "asus::phone", METHOD_PLED);
-	अगर (r)
-		जाओ error;
-	r = asus_led_रेजिस्टर(asus, &asus->gled, "asus::gaming", METHOD_GLED);
-	अगर (r)
-		जाओ error;
-	अगर (!acpi_check_handle(asus->handle, METHOD_KBD_LIGHT_SET, शून्य) &&
-	    !acpi_check_handle(asus->handle, METHOD_KBD_LIGHT_GET, शून्य)) अणु
-		काष्ठा asus_led *led = &asus->kled;
-		काष्ठा led_classdev *cdev = &led->led;
+	if (r)
+		goto error;
+	r = asus_led_register(asus, &asus->mled, "asus::mail", METHOD_MLED);
+	if (r)
+		goto error;
+	r = asus_led_register(asus, &asus->tled, "asus::touchpad", METHOD_TLED);
+	if (r)
+		goto error;
+	r = asus_led_register(asus, &asus->rled, "asus::record", METHOD_RLED);
+	if (r)
+		goto error;
+	r = asus_led_register(asus, &asus->pled, "asus::phone", METHOD_PLED);
+	if (r)
+		goto error;
+	r = asus_led_register(asus, &asus->gled, "asus::gaming", METHOD_GLED);
+	if (r)
+		goto error;
+	if (!acpi_check_handle(asus->handle, METHOD_KBD_LIGHT_SET, NULL) &&
+	    !acpi_check_handle(asus->handle, METHOD_KBD_LIGHT_GET, NULL)) {
+		struct asus_led *led = &asus->kled;
+		struct led_classdev *cdev = &led->led;
 
 		led->asus = asus;
 
@@ -735,790 +734,790 @@ MODULE_PARM_DESC(als_status, "Set the ALS status on boot "
 		cdev->brightness_set = asus_kled_cdev_set;
 		cdev->brightness_get = asus_kled_cdev_get;
 		cdev->max_brightness = 3;
-		r = led_classdev_रेजिस्टर(&asus->platक्रमm_device->dev, cdev);
-	पूर्ण
+		r = led_classdev_register(&asus->platform_device->dev, cdev);
+	}
 error:
-	अगर (r)
-		asus_led_निकास(asus);
-	वापस r;
-पूर्ण
+	if (r)
+		asus_led_exit(asus);
+	return r;
+}
 
 /*
  * Backlight device
  */
-अटल पूर्णांक asus_पढ़ो_brightness(काष्ठा backlight_device *bd)
-अणु
-	काष्ठा asus_laptop *asus = bl_get_data(bd);
-	अचिन्हित दीर्घ दीर्घ value;
+static int asus_read_brightness(struct backlight_device *bd)
+{
+	struct asus_laptop *asus = bl_get_data(bd);
+	unsigned long long value;
 	acpi_status rv;
 
-	rv = acpi_evaluate_पूर्णांकeger(asus->handle, METHOD_BRIGHTNESS_GET,
-				   शून्य, &value);
-	अगर (ACPI_FAILURE(rv)) अणु
+	rv = acpi_evaluate_integer(asus->handle, METHOD_BRIGHTNESS_GET,
+				   NULL, &value);
+	if (ACPI_FAILURE(rv)) {
 		pr_warn("Error reading brightness\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	वापस value;
-पूर्ण
+	return value;
+}
 
-अटल पूर्णांक asus_set_brightness(काष्ठा backlight_device *bd, पूर्णांक value)
-अणु
-	काष्ठा asus_laptop *asus = bl_get_data(bd);
+static int asus_set_brightness(struct backlight_device *bd, int value)
+{
+	struct asus_laptop *asus = bl_get_data(bd);
 
-	अगर (ग_लिखो_acpi_पूर्णांक(asus->handle, METHOD_BRIGHTNESS_SET, value)) अणु
+	if (write_acpi_int(asus->handle, METHOD_BRIGHTNESS_SET, value)) {
 		pr_warn("Error changing brightness\n");
-		वापस -EIO;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return -EIO;
+	}
+	return 0;
+}
 
-अटल पूर्णांक update_bl_status(काष्ठा backlight_device *bd)
-अणु
-	पूर्णांक value = bd->props.brightness;
+static int update_bl_status(struct backlight_device *bd)
+{
+	int value = bd->props.brightness;
 
-	वापस asus_set_brightness(bd, value);
-पूर्ण
+	return asus_set_brightness(bd, value);
+}
 
-अटल स्थिर काष्ठा backlight_ops asusbl_ops = अणु
-	.get_brightness = asus_पढ़ो_brightness,
+static const struct backlight_ops asusbl_ops = {
+	.get_brightness = asus_read_brightness,
 	.update_status = update_bl_status,
-पूर्ण;
+};
 
-अटल पूर्णांक asus_backlight_notअगरy(काष्ठा asus_laptop *asus)
-अणु
-	काष्ठा backlight_device *bd = asus->backlight_device;
-	पूर्णांक old = bd->props.brightness;
+static int asus_backlight_notify(struct asus_laptop *asus)
+{
+	struct backlight_device *bd = asus->backlight_device;
+	int old = bd->props.brightness;
 
-	backlight_क्रमce_update(bd, BACKLIGHT_UPDATE_HOTKEY);
+	backlight_force_update(bd, BACKLIGHT_UPDATE_HOTKEY);
 
-	वापस old;
-पूर्ण
+	return old;
+}
 
-अटल पूर्णांक asus_backlight_init(काष्ठा asus_laptop *asus)
-अणु
-	काष्ठा backlight_device *bd;
-	काष्ठा backlight_properties props;
+static int asus_backlight_init(struct asus_laptop *asus)
+{
+	struct backlight_device *bd;
+	struct backlight_properties props;
 
-	अगर (acpi_check_handle(asus->handle, METHOD_BRIGHTNESS_GET, शून्य) ||
-	    acpi_check_handle(asus->handle, METHOD_BRIGHTNESS_SET, शून्य))
-		वापस 0;
+	if (acpi_check_handle(asus->handle, METHOD_BRIGHTNESS_GET, NULL) ||
+	    acpi_check_handle(asus->handle, METHOD_BRIGHTNESS_SET, NULL))
+		return 0;
 
-	स_रखो(&props, 0, माप(काष्ठा backlight_properties));
+	memset(&props, 0, sizeof(struct backlight_properties));
 	props.max_brightness = 15;
 	props.type = BACKLIGHT_PLATFORM;
 
-	bd = backlight_device_रेजिस्टर(ASUS_LAPTOP_खाता,
-				       &asus->platक्रमm_device->dev, asus,
+	bd = backlight_device_register(ASUS_LAPTOP_FILE,
+				       &asus->platform_device->dev, asus,
 				       &asusbl_ops, &props);
-	अगर (IS_ERR(bd)) अणु
+	if (IS_ERR(bd)) {
 		pr_err("Could not register asus backlight device\n");
-		asus->backlight_device = शून्य;
-		वापस PTR_ERR(bd);
-	पूर्ण
+		asus->backlight_device = NULL;
+		return PTR_ERR(bd);
+	}
 
 	asus->backlight_device = bd;
-	bd->props.brightness = asus_पढ़ो_brightness(bd);
-	bd->props.घातer = FB_BLANK_UNBLANK;
+	bd->props.brightness = asus_read_brightness(bd);
+	bd->props.power = FB_BLANK_UNBLANK;
 	backlight_update_status(bd);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम asus_backlight_निकास(काष्ठा asus_laptop *asus)
-अणु
-	backlight_device_unरेजिस्टर(asus->backlight_device);
-	asus->backlight_device = शून्य;
-पूर्ण
+static void asus_backlight_exit(struct asus_laptop *asus)
+{
+	backlight_device_unregister(asus->backlight_device);
+	asus->backlight_device = NULL;
+}
 
 /*
- * Platक्रमm device handlers
+ * Platform device handlers
  */
 
 /*
- * We ग_लिखो our info in page, we begin at offset off and cannot ग_लिखो more
- * than count bytes. We set eof to 1 अगर we handle those 2 values. We वापस the
+ * We write our info in page, we begin at offset off and cannot write more
+ * than count bytes. We set eof to 1 if we handle those 2 values. We return the
  * number of bytes written in page
  */
-अटल sमाप_प्रकार infos_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			  अक्षर *page)
-अणु
-	काष्ठा asus_laptop *asus = dev_get_drvdata(dev);
-	पूर्णांक len = 0;
-	अचिन्हित दीर्घ दीर्घ temp;
-	अक्षर buf[16];		/* enough क्रम all info */
+static ssize_t infos_show(struct device *dev, struct device_attribute *attr,
+			  char *page)
+{
+	struct asus_laptop *asus = dev_get_drvdata(dev);
+	int len = 0;
+	unsigned long long temp;
+	char buf[16];		/* enough for all info */
 	acpi_status rv;
 
 	/*
-	 * We use the easy way, we करोn't care of off and count,
-	 * so we करोn't set eof to 1
+	 * We use the easy way, we don't care of off and count,
+	 * so we don't set eof to 1
 	 */
 
-	len += प्र_लिखो(page, ASUS_LAPTOP_NAME " " ASUS_LAPTOP_VERSION "\n");
-	len += प्र_लिखो(page + len, "Model reference    : %s\n", asus->name);
+	len += sprintf(page, ASUS_LAPTOP_NAME " " ASUS_LAPTOP_VERSION "\n");
+	len += sprintf(page + len, "Model reference    : %s\n", asus->name);
 	/*
 	 * The SFUN method probably allows the original driver to get the list
 	 * of features supported by a given model. For now, 0x0100 or 0x0800
-	 * bit signअगरies that the laptop is equipped with a Wi-Fi MiniPCI card.
-	 * The signअगरicance of others is yet to be found.
+	 * bit signifies that the laptop is equipped with a Wi-Fi MiniPCI card.
+	 * The significance of others is yet to be found.
 	 */
-	rv = acpi_evaluate_पूर्णांकeger(asus->handle, "SFUN", शून्य, &temp);
-	अगर (ACPI_SUCCESS(rv))
-		len += प्र_लिखो(page + len, "SFUN value         : %#x\n",
-			       (uपूर्णांक) temp);
+	rv = acpi_evaluate_integer(asus->handle, "SFUN", NULL, &temp);
+	if (ACPI_SUCCESS(rv))
+		len += sprintf(page + len, "SFUN value         : %#x\n",
+			       (uint) temp);
 	/*
-	 * The HWRS method वापस inक्रमmations about the hardware.
-	 * 0x80 bit is क्रम WLAN, 0x100 क्रम Bluetooth.
-	 * 0x40 क्रम WWAN, 0x10 क्रम WIMAX.
-	 * The signअगरicance of others is yet to be found.
-	 * We करोn't currently use this क्रम device detection, and it
-	 * takes several seconds to run on some प्रणालीs.
+	 * The HWRS method return informations about the hardware.
+	 * 0x80 bit is for WLAN, 0x100 for Bluetooth.
+	 * 0x40 for WWAN, 0x10 for WIMAX.
+	 * The significance of others is yet to be found.
+	 * We don't currently use this for device detection, and it
+	 * takes several seconds to run on some systems.
 	 */
-	rv = acpi_evaluate_पूर्णांकeger(asus->handle, "HWRS", शून्य, &temp);
-	अगर (ACPI_SUCCESS(rv))
-		len += प्र_लिखो(page + len, "HWRS value         : %#x\n",
-			       (uपूर्णांक) temp);
+	rv = acpi_evaluate_integer(asus->handle, "HWRS", NULL, &temp);
+	if (ACPI_SUCCESS(rv))
+		len += sprintf(page + len, "HWRS value         : %#x\n",
+			       (uint) temp);
 	/*
-	 * Another value क्रम userspace: the ASYM method वापसs 0x02 क्रम
-	 * battery low and 0x04 क्रम battery critical, its पढ़ोings tend to be
+	 * Another value for userspace: the ASYM method returns 0x02 for
+	 * battery low and 0x04 for battery critical, its readings tend to be
 	 * more accurate than those provided by _BST.
 	 * Note: since not all the laptops provide this method, errors are
 	 * silently ignored.
 	 */
-	rv = acpi_evaluate_पूर्णांकeger(asus->handle, "ASYM", शून्य, &temp);
-	अगर (ACPI_SUCCESS(rv))
-		len += प्र_लिखो(page + len, "ASYM value         : %#x\n",
-			       (uपूर्णांक) temp);
-	अगर (asus->dsdt_info) अणु
-		snम_लिखो(buf, 16, "%d", asus->dsdt_info->length);
-		len += प्र_लिखो(page + len, "DSDT length        : %s\n", buf);
-		snम_लिखो(buf, 16, "%d", asus->dsdt_info->checksum);
-		len += प्र_लिखो(page + len, "DSDT checksum      : %s\n", buf);
-		snम_लिखो(buf, 16, "%d", asus->dsdt_info->revision);
-		len += प्र_लिखो(page + len, "DSDT revision      : %s\n", buf);
-		snम_लिखो(buf, 7, "%s", asus->dsdt_info->oem_id);
-		len += प्र_लिखो(page + len, "OEM id             : %s\n", buf);
-		snम_लिखो(buf, 9, "%s", asus->dsdt_info->oem_table_id);
-		len += प्र_लिखो(page + len, "OEM table id       : %s\n", buf);
-		snम_लिखो(buf, 16, "%x", asus->dsdt_info->oem_revision);
-		len += प्र_लिखो(page + len, "OEM revision       : 0x%s\n", buf);
-		snम_लिखो(buf, 5, "%s", asus->dsdt_info->asl_compiler_id);
-		len += प्र_लिखो(page + len, "ASL comp vendor id : %s\n", buf);
-		snम_लिखो(buf, 16, "%x", asus->dsdt_info->asl_compiler_revision);
-		len += प्र_लिखो(page + len, "ASL comp revision  : 0x%s\n", buf);
-	पूर्ण
+	rv = acpi_evaluate_integer(asus->handle, "ASYM", NULL, &temp);
+	if (ACPI_SUCCESS(rv))
+		len += sprintf(page + len, "ASYM value         : %#x\n",
+			       (uint) temp);
+	if (asus->dsdt_info) {
+		snprintf(buf, 16, "%d", asus->dsdt_info->length);
+		len += sprintf(page + len, "DSDT length        : %s\n", buf);
+		snprintf(buf, 16, "%d", asus->dsdt_info->checksum);
+		len += sprintf(page + len, "DSDT checksum      : %s\n", buf);
+		snprintf(buf, 16, "%d", asus->dsdt_info->revision);
+		len += sprintf(page + len, "DSDT revision      : %s\n", buf);
+		snprintf(buf, 7, "%s", asus->dsdt_info->oem_id);
+		len += sprintf(page + len, "OEM id             : %s\n", buf);
+		snprintf(buf, 9, "%s", asus->dsdt_info->oem_table_id);
+		len += sprintf(page + len, "OEM table id       : %s\n", buf);
+		snprintf(buf, 16, "%x", asus->dsdt_info->oem_revision);
+		len += sprintf(page + len, "OEM revision       : 0x%s\n", buf);
+		snprintf(buf, 5, "%s", asus->dsdt_info->asl_compiler_id);
+		len += sprintf(page + len, "ASL comp vendor id : %s\n", buf);
+		snprintf(buf, 16, "%x", asus->dsdt_info->asl_compiler_revision);
+		len += sprintf(page + len, "ASL comp revision  : 0x%s\n", buf);
+	}
 
-	वापस len;
-पूर्ण
-अटल DEVICE_ATTR_RO(infos);
+	return len;
+}
+static DEVICE_ATTR_RO(infos);
 
-अटल sमाप_प्रकार sysfs_acpi_set(काष्ठा asus_laptop *asus,
-			      स्थिर अक्षर *buf, माप_प्रकार count,
-			      स्थिर अक्षर *method)
-अणु
-	पूर्णांक rv, value;
+static ssize_t sysfs_acpi_set(struct asus_laptop *asus,
+			      const char *buf, size_t count,
+			      const char *method)
+{
+	int rv, value;
 
-	rv = kstrtoपूर्णांक(buf, 0, &value);
-	अगर (rv < 0)
-		वापस rv;
+	rv = kstrtoint(buf, 0, &value);
+	if (rv < 0)
+		return rv;
 
-	अगर (ग_लिखो_acpi_पूर्णांक(asus->handle, method, value))
-		वापस -ENODEV;
-	वापस count;
-पूर्ण
+	if (write_acpi_int(asus->handle, method, value))
+		return -ENODEV;
+	return count;
+}
 
 /*
  * LEDD display
  */
-अटल sमाप_प्रकार ledd_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			 अक्षर *buf)
-अणु
-	काष्ठा asus_laptop *asus = dev_get_drvdata(dev);
+static ssize_t ledd_show(struct device *dev, struct device_attribute *attr,
+			 char *buf)
+{
+	struct asus_laptop *asus = dev_get_drvdata(dev);
 
-	वापस प्र_लिखो(buf, "0x%08x\n", asus->ledd_status);
-पूर्ण
+	return sprintf(buf, "0x%08x\n", asus->ledd_status);
+}
 
-अटल sमाप_प्रकार ledd_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			  स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा asus_laptop *asus = dev_get_drvdata(dev);
-	पूर्णांक rv, value;
+static ssize_t ledd_store(struct device *dev, struct device_attribute *attr,
+			  const char *buf, size_t count)
+{
+	struct asus_laptop *asus = dev_get_drvdata(dev);
+	int rv, value;
 
-	rv = kstrtoपूर्णांक(buf, 0, &value);
-	अगर (rv < 0)
-		वापस rv;
+	rv = kstrtoint(buf, 0, &value);
+	if (rv < 0)
+		return rv;
 
-	अगर (ग_लिखो_acpi_पूर्णांक(asus->handle, METHOD_LEDD, value)) अणु
+	if (write_acpi_int(asus->handle, METHOD_LEDD, value)) {
 		pr_warn("LED display write failed\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	asus->ledd_status = (u32) value;
-	वापस count;
-पूर्ण
-अटल DEVICE_ATTR_RW(ledd);
+	return count;
+}
+static DEVICE_ATTR_RW(ledd);
 
 /*
  * Wireless
  */
-अटल पूर्णांक asus_wireless_status(काष्ठा asus_laptop *asus, पूर्णांक mask)
-अणु
-	अचिन्हित दीर्घ दीर्घ status;
+static int asus_wireless_status(struct asus_laptop *asus, int mask)
+{
+	unsigned long long status;
 	acpi_status rv = AE_OK;
 
-	अगर (!asus->have_rsts)
-		वापस (asus->wireless_status & mask) ? 1 : 0;
+	if (!asus->have_rsts)
+		return (asus->wireless_status & mask) ? 1 : 0;
 
-	rv = acpi_evaluate_पूर्णांकeger(asus->handle, METHOD_WL_STATUS,
-				   शून्य, &status);
-	अगर (ACPI_FAILURE(rv)) अणु
+	rv = acpi_evaluate_integer(asus->handle, METHOD_WL_STATUS,
+				   NULL, &status);
+	if (ACPI_FAILURE(rv)) {
 		pr_warn("Error reading Wireless status\n");
-		वापस -EINVAL;
-	पूर्ण
-	वापस !!(status & mask);
-पूर्ण
+		return -EINVAL;
+	}
+	return !!(status & mask);
+}
 
 /*
  * WLAN
  */
-अटल पूर्णांक asus_wlan_set(काष्ठा asus_laptop *asus, पूर्णांक status)
-अणु
-	अगर (ग_लिखो_acpi_पूर्णांक(asus->handle, METHOD_WLAN, !!status)) अणु
+static int asus_wlan_set(struct asus_laptop *asus, int status)
+{
+	if (write_acpi_int(asus->handle, METHOD_WLAN, !!status)) {
 		pr_warn("Error setting wlan status to %d\n", status);
-		वापस -EIO;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return -EIO;
+	}
+	return 0;
+}
 
-अटल sमाप_प्रकार wlan_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			 अक्षर *buf)
-अणु
-	काष्ठा asus_laptop *asus = dev_get_drvdata(dev);
+static ssize_t wlan_show(struct device *dev, struct device_attribute *attr,
+			 char *buf)
+{
+	struct asus_laptop *asus = dev_get_drvdata(dev);
 
-	वापस प्र_लिखो(buf, "%d\n", asus_wireless_status(asus, WL_RSTS));
-पूर्ण
+	return sprintf(buf, "%d\n", asus_wireless_status(asus, WL_RSTS));
+}
 
-अटल sमाप_प्रकार wlan_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			  स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा asus_laptop *asus = dev_get_drvdata(dev);
+static ssize_t wlan_store(struct device *dev, struct device_attribute *attr,
+			  const char *buf, size_t count)
+{
+	struct asus_laptop *asus = dev_get_drvdata(dev);
 
-	वापस sysfs_acpi_set(asus, buf, count, METHOD_WLAN);
-पूर्ण
-अटल DEVICE_ATTR_RW(wlan);
+	return sysfs_acpi_set(asus, buf, count, METHOD_WLAN);
+}
+static DEVICE_ATTR_RW(wlan);
 
 /*e
  * Bluetooth
  */
-अटल पूर्णांक asus_bluetooth_set(काष्ठा asus_laptop *asus, पूर्णांक status)
-अणु
-	अगर (ग_लिखो_acpi_पूर्णांक(asus->handle, METHOD_BLUETOOTH, !!status)) अणु
+static int asus_bluetooth_set(struct asus_laptop *asus, int status)
+{
+	if (write_acpi_int(asus->handle, METHOD_BLUETOOTH, !!status)) {
 		pr_warn("Error setting bluetooth status to %d\n", status);
-		वापस -EIO;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return -EIO;
+	}
+	return 0;
+}
 
-अटल sमाप_प्रकार bluetooth_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			      अक्षर *buf)
-अणु
-	काष्ठा asus_laptop *asus = dev_get_drvdata(dev);
+static ssize_t bluetooth_show(struct device *dev, struct device_attribute *attr,
+			      char *buf)
+{
+	struct asus_laptop *asus = dev_get_drvdata(dev);
 
-	वापस प्र_लिखो(buf, "%d\n", asus_wireless_status(asus, BT_RSTS));
-पूर्ण
+	return sprintf(buf, "%d\n", asus_wireless_status(asus, BT_RSTS));
+}
 
-अटल sमाप_प्रकार bluetooth_store(काष्ठा device *dev,
-			       काष्ठा device_attribute *attr, स्थिर अक्षर *buf,
-			       माप_प्रकार count)
-अणु
-	काष्ठा asus_laptop *asus = dev_get_drvdata(dev);
+static ssize_t bluetooth_store(struct device *dev,
+			       struct device_attribute *attr, const char *buf,
+			       size_t count)
+{
+	struct asus_laptop *asus = dev_get_drvdata(dev);
 
-	वापस sysfs_acpi_set(asus, buf, count, METHOD_BLUETOOTH);
-पूर्ण
-अटल DEVICE_ATTR_RW(bluetooth);
+	return sysfs_acpi_set(asus, buf, count, METHOD_BLUETOOTH);
+}
+static DEVICE_ATTR_RW(bluetooth);
 
 /*
  * Wimax
  */
-अटल पूर्णांक asus_wimax_set(काष्ठा asus_laptop *asus, पूर्णांक status)
-अणु
-	अगर (ग_लिखो_acpi_पूर्णांक(asus->handle, METHOD_WIMAX, !!status)) अणु
+static int asus_wimax_set(struct asus_laptop *asus, int status)
+{
+	if (write_acpi_int(asus->handle, METHOD_WIMAX, !!status)) {
 		pr_warn("Error setting wimax status to %d\n", status);
-		वापस -EIO;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return -EIO;
+	}
+	return 0;
+}
 
-अटल sमाप_प्रकार wimax_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			  अक्षर *buf)
-अणु
-	काष्ठा asus_laptop *asus = dev_get_drvdata(dev);
+static ssize_t wimax_show(struct device *dev, struct device_attribute *attr,
+			  char *buf)
+{
+	struct asus_laptop *asus = dev_get_drvdata(dev);
 
-	वापस प्र_लिखो(buf, "%d\n", asus_wireless_status(asus, WM_RSTS));
-पूर्ण
+	return sprintf(buf, "%d\n", asus_wireless_status(asus, WM_RSTS));
+}
 
-अटल sमाप_प्रकार wimax_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			   स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा asus_laptop *asus = dev_get_drvdata(dev);
+static ssize_t wimax_store(struct device *dev, struct device_attribute *attr,
+			   const char *buf, size_t count)
+{
+	struct asus_laptop *asus = dev_get_drvdata(dev);
 
-	वापस sysfs_acpi_set(asus, buf, count, METHOD_WIMAX);
-पूर्ण
-अटल DEVICE_ATTR_RW(wimax);
+	return sysfs_acpi_set(asus, buf, count, METHOD_WIMAX);
+}
+static DEVICE_ATTR_RW(wimax);
 
 /*
  * Wwan
  */
-अटल पूर्णांक asus_wwan_set(काष्ठा asus_laptop *asus, पूर्णांक status)
-अणु
-	अगर (ग_लिखो_acpi_पूर्णांक(asus->handle, METHOD_WWAN, !!status)) अणु
+static int asus_wwan_set(struct asus_laptop *asus, int status)
+{
+	if (write_acpi_int(asus->handle, METHOD_WWAN, !!status)) {
 		pr_warn("Error setting wwan status to %d\n", status);
-		वापस -EIO;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return -EIO;
+	}
+	return 0;
+}
 
-अटल sमाप_प्रकार wwan_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			 अक्षर *buf)
-अणु
-	काष्ठा asus_laptop *asus = dev_get_drvdata(dev);
+static ssize_t wwan_show(struct device *dev, struct device_attribute *attr,
+			 char *buf)
+{
+	struct asus_laptop *asus = dev_get_drvdata(dev);
 
-	वापस प्र_लिखो(buf, "%d\n", asus_wireless_status(asus, WW_RSTS));
-पूर्ण
+	return sprintf(buf, "%d\n", asus_wireless_status(asus, WW_RSTS));
+}
 
-अटल sमाप_प्रकार wwan_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			  स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा asus_laptop *asus = dev_get_drvdata(dev);
+static ssize_t wwan_store(struct device *dev, struct device_attribute *attr,
+			  const char *buf, size_t count)
+{
+	struct asus_laptop *asus = dev_get_drvdata(dev);
 
-	वापस sysfs_acpi_set(asus, buf, count, METHOD_WWAN);
-पूर्ण
-अटल DEVICE_ATTR_RW(wwan);
+	return sysfs_acpi_set(asus, buf, count, METHOD_WWAN);
+}
+static DEVICE_ATTR_RW(wwan);
 
 /*
  * Display
  */
-अटल व्योम asus_set_display(काष्ठा asus_laptop *asus, पूर्णांक value)
-अणु
-	/* no sanity check needed क्रम now */
-	अगर (ग_लिखो_acpi_पूर्णांक(asus->handle, METHOD_SWITCH_DISPLAY, value))
+static void asus_set_display(struct asus_laptop *asus, int value)
+{
+	/* no sanity check needed for now */
+	if (write_acpi_int(asus->handle, METHOD_SWITCH_DISPLAY, value))
 		pr_warn("Error setting display\n");
-	वापस;
-पूर्ण
+	return;
+}
 
 /*
- * Experimental support क्रम display चयनing. As of now: 1 should activate
- * the LCD output, 2 should करो क्रम CRT, 4 क्रम TV-Out and 8 क्रम DVI.
+ * Experimental support for display switching. As of now: 1 should activate
+ * the LCD output, 2 should do for CRT, 4 for TV-Out and 8 for DVI.
  * Any combination (bitwise) of these will suffice. I never actually tested 4
  * displays hooked up simultaneously, so be warned. See the acpi4asus README
- * क्रम more info.
+ * for more info.
  */
-अटल sमाप_प्रकार display_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			     स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा asus_laptop *asus = dev_get_drvdata(dev);
-	पूर्णांक rv, value;
+static ssize_t display_store(struct device *dev, struct device_attribute *attr,
+			     const char *buf, size_t count)
+{
+	struct asus_laptop *asus = dev_get_drvdata(dev);
+	int rv, value;
 
-	rv = kstrtoपूर्णांक(buf, 0, &value);
-	अगर (rv < 0)
-		वापस rv;
+	rv = kstrtoint(buf, 0, &value);
+	if (rv < 0)
+		return rv;
 
 	asus_set_display(asus, value);
-	वापस count;
-पूर्ण
-अटल DEVICE_ATTR_WO(display);
+	return count;
+}
+static DEVICE_ATTR_WO(display);
 
 /*
  * Light Sens
  */
-अटल व्योम asus_als_चयन(काष्ठा asus_laptop *asus, पूर्णांक value)
-अणु
-	पूर्णांक ret;
+static void asus_als_switch(struct asus_laptop *asus, int value)
+{
+	int ret;
 
-	अगर (asus->is_pega_lucid) अणु
+	if (asus->is_pega_lucid) {
 		ret = asus_pega_lucid_set(asus, PEGA_ALS, value);
-		अगर (!ret)
+		if (!ret)
 			ret = asus_pega_lucid_set(asus, PEGA_ALS_POWER, value);
-	पूर्ण अन्यथा अणु
-		ret = ग_लिखो_acpi_पूर्णांक(asus->handle, METHOD_ALS_CONTROL, value);
-	पूर्ण
-	अगर (ret)
+	} else {
+		ret = write_acpi_int(asus->handle, METHOD_ALS_CONTROL, value);
+	}
+	if (ret)
 		pr_warn("Error setting light sensor switch\n");
 
-	asus->light_चयन = value;
-पूर्ण
+	asus->light_switch = value;
+}
 
-अटल sमाप_प्रकार ls_चयन_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			      अक्षर *buf)
-अणु
-	काष्ठा asus_laptop *asus = dev_get_drvdata(dev);
+static ssize_t ls_switch_show(struct device *dev, struct device_attribute *attr,
+			      char *buf)
+{
+	struct asus_laptop *asus = dev_get_drvdata(dev);
 
-	वापस प्र_लिखो(buf, "%d\n", asus->light_चयन);
-पूर्ण
+	return sprintf(buf, "%d\n", asus->light_switch);
+}
 
-अटल sमाप_प्रकार ls_चयन_store(काष्ठा device *dev,
-			       काष्ठा device_attribute *attr, स्थिर अक्षर *buf,
-			       माप_प्रकार count)
-अणु
-	काष्ठा asus_laptop *asus = dev_get_drvdata(dev);
-	पूर्णांक rv, value;
+static ssize_t ls_switch_store(struct device *dev,
+			       struct device_attribute *attr, const char *buf,
+			       size_t count)
+{
+	struct asus_laptop *asus = dev_get_drvdata(dev);
+	int rv, value;
 
-	rv = kstrtoपूर्णांक(buf, 0, &value);
-	अगर (rv < 0)
-		वापस rv;
+	rv = kstrtoint(buf, 0, &value);
+	if (rv < 0)
+		return rv;
 
-	asus_als_चयन(asus, value ? 1 : 0);
-	वापस count;
-पूर्ण
-अटल DEVICE_ATTR_RW(ls_चयन);
+	asus_als_switch(asus, value ? 1 : 0);
+	return count;
+}
+static DEVICE_ATTR_RW(ls_switch);
 
-अटल व्योम asus_als_level(काष्ठा asus_laptop *asus, पूर्णांक value)
-अणु
-	अगर (ग_लिखो_acpi_पूर्णांक(asus->handle, METHOD_ALS_LEVEL, value))
+static void asus_als_level(struct asus_laptop *asus, int value)
+{
+	if (write_acpi_int(asus->handle, METHOD_ALS_LEVEL, value))
 		pr_warn("Error setting light sensor level\n");
 	asus->light_level = value;
-पूर्ण
+}
 
-अटल sमाप_प्रकार ls_level_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			     अक्षर *buf)
-अणु
-	काष्ठा asus_laptop *asus = dev_get_drvdata(dev);
+static ssize_t ls_level_show(struct device *dev, struct device_attribute *attr,
+			     char *buf)
+{
+	struct asus_laptop *asus = dev_get_drvdata(dev);
 
-	वापस प्र_लिखो(buf, "%d\n", asus->light_level);
-पूर्ण
+	return sprintf(buf, "%d\n", asus->light_level);
+}
 
-अटल sमाप_प्रकार ls_level_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			      स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा asus_laptop *asus = dev_get_drvdata(dev);
-	पूर्णांक rv, value;
+static ssize_t ls_level_store(struct device *dev, struct device_attribute *attr,
+			      const char *buf, size_t count)
+{
+	struct asus_laptop *asus = dev_get_drvdata(dev);
+	int rv, value;
 
-	rv = kstrtoपूर्णांक(buf, 0, &value);
-	अगर (rv < 0)
-		वापस rv;
+	rv = kstrtoint(buf, 0, &value);
+	if (rv < 0)
+		return rv;
 
 	value = (0 < value) ? ((15 < value) ? 15 : value) : 0;
 	/* 0 <= value <= 15 */
 	asus_als_level(asus, value);
 
-	वापस count;
-पूर्ण
-अटल DEVICE_ATTR_RW(ls_level);
+	return count;
+}
+static DEVICE_ATTR_RW(ls_level);
 
-अटल पूर्णांक pega_पूर्णांक_पढ़ो(काष्ठा asus_laptop *asus, पूर्णांक arg, पूर्णांक *result)
-अणु
-	काष्ठा acpi_buffer buffer = अणु ACPI_ALLOCATE_BUFFER, शून्य पूर्ण;
-	पूर्णांक err = ग_लिखो_acpi_पूर्णांक_ret(asus->handle, METHOD_PEGA_READ, arg,
+static int pega_int_read(struct asus_laptop *asus, int arg, int *result)
+{
+	struct acpi_buffer buffer = { ACPI_ALLOCATE_BUFFER, NULL };
+	int err = write_acpi_int_ret(asus->handle, METHOD_PEGA_READ, arg,
 				     &buffer);
-	अगर (!err) अणु
-		जोड़ acpi_object *obj = buffer.poपूर्णांकer;
-		अगर (obj && obj->type == ACPI_TYPE_INTEGER)
-			*result = obj->पूर्णांकeger.value;
-		अन्यथा
+	if (!err) {
+		union acpi_object *obj = buffer.pointer;
+		if (obj && obj->type == ACPI_TYPE_INTEGER)
+			*result = obj->integer.value;
+		else
 			err = -EIO;
-	पूर्ण
-	वापस err;
-पूर्ण
+	}
+	return err;
+}
 
-अटल sमाप_प्रकार ls_value_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			     अक्षर *buf)
-अणु
-	काष्ठा asus_laptop *asus = dev_get_drvdata(dev);
-	पूर्णांक err, hi, lo;
+static ssize_t ls_value_show(struct device *dev, struct device_attribute *attr,
+			     char *buf)
+{
+	struct asus_laptop *asus = dev_get_drvdata(dev);
+	int err, hi, lo;
 
-	err = pega_पूर्णांक_पढ़ो(asus, PEGA_READ_ALS_H, &hi);
-	अगर (!err)
-		err = pega_पूर्णांक_पढ़ो(asus, PEGA_READ_ALS_L, &lo);
-	अगर (!err)
-		वापस प्र_लिखो(buf, "%d\n", 10 * hi + lo);
-	वापस err;
-पूर्ण
-अटल DEVICE_ATTR_RO(ls_value);
+	err = pega_int_read(asus, PEGA_READ_ALS_H, &hi);
+	if (!err)
+		err = pega_int_read(asus, PEGA_READ_ALS_L, &lo);
+	if (!err)
+		return sprintf(buf, "%d\n", 10 * hi + lo);
+	return err;
+}
+static DEVICE_ATTR_RO(ls_value);
 
 /*
  * GPS
  */
-अटल पूर्णांक asus_gps_status(काष्ठा asus_laptop *asus)
-अणु
-	अचिन्हित दीर्घ दीर्घ status;
+static int asus_gps_status(struct asus_laptop *asus)
+{
+	unsigned long long status;
 	acpi_status rv;
 
-	rv = acpi_evaluate_पूर्णांकeger(asus->handle, METHOD_GPS_STATUS,
-				   शून्य, &status);
-	अगर (ACPI_FAILURE(rv)) अणु
+	rv = acpi_evaluate_integer(asus->handle, METHOD_GPS_STATUS,
+				   NULL, &status);
+	if (ACPI_FAILURE(rv)) {
 		pr_warn("Error reading GPS status\n");
-		वापस -ENODEV;
-	पूर्ण
-	वापस !!status;
-पूर्ण
+		return -ENODEV;
+	}
+	return !!status;
+}
 
-अटल पूर्णांक asus_gps_चयन(काष्ठा asus_laptop *asus, पूर्णांक status)
-अणु
-	स्थिर अक्षर *meth = status ? METHOD_GPS_ON : METHOD_GPS_OFF;
+static int asus_gps_switch(struct asus_laptop *asus, int status)
+{
+	const char *meth = status ? METHOD_GPS_ON : METHOD_GPS_OFF;
 
-	अगर (ग_लिखो_acpi_पूर्णांक(asus->handle, meth, 0x02))
-		वापस -ENODEV;
-	वापस 0;
-पूर्ण
+	if (write_acpi_int(asus->handle, meth, 0x02))
+		return -ENODEV;
+	return 0;
+}
 
-अटल sमाप_प्रकार gps_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			अक्षर *buf)
-अणु
-	काष्ठा asus_laptop *asus = dev_get_drvdata(dev);
+static ssize_t gps_show(struct device *dev, struct device_attribute *attr,
+			char *buf)
+{
+	struct asus_laptop *asus = dev_get_drvdata(dev);
 
-	वापस प्र_लिखो(buf, "%d\n", asus_gps_status(asus));
-पूर्ण
+	return sprintf(buf, "%d\n", asus_gps_status(asus));
+}
 
-अटल sमाप_प्रकार gps_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			 स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा asus_laptop *asus = dev_get_drvdata(dev);
-	पूर्णांक rv, value;
-	पूर्णांक ret;
+static ssize_t gps_store(struct device *dev, struct device_attribute *attr,
+			 const char *buf, size_t count)
+{
+	struct asus_laptop *asus = dev_get_drvdata(dev);
+	int rv, value;
+	int ret;
 
-	rv = kstrtoपूर्णांक(buf, 0, &value);
-	अगर (rv < 0)
-		वापस rv;
-	ret = asus_gps_चयन(asus, !!value);
-	अगर (ret)
-		वापस ret;
-	rfसमाप्त_set_sw_state(asus->gps.rfसमाप्त, !value);
-	वापस count;
-पूर्ण
-अटल DEVICE_ATTR_RW(gps);
+	rv = kstrtoint(buf, 0, &value);
+	if (rv < 0)
+		return rv;
+	ret = asus_gps_switch(asus, !!value);
+	if (ret)
+		return ret;
+	rfkill_set_sw_state(asus->gps.rfkill, !value);
+	return count;
+}
+static DEVICE_ATTR_RW(gps);
 
 /*
- * rfसमाप्त
+ * rfkill
  */
-अटल पूर्णांक asus_gps_rfसमाप्त_set(व्योम *data, bool blocked)
-अणु
-	काष्ठा asus_laptop *asus = data;
+static int asus_gps_rfkill_set(void *data, bool blocked)
+{
+	struct asus_laptop *asus = data;
 
-	वापस asus_gps_चयन(asus, !blocked);
-पूर्ण
+	return asus_gps_switch(asus, !blocked);
+}
 
-अटल स्थिर काष्ठा rfसमाप्त_ops asus_gps_rfसमाप्त_ops = अणु
-	.set_block = asus_gps_rfसमाप्त_set,
-पूर्ण;
+static const struct rfkill_ops asus_gps_rfkill_ops = {
+	.set_block = asus_gps_rfkill_set,
+};
 
-अटल पूर्णांक asus_rfसमाप्त_set(व्योम *data, bool blocked)
-अणु
-	काष्ठा asus_rfसमाप्त *rfk = data;
-	काष्ठा asus_laptop *asus = rfk->asus;
+static int asus_rfkill_set(void *data, bool blocked)
+{
+	struct asus_rfkill *rfk = data;
+	struct asus_laptop *asus = rfk->asus;
 
-	अगर (rfk->control_id == WL_RSTS)
-		वापस asus_wlan_set(asus, !blocked);
-	अन्यथा अगर (rfk->control_id == BT_RSTS)
-		वापस asus_bluetooth_set(asus, !blocked);
-	अन्यथा अगर (rfk->control_id == WM_RSTS)
-		वापस asus_wimax_set(asus, !blocked);
-	अन्यथा अगर (rfk->control_id == WW_RSTS)
-		वापस asus_wwan_set(asus, !blocked);
+	if (rfk->control_id == WL_RSTS)
+		return asus_wlan_set(asus, !blocked);
+	else if (rfk->control_id == BT_RSTS)
+		return asus_bluetooth_set(asus, !blocked);
+	else if (rfk->control_id == WM_RSTS)
+		return asus_wimax_set(asus, !blocked);
+	else if (rfk->control_id == WW_RSTS)
+		return asus_wwan_set(asus, !blocked);
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल स्थिर काष्ठा rfसमाप्त_ops asus_rfसमाप्त_ops = अणु
-	.set_block = asus_rfसमाप्त_set,
-पूर्ण;
+static const struct rfkill_ops asus_rfkill_ops = {
+	.set_block = asus_rfkill_set,
+};
 
-अटल व्योम asus_rfसमाप्त_terminate(काष्ठा asus_rfसमाप्त *rfk)
-अणु
-	अगर (!rfk->rfसमाप्त)
-		वापस ;
+static void asus_rfkill_terminate(struct asus_rfkill *rfk)
+{
+	if (!rfk->rfkill)
+		return ;
 
-	rfसमाप्त_unरेजिस्टर(rfk->rfसमाप्त);
-	rfसमाप्त_destroy(rfk->rfसमाप्त);
-	rfk->rfसमाप्त = शून्य;
-पूर्ण
+	rfkill_unregister(rfk->rfkill);
+	rfkill_destroy(rfk->rfkill);
+	rfk->rfkill = NULL;
+}
 
-अटल व्योम asus_rfसमाप्त_निकास(काष्ठा asus_laptop *asus)
-अणु
-	asus_rfसमाप्त_terminate(&asus->wwan);
-	asus_rfसमाप्त_terminate(&asus->bluetooth);
-	asus_rfसमाप्त_terminate(&asus->wlan);
-	asus_rfसमाप्त_terminate(&asus->gps);
-पूर्ण
+static void asus_rfkill_exit(struct asus_laptop *asus)
+{
+	asus_rfkill_terminate(&asus->wwan);
+	asus_rfkill_terminate(&asus->bluetooth);
+	asus_rfkill_terminate(&asus->wlan);
+	asus_rfkill_terminate(&asus->gps);
+}
 
-अटल पूर्णांक asus_rfसमाप्त_setup(काष्ठा asus_laptop *asus, काष्ठा asus_rfसमाप्त *rfk,
-			     स्थिर अक्षर *name, पूर्णांक control_id, पूर्णांक type,
-			     स्थिर काष्ठा rfसमाप्त_ops *ops)
-अणु
-	पूर्णांक result;
+static int asus_rfkill_setup(struct asus_laptop *asus, struct asus_rfkill *rfk,
+			     const char *name, int control_id, int type,
+			     const struct rfkill_ops *ops)
+{
+	int result;
 
 	rfk->control_id = control_id;
 	rfk->asus = asus;
-	rfk->rfसमाप्त = rfसमाप्त_alloc(name, &asus->platक्रमm_device->dev,
+	rfk->rfkill = rfkill_alloc(name, &asus->platform_device->dev,
 				   type, ops, rfk);
-	अगर (!rfk->rfसमाप्त)
-		वापस -EINVAL;
+	if (!rfk->rfkill)
+		return -EINVAL;
 
-	result = rfसमाप्त_रेजिस्टर(rfk->rfसमाप्त);
-	अगर (result) अणु
-		rfसमाप्त_destroy(rfk->rfसमाप्त);
-		rfk->rfसमाप्त = शून्य;
-	पूर्ण
+	result = rfkill_register(rfk->rfkill);
+	if (result) {
+		rfkill_destroy(rfk->rfkill);
+		rfk->rfkill = NULL;
+	}
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
-अटल पूर्णांक asus_rfसमाप्त_init(काष्ठा asus_laptop *asus)
-अणु
-	पूर्णांक result = 0;
+static int asus_rfkill_init(struct asus_laptop *asus)
+{
+	int result = 0;
 
-	अगर (asus->is_pega_lucid)
-		वापस -ENODEV;
+	if (asus->is_pega_lucid)
+		return -ENODEV;
 
-	अगर (!acpi_check_handle(asus->handle, METHOD_GPS_ON, शून्य) &&
-	    !acpi_check_handle(asus->handle, METHOD_GPS_OFF, शून्य) &&
-	    !acpi_check_handle(asus->handle, METHOD_GPS_STATUS, शून्य))
-		result = asus_rfसमाप्त_setup(asus, &asus->gps, "asus-gps",
+	if (!acpi_check_handle(asus->handle, METHOD_GPS_ON, NULL) &&
+	    !acpi_check_handle(asus->handle, METHOD_GPS_OFF, NULL) &&
+	    !acpi_check_handle(asus->handle, METHOD_GPS_STATUS, NULL))
+		result = asus_rfkill_setup(asus, &asus->gps, "asus-gps",
 					   -1, RFKILL_TYPE_GPS,
-					   &asus_gps_rfसमाप्त_ops);
-	अगर (result)
-		जाओ निकास;
+					   &asus_gps_rfkill_ops);
+	if (result)
+		goto exit;
 
 
-	अगर (!acpi_check_handle(asus->handle, METHOD_WLAN, शून्य) &&
+	if (!acpi_check_handle(asus->handle, METHOD_WLAN, NULL) &&
 	    asus->wled_type == TYPE_RFKILL)
-		result = asus_rfसमाप्त_setup(asus, &asus->wlan, "asus-wlan",
+		result = asus_rfkill_setup(asus, &asus->wlan, "asus-wlan",
 					   WL_RSTS, RFKILL_TYPE_WLAN,
-					   &asus_rfसमाप्त_ops);
-	अगर (result)
-		जाओ निकास;
+					   &asus_rfkill_ops);
+	if (result)
+		goto exit;
 
-	अगर (!acpi_check_handle(asus->handle, METHOD_BLUETOOTH, शून्य) &&
+	if (!acpi_check_handle(asus->handle, METHOD_BLUETOOTH, NULL) &&
 	    asus->bled_type == TYPE_RFKILL)
-		result = asus_rfसमाप्त_setup(asus, &asus->bluetooth,
+		result = asus_rfkill_setup(asus, &asus->bluetooth,
 					   "asus-bluetooth", BT_RSTS,
 					   RFKILL_TYPE_BLUETOOTH,
-					   &asus_rfसमाप्त_ops);
-	अगर (result)
-		जाओ निकास;
+					   &asus_rfkill_ops);
+	if (result)
+		goto exit;
 
-	अगर (!acpi_check_handle(asus->handle, METHOD_WWAN, शून्य))
-		result = asus_rfसमाप्त_setup(asus, &asus->wwan, "asus-wwan",
+	if (!acpi_check_handle(asus->handle, METHOD_WWAN, NULL))
+		result = asus_rfkill_setup(asus, &asus->wwan, "asus-wwan",
 					   WW_RSTS, RFKILL_TYPE_WWAN,
-					   &asus_rfसमाप्त_ops);
-	अगर (result)
-		जाओ निकास;
+					   &asus_rfkill_ops);
+	if (result)
+		goto exit;
 
-	अगर (!acpi_check_handle(asus->handle, METHOD_WIMAX, शून्य))
-		result = asus_rfसमाप्त_setup(asus, &asus->wimax, "asus-wimax",
+	if (!acpi_check_handle(asus->handle, METHOD_WIMAX, NULL))
+		result = asus_rfkill_setup(asus, &asus->wimax, "asus-wimax",
 					   WM_RSTS, RFKILL_TYPE_WIMAX,
-					   &asus_rfसमाप्त_ops);
-	अगर (result)
-		जाओ निकास;
+					   &asus_rfkill_ops);
+	if (result)
+		goto exit;
 
-निकास:
-	अगर (result)
-		asus_rfसमाप्त_निकास(asus);
+exit:
+	if (result)
+		asus_rfkill_exit(asus);
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
-अटल पूर्णांक pega_rfसमाप्त_set(व्योम *data, bool blocked)
-अणु
-	काष्ठा asus_rfसमाप्त *rfk = data;
+static int pega_rfkill_set(void *data, bool blocked)
+{
+	struct asus_rfkill *rfk = data;
 
-	पूर्णांक ret = asus_pega_lucid_set(rfk->asus, rfk->control_id, !blocked);
-	वापस ret;
-पूर्ण
+	int ret = asus_pega_lucid_set(rfk->asus, rfk->control_id, !blocked);
+	return ret;
+}
 
-अटल स्थिर काष्ठा rfसमाप्त_ops pega_rfसमाप्त_ops = अणु
-	.set_block = pega_rfसमाप्त_set,
-पूर्ण;
+static const struct rfkill_ops pega_rfkill_ops = {
+	.set_block = pega_rfkill_set,
+};
 
-अटल पूर्णांक pega_rfसमाप्त_setup(काष्ठा asus_laptop *asus, काष्ठा asus_rfसमाप्त *rfk,
-			     स्थिर अक्षर *name, पूर्णांक controlid, पूर्णांक rfसमाप्त_type)
-अणु
-	वापस asus_rfसमाप्त_setup(asus, rfk, name, controlid, rfसमाप्त_type,
-				 &pega_rfसमाप्त_ops);
-पूर्ण
+static int pega_rfkill_setup(struct asus_laptop *asus, struct asus_rfkill *rfk,
+			     const char *name, int controlid, int rfkill_type)
+{
+	return asus_rfkill_setup(asus, rfk, name, controlid, rfkill_type,
+				 &pega_rfkill_ops);
+}
 
-अटल पूर्णांक pega_rfसमाप्त_init(काष्ठा asus_laptop *asus)
-अणु
-	पूर्णांक ret = 0;
+static int pega_rfkill_init(struct asus_laptop *asus)
+{
+	int ret = 0;
 
-	अगर(!asus->is_pega_lucid)
-		वापस -ENODEV;
+	if(!asus->is_pega_lucid)
+		return -ENODEV;
 
-	ret = pega_rfसमाप्त_setup(asus, &asus->wlan, "pega-wlan",
+	ret = pega_rfkill_setup(asus, &asus->wlan, "pega-wlan",
 				PEGA_WLAN, RFKILL_TYPE_WLAN);
-	अगर(ret)
-		जाओ निकास;
+	if(ret)
+		goto exit;
 
-	ret = pega_rfसमाप्त_setup(asus, &asus->bluetooth, "pega-bt",
+	ret = pega_rfkill_setup(asus, &asus->bluetooth, "pega-bt",
 				PEGA_BLUETOOTH, RFKILL_TYPE_BLUETOOTH);
-	अगर(ret)
-		जाओ निकास;
+	if(ret)
+		goto exit;
 
-	ret = pega_rfसमाप्त_setup(asus, &asus->wwan, "pega-wwan",
+	ret = pega_rfkill_setup(asus, &asus->wwan, "pega-wwan",
 				PEGA_WWAN, RFKILL_TYPE_WWAN);
 
-निकास:
-	अगर (ret)
-		asus_rfसमाप्त_निकास(asus);
+exit:
+	if (ret)
+		asus_rfkill_exit(asus);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
  * Input device (i.e. hotkeys)
  */
-अटल व्योम asus_input_notअगरy(काष्ठा asus_laptop *asus, पूर्णांक event)
-अणु
-	अगर (!asus->inputdev)
-		वापस ;
-	अगर (!sparse_keymap_report_event(asus->inputdev, event, 1, true))
+static void asus_input_notify(struct asus_laptop *asus, int event)
+{
+	if (!asus->inputdev)
+		return ;
+	if (!sparse_keymap_report_event(asus->inputdev, event, 1, true))
 		pr_info("Unknown key %x pressed\n", event);
-पूर्ण
+}
 
-अटल पूर्णांक asus_input_init(काष्ठा asus_laptop *asus)
-अणु
-	काष्ठा input_dev *input;
-	पूर्णांक error;
+static int asus_input_init(struct asus_laptop *asus)
+{
+	struct input_dev *input;
+	int error;
 
 	input = input_allocate_device();
-	अगर (!input)
-		वापस -ENOMEM;
+	if (!input)
+		return -ENOMEM;
 
 	input->name = "Asus Laptop extra buttons";
-	input->phys = ASUS_LAPTOP_खाता "/input0";
+	input->phys = ASUS_LAPTOP_FILE "/input0";
 	input->id.bustype = BUS_HOST;
-	input->dev.parent = &asus->platक्रमm_device->dev;
+	input->dev.parent = &asus->platform_device->dev;
 
-	error = sparse_keymap_setup(input, asus_keymap, शून्य);
-	अगर (error) अणु
+	error = sparse_keymap_setup(input, asus_keymap, NULL);
+	if (error) {
 		pr_err("Unable to setup input device keymap\n");
-		जाओ err_मुक्त_dev;
-	पूर्ण
-	error = input_रेजिस्टर_device(input);
-	अगर (error) अणु
+		goto err_free_dev;
+	}
+	error = input_register_device(input);
+	if (error) {
 		pr_warn("Unable to register input device\n");
-		जाओ err_मुक्त_dev;
-	पूर्ण
+		goto err_free_dev;
+	}
 
 	asus->inputdev = input;
-	वापस 0;
+	return 0;
 
-err_मुक्त_dev:
-	input_मुक्त_device(input);
-	वापस error;
-पूर्ण
+err_free_dev:
+	input_free_device(input);
+	return error;
+}
 
-अटल व्योम asus_input_निकास(काष्ठा asus_laptop *asus)
-अणु
-	अगर (asus->inputdev)
-		input_unरेजिस्टर_device(asus->inputdev);
-	asus->inputdev = शून्य;
-पूर्ण
+static void asus_input_exit(struct asus_laptop *asus)
+{
+	if (asus->inputdev)
+		input_unregister_device(asus->inputdev);
+	asus->inputdev = NULL;
+}
 
 /*
  * ACPI driver
  */
-अटल व्योम asus_acpi_notअगरy(काष्ठा acpi_device *device, u32 event)
-अणु
-	काष्ठा asus_laptop *asus = acpi_driver_data(device);
+static void asus_acpi_notify(struct acpi_device *device, u32 event)
+{
+	struct asus_laptop *asus = acpi_driver_data(device);
 	u16 count;
 
 	/* TODO Find a better way to handle events count. */
@@ -1527,31 +1526,31 @@ err_मुक्त_dev:
 					dev_name(&asus->device->dev), event,
 					count);
 
-	अगर (event >= ATKD_BRNUP_MIN && event <= ATKD_BRNUP_MAX)
+	if (event >= ATKD_BRNUP_MIN && event <= ATKD_BRNUP_MAX)
 		event = ATKD_BRNUP;
-	अन्यथा अगर (event >= ATKD_BRNDOWN_MIN &&
+	else if (event >= ATKD_BRNDOWN_MIN &&
 		 event <= ATKD_BRNDOWN_MAX)
 		event = ATKD_BRNDOWN;
 
 	/* Brightness events are special */
-	अगर (event == ATKD_BRNDOWN || event == ATKD_BRNUP) अणु
-		अगर (asus->backlight_device != शून्य) अणु
+	if (event == ATKD_BRNDOWN || event == ATKD_BRNUP) {
+		if (asus->backlight_device != NULL) {
 			/* Update the backlight device. */
-			asus_backlight_notअगरy(asus);
-			वापस ;
-		पूर्ण
-	पूर्ण
+			asus_backlight_notify(asus);
+			return ;
+		}
+	}
 
 	/* Accelerometer "coarse orientation change" event */
-	अगर (asus->pega_accel_poll && event == 0xEA) अणु
+	if (asus->pega_accel_poll && event == 0xEA) {
 		kobject_uevent(&asus->pega_accel_poll->dev.kobj, KOBJ_CHANGE);
-		वापस ;
-	पूर्ण
+		return ;
+	}
 
-	asus_input_notअगरy(asus, event);
-पूर्ण
+	asus_input_notify(asus, event);
+}
 
-अटल काष्ठा attribute *asus_attributes[] = अणु
+static struct attribute *asus_attributes[] = {
 	&dev_attr_infos.attr,
 	&dev_attr_wlan.attr,
 	&dev_attr_bluetooth.attr,
@@ -1561,412 +1560,412 @@ err_मुक्त_dev:
 	&dev_attr_ledd.attr,
 	&dev_attr_ls_value.attr,
 	&dev_attr_ls_level.attr,
-	&dev_attr_ls_चयन.attr,
+	&dev_attr_ls_switch.attr,
 	&dev_attr_gps.attr,
-	शून्य
-पूर्ण;
+	NULL
+};
 
-अटल umode_t asus_sysfs_is_visible(काष्ठा kobject *kobj,
-				    काष्ठा attribute *attr,
-				    पूर्णांक idx)
-अणु
-	काष्ठा device *dev = kobj_to_dev(kobj);
-	काष्ठा asus_laptop *asus = dev_get_drvdata(dev);
+static umode_t asus_sysfs_is_visible(struct kobject *kobj,
+				    struct attribute *attr,
+				    int idx)
+{
+	struct device *dev = kobj_to_dev(kobj);
+	struct asus_laptop *asus = dev_get_drvdata(dev);
 	acpi_handle handle = asus->handle;
 	bool supported;
 
-	अगर (asus->is_pega_lucid) अणु
-		/* no ls_level पूर्णांकerface on the Lucid */
-		अगर (attr == &dev_attr_ls_चयन.attr)
+	if (asus->is_pega_lucid) {
+		/* no ls_level interface on the Lucid */
+		if (attr == &dev_attr_ls_switch.attr)
 			supported = true;
-		अन्यथा अगर (attr == &dev_attr_ls_level.attr)
+		else if (attr == &dev_attr_ls_level.attr)
 			supported = false;
-		अन्यथा
-			जाओ normal;
+		else
+			goto normal;
 
-		वापस supported ? attr->mode : 0;
-	पूर्ण
+		return supported ? attr->mode : 0;
+	}
 
 normal:
-	अगर (attr == &dev_attr_wlan.attr) अणु
-		supported = !acpi_check_handle(handle, METHOD_WLAN, शून्य);
+	if (attr == &dev_attr_wlan.attr) {
+		supported = !acpi_check_handle(handle, METHOD_WLAN, NULL);
 
-	पूर्ण अन्यथा अगर (attr == &dev_attr_bluetooth.attr) अणु
-		supported = !acpi_check_handle(handle, METHOD_BLUETOOTH, शून्य);
+	} else if (attr == &dev_attr_bluetooth.attr) {
+		supported = !acpi_check_handle(handle, METHOD_BLUETOOTH, NULL);
 
-	पूर्ण अन्यथा अगर (attr == &dev_attr_display.attr) अणु
-		supported = !acpi_check_handle(handle, METHOD_SWITCH_DISPLAY, शून्य);
+	} else if (attr == &dev_attr_display.attr) {
+		supported = !acpi_check_handle(handle, METHOD_SWITCH_DISPLAY, NULL);
 
-	पूर्ण अन्यथा अगर (attr == &dev_attr_wimax.attr) अणु
+	} else if (attr == &dev_attr_wimax.attr) {
 		supported =
-			!acpi_check_handle(asus->handle, METHOD_WIMAX, शून्य);
+			!acpi_check_handle(asus->handle, METHOD_WIMAX, NULL);
 
-	पूर्ण अन्यथा अगर (attr == &dev_attr_wwan.attr) अणु
-		supported = !acpi_check_handle(asus->handle, METHOD_WWAN, शून्य);
+	} else if (attr == &dev_attr_wwan.attr) {
+		supported = !acpi_check_handle(asus->handle, METHOD_WWAN, NULL);
 
-	पूर्ण अन्यथा अगर (attr == &dev_attr_ledd.attr) अणु
-		supported = !acpi_check_handle(handle, METHOD_LEDD, शून्य);
+	} else if (attr == &dev_attr_ledd.attr) {
+		supported = !acpi_check_handle(handle, METHOD_LEDD, NULL);
 
-	पूर्ण अन्यथा अगर (attr == &dev_attr_ls_चयन.attr ||
-		   attr == &dev_attr_ls_level.attr) अणु
-		supported = !acpi_check_handle(handle, METHOD_ALS_CONTROL, शून्य) &&
-			!acpi_check_handle(handle, METHOD_ALS_LEVEL, शून्य);
-	पूर्ण अन्यथा अगर (attr == &dev_attr_ls_value.attr) अणु
+	} else if (attr == &dev_attr_ls_switch.attr ||
+		   attr == &dev_attr_ls_level.attr) {
+		supported = !acpi_check_handle(handle, METHOD_ALS_CONTROL, NULL) &&
+			!acpi_check_handle(handle, METHOD_ALS_LEVEL, NULL);
+	} else if (attr == &dev_attr_ls_value.attr) {
 		supported = asus->is_pega_lucid;
-	पूर्ण अन्यथा अगर (attr == &dev_attr_gps.attr) अणु
-		supported = !acpi_check_handle(handle, METHOD_GPS_ON, शून्य) &&
-			    !acpi_check_handle(handle, METHOD_GPS_OFF, शून्य) &&
-			    !acpi_check_handle(handle, METHOD_GPS_STATUS, शून्य);
-	पूर्ण अन्यथा अणु
+	} else if (attr == &dev_attr_gps.attr) {
+		supported = !acpi_check_handle(handle, METHOD_GPS_ON, NULL) &&
+			    !acpi_check_handle(handle, METHOD_GPS_OFF, NULL) &&
+			    !acpi_check_handle(handle, METHOD_GPS_STATUS, NULL);
+	} else {
 		supported = true;
-	पूर्ण
+	}
 
-	वापस supported ? attr->mode : 0;
-पूर्ण
+	return supported ? attr->mode : 0;
+}
 
 
-अटल स्थिर काष्ठा attribute_group asus_attr_group = अणु
+static const struct attribute_group asus_attr_group = {
 	.is_visible	= asus_sysfs_is_visible,
 	.attrs		= asus_attributes,
-पूर्ण;
+};
 
-अटल पूर्णांक asus_platक्रमm_init(काष्ठा asus_laptop *asus)
-अणु
-	पूर्णांक result;
+static int asus_platform_init(struct asus_laptop *asus)
+{
+	int result;
 
-	asus->platक्रमm_device = platक्रमm_device_alloc(ASUS_LAPTOP_खाता, -1);
-	अगर (!asus->platक्रमm_device)
-		वापस -ENOMEM;
-	platक्रमm_set_drvdata(asus->platक्रमm_device, asus);
+	asus->platform_device = platform_device_alloc(ASUS_LAPTOP_FILE, -1);
+	if (!asus->platform_device)
+		return -ENOMEM;
+	platform_set_drvdata(asus->platform_device, asus);
 
-	result = platक्रमm_device_add(asus->platक्रमm_device);
-	अगर (result)
-		जाओ fail_platक्रमm_device;
+	result = platform_device_add(asus->platform_device);
+	if (result)
+		goto fail_platform_device;
 
-	result = sysfs_create_group(&asus->platक्रमm_device->dev.kobj,
+	result = sysfs_create_group(&asus->platform_device->dev.kobj,
 				    &asus_attr_group);
-	अगर (result)
-		जाओ fail_sysfs;
+	if (result)
+		goto fail_sysfs;
 
-	वापस 0;
+	return 0;
 
 fail_sysfs:
-	platक्रमm_device_del(asus->platक्रमm_device);
-fail_platक्रमm_device:
-	platक्रमm_device_put(asus->platक्रमm_device);
-	वापस result;
-पूर्ण
+	platform_device_del(asus->platform_device);
+fail_platform_device:
+	platform_device_put(asus->platform_device);
+	return result;
+}
 
-अटल व्योम asus_platक्रमm_निकास(काष्ठा asus_laptop *asus)
-अणु
-	sysfs_हटाओ_group(&asus->platक्रमm_device->dev.kobj, &asus_attr_group);
-	platक्रमm_device_unरेजिस्टर(asus->platक्रमm_device);
-पूर्ण
+static void asus_platform_exit(struct asus_laptop *asus)
+{
+	sysfs_remove_group(&asus->platform_device->dev.kobj, &asus_attr_group);
+	platform_device_unregister(asus->platform_device);
+}
 
-अटल काष्ठा platक्रमm_driver platक्रमm_driver = अणु
-	.driver = अणु
-		.name = ASUS_LAPTOP_खाता,
-	पूर्ण,
-पूर्ण;
+static struct platform_driver platform_driver = {
+	.driver = {
+		.name = ASUS_LAPTOP_FILE,
+	},
+};
 
 /*
  * This function is used to initialize the context with right values. In this
- * method, we can make all the detection we want, and modअगरy the asus_laptop
- * काष्ठा
+ * method, we can make all the detection we want, and modify the asus_laptop
+ * struct
  */
-अटल पूर्णांक asus_laptop_get_info(काष्ठा asus_laptop *asus)
-अणु
-	काष्ठा acpi_buffer buffer = अणु ACPI_ALLOCATE_BUFFER, शून्य पूर्ण;
-	जोड़ acpi_object *model = शून्य;
-	अचिन्हित दीर्घ दीर्घ bsts_result;
-	अक्षर *string = शून्य;
+static int asus_laptop_get_info(struct asus_laptop *asus)
+{
+	struct acpi_buffer buffer = { ACPI_ALLOCATE_BUFFER, NULL };
+	union acpi_object *model = NULL;
+	unsigned long long bsts_result;
+	char *string = NULL;
 	acpi_status status;
 
 	/*
-	 * Get DSDT headers early enough to allow क्रम dअगरferentiating between
-	 * models, but late enough to allow acpi_bus_रेजिस्टर_driver() to fail
-	 * beक्रमe करोing anything ACPI-specअगरic. Should we encounter a machine,
-	 * which needs special handling (i.e. its hotkey device has a dअगरferent
+	 * Get DSDT headers early enough to allow for differentiating between
+	 * models, but late enough to allow acpi_bus_register_driver() to fail
+	 * before doing anything ACPI-specific. Should we encounter a machine,
+	 * which needs special handling (i.e. its hotkey device has a different
 	 * HID), this bit will be moved.
 	 */
 	status = acpi_get_table(ACPI_SIG_DSDT, 1, &asus->dsdt_info);
-	अगर (ACPI_FAILURE(status))
+	if (ACPI_FAILURE(status))
 		pr_warn("Couldn't get the DSDT table header\n");
 
-	/* We have to ग_लिखो 0 on init this far क्रम all ASUS models */
-	अगर (ग_लिखो_acpi_पूर्णांक_ret(asus->handle, "INIT", 0, &buffer)) अणु
+	/* We have to write 0 on init this far for all ASUS models */
+	if (write_acpi_int_ret(asus->handle, "INIT", 0, &buffer)) {
 		pr_err("Hotkey initialization failed\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	/* This needs to be called क्रम some laptops to init properly */
+	/* This needs to be called for some laptops to init properly */
 	status =
-	    acpi_evaluate_पूर्णांकeger(asus->handle, "BSTS", शून्य, &bsts_result);
-	अगर (ACPI_FAILURE(status))
+	    acpi_evaluate_integer(asus->handle, "BSTS", NULL, &bsts_result);
+	if (ACPI_FAILURE(status))
 		pr_warn("Error calling BSTS\n");
-	अन्यथा अगर (bsts_result)
+	else if (bsts_result)
 		pr_notice("BSTS called, 0x%02x returned\n",
-		       (uपूर्णांक) bsts_result);
+		       (uint) bsts_result);
 
 	/* This too ... */
-	अगर (ग_लिखो_acpi_पूर्णांक(asus->handle, "CWAP", wapf))
+	if (write_acpi_int(asus->handle, "CWAP", wapf))
 		pr_err("Error calling CWAP(%d)\n", wapf);
 	/*
-	 * Try to match the object वापसed by INIT to the specअगरic model.
+	 * Try to match the object returned by INIT to the specific model.
 	 * Handle every possible object (or the lack of thereof) the DSDT
-	 * ग_लिखोrs might throw at us. When in trouble, we pass शून्य to
-	 * asus_model_match() and try something completely dअगरferent.
+	 * writers might throw at us. When in trouble, we pass NULL to
+	 * asus_model_match() and try something completely different.
 	 */
-	अगर (buffer.poपूर्णांकer) अणु
-		model = buffer.poपूर्णांकer;
-		चयन (model->type) अणु
-		हाल ACPI_TYPE_STRING:
-			string = model->string.poपूर्णांकer;
-			अवरोध;
-		हाल ACPI_TYPE_BUFFER:
-			string = model->buffer.poपूर्णांकer;
-			अवरोध;
-		शेष:
+	if (buffer.pointer) {
+		model = buffer.pointer;
+		switch (model->type) {
+		case ACPI_TYPE_STRING:
+			string = model->string.pointer;
+			break;
+		case ACPI_TYPE_BUFFER:
+			string = model->buffer.pointer;
+			break;
+		default:
 			string = "";
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 	asus->name = kstrdup(string, GFP_KERNEL);
-	अगर (!asus->name) अणु
-		kमुक्त(buffer.poपूर्णांकer);
-		वापस -ENOMEM;
-	पूर्ण
+	if (!asus->name) {
+		kfree(buffer.pointer);
+		return -ENOMEM;
+	}
 
-	अगर (string)
+	if (string)
 		pr_notice("  %s model detected\n", string);
 
-	अगर (!acpi_check_handle(asus->handle, METHOD_WL_STATUS, शून्य))
+	if (!acpi_check_handle(asus->handle, METHOD_WL_STATUS, NULL))
 		asus->have_rsts = true;
 
-	kमुक्त(model);
+	kfree(model);
 
-	वापस AE_OK;
-पूर्ण
+	return AE_OK;
+}
 
-अटल पूर्णांक asus_acpi_init(काष्ठा asus_laptop *asus)
-अणु
-	पूर्णांक result = 0;
+static int asus_acpi_init(struct asus_laptop *asus)
+{
+	int result = 0;
 
 	result = acpi_bus_get_status(asus->device);
-	अगर (result)
-		वापस result;
-	अगर (!asus->device->status.present) अणु
+	if (result)
+		return result;
+	if (!asus->device->status.present) {
 		pr_err("Hotkey device not present, aborting\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	result = asus_laptop_get_info(asus);
-	अगर (result)
-		वापस result;
+	if (result)
+		return result;
 
-	अगर (!म_भेद(bled_type, "led"))
+	if (!strcmp(bled_type, "led"))
 		asus->bled_type = TYPE_LED;
-	अन्यथा अगर (!म_भेद(bled_type, "rfkill"))
+	else if (!strcmp(bled_type, "rfkill"))
 		asus->bled_type = TYPE_RFKILL;
 
-	अगर (!म_भेद(wled_type, "led"))
+	if (!strcmp(wled_type, "led"))
 		asus->wled_type = TYPE_LED;
-	अन्यथा अगर (!म_भेद(wled_type, "rfkill"))
+	else if (!strcmp(wled_type, "rfkill"))
 		asus->wled_type = TYPE_RFKILL;
 
-	अगर (bluetooth_status >= 0)
+	if (bluetooth_status >= 0)
 		asus_bluetooth_set(asus, !!bluetooth_status);
 
-	अगर (wlan_status >= 0)
+	if (wlan_status >= 0)
 		asus_wlan_set(asus, !!wlan_status);
 
-	अगर (wimax_status >= 0)
+	if (wimax_status >= 0)
 		asus_wimax_set(asus, !!wimax_status);
 
-	अगर (wwan_status >= 0)
+	if (wwan_status >= 0)
 		asus_wwan_set(asus, !!wwan_status);
 
-	/* Keyboard Backlight is on by शेष */
-	अगर (!acpi_check_handle(asus->handle, METHOD_KBD_LIGHT_SET, शून्य))
+	/* Keyboard Backlight is on by default */
+	if (!acpi_check_handle(asus->handle, METHOD_KBD_LIGHT_SET, NULL))
 		asus_kled_set(asus, 1);
 
-	/* LED display is off by शेष */
+	/* LED display is off by default */
 	asus->ledd_status = 0xFFF;
 
 	/* Set initial values of light sensor and level */
-	asus->light_चयन = !!als_status;
-	asus->light_level = 5;	/* level 5 क्रम sensor sensitivity */
+	asus->light_switch = !!als_status;
+	asus->light_level = 5;	/* level 5 for sensor sensitivity */
 
-	अगर (asus->is_pega_lucid) अणु
-		asus_als_चयन(asus, asus->light_चयन);
-	पूर्ण अन्यथा अगर (!acpi_check_handle(asus->handle, METHOD_ALS_CONTROL, शून्य) &&
-		   !acpi_check_handle(asus->handle, METHOD_ALS_LEVEL, शून्य)) अणु
-		asus_als_चयन(asus, asus->light_चयन);
+	if (asus->is_pega_lucid) {
+		asus_als_switch(asus, asus->light_switch);
+	} else if (!acpi_check_handle(asus->handle, METHOD_ALS_CONTROL, NULL) &&
+		   !acpi_check_handle(asus->handle, METHOD_ALS_LEVEL, NULL)) {
+		asus_als_switch(asus, asus->light_switch);
 		asus_als_level(asus, asus->light_level);
-	पूर्ण
+	}
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
-अटल व्योम asus_dmi_check(व्योम)
-अणु
-	स्थिर अक्षर *model;
+static void asus_dmi_check(void)
+{
+	const char *model;
 
-	model = dmi_get_प्रणाली_info(DMI_PRODUCT_NAME);
-	अगर (!model)
-		वापस;
+	model = dmi_get_system_info(DMI_PRODUCT_NAME);
+	if (!model)
+		return;
 
-	/* On L1400B WLED control the sound card, करोn't mess with it ... */
-	अगर (म_भेदन(model, "L1400B", 6) == 0) अणु
+	/* On L1400B WLED control the sound card, don't mess with it ... */
+	if (strncmp(model, "L1400B", 6) == 0) {
 		wlan_status = -1;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल bool asus_device_present;
+static bool asus_device_present;
 
-अटल पूर्णांक asus_acpi_add(काष्ठा acpi_device *device)
-अणु
-	काष्ठा asus_laptop *asus;
-	पूर्णांक result;
+static int asus_acpi_add(struct acpi_device *device)
+{
+	struct asus_laptop *asus;
+	int result;
 
 	pr_notice("Asus Laptop Support version %s\n",
 		  ASUS_LAPTOP_VERSION);
-	asus = kzalloc(माप(काष्ठा asus_laptop), GFP_KERNEL);
-	अगर (!asus)
-		वापस -ENOMEM;
+	asus = kzalloc(sizeof(struct asus_laptop), GFP_KERNEL);
+	if (!asus)
+		return -ENOMEM;
 	asus->handle = device->handle;
-	म_नकल(acpi_device_name(device), ASUS_LAPTOP_DEVICE_NAME);
-	म_नकल(acpi_device_class(device), ASUS_LAPTOP_CLASS);
+	strcpy(acpi_device_name(device), ASUS_LAPTOP_DEVICE_NAME);
+	strcpy(acpi_device_class(device), ASUS_LAPTOP_CLASS);
 	device->driver_data = asus;
 	asus->device = device;
 
 	asus_dmi_check();
 
 	result = asus_acpi_init(asus);
-	अगर (result)
-		जाओ fail_platक्रमm;
+	if (result)
+		goto fail_platform;
 
 	/*
-	 * Need platक्रमm type detection first, then the platक्रमm
-	 * device.  It is used as a parent क्रम the sub-devices below.
+	 * Need platform type detection first, then the platform
+	 * device.  It is used as a parent for the sub-devices below.
 	 */
 	asus->is_pega_lucid = asus_check_pega_lucid(asus);
-	result = asus_platक्रमm_init(asus);
-	अगर (result)
-		जाओ fail_platक्रमm;
+	result = asus_platform_init(asus);
+	if (result)
+		goto fail_platform;
 
-	अगर (acpi_video_get_backlight_type() == acpi_backlight_venकरोr) अणु
+	if (acpi_video_get_backlight_type() == acpi_backlight_vendor) {
 		result = asus_backlight_init(asus);
-		अगर (result)
-			जाओ fail_backlight;
-	पूर्ण
+		if (result)
+			goto fail_backlight;
+	}
 
 	result = asus_input_init(asus);
-	अगर (result)
-		जाओ fail_input;
+	if (result)
+		goto fail_input;
 
 	result = asus_led_init(asus);
-	अगर (result)
-		जाओ fail_led;
+	if (result)
+		goto fail_led;
 
-	result = asus_rfसमाप्त_init(asus);
-	अगर (result && result != -ENODEV)
-		जाओ fail_rfसमाप्त;
+	result = asus_rfkill_init(asus);
+	if (result && result != -ENODEV)
+		goto fail_rfkill;
 
 	result = pega_accel_init(asus);
-	अगर (result && result != -ENODEV)
-		जाओ fail_pega_accel;
+	if (result && result != -ENODEV)
+		goto fail_pega_accel;
 
-	result = pega_rfसमाप्त_init(asus);
-	अगर (result && result != -ENODEV)
-		जाओ fail_pega_rfसमाप्त;
+	result = pega_rfkill_init(asus);
+	if (result && result != -ENODEV)
+		goto fail_pega_rfkill;
 
 	asus_device_present = true;
-	वापस 0;
+	return 0;
 
-fail_pega_rfसमाप्त:
-	pega_accel_निकास(asus);
+fail_pega_rfkill:
+	pega_accel_exit(asus);
 fail_pega_accel:
-	asus_rfसमाप्त_निकास(asus);
-fail_rfसमाप्त:
-	asus_led_निकास(asus);
+	asus_rfkill_exit(asus);
+fail_rfkill:
+	asus_led_exit(asus);
 fail_led:
-	asus_input_निकास(asus);
+	asus_input_exit(asus);
 fail_input:
-	asus_backlight_निकास(asus);
+	asus_backlight_exit(asus);
 fail_backlight:
-	asus_platक्रमm_निकास(asus);
-fail_platक्रमm:
-	kमुक्त(asus);
+	asus_platform_exit(asus);
+fail_platform:
+	kfree(asus);
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
-अटल पूर्णांक asus_acpi_हटाओ(काष्ठा acpi_device *device)
-अणु
-	काष्ठा asus_laptop *asus = acpi_driver_data(device);
+static int asus_acpi_remove(struct acpi_device *device)
+{
+	struct asus_laptop *asus = acpi_driver_data(device);
 
-	asus_backlight_निकास(asus);
-	asus_rfसमाप्त_निकास(asus);
-	asus_led_निकास(asus);
-	asus_input_निकास(asus);
-	pega_accel_निकास(asus);
-	asus_platक्रमm_निकास(asus);
+	asus_backlight_exit(asus);
+	asus_rfkill_exit(asus);
+	asus_led_exit(asus);
+	asus_input_exit(asus);
+	pega_accel_exit(asus);
+	asus_platform_exit(asus);
 
-	kमुक्त(asus->name);
-	kमुक्त(asus);
-	वापस 0;
-पूर्ण
+	kfree(asus->name);
+	kfree(asus);
+	return 0;
+}
 
-अटल स्थिर काष्ठा acpi_device_id asus_device_ids[] = अणु
-	अणु"ATK0100", 0पूर्ण,
-	अणु"ATK0101", 0पूर्ण,
-	अणु"", 0पूर्ण,
-पूर्ण;
+static const struct acpi_device_id asus_device_ids[] = {
+	{"ATK0100", 0},
+	{"ATK0101", 0},
+	{"", 0},
+};
 MODULE_DEVICE_TABLE(acpi, asus_device_ids);
 
-अटल काष्ठा acpi_driver asus_acpi_driver = अणु
+static struct acpi_driver asus_acpi_driver = {
 	.name = ASUS_LAPTOP_NAME,
 	.class = ASUS_LAPTOP_CLASS,
 	.owner = THIS_MODULE,
 	.ids = asus_device_ids,
 	.flags = ACPI_DRIVER_ALL_NOTIFY_EVENTS,
-	.ops = अणु
+	.ops = {
 		.add = asus_acpi_add,
-		.हटाओ = asus_acpi_हटाओ,
-		.notअगरy = asus_acpi_notअगरy,
-		पूर्ण,
-पूर्ण;
+		.remove = asus_acpi_remove,
+		.notify = asus_acpi_notify,
+		},
+};
 
-अटल पूर्णांक __init asus_laptop_init(व्योम)
-अणु
-	पूर्णांक result;
+static int __init asus_laptop_init(void)
+{
+	int result;
 
-	result = platक्रमm_driver_रेजिस्टर(&platक्रमm_driver);
-	अगर (result < 0)
-		वापस result;
+	result = platform_driver_register(&platform_driver);
+	if (result < 0)
+		return result;
 
-	result = acpi_bus_रेजिस्टर_driver(&asus_acpi_driver);
-	अगर (result < 0)
-		जाओ fail_acpi_driver;
-	अगर (!asus_device_present) अणु
+	result = acpi_bus_register_driver(&asus_acpi_driver);
+	if (result < 0)
+		goto fail_acpi_driver;
+	if (!asus_device_present) {
 		result = -ENODEV;
-		जाओ fail_no_device;
-	पूर्ण
-	वापस 0;
+		goto fail_no_device;
+	}
+	return 0;
 
 fail_no_device:
-	acpi_bus_unरेजिस्टर_driver(&asus_acpi_driver);
+	acpi_bus_unregister_driver(&asus_acpi_driver);
 fail_acpi_driver:
-	platक्रमm_driver_unरेजिस्टर(&platक्रमm_driver);
-	वापस result;
-पूर्ण
+	platform_driver_unregister(&platform_driver);
+	return result;
+}
 
-अटल व्योम __निकास asus_laptop_निकास(व्योम)
-अणु
-	acpi_bus_unरेजिस्टर_driver(&asus_acpi_driver);
-	platक्रमm_driver_unरेजिस्टर(&platक्रमm_driver);
-पूर्ण
+static void __exit asus_laptop_exit(void)
+{
+	acpi_bus_unregister_driver(&asus_acpi_driver);
+	platform_driver_unregister(&platform_driver);
+}
 
 module_init(asus_laptop_init);
-module_निकास(asus_laptop_निकास);
+module_exit(asus_laptop_exit);

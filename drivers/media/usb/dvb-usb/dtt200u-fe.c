@@ -1,232 +1,231 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
-/* Frontend part of the Linux driver क्रम the WideView/ Yakumo/ Hama/
+// SPDX-License-Identifier: GPL-2.0-only
+/* Frontend part of the Linux driver for the WideView/ Yakumo/ Hama/
  * Typhoon/ Yuan DVB-T USB2.0 receiver.
  *
  * Copyright (C) 2005 Patrick Boettcher <patrick.boettcher@posteo.de>
  *
- * see Documentation/driver-api/media/drivers/dvb-usb.rst क्रम more inक्रमmation
+ * see Documentation/driver-api/media/drivers/dvb-usb.rst for more information
  */
-#समावेश "dtt200u.h"
+#include "dtt200u.h"
 
-काष्ठा dtt200u_fe_state अणु
-	काष्ठा dvb_usb_device *d;
+struct dtt200u_fe_state {
+	struct dvb_usb_device *d;
 
-	क्रमागत fe_status stat;
+	enum fe_status stat;
 
-	काष्ठा dtv_frontend_properties fep;
-	काष्ठा dvb_frontend frontend;
+	struct dtv_frontend_properties fep;
+	struct dvb_frontend frontend;
 
-	अचिन्हित अक्षर data[80];
-	काष्ठा mutex data_mutex;
-पूर्ण;
+	unsigned char data[80];
+	struct mutex data_mutex;
+};
 
-अटल पूर्णांक dtt200u_fe_पढ़ो_status(काष्ठा dvb_frontend *fe,
-				  क्रमागत fe_status *stat)
-अणु
-	काष्ठा dtt200u_fe_state *state = fe->demodulator_priv;
-	पूर्णांक ret;
+static int dtt200u_fe_read_status(struct dvb_frontend *fe,
+				  enum fe_status *stat)
+{
+	struct dtt200u_fe_state *state = fe->demodulator_priv;
+	int ret;
 
 	mutex_lock(&state->data_mutex);
 	state->data[0] = GET_TUNE_STATUS;
 
 	ret = dvb_usb_generic_rw(state->d, state->data, 1, state->data, 3, 0);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		*stat = 0;
 		mutex_unlock(&state->data_mutex);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	चयन (state->data[0]) अणु
-		हाल 0x01:
+	switch (state->data[0]) {
+		case 0x01:
 			*stat = FE_HAS_SIGNAL | FE_HAS_CARRIER |
 				FE_HAS_VITERBI | FE_HAS_SYNC | FE_HAS_LOCK;
-			अवरोध;
-		हाल 0x00: /* pending */
+			break;
+		case 0x00: /* pending */
 			*stat = FE_TIMEDOUT; /* during set_frontend */
-			अवरोध;
-		शेष:
-		हाल 0x02: /* failed */
+			break;
+		default:
+		case 0x02: /* failed */
 			*stat = 0;
-			अवरोध;
-	पूर्ण
+			break;
+	}
 	mutex_unlock(&state->data_mutex);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dtt200u_fe_पढ़ो_ber(काष्ठा dvb_frontend* fe, u32 *ber)
-अणु
-	काष्ठा dtt200u_fe_state *state = fe->demodulator_priv;
-	पूर्णांक ret;
+static int dtt200u_fe_read_ber(struct dvb_frontend* fe, u32 *ber)
+{
+	struct dtt200u_fe_state *state = fe->demodulator_priv;
+	int ret;
 
 	mutex_lock(&state->data_mutex);
 	state->data[0] = GET_VIT_ERR_CNT;
 
 	ret = dvb_usb_generic_rw(state->d, state->data, 1, state->data, 3, 0);
-	अगर (ret >= 0)
+	if (ret >= 0)
 		*ber = (state->data[0] << 16) | (state->data[1] << 8) | state->data[2];
 
 	mutex_unlock(&state->data_mutex);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक dtt200u_fe_पढ़ो_unc_blocks(काष्ठा dvb_frontend* fe, u32 *unc)
-अणु
-	काष्ठा dtt200u_fe_state *state = fe->demodulator_priv;
-	पूर्णांक ret;
+static int dtt200u_fe_read_unc_blocks(struct dvb_frontend* fe, u32 *unc)
+{
+	struct dtt200u_fe_state *state = fe->demodulator_priv;
+	int ret;
 
 	mutex_lock(&state->data_mutex);
 	state->data[0] = GET_RS_UNCOR_BLK_CNT;
 
 	ret = dvb_usb_generic_rw(state->d, state->data, 1, state->data, 2, 0);
-	अगर (ret >= 0)
+	if (ret >= 0)
 		*unc = (state->data[0] << 8) | state->data[1];
 
 	mutex_unlock(&state->data_mutex);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक dtt200u_fe_पढ़ो_संकेत_strength(काष्ठा dvb_frontend* fe, u16 *strength)
-अणु
-	काष्ठा dtt200u_fe_state *state = fe->demodulator_priv;
-	पूर्णांक ret;
+static int dtt200u_fe_read_signal_strength(struct dvb_frontend* fe, u16 *strength)
+{
+	struct dtt200u_fe_state *state = fe->demodulator_priv;
+	int ret;
 
 	mutex_lock(&state->data_mutex);
 	state->data[0] = GET_AGC;
 
 	ret = dvb_usb_generic_rw(state->d, state->data, 1, state->data, 1, 0);
-	अगर (ret >= 0)
+	if (ret >= 0)
 		*strength = (state->data[0] << 8) | state->data[0];
 
 	mutex_unlock(&state->data_mutex);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक dtt200u_fe_पढ़ो_snr(काष्ठा dvb_frontend* fe, u16 *snr)
-अणु
-	काष्ठा dtt200u_fe_state *state = fe->demodulator_priv;
-	पूर्णांक ret;
+static int dtt200u_fe_read_snr(struct dvb_frontend* fe, u16 *snr)
+{
+	struct dtt200u_fe_state *state = fe->demodulator_priv;
+	int ret;
 
 	mutex_lock(&state->data_mutex);
 	state->data[0] = GET_SNR;
 
 	ret = dvb_usb_generic_rw(state->d, state->data, 1, state->data, 1, 0);
-	अगर (ret >= 0)
+	if (ret >= 0)
 		*snr = ~((state->data[0] << 8) | state->data[0]);
 
 	mutex_unlock(&state->data_mutex);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक dtt200u_fe_init(काष्ठा dvb_frontend* fe)
-अणु
-	काष्ठा dtt200u_fe_state *state = fe->demodulator_priv;
-	पूर्णांक ret;
+static int dtt200u_fe_init(struct dvb_frontend* fe)
+{
+	struct dtt200u_fe_state *state = fe->demodulator_priv;
+	int ret;
 
 	mutex_lock(&state->data_mutex);
 	state->data[0] = SET_INIT;
 
-	ret = dvb_usb_generic_ग_लिखो(state->d, state->data, 1);
+	ret = dvb_usb_generic_write(state->d, state->data, 1);
 	mutex_unlock(&state->data_mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक dtt200u_fe_sleep(काष्ठा dvb_frontend* fe)
-अणु
-	वापस dtt200u_fe_init(fe);
-पूर्ण
+static int dtt200u_fe_sleep(struct dvb_frontend* fe)
+{
+	return dtt200u_fe_init(fe);
+}
 
-अटल पूर्णांक dtt200u_fe_get_tune_settings(काष्ठा dvb_frontend* fe, काष्ठा dvb_frontend_tune_settings *tune)
-अणु
+static int dtt200u_fe_get_tune_settings(struct dvb_frontend* fe, struct dvb_frontend_tune_settings *tune)
+{
 	tune->min_delay_ms = 1500;
 	tune->step_size = 0;
-	tune->max_drअगरt = 0;
-	वापस 0;
-पूर्ण
+	tune->max_drift = 0;
+	return 0;
+}
 
-अटल पूर्णांक dtt200u_fe_set_frontend(काष्ठा dvb_frontend *fe)
-अणु
-	काष्ठा dtv_frontend_properties *fep = &fe->dtv_property_cache;
-	काष्ठा dtt200u_fe_state *state = fe->demodulator_priv;
-	पूर्णांक ret;
+static int dtt200u_fe_set_frontend(struct dvb_frontend *fe)
+{
+	struct dtv_frontend_properties *fep = &fe->dtv_property_cache;
+	struct dtt200u_fe_state *state = fe->demodulator_priv;
+	int ret;
 	u16 freq = fep->frequency / 250000;
 
 	mutex_lock(&state->data_mutex);
 	state->data[0] = SET_BANDWIDTH;
-	चयन (fep->bandwidth_hz) अणु
-	हाल 8000000:
+	switch (fep->bandwidth_hz) {
+	case 8000000:
 		state->data[1] = 8;
-		अवरोध;
-	हाल 7000000:
+		break;
+	case 7000000:
 		state->data[1] = 7;
-		अवरोध;
-	हाल 6000000:
+		break;
+	case 6000000:
 		state->data[1] = 6;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		ret = -EINVAL;
-		जाओ ret;
-	पूर्ण
+		goto ret;
+	}
 
-	ret = dvb_usb_generic_ग_लिखो(state->d, state->data, 2);
-	अगर (ret < 0)
-		जाओ ret;
+	ret = dvb_usb_generic_write(state->d, state->data, 2);
+	if (ret < 0)
+		goto ret;
 
 	state->data[0] = SET_RF_FREQ;
 	state->data[1] = freq & 0xff;
 	state->data[2] = (freq >> 8) & 0xff;
-	ret = dvb_usb_generic_ग_लिखो(state->d, state->data, 3);
-	अगर (ret < 0)
-		जाओ ret;
+	ret = dvb_usb_generic_write(state->d, state->data, 3);
+	if (ret < 0)
+		goto ret;
 
 ret:
 	mutex_unlock(&state->data_mutex);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक dtt200u_fe_get_frontend(काष्ठा dvb_frontend* fe,
-				   काष्ठा dtv_frontend_properties *fep)
-अणु
-	काष्ठा dtt200u_fe_state *state = fe->demodulator_priv;
+static int dtt200u_fe_get_frontend(struct dvb_frontend* fe,
+				   struct dtv_frontend_properties *fep)
+{
+	struct dtt200u_fe_state *state = fe->demodulator_priv;
 
-	स_नकल(fep, &state->fep, माप(काष्ठा dtv_frontend_properties));
-	वापस 0;
-पूर्ण
+	memcpy(fep, &state->fep, sizeof(struct dtv_frontend_properties));
+	return 0;
+}
 
-अटल व्योम dtt200u_fe_release(काष्ठा dvb_frontend* fe)
-अणु
-	काष्ठा dtt200u_fe_state *state = (काष्ठा dtt200u_fe_state*) fe->demodulator_priv;
-	kमुक्त(state);
-पूर्ण
+static void dtt200u_fe_release(struct dvb_frontend* fe)
+{
+	struct dtt200u_fe_state *state = (struct dtt200u_fe_state*) fe->demodulator_priv;
+	kfree(state);
+}
 
-अटल स्थिर काष्ठा dvb_frontend_ops dtt200u_fe_ops;
+static const struct dvb_frontend_ops dtt200u_fe_ops;
 
-काष्ठा dvb_frontend* dtt200u_fe_attach(काष्ठा dvb_usb_device *d)
-अणु
-	काष्ठा dtt200u_fe_state* state = शून्य;
+struct dvb_frontend* dtt200u_fe_attach(struct dvb_usb_device *d)
+{
+	struct dtt200u_fe_state* state = NULL;
 
-	/* allocate memory क्रम the पूर्णांकernal state */
-	state = kzalloc(माप(काष्ठा dtt200u_fe_state), GFP_KERNEL);
-	अगर (state == शून्य)
-		जाओ error;
+	/* allocate memory for the internal state */
+	state = kzalloc(sizeof(struct dtt200u_fe_state), GFP_KERNEL);
+	if (state == NULL)
+		goto error;
 
 	deb_info("attaching frontend dtt200u\n");
 
 	state->d = d;
 	mutex_init(&state->data_mutex);
 
-	स_नकल(&state->frontend.ops,&dtt200u_fe_ops,माप(काष्ठा dvb_frontend_ops));
+	memcpy(&state->frontend.ops,&dtt200u_fe_ops,sizeof(struct dvb_frontend_ops));
 	state->frontend.demodulator_priv = state;
 
-	वापस &state->frontend;
+	return &state->frontend;
 error:
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल स्थिर काष्ठा dvb_frontend_ops dtt200u_fe_ops = अणु
-	.delsys = अणु SYS_DVBT पूर्ण,
-	.info = अणु
+static const struct dvb_frontend_ops dtt200u_fe_ops = {
+	.delsys = { SYS_DVBT },
+	.info = {
 		.name			= "WideView USB DVB-T",
 		.frequency_min_hz	=  44250 * kHz,
 		.frequency_max_hz	= 867250 * kHz,
@@ -239,7 +238,7 @@ error:
 				FE_CAN_GUARD_INTERVAL_AUTO |
 				FE_CAN_RECOVER |
 				FE_CAN_HIERARCHY_AUTO,
-	पूर्ण,
+	},
 
 	.release = dtt200u_fe_release,
 
@@ -250,9 +249,9 @@ error:
 	.get_frontend = dtt200u_fe_get_frontend,
 	.get_tune_settings = dtt200u_fe_get_tune_settings,
 
-	.पढ़ो_status = dtt200u_fe_पढ़ो_status,
-	.पढ़ो_ber = dtt200u_fe_पढ़ो_ber,
-	.पढ़ो_संकेत_strength = dtt200u_fe_पढ़ो_संकेत_strength,
-	.पढ़ो_snr = dtt200u_fe_पढ़ो_snr,
-	.पढ़ो_ucblocks = dtt200u_fe_पढ़ो_unc_blocks,
-पूर्ण;
+	.read_status = dtt200u_fe_read_status,
+	.read_ber = dtt200u_fe_read_ber,
+	.read_signal_strength = dtt200u_fe_read_signal_strength,
+	.read_snr = dtt200u_fe_read_snr,
+	.read_ucblocks = dtt200u_fe_read_unc_blocks,
+};

@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * ADLX345/346 Three-Axis Digital Accelerometers (SPI Interface)
  *
@@ -8,124 +7,124 @@
  * Copyright (C) 2009 Michael Hennerich, Analog Devices Inc.
  */
 
-#समावेश <linux/input.h>	/* BUS_SPI */
-#समावेश <linux/module.h>
-#समावेश <linux/spi/spi.h>
-#समावेश <linux/pm.h>
-#समावेश <linux/types.h>
-#समावेश "adxl34x.h"
+#include <linux/input.h>	/* BUS_SPI */
+#include <linux/module.h>
+#include <linux/spi/spi.h>
+#include <linux/pm.h>
+#include <linux/types.h>
+#include "adxl34x.h"
 
-#घोषणा MAX_SPI_FREQ_HZ		5000000
-#घोषणा MAX_FREQ_NO_FIFODELAY	1500000
-#घोषणा ADXL34X_CMD_MULTB	(1 << 6)
-#घोषणा ADXL34X_CMD_READ	(1 << 7)
-#घोषणा ADXL34X_WRITECMD(reg)	(reg & 0x3F)
-#घोषणा ADXL34X_READCMD(reg)	(ADXL34X_CMD_READ | (reg & 0x3F))
-#घोषणा ADXL34X_READMB_CMD(reg) (ADXL34X_CMD_READ | ADXL34X_CMD_MULTB \
+#define MAX_SPI_FREQ_HZ		5000000
+#define MAX_FREQ_NO_FIFODELAY	1500000
+#define ADXL34X_CMD_MULTB	(1 << 6)
+#define ADXL34X_CMD_READ	(1 << 7)
+#define ADXL34X_WRITECMD(reg)	(reg & 0x3F)
+#define ADXL34X_READCMD(reg)	(ADXL34X_CMD_READ | (reg & 0x3F))
+#define ADXL34X_READMB_CMD(reg) (ADXL34X_CMD_READ | ADXL34X_CMD_MULTB \
 					| (reg & 0x3F))
 
-अटल पूर्णांक adxl34x_spi_पढ़ो(काष्ठा device *dev, अचिन्हित अक्षर reg)
-अणु
-	काष्ठा spi_device *spi = to_spi_device(dev);
-	अचिन्हित अक्षर cmd;
+static int adxl34x_spi_read(struct device *dev, unsigned char reg)
+{
+	struct spi_device *spi = to_spi_device(dev);
+	unsigned char cmd;
 
 	cmd = ADXL34X_READCMD(reg);
 
-	वापस spi_w8r8(spi, cmd);
-पूर्ण
+	return spi_w8r8(spi, cmd);
+}
 
-अटल पूर्णांक adxl34x_spi_ग_लिखो(काष्ठा device *dev,
-			     अचिन्हित अक्षर reg, अचिन्हित अक्षर val)
-अणु
-	काष्ठा spi_device *spi = to_spi_device(dev);
-	अचिन्हित अक्षर buf[2];
+static int adxl34x_spi_write(struct device *dev,
+			     unsigned char reg, unsigned char val)
+{
+	struct spi_device *spi = to_spi_device(dev);
+	unsigned char buf[2];
 
 	buf[0] = ADXL34X_WRITECMD(reg);
 	buf[1] = val;
 
-	वापस spi_ग_लिखो(spi, buf, माप(buf));
-पूर्ण
+	return spi_write(spi, buf, sizeof(buf));
+}
 
-अटल पूर्णांक adxl34x_spi_पढ़ो_block(काष्ठा device *dev,
-				  अचिन्हित अक्षर reg, पूर्णांक count,
-				  व्योम *buf)
-अणु
-	काष्ठा spi_device *spi = to_spi_device(dev);
-	sमाप_प्रकार status;
+static int adxl34x_spi_read_block(struct device *dev,
+				  unsigned char reg, int count,
+				  void *buf)
+{
+	struct spi_device *spi = to_spi_device(dev);
+	ssize_t status;
 
 	reg = ADXL34X_READMB_CMD(reg);
-	status = spi_ग_लिखो_then_पढ़ो(spi, &reg, 1, buf, count);
+	status = spi_write_then_read(spi, &reg, 1, buf, count);
 
-	वापस (status < 0) ? status : 0;
-पूर्ण
+	return (status < 0) ? status : 0;
+}
 
-अटल स्थिर काष्ठा adxl34x_bus_ops adxl34x_spi_bops = अणु
+static const struct adxl34x_bus_ops adxl34x_spi_bops = {
 	.bustype	= BUS_SPI,
-	.ग_लिखो		= adxl34x_spi_ग_लिखो,
-	.पढ़ो		= adxl34x_spi_पढ़ो,
-	.पढ़ो_block	= adxl34x_spi_पढ़ो_block,
-पूर्ण;
+	.write		= adxl34x_spi_write,
+	.read		= adxl34x_spi_read,
+	.read_block	= adxl34x_spi_read_block,
+};
 
-अटल पूर्णांक adxl34x_spi_probe(काष्ठा spi_device *spi)
-अणु
-	काष्ठा adxl34x *ac;
+static int adxl34x_spi_probe(struct spi_device *spi)
+{
+	struct adxl34x *ac;
 
-	/* करोn't exceed max specअगरied SPI CLK frequency */
-	अगर (spi->max_speed_hz > MAX_SPI_FREQ_HZ) अणु
+	/* don't exceed max specified SPI CLK frequency */
+	if (spi->max_speed_hz > MAX_SPI_FREQ_HZ) {
 		dev_err(&spi->dev, "SPI CLK %d Hz too fast\n", spi->max_speed_hz);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	ac = adxl34x_probe(&spi->dev, spi->irq,
 			   spi->max_speed_hz > MAX_FREQ_NO_FIFODELAY,
 			   &adxl34x_spi_bops);
 
-	अगर (IS_ERR(ac))
-		वापस PTR_ERR(ac);
+	if (IS_ERR(ac))
+		return PTR_ERR(ac);
 
 	spi_set_drvdata(spi, ac);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक adxl34x_spi_हटाओ(काष्ठा spi_device *spi)
-अणु
-	काष्ठा adxl34x *ac = spi_get_drvdata(spi);
+static int adxl34x_spi_remove(struct spi_device *spi)
+{
+	struct adxl34x *ac = spi_get_drvdata(spi);
 
-	वापस adxl34x_हटाओ(ac);
-पूर्ण
+	return adxl34x_remove(ac);
+}
 
-अटल पूर्णांक __maybe_unused adxl34x_spi_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा spi_device *spi = to_spi_device(dev);
-	काष्ठा adxl34x *ac = spi_get_drvdata(spi);
+static int __maybe_unused adxl34x_spi_suspend(struct device *dev)
+{
+	struct spi_device *spi = to_spi_device(dev);
+	struct adxl34x *ac = spi_get_drvdata(spi);
 
 	adxl34x_suspend(ac);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __maybe_unused adxl34x_spi_resume(काष्ठा device *dev)
-अणु
-	काष्ठा spi_device *spi = to_spi_device(dev);
-	काष्ठा adxl34x *ac = spi_get_drvdata(spi);
+static int __maybe_unused adxl34x_spi_resume(struct device *dev)
+{
+	struct spi_device *spi = to_spi_device(dev);
+	struct adxl34x *ac = spi_get_drvdata(spi);
 
 	adxl34x_resume(ac);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल SIMPLE_DEV_PM_OPS(adxl34x_spi_pm, adxl34x_spi_suspend,
+static SIMPLE_DEV_PM_OPS(adxl34x_spi_pm, adxl34x_spi_suspend,
 			 adxl34x_spi_resume);
 
-अटल काष्ठा spi_driver adxl34x_driver = अणु
-	.driver = अणु
+static struct spi_driver adxl34x_driver = {
+	.driver = {
 		.name = "adxl34x",
 		.pm = &adxl34x_spi_pm,
-	पूर्ण,
+	},
 	.probe   = adxl34x_spi_probe,
-	.हटाओ  = adxl34x_spi_हटाओ,
-पूर्ण;
+	.remove  = adxl34x_spi_remove,
+};
 
 module_spi_driver(adxl34x_driver);
 

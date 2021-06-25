@@ -1,116 +1,115 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * MMP PMU घातer island support
+ * MMP PMU power island support
  *
- * Copyright (C) 2020 Lubomir Rपूर्णांकel <lkundrak@v3.sk>
+ * Copyright (C) 2020 Lubomir Rintel <lkundrak@v3.sk>
  */
 
-#समावेश <linux/pm_करोमुख्य.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/पन.स>
+#include <linux/pm_domain.h>
+#include <linux/slab.h>
+#include <linux/io.h>
 
-#समावेश "clk.h"
+#include "clk.h"
 
-#घोषणा to_mmp_pm_करोमुख्य(genpd) container_of(genpd, काष्ठा mmp_pm_करोमुख्य, genpd)
+#define to_mmp_pm_domain(genpd) container_of(genpd, struct mmp_pm_domain, genpd)
 
-काष्ठा mmp_pm_करोमुख्य अणु
-	काष्ठा generic_pm_करोमुख्य genpd;
-	व्योम __iomem *reg;
+struct mmp_pm_domain {
+	struct generic_pm_domain genpd;
+	void __iomem *reg;
 	spinlock_t *lock;
-	u32 घातer_on;
+	u32 power_on;
 	u32 reset;
-	u32 घड़ी_enable;
-	अचिन्हित पूर्णांक flags;
-पूर्ण;
+	u32 clock_enable;
+	unsigned int flags;
+};
 
-अटल पूर्णांक mmp_pm_करोमुख्य_घातer_on(काष्ठा generic_pm_करोमुख्य *genpd)
-अणु
-	काष्ठा mmp_pm_करोमुख्य *pm_करोमुख्य = to_mmp_pm_करोमुख्य(genpd);
-	अचिन्हित दीर्घ flags = 0;
+static int mmp_pm_domain_power_on(struct generic_pm_domain *genpd)
+{
+	struct mmp_pm_domain *pm_domain = to_mmp_pm_domain(genpd);
+	unsigned long flags = 0;
 	u32 val;
 
-	अगर (pm_करोमुख्य->lock)
-		spin_lock_irqsave(pm_करोमुख्य->lock, flags);
+	if (pm_domain->lock)
+		spin_lock_irqsave(pm_domain->lock, flags);
 
-	val = पढ़ोl(pm_करोमुख्य->reg);
+	val = readl(pm_domain->reg);
 
-	/* Turn on the घातer island */
-	val |= pm_करोमुख्य->घातer_on;
-	ग_लिखोl(val, pm_करोमुख्य->reg);
+	/* Turn on the power island */
+	val |= pm_domain->power_on;
+	writel(val, pm_domain->reg);
 
 	/* Disable isolation */
 	val |= 0x100;
-	ग_लिखोl(val, pm_करोमुख्य->reg);
+	writel(val, pm_domain->reg);
 
-	/* Some blocks need to be reset after a घातer up */
-	अगर (pm_करोमुख्य->reset || pm_करोमुख्य->घड़ी_enable) अणु
-		u32 after_घातer_on = val;
+	/* Some blocks need to be reset after a power up */
+	if (pm_domain->reset || pm_domain->clock_enable) {
+		u32 after_power_on = val;
 
-		val &= ~pm_करोमुख्य->reset;
-		ग_लिखोl(val, pm_करोमुख्य->reg);
+		val &= ~pm_domain->reset;
+		writel(val, pm_domain->reg);
 
-		val |= pm_करोमुख्य->घड़ी_enable;
-		ग_लिखोl(val, pm_करोमुख्य->reg);
+		val |= pm_domain->clock_enable;
+		writel(val, pm_domain->reg);
 
-		val |= pm_करोमुख्य->reset;
-		ग_लिखोl(val, pm_करोमुख्य->reg);
+		val |= pm_domain->reset;
+		writel(val, pm_domain->reg);
 
-		ग_लिखोl(after_घातer_on, pm_करोमुख्य->reg);
-	पूर्ण
+		writel(after_power_on, pm_domain->reg);
+	}
 
-	अगर (pm_करोमुख्य->lock)
-		spin_unlock_irqrestore(pm_करोमुख्य->lock, flags);
+	if (pm_domain->lock)
+		spin_unlock_irqrestore(pm_domain->lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mmp_pm_करोमुख्य_घातer_off(काष्ठा generic_pm_करोमुख्य *genpd)
-अणु
-	काष्ठा mmp_pm_करोमुख्य *pm_करोमुख्य = to_mmp_pm_करोमुख्य(genpd);
-	अचिन्हित दीर्घ flags = 0;
+static int mmp_pm_domain_power_off(struct generic_pm_domain *genpd)
+{
+	struct mmp_pm_domain *pm_domain = to_mmp_pm_domain(genpd);
+	unsigned long flags = 0;
 	u32 val;
 
-	अगर (pm_करोमुख्य->flags & MMP_PM_DOMAIN_NO_DISABLE)
-		वापस 0;
+	if (pm_domain->flags & MMP_PM_DOMAIN_NO_DISABLE)
+		return 0;
 
-	अगर (pm_करोमुख्य->lock)
-		spin_lock_irqsave(pm_करोमुख्य->lock, flags);
+	if (pm_domain->lock)
+		spin_lock_irqsave(pm_domain->lock, flags);
 
-	/* Turn off and isolate the the घातer island. */
-	val = पढ़ोl(pm_करोमुख्य->reg);
-	val &= ~pm_करोमुख्य->घातer_on;
+	/* Turn off and isolate the the power island. */
+	val = readl(pm_domain->reg);
+	val &= ~pm_domain->power_on;
 	val &= ~0x100;
-	ग_लिखोl(val, pm_करोमुख्य->reg);
+	writel(val, pm_domain->reg);
 
-	अगर (pm_करोमुख्य->lock)
-		spin_unlock_irqrestore(pm_करोमुख्य->lock, flags);
+	if (pm_domain->lock)
+		spin_unlock_irqrestore(pm_domain->lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-काष्ठा generic_pm_करोमुख्य *mmp_pm_करोमुख्य_रेजिस्टर(स्थिर अक्षर *name,
-		व्योम __iomem *reg,
-		u32 घातer_on, u32 reset, u32 घड़ी_enable,
-		अचिन्हित पूर्णांक flags, spinlock_t *lock)
-अणु
-	काष्ठा mmp_pm_करोमुख्य *pm_करोमुख्य;
+struct generic_pm_domain *mmp_pm_domain_register(const char *name,
+		void __iomem *reg,
+		u32 power_on, u32 reset, u32 clock_enable,
+		unsigned int flags, spinlock_t *lock)
+{
+	struct mmp_pm_domain *pm_domain;
 
-	pm_करोमुख्य = kzalloc(माप(*pm_करोमुख्य), GFP_KERNEL);
-	अगर (!pm_करोमुख्य)
-		वापस ERR_PTR(-ENOMEM);
+	pm_domain = kzalloc(sizeof(*pm_domain), GFP_KERNEL);
+	if (!pm_domain)
+		return ERR_PTR(-ENOMEM);
 
-	pm_करोमुख्य->reg = reg;
-	pm_करोमुख्य->घातer_on = घातer_on;
-	pm_करोमुख्य->reset = reset;
-	pm_करोमुख्य->घड़ी_enable = घड़ी_enable;
-	pm_करोमुख्य->flags = flags;
-	pm_करोमुख्य->lock = lock;
+	pm_domain->reg = reg;
+	pm_domain->power_on = power_on;
+	pm_domain->reset = reset;
+	pm_domain->clock_enable = clock_enable;
+	pm_domain->flags = flags;
+	pm_domain->lock = lock;
 
-	pm_genpd_init(&pm_करोमुख्य->genpd, शून्य, true);
-	pm_करोमुख्य->genpd.name = name;
-	pm_करोमुख्य->genpd.घातer_on = mmp_pm_करोमुख्य_घातer_on;
-	pm_करोमुख्य->genpd.घातer_off = mmp_pm_करोमुख्य_घातer_off;
+	pm_genpd_init(&pm_domain->genpd, NULL, true);
+	pm_domain->genpd.name = name;
+	pm_domain->genpd.power_on = mmp_pm_domain_power_on;
+	pm_domain->genpd.power_off = mmp_pm_domain_power_off;
 
-	वापस &pm_करोमुख्य->genpd;
-पूर्ण
+	return &pm_domain->genpd;
+}

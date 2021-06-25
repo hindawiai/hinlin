@@ -1,10 +1,9 @@
-<शैली गुरु>
 /*
- * drivers/अक्षर/watchकरोg/ixp4xx_wdt.c
+ * drivers/char/watchdog/ixp4xx_wdt.c
  *
- * Watchकरोg driver क्रम Intel IXP4xx network processors
+ * Watchdog driver for Intel IXP4xx network processors
  *
- * Author: Deepak Saxena <dsaxena@plनिकासy.net>
+ * Author: Deepak Saxena <dsaxena@plexity.net>
  *
  * Copyright 2004 (c) MontaVista, Software, Inc.
  * Based on sa1100 driver, Copyright (C) 2000 Oleg Drokin <green@crimea.edu>
@@ -14,34 +13,34 @@
  * warranty of any kind, whether express or implied.
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/module.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/types.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/miscdevice.h>
-#समावेश <linux/of.h>
-#समावेश <linux/watchकरोg.h>
-#समावेश <linux/init.h>
-#समावेश <linux/bitops.h>
-#समावेश <linux/uaccess.h>
-#समावेश <mach/hardware.h>
+#include <linux/module.h>
+#include <linux/moduleparam.h>
+#include <linux/types.h>
+#include <linux/kernel.h>
+#include <linux/fs.h>
+#include <linux/miscdevice.h>
+#include <linux/of.h>
+#include <linux/watchdog.h>
+#include <linux/init.h>
+#include <linux/bitops.h>
+#include <linux/uaccess.h>
+#include <mach/hardware.h>
 
-अटल bool nowayout = WATCHDOG_NOWAYOUT;
-अटल पूर्णांक heartbeat = 60;	/* (secs) Default is 1 minute */
-अटल अचिन्हित दीर्घ wdt_status;
-अटल अचिन्हित दीर्घ boot_status;
-अटल DEFINE_SPINLOCK(wdt_lock);
+static bool nowayout = WATCHDOG_NOWAYOUT;
+static int heartbeat = 60;	/* (secs) Default is 1 minute */
+static unsigned long wdt_status;
+static unsigned long boot_status;
+static DEFINE_SPINLOCK(wdt_lock);
 
-#घोषणा WDT_TICK_RATE (IXP4XX_PERIPHERAL_BUS_CLOCK * 1000000UL)
+#define WDT_TICK_RATE (IXP4XX_PERIPHERAL_BUS_CLOCK * 1000000UL)
 
-#घोषणा	WDT_IN_USE		0
-#घोषणा	WDT_OK_TO_CLOSE		1
+#define	WDT_IN_USE		0
+#define	WDT_OK_TO_CLOSE		1
 
-अटल व्योम wdt_enable(व्योम)
-अणु
+static void wdt_enable(void)
+{
 	spin_lock(&wdt_lock);
 	*IXP4XX_OSWK = IXP4XX_WDT_KEY;
 	*IXP4XX_OSWE = 0;
@@ -49,170 +48,170 @@
 	*IXP4XX_OSWE = IXP4XX_WDT_COUNT_ENABLE | IXP4XX_WDT_RESET_ENABLE;
 	*IXP4XX_OSWK = 0;
 	spin_unlock(&wdt_lock);
-पूर्ण
+}
 
-अटल व्योम wdt_disable(व्योम)
-अणु
+static void wdt_disable(void)
+{
 	spin_lock(&wdt_lock);
 	*IXP4XX_OSWK = IXP4XX_WDT_KEY;
 	*IXP4XX_OSWE = 0;
 	*IXP4XX_OSWK = 0;
 	spin_unlock(&wdt_lock);
-पूर्ण
+}
 
-अटल पूर्णांक ixp4xx_wdt_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	अगर (test_and_set_bit(WDT_IN_USE, &wdt_status))
-		वापस -EBUSY;
+static int ixp4xx_wdt_open(struct inode *inode, struct file *file)
+{
+	if (test_and_set_bit(WDT_IN_USE, &wdt_status))
+		return -EBUSY;
 
 	clear_bit(WDT_OK_TO_CLOSE, &wdt_status);
 	wdt_enable();
-	वापस stream_खोलो(inode, file);
-पूर्ण
+	return stream_open(inode, file);
+}
 
-अटल sमाप_प्रकार
-ixp4xx_wdt_ग_लिखो(काष्ठा file *file, स्थिर अक्षर *data, माप_प्रकार len, loff_t *ppos)
-अणु
-	अगर (len) अणु
-		अगर (!nowayout) अणु
-			माप_प्रकार i;
+static ssize_t
+ixp4xx_wdt_write(struct file *file, const char *data, size_t len, loff_t *ppos)
+{
+	if (len) {
+		if (!nowayout) {
+			size_t i;
 
 			clear_bit(WDT_OK_TO_CLOSE, &wdt_status);
 
-			क्रम (i = 0; i != len; i++) अणु
-				अक्षर c;
+			for (i = 0; i != len; i++) {
+				char c;
 
-				अगर (get_user(c, data + i))
-					वापस -EFAULT;
-				अगर (c == 'V')
+				if (get_user(c, data + i))
+					return -EFAULT;
+				if (c == 'V')
 					set_bit(WDT_OK_TO_CLOSE, &wdt_status);
-			पूर्ण
-		पूर्ण
+			}
+		}
 		wdt_enable();
-	पूर्ण
-	वापस len;
-पूर्ण
+	}
+	return len;
+}
 
-अटल स्थिर काष्ठा watchकरोg_info ident = अणु
+static const struct watchdog_info ident = {
 	.options	= WDIOF_CARDRESET | WDIOF_MAGICCLOSE |
 			  WDIOF_SETTIMEOUT | WDIOF_KEEPALIVEPING,
 	.identity	= "IXP4xx Watchdog",
-पूर्ण;
+};
 
 
-अटल दीर्घ ixp4xx_wdt_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd,
-							अचिन्हित दीर्घ arg)
-अणु
-	पूर्णांक ret = -ENOTTY;
-	पूर्णांक समय;
+static long ixp4xx_wdt_ioctl(struct file *file, unsigned int cmd,
+							unsigned long arg)
+{
+	int ret = -ENOTTY;
+	int time;
 
-	चयन (cmd) अणु
-	हाल WDIOC_GETSUPPORT:
-		ret = copy_to_user((काष्ठा watchकरोg_info *)arg, &ident,
-				   माप(ident)) ? -EFAULT : 0;
-		अवरोध;
+	switch (cmd) {
+	case WDIOC_GETSUPPORT:
+		ret = copy_to_user((struct watchdog_info *)arg, &ident,
+				   sizeof(ident)) ? -EFAULT : 0;
+		break;
 
-	हाल WDIOC_GETSTATUS:
-		ret = put_user(0, (पूर्णांक *)arg);
-		अवरोध;
+	case WDIOC_GETSTATUS:
+		ret = put_user(0, (int *)arg);
+		break;
 
-	हाल WDIOC_GETBOOTSTATUS:
-		ret = put_user(boot_status, (पूर्णांक *)arg);
-		अवरोध;
+	case WDIOC_GETBOOTSTATUS:
+		ret = put_user(boot_status, (int *)arg);
+		break;
 
-	हाल WDIOC_KEEPALIVE:
+	case WDIOC_KEEPALIVE:
 		wdt_enable();
 		ret = 0;
-		अवरोध;
+		break;
 
-	हाल WDIOC_SETTIMEOUT:
-		ret = get_user(समय, (पूर्णांक *)arg);
-		अगर (ret)
-			अवरोध;
+	case WDIOC_SETTIMEOUT:
+		ret = get_user(time, (int *)arg);
+		if (ret)
+			break;
 
-		अगर (समय <= 0 || समय > 60) अणु
+		if (time <= 0 || time > 60) {
 			ret = -EINVAL;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		heartbeat = समय;
+		heartbeat = time;
 		wdt_enable();
 		fallthrough;
 
-	हाल WDIOC_GETTIMEOUT:
-		ret = put_user(heartbeat, (पूर्णांक *)arg);
-		अवरोध;
-	पूर्ण
-	वापस ret;
-पूर्ण
+	case WDIOC_GETTIMEOUT:
+		ret = put_user(heartbeat, (int *)arg);
+		break;
+	}
+	return ret;
+}
 
-अटल पूर्णांक ixp4xx_wdt_release(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	अगर (test_bit(WDT_OK_TO_CLOSE, &wdt_status))
+static int ixp4xx_wdt_release(struct inode *inode, struct file *file)
+{
+	if (test_bit(WDT_OK_TO_CLOSE, &wdt_status))
 		wdt_disable();
-	अन्यथा
+	else
 		pr_crit("Device closed unexpectedly - timer will not stop\n");
 	clear_bit(WDT_IN_USE, &wdt_status);
 	clear_bit(WDT_OK_TO_CLOSE, &wdt_status);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-अटल स्थिर काष्ठा file_operations ixp4xx_wdt_fops = अणु
+static const struct file_operations ixp4xx_wdt_fops = {
 	.owner		= THIS_MODULE,
 	.llseek		= no_llseek,
-	.ग_लिखो		= ixp4xx_wdt_ग_लिखो,
+	.write		= ixp4xx_wdt_write,
 	.unlocked_ioctl	= ixp4xx_wdt_ioctl,
 	.compat_ioctl	= compat_ptr_ioctl,
-	.खोलो		= ixp4xx_wdt_खोलो,
+	.open		= ixp4xx_wdt_open,
 	.release	= ixp4xx_wdt_release,
-पूर्ण;
+};
 
-अटल काष्ठा miscdevice ixp4xx_wdt_miscdev = अणु
+static struct miscdevice ixp4xx_wdt_miscdev = {
 	.minor		= WATCHDOG_MINOR,
 	.name		= "watchdog",
 	.fops		= &ixp4xx_wdt_fops,
-पूर्ण;
+};
 
-अटल पूर्णांक __init ixp4xx_wdt_init(व्योम)
-अणु
-	पूर्णांक ret;
+static int __init ixp4xx_wdt_init(void)
+{
+	int ret;
 
 	/*
 	 * FIXME: we bail out on device tree boot but this really needs
-	 * to be fixed in a nicer way: this रेजिस्टरs the MDIO bus beक्रमe
-	 * even matching the driver infraकाष्ठाure, we should only probe
+	 * to be fixed in a nicer way: this registers the MDIO bus before
+	 * even matching the driver infrastructure, we should only probe
 	 * detected hardware.
 	 */
-	अगर (of_have_populated_dt())
-		वापस -ENODEV;
-	अगर (!(पढ़ो_cpuid_id() & 0xf) && !cpu_is_ixp46x()) अणु
+	if (of_have_populated_dt())
+		return -ENODEV;
+	if (!(read_cpuid_id() & 0xf) && !cpu_is_ixp46x()) {
 		pr_err("Rev. A0 IXP42x CPU detected - watchdog disabled\n");
 
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 	boot_status = (*IXP4XX_OSST & IXP4XX_OSST_TIMER_WARM_RESET) ?
 			WDIOF_CARDRESET : 0;
-	ret = misc_रेजिस्टर(&ixp4xx_wdt_miscdev);
-	अगर (ret == 0)
+	ret = misc_register(&ixp4xx_wdt_miscdev);
+	if (ret == 0)
 		pr_info("timer heartbeat %d sec\n", heartbeat);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम __निकास ixp4xx_wdt_निकास(व्योम)
-अणु
-	misc_deरेजिस्टर(&ixp4xx_wdt_miscdev);
-पूर्ण
+static void __exit ixp4xx_wdt_exit(void)
+{
+	misc_deregister(&ixp4xx_wdt_miscdev);
+}
 
 
 module_init(ixp4xx_wdt_init);
-module_निकास(ixp4xx_wdt_निकास);
+module_exit(ixp4xx_wdt_exit);
 
 MODULE_AUTHOR("Deepak Saxena <dsaxena@plexity.net>");
 MODULE_DESCRIPTION("IXP4xx Network Processor Watchdog");
 
-module_param(heartbeat, पूर्णांक, 0);
+module_param(heartbeat, int, 0);
 MODULE_PARM_DESC(heartbeat, "Watchdog heartbeat in seconds (default 60s)");
 
 module_param(nowayout, bool, 0);

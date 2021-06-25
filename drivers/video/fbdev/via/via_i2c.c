@@ -1,118 +1,117 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright 1998-2009 VIA Technologies, Inc. All Rights Reserved.
  * Copyright 2001-2008 S3 Graphics, Inc. All Rights Reserved.
 
  */
 
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/module.h>
-#समावेश <linux/via-core.h>
-#समावेश <linux/via_i2c.h>
+#include <linux/platform_device.h>
+#include <linux/delay.h>
+#include <linux/spinlock.h>
+#include <linux/module.h>
+#include <linux/via-core.h>
+#include <linux/via_i2c.h>
 
 /*
- * There can only be one set of these, so there's no poपूर्णांक in having
+ * There can only be one set of these, so there's no point in having
  * them be dynamically allocated...
  */
-#घोषणा VIAFB_NUM_I2C		5
-अटल काष्ठा via_i2c_stuff via_i2c_par[VIAFB_NUM_I2C];
-अटल काष्ठा viafb_dev *i2c_vdev;  /* Passed in from core */
+#define VIAFB_NUM_I2C		5
+static struct via_i2c_stuff via_i2c_par[VIAFB_NUM_I2C];
+static struct viafb_dev *i2c_vdev;  /* Passed in from core */
 
-अटल व्योम via_i2c_setscl(व्योम *data, पूर्णांक state)
-अणु
+static void via_i2c_setscl(void *data, int state)
+{
 	u8 val;
-	काष्ठा via_port_cfg *adap_data = data;
-	अचिन्हित दीर्घ flags;
+	struct via_port_cfg *adap_data = data;
+	unsigned long flags;
 
 	spin_lock_irqsave(&i2c_vdev->reg_lock, flags);
-	val = via_पढ़ो_reg(adap_data->io_port, adap_data->ioport_index) & 0xF0;
-	अगर (state)
+	val = via_read_reg(adap_data->io_port, adap_data->ioport_index) & 0xF0;
+	if (state)
 		val |= 0x20;
-	अन्यथा
+	else
 		val &= ~0x20;
-	चयन (adap_data->type) अणु
-	हाल VIA_PORT_I2C:
+	switch (adap_data->type) {
+	case VIA_PORT_I2C:
 		val |= 0x01;
-		अवरोध;
-	हाल VIA_PORT_GPIO:
+		break;
+	case VIA_PORT_GPIO:
 		val |= 0x82;
-		अवरोध;
-	शेष:
-		prपूर्णांकk(KERN_ERR "viafb_i2c: specify wrong i2c type.\n");
-	पूर्ण
-	via_ग_लिखो_reg(adap_data->io_port, adap_data->ioport_index, val);
+		break;
+	default:
+		printk(KERN_ERR "viafb_i2c: specify wrong i2c type.\n");
+	}
+	via_write_reg(adap_data->io_port, adap_data->ioport_index, val);
 	spin_unlock_irqrestore(&i2c_vdev->reg_lock, flags);
-पूर्ण
+}
 
-अटल पूर्णांक via_i2c_माला_लोcl(व्योम *data)
-अणु
-	काष्ठा via_port_cfg *adap_data = data;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret = 0;
+static int via_i2c_getscl(void *data)
+{
+	struct via_port_cfg *adap_data = data;
+	unsigned long flags;
+	int ret = 0;
 
 	spin_lock_irqsave(&i2c_vdev->reg_lock, flags);
-	अगर (adap_data->type == VIA_PORT_GPIO)
-		via_ग_लिखो_reg_mask(adap_data->io_port, adap_data->ioport_index,
+	if (adap_data->type == VIA_PORT_GPIO)
+		via_write_reg_mask(adap_data->io_port, adap_data->ioport_index,
 			0, 0x80);
-	अगर (via_पढ़ो_reg(adap_data->io_port, adap_data->ioport_index) & 0x08)
+	if (via_read_reg(adap_data->io_port, adap_data->ioport_index) & 0x08)
 		ret = 1;
 	spin_unlock_irqrestore(&i2c_vdev->reg_lock, flags);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक via_i2c_माला_लोda(व्योम *data)
-अणु
-	काष्ठा via_port_cfg *adap_data = data;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret = 0;
+static int via_i2c_getsda(void *data)
+{
+	struct via_port_cfg *adap_data = data;
+	unsigned long flags;
+	int ret = 0;
 
 	spin_lock_irqsave(&i2c_vdev->reg_lock, flags);
-	अगर (adap_data->type == VIA_PORT_GPIO)
-		via_ग_लिखो_reg_mask(adap_data->io_port, adap_data->ioport_index,
+	if (adap_data->type == VIA_PORT_GPIO)
+		via_write_reg_mask(adap_data->io_port, adap_data->ioport_index,
 			0, 0x40);
-	अगर (via_पढ़ो_reg(adap_data->io_port, adap_data->ioport_index) & 0x04)
+	if (via_read_reg(adap_data->io_port, adap_data->ioport_index) & 0x04)
 		ret = 1;
 	spin_unlock_irqrestore(&i2c_vdev->reg_lock, flags);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम via_i2c_setsda(व्योम *data, पूर्णांक state)
-अणु
+static void via_i2c_setsda(void *data, int state)
+{
 	u8 val;
-	काष्ठा via_port_cfg *adap_data = data;
-	अचिन्हित दीर्घ flags;
+	struct via_port_cfg *adap_data = data;
+	unsigned long flags;
 
 	spin_lock_irqsave(&i2c_vdev->reg_lock, flags);
-	val = via_पढ़ो_reg(adap_data->io_port, adap_data->ioport_index) & 0xF0;
-	अगर (state)
+	val = via_read_reg(adap_data->io_port, adap_data->ioport_index) & 0xF0;
+	if (state)
 		val |= 0x10;
-	अन्यथा
+	else
 		val &= ~0x10;
-	चयन (adap_data->type) अणु
-	हाल VIA_PORT_I2C:
+	switch (adap_data->type) {
+	case VIA_PORT_I2C:
 		val |= 0x01;
-		अवरोध;
-	हाल VIA_PORT_GPIO:
+		break;
+	case VIA_PORT_GPIO:
 		val |= 0x42;
-		अवरोध;
-	शेष:
-		prपूर्णांकk(KERN_ERR "viafb_i2c: specify wrong i2c type.\n");
-	पूर्ण
-	via_ग_लिखो_reg(adap_data->io_port, adap_data->ioport_index, val);
+		break;
+	default:
+		printk(KERN_ERR "viafb_i2c: specify wrong i2c type.\n");
+	}
+	via_write_reg(adap_data->io_port, adap_data->ioport_index, val);
 	spin_unlock_irqrestore(&i2c_vdev->reg_lock, flags);
-पूर्ण
+}
 
-पूर्णांक viafb_i2c_पढ़ोbyte(u8 adap, u8 slave_addr, u8 index, u8 *pdata)
-अणु
-	पूर्णांक ret;
-	u8 mm1[] = अणु0x00पूर्ण;
-	काष्ठा i2c_msg msgs[2];
+int viafb_i2c_readbyte(u8 adap, u8 slave_addr, u8 index, u8 *pdata)
+{
+	int ret;
+	u8 mm1[] = {0x00};
+	struct i2c_msg msgs[2];
 
-	अगर (!via_i2c_par[adap].is_active)
-		वापस -ENODEV;
+	if (!via_i2c_par[adap].is_active)
+		return -ENODEV;
 	*pdata = 0;
 	msgs[0].flags = 0;
 	msgs[1].flags = I2C_M_RD;
@@ -121,43 +120,43 @@
 	msgs[0].len = 1; msgs[1].len = 1;
 	msgs[0].buf = mm1; msgs[1].buf = pdata;
 	ret = i2c_transfer(&via_i2c_par[adap].adapter, msgs, 2);
-	अगर (ret == 2)
+	if (ret == 2)
 		ret = 0;
-	अन्यथा अगर (ret >= 0)
+	else if (ret >= 0)
 		ret = -EIO;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक viafb_i2c_ग_लिखोbyte(u8 adap, u8 slave_addr, u8 index, u8 data)
-अणु
-	पूर्णांक ret;
-	u8 msg[2] = अणु index, data पूर्ण;
-	काष्ठा i2c_msg msgs;
+int viafb_i2c_writebyte(u8 adap, u8 slave_addr, u8 index, u8 data)
+{
+	int ret;
+	u8 msg[2] = { index, data };
+	struct i2c_msg msgs;
 
-	अगर (!via_i2c_par[adap].is_active)
-		वापस -ENODEV;
+	if (!via_i2c_par[adap].is_active)
+		return -ENODEV;
 	msgs.flags = 0;
 	msgs.addr = slave_addr / 2;
 	msgs.len = 2;
 	msgs.buf = msg;
 	ret = i2c_transfer(&via_i2c_par[adap].adapter, &msgs, 1);
-	अगर (ret == 1)
+	if (ret == 1)
 		ret = 0;
-	अन्यथा अगर (ret >= 0)
+	else if (ret >= 0)
 		ret = -EIO;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक viafb_i2c_पढ़ोbytes(u8 adap, u8 slave_addr, u8 index, u8 *buff, पूर्णांक buff_len)
-अणु
-	पूर्णांक ret;
-	u8 mm1[] = अणु0x00पूर्ण;
-	काष्ठा i2c_msg msgs[2];
+int viafb_i2c_readbytes(u8 adap, u8 slave_addr, u8 index, u8 *buff, int buff_len)
+{
+	int ret;
+	u8 mm1[] = {0x00};
+	struct i2c_msg msgs[2];
 
-	अगर (!via_i2c_par[adap].is_active)
-		वापस -ENODEV;
+	if (!via_i2c_par[adap].is_active)
+		return -ENODEV;
 	msgs[0].flags = 0;
 	msgs[1].flags = I2C_M_RD;
 	msgs[0].addr = msgs[1].addr = slave_addr / 2;
@@ -165,49 +164,49 @@
 	msgs[0].len = 1; msgs[1].len = buff_len;
 	msgs[0].buf = mm1; msgs[1].buf = buff;
 	ret = i2c_transfer(&via_i2c_par[adap].adapter, msgs, 2);
-	अगर (ret == 2)
+	if (ret == 2)
 		ret = 0;
-	अन्यथा अगर (ret >= 0)
+	else if (ret >= 0)
 		ret = -EIO;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * Allow other viafb subdevices to look up a specअगरic adapter
+ * Allow other viafb subdevices to look up a specific adapter
  * by port name.
  */
-काष्ठा i2c_adapter *viafb_find_i2c_adapter(क्रमागत viafb_i2c_adap which)
-अणु
-	काष्ठा via_i2c_stuff *stuff = &via_i2c_par[which];
+struct i2c_adapter *viafb_find_i2c_adapter(enum viafb_i2c_adap which)
+{
+	struct via_i2c_stuff *stuff = &via_i2c_par[which];
 
-	वापस &stuff->adapter;
-पूर्ण
+	return &stuff->adapter;
+}
 EXPORT_SYMBOL_GPL(viafb_find_i2c_adapter);
 
 
-अटल पूर्णांक create_i2c_bus(काष्ठा i2c_adapter *adapter,
-			  काष्ठा i2c_algo_bit_data *algo,
-			  काष्ठा via_port_cfg *adap_cfg,
-			  काष्ठा pci_dev *pdev)
-अणु
+static int create_i2c_bus(struct i2c_adapter *adapter,
+			  struct i2c_algo_bit_data *algo,
+			  struct via_port_cfg *adap_cfg,
+			  struct pci_dev *pdev)
+{
 	algo->setsda = via_i2c_setsda;
 	algo->setscl = via_i2c_setscl;
-	algo->माला_लोda = via_i2c_माला_लोda;
-	algo->माला_लोcl = via_i2c_माला_लोcl;
+	algo->getsda = via_i2c_getsda;
+	algo->getscl = via_i2c_getscl;
 	algo->udelay = 10;
-	algo->समयout = 2;
+	algo->timeout = 2;
 	algo->data = adap_cfg;
 
-	प्र_लिखो(adapter->name, "viafb i2c io_port idx 0x%02x",
+	sprintf(adapter->name, "viafb i2c io_port idx 0x%02x",
 		adap_cfg->ioport_index);
 	adapter->owner = THIS_MODULE;
 	adapter->class = I2C_CLASS_DDC;
 	adapter->algo_data = algo;
-	अगर (pdev)
+	if (pdev)
 		adapter->dev.parent = &pdev->dev;
-	अन्यथा
-		adapter->dev.parent = शून्य;
+	else
+		adapter->dev.parent = NULL;
 	/* i2c_set_adapdata(adapter, adap_cfg); */
 
 	/* Raise SCL and SDA */
@@ -215,68 +214,68 @@ EXPORT_SYMBOL_GPL(viafb_find_i2c_adapter);
 	via_i2c_setscl(adap_cfg, 1);
 	udelay(20);
 
-	वापस i2c_bit_add_bus(adapter);
-पूर्ण
+	return i2c_bit_add_bus(adapter);
+}
 
-अटल पूर्णांक viafb_i2c_probe(काष्ठा platक्रमm_device *platdev)
-अणु
-	पूर्णांक i, ret;
-	काष्ठा via_port_cfg *configs;
+static int viafb_i2c_probe(struct platform_device *platdev)
+{
+	int i, ret;
+	struct via_port_cfg *configs;
 
-	i2c_vdev = platdev->dev.platक्रमm_data;
+	i2c_vdev = platdev->dev.platform_data;
 	configs = i2c_vdev->port_cfg;
 
-	क्रम (i = 0; i < VIAFB_NUM_PORTS; i++) अणु
-		काष्ठा via_port_cfg *adap_cfg = configs++;
-		काष्ठा via_i2c_stuff *i2c_stuff = &via_i2c_par[i];
+	for (i = 0; i < VIAFB_NUM_PORTS; i++) {
+		struct via_port_cfg *adap_cfg = configs++;
+		struct via_i2c_stuff *i2c_stuff = &via_i2c_par[i];
 
 		i2c_stuff->is_active = 0;
-		अगर (adap_cfg->type == 0 || adap_cfg->mode != VIA_MODE_I2C)
-			जारी;
+		if (adap_cfg->type == 0 || adap_cfg->mode != VIA_MODE_I2C)
+			continue;
 		ret = create_i2c_bus(&i2c_stuff->adapter,
 				     &i2c_stuff->algo, adap_cfg,
-				शून्य); /* FIXME: PCIDEV */
-		अगर (ret < 0) अणु
-			prपूर्णांकk(KERN_ERR "viafb: cannot create i2c bus %u:%d\n",
+				NULL); /* FIXME: PCIDEV */
+		if (ret < 0) {
+			printk(KERN_ERR "viafb: cannot create i2c bus %u:%d\n",
 				i, ret);
-			जारी;  /* Still try to make the rest */
-		पूर्ण
+			continue;  /* Still try to make the rest */
+		}
 		i2c_stuff->is_active = 1;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक viafb_i2c_हटाओ(काष्ठा platक्रमm_device *platdev)
-अणु
-	पूर्णांक i;
+static int viafb_i2c_remove(struct platform_device *platdev)
+{
+	int i;
 
-	क्रम (i = 0; i < VIAFB_NUM_PORTS; i++) अणु
-		काष्ठा via_i2c_stuff *i2c_stuff = &via_i2c_par[i];
+	for (i = 0; i < VIAFB_NUM_PORTS; i++) {
+		struct via_i2c_stuff *i2c_stuff = &via_i2c_par[i];
 		/*
-		 * Only हटाओ those entries in the array that we've
+		 * Only remove those entries in the array that we've
 		 * actually used (and thus initialized algo_data)
 		 */
-		अगर (i2c_stuff->is_active)
+		if (i2c_stuff->is_active)
 			i2c_del_adapter(&i2c_stuff->adapter);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver via_i2c_driver = अणु
-	.driver = अणु
+static struct platform_driver via_i2c_driver = {
+	.driver = {
 		.name = "viafb-i2c",
-	पूर्ण,
+	},
 	.probe = viafb_i2c_probe,
-	.हटाओ = viafb_i2c_हटाओ,
-पूर्ण;
+	.remove = viafb_i2c_remove,
+};
 
-पूर्णांक viafb_i2c_init(व्योम)
-अणु
-	वापस platक्रमm_driver_रेजिस्टर(&via_i2c_driver);
-पूर्ण
+int viafb_i2c_init(void)
+{
+	return platform_driver_register(&via_i2c_driver);
+}
 
-व्योम viafb_i2c_निकास(व्योम)
-अणु
-	platक्रमm_driver_unरेजिस्टर(&via_i2c_driver);
-पूर्ण
+void viafb_i2c_exit(void)
+{
+	platform_driver_unregister(&via_i2c_driver);
+}

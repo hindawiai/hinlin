@@ -1,4 +1,3 @@
-<शैली गुरु>
 /* Synopsys DesignWare Core Enterprise Ethernet (XLGMAC) Driver
  *
  * Copyright (c) 2017 Synopsys, Inc. (www.synopsys.com)
@@ -6,35 +5,35 @@
  * This program is dual-licensed; you may select either version 2 of
  * the GNU General Public License ("GPL") or BSD license ("BSD").
  *
- * This Synopsys DWC XLGMAC software driver and associated करोcumentation
+ * This Synopsys DWC XLGMAC software driver and associated documentation
  * (hereinafter the "Software") is an unsupported proprietary work of
  * Synopsys, Inc. unless otherwise expressly agreed to in writing between
  * Synopsys and you. The Software IS NOT an item of Licensed Software or a
  * Licensed Product under any End User Software License Agreement or
- * Agreement क्रम Licensed Products with Synopsys or any supplement thereto.
- * Synopsys is a रेजिस्टरed trademark of Synopsys, Inc. Other names included
+ * Agreement for Licensed Products with Synopsys or any supplement thereto.
+ * Synopsys is a registered trademark of Synopsys, Inc. Other names included
  * in the SOFTWARE may be the trademarks of their respective owners.
  */
 
-#समावेश <linux/ethtool.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/netdevice.h>
+#include <linux/ethtool.h>
+#include <linux/kernel.h>
+#include <linux/netdevice.h>
 
-#समावेश "dwc-xlgmac.h"
-#समावेश "dwc-xlgmac-reg.h"
+#include "dwc-xlgmac.h"
+#include "dwc-xlgmac-reg.h"
 
-काष्ठा xlgmac_stats_desc अणु
-	अक्षर stat_string[ETH_GSTRING_LEN];
-	पूर्णांक stat_offset;
-पूर्ण;
+struct xlgmac_stats_desc {
+	char stat_string[ETH_GSTRING_LEN];
+	int stat_offset;
+};
 
-#घोषणा XLGMAC_STAT(str, var)					\
-	अणु							\
+#define XLGMAC_STAT(str, var)					\
+	{							\
 		str,						\
-		दुरत्व(काष्ठा xlgmac_pdata, stats.var),	\
-	पूर्ण
+		offsetof(struct xlgmac_pdata, stats.var),	\
+	}
 
-अटल स्थिर काष्ठा xlgmac_stats_desc xlgmac_gstring_stats[] = अणु
+static const struct xlgmac_stats_desc xlgmac_gstring_stats[] = {
 	/* MMC TX counters */
 	XLGMAC_STAT("tx_bytes", txoctetcount_gb),
 	XLGMAC_STAT("tx_bytes_good", txoctetcount_g),
@@ -53,7 +52,7 @@
 	XLGMAC_STAT("tx_512_to_1023_byte_packets", tx512to1023octets_gb),
 	XLGMAC_STAT("tx_1024_to_max_byte_packets", tx1024tomaxoctets_gb),
 	XLGMAC_STAT("tx_underflow_errors", txunderflowerror),
-	XLGMAC_STAT("tx_pause_frames", txछोड़ोframes),
+	XLGMAC_STAT("tx_pause_frames", txpauseframes),
 
 	/* MMC RX counters */
 	XLGMAC_STAT("rx_bytes", rxoctetcount_gb),
@@ -76,9 +75,9 @@
 	XLGMAC_STAT("rx_crc_errors_giant_packets", rxjabbererror),
 	XLGMAC_STAT("rx_length_errors", rxlengtherror),
 	XLGMAC_STAT("rx_out_of_range_errors", rxoutofrangetype),
-	XLGMAC_STAT("rx_fifo_overflow_errors", rxfअगरooverflow),
-	XLGMAC_STAT("rx_watchdog_errors", rxwatchकरोgerror),
-	XLGMAC_STAT("rx_pause_frames", rxछोड़ोframes),
+	XLGMAC_STAT("rx_fifo_overflow_errors", rxfifooverflow),
+	XLGMAC_STAT("rx_watchdog_errors", rxwatchdogerror),
+	XLGMAC_STAT("rx_pause_frames", rxpauseframes),
 
 	/* Extra counters */
 	XLGMAC_STAT("tx_tso_packets", tx_tso_packets),
@@ -91,22 +90,22 @@
 	XLGMAC_STAT("tx_vlan_packets", tx_vlan_packets),
 	XLGMAC_STAT("rx_vlan_packets", rx_vlan_packets),
 	XLGMAC_STAT("napi_poll_isr", napi_poll_isr),
-	XLGMAC_STAT("napi_poll_txtimer", napi_poll_txसमयr),
-पूर्ण;
+	XLGMAC_STAT("napi_poll_txtimer", napi_poll_txtimer),
+};
 
-#घोषणा XLGMAC_STATS_COUNT	ARRAY_SIZE(xlgmac_gstring_stats)
+#define XLGMAC_STATS_COUNT	ARRAY_SIZE(xlgmac_gstring_stats)
 
-अटल व्योम xlgmac_ethtool_get_drvinfo(काष्ठा net_device *netdev,
-				       काष्ठा ethtool_drvinfo *drvinfo)
-अणु
-	काष्ठा xlgmac_pdata *pdata = netdev_priv(netdev);
+static void xlgmac_ethtool_get_drvinfo(struct net_device *netdev,
+				       struct ethtool_drvinfo *drvinfo)
+{
+	struct xlgmac_pdata *pdata = netdev_priv(netdev);
 	u32 ver = pdata->hw_feat.version;
 	u32 snpsver, devid, userver;
 
-	strlcpy(drvinfo->driver, pdata->drv_name, माप(drvinfo->driver));
-	strlcpy(drvinfo->version, pdata->drv_ver, माप(drvinfo->version));
+	strlcpy(drvinfo->driver, pdata->drv_name, sizeof(drvinfo->driver));
+	strlcpy(drvinfo->version, pdata->drv_ver, sizeof(drvinfo->version));
 	strlcpy(drvinfo->bus_info, dev_name(pdata->dev),
-		माप(drvinfo->bus_info));
+		sizeof(drvinfo->bus_info));
 	/* S|SNPSVER: Synopsys-defined Version
 	 * D|DEVID: Indicates the Device family
 	 * U|USERVER: User-defined Version
@@ -117,68 +116,68 @@
 				    MAC_VR_DEVID_LEN);
 	userver = XLGMAC_GET_REG_BITS(ver, MAC_VR_USERVER_POS,
 				      MAC_VR_USERVER_LEN);
-	snम_लिखो(drvinfo->fw_version, माप(drvinfo->fw_version),
+	snprintf(drvinfo->fw_version, sizeof(drvinfo->fw_version),
 		 "S.D.U: %x.%x.%x", snpsver, devid, userver);
-पूर्ण
+}
 
-अटल u32 xlgmac_ethtool_get_msglevel(काष्ठा net_device *netdev)
-अणु
-	काष्ठा xlgmac_pdata *pdata = netdev_priv(netdev);
+static u32 xlgmac_ethtool_get_msglevel(struct net_device *netdev)
+{
+	struct xlgmac_pdata *pdata = netdev_priv(netdev);
 
-	वापस pdata->msg_enable;
-पूर्ण
+	return pdata->msg_enable;
+}
 
-अटल व्योम xlgmac_ethtool_set_msglevel(काष्ठा net_device *netdev,
+static void xlgmac_ethtool_set_msglevel(struct net_device *netdev,
 					u32 msglevel)
-अणु
-	काष्ठा xlgmac_pdata *pdata = netdev_priv(netdev);
+{
+	struct xlgmac_pdata *pdata = netdev_priv(netdev);
 
 	pdata->msg_enable = msglevel;
-पूर्ण
+}
 
-अटल व्योम xlgmac_ethtool_get_channels(काष्ठा net_device *netdev,
-					काष्ठा ethtool_channels *channel)
-अणु
-	काष्ठा xlgmac_pdata *pdata = netdev_priv(netdev);
+static void xlgmac_ethtool_get_channels(struct net_device *netdev,
+					struct ethtool_channels *channel)
+{
+	struct xlgmac_pdata *pdata = netdev_priv(netdev);
 
 	channel->max_rx = XLGMAC_MAX_DMA_CHANNELS;
 	channel->max_tx = XLGMAC_MAX_DMA_CHANNELS;
 	channel->rx_count = pdata->rx_q_count;
 	channel->tx_count = pdata->tx_q_count;
-पूर्ण
+}
 
-अटल पूर्णांक xlgmac_ethtool_get_coalesce(काष्ठा net_device *netdev,
-				       काष्ठा ethtool_coalesce *ec)
-अणु
-	काष्ठा xlgmac_pdata *pdata = netdev_priv(netdev);
+static int xlgmac_ethtool_get_coalesce(struct net_device *netdev,
+				       struct ethtool_coalesce *ec)
+{
+	struct xlgmac_pdata *pdata = netdev_priv(netdev);
 
 	ec->rx_coalesce_usecs = pdata->rx_usecs;
 	ec->rx_max_coalesced_frames = pdata->rx_frames;
 	ec->tx_max_coalesced_frames = pdata->tx_frames;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक xlgmac_ethtool_set_coalesce(काष्ठा net_device *netdev,
-				       काष्ठा ethtool_coalesce *ec)
-अणु
-	काष्ठा xlgmac_pdata *pdata = netdev_priv(netdev);
-	काष्ठा xlgmac_hw_ops *hw_ops = &pdata->hw_ops;
-	अचिन्हित पूर्णांक rx_frames, rx_riwt, rx_usecs;
-	अचिन्हित पूर्णांक tx_frames;
+static int xlgmac_ethtool_set_coalesce(struct net_device *netdev,
+				       struct ethtool_coalesce *ec)
+{
+	struct xlgmac_pdata *pdata = netdev_priv(netdev);
+	struct xlgmac_hw_ops *hw_ops = &pdata->hw_ops;
+	unsigned int rx_frames, rx_riwt, rx_usecs;
+	unsigned int tx_frames;
 
 	rx_usecs = ec->rx_coalesce_usecs;
 	rx_riwt = hw_ops->usec_to_riwt(pdata, rx_usecs);
 	rx_frames = ec->rx_max_coalesced_frames;
 	tx_frames = ec->tx_max_coalesced_frames;
 
-	अगर ((rx_riwt > XLGMAC_MAX_DMA_RIWT) ||
+	if ((rx_riwt > XLGMAC_MAX_DMA_RIWT) ||
 	    (rx_riwt < XLGMAC_MIN_DMA_RIWT) ||
 	    (rx_frames > pdata->rx_desc_count))
-		वापस -EINVAL;
+		return -EINVAL;
 
-	अगर (tx_frames > pdata->tx_desc_count)
-		वापस -EINVAL;
+	if (tx_frames > pdata->tx_desc_count)
+		return -EINVAL;
 
 	pdata->rx_riwt = rx_riwt;
 	pdata->rx_usecs = rx_usecs;
@@ -188,61 +187,61 @@
 	pdata->tx_frames = tx_frames;
 	hw_ops->config_tx_coalesce(pdata);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम xlgmac_ethtool_get_strings(काष्ठा net_device *netdev,
+static void xlgmac_ethtool_get_strings(struct net_device *netdev,
 				       u32 stringset, u8 *data)
-अणु
-	पूर्णांक i;
+{
+	int i;
 
-	चयन (stringset) अणु
-	हाल ETH_SS_STATS:
-		क्रम (i = 0; i < XLGMAC_STATS_COUNT; i++) अणु
-			स_नकल(data, xlgmac_gstring_stats[i].stat_string,
+	switch (stringset) {
+	case ETH_SS_STATS:
+		for (i = 0; i < XLGMAC_STATS_COUNT; i++) {
+			memcpy(data, xlgmac_gstring_stats[i].stat_string,
 			       ETH_GSTRING_LEN);
 			data += ETH_GSTRING_LEN;
-		पूर्ण
-		अवरोध;
-	शेष:
+		}
+		break;
+	default:
 		WARN_ON(1);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-अटल पूर्णांक xlgmac_ethtool_get_sset_count(काष्ठा net_device *netdev,
-					 पूर्णांक stringset)
-अणु
-	पूर्णांक ret;
+static int xlgmac_ethtool_get_sset_count(struct net_device *netdev,
+					 int stringset)
+{
+	int ret;
 
-	चयन (stringset) अणु
-	हाल ETH_SS_STATS:
+	switch (stringset) {
+	case ETH_SS_STATS:
 		ret = XLGMAC_STATS_COUNT;
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		ret = -EOPNOTSUPP;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम xlgmac_ethtool_get_ethtool_stats(काष्ठा net_device *netdev,
-					     काष्ठा ethtool_stats *stats,
+static void xlgmac_ethtool_get_ethtool_stats(struct net_device *netdev,
+					     struct ethtool_stats *stats,
 					     u64 *data)
-अणु
-	काष्ठा xlgmac_pdata *pdata = netdev_priv(netdev);
+{
+	struct xlgmac_pdata *pdata = netdev_priv(netdev);
 	u8 *stat;
-	पूर्णांक i;
+	int i;
 
-	pdata->hw_ops.पढ़ो_mmc_stats(pdata);
-	क्रम (i = 0; i < XLGMAC_STATS_COUNT; i++) अणु
+	pdata->hw_ops.read_mmc_stats(pdata);
+	for (i = 0; i < XLGMAC_STATS_COUNT; i++) {
 		stat = (u8 *)pdata + xlgmac_gstring_stats[i].stat_offset;
 		*data++ = *(u64 *)stat;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल स्थिर काष्ठा ethtool_ops xlgmac_ethtool_ops = अणु
+static const struct ethtool_ops xlgmac_ethtool_ops = {
 	.supported_coalesce_params = ETHTOOL_COALESCE_RX_USECS |
 				     ETHTOOL_COALESCE_MAX_FRAMES,
 	.get_drvinfo = xlgmac_ethtool_get_drvinfo,
@@ -255,9 +254,9 @@
 	.get_strings = xlgmac_ethtool_get_strings,
 	.get_sset_count = xlgmac_ethtool_get_sset_count,
 	.get_ethtool_stats = xlgmac_ethtool_get_ethtool_stats,
-पूर्ण;
+};
 
-स्थिर काष्ठा ethtool_ops *xlgmac_get_ethtool_ops(व्योम)
-अणु
-	वापस &xlgmac_ethtool_ops;
-पूर्ण
+const struct ethtool_ops *xlgmac_get_ethtool_ops(void)
+{
+	return &xlgmac_ethtool_ops;
+}

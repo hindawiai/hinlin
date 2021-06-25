@@ -1,9 +1,8 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /* IEEE 802.11 SoftMAC layer
  * Copyright (c) 2005 Andrea Merello <andrea.merello@gmail.com>
  *
- * Mostly extracted from the rtl8180-sa2400 driver क्रम the
+ * Mostly extracted from the rtl8180-sa2400 driver for the
  * in-kernel generic ieee802.11 stack.
  *
  * Few lines might be stolen from other part of the ieee80211
@@ -12,71 +11,71 @@
  * WPA code stolen from the ipw2200 driver.
  * Copyright who own it's copyright.
  */
-#समावेश "ieee80211.h"
+#include "ieee80211.h"
 
-#समावेश <linux/अक्रमom.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/etherdevice.h>
+#include <linux/random.h>
+#include <linux/delay.h>
+#include <linux/slab.h>
+#include <linux/uaccess.h>
+#include <linux/etherdevice.h>
 
-#समावेश "dot11d.h"
+#include "dot11d.h"
 
-लघु ieee80211_is_54g(स्थिर काष्ठा ieee80211_network *net)
-अणु
-	वापस (net->rates_ex_len > 0) || (net->rates_len > 4);
-पूर्ण
+short ieee80211_is_54g(const struct ieee80211_network *net)
+{
+	return (net->rates_ex_len > 0) || (net->rates_len > 4);
+}
 EXPORT_SYMBOL(ieee80211_is_54g);
 
-लघु ieee80211_is_लघुslot(स्थिर काष्ठा ieee80211_network *net)
-अणु
-	वापस net->capability & WLAN_CAPABILITY_SHORT_SLOT;
-पूर्ण
-EXPORT_SYMBOL(ieee80211_is_लघुslot);
+short ieee80211_is_shortslot(const struct ieee80211_network *net)
+{
+	return net->capability & WLAN_CAPABILITY_SHORT_SLOT;
+}
+EXPORT_SYMBOL(ieee80211_is_shortslot);
 
-/* वापसs the total length needed क्रम pleacing the RATE MFIE
- * tag and the EXTENDED RATE MFIE tag अगर needed.
- * It encludes two bytes per tag क्रम the tag itself and its len
+/* returns the total length needed for pleacing the RATE MFIE
+ * tag and the EXTENDED RATE MFIE tag if needed.
+ * It encludes two bytes per tag for the tag itself and its len
  */
-अटल अचिन्हित पूर्णांक ieee80211_MFIE_rate_len(काष्ठा ieee80211_device *ieee)
-अणु
-	अचिन्हित पूर्णांक rate_len = 0;
+static unsigned int ieee80211_MFIE_rate_len(struct ieee80211_device *ieee)
+{
+	unsigned int rate_len = 0;
 
-	अगर (ieee->modulation & IEEE80211_CCK_MODULATION)
+	if (ieee->modulation & IEEE80211_CCK_MODULATION)
 		rate_len = IEEE80211_CCK_RATE_LEN + 2;
 
-	अगर (ieee->modulation & IEEE80211_OFDM_MODULATION)
+	if (ieee->modulation & IEEE80211_OFDM_MODULATION)
 		rate_len += IEEE80211_OFDM_RATE_LEN + 2;
 
-	वापस rate_len;
-पूर्ण
+	return rate_len;
+}
 
-/* pleace the MFIE rate, tag to the memory (द्विगुन) poined.
- * Then it updates the poपूर्णांकer so that
- * it poपूर्णांकs after the new MFIE tag added.
+/* pleace the MFIE rate, tag to the memory (double) poined.
+ * Then it updates the pointer so that
+ * it points after the new MFIE tag added.
  */
-अटल व्योम ieee80211_MFIE_Brate(काष्ठा ieee80211_device *ieee, u8 **tag_p)
-अणु
+static void ieee80211_MFIE_Brate(struct ieee80211_device *ieee, u8 **tag_p)
+{
 	u8 *tag = *tag_p;
 
-	अगर (ieee->modulation & IEEE80211_CCK_MODULATION) अणु
+	if (ieee->modulation & IEEE80211_CCK_MODULATION) {
 		*tag++ = MFIE_TYPE_RATES;
 		*tag++ = 4;
 		*tag++ = IEEE80211_BASIC_RATE_MASK | IEEE80211_CCK_RATE_1MB;
 		*tag++ = IEEE80211_BASIC_RATE_MASK | IEEE80211_CCK_RATE_2MB;
 		*tag++ = IEEE80211_BASIC_RATE_MASK | IEEE80211_CCK_RATE_5MB;
 		*tag++ = IEEE80211_BASIC_RATE_MASK | IEEE80211_CCK_RATE_11MB;
-	पूर्ण
+	}
 
-	/* We may add an option क्रम custom rates that specअगरic HW might support */
+	/* We may add an option for custom rates that specific HW might support */
 	*tag_p = tag;
-पूर्ण
+}
 
-अटल व्योम ieee80211_MFIE_Grate(काष्ठा ieee80211_device *ieee, u8 **tag_p)
-अणु
+static void ieee80211_MFIE_Grate(struct ieee80211_device *ieee, u8 **tag_p)
+{
 	u8 *tag = *tag_p;
 
-	अगर (ieee->modulation & IEEE80211_OFDM_MODULATION) अणु
+	if (ieee->modulation & IEEE80211_OFDM_MODULATION) {
 		*tag++ = MFIE_TYPE_RATES_EX;
 		*tag++ = 8;
 		*tag++ = IEEE80211_BASIC_RATE_MASK | IEEE80211_OFDM_RATE_6MB;
@@ -87,14 +86,14 @@ EXPORT_SYMBOL(ieee80211_is_लघुslot);
 		*tag++ = IEEE80211_BASIC_RATE_MASK | IEEE80211_OFDM_RATE_36MB;
 		*tag++ = IEEE80211_BASIC_RATE_MASK | IEEE80211_OFDM_RATE_48MB;
 		*tag++ = IEEE80211_BASIC_RATE_MASK | IEEE80211_OFDM_RATE_54MB;
-	पूर्ण
+	}
 
-	/* We may add an option क्रम custom rates that specअगरic HW might support */
+	/* We may add an option for custom rates that specific HW might support */
 	*tag_p = tag;
-पूर्ण
+}
 
-अटल व्योम ieee80211_WMM_Info(काष्ठा ieee80211_device *ieee, u8 **tag_p)
-अणु
+static void ieee80211_WMM_Info(struct ieee80211_device *ieee, u8 **tag_p)
+{
 	u8 *tag = *tag_p;
 
 	*tag++ = MFIE_TYPE_GENERIC; /* 0 */
@@ -105,20 +104,20 @@ EXPORT_SYMBOL(ieee80211_is_लघुslot);
 	*tag++ = 0x02;	/* 5 */
 	*tag++ = 0x00;
 	*tag++ = 0x01;
-#अगर_घोषित SUPPORT_USPD
-	अगर (ieee->current_network.wmm_info & 0x80)
+#ifdef SUPPORT_USPD
+	if (ieee->current_network.wmm_info & 0x80)
 		*tag++ = 0x0f | MAX_SP_Len;
-	अन्यथा
+	else
 		*tag++ = MAX_SP_Len;
-#अन्यथा
+#else
 	*tag++ = MAX_SP_Len;
-#पूर्ण_अगर
+#endif
 	*tag_p = tag;
-पूर्ण
+}
 
-#अगर_घोषित THOMAS_TURBO
-अटल व्योम ieee80211_TURBO_Info(काष्ठा ieee80211_device *ieee, u8 **tag_p)
-अणु
+#ifdef THOMAS_TURBO
+static void ieee80211_TURBO_Info(struct ieee80211_device *ieee, u8 **tag_p)
+{
 	u8 *tag = *tag_p;
 
 	*tag++ = MFIE_TYPE_GENERIC; /* 0 */
@@ -133,91 +132,91 @@ EXPORT_SYMBOL(ieee80211_is_लघुslot);
 
 	*tag_p = tag;
 	netdev_alert(ieee->dev, "This is enable turbo mode IE process\n");
-पूर्ण
-#पूर्ण_अगर
+}
+#endif
 
-अटल व्योम enqueue_mgmt(काष्ठा ieee80211_device *ieee, काष्ठा sk_buff *skb)
-अणु
-	पूर्णांक nh;
+static void enqueue_mgmt(struct ieee80211_device *ieee, struct sk_buff *skb)
+{
+	int nh;
 
 	nh = (ieee->mgmt_queue_head + 1) % MGMT_QUEUE_NUM;
 
 /*
- * अगर the queue is full but we have newer frames then
- * just overग_लिखोs the oldest.
+ * if the queue is full but we have newer frames then
+ * just overwrites the oldest.
  *
- * अगर (nh == ieee->mgmt_queue_tail)
- *		वापस -1;
+ * if (nh == ieee->mgmt_queue_tail)
+ *		return -1;
  */
 	ieee->mgmt_queue_head = nh;
 	ieee->mgmt_queue_ring[nh] = skb;
 
-	//वापस 0;
-पूर्ण
+	//return 0;
+}
 
-अटल काष्ठा sk_buff *dequeue_mgmt(काष्ठा ieee80211_device *ieee)
-अणु
-	काष्ठा sk_buff *ret;
+static struct sk_buff *dequeue_mgmt(struct ieee80211_device *ieee)
+{
+	struct sk_buff *ret;
 
-	अगर (ieee->mgmt_queue_tail == ieee->mgmt_queue_head)
-		वापस शून्य;
+	if (ieee->mgmt_queue_tail == ieee->mgmt_queue_head)
+		return NULL;
 
 	ret = ieee->mgmt_queue_ring[ieee->mgmt_queue_tail];
 
 	ieee->mgmt_queue_tail =
 		(ieee->mgmt_queue_tail + 1) % MGMT_QUEUE_NUM;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम init_mgmt_queue(काष्ठा ieee80211_device *ieee)
-अणु
+static void init_mgmt_queue(struct ieee80211_device *ieee)
+{
 	ieee->mgmt_queue_tail = ieee->mgmt_queue_head = 0;
-पूर्ण
+}
 
-अटल u8 MgntQuery_MgntFrameTxRate(काष्ठा ieee80211_device *ieee)
-अणु
+static u8 MgntQuery_MgntFrameTxRate(struct ieee80211_device *ieee)
+{
 	PRT_HIGH_THROUGHPUT      pHTInfo = ieee->pHTInfo;
 	u8 rate;
 
 	/* 2008/01/25 MH For broadcom, MGNT frame set as OFDM 6M. */
-	अगर (pHTInfo->IOTAction & HT_IOT_ACT_MGNT_USE_CCK_6M)
+	if (pHTInfo->IOTAction & HT_IOT_ACT_MGNT_USE_CCK_6M)
 		rate = 0x0c;
-	अन्यथा
+	else
 		rate = ieee->basic_rate & 0x7f;
 
-	अगर (rate == 0) अणु
+	if (rate == 0) {
 		/* 2005.01.26, by rcnjko. */
-		अगर (ieee->mode == IEEE_A ||
+		if (ieee->mode == IEEE_A ||
 		    ieee->mode == IEEE_N_5G ||
 		    (ieee->mode == IEEE_N_24G && !pHTInfo->bCurSuppCCK))
 			rate = 0x0c;
-		अन्यथा
+		else
 			rate = 0x02;
-	पूर्ण
+	}
 
 	/*
-	// Data rate of ProbeReq is alपढ़ोy decided. Annie, 2005-03-31
-	अगर( pMgntInfo->bScanInProgress || (pMgntInfo->bDualModeScanStep!=0) ) अणु
-	अगर(pMgntInfo->करोt11CurrentWirelessMode==WIRELESS_MODE_A)
+	// Data rate of ProbeReq is already decided. Annie, 2005-03-31
+	if( pMgntInfo->bScanInProgress || (pMgntInfo->bDualModeScanStep!=0) ) {
+	if(pMgntInfo->dot11CurrentWirelessMode==WIRELESS_MODE_A)
 	rate = 0x0c;
-	अन्यथा
+	else
 	rate = 0x02;
-	पूर्ण
+	}
 	 */
-	वापस rate;
-पूर्ण
+	return rate;
+}
 
-व्योम ieee80211_sta_wakeup(काष्ठा ieee80211_device *ieee, लघु nl);
+void ieee80211_sta_wakeup(struct ieee80211_device *ieee, short nl);
 
-अंतरभूत व्योम sofपंचांगac_mgmt_xmit(काष्ठा sk_buff *skb, काष्ठा ieee80211_device *ieee)
-अणु
-	अचिन्हित दीर्घ flags;
-	लघु single = ieee->sofपंचांगac_features & IEEE_SOFTMAC_SINGLE_QUEUE;
-	काष्ठा rtl_80211_hdr_3addr  *header =
-		(काष्ठा rtl_80211_hdr_3addr  *)skb->data;
+inline void softmac_mgmt_xmit(struct sk_buff *skb, struct ieee80211_device *ieee)
+{
+	unsigned long flags;
+	short single = ieee->softmac_features & IEEE_SOFTMAC_SINGLE_QUEUE;
+	struct rtl_80211_hdr_3addr  *header =
+		(struct rtl_80211_hdr_3addr  *)skb->data;
 
-	काष्ठा cb_desc *tcb_desc = (काष्ठा cb_desc *)(skb->cb + MAX_DEV_ADDR_SIZE);
+	struct cb_desc *tcb_desc = (struct cb_desc *)(skb->cb + MAX_DEV_ADDR_SIZE);
 
 	spin_lock_irqsave(&ieee->lock, flags);
 
@@ -230,488 +229,488 @@ EXPORT_SYMBOL(ieee80211_is_लघुslot);
 	tcb_desc->bTxDisableRateFallBack = 1;
 	tcb_desc->bTxUseDriverAssingedRate = 1;
 
-	अगर (single) अणु
-		अगर (ieee->queue_stop) अणु
+	if (single) {
+		if (ieee->queue_stop) {
 			enqueue_mgmt(ieee, skb);
-		पूर्ण अन्यथा अणु
+		} else {
 			header->seq_ctl = cpu_to_le16(ieee->seq_ctrl[0] << 4);
 
-			अगर (ieee->seq_ctrl[0] == 0xFFF)
+			if (ieee->seq_ctrl[0] == 0xFFF)
 				ieee->seq_ctrl[0] = 0;
-			अन्यथा
+			else
 				ieee->seq_ctrl[0]++;
 
-			/* aव्योम watchकरोg triggers */
-			netअगर_trans_update(ieee->dev);
-			ieee->sofपंचांगac_data_hard_start_xmit(skb, ieee->dev, ieee->basic_rate);
-			//dev_kमुक्त_skb_any(skb);//edit by thomas
-		पूर्ण
+			/* avoid watchdog triggers */
+			netif_trans_update(ieee->dev);
+			ieee->softmac_data_hard_start_xmit(skb, ieee->dev, ieee->basic_rate);
+			//dev_kfree_skb_any(skb);//edit by thomas
+		}
 
 		spin_unlock_irqrestore(&ieee->lock, flags);
-	पूर्ण अन्यथा अणु
+	} else {
 		spin_unlock_irqrestore(&ieee->lock, flags);
 		spin_lock_irqsave(&ieee->mgmt_tx_lock, flags);
 
 		header->seq_ctl = cpu_to_le16(ieee->seq_ctrl[0] << 4);
 
-		अगर (ieee->seq_ctrl[0] == 0xFFF)
+		if (ieee->seq_ctrl[0] == 0xFFF)
 			ieee->seq_ctrl[0] = 0;
-		अन्यथा
+		else
 			ieee->seq_ctrl[0]++;
 
 		/* check whether the managed packet queued greater than 5 */
-		अगर (!ieee->check_nic_enough_desc(ieee->dev, tcb_desc->queue_index) || \
-		    (skb_queue_len(&ieee->skb_रुकोQ[tcb_desc->queue_index]) != 0) || \
-		    (ieee->queue_stop)) अणु
+		if (!ieee->check_nic_enough_desc(ieee->dev, tcb_desc->queue_index) || \
+		    (skb_queue_len(&ieee->skb_waitQ[tcb_desc->queue_index]) != 0) || \
+		    (ieee->queue_stop)) {
 			/* insert the skb packet to the management queue */
-			/* as क्रम the completion function, it करोes not need
+			/* as for the completion function, it does not need
 			 * to check it any more.
 			 * */
-			prपूर्णांकk("%s():insert to waitqueue!\n", __func__);
-			skb_queue_tail(&ieee->skb_रुकोQ[tcb_desc->queue_index], skb);
-		पूर्ण अन्यथा अणु
-			ieee->sofपंचांगac_hard_start_xmit(skb, ieee->dev);
-			//dev_kमुक्त_skb_any(skb);//edit by thomas
-		पूर्ण
+			printk("%s():insert to waitqueue!\n", __func__);
+			skb_queue_tail(&ieee->skb_waitQ[tcb_desc->queue_index], skb);
+		} else {
+			ieee->softmac_hard_start_xmit(skb, ieee->dev);
+			//dev_kfree_skb_any(skb);//edit by thomas
+		}
 		spin_unlock_irqrestore(&ieee->mgmt_tx_lock, flags);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल अंतरभूत व्योम
-sofपंचांगac_ps_mgmt_xmit(काष्ठा sk_buff *skb, काष्ठा ieee80211_device *ieee)
-अणु
-	लघु single = ieee->sofपंचांगac_features & IEEE_SOFTMAC_SINGLE_QUEUE;
-	काष्ठा rtl_80211_hdr_3addr  *header =
-		(काष्ठा rtl_80211_hdr_3addr  *)skb->data;
+static inline void
+softmac_ps_mgmt_xmit(struct sk_buff *skb, struct ieee80211_device *ieee)
+{
+	short single = ieee->softmac_features & IEEE_SOFTMAC_SINGLE_QUEUE;
+	struct rtl_80211_hdr_3addr  *header =
+		(struct rtl_80211_hdr_3addr  *)skb->data;
 
-	अगर (single) अणु
+	if (single) {
 		header->seq_ctl = cpu_to_le16(ieee->seq_ctrl[0] << 4);
 
-		अगर (ieee->seq_ctrl[0] == 0xFFF)
+		if (ieee->seq_ctrl[0] == 0xFFF)
 			ieee->seq_ctrl[0] = 0;
-		अन्यथा
+		else
 			ieee->seq_ctrl[0]++;
 
-		/* aव्योम watchकरोg triggers */
-		netअगर_trans_update(ieee->dev);
-		ieee->sofपंचांगac_data_hard_start_xmit(skb, ieee->dev, ieee->basic_rate);
-	पूर्ण अन्यथा अणु
+		/* avoid watchdog triggers */
+		netif_trans_update(ieee->dev);
+		ieee->softmac_data_hard_start_xmit(skb, ieee->dev, ieee->basic_rate);
+	} else {
 		header->seq_ctl = cpu_to_le16(ieee->seq_ctrl[0] << 4);
 
-		अगर (ieee->seq_ctrl[0] == 0xFFF)
+		if (ieee->seq_ctrl[0] == 0xFFF)
 			ieee->seq_ctrl[0] = 0;
-		अन्यथा
+		else
 			ieee->seq_ctrl[0]++;
 
-		ieee->sofपंचांगac_hard_start_xmit(skb, ieee->dev);
-	पूर्ण
-	//dev_kमुक्त_skb_any(skb);//edit by thomas
-पूर्ण
+		ieee->softmac_hard_start_xmit(skb, ieee->dev);
+	}
+	//dev_kfree_skb_any(skb);//edit by thomas
+}
 
-अटल अंतरभूत काष्ठा sk_buff *ieee80211_probe_req(काष्ठा ieee80211_device *ieee)
-अणु
-	अचिन्हित पूर्णांक len, rate_len;
+static inline struct sk_buff *ieee80211_probe_req(struct ieee80211_device *ieee)
+{
+	unsigned int len, rate_len;
 	u8 *tag;
-	काष्ठा sk_buff *skb;
-	काष्ठा ieee80211_probe_request *req;
+	struct sk_buff *skb;
+	struct ieee80211_probe_request *req;
 
 	len = ieee->current_network.ssid_len;
 
 	rate_len = ieee80211_MFIE_rate_len(ieee);
 
-	skb = dev_alloc_skb(माप(काष्ठा ieee80211_probe_request) +
+	skb = dev_alloc_skb(sizeof(struct ieee80211_probe_request) +
 			    2 + len + rate_len + ieee->tx_headroom);
-	अगर (!skb)
-		वापस शून्य;
+	if (!skb)
+		return NULL;
 
 	skb_reserve(skb, ieee->tx_headroom);
 
-	req = skb_put(skb, माप(काष्ठा ieee80211_probe_request));
+	req = skb_put(skb, sizeof(struct ieee80211_probe_request));
 	req->header.frame_ctl = cpu_to_le16(IEEE80211_STYPE_PROBE_REQ);
 	req->header.duration_id = 0; /* FIXME: is this OK? */
 
 	eth_broadcast_addr(req->header.addr1);
-	स_नकल(req->header.addr2, ieee->dev->dev_addr, ETH_ALEN);
+	memcpy(req->header.addr2, ieee->dev->dev_addr, ETH_ALEN);
 	eth_broadcast_addr(req->header.addr3);
 
 	tag = skb_put(skb, len + 2 + rate_len);
 
 	*tag++ = MFIE_TYPE_SSID;
 	*tag++ = len;
-	स_नकल(tag, ieee->current_network.ssid, len);
+	memcpy(tag, ieee->current_network.ssid, len);
 	tag += len;
 
 	ieee80211_MFIE_Brate(ieee, &tag);
 	ieee80211_MFIE_Grate(ieee, &tag);
-	वापस skb;
-पूर्ण
+	return skb;
+}
 
-काष्ठा sk_buff *ieee80211_get_beacon_(काष्ठा ieee80211_device *ieee);
+struct sk_buff *ieee80211_get_beacon_(struct ieee80211_device *ieee);
 
-अटल व्योम ieee80211_send_beacon(काष्ठा ieee80211_device *ieee)
-अणु
-	काष्ठा sk_buff *skb;
+static void ieee80211_send_beacon(struct ieee80211_device *ieee)
+{
+	struct sk_buff *skb;
 
-	अगर (!ieee->ieee_up)
-		वापस;
-	//अचिन्हित दीर्घ flags;
+	if (!ieee->ieee_up)
+		return;
+	//unsigned long flags;
 	skb = ieee80211_get_beacon_(ieee);
 
-	अगर (skb) अणु
-		sofपंचांगac_mgmt_xmit(skb, ieee);
-		ieee->sofपंचांगac_stats.tx_beacons++;
-		//dev_kमुक्त_skb_any(skb);//edit by thomas
-	पूर्ण
-//	ieee->beacon_समयr.expires = jअगरfies +
-//		(MSECS( ieee->current_network.beacon_पूर्णांकerval -5));
+	if (skb) {
+		softmac_mgmt_xmit(skb, ieee);
+		ieee->softmac_stats.tx_beacons++;
+		//dev_kfree_skb_any(skb);//edit by thomas
+	}
+//	ieee->beacon_timer.expires = jiffies +
+//		(MSECS( ieee->current_network.beacon_interval -5));
 
 	//spin_lock_irqsave(&ieee->beacon_lock,flags);
-	अगर (ieee->beacon_txing && ieee->ieee_up) अणु
-//		अगर(!समयr_pending(&ieee->beacon_समयr))
-//			add_समयr(&ieee->beacon_समयr);
-		mod_समयr(&ieee->beacon_समयr,
-			  jअगरfies + msecs_to_jअगरfies(ieee->current_network.beacon_पूर्णांकerval - 5));
-	पूर्ण
+	if (ieee->beacon_txing && ieee->ieee_up) {
+//		if(!timer_pending(&ieee->beacon_timer))
+//			add_timer(&ieee->beacon_timer);
+		mod_timer(&ieee->beacon_timer,
+			  jiffies + msecs_to_jiffies(ieee->current_network.beacon_interval - 5));
+	}
 	//spin_unlock_irqrestore(&ieee->beacon_lock,flags);
-पूर्ण
+}
 
-अटल व्योम ieee80211_send_beacon_cb(काष्ठा समयr_list *t)
-अणु
-	काष्ठा ieee80211_device *ieee =
-		from_समयr(ieee, t, beacon_समयr);
-	अचिन्हित दीर्घ flags;
+static void ieee80211_send_beacon_cb(struct timer_list *t)
+{
+	struct ieee80211_device *ieee =
+		from_timer(ieee, t, beacon_timer);
+	unsigned long flags;
 
 	spin_lock_irqsave(&ieee->beacon_lock, flags);
 	ieee80211_send_beacon(ieee);
 	spin_unlock_irqrestore(&ieee->beacon_lock, flags);
-पूर्ण
+}
 
-अटल व्योम ieee80211_send_probe(काष्ठा ieee80211_device *ieee)
-अणु
-	काष्ठा sk_buff *skb;
+static void ieee80211_send_probe(struct ieee80211_device *ieee)
+{
+	struct sk_buff *skb;
 
 	skb = ieee80211_probe_req(ieee);
-	अगर (skb) अणु
-		sofपंचांगac_mgmt_xmit(skb, ieee);
-		ieee->sofपंचांगac_stats.tx_probe_rq++;
-		//dev_kमुक्त_skb_any(skb);//edit by thomas
-	पूर्ण
-पूर्ण
+	if (skb) {
+		softmac_mgmt_xmit(skb, ieee);
+		ieee->softmac_stats.tx_probe_rq++;
+		//dev_kfree_skb_any(skb);//edit by thomas
+	}
+}
 
-अटल व्योम ieee80211_send_probe_requests(काष्ठा ieee80211_device *ieee)
-अणु
-	अगर (ieee->active_scan && (ieee->sofपंचांगac_features & IEEE_SOFTMAC_PROBERQ)) अणु
+static void ieee80211_send_probe_requests(struct ieee80211_device *ieee)
+{
+	if (ieee->active_scan && (ieee->softmac_features & IEEE_SOFTMAC_PROBERQ)) {
 		ieee80211_send_probe(ieee);
 		ieee80211_send_probe(ieee);
-	पूर्ण
-पूर्ण
+	}
+}
 
-/* this perक्रमms syncro scan blocking the caller until all channels
+/* this performs syncro scan blocking the caller until all channels
  * in the allowed channel map has been checked.
  */
-व्योम ieee80211_sofपंचांगac_scan_syncro(काष्ठा ieee80211_device *ieee)
-अणु
-	लघु ch = 0;
+void ieee80211_softmac_scan_syncro(struct ieee80211_device *ieee)
+{
+	short ch = 0;
 	u8 channel_map[MAX_CHANNEL_NUMBER + 1];
 
-	स_नकल(channel_map, GET_DOT11D_INFO(ieee)->channel_map, MAX_CHANNEL_NUMBER + 1);
+	memcpy(channel_map, GET_DOT11D_INFO(ieee)->channel_map, MAX_CHANNEL_NUMBER + 1);
 	mutex_lock(&ieee->scan_mutex);
 
-	जबतक (1) अणु
-		करो अणु
+	while (1) {
+		do {
 			ch++;
-			अगर (ch > MAX_CHANNEL_NUMBER)
-				जाओ out; /* scan completed */
-		पूर्ण जबतक (!channel_map[ch]);
+			if (ch > MAX_CHANNEL_NUMBER)
+				goto out; /* scan completed */
+		} while (!channel_map[ch]);
 
 		/* this function can be called in two situations
-		 * 1- We have चयनed to ad-hoc mode and we are
-		 *    perक्रमming a complete syncro scan beक्रमe conclude
-		 *    there are no पूर्णांकeresting cell and to create a
-		 *    new one. In this हाल the link state is
-		 *    IEEE80211_NOLINK until we found an पूर्णांकeresting cell.
+		 * 1- We have switched to ad-hoc mode and we are
+		 *    performing a complete syncro scan before conclude
+		 *    there are no interesting cell and to create a
+		 *    new one. In this case the link state is
+		 *    IEEE80211_NOLINK until we found an interesting cell.
 		 *    If so the ieee8021_new_net, called by the RX path
 		 *    will set the state to IEEE80211_LINKED, so we stop
 		 *    scanning
 		 * 2- We are linked and the root uses run iwlist scan.
-		 *    So we चयन to IEEE80211_LINKED_SCANNING to remember
-		 *    that we are still logically linked (not पूर्णांकerested in
-		 *    new network events, despite क्रम updating the net list,
+		 *    So we switch to IEEE80211_LINKED_SCANNING to remember
+		 *    that we are still logically linked (not interested in
+		 *    new network events, despite for updating the net list,
 		 *    but we are temporarly 'unlinked' as the driver shall
 		 *    not filter RX frames and the channel is changing.
-		 * So the only situation in witch are पूर्णांकerested is to check
-		 * अगर the state become LINKED because of the #1 situation
+		 * So the only situation in witch are interested is to check
+		 * if the state become LINKED because of the #1 situation
 		 */
 
-		अगर (ieee->state == IEEE80211_LINKED)
-			जाओ out;
+		if (ieee->state == IEEE80211_LINKED)
+			goto out;
 		ieee->set_chan(ieee->dev, ch);
-		अगर (channel_map[ch] == 1)
+		if (channel_map[ch] == 1)
 			ieee80211_send_probe_requests(ieee);
 
-		/* this prevent excessive समय रुको when we
-		 * need to रुको क्रम a syncro scan to end..
+		/* this prevent excessive time wait when we
+		 * need to wait for a syncro scan to end..
 		 */
-		अगर (ieee->state >= IEEE80211_LINKED && ieee->sync_scan_hurryup)
-			जाओ out;
+		if (ieee->state >= IEEE80211_LINKED && ieee->sync_scan_hurryup)
+			goto out;
 
-		msleep_पूर्णांकerruptible(IEEE80211_SOFTMAC_SCAN_TIME);
-	पूर्ण
+		msleep_interruptible(IEEE80211_SOFTMAC_SCAN_TIME);
+	}
 out:
-	अगर (ieee->state < IEEE80211_LINKED) अणु
+	if (ieee->state < IEEE80211_LINKED) {
 		ieee->actscanning = false;
 		mutex_unlock(&ieee->scan_mutex);
-	पूर्ण अन्यथा अणु
+	} else {
 		ieee->sync_scan_hurryup = 0;
-		अगर (IS_DOT11D_ENABLE(ieee))
-			करोt11d_scan_complete(ieee);
+		if (IS_DOT11D_ENABLE(ieee))
+			dot11d_scan_complete(ieee);
 		mutex_unlock(&ieee->scan_mutex);
-	पूर्ण
-पूर्ण
-EXPORT_SYMBOL(ieee80211_sofपंचांगac_scan_syncro);
+	}
+}
+EXPORT_SYMBOL(ieee80211_softmac_scan_syncro);
 
-अटल व्योम ieee80211_sofपंचांगac_scan_wq(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा delayed_work *dwork = to_delayed_work(work);
-	काष्ठा ieee80211_device *ieee = container_of(dwork, काष्ठा ieee80211_device, sofपंचांगac_scan_wq);
-	अटल लघु watchकरोg;
+static void ieee80211_softmac_scan_wq(struct work_struct *work)
+{
+	struct delayed_work *dwork = to_delayed_work(work);
+	struct ieee80211_device *ieee = container_of(dwork, struct ieee80211_device, softmac_scan_wq);
+	static short watchdog;
 	u8 channel_map[MAX_CHANNEL_NUMBER + 1];
 
-	स_नकल(channel_map, GET_DOT11D_INFO(ieee)->channel_map, MAX_CHANNEL_NUMBER + 1);
-	अगर (!ieee->ieee_up)
-		वापस;
+	memcpy(channel_map, GET_DOT11D_INFO(ieee)->channel_map, MAX_CHANNEL_NUMBER + 1);
+	if (!ieee->ieee_up)
+		return;
 	mutex_lock(&ieee->scan_mutex);
-	करो अणु
+	do {
 		ieee->current_network.channel =
 			(ieee->current_network.channel + 1) % MAX_CHANNEL_NUMBER;
-		अगर (watchकरोg++ > MAX_CHANNEL_NUMBER) अणु
-		//अगर current channel is not in channel map, set to शेष channel.
-			अगर (!channel_map[ieee->current_network.channel]) अणु
+		if (watchdog++ > MAX_CHANNEL_NUMBER) {
+		//if current channel is not in channel map, set to default channel.
+			if (!channel_map[ieee->current_network.channel]) {
 				ieee->current_network.channel = 6;
-				जाओ out; /* no good chans */
-			पूर्ण
-		पूर्ण
-	पूर्ण जबतक (!channel_map[ieee->current_network.channel]);
-	अगर (ieee->scanning == 0)
-		जाओ out;
+				goto out; /* no good chans */
+			}
+		}
+	} while (!channel_map[ieee->current_network.channel]);
+	if (ieee->scanning == 0)
+		goto out;
 	ieee->set_chan(ieee->dev, ieee->current_network.channel);
-	अगर (channel_map[ieee->current_network.channel] == 1)
+	if (channel_map[ieee->current_network.channel] == 1)
 		ieee80211_send_probe_requests(ieee);
 
-	schedule_delayed_work(&ieee->sofपंचांगac_scan_wq, IEEE80211_SOFTMAC_SCAN_TIME);
+	schedule_delayed_work(&ieee->softmac_scan_wq, IEEE80211_SOFTMAC_SCAN_TIME);
 
 	mutex_unlock(&ieee->scan_mutex);
-	वापस;
+	return;
 out:
-	अगर (IS_DOT11D_ENABLE(ieee))
-		करोt11d_scan_complete(ieee);
+	if (IS_DOT11D_ENABLE(ieee))
+		dot11d_scan_complete(ieee);
 	ieee->actscanning = false;
-	watchकरोg = 0;
+	watchdog = 0;
 	ieee->scanning = 0;
 	mutex_unlock(&ieee->scan_mutex);
-पूर्ण
+}
 
-अटल व्योम ieee80211_beacons_start(काष्ठा ieee80211_device *ieee)
-अणु
-	अचिन्हित दीर्घ flags;
+static void ieee80211_beacons_start(struct ieee80211_device *ieee)
+{
+	unsigned long flags;
 	spin_lock_irqsave(&ieee->beacon_lock, flags);
 
 	ieee->beacon_txing = 1;
 	ieee80211_send_beacon(ieee);
 
 	spin_unlock_irqrestore(&ieee->beacon_lock, flags);
-पूर्ण
+}
 
-अटल व्योम ieee80211_beacons_stop(काष्ठा ieee80211_device *ieee)
-अणु
-	अचिन्हित दीर्घ flags;
+static void ieee80211_beacons_stop(struct ieee80211_device *ieee)
+{
+	unsigned long flags;
 
 	spin_lock_irqsave(&ieee->beacon_lock, flags);
 
 	ieee->beacon_txing = 0;
-	del_समयr_sync(&ieee->beacon_समयr);
+	del_timer_sync(&ieee->beacon_timer);
 
 	spin_unlock_irqrestore(&ieee->beacon_lock, flags);
-पूर्ण
+}
 
-व्योम ieee80211_stop_send_beacons(काष्ठा ieee80211_device *ieee)
-अणु
-	अगर (ieee->stop_send_beacons)
+void ieee80211_stop_send_beacons(struct ieee80211_device *ieee)
+{
+	if (ieee->stop_send_beacons)
 		ieee->stop_send_beacons(ieee->dev);
-	अगर (ieee->sofपंचांगac_features & IEEE_SOFTMAC_BEACONS)
+	if (ieee->softmac_features & IEEE_SOFTMAC_BEACONS)
 		ieee80211_beacons_stop(ieee);
-पूर्ण
+}
 EXPORT_SYMBOL(ieee80211_stop_send_beacons);
 
-व्योम ieee80211_start_send_beacons(काष्ठा ieee80211_device *ieee)
-अणु
-	अगर (ieee->start_send_beacons)
+void ieee80211_start_send_beacons(struct ieee80211_device *ieee)
+{
+	if (ieee->start_send_beacons)
 		ieee->start_send_beacons(ieee->dev, ieee->basic_rate);
-	अगर (ieee->sofपंचांगac_features & IEEE_SOFTMAC_BEACONS)
+	if (ieee->softmac_features & IEEE_SOFTMAC_BEACONS)
 		ieee80211_beacons_start(ieee);
-पूर्ण
+}
 EXPORT_SYMBOL(ieee80211_start_send_beacons);
 
-अटल व्योम ieee80211_sofपंचांगac_stop_scan(काष्ठा ieee80211_device *ieee)
-अणु
-//	अचिन्हित दीर्घ flags;
+static void ieee80211_softmac_stop_scan(struct ieee80211_device *ieee)
+{
+//	unsigned long flags;
 
 	//ieee->sync_scan_hurryup = 1;
 
 	mutex_lock(&ieee->scan_mutex);
 //	spin_lock_irqsave(&ieee->lock, flags);
 
-	अगर (ieee->scanning == 1) अणु
+	if (ieee->scanning == 1) {
 		ieee->scanning = 0;
 
-		cancel_delayed_work(&ieee->sofपंचांगac_scan_wq);
-	पूर्ण
+		cancel_delayed_work(&ieee->softmac_scan_wq);
+	}
 
 //	spin_unlock_irqrestore(&ieee->lock, flags);
 	mutex_unlock(&ieee->scan_mutex);
-पूर्ण
+}
 
-व्योम ieee80211_stop_scan(काष्ठा ieee80211_device *ieee)
-अणु
-	अगर (ieee->sofपंचांगac_features & IEEE_SOFTMAC_SCAN)
-		ieee80211_sofपंचांगac_stop_scan(ieee);
-	अन्यथा
+void ieee80211_stop_scan(struct ieee80211_device *ieee)
+{
+	if (ieee->softmac_features & IEEE_SOFTMAC_SCAN)
+		ieee80211_softmac_stop_scan(ieee);
+	else
 		ieee->stop_scan(ieee->dev);
-पूर्ण
+}
 EXPORT_SYMBOL(ieee80211_stop_scan);
 
 /* called with ieee->lock held */
-अटल व्योम ieee80211_start_scan(काष्ठा ieee80211_device *ieee)
-अणु
-	अगर (IS_DOT11D_ENABLE(ieee)) अणु
-		अगर (IS_COUNTRY_IE_VALID(ieee))
+static void ieee80211_start_scan(struct ieee80211_device *ieee)
+{
+	if (IS_DOT11D_ENABLE(ieee)) {
+		if (IS_COUNTRY_IE_VALID(ieee))
 			RESET_CIE_WATCHDOG(ieee);
-	पूर्ण
-	अगर (ieee->sofपंचांगac_features & IEEE_SOFTMAC_SCAN) अणु
-		अगर (ieee->scanning == 0) अणु
+	}
+	if (ieee->softmac_features & IEEE_SOFTMAC_SCAN) {
+		if (ieee->scanning == 0) {
 			ieee->scanning = 1;
-			schedule_delayed_work(&ieee->sofपंचांगac_scan_wq, 0);
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			schedule_delayed_work(&ieee->softmac_scan_wq, 0);
+		}
+	} else {
 		ieee->start_scan(ieee->dev);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /* called with wx_mutex held */
-व्योम ieee80211_start_scan_syncro(काष्ठा ieee80211_device *ieee)
-अणु
-	अगर (IS_DOT11D_ENABLE(ieee)) अणु
-		अगर (IS_COUNTRY_IE_VALID(ieee))
+void ieee80211_start_scan_syncro(struct ieee80211_device *ieee)
+{
+	if (IS_DOT11D_ENABLE(ieee)) {
+		if (IS_COUNTRY_IE_VALID(ieee))
 			RESET_CIE_WATCHDOG(ieee);
-	पूर्ण
+	}
 	ieee->sync_scan_hurryup = 0;
-	अगर (ieee->sofपंचांगac_features & IEEE_SOFTMAC_SCAN)
-		ieee80211_sofपंचांगac_scan_syncro(ieee);
-	अन्यथा
+	if (ieee->softmac_features & IEEE_SOFTMAC_SCAN)
+		ieee80211_softmac_scan_syncro(ieee);
+	else
 		ieee->scan_syncro(ieee->dev);
-पूर्ण
+}
 EXPORT_SYMBOL(ieee80211_start_scan_syncro);
 
-अटल अंतरभूत काष्ठा sk_buff *
-ieee80211_authentication_req(काष्ठा ieee80211_network *beacon,
-			     काष्ठा ieee80211_device *ieee, पूर्णांक challengelen)
-अणु
-	काष्ठा sk_buff *skb;
-	काष्ठा ieee80211_authentication *auth;
-	पूर्णांक len = माप(काष्ठा ieee80211_authentication) + challengelen + ieee->tx_headroom;
+static inline struct sk_buff *
+ieee80211_authentication_req(struct ieee80211_network *beacon,
+			     struct ieee80211_device *ieee, int challengelen)
+{
+	struct sk_buff *skb;
+	struct ieee80211_authentication *auth;
+	int len = sizeof(struct ieee80211_authentication) + challengelen + ieee->tx_headroom;
 
 	skb = dev_alloc_skb(len);
-	अगर (!skb)
-		वापस शून्य;
+	if (!skb)
+		return NULL;
 
 	skb_reserve(skb, ieee->tx_headroom);
-	auth = skb_put(skb, माप(काष्ठा ieee80211_authentication));
+	auth = skb_put(skb, sizeof(struct ieee80211_authentication));
 
-	अगर (challengelen)
+	if (challengelen)
 		auth->header.frame_ctl = cpu_to_le16(IEEE80211_STYPE_AUTH
 						     | IEEE80211_FCTL_WEP);
-	अन्यथा
+	else
 		auth->header.frame_ctl = cpu_to_le16(IEEE80211_STYPE_AUTH);
 
 	auth->header.duration_id = cpu_to_le16(0x013a);
 
-	स_नकल(auth->header.addr1, beacon->bssid, ETH_ALEN);
-	स_नकल(auth->header.addr2, ieee->dev->dev_addr, ETH_ALEN);
-	स_नकल(auth->header.addr3, beacon->bssid, ETH_ALEN);
+	memcpy(auth->header.addr1, beacon->bssid, ETH_ALEN);
+	memcpy(auth->header.addr2, ieee->dev->dev_addr, ETH_ALEN);
+	memcpy(auth->header.addr3, beacon->bssid, ETH_ALEN);
 
-	//auth->algorithm = ieee->खोलो_wep ? WLAN_AUTH_OPEN : WLAN_AUTH_SHARED_KEY;
-	अगर (ieee->auth_mode == 0)
+	//auth->algorithm = ieee->open_wep ? WLAN_AUTH_OPEN : WLAN_AUTH_SHARED_KEY;
+	if (ieee->auth_mode == 0)
 		auth->algorithm = WLAN_AUTH_OPEN;
-	अन्यथा अगर (ieee->auth_mode == 1)
+	else if (ieee->auth_mode == 1)
 		auth->algorithm = cpu_to_le16(WLAN_AUTH_SHARED_KEY);
-	अन्यथा अगर (ieee->auth_mode == 2)
+	else if (ieee->auth_mode == 2)
 		auth->algorithm = WLAN_AUTH_OPEN; /* 0x80; */
-	prपूर्णांकk("=================>%s():auth->algorithm is %d\n", __func__, auth->algorithm);
+	printk("=================>%s():auth->algorithm is %d\n", __func__, auth->algorithm);
 	auth->transaction = cpu_to_le16(ieee->associate_seq);
 	ieee->associate_seq++;
 
 	auth->status = cpu_to_le16(WLAN_STATUS_SUCCESS);
 
-	वापस skb;
-पूर्ण
+	return skb;
+}
 
-अटल काष्ठा sk_buff *ieee80211_probe_resp(काष्ठा ieee80211_device *ieee, u8 *dest)
-अणु
+static struct sk_buff *ieee80211_probe_resp(struct ieee80211_device *ieee, u8 *dest)
+{
 	u8 *tag;
-	पूर्णांक beacon_size;
-	काष्ठा ieee80211_probe_response *beacon_buf;
-	काष्ठा sk_buff *skb = शून्य;
-	पूर्णांक encrypt;
-	पूर्णांक atim_len, erp_len;
-	काष्ठा ieee80211_crypt_data *crypt;
+	int beacon_size;
+	struct ieee80211_probe_response *beacon_buf;
+	struct sk_buff *skb = NULL;
+	int encrypt;
+	int atim_len, erp_len;
+	struct ieee80211_crypt_data *crypt;
 
-	अक्षर *ssid = ieee->current_network.ssid;
-	पूर्णांक ssid_len = ieee->current_network.ssid_len;
-	पूर्णांक rate_len = ieee->current_network.rates_len + 2;
-	पूर्णांक rate_ex_len = ieee->current_network.rates_ex_len;
-	पूर्णांक wpa_ie_len = ieee->wpa_ie_len;
+	char *ssid = ieee->current_network.ssid;
+	int ssid_len = ieee->current_network.ssid_len;
+	int rate_len = ieee->current_network.rates_len + 2;
+	int rate_ex_len = ieee->current_network.rates_ex_len;
+	int wpa_ie_len = ieee->wpa_ie_len;
 	u8 erpinfo_content = 0;
 
-	u8 *पंचांगp_ht_cap_buf;
-	u8 पंचांगp_ht_cap_len = 0;
-	u8 *पंचांगp_ht_info_buf;
-	u8 पंचांगp_ht_info_len = 0;
+	u8 *tmp_ht_cap_buf;
+	u8 tmp_ht_cap_len = 0;
+	u8 *tmp_ht_info_buf;
+	u8 tmp_ht_info_len = 0;
 	PRT_HIGH_THROUGHPUT	pHTInfo = ieee->pHTInfo;
-	u8 *पंचांगp_generic_ie_buf = शून्य;
-	u8 पंचांगp_generic_ie_len = 0;
+	u8 *tmp_generic_ie_buf = NULL;
+	u8 tmp_generic_ie_len = 0;
 
-	अगर (rate_ex_len > 0)
+	if (rate_ex_len > 0)
 		rate_ex_len += 2;
 
-	अगर (ieee->current_network.capability & WLAN_CAPABILITY_IBSS)
+	if (ieee->current_network.capability & WLAN_CAPABILITY_IBSS)
 		atim_len = 4;
-	अन्यथा
+	else
 		atim_len = 0;
 
-	अगर (ieee80211_is_54g(&ieee->current_network))
+	if (ieee80211_is_54g(&ieee->current_network))
 		erp_len = 3;
-	अन्यथा
+	else
 		erp_len = 0;
 
 	crypt = ieee->crypt[ieee->tx_keyidx];
 
 	encrypt = ieee->host_encrypt && crypt && crypt->ops &&
-		((0 == म_भेद(crypt->ops->name, "WEP") || wpa_ie_len));
+		((0 == strcmp(crypt->ops->name, "WEP") || wpa_ie_len));
 	/* HT ralated element */
-	पंचांगp_ht_cap_buf = (u8 *)&ieee->pHTInfo->SelfHTCap;
-	पंचांगp_ht_cap_len = माप(ieee->pHTInfo->SelfHTCap);
-	पंचांगp_ht_info_buf = (u8 *)&ieee->pHTInfo->SelfHTInfo;
-	पंचांगp_ht_info_len = माप(ieee->pHTInfo->SelfHTInfo);
-	HTConकाष्ठाCapabilityElement(ieee, पंचांगp_ht_cap_buf, &पंचांगp_ht_cap_len, encrypt);
-	HTConकाष्ठाInfoElement(ieee, पंचांगp_ht_info_buf, &पंचांगp_ht_info_len, encrypt);
+	tmp_ht_cap_buf = (u8 *)&ieee->pHTInfo->SelfHTCap;
+	tmp_ht_cap_len = sizeof(ieee->pHTInfo->SelfHTCap);
+	tmp_ht_info_buf = (u8 *)&ieee->pHTInfo->SelfHTInfo;
+	tmp_ht_info_len = sizeof(ieee->pHTInfo->SelfHTInfo);
+	HTConstructCapabilityElement(ieee, tmp_ht_cap_buf, &tmp_ht_cap_len, encrypt);
+	HTConstructInfoElement(ieee, tmp_ht_info_buf, &tmp_ht_info_len, encrypt);
 
-	अगर (pHTInfo->bRegRT2RTAggregation) अणु
-		पंचांगp_generic_ie_buf = ieee->pHTInfo->szRT2RTAggBuffer;
-		पंचांगp_generic_ie_len = माप(ieee->pHTInfo->szRT2RTAggBuffer);
-		HTConकाष्ठाRT2RTAggElement(ieee, पंचांगp_generic_ie_buf, &पंचांगp_generic_ie_len);
-	पूर्ण
-//	prपूर्णांकk("===============>tmp_ht_cap_len is %d,tmp_ht_info_len is %d, tmp_generic_ie_len is %d\n",पंचांगp_ht_cap_len,पंचांगp_ht_info_len,पंचांगp_generic_ie_len);
-	beacon_size = माप(काष्ठा ieee80211_probe_response) + 2
+	if (pHTInfo->bRegRT2RTAggregation) {
+		tmp_generic_ie_buf = ieee->pHTInfo->szRT2RTAggBuffer;
+		tmp_generic_ie_len = sizeof(ieee->pHTInfo->szRT2RTAggBuffer);
+		HTConstructRT2RTAggElement(ieee, tmp_generic_ie_buf, &tmp_generic_ie_len);
+	}
+//	printk("===============>tmp_ht_cap_len is %d,tmp_ht_info_len is %d, tmp_generic_ie_len is %d\n",tmp_ht_cap_len,tmp_ht_info_len,tmp_generic_ie_len);
+	beacon_size = sizeof(struct ieee80211_probe_response) + 2
 		+ ssid_len
 		+ 3 //channel
 		+ rate_len
@@ -719,32 +718,32 @@ ieee80211_authentication_req(काष्ठा ieee80211_network *beacon,
 		+ atim_len
 		+ erp_len
 		+ wpa_ie_len
-	//	+ पंचांगp_ht_cap_len
-	//	+ पंचांगp_ht_info_len
-	//	+ पंचांगp_generic_ie_len
+	//	+ tmp_ht_cap_len
+	//	+ tmp_ht_info_len
+	//	+ tmp_generic_ie_len
 //		+ wmm_len+2
 		+ ieee->tx_headroom;
 	skb = dev_alloc_skb(beacon_size);
-	अगर (!skb)
-		वापस शून्य;
+	if (!skb)
+		return NULL;
 	skb_reserve(skb, ieee->tx_headroom);
 	beacon_buf = skb_put(skb, (beacon_size - ieee->tx_headroom));
-	स_नकल(beacon_buf->header.addr1, dest, ETH_ALEN);
-	स_नकल(beacon_buf->header.addr2, ieee->dev->dev_addr, ETH_ALEN);
-	स_नकल(beacon_buf->header.addr3, ieee->current_network.bssid, ETH_ALEN);
+	memcpy(beacon_buf->header.addr1, dest, ETH_ALEN);
+	memcpy(beacon_buf->header.addr2, ieee->dev->dev_addr, ETH_ALEN);
+	memcpy(beacon_buf->header.addr3, ieee->current_network.bssid, ETH_ALEN);
 
 	beacon_buf->header.duration_id = 0; /* FIXME */
-	beacon_buf->beacon_पूर्णांकerval =
-		cpu_to_le16(ieee->current_network.beacon_पूर्णांकerval);
+	beacon_buf->beacon_interval =
+		cpu_to_le16(ieee->current_network.beacon_interval);
 	beacon_buf->capability =
 		cpu_to_le16(ieee->current_network.capability & WLAN_CAPABILITY_IBSS);
 	beacon_buf->capability |=
-		cpu_to_le16(ieee->current_network.capability & WLAN_CAPABILITY_SHORT_PREAMBLE); /* add लघु preamble here */
+		cpu_to_le16(ieee->current_network.capability & WLAN_CAPABILITY_SHORT_PREAMBLE); /* add short preamble here */
 
-	अगर (ieee->लघु_slot && (ieee->current_network.capability & WLAN_CAPABILITY_SHORT_SLOT))
+	if (ieee->short_slot && (ieee->current_network.capability & WLAN_CAPABILITY_SHORT_SLOT))
 		beacon_buf->capability |= cpu_to_le16(WLAN_CAPABILITY_SHORT_SLOT);
 
-	अगर (encrypt)
+	if (encrypt)
 		beacon_buf->capability |= cpu_to_le16(WLAN_CAPABILITY_PRIVACY);
 
 	beacon_buf->header.frame_ctl = cpu_to_le16(IEEE80211_STYPE_PROBE_RESP);
@@ -753,100 +752,100 @@ ieee80211_authentication_req(काष्ठा ieee80211_network *beacon,
 
 	tag = (u8 *)beacon_buf->info_element[0].data;
 
-	स_नकल(tag, ssid, ssid_len);
+	memcpy(tag, ssid, ssid_len);
 
 	tag += ssid_len;
 
 	*(tag++) = MFIE_TYPE_RATES;
 	*(tag++) = rate_len - 2;
-	स_नकल(tag, ieee->current_network.rates, rate_len - 2);
+	memcpy(tag, ieee->current_network.rates, rate_len - 2);
 	tag += rate_len - 2;
 
 	*(tag++) = MFIE_TYPE_DS_SET;
 	*(tag++) = 1;
 	*(tag++) = ieee->current_network.channel;
 
-	अगर (atim_len) अणु
+	if (atim_len) {
 		*(tag++) = MFIE_TYPE_IBSS_SET;
 		*(tag++) = 2;
 
-		put_unaligned_le16(ieee->current_network.atim_winकरोw,
+		put_unaligned_le16(ieee->current_network.atim_window,
 				   tag);
 		tag += 2;
-	पूर्ण
+	}
 
-	अगर (erp_len) अणु
+	if (erp_len) {
 		*(tag++) = MFIE_TYPE_ERP;
 		*(tag++) = 1;
 		*(tag++) = erpinfo_content;
-	पूर्ण
-	अगर (rate_ex_len) अणु
+	}
+	if (rate_ex_len) {
 		*(tag++) = MFIE_TYPE_RATES_EX;
 		*(tag++) = rate_ex_len - 2;
-		स_नकल(tag, ieee->current_network.rates_ex, rate_ex_len - 2);
+		memcpy(tag, ieee->current_network.rates_ex, rate_ex_len - 2);
 		tag += rate_ex_len - 2;
-	पूर्ण
+	}
 
-	अगर (wpa_ie_len) अणु
-		अगर (ieee->iw_mode == IW_MODE_ADHOC) अणु
-			//as Winकरोws will set pairwise key same as the group key which is not allowed in Linux, so set this क्रम IOT issue. WB 2008.07.07
-			स_नकल(&ieee->wpa_ie[14], &ieee->wpa_ie[8], 4);
-		पूर्ण
-		स_नकल(tag, ieee->wpa_ie, ieee->wpa_ie_len);
+	if (wpa_ie_len) {
+		if (ieee->iw_mode == IW_MODE_ADHOC) {
+			//as Windows will set pairwise key same as the group key which is not allowed in Linux, so set this for IOT issue. WB 2008.07.07
+			memcpy(&ieee->wpa_ie[14], &ieee->wpa_ie[8], 4);
+		}
+		memcpy(tag, ieee->wpa_ie, ieee->wpa_ie_len);
 		tag += wpa_ie_len;
-	पूर्ण
+	}
 
 	//skb->dev = ieee->dev;
-	वापस skb;
-पूर्ण
+	return skb;
+}
 
-अटल काष्ठा sk_buff *ieee80211_assoc_resp(काष्ठा ieee80211_device *ieee,
+static struct sk_buff *ieee80211_assoc_resp(struct ieee80211_device *ieee,
 					    u8 *dest)
-अणु
-	काष्ठा sk_buff *skb;
+{
+	struct sk_buff *skb;
 	u8 *tag;
 
-	काष्ठा ieee80211_crypt_data *crypt;
-	काष्ठा ieee80211_assoc_response_frame *assoc;
-	लघु encrypt;
+	struct ieee80211_crypt_data *crypt;
+	struct ieee80211_assoc_response_frame *assoc;
+	short encrypt;
 
-	अचिन्हित पूर्णांक rate_len = ieee80211_MFIE_rate_len(ieee);
-	पूर्णांक len = माप(काष्ठा ieee80211_assoc_response_frame) + rate_len + ieee->tx_headroom;
+	unsigned int rate_len = ieee80211_MFIE_rate_len(ieee);
+	int len = sizeof(struct ieee80211_assoc_response_frame) + rate_len + ieee->tx_headroom;
 
 	skb = dev_alloc_skb(len);
 
-	अगर (!skb)
-		वापस शून्य;
+	if (!skb)
+		return NULL;
 
 	skb_reserve(skb, ieee->tx_headroom);
 
-	assoc = skb_put(skb, माप(काष्ठा ieee80211_assoc_response_frame));
+	assoc = skb_put(skb, sizeof(struct ieee80211_assoc_response_frame));
 
 	assoc->header.frame_ctl = cpu_to_le16(IEEE80211_STYPE_ASSOC_RESP);
-	स_नकल(assoc->header.addr1, dest, ETH_ALEN);
-	स_नकल(assoc->header.addr3, ieee->dev->dev_addr, ETH_ALEN);
-	स_नकल(assoc->header.addr2, ieee->dev->dev_addr, ETH_ALEN);
+	memcpy(assoc->header.addr1, dest, ETH_ALEN);
+	memcpy(assoc->header.addr3, ieee->dev->dev_addr, ETH_ALEN);
+	memcpy(assoc->header.addr2, ieee->dev->dev_addr, ETH_ALEN);
 	assoc->capability = cpu_to_le16(ieee->iw_mode == IW_MODE_MASTER ?
 		WLAN_CAPABILITY_BSS : WLAN_CAPABILITY_IBSS);
 
-	अगर (ieee->लघु_slot)
+	if (ieee->short_slot)
 		assoc->capability |= cpu_to_le16(WLAN_CAPABILITY_SHORT_SLOT);
 
-	अगर (ieee->host_encrypt)
+	if (ieee->host_encrypt)
 		crypt = ieee->crypt[ieee->tx_keyidx];
-	अन्यथा
-		crypt = शून्य;
+	else
+		crypt = NULL;
 
 	encrypt = crypt && crypt->ops;
 
-	अगर (encrypt)
+	if (encrypt)
 		assoc->capability |= cpu_to_le16(WLAN_CAPABILITY_PRIVACY);
 
 	assoc->status = 0;
 	assoc->aid = cpu_to_le16(ieee->assoc_id);
-	अगर (ieee->assoc_id == 0x2007)
+	if (ieee->assoc_id == 0x2007)
 		ieee->assoc_id = 0;
-	अन्यथा
+	else
 		ieee->assoc_id++;
 
 	tag = skb_put(skb, rate_len);
@@ -854,146 +853,146 @@ ieee80211_authentication_req(काष्ठा ieee80211_network *beacon,
 	ieee80211_MFIE_Brate(ieee, &tag);
 	ieee80211_MFIE_Grate(ieee, &tag);
 
-	वापस skb;
-पूर्ण
+	return skb;
+}
 
-अटल काष्ठा sk_buff *ieee80211_auth_resp(काष्ठा ieee80211_device *ieee,
-					   पूर्णांक status, u8 *dest)
-अणु
-	काष्ठा sk_buff *skb;
-	काष्ठा ieee80211_authentication *auth;
-	पूर्णांक len = ieee->tx_headroom + माप(काष्ठा ieee80211_authentication) + 1;
+static struct sk_buff *ieee80211_auth_resp(struct ieee80211_device *ieee,
+					   int status, u8 *dest)
+{
+	struct sk_buff *skb;
+	struct ieee80211_authentication *auth;
+	int len = ieee->tx_headroom + sizeof(struct ieee80211_authentication) + 1;
 
 	skb = dev_alloc_skb(len);
 
-	अगर (!skb)
-		वापस शून्य;
+	if (!skb)
+		return NULL;
 
-	skb->len = माप(काष्ठा ieee80211_authentication);
+	skb->len = sizeof(struct ieee80211_authentication);
 
-	auth = (काष्ठा ieee80211_authentication *)skb->data;
+	auth = (struct ieee80211_authentication *)skb->data;
 
 	auth->status = cpu_to_le16(status);
 	auth->transaction = cpu_to_le16(2);
 	auth->algorithm = cpu_to_le16(WLAN_AUTH_OPEN);
 
-	स_नकल(auth->header.addr3, ieee->dev->dev_addr, ETH_ALEN);
-	स_नकल(auth->header.addr2, ieee->dev->dev_addr, ETH_ALEN);
-	स_नकल(auth->header.addr1, dest, ETH_ALEN);
+	memcpy(auth->header.addr3, ieee->dev->dev_addr, ETH_ALEN);
+	memcpy(auth->header.addr2, ieee->dev->dev_addr, ETH_ALEN);
+	memcpy(auth->header.addr1, dest, ETH_ALEN);
 	auth->header.frame_ctl = cpu_to_le16(IEEE80211_STYPE_AUTH);
-	वापस skb;
-पूर्ण
+	return skb;
+}
 
-अटल काष्ठा sk_buff *ieee80211_null_func(काष्ठा ieee80211_device *ieee,
-					   लघु pwr)
-अणु
-	काष्ठा sk_buff *skb;
-	काष्ठा rtl_80211_hdr_3addr *hdr;
+static struct sk_buff *ieee80211_null_func(struct ieee80211_device *ieee,
+					   short pwr)
+{
+	struct sk_buff *skb;
+	struct rtl_80211_hdr_3addr *hdr;
 
-	skb = dev_alloc_skb(माप(काष्ठा rtl_80211_hdr_3addr));
+	skb = dev_alloc_skb(sizeof(struct rtl_80211_hdr_3addr));
 
-	अगर (!skb)
-		वापस शून्य;
+	if (!skb)
+		return NULL;
 
-	hdr = skb_put(skb, माप(काष्ठा rtl_80211_hdr_3addr));
+	hdr = skb_put(skb, sizeof(struct rtl_80211_hdr_3addr));
 
-	स_नकल(hdr->addr1, ieee->current_network.bssid, ETH_ALEN);
-	स_नकल(hdr->addr2, ieee->dev->dev_addr, ETH_ALEN);
-	स_नकल(hdr->addr3, ieee->current_network.bssid, ETH_ALEN);
+	memcpy(hdr->addr1, ieee->current_network.bssid, ETH_ALEN);
+	memcpy(hdr->addr2, ieee->dev->dev_addr, ETH_ALEN);
+	memcpy(hdr->addr3, ieee->current_network.bssid, ETH_ALEN);
 
 	hdr->frame_ctl = cpu_to_le16(IEEE80211_FTYPE_DATA |
-				     IEEE80211_STYPE_शून्यFUNC | IEEE80211_FCTL_TODS |
+				     IEEE80211_STYPE_NULLFUNC | IEEE80211_FCTL_TODS |
 				     (pwr ? IEEE80211_FCTL_PM : 0));
 
-	वापस skb;
-पूर्ण
+	return skb;
+}
 
-अटल व्योम ieee80211_resp_to_assoc_rq(काष्ठा ieee80211_device *ieee, u8 *dest)
-अणु
-	काष्ठा sk_buff *buf = ieee80211_assoc_resp(ieee, dest);
+static void ieee80211_resp_to_assoc_rq(struct ieee80211_device *ieee, u8 *dest)
+{
+	struct sk_buff *buf = ieee80211_assoc_resp(ieee, dest);
 
-	अगर (buf)
-		sofपंचांगac_mgmt_xmit(buf, ieee);
-पूर्ण
+	if (buf)
+		softmac_mgmt_xmit(buf, ieee);
+}
 
-अटल व्योम ieee80211_resp_to_auth(काष्ठा ieee80211_device *ieee, पूर्णांक s,
+static void ieee80211_resp_to_auth(struct ieee80211_device *ieee, int s,
 				   u8 *dest)
-अणु
-	काष्ठा sk_buff *buf = ieee80211_auth_resp(ieee, s, dest);
+{
+	struct sk_buff *buf = ieee80211_auth_resp(ieee, s, dest);
 
-	अगर (buf)
-		sofपंचांगac_mgmt_xmit(buf, ieee);
-पूर्ण
+	if (buf)
+		softmac_mgmt_xmit(buf, ieee);
+}
 
-अटल व्योम ieee80211_resp_to_probe(काष्ठा ieee80211_device *ieee, u8 *dest)
-अणु
-	काष्ठा sk_buff *buf = ieee80211_probe_resp(ieee, dest);
-	अगर (buf)
-		sofपंचांगac_mgmt_xmit(buf, ieee);
-पूर्ण
+static void ieee80211_resp_to_probe(struct ieee80211_device *ieee, u8 *dest)
+{
+	struct sk_buff *buf = ieee80211_probe_resp(ieee, dest);
+	if (buf)
+		softmac_mgmt_xmit(buf, ieee);
+}
 
-अटल अंतरभूत काष्ठा sk_buff *
-ieee80211_association_req(काष्ठा ieee80211_network *beacon,
-			  काष्ठा ieee80211_device *ieee)
-अणु
-	काष्ठा sk_buff *skb;
-	//अचिन्हित दीर्घ flags;
+static inline struct sk_buff *
+ieee80211_association_req(struct ieee80211_network *beacon,
+			  struct ieee80211_device *ieee)
+{
+	struct sk_buff *skb;
+	//unsigned long flags;
 
-	काष्ठा ieee80211_assoc_request_frame *hdr;
+	struct ieee80211_assoc_request_frame *hdr;
 	u8 *tag;//,*rsn_ie;
-	//लघु info_addr = 0;
-	//पूर्णांक i;
+	//short info_addr = 0;
+	//int i;
 	//u16 suite_count = 0;
 	//u8 suit_select = 0;
-	//अचिन्हित पूर्णांक wpa_len = beacon->wpa_ie_len;
-	//क्रम HT
-	u8 *ht_cap_buf = शून्य;
+	//unsigned int wpa_len = beacon->wpa_ie_len;
+	//for HT
+	u8 *ht_cap_buf = NULL;
 	u8 ht_cap_len = 0;
-	u8 *realtek_ie_buf = शून्य;
+	u8 *realtek_ie_buf = NULL;
 	u8 realtek_ie_len = 0;
-	पूर्णांक wpa_ie_len = ieee->wpa_ie_len;
-	अचिन्हित पूर्णांक ckip_ie_len = 0;
-	अचिन्हित पूर्णांक ccxrm_ie_len = 0;
-	अचिन्हित पूर्णांक cxvernum_ie_len = 0;
-	काष्ठा ieee80211_crypt_data *crypt;
-	पूर्णांक encrypt;
+	int wpa_ie_len = ieee->wpa_ie_len;
+	unsigned int ckip_ie_len = 0;
+	unsigned int ccxrm_ie_len = 0;
+	unsigned int cxvernum_ie_len = 0;
+	struct ieee80211_crypt_data *crypt;
+	int encrypt;
 
-	अचिन्हित पूर्णांक rate_len = ieee80211_MFIE_rate_len(ieee);
-	अचिन्हित पूर्णांक wmm_info_len = beacon->qos_data.supported ? 9 : 0;
-#अगर_घोषित THOMAS_TURBO
-	अचिन्हित पूर्णांक turbo_info_len = beacon->Turbo_Enable ? 9 : 0;
-#पूर्ण_अगर
+	unsigned int rate_len = ieee80211_MFIE_rate_len(ieee);
+	unsigned int wmm_info_len = beacon->qos_data.supported ? 9 : 0;
+#ifdef THOMAS_TURBO
+	unsigned int turbo_info_len = beacon->Turbo_Enable ? 9 : 0;
+#endif
 
-	पूर्णांक len = 0;
+	int len = 0;
 
 	crypt = ieee->crypt[ieee->tx_keyidx];
-	encrypt = ieee->host_encrypt && crypt && crypt->ops && ((0 == म_भेद(crypt->ops->name, "WEP") || wpa_ie_len));
+	encrypt = ieee->host_encrypt && crypt && crypt->ops && ((0 == strcmp(crypt->ops->name, "WEP") || wpa_ie_len));
 
 	/* Include High Throuput capability && Realtek proprietary */
-	अगर (ieee->pHTInfo->bCurrentHTSupport && ieee->pHTInfo->bEnableHT) अणु
+	if (ieee->pHTInfo->bCurrentHTSupport && ieee->pHTInfo->bEnableHT) {
 		ht_cap_buf = (u8 *)&ieee->pHTInfo->SelfHTCap;
-		ht_cap_len = माप(ieee->pHTInfo->SelfHTCap);
-		HTConकाष्ठाCapabilityElement(ieee, ht_cap_buf, &ht_cap_len, encrypt);
-		अगर (ieee->pHTInfo->bCurrentRT2RTAggregation) अणु
+		ht_cap_len = sizeof(ieee->pHTInfo->SelfHTCap);
+		HTConstructCapabilityElement(ieee, ht_cap_buf, &ht_cap_len, encrypt);
+		if (ieee->pHTInfo->bCurrentRT2RTAggregation) {
 			realtek_ie_buf = ieee->pHTInfo->szRT2RTAggBuffer;
-			realtek_ie_len = माप(ieee->pHTInfo->szRT2RTAggBuffer);
-			HTConकाष्ठाRT2RTAggElement(ieee, realtek_ie_buf, &realtek_ie_len);
-		पूर्ण
-	पूर्ण
-	अगर (ieee->qos_support)
+			realtek_ie_len = sizeof(ieee->pHTInfo->szRT2RTAggBuffer);
+			HTConstructRT2RTAggElement(ieee, realtek_ie_buf, &realtek_ie_len);
+		}
+	}
+	if (ieee->qos_support)
 		wmm_info_len = beacon->qos_data.supported ? 9 : 0;
 
-	अगर (beacon->bCkipSupported)
+	if (beacon->bCkipSupported)
 		ckip_ie_len = 30 + 2;
 
-	अगर (beacon->bCcxRmEnable)
+	if (beacon->bCcxRmEnable)
 		ccxrm_ie_len = 6 + 2;
 
-	अगर (beacon->BssCcxVerNumber >= 2)
+	if (beacon->BssCcxVerNumber >= 2)
 		cxvernum_ie_len = 5 + 2;
 
-#अगर_घोषित THOMAS_TURBO
-	len = माप(काष्ठा ieee80211_assoc_request_frame) + 2
+#ifdef THOMAS_TURBO
+	len = sizeof(struct ieee80211_assoc_request_frame) + 2
 		+ beacon->ssid_len	/* essid tagged val */
 		+ rate_len	/* rates tagged val */
 		+ wpa_ie_len
@@ -1005,8 +1004,8 @@ ieee80211_association_req(काष्ठा ieee80211_network *beacon,
 		+ ccxrm_ie_len
 		+ cxvernum_ie_len
 		+ ieee->tx_headroom;
-#अन्यथा
-	len = माप(काष्ठा ieee80211_assoc_request_frame) + 2
+#else
+	len = sizeof(struct ieee80211_assoc_request_frame) + 2
 		+ beacon->ssid_len	/* essid tagged val */
 		+ rate_len	/* rates tagged val */
 		+ wpa_ie_len
@@ -1017,37 +1016,37 @@ ieee80211_association_req(काष्ठा ieee80211_network *beacon,
 		+ ccxrm_ie_len
 		+ cxvernum_ie_len
 		+ ieee->tx_headroom;
-#पूर्ण_अगर
+#endif
 	skb = dev_alloc_skb(len);
 
-	अगर (!skb)
-		वापस शून्य;
+	if (!skb)
+		return NULL;
 
 	skb_reserve(skb, ieee->tx_headroom);
 
-	hdr = skb_put(skb, माप(काष्ठा ieee80211_assoc_request_frame) + 2);
+	hdr = skb_put(skb, sizeof(struct ieee80211_assoc_request_frame) + 2);
 
 	hdr->header.frame_ctl = IEEE80211_STYPE_ASSOC_REQ;
 	hdr->header.duration_id = cpu_to_le16(37);
-	स_नकल(hdr->header.addr1, beacon->bssid, ETH_ALEN);
-	स_नकल(hdr->header.addr2, ieee->dev->dev_addr, ETH_ALEN);
-	स_नकल(hdr->header.addr3, beacon->bssid, ETH_ALEN);
+	memcpy(hdr->header.addr1, beacon->bssid, ETH_ALEN);
+	memcpy(hdr->header.addr2, ieee->dev->dev_addr, ETH_ALEN);
+	memcpy(hdr->header.addr3, beacon->bssid, ETH_ALEN);
 
-	स_नकल(ieee->ap_mac_addr, beacon->bssid, ETH_ALEN);//क्रम HW security, John
+	memcpy(ieee->ap_mac_addr, beacon->bssid, ETH_ALEN);//for HW security, John
 
 	hdr->capability = cpu_to_le16(WLAN_CAPABILITY_BSS);
-	अगर (beacon->capability & WLAN_CAPABILITY_PRIVACY)
+	if (beacon->capability & WLAN_CAPABILITY_PRIVACY)
 		hdr->capability |= cpu_to_le16(WLAN_CAPABILITY_PRIVACY);
 
-	अगर (beacon->capability & WLAN_CAPABILITY_SHORT_PREAMBLE)
-		hdr->capability |= cpu_to_le16(WLAN_CAPABILITY_SHORT_PREAMBLE); //add लघु_preamble here
+	if (beacon->capability & WLAN_CAPABILITY_SHORT_PREAMBLE)
+		hdr->capability |= cpu_to_le16(WLAN_CAPABILITY_SHORT_PREAMBLE); //add short_preamble here
 
-	अगर (ieee->लघु_slot)
+	if (ieee->short_slot)
 		hdr->capability |= cpu_to_le16(WLAN_CAPABILITY_SHORT_SLOT);
-	अगर (wmm_info_len) //QOS
+	if (wmm_info_len) //QOS
 		hdr->capability |= cpu_to_le16(WLAN_CAPABILITY_QOS);
 
-	hdr->listen_पूर्णांकerval = cpu_to_le16(0xa);
+	hdr->listen_interval = cpu_to_le16(0xa);
 
 	hdr->info_element[0].id = MFIE_TYPE_SSID;
 
@@ -1059,123 +1058,123 @@ ieee80211_association_req(काष्ठा ieee80211_network *beacon,
 	ieee80211_MFIE_Brate(ieee, &tag);
 	ieee80211_MFIE_Grate(ieee, &tag);
 	// For CCX 1 S13, CKIP. Added by Annie, 2006-08-14.
-	अगर (beacon->bCkipSupported) अणु
-		अटल u8	AironetIeOui[] = अणु0x00, 0x01, 0x66पूर्ण; // "4500-client"
+	if (beacon->bCkipSupported) {
+		static u8	AironetIeOui[] = {0x00, 0x01, 0x66}; // "4500-client"
 		u8	CcxAironetBuf[30];
-		काष्ठा octet_string	osCcxAironetIE;
+		struct octet_string	osCcxAironetIE;
 
-		स_रखो(CcxAironetBuf, 0, 30);
+		memset(CcxAironetBuf, 0, 30);
 		osCcxAironetIE.octet = CcxAironetBuf;
-		osCcxAironetIE.length = माप(CcxAironetBuf);
+		osCcxAironetIE.length = sizeof(CcxAironetBuf);
 		//
 		// Ref. CCX test plan v3.61, 3.2.3.1 step 13.
 		// We want to make the device type as "4500-client". 060926, by CCW.
 		//
-		स_नकल(osCcxAironetIE.octet, AironetIeOui, माप(AironetIeOui));
+		memcpy(osCcxAironetIE.octet, AironetIeOui, sizeof(AironetIeOui));
 
 		// CCX1 spec V1.13, A01.1 CKIP Negotiation (page23):
-		// "The CKIP negotiation is started with the associate request from the client to the access poपूर्णांक,
+		// "The CKIP negotiation is started with the associate request from the client to the access point,
 		//  containing an Aironet element with both the MIC and KP bits set."
 		osCcxAironetIE.octet[IE_CISCO_FLAG_POSITION] |= (SUPPORT_CKIP_PK | SUPPORT_CKIP_MIC);
 		tag = skb_put(skb, ckip_ie_len);
 		*tag++ = MFIE_TYPE_AIRONET;
 		*tag++ = osCcxAironetIE.length;
-		स_नकल(tag, osCcxAironetIE.octet, osCcxAironetIE.length);
+		memcpy(tag, osCcxAironetIE.octet, osCcxAironetIE.length);
 		tag += osCcxAironetIE.length;
-	पूर्ण
+	}
 
-	अगर (beacon->bCcxRmEnable) अणु
-		अटल u8 CcxRmCapBuf[] = अणु0x00, 0x40, 0x96, 0x01, 0x01, 0x00पूर्ण;
-		काष्ठा octet_string osCcxRmCap;
+	if (beacon->bCcxRmEnable) {
+		static u8 CcxRmCapBuf[] = {0x00, 0x40, 0x96, 0x01, 0x01, 0x00};
+		struct octet_string osCcxRmCap;
 
 		osCcxRmCap.octet = CcxRmCapBuf;
-		osCcxRmCap.length = माप(CcxRmCapBuf);
+		osCcxRmCap.length = sizeof(CcxRmCapBuf);
 		tag = skb_put(skb, ccxrm_ie_len);
 		*tag++ = MFIE_TYPE_GENERIC;
 		*tag++ = osCcxRmCap.length;
-		स_नकल(tag, osCcxRmCap.octet, osCcxRmCap.length);
+		memcpy(tag, osCcxRmCap.octet, osCcxRmCap.length);
 		tag += osCcxRmCap.length;
-	पूर्ण
+	}
 
-	अगर (beacon->BssCcxVerNumber >= 2) अणु
-		u8			CcxVerNumBuf[] = अणु0x00, 0x40, 0x96, 0x03, 0x00पूर्ण;
-		काष्ठा octet_string	osCcxVerNum;
+	if (beacon->BssCcxVerNumber >= 2) {
+		u8			CcxVerNumBuf[] = {0x00, 0x40, 0x96, 0x03, 0x00};
+		struct octet_string	osCcxVerNum;
 		CcxVerNumBuf[4] = beacon->BssCcxVerNumber;
 		osCcxVerNum.octet = CcxVerNumBuf;
-		osCcxVerNum.length = माप(CcxVerNumBuf);
+		osCcxVerNum.length = sizeof(CcxVerNumBuf);
 		tag = skb_put(skb, cxvernum_ie_len);
 		*tag++ = MFIE_TYPE_GENERIC;
 		*tag++ = osCcxVerNum.length;
-		स_नकल(tag, osCcxVerNum.octet, osCcxVerNum.length);
+		memcpy(tag, osCcxVerNum.octet, osCcxVerNum.length);
 		tag += osCcxVerNum.length;
-	पूर्ण
+	}
 	//HT cap element
-	अगर (ieee->pHTInfo->bCurrentHTSupport && ieee->pHTInfo->bEnableHT) अणु
-		अगर (ieee->pHTInfo->ePeerHTSpecVer != HT_SPEC_VER_EWC) अणु
+	if (ieee->pHTInfo->bCurrentHTSupport && ieee->pHTInfo->bEnableHT) {
+		if (ieee->pHTInfo->ePeerHTSpecVer != HT_SPEC_VER_EWC) {
 			tag = skb_put(skb, ht_cap_len);
 			*tag++ = MFIE_TYPE_HT_CAP;
 			*tag++ = ht_cap_len - 2;
-			स_नकल(tag, ht_cap_buf, ht_cap_len - 2);
+			memcpy(tag, ht_cap_buf, ht_cap_len - 2);
 			tag += ht_cap_len - 2;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	//choose what wpa_supplicant gives to associate.
-	अगर (wpa_ie_len)
+	if (wpa_ie_len)
 		skb_put_data(skb, ieee->wpa_ie, wpa_ie_len);
 
-	अगर (wmm_info_len) अणु
+	if (wmm_info_len) {
 		tag = skb_put(skb, wmm_info_len);
 		ieee80211_WMM_Info(ieee, &tag);
-	पूर्ण
-#अगर_घोषित THOMAS_TURBO
-	अगर (turbo_info_len) अणु
+	}
+#ifdef THOMAS_TURBO
+	if (turbo_info_len) {
 		tag = skb_put(skb, turbo_info_len);
 		ieee80211_TURBO_Info(ieee, &tag);
-	पूर्ण
-#पूर्ण_अगर
+	}
+#endif
 
-	अगर (ieee->pHTInfo->bCurrentHTSupport && ieee->pHTInfo->bEnableHT) अणु
-		अगर (ieee->pHTInfo->ePeerHTSpecVer == HT_SPEC_VER_EWC) अणु
+	if (ieee->pHTInfo->bCurrentHTSupport && ieee->pHTInfo->bEnableHT) {
+		if (ieee->pHTInfo->ePeerHTSpecVer == HT_SPEC_VER_EWC) {
 			tag = skb_put(skb, ht_cap_len);
 			*tag++ = MFIE_TYPE_GENERIC;
 			*tag++ = ht_cap_len - 2;
-			स_नकल(tag, ht_cap_buf, ht_cap_len - 2);
+			memcpy(tag, ht_cap_buf, ht_cap_len - 2);
 			tag += ht_cap_len - 2;
-		पूर्ण
+		}
 
-		अगर (ieee->pHTInfo->bCurrentRT2RTAggregation) अणु
+		if (ieee->pHTInfo->bCurrentRT2RTAggregation) {
 			tag = skb_put(skb, realtek_ie_len);
 			*tag++ = MFIE_TYPE_GENERIC;
 			*tag++ = realtek_ie_len - 2;
-			स_नकल(tag, realtek_ie_buf, realtek_ie_len - 2);
-		पूर्ण
-	पूर्ण
-//	prपूर्णांकk("<=====%s(), %p, %p\n", __func__, ieee->dev, ieee->dev->dev_addr);
+			memcpy(tag, realtek_ie_buf, realtek_ie_len - 2);
+		}
+	}
+//	printk("<=====%s(), %p, %p\n", __func__, ieee->dev, ieee->dev->dev_addr);
 //	IEEE80211_DEBUG_DATA(IEEE80211_DL_DATA, skb->data, skb->len);
-	वापस skb;
-पूर्ण
+	return skb;
+}
 
-व्योम ieee80211_associate_पात(काष्ठा ieee80211_device *ieee)
-अणु
-	अचिन्हित दीर्घ flags;
+void ieee80211_associate_abort(struct ieee80211_device *ieee)
+{
+	unsigned long flags;
 	spin_lock_irqsave(&ieee->lock, flags);
 
 	ieee->associate_seq++;
 
-	/* करोn't scan, and aव्योम to have the RX path possibily
-	 * try again to associate. Even करो not react to AUTH or
-	 * ASSOC response. Just रुको क्रम the retry wq to be scheduled.
-	 * Here we will check अगर there are good nets to associate
+	/* don't scan, and avoid to have the RX path possibily
+	 * try again to associate. Even do not react to AUTH or
+	 * ASSOC response. Just wait for the retry wq to be scheduled.
+	 * Here we will check if there are good nets to associate
 	 * with, so we retry or just get back to NO_LINK and scanning
 	 */
-	अगर (ieee->state == IEEE80211_ASSOCIATING_AUTHENTICATING) अणु
+	if (ieee->state == IEEE80211_ASSOCIATING_AUTHENTICATING) {
 		IEEE80211_DEBUG_MGMT("Authentication failed\n");
-		ieee->sofपंचांगac_stats.no_auth_rs++;
-	पूर्ण अन्यथा अणु
+		ieee->softmac_stats.no_auth_rs++;
+	} else {
 		IEEE80211_DEBUG_MGMT("Association failed\n");
-		ieee->sofपंचांगac_stats.no_ass_rs++;
-	पूर्ण
+		ieee->softmac_stats.no_ass_rs++;
+	}
 
 	ieee->state = IEEE80211_ASSOCIATING_RETRY;
 
@@ -1183,154 +1182,154 @@ ieee80211_association_req(काष्ठा ieee80211_network *beacon,
 			      IEEE80211_SOFTMAC_ASSOC_RETRY_TIME);
 
 	spin_unlock_irqrestore(&ieee->lock, flags);
-पूर्ण
+}
 
-अटल व्योम ieee80211_associate_पात_cb(काष्ठा समयr_list *t)
-अणु
-	काष्ठा ieee80211_device *dev = from_समयr(dev, t, associate_समयr);
+static void ieee80211_associate_abort_cb(struct timer_list *t)
+{
+	struct ieee80211_device *dev = from_timer(dev, t, associate_timer);
 
-	ieee80211_associate_पात(dev);
-पूर्ण
+	ieee80211_associate_abort(dev);
+}
 
-अटल व्योम ieee80211_associate_step1(काष्ठा ieee80211_device *ieee)
-अणु
-	काष्ठा ieee80211_network *beacon = &ieee->current_network;
-	काष्ठा sk_buff *skb;
+static void ieee80211_associate_step1(struct ieee80211_device *ieee)
+{
+	struct ieee80211_network *beacon = &ieee->current_network;
+	struct sk_buff *skb;
 
 	IEEE80211_DEBUG_MGMT("Stopping scan\n");
 
-	ieee->sofपंचांगac_stats.tx_auth_rq++;
+	ieee->softmac_stats.tx_auth_rq++;
 	skb = ieee80211_authentication_req(beacon, ieee, 0);
 
-	अगर (!skb) अणु
-		ieee80211_associate_पात(ieee);
-	पूर्ण अन्यथा अणु
+	if (!skb) {
+		ieee80211_associate_abort(ieee);
+	} else {
 		ieee->state = IEEE80211_ASSOCIATING_AUTHENTICATING;
 		IEEE80211_DEBUG_MGMT("Sending authentication request\n");
-		sofपंचांगac_mgmt_xmit(skb, ieee);
-		//BUGON when you try to add_समयr twice, using mod_समयr may be better, john0709
-		अगर (!समयr_pending(&ieee->associate_समयr)) अणु
-			ieee->associate_समयr.expires = jअगरfies + (HZ / 2);
-			add_समयr(&ieee->associate_समयr);
-		पूर्ण
-		//dev_kमुक्त_skb_any(skb);//edit by thomas
-	पूर्ण
-पूर्ण
+		softmac_mgmt_xmit(skb, ieee);
+		//BUGON when you try to add_timer twice, using mod_timer may be better, john0709
+		if (!timer_pending(&ieee->associate_timer)) {
+			ieee->associate_timer.expires = jiffies + (HZ / 2);
+			add_timer(&ieee->associate_timer);
+		}
+		//dev_kfree_skb_any(skb);//edit by thomas
+	}
+}
 
-अटल व्योम ieee80211_auth_challenge(काष्ठा ieee80211_device *ieee,
+static void ieee80211_auth_challenge(struct ieee80211_device *ieee,
 				     u8 *challenge,
-				     पूर्णांक chlen)
-अणु
+				     int chlen)
+{
 	u8 *c;
-	काष्ठा sk_buff *skb;
-	काष्ठा ieee80211_network *beacon = &ieee->current_network;
-//	पूर्णांक hlen = माप(काष्ठा ieee80211_authentication);
+	struct sk_buff *skb;
+	struct ieee80211_network *beacon = &ieee->current_network;
+//	int hlen = sizeof(struct ieee80211_authentication);
 
 	ieee->associate_seq++;
-	ieee->sofपंचांगac_stats.tx_auth_rq++;
+	ieee->softmac_stats.tx_auth_rq++;
 
 	skb = ieee80211_authentication_req(beacon, ieee, chlen + 2);
-	अगर (!skb) अणु
-		ieee80211_associate_पात(ieee);
-	पूर्ण अन्यथा अणु
+	if (!skb) {
+		ieee80211_associate_abort(ieee);
+	} else {
 		c = skb_put(skb, chlen + 2);
 		*(c++) = MFIE_TYPE_CHALLENGE;
 		*(c++) = chlen;
-		स_नकल(c, challenge, chlen);
+		memcpy(c, challenge, chlen);
 
 		IEEE80211_DEBUG_MGMT("Sending authentication challenge response\n");
 
-		ieee80211_encrypt_fragment(ieee, skb, माप(काष्ठा rtl_80211_hdr_3addr));
+		ieee80211_encrypt_fragment(ieee, skb, sizeof(struct rtl_80211_hdr_3addr));
 
-		sofपंचांगac_mgmt_xmit(skb, ieee);
-		mod_समयr(&ieee->associate_समयr, jअगरfies + (HZ / 2));
-		//dev_kमुक्त_skb_any(skb);//edit by thomas
-	पूर्ण
-	kमुक्त(challenge);
-पूर्ण
+		softmac_mgmt_xmit(skb, ieee);
+		mod_timer(&ieee->associate_timer, jiffies + (HZ / 2));
+		//dev_kfree_skb_any(skb);//edit by thomas
+	}
+	kfree(challenge);
+}
 
-अटल व्योम ieee80211_associate_step2(काष्ठा ieee80211_device *ieee)
-अणु
-	काष्ठा sk_buff *skb;
-	काष्ठा ieee80211_network *beacon = &ieee->current_network;
+static void ieee80211_associate_step2(struct ieee80211_device *ieee)
+{
+	struct sk_buff *skb;
+	struct ieee80211_network *beacon = &ieee->current_network;
 
-	del_समयr_sync(&ieee->associate_समयr);
+	del_timer_sync(&ieee->associate_timer);
 
 	IEEE80211_DEBUG_MGMT("Sending association request\n");
 
-	ieee->sofपंचांगac_stats.tx_ass_rq++;
+	ieee->softmac_stats.tx_ass_rq++;
 	skb = ieee80211_association_req(beacon, ieee);
-	अगर (!skb) अणु
-		ieee80211_associate_पात(ieee);
-	पूर्ण अन्यथा अणु
-		sofपंचांगac_mgmt_xmit(skb, ieee);
-		mod_समयr(&ieee->associate_समयr, jअगरfies + (HZ / 2));
-		//dev_kमुक्त_skb_any(skb);//edit by thomas
-	पूर्ण
-पूर्ण
-अटल व्योम ieee80211_associate_complete_wq(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा ieee80211_device *ieee = container_of(work, काष्ठा ieee80211_device, associate_complete_wq);
+	if (!skb) {
+		ieee80211_associate_abort(ieee);
+	} else {
+		softmac_mgmt_xmit(skb, ieee);
+		mod_timer(&ieee->associate_timer, jiffies + (HZ / 2));
+		//dev_kfree_skb_any(skb);//edit by thomas
+	}
+}
+static void ieee80211_associate_complete_wq(struct work_struct *work)
+{
+	struct ieee80211_device *ieee = container_of(work, struct ieee80211_device, associate_complete_wq);
 
 	netdev_info(ieee->dev, "Associated successfully\n");
-	अगर (ieee80211_is_54g(&ieee->current_network) &&
-	    (ieee->modulation & IEEE80211_OFDM_MODULATION)) अणु
+	if (ieee80211_is_54g(&ieee->current_network) &&
+	    (ieee->modulation & IEEE80211_OFDM_MODULATION)) {
 		ieee->rate = 108;
 		netdev_info(ieee->dev, "Using G rates:%d\n", ieee->rate);
-	पूर्ण अन्यथा अणु
+	} else {
 		ieee->rate = 22;
 		netdev_info(ieee->dev, "Using B rates:%d\n", ieee->rate);
-	पूर्ण
-	अगर (ieee->pHTInfo->bCurrentHTSupport && ieee->pHTInfo->bEnableHT) अणु
-		prपूर्णांकk("Successfully associated, ht enabled\n");
+	}
+	if (ieee->pHTInfo->bCurrentHTSupport && ieee->pHTInfo->bEnableHT) {
+		printk("Successfully associated, ht enabled\n");
 		HTOnAssocRsp(ieee);
-	पूर्ण अन्यथा अणु
-		prपूर्णांकk("Successfully associated, ht not enabled(%d, %d)\n", ieee->pHTInfo->bCurrentHTSupport, ieee->pHTInfo->bEnableHT);
-		स_रखो(ieee->करोt11HTOperationalRateSet, 0, 16);
+	} else {
+		printk("Successfully associated, ht not enabled(%d, %d)\n", ieee->pHTInfo->bCurrentHTSupport, ieee->pHTInfo->bEnableHT);
+		memset(ieee->dot11HTOperationalRateSet, 0, 16);
 		//HTSetConnectBwMode(ieee, HT_CHANNEL_WIDTH_20, HT_EXTCHNL_OFFSET_NO_EXT);
-	पूर्ण
-	ieee->LinkDetectInfo.SlotNum = 2 * (1 + ieee->current_network.beacon_पूर्णांकerval / 500);
-	// To prevent the immediately calling watch_करोg after association.
-	अगर (ieee->LinkDetectInfo.NumRecvBcnInPeriod == 0 || ieee->LinkDetectInfo.NumRecvDataInPeriod == 0) अणु
+	}
+	ieee->LinkDetectInfo.SlotNum = 2 * (1 + ieee->current_network.beacon_interval / 500);
+	// To prevent the immediately calling watch_dog after association.
+	if (ieee->LinkDetectInfo.NumRecvBcnInPeriod == 0 || ieee->LinkDetectInfo.NumRecvDataInPeriod == 0) {
 		ieee->LinkDetectInfo.NumRecvBcnInPeriod = 1;
 		ieee->LinkDetectInfo.NumRecvDataInPeriod = 1;
-	पूर्ण
+	}
 	ieee->link_change(ieee->dev);
-	अगर (!ieee->is_silent_reset) अणु
-		prपूर्णांकk("============>normal associate\n");
-		notअगरy_wx_assoc_event(ieee);
-	पूर्ण अन्यथा अणु
-		prपूर्णांकk("==================>silent reset associate\n");
+	if (!ieee->is_silent_reset) {
+		printk("============>normal associate\n");
+		notify_wx_assoc_event(ieee);
+	} else {
+		printk("==================>silent reset associate\n");
 		ieee->is_silent_reset = false;
-	पूर्ण
+	}
 
-	अगर (ieee->data_hard_resume)
+	if (ieee->data_hard_resume)
 		ieee->data_hard_resume(ieee->dev);
-	netअगर_carrier_on(ieee->dev);
-पूर्ण
+	netif_carrier_on(ieee->dev);
+}
 
-अटल व्योम ieee80211_associate_complete(काष्ठा ieee80211_device *ieee)
-अणु
-//	पूर्णांक i;
-//	काष्ठा net_device* dev = ieee->dev;
-	del_समयr_sync(&ieee->associate_समयr);
+static void ieee80211_associate_complete(struct ieee80211_device *ieee)
+{
+//	int i;
+//	struct net_device* dev = ieee->dev;
+	del_timer_sync(&ieee->associate_timer);
 
 	ieee->state = IEEE80211_LINKED;
-	//ieee->UpdateHalRATRTableHandler(dev, ieee->करोt11HTOperationalRateSet);
+	//ieee->UpdateHalRATRTableHandler(dev, ieee->dot11HTOperationalRateSet);
 	schedule_work(&ieee->associate_complete_wq);
-पूर्ण
+}
 
-अटल व्योम ieee80211_associate_procedure_wq(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा ieee80211_device *ieee = container_of(work, काष्ठा ieee80211_device, associate_procedure_wq);
+static void ieee80211_associate_procedure_wq(struct work_struct *work)
+{
+	struct ieee80211_device *ieee = container_of(work, struct ieee80211_device, associate_procedure_wq);
 	ieee->sync_scan_hurryup = 1;
 	mutex_lock(&ieee->wx_mutex);
 
-	अगर (ieee->data_hard_stop)
+	if (ieee->data_hard_stop)
 		ieee->data_hard_stop(ieee->dev);
 
 	ieee80211_stop_scan(ieee);
-	prपूर्णांकk("===>%s(), chan:%d\n", __func__, ieee->current_network.channel);
+	printk("===>%s(), chan:%d\n", __func__, ieee->current_network.channel);
 	//ieee->set_chan(ieee->dev, ieee->current_network.channel);
 	HTSetConnectBwMode(ieee, HT_CHANNEL_WIDTH_20, HT_EXTCHNL_OFFSET_NO_EXT);
 
@@ -1338,61 +1337,61 @@ ieee80211_association_req(काष्ठा ieee80211_network *beacon,
 	ieee80211_associate_step1(ieee);
 
 	mutex_unlock(&ieee->wx_mutex);
-पूर्ण
+}
 
-अंतरभूत व्योम ieee80211_sofपंचांगac_new_net(काष्ठा ieee80211_device *ieee, काष्ठा ieee80211_network *net)
-अणु
-	u8 पंचांगp_ssid[IW_ESSID_MAX_SIZE + 1];
-	पूर्णांक पंचांगp_ssid_len = 0;
+inline void ieee80211_softmac_new_net(struct ieee80211_device *ieee, struct ieee80211_network *net)
+{
+	u8 tmp_ssid[IW_ESSID_MAX_SIZE + 1];
+	int tmp_ssid_len = 0;
 
-	लघु apset, ssidset, ssidbroad, apmatch, ssidmatch;
+	short apset, ssidset, ssidbroad, apmatch, ssidmatch;
 
-	/* we are पूर्णांकerested in new new only अगर we are not associated
+	/* we are interested in new new only if we are not associated
 	 * and we are not associating / authenticating
 	 */
-	अगर (ieee->state != IEEE80211_NOLINK)
-		वापस;
+	if (ieee->state != IEEE80211_NOLINK)
+		return;
 
-	अगर ((ieee->iw_mode == IW_MODE_INFRA) && !(net->capability & WLAN_CAPABILITY_BSS))
-		वापस;
+	if ((ieee->iw_mode == IW_MODE_INFRA) && !(net->capability & WLAN_CAPABILITY_BSS))
+		return;
 
-	अगर ((ieee->iw_mode == IW_MODE_ADHOC) && !(net->capability & WLAN_CAPABILITY_IBSS))
-		वापस;
+	if ((ieee->iw_mode == IW_MODE_ADHOC) && !(net->capability & WLAN_CAPABILITY_IBSS))
+		return;
 
-	अगर (ieee->iw_mode == IW_MODE_INFRA || ieee->iw_mode == IW_MODE_ADHOC) अणु
-		/* अगर the user specअगरied the AP MAC, we need also the essid
-		 * This could be obtained by beacons or, अगर the network करोes not
+	if (ieee->iw_mode == IW_MODE_INFRA || ieee->iw_mode == IW_MODE_ADHOC) {
+		/* if the user specified the AP MAC, we need also the essid
+		 * This could be obtained by beacons or, if the network does not
 		 * broadcast it, it can be put manually.
 		 */
-		apset = ieee->wap_set;//(स_भेद(ieee->current_network.bssid, zero,ETH_ALEN)!=0 );
+		apset = ieee->wap_set;//(memcmp(ieee->current_network.bssid, zero,ETH_ALEN)!=0 );
 		ssidset = ieee->ssid_set;//ieee->current_network.ssid[0] != '\0';
 		ssidbroad =  !(net->ssid_len == 0 || net->ssid[0] == '\0');
-		apmatch = (स_भेद(ieee->current_network.bssid, net->bssid, ETH_ALEN) == 0);
+		apmatch = (memcmp(ieee->current_network.bssid, net->bssid, ETH_ALEN) == 0);
 		ssidmatch = (ieee->current_network.ssid_len == net->ssid_len) &&
-			(!म_भेदन(ieee->current_network.ssid, net->ssid, net->ssid_len));
+			(!strncmp(ieee->current_network.ssid, net->ssid, net->ssid_len));
 
-		/* अगर the user set the AP check अगर match.
-		 * अगर the network करोes not broadcast essid we check the user supplyed ANY essid
-		 * अगर the network करोes broadcast and the user करोes not set essid it is OK
-		 * अगर the network करोes broadcast and the user did set essid chech अगर essid match
+		/* if the user set the AP check if match.
+		 * if the network does not broadcast essid we check the user supplyed ANY essid
+		 * if the network does broadcast and the user does not set essid it is OK
+		 * if the network does broadcast and the user did set essid chech if essid match
 		 */
-		अगर ((apset && apmatch &&
+		if ((apset && apmatch &&
 		     ((ssidset && ssidbroad && ssidmatch) || (ssidbroad && !ssidset) || (!ssidbroad && ssidset))) ||
-		    /* अगर the ap is not set, check that the user set the bssid
-		     * and the network करोes broadcast and that those two bssid matches
+		    /* if the ap is not set, check that the user set the bssid
+		     * and the network does broadcast and that those two bssid matches
 		     */
-		    (!apset && ssidset && ssidbroad && ssidmatch)) अणु
-			/* अगर the essid is hidden replace it with the
+		    (!apset && ssidset && ssidbroad && ssidmatch)) {
+			/* if the essid is hidden replace it with the
 			 * essid provided by the user.
 			 */
-			अगर (!ssidbroad) अणु
-				म_नकलन(पंचांगp_ssid, ieee->current_network.ssid, IW_ESSID_MAX_SIZE);
-				पंचांगp_ssid_len = ieee->current_network.ssid_len;
-			पूर्ण
-			स_नकल(&ieee->current_network, net, माप(काष्ठा ieee80211_network));
+			if (!ssidbroad) {
+				strncpy(tmp_ssid, ieee->current_network.ssid, IW_ESSID_MAX_SIZE);
+				tmp_ssid_len = ieee->current_network.ssid_len;
+			}
+			memcpy(&ieee->current_network, net, sizeof(struct ieee80211_network));
 
-			म_नकलन(ieee->current_network.ssid, पंचांगp_ssid, IW_ESSID_MAX_SIZE);
-			ieee->current_network.ssid_len = पंचांगp_ssid_len;
+			strncpy(ieee->current_network.ssid, tmp_ssid, IW_ESSID_MAX_SIZE);
+			ieee->current_network.ssid_len = tmp_ssid_len;
 			netdev_info(ieee->dev,
 				    "Linking with %s,channel:%d, qos:%d, myHT:%d, networkHT:%d\n",
 				    ieee->current_network.ssid,
@@ -1403,325 +1402,325 @@ ieee80211_association_req(काष्ठा ieee80211_network *beacon,
 
 			//ieee->pHTInfo->IOTAction = 0;
 			HTResetIOTSetting(ieee->pHTInfo);
-			अगर (ieee->iw_mode == IW_MODE_INFRA) अणु
-				/* Join the network क्रम the first समय */
+			if (ieee->iw_mode == IW_MODE_INFRA) {
+				/* Join the network for the first time */
 				ieee->AsocRetryCount = 0;
-				//क्रम HT by amy 080514
-				अगर ((ieee->current_network.qos_data.supported == 1) &&
+				//for HT by amy 080514
+				if ((ieee->current_network.qos_data.supported == 1) &&
 				    // (ieee->pHTInfo->bEnableHT && ieee->current_network.bssht.bdSupportHT))
-				    ieee->current_network.bssht.bdSupportHT) अणु
+				    ieee->current_network.bssht.bdSupportHT) {
 /*WB, 2008.09.09:bCurrentHTSupport and bEnableHT two flags are going to put together to check whether we are in HT now, so needn't to check bEnableHT flags here. That's is to say we will set to HT support whenever joined AP has the ability to support HT. And whether we are in HT or not, please check bCurrentHTSupport&&bEnableHT now please.*/
 					//	ieee->pHTInfo->bCurrentHTSupport = true;
 					HTResetSelfAndSavePeerSetting(ieee, &ieee->current_network);
-				पूर्ण अन्यथा अणु
+				} else {
 					ieee->pHTInfo->bCurrentHTSupport = false;
-				पूर्ण
+				}
 
 				ieee->state = IEEE80211_ASSOCIATING;
 				schedule_work(&ieee->associate_procedure_wq);
-			पूर्ण अन्यथा अणु
-				अगर (ieee80211_is_54g(&ieee->current_network) &&
-				    (ieee->modulation & IEEE80211_OFDM_MODULATION)) अणु
+			} else {
+				if (ieee80211_is_54g(&ieee->current_network) &&
+				    (ieee->modulation & IEEE80211_OFDM_MODULATION)) {
 					ieee->rate = 108;
 					ieee->SetWirelessMode(ieee->dev, IEEE_G);
 					netdev_info(ieee->dev,
 						    "Using G rates\n");
-				पूर्ण अन्यथा अणु
+				} else {
 					ieee->rate = 22;
 					ieee->SetWirelessMode(ieee->dev, IEEE_B);
 					netdev_info(ieee->dev,
 						    "Using B rates\n");
-				पूर्ण
-				स_रखो(ieee->करोt11HTOperationalRateSet, 0, 16);
+				}
+				memset(ieee->dot11HTOperationalRateSet, 0, 16);
 				//HTSetConnectBwMode(ieee, HT_CHANNEL_WIDTH_20, HT_EXTCHNL_OFFSET_NO_EXT);
 				ieee->state = IEEE80211_LINKED;
-			पूर्ण
-		पूर्ण
-	पूर्ण
-पूर्ण
+			}
+		}
+	}
+}
 
-व्योम ieee80211_sofपंचांगac_check_all_nets(काष्ठा ieee80211_device *ieee)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा ieee80211_network *target;
+void ieee80211_softmac_check_all_nets(struct ieee80211_device *ieee)
+{
+	unsigned long flags;
+	struct ieee80211_network *target;
 
 	spin_lock_irqsave(&ieee->lock, flags);
 
-	list_क्रम_each_entry(target, &ieee->network_list, list) अणु
-		/* अगर the state become dअगरferent that NOLINK means
-		 * we had found what we are searching क्रम
+	list_for_each_entry(target, &ieee->network_list, list) {
+		/* if the state become different that NOLINK means
+		 * we had found what we are searching for
 		 */
 
-		अगर (ieee->state != IEEE80211_NOLINK)
-			अवरोध;
+		if (ieee->state != IEEE80211_NOLINK)
+			break;
 
-		अगर (ieee->scan_age == 0 || समय_after(target->last_scanned + ieee->scan_age, jअगरfies))
-			ieee80211_sofपंचांगac_new_net(ieee, target);
-	पूर्ण
+		if (ieee->scan_age == 0 || time_after(target->last_scanned + ieee->scan_age, jiffies))
+			ieee80211_softmac_new_net(ieee, target);
+	}
 
 	spin_unlock_irqrestore(&ieee->lock, flags);
-पूर्ण
+}
 
-अटल अंतरभूत u16 auth_parse(काष्ठा sk_buff *skb, u8 **challenge, पूर्णांक *chlen)
-अणु
-	काष्ठा ieee80211_authentication *a;
+static inline u16 auth_parse(struct sk_buff *skb, u8 **challenge, int *chlen)
+{
+	struct ieee80211_authentication *a;
 	u8 *t;
-	अगर (skb->len < (माप(काष्ठा ieee80211_authentication) - माप(काष्ठा ieee80211_info_element))) अणु
+	if (skb->len < (sizeof(struct ieee80211_authentication) - sizeof(struct ieee80211_info_element))) {
 		IEEE80211_DEBUG_MGMT("invalid len in auth resp: %d\n", skb->len);
-		वापस 0xcafe;
-	पूर्ण
-	*challenge = शून्य;
-	a = (काष्ठा ieee80211_authentication *)skb->data;
-	अगर (skb->len > (माप(काष्ठा ieee80211_authentication) + 3)) अणु
-		t = skb->data + माप(काष्ठा ieee80211_authentication);
+		return 0xcafe;
+	}
+	*challenge = NULL;
+	a = (struct ieee80211_authentication *)skb->data;
+	if (skb->len > (sizeof(struct ieee80211_authentication) + 3)) {
+		t = skb->data + sizeof(struct ieee80211_authentication);
 
-		अगर (*(t++) == MFIE_TYPE_CHALLENGE) अणु
+		if (*(t++) == MFIE_TYPE_CHALLENGE) {
 			*chlen = *(t++);
 			*challenge = kmemdup(t, *chlen, GFP_ATOMIC);
-			अगर (!*challenge)
-				वापस -ENOMEM;
-		पूर्ण
-	पूर्ण
+			if (!*challenge)
+				return -ENOMEM;
+		}
+	}
 
-	वापस le16_to_cpu(a->status);
-पूर्ण
+	return le16_to_cpu(a->status);
+}
 
-अटल पूर्णांक auth_rq_parse(काष्ठा sk_buff *skb, u8 *dest)
-अणु
-	काष्ठा ieee80211_authentication *a;
+static int auth_rq_parse(struct sk_buff *skb, u8 *dest)
+{
+	struct ieee80211_authentication *a;
 
-	अगर (skb->len < (माप(काष्ठा ieee80211_authentication) - माप(काष्ठा ieee80211_info_element))) अणु
+	if (skb->len < (sizeof(struct ieee80211_authentication) - sizeof(struct ieee80211_info_element))) {
 		IEEE80211_DEBUG_MGMT("invalid len in auth request: %d\n", skb->len);
-		वापस -1;
-	पूर्ण
-	a = (काष्ठा ieee80211_authentication *)skb->data;
+		return -1;
+	}
+	a = (struct ieee80211_authentication *)skb->data;
 
-	स_नकल(dest, a->header.addr2, ETH_ALEN);
+	memcpy(dest, a->header.addr2, ETH_ALEN);
 
-	अगर (le16_to_cpu(a->algorithm) != WLAN_AUTH_OPEN)
-		वापस  WLAN_STATUS_NOT_SUPPORTED_AUTH_ALG;
+	if (le16_to_cpu(a->algorithm) != WLAN_AUTH_OPEN)
+		return  WLAN_STATUS_NOT_SUPPORTED_AUTH_ALG;
 
-	वापस WLAN_STATUS_SUCCESS;
-पूर्ण
+	return WLAN_STATUS_SUCCESS;
+}
 
-अटल लघु probe_rq_parse(काष्ठा ieee80211_device *ieee, काष्ठा sk_buff *skb, u8 *src)
-अणु
+static short probe_rq_parse(struct ieee80211_device *ieee, struct sk_buff *skb, u8 *src)
+{
 	u8 *tag;
 	u8 *skbend;
-	u8 *ssid = शून्य;
+	u8 *ssid = NULL;
 	u8 ssidlen = 0;
 
-	काष्ठा rtl_80211_hdr_3addr   *header =
-		(काष्ठा rtl_80211_hdr_3addr   *)skb->data;
+	struct rtl_80211_hdr_3addr   *header =
+		(struct rtl_80211_hdr_3addr   *)skb->data;
 
-	अगर (skb->len < माप(काष्ठा rtl_80211_hdr_3addr))
-		वापस -1; /* corrupted */
+	if (skb->len < sizeof(struct rtl_80211_hdr_3addr))
+		return -1; /* corrupted */
 
-	स_नकल(src, header->addr2, ETH_ALEN);
+	memcpy(src, header->addr2, ETH_ALEN);
 
 	skbend = (u8 *)skb->data + skb->len;
 
-	tag = skb->data + माप(काष्ठा rtl_80211_hdr_3addr);
+	tag = skb->data + sizeof(struct rtl_80211_hdr_3addr);
 
-	जबतक (tag + 1 < skbend) अणु
-		अगर (*tag == 0) अणु
+	while (tag + 1 < skbend) {
+		if (*tag == 0) {
 			ssid = tag + 2;
 			ssidlen = *(tag + 1);
-			अवरोध;
-		पूर्ण
-		tag++; /* poपूर्णांक to the len field */
-		tag = tag + *(tag); /* poपूर्णांक to the last data byte of the tag */
-		tag++; /* poपूर्णांक to the next tag */
-	पूर्ण
+			break;
+		}
+		tag++; /* point to the len field */
+		tag = tag + *(tag); /* point to the last data byte of the tag */
+		tag++; /* point to the next tag */
+	}
 
 	//IEEE80211DMESG("Card MAC address is "MACSTR, MAC2STR(src));
-	अगर (ssidlen == 0)
-		वापस 1;
+	if (ssidlen == 0)
+		return 1;
 
-	अगर (!ssid)
-		वापस 1; /* ssid not found in tagged param */
+	if (!ssid)
+		return 1; /* ssid not found in tagged param */
 
-	वापस (!म_भेदन(ssid, ieee->current_network.ssid, ssidlen));
-पूर्ण
+	return (!strncmp(ssid, ieee->current_network.ssid, ssidlen));
+}
 
-अटल पूर्णांक assoc_rq_parse(काष्ठा sk_buff *skb, u8 *dest)
-अणु
-	काष्ठा ieee80211_assoc_request_frame *a;
+static int assoc_rq_parse(struct sk_buff *skb, u8 *dest)
+{
+	struct ieee80211_assoc_request_frame *a;
 
-	अगर (skb->len < (माप(काष्ठा ieee80211_assoc_request_frame) -
-		माप(काष्ठा ieee80211_info_element))) अणु
+	if (skb->len < (sizeof(struct ieee80211_assoc_request_frame) -
+		sizeof(struct ieee80211_info_element))) {
 		IEEE80211_DEBUG_MGMT("invalid len in auth request:%d \n", skb->len);
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	a = (काष्ठा ieee80211_assoc_request_frame *)skb->data;
+	a = (struct ieee80211_assoc_request_frame *)skb->data;
 
-	स_नकल(dest, a->header.addr2, ETH_ALEN);
+	memcpy(dest, a->header.addr2, ETH_ALEN);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत u16 assoc_parse(काष्ठा ieee80211_device *ieee, काष्ठा sk_buff *skb, पूर्णांक *aid)
-अणु
-	काष्ठा ieee80211_assoc_response_frame *response_head;
+static inline u16 assoc_parse(struct ieee80211_device *ieee, struct sk_buff *skb, int *aid)
+{
+	struct ieee80211_assoc_response_frame *response_head;
 	u16 status_code;
 
-	अगर (skb->len < माप(काष्ठा ieee80211_assoc_response_frame)) अणु
+	if (skb->len < sizeof(struct ieee80211_assoc_response_frame)) {
 		IEEE80211_DEBUG_MGMT("invalid len in auth resp: %d\n", skb->len);
-		वापस 0xcafe;
-	पूर्ण
+		return 0xcafe;
+	}
 
-	response_head = (काष्ठा ieee80211_assoc_response_frame *)skb->data;
+	response_head = (struct ieee80211_assoc_response_frame *)skb->data;
 	*aid = le16_to_cpu(response_head->aid) & 0x3fff;
 
 	status_code = le16_to_cpu(response_head->status);
-	अगर ((status_code == WLAN_STATUS_ASSOC_DENIED_RATES ||
+	if ((status_code == WLAN_STATUS_ASSOC_DENIED_RATES ||
 	     status_code == WLAN_STATUS_CAPS_UNSUPPORTED) &&
 	    ((ieee->mode == IEEE_G) &&
 	     (ieee->current_network.mode == IEEE_N_24G) &&
-	     (ieee->AsocRetryCount++ < (RT_ASOC_RETRY_LIMIT - 1)))) अणु
+	     (ieee->AsocRetryCount++ < (RT_ASOC_RETRY_LIMIT - 1)))) {
 		ieee->pHTInfo->IOTAction |= HT_IOT_ACT_PURE_N_MODE;
-	पूर्ण अन्यथा अणु
+	} else {
 		ieee->AsocRetryCount = 0;
-	पूर्ण
+	}
 
-	वापस le16_to_cpu(response_head->status);
-पूर्ण
+	return le16_to_cpu(response_head->status);
+}
 
-अटल अंतरभूत व्योम
-ieee80211_rx_probe_rq(काष्ठा ieee80211_device *ieee, काष्ठा sk_buff *skb)
-अणु
+static inline void
+ieee80211_rx_probe_rq(struct ieee80211_device *ieee, struct sk_buff *skb)
+{
 	u8 dest[ETH_ALEN];
 
 	//IEEE80211DMESG("Rx probe");
-	ieee->sofपंचांगac_stats.rx_probe_rq++;
+	ieee->softmac_stats.rx_probe_rq++;
 	//DMESG("Dest is "MACSTR, MAC2STR(dest));
-	अगर (probe_rq_parse(ieee, skb, dest)) अणु
+	if (probe_rq_parse(ieee, skb, dest)) {
 		//IEEE80211DMESG("Was for me!");
-		ieee->sofपंचांगac_stats.tx_probe_rs++;
+		ieee->softmac_stats.tx_probe_rs++;
 		ieee80211_resp_to_probe(ieee, dest);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल अंतरभूत व्योम
-ieee80211_rx_auth_rq(काष्ठा ieee80211_device *ieee, काष्ठा sk_buff *skb)
-अणु
+static inline void
+ieee80211_rx_auth_rq(struct ieee80211_device *ieee, struct sk_buff *skb)
+{
 	u8 dest[ETH_ALEN];
-	पूर्णांक status;
+	int status;
 	//IEEE80211DMESG("Rx probe");
-	ieee->sofपंचांगac_stats.rx_auth_rq++;
+	ieee->softmac_stats.rx_auth_rq++;
 
 	status = auth_rq_parse(skb, dest);
-	अगर (status != -1)
+	if (status != -1)
 		ieee80211_resp_to_auth(ieee, status, dest);
 	//DMESG("Dest is "MACSTR, MAC2STR(dest));
-पूर्ण
+}
 
-अटल अंतरभूत व्योम
-ieee80211_rx_assoc_rq(काष्ठा ieee80211_device *ieee, काष्ठा sk_buff *skb)
-अणु
+static inline void
+ieee80211_rx_assoc_rq(struct ieee80211_device *ieee, struct sk_buff *skb)
+{
 	u8 dest[ETH_ALEN];
-	//अचिन्हित दीर्घ flags;
+	//unsigned long flags;
 
-	ieee->sofपंचांगac_stats.rx_ass_rq++;
-	अगर (assoc_rq_parse(skb, dest) != -1)
+	ieee->softmac_stats.rx_ass_rq++;
+	if (assoc_rq_parse(skb, dest) != -1)
 		ieee80211_resp_to_assoc_rq(ieee, dest);
 
 	netdev_info(ieee->dev, "New client associated: %pM\n", dest);
 	//FIXME
-पूर्ण
+}
 
-अटल व्योम ieee80211_sta_ps_send_null_frame(काष्ठा ieee80211_device *ieee,
-					     लघु pwr)
-अणु
-	काष्ठा sk_buff *buf = ieee80211_null_func(ieee, pwr);
+static void ieee80211_sta_ps_send_null_frame(struct ieee80211_device *ieee,
+					     short pwr)
+{
+	struct sk_buff *buf = ieee80211_null_func(ieee, pwr);
 
-	अगर (buf)
-		sofपंचांगac_ps_mgmt_xmit(buf, ieee);
-पूर्ण
+	if (buf)
+		softmac_ps_mgmt_xmit(buf, ieee);
+}
 /* EXPORT_SYMBOL(ieee80211_sta_ps_send_null_frame); */
 
-अटल लघु ieee80211_sta_ps_sleep(काष्ठा ieee80211_device *ieee, u32 *समय_h,
-				    u32 *समय_l)
-अणु
-	पूर्णांक समयout;
+static short ieee80211_sta_ps_sleep(struct ieee80211_device *ieee, u32 *time_h,
+				    u32 *time_l)
+{
+	int timeout;
 	u8 dtim;
-	/*अगर(ieee->ps == IEEE80211_PS_DISABLED ||
+	/*if(ieee->ps == IEEE80211_PS_DISABLED ||
 		ieee->iw_mode != IW_MODE_INFRA ||
 		ieee->state != IEEE80211_LINKED)
 
-		वापस 0;
+		return 0;
 	*/
 	dtim = ieee->current_network.dtim_data;
-	अगर (!(dtim & IEEE80211_DTIM_VALID))
-		वापस 0;
-	समयout = ieee->current_network.beacon_पूर्णांकerval; //should we use ps_समयout value or beacon_पूर्णांकerval
+	if (!(dtim & IEEE80211_DTIM_VALID))
+		return 0;
+	timeout = ieee->current_network.beacon_interval; //should we use ps_timeout value or beacon_interval
 	ieee->current_network.dtim_data = IEEE80211_DTIM_INVALID;
 
-	अगर (dtim & ((IEEE80211_DTIM_UCAST | IEEE80211_DTIM_MBCAST) & ieee->ps))
-		वापस 2;
+	if (dtim & ((IEEE80211_DTIM_UCAST | IEEE80211_DTIM_MBCAST) & ieee->ps))
+		return 2;
 
-	अगर (!समय_after(jअगरfies,
-			dev_trans_start(ieee->dev) + msecs_to_jअगरfies(समयout)))
-		वापस 0;
+	if (!time_after(jiffies,
+			dev_trans_start(ieee->dev) + msecs_to_jiffies(timeout)))
+		return 0;
 
-	अगर (!समय_after(jअगरfies,
-			ieee->last_rx_ps_समय + msecs_to_jअगरfies(समयout)))
-		वापस 0;
+	if (!time_after(jiffies,
+			ieee->last_rx_ps_time + msecs_to_jiffies(timeout)))
+		return 0;
 
-	अगर ((ieee->sofपंचांगac_features & IEEE_SOFTMAC_SINGLE_QUEUE) &&
+	if ((ieee->softmac_features & IEEE_SOFTMAC_SINGLE_QUEUE) &&
 	    (ieee->mgmt_queue_tail != ieee->mgmt_queue_head))
-		वापस 0;
+		return 0;
 
-	अगर (समय_l) अणु
-		*समय_l = ieee->current_network.last_dtim_sta_समय[0]
-			+ (ieee->current_network.beacon_पूर्णांकerval
+	if (time_l) {
+		*time_l = ieee->current_network.last_dtim_sta_time[0]
+			+ (ieee->current_network.beacon_interval
 			   * ieee->current_network.dtim_period) * 1000;
-	पूर्ण
+	}
 
-	अगर (समय_h) अणु
-		*समय_h = ieee->current_network.last_dtim_sta_समय[1];
-		अगर (समय_l && *समय_l < ieee->current_network.last_dtim_sta_समय[0])
-			*समय_h += 1;
-	पूर्ण
+	if (time_h) {
+		*time_h = ieee->current_network.last_dtim_sta_time[1];
+		if (time_l && *time_l < ieee->current_network.last_dtim_sta_time[0])
+			*time_h += 1;
+	}
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल अंतरभूत व्योम ieee80211_sta_ps(काष्ठा tasklet_काष्ठा *t)
-अणु
-	काष्ठा ieee80211_device *ieee = from_tasklet(ieee, t, ps_task);
+static inline void ieee80211_sta_ps(struct tasklet_struct *t)
+{
+	struct ieee80211_device *ieee = from_tasklet(ieee, t, ps_task);
 	u32 th, tl;
-	लघु sleep;
+	short sleep;
 
-	अचिन्हित दीर्घ flags, flags2;
+	unsigned long flags, flags2;
 
 	spin_lock_irqsave(&ieee->lock, flags);
 
-	अगर ((ieee->ps == IEEE80211_PS_DISABLED ||
+	if ((ieee->ps == IEEE80211_PS_DISABLED ||
 	     ieee->iw_mode != IW_MODE_INFRA ||
-	     ieee->state != IEEE80211_LINKED)) अणु
+	     ieee->state != IEEE80211_LINKED)) {
 		//	#warning CHECK_LOCK_HERE
 		spin_lock_irqsave(&ieee->mgmt_tx_lock, flags2);
 
 		ieee80211_sta_wakeup(ieee, 1);
 
 		spin_unlock_irqrestore(&ieee->mgmt_tx_lock, flags2);
-	पूर्ण
+	}
 
 	sleep = ieee80211_sta_ps_sleep(ieee, &th, &tl);
-	/* 2 wake, 1 sleep, 0 करो nothing */
-	अगर (sleep == 0)
-		जाओ out;
+	/* 2 wake, 1 sleep, 0 do nothing */
+	if (sleep == 0)
+		goto out;
 
-	अगर (sleep == 1) अणु
-		अगर (ieee->sta_sleep == 1) अणु
+	if (sleep == 1) {
+		if (ieee->sta_sleep == 1) {
 			ieee->enter_sleep_state(ieee->dev, th, tl);
-		पूर्ण अन्यथा अगर (ieee->sta_sleep == 0) अणु
-		//	prपूर्णांकk("send null 1\n");
+		} else if (ieee->sta_sleep == 0) {
+		//	printk("send null 1\n");
 			spin_lock_irqsave(&ieee->mgmt_tx_lock, flags2);
 
-			अगर (ieee->ps_is_queue_empty(ieee->dev)) अणु
+			if (ieee->ps_is_queue_empty(ieee->dev)) {
 				ieee->sta_sleep = 2;
 
 				ieee->ps_request_tx_ack(ieee->dev);
@@ -1730,309 +1729,309 @@ ieee80211_rx_assoc_rq(काष्ठा ieee80211_device *ieee, काष्ठ
 
 				ieee->ps_th = th;
 				ieee->ps_tl = tl;
-			पूर्ण
+			}
 			spin_unlock_irqrestore(&ieee->mgmt_tx_lock, flags2);
-		पूर्ण
-	पूर्ण अन्यथा अगर (sleep == 2) अणु
+		}
+	} else if (sleep == 2) {
 //#warning CHECK_LOCK_HERE
 		spin_lock_irqsave(&ieee->mgmt_tx_lock, flags2);
 
 		ieee80211_sta_wakeup(ieee, 1);
 
 		spin_unlock_irqrestore(&ieee->mgmt_tx_lock, flags2);
-	पूर्ण
+	}
 out:
 	spin_unlock_irqrestore(&ieee->lock, flags);
-पूर्ण
+}
 
-व्योम ieee80211_sta_wakeup(काष्ठा ieee80211_device *ieee, लघु nl)
-अणु
-	अगर (ieee->sta_sleep == 0) अणु
-		अगर (nl) अणु
-			prपूर्णांकk("Warning: driver is probably failing to report TX ps error\n");
+void ieee80211_sta_wakeup(struct ieee80211_device *ieee, short nl)
+{
+	if (ieee->sta_sleep == 0) {
+		if (nl) {
+			printk("Warning: driver is probably failing to report TX ps error\n");
 			ieee->ps_request_tx_ack(ieee->dev);
 			ieee80211_sta_ps_send_null_frame(ieee, 0);
-		पूर्ण
-		वापस;
-	पूर्ण
+		}
+		return;
+	}
 
-	अगर (ieee->sta_sleep == 1)
+	if (ieee->sta_sleep == 1)
 		ieee->sta_wake_up(ieee->dev);
 
 	ieee->sta_sleep = 0;
 
-	अगर (nl) अणु
+	if (nl) {
 		ieee->ps_request_tx_ack(ieee->dev);
 		ieee80211_sta_ps_send_null_frame(ieee, 0);
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम ieee80211_ps_tx_ack(काष्ठा ieee80211_device *ieee, लघु success)
-अणु
-	अचिन्हित दीर्घ flags, flags2;
+void ieee80211_ps_tx_ack(struct ieee80211_device *ieee, short success)
+{
+	unsigned long flags, flags2;
 
 	spin_lock_irqsave(&ieee->lock, flags);
 
-	अगर (ieee->sta_sleep == 2) अणु
+	if (ieee->sta_sleep == 2) {
 		/* Null frame with PS bit set */
-		अगर (success) अणु
+		if (success) {
 			ieee->sta_sleep = 1;
 			ieee->enter_sleep_state(ieee->dev, ieee->ps_th, ieee->ps_tl);
-		पूर्ण
-		/* अगर the card report not success we can't be sure the AP
+		}
+		/* if the card report not success we can't be sure the AP
 		 * has not RXed so we can't assume the AP believe us awake
 		 */
-	पूर्ण अन्यथा अणु
-		/* 21112005 - tx again null without PS bit अगर lost */
-		अगर ((ieee->sta_sleep == 0) && !success) अणु
+	} else {
+		/* 21112005 - tx again null without PS bit if lost */
+		if ((ieee->sta_sleep == 0) && !success) {
 			spin_lock_irqsave(&ieee->mgmt_tx_lock, flags2);
 			ieee80211_sta_ps_send_null_frame(ieee, 0);
 			spin_unlock_irqrestore(&ieee->mgmt_tx_lock, flags2);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	spin_unlock_irqrestore(&ieee->lock, flags);
-पूर्ण
+}
 EXPORT_SYMBOL(ieee80211_ps_tx_ack);
 
-अटल व्योम ieee80211_process_action(काष्ठा ieee80211_device *ieee,
-				     काष्ठा sk_buff *skb)
-अणु
-	काष्ठा rtl_80211_hdr *header = (काष्ठा rtl_80211_hdr *)skb->data;
+static void ieee80211_process_action(struct ieee80211_device *ieee,
+				     struct sk_buff *skb)
+{
+	struct rtl_80211_hdr *header = (struct rtl_80211_hdr *)skb->data;
 	u8 *act = ieee80211_get_payload(header);
-	u8 पंचांगp = 0;
+	u8 tmp = 0;
 //	IEEE80211_DEBUG_DATA(IEEE80211_DL_DATA|IEEE80211_DL_BA, skb->data, skb->len);
-	अगर (!act) अणु
+	if (!act) {
 		IEEE80211_DEBUG(IEEE80211_DL_ERR, "error to get payload of action frame\n");
-		वापस;
-	पूर्ण
-	पंचांगp = *act;
+		return;
+	}
+	tmp = *act;
 	act++;
-	चयन (पंचांगp) अणु
-	हाल ACT_CAT_BA:
-		अगर (*act == ACT_ADDBAREQ)
+	switch (tmp) {
+	case ACT_CAT_BA:
+		if (*act == ACT_ADDBAREQ)
 			ieee80211_rx_ADDBAReq(ieee, skb);
-		अन्यथा अगर (*act == ACT_ADDBARSP)
+		else if (*act == ACT_ADDBARSP)
 			ieee80211_rx_ADDBARsp(ieee, skb);
-		अन्यथा अगर (*act == ACT_DELBA)
+		else if (*act == ACT_DELBA)
 			ieee80211_rx_DELBA(ieee, skb);
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-	वापस;
-पूर्ण
+		break;
+	default:
+		break;
+	}
+	return;
+}
 
-अटल व्योम ieee80211_check_auth_response(काष्ठा ieee80211_device *ieee,
-					  काष्ठा sk_buff *skb)
-अणु
-	/* शेष support N mode, disable halfNmode */
+static void ieee80211_check_auth_response(struct ieee80211_device *ieee,
+					  struct sk_buff *skb)
+{
+	/* default support N mode, disable halfNmode */
 	bool bSupportNmode = true, bHalfSupportNmode = false;
 	u16 errcode;
 	u8 *challenge;
-	पूर्णांक chlen = 0;
+	int chlen = 0;
 	u32 iotAction;
 
 	errcode = auth_parse(skb, &challenge, &chlen);
-	अगर (!errcode) अणु
-		अगर (ieee->खोलो_wep || !challenge) अणु
+	if (!errcode) {
+		if (ieee->open_wep || !challenge) {
 			ieee->state = IEEE80211_ASSOCIATING_AUTHENTICATED;
-			ieee->sofपंचांगac_stats.rx_auth_rs_ok++;
+			ieee->softmac_stats.rx_auth_rs_ok++;
 			iotAction = ieee->pHTInfo->IOTAction;
-			अगर (!(iotAction & HT_IOT_ACT_PURE_N_MODE)) अणु
-				अगर (!ieee->GetNmodeSupportBySecCfg(ieee->dev)) अणु
+			if (!(iotAction & HT_IOT_ACT_PURE_N_MODE)) {
+				if (!ieee->GetNmodeSupportBySecCfg(ieee->dev)) {
 					/* WEP or TKIP encryption */
-					अगर (IsHTHalfNmodeAPs(ieee)) अणु
+					if (IsHTHalfNmodeAPs(ieee)) {
 						bSupportNmode = true;
 						bHalfSupportNmode = true;
-					पूर्ण अन्यथा अणु
+					} else {
 						bSupportNmode = false;
 						bHalfSupportNmode = false;
-					पूर्ण
+					}
 					netdev_dbg(ieee->dev, "SEC(%d, %d)\n",
 							bSupportNmode,
 							bHalfSupportNmode);
-				पूर्ण
-			पूर्ण
-			/* Dummy wirless mode setting- aव्योम encryption issue */
-			अगर (bSupportNmode) अणु
+				}
+			}
+			/* Dummy wirless mode setting- avoid encryption issue */
+			if (bSupportNmode) {
 				/* N mode setting */
 				ieee->SetWirelessMode(ieee->dev,
 						ieee->current_network.mode);
-			पूर्ण अन्यथा अणु
+			} else {
 				/* b/g mode setting - TODO */
 				ieee->SetWirelessMode(ieee->dev, IEEE_G);
-			पूर्ण
+			}
 
-			अगर (ieee->current_network.mode == IEEE_N_24G &&
-					bHalfSupportNmode) अणु
+			if (ieee->current_network.mode == IEEE_N_24G &&
+					bHalfSupportNmode) {
 				netdev_dbg(ieee->dev, "enter half N mode\n");
 				ieee->bHalfWirelessN24GMode = true;
-			पूर्ण अन्यथा अणु
+			} else {
 				ieee->bHalfWirelessN24GMode = false;
-			पूर्ण
+			}
 			ieee80211_associate_step2(ieee);
-		पूर्ण अन्यथा अणु
+		} else {
 			ieee80211_auth_challenge(ieee, challenge, chlen);
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		ieee->sofपंचांगac_stats.rx_auth_rs_err++;
+		}
+	} else {
+		ieee->softmac_stats.rx_auth_rs_err++;
 		IEEE80211_DEBUG_MGMT("Auth response status code 0x%x", errcode);
-		ieee80211_associate_पात(ieee);
-	पूर्ण
-पूर्ण
+		ieee80211_associate_abort(ieee);
+	}
+}
 
-अंतरभूत पूर्णांक
-ieee80211_rx_frame_sofपंचांगac(काष्ठा ieee80211_device *ieee, काष्ठा sk_buff *skb,
-			   काष्ठा ieee80211_rx_stats *rx_stats, u16 type,
+inline int
+ieee80211_rx_frame_softmac(struct ieee80211_device *ieee, struct sk_buff *skb,
+			   struct ieee80211_rx_stats *rx_stats, u16 type,
 			   u16 stype)
-अणु
-	काष्ठा rtl_80211_hdr_3addr *header = (काष्ठा rtl_80211_hdr_3addr *)skb->data;
+{
+	struct rtl_80211_hdr_3addr *header = (struct rtl_80211_hdr_3addr *)skb->data;
 	u16 errcode;
-	पूर्णांक aid;
-	काष्ठा ieee80211_assoc_response_frame *assoc_resp;
-//	काष्ठा ieee80211_info_element *info_element;
+	int aid;
+	struct ieee80211_assoc_response_frame *assoc_resp;
+//	struct ieee80211_info_element *info_element;
 
-	अगर (!ieee->proto_started)
-		वापस 0;
+	if (!ieee->proto_started)
+		return 0;
 
-	अगर (ieee->sta_sleep || (ieee->ps != IEEE80211_PS_DISABLED &&
+	if (ieee->sta_sleep || (ieee->ps != IEEE80211_PS_DISABLED &&
 				ieee->iw_mode == IW_MODE_INFRA &&
 				ieee->state == IEEE80211_LINKED))
 		tasklet_schedule(&ieee->ps_task);
 
-	अगर (WLAN_FC_GET_STYPE(header->frame_ctl) != IEEE80211_STYPE_PROBE_RESP &&
+	if (WLAN_FC_GET_STYPE(header->frame_ctl) != IEEE80211_STYPE_PROBE_RESP &&
 	    WLAN_FC_GET_STYPE(header->frame_ctl) != IEEE80211_STYPE_BEACON)
-		ieee->last_rx_ps_समय = jअगरfies;
+		ieee->last_rx_ps_time = jiffies;
 
-	चयन (WLAN_FC_GET_STYPE(header->frame_ctl)) अणु
-	हाल IEEE80211_STYPE_ASSOC_RESP:
-	हाल IEEE80211_STYPE_REASSOC_RESP:
+	switch (WLAN_FC_GET_STYPE(header->frame_ctl)) {
+	case IEEE80211_STYPE_ASSOC_RESP:
+	case IEEE80211_STYPE_REASSOC_RESP:
 		IEEE80211_DEBUG_MGMT("received [RE]ASSOCIATION RESPONSE (%d)\n",
 				WLAN_FC_GET_STYPE(header->frame_ctl));
-		अगर ((ieee->sofपंचांगac_features & IEEE_SOFTMAC_ASSOCIATE) &&
+		if ((ieee->softmac_features & IEEE_SOFTMAC_ASSOCIATE) &&
 		    ieee->state == IEEE80211_ASSOCIATING_AUTHENTICATED &&
-		    ieee->iw_mode == IW_MODE_INFRA) अणु
-			काष्ठा ieee80211_network network_resp;
-			काष्ठा ieee80211_network *network = &network_resp;
+		    ieee->iw_mode == IW_MODE_INFRA) {
+			struct ieee80211_network network_resp;
+			struct ieee80211_network *network = &network_resp;
 
 			errcode = assoc_parse(ieee, skb, &aid);
-			अगर (!errcode) अणु
+			if (!errcode) {
 				ieee->state = IEEE80211_LINKED;
 				ieee->assoc_id = aid;
-				ieee->sofपंचांगac_stats.rx_ass_ok++;
+				ieee->softmac_stats.rx_ass_ok++;
 				/* station support qos */
-				/* Let the रेजिस्टर setting शेषly with Legacy station */
-				अगर (ieee->qos_support) अणु
-					assoc_resp = (काष्ठा ieee80211_assoc_response_frame *)skb->data;
-					स_रखो(network, 0, माप(*network));
-					अगर (ieee80211_parse_info_param(ieee, assoc_resp->info_element,\
-								       rx_stats->len - माप(*assoc_resp), \
-								       network, rx_stats)) अणु
-						वापस 1;
-					पूर्ण अन्यथा अणु
+				/* Let the register setting defaultly with Legacy station */
+				if (ieee->qos_support) {
+					assoc_resp = (struct ieee80211_assoc_response_frame *)skb->data;
+					memset(network, 0, sizeof(*network));
+					if (ieee80211_parse_info_param(ieee, assoc_resp->info_element,\
+								       rx_stats->len - sizeof(*assoc_resp), \
+								       network, rx_stats)) {
+						return 1;
+					} else {
 						//filling the PeerHTCap. //maybe not necessary as we can get its info from current_network.
-						स_नकल(ieee->pHTInfo->PeerHTCapBuf, network->bssht.bdHTCapBuf, network->bssht.bdHTCapLen);
-						स_नकल(ieee->pHTInfo->PeerHTInfoBuf, network->bssht.bdHTInfoBuf, network->bssht.bdHTInfoLen);
-					पूर्ण
-					अगर (ieee->handle_assoc_response)
-						ieee->handle_assoc_response(ieee->dev, (काष्ठा ieee80211_assoc_response_frame *)header, network);
-				पूर्ण
+						memcpy(ieee->pHTInfo->PeerHTCapBuf, network->bssht.bdHTCapBuf, network->bssht.bdHTCapLen);
+						memcpy(ieee->pHTInfo->PeerHTInfoBuf, network->bssht.bdHTInfoBuf, network->bssht.bdHTInfoLen);
+					}
+					if (ieee->handle_assoc_response)
+						ieee->handle_assoc_response(ieee->dev, (struct ieee80211_assoc_response_frame *)header, network);
+				}
 				ieee80211_associate_complete(ieee);
-			पूर्ण अन्यथा अणु
+			} else {
 				/* aid could not been allocated */
-				ieee->sofपंचांगac_stats.rx_ass_err++;
-				prपूर्णांकk("Association response status code 0x%x\n",
+				ieee->softmac_stats.rx_ass_err++;
+				printk("Association response status code 0x%x\n",
 				       errcode);
 				IEEE80211_DEBUG_MGMT("Association response status code 0x%x\n",
 						     errcode);
-				अगर (ieee->AsocRetryCount < RT_ASOC_RETRY_LIMIT)
+				if (ieee->AsocRetryCount < RT_ASOC_RETRY_LIMIT)
 					schedule_work(&ieee->associate_procedure_wq);
-				अन्यथा
-					ieee80211_associate_पात(ieee);
-			पूर्ण
-		पूर्ण
-		अवरोध;
+				else
+					ieee80211_associate_abort(ieee);
+			}
+		}
+		break;
 
-	हाल IEEE80211_STYPE_ASSOC_REQ:
-	हाल IEEE80211_STYPE_REASSOC_REQ:
-		अगर ((ieee->sofपंचांगac_features & IEEE_SOFTMAC_ASSOCIATE) &&
+	case IEEE80211_STYPE_ASSOC_REQ:
+	case IEEE80211_STYPE_REASSOC_REQ:
+		if ((ieee->softmac_features & IEEE_SOFTMAC_ASSOCIATE) &&
 		    ieee->iw_mode == IW_MODE_MASTER)
 			ieee80211_rx_assoc_rq(ieee, skb);
-		अवरोध;
+		break;
 
-	हाल IEEE80211_STYPE_AUTH:
-		अगर (ieee->sofपंचांगac_features & IEEE_SOFTMAC_ASSOCIATE) अणु
-			अगर (ieee->state == IEEE80211_ASSOCIATING_AUTHENTICATING
-			    && ieee->iw_mode == IW_MODE_INFRA) अणु
+	case IEEE80211_STYPE_AUTH:
+		if (ieee->softmac_features & IEEE_SOFTMAC_ASSOCIATE) {
+			if (ieee->state == IEEE80211_ASSOCIATING_AUTHENTICATING
+			    && ieee->iw_mode == IW_MODE_INFRA) {
 				IEEE80211_DEBUG_MGMT("Received auth response");
 				ieee80211_check_auth_response(ieee, skb);
-			पूर्ण अन्यथा अगर (ieee->iw_mode == IW_MODE_MASTER) अणु
+			} else if (ieee->iw_mode == IW_MODE_MASTER) {
 				ieee80211_rx_auth_rq(ieee, skb);
-			पूर्ण
-		पूर्ण
-		अवरोध;
+			}
+		}
+		break;
 
-	हाल IEEE80211_STYPE_PROBE_REQ:
-		अगर ((ieee->sofपंचांगac_features & IEEE_SOFTMAC_PROBERS) &&
+	case IEEE80211_STYPE_PROBE_REQ:
+		if ((ieee->softmac_features & IEEE_SOFTMAC_PROBERS) &&
 		    ((ieee->iw_mode == IW_MODE_ADHOC ||
 		      ieee->iw_mode == IW_MODE_MASTER) &&
-		     ieee->state == IEEE80211_LINKED)) अणु
+		     ieee->state == IEEE80211_LINKED)) {
 			ieee80211_rx_probe_rq(ieee, skb);
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	हाल IEEE80211_STYPE_DISASSOC:
-	हाल IEEE80211_STYPE_DEAUTH:
-		/* FIXME क्रम now repeat all the association procedure
-		* both क्रम disassociation and deauthentication
+	case IEEE80211_STYPE_DISASSOC:
+	case IEEE80211_STYPE_DEAUTH:
+		/* FIXME for now repeat all the association procedure
+		* both for disassociation and deauthentication
 		*/
-		अगर ((ieee->sofपंचांगac_features & IEEE_SOFTMAC_ASSOCIATE) &&
+		if ((ieee->softmac_features & IEEE_SOFTMAC_ASSOCIATE) &&
 		    ieee->state == IEEE80211_LINKED &&
-		    ieee->iw_mode == IW_MODE_INFRA) अणु
+		    ieee->iw_mode == IW_MODE_INFRA) {
 			ieee->state = IEEE80211_ASSOCIATING;
-			ieee->sofपंचांगac_stats.reassoc++;
+			ieee->softmac_stats.reassoc++;
 
-			notअगरy_wx_assoc_event(ieee);
+			notify_wx_assoc_event(ieee);
 			//HTSetConnectBwMode(ieee, HT_CHANNEL_WIDTH_20, HT_EXTCHNL_OFFSET_NO_EXT);
 			RemovePeerTS(ieee, header->addr2);
 			schedule_work(&ieee->associate_procedure_wq);
-		पूर्ण
-		अवरोध;
-	हाल IEEE80211_STYPE_MANAGE_ACT:
+		}
+		break;
+	case IEEE80211_STYPE_MANAGE_ACT:
 		ieee80211_process_action(ieee, skb);
-		अवरोध;
-	शेष:
-		वापस -1;
-	पूर्ण
+		break;
+	default:
+		return -1;
+	}
 
-	//dev_kमुक्त_skb_any(skb);
-	वापस 0;
-पूर्ण
+	//dev_kfree_skb_any(skb);
+	return 0;
+}
 
-/* The following are क्रम a simpler TX queue management.
- * Instead of using netअगर_[stop/wake]_queue, the driver
+/* The following are for a simpler TX queue management.
+ * Instead of using netif_[stop/wake]_queue, the driver
  * will use these two functions (plus a reset one) that
- * will पूर्णांकernally call the kernel netअगर_* and take care
+ * will internally call the kernel netif_* and take care
  * of the ieee802.11 fragmentation.
- * So, the driver receives a fragment at a समय and might
+ * So, the driver receives a fragment at a time and might
  * call the stop function when it wants, without taking
  * care to have enough room to TX an entire packet.
- * This might be useful अगर each fragment needs its own
- * descriptor. Thus, just keeping a total मुक्त memory > than
+ * This might be useful if each fragment needs its own
+ * descriptor. Thus, just keeping a total free memory > than
  * the max fragmentation threshold is not enough. If the
- * ieee802.11 stack passed a TXB काष्ठा, then you would need
- * to keep N मुक्त descriptors where
+ * ieee802.11 stack passed a TXB struct, then you would need
+ * to keep N free descriptors where
  * N = MAX_PACKET_SIZE / MIN_FRAG_THRESHOLD.
  * In this way you need just one and the 802.11 stack
  * will take care of buffering fragments and pass them to
  * to the driver later, when it wakes the queue.
  */
-व्योम ieee80211_sofपंचांगac_xmit(काष्ठा ieee80211_txb *txb, काष्ठा ieee80211_device *ieee)
-अणु
-	अचिन्हित पूर्णांक queue_index = txb->queue_index;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक  i;
-	काष्ठा cb_desc *tcb_desc = शून्य;
+void ieee80211_softmac_xmit(struct ieee80211_txb *txb, struct ieee80211_device *ieee)
+{
+	unsigned int queue_index = txb->queue_index;
+	unsigned long flags;
+	int  i;
+	struct cb_desc *tcb_desc = NULL;
 
 	spin_lock_irqsave(&ieee->lock, flags);
 
@@ -2042,233 +2041,233 @@ ieee80211_rx_frame_sofपंचांगac(काष्ठा ieee80211_device *
 	/* update the tx status */
 	ieee->stats.tx_bytes += le16_to_cpu(txb->payload_size);
 	ieee->stats.tx_packets++;
-	tcb_desc = (काष्ठा cb_desc *)(txb->fragments[0]->cb + MAX_DEV_ADDR_SIZE);
-	अगर (tcb_desc->bMulticast)
+	tcb_desc = (struct cb_desc *)(txb->fragments[0]->cb + MAX_DEV_ADDR_SIZE);
+	if (tcb_desc->bMulticast)
 		ieee->stats.multicast++;
 
-	/* अगर xmit available, just xmit it immediately, अन्यथा just insert it to the रुको queue */
-	क्रम (i = 0; i < txb->nr_frags; i++) अणु
-#अगर_घोषित USB_TX_DRIVER_AGGREGATION_ENABLE
-		अगर ((skb_queue_len(&ieee->skb_drv_aggQ[queue_index]) != 0) ||
-#अन्यथा
-		अगर ((skb_queue_len(&ieee->skb_रुकोQ[queue_index]) != 0) ||
-#पूर्ण_अगर
+	/* if xmit available, just xmit it immediately, else just insert it to the wait queue */
+	for (i = 0; i < txb->nr_frags; i++) {
+#ifdef USB_TX_DRIVER_AGGREGATION_ENABLE
+		if ((skb_queue_len(&ieee->skb_drv_aggQ[queue_index]) != 0) ||
+#else
+		if ((skb_queue_len(&ieee->skb_waitQ[queue_index]) != 0) ||
+#endif
 		    (!ieee->check_nic_enough_desc(ieee->dev, queue_index)) ||
-		    (ieee->queue_stop)) अणु
-			/* insert the skb packet to the रुको queue */
-			/* as क्रम the completion function, it करोes not need
+		    (ieee->queue_stop)) {
+			/* insert the skb packet to the wait queue */
+			/* as for the completion function, it does not need
 			 * to check it any more.
 			 * */
-			//prपूर्णांकk("error:no descriptor left@queue_index %d\n", queue_index);
+			//printk("error:no descriptor left@queue_index %d\n", queue_index);
 			//ieee80211_stop_queue(ieee);
-#अगर_घोषित USB_TX_DRIVER_AGGREGATION_ENABLE
+#ifdef USB_TX_DRIVER_AGGREGATION_ENABLE
 			skb_queue_tail(&ieee->skb_drv_aggQ[queue_index], txb->fragments[i]);
-#अन्यथा
-			skb_queue_tail(&ieee->skb_रुकोQ[queue_index], txb->fragments[i]);
-#पूर्ण_अगर
-		पूर्ण अन्यथा अणु
-			ieee->sofपंचांगac_data_hard_start_xmit(txb->fragments[i],
+#else
+			skb_queue_tail(&ieee->skb_waitQ[queue_index], txb->fragments[i]);
+#endif
+		} else {
+			ieee->softmac_data_hard_start_xmit(txb->fragments[i],
 							   ieee->dev, ieee->rate);
 			//ieee->stats.tx_packets++;
 			//ieee->stats.tx_bytes += txb->fragments[i]->len;
-			//ieee->dev->trans_start = jअगरfies;
-		पूर्ण
-	पूर्ण
-	ieee80211_txb_मुक्त(txb);
+			//ieee->dev->trans_start = jiffies;
+		}
+	}
+	ieee80211_txb_free(txb);
 
-//निकास:
+//exit:
 	spin_unlock_irqrestore(&ieee->lock, flags);
-पूर्ण
-EXPORT_SYMBOL(ieee80211_sofपंचांगac_xmit);
+}
+EXPORT_SYMBOL(ieee80211_softmac_xmit);
 
 /* called with ieee->lock acquired */
-अटल व्योम ieee80211_resume_tx(काष्ठा ieee80211_device *ieee)
-अणु
-	पूर्णांक i;
-	क्रम (i = ieee->tx_pending.frag; i < ieee->tx_pending.txb->nr_frags; i++) अणु
-		अगर (ieee->queue_stop) अणु
+static void ieee80211_resume_tx(struct ieee80211_device *ieee)
+{
+	int i;
+	for (i = ieee->tx_pending.frag; i < ieee->tx_pending.txb->nr_frags; i++) {
+		if (ieee->queue_stop) {
 			ieee->tx_pending.frag = i;
-			वापस;
-		पूर्ण अन्यथा अणु
-			ieee->sofपंचांगac_data_hard_start_xmit(ieee->tx_pending.txb->fragments[i],
+			return;
+		} else {
+			ieee->softmac_data_hard_start_xmit(ieee->tx_pending.txb->fragments[i],
 							   ieee->dev, ieee->rate);
 			//(i+1)<ieee->tx_pending.txb->nr_frags);
 			ieee->stats.tx_packets++;
-			netअगर_trans_update(ieee->dev);
-		पूर्ण
-	पूर्ण
+			netif_trans_update(ieee->dev);
+		}
+	}
 
-	ieee80211_txb_मुक्त(ieee->tx_pending.txb);
-	ieee->tx_pending.txb = शून्य;
-पूर्ण
+	ieee80211_txb_free(ieee->tx_pending.txb);
+	ieee->tx_pending.txb = NULL;
+}
 
-व्योम ieee80211_reset_queue(काष्ठा ieee80211_device *ieee)
-अणु
-	अचिन्हित दीर्घ flags;
+void ieee80211_reset_queue(struct ieee80211_device *ieee)
+{
+	unsigned long flags;
 
 	spin_lock_irqsave(&ieee->lock, flags);
 	init_mgmt_queue(ieee);
-	अगर (ieee->tx_pending.txb) अणु
-		ieee80211_txb_मुक्त(ieee->tx_pending.txb);
-		ieee->tx_pending.txb = शून्य;
-	पूर्ण
+	if (ieee->tx_pending.txb) {
+		ieee80211_txb_free(ieee->tx_pending.txb);
+		ieee->tx_pending.txb = NULL;
+	}
 	ieee->queue_stop = 0;
 	spin_unlock_irqrestore(&ieee->lock, flags);
-पूर्ण
+}
 EXPORT_SYMBOL(ieee80211_reset_queue);
 
-व्योम ieee80211_wake_queue(काष्ठा ieee80211_device *ieee)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा sk_buff *skb;
-	काष्ठा rtl_80211_hdr_3addr  *header;
+void ieee80211_wake_queue(struct ieee80211_device *ieee)
+{
+	unsigned long flags;
+	struct sk_buff *skb;
+	struct rtl_80211_hdr_3addr  *header;
 
 	spin_lock_irqsave(&ieee->lock, flags);
-	अगर (!ieee->queue_stop)
-		जाओ निकास;
+	if (!ieee->queue_stop)
+		goto exit;
 
 	ieee->queue_stop = 0;
 
-	अगर (ieee->sofपंचांगac_features & IEEE_SOFTMAC_SINGLE_QUEUE) अणु
-		जबतक (!ieee->queue_stop && (skb = dequeue_mgmt(ieee))) अणु
-			header = (काष्ठा rtl_80211_hdr_3addr  *)skb->data;
+	if (ieee->softmac_features & IEEE_SOFTMAC_SINGLE_QUEUE) {
+		while (!ieee->queue_stop && (skb = dequeue_mgmt(ieee))) {
+			header = (struct rtl_80211_hdr_3addr  *)skb->data;
 
 			header->seq_ctl = cpu_to_le16(ieee->seq_ctrl[0] << 4);
 
-			अगर (ieee->seq_ctrl[0] == 0xFFF)
+			if (ieee->seq_ctrl[0] == 0xFFF)
 				ieee->seq_ctrl[0] = 0;
-			अन्यथा
+			else
 				ieee->seq_ctrl[0]++;
 
-			ieee->sofपंचांगac_data_hard_start_xmit(skb, ieee->dev, ieee->basic_rate);
-			//dev_kमुक्त_skb_any(skb);//edit by thomas
-		पूर्ण
-	पूर्ण
-	अगर (!ieee->queue_stop && ieee->tx_pending.txb)
+			ieee->softmac_data_hard_start_xmit(skb, ieee->dev, ieee->basic_rate);
+			//dev_kfree_skb_any(skb);//edit by thomas
+		}
+	}
+	if (!ieee->queue_stop && ieee->tx_pending.txb)
 		ieee80211_resume_tx(ieee);
 
-	अगर (!ieee->queue_stop && netअगर_queue_stopped(ieee->dev)) अणु
-		ieee->sofपंचांगac_stats.swtxawake++;
-		netअगर_wake_queue(ieee->dev);
-	पूर्ण
-निकास:
+	if (!ieee->queue_stop && netif_queue_stopped(ieee->dev)) {
+		ieee->softmac_stats.swtxawake++;
+		netif_wake_queue(ieee->dev);
+	}
+exit:
 	spin_unlock_irqrestore(&ieee->lock, flags);
-पूर्ण
+}
 EXPORT_SYMBOL(ieee80211_wake_queue);
 
-व्योम ieee80211_stop_queue(काष्ठा ieee80211_device *ieee)
-अणु
-	//अचिन्हित दीर्घ flags;
+void ieee80211_stop_queue(struct ieee80211_device *ieee)
+{
+	//unsigned long flags;
 	//spin_lock_irqsave(&ieee->lock,flags);
 
-	अगर (!netअगर_queue_stopped(ieee->dev)) अणु
-		netअगर_stop_queue(ieee->dev);
-		ieee->sofपंचांगac_stats.swtxstop++;
-	पूर्ण
+	if (!netif_queue_stopped(ieee->dev)) {
+		netif_stop_queue(ieee->dev);
+		ieee->softmac_stats.swtxstop++;
+	}
 	ieee->queue_stop = 1;
 	//spin_unlock_irqrestore(&ieee->lock,flags);
-पूर्ण
+}
 EXPORT_SYMBOL(ieee80211_stop_queue);
 
 /* called in user context only */
-व्योम ieee80211_start_master_bss(काष्ठा ieee80211_device *ieee)
-अणु
+void ieee80211_start_master_bss(struct ieee80211_device *ieee)
+{
 	ieee->assoc_id = 1;
 
-	अगर (ieee->current_network.ssid_len == 0) अणु
-		म_नकलन(ieee->current_network.ssid,
+	if (ieee->current_network.ssid_len == 0) {
+		strncpy(ieee->current_network.ssid,
 			IEEE80211_DEFAULT_TX_ESSID,
 			IW_ESSID_MAX_SIZE);
 
-		ieee->current_network.ssid_len = म_माप(IEEE80211_DEFAULT_TX_ESSID);
+		ieee->current_network.ssid_len = strlen(IEEE80211_DEFAULT_TX_ESSID);
 		ieee->ssid_set = 1;
-	पूर्ण
+	}
 
-	स_नकल(ieee->current_network.bssid, ieee->dev->dev_addr, ETH_ALEN);
+	memcpy(ieee->current_network.bssid, ieee->dev->dev_addr, ETH_ALEN);
 
 	ieee->set_chan(ieee->dev, ieee->current_network.channel);
 	ieee->state = IEEE80211_LINKED;
 	ieee->link_change(ieee->dev);
-	notअगरy_wx_assoc_event(ieee);
+	notify_wx_assoc_event(ieee);
 
-	अगर (ieee->data_hard_resume)
+	if (ieee->data_hard_resume)
 		ieee->data_hard_resume(ieee->dev);
 
-	netअगर_carrier_on(ieee->dev);
-पूर्ण
+	netif_carrier_on(ieee->dev);
+}
 
-अटल व्योम ieee80211_start_monitor_mode(काष्ठा ieee80211_device *ieee)
-अणु
-	अगर (ieee->raw_tx) अणु
-		अगर (ieee->data_hard_resume)
+static void ieee80211_start_monitor_mode(struct ieee80211_device *ieee)
+{
+	if (ieee->raw_tx) {
+		if (ieee->data_hard_resume)
 			ieee->data_hard_resume(ieee->dev);
 
-		netअगर_carrier_on(ieee->dev);
-	पूर्ण
-पूर्ण
-अटल व्योम ieee80211_start_ibss_wq(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा delayed_work *dwork = to_delayed_work(work);
-	काष्ठा ieee80211_device *ieee = container_of(dwork, काष्ठा ieee80211_device, start_ibss_wq);
-	/* iwconfig mode ad-hoc will schedule this and वापस
+		netif_carrier_on(ieee->dev);
+	}
+}
+static void ieee80211_start_ibss_wq(struct work_struct *work)
+{
+	struct delayed_work *dwork = to_delayed_work(work);
+	struct ieee80211_device *ieee = container_of(dwork, struct ieee80211_device, start_ibss_wq);
+	/* iwconfig mode ad-hoc will schedule this and return
 	 * on the other hand this will block further iwconfig SET
 	 * operations because of the wx_mutex hold.
 	 * Anyway some most set operations set a flag to speed-up
-	 * (पात) this wq (when syncro scanning) beक्रमe sleeping
+	 * (abort) this wq (when syncro scanning) before sleeping
 	 * on the semaphore
 	 */
-	अगर (!ieee->proto_started) अणु
-		prपूर्णांकk("==========oh driver down return\n");
-		वापस;
-	पूर्ण
+	if (!ieee->proto_started) {
+		printk("==========oh driver down return\n");
+		return;
+	}
 	mutex_lock(&ieee->wx_mutex);
 
-	अगर (ieee->current_network.ssid_len == 0) अणु
-		म_नकल(ieee->current_network.ssid, IEEE80211_DEFAULT_TX_ESSID);
-		ieee->current_network.ssid_len = म_माप(IEEE80211_DEFAULT_TX_ESSID);
+	if (ieee->current_network.ssid_len == 0) {
+		strcpy(ieee->current_network.ssid, IEEE80211_DEFAULT_TX_ESSID);
+		ieee->current_network.ssid_len = strlen(IEEE80211_DEFAULT_TX_ESSID);
 		ieee->ssid_set = 1;
-	पूर्ण
+	}
 
-	/* check अगर we have this cell in our network list */
-	ieee80211_sofपंचांगac_check_all_nets(ieee);
+	/* check if we have this cell in our network list */
+	ieee80211_softmac_check_all_nets(ieee);
 
-//	अगर((IS_DOT11D_ENABLE(ieee)) && (ieee->state == IEEE80211_NOLINK))
-	अगर (ieee->state == IEEE80211_NOLINK)
+//	if((IS_DOT11D_ENABLE(ieee)) && (ieee->state == IEEE80211_NOLINK))
+	if (ieee->state == IEEE80211_NOLINK)
 		ieee->current_network.channel = 6;
-	/* अगर not then the state is not linked. Maybe the user चयनed to
+	/* if not then the state is not linked. Maybe the user switched to
 	 * ad-hoc mode just after being in monitor mode, or just after
-	 * being very few समय in managed mode (so the card have had no
-	 * समय to scan all the chans..) or we have just run up the अगरace
+	 * being very few time in managed mode (so the card have had no
+	 * time to scan all the chans..) or we have just run up the iface
 	 * after setting ad-hoc mode. So we have to give another try..
-	 * Here, in ibss mode, should be safe to करो this without extra care
+	 * Here, in ibss mode, should be safe to do this without extra care
 	 * (in bss mode we had to make sure no-one tryed to associate when
 	 * we had just checked the ieee->state and we was going to start the
 	 * scan) beacause in ibss mode the ieee80211_new_net function, when
 	 * finds a good net, just set the ieee->state to IEEE80211_LINKED,
-	 * so, at worst, we waste a bit of समय to initiate an unneeded syncro
+	 * so, at worst, we waste a bit of time to initiate an unneeded syncro
 	 * scan, that will stop at the first round because it sees the state
 	 * associated.
 	 */
-	अगर (ieee->state == IEEE80211_NOLINK)
+	if (ieee->state == IEEE80211_NOLINK)
 		ieee80211_start_scan_syncro(ieee);
 
 	/* the network definitively is not here.. create a new cell */
-	अगर (ieee->state == IEEE80211_NOLINK) अणु
-		prपूर्णांकk("creating new IBSS cell\n");
-		अगर (!ieee->wap_set)
-			eth_अक्रमom_addr(ieee->current_network.bssid);
+	if (ieee->state == IEEE80211_NOLINK) {
+		printk("creating new IBSS cell\n");
+		if (!ieee->wap_set)
+			eth_random_addr(ieee->current_network.bssid);
 
-		अगर (ieee->modulation & IEEE80211_CCK_MODULATION) अणु
+		if (ieee->modulation & IEEE80211_CCK_MODULATION) {
 			ieee->current_network.rates_len = 4;
 
 			ieee->current_network.rates[0] = IEEE80211_BASIC_RATE_MASK | IEEE80211_CCK_RATE_1MB;
 			ieee->current_network.rates[1] = IEEE80211_BASIC_RATE_MASK | IEEE80211_CCK_RATE_2MB;
 			ieee->current_network.rates[2] = IEEE80211_BASIC_RATE_MASK | IEEE80211_CCK_RATE_5MB;
 			ieee->current_network.rates[3] = IEEE80211_BASIC_RATE_MASK | IEEE80211_CCK_RATE_11MB;
-		पूर्ण अन्यथा अणु
+		} else {
 			ieee->current_network.rates_len = 0;
-		पूर्ण
-		अगर (ieee->modulation & IEEE80211_OFDM_MODULATION) अणु
+		}
+		if (ieee->modulation & IEEE80211_OFDM_MODULATION) {
 			ieee->current_network.rates_ex_len = 8;
 
 			ieee->current_network.rates_ex[0] = IEEE80211_BASIC_RATE_MASK | IEEE80211_OFDM_RATE_6MB;
@@ -2281,115 +2280,115 @@ EXPORT_SYMBOL(ieee80211_stop_queue);
 			ieee->current_network.rates_ex[7] = IEEE80211_BASIC_RATE_MASK | IEEE80211_OFDM_RATE_54MB;
 
 			ieee->rate = 108;
-		पूर्ण अन्यथा अणु
+		} else {
 			ieee->current_network.rates_ex_len = 0;
 			ieee->rate = 22;
-		पूर्ण
+		}
 
-		// By शेष, WMM function will be disabled in IBSS mode
+		// By default, WMM function will be disabled in IBSS mode
 		ieee->current_network.QoS_Enable = 0;
 		ieee->SetWirelessMode(ieee->dev, IEEE_G);
-		ieee->current_network.atim_winकरोw = 0;
+		ieee->current_network.atim_window = 0;
 		ieee->current_network.capability = WLAN_CAPABILITY_IBSS;
-		अगर (ieee->लघु_slot)
+		if (ieee->short_slot)
 			ieee->current_network.capability |= WLAN_CAPABILITY_SHORT_SLOT;
-	पूर्ण
+	}
 
 	ieee->state = IEEE80211_LINKED;
 
 	ieee->set_chan(ieee->dev, ieee->current_network.channel);
 	ieee->link_change(ieee->dev);
 
-	notअगरy_wx_assoc_event(ieee);
+	notify_wx_assoc_event(ieee);
 
 	ieee80211_start_send_beacons(ieee);
 
-	अगर (ieee->data_hard_resume)
+	if (ieee->data_hard_resume)
 		ieee->data_hard_resume(ieee->dev);
-	netअगर_carrier_on(ieee->dev);
+	netif_carrier_on(ieee->dev);
 
 	mutex_unlock(&ieee->wx_mutex);
-पूर्ण
+}
 
-अंतरभूत व्योम ieee80211_start_ibss(काष्ठा ieee80211_device *ieee)
-अणु
+inline void ieee80211_start_ibss(struct ieee80211_device *ieee)
+{
 	schedule_delayed_work(&ieee->start_ibss_wq, 150);
-पूर्ण
+}
 
 /* this is called only in user context, with wx_mutex held */
-व्योम ieee80211_start_bss(काष्ठा ieee80211_device *ieee)
-अणु
-	अचिन्हित दीर्घ flags;
+void ieee80211_start_bss(struct ieee80211_device *ieee)
+{
+	unsigned long flags;
 	//
 	// Ref: 802.11d 11.1.3.3
-	// STA shall not start a BSS unless properly क्रमmed Beacon frame including a Country IE.
+	// STA shall not start a BSS unless properly formed Beacon frame including a Country IE.
 	//
-	अगर (IS_DOT11D_ENABLE(ieee) && !IS_COUNTRY_IE_VALID(ieee)) अणु
-		अगर (!ieee->bGlobalDoमुख्य)
-			वापस;
-	पूर्ण
-	/* check अगर we have alपढ़ोy found the net we
-	 * are पूर्णांकerested in (अगर any).
-	 * अगर not (we are disassociated and we are not
+	if (IS_DOT11D_ENABLE(ieee) && !IS_COUNTRY_IE_VALID(ieee)) {
+		if (!ieee->bGlobalDomain)
+			return;
+	}
+	/* check if we have already found the net we
+	 * are interested in (if any).
+	 * if not (we are disassociated and we are not
 	 * in associating / authenticating phase) start the background scanning.
 	 */
-	ieee80211_sofपंचांगac_check_all_nets(ieee);
+	ieee80211_softmac_check_all_nets(ieee);
 
 	/* ensure no-one start an associating process (thus setting
-	 * the ieee->state to ieee80211_ASSOCIATING) जबतक we
+	 * the ieee->state to ieee80211_ASSOCIATING) while we
 	 * have just checked it and we are going to enable scan.
 	 * The ieee80211_new_net function is always called with
-	 * lock held (from both ieee80211_sofपंचांगac_check_all_nets and
+	 * lock held (from both ieee80211_softmac_check_all_nets and
 	 * the rx path), so we cannot be in the middle of such function
 	 */
 	spin_lock_irqsave(&ieee->lock, flags);
 
-	अगर (ieee->state == IEEE80211_NOLINK) अणु
+	if (ieee->state == IEEE80211_NOLINK) {
 		ieee->actscanning = true;
 		ieee80211_start_scan(ieee);
-	पूर्ण
+	}
 	spin_unlock_irqrestore(&ieee->lock, flags);
-पूर्ण
+}
 
 /* called only in userspace context */
-व्योम ieee80211_disassociate(काष्ठा ieee80211_device *ieee)
-अणु
-	netअगर_carrier_off(ieee->dev);
-	अगर (ieee->sofपंचांगac_features & IEEE_SOFTMAC_TX_QUEUE)
+void ieee80211_disassociate(struct ieee80211_device *ieee)
+{
+	netif_carrier_off(ieee->dev);
+	if (ieee->softmac_features & IEEE_SOFTMAC_TX_QUEUE)
 		ieee80211_reset_queue(ieee);
 
-	अगर (ieee->data_hard_stop)
+	if (ieee->data_hard_stop)
 		ieee->data_hard_stop(ieee->dev);
-	अगर (IS_DOT11D_ENABLE(ieee))
-		करोt11d_reset(ieee);
+	if (IS_DOT11D_ENABLE(ieee))
+		dot11d_reset(ieee);
 	ieee->state = IEEE80211_NOLINK;
 	ieee->is_set_key = false;
 	ieee->link_change(ieee->dev);
 	//HTSetConnectBwMode(ieee, HT_CHANNEL_WIDTH_20, HT_EXTCHNL_OFFSET_NO_EXT);
-	notअगरy_wx_assoc_event(ieee);
-पूर्ण
+	notify_wx_assoc_event(ieee);
+}
 EXPORT_SYMBOL(ieee80211_disassociate);
 
-अटल व्योम ieee80211_associate_retry_wq(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा delayed_work *dwork = to_delayed_work(work);
-	काष्ठा ieee80211_device *ieee = container_of(dwork, काष्ठा ieee80211_device, associate_retry_wq);
-	अचिन्हित दीर्घ flags;
+static void ieee80211_associate_retry_wq(struct work_struct *work)
+{
+	struct delayed_work *dwork = to_delayed_work(work);
+	struct ieee80211_device *ieee = container_of(dwork, struct ieee80211_device, associate_retry_wq);
+	unsigned long flags;
 
 	mutex_lock(&ieee->wx_mutex);
-	अगर (!ieee->proto_started)
-		जाओ निकास;
+	if (!ieee->proto_started)
+		goto exit;
 
-	अगर (ieee->state != IEEE80211_ASSOCIATING_RETRY)
-		जाओ निकास;
+	if (ieee->state != IEEE80211_ASSOCIATING_RETRY)
+		goto exit;
 
-	/* until we करो not set the state to IEEE80211_NOLINK
-	* there are no possibility to have someone अन्यथा trying
+	/* until we do not set the state to IEEE80211_NOLINK
+	* there are no possibility to have someone else trying
 	* to start an association procedure (we get here with
 	* ieee->state = IEEE80211_ASSOCIATING).
 	* When we set the state to IEEE80211_NOLINK it is possible
 	* that the RX path run an attempt to associate, but
-	* both ieee80211_sofपंचांगac_check_all_nets and the
+	* both ieee80211_softmac_check_all_nets and the
 	* RX path works with ieee->lock held so there are no
 	* problems. If we are still disassociated then start a scan.
 	* the lock here is necessary to ensure no one try to start
@@ -2398,158 +2397,158 @@ EXPORT_SYMBOL(ieee80211_disassociate);
 	*/
 	ieee->state = IEEE80211_NOLINK;
 
-	ieee80211_sofपंचांगac_check_all_nets(ieee);
+	ieee80211_softmac_check_all_nets(ieee);
 
 	spin_lock_irqsave(&ieee->lock, flags);
 
-	अगर (ieee->state == IEEE80211_NOLINK)
+	if (ieee->state == IEEE80211_NOLINK)
 		ieee80211_start_scan(ieee);
 
 	spin_unlock_irqrestore(&ieee->lock, flags);
 
-निकास:
+exit:
 	mutex_unlock(&ieee->wx_mutex);
-पूर्ण
+}
 
-काष्ठा sk_buff *ieee80211_get_beacon_(काष्ठा ieee80211_device *ieee)
-अणु
-	u8 broadcast_addr[] = अणु0xff, 0xff, 0xff, 0xff, 0xff, 0xffपूर्ण;
+struct sk_buff *ieee80211_get_beacon_(struct ieee80211_device *ieee)
+{
+	u8 broadcast_addr[] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
 
-	काष्ठा sk_buff *skb;
-	काष्ठा ieee80211_probe_response *b;
+	struct sk_buff *skb;
+	struct ieee80211_probe_response *b;
 
 	skb = ieee80211_probe_resp(ieee, broadcast_addr);
 
-	अगर (!skb)
-		वापस शून्य;
+	if (!skb)
+		return NULL;
 
-	b = (काष्ठा ieee80211_probe_response *)skb->data;
+	b = (struct ieee80211_probe_response *)skb->data;
 	b->header.frame_ctl = cpu_to_le16(IEEE80211_STYPE_BEACON);
 
-	वापस skb;
-पूर्ण
+	return skb;
+}
 
-काष्ठा sk_buff *ieee80211_get_beacon(काष्ठा ieee80211_device *ieee)
-अणु
-	काष्ठा sk_buff *skb;
-	काष्ठा ieee80211_probe_response *b;
+struct sk_buff *ieee80211_get_beacon(struct ieee80211_device *ieee)
+{
+	struct sk_buff *skb;
+	struct ieee80211_probe_response *b;
 
 	skb = ieee80211_get_beacon_(ieee);
-	अगर (!skb)
-		वापस शून्य;
+	if (!skb)
+		return NULL;
 
-	b = (काष्ठा ieee80211_probe_response *)skb->data;
+	b = (struct ieee80211_probe_response *)skb->data;
 	b->header.seq_ctl = cpu_to_le16(ieee->seq_ctrl[0] << 4);
 
-	अगर (ieee->seq_ctrl[0] == 0xFFF)
+	if (ieee->seq_ctrl[0] == 0xFFF)
 		ieee->seq_ctrl[0] = 0;
-	अन्यथा
+	else
 		ieee->seq_ctrl[0]++;
 
-	वापस skb;
-पूर्ण
+	return skb;
+}
 EXPORT_SYMBOL(ieee80211_get_beacon);
 
-व्योम ieee80211_sofपंचांगac_stop_protocol(काष्ठा ieee80211_device *ieee)
-अणु
+void ieee80211_softmac_stop_protocol(struct ieee80211_device *ieee)
+{
 	ieee->sync_scan_hurryup = 1;
 	mutex_lock(&ieee->wx_mutex);
 	ieee80211_stop_protocol(ieee);
 	mutex_unlock(&ieee->wx_mutex);
-पूर्ण
-EXPORT_SYMBOL(ieee80211_sofपंचांगac_stop_protocol);
+}
+EXPORT_SYMBOL(ieee80211_softmac_stop_protocol);
 
-व्योम ieee80211_stop_protocol(काष्ठा ieee80211_device *ieee)
-अणु
-	अगर (!ieee->proto_started)
-		वापस;
+void ieee80211_stop_protocol(struct ieee80211_device *ieee)
+{
+	if (!ieee->proto_started)
+		return;
 
 	ieee->proto_started = 0;
 
 	ieee80211_stop_send_beacons(ieee);
-	del_समयr_sync(&ieee->associate_समयr);
+	del_timer_sync(&ieee->associate_timer);
 	cancel_delayed_work(&ieee->associate_retry_wq);
 	cancel_delayed_work(&ieee->start_ibss_wq);
 	ieee80211_stop_scan(ieee);
 
 	ieee80211_disassociate(ieee);
 	RemoveAllTS(ieee); //added as we disconnect from the previous BSS, Remove all TS
-पूर्ण
+}
 
-व्योम ieee80211_sofपंचांगac_start_protocol(काष्ठा ieee80211_device *ieee)
-अणु
+void ieee80211_softmac_start_protocol(struct ieee80211_device *ieee)
+{
 	ieee->sync_scan_hurryup = 0;
 	mutex_lock(&ieee->wx_mutex);
 	ieee80211_start_protocol(ieee);
 	mutex_unlock(&ieee->wx_mutex);
-पूर्ण
-EXPORT_SYMBOL(ieee80211_sofपंचांगac_start_protocol);
+}
+EXPORT_SYMBOL(ieee80211_softmac_start_protocol);
 
-व्योम ieee80211_start_protocol(काष्ठा ieee80211_device *ieee)
-अणु
-	लघु ch = 0;
-	पूर्णांक i = 0;
+void ieee80211_start_protocol(struct ieee80211_device *ieee)
+{
+	short ch = 0;
+	int i = 0;
 
-	अगर (ieee->proto_started)
-		वापस;
+	if (ieee->proto_started)
+		return;
 
 	ieee->proto_started = 1;
 
-	अगर (ieee->current_network.channel == 0) अणु
-		करो अणु
+	if (ieee->current_network.channel == 0) {
+		do {
 			ch++;
-			अगर (ch > MAX_CHANNEL_NUMBER)
-				वापस; /* no channel found */
-		पूर्ण जबतक (!GET_DOT11D_INFO(ieee)->channel_map[ch]);
+			if (ch > MAX_CHANNEL_NUMBER)
+				return; /* no channel found */
+		} while (!GET_DOT11D_INFO(ieee)->channel_map[ch]);
 		ieee->current_network.channel = ch;
-	पूर्ण
+	}
 
-	अगर (ieee->current_network.beacon_पूर्णांकerval == 0)
-		ieee->current_network.beacon_पूर्णांकerval = 100;
-//	prपूर्णांकk("===>%s(), chan:%d\n", __func__, ieee->current_network.channel);
+	if (ieee->current_network.beacon_interval == 0)
+		ieee->current_network.beacon_interval = 100;
+//	printk("===>%s(), chan:%d\n", __func__, ieee->current_network.channel);
 //	ieee->set_chan(ieee->dev,ieee->current_network.channel);
 
-	क्रम (i = 0; i < 17; i++) अणु
+	for (i = 0; i < 17; i++) {
 		ieee->last_rxseq_num[i] = -1;
 		ieee->last_rxfrag_num[i] = -1;
-		ieee->last_packet_समय[i] = 0;
-	पूर्ण
+		ieee->last_packet_time[i] = 0;
+	}
 
-	ieee->init_wmmparam_flag = 0;//reinitialize AC_xx_PARAM रेजिस्टरs.
+	ieee->init_wmmparam_flag = 0;//reinitialize AC_xx_PARAM registers.
 
-	/* अगर the user set the MAC of the ad-hoc cell and then
-	 * चयन to managed mode, shall we  make sure that association
-	 * attempts करोes not fail just because the user provide the essid
-	 * and the nic is still checking क्रम the AP MAC ??
+	/* if the user set the MAC of the ad-hoc cell and then
+	 * switch to managed mode, shall we  make sure that association
+	 * attempts does not fail just because the user provide the essid
+	 * and the nic is still checking for the AP MAC ??
 	 */
-	अगर (ieee->iw_mode == IW_MODE_INFRA)
+	if (ieee->iw_mode == IW_MODE_INFRA)
 		ieee80211_start_bss(ieee);
 
-	अन्यथा अगर (ieee->iw_mode == IW_MODE_ADHOC)
+	else if (ieee->iw_mode == IW_MODE_ADHOC)
 		ieee80211_start_ibss(ieee);
 
-	अन्यथा अगर (ieee->iw_mode == IW_MODE_MASTER)
+	else if (ieee->iw_mode == IW_MODE_MASTER)
 		ieee80211_start_master_bss(ieee);
 
-	अन्यथा अगर (ieee->iw_mode == IW_MODE_MONITOR)
+	else if (ieee->iw_mode == IW_MODE_MONITOR)
 		ieee80211_start_monitor_mode(ieee);
-पूर्ण
+}
 
-#घोषणा DRV_NAME  "Ieee80211"
-व्योम ieee80211_sofपंचांगac_init(काष्ठा ieee80211_device *ieee)
-अणु
-	पूर्णांक i;
-	स_रखो(&ieee->current_network, 0, माप(काष्ठा ieee80211_network));
+#define DRV_NAME  "Ieee80211"
+void ieee80211_softmac_init(struct ieee80211_device *ieee)
+{
+	int i;
+	memset(&ieee->current_network, 0, sizeof(struct ieee80211_network));
 
 	ieee->state = IEEE80211_NOLINK;
 	ieee->sync_scan_hurryup = 0;
-	क्रम (i = 0; i < 5; i++)
+	for (i = 0; i < 5; i++)
 		ieee->seq_ctrl[i] = 0;
 
-	ieee->करोt11d_info = kzalloc(माप(काष्ठा rt_करोt11d_info), GFP_KERNEL);
-	अगर (!ieee->करोt11d_info)
+	ieee->dot11d_info = kzalloc(sizeof(struct rt_dot11d_info), GFP_KERNEL);
+	if (!ieee->dot11d_info)
 		IEEE80211_DEBUG(IEEE80211_DL_ERR, "can't alloc memory for DOT11D\n");
-	//added क्रम  AP roaming
+	//added for  AP roaming
 	ieee->LinkDetectInfo.SlotNum = 2;
 	ieee->LinkDetectInfo.NumRecvBcnInPeriod = 0;
 	ieee->LinkDetectInfo.NumRecvDataInPeriod = 0;
@@ -2557,7 +2556,7 @@ EXPORT_SYMBOL(ieee80211_sofपंचांगac_start_protocol);
 	ieee->assoc_id = 0;
 	ieee->queue_stop = 0;
 	ieee->scanning = 0;
-	ieee->sofपंचांगac_features = 0; //so IEEE2100-like driver are happy
+	ieee->softmac_features = 0; //so IEEE2100-like driver are happy
 	ieee->wap_set = 0;
 	ieee->ssid_set = 0;
 	ieee->proto_started = 0;
@@ -2565,9 +2564,9 @@ EXPORT_SYMBOL(ieee80211_sofपंचांगac_start_protocol);
 	ieee->rate = 22;
 	ieee->ps = IEEE80211_PS_DISABLED;
 	ieee->sta_sleep = 0;
-	ieee->Regकरोt11HTOperationalRateSet[0] = 0xff;//support MCS 0~7
-	ieee->Regकरोt11HTOperationalRateSet[1] = 0xff;//support MCS 8~15
-	ieee->Regकरोt11HTOperationalRateSet[4] = 0x01;
+	ieee->Regdot11HTOperationalRateSet[0] = 0xff;//support MCS 0~7
+	ieee->Regdot11HTOperationalRateSet[1] = 0xff;//support MCS 8~15
+	ieee->Regdot11HTOperationalRateSet[4] = 0x01;
 	//added by amy
 	ieee->actscanning = false;
 	ieee->beinretry = false;
@@ -2580,16 +2579,16 @@ EXPORT_SYMBOL(ieee80211_sofपंचांगac_start_protocol);
 	ieee->sta_edca_param[3] = 0x002F3262;
 	ieee->aggregation = true;
 	ieee->enable_rx_imm_BA = true;
-	ieee->tx_pending.txb = शून्य;
+	ieee->tx_pending.txb = NULL;
 
-	समयr_setup(&ieee->associate_समयr, ieee80211_associate_पात_cb, 0);
+	timer_setup(&ieee->associate_timer, ieee80211_associate_abort_cb, 0);
 
-	समयr_setup(&ieee->beacon_समयr, ieee80211_send_beacon_cb, 0);
+	timer_setup(&ieee->beacon_timer, ieee80211_send_beacon_cb, 0);
 
 	INIT_DELAYED_WORK(&ieee->start_ibss_wq, ieee80211_start_ibss_wq);
 	INIT_WORK(&ieee->associate_complete_wq, ieee80211_associate_complete_wq);
 	INIT_WORK(&ieee->associate_procedure_wq, ieee80211_associate_procedure_wq);
-	INIT_DELAYED_WORK(&ieee->sofपंचांगac_scan_wq, ieee80211_sofपंचांगac_scan_wq);
+	INIT_DELAYED_WORK(&ieee->softmac_scan_wq, ieee80211_softmac_scan_wq);
 	INIT_DELAYED_WORK(&ieee->associate_retry_wq, ieee80211_associate_retry_wq);
 	INIT_WORK(&ieee->wx_sync_scan_wq, ieee80211_wx_sync_scan_wq);
 
@@ -2600,448 +2599,448 @@ EXPORT_SYMBOL(ieee80211_sofपंचांगac_start_protocol);
 	spin_lock_init(&ieee->beacon_lock);
 
 	tasklet_setup(&ieee->ps_task, ieee80211_sta_ps);
-पूर्ण
+}
 
-व्योम ieee80211_sofपंचांगac_मुक्त(काष्ठा ieee80211_device *ieee)
-अणु
+void ieee80211_softmac_free(struct ieee80211_device *ieee)
+{
 	mutex_lock(&ieee->wx_mutex);
-	kमुक्त(ieee->करोt11d_info);
-	ieee->करोt11d_info = शून्य;
-	del_समयr_sync(&ieee->associate_समयr);
+	kfree(ieee->dot11d_info);
+	ieee->dot11d_info = NULL;
+	del_timer_sync(&ieee->associate_timer);
 
 	cancel_delayed_work(&ieee->associate_retry_wq);
 
 	mutex_unlock(&ieee->wx_mutex);
-पूर्ण
+}
 
 /********************************************************
  * Start of WPA code.                                   *
  * this is stolen from the ipw2200 driver               *
  ********************************************************/
-अटल पूर्णांक ieee80211_wpa_enable(काष्ठा ieee80211_device *ieee, पूर्णांक value)
-अणु
-	/* This is called when wpa_supplicant loads and बंदs the driver
-	 * पूर्णांकerface. */
-	prपूर्णांकk("%s WPA\n", value ? "enabling" : "disabling");
+static int ieee80211_wpa_enable(struct ieee80211_device *ieee, int value)
+{
+	/* This is called when wpa_supplicant loads and closes the driver
+	 * interface. */
+	printk("%s WPA\n", value ? "enabling" : "disabling");
 	ieee->wpa_enabled = value;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ieee80211_wpa_assoc_frame(काष्ठा ieee80211_device *ieee,
-				      अक्षर *wpa_ie, पूर्णांक wpa_ie_len)
-अणु
+static void ieee80211_wpa_assoc_frame(struct ieee80211_device *ieee,
+				      char *wpa_ie, int wpa_ie_len)
+{
 	/* make sure WPA is enabled */
 	ieee80211_wpa_enable(ieee, 1);
 
 	ieee80211_disassociate(ieee);
-पूर्ण
+}
 
-अटल पूर्णांक ieee80211_wpa_mlme(काष्ठा ieee80211_device *ieee, पूर्णांक command, पूर्णांक reason)
-अणु
-	पूर्णांक ret = 0;
+static int ieee80211_wpa_mlme(struct ieee80211_device *ieee, int command, int reason)
+{
+	int ret = 0;
 
-	चयन (command) अणु
-	हाल IEEE_MLME_STA_DEAUTH:
+	switch (command) {
+	case IEEE_MLME_STA_DEAUTH:
 		// silently ignore
-		अवरोध;
+		break;
 
-	हाल IEEE_MLME_STA_DISASSOC:
+	case IEEE_MLME_STA_DISASSOC:
 		ieee80211_disassociate(ieee);
-		अवरोध;
+		break;
 
-	शेष:
-		prपूर्णांकk("Unknown MLME request: %d\n", command);
+	default:
+		printk("Unknown MLME request: %d\n", command);
 		ret = -EOPNOTSUPP;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक ieee80211_wpa_set_wpa_ie(काष्ठा ieee80211_device *ieee,
-			      काष्ठा ieee_param *param, पूर्णांक plen)
-अणु
+static int ieee80211_wpa_set_wpa_ie(struct ieee80211_device *ieee,
+			      struct ieee_param *param, int plen)
+{
 	u8 *buf;
 
-	अगर (param->u.wpa_ie.len > MAX_WPA_IE_LEN)
-		वापस -EINVAL;
+	if (param->u.wpa_ie.len > MAX_WPA_IE_LEN)
+		return -EINVAL;
 
-	अगर (param->u.wpa_ie.len) अणु
+	if (param->u.wpa_ie.len) {
 		buf = kmemdup(param->u.wpa_ie.data, param->u.wpa_ie.len,
 			      GFP_KERNEL);
-		अगर (!buf)
-			वापस -ENOMEM;
+		if (!buf)
+			return -ENOMEM;
 
-		kमुक्त(ieee->wpa_ie);
+		kfree(ieee->wpa_ie);
 		ieee->wpa_ie = buf;
 		ieee->wpa_ie_len = param->u.wpa_ie.len;
-	पूर्ण अन्यथा अणु
-		kमुक्त(ieee->wpa_ie);
-		ieee->wpa_ie = शून्य;
+	} else {
+		kfree(ieee->wpa_ie);
+		ieee->wpa_ie = NULL;
 		ieee->wpa_ie_len = 0;
-	पूर्ण
+	}
 
 	ieee80211_wpa_assoc_frame(ieee, ieee->wpa_ie, ieee->wpa_ie_len);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#घोषणा AUTH_ALG_OPEN_SYSTEM			0x1
-#घोषणा AUTH_ALG_SHARED_KEY			0x2
+#define AUTH_ALG_OPEN_SYSTEM			0x1
+#define AUTH_ALG_SHARED_KEY			0x2
 
-अटल पूर्णांक ieee80211_wpa_set_auth_algs(काष्ठा ieee80211_device *ieee, पूर्णांक value)
-अणु
-	काष्ठा ieee80211_security sec = अणु
+static int ieee80211_wpa_set_auth_algs(struct ieee80211_device *ieee, int value)
+{
+	struct ieee80211_security sec = {
 		.flags = SEC_AUTH_MODE,
-	पूर्ण;
+	};
 
-	अगर (value & AUTH_ALG_SHARED_KEY) अणु
+	if (value & AUTH_ALG_SHARED_KEY) {
 		sec.auth_mode = WLAN_AUTH_SHARED_KEY;
-		ieee->खोलो_wep = 0;
+		ieee->open_wep = 0;
 		ieee->auth_mode = 1;
-	पूर्ण अन्यथा अगर (value & AUTH_ALG_OPEN_SYSTEM) अणु
+	} else if (value & AUTH_ALG_OPEN_SYSTEM) {
 		sec.auth_mode = WLAN_AUTH_OPEN;
-		ieee->खोलो_wep = 1;
+		ieee->open_wep = 1;
 		ieee->auth_mode = 0;
-	पूर्ण अन्यथा अगर (value & IW_AUTH_ALG_LEAP) अणु
+	} else if (value & IW_AUTH_ALG_LEAP) {
 		sec.auth_mode = WLAN_AUTH_LEAP;
-		ieee->खोलो_wep = 1;
+		ieee->open_wep = 1;
 		ieee->auth_mode = 2;
-	पूर्ण
+	}
 
-	अगर (ieee->set_security)
+	if (ieee->set_security)
 		ieee->set_security(ieee->dev, &sec);
-	//अन्यथा
+	//else
 	//	ret = -EOPNOTSUPP;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ieee80211_wpa_set_param(काष्ठा ieee80211_device *ieee, u8 name, u32 value)
-अणु
-	पूर्णांक ret = 0;
-	अचिन्हित दीर्घ flags;
+static int ieee80211_wpa_set_param(struct ieee80211_device *ieee, u8 name, u32 value)
+{
+	int ret = 0;
+	unsigned long flags;
 
-	चयन (name) अणु
-	हाल IEEE_PARAM_WPA_ENABLED:
+	switch (name) {
+	case IEEE_PARAM_WPA_ENABLED:
 		ret = ieee80211_wpa_enable(ieee, value);
-		अवरोध;
+		break;
 
-	हाल IEEE_PARAM_TKIP_COUNTERMEASURES:
+	case IEEE_PARAM_TKIP_COUNTERMEASURES:
 		ieee->tkip_countermeasures = value;
-		अवरोध;
+		break;
 
-	हाल IEEE_PARAM_DROP_UNENCRYPTED: अणु
+	case IEEE_PARAM_DROP_UNENCRYPTED: {
 		/* HACK:
 		 *
 		 * wpa_supplicant calls set_wpa_enabled when the driver
-		 * is loaded and unloaded, regardless of अगर WPA is being
+		 * is loaded and unloaded, regardless of if WPA is being
 		 * used.  No other calls are made which can be used to
-		 * determine अगर encryption will be used or not prior to
+		 * determine if encryption will be used or not prior to
 		 * association being expected.  If encryption is not being
-		 * used, drop_unencrypted is set to false, अन्यथा true -- we
-		 * can use this to determine अगर the CAP_PRIVACY_ON bit should
+		 * used, drop_unencrypted is set to false, else true -- we
+		 * can use this to determine if the CAP_PRIVACY_ON bit should
 		 * be set.
 		 */
-		काष्ठा ieee80211_security sec = अणु
+		struct ieee80211_security sec = {
 			.flags = SEC_ENABLED,
 			.enabled = value,
-		पूर्ण;
+		};
 		ieee->drop_unencrypted = value;
-		/* We only change SEC_LEVEL क्रम खोलो mode. Others
+		/* We only change SEC_LEVEL for open mode. Others
 		 * are set by ipw_wpa_set_encryption.
 		 */
-		अगर (!value) अणु
+		if (!value) {
 			sec.flags |= SEC_LEVEL;
 			sec.level = SEC_LEVEL_0;
-		पूर्ण अन्यथा अणु
+		} else {
 			sec.flags |= SEC_LEVEL;
 			sec.level = SEC_LEVEL_1;
-		पूर्ण
-		अगर (ieee->set_security)
+		}
+		if (ieee->set_security)
 			ieee->set_security(ieee->dev, &sec);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	हाल IEEE_PARAM_PRIVACY_INVOKED:
+	case IEEE_PARAM_PRIVACY_INVOKED:
 		ieee->privacy_invoked = value;
-		अवरोध;
+		break;
 
-	हाल IEEE_PARAM_AUTH_ALGS:
+	case IEEE_PARAM_AUTH_ALGS:
 		ret = ieee80211_wpa_set_auth_algs(ieee, value);
-		अवरोध;
+		break;
 
-	हाल IEEE_PARAM_IEEE_802_1X:
+	case IEEE_PARAM_IEEE_802_1X:
 		ieee->ieee802_1x = value;
-		अवरोध;
-	हाल IEEE_PARAM_WPAX_SELECT:
-		// added क्रम WPA2 mixed mode
+		break;
+	case IEEE_PARAM_WPAX_SELECT:
+		// added for WPA2 mixed mode
 		spin_lock_irqsave(&ieee->wpax_suitlist_lock, flags);
 		ieee->wpax_type_set = 1;
-		ieee->wpax_type_notअगरy = value;
+		ieee->wpax_type_notify = value;
 		spin_unlock_irqrestore(&ieee->wpax_suitlist_lock, flags);
-		अवरोध;
+		break;
 
-	शेष:
-		prपूर्णांकk("Unknown WPA param: %d\n", name);
+	default:
+		printk("Unknown WPA param: %d\n", name);
 		ret = -EOPNOTSUPP;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /* implementation borrowed from hostap driver */
-अटल पूर्णांक ieee80211_wpa_set_encryption(काष्ठा ieee80211_device *ieee,
-				  काष्ठा ieee_param *param, पूर्णांक param_len)
-अणु
-	पूर्णांक ret = 0;
-	स्थिर अक्षर *module = शून्य;
+static int ieee80211_wpa_set_encryption(struct ieee80211_device *ieee,
+				  struct ieee_param *param, int param_len)
+{
+	int ret = 0;
+	const char *module = NULL;
 
-	काष्ठा ieee80211_crypto_ops *ops = शून्य;
-	काष्ठा ieee80211_crypt_data **crypt;
+	struct ieee80211_crypto_ops *ops = NULL;
+	struct ieee80211_crypt_data **crypt;
 
-	काष्ठा ieee80211_security sec = अणु
+	struct ieee80211_security sec = {
 		.flags = 0,
-	पूर्ण;
+	};
 
 	param->u.crypt.err = 0;
 	param->u.crypt.alg[IEEE_CRYPT_ALG_NAME_LEN - 1] = '\0';
 
-	अगर (param_len !=
-	    (पूर्णांक)((अक्षर *)param->u.crypt.key - (अक्षर *)param) +
-	    param->u.crypt.key_len) अणु
-		prपूर्णांकk("Len mismatch %d, %d\n", param_len,
+	if (param_len !=
+	    (int)((char *)param->u.crypt.key - (char *)param) +
+	    param->u.crypt.key_len) {
+		printk("Len mismatch %d, %d\n", param_len,
 			       param->u.crypt.key_len);
-		वापस -EINVAL;
-	पूर्ण
-	अगर (is_broadcast_ether_addr(param->sta_addr)) अणु
-		अगर (param->u.crypt.idx >= WEP_KEYS)
-			वापस -EINVAL;
+		return -EINVAL;
+	}
+	if (is_broadcast_ether_addr(param->sta_addr)) {
+		if (param->u.crypt.idx >= WEP_KEYS)
+			return -EINVAL;
 		crypt = &ieee->crypt[param->u.crypt.idx];
-	पूर्ण अन्यथा अणु
-		वापस -EINVAL;
-	पूर्ण
+	} else {
+		return -EINVAL;
+	}
 
-	अगर (म_भेद(param->u.crypt.alg, "none") == 0) अणु
-		अगर (crypt) अणु
+	if (strcmp(param->u.crypt.alg, "none") == 0) {
+		if (crypt) {
 			sec.enabled = 0;
 			// FIXME FIXME
 			//sec.encrypt = 0;
 			sec.level = SEC_LEVEL_0;
 			sec.flags |= SEC_ENABLED | SEC_LEVEL;
 			ieee80211_crypt_delayed_deinit(ieee, crypt);
-		पूर्ण
-		जाओ करोne;
-	पूर्ण
+		}
+		goto done;
+	}
 	sec.enabled = 1;
 // FIXME FIXME
 //	sec.encrypt = 1;
 	sec.flags |= SEC_ENABLED;
 
 	/* IPW HW cannot build TKIP MIC, host decryption still needed. */
-	अगर (!(ieee->host_encrypt || ieee->host_decrypt) &&
-	    म_भेद(param->u.crypt.alg, "TKIP"))
-		जाओ skip_host_crypt;
+	if (!(ieee->host_encrypt || ieee->host_decrypt) &&
+	    strcmp(param->u.crypt.alg, "TKIP"))
+		goto skip_host_crypt;
 
-	//set WEP40 first, it will be modअगरied according to WEP104 or WEP40 at other place
-	अगर (!म_भेद(param->u.crypt.alg, "WEP"))
+	//set WEP40 first, it will be modified according to WEP104 or WEP40 at other place
+	if (!strcmp(param->u.crypt.alg, "WEP"))
 		module = "ieee80211_crypt_wep";
-	अन्यथा अगर (!म_भेद(param->u.crypt.alg, "TKIP"))
+	else if (!strcmp(param->u.crypt.alg, "TKIP"))
 		module = "ieee80211_crypt_tkip";
-	अन्यथा अगर (!म_भेद(param->u.crypt.alg, "CCMP"))
+	else if (!strcmp(param->u.crypt.alg, "CCMP"))
 		module = "ieee80211_crypt_ccmp";
-	अगर (module)
+	if (module)
 		ops = try_then_request_module(ieee80211_get_crypto_ops(param->u.crypt.alg),
 					      module);
-	अगर (!ops) अणु
-		prपूर्णांकk("unknown crypto alg '%s'\n", param->u.crypt.alg);
+	if (!ops) {
+		printk("unknown crypto alg '%s'\n", param->u.crypt.alg);
 		param->u.crypt.err = IEEE_CRYPT_ERR_UNKNOWN_ALG;
 		ret = -EINVAL;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	अगर (!*crypt || (*crypt)->ops != ops) अणु
-		काष्ठा ieee80211_crypt_data *new_crypt;
+	if (!*crypt || (*crypt)->ops != ops) {
+		struct ieee80211_crypt_data *new_crypt;
 
 		ieee80211_crypt_delayed_deinit(ieee, crypt);
 
-		new_crypt = kzalloc(माप(*new_crypt), GFP_KERNEL);
-		अगर (!new_crypt) अणु
+		new_crypt = kzalloc(sizeof(*new_crypt), GFP_KERNEL);
+		if (!new_crypt) {
 			ret = -ENOMEM;
-			जाओ करोne;
-		पूर्ण
+			goto done;
+		}
 		new_crypt->ops = ops;
-		अगर (new_crypt->ops && try_module_get(new_crypt->ops->owner))
+		if (new_crypt->ops && try_module_get(new_crypt->ops->owner))
 			new_crypt->priv =
 				new_crypt->ops->init(param->u.crypt.idx);
 
-		अगर (!new_crypt->priv) अणु
-			kमुक्त(new_crypt);
+		if (!new_crypt->priv) {
+			kfree(new_crypt);
 			param->u.crypt.err = IEEE_CRYPT_ERR_CRYPT_INIT_FAILED;
 			ret = -EINVAL;
-			जाओ करोne;
-		पूर्ण
+			goto done;
+		}
 
 		*crypt = new_crypt;
-	पूर्ण
+	}
 
-	अगर (param->u.crypt.key_len > 0 && (*crypt)->ops->set_key &&
+	if (param->u.crypt.key_len > 0 && (*crypt)->ops->set_key &&
 	    (*crypt)->ops->set_key(param->u.crypt.key,
 				   param->u.crypt.key_len, param->u.crypt.seq,
-				   (*crypt)->priv) < 0) अणु
-		prपूर्णांकk("key setting failed\n");
+				   (*crypt)->priv) < 0) {
+		printk("key setting failed\n");
 		param->u.crypt.err = IEEE_CRYPT_ERR_KEY_SET_FAILED;
 		ret = -EINVAL;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
  skip_host_crypt:
-	अगर (param->u.crypt.set_tx) अणु
+	if (param->u.crypt.set_tx) {
 		ieee->tx_keyidx = param->u.crypt.idx;
 		sec.active_key = param->u.crypt.idx;
 		sec.flags |= SEC_ACTIVE_KEY;
-	पूर्ण अन्यथा अणु
+	} else {
 		sec.flags &= ~SEC_ACTIVE_KEY;
-	पूर्ण
-	स_नकल(sec.keys[param->u.crypt.idx],
+	}
+	memcpy(sec.keys[param->u.crypt.idx],
 	       param->u.crypt.key,
 	       param->u.crypt.key_len);
 	sec.key_sizes[param->u.crypt.idx] = param->u.crypt.key_len;
 	sec.flags |= (1 << param->u.crypt.idx);
 
-	अगर (म_भेद(param->u.crypt.alg, "WEP") == 0) अणु
+	if (strcmp(param->u.crypt.alg, "WEP") == 0) {
 		sec.flags |= SEC_LEVEL;
 		sec.level = SEC_LEVEL_1;
-	पूर्ण अन्यथा अगर (म_भेद(param->u.crypt.alg, "TKIP") == 0) अणु
+	} else if (strcmp(param->u.crypt.alg, "TKIP") == 0) {
 		sec.flags |= SEC_LEVEL;
 		sec.level = SEC_LEVEL_2;
-	पूर्ण अन्यथा अगर (म_भेद(param->u.crypt.alg, "CCMP") == 0) अणु
+	} else if (strcmp(param->u.crypt.alg, "CCMP") == 0) {
 		sec.flags |= SEC_LEVEL;
 		sec.level = SEC_LEVEL_3;
-	पूर्ण
- करोne:
-	अगर (ieee->set_security)
+	}
+ done:
+	if (ieee->set_security)
 		ieee->set_security(ieee->dev, &sec);
 
-	/* Do not reset port अगर card is in Managed mode since resetting will
+	/* Do not reset port if card is in Managed mode since resetting will
 	 * generate new IEEE 802.11 authentication which may end up in looping
 	 * with IEEE 802.1X.  If your hardware requires a reset after WEP
-	 * configuration (क्रम example... Prism2), implement the reset_port in
-	 * the callbacks काष्ठाures used to initialize the 802.11 stack. */
-	अगर (ieee->reset_on_keychange &&
+	 * configuration (for example... Prism2), implement the reset_port in
+	 * the callbacks structures used to initialize the 802.11 stack. */
+	if (ieee->reset_on_keychange &&
 	    ieee->iw_mode != IW_MODE_INFRA &&
 	    ieee->reset_port &&
-	    ieee->reset_port(ieee->dev)) अणु
-		prपूर्णांकk("reset_port failed\n");
+	    ieee->reset_port(ieee->dev)) {
+		printk("reset_port failed\n");
 		param->u.crypt.err = IEEE_CRYPT_ERR_CARD_CONF_FAILED;
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल अंतरभूत काष्ठा sk_buff *ieee80211_disassociate_skb(काष्ठा ieee80211_network *beacon,
-							 काष्ठा ieee80211_device *ieee,
+static inline struct sk_buff *ieee80211_disassociate_skb(struct ieee80211_network *beacon,
+							 struct ieee80211_device *ieee,
 							 u8	asRsn)
-अणु
-	काष्ठा sk_buff *skb;
-	काष्ठा ieee80211_disassoc *disass;
+{
+	struct sk_buff *skb;
+	struct ieee80211_disassoc *disass;
 
-	skb = dev_alloc_skb(माप(काष्ठा ieee80211_disassoc));
-	अगर (!skb)
-		वापस शून्य;
+	skb = dev_alloc_skb(sizeof(struct ieee80211_disassoc));
+	if (!skb)
+		return NULL;
 
-	disass = skb_put(skb, माप(काष्ठा ieee80211_disassoc));
+	disass = skb_put(skb, sizeof(struct ieee80211_disassoc));
 	disass->header.frame_ctl = cpu_to_le16(IEEE80211_STYPE_DISASSOC);
 	disass->header.duration_id = 0;
 
-	स_नकल(disass->header.addr1, beacon->bssid, ETH_ALEN);
-	स_नकल(disass->header.addr2, ieee->dev->dev_addr, ETH_ALEN);
-	स_नकल(disass->header.addr3, beacon->bssid, ETH_ALEN);
+	memcpy(disass->header.addr1, beacon->bssid, ETH_ALEN);
+	memcpy(disass->header.addr2, ieee->dev->dev_addr, ETH_ALEN);
+	memcpy(disass->header.addr3, beacon->bssid, ETH_ALEN);
 
 	disass->reason = cpu_to_le16(asRsn);
-	वापस skb;
-पूर्ण
+	return skb;
+}
 
-व्योम
-SendDisassociation(काष्ठा ieee80211_device *ieee,
+void
+SendDisassociation(struct ieee80211_device *ieee,
 		   u8			   *asSta,
 		   u8			    asRsn
 )
-अणु
-	काष्ठा ieee80211_network *beacon = &ieee->current_network;
-	काष्ठा sk_buff *skb;
+{
+	struct ieee80211_network *beacon = &ieee->current_network;
+	struct sk_buff *skb;
 
 	skb = ieee80211_disassociate_skb(beacon, ieee, asRsn);
-	अगर (skb) अणु
-		sofपंचांगac_mgmt_xmit(skb, ieee);
-		//dev_kमुक्त_skb_any(skb);//edit by thomas
-	पूर्ण
-पूर्ण
+	if (skb) {
+		softmac_mgmt_xmit(skb, ieee);
+		//dev_kfree_skb_any(skb);//edit by thomas
+	}
+}
 EXPORT_SYMBOL(SendDisassociation);
 
-पूर्णांक ieee80211_wpa_supplicant_ioctl(काष्ठा ieee80211_device *ieee, काष्ठा iw_poपूर्णांक *p)
-अणु
-	काष्ठा ieee_param *param;
-	पूर्णांक ret = 0;
+int ieee80211_wpa_supplicant_ioctl(struct ieee80211_device *ieee, struct iw_point *p)
+{
+	struct ieee_param *param;
+	int ret = 0;
 
 	mutex_lock(&ieee->wx_mutex);
 	//IEEE_DEBUG_INFO("wpa_supplicant: len=%d\n", p->length);
 
-	अगर (p->length < माप(काष्ठा ieee_param) || !p->poपूर्णांकer) अणु
+	if (p->length < sizeof(struct ieee_param) || !p->pointer) {
 		ret = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	param = memdup_user(p->poपूर्णांकer, p->length);
-	अगर (IS_ERR(param)) अणु
+	param = memdup_user(p->pointer, p->length);
+	if (IS_ERR(param)) {
 		ret = PTR_ERR(param);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	चयन (param->cmd) अणु
-	हाल IEEE_CMD_SET_WPA_PARAM:
+	switch (param->cmd) {
+	case IEEE_CMD_SET_WPA_PARAM:
 		ret = ieee80211_wpa_set_param(ieee, param->u.wpa_param.name,
 					param->u.wpa_param.value);
-		अवरोध;
+		break;
 
-	हाल IEEE_CMD_SET_WPA_IE:
+	case IEEE_CMD_SET_WPA_IE:
 		ret = ieee80211_wpa_set_wpa_ie(ieee, param, p->length);
-		अवरोध;
+		break;
 
-	हाल IEEE_CMD_SET_ENCRYPTION:
+	case IEEE_CMD_SET_ENCRYPTION:
 		ret = ieee80211_wpa_set_encryption(ieee, param, p->length);
-		अवरोध;
+		break;
 
-	हाल IEEE_CMD_MLME:
+	case IEEE_CMD_MLME:
 		ret = ieee80211_wpa_mlme(ieee, param->u.mlme.command,
 				   param->u.mlme.reason_code);
-		अवरोध;
+		break;
 
-	शेष:
-		prपूर्णांकk("Unknown WPA supplicant request: %d\n", param->cmd);
+	default:
+		printk("Unknown WPA supplicant request: %d\n", param->cmd);
 		ret = -EOPNOTSUPP;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	अगर (ret == 0 && copy_to_user(p->poपूर्णांकer, param, p->length))
+	if (ret == 0 && copy_to_user(p->pointer, param, p->length))
 		ret = -EFAULT;
 
-	kमुक्त(param);
+	kfree(param);
 out:
 	mutex_unlock(&ieee->wx_mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL(ieee80211_wpa_supplicant_ioctl);
 
-व्योम notअगरy_wx_assoc_event(काष्ठा ieee80211_device *ieee)
-अणु
-	जोड़ iwreq_data wrqu;
+void notify_wx_assoc_event(struct ieee80211_device *ieee)
+{
+	union iwreq_data wrqu;
 
 	wrqu.ap_addr.sa_family = ARPHRD_ETHER;
-	अगर (ieee->state == IEEE80211_LINKED)
-		स_नकल(wrqu.ap_addr.sa_data, ieee->current_network.bssid, ETH_ALEN);
-	अन्यथा
+	if (ieee->state == IEEE80211_LINKED)
+		memcpy(wrqu.ap_addr.sa_data, ieee->current_network.bssid, ETH_ALEN);
+	else
 		eth_zero_addr(wrqu.ap_addr.sa_data);
-	wireless_send_event(ieee->dev, SIOCGIWAP, &wrqu, शून्य);
-पूर्ण
-EXPORT_SYMBOL(notअगरy_wx_assoc_event);
+	wireless_send_event(ieee->dev, SIOCGIWAP, &wrqu, NULL);
+}
+EXPORT_SYMBOL(notify_wx_assoc_event);

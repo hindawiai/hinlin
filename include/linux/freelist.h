@@ -1,130 +1,129 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only OR BSD-2-Clause */
-#अगर_अघोषित FREELIST_H
-#घोषणा FREELIST_H
+/* SPDX-License-Identifier: GPL-2.0-only OR BSD-2-Clause */
+#ifndef FREELIST_H
+#define FREELIST_H
 
-#समावेश <linux/atomic.h>
+#include <linux/atomic.h>
 
 /*
  * Copyright: cameron@moodycamel.com
  *
- * A simple CAS-based lock-मुक्त मुक्त list. Not the fastest thing in the world
+ * A simple CAS-based lock-free free list. Not the fastest thing in the world
  * under heavy contention, but simple and correct (assuming nodes are never
- * मुक्तd until after the मुक्त list is destroyed), and fairly speedy under low
+ * freed until after the free list is destroyed), and fairly speedy under low
  * contention.
  *
- * Adapted from: https://moodycamel.com/blog/2014/solving-the-aba-problem-क्रम-lock-मुक्त-मुक्त-lists
+ * Adapted from: https://moodycamel.com/blog/2014/solving-the-aba-problem-for-lock-free-free-lists
  */
 
-काष्ठा मुक्तlist_node अणु
+struct freelist_node {
 	atomic_t		refs;
-	काष्ठा मुक्तlist_node	*next;
-पूर्ण;
+	struct freelist_node	*next;
+};
 
-काष्ठा मुक्तlist_head अणु
-	काष्ठा मुक्तlist_node	*head;
-पूर्ण;
+struct freelist_head {
+	struct freelist_node	*head;
+};
 
-#घोषणा REFS_ON_FREELIST 0x80000000
-#घोषणा REFS_MASK	 0x7FFFFFFF
+#define REFS_ON_FREELIST 0x80000000
+#define REFS_MASK	 0x7FFFFFFF
 
-अटल अंतरभूत व्योम __मुक्तlist_add(काष्ठा मुक्तlist_node *node, काष्ठा मुक्तlist_head *list)
-अणु
+static inline void __freelist_add(struct freelist_node *node, struct freelist_head *list)
+{
 	/*
 	 * Since the refcount is zero, and nobody can increase it once it's
 	 * zero (except us, and we run only one copy of this method per node at
-	 * a समय, i.e. the single thपढ़ो हाल), then we know we can safely
-	 * change the next poपूर्णांकer of the node; however, once the refcount is
-	 * back above zero, then other thपढ़ोs could increase it (happens under
+	 * a time, i.e. the single thread case), then we know we can safely
+	 * change the next pointer of the node; however, once the refcount is
+	 * back above zero, then other threads could increase it (happens under
 	 * heavy contention, when the refcount goes to zero in between a load
 	 * and a refcount increment of a node in try_get, then back up to
-	 * something non-zero, then the refcount increment is करोne by the other
-	 * thपढ़ो) -- so अगर the CAS to add the node to the actual list fails,
-	 * decrese the refcount and leave the add operation to the next thपढ़ो
-	 * who माला_दो the refcount back to zero (which could be us, hence the
+	 * something non-zero, then the refcount increment is done by the other
+	 * thread) -- so if the CAS to add the node to the actual list fails,
+	 * decrese the refcount and leave the add operation to the next thread
+	 * who puts the refcount back to zero (which could be us, hence the
 	 * loop).
 	 */
-	काष्ठा मुक्तlist_node *head = READ_ONCE(list->head);
+	struct freelist_node *head = READ_ONCE(list->head);
 
-	क्रम (;;) अणु
+	for (;;) {
 		WRITE_ONCE(node->next, head);
 		atomic_set_release(&node->refs, 1);
 
-		अगर (!try_cmpxchg_release(&list->head, &head, node)) अणु
+		if (!try_cmpxchg_release(&list->head, &head, node)) {
 			/*
 			 * Hmm, the add failed, but we can only try again when
 			 * the refcount goes back to zero.
 			 */
-			अगर (atomic_fetch_add_release(REFS_ON_FREELIST - 1, &node->refs) == 1)
-				जारी;
-		पूर्ण
-		वापस;
-	पूर्ण
-पूर्ण
+			if (atomic_fetch_add_release(REFS_ON_FREELIST - 1, &node->refs) == 1)
+				continue;
+		}
+		return;
+	}
+}
 
-अटल अंतरभूत व्योम मुक्तlist_add(काष्ठा मुक्तlist_node *node, काष्ठा मुक्तlist_head *list)
-अणु
+static inline void freelist_add(struct freelist_node *node, struct freelist_head *list)
+{
 	/*
-	 * We know that the should-be-on-मुक्तlist bit is 0 at this poपूर्णांक, so
+	 * We know that the should-be-on-freelist bit is 0 at this point, so
 	 * it's safe to set it using a fetch_add.
 	 */
-	अगर (!atomic_fetch_add_release(REFS_ON_FREELIST, &node->refs)) अणु
+	if (!atomic_fetch_add_release(REFS_ON_FREELIST, &node->refs)) {
 		/*
 		 * Oh look! We were the last ones referencing this node, and we
-		 * know we want to add it to the मुक्त list, so let's करो it!
+		 * know we want to add it to the free list, so let's do it!
 		 */
-		__मुक्तlist_add(node, list);
-	पूर्ण
-पूर्ण
+		__freelist_add(node, list);
+	}
+}
 
-अटल अंतरभूत काष्ठा मुक्तlist_node *मुक्तlist_try_get(काष्ठा मुक्तlist_head *list)
-अणु
-	काष्ठा मुक्तlist_node *prev, *next, *head = smp_load_acquire(&list->head);
-	अचिन्हित पूर्णांक refs;
+static inline struct freelist_node *freelist_try_get(struct freelist_head *list)
+{
+	struct freelist_node *prev, *next, *head = smp_load_acquire(&list->head);
+	unsigned int refs;
 
-	जबतक (head) अणु
+	while (head) {
 		prev = head;
-		refs = atomic_पढ़ो(&head->refs);
-		अगर ((refs & REFS_MASK) == 0 ||
-		    !atomic_try_cmpxchg_acquire(&head->refs, &refs, refs+1)) अणु
+		refs = atomic_read(&head->refs);
+		if ((refs & REFS_MASK) == 0 ||
+		    !atomic_try_cmpxchg_acquire(&head->refs, &refs, refs+1)) {
 			head = smp_load_acquire(&list->head);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		/*
 		 * Good, reference count has been incremented (it wasn't at
-		 * zero), which means we can पढ़ो the next and not worry about
-		 * it changing between now and the समय we करो the CAS.
+		 * zero), which means we can read the next and not worry about
+		 * it changing between now and the time we do the CAS.
 		 */
 		next = READ_ONCE(head->next);
-		अगर (try_cmpxchg_acquire(&list->head, &head, next)) अणु
+		if (try_cmpxchg_acquire(&list->head, &head, next)) {
 			/*
 			 * Yay, got the node. This means it was on the list,
-			 * which means should-be-on-मुक्तlist must be false no
-			 * matter the refcount (because nobody अन्यथा knows it's
+			 * which means should-be-on-freelist must be false no
+			 * matter the refcount (because nobody else knows it's
 			 * been taken off yet, it can't have been put back on).
 			 */
-			WARN_ON_ONCE(atomic_पढ़ो(&head->refs) & REFS_ON_FREELIST);
+			WARN_ON_ONCE(atomic_read(&head->refs) & REFS_ON_FREELIST);
 
 			/*
-			 * Decrease refcount twice, once क्रम our ref, and once
-			 * क्रम the list's ref.
+			 * Decrease refcount twice, once for our ref, and once
+			 * for the list's ref.
 			 */
 			atomic_fetch_add(-2, &head->refs);
 
-			वापस head;
-		पूर्ण
+			return head;
+		}
 
 		/*
 		 * OK, the head must have changed on us, but we still need to decrement
 		 * the refcount we increased.
 		 */
 		refs = atomic_fetch_add(-1, &prev->refs);
-		अगर (refs == REFS_ON_FREELIST + 1)
-			__मुक्तlist_add(prev, list);
-	पूर्ण
+		if (refs == REFS_ON_FREELIST + 1)
+			__freelist_add(prev, list);
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-#पूर्ण_अगर /* FREELIST_H */
+#endif /* FREELIST_H */

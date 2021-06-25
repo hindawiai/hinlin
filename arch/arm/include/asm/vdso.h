@@ -1,32 +1,31 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __ASM_VDSO_H
-#घोषणा __ASM_VDSO_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __ASM_VDSO_H
+#define __ASM_VDSO_H
 
-#अगर_घोषित __KERNEL__
+#ifdef __KERNEL__
 
-#अगर_अघोषित __ASSEMBLY__
+#ifndef __ASSEMBLY__
 
-काष्ठा mm_काष्ठा;
+struct mm_struct;
 
-#अगर_घोषित CONFIG_VDSO
+#ifdef CONFIG_VDSO
 
-व्योम arm_install_vdso(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ addr);
+void arm_install_vdso(struct mm_struct *mm, unsigned long addr);
 
-बाह्य अचिन्हित पूर्णांक vdso_total_pages;
+extern unsigned int vdso_total_pages;
 
-#अन्यथा /* CONFIG_VDSO */
+#else /* CONFIG_VDSO */
 
-अटल अंतरभूत व्योम arm_install_vdso(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ addr)
-अणु
-पूर्ण
+static inline void arm_install_vdso(struct mm_struct *mm, unsigned long addr)
+{
+}
 
-#घोषणा vdso_total_pages 0
+#define vdso_total_pages 0
 
-#पूर्ण_अगर /* CONFIG_VDSO */
+#endif /* CONFIG_VDSO */
 
-#पूर्ण_अगर /* __ASSEMBLY__ */
+#endif /* __ASSEMBLY__ */
 
-#पूर्ण_अगर /* __KERNEL__ */
+#endif /* __KERNEL__ */
 
-#पूर्ण_अगर /* __ASM_VDSO_H */
+#endif /* __ASM_VDSO_H */

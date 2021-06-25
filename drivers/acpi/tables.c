@@ -1,449 +1,448 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  *  acpi_tables.c - ACPI Boot-Time Table Parsing
  *
- *  Copyright (C) 2001 Paul Diefenbaugh <paul.s.diefenbaugh@पूर्णांकel.com>
+ *  Copyright (C) 2001 Paul Diefenbaugh <paul.s.diefenbaugh@intel.com>
  */
 
-/* Uncomment next line to get verbose prपूर्णांकout */
-/* #घोषणा DEBUG */
-#घोषणा pr_fmt(fmt) "ACPI: " fmt
+/* Uncomment next line to get verbose printout */
+/* #define DEBUG */
+#define pr_fmt(fmt) "ACPI: " fmt
 
-#समावेश <linux/init.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/smp.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/types.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/acpi.h>
-#समावेश <linux/memblock.h>
-#समावेश <linux/earlycpपन.स>
-#समावेश <linux/initrd.h>
-#समावेश <linux/security.h>
-#समावेश "internal.h"
+#include <linux/init.h>
+#include <linux/kernel.h>
+#include <linux/smp.h>
+#include <linux/string.h>
+#include <linux/types.h>
+#include <linux/irq.h>
+#include <linux/errno.h>
+#include <linux/acpi.h>
+#include <linux/memblock.h>
+#include <linux/earlycpio.h>
+#include <linux/initrd.h>
+#include <linux/security.h>
+#include "internal.h"
 
-#अगर_घोषित CONFIG_ACPI_CUSTOM_DSDT
-#समावेश CONFIG_ACPI_CUSTOM_DSDT_खाता
-#पूर्ण_अगर
+#ifdef CONFIG_ACPI_CUSTOM_DSDT
+#include CONFIG_ACPI_CUSTOM_DSDT_FILE
+#endif
 
-#घोषणा ACPI_MAX_TABLES		128
+#define ACPI_MAX_TABLES		128
 
-अटल अक्षर *mps_पूर्णांकi_flags_polarity[] = अणु "dfl", "high", "res", "low" पूर्ण;
-अटल अक्षर *mps_पूर्णांकi_flags_trigger[] = अणु "dfl", "edge", "res", "level" पूर्ण;
+static char *mps_inti_flags_polarity[] = { "dfl", "high", "res", "low" };
+static char *mps_inti_flags_trigger[] = { "dfl", "edge", "res", "level" };
 
-अटल काष्ठा acpi_table_desc initial_tables[ACPI_MAX_TABLES] __initdata;
+static struct acpi_table_desc initial_tables[ACPI_MAX_TABLES] __initdata;
 
-अटल पूर्णांक acpi_apic_instance __initdata;
+static int acpi_apic_instance __initdata;
 
-क्रमागत acpi_subtable_type अणु
+enum acpi_subtable_type {
 	ACPI_SUBTABLE_COMMON,
 	ACPI_SUBTABLE_HMAT,
-पूर्ण;
+};
 
-काष्ठा acpi_subtable_entry अणु
-	जोड़ acpi_subtable_headers *hdr;
-	क्रमागत acpi_subtable_type type;
-पूर्ण;
+struct acpi_subtable_entry {
+	union acpi_subtable_headers *hdr;
+	enum acpi_subtable_type type;
+};
 
 /*
- * Disable table checksum verअगरication क्रम the early stage due to the size
+ * Disable table checksum verification for the early stage due to the size
  * limitation of the current x86 early mapping implementation.
  */
-अटल bool acpi_verअगरy_table_checksum __initdata = false;
+static bool acpi_verify_table_checksum __initdata = false;
 
-व्योम acpi_table_prपूर्णांक_madt_entry(काष्ठा acpi_subtable_header *header)
-अणु
-	अगर (!header)
-		वापस;
+void acpi_table_print_madt_entry(struct acpi_subtable_header *header)
+{
+	if (!header)
+		return;
 
-	चयन (header->type) अणु
+	switch (header->type) {
 
-	हाल ACPI_MADT_TYPE_LOCAL_APIC:
-		अणु
-			काष्ठा acpi_madt_local_apic *p =
-			    (काष्ठा acpi_madt_local_apic *)header;
+	case ACPI_MADT_TYPE_LOCAL_APIC:
+		{
+			struct acpi_madt_local_apic *p =
+			    (struct acpi_madt_local_apic *)header;
 			pr_debug("LAPIC (acpi_id[0x%02x] lapic_id[0x%02x] %s)\n",
 				 p->processor_id, p->id,
 				 (p->lapic_flags & ACPI_MADT_ENABLED) ? "enabled" : "disabled");
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	हाल ACPI_MADT_TYPE_LOCAL_X2APIC:
-		अणु
-			काष्ठा acpi_madt_local_x2apic *p =
-			    (काष्ठा acpi_madt_local_x2apic *)header;
+	case ACPI_MADT_TYPE_LOCAL_X2APIC:
+		{
+			struct acpi_madt_local_x2apic *p =
+			    (struct acpi_madt_local_x2apic *)header;
 			pr_debug("X2APIC (apic_id[0x%02x] uid[0x%02x] %s)\n",
 				 p->local_apic_id, p->uid,
 				 (p->lapic_flags & ACPI_MADT_ENABLED) ? "enabled" : "disabled");
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	हाल ACPI_MADT_TYPE_IO_APIC:
-		अणु
-			काष्ठा acpi_madt_io_apic *p =
-			    (काष्ठा acpi_madt_io_apic *)header;
+	case ACPI_MADT_TYPE_IO_APIC:
+		{
+			struct acpi_madt_io_apic *p =
+			    (struct acpi_madt_io_apic *)header;
 			pr_debug("IOAPIC (id[0x%02x] address[0x%08x] gsi_base[%d])\n",
 				 p->id, p->address, p->global_irq_base);
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	हाल ACPI_MADT_TYPE_INTERRUPT_OVERRIDE:
-		अणु
-			काष्ठा acpi_madt_पूर्णांकerrupt_override *p =
-			    (काष्ठा acpi_madt_पूर्णांकerrupt_override *)header;
+	case ACPI_MADT_TYPE_INTERRUPT_OVERRIDE:
+		{
+			struct acpi_madt_interrupt_override *p =
+			    (struct acpi_madt_interrupt_override *)header;
 			pr_info("INT_SRC_OVR (bus %d bus_irq %d global_irq %d %s %s)\n",
 				p->bus, p->source_irq, p->global_irq,
-				mps_पूर्णांकi_flags_polarity[p->पूर्णांकi_flags & ACPI_MADT_POLARITY_MASK],
-				mps_पूर्णांकi_flags_trigger[(p->पूर्णांकi_flags & ACPI_MADT_TRIGGER_MASK) >> 2]);
-			अगर (p->पूर्णांकi_flags  &
+				mps_inti_flags_polarity[p->inti_flags & ACPI_MADT_POLARITY_MASK],
+				mps_inti_flags_trigger[(p->inti_flags & ACPI_MADT_TRIGGER_MASK) >> 2]);
+			if (p->inti_flags  &
 			    ~(ACPI_MADT_POLARITY_MASK | ACPI_MADT_TRIGGER_MASK))
 				pr_info("INT_SRC_OVR unexpected reserved flags: 0x%x\n",
-					p->पूर्णांकi_flags  &
+					p->inti_flags  &
 					~(ACPI_MADT_POLARITY_MASK | ACPI_MADT_TRIGGER_MASK));
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	हाल ACPI_MADT_TYPE_NMI_SOURCE:
-		अणु
-			काष्ठा acpi_madt_nmi_source *p =
-			    (काष्ठा acpi_madt_nmi_source *)header;
+	case ACPI_MADT_TYPE_NMI_SOURCE:
+		{
+			struct acpi_madt_nmi_source *p =
+			    (struct acpi_madt_nmi_source *)header;
 			pr_info("NMI_SRC (%s %s global_irq %d)\n",
-				mps_पूर्णांकi_flags_polarity[p->पूर्णांकi_flags & ACPI_MADT_POLARITY_MASK],
-				mps_पूर्णांकi_flags_trigger[(p->पूर्णांकi_flags & ACPI_MADT_TRIGGER_MASK) >> 2],
+				mps_inti_flags_polarity[p->inti_flags & ACPI_MADT_POLARITY_MASK],
+				mps_inti_flags_trigger[(p->inti_flags & ACPI_MADT_TRIGGER_MASK) >> 2],
 				p->global_irq);
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	हाल ACPI_MADT_TYPE_LOCAL_APIC_NMI:
-		अणु
-			काष्ठा acpi_madt_local_apic_nmi *p =
-			    (काष्ठा acpi_madt_local_apic_nmi *)header;
+	case ACPI_MADT_TYPE_LOCAL_APIC_NMI:
+		{
+			struct acpi_madt_local_apic_nmi *p =
+			    (struct acpi_madt_local_apic_nmi *)header;
 			pr_info("LAPIC_NMI (acpi_id[0x%02x] %s %s lint[0x%x])\n",
 				p->processor_id,
-				mps_पूर्णांकi_flags_polarity[p->पूर्णांकi_flags & ACPI_MADT_POLARITY_MASK	],
-				mps_पूर्णांकi_flags_trigger[(p->पूर्णांकi_flags & ACPI_MADT_TRIGGER_MASK) >> 2],
-				p->lपूर्णांक);
-		पूर्ण
-		अवरोध;
+				mps_inti_flags_polarity[p->inti_flags & ACPI_MADT_POLARITY_MASK	],
+				mps_inti_flags_trigger[(p->inti_flags & ACPI_MADT_TRIGGER_MASK) >> 2],
+				p->lint);
+		}
+		break;
 
-	हाल ACPI_MADT_TYPE_LOCAL_X2APIC_NMI:
-		अणु
+	case ACPI_MADT_TYPE_LOCAL_X2APIC_NMI:
+		{
 			u16 polarity, trigger;
-			काष्ठा acpi_madt_local_x2apic_nmi *p =
-			    (काष्ठा acpi_madt_local_x2apic_nmi *)header;
+			struct acpi_madt_local_x2apic_nmi *p =
+			    (struct acpi_madt_local_x2apic_nmi *)header;
 
-			polarity = p->पूर्णांकi_flags & ACPI_MADT_POLARITY_MASK;
-			trigger = (p->पूर्णांकi_flags & ACPI_MADT_TRIGGER_MASK) >> 2;
+			polarity = p->inti_flags & ACPI_MADT_POLARITY_MASK;
+			trigger = (p->inti_flags & ACPI_MADT_TRIGGER_MASK) >> 2;
 
 			pr_info("X2APIC_NMI (uid[0x%02x] %s %s lint[0x%x])\n",
 				p->uid,
-				mps_पूर्णांकi_flags_polarity[polarity],
-				mps_पूर्णांकi_flags_trigger[trigger],
-				p->lपूर्णांक);
-		पूर्ण
-		अवरोध;
+				mps_inti_flags_polarity[polarity],
+				mps_inti_flags_trigger[trigger],
+				p->lint);
+		}
+		break;
 
-	हाल ACPI_MADT_TYPE_LOCAL_APIC_OVERRIDE:
-		अणु
-			काष्ठा acpi_madt_local_apic_override *p =
-			    (काष्ठा acpi_madt_local_apic_override *)header;
+	case ACPI_MADT_TYPE_LOCAL_APIC_OVERRIDE:
+		{
+			struct acpi_madt_local_apic_override *p =
+			    (struct acpi_madt_local_apic_override *)header;
 			pr_info("LAPIC_ADDR_OVR (address[%p])\n",
-				(व्योम *)(अचिन्हित दीर्घ)p->address);
-		पूर्ण
-		अवरोध;
+				(void *)(unsigned long)p->address);
+		}
+		break;
 
-	हाल ACPI_MADT_TYPE_IO_SAPIC:
-		अणु
-			काष्ठा acpi_madt_io_sapic *p =
-			    (काष्ठा acpi_madt_io_sapic *)header;
+	case ACPI_MADT_TYPE_IO_SAPIC:
+		{
+			struct acpi_madt_io_sapic *p =
+			    (struct acpi_madt_io_sapic *)header;
 			pr_debug("IOSAPIC (id[0x%x] address[%p] gsi_base[%d])\n",
-				 p->id, (व्योम *)(अचिन्हित दीर्घ)p->address,
+				 p->id, (void *)(unsigned long)p->address,
 				 p->global_irq_base);
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	हाल ACPI_MADT_TYPE_LOCAL_SAPIC:
-		अणु
-			काष्ठा acpi_madt_local_sapic *p =
-			    (काष्ठा acpi_madt_local_sapic *)header;
+	case ACPI_MADT_TYPE_LOCAL_SAPIC:
+		{
+			struct acpi_madt_local_sapic *p =
+			    (struct acpi_madt_local_sapic *)header;
 			pr_debug("LSAPIC (acpi_id[0x%02x] lsapic_id[0x%02x] lsapic_eid[0x%02x] %s)\n",
 				 p->processor_id, p->id, p->eid,
 				 (p->lapic_flags & ACPI_MADT_ENABLED) ? "enabled" : "disabled");
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	हाल ACPI_MADT_TYPE_INTERRUPT_SOURCE:
-		अणु
-			काष्ठा acpi_madt_पूर्णांकerrupt_source *p =
-			    (काष्ठा acpi_madt_पूर्णांकerrupt_source *)header;
+	case ACPI_MADT_TYPE_INTERRUPT_SOURCE:
+		{
+			struct acpi_madt_interrupt_source *p =
+			    (struct acpi_madt_interrupt_source *)header;
 			pr_info("PLAT_INT_SRC (%s %s type[0x%x] id[0x%04x] eid[0x%x] iosapic_vector[0x%x] global_irq[0x%x]\n",
-				mps_पूर्णांकi_flags_polarity[p->पूर्णांकi_flags & ACPI_MADT_POLARITY_MASK],
-				mps_पूर्णांकi_flags_trigger[(p->पूर्णांकi_flags & ACPI_MADT_TRIGGER_MASK) >> 2],
+				mps_inti_flags_polarity[p->inti_flags & ACPI_MADT_POLARITY_MASK],
+				mps_inti_flags_trigger[(p->inti_flags & ACPI_MADT_TRIGGER_MASK) >> 2],
 				p->type, p->id, p->eid, p->io_sapic_vector,
 				p->global_irq);
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	हाल ACPI_MADT_TYPE_GENERIC_INTERRUPT:
-		अणु
-			काष्ठा acpi_madt_generic_पूर्णांकerrupt *p =
-				(काष्ठा acpi_madt_generic_पूर्णांकerrupt *)header;
+	case ACPI_MADT_TYPE_GENERIC_INTERRUPT:
+		{
+			struct acpi_madt_generic_interrupt *p =
+				(struct acpi_madt_generic_interrupt *)header;
 			pr_debug("GICC (acpi_id[0x%04x] address[%llx] MPIDR[0x%llx] %s)\n",
 				 p->uid, p->base_address,
 				 p->arm_mpidr,
 				 (p->flags & ACPI_MADT_ENABLED) ? "enabled" : "disabled");
 
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	हाल ACPI_MADT_TYPE_GENERIC_DISTRIBUTOR:
-		अणु
-			काष्ठा acpi_madt_generic_distributor *p =
-				(काष्ठा acpi_madt_generic_distributor *)header;
+	case ACPI_MADT_TYPE_GENERIC_DISTRIBUTOR:
+		{
+			struct acpi_madt_generic_distributor *p =
+				(struct acpi_madt_generic_distributor *)header;
 			pr_debug("GIC Distributor (gic_id[0x%04x] address[%llx] gsi_base[%d])\n",
 				 p->gic_id, p->base_address,
 				 p->global_irq_base);
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	शेष:
+	default:
 		pr_warn("Found unsupported MADT entry (type = 0x%x)\n",
 			header->type);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-अटल अचिन्हित दीर्घ __init
-acpi_get_entry_type(काष्ठा acpi_subtable_entry *entry)
-अणु
-	चयन (entry->type) अणु
-	हाल ACPI_SUBTABLE_COMMON:
-		वापस entry->hdr->common.type;
-	हाल ACPI_SUBTABLE_HMAT:
-		वापस entry->hdr->hmat.type;
-	पूर्ण
-	वापस 0;
-पूर्ण
+static unsigned long __init
+acpi_get_entry_type(struct acpi_subtable_entry *entry)
+{
+	switch (entry->type) {
+	case ACPI_SUBTABLE_COMMON:
+		return entry->hdr->common.type;
+	case ACPI_SUBTABLE_HMAT:
+		return entry->hdr->hmat.type;
+	}
+	return 0;
+}
 
-अटल अचिन्हित दीर्घ __init
-acpi_get_entry_length(काष्ठा acpi_subtable_entry *entry)
-अणु
-	चयन (entry->type) अणु
-	हाल ACPI_SUBTABLE_COMMON:
-		वापस entry->hdr->common.length;
-	हाल ACPI_SUBTABLE_HMAT:
-		वापस entry->hdr->hmat.length;
-	पूर्ण
-	वापस 0;
-पूर्ण
+static unsigned long __init
+acpi_get_entry_length(struct acpi_subtable_entry *entry)
+{
+	switch (entry->type) {
+	case ACPI_SUBTABLE_COMMON:
+		return entry->hdr->common.length;
+	case ACPI_SUBTABLE_HMAT:
+		return entry->hdr->hmat.length;
+	}
+	return 0;
+}
 
-अटल अचिन्हित दीर्घ __init
-acpi_get_subtable_header_length(काष्ठा acpi_subtable_entry *entry)
-अणु
-	चयन (entry->type) अणु
-	हाल ACPI_SUBTABLE_COMMON:
-		वापस माप(entry->hdr->common);
-	हाल ACPI_SUBTABLE_HMAT:
-		वापस माप(entry->hdr->hmat);
-	पूर्ण
-	वापस 0;
-पूर्ण
+static unsigned long __init
+acpi_get_subtable_header_length(struct acpi_subtable_entry *entry)
+{
+	switch (entry->type) {
+	case ACPI_SUBTABLE_COMMON:
+		return sizeof(entry->hdr->common);
+	case ACPI_SUBTABLE_HMAT:
+		return sizeof(entry->hdr->hmat);
+	}
+	return 0;
+}
 
-अटल क्रमागत acpi_subtable_type __init
-acpi_get_subtable_type(अक्षर *id)
-अणु
-	अगर (म_भेदन(id, ACPI_SIG_HMAT, 4) == 0)
-		वापस ACPI_SUBTABLE_HMAT;
-	वापस ACPI_SUBTABLE_COMMON;
-पूर्ण
+static enum acpi_subtable_type __init
+acpi_get_subtable_type(char *id)
+{
+	if (strncmp(id, ACPI_SIG_HMAT, 4) == 0)
+		return ACPI_SUBTABLE_HMAT;
+	return ACPI_SUBTABLE_COMMON;
+}
 
 /**
- * acpi_parse_entries_array - क्रम each proc_num find a suitable subtable
+ * acpi_parse_entries_array - for each proc_num find a suitable subtable
  *
- * @id: table id (क्रम debugging purposes)
+ * @id: table id (for debugging purposes)
  * @table_size: size of the root table
- * @table_header: where करोes the table start?
- * @proc: array of acpi_subtable_proc काष्ठा containing entry id
+ * @table_header: where does the table start?
+ * @proc: array of acpi_subtable_proc struct containing entry id
  *        and associated handler with it
  * @proc_num: how big proc is?
  * @max_entries: how many entries can we process?
  *
  * For each proc_num find a subtable with proc->id and run proc->handler
- * on it. Assumption is that there's only single handler क्रम particular
+ * on it. Assumption is that there's only single handler for particular
  * entry id.
  *
  * The table_size is not the size of the complete ACPI table (the length
- * field in the header काष्ठा), but only the size of the root table; i.e.,
+ * field in the header struct), but only the size of the root table; i.e.,
  * the offset from the very first byte of the complete ACPI table, to the
  * first byte of the very first subtable.
  *
- * On success वापसs sum of all matching entries क्रम all proc handlers.
- * Otherwise, -ENODEV or -EINVAL is वापसed.
+ * On success returns sum of all matching entries for all proc handlers.
+ * Otherwise, -ENODEV or -EINVAL is returned.
  */
-अटल पूर्णांक __init acpi_parse_entries_array(अक्षर *id, अचिन्हित दीर्घ table_size,
-		काष्ठा acpi_table_header *table_header,
-		काष्ठा acpi_subtable_proc *proc, पूर्णांक proc_num,
-		अचिन्हित पूर्णांक max_entries)
-अणु
-	काष्ठा acpi_subtable_entry entry;
-	अचिन्हित दीर्घ table_end, subtable_len, entry_len;
-	पूर्णांक count = 0;
-	पूर्णांक errs = 0;
-	पूर्णांक i;
+static int __init acpi_parse_entries_array(char *id, unsigned long table_size,
+		struct acpi_table_header *table_header,
+		struct acpi_subtable_proc *proc, int proc_num,
+		unsigned int max_entries)
+{
+	struct acpi_subtable_entry entry;
+	unsigned long table_end, subtable_len, entry_len;
+	int count = 0;
+	int errs = 0;
+	int i;
 
-	table_end = (अचिन्हित दीर्घ)table_header + table_header->length;
+	table_end = (unsigned long)table_header + table_header->length;
 
-	/* Parse all entries looking क्रम a match. */
+	/* Parse all entries looking for a match. */
 
 	entry.type = acpi_get_subtable_type(id);
-	entry.hdr = (जोड़ acpi_subtable_headers *)
-	    ((अचिन्हित दीर्घ)table_header + table_size);
+	entry.hdr = (union acpi_subtable_headers *)
+	    ((unsigned long)table_header + table_size);
 	subtable_len = acpi_get_subtable_header_length(&entry);
 
-	जबतक (((अचिन्हित दीर्घ)entry.hdr) + subtable_len  < table_end) अणु
-		अगर (max_entries && count >= max_entries)
-			अवरोध;
+	while (((unsigned long)entry.hdr) + subtable_len  < table_end) {
+		if (max_entries && count >= max_entries)
+			break;
 
-		क्रम (i = 0; i < proc_num; i++) अणु
-			अगर (acpi_get_entry_type(&entry) != proc[i].id)
-				जारी;
-			अगर (!proc[i].handler ||
-			     (!errs && proc[i].handler(entry.hdr, table_end))) अणु
+		for (i = 0; i < proc_num; i++) {
+			if (acpi_get_entry_type(&entry) != proc[i].id)
+				continue;
+			if (!proc[i].handler ||
+			     (!errs && proc[i].handler(entry.hdr, table_end))) {
 				errs++;
-				जारी;
-			पूर्ण
+				continue;
+			}
 
 			proc[i].count++;
-			अवरोध;
-		पूर्ण
-		अगर (i != proc_num)
+			break;
+		}
+		if (i != proc_num)
 			count++;
 
 		/*
-		 * If entry->length is 0, अवरोध from this loop to aव्योम
+		 * If entry->length is 0, break from this loop to avoid
 		 * infinite loop.
 		 */
 		entry_len = acpi_get_entry_length(&entry);
-		अगर (entry_len == 0) अणु
+		if (entry_len == 0) {
 			pr_err("[%4.4s:0x%02x] Invalid zero length\n", id, proc->id);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
-		entry.hdr = (जोड़ acpi_subtable_headers *)
-		    ((अचिन्हित दीर्घ)entry.hdr + entry_len);
-	पूर्ण
+		entry.hdr = (union acpi_subtable_headers *)
+		    ((unsigned long)entry.hdr + entry_len);
+	}
 
-	अगर (max_entries && count > max_entries) अणु
+	if (max_entries && count > max_entries) {
 		pr_warn("[%4.4s:0x%02x] found the maximum %i entries\n",
 			id, proc->id, count);
-	पूर्ण
+	}
 
-	वापस errs ? -EINVAL : count;
-पूर्ण
+	return errs ? -EINVAL : count;
+}
 
-पूर्णांक __init acpi_table_parse_entries_array(अक्षर *id,
-			 अचिन्हित दीर्घ table_size,
-			 काष्ठा acpi_subtable_proc *proc, पूर्णांक proc_num,
-			 अचिन्हित पूर्णांक max_entries)
-अणु
-	काष्ठा acpi_table_header *table_header = शून्य;
-	पूर्णांक count;
+int __init acpi_table_parse_entries_array(char *id,
+			 unsigned long table_size,
+			 struct acpi_subtable_proc *proc, int proc_num,
+			 unsigned int max_entries)
+{
+	struct acpi_table_header *table_header = NULL;
+	int count;
 	u32 instance = 0;
 
-	अगर (acpi_disabled)
-		वापस -ENODEV;
+	if (acpi_disabled)
+		return -ENODEV;
 
-	अगर (!id)
-		वापस -EINVAL;
+	if (!id)
+		return -EINVAL;
 
-	अगर (!table_size)
-		वापस -EINVAL;
+	if (!table_size)
+		return -EINVAL;
 
-	अगर (!म_भेदन(id, ACPI_SIG_MADT, 4))
+	if (!strncmp(id, ACPI_SIG_MADT, 4))
 		instance = acpi_apic_instance;
 
 	acpi_get_table(id, instance, &table_header);
-	अगर (!table_header) अणु
+	if (!table_header) {
 		pr_warn("%4.4s not present\n", id);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	count = acpi_parse_entries_array(id, table_size, table_header,
 			proc, proc_num, max_entries);
 
 	acpi_put_table(table_header);
-	वापस count;
-पूर्ण
+	return count;
+}
 
-पूर्णांक __init acpi_table_parse_entries(अक्षर *id,
-			अचिन्हित दीर्घ table_size,
-			पूर्णांक entry_id,
+int __init acpi_table_parse_entries(char *id,
+			unsigned long table_size,
+			int entry_id,
 			acpi_tbl_entry_handler handler,
-			अचिन्हित पूर्णांक max_entries)
-अणु
-	काष्ठा acpi_subtable_proc proc = अणु
+			unsigned int max_entries)
+{
+	struct acpi_subtable_proc proc = {
 		.id		= entry_id,
 		.handler	= handler,
-	पूर्ण;
+	};
 
-	वापस acpi_table_parse_entries_array(id, table_size, &proc, 1,
+	return acpi_table_parse_entries_array(id, table_size, &proc, 1,
 						max_entries);
-पूर्ण
+}
 
-पूर्णांक __init acpi_table_parse_madt(क्रमागत acpi_madt_type id,
-		      acpi_tbl_entry_handler handler, अचिन्हित पूर्णांक max_entries)
-अणु
-	वापस acpi_table_parse_entries(ACPI_SIG_MADT,
-					    माप(काष्ठा acpi_table_madt), id,
+int __init acpi_table_parse_madt(enum acpi_madt_type id,
+		      acpi_tbl_entry_handler handler, unsigned int max_entries)
+{
+	return acpi_table_parse_entries(ACPI_SIG_MADT,
+					    sizeof(struct acpi_table_madt), id,
 					    handler, max_entries);
-पूर्ण
+}
 
 /**
  * acpi_table_parse - find table with @id, run @handler on it
  * @id: table id to find
  * @handler: handler to run
  *
- * Scan the ACPI System Descriptor Table (STD) क्रम a table matching @id,
+ * Scan the ACPI System Descriptor Table (STD) for a table matching @id,
  * run @handler on it.
  *
- * Return 0 अगर table found, -त्रुटि_सं अगर not.
+ * Return 0 if table found, -errno if not.
  */
-पूर्णांक __init acpi_table_parse(अक्षर *id, acpi_tbl_table_handler handler)
-अणु
-	काष्ठा acpi_table_header *table = शून्य;
+int __init acpi_table_parse(char *id, acpi_tbl_table_handler handler)
+{
+	struct acpi_table_header *table = NULL;
 
-	अगर (acpi_disabled)
-		वापस -ENODEV;
+	if (acpi_disabled)
+		return -ENODEV;
 
-	अगर (!id || !handler)
-		वापस -EINVAL;
+	if (!id || !handler)
+		return -EINVAL;
 
-	अगर (म_भेदन(id, ACPI_SIG_MADT, 4) == 0)
+	if (strncmp(id, ACPI_SIG_MADT, 4) == 0)
 		acpi_get_table(id, acpi_apic_instance, &table);
-	अन्यथा
+	else
 		acpi_get_table(id, 0, &table);
 
-	अगर (table) अणु
+	if (table) {
 		handler(table);
 		acpi_put_table(table);
-		वापस 0;
-	पूर्ण अन्यथा
-		वापस -ENODEV;
-पूर्ण
+		return 0;
+	} else
+		return -ENODEV;
+}
 
 /*
  * The BIOS is supposed to supply a single APIC/MADT,
  * but some report two.  Provide a knob to use either.
- * (करोn't you wish instance 0 and 1 were not the same?)
+ * (don't you wish instance 0 and 1 were not the same?)
  */
-अटल व्योम __init check_multiple_madt(व्योम)
-अणु
-	काष्ठा acpi_table_header *table = शून्य;
+static void __init check_multiple_madt(void)
+{
+	struct acpi_table_header *table = NULL;
 
 	acpi_get_table(ACPI_SIG_MADT, 2, &table);
-	अगर (table) अणु
+	if (table) {
 		pr_warn("BIOS bug: multiple APIC/MADT found, using %d\n",
 			acpi_apic_instance);
 		pr_warn("If \"acpi_apic_instance=%d\" works better, "
@@ -451,36 +450,36 @@ acpi_get_subtable_type(अक्षर *id)
 			acpi_apic_instance ? 0 : 2);
 		acpi_put_table(table);
 
-	पूर्ण अन्यथा
+	} else
 		acpi_apic_instance = 0;
 
-	वापस;
-पूर्ण
+	return;
+}
 
-अटल व्योम acpi_table_taपूर्णांक(काष्ठा acpi_table_header *table)
-अणु
+static void acpi_table_taint(struct acpi_table_header *table)
+{
 	pr_warn("Override [%4.4s-%8.8s], this is unsafe: tainting kernel\n",
 		table->signature, table->oem_table_id);
-	add_taपूर्णांक(TAINT_OVERRIDDEN_ACPI_TABLE, LOCKDEP_NOW_UNRELIABLE);
-पूर्ण
+	add_taint(TAINT_OVERRIDDEN_ACPI_TABLE, LOCKDEP_NOW_UNRELIABLE);
+}
 
-#अगर_घोषित CONFIG_ACPI_TABLE_UPGRADE
-अटल u64 acpi_tables_addr;
-अटल पूर्णांक all_tables_size;
+#ifdef CONFIG_ACPI_TABLE_UPGRADE
+static u64 acpi_tables_addr;
+static int all_tables_size;
 
 /* Copied from acpica/tbutils.c:acpi_tb_checksum() */
-अटल u8 __init acpi_table_checksum(u8 *buffer, u32 length)
-अणु
+static u8 __init acpi_table_checksum(u8 *buffer, u32 length)
+{
 	u8 sum = 0;
 	u8 *end = buffer + length;
 
-	जबतक (buffer < end)
+	while (buffer < end)
 		sum = (u8) (sum + *(buffer++));
-	वापस sum;
-पूर्ण
+	return sum;
+}
 
 /* All but ACPI_SIG_RSDP and ACPI_SIG_FACS: */
-अटल स्थिर अक्षर table_sigs[][ACPI_NAMESEG_SIZE] __initस्थिर = अणु
+static const char table_sigs[][ACPI_NAMESEG_SIZE] __initconst = {
 	ACPI_SIG_BERT, ACPI_SIG_BGRT, ACPI_SIG_CPEP, ACPI_SIG_ECDT,
 	ACPI_SIG_EINJ, ACPI_SIG_ERST, ACPI_SIG_HEST, ACPI_SIG_MADT,
 	ACPI_SIG_MSCT, ACPI_SIG_SBST, ACPI_SIG_SLIT, ACPI_SIG_SRAT,
@@ -491,72 +490,72 @@ acpi_get_subtable_type(अक्षर *id)
 	ACPI_SIG_WDDT, ACPI_SIG_WDRT, ACPI_SIG_DSDT, ACPI_SIG_FADT,
 	ACPI_SIG_PSDT, ACPI_SIG_RSDT, ACPI_SIG_XSDT, ACPI_SIG_SSDT,
 	ACPI_SIG_IORT, ACPI_SIG_NFIT, ACPI_SIG_HMAT, ACPI_SIG_PPTT,
-	ACPI_SIG_NHLT पूर्ण;
+	ACPI_SIG_NHLT };
 
-#घोषणा ACPI_HEADER_SIZE माप(काष्ठा acpi_table_header)
+#define ACPI_HEADER_SIZE sizeof(struct acpi_table_header)
 
-#घोषणा NR_ACPI_INITRD_TABLES 64
-अटल काष्ठा cpio_data __initdata acpi_initrd_files[NR_ACPI_INITRD_TABLES];
-अटल DECLARE_BITMAP(acpi_initrd_installed, NR_ACPI_INITRD_TABLES);
+#define NR_ACPI_INITRD_TABLES 64
+static struct cpio_data __initdata acpi_initrd_files[NR_ACPI_INITRD_TABLES];
+static DECLARE_BITMAP(acpi_initrd_installed, NR_ACPI_INITRD_TABLES);
 
-#घोषणा MAP_CHUNK_SIZE   (NR_FIX_BTMAPS << PAGE_SHIFT)
+#define MAP_CHUNK_SIZE   (NR_FIX_BTMAPS << PAGE_SHIFT)
 
-व्योम __init acpi_table_upgrade(व्योम)
-अणु
-	व्योम *data;
-	माप_प्रकार size;
-	पूर्णांक sig, no, table_nr = 0, total_offset = 0;
-	दीर्घ offset = 0;
-	काष्ठा acpi_table_header *table;
-	अक्षर cpio_path[32] = "kernel/firmware/acpi/";
-	काष्ठा cpio_data file;
+void __init acpi_table_upgrade(void)
+{
+	void *data;
+	size_t size;
+	int sig, no, table_nr = 0, total_offset = 0;
+	long offset = 0;
+	struct acpi_table_header *table;
+	char cpio_path[32] = "kernel/firmware/acpi/";
+	struct cpio_data file;
 
-	अगर (IS_ENABLED(CONFIG_ACPI_TABLE_OVERRIDE_VIA_BUILTIN_INITRD)) अणु
+	if (IS_ENABLED(CONFIG_ACPI_TABLE_OVERRIDE_VIA_BUILTIN_INITRD)) {
 		data = __initramfs_start;
 		size = __initramfs_size;
-	पूर्ण अन्यथा अणु
-		data = (व्योम *)initrd_start;
+	} else {
+		data = (void *)initrd_start;
 		size = initrd_end - initrd_start;
-	पूर्ण
+	}
 
-	अगर (data == शून्य || size == 0)
-		वापस;
+	if (data == NULL || size == 0)
+		return;
 
-	क्रम (no = 0; no < NR_ACPI_INITRD_TABLES; no++) अणु
+	for (no = 0; no < NR_ACPI_INITRD_TABLES; no++) {
 		file = find_cpio_data(cpio_path, data, size, &offset);
-		अगर (!file.data)
-			अवरोध;
+		if (!file.data)
+			break;
 
 		data += offset;
 		size -= offset;
 
-		अगर (file.size < माप(काष्ठा acpi_table_header)) अणु
+		if (file.size < sizeof(struct acpi_table_header)) {
 			pr_err("ACPI OVERRIDE: Table smaller than ACPI header [%s%s]\n",
 				cpio_path, file.name);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		table = file.data;
 
-		क्रम (sig = 0; sig < ARRAY_SIZE(table_sigs); sig++)
-			अगर (!स_भेद(table->signature, table_sigs[sig], 4))
-				अवरोध;
+		for (sig = 0; sig < ARRAY_SIZE(table_sigs); sig++)
+			if (!memcmp(table->signature, table_sigs[sig], 4))
+				break;
 
-		अगर (sig >= ARRAY_SIZE(table_sigs)) अणु
+		if (sig >= ARRAY_SIZE(table_sigs)) {
 			pr_err("ACPI OVERRIDE: Unknown signature [%s%s]\n",
 				cpio_path, file.name);
-			जारी;
-		पूर्ण
-		अगर (file.size != table->length) अणु
+			continue;
+		}
+		if (file.size != table->length) {
 			pr_err("ACPI OVERRIDE: File length does not match table length [%s%s]\n",
 				cpio_path, file.name);
-			जारी;
-		पूर्ण
-		अगर (acpi_table_checksum(file.data, table->length)) अणु
+			continue;
+		}
+		if (acpi_table_checksum(file.data, table->length)) {
 			pr_err("ACPI OVERRIDE: Bad table checksum [%s%s]\n",
 				cpio_path, file.name);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		pr_info("%4.4s ACPI table found in initrd [%s%s][0x%x]\n",
 			table->signature, cpio_path, file.name, table->length);
@@ -565,26 +564,26 @@ acpi_get_subtable_type(अक्षर *id)
 		acpi_initrd_files[table_nr].data = file.data;
 		acpi_initrd_files[table_nr].size = file.size;
 		table_nr++;
-	पूर्ण
-	अगर (table_nr == 0)
-		वापस;
+	}
+	if (table_nr == 0)
+		return;
 
-	अगर (security_locked_करोwn(LOCKDOWN_ACPI_TABLES)) अणु
+	if (security_locked_down(LOCKDOWN_ACPI_TABLES)) {
 		pr_notice("kernel is locked down, ignoring table override\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	acpi_tables_addr =
 		memblock_find_in_range(0, ACPI_TABLE_UPGRADE_MAX_PHYS,
 				       all_tables_size, PAGE_SIZE);
-	अगर (!acpi_tables_addr) अणु
+	if (!acpi_tables_addr) {
 		WARN_ON(1);
-		वापस;
-	पूर्ण
+		return;
+	}
 	/*
-	 * Only calling e820_add_reserve करोes not work and the
+	 * Only calling e820_add_reserve does not work and the
 	 * tables are invalid (memory got used) later.
-	 * memblock_reserve works as expected and the tables won't get modअगरied.
+	 * memblock_reserve works as expected and the tables won't get modified.
 	 * But it's not enough on X86 because ioremap will
 	 * complain later (used by acpi_os_map_memory) that the pages
 	 * that should get mapped are not marked "reserved".
@@ -595,78 +594,78 @@ acpi_get_subtable_type(अक्षर *id)
 	arch_reserve_mem_area(acpi_tables_addr, all_tables_size);
 
 	/*
-	 * early_ioremap only can remap 256k one समय. If we map all
-	 * tables one समय, we will hit the limit. Need to map chunks
+	 * early_ioremap only can remap 256k one time. If we map all
+	 * tables one time, we will hit the limit. Need to map chunks
 	 * one by one during copying the same as that in relocate_initrd().
 	 */
-	क्रम (no = 0; no < table_nr; no++) अणु
-		अचिन्हित अक्षर *src_p = acpi_initrd_files[no].data;
+	for (no = 0; no < table_nr; no++) {
+		unsigned char *src_p = acpi_initrd_files[no].data;
 		phys_addr_t size = acpi_initrd_files[no].size;
 		phys_addr_t dest_addr = acpi_tables_addr + total_offset;
 		phys_addr_t slop, clen;
-		अक्षर *dest_p;
+		char *dest_p;
 
 		total_offset += size;
 
-		जबतक (size) अणु
+		while (size) {
 			slop = dest_addr & ~PAGE_MASK;
 			clen = size;
-			अगर (clen > MAP_CHUNK_SIZE - slop)
+			if (clen > MAP_CHUNK_SIZE - slop)
 				clen = MAP_CHUNK_SIZE - slop;
 			dest_p = early_memremap(dest_addr & PAGE_MASK,
 						clen + slop);
-			स_नकल(dest_p + slop, src_p, clen);
+			memcpy(dest_p + slop, src_p, clen);
 			early_memunmap(dest_p, clen + slop);
 			src_p += clen;
 			dest_addr += clen;
 			size -= clen;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल acpi_status
-acpi_table_initrd_override(काष्ठा acpi_table_header *existing_table,
+static acpi_status
+acpi_table_initrd_override(struct acpi_table_header *existing_table,
 			   acpi_physical_address *address, u32 *length)
-अणु
-	पूर्णांक table_offset = 0;
-	पूर्णांक table_index = 0;
-	काष्ठा acpi_table_header *table;
+{
+	int table_offset = 0;
+	int table_index = 0;
+	struct acpi_table_header *table;
 	u32 table_length;
 
 	*length = 0;
 	*address = 0;
-	अगर (!acpi_tables_addr)
-		वापस AE_OK;
+	if (!acpi_tables_addr)
+		return AE_OK;
 
-	जबतक (table_offset + ACPI_HEADER_SIZE <= all_tables_size) अणु
+	while (table_offset + ACPI_HEADER_SIZE <= all_tables_size) {
 		table = acpi_os_map_memory(acpi_tables_addr + table_offset,
 					   ACPI_HEADER_SIZE);
-		अगर (table_offset + table->length > all_tables_size) अणु
+		if (table_offset + table->length > all_tables_size) {
 			acpi_os_unmap_memory(table, ACPI_HEADER_SIZE);
 			WARN_ON(1);
-			वापस AE_OK;
-		पूर्ण
+			return AE_OK;
+		}
 
 		table_length = table->length;
 
 		/* Only override tables matched */
-		अगर (स_भेद(existing_table->signature, table->signature, 4) ||
-		    स_भेद(table->oem_id, existing_table->oem_id,
+		if (memcmp(existing_table->signature, table->signature, 4) ||
+		    memcmp(table->oem_id, existing_table->oem_id,
 			   ACPI_OEM_ID_SIZE) ||
-		    स_भेद(table->oem_table_id, existing_table->oem_table_id,
-			   ACPI_OEM_TABLE_ID_SIZE)) अणु
+		    memcmp(table->oem_table_id, existing_table->oem_table_id,
+			   ACPI_OEM_TABLE_ID_SIZE)) {
 			acpi_os_unmap_memory(table, ACPI_HEADER_SIZE);
-			जाओ next_table;
-		पूर्ण
+			goto next_table;
+		}
 		/*
-		 * Mark the table to aव्योम being used in
+		 * Mark the table to avoid being used in
 		 * acpi_table_initrd_scan() and check the revision.
 		 */
-		अगर (test_and_set_bit(table_index, acpi_initrd_installed) ||
-		    existing_table->oem_revision >= table->oem_revision) अणु
+		if (test_and_set_bit(table_index, acpi_initrd_installed) ||
+		    existing_table->oem_revision >= table->oem_revision) {
 			acpi_os_unmap_memory(table, ACPI_HEADER_SIZE);
-			जाओ next_table;
-		पूर्ण
+			goto next_table;
+		}
 
 		*length = table_length;
 		*address = acpi_tables_addr + table_offset;
@@ -674,51 +673,51 @@ acpi_table_initrd_override(काष्ठा acpi_table_header *existing_table,
 			table->signature, table->oem_id,
 			table->oem_table_id);
 		acpi_os_unmap_memory(table, ACPI_HEADER_SIZE);
-		अवरोध;
+		break;
 
 next_table:
 		table_offset += table_length;
 		table_index++;
-	पूर्ण
-	वापस AE_OK;
-पूर्ण
+	}
+	return AE_OK;
+}
 
-अटल व्योम __init acpi_table_initrd_scan(व्योम)
-अणु
-	पूर्णांक table_offset = 0;
-	पूर्णांक table_index = 0;
+static void __init acpi_table_initrd_scan(void)
+{
+	int table_offset = 0;
+	int table_index = 0;
 	u32 table_length;
-	काष्ठा acpi_table_header *table;
+	struct acpi_table_header *table;
 
-	अगर (!acpi_tables_addr)
-		वापस;
+	if (!acpi_tables_addr)
+		return;
 
-	जबतक (table_offset + ACPI_HEADER_SIZE <= all_tables_size) अणु
+	while (table_offset + ACPI_HEADER_SIZE <= all_tables_size) {
 		table = acpi_os_map_memory(acpi_tables_addr + table_offset,
 					   ACPI_HEADER_SIZE);
-		अगर (table_offset + table->length > all_tables_size) अणु
+		if (table_offset + table->length > all_tables_size) {
 			acpi_os_unmap_memory(table, ACPI_HEADER_SIZE);
 			WARN_ON(1);
-			वापस;
-		पूर्ण
+			return;
+		}
 
 		table_length = table->length;
 
-		/* Skip RSDT/XSDT which should only be used क्रम override */
-		अगर (ACPI_COMPARE_NAMESEG(table->signature, ACPI_SIG_RSDT) ||
-		    ACPI_COMPARE_NAMESEG(table->signature, ACPI_SIG_XSDT)) अणु
+		/* Skip RSDT/XSDT which should only be used for override */
+		if (ACPI_COMPARE_NAMESEG(table->signature, ACPI_SIG_RSDT) ||
+		    ACPI_COMPARE_NAMESEG(table->signature, ACPI_SIG_XSDT)) {
 			acpi_os_unmap_memory(table, ACPI_HEADER_SIZE);
-			जाओ next_table;
-		पूर्ण
+			goto next_table;
+		}
 		/*
-		 * Mark the table to aव्योम being used in
+		 * Mark the table to avoid being used in
 		 * acpi_table_initrd_override(). Though this is not possible
 		 * because override is disabled in acpi_install_table().
 		 */
-		अगर (test_and_set_bit(table_index, acpi_initrd_installed)) अणु
+		if (test_and_set_bit(table_index, acpi_initrd_installed)) {
 			acpi_os_unmap_memory(table, ACPI_HEADER_SIZE);
-			जाओ next_table;
-		पूर्ण
+			goto next_table;
+		}
 
 		pr_info("Table Upgrade: install [%4.4s-%6.6s-%8.8s]\n",
 			table->signature, table->oem_id,
@@ -728,151 +727,151 @@ next_table:
 next_table:
 		table_offset += table_length;
 		table_index++;
-	पूर्ण
-पूर्ण
-#अन्यथा
-अटल acpi_status
-acpi_table_initrd_override(काष्ठा acpi_table_header *existing_table,
+	}
+}
+#else
+static acpi_status
+acpi_table_initrd_override(struct acpi_table_header *existing_table,
 			   acpi_physical_address *address,
 			   u32 *table_length)
-अणु
+{
 	*table_length = 0;
 	*address = 0;
-	वापस AE_OK;
-पूर्ण
+	return AE_OK;
+}
 
-अटल व्योम __init acpi_table_initrd_scan(व्योम)
-अणु
-पूर्ण
-#पूर्ण_अगर /* CONFIG_ACPI_TABLE_UPGRADE */
+static void __init acpi_table_initrd_scan(void)
+{
+}
+#endif /* CONFIG_ACPI_TABLE_UPGRADE */
 
 acpi_status
-acpi_os_physical_table_override(काष्ठा acpi_table_header *existing_table,
+acpi_os_physical_table_override(struct acpi_table_header *existing_table,
 				acpi_physical_address *address,
 				u32 *table_length)
-अणु
-	वापस acpi_table_initrd_override(existing_table, address,
+{
+	return acpi_table_initrd_override(existing_table, address,
 					  table_length);
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_ACPI_CUSTOM_DSDT
-अटल व्योम *amlcode __attribute__ ((weakref("AmlCode")));
-अटल व्योम *dsdt_amlcode __attribute__ ((weakref("dsdt_aml_code")));
-#पूर्ण_अगर
+#ifdef CONFIG_ACPI_CUSTOM_DSDT
+static void *amlcode __attribute__ ((weakref("AmlCode")));
+static void *dsdt_amlcode __attribute__ ((weakref("dsdt_aml_code")));
+#endif
 
-acpi_status acpi_os_table_override(काष्ठा acpi_table_header *existing_table,
-		       काष्ठा acpi_table_header **new_table)
-अणु
-	अगर (!existing_table || !new_table)
-		वापस AE_BAD_PARAMETER;
+acpi_status acpi_os_table_override(struct acpi_table_header *existing_table,
+		       struct acpi_table_header **new_table)
+{
+	if (!existing_table || !new_table)
+		return AE_BAD_PARAMETER;
 
-	*new_table = शून्य;
+	*new_table = NULL;
 
-#अगर_घोषित CONFIG_ACPI_CUSTOM_DSDT
-	अगर (!म_भेदन(existing_table->signature, "DSDT", 4)) अणु
-		*new_table = (काष्ठा acpi_table_header *)&amlcode;
-		अगर (!(*new_table))
-			*new_table = (काष्ठा acpi_table_header *)&dsdt_amlcode;
-	पूर्ण
-#पूर्ण_अगर
-	अगर (*new_table != शून्य)
-		acpi_table_taपूर्णांक(existing_table);
-	वापस AE_OK;
-पूर्ण
+#ifdef CONFIG_ACPI_CUSTOM_DSDT
+	if (!strncmp(existing_table->signature, "DSDT", 4)) {
+		*new_table = (struct acpi_table_header *)&amlcode;
+		if (!(*new_table))
+			*new_table = (struct acpi_table_header *)&dsdt_amlcode;
+	}
+#endif
+	if (*new_table != NULL)
+		acpi_table_taint(existing_table);
+	return AE_OK;
+}
 
 /*
  * acpi_locate_initial_tables()
  *
  * find RSDP, find and checksum SDT/XSDT.
- * checksum all tables, prपूर्णांक SDT/XSDT
+ * checksum all tables, print SDT/XSDT
  *
  * result: sdt_entry[] is initialized
  */
 
-पूर्णांक __init acpi_locate_initial_tables(व्योम)
-अणु
+int __init acpi_locate_initial_tables(void)
+{
 	acpi_status status;
 
-	अगर (acpi_verअगरy_table_checksum) अणु
+	if (acpi_verify_table_checksum) {
 		pr_info("Early table checksum verification enabled\n");
 		acpi_gbl_enable_table_validation = TRUE;
-	पूर्ण अन्यथा अणु
+	} else {
 		pr_info("Early table checksum verification disabled\n");
 		acpi_gbl_enable_table_validation = FALSE;
-	पूर्ण
+	}
 
 	status = acpi_initialize_tables(initial_tables, ACPI_MAX_TABLES, 0);
-	अगर (ACPI_FAILURE(status))
-		वापस -EINVAL;
+	if (ACPI_FAILURE(status))
+		return -EINVAL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम __init acpi_reserve_initial_tables(व्योम)
-अणु
-	पूर्णांक i;
+void __init acpi_reserve_initial_tables(void)
+{
+	int i;
 
-	क्रम (i = 0; i < ACPI_MAX_TABLES; i++) अणु
-		काष्ठा acpi_table_desc *table_desc = &initial_tables[i];
+	for (i = 0; i < ACPI_MAX_TABLES; i++) {
+		struct acpi_table_desc *table_desc = &initial_tables[i];
 		u64 start = table_desc->address;
 		u64 size = table_desc->length;
 
-		अगर (!start || !size)
-			अवरोध;
+		if (!start || !size)
+			break;
 
 		pr_info("Reserving %4s table memory at [mem 0x%llx-0x%llx]\n",
 			table_desc->signature.ascii, start, start + size - 1);
 
 		memblock_reserve(start, size);
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम __init acpi_table_init_complete(व्योम)
-अणु
+void __init acpi_table_init_complete(void)
+{
 	acpi_table_initrd_scan();
 	check_multiple_madt();
-पूर्ण
+}
 
-पूर्णांक __init acpi_table_init(व्योम)
-अणु
-	पूर्णांक ret;
+int __init acpi_table_init(void)
+{
+	int ret;
 
 	ret = acpi_locate_initial_tables();
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	acpi_table_init_complete();
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __init acpi_parse_apic_instance(अक्षर *str)
-अणु
-	अगर (!str)
-		वापस -EINVAL;
+static int __init acpi_parse_apic_instance(char *str)
+{
+	if (!str)
+		return -EINVAL;
 
-	अगर (kstrtoपूर्णांक(str, 0, &acpi_apic_instance))
-		वापस -EINVAL;
+	if (kstrtoint(str, 0, &acpi_apic_instance))
+		return -EINVAL;
 
 	pr_notice("Shall use APIC/MADT table %d\n", acpi_apic_instance);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 early_param("acpi_apic_instance", acpi_parse_apic_instance);
 
-अटल पूर्णांक __init acpi_क्रमce_table_verअगरication_setup(अक्षर *s)
-अणु
-	acpi_verअगरy_table_checksum = true;
+static int __init acpi_force_table_verification_setup(char *s)
+{
+	acpi_verify_table_checksum = true;
 
-	वापस 0;
-पूर्ण
-early_param("acpi_force_table_verification", acpi_क्रमce_table_verअगरication_setup);
+	return 0;
+}
+early_param("acpi_force_table_verification", acpi_force_table_verification_setup);
 
-अटल पूर्णांक __init acpi_क्रमce_32bit_fadt_addr(अक्षर *s)
-अणु
+static int __init acpi_force_32bit_fadt_addr(char *s)
+{
 	pr_info("Forcing 32 Bit FADT addresses\n");
 	acpi_gbl_use32_bit_fadt_addresses = TRUE;
 
-	वापस 0;
-पूर्ण
-early_param("acpi_force_32bit_fadt_addr", acpi_क्रमce_32bit_fadt_addr);
+	return 0;
+}
+early_param("acpi_force_32bit_fadt_addr", acpi_force_32bit_fadt_addr);

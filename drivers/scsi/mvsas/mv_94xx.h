@@ -1,36 +1,35 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Marvell 88SE94xx hardware specअगरic head file
+ * Marvell 88SE94xx hardware specific head file
  *
  * Copyright 2007 Red Hat, Inc.
  * Copyright 2008 Marvell. <kewei@marvell.com>
  * Copyright 2009-2011 Marvell. <yuxiangl@marvell.com>
 */
 
-#अगर_अघोषित _MVS94XX_REG_H_
-#घोषणा _MVS94XX_REG_H_
+#ifndef _MVS94XX_REG_H_
+#define _MVS94XX_REG_H_
 
-#समावेश <linux/types.h>
+#include <linux/types.h>
 
-#घोषणा MAX_LINK_RATE		SAS_LINK_RATE_6_0_GBPS
+#define MAX_LINK_RATE		SAS_LINK_RATE_6_0_GBPS
 
-क्रमागत VANIR_REVISION_ID अणु
+enum VANIR_REVISION_ID {
 	VANIR_A0_REV		= 0xA0,
 	VANIR_B0_REV		= 0x01,
 	VANIR_C0_REV		= 0x02,
 	VANIR_C1_REV		= 0x03,
 	VANIR_C2_REV		= 0xC2,
-पूर्ण;
+};
 
-क्रमागत host_रेजिस्टरs अणु
+enum host_registers {
 	MVS_HST_CHIP_CONFIG	= 0x10104,	/* chip configuration */
-पूर्ण;
+};
 
-क्रमागत hw_रेजिस्टरs अणु
+enum hw_registers {
 	MVS_GBL_CTL		= 0x04,  /* global control */
 	MVS_GBL_INT_STAT	= 0x00,  /* global irq status */
-	MVS_GBL_PI		= 0x0C,  /* ports implemented biपंचांगask */
+	MVS_GBL_PI		= 0x0C,  /* ports implemented bitmask */
 
 	MVS_PHY_CTL		= 0x40,  /* SOC PHY Control */
 	MVS_PORTS_IMP		= 0x9C,  /* SOC Port Implemented */
@@ -49,33 +48,33 @@
 	MVS_TX_LO		= 0x124, /* TX (delivery) ring addr */
 	MVS_TX_HI		= 0x128,
 
-	MVS_TX_PROD_IDX		= 0x12C, /* TX producer poपूर्णांकer */
-	MVS_TX_CONS_IDX		= 0x130, /* TX consumer poपूर्णांकer (RO) */
+	MVS_TX_PROD_IDX		= 0x12C, /* TX producer pointer */
+	MVS_TX_CONS_IDX		= 0x130, /* TX consumer pointer (RO) */
 	MVS_RX_CFG		= 0x134, /* RX configuration */
 	MVS_RX_LO		= 0x138, /* RX (completion) ring addr */
 	MVS_RX_HI		= 0x13C,
-	MVS_RX_CONS_IDX		= 0x140, /* RX consumer poपूर्णांकer (RO) */
+	MVS_RX_CONS_IDX		= 0x140, /* RX consumer pointer (RO) */
 
 	MVS_INT_COAL		= 0x148, /* Int coalescing config */
-	MVS_INT_COAL_TMOUT	= 0x14C, /* Int coalescing समयout */
-	MVS_INT_STAT		= 0x150, /* Central पूर्णांक status */
-	MVS_INT_MASK		= 0x154, /* Central पूर्णांक enable */
-	MVS_INT_STAT_SRS_0	= 0x158, /* SATA रेजिस्टर set status */
+	MVS_INT_COAL_TMOUT	= 0x14C, /* Int coalescing timeout */
+	MVS_INT_STAT		= 0x150, /* Central int status */
+	MVS_INT_MASK		= 0x154, /* Central int enable */
+	MVS_INT_STAT_SRS_0	= 0x158, /* SATA register set status */
 	MVS_INT_MASK_SRS_0	= 0x15C,
 	MVS_INT_STAT_SRS_1	= 0x160,
 	MVS_INT_MASK_SRS_1	= 0x164,
-	MVS_NON_NCQ_ERR_0	= 0x168, /* SRS Non-specअगरic NCQ Error */
+	MVS_NON_NCQ_ERR_0	= 0x168, /* SRS Non-specific NCQ Error */
 	MVS_NON_NCQ_ERR_1	= 0x16C,
-	MVS_CMD_ADDR		= 0x170, /* Command रेजिस्टर port (addr) */
-	MVS_CMD_DATA		= 0x174, /* Command रेजिस्टर port (data) */
+	MVS_CMD_ADDR		= 0x170, /* Command register port (addr) */
+	MVS_CMD_DATA		= 0x174, /* Command register port (data) */
 	MVS_MEM_PARITY_ERR	= 0x178, /* Memory parity error */
 
 					 /* ports 1-3 follow after this */
-	MVS_P0_INT_STAT		= 0x180, /* port0 पूर्णांकerrupt status */
-	MVS_P0_INT_MASK		= 0x184, /* port0 पूर्णांकerrupt mask */
+	MVS_P0_INT_STAT		= 0x180, /* port0 interrupt status */
+	MVS_P0_INT_MASK		= 0x184, /* port0 interrupt mask */
 					 /* ports 5-7 follow after this */
-	MVS_P4_INT_STAT		= 0x1A0, /* Port4 पूर्णांकerrupt status */
-	MVS_P4_INT_MASK		= 0x1A4, /* Port4 पूर्णांकerrupt enable mask */
+	MVS_P4_INT_STAT		= 0x1A0, /* Port4 interrupt status */
+	MVS_P4_INT_MASK		= 0x1A4, /* Port4 interrupt enable mask */
 
 					 /* ports 1-3 follow after this */
 	MVS_P0_SER_CTLSTAT	= 0x1D0, /* port0 serial control/status */
@@ -83,8 +82,8 @@
 	MVS_P4_SER_CTLSTAT	= 0x1E0, /* port4 serial control/status */
 
 					 /* ports 1-3 follow after this */
-	MVS_P0_CFG_ADDR		= 0x200, /* port0 phy रेजिस्टर address */
-	MVS_P0_CFG_DATA		= 0x204, /* port0 phy रेजिस्टर data */
+	MVS_P0_CFG_ADDR		= 0x200, /* port0 phy register address */
+	MVS_P0_CFG_DATA		= 0x204, /* port0 phy register data */
 					 /* ports 5-7 follow after this */
 	MVS_P4_CFG_ADDR		= 0x220, /* Port4 config address */
 	MVS_P4_CFG_DATA		= 0x224, /* Port4 config data */
@@ -99,17 +98,17 @@
 	MVS_PA_VSR_ADDR		= 0x290, /* All port VSR addr */
 	MVS_PA_VSR_PORT		= 0x294, /* All port VSR data */
 	MVS_COMMAND_ACTIVE	= 0x300,
-पूर्ण;
+};
 
-क्रमागत pci_cfg_रेजिस्टरs अणु
+enum pci_cfg_registers {
 	PCR_PHY_CTL		= 0x40,
 	PCR_PHY_CTL2		= 0x90,
 	PCR_DEV_CTRL		= 0x78,
 	PCR_LINK_STAT		= 0x82,
-पूर्ण;
+};
 
-/*  SAS/SATA Venकरोr Specअगरic Port Registers */
-क्रमागत sas_sata_vsp_regs अणु
+/*  SAS/SATA Vendor Specific Port Registers */
+enum sas_sata_vsp_regs {
 	VSR_PHY_STAT		= 0x00 * 4, /* Phy Interrupt Status */
 	VSR_PHY_MODE1		= 0x01 * 4, /* phy Interrupt Enable */
 	VSR_PHY_MODE2		= 0x02 * 4, /* Phy Configuration */
@@ -127,17 +126,17 @@
 	VSR_PHY_FFE_CONTROL	= 0x10C,
 	VSR_PHY_DFE_UPDATE_CRTL	= 0x110,
 	VSR_REF_CLOCK_CRTL	= 0x1A0,
-पूर्ण;
+};
 
-क्रमागत chip_रेजिस्टर_bits अणु
+enum chip_register_bits {
 	PHY_MIN_SPP_PHYS_LINK_RATE_MASK = (0x7 << 8),
 	PHY_MAX_SPP_PHYS_LINK_RATE_MASK = (0x7 << 12),
 	PHY_NEG_SPP_PHYS_LINK_RATE_MASK_OFFSET = (16),
 	PHY_NEG_SPP_PHYS_LINK_RATE_MASK =
 			(0x3 << PHY_NEG_SPP_PHYS_LINK_RATE_MASK_OFFSET),
-पूर्ण;
+};
 
-क्रमागत pci_पूर्णांकerrupt_cause अणु
+enum pci_interrupt_cause {
 	/*  MAIN_IRQ_CAUSE (R10200) Bits*/
 	MVS_IRQ_COM_IN_I2O_IOP0        = (1 << 0),
 	MVS_IRQ_COM_IN_I2O_IOP1        = (1 << 1),
@@ -168,11 +167,11 @@
 	MVS_IRQ_COM_ERR                = (1 << 29),
 	MVS_IRQ_I2O_ERR                = (1 << 30),
 	MVS_IRQ_PCIE_ERR               = (1 << 31),
-पूर्ण;
+};
 
-जोड़ reg_phy_cfg अणु
+union reg_phy_cfg {
 	u32 v;
-	काष्ठा अणु
+	struct {
 		u32 phy_reset:1;
 		u32 sas_support:1;
 		u32 sata_support:1;
@@ -202,64 +201,64 @@
 		u32 bypass_oob:1;
 		u32 disable_phy:1;
 		u32 rsvd:8;
-	पूर्ण u;
-पूर्ण;
+	} u;
+};
 
-#घोषणा MAX_SG_ENTRY		255
+#define MAX_SG_ENTRY		255
 
-काष्ठा mvs_prd_imt अणु
-#अगर_अघोषित __BIG_ENDIAN
+struct mvs_prd_imt {
+#ifndef __BIG_ENDIAN
 	__le32			len:22;
 	u8			_r_a:2;
 	u8			misc_ctl:4;
-	u8			पूर्णांकer_sel:4;
-#अन्यथा
-	u32			पूर्णांकer_sel:4;
+	u8			inter_sel:4;
+#else
+	u32			inter_sel:4;
 	u32			misc_ctl:4;
 	u32			_r_a:2;
 	u32			len:22;
-#पूर्ण_अगर
-पूर्ण;
+#endif
+};
 
-काष्ठा mvs_prd अणु
+struct mvs_prd {
 	/* 64-bit buffer address */
 	__le64			addr;
 	/* 22-bit length */
 	__le32			im_len;
-पूर्ण __attribute__ ((packed));
+} __attribute__ ((packed));
 
-क्रमागत sgpio_रेजिस्टरs अणु
+enum sgpio_registers {
 	MVS_SGPIO_HOST_OFFSET	= 0x100,	/* offset between hosts */
 
 	MVS_SGPIO_CFG0	= 0xc200,
 	MVS_SGPIO_CFG0_ENABLE	= (1 << 0),	/* enable pins */
 	MVS_SGPIO_CFG0_BLINKB	= (1 << 1),	/* blink generators */
 	MVS_SGPIO_CFG0_BLINKA	= (1 << 2),
-	MVS_SGPIO_CFG0_INVSCLK	= (1 << 3),	/* invert संकेत? */
+	MVS_SGPIO_CFG0_INVSCLK	= (1 << 3),	/* invert signal? */
 	MVS_SGPIO_CFG0_INVSLOAD	= (1 << 4),
 	MVS_SGPIO_CFG0_INVSDOUT	= (1 << 5),
 	MVS_SGPIO_CFG0_SLOAD_FALLEDGE = (1 << 6),	/* rise/fall edge? */
 	MVS_SGPIO_CFG0_SDOUT_FALLEDGE = (1 << 7),
 	MVS_SGPIO_CFG0_SDIN_RISEEDGE = (1 << 8),
 	MVS_SGPIO_CFG0_MAN_BITLEN_SHIFT = 18,	/* bits/frame manual mode */
-	MVS_SGPIO_CFG0_AUT_BITLEN_SHIFT = 24,	/* bits/frame स्वतः mode */
+	MVS_SGPIO_CFG0_AUT_BITLEN_SHIFT = 24,	/* bits/frame auto mode */
 
-	MVS_SGPIO_CFG1	= 0xc204,	/* blink timing रेजिस्टर */
-	MVS_SGPIO_CFG1_LOWA_SHIFT	= 0,	/* A off समय */
-	MVS_SGPIO_CFG1_HIA_SHIFT	= 4,	/* A on समय */
-	MVS_SGPIO_CFG1_LOWB_SHIFT	= 8,	/* B off समय */
-	MVS_SGPIO_CFG1_HIB_SHIFT	= 12,	/* B on समय */
-	MVS_SGPIO_CFG1_MAXACTON_SHIFT	= 16,	/* max activity on समय */
+	MVS_SGPIO_CFG1	= 0xc204,	/* blink timing register */
+	MVS_SGPIO_CFG1_LOWA_SHIFT	= 0,	/* A off time */
+	MVS_SGPIO_CFG1_HIA_SHIFT	= 4,	/* A on time */
+	MVS_SGPIO_CFG1_LOWB_SHIFT	= 8,	/* B off time */
+	MVS_SGPIO_CFG1_HIB_SHIFT	= 12,	/* B on time */
+	MVS_SGPIO_CFG1_MAXACTON_SHIFT	= 16,	/* max activity on time */
 
-		/* क्रमce activity off समय */
+		/* force activity off time */
 	MVS_SGPIO_CFG1_FORCEACTOFF_SHIFT	= 20,
-		/* stretch activity on समय */
+		/* stretch activity on time */
 	MVS_SGPIO_CFG1_STRCHACTON_SHIFT	= 24,
-		/* stretch activiity off समय */
+		/* stretch activiity off time */
 	MVS_SGPIO_CFG1_STRCHACTOFF_SHIFT	= 28,
 
 
-	MVS_SGPIO_CFG2	= 0xc208,	/* घड़ी speed रेजिस्टर */
+	MVS_SGPIO_CFG2	= 0xc208,	/* clock speed register */
 	MVS_SGPIO_CFG2_CLK_SHIFT	= 0,
 	MVS_SGPIO_CFG2_BLINK_SHIFT	= 20,
 
@@ -273,20 +272,20 @@
 	MVS_SGPIO_DCTRL_ERR_SHIFT	= 0,
 	MVS_SGPIO_DCTRL_LOC_SHIFT	= 3,
 	MVS_SGPIO_DCTRL_ACT_SHIFT	= 5,
-पूर्ण;
+};
 
-क्रमागत sgpio_led_status अणु
+enum sgpio_led_status {
 	LED_OFF	= 0,
 	LED_ON	= 1,
 	LED_BLINKA	= 2,
 	LED_BLINKA_INV	= 3,
 	LED_BLINKA_SOF	= 4,
-	LED_BLINKA_खातापूर्ण	= 5,
+	LED_BLINKA_EOF	= 5,
 	LED_BLINKB	= 6,
 	LED_BLINKB_INV	= 7,
-पूर्ण;
+};
 
-#घोषणा DEFAULT_SGPIO_BITS ((LED_BLINKA_SOF << \
+#define DEFAULT_SGPIO_BITS ((LED_BLINKA_SOF << \
 				MVS_SGPIO_DCTRL_ACT_SHIFT) << (8 * 3) | \
 			(LED_BLINKA_SOF << \
 				MVS_SGPIO_DCTRL_ACT_SHIFT) << (8 * 2) | \
@@ -296,39 +295,39 @@
 				MVS_SGPIO_DCTRL_ACT_SHIFT) << (8 * 0))
 
 /*
- * these रेजिस्टरs are accessed through port venकरोr
- * specअगरic address/data रेजिस्टरs
+ * these registers are accessed through port vendor
+ * specific address/data registers
  */
-क्रमागत sas_sata_phy_regs अणु
+enum sas_sata_phy_regs {
 	GENERATION_1_SETTING		= 0x118,
 	GENERATION_1_2_SETTING		= 0x11C,
 	GENERATION_2_3_SETTING		= 0x120,
 	GENERATION_3_4_SETTING		= 0x124,
-पूर्ण;
+};
 
-#घोषणा SPI_CTRL_REG_94XX           	0xc800
-#घोषणा SPI_ADDR_REG_94XX            	0xc804
-#घोषणा SPI_WR_DATA_REG_94XX         0xc808
-#घोषणा SPI_RD_DATA_REG_94XX         	0xc80c
-#घोषणा SPI_CTRL_READ_94XX         	(1U << 2)
-#घोषणा SPI_ADDR_VLD_94XX         	(1U << 1)
-#घोषणा SPI_CTRL_SpiStart_94XX     	(1U << 0)
+#define SPI_CTRL_REG_94XX           	0xc800
+#define SPI_ADDR_REG_94XX            	0xc804
+#define SPI_WR_DATA_REG_94XX         0xc808
+#define SPI_RD_DATA_REG_94XX         	0xc80c
+#define SPI_CTRL_READ_94XX         	(1U << 2)
+#define SPI_ADDR_VLD_94XX         	(1U << 1)
+#define SPI_CTRL_SpiStart_94XX     	(1U << 0)
 
-अटल अंतरभूत पूर्णांक
+static inline int
 mv_ffc64(u64 v)
-अणु
+{
 	u64 x = ~v;
-	वापस x ? __ffs64(x) : -1;
-पूर्ण
+	return x ? __ffs64(x) : -1;
+}
 
-#घोषणा r_reg_set_enable(i) \
+#define r_reg_set_enable(i) \
 	(((i) > 31) ? mr32(MVS_STP_REG_SET_1) : \
 	mr32(MVS_STP_REG_SET_0))
 
-#घोषणा w_reg_set_enable(i, पंचांगp) \
-	(((i) > 31) ? mw32(MVS_STP_REG_SET_1, पंचांगp) : \
-	mw32(MVS_STP_REG_SET_0, पंचांगp))
+#define w_reg_set_enable(i, tmp) \
+	(((i) > 31) ? mw32(MVS_STP_REG_SET_1, tmp) : \
+	mw32(MVS_STP_REG_SET_0, tmp))
 
-बाह्य स्थिर काष्ठा mvs_dispatch mvs_94xx_dispatch;
-#पूर्ण_अगर
+extern const struct mvs_dispatch mvs_94xx_dispatch;
+#endif
 

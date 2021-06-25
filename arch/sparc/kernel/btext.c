@@ -1,219 +1,218 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Procedures क्रम drawing on the screen early on in the boot process.
+ * Procedures for drawing on the screen early on in the boot process.
  *
  * Benjamin Herrenschmidt <benh@kernel.crashing.org>
  */
-#समावेश <linux/kernel.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/init.h>
-#समावेश <linux/console.h>
+#include <linux/kernel.h>
+#include <linux/string.h>
+#include <linux/init.h>
+#include <linux/console.h>
 
-#समावेश <यंत्र/btext.h>
-#समावेश <यंत्र/oplib.h>
-#समावेश <यंत्र/पन.स>
+#include <asm/btext.h>
+#include <asm/oplib.h>
+#include <asm/io.h>
 
-#घोषणा NO_SCROLL
+#define NO_SCROLL
 
-#अगर_अघोषित NO_SCROLL
-अटल व्योम scrollscreen(व्योम);
-#पूर्ण_अगर
+#ifndef NO_SCROLL
+static void scrollscreen(void);
+#endif
 
-अटल व्योम draw_byte(अचिन्हित अक्षर c, दीर्घ locX, दीर्घ locY);
-अटल व्योम draw_byte_32(अचिन्हित अक्षर *bits, अचिन्हित पूर्णांक *base, पूर्णांक rb);
-अटल व्योम draw_byte_16(अचिन्हित अक्षर *bits, अचिन्हित पूर्णांक *base, पूर्णांक rb);
-अटल व्योम draw_byte_8(अचिन्हित अक्षर *bits, अचिन्हित पूर्णांक *base, पूर्णांक rb);
+static void draw_byte(unsigned char c, long locX, long locY);
+static void draw_byte_32(unsigned char *bits, unsigned int *base, int rb);
+static void draw_byte_16(unsigned char *bits, unsigned int *base, int rb);
+static void draw_byte_8(unsigned char *bits, unsigned int *base, int rb);
 
-#घोषणा __क्रमce_data __section(".data")
+#define __force_data __section(".data")
 
-अटल पूर्णांक g_loc_X __क्रमce_data;
-अटल पूर्णांक g_loc_Y __क्रमce_data;
-अटल पूर्णांक g_max_loc_X __क्रमce_data;
-अटल पूर्णांक g_max_loc_Y __क्रमce_data;
+static int g_loc_X __force_data;
+static int g_loc_Y __force_data;
+static int g_max_loc_X __force_data;
+static int g_max_loc_Y __force_data;
 
-अटल पूर्णांक dispDeviceRowBytes __क्रमce_data;
-अटल पूर्णांक dispDeviceDepth  __क्रमce_data;
-अटल पूर्णांक dispDeviceRect[4] __क्रमce_data;
-अटल अचिन्हित अक्षर *dispDeviceBase __क्रमce_data;
+static int dispDeviceRowBytes __force_data;
+static int dispDeviceDepth  __force_data;
+static int dispDeviceRect[4] __force_data;
+static unsigned char *dispDeviceBase __force_data;
 
-#घोषणा cmapsz	(16*256)
+#define cmapsz	(16*256)
 
-अटल अचिन्हित अक्षर vga_font[cmapsz];
+static unsigned char vga_font[cmapsz];
 
-अटल पूर्णांक __init btext_initialize(phandle node)
-अणु
-	अचिन्हित पूर्णांक width, height, depth, pitch;
-	अचिन्हित दीर्घ address = 0;
+static int __init btext_initialize(phandle node)
+{
+	unsigned int width, height, depth, pitch;
+	unsigned long address = 0;
 	u32 prop;
 
-	अगर (prom_getproperty(node, "width", (अक्षर *)&width, 4) < 0)
-		वापस -EINVAL;
-	अगर (prom_getproperty(node, "height", (अक्षर *)&height, 4) < 0)
-		वापस -EINVAL;
-	अगर (prom_getproperty(node, "depth", (अक्षर *)&depth, 4) < 0)
-		वापस -EINVAL;
+	if (prom_getproperty(node, "width", (char *)&width, 4) < 0)
+		return -EINVAL;
+	if (prom_getproperty(node, "height", (char *)&height, 4) < 0)
+		return -EINVAL;
+	if (prom_getproperty(node, "depth", (char *)&depth, 4) < 0)
+		return -EINVAL;
 	pitch = width * ((depth + 7) / 8);
 
-	अगर (prom_getproperty(node, "linebytes", (अक्षर *)&prop, 4) >= 0 &&
+	if (prom_getproperty(node, "linebytes", (char *)&prop, 4) >= 0 &&
 	    prop != 0xffffffffu)
 		pitch = prop;
 
-	अगर (pitch == 1)
+	if (pitch == 1)
 		pitch = 0x1000;
 
-	अगर (prom_getproperty(node, "address", (अक्षर *)&prop, 4) >= 0)
+	if (prom_getproperty(node, "address", (char *)&prop, 4) >= 0)
 		address = prop;
 
-	/* FIXME: Add support क्रम PCI reg properties. Right now, only
+	/* FIXME: Add support for PCI reg properties. Right now, only
 	 * reliable on macs
 	 */
-	अगर (address == 0)
-		वापस -EINVAL;
+	if (address == 0)
+		return -EINVAL;
 
 	g_loc_X = 0;
 	g_loc_Y = 0;
 	g_max_loc_X = width / 8;
 	g_max_loc_Y = height / 16;
-	dispDeviceBase = (अचिन्हित अक्षर *)address;
+	dispDeviceBase = (unsigned char *)address;
 	dispDeviceRowBytes = pitch;
 	dispDeviceDepth = depth == 15 ? 16 : depth;
 	dispDeviceRect[0] = dispDeviceRect[1] = 0;
 	dispDeviceRect[2] = width;
 	dispDeviceRect[3] = height;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Calc the base address of a given poपूर्णांक (x,y) */
-अटल अचिन्हित अक्षर * calc_base(पूर्णांक x, पूर्णांक y)
-अणु
-	अचिन्हित अक्षर *base = dispDeviceBase;
+/* Calc the base address of a given point (x,y) */
+static unsigned char * calc_base(int x, int y)
+{
+	unsigned char *base = dispDeviceBase;
 
 	base += (x + dispDeviceRect[0]) * (dispDeviceDepth >> 3);
 	base += (y + dispDeviceRect[1]) * dispDeviceRowBytes;
-	वापस base;
-पूर्ण
+	return base;
+}
 
-अटल व्योम btext_clearscreen(व्योम)
-अणु
-	अचिन्हित पूर्णांक *base	= (अचिन्हित पूर्णांक *)calc_base(0, 0);
-	अचिन्हित दीर्घ width 	= ((dispDeviceRect[2] - dispDeviceRect[0]) *
+static void btext_clearscreen(void)
+{
+	unsigned int *base	= (unsigned int *)calc_base(0, 0);
+	unsigned long width 	= ((dispDeviceRect[2] - dispDeviceRect[0]) *
 					(dispDeviceDepth >> 3)) >> 2;
-	पूर्णांक i,j;
+	int i,j;
 
-	क्रम (i=0; i<(dispDeviceRect[3] - dispDeviceRect[1]); i++)
-	अणु
-		अचिन्हित पूर्णांक *ptr = base;
-		क्रम(j=width; j; --j)
+	for (i=0; i<(dispDeviceRect[3] - dispDeviceRect[1]); i++)
+	{
+		unsigned int *ptr = base;
+		for(j=width; j; --j)
 			*(ptr++) = 0;
 		base += (dispDeviceRowBytes >> 2);
-	पूर्ण
-पूर्ण
+	}
+}
 
-#अगर_अघोषित NO_SCROLL
-अटल व्योम scrollscreen(व्योम)
-अणु
-	अचिन्हित पूर्णांक *src     	= (अचिन्हित पूर्णांक *)calc_base(0,16);
-	अचिन्हित पूर्णांक *dst     	= (अचिन्हित पूर्णांक *)calc_base(0,0);
-	अचिन्हित दीर्घ width    	= ((dispDeviceRect[2] - dispDeviceRect[0]) *
+#ifndef NO_SCROLL
+static void scrollscreen(void)
+{
+	unsigned int *src     	= (unsigned int *)calc_base(0,16);
+	unsigned int *dst     	= (unsigned int *)calc_base(0,0);
+	unsigned long width    	= ((dispDeviceRect[2] - dispDeviceRect[0]) *
 				   (dispDeviceDepth >> 3)) >> 2;
-	पूर्णांक i,j;
+	int i,j;
 
-	क्रम (i=0; i<(dispDeviceRect[3] - dispDeviceRect[1] - 16); i++)
-	अणु
-		अचिन्हित पूर्णांक *src_ptr = src;
-		अचिन्हित पूर्णांक *dst_ptr = dst;
-		क्रम(j=width; j; --j)
+	for (i=0; i<(dispDeviceRect[3] - dispDeviceRect[1] - 16); i++)
+	{
+		unsigned int *src_ptr = src;
+		unsigned int *dst_ptr = dst;
+		for(j=width; j; --j)
 			*(dst_ptr++) = *(src_ptr++);
 		src += (dispDeviceRowBytes >> 2);
 		dst += (dispDeviceRowBytes >> 2);
-	पूर्ण
-	क्रम (i=0; i<16; i++)
-	अणु
-		अचिन्हित पूर्णांक *dst_ptr = dst;
-		क्रम(j=width; j; --j)
+	}
+	for (i=0; i<16; i++)
+	{
+		unsigned int *dst_ptr = dst;
+		for(j=width; j; --j)
 			*(dst_ptr++) = 0;
 		dst += (dispDeviceRowBytes >> 2);
-	पूर्ण
-पूर्ण
-#पूर्ण_अगर /* ndef NO_SCROLL */
+	}
+}
+#endif /* ndef NO_SCROLL */
 
-अटल व्योम btext_drawअक्षर(अक्षर c)
-अणु
-	पूर्णांक cline = 0;
-#अगर_घोषित NO_SCROLL
-	पूर्णांक x;
-#पूर्ण_अगर
-	चयन (c) अणु
-	हाल '\b':
-		अगर (g_loc_X > 0)
+static void btext_drawchar(char c)
+{
+	int cline = 0;
+#ifdef NO_SCROLL
+	int x;
+#endif
+	switch (c) {
+	case '\b':
+		if (g_loc_X > 0)
 			--g_loc_X;
-		अवरोध;
-	हाल '\t':
+		break;
+	case '\t':
 		g_loc_X = (g_loc_X & -8) + 8;
-		अवरोध;
-	हाल '\r':
+		break;
+	case '\r':
 		g_loc_X = 0;
-		अवरोध;
-	हाल '\n':
+		break;
+	case '\n':
 		g_loc_X = 0;
 		g_loc_Y++;
 		cline = 1;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		draw_byte(c, g_loc_X++, g_loc_Y);
-	पूर्ण
-	अगर (g_loc_X >= g_max_loc_X) अणु
+	}
+	if (g_loc_X >= g_max_loc_X) {
 		g_loc_X = 0;
 		g_loc_Y++;
 		cline = 1;
-	पूर्ण
-#अगर_अघोषित NO_SCROLL
-	जबतक (g_loc_Y >= g_max_loc_Y) अणु
+	}
+#ifndef NO_SCROLL
+	while (g_loc_Y >= g_max_loc_Y) {
 		scrollscreen();
 		g_loc_Y--;
-	पूर्ण
-#अन्यथा
-	/* wrap around from bottom to top of screen so we करोn't
-	   waste समय scrolling each line.  -- paulus. */
-	अगर (g_loc_Y >= g_max_loc_Y)
+	}
+#else
+	/* wrap around from bottom to top of screen so we don't
+	   waste time scrolling each line.  -- paulus. */
+	if (g_loc_Y >= g_max_loc_Y)
 		g_loc_Y = 0;
-	अगर (cline) अणु
-		क्रम (x = 0; x < g_max_loc_X; ++x)
+	if (cline) {
+		for (x = 0; x < g_max_loc_X; ++x)
 			draw_byte(' ', x, g_loc_Y);
-	पूर्ण
-#पूर्ण_अगर
-पूर्ण
+	}
+#endif
+}
 
-अटल व्योम btext_drawtext(स्थिर अक्षर *c, अचिन्हित पूर्णांक len)
-अणु
-	जबतक (len--)
-		btext_drawअक्षर(*c++);
-पूर्ण
+static void btext_drawtext(const char *c, unsigned int len)
+{
+	while (len--)
+		btext_drawchar(*c++);
+}
 
-अटल व्योम draw_byte(अचिन्हित अक्षर c, दीर्घ locX, दीर्घ locY)
-अणु
-	अचिन्हित अक्षर *base	= calc_base(locX << 3, locY << 4);
-	अचिन्हित अक्षर *font	= &vga_font[((अचिन्हित पूर्णांक)c) * 16];
-	पूर्णांक rb			= dispDeviceRowBytes;
+static void draw_byte(unsigned char c, long locX, long locY)
+{
+	unsigned char *base	= calc_base(locX << 3, locY << 4);
+	unsigned char *font	= &vga_font[((unsigned int)c) * 16];
+	int rb			= dispDeviceRowBytes;
 
-	चयन(dispDeviceDepth) अणु
-	हाल 24:
-	हाल 32:
-		draw_byte_32(font, (अचिन्हित पूर्णांक *)base, rb);
-		अवरोध;
-	हाल 15:
-	हाल 16:
-		draw_byte_16(font, (अचिन्हित पूर्णांक *)base, rb);
-		अवरोध;
-	हाल 8:
-		draw_byte_8(font, (अचिन्हित पूर्णांक *)base, rb);
-		अवरोध;
-	पूर्ण
-पूर्ण
+	switch(dispDeviceDepth) {
+	case 24:
+	case 32:
+		draw_byte_32(font, (unsigned int *)base, rb);
+		break;
+	case 15:
+	case 16:
+		draw_byte_16(font, (unsigned int *)base, rb);
+		break;
+	case 8:
+		draw_byte_8(font, (unsigned int *)base, rb);
+		break;
+	}
+}
 
-अटल अचिन्हित पूर्णांक expand_bits_8[16] = अणु
+static unsigned int expand_bits_8[16] = {
 	0x00000000,
 	0x000000ff,
 	0x0000ff00,
@@ -230,24 +229,24 @@
 	0xffff00ff,
 	0xffffff00,
 	0xffffffff
-पूर्ण;
+};
 
-अटल अचिन्हित पूर्णांक expand_bits_16[4] = अणु
+static unsigned int expand_bits_16[4] = {
 	0x00000000,
 	0x0000ffff,
 	0xffff0000,
 	0xffffffff
-पूर्ण;
+};
 
 
-अटल व्योम draw_byte_32(अचिन्हित अक्षर *font, अचिन्हित पूर्णांक *base, पूर्णांक rb)
-अणु
-	पूर्णांक l, bits;
-	पूर्णांक fg = 0xFFFFFFFFUL;
-	पूर्णांक bg = 0x00000000UL;
+static void draw_byte_32(unsigned char *font, unsigned int *base, int rb)
+{
+	int l, bits;
+	int fg = 0xFFFFFFFFUL;
+	int bg = 0x00000000UL;
 
-	क्रम (l = 0; l < 16; ++l)
-	अणु
+	for (l = 0; l < 16; ++l)
+	{
 		bits = *font++;
 		base[0] = (-(bits >> 7) & fg) ^ bg;
 		base[1] = (-((bits >> 6) & 1) & fg) ^ bg;
@@ -257,78 +256,78 @@
 		base[5] = (-((bits >> 2) & 1) & fg) ^ bg;
 		base[6] = (-((bits >> 1) & 1) & fg) ^ bg;
 		base[7] = (-(bits & 1) & fg) ^ bg;
-		base = (अचिन्हित पूर्णांक *) ((अक्षर *)base + rb);
-	पूर्ण
-पूर्ण
+		base = (unsigned int *) ((char *)base + rb);
+	}
+}
 
-अटल व्योम draw_byte_16(अचिन्हित अक्षर *font, अचिन्हित पूर्णांक *base, पूर्णांक rb)
-अणु
-	पूर्णांक l, bits;
-	पूर्णांक fg = 0xFFFFFFFFUL;
-	पूर्णांक bg = 0x00000000UL;
-	अचिन्हित पूर्णांक *eb = (पूर्णांक *)expand_bits_16;
+static void draw_byte_16(unsigned char *font, unsigned int *base, int rb)
+{
+	int l, bits;
+	int fg = 0xFFFFFFFFUL;
+	int bg = 0x00000000UL;
+	unsigned int *eb = (int *)expand_bits_16;
 
-	क्रम (l = 0; l < 16; ++l)
-	अणु
+	for (l = 0; l < 16; ++l)
+	{
 		bits = *font++;
 		base[0] = (eb[bits >> 6] & fg) ^ bg;
 		base[1] = (eb[(bits >> 4) & 3] & fg) ^ bg;
 		base[2] = (eb[(bits >> 2) & 3] & fg) ^ bg;
 		base[3] = (eb[bits & 3] & fg) ^ bg;
-		base = (अचिन्हित पूर्णांक *) ((अक्षर *)base + rb);
-	पूर्ण
-पूर्ण
+		base = (unsigned int *) ((char *)base + rb);
+	}
+}
 
-अटल व्योम draw_byte_8(अचिन्हित अक्षर *font, अचिन्हित पूर्णांक *base, पूर्णांक rb)
-अणु
-	पूर्णांक l, bits;
-	पूर्णांक fg = 0x0F0F0F0FUL;
-	पूर्णांक bg = 0x00000000UL;
-	अचिन्हित पूर्णांक *eb = (पूर्णांक *)expand_bits_8;
+static void draw_byte_8(unsigned char *font, unsigned int *base, int rb)
+{
+	int l, bits;
+	int fg = 0x0F0F0F0FUL;
+	int bg = 0x00000000UL;
+	unsigned int *eb = (int *)expand_bits_8;
 
-	क्रम (l = 0; l < 16; ++l)
-	अणु
+	for (l = 0; l < 16; ++l)
+	{
 		bits = *font++;
 		base[0] = (eb[bits >> 4] & fg) ^ bg;
 		base[1] = (eb[bits & 0xf] & fg) ^ bg;
-		base = (अचिन्हित पूर्णांक *) ((अक्षर *)base + rb);
-	पूर्ण
-पूर्ण
+		base = (unsigned int *) ((char *)base + rb);
+	}
+}
 
-अटल व्योम btext_console_ग_लिखो(काष्ठा console *con, स्थिर अक्षर *s,
-				अचिन्हित पूर्णांक n)
-अणु
+static void btext_console_write(struct console *con, const char *s,
+				unsigned int n)
+{
 	btext_drawtext(s, n);
-पूर्ण
+}
 
-अटल काष्ठा console btext_console = अणु
+static struct console btext_console = {
 	.name	= "btext",
-	.ग_लिखो	= btext_console_ग_लिखो,
+	.write	= btext_console_write,
 	.flags	= CON_PRINTBUFFER | CON_ENABLED | CON_BOOT | CON_ANYTIME,
 	.index	= 0,
-पूर्ण;
+};
 
-पूर्णांक __init btext_find_display(व्योम)
-अणु
+int __init btext_find_display(void)
+{
 	phandle node;
-	अक्षर type[32];
-	पूर्णांक ret;
+	char type[32];
+	int ret;
 
-	node = prom_inst2pkg(prom_मानक_निकास);
-	अगर (prom_getproperty(node, "device_type", type, 32) < 0)
-		वापस -ENODEV;
-	अगर (म_भेद(type, "display"))
-		वापस -ENODEV;
+	node = prom_inst2pkg(prom_stdout);
+	if (prom_getproperty(node, "device_type", type, 32) < 0)
+		return -ENODEV;
+	if (strcmp(type, "display"))
+		return -ENODEV;
 
 	ret = btext_initialize(node);
-	अगर (!ret) अणु
+	if (!ret) {
 		btext_clearscreen();
-		रेजिस्टर_console(&btext_console);
-	पूर्ण
-	वापस ret;
-पूर्ण
+		register_console(&btext_console);
+	}
+	return ret;
+}
 
-अटल अचिन्हित अक्षर vga_font[cmapsz] = अणु
+static unsigned char vga_font[cmapsz] = {
 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x7e, 0x81, 0xa5, 0x81, 0x81, 0xbd,
 0x99, 0x81, 0x81, 0x7e, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x7e, 0xff,
@@ -671,4 +670,4 @@
 0x7c, 0x7c, 0x7c, 0x7c, 0x7c, 0x7c, 0x7c, 0x00, 0x00, 0x00, 0x00, 0x00,
 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 0x00, 0x00, 0x00, 0x00,
-पूर्ण;
+};

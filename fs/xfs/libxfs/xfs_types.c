@@ -1,98 +1,97 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (c) 2000-2002,2005 Silicon Graphics, Inc.
  * Copyright (C) 2017 Oracle.
  * All Rights Reserved.
  */
-#समावेश "xfs.h"
-#समावेश "xfs_fs.h"
-#समावेश "xfs_format.h"
-#समावेश "xfs_shared.h"
-#समावेश "xfs_trans_resv.h"
-#समावेश "xfs_bit.h"
-#समावेश "xfs_mount.h"
+#include "xfs.h"
+#include "xfs_fs.h"
+#include "xfs_format.h"
+#include "xfs_shared.h"
+#include "xfs_trans_resv.h"
+#include "xfs_bit.h"
+#include "xfs_mount.h"
 
 /* Find the size of the AG, in blocks. */
-अंतरभूत xfs_agblock_t
+inline xfs_agblock_t
 xfs_ag_block_count(
-	काष्ठा xfs_mount	*mp,
+	struct xfs_mount	*mp,
 	xfs_agnumber_t		agno)
-अणु
+{
 	ASSERT(agno < mp->m_sb.sb_agcount);
 
-	अगर (agno < mp->m_sb.sb_agcount - 1)
-		वापस mp->m_sb.sb_agblocks;
-	वापस mp->m_sb.sb_dblocks - (agno * mp->m_sb.sb_agblocks);
-पूर्ण
+	if (agno < mp->m_sb.sb_agcount - 1)
+		return mp->m_sb.sb_agblocks;
+	return mp->m_sb.sb_dblocks - (agno * mp->m_sb.sb_agblocks);
+}
 
 /*
- * Verअगरy that an AG block number poपूर्णांकer neither poपूर्णांकs outside the AG
- * nor poपूर्णांकs at अटल metadata.
+ * Verify that an AG block number pointer neither points outside the AG
+ * nor points at static metadata.
  */
-अंतरभूत bool
-xfs_verअगरy_agbno(
-	काष्ठा xfs_mount	*mp,
+inline bool
+xfs_verify_agbno(
+	struct xfs_mount	*mp,
 	xfs_agnumber_t		agno,
 	xfs_agblock_t		agbno)
-अणु
+{
 	xfs_agblock_t		eoag;
 
 	eoag = xfs_ag_block_count(mp, agno);
-	अगर (agbno >= eoag)
-		वापस false;
-	अगर (agbno <= XFS_AGFL_BLOCK(mp))
-		वापस false;
-	वापस true;
-पूर्ण
+	if (agbno >= eoag)
+		return false;
+	if (agbno <= XFS_AGFL_BLOCK(mp))
+		return false;
+	return true;
+}
 
 /*
- * Verअगरy that an FS block number poपूर्णांकer neither poपूर्णांकs outside the
- * fileप्रणाली nor poपूर्णांकs at अटल AG metadata.
+ * Verify that an FS block number pointer neither points outside the
+ * filesystem nor points at static AG metadata.
  */
-अंतरभूत bool
-xfs_verअगरy_fsbno(
-	काष्ठा xfs_mount	*mp,
+inline bool
+xfs_verify_fsbno(
+	struct xfs_mount	*mp,
 	xfs_fsblock_t		fsbno)
-अणु
+{
 	xfs_agnumber_t		agno = XFS_FSB_TO_AGNO(mp, fsbno);
 
-	अगर (agno >= mp->m_sb.sb_agcount)
-		वापस false;
-	वापस xfs_verअगरy_agbno(mp, agno, XFS_FSB_TO_AGBNO(mp, fsbno));
-पूर्ण
+	if (agno >= mp->m_sb.sb_agcount)
+		return false;
+	return xfs_verify_agbno(mp, agno, XFS_FSB_TO_AGBNO(mp, fsbno));
+}
 
 /*
- * Verअगरy that a data device extent is fully contained inside the fileप्रणाली,
- * करोes not cross an AG boundary, and करोes not poपूर्णांक at अटल metadata.
+ * Verify that a data device extent is fully contained inside the filesystem,
+ * does not cross an AG boundary, and does not point at static metadata.
  */
 bool
-xfs_verअगरy_fsbext(
-	काष्ठा xfs_mount	*mp,
+xfs_verify_fsbext(
+	struct xfs_mount	*mp,
 	xfs_fsblock_t		fsbno,
 	xfs_fsblock_t		len)
-अणु
-	अगर (fsbno + len <= fsbno)
-		वापस false;
+{
+	if (fsbno + len <= fsbno)
+		return false;
 
-	अगर (!xfs_verअगरy_fsbno(mp, fsbno))
-		वापस false;
+	if (!xfs_verify_fsbno(mp, fsbno))
+		return false;
 
-	अगर (!xfs_verअगरy_fsbno(mp, fsbno + len - 1))
-		वापस false;
+	if (!xfs_verify_fsbno(mp, fsbno + len - 1))
+		return false;
 
-	वापस  XFS_FSB_TO_AGNO(mp, fsbno) ==
+	return  XFS_FSB_TO_AGNO(mp, fsbno) ==
 		XFS_FSB_TO_AGNO(mp, fsbno + len - 1);
-पूर्ण
+}
 
 /* Calculate the first and last possible inode number in an AG. */
-अंतरभूत व्योम
+inline void
 xfs_agino_range(
-	काष्ठा xfs_mount	*mp,
+	struct xfs_mount	*mp,
 	xfs_agnumber_t		agno,
 	xfs_agino_t		*first,
 	xfs_agino_t		*last)
-अणु
+{
 	xfs_agblock_t		bno;
 	xfs_agblock_t		eoag;
 
@@ -109,178 +108,178 @@ xfs_agino_range(
 	 * Calculate the last inode, which will be at the end of the
 	 * last (aligned) cluster that can be allocated in the AG.
 	 */
-	bno = round_करोwn(eoag, M_IGEO(mp)->cluster_align);
+	bno = round_down(eoag, M_IGEO(mp)->cluster_align);
 	*last = XFS_AGB_TO_AGINO(mp, bno) - 1;
-पूर्ण
+}
 
 /*
- * Verअगरy that an AG inode number poपूर्णांकer neither poपूर्णांकs outside the AG
- * nor poपूर्णांकs at अटल metadata.
+ * Verify that an AG inode number pointer neither points outside the AG
+ * nor points at static metadata.
  */
-अंतरभूत bool
-xfs_verअगरy_agino(
-	काष्ठा xfs_mount	*mp,
+inline bool
+xfs_verify_agino(
+	struct xfs_mount	*mp,
 	xfs_agnumber_t		agno,
 	xfs_agino_t		agino)
-अणु
+{
 	xfs_agino_t		first;
 	xfs_agino_t		last;
 
 	xfs_agino_range(mp, agno, &first, &last);
-	वापस agino >= first && agino <= last;
-पूर्ण
+	return agino >= first && agino <= last;
+}
 
 /*
- * Verअगरy that an AG inode number poपूर्णांकer neither poपूर्णांकs outside the AG
- * nor poपूर्णांकs at अटल metadata, or is शून्यAGINO.
+ * Verify that an AG inode number pointer neither points outside the AG
+ * nor points at static metadata, or is NULLAGINO.
  */
 bool
-xfs_verअगरy_agino_or_null(
-	काष्ठा xfs_mount	*mp,
+xfs_verify_agino_or_null(
+	struct xfs_mount	*mp,
 	xfs_agnumber_t		agno,
 	xfs_agino_t		agino)
-अणु
-	वापस agino == शून्यAGINO || xfs_verअगरy_agino(mp, agno, agino);
-पूर्ण
+{
+	return agino == NULLAGINO || xfs_verify_agino(mp, agno, agino);
+}
 
 /*
- * Verअगरy that an FS inode number poपूर्णांकer neither poपूर्णांकs outside the
- * fileप्रणाली nor poपूर्णांकs at अटल AG metadata.
+ * Verify that an FS inode number pointer neither points outside the
+ * filesystem nor points at static AG metadata.
  */
-अंतरभूत bool
-xfs_verअगरy_ino(
-	काष्ठा xfs_mount	*mp,
+inline bool
+xfs_verify_ino(
+	struct xfs_mount	*mp,
 	xfs_ino_t		ino)
-अणु
+{
 	xfs_agnumber_t		agno = XFS_INO_TO_AGNO(mp, ino);
 	xfs_agino_t		agino = XFS_INO_TO_AGINO(mp, ino);
 
-	अगर (agno >= mp->m_sb.sb_agcount)
-		वापस false;
-	अगर (XFS_AGINO_TO_INO(mp, agno, agino) != ino)
-		वापस false;
-	वापस xfs_verअगरy_agino(mp, agno, agino);
-पूर्ण
+	if (agno >= mp->m_sb.sb_agcount)
+		return false;
+	if (XFS_AGINO_TO_INO(mp, agno, agino) != ino)
+		return false;
+	return xfs_verify_agino(mp, agno, agino);
+}
 
-/* Is this an पूर्णांकernal inode number? */
-अंतरभूत bool
-xfs_पूर्णांकernal_inum(
-	काष्ठा xfs_mount	*mp,
+/* Is this an internal inode number? */
+inline bool
+xfs_internal_inum(
+	struct xfs_mount	*mp,
 	xfs_ino_t		ino)
-अणु
-	वापस ino == mp->m_sb.sb_rbmino || ino == mp->m_sb.sb_rsumino ||
+{
+	return ino == mp->m_sb.sb_rbmino || ino == mp->m_sb.sb_rsumino ||
 		(xfs_sb_version_hasquota(&mp->m_sb) &&
 		 xfs_is_quota_inode(&mp->m_sb, ino));
-पूर्ण
+}
 
 /*
- * Verअगरy that a directory entry's inode number doesn't poपूर्णांक at an पूर्णांकernal
- * inode, empty space, or अटल AG metadata.
+ * Verify that a directory entry's inode number doesn't point at an internal
+ * inode, empty space, or static AG metadata.
  */
 bool
-xfs_verअगरy_dir_ino(
-	काष्ठा xfs_mount	*mp,
+xfs_verify_dir_ino(
+	struct xfs_mount	*mp,
 	xfs_ino_t		ino)
-अणु
-	अगर (xfs_पूर्णांकernal_inum(mp, ino))
-		वापस false;
-	वापस xfs_verअगरy_ino(mp, ino);
-पूर्ण
+{
+	if (xfs_internal_inum(mp, ino))
+		return false;
+	return xfs_verify_ino(mp, ino);
+}
 
 /*
- * Verअगरy that an realसमय block number poपूर्णांकer करोesn't poपूर्णांक off the
- * end of the realसमय device.
+ * Verify that an realtime block number pointer doesn't point off the
+ * end of the realtime device.
  */
-अंतरभूत bool
-xfs_verअगरy_rtbno(
-	काष्ठा xfs_mount	*mp,
+inline bool
+xfs_verify_rtbno(
+	struct xfs_mount	*mp,
 	xfs_rtblock_t		rtbno)
-अणु
-	वापस rtbno < mp->m_sb.sb_rblocks;
-पूर्ण
+{
+	return rtbno < mp->m_sb.sb_rblocks;
+}
 
-/* Verअगरy that a realसमय device extent is fully contained inside the volume. */
+/* Verify that a realtime device extent is fully contained inside the volume. */
 bool
-xfs_verअगरy_rtext(
-	काष्ठा xfs_mount	*mp,
+xfs_verify_rtext(
+	struct xfs_mount	*mp,
 	xfs_rtblock_t		rtbno,
 	xfs_rtblock_t		len)
-अणु
-	अगर (rtbno + len <= rtbno)
-		वापस false;
+{
+	if (rtbno + len <= rtbno)
+		return false;
 
-	अगर (!xfs_verअगरy_rtbno(mp, rtbno))
-		वापस false;
+	if (!xfs_verify_rtbno(mp, rtbno))
+		return false;
 
-	वापस xfs_verअगरy_rtbno(mp, rtbno + len - 1);
-पूर्ण
+	return xfs_verify_rtbno(mp, rtbno + len - 1);
+}
 
 /* Calculate the range of valid icount values. */
-अंतरभूत व्योम
+inline void
 xfs_icount_range(
-	काष्ठा xfs_mount	*mp,
-	अचिन्हित दीर्घ दीर्घ	*min,
-	अचिन्हित दीर्घ दीर्घ	*max)
-अणु
-	अचिन्हित दीर्घ दीर्घ	nr_inos = 0;
+	struct xfs_mount	*mp,
+	unsigned long long	*min,
+	unsigned long long	*max)
+{
+	unsigned long long	nr_inos = 0;
 	xfs_agnumber_t		agno;
 
-	/* root, rtbiपंचांगap, rtsum all live in the first chunk */
+	/* root, rtbitmap, rtsum all live in the first chunk */
 	*min = XFS_INODES_PER_CHUNK;
 
-	क्रम (agno = 0; agno < mp->m_sb.sb_agcount; agno++) अणु
+	for (agno = 0; agno < mp->m_sb.sb_agcount; agno++) {
 		xfs_agino_t	first, last;
 
 		xfs_agino_range(mp, agno, &first, &last);
 		nr_inos += last - first + 1;
-	पूर्ण
+	}
 	*max = nr_inos;
-पूर्ण
+}
 
 /* Sanity-checking of inode counts. */
 bool
-xfs_verअगरy_icount(
-	काष्ठा xfs_mount	*mp,
-	अचिन्हित दीर्घ दीर्घ	icount)
-अणु
-	अचिन्हित दीर्घ दीर्घ	min, max;
+xfs_verify_icount(
+	struct xfs_mount	*mp,
+	unsigned long long	icount)
+{
+	unsigned long long	min, max;
 
 	xfs_icount_range(mp, &min, &max);
-	वापस icount >= min && icount <= max;
-पूर्ण
+	return icount >= min && icount <= max;
+}
 
 /* Sanity-checking of dir/attr block offsets. */
 bool
-xfs_verअगरy_dablk(
-	काष्ठा xfs_mount	*mp,
+xfs_verify_dablk(
+	struct xfs_mount	*mp,
 	xfs_fileoff_t		dabno)
-अणु
+{
 	xfs_dablk_t		max_dablk = -1U;
 
-	वापस dabno <= max_dablk;
-पूर्ण
+	return dabno <= max_dablk;
+}
 
-/* Check that a file block offset करोes not exceed the maximum. */
+/* Check that a file block offset does not exceed the maximum. */
 bool
-xfs_verअगरy_fileoff(
-	काष्ठा xfs_mount	*mp,
+xfs_verify_fileoff(
+	struct xfs_mount	*mp,
 	xfs_fileoff_t		off)
-अणु
-	वापस off <= XFS_MAX_खाताOFF;
-पूर्ण
+{
+	return off <= XFS_MAX_FILEOFF;
+}
 
-/* Check that a range of file block offsets करो not exceed the maximum. */
+/* Check that a range of file block offsets do not exceed the maximum. */
 bool
-xfs_verअगरy_fileext(
-	काष्ठा xfs_mount	*mp,
+xfs_verify_fileext(
+	struct xfs_mount	*mp,
 	xfs_fileoff_t		off,
 	xfs_fileoff_t		len)
-अणु
-	अगर (off + len <= off)
-		वापस false;
+{
+	if (off + len <= off)
+		return false;
 
-	अगर (!xfs_verअगरy_fileoff(mp, off))
-		वापस false;
+	if (!xfs_verify_fileoff(mp, off))
+		return false;
 
-	वापस xfs_verअगरy_fileoff(mp, off + len - 1);
-पूर्ण
+	return xfs_verify_fileoff(mp, off + len - 1);
+}

@@ -1,107 +1,106 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /* Copyright (c) 2016 Facebook
  */
-#समावेश <linux/unistd.h>
-#समावेश <linux/bpf.h>
+#include <linux/unistd.h>
+#include <linux/bpf.h>
 
-#समावेश <मानकपन.स>
-#समावेश <मानक_निवेशt.h>
-#समावेश <unistd.h>
-#समावेश <माला.स>
-#समावेश <त्रुटिसं.स>
-#समावेश <fcntl.h>
+#include <stdio.h>
+#include <stdint.h>
+#include <unistd.h>
+#include <string.h>
+#include <errno.h>
+#include <fcntl.h>
 
-#समावेश <bpf/bpf.h>
+#include <bpf/bpf.h>
 
-अटल व्योम usage(व्योम)
-अणु
-	म_लिखो("Usage: test_cgrp2_array_pin [...]\n");
-	म_लिखो("       -F <file>   File to pin an BPF cgroup array\n");
-	म_लिखो("       -U <file>   Update an already pinned BPF cgroup array\n");
-	म_लिखो("       -v <value>  Full path of the cgroup2\n");
-	म_लिखो("       -h          Display this help\n");
-पूर्ण
+static void usage(void)
+{
+	printf("Usage: test_cgrp2_array_pin [...]\n");
+	printf("       -F <file>   File to pin an BPF cgroup array\n");
+	printf("       -U <file>   Update an already pinned BPF cgroup array\n");
+	printf("       -v <value>  Full path of the cgroup2\n");
+	printf("       -h          Display this help\n");
+}
 
-पूर्णांक मुख्य(पूर्णांक argc, अक्षर **argv)
-अणु
-	स्थिर अक्षर *pinned_file = शून्य, *cg2 = शून्य;
-	पूर्णांक create_array = 1;
-	पूर्णांक array_key = 0;
-	पूर्णांक array_fd = -1;
-	पूर्णांक cg2_fd = -1;
-	पूर्णांक ret = -1;
-	पूर्णांक opt;
+int main(int argc, char **argv)
+{
+	const char *pinned_file = NULL, *cg2 = NULL;
+	int create_array = 1;
+	int array_key = 0;
+	int array_fd = -1;
+	int cg2_fd = -1;
+	int ret = -1;
+	int opt;
 
-	जबतक ((opt = getopt(argc, argv, "F:U:v:")) != -1) अणु
-		चयन (opt) अणु
+	while ((opt = getopt(argc, argv, "F:U:v:")) != -1) {
+		switch (opt) {
 		/* General args */
-		हाल 'F':
+		case 'F':
 			pinned_file = optarg;
-			अवरोध;
-		हाल 'U':
+			break;
+		case 'U':
 			pinned_file = optarg;
 			create_array = 0;
-			अवरोध;
-		हाल 'v':
+			break;
+		case 'v':
 			cg2 = optarg;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			usage();
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 
-	अगर (!cg2 || !pinned_file) अणु
+	if (!cg2 || !pinned_file) {
 		usage();
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	cg2_fd = खोलो(cg2, O_RDONLY);
-	अगर (cg2_fd < 0) अणु
-		ख_लिखो(मानक_त्रुटि, "open(%s,...): %s(%d)\n",
-			cg2, म_त्रुटि(त्रुटि_सं), त्रुटि_सं);
-		जाओ out;
-	पूर्ण
+	cg2_fd = open(cg2, O_RDONLY);
+	if (cg2_fd < 0) {
+		fprintf(stderr, "open(%s,...): %s(%d)\n",
+			cg2, strerror(errno), errno);
+		goto out;
+	}
 
-	अगर (create_array) अणु
+	if (create_array) {
 		array_fd = bpf_create_map(BPF_MAP_TYPE_CGROUP_ARRAY,
-					  माप(uपूर्णांक32_t), माप(uपूर्णांक32_t),
+					  sizeof(uint32_t), sizeof(uint32_t),
 					  1, 0);
-		अगर (array_fd < 0) अणु
-			ख_लिखो(मानक_त्रुटि,
+		if (array_fd < 0) {
+			fprintf(stderr,
 				"bpf_create_map(BPF_MAP_TYPE_CGROUP_ARRAY,...): %s(%d)\n",
-				म_त्रुटि(त्रुटि_सं), त्रुटि_सं);
-			जाओ out;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+				strerror(errno), errno);
+			goto out;
+		}
+	} else {
 		array_fd = bpf_obj_get(pinned_file);
-		अगर (array_fd < 0) अणु
-			ख_लिखो(मानक_त्रुटि, "bpf_obj_get(%s): %s(%d)\n",
-				pinned_file, म_त्रुटि(त्रुटि_सं), त्रुटि_सं);
-			जाओ out;
-		पूर्ण
-	पूर्ण
+		if (array_fd < 0) {
+			fprintf(stderr, "bpf_obj_get(%s): %s(%d)\n",
+				pinned_file, strerror(errno), errno);
+			goto out;
+		}
+	}
 
 	ret = bpf_map_update_elem(array_fd, &array_key, &cg2_fd, 0);
-	अगर (ret) अणु
-		लिखो_त्रुटि("bpf_map_update_elem");
-		जाओ out;
-	पूर्ण
+	if (ret) {
+		perror("bpf_map_update_elem");
+		goto out;
+	}
 
-	अगर (create_array) अणु
+	if (create_array) {
 		ret = bpf_obj_pin(array_fd, pinned_file);
-		अगर (ret) अणु
-			ख_लिखो(मानक_त्रुटि, "bpf_obj_pin(..., %s): %s(%d)\n",
-				pinned_file, म_त्रुटि(त्रुटि_सं), त्रुटि_सं);
-			जाओ out;
-		पूर्ण
-	पूर्ण
+		if (ret) {
+			fprintf(stderr, "bpf_obj_pin(..., %s): %s(%d)\n",
+				pinned_file, strerror(errno), errno);
+			goto out;
+		}
+	}
 
 out:
-	अगर (array_fd != -1)
-		बंद(array_fd);
-	अगर (cg2_fd != -1)
-		बंद(cg2_fd);
-	वापस ret;
-पूर्ण
+	if (array_fd != -1)
+		close(array_fd);
+	if (cg2_fd != -1)
+		close(cg2_fd);
+	return ret;
+}

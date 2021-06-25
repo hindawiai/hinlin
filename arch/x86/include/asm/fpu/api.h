@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Copyright (C) 1994 Linus Torvalds
  *
@@ -9,104 +8,104 @@
  * x86-64 work by Andi Kleen 2002
  */
 
-#अगर_अघोषित _ASM_X86_FPU_API_H
-#घोषणा _ASM_X86_FPU_API_H
-#समावेश <linux/bottom_half.h>
+#ifndef _ASM_X86_FPU_API_H
+#define _ASM_X86_FPU_API_H
+#include <linux/bottom_half.h>
 
 /*
- * Use kernel_fpu_begin/end() अगर you पूर्णांकend to use FPU in kernel context. It
- * disables preemption so be careful अगर you पूर्णांकend to use it क्रम दीर्घ periods
- * of समय.
- * If you पूर्णांकend to use the FPU in irq/softirq you need to check first with
- * irq_fpu_usable() अगर it is possible.
+ * Use kernel_fpu_begin/end() if you intend to use FPU in kernel context. It
+ * disables preemption so be careful if you intend to use it for long periods
+ * of time.
+ * If you intend to use the FPU in irq/softirq you need to check first with
+ * irq_fpu_usable() if it is possible.
  */
 
 /* Kernel FPU states to initialize in kernel_fpu_begin_mask() */
-#घोषणा KFPU_387	_BITUL(0)	/* 387 state will be initialized */
-#घोषणा KFPU_MXCSR	_BITUL(1)	/* MXCSR will be initialized */
+#define KFPU_387	_BITUL(0)	/* 387 state will be initialized */
+#define KFPU_MXCSR	_BITUL(1)	/* MXCSR will be initialized */
 
-बाह्य व्योम kernel_fpu_begin_mask(अचिन्हित पूर्णांक kfpu_mask);
-बाह्य व्योम kernel_fpu_end(व्योम);
-बाह्य bool irq_fpu_usable(व्योम);
-बाह्य व्योम fpregs_mark_activate(व्योम);
+extern void kernel_fpu_begin_mask(unsigned int kfpu_mask);
+extern void kernel_fpu_end(void);
+extern bool irq_fpu_usable(void);
+extern void fpregs_mark_activate(void);
 
 /* Code that is unaware of kernel_fpu_begin_mask() can use this */
-अटल अंतरभूत व्योम kernel_fpu_begin(व्योम)
-अणु
-#अगर_घोषित CONFIG_X86_64
+static inline void kernel_fpu_begin(void)
+{
+#ifdef CONFIG_X86_64
 	/*
-	 * Any 64-bit code that uses 387 inकाष्ठाions must explicitly request
+	 * Any 64-bit code that uses 387 instructions must explicitly request
 	 * KFPU_387.
 	 */
 	kernel_fpu_begin_mask(KFPU_MXCSR);
-#अन्यथा
+#else
 	/*
 	 * 32-bit kernel code may use 387 operations as well as SSE2, etc,
-	 * as दीर्घ as it checks that the CPU has the required capability.
+	 * as long as it checks that the CPU has the required capability.
 	 */
 	kernel_fpu_begin_mask(KFPU_387 | KFPU_MXCSR);
-#पूर्ण_अगर
-पूर्ण
+#endif
+}
 
 /*
- * Use fpregs_lock() जबतक editing CPU's FPU रेजिस्टरs or fpu->state.
- * A context चयन will (and softirq might) save CPU's FPU रेजिस्टरs to
- * fpu->state and set TIF_NEED_FPU_LOAD leaving CPU's FPU रेजिस्टरs in
- * a अक्रमom state.
+ * Use fpregs_lock() while editing CPU's FPU registers or fpu->state.
+ * A context switch will (and softirq might) save CPU's FPU registers to
+ * fpu->state and set TIF_NEED_FPU_LOAD leaving CPU's FPU registers in
+ * a random state.
  *
- * local_bh_disable() protects against both preemption and soft पूर्णांकerrupts
+ * local_bh_disable() protects against both preemption and soft interrupts
  * on !RT kernels.
  *
  * On RT kernels local_bh_disable() is not sufficient because it only
- * serializes soft पूर्णांकerrupt related sections via a local lock, but stays
+ * serializes soft interrupt related sections via a local lock, but stays
  * preemptible. Disabling preemption is the right choice here as bottom
- * half processing is always in thपढ़ो context on RT kernels so it
+ * half processing is always in thread context on RT kernels so it
  * implicitly prevents bottom half processing as well.
  *
  * Disabling preemption also serializes against kernel_fpu_begin().
  */
-अटल अंतरभूत व्योम fpregs_lock(व्योम)
-अणु
-	अगर (!IS_ENABLED(CONFIG_PREEMPT_RT))
+static inline void fpregs_lock(void)
+{
+	if (!IS_ENABLED(CONFIG_PREEMPT_RT))
 		local_bh_disable();
-	अन्यथा
+	else
 		preempt_disable();
-पूर्ण
+}
 
-अटल अंतरभूत व्योम fpregs_unlock(व्योम)
-अणु
-	अगर (!IS_ENABLED(CONFIG_PREEMPT_RT))
+static inline void fpregs_unlock(void)
+{
+	if (!IS_ENABLED(CONFIG_PREEMPT_RT))
 		local_bh_enable();
-	अन्यथा
+	else
 		preempt_enable();
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_X86_DEBUG_FPU
-बाह्य व्योम fpregs_निश्चित_state_consistent(व्योम);
-#अन्यथा
-अटल अंतरभूत व्योम fpregs_निश्चित_state_consistent(व्योम) अणु पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_X86_DEBUG_FPU
+extern void fpregs_assert_state_consistent(void);
+#else
+static inline void fpregs_assert_state_consistent(void) { }
+#endif
 
 /*
- * Load the task FPU state beक्रमe वापसing to userspace.
+ * Load the task FPU state before returning to userspace.
  */
-बाह्य व्योम चयन_fpu_वापस(व्योम);
+extern void switch_fpu_return(void);
 
 /*
  * Query the presence of one or more xfeatures. Works on any legacy CPU as well.
  *
- * If 'feature_name' is set then put a human-पढ़ोable description of
- * the feature there as well - this can be used to prपूर्णांक error (or success)
+ * If 'feature_name' is set then put a human-readable description of
+ * the feature there as well - this can be used to print error (or success)
  * messages.
  */
-बाह्य पूर्णांक cpu_has_xfeatures(u64 xfeatures_mask, स्थिर अक्षर **feature_name);
+extern int cpu_has_xfeatures(u64 xfeatures_mask, const char **feature_name);
 
 /*
  * Tasks that are not using SVA have mm->pasid set to zero to note that they
- * will not have the valid bit set in MSR_IA32_PASID जबतक they are running.
+ * will not have the valid bit set in MSR_IA32_PASID while they are running.
  */
-#घोषणा PASID_DISABLED	0
+#define PASID_DISABLED	0
 
-अटल अंतरभूत व्योम update_pasid(व्योम) अणु पूर्ण
+static inline void update_pasid(void) { }
 
-#पूर्ण_अगर /* _ASM_X86_FPU_API_H */
+#endif /* _ASM_X86_FPU_API_H */

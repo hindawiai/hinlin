@@ -1,25 +1,24 @@
-<शैली गुरु>
 /*
- * Assembler क्रम the sequencer program करोwnloaded to Aic7xxx SCSI host adapters
+ * Assembler for the sequencer program downloaded to Aic7xxx SCSI host adapters
  *
  * Copyright (c) 1997 Justin T. Gibbs.
  * Copyright (c) 2001, 2002 Adaptec Inc.
  * All rights reserved.
  *
- * Redistribution and use in source and binary क्रमms, with or without
- * modअगरication, are permitted provided that the following conditions
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions, and the following disclaimer,
- *    without modअगरication.
- * 2. Redistributions in binary क्रमm must reproduce at minimum a disclaimer
+ *    without modification.
+ * 2. Redistributions in binary form must reproduce at minimum a disclaimer
  *    substantially similar to the "NO WARRANTY" disclaimer below
  *    ("Disclaimer") and any redistribution must be conditioned upon
- *    including a substantially similar Disclaimer requirement क्रम further
+ *    including a substantially similar Disclaimer requirement for further
  *    binary redistribution.
  * 3. Neither the names of the above-listed copyright holders nor the names
- *    of any contributors may be used to enकरोrse or promote products derived
- *    from this software without specअगरic prior written permission.
+ *    of any contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
  *
  * Alternatively, this software may be distributed under the terms of the
  * GNU General Public License ("GPL") version 2 as published by the Free
@@ -38,55 +37,55 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: //depot/aic7xxx/aic7xxx/aicयंत्र/aicयंत्र.h#14 $
+ * $Id: //depot/aic7xxx/aic7xxx/aicasm/aicasm.h#14 $
  *
  * $FreeBSD$
  */
 
-#समावेश "../queue.h"
+#include "../queue.h"
 
-#अगर_अघोषित TRUE
-#घोषणा TRUE 1
-#पूर्ण_अगर
+#ifndef TRUE
+#define TRUE 1
+#endif
 
-#अगर_अघोषित FALSE
-#घोषणा FALSE 0
-#पूर्ण_अगर
+#ifndef FALSE
+#define FALSE 0
+#endif
 
-प्रकार काष्ठा path_entry अणु
-	अक्षर	*directory;
-	पूर्णांक	quoted_includes_only;
+typedef struct path_entry {
+	char	*directory;
+	int	quoted_includes_only;
 	SLIST_ENTRY(path_entry) links;
-पूर्ण *path_entry_t;
+} *path_entry_t;
 
-प्रकार क्रमागत अणु  
+typedef enum {  
 	QUOTED_INCLUDE,
 	BRACKETED_INCLUDE,
-	SOURCE_खाता
-पूर्ण include_type;
+	SOURCE_FILE
+} include_type;
 
 SLIST_HEAD(path_list, path_entry);
 
-बाह्य काष्ठा path_list search_path;
-बाह्य काष्ठा cs_tailq cs_tailq;
-बाह्य काष्ठा scope_list scope_stack;
-बाह्य काष्ठा symlist patch_functions;
-बाह्य पूर्णांक includes_search_curdir;		/* False अगर we've seen -I- */
-बाह्य अक्षर *appname;
-बाह्य अक्षर *stock_include_file;
-बाह्य पूर्णांक yylineno;
-बाह्य अक्षर *yyfilename;
-बाह्य अक्षर *prefix;
-बाह्य अक्षर *patch_arg_list;
-बाह्य अक्षर *versions;
-बाह्य पूर्णांक   src_mode;
-बाह्य पूर्णांक   dst_mode;
-काष्ठा symbol;
+extern struct path_list search_path;
+extern struct cs_tailq cs_tailq;
+extern struct scope_list scope_stack;
+extern struct symlist patch_functions;
+extern int includes_search_curdir;		/* False if we've seen -I- */
+extern char *appname;
+extern char *stock_include_file;
+extern int yylineno;
+extern char *yyfilename;
+extern char *prefix;
+extern char *patch_arg_list;
+extern char *versions;
+extern int   src_mode;
+extern int   dst_mode;
+struct symbol;
 
-व्योम stop(स्थिर अक्षर *errstring, पूर्णांक err_code);
-व्योम include_file(अक्षर *file_name, include_type type);
-व्योम expand_macro(काष्ठा symbol *macro_symbol);
-काष्ठा inकाष्ठाion *seq_alloc(व्योम);
-काष्ठा critical_section *cs_alloc(व्योम);
-काष्ठा scope *scope_alloc(व्योम);
-व्योम process_scope(काष्ठा scope *);
+void stop(const char *errstring, int err_code);
+void include_file(char *file_name, include_type type);
+void expand_macro(struct symbol *macro_symbol);
+struct instruction *seq_alloc(void);
+struct critical_section *cs_alloc(void);
+struct scope *scope_alloc(void);
+void process_scope(struct scope *);

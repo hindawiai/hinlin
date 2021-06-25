@@ -1,24 +1,23 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * Copyright (C) 2016 Freescale Semiconductor, Inc.
  * Copyright 2017-2018 NXP
- *	Dong Aisheng <aisheng.करोng@nxp.com>
+ *	Dong Aisheng <aisheng.dong@nxp.com>
  */
 
-#समावेश <dt-bindings/pinctrl/pads-imx8qxp.h>
-#समावेश <linux/err.h>
-#समावेश <linux/firmware/imx/sci.h>
-#समावेश <linux/init.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/pinctrl/pinctrl.h>
+#include <dt-bindings/pinctrl/pads-imx8qxp.h>
+#include <linux/err.h>
+#include <linux/firmware/imx/sci.h>
+#include <linux/init.h>
+#include <linux/io.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/of_device.h>
+#include <linux/pinctrl/pinctrl.h>
 
-#समावेश "pinctrl-imx.h"
+#include "pinctrl-imx.h"
 
-अटल स्थिर काष्ठा pinctrl_pin_desc imx8qxp_pinctrl_pads[] = अणु
+static const struct pinctrl_pin_desc imx8qxp_pinctrl_pads[] = {
 	IMX_PINCTRL_PIN(IMX8QXP_PCIE_CTRL0_PERST_B),
 	IMX_PINCTRL_PIN(IMX8QXP_PCIE_CTRL0_CLKREQ_B),
 	IMX_PINCTRL_PIN(IMX8QXP_PCIE_CTRL0_WAKE_B),
@@ -44,10 +43,10 @@
 	IMX_PINCTRL_PIN(IMX8QXP_COMP_CTL_GPIO_1V8_3V3_SD1FIX1),
 	IMX_PINCTRL_PIN(IMX8QXP_USDHC1_RESET_B),
 	IMX_PINCTRL_PIN(IMX8QXP_USDHC1_VSELECT),
-	IMX_PINCTRL_PIN(IMX8QXP_CTL_न_अंकD_RE_P_N),
+	IMX_PINCTRL_PIN(IMX8QXP_CTL_NAND_RE_P_N),
 	IMX_PINCTRL_PIN(IMX8QXP_USDHC1_WP),
 	IMX_PINCTRL_PIN(IMX8QXP_USDHC1_CD_B),
-	IMX_PINCTRL_PIN(IMX8QXP_CTL_न_अंकD_DQS_P_N),
+	IMX_PINCTRL_PIN(IMX8QXP_CTL_NAND_DQS_P_N),
 	IMX_PINCTRL_PIN(IMX8QXP_COMP_CTL_GPIO_1V8_3V3_VSELSEP),
 	IMX_PINCTRL_PIN(IMX8QXP_USDHC1_CLK),
 	IMX_PINCTRL_PIN(IMX8QXP_USDHC1_CMD),
@@ -193,47 +192,47 @@
 	IMX_PINCTRL_PIN(IMX8QXP_QSPI0B_SS0_B),
 	IMX_PINCTRL_PIN(IMX8QXP_QSPI0B_SS1_B),
 	IMX_PINCTRL_PIN(IMX8QXP_COMP_CTL_GPIO_1V8_3V3_QSPI0B),
-पूर्ण;
+};
 
-अटल काष्ठा imx_pinctrl_soc_info imx8qxp_pinctrl_info = अणु
+static struct imx_pinctrl_soc_info imx8qxp_pinctrl_info = {
 	.pins = imx8qxp_pinctrl_pads,
 	.npins = ARRAY_SIZE(imx8qxp_pinctrl_pads),
 	.flags = IMX_USE_SCU,
 	.imx_pinconf_get = imx_pinconf_get_scu,
 	.imx_pinconf_set = imx_pinconf_set_scu,
 	.imx_pinctrl_parse_pin = imx_pinctrl_parse_pin_scu,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा of_device_id imx8qxp_pinctrl_of_match[] = अणु
-	अणु .compatible = "fsl,imx8qxp-iomuxc", पूर्ण,
-	अणु /* sentinel */ पूर्ण
-पूर्ण;
+static const struct of_device_id imx8qxp_pinctrl_of_match[] = {
+	{ .compatible = "fsl,imx8qxp-iomuxc", },
+	{ /* sentinel */ }
+};
 MODULE_DEVICE_TABLE(of, imx8qxp_pinctrl_of_match);
 
-अटल पूर्णांक imx8qxp_pinctrl_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	पूर्णांक ret;
+static int imx8qxp_pinctrl_probe(struct platform_device *pdev)
+{
+	int ret;
 
 	ret = imx_pinctrl_sc_ipc_init(pdev);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस imx_pinctrl_probe(pdev, &imx8qxp_pinctrl_info);
-पूर्ण
+	return imx_pinctrl_probe(pdev, &imx8qxp_pinctrl_info);
+}
 
-अटल काष्ठा platक्रमm_driver imx8qxp_pinctrl_driver = अणु
-	.driver = अणु
+static struct platform_driver imx8qxp_pinctrl_driver = {
+	.driver = {
 		.name = "imx8qxp-pinctrl",
 		.of_match_table = imx8qxp_pinctrl_of_match,
 		.suppress_bind_attrs = true,
-	पूर्ण,
+	},
 	.probe = imx8qxp_pinctrl_probe,
-पूर्ण;
+};
 
-अटल पूर्णांक __init imx8qxp_pinctrl_init(व्योम)
-अणु
-	वापस platक्रमm_driver_रेजिस्टर(&imx8qxp_pinctrl_driver);
-पूर्ण
+static int __init imx8qxp_pinctrl_init(void)
+{
+	return platform_driver_register(&imx8qxp_pinctrl_driver);
+}
 arch_initcall(imx8qxp_pinctrl_init);
 
 MODULE_AUTHOR("Aisheng Dong <aisheng.dong@nxp.com>");

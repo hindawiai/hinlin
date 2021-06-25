@@ -1,51 +1,50 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#समावेश <linux/fsnotअगरy_backend.h>
-#समावेश <linux/inotअगरy.h>
-#समावेश <linux/slab.h> /* काष्ठा kmem_cache */
+/* SPDX-License-Identifier: GPL-2.0 */
+#include <linux/fsnotify_backend.h>
+#include <linux/inotify.h>
+#include <linux/slab.h> /* struct kmem_cache */
 
-काष्ठा inotअगरy_event_info अणु
-	काष्ठा fsnotअगरy_event fse;
+struct inotify_event_info {
+	struct fsnotify_event fse;
 	u32 mask;
-	पूर्णांक wd;
+	int wd;
 	u32 sync_cookie;
-	पूर्णांक name_len;
-	अक्षर name[];
-पूर्ण;
+	int name_len;
+	char name[];
+};
 
-काष्ठा inotअगरy_inode_mark अणु
-	काष्ठा fsnotअगरy_mark fsn_mark;
-	पूर्णांक wd;
-पूर्ण;
+struct inotify_inode_mark {
+	struct fsnotify_mark fsn_mark;
+	int wd;
+};
 
-अटल अंतरभूत काष्ठा inotअगरy_event_info *INOTIFY_E(काष्ठा fsnotअगरy_event *fse)
-अणु
-	वापस container_of(fse, काष्ठा inotअगरy_event_info, fse);
-पूर्ण
+static inline struct inotify_event_info *INOTIFY_E(struct fsnotify_event *fse)
+{
+	return container_of(fse, struct inotify_event_info, fse);
+}
 
-बाह्य व्योम inotअगरy_ignored_and_हटाओ_idr(काष्ठा fsnotअगरy_mark *fsn_mark,
-					   काष्ठा fsnotअगरy_group *group);
-बाह्य पूर्णांक inotअगरy_handle_inode_event(काष्ठा fsnotअगरy_mark *inode_mark,
-				      u32 mask, काष्ठा inode *inode,
-				      काष्ठा inode *dir,
-				      स्थिर काष्ठा qstr *name, u32 cookie);
+extern void inotify_ignored_and_remove_idr(struct fsnotify_mark *fsn_mark,
+					   struct fsnotify_group *group);
+extern int inotify_handle_inode_event(struct fsnotify_mark *inode_mark,
+				      u32 mask, struct inode *inode,
+				      struct inode *dir,
+				      const struct qstr *name, u32 cookie);
 
-बाह्य स्थिर काष्ठा fsnotअगरy_ops inotअगरy_fsnotअगरy_ops;
-बाह्य काष्ठा kmem_cache *inotअगरy_inode_mark_cachep;
+extern const struct fsnotify_ops inotify_fsnotify_ops;
+extern struct kmem_cache *inotify_inode_mark_cachep;
 
-#अगर_घोषित CONFIG_INOTIFY_USER
-अटल अंतरभूत व्योम dec_inotअगरy_instances(काष्ठा ucounts *ucounts)
-अणु
+#ifdef CONFIG_INOTIFY_USER
+static inline void dec_inotify_instances(struct ucounts *ucounts)
+{
 	dec_ucount(ucounts, UCOUNT_INOTIFY_INSTANCES);
-पूर्ण
+}
 
-अटल अंतरभूत काष्ठा ucounts *inc_inotअगरy_watches(काष्ठा ucounts *ucounts)
-अणु
-	वापस inc_ucount(ucounts->ns, ucounts->uid, UCOUNT_INOTIFY_WATCHES);
-पूर्ण
+static inline struct ucounts *inc_inotify_watches(struct ucounts *ucounts)
+{
+	return inc_ucount(ucounts->ns, ucounts->uid, UCOUNT_INOTIFY_WATCHES);
+}
 
-अटल अंतरभूत व्योम dec_inotअगरy_watches(काष्ठा ucounts *ucounts)
-अणु
+static inline void dec_inotify_watches(struct ucounts *ucounts)
+{
 	dec_ucount(ucounts, UCOUNT_INOTIFY_WATCHES);
-पूर्ण
-#पूर्ण_अगर
+}
+#endif

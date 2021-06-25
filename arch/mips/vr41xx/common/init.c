@@ -1,61 +1,60 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- *  init.c, Common initialization routines क्रम NEC VR4100 series.
+ *  init.c, Common initialization routines for NEC VR4100 series.
  *
  *  Copyright (C) 2003-2009  Yoichi Yuasa <yuasa@linux-mips.org>
  */
-#समावेश <linux/init.h>
-#समावेश <linux/ioport.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/माला.स>
+#include <linux/init.h>
+#include <linux/ioport.h>
+#include <linux/irq.h>
+#include <linux/string.h>
 
-#समावेश <यंत्र/bootinfo.h>
-#समावेश <यंत्र/समय.स>
-#समावेश <यंत्र/vr41xx/irq.h>
-#समावेश <यंत्र/vr41xx/vr41xx.h>
+#include <asm/bootinfo.h>
+#include <asm/time.h>
+#include <asm/vr41xx/irq.h>
+#include <asm/vr41xx/vr41xx.h>
 
-#घोषणा IO_MEM_RESOURCE_START	0UL
-#घोषणा IO_MEM_RESOURCE_END	0x1fffffffUL
+#define IO_MEM_RESOURCE_START	0UL
+#define IO_MEM_RESOURCE_END	0x1fffffffUL
 
-अटल व्योम __init iomem_resource_init(व्योम)
-अणु
+static void __init iomem_resource_init(void)
+{
 	iomem_resource.start = IO_MEM_RESOURCE_START;
 	iomem_resource.end = IO_MEM_RESOURCE_END;
-पूर्ण
+}
 
-व्योम __init plat_समय_init(व्योम)
-अणु
-	अचिन्हित दीर्घ tघड़ी;
+void __init plat_time_init(void)
+{
+	unsigned long tclock;
 
-	vr41xx_calculate_घड़ी_frequency();
+	vr41xx_calculate_clock_frequency();
 
-	tघड़ी = vr41xx_get_tघड़ी_frequency();
-	अगर (current_cpu_data.processor_id == PRID_VR4131_REV2_0 ||
+	tclock = vr41xx_get_tclock_frequency();
+	if (current_cpu_data.processor_id == PRID_VR4131_REV2_0 ||
 	    current_cpu_data.processor_id == PRID_VR4131_REV2_1)
-		mips_hpt_frequency = tघड़ी / 2;
-	अन्यथा
-		mips_hpt_frequency = tघड़ी / 4;
-पूर्ण
+		mips_hpt_frequency = tclock / 2;
+	else
+		mips_hpt_frequency = tclock / 4;
+}
 
-व्योम __init plat_mem_setup(व्योम)
-अणु
+void __init plat_mem_setup(void)
+{
 	iomem_resource_init();
 
 	vr41xx_siu_setup();
-पूर्ण
+}
 
-व्योम __init prom_init(व्योम)
-अणु
-	पूर्णांक argc, i;
-	अक्षर **argv;
+void __init prom_init(void)
+{
+	int argc, i;
+	char **argv;
 
 	argc = fw_arg0;
-	argv = (अक्षर **)fw_arg1;
+	argv = (char **)fw_arg1;
 
-	क्रम (i = 1; i < argc; i++) अणु
+	for (i = 1; i < argc; i++) {
 		strlcat(arcs_cmdline, argv[i], COMMAND_LINE_SIZE);
-		अगर (i < (argc - 1))
+		if (i < (argc - 1))
 			strlcat(arcs_cmdline, " ", COMMAND_LINE_SIZE);
-	पूर्ण
-पूर्ण
+	}
+}

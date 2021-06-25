@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0
+// SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
 /******************************************************************************
  *
  * Module Name: tbinstal - ACPI table installation and removal
@@ -8,11 +7,11 @@
  *
  *****************************************************************************/
 
-#समावेश <acpi/acpi.h>
-#समावेश "accommon.h"
-#समावेश "actables.h"
+#include <acpi/acpi.h>
+#include "accommon.h"
+#include "actables.h"
 
-#घोषणा _COMPONENT          ACPI_TABLES
+#define _COMPONENT          ACPI_TABLES
 ACPI_MODULE_NAME("tbinstal")
 
 /*******************************************************************************
@@ -20,76 +19,76 @@ ACPI_MODULE_NAME("tbinstal")
  * FUNCTION:    acpi_tb_install_table_with_override
  *
  * PARAMETERS:  new_table_desc          - New table descriptor to install
- *              override                - Whether override should be perक्रमmed
- *              table_index             - Where the table index is वापसed
+ *              override                - Whether override should be performed
+ *              table_index             - Where the table index is returned
  *
  * RETURN:      None
  *
- * DESCRIPTION: Install an ACPI table पूर्णांकo the global data काष्ठाure. The
+ * DESCRIPTION: Install an ACPI table into the global data structure. The
  *              table override mechanism is called to allow the host
- *              OS to replace any table beक्रमe it is installed in the root
+ *              OS to replace any table before it is installed in the root
  *              table array.
  *
  ******************************************************************************/
-व्योम
-acpi_tb_install_table_with_override(काष्ठा acpi_table_desc *new_table_desc,
+void
+acpi_tb_install_table_with_override(struct acpi_table_desc *new_table_desc,
 				    u8 override, u32 *table_index)
-अणु
+{
 	u32 i;
 	acpi_status status;
 
-	status = acpi_tb_get_next_table_descriptor(&i, शून्य);
-	अगर (ACPI_FAILURE(status)) अणु
-		वापस;
-	पूर्ण
+	status = acpi_tb_get_next_table_descriptor(&i, NULL);
+	if (ACPI_FAILURE(status)) {
+		return;
+	}
 
 	/*
 	 * ACPI Table Override:
 	 *
-	 * Beक्रमe we install the table, let the host OS override it with a new
-	 * one अगर desired. Any table within the RSDT/XSDT can be replaced,
-	 * including the DSDT which is poपूर्णांकed to by the FADT.
+	 * Before we install the table, let the host OS override it with a new
+	 * one if desired. Any table within the RSDT/XSDT can be replaced,
+	 * including the DSDT which is pointed to by the FADT.
 	 */
-	अगर (override) अणु
+	if (override) {
 		acpi_tb_override_table(new_table_desc);
-	पूर्ण
+	}
 
 	acpi_tb_init_table_descriptor(&acpi_gbl_root_table_list.tables[i],
 				      new_table_desc->address,
 				      new_table_desc->flags,
-				      new_table_desc->poपूर्णांकer);
+				      new_table_desc->pointer);
 
-	acpi_tb_prपूर्णांक_table_header(new_table_desc->address,
-				   new_table_desc->poपूर्णांकer);
+	acpi_tb_print_table_header(new_table_desc->address,
+				   new_table_desc->pointer);
 
 	/* This synchronizes acpi_gbl_dsdt_index */
 
 	*table_index = i;
 
-	/* Set the global पूर्णांकeger width (based upon revision of the DSDT) */
+	/* Set the global integer width (based upon revision of the DSDT) */
 
-	अगर (i == acpi_gbl_dsdt_index) अणु
-		acpi_ut_set_पूर्णांकeger_width(new_table_desc->poपूर्णांकer->revision);
-	पूर्ण
-पूर्ण
+	if (i == acpi_gbl_dsdt_index) {
+		acpi_ut_set_integer_width(new_table_desc->pointer->revision);
+	}
+}
 
 /*******************************************************************************
  *
  * FUNCTION:    acpi_tb_install_standard_table
  *
- * PARAMETERS:  address             - Address of the table (might be a भव
+ * PARAMETERS:  address             - Address of the table (might be a virtual
  *                                    address depending on the table_flags)
- *              flags               - Flags क्रम the table
- *              reload              - Whether reload should be perक्रमmed
- *              override            - Whether override should be perक्रमmed
- *              table_index         - Where the table index is वापसed
+ *              flags               - Flags for the table
+ *              reload              - Whether reload should be performed
+ *              override            - Whether override should be performed
+ *              table_index         - Where the table index is returned
  *
  * RETURN:      Status
  *
- * DESCRIPTION: This function is called to verअगरy and install an ACPI table.
+ * DESCRIPTION: This function is called to verify and install an ACPI table.
  *              When this function is called by "Load" or "LoadTable" opcodes,
  *              or by acpi_load_table() API, the "Reload" parameter is set.
- *              After successfully वापसing from this function, table is
+ *              After successfully returning from this function, table is
  *              "INSTALLED" but not "VALIDATED".
  *
  ******************************************************************************/
@@ -98,60 +97,60 @@ acpi_status
 acpi_tb_install_standard_table(acpi_physical_address address,
 			       u8 flags,
 			       u8 reload, u8 override, u32 *table_index)
-अणु
+{
 	u32 i;
 	acpi_status status = AE_OK;
-	काष्ठा acpi_table_desc new_table_desc;
+	struct acpi_table_desc new_table_desc;
 
 	ACPI_FUNCTION_TRACE(tb_install_standard_table);
 
-	/* Acquire a temporary table descriptor क्रम validation */
+	/* Acquire a temporary table descriptor for validation */
 
 	status = acpi_tb_acquire_temp_table(&new_table_desc, address, flags);
-	अगर (ACPI_FAILURE(status)) अणु
+	if (ACPI_FAILURE(status)) {
 		ACPI_ERROR((AE_INFO,
 			    "Could not acquire table length at %8.8X%8.8X",
 			    ACPI_FORMAT_UINT64(address)));
-		वापस_ACPI_STATUS(status);
-	पूर्ण
+		return_ACPI_STATUS(status);
+	}
 
 	/*
-	 * Optionally करो not load any SSDTs from the RSDT/XSDT. This can
-	 * be useful क्रम debugging ACPI problems on some machines.
+	 * Optionally do not load any SSDTs from the RSDT/XSDT. This can
+	 * be useful for debugging ACPI problems on some machines.
 	 */
-	अगर (!reload &&
+	if (!reload &&
 	    acpi_gbl_disable_ssdt_table_install &&
-	    ACPI_COMPARE_NAMESEG(&new_table_desc.signature, ACPI_SIG_SSDT)) अणु
+	    ACPI_COMPARE_NAMESEG(&new_table_desc.signature, ACPI_SIG_SSDT)) {
 		ACPI_INFO(("Ignoring installation of %4.4s at %8.8X%8.8X",
 			   new_table_desc.signature.ascii,
 			   ACPI_FORMAT_UINT64(address)));
-		जाओ release_and_निकास;
-	पूर्ण
+		goto release_and_exit;
+	}
 
 	/* Acquire the table lock */
 
-	(व्योम)acpi_ut_acquire_mutex(ACPI_MTX_TABLES);
+	(void)acpi_ut_acquire_mutex(ACPI_MTX_TABLES);
 
-	/* Validate and verअगरy a table beक्रमe installation */
+	/* Validate and verify a table before installation */
 
-	status = acpi_tb_verअगरy_temp_table(&new_table_desc, शून्य, &i);
-	अगर (ACPI_FAILURE(status)) अणु
-		अगर (status == AE_CTRL_TERMINATE) अणु
+	status = acpi_tb_verify_temp_table(&new_table_desc, NULL, &i);
+	if (ACPI_FAILURE(status)) {
+		if (status == AE_CTRL_TERMINATE) {
 			/*
 			 * Table was unloaded, allow it to be reloaded.
-			 * As we are going to वापस AE_OK to the caller, we should
-			 * take the responsibility of मुक्तing the input descriptor.
+			 * As we are going to return AE_OK to the caller, we should
+			 * take the responsibility of freeing the input descriptor.
 			 * Refill the input descriptor to ensure
 			 * acpi_tb_install_table_with_override() can be called again to
 			 * indicate the re-installation.
 			 */
 			acpi_tb_uninstall_table(&new_table_desc);
-			(व्योम)acpi_ut_release_mutex(ACPI_MTX_TABLES);
+			(void)acpi_ut_release_mutex(ACPI_MTX_TABLES);
 			*table_index = i;
-			वापस_ACPI_STATUS(AE_OK);
-		पूर्ण
-		जाओ unlock_and_निकास;
-	पूर्ण
+			return_ACPI_STATUS(AE_OK);
+		}
+		goto unlock_and_exit;
+	}
 
 	/* Add the table to the global root table list */
 
@@ -160,23 +159,23 @@ acpi_tb_install_standard_table(acpi_physical_address address,
 
 	/* Invoke table handler */
 
-	(व्योम)acpi_ut_release_mutex(ACPI_MTX_TABLES);
-	acpi_tb_notअगरy_table(ACPI_TABLE_EVENT_INSTALL, new_table_desc.poपूर्णांकer);
-	(व्योम)acpi_ut_acquire_mutex(ACPI_MTX_TABLES);
+	(void)acpi_ut_release_mutex(ACPI_MTX_TABLES);
+	acpi_tb_notify_table(ACPI_TABLE_EVENT_INSTALL, new_table_desc.pointer);
+	(void)acpi_ut_acquire_mutex(ACPI_MTX_TABLES);
 
-unlock_and_निकास:
+unlock_and_exit:
 
 	/* Release the table lock */
 
-	(व्योम)acpi_ut_release_mutex(ACPI_MTX_TABLES);
+	(void)acpi_ut_release_mutex(ACPI_MTX_TABLES);
 
-release_and_निकास:
+release_and_exit:
 
 	/* Release the temporary table descriptor */
 
 	acpi_tb_release_temp_table(&new_table_desc);
-	वापस_ACPI_STATUS(status);
-पूर्ण
+	return_ACPI_STATUS(status);
+}
 
 /*******************************************************************************
  *
@@ -189,55 +188,55 @@ release_and_निकास:
  *
  * DESCRIPTION: Attempt table override by calling the OSL override functions.
  *              Note: If the table is overridden, then the entire new table
- *              is acquired and वापसed by this function.
- *              Beक्रमe/after invocation, the table descriptor is in a state
+ *              is acquired and returned by this function.
+ *              Before/after invocation, the table descriptor is in a state
  *              that is "VALIDATED".
  *
  ******************************************************************************/
 
-व्योम acpi_tb_override_table(काष्ठा acpi_table_desc *old_table_desc)
-अणु
+void acpi_tb_override_table(struct acpi_table_desc *old_table_desc)
+{
 	acpi_status status;
-	काष्ठा acpi_table_desc new_table_desc;
-	काष्ठा acpi_table_header *table;
+	struct acpi_table_desc new_table_desc;
+	struct acpi_table_header *table;
 	acpi_physical_address address;
 	u32 length;
-	ACPI_ERROR_ONLY(अक्षर *override_type);
+	ACPI_ERROR_ONLY(char *override_type);
 
-	/* (1) Attempt logical override (वापसs a logical address) */
+	/* (1) Attempt logical override (returns a logical address) */
 
-	status = acpi_os_table_override(old_table_desc->poपूर्णांकer, &table);
-	अगर (ACPI_SUCCESS(status) && table) अणु
+	status = acpi_os_table_override(old_table_desc->pointer, &table);
+	if (ACPI_SUCCESS(status) && table) {
 		acpi_tb_acquire_temp_table(&new_table_desc,
 					   ACPI_PTR_TO_PHYSADDR(table),
 					   ACPI_TABLE_ORIGIN_EXTERNAL_VIRTUAL);
 		ACPI_ERROR_ONLY(override_type = "Logical");
-		जाओ finish_override;
-	पूर्ण
+		goto finish_override;
+	}
 
-	/* (2) Attempt physical override (वापसs a physical address) */
+	/* (2) Attempt physical override (returns a physical address) */
 
-	status = acpi_os_physical_table_override(old_table_desc->poपूर्णांकer,
+	status = acpi_os_physical_table_override(old_table_desc->pointer,
 						 &address, &length);
-	अगर (ACPI_SUCCESS(status) && address && length) अणु
+	if (ACPI_SUCCESS(status) && address && length) {
 		acpi_tb_acquire_temp_table(&new_table_desc, address,
 					   ACPI_TABLE_ORIGIN_INTERNAL_PHYSICAL);
 		ACPI_ERROR_ONLY(override_type = "Physical");
-		जाओ finish_override;
-	पूर्ण
+		goto finish_override;
+	}
 
-	वापस;			/* There was no override */
+	return;			/* There was no override */
 
 finish_override:
 
 	/*
-	 * Validate and verअगरy a table beक्रमe overriding, no nested table
+	 * Validate and verify a table before overriding, no nested table
 	 * duplication check as it's too complicated and unnecessary.
 	 */
-	status = acpi_tb_verअगरy_temp_table(&new_table_desc, शून्य, शून्य);
-	अगर (ACPI_FAILURE(status)) अणु
-		वापस;
-	पूर्ण
+	status = acpi_tb_verify_temp_table(&new_table_desc, NULL, NULL);
+	if (ACPI_FAILURE(status)) {
+		return;
+	}
 
 	ACPI_INFO(("%4.4s 0x%8.8X%8.8X"
 		   " %s table override, new table: 0x%8.8X%8.8X",
@@ -255,13 +254,13 @@ finish_override:
 	 */
 	acpi_tb_init_table_descriptor(old_table_desc, new_table_desc.address,
 				      new_table_desc.flags,
-				      new_table_desc.poपूर्णांकer);
+				      new_table_desc.pointer);
 	acpi_tb_validate_temp_table(old_table_desc);
 
 	/* Release the temporary table descriptor */
 
 	acpi_tb_release_temp_table(&new_table_desc);
-पूर्ण
+}
 
 /*******************************************************************************
  *
@@ -271,28 +270,28 @@ finish_override:
  *
  * RETURN:      None
  *
- * DESCRIPTION: Delete one पूर्णांकernal ACPI table
+ * DESCRIPTION: Delete one internal ACPI table
  *
  ******************************************************************************/
 
-व्योम acpi_tb_uninstall_table(काष्ठा acpi_table_desc *table_desc)
-अणु
+void acpi_tb_uninstall_table(struct acpi_table_desc *table_desc)
+{
 
 	ACPI_FUNCTION_TRACE(tb_uninstall_table);
 
 	/* Table must be installed */
 
-	अगर (!table_desc->address) अणु
-		वापस_VOID;
-	पूर्ण
+	if (!table_desc->address) {
+		return_VOID;
+	}
 
 	acpi_tb_invalidate_table(table_desc);
 
-	अगर ((table_desc->flags & ACPI_TABLE_ORIGIN_MASK) ==
-	    ACPI_TABLE_ORIGIN_INTERNAL_VIRTUAL) अणु
+	if ((table_desc->flags & ACPI_TABLE_ORIGIN_MASK) ==
+	    ACPI_TABLE_ORIGIN_INTERNAL_VIRTUAL) {
 		ACPI_FREE(ACPI_PHYSADDR_TO_PTR(table_desc->address));
-	पूर्ण
+	}
 
-	table_desc->address = ACPI_PTR_TO_PHYSADDR(शून्य);
-	वापस_VOID;
-पूर्ण
+	table_desc->address = ACPI_PTR_TO_PHYSADDR(NULL);
+	return_VOID;
+}

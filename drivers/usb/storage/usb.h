@@ -1,211 +1,210 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0+ */
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
- * Driver क्रम USB Mass Storage compliant devices
+ * Driver for USB Mass Storage compliant devices
  * Main Header File
  *
- * Current development and मुख्यtenance by:
+ * Current development and maintenance by:
  *   (c) 1999-2002 Matthew Dharm (mdharm-usb@one-eyed-alien.net)
  *
  * Initial work by:
- *   (c) 1999 Michael Gee (michael@linuxspecअगरic.com)
+ *   (c) 1999 Michael Gee (michael@linuxspecific.com)
  *
- * This driver is based on the 'USB Mass Storage Class' करोcument. This
+ * This driver is based on the 'USB Mass Storage Class' document. This
  * describes in detail the protocol used to communicate with such
  * devices.  Clearly, the designers had SCSI and ATAPI commands in
- * mind when they created this करोcument.  The commands are all very
- * similar to commands in the SCSI-II and ATAPI specअगरications.
+ * mind when they created this document.  The commands are all very
+ * similar to commands in the SCSI-II and ATAPI specifications.
  *
- * It is important to note that in a number of हालs this class
- * exhibits class-specअगरic exemptions from the USB specअगरication.
- * Notably the usage of NAK, STALL and ACK dअगरfers from the norm, in
- * that they are used to communicate रुको, failed and OK on commands.
+ * It is important to note that in a number of cases this class
+ * exhibits class-specific exemptions from the USB specification.
+ * Notably the usage of NAK, STALL and ACK differs from the norm, in
+ * that they are used to communicate wait, failed and OK on commands.
  *
- * Also, क्रम certain devices, the पूर्णांकerrupt endpoपूर्णांक is used to convey
+ * Also, for certain devices, the interrupt endpoint is used to convey
  * status of a command.
  */
 
-#अगर_अघोषित _USB_H_
-#घोषणा _USB_H_
+#ifndef _USB_H_
+#define _USB_H_
 
-#समावेश <linux/usb.h>
-#समावेश <linux/usb_usual.h>
-#समावेश <linux/blkdev.h>
-#समावेश <linux/completion.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/workqueue.h>
-#समावेश <scsi/scsi_host.h>
+#include <linux/usb.h>
+#include <linux/usb_usual.h>
+#include <linux/blkdev.h>
+#include <linux/completion.h>
+#include <linux/mutex.h>
+#include <linux/workqueue.h>
+#include <scsi/scsi_host.h>
 
-काष्ठा us_data;
-काष्ठा scsi_cmnd;
+struct us_data;
+struct scsi_cmnd;
 
 /*
  * Unusual device list definitions 
  */
 
-काष्ठा us_unusual_dev अणु
-	स्थिर अक्षर* venकरोrName;
-	स्थिर अक्षर* productName;
+struct us_unusual_dev {
+	const char* vendorName;
+	const char* productName;
 	__u8  useProtocol;
 	__u8  useTransport;
-	पूर्णांक (*initFunction)(काष्ठा us_data *);
-पूर्ण;
+	int (*initFunction)(struct us_data *);
+};
 
 
 /* Dynamic bitflag definitions (us->dflags): used in set_bit() etc. */
-#घोषणा US_FLIDX_URB_ACTIVE	0	/* current_urb is in use    */
-#घोषणा US_FLIDX_SG_ACTIVE	1	/* current_sg is in use     */
-#घोषणा US_FLIDX_ABORTING	2	/* पात is in progress     */
-#घोषणा US_FLIDX_DISCONNECTING	3	/* disconnect in progress   */
-#घोषणा US_FLIDX_RESETTING	4	/* device reset in progress */
-#घोषणा US_FLIDX_TIMED_OUT	5	/* SCSI midlayer समयd out  */
-#घोषणा US_FLIDX_SCAN_PENDING	6	/* scanning not yet करोne    */
-#घोषणा US_FLIDX_REDO_READ10	7	/* reकरो READ(10) command    */
-#घोषणा US_FLIDX_READ10_WORKED	8	/* previous READ(10) succeeded */
+#define US_FLIDX_URB_ACTIVE	0	/* current_urb is in use    */
+#define US_FLIDX_SG_ACTIVE	1	/* current_sg is in use     */
+#define US_FLIDX_ABORTING	2	/* abort is in progress     */
+#define US_FLIDX_DISCONNECTING	3	/* disconnect in progress   */
+#define US_FLIDX_RESETTING	4	/* device reset in progress */
+#define US_FLIDX_TIMED_OUT	5	/* SCSI midlayer timed out  */
+#define US_FLIDX_SCAN_PENDING	6	/* scanning not yet done    */
+#define US_FLIDX_REDO_READ10	7	/* redo READ(10) command    */
+#define US_FLIDX_READ10_WORKED	8	/* previous READ(10) succeeded */
 
-#घोषणा USB_STOR_STRING_LEN 32
+#define USB_STOR_STRING_LEN 32
 
 /*
- * We provide a DMA-mapped I/O buffer क्रम use with small USB transfers.
+ * We provide a DMA-mapped I/O buffer for use with small USB transfers.
  * It turns out that CB[I] needs a 12-byte buffer and Bulk-only needs a
  * 31-byte buffer.  But Freecom needs a 64-byte buffer, so that's the
  * size we'll allocate.
  */
 
-#घोषणा US_IOBUF_SIZE		64	/* Size of the DMA-mapped I/O buffer */
-#घोषणा US_SENSE_SIZE		18	/* Size of the स्वतःsense data buffer */
+#define US_IOBUF_SIZE		64	/* Size of the DMA-mapped I/O buffer */
+#define US_SENSE_SIZE		18	/* Size of the autosense data buffer */
 
-प्रकार पूर्णांक (*trans_cmnd)(काष्ठा scsi_cmnd *, काष्ठा us_data*);
-प्रकार पूर्णांक (*trans_reset)(काष्ठा us_data*);
-प्रकार व्योम (*proto_cmnd)(काष्ठा scsi_cmnd*, काष्ठा us_data*);
-प्रकार व्योम (*extra_data_deकाष्ठाor)(व्योम *);	/* extra data deकाष्ठाor */
-प्रकार व्योम (*pm_hook)(काष्ठा us_data *, पूर्णांक);	/* घातer management hook */
+typedef int (*trans_cmnd)(struct scsi_cmnd *, struct us_data*);
+typedef int (*trans_reset)(struct us_data*);
+typedef void (*proto_cmnd)(struct scsi_cmnd*, struct us_data*);
+typedef void (*extra_data_destructor)(void *);	/* extra data destructor */
+typedef void (*pm_hook)(struct us_data *, int);	/* power management hook */
 
-#घोषणा US_SUSPEND	0
-#घोषणा US_RESUME	1
+#define US_SUSPEND	0
+#define US_RESUME	1
 
-/* we allocate one of these क्रम every device that we remember */
-काष्ठा us_data अणु
+/* we allocate one of these for every device that we remember */
+struct us_data {
 	/*
 	 * The device we're working with
 	 * It's important to note:
 	 *    (o) you must hold dev_mutex to change pusb_dev
 	 */
-	काष्ठा mutex		dev_mutex;	 /* protect pusb_dev */
-	काष्ठा usb_device	*pusb_dev;	 /* this usb_device */
-	काष्ठा usb_पूर्णांकerface	*pusb_पूर्णांकf;	 /* this पूर्णांकerface */
-	स्थिर काष्ठा us_unusual_dev   *unusual_dev;
+	struct mutex		dev_mutex;	 /* protect pusb_dev */
+	struct usb_device	*pusb_dev;	 /* this usb_device */
+	struct usb_interface	*pusb_intf;	 /* this interface */
+	const struct us_unusual_dev   *unusual_dev;
 						/* device-filter entry     */
-	अचिन्हित दीर्घ		fflags;		 /* fixed flags from filter */
-	अचिन्हित दीर्घ		dflags;		 /* dynamic atomic bitflags */
-	अचिन्हित पूर्णांक		send_bulk_pipe;	 /* cached pipe values */
-	अचिन्हित पूर्णांक		recv_bulk_pipe;
-	अचिन्हित पूर्णांक		send_ctrl_pipe;
-	अचिन्हित पूर्णांक		recv_ctrl_pipe;
-	अचिन्हित पूर्णांक		recv_पूर्णांकr_pipe;
+	unsigned long		fflags;		 /* fixed flags from filter */
+	unsigned long		dflags;		 /* dynamic atomic bitflags */
+	unsigned int		send_bulk_pipe;	 /* cached pipe values */
+	unsigned int		recv_bulk_pipe;
+	unsigned int		send_ctrl_pipe;
+	unsigned int		recv_ctrl_pipe;
+	unsigned int		recv_intr_pipe;
 
-	/* inक्रमmation about the device */
-	अक्षर			*transport_name;
-	अक्षर			*protocol_name;
+	/* information about the device */
+	char			*transport_name;
+	char			*protocol_name;
 	__le32			bcs_signature;
 	u8			subclass;
 	u8			protocol;
 	u8			max_lun;
 
-	u8			अगरnum;		 /* पूर्णांकerface number   */
-	u8			ep_bInterval;	 /* पूर्णांकerrupt पूर्णांकerval */
+	u8			ifnum;		 /* interface number   */
+	u8			ep_bInterval;	 /* interrupt interval */
 
-	/* function poपूर्णांकers क्रम this device */
+	/* function pointers for this device */
 	trans_cmnd		transport;	 /* transport function	   */
 	trans_reset		transport_reset; /* transport device reset */
 	proto_cmnd		proto_handler;	 /* protocol handler	   */
 
-	/* SCSI पूर्णांकerfaces */
-	काष्ठा scsi_cmnd	*srb;		 /* current srb		*/
-	अचिन्हित पूर्णांक		tag;		 /* current dCBWTag	*/
-	अक्षर			scsi_name[32];	 /* scsi_host name	*/
+	/* SCSI interfaces */
+	struct scsi_cmnd	*srb;		 /* current srb		*/
+	unsigned int		tag;		 /* current dCBWTag	*/
+	char			scsi_name[32];	 /* scsi_host name	*/
 
 	/* control and bulk communications data */
-	काष्ठा urb		*current_urb;	 /* USB requests	 */
-	काष्ठा usb_ctrlrequest	*cr;		 /* control requests	 */
-	काष्ठा usb_sg_request	current_sg;	 /* scatter-gather req.  */
-	अचिन्हित अक्षर		*iobuf;		 /* I/O buffer		 */
+	struct urb		*current_urb;	 /* USB requests	 */
+	struct usb_ctrlrequest	*cr;		 /* control requests	 */
+	struct usb_sg_request	current_sg;	 /* scatter-gather req.  */
+	unsigned char		*iobuf;		 /* I/O buffer		 */
 	dma_addr_t		iobuf_dma;	 /* buffer DMA addresses */
-	काष्ठा task_काष्ठा	*ctl_thपढ़ो;	 /* the control thपढ़ो   */
+	struct task_struct	*ctl_thread;	 /* the control thread   */
 
-	/* mutual exclusion and synchronization काष्ठाures */
-	काष्ठा completion	cmnd_पढ़ोy;	 /* to sleep thपढ़ो on	    */
-	काष्ठा completion	notअगरy;		 /* thपढ़ो begin/end	    */
-	रुको_queue_head_t	delay_रुको;	 /* रुको during reset	    */
-	काष्ठा delayed_work	scan_dwork;	 /* क्रम async scanning      */
+	/* mutual exclusion and synchronization structures */
+	struct completion	cmnd_ready;	 /* to sleep thread on	    */
+	struct completion	notify;		 /* thread begin/end	    */
+	wait_queue_head_t	delay_wait;	 /* wait during reset	    */
+	struct delayed_work	scan_dwork;	 /* for async scanning      */
 
-	/* subdriver inक्रमmation */
-	व्योम			*extra;		 /* Any extra data          */
-	extra_data_deकाष्ठाor	extra_deकाष्ठाor;/* extra data deकाष्ठाor   */
-#अगर_घोषित CONFIG_PM
+	/* subdriver information */
+	void			*extra;		 /* Any extra data          */
+	extra_data_destructor	extra_destructor;/* extra data destructor   */
+#ifdef CONFIG_PM
 	pm_hook			suspend_resume_hook;
-#पूर्ण_अगर
+#endif
 
-	/* hacks क्रम READ CAPACITY bug handling */
-	पूर्णांक			use_last_sector_hacks;
-	पूर्णांक			last_sector_retries;
-पूर्ण;
+	/* hacks for READ CAPACITY bug handling */
+	int			use_last_sector_hacks;
+	int			last_sector_retries;
+};
 
 /* Convert between us_data and the corresponding Scsi_Host */
-अटल अंतरभूत काष्ठा Scsi_Host *us_to_host(काष्ठा us_data *us) अणु
-	वापस container_of((व्योम *) us, काष्ठा Scsi_Host, hostdata);
-पूर्ण
-अटल अंतरभूत काष्ठा us_data *host_to_us(काष्ठा Scsi_Host *host) अणु
-	वापस (काष्ठा us_data *) host->hostdata;
-पूर्ण
+static inline struct Scsi_Host *us_to_host(struct us_data *us) {
+	return container_of((void *) us, struct Scsi_Host, hostdata);
+}
+static inline struct us_data *host_to_us(struct Scsi_Host *host) {
+	return (struct us_data *) host->hostdata;
+}
 
-/* Function to fill an inquiry response. See usb.c क्रम details */
-बाह्य व्योम fill_inquiry_response(काष्ठा us_data *us,
-	अचिन्हित अक्षर *data, अचिन्हित पूर्णांक data_len);
+/* Function to fill an inquiry response. See usb.c for details */
+extern void fill_inquiry_response(struct us_data *us,
+	unsigned char *data, unsigned int data_len);
 
 /*
  * The scsi_lock() and scsi_unlock() macros protect the sm_state and the
- * single queue element srb क्रम ग_लिखो access
+ * single queue element srb for write access
  */
-#घोषणा scsi_unlock(host)	spin_unlock_irq(host->host_lock)
-#घोषणा scsi_lock(host)		spin_lock_irq(host->host_lock)
+#define scsi_unlock(host)	spin_unlock_irq(host->host_lock)
+#define scsi_lock(host)		spin_lock_irq(host->host_lock)
 
 /* General routines provided by the usb-storage standard core */
-#अगर_घोषित CONFIG_PM
-बाह्य पूर्णांक usb_stor_suspend(काष्ठा usb_पूर्णांकerface *अगरace, pm_message_t message);
-बाह्य पूर्णांक usb_stor_resume(काष्ठा usb_पूर्णांकerface *अगरace);
-बाह्य पूर्णांक usb_stor_reset_resume(काष्ठा usb_पूर्णांकerface *अगरace);
-#अन्यथा
-#घोषणा usb_stor_suspend	शून्य
-#घोषणा usb_stor_resume		शून्य
-#घोषणा usb_stor_reset_resume	शून्य
-#पूर्ण_अगर
+#ifdef CONFIG_PM
+extern int usb_stor_suspend(struct usb_interface *iface, pm_message_t message);
+extern int usb_stor_resume(struct usb_interface *iface);
+extern int usb_stor_reset_resume(struct usb_interface *iface);
+#else
+#define usb_stor_suspend	NULL
+#define usb_stor_resume		NULL
+#define usb_stor_reset_resume	NULL
+#endif
 
-बाह्य पूर्णांक usb_stor_pre_reset(काष्ठा usb_पूर्णांकerface *अगरace);
-बाह्य पूर्णांक usb_stor_post_reset(काष्ठा usb_पूर्णांकerface *अगरace);
+extern int usb_stor_pre_reset(struct usb_interface *iface);
+extern int usb_stor_post_reset(struct usb_interface *iface);
 
-बाह्य पूर्णांक usb_stor_probe1(काष्ठा us_data **pus,
-		काष्ठा usb_पूर्णांकerface *पूर्णांकf,
-		स्थिर काष्ठा usb_device_id *id,
-		स्थिर काष्ठा us_unusual_dev *unusual_dev,
-		काष्ठा scsi_host_ढाँचा *sht);
-बाह्य पूर्णांक usb_stor_probe2(काष्ठा us_data *us);
-बाह्य व्योम usb_stor_disconnect(काष्ठा usb_पूर्णांकerface *पूर्णांकf);
+extern int usb_stor_probe1(struct us_data **pus,
+		struct usb_interface *intf,
+		const struct usb_device_id *id,
+		const struct us_unusual_dev *unusual_dev,
+		struct scsi_host_template *sht);
+extern int usb_stor_probe2(struct us_data *us);
+extern void usb_stor_disconnect(struct usb_interface *intf);
 
-बाह्य व्योम usb_stor_adjust_quirks(काष्ठा usb_device *dev,
-		अचिन्हित दीर्घ *fflags);
+extern void usb_stor_adjust_quirks(struct usb_device *dev,
+		unsigned long *fflags);
 
-#घोषणा module_usb_stor_driver(__driver, __sht, __name) \
-अटल पूर्णांक __init __driver##_init(व्योम) \
-अणु \
-	usb_stor_host_ढाँचा_init(&(__sht), __name, THIS_MODULE); \
-	वापस usb_रेजिस्टर(&(__driver)); \
-पूर्ण \
+#define module_usb_stor_driver(__driver, __sht, __name) \
+static int __init __driver##_init(void) \
+{ \
+	usb_stor_host_template_init(&(__sht), __name, THIS_MODULE); \
+	return usb_register(&(__driver)); \
+} \
 module_init(__driver##_init); \
-अटल व्योम __निकास __driver##_निकास(व्योम) \
-अणु \
-	usb_deरेजिस्टर(&(__driver)); \
-पूर्ण \
-module_निकास(__driver##_निकास)
+static void __exit __driver##_exit(void) \
+{ \
+	usb_deregister(&(__driver)); \
+} \
+module_exit(__driver##_exit)
 
-#पूर्ण_अगर
+#endif

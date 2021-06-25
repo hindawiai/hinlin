@@ -1,74 +1,73 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
- * Common समयbase prototypes and such क्रम all ppc machines.
+ * Common timebase prototypes and such for all ppc machines.
  */
 
-#अगर_अघोषित _ASM_POWERPC_VDSO_TIMEBASE_H
-#घोषणा _ASM_POWERPC_VDSO_TIMEBASE_H
+#ifndef _ASM_POWERPC_VDSO_TIMEBASE_H
+#define _ASM_POWERPC_VDSO_TIMEBASE_H
 
-#समावेश <यंत्र/reg.h>
+#include <asm/reg.h>
 
 /*
- * We use __घातerpc64__ here because we want the compat VDSO to use the 32-bit
- * version below in the अन्यथा हाल of the अगरdef.
+ * We use __powerpc64__ here because we want the compat VDSO to use the 32-bit
+ * version below in the else case of the ifdef.
  */
-#अगर defined(__घातerpc64__) && (defined(CONFIG_PPC_CELL) || defined(CONFIG_E500))
-#घोषणा mftb()		(अणुअचिन्हित दीर्घ rval;				\
-			यंत्र अस्थिर(					\
+#if defined(__powerpc64__) && (defined(CONFIG_PPC_CELL) || defined(CONFIG_E500))
+#define mftb()		({unsigned long rval;				\
+			asm volatile(					\
 				"90:	mfspr %0, %2;\n"		\
 				ASM_FTR_IFSET(				\
 					"97:	cmpwi %0,0;\n"		\
 					"	beq- 90b;\n", "", %1)	\
 			: "=r" (rval) \
 			: "i" (CPU_FTR_CELL_TB_BUG), "i" (SPRN_TBRL) : "cr0"); \
-			rval;पूर्ण)
-#या_अगर defined(CONFIG_PPC_8xx)
-#घोषणा mftb()		(अणुअचिन्हित दीर्घ rval;	\
-			यंत्र अस्थिर("mftbl %0" : "=r" (rval)); rval;पूर्ण)
-#अन्यथा
-#घोषणा mftb()		(अणुअचिन्हित दीर्घ rval;	\
-			यंत्र अस्थिर("mfspr %0, %1" : \
-				     "=r" (rval) : "i" (SPRN_TBRL)); rval;पूर्ण)
-#पूर्ण_अगर /* !CONFIG_PPC_CELL */
+			rval;})
+#elif defined(CONFIG_PPC_8xx)
+#define mftb()		({unsigned long rval;	\
+			asm volatile("mftbl %0" : "=r" (rval)); rval;})
+#else
+#define mftb()		({unsigned long rval;	\
+			asm volatile("mfspr %0, %1" : \
+				     "=r" (rval) : "i" (SPRN_TBRL)); rval;})
+#endif /* !CONFIG_PPC_CELL */
 
-#अगर defined(CONFIG_PPC_8xx)
-#घोषणा mftbu()		(अणुअचिन्हित दीर्घ rval;	\
-			यंत्र अस्थिर("mftbu %0" : "=r" (rval)); rval;पूर्ण)
-#अन्यथा
-#घोषणा mftbu()		(अणुअचिन्हित दीर्घ rval;	\
-			यंत्र अस्थिर("mfspr %0, %1" : "=r" (rval) : \
-				"i" (SPRN_TBRU)); rval;पूर्ण)
-#पूर्ण_अगर
+#if defined(CONFIG_PPC_8xx)
+#define mftbu()		({unsigned long rval;	\
+			asm volatile("mftbu %0" : "=r" (rval)); rval;})
+#else
+#define mftbu()		({unsigned long rval;	\
+			asm volatile("mfspr %0, %1" : "=r" (rval) : \
+				"i" (SPRN_TBRU)); rval;})
+#endif
 
-#घोषणा mttbl(v)	यंत्र अस्थिर("mttbl %0":: "r"(v))
-#घोषणा mttbu(v)	यंत्र अस्थिर("mttbu %0":: "r"(v))
+#define mttbl(v)	asm volatile("mttbl %0":: "r"(v))
+#define mttbu(v)	asm volatile("mttbu %0":: "r"(v))
 
-अटल __always_अंतरभूत u64 get_tb(व्योम)
-अणु
-	अचिन्हित पूर्णांक tbhi, tblo, tbhi2;
+static __always_inline u64 get_tb(void)
+{
+	unsigned int tbhi, tblo, tbhi2;
 
 	/*
-	 * We use __घातerpc64__ here not CONFIG_PPC64 because we want the compat
-	 * VDSO to use the 32-bit compatible version in the जबतक loop below.
+	 * We use __powerpc64__ here not CONFIG_PPC64 because we want the compat
+	 * VDSO to use the 32-bit compatible version in the while loop below.
 	 */
-	अगर (__is_defined(__घातerpc64__))
-		वापस mftb();
+	if (__is_defined(__powerpc64__))
+		return mftb();
 
-	करो अणु
+	do {
 		tbhi = mftbu();
 		tblo = mftb();
 		tbhi2 = mftbu();
-	पूर्ण जबतक (tbhi != tbhi2);
+	} while (tbhi != tbhi2);
 
-	वापस ((u64)tbhi << 32) | tblo;
-पूर्ण
+	return ((u64)tbhi << 32) | tblo;
+}
 
-अटल अंतरभूत व्योम set_tb(अचिन्हित पूर्णांक upper, अचिन्हित पूर्णांक lower)
-अणु
+static inline void set_tb(unsigned int upper, unsigned int lower)
+{
 	mtspr(SPRN_TBWL, 0);
 	mtspr(SPRN_TBWU, upper);
 	mtspr(SPRN_TBWL, lower);
-पूर्ण
+}
 
-#पूर्ण_अगर /* _ASM_POWERPC_VDSO_TIMEBASE_H */
+#endif /* _ASM_POWERPC_VDSO_TIMEBASE_H */

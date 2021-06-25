@@ -1,50 +1,49 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 
-#अघोषित TRACE_SYSTEM
-#घोषणा TRACE_SYSTEM ucsi
+#undef TRACE_SYSTEM
+#define TRACE_SYSTEM ucsi
 
-#अगर !defined(__UCSI_TRACE_H) || defined(TRACE_HEADER_MULTI_READ)
-#घोषणा __UCSI_TRACE_H
+#if !defined(__UCSI_TRACE_H) || defined(TRACE_HEADER_MULTI_READ)
+#define __UCSI_TRACE_H
 
-#समावेश <linux/tracepoपूर्णांक.h>
-#समावेश <linux/usb/typec_alपंचांगode.h>
+#include <linux/tracepoint.h>
+#include <linux/usb/typec_altmode.h>
 
-स्थिर अक्षर *ucsi_cmd_str(u64 raw_cmd);
-स्थिर अक्षर *ucsi_cci_str(u32 cci);
-स्थिर अक्षर *ucsi_recipient_str(u8 recipient);
+const char *ucsi_cmd_str(u64 raw_cmd);
+const char *ucsi_cci_str(u32 cci);
+const char *ucsi_recipient_str(u8 recipient);
 
 DECLARE_EVENT_CLASS(ucsi_log_command,
-	TP_PROTO(u64 command, पूर्णांक ret),
+	TP_PROTO(u64 command, int ret),
 	TP_ARGS(command, ret),
 	TP_STRUCT__entry(
 		__field(u64, ctrl)
-		__field(पूर्णांक, ret)
+		__field(int, ret)
 	),
 	TP_fast_assign(
 		__entry->ctrl = command;
 		__entry->ret = ret;
 	),
-	TP_prपूर्णांकk("%s -> %s (err=%d)", ucsi_cmd_str(__entry->ctrl),
+	TP_printk("%s -> %s (err=%d)", ucsi_cmd_str(__entry->ctrl),
 		__entry->ret < 0 ? "FAIL" : "OK",
 		__entry->ret < 0 ? __entry->ret : 0)
 );
 
 DEFINE_EVENT(ucsi_log_command, ucsi_run_command,
-	TP_PROTO(u64 command, पूर्णांक ret),
+	TP_PROTO(u64 command, int ret),
 	TP_ARGS(command, ret)
 );
 
 DEFINE_EVENT(ucsi_log_command, ucsi_reset_ppm,
-	TP_PROTO(u64 command, पूर्णांक ret),
+	TP_PROTO(u64 command, int ret),
 	TP_ARGS(command, ret)
 );
 
 DECLARE_EVENT_CLASS(ucsi_log_connector_status,
-	TP_PROTO(पूर्णांक port, काष्ठा ucsi_connector_status *status),
+	TP_PROTO(int port, struct ucsi_connector_status *status),
 	TP_ARGS(port, status),
 	TP_STRUCT__entry(
-		__field(पूर्णांक, port)
+		__field(int, port)
 		__field(u16, change)
 		__field(u8, opmode)
 		__field(u8, connected)
@@ -59,13 +58,13 @@ DECLARE_EVENT_CLASS(ucsi_log_connector_status,
 		__entry->change = status->change;
 		__entry->opmode = UCSI_CONSTAT_PWR_OPMODE(status->flags);
 		__entry->connected = !!(status->flags & UCSI_CONSTAT_CONNECTED);
-		__entry->pwr_dir = !!(status->flags & UCSI_CONSTAT_PWR_सूची);
+		__entry->pwr_dir = !!(status->flags & UCSI_CONSTAT_PWR_DIR);
 		__entry->partner_flags = UCSI_CONSTAT_PARTNER_FLAGS(status->flags);
 		__entry->partner_type = UCSI_CONSTAT_PARTNER_TYPE(status->flags);
 		__entry->request_data_obj = status->request_data_obj;
 		__entry->bc_status = UCSI_CONSTAT_BC_STATUS(status->pwr_status);
 	),
-	TP_prपूर्णांकk("port%d status: change=%04x, opmode=%x, connected=%d, "
+	TP_printk("port%d status: change=%04x, opmode=%x, connected=%d, "
 		"sourcing=%d, partner_flags=%x, partner_type=%x, "
 		"request_data_obj=%08x, BC status=%x", __entry->port,
 		__entry->change, __entry->opmode, __entry->connected,
@@ -74,48 +73,48 @@ DECLARE_EVENT_CLASS(ucsi_log_connector_status,
 );
 
 DEFINE_EVENT(ucsi_log_connector_status, ucsi_connector_change,
-	TP_PROTO(पूर्णांक port, काष्ठा ucsi_connector_status *status),
+	TP_PROTO(int port, struct ucsi_connector_status *status),
 	TP_ARGS(port, status)
 );
 
-DEFINE_EVENT(ucsi_log_connector_status, ucsi_रेजिस्टर_port,
-	TP_PROTO(पूर्णांक port, काष्ठा ucsi_connector_status *status),
+DEFINE_EVENT(ucsi_log_connector_status, ucsi_register_port,
+	TP_PROTO(int port, struct ucsi_connector_status *status),
 	TP_ARGS(port, status)
 );
 
-DECLARE_EVENT_CLASS(ucsi_log_रेजिस्टर_alपंचांगode,
-	TP_PROTO(u8 recipient, काष्ठा typec_alपंचांगode *alt),
+DECLARE_EVENT_CLASS(ucsi_log_register_altmode,
+	TP_PROTO(u8 recipient, struct typec_altmode *alt),
 	TP_ARGS(recipient, alt),
 	TP_STRUCT__entry(
 		__field(u8, recipient)
 		__field(u16, svid)
 		__field(u8, mode)
-		__field(u32, vकरो)
+		__field(u32, vdo)
 	),
 	TP_fast_assign(
 		__entry->recipient = recipient;
 		__entry->svid = alt->svid;
 		__entry->mode = alt->mode;
-		__entry->vकरो = alt->vकरो;
+		__entry->vdo = alt->vdo;
 	),
-	TP_prपूर्णांकk("%s alt mode: svid %04x, mode %d vdo %x",
+	TP_printk("%s alt mode: svid %04x, mode %d vdo %x",
 		  ucsi_recipient_str(__entry->recipient), __entry->svid,
-		  __entry->mode, __entry->vकरो)
+		  __entry->mode, __entry->vdo)
 );
 
-DEFINE_EVENT(ucsi_log_रेजिस्टर_alपंचांगode, ucsi_रेजिस्टर_alपंचांगode,
-	TP_PROTO(u8 recipient, काष्ठा typec_alपंचांगode *alt),
+DEFINE_EVENT(ucsi_log_register_altmode, ucsi_register_altmode,
+	TP_PROTO(u8 recipient, struct typec_altmode *alt),
 	TP_ARGS(recipient, alt)
 );
 
-#पूर्ण_अगर /* __UCSI_TRACE_H */
+#endif /* __UCSI_TRACE_H */
 
 /* This part must be outside protection */
 
-#अघोषित TRACE_INCLUDE_PATH
-#घोषणा TRACE_INCLUDE_PATH .
+#undef TRACE_INCLUDE_PATH
+#define TRACE_INCLUDE_PATH .
 
-#अघोषित TRACE_INCLUDE_खाता
-#घोषणा TRACE_INCLUDE_खाता trace
+#undef TRACE_INCLUDE_FILE
+#define TRACE_INCLUDE_FILE trace
 
-#समावेश <trace/define_trace.h>
+#include <trace/define_trace.h>

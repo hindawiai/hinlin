@@ -1,49 +1,48 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-/* Copyright 2018 Marty E. Plummer <hanetzer@starपंचांगail.com> */
+// SPDX-License-Identifier: GPL-2.0
+/* Copyright 2018 Marty E. Plummer <hanetzer@startmail.com> */
 /* Copyright 2019 Linaro, Ltd., Rob Herring <robh@kernel.org> */
 /* Copyright 2019 Collabora ltd. */
 
-#समावेश <linux/module.h>
-#समावेश <linux/of_platक्रमm.h>
-#समावेश <linux/pagemap.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <drm/panfrost_drm.h>
-#समावेश <drm/drm_drv.h>
-#समावेश <drm/drm_ioctl.h>
-#समावेश <drm/drm_syncobj.h>
-#समावेश <drm/drm_utils.h>
+#include <linux/module.h>
+#include <linux/of_platform.h>
+#include <linux/pagemap.h>
+#include <linux/pm_runtime.h>
+#include <drm/panfrost_drm.h>
+#include <drm/drm_drv.h>
+#include <drm/drm_ioctl.h>
+#include <drm/drm_syncobj.h>
+#include <drm/drm_utils.h>
 
-#समावेश "panfrost_device.h"
-#समावेश "panfrost_gem.h"
-#समावेश "panfrost_mmu.h"
-#समावेश "panfrost_job.h"
-#समावेश "panfrost_gpu.h"
-#समावेश "panfrost_perfcnt.h"
+#include "panfrost_device.h"
+#include "panfrost_gem.h"
+#include "panfrost_mmu.h"
+#include "panfrost_job.h"
+#include "panfrost_gpu.h"
+#include "panfrost_perfcnt.h"
 
-अटल bool unstable_ioctls;
+static bool unstable_ioctls;
 module_param_unsafe(unstable_ioctls, bool, 0600);
 
-अटल पूर्णांक panfrost_ioctl_get_param(काष्ठा drm_device *ddev, व्योम *data, काष्ठा drm_file *file)
-अणु
-	काष्ठा drm_panfrost_get_param *param = data;
-	काष्ठा panfrost_device *pfdev = ddev->dev_निजी;
+static int panfrost_ioctl_get_param(struct drm_device *ddev, void *data, struct drm_file *file)
+{
+	struct drm_panfrost_get_param *param = data;
+	struct panfrost_device *pfdev = ddev->dev_private;
 
-	अगर (param->pad != 0)
-		वापस -EINVAL;
+	if (param->pad != 0)
+		return -EINVAL;
 
-#घोषणा PANFROST_FEATURE(name, member)			\
-	हाल DRM_PANFROST_PARAM_ ## name:		\
+#define PANFROST_FEATURE(name, member)			\
+	case DRM_PANFROST_PARAM_ ## name:		\
 		param->value = pfdev->features.member;	\
-		अवरोध
-#घोषणा PANFROST_FEATURE_ARRAY(name, member, max)			\
-	हाल DRM_PANFROST_PARAM_ ## name ## 0 ...			\
+		break
+#define PANFROST_FEATURE_ARRAY(name, member, max)			\
+	case DRM_PANFROST_PARAM_ ## name ## 0 ...			\
 		DRM_PANFROST_PARAM_ ## name ## max:			\
 		param->value = pfdev->features.member[param->param -	\
 			DRM_PANFROST_PARAM_ ## name ## 0];		\
-		अवरोध
+		break
 
-	चयन (param->param) अणु
+	switch (param->param) {
 		PANFROST_FEATURE(GPU_PROD_ID, id);
 		PANFROST_FEATURE(GPU_REVISION, revision);
 		PANFROST_FEATURE(SHADER_PRESENT, shader_present);
@@ -57,211 +56,211 @@ module_param_unsafe(unstable_ioctls, bool, 0600);
 		PANFROST_FEATURE(TILER_FEATURES, tiler_features);
 		PANFROST_FEATURE(MEM_FEATURES, mem_features);
 		PANFROST_FEATURE(MMU_FEATURES, mmu_features);
-		PANFROST_FEATURE(THREAD_FEATURES, thपढ़ो_features);
-		PANFROST_FEATURE(MAX_THREADS, max_thपढ़ोs);
+		PANFROST_FEATURE(THREAD_FEATURES, thread_features);
+		PANFROST_FEATURE(MAX_THREADS, max_threads);
 		PANFROST_FEATURE(THREAD_MAX_WORKGROUP_SZ,
-				thपढ़ो_max_workgroup_sz);
+				thread_max_workgroup_sz);
 		PANFROST_FEATURE(THREAD_MAX_BARRIER_SZ,
-				thपढ़ो_max_barrier_sz);
+				thread_max_barrier_sz);
 		PANFROST_FEATURE(COHERENCY_FEATURES, coherency_features);
 		PANFROST_FEATURE_ARRAY(TEXTURE_FEATURES, texture_features, 3);
 		PANFROST_FEATURE_ARRAY(JS_FEATURES, js_features, 15);
 		PANFROST_FEATURE(NR_CORE_GROUPS, nr_core_groups);
-		PANFROST_FEATURE(THREAD_TLS_ALLOC, thपढ़ो_tls_alloc);
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		PANFROST_FEATURE(THREAD_TLS_ALLOC, thread_tls_alloc);
+	default:
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक panfrost_ioctl_create_bo(काष्ठा drm_device *dev, व्योम *data,
-		काष्ठा drm_file *file)
-अणु
-	काष्ठा panfrost_file_priv *priv = file->driver_priv;
-	काष्ठा panfrost_gem_object *bo;
-	काष्ठा drm_panfrost_create_bo *args = data;
-	काष्ठा panfrost_gem_mapping *mapping;
+static int panfrost_ioctl_create_bo(struct drm_device *dev, void *data,
+		struct drm_file *file)
+{
+	struct panfrost_file_priv *priv = file->driver_priv;
+	struct panfrost_gem_object *bo;
+	struct drm_panfrost_create_bo *args = data;
+	struct panfrost_gem_mapping *mapping;
 
-	अगर (!args->size || args->pad ||
+	if (!args->size || args->pad ||
 	    (args->flags & ~(PANFROST_BO_NOEXEC | PANFROST_BO_HEAP)))
-		वापस -EINVAL;
+		return -EINVAL;
 
 	/* Heaps should never be executable */
-	अगर ((args->flags & PANFROST_BO_HEAP) &&
+	if ((args->flags & PANFROST_BO_HEAP) &&
 	    !(args->flags & PANFROST_BO_NOEXEC))
-		वापस -EINVAL;
+		return -EINVAL;
 
 	bo = panfrost_gem_create_with_handle(file, dev, args->size, args->flags,
 					     &args->handle);
-	अगर (IS_ERR(bo))
-		वापस PTR_ERR(bo);
+	if (IS_ERR(bo))
+		return PTR_ERR(bo);
 
 	mapping = panfrost_gem_mapping_get(bo, priv);
-	अगर (!mapping) अणु
+	if (!mapping) {
 		drm_gem_object_put(&bo->base.base);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	args->offset = mapping->mmnode.start << PAGE_SHIFT;
 	panfrost_gem_mapping_put(mapping);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * panfrost_lookup_bos() - Sets up job->bo[] with the GEM objects
  * referenced by the job.
  * @dev: DRM device
- * @file_priv: DRM file क्रम this fd
+ * @file_priv: DRM file for this fd
  * @args: IOCTL args
  * @job: job being set up
  *
  * Resolve handles from userspace to BOs and attach them to job.
  *
- * Note that this function करोesn't need to unreference the BOs on
- * failure, because that will happen at panfrost_job_cleanup() समय.
+ * Note that this function doesn't need to unreference the BOs on
+ * failure, because that will happen at panfrost_job_cleanup() time.
  */
-अटल पूर्णांक
-panfrost_lookup_bos(काष्ठा drm_device *dev,
-		  काष्ठा drm_file *file_priv,
-		  काष्ठा drm_panfrost_submit *args,
-		  काष्ठा panfrost_job *job)
-अणु
-	काष्ठा panfrost_file_priv *priv = file_priv->driver_priv;
-	काष्ठा panfrost_gem_object *bo;
-	अचिन्हित पूर्णांक i;
-	पूर्णांक ret;
+static int
+panfrost_lookup_bos(struct drm_device *dev,
+		  struct drm_file *file_priv,
+		  struct drm_panfrost_submit *args,
+		  struct panfrost_job *job)
+{
+	struct panfrost_file_priv *priv = file_priv->driver_priv;
+	struct panfrost_gem_object *bo;
+	unsigned int i;
+	int ret;
 
 	job->bo_count = args->bo_handle_count;
 
-	अगर (!job->bo_count)
-		वापस 0;
+	if (!job->bo_count)
+		return 0;
 
-	job->implicit_fences = kvदो_स्मृति_array(job->bo_count,
-				  माप(काष्ठा dma_fence *),
+	job->implicit_fences = kvmalloc_array(job->bo_count,
+				  sizeof(struct dma_fence *),
 				  GFP_KERNEL | __GFP_ZERO);
-	अगर (!job->implicit_fences)
-		वापस -ENOMEM;
+	if (!job->implicit_fences)
+		return -ENOMEM;
 
 	ret = drm_gem_objects_lookup(file_priv,
-				     (व्योम __user *)(uपूर्णांकptr_t)args->bo_handles,
+				     (void __user *)(uintptr_t)args->bo_handles,
 				     job->bo_count, &job->bos);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	job->mappings = kvदो_स्मृति_array(job->bo_count,
-				       माप(काष्ठा panfrost_gem_mapping *),
+	job->mappings = kvmalloc_array(job->bo_count,
+				       sizeof(struct panfrost_gem_mapping *),
 				       GFP_KERNEL | __GFP_ZERO);
-	अगर (!job->mappings)
-		वापस -ENOMEM;
+	if (!job->mappings)
+		return -ENOMEM;
 
-	क्रम (i = 0; i < job->bo_count; i++) अणु
-		काष्ठा panfrost_gem_mapping *mapping;
+	for (i = 0; i < job->bo_count; i++) {
+		struct panfrost_gem_mapping *mapping;
 
 		bo = to_panfrost_bo(job->bos[i]);
 		mapping = panfrost_gem_mapping_get(bo, priv);
-		अगर (!mapping) अणु
+		if (!mapping) {
 			ret = -EINVAL;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		atomic_inc(&bo->gpu_usecount);
 		job->mappings[i] = mapping;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
  * panfrost_copy_in_sync() - Sets up job->in_fences[] with the sync objects
  * referenced by the job.
  * @dev: DRM device
- * @file_priv: DRM file क्रम this fd
+ * @file_priv: DRM file for this fd
  * @args: IOCTL args
  * @job: job being set up
  *
  * Resolve syncobjs from userspace to fences and attach them to job.
  *
- * Note that this function करोesn't need to unreference the fences on
- * failure, because that will happen at panfrost_job_cleanup() समय.
+ * Note that this function doesn't need to unreference the fences on
+ * failure, because that will happen at panfrost_job_cleanup() time.
  */
-अटल पूर्णांक
-panfrost_copy_in_sync(काष्ठा drm_device *dev,
-		  काष्ठा drm_file *file_priv,
-		  काष्ठा drm_panfrost_submit *args,
-		  काष्ठा panfrost_job *job)
-अणु
+static int
+panfrost_copy_in_sync(struct drm_device *dev,
+		  struct drm_file *file_priv,
+		  struct drm_panfrost_submit *args,
+		  struct panfrost_job *job)
+{
 	u32 *handles;
-	पूर्णांक ret = 0;
-	पूर्णांक i;
+	int ret = 0;
+	int i;
 
 	job->in_fence_count = args->in_sync_count;
 
-	अगर (!job->in_fence_count)
-		वापस 0;
+	if (!job->in_fence_count)
+		return 0;
 
-	job->in_fences = kvदो_स्मृति_array(job->in_fence_count,
-					माप(काष्ठा dma_fence *),
+	job->in_fences = kvmalloc_array(job->in_fence_count,
+					sizeof(struct dma_fence *),
 					GFP_KERNEL | __GFP_ZERO);
-	अगर (!job->in_fences) अणु
+	if (!job->in_fences) {
 		DRM_DEBUG("Failed to allocate job in fences\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	handles = kvदो_स्मृति_array(job->in_fence_count, माप(u32), GFP_KERNEL);
-	अगर (!handles) अणु
+	handles = kvmalloc_array(job->in_fence_count, sizeof(u32), GFP_KERNEL);
+	if (!handles) {
 		ret = -ENOMEM;
 		DRM_DEBUG("Failed to allocate incoming syncobj handles\n");
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
-	अगर (copy_from_user(handles,
-			   (व्योम __user *)(uपूर्णांकptr_t)args->in_syncs,
-			   job->in_fence_count * माप(u32))) अणु
+	if (copy_from_user(handles,
+			   (void __user *)(uintptr_t)args->in_syncs,
+			   job->in_fence_count * sizeof(u32))) {
 		ret = -EFAULT;
 		DRM_DEBUG("Failed to copy in syncobj handles\n");
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
-	क्रम (i = 0; i < job->in_fence_count; i++) अणु
+	for (i = 0; i < job->in_fence_count; i++) {
 		ret = drm_syncobj_find_fence(file_priv, handles[i], 0, 0,
 					     &job->in_fences[i]);
-		अगर (ret == -EINVAL)
-			जाओ fail;
-	पूर्ण
+		if (ret == -EINVAL)
+			goto fail;
+	}
 
 fail:
-	kvमुक्त(handles);
-	वापस ret;
-पूर्ण
+	kvfree(handles);
+	return ret;
+}
 
-अटल पूर्णांक panfrost_ioctl_submit(काष्ठा drm_device *dev, व्योम *data,
-		काष्ठा drm_file *file)
-अणु
-	काष्ठा panfrost_device *pfdev = dev->dev_निजी;
-	काष्ठा drm_panfrost_submit *args = data;
-	काष्ठा drm_syncobj *sync_out = शून्य;
-	काष्ठा panfrost_job *job;
-	पूर्णांक ret = 0;
+static int panfrost_ioctl_submit(struct drm_device *dev, void *data,
+		struct drm_file *file)
+{
+	struct panfrost_device *pfdev = dev->dev_private;
+	struct drm_panfrost_submit *args = data;
+	struct drm_syncobj *sync_out = NULL;
+	struct panfrost_job *job;
+	int ret = 0;
 
-	अगर (!args->jc)
-		वापस -EINVAL;
+	if (!args->jc)
+		return -EINVAL;
 
-	अगर (args->requirements && args->requirements != PANFROST_JD_REQ_FS)
-		वापस -EINVAL;
+	if (args->requirements && args->requirements != PANFROST_JD_REQ_FS)
+		return -EINVAL;
 
-	अगर (args->out_sync > 0) अणु
+	if (args->out_sync > 0) {
 		sync_out = drm_syncobj_find(file, args->out_sync);
-		अगर (!sync_out)
-			वापस -ENODEV;
-	पूर्ण
+		if (!sync_out)
+			return -ENODEV;
+	}
 
-	job = kzalloc(माप(*job), GFP_KERNEL);
-	अगर (!job) अणु
+	job = kzalloc(sizeof(*job), GFP_KERNEL);
+	if (!job) {
 		ret = -ENOMEM;
-		जाओ fail_out_sync;
-	पूर्ण
+		goto fail_out_sync;
+	}
 
 	kref_init(&job->refcount);
 
@@ -272,267 +271,267 @@ fail:
 	job->file_priv = file->driver_priv;
 
 	ret = panfrost_copy_in_sync(dev, file, args, job);
-	अगर (ret)
-		जाओ fail_job;
+	if (ret)
+		goto fail_job;
 
 	ret = panfrost_lookup_bos(dev, file, args, job);
-	अगर (ret)
-		जाओ fail_job;
+	if (ret)
+		goto fail_job;
 
 	ret = panfrost_job_push(job);
-	अगर (ret)
-		जाओ fail_job;
+	if (ret)
+		goto fail_job;
 
-	/* Update the वापस sync object क्रम the job */
-	अगर (sync_out)
-		drm_syncobj_replace_fence(sync_out, job->render_करोne_fence);
+	/* Update the return sync object for the job */
+	if (sync_out)
+		drm_syncobj_replace_fence(sync_out, job->render_done_fence);
 
 fail_job:
 	panfrost_job_put(job);
 fail_out_sync:
-	अगर (sync_out)
+	if (sync_out)
 		drm_syncobj_put(sync_out);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक
-panfrost_ioctl_रुको_bo(काष्ठा drm_device *dev, व्योम *data,
-		       काष्ठा drm_file *file_priv)
-अणु
-	दीर्घ ret;
-	काष्ठा drm_panfrost_रुको_bo *args = data;
-	काष्ठा drm_gem_object *gem_obj;
-	अचिन्हित दीर्घ समयout = drm_समयout_असल_to_jअगरfies(args->समयout_ns);
+static int
+panfrost_ioctl_wait_bo(struct drm_device *dev, void *data,
+		       struct drm_file *file_priv)
+{
+	long ret;
+	struct drm_panfrost_wait_bo *args = data;
+	struct drm_gem_object *gem_obj;
+	unsigned long timeout = drm_timeout_abs_to_jiffies(args->timeout_ns);
 
-	अगर (args->pad)
-		वापस -EINVAL;
+	if (args->pad)
+		return -EINVAL;
 
 	gem_obj = drm_gem_object_lookup(file_priv, args->handle);
-	अगर (!gem_obj)
-		वापस -ENOENT;
+	if (!gem_obj)
+		return -ENOENT;
 
-	ret = dma_resv_रुको_समयout_rcu(gem_obj->resv, true,
-						  true, समयout);
-	अगर (!ret)
-		ret = समयout ? -ETIMEDOUT : -EBUSY;
+	ret = dma_resv_wait_timeout_rcu(gem_obj->resv, true,
+						  true, timeout);
+	if (!ret)
+		ret = timeout ? -ETIMEDOUT : -EBUSY;
 
 	drm_gem_object_put(gem_obj);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक panfrost_ioctl_mmap_bo(काष्ठा drm_device *dev, व्योम *data,
-		      काष्ठा drm_file *file_priv)
-अणु
-	काष्ठा drm_panfrost_mmap_bo *args = data;
-	काष्ठा drm_gem_object *gem_obj;
-	पूर्णांक ret;
+static int panfrost_ioctl_mmap_bo(struct drm_device *dev, void *data,
+		      struct drm_file *file_priv)
+{
+	struct drm_panfrost_mmap_bo *args = data;
+	struct drm_gem_object *gem_obj;
+	int ret;
 
-	अगर (args->flags != 0) अणु
+	if (args->flags != 0) {
 		DRM_INFO("unknown mmap_bo flags: %d\n", args->flags);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	gem_obj = drm_gem_object_lookup(file_priv, args->handle);
-	अगर (!gem_obj) अणु
+	if (!gem_obj) {
 		DRM_DEBUG("Failed to look up GEM BO %d\n", args->handle);
-		वापस -ENOENT;
-	पूर्ण
+		return -ENOENT;
+	}
 
 	/* Don't allow mmapping of heap objects as pages are not pinned. */
-	अगर (to_panfrost_bo(gem_obj)->is_heap) अणु
+	if (to_panfrost_bo(gem_obj)->is_heap) {
 		ret = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	ret = drm_gem_create_mmap_offset(gem_obj);
-	अगर (ret == 0)
+	if (ret == 0)
 		args->offset = drm_vma_node_offset_addr(&gem_obj->vma_node);
 
 out:
 	drm_gem_object_put(gem_obj);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक panfrost_ioctl_get_bo_offset(काष्ठा drm_device *dev, व्योम *data,
-			    काष्ठा drm_file *file_priv)
-अणु
-	काष्ठा panfrost_file_priv *priv = file_priv->driver_priv;
-	काष्ठा drm_panfrost_get_bo_offset *args = data;
-	काष्ठा panfrost_gem_mapping *mapping;
-	काष्ठा drm_gem_object *gem_obj;
-	काष्ठा panfrost_gem_object *bo;
+static int panfrost_ioctl_get_bo_offset(struct drm_device *dev, void *data,
+			    struct drm_file *file_priv)
+{
+	struct panfrost_file_priv *priv = file_priv->driver_priv;
+	struct drm_panfrost_get_bo_offset *args = data;
+	struct panfrost_gem_mapping *mapping;
+	struct drm_gem_object *gem_obj;
+	struct panfrost_gem_object *bo;
 
 	gem_obj = drm_gem_object_lookup(file_priv, args->handle);
-	अगर (!gem_obj) अणु
+	if (!gem_obj) {
 		DRM_DEBUG("Failed to look up GEM BO %d\n", args->handle);
-		वापस -ENOENT;
-	पूर्ण
+		return -ENOENT;
+	}
 	bo = to_panfrost_bo(gem_obj);
 
 	mapping = panfrost_gem_mapping_get(bo, priv);
 	drm_gem_object_put(gem_obj);
 
-	अगर (!mapping)
-		वापस -EINVAL;
+	if (!mapping)
+		return -EINVAL;
 
 	args->offset = mapping->mmnode.start << PAGE_SHIFT;
 	panfrost_gem_mapping_put(mapping);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक panfrost_ioctl_madvise(काष्ठा drm_device *dev, व्योम *data,
-				  काष्ठा drm_file *file_priv)
-अणु
-	काष्ठा panfrost_file_priv *priv = file_priv->driver_priv;
-	काष्ठा drm_panfrost_madvise *args = data;
-	काष्ठा panfrost_device *pfdev = dev->dev_निजी;
-	काष्ठा drm_gem_object *gem_obj;
-	काष्ठा panfrost_gem_object *bo;
-	पूर्णांक ret = 0;
+static int panfrost_ioctl_madvise(struct drm_device *dev, void *data,
+				  struct drm_file *file_priv)
+{
+	struct panfrost_file_priv *priv = file_priv->driver_priv;
+	struct drm_panfrost_madvise *args = data;
+	struct panfrost_device *pfdev = dev->dev_private;
+	struct drm_gem_object *gem_obj;
+	struct panfrost_gem_object *bo;
+	int ret = 0;
 
 	gem_obj = drm_gem_object_lookup(file_priv, args->handle);
-	अगर (!gem_obj) अणु
+	if (!gem_obj) {
 		DRM_DEBUG("Failed to look up GEM BO %d\n", args->handle);
-		वापस -ENOENT;
-	पूर्ण
+		return -ENOENT;
+	}
 
 	bo = to_panfrost_bo(gem_obj);
 
 	mutex_lock(&pfdev->shrinker_lock);
 	mutex_lock(&bo->mappings.lock);
-	अगर (args->madv == PANFROST_MADV_DONTNEED) अणु
-		काष्ठा panfrost_gem_mapping *first;
+	if (args->madv == PANFROST_MADV_DONTNEED) {
+		struct panfrost_gem_mapping *first;
 
 		first = list_first_entry(&bo->mappings.list,
-					 काष्ठा panfrost_gem_mapping,
+					 struct panfrost_gem_mapping,
 					 node);
 
 		/*
 		 * If we want to mark the BO purgeable, there must be only one
 		 * user: the caller FD.
-		 * We could करो something smarter and mark the BO purgeable only
+		 * We could do something smarter and mark the BO purgeable only
 		 * when all its users have marked it purgeable, but globally
 		 * visible/shared BOs are likely to never be marked purgeable
 		 * anyway, so let's not bother.
 		 */
-		अगर (!list_is_singular(&bo->mappings.list) ||
-		    WARN_ON_ONCE(first->mmu != &priv->mmu)) अणु
+		if (!list_is_singular(&bo->mappings.list) ||
+		    WARN_ON_ONCE(first->mmu != &priv->mmu)) {
 			ret = -EINVAL;
-			जाओ out_unlock_mappings;
-		पूर्ण
-	पूर्ण
+			goto out_unlock_mappings;
+		}
+	}
 
 	args->retained = drm_gem_shmem_madvise(gem_obj, args->madv);
 
-	अगर (args->retained) अणु
-		अगर (args->madv == PANFROST_MADV_DONTNEED)
+	if (args->retained) {
+		if (args->madv == PANFROST_MADV_DONTNEED)
 			list_add_tail(&bo->base.madv_list,
 				      &pfdev->shrinker_list);
-		अन्यथा अगर (args->madv == PANFROST_MADV_WILLNEED)
+		else if (args->madv == PANFROST_MADV_WILLNEED)
 			list_del_init(&bo->base.madv_list);
-	पूर्ण
+	}
 
 out_unlock_mappings:
 	mutex_unlock(&bo->mappings.lock);
 	mutex_unlock(&pfdev->shrinker_lock);
 
 	drm_gem_object_put(gem_obj);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक panfrost_unstable_ioctl_check(व्योम)
-अणु
-	अगर (!unstable_ioctls)
-		वापस -ENOSYS;
+int panfrost_unstable_ioctl_check(void)
+{
+	if (!unstable_ioctls)
+		return -ENOSYS;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#घोषणा PFN_4G		(SZ_4G >> PAGE_SHIFT)
-#घोषणा PFN_4G_MASK	(PFN_4G - 1)
-#घोषणा PFN_16M		(SZ_16M >> PAGE_SHIFT)
+#define PFN_4G		(SZ_4G >> PAGE_SHIFT)
+#define PFN_4G_MASK	(PFN_4G - 1)
+#define PFN_16M		(SZ_16M >> PAGE_SHIFT)
 
-अटल व्योम panfrost_drm_mm_color_adjust(स्थिर काष्ठा drm_mm_node *node,
-					 अचिन्हित दीर्घ color,
+static void panfrost_drm_mm_color_adjust(const struct drm_mm_node *node,
+					 unsigned long color,
 					 u64 *start, u64 *end)
-अणु
+{
 	/* Executable buffers can't start or end on a 4GB boundary */
-	अगर (!(color & PANFROST_BO_NOEXEC)) अणु
+	if (!(color & PANFROST_BO_NOEXEC)) {
 		u64 next_seg;
 
-		अगर ((*start & PFN_4G_MASK) == 0)
+		if ((*start & PFN_4G_MASK) == 0)
 			(*start)++;
 
-		अगर ((*end & PFN_4G_MASK) == 0)
+		if ((*end & PFN_4G_MASK) == 0)
 			(*end)--;
 
 		next_seg = ALIGN(*start, PFN_4G);
-		अगर (next_seg - *start <= PFN_16M)
+		if (next_seg - *start <= PFN_16M)
 			*start = next_seg + 1;
 
 		*end = min(*end, ALIGN(*start, PFN_4G) - 1);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक
-panfrost_खोलो(काष्ठा drm_device *dev, काष्ठा drm_file *file)
-अणु
-	पूर्णांक ret;
-	काष्ठा panfrost_device *pfdev = dev->dev_निजी;
-	काष्ठा panfrost_file_priv *panfrost_priv;
+static int
+panfrost_open(struct drm_device *dev, struct drm_file *file)
+{
+	int ret;
+	struct panfrost_device *pfdev = dev->dev_private;
+	struct panfrost_file_priv *panfrost_priv;
 
-	panfrost_priv = kzalloc(माप(*panfrost_priv), GFP_KERNEL);
-	अगर (!panfrost_priv)
-		वापस -ENOMEM;
+	panfrost_priv = kzalloc(sizeof(*panfrost_priv), GFP_KERNEL);
+	if (!panfrost_priv)
+		return -ENOMEM;
 
 	panfrost_priv->pfdev = pfdev;
 	file->driver_priv = panfrost_priv;
 
 	spin_lock_init(&panfrost_priv->mm_lock);
 
-	/* 4G enough क्रम now. can be 48-bit */
+	/* 4G enough for now. can be 48-bit */
 	drm_mm_init(&panfrost_priv->mm, SZ_32M >> PAGE_SHIFT, (SZ_4G - SZ_32M) >> PAGE_SHIFT);
 	panfrost_priv->mm.color_adjust = panfrost_drm_mm_color_adjust;
 
 	ret = panfrost_mmu_pgtable_alloc(panfrost_priv);
-	अगर (ret)
-		जाओ err_pgtable;
+	if (ret)
+		goto err_pgtable;
 
-	ret = panfrost_job_खोलो(panfrost_priv);
-	अगर (ret)
-		जाओ err_job;
+	ret = panfrost_job_open(panfrost_priv);
+	if (ret)
+		goto err_job;
 
-	वापस 0;
+	return 0;
 
 err_job:
-	panfrost_mmu_pgtable_मुक्त(panfrost_priv);
+	panfrost_mmu_pgtable_free(panfrost_priv);
 err_pgtable:
-	drm_mm_takeकरोwn(&panfrost_priv->mm);
-	kमुक्त(panfrost_priv);
-	वापस ret;
-पूर्ण
+	drm_mm_takedown(&panfrost_priv->mm);
+	kfree(panfrost_priv);
+	return ret;
+}
 
-अटल व्योम
-panfrost_postबंद(काष्ठा drm_device *dev, काष्ठा drm_file *file)
-अणु
-	काष्ठा panfrost_file_priv *panfrost_priv = file->driver_priv;
+static void
+panfrost_postclose(struct drm_device *dev, struct drm_file *file)
+{
+	struct panfrost_file_priv *panfrost_priv = file->driver_priv;
 
-	panfrost_perfcnt_बंद(file);
-	panfrost_job_बंद(panfrost_priv);
+	panfrost_perfcnt_close(file);
+	panfrost_job_close(panfrost_priv);
 
-	panfrost_mmu_pgtable_मुक्त(panfrost_priv);
-	drm_mm_takeकरोwn(&panfrost_priv->mm);
-	kमुक्त(panfrost_priv);
-पूर्ण
+	panfrost_mmu_pgtable_free(panfrost_priv);
+	drm_mm_takedown(&panfrost_priv->mm);
+	kfree(panfrost_priv);
+}
 
-अटल स्थिर काष्ठा drm_ioctl_desc panfrost_drm_driver_ioctls[] = अणु
-#घोषणा PANFROST_IOCTL(n, func, flags) \
+static const struct drm_ioctl_desc panfrost_drm_driver_ioctls[] = {
+#define PANFROST_IOCTL(n, func, flags) \
 	DRM_IOCTL_DEF_DRV(PANFROST_##n, panfrost_ioctl_##func, flags)
 
 	PANFROST_IOCTL(SUBMIT,		submit,		DRM_RENDER_ALLOW),
-	PANFROST_IOCTL(WAIT_BO,		रुको_bo,	DRM_RENDER_ALLOW),
+	PANFROST_IOCTL(WAIT_BO,		wait_bo,	DRM_RENDER_ALLOW),
 	PANFROST_IOCTL(CREATE_BO,	create_bo,	DRM_RENDER_ALLOW),
 	PANFROST_IOCTL(MMAP_BO,		mmap_bo,	DRM_RENDER_ALLOW),
 	PANFROST_IOCTL(GET_PARAM,	get_param,	DRM_RENDER_ALLOW),
@@ -540,19 +539,19 @@ panfrost_postबंद(काष्ठा drm_device *dev, काष्ठा dr
 	PANFROST_IOCTL(PERFCNT_ENABLE,	perfcnt_enable,	DRM_RENDER_ALLOW),
 	PANFROST_IOCTL(PERFCNT_DUMP,	perfcnt_dump,	DRM_RENDER_ALLOW),
 	PANFROST_IOCTL(MADVISE,		madvise,	DRM_RENDER_ALLOW),
-पूर्ण;
+};
 
 DEFINE_DRM_GEM_FOPS(panfrost_drm_driver_fops);
 
 /*
  * Panfrost driver version:
- * - 1.0 - initial पूर्णांकerface
- * - 1.1 - adds HEAP and NOEXEC flags क्रम CREATE_BO
+ * - 1.0 - initial interface
+ * - 1.1 - adds HEAP and NOEXEC flags for CREATE_BO
  */
-अटल स्थिर काष्ठा drm_driver panfrost_drm_driver = अणु
+static const struct drm_driver panfrost_drm_driver = {
 	.driver_features	= DRIVER_RENDER | DRIVER_GEM | DRIVER_SYNCOBJ,
-	.खोलो			= panfrost_खोलो,
-	.postबंद		= panfrost_postबंद,
+	.open			= panfrost_open,
+	.postclose		= panfrost_postclose,
 	.ioctls			= panfrost_drm_driver_ioctls,
 	.num_ioctls		= ARRAY_SIZE(panfrost_drm_driver_ioctls),
 	.fops			= &panfrost_drm_driver_fops,
@@ -567,140 +566,140 @@ DEFINE_DRM_GEM_FOPS(panfrost_drm_driver_fops);
 	.prime_fd_to_handle	= drm_gem_prime_fd_to_handle,
 	.gem_prime_import_sg_table = panfrost_gem_prime_import_sg_table,
 	.gem_prime_mmap		= drm_gem_prime_mmap,
-पूर्ण;
+};
 
-अटल पूर्णांक panfrost_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा panfrost_device *pfdev;
-	काष्ठा drm_device *ddev;
-	पूर्णांक err;
+static int panfrost_probe(struct platform_device *pdev)
+{
+	struct panfrost_device *pfdev;
+	struct drm_device *ddev;
+	int err;
 
-	pfdev = devm_kzalloc(&pdev->dev, माप(*pfdev), GFP_KERNEL);
-	अगर (!pfdev)
-		वापस -ENOMEM;
+	pfdev = devm_kzalloc(&pdev->dev, sizeof(*pfdev), GFP_KERNEL);
+	if (!pfdev)
+		return -ENOMEM;
 
 	pfdev->pdev = pdev;
 	pfdev->dev = &pdev->dev;
 
-	platक्रमm_set_drvdata(pdev, pfdev);
+	platform_set_drvdata(pdev, pfdev);
 
 	pfdev->comp = of_device_get_match_data(&pdev->dev);
-	अगर (!pfdev->comp)
-		वापस -ENODEV;
+	if (!pfdev->comp)
+		return -ENODEV;
 
 	pfdev->coherent = device_get_dma_attr(&pdev->dev) == DEV_DMA_COHERENT;
 
 	/* Allocate and initialze the DRM device. */
 	ddev = drm_dev_alloc(&panfrost_drm_driver, &pdev->dev);
-	अगर (IS_ERR(ddev))
-		वापस PTR_ERR(ddev);
+	if (IS_ERR(ddev))
+		return PTR_ERR(ddev);
 
-	ddev->dev_निजी = pfdev;
+	ddev->dev_private = pfdev;
 	pfdev->ddev = ddev;
 
 	mutex_init(&pfdev->shrinker_lock);
 	INIT_LIST_HEAD(&pfdev->shrinker_list);
 
 	err = panfrost_device_init(pfdev);
-	अगर (err) अणु
-		अगर (err != -EPROBE_DEFER)
+	if (err) {
+		if (err != -EPROBE_DEFER)
 			dev_err(&pdev->dev, "Fatal error during GPU init\n");
-		जाओ err_out0;
-	पूर्ण
+		goto err_out0;
+	}
 
-	pm_runसमय_set_active(pfdev->dev);
-	pm_runसमय_mark_last_busy(pfdev->dev);
-	pm_runसमय_enable(pfdev->dev);
-	pm_runसमय_set_स्वतःsuspend_delay(pfdev->dev, 50); /* ~3 frames */
-	pm_runसमय_use_स्वतःsuspend(pfdev->dev);
+	pm_runtime_set_active(pfdev->dev);
+	pm_runtime_mark_last_busy(pfdev->dev);
+	pm_runtime_enable(pfdev->dev);
+	pm_runtime_set_autosuspend_delay(pfdev->dev, 50); /* ~3 frames */
+	pm_runtime_use_autosuspend(pfdev->dev);
 
 	/*
 	 * Register the DRM device with the core and the connectors with
 	 * sysfs
 	 */
-	err = drm_dev_रेजिस्टर(ddev, 0);
-	अगर (err < 0)
-		जाओ err_out1;
+	err = drm_dev_register(ddev, 0);
+	if (err < 0)
+		goto err_out1;
 
 	panfrost_gem_shrinker_init(ddev);
 
-	वापस 0;
+	return 0;
 
 err_out1:
-	pm_runसमय_disable(pfdev->dev);
+	pm_runtime_disable(pfdev->dev);
 	panfrost_device_fini(pfdev);
-	pm_runसमय_set_suspended(pfdev->dev);
+	pm_runtime_set_suspended(pfdev->dev);
 err_out0:
 	drm_dev_put(ddev);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक panfrost_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा panfrost_device *pfdev = platक्रमm_get_drvdata(pdev);
-	काष्ठा drm_device *ddev = pfdev->ddev;
+static int panfrost_remove(struct platform_device *pdev)
+{
+	struct panfrost_device *pfdev = platform_get_drvdata(pdev);
+	struct drm_device *ddev = pfdev->ddev;
 
-	drm_dev_unरेजिस्टर(ddev);
+	drm_dev_unregister(ddev);
 	panfrost_gem_shrinker_cleanup(ddev);
 
-	pm_runसमय_get_sync(pfdev->dev);
-	pm_runसमय_disable(pfdev->dev);
+	pm_runtime_get_sync(pfdev->dev);
+	pm_runtime_disable(pfdev->dev);
 	panfrost_device_fini(pfdev);
-	pm_runसमय_set_suspended(pfdev->dev);
+	pm_runtime_set_suspended(pfdev->dev);
 
 	drm_dev_put(ddev);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर अक्षर * स्थिर शेष_supplies[] = अणु "mali" पूर्ण;
-अटल स्थिर काष्ठा panfrost_compatible शेष_data = अणु
-	.num_supplies = ARRAY_SIZE(शेष_supplies),
-	.supply_names = शेष_supplies,
-	.num_pm_करोमुख्यs = 1, /* optional */
-	.pm_करोमुख्य_names = शून्य,
-पूर्ण;
+static const char * const default_supplies[] = { "mali" };
+static const struct panfrost_compatible default_data = {
+	.num_supplies = ARRAY_SIZE(default_supplies),
+	.supply_names = default_supplies,
+	.num_pm_domains = 1, /* optional */
+	.pm_domain_names = NULL,
+};
 
-अटल स्थिर काष्ठा panfrost_compatible amlogic_data = अणु
-	.num_supplies = ARRAY_SIZE(शेष_supplies),
-	.supply_names = शेष_supplies,
-	.venकरोr_quirk = panfrost_gpu_amlogic_quirk,
-पूर्ण;
+static const struct panfrost_compatible amlogic_data = {
+	.num_supplies = ARRAY_SIZE(default_supplies),
+	.supply_names = default_supplies,
+	.vendor_quirk = panfrost_gpu_amlogic_quirk,
+};
 
-अटल स्थिर काष्ठा of_device_id dt_match[] = अणु
-	/* Set first to probe beक्रमe the generic compatibles */
-	अणु .compatible = "amlogic,meson-gxm-mali",
-	  .data = &amlogic_data, पूर्ण,
-	अणु .compatible = "amlogic,meson-g12a-mali",
-	  .data = &amlogic_data, पूर्ण,
-	अणु .compatible = "arm,mali-t604", .data = &शेष_data, पूर्ण,
-	अणु .compatible = "arm,mali-t624", .data = &शेष_data, पूर्ण,
-	अणु .compatible = "arm,mali-t628", .data = &शेष_data, पूर्ण,
-	अणु .compatible = "arm,mali-t720", .data = &शेष_data, पूर्ण,
-	अणु .compatible = "arm,mali-t760", .data = &शेष_data, पूर्ण,
-	अणु .compatible = "arm,mali-t820", .data = &शेष_data, पूर्ण,
-	अणु .compatible = "arm,mali-t830", .data = &शेष_data, पूर्ण,
-	अणु .compatible = "arm,mali-t860", .data = &शेष_data, पूर्ण,
-	अणु .compatible = "arm,mali-t880", .data = &शेष_data, पूर्ण,
-	अणु .compatible = "arm,mali-bifrost", .data = &शेष_data, पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct of_device_id dt_match[] = {
+	/* Set first to probe before the generic compatibles */
+	{ .compatible = "amlogic,meson-gxm-mali",
+	  .data = &amlogic_data, },
+	{ .compatible = "amlogic,meson-g12a-mali",
+	  .data = &amlogic_data, },
+	{ .compatible = "arm,mali-t604", .data = &default_data, },
+	{ .compatible = "arm,mali-t624", .data = &default_data, },
+	{ .compatible = "arm,mali-t628", .data = &default_data, },
+	{ .compatible = "arm,mali-t720", .data = &default_data, },
+	{ .compatible = "arm,mali-t760", .data = &default_data, },
+	{ .compatible = "arm,mali-t820", .data = &default_data, },
+	{ .compatible = "arm,mali-t830", .data = &default_data, },
+	{ .compatible = "arm,mali-t860", .data = &default_data, },
+	{ .compatible = "arm,mali-t880", .data = &default_data, },
+	{ .compatible = "arm,mali-bifrost", .data = &default_data, },
+	{}
+};
 MODULE_DEVICE_TABLE(of, dt_match);
 
-अटल स्थिर काष्ठा dev_pm_ops panfrost_pm_ops = अणु
-	SET_SYSTEM_SLEEP_PM_OPS(pm_runसमय_क्रमce_suspend, pm_runसमय_क्रमce_resume)
-	SET_RUNTIME_PM_OPS(panfrost_device_suspend, panfrost_device_resume, शून्य)
-पूर्ण;
+static const struct dev_pm_ops panfrost_pm_ops = {
+	SET_SYSTEM_SLEEP_PM_OPS(pm_runtime_force_suspend, pm_runtime_force_resume)
+	SET_RUNTIME_PM_OPS(panfrost_device_suspend, panfrost_device_resume, NULL)
+};
 
-अटल काष्ठा platक्रमm_driver panfrost_driver = अणु
+static struct platform_driver panfrost_driver = {
 	.probe		= panfrost_probe,
-	.हटाओ		= panfrost_हटाओ,
-	.driver		= अणु
+	.remove		= panfrost_remove,
+	.driver		= {
 		.name	= "panfrost",
 		.pm	= &panfrost_pm_ops,
 		.of_match_table = dt_match,
-	पूर्ण,
-पूर्ण;
-module_platक्रमm_driver(panfrost_driver);
+	},
+};
+module_platform_driver(panfrost_driver);
 
 MODULE_AUTHOR("Panfrost Project Developers");
 MODULE_DESCRIPTION("Panfrost DRM Driver");

@@ -1,597 +1,596 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- *  fs/समयrfd.c
+ *  fs/timerfd.c
  *
  *  Copyright (C) 2007  Davide Libenzi <davidel@xmailserver.org>
  *
  *
- *  Thanks to Thomas Gleixner क्रम code reviews and useful comments.
+ *  Thanks to Thomas Gleixner for code reviews and useful comments.
  *
  */
 
-#समावेश <linux/alarmसमयr.h>
-#समावेश <linux/file.h>
-#समावेश <linux/poll.h>
-#समावेश <linux/init.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/list.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/समय.स>
-#समावेश <linux/hrसमयr.h>
-#समावेश <linux/anon_inodes.h>
-#समावेश <linux/समयrfd.h>
-#समावेश <linux/syscalls.h>
-#समावेश <linux/compat.h>
-#समावेश <linux/rcupdate.h>
-#समावेश <linux/समय_namespace.h>
+#include <linux/alarmtimer.h>
+#include <linux/file.h>
+#include <linux/poll.h>
+#include <linux/init.h>
+#include <linux/fs.h>
+#include <linux/sched.h>
+#include <linux/kernel.h>
+#include <linux/slab.h>
+#include <linux/list.h>
+#include <linux/spinlock.h>
+#include <linux/time.h>
+#include <linux/hrtimer.h>
+#include <linux/anon_inodes.h>
+#include <linux/timerfd.h>
+#include <linux/syscalls.h>
+#include <linux/compat.h>
+#include <linux/rcupdate.h>
+#include <linux/time_namespace.h>
 
-काष्ठा समयrfd_ctx अणु
-	जोड़ अणु
-		काष्ठा hrसमयr पंचांगr;
-		काष्ठा alarm alarm;
-	पूर्ण t;
-	kसमय_प्रकार tपूर्णांकv;
-	kसमय_प्रकार moffs;
-	रुको_queue_head_t wqh;
+struct timerfd_ctx {
+	union {
+		struct hrtimer tmr;
+		struct alarm alarm;
+	} t;
+	ktime_t tintv;
+	ktime_t moffs;
+	wait_queue_head_t wqh;
 	u64 ticks;
-	पूर्णांक घड़ीid;
-	लघु अचिन्हित expired;
-	लघु अचिन्हित समय_रखो_flags;	/* to show in fdinfo */
-	काष्ठा rcu_head rcu;
-	काष्ठा list_head clist;
+	int clockid;
+	short unsigned expired;
+	short unsigned settime_flags;	/* to show in fdinfo */
+	struct rcu_head rcu;
+	struct list_head clist;
 	spinlock_t cancel_lock;
 	bool might_cancel;
-पूर्ण;
+};
 
-अटल LIST_HEAD(cancel_list);
-अटल DEFINE_SPINLOCK(cancel_lock);
+static LIST_HEAD(cancel_list);
+static DEFINE_SPINLOCK(cancel_lock);
 
-अटल अंतरभूत bool isalarm(काष्ठा समयrfd_ctx *ctx)
-अणु
-	वापस ctx->घड़ीid == CLOCK_REALTIME_ALARM ||
-		ctx->घड़ीid == CLOCK_BOOTTIME_ALARM;
-पूर्ण
+static inline bool isalarm(struct timerfd_ctx *ctx)
+{
+	return ctx->clockid == CLOCK_REALTIME_ALARM ||
+		ctx->clockid == CLOCK_BOOTTIME_ALARM;
+}
 
 /*
- * This माला_लो called when the समयr event triggers. We set the "expired"
- * flag, but we करो not re-arm the समयr (in हाल it's necessary,
- * tपूर्णांकv != 0) until the समयr is accessed.
+ * This gets called when the timer event triggers. We set the "expired"
+ * flag, but we do not re-arm the timer (in case it's necessary,
+ * tintv != 0) until the timer is accessed.
  */
-अटल व्योम समयrfd_triggered(काष्ठा समयrfd_ctx *ctx)
-अणु
-	अचिन्हित दीर्घ flags;
+static void timerfd_triggered(struct timerfd_ctx *ctx)
+{
+	unsigned long flags;
 
 	spin_lock_irqsave(&ctx->wqh.lock, flags);
 	ctx->expired = 1;
 	ctx->ticks++;
 	wake_up_locked_poll(&ctx->wqh, EPOLLIN);
 	spin_unlock_irqrestore(&ctx->wqh.lock, flags);
-पूर्ण
+}
 
-अटल क्रमागत hrसमयr_restart समयrfd_पंचांगrproc(काष्ठा hrसमयr *hपंचांगr)
-अणु
-	काष्ठा समयrfd_ctx *ctx = container_of(hपंचांगr, काष्ठा समयrfd_ctx,
-					       t.पंचांगr);
-	समयrfd_triggered(ctx);
-	वापस HRTIMER_NORESTART;
-पूर्ण
+static enum hrtimer_restart timerfd_tmrproc(struct hrtimer *htmr)
+{
+	struct timerfd_ctx *ctx = container_of(htmr, struct timerfd_ctx,
+					       t.tmr);
+	timerfd_triggered(ctx);
+	return HRTIMER_NORESTART;
+}
 
-अटल क्रमागत alarmसमयr_restart समयrfd_alarmproc(काष्ठा alarm *alarm,
-	kसमय_प्रकार now)
-अणु
-	काष्ठा समयrfd_ctx *ctx = container_of(alarm, काष्ठा समयrfd_ctx,
+static enum alarmtimer_restart timerfd_alarmproc(struct alarm *alarm,
+	ktime_t now)
+{
+	struct timerfd_ctx *ctx = container_of(alarm, struct timerfd_ctx,
 					       t.alarm);
-	समयrfd_triggered(ctx);
-	वापस ALARMTIMER_NORESTART;
-पूर्ण
+	timerfd_triggered(ctx);
+	return ALARMTIMER_NORESTART;
+}
 
 /*
- * Called when the घड़ी was set to cancel the समयrs in the cancel
- * list. This will wake up processes रुकोing on these समयrs. The
- * wake-up requires ctx->ticks to be non zero, thereक्रमe we increment
- * it beक्रमe calling wake_up_locked().
+ * Called when the clock was set to cancel the timers in the cancel
+ * list. This will wake up processes waiting on these timers. The
+ * wake-up requires ctx->ticks to be non zero, therefore we increment
+ * it before calling wake_up_locked().
  */
-व्योम समयrfd_घड़ी_was_set(व्योम)
-अणु
-	kसमय_प्रकार moffs = kसमय_mono_to_real(0);
-	काष्ठा समयrfd_ctx *ctx;
-	अचिन्हित दीर्घ flags;
+void timerfd_clock_was_set(void)
+{
+	ktime_t moffs = ktime_mono_to_real(0);
+	struct timerfd_ctx *ctx;
+	unsigned long flags;
 
-	rcu_पढ़ो_lock();
-	list_क्रम_each_entry_rcu(ctx, &cancel_list, clist) अणु
-		अगर (!ctx->might_cancel)
-			जारी;
+	rcu_read_lock();
+	list_for_each_entry_rcu(ctx, &cancel_list, clist) {
+		if (!ctx->might_cancel)
+			continue;
 		spin_lock_irqsave(&ctx->wqh.lock, flags);
-		अगर (ctx->moffs != moffs) अणु
+		if (ctx->moffs != moffs) {
 			ctx->moffs = KTIME_MAX;
 			ctx->ticks++;
 			wake_up_locked_poll(&ctx->wqh, EPOLLIN);
-		पूर्ण
+		}
 		spin_unlock_irqrestore(&ctx->wqh.lock, flags);
-	पूर्ण
-	rcu_पढ़ो_unlock();
-पूर्ण
+	}
+	rcu_read_unlock();
+}
 
-अटल व्योम __समयrfd_हटाओ_cancel(काष्ठा समयrfd_ctx *ctx)
-अणु
-	अगर (ctx->might_cancel) अणु
+static void __timerfd_remove_cancel(struct timerfd_ctx *ctx)
+{
+	if (ctx->might_cancel) {
 		ctx->might_cancel = false;
 		spin_lock(&cancel_lock);
 		list_del_rcu(&ctx->clist);
 		spin_unlock(&cancel_lock);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम समयrfd_हटाओ_cancel(काष्ठा समयrfd_ctx *ctx)
-अणु
+static void timerfd_remove_cancel(struct timerfd_ctx *ctx)
+{
 	spin_lock(&ctx->cancel_lock);
-	__समयrfd_हटाओ_cancel(ctx);
+	__timerfd_remove_cancel(ctx);
 	spin_unlock(&ctx->cancel_lock);
-पूर्ण
+}
 
-अटल bool समयrfd_canceled(काष्ठा समयrfd_ctx *ctx)
-अणु
-	अगर (!ctx->might_cancel || ctx->moffs != KTIME_MAX)
-		वापस false;
-	ctx->moffs = kसमय_mono_to_real(0);
-	वापस true;
-पूर्ण
+static bool timerfd_canceled(struct timerfd_ctx *ctx)
+{
+	if (!ctx->might_cancel || ctx->moffs != KTIME_MAX)
+		return false;
+	ctx->moffs = ktime_mono_to_real(0);
+	return true;
+}
 
-अटल व्योम समयrfd_setup_cancel(काष्ठा समयrfd_ctx *ctx, पूर्णांक flags)
-अणु
+static void timerfd_setup_cancel(struct timerfd_ctx *ctx, int flags)
+{
 	spin_lock(&ctx->cancel_lock);
-	अगर ((ctx->घड़ीid == CLOCK_REALTIME ||
-	     ctx->घड़ीid == CLOCK_REALTIME_ALARM) &&
-	    (flags & TFD_TIMER_ABSTIME) && (flags & TFD_TIMER_CANCEL_ON_SET)) अणु
-		अगर (!ctx->might_cancel) अणु
+	if ((ctx->clockid == CLOCK_REALTIME ||
+	     ctx->clockid == CLOCK_REALTIME_ALARM) &&
+	    (flags & TFD_TIMER_ABSTIME) && (flags & TFD_TIMER_CANCEL_ON_SET)) {
+		if (!ctx->might_cancel) {
 			ctx->might_cancel = true;
 			spin_lock(&cancel_lock);
 			list_add_rcu(&ctx->clist, &cancel_list);
 			spin_unlock(&cancel_lock);
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		__समयrfd_हटाओ_cancel(ctx);
-	पूर्ण
+		}
+	} else {
+		__timerfd_remove_cancel(ctx);
+	}
 	spin_unlock(&ctx->cancel_lock);
-पूर्ण
+}
 
-अटल kसमय_प्रकार समयrfd_get_reमुख्यing(काष्ठा समयrfd_ctx *ctx)
-अणु
-	kसमय_प्रकार reमुख्यing;
+static ktime_t timerfd_get_remaining(struct timerfd_ctx *ctx)
+{
+	ktime_t remaining;
 
-	अगर (isalarm(ctx))
-		reमुख्यing = alarm_expires_reमुख्यing(&ctx->t.alarm);
-	अन्यथा
-		reमुख्यing = hrसमयr_expires_reमुख्यing_adjusted(&ctx->t.पंचांगr);
+	if (isalarm(ctx))
+		remaining = alarm_expires_remaining(&ctx->t.alarm);
+	else
+		remaining = hrtimer_expires_remaining_adjusted(&ctx->t.tmr);
 
-	वापस reमुख्यing < 0 ? 0: reमुख्यing;
-पूर्ण
+	return remaining < 0 ? 0: remaining;
+}
 
-अटल पूर्णांक समयrfd_setup(काष्ठा समयrfd_ctx *ctx, पूर्णांक flags,
-			 स्थिर काष्ठा iसमयrspec64 *kपंचांगr)
-अणु
-	क्रमागत hrसमयr_mode hपंचांगode;
-	kसमय_प्रकार texp;
-	पूर्णांक घड़ीid = ctx->घड़ीid;
+static int timerfd_setup(struct timerfd_ctx *ctx, int flags,
+			 const struct itimerspec64 *ktmr)
+{
+	enum hrtimer_mode htmode;
+	ktime_t texp;
+	int clockid = ctx->clockid;
 
-	hपंचांगode = (flags & TFD_TIMER_ABSTIME) ?
+	htmode = (flags & TFD_TIMER_ABSTIME) ?
 		HRTIMER_MODE_ABS: HRTIMER_MODE_REL;
 
-	texp = बारpec64_to_kसमय(kपंचांगr->it_value);
+	texp = timespec64_to_ktime(ktmr->it_value);
 	ctx->expired = 0;
 	ctx->ticks = 0;
-	ctx->tपूर्णांकv = बारpec64_to_kसमय(kपंचांगr->it_पूर्णांकerval);
+	ctx->tintv = timespec64_to_ktime(ktmr->it_interval);
 
-	अगर (isalarm(ctx)) अणु
+	if (isalarm(ctx)) {
 		alarm_init(&ctx->t.alarm,
-			   ctx->घड़ीid == CLOCK_REALTIME_ALARM ?
+			   ctx->clockid == CLOCK_REALTIME_ALARM ?
 			   ALARM_REALTIME : ALARM_BOOTTIME,
-			   समयrfd_alarmproc);
-	पूर्ण अन्यथा अणु
-		hrसमयr_init(&ctx->t.पंचांगr, घड़ीid, hपंचांगode);
-		hrसमयr_set_expires(&ctx->t.पंचांगr, texp);
-		ctx->t.पंचांगr.function = समयrfd_पंचांगrproc;
-	पूर्ण
+			   timerfd_alarmproc);
+	} else {
+		hrtimer_init(&ctx->t.tmr, clockid, htmode);
+		hrtimer_set_expires(&ctx->t.tmr, texp);
+		ctx->t.tmr.function = timerfd_tmrproc;
+	}
 
-	अगर (texp != 0) अणु
-		अगर (flags & TFD_TIMER_ABSTIME)
-			texp = समयns_kसमय_प्रकारo_host(घड़ीid, texp);
-		अगर (isalarm(ctx)) अणु
-			अगर (flags & TFD_TIMER_ABSTIME)
+	if (texp != 0) {
+		if (flags & TFD_TIMER_ABSTIME)
+			texp = timens_ktime_to_host(clockid, texp);
+		if (isalarm(ctx)) {
+			if (flags & TFD_TIMER_ABSTIME)
 				alarm_start(&ctx->t.alarm, texp);
-			अन्यथा
+			else
 				alarm_start_relative(&ctx->t.alarm, texp);
-		पूर्ण अन्यथा अणु
-			hrसमयr_start(&ctx->t.पंचांगr, texp, hपंचांगode);
-		पूर्ण
+		} else {
+			hrtimer_start(&ctx->t.tmr, texp, htmode);
+		}
 
-		अगर (समयrfd_canceled(ctx))
-			वापस -ECANCELED;
-	पूर्ण
+		if (timerfd_canceled(ctx))
+			return -ECANCELED;
+	}
 
-	ctx->समय_रखो_flags = flags & TFD_SETTIME_FLAGS;
-	वापस 0;
-पूर्ण
+	ctx->settime_flags = flags & TFD_SETTIME_FLAGS;
+	return 0;
+}
 
-अटल पूर्णांक समयrfd_release(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा समयrfd_ctx *ctx = file->निजी_data;
+static int timerfd_release(struct inode *inode, struct file *file)
+{
+	struct timerfd_ctx *ctx = file->private_data;
 
-	समयrfd_हटाओ_cancel(ctx);
+	timerfd_remove_cancel(ctx);
 
-	अगर (isalarm(ctx))
+	if (isalarm(ctx))
 		alarm_cancel(&ctx->t.alarm);
-	अन्यथा
-		hrसमयr_cancel(&ctx->t.पंचांगr);
-	kमुक्त_rcu(ctx, rcu);
-	वापस 0;
-पूर्ण
+	else
+		hrtimer_cancel(&ctx->t.tmr);
+	kfree_rcu(ctx, rcu);
+	return 0;
+}
 
-अटल __poll_t समयrfd_poll(काष्ठा file *file, poll_table *रुको)
-अणु
-	काष्ठा समयrfd_ctx *ctx = file->निजी_data;
+static __poll_t timerfd_poll(struct file *file, poll_table *wait)
+{
+	struct timerfd_ctx *ctx = file->private_data;
 	__poll_t events = 0;
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 
-	poll_रुको(file, &ctx->wqh, रुको);
+	poll_wait(file, &ctx->wqh, wait);
 
 	spin_lock_irqsave(&ctx->wqh.lock, flags);
-	अगर (ctx->ticks)
+	if (ctx->ticks)
 		events |= EPOLLIN;
 	spin_unlock_irqrestore(&ctx->wqh.lock, flags);
 
-	वापस events;
-पूर्ण
+	return events;
+}
 
-अटल sमाप_प्रकार समयrfd_पढ़ो(काष्ठा file *file, अक्षर __user *buf, माप_प्रकार count,
+static ssize_t timerfd_read(struct file *file, char __user *buf, size_t count,
 			    loff_t *ppos)
-अणु
-	काष्ठा समयrfd_ctx *ctx = file->निजी_data;
-	sमाप_प्रकार res;
+{
+	struct timerfd_ctx *ctx = file->private_data;
+	ssize_t res;
 	u64 ticks = 0;
 
-	अगर (count < माप(ticks))
-		वापस -EINVAL;
+	if (count < sizeof(ticks))
+		return -EINVAL;
 	spin_lock_irq(&ctx->wqh.lock);
-	अगर (file->f_flags & O_NONBLOCK)
+	if (file->f_flags & O_NONBLOCK)
 		res = -EAGAIN;
-	अन्यथा
-		res = रुको_event_पूर्णांकerruptible_locked_irq(ctx->wqh, ctx->ticks);
+	else
+		res = wait_event_interruptible_locked_irq(ctx->wqh, ctx->ticks);
 
 	/*
-	 * If घड़ी has changed, we करो not care about the
-	 * ticks and we करो not rearm the समयr. Userspace must
+	 * If clock has changed, we do not care about the
+	 * ticks and we do not rearm the timer. Userspace must
 	 * reevaluate anyway.
 	 */
-	अगर (समयrfd_canceled(ctx)) अणु
+	if (timerfd_canceled(ctx)) {
 		ctx->ticks = 0;
 		ctx->expired = 0;
 		res = -ECANCELED;
-	पूर्ण
+	}
 
-	अगर (ctx->ticks) अणु
+	if (ctx->ticks) {
 		ticks = ctx->ticks;
 
-		अगर (ctx->expired && ctx->tपूर्णांकv) अणु
+		if (ctx->expired && ctx->tintv) {
 			/*
-			 * If tपूर्णांकv != 0, this is a periodic समयr that
-			 * needs to be re-armed. We aव्योम करोing it in the समयr
-			 * callback to aव्योम DoS attacks specअगरying a very
-			 * लघु समयr period.
+			 * If tintv != 0, this is a periodic timer that
+			 * needs to be re-armed. We avoid doing it in the timer
+			 * callback to avoid DoS attacks specifying a very
+			 * short timer period.
 			 */
-			अगर (isalarm(ctx)) अणु
-				ticks += alarm_क्रमward_now(
-					&ctx->t.alarm, ctx->tपूर्णांकv) - 1;
+			if (isalarm(ctx)) {
+				ticks += alarm_forward_now(
+					&ctx->t.alarm, ctx->tintv) - 1;
 				alarm_restart(&ctx->t.alarm);
-			पूर्ण अन्यथा अणु
-				ticks += hrसमयr_क्रमward_now(&ctx->t.पंचांगr,
-							     ctx->tपूर्णांकv) - 1;
-				hrसमयr_restart(&ctx->t.पंचांगr);
-			पूर्ण
-		पूर्ण
+			} else {
+				ticks += hrtimer_forward_now(&ctx->t.tmr,
+							     ctx->tintv) - 1;
+				hrtimer_restart(&ctx->t.tmr);
+			}
+		}
 		ctx->expired = 0;
 		ctx->ticks = 0;
-	पूर्ण
+	}
 	spin_unlock_irq(&ctx->wqh.lock);
-	अगर (ticks)
-		res = put_user(ticks, (u64 __user *) buf) ? -EFAULT: माप(ticks);
-	वापस res;
-पूर्ण
+	if (ticks)
+		res = put_user(ticks, (u64 __user *) buf) ? -EFAULT: sizeof(ticks);
+	return res;
+}
 
-#अगर_घोषित CONFIG_PROC_FS
-अटल व्योम समयrfd_show(काष्ठा seq_file *m, काष्ठा file *file)
-अणु
-	काष्ठा समयrfd_ctx *ctx = file->निजी_data;
-	काष्ठा बारpec64 value, पूर्णांकerval;
+#ifdef CONFIG_PROC_FS
+static void timerfd_show(struct seq_file *m, struct file *file)
+{
+	struct timerfd_ctx *ctx = file->private_data;
+	struct timespec64 value, interval;
 
 	spin_lock_irq(&ctx->wqh.lock);
-	value = kसमय_प्रकारo_बारpec64(समयrfd_get_reमुख्यing(ctx));
-	पूर्णांकerval = kसमय_प्रकारo_बारpec64(ctx->tपूर्णांकv);
+	value = ktime_to_timespec64(timerfd_get_remaining(ctx));
+	interval = ktime_to_timespec64(ctx->tintv);
 	spin_unlock_irq(&ctx->wqh.lock);
 
-	seq_म_लिखो(m,
+	seq_printf(m,
 		   "clockid: %d\n"
 		   "ticks: %llu\n"
 		   "settime flags: 0%o\n"
 		   "it_value: (%llu, %llu)\n"
 		   "it_interval: (%llu, %llu)\n",
-		   ctx->घड़ीid,
-		   (अचिन्हित दीर्घ दीर्घ)ctx->ticks,
-		   ctx->समय_रखो_flags,
-		   (अचिन्हित दीर्घ दीर्घ)value.tv_sec,
-		   (अचिन्हित दीर्घ दीर्घ)value.tv_nsec,
-		   (अचिन्हित दीर्घ दीर्घ)पूर्णांकerval.tv_sec,
-		   (अचिन्हित दीर्घ दीर्घ)पूर्णांकerval.tv_nsec);
-पूर्ण
-#अन्यथा
-#घोषणा समयrfd_show शून्य
-#पूर्ण_अगर
+		   ctx->clockid,
+		   (unsigned long long)ctx->ticks,
+		   ctx->settime_flags,
+		   (unsigned long long)value.tv_sec,
+		   (unsigned long long)value.tv_nsec,
+		   (unsigned long long)interval.tv_sec,
+		   (unsigned long long)interval.tv_nsec);
+}
+#else
+#define timerfd_show NULL
+#endif
 
-#अगर_घोषित CONFIG_CHECKPOINT_RESTORE
-अटल दीर्घ समयrfd_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
-अणु
-	काष्ठा समयrfd_ctx *ctx = file->निजी_data;
-	पूर्णांक ret = 0;
+#ifdef CONFIG_CHECKPOINT_RESTORE
+static long timerfd_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
+{
+	struct timerfd_ctx *ctx = file->private_data;
+	int ret = 0;
 
-	चयन (cmd) अणु
-	हाल TFD_IOC_SET_TICKS: अणु
+	switch (cmd) {
+	case TFD_IOC_SET_TICKS: {
 		u64 ticks;
 
-		अगर (copy_from_user(&ticks, (u64 __user *)arg, माप(ticks)))
-			वापस -EFAULT;
-		अगर (!ticks)
-			वापस -EINVAL;
+		if (copy_from_user(&ticks, (u64 __user *)arg, sizeof(ticks)))
+			return -EFAULT;
+		if (!ticks)
+			return -EINVAL;
 
 		spin_lock_irq(&ctx->wqh.lock);
-		अगर (!समयrfd_canceled(ctx)) अणु
+		if (!timerfd_canceled(ctx)) {
 			ctx->ticks = ticks;
 			wake_up_locked_poll(&ctx->wqh, EPOLLIN);
-		पूर्ण अन्यथा
+		} else
 			ret = -ECANCELED;
 		spin_unlock_irq(&ctx->wqh.lock);
-		अवरोध;
-	पूर्ण
-	शेष:
+		break;
+	}
+	default:
 		ret = -ENOTTY;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस ret;
-पूर्ण
-#अन्यथा
-#घोषणा समयrfd_ioctl शून्य
-#पूर्ण_अगर
+	return ret;
+}
+#else
+#define timerfd_ioctl NULL
+#endif
 
-अटल स्थिर काष्ठा file_operations समयrfd_fops = अणु
-	.release	= समयrfd_release,
-	.poll		= समयrfd_poll,
-	.पढ़ो		= समयrfd_पढ़ो,
+static const struct file_operations timerfd_fops = {
+	.release	= timerfd_release,
+	.poll		= timerfd_poll,
+	.read		= timerfd_read,
 	.llseek		= noop_llseek,
-	.show_fdinfo	= समयrfd_show,
-	.unlocked_ioctl	= समयrfd_ioctl,
-पूर्ण;
+	.show_fdinfo	= timerfd_show,
+	.unlocked_ioctl	= timerfd_ioctl,
+};
 
-अटल पूर्णांक समयrfd_fget(पूर्णांक fd, काष्ठा fd *p)
-अणु
-	काष्ठा fd f = fdget(fd);
-	अगर (!f.file)
-		वापस -EBADF;
-	अगर (f.file->f_op != &समयrfd_fops) अणु
+static int timerfd_fget(int fd, struct fd *p)
+{
+	struct fd f = fdget(fd);
+	if (!f.file)
+		return -EBADF;
+	if (f.file->f_op != &timerfd_fops) {
 		fdput(f);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	*p = f;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-SYSCALL_DEFINE2(समयrfd_create, पूर्णांक, घड़ीid, पूर्णांक, flags)
-अणु
-	पूर्णांक ufd;
-	काष्ठा समयrfd_ctx *ctx;
+SYSCALL_DEFINE2(timerfd_create, int, clockid, int, flags)
+{
+	int ufd;
+	struct timerfd_ctx *ctx;
 
-	/* Check the TFD_* स्थिरants क्रम consistency.  */
+	/* Check the TFD_* constants for consistency.  */
 	BUILD_BUG_ON(TFD_CLOEXEC != O_CLOEXEC);
 	BUILD_BUG_ON(TFD_NONBLOCK != O_NONBLOCK);
 
-	अगर ((flags & ~TFD_CREATE_FLAGS) ||
-	    (घड़ीid != CLOCK_MONOTONIC &&
-	     घड़ीid != CLOCK_REALTIME &&
-	     घड़ीid != CLOCK_REALTIME_ALARM &&
-	     घड़ीid != CLOCK_BOOTTIME &&
-	     घड़ीid != CLOCK_BOOTTIME_ALARM))
-		वापस -EINVAL;
+	if ((flags & ~TFD_CREATE_FLAGS) ||
+	    (clockid != CLOCK_MONOTONIC &&
+	     clockid != CLOCK_REALTIME &&
+	     clockid != CLOCK_REALTIME_ALARM &&
+	     clockid != CLOCK_BOOTTIME &&
+	     clockid != CLOCK_BOOTTIME_ALARM))
+		return -EINVAL;
 
-	अगर ((घड़ीid == CLOCK_REALTIME_ALARM ||
-	     घड़ीid == CLOCK_BOOTTIME_ALARM) &&
+	if ((clockid == CLOCK_REALTIME_ALARM ||
+	     clockid == CLOCK_BOOTTIME_ALARM) &&
 	    !capable(CAP_WAKE_ALARM))
-		वापस -EPERM;
+		return -EPERM;
 
-	ctx = kzalloc(माप(*ctx), GFP_KERNEL);
-	अगर (!ctx)
-		वापस -ENOMEM;
+	ctx = kzalloc(sizeof(*ctx), GFP_KERNEL);
+	if (!ctx)
+		return -ENOMEM;
 
-	init_रुकोqueue_head(&ctx->wqh);
+	init_waitqueue_head(&ctx->wqh);
 	spin_lock_init(&ctx->cancel_lock);
-	ctx->घड़ीid = घड़ीid;
+	ctx->clockid = clockid;
 
-	अगर (isalarm(ctx))
+	if (isalarm(ctx))
 		alarm_init(&ctx->t.alarm,
-			   ctx->घड़ीid == CLOCK_REALTIME_ALARM ?
+			   ctx->clockid == CLOCK_REALTIME_ALARM ?
 			   ALARM_REALTIME : ALARM_BOOTTIME,
-			   समयrfd_alarmproc);
-	अन्यथा
-		hrसमयr_init(&ctx->t.पंचांगr, घड़ीid, HRTIMER_MODE_ABS);
+			   timerfd_alarmproc);
+	else
+		hrtimer_init(&ctx->t.tmr, clockid, HRTIMER_MODE_ABS);
 
-	ctx->moffs = kसमय_mono_to_real(0);
+	ctx->moffs = ktime_mono_to_real(0);
 
-	ufd = anon_inode_getfd("[timerfd]", &समयrfd_fops, ctx,
+	ufd = anon_inode_getfd("[timerfd]", &timerfd_fops, ctx,
 			       O_RDWR | (flags & TFD_SHARED_FCNTL_FLAGS));
-	अगर (ufd < 0)
-		kमुक्त(ctx);
+	if (ufd < 0)
+		kfree(ctx);
 
-	वापस ufd;
-पूर्ण
+	return ufd;
+}
 
-अटल पूर्णांक करो_समयrfd_समय_रखो(पूर्णांक ufd, पूर्णांक flags, 
-		स्थिर काष्ठा iसमयrspec64 *new,
-		काष्ठा iसमयrspec64 *old)
-अणु
-	काष्ठा fd f;
-	काष्ठा समयrfd_ctx *ctx;
-	पूर्णांक ret;
+static int do_timerfd_settime(int ufd, int flags, 
+		const struct itimerspec64 *new,
+		struct itimerspec64 *old)
+{
+	struct fd f;
+	struct timerfd_ctx *ctx;
+	int ret;
 
-	अगर ((flags & ~TFD_SETTIME_FLAGS) ||
-		 !iसमयrspec64_valid(new))
-		वापस -EINVAL;
+	if ((flags & ~TFD_SETTIME_FLAGS) ||
+		 !itimerspec64_valid(new))
+		return -EINVAL;
 
-	ret = समयrfd_fget(ufd, &f);
-	अगर (ret)
-		वापस ret;
-	ctx = f.file->निजी_data;
+	ret = timerfd_fget(ufd, &f);
+	if (ret)
+		return ret;
+	ctx = f.file->private_data;
 
-	अगर (isalarm(ctx) && !capable(CAP_WAKE_ALARM)) अणु
+	if (isalarm(ctx) && !capable(CAP_WAKE_ALARM)) {
 		fdput(f);
-		वापस -EPERM;
-	पूर्ण
+		return -EPERM;
+	}
 
-	समयrfd_setup_cancel(ctx, flags);
+	timerfd_setup_cancel(ctx, flags);
 
 	/*
-	 * We need to stop the existing समयr beक्रमe reprogramming
+	 * We need to stop the existing timer before reprogramming
 	 * it to the new values.
 	 */
-	क्रम (;;) अणु
+	for (;;) {
 		spin_lock_irq(&ctx->wqh.lock);
 
-		अगर (isalarm(ctx)) अणु
-			अगर (alarm_try_to_cancel(&ctx->t.alarm) >= 0)
-				अवरोध;
-		पूर्ण अन्यथा अणु
-			अगर (hrसमयr_try_to_cancel(&ctx->t.पंचांगr) >= 0)
-				अवरोध;
-		पूर्ण
+		if (isalarm(ctx)) {
+			if (alarm_try_to_cancel(&ctx->t.alarm) >= 0)
+				break;
+		} else {
+			if (hrtimer_try_to_cancel(&ctx->t.tmr) >= 0)
+				break;
+		}
 		spin_unlock_irq(&ctx->wqh.lock);
 
-		अगर (isalarm(ctx))
-			hrसमयr_cancel_रुको_running(&ctx->t.alarm.समयr);
-		अन्यथा
-			hrसमयr_cancel_रुको_running(&ctx->t.पंचांगr);
-	पूर्ण
+		if (isalarm(ctx))
+			hrtimer_cancel_wait_running(&ctx->t.alarm.timer);
+		else
+			hrtimer_cancel_wait_running(&ctx->t.tmr);
+	}
 
 	/*
-	 * If the समयr is expired and it's periodic, we need to advance it
-	 * because the caller may want to know the previous expiration समय.
-	 * We करो not update "ticks" and "expired" since the समयr will be
-	 * re-programmed again in the following समयrfd_setup() call.
+	 * If the timer is expired and it's periodic, we need to advance it
+	 * because the caller may want to know the previous expiration time.
+	 * We do not update "ticks" and "expired" since the timer will be
+	 * re-programmed again in the following timerfd_setup() call.
 	 */
-	अगर (ctx->expired && ctx->tपूर्णांकv) अणु
-		अगर (isalarm(ctx))
-			alarm_क्रमward_now(&ctx->t.alarm, ctx->tपूर्णांकv);
-		अन्यथा
-			hrसमयr_क्रमward_now(&ctx->t.पंचांगr, ctx->tपूर्णांकv);
-	पूर्ण
+	if (ctx->expired && ctx->tintv) {
+		if (isalarm(ctx))
+			alarm_forward_now(&ctx->t.alarm, ctx->tintv);
+		else
+			hrtimer_forward_now(&ctx->t.tmr, ctx->tintv);
+	}
 
-	old->it_value = kसमय_प्रकारo_बारpec64(समयrfd_get_reमुख्यing(ctx));
-	old->it_पूर्णांकerval = kसमय_प्रकारo_बारpec64(ctx->tपूर्णांकv);
+	old->it_value = ktime_to_timespec64(timerfd_get_remaining(ctx));
+	old->it_interval = ktime_to_timespec64(ctx->tintv);
 
 	/*
-	 * Re-program the समयr to the new value ...
+	 * Re-program the timer to the new value ...
 	 */
-	ret = समयrfd_setup(ctx, flags, new);
+	ret = timerfd_setup(ctx, flags, new);
 
 	spin_unlock_irq(&ctx->wqh.lock);
 	fdput(f);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक करो_समयrfd_समय_लो(पूर्णांक ufd, काष्ठा iसमयrspec64 *t)
-अणु
-	काष्ठा fd f;
-	काष्ठा समयrfd_ctx *ctx;
-	पूर्णांक ret = समयrfd_fget(ufd, &f);
-	अगर (ret)
-		वापस ret;
-	ctx = f.file->निजी_data;
+static int do_timerfd_gettime(int ufd, struct itimerspec64 *t)
+{
+	struct fd f;
+	struct timerfd_ctx *ctx;
+	int ret = timerfd_fget(ufd, &f);
+	if (ret)
+		return ret;
+	ctx = f.file->private_data;
 
 	spin_lock_irq(&ctx->wqh.lock);
-	अगर (ctx->expired && ctx->tपूर्णांकv) अणु
+	if (ctx->expired && ctx->tintv) {
 		ctx->expired = 0;
 
-		अगर (isalarm(ctx)) अणु
+		if (isalarm(ctx)) {
 			ctx->ticks +=
-				alarm_क्रमward_now(
-					&ctx->t.alarm, ctx->tपूर्णांकv) - 1;
+				alarm_forward_now(
+					&ctx->t.alarm, ctx->tintv) - 1;
 			alarm_restart(&ctx->t.alarm);
-		पूर्ण अन्यथा अणु
+		} else {
 			ctx->ticks +=
-				hrसमयr_क्रमward_now(&ctx->t.पंचांगr, ctx->tपूर्णांकv)
+				hrtimer_forward_now(&ctx->t.tmr, ctx->tintv)
 				- 1;
-			hrसमयr_restart(&ctx->t.पंचांगr);
-		पूर्ण
-	पूर्ण
-	t->it_value = kसमय_प्रकारo_बारpec64(समयrfd_get_reमुख्यing(ctx));
-	t->it_पूर्णांकerval = kसमय_प्रकारo_बारpec64(ctx->tपूर्णांकv);
+			hrtimer_restart(&ctx->t.tmr);
+		}
+	}
+	t->it_value = ktime_to_timespec64(timerfd_get_remaining(ctx));
+	t->it_interval = ktime_to_timespec64(ctx->tintv);
 	spin_unlock_irq(&ctx->wqh.lock);
 	fdput(f);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-SYSCALL_DEFINE4(समयrfd_समय_रखो, पूर्णांक, ufd, पूर्णांक, flags,
-		स्थिर काष्ठा __kernel_iसमयrspec __user *, uपंचांगr,
-		काष्ठा __kernel_iसमयrspec __user *, oपंचांगr)
-अणु
-	काष्ठा iसमयrspec64 new, old;
-	पूर्णांक ret;
+SYSCALL_DEFINE4(timerfd_settime, int, ufd, int, flags,
+		const struct __kernel_itimerspec __user *, utmr,
+		struct __kernel_itimerspec __user *, otmr)
+{
+	struct itimerspec64 new, old;
+	int ret;
 
-	अगर (get_iसमयrspec64(&new, uपंचांगr))
-		वापस -EFAULT;
-	ret = करो_समयrfd_समय_रखो(ufd, flags, &new, &old);
-	अगर (ret)
-		वापस ret;
-	अगर (oपंचांगr && put_iसमयrspec64(&old, oपंचांगr))
-		वापस -EFAULT;
+	if (get_itimerspec64(&new, utmr))
+		return -EFAULT;
+	ret = do_timerfd_settime(ufd, flags, &new, &old);
+	if (ret)
+		return ret;
+	if (otmr && put_itimerspec64(&old, otmr))
+		return -EFAULT;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-SYSCALL_DEFINE2(समयrfd_समय_लो, पूर्णांक, ufd, काष्ठा __kernel_iसमयrspec __user *, oपंचांगr)
-अणु
-	काष्ठा iसमयrspec64 koपंचांगr;
-	पूर्णांक ret = करो_समयrfd_समय_लो(ufd, &koपंचांगr);
-	अगर (ret)
-		वापस ret;
-	वापस put_iसमयrspec64(&koपंचांगr, oपंचांगr) ? -EFAULT : 0;
-पूर्ण
+SYSCALL_DEFINE2(timerfd_gettime, int, ufd, struct __kernel_itimerspec __user *, otmr)
+{
+	struct itimerspec64 kotmr;
+	int ret = do_timerfd_gettime(ufd, &kotmr);
+	if (ret)
+		return ret;
+	return put_itimerspec64(&kotmr, otmr) ? -EFAULT : 0;
+}
 
-#अगर_घोषित CONFIG_COMPAT_32BIT_TIME
-SYSCALL_DEFINE4(समयrfd_समय_रखो32, पूर्णांक, ufd, पूर्णांक, flags,
-		स्थिर काष्ठा old_iसमयrspec32 __user *, uपंचांगr,
-		काष्ठा old_iसमयrspec32 __user *, oपंचांगr)
-अणु
-	काष्ठा iसमयrspec64 new, old;
-	पूर्णांक ret;
+#ifdef CONFIG_COMPAT_32BIT_TIME
+SYSCALL_DEFINE4(timerfd_settime32, int, ufd, int, flags,
+		const struct old_itimerspec32 __user *, utmr,
+		struct old_itimerspec32 __user *, otmr)
+{
+	struct itimerspec64 new, old;
+	int ret;
 
-	अगर (get_old_iसमयrspec32(&new, uपंचांगr))
-		वापस -EFAULT;
-	ret = करो_समयrfd_समय_रखो(ufd, flags, &new, &old);
-	अगर (ret)
-		वापस ret;
-	अगर (oपंचांगr && put_old_iसमयrspec32(&old, oपंचांगr))
-		वापस -EFAULT;
-	वापस ret;
-पूर्ण
+	if (get_old_itimerspec32(&new, utmr))
+		return -EFAULT;
+	ret = do_timerfd_settime(ufd, flags, &new, &old);
+	if (ret)
+		return ret;
+	if (otmr && put_old_itimerspec32(&old, otmr))
+		return -EFAULT;
+	return ret;
+}
 
-SYSCALL_DEFINE2(समयrfd_समय_लो32, पूर्णांक, ufd,
-		काष्ठा old_iसमयrspec32 __user *, oपंचांगr)
-अणु
-	काष्ठा iसमयrspec64 koपंचांगr;
-	पूर्णांक ret = करो_समयrfd_समय_लो(ufd, &koपंचांगr);
-	अगर (ret)
-		वापस ret;
-	वापस put_old_iसमयrspec32(&koपंचांगr, oपंचांगr) ? -EFAULT : 0;
-पूर्ण
-#पूर्ण_अगर
+SYSCALL_DEFINE2(timerfd_gettime32, int, ufd,
+		struct old_itimerspec32 __user *, otmr)
+{
+	struct itimerspec64 kotmr;
+	int ret = do_timerfd_gettime(ufd, &kotmr);
+	if (ret)
+		return ret;
+	return put_old_itimerspec32(&kotmr, otmr) ? -EFAULT : 0;
+}
+#endif

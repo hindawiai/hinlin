@@ -1,19 +1,18 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: ISC
+// SPDX-License-Identifier: ISC
 /*
  * Copyright (c) 2005-2011 Atheros Communications Inc.
  * Copyright (c) 2011-2017 Qualcomm Atheros, Inc.
  */
 
-#समावेश <linux/slab.h>
-#समावेश <linux/अगर_ether.h>
+#include <linux/slab.h>
+#include <linux/if_ether.h>
 
-#समावेश "htt.h"
-#समावेश "core.h"
-#समावेश "debug.h"
-#समावेश "hif.h"
+#include "htt.h"
+#include "core.h"
+#include "debug.h"
+#include "hif.h"
 
-अटल स्थिर क्रमागत htt_t2h_msg_type htt_मुख्य_t2h_msg_types[] = अणु
+static const enum htt_t2h_msg_type htt_main_t2h_msg_types[] = {
 	[HTT_MAIN_T2H_MSG_TYPE_VERSION_CONF] = HTT_T2H_MSG_TYPE_VERSION_CONF,
 	[HTT_MAIN_T2H_MSG_TYPE_RX_IND] = HTT_T2H_MSG_TYPE_RX_IND,
 	[HTT_MAIN_T2H_MSG_TYPE_RX_FLUSH] = HTT_T2H_MSG_TYPE_RX_FLUSH,
@@ -36,9 +35,9 @@
 	[HTT_MAIN_T2H_MSG_TYPE_RX_OFFLOAD_DELIVER_IND] =
 		HTT_T2H_MSG_TYPE_RX_OFFLOAD_DELIVER_IND,
 	[HTT_MAIN_T2H_MSG_TYPE_TEST] = HTT_T2H_MSG_TYPE_TEST,
-पूर्ण;
+};
 
-अटल स्थिर क्रमागत htt_t2h_msg_type htt_10x_t2h_msg_types[] = अणु
+static const enum htt_t2h_msg_type htt_10x_t2h_msg_types[] = {
 	[HTT_10X_T2H_MSG_TYPE_VERSION_CONF] = HTT_T2H_MSG_TYPE_VERSION_CONF,
 	[HTT_10X_T2H_MSG_TYPE_RX_IND] = HTT_T2H_MSG_TYPE_RX_IND,
 	[HTT_10X_T2H_MSG_TYPE_RX_FLUSH] = HTT_T2H_MSG_TYPE_RX_FLUSH,
@@ -59,9 +58,9 @@
 	[HTT_10X_T2H_MSG_TYPE_STATS_NOUPLOAD] = HTT_T2H_MSG_TYPE_STATS_NOUPLOAD,
 	[HTT_10X_T2H_MSG_TYPE_MGMT_TX_COMPL_IND] =
 		HTT_T2H_MSG_TYPE_MGMT_TX_COMPLETION,
-पूर्ण;
+};
 
-अटल स्थिर क्रमागत htt_t2h_msg_type htt_tlv_t2h_msg_types[] = अणु
+static const enum htt_t2h_msg_type htt_tlv_t2h_msg_types[] = {
 	[HTT_TLV_T2H_MSG_TYPE_VERSION_CONF] = HTT_T2H_MSG_TYPE_VERSION_CONF,
 	[HTT_TLV_T2H_MSG_TYPE_RX_IND] = HTT_T2H_MSG_TYPE_RX_IND,
 	[HTT_TLV_T2H_MSG_TYPE_RX_FLUSH] = HTT_T2H_MSG_TYPE_RX_FLUSH,
@@ -91,9 +90,9 @@
 	[HTT_TLV_T2H_MSG_TYPE_RX_OFLD_PKT_ERR] =
 		HTT_T2H_MSG_TYPE_RX_OFLD_PKT_ERR,
 	[HTT_TLV_T2H_MSG_TYPE_TEST] = HTT_T2H_MSG_TYPE_TEST,
-पूर्ण;
+};
 
-अटल स्थिर क्रमागत htt_t2h_msg_type htt_10_4_t2h_msg_types[] = अणु
+static const enum htt_t2h_msg_type htt_10_4_t2h_msg_types[] = {
 	[HTT_10_4_T2H_MSG_TYPE_VERSION_CONF] = HTT_T2H_MSG_TYPE_VERSION_CONF,
 	[HTT_10_4_T2H_MSG_TYPE_RX_IND] = HTT_T2H_MSG_TYPE_RX_IND,
 	[HTT_10_4_T2H_MSG_TYPE_RX_FLUSH] = HTT_T2H_MSG_TYPE_RX_FLUSH,
@@ -130,18 +129,18 @@
 				HTT_T2H_MSG_TYPE_TX_MODE_SWITCH_IND,
 	[HTT_10_4_T2H_MSG_TYPE_PEER_STATS] =
 				HTT_T2H_MSG_TYPE_PEER_STATS,
-पूर्ण;
+};
 
-पूर्णांक ath10k_htt_connect(काष्ठा ath10k_htt *htt)
-अणु
-	काष्ठा ath10k_htc_svc_conn_req conn_req;
-	काष्ठा ath10k_htc_svc_conn_resp conn_resp;
-	काष्ठा ath10k *ar = htt->ar;
-	काष्ठा ath10k_htc_ep *ep;
-	पूर्णांक status;
+int ath10k_htt_connect(struct ath10k_htt *htt)
+{
+	struct ath10k_htc_svc_conn_req conn_req;
+	struct ath10k_htc_svc_conn_resp conn_resp;
+	struct ath10k *ar = htt->ar;
+	struct ath10k_htc_ep *ep;
+	int status;
 
-	स_रखो(&conn_req, 0, माप(conn_req));
-	स_रखो(&conn_resp, 0, माप(conn_resp));
+	memset(&conn_req, 0, sizeof(conn_req));
+	memset(&conn_resp, 0, sizeof(conn_resp));
 
 	conn_req.ep_ops.ep_tx_complete = ath10k_htt_htc_tx_complete;
 	conn_req.ep_ops.ep_rx_complete = ath10k_htt_htc_t2h_msg_handler;
@@ -153,33 +152,33 @@
 	status = ath10k_htc_connect_service(&htt->ar->htc, &conn_req,
 					    &conn_resp);
 
-	अगर (status)
-		वापस status;
+	if (status)
+		return status;
 
 	htt->eid = conn_resp.eid;
 
-	अगर (ar->bus_param.dev_type == ATH10K_DEV_TYPE_HL) अणु
-		ep = &ar->htc.endpoपूर्णांक[htt->eid];
+	if (ar->bus_param.dev_type == ATH10K_DEV_TYPE_HL) {
+		ep = &ar->htc.endpoint[htt->eid];
 		ath10k_htc_setup_tx_req(ep);
-	पूर्ण
+	}
 
-	htt->disable_tx_comp = ath10k_hअगर_get_htt_tx_complete(htt->ar);
-	अगर (htt->disable_tx_comp)
+	htt->disable_tx_comp = ath10k_hif_get_htt_tx_complete(htt->ar);
+	if (htt->disable_tx_comp)
 		ath10k_htc_change_tx_credit_flow(&htt->ar->htc, htt->eid, true);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक ath10k_htt_init(काष्ठा ath10k *ar)
-अणु
-	काष्ठा ath10k_htt *htt = &ar->htt;
+int ath10k_htt_init(struct ath10k *ar)
+{
+	struct ath10k_htt *htt = &ar->htt;
 
 	htt->ar = ar;
 
 	/*
 	 * Prefetch enough data to satisfy target
-	 * classअगरication engine.
-	 * This is क्रम LL chips. HL chips will probably
+	 * classification engine.
+	 * This is for LL chips. HL chips will probably
 	 * transfer all frame in the tx fragment.
 	 */
 	htt->prefetch_len =
@@ -188,97 +187,97 @@
 		8 + /* llc snap */
 		2; /* ip4 dscp or ip6 priority */
 
-	चयन (ar->running_fw->fw_file.htt_op_version) अणु
-	हाल ATH10K_FW_HTT_OP_VERSION_10_4:
+	switch (ar->running_fw->fw_file.htt_op_version) {
+	case ATH10K_FW_HTT_OP_VERSION_10_4:
 		ar->htt.t2h_msg_types = htt_10_4_t2h_msg_types;
 		ar->htt.t2h_msg_types_max = HTT_10_4_T2H_NUM_MSGS;
-		अवरोध;
-	हाल ATH10K_FW_HTT_OP_VERSION_10_1:
+		break;
+	case ATH10K_FW_HTT_OP_VERSION_10_1:
 		ar->htt.t2h_msg_types = htt_10x_t2h_msg_types;
 		ar->htt.t2h_msg_types_max = HTT_10X_T2H_NUM_MSGS;
-		अवरोध;
-	हाल ATH10K_FW_HTT_OP_VERSION_TLV:
+		break;
+	case ATH10K_FW_HTT_OP_VERSION_TLV:
 		ar->htt.t2h_msg_types = htt_tlv_t2h_msg_types;
 		ar->htt.t2h_msg_types_max = HTT_TLV_T2H_NUM_MSGS;
-		अवरोध;
-	हाल ATH10K_FW_HTT_OP_VERSION_MAIN:
-		ar->htt.t2h_msg_types = htt_मुख्य_t2h_msg_types;
+		break;
+	case ATH10K_FW_HTT_OP_VERSION_MAIN:
+		ar->htt.t2h_msg_types = htt_main_t2h_msg_types;
 		ar->htt.t2h_msg_types_max = HTT_MAIN_T2H_NUM_MSGS;
-		अवरोध;
-	हाल ATH10K_FW_HTT_OP_VERSION_MAX:
-	हाल ATH10K_FW_HTT_OP_VERSION_UNSET:
+		break;
+	case ATH10K_FW_HTT_OP_VERSION_MAX:
+	case ATH10K_FW_HTT_OP_VERSION_UNSET:
 		WARN_ON(1);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	ath10k_htt_set_tx_ops(htt);
 	ath10k_htt_set_rx_ops(htt);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#घोषणा HTT_TARGET_VERSION_TIMEOUT_HZ (3 * HZ)
+#define HTT_TARGET_VERSION_TIMEOUT_HZ (3 * HZ)
 
-अटल पूर्णांक ath10k_htt_verअगरy_version(काष्ठा ath10k_htt *htt)
-अणु
-	काष्ठा ath10k *ar = htt->ar;
+static int ath10k_htt_verify_version(struct ath10k_htt *htt)
+{
+	struct ath10k *ar = htt->ar;
 
 	ath10k_dbg(ar, ATH10K_DBG_BOOT, "htt target version %d.%d\n",
 		   htt->target_version_major, htt->target_version_minor);
 
-	अगर (htt->target_version_major != 2 &&
-	    htt->target_version_major != 3) अणु
+	if (htt->target_version_major != 2 &&
+	    htt->target_version_major != 3) {
 		ath10k_err(ar, "unsupported htt major version %d. supported versions are 2 and 3\n",
 			   htt->target_version_major);
-		वापस -ENOTSUPP;
-	पूर्ण
+		return -ENOTSUPP;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक ath10k_htt_setup(काष्ठा ath10k_htt *htt)
-अणु
-	काष्ठा ath10k *ar = htt->ar;
-	पूर्णांक status;
+int ath10k_htt_setup(struct ath10k_htt *htt)
+{
+	struct ath10k *ar = htt->ar;
+	int status;
 
 	init_completion(&htt->target_version_received);
 
 	status = ath10k_htt_h2t_ver_req_msg(htt);
-	अगर (status)
-		वापस status;
+	if (status)
+		return status;
 
-	status = रुको_क्रम_completion_समयout(&htt->target_version_received,
+	status = wait_for_completion_timeout(&htt->target_version_received,
 					     HTT_TARGET_VERSION_TIMEOUT_HZ);
-	अगर (status == 0) अणु
+	if (status == 0) {
 		ath10k_warn(ar, "htt version request timed out\n");
-		वापस -ETIMEDOUT;
-	पूर्ण
+		return -ETIMEDOUT;
+	}
 
-	status = ath10k_htt_verअगरy_version(htt);
-	अगर (status) अणु
+	status = ath10k_htt_verify_version(htt);
+	if (status) {
 		ath10k_warn(ar, "failed to verify htt version: %d\n",
 			    status);
-		वापस status;
-	पूर्ण
+		return status;
+	}
 
 	status = ath10k_htt_send_frag_desc_bank_cfg(htt);
-	अगर (status)
-		वापस status;
+	if (status)
+		return status;
 
 	status = ath10k_htt_send_rx_ring_cfg(htt);
-	अगर (status) अणु
+	if (status) {
 		ath10k_warn(ar, "failed to setup rx ring: %d\n",
 			    status);
-		वापस status;
-	पूर्ण
+		return status;
+	}
 
 	status = ath10k_htt_h2t_aggr_cfg_msg(htt,
 					     htt->max_num_ampdu,
 					     htt->max_num_amsdu);
-	अगर (status) अणु
+	if (status) {
 		ath10k_warn(ar, "failed to setup amsdu/ampdu limit: %d\n",
 			    status);
-		वापस status;
-	पूर्ण
+		return status;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

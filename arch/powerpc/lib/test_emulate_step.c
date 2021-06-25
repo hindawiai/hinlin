@@ -1,73 +1,72 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * Simple sanity tests क्रम inकाष्ठाion emulation infraकाष्ठाure.
+ * Simple sanity tests for instruction emulation infrastructure.
  *
  * Copyright IBM Corp. 2016
  */
 
-#घोषणा pr_fmt(fmt) "emulate_step_test: " fmt
+#define pr_fmt(fmt) "emulate_step_test: " fmt
 
-#समावेश <linux/ptrace.h>
-#समावेश <यंत्र/cpu_has_feature.h>
-#समावेश <यंत्र/sstep.h>
-#समावेश <यंत्र/ppc-opcode.h>
-#समावेश <यंत्र/code-patching.h>
-#समावेश <यंत्र/inst.h>
+#include <linux/ptrace.h>
+#include <asm/cpu_has_feature.h>
+#include <asm/sstep.h>
+#include <asm/ppc-opcode.h>
+#include <asm/code-patching.h>
+#include <asm/inst.h>
 
-#घोषणा MAX_SUBTESTS	16
+#define MAX_SUBTESTS	16
 
-#घोषणा IGNORE_GPR(n)	(0x1UL << (n))
-#घोषणा IGNORE_XER	(0x1UL << 32)
-#घोषणा IGNORE_CCR	(0x1UL << 33)
-#घोषणा NEGATIVE_TEST	(0x1UL << 63)
+#define IGNORE_GPR(n)	(0x1UL << (n))
+#define IGNORE_XER	(0x1UL << 32)
+#define IGNORE_CCR	(0x1UL << 33)
+#define NEGATIVE_TEST	(0x1UL << 63)
 
-#घोषणा TEST_PLD(r, base, i, pr) \
+#define TEST_PLD(r, base, i, pr) \
 	ppc_inst_prefix(PPC_PREFIX_8LS | __PPC_PRFX_R(pr) | IMM_H(i), \
 			PPC_INST_PLD | ___PPC_RT(r) | ___PPC_RA(base) | IMM_L(i))
 
-#घोषणा TEST_PLWZ(r, base, i, pr) \
+#define TEST_PLWZ(r, base, i, pr) \
 	ppc_inst_prefix(PPC_PREFIX_MLS | __PPC_PRFX_R(pr) | IMM_H(i), \
 			PPC_RAW_LWZ(r, base, i))
 
-#घोषणा TEST_PSTD(r, base, i, pr) \
+#define TEST_PSTD(r, base, i, pr) \
 	ppc_inst_prefix(PPC_PREFIX_8LS | __PPC_PRFX_R(pr) | IMM_H(i), \
 			PPC_INST_PSTD | ___PPC_RT(r) | ___PPC_RA(base) | IMM_L(i))
 
-#घोषणा TEST_PLFS(r, base, i, pr) \
+#define TEST_PLFS(r, base, i, pr) \
 	ppc_inst_prefix(PPC_PREFIX_MLS | __PPC_PRFX_R(pr) | IMM_H(i), \
 			PPC_INST_LFS | ___PPC_RT(r) | ___PPC_RA(base) | IMM_L(i))
 
-#घोषणा TEST_PSTFS(r, base, i, pr) \
+#define TEST_PSTFS(r, base, i, pr) \
 	ppc_inst_prefix(PPC_PREFIX_MLS | __PPC_PRFX_R(pr) | IMM_H(i), \
 			PPC_INST_STFS | ___PPC_RT(r) | ___PPC_RA(base) | IMM_L(i))
 
-#घोषणा TEST_PLFD(r, base, i, pr) \
+#define TEST_PLFD(r, base, i, pr) \
 	ppc_inst_prefix(PPC_PREFIX_MLS | __PPC_PRFX_R(pr) | IMM_H(i), \
 			PPC_INST_LFD | ___PPC_RT(r) | ___PPC_RA(base) | IMM_L(i))
 
-#घोषणा TEST_PSTFD(r, base, i, pr) \
+#define TEST_PSTFD(r, base, i, pr) \
 	ppc_inst_prefix(PPC_PREFIX_MLS | __PPC_PRFX_R(pr) | IMM_H(i), \
 			PPC_INST_STFD | ___PPC_RT(r) | ___PPC_RA(base) | IMM_L(i))
 
-#घोषणा TEST_PADDI(t, a, i, pr) \
+#define TEST_PADDI(t, a, i, pr) \
 	ppc_inst_prefix(PPC_PREFIX_MLS | __PPC_PRFX_R(pr) | IMM_H(i), \
 			PPC_RAW_ADDI(t, a, i))
 
 
-अटल व्योम __init init_pt_regs(काष्ठा pt_regs *regs)
-अणु
-	अटल अचिन्हित दीर्घ msr;
-	अटल bool msr_cached;
+static void __init init_pt_regs(struct pt_regs *regs)
+{
+	static unsigned long msr;
+	static bool msr_cached;
 
-	स_रखो(regs, 0, माप(काष्ठा pt_regs));
+	memset(regs, 0, sizeof(struct pt_regs));
 
-	अगर (likely(msr_cached)) अणु
+	if (likely(msr_cached)) {
 		regs->msr = msr;
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	यंत्र अस्थिर("mfmsr %0" : "=r"(regs->msr));
+	asm volatile("mfmsr %0" : "=r"(regs->msr));
 
 	regs->msr |= MSR_FP;
 	regs->msr |= MSR_VEC;
@@ -75,176 +74,176 @@
 
 	msr = regs->msr;
 	msr_cached = true;
-पूर्ण
+}
 
-अटल व्योम __init show_result(अक्षर *mnemonic, अक्षर *result)
-अणु
+static void __init show_result(char *mnemonic, char *result)
+{
 	pr_info("%-14s : %s\n", mnemonic, result);
-पूर्ण
+}
 
-अटल व्योम __init show_result_with_descr(अक्षर *mnemonic, अक्षर *descr,
-					  अक्षर *result)
-अणु
+static void __init show_result_with_descr(char *mnemonic, char *descr,
+					  char *result)
+{
 	pr_info("%-14s : %-50s %s\n", mnemonic, descr, result);
-पूर्ण
+}
 
-अटल व्योम __init test_ld(व्योम)
-अणु
-	काष्ठा pt_regs regs;
-	अचिन्हित दीर्घ a = 0x23;
-	पूर्णांक stepped = -1;
+static void __init test_ld(void)
+{
+	struct pt_regs regs;
+	unsigned long a = 0x23;
+	int stepped = -1;
 
 	init_pt_regs(&regs);
-	regs.gpr[3] = (अचिन्हित दीर्घ) &a;
+	regs.gpr[3] = (unsigned long) &a;
 
 	/* ld r5, 0(r3) */
 	stepped = emulate_step(&regs, ppc_inst(PPC_RAW_LD(5, 3, 0)));
 
-	अगर (stepped == 1 && regs.gpr[5] == a)
+	if (stepped == 1 && regs.gpr[5] == a)
 		show_result("ld", "PASS");
-	अन्यथा
+	else
 		show_result("ld", "FAIL");
-पूर्ण
+}
 
-अटल व्योम __init test_pld(व्योम)
-अणु
-	काष्ठा pt_regs regs;
-	अचिन्हित दीर्घ a = 0x23;
-	पूर्णांक stepped = -1;
+static void __init test_pld(void)
+{
+	struct pt_regs regs;
+	unsigned long a = 0x23;
+	int stepped = -1;
 
-	अगर (!cpu_has_feature(CPU_FTR_ARCH_31)) अणु
+	if (!cpu_has_feature(CPU_FTR_ARCH_31)) {
 		show_result("pld", "SKIP (!CPU_FTR_ARCH_31)");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	init_pt_regs(&regs);
-	regs.gpr[3] = (अचिन्हित दीर्घ)&a;
+	regs.gpr[3] = (unsigned long)&a;
 
 	/* pld r5, 0(r3), 0 */
 	stepped = emulate_step(&regs, TEST_PLD(5, 3, 0, 0));
 
-	अगर (stepped == 1 && regs.gpr[5] == a)
+	if (stepped == 1 && regs.gpr[5] == a)
 		show_result("pld", "PASS");
-	अन्यथा
+	else
 		show_result("pld", "FAIL");
-पूर्ण
+}
 
-अटल व्योम __init test_lwz(व्योम)
-अणु
-	काष्ठा pt_regs regs;
-	अचिन्हित पूर्णांक a = 0x4545;
-	पूर्णांक stepped = -1;
+static void __init test_lwz(void)
+{
+	struct pt_regs regs;
+	unsigned int a = 0x4545;
+	int stepped = -1;
 
 	init_pt_regs(&regs);
-	regs.gpr[3] = (अचिन्हित दीर्घ) &a;
+	regs.gpr[3] = (unsigned long) &a;
 
 	/* lwz r5, 0(r3) */
 	stepped = emulate_step(&regs, ppc_inst(PPC_RAW_LWZ(5, 3, 0)));
 
-	अगर (stepped == 1 && regs.gpr[5] == a)
+	if (stepped == 1 && regs.gpr[5] == a)
 		show_result("lwz", "PASS");
-	अन्यथा
+	else
 		show_result("lwz", "FAIL");
-पूर्ण
+}
 
-अटल व्योम __init test_plwz(व्योम)
-अणु
-	काष्ठा pt_regs regs;
-	अचिन्हित पूर्णांक a = 0x4545;
-	पूर्णांक stepped = -1;
+static void __init test_plwz(void)
+{
+	struct pt_regs regs;
+	unsigned int a = 0x4545;
+	int stepped = -1;
 
-	अगर (!cpu_has_feature(CPU_FTR_ARCH_31)) अणु
+	if (!cpu_has_feature(CPU_FTR_ARCH_31)) {
 		show_result("plwz", "SKIP (!CPU_FTR_ARCH_31)");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	init_pt_regs(&regs);
-	regs.gpr[3] = (अचिन्हित दीर्घ)&a;
+	regs.gpr[3] = (unsigned long)&a;
 
 	/* plwz r5, 0(r3), 0 */
 
 	stepped = emulate_step(&regs, TEST_PLWZ(5, 3, 0, 0));
 
-	अगर (stepped == 1 && regs.gpr[5] == a)
+	if (stepped == 1 && regs.gpr[5] == a)
 		show_result("plwz", "PASS");
-	अन्यथा
+	else
 		show_result("plwz", "FAIL");
-पूर्ण
+}
 
-अटल व्योम __init test_lwzx(व्योम)
-अणु
-	काष्ठा pt_regs regs;
-	अचिन्हित पूर्णांक a[3] = अणु0x0, 0x0, 0x1234पूर्ण;
-	पूर्णांक stepped = -1;
+static void __init test_lwzx(void)
+{
+	struct pt_regs regs;
+	unsigned int a[3] = {0x0, 0x0, 0x1234};
+	int stepped = -1;
 
 	init_pt_regs(&regs);
-	regs.gpr[3] = (अचिन्हित दीर्घ) a;
+	regs.gpr[3] = (unsigned long) a;
 	regs.gpr[4] = 8;
 	regs.gpr[5] = 0x8765;
 
 	/* lwzx r5, r3, r4 */
 	stepped = emulate_step(&regs, ppc_inst(PPC_RAW_LWZX(5, 3, 4)));
-	अगर (stepped == 1 && regs.gpr[5] == a[2])
+	if (stepped == 1 && regs.gpr[5] == a[2])
 		show_result("lwzx", "PASS");
-	अन्यथा
+	else
 		show_result("lwzx", "FAIL");
-पूर्ण
+}
 
-अटल व्योम __init test_std(व्योम)
-अणु
-	काष्ठा pt_regs regs;
-	अचिन्हित दीर्घ a = 0x1234;
-	पूर्णांक stepped = -1;
+static void __init test_std(void)
+{
+	struct pt_regs regs;
+	unsigned long a = 0x1234;
+	int stepped = -1;
 
 	init_pt_regs(&regs);
-	regs.gpr[3] = (अचिन्हित दीर्घ) &a;
+	regs.gpr[3] = (unsigned long) &a;
 	regs.gpr[5] = 0x5678;
 
 	/* std r5, 0(r3) */
 	stepped = emulate_step(&regs, ppc_inst(PPC_RAW_STD(5, 3, 0)));
-	अगर (stepped == 1 && regs.gpr[5] == a)
+	if (stepped == 1 && regs.gpr[5] == a)
 		show_result("std", "PASS");
-	अन्यथा
+	else
 		show_result("std", "FAIL");
-पूर्ण
+}
 
-अटल व्योम __init test_pstd(व्योम)
-अणु
-	काष्ठा pt_regs regs;
-	अचिन्हित दीर्घ a = 0x1234;
-	पूर्णांक stepped = -1;
+static void __init test_pstd(void)
+{
+	struct pt_regs regs;
+	unsigned long a = 0x1234;
+	int stepped = -1;
 
-	अगर (!cpu_has_feature(CPU_FTR_ARCH_31)) अणु
+	if (!cpu_has_feature(CPU_FTR_ARCH_31)) {
 		show_result("pstd", "SKIP (!CPU_FTR_ARCH_31)");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	init_pt_regs(&regs);
-	regs.gpr[3] = (अचिन्हित दीर्घ)&a;
+	regs.gpr[3] = (unsigned long)&a;
 	regs.gpr[5] = 0x5678;
 
 	/* pstd r5, 0(r3), 0 */
 	stepped = emulate_step(&regs, TEST_PSTD(5, 3, 0, 0));
-	अगर (stepped == 1 || regs.gpr[5] == a)
+	if (stepped == 1 || regs.gpr[5] == a)
 		show_result("pstd", "PASS");
-	अन्यथा
+	else
 		show_result("pstd", "FAIL");
-पूर्ण
+}
 
-अटल व्योम __init test_ldarx_stdcx(व्योम)
-अणु
-	काष्ठा pt_regs regs;
-	अचिन्हित दीर्घ a = 0x1234;
-	पूर्णांक stepped = -1;
-	अचिन्हित दीर्घ cr0_eq = 0x1 << 29; /* eq bit of CR0 */
+static void __init test_ldarx_stdcx(void)
+{
+	struct pt_regs regs;
+	unsigned long a = 0x1234;
+	int stepped = -1;
+	unsigned long cr0_eq = 0x1 << 29; /* eq bit of CR0 */
 
 	init_pt_regs(&regs);
-	यंत्र अस्थिर("mfcr %0" : "=r"(regs.ccr));
+	asm volatile("mfcr %0" : "=r"(regs.ccr));
 
 
 	/*** ldarx ***/
 
-	regs.gpr[3] = (अचिन्हित दीर्घ) &a;
+	regs.gpr[3] = (unsigned long) &a;
 	regs.gpr[4] = 0;
 	regs.gpr[5] = 0x5678;
 
@@ -252,14 +251,14 @@
 	stepped = emulate_step(&regs, ppc_inst(PPC_RAW_LDARX(5, 3, 4, 0)));
 
 	/*
-	 * Don't touch 'a' here. Touching 'a' can करो Load/store
+	 * Don't touch 'a' here. Touching 'a' can do Load/store
 	 * of 'a' which result in failure of subsequent stdcx.
-	 * Instead, use hardcoded value क्रम comparison.
+	 * Instead, use hardcoded value for comparison.
 	 */
-	अगर (stepped <= 0 || regs.gpr[5] != 0x1234) अणु
+	if (stepped <= 0 || regs.gpr[5] != 0x1234) {
 		show_result("ldarx / stdcx.", "FAIL (ldarx)");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 
 	/*** stdcx. ***/
@@ -272,28 +271,28 @@
 	/*
 	 * Two possible scenarios that indicates successful emulation
 	 * of stdcx. :
-	 *  1. Reservation is active and store is perक्रमmed. In this
-	 *     हाल cr0.eq bit will be set to 1.
-	 *  2. Reservation is not active and store is not perक्रमmed.
-	 *     In this हाल cr0.eq bit will be set to 0.
+	 *  1. Reservation is active and store is performed. In this
+	 *     case cr0.eq bit will be set to 1.
+	 *  2. Reservation is not active and store is not performed.
+	 *     In this case cr0.eq bit will be set to 0.
 	 */
-	अगर (stepped == 1 && ((regs.gpr[5] == a && (regs.ccr & cr0_eq))
+	if (stepped == 1 && ((regs.gpr[5] == a && (regs.ccr & cr0_eq))
 			|| (regs.gpr[5] != a && !(regs.ccr & cr0_eq))))
 		show_result("ldarx / stdcx.", "PASS");
-	अन्यथा
+	else
 		show_result("ldarx / stdcx.", "FAIL (stdcx.)");
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_PPC_FPU
-अटल व्योम __init test_lfsx_stfsx(व्योम)
-अणु
-	काष्ठा pt_regs regs;
-	जोड़ अणु
-		भग्न a;
-		पूर्णांक b;
-	पूर्ण c;
-	पूर्णांक cached_b;
-	पूर्णांक stepped = -1;
+#ifdef CONFIG_PPC_FPU
+static void __init test_lfsx_stfsx(void)
+{
+	struct pt_regs regs;
+	union {
+		float a;
+		int b;
+	} c;
+	int cached_b;
+	int stepped = -1;
 
 	init_pt_regs(&regs);
 
@@ -303,15 +302,15 @@
 	c.a = 123.45;
 	cached_b = c.b;
 
-	regs.gpr[3] = (अचिन्हित दीर्घ) &c.a;
+	regs.gpr[3] = (unsigned long) &c.a;
 	regs.gpr[4] = 0;
 
 	/* lfsx frt10, r3, r4 */
 	stepped = emulate_step(&regs, ppc_inst(PPC_RAW_LFSX(10, 3, 4)));
 
-	अगर (stepped == 1)
+	if (stepped == 1)
 		show_result("lfsx", "PASS");
-	अन्यथा
+	else
 		show_result("lfsx", "FAIL");
 
 
@@ -322,26 +321,26 @@
 	/* stfsx frs10, r3, r4 */
 	stepped = emulate_step(&regs, ppc_inst(PPC_RAW_STFSX(10, 3, 4)));
 
-	अगर (stepped == 1 && c.b == cached_b)
+	if (stepped == 1 && c.b == cached_b)
 		show_result("stfsx", "PASS");
-	अन्यथा
+	else
 		show_result("stfsx", "FAIL");
-पूर्ण
+}
 
-अटल व्योम __init test_plfs_pstfs(व्योम)
-अणु
-	काष्ठा pt_regs regs;
-	जोड़ अणु
-		भग्न a;
-		पूर्णांक b;
-	पूर्ण c;
-	पूर्णांक cached_b;
-	पूर्णांक stepped = -1;
+static void __init test_plfs_pstfs(void)
+{
+	struct pt_regs regs;
+	union {
+		float a;
+		int b;
+	} c;
+	int cached_b;
+	int stepped = -1;
 
-	अगर (!cpu_has_feature(CPU_FTR_ARCH_31)) अणु
+	if (!cpu_has_feature(CPU_FTR_ARCH_31)) {
 		show_result("pld", "SKIP (!CPU_FTR_ARCH_31)");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	init_pt_regs(&regs);
 
@@ -351,14 +350,14 @@
 	c.a = 123.45;
 	cached_b = c.b;
 
-	regs.gpr[3] = (अचिन्हित दीर्घ)&c.a;
+	regs.gpr[3] = (unsigned long)&c.a;
 
 	/* plfs frt10, 0(r3), 0  */
 	stepped = emulate_step(&regs, TEST_PLFS(10, 3, 0, 0));
 
-	अगर (stepped == 1)
+	if (stepped == 1)
 		show_result("plfs", "PASS");
-	अन्यथा
+	else
 		show_result("plfs", "FAIL");
 
 
@@ -369,21 +368,21 @@
 	/* pstfs frs10, 0(r3), 0 */
 	stepped = emulate_step(&regs, TEST_PSTFS(10, 3, 0, 0));
 
-	अगर (stepped == 1 && c.b == cached_b)
+	if (stepped == 1 && c.b == cached_b)
 		show_result("pstfs", "PASS");
-	अन्यथा
+	else
 		show_result("pstfs", "FAIL");
-पूर्ण
+}
 
-अटल व्योम __init test_lfdx_stfdx(व्योम)
-अणु
-	काष्ठा pt_regs regs;
-	जोड़ अणु
-		द्विगुन a;
-		दीर्घ b;
-	पूर्ण c;
-	दीर्घ cached_b;
-	पूर्णांक stepped = -1;
+static void __init test_lfdx_stfdx(void)
+{
+	struct pt_regs regs;
+	union {
+		double a;
+		long b;
+	} c;
+	long cached_b;
+	int stepped = -1;
 
 	init_pt_regs(&regs);
 
@@ -393,15 +392,15 @@
 	c.a = 123456.78;
 	cached_b = c.b;
 
-	regs.gpr[3] = (अचिन्हित दीर्घ) &c.a;
+	regs.gpr[3] = (unsigned long) &c.a;
 	regs.gpr[4] = 0;
 
 	/* lfdx frt10, r3, r4 */
 	stepped = emulate_step(&regs, ppc_inst(PPC_RAW_LFDX(10, 3, 4)));
 
-	अगर (stepped == 1)
+	if (stepped == 1)
 		show_result("lfdx", "PASS");
-	अन्यथा
+	else
 		show_result("lfdx", "FAIL");
 
 
@@ -412,26 +411,26 @@
 	/* stfdx frs10, r3, r4 */
 	stepped = emulate_step(&regs, ppc_inst(PPC_RAW_STFDX(10, 3, 4)));
 
-	अगर (stepped == 1 && c.b == cached_b)
+	if (stepped == 1 && c.b == cached_b)
 		show_result("stfdx", "PASS");
-	अन्यथा
+	else
 		show_result("stfdx", "FAIL");
-पूर्ण
+}
 
-अटल व्योम __init test_plfd_pstfd(व्योम)
-अणु
-	काष्ठा pt_regs regs;
-	जोड़ अणु
-		द्विगुन a;
-		दीर्घ b;
-	पूर्ण c;
-	दीर्घ cached_b;
-	पूर्णांक stepped = -1;
+static void __init test_plfd_pstfd(void)
+{
+	struct pt_regs regs;
+	union {
+		double a;
+		long b;
+	} c;
+	long cached_b;
+	int stepped = -1;
 
-	अगर (!cpu_has_feature(CPU_FTR_ARCH_31)) अणु
+	if (!cpu_has_feature(CPU_FTR_ARCH_31)) {
 		show_result("pld", "SKIP (!CPU_FTR_ARCH_31)");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	init_pt_regs(&regs);
 
@@ -441,14 +440,14 @@
 	c.a = 123456.78;
 	cached_b = c.b;
 
-	regs.gpr[3] = (अचिन्हित दीर्घ)&c.a;
+	regs.gpr[3] = (unsigned long)&c.a;
 
 	/* plfd frt10, 0(r3), 0 */
 	stepped = emulate_step(&regs, TEST_PLFD(10, 3, 0, 0));
 
-	अगर (stepped == 1)
+	if (stepped == 1)
 		show_result("plfd", "PASS");
-	अन्यथा
+	else
 		show_result("plfd", "FAIL");
 
 
@@ -459,47 +458,47 @@
 	/* pstfd frs10, 0(r3), 0 */
 	stepped = emulate_step(&regs, TEST_PSTFD(10, 3, 0, 0));
 
-	अगर (stepped == 1 && c.b == cached_b)
+	if (stepped == 1 && c.b == cached_b)
 		show_result("pstfd", "PASS");
-	अन्यथा
+	else
 		show_result("pstfd", "FAIL");
-पूर्ण
-#अन्यथा
-अटल व्योम __init test_lfsx_stfsx(व्योम)
-अणु
+}
+#else
+static void __init test_lfsx_stfsx(void)
+{
 	show_result("lfsx", "SKIP (CONFIG_PPC_FPU is not set)");
 	show_result("stfsx", "SKIP (CONFIG_PPC_FPU is not set)");
-पूर्ण
+}
 
-अटल व्योम __init test_plfs_pstfs(व्योम)
-अणु
+static void __init test_plfs_pstfs(void)
+{
 	show_result("plfs", "SKIP (CONFIG_PPC_FPU is not set)");
 	show_result("pstfs", "SKIP (CONFIG_PPC_FPU is not set)");
-पूर्ण
+}
 
-अटल व्योम __init test_lfdx_stfdx(व्योम)
-अणु
+static void __init test_lfdx_stfdx(void)
+{
 	show_result("lfdx", "SKIP (CONFIG_PPC_FPU is not set)");
 	show_result("stfdx", "SKIP (CONFIG_PPC_FPU is not set)");
-पूर्ण
+}
 
-अटल व्योम __init test_plfd_pstfd(व्योम)
-अणु
+static void __init test_plfd_pstfd(void)
+{
 	show_result("plfd", "SKIP (CONFIG_PPC_FPU is not set)");
 	show_result("pstfd", "SKIP (CONFIG_PPC_FPU is not set)");
-पूर्ण
-#पूर्ण_अगर /* CONFIG_PPC_FPU */
+}
+#endif /* CONFIG_PPC_FPU */
 
-#अगर_घोषित CONFIG_ALTIVEC
-अटल व्योम __init test_lvx_stvx(व्योम)
-अणु
-	काष्ठा pt_regs regs;
-	जोड़ अणु
+#ifdef CONFIG_ALTIVEC
+static void __init test_lvx_stvx(void)
+{
+	struct pt_regs regs;
+	union {
 		vector128 a;
 		u32 b[4];
-	पूर्ण c;
+	} c;
 	u32 cached_b[4];
-	पूर्णांक stepped = -1;
+	int stepped = -1;
 
 	init_pt_regs(&regs);
 
@@ -511,15 +510,15 @@
 	cached_b[2] = c.b[2] = 9012;
 	cached_b[3] = c.b[3] = 982134;
 
-	regs.gpr[3] = (अचिन्हित दीर्घ) &c.a;
+	regs.gpr[3] = (unsigned long) &c.a;
 	regs.gpr[4] = 0;
 
 	/* lvx vrt10, r3, r4 */
 	stepped = emulate_step(&regs, ppc_inst(PPC_RAW_LVX(10, 3, 4)));
 
-	अगर (stepped == 1)
+	if (stepped == 1)
 		show_result("lvx", "PASS");
-	अन्यथा
+	else
 		show_result("lvx", "FAIL");
 
 
@@ -533,30 +532,30 @@
 	/* stvx vrs10, r3, r4 */
 	stepped = emulate_step(&regs, ppc_inst(PPC_RAW_STVX(10, 3, 4)));
 
-	अगर (stepped == 1 && cached_b[0] == c.b[0] && cached_b[1] == c.b[1] &&
+	if (stepped == 1 && cached_b[0] == c.b[0] && cached_b[1] == c.b[1] &&
 	    cached_b[2] == c.b[2] && cached_b[3] == c.b[3])
 		show_result("stvx", "PASS");
-	अन्यथा
+	else
 		show_result("stvx", "FAIL");
-पूर्ण
-#अन्यथा
-अटल व्योम __init test_lvx_stvx(व्योम)
-अणु
+}
+#else
+static void __init test_lvx_stvx(void)
+{
 	show_result("lvx", "SKIP (CONFIG_ALTIVEC is not set)");
 	show_result("stvx", "SKIP (CONFIG_ALTIVEC is not set)");
-पूर्ण
-#पूर्ण_अगर /* CONFIG_ALTIVEC */
+}
+#endif /* CONFIG_ALTIVEC */
 
-#अगर_घोषित CONFIG_VSX
-अटल व्योम __init test_lxvd2x_stxvd2x(व्योम)
-अणु
-	काष्ठा pt_regs regs;
-	जोड़ अणु
+#ifdef CONFIG_VSX
+static void __init test_lxvd2x_stxvd2x(void)
+{
+	struct pt_regs regs;
+	union {
 		vector128 a;
 		u32 b[4];
-	पूर्ण c;
+	} c;
 	u32 cached_b[4];
-	पूर्णांक stepped = -1;
+	int stepped = -1;
 
 	init_pt_regs(&regs);
 
@@ -568,20 +567,20 @@
 	cached_b[2] = c.b[2] = 834;
 	cached_b[3] = c.b[3] = 6138911;
 
-	regs.gpr[3] = (अचिन्हित दीर्घ) &c.a;
+	regs.gpr[3] = (unsigned long) &c.a;
 	regs.gpr[4] = 0;
 
 	/* lxvd2x vsr39, r3, r4 */
 	stepped = emulate_step(&regs, ppc_inst(PPC_RAW_LXVD2X(39, R3, R4)));
 
-	अगर (stepped == 1 && cpu_has_feature(CPU_FTR_VSX)) अणु
+	if (stepped == 1 && cpu_has_feature(CPU_FTR_VSX)) {
 		show_result("lxvd2x", "PASS");
-	पूर्ण अन्यथा अणु
-		अगर (!cpu_has_feature(CPU_FTR_VSX))
+	} else {
+		if (!cpu_has_feature(CPU_FTR_VSX))
 			show_result("lxvd2x", "PASS (!CPU_FTR_VSX)");
-		अन्यथा
+		else
 			show_result("lxvd2x", "FAIL");
-	पूर्ण
+	}
 
 
 	/*** stxvd2x ***/
@@ -594,41 +593,41 @@
 	/* stxvd2x vsr39, r3, r4 */
 	stepped = emulate_step(&regs, ppc_inst(PPC_RAW_STXVD2X(39, R3, R4)));
 
-	अगर (stepped == 1 && cached_b[0] == c.b[0] && cached_b[1] == c.b[1] &&
+	if (stepped == 1 && cached_b[0] == c.b[0] && cached_b[1] == c.b[1] &&
 	    cached_b[2] == c.b[2] && cached_b[3] == c.b[3] &&
-	    cpu_has_feature(CPU_FTR_VSX)) अणु
+	    cpu_has_feature(CPU_FTR_VSX)) {
 		show_result("stxvd2x", "PASS");
-	पूर्ण अन्यथा अणु
-		अगर (!cpu_has_feature(CPU_FTR_VSX))
+	} else {
+		if (!cpu_has_feature(CPU_FTR_VSX))
 			show_result("stxvd2x", "PASS (!CPU_FTR_VSX)");
-		अन्यथा
+		else
 			show_result("stxvd2x", "FAIL");
-	पूर्ण
-पूर्ण
-#अन्यथा
-अटल व्योम __init test_lxvd2x_stxvd2x(व्योम)
-अणु
+	}
+}
+#else
+static void __init test_lxvd2x_stxvd2x(void)
+{
 	show_result("lxvd2x", "SKIP (CONFIG_VSX is not set)");
 	show_result("stxvd2x", "SKIP (CONFIG_VSX is not set)");
-पूर्ण
-#पूर्ण_अगर /* CONFIG_VSX */
+}
+#endif /* CONFIG_VSX */
 
-#अगर_घोषित CONFIG_VSX
-अटल व्योम __init test_lxvp_stxvp(व्योम)
-अणु
-	काष्ठा pt_regs regs;
-	जोड़ अणु
+#ifdef CONFIG_VSX
+static void __init test_lxvp_stxvp(void)
+{
+	struct pt_regs regs;
+	union {
 		vector128 a;
 		u32 b[4];
-	पूर्ण c[2];
+	} c[2];
 	u32 cached_b[8];
-	पूर्णांक stepped = -1;
+	int stepped = -1;
 
-	अगर (!cpu_has_feature(CPU_FTR_ARCH_31)) अणु
+	if (!cpu_has_feature(CPU_FTR_ARCH_31)) {
 		show_result("lxvp", "SKIP (!CPU_FTR_ARCH_31)");
 		show_result("stxvp", "SKIP (!CPU_FTR_ARCH_31)");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	init_pt_regs(&regs);
 
@@ -643,7 +642,7 @@
 	cached_b[6] = c[1].b[2] = 91011;
 	cached_b[7] = c[1].b[3] = 121314;
 
-	regs.gpr[4] = (अचिन्हित दीर्घ)&c[0].a;
+	regs.gpr[4] = (unsigned long)&c[0].a;
 
 	/*
 	 * lxvp XTp,DQ(RA)
@@ -652,14 +651,14 @@
 	 */
 	stepped = emulate_step(&regs, ppc_inst(PPC_RAW_LXVP(34, 4, 0)));
 
-	अगर (stepped == 1 && cpu_has_feature(CPU_FTR_VSX)) अणु
+	if (stepped == 1 && cpu_has_feature(CPU_FTR_VSX)) {
 		show_result("lxvp", "PASS");
-	पूर्ण अन्यथा अणु
-		अगर (!cpu_has_feature(CPU_FTR_VSX))
+	} else {
+		if (!cpu_has_feature(CPU_FTR_VSX))
 			show_result("lxvp", "PASS (!CPU_FTR_VSX)");
-		अन्यथा
+		else
 			show_result("lxvp", "FAIL");
-	पूर्ण
+	}
 
 	/*** stxvp ***/
 
@@ -679,43 +678,43 @@
 	 */
 	stepped = emulate_step(&regs, ppc_inst(PPC_RAW_STXVP(34, 4, 0)));
 
-	अगर (stepped == 1 && cached_b[0] == c[0].b[0] && cached_b[1] == c[0].b[1] &&
+	if (stepped == 1 && cached_b[0] == c[0].b[0] && cached_b[1] == c[0].b[1] &&
 	    cached_b[2] == c[0].b[2] && cached_b[3] == c[0].b[3] &&
 	    cached_b[4] == c[1].b[0] && cached_b[5] == c[1].b[1] &&
 	    cached_b[6] == c[1].b[2] && cached_b[7] == c[1].b[3] &&
-	    cpu_has_feature(CPU_FTR_VSX)) अणु
+	    cpu_has_feature(CPU_FTR_VSX)) {
 		show_result("stxvp", "PASS");
-	पूर्ण अन्यथा अणु
-		अगर (!cpu_has_feature(CPU_FTR_VSX))
+	} else {
+		if (!cpu_has_feature(CPU_FTR_VSX))
 			show_result("stxvp", "PASS (!CPU_FTR_VSX)");
-		अन्यथा
+		else
 			show_result("stxvp", "FAIL");
-	पूर्ण
-पूर्ण
-#अन्यथा
-अटल व्योम __init test_lxvp_stxvp(व्योम)
-अणु
+	}
+}
+#else
+static void __init test_lxvp_stxvp(void)
+{
 	show_result("lxvp", "SKIP (CONFIG_VSX is not set)");
 	show_result("stxvp", "SKIP (CONFIG_VSX is not set)");
-पूर्ण
-#पूर्ण_अगर /* CONFIG_VSX */
+}
+#endif /* CONFIG_VSX */
 
-#अगर_घोषित CONFIG_VSX
-अटल व्योम __init test_lxvpx_stxvpx(व्योम)
-अणु
-	काष्ठा pt_regs regs;
-	जोड़ अणु
+#ifdef CONFIG_VSX
+static void __init test_lxvpx_stxvpx(void)
+{
+	struct pt_regs regs;
+	union {
 		vector128 a;
 		u32 b[4];
-	पूर्ण c[2];
+	} c[2];
 	u32 cached_b[8];
-	पूर्णांक stepped = -1;
+	int stepped = -1;
 
-	अगर (!cpu_has_feature(CPU_FTR_ARCH_31)) अणु
+	if (!cpu_has_feature(CPU_FTR_ARCH_31)) {
 		show_result("lxvpx", "SKIP (!CPU_FTR_ARCH_31)");
 		show_result("stxvpx", "SKIP (!CPU_FTR_ARCH_31)");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	init_pt_regs(&regs);
 
@@ -730,7 +729,7 @@
 	cached_b[6] = c[1].b[2] = 91011;
 	cached_b[7] = c[1].b[3] = 121314;
 
-	regs.gpr[3] = (अचिन्हित दीर्घ)&c[0].a;
+	regs.gpr[3] = (unsigned long)&c[0].a;
 	regs.gpr[4] = 0;
 
 	/*
@@ -740,14 +739,14 @@
 	 */
 	stepped = emulate_step(&regs, ppc_inst(PPC_RAW_LXVPX(34, 3, 4)));
 
-	अगर (stepped == 1 && cpu_has_feature(CPU_FTR_VSX)) अणु
+	if (stepped == 1 && cpu_has_feature(CPU_FTR_VSX)) {
 		show_result("lxvpx", "PASS");
-	पूर्ण अन्यथा अणु
-		अगर (!cpu_has_feature(CPU_FTR_VSX))
+	} else {
+		if (!cpu_has_feature(CPU_FTR_VSX))
 			show_result("lxvpx", "PASS (!CPU_FTR_VSX)");
-		अन्यथा
+		else
 			show_result("lxvpx", "FAIL");
-	पूर्ण
+	}
 
 	/*** stxvpx ***/
 
@@ -767,44 +766,44 @@
 	 */
 	stepped = emulate_step(&regs, ppc_inst(PPC_RAW_STXVPX(34, 3, 4)));
 
-	अगर (stepped == 1 && cached_b[0] == c[0].b[0] && cached_b[1] == c[0].b[1] &&
+	if (stepped == 1 && cached_b[0] == c[0].b[0] && cached_b[1] == c[0].b[1] &&
 	    cached_b[2] == c[0].b[2] && cached_b[3] == c[0].b[3] &&
 	    cached_b[4] == c[1].b[0] && cached_b[5] == c[1].b[1] &&
 	    cached_b[6] == c[1].b[2] && cached_b[7] == c[1].b[3] &&
-	    cpu_has_feature(CPU_FTR_VSX)) अणु
+	    cpu_has_feature(CPU_FTR_VSX)) {
 		show_result("stxvpx", "PASS");
-	पूर्ण अन्यथा अणु
-		अगर (!cpu_has_feature(CPU_FTR_VSX))
+	} else {
+		if (!cpu_has_feature(CPU_FTR_VSX))
 			show_result("stxvpx", "PASS (!CPU_FTR_VSX)");
-		अन्यथा
+		else
 			show_result("stxvpx", "FAIL");
-	पूर्ण
-पूर्ण
-#अन्यथा
-अटल व्योम __init test_lxvpx_stxvpx(व्योम)
-अणु
+	}
+}
+#else
+static void __init test_lxvpx_stxvpx(void)
+{
 	show_result("lxvpx", "SKIP (CONFIG_VSX is not set)");
 	show_result("stxvpx", "SKIP (CONFIG_VSX is not set)");
-पूर्ण
-#पूर्ण_अगर /* CONFIG_VSX */
+}
+#endif /* CONFIG_VSX */
 
-#अगर_घोषित CONFIG_VSX
-अटल व्योम __init test_plxvp_pstxvp(व्योम)
-अणु
-	काष्ठा ppc_inst instr;
-	काष्ठा pt_regs regs;
-	जोड़ अणु
+#ifdef CONFIG_VSX
+static void __init test_plxvp_pstxvp(void)
+{
+	struct ppc_inst instr;
+	struct pt_regs regs;
+	union {
 		vector128 a;
 		u32 b[4];
-	पूर्ण c[2];
+	} c[2];
 	u32 cached_b[8];
-	पूर्णांक stepped = -1;
+	int stepped = -1;
 
-	अगर (!cpu_has_feature(CPU_FTR_ARCH_31)) अणु
+	if (!cpu_has_feature(CPU_FTR_ARCH_31)) {
 		show_result("plxvp", "SKIP (!CPU_FTR_ARCH_31)");
 		show_result("pstxvp", "SKIP (!CPU_FTR_ARCH_31)");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/*** plxvp ***/
 
@@ -818,7 +817,7 @@
 	cached_b[7] = c[1].b[3] = 121314;
 
 	init_pt_regs(&regs);
-	regs.gpr[3] = (अचिन्हित दीर्घ)&c[0].a;
+	regs.gpr[3] = (unsigned long)&c[0].a;
 
 	/*
 	 * plxvp XTp,D(RA),R
@@ -829,14 +828,14 @@
 			PPC_RAW_PLXVP(34, 0, 3, 0) & 0xffffffff);
 
 	stepped = emulate_step(&regs, instr);
-	अगर (stepped == 1 && cpu_has_feature(CPU_FTR_VSX)) अणु
+	if (stepped == 1 && cpu_has_feature(CPU_FTR_VSX)) {
 		show_result("plxvp", "PASS");
-	पूर्ण अन्यथा अणु
-		अगर (!cpu_has_feature(CPU_FTR_VSX))
+	} else {
+		if (!cpu_has_feature(CPU_FTR_VSX))
 			show_result("plxvp", "PASS (!CPU_FTR_VSX)");
-		अन्यथा
+		else
 			show_result("plxvp", "FAIL");
-	पूर्ण
+	}
 
 	/*** pstxvp ***/
 
@@ -859,29 +858,29 @@
 
 	stepped = emulate_step(&regs, instr);
 
-	अगर (stepped == 1 && cached_b[0] == c[0].b[0] && cached_b[1] == c[0].b[1] &&
+	if (stepped == 1 && cached_b[0] == c[0].b[0] && cached_b[1] == c[0].b[1] &&
 	    cached_b[2] == c[0].b[2] && cached_b[3] == c[0].b[3] &&
 	    cached_b[4] == c[1].b[0] && cached_b[5] == c[1].b[1] &&
 	    cached_b[6] == c[1].b[2] && cached_b[7] == c[1].b[3] &&
-	    cpu_has_feature(CPU_FTR_VSX)) अणु
+	    cpu_has_feature(CPU_FTR_VSX)) {
 		show_result("pstxvp", "PASS");
-	पूर्ण अन्यथा अणु
-		अगर (!cpu_has_feature(CPU_FTR_VSX))
+	} else {
+		if (!cpu_has_feature(CPU_FTR_VSX))
 			show_result("pstxvp", "PASS (!CPU_FTR_VSX)");
-		अन्यथा
+		else
 			show_result("pstxvp", "FAIL");
-	पूर्ण
-पूर्ण
-#अन्यथा
-अटल व्योम __init test_plxvp_pstxvp(व्योम)
-अणु
+	}
+}
+#else
+static void __init test_plxvp_pstxvp(void)
+{
 	show_result("plxvp", "SKIP (CONFIG_VSX is not set)");
 	show_result("pstxvp", "SKIP (CONFIG_VSX is not set)");
-पूर्ण
-#पूर्ण_अगर /* CONFIG_VSX */
+}
+#endif /* CONFIG_VSX */
 
-अटल व्योम __init run_tests_load_store(व्योम)
-अणु
+static void __init run_tests_load_store(void)
+{
 	test_ld();
 	test_pld();
 	test_lwz();
@@ -899,750 +898,750 @@
 	test_lxvp_stxvp();
 	test_lxvpx_stxvpx();
 	test_plxvp_pstxvp();
-पूर्ण
+}
 
-काष्ठा compute_test अणु
-	अक्षर *mnemonic;
-	अचिन्हित दीर्घ cpu_feature;
-	काष्ठा अणु
-		अक्षर *descr;
-		अचिन्हित दीर्घ flags;
-		काष्ठा ppc_inst instr;
-		काष्ठा pt_regs regs;
-	पूर्ण subtests[MAX_SUBTESTS + 1];
-पूर्ण;
+struct compute_test {
+	char *mnemonic;
+	unsigned long cpu_feature;
+	struct {
+		char *descr;
+		unsigned long flags;
+		struct ppc_inst instr;
+		struct pt_regs regs;
+	} subtests[MAX_SUBTESTS + 1];
+};
 
-/* Extreme values क्रम si0||si1 (the MLS:D-क्रमm 34 bit immediate field) */
-#घोषणा SI_MIN BIT(33)
-#घोषणा SI_MAX (BIT(33) - 1)
-#घोषणा SI_UMAX (BIT(34) - 1)
+/* Extreme values for si0||si1 (the MLS:D-form 34 bit immediate field) */
+#define SI_MIN BIT(33)
+#define SI_MAX (BIT(33) - 1)
+#define SI_UMAX (BIT(34) - 1)
 
-अटल काष्ठा compute_test compute_tests[] = अणु
-	अणु
+static struct compute_test compute_tests[] = {
+	{
 		.mnemonic = "nop",
-		.subtests = अणु
-			अणु
+		.subtests = {
+			{
 				.descr = "R0 = LONG_MAX",
 				.instr = ppc_inst(PPC_INST_NOP),
-				.regs = अणु
-					.gpr[0] = दीर्घ_उच्च,
-				पूर्ण
-			पूर्ण
-		पूर्ण
-	पूर्ण,
-	अणु
+				.regs = {
+					.gpr[0] = LONG_MAX,
+				}
+			}
+		}
+	},
+	{
 		.mnemonic = "add",
-		.subtests = अणु
-			अणु
+		.subtests = {
+			{
 				.descr = "RA = LONG_MIN, RB = LONG_MIN",
 				.instr = ppc_inst(PPC_RAW_ADD(20, 21, 22)),
-				.regs = अणु
-					.gpr[21] = दीर्घ_न्यून,
-					.gpr[22] = दीर्घ_न्यून,
-				पूर्ण
-			पूर्ण,
-			अणु
+				.regs = {
+					.gpr[21] = LONG_MIN,
+					.gpr[22] = LONG_MIN,
+				}
+			},
+			{
 				.descr = "RA = LONG_MIN, RB = LONG_MAX",
 				.instr = ppc_inst(PPC_RAW_ADD(20, 21, 22)),
-				.regs = अणु
-					.gpr[21] = दीर्घ_न्यून,
-					.gpr[22] = दीर्घ_उच्च,
-				पूर्ण
-			पूर्ण,
-			अणु
+				.regs = {
+					.gpr[21] = LONG_MIN,
+					.gpr[22] = LONG_MAX,
+				}
+			},
+			{
 				.descr = "RA = LONG_MAX, RB = LONG_MAX",
 				.instr = ppc_inst(PPC_RAW_ADD(20, 21, 22)),
-				.regs = अणु
-					.gpr[21] = दीर्घ_उच्च,
-					.gpr[22] = दीर्घ_उच्च,
-				पूर्ण
-			पूर्ण,
-			अणु
+				.regs = {
+					.gpr[21] = LONG_MAX,
+					.gpr[22] = LONG_MAX,
+				}
+			},
+			{
 				.descr = "RA = ULONG_MAX, RB = ULONG_MAX",
 				.instr = ppc_inst(PPC_RAW_ADD(20, 21, 22)),
-				.regs = अणु
-					.gpr[21] = अच_दीर्घ_उच्च,
-					.gpr[22] = अच_दीर्घ_उच्च,
-				पूर्ण
-			पूर्ण,
-			अणु
+				.regs = {
+					.gpr[21] = ULONG_MAX,
+					.gpr[22] = ULONG_MAX,
+				}
+			},
+			{
 				.descr = "RA = ULONG_MAX, RB = 0x1",
 				.instr = ppc_inst(PPC_RAW_ADD(20, 21, 22)),
-				.regs = अणु
-					.gpr[21] = अच_दीर्घ_उच्च,
+				.regs = {
+					.gpr[21] = ULONG_MAX,
 					.gpr[22] = 0x1,
-				पूर्ण
-			पूर्ण,
-			अणु
+				}
+			},
+			{
 				.descr = "RA = INT_MIN, RB = INT_MIN",
 				.instr = ppc_inst(PPC_RAW_ADD(20, 21, 22)),
-				.regs = अणु
-					.gpr[21] = पूर्णांक_न्यून,
-					.gpr[22] = पूर्णांक_न्यून,
-				पूर्ण
-			पूर्ण,
-			अणु
+				.regs = {
+					.gpr[21] = INT_MIN,
+					.gpr[22] = INT_MIN,
+				}
+			},
+			{
 				.descr = "RA = INT_MIN, RB = INT_MAX",
 				.instr = ppc_inst(PPC_RAW_ADD(20, 21, 22)),
-				.regs = अणु
-					.gpr[21] = पूर्णांक_न्यून,
-					.gpr[22] = पूर्णांक_उच्च,
-				पूर्ण
-			पूर्ण,
-			अणु
+				.regs = {
+					.gpr[21] = INT_MIN,
+					.gpr[22] = INT_MAX,
+				}
+			},
+			{
 				.descr = "RA = INT_MAX, RB = INT_MAX",
 				.instr = ppc_inst(PPC_RAW_ADD(20, 21, 22)),
-				.regs = अणु
-					.gpr[21] = पूर्णांक_उच्च,
-					.gpr[22] = पूर्णांक_उच्च,
-				पूर्ण
-			पूर्ण,
-			अणु
+				.regs = {
+					.gpr[21] = INT_MAX,
+					.gpr[22] = INT_MAX,
+				}
+			},
+			{
 				.descr = "RA = UINT_MAX, RB = UINT_MAX",
 				.instr = ppc_inst(PPC_RAW_ADD(20, 21, 22)),
-				.regs = अणु
-					.gpr[21] = अच_पूर्णांक_उच्च,
-					.gpr[22] = अच_पूर्णांक_उच्च,
-				पूर्ण
-			पूर्ण,
-			अणु
+				.regs = {
+					.gpr[21] = UINT_MAX,
+					.gpr[22] = UINT_MAX,
+				}
+			},
+			{
 				.descr = "RA = UINT_MAX, RB = 0x1",
 				.instr = ppc_inst(PPC_RAW_ADD(20, 21, 22)),
-				.regs = अणु
-					.gpr[21] = अच_पूर्णांक_उच्च,
+				.regs = {
+					.gpr[21] = UINT_MAX,
 					.gpr[22] = 0x1,
-				पूर्ण
-			पूर्ण
-		पूर्ण
-	पूर्ण,
-	अणु
+				}
+			}
+		}
+	},
+	{
 		.mnemonic = "add.",
-		.subtests = अणु
-			अणु
+		.subtests = {
+			{
 				.descr = "RA = LONG_MIN, RB = LONG_MIN",
 				.flags = IGNORE_CCR,
 				.instr = ppc_inst(PPC_RAW_ADD_DOT(20, 21, 22)),
-				.regs = अणु
-					.gpr[21] = दीर्घ_न्यून,
-					.gpr[22] = दीर्घ_न्यून,
-				पूर्ण
-			पूर्ण,
-			अणु
+				.regs = {
+					.gpr[21] = LONG_MIN,
+					.gpr[22] = LONG_MIN,
+				}
+			},
+			{
 				.descr = "RA = LONG_MIN, RB = LONG_MAX",
 				.instr = ppc_inst(PPC_RAW_ADD_DOT(20, 21, 22)),
-				.regs = अणु
-					.gpr[21] = दीर्घ_न्यून,
-					.gpr[22] = दीर्घ_उच्च,
-				पूर्ण
-			पूर्ण,
-			अणु
+				.regs = {
+					.gpr[21] = LONG_MIN,
+					.gpr[22] = LONG_MAX,
+				}
+			},
+			{
 				.descr = "RA = LONG_MAX, RB = LONG_MAX",
 				.flags = IGNORE_CCR,
 				.instr = ppc_inst(PPC_RAW_ADD_DOT(20, 21, 22)),
-				.regs = अणु
-					.gpr[21] = दीर्घ_उच्च,
-					.gpr[22] = दीर्घ_उच्च,
-				पूर्ण
-			पूर्ण,
-			अणु
+				.regs = {
+					.gpr[21] = LONG_MAX,
+					.gpr[22] = LONG_MAX,
+				}
+			},
+			{
 				.descr = "RA = ULONG_MAX, RB = ULONG_MAX",
 				.instr = ppc_inst(PPC_RAW_ADD_DOT(20, 21, 22)),
-				.regs = अणु
-					.gpr[21] = अच_दीर्घ_उच्च,
-					.gpr[22] = अच_दीर्घ_उच्च,
-				पूर्ण
-			पूर्ण,
-			अणु
+				.regs = {
+					.gpr[21] = ULONG_MAX,
+					.gpr[22] = ULONG_MAX,
+				}
+			},
+			{
 				.descr = "RA = ULONG_MAX, RB = 0x1",
 				.instr = ppc_inst(PPC_RAW_ADD_DOT(20, 21, 22)),
-				.regs = अणु
-					.gpr[21] = अच_दीर्घ_उच्च,
+				.regs = {
+					.gpr[21] = ULONG_MAX,
 					.gpr[22] = 0x1,
-				पूर्ण
-			पूर्ण,
-			अणु
+				}
+			},
+			{
 				.descr = "RA = INT_MIN, RB = INT_MIN",
 				.instr = ppc_inst(PPC_RAW_ADD_DOT(20, 21, 22)),
-				.regs = अणु
-					.gpr[21] = पूर्णांक_न्यून,
-					.gpr[22] = पूर्णांक_न्यून,
-				पूर्ण
-			पूर्ण,
-			अणु
+				.regs = {
+					.gpr[21] = INT_MIN,
+					.gpr[22] = INT_MIN,
+				}
+			},
+			{
 				.descr = "RA = INT_MIN, RB = INT_MAX",
 				.instr = ppc_inst(PPC_RAW_ADD_DOT(20, 21, 22)),
-				.regs = अणु
-					.gpr[21] = पूर्णांक_न्यून,
-					.gpr[22] = पूर्णांक_उच्च,
-				पूर्ण
-			पूर्ण,
-			अणु
+				.regs = {
+					.gpr[21] = INT_MIN,
+					.gpr[22] = INT_MAX,
+				}
+			},
+			{
 				.descr = "RA = INT_MAX, RB = INT_MAX",
 				.instr = ppc_inst(PPC_RAW_ADD_DOT(20, 21, 22)),
-				.regs = अणु
-					.gpr[21] = पूर्णांक_उच्च,
-					.gpr[22] = पूर्णांक_उच्च,
-				पूर्ण
-			पूर्ण,
-			अणु
+				.regs = {
+					.gpr[21] = INT_MAX,
+					.gpr[22] = INT_MAX,
+				}
+			},
+			{
 				.descr = "RA = UINT_MAX, RB = UINT_MAX",
 				.instr = ppc_inst(PPC_RAW_ADD_DOT(20, 21, 22)),
-				.regs = अणु
-					.gpr[21] = अच_पूर्णांक_उच्च,
-					.gpr[22] = अच_पूर्णांक_उच्च,
-				पूर्ण
-			पूर्ण,
-			अणु
+				.regs = {
+					.gpr[21] = UINT_MAX,
+					.gpr[22] = UINT_MAX,
+				}
+			},
+			{
 				.descr = "RA = UINT_MAX, RB = 0x1",
 				.instr = ppc_inst(PPC_RAW_ADD_DOT(20, 21, 22)),
-				.regs = अणु
-					.gpr[21] = अच_पूर्णांक_उच्च,
+				.regs = {
+					.gpr[21] = UINT_MAX,
 					.gpr[22] = 0x1,
-				पूर्ण
-			पूर्ण
-		पूर्ण
-	पूर्ण,
-	अणु
+				}
+			}
+		}
+	},
+	{
 		.mnemonic = "addc",
-		.subtests = अणु
-			अणु
+		.subtests = {
+			{
 				.descr = "RA = LONG_MIN, RB = LONG_MIN",
 				.instr = ppc_inst(PPC_RAW_ADDC(20, 21, 22)),
-				.regs = अणु
-					.gpr[21] = दीर्घ_न्यून,
-					.gpr[22] = दीर्घ_न्यून,
-				पूर्ण
-			पूर्ण,
-			अणु
+				.regs = {
+					.gpr[21] = LONG_MIN,
+					.gpr[22] = LONG_MIN,
+				}
+			},
+			{
 				.descr = "RA = LONG_MIN, RB = LONG_MAX",
 				.instr = ppc_inst(PPC_RAW_ADDC(20, 21, 22)),
-				.regs = अणु
-					.gpr[21] = दीर्घ_न्यून,
-					.gpr[22] = दीर्घ_उच्च,
-				पूर्ण
-			पूर्ण,
-			अणु
+				.regs = {
+					.gpr[21] = LONG_MIN,
+					.gpr[22] = LONG_MAX,
+				}
+			},
+			{
 				.descr = "RA = LONG_MAX, RB = LONG_MAX",
 				.instr = ppc_inst(PPC_RAW_ADDC(20, 21, 22)),
-				.regs = अणु
-					.gpr[21] = दीर्घ_उच्च,
-					.gpr[22] = दीर्घ_उच्च,
-				पूर्ण
-			पूर्ण,
-			अणु
+				.regs = {
+					.gpr[21] = LONG_MAX,
+					.gpr[22] = LONG_MAX,
+				}
+			},
+			{
 				.descr = "RA = ULONG_MAX, RB = ULONG_MAX",
 				.instr = ppc_inst(PPC_RAW_ADDC(20, 21, 22)),
-				.regs = अणु
-					.gpr[21] = अच_दीर्घ_उच्च,
-					.gpr[22] = अच_दीर्घ_उच्च,
-				पूर्ण
-			पूर्ण,
-			अणु
+				.regs = {
+					.gpr[21] = ULONG_MAX,
+					.gpr[22] = ULONG_MAX,
+				}
+			},
+			{
 				.descr = "RA = ULONG_MAX, RB = 0x1",
 				.instr = ppc_inst(PPC_RAW_ADDC(20, 21, 22)),
-				.regs = अणु
-					.gpr[21] = अच_दीर्घ_उच्च,
+				.regs = {
+					.gpr[21] = ULONG_MAX,
 					.gpr[22] = 0x1,
-				पूर्ण
-			पूर्ण,
-			अणु
+				}
+			},
+			{
 				.descr = "RA = INT_MIN, RB = INT_MIN",
 				.instr = ppc_inst(PPC_RAW_ADDC(20, 21, 22)),
-				.regs = अणु
-					.gpr[21] = पूर्णांक_न्यून,
-					.gpr[22] = पूर्णांक_न्यून,
-				पूर्ण
-			पूर्ण,
-			अणु
+				.regs = {
+					.gpr[21] = INT_MIN,
+					.gpr[22] = INT_MIN,
+				}
+			},
+			{
 				.descr = "RA = INT_MIN, RB = INT_MAX",
 				.instr = ppc_inst(PPC_RAW_ADDC(20, 21, 22)),
-				.regs = अणु
-					.gpr[21] = पूर्णांक_न्यून,
-					.gpr[22] = पूर्णांक_उच्च,
-				पूर्ण
-			पूर्ण,
-			अणु
+				.regs = {
+					.gpr[21] = INT_MIN,
+					.gpr[22] = INT_MAX,
+				}
+			},
+			{
 				.descr = "RA = INT_MAX, RB = INT_MAX",
 				.instr = ppc_inst(PPC_RAW_ADDC(20, 21, 22)),
-				.regs = अणु
-					.gpr[21] = पूर्णांक_उच्च,
-					.gpr[22] = पूर्णांक_उच्च,
-				पूर्ण
-			पूर्ण,
-			अणु
+				.regs = {
+					.gpr[21] = INT_MAX,
+					.gpr[22] = INT_MAX,
+				}
+			},
+			{
 				.descr = "RA = UINT_MAX, RB = UINT_MAX",
 				.instr = ppc_inst(PPC_RAW_ADDC(20, 21, 22)),
-				.regs = अणु
-					.gpr[21] = अच_पूर्णांक_उच्च,
-					.gpr[22] = अच_पूर्णांक_उच्च,
-				पूर्ण
-			पूर्ण,
-			अणु
+				.regs = {
+					.gpr[21] = UINT_MAX,
+					.gpr[22] = UINT_MAX,
+				}
+			},
+			{
 				.descr = "RA = UINT_MAX, RB = 0x1",
 				.instr = ppc_inst(PPC_RAW_ADDC(20, 21, 22)),
-				.regs = अणु
-					.gpr[21] = अच_पूर्णांक_उच्च,
+				.regs = {
+					.gpr[21] = UINT_MAX,
 					.gpr[22] = 0x1,
-				पूर्ण
-			पूर्ण,
-			अणु
+				}
+			},
+			{
 				.descr = "RA = LONG_MIN | INT_MIN, RB = LONG_MIN | INT_MIN",
 				.instr = ppc_inst(PPC_RAW_ADDC(20, 21, 22)),
-				.regs = अणु
-					.gpr[21] = दीर्घ_न्यून | (uपूर्णांक)पूर्णांक_न्यून,
-					.gpr[22] = दीर्घ_न्यून | (uपूर्णांक)पूर्णांक_न्यून,
-				पूर्ण
-			पूर्ण
-		पूर्ण
-	पूर्ण,
-	अणु
+				.regs = {
+					.gpr[21] = LONG_MIN | (uint)INT_MIN,
+					.gpr[22] = LONG_MIN | (uint)INT_MIN,
+				}
+			}
+		}
+	},
+	{
 		.mnemonic = "addc.",
-		.subtests = अणु
-			अणु
+		.subtests = {
+			{
 				.descr = "RA = LONG_MIN, RB = LONG_MIN",
 				.flags = IGNORE_CCR,
 				.instr = ppc_inst(PPC_RAW_ADDC_DOT(20, 21, 22)),
-				.regs = अणु
-					.gpr[21] = दीर्घ_न्यून,
-					.gpr[22] = दीर्घ_न्यून,
-				पूर्ण
-			पूर्ण,
-			अणु
+				.regs = {
+					.gpr[21] = LONG_MIN,
+					.gpr[22] = LONG_MIN,
+				}
+			},
+			{
 				.descr = "RA = LONG_MIN, RB = LONG_MAX",
 				.instr = ppc_inst(PPC_RAW_ADDC_DOT(20, 21, 22)),
-				.regs = अणु
-					.gpr[21] = दीर्घ_न्यून,
-					.gpr[22] = दीर्घ_उच्च,
-				पूर्ण
-			पूर्ण,
-			अणु
+				.regs = {
+					.gpr[21] = LONG_MIN,
+					.gpr[22] = LONG_MAX,
+				}
+			},
+			{
 				.descr = "RA = LONG_MAX, RB = LONG_MAX",
 				.flags = IGNORE_CCR,
 				.instr = ppc_inst(PPC_RAW_ADDC_DOT(20, 21, 22)),
-				.regs = अणु
-					.gpr[21] = दीर्घ_उच्च,
-					.gpr[22] = दीर्घ_उच्च,
-				पूर्ण
-			पूर्ण,
-			अणु
+				.regs = {
+					.gpr[21] = LONG_MAX,
+					.gpr[22] = LONG_MAX,
+				}
+			},
+			{
 				.descr = "RA = ULONG_MAX, RB = ULONG_MAX",
 				.instr = ppc_inst(PPC_RAW_ADDC_DOT(20, 21, 22)),
-				.regs = अणु
-					.gpr[21] = अच_दीर्घ_उच्च,
-					.gpr[22] = अच_दीर्घ_उच्च,
-				पूर्ण
-			पूर्ण,
-			अणु
+				.regs = {
+					.gpr[21] = ULONG_MAX,
+					.gpr[22] = ULONG_MAX,
+				}
+			},
+			{
 				.descr = "RA = ULONG_MAX, RB = 0x1",
 				.instr = ppc_inst(PPC_RAW_ADDC_DOT(20, 21, 22)),
-				.regs = अणु
-					.gpr[21] = अच_दीर्घ_उच्च,
+				.regs = {
+					.gpr[21] = ULONG_MAX,
 					.gpr[22] = 0x1,
-				पूर्ण
-			पूर्ण,
-			अणु
+				}
+			},
+			{
 				.descr = "RA = INT_MIN, RB = INT_MIN",
 				.instr = ppc_inst(PPC_RAW_ADDC_DOT(20, 21, 22)),
-				.regs = अणु
-					.gpr[21] = पूर्णांक_न्यून,
-					.gpr[22] = पूर्णांक_न्यून,
-				पूर्ण
-			पूर्ण,
-			अणु
+				.regs = {
+					.gpr[21] = INT_MIN,
+					.gpr[22] = INT_MIN,
+				}
+			},
+			{
 				.descr = "RA = INT_MIN, RB = INT_MAX",
 				.instr = ppc_inst(PPC_RAW_ADDC_DOT(20, 21, 22)),
-				.regs = अणु
-					.gpr[21] = पूर्णांक_न्यून,
-					.gpr[22] = पूर्णांक_उच्च,
-				पूर्ण
-			पूर्ण,
-			अणु
+				.regs = {
+					.gpr[21] = INT_MIN,
+					.gpr[22] = INT_MAX,
+				}
+			},
+			{
 				.descr = "RA = INT_MAX, RB = INT_MAX",
 				.instr = ppc_inst(PPC_RAW_ADDC_DOT(20, 21, 22)),
-				.regs = अणु
-					.gpr[21] = पूर्णांक_उच्च,
-					.gpr[22] = पूर्णांक_उच्च,
-				पूर्ण
-			पूर्ण,
-			अणु
+				.regs = {
+					.gpr[21] = INT_MAX,
+					.gpr[22] = INT_MAX,
+				}
+			},
+			{
 				.descr = "RA = UINT_MAX, RB = UINT_MAX",
 				.instr = ppc_inst(PPC_RAW_ADDC_DOT(20, 21, 22)),
-				.regs = अणु
-					.gpr[21] = अच_पूर्णांक_उच्च,
-					.gpr[22] = अच_पूर्णांक_उच्च,
-				पूर्ण
-			पूर्ण,
-			अणु
+				.regs = {
+					.gpr[21] = UINT_MAX,
+					.gpr[22] = UINT_MAX,
+				}
+			},
+			{
 				.descr = "RA = UINT_MAX, RB = 0x1",
 				.instr = ppc_inst(PPC_RAW_ADDC_DOT(20, 21, 22)),
-				.regs = अणु
-					.gpr[21] = अच_पूर्णांक_उच्च,
+				.regs = {
+					.gpr[21] = UINT_MAX,
 					.gpr[22] = 0x1,
-				पूर्ण
-			पूर्ण,
-			अणु
+				}
+			},
+			{
 				.descr = "RA = LONG_MIN | INT_MIN, RB = LONG_MIN | INT_MIN",
 				.instr = ppc_inst(PPC_RAW_ADDC_DOT(20, 21, 22)),
-				.regs = अणु
-					.gpr[21] = दीर्घ_न्यून | (uपूर्णांक)पूर्णांक_न्यून,
-					.gpr[22] = दीर्घ_न्यून | (uपूर्णांक)पूर्णांक_न्यून,
-				पूर्ण
-			पूर्ण
-		पूर्ण
-	पूर्ण,
-	अणु
+				.regs = {
+					.gpr[21] = LONG_MIN | (uint)INT_MIN,
+					.gpr[22] = LONG_MIN | (uint)INT_MIN,
+				}
+			}
+		}
+	},
+	{
 		.mnemonic = "divde",
-		.subtests = अणु
-			अणु
+		.subtests = {
+			{
 				.descr = "RA = LONG_MIN, RB = LONG_MIN",
 				.instr = ppc_inst(PPC_RAW_DIVDE(20, 21, 22)),
-				.regs = अणु
-					.gpr[21] = दीर्घ_न्यून,
-					.gpr[22] = दीर्घ_न्यून,
-				पूर्ण
-			पूर्ण,
-			अणु
+				.regs = {
+					.gpr[21] = LONG_MIN,
+					.gpr[22] = LONG_MIN,
+				}
+			},
+			{
 				.descr = "RA = 1L, RB = 0",
 				.instr = ppc_inst(PPC_RAW_DIVDE(20, 21, 22)),
 				.flags = IGNORE_GPR(20),
-				.regs = अणु
+				.regs = {
 					.gpr[21] = 1L,
 					.gpr[22] = 0,
-				पूर्ण
-			पूर्ण,
-			अणु
+				}
+			},
+			{
 				.descr = "RA = LONG_MIN, RB = LONG_MAX",
 				.instr = ppc_inst(PPC_RAW_DIVDE(20, 21, 22)),
-				.regs = अणु
-					.gpr[21] = दीर्घ_न्यून,
-					.gpr[22] = दीर्घ_उच्च,
-				पूर्ण
-			पूर्ण
-		पूर्ण
-	पूर्ण,
-	अणु
+				.regs = {
+					.gpr[21] = LONG_MIN,
+					.gpr[22] = LONG_MAX,
+				}
+			}
+		}
+	},
+	{
 		.mnemonic = "divde.",
-		.subtests = अणु
-			अणु
+		.subtests = {
+			{
 				.descr = "RA = LONG_MIN, RB = LONG_MIN",
 				.instr = ppc_inst(PPC_RAW_DIVDE_DOT(20, 21, 22)),
-				.regs = अणु
-					.gpr[21] = दीर्घ_न्यून,
-					.gpr[22] = दीर्घ_न्यून,
-				पूर्ण
-			पूर्ण,
-			अणु
+				.regs = {
+					.gpr[21] = LONG_MIN,
+					.gpr[22] = LONG_MIN,
+				}
+			},
+			{
 				.descr = "RA = 1L, RB = 0",
 				.instr = ppc_inst(PPC_RAW_DIVDE_DOT(20, 21, 22)),
 				.flags = IGNORE_GPR(20),
-				.regs = अणु
+				.regs = {
 					.gpr[21] = 1L,
 					.gpr[22] = 0,
-				पूर्ण
-			पूर्ण,
-			अणु
+				}
+			},
+			{
 				.descr = "RA = LONG_MIN, RB = LONG_MAX",
 				.instr = ppc_inst(PPC_RAW_DIVDE_DOT(20, 21, 22)),
-				.regs = अणु
-					.gpr[21] = दीर्घ_न्यून,
-					.gpr[22] = दीर्घ_उच्च,
-				पूर्ण
-			पूर्ण
-		पूर्ण
-	पूर्ण,
-	अणु
+				.regs = {
+					.gpr[21] = LONG_MIN,
+					.gpr[22] = LONG_MAX,
+				}
+			}
+		}
+	},
+	{
 		.mnemonic = "divdeu",
-		.subtests = अणु
-			अणु
+		.subtests = {
+			{
 				.descr = "RA = LONG_MIN, RB = LONG_MIN",
 				.instr = ppc_inst(PPC_RAW_DIVDEU(20, 21, 22)),
 				.flags = IGNORE_GPR(20),
-				.regs = अणु
-					.gpr[21] = दीर्घ_न्यून,
-					.gpr[22] = दीर्घ_न्यून,
-				पूर्ण
-			पूर्ण,
-			अणु
+				.regs = {
+					.gpr[21] = LONG_MIN,
+					.gpr[22] = LONG_MIN,
+				}
+			},
+			{
 				.descr = "RA = 1L, RB = 0",
 				.instr = ppc_inst(PPC_RAW_DIVDEU(20, 21, 22)),
 				.flags = IGNORE_GPR(20),
-				.regs = अणु
+				.regs = {
 					.gpr[21] = 1L,
 					.gpr[22] = 0,
-				पूर्ण
-			पूर्ण,
-			अणु
+				}
+			},
+			{
 				.descr = "RA = LONG_MIN, RB = LONG_MAX",
 				.instr = ppc_inst(PPC_RAW_DIVDEU(20, 21, 22)),
-				.regs = अणु
-					.gpr[21] = दीर्घ_न्यून,
-					.gpr[22] = दीर्घ_उच्च,
-				पूर्ण
-			पूर्ण,
-			अणु
+				.regs = {
+					.gpr[21] = LONG_MIN,
+					.gpr[22] = LONG_MAX,
+				}
+			},
+			{
 				.descr = "RA = LONG_MAX - 1, RB = LONG_MAX",
 				.instr = ppc_inst(PPC_RAW_DIVDEU(20, 21, 22)),
-				.regs = अणु
-					.gpr[21] = दीर्घ_उच्च - 1,
-					.gpr[22] = दीर्घ_उच्च,
-				पूर्ण
-			पूर्ण,
-			अणु
+				.regs = {
+					.gpr[21] = LONG_MAX - 1,
+					.gpr[22] = LONG_MAX,
+				}
+			},
+			{
 				.descr = "RA = LONG_MIN + 1, RB = LONG_MIN",
 				.instr = ppc_inst(PPC_RAW_DIVDEU(20, 21, 22)),
 				.flags = IGNORE_GPR(20),
-				.regs = अणु
-					.gpr[21] = दीर्घ_न्यून + 1,
-					.gpr[22] = दीर्घ_न्यून,
-				पूर्ण
-			पूर्ण
-		पूर्ण
-	पूर्ण,
-	अणु
+				.regs = {
+					.gpr[21] = LONG_MIN + 1,
+					.gpr[22] = LONG_MIN,
+				}
+			}
+		}
+	},
+	{
 		.mnemonic = "divdeu.",
-		.subtests = अणु
-			अणु
+		.subtests = {
+			{
 				.descr = "RA = LONG_MIN, RB = LONG_MIN",
 				.instr = ppc_inst(PPC_RAW_DIVDEU_DOT(20, 21, 22)),
 				.flags = IGNORE_GPR(20),
-				.regs = अणु
-					.gpr[21] = दीर्घ_न्यून,
-					.gpr[22] = दीर्घ_न्यून,
-				पूर्ण
-			पूर्ण,
-			अणु
+				.regs = {
+					.gpr[21] = LONG_MIN,
+					.gpr[22] = LONG_MIN,
+				}
+			},
+			{
 				.descr = "RA = 1L, RB = 0",
 				.instr = ppc_inst(PPC_RAW_DIVDEU_DOT(20, 21, 22)),
 				.flags = IGNORE_GPR(20),
-				.regs = अणु
+				.regs = {
 					.gpr[21] = 1L,
 					.gpr[22] = 0,
-				पूर्ण
-			पूर्ण,
-			अणु
+				}
+			},
+			{
 				.descr = "RA = LONG_MIN, RB = LONG_MAX",
 				.instr = ppc_inst(PPC_RAW_DIVDEU_DOT(20, 21, 22)),
-				.regs = अणु
-					.gpr[21] = दीर्घ_न्यून,
-					.gpr[22] = दीर्घ_उच्च,
-				पूर्ण
-			पूर्ण,
-			अणु
+				.regs = {
+					.gpr[21] = LONG_MIN,
+					.gpr[22] = LONG_MAX,
+				}
+			},
+			{
 				.descr = "RA = LONG_MAX - 1, RB = LONG_MAX",
 				.instr = ppc_inst(PPC_RAW_DIVDEU_DOT(20, 21, 22)),
-				.regs = अणु
-					.gpr[21] = दीर्घ_उच्च - 1,
-					.gpr[22] = दीर्घ_उच्च,
-				पूर्ण
-			पूर्ण,
-			अणु
+				.regs = {
+					.gpr[21] = LONG_MAX - 1,
+					.gpr[22] = LONG_MAX,
+				}
+			},
+			{
 				.descr = "RA = LONG_MIN + 1, RB = LONG_MIN",
 				.instr = ppc_inst(PPC_RAW_DIVDEU_DOT(20, 21, 22)),
 				.flags = IGNORE_GPR(20),
-				.regs = अणु
-					.gpr[21] = दीर्घ_न्यून + 1,
-					.gpr[22] = दीर्घ_न्यून,
-				पूर्ण
-			पूर्ण
-		पूर्ण
-	पूर्ण,
-	अणु
+				.regs = {
+					.gpr[21] = LONG_MIN + 1,
+					.gpr[22] = LONG_MIN,
+				}
+			}
+		}
+	},
+	{
 		.mnemonic = "paddi",
 		.cpu_feature = CPU_FTR_ARCH_31,
-		.subtests = अणु
-			अणु
+		.subtests = {
+			{
 				.descr = "RA = LONG_MIN, SI = SI_MIN, R = 0",
 				.instr = TEST_PADDI(21, 22, SI_MIN, 0),
-				.regs = अणु
+				.regs = {
 					.gpr[21] = 0,
-					.gpr[22] = दीर्घ_न्यून,
-				पूर्ण
-			पूर्ण,
-			अणु
+					.gpr[22] = LONG_MIN,
+				}
+			},
+			{
 				.descr = "RA = LONG_MIN, SI = SI_MAX, R = 0",
 				.instr = TEST_PADDI(21, 22, SI_MAX, 0),
-				.regs = अणु
+				.regs = {
 					.gpr[21] = 0,
-					.gpr[22] = दीर्घ_न्यून,
-				पूर्ण
-			पूर्ण,
-			अणु
+					.gpr[22] = LONG_MIN,
+				}
+			},
+			{
 				.descr = "RA = LONG_MAX, SI = SI_MAX, R = 0",
 				.instr = TEST_PADDI(21, 22, SI_MAX, 0),
-				.regs = अणु
+				.regs = {
 					.gpr[21] = 0,
-					.gpr[22] = दीर्घ_उच्च,
-				पूर्ण
-			पूर्ण,
-			अणु
+					.gpr[22] = LONG_MAX,
+				}
+			},
+			{
 				.descr = "RA = ULONG_MAX, SI = SI_UMAX, R = 0",
 				.instr = TEST_PADDI(21, 22, SI_UMAX, 0),
-				.regs = अणु
+				.regs = {
 					.gpr[21] = 0,
-					.gpr[22] = अच_दीर्घ_उच्च,
-				पूर्ण
-			पूर्ण,
-			अणु
+					.gpr[22] = ULONG_MAX,
+				}
+			},
+			{
 				.descr = "RA = ULONG_MAX, SI = 0x1, R = 0",
 				.instr = TEST_PADDI(21, 22, 0x1, 0),
-				.regs = अणु
+				.regs = {
 					.gpr[21] = 0,
-					.gpr[22] = अच_दीर्घ_उच्च,
-				पूर्ण
-			पूर्ण,
-			अणु
+					.gpr[22] = ULONG_MAX,
+				}
+			},
+			{
 				.descr = "RA = INT_MIN, SI = SI_MIN, R = 0",
 				.instr = TEST_PADDI(21, 22, SI_MIN, 0),
-				.regs = अणु
+				.regs = {
 					.gpr[21] = 0,
-					.gpr[22] = पूर्णांक_न्यून,
-				पूर्ण
-			पूर्ण,
-			अणु
+					.gpr[22] = INT_MIN,
+				}
+			},
+			{
 				.descr = "RA = INT_MIN, SI = SI_MAX, R = 0",
 				.instr = TEST_PADDI(21, 22, SI_MAX, 0),
-				.regs = अणु
+				.regs = {
 					.gpr[21] = 0,
-					.gpr[22] = पूर्णांक_न्यून,
-				पूर्ण
-			पूर्ण,
-			अणु
+					.gpr[22] = INT_MIN,
+				}
+			},
+			{
 				.descr = "RA = INT_MAX, SI = SI_MAX, R = 0",
 				.instr = TEST_PADDI(21, 22, SI_MAX, 0),
-				.regs = अणु
+				.regs = {
 					.gpr[21] = 0,
-					.gpr[22] = पूर्णांक_उच्च,
-				पूर्ण
-			पूर्ण,
-			अणु
+					.gpr[22] = INT_MAX,
+				}
+			},
+			{
 				.descr = "RA = UINT_MAX, SI = 0x1, R = 0",
 				.instr = TEST_PADDI(21, 22, 0x1, 0),
-				.regs = अणु
+				.regs = {
 					.gpr[21] = 0,
-					.gpr[22] = अच_पूर्णांक_उच्च,
-				पूर्ण
-			पूर्ण,
-			अणु
+					.gpr[22] = UINT_MAX,
+				}
+			},
+			{
 				.descr = "RA = UINT_MAX, SI = SI_MAX, R = 0",
 				.instr = TEST_PADDI(21, 22, SI_MAX, 0),
-				.regs = अणु
+				.regs = {
 					.gpr[21] = 0,
-					.gpr[22] = अच_पूर्णांक_उच्च,
-				पूर्ण
-			पूर्ण,
-			अणु
+					.gpr[22] = UINT_MAX,
+				}
+			},
+			{
 				.descr = "RA is r0, SI = SI_MIN, R = 0",
 				.instr = TEST_PADDI(21, 0, SI_MIN, 0),
-				.regs = अणु
+				.regs = {
 					.gpr[21] = 0x0,
-				पूर्ण
-			पूर्ण,
-			अणु
+				}
+			},
+			{
 				.descr = "RA = 0, SI = SI_MIN, R = 0",
 				.instr = TEST_PADDI(21, 22, SI_MIN, 0),
-				.regs = अणु
+				.regs = {
 					.gpr[21] = 0x0,
 					.gpr[22] = 0x0,
-				पूर्ण
-			पूर्ण,
-			अणु
+				}
+			},
+			{
 				.descr = "RA is r0, SI = 0, R = 1",
 				.instr = TEST_PADDI(21, 0, 0, 1),
-				.regs = अणु
+				.regs = {
 					.gpr[21] = 0,
-				पूर्ण
-			पूर्ण,
-			अणु
+				}
+			},
+			{
 				.descr = "RA is r0, SI = SI_MIN, R = 1",
 				.instr = TEST_PADDI(21, 0, SI_MIN, 1),
-				.regs = अणु
+				.regs = {
 					.gpr[21] = 0,
-				पूर्ण
-			पूर्ण,
-			/* Invalid inकाष्ठाion क्रमm with R = 1 and RA != 0 */
-			अणु
+				}
+			},
+			/* Invalid instruction form with R = 1 and RA != 0 */
+			{
 				.descr = "RA = R22(0), SI = 0, R = 1",
 				.instr = TEST_PADDI(21, 22, 0, 1),
 				.flags = NEGATIVE_TEST,
-				.regs = अणु
+				.regs = {
 					.gpr[21] = 0,
 					.gpr[22] = 0,
-				पूर्ण
-			पूर्ण
-		पूर्ण
-	पूर्ण
-पूर्ण;
+				}
+			}
+		}
+	}
+};
 
-अटल पूर्णांक __init emulate_compute_instr(काष्ठा pt_regs *regs,
-					काष्ठा ppc_inst instr,
+static int __init emulate_compute_instr(struct pt_regs *regs,
+					struct ppc_inst instr,
 					bool negative)
-अणु
-	पूर्णांक analysed;
-	काष्ठा inकाष्ठाion_op op;
+{
+	int analysed;
+	struct instruction_op op;
 
-	अगर (!regs || !ppc_inst_val(instr))
-		वापस -EINVAL;
+	if (!regs || !ppc_inst_val(instr))
+		return -EINVAL;
 
 	regs->nip = patch_site_addr(&patch__exec_instr);
 
 	analysed = analyse_instr(&op, regs, instr);
-	अगर (analysed != 1 || GETTYPE(op.type) != COMPUTE) अणु
-		अगर (negative)
-			वापस -EFAULT;
+	if (analysed != 1 || GETTYPE(op.type) != COMPUTE) {
+		if (negative)
+			return -EFAULT;
 		pr_info("emulation failed, instruction = %s\n", ppc_inst_as_str(instr));
-		वापस -EFAULT;
-	पूर्ण
-	अगर (analysed == 1 && negative)
+		return -EFAULT;
+	}
+	if (analysed == 1 && negative)
 		pr_info("negative test failed, instruction = %s\n", ppc_inst_as_str(instr));
-	अगर (!negative)
+	if (!negative)
 		emulate_update_regs(regs, &op);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __init execute_compute_instr(काष्ठा pt_regs *regs,
-					काष्ठा ppc_inst instr)
-अणु
-	बाह्य पूर्णांक exec_instr(काष्ठा pt_regs *regs);
+static int __init execute_compute_instr(struct pt_regs *regs,
+					struct ppc_inst instr)
+{
+	extern int exec_instr(struct pt_regs *regs);
 
-	अगर (!regs || !ppc_inst_val(instr))
-		वापस -EINVAL;
+	if (!regs || !ppc_inst_val(instr))
+		return -EINVAL;
 
-	/* Patch the NOP with the actual inकाष्ठाion */
-	patch_inकाष्ठाion_site(&patch__exec_instr, instr);
-	अगर (exec_instr(regs)) अणु
+	/* Patch the NOP with the actual instruction */
+	patch_instruction_site(&patch__exec_instr, instr);
+	if (exec_instr(regs)) {
 		pr_info("execution failed, instruction = %s\n", ppc_inst_as_str(instr));
-		वापस -EFAULT;
-	पूर्ण
+		return -EFAULT;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#घोषणा gpr_mismatch(gprn, exp, got)	\
+#define gpr_mismatch(gprn, exp, got)	\
 	pr_info("GPR%u mismatch, exp = 0x%016lx, got = 0x%016lx\n",	\
 		gprn, exp, got)
 
-#घोषणा reg_mismatch(name, exp, got)	\
+#define reg_mismatch(name, exp, got)	\
 	pr_info("%s mismatch, exp = 0x%016lx, got = 0x%016lx\n",	\
 		name, exp, got)
 
-अटल व्योम __init run_tests_compute(व्योम)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा compute_test *test;
-	काष्ठा pt_regs *regs, exp, got;
-	अचिन्हित पूर्णांक i, j, k;
-	काष्ठा ppc_inst instr;
+static void __init run_tests_compute(void)
+{
+	unsigned long flags;
+	struct compute_test *test;
+	struct pt_regs *regs, exp, got;
+	unsigned int i, j, k;
+	struct ppc_inst instr;
 	bool ignore_gpr, ignore_xer, ignore_ccr, passed, rc, negative;
 
-	क्रम (i = 0; i < ARRAY_SIZE(compute_tests); i++) अणु
+	for (i = 0; i < ARRAY_SIZE(compute_tests); i++) {
 		test = &compute_tests[i];
 
-		अगर (test->cpu_feature && !early_cpu_has_feature(test->cpu_feature)) अणु
+		if (test->cpu_feature && !early_cpu_has_feature(test->cpu_feature)) {
 			show_result(test->mnemonic, "SKIP (!CPU_FTR)");
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		क्रम (j = 0; j < MAX_SUBTESTS && test->subtests[j].descr; j++) अणु
+		for (j = 0; j < MAX_SUBTESTS && test->subtests[j].descr; j++) {
 			instr = test->subtests[j].instr;
 			flags = test->subtests[j].flags;
 			regs = &test->subtests[j].regs;
@@ -1651,8 +1650,8 @@
 			ignore_ccr = flags & IGNORE_CCR;
 			passed = true;
 
-			स_नकल(&exp, regs, माप(काष्ठा pt_regs));
-			स_नकल(&got, regs, माप(काष्ठा pt_regs));
+			memcpy(&exp, regs, sizeof(struct pt_regs));
+			memcpy(&got, regs, sizeof(struct pt_regs));
 
 			/*
 			 * Set a compatible MSR value explicitly to ensure
@@ -1662,56 +1661,56 @@
 			got.msr = MSR_KERNEL;
 
 			rc = emulate_compute_instr(&got, instr, negative) != 0;
-			अगर (negative) अणु
-				/* skip executing inकाष्ठाion */
+			if (negative) {
+				/* skip executing instruction */
 				passed = rc;
-				जाओ prपूर्णांक;
-			पूर्ण अन्यथा अगर (rc || execute_compute_instr(&exp, instr)) अणु
+				goto print;
+			} else if (rc || execute_compute_instr(&exp, instr)) {
 				passed = false;
-				जाओ prपूर्णांक;
-			पूर्ण
+				goto print;
+			}
 
-			/* Verअगरy GPR values */
-			क्रम (k = 0; k < 32; k++) अणु
+			/* Verify GPR values */
+			for (k = 0; k < 32; k++) {
 				ignore_gpr = flags & IGNORE_GPR(k);
-				अगर (!ignore_gpr && exp.gpr[k] != got.gpr[k]) अणु
+				if (!ignore_gpr && exp.gpr[k] != got.gpr[k]) {
 					passed = false;
 					gpr_mismatch(k, exp.gpr[k], got.gpr[k]);
-				पूर्ण
-			पूर्ण
+				}
+			}
 
-			/* Verअगरy LR value */
-			अगर (exp.link != got.link) अणु
+			/* Verify LR value */
+			if (exp.link != got.link) {
 				passed = false;
 				reg_mismatch("LR", exp.link, got.link);
-			पूर्ण
+			}
 
-			/* Verअगरy XER value */
-			अगर (!ignore_xer && exp.xer != got.xer) अणु
+			/* Verify XER value */
+			if (!ignore_xer && exp.xer != got.xer) {
 				passed = false;
 				reg_mismatch("XER", exp.xer, got.xer);
-			पूर्ण
+			}
 
-			/* Verअगरy CR value */
-			अगर (!ignore_ccr && exp.ccr != got.ccr) अणु
+			/* Verify CR value */
+			if (!ignore_ccr && exp.ccr != got.ccr) {
 				passed = false;
 				reg_mismatch("CR", exp.ccr, got.ccr);
-			पूर्ण
+			}
 
-prपूर्णांक:
+print:
 			show_result_with_descr(test->mnemonic,
 					       test->subtests[j].descr,
 					       passed ? "PASS" : "FAIL");
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल पूर्णांक __init test_emulate_step(व्योम)
-अणु
-	prपूर्णांकk(KERN_INFO "Running instruction emulation self-tests ...\n");
+static int __init test_emulate_step(void)
+{
+	printk(KERN_INFO "Running instruction emulation self-tests ...\n");
 	run_tests_load_store();
 	run_tests_compute();
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 late_initcall(test_emulate_step);

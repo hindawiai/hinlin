@@ -1,232 +1,231 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * NXP LPC18xx/LPC43xx EEPROM memory NVMEM driver
  *
  * Copyright (c) 2015 Ariel D'Alessandro <ariel@vanguardiasur.com>
  */
 
-#समावेश <linux/clk.h>
-#समावेश <linux/device.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/err.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/module.h>
-#समावेश <linux/mod_devicetable.h>
-#समावेश <linux/nvmem-provider.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/reset.h>
+#include <linux/clk.h>
+#include <linux/device.h>
+#include <linux/delay.h>
+#include <linux/err.h>
+#include <linux/io.h>
+#include <linux/module.h>
+#include <linux/mod_devicetable.h>
+#include <linux/nvmem-provider.h>
+#include <linux/platform_device.h>
+#include <linux/reset.h>
 
 /* Registers */
-#घोषणा LPC18XX_EEPROM_AUTOPROG			0x00c
-#घोषणा LPC18XX_EEPROM_AUTOPROG_WORD		0x1
+#define LPC18XX_EEPROM_AUTOPROG			0x00c
+#define LPC18XX_EEPROM_AUTOPROG_WORD		0x1
 
-#घोषणा LPC18XX_EEPROM_CLKDIV			0x014
+#define LPC18XX_EEPROM_CLKDIV			0x014
 
-#घोषणा LPC18XX_EEPROM_PWRDWN			0x018
-#घोषणा LPC18XX_EEPROM_PWRDWN_NO		0x0
-#घोषणा LPC18XX_EEPROM_PWRDWN_YES		0x1
+#define LPC18XX_EEPROM_PWRDWN			0x018
+#define LPC18XX_EEPROM_PWRDWN_NO		0x0
+#define LPC18XX_EEPROM_PWRDWN_YES		0x1
 
-#घोषणा LPC18XX_EEPROM_INTSTAT			0xfe0
-#घोषणा LPC18XX_EEPROM_INTSTAT_END_OF_PROG	BIT(2)
+#define LPC18XX_EEPROM_INTSTAT			0xfe0
+#define LPC18XX_EEPROM_INTSTAT_END_OF_PROG	BIT(2)
 
-#घोषणा LPC18XX_EEPROM_INTSTATCLR		0xfe8
-#घोषणा LPC18XX_EEPROM_INTSTATCLR_PROG_CLR_ST	BIT(2)
+#define LPC18XX_EEPROM_INTSTATCLR		0xfe8
+#define LPC18XX_EEPROM_INTSTATCLR_PROG_CLR_ST	BIT(2)
 
 /* Fixed page size (bytes) */
-#घोषणा LPC18XX_EEPROM_PAGE_SIZE		0x80
+#define LPC18XX_EEPROM_PAGE_SIZE		0x80
 
-/* EEPROM device requires a ~1500 kHz घड़ी (min 800 kHz, max 1600 kHz) */
-#घोषणा LPC18XX_EEPROM_CLOCK_HZ			1500000
+/* EEPROM device requires a ~1500 kHz clock (min 800 kHz, max 1600 kHz) */
+#define LPC18XX_EEPROM_CLOCK_HZ			1500000
 
-/* EEPROM requires 3 ms of erase/program समय between each writing */
-#घोषणा LPC18XX_EEPROM_PROGRAM_TIME		3
+/* EEPROM requires 3 ms of erase/program time between each writing */
+#define LPC18XX_EEPROM_PROGRAM_TIME		3
 
-काष्ठा lpc18xx_eeprom_dev अणु
-	काष्ठा clk *clk;
-	व्योम __iomem *reg_base;
-	व्योम __iomem *mem_base;
-	काष्ठा nvmem_device *nvmem;
-	अचिन्हित reg_bytes;
-	अचिन्हित val_bytes;
-	पूर्णांक size;
-पूर्ण;
+struct lpc18xx_eeprom_dev {
+	struct clk *clk;
+	void __iomem *reg_base;
+	void __iomem *mem_base;
+	struct nvmem_device *nvmem;
+	unsigned reg_bytes;
+	unsigned val_bytes;
+	int size;
+};
 
-अटल अंतरभूत व्योम lpc18xx_eeprom_ग_लिखोl(काष्ठा lpc18xx_eeprom_dev *eeprom,
+static inline void lpc18xx_eeprom_writel(struct lpc18xx_eeprom_dev *eeprom,
 					 u32 reg, u32 val)
-अणु
-	ग_लिखोl(val, eeprom->reg_base + reg);
-पूर्ण
+{
+	writel(val, eeprom->reg_base + reg);
+}
 
-अटल अंतरभूत u32 lpc18xx_eeprom_पढ़ोl(काष्ठा lpc18xx_eeprom_dev *eeprom,
+static inline u32 lpc18xx_eeprom_readl(struct lpc18xx_eeprom_dev *eeprom,
 				       u32 reg)
-अणु
-	वापस पढ़ोl(eeprom->reg_base + reg);
-पूर्ण
+{
+	return readl(eeprom->reg_base + reg);
+}
 
-अटल पूर्णांक lpc18xx_eeprom_busyरुको_until_prog(काष्ठा lpc18xx_eeprom_dev *eeprom)
-अणु
-	अचिन्हित दीर्घ end;
+static int lpc18xx_eeprom_busywait_until_prog(struct lpc18xx_eeprom_dev *eeprom)
+{
+	unsigned long end;
 	u32 val;
 
 	/* Wait until EEPROM program operation has finished */
-	end = jअगरfies + msecs_to_jअगरfies(LPC18XX_EEPROM_PROGRAM_TIME * 10);
+	end = jiffies + msecs_to_jiffies(LPC18XX_EEPROM_PROGRAM_TIME * 10);
 
-	जबतक (समय_is_after_jअगरfies(end)) अणु
-		val = lpc18xx_eeprom_पढ़ोl(eeprom, LPC18XX_EEPROM_INTSTAT);
+	while (time_is_after_jiffies(end)) {
+		val = lpc18xx_eeprom_readl(eeprom, LPC18XX_EEPROM_INTSTAT);
 
-		अगर (val & LPC18XX_EEPROM_INTSTAT_END_OF_PROG) अणु
-			lpc18xx_eeprom_ग_लिखोl(eeprom, LPC18XX_EEPROM_INTSTATCLR,
+		if (val & LPC18XX_EEPROM_INTSTAT_END_OF_PROG) {
+			lpc18xx_eeprom_writel(eeprom, LPC18XX_EEPROM_INTSTATCLR,
 					LPC18XX_EEPROM_INTSTATCLR_PROG_CLR_ST);
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 
 		usleep_range(LPC18XX_EEPROM_PROGRAM_TIME * USEC_PER_MSEC,
 			     (LPC18XX_EEPROM_PROGRAM_TIME + 1) * USEC_PER_MSEC);
-	पूर्ण
+	}
 
-	वापस -ETIMEDOUT;
-पूर्ण
+	return -ETIMEDOUT;
+}
 
-अटल पूर्णांक lpc18xx_eeprom_gather_ग_लिखो(व्योम *context, अचिन्हित पूर्णांक reg,
-				       व्योम *val, माप_प्रकार bytes)
-अणु
-	काष्ठा lpc18xx_eeprom_dev *eeprom = context;
-	अचिन्हित पूर्णांक offset = reg;
-	पूर्णांक ret;
+static int lpc18xx_eeprom_gather_write(void *context, unsigned int reg,
+				       void *val, size_t bytes)
+{
+	struct lpc18xx_eeprom_dev *eeprom = context;
+	unsigned int offset = reg;
+	int ret;
 
 	/*
 	 * The last page contains the EEPROM initialization data and is not
 	 * writable.
 	 */
-	अगर ((reg > eeprom->size - LPC18XX_EEPROM_PAGE_SIZE) ||
+	if ((reg > eeprom->size - LPC18XX_EEPROM_PAGE_SIZE) ||
 			(reg + bytes > eeprom->size - LPC18XX_EEPROM_PAGE_SIZE))
-		वापस -EINVAL;
+		return -EINVAL;
 
 
-	lpc18xx_eeprom_ग_लिखोl(eeprom, LPC18XX_EEPROM_PWRDWN,
+	lpc18xx_eeprom_writel(eeprom, LPC18XX_EEPROM_PWRDWN,
 			      LPC18XX_EEPROM_PWRDWN_NO);
 
-	/* Wait 100 us जबतक the EEPROM wakes up */
+	/* Wait 100 us while the EEPROM wakes up */
 	usleep_range(100, 200);
 
-	जबतक (bytes) अणु
-		ग_लिखोl(*(u32 *)val, eeprom->mem_base + offset);
-		ret = lpc18xx_eeprom_busyरुको_until_prog(eeprom);
-		अगर (ret < 0)
-			वापस ret;
+	while (bytes) {
+		writel(*(u32 *)val, eeprom->mem_base + offset);
+		ret = lpc18xx_eeprom_busywait_until_prog(eeprom);
+		if (ret < 0)
+			return ret;
 
 		bytes -= eeprom->val_bytes;
 		val += eeprom->val_bytes;
 		offset += eeprom->val_bytes;
-	पूर्ण
+	}
 
-	lpc18xx_eeprom_ग_लिखोl(eeprom, LPC18XX_EEPROM_PWRDWN,
+	lpc18xx_eeprom_writel(eeprom, LPC18XX_EEPROM_PWRDWN,
 			      LPC18XX_EEPROM_PWRDWN_YES);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक lpc18xx_eeprom_पढ़ो(व्योम *context, अचिन्हित पूर्णांक offset,
-			       व्योम *val, माप_प्रकार bytes)
-अणु
-	काष्ठा lpc18xx_eeprom_dev *eeprom = context;
+static int lpc18xx_eeprom_read(void *context, unsigned int offset,
+			       void *val, size_t bytes)
+{
+	struct lpc18xx_eeprom_dev *eeprom = context;
 
-	lpc18xx_eeprom_ग_लिखोl(eeprom, LPC18XX_EEPROM_PWRDWN,
+	lpc18xx_eeprom_writel(eeprom, LPC18XX_EEPROM_PWRDWN,
 			      LPC18XX_EEPROM_PWRDWN_NO);
 
-	/* Wait 100 us जबतक the EEPROM wakes up */
+	/* Wait 100 us while the EEPROM wakes up */
 	usleep_range(100, 200);
 
-	जबतक (bytes) अणु
-		*(u32 *)val = पढ़ोl(eeprom->mem_base + offset);
+	while (bytes) {
+		*(u32 *)val = readl(eeprom->mem_base + offset);
 		bytes -= eeprom->val_bytes;
 		val += eeprom->val_bytes;
 		offset += eeprom->val_bytes;
-	पूर्ण
+	}
 
-	lpc18xx_eeprom_ग_लिखोl(eeprom, LPC18XX_EEPROM_PWRDWN,
+	lpc18xx_eeprom_writel(eeprom, LPC18XX_EEPROM_PWRDWN,
 			      LPC18XX_EEPROM_PWRDWN_YES);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-अटल काष्ठा nvmem_config lpc18xx_nvmem_config = अणु
+static struct nvmem_config lpc18xx_nvmem_config = {
 	.name = "lpc18xx-eeprom",
 	.stride = 4,
 	.word_size = 4,
-	.reg_पढ़ो = lpc18xx_eeprom_पढ़ो,
-	.reg_ग_लिखो = lpc18xx_eeprom_gather_ग_लिखो,
-पूर्ण;
+	.reg_read = lpc18xx_eeprom_read,
+	.reg_write = lpc18xx_eeprom_gather_write,
+};
 
-अटल पूर्णांक lpc18xx_eeprom_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा lpc18xx_eeprom_dev *eeprom;
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा reset_control *rst;
-	अचिन्हित दीर्घ clk_rate;
-	काष्ठा resource *res;
-	पूर्णांक ret;
+static int lpc18xx_eeprom_probe(struct platform_device *pdev)
+{
+	struct lpc18xx_eeprom_dev *eeprom;
+	struct device *dev = &pdev->dev;
+	struct reset_control *rst;
+	unsigned long clk_rate;
+	struct resource *res;
+	int ret;
 
-	eeprom = devm_kzalloc(dev, माप(*eeprom), GFP_KERNEL);
-	अगर (!eeprom)
-		वापस -ENOMEM;
+	eeprom = devm_kzalloc(dev, sizeof(*eeprom), GFP_KERNEL);
+	if (!eeprom)
+		return -ENOMEM;
 
-	res = platक्रमm_get_resource_byname(pdev, IORESOURCE_MEM, "reg");
+	res = platform_get_resource_byname(pdev, IORESOURCE_MEM, "reg");
 	eeprom->reg_base = devm_ioremap_resource(dev, res);
-	अगर (IS_ERR(eeprom->reg_base))
-		वापस PTR_ERR(eeprom->reg_base);
+	if (IS_ERR(eeprom->reg_base))
+		return PTR_ERR(eeprom->reg_base);
 
-	res = platक्रमm_get_resource_byname(pdev, IORESOURCE_MEM, "mem");
+	res = platform_get_resource_byname(pdev, IORESOURCE_MEM, "mem");
 	eeprom->mem_base = devm_ioremap_resource(dev, res);
-	अगर (IS_ERR(eeprom->mem_base))
-		वापस PTR_ERR(eeprom->mem_base);
+	if (IS_ERR(eeprom->mem_base))
+		return PTR_ERR(eeprom->mem_base);
 
 	eeprom->clk = devm_clk_get(&pdev->dev, "eeprom");
-	अगर (IS_ERR(eeprom->clk)) अणु
+	if (IS_ERR(eeprom->clk)) {
 		dev_err(&pdev->dev, "failed to get eeprom clock\n");
-		वापस PTR_ERR(eeprom->clk);
-	पूर्ण
+		return PTR_ERR(eeprom->clk);
+	}
 
 	ret = clk_prepare_enable(eeprom->clk);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(dev, "failed to prepare/enable eeprom clk: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	rst = devm_reset_control_get_exclusive(dev, शून्य);
-	अगर (IS_ERR(rst)) अणु
+	rst = devm_reset_control_get_exclusive(dev, NULL);
+	if (IS_ERR(rst)) {
 		dev_err(dev, "failed to get reset: %ld\n", PTR_ERR(rst));
 		ret = PTR_ERR(rst);
-		जाओ err_clk;
-	पूर्ण
+		goto err_clk;
+	}
 
-	ret = reset_control_निश्चित(rst);
-	अगर (ret < 0) अणु
+	ret = reset_control_assert(rst);
+	if (ret < 0) {
 		dev_err(dev, "failed to assert reset: %d\n", ret);
-		जाओ err_clk;
-	पूर्ण
+		goto err_clk;
+	}
 
 	eeprom->val_bytes = 4;
 	eeprom->reg_bytes = 4;
 
 	/*
-	 * Clock rate is generated by भागiding the प्रणाली bus घड़ी by the
-	 * भागision factor, contained in the भागider रेजिस्टर (minus 1 encoded).
+	 * Clock rate is generated by dividing the system bus clock by the
+	 * division factor, contained in the divider register (minus 1 encoded).
 	 */
 	clk_rate = clk_get_rate(eeprom->clk);
 	clk_rate = DIV_ROUND_UP(clk_rate, LPC18XX_EEPROM_CLOCK_HZ) - 1;
-	lpc18xx_eeprom_ग_लिखोl(eeprom, LPC18XX_EEPROM_CLKDIV, clk_rate);
+	lpc18xx_eeprom_writel(eeprom, LPC18XX_EEPROM_CLKDIV, clk_rate);
 
 	/*
 	 * Writing a single word to the page will start the erase/program cycle
-	 * स्वतःmatically
+	 * automatically
 	 */
-	lpc18xx_eeprom_ग_लिखोl(eeprom, LPC18XX_EEPROM_AUTOPROG,
+	lpc18xx_eeprom_writel(eeprom, LPC18XX_EEPROM_AUTOPROG,
 			      LPC18XX_EEPROM_AUTOPROG_WORD);
 
-	lpc18xx_eeprom_ग_लिखोl(eeprom, LPC18XX_EEPROM_PWRDWN,
+	lpc18xx_eeprom_writel(eeprom, LPC18XX_EEPROM_PWRDWN,
 			      LPC18XX_EEPROM_PWRDWN_YES);
 
 	eeprom->size = resource_size(res);
@@ -234,47 +233,47 @@
 	lpc18xx_nvmem_config.dev = dev;
 	lpc18xx_nvmem_config.priv = eeprom;
 
-	eeprom->nvmem = devm_nvmem_रेजिस्टर(dev, &lpc18xx_nvmem_config);
-	अगर (IS_ERR(eeprom->nvmem)) अणु
+	eeprom->nvmem = devm_nvmem_register(dev, &lpc18xx_nvmem_config);
+	if (IS_ERR(eeprom->nvmem)) {
 		ret = PTR_ERR(eeprom->nvmem);
-		जाओ err_clk;
-	पूर्ण
+		goto err_clk;
+	}
 
-	platक्रमm_set_drvdata(pdev, eeprom);
+	platform_set_drvdata(pdev, eeprom);
 
-	वापस 0;
+	return 0;
 
 err_clk:
 	clk_disable_unprepare(eeprom->clk);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक lpc18xx_eeprom_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा lpc18xx_eeprom_dev *eeprom = platक्रमm_get_drvdata(pdev);
+static int lpc18xx_eeprom_remove(struct platform_device *pdev)
+{
+	struct lpc18xx_eeprom_dev *eeprom = platform_get_drvdata(pdev);
 
 	clk_disable_unprepare(eeprom->clk);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id lpc18xx_eeprom_of_match[] = अणु
-	अणु .compatible = "nxp,lpc1857-eeprom" पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+static const struct of_device_id lpc18xx_eeprom_of_match[] = {
+	{ .compatible = "nxp,lpc1857-eeprom" },
+	{ },
+};
 MODULE_DEVICE_TABLE(of, lpc18xx_eeprom_of_match);
 
-अटल काष्ठा platक्रमm_driver lpc18xx_eeprom_driver = अणु
+static struct platform_driver lpc18xx_eeprom_driver = {
 	.probe = lpc18xx_eeprom_probe,
-	.हटाओ = lpc18xx_eeprom_हटाओ,
-	.driver = अणु
+	.remove = lpc18xx_eeprom_remove,
+	.driver = {
 		.name = "lpc18xx-eeprom",
 		.of_match_table = lpc18xx_eeprom_of_match,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver(lpc18xx_eeprom_driver);
+module_platform_driver(lpc18xx_eeprom_driver);
 
 MODULE_AUTHOR("Ariel D'Alessandro <ariel@vanguardiasur.com.ar>");
 MODULE_DESCRIPTION("NXP LPC18xx EEPROM memory Driver");

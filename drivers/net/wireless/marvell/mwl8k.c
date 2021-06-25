@@ -1,7 +1,6 @@
-<शैली गुरु>
 /*
  * drivers/net/wireless/mwl8k.c
- * Driver क्रम Marvell TOPDOG 802.11 Wireless cards
+ * Driver for Marvell TOPDOG 802.11 Wireless cards
  *
  * Copyright (C) 2008, 2009, 2010 Marvell Semiconductor Inc.
  *
@@ -10,83 +9,83 @@
  * warranty of any kind, whether express or implied.
  */
 
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/list.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/completion.h>
-#समावेश <linux/etherdevice.h>
-#समावेश <linux/slab.h>
-#समावेश <net/mac80211.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/firmware.h>
-#समावेश <linux/workqueue.h>
+#include <linux/interrupt.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/sched.h>
+#include <linux/spinlock.h>
+#include <linux/list.h>
+#include <linux/pci.h>
+#include <linux/delay.h>
+#include <linux/completion.h>
+#include <linux/etherdevice.h>
+#include <linux/slab.h>
+#include <net/mac80211.h>
+#include <linux/moduleparam.h>
+#include <linux/firmware.h>
+#include <linux/workqueue.h>
 
-#घोषणा MWL8K_DESC	"Marvell TOPDOG(R) 802.11 Wireless Network Driver"
-#घोषणा MWL8K_NAME	KBUILD_MODNAME
-#घोषणा MWL8K_VERSION	"0.13"
+#define MWL8K_DESC	"Marvell TOPDOG(R) 802.11 Wireless Network Driver"
+#define MWL8K_NAME	KBUILD_MODNAME
+#define MWL8K_VERSION	"0.13"
 
 /* Module parameters */
-अटल bool ap_mode_शेष;
-module_param(ap_mode_शेष, bool, 0);
-MODULE_PARM_DESC(ap_mode_शेष,
+static bool ap_mode_default;
+module_param(ap_mode_default, bool, 0);
+MODULE_PARM_DESC(ap_mode_default,
 		 "Set to 1 to make ap mode the default instead of sta mode");
 
 /* Register definitions */
-#घोषणा MWL8K_HIU_GEN_PTR			0x00000c10
-#घोषणा  MWL8K_MODE_STA				 0x0000005a
-#घोषणा  MWL8K_MODE_AP				 0x000000a5
-#घोषणा MWL8K_HIU_INT_CODE			0x00000c14
-#घोषणा  MWL8K_FWSTA_READY			 0xf0f1f2f4
-#घोषणा  MWL8K_FWAP_READY			 0xf1f2f4a5
-#घोषणा  MWL8K_INT_CODE_CMD_FINISHED		 0x00000005
-#घोषणा MWL8K_HIU_SCRATCH			0x00000c40
+#define MWL8K_HIU_GEN_PTR			0x00000c10
+#define  MWL8K_MODE_STA				 0x0000005a
+#define  MWL8K_MODE_AP				 0x000000a5
+#define MWL8K_HIU_INT_CODE			0x00000c14
+#define  MWL8K_FWSTA_READY			 0xf0f1f2f4
+#define  MWL8K_FWAP_READY			 0xf1f2f4a5
+#define  MWL8K_INT_CODE_CMD_FINISHED		 0x00000005
+#define MWL8K_HIU_SCRATCH			0x00000c40
 
 /* Host->device communications */
-#घोषणा MWL8K_HIU_H2A_INTERRUPT_EVENTS		0x00000c18
-#घोषणा MWL8K_HIU_H2A_INTERRUPT_STATUS		0x00000c1c
-#घोषणा MWL8K_HIU_H2A_INTERRUPT_MASK		0x00000c20
-#घोषणा MWL8K_HIU_H2A_INTERRUPT_CLEAR_SEL	0x00000c24
-#घोषणा MWL8K_HIU_H2A_INTERRUPT_STATUS_MASK	0x00000c28
-#घोषणा  MWL8K_H2A_INT_DUMMY			 (1 << 20)
-#घोषणा  MWL8K_H2A_INT_RESET			 (1 << 15)
-#घोषणा  MWL8K_H2A_INT_DOORBELL			 (1 << 1)
-#घोषणा  MWL8K_H2A_INT_PPA_READY		 (1 << 0)
+#define MWL8K_HIU_H2A_INTERRUPT_EVENTS		0x00000c18
+#define MWL8K_HIU_H2A_INTERRUPT_STATUS		0x00000c1c
+#define MWL8K_HIU_H2A_INTERRUPT_MASK		0x00000c20
+#define MWL8K_HIU_H2A_INTERRUPT_CLEAR_SEL	0x00000c24
+#define MWL8K_HIU_H2A_INTERRUPT_STATUS_MASK	0x00000c28
+#define  MWL8K_H2A_INT_DUMMY			 (1 << 20)
+#define  MWL8K_H2A_INT_RESET			 (1 << 15)
+#define  MWL8K_H2A_INT_DOORBELL			 (1 << 1)
+#define  MWL8K_H2A_INT_PPA_READY		 (1 << 0)
 
 /* Device->host communications */
-#घोषणा MWL8K_HIU_A2H_INTERRUPT_EVENTS		0x00000c2c
-#घोषणा MWL8K_HIU_A2H_INTERRUPT_STATUS		0x00000c30
-#घोषणा MWL8K_HIU_A2H_INTERRUPT_MASK		0x00000c34
-#घोषणा MWL8K_HIU_A2H_INTERRUPT_CLEAR_SEL	0x00000c38
-#घोषणा MWL8K_HIU_A2H_INTERRUPT_STATUS_MASK	0x00000c3c
-#घोषणा  MWL8K_A2H_INT_DUMMY			 (1 << 20)
-#घोषणा  MWL8K_A2H_INT_BA_WATCHDOG		 (1 << 14)
-#घोषणा  MWL8K_A2H_INT_CHNL_SWITCHED		 (1 << 11)
-#घोषणा  MWL8K_A2H_INT_QUEUE_EMPTY		 (1 << 10)
-#घोषणा  MWL8K_A2H_INT_RADAR_DETECT		 (1 << 7)
-#घोषणा  MWL8K_A2H_INT_RADIO_ON			 (1 << 6)
-#घोषणा  MWL8K_A2H_INT_RADIO_OFF		 (1 << 5)
-#घोषणा  MWL8K_A2H_INT_MAC_EVENT		 (1 << 3)
-#घोषणा  MWL8K_A2H_INT_OPC_DONE			 (1 << 2)
-#घोषणा  MWL8K_A2H_INT_RX_READY			 (1 << 1)
-#घोषणा  MWL8K_A2H_INT_TX_DONE			 (1 << 0)
+#define MWL8K_HIU_A2H_INTERRUPT_EVENTS		0x00000c2c
+#define MWL8K_HIU_A2H_INTERRUPT_STATUS		0x00000c30
+#define MWL8K_HIU_A2H_INTERRUPT_MASK		0x00000c34
+#define MWL8K_HIU_A2H_INTERRUPT_CLEAR_SEL	0x00000c38
+#define MWL8K_HIU_A2H_INTERRUPT_STATUS_MASK	0x00000c3c
+#define  MWL8K_A2H_INT_DUMMY			 (1 << 20)
+#define  MWL8K_A2H_INT_BA_WATCHDOG		 (1 << 14)
+#define  MWL8K_A2H_INT_CHNL_SWITCHED		 (1 << 11)
+#define  MWL8K_A2H_INT_QUEUE_EMPTY		 (1 << 10)
+#define  MWL8K_A2H_INT_RADAR_DETECT		 (1 << 7)
+#define  MWL8K_A2H_INT_RADIO_ON			 (1 << 6)
+#define  MWL8K_A2H_INT_RADIO_OFF		 (1 << 5)
+#define  MWL8K_A2H_INT_MAC_EVENT		 (1 << 3)
+#define  MWL8K_A2H_INT_OPC_DONE			 (1 << 2)
+#define  MWL8K_A2H_INT_RX_READY			 (1 << 1)
+#define  MWL8K_A2H_INT_TX_DONE			 (1 << 0)
 
-/* HW micro second समयr रेजिस्टर
+/* HW micro second timer register
  * located at offset 0xA600. This
- * will be used to बारtamp tx
+ * will be used to timestamp tx
  * packets.
  */
 
-#घोषणा	MWL8K_HW_TIMER_REGISTER			0x0000a600
-#घोषणा BBU_RXRDY_CNT_REG			0x0000a860
-#घोषणा NOK_CCA_CNT_REG				0x0000a6a0
-#घोषणा BBU_AVG_NOISE_VAL			0x67
+#define	MWL8K_HW_TIMER_REGISTER			0x0000a600
+#define BBU_RXRDY_CNT_REG			0x0000a860
+#define NOK_CCA_CNT_REG				0x0000a6a0
+#define BBU_AVG_NOISE_VAL			0x67
 
-#घोषणा MWL8K_A2H_EVENTS	(MWL8K_A2H_INT_DUMMY | \
+#define MWL8K_A2H_EVENTS	(MWL8K_A2H_INT_DUMMY | \
 				 MWL8K_A2H_INT_CHNL_SWITCHED | \
 				 MWL8K_A2H_INT_QUEUE_EMPTY | \
 				 MWL8K_A2H_INT_RADAR_DETECT | \
@@ -98,139 +97,139 @@ MODULE_PARM_DESC(ap_mode_शेष,
 				 MWL8K_A2H_INT_TX_DONE | \
 				 MWL8K_A2H_INT_BA_WATCHDOG)
 
-#घोषणा MWL8K_RX_QUEUES		1
-#घोषणा MWL8K_TX_WMM_QUEUES	4
-#घोषणा MWL8K_MAX_AMPDU_QUEUES	8
-#घोषणा MWL8K_MAX_TX_QUEUES	(MWL8K_TX_WMM_QUEUES + MWL8K_MAX_AMPDU_QUEUES)
-#घोषणा mwl8k_tx_queues(priv)	(MWL8K_TX_WMM_QUEUES + (priv)->num_ampdu_queues)
+#define MWL8K_RX_QUEUES		1
+#define MWL8K_TX_WMM_QUEUES	4
+#define MWL8K_MAX_AMPDU_QUEUES	8
+#define MWL8K_MAX_TX_QUEUES	(MWL8K_TX_WMM_QUEUES + MWL8K_MAX_AMPDU_QUEUES)
+#define mwl8k_tx_queues(priv)	(MWL8K_TX_WMM_QUEUES + (priv)->num_ampdu_queues)
 
 /* txpriorities are mapped with hw queues.
  * Each hw queue has a txpriority.
  */
-#घोषणा TOTAL_HW_TX_QUEUES	8
+#define TOTAL_HW_TX_QUEUES	8
 
 /* Each HW queue can have one AMPDU stream.
  * But, because one of the hw queue is reserved,
  * maximum AMPDU queues that can be created are
- * one लघु of total tx queues.
+ * one short of total tx queues.
  */
-#घोषणा MWL8K_NUM_AMPDU_STREAMS	(TOTAL_HW_TX_QUEUES - 1)
+#define MWL8K_NUM_AMPDU_STREAMS	(TOTAL_HW_TX_QUEUES - 1)
 
-#घोषणा MWL8K_NUM_CHANS 18
+#define MWL8K_NUM_CHANS 18
 
-काष्ठा rxd_ops अणु
-	पूर्णांक rxd_size;
-	व्योम (*rxd_init)(व्योम *rxd, dma_addr_t next_dma_addr);
-	व्योम (*rxd_refill)(व्योम *rxd, dma_addr_t addr, पूर्णांक len);
-	पूर्णांक (*rxd_process)(व्योम *rxd, काष्ठा ieee80211_rx_status *status,
+struct rxd_ops {
+	int rxd_size;
+	void (*rxd_init)(void *rxd, dma_addr_t next_dma_addr);
+	void (*rxd_refill)(void *rxd, dma_addr_t addr, int len);
+	int (*rxd_process)(void *rxd, struct ieee80211_rx_status *status,
 			   __le16 *qos, s8 *noise);
-पूर्ण;
+};
 
-काष्ठा mwl8k_device_info अणु
-	अक्षर *part_name;
-	अक्षर *helper_image;
-	अक्षर *fw_image_sta;
-	अक्षर *fw_image_ap;
-	काष्ठा rxd_ops *ap_rxd_ops;
+struct mwl8k_device_info {
+	char *part_name;
+	char *helper_image;
+	char *fw_image_sta;
+	char *fw_image_ap;
+	struct rxd_ops *ap_rxd_ops;
 	u32 fw_api_ap;
-पूर्ण;
+};
 
-काष्ठा mwl8k_rx_queue अणु
-	पूर्णांक rxd_count;
+struct mwl8k_rx_queue {
+	int rxd_count;
 
 	/* hw receives here */
-	पूर्णांक head;
+	int head;
 
 	/* refill descs here */
-	पूर्णांक tail;
+	int tail;
 
-	व्योम *rxd;
+	void *rxd;
 	dma_addr_t rxd_dma;
-	काष्ठा अणु
-		काष्ठा sk_buff *skb;
+	struct {
+		struct sk_buff *skb;
 		DEFINE_DMA_UNMAP_ADDR(dma);
-	पूर्ण *buf;
-पूर्ण;
+	} *buf;
+};
 
-काष्ठा mwl8k_tx_queue अणु
+struct mwl8k_tx_queue {
 	/* hw transmits here */
-	पूर्णांक head;
+	int head;
 
 	/* sw appends here */
-	पूर्णांक tail;
+	int tail;
 
-	अचिन्हित पूर्णांक len;
-	काष्ठा mwl8k_tx_desc *txd;
+	unsigned int len;
+	struct mwl8k_tx_desc *txd;
 	dma_addr_t txd_dma;
-	काष्ठा sk_buff **skb;
-पूर्ण;
+	struct sk_buff **skb;
+};
 
-क्रमागत अणु
+enum {
 	AMPDU_NO_STREAM,
 	AMPDU_STREAM_NEW,
 	AMPDU_STREAM_IN_PROGRESS,
 	AMPDU_STREAM_ACTIVE,
-पूर्ण;
+};
 
-काष्ठा mwl8k_ampdu_stream अणु
-	काष्ठा ieee80211_sta *sta;
+struct mwl8k_ampdu_stream {
+	struct ieee80211_sta *sta;
 	u8 tid;
 	u8 state;
 	u8 idx;
-पूर्ण;
+};
 
-काष्ठा mwl8k_priv अणु
-	काष्ठा ieee80211_hw *hw;
-	काष्ठा pci_dev *pdev;
-	पूर्णांक irq;
+struct mwl8k_priv {
+	struct ieee80211_hw *hw;
+	struct pci_dev *pdev;
+	int irq;
 
-	काष्ठा mwl8k_device_info *device_info;
+	struct mwl8k_device_info *device_info;
 
-	व्योम __iomem *sram;
-	व्योम __iomem *regs;
+	void __iomem *sram;
+	void __iomem *regs;
 
 	/* firmware */
-	स्थिर काष्ठा firmware *fw_helper;
-	स्थिर काष्ठा firmware *fw_ucode;
+	const struct firmware *fw_helper;
+	const struct firmware *fw_ucode;
 
 	/* hardware/firmware parameters */
 	bool ap_fw;
-	काष्ठा rxd_ops *rxd_ops;
-	काष्ठा ieee80211_supported_band band_24;
-	काष्ठा ieee80211_channel channels_24[14];
-	काष्ठा ieee80211_rate rates_24[13];
-	काष्ठा ieee80211_supported_band band_50;
-	काष्ठा ieee80211_channel channels_50[9];
-	काष्ठा ieee80211_rate rates_50[8];
+	struct rxd_ops *rxd_ops;
+	struct ieee80211_supported_band band_24;
+	struct ieee80211_channel channels_24[14];
+	struct ieee80211_rate rates_24[13];
+	struct ieee80211_supported_band band_50;
+	struct ieee80211_channel channels_50[9];
+	struct ieee80211_rate rates_50[8];
 	u32 ap_macids_supported;
 	u32 sta_macids_supported;
 
-	/* Ampdu stream inक्रमmation */
+	/* Ampdu stream information */
 	u8 num_ampdu_queues;
 	spinlock_t stream_lock;
-	काष्ठा mwl8k_ampdu_stream ampdu[MWL8K_MAX_AMPDU_QUEUES];
-	काष्ठा work_काष्ठा watchकरोg_ba_handle;
+	struct mwl8k_ampdu_stream ampdu[MWL8K_MAX_AMPDU_QUEUES];
+	struct work_struct watchdog_ba_handle;
 
 	/* firmware access */
-	काष्ठा mutex fw_mutex;
-	काष्ठा task_काष्ठा *fw_mutex_owner;
-	काष्ठा task_काष्ठा *hw_restart_owner;
-	पूर्णांक fw_mutex_depth;
-	काष्ठा completion *hostcmd_रुको;
+	struct mutex fw_mutex;
+	struct task_struct *fw_mutex_owner;
+	struct task_struct *hw_restart_owner;
+	int fw_mutex_depth;
+	struct completion *hostcmd_wait;
 
-	atomic_t watchकरोg_event_pending;
+	atomic_t watchdog_event_pending;
 
 	/* lock held over TX and TX reap */
 	spinlock_t tx_lock;
 
-	/* TX quiesce completion, रक्षित by fw_mutex and tx_lock */
-	काष्ठा completion *tx_रुको;
+	/* TX quiesce completion, protected by fw_mutex and tx_lock */
+	struct completion *tx_wait;
 
-	/* List of पूर्णांकerfaces.  */
+	/* List of interfaces.  */
 	u32 macids_used;
-	काष्ठा list_head vअगर_list;
+	struct list_head vif_list;
 
-	/* घातer management status cookie from firmware */
+	/* power management status cookie from firmware */
 	u32 *cookie;
 	dma_addr_t cookie_dma;
 
@@ -240,220 +239,220 @@ MODULE_PARM_DESC(ap_mode_शेष,
 	u32 caps;
 
 	/*
-	 * Running count of TX packets in flight, to aव्योम
-	 * iterating over the transmit rings each समय.
+	 * Running count of TX packets in flight, to avoid
+	 * iterating over the transmit rings each time.
 	 */
-	पूर्णांक pending_tx_pkts;
+	int pending_tx_pkts;
 
-	काष्ठा mwl8k_rx_queue rxq[MWL8K_RX_QUEUES];
-	काष्ठा mwl8k_tx_queue txq[MWL8K_MAX_TX_QUEUES];
+	struct mwl8k_rx_queue rxq[MWL8K_RX_QUEUES];
+	struct mwl8k_tx_queue txq[MWL8K_MAX_TX_QUEUES];
 	u32 txq_offset[MWL8K_MAX_TX_QUEUES];
 
 	bool radio_on;
-	bool radio_लघु_preamble;
-	bool snअगरfer_enabled;
+	bool radio_short_preamble;
+	bool sniffer_enabled;
 	bool wmm_enabled;
 
-	/* XXX need to convert this to handle multiple पूर्णांकerfaces */
+	/* XXX need to convert this to handle multiple interfaces */
 	bool capture_beacon;
 	u8 capture_bssid[ETH_ALEN];
-	काष्ठा sk_buff *beacon_skb;
+	struct sk_buff *beacon_skb;
 
 	/*
 	 * This FJ worker has to be global as it is scheduled from the
-	 * RX handler.  At this poपूर्णांक we करोn't know which पूर्णांकerface it
-	 * beदीर्घs to until the list of bssids रुकोing to complete join
+	 * RX handler.  At this point we don't know which interface it
+	 * belongs to until the list of bssids waiting to complete join
 	 * is checked.
 	 */
-	काष्ठा work_काष्ठा finalize_join_worker;
+	struct work_struct finalize_join_worker;
 
-	/* Tasklet to perक्रमm TX reclaim.  */
-	काष्ठा tasklet_काष्ठा poll_tx_task;
+	/* Tasklet to perform TX reclaim.  */
+	struct tasklet_struct poll_tx_task;
 
-	/* Tasklet to perक्रमm RX.  */
-	काष्ठा tasklet_काष्ठा poll_rx_task;
+	/* Tasklet to perform RX.  */
+	struct tasklet_struct poll_rx_task;
 
 	/* Most recently reported noise in dBm */
 	s8 noise;
 
 	/*
-	 * preserve the queue configurations so they can be restored अगर/when
+	 * preserve the queue configurations so they can be restored if/when
 	 * the firmware image is swapped.
 	 */
-	काष्ठा ieee80211_tx_queue_params wmm_params[MWL8K_TX_WMM_QUEUES];
+	struct ieee80211_tx_queue_params wmm_params[MWL8K_TX_WMM_QUEUES];
 
-	/* To perक्रमm the task of reloading the firmware */
-	काष्ठा work_काष्ठा fw_reload;
+	/* To perform the task of reloading the firmware */
+	struct work_struct fw_reload;
 	bool hw_restart_in_progress;
 
 	/* async firmware loading state */
-	अचिन्हित fw_state;
-	अक्षर *fw_pref;
-	अक्षर *fw_alt;
+	unsigned fw_state;
+	char *fw_pref;
+	char *fw_alt;
 	bool is_8764;
-	काष्ठा completion firmware_loading_complete;
+	struct completion firmware_loading_complete;
 
-	/* biपंचांगap of running BSSes */
+	/* bitmap of running BSSes */
 	u32 running_bsses;
 
 	/* ACS related */
 	bool sw_scan_start;
-	काष्ठा ieee80211_channel *acs_chan;
-	अचिन्हित दीर्घ channel_समय;
-	काष्ठा survey_info survey[MWL8K_NUM_CHANS];
-पूर्ण;
+	struct ieee80211_channel *acs_chan;
+	unsigned long channel_time;
+	struct survey_info survey[MWL8K_NUM_CHANS];
+};
 
-#घोषणा MAX_WEP_KEY_LEN         13
-#घोषणा NUM_WEP_KEYS            4
+#define MAX_WEP_KEY_LEN         13
+#define NUM_WEP_KEYS            4
 
-/* Per पूर्णांकerface specअगरic निजी data */
-काष्ठा mwl8k_vअगर अणु
-	काष्ठा list_head list;
-	काष्ठा ieee80211_vअगर *vअगर;
+/* Per interface specific private data */
+struct mwl8k_vif {
+	struct list_head list;
+	struct ieee80211_vif *vif;
 
-	/* Firmware macid क्रम this vअगर.  */
-	पूर्णांक macid;
+	/* Firmware macid for this vif.  */
+	int macid;
 
-	/* Non AMPDU sequence number asचिन्हित by driver.  */
+	/* Non AMPDU sequence number assigned by driver.  */
 	u16 seqno;
 
 	/* Saved WEP keys */
-	काष्ठा अणु
+	struct {
 		u8 enabled;
-		u8 key[माप(काष्ठा ieee80211_key_conf) + MAX_WEP_KEY_LEN];
-	पूर्ण wep_key_conf[NUM_WEP_KEYS];
+		u8 key[sizeof(struct ieee80211_key_conf) + MAX_WEP_KEY_LEN];
+	} wep_key_conf[NUM_WEP_KEYS];
 
 	/* BSSID */
 	u8 bssid[ETH_ALEN];
 
-	/* A flag to indicate is HW crypto is enabled क्रम this bssid */
+	/* A flag to indicate is HW crypto is enabled for this bssid */
 	bool is_hw_crypto_enabled;
-पूर्ण;
-#घोषणा MWL8K_VIF(_vअगर) ((काष्ठा mwl8k_vअगर *)&((_vअगर)->drv_priv))
-#घोषणा IEEE80211_KEY_CONF(_u8) ((काष्ठा ieee80211_key_conf *)(_u8))
+};
+#define MWL8K_VIF(_vif) ((struct mwl8k_vif *)&((_vif)->drv_priv))
+#define IEEE80211_KEY_CONF(_u8) ((struct ieee80211_key_conf *)(_u8))
 
-काष्ठा tx_traffic_info अणु
-	u32 start_समय;
+struct tx_traffic_info {
+	u32 start_time;
 	u32 pkts;
-पूर्ण;
+};
 
-#घोषणा MWL8K_MAX_TID 8
-काष्ठा mwl8k_sta अणु
-	/* Index पूर्णांकo station database. Returned by UPDATE_STADB.  */
+#define MWL8K_MAX_TID 8
+struct mwl8k_sta {
+	/* Index into station database. Returned by UPDATE_STADB.  */
 	u8 peer_id;
 	u8 is_ampdu_allowed;
-	काष्ठा tx_traffic_info tx_stats[MWL8K_MAX_TID];
-पूर्ण;
-#घोषणा MWL8K_STA(_sta) ((काष्ठा mwl8k_sta *)&((_sta)->drv_priv))
+	struct tx_traffic_info tx_stats[MWL8K_MAX_TID];
+};
+#define MWL8K_STA(_sta) ((struct mwl8k_sta *)&((_sta)->drv_priv))
 
-अटल स्थिर काष्ठा ieee80211_channel mwl8k_channels_24[] = अणु
-	अणु .band = NL80211_BAND_2GHZ, .center_freq = 2412, .hw_value = 1, पूर्ण,
-	अणु .band = NL80211_BAND_2GHZ, .center_freq = 2417, .hw_value = 2, पूर्ण,
-	अणु .band = NL80211_BAND_2GHZ, .center_freq = 2422, .hw_value = 3, पूर्ण,
-	अणु .band = NL80211_BAND_2GHZ, .center_freq = 2427, .hw_value = 4, पूर्ण,
-	अणु .band = NL80211_BAND_2GHZ, .center_freq = 2432, .hw_value = 5, पूर्ण,
-	अणु .band = NL80211_BAND_2GHZ, .center_freq = 2437, .hw_value = 6, पूर्ण,
-	अणु .band = NL80211_BAND_2GHZ, .center_freq = 2442, .hw_value = 7, पूर्ण,
-	अणु .band = NL80211_BAND_2GHZ, .center_freq = 2447, .hw_value = 8, पूर्ण,
-	अणु .band = NL80211_BAND_2GHZ, .center_freq = 2452, .hw_value = 9, पूर्ण,
-	अणु .band = NL80211_BAND_2GHZ, .center_freq = 2457, .hw_value = 10, पूर्ण,
-	अणु .band = NL80211_BAND_2GHZ, .center_freq = 2462, .hw_value = 11, पूर्ण,
-	अणु .band = NL80211_BAND_2GHZ, .center_freq = 2467, .hw_value = 12, पूर्ण,
-	अणु .band = NL80211_BAND_2GHZ, .center_freq = 2472, .hw_value = 13, पूर्ण,
-	अणु .band = NL80211_BAND_2GHZ, .center_freq = 2484, .hw_value = 14, पूर्ण,
-पूर्ण;
+static const struct ieee80211_channel mwl8k_channels_24[] = {
+	{ .band = NL80211_BAND_2GHZ, .center_freq = 2412, .hw_value = 1, },
+	{ .band = NL80211_BAND_2GHZ, .center_freq = 2417, .hw_value = 2, },
+	{ .band = NL80211_BAND_2GHZ, .center_freq = 2422, .hw_value = 3, },
+	{ .band = NL80211_BAND_2GHZ, .center_freq = 2427, .hw_value = 4, },
+	{ .band = NL80211_BAND_2GHZ, .center_freq = 2432, .hw_value = 5, },
+	{ .band = NL80211_BAND_2GHZ, .center_freq = 2437, .hw_value = 6, },
+	{ .band = NL80211_BAND_2GHZ, .center_freq = 2442, .hw_value = 7, },
+	{ .band = NL80211_BAND_2GHZ, .center_freq = 2447, .hw_value = 8, },
+	{ .band = NL80211_BAND_2GHZ, .center_freq = 2452, .hw_value = 9, },
+	{ .band = NL80211_BAND_2GHZ, .center_freq = 2457, .hw_value = 10, },
+	{ .band = NL80211_BAND_2GHZ, .center_freq = 2462, .hw_value = 11, },
+	{ .band = NL80211_BAND_2GHZ, .center_freq = 2467, .hw_value = 12, },
+	{ .band = NL80211_BAND_2GHZ, .center_freq = 2472, .hw_value = 13, },
+	{ .band = NL80211_BAND_2GHZ, .center_freq = 2484, .hw_value = 14, },
+};
 
-अटल स्थिर काष्ठा ieee80211_rate mwl8k_rates_24[] = अणु
-	अणु .bitrate = 10, .hw_value = 2, पूर्ण,
-	अणु .bitrate = 20, .hw_value = 4, पूर्ण,
-	अणु .bitrate = 55, .hw_value = 11, पूर्ण,
-	अणु .bitrate = 110, .hw_value = 22, पूर्ण,
-	अणु .bitrate = 220, .hw_value = 44, पूर्ण,
-	अणु .bitrate = 60, .hw_value = 12, पूर्ण,
-	अणु .bitrate = 90, .hw_value = 18, पूर्ण,
-	अणु .bitrate = 120, .hw_value = 24, पूर्ण,
-	अणु .bitrate = 180, .hw_value = 36, पूर्ण,
-	अणु .bitrate = 240, .hw_value = 48, पूर्ण,
-	अणु .bitrate = 360, .hw_value = 72, पूर्ण,
-	अणु .bitrate = 480, .hw_value = 96, पूर्ण,
-	अणु .bitrate = 540, .hw_value = 108, पूर्ण,
-पूर्ण;
+static const struct ieee80211_rate mwl8k_rates_24[] = {
+	{ .bitrate = 10, .hw_value = 2, },
+	{ .bitrate = 20, .hw_value = 4, },
+	{ .bitrate = 55, .hw_value = 11, },
+	{ .bitrate = 110, .hw_value = 22, },
+	{ .bitrate = 220, .hw_value = 44, },
+	{ .bitrate = 60, .hw_value = 12, },
+	{ .bitrate = 90, .hw_value = 18, },
+	{ .bitrate = 120, .hw_value = 24, },
+	{ .bitrate = 180, .hw_value = 36, },
+	{ .bitrate = 240, .hw_value = 48, },
+	{ .bitrate = 360, .hw_value = 72, },
+	{ .bitrate = 480, .hw_value = 96, },
+	{ .bitrate = 540, .hw_value = 108, },
+};
 
-अटल स्थिर काष्ठा ieee80211_channel mwl8k_channels_50[] = अणु
-	अणु .band = NL80211_BAND_5GHZ, .center_freq = 5180, .hw_value = 36, पूर्ण,
-	अणु .band = NL80211_BAND_5GHZ, .center_freq = 5200, .hw_value = 40, पूर्ण,
-	अणु .band = NL80211_BAND_5GHZ, .center_freq = 5220, .hw_value = 44, पूर्ण,
-	अणु .band = NL80211_BAND_5GHZ, .center_freq = 5240, .hw_value = 48, पूर्ण,
-	अणु .band = NL80211_BAND_5GHZ, .center_freq = 5745, .hw_value = 149, पूर्ण,
-	अणु .band = NL80211_BAND_5GHZ, .center_freq = 5765, .hw_value = 153, पूर्ण,
-	अणु .band = NL80211_BAND_5GHZ, .center_freq = 5785, .hw_value = 157, पूर्ण,
-	अणु .band = NL80211_BAND_5GHZ, .center_freq = 5805, .hw_value = 161, पूर्ण,
-	अणु .band = NL80211_BAND_5GHZ, .center_freq = 5825, .hw_value = 165, पूर्ण,
-पूर्ण;
+static const struct ieee80211_channel mwl8k_channels_50[] = {
+	{ .band = NL80211_BAND_5GHZ, .center_freq = 5180, .hw_value = 36, },
+	{ .band = NL80211_BAND_5GHZ, .center_freq = 5200, .hw_value = 40, },
+	{ .band = NL80211_BAND_5GHZ, .center_freq = 5220, .hw_value = 44, },
+	{ .band = NL80211_BAND_5GHZ, .center_freq = 5240, .hw_value = 48, },
+	{ .band = NL80211_BAND_5GHZ, .center_freq = 5745, .hw_value = 149, },
+	{ .band = NL80211_BAND_5GHZ, .center_freq = 5765, .hw_value = 153, },
+	{ .band = NL80211_BAND_5GHZ, .center_freq = 5785, .hw_value = 157, },
+	{ .band = NL80211_BAND_5GHZ, .center_freq = 5805, .hw_value = 161, },
+	{ .band = NL80211_BAND_5GHZ, .center_freq = 5825, .hw_value = 165, },
+};
 
-अटल स्थिर काष्ठा ieee80211_rate mwl8k_rates_50[] = अणु
-	अणु .bitrate = 60, .hw_value = 12, पूर्ण,
-	अणु .bitrate = 90, .hw_value = 18, पूर्ण,
-	अणु .bitrate = 120, .hw_value = 24, पूर्ण,
-	अणु .bitrate = 180, .hw_value = 36, पूर्ण,
-	अणु .bitrate = 240, .hw_value = 48, पूर्ण,
-	अणु .bitrate = 360, .hw_value = 72, पूर्ण,
-	अणु .bitrate = 480, .hw_value = 96, पूर्ण,
-	अणु .bitrate = 540, .hw_value = 108, पूर्ण,
-पूर्ण;
+static const struct ieee80211_rate mwl8k_rates_50[] = {
+	{ .bitrate = 60, .hw_value = 12, },
+	{ .bitrate = 90, .hw_value = 18, },
+	{ .bitrate = 120, .hw_value = 24, },
+	{ .bitrate = 180, .hw_value = 36, },
+	{ .bitrate = 240, .hw_value = 48, },
+	{ .bitrate = 360, .hw_value = 72, },
+	{ .bitrate = 480, .hw_value = 96, },
+	{ .bitrate = 540, .hw_value = 108, },
+};
 
 /* Set or get info from Firmware */
-#घोषणा MWL8K_CMD_GET			0x0000
-#घोषणा MWL8K_CMD_SET			0x0001
-#घोषणा MWL8K_CMD_SET_LIST		0x0002
+#define MWL8K_CMD_GET			0x0000
+#define MWL8K_CMD_SET			0x0001
+#define MWL8K_CMD_SET_LIST		0x0002
 
 /* Firmware command codes */
-#घोषणा MWL8K_CMD_CODE_DNLD		0x0001
-#घोषणा MWL8K_CMD_GET_HW_SPEC		0x0003
-#घोषणा MWL8K_CMD_SET_HW_SPEC		0x0004
-#घोषणा MWL8K_CMD_MAC_MULTICAST_ADR	0x0010
-#घोषणा MWL8K_CMD_GET_STAT		0x0014
-#घोषणा MWL8K_CMD_BBP_REG_ACCESS	0x001a
-#घोषणा MWL8K_CMD_RADIO_CONTROL		0x001c
-#घोषणा MWL8K_CMD_RF_TX_POWER		0x001e
-#घोषणा MWL8K_CMD_TX_POWER		0x001f
-#घोषणा MWL8K_CMD_RF_ANTENNA		0x0020
-#घोषणा MWL8K_CMD_SET_BEACON		0x0100		/* per-vअगर */
-#घोषणा MWL8K_CMD_SET_PRE_SCAN		0x0107
-#घोषणा MWL8K_CMD_SET_POST_SCAN		0x0108
-#घोषणा MWL8K_CMD_SET_RF_CHANNEL	0x010a
-#घोषणा MWL8K_CMD_SET_AID		0x010d
-#घोषणा MWL8K_CMD_SET_RATE		0x0110
-#घोषणा MWL8K_CMD_SET_FINALIZE_JOIN	0x0111
-#घोषणा MWL8K_CMD_RTS_THRESHOLD		0x0113
-#घोषणा MWL8K_CMD_SET_SLOT		0x0114
-#घोषणा MWL8K_CMD_SET_EDCA_PARAMS	0x0115
-#घोषणा MWL8K_CMD_SET_WMM_MODE		0x0123
-#घोषणा MWL8K_CMD_MIMO_CONFIG		0x0125
-#घोषणा MWL8K_CMD_USE_FIXED_RATE	0x0126
-#घोषणा MWL8K_CMD_ENABLE_SNIFFER	0x0150
-#घोषणा MWL8K_CMD_SET_MAC_ADDR		0x0202		/* per-vअगर */
-#घोषणा MWL8K_CMD_SET_RATEADAPT_MODE	0x0203
-#घोषणा MWL8K_CMD_GET_WATCHDOG_BITMAP	0x0205
-#घोषणा MWL8K_CMD_DEL_MAC_ADDR		0x0206		/* per-vअगर */
-#घोषणा MWL8K_CMD_BSS_START		0x1100		/* per-vअगर */
-#घोषणा MWL8K_CMD_SET_NEW_STN		0x1111		/* per-vअगर */
-#घोषणा MWL8K_CMD_UPDATE_ENCRYPTION	0x1122		/* per-vअगर */
-#घोषणा MWL8K_CMD_UPDATE_STADB		0x1123
-#घोषणा MWL8K_CMD_BASTREAM		0x1125
+#define MWL8K_CMD_CODE_DNLD		0x0001
+#define MWL8K_CMD_GET_HW_SPEC		0x0003
+#define MWL8K_CMD_SET_HW_SPEC		0x0004
+#define MWL8K_CMD_MAC_MULTICAST_ADR	0x0010
+#define MWL8K_CMD_GET_STAT		0x0014
+#define MWL8K_CMD_BBP_REG_ACCESS	0x001a
+#define MWL8K_CMD_RADIO_CONTROL		0x001c
+#define MWL8K_CMD_RF_TX_POWER		0x001e
+#define MWL8K_CMD_TX_POWER		0x001f
+#define MWL8K_CMD_RF_ANTENNA		0x0020
+#define MWL8K_CMD_SET_BEACON		0x0100		/* per-vif */
+#define MWL8K_CMD_SET_PRE_SCAN		0x0107
+#define MWL8K_CMD_SET_POST_SCAN		0x0108
+#define MWL8K_CMD_SET_RF_CHANNEL	0x010a
+#define MWL8K_CMD_SET_AID		0x010d
+#define MWL8K_CMD_SET_RATE		0x0110
+#define MWL8K_CMD_SET_FINALIZE_JOIN	0x0111
+#define MWL8K_CMD_RTS_THRESHOLD		0x0113
+#define MWL8K_CMD_SET_SLOT		0x0114
+#define MWL8K_CMD_SET_EDCA_PARAMS	0x0115
+#define MWL8K_CMD_SET_WMM_MODE		0x0123
+#define MWL8K_CMD_MIMO_CONFIG		0x0125
+#define MWL8K_CMD_USE_FIXED_RATE	0x0126
+#define MWL8K_CMD_ENABLE_SNIFFER	0x0150
+#define MWL8K_CMD_SET_MAC_ADDR		0x0202		/* per-vif */
+#define MWL8K_CMD_SET_RATEADAPT_MODE	0x0203
+#define MWL8K_CMD_GET_WATCHDOG_BITMAP	0x0205
+#define MWL8K_CMD_DEL_MAC_ADDR		0x0206		/* per-vif */
+#define MWL8K_CMD_BSS_START		0x1100		/* per-vif */
+#define MWL8K_CMD_SET_NEW_STN		0x1111		/* per-vif */
+#define MWL8K_CMD_UPDATE_ENCRYPTION	0x1122		/* per-vif */
+#define MWL8K_CMD_UPDATE_STADB		0x1123
+#define MWL8K_CMD_BASTREAM		0x1125
 
-#घोषणा MWL8K_LEGACY_5G_RATE_OFFSET \
+#define MWL8K_LEGACY_5G_RATE_OFFSET \
 	(ARRAY_SIZE(mwl8k_rates_24) - ARRAY_SIZE(mwl8k_rates_50))
 
-अटल स्थिर अक्षर *mwl8k_cmd_name(__le16 cmd, अक्षर *buf, पूर्णांक bufsize)
-अणु
+static const char *mwl8k_cmd_name(__le16 cmd, char *buf, int bufsize)
+{
 	u16 command = le16_to_cpu(cmd);
 
-#घोषणा MWL8K_CMDNAME(x)	हाल MWL8K_CMD_##x: करो अणु\
-					snम_लिखो(buf, bufsize, "%s", #x);\
-					वापस buf;\
-					पूर्ण जबतक (0)
-	चयन (command & ~0x8000) अणु
+#define MWL8K_CMDNAME(x)	case MWL8K_CMD_##x: do {\
+					snprintf(buf, bufsize, "%s", #x);\
+					return buf;\
+					} while (0)
+	switch (command & ~0x8000) {
 		MWL8K_CMDNAME(CODE_DNLD);
 		MWL8K_CMDNAME(GET_HW_SPEC);
 		MWL8K_CMDNAME(SET_HW_SPEC);
@@ -485,431 +484,431 @@ MODULE_PARM_DESC(ap_mode_शेष,
 		MWL8K_CMDNAME(UPDATE_STADB);
 		MWL8K_CMDNAME(BASTREAM);
 		MWL8K_CMDNAME(GET_WATCHDOG_BITMAP);
-	शेष:
-		snम_लिखो(buf, bufsize, "0x%x", cmd);
-	पूर्ण
-#अघोषित MWL8K_CMDNAME
+	default:
+		snprintf(buf, bufsize, "0x%x", cmd);
+	}
+#undef MWL8K_CMDNAME
 
-	वापस buf;
-पूर्ण
+	return buf;
+}
 
 /* Hardware and firmware reset */
-अटल व्योम mwl8k_hw_reset(काष्ठा mwl8k_priv *priv)
-अणु
-	ioग_लिखो32(MWL8K_H2A_INT_RESET,
+static void mwl8k_hw_reset(struct mwl8k_priv *priv)
+{
+	iowrite32(MWL8K_H2A_INT_RESET,
 		priv->regs + MWL8K_HIU_H2A_INTERRUPT_EVENTS);
-	ioग_लिखो32(MWL8K_H2A_INT_RESET,
+	iowrite32(MWL8K_H2A_INT_RESET,
 		priv->regs + MWL8K_HIU_H2A_INTERRUPT_EVENTS);
 	msleep(20);
-पूर्ण
+}
 
 /* Release fw image */
-अटल व्योम mwl8k_release_fw(स्थिर काष्ठा firmware **fw)
-अणु
-	अगर (*fw == शून्य)
-		वापस;
+static void mwl8k_release_fw(const struct firmware **fw)
+{
+	if (*fw == NULL)
+		return;
 	release_firmware(*fw);
-	*fw = शून्य;
-पूर्ण
+	*fw = NULL;
+}
 
-अटल व्योम mwl8k_release_firmware(काष्ठा mwl8k_priv *priv)
-अणु
+static void mwl8k_release_firmware(struct mwl8k_priv *priv)
+{
 	mwl8k_release_fw(&priv->fw_ucode);
 	mwl8k_release_fw(&priv->fw_helper);
-पूर्ण
+}
 
-/* states क्रम asynchronous f/w loading */
-अटल व्योम mwl8k_fw_state_machine(स्थिर काष्ठा firmware *fw, व्योम *context);
-क्रमागत अणु
+/* states for asynchronous f/w loading */
+static void mwl8k_fw_state_machine(const struct firmware *fw, void *context);
+enum {
 	FW_STATE_INIT = 0,
 	FW_STATE_LOADING_PREF,
 	FW_STATE_LOADING_ALT,
 	FW_STATE_ERROR,
-पूर्ण;
+};
 
 /* Request fw image */
-अटल पूर्णांक mwl8k_request_fw(काष्ठा mwl8k_priv *priv,
-			    स्थिर अक्षर *fname, स्थिर काष्ठा firmware **fw,
-			    bool noरुको)
-अणु
+static int mwl8k_request_fw(struct mwl8k_priv *priv,
+			    const char *fname, const struct firmware **fw,
+			    bool nowait)
+{
 	/* release current image */
-	अगर (*fw != शून्य)
+	if (*fw != NULL)
 		mwl8k_release_fw(fw);
 
-	अगर (noरुको)
-		वापस request_firmware_noरुको(THIS_MODULE, 1, fname,
+	if (nowait)
+		return request_firmware_nowait(THIS_MODULE, 1, fname,
 					       &priv->pdev->dev, GFP_KERNEL,
 					       priv, mwl8k_fw_state_machine);
-	अन्यथा
-		वापस request_firmware(fw, fname, &priv->pdev->dev);
-पूर्ण
+	else
+		return request_firmware(fw, fname, &priv->pdev->dev);
+}
 
-अटल पूर्णांक mwl8k_request_firmware(काष्ठा mwl8k_priv *priv, अक्षर *fw_image,
-				  bool noरुको)
-अणु
-	काष्ठा mwl8k_device_info *di = priv->device_info;
-	पूर्णांक rc;
+static int mwl8k_request_firmware(struct mwl8k_priv *priv, char *fw_image,
+				  bool nowait)
+{
+	struct mwl8k_device_info *di = priv->device_info;
+	int rc;
 
-	अगर (di->helper_image != शून्य) अणु
-		अगर (noरुको)
+	if (di->helper_image != NULL) {
+		if (nowait)
 			rc = mwl8k_request_fw(priv, di->helper_image,
 					      &priv->fw_helper, true);
-		अन्यथा
+		else
 			rc = mwl8k_request_fw(priv, di->helper_image,
 					      &priv->fw_helper, false);
-		अगर (rc)
-			prपूर्णांकk(KERN_ERR "%s: Error requesting helper fw %s\n",
+		if (rc)
+			printk(KERN_ERR "%s: Error requesting helper fw %s\n",
 			       pci_name(priv->pdev), di->helper_image);
 
-		अगर (rc || noरुको)
-			वापस rc;
-	पूर्ण
+		if (rc || nowait)
+			return rc;
+	}
 
-	अगर (noरुको) अणु
+	if (nowait) {
 		/*
-		 * अगर we get here, no helper image is needed.  Skip the
+		 * if we get here, no helper image is needed.  Skip the
 		 * FW_STATE_INIT state.
 		 */
 		priv->fw_state = FW_STATE_LOADING_PREF;
 		rc = mwl8k_request_fw(priv, fw_image,
 				      &priv->fw_ucode,
 				      true);
-	पूर्ण अन्यथा
+	} else
 		rc = mwl8k_request_fw(priv, fw_image,
 				      &priv->fw_ucode, false);
-	अगर (rc) अणु
-		prपूर्णांकk(KERN_ERR "%s: Error requesting firmware file %s\n",
+	if (rc) {
+		printk(KERN_ERR "%s: Error requesting firmware file %s\n",
 		       pci_name(priv->pdev), fw_image);
 		mwl8k_release_fw(&priv->fw_helper);
-		वापस rc;
-	पूर्ण
+		return rc;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-काष्ठा mwl8k_cmd_pkt अणु
+struct mwl8k_cmd_pkt {
 	__le16	code;
 	__le16	length;
 	__u8	seq_num;
 	__u8	macid;
 	__le16	result;
-	अक्षर	payload[];
-पूर्ण __packed;
+	char	payload[];
+} __packed;
 
 /*
  * Firmware loading.
  */
-अटल पूर्णांक
-mwl8k_send_fw_load_cmd(काष्ठा mwl8k_priv *priv, व्योम *data, पूर्णांक length)
-अणु
-	व्योम __iomem *regs = priv->regs;
+static int
+mwl8k_send_fw_load_cmd(struct mwl8k_priv *priv, void *data, int length)
+{
+	void __iomem *regs = priv->regs;
 	dma_addr_t dma_addr;
-	पूर्णांक loops;
+	int loops;
 
 	dma_addr = dma_map_single(&priv->pdev->dev, data, length,
 				  DMA_TO_DEVICE);
-	अगर (dma_mapping_error(&priv->pdev->dev, dma_addr))
-		वापस -ENOMEM;
+	if (dma_mapping_error(&priv->pdev->dev, dma_addr))
+		return -ENOMEM;
 
-	ioग_लिखो32(dma_addr, regs + MWL8K_HIU_GEN_PTR);
-	ioग_लिखो32(0, regs + MWL8K_HIU_INT_CODE);
-	ioग_लिखो32(MWL8K_H2A_INT_DOORBELL,
+	iowrite32(dma_addr, regs + MWL8K_HIU_GEN_PTR);
+	iowrite32(0, regs + MWL8K_HIU_INT_CODE);
+	iowrite32(MWL8K_H2A_INT_DOORBELL,
 		regs + MWL8K_HIU_H2A_INTERRUPT_EVENTS);
-	ioग_लिखो32(MWL8K_H2A_INT_DUMMY,
+	iowrite32(MWL8K_H2A_INT_DUMMY,
 		regs + MWL8K_HIU_H2A_INTERRUPT_EVENTS);
 
 	loops = 1000;
-	करो अणु
-		u32 पूर्णांक_code;
-		अगर (priv->is_8764) अणु
-			पूर्णांक_code = ioपढ़ो32(regs +
+	do {
+		u32 int_code;
+		if (priv->is_8764) {
+			int_code = ioread32(regs +
 					    MWL8K_HIU_H2A_INTERRUPT_STATUS);
-			अगर (पूर्णांक_code == 0)
-				अवरोध;
-		पूर्ण अन्यथा अणु
-			पूर्णांक_code = ioपढ़ो32(regs + MWL8K_HIU_INT_CODE);
-			अगर (पूर्णांक_code == MWL8K_INT_CODE_CMD_FINISHED) अणु
-				ioग_लिखो32(0, regs + MWL8K_HIU_INT_CODE);
-				अवरोध;
-			पूर्ण
-		पूर्ण
+			if (int_code == 0)
+				break;
+		} else {
+			int_code = ioread32(regs + MWL8K_HIU_INT_CODE);
+			if (int_code == MWL8K_INT_CODE_CMD_FINISHED) {
+				iowrite32(0, regs + MWL8K_HIU_INT_CODE);
+				break;
+			}
+		}
 		cond_resched();
 		udelay(1);
-	पूर्ण जबतक (--loops);
+	} while (--loops);
 
 	dma_unmap_single(&priv->pdev->dev, dma_addr, length, DMA_TO_DEVICE);
 
-	वापस loops ? 0 : -ETIMEDOUT;
-पूर्ण
+	return loops ? 0 : -ETIMEDOUT;
+}
 
-अटल पूर्णांक mwl8k_load_fw_image(काष्ठा mwl8k_priv *priv,
-				स्थिर u8 *data, माप_प्रकार length)
-अणु
-	काष्ठा mwl8k_cmd_pkt *cmd;
-	पूर्णांक करोne;
-	पूर्णांक rc = 0;
+static int mwl8k_load_fw_image(struct mwl8k_priv *priv,
+				const u8 *data, size_t length)
+{
+	struct mwl8k_cmd_pkt *cmd;
+	int done;
+	int rc = 0;
 
-	cmd = kदो_स्मृति(माप(*cmd) + 256, GFP_KERNEL);
-	अगर (cmd == शून्य)
-		वापस -ENOMEM;
+	cmd = kmalloc(sizeof(*cmd) + 256, GFP_KERNEL);
+	if (cmd == NULL)
+		return -ENOMEM;
 
 	cmd->code = cpu_to_le16(MWL8K_CMD_CODE_DNLD);
 	cmd->seq_num = 0;
 	cmd->macid = 0;
 	cmd->result = 0;
 
-	करोne = 0;
-	जबतक (length) अणु
-		पूर्णांक block_size = length > 256 ? 256 : length;
+	done = 0;
+	while (length) {
+		int block_size = length > 256 ? 256 : length;
 
-		स_नकल(cmd->payload, data + करोne, block_size);
+		memcpy(cmd->payload, data + done, block_size);
 		cmd->length = cpu_to_le16(block_size);
 
 		rc = mwl8k_send_fw_load_cmd(priv, cmd,
-						माप(*cmd) + block_size);
-		अगर (rc)
-			अवरोध;
+						sizeof(*cmd) + block_size);
+		if (rc)
+			break;
 
-		करोne += block_size;
+		done += block_size;
 		length -= block_size;
-	पूर्ण
+	}
 
-	अगर (!rc) अणु
+	if (!rc) {
 		cmd->length = 0;
-		rc = mwl8k_send_fw_load_cmd(priv, cmd, माप(*cmd));
-	पूर्ण
+		rc = mwl8k_send_fw_load_cmd(priv, cmd, sizeof(*cmd));
+	}
 
-	kमुक्त(cmd);
+	kfree(cmd);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक mwl8k_feed_fw_image(काष्ठा mwl8k_priv *priv,
-				स्थिर u8 *data, माप_प्रकार length)
-अणु
-	अचिन्हित अक्षर *buffer;
-	पूर्णांक may_जारी, rc = 0;
-	u32 करोne, prev_block_size;
+static int mwl8k_feed_fw_image(struct mwl8k_priv *priv,
+				const u8 *data, size_t length)
+{
+	unsigned char *buffer;
+	int may_continue, rc = 0;
+	u32 done, prev_block_size;
 
-	buffer = kदो_स्मृति(1024, GFP_KERNEL);
-	अगर (buffer == शून्य)
-		वापस -ENOMEM;
+	buffer = kmalloc(1024, GFP_KERNEL);
+	if (buffer == NULL)
+		return -ENOMEM;
 
-	करोne = 0;
+	done = 0;
 	prev_block_size = 0;
-	may_जारी = 1000;
-	जबतक (may_जारी > 0) अणु
+	may_continue = 1000;
+	while (may_continue > 0) {
 		u32 block_size;
 
-		block_size = ioपढ़ो32(priv->regs + MWL8K_HIU_SCRATCH);
-		अगर (block_size & 1) अणु
+		block_size = ioread32(priv->regs + MWL8K_HIU_SCRATCH);
+		if (block_size & 1) {
 			block_size &= ~1;
-			may_जारी--;
-		पूर्ण अन्यथा अणु
-			करोne += prev_block_size;
+			may_continue--;
+		} else {
+			done += prev_block_size;
 			length -= prev_block_size;
-		पूर्ण
+		}
 
-		अगर (block_size > 1024 || block_size > length) अणु
+		if (block_size > 1024 || block_size > length) {
 			rc = -EOVERFLOW;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (length == 0) अणु
+		if (length == 0) {
 			rc = 0;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (block_size == 0) अणु
+		if (block_size == 0) {
 			rc = -EPROTO;
-			may_जारी--;
+			may_continue--;
 			udelay(1);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		prev_block_size = block_size;
-		स_नकल(buffer, data + करोne, block_size);
+		memcpy(buffer, data + done, block_size);
 
 		rc = mwl8k_send_fw_load_cmd(priv, buffer, block_size);
-		अगर (rc)
-			अवरोध;
-	पूर्ण
+		if (rc)
+			break;
+	}
 
-	अगर (!rc && length != 0)
+	if (!rc && length != 0)
 		rc = -EREMOTEIO;
 
-	kमुक्त(buffer);
+	kfree(buffer);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक mwl8k_load_firmware(काष्ठा ieee80211_hw *hw)
-अणु
-	काष्ठा mwl8k_priv *priv = hw->priv;
-	स्थिर काष्ठा firmware *fw = priv->fw_ucode;
-	पूर्णांक rc;
-	पूर्णांक loops;
+static int mwl8k_load_firmware(struct ieee80211_hw *hw)
+{
+	struct mwl8k_priv *priv = hw->priv;
+	const struct firmware *fw = priv->fw_ucode;
+	int rc;
+	int loops;
 
-	अगर (!स_भेद(fw->data, "\x01\x00\x00\x00", 4) && !priv->is_8764) अणु
-		स्थिर काष्ठा firmware *helper = priv->fw_helper;
+	if (!memcmp(fw->data, "\x01\x00\x00\x00", 4) && !priv->is_8764) {
+		const struct firmware *helper = priv->fw_helper;
 
-		अगर (helper == शून्य) अणु
-			prपूर्णांकk(KERN_ERR "%s: helper image needed but none "
+		if (helper == NULL) {
+			printk(KERN_ERR "%s: helper image needed but none "
 			       "given\n", pci_name(priv->pdev));
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
 		rc = mwl8k_load_fw_image(priv, helper->data, helper->size);
-		अगर (rc) अणु
-			prपूर्णांकk(KERN_ERR "%s: unable to load firmware "
+		if (rc) {
+			printk(KERN_ERR "%s: unable to load firmware "
 			       "helper image\n", pci_name(priv->pdev));
-			वापस rc;
-		पूर्ण
+			return rc;
+		}
 		msleep(20);
 
 		rc = mwl8k_feed_fw_image(priv, fw->data, fw->size);
-	पूर्ण अन्यथा अणु
-		अगर (priv->is_8764)
+	} else {
+		if (priv->is_8764)
 			rc = mwl8k_feed_fw_image(priv, fw->data, fw->size);
-		अन्यथा
+		else
 			rc = mwl8k_load_fw_image(priv, fw->data, fw->size);
-	पूर्ण
+	}
 
-	अगर (rc) अणु
-		prपूर्णांकk(KERN_ERR "%s: unable to load firmware image\n",
+	if (rc) {
+		printk(KERN_ERR "%s: unable to load firmware image\n",
 		       pci_name(priv->pdev));
-		वापस rc;
-	पूर्ण
+		return rc;
+	}
 
-	ioग_लिखो32(MWL8K_MODE_STA, priv->regs + MWL8K_HIU_GEN_PTR);
+	iowrite32(MWL8K_MODE_STA, priv->regs + MWL8K_HIU_GEN_PTR);
 
 	loops = 500000;
-	करो अणु
-		u32 पढ़ोy_code;
+	do {
+		u32 ready_code;
 
-		पढ़ोy_code = ioपढ़ो32(priv->regs + MWL8K_HIU_INT_CODE);
-		अगर (पढ़ोy_code == MWL8K_FWAP_READY) अणु
+		ready_code = ioread32(priv->regs + MWL8K_HIU_INT_CODE);
+		if (ready_code == MWL8K_FWAP_READY) {
 			priv->ap_fw = true;
-			अवरोध;
-		पूर्ण अन्यथा अगर (पढ़ोy_code == MWL8K_FWSTA_READY) अणु
+			break;
+		} else if (ready_code == MWL8K_FWSTA_READY) {
 			priv->ap_fw = false;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		cond_resched();
 		udelay(1);
-	पूर्ण जबतक (--loops);
+	} while (--loops);
 
-	वापस loops ? 0 : -ETIMEDOUT;
-पूर्ण
+	return loops ? 0 : -ETIMEDOUT;
+}
 
 
 /* DMA header used by firmware and hardware.  */
-काष्ठा mwl8k_dma_data अणु
+struct mwl8k_dma_data {
 	__le16 fwlen;
-	काष्ठा ieee80211_hdr wh;
-	अक्षर data[];
-पूर्ण __packed __aligned(2);
+	struct ieee80211_hdr wh;
+	char data[];
+} __packed __aligned(2);
 
-/* Routines to add/हटाओ DMA header from skb.  */
-अटल अंतरभूत व्योम mwl8k_हटाओ_dma_header(काष्ठा sk_buff *skb, __le16 qos)
-अणु
-	काष्ठा mwl8k_dma_data *tr;
-	पूर्णांक hdrlen;
+/* Routines to add/remove DMA header from skb.  */
+static inline void mwl8k_remove_dma_header(struct sk_buff *skb, __le16 qos)
+{
+	struct mwl8k_dma_data *tr;
+	int hdrlen;
 
-	tr = (काष्ठा mwl8k_dma_data *)skb->data;
+	tr = (struct mwl8k_dma_data *)skb->data;
 	hdrlen = ieee80211_hdrlen(tr->wh.frame_control);
 
-	अगर (hdrlen != माप(tr->wh)) अणु
-		अगर (ieee80211_is_data_qos(tr->wh.frame_control)) अणु
-			स_हटाओ(tr->data - hdrlen, &tr->wh, hdrlen - 2);
+	if (hdrlen != sizeof(tr->wh)) {
+		if (ieee80211_is_data_qos(tr->wh.frame_control)) {
+			memmove(tr->data - hdrlen, &tr->wh, hdrlen - 2);
 			*((__le16 *)(tr->data - 2)) = qos;
-		पूर्ण अन्यथा अणु
-			स_हटाओ(tr->data - hdrlen, &tr->wh, hdrlen);
-		पूर्ण
-	पूर्ण
+		} else {
+			memmove(tr->data - hdrlen, &tr->wh, hdrlen);
+		}
+	}
 
-	अगर (hdrlen != माप(*tr))
-		skb_pull(skb, माप(*tr) - hdrlen);
-पूर्ण
+	if (hdrlen != sizeof(*tr))
+		skb_pull(skb, sizeof(*tr) - hdrlen);
+}
 
-#घोषणा REDUCED_TX_HEADROOM	8
+#define REDUCED_TX_HEADROOM	8
 
-अटल व्योम
-mwl8k_add_dma_header(काष्ठा mwl8k_priv *priv, काष्ठा sk_buff *skb,
-						पूर्णांक head_pad, पूर्णांक tail_pad)
-अणु
-	काष्ठा ieee80211_hdr *wh;
-	पूर्णांक hdrlen;
-	पूर्णांक reqd_hdrlen;
-	काष्ठा mwl8k_dma_data *tr;
+static void
+mwl8k_add_dma_header(struct mwl8k_priv *priv, struct sk_buff *skb,
+						int head_pad, int tail_pad)
+{
+	struct ieee80211_hdr *wh;
+	int hdrlen;
+	int reqd_hdrlen;
+	struct mwl8k_dma_data *tr;
 
 	/*
 	 * Add a firmware DMA header; the firmware requires that we
 	 * present a 2-byte payload length followed by a 4-address
 	 * header (without QoS field), followed (optionally) by any
-	 * WEP/ExtIV header (but only filled in क्रम CCMP).
+	 * WEP/ExtIV header (but only filled in for CCMP).
 	 */
-	wh = (काष्ठा ieee80211_hdr *)skb->data;
+	wh = (struct ieee80211_hdr *)skb->data;
 
 	hdrlen = ieee80211_hdrlen(wh->frame_control);
 
 	/*
-	 * Check अगर skb_resize is required because of
-	 * tx_headroom adjusपंचांगent.
+	 * Check if skb_resize is required because of
+	 * tx_headroom adjustment.
 	 */
-	अगर (priv->ap_fw && (hdrlen < (माप(काष्ठा ieee80211_cts)
-						+ REDUCED_TX_HEADROOM))) अणु
-		अगर (pskb_expand_head(skb, REDUCED_TX_HEADROOM, 0, GFP_ATOMIC)) अणु
+	if (priv->ap_fw && (hdrlen < (sizeof(struct ieee80211_cts)
+						+ REDUCED_TX_HEADROOM))) {
+		if (pskb_expand_head(skb, REDUCED_TX_HEADROOM, 0, GFP_ATOMIC)) {
 
 			wiphy_err(priv->hw->wiphy,
 					"Failed to reallocate TX buffer\n");
-			वापस;
-		पूर्ण
+			return;
+		}
 		skb->truesize += REDUCED_TX_HEADROOM;
-	पूर्ण
+	}
 
-	reqd_hdrlen = माप(*tr) + head_pad;
+	reqd_hdrlen = sizeof(*tr) + head_pad;
 
-	अगर (hdrlen != reqd_hdrlen)
+	if (hdrlen != reqd_hdrlen)
 		skb_push(skb, reqd_hdrlen - hdrlen);
 
-	अगर (ieee80211_is_data_qos(wh->frame_control))
+	if (ieee80211_is_data_qos(wh->frame_control))
 		hdrlen -= IEEE80211_QOS_CTL_LEN;
 
-	tr = (काष्ठा mwl8k_dma_data *)skb->data;
-	अगर (wh != &tr->wh)
-		स_हटाओ(&tr->wh, wh, hdrlen);
-	अगर (hdrlen != माप(tr->wh))
-		स_रखो(((व्योम *)&tr->wh) + hdrlen, 0, माप(tr->wh) - hdrlen);
+	tr = (struct mwl8k_dma_data *)skb->data;
+	if (wh != &tr->wh)
+		memmove(&tr->wh, wh, hdrlen);
+	if (hdrlen != sizeof(tr->wh))
+		memset(((void *)&tr->wh) + hdrlen, 0, sizeof(tr->wh) - hdrlen);
 
 	/*
-	 * Firmware length is the length of the fully क्रमmed "802.11
-	 * payload".  That is, everything except क्रम the 802.11 header.
+	 * Firmware length is the length of the fully formed "802.11
+	 * payload".  That is, everything except for the 802.11 header.
 	 * This includes all crypto material including the MIC.
 	 */
-	tr->fwlen = cpu_to_le16(skb->len - माप(*tr) + tail_pad);
-पूर्ण
+	tr->fwlen = cpu_to_le16(skb->len - sizeof(*tr) + tail_pad);
+}
 
-अटल व्योम mwl8k_encapsulate_tx_frame(काष्ठा mwl8k_priv *priv,
-		काष्ठा sk_buff *skb)
-अणु
-	काष्ठा ieee80211_hdr *wh;
-	काष्ठा ieee80211_tx_info *tx_info;
-	काष्ठा ieee80211_key_conf *key_conf;
-	पूर्णांक data_pad;
-	पूर्णांक head_pad = 0;
+static void mwl8k_encapsulate_tx_frame(struct mwl8k_priv *priv,
+		struct sk_buff *skb)
+{
+	struct ieee80211_hdr *wh;
+	struct ieee80211_tx_info *tx_info;
+	struct ieee80211_key_conf *key_conf;
+	int data_pad;
+	int head_pad = 0;
 
-	wh = (काष्ठा ieee80211_hdr *)skb->data;
+	wh = (struct ieee80211_hdr *)skb->data;
 
 	tx_info = IEEE80211_SKB_CB(skb);
 
-	key_conf = शून्य;
-	अगर (ieee80211_is_data(wh->frame_control))
+	key_conf = NULL;
+	if (ieee80211_is_data(wh->frame_control))
 		key_conf = tx_info->control.hw_key;
 
 	/*
-	 * Make sure the packet header is in the DMA header क्रमmat (4-address
+	 * Make sure the packet header is in the DMA header format (4-address
 	 * without QoS), and add head & tail padding when HW crypto is enabled.
 	 *
 	 * We have the following trailer padding requirements:
@@ -918,28 +917,28 @@ mwl8k_add_dma_header(काष्ठा mwl8k_priv *priv, काष्ठा sk_
 	 * - CCMP: 8 trailer bytes (MIC)
 	 */
 	data_pad = 0;
-	अगर (key_conf != शून्य) अणु
+	if (key_conf != NULL) {
 		head_pad = key_conf->iv_len;
-		चयन (key_conf->cipher) अणु
-		हाल WLAN_CIPHER_SUITE_WEP40:
-		हाल WLAN_CIPHER_SUITE_WEP104:
+		switch (key_conf->cipher) {
+		case WLAN_CIPHER_SUITE_WEP40:
+		case WLAN_CIPHER_SUITE_WEP104:
 			data_pad = 4;
-			अवरोध;
-		हाल WLAN_CIPHER_SUITE_TKIP:
+			break;
+		case WLAN_CIPHER_SUITE_TKIP:
 			data_pad = 12;
-			अवरोध;
-		हाल WLAN_CIPHER_SUITE_CCMP:
+			break;
+		case WLAN_CIPHER_SUITE_CCMP:
 			data_pad = 8;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 	mwl8k_add_dma_header(priv, skb, head_pad, data_pad);
-पूर्ण
+}
 
 /*
- * Packet reception क्रम 88w8366/88w8764 AP firmware.
+ * Packet reception for 88w8366/88w8764 AP firmware.
  */
-काष्ठा mwl8k_rxd_ap अणु
+struct mwl8k_rxd_ap {
 	__le16 pkt_len;
 	__u8 sq2;
 	__u8 rate;
@@ -948,109 +947,109 @@ mwl8k_add_dma_header(काष्ठा mwl8k_priv *priv, काष्ठा sk_
 	__le16 qos_control;
 	__le16 htsig2;
 	__le32 hw_rssi_info;
-	__le32 hw_noise_न्यूनमान_info;
-	__u8 noise_न्यूनमान;
+	__le32 hw_noise_floor_info;
+	__u8 noise_floor;
 	__u8 pad0[3];
 	__u8 rssi;
 	__u8 rx_status;
 	__u8 channel;
 	__u8 rx_ctrl;
-पूर्ण __packed;
+} __packed;
 
-#घोषणा MWL8K_AP_RATE_INFO_MCS_FORMAT		0x80
-#घोषणा MWL8K_AP_RATE_INFO_40MHZ		0x40
-#घोषणा MWL8K_AP_RATE_INFO_RATEID(x)		((x) & 0x3f)
+#define MWL8K_AP_RATE_INFO_MCS_FORMAT		0x80
+#define MWL8K_AP_RATE_INFO_40MHZ		0x40
+#define MWL8K_AP_RATE_INFO_RATEID(x)		((x) & 0x3f)
 
-#घोषणा MWL8K_AP_RX_CTRL_OWNED_BY_HOST		0x80
+#define MWL8K_AP_RX_CTRL_OWNED_BY_HOST		0x80
 
 /* 8366/8764 AP rx_status bits */
-#घोषणा MWL8K_AP_RXSTAT_DECRYPT_ERR_MASK		0x80
-#घोषणा MWL8K_AP_RXSTAT_GENERAL_DECRYPT_ERR		0xFF
-#घोषणा MWL8K_AP_RXSTAT_TKIP_DECRYPT_MIC_ERR		0x02
-#घोषणा MWL8K_AP_RXSTAT_WEP_DECRYPT_ICV_ERR		0x04
-#घोषणा MWL8K_AP_RXSTAT_TKIP_DECRYPT_ICV_ERR		0x08
+#define MWL8K_AP_RXSTAT_DECRYPT_ERR_MASK		0x80
+#define MWL8K_AP_RXSTAT_GENERAL_DECRYPT_ERR		0xFF
+#define MWL8K_AP_RXSTAT_TKIP_DECRYPT_MIC_ERR		0x02
+#define MWL8K_AP_RXSTAT_WEP_DECRYPT_ICV_ERR		0x04
+#define MWL8K_AP_RXSTAT_TKIP_DECRYPT_ICV_ERR		0x08
 
-अटल व्योम mwl8k_rxd_ap_init(व्योम *_rxd, dma_addr_t next_dma_addr)
-अणु
-	काष्ठा mwl8k_rxd_ap *rxd = _rxd;
+static void mwl8k_rxd_ap_init(void *_rxd, dma_addr_t next_dma_addr)
+{
+	struct mwl8k_rxd_ap *rxd = _rxd;
 
 	rxd->next_rxd_phys_addr = cpu_to_le32(next_dma_addr);
 	rxd->rx_ctrl = MWL8K_AP_RX_CTRL_OWNED_BY_HOST;
-पूर्ण
+}
 
-अटल व्योम mwl8k_rxd_ap_refill(व्योम *_rxd, dma_addr_t addr, पूर्णांक len)
-अणु
-	काष्ठा mwl8k_rxd_ap *rxd = _rxd;
+static void mwl8k_rxd_ap_refill(void *_rxd, dma_addr_t addr, int len)
+{
+	struct mwl8k_rxd_ap *rxd = _rxd;
 
 	rxd->pkt_len = cpu_to_le16(len);
 	rxd->pkt_phys_addr = cpu_to_le32(addr);
 	wmb();
 	rxd->rx_ctrl = 0;
-पूर्ण
+}
 
-अटल पूर्णांक
-mwl8k_rxd_ap_process(व्योम *_rxd, काष्ठा ieee80211_rx_status *status,
+static int
+mwl8k_rxd_ap_process(void *_rxd, struct ieee80211_rx_status *status,
 		     __le16 *qos, s8 *noise)
-अणु
-	काष्ठा mwl8k_rxd_ap *rxd = _rxd;
+{
+	struct mwl8k_rxd_ap *rxd = _rxd;
 
-	अगर (!(rxd->rx_ctrl & MWL8K_AP_RX_CTRL_OWNED_BY_HOST))
-		वापस -1;
+	if (!(rxd->rx_ctrl & MWL8K_AP_RX_CTRL_OWNED_BY_HOST))
+		return -1;
 	rmb();
 
-	स_रखो(status, 0, माप(*status));
+	memset(status, 0, sizeof(*status));
 
-	status->संकेत = -rxd->rssi;
-	*noise = -rxd->noise_न्यूनमान;
+	status->signal = -rxd->rssi;
+	*noise = -rxd->noise_floor;
 
-	अगर (rxd->rate & MWL8K_AP_RATE_INFO_MCS_FORMAT) अणु
+	if (rxd->rate & MWL8K_AP_RATE_INFO_MCS_FORMAT) {
 		status->encoding = RX_ENC_HT;
-		अगर (rxd->rate & MWL8K_AP_RATE_INFO_40MHZ)
+		if (rxd->rate & MWL8K_AP_RATE_INFO_40MHZ)
 			status->bw = RATE_INFO_BW_40;
 		status->rate_idx = MWL8K_AP_RATE_INFO_RATEID(rxd->rate);
-	पूर्ण अन्यथा अणु
-		पूर्णांक i;
+	} else {
+		int i;
 
-		क्रम (i = 0; i < ARRAY_SIZE(mwl8k_rates_24); i++) अणु
-			अगर (mwl8k_rates_24[i].hw_value == rxd->rate) अणु
+		for (i = 0; i < ARRAY_SIZE(mwl8k_rates_24); i++) {
+			if (mwl8k_rates_24[i].hw_value == rxd->rate) {
 				status->rate_idx = i;
-				अवरोध;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				break;
+			}
+		}
+	}
 
-	अगर (rxd->channel > 14) अणु
+	if (rxd->channel > 14) {
 		status->band = NL80211_BAND_5GHZ;
-		अगर (!(status->encoding == RX_ENC_HT) &&
+		if (!(status->encoding == RX_ENC_HT) &&
 		    status->rate_idx >= MWL8K_LEGACY_5G_RATE_OFFSET)
 			status->rate_idx -= MWL8K_LEGACY_5G_RATE_OFFSET;
-	पूर्ण अन्यथा अणु
+	} else {
 		status->band = NL80211_BAND_2GHZ;
-	पूर्ण
+	}
 	status->freq = ieee80211_channel_to_frequency(rxd->channel,
 						      status->band);
 
 	*qos = rxd->qos_control;
 
-	अगर ((rxd->rx_status != MWL8K_AP_RXSTAT_GENERAL_DECRYPT_ERR) &&
+	if ((rxd->rx_status != MWL8K_AP_RXSTAT_GENERAL_DECRYPT_ERR) &&
 	    (rxd->rx_status & MWL8K_AP_RXSTAT_DECRYPT_ERR_MASK) &&
 	    (rxd->rx_status & MWL8K_AP_RXSTAT_TKIP_DECRYPT_MIC_ERR))
 		status->flag |= RX_FLAG_MMIC_ERROR;
 
-	वापस le16_to_cpu(rxd->pkt_len);
-पूर्ण
+	return le16_to_cpu(rxd->pkt_len);
+}
 
-अटल काष्ठा rxd_ops rxd_ap_ops = अणु
-	.rxd_size	= माप(काष्ठा mwl8k_rxd_ap),
+static struct rxd_ops rxd_ap_ops = {
+	.rxd_size	= sizeof(struct mwl8k_rxd_ap),
 	.rxd_init	= mwl8k_rxd_ap_init,
 	.rxd_refill	= mwl8k_rxd_ap_refill,
 	.rxd_process	= mwl8k_rxd_ap_process,
-पूर्ण;
+};
 
 /*
- * Packet reception क्रम STA firmware.
+ * Packet reception for STA firmware.
  */
-काष्ठा mwl8k_rxd_sta अणु
+struct mwl8k_rxd_sta {
 	__le16 pkt_len;
 	__u8 link_quality;
 	__u8 noise_level;
@@ -1065,105 +1064,105 @@ mwl8k_rxd_ap_process(व्योम *_rxd, काष्ठा ieee80211_rx_stat
 	__u8 rx_ctrl;
 	__u8 rx_status;
 	__u8 pad2[2];
-पूर्ण __packed;
+} __packed;
 
-#घोषणा MWL8K_STA_RATE_INFO_SHORTPRE		0x8000
-#घोषणा MWL8K_STA_RATE_INFO_ANTSELECT(x)	(((x) >> 11) & 0x3)
-#घोषणा MWL8K_STA_RATE_INFO_RATEID(x)		(((x) >> 3) & 0x3f)
-#घोषणा MWL8K_STA_RATE_INFO_40MHZ		0x0004
-#घोषणा MWL8K_STA_RATE_INFO_SHORTGI		0x0002
-#घोषणा MWL8K_STA_RATE_INFO_MCS_FORMAT		0x0001
+#define MWL8K_STA_RATE_INFO_SHORTPRE		0x8000
+#define MWL8K_STA_RATE_INFO_ANTSELECT(x)	(((x) >> 11) & 0x3)
+#define MWL8K_STA_RATE_INFO_RATEID(x)		(((x) >> 3) & 0x3f)
+#define MWL8K_STA_RATE_INFO_40MHZ		0x0004
+#define MWL8K_STA_RATE_INFO_SHORTGI		0x0002
+#define MWL8K_STA_RATE_INFO_MCS_FORMAT		0x0001
 
-#घोषणा MWL8K_STA_RX_CTRL_OWNED_BY_HOST		0x02
-#घोषणा MWL8K_STA_RX_CTRL_DECRYPT_ERROR		0x04
+#define MWL8K_STA_RX_CTRL_OWNED_BY_HOST		0x02
+#define MWL8K_STA_RX_CTRL_DECRYPT_ERROR		0x04
 /* ICV=0 or MIC=1 */
-#घोषणा MWL8K_STA_RX_CTRL_DEC_ERR_TYPE		0x08
-/* Key is uploaded only in failure हाल */
-#घोषणा MWL8K_STA_RX_CTRL_KEY_INDEX			0x30
+#define MWL8K_STA_RX_CTRL_DEC_ERR_TYPE		0x08
+/* Key is uploaded only in failure case */
+#define MWL8K_STA_RX_CTRL_KEY_INDEX			0x30
 
-अटल व्योम mwl8k_rxd_sta_init(व्योम *_rxd, dma_addr_t next_dma_addr)
-अणु
-	काष्ठा mwl8k_rxd_sta *rxd = _rxd;
+static void mwl8k_rxd_sta_init(void *_rxd, dma_addr_t next_dma_addr)
+{
+	struct mwl8k_rxd_sta *rxd = _rxd;
 
 	rxd->next_rxd_phys_addr = cpu_to_le32(next_dma_addr);
 	rxd->rx_ctrl = MWL8K_STA_RX_CTRL_OWNED_BY_HOST;
-पूर्ण
+}
 
-अटल व्योम mwl8k_rxd_sta_refill(व्योम *_rxd, dma_addr_t addr, पूर्णांक len)
-अणु
-	काष्ठा mwl8k_rxd_sta *rxd = _rxd;
+static void mwl8k_rxd_sta_refill(void *_rxd, dma_addr_t addr, int len)
+{
+	struct mwl8k_rxd_sta *rxd = _rxd;
 
 	rxd->pkt_len = cpu_to_le16(len);
 	rxd->pkt_phys_addr = cpu_to_le32(addr);
 	wmb();
 	rxd->rx_ctrl = 0;
-पूर्ण
+}
 
-अटल पूर्णांक
-mwl8k_rxd_sta_process(व्योम *_rxd, काष्ठा ieee80211_rx_status *status,
+static int
+mwl8k_rxd_sta_process(void *_rxd, struct ieee80211_rx_status *status,
 		       __le16 *qos, s8 *noise)
-अणु
-	काष्ठा mwl8k_rxd_sta *rxd = _rxd;
+{
+	struct mwl8k_rxd_sta *rxd = _rxd;
 	u16 rate_info;
 
-	अगर (!(rxd->rx_ctrl & MWL8K_STA_RX_CTRL_OWNED_BY_HOST))
-		वापस -1;
+	if (!(rxd->rx_ctrl & MWL8K_STA_RX_CTRL_OWNED_BY_HOST))
+		return -1;
 	rmb();
 
 	rate_info = le16_to_cpu(rxd->rate_info);
 
-	स_रखो(status, 0, माप(*status));
+	memset(status, 0, sizeof(*status));
 
-	status->संकेत = -rxd->rssi;
+	status->signal = -rxd->rssi;
 	*noise = -rxd->noise_level;
 	status->antenna = MWL8K_STA_RATE_INFO_ANTSELECT(rate_info);
 	status->rate_idx = MWL8K_STA_RATE_INFO_RATEID(rate_info);
 
-	अगर (rate_info & MWL8K_STA_RATE_INFO_SHORTPRE)
+	if (rate_info & MWL8K_STA_RATE_INFO_SHORTPRE)
 		status->enc_flags |= RX_ENC_FLAG_SHORTPRE;
-	अगर (rate_info & MWL8K_STA_RATE_INFO_40MHZ)
+	if (rate_info & MWL8K_STA_RATE_INFO_40MHZ)
 		status->bw = RATE_INFO_BW_40;
-	अगर (rate_info & MWL8K_STA_RATE_INFO_SHORTGI)
+	if (rate_info & MWL8K_STA_RATE_INFO_SHORTGI)
 		status->enc_flags |= RX_ENC_FLAG_SHORT_GI;
-	अगर (rate_info & MWL8K_STA_RATE_INFO_MCS_FORMAT)
+	if (rate_info & MWL8K_STA_RATE_INFO_MCS_FORMAT)
 		status->encoding = RX_ENC_HT;
 
-	अगर (rxd->channel > 14) अणु
+	if (rxd->channel > 14) {
 		status->band = NL80211_BAND_5GHZ;
-		अगर (!(status->encoding == RX_ENC_HT) &&
+		if (!(status->encoding == RX_ENC_HT) &&
 		    status->rate_idx >= MWL8K_LEGACY_5G_RATE_OFFSET)
 			status->rate_idx -= MWL8K_LEGACY_5G_RATE_OFFSET;
-	पूर्ण अन्यथा अणु
+	} else {
 		status->band = NL80211_BAND_2GHZ;
-	पूर्ण
+	}
 	status->freq = ieee80211_channel_to_frequency(rxd->channel,
 						      status->band);
 
 	*qos = rxd->qos_control;
-	अगर ((rxd->rx_ctrl & MWL8K_STA_RX_CTRL_DECRYPT_ERROR) &&
+	if ((rxd->rx_ctrl & MWL8K_STA_RX_CTRL_DECRYPT_ERROR) &&
 	    (rxd->rx_ctrl & MWL8K_STA_RX_CTRL_DEC_ERR_TYPE))
 		status->flag |= RX_FLAG_MMIC_ERROR;
 
-	वापस le16_to_cpu(rxd->pkt_len);
-पूर्ण
+	return le16_to_cpu(rxd->pkt_len);
+}
 
-अटल काष्ठा rxd_ops rxd_sta_ops = अणु
-	.rxd_size	= माप(काष्ठा mwl8k_rxd_sta),
+static struct rxd_ops rxd_sta_ops = {
+	.rxd_size	= sizeof(struct mwl8k_rxd_sta),
 	.rxd_init	= mwl8k_rxd_sta_init,
 	.rxd_refill	= mwl8k_rxd_sta_refill,
 	.rxd_process	= mwl8k_rxd_sta_process,
-पूर्ण;
+};
 
 
-#घोषणा MWL8K_RX_DESCS		256
-#घोषणा MWL8K_RX_MAXSZ		3800
+#define MWL8K_RX_DESCS		256
+#define MWL8K_RX_MAXSZ		3800
 
-अटल पूर्णांक mwl8k_rxq_init(काष्ठा ieee80211_hw *hw, पूर्णांक index)
-अणु
-	काष्ठा mwl8k_priv *priv = hw->priv;
-	काष्ठा mwl8k_rx_queue *rxq = priv->rxq + index;
-	पूर्णांक size;
-	पूर्णांक i;
+static int mwl8k_rxq_init(struct ieee80211_hw *hw, int index)
+{
+	struct mwl8k_priv *priv = hw->priv;
+	struct mwl8k_rx_queue *rxq = priv->rxq + index;
+	int size;
+	int i;
 
 	rxq->rxd_count = 0;
 	rxq->head = 0;
@@ -1173,60 +1172,60 @@ mwl8k_rxd_sta_process(व्योम *_rxd, काष्ठा ieee80211_rx_sta
 
 	rxq->rxd = dma_alloc_coherent(&priv->pdev->dev, size, &rxq->rxd_dma,
 				      GFP_KERNEL);
-	अगर (rxq->rxd == शून्य) अणु
+	if (rxq->rxd == NULL) {
 		wiphy_err(hw->wiphy, "failed to alloc RX descriptors\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	rxq->buf = kसुस्मृति(MWL8K_RX_DESCS, माप(*rxq->buf), GFP_KERNEL);
-	अगर (rxq->buf == शून्य) अणु
-		dma_मुक्त_coherent(&priv->pdev->dev, size, rxq->rxd,
+	rxq->buf = kcalloc(MWL8K_RX_DESCS, sizeof(*rxq->buf), GFP_KERNEL);
+	if (rxq->buf == NULL) {
+		dma_free_coherent(&priv->pdev->dev, size, rxq->rxd,
 				  rxq->rxd_dma);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	क्रम (i = 0; i < MWL8K_RX_DESCS; i++) अणु
-		पूर्णांक desc_size;
-		व्योम *rxd;
-		पूर्णांक nexti;
+	for (i = 0; i < MWL8K_RX_DESCS; i++) {
+		int desc_size;
+		void *rxd;
+		int nexti;
 		dma_addr_t next_dma_addr;
 
 		desc_size = priv->rxd_ops->rxd_size;
 		rxd = rxq->rxd + (i * priv->rxd_ops->rxd_size);
 
 		nexti = i + 1;
-		अगर (nexti == MWL8K_RX_DESCS)
+		if (nexti == MWL8K_RX_DESCS)
 			nexti = 0;
 		next_dma_addr = rxq->rxd_dma + (nexti * desc_size);
 
 		priv->rxd_ops->rxd_init(rxd, next_dma_addr);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rxq_refill(काष्ठा ieee80211_hw *hw, पूर्णांक index, पूर्णांक limit)
-अणु
-	काष्ठा mwl8k_priv *priv = hw->priv;
-	काष्ठा mwl8k_rx_queue *rxq = priv->rxq + index;
-	पूर्णांक refilled = 0;
+static int rxq_refill(struct ieee80211_hw *hw, int index, int limit)
+{
+	struct mwl8k_priv *priv = hw->priv;
+	struct mwl8k_rx_queue *rxq = priv->rxq + index;
+	int refilled = 0;
 
-	जबतक (rxq->rxd_count < MWL8K_RX_DESCS && limit--) अणु
-		काष्ठा sk_buff *skb;
+	while (rxq->rxd_count < MWL8K_RX_DESCS && limit--) {
+		struct sk_buff *skb;
 		dma_addr_t addr;
-		पूर्णांक rx;
-		व्योम *rxd;
+		int rx;
+		void *rxd;
 
 		skb = dev_alloc_skb(MWL8K_RX_MAXSZ);
-		अगर (skb == शून्य)
-			अवरोध;
+		if (skb == NULL)
+			break;
 
 		addr = dma_map_single(&priv->pdev->dev, skb->data,
 				      MWL8K_RX_MAXSZ, DMA_FROM_DEVICE);
 
 		rxq->rxd_count++;
 		rx = rxq->tail++;
-		अगर (rxq->tail == MWL8K_RX_DESCS)
+		if (rxq->tail == MWL8K_RX_DESCS)
 			rxq->tail = 0;
 		rxq->buf[rx].skb = skb;
 		dma_unmap_addr_set(&rxq->buf[rx], dma, addr);
@@ -1235,116 +1234,116 @@ mwl8k_rxd_sta_process(व्योम *_rxd, काष्ठा ieee80211_rx_sta
 		priv->rxd_ops->rxd_refill(rxd, addr, MWL8K_RX_MAXSZ);
 
 		refilled++;
-	पूर्ण
+	}
 
-	वापस refilled;
-पूर्ण
+	return refilled;
+}
 
 /* Must be called only when the card's reception is completely halted */
-अटल व्योम mwl8k_rxq_deinit(काष्ठा ieee80211_hw *hw, पूर्णांक index)
-अणु
-	काष्ठा mwl8k_priv *priv = hw->priv;
-	काष्ठा mwl8k_rx_queue *rxq = priv->rxq + index;
-	पूर्णांक i;
+static void mwl8k_rxq_deinit(struct ieee80211_hw *hw, int index)
+{
+	struct mwl8k_priv *priv = hw->priv;
+	struct mwl8k_rx_queue *rxq = priv->rxq + index;
+	int i;
 
-	अगर (rxq->rxd == शून्य)
-		वापस;
+	if (rxq->rxd == NULL)
+		return;
 
-	क्रम (i = 0; i < MWL8K_RX_DESCS; i++) अणु
-		अगर (rxq->buf[i].skb != शून्य) अणु
+	for (i = 0; i < MWL8K_RX_DESCS; i++) {
+		if (rxq->buf[i].skb != NULL) {
 			dma_unmap_single(&priv->pdev->dev,
 					 dma_unmap_addr(&rxq->buf[i], dma),
 					 MWL8K_RX_MAXSZ, DMA_FROM_DEVICE);
 			dma_unmap_addr_set(&rxq->buf[i], dma, 0);
 
-			kमुक्त_skb(rxq->buf[i].skb);
-			rxq->buf[i].skb = शून्य;
-		पूर्ण
-	पूर्ण
+			kfree_skb(rxq->buf[i].skb);
+			rxq->buf[i].skb = NULL;
+		}
+	}
 
-	kमुक्त(rxq->buf);
-	rxq->buf = शून्य;
+	kfree(rxq->buf);
+	rxq->buf = NULL;
 
-	dma_मुक्त_coherent(&priv->pdev->dev,
+	dma_free_coherent(&priv->pdev->dev,
 			  MWL8K_RX_DESCS * priv->rxd_ops->rxd_size, rxq->rxd,
 			  rxq->rxd_dma);
-	rxq->rxd = शून्य;
-पूर्ण
+	rxq->rxd = NULL;
+}
 
 
 /*
- * Scan a list of BSSIDs to process क्रम finalize join.
- * Allows क्रम extension to process multiple BSSIDs.
+ * Scan a list of BSSIDs to process for finalize join.
+ * Allows for extension to process multiple BSSIDs.
  */
-अटल अंतरभूत पूर्णांक
-mwl8k_capture_bssid(काष्ठा mwl8k_priv *priv, काष्ठा ieee80211_hdr *wh)
-अणु
-	वापस priv->capture_beacon &&
+static inline int
+mwl8k_capture_bssid(struct mwl8k_priv *priv, struct ieee80211_hdr *wh)
+{
+	return priv->capture_beacon &&
 		ieee80211_is_beacon(wh->frame_control) &&
 		ether_addr_equal_64bits(wh->addr3, priv->capture_bssid);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम mwl8k_save_beacon(काष्ठा ieee80211_hw *hw,
-				     काष्ठा sk_buff *skb)
-अणु
-	काष्ठा mwl8k_priv *priv = hw->priv;
+static inline void mwl8k_save_beacon(struct ieee80211_hw *hw,
+				     struct sk_buff *skb)
+{
+	struct mwl8k_priv *priv = hw->priv;
 
 	priv->capture_beacon = false;
 	eth_zero_addr(priv->capture_bssid);
 
 	/*
 	 * Use GFP_ATOMIC as rxq_process is called from
-	 * the primary पूर्णांकerrupt handler, memory allocation call
+	 * the primary interrupt handler, memory allocation call
 	 * must not sleep.
 	 */
 	priv->beacon_skb = skb_copy(skb, GFP_ATOMIC);
-	अगर (priv->beacon_skb != शून्य)
+	if (priv->beacon_skb != NULL)
 		ieee80211_queue_work(hw, &priv->finalize_join_worker);
-पूर्ण
+}
 
-अटल अंतरभूत काष्ठा mwl8k_vअगर *mwl8k_find_vअगर_bss(काष्ठा list_head *vअगर_list,
+static inline struct mwl8k_vif *mwl8k_find_vif_bss(struct list_head *vif_list,
 						   u8 *bssid)
-अणु
-	काष्ठा mwl8k_vअगर *mwl8k_vअगर;
+{
+	struct mwl8k_vif *mwl8k_vif;
 
-	list_क्रम_each_entry(mwl8k_vअगर,
-			    vअगर_list, list) अणु
-		अगर (स_भेद(bssid, mwl8k_vअगर->bssid,
+	list_for_each_entry(mwl8k_vif,
+			    vif_list, list) {
+		if (memcmp(bssid, mwl8k_vif->bssid,
 			   ETH_ALEN) == 0)
-			वापस mwl8k_vअगर;
-	पूर्ण
+			return mwl8k_vif;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल पूर्णांक rxq_process(काष्ठा ieee80211_hw *hw, पूर्णांक index, पूर्णांक limit)
-अणु
-	काष्ठा mwl8k_priv *priv = hw->priv;
-	काष्ठा mwl8k_vअगर *mwl8k_vअगर = शून्य;
-	काष्ठा mwl8k_rx_queue *rxq = priv->rxq + index;
-	पूर्णांक processed;
+static int rxq_process(struct ieee80211_hw *hw, int index, int limit)
+{
+	struct mwl8k_priv *priv = hw->priv;
+	struct mwl8k_vif *mwl8k_vif = NULL;
+	struct mwl8k_rx_queue *rxq = priv->rxq + index;
+	int processed;
 
 	processed = 0;
-	जबतक (rxq->rxd_count && limit--) अणु
-		काष्ठा sk_buff *skb;
-		व्योम *rxd;
-		पूर्णांक pkt_len;
-		काष्ठा ieee80211_rx_status status;
-		काष्ठा ieee80211_hdr *wh;
+	while (rxq->rxd_count && limit--) {
+		struct sk_buff *skb;
+		void *rxd;
+		int pkt_len;
+		struct ieee80211_rx_status status;
+		struct ieee80211_hdr *wh;
 		__le16 qos;
 
 		skb = rxq->buf[rxq->head].skb;
-		अगर (skb == शून्य)
-			अवरोध;
+		if (skb == NULL)
+			break;
 
 		rxd = rxq->rxd + (rxq->head * priv->rxd_ops->rxd_size);
 
 		pkt_len = priv->rxd_ops->rxd_process(rxd, &status, &qos,
 							&priv->noise);
-		अगर (pkt_len < 0)
-			अवरोध;
+		if (pkt_len < 0)
+			break;
 
-		rxq->buf[rxq->head].skb = शून्य;
+		rxq->buf[rxq->head].skb = NULL;
 
 		dma_unmap_single(&priv->pdev->dev,
 				 dma_unmap_addr(&rxq->buf[rxq->head], dma),
@@ -1352,32 +1351,32 @@ mwl8k_capture_bssid(काष्ठा mwl8k_priv *priv, काष्ठा ieee
 		dma_unmap_addr_set(&rxq->buf[rxq->head], dma, 0);
 
 		rxq->head++;
-		अगर (rxq->head == MWL8K_RX_DESCS)
+		if (rxq->head == MWL8K_RX_DESCS)
 			rxq->head = 0;
 
 		rxq->rxd_count--;
 
-		wh = &((काष्ठा mwl8k_dma_data *)skb->data)->wh;
+		wh = &((struct mwl8k_dma_data *)skb->data)->wh;
 
 		/*
-		 * Check क्रम a pending join operation.  Save a
+		 * Check for a pending join operation.  Save a
 		 * copy of the beacon and schedule a tasklet to
 		 * send a FINALIZE_JOIN command to the firmware.
 		 */
-		अगर (mwl8k_capture_bssid(priv, (व्योम *)skb->data))
+		if (mwl8k_capture_bssid(priv, (void *)skb->data))
 			mwl8k_save_beacon(hw, skb);
 
-		अगर (ieee80211_has_रक्षित(wh->frame_control)) अणु
+		if (ieee80211_has_protected(wh->frame_control)) {
 
-			/* Check अगर hw crypto has been enabled क्रम
+			/* Check if hw crypto has been enabled for
 			 * this bss. If yes, set the status flags
 			 * accordingly
 			 */
-			mwl8k_vअगर = mwl8k_find_vअगर_bss(&priv->vअगर_list,
+			mwl8k_vif = mwl8k_find_vif_bss(&priv->vif_list,
 								wh->addr1);
 
-			अगर (mwl8k_vअगर != शून्य &&
-			    mwl8k_vअगर->is_hw_crypto_enabled) अणु
+			if (mwl8k_vif != NULL &&
+			    mwl8k_vif->is_hw_crypto_enabled) {
 				/*
 				 * When MMIC ERROR is encountered
 				 * by the firmware, payload is
@@ -1386,54 +1385,54 @@ mwl8k_capture_bssid(काष्ठा mwl8k_priv *priv, काष्ठा ieee
 				 * to the host.
 				 *
 				 * We need to add four bytes of
-				 * key inक्रमmation.  In it
+				 * key information.  In it
 				 * MAC80211 expects keyidx set to
-				 * 0 क्रम triggering Counter
+				 * 0 for triggering Counter
 				 * Measure of MMIC failure.
 				 */
-				अगर (status.flag & RX_FLAG_MMIC_ERROR) अणु
-					काष्ठा mwl8k_dma_data *tr;
-					tr = (काष्ठा mwl8k_dma_data *)skb->data;
-					स_रखो((व्योम *)&(tr->data), 0, 4);
+				if (status.flag & RX_FLAG_MMIC_ERROR) {
+					struct mwl8k_dma_data *tr;
+					tr = (struct mwl8k_dma_data *)skb->data;
+					memset((void *)&(tr->data), 0, 4);
 					pkt_len += 4;
-				पूर्ण
+				}
 
-				अगर (!ieee80211_is_auth(wh->frame_control))
+				if (!ieee80211_is_auth(wh->frame_control))
 					status.flag |= RX_FLAG_IV_STRIPPED |
 						       RX_FLAG_DECRYPTED |
 						       RX_FLAG_MMIC_STRIPPED;
-			पूर्ण
-		पूर्ण
+			}
+		}
 
 		skb_put(skb, pkt_len);
-		mwl8k_हटाओ_dma_header(skb, qos);
-		स_नकल(IEEE80211_SKB_RXCB(skb), &status, माप(status));
+		mwl8k_remove_dma_header(skb, qos);
+		memcpy(IEEE80211_SKB_RXCB(skb), &status, sizeof(status));
 		ieee80211_rx_irqsafe(hw, skb);
 
 		processed++;
-	पूर्ण
+	}
 
-	वापस processed;
-पूर्ण
+	return processed;
+}
 
 
 /*
  * Packet transmission.
  */
 
-#घोषणा MWL8K_TXD_STATUS_OK			0x00000001
-#घोषणा MWL8K_TXD_STATUS_OK_RETRY		0x00000002
-#घोषणा MWL8K_TXD_STATUS_OK_MORE_RETRY		0x00000004
-#घोषणा MWL8K_TXD_STATUS_MULTICAST_TX		0x00000008
-#घोषणा MWL8K_TXD_STATUS_FW_OWNED		0x80000000
+#define MWL8K_TXD_STATUS_OK			0x00000001
+#define MWL8K_TXD_STATUS_OK_RETRY		0x00000002
+#define MWL8K_TXD_STATUS_OK_MORE_RETRY		0x00000004
+#define MWL8K_TXD_STATUS_MULTICAST_TX		0x00000008
+#define MWL8K_TXD_STATUS_FW_OWNED		0x80000000
 
-#घोषणा MWL8K_QOS_QLEN_UNSPEC			0xff00
-#घोषणा MWL8K_QOS_ACK_POLICY_MASK		0x0060
-#घोषणा MWL8K_QOS_ACK_POLICY_NORMAL		0x0000
-#घोषणा MWL8K_QOS_ACK_POLICY_BLOCKACK		0x0060
-#घोषणा MWL8K_QOS_EOSP				0x0010
+#define MWL8K_QOS_QLEN_UNSPEC			0xff00
+#define MWL8K_QOS_ACK_POLICY_MASK		0x0060
+#define MWL8K_QOS_ACK_POLICY_NORMAL		0x0000
+#define MWL8K_QOS_ACK_POLICY_BLOCKACK		0x0060
+#define MWL8K_QOS_EOSP				0x0010
 
-काष्ठा mwl8k_tx_desc अणु
+struct mwl8k_tx_desc {
 	__le32 status;
 	__u8 data_rate;
 	__u8 tx_priority;
@@ -1442,91 +1441,91 @@ mwl8k_capture_bssid(काष्ठा mwl8k_priv *priv, काष्ठा ieee
 	__le16 pkt_len;
 	__u8 dest_MAC_addr[ETH_ALEN];
 	__le32 next_txd_phys_addr;
-	__le32 बारtamp;
+	__le32 timestamp;
 	__le16 rate_info;
 	__u8 peer_id;
 	__u8 tx_frag_cnt;
-पूर्ण __packed;
+} __packed;
 
-#घोषणा MWL8K_TX_DESCS		128
+#define MWL8K_TX_DESCS		128
 
-अटल पूर्णांक mwl8k_txq_init(काष्ठा ieee80211_hw *hw, पूर्णांक index)
-अणु
-	काष्ठा mwl8k_priv *priv = hw->priv;
-	काष्ठा mwl8k_tx_queue *txq = priv->txq + index;
-	पूर्णांक size;
-	पूर्णांक i;
+static int mwl8k_txq_init(struct ieee80211_hw *hw, int index)
+{
+	struct mwl8k_priv *priv = hw->priv;
+	struct mwl8k_tx_queue *txq = priv->txq + index;
+	int size;
+	int i;
 
 	txq->len = 0;
 	txq->head = 0;
 	txq->tail = 0;
 
-	size = MWL8K_TX_DESCS * माप(काष्ठा mwl8k_tx_desc);
+	size = MWL8K_TX_DESCS * sizeof(struct mwl8k_tx_desc);
 
 	txq->txd = dma_alloc_coherent(&priv->pdev->dev, size, &txq->txd_dma,
 				      GFP_KERNEL);
-	अगर (txq->txd == शून्य) अणु
+	if (txq->txd == NULL) {
 		wiphy_err(hw->wiphy, "failed to alloc TX descriptors\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	txq->skb = kसुस्मृति(MWL8K_TX_DESCS, माप(*txq->skb), GFP_KERNEL);
-	अगर (txq->skb == शून्य) अणु
-		dma_मुक्त_coherent(&priv->pdev->dev, size, txq->txd,
+	txq->skb = kcalloc(MWL8K_TX_DESCS, sizeof(*txq->skb), GFP_KERNEL);
+	if (txq->skb == NULL) {
+		dma_free_coherent(&priv->pdev->dev, size, txq->txd,
 				  txq->txd_dma);
-		txq->txd = शून्य;
-		वापस -ENOMEM;
-	पूर्ण
+		txq->txd = NULL;
+		return -ENOMEM;
+	}
 
-	क्रम (i = 0; i < MWL8K_TX_DESCS; i++) अणु
-		काष्ठा mwl8k_tx_desc *tx_desc;
-		पूर्णांक nexti;
+	for (i = 0; i < MWL8K_TX_DESCS; i++) {
+		struct mwl8k_tx_desc *tx_desc;
+		int nexti;
 
 		tx_desc = txq->txd + i;
 		nexti = (i + 1) % MWL8K_TX_DESCS;
 
 		tx_desc->status = 0;
 		tx_desc->next_txd_phys_addr =
-			cpu_to_le32(txq->txd_dma + nexti * माप(*tx_desc));
-	पूर्ण
+			cpu_to_le32(txq->txd_dma + nexti * sizeof(*tx_desc));
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत व्योम mwl8k_tx_start(काष्ठा mwl8k_priv *priv)
-अणु
-	ioग_लिखो32(MWL8K_H2A_INT_PPA_READY,
+static inline void mwl8k_tx_start(struct mwl8k_priv *priv)
+{
+	iowrite32(MWL8K_H2A_INT_PPA_READY,
 		priv->regs + MWL8K_HIU_H2A_INTERRUPT_EVENTS);
-	ioग_लिखो32(MWL8K_H2A_INT_DUMMY,
+	iowrite32(MWL8K_H2A_INT_DUMMY,
 		priv->regs + MWL8K_HIU_H2A_INTERRUPT_EVENTS);
-	ioपढ़ो32(priv->regs + MWL8K_HIU_INT_CODE);
-पूर्ण
+	ioread32(priv->regs + MWL8K_HIU_INT_CODE);
+}
 
-अटल व्योम mwl8k_dump_tx_rings(काष्ठा ieee80211_hw *hw)
-अणु
-	काष्ठा mwl8k_priv *priv = hw->priv;
-	पूर्णांक i;
+static void mwl8k_dump_tx_rings(struct ieee80211_hw *hw)
+{
+	struct mwl8k_priv *priv = hw->priv;
+	int i;
 
-	क्रम (i = 0; i < mwl8k_tx_queues(priv); i++) अणु
-		काष्ठा mwl8k_tx_queue *txq = priv->txq + i;
-		पूर्णांक fw_owned = 0;
-		पूर्णांक drv_owned = 0;
-		पूर्णांक unused = 0;
-		पूर्णांक desc;
+	for (i = 0; i < mwl8k_tx_queues(priv); i++) {
+		struct mwl8k_tx_queue *txq = priv->txq + i;
+		int fw_owned = 0;
+		int drv_owned = 0;
+		int unused = 0;
+		int desc;
 
-		क्रम (desc = 0; desc < MWL8K_TX_DESCS; desc++) अणु
-			काष्ठा mwl8k_tx_desc *tx_desc = txq->txd + desc;
+		for (desc = 0; desc < MWL8K_TX_DESCS; desc++) {
+			struct mwl8k_tx_desc *tx_desc = txq->txd + desc;
 			u32 status;
 
 			status = le32_to_cpu(tx_desc->status);
-			अगर (status & MWL8K_TXD_STATUS_FW_OWNED)
+			if (status & MWL8K_TXD_STATUS_FW_OWNED)
 				fw_owned++;
-			अन्यथा
+			else
 				drv_owned++;
 
-			अगर (tx_desc->pkt_len == 0)
+			if (tx_desc->pkt_len == 0)
 				unused++;
-		पूर्ण
+		}
 
 		wiphy_err(hw->wiphy,
 			  "txq[%d] len=%d head=%d tail=%d "
@@ -1534,91 +1533,91 @@ mwl8k_capture_bssid(काष्ठा mwl8k_priv *priv, काष्ठा ieee
 			  i,
 			  txq->len, txq->head, txq->tail,
 			  fw_owned, drv_owned, unused);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
  * Must be called with priv->fw_mutex held and tx queues stopped.
  */
-#घोषणा MWL8K_TX_WAIT_TIMEOUT_MS	5000
+#define MWL8K_TX_WAIT_TIMEOUT_MS	5000
 
-अटल पूर्णांक mwl8k_tx_रुको_empty(काष्ठा ieee80211_hw *hw)
-अणु
-	काष्ठा mwl8k_priv *priv = hw->priv;
-	DECLARE_COMPLETION_ONSTACK(tx_रुको);
-	पूर्णांक retry;
-	पूर्णांक rc;
+static int mwl8k_tx_wait_empty(struct ieee80211_hw *hw)
+{
+	struct mwl8k_priv *priv = hw->priv;
+	DECLARE_COMPLETION_ONSTACK(tx_wait);
+	int retry;
+	int rc;
 
 	might_sleep();
 
 	/* Since fw restart is in progress, allow only the firmware
 	 * commands from the restart code and block the other
-	 * commands since they are going to fail in any हाल since
+	 * commands since they are going to fail in any case since
 	 * the firmware has crashed
 	 */
-	अगर (priv->hw_restart_in_progress) अणु
-		अगर (priv->hw_restart_owner == current)
-			वापस 0;
-		अन्यथा
-			वापस -EBUSY;
-	पूर्ण
+	if (priv->hw_restart_in_progress) {
+		if (priv->hw_restart_owner == current)
+			return 0;
+		else
+			return -EBUSY;
+	}
 
-	अगर (atomic_पढ़ो(&priv->watchकरोg_event_pending))
-		वापस 0;
+	if (atomic_read(&priv->watchdog_event_pending))
+		return 0;
 
 	/*
-	 * The TX queues are stopped at this poपूर्णांक, so this test
-	 * करोesn't need to take ->tx_lock.
+	 * The TX queues are stopped at this point, so this test
+	 * doesn't need to take ->tx_lock.
 	 */
-	अगर (!priv->pending_tx_pkts)
-		वापस 0;
+	if (!priv->pending_tx_pkts)
+		return 0;
 
 	retry = 1;
 	rc = 0;
 
 	spin_lock_bh(&priv->tx_lock);
-	priv->tx_रुको = &tx_रुको;
-	जबतक (!rc) अणु
-		पूर्णांक oldcount;
-		अचिन्हित दीर्घ समयout;
+	priv->tx_wait = &tx_wait;
+	while (!rc) {
+		int oldcount;
+		unsigned long timeout;
 
 		oldcount = priv->pending_tx_pkts;
 
 		spin_unlock_bh(&priv->tx_lock);
-		समयout = रुको_क्रम_completion_समयout(&tx_रुको,
-			    msecs_to_jअगरfies(MWL8K_TX_WAIT_TIMEOUT_MS));
+		timeout = wait_for_completion_timeout(&tx_wait,
+			    msecs_to_jiffies(MWL8K_TX_WAIT_TIMEOUT_MS));
 
-		अगर (atomic_पढ़ो(&priv->watchकरोg_event_pending)) अणु
+		if (atomic_read(&priv->watchdog_event_pending)) {
 			spin_lock_bh(&priv->tx_lock);
-			priv->tx_रुको = शून्य;
+			priv->tx_wait = NULL;
 			spin_unlock_bh(&priv->tx_lock);
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 
 		spin_lock_bh(&priv->tx_lock);
 
-		अगर (समयout || !priv->pending_tx_pkts) अणु
+		if (timeout || !priv->pending_tx_pkts) {
 			WARN_ON(priv->pending_tx_pkts);
-			अगर (retry)
+			if (retry)
 				wiphy_notice(hw->wiphy, "tx rings drained\n");
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (retry) अणु
+		if (retry) {
 			mwl8k_tx_start(priv);
 			retry = 0;
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		अगर (priv->pending_tx_pkts < oldcount) अणु
+		if (priv->pending_tx_pkts < oldcount) {
 			wiphy_notice(hw->wiphy,
 				     "waiting for tx rings to drain (%d -> %d pkts)\n",
 				     oldcount, priv->pending_tx_pkts);
 			retry = 1;
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		priv->tx_रुको = शून्य;
+		priv->tx_wait = NULL;
 
 		wiphy_err(hw->wiphy, "tx rings stuck for %d ms\n",
 			  MWL8K_TX_WAIT_TIMEOUT_MS);
@@ -1627,80 +1626,80 @@ mwl8k_capture_bssid(काष्ठा mwl8k_priv *priv, काष्ठा ieee
 		ieee80211_queue_work(hw, &priv->fw_reload);
 
 		rc = -ETIMEDOUT;
-	पूर्ण
-	priv->tx_रुको = शून्य;
+	}
+	priv->tx_wait = NULL;
 	spin_unlock_bh(&priv->tx_lock);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-#घोषणा MWL8K_TXD_SUCCESS(status)				\
+#define MWL8K_TXD_SUCCESS(status)				\
 	((status) & (MWL8K_TXD_STATUS_OK |			\
 		     MWL8K_TXD_STATUS_OK_RETRY |		\
 		     MWL8K_TXD_STATUS_OK_MORE_RETRY))
 
-अटल पूर्णांक mwl8k_tid_queue_mapping(u8 tid)
-अणु
+static int mwl8k_tid_queue_mapping(u8 tid)
+{
 	BUG_ON(tid > 7);
 
-	चयन (tid) अणु
-	हाल 0:
-	हाल 3:
-		वापस IEEE80211_AC_BE;
-	हाल 1:
-	हाल 2:
-		वापस IEEE80211_AC_BK;
-	हाल 4:
-	हाल 5:
-		वापस IEEE80211_AC_VI;
-	हाल 6:
-	हाल 7:
-		वापस IEEE80211_AC_VO;
-	शेष:
-		वापस -1;
-	पूर्ण
-पूर्ण
+	switch (tid) {
+	case 0:
+	case 3:
+		return IEEE80211_AC_BE;
+	case 1:
+	case 2:
+		return IEEE80211_AC_BK;
+	case 4:
+	case 5:
+		return IEEE80211_AC_VI;
+	case 6:
+	case 7:
+		return IEEE80211_AC_VO;
+	default:
+		return -1;
+	}
+}
 
-/* The firmware will fill in the rate inक्रमmation
- * क्रम each packet that माला_लो queued in the hardware
- * and these macros will पूर्णांकerpret that info.
+/* The firmware will fill in the rate information
+ * for each packet that gets queued in the hardware
+ * and these macros will interpret that info.
  */
 
-#घोषणा RI_FORMAT(a)		  (a & 0x0001)
-#घोषणा RI_RATE_ID_MCS(a)	 ((a & 0x01f8) >> 3)
+#define RI_FORMAT(a)		  (a & 0x0001)
+#define RI_RATE_ID_MCS(a)	 ((a & 0x01f8) >> 3)
 
-अटल पूर्णांक
-mwl8k_txq_reclaim(काष्ठा ieee80211_hw *hw, पूर्णांक index, पूर्णांक limit, पूर्णांक क्रमce)
-अणु
-	काष्ठा mwl8k_priv *priv = hw->priv;
-	काष्ठा mwl8k_tx_queue *txq = priv->txq + index;
-	पूर्णांक processed;
+static int
+mwl8k_txq_reclaim(struct ieee80211_hw *hw, int index, int limit, int force)
+{
+	struct mwl8k_priv *priv = hw->priv;
+	struct mwl8k_tx_queue *txq = priv->txq + index;
+	int processed;
 
 	processed = 0;
-	जबतक (txq->len > 0 && limit--) अणु
-		पूर्णांक tx;
-		काष्ठा mwl8k_tx_desc *tx_desc;
-		अचिन्हित दीर्घ addr;
-		पूर्णांक size;
-		काष्ठा sk_buff *skb;
-		काष्ठा ieee80211_tx_info *info;
+	while (txq->len > 0 && limit--) {
+		int tx;
+		struct mwl8k_tx_desc *tx_desc;
+		unsigned long addr;
+		int size;
+		struct sk_buff *skb;
+		struct ieee80211_tx_info *info;
 		u32 status;
-		काष्ठा ieee80211_sta *sta;
-		काष्ठा mwl8k_sta *sta_info = शून्य;
+		struct ieee80211_sta *sta;
+		struct mwl8k_sta *sta_info = NULL;
 		u16 rate_info;
-		काष्ठा ieee80211_hdr *wh;
+		struct ieee80211_hdr *wh;
 
 		tx = txq->head;
 		tx_desc = txq->txd + tx;
 
 		status = le32_to_cpu(tx_desc->status);
 
-		अगर (status & MWL8K_TXD_STATUS_FW_OWNED) अणु
-			अगर (!क्रमce)
-				अवरोध;
+		if (status & MWL8K_TXD_STATUS_FW_OWNED) {
+			if (!force)
+				break;
 			tx_desc->status &=
 				~cpu_to_le32(MWL8K_TXD_STATUS_FW_OWNED);
-		पूर्ण
+		}
 
 		txq->head = (tx + 1) % MWL8K_TX_DESCS;
 		BUG_ON(txq->len == 0);
@@ -1710,42 +1709,42 @@ mwl8k_txq_reclaim(काष्ठा ieee80211_hw *hw, पूर्णांक 
 		addr = le32_to_cpu(tx_desc->pkt_phys_addr);
 		size = le16_to_cpu(tx_desc->pkt_len);
 		skb = txq->skb[tx];
-		txq->skb[tx] = शून्य;
+		txq->skb[tx] = NULL;
 
-		BUG_ON(skb == शून्य);
+		BUG_ON(skb == NULL);
 		dma_unmap_single(&priv->pdev->dev, addr, size, DMA_TO_DEVICE);
 
-		mwl8k_हटाओ_dma_header(skb, tx_desc->qos_control);
+		mwl8k_remove_dma_header(skb, tx_desc->qos_control);
 
-		wh = (काष्ठा ieee80211_hdr *) skb->data;
+		wh = (struct ieee80211_hdr *) skb->data;
 
 		/* Mark descriptor as unused */
 		tx_desc->pkt_phys_addr = 0;
 		tx_desc->pkt_len = 0;
 
 		info = IEEE80211_SKB_CB(skb);
-		अगर (ieee80211_is_data(wh->frame_control)) अणु
-			rcu_पढ़ो_lock();
-			sta = ieee80211_find_sta_by_अगरaddr(hw, wh->addr1,
+		if (ieee80211_is_data(wh->frame_control)) {
+			rcu_read_lock();
+			sta = ieee80211_find_sta_by_ifaddr(hw, wh->addr1,
 							   wh->addr2);
-			अगर (sta) अणु
+			if (sta) {
 				sta_info = MWL8K_STA(sta);
-				BUG_ON(sta_info == शून्य);
+				BUG_ON(sta_info == NULL);
 				rate_info = le16_to_cpu(tx_desc->rate_info);
-				/* If rate is < 6.5 Mpbs क्रम an ht station
-				 * करो not क्रमm an ampdu. If the station is a
-				 * legacy station (क्रमmat = 0), करो not क्रमm an
+				/* If rate is < 6.5 Mpbs for an ht station
+				 * do not form an ampdu. If the station is a
+				 * legacy station (format = 0), do not form an
 				 * ampdu
 				 */
-				अगर (RI_RATE_ID_MCS(rate_info) < 1 ||
-				    RI_FORMAT(rate_info) == 0) अणु
+				if (RI_RATE_ID_MCS(rate_info) < 1 ||
+				    RI_FORMAT(rate_info) == 0) {
 					sta_info->is_ampdu_allowed = false;
-				पूर्ण अन्यथा अणु
+				} else {
 					sta_info->is_ampdu_allowed = true;
-				पूर्ण
-			पूर्ण
-			rcu_पढ़ो_unlock();
-		पूर्ण
+				}
+			}
+			rcu_read_unlock();
+		}
 
 		ieee80211_tx_info_clear_status(info);
 
@@ -1755,312 +1754,312 @@ mwl8k_txq_reclaim(काष्ठा ieee80211_hw *hw, पूर्णांक 
 		info->status.rates[0].idx = -1;
 		info->status.rates[0].count = 1;
 
-		अगर (MWL8K_TXD_SUCCESS(status))
+		if (MWL8K_TXD_SUCCESS(status))
 			info->flags |= IEEE80211_TX_STAT_ACK;
 
 		ieee80211_tx_status_irqsafe(hw, skb);
 
 		processed++;
-	पूर्ण
+	}
 
-	वापस processed;
-पूर्ण
+	return processed;
+}
 
 /* must be called only when the card's transmit is completely halted */
-अटल व्योम mwl8k_txq_deinit(काष्ठा ieee80211_hw *hw, पूर्णांक index)
-अणु
-	काष्ठा mwl8k_priv *priv = hw->priv;
-	काष्ठा mwl8k_tx_queue *txq = priv->txq + index;
+static void mwl8k_txq_deinit(struct ieee80211_hw *hw, int index)
+{
+	struct mwl8k_priv *priv = hw->priv;
+	struct mwl8k_tx_queue *txq = priv->txq + index;
 
-	अगर (txq->txd == शून्य)
-		वापस;
+	if (txq->txd == NULL)
+		return;
 
-	mwl8k_txq_reclaim(hw, index, पूर्णांक_उच्च, 1);
+	mwl8k_txq_reclaim(hw, index, INT_MAX, 1);
 
-	kमुक्त(txq->skb);
-	txq->skb = शून्य;
+	kfree(txq->skb);
+	txq->skb = NULL;
 
-	dma_मुक्त_coherent(&priv->pdev->dev,
-			  MWL8K_TX_DESCS * माप(काष्ठा mwl8k_tx_desc),
+	dma_free_coherent(&priv->pdev->dev,
+			  MWL8K_TX_DESCS * sizeof(struct mwl8k_tx_desc),
 			  txq->txd, txq->txd_dma);
-	txq->txd = शून्य;
-पूर्ण
+	txq->txd = NULL;
+}
 
 /* caller must hold priv->stream_lock when calling the stream functions */
-अटल काष्ठा mwl8k_ampdu_stream *
-mwl8k_add_stream(काष्ठा ieee80211_hw *hw, काष्ठा ieee80211_sta *sta, u8 tid)
-अणु
-	काष्ठा mwl8k_ampdu_stream *stream;
-	काष्ठा mwl8k_priv *priv = hw->priv;
-	पूर्णांक i;
+static struct mwl8k_ampdu_stream *
+mwl8k_add_stream(struct ieee80211_hw *hw, struct ieee80211_sta *sta, u8 tid)
+{
+	struct mwl8k_ampdu_stream *stream;
+	struct mwl8k_priv *priv = hw->priv;
+	int i;
 
-	क्रम (i = 0; i < MWL8K_NUM_AMPDU_STREAMS; i++) अणु
+	for (i = 0; i < MWL8K_NUM_AMPDU_STREAMS; i++) {
 		stream = &priv->ampdu[i];
-		अगर (stream->state == AMPDU_NO_STREAM) अणु
+		if (stream->state == AMPDU_NO_STREAM) {
 			stream->sta = sta;
 			stream->state = AMPDU_STREAM_NEW;
 			stream->tid = tid;
 			stream->idx = i;
 			wiphy_debug(hw->wiphy, "Added a new stream for %pM %d",
 				    sta->addr, tid);
-			वापस stream;
-		पूर्ण
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+			return stream;
+		}
+	}
+	return NULL;
+}
 
-अटल पूर्णांक
-mwl8k_start_stream(काष्ठा ieee80211_hw *hw, काष्ठा mwl8k_ampdu_stream *stream)
-अणु
-	पूर्णांक ret;
+static int
+mwl8k_start_stream(struct ieee80211_hw *hw, struct mwl8k_ampdu_stream *stream)
+{
+	int ret;
 
-	/* अगर the stream has alपढ़ोy been started, करोn't start it again */
-	अगर (stream->state != AMPDU_STREAM_NEW)
-		वापस 0;
+	/* if the stream has already been started, don't start it again */
+	if (stream->state != AMPDU_STREAM_NEW)
+		return 0;
 	ret = ieee80211_start_tx_ba_session(stream->sta, stream->tid, 0);
-	अगर (ret)
+	if (ret)
 		wiphy_debug(hw->wiphy, "Failed to start stream for %pM %d: "
 			    "%d\n", stream->sta->addr, stream->tid, ret);
-	अन्यथा
+	else
 		wiphy_debug(hw->wiphy, "Started stream for %pM %d\n",
 			    stream->sta->addr, stream->tid);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम
-mwl8k_हटाओ_stream(काष्ठा ieee80211_hw *hw, काष्ठा mwl8k_ampdu_stream *stream)
-अणु
+static void
+mwl8k_remove_stream(struct ieee80211_hw *hw, struct mwl8k_ampdu_stream *stream)
+{
 	wiphy_debug(hw->wiphy, "Remove stream for %pM %d\n", stream->sta->addr,
 		    stream->tid);
-	स_रखो(stream, 0, माप(*stream));
-पूर्ण
+	memset(stream, 0, sizeof(*stream));
+}
 
-अटल काष्ठा mwl8k_ampdu_stream *
-mwl8k_lookup_stream(काष्ठा ieee80211_hw *hw, u8 *addr, u8 tid)
-अणु
-	काष्ठा mwl8k_priv *priv = hw->priv;
-	पूर्णांक i;
+static struct mwl8k_ampdu_stream *
+mwl8k_lookup_stream(struct ieee80211_hw *hw, u8 *addr, u8 tid)
+{
+	struct mwl8k_priv *priv = hw->priv;
+	int i;
 
-	क्रम (i = 0; i < MWL8K_NUM_AMPDU_STREAMS; i++) अणु
-		काष्ठा mwl8k_ampdu_stream *stream;
+	for (i = 0; i < MWL8K_NUM_AMPDU_STREAMS; i++) {
+		struct mwl8k_ampdu_stream *stream;
 		stream = &priv->ampdu[i];
-		अगर (stream->state == AMPDU_NO_STREAM)
-			जारी;
-		अगर (!स_भेद(stream->sta->addr, addr, ETH_ALEN) &&
+		if (stream->state == AMPDU_NO_STREAM)
+			continue;
+		if (!memcmp(stream->sta->addr, addr, ETH_ALEN) &&
 		    stream->tid == tid)
-			वापस stream;
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+			return stream;
+	}
+	return NULL;
+}
 
-#घोषणा MWL8K_AMPDU_PACKET_THRESHOLD 64
-अटल अंतरभूत bool mwl8k_ampdu_allowed(काष्ठा ieee80211_sta *sta, u8 tid)
-अणु
-	काष्ठा mwl8k_sta *sta_info = MWL8K_STA(sta);
-	काष्ठा tx_traffic_info *tx_stats;
+#define MWL8K_AMPDU_PACKET_THRESHOLD 64
+static inline bool mwl8k_ampdu_allowed(struct ieee80211_sta *sta, u8 tid)
+{
+	struct mwl8k_sta *sta_info = MWL8K_STA(sta);
+	struct tx_traffic_info *tx_stats;
 
 	BUG_ON(tid >= MWL8K_MAX_TID);
 	tx_stats = &sta_info->tx_stats[tid];
 
-	वापस sta_info->is_ampdu_allowed &&
+	return sta_info->is_ampdu_allowed &&
 		tx_stats->pkts > MWL8K_AMPDU_PACKET_THRESHOLD;
-पूर्ण
+}
 
-अटल अंतरभूत व्योम mwl8k_tx_count_packet(काष्ठा ieee80211_sta *sta, u8 tid)
-अणु
-	काष्ठा mwl8k_sta *sta_info = MWL8K_STA(sta);
-	काष्ठा tx_traffic_info *tx_stats;
+static inline void mwl8k_tx_count_packet(struct ieee80211_sta *sta, u8 tid)
+{
+	struct mwl8k_sta *sta_info = MWL8K_STA(sta);
+	struct tx_traffic_info *tx_stats;
 
 	BUG_ON(tid >= MWL8K_MAX_TID);
 	tx_stats = &sta_info->tx_stats[tid];
 
-	अगर (tx_stats->start_समय == 0)
-		tx_stats->start_समय = jअगरfies;
+	if (tx_stats->start_time == 0)
+		tx_stats->start_time = jiffies;
 
 	/* reset the packet count after each second elapses.  If the number of
 	 * packets ever exceeds the ampdu_min_traffic threshold, we will allow
 	 * an ampdu stream to be started.
 	 */
-	अगर (jअगरfies - tx_stats->start_समय > HZ) अणु
+	if (jiffies - tx_stats->start_time > HZ) {
 		tx_stats->pkts = 0;
-		tx_stats->start_समय = 0;
-	पूर्ण अन्यथा
+		tx_stats->start_time = 0;
+	} else
 		tx_stats->pkts++;
-पूर्ण
+}
 
 /* The hardware ampdu queues start from 5.
- * txpriorities क्रम ampdu queues are
+ * txpriorities for ampdu queues are
  * 5 6 7 0 1 2 3 4 ie., queue 5 is highest
  * and queue 3 is lowest (queue 4 is reserved)
  */
-#घोषणा BA_QUEUE		5
+#define BA_QUEUE		5
 
-अटल व्योम
-mwl8k_txq_xmit(काष्ठा ieee80211_hw *hw,
-	       पूर्णांक index,
-	       काष्ठा ieee80211_sta *sta,
-	       काष्ठा sk_buff *skb)
-अणु
-	काष्ठा mwl8k_priv *priv = hw->priv;
-	काष्ठा ieee80211_tx_info *tx_info;
-	काष्ठा mwl8k_vअगर *mwl8k_vअगर;
-	काष्ठा ieee80211_hdr *wh;
-	काष्ठा mwl8k_tx_queue *txq;
-	काष्ठा mwl8k_tx_desc *tx;
+static void
+mwl8k_txq_xmit(struct ieee80211_hw *hw,
+	       int index,
+	       struct ieee80211_sta *sta,
+	       struct sk_buff *skb)
+{
+	struct mwl8k_priv *priv = hw->priv;
+	struct ieee80211_tx_info *tx_info;
+	struct mwl8k_vif *mwl8k_vif;
+	struct ieee80211_hdr *wh;
+	struct mwl8k_tx_queue *txq;
+	struct mwl8k_tx_desc *tx;
 	dma_addr_t dma;
 	u32 txstatus;
 	u8 txdatarate;
 	u16 qos;
-	पूर्णांक txpriority;
+	int txpriority;
 	u8 tid = 0;
-	काष्ठा mwl8k_ampdu_stream *stream = शून्य;
+	struct mwl8k_ampdu_stream *stream = NULL;
 	bool start_ba_session = false;
 	bool mgmtframe = false;
-	काष्ठा ieee80211_mgmt *mgmt = (काष्ठा ieee80211_mgmt *)skb->data;
+	struct ieee80211_mgmt *mgmt = (struct ieee80211_mgmt *)skb->data;
 	bool eapol_frame = false;
 
-	wh = (काष्ठा ieee80211_hdr *)skb->data;
-	अगर (ieee80211_is_data_qos(wh->frame_control))
+	wh = (struct ieee80211_hdr *)skb->data;
+	if (ieee80211_is_data_qos(wh->frame_control))
 		qos = le16_to_cpu(*((__le16 *)ieee80211_get_qos_ctl(wh)));
-	अन्यथा
+	else
 		qos = 0;
 
-	अगर (skb->protocol == cpu_to_be16(ETH_P_PAE))
+	if (skb->protocol == cpu_to_be16(ETH_P_PAE))
 		eapol_frame = true;
 
-	अगर (ieee80211_is_mgmt(wh->frame_control))
+	if (ieee80211_is_mgmt(wh->frame_control))
 		mgmtframe = true;
 
-	अगर (priv->ap_fw)
+	if (priv->ap_fw)
 		mwl8k_encapsulate_tx_frame(priv, skb);
-	अन्यथा
+	else
 		mwl8k_add_dma_header(priv, skb, 0, 0);
 
-	wh = &((काष्ठा mwl8k_dma_data *)skb->data)->wh;
+	wh = &((struct mwl8k_dma_data *)skb->data)->wh;
 
 	tx_info = IEEE80211_SKB_CB(skb);
-	mwl8k_vअगर = MWL8K_VIF(tx_info->control.vअगर);
+	mwl8k_vif = MWL8K_VIF(tx_info->control.vif);
 
-	अगर (tx_info->flags & IEEE80211_TX_CTL_ASSIGN_SEQ) अणु
+	if (tx_info->flags & IEEE80211_TX_CTL_ASSIGN_SEQ) {
 		wh->seq_ctrl &= cpu_to_le16(IEEE80211_SCTL_FRAG);
-		wh->seq_ctrl |= cpu_to_le16(mwl8k_vअगर->seqno);
-		mwl8k_vअगर->seqno += 0x10;
-	पूर्ण
+		wh->seq_ctrl |= cpu_to_le16(mwl8k_vif->seqno);
+		mwl8k_vif->seqno += 0x10;
+	}
 
-	/* Setup firmware control bit fields क्रम each frame type.  */
+	/* Setup firmware control bit fields for each frame type.  */
 	txstatus = 0;
 	txdatarate = 0;
-	अगर (ieee80211_is_mgmt(wh->frame_control) ||
-	    ieee80211_is_ctl(wh->frame_control)) अणु
+	if (ieee80211_is_mgmt(wh->frame_control) ||
+	    ieee80211_is_ctl(wh->frame_control)) {
 		txdatarate = 0;
 		qos |= MWL8K_QOS_QLEN_UNSPEC | MWL8K_QOS_EOSP;
-	पूर्ण अन्यथा अगर (ieee80211_is_data(wh->frame_control)) अणु
+	} else if (ieee80211_is_data(wh->frame_control)) {
 		txdatarate = 1;
-		अगर (is_multicast_ether_addr(wh->addr1))
+		if (is_multicast_ether_addr(wh->addr1))
 			txstatus |= MWL8K_TXD_STATUS_MULTICAST_TX;
 
 		qos &= ~MWL8K_QOS_ACK_POLICY_MASK;
-		अगर (tx_info->flags & IEEE80211_TX_CTL_AMPDU)
+		if (tx_info->flags & IEEE80211_TX_CTL_AMPDU)
 			qos |= MWL8K_QOS_ACK_POLICY_BLOCKACK;
-		अन्यथा
+		else
 			qos |= MWL8K_QOS_ACK_POLICY_NORMAL;
-	पूर्ण
+	}
 
 	/* Queue ADDBA request in the respective data queue.  While setting up
-	 * the ampdu stream, mac80211 queues further packets क्रम that
+	 * the ampdu stream, mac80211 queues further packets for that
 	 * particular ra/tid pair.  However, packets piled up in the hardware
-	 * क्रम that ra/tid pair will still go out. ADDBA request and the
-	 * related data packets going out from dअगरferent queues asynchronously
-	 * will cause a shअगरt in the receiver winकरोw which might result in
+	 * for that ra/tid pair will still go out. ADDBA request and the
+	 * related data packets going out from different queues asynchronously
+	 * will cause a shift in the receiver window which might result in
 	 * ampdu packets getting dropped at the receiver after the stream has
 	 * been setup.
 	 */
-	अगर (unlikely(ieee80211_is_action(wh->frame_control) &&
+	if (unlikely(ieee80211_is_action(wh->frame_control) &&
 	    mgmt->u.action.category == WLAN_CATEGORY_BACK &&
 	    mgmt->u.action.u.addba_req.action_code == WLAN_ACTION_ADDBA_REQ &&
-	    priv->ap_fw)) अणु
+	    priv->ap_fw)) {
 		u16 capab = le16_to_cpu(mgmt->u.action.u.addba_req.capab);
 		tid = (capab & IEEE80211_ADDBA_PARAM_TID_MASK) >> 2;
 		index = mwl8k_tid_queue_mapping(tid);
-	पूर्ण
+	}
 
 	txpriority = index;
 
-	अगर (priv->ap_fw && sta && sta->ht_cap.ht_supported && !eapol_frame &&
-	    ieee80211_is_data_qos(wh->frame_control)) अणु
+	if (priv->ap_fw && sta && sta->ht_cap.ht_supported && !eapol_frame &&
+	    ieee80211_is_data_qos(wh->frame_control)) {
 		tid = qos & 0xf;
 		mwl8k_tx_count_packet(sta, tid);
 		spin_lock(&priv->stream_lock);
 		stream = mwl8k_lookup_stream(hw, sta->addr, tid);
-		अगर (stream != शून्य) अणु
-			अगर (stream->state == AMPDU_STREAM_ACTIVE) अणु
+		if (stream != NULL) {
+			if (stream->state == AMPDU_STREAM_ACTIVE) {
 				WARN_ON(!(qos & MWL8K_QOS_ACK_POLICY_BLOCKACK));
 				txpriority = (BA_QUEUE + stream->idx) %
 					     TOTAL_HW_TX_QUEUES;
-				अगर (stream->idx <= 1)
+				if (stream->idx <= 1)
 					index = stream->idx +
 						MWL8K_TX_WMM_QUEUES;
 
-			पूर्ण अन्यथा अगर (stream->state == AMPDU_STREAM_NEW) अणु
-				/* We get here अगर the driver sends us packets
-				 * after we've initiated a stream, but beक्रमe
+			} else if (stream->state == AMPDU_STREAM_NEW) {
+				/* We get here if the driver sends us packets
+				 * after we've initiated a stream, but before
 				 * our ampdu_action routine has been called
 				 * with IEEE80211_AMPDU_TX_START to get the SSN
-				 * क्रम the ADDBA request.  So this packet can
+				 * for the ADDBA request.  So this packet can
 				 * go out with no risk of sequence number
 				 * mismatch.  No special handling is required.
 				 */
-			पूर्ण अन्यथा अणु
+			} else {
 				/* Drop packets that would go out after the
-				 * ADDBA request was sent but beक्रमe the ADDBA
-				 * response is received.  If we करोn't करो this,
+				 * ADDBA request was sent but before the ADDBA
+				 * response is received.  If we don't do this,
 				 * the recipient would probably receive it
 				 * after the ADDBA request with SSN 0.  This
-				 * will cause the recipient's BA receive winकरोw
-				 * to shअगरt, which would cause the subsequent
+				 * will cause the recipient's BA receive window
+				 * to shift, which would cause the subsequent
 				 * packets in the BA stream to be discarded.
-				 * mac80211 queues our packets क्रम us in this
-				 * हाल, so this is really just a safety check.
+				 * mac80211 queues our packets for us in this
+				 * case, so this is really just a safety check.
 				 */
 				wiphy_warn(hw->wiphy,
 					   "Cannot send packet while ADDBA "
 					   "dialog is underway.\n");
 				spin_unlock(&priv->stream_lock);
-				dev_kमुक्त_skb(skb);
-				वापस;
-			पूर्ण
-		पूर्ण अन्यथा अणु
+				dev_kfree_skb(skb);
+				return;
+			}
+		} else {
 			/* Defer calling mwl8k_start_stream so that the current
-			 * skb can go out beक्रमe the ADDBA request.  This
+			 * skb can go out before the ADDBA request.  This
 			 * prevents sequence number mismatch at the recepient
 			 * as described above.
 			 */
-			अगर (mwl8k_ampdu_allowed(sta, tid)) अणु
+			if (mwl8k_ampdu_allowed(sta, tid)) {
 				stream = mwl8k_add_stream(hw, sta, tid);
-				अगर (stream != शून्य)
+				if (stream != NULL)
 					start_ba_session = true;
-			पूर्ण
-		पूर्ण
+			}
+		}
 		spin_unlock(&priv->stream_lock);
-	पूर्ण अन्यथा अणु
+	} else {
 		qos &= ~MWL8K_QOS_ACK_POLICY_MASK;
 		qos |= MWL8K_QOS_ACK_POLICY_NORMAL;
-	पूर्ण
+	}
 
 	dma = dma_map_single(&priv->pdev->dev, skb->data, skb->len,
 			     DMA_TO_DEVICE);
 
-	अगर (dma_mapping_error(&priv->pdev->dev, dma)) अणु
+	if (dma_mapping_error(&priv->pdev->dev, dma)) {
 		wiphy_debug(hw->wiphy,
 			    "failed to dma map skb, dropping TX frame.\n");
-		अगर (start_ba_session) अणु
+		if (start_ba_session) {
 			spin_lock(&priv->stream_lock);
-			mwl8k_हटाओ_stream(hw, stream);
+			mwl8k_remove_stream(hw, stream);
 			spin_unlock(&priv->stream_lock);
-		पूर्ण
-		dev_kमुक्त_skb(skb);
-		वापस;
-	पूर्ण
+		}
+		dev_kfree_skb(skb);
+		return;
+	}
 
 	spin_lock_bh(&priv->tx_lock);
 
@@ -2069,28 +2068,28 @@ mwl8k_txq_xmit(काष्ठा ieee80211_hw *hw,
 	/* Mgmt frames that go out frequently are probe
 	 * responses. Other mgmt frames got out relatively
 	 * infrequently. Hence reserve 2 buffers so that
-	 * other mgmt frames करो not get dropped due to an
-	 * alपढ़ोy queued probe response in one of the
+	 * other mgmt frames do not get dropped due to an
+	 * already queued probe response in one of the
 	 * reserved buffers.
 	 */
 
-	अगर (txq->len >= MWL8K_TX_DESCS - 2) अणु
-		अगर (!mgmtframe || txq->len == MWL8K_TX_DESCS) अणु
-			अगर (start_ba_session) अणु
+	if (txq->len >= MWL8K_TX_DESCS - 2) {
+		if (!mgmtframe || txq->len == MWL8K_TX_DESCS) {
+			if (start_ba_session) {
 				spin_lock(&priv->stream_lock);
-				mwl8k_हटाओ_stream(hw, stream);
+				mwl8k_remove_stream(hw, stream);
 				spin_unlock(&priv->stream_lock);
-			पूर्ण
+			}
 			mwl8k_tx_start(priv);
 			spin_unlock_bh(&priv->tx_lock);
 			dma_unmap_single(&priv->pdev->dev, dma, skb->len,
 					 DMA_TO_DEVICE);
-			dev_kमुक्त_skb(skb);
-			वापस;
-		पूर्ण
-	पूर्ण
+			dev_kfree_skb(skb);
+			return;
+		}
+	}
 
-	BUG_ON(txq->skb[txq->tail] != शून्य);
+	BUG_ON(txq->skb[txq->tail] != NULL);
 	txq->skb[txq->tail] = skb;
 
 	tx = txq->txd + txq->tail;
@@ -2100,16 +2099,16 @@ mwl8k_txq_xmit(काष्ठा ieee80211_hw *hw,
 	tx->pkt_phys_addr = cpu_to_le32(dma);
 	tx->pkt_len = cpu_to_le16(skb->len);
 	tx->rate_info = 0;
-	अगर (!priv->ap_fw && sta != शून्य)
+	if (!priv->ap_fw && sta != NULL)
 		tx->peer_id = MWL8K_STA(sta)->peer_id;
-	अन्यथा
+	else
 		tx->peer_id = 0;
 
-	अगर (priv->ap_fw && ieee80211_is_data(wh->frame_control) && !eapol_frame)
-		tx->बारtamp = cpu_to_le32(ioपढ़ो32(priv->regs +
+	if (priv->ap_fw && ieee80211_is_data(wh->frame_control) && !eapol_frame)
+		tx->timestamp = cpu_to_le32(ioread32(priv->regs +
 						MWL8K_HW_TIMER_REGISTER));
-	अन्यथा
-		tx->बारtamp = 0;
+	else
+		tx->timestamp = 0;
 
 	wmb();
 	tx->status = cpu_to_le32(MWL8K_TXD_STATUS_FW_OWNED | txstatus);
@@ -2118,7 +2117,7 @@ mwl8k_txq_xmit(काष्ठा ieee80211_hw *hw,
 	priv->pending_tx_pkts++;
 
 	txq->tail++;
-	अगर (txq->tail == MWL8K_TX_DESCS)
+	if (txq->tail == MWL8K_TX_DESCS)
 		txq->tail = 0;
 
 	mwl8k_tx_start(priv);
@@ -2126,24 +2125,24 @@ mwl8k_txq_xmit(काष्ठा ieee80211_hw *hw,
 	spin_unlock_bh(&priv->tx_lock);
 
 	/* Initiate the ampdu session here */
-	अगर (start_ba_session) अणु
+	if (start_ba_session) {
 		spin_lock(&priv->stream_lock);
-		अगर (mwl8k_start_stream(hw, stream))
-			mwl8k_हटाओ_stream(hw, stream);
+		if (mwl8k_start_stream(hw, stream))
+			mwl8k_remove_stream(hw, stream);
 		spin_unlock(&priv->stream_lock);
-	पूर्ण
-पूर्ण
+	}
+}
 
 
 /*
  * Firmware access.
  *
- * We have the following requirements क्रम issuing firmware commands:
+ * We have the following requirements for issuing firmware commands:
  * - Some commands require that the packet transmit path is idle when
  *   the command is issued.  (For simplicity, we'll just quiesce the
- *   transmit path क्रम every command.)
+ *   transmit path for every command.)
  * - There are certain sequences of commands that need to be issued to
- *   the hardware sequentially, with no other पूर्णांकervening commands.
+ *   the hardware sequentially, with no other intervening commands.
  *
  * This leads to an implementation of a "firmware lock" as a mutex that
  * can be taken recursively, and which is taken by both the low-level
@@ -2151,173 +2150,173 @@ mwl8k_txq_xmit(काष्ठा ieee80211_hw *hw,
  * that function that require issuing of an atomic sequence of commands,
  * and quiesces the transmit path whenever it's taken.
  */
-अटल पूर्णांक mwl8k_fw_lock(काष्ठा ieee80211_hw *hw)
-अणु
-	काष्ठा mwl8k_priv *priv = hw->priv;
+static int mwl8k_fw_lock(struct ieee80211_hw *hw)
+{
+	struct mwl8k_priv *priv = hw->priv;
 
-	अगर (priv->fw_mutex_owner != current) अणु
-		पूर्णांक rc;
+	if (priv->fw_mutex_owner != current) {
+		int rc;
 
 		mutex_lock(&priv->fw_mutex);
 		ieee80211_stop_queues(hw);
 
-		rc = mwl8k_tx_रुको_empty(hw);
-		अगर (rc) अणु
-			अगर (!priv->hw_restart_in_progress)
+		rc = mwl8k_tx_wait_empty(hw);
+		if (rc) {
+			if (!priv->hw_restart_in_progress)
 				ieee80211_wake_queues(hw);
 
 			mutex_unlock(&priv->fw_mutex);
 
-			वापस rc;
-		पूर्ण
+			return rc;
+		}
 
 		priv->fw_mutex_owner = current;
-	पूर्ण
+	}
 
 	priv->fw_mutex_depth++;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम mwl8k_fw_unlock(काष्ठा ieee80211_hw *hw)
-अणु
-	काष्ठा mwl8k_priv *priv = hw->priv;
+static void mwl8k_fw_unlock(struct ieee80211_hw *hw)
+{
+	struct mwl8k_priv *priv = hw->priv;
 
-	अगर (!--priv->fw_mutex_depth) अणु
-		अगर (!priv->hw_restart_in_progress)
+	if (!--priv->fw_mutex_depth) {
+		if (!priv->hw_restart_in_progress)
 			ieee80211_wake_queues(hw);
 
-		priv->fw_mutex_owner = शून्य;
+		priv->fw_mutex_owner = NULL;
 		mutex_unlock(&priv->fw_mutex);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम mwl8k_enable_bsses(काष्ठा ieee80211_hw *hw, bool enable,
-			       u32 biपंचांगap);
+static void mwl8k_enable_bsses(struct ieee80211_hw *hw, bool enable,
+			       u32 bitmap);
 
 /*
  * Command processing.
  */
 
 /* Timeout firmware commands after 10s */
-#घोषणा MWL8K_CMD_TIMEOUT_MS	10000
+#define MWL8K_CMD_TIMEOUT_MS	10000
 
-अटल पूर्णांक mwl8k_post_cmd(काष्ठा ieee80211_hw *hw, काष्ठा mwl8k_cmd_pkt *cmd)
-अणु
-	DECLARE_COMPLETION_ONSTACK(cmd_रुको);
-	काष्ठा mwl8k_priv *priv = hw->priv;
-	व्योम __iomem *regs = priv->regs;
+static int mwl8k_post_cmd(struct ieee80211_hw *hw, struct mwl8k_cmd_pkt *cmd)
+{
+	DECLARE_COMPLETION_ONSTACK(cmd_wait);
+	struct mwl8k_priv *priv = hw->priv;
+	void __iomem *regs = priv->regs;
 	dma_addr_t dma_addr;
-	अचिन्हित पूर्णांक dma_size;
-	पूर्णांक rc;
-	अचिन्हित दीर्घ समयout = 0;
+	unsigned int dma_size;
+	int rc;
+	unsigned long timeout = 0;
 	u8 buf[32];
-	u32 biपंचांगap = 0;
+	u32 bitmap = 0;
 
 	wiphy_dbg(hw->wiphy, "Posting %s [%d]\n",
-		  mwl8k_cmd_name(cmd->code, buf, माप(buf)), cmd->macid);
+		  mwl8k_cmd_name(cmd->code, buf, sizeof(buf)), cmd->macid);
 
-	/* Beक्रमe posting firmware commands that could change the hardware
-	 * अक्षरacteristics, make sure that all BSSes are stopped temporary.
+	/* Before posting firmware commands that could change the hardware
+	 * characteristics, make sure that all BSSes are stopped temporary.
 	 * Enable these stopped BSSes after completion of the commands
 	 */
 
 	rc = mwl8k_fw_lock(hw);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
-	अगर (priv->ap_fw && priv->running_bsses) अणु
-		चयन (le16_to_cpu(cmd->code)) अणु
-		हाल MWL8K_CMD_SET_RF_CHANNEL:
-		हाल MWL8K_CMD_RADIO_CONTROL:
-		हाल MWL8K_CMD_RF_TX_POWER:
-		हाल MWL8K_CMD_TX_POWER:
-		हाल MWL8K_CMD_RF_ANTENNA:
-		हाल MWL8K_CMD_RTS_THRESHOLD:
-		हाल MWL8K_CMD_MIMO_CONFIG:
-			biपंचांगap = priv->running_bsses;
-			mwl8k_enable_bsses(hw, false, biपंचांगap);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+	if (priv->ap_fw && priv->running_bsses) {
+		switch (le16_to_cpu(cmd->code)) {
+		case MWL8K_CMD_SET_RF_CHANNEL:
+		case MWL8K_CMD_RADIO_CONTROL:
+		case MWL8K_CMD_RF_TX_POWER:
+		case MWL8K_CMD_TX_POWER:
+		case MWL8K_CMD_RF_ANTENNA:
+		case MWL8K_CMD_RTS_THRESHOLD:
+		case MWL8K_CMD_MIMO_CONFIG:
+			bitmap = priv->running_bsses;
+			mwl8k_enable_bsses(hw, false, bitmap);
+			break;
+		}
+	}
 
-	cmd->result = (__क्रमce __le16) 0xffff;
+	cmd->result = (__force __le16) 0xffff;
 	dma_size = le16_to_cpu(cmd->length);
 	dma_addr = dma_map_single(&priv->pdev->dev, cmd, dma_size,
-				  DMA_BIसूचीECTIONAL);
-	अगर (dma_mapping_error(&priv->pdev->dev, dma_addr)) अणु
+				  DMA_BIDIRECTIONAL);
+	if (dma_mapping_error(&priv->pdev->dev, dma_addr)) {
 		rc = -ENOMEM;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
-	priv->hostcmd_रुको = &cmd_रुको;
-	ioग_लिखो32(dma_addr, regs + MWL8K_HIU_GEN_PTR);
-	ioग_लिखो32(MWL8K_H2A_INT_DOORBELL,
+	priv->hostcmd_wait = &cmd_wait;
+	iowrite32(dma_addr, regs + MWL8K_HIU_GEN_PTR);
+	iowrite32(MWL8K_H2A_INT_DOORBELL,
 		regs + MWL8K_HIU_H2A_INTERRUPT_EVENTS);
-	ioग_लिखो32(MWL8K_H2A_INT_DUMMY,
+	iowrite32(MWL8K_H2A_INT_DUMMY,
 		regs + MWL8K_HIU_H2A_INTERRUPT_EVENTS);
 
-	समयout = रुको_क्रम_completion_समयout(&cmd_रुको,
-				msecs_to_jअगरfies(MWL8K_CMD_TIMEOUT_MS));
+	timeout = wait_for_completion_timeout(&cmd_wait,
+				msecs_to_jiffies(MWL8K_CMD_TIMEOUT_MS));
 
-	priv->hostcmd_रुको = शून्य;
+	priv->hostcmd_wait = NULL;
 
 
 	dma_unmap_single(&priv->pdev->dev, dma_addr, dma_size,
-			 DMA_BIसूचीECTIONAL);
+			 DMA_BIDIRECTIONAL);
 
-	अगर (!समयout) अणु
+	if (!timeout) {
 		wiphy_err(hw->wiphy, "Command %s timeout after %u ms\n",
-			  mwl8k_cmd_name(cmd->code, buf, माप(buf)),
+			  mwl8k_cmd_name(cmd->code, buf, sizeof(buf)),
 			  MWL8K_CMD_TIMEOUT_MS);
 		rc = -ETIMEDOUT;
-	पूर्ण अन्यथा अणु
-		पूर्णांक ms;
+	} else {
+		int ms;
 
-		ms = MWL8K_CMD_TIMEOUT_MS - jअगरfies_to_msecs(समयout);
+		ms = MWL8K_CMD_TIMEOUT_MS - jiffies_to_msecs(timeout);
 
 		rc = cmd->result ? -EINVAL : 0;
-		अगर (rc)
+		if (rc)
 			wiphy_err(hw->wiphy, "Command %s error 0x%x\n",
-				  mwl8k_cmd_name(cmd->code, buf, माप(buf)),
+				  mwl8k_cmd_name(cmd->code, buf, sizeof(buf)),
 				  le16_to_cpu(cmd->result));
-		अन्यथा अगर (ms > 2000)
+		else if (ms > 2000)
 			wiphy_notice(hw->wiphy, "Command %s took %d ms\n",
 				     mwl8k_cmd_name(cmd->code,
-						    buf, माप(buf)),
+						    buf, sizeof(buf)),
 				     ms);
-	पूर्ण
+	}
 
-निकास:
-	अगर (biपंचांगap)
-		mwl8k_enable_bsses(hw, true, biपंचांगap);
+exit:
+	if (bitmap)
+		mwl8k_enable_bsses(hw, true, bitmap);
 
 	mwl8k_fw_unlock(hw);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक mwl8k_post_pervअगर_cmd(काष्ठा ieee80211_hw *hw,
-				 काष्ठा ieee80211_vअगर *vअगर,
-				 काष्ठा mwl8k_cmd_pkt *cmd)
-अणु
-	अगर (vअगर != शून्य)
-		cmd->macid = MWL8K_VIF(vअगर)->macid;
-	वापस mwl8k_post_cmd(hw, cmd);
-पूर्ण
+static int mwl8k_post_pervif_cmd(struct ieee80211_hw *hw,
+				 struct ieee80211_vif *vif,
+				 struct mwl8k_cmd_pkt *cmd)
+{
+	if (vif != NULL)
+		cmd->macid = MWL8K_VIF(vif)->macid;
+	return mwl8k_post_cmd(hw, cmd);
+}
 
 /*
  * Setup code shared between STA and AP firmware images.
  */
-अटल व्योम mwl8k_setup_2ghz_band(काष्ठा ieee80211_hw *hw)
-अणु
-	काष्ठा mwl8k_priv *priv = hw->priv;
+static void mwl8k_setup_2ghz_band(struct ieee80211_hw *hw)
+{
+	struct mwl8k_priv *priv = hw->priv;
 
-	BUILD_BUG_ON(माप(priv->channels_24) != माप(mwl8k_channels_24));
-	स_नकल(priv->channels_24, mwl8k_channels_24, माप(mwl8k_channels_24));
+	BUILD_BUG_ON(sizeof(priv->channels_24) != sizeof(mwl8k_channels_24));
+	memcpy(priv->channels_24, mwl8k_channels_24, sizeof(mwl8k_channels_24));
 
-	BUILD_BUG_ON(माप(priv->rates_24) != माप(mwl8k_rates_24));
-	स_नकल(priv->rates_24, mwl8k_rates_24, माप(mwl8k_rates_24));
+	BUILD_BUG_ON(sizeof(priv->rates_24) != sizeof(mwl8k_rates_24));
+	memcpy(priv->rates_24, mwl8k_rates_24, sizeof(mwl8k_rates_24));
 
 	priv->band_24.band = NL80211_BAND_2GHZ;
 	priv->band_24.channels = priv->channels_24;
@@ -2326,17 +2325,17 @@ mwl8k_txq_xmit(काष्ठा ieee80211_hw *hw,
 	priv->band_24.n_bitrates = ARRAY_SIZE(mwl8k_rates_24);
 
 	hw->wiphy->bands[NL80211_BAND_2GHZ] = &priv->band_24;
-पूर्ण
+}
 
-अटल व्योम mwl8k_setup_5ghz_band(काष्ठा ieee80211_hw *hw)
-अणु
-	काष्ठा mwl8k_priv *priv = hw->priv;
+static void mwl8k_setup_5ghz_band(struct ieee80211_hw *hw)
+{
+	struct mwl8k_priv *priv = hw->priv;
 
-	BUILD_BUG_ON(माप(priv->channels_50) != माप(mwl8k_channels_50));
-	स_नकल(priv->channels_50, mwl8k_channels_50, माप(mwl8k_channels_50));
+	BUILD_BUG_ON(sizeof(priv->channels_50) != sizeof(mwl8k_channels_50));
+	memcpy(priv->channels_50, mwl8k_channels_50, sizeof(mwl8k_channels_50));
 
-	BUILD_BUG_ON(माप(priv->rates_50) != माप(mwl8k_rates_50));
-	स_नकल(priv->rates_50, mwl8k_rates_50, माप(mwl8k_rates_50));
+	BUILD_BUG_ON(sizeof(priv->rates_50) != sizeof(mwl8k_rates_50));
+	memcpy(priv->rates_50, mwl8k_rates_50, sizeof(mwl8k_rates_50));
 
 	priv->band_50.band = NL80211_BAND_5GHZ;
 	priv->band_50.channels = priv->channels_50;
@@ -2345,144 +2344,144 @@ mwl8k_txq_xmit(काष्ठा ieee80211_hw *hw,
 	priv->band_50.n_bitrates = ARRAY_SIZE(mwl8k_rates_50);
 
 	hw->wiphy->bands[NL80211_BAND_5GHZ] = &priv->band_50;
-पूर्ण
+}
 
 /*
  * CMD_GET_HW_SPEC (STA version).
  */
-काष्ठा mwl8k_cmd_get_hw_spec_sta अणु
-	काष्ठा mwl8k_cmd_pkt header;
+struct mwl8k_cmd_get_hw_spec_sta {
+	struct mwl8k_cmd_pkt header;
 	__u8 hw_rev;
-	__u8 host_पूर्णांकerface;
+	__u8 host_interface;
 	__le16 num_mcaddrs;
 	__u8 perm_addr[ETH_ALEN];
 	__le16 region_code;
 	__le32 fw_rev;
 	__le32 ps_cookie;
 	__le32 caps;
-	__u8 mcs_biपंचांगap[16];
+	__u8 mcs_bitmap[16];
 	__le32 rx_queue_ptr;
 	__le32 num_tx_queues;
 	__le32 tx_queue_ptrs[MWL8K_TX_WMM_QUEUES];
 	__le32 caps2;
 	__le32 num_tx_desc_per_queue;
 	__le32 total_rxd;
-पूर्ण __packed;
+} __packed;
 
-#घोषणा MWL8K_CAP_MAX_AMSDU		0x20000000
-#घोषणा MWL8K_CAP_GREENFIELD		0x08000000
-#घोषणा MWL8K_CAP_AMPDU			0x04000000
-#घोषणा MWL8K_CAP_RX_STBC		0x01000000
-#घोषणा MWL8K_CAP_TX_STBC		0x00800000
-#घोषणा MWL8K_CAP_SHORTGI_40MHZ		0x00400000
-#घोषणा MWL8K_CAP_SHORTGI_20MHZ		0x00200000
-#घोषणा MWL8K_CAP_RX_ANTENNA_MASK	0x000e0000
-#घोषणा MWL8K_CAP_TX_ANTENNA_MASK	0x0001c000
-#घोषणा MWL8K_CAP_DELAY_BA		0x00003000
-#घोषणा MWL8K_CAP_MIMO			0x00000200
-#घोषणा MWL8K_CAP_40MHZ			0x00000100
-#घोषणा MWL8K_CAP_BAND_MASK		0x00000007
-#घोषणा MWL8K_CAP_5GHZ			0x00000004
-#घोषणा MWL8K_CAP_2GHZ4			0x00000001
+#define MWL8K_CAP_MAX_AMSDU		0x20000000
+#define MWL8K_CAP_GREENFIELD		0x08000000
+#define MWL8K_CAP_AMPDU			0x04000000
+#define MWL8K_CAP_RX_STBC		0x01000000
+#define MWL8K_CAP_TX_STBC		0x00800000
+#define MWL8K_CAP_SHORTGI_40MHZ		0x00400000
+#define MWL8K_CAP_SHORTGI_20MHZ		0x00200000
+#define MWL8K_CAP_RX_ANTENNA_MASK	0x000e0000
+#define MWL8K_CAP_TX_ANTENNA_MASK	0x0001c000
+#define MWL8K_CAP_DELAY_BA		0x00003000
+#define MWL8K_CAP_MIMO			0x00000200
+#define MWL8K_CAP_40MHZ			0x00000100
+#define MWL8K_CAP_BAND_MASK		0x00000007
+#define MWL8K_CAP_5GHZ			0x00000004
+#define MWL8K_CAP_2GHZ4			0x00000001
 
-अटल व्योम
-mwl8k_set_ht_caps(काष्ठा ieee80211_hw *hw,
-		  काष्ठा ieee80211_supported_band *band, u32 cap)
-अणु
-	पूर्णांक rx_streams;
-	पूर्णांक tx_streams;
+static void
+mwl8k_set_ht_caps(struct ieee80211_hw *hw,
+		  struct ieee80211_supported_band *band, u32 cap)
+{
+	int rx_streams;
+	int tx_streams;
 
 	band->ht_cap.ht_supported = 1;
 
-	अगर (cap & MWL8K_CAP_MAX_AMSDU)
+	if (cap & MWL8K_CAP_MAX_AMSDU)
 		band->ht_cap.cap |= IEEE80211_HT_CAP_MAX_AMSDU;
-	अगर (cap & MWL8K_CAP_GREENFIELD)
+	if (cap & MWL8K_CAP_GREENFIELD)
 		band->ht_cap.cap |= IEEE80211_HT_CAP_GRN_FLD;
-	अगर (cap & MWL8K_CAP_AMPDU) अणु
+	if (cap & MWL8K_CAP_AMPDU) {
 		ieee80211_hw_set(hw, AMPDU_AGGREGATION);
 		band->ht_cap.ampdu_factor = IEEE80211_HT_MAX_AMPDU_64K;
 		band->ht_cap.ampdu_density = IEEE80211_HT_MPDU_DENSITY_NONE;
-	पूर्ण
-	अगर (cap & MWL8K_CAP_RX_STBC)
+	}
+	if (cap & MWL8K_CAP_RX_STBC)
 		band->ht_cap.cap |= IEEE80211_HT_CAP_RX_STBC;
-	अगर (cap & MWL8K_CAP_TX_STBC)
+	if (cap & MWL8K_CAP_TX_STBC)
 		band->ht_cap.cap |= IEEE80211_HT_CAP_TX_STBC;
-	अगर (cap & MWL8K_CAP_SHORTGI_40MHZ)
+	if (cap & MWL8K_CAP_SHORTGI_40MHZ)
 		band->ht_cap.cap |= IEEE80211_HT_CAP_SGI_40;
-	अगर (cap & MWL8K_CAP_SHORTGI_20MHZ)
+	if (cap & MWL8K_CAP_SHORTGI_20MHZ)
 		band->ht_cap.cap |= IEEE80211_HT_CAP_SGI_20;
-	अगर (cap & MWL8K_CAP_DELAY_BA)
+	if (cap & MWL8K_CAP_DELAY_BA)
 		band->ht_cap.cap |= IEEE80211_HT_CAP_DELAY_BA;
-	अगर (cap & MWL8K_CAP_40MHZ)
+	if (cap & MWL8K_CAP_40MHZ)
 		band->ht_cap.cap |= IEEE80211_HT_CAP_SUP_WIDTH_20_40;
 
 	rx_streams = hweight32(cap & MWL8K_CAP_RX_ANTENNA_MASK);
 	tx_streams = hweight32(cap & MWL8K_CAP_TX_ANTENNA_MASK);
 
 	band->ht_cap.mcs.rx_mask[0] = 0xff;
-	अगर (rx_streams >= 2)
+	if (rx_streams >= 2)
 		band->ht_cap.mcs.rx_mask[1] = 0xff;
-	अगर (rx_streams >= 3)
+	if (rx_streams >= 3)
 		band->ht_cap.mcs.rx_mask[2] = 0xff;
 	band->ht_cap.mcs.rx_mask[4] = 0x01;
 	band->ht_cap.mcs.tx_params = IEEE80211_HT_MCS_TX_DEFINED;
 
-	अगर (rx_streams != tx_streams) अणु
+	if (rx_streams != tx_streams) {
 		band->ht_cap.mcs.tx_params |= IEEE80211_HT_MCS_TX_RX_DIFF;
 		band->ht_cap.mcs.tx_params |= (tx_streams - 1) <<
 				IEEE80211_HT_MCS_TX_MAX_STREAMS_SHIFT;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम
-mwl8k_set_caps(काष्ठा ieee80211_hw *hw, u32 caps)
-अणु
-	काष्ठा mwl8k_priv *priv = hw->priv;
+static void
+mwl8k_set_caps(struct ieee80211_hw *hw, u32 caps)
+{
+	struct mwl8k_priv *priv = hw->priv;
 
-	अगर (priv->caps)
-		वापस;
+	if (priv->caps)
+		return;
 
-	अगर ((caps & MWL8K_CAP_2GHZ4) || !(caps & MWL8K_CAP_BAND_MASK)) अणु
+	if ((caps & MWL8K_CAP_2GHZ4) || !(caps & MWL8K_CAP_BAND_MASK)) {
 		mwl8k_setup_2ghz_band(hw);
-		अगर (caps & MWL8K_CAP_MIMO)
+		if (caps & MWL8K_CAP_MIMO)
 			mwl8k_set_ht_caps(hw, &priv->band_24, caps);
-	पूर्ण
+	}
 
-	अगर (caps & MWL8K_CAP_5GHZ) अणु
+	if (caps & MWL8K_CAP_5GHZ) {
 		mwl8k_setup_5ghz_band(hw);
-		अगर (caps & MWL8K_CAP_MIMO)
+		if (caps & MWL8K_CAP_MIMO)
 			mwl8k_set_ht_caps(hw, &priv->band_50, caps);
-	पूर्ण
+	}
 
 	priv->caps = caps;
-पूर्ण
+}
 
-अटल पूर्णांक mwl8k_cmd_get_hw_spec_sta(काष्ठा ieee80211_hw *hw)
-अणु
-	काष्ठा mwl8k_priv *priv = hw->priv;
-	काष्ठा mwl8k_cmd_get_hw_spec_sta *cmd;
-	पूर्णांक rc;
-	पूर्णांक i;
+static int mwl8k_cmd_get_hw_spec_sta(struct ieee80211_hw *hw)
+{
+	struct mwl8k_priv *priv = hw->priv;
+	struct mwl8k_cmd_get_hw_spec_sta *cmd;
+	int rc;
+	int i;
 
-	cmd = kzalloc(माप(*cmd), GFP_KERNEL);
-	अगर (cmd == शून्य)
-		वापस -ENOMEM;
+	cmd = kzalloc(sizeof(*cmd), GFP_KERNEL);
+	if (cmd == NULL)
+		return -ENOMEM;
 
 	cmd->header.code = cpu_to_le16(MWL8K_CMD_GET_HW_SPEC);
-	cmd->header.length = cpu_to_le16(माप(*cmd));
+	cmd->header.length = cpu_to_le16(sizeof(*cmd));
 
-	स_रखो(cmd->perm_addr, 0xff, माप(cmd->perm_addr));
+	memset(cmd->perm_addr, 0xff, sizeof(cmd->perm_addr));
 	cmd->ps_cookie = cpu_to_le32(priv->cookie_dma);
 	cmd->rx_queue_ptr = cpu_to_le32(priv->rxq[0].rxd_dma);
 	cmd->num_tx_queues = cpu_to_le32(mwl8k_tx_queues(priv));
-	क्रम (i = 0; i < mwl8k_tx_queues(priv); i++)
+	for (i = 0; i < mwl8k_tx_queues(priv); i++)
 		cmd->tx_queue_ptrs[i] = cpu_to_le32(priv->txq[i].txd_dma);
 	cmd->num_tx_desc_per_queue = cpu_to_le32(MWL8K_TX_DESCS);
 	cmd->total_rxd = cpu_to_le32(MWL8K_RX_DESCS);
 
 	rc = mwl8k_post_cmd(hw, &cmd->header);
 
-	अगर (!rc) अणु
+	if (!rc) {
 		SET_IEEE80211_PERM_ADDR(hw, cmd->perm_addr);
 		priv->num_mcaddrs = le16_to_cpu(cmd->num_mcaddrs);
 		priv->fw_rev = le32_to_cpu(cmd->fw_rev);
@@ -2490,19 +2489,19 @@ mwl8k_set_caps(काष्ठा ieee80211_hw *hw, u32 caps)
 		mwl8k_set_caps(hw, le32_to_cpu(cmd->caps));
 		priv->ap_macids_supported = 0x00000000;
 		priv->sta_macids_supported = 0x00000001;
-	पूर्ण
+	}
 
-	kमुक्त(cmd);
-	वापस rc;
-पूर्ण
+	kfree(cmd);
+	return rc;
+}
 
 /*
  * CMD_GET_HW_SPEC (AP version).
  */
-काष्ठा mwl8k_cmd_get_hw_spec_ap अणु
-	काष्ठा mwl8k_cmd_pkt header;
+struct mwl8k_cmd_get_hw_spec_ap {
+	struct mwl8k_cmd_pkt header;
 	__u8 hw_rev;
-	__u8 host_पूर्णांकerface;
+	__u8 host_interface;
 	__le16 num_wcb;
 	__le16 num_mcaddrs;
 	__u8 perm_addr[ETH_ALEN];
@@ -2520,40 +2519,40 @@ mwl8k_set_caps(काष्ठा ieee80211_hw *hw, u32 caps)
 	__le32 caps;
 	__le32 num_of_ampdu_queues;
 	__le32 wcbbase_ampdu[MWL8K_MAX_AMPDU_QUEUES];
-पूर्ण __packed;
+} __packed;
 
-अटल पूर्णांक mwl8k_cmd_get_hw_spec_ap(काष्ठा ieee80211_hw *hw)
-अणु
-	काष्ठा mwl8k_priv *priv = hw->priv;
-	काष्ठा mwl8k_cmd_get_hw_spec_ap *cmd;
-	पूर्णांक rc, i;
+static int mwl8k_cmd_get_hw_spec_ap(struct ieee80211_hw *hw)
+{
+	struct mwl8k_priv *priv = hw->priv;
+	struct mwl8k_cmd_get_hw_spec_ap *cmd;
+	int rc, i;
 	u32 api_version;
 
-	cmd = kzalloc(माप(*cmd), GFP_KERNEL);
-	अगर (cmd == शून्य)
-		वापस -ENOMEM;
+	cmd = kzalloc(sizeof(*cmd), GFP_KERNEL);
+	if (cmd == NULL)
+		return -ENOMEM;
 
 	cmd->header.code = cpu_to_le16(MWL8K_CMD_GET_HW_SPEC);
-	cmd->header.length = cpu_to_le16(माप(*cmd));
+	cmd->header.length = cpu_to_le16(sizeof(*cmd));
 
-	स_रखो(cmd->perm_addr, 0xff, माप(cmd->perm_addr));
+	memset(cmd->perm_addr, 0xff, sizeof(cmd->perm_addr));
 	cmd->ps_cookie = cpu_to_le32(priv->cookie_dma);
 
 	rc = mwl8k_post_cmd(hw, &cmd->header);
 
-	अगर (!rc) अणु
-		पूर्णांक off;
+	if (!rc) {
+		int off;
 
 		api_version = le32_to_cpu(cmd->fw_api_version);
-		अगर (priv->device_info->fw_api_ap != api_version) अणु
-			prपूर्णांकk(KERN_ERR "%s: Unsupported fw API version for %s."
+		if (priv->device_info->fw_api_ap != api_version) {
+			printk(KERN_ERR "%s: Unsupported fw API version for %s."
 			       "  Expected %d got %d.\n", MWL8K_NAME,
 			       priv->device_info->part_name,
 			       priv->device_info->fw_api_ap,
 			       api_version);
 			rc = -EINVAL;
-			जाओ करोne;
-		पूर्ण
+			goto done;
+		}
 		SET_IEEE80211_PERM_ADDR(hw, cmd->perm_addr);
 		priv->num_mcaddrs = le16_to_cpu(cmd->num_mcaddrs);
 		priv->fw_rev = le32_to_cpu(cmd->fw_rev);
@@ -2562,41 +2561,41 @@ mwl8k_set_caps(काष्ठा ieee80211_hw *hw, u32 caps)
 		priv->ap_macids_supported = 0x000000ff;
 		priv->sta_macids_supported = 0x00000100;
 		priv->num_ampdu_queues = le32_to_cpu(cmd->num_of_ampdu_queues);
-		अगर (priv->num_ampdu_queues > MWL8K_MAX_AMPDU_QUEUES) अणु
+		if (priv->num_ampdu_queues > MWL8K_MAX_AMPDU_QUEUES) {
 			wiphy_warn(hw->wiphy, "fw reported %d ampdu queues"
 				   " but we only support %d.\n",
 				   priv->num_ampdu_queues,
 				   MWL8K_MAX_AMPDU_QUEUES);
 			priv->num_ampdu_queues = MWL8K_MAX_AMPDU_QUEUES;
-		पूर्ण
+		}
 		off = le32_to_cpu(cmd->rxwrptr) & 0xffff;
-		ioग_लिखो32(priv->rxq[0].rxd_dma, priv->sram + off);
+		iowrite32(priv->rxq[0].rxd_dma, priv->sram + off);
 
 		off = le32_to_cpu(cmd->rxrdptr) & 0xffff;
-		ioग_लिखो32(priv->rxq[0].rxd_dma, priv->sram + off);
+		iowrite32(priv->rxq[0].rxd_dma, priv->sram + off);
 
 		priv->txq_offset[0] = le32_to_cpu(cmd->wcbbase0) & 0xffff;
 		priv->txq_offset[1] = le32_to_cpu(cmd->wcbbase1) & 0xffff;
 		priv->txq_offset[2] = le32_to_cpu(cmd->wcbbase2) & 0xffff;
 		priv->txq_offset[3] = le32_to_cpu(cmd->wcbbase3) & 0xffff;
 
-		क्रम (i = 0; i < priv->num_ampdu_queues; i++)
+		for (i = 0; i < priv->num_ampdu_queues; i++)
 			priv->txq_offset[i + MWL8K_TX_WMM_QUEUES] =
 				le32_to_cpu(cmd->wcbbase_ampdu[i]) & 0xffff;
-	पूर्ण
+	}
 
-करोne:
-	kमुक्त(cmd);
-	वापस rc;
-पूर्ण
+done:
+	kfree(cmd);
+	return rc;
+}
 
 /*
  * CMD_SET_HW_SPEC.
  */
-काष्ठा mwl8k_cmd_set_hw_spec अणु
-	काष्ठा mwl8k_cmd_pkt header;
+struct mwl8k_cmd_set_hw_spec {
+	struct mwl8k_cmd_pkt header;
 	__u8 hw_rev;
-	__u8 host_पूर्णांकerface;
+	__u8 host_interface;
 	__le16 num_mcaddrs;
 	__u8 perm_addr[ETH_ALEN];
 	__le16 region_code;
@@ -2609,34 +2608,34 @@ mwl8k_set_caps(काष्ठा ieee80211_hw *hw, u32 caps)
 	__le32 flags;
 	__le32 num_tx_desc_per_queue;
 	__le32 total_rxd;
-पूर्ण __packed;
+} __packed;
 
 /* If enabled, MWL8K_SET_HW_SPEC_FLAG_ENABLE_LIFE_TIME_EXPIRY will cause
- * packets to expire 500 ms after the बारtamp in the tx descriptor.  That is,
- * the packets that are queued क्रम more than 500ms, will be dropped in the
+ * packets to expire 500 ms after the timestamp in the tx descriptor.  That is,
+ * the packets that are queued for more than 500ms, will be dropped in the
  * hardware. This helps minimizing the issues caused due to head-of-line
  * blocking where a slow client can hog the bandwidth and affect traffic to a
  * faster client.
  */
-#घोषणा MWL8K_SET_HW_SPEC_FLAG_ENABLE_LIFE_TIME_EXPIRY	0x00000400
-#घोषणा MWL8K_SET_HW_SPEC_FLAG_GENERATE_CCMP_HDR	0x00000200
-#घोषणा MWL8K_SET_HW_SPEC_FLAG_HOST_DECR_MGMT		0x00000080
-#घोषणा MWL8K_SET_HW_SPEC_FLAG_HOSTFORM_PROBERESP	0x00000020
-#घोषणा MWL8K_SET_HW_SPEC_FLAG_HOSTFORM_BEACON		0x00000010
+#define MWL8K_SET_HW_SPEC_FLAG_ENABLE_LIFE_TIME_EXPIRY	0x00000400
+#define MWL8K_SET_HW_SPEC_FLAG_GENERATE_CCMP_HDR	0x00000200
+#define MWL8K_SET_HW_SPEC_FLAG_HOST_DECR_MGMT		0x00000080
+#define MWL8K_SET_HW_SPEC_FLAG_HOSTFORM_PROBERESP	0x00000020
+#define MWL8K_SET_HW_SPEC_FLAG_HOSTFORM_BEACON		0x00000010
 
-अटल पूर्णांक mwl8k_cmd_set_hw_spec(काष्ठा ieee80211_hw *hw)
-अणु
-	काष्ठा mwl8k_priv *priv = hw->priv;
-	काष्ठा mwl8k_cmd_set_hw_spec *cmd;
-	पूर्णांक rc;
-	पूर्णांक i;
+static int mwl8k_cmd_set_hw_spec(struct ieee80211_hw *hw)
+{
+	struct mwl8k_priv *priv = hw->priv;
+	struct mwl8k_cmd_set_hw_spec *cmd;
+	int rc;
+	int i;
 
-	cmd = kzalloc(माप(*cmd), GFP_KERNEL);
-	अगर (cmd == शून्य)
-		वापस -ENOMEM;
+	cmd = kzalloc(sizeof(*cmd), GFP_KERNEL);
+	if (cmd == NULL)
+		return -ENOMEM;
 
 	cmd->header.code = cpu_to_le16(MWL8K_CMD_SET_HW_SPEC);
-	cmd->header.length = cpu_to_le16(माप(*cmd));
+	cmd->header.length = cpu_to_le16(sizeof(*cmd));
 
 	cmd->ps_cookie = cpu_to_le32(priv->cookie_dma);
 	cmd->rx_queue_ptr = cpu_to_le32(priv->rxq[0].rxd_dma);
@@ -2646,12 +2645,12 @@ mwl8k_set_caps(काष्ठा ieee80211_hw *hw, u32 caps)
 	 * Mac80211 stack has Q0 as highest priority and Q3 as lowest in
 	 * that order. Firmware has Q3 as highest priority and Q0 as lowest
 	 * in that order. Map Q3 of mac80211 to Q0 of firmware so that the
-	 * priority is पूर्णांकerpreted the right way in firmware.
+	 * priority is interpreted the right way in firmware.
 	 */
-	क्रम (i = 0; i < mwl8k_tx_queues(priv); i++) अणु
-		पूर्णांक j = mwl8k_tx_queues(priv) - 1 - i;
+	for (i = 0; i < mwl8k_tx_queues(priv); i++) {
+		int j = mwl8k_tx_queues(priv) - 1 - i;
 		cmd->tx_queue_ptrs[i] = cpu_to_le32(priv->txq[j].txd_dma);
-	पूर्ण
+	}
 
 	cmd->flags = cpu_to_le32(MWL8K_SET_HW_SPEC_FLAG_HOST_DECR_MGMT |
 				 MWL8K_SET_HW_SPEC_FLAG_HOSTFORM_PROBERESP |
@@ -2662,763 +2661,763 @@ mwl8k_set_caps(काष्ठा ieee80211_hw *hw, u32 caps)
 	cmd->total_rxd = cpu_to_le32(MWL8K_RX_DESCS);
 
 	rc = mwl8k_post_cmd(hw, &cmd->header);
-	kमुक्त(cmd);
+	kfree(cmd);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*
  * CMD_MAC_MULTICAST_ADR.
  */
-काष्ठा mwl8k_cmd_mac_multicast_adr अणु
-	काष्ठा mwl8k_cmd_pkt header;
+struct mwl8k_cmd_mac_multicast_adr {
+	struct mwl8k_cmd_pkt header;
 	__le16 action;
 	__le16 numaddr;
 	__u8 addr[][ETH_ALEN];
-पूर्ण;
+};
 
-#घोषणा MWL8K_ENABLE_RX_सूचीECTED	0x0001
-#घोषणा MWL8K_ENABLE_RX_MULTICAST	0x0002
-#घोषणा MWL8K_ENABLE_RX_ALL_MULTICAST	0x0004
-#घोषणा MWL8K_ENABLE_RX_BROADCAST	0x0008
+#define MWL8K_ENABLE_RX_DIRECTED	0x0001
+#define MWL8K_ENABLE_RX_MULTICAST	0x0002
+#define MWL8K_ENABLE_RX_ALL_MULTICAST	0x0004
+#define MWL8K_ENABLE_RX_BROADCAST	0x0008
 
-अटल काष्ठा mwl8k_cmd_pkt *
-__mwl8k_cmd_mac_multicast_adr(काष्ठा ieee80211_hw *hw, पूर्णांक allmulti,
-			      काष्ठा netdev_hw_addr_list *mc_list)
-अणु
-	काष्ठा mwl8k_priv *priv = hw->priv;
-	काष्ठा mwl8k_cmd_mac_multicast_adr *cmd;
-	पूर्णांक size;
-	पूर्णांक mc_count = 0;
+static struct mwl8k_cmd_pkt *
+__mwl8k_cmd_mac_multicast_adr(struct ieee80211_hw *hw, int allmulti,
+			      struct netdev_hw_addr_list *mc_list)
+{
+	struct mwl8k_priv *priv = hw->priv;
+	struct mwl8k_cmd_mac_multicast_adr *cmd;
+	int size;
+	int mc_count = 0;
 
-	अगर (mc_list)
+	if (mc_list)
 		mc_count = netdev_hw_addr_list_count(mc_list);
 
-	अगर (allmulti || mc_count > priv->num_mcaddrs) अणु
+	if (allmulti || mc_count > priv->num_mcaddrs) {
 		allmulti = 1;
 		mc_count = 0;
-	पूर्ण
+	}
 
-	size = माप(*cmd) + mc_count * ETH_ALEN;
+	size = sizeof(*cmd) + mc_count * ETH_ALEN;
 
 	cmd = kzalloc(size, GFP_ATOMIC);
-	अगर (cmd == शून्य)
-		वापस शून्य;
+	if (cmd == NULL)
+		return NULL;
 
 	cmd->header.code = cpu_to_le16(MWL8K_CMD_MAC_MULTICAST_ADR);
 	cmd->header.length = cpu_to_le16(size);
-	cmd->action = cpu_to_le16(MWL8K_ENABLE_RX_सूचीECTED |
+	cmd->action = cpu_to_le16(MWL8K_ENABLE_RX_DIRECTED |
 				  MWL8K_ENABLE_RX_BROADCAST);
 
-	अगर (allmulti) अणु
+	if (allmulti) {
 		cmd->action |= cpu_to_le16(MWL8K_ENABLE_RX_ALL_MULTICAST);
-	पूर्ण अन्यथा अगर (mc_count) अणु
-		काष्ठा netdev_hw_addr *ha;
-		पूर्णांक i = 0;
+	} else if (mc_count) {
+		struct netdev_hw_addr *ha;
+		int i = 0;
 
 		cmd->action |= cpu_to_le16(MWL8K_ENABLE_RX_MULTICAST);
 		cmd->numaddr = cpu_to_le16(mc_count);
-		netdev_hw_addr_list_क्रम_each(ha, mc_list) अणु
-			स_नकल(cmd->addr[i], ha->addr, ETH_ALEN);
-		पूर्ण
-	पूर्ण
+		netdev_hw_addr_list_for_each(ha, mc_list) {
+			memcpy(cmd->addr[i], ha->addr, ETH_ALEN);
+		}
+	}
 
-	वापस &cmd->header;
-पूर्ण
+	return &cmd->header;
+}
 
 /*
  * CMD_GET_STAT.
  */
-काष्ठा mwl8k_cmd_get_stat अणु
-	काष्ठा mwl8k_cmd_pkt header;
+struct mwl8k_cmd_get_stat {
+	struct mwl8k_cmd_pkt header;
 	__le32 stats[64];
-पूर्ण __packed;
+} __packed;
 
-#घोषणा MWL8K_STAT_ACK_FAILURE	9
-#घोषणा MWL8K_STAT_RTS_FAILURE	12
-#घोषणा MWL8K_STAT_FCS_ERROR	24
-#घोषणा MWL8K_STAT_RTS_SUCCESS	11
+#define MWL8K_STAT_ACK_FAILURE	9
+#define MWL8K_STAT_RTS_FAILURE	12
+#define MWL8K_STAT_FCS_ERROR	24
+#define MWL8K_STAT_RTS_SUCCESS	11
 
-अटल पूर्णांक mwl8k_cmd_get_stat(काष्ठा ieee80211_hw *hw,
-			      काष्ठा ieee80211_low_level_stats *stats)
-अणु
-	काष्ठा mwl8k_cmd_get_stat *cmd;
-	पूर्णांक rc;
+static int mwl8k_cmd_get_stat(struct ieee80211_hw *hw,
+			      struct ieee80211_low_level_stats *stats)
+{
+	struct mwl8k_cmd_get_stat *cmd;
+	int rc;
 
-	cmd = kzalloc(माप(*cmd), GFP_KERNEL);
-	अगर (cmd == शून्य)
-		वापस -ENOMEM;
+	cmd = kzalloc(sizeof(*cmd), GFP_KERNEL);
+	if (cmd == NULL)
+		return -ENOMEM;
 
 	cmd->header.code = cpu_to_le16(MWL8K_CMD_GET_STAT);
-	cmd->header.length = cpu_to_le16(माप(*cmd));
+	cmd->header.length = cpu_to_le16(sizeof(*cmd));
 
 	rc = mwl8k_post_cmd(hw, &cmd->header);
-	अगर (!rc) अणु
-		stats->करोt11ACKFailureCount =
+	if (!rc) {
+		stats->dot11ACKFailureCount =
 			le32_to_cpu(cmd->stats[MWL8K_STAT_ACK_FAILURE]);
-		stats->करोt11RTSFailureCount =
+		stats->dot11RTSFailureCount =
 			le32_to_cpu(cmd->stats[MWL8K_STAT_RTS_FAILURE]);
-		stats->करोt11FCSErrorCount =
+		stats->dot11FCSErrorCount =
 			le32_to_cpu(cmd->stats[MWL8K_STAT_FCS_ERROR]);
-		stats->करोt11RTSSuccessCount =
+		stats->dot11RTSSuccessCount =
 			le32_to_cpu(cmd->stats[MWL8K_STAT_RTS_SUCCESS]);
-	पूर्ण
-	kमुक्त(cmd);
+	}
+	kfree(cmd);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*
  * CMD_RADIO_CONTROL.
  */
-काष्ठा mwl8k_cmd_radio_control अणु
-	काष्ठा mwl8k_cmd_pkt header;
+struct mwl8k_cmd_radio_control {
+	struct mwl8k_cmd_pkt header;
 	__le16 action;
 	__le16 control;
 	__le16 radio_on;
-पूर्ण __packed;
+} __packed;
 
-अटल पूर्णांक
-mwl8k_cmd_radio_control(काष्ठा ieee80211_hw *hw, bool enable, bool क्रमce)
-अणु
-	काष्ठा mwl8k_priv *priv = hw->priv;
-	काष्ठा mwl8k_cmd_radio_control *cmd;
-	पूर्णांक rc;
+static int
+mwl8k_cmd_radio_control(struct ieee80211_hw *hw, bool enable, bool force)
+{
+	struct mwl8k_priv *priv = hw->priv;
+	struct mwl8k_cmd_radio_control *cmd;
+	int rc;
 
-	अगर (enable == priv->radio_on && !क्रमce)
-		वापस 0;
+	if (enable == priv->radio_on && !force)
+		return 0;
 
-	cmd = kzalloc(माप(*cmd), GFP_KERNEL);
-	अगर (cmd == शून्य)
-		वापस -ENOMEM;
+	cmd = kzalloc(sizeof(*cmd), GFP_KERNEL);
+	if (cmd == NULL)
+		return -ENOMEM;
 
 	cmd->header.code = cpu_to_le16(MWL8K_CMD_RADIO_CONTROL);
-	cmd->header.length = cpu_to_le16(माप(*cmd));
+	cmd->header.length = cpu_to_le16(sizeof(*cmd));
 	cmd->action = cpu_to_le16(MWL8K_CMD_SET);
-	cmd->control = cpu_to_le16(priv->radio_लघु_preamble ? 3 : 1);
+	cmd->control = cpu_to_le16(priv->radio_short_preamble ? 3 : 1);
 	cmd->radio_on = cpu_to_le16(enable ? 0x0001 : 0x0000);
 
 	rc = mwl8k_post_cmd(hw, &cmd->header);
-	kमुक्त(cmd);
+	kfree(cmd);
 
-	अगर (!rc)
+	if (!rc)
 		priv->radio_on = enable;
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक mwl8k_cmd_radio_disable(काष्ठा ieee80211_hw *hw)
-अणु
-	वापस mwl8k_cmd_radio_control(hw, 0, 0);
-पूर्ण
+static int mwl8k_cmd_radio_disable(struct ieee80211_hw *hw)
+{
+	return mwl8k_cmd_radio_control(hw, 0, 0);
+}
 
-अटल पूर्णांक mwl8k_cmd_radio_enable(काष्ठा ieee80211_hw *hw)
-अणु
-	वापस mwl8k_cmd_radio_control(hw, 1, 0);
-पूर्ण
+static int mwl8k_cmd_radio_enable(struct ieee80211_hw *hw)
+{
+	return mwl8k_cmd_radio_control(hw, 1, 0);
+}
 
-अटल पूर्णांक
-mwl8k_set_radio_preamble(काष्ठा ieee80211_hw *hw, bool लघु_preamble)
-अणु
-	काष्ठा mwl8k_priv *priv = hw->priv;
+static int
+mwl8k_set_radio_preamble(struct ieee80211_hw *hw, bool short_preamble)
+{
+	struct mwl8k_priv *priv = hw->priv;
 
-	priv->radio_लघु_preamble = लघु_preamble;
+	priv->radio_short_preamble = short_preamble;
 
-	वापस mwl8k_cmd_radio_control(hw, 1, 1);
-पूर्ण
+	return mwl8k_cmd_radio_control(hw, 1, 1);
+}
 
 /*
  * CMD_RF_TX_POWER.
  */
-#घोषणा MWL8K_RF_TX_POWER_LEVEL_TOTAL	8
+#define MWL8K_RF_TX_POWER_LEVEL_TOTAL	8
 
-काष्ठा mwl8k_cmd_rf_tx_घातer अणु
-	काष्ठा mwl8k_cmd_pkt header;
+struct mwl8k_cmd_rf_tx_power {
+	struct mwl8k_cmd_pkt header;
 	__le16 action;
 	__le16 support_level;
 	__le16 current_level;
 	__le16 reserved;
-	__le16 घातer_level_list[MWL8K_RF_TX_POWER_LEVEL_TOTAL];
-पूर्ण __packed;
+	__le16 power_level_list[MWL8K_RF_TX_POWER_LEVEL_TOTAL];
+} __packed;
 
-अटल पूर्णांक mwl8k_cmd_rf_tx_घातer(काष्ठा ieee80211_hw *hw, पूर्णांक dBm)
-अणु
-	काष्ठा mwl8k_cmd_rf_tx_घातer *cmd;
-	पूर्णांक rc;
+static int mwl8k_cmd_rf_tx_power(struct ieee80211_hw *hw, int dBm)
+{
+	struct mwl8k_cmd_rf_tx_power *cmd;
+	int rc;
 
-	cmd = kzalloc(माप(*cmd), GFP_KERNEL);
-	अगर (cmd == शून्य)
-		वापस -ENOMEM;
+	cmd = kzalloc(sizeof(*cmd), GFP_KERNEL);
+	if (cmd == NULL)
+		return -ENOMEM;
 
 	cmd->header.code = cpu_to_le16(MWL8K_CMD_RF_TX_POWER);
-	cmd->header.length = cpu_to_le16(माप(*cmd));
+	cmd->header.length = cpu_to_le16(sizeof(*cmd));
 	cmd->action = cpu_to_le16(MWL8K_CMD_SET);
 	cmd->support_level = cpu_to_le16(dBm);
 
 	rc = mwl8k_post_cmd(hw, &cmd->header);
-	kमुक्त(cmd);
+	kfree(cmd);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*
  * CMD_TX_POWER.
  */
-#घोषणा MWL8K_TX_POWER_LEVEL_TOTAL      12
+#define MWL8K_TX_POWER_LEVEL_TOTAL      12
 
-काष्ठा mwl8k_cmd_tx_घातer अणु
-	काष्ठा mwl8k_cmd_pkt header;
+struct mwl8k_cmd_tx_power {
+	struct mwl8k_cmd_pkt header;
 	__le16 action;
 	__le16 band;
 	__le16 channel;
 	__le16 bw;
 	__le16 sub_ch;
-	__le16 घातer_level_list[MWL8K_TX_POWER_LEVEL_TOTAL];
-पूर्ण __packed;
+	__le16 power_level_list[MWL8K_TX_POWER_LEVEL_TOTAL];
+} __packed;
 
-अटल पूर्णांक mwl8k_cmd_tx_घातer(काष्ठा ieee80211_hw *hw,
-				     काष्ठा ieee80211_conf *conf,
-				     अचिन्हित लघु pwr)
-अणु
-	काष्ठा ieee80211_channel *channel = conf->chandef.chan;
-	क्रमागत nl80211_channel_type channel_type =
+static int mwl8k_cmd_tx_power(struct ieee80211_hw *hw,
+				     struct ieee80211_conf *conf,
+				     unsigned short pwr)
+{
+	struct ieee80211_channel *channel = conf->chandef.chan;
+	enum nl80211_channel_type channel_type =
 		cfg80211_get_chandef_type(&conf->chandef);
-	काष्ठा mwl8k_cmd_tx_घातer *cmd;
-	पूर्णांक rc;
-	पूर्णांक i;
+	struct mwl8k_cmd_tx_power *cmd;
+	int rc;
+	int i;
 
-	cmd = kzalloc(माप(*cmd), GFP_KERNEL);
-	अगर (cmd == शून्य)
-		वापस -ENOMEM;
+	cmd = kzalloc(sizeof(*cmd), GFP_KERNEL);
+	if (cmd == NULL)
+		return -ENOMEM;
 
 	cmd->header.code = cpu_to_le16(MWL8K_CMD_TX_POWER);
-	cmd->header.length = cpu_to_le16(माप(*cmd));
+	cmd->header.length = cpu_to_le16(sizeof(*cmd));
 	cmd->action = cpu_to_le16(MWL8K_CMD_SET_LIST);
 
-	अगर (channel->band == NL80211_BAND_2GHZ)
+	if (channel->band == NL80211_BAND_2GHZ)
 		cmd->band = cpu_to_le16(0x1);
-	अन्यथा अगर (channel->band == NL80211_BAND_5GHZ)
+	else if (channel->band == NL80211_BAND_5GHZ)
 		cmd->band = cpu_to_le16(0x4);
 
 	cmd->channel = cpu_to_le16(channel->hw_value);
 
-	अगर (channel_type == NL80211_CHAN_NO_HT ||
-	    channel_type == NL80211_CHAN_HT20) अणु
+	if (channel_type == NL80211_CHAN_NO_HT ||
+	    channel_type == NL80211_CHAN_HT20) {
 		cmd->bw = cpu_to_le16(0x2);
-	पूर्ण अन्यथा अणु
+	} else {
 		cmd->bw = cpu_to_le16(0x4);
-		अगर (channel_type == NL80211_CHAN_HT40MINUS)
+		if (channel_type == NL80211_CHAN_HT40MINUS)
 			cmd->sub_ch = cpu_to_le16(0x3);
-		अन्यथा अगर (channel_type == NL80211_CHAN_HT40PLUS)
+		else if (channel_type == NL80211_CHAN_HT40PLUS)
 			cmd->sub_ch = cpu_to_le16(0x1);
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < MWL8K_TX_POWER_LEVEL_TOTAL; i++)
-		cmd->घातer_level_list[i] = cpu_to_le16(pwr);
+	for (i = 0; i < MWL8K_TX_POWER_LEVEL_TOTAL; i++)
+		cmd->power_level_list[i] = cpu_to_le16(pwr);
 
 	rc = mwl8k_post_cmd(hw, &cmd->header);
-	kमुक्त(cmd);
+	kfree(cmd);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*
  * CMD_RF_ANTENNA.
  */
-काष्ठा mwl8k_cmd_rf_antenna अणु
-	काष्ठा mwl8k_cmd_pkt header;
+struct mwl8k_cmd_rf_antenna {
+	struct mwl8k_cmd_pkt header;
 	__le16 antenna;
 	__le16 mode;
-पूर्ण __packed;
+} __packed;
 
-#घोषणा MWL8K_RF_ANTENNA_RX		1
-#घोषणा MWL8K_RF_ANTENNA_TX		2
+#define MWL8K_RF_ANTENNA_RX		1
+#define MWL8K_RF_ANTENNA_TX		2
 
-अटल पूर्णांक
-mwl8k_cmd_rf_antenna(काष्ठा ieee80211_hw *hw, पूर्णांक antenna, पूर्णांक mask)
-अणु
-	काष्ठा mwl8k_cmd_rf_antenna *cmd;
-	पूर्णांक rc;
+static int
+mwl8k_cmd_rf_antenna(struct ieee80211_hw *hw, int antenna, int mask)
+{
+	struct mwl8k_cmd_rf_antenna *cmd;
+	int rc;
 
-	cmd = kzalloc(माप(*cmd), GFP_KERNEL);
-	अगर (cmd == शून्य)
-		वापस -ENOMEM;
+	cmd = kzalloc(sizeof(*cmd), GFP_KERNEL);
+	if (cmd == NULL)
+		return -ENOMEM;
 
 	cmd->header.code = cpu_to_le16(MWL8K_CMD_RF_ANTENNA);
-	cmd->header.length = cpu_to_le16(माप(*cmd));
+	cmd->header.length = cpu_to_le16(sizeof(*cmd));
 	cmd->antenna = cpu_to_le16(antenna);
 	cmd->mode = cpu_to_le16(mask);
 
 	rc = mwl8k_post_cmd(hw, &cmd->header);
-	kमुक्त(cmd);
+	kfree(cmd);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*
  * CMD_SET_BEACON.
  */
-काष्ठा mwl8k_cmd_set_beacon अणु
-	काष्ठा mwl8k_cmd_pkt header;
+struct mwl8k_cmd_set_beacon {
+	struct mwl8k_cmd_pkt header;
 	__le16 beacon_len;
 	__u8 beacon[];
-पूर्ण;
+};
 
-अटल पूर्णांक mwl8k_cmd_set_beacon(काष्ठा ieee80211_hw *hw,
-				काष्ठा ieee80211_vअगर *vअगर, u8 *beacon, पूर्णांक len)
-अणु
-	काष्ठा mwl8k_cmd_set_beacon *cmd;
-	पूर्णांक rc;
+static int mwl8k_cmd_set_beacon(struct ieee80211_hw *hw,
+				struct ieee80211_vif *vif, u8 *beacon, int len)
+{
+	struct mwl8k_cmd_set_beacon *cmd;
+	int rc;
 
-	cmd = kzalloc(माप(*cmd) + len, GFP_KERNEL);
-	अगर (cmd == शून्य)
-		वापस -ENOMEM;
+	cmd = kzalloc(sizeof(*cmd) + len, GFP_KERNEL);
+	if (cmd == NULL)
+		return -ENOMEM;
 
 	cmd->header.code = cpu_to_le16(MWL8K_CMD_SET_BEACON);
-	cmd->header.length = cpu_to_le16(माप(*cmd) + len);
+	cmd->header.length = cpu_to_le16(sizeof(*cmd) + len);
 	cmd->beacon_len = cpu_to_le16(len);
-	स_नकल(cmd->beacon, beacon, len);
+	memcpy(cmd->beacon, beacon, len);
 
-	rc = mwl8k_post_pervअगर_cmd(hw, vअगर, &cmd->header);
-	kमुक्त(cmd);
+	rc = mwl8k_post_pervif_cmd(hw, vif, &cmd->header);
+	kfree(cmd);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*
  * CMD_SET_PRE_SCAN.
  */
-काष्ठा mwl8k_cmd_set_pre_scan अणु
-	काष्ठा mwl8k_cmd_pkt header;
-पूर्ण __packed;
+struct mwl8k_cmd_set_pre_scan {
+	struct mwl8k_cmd_pkt header;
+} __packed;
 
-अटल पूर्णांक mwl8k_cmd_set_pre_scan(काष्ठा ieee80211_hw *hw)
-अणु
-	काष्ठा mwl8k_cmd_set_pre_scan *cmd;
-	पूर्णांक rc;
+static int mwl8k_cmd_set_pre_scan(struct ieee80211_hw *hw)
+{
+	struct mwl8k_cmd_set_pre_scan *cmd;
+	int rc;
 
-	cmd = kzalloc(माप(*cmd), GFP_KERNEL);
-	अगर (cmd == शून्य)
-		वापस -ENOMEM;
+	cmd = kzalloc(sizeof(*cmd), GFP_KERNEL);
+	if (cmd == NULL)
+		return -ENOMEM;
 
 	cmd->header.code = cpu_to_le16(MWL8K_CMD_SET_PRE_SCAN);
-	cmd->header.length = cpu_to_le16(माप(*cmd));
+	cmd->header.length = cpu_to_le16(sizeof(*cmd));
 
 	rc = mwl8k_post_cmd(hw, &cmd->header);
-	kमुक्त(cmd);
+	kfree(cmd);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*
  * CMD_BBP_REG_ACCESS.
  */
-काष्ठा mwl8k_cmd_bbp_reg_access अणु
-	काष्ठा mwl8k_cmd_pkt header;
+struct mwl8k_cmd_bbp_reg_access {
+	struct mwl8k_cmd_pkt header;
 	__le16 action;
 	__le16 offset;
 	u8 value;
 	u8 rsrv[3];
-पूर्ण __packed;
+} __packed;
 
-अटल पूर्णांक
-mwl8k_cmd_bbp_reg_access(काष्ठा ieee80211_hw *hw,
+static int
+mwl8k_cmd_bbp_reg_access(struct ieee80211_hw *hw,
 			 u16 action,
 			 u16 offset,
 			 u8 *value)
-अणु
-	काष्ठा mwl8k_cmd_bbp_reg_access *cmd;
-	पूर्णांक rc;
+{
+	struct mwl8k_cmd_bbp_reg_access *cmd;
+	int rc;
 
-	cmd = kzalloc(माप(*cmd), GFP_KERNEL);
-	अगर (cmd == शून्य)
-		वापस -ENOMEM;
+	cmd = kzalloc(sizeof(*cmd), GFP_KERNEL);
+	if (cmd == NULL)
+		return -ENOMEM;
 
 	cmd->header.code = cpu_to_le16(MWL8K_CMD_BBP_REG_ACCESS);
-	cmd->header.length = cpu_to_le16(माप(*cmd));
+	cmd->header.length = cpu_to_le16(sizeof(*cmd));
 	cmd->action = cpu_to_le16(action);
 	cmd->offset = cpu_to_le16(offset);
 
 	rc = mwl8k_post_cmd(hw, &cmd->header);
 
-	अगर (!rc)
+	if (!rc)
 		*value = cmd->value;
-	अन्यथा
+	else
 		*value = 0;
 
-	kमुक्त(cmd);
+	kfree(cmd);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*
  * CMD_SET_POST_SCAN.
  */
-काष्ठा mwl8k_cmd_set_post_scan अणु
-	काष्ठा mwl8k_cmd_pkt header;
+struct mwl8k_cmd_set_post_scan {
+	struct mwl8k_cmd_pkt header;
 	__le32 isibss;
 	__u8 bssid[ETH_ALEN];
-पूर्ण __packed;
+} __packed;
 
-अटल पूर्णांक
-mwl8k_cmd_set_post_scan(काष्ठा ieee80211_hw *hw, स्थिर __u8 *mac)
-अणु
-	काष्ठा mwl8k_cmd_set_post_scan *cmd;
-	पूर्णांक rc;
+static int
+mwl8k_cmd_set_post_scan(struct ieee80211_hw *hw, const __u8 *mac)
+{
+	struct mwl8k_cmd_set_post_scan *cmd;
+	int rc;
 
-	cmd = kzalloc(माप(*cmd), GFP_KERNEL);
-	अगर (cmd == शून्य)
-		वापस -ENOMEM;
+	cmd = kzalloc(sizeof(*cmd), GFP_KERNEL);
+	if (cmd == NULL)
+		return -ENOMEM;
 
 	cmd->header.code = cpu_to_le16(MWL8K_CMD_SET_POST_SCAN);
-	cmd->header.length = cpu_to_le16(माप(*cmd));
+	cmd->header.length = cpu_to_le16(sizeof(*cmd));
 	cmd->isibss = 0;
-	स_नकल(cmd->bssid, mac, ETH_ALEN);
+	memcpy(cmd->bssid, mac, ETH_ALEN);
 
 	rc = mwl8k_post_cmd(hw, &cmd->header);
-	kमुक्त(cmd);
+	kfree(cmd);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक freq_to_idx(काष्ठा mwl8k_priv *priv, पूर्णांक freq)
-अणु
-	काष्ठा ieee80211_supported_band *sband;
-	पूर्णांक band, ch, idx = 0;
+static int freq_to_idx(struct mwl8k_priv *priv, int freq)
+{
+	struct ieee80211_supported_band *sband;
+	int band, ch, idx = 0;
 
-	क्रम (band = NL80211_BAND_2GHZ; band < NUM_NL80211_BANDS; band++) अणु
+	for (band = NL80211_BAND_2GHZ; band < NUM_NL80211_BANDS; band++) {
 		sband = priv->hw->wiphy->bands[band];
-		अगर (!sband)
-			जारी;
+		if (!sband)
+			continue;
 
-		क्रम (ch = 0; ch < sband->n_channels; ch++, idx++)
-			अगर (sband->channels[ch].center_freq == freq)
-				जाओ निकास;
-	पूर्ण
+		for (ch = 0; ch < sband->n_channels; ch++, idx++)
+			if (sband->channels[ch].center_freq == freq)
+				goto exit;
+	}
 
-निकास:
-	वापस idx;
-पूर्ण
+exit:
+	return idx;
+}
 
-अटल व्योम mwl8k_update_survey(काष्ठा mwl8k_priv *priv,
-				काष्ठा ieee80211_channel *channel)
-अणु
+static void mwl8k_update_survey(struct mwl8k_priv *priv,
+				struct ieee80211_channel *channel)
+{
 	u32 cca_cnt, rx_rdy;
 	s8 nf = 0, idx;
-	काष्ठा survey_info *survey;
+	struct survey_info *survey;
 
 	idx = freq_to_idx(priv, priv->acs_chan->center_freq);
-	अगर (idx >= MWL8K_NUM_CHANS) अणु
+	if (idx >= MWL8K_NUM_CHANS) {
 		wiphy_err(priv->hw->wiphy, "Failed to update survey\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	survey = &priv->survey[idx];
 
-	cca_cnt = ioपढ़ो32(priv->regs + NOK_CCA_CNT_REG);
+	cca_cnt = ioread32(priv->regs + NOK_CCA_CNT_REG);
 	cca_cnt /= 1000; /* uSecs to mSecs */
-	survey->समय_busy = (u64) cca_cnt;
+	survey->time_busy = (u64) cca_cnt;
 
-	rx_rdy = ioपढ़ो32(priv->regs + BBU_RXRDY_CNT_REG);
+	rx_rdy = ioread32(priv->regs + BBU_RXRDY_CNT_REG);
 	rx_rdy /= 1000; /* uSecs to mSecs */
-	survey->समय_rx = (u64) rx_rdy;
+	survey->time_rx = (u64) rx_rdy;
 
-	priv->channel_समय = jअगरfies - priv->channel_समय;
-	survey->समय = jअगरfies_to_msecs(priv->channel_समय);
+	priv->channel_time = jiffies - priv->channel_time;
+	survey->time = jiffies_to_msecs(priv->channel_time);
 
 	survey->channel = channel;
 
 	mwl8k_cmd_bbp_reg_access(priv->hw, 0, BBU_AVG_NOISE_VAL, &nf);
 
-	/* Make sure sign is negative अन्यथा ACS  at hostapd fails */
+	/* Make sure sign is negative else ACS  at hostapd fails */
 	survey->noise = nf * -1;
 
 	survey->filled = SURVEY_INFO_NOISE_DBM |
 			 SURVEY_INFO_TIME |
 			 SURVEY_INFO_TIME_BUSY |
 			 SURVEY_INFO_TIME_RX;
-पूर्ण
+}
 
 /*
  * CMD_SET_RF_CHANNEL.
  */
-काष्ठा mwl8k_cmd_set_rf_channel अणु
-	काष्ठा mwl8k_cmd_pkt header;
+struct mwl8k_cmd_set_rf_channel {
+	struct mwl8k_cmd_pkt header;
 	__le16 action;
 	__u8 current_channel;
 	__le32 channel_flags;
-पूर्ण __packed;
+} __packed;
 
-अटल पूर्णांक mwl8k_cmd_set_rf_channel(काष्ठा ieee80211_hw *hw,
-				    काष्ठा ieee80211_conf *conf)
-अणु
-	काष्ठा ieee80211_channel *channel = conf->chandef.chan;
-	क्रमागत nl80211_channel_type channel_type =
+static int mwl8k_cmd_set_rf_channel(struct ieee80211_hw *hw,
+				    struct ieee80211_conf *conf)
+{
+	struct ieee80211_channel *channel = conf->chandef.chan;
+	enum nl80211_channel_type channel_type =
 		cfg80211_get_chandef_type(&conf->chandef);
-	काष्ठा mwl8k_cmd_set_rf_channel *cmd;
-	काष्ठा mwl8k_priv *priv = hw->priv;
-	पूर्णांक rc;
+	struct mwl8k_cmd_set_rf_channel *cmd;
+	struct mwl8k_priv *priv = hw->priv;
+	int rc;
 
-	cmd = kzalloc(माप(*cmd), GFP_KERNEL);
-	अगर (cmd == शून्य)
-		वापस -ENOMEM;
+	cmd = kzalloc(sizeof(*cmd), GFP_KERNEL);
+	if (cmd == NULL)
+		return -ENOMEM;
 
 	cmd->header.code = cpu_to_le16(MWL8K_CMD_SET_RF_CHANNEL);
-	cmd->header.length = cpu_to_le16(माप(*cmd));
+	cmd->header.length = cpu_to_le16(sizeof(*cmd));
 	cmd->action = cpu_to_le16(MWL8K_CMD_SET);
 	cmd->current_channel = channel->hw_value;
 
-	अगर (channel->band == NL80211_BAND_2GHZ)
+	if (channel->band == NL80211_BAND_2GHZ)
 		cmd->channel_flags |= cpu_to_le32(0x00000001);
-	अन्यथा अगर (channel->band == NL80211_BAND_5GHZ)
+	else if (channel->band == NL80211_BAND_5GHZ)
 		cmd->channel_flags |= cpu_to_le32(0x00000004);
 
-	अगर (!priv->sw_scan_start) अणु
-		अगर (channel_type == NL80211_CHAN_NO_HT ||
+	if (!priv->sw_scan_start) {
+		if (channel_type == NL80211_CHAN_NO_HT ||
 		    channel_type == NL80211_CHAN_HT20)
 			cmd->channel_flags |= cpu_to_le32(0x00000080);
-		अन्यथा अगर (channel_type == NL80211_CHAN_HT40MINUS)
+		else if (channel_type == NL80211_CHAN_HT40MINUS)
 			cmd->channel_flags |= cpu_to_le32(0x000001900);
-		अन्यथा अगर (channel_type == NL80211_CHAN_HT40PLUS)
+		else if (channel_type == NL80211_CHAN_HT40PLUS)
 			cmd->channel_flags |= cpu_to_le32(0x000000900);
-	पूर्ण अन्यथा अणु
+	} else {
 		cmd->channel_flags |= cpu_to_le32(0x00000080);
-	पूर्ण
+	}
 
-	अगर (priv->sw_scan_start) अणु
+	if (priv->sw_scan_start) {
 		/* Store current channel stats
-		 * beक्रमe चयनing to newer one.
-		 * This will be processed only क्रम AP fw.
+		 * before switching to newer one.
+		 * This will be processed only for AP fw.
 		 */
-		अगर (priv->channel_समय != 0)
+		if (priv->channel_time != 0)
 			mwl8k_update_survey(priv, priv->acs_chan);
 
-		priv->channel_समय = jअगरfies;
+		priv->channel_time = jiffies;
 		priv->acs_chan =  channel;
-	पूर्ण
+	}
 
 	rc = mwl8k_post_cmd(hw, &cmd->header);
-	kमुक्त(cmd);
+	kfree(cmd);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*
  * CMD_SET_AID.
  */
-#घोषणा MWL8K_FRAME_PROT_DISABLED			0x00
-#घोषणा MWL8K_FRAME_PROT_11G				0x07
-#घोषणा MWL8K_FRAME_PROT_11N_HT_40MHZ_ONLY		0x02
-#घोषणा MWL8K_FRAME_PROT_11N_HT_ALL			0x06
+#define MWL8K_FRAME_PROT_DISABLED			0x00
+#define MWL8K_FRAME_PROT_11G				0x07
+#define MWL8K_FRAME_PROT_11N_HT_40MHZ_ONLY		0x02
+#define MWL8K_FRAME_PROT_11N_HT_ALL			0x06
 
-काष्ठा mwl8k_cmd_update_set_aid अणु
-	काष्ठा	mwl8k_cmd_pkt header;
+struct mwl8k_cmd_update_set_aid {
+	struct	mwl8k_cmd_pkt header;
 	__le16	aid;
 
 	 /* AP's MAC address (BSSID) */
 	__u8	bssid[ETH_ALEN];
 	__le16	protection_mode;
 	__u8	supp_rates[14];
-पूर्ण __packed;
+} __packed;
 
-अटल व्योम legacy_rate_mask_to_array(u8 *rates, u32 mask)
-अणु
-	पूर्णांक i;
-	पूर्णांक j;
+static void legacy_rate_mask_to_array(u8 *rates, u32 mask)
+{
+	int i;
+	int j;
 
 	/*
 	 * Clear nonstandard rate 4.
 	 */
 	mask &= 0x1fef;
 
-	क्रम (i = 0, j = 0; i < 13; i++) अणु
-		अगर (mask & (1 << i))
+	for (i = 0, j = 0; i < 13; i++) {
+		if (mask & (1 << i))
 			rates[j++] = mwl8k_rates_24[i].hw_value;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक
-mwl8k_cmd_set_aid(काष्ठा ieee80211_hw *hw,
-		  काष्ठा ieee80211_vअगर *vअगर, u32 legacy_rate_mask)
-अणु
-	काष्ठा mwl8k_cmd_update_set_aid *cmd;
+static int
+mwl8k_cmd_set_aid(struct ieee80211_hw *hw,
+		  struct ieee80211_vif *vif, u32 legacy_rate_mask)
+{
+	struct mwl8k_cmd_update_set_aid *cmd;
 	u16 prot_mode;
-	पूर्णांक rc;
+	int rc;
 
-	cmd = kzalloc(माप(*cmd), GFP_KERNEL);
-	अगर (cmd == शून्य)
-		वापस -ENOMEM;
+	cmd = kzalloc(sizeof(*cmd), GFP_KERNEL);
+	if (cmd == NULL)
+		return -ENOMEM;
 
 	cmd->header.code = cpu_to_le16(MWL8K_CMD_SET_AID);
-	cmd->header.length = cpu_to_le16(माप(*cmd));
-	cmd->aid = cpu_to_le16(vअगर->bss_conf.aid);
-	स_नकल(cmd->bssid, vअगर->bss_conf.bssid, ETH_ALEN);
+	cmd->header.length = cpu_to_le16(sizeof(*cmd));
+	cmd->aid = cpu_to_le16(vif->bss_conf.aid);
+	memcpy(cmd->bssid, vif->bss_conf.bssid, ETH_ALEN);
 
-	अगर (vअगर->bss_conf.use_cts_prot) अणु
+	if (vif->bss_conf.use_cts_prot) {
 		prot_mode = MWL8K_FRAME_PROT_11G;
-	पूर्ण अन्यथा अणु
-		चयन (vअगर->bss_conf.ht_operation_mode &
-			IEEE80211_HT_OP_MODE_PROTECTION) अणु
-		हाल IEEE80211_HT_OP_MODE_PROTECTION_20MHZ:
+	} else {
+		switch (vif->bss_conf.ht_operation_mode &
+			IEEE80211_HT_OP_MODE_PROTECTION) {
+		case IEEE80211_HT_OP_MODE_PROTECTION_20MHZ:
 			prot_mode = MWL8K_FRAME_PROT_11N_HT_40MHZ_ONLY;
-			अवरोध;
-		हाल IEEE80211_HT_OP_MODE_PROTECTION_NONHT_MIXED:
+			break;
+		case IEEE80211_HT_OP_MODE_PROTECTION_NONHT_MIXED:
 			prot_mode = MWL8K_FRAME_PROT_11N_HT_ALL;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			prot_mode = MWL8K_FRAME_PROT_DISABLED;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 	cmd->protection_mode = cpu_to_le16(prot_mode);
 
 	legacy_rate_mask_to_array(cmd->supp_rates, legacy_rate_mask);
 
 	rc = mwl8k_post_cmd(hw, &cmd->header);
-	kमुक्त(cmd);
+	kfree(cmd);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*
  * CMD_SET_RATE.
  */
-काष्ठा mwl8k_cmd_set_rate अणु
-	काष्ठा	mwl8k_cmd_pkt header;
+struct mwl8k_cmd_set_rate {
+	struct	mwl8k_cmd_pkt header;
 	__u8	legacy_rates[14];
 
-	/* Biपंचांगap क्रम supported MCS codes.  */
+	/* Bitmap for supported MCS codes.  */
 	__u8	mcs_set[16];
 	__u8	reserved[16];
-पूर्ण __packed;
+} __packed;
 
-अटल पूर्णांक
-mwl8k_cmd_set_rate(काष्ठा ieee80211_hw *hw, काष्ठा ieee80211_vअगर *vअगर,
+static int
+mwl8k_cmd_set_rate(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
 		   u32 legacy_rate_mask, u8 *mcs_rates)
-अणु
-	काष्ठा mwl8k_cmd_set_rate *cmd;
-	पूर्णांक rc;
+{
+	struct mwl8k_cmd_set_rate *cmd;
+	int rc;
 
-	cmd = kzalloc(माप(*cmd), GFP_KERNEL);
-	अगर (cmd == शून्य)
-		वापस -ENOMEM;
+	cmd = kzalloc(sizeof(*cmd), GFP_KERNEL);
+	if (cmd == NULL)
+		return -ENOMEM;
 
 	cmd->header.code = cpu_to_le16(MWL8K_CMD_SET_RATE);
-	cmd->header.length = cpu_to_le16(माप(*cmd));
+	cmd->header.length = cpu_to_le16(sizeof(*cmd));
 	legacy_rate_mask_to_array(cmd->legacy_rates, legacy_rate_mask);
-	स_नकल(cmd->mcs_set, mcs_rates, 16);
+	memcpy(cmd->mcs_set, mcs_rates, 16);
 
 	rc = mwl8k_post_cmd(hw, &cmd->header);
-	kमुक्त(cmd);
+	kfree(cmd);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*
  * CMD_FINALIZE_JOIN.
  */
-#घोषणा MWL8K_FJ_BEACON_MAXLEN	128
+#define MWL8K_FJ_BEACON_MAXLEN	128
 
-काष्ठा mwl8k_cmd_finalize_join अणु
-	काष्ठा mwl8k_cmd_pkt header;
-	__le32 sleep_पूर्णांकerval;	/* Number of beacon periods to sleep */
+struct mwl8k_cmd_finalize_join {
+	struct mwl8k_cmd_pkt header;
+	__le32 sleep_interval;	/* Number of beacon periods to sleep */
 	__u8 beacon_data[MWL8K_FJ_BEACON_MAXLEN];
-पूर्ण __packed;
+} __packed;
 
-अटल पूर्णांक mwl8k_cmd_finalize_join(काष्ठा ieee80211_hw *hw, व्योम *frame,
-				   पूर्णांक framelen, पूर्णांक dtim)
-अणु
-	काष्ठा mwl8k_cmd_finalize_join *cmd;
-	काष्ठा ieee80211_mgmt *payload = frame;
-	पूर्णांक payload_len;
-	पूर्णांक rc;
+static int mwl8k_cmd_finalize_join(struct ieee80211_hw *hw, void *frame,
+				   int framelen, int dtim)
+{
+	struct mwl8k_cmd_finalize_join *cmd;
+	struct ieee80211_mgmt *payload = frame;
+	int payload_len;
+	int rc;
 
-	cmd = kzalloc(माप(*cmd), GFP_KERNEL);
-	अगर (cmd == शून्य)
-		वापस -ENOMEM;
+	cmd = kzalloc(sizeof(*cmd), GFP_KERNEL);
+	if (cmd == NULL)
+		return -ENOMEM;
 
 	cmd->header.code = cpu_to_le16(MWL8K_CMD_SET_FINALIZE_JOIN);
-	cmd->header.length = cpu_to_le16(माप(*cmd));
-	cmd->sleep_पूर्णांकerval = cpu_to_le32(dtim ? dtim : 1);
+	cmd->header.length = cpu_to_le16(sizeof(*cmd));
+	cmd->sleep_interval = cpu_to_le32(dtim ? dtim : 1);
 
 	payload_len = framelen - ieee80211_hdrlen(payload->frame_control);
-	अगर (payload_len < 0)
+	if (payload_len < 0)
 		payload_len = 0;
-	अन्यथा अगर (payload_len > MWL8K_FJ_BEACON_MAXLEN)
+	else if (payload_len > MWL8K_FJ_BEACON_MAXLEN)
 		payload_len = MWL8K_FJ_BEACON_MAXLEN;
 
-	स_नकल(cmd->beacon_data, &payload->u.beacon, payload_len);
+	memcpy(cmd->beacon_data, &payload->u.beacon, payload_len);
 
 	rc = mwl8k_post_cmd(hw, &cmd->header);
-	kमुक्त(cmd);
+	kfree(cmd);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*
  * CMD_SET_RTS_THRESHOLD.
  */
-काष्ठा mwl8k_cmd_set_rts_threshold अणु
-	काष्ठा mwl8k_cmd_pkt header;
+struct mwl8k_cmd_set_rts_threshold {
+	struct mwl8k_cmd_pkt header;
 	__le16 action;
 	__le16 threshold;
-पूर्ण __packed;
+} __packed;
 
-अटल पूर्णांक
-mwl8k_cmd_set_rts_threshold(काष्ठा ieee80211_hw *hw, पूर्णांक rts_thresh)
-अणु
-	काष्ठा mwl8k_cmd_set_rts_threshold *cmd;
-	पूर्णांक rc;
+static int
+mwl8k_cmd_set_rts_threshold(struct ieee80211_hw *hw, int rts_thresh)
+{
+	struct mwl8k_cmd_set_rts_threshold *cmd;
+	int rc;
 
-	cmd = kzalloc(माप(*cmd), GFP_KERNEL);
-	अगर (cmd == शून्य)
-		वापस -ENOMEM;
+	cmd = kzalloc(sizeof(*cmd), GFP_KERNEL);
+	if (cmd == NULL)
+		return -ENOMEM;
 
 	cmd->header.code = cpu_to_le16(MWL8K_CMD_RTS_THRESHOLD);
-	cmd->header.length = cpu_to_le16(माप(*cmd));
+	cmd->header.length = cpu_to_le16(sizeof(*cmd));
 	cmd->action = cpu_to_le16(MWL8K_CMD_SET);
 	cmd->threshold = cpu_to_le16(rts_thresh);
 
 	rc = mwl8k_post_cmd(hw, &cmd->header);
-	kमुक्त(cmd);
+	kfree(cmd);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*
  * CMD_SET_SLOT.
  */
-काष्ठा mwl8k_cmd_set_slot अणु
-	काष्ठा mwl8k_cmd_pkt header;
+struct mwl8k_cmd_set_slot {
+	struct mwl8k_cmd_pkt header;
 	__le16 action;
-	__u8 लघु_slot;
-पूर्ण __packed;
+	__u8 short_slot;
+} __packed;
 
-अटल पूर्णांक mwl8k_cmd_set_slot(काष्ठा ieee80211_hw *hw, bool लघु_slot_समय)
-अणु
-	काष्ठा mwl8k_cmd_set_slot *cmd;
-	पूर्णांक rc;
+static int mwl8k_cmd_set_slot(struct ieee80211_hw *hw, bool short_slot_time)
+{
+	struct mwl8k_cmd_set_slot *cmd;
+	int rc;
 
-	cmd = kzalloc(माप(*cmd), GFP_KERNEL);
-	अगर (cmd == शून्य)
-		वापस -ENOMEM;
+	cmd = kzalloc(sizeof(*cmd), GFP_KERNEL);
+	if (cmd == NULL)
+		return -ENOMEM;
 
 	cmd->header.code = cpu_to_le16(MWL8K_CMD_SET_SLOT);
-	cmd->header.length = cpu_to_le16(माप(*cmd));
+	cmd->header.length = cpu_to_le16(sizeof(*cmd));
 	cmd->action = cpu_to_le16(MWL8K_CMD_SET);
-	cmd->लघु_slot = लघु_slot_समय;
+	cmd->short_slot = short_slot_time;
 
 	rc = mwl8k_post_cmd(hw, &cmd->header);
-	kमुक्त(cmd);
+	kfree(cmd);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*
  * CMD_SET_EDCA_PARAMS.
  */
-काष्ठा mwl8k_cmd_set_edca_params अणु
-	काष्ठा mwl8k_cmd_pkt header;
+struct mwl8k_cmd_set_edca_params {
+	struct mwl8k_cmd_pkt header;
 
 	/* See MWL8K_SET_EDCA_XXX below */
 	__le16 action;
@@ -3426,500 +3425,500 @@ mwl8k_cmd_set_rts_threshold(काष्ठा ieee80211_hw *hw, पूर्ण
 	/* TX opportunity in units of 32 us */
 	__le16 txop;
 
-	जोड़ अणु
-		काष्ठा अणु
+	union {
+		struct {
 			/* Log exponent of max contention period: 0...15 */
 			__le32 log_cw_max;
 
 			/* Log exponent of min contention period: 0...15 */
 			__le32 log_cw_min;
 
-			/* Adaptive पूर्णांकerframe spacing in units of 32us */
-			__u8 aअगरs;
+			/* Adaptive interframe spacing in units of 32us */
+			__u8 aifs;
 
 			/* TX queue to configure */
 			__u8 txq;
-		पूर्ण ap;
-		काष्ठा अणु
+		} ap;
+		struct {
 			/* Log exponent of max contention period: 0...15 */
 			__u8 log_cw_max;
 
 			/* Log exponent of min contention period: 0...15 */
 			__u8 log_cw_min;
 
-			/* Adaptive पूर्णांकerframe spacing in units of 32us */
-			__u8 aअगरs;
+			/* Adaptive interframe spacing in units of 32us */
+			__u8 aifs;
 
 			/* TX queue to configure */
 			__u8 txq;
-		पूर्ण sta;
-	पूर्ण;
-पूर्ण __packed;
+		} sta;
+	};
+} __packed;
 
-#घोषणा MWL8K_SET_EDCA_CW	0x01
-#घोषणा MWL8K_SET_EDCA_TXOP	0x02
-#घोषणा MWL8K_SET_EDCA_AIFS	0x04
+#define MWL8K_SET_EDCA_CW	0x01
+#define MWL8K_SET_EDCA_TXOP	0x02
+#define MWL8K_SET_EDCA_AIFS	0x04
 
-#घोषणा MWL8K_SET_EDCA_ALL	(MWL8K_SET_EDCA_CW | \
+#define MWL8K_SET_EDCA_ALL	(MWL8K_SET_EDCA_CW | \
 				 MWL8K_SET_EDCA_TXOP | \
 				 MWL8K_SET_EDCA_AIFS)
 
-अटल पूर्णांक
-mwl8k_cmd_set_edca_params(काष्ठा ieee80211_hw *hw, __u8 qnum,
+static int
+mwl8k_cmd_set_edca_params(struct ieee80211_hw *hw, __u8 qnum,
 			  __u16 cw_min, __u16 cw_max,
-			  __u8 aअगरs, __u16 txop)
-अणु
-	काष्ठा mwl8k_priv *priv = hw->priv;
-	काष्ठा mwl8k_cmd_set_edca_params *cmd;
-	पूर्णांक rc;
+			  __u8 aifs, __u16 txop)
+{
+	struct mwl8k_priv *priv = hw->priv;
+	struct mwl8k_cmd_set_edca_params *cmd;
+	int rc;
 
-	cmd = kzalloc(माप(*cmd), GFP_KERNEL);
-	अगर (cmd == शून्य)
-		वापस -ENOMEM;
+	cmd = kzalloc(sizeof(*cmd), GFP_KERNEL);
+	if (cmd == NULL)
+		return -ENOMEM;
 
 	cmd->header.code = cpu_to_le16(MWL8K_CMD_SET_EDCA_PARAMS);
-	cmd->header.length = cpu_to_le16(माप(*cmd));
+	cmd->header.length = cpu_to_le16(sizeof(*cmd));
 	cmd->action = cpu_to_le16(MWL8K_SET_EDCA_ALL);
 	cmd->txop = cpu_to_le16(txop);
-	अगर (priv->ap_fw) अणु
+	if (priv->ap_fw) {
 		cmd->ap.log_cw_max = cpu_to_le32(ilog2(cw_max + 1));
 		cmd->ap.log_cw_min = cpu_to_le32(ilog2(cw_min + 1));
-		cmd->ap.aअगरs = aअगरs;
+		cmd->ap.aifs = aifs;
 		cmd->ap.txq = qnum;
-	पूर्ण अन्यथा अणु
+	} else {
 		cmd->sta.log_cw_max = (u8)ilog2(cw_max + 1);
 		cmd->sta.log_cw_min = (u8)ilog2(cw_min + 1);
-		cmd->sta.aअगरs = aअगरs;
+		cmd->sta.aifs = aifs;
 		cmd->sta.txq = qnum;
-	पूर्ण
+	}
 
 	rc = mwl8k_post_cmd(hw, &cmd->header);
-	kमुक्त(cmd);
+	kfree(cmd);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*
  * CMD_SET_WMM_MODE.
  */
-काष्ठा mwl8k_cmd_set_wmm_mode अणु
-	काष्ठा mwl8k_cmd_pkt header;
+struct mwl8k_cmd_set_wmm_mode {
+	struct mwl8k_cmd_pkt header;
 	__le16 action;
-पूर्ण __packed;
+} __packed;
 
-अटल पूर्णांक mwl8k_cmd_set_wmm_mode(काष्ठा ieee80211_hw *hw, bool enable)
-अणु
-	काष्ठा mwl8k_priv *priv = hw->priv;
-	काष्ठा mwl8k_cmd_set_wmm_mode *cmd;
-	पूर्णांक rc;
+static int mwl8k_cmd_set_wmm_mode(struct ieee80211_hw *hw, bool enable)
+{
+	struct mwl8k_priv *priv = hw->priv;
+	struct mwl8k_cmd_set_wmm_mode *cmd;
+	int rc;
 
-	cmd = kzalloc(माप(*cmd), GFP_KERNEL);
-	अगर (cmd == शून्य)
-		वापस -ENOMEM;
+	cmd = kzalloc(sizeof(*cmd), GFP_KERNEL);
+	if (cmd == NULL)
+		return -ENOMEM;
 
 	cmd->header.code = cpu_to_le16(MWL8K_CMD_SET_WMM_MODE);
-	cmd->header.length = cpu_to_le16(माप(*cmd));
+	cmd->header.length = cpu_to_le16(sizeof(*cmd));
 	cmd->action = cpu_to_le16(!!enable);
 
 	rc = mwl8k_post_cmd(hw, &cmd->header);
-	kमुक्त(cmd);
+	kfree(cmd);
 
-	अगर (!rc)
+	if (!rc)
 		priv->wmm_enabled = enable;
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*
  * CMD_MIMO_CONFIG.
  */
-काष्ठा mwl8k_cmd_mimo_config अणु
-	काष्ठा mwl8k_cmd_pkt header;
+struct mwl8k_cmd_mimo_config {
+	struct mwl8k_cmd_pkt header;
 	__le32 action;
 	__u8 rx_antenna_map;
 	__u8 tx_antenna_map;
-पूर्ण __packed;
+} __packed;
 
-अटल पूर्णांक mwl8k_cmd_mimo_config(काष्ठा ieee80211_hw *hw, __u8 rx, __u8 tx)
-अणु
-	काष्ठा mwl8k_cmd_mimo_config *cmd;
-	पूर्णांक rc;
+static int mwl8k_cmd_mimo_config(struct ieee80211_hw *hw, __u8 rx, __u8 tx)
+{
+	struct mwl8k_cmd_mimo_config *cmd;
+	int rc;
 
-	cmd = kzalloc(माप(*cmd), GFP_KERNEL);
-	अगर (cmd == शून्य)
-		वापस -ENOMEM;
+	cmd = kzalloc(sizeof(*cmd), GFP_KERNEL);
+	if (cmd == NULL)
+		return -ENOMEM;
 
 	cmd->header.code = cpu_to_le16(MWL8K_CMD_MIMO_CONFIG);
-	cmd->header.length = cpu_to_le16(माप(*cmd));
+	cmd->header.length = cpu_to_le16(sizeof(*cmd));
 	cmd->action = cpu_to_le32((u32)MWL8K_CMD_SET);
 	cmd->rx_antenna_map = rx;
 	cmd->tx_antenna_map = tx;
 
 	rc = mwl8k_post_cmd(hw, &cmd->header);
-	kमुक्त(cmd);
+	kfree(cmd);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*
  * CMD_USE_FIXED_RATE (STA version).
  */
-काष्ठा mwl8k_cmd_use_fixed_rate_sta अणु
-	काष्ठा mwl8k_cmd_pkt header;
+struct mwl8k_cmd_use_fixed_rate_sta {
+	struct mwl8k_cmd_pkt header;
 	__le32 action;
 	__le32 allow_rate_drop;
 	__le32 num_rates;
-	काष्ठा अणु
+	struct {
 		__le32 is_ht_rate;
 		__le32 enable_retry;
 		__le32 rate;
 		__le32 retry_count;
-	पूर्ण rate_entry[8];
+	} rate_entry[8];
 	__le32 rate_type;
 	__le32 reserved1;
 	__le32 reserved2;
-पूर्ण __packed;
+} __packed;
 
-#घोषणा MWL8K_USE_AUTO_RATE	0x0002
-#घोषणा MWL8K_UCAST_RATE	0
+#define MWL8K_USE_AUTO_RATE	0x0002
+#define MWL8K_UCAST_RATE	0
 
-अटल पूर्णांक mwl8k_cmd_use_fixed_rate_sta(काष्ठा ieee80211_hw *hw)
-अणु
-	काष्ठा mwl8k_cmd_use_fixed_rate_sta *cmd;
-	पूर्णांक rc;
+static int mwl8k_cmd_use_fixed_rate_sta(struct ieee80211_hw *hw)
+{
+	struct mwl8k_cmd_use_fixed_rate_sta *cmd;
+	int rc;
 
-	cmd = kzalloc(माप(*cmd), GFP_KERNEL);
-	अगर (cmd == शून्य)
-		वापस -ENOMEM;
+	cmd = kzalloc(sizeof(*cmd), GFP_KERNEL);
+	if (cmd == NULL)
+		return -ENOMEM;
 
 	cmd->header.code = cpu_to_le16(MWL8K_CMD_USE_FIXED_RATE);
-	cmd->header.length = cpu_to_le16(माप(*cmd));
+	cmd->header.length = cpu_to_le16(sizeof(*cmd));
 	cmd->action = cpu_to_le32(MWL8K_USE_AUTO_RATE);
 	cmd->rate_type = cpu_to_le32(MWL8K_UCAST_RATE);
 
 	rc = mwl8k_post_cmd(hw, &cmd->header);
-	kमुक्त(cmd);
+	kfree(cmd);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*
  * CMD_USE_FIXED_RATE (AP version).
  */
-काष्ठा mwl8k_cmd_use_fixed_rate_ap अणु
-	काष्ठा mwl8k_cmd_pkt header;
+struct mwl8k_cmd_use_fixed_rate_ap {
+	struct mwl8k_cmd_pkt header;
 	__le32 action;
 	__le32 allow_rate_drop;
 	__le32 num_rates;
-	काष्ठा mwl8k_rate_entry_ap अणु
+	struct mwl8k_rate_entry_ap {
 		__le32 is_ht_rate;
 		__le32 enable_retry;
 		__le32 rate;
 		__le32 retry_count;
-	पूर्ण rate_entry[4];
+	} rate_entry[4];
 	u8 multicast_rate;
 	u8 multicast_rate_type;
 	u8 management_rate;
-पूर्ण __packed;
+} __packed;
 
-अटल पूर्णांक
-mwl8k_cmd_use_fixed_rate_ap(काष्ठा ieee80211_hw *hw, पूर्णांक mcast, पूर्णांक mgmt)
-अणु
-	काष्ठा mwl8k_cmd_use_fixed_rate_ap *cmd;
-	पूर्णांक rc;
+static int
+mwl8k_cmd_use_fixed_rate_ap(struct ieee80211_hw *hw, int mcast, int mgmt)
+{
+	struct mwl8k_cmd_use_fixed_rate_ap *cmd;
+	int rc;
 
-	cmd = kzalloc(माप(*cmd), GFP_KERNEL);
-	अगर (cmd == शून्य)
-		वापस -ENOMEM;
+	cmd = kzalloc(sizeof(*cmd), GFP_KERNEL);
+	if (cmd == NULL)
+		return -ENOMEM;
 
 	cmd->header.code = cpu_to_le16(MWL8K_CMD_USE_FIXED_RATE);
-	cmd->header.length = cpu_to_le16(माप(*cmd));
+	cmd->header.length = cpu_to_le16(sizeof(*cmd));
 	cmd->action = cpu_to_le32(MWL8K_USE_AUTO_RATE);
 	cmd->multicast_rate = mcast;
 	cmd->management_rate = mgmt;
 
 	rc = mwl8k_post_cmd(hw, &cmd->header);
-	kमुक्त(cmd);
+	kfree(cmd);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*
  * CMD_ENABLE_SNIFFER.
  */
-काष्ठा mwl8k_cmd_enable_snअगरfer अणु
-	काष्ठा mwl8k_cmd_pkt header;
+struct mwl8k_cmd_enable_sniffer {
+	struct mwl8k_cmd_pkt header;
 	__le32 action;
-पूर्ण __packed;
+} __packed;
 
-अटल पूर्णांक mwl8k_cmd_enable_snअगरfer(काष्ठा ieee80211_hw *hw, bool enable)
-अणु
-	काष्ठा mwl8k_cmd_enable_snअगरfer *cmd;
-	पूर्णांक rc;
+static int mwl8k_cmd_enable_sniffer(struct ieee80211_hw *hw, bool enable)
+{
+	struct mwl8k_cmd_enable_sniffer *cmd;
+	int rc;
 
-	cmd = kzalloc(माप(*cmd), GFP_KERNEL);
-	अगर (cmd == शून्य)
-		वापस -ENOMEM;
+	cmd = kzalloc(sizeof(*cmd), GFP_KERNEL);
+	if (cmd == NULL)
+		return -ENOMEM;
 
 	cmd->header.code = cpu_to_le16(MWL8K_CMD_ENABLE_SNIFFER);
-	cmd->header.length = cpu_to_le16(माप(*cmd));
+	cmd->header.length = cpu_to_le16(sizeof(*cmd));
 	cmd->action = cpu_to_le32(!!enable);
 
 	rc = mwl8k_post_cmd(hw, &cmd->header);
-	kमुक्त(cmd);
+	kfree(cmd);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-काष्ठा mwl8k_cmd_update_mac_addr अणु
-	काष्ठा mwl8k_cmd_pkt header;
-	जोड़ अणु
-		काष्ठा अणु
+struct mwl8k_cmd_update_mac_addr {
+	struct mwl8k_cmd_pkt header;
+	union {
+		struct {
 			__le16 mac_type;
 			__u8 mac_addr[ETH_ALEN];
-		पूर्ण mbss;
+		} mbss;
 		__u8 mac_addr[ETH_ALEN];
-	पूर्ण;
-पूर्ण __packed;
+	};
+} __packed;
 
-#घोषणा MWL8K_MAC_TYPE_PRIMARY_CLIENT		0
-#घोषणा MWL8K_MAC_TYPE_SECONDARY_CLIENT		1
-#घोषणा MWL8K_MAC_TYPE_PRIMARY_AP		2
-#घोषणा MWL8K_MAC_TYPE_SECONDARY_AP		3
+#define MWL8K_MAC_TYPE_PRIMARY_CLIENT		0
+#define MWL8K_MAC_TYPE_SECONDARY_CLIENT		1
+#define MWL8K_MAC_TYPE_PRIMARY_AP		2
+#define MWL8K_MAC_TYPE_SECONDARY_AP		3
 
-अटल पूर्णांक mwl8k_cmd_update_mac_addr(काष्ठा ieee80211_hw *hw,
-				  काष्ठा ieee80211_vअगर *vअगर, u8 *mac, bool set)
-अणु
-	काष्ठा mwl8k_priv *priv = hw->priv;
-	काष्ठा mwl8k_vअगर *mwl8k_vअगर = MWL8K_VIF(vअगर);
-	काष्ठा mwl8k_cmd_update_mac_addr *cmd;
-	पूर्णांक mac_type;
-	पूर्णांक rc;
+static int mwl8k_cmd_update_mac_addr(struct ieee80211_hw *hw,
+				  struct ieee80211_vif *vif, u8 *mac, bool set)
+{
+	struct mwl8k_priv *priv = hw->priv;
+	struct mwl8k_vif *mwl8k_vif = MWL8K_VIF(vif);
+	struct mwl8k_cmd_update_mac_addr *cmd;
+	int mac_type;
+	int rc;
 
 	mac_type = MWL8K_MAC_TYPE_PRIMARY_AP;
-	अगर (vअगर != शून्य && vअगर->type == NL80211_IFTYPE_STATION) अणु
-		अगर (mwl8k_vअगर->macid + 1 == ffs(priv->sta_macids_supported))
-			अगर (priv->ap_fw)
+	if (vif != NULL && vif->type == NL80211_IFTYPE_STATION) {
+		if (mwl8k_vif->macid + 1 == ffs(priv->sta_macids_supported))
+			if (priv->ap_fw)
 				mac_type = MWL8K_MAC_TYPE_SECONDARY_CLIENT;
-			अन्यथा
+			else
 				mac_type = MWL8K_MAC_TYPE_PRIMARY_CLIENT;
-		अन्यथा
+		else
 			mac_type = MWL8K_MAC_TYPE_SECONDARY_CLIENT;
-	पूर्ण अन्यथा अगर (vअगर != शून्य && vअगर->type == NL80211_IFTYPE_AP) अणु
-		अगर (mwl8k_vअगर->macid + 1 == ffs(priv->ap_macids_supported))
+	} else if (vif != NULL && vif->type == NL80211_IFTYPE_AP) {
+		if (mwl8k_vif->macid + 1 == ffs(priv->ap_macids_supported))
 			mac_type = MWL8K_MAC_TYPE_PRIMARY_AP;
-		अन्यथा
+		else
 			mac_type = MWL8K_MAC_TYPE_SECONDARY_AP;
-	पूर्ण
+	}
 
-	cmd = kzalloc(माप(*cmd), GFP_KERNEL);
-	अगर (cmd == शून्य)
-		वापस -ENOMEM;
+	cmd = kzalloc(sizeof(*cmd), GFP_KERNEL);
+	if (cmd == NULL)
+		return -ENOMEM;
 
-	अगर (set)
+	if (set)
 		cmd->header.code = cpu_to_le16(MWL8K_CMD_SET_MAC_ADDR);
-	अन्यथा
+	else
 		cmd->header.code = cpu_to_le16(MWL8K_CMD_DEL_MAC_ADDR);
 
-	cmd->header.length = cpu_to_le16(माप(*cmd));
-	अगर (priv->ap_fw) अणु
+	cmd->header.length = cpu_to_le16(sizeof(*cmd));
+	if (priv->ap_fw) {
 		cmd->mbss.mac_type = cpu_to_le16(mac_type);
-		स_नकल(cmd->mbss.mac_addr, mac, ETH_ALEN);
-	पूर्ण अन्यथा अणु
-		स_नकल(cmd->mac_addr, mac, ETH_ALEN);
-	पूर्ण
+		memcpy(cmd->mbss.mac_addr, mac, ETH_ALEN);
+	} else {
+		memcpy(cmd->mac_addr, mac, ETH_ALEN);
+	}
 
-	rc = mwl8k_post_pervअगर_cmd(hw, vअगर, &cmd->header);
-	kमुक्त(cmd);
+	rc = mwl8k_post_pervif_cmd(hw, vif, &cmd->header);
+	kfree(cmd);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*
  * MWL8K_CMD_SET_MAC_ADDR.
  */
-अटल अंतरभूत पूर्णांक mwl8k_cmd_set_mac_addr(काष्ठा ieee80211_hw *hw,
-				  काष्ठा ieee80211_vअगर *vअगर, u8 *mac)
-अणु
-	वापस mwl8k_cmd_update_mac_addr(hw, vअगर, mac, true);
-पूर्ण
+static inline int mwl8k_cmd_set_mac_addr(struct ieee80211_hw *hw,
+				  struct ieee80211_vif *vif, u8 *mac)
+{
+	return mwl8k_cmd_update_mac_addr(hw, vif, mac, true);
+}
 
 /*
  * MWL8K_CMD_DEL_MAC_ADDR.
  */
-अटल अंतरभूत पूर्णांक mwl8k_cmd_del_mac_addr(काष्ठा ieee80211_hw *hw,
-				  काष्ठा ieee80211_vअगर *vअगर, u8 *mac)
-अणु
-	वापस mwl8k_cmd_update_mac_addr(hw, vअगर, mac, false);
-पूर्ण
+static inline int mwl8k_cmd_del_mac_addr(struct ieee80211_hw *hw,
+				  struct ieee80211_vif *vif, u8 *mac)
+{
+	return mwl8k_cmd_update_mac_addr(hw, vif, mac, false);
+}
 
 /*
  * CMD_SET_RATEADAPT_MODE.
  */
-काष्ठा mwl8k_cmd_set_rate_adapt_mode अणु
-	काष्ठा mwl8k_cmd_pkt header;
+struct mwl8k_cmd_set_rate_adapt_mode {
+	struct mwl8k_cmd_pkt header;
 	__le16 action;
 	__le16 mode;
-पूर्ण __packed;
+} __packed;
 
-अटल पूर्णांक mwl8k_cmd_set_rateadapt_mode(काष्ठा ieee80211_hw *hw, __u16 mode)
-अणु
-	काष्ठा mwl8k_cmd_set_rate_adapt_mode *cmd;
-	पूर्णांक rc;
+static int mwl8k_cmd_set_rateadapt_mode(struct ieee80211_hw *hw, __u16 mode)
+{
+	struct mwl8k_cmd_set_rate_adapt_mode *cmd;
+	int rc;
 
-	cmd = kzalloc(माप(*cmd), GFP_KERNEL);
-	अगर (cmd == शून्य)
-		वापस -ENOMEM;
+	cmd = kzalloc(sizeof(*cmd), GFP_KERNEL);
+	if (cmd == NULL)
+		return -ENOMEM;
 
 	cmd->header.code = cpu_to_le16(MWL8K_CMD_SET_RATEADAPT_MODE);
-	cmd->header.length = cpu_to_le16(माप(*cmd));
+	cmd->header.length = cpu_to_le16(sizeof(*cmd));
 	cmd->action = cpu_to_le16(MWL8K_CMD_SET);
 	cmd->mode = cpu_to_le16(mode);
 
 	rc = mwl8k_post_cmd(hw, &cmd->header);
-	kमुक्त(cmd);
+	kfree(cmd);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*
  * CMD_GET_WATCHDOG_BITMAP.
  */
-काष्ठा mwl8k_cmd_get_watchकरोg_biपंचांगap अणु
-	काष्ठा mwl8k_cmd_pkt header;
-	u8	biपंचांगap;
-पूर्ण __packed;
+struct mwl8k_cmd_get_watchdog_bitmap {
+	struct mwl8k_cmd_pkt header;
+	u8	bitmap;
+} __packed;
 
-अटल पूर्णांक mwl8k_cmd_get_watchकरोg_biपंचांगap(काष्ठा ieee80211_hw *hw, u8 *biपंचांगap)
-अणु
-	काष्ठा mwl8k_cmd_get_watchकरोg_biपंचांगap *cmd;
-	पूर्णांक rc;
+static int mwl8k_cmd_get_watchdog_bitmap(struct ieee80211_hw *hw, u8 *bitmap)
+{
+	struct mwl8k_cmd_get_watchdog_bitmap *cmd;
+	int rc;
 
-	cmd = kzalloc(माप(*cmd), GFP_KERNEL);
-	अगर (cmd == शून्य)
-		वापस -ENOMEM;
+	cmd = kzalloc(sizeof(*cmd), GFP_KERNEL);
+	if (cmd == NULL)
+		return -ENOMEM;
 
 	cmd->header.code = cpu_to_le16(MWL8K_CMD_GET_WATCHDOG_BITMAP);
-	cmd->header.length = cpu_to_le16(माप(*cmd));
+	cmd->header.length = cpu_to_le16(sizeof(*cmd));
 
 	rc = mwl8k_post_cmd(hw, &cmd->header);
-	अगर (!rc)
-		*biपंचांगap = cmd->biपंचांगap;
+	if (!rc)
+		*bitmap = cmd->bitmap;
 
-	kमुक्त(cmd);
+	kfree(cmd);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-#घोषणा MWL8K_WMM_QUEUE_NUMBER	3
+#define MWL8K_WMM_QUEUE_NUMBER	3
 
-अटल व्योम mwl8k_destroy_ba(काष्ठा ieee80211_hw *hw,
+static void mwl8k_destroy_ba(struct ieee80211_hw *hw,
 			     u8 idx);
 
-अटल व्योम mwl8k_watchकरोg_ba_events(काष्ठा work_काष्ठा *work)
-अणु
-	पूर्णांक rc;
-	u8 biपंचांगap = 0, stream_index;
-	काष्ठा mwl8k_ampdu_stream *streams;
-	काष्ठा mwl8k_priv *priv =
-		container_of(work, काष्ठा mwl8k_priv, watchकरोg_ba_handle);
-	काष्ठा ieee80211_hw *hw = priv->hw;
-	पूर्णांक i;
+static void mwl8k_watchdog_ba_events(struct work_struct *work)
+{
+	int rc;
+	u8 bitmap = 0, stream_index;
+	struct mwl8k_ampdu_stream *streams;
+	struct mwl8k_priv *priv =
+		container_of(work, struct mwl8k_priv, watchdog_ba_handle);
+	struct ieee80211_hw *hw = priv->hw;
+	int i;
 	u32 status = 0;
 
 	mwl8k_fw_lock(hw);
 
-	rc = mwl8k_cmd_get_watchकरोg_biपंचांगap(priv->hw, &biपंचांगap);
-	अगर (rc)
-		जाओ करोne;
+	rc = mwl8k_cmd_get_watchdog_bitmap(priv->hw, &bitmap);
+	if (rc)
+		goto done;
 
 	spin_lock(&priv->stream_lock);
 
-	/* the biपंचांगap is the hw queue number.  Map it to the ampdu queue. */
-	क्रम (i = 0; i < TOTAL_HW_TX_QUEUES; i++) अणु
-		अगर (biपंचांगap & (1 << i)) अणु
+	/* the bitmap is the hw queue number.  Map it to the ampdu queue. */
+	for (i = 0; i < TOTAL_HW_TX_QUEUES; i++) {
+		if (bitmap & (1 << i)) {
 			stream_index = (i + MWL8K_WMM_QUEUE_NUMBER) %
 				       TOTAL_HW_TX_QUEUES;
 			streams = &priv->ampdu[stream_index];
-			अगर (streams->state == AMPDU_STREAM_ACTIVE) अणु
+			if (streams->state == AMPDU_STREAM_ACTIVE) {
 				ieee80211_stop_tx_ba_session(streams->sta,
 							     streams->tid);
 				spin_unlock(&priv->stream_lock);
 				mwl8k_destroy_ba(hw, stream_index);
 				spin_lock(&priv->stream_lock);
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
 	spin_unlock(&priv->stream_lock);
-करोne:
-	atomic_dec(&priv->watchकरोg_event_pending);
-	status = ioपढ़ो32(priv->regs + MWL8K_HIU_A2H_INTERRUPT_STATUS_MASK);
-	ioग_लिखो32((status | MWL8K_A2H_INT_BA_WATCHDOG),
+done:
+	atomic_dec(&priv->watchdog_event_pending);
+	status = ioread32(priv->regs + MWL8K_HIU_A2H_INTERRUPT_STATUS_MASK);
+	iowrite32((status | MWL8K_A2H_INT_BA_WATCHDOG),
 		  priv->regs + MWL8K_HIU_A2H_INTERRUPT_STATUS_MASK);
 	mwl8k_fw_unlock(hw);
-	वापस;
-पूर्ण
+	return;
+}
 
 
 /*
  * CMD_BSS_START.
  */
-काष्ठा mwl8k_cmd_bss_start अणु
-	काष्ठा mwl8k_cmd_pkt header;
+struct mwl8k_cmd_bss_start {
+	struct mwl8k_cmd_pkt header;
 	__le32 enable;
-पूर्ण __packed;
+} __packed;
 
-अटल पूर्णांक mwl8k_cmd_bss_start(काष्ठा ieee80211_hw *hw,
-			       काष्ठा ieee80211_vअगर *vअगर, पूर्णांक enable)
-अणु
-	काष्ठा mwl8k_cmd_bss_start *cmd;
-	काष्ठा mwl8k_vअगर *mwl8k_vअगर = MWL8K_VIF(vअगर);
-	काष्ठा mwl8k_priv *priv = hw->priv;
-	पूर्णांक rc;
+static int mwl8k_cmd_bss_start(struct ieee80211_hw *hw,
+			       struct ieee80211_vif *vif, int enable)
+{
+	struct mwl8k_cmd_bss_start *cmd;
+	struct mwl8k_vif *mwl8k_vif = MWL8K_VIF(vif);
+	struct mwl8k_priv *priv = hw->priv;
+	int rc;
 
-	अगर (enable && (priv->running_bsses & (1 << mwl8k_vअगर->macid)))
-		वापस 0;
+	if (enable && (priv->running_bsses & (1 << mwl8k_vif->macid)))
+		return 0;
 
-	अगर (!enable && !(priv->running_bsses & (1 << mwl8k_vअगर->macid)))
-		वापस 0;
+	if (!enable && !(priv->running_bsses & (1 << mwl8k_vif->macid)))
+		return 0;
 
-	cmd = kzalloc(माप(*cmd), GFP_KERNEL);
-	अगर (cmd == शून्य)
-		वापस -ENOMEM;
+	cmd = kzalloc(sizeof(*cmd), GFP_KERNEL);
+	if (cmd == NULL)
+		return -ENOMEM;
 
 	cmd->header.code = cpu_to_le16(MWL8K_CMD_BSS_START);
-	cmd->header.length = cpu_to_le16(माप(*cmd));
+	cmd->header.length = cpu_to_le16(sizeof(*cmd));
 	cmd->enable = cpu_to_le32(enable);
 
-	rc = mwl8k_post_pervअगर_cmd(hw, vअगर, &cmd->header);
-	kमुक्त(cmd);
+	rc = mwl8k_post_pervif_cmd(hw, vif, &cmd->header);
+	kfree(cmd);
 
-	अगर (!rc) अणु
-		अगर (enable)
-			priv->running_bsses |= (1 << mwl8k_vअगर->macid);
-		अन्यथा
-			priv->running_bsses &= ~(1 << mwl8k_vअगर->macid);
-	पूर्ण
-	वापस rc;
-पूर्ण
+	if (!rc) {
+		if (enable)
+			priv->running_bsses |= (1 << mwl8k_vif->macid);
+		else
+			priv->running_bsses &= ~(1 << mwl8k_vif->macid);
+	}
+	return rc;
+}
 
-अटल व्योम mwl8k_enable_bsses(काष्ठा ieee80211_hw *hw, bool enable, u32 biपंचांगap)
-अणु
-	काष्ठा mwl8k_priv *priv = hw->priv;
-	काष्ठा mwl8k_vअगर *mwl8k_vअगर, *पंचांगp_vअगर;
-	काष्ठा ieee80211_vअगर *vअगर;
+static void mwl8k_enable_bsses(struct ieee80211_hw *hw, bool enable, u32 bitmap)
+{
+	struct mwl8k_priv *priv = hw->priv;
+	struct mwl8k_vif *mwl8k_vif, *tmp_vif;
+	struct ieee80211_vif *vif;
 
-	list_क्रम_each_entry_safe(mwl8k_vअगर, पंचांगp_vअगर, &priv->vअगर_list, list) अणु
-		vअगर = mwl8k_vअगर->vअगर;
+	list_for_each_entry_safe(mwl8k_vif, tmp_vif, &priv->vif_list, list) {
+		vif = mwl8k_vif->vif;
 
-		अगर (!(biपंचांगap & (1 << mwl8k_vअगर->macid)))
-			जारी;
+		if (!(bitmap & (1 << mwl8k_vif->macid)))
+			continue;
 
-		अगर (vअगर->type == NL80211_IFTYPE_AP)
-			mwl8k_cmd_bss_start(hw, vअगर, enable);
-	पूर्ण
-पूर्ण
+		if (vif->type == NL80211_IFTYPE_AP)
+			mwl8k_cmd_bss_start(hw, vif, enable);
+	}
+}
 /*
  * CMD_BASTREAM.
  */
@@ -3927,23 +3926,23 @@ mwl8k_cmd_use_fixed_rate_ap(काष्ठा ieee80211_hw *hw, पूर्ण
 /*
  * UPSTREAM is tx direction
  */
-#घोषणा BASTREAM_FLAG_सूचीECTION_UPSTREAM	0x00
-#घोषणा BASTREAM_FLAG_IMMEDIATE_TYPE		0x01
+#define BASTREAM_FLAG_DIRECTION_UPSTREAM	0x00
+#define BASTREAM_FLAG_IMMEDIATE_TYPE		0x01
 
-क्रमागत ba_stream_action_type अणु
+enum ba_stream_action_type {
 	MWL8K_BA_CREATE,
 	MWL8K_BA_UPDATE,
 	MWL8K_BA_DESTROY,
 	MWL8K_BA_FLUSH,
 	MWL8K_BA_CHECK,
-पूर्ण;
+};
 
 
-काष्ठा mwl8k_create_ba_stream अणु
+struct mwl8k_create_ba_stream {
 	__le32	flags;
 	__le32	idle_thrs;
 	__le32	bar_thrs;
-	__le32	winकरोw_size;
+	__le32	window_size;
 	u8	peer_mac_addr[6];
 	u8	dialog_token;
 	u8	tid;
@@ -3953,76 +3952,76 @@ mwl8k_cmd_use_fixed_rate_ap(काष्ठा ieee80211_hw *hw, पूर्ण
 	u8	reset_seq_no_flag;
 	__le16	curr_seq_no;
 	u8	sta_src_mac_addr[6];
-पूर्ण __packed;
+} __packed;
 
-काष्ठा mwl8k_destroy_ba_stream अणु
+struct mwl8k_destroy_ba_stream {
 	__le32	flags;
 	__le32	ba_context;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा mwl8k_cmd_bastream अणु
-	काष्ठा mwl8k_cmd_pkt	header;
+struct mwl8k_cmd_bastream {
+	struct mwl8k_cmd_pkt	header;
 	__le32	action;
-	जोड़ अणु
-		काष्ठा mwl8k_create_ba_stream	create_params;
-		काष्ठा mwl8k_destroy_ba_stream	destroy_params;
-	पूर्ण;
-पूर्ण __packed;
+	union {
+		struct mwl8k_create_ba_stream	create_params;
+		struct mwl8k_destroy_ba_stream	destroy_params;
+	};
+} __packed;
 
-अटल पूर्णांक
-mwl8k_check_ba(काष्ठा ieee80211_hw *hw, काष्ठा mwl8k_ampdu_stream *stream,
-	       काष्ठा ieee80211_vअगर *vअगर)
-अणु
-	काष्ठा mwl8k_cmd_bastream *cmd;
-	पूर्णांक rc;
+static int
+mwl8k_check_ba(struct ieee80211_hw *hw, struct mwl8k_ampdu_stream *stream,
+	       struct ieee80211_vif *vif)
+{
+	struct mwl8k_cmd_bastream *cmd;
+	int rc;
 
-	cmd = kzalloc(माप(*cmd), GFP_KERNEL);
-	अगर (cmd == शून्य)
-		वापस -ENOMEM;
+	cmd = kzalloc(sizeof(*cmd), GFP_KERNEL);
+	if (cmd == NULL)
+		return -ENOMEM;
 
 	cmd->header.code = cpu_to_le16(MWL8K_CMD_BASTREAM);
-	cmd->header.length = cpu_to_le16(माप(*cmd));
+	cmd->header.length = cpu_to_le16(sizeof(*cmd));
 
 	cmd->action = cpu_to_le32(MWL8K_BA_CHECK);
 
 	cmd->create_params.queue_id = stream->idx;
-	स_नकल(&cmd->create_params.peer_mac_addr[0], stream->sta->addr,
+	memcpy(&cmd->create_params.peer_mac_addr[0], stream->sta->addr,
 	       ETH_ALEN);
 	cmd->create_params.tid = stream->tid;
 
 	cmd->create_params.flags =
 		cpu_to_le32(BASTREAM_FLAG_IMMEDIATE_TYPE) |
-		cpu_to_le32(BASTREAM_FLAG_सूचीECTION_UPSTREAM);
+		cpu_to_le32(BASTREAM_FLAG_DIRECTION_UPSTREAM);
 
-	rc = mwl8k_post_pervअगर_cmd(hw, vअगर, &cmd->header);
+	rc = mwl8k_post_pervif_cmd(hw, vif, &cmd->header);
 
-	kमुक्त(cmd);
+	kfree(cmd);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक
-mwl8k_create_ba(काष्ठा ieee80211_hw *hw, काष्ठा mwl8k_ampdu_stream *stream,
-		u8 buf_size, काष्ठा ieee80211_vअगर *vअगर)
-अणु
-	काष्ठा mwl8k_cmd_bastream *cmd;
-	पूर्णांक rc;
+static int
+mwl8k_create_ba(struct ieee80211_hw *hw, struct mwl8k_ampdu_stream *stream,
+		u8 buf_size, struct ieee80211_vif *vif)
+{
+	struct mwl8k_cmd_bastream *cmd;
+	int rc;
 
-	cmd = kzalloc(माप(*cmd), GFP_KERNEL);
-	अगर (cmd == शून्य)
-		वापस -ENOMEM;
+	cmd = kzalloc(sizeof(*cmd), GFP_KERNEL);
+	if (cmd == NULL)
+		return -ENOMEM;
 
 
 	cmd->header.code = cpu_to_le16(MWL8K_CMD_BASTREAM);
-	cmd->header.length = cpu_to_le16(माप(*cmd));
+	cmd->header.length = cpu_to_le16(sizeof(*cmd));
 
 	cmd->action = cpu_to_le32(MWL8K_BA_CREATE);
 
 	cmd->create_params.bar_thrs = cpu_to_le32((u32)buf_size);
-	cmd->create_params.winकरोw_size = cpu_to_le32((u32)buf_size);
+	cmd->create_params.window_size = cpu_to_le32((u32)buf_size);
 	cmd->create_params.queue_id = stream->idx;
 
-	स_नकल(cmd->create_params.peer_mac_addr, stream->sta->addr, ETH_ALEN);
+	memcpy(cmd->create_params.peer_mac_addr, stream->sta->addr, ETH_ALEN);
 	cmd->create_params.tid = stream->tid;
 	cmd->create_params.curr_seq_no = cpu_to_le16(0);
 	cmd->create_params.reset_seq_no_flag = 1;
@@ -4035,28 +4034,28 @@ mwl8k_create_ba(काष्ठा ieee80211_hw *hw, काष्ठा mwl8k_am
 
 	cmd->create_params.flags =
 		cpu_to_le32(BASTREAM_FLAG_IMMEDIATE_TYPE |
-					BASTREAM_FLAG_सूचीECTION_UPSTREAM);
+					BASTREAM_FLAG_DIRECTION_UPSTREAM);
 
-	rc = mwl8k_post_pervअगर_cmd(hw, vअगर, &cmd->header);
+	rc = mwl8k_post_pervif_cmd(hw, vif, &cmd->header);
 
 	wiphy_debug(hw->wiphy, "Created a BA stream for %pM : tid %d\n",
 		stream->sta->addr, stream->tid);
-	kमुक्त(cmd);
+	kfree(cmd);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल व्योम mwl8k_destroy_ba(काष्ठा ieee80211_hw *hw,
+static void mwl8k_destroy_ba(struct ieee80211_hw *hw,
 			     u8 idx)
-अणु
-	काष्ठा mwl8k_cmd_bastream *cmd;
+{
+	struct mwl8k_cmd_bastream *cmd;
 
-	cmd = kzalloc(माप(*cmd), GFP_KERNEL);
-	अगर (cmd == शून्य)
-		वापस;
+	cmd = kzalloc(sizeof(*cmd), GFP_KERNEL);
+	if (cmd == NULL)
+		return;
 
 	cmd->header.code = cpu_to_le16(MWL8K_CMD_BASTREAM);
-	cmd->header.length = cpu_to_le16(माप(*cmd));
+	cmd->header.length = cpu_to_le16(sizeof(*cmd));
 	cmd->action = cpu_to_le32(MWL8K_BA_DESTROY);
 
 	cmd->destroy_params.ba_context = cpu_to_le32(idx);
@@ -4064,14 +4063,14 @@ mwl8k_create_ba(काष्ठा ieee80211_hw *hw, काष्ठा mwl8k_am
 
 	wiphy_debug(hw->wiphy, "Deleted BA stream index %d\n", idx);
 
-	kमुक्त(cmd);
-पूर्ण
+	kfree(cmd);
+}
 
 /*
  * CMD_SET_NEW_STN.
  */
-काष्ठा mwl8k_cmd_set_new_stn अणु
-	काष्ठा mwl8k_cmd_pkt header;
+struct mwl8k_cmd_set_new_stn {
+	struct mwl8k_cmd_pkt header;
 	__le16 aid;
 	__u8 mac_addr[6];
 	__le16 stn_id;
@@ -4090,35 +4089,35 @@ mwl8k_create_ba(काष्ठा ieee80211_hw *hw, काष्ठा mwl8k_am
 	__u8 add_qos_info;
 	__u8 is_qos_sta;
 	__le32 fw_sta_ptr;
-पूर्ण __packed;
+} __packed;
 
-#घोषणा MWL8K_STA_ACTION_ADD		0
-#घोषणा MWL8K_STA_ACTION_REMOVE		2
+#define MWL8K_STA_ACTION_ADD		0
+#define MWL8K_STA_ACTION_REMOVE		2
 
-अटल पूर्णांक mwl8k_cmd_set_new_stn_add(काष्ठा ieee80211_hw *hw,
-				     काष्ठा ieee80211_vअगर *vअगर,
-				     काष्ठा ieee80211_sta *sta)
-अणु
-	काष्ठा mwl8k_cmd_set_new_stn *cmd;
+static int mwl8k_cmd_set_new_stn_add(struct ieee80211_hw *hw,
+				     struct ieee80211_vif *vif,
+				     struct ieee80211_sta *sta)
+{
+	struct mwl8k_cmd_set_new_stn *cmd;
 	u32 rates;
-	पूर्णांक rc;
+	int rc;
 
-	cmd = kzalloc(माप(*cmd), GFP_KERNEL);
-	अगर (cmd == शून्य)
-		वापस -ENOMEM;
+	cmd = kzalloc(sizeof(*cmd), GFP_KERNEL);
+	if (cmd == NULL)
+		return -ENOMEM;
 
 	cmd->header.code = cpu_to_le16(MWL8K_CMD_SET_NEW_STN);
-	cmd->header.length = cpu_to_le16(माप(*cmd));
+	cmd->header.length = cpu_to_le16(sizeof(*cmd));
 	cmd->aid = cpu_to_le16(sta->aid);
-	स_नकल(cmd->mac_addr, sta->addr, ETH_ALEN);
+	memcpy(cmd->mac_addr, sta->addr, ETH_ALEN);
 	cmd->stn_id = cpu_to_le16(sta->aid);
 	cmd->action = cpu_to_le16(MWL8K_STA_ACTION_ADD);
-	अगर (hw->conf.chandef.chan->band == NL80211_BAND_2GHZ)
+	if (hw->conf.chandef.chan->band == NL80211_BAND_2GHZ)
 		rates = sta->supp_rates[NL80211_BAND_2GHZ];
-	अन्यथा
+	else
 		rates = sta->supp_rates[NL80211_BAND_5GHZ] << 5;
 	cmd->legacy_rates = cpu_to_le32(rates);
-	अगर (sta->ht_cap.ht_supported) अणु
+	if (sta->ht_cap.ht_supported) {
 		cmd->ht_rates[0] = sta->ht_cap.mcs.rx_mask[0];
 		cmd->ht_rates[1] = sta->ht_cap.mcs.rx_mask[1];
 		cmd->ht_rates[2] = sta->ht_cap.mcs.rx_mask[2];
@@ -4127,97 +4126,97 @@ mwl8k_create_ba(काष्ठा ieee80211_hw *hw, काष्ठा mwl8k_am
 		cmd->mac_ht_param_info = (sta->ht_cap.ampdu_factor & 3) |
 			((sta->ht_cap.ampdu_density & 7) << 2);
 		cmd->is_qos_sta = 1;
-	पूर्ण
+	}
 
-	rc = mwl8k_post_pervअगर_cmd(hw, vअगर, &cmd->header);
-	kमुक्त(cmd);
+	rc = mwl8k_post_pervif_cmd(hw, vif, &cmd->header);
+	kfree(cmd);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक mwl8k_cmd_set_new_stn_add_self(काष्ठा ieee80211_hw *hw,
-					  काष्ठा ieee80211_vअगर *vअगर)
-अणु
-	काष्ठा mwl8k_cmd_set_new_stn *cmd;
-	पूर्णांक rc;
+static int mwl8k_cmd_set_new_stn_add_self(struct ieee80211_hw *hw,
+					  struct ieee80211_vif *vif)
+{
+	struct mwl8k_cmd_set_new_stn *cmd;
+	int rc;
 
-	cmd = kzalloc(माप(*cmd), GFP_KERNEL);
-	अगर (cmd == शून्य)
-		वापस -ENOMEM;
+	cmd = kzalloc(sizeof(*cmd), GFP_KERNEL);
+	if (cmd == NULL)
+		return -ENOMEM;
 
 	cmd->header.code = cpu_to_le16(MWL8K_CMD_SET_NEW_STN);
-	cmd->header.length = cpu_to_le16(माप(*cmd));
-	स_नकल(cmd->mac_addr, vअगर->addr, ETH_ALEN);
+	cmd->header.length = cpu_to_le16(sizeof(*cmd));
+	memcpy(cmd->mac_addr, vif->addr, ETH_ALEN);
 
-	rc = mwl8k_post_pervअगर_cmd(hw, vअगर, &cmd->header);
-	kमुक्त(cmd);
+	rc = mwl8k_post_pervif_cmd(hw, vif, &cmd->header);
+	kfree(cmd);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक mwl8k_cmd_set_new_stn_del(काष्ठा ieee80211_hw *hw,
-				     काष्ठा ieee80211_vअगर *vअगर, u8 *addr)
-अणु
-	काष्ठा mwl8k_cmd_set_new_stn *cmd;
-	काष्ठा mwl8k_priv *priv = hw->priv;
-	पूर्णांक rc, i;
+static int mwl8k_cmd_set_new_stn_del(struct ieee80211_hw *hw,
+				     struct ieee80211_vif *vif, u8 *addr)
+{
+	struct mwl8k_cmd_set_new_stn *cmd;
+	struct mwl8k_priv *priv = hw->priv;
+	int rc, i;
 	u8 idx;
 
 	spin_lock(&priv->stream_lock);
-	/* Destroy any active ampdu streams क्रम this sta */
-	क्रम (i = 0; i < MWL8K_NUM_AMPDU_STREAMS; i++) अणु
-		काष्ठा mwl8k_ampdu_stream *s;
+	/* Destroy any active ampdu streams for this sta */
+	for (i = 0; i < MWL8K_NUM_AMPDU_STREAMS; i++) {
+		struct mwl8k_ampdu_stream *s;
 		s = &priv->ampdu[i];
-		अगर (s->state != AMPDU_NO_STREAM) अणु
-			अगर (स_भेद(s->sta->addr, addr, ETH_ALEN) == 0) अणु
-				अगर (s->state == AMPDU_STREAM_ACTIVE) अणु
+		if (s->state != AMPDU_NO_STREAM) {
+			if (memcmp(s->sta->addr, addr, ETH_ALEN) == 0) {
+				if (s->state == AMPDU_STREAM_ACTIVE) {
 					idx = s->idx;
 					spin_unlock(&priv->stream_lock);
 					mwl8k_destroy_ba(hw, idx);
 					spin_lock(&priv->stream_lock);
-				पूर्ण अन्यथा अगर (s->state == AMPDU_STREAM_NEW) अणु
-					mwl8k_हटाओ_stream(hw, s);
-				पूर्ण
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				} else if (s->state == AMPDU_STREAM_NEW) {
+					mwl8k_remove_stream(hw, s);
+				}
+			}
+		}
+	}
 
 	spin_unlock(&priv->stream_lock);
 
-	cmd = kzalloc(माप(*cmd), GFP_KERNEL);
-	अगर (cmd == शून्य)
-		वापस -ENOMEM;
+	cmd = kzalloc(sizeof(*cmd), GFP_KERNEL);
+	if (cmd == NULL)
+		return -ENOMEM;
 
 	cmd->header.code = cpu_to_le16(MWL8K_CMD_SET_NEW_STN);
-	cmd->header.length = cpu_to_le16(माप(*cmd));
-	स_नकल(cmd->mac_addr, addr, ETH_ALEN);
+	cmd->header.length = cpu_to_le16(sizeof(*cmd));
+	memcpy(cmd->mac_addr, addr, ETH_ALEN);
 	cmd->action = cpu_to_le16(MWL8K_STA_ACTION_REMOVE);
 
-	rc = mwl8k_post_pervअगर_cmd(hw, vअगर, &cmd->header);
-	kमुक्त(cmd);
+	rc = mwl8k_post_pervif_cmd(hw, vif, &cmd->header);
+	kfree(cmd);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*
  * CMD_UPDATE_ENCRYPTION.
  */
 
-#घोषणा MAX_ENCR_KEY_LENGTH	16
-#घोषणा MIC_KEY_LENGTH		8
+#define MAX_ENCR_KEY_LENGTH	16
+#define MIC_KEY_LENGTH		8
 
-काष्ठा mwl8k_cmd_update_encryption अणु
-	काष्ठा mwl8k_cmd_pkt header;
+struct mwl8k_cmd_update_encryption {
+	struct mwl8k_cmd_pkt header;
 
 	__le32 action;
 	__le32 reserved;
 	__u8 mac_addr[6];
 	__u8 encr_type;
 
-पूर्ण __packed;
+} __packed;
 
-काष्ठा mwl8k_cmd_set_key अणु
-	काष्ठा mwl8k_cmd_pkt header;
+struct mwl8k_cmd_set_key {
+	struct mwl8k_cmd_pkt header;
 
 	__le32 action;
 	__le32 reserved;
@@ -4234,259 +4233,259 @@ mwl8k_create_ba(काष्ठा ieee80211_hw *hw, काष्ठा mwl8k_am
 	__le16 tkip_tsc_low;
 	__le32 tkip_tsc_high;
 	__u8 mac_addr[6];
-पूर्ण __packed;
+} __packed;
 
-क्रमागत अणु
+enum {
 	MWL8K_ENCR_ENABLE,
 	MWL8K_ENCR_SET_KEY,
 	MWL8K_ENCR_REMOVE_KEY,
 	MWL8K_ENCR_SET_GROUP_KEY,
-पूर्ण;
+};
 
-#घोषणा MWL8K_UPDATE_ENCRYPTION_TYPE_WEP	0
-#घोषणा MWL8K_UPDATE_ENCRYPTION_TYPE_DISABLE	1
-#घोषणा MWL8K_UPDATE_ENCRYPTION_TYPE_TKIP	4
-#घोषणा MWL8K_UPDATE_ENCRYPTION_TYPE_MIXED	7
-#घोषणा MWL8K_UPDATE_ENCRYPTION_TYPE_AES	8
+#define MWL8K_UPDATE_ENCRYPTION_TYPE_WEP	0
+#define MWL8K_UPDATE_ENCRYPTION_TYPE_DISABLE	1
+#define MWL8K_UPDATE_ENCRYPTION_TYPE_TKIP	4
+#define MWL8K_UPDATE_ENCRYPTION_TYPE_MIXED	7
+#define MWL8K_UPDATE_ENCRYPTION_TYPE_AES	8
 
-क्रमागत अणु
+enum {
 	MWL8K_ALG_WEP,
 	MWL8K_ALG_TKIP,
 	MWL8K_ALG_CCMP,
-पूर्ण;
+};
 
-#घोषणा MWL8K_KEY_FLAG_TXGROUPKEY	0x00000004
-#घोषणा MWL8K_KEY_FLAG_PAIRWISE		0x00000008
-#घोषणा MWL8K_KEY_FLAG_TSC_VALID	0x00000040
-#घोषणा MWL8K_KEY_FLAG_WEP_TXKEY	0x01000000
-#घोषणा MWL8K_KEY_FLAG_MICKEY_VALID	0x02000000
+#define MWL8K_KEY_FLAG_TXGROUPKEY	0x00000004
+#define MWL8K_KEY_FLAG_PAIRWISE		0x00000008
+#define MWL8K_KEY_FLAG_TSC_VALID	0x00000040
+#define MWL8K_KEY_FLAG_WEP_TXKEY	0x01000000
+#define MWL8K_KEY_FLAG_MICKEY_VALID	0x02000000
 
-अटल पूर्णांक mwl8k_cmd_update_encryption_enable(काष्ठा ieee80211_hw *hw,
-					      काष्ठा ieee80211_vअगर *vअगर,
+static int mwl8k_cmd_update_encryption_enable(struct ieee80211_hw *hw,
+					      struct ieee80211_vif *vif,
 					      u8 *addr,
 					      u8 encr_type)
-अणु
-	काष्ठा mwl8k_cmd_update_encryption *cmd;
-	पूर्णांक rc;
+{
+	struct mwl8k_cmd_update_encryption *cmd;
+	int rc;
 
-	cmd = kzalloc(माप(*cmd), GFP_KERNEL);
-	अगर (cmd == शून्य)
-		वापस -ENOMEM;
+	cmd = kzalloc(sizeof(*cmd), GFP_KERNEL);
+	if (cmd == NULL)
+		return -ENOMEM;
 
 	cmd->header.code = cpu_to_le16(MWL8K_CMD_UPDATE_ENCRYPTION);
-	cmd->header.length = cpu_to_le16(माप(*cmd));
+	cmd->header.length = cpu_to_le16(sizeof(*cmd));
 	cmd->action = cpu_to_le32(MWL8K_ENCR_ENABLE);
-	स_नकल(cmd->mac_addr, addr, ETH_ALEN);
+	memcpy(cmd->mac_addr, addr, ETH_ALEN);
 	cmd->encr_type = encr_type;
 
-	rc = mwl8k_post_pervअगर_cmd(hw, vअगर, &cmd->header);
-	kमुक्त(cmd);
+	rc = mwl8k_post_pervif_cmd(hw, vif, &cmd->header);
+	kfree(cmd);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक mwl8k_encryption_set_cmd_info(काष्ठा mwl8k_cmd_set_key *cmd,
+static int mwl8k_encryption_set_cmd_info(struct mwl8k_cmd_set_key *cmd,
 						u8 *addr,
-						काष्ठा ieee80211_key_conf *key)
-अणु
+						struct ieee80211_key_conf *key)
+{
 	cmd->header.code = cpu_to_le16(MWL8K_CMD_UPDATE_ENCRYPTION);
-	cmd->header.length = cpu_to_le16(माप(*cmd));
-	cmd->length = cpu_to_le16(माप(*cmd) -
-				दुरत्व(काष्ठा mwl8k_cmd_set_key, length));
+	cmd->header.length = cpu_to_le16(sizeof(*cmd));
+	cmd->length = cpu_to_le16(sizeof(*cmd) -
+				offsetof(struct mwl8k_cmd_set_key, length));
 	cmd->key_id = cpu_to_le32(key->keyidx);
 	cmd->key_len = cpu_to_le16(key->keylen);
-	स_नकल(cmd->mac_addr, addr, ETH_ALEN);
+	memcpy(cmd->mac_addr, addr, ETH_ALEN);
 
-	चयन (key->cipher) अणु
-	हाल WLAN_CIPHER_SUITE_WEP40:
-	हाल WLAN_CIPHER_SUITE_WEP104:
+	switch (key->cipher) {
+	case WLAN_CIPHER_SUITE_WEP40:
+	case WLAN_CIPHER_SUITE_WEP104:
 		cmd->key_type_id = cpu_to_le16(MWL8K_ALG_WEP);
-		अगर (key->keyidx == 0)
+		if (key->keyidx == 0)
 			cmd->key_info =	cpu_to_le32(MWL8K_KEY_FLAG_WEP_TXKEY);
 
-		अवरोध;
-	हाल WLAN_CIPHER_SUITE_TKIP:
+		break;
+	case WLAN_CIPHER_SUITE_TKIP:
 		cmd->key_type_id = cpu_to_le16(MWL8K_ALG_TKIP);
 		cmd->key_info =	(key->flags & IEEE80211_KEY_FLAG_PAIRWISE)
 			? cpu_to_le32(MWL8K_KEY_FLAG_PAIRWISE)
 			: cpu_to_le32(MWL8K_KEY_FLAG_TXGROUPKEY);
 		cmd->key_info |= cpu_to_le32(MWL8K_KEY_FLAG_MICKEY_VALID
 						| MWL8K_KEY_FLAG_TSC_VALID);
-		अवरोध;
-	हाल WLAN_CIPHER_SUITE_CCMP:
+		break;
+	case WLAN_CIPHER_SUITE_CCMP:
 		cmd->key_type_id = cpu_to_le16(MWL8K_ALG_CCMP);
 		cmd->key_info =	(key->flags & IEEE80211_KEY_FLAG_PAIRWISE)
 			? cpu_to_le32(MWL8K_KEY_FLAG_PAIRWISE)
 			: cpu_to_le32(MWL8K_KEY_FLAG_TXGROUPKEY);
-		अवरोध;
-	शेष:
-		वापस -ENOTSUPP;
-	पूर्ण
+		break;
+	default:
+		return -ENOTSUPP;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mwl8k_cmd_encryption_set_key(काष्ठा ieee80211_hw *hw,
-						काष्ठा ieee80211_vअगर *vअगर,
+static int mwl8k_cmd_encryption_set_key(struct ieee80211_hw *hw,
+						struct ieee80211_vif *vif,
 						u8 *addr,
-						काष्ठा ieee80211_key_conf *key)
-अणु
-	काष्ठा mwl8k_cmd_set_key *cmd;
-	पूर्णांक rc;
-	पूर्णांक keymlen;
+						struct ieee80211_key_conf *key)
+{
+	struct mwl8k_cmd_set_key *cmd;
+	int rc;
+	int keymlen;
 	u32 action;
 	u8 idx;
-	काष्ठा mwl8k_vअगर *mwl8k_vअगर = MWL8K_VIF(vअगर);
+	struct mwl8k_vif *mwl8k_vif = MWL8K_VIF(vif);
 
-	cmd = kzalloc(माप(*cmd), GFP_KERNEL);
-	अगर (cmd == शून्य)
-		वापस -ENOMEM;
+	cmd = kzalloc(sizeof(*cmd), GFP_KERNEL);
+	if (cmd == NULL)
+		return -ENOMEM;
 
 	rc = mwl8k_encryption_set_cmd_info(cmd, addr, key);
-	अगर (rc < 0)
-		जाओ करोne;
+	if (rc < 0)
+		goto done;
 
 	idx = key->keyidx;
 
-	अगर (key->flags & IEEE80211_KEY_FLAG_PAIRWISE)
+	if (key->flags & IEEE80211_KEY_FLAG_PAIRWISE)
 		action = MWL8K_ENCR_SET_KEY;
-	अन्यथा
+	else
 		action = MWL8K_ENCR_SET_GROUP_KEY;
 
-	चयन (key->cipher) अणु
-	हाल WLAN_CIPHER_SUITE_WEP40:
-	हाल WLAN_CIPHER_SUITE_WEP104:
-		अगर (!mwl8k_vअगर->wep_key_conf[idx].enabled) अणु
-			स_नकल(mwl8k_vअगर->wep_key_conf[idx].key, key,
-						माप(*key) + key->keylen);
-			mwl8k_vअगर->wep_key_conf[idx].enabled = 1;
-		पूर्ण
+	switch (key->cipher) {
+	case WLAN_CIPHER_SUITE_WEP40:
+	case WLAN_CIPHER_SUITE_WEP104:
+		if (!mwl8k_vif->wep_key_conf[idx].enabled) {
+			memcpy(mwl8k_vif->wep_key_conf[idx].key, key,
+						sizeof(*key) + key->keylen);
+			mwl8k_vif->wep_key_conf[idx].enabled = 1;
+		}
 
 		keymlen = key->keylen;
 		action = MWL8K_ENCR_SET_KEY;
-		अवरोध;
-	हाल WLAN_CIPHER_SUITE_TKIP:
+		break;
+	case WLAN_CIPHER_SUITE_TKIP:
 		keymlen = MAX_ENCR_KEY_LENGTH + 2 * MIC_KEY_LENGTH;
-		अवरोध;
-	हाल WLAN_CIPHER_SUITE_CCMP:
+		break;
+	case WLAN_CIPHER_SUITE_CCMP:
 		keymlen = key->keylen;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		rc = -ENOTSUPP;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	स_नकल(cmd->key_material, key->key, keymlen);
+	memcpy(cmd->key_material, key->key, keymlen);
 	cmd->action = cpu_to_le32(action);
 
-	rc = mwl8k_post_pervअगर_cmd(hw, vअगर, &cmd->header);
-करोne:
-	kमुक्त(cmd);
+	rc = mwl8k_post_pervif_cmd(hw, vif, &cmd->header);
+done:
+	kfree(cmd);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक mwl8k_cmd_encryption_हटाओ_key(काष्ठा ieee80211_hw *hw,
-						काष्ठा ieee80211_vअगर *vअगर,
+static int mwl8k_cmd_encryption_remove_key(struct ieee80211_hw *hw,
+						struct ieee80211_vif *vif,
 						u8 *addr,
-						काष्ठा ieee80211_key_conf *key)
-अणु
-	काष्ठा mwl8k_cmd_set_key *cmd;
-	पूर्णांक rc;
-	काष्ठा mwl8k_vअगर *mwl8k_vअगर = MWL8K_VIF(vअगर);
+						struct ieee80211_key_conf *key)
+{
+	struct mwl8k_cmd_set_key *cmd;
+	int rc;
+	struct mwl8k_vif *mwl8k_vif = MWL8K_VIF(vif);
 
-	cmd = kzalloc(माप(*cmd), GFP_KERNEL);
-	अगर (cmd == शून्य)
-		वापस -ENOMEM;
+	cmd = kzalloc(sizeof(*cmd), GFP_KERNEL);
+	if (cmd == NULL)
+		return -ENOMEM;
 
 	rc = mwl8k_encryption_set_cmd_info(cmd, addr, key);
-	अगर (rc < 0)
-		जाओ करोne;
+	if (rc < 0)
+		goto done;
 
-	अगर (key->cipher == WLAN_CIPHER_SUITE_WEP40 ||
+	if (key->cipher == WLAN_CIPHER_SUITE_WEP40 ||
 			key->cipher == WLAN_CIPHER_SUITE_WEP104)
-		mwl8k_vअगर->wep_key_conf[key->keyidx].enabled = 0;
+		mwl8k_vif->wep_key_conf[key->keyidx].enabled = 0;
 
 	cmd->action = cpu_to_le32(MWL8K_ENCR_REMOVE_KEY);
 
-	rc = mwl8k_post_pervअगर_cmd(hw, vअगर, &cmd->header);
-करोne:
-	kमुक्त(cmd);
+	rc = mwl8k_post_pervif_cmd(hw, vif, &cmd->header);
+done:
+	kfree(cmd);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक mwl8k_set_key(काष्ठा ieee80211_hw *hw,
-			 क्रमागत set_key_cmd cmd_param,
-			 काष्ठा ieee80211_vअगर *vअगर,
-			 काष्ठा ieee80211_sta *sta,
-			 काष्ठा ieee80211_key_conf *key)
-अणु
-	पूर्णांक rc = 0;
+static int mwl8k_set_key(struct ieee80211_hw *hw,
+			 enum set_key_cmd cmd_param,
+			 struct ieee80211_vif *vif,
+			 struct ieee80211_sta *sta,
+			 struct ieee80211_key_conf *key)
+{
+	int rc = 0;
 	u8 encr_type;
 	u8 *addr;
-	काष्ठा mwl8k_vअगर *mwl8k_vअगर = MWL8K_VIF(vअगर);
-	काष्ठा mwl8k_priv *priv = hw->priv;
+	struct mwl8k_vif *mwl8k_vif = MWL8K_VIF(vif);
+	struct mwl8k_priv *priv = hw->priv;
 
-	अगर (vअगर->type == NL80211_IFTYPE_STATION && !priv->ap_fw)
-		वापस -EOPNOTSUPP;
+	if (vif->type == NL80211_IFTYPE_STATION && !priv->ap_fw)
+		return -EOPNOTSUPP;
 
-	अगर (sta == शून्य)
-		addr = vअगर->addr;
-	अन्यथा
+	if (sta == NULL)
+		addr = vif->addr;
+	else
 		addr = sta->addr;
 
-	अगर (cmd_param == SET_KEY) अणु
-		rc = mwl8k_cmd_encryption_set_key(hw, vअगर, addr, key);
-		अगर (rc)
-			जाओ out;
+	if (cmd_param == SET_KEY) {
+		rc = mwl8k_cmd_encryption_set_key(hw, vif, addr, key);
+		if (rc)
+			goto out;
 
-		अगर ((key->cipher == WLAN_CIPHER_SUITE_WEP40)
+		if ((key->cipher == WLAN_CIPHER_SUITE_WEP40)
 				|| (key->cipher == WLAN_CIPHER_SUITE_WEP104))
 			encr_type = MWL8K_UPDATE_ENCRYPTION_TYPE_WEP;
-		अन्यथा
+		else
 			encr_type = MWL8K_UPDATE_ENCRYPTION_TYPE_MIXED;
 
-		rc = mwl8k_cmd_update_encryption_enable(hw, vअगर, addr,
+		rc = mwl8k_cmd_update_encryption_enable(hw, vif, addr,
 								encr_type);
-		अगर (rc)
-			जाओ out;
+		if (rc)
+			goto out;
 
-		mwl8k_vअगर->is_hw_crypto_enabled = true;
+		mwl8k_vif->is_hw_crypto_enabled = true;
 
-	पूर्ण अन्यथा अणु
-		rc = mwl8k_cmd_encryption_हटाओ_key(hw, vअगर, addr, key);
+	} else {
+		rc = mwl8k_cmd_encryption_remove_key(hw, vif, addr, key);
 
-		अगर (rc)
-			जाओ out;
-	पूर्ण
+		if (rc)
+			goto out;
+	}
 out:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*
  * CMD_UPDATE_STADB.
  */
-काष्ठा ewc_ht_info अणु
+struct ewc_ht_info {
 	__le16	control1;
 	__le16	control2;
 	__le16	control3;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा peer_capability_info अणु
+struct peer_capability_info {
 	/* Peer type - AP vs. STA.  */
 	__u8	peer_type;
 
 	/* Basic 802.11 capabilities from assoc resp.  */
 	__le16	basic_caps;
 
-	/* Set अगर peer supports 802.11n high throughput (HT).  */
+	/* Set if peer supports 802.11n high throughput (HT).  */
 	__u8	ht_support;
 
-	/* Valid अगर HT is supported.  */
+	/* Valid if HT is supported.  */
 	__le16	ht_caps;
 	__u8	extended_ht_caps;
-	काष्ठा ewc_ht_info	ewc_info;
+	struct ewc_ht_info	ewc_info;
 
 	/* Legacy rate table. Intersection of our rates and peer rates.  */
 	__u8	legacy_rates[12];
@@ -4495,15 +4494,15 @@ out:
 	__u8	ht_rates[16];
 	__u8	pad[16];
 
-	/* If set, पूर्णांकeroperability mode, no proprietary extensions.  */
-	__u8	पूर्णांकerop;
+	/* If set, interoperability mode, no proprietary extensions.  */
+	__u8	interop;
 	__u8	pad2;
 	__u8	station_id;
 	__le16	amsdu_enabled;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा mwl8k_cmd_update_stadb अणु
-	काष्ठा mwl8k_cmd_pkt header;
+struct mwl8k_cmd_update_stadb {
+	struct mwl8k_cmd_pkt header;
 
 	/* See STADB_ACTION_TYPE */
 	__le32	action;
@@ -4514,426 +4513,426 @@ out:
 	__le32	reserved;
 
 	/* Peer info - valid during add/update.  */
-	काष्ठा peer_capability_info	peer_info;
-पूर्ण __packed;
+	struct peer_capability_info	peer_info;
+} __packed;
 
-#घोषणा MWL8K_STA_DB_MODIFY_ENTRY	1
-#घोषणा MWL8K_STA_DB_DEL_ENTRY		2
+#define MWL8K_STA_DB_MODIFY_ENTRY	1
+#define MWL8K_STA_DB_DEL_ENTRY		2
 
 /* Peer Entry flags - used to define the type of the peer node */
-#घोषणा MWL8K_PEER_TYPE_ACCESSPOINT	2
+#define MWL8K_PEER_TYPE_ACCESSPOINT	2
 
-अटल पूर्णांक mwl8k_cmd_update_stadb_add(काष्ठा ieee80211_hw *hw,
-				      काष्ठा ieee80211_vअगर *vअगर,
-				      काष्ठा ieee80211_sta *sta)
-अणु
-	काष्ठा mwl8k_cmd_update_stadb *cmd;
-	काष्ठा peer_capability_info *p;
+static int mwl8k_cmd_update_stadb_add(struct ieee80211_hw *hw,
+				      struct ieee80211_vif *vif,
+				      struct ieee80211_sta *sta)
+{
+	struct mwl8k_cmd_update_stadb *cmd;
+	struct peer_capability_info *p;
 	u32 rates;
-	पूर्णांक rc;
+	int rc;
 
-	cmd = kzalloc(माप(*cmd), GFP_KERNEL);
-	अगर (cmd == शून्य)
-		वापस -ENOMEM;
+	cmd = kzalloc(sizeof(*cmd), GFP_KERNEL);
+	if (cmd == NULL)
+		return -ENOMEM;
 
 	cmd->header.code = cpu_to_le16(MWL8K_CMD_UPDATE_STADB);
-	cmd->header.length = cpu_to_le16(माप(*cmd));
+	cmd->header.length = cpu_to_le16(sizeof(*cmd));
 	cmd->action = cpu_to_le32(MWL8K_STA_DB_MODIFY_ENTRY);
-	स_नकल(cmd->peer_addr, sta->addr, ETH_ALEN);
+	memcpy(cmd->peer_addr, sta->addr, ETH_ALEN);
 
 	p = &cmd->peer_info;
 	p->peer_type = MWL8K_PEER_TYPE_ACCESSPOINT;
-	p->basic_caps = cpu_to_le16(vअगर->bss_conf.assoc_capability);
+	p->basic_caps = cpu_to_le16(vif->bss_conf.assoc_capability);
 	p->ht_support = sta->ht_cap.ht_supported;
 	p->ht_caps = cpu_to_le16(sta->ht_cap.cap);
 	p->extended_ht_caps = (sta->ht_cap.ampdu_factor & 3) |
 		((sta->ht_cap.ampdu_density & 7) << 2);
-	अगर (hw->conf.chandef.chan->band == NL80211_BAND_2GHZ)
+	if (hw->conf.chandef.chan->band == NL80211_BAND_2GHZ)
 		rates = sta->supp_rates[NL80211_BAND_2GHZ];
-	अन्यथा
+	else
 		rates = sta->supp_rates[NL80211_BAND_5GHZ] << 5;
 	legacy_rate_mask_to_array(p->legacy_rates, rates);
-	स_नकल(p->ht_rates, sta->ht_cap.mcs.rx_mask, 16);
-	p->पूर्णांकerop = 1;
+	memcpy(p->ht_rates, sta->ht_cap.mcs.rx_mask, 16);
+	p->interop = 1;
 	p->amsdu_enabled = 0;
 
 	rc = mwl8k_post_cmd(hw, &cmd->header);
-	अगर (!rc)
+	if (!rc)
 		rc = p->station_id;
-	kमुक्त(cmd);
+	kfree(cmd);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक mwl8k_cmd_update_stadb_del(काष्ठा ieee80211_hw *hw,
-				      काष्ठा ieee80211_vअगर *vअगर, u8 *addr)
-अणु
-	काष्ठा mwl8k_cmd_update_stadb *cmd;
-	पूर्णांक rc;
+static int mwl8k_cmd_update_stadb_del(struct ieee80211_hw *hw,
+				      struct ieee80211_vif *vif, u8 *addr)
+{
+	struct mwl8k_cmd_update_stadb *cmd;
+	int rc;
 
-	cmd = kzalloc(माप(*cmd), GFP_KERNEL);
-	अगर (cmd == शून्य)
-		वापस -ENOMEM;
+	cmd = kzalloc(sizeof(*cmd), GFP_KERNEL);
+	if (cmd == NULL)
+		return -ENOMEM;
 
 	cmd->header.code = cpu_to_le16(MWL8K_CMD_UPDATE_STADB);
-	cmd->header.length = cpu_to_le16(माप(*cmd));
+	cmd->header.length = cpu_to_le16(sizeof(*cmd));
 	cmd->action = cpu_to_le32(MWL8K_STA_DB_DEL_ENTRY);
-	स_नकल(cmd->peer_addr, addr, ETH_ALEN);
+	memcpy(cmd->peer_addr, addr, ETH_ALEN);
 
 	rc = mwl8k_post_cmd(hw, &cmd->header);
-	kमुक्त(cmd);
+	kfree(cmd);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 
 /*
  * Interrupt handling.
  */
-अटल irqवापस_t mwl8k_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा ieee80211_hw *hw = dev_id;
-	काष्ठा mwl8k_priv *priv = hw->priv;
+static irqreturn_t mwl8k_interrupt(int irq, void *dev_id)
+{
+	struct ieee80211_hw *hw = dev_id;
+	struct mwl8k_priv *priv = hw->priv;
 	u32 status;
 
-	status = ioपढ़ो32(priv->regs + MWL8K_HIU_A2H_INTERRUPT_STATUS);
-	अगर (!status)
-		वापस IRQ_NONE;
+	status = ioread32(priv->regs + MWL8K_HIU_A2H_INTERRUPT_STATUS);
+	if (!status)
+		return IRQ_NONE;
 
-	अगर (status & MWL8K_A2H_INT_TX_DONE) अणु
+	if (status & MWL8K_A2H_INT_TX_DONE) {
 		status &= ~MWL8K_A2H_INT_TX_DONE;
 		tasklet_schedule(&priv->poll_tx_task);
-	पूर्ण
+	}
 
-	अगर (status & MWL8K_A2H_INT_RX_READY) अणु
+	if (status & MWL8K_A2H_INT_RX_READY) {
 		status &= ~MWL8K_A2H_INT_RX_READY;
 		tasklet_schedule(&priv->poll_rx_task);
-	पूर्ण
+	}
 
-	अगर (status & MWL8K_A2H_INT_BA_WATCHDOG) अणु
-		ioग_लिखो32(~MWL8K_A2H_INT_BA_WATCHDOG,
+	if (status & MWL8K_A2H_INT_BA_WATCHDOG) {
+		iowrite32(~MWL8K_A2H_INT_BA_WATCHDOG,
 			  priv->regs + MWL8K_HIU_A2H_INTERRUPT_STATUS_MASK);
 
-		atomic_inc(&priv->watchकरोg_event_pending);
+		atomic_inc(&priv->watchdog_event_pending);
 		status &= ~MWL8K_A2H_INT_BA_WATCHDOG;
-		ieee80211_queue_work(hw, &priv->watchकरोg_ba_handle);
-	पूर्ण
+		ieee80211_queue_work(hw, &priv->watchdog_ba_handle);
+	}
 
-	अगर (status)
-		ioग_लिखो32(~status, priv->regs + MWL8K_HIU_A2H_INTERRUPT_STATUS);
+	if (status)
+		iowrite32(~status, priv->regs + MWL8K_HIU_A2H_INTERRUPT_STATUS);
 
-	अगर (status & MWL8K_A2H_INT_OPC_DONE) अणु
-		अगर (priv->hostcmd_रुको != शून्य)
-			complete(priv->hostcmd_रुको);
-	पूर्ण
+	if (status & MWL8K_A2H_INT_OPC_DONE) {
+		if (priv->hostcmd_wait != NULL)
+			complete(priv->hostcmd_wait);
+	}
 
-	अगर (status & MWL8K_A2H_INT_QUEUE_EMPTY) अणु
-		अगर (!mutex_is_locked(&priv->fw_mutex) &&
+	if (status & MWL8K_A2H_INT_QUEUE_EMPTY) {
+		if (!mutex_is_locked(&priv->fw_mutex) &&
 		    priv->radio_on && priv->pending_tx_pkts)
 			mwl8k_tx_start(priv);
-	पूर्ण
+	}
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल व्योम mwl8k_tx_poll(काष्ठा tasklet_काष्ठा *t)
-अणु
-	काष्ठा mwl8k_priv *priv = from_tasklet(priv, t, poll_tx_task);
-	काष्ठा ieee80211_hw *hw = pci_get_drvdata(priv->pdev);
-	पूर्णांक limit;
-	पूर्णांक i;
+static void mwl8k_tx_poll(struct tasklet_struct *t)
+{
+	struct mwl8k_priv *priv = from_tasklet(priv, t, poll_tx_task);
+	struct ieee80211_hw *hw = pci_get_drvdata(priv->pdev);
+	int limit;
+	int i;
 
 	limit = 32;
 
 	spin_lock(&priv->tx_lock);
 
-	क्रम (i = 0; i < mwl8k_tx_queues(priv); i++)
+	for (i = 0; i < mwl8k_tx_queues(priv); i++)
 		limit -= mwl8k_txq_reclaim(hw, i, limit, 0);
 
-	अगर (!priv->pending_tx_pkts && priv->tx_रुको != शून्य) अणु
-		complete(priv->tx_रुको);
-		priv->tx_रुको = शून्य;
-	पूर्ण
+	if (!priv->pending_tx_pkts && priv->tx_wait != NULL) {
+		complete(priv->tx_wait);
+		priv->tx_wait = NULL;
+	}
 
 	spin_unlock(&priv->tx_lock);
 
-	अगर (limit) अणु
-		ग_लिखोl(~MWL8K_A2H_INT_TX_DONE,
+	if (limit) {
+		writel(~MWL8K_A2H_INT_TX_DONE,
 		       priv->regs + MWL8K_HIU_A2H_INTERRUPT_STATUS);
-	पूर्ण अन्यथा अणु
+	} else {
 		tasklet_schedule(&priv->poll_tx_task);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम mwl8k_rx_poll(काष्ठा tasklet_काष्ठा *t)
-अणु
-	काष्ठा mwl8k_priv *priv = from_tasklet(priv, t, poll_rx_task);
-	काष्ठा ieee80211_hw *hw = pci_get_drvdata(priv->pdev);
-	पूर्णांक limit;
+static void mwl8k_rx_poll(struct tasklet_struct *t)
+{
+	struct mwl8k_priv *priv = from_tasklet(priv, t, poll_rx_task);
+	struct ieee80211_hw *hw = pci_get_drvdata(priv->pdev);
+	int limit;
 
 	limit = 32;
 	limit -= rxq_process(hw, 0, limit);
 	limit -= rxq_refill(hw, 0, limit);
 
-	अगर (limit) अणु
-		ग_लिखोl(~MWL8K_A2H_INT_RX_READY,
+	if (limit) {
+		writel(~MWL8K_A2H_INT_RX_READY,
 		       priv->regs + MWL8K_HIU_A2H_INTERRUPT_STATUS);
-	पूर्ण अन्यथा अणु
+	} else {
 		tasklet_schedule(&priv->poll_rx_task);
-	पूर्ण
-पूर्ण
+	}
+}
 
 
 /*
  * Core driver operations.
  */
-अटल व्योम mwl8k_tx(काष्ठा ieee80211_hw *hw,
-		     काष्ठा ieee80211_tx_control *control,
-		     काष्ठा sk_buff *skb)
-अणु
-	काष्ठा mwl8k_priv *priv = hw->priv;
-	पूर्णांक index = skb_get_queue_mapping(skb);
+static void mwl8k_tx(struct ieee80211_hw *hw,
+		     struct ieee80211_tx_control *control,
+		     struct sk_buff *skb)
+{
+	struct mwl8k_priv *priv = hw->priv;
+	int index = skb_get_queue_mapping(skb);
 
-	अगर (!priv->radio_on) अणु
+	if (!priv->radio_on) {
 		wiphy_debug(hw->wiphy,
 			    "dropped TX frame since radio disabled\n");
-		dev_kमुक्त_skb(skb);
-		वापस;
-	पूर्ण
+		dev_kfree_skb(skb);
+		return;
+	}
 
 	mwl8k_txq_xmit(hw, index, control->sta, skb);
-पूर्ण
+}
 
-अटल पूर्णांक mwl8k_start(काष्ठा ieee80211_hw *hw)
-अणु
-	काष्ठा mwl8k_priv *priv = hw->priv;
-	पूर्णांक rc;
+static int mwl8k_start(struct ieee80211_hw *hw)
+{
+	struct mwl8k_priv *priv = hw->priv;
+	int rc;
 
-	rc = request_irq(priv->pdev->irq, mwl8k_पूर्णांकerrupt,
+	rc = request_irq(priv->pdev->irq, mwl8k_interrupt,
 			 IRQF_SHARED, MWL8K_NAME, hw);
-	अगर (rc) अणु
+	if (rc) {
 		priv->irq = -1;
 		wiphy_err(hw->wiphy, "failed to register IRQ handler\n");
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 	priv->irq = priv->pdev->irq;
 
 	/* Enable TX reclaim and RX tasklets.  */
 	tasklet_enable(&priv->poll_tx_task);
 	tasklet_enable(&priv->poll_rx_task);
 
-	/* Enable पूर्णांकerrupts */
-	ioग_लिखो32(MWL8K_A2H_EVENTS, priv->regs + MWL8K_HIU_A2H_INTERRUPT_MASK);
-	ioग_लिखो32(MWL8K_A2H_EVENTS,
+	/* Enable interrupts */
+	iowrite32(MWL8K_A2H_EVENTS, priv->regs + MWL8K_HIU_A2H_INTERRUPT_MASK);
+	iowrite32(MWL8K_A2H_EVENTS,
 		  priv->regs + MWL8K_HIU_A2H_INTERRUPT_STATUS_MASK);
 
 	rc = mwl8k_fw_lock(hw);
-	अगर (!rc) अणु
+	if (!rc) {
 		rc = mwl8k_cmd_radio_enable(hw);
 
-		अगर (!priv->ap_fw) अणु
-			अगर (!rc)
-				rc = mwl8k_cmd_enable_snअगरfer(hw, 0);
+		if (!priv->ap_fw) {
+			if (!rc)
+				rc = mwl8k_cmd_enable_sniffer(hw, 0);
 
-			अगर (!rc)
+			if (!rc)
 				rc = mwl8k_cmd_set_pre_scan(hw);
 
-			अगर (!rc)
+			if (!rc)
 				rc = mwl8k_cmd_set_post_scan(hw,
 						"\x00\x00\x00\x00\x00\x00");
-		पूर्ण
+		}
 
-		अगर (!rc)
+		if (!rc)
 			rc = mwl8k_cmd_set_rateadapt_mode(hw, 0);
 
-		अगर (!rc)
+		if (!rc)
 			rc = mwl8k_cmd_set_wmm_mode(hw, 0);
 
 		mwl8k_fw_unlock(hw);
-	पूर्ण
+	}
 
-	अगर (rc) अणु
-		ioग_लिखो32(0, priv->regs + MWL8K_HIU_A2H_INTERRUPT_MASK);
-		मुक्त_irq(priv->pdev->irq, hw);
+	if (rc) {
+		iowrite32(0, priv->regs + MWL8K_HIU_A2H_INTERRUPT_MASK);
+		free_irq(priv->pdev->irq, hw);
 		priv->irq = -1;
 		tasklet_disable(&priv->poll_tx_task);
 		tasklet_disable(&priv->poll_rx_task);
-	पूर्ण अन्यथा अणु
+	} else {
 		ieee80211_wake_queues(hw);
-	पूर्ण
+	}
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल व्योम mwl8k_stop(काष्ठा ieee80211_hw *hw)
-अणु
-	काष्ठा mwl8k_priv *priv = hw->priv;
-	पूर्णांक i;
+static void mwl8k_stop(struct ieee80211_hw *hw)
+{
+	struct mwl8k_priv *priv = hw->priv;
+	int i;
 
-	अगर (!priv->hw_restart_in_progress)
+	if (!priv->hw_restart_in_progress)
 		mwl8k_cmd_radio_disable(hw);
 
 	ieee80211_stop_queues(hw);
 
-	/* Disable पूर्णांकerrupts */
-	ioग_लिखो32(0, priv->regs + MWL8K_HIU_A2H_INTERRUPT_MASK);
-	अगर (priv->irq != -1) अणु
-		मुक्त_irq(priv->pdev->irq, hw);
+	/* Disable interrupts */
+	iowrite32(0, priv->regs + MWL8K_HIU_A2H_INTERRUPT_MASK);
+	if (priv->irq != -1) {
+		free_irq(priv->pdev->irq, hw);
 		priv->irq = -1;
-	पूर्ण
+	}
 
 	/* Stop finalize join worker */
 	cancel_work_sync(&priv->finalize_join_worker);
-	cancel_work_sync(&priv->watchकरोg_ba_handle);
-	अगर (priv->beacon_skb != शून्य)
-		dev_kमुक्त_skb(priv->beacon_skb);
+	cancel_work_sync(&priv->watchdog_ba_handle);
+	if (priv->beacon_skb != NULL)
+		dev_kfree_skb(priv->beacon_skb);
 
 	/* Stop TX reclaim and RX tasklets.  */
 	tasklet_disable(&priv->poll_tx_task);
 	tasklet_disable(&priv->poll_rx_task);
 
 	/* Return all skbs to mac80211 */
-	क्रम (i = 0; i < mwl8k_tx_queues(priv); i++)
-		mwl8k_txq_reclaim(hw, i, पूर्णांक_उच्च, 1);
-पूर्ण
+	for (i = 0; i < mwl8k_tx_queues(priv); i++)
+		mwl8k_txq_reclaim(hw, i, INT_MAX, 1);
+}
 
-अटल पूर्णांक mwl8k_reload_firmware(काष्ठा ieee80211_hw *hw, अक्षर *fw_image);
+static int mwl8k_reload_firmware(struct ieee80211_hw *hw, char *fw_image);
 
-अटल पूर्णांक mwl8k_add_पूर्णांकerface(काष्ठा ieee80211_hw *hw,
-			       काष्ठा ieee80211_vअगर *vअगर)
-अणु
-	काष्ठा mwl8k_priv *priv = hw->priv;
-	काष्ठा mwl8k_vअगर *mwl8k_vअगर;
+static int mwl8k_add_interface(struct ieee80211_hw *hw,
+			       struct ieee80211_vif *vif)
+{
+	struct mwl8k_priv *priv = hw->priv;
+	struct mwl8k_vif *mwl8k_vif;
 	u32 macids_supported;
-	पूर्णांक macid, rc;
-	काष्ठा mwl8k_device_info *di;
+	int macid, rc;
+	struct mwl8k_device_info *di;
 
 	/*
-	 * Reject पूर्णांकerface creation अगर snअगरfer mode is active, as
-	 * STA operation is mutually exclusive with hardware snअगरfer
-	 * mode.  (Snअगरfer mode is only used on STA firmware.)
+	 * Reject interface creation if sniffer mode is active, as
+	 * STA operation is mutually exclusive with hardware sniffer
+	 * mode.  (Sniffer mode is only used on STA firmware.)
 	 */
-	अगर (priv->snअगरfer_enabled) अणु
+	if (priv->sniffer_enabled) {
 		wiphy_info(hw->wiphy,
 			   "unable to create STA interface because sniffer mode is enabled\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	di = priv->device_info;
-	चयन (vअगर->type) अणु
-	हाल NL80211_IFTYPE_AP:
-		अगर (!priv->ap_fw && di->fw_image_ap) अणु
+	switch (vif->type) {
+	case NL80211_IFTYPE_AP:
+		if (!priv->ap_fw && di->fw_image_ap) {
 			/* we must load the ap fw to meet this request */
-			अगर (!list_empty(&priv->vअगर_list))
-				वापस -EBUSY;
+			if (!list_empty(&priv->vif_list))
+				return -EBUSY;
 			rc = mwl8k_reload_firmware(hw, di->fw_image_ap);
-			अगर (rc)
-				वापस rc;
-		पूर्ण
+			if (rc)
+				return rc;
+		}
 		macids_supported = priv->ap_macids_supported;
-		अवरोध;
-	हाल NL80211_IFTYPE_STATION:
-		अगर (priv->ap_fw && di->fw_image_sta) अणु
-			अगर (!list_empty(&priv->vअगर_list)) अणु
+		break;
+	case NL80211_IFTYPE_STATION:
+		if (priv->ap_fw && di->fw_image_sta) {
+			if (!list_empty(&priv->vif_list)) {
 				wiphy_warn(hw->wiphy, "AP interface is running.\n"
 					   "Adding STA interface for WDS");
-			पूर्ण अन्यथा अणु
+			} else {
 				/* we must load the sta fw to
 				 * meet this request.
 				 */
 				rc = mwl8k_reload_firmware(hw,
 							   di->fw_image_sta);
-				अगर (rc)
-					वापस rc;
-			पूर्ण
-		पूर्ण
+				if (rc)
+					return rc;
+			}
+		}
 		macids_supported = priv->sta_macids_supported;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
 	macid = ffs(macids_supported & ~priv->macids_used);
-	अगर (!macid--)
-		वापस -EBUSY;
+	if (!macid--)
+		return -EBUSY;
 
-	/* Setup driver निजी area. */
-	mwl8k_vअगर = MWL8K_VIF(vअगर);
-	स_रखो(mwl8k_vअगर, 0, माप(*mwl8k_vअगर));
-	mwl8k_vअगर->vअगर = vअगर;
-	mwl8k_vअगर->macid = macid;
-	mwl8k_vअगर->seqno = 0;
-	स_नकल(mwl8k_vअगर->bssid, vअगर->addr, ETH_ALEN);
-	mwl8k_vअगर->is_hw_crypto_enabled = false;
+	/* Setup driver private area. */
+	mwl8k_vif = MWL8K_VIF(vif);
+	memset(mwl8k_vif, 0, sizeof(*mwl8k_vif));
+	mwl8k_vif->vif = vif;
+	mwl8k_vif->macid = macid;
+	mwl8k_vif->seqno = 0;
+	memcpy(mwl8k_vif->bssid, vif->addr, ETH_ALEN);
+	mwl8k_vif->is_hw_crypto_enabled = false;
 
 	/* Set the mac address.  */
-	mwl8k_cmd_set_mac_addr(hw, vअगर, vअगर->addr);
+	mwl8k_cmd_set_mac_addr(hw, vif, vif->addr);
 
-	अगर (vअगर->type == NL80211_IFTYPE_AP)
-		mwl8k_cmd_set_new_stn_add_self(hw, vअगर);
+	if (vif->type == NL80211_IFTYPE_AP)
+		mwl8k_cmd_set_new_stn_add_self(hw, vif);
 
-	priv->macids_used |= 1 << mwl8k_vअगर->macid;
-	list_add_tail(&mwl8k_vअगर->list, &priv->vअगर_list);
+	priv->macids_used |= 1 << mwl8k_vif->macid;
+	list_add_tail(&mwl8k_vif->list, &priv->vif_list);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम mwl8k_हटाओ_vअगर(काष्ठा mwl8k_priv *priv, काष्ठा mwl8k_vअगर *vअगर)
-अणु
-	/* Has ieee80211_restart_hw re-added the हटाओd पूर्णांकerfaces? */
-	अगर (!priv->macids_used)
-		वापस;
+static void mwl8k_remove_vif(struct mwl8k_priv *priv, struct mwl8k_vif *vif)
+{
+	/* Has ieee80211_restart_hw re-added the removed interfaces? */
+	if (!priv->macids_used)
+		return;
 
-	priv->macids_used &= ~(1 << vअगर->macid);
-	list_del(&vअगर->list);
-पूर्ण
+	priv->macids_used &= ~(1 << vif->macid);
+	list_del(&vif->list);
+}
 
-अटल व्योम mwl8k_हटाओ_पूर्णांकerface(काष्ठा ieee80211_hw *hw,
-				   काष्ठा ieee80211_vअगर *vअगर)
-अणु
-	काष्ठा mwl8k_priv *priv = hw->priv;
-	काष्ठा mwl8k_vअगर *mwl8k_vअगर = MWL8K_VIF(vअगर);
+static void mwl8k_remove_interface(struct ieee80211_hw *hw,
+				   struct ieee80211_vif *vif)
+{
+	struct mwl8k_priv *priv = hw->priv;
+	struct mwl8k_vif *mwl8k_vif = MWL8K_VIF(vif);
 
-	अगर (vअगर->type == NL80211_IFTYPE_AP)
-		mwl8k_cmd_set_new_stn_del(hw, vअगर, vअगर->addr);
+	if (vif->type == NL80211_IFTYPE_AP)
+		mwl8k_cmd_set_new_stn_del(hw, vif, vif->addr);
 
-	mwl8k_cmd_del_mac_addr(hw, vअगर, vअगर->addr);
+	mwl8k_cmd_del_mac_addr(hw, vif, vif->addr);
 
-	mwl8k_हटाओ_vअगर(priv, mwl8k_vअगर);
-पूर्ण
+	mwl8k_remove_vif(priv, mwl8k_vif);
+}
 
-अटल व्योम mwl8k_hw_restart_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा mwl8k_priv *priv =
-		container_of(work, काष्ठा mwl8k_priv, fw_reload);
-	काष्ठा ieee80211_hw *hw = priv->hw;
-	काष्ठा mwl8k_device_info *di;
-	पूर्णांक rc;
+static void mwl8k_hw_restart_work(struct work_struct *work)
+{
+	struct mwl8k_priv *priv =
+		container_of(work, struct mwl8k_priv, fw_reload);
+	struct ieee80211_hw *hw = priv->hw;
+	struct mwl8k_device_info *di;
+	int rc;
 
-	/* If some command is रुकोing क्रम a response, clear it */
-	अगर (priv->hostcmd_रुको != शून्य) अणु
-		complete(priv->hostcmd_रुको);
-		priv->hostcmd_रुको = शून्य;
-	पूर्ण
+	/* If some command is waiting for a response, clear it */
+	if (priv->hostcmd_wait != NULL) {
+		complete(priv->hostcmd_wait);
+		priv->hostcmd_wait = NULL;
+	}
 
 	priv->hw_restart_owner = current;
 	di = priv->device_info;
 	mwl8k_fw_lock(hw);
 
-	अगर (priv->ap_fw)
+	if (priv->ap_fw)
 		rc = mwl8k_reload_firmware(hw, di->fw_image_ap);
-	अन्यथा
+	else
 		rc = mwl8k_reload_firmware(hw, di->fw_image_sta);
 
-	अगर (rc)
-		जाओ fail;
+	if (rc)
+		goto fail;
 
-	priv->hw_restart_owner = शून्य;
+	priv->hw_restart_owner = NULL;
 	priv->hw_restart_in_progress = false;
 
 	/*
 	 * This unlock will wake up the queues and
-	 * also खोलोs the command path क्रम other
+	 * also opens the command path for other
 	 * commands
 	 */
 	mwl8k_fw_unlock(hw);
@@ -4942,359 +4941,359 @@ out:
 
 	wiphy_err(hw->wiphy, "Firmware restarted successfully\n");
 
-	वापस;
+	return;
 fail:
 	mwl8k_fw_unlock(hw);
 
 	wiphy_err(hw->wiphy, "Firmware restart failed\n");
-पूर्ण
+}
 
-अटल पूर्णांक mwl8k_config(काष्ठा ieee80211_hw *hw, u32 changed)
-अणु
-	काष्ठा ieee80211_conf *conf = &hw->conf;
-	काष्ठा mwl8k_priv *priv = hw->priv;
-	पूर्णांक rc;
+static int mwl8k_config(struct ieee80211_hw *hw, u32 changed)
+{
+	struct ieee80211_conf *conf = &hw->conf;
+	struct mwl8k_priv *priv = hw->priv;
+	int rc;
 
 	rc = mwl8k_fw_lock(hw);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
-	अगर (conf->flags & IEEE80211_CONF_IDLE)
+	if (conf->flags & IEEE80211_CONF_IDLE)
 		rc = mwl8k_cmd_radio_disable(hw);
-	अन्यथा
+	else
 		rc = mwl8k_cmd_radio_enable(hw);
-	अगर (rc)
-		जाओ out;
+	if (rc)
+		goto out;
 
-	अगर (changed & IEEE80211_CONF_CHANGE_CHANNEL) अणु
+	if (changed & IEEE80211_CONF_CHANGE_CHANNEL) {
 		rc = mwl8k_cmd_set_rf_channel(hw, conf);
-		अगर (rc)
-			जाओ out;
-	पूर्ण
+		if (rc)
+			goto out;
+	}
 
-	अगर (conf->घातer_level > 18)
-		conf->घातer_level = 18;
+	if (conf->power_level > 18)
+		conf->power_level = 18;
 
-	अगर (priv->ap_fw) अणु
+	if (priv->ap_fw) {
 
-		अगर (conf->flags & IEEE80211_CONF_CHANGE_POWER) अणु
-			rc = mwl8k_cmd_tx_घातer(hw, conf, conf->घातer_level);
-			अगर (rc)
-				जाओ out;
-		पूर्ण
+		if (conf->flags & IEEE80211_CONF_CHANGE_POWER) {
+			rc = mwl8k_cmd_tx_power(hw, conf, conf->power_level);
+			if (rc)
+				goto out;
+		}
 
 
-	पूर्ण अन्यथा अणु
-		rc = mwl8k_cmd_rf_tx_घातer(hw, conf->घातer_level);
-		अगर (rc)
-			जाओ out;
+	} else {
+		rc = mwl8k_cmd_rf_tx_power(hw, conf->power_level);
+		if (rc)
+			goto out;
 		rc = mwl8k_cmd_mimo_config(hw, 0x7, 0x7);
-	पूर्ण
+	}
 
 out:
 	mwl8k_fw_unlock(hw);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल व्योम
-mwl8k_bss_info_changed_sta(काष्ठा ieee80211_hw *hw, काष्ठा ieee80211_vअगर *vअगर,
-			   काष्ठा ieee80211_bss_conf *info, u32 changed)
-अणु
-	काष्ठा mwl8k_priv *priv = hw->priv;
+static void
+mwl8k_bss_info_changed_sta(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
+			   struct ieee80211_bss_conf *info, u32 changed)
+{
+	struct mwl8k_priv *priv = hw->priv;
 	u32 ap_legacy_rates = 0;
 	u8 ap_mcs_rates[16];
-	पूर्णांक rc;
+	int rc;
 
-	अगर (mwl8k_fw_lock(hw))
-		वापस;
+	if (mwl8k_fw_lock(hw))
+		return;
 
 	/*
-	 * No need to capture a beacon अगर we're no दीर्घer associated.
+	 * No need to capture a beacon if we're no longer associated.
 	 */
-	अगर ((changed & BSS_CHANGED_ASSOC) && !vअगर->bss_conf.assoc)
+	if ((changed & BSS_CHANGED_ASSOC) && !vif->bss_conf.assoc)
 		priv->capture_beacon = false;
 
 	/*
 	 * Get the AP's legacy and MCS rates.
 	 */
-	अगर (vअगर->bss_conf.assoc) अणु
-		काष्ठा ieee80211_sta *ap;
+	if (vif->bss_conf.assoc) {
+		struct ieee80211_sta *ap;
 
-		rcu_पढ़ो_lock();
+		rcu_read_lock();
 
-		ap = ieee80211_find_sta(vअगर, vअगर->bss_conf.bssid);
-		अगर (ap == शून्य) अणु
-			rcu_पढ़ो_unlock();
-			जाओ out;
-		पूर्ण
+		ap = ieee80211_find_sta(vif, vif->bss_conf.bssid);
+		if (ap == NULL) {
+			rcu_read_unlock();
+			goto out;
+		}
 
-		अगर (hw->conf.chandef.chan->band == NL80211_BAND_2GHZ) अणु
+		if (hw->conf.chandef.chan->band == NL80211_BAND_2GHZ) {
 			ap_legacy_rates = ap->supp_rates[NL80211_BAND_2GHZ];
-		पूर्ण अन्यथा अणु
+		} else {
 			ap_legacy_rates =
 				ap->supp_rates[NL80211_BAND_5GHZ] << 5;
-		पूर्ण
-		स_नकल(ap_mcs_rates, ap->ht_cap.mcs.rx_mask, 16);
+		}
+		memcpy(ap_mcs_rates, ap->ht_cap.mcs.rx_mask, 16);
 
-		rcu_पढ़ो_unlock();
+		rcu_read_unlock();
 
-		अगर (changed & BSS_CHANGED_ASSOC) अणु
-			अगर (!priv->ap_fw) अणु
-				rc = mwl8k_cmd_set_rate(hw, vअगर,
+		if (changed & BSS_CHANGED_ASSOC) {
+			if (!priv->ap_fw) {
+				rc = mwl8k_cmd_set_rate(hw, vif,
 							ap_legacy_rates,
 							ap_mcs_rates);
-				अगर (rc)
-					जाओ out;
+				if (rc)
+					goto out;
 
 				rc = mwl8k_cmd_use_fixed_rate_sta(hw);
-				अगर (rc)
-					जाओ out;
-			पूर्ण अन्यथा अणु
-				पूर्णांक idx;
-				पूर्णांक rate;
+				if (rc)
+					goto out;
+			} else {
+				int idx;
+				int rate;
 
-				/* Use AP firmware specअगरic rate command.
+				/* Use AP firmware specific rate command.
 				 */
-				idx = ffs(vअगर->bss_conf.basic_rates);
-				अगर (idx)
+				idx = ffs(vif->bss_conf.basic_rates);
+				if (idx)
 					idx--;
 
-				अगर (hw->conf.chandef.chan->band ==
+				if (hw->conf.chandef.chan->band ==
 				    NL80211_BAND_2GHZ)
 					rate = mwl8k_rates_24[idx].hw_value;
-				अन्यथा
+				else
 					rate = mwl8k_rates_50[idx].hw_value;
 
 				mwl8k_cmd_use_fixed_rate_ap(hw, rate, rate);
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
-	अगर (changed & BSS_CHANGED_ERP_PREAMBLE) अणु
+	if (changed & BSS_CHANGED_ERP_PREAMBLE) {
 		rc = mwl8k_set_radio_preamble(hw,
-				vअगर->bss_conf.use_लघु_preamble);
-		अगर (rc)
-			जाओ out;
-	पूर्ण
+				vif->bss_conf.use_short_preamble);
+		if (rc)
+			goto out;
+	}
 
-	अगर ((changed & BSS_CHANGED_ERP_SLOT) && !priv->ap_fw)  अणु
-		rc = mwl8k_cmd_set_slot(hw, vअगर->bss_conf.use_लघु_slot);
-		अगर (rc)
-			जाओ out;
-	पूर्ण
+	if ((changed & BSS_CHANGED_ERP_SLOT) && !priv->ap_fw)  {
+		rc = mwl8k_cmd_set_slot(hw, vif->bss_conf.use_short_slot);
+		if (rc)
+			goto out;
+	}
 
-	अगर (vअगर->bss_conf.assoc && !priv->ap_fw &&
+	if (vif->bss_conf.assoc && !priv->ap_fw &&
 	    (changed & (BSS_CHANGED_ASSOC | BSS_CHANGED_ERP_CTS_PROT |
-			BSS_CHANGED_HT))) अणु
-		rc = mwl8k_cmd_set_aid(hw, vअगर, ap_legacy_rates);
-		अगर (rc)
-			जाओ out;
-	पूर्ण
+			BSS_CHANGED_HT))) {
+		rc = mwl8k_cmd_set_aid(hw, vif, ap_legacy_rates);
+		if (rc)
+			goto out;
+	}
 
-	अगर (vअगर->bss_conf.assoc &&
-	    (changed & (BSS_CHANGED_ASSOC | BSS_CHANGED_BEACON_INT))) अणु
+	if (vif->bss_conf.assoc &&
+	    (changed & (BSS_CHANGED_ASSOC | BSS_CHANGED_BEACON_INT))) {
 		/*
 		 * Finalize the join.  Tell rx handler to process
 		 * next beacon from our BSSID.
 		 */
-		स_नकल(priv->capture_bssid, vअगर->bss_conf.bssid, ETH_ALEN);
+		memcpy(priv->capture_bssid, vif->bss_conf.bssid, ETH_ALEN);
 		priv->capture_beacon = true;
-	पूर्ण
+	}
 
 out:
 	mwl8k_fw_unlock(hw);
-पूर्ण
+}
 
-अटल व्योम
-mwl8k_bss_info_changed_ap(काष्ठा ieee80211_hw *hw, काष्ठा ieee80211_vअगर *vअगर,
-			  काष्ठा ieee80211_bss_conf *info, u32 changed)
-अणु
-	पूर्णांक rc;
+static void
+mwl8k_bss_info_changed_ap(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
+			  struct ieee80211_bss_conf *info, u32 changed)
+{
+	int rc;
 
-	अगर (mwl8k_fw_lock(hw))
-		वापस;
+	if (mwl8k_fw_lock(hw))
+		return;
 
-	अगर (changed & BSS_CHANGED_ERP_PREAMBLE) अणु
+	if (changed & BSS_CHANGED_ERP_PREAMBLE) {
 		rc = mwl8k_set_radio_preamble(hw,
-				vअगर->bss_conf.use_लघु_preamble);
-		अगर (rc)
-			जाओ out;
-	पूर्ण
+				vif->bss_conf.use_short_preamble);
+		if (rc)
+			goto out;
+	}
 
-	अगर (changed & BSS_CHANGED_BASIC_RATES) अणु
-		पूर्णांक idx;
-		पूर्णांक rate;
+	if (changed & BSS_CHANGED_BASIC_RATES) {
+		int idx;
+		int rate;
 
 		/*
-		 * Use lowest supported basic rate क्रम multicasts
+		 * Use lowest supported basic rate for multicasts
 		 * and management frames (such as probe responses --
 		 * beacons will always go out at 1 Mb/s).
 		 */
-		idx = ffs(vअगर->bss_conf.basic_rates);
-		अगर (idx)
+		idx = ffs(vif->bss_conf.basic_rates);
+		if (idx)
 			idx--;
 
-		अगर (hw->conf.chandef.chan->band == NL80211_BAND_2GHZ)
+		if (hw->conf.chandef.chan->band == NL80211_BAND_2GHZ)
 			rate = mwl8k_rates_24[idx].hw_value;
-		अन्यथा
+		else
 			rate = mwl8k_rates_50[idx].hw_value;
 
 		mwl8k_cmd_use_fixed_rate_ap(hw, rate, rate);
-	पूर्ण
+	}
 
-	अगर (changed & (BSS_CHANGED_BEACON_INT | BSS_CHANGED_BEACON)) अणु
-		काष्ठा sk_buff *skb;
+	if (changed & (BSS_CHANGED_BEACON_INT | BSS_CHANGED_BEACON)) {
+		struct sk_buff *skb;
 
-		skb = ieee80211_beacon_get(hw, vअगर);
-		अगर (skb != शून्य) अणु
-			mwl8k_cmd_set_beacon(hw, vअगर, skb->data, skb->len);
-			kमुक्त_skb(skb);
-		पूर्ण
-	पूर्ण
+		skb = ieee80211_beacon_get(hw, vif);
+		if (skb != NULL) {
+			mwl8k_cmd_set_beacon(hw, vif, skb->data, skb->len);
+			kfree_skb(skb);
+		}
+	}
 
-	अगर (changed & BSS_CHANGED_BEACON_ENABLED)
-		mwl8k_cmd_bss_start(hw, vअगर, info->enable_beacon);
+	if (changed & BSS_CHANGED_BEACON_ENABLED)
+		mwl8k_cmd_bss_start(hw, vif, info->enable_beacon);
 
 out:
 	mwl8k_fw_unlock(hw);
-पूर्ण
+}
 
-अटल व्योम
-mwl8k_bss_info_changed(काष्ठा ieee80211_hw *hw, काष्ठा ieee80211_vअगर *vअगर,
-		       काष्ठा ieee80211_bss_conf *info, u32 changed)
-अणु
-	अगर (vअगर->type == NL80211_IFTYPE_STATION)
-		mwl8k_bss_info_changed_sta(hw, vअगर, info, changed);
-	अगर (vअगर->type == NL80211_IFTYPE_AP)
-		mwl8k_bss_info_changed_ap(hw, vअगर, info, changed);
-पूर्ण
+static void
+mwl8k_bss_info_changed(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
+		       struct ieee80211_bss_conf *info, u32 changed)
+{
+	if (vif->type == NL80211_IFTYPE_STATION)
+		mwl8k_bss_info_changed_sta(hw, vif, info, changed);
+	if (vif->type == NL80211_IFTYPE_AP)
+		mwl8k_bss_info_changed_ap(hw, vif, info, changed);
+}
 
-अटल u64 mwl8k_prepare_multicast(काष्ठा ieee80211_hw *hw,
-				   काष्ठा netdev_hw_addr_list *mc_list)
-अणु
-	काष्ठा mwl8k_cmd_pkt *cmd;
+static u64 mwl8k_prepare_multicast(struct ieee80211_hw *hw,
+				   struct netdev_hw_addr_list *mc_list)
+{
+	struct mwl8k_cmd_pkt *cmd;
 
 	/*
-	 * Synthesize and वापस a command packet that programs the
-	 * hardware multicast address filter.  At this poपूर्णांक we करोn't
-	 * know whether FIF_ALLMULTI is being requested, but अगर it is,
+	 * Synthesize and return a command packet that programs the
+	 * hardware multicast address filter.  At this point we don't
+	 * know whether FIF_ALLMULTI is being requested, but if it is,
 	 * we'll end up throwing this packet away and creating a new
 	 * one in mwl8k_configure_filter().
 	 */
 	cmd = __mwl8k_cmd_mac_multicast_adr(hw, 0, mc_list);
 
-	वापस (अचिन्हित दीर्घ)cmd;
-पूर्ण
+	return (unsigned long)cmd;
+}
 
-अटल पूर्णांक
-mwl8k_configure_filter_snअगरfer(काष्ठा ieee80211_hw *hw,
-			       अचिन्हित पूर्णांक changed_flags,
-			       अचिन्हित पूर्णांक *total_flags)
-अणु
-	काष्ठा mwl8k_priv *priv = hw->priv;
+static int
+mwl8k_configure_filter_sniffer(struct ieee80211_hw *hw,
+			       unsigned int changed_flags,
+			       unsigned int *total_flags)
+{
+	struct mwl8k_priv *priv = hw->priv;
 
 	/*
-	 * Hardware snअगरfer mode is mutually exclusive with STA
-	 * operation, so refuse to enable snअगरfer mode अगर a STA
-	 * पूर्णांकerface is active.
+	 * Hardware sniffer mode is mutually exclusive with STA
+	 * operation, so refuse to enable sniffer mode if a STA
+	 * interface is active.
 	 */
-	अगर (!list_empty(&priv->vअगर_list)) अणु
-		अगर (net_ratelimit())
+	if (!list_empty(&priv->vif_list)) {
+		if (net_ratelimit())
 			wiphy_info(hw->wiphy,
 				   "not enabling sniffer mode because STA interface is active\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (!priv->snअगरfer_enabled) अणु
-		अगर (mwl8k_cmd_enable_snअगरfer(hw, 1))
-			वापस 0;
-		priv->snअगरfer_enabled = true;
-	पूर्ण
+	if (!priv->sniffer_enabled) {
+		if (mwl8k_cmd_enable_sniffer(hw, 1))
+			return 0;
+		priv->sniffer_enabled = true;
+	}
 
 	*total_flags &=	FIF_ALLMULTI |
 			FIF_BCN_PRBRESP_PROMISC | FIF_CONTROL |
 			FIF_OTHER_BSS;
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल काष्ठा mwl8k_vअगर *mwl8k_first_vअगर(काष्ठा mwl8k_priv *priv)
-अणु
-	अगर (!list_empty(&priv->vअगर_list))
-		वापस list_entry(priv->vअगर_list.next, काष्ठा mwl8k_vअगर, list);
+static struct mwl8k_vif *mwl8k_first_vif(struct mwl8k_priv *priv)
+{
+	if (!list_empty(&priv->vif_list))
+		return list_entry(priv->vif_list.next, struct mwl8k_vif, list);
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल व्योम mwl8k_configure_filter(काष्ठा ieee80211_hw *hw,
-				   अचिन्हित पूर्णांक changed_flags,
-				   अचिन्हित पूर्णांक *total_flags,
+static void mwl8k_configure_filter(struct ieee80211_hw *hw,
+				   unsigned int changed_flags,
+				   unsigned int *total_flags,
 				   u64 multicast)
-अणु
-	काष्ठा mwl8k_priv *priv = hw->priv;
-	काष्ठा mwl8k_cmd_pkt *cmd = (व्योम *)(अचिन्हित दीर्घ)multicast;
+{
+	struct mwl8k_priv *priv = hw->priv;
+	struct mwl8k_cmd_pkt *cmd = (void *)(unsigned long)multicast;
 
 	/*
-	 * AP firmware करोesn't allow fine-grained control over
+	 * AP firmware doesn't allow fine-grained control over
 	 * the receive filter.
 	 */
-	अगर (priv->ap_fw) अणु
+	if (priv->ap_fw) {
 		*total_flags &= FIF_ALLMULTI | FIF_BCN_PRBRESP_PROMISC;
-		kमुक्त(cmd);
-		वापस;
-	पूर्ण
+		kfree(cmd);
+		return;
+	}
 
 	/*
-	 * Enable hardware snअगरfer mode अगर FIF_CONTROL or
+	 * Enable hardware sniffer mode if FIF_CONTROL or
 	 * FIF_OTHER_BSS is requested.
 	 */
-	अगर (*total_flags & (FIF_CONTROL | FIF_OTHER_BSS) &&
-	    mwl8k_configure_filter_snअगरfer(hw, changed_flags, total_flags)) अणु
-		kमुक्त(cmd);
-		वापस;
-	पूर्ण
+	if (*total_flags & (FIF_CONTROL | FIF_OTHER_BSS) &&
+	    mwl8k_configure_filter_sniffer(hw, changed_flags, total_flags)) {
+		kfree(cmd);
+		return;
+	}
 
 	/* Clear unsupported feature flags */
 	*total_flags &= FIF_ALLMULTI | FIF_BCN_PRBRESP_PROMISC;
 
-	अगर (mwl8k_fw_lock(hw)) अणु
-		kमुक्त(cmd);
-		वापस;
-	पूर्ण
+	if (mwl8k_fw_lock(hw)) {
+		kfree(cmd);
+		return;
+	}
 
-	अगर (priv->snअगरfer_enabled) अणु
-		mwl8k_cmd_enable_snअगरfer(hw, 0);
-		priv->snअगरfer_enabled = false;
-	पूर्ण
+	if (priv->sniffer_enabled) {
+		mwl8k_cmd_enable_sniffer(hw, 0);
+		priv->sniffer_enabled = false;
+	}
 
-	अगर (changed_flags & FIF_BCN_PRBRESP_PROMISC) अणु
-		अगर (*total_flags & FIF_BCN_PRBRESP_PROMISC) अणु
+	if (changed_flags & FIF_BCN_PRBRESP_PROMISC) {
+		if (*total_flags & FIF_BCN_PRBRESP_PROMISC) {
 			/*
 			 * Disable the BSS filter.
 			 */
 			mwl8k_cmd_set_pre_scan(hw);
-		पूर्ण अन्यथा अणु
-			काष्ठा mwl8k_vअगर *mwl8k_vअगर;
-			स्थिर u8 *bssid;
+		} else {
+			struct mwl8k_vif *mwl8k_vif;
+			const u8 *bssid;
 
 			/*
 			 * Enable the BSS filter.
 			 *
-			 * If there is an active STA पूर्णांकerface, use that
-			 * पूर्णांकerface's BSSID, otherwise use a dummy one
-			 * (where the OUI part needs to be nonzero क्रम
+			 * If there is an active STA interface, use that
+			 * interface's BSSID, otherwise use a dummy one
+			 * (where the OUI part needs to be nonzero for
 			 * the BSSID to be accepted by POST_SCAN).
 			 */
-			mwl8k_vअगर = mwl8k_first_vअगर(priv);
-			अगर (mwl8k_vअगर != शून्य)
-				bssid = mwl8k_vअगर->vअगर->bss_conf.bssid;
-			अन्यथा
+			mwl8k_vif = mwl8k_first_vif(priv);
+			if (mwl8k_vif != NULL)
+				bssid = mwl8k_vif->vif->bss_conf.bssid;
+			else
 				bssid = "\x01\x00\x00\x00\x00\x00";
 
 			mwl8k_cmd_set_post_scan(hw, bssid);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/*
 	 * If FIF_ALLMULTI is being requested, throw away the command
@@ -5302,255 +5301,255 @@ mwl8k_configure_filter_snअगरfer(काष्ठा ieee80211_hw *hw,
 	 * a command packet that enables reception of all multicast
 	 * packets.
 	 */
-	अगर (*total_flags & FIF_ALLMULTI) अणु
-		kमुक्त(cmd);
-		cmd = __mwl8k_cmd_mac_multicast_adr(hw, 1, शून्य);
-	पूर्ण
+	if (*total_flags & FIF_ALLMULTI) {
+		kfree(cmd);
+		cmd = __mwl8k_cmd_mac_multicast_adr(hw, 1, NULL);
+	}
 
-	अगर (cmd != शून्य) अणु
+	if (cmd != NULL) {
 		mwl8k_post_cmd(hw, cmd);
-		kमुक्त(cmd);
-	पूर्ण
+		kfree(cmd);
+	}
 
 	mwl8k_fw_unlock(hw);
-पूर्ण
+}
 
-अटल पूर्णांक mwl8k_set_rts_threshold(काष्ठा ieee80211_hw *hw, u32 value)
-अणु
-	वापस mwl8k_cmd_set_rts_threshold(hw, value);
-पूर्ण
+static int mwl8k_set_rts_threshold(struct ieee80211_hw *hw, u32 value)
+{
+	return mwl8k_cmd_set_rts_threshold(hw, value);
+}
 
-अटल पूर्णांक mwl8k_sta_हटाओ(काष्ठा ieee80211_hw *hw,
-			    काष्ठा ieee80211_vअगर *vअगर,
-			    काष्ठा ieee80211_sta *sta)
-अणु
-	काष्ठा mwl8k_priv *priv = hw->priv;
+static int mwl8k_sta_remove(struct ieee80211_hw *hw,
+			    struct ieee80211_vif *vif,
+			    struct ieee80211_sta *sta)
+{
+	struct mwl8k_priv *priv = hw->priv;
 
-	अगर (priv->ap_fw)
-		वापस mwl8k_cmd_set_new_stn_del(hw, vअगर, sta->addr);
-	अन्यथा
-		वापस mwl8k_cmd_update_stadb_del(hw, vअगर, sta->addr);
-पूर्ण
+	if (priv->ap_fw)
+		return mwl8k_cmd_set_new_stn_del(hw, vif, sta->addr);
+	else
+		return mwl8k_cmd_update_stadb_del(hw, vif, sta->addr);
+}
 
-अटल पूर्णांक mwl8k_sta_add(काष्ठा ieee80211_hw *hw,
-			 काष्ठा ieee80211_vअगर *vअगर,
-			 काष्ठा ieee80211_sta *sta)
-अणु
-	काष्ठा mwl8k_priv *priv = hw->priv;
-	पूर्णांक ret;
-	पूर्णांक i;
-	काष्ठा mwl8k_vअगर *mwl8k_vअगर = MWL8K_VIF(vअगर);
-	काष्ठा ieee80211_key_conf *key;
+static int mwl8k_sta_add(struct ieee80211_hw *hw,
+			 struct ieee80211_vif *vif,
+			 struct ieee80211_sta *sta)
+{
+	struct mwl8k_priv *priv = hw->priv;
+	int ret;
+	int i;
+	struct mwl8k_vif *mwl8k_vif = MWL8K_VIF(vif);
+	struct ieee80211_key_conf *key;
 
-	अगर (!priv->ap_fw) अणु
-		ret = mwl8k_cmd_update_stadb_add(hw, vअगर, sta);
-		अगर (ret >= 0) अणु
+	if (!priv->ap_fw) {
+		ret = mwl8k_cmd_update_stadb_add(hw, vif, sta);
+		if (ret >= 0) {
 			MWL8K_STA(sta)->peer_id = ret;
-			अगर (sta->ht_cap.ht_supported)
+			if (sta->ht_cap.ht_supported)
 				MWL8K_STA(sta)->is_ampdu_allowed = true;
 			ret = 0;
-		पूर्ण
+		}
 
-	पूर्ण अन्यथा अणु
-		ret = mwl8k_cmd_set_new_stn_add(hw, vअगर, sta);
-	पूर्ण
+	} else {
+		ret = mwl8k_cmd_set_new_stn_add(hw, vif, sta);
+	}
 
-	क्रम (i = 0; i < NUM_WEP_KEYS; i++) अणु
-		key = IEEE80211_KEY_CONF(mwl8k_vअगर->wep_key_conf[i].key);
-		अगर (mwl8k_vअगर->wep_key_conf[i].enabled)
-			mwl8k_set_key(hw, SET_KEY, vअगर, sta, key);
-	पूर्ण
-	वापस ret;
-पूर्ण
+	for (i = 0; i < NUM_WEP_KEYS; i++) {
+		key = IEEE80211_KEY_CONF(mwl8k_vif->wep_key_conf[i].key);
+		if (mwl8k_vif->wep_key_conf[i].enabled)
+			mwl8k_set_key(hw, SET_KEY, vif, sta, key);
+	}
+	return ret;
+}
 
-अटल पूर्णांक mwl8k_conf_tx(काष्ठा ieee80211_hw *hw,
-			 काष्ठा ieee80211_vअगर *vअगर, u16 queue,
-			 स्थिर काष्ठा ieee80211_tx_queue_params *params)
-अणु
-	काष्ठा mwl8k_priv *priv = hw->priv;
-	पूर्णांक rc;
+static int mwl8k_conf_tx(struct ieee80211_hw *hw,
+			 struct ieee80211_vif *vif, u16 queue,
+			 const struct ieee80211_tx_queue_params *params)
+{
+	struct mwl8k_priv *priv = hw->priv;
+	int rc;
 
 	rc = mwl8k_fw_lock(hw);
-	अगर (!rc) अणु
+	if (!rc) {
 		BUG_ON(queue > MWL8K_TX_WMM_QUEUES - 1);
-		स_नकल(&priv->wmm_params[queue], params, माप(*params));
+		memcpy(&priv->wmm_params[queue], params, sizeof(*params));
 
-		अगर (!priv->wmm_enabled)
+		if (!priv->wmm_enabled)
 			rc = mwl8k_cmd_set_wmm_mode(hw, 1);
 
-		अगर (!rc) अणु
-			पूर्णांक q = MWL8K_TX_WMM_QUEUES - 1 - queue;
+		if (!rc) {
+			int q = MWL8K_TX_WMM_QUEUES - 1 - queue;
 			rc = mwl8k_cmd_set_edca_params(hw, q,
 						       params->cw_min,
 						       params->cw_max,
-						       params->aअगरs,
+						       params->aifs,
 						       params->txop);
-		पूर्ण
+		}
 
 		mwl8k_fw_unlock(hw);
-	पूर्ण
+	}
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक mwl8k_get_stats(काष्ठा ieee80211_hw *hw,
-			   काष्ठा ieee80211_low_level_stats *stats)
-अणु
-	वापस mwl8k_cmd_get_stat(hw, stats);
-पूर्ण
+static int mwl8k_get_stats(struct ieee80211_hw *hw,
+			   struct ieee80211_low_level_stats *stats)
+{
+	return mwl8k_cmd_get_stat(hw, stats);
+}
 
-अटल पूर्णांक mwl8k_get_survey(काष्ठा ieee80211_hw *hw, पूर्णांक idx,
-				काष्ठा survey_info *survey)
-अणु
-	काष्ठा mwl8k_priv *priv = hw->priv;
-	काष्ठा ieee80211_conf *conf = &hw->conf;
-	काष्ठा ieee80211_supported_band *sband;
+static int mwl8k_get_survey(struct ieee80211_hw *hw, int idx,
+				struct survey_info *survey)
+{
+	struct mwl8k_priv *priv = hw->priv;
+	struct ieee80211_conf *conf = &hw->conf;
+	struct ieee80211_supported_band *sband;
 
-	अगर (priv->ap_fw) अणु
+	if (priv->ap_fw) {
 		sband = hw->wiphy->bands[NL80211_BAND_2GHZ];
 
-		अगर (sband && idx >= sband->n_channels) अणु
+		if (sband && idx >= sband->n_channels) {
 			idx -= sband->n_channels;
-			sband = शून्य;
-		पूर्ण
+			sband = NULL;
+		}
 
-		अगर (!sband)
+		if (!sband)
 			sband = hw->wiphy->bands[NL80211_BAND_5GHZ];
 
-		अगर (!sband || idx >= sband->n_channels)
-			वापस -ENOENT;
+		if (!sband || idx >= sband->n_channels)
+			return -ENOENT;
 
-		स_नकल(survey, &priv->survey[idx], माप(*survey));
+		memcpy(survey, &priv->survey[idx], sizeof(*survey));
 		survey->channel = &sband->channels[idx];
 
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (idx != 0)
-		वापस -ENOENT;
+	if (idx != 0)
+		return -ENOENT;
 
 	survey->channel = conf->chandef.chan;
 	survey->filled = SURVEY_INFO_NOISE_DBM;
 	survey->noise = priv->noise;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#घोषणा MAX_AMPDU_ATTEMPTS 5
+#define MAX_AMPDU_ATTEMPTS 5
 
-अटल पूर्णांक
-mwl8k_ampdu_action(काष्ठा ieee80211_hw *hw, काष्ठा ieee80211_vअगर *vअगर,
-		   काष्ठा ieee80211_ampdu_params *params)
-अणु
-	काष्ठा ieee80211_sta *sta = params->sta;
-	क्रमागत ieee80211_ampdu_mlme_action action = params->action;
+static int
+mwl8k_ampdu_action(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
+		   struct ieee80211_ampdu_params *params)
+{
+	struct ieee80211_sta *sta = params->sta;
+	enum ieee80211_ampdu_mlme_action action = params->action;
 	u16 tid = params->tid;
 	u16 *ssn = &params->ssn;
 	u8 buf_size = params->buf_size;
-	पूर्णांक i, rc = 0;
-	काष्ठा mwl8k_priv *priv = hw->priv;
-	काष्ठा mwl8k_ampdu_stream *stream;
+	int i, rc = 0;
+	struct mwl8k_priv *priv = hw->priv;
+	struct mwl8k_ampdu_stream *stream;
 	u8 *addr = sta->addr, idx;
-	काष्ठा mwl8k_sta *sta_info = MWL8K_STA(sta);
+	struct mwl8k_sta *sta_info = MWL8K_STA(sta);
 
-	अगर (!ieee80211_hw_check(hw, AMPDU_AGGREGATION))
-		वापस -ENOTSUPP;
+	if (!ieee80211_hw_check(hw, AMPDU_AGGREGATION))
+		return -ENOTSUPP;
 
 	spin_lock(&priv->stream_lock);
 	stream = mwl8k_lookup_stream(hw, addr, tid);
 
-	चयन (action) अणु
-	हाल IEEE80211_AMPDU_RX_START:
-	हाल IEEE80211_AMPDU_RX_STOP:
-		अवरोध;
-	हाल IEEE80211_AMPDU_TX_START:
-		/* By the समय we get here the hw queues may contain outgoing
-		 * packets क्रम this RA/TID that are not part of this BA
+	switch (action) {
+	case IEEE80211_AMPDU_RX_START:
+	case IEEE80211_AMPDU_RX_STOP:
+		break;
+	case IEEE80211_AMPDU_TX_START:
+		/* By the time we get here the hw queues may contain outgoing
+		 * packets for this RA/TID that are not part of this BA
 		 * session.  The hw will assign sequence numbers to these
-		 * packets as they go out.  So अगर we query the hw क्रम its next
-		 * sequence number and use that क्रम the SSN here, it may end up
+		 * packets as they go out.  So if we query the hw for its next
+		 * sequence number and use that for the SSN here, it may end up
 		 * being wrong, which will lead to sequence number mismatch at
-		 * the recipient.  To aव्योम this, we reset the sequence number
-		 * to O क्रम the first MPDU in this BA stream.
+		 * the recipient.  To avoid this, we reset the sequence number
+		 * to O for the first MPDU in this BA stream.
 		 */
 		*ssn = 0;
-		अगर (stream == शून्य) अणु
+		if (stream == NULL) {
 			/* This means that somebody outside this driver called
 			 * ieee80211_start_tx_ba_session.  This is unexpected
-			 * because we करो our own rate control.  Just warn and
+			 * because we do our own rate control.  Just warn and
 			 * move on.
 			 */
 			wiphy_warn(hw->wiphy, "Unexpected call to %s.  "
 				   "Proceeding anyway.\n", __func__);
 			stream = mwl8k_add_stream(hw, sta, tid);
-		पूर्ण
-		अगर (stream == शून्य) अणु
+		}
+		if (stream == NULL) {
 			wiphy_debug(hw->wiphy, "no free AMPDU streams\n");
 			rc = -EBUSY;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		stream->state = AMPDU_STREAM_IN_PROGRESS;
 
-		/* Release the lock beक्रमe we करो the समय consuming stuff */
+		/* Release the lock before we do the time consuming stuff */
 		spin_unlock(&priv->stream_lock);
-		क्रम (i = 0; i < MAX_AMPDU_ATTEMPTS; i++) अणु
+		for (i = 0; i < MAX_AMPDU_ATTEMPTS; i++) {
 
-			/* Check अगर link is still valid */
-			अगर (!sta_info->is_ampdu_allowed) अणु
+			/* Check if link is still valid */
+			if (!sta_info->is_ampdu_allowed) {
 				spin_lock(&priv->stream_lock);
-				mwl8k_हटाओ_stream(hw, stream);
+				mwl8k_remove_stream(hw, stream);
 				spin_unlock(&priv->stream_lock);
-				वापस -EBUSY;
-			पूर्ण
+				return -EBUSY;
+			}
 
-			rc = mwl8k_check_ba(hw, stream, vअगर);
+			rc = mwl8k_check_ba(hw, stream, vif);
 
 			/* If HW restart is in progress mwl8k_post_cmd will
-			 * वापस -EBUSY. Aव्योम retrying mwl8k_check_ba in
-			 * such हालs
+			 * return -EBUSY. Avoid retrying mwl8k_check_ba in
+			 * such cases
 			 */
-			अगर (!rc || rc == -EBUSY)
-				अवरोध;
+			if (!rc || rc == -EBUSY)
+				break;
 			/*
-			 * HW queues take समय to be flushed, give them
-			 * sufficient समय
+			 * HW queues take time to be flushed, give them
+			 * sufficient time
 			 */
 
 			msleep(1000);
-		पूर्ण
+		}
 		spin_lock(&priv->stream_lock);
-		अगर (rc) अणु
+		if (rc) {
 			wiphy_err(hw->wiphy, "Stream for tid %d busy after %d"
 				" attempts\n", tid, MAX_AMPDU_ATTEMPTS);
-			mwl8k_हटाओ_stream(hw, stream);
+			mwl8k_remove_stream(hw, stream);
 			rc = -EBUSY;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		rc = IEEE80211_AMPDU_TX_START_IMMEDIATE;
-		अवरोध;
-	हाल IEEE80211_AMPDU_TX_STOP_CONT:
-	हाल IEEE80211_AMPDU_TX_STOP_FLUSH:
-	हाल IEEE80211_AMPDU_TX_STOP_FLUSH_CONT:
-		अगर (stream) अणु
-			अगर (stream->state == AMPDU_STREAM_ACTIVE) अणु
+		break;
+	case IEEE80211_AMPDU_TX_STOP_CONT:
+	case IEEE80211_AMPDU_TX_STOP_FLUSH:
+	case IEEE80211_AMPDU_TX_STOP_FLUSH_CONT:
+		if (stream) {
+			if (stream->state == AMPDU_STREAM_ACTIVE) {
 				idx = stream->idx;
 				spin_unlock(&priv->stream_lock);
 				mwl8k_destroy_ba(hw, idx);
 				spin_lock(&priv->stream_lock);
-			पूर्ण
-			mwl8k_हटाओ_stream(hw, stream);
-		पूर्ण
-		ieee80211_stop_tx_ba_cb_irqsafe(vअगर, addr, tid);
-		अवरोध;
-	हाल IEEE80211_AMPDU_TX_OPERATIONAL:
-		BUG_ON(stream == शून्य);
+			}
+			mwl8k_remove_stream(hw, stream);
+		}
+		ieee80211_stop_tx_ba_cb_irqsafe(vif, addr, tid);
+		break;
+	case IEEE80211_AMPDU_TX_OPERATIONAL:
+		BUG_ON(stream == NULL);
 		BUG_ON(stream->state != AMPDU_STREAM_IN_PROGRESS);
 		spin_unlock(&priv->stream_lock);
-		rc = mwl8k_create_ba(hw, stream, buf_size, vअगर);
+		rc = mwl8k_create_ba(hw, stream, buf_size, vif);
 		spin_lock(&priv->stream_lock);
-		अगर (!rc)
+		if (!rc)
 			stream->state = AMPDU_STREAM_ACTIVE;
-		अन्यथा अणु
+		else {
 			idx = stream->idx;
 			spin_unlock(&priv->stream_lock);
 			mwl8k_destroy_ba(hw, idx);
@@ -5558,61 +5557,61 @@ mwl8k_ampdu_action(काष्ठा ieee80211_hw *hw, काष्ठा ieee8
 			wiphy_debug(hw->wiphy,
 				"Failed adding stream for sta %pM tid %d\n",
 				addr, tid);
-			mwl8k_हटाओ_stream(hw, stream);
-		पूर्ण
-		अवरोध;
+			mwl8k_remove_stream(hw, stream);
+		}
+		break;
 
-	शेष:
+	default:
 		rc = -ENOTSUPP;
-	पूर्ण
+	}
 
 	spin_unlock(&priv->stream_lock);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल व्योम mwl8k_sw_scan_start(काष्ठा ieee80211_hw *hw,
-				काष्ठा ieee80211_vअगर *vअगर,
-				स्थिर u8 *mac_addr)
-अणु
-	काष्ठा mwl8k_priv *priv = hw->priv;
-	u8 पंचांगp;
+static void mwl8k_sw_scan_start(struct ieee80211_hw *hw,
+				struct ieee80211_vif *vif,
+				const u8 *mac_addr)
+{
+	struct mwl8k_priv *priv = hw->priv;
+	u8 tmp;
 
-	अगर (!priv->ap_fw)
-		वापस;
+	if (!priv->ap_fw)
+		return;
 
 	/* clear all stats */
-	priv->channel_समय = 0;
-	ioपढ़ो32(priv->regs + BBU_RXRDY_CNT_REG);
-	ioपढ़ो32(priv->regs + NOK_CCA_CNT_REG);
-	mwl8k_cmd_bbp_reg_access(priv->hw, 0, BBU_AVG_NOISE_VAL, &पंचांगp);
+	priv->channel_time = 0;
+	ioread32(priv->regs + BBU_RXRDY_CNT_REG);
+	ioread32(priv->regs + NOK_CCA_CNT_REG);
+	mwl8k_cmd_bbp_reg_access(priv->hw, 0, BBU_AVG_NOISE_VAL, &tmp);
 
 	priv->sw_scan_start = true;
-पूर्ण
+}
 
-अटल व्योम mwl8k_sw_scan_complete(काष्ठा ieee80211_hw *hw,
-				   काष्ठा ieee80211_vअगर *vअगर)
-अणु
-	काष्ठा mwl8k_priv *priv = hw->priv;
-	u8 पंचांगp;
+static void mwl8k_sw_scan_complete(struct ieee80211_hw *hw,
+				   struct ieee80211_vif *vif)
+{
+	struct mwl8k_priv *priv = hw->priv;
+	u8 tmp;
 
-	अगर (!priv->ap_fw)
-		वापस;
+	if (!priv->ap_fw)
+		return;
 
 	priv->sw_scan_start = false;
 
 	/* clear all stats */
-	priv->channel_समय = 0;
-	ioपढ़ो32(priv->regs + BBU_RXRDY_CNT_REG);
-	ioपढ़ो32(priv->regs + NOK_CCA_CNT_REG);
-	mwl8k_cmd_bbp_reg_access(priv->hw, 0, BBU_AVG_NOISE_VAL, &पंचांगp);
-पूर्ण
+	priv->channel_time = 0;
+	ioread32(priv->regs + BBU_RXRDY_CNT_REG);
+	ioread32(priv->regs + NOK_CCA_CNT_REG);
+	mwl8k_cmd_bbp_reg_access(priv->hw, 0, BBU_AVG_NOISE_VAL, &tmp);
+}
 
-अटल स्थिर काष्ठा ieee80211_ops mwl8k_ops = अणु
+static const struct ieee80211_ops mwl8k_ops = {
 	.tx			= mwl8k_tx,
 	.start			= mwl8k_start,
 	.stop			= mwl8k_stop,
-	.add_पूर्णांकerface		= mwl8k_add_पूर्णांकerface,
-	.हटाओ_पूर्णांकerface	= mwl8k_हटाओ_पूर्णांकerface,
+	.add_interface		= mwl8k_add_interface,
+	.remove_interface	= mwl8k_remove_interface,
 	.config			= mwl8k_config,
 	.bss_info_changed	= mwl8k_bss_info_changed,
 	.prepare_multicast	= mwl8k_prepare_multicast,
@@ -5620,76 +5619,76 @@ mwl8k_ampdu_action(काष्ठा ieee80211_hw *hw, काष्ठा ieee8
 	.set_key                = mwl8k_set_key,
 	.set_rts_threshold	= mwl8k_set_rts_threshold,
 	.sta_add		= mwl8k_sta_add,
-	.sta_हटाओ		= mwl8k_sta_हटाओ,
+	.sta_remove		= mwl8k_sta_remove,
 	.conf_tx		= mwl8k_conf_tx,
 	.get_stats		= mwl8k_get_stats,
 	.get_survey		= mwl8k_get_survey,
 	.ampdu_action		= mwl8k_ampdu_action,
 	.sw_scan_start		= mwl8k_sw_scan_start,
 	.sw_scan_complete	= mwl8k_sw_scan_complete,
-पूर्ण;
+};
 
-अटल व्योम mwl8k_finalize_join_worker(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा mwl8k_priv *priv =
-		container_of(work, काष्ठा mwl8k_priv, finalize_join_worker);
-	काष्ठा sk_buff *skb = priv->beacon_skb;
-	काष्ठा ieee80211_mgmt *mgmt = (व्योम *)skb->data;
-	पूर्णांक len = skb->len - दुरत्व(काष्ठा ieee80211_mgmt, u.beacon.variable);
-	स्थिर u8 *tim = cfg80211_find_ie(WLAN_EID_TIM,
+static void mwl8k_finalize_join_worker(struct work_struct *work)
+{
+	struct mwl8k_priv *priv =
+		container_of(work, struct mwl8k_priv, finalize_join_worker);
+	struct sk_buff *skb = priv->beacon_skb;
+	struct ieee80211_mgmt *mgmt = (void *)skb->data;
+	int len = skb->len - offsetof(struct ieee80211_mgmt, u.beacon.variable);
+	const u8 *tim = cfg80211_find_ie(WLAN_EID_TIM,
 					 mgmt->u.beacon.variable, len);
-	पूर्णांक dtim_period = 1;
+	int dtim_period = 1;
 
-	अगर (tim && tim[1] >= 2)
+	if (tim && tim[1] >= 2)
 		dtim_period = tim[3];
 
 	mwl8k_cmd_finalize_join(priv->hw, skb->data, skb->len, dtim_period);
 
-	dev_kमुक्त_skb(skb);
-	priv->beacon_skb = शून्य;
-पूर्ण
+	dev_kfree_skb(skb);
+	priv->beacon_skb = NULL;
+}
 
-क्रमागत अणु
+enum {
 	MWL8363 = 0,
 	MWL8687,
 	MWL8366,
 	MWL8764,
-पूर्ण;
+};
 
-#घोषणा MWL8K_8366_AP_FW_API 3
-#घोषणा _MWL8K_8366_AP_FW(api) "mwl8k/fmimage_8366_ap-" #api ".fw"
-#घोषणा MWL8K_8366_AP_FW(api) _MWL8K_8366_AP_FW(api)
+#define MWL8K_8366_AP_FW_API 3
+#define _MWL8K_8366_AP_FW(api) "mwl8k/fmimage_8366_ap-" #api ".fw"
+#define MWL8K_8366_AP_FW(api) _MWL8K_8366_AP_FW(api)
 
-#घोषणा MWL8K_8764_AP_FW_API 1
-#घोषणा _MWL8K_8764_AP_FW(api) "mwl8k/fmimage_8764_ap-" #api ".fw"
-#घोषणा MWL8K_8764_AP_FW(api) _MWL8K_8764_AP_FW(api)
+#define MWL8K_8764_AP_FW_API 1
+#define _MWL8K_8764_AP_FW(api) "mwl8k/fmimage_8764_ap-" #api ".fw"
+#define MWL8K_8764_AP_FW(api) _MWL8K_8764_AP_FW(api)
 
-अटल काष्ठा mwl8k_device_info mwl8k_info_tbl[] = अणु
-	[MWL8363] = अणु
+static struct mwl8k_device_info mwl8k_info_tbl[] = {
+	[MWL8363] = {
 		.part_name	= "88w8363",
 		.helper_image	= "mwl8k/helper_8363.fw",
 		.fw_image_sta	= "mwl8k/fmimage_8363.fw",
-	पूर्ण,
-	[MWL8687] = अणु
+	},
+	[MWL8687] = {
 		.part_name	= "88w8687",
 		.helper_image	= "mwl8k/helper_8687.fw",
 		.fw_image_sta	= "mwl8k/fmimage_8687.fw",
-	पूर्ण,
-	[MWL8366] = अणु
+	},
+	[MWL8366] = {
 		.part_name	= "88w8366",
 		.helper_image	= "mwl8k/helper_8366.fw",
 		.fw_image_sta	= "mwl8k/fmimage_8366.fw",
 		.fw_image_ap	= MWL8K_8366_AP_FW(MWL8K_8366_AP_FW_API),
 		.fw_api_ap	= MWL8K_8366_AP_FW_API,
 		.ap_rxd_ops	= &rxd_ap_ops,
-	पूर्ण,
-	[MWL8764] = अणु
+	},
+	[MWL8764] = {
 		.part_name	= "88w8764",
 		.fw_image_ap	= MWL8K_8764_AP_FW(MWL8K_8764_AP_FW_API),
 		.fw_api_ap	= MWL8K_8764_AP_FW_API,
 		.ap_rxd_ops	= &rxd_ap_ops,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
 MODULE_FIRMWARE("mwl8k/helper_8363.fw");
 MODULE_FIRMWARE("mwl8k/fmimage_8363.fw");
@@ -5699,286 +5698,286 @@ MODULE_FIRMWARE("mwl8k/helper_8366.fw");
 MODULE_FIRMWARE("mwl8k/fmimage_8366.fw");
 MODULE_FIRMWARE(MWL8K_8366_AP_FW(MWL8K_8366_AP_FW_API));
 
-अटल स्थिर काष्ठा pci_device_id mwl8k_pci_id_table[] = अणु
-	अणु PCI_VDEVICE(MARVELL, 0x2a0a), .driver_data = MWL8363, पूर्ण,
-	अणु PCI_VDEVICE(MARVELL, 0x2a0c), .driver_data = MWL8363, पूर्ण,
-	अणु PCI_VDEVICE(MARVELL, 0x2a24), .driver_data = MWL8363, पूर्ण,
-	अणु PCI_VDEVICE(MARVELL, 0x2a2b), .driver_data = MWL8687, पूर्ण,
-	अणु PCI_VDEVICE(MARVELL, 0x2a30), .driver_data = MWL8687, पूर्ण,
-	अणु PCI_VDEVICE(MARVELL, 0x2a40), .driver_data = MWL8366, पूर्ण,
-	अणु PCI_VDEVICE(MARVELL, 0x2a41), .driver_data = MWL8366, पूर्ण,
-	अणु PCI_VDEVICE(MARVELL, 0x2a42), .driver_data = MWL8366, पूर्ण,
-	अणु PCI_VDEVICE(MARVELL, 0x2a43), .driver_data = MWL8366, पूर्ण,
-	अणु PCI_VDEVICE(MARVELL, 0x2b36), .driver_data = MWL8764, पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+static const struct pci_device_id mwl8k_pci_id_table[] = {
+	{ PCI_VDEVICE(MARVELL, 0x2a0a), .driver_data = MWL8363, },
+	{ PCI_VDEVICE(MARVELL, 0x2a0c), .driver_data = MWL8363, },
+	{ PCI_VDEVICE(MARVELL, 0x2a24), .driver_data = MWL8363, },
+	{ PCI_VDEVICE(MARVELL, 0x2a2b), .driver_data = MWL8687, },
+	{ PCI_VDEVICE(MARVELL, 0x2a30), .driver_data = MWL8687, },
+	{ PCI_VDEVICE(MARVELL, 0x2a40), .driver_data = MWL8366, },
+	{ PCI_VDEVICE(MARVELL, 0x2a41), .driver_data = MWL8366, },
+	{ PCI_VDEVICE(MARVELL, 0x2a42), .driver_data = MWL8366, },
+	{ PCI_VDEVICE(MARVELL, 0x2a43), .driver_data = MWL8366, },
+	{ PCI_VDEVICE(MARVELL, 0x2b36), .driver_data = MWL8764, },
+	{ },
+};
 MODULE_DEVICE_TABLE(pci, mwl8k_pci_id_table);
 
-अटल पूर्णांक mwl8k_request_alt_fw(काष्ठा mwl8k_priv *priv)
-अणु
-	पूर्णांक rc;
-	prपूर्णांकk(KERN_ERR "%s: Error requesting preferred fw %s.\n"
+static int mwl8k_request_alt_fw(struct mwl8k_priv *priv)
+{
+	int rc;
+	printk(KERN_ERR "%s: Error requesting preferred fw %s.\n"
 	       "Trying alternative firmware %s\n", pci_name(priv->pdev),
 	       priv->fw_pref, priv->fw_alt);
 	rc = mwl8k_request_fw(priv, priv->fw_alt, &priv->fw_ucode, true);
-	अगर (rc) अणु
-		prपूर्णांकk(KERN_ERR "%s: Error requesting alt fw %s\n",
+	if (rc) {
+		printk(KERN_ERR "%s: Error requesting alt fw %s\n",
 		       pci_name(priv->pdev), priv->fw_alt);
-		वापस rc;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return rc;
+	}
+	return 0;
+}
 
-अटल पूर्णांक mwl8k_firmware_load_success(काष्ठा mwl8k_priv *priv);
-अटल व्योम mwl8k_fw_state_machine(स्थिर काष्ठा firmware *fw, व्योम *context)
-अणु
-	काष्ठा mwl8k_priv *priv = context;
-	काष्ठा mwl8k_device_info *di = priv->device_info;
-	पूर्णांक rc;
+static int mwl8k_firmware_load_success(struct mwl8k_priv *priv);
+static void mwl8k_fw_state_machine(const struct firmware *fw, void *context)
+{
+	struct mwl8k_priv *priv = context;
+	struct mwl8k_device_info *di = priv->device_info;
+	int rc;
 
-	चयन (priv->fw_state) अणु
-	हाल FW_STATE_INIT:
-		अगर (!fw) अणु
-			prपूर्णांकk(KERN_ERR "%s: Error requesting helper fw %s\n",
+	switch (priv->fw_state) {
+	case FW_STATE_INIT:
+		if (!fw) {
+			printk(KERN_ERR "%s: Error requesting helper fw %s\n",
 			       pci_name(priv->pdev), di->helper_image);
-			जाओ fail;
-		पूर्ण
+			goto fail;
+		}
 		priv->fw_helper = fw;
 		rc = mwl8k_request_fw(priv, priv->fw_pref, &priv->fw_ucode,
 				      true);
-		अगर (rc && priv->fw_alt) अणु
+		if (rc && priv->fw_alt) {
 			rc = mwl8k_request_alt_fw(priv);
-			अगर (rc)
-				जाओ fail;
+			if (rc)
+				goto fail;
 			priv->fw_state = FW_STATE_LOADING_ALT;
-		पूर्ण अन्यथा अगर (rc)
-			जाओ fail;
-		अन्यथा
+		} else if (rc)
+			goto fail;
+		else
 			priv->fw_state = FW_STATE_LOADING_PREF;
-		अवरोध;
+		break;
 
-	हाल FW_STATE_LOADING_PREF:
-		अगर (!fw) अणु
-			अगर (priv->fw_alt) अणु
+	case FW_STATE_LOADING_PREF:
+		if (!fw) {
+			if (priv->fw_alt) {
 				rc = mwl8k_request_alt_fw(priv);
-				अगर (rc)
-					जाओ fail;
+				if (rc)
+					goto fail;
 				priv->fw_state = FW_STATE_LOADING_ALT;
-			पूर्ण अन्यथा
-				जाओ fail;
-		पूर्ण अन्यथा अणु
+			} else
+				goto fail;
+		} else {
 			priv->fw_ucode = fw;
 			rc = mwl8k_firmware_load_success(priv);
-			अगर (rc)
-				जाओ fail;
-			अन्यथा
+			if (rc)
+				goto fail;
+			else
 				complete(&priv->firmware_loading_complete);
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	हाल FW_STATE_LOADING_ALT:
-		अगर (!fw) अणु
-			prपूर्णांकk(KERN_ERR "%s: Error requesting alt fw %s\n",
+	case FW_STATE_LOADING_ALT:
+		if (!fw) {
+			printk(KERN_ERR "%s: Error requesting alt fw %s\n",
 			       pci_name(priv->pdev), di->helper_image);
-			जाओ fail;
-		पूर्ण
+			goto fail;
+		}
 		priv->fw_ucode = fw;
 		rc = mwl8k_firmware_load_success(priv);
-		अगर (rc)
-			जाओ fail;
-		अन्यथा
+		if (rc)
+			goto fail;
+		else
 			complete(&priv->firmware_loading_complete);
-		अवरोध;
+		break;
 
-	शेष:
-		prपूर्णांकk(KERN_ERR "%s: Unexpected firmware loading state: %d\n",
+	default:
+		printk(KERN_ERR "%s: Unexpected firmware loading state: %d\n",
 		       MWL8K_NAME, priv->fw_state);
 		BUG_ON(1);
-	पूर्ण
+	}
 
-	वापस;
+	return;
 
 fail:
 	priv->fw_state = FW_STATE_ERROR;
 	complete(&priv->firmware_loading_complete);
 	device_release_driver(&priv->pdev->dev);
 	mwl8k_release_firmware(priv);
-पूर्ण
+}
 
-#घोषणा MAX_RESTART_ATTEMPTS 1
-अटल पूर्णांक mwl8k_init_firmware(काष्ठा ieee80211_hw *hw, अक्षर *fw_image,
-			       bool noरुको)
-अणु
-	काष्ठा mwl8k_priv *priv = hw->priv;
-	पूर्णांक rc;
-	पूर्णांक count = MAX_RESTART_ATTEMPTS;
+#define MAX_RESTART_ATTEMPTS 1
+static int mwl8k_init_firmware(struct ieee80211_hw *hw, char *fw_image,
+			       bool nowait)
+{
+	struct mwl8k_priv *priv = hw->priv;
+	int rc;
+	int count = MAX_RESTART_ATTEMPTS;
 
 retry:
 	/* Reset firmware and hardware */
 	mwl8k_hw_reset(priv);
 
-	/* Ask userland hotplug daemon क्रम the device firmware */
-	rc = mwl8k_request_firmware(priv, fw_image, noरुको);
-	अगर (rc) अणु
+	/* Ask userland hotplug daemon for the device firmware */
+	rc = mwl8k_request_firmware(priv, fw_image, nowait);
+	if (rc) {
 		wiphy_err(hw->wiphy, "Firmware files not found\n");
-		वापस rc;
-	पूर्ण
+		return rc;
+	}
 
-	अगर (noरुको)
-		वापस rc;
+	if (nowait)
+		return rc;
 
-	/* Load firmware पूर्णांकo hardware */
+	/* Load firmware into hardware */
 	rc = mwl8k_load_firmware(hw);
-	अगर (rc)
+	if (rc)
 		wiphy_err(hw->wiphy, "Cannot start firmware\n");
 
 	/* Reclaim memory once firmware is successfully loaded */
 	mwl8k_release_firmware(priv);
 
-	अगर (rc && count) अणु
+	if (rc && count) {
 		/* FW did not start successfully;
-		 * lets try one more समय
+		 * lets try one more time
 		 */
 		count--;
 		wiphy_err(hw->wiphy, "Trying to reload the firmware again\n");
 		msleep(20);
-		जाओ retry;
-	पूर्ण
+		goto retry;
+	}
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक mwl8k_init_txqs(काष्ठा ieee80211_hw *hw)
-अणु
-	काष्ठा mwl8k_priv *priv = hw->priv;
-	पूर्णांक rc = 0;
-	पूर्णांक i;
+static int mwl8k_init_txqs(struct ieee80211_hw *hw)
+{
+	struct mwl8k_priv *priv = hw->priv;
+	int rc = 0;
+	int i;
 
-	क्रम (i = 0; i < mwl8k_tx_queues(priv); i++) अणु
+	for (i = 0; i < mwl8k_tx_queues(priv); i++) {
 		rc = mwl8k_txq_init(hw, i);
-		अगर (rc)
-			अवरोध;
-		अगर (priv->ap_fw)
-			ioग_लिखो32(priv->txq[i].txd_dma,
+		if (rc)
+			break;
+		if (priv->ap_fw)
+			iowrite32(priv->txq[i].txd_dma,
 				  priv->sram + priv->txq_offset[i]);
-	पूर्ण
-	वापस rc;
-पूर्ण
+	}
+	return rc;
+}
 
 /* initialize hw after successfully loading a firmware image */
-अटल पूर्णांक mwl8k_probe_hw(काष्ठा ieee80211_hw *hw)
-अणु
-	काष्ठा mwl8k_priv *priv = hw->priv;
-	पूर्णांक rc = 0;
-	पूर्णांक i;
+static int mwl8k_probe_hw(struct ieee80211_hw *hw)
+{
+	struct mwl8k_priv *priv = hw->priv;
+	int rc = 0;
+	int i;
 
-	अगर (priv->ap_fw) अणु
+	if (priv->ap_fw) {
 		priv->rxd_ops = priv->device_info->ap_rxd_ops;
-		अगर (priv->rxd_ops == शून्य) अणु
+		if (priv->rxd_ops == NULL) {
 			wiphy_err(hw->wiphy,
 				  "Driver does not have AP firmware image support for this hardware\n");
 			rc = -ENOENT;
-			जाओ err_stop_firmware;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			goto err_stop_firmware;
+		}
+	} else {
 		priv->rxd_ops = &rxd_sta_ops;
-	पूर्ण
+	}
 
-	priv->snअगरfer_enabled = false;
+	priv->sniffer_enabled = false;
 	priv->wmm_enabled = false;
 	priv->pending_tx_pkts = 0;
-	atomic_set(&priv->watchकरोg_event_pending, 0);
+	atomic_set(&priv->watchdog_event_pending, 0);
 
 	rc = mwl8k_rxq_init(hw, 0);
-	अगर (rc)
-		जाओ err_stop_firmware;
-	rxq_refill(hw, 0, पूर्णांक_उच्च);
+	if (rc)
+		goto err_stop_firmware;
+	rxq_refill(hw, 0, INT_MAX);
 
 	/* For the sta firmware, we need to know the dma addresses of tx queues
-	 * beक्रमe sending MWL8K_CMD_GET_HW_SPEC.  So we must initialize them
-	 * prior to issuing this command.  But क्रम the AP हाल, we learn the
-	 * total number of queues from the result CMD_GET_HW_SPEC, so क्रम this
-	 * हाल we must initialize the tx queues after.
+	 * before sending MWL8K_CMD_GET_HW_SPEC.  So we must initialize them
+	 * prior to issuing this command.  But for the AP case, we learn the
+	 * total number of queues from the result CMD_GET_HW_SPEC, so for this
+	 * case we must initialize the tx queues after.
 	 */
 	priv->num_ampdu_queues = 0;
-	अगर (!priv->ap_fw) अणु
+	if (!priv->ap_fw) {
 		rc = mwl8k_init_txqs(hw);
-		अगर (rc)
-			जाओ err_मुक्त_queues;
-	पूर्ण
+		if (rc)
+			goto err_free_queues;
+	}
 
-	ioग_लिखो32(0, priv->regs + MWL8K_HIU_A2H_INTERRUPT_STATUS);
-	ioग_लिखो32(0, priv->regs + MWL8K_HIU_A2H_INTERRUPT_MASK);
-	ioग_लिखो32(MWL8K_A2H_INT_TX_DONE|MWL8K_A2H_INT_RX_READY|
+	iowrite32(0, priv->regs + MWL8K_HIU_A2H_INTERRUPT_STATUS);
+	iowrite32(0, priv->regs + MWL8K_HIU_A2H_INTERRUPT_MASK);
+	iowrite32(MWL8K_A2H_INT_TX_DONE|MWL8K_A2H_INT_RX_READY|
 		  MWL8K_A2H_INT_BA_WATCHDOG,
 		  priv->regs + MWL8K_HIU_A2H_INTERRUPT_CLEAR_SEL);
-	ioग_लिखो32(MWL8K_A2H_INT_OPC_DONE,
+	iowrite32(MWL8K_A2H_INT_OPC_DONE,
 		  priv->regs + MWL8K_HIU_A2H_INTERRUPT_STATUS_MASK);
 
-	rc = request_irq(priv->pdev->irq, mwl8k_पूर्णांकerrupt,
+	rc = request_irq(priv->pdev->irq, mwl8k_interrupt,
 			 IRQF_SHARED, MWL8K_NAME, hw);
-	अगर (rc) अणु
+	if (rc) {
 		wiphy_err(hw->wiphy, "failed to register IRQ handler\n");
-		जाओ err_मुक्त_queues;
-	पूर्ण
+		goto err_free_queues;
+	}
 
 	/*
 	 * When hw restart is requested,
 	 * mac80211 will take care of clearing
-	 * the ampdu streams, so करो not clear
+	 * the ampdu streams, so do not clear
 	 * the ampdu state here
 	 */
-	अगर (!priv->hw_restart_in_progress)
-		स_रखो(priv->ampdu, 0, माप(priv->ampdu));
+	if (!priv->hw_restart_in_progress)
+		memset(priv->ampdu, 0, sizeof(priv->ampdu));
 
 	/*
-	 * Temporarily enable पूर्णांकerrupts.  Initial firmware host
-	 * commands use पूर्णांकerrupts and aव्योम polling.  Disable
-	 * पूर्णांकerrupts when करोne.
+	 * Temporarily enable interrupts.  Initial firmware host
+	 * commands use interrupts and avoid polling.  Disable
+	 * interrupts when done.
 	 */
-	ioग_लिखो32(MWL8K_A2H_EVENTS, priv->regs + MWL8K_HIU_A2H_INTERRUPT_MASK);
+	iowrite32(MWL8K_A2H_EVENTS, priv->regs + MWL8K_HIU_A2H_INTERRUPT_MASK);
 
 	/* Get config data, mac addrs etc */
-	अगर (priv->ap_fw) अणु
+	if (priv->ap_fw) {
 		rc = mwl8k_cmd_get_hw_spec_ap(hw);
-		अगर (!rc)
+		if (!rc)
 			rc = mwl8k_init_txqs(hw);
-		अगर (!rc)
+		if (!rc)
 			rc = mwl8k_cmd_set_hw_spec(hw);
-	पूर्ण अन्यथा अणु
+	} else {
 		rc = mwl8k_cmd_get_hw_spec_sta(hw);
-	पूर्ण
-	अगर (rc) अणु
+	}
+	if (rc) {
 		wiphy_err(hw->wiphy, "Cannot initialise firmware\n");
-		जाओ err_मुक्त_irq;
-	पूर्ण
+		goto err_free_irq;
+	}
 
 	/* Turn radio off */
 	rc = mwl8k_cmd_radio_disable(hw);
-	अगर (rc) अणु
+	if (rc) {
 		wiphy_err(hw->wiphy, "Cannot disable\n");
-		जाओ err_मुक्त_irq;
-	पूर्ण
+		goto err_free_irq;
+	}
 
 	/* Clear MAC address */
-	rc = mwl8k_cmd_set_mac_addr(hw, शून्य, "\x00\x00\x00\x00\x00\x00");
-	अगर (rc) अणु
+	rc = mwl8k_cmd_set_mac_addr(hw, NULL, "\x00\x00\x00\x00\x00\x00");
+	if (rc) {
 		wiphy_err(hw->wiphy, "Cannot clear MAC address\n");
-		जाओ err_मुक्त_irq;
-	पूर्ण
+		goto err_free_irq;
+	}
 
 	/* Configure Antennas */
 	rc = mwl8k_cmd_rf_antenna(hw, MWL8K_RF_ANTENNA_RX, 0x3);
-	अगर (rc)
+	if (rc)
 		wiphy_warn(hw->wiphy, "failed to set # of RX antennas");
 	rc = mwl8k_cmd_rf_antenna(hw, MWL8K_RF_ANTENNA_TX, 0x7);
-	अगर (rc)
+	if (rc)
 		wiphy_warn(hw->wiphy, "failed to set # of TX antennas");
 
 
-	/* Disable पूर्णांकerrupts */
-	ioग_लिखो32(0, priv->regs + MWL8K_HIU_A2H_INTERRUPT_MASK);
-	मुक्त_irq(priv->pdev->irq, hw);
+	/* Disable interrupts */
+	iowrite32(0, priv->regs + MWL8K_HIU_A2H_INTERRUPT_MASK);
+	free_irq(priv->pdev->irq, hw);
 
 	wiphy_info(hw->wiphy, "%s v%d, %pm, %s firmware %u.%u.%u.%u\n",
 		   priv->device_info->part_name,
@@ -5987,111 +5986,111 @@ retry:
 		   (priv->fw_rev >> 24) & 0xff, (priv->fw_rev >> 16) & 0xff,
 		   (priv->fw_rev >> 8) & 0xff, priv->fw_rev & 0xff);
 
-	वापस 0;
+	return 0;
 
-err_मुक्त_irq:
-	ioग_लिखो32(0, priv->regs + MWL8K_HIU_A2H_INTERRUPT_MASK);
-	मुक्त_irq(priv->pdev->irq, hw);
+err_free_irq:
+	iowrite32(0, priv->regs + MWL8K_HIU_A2H_INTERRUPT_MASK);
+	free_irq(priv->pdev->irq, hw);
 
-err_मुक्त_queues:
-	क्रम (i = 0; i < mwl8k_tx_queues(priv); i++)
+err_free_queues:
+	for (i = 0; i < mwl8k_tx_queues(priv); i++)
 		mwl8k_txq_deinit(hw, i);
 	mwl8k_rxq_deinit(hw, 0);
 
 err_stop_firmware:
 	mwl8k_hw_reset(priv);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*
  * invoke mwl8k_reload_firmware to change the firmware image after the device
- * has alपढ़ोy been रेजिस्टरed
+ * has already been registered
  */
-अटल पूर्णांक mwl8k_reload_firmware(काष्ठा ieee80211_hw *hw, अक्षर *fw_image)
-अणु
-	पूर्णांक i, rc = 0;
-	काष्ठा mwl8k_priv *priv = hw->priv;
-	काष्ठा mwl8k_vअगर *vअगर, *पंचांगp_vअगर;
+static int mwl8k_reload_firmware(struct ieee80211_hw *hw, char *fw_image)
+{
+	int i, rc = 0;
+	struct mwl8k_priv *priv = hw->priv;
+	struct mwl8k_vif *vif, *tmp_vif;
 
 	mwl8k_stop(hw);
 	mwl8k_rxq_deinit(hw, 0);
 
 	/*
-	 * All the existing पूर्णांकerfaces are re-added by the ieee80211_reconfig;
-	 * which means driver should हटाओ existing पूर्णांकerfaces beक्रमe calling
+	 * All the existing interfaces are re-added by the ieee80211_reconfig;
+	 * which means driver should remove existing interfaces before calling
 	 * ieee80211_restart_hw
 	 */
-	अगर (priv->hw_restart_in_progress)
-		list_क्रम_each_entry_safe(vअगर, पंचांगp_vअगर, &priv->vअगर_list, list)
-			mwl8k_हटाओ_vअगर(priv, vअगर);
+	if (priv->hw_restart_in_progress)
+		list_for_each_entry_safe(vif, tmp_vif, &priv->vif_list, list)
+			mwl8k_remove_vif(priv, vif);
 
-	क्रम (i = 0; i < mwl8k_tx_queues(priv); i++)
+	for (i = 0; i < mwl8k_tx_queues(priv); i++)
 		mwl8k_txq_deinit(hw, i);
 
 	rc = mwl8k_init_firmware(hw, fw_image, false);
-	अगर (rc)
-		जाओ fail;
+	if (rc)
+		goto fail;
 
 	rc = mwl8k_probe_hw(hw);
-	अगर (rc)
-		जाओ fail;
+	if (rc)
+		goto fail;
 
-	अगर (priv->hw_restart_in_progress)
-		वापस rc;
+	if (priv->hw_restart_in_progress)
+		return rc;
 
 	rc = mwl8k_start(hw);
-	अगर (rc)
-		जाओ fail;
+	if (rc)
+		goto fail;
 
 	rc = mwl8k_config(hw, ~0);
-	अगर (rc)
-		जाओ fail;
+	if (rc)
+		goto fail;
 
-	क्रम (i = 0; i < MWL8K_TX_WMM_QUEUES; i++) अणु
-		rc = mwl8k_conf_tx(hw, शून्य, i, &priv->wmm_params[i]);
-		अगर (rc)
-			जाओ fail;
-	पूर्ण
+	for (i = 0; i < MWL8K_TX_WMM_QUEUES; i++) {
+		rc = mwl8k_conf_tx(hw, NULL, i, &priv->wmm_params[i]);
+		if (rc)
+			goto fail;
+	}
 
-	वापस rc;
+	return rc;
 
 fail:
-	prपूर्णांकk(KERN_WARNING "mwl8k: Failed to reload firmware image.\n");
-	वापस rc;
-पूर्ण
+	printk(KERN_WARNING "mwl8k: Failed to reload firmware image.\n");
+	return rc;
+}
 
-अटल स्थिर काष्ठा ieee80211_अगरace_limit ap_अगर_limits[] = अणु
-	अणु .max = 8,	.types = BIT(NL80211_IFTYPE_AP) पूर्ण,
-	अणु .max = 1,	.types = BIT(NL80211_IFTYPE_STATION) पूर्ण,
-पूर्ण;
+static const struct ieee80211_iface_limit ap_if_limits[] = {
+	{ .max = 8,	.types = BIT(NL80211_IFTYPE_AP) },
+	{ .max = 1,	.types = BIT(NL80211_IFTYPE_STATION) },
+};
 
-अटल स्थिर काष्ठा ieee80211_अगरace_combination ap_अगर_comb = अणु
-	.limits = ap_अगर_limits,
-	.n_limits = ARRAY_SIZE(ap_अगर_limits),
-	.max_पूर्णांकerfaces = 8,
-	.num_dअगरferent_channels = 1,
-पूर्ण;
+static const struct ieee80211_iface_combination ap_if_comb = {
+	.limits = ap_if_limits,
+	.n_limits = ARRAY_SIZE(ap_if_limits),
+	.max_interfaces = 8,
+	.num_different_channels = 1,
+};
 
 
-अटल पूर्णांक mwl8k_firmware_load_success(काष्ठा mwl8k_priv *priv)
-अणु
-	काष्ठा ieee80211_hw *hw = priv->hw;
-	पूर्णांक i, rc;
+static int mwl8k_firmware_load_success(struct mwl8k_priv *priv)
+{
+	struct ieee80211_hw *hw = priv->hw;
+	int i, rc;
 
 	rc = mwl8k_load_firmware(hw);
 	mwl8k_release_firmware(priv);
-	अगर (rc) अणु
+	if (rc) {
 		wiphy_err(hw->wiphy, "Cannot start firmware\n");
-		वापस rc;
-	पूर्ण
+		return rc;
+	}
 
 	/*
 	 * Extra headroom is the size of the required DMA header
 	 * minus the size of the smallest 802.11 frame (CTS frame).
 	 */
 	hw->extra_tx_headroom =
-		माप(काष्ठा mwl8k_dma_data) - माप(काष्ठा ieee80211_cts);
+		sizeof(struct mwl8k_dma_data) - sizeof(struct ieee80211_cts);
 
 	hw->extra_tx_headroom -= priv->ap_fw ? REDUCED_TX_HEADROOM : 0;
 
@@ -6105,24 +6104,24 @@ fail:
 	 * Ask mac80211 to not to trigger PS mode
 	 * based on PM bit of incoming frames.
 	 */
-	अगर (priv->ap_fw)
+	if (priv->ap_fw)
 		ieee80211_hw_set(hw, AP_LINK_PS);
 
-	hw->vअगर_data_size = माप(काष्ठा mwl8k_vअगर);
-	hw->sta_data_size = माप(काष्ठा mwl8k_sta);
+	hw->vif_data_size = sizeof(struct mwl8k_vif);
+	hw->sta_data_size = sizeof(struct mwl8k_sta);
 
 	priv->macids_used = 0;
-	INIT_LIST_HEAD(&priv->vअगर_list);
+	INIT_LIST_HEAD(&priv->vif_list);
 
-	/* Set शेष radio state and preamble */
+	/* Set default radio state and preamble */
 	priv->radio_on = false;
-	priv->radio_लघु_preamble = false;
+	priv->radio_short_preamble = false;
 
 	/* Finalize join worker */
 	INIT_WORK(&priv->finalize_join_worker, mwl8k_finalize_join_worker);
-	/* Handle watchकरोg ba events */
-	INIT_WORK(&priv->watchकरोg_ba_handle, mwl8k_watchकरोg_ba_events);
-	/* To reload the firmware अगर it crashes */
+	/* Handle watchdog ba events */
+	INIT_WORK(&priv->watchdog_ba_handle, mwl8k_watchdog_ba_events);
+	/* To reload the firmware if it crashes */
 	INIT_WORK(&priv->fw_reload, mwl8k_hw_restart_work);
 
 	/* TX reclaim and RX tasklets.  */
@@ -6134,96 +6133,96 @@ fail:
 	/* Power management cookie */
 	priv->cookie = dma_alloc_coherent(&priv->pdev->dev, 4,
 					  &priv->cookie_dma, GFP_KERNEL);
-	अगर (priv->cookie == शून्य)
-		वापस -ENOMEM;
+	if (priv->cookie == NULL)
+		return -ENOMEM;
 
 	mutex_init(&priv->fw_mutex);
-	priv->fw_mutex_owner = शून्य;
+	priv->fw_mutex_owner = NULL;
 	priv->fw_mutex_depth = 0;
-	priv->hostcmd_रुको = शून्य;
+	priv->hostcmd_wait = NULL;
 
 	spin_lock_init(&priv->tx_lock);
 
 	spin_lock_init(&priv->stream_lock);
 
-	priv->tx_रुको = शून्य;
+	priv->tx_wait = NULL;
 
 	rc = mwl8k_probe_hw(hw);
-	अगर (rc)
-		जाओ err_मुक्त_cookie;
+	if (rc)
+		goto err_free_cookie;
 
-	hw->wiphy->पूर्णांकerface_modes = 0;
+	hw->wiphy->interface_modes = 0;
 
-	अगर (priv->ap_macids_supported || priv->device_info->fw_image_ap) अणु
-		hw->wiphy->पूर्णांकerface_modes |= BIT(NL80211_IFTYPE_AP);
-		hw->wiphy->पूर्णांकerface_modes |= BIT(NL80211_IFTYPE_STATION);
-		hw->wiphy->अगरace_combinations = &ap_अगर_comb;
-		hw->wiphy->n_अगरace_combinations = 1;
-	पूर्ण
+	if (priv->ap_macids_supported || priv->device_info->fw_image_ap) {
+		hw->wiphy->interface_modes |= BIT(NL80211_IFTYPE_AP);
+		hw->wiphy->interface_modes |= BIT(NL80211_IFTYPE_STATION);
+		hw->wiphy->iface_combinations = &ap_if_comb;
+		hw->wiphy->n_iface_combinations = 1;
+	}
 
-	अगर (priv->sta_macids_supported || priv->device_info->fw_image_sta)
-		hw->wiphy->पूर्णांकerface_modes |= BIT(NL80211_IFTYPE_STATION);
+	if (priv->sta_macids_supported || priv->device_info->fw_image_sta)
+		hw->wiphy->interface_modes |= BIT(NL80211_IFTYPE_STATION);
 
 	wiphy_ext_feature_set(hw->wiphy, NL80211_EXT_FEATURE_CQM_RSSI_LIST);
 
-	rc = ieee80211_रेजिस्टर_hw(hw);
-	अगर (rc) अणु
+	rc = ieee80211_register_hw(hw);
+	if (rc) {
 		wiphy_err(hw->wiphy, "Cannot register device\n");
-		जाओ err_unprobe_hw;
-	पूर्ण
+		goto err_unprobe_hw;
+	}
 
-	वापस 0;
+	return 0;
 
 err_unprobe_hw:
-	क्रम (i = 0; i < mwl8k_tx_queues(priv); i++)
+	for (i = 0; i < mwl8k_tx_queues(priv); i++)
 		mwl8k_txq_deinit(hw, i);
 	mwl8k_rxq_deinit(hw, 0);
 
-err_मुक्त_cookie:
-	अगर (priv->cookie != शून्य)
-		dma_मुक्त_coherent(&priv->pdev->dev, 4, priv->cookie,
+err_free_cookie:
+	if (priv->cookie != NULL)
+		dma_free_coherent(&priv->pdev->dev, 4, priv->cookie,
 				  priv->cookie_dma);
 
-	वापस rc;
-पूर्ण
-अटल पूर्णांक mwl8k_probe(काष्ठा pci_dev *pdev,
-				 स्थिर काष्ठा pci_device_id *id)
-अणु
-	अटल पूर्णांक prपूर्णांकed_version;
-	काष्ठा ieee80211_hw *hw;
-	काष्ठा mwl8k_priv *priv;
-	काष्ठा mwl8k_device_info *di;
-	पूर्णांक rc;
+	return rc;
+}
+static int mwl8k_probe(struct pci_dev *pdev,
+				 const struct pci_device_id *id)
+{
+	static int printed_version;
+	struct ieee80211_hw *hw;
+	struct mwl8k_priv *priv;
+	struct mwl8k_device_info *di;
+	int rc;
 
-	अगर (!prपूर्णांकed_version) अणु
-		prपूर्णांकk(KERN_INFO "%s version %s\n", MWL8K_DESC, MWL8K_VERSION);
-		prपूर्णांकed_version = 1;
-	पूर्ण
+	if (!printed_version) {
+		printk(KERN_INFO "%s version %s\n", MWL8K_DESC, MWL8K_VERSION);
+		printed_version = 1;
+	}
 
 
 	rc = pci_enable_device(pdev);
-	अगर (rc) अणु
-		prपूर्णांकk(KERN_ERR "%s: Cannot enable new PCI device\n",
+	if (rc) {
+		printk(KERN_ERR "%s: Cannot enable new PCI device\n",
 		       MWL8K_NAME);
-		वापस rc;
-	पूर्ण
+		return rc;
+	}
 
 	rc = pci_request_regions(pdev, MWL8K_NAME);
-	अगर (rc) अणु
-		prपूर्णांकk(KERN_ERR "%s: Cannot obtain PCI resources\n",
+	if (rc) {
+		printk(KERN_ERR "%s: Cannot obtain PCI resources\n",
 		       MWL8K_NAME);
-		जाओ err_disable_device;
-	पूर्ण
+		goto err_disable_device;
+	}
 
 	pci_set_master(pdev);
 
 
-	hw = ieee80211_alloc_hw(माप(*priv), &mwl8k_ops);
-	अगर (hw == शून्य) अणु
-		prपूर्णांकk(KERN_ERR "%s: ieee80211 alloc failed\n", MWL8K_NAME);
+	hw = ieee80211_alloc_hw(sizeof(*priv), &mwl8k_ops);
+	if (hw == NULL) {
+		printk(KERN_ERR "%s: ieee80211 alloc failed\n", MWL8K_NAME);
 		rc = -ENOMEM;
-		जाओ err_मुक्त_reg;
-	पूर्ण
+		goto err_free_reg;
+	}
 
 	SET_IEEE80211_DEV(hw, &pdev->dev);
 	pci_set_drvdata(pdev, hw);
@@ -6233,134 +6232,134 @@ err_मुक्त_cookie:
 	priv->pdev = pdev;
 	priv->device_info = &mwl8k_info_tbl[id->driver_data];
 
-	अगर (id->driver_data == MWL8764)
+	if (id->driver_data == MWL8764)
 		priv->is_8764 = true;
 
 	priv->sram = pci_iomap(pdev, 0, 0x10000);
-	अगर (priv->sram == शून्य) अणु
+	if (priv->sram == NULL) {
 		wiphy_err(hw->wiphy, "Cannot map device SRAM\n");
 		rc = -EIO;
-		जाओ err_iounmap;
-	पूर्ण
+		goto err_iounmap;
+	}
 
 	/*
-	 * If BAR0 is a 32 bit BAR, the रेजिस्टर BAR will be BAR1.
-	 * If BAR0 is a 64 bit BAR, the रेजिस्टर BAR will be BAR2.
+	 * If BAR0 is a 32 bit BAR, the register BAR will be BAR1.
+	 * If BAR0 is a 64 bit BAR, the register BAR will be BAR2.
 	 */
 	priv->regs = pci_iomap(pdev, 1, 0x10000);
-	अगर (priv->regs == शून्य) अणु
+	if (priv->regs == NULL) {
 		priv->regs = pci_iomap(pdev, 2, 0x10000);
-		अगर (priv->regs == शून्य) अणु
+		if (priv->regs == NULL) {
 			wiphy_err(hw->wiphy, "Cannot map device registers\n");
 			rc = -EIO;
-			जाओ err_iounmap;
-		पूर्ण
-	पूर्ण
+			goto err_iounmap;
+		}
+	}
 
 	/*
 	 * Choose the initial fw image depending on user input.  If a second
 	 * image is available, make it the alternative image that will be
-	 * loaded अगर the first one fails.
+	 * loaded if the first one fails.
 	 */
 	init_completion(&priv->firmware_loading_complete);
 	di = priv->device_info;
-	अगर (ap_mode_शेष && di->fw_image_ap) अणु
+	if (ap_mode_default && di->fw_image_ap) {
 		priv->fw_pref = di->fw_image_ap;
 		priv->fw_alt = di->fw_image_sta;
-	पूर्ण अन्यथा अगर (!ap_mode_शेष && di->fw_image_sta) अणु
+	} else if (!ap_mode_default && di->fw_image_sta) {
 		priv->fw_pref = di->fw_image_sta;
 		priv->fw_alt = di->fw_image_ap;
-	पूर्ण अन्यथा अगर (ap_mode_शेष && !di->fw_image_ap && di->fw_image_sta) अणु
-		prपूर्णांकk(KERN_WARNING "AP fw is unavailable.  Using STA fw.");
+	} else if (ap_mode_default && !di->fw_image_ap && di->fw_image_sta) {
+		printk(KERN_WARNING "AP fw is unavailable.  Using STA fw.");
 		priv->fw_pref = di->fw_image_sta;
-	पूर्ण अन्यथा अगर (!ap_mode_शेष && !di->fw_image_sta && di->fw_image_ap) अणु
-		prपूर्णांकk(KERN_WARNING "STA fw is unavailable.  Using AP fw.");
+	} else if (!ap_mode_default && !di->fw_image_sta && di->fw_image_ap) {
+		printk(KERN_WARNING "STA fw is unavailable.  Using AP fw.");
 		priv->fw_pref = di->fw_image_ap;
-	पूर्ण
+	}
 	rc = mwl8k_init_firmware(hw, priv->fw_pref, true);
-	अगर (rc)
-		जाओ err_stop_firmware;
+	if (rc)
+		goto err_stop_firmware;
 
 	priv->hw_restart_in_progress = false;
 
 	priv->running_bsses = 0;
 
-	वापस rc;
+	return rc;
 
 err_stop_firmware:
 	mwl8k_hw_reset(priv);
 
 err_iounmap:
-	अगर (priv->regs != शून्य)
+	if (priv->regs != NULL)
 		pci_iounmap(pdev, priv->regs);
 
-	अगर (priv->sram != शून्य)
+	if (priv->sram != NULL)
 		pci_iounmap(pdev, priv->sram);
 
-	ieee80211_मुक्त_hw(hw);
+	ieee80211_free_hw(hw);
 
-err_मुक्त_reg:
+err_free_reg:
 	pci_release_regions(pdev);
 
 err_disable_device:
 	pci_disable_device(pdev);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल व्योम mwl8k_हटाओ(काष्ठा pci_dev *pdev)
-अणु
-	काष्ठा ieee80211_hw *hw = pci_get_drvdata(pdev);
-	काष्ठा mwl8k_priv *priv;
-	पूर्णांक i;
+static void mwl8k_remove(struct pci_dev *pdev)
+{
+	struct ieee80211_hw *hw = pci_get_drvdata(pdev);
+	struct mwl8k_priv *priv;
+	int i;
 
-	अगर (hw == शून्य)
-		वापस;
+	if (hw == NULL)
+		return;
 	priv = hw->priv;
 
-	रुको_क्रम_completion(&priv->firmware_loading_complete);
+	wait_for_completion(&priv->firmware_loading_complete);
 
-	अगर (priv->fw_state == FW_STATE_ERROR) अणु
+	if (priv->fw_state == FW_STATE_ERROR) {
 		mwl8k_hw_reset(priv);
-		जाओ unmap;
-	पूर्ण
+		goto unmap;
+	}
 
 	ieee80211_stop_queues(hw);
 
-	ieee80211_unरेजिस्टर_hw(hw);
+	ieee80211_unregister_hw(hw);
 
 	/* Remove TX reclaim and RX tasklets.  */
-	tasklet_समाप्त(&priv->poll_tx_task);
-	tasklet_समाप्त(&priv->poll_rx_task);
+	tasklet_kill(&priv->poll_tx_task);
+	tasklet_kill(&priv->poll_rx_task);
 
 	/* Stop hardware */
 	mwl8k_hw_reset(priv);
 
 	/* Return all skbs to mac80211 */
-	क्रम (i = 0; i < mwl8k_tx_queues(priv); i++)
-		mwl8k_txq_reclaim(hw, i, पूर्णांक_उच्च, 1);
+	for (i = 0; i < mwl8k_tx_queues(priv); i++)
+		mwl8k_txq_reclaim(hw, i, INT_MAX, 1);
 
-	क्रम (i = 0; i < mwl8k_tx_queues(priv); i++)
+	for (i = 0; i < mwl8k_tx_queues(priv); i++)
 		mwl8k_txq_deinit(hw, i);
 
 	mwl8k_rxq_deinit(hw, 0);
 
-	dma_मुक्त_coherent(&priv->pdev->dev, 4, priv->cookie, priv->cookie_dma);
+	dma_free_coherent(&priv->pdev->dev, 4, priv->cookie, priv->cookie_dma);
 
 unmap:
 	pci_iounmap(pdev, priv->regs);
 	pci_iounmap(pdev, priv->sram);
-	ieee80211_मुक्त_hw(hw);
+	ieee80211_free_hw(hw);
 	pci_release_regions(pdev);
 	pci_disable_device(pdev);
-पूर्ण
+}
 
-अटल काष्ठा pci_driver mwl8k_driver = अणु
+static struct pci_driver mwl8k_driver = {
 	.name		= MWL8K_NAME,
 	.id_table	= mwl8k_pci_id_table,
 	.probe		= mwl8k_probe,
-	.हटाओ		= mwl8k_हटाओ,
-पूर्ण;
+	.remove		= mwl8k_remove,
+};
 
 module_pci_driver(mwl8k_driver);
 

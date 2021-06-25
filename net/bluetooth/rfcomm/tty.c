@@ -1,10 +1,9 @@
-<शैली गुरु>
 /*
-   RFCOMM implementation क्रम Linux Bluetooth stack (BlueZ).
+   RFCOMM implementation for Linux Bluetooth stack (BlueZ).
    Copyright (C) 2002 Maxim Krasnyansky <maxk@qualcomm.com>
-   Copyright (C) 2002 Marcel Holपंचांगann <marcel@holपंचांगann.org>
+   Copyright (C) 2002 Marcel Holtmann <marcel@holtmann.org>
 
-   This program is मुक्त software; you can redistribute it and/or modअगरy
+   This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License version 2 as
    published by the Free Software Foundation;
 
@@ -12,7 +11,7 @@
    OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT OF THIRD PARTY RIGHTS.
    IN NO EVENT SHALL THE COPYRIGHT HOLDER(S) AND AUTHOR(S) BE LIABLE FOR ANY
-   CLAIM, OR ANY SPECIAL INसूचीECT OR CONSEQUENTIAL DAMAGES, OR ANY DAMAGES
+   CLAIM, OR ANY SPECIAL INDIRECT OR CONSEQUENTIAL DAMAGES, OR ANY DAMAGES
    WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
    ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
@@ -26,165 +25,165 @@
  * RFCOMM TTY.
  */
 
-#समावेश <linux/module.h>
+#include <linux/module.h>
 
-#समावेश <linux/tty.h>
-#समावेश <linux/tty_driver.h>
-#समावेश <linux/tty_flip.h>
+#include <linux/tty.h>
+#include <linux/tty_driver.h>
+#include <linux/tty_flip.h>
 
-#समावेश <net/bluetooth/bluetooth.h>
-#समावेश <net/bluetooth/hci_core.h>
-#समावेश <net/bluetooth/rfcomm.h>
+#include <net/bluetooth/bluetooth.h>
+#include <net/bluetooth/hci_core.h>
+#include <net/bluetooth/rfcomm.h>
 
-#घोषणा RFCOMM_TTY_MAGIC 0x6d02		/* magic number क्रम rfcomm काष्ठा */
-#घोषणा RFCOMM_TTY_PORTS RFCOMM_MAX_DEV	/* whole lotta rfcomm devices */
-#घोषणा RFCOMM_TTY_MAJOR 216		/* device node major id of the usb/bluetooth.c driver */
-#घोषणा RFCOMM_TTY_MINOR 0
+#define RFCOMM_TTY_MAGIC 0x6d02		/* magic number for rfcomm struct */
+#define RFCOMM_TTY_PORTS RFCOMM_MAX_DEV	/* whole lotta rfcomm devices */
+#define RFCOMM_TTY_MAJOR 216		/* device node major id of the usb/bluetooth.c driver */
+#define RFCOMM_TTY_MINOR 0
 
-अटल DEFINE_MUTEX(rfcomm_ioctl_mutex);
-अटल काष्ठा tty_driver *rfcomm_tty_driver;
+static DEFINE_MUTEX(rfcomm_ioctl_mutex);
+static struct tty_driver *rfcomm_tty_driver;
 
-काष्ठा rfcomm_dev अणु
-	काष्ठा tty_port		port;
-	काष्ठा list_head	list;
+struct rfcomm_dev {
+	struct tty_port		port;
+	struct list_head	list;
 
-	अक्षर			name[12];
-	पूर्णांक			id;
-	अचिन्हित दीर्घ		flags;
-	पूर्णांक			err;
+	char			name[12];
+	int			id;
+	unsigned long		flags;
+	int			err;
 
-	अचिन्हित दीर्घ		status;		/* करोn't export to userspace */
+	unsigned long		status;		/* don't export to userspace */
 
 	bdaddr_t		src;
 	bdaddr_t		dst;
 	u8			channel;
 
-	uपूर्णांक			modem_status;
+	uint			modem_status;
 
-	काष्ठा rfcomm_dlc	*dlc;
+	struct rfcomm_dlc	*dlc;
 
-	काष्ठा device		*tty_dev;
+	struct device		*tty_dev;
 
 	atomic_t		wmem_alloc;
 
-	काष्ठा sk_buff_head	pending;
-पूर्ण;
+	struct sk_buff_head	pending;
+};
 
-अटल LIST_HEAD(rfcomm_dev_list);
-अटल DEFINE_MUTEX(rfcomm_dev_lock);
+static LIST_HEAD(rfcomm_dev_list);
+static DEFINE_MUTEX(rfcomm_dev_lock);
 
-अटल व्योम rfcomm_dev_data_पढ़ोy(काष्ठा rfcomm_dlc *dlc, काष्ठा sk_buff *skb);
-अटल व्योम rfcomm_dev_state_change(काष्ठा rfcomm_dlc *dlc, पूर्णांक err);
-अटल व्योम rfcomm_dev_modem_status(काष्ठा rfcomm_dlc *dlc, u8 v24_sig);
+static void rfcomm_dev_data_ready(struct rfcomm_dlc *dlc, struct sk_buff *skb);
+static void rfcomm_dev_state_change(struct rfcomm_dlc *dlc, int err);
+static void rfcomm_dev_modem_status(struct rfcomm_dlc *dlc, u8 v24_sig);
 
 /* ---- Device functions ---- */
 
-अटल व्योम rfcomm_dev_deकाष्ठा(काष्ठा tty_port *port)
-अणु
-	काष्ठा rfcomm_dev *dev = container_of(port, काष्ठा rfcomm_dev, port);
-	काष्ठा rfcomm_dlc *dlc = dev->dlc;
+static void rfcomm_dev_destruct(struct tty_port *port)
+{
+	struct rfcomm_dev *dev = container_of(port, struct rfcomm_dev, port);
+	struct rfcomm_dlc *dlc = dev->dlc;
 
 	BT_DBG("dev %p dlc %p", dev, dlc);
 
 	rfcomm_dlc_lock(dlc);
-	/* Detach DLC अगर it's owned by this dev */
-	अगर (dlc->owner == dev)
-		dlc->owner = शून्य;
+	/* Detach DLC if it's owned by this dev */
+	if (dlc->owner == dev)
+		dlc->owner = NULL;
 	rfcomm_dlc_unlock(dlc);
 
 	rfcomm_dlc_put(dlc);
 
-	अगर (dev->tty_dev)
-		tty_unरेजिस्टर_device(rfcomm_tty_driver, dev->id);
+	if (dev->tty_dev)
+		tty_unregister_device(rfcomm_tty_driver, dev->id);
 
 	mutex_lock(&rfcomm_dev_lock);
 	list_del(&dev->list);
 	mutex_unlock(&rfcomm_dev_lock);
 
-	kमुक्त(dev);
+	kfree(dev);
 
 	/* It's safe to call module_put() here because socket still
 	   holds reference to this module. */
 	module_put(THIS_MODULE);
-पूर्ण
+}
 
-/* device-specअगरic initialization: खोलो the dlc */
-अटल पूर्णांक rfcomm_dev_activate(काष्ठा tty_port *port, काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा rfcomm_dev *dev = container_of(port, काष्ठा rfcomm_dev, port);
-	पूर्णांक err;
+/* device-specific initialization: open the dlc */
+static int rfcomm_dev_activate(struct tty_port *port, struct tty_struct *tty)
+{
+	struct rfcomm_dev *dev = container_of(port, struct rfcomm_dev, port);
+	int err;
 
-	err = rfcomm_dlc_खोलो(dev->dlc, &dev->src, &dev->dst, dev->channel);
-	अगर (err)
+	err = rfcomm_dlc_open(dev->dlc, &dev->src, &dev->dst, dev->channel);
+	if (err)
 		set_bit(TTY_IO_ERROR, &tty->flags);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-/* we block the खोलो until the dlc->state becomes BT_CONNECTED */
-अटल पूर्णांक rfcomm_dev_carrier_उठाओd(काष्ठा tty_port *port)
-अणु
-	काष्ठा rfcomm_dev *dev = container_of(port, काष्ठा rfcomm_dev, port);
+/* we block the open until the dlc->state becomes BT_CONNECTED */
+static int rfcomm_dev_carrier_raised(struct tty_port *port)
+{
+	struct rfcomm_dev *dev = container_of(port, struct rfcomm_dev, port);
 
-	वापस (dev->dlc->state == BT_CONNECTED);
-पूर्ण
+	return (dev->dlc->state == BT_CONNECTED);
+}
 
-/* device-specअगरic cleanup: बंद the dlc */
-अटल व्योम rfcomm_dev_shutकरोwn(काष्ठा tty_port *port)
-अणु
-	काष्ठा rfcomm_dev *dev = container_of(port, काष्ठा rfcomm_dev, port);
+/* device-specific cleanup: close the dlc */
+static void rfcomm_dev_shutdown(struct tty_port *port)
+{
+	struct rfcomm_dev *dev = container_of(port, struct rfcomm_dev, port);
 
-	अगर (dev->tty_dev->parent)
-		device_move(dev->tty_dev, शून्य, DPM_ORDER_DEV_LAST);
+	if (dev->tty_dev->parent)
+		device_move(dev->tty_dev, NULL, DPM_ORDER_DEV_LAST);
 
-	/* बंद the dlc */
-	rfcomm_dlc_बंद(dev->dlc, 0);
-पूर्ण
+	/* close the dlc */
+	rfcomm_dlc_close(dev->dlc, 0);
+}
 
-अटल स्थिर काष्ठा tty_port_operations rfcomm_port_ops = अणु
-	.deकाष्ठा = rfcomm_dev_deकाष्ठा,
+static const struct tty_port_operations rfcomm_port_ops = {
+	.destruct = rfcomm_dev_destruct,
 	.activate = rfcomm_dev_activate,
-	.shutकरोwn = rfcomm_dev_shutकरोwn,
-	.carrier_उठाओd = rfcomm_dev_carrier_उठाओd,
-पूर्ण;
+	.shutdown = rfcomm_dev_shutdown,
+	.carrier_raised = rfcomm_dev_carrier_raised,
+};
 
-अटल काष्ठा rfcomm_dev *__rfcomm_dev_lookup(पूर्णांक id)
-अणु
-	काष्ठा rfcomm_dev *dev;
+static struct rfcomm_dev *__rfcomm_dev_lookup(int id)
+{
+	struct rfcomm_dev *dev;
 
-	list_क्रम_each_entry(dev, &rfcomm_dev_list, list)
-		अगर (dev->id == id)
-			वापस dev;
+	list_for_each_entry(dev, &rfcomm_dev_list, list)
+		if (dev->id == id)
+			return dev;
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल काष्ठा rfcomm_dev *rfcomm_dev_get(पूर्णांक id)
-अणु
-	काष्ठा rfcomm_dev *dev;
+static struct rfcomm_dev *rfcomm_dev_get(int id)
+{
+	struct rfcomm_dev *dev;
 
 	mutex_lock(&rfcomm_dev_lock);
 
 	dev = __rfcomm_dev_lookup(id);
 
-	अगर (dev && !tty_port_get(&dev->port))
-		dev = शून्य;
+	if (dev && !tty_port_get(&dev->port))
+		dev = NULL;
 
 	mutex_unlock(&rfcomm_dev_lock);
 
-	वापस dev;
-पूर्ण
+	return dev;
+}
 
-अटल व्योम rfcomm_reparent_device(काष्ठा rfcomm_dev *dev)
-अणु
-	काष्ठा hci_dev *hdev;
-	काष्ठा hci_conn *conn;
+static void rfcomm_reparent_device(struct rfcomm_dev *dev)
+{
+	struct hci_dev *hdev;
+	struct hci_conn *conn;
 
 	hdev = hci_get_route(&dev->dst, &dev->src, BDADDR_BREDR);
-	अगर (!hdev)
-		वापस;
+	if (!hdev)
+		return;
 
 	/* The lookup results are unsafe to access without the
-	 * hci device lock (FIXME: why is this not करोcumented?)
+	 * hci device lock (FIXME: why is this not documented?)
 	 */
 	hci_dev_lock(hdev);
 	conn = hci_conn_hash_lookup_ba(hdev, ACL_LINK, &dev->dst);
@@ -192,73 +191,73 @@
 	/* Just because the acl link is in the hash table is no
 	 * guarantee the sysfs device has been added ...
 	 */
-	अगर (conn && device_is_रेजिस्टरed(&conn->dev))
+	if (conn && device_is_registered(&conn->dev))
 		device_move(dev->tty_dev, &conn->dev, DPM_ORDER_DEV_AFTER_PARENT);
 
 	hci_dev_unlock(hdev);
 	hci_dev_put(hdev);
-पूर्ण
+}
 
-अटल sमाप_प्रकार show_address(काष्ठा device *tty_dev, काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा rfcomm_dev *dev = dev_get_drvdata(tty_dev);
-	वापस प्र_लिखो(buf, "%pMR\n", &dev->dst);
-पूर्ण
+static ssize_t show_address(struct device *tty_dev, struct device_attribute *attr, char *buf)
+{
+	struct rfcomm_dev *dev = dev_get_drvdata(tty_dev);
+	return sprintf(buf, "%pMR\n", &dev->dst);
+}
 
-अटल sमाप_प्रकार show_channel(काष्ठा device *tty_dev, काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा rfcomm_dev *dev = dev_get_drvdata(tty_dev);
-	वापस प्र_लिखो(buf, "%d\n", dev->channel);
-पूर्ण
+static ssize_t show_channel(struct device *tty_dev, struct device_attribute *attr, char *buf)
+{
+	struct rfcomm_dev *dev = dev_get_drvdata(tty_dev);
+	return sprintf(buf, "%d\n", dev->channel);
+}
 
-अटल DEVICE_ATTR(address, 0444, show_address, शून्य);
-अटल DEVICE_ATTR(channel, 0444, show_channel, शून्य);
+static DEVICE_ATTR(address, 0444, show_address, NULL);
+static DEVICE_ATTR(channel, 0444, show_channel, NULL);
 
-अटल काष्ठा rfcomm_dev *__rfcomm_dev_add(काष्ठा rfcomm_dev_req *req,
-					   काष्ठा rfcomm_dlc *dlc)
-अणु
-	काष्ठा rfcomm_dev *dev, *entry;
-	काष्ठा list_head *head = &rfcomm_dev_list;
-	पूर्णांक err = 0;
+static struct rfcomm_dev *__rfcomm_dev_add(struct rfcomm_dev_req *req,
+					   struct rfcomm_dlc *dlc)
+{
+	struct rfcomm_dev *dev, *entry;
+	struct list_head *head = &rfcomm_dev_list;
+	int err = 0;
 
-	dev = kzalloc(माप(काष्ठा rfcomm_dev), GFP_KERNEL);
-	अगर (!dev)
-		वापस ERR_PTR(-ENOMEM);
+	dev = kzalloc(sizeof(struct rfcomm_dev), GFP_KERNEL);
+	if (!dev)
+		return ERR_PTR(-ENOMEM);
 
 	mutex_lock(&rfcomm_dev_lock);
 
-	अगर (req->dev_id < 0) अणु
+	if (req->dev_id < 0) {
 		dev->id = 0;
 
-		list_क्रम_each_entry(entry, &rfcomm_dev_list, list) अणु
-			अगर (entry->id != dev->id)
-				अवरोध;
+		list_for_each_entry(entry, &rfcomm_dev_list, list) {
+			if (entry->id != dev->id)
+				break;
 
 			dev->id++;
 			head = &entry->list;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		dev->id = req->dev_id;
 
-		list_क्रम_each_entry(entry, &rfcomm_dev_list, list) अणु
-			अगर (entry->id == dev->id) अणु
+		list_for_each_entry(entry, &rfcomm_dev_list, list) {
+			if (entry->id == dev->id) {
 				err = -EADDRINUSE;
-				जाओ out;
-			पूर्ण
+				goto out;
+			}
 
-			अगर (entry->id > dev->id - 1)
-				अवरोध;
+			if (entry->id > dev->id - 1)
+				break;
 
 			head = &entry->list;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर ((dev->id < 0) || (dev->id > RFCOMM_MAX_DEV - 1)) अणु
-		err = -ENखाता;
-		जाओ out;
-	पूर्ण
+	if ((dev->id < 0) || (dev->id > RFCOMM_MAX_DEV - 1)) {
+		err = -ENFILE;
+		goto out;
+	}
 
-	प्र_लिखो(dev->name, "rfcomm%d", dev->id);
+	sprintf(dev->name, "rfcomm%d", dev->id);
 
 	list_add(&dev->list, head);
 
@@ -276,22 +275,22 @@
 
 	rfcomm_dlc_lock(dlc);
 
-	अगर (req->flags & (1 << RFCOMM_REUSE_DLC)) अणु
-		काष्ठा sock *sk = dlc->owner;
-		काष्ठा sk_buff *skb;
+	if (req->flags & (1 << RFCOMM_REUSE_DLC)) {
+		struct sock *sk = dlc->owner;
+		struct sk_buff *skb;
 
 		BUG_ON(!sk);
 
 		rfcomm_dlc_throttle(dlc);
 
-		जबतक ((skb = skb_dequeue(&sk->sk_receive_queue))) अणु
+		while ((skb = skb_dequeue(&sk->sk_receive_queue))) {
 			skb_orphan(skb);
 			skb_queue_tail(&dev->pending, skb);
 			atomic_sub(skb->len, &sk->sk_rmem_alloc);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	dlc->data_पढ़ोy   = rfcomm_dev_data_पढ़ोy;
+	dlc->data_ready   = rfcomm_dev_data_ready;
 	dlc->state_change = rfcomm_dev_state_change;
 	dlc->modem_status = rfcomm_dev_modem_status;
 
@@ -302,232 +301,232 @@
 
 	rfcomm_dlc_unlock(dlc);
 
-	/* It's safe to call __module_get() here because socket alपढ़ोy
+	/* It's safe to call __module_get() here because socket already
 	   holds reference to this module. */
 	__module_get(THIS_MODULE);
 
 	mutex_unlock(&rfcomm_dev_lock);
-	वापस dev;
+	return dev;
 
 out:
 	mutex_unlock(&rfcomm_dev_lock);
-	kमुक्त(dev);
-	वापस ERR_PTR(err);
-पूर्ण
+	kfree(dev);
+	return ERR_PTR(err);
+}
 
-अटल पूर्णांक rfcomm_dev_add(काष्ठा rfcomm_dev_req *req, काष्ठा rfcomm_dlc *dlc)
-अणु
-	काष्ठा rfcomm_dev *dev;
-	काष्ठा device *tty;
+static int rfcomm_dev_add(struct rfcomm_dev_req *req, struct rfcomm_dlc *dlc)
+{
+	struct rfcomm_dev *dev;
+	struct device *tty;
 
 	BT_DBG("id %d channel %d", req->dev_id, req->channel);
 
 	dev = __rfcomm_dev_add(req, dlc);
-	अगर (IS_ERR(dev)) अणु
+	if (IS_ERR(dev)) {
 		rfcomm_dlc_put(dlc);
-		वापस PTR_ERR(dev);
-	पूर्ण
+		return PTR_ERR(dev);
+	}
 
-	tty = tty_port_रेजिस्टर_device(&dev->port, rfcomm_tty_driver,
-			dev->id, शून्य);
-	अगर (IS_ERR(tty)) अणु
+	tty = tty_port_register_device(&dev->port, rfcomm_tty_driver,
+			dev->id, NULL);
+	if (IS_ERR(tty)) {
 		tty_port_put(&dev->port);
-		वापस PTR_ERR(tty);
-	पूर्ण
+		return PTR_ERR(tty);
+	}
 
 	dev->tty_dev = tty;
 	rfcomm_reparent_device(dev);
 	dev_set_drvdata(dev->tty_dev, dev);
 
-	अगर (device_create_file(dev->tty_dev, &dev_attr_address) < 0)
+	if (device_create_file(dev->tty_dev, &dev_attr_address) < 0)
 		BT_ERR("Failed to create address attribute");
 
-	अगर (device_create_file(dev->tty_dev, &dev_attr_channel) < 0)
+	if (device_create_file(dev->tty_dev, &dev_attr_channel) < 0)
 		BT_ERR("Failed to create channel attribute");
 
-	वापस dev->id;
-पूर्ण
+	return dev->id;
+}
 
 /* ---- Send buffer ---- */
-अटल अंतरभूत अचिन्हित पूर्णांक rfcomm_room(काष्ठा rfcomm_dev *dev)
-अणु
-	काष्ठा rfcomm_dlc *dlc = dev->dlc;
+static inline unsigned int rfcomm_room(struct rfcomm_dev *dev)
+{
+	struct rfcomm_dlc *dlc = dev->dlc;
 
 	/* Limit the outstanding number of packets not yet sent to 40 */
-	पूर्णांक pending = 40 - atomic_पढ़ो(&dev->wmem_alloc);
+	int pending = 40 - atomic_read(&dev->wmem_alloc);
 
-	वापस max(0, pending) * dlc->mtu;
-पूर्ण
+	return max(0, pending) * dlc->mtu;
+}
 
-अटल व्योम rfcomm_wमुक्त(काष्ठा sk_buff *skb)
-अणु
-	काष्ठा rfcomm_dev *dev = (व्योम *) skb->sk;
+static void rfcomm_wfree(struct sk_buff *skb)
+{
+	struct rfcomm_dev *dev = (void *) skb->sk;
 	atomic_dec(&dev->wmem_alloc);
-	अगर (test_bit(RFCOMM_TTY_ATTACHED, &dev->flags))
+	if (test_bit(RFCOMM_TTY_ATTACHED, &dev->flags))
 		tty_port_tty_wakeup(&dev->port);
 	tty_port_put(&dev->port);
-पूर्ण
+}
 
-अटल व्योम rfcomm_set_owner_w(काष्ठा sk_buff *skb, काष्ठा rfcomm_dev *dev)
-अणु
+static void rfcomm_set_owner_w(struct sk_buff *skb, struct rfcomm_dev *dev)
+{
 	tty_port_get(&dev->port);
 	atomic_inc(&dev->wmem_alloc);
-	skb->sk = (व्योम *) dev;
-	skb->deकाष्ठाor = rfcomm_wमुक्त;
-पूर्ण
+	skb->sk = (void *) dev;
+	skb->destructor = rfcomm_wfree;
+}
 
-अटल काष्ठा sk_buff *rfcomm_wदो_स्मृति(काष्ठा rfcomm_dev *dev, अचिन्हित दीर्घ size, gfp_t priority)
-अणु
-	काष्ठा sk_buff *skb = alloc_skb(size, priority);
-	अगर (skb)
+static struct sk_buff *rfcomm_wmalloc(struct rfcomm_dev *dev, unsigned long size, gfp_t priority)
+{
+	struct sk_buff *skb = alloc_skb(size, priority);
+	if (skb)
 		rfcomm_set_owner_w(skb, dev);
-	वापस skb;
-पूर्ण
+	return skb;
+}
 
 /* ---- Device IOCTLs ---- */
 
-#घोषणा NOCAP_FLAGS ((1 << RFCOMM_REUSE_DLC) | (1 << RFCOMM_RELEASE_ONHUP))
+#define NOCAP_FLAGS ((1 << RFCOMM_REUSE_DLC) | (1 << RFCOMM_RELEASE_ONHUP))
 
-अटल पूर्णांक __rfcomm_create_dev(काष्ठा sock *sk, व्योम __user *arg)
-अणु
-	काष्ठा rfcomm_dev_req req;
-	काष्ठा rfcomm_dlc *dlc;
-	पूर्णांक id;
+static int __rfcomm_create_dev(struct sock *sk, void __user *arg)
+{
+	struct rfcomm_dev_req req;
+	struct rfcomm_dlc *dlc;
+	int id;
 
-	अगर (copy_from_user(&req, arg, माप(req)))
-		वापस -EFAULT;
+	if (copy_from_user(&req, arg, sizeof(req)))
+		return -EFAULT;
 
 	BT_DBG("sk %p dev_id %d flags 0x%x", sk, req.dev_id, req.flags);
 
-	अगर (req.flags != NOCAP_FLAGS && !capable(CAP_NET_ADMIN))
-		वापस -EPERM;
+	if (req.flags != NOCAP_FLAGS && !capable(CAP_NET_ADMIN))
+		return -EPERM;
 
-	अगर (req.flags & (1 << RFCOMM_REUSE_DLC)) अणु
+	if (req.flags & (1 << RFCOMM_REUSE_DLC)) {
 		/* Socket must be connected */
-		अगर (sk->sk_state != BT_CONNECTED)
-			वापस -EBADFD;
+		if (sk->sk_state != BT_CONNECTED)
+			return -EBADFD;
 
 		dlc = rfcomm_pi(sk)->dlc;
 		rfcomm_dlc_hold(dlc);
-	पूर्ण अन्यथा अणु
+	} else {
 		/* Validate the channel is unused */
 		dlc = rfcomm_dlc_exists(&req.src, &req.dst, req.channel);
-		अगर (IS_ERR(dlc))
-			वापस PTR_ERR(dlc);
-		अगर (dlc)
-			वापस -EBUSY;
+		if (IS_ERR(dlc))
+			return PTR_ERR(dlc);
+		if (dlc)
+			return -EBUSY;
 		dlc = rfcomm_dlc_alloc(GFP_KERNEL);
-		अगर (!dlc)
-			वापस -ENOMEM;
-	पूर्ण
+		if (!dlc)
+			return -ENOMEM;
+	}
 
 	id = rfcomm_dev_add(&req, dlc);
-	अगर (id < 0)
-		वापस id;
+	if (id < 0)
+		return id;
 
-	अगर (req.flags & (1 << RFCOMM_REUSE_DLC)) अणु
+	if (req.flags & (1 << RFCOMM_REUSE_DLC)) {
 		/* DLC is now used by device.
 		 * Socket must be disconnected */
 		sk->sk_state = BT_CLOSED;
-	पूर्ण
+	}
 
-	वापस id;
-पूर्ण
+	return id;
+}
 
-अटल पूर्णांक __rfcomm_release_dev(व्योम __user *arg)
-अणु
-	काष्ठा rfcomm_dev_req req;
-	काष्ठा rfcomm_dev *dev;
-	काष्ठा tty_काष्ठा *tty;
+static int __rfcomm_release_dev(void __user *arg)
+{
+	struct rfcomm_dev_req req;
+	struct rfcomm_dev *dev;
+	struct tty_struct *tty;
 
-	अगर (copy_from_user(&req, arg, माप(req)))
-		वापस -EFAULT;
+	if (copy_from_user(&req, arg, sizeof(req)))
+		return -EFAULT;
 
 	BT_DBG("dev_id %d flags 0x%x", req.dev_id, req.flags);
 
 	dev = rfcomm_dev_get(req.dev_id);
-	अगर (!dev)
-		वापस -ENODEV;
+	if (!dev)
+		return -ENODEV;
 
-	अगर (dev->flags != NOCAP_FLAGS && !capable(CAP_NET_ADMIN)) अणु
+	if (dev->flags != NOCAP_FLAGS && !capable(CAP_NET_ADMIN)) {
 		tty_port_put(&dev->port);
-		वापस -EPERM;
-	पूर्ण
+		return -EPERM;
+	}
 
 	/* only release once */
-	अगर (test_and_set_bit(RFCOMM_DEV_RELEASED, &dev->status)) अणु
+	if (test_and_set_bit(RFCOMM_DEV_RELEASED, &dev->status)) {
 		tty_port_put(&dev->port);
-		वापस -EALREADY;
-	पूर्ण
+		return -EALREADY;
+	}
 
-	अगर (req.flags & (1 << RFCOMM_HANGUP_NOW))
-		rfcomm_dlc_बंद(dev->dlc, 0);
+	if (req.flags & (1 << RFCOMM_HANGUP_NOW))
+		rfcomm_dlc_close(dev->dlc, 0);
 
-	/* Shut करोwn TTY synchronously beक्रमe मुक्तing rfcomm_dev */
+	/* Shut down TTY synchronously before freeing rfcomm_dev */
 	tty = tty_port_tty_get(&dev->port);
-	अगर (tty) अणु
+	if (tty) {
 		tty_vhangup(tty);
 		tty_kref_put(tty);
-	पूर्ण
+	}
 
-	अगर (!test_bit(RFCOMM_TTY_OWNED, &dev->status))
+	if (!test_bit(RFCOMM_TTY_OWNED, &dev->status))
 		tty_port_put(&dev->port);
 
 	tty_port_put(&dev->port);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rfcomm_create_dev(काष्ठा sock *sk, व्योम __user *arg)
-अणु
-	पूर्णांक ret;
+static int rfcomm_create_dev(struct sock *sk, void __user *arg)
+{
+	int ret;
 
 	mutex_lock(&rfcomm_ioctl_mutex);
 	ret = __rfcomm_create_dev(sk, arg);
 	mutex_unlock(&rfcomm_ioctl_mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक rfcomm_release_dev(व्योम __user *arg)
-अणु
-	पूर्णांक ret;
+static int rfcomm_release_dev(void __user *arg)
+{
+	int ret;
 
 	mutex_lock(&rfcomm_ioctl_mutex);
 	ret = __rfcomm_release_dev(arg);
 	mutex_unlock(&rfcomm_ioctl_mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक rfcomm_get_dev_list(व्योम __user *arg)
-अणु
-	काष्ठा rfcomm_dev *dev;
-	काष्ठा rfcomm_dev_list_req *dl;
-	काष्ठा rfcomm_dev_info *di;
-	पूर्णांक n = 0, size, err;
+static int rfcomm_get_dev_list(void __user *arg)
+{
+	struct rfcomm_dev *dev;
+	struct rfcomm_dev_list_req *dl;
+	struct rfcomm_dev_info *di;
+	int n = 0, size, err;
 	u16 dev_num;
 
 	BT_DBG("");
 
-	अगर (get_user(dev_num, (u16 __user *) arg))
-		वापस -EFAULT;
+	if (get_user(dev_num, (u16 __user *) arg))
+		return -EFAULT;
 
-	अगर (!dev_num || dev_num > (PAGE_SIZE * 4) / माप(*di))
-		वापस -EINVAL;
+	if (!dev_num || dev_num > (PAGE_SIZE * 4) / sizeof(*di))
+		return -EINVAL;
 
-	size = माप(*dl) + dev_num * माप(*di);
+	size = sizeof(*dl) + dev_num * sizeof(*di);
 
 	dl = kzalloc(size, GFP_KERNEL);
-	अगर (!dl)
-		वापस -ENOMEM;
+	if (!dl)
+		return -ENOMEM;
 
 	di = dl->dev_info;
 
 	mutex_lock(&rfcomm_dev_lock);
 
-	list_क्रम_each_entry(dev, &rfcomm_dev_list, list) अणु
-		अगर (!tty_port_get(&dev->port))
-			जारी;
+	list_for_each_entry(dev, &rfcomm_dev_list, list) {
+		if (!tty_port_get(&dev->port))
+			continue;
 		(di + n)->id      = dev->id;
 		(di + n)->flags   = dev->flags;
 		(di + n)->state   = dev->dlc->state;
@@ -535,35 +534,35 @@ out:
 		bacpy(&(di + n)->src, &dev->src);
 		bacpy(&(di + n)->dst, &dev->dst);
 		tty_port_put(&dev->port);
-		अगर (++n >= dev_num)
-			अवरोध;
-	पूर्ण
+		if (++n >= dev_num)
+			break;
+	}
 
 	mutex_unlock(&rfcomm_dev_lock);
 
 	dl->dev_num = n;
-	size = माप(*dl) + n * माप(*di);
+	size = sizeof(*dl) + n * sizeof(*di);
 
 	err = copy_to_user(arg, dl, size);
-	kमुक्त(dl);
+	kfree(dl);
 
-	वापस err ? -EFAULT : 0;
-पूर्ण
+	return err ? -EFAULT : 0;
+}
 
-अटल पूर्णांक rfcomm_get_dev_info(व्योम __user *arg)
-अणु
-	काष्ठा rfcomm_dev *dev;
-	काष्ठा rfcomm_dev_info di;
-	पूर्णांक err = 0;
+static int rfcomm_get_dev_info(void __user *arg)
+{
+	struct rfcomm_dev *dev;
+	struct rfcomm_dev_info di;
+	int err = 0;
 
 	BT_DBG("");
 
-	अगर (copy_from_user(&di, arg, माप(di)))
-		वापस -EFAULT;
+	if (copy_from_user(&di, arg, sizeof(di)))
+		return -EFAULT;
 
 	dev = rfcomm_dev_get(di.id);
-	अगर (!dev)
-		वापस -ENODEV;
+	if (!dev)
+		return -ENODEV;
 
 	di.flags   = dev->flags;
 	di.channel = dev->channel;
@@ -571,83 +570,83 @@ out:
 	bacpy(&di.src, &dev->src);
 	bacpy(&di.dst, &dev->dst);
 
-	अगर (copy_to_user(arg, &di, माप(di)))
+	if (copy_to_user(arg, &di, sizeof(di)))
 		err = -EFAULT;
 
 	tty_port_put(&dev->port);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक rfcomm_dev_ioctl(काष्ठा sock *sk, अचिन्हित पूर्णांक cmd, व्योम __user *arg)
-अणु
+int rfcomm_dev_ioctl(struct sock *sk, unsigned int cmd, void __user *arg)
+{
 	BT_DBG("cmd %d arg %p", cmd, arg);
 
-	चयन (cmd) अणु
-	हाल RFCOMMCREATEDEV:
-		वापस rfcomm_create_dev(sk, arg);
+	switch (cmd) {
+	case RFCOMMCREATEDEV:
+		return rfcomm_create_dev(sk, arg);
 
-	हाल RFCOMMRELEASEDEV:
-		वापस rfcomm_release_dev(arg);
+	case RFCOMMRELEASEDEV:
+		return rfcomm_release_dev(arg);
 
-	हाल RFCOMMGETDEVLIST:
-		वापस rfcomm_get_dev_list(arg);
+	case RFCOMMGETDEVLIST:
+		return rfcomm_get_dev_list(arg);
 
-	हाल RFCOMMGETDEVINFO:
-		वापस rfcomm_get_dev_info(arg);
-	पूर्ण
+	case RFCOMMGETDEVINFO:
+		return rfcomm_get_dev_info(arg);
+	}
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
 /* ---- DLC callbacks ---- */
-अटल व्योम rfcomm_dev_data_पढ़ोy(काष्ठा rfcomm_dlc *dlc, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा rfcomm_dev *dev = dlc->owner;
+static void rfcomm_dev_data_ready(struct rfcomm_dlc *dlc, struct sk_buff *skb)
+{
+	struct rfcomm_dev *dev = dlc->owner;
 
-	अगर (!dev) अणु
-		kमुक्त_skb(skb);
-		वापस;
-	पूर्ण
+	if (!dev) {
+		kfree_skb(skb);
+		return;
+	}
 
-	अगर (!skb_queue_empty(&dev->pending)) अणु
+	if (!skb_queue_empty(&dev->pending)) {
 		skb_queue_tail(&dev->pending, skb);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	BT_DBG("dlc %p len %d", dlc, skb->len);
 
 	tty_insert_flip_string(&dev->port, skb->data, skb->len);
 	tty_flip_buffer_push(&dev->port);
 
-	kमुक्त_skb(skb);
-पूर्ण
+	kfree_skb(skb);
+}
 
-अटल व्योम rfcomm_dev_state_change(काष्ठा rfcomm_dlc *dlc, पूर्णांक err)
-अणु
-	काष्ठा rfcomm_dev *dev = dlc->owner;
-	अगर (!dev)
-		वापस;
+static void rfcomm_dev_state_change(struct rfcomm_dlc *dlc, int err)
+{
+	struct rfcomm_dev *dev = dlc->owner;
+	if (!dev)
+		return;
 
 	BT_DBG("dlc %p dev %p err %d", dlc, dev, err);
 
 	dev->err = err;
-	अगर (dlc->state == BT_CONNECTED) अणु
+	if (dlc->state == BT_CONNECTED) {
 		rfcomm_reparent_device(dev);
 
-		wake_up_पूर्णांकerruptible(&dev->port.खोलो_रुको);
-	पूर्ण अन्यथा अगर (dlc->state == BT_CLOSED)
+		wake_up_interruptible(&dev->port.open_wait);
+	} else if (dlc->state == BT_CLOSED)
 		tty_port_tty_hangup(&dev->port, false);
-पूर्ण
+}
 
-अटल व्योम rfcomm_dev_modem_status(काष्ठा rfcomm_dlc *dlc, u8 v24_sig)
-अणु
-	काष्ठा rfcomm_dev *dev = dlc->owner;
-	अगर (!dev)
-		वापस;
+static void rfcomm_dev_modem_status(struct rfcomm_dlc *dlc, u8 v24_sig)
+{
+	struct rfcomm_dev *dev = dlc->owner;
+	if (!dev)
+		return;
 
 	BT_DBG("dlc %p dev %p v24_sig 0x%02x", dlc, dev, v24_sig);
 
-	अगर ((dev->modem_status & TIOCM_CD) && !(v24_sig & RFCOMM_V24_DV))
+	if ((dev->modem_status & TIOCM_CD) && !(v24_sig & RFCOMM_V24_DV))
 		tty_port_tty_hangup(&dev->port, true);
 
 	dev->modem_status =
@@ -655,69 +654,69 @@ out:
 		((v24_sig & RFCOMM_V24_RTR) ? (TIOCM_RTS | TIOCM_CTS) : 0) |
 		((v24_sig & RFCOMM_V24_IC)  ? TIOCM_RI : 0) |
 		((v24_sig & RFCOMM_V24_DV)  ? TIOCM_CD : 0);
-पूर्ण
+}
 
 /* ---- TTY functions ---- */
-अटल व्योम rfcomm_tty_copy_pending(काष्ठा rfcomm_dev *dev)
-अणु
-	काष्ठा sk_buff *skb;
-	पूर्णांक inserted = 0;
+static void rfcomm_tty_copy_pending(struct rfcomm_dev *dev)
+{
+	struct sk_buff *skb;
+	int inserted = 0;
 
 	BT_DBG("dev %p", dev);
 
 	rfcomm_dlc_lock(dev->dlc);
 
-	जबतक ((skb = skb_dequeue(&dev->pending))) अणु
+	while ((skb = skb_dequeue(&dev->pending))) {
 		inserted += tty_insert_flip_string(&dev->port, skb->data,
 				skb->len);
-		kमुक्त_skb(skb);
-	पूर्ण
+		kfree_skb(skb);
+	}
 
 	rfcomm_dlc_unlock(dev->dlc);
 
-	अगर (inserted > 0)
+	if (inserted > 0)
 		tty_flip_buffer_push(&dev->port);
-पूर्ण
+}
 
-/* करो the reverse of install, clearing the tty fields and releasing the
+/* do the reverse of install, clearing the tty fields and releasing the
  * reference to tty_port
  */
-अटल व्योम rfcomm_tty_cleanup(काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा rfcomm_dev *dev = tty->driver_data;
+static void rfcomm_tty_cleanup(struct tty_struct *tty)
+{
+	struct rfcomm_dev *dev = tty->driver_data;
 
 	clear_bit(RFCOMM_TTY_ATTACHED, &dev->flags);
 
 	rfcomm_dlc_lock(dev->dlc);
-	tty->driver_data = शून्य;
+	tty->driver_data = NULL;
 	rfcomm_dlc_unlock(dev->dlc);
 
 	/*
-	 * purge the dlc->tx_queue to aव्योम circular dependencies
+	 * purge the dlc->tx_queue to avoid circular dependencies
 	 * between dev and dlc
 	 */
 	skb_queue_purge(&dev->dlc->tx_queue);
 
 	tty_port_put(&dev->port);
-पूर्ण
+}
 
 /* we acquire the tty_port reference since it's here the tty is first used
  * by setting the termios. We also populate the driver_data field and install
  * the tty port
  */
-अटल पूर्णांक rfcomm_tty_install(काष्ठा tty_driver *driver, काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा rfcomm_dev *dev;
-	काष्ठा rfcomm_dlc *dlc;
-	पूर्णांक err;
+static int rfcomm_tty_install(struct tty_driver *driver, struct tty_struct *tty)
+{
+	struct rfcomm_dev *dev;
+	struct rfcomm_dlc *dlc;
+	int err;
 
 	dev = rfcomm_dev_get(tty->index);
-	अगर (!dev)
-		वापस -ENODEV;
+	if (!dev)
+		return -ENODEV;
 
 	dlc = dev->dlc;
 
-	/* Attach TTY and खोलो DLC */
+	/* Attach TTY and open DLC */
 	rfcomm_dlc_lock(dlc);
 	tty->driver_data = dev;
 	rfcomm_dlc_unlock(dlc);
@@ -725,75 +724,75 @@ out:
 
 	/* install the tty_port */
 	err = tty_port_install(&dev->port, driver, tty);
-	अगर (err) अणु
+	if (err) {
 		rfcomm_tty_cleanup(tty);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	/* take over the tty_port reference अगर the port was created with the
-	 * flag RFCOMM_RELEASE_ONHUP. This will क्रमce the release of the port
-	 * when the last process बंदs the tty. The behaviour is expected by
+	/* take over the tty_port reference if the port was created with the
+	 * flag RFCOMM_RELEASE_ONHUP. This will force the release of the port
+	 * when the last process closes the tty. The behaviour is expected by
 	 * userspace.
 	 */
-	अगर (test_bit(RFCOMM_RELEASE_ONHUP, &dev->flags)) अणु
+	if (test_bit(RFCOMM_RELEASE_ONHUP, &dev->flags)) {
 		set_bit(RFCOMM_TTY_OWNED, &dev->status);
 		tty_port_put(&dev->port);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rfcomm_tty_खोलो(काष्ठा tty_काष्ठा *tty, काष्ठा file *filp)
-अणु
-	काष्ठा rfcomm_dev *dev = tty->driver_data;
-	पूर्णांक err;
+static int rfcomm_tty_open(struct tty_struct *tty, struct file *filp)
+{
+	struct rfcomm_dev *dev = tty->driver_data;
+	int err;
 
 	BT_DBG("tty %p id %d", tty, tty->index);
 
 	BT_DBG("dev %p dst %pMR channel %d opened %d", dev, &dev->dst,
 	       dev->channel, dev->port.count);
 
-	err = tty_port_खोलो(&dev->port, tty, filp);
-	अगर (err)
-		वापस err;
+	err = tty_port_open(&dev->port, tty, filp);
+	if (err)
+		return err;
 
 	/*
-	 * FIXME: rfcomm should use proper flow control क्रम
+	 * FIXME: rfcomm should use proper flow control for
 	 * received data. This hack will be unnecessary and can
-	 * be हटाओd when that's implemented
+	 * be removed when that's implemented
 	 */
 	rfcomm_tty_copy_pending(dev);
 
 	rfcomm_dlc_unthrottle(dev->dlc);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम rfcomm_tty_बंद(काष्ठा tty_काष्ठा *tty, काष्ठा file *filp)
-अणु
-	काष्ठा rfcomm_dev *dev = (काष्ठा rfcomm_dev *) tty->driver_data;
+static void rfcomm_tty_close(struct tty_struct *tty, struct file *filp)
+{
+	struct rfcomm_dev *dev = (struct rfcomm_dev *) tty->driver_data;
 
 	BT_DBG("tty %p dev %p dlc %p opened %d", tty, dev, dev->dlc,
 						dev->port.count);
 
-	tty_port_बंद(&dev->port, tty, filp);
-पूर्ण
+	tty_port_close(&dev->port, tty, filp);
+}
 
-अटल पूर्णांक rfcomm_tty_ग_लिखो(काष्ठा tty_काष्ठा *tty, स्थिर अचिन्हित अक्षर *buf, पूर्णांक count)
-अणु
-	काष्ठा rfcomm_dev *dev = (काष्ठा rfcomm_dev *) tty->driver_data;
-	काष्ठा rfcomm_dlc *dlc = dev->dlc;
-	काष्ठा sk_buff *skb;
-	पूर्णांक sent = 0, size;
+static int rfcomm_tty_write(struct tty_struct *tty, const unsigned char *buf, int count)
+{
+	struct rfcomm_dev *dev = (struct rfcomm_dev *) tty->driver_data;
+	struct rfcomm_dlc *dlc = dev->dlc;
+	struct sk_buff *skb;
+	int sent = 0, size;
 
 	BT_DBG("tty %p count %d", tty, count);
 
-	जबतक (count) अणु
-		size = min_t(uपूर्णांक, count, dlc->mtu);
+	while (count) {
+		size = min_t(uint, count, dlc->mtu);
 
-		skb = rfcomm_wदो_स्मृति(dev, size + RFCOMM_SKB_RESERVE, GFP_ATOMIC);
-		अगर (!skb)
-			अवरोध;
+		skb = rfcomm_wmalloc(dev, size + RFCOMM_SKB_RESERVE, GFP_ATOMIC);
+		if (!skb)
+			break;
 
 		skb_reserve(skb, RFCOMM_SKB_HEAD_RESERVE);
 
@@ -803,332 +802,332 @@ out:
 
 		sent  += size;
 		count -= size;
-	पूर्ण
+	}
 
-	वापस sent;
-पूर्ण
+	return sent;
+}
 
-अटल पूर्णांक rfcomm_tty_ग_लिखो_room(काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा rfcomm_dev *dev = (काष्ठा rfcomm_dev *) tty->driver_data;
-	पूर्णांक room = 0;
+static int rfcomm_tty_write_room(struct tty_struct *tty)
+{
+	struct rfcomm_dev *dev = (struct rfcomm_dev *) tty->driver_data;
+	int room = 0;
 
-	अगर (dev && dev->dlc)
+	if (dev && dev->dlc)
 		room = rfcomm_room(dev);
 
 	BT_DBG("tty %p room %d", tty, room);
 
-	वापस room;
-पूर्ण
+	return room;
+}
 
-अटल पूर्णांक rfcomm_tty_ioctl(काष्ठा tty_काष्ठा *tty, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
-अणु
+static int rfcomm_tty_ioctl(struct tty_struct *tty, unsigned int cmd, unsigned long arg)
+{
 	BT_DBG("tty %p cmd 0x%02x", tty, cmd);
 
-	चयन (cmd) अणु
-	हाल TCGETS:
+	switch (cmd) {
+	case TCGETS:
 		BT_DBG("TCGETS is not supported");
-		वापस -ENOIOCTLCMD;
+		return -ENOIOCTLCMD;
 
-	हाल TCSETS:
+	case TCSETS:
 		BT_DBG("TCSETS is not supported");
-		वापस -ENOIOCTLCMD;
+		return -ENOIOCTLCMD;
 
-	हाल TIOCMIWAIT:
+	case TIOCMIWAIT:
 		BT_DBG("TIOCMIWAIT");
-		अवरोध;
+		break;
 
-	हाल TIOCSERGETLSR:
+	case TIOCSERGETLSR:
 		BT_ERR("TIOCSERGETLSR is not supported");
-		वापस -ENOIOCTLCMD;
+		return -ENOIOCTLCMD;
 
-	हाल TIOCSERCONFIG:
+	case TIOCSERCONFIG:
 		BT_ERR("TIOCSERCONFIG is not supported");
-		वापस -ENOIOCTLCMD;
+		return -ENOIOCTLCMD;
 
-	शेष:
-		वापस -ENOIOCTLCMD;	/* ioctls which we must ignore */
+	default:
+		return -ENOIOCTLCMD;	/* ioctls which we must ignore */
 
-	पूर्ण
+	}
 
-	वापस -ENOIOCTLCMD;
-पूर्ण
+	return -ENOIOCTLCMD;
+}
 
-अटल व्योम rfcomm_tty_set_termios(काष्ठा tty_काष्ठा *tty, काष्ठा ktermios *old)
-अणु
-	काष्ठा ktermios *new = &tty->termios;
-	पूर्णांक old_baud_rate = tty_termios_baud_rate(old);
-	पूर्णांक new_baud_rate = tty_termios_baud_rate(new);
+static void rfcomm_tty_set_termios(struct tty_struct *tty, struct ktermios *old)
+{
+	struct ktermios *new = &tty->termios;
+	int old_baud_rate = tty_termios_baud_rate(old);
+	int new_baud_rate = tty_termios_baud_rate(new);
 
 	u8 baud, data_bits, stop_bits, parity, x_on, x_off;
 	u16 changes = 0;
 
-	काष्ठा rfcomm_dev *dev = (काष्ठा rfcomm_dev *) tty->driver_data;
+	struct rfcomm_dev *dev = (struct rfcomm_dev *) tty->driver_data;
 
 	BT_DBG("tty %p termios %p", tty, old);
 
-	अगर (!dev || !dev->dlc || !dev->dlc->session)
-		वापस;
+	if (!dev || !dev->dlc || !dev->dlc->session)
+		return;
 
 	/* Handle turning off CRTSCTS */
-	अगर ((old->c_cflag & CRTSCTS) && !(new->c_cflag & CRTSCTS))
+	if ((old->c_cflag & CRTSCTS) && !(new->c_cflag & CRTSCTS))
 		BT_DBG("Turning off CRTSCTS unsupported");
 
 	/* Parity on/off and when on, odd/even */
-	अगर (((old->c_cflag & PARENB) != (new->c_cflag & PARENB)) ||
-			((old->c_cflag & PARODD) != (new->c_cflag & PARODD))) अणु
+	if (((old->c_cflag & PARENB) != (new->c_cflag & PARENB)) ||
+			((old->c_cflag & PARODD) != (new->c_cflag & PARODD))) {
 		changes |= RFCOMM_RPN_PM_PARITY;
 		BT_DBG("Parity change detected.");
-	पूर्ण
+	}
 
 	/* Mark and space parity are not supported! */
-	अगर (new->c_cflag & PARENB) अणु
-		अगर (new->c_cflag & PARODD) अणु
+	if (new->c_cflag & PARENB) {
+		if (new->c_cflag & PARODD) {
 			BT_DBG("Parity is ODD");
 			parity = RFCOMM_RPN_PARITY_ODD;
-		पूर्ण अन्यथा अणु
+		} else {
 			BT_DBG("Parity is EVEN");
 			parity = RFCOMM_RPN_PARITY_EVEN;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		BT_DBG("Parity is OFF");
 		parity = RFCOMM_RPN_PARITY_NONE;
-	पूर्ण
+	}
 
-	/* Setting the x_on / x_off अक्षरacters */
-	अगर (old->c_cc[VSTOP] != new->c_cc[VSTOP]) अणु
+	/* Setting the x_on / x_off characters */
+	if (old->c_cc[VSTOP] != new->c_cc[VSTOP]) {
 		BT_DBG("XOFF custom");
 		x_on = new->c_cc[VSTOP];
 		changes |= RFCOMM_RPN_PM_XON;
-	पूर्ण अन्यथा अणु
+	} else {
 		BT_DBG("XOFF default");
 		x_on = RFCOMM_RPN_XON_CHAR;
-	पूर्ण
+	}
 
-	अगर (old->c_cc[VSTART] != new->c_cc[VSTART]) अणु
+	if (old->c_cc[VSTART] != new->c_cc[VSTART]) {
 		BT_DBG("XON custom");
 		x_off = new->c_cc[VSTART];
 		changes |= RFCOMM_RPN_PM_XOFF;
-	पूर्ण अन्यथा अणु
+	} else {
 		BT_DBG("XON default");
 		x_off = RFCOMM_RPN_XOFF_CHAR;
-	पूर्ण
+	}
 
 	/* Handle setting of stop bits */
-	अगर ((old->c_cflag & CSTOPB) != (new->c_cflag & CSTOPB))
+	if ((old->c_cflag & CSTOPB) != (new->c_cflag & CSTOPB))
 		changes |= RFCOMM_RPN_PM_STOP;
 
-	/* POSIX करोes not support 1.5 stop bits and RFCOMM करोes not
-	 * support 2 stop bits. So a request क्रम 2 stop bits माला_लो
+	/* POSIX does not support 1.5 stop bits and RFCOMM does not
+	 * support 2 stop bits. So a request for 2 stop bits gets
 	 * translated to 1.5 stop bits */
-	अगर (new->c_cflag & CSTOPB)
+	if (new->c_cflag & CSTOPB)
 		stop_bits = RFCOMM_RPN_STOP_15;
-	अन्यथा
+	else
 		stop_bits = RFCOMM_RPN_STOP_1;
 
 	/* Handle number of data bits [5-8] */
-	अगर ((old->c_cflag & CSIZE) != (new->c_cflag & CSIZE))
+	if ((old->c_cflag & CSIZE) != (new->c_cflag & CSIZE))
 		changes |= RFCOMM_RPN_PM_DATA;
 
-	चयन (new->c_cflag & CSIZE) अणु
-	हाल CS5:
+	switch (new->c_cflag & CSIZE) {
+	case CS5:
 		data_bits = RFCOMM_RPN_DATA_5;
-		अवरोध;
-	हाल CS6:
+		break;
+	case CS6:
 		data_bits = RFCOMM_RPN_DATA_6;
-		अवरोध;
-	हाल CS7:
+		break;
+	case CS7:
 		data_bits = RFCOMM_RPN_DATA_7;
-		अवरोध;
-	हाल CS8:
+		break;
+	case CS8:
 		data_bits = RFCOMM_RPN_DATA_8;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		data_bits = RFCOMM_RPN_DATA_8;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	/* Handle baudrate settings */
-	अगर (old_baud_rate != new_baud_rate)
+	if (old_baud_rate != new_baud_rate)
 		changes |= RFCOMM_RPN_PM_BITRATE;
 
-	चयन (new_baud_rate) अणु
-	हाल 2400:
+	switch (new_baud_rate) {
+	case 2400:
 		baud = RFCOMM_RPN_BR_2400;
-		अवरोध;
-	हाल 4800:
+		break;
+	case 4800:
 		baud = RFCOMM_RPN_BR_4800;
-		अवरोध;
-	हाल 7200:
+		break;
+	case 7200:
 		baud = RFCOMM_RPN_BR_7200;
-		अवरोध;
-	हाल 9600:
+		break;
+	case 9600:
 		baud = RFCOMM_RPN_BR_9600;
-		अवरोध;
-	हाल 19200:
+		break;
+	case 19200:
 		baud = RFCOMM_RPN_BR_19200;
-		अवरोध;
-	हाल 38400:
+		break;
+	case 38400:
 		baud = RFCOMM_RPN_BR_38400;
-		अवरोध;
-	हाल 57600:
+		break;
+	case 57600:
 		baud = RFCOMM_RPN_BR_57600;
-		अवरोध;
-	हाल 115200:
+		break;
+	case 115200:
 		baud = RFCOMM_RPN_BR_115200;
-		अवरोध;
-	हाल 230400:
+		break;
+	case 230400:
 		baud = RFCOMM_RPN_BR_230400;
-		अवरोध;
-	शेष:
-		/* 9600 is standard accordinag to the RFCOMM specअगरication */
+		break;
+	default:
+		/* 9600 is standard accordinag to the RFCOMM specification */
 		baud = RFCOMM_RPN_BR_9600;
-		अवरोध;
+		break;
 
-	पूर्ण
+	}
 
-	अगर (changes)
+	if (changes)
 		rfcomm_send_rpn(dev->dlc->session, 1, dev->dlc->dlci, baud,
 				data_bits, stop_bits, parity,
 				RFCOMM_RPN_FLOW_NONE, x_on, x_off, changes);
-पूर्ण
+}
 
-अटल व्योम rfcomm_tty_throttle(काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा rfcomm_dev *dev = (काष्ठा rfcomm_dev *) tty->driver_data;
+static void rfcomm_tty_throttle(struct tty_struct *tty)
+{
+	struct rfcomm_dev *dev = (struct rfcomm_dev *) tty->driver_data;
 
 	BT_DBG("tty %p dev %p", tty, dev);
 
 	rfcomm_dlc_throttle(dev->dlc);
-पूर्ण
+}
 
-अटल व्योम rfcomm_tty_unthrottle(काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा rfcomm_dev *dev = (काष्ठा rfcomm_dev *) tty->driver_data;
+static void rfcomm_tty_unthrottle(struct tty_struct *tty)
+{
+	struct rfcomm_dev *dev = (struct rfcomm_dev *) tty->driver_data;
 
 	BT_DBG("tty %p dev %p", tty, dev);
 
 	rfcomm_dlc_unthrottle(dev->dlc);
-पूर्ण
+}
 
-अटल पूर्णांक rfcomm_tty_अक्षरs_in_buffer(काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा rfcomm_dev *dev = (काष्ठा rfcomm_dev *) tty->driver_data;
-
-	BT_DBG("tty %p dev %p", tty, dev);
-
-	अगर (!dev || !dev->dlc)
-		वापस 0;
-
-	अगर (!skb_queue_empty(&dev->dlc->tx_queue))
-		वापस dev->dlc->mtu;
-
-	वापस 0;
-पूर्ण
-
-अटल व्योम rfcomm_tty_flush_buffer(काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा rfcomm_dev *dev = (काष्ठा rfcomm_dev *) tty->driver_data;
+static int rfcomm_tty_chars_in_buffer(struct tty_struct *tty)
+{
+	struct rfcomm_dev *dev = (struct rfcomm_dev *) tty->driver_data;
 
 	BT_DBG("tty %p dev %p", tty, dev);
 
-	अगर (!dev || !dev->dlc)
-		वापस;
+	if (!dev || !dev->dlc)
+		return 0;
+
+	if (!skb_queue_empty(&dev->dlc->tx_queue))
+		return dev->dlc->mtu;
+
+	return 0;
+}
+
+static void rfcomm_tty_flush_buffer(struct tty_struct *tty)
+{
+	struct rfcomm_dev *dev = (struct rfcomm_dev *) tty->driver_data;
+
+	BT_DBG("tty %p dev %p", tty, dev);
+
+	if (!dev || !dev->dlc)
+		return;
 
 	skb_queue_purge(&dev->dlc->tx_queue);
 	tty_wakeup(tty);
-पूर्ण
+}
 
-अटल व्योम rfcomm_tty_send_xअक्षर(काष्ठा tty_काष्ठा *tty, अक्षर ch)
-अणु
+static void rfcomm_tty_send_xchar(struct tty_struct *tty, char ch)
+{
 	BT_DBG("tty %p ch %c", tty, ch);
-पूर्ण
+}
 
-अटल व्योम rfcomm_tty_रुको_until_sent(काष्ठा tty_काष्ठा *tty, पूर्णांक समयout)
-अणु
-	BT_DBG("tty %p timeout %d", tty, समयout);
-पूर्ण
+static void rfcomm_tty_wait_until_sent(struct tty_struct *tty, int timeout)
+{
+	BT_DBG("tty %p timeout %d", tty, timeout);
+}
 
-अटल व्योम rfcomm_tty_hangup(काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा rfcomm_dev *dev = (काष्ठा rfcomm_dev *) tty->driver_data;
+static void rfcomm_tty_hangup(struct tty_struct *tty)
+{
+	struct rfcomm_dev *dev = (struct rfcomm_dev *) tty->driver_data;
 
 	BT_DBG("tty %p dev %p", tty, dev);
 
 	tty_port_hangup(&dev->port);
-पूर्ण
+}
 
-अटल पूर्णांक rfcomm_tty_tiocmget(काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा rfcomm_dev *dev = (काष्ठा rfcomm_dev *) tty->driver_data;
+static int rfcomm_tty_tiocmget(struct tty_struct *tty)
+{
+	struct rfcomm_dev *dev = (struct rfcomm_dev *) tty->driver_data;
 
 	BT_DBG("tty %p dev %p", tty, dev);
 
-	वापस dev->modem_status;
-पूर्ण
+	return dev->modem_status;
+}
 
-अटल पूर्णांक rfcomm_tty_tiocmset(काष्ठा tty_काष्ठा *tty, अचिन्हित पूर्णांक set, अचिन्हित पूर्णांक clear)
-अणु
-	काष्ठा rfcomm_dev *dev = (काष्ठा rfcomm_dev *) tty->driver_data;
-	काष्ठा rfcomm_dlc *dlc = dev->dlc;
+static int rfcomm_tty_tiocmset(struct tty_struct *tty, unsigned int set, unsigned int clear)
+{
+	struct rfcomm_dev *dev = (struct rfcomm_dev *) tty->driver_data;
+	struct rfcomm_dlc *dlc = dev->dlc;
 	u8 v24_sig;
 
 	BT_DBG("tty %p dev %p set 0x%02x clear 0x%02x", tty, dev, set, clear);
 
 	rfcomm_dlc_get_modem_status(dlc, &v24_sig);
 
-	अगर (set & TIOCM_DSR || set & TIOCM_DTR)
+	if (set & TIOCM_DSR || set & TIOCM_DTR)
 		v24_sig |= RFCOMM_V24_RTC;
-	अगर (set & TIOCM_RTS || set & TIOCM_CTS)
+	if (set & TIOCM_RTS || set & TIOCM_CTS)
 		v24_sig |= RFCOMM_V24_RTR;
-	अगर (set & TIOCM_RI)
+	if (set & TIOCM_RI)
 		v24_sig |= RFCOMM_V24_IC;
-	अगर (set & TIOCM_CD)
+	if (set & TIOCM_CD)
 		v24_sig |= RFCOMM_V24_DV;
 
-	अगर (clear & TIOCM_DSR || clear & TIOCM_DTR)
+	if (clear & TIOCM_DSR || clear & TIOCM_DTR)
 		v24_sig &= ~RFCOMM_V24_RTC;
-	अगर (clear & TIOCM_RTS || clear & TIOCM_CTS)
+	if (clear & TIOCM_RTS || clear & TIOCM_CTS)
 		v24_sig &= ~RFCOMM_V24_RTR;
-	अगर (clear & TIOCM_RI)
+	if (clear & TIOCM_RI)
 		v24_sig &= ~RFCOMM_V24_IC;
-	अगर (clear & TIOCM_CD)
+	if (clear & TIOCM_CD)
 		v24_sig &= ~RFCOMM_V24_DV;
 
 	rfcomm_dlc_set_modem_status(dlc, v24_sig);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* ---- TTY काष्ठाure ---- */
+/* ---- TTY structure ---- */
 
-अटल स्थिर काष्ठा tty_operations rfcomm_ops = अणु
-	.खोलो			= rfcomm_tty_खोलो,
-	.बंद			= rfcomm_tty_बंद,
-	.ग_लिखो			= rfcomm_tty_ग_लिखो,
-	.ग_लिखो_room		= rfcomm_tty_ग_लिखो_room,
-	.अक्षरs_in_buffer	= rfcomm_tty_अक्षरs_in_buffer,
+static const struct tty_operations rfcomm_ops = {
+	.open			= rfcomm_tty_open,
+	.close			= rfcomm_tty_close,
+	.write			= rfcomm_tty_write,
+	.write_room		= rfcomm_tty_write_room,
+	.chars_in_buffer	= rfcomm_tty_chars_in_buffer,
 	.flush_buffer		= rfcomm_tty_flush_buffer,
 	.ioctl			= rfcomm_tty_ioctl,
 	.throttle		= rfcomm_tty_throttle,
 	.unthrottle		= rfcomm_tty_unthrottle,
 	.set_termios		= rfcomm_tty_set_termios,
-	.send_xअक्षर		= rfcomm_tty_send_xअक्षर,
+	.send_xchar		= rfcomm_tty_send_xchar,
 	.hangup			= rfcomm_tty_hangup,
-	.रुको_until_sent	= rfcomm_tty_रुको_until_sent,
+	.wait_until_sent	= rfcomm_tty_wait_until_sent,
 	.tiocmget		= rfcomm_tty_tiocmget,
 	.tiocmset		= rfcomm_tty_tiocmset,
 	.install                = rfcomm_tty_install,
 	.cleanup                = rfcomm_tty_cleanup,
-पूर्ण;
+};
 
-पूर्णांक __init rfcomm_init_ttys(व्योम)
-अणु
-	पूर्णांक error;
+int __init rfcomm_init_ttys(void)
+{
+	int error;
 
 	rfcomm_tty_driver = alloc_tty_driver(RFCOMM_TTY_PORTS);
-	अगर (!rfcomm_tty_driver)
-		वापस -ENOMEM;
+	if (!rfcomm_tty_driver)
+		return -ENOMEM;
 
 	rfcomm_tty_driver->driver_name	= "rfcomm";
 	rfcomm_tty_driver->name		= "rfcomm";
@@ -1142,20 +1141,20 @@ out:
 	rfcomm_tty_driver->init_termios.c_lflag &= ~ICANON;
 	tty_set_operations(rfcomm_tty_driver, &rfcomm_ops);
 
-	error = tty_रेजिस्टर_driver(rfcomm_tty_driver);
-	अगर (error) अणु
+	error = tty_register_driver(rfcomm_tty_driver);
+	if (error) {
 		BT_ERR("Can't register RFCOMM TTY driver");
 		put_tty_driver(rfcomm_tty_driver);
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
 	BT_INFO("RFCOMM TTY layer initialized");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम rfcomm_cleanup_ttys(व्योम)
-अणु
-	tty_unरेजिस्टर_driver(rfcomm_tty_driver);
+void rfcomm_cleanup_ttys(void)
+{
+	tty_unregister_driver(rfcomm_tty_driver);
 	put_tty_driver(rfcomm_tty_driver);
-पूर्ण
+}

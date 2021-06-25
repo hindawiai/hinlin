@@ -1,267 +1,266 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * sdhci-pltfm.c Support क्रम SDHCI platक्रमm devices
+ * sdhci-pltfm.c Support for SDHCI platform devices
  * Copyright (c) 2009 Intel Corporation
  *
  * Copyright (c) 2007, 2011 Freescale Semiconductor, Inc.
  * Copyright (c) 2009 MontaVista Software, Inc.
  *
- * Authors: Xiaobo Xie <X.Xie@मुक्तscale.com>
+ * Authors: Xiaobo Xie <X.Xie@freescale.com>
  *	    Anton Vorontsov <avorontsov@ru.mvista.com>
  */
 
 /* Supports:
- * SDHCI platक्रमm devices
+ * SDHCI platform devices
  *
  * Inspired by sdhci-pci.c, by Pierre Ossman
  */
 
-#समावेश <linux/err.h>
-#समावेश <linux/module.h>
-#समावेश <linux/property.h>
-#समावेश <linux/of.h>
-#अगर_घोषित CONFIG_PPC
-#समावेश <यंत्र/machdep.h>
-#पूर्ण_अगर
-#समावेश "sdhci-pltfm.h"
+#include <linux/err.h>
+#include <linux/module.h>
+#include <linux/property.h>
+#include <linux/of.h>
+#ifdef CONFIG_PPC
+#include <asm/machdep.h>
+#endif
+#include "sdhci-pltfm.h"
 
-अचिन्हित पूर्णांक sdhci_pltfm_clk_get_max_घड़ी(काष्ठा sdhci_host *host)
-अणु
-	काष्ठा sdhci_pltfm_host *pltfm_host = sdhci_priv(host);
+unsigned int sdhci_pltfm_clk_get_max_clock(struct sdhci_host *host)
+{
+	struct sdhci_pltfm_host *pltfm_host = sdhci_priv(host);
 
-	वापस clk_get_rate(pltfm_host->clk);
-पूर्ण
-EXPORT_SYMBOL_GPL(sdhci_pltfm_clk_get_max_घड़ी);
+	return clk_get_rate(pltfm_host->clk);
+}
+EXPORT_SYMBOL_GPL(sdhci_pltfm_clk_get_max_clock);
 
-अटल स्थिर काष्ठा sdhci_ops sdhci_pltfm_ops = अणु
-	.set_घड़ी = sdhci_set_घड़ी,
+static const struct sdhci_ops sdhci_pltfm_ops = {
+	.set_clock = sdhci_set_clock,
 	.set_bus_width = sdhci_set_bus_width,
 	.reset = sdhci_reset,
-	.set_uhs_संकेतing = sdhci_set_uhs_संकेतing,
-पूर्ण;
+	.set_uhs_signaling = sdhci_set_uhs_signaling,
+};
 
-अटल bool sdhci_wp_inverted(काष्ठा device *dev)
-अणु
-	अगर (device_property_present(dev, "sdhci,wp-inverted") ||
+static bool sdhci_wp_inverted(struct device *dev)
+{
+	if (device_property_present(dev, "sdhci,wp-inverted") ||
 	    device_property_present(dev, "wp-inverted"))
-		वापस true;
+		return true;
 
-	/* Old device trees करोn't have the wp-inverted property. */
-#अगर_घोषित CONFIG_PPC
-	वापस machine_is(mpc837x_rdb) || machine_is(mpc837x_mds);
-#अन्यथा
-	वापस false;
-#पूर्ण_अगर /* CONFIG_PPC */
-पूर्ण
+	/* Old device trees don't have the wp-inverted property. */
+#ifdef CONFIG_PPC
+	return machine_is(mpc837x_rdb) || machine_is(mpc837x_mds);
+#else
+	return false;
+#endif /* CONFIG_PPC */
+}
 
-#अगर_घोषित CONFIG_OF
-अटल व्योम sdhci_get_compatibility(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा sdhci_host *host = platक्रमm_get_drvdata(pdev);
-	काष्ठा device_node *np = pdev->dev.of_node;
+#ifdef CONFIG_OF
+static void sdhci_get_compatibility(struct platform_device *pdev)
+{
+	struct sdhci_host *host = platform_get_drvdata(pdev);
+	struct device_node *np = pdev->dev.of_node;
 
-	अगर (!np)
-		वापस;
+	if (!np)
+		return;
 
-	अगर (of_device_is_compatible(np, "fsl,p2020-rev1-esdhc"))
+	if (of_device_is_compatible(np, "fsl,p2020-rev1-esdhc"))
 		host->quirks |= SDHCI_QUIRK_BROKEN_DMA;
 
-	अगर (of_device_is_compatible(np, "fsl,p2020-esdhc") ||
+	if (of_device_is_compatible(np, "fsl,p2020-esdhc") ||
 	    of_device_is_compatible(np, "fsl,p1010-esdhc") ||
 	    of_device_is_compatible(np, "fsl,t4240-esdhc") ||
 	    of_device_is_compatible(np, "fsl,mpc8536-esdhc"))
 		host->quirks |= SDHCI_QUIRK_BROKEN_TIMEOUT_VAL;
-पूर्ण
-#अन्यथा
-व्योम sdhci_get_compatibility(काष्ठा platक्रमm_device *pdev) अणुपूर्ण
-#पूर्ण_अगर /* CONFIG_OF */
+}
+#else
+void sdhci_get_compatibility(struct platform_device *pdev) {}
+#endif /* CONFIG_OF */
 
-व्योम sdhci_get_property(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा sdhci_host *host = platक्रमm_get_drvdata(pdev);
-	काष्ठा sdhci_pltfm_host *pltfm_host = sdhci_priv(host);
+void sdhci_get_property(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	struct sdhci_host *host = platform_get_drvdata(pdev);
+	struct sdhci_pltfm_host *pltfm_host = sdhci_priv(host);
 	u32 bus_width;
 
-	अगर (device_property_present(dev, "sdhci,auto-cmd12"))
+	if (device_property_present(dev, "sdhci,auto-cmd12"))
 		host->quirks |= SDHCI_QUIRK_MULTIBLOCK_READ_ACMD12;
 
-	अगर (device_property_present(dev, "sdhci,1-bit-only") ||
-	    (device_property_पढ़ो_u32(dev, "bus-width", &bus_width) == 0 &&
+	if (device_property_present(dev, "sdhci,1-bit-only") ||
+	    (device_property_read_u32(dev, "bus-width", &bus_width) == 0 &&
 	    bus_width == 1))
 		host->quirks |= SDHCI_QUIRK_FORCE_1_BIT_DATA;
 
-	अगर (sdhci_wp_inverted(dev))
+	if (sdhci_wp_inverted(dev))
 		host->quirks |= SDHCI_QUIRK_INVERTED_WRITE_PROTECT;
 
-	अगर (device_property_present(dev, "broken-cd"))
+	if (device_property_present(dev, "broken-cd"))
 		host->quirks |= SDHCI_QUIRK_BROKEN_CARD_DETECTION;
 
-	अगर (device_property_present(dev, "no-1-8-v"))
+	if (device_property_present(dev, "no-1-8-v"))
 		host->quirks2 |= SDHCI_QUIRK2_NO_1_8_V;
 
 	sdhci_get_compatibility(pdev);
 
-	device_property_पढ़ो_u32(dev, "clock-frequency", &pltfm_host->घड़ी);
+	device_property_read_u32(dev, "clock-frequency", &pltfm_host->clock);
 
-	अगर (device_property_present(dev, "keep-power-in-suspend"))
+	if (device_property_present(dev, "keep-power-in-suspend"))
 		host->mmc->pm_caps |= MMC_PM_KEEP_POWER;
 
-	अगर (device_property_पढ़ो_bool(dev, "wakeup-source") ||
-	    device_property_पढ़ो_bool(dev, "enable-sdio-wakeup")) /* legacy */
+	if (device_property_read_bool(dev, "wakeup-source") ||
+	    device_property_read_bool(dev, "enable-sdio-wakeup")) /* legacy */
 		host->mmc->pm_caps |= MMC_PM_WAKE_SDIO_IRQ;
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(sdhci_get_property);
 
-काष्ठा sdhci_host *sdhci_pltfm_init(काष्ठा platक्रमm_device *pdev,
-				    स्थिर काष्ठा sdhci_pltfm_data *pdata,
-				    माप_प्रकार priv_size)
-अणु
-	काष्ठा sdhci_host *host;
-	व्योम __iomem *ioaddr;
-	पूर्णांक irq, ret;
+struct sdhci_host *sdhci_pltfm_init(struct platform_device *pdev,
+				    const struct sdhci_pltfm_data *pdata,
+				    size_t priv_size)
+{
+	struct sdhci_host *host;
+	void __iomem *ioaddr;
+	int irq, ret;
 
-	ioaddr = devm_platक्रमm_ioremap_resource(pdev, 0);
-	अगर (IS_ERR(ioaddr)) अणु
+	ioaddr = devm_platform_ioremap_resource(pdev, 0);
+	if (IS_ERR(ioaddr)) {
 		ret = PTR_ERR(ioaddr);
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	irq = platक्रमm_get_irq(pdev, 0);
-	अगर (irq < 0) अणु
+	irq = platform_get_irq(pdev, 0);
+	if (irq < 0) {
 		ret = irq;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	host = sdhci_alloc_host(&pdev->dev,
-		माप(काष्ठा sdhci_pltfm_host) + priv_size);
+		sizeof(struct sdhci_pltfm_host) + priv_size);
 
-	अगर (IS_ERR(host)) अणु
+	if (IS_ERR(host)) {
 		ret = PTR_ERR(host);
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	host->ioaddr = ioaddr;
 	host->irq = irq;
 	host->hw_name = dev_name(&pdev->dev);
-	अगर (pdata && pdata->ops)
+	if (pdata && pdata->ops)
 		host->ops = pdata->ops;
-	अन्यथा
+	else
 		host->ops = &sdhci_pltfm_ops;
-	अगर (pdata) अणु
+	if (pdata) {
 		host->quirks = pdata->quirks;
 		host->quirks2 = pdata->quirks2;
-	पूर्ण
+	}
 
-	platक्रमm_set_drvdata(pdev, host);
+	platform_set_drvdata(pdev, host);
 
-	वापस host;
+	return host;
 err:
 	dev_err(&pdev->dev, "%s failed %d\n", __func__, ret);
-	वापस ERR_PTR(ret);
-पूर्ण
+	return ERR_PTR(ret);
+}
 EXPORT_SYMBOL_GPL(sdhci_pltfm_init);
 
-व्योम sdhci_pltfm_मुक्त(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा sdhci_host *host = platक्रमm_get_drvdata(pdev);
+void sdhci_pltfm_free(struct platform_device *pdev)
+{
+	struct sdhci_host *host = platform_get_drvdata(pdev);
 
-	sdhci_मुक्त_host(host);
-पूर्ण
-EXPORT_SYMBOL_GPL(sdhci_pltfm_मुक्त);
+	sdhci_free_host(host);
+}
+EXPORT_SYMBOL_GPL(sdhci_pltfm_free);
 
-पूर्णांक sdhci_pltfm_रेजिस्टर(काष्ठा platक्रमm_device *pdev,
-			स्थिर काष्ठा sdhci_pltfm_data *pdata,
-			माप_प्रकार priv_size)
-अणु
-	काष्ठा sdhci_host *host;
-	पूर्णांक ret = 0;
+int sdhci_pltfm_register(struct platform_device *pdev,
+			const struct sdhci_pltfm_data *pdata,
+			size_t priv_size)
+{
+	struct sdhci_host *host;
+	int ret = 0;
 
 	host = sdhci_pltfm_init(pdev, pdata, priv_size);
-	अगर (IS_ERR(host))
-		वापस PTR_ERR(host);
+	if (IS_ERR(host))
+		return PTR_ERR(host);
 
 	sdhci_get_property(pdev);
 
 	ret = sdhci_add_host(host);
-	अगर (ret)
-		sdhci_pltfm_मुक्त(pdev);
+	if (ret)
+		sdhci_pltfm_free(pdev);
 
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(sdhci_pltfm_रेजिस्टर);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(sdhci_pltfm_register);
 
-पूर्णांक sdhci_pltfm_unरेजिस्टर(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा sdhci_host *host = platक्रमm_get_drvdata(pdev);
-	काष्ठा sdhci_pltfm_host *pltfm_host = sdhci_priv(host);
-	पूर्णांक dead = (पढ़ोl(host->ioaddr + SDHCI_INT_STATUS) == 0xffffffff);
+int sdhci_pltfm_unregister(struct platform_device *pdev)
+{
+	struct sdhci_host *host = platform_get_drvdata(pdev);
+	struct sdhci_pltfm_host *pltfm_host = sdhci_priv(host);
+	int dead = (readl(host->ioaddr + SDHCI_INT_STATUS) == 0xffffffff);
 
-	sdhci_हटाओ_host(host, dead);
+	sdhci_remove_host(host, dead);
 	clk_disable_unprepare(pltfm_host->clk);
-	sdhci_pltfm_मुक्त(pdev);
+	sdhci_pltfm_free(pdev);
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(sdhci_pltfm_unरेजिस्टर);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(sdhci_pltfm_unregister);
 
-#अगर_घोषित CONFIG_PM_SLEEP
-पूर्णांक sdhci_pltfm_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा sdhci_host *host = dev_get_drvdata(dev);
-	काष्ठा sdhci_pltfm_host *pltfm_host = sdhci_priv(host);
-	पूर्णांक ret;
+#ifdef CONFIG_PM_SLEEP
+int sdhci_pltfm_suspend(struct device *dev)
+{
+	struct sdhci_host *host = dev_get_drvdata(dev);
+	struct sdhci_pltfm_host *pltfm_host = sdhci_priv(host);
+	int ret;
 
-	अगर (host->tuning_mode != SDHCI_TUNING_MODE_3)
+	if (host->tuning_mode != SDHCI_TUNING_MODE_3)
 		mmc_retune_needed(host->mmc);
 
 	ret = sdhci_suspend_host(host);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	clk_disable_unprepare(pltfm_host->clk);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(sdhci_pltfm_suspend);
 
-पूर्णांक sdhci_pltfm_resume(काष्ठा device *dev)
-अणु
-	काष्ठा sdhci_host *host = dev_get_drvdata(dev);
-	काष्ठा sdhci_pltfm_host *pltfm_host = sdhci_priv(host);
-	पूर्णांक ret;
+int sdhci_pltfm_resume(struct device *dev)
+{
+	struct sdhci_host *host = dev_get_drvdata(dev);
+	struct sdhci_pltfm_host *pltfm_host = sdhci_priv(host);
+	int ret;
 
 	ret = clk_prepare_enable(pltfm_host->clk);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = sdhci_resume_host(host);
-	अगर (ret)
+	if (ret)
 		clk_disable_unprepare(pltfm_host->clk);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(sdhci_pltfm_resume);
-#पूर्ण_अगर
+#endif
 
-स्थिर काष्ठा dev_pm_ops sdhci_pltfm_pmops = अणु
+const struct dev_pm_ops sdhci_pltfm_pmops = {
 	SET_SYSTEM_SLEEP_PM_OPS(sdhci_pltfm_suspend, sdhci_pltfm_resume)
-पूर्ण;
+};
 EXPORT_SYMBOL_GPL(sdhci_pltfm_pmops);
 
-अटल पूर्णांक __init sdhci_pltfm_drv_init(व्योम)
-अणु
+static int __init sdhci_pltfm_drv_init(void)
+{
 	pr_info("sdhci-pltfm: SDHCI platform and OF driver helper\n");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 module_init(sdhci_pltfm_drv_init);
 
-अटल व्योम __निकास sdhci_pltfm_drv_निकास(व्योम)
-अणु
-पूर्ण
-module_निकास(sdhci_pltfm_drv_निकास);
+static void __exit sdhci_pltfm_drv_exit(void)
+{
+}
+module_exit(sdhci_pltfm_drv_exit);
 
 MODULE_DESCRIPTION("SDHCI platform and OF driver helper");
 MODULE_AUTHOR("Intel Corporation");

@@ -1,55 +1,54 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
- * Hardware monitoring driver क्रम PMBus devices
+ * Hardware monitoring driver for PMBus devices
  *
  * Copyright (c) 2010, 2011 Ericsson AB.
  */
 
-#अगर_अघोषित _PMBUS_H_
-#घोषणा _PMBUS_H_
+#ifndef _PMBUS_H_
+#define _PMBUS_H_
 
-#समावेश <linux/bits.h>
+#include <linux/bits.h>
 
 /* flags */
 
 /*
  * PMBUS_SKIP_STATUS_CHECK
  *
- * During रेजिस्टर detection, skip checking the status रेजिस्टर क्रम
+ * During register detection, skip checking the status register for
  * communication or command errors.
  *
- * Some PMBus chips respond with valid data when trying to पढ़ो an unsupported
- * रेजिस्टर. For such chips, checking the status रेजिस्टर is mandatory when
- * trying to determine अगर a chip रेजिस्टर exists or not.
- * Other PMBus chips करोn't support the STATUS_CML रेजिस्टर, or report
- * communication errors क्रम no explicable reason. For such chips, checking
- * the status रेजिस्टर must be disabled.
+ * Some PMBus chips respond with valid data when trying to read an unsupported
+ * register. For such chips, checking the status register is mandatory when
+ * trying to determine if a chip register exists or not.
+ * Other PMBus chips don't support the STATUS_CML register, or report
+ * communication errors for no explicable reason. For such chips, checking
+ * the status register must be disabled.
  */
-#घोषणा PMBUS_SKIP_STATUS_CHECK	BIT(0)
+#define PMBUS_SKIP_STATUS_CHECK	BIT(0)
 
 /*
  * PMBUS_WRITE_PROTECTED
- * Set अगर the chip is ग_लिखो रक्षित and ग_लिखो protection is not determined
+ * Set if the chip is write protected and write protection is not determined
  * by the standard WRITE_PROTECT command.
  */
-#घोषणा PMBUS_WRITE_PROTECTED	BIT(1)
+#define PMBUS_WRITE_PROTECTED	BIT(1)
 
 /*
  * PMBUS_NO_CAPABILITY
  *
- * Some PMBus chips करोn't respond with valid data when पढ़ोing the CAPABILITY
- * रेजिस्टर. For such chips, this flag should be set so that the PMBus core
- * driver करोesn't use CAPABILITY to determine it's behavior.
+ * Some PMBus chips don't respond with valid data when reading the CAPABILITY
+ * register. For such chips, this flag should be set so that the PMBus core
+ * driver doesn't use CAPABILITY to determine it's behavior.
  */
-#घोषणा PMBUS_NO_CAPABILITY			BIT(2)
+#define PMBUS_NO_CAPABILITY			BIT(2)
 
-काष्ठा pmbus_platक्रमm_data अणु
-	u32 flags;		/* Device specअगरic flags */
+struct pmbus_platform_data {
+	u32 flags;		/* Device specific flags */
 
 	/* regulator support */
-	पूर्णांक num_regulators;
-	काष्ठा regulator_init_data *reg_init_data;
-पूर्ण;
+	int num_regulators;
+	struct regulator_init_data *reg_init_data;
+};
 
-#पूर्ण_अगर /* _PMBUS_H_ */
+#endif /* _PMBUS_H_ */

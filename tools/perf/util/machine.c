@@ -1,101 +1,100 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <dirent.h>
-#समावेश <त्रुटिसं.स>
-#समावेश <पूर्णांकtypes.h>
-#समावेश <regex.h>
-#समावेश <मानककोष.स>
-#समावेश "callchain.h"
-#समावेश "debug.h"
-#समावेश "dso.h"
-#समावेश "env.h"
-#समावेश "event.h"
-#समावेश "evsel.h"
-#समावेश "hist.h"
-#समावेश "machine.h"
-#समावेश "map.h"
-#समावेश "map_symbol.h"
-#समावेश "branch.h"
-#समावेश "mem-events.h"
-#समावेश "srcline.h"
-#समावेश "symbol.h"
-#समावेश "sort.h"
-#समावेश "strlist.h"
-#समावेश "target.h"
-#समावेश "thread.h"
-#समावेश "util.h"
-#समावेश "vdso.h"
-#समावेश <stdbool.h>
-#समावेश <sys/types.h>
-#समावेश <sys/स्थिति.स>
-#समावेश <unistd.h>
-#समावेश "unwind.h"
-#समावेश "linux/hash.h"
-#समावेश "asm/bug.h"
-#समावेश "bpf-event.h"
-#समावेश <पूर्णांकernal/lib.h> // page_size
-#समावेश "cgroup.h"
+// SPDX-License-Identifier: GPL-2.0
+#include <dirent.h>
+#include <errno.h>
+#include <inttypes.h>
+#include <regex.h>
+#include <stdlib.h>
+#include "callchain.h"
+#include "debug.h"
+#include "dso.h"
+#include "env.h"
+#include "event.h"
+#include "evsel.h"
+#include "hist.h"
+#include "machine.h"
+#include "map.h"
+#include "map_symbol.h"
+#include "branch.h"
+#include "mem-events.h"
+#include "srcline.h"
+#include "symbol.h"
+#include "sort.h"
+#include "strlist.h"
+#include "target.h"
+#include "thread.h"
+#include "util.h"
+#include "vdso.h"
+#include <stdbool.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include "unwind.h"
+#include "linux/hash.h"
+#include "asm/bug.h"
+#include "bpf-event.h"
+#include <internal/lib.h> // page_size
+#include "cgroup.h"
 
-#समावेश <linux/प्रकार.स>
-#समावेश <symbol/kallsyms.h>
-#समावेश <linux/mman.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/zभाग.स>
+#include <linux/ctype.h>
+#include <symbol/kallsyms.h>
+#include <linux/mman.h>
+#include <linux/string.h>
+#include <linux/zalloc.h>
 
-अटल व्योम __machine__हटाओ_thपढ़ो(काष्ठा machine *machine, काष्ठा thपढ़ो *th, bool lock);
+static void __machine__remove_thread(struct machine *machine, struct thread *th, bool lock);
 
-अटल काष्ठा dso *machine__kernel_dso(काष्ठा machine *machine)
-अणु
-	वापस machine->vmlinux_map->dso;
-पूर्ण
+static struct dso *machine__kernel_dso(struct machine *machine)
+{
+	return machine->vmlinux_map->dso;
+}
 
-अटल व्योम dsos__init(काष्ठा dsos *dsos)
-अणु
+static void dsos__init(struct dsos *dsos)
+{
 	INIT_LIST_HEAD(&dsos->head);
 	dsos->root = RB_ROOT;
 	init_rwsem(&dsos->lock);
-पूर्ण
+}
 
-अटल व्योम machine__thपढ़ोs_init(काष्ठा machine *machine)
-अणु
-	पूर्णांक i;
+static void machine__threads_init(struct machine *machine)
+{
+	int i;
 
-	क्रम (i = 0; i < THREADS__TABLE_SIZE; i++) अणु
-		काष्ठा thपढ़ोs *thपढ़ोs = &machine->thपढ़ोs[i];
-		thपढ़ोs->entries = RB_ROOT_CACHED;
-		init_rwsem(&thपढ़ोs->lock);
-		thपढ़ोs->nr = 0;
-		INIT_LIST_HEAD(&thपढ़ोs->dead);
-		thपढ़ोs->last_match = शून्य;
-	पूर्ण
-पूर्ण
+	for (i = 0; i < THREADS__TABLE_SIZE; i++) {
+		struct threads *threads = &machine->threads[i];
+		threads->entries = RB_ROOT_CACHED;
+		init_rwsem(&threads->lock);
+		threads->nr = 0;
+		INIT_LIST_HEAD(&threads->dead);
+		threads->last_match = NULL;
+	}
+}
 
-अटल पूर्णांक machine__set_mmap_name(काष्ठा machine *machine)
-अणु
-	अगर (machine__is_host(machine))
+static int machine__set_mmap_name(struct machine *machine)
+{
+	if (machine__is_host(machine))
 		machine->mmap_name = strdup("[kernel.kallsyms]");
-	अन्यथा अगर (machine__is_शेष_guest(machine))
+	else if (machine__is_default_guest(machine))
 		machine->mmap_name = strdup("[guest.kernel.kallsyms]");
-	अन्यथा अगर (aप्र_लिखो(&machine->mmap_name, "[guest.kernel.kallsyms.%d]",
+	else if (asprintf(&machine->mmap_name, "[guest.kernel.kallsyms.%d]",
 			  machine->pid) < 0)
-		machine->mmap_name = शून्य;
+		machine->mmap_name = NULL;
 
-	वापस machine->mmap_name ? 0 : -ENOMEM;
-पूर्ण
+	return machine->mmap_name ? 0 : -ENOMEM;
+}
 
-पूर्णांक machine__init(काष्ठा machine *machine, स्थिर अक्षर *root_dir, pid_t pid)
-अणु
-	पूर्णांक err = -ENOMEM;
+int machine__init(struct machine *machine, const char *root_dir, pid_t pid)
+{
+	int err = -ENOMEM;
 
-	स_रखो(machine, 0, माप(*machine));
+	memset(machine, 0, sizeof(*machine));
 	maps__init(&machine->kmaps, machine);
 	RB_CLEAR_NODE(&machine->rb_node);
 	dsos__init(&machine->dsos);
 
-	machine__thपढ़ोs_init(machine);
+	machine__threads_init(machine);
 
-	machine->vdso_info = शून्य;
-	machine->env = शून्य;
+	machine->vdso_info = NULL;
+	machine->env = NULL;
 
 	machine->pid = pid;
 
@@ -103,563 +102,563 @@
 	machine->kptr_restrict_warned = false;
 	machine->comm_exec = false;
 	machine->kernel_start = 0;
-	machine->vmlinux_map = शून्य;
+	machine->vmlinux_map = NULL;
 
 	machine->root_dir = strdup(root_dir);
-	अगर (machine->root_dir == शून्य)
-		वापस -ENOMEM;
+	if (machine->root_dir == NULL)
+		return -ENOMEM;
 
-	अगर (machine__set_mmap_name(machine))
-		जाओ out;
+	if (machine__set_mmap_name(machine))
+		goto out;
 
-	अगर (pid != HOST_KERNEL_ID) अणु
-		काष्ठा thपढ़ो *thपढ़ो = machine__findnew_thपढ़ो(machine, -1,
+	if (pid != HOST_KERNEL_ID) {
+		struct thread *thread = machine__findnew_thread(machine, -1,
 								pid);
-		अक्षर comm[64];
+		char comm[64];
 
-		अगर (thपढ़ो == शून्य)
-			जाओ out;
+		if (thread == NULL)
+			goto out;
 
-		snम_लिखो(comm, माप(comm), "[guest/%d]", pid);
-		thपढ़ो__set_comm(thपढ़ो, comm, 0);
-		thपढ़ो__put(thपढ़ो);
-	पूर्ण
+		snprintf(comm, sizeof(comm), "[guest/%d]", pid);
+		thread__set_comm(thread, comm, 0);
+		thread__put(thread);
+	}
 
-	machine->current_tid = शून्य;
+	machine->current_tid = NULL;
 	err = 0;
 
 out:
-	अगर (err) अणु
-		zमुक्त(&machine->root_dir);
-		zमुक्त(&machine->mmap_name);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	if (err) {
+		zfree(&machine->root_dir);
+		zfree(&machine->mmap_name);
+	}
+	return 0;
+}
 
-काष्ठा machine *machine__new_host(व्योम)
-अणु
-	काष्ठा machine *machine = दो_स्मृति(माप(*machine));
+struct machine *machine__new_host(void)
+{
+	struct machine *machine = malloc(sizeof(*machine));
 
-	अगर (machine != शून्य) अणु
+	if (machine != NULL) {
 		machine__init(machine, "", HOST_KERNEL_ID);
 
-		अगर (machine__create_kernel_maps(machine) < 0)
-			जाओ out_delete;
-	पूर्ण
+		if (machine__create_kernel_maps(machine) < 0)
+			goto out_delete;
+	}
 
-	वापस machine;
+	return machine;
 out_delete:
-	मुक्त(machine);
-	वापस शून्य;
-पूर्ण
+	free(machine);
+	return NULL;
+}
 
-काष्ठा machine *machine__new_kallsyms(व्योम)
-अणु
-	काष्ठा machine *machine = machine__new_host();
+struct machine *machine__new_kallsyms(void)
+{
+	struct machine *machine = machine__new_host();
 	/*
 	 * FIXME:
-	 * 1) We should चयन to machine__load_kallsyms(), i.e. not explicitly
-	 *    ask क्रम not using the kcore parsing code, once this one is fixed
+	 * 1) We should switch to machine__load_kallsyms(), i.e. not explicitly
+	 *    ask for not using the kcore parsing code, once this one is fixed
 	 *    to create a map per module.
 	 */
-	अगर (machine && machine__load_kallsyms(machine, "/proc/kallsyms") <= 0) अणु
+	if (machine && machine__load_kallsyms(machine, "/proc/kallsyms") <= 0) {
 		machine__delete(machine);
-		machine = शून्य;
-	पूर्ण
+		machine = NULL;
+	}
 
-	वापस machine;
-पूर्ण
+	return machine;
+}
 
-अटल व्योम dsos__purge(काष्ठा dsos *dsos)
-अणु
-	काष्ठा dso *pos, *n;
+static void dsos__purge(struct dsos *dsos)
+{
+	struct dso *pos, *n;
 
-	करोwn_ग_लिखो(&dsos->lock);
+	down_write(&dsos->lock);
 
-	list_क्रम_each_entry_safe(pos, n, &dsos->head, node) अणु
+	list_for_each_entry_safe(pos, n, &dsos->head, node) {
 		RB_CLEAR_NODE(&pos->rb_node);
-		pos->root = शून्य;
+		pos->root = NULL;
 		list_del_init(&pos->node);
 		dso__put(pos);
-	पूर्ण
+	}
 
-	up_ग_लिखो(&dsos->lock);
-पूर्ण
+	up_write(&dsos->lock);
+}
 
-अटल व्योम dsos__निकास(काष्ठा dsos *dsos)
-अणु
+static void dsos__exit(struct dsos *dsos)
+{
 	dsos__purge(dsos);
-	निकास_rwsem(&dsos->lock);
-पूर्ण
+	exit_rwsem(&dsos->lock);
+}
 
-व्योम machine__delete_thपढ़ोs(काष्ठा machine *machine)
-अणु
-	काष्ठा rb_node *nd;
-	पूर्णांक i;
+void machine__delete_threads(struct machine *machine)
+{
+	struct rb_node *nd;
+	int i;
 
-	क्रम (i = 0; i < THREADS__TABLE_SIZE; i++) अणु
-		काष्ठा thपढ़ोs *thपढ़ोs = &machine->thपढ़ोs[i];
-		करोwn_ग_लिखो(&thपढ़ोs->lock);
-		nd = rb_first_cached(&thपढ़ोs->entries);
-		जबतक (nd) अणु
-			काष्ठा thपढ़ो *t = rb_entry(nd, काष्ठा thपढ़ो, rb_node);
+	for (i = 0; i < THREADS__TABLE_SIZE; i++) {
+		struct threads *threads = &machine->threads[i];
+		down_write(&threads->lock);
+		nd = rb_first_cached(&threads->entries);
+		while (nd) {
+			struct thread *t = rb_entry(nd, struct thread, rb_node);
 
 			nd = rb_next(nd);
-			__machine__हटाओ_thपढ़ो(machine, t, false);
-		पूर्ण
-		up_ग_लिखो(&thपढ़ोs->lock);
-	पूर्ण
-पूर्ण
+			__machine__remove_thread(machine, t, false);
+		}
+		up_write(&threads->lock);
+	}
+}
 
-व्योम machine__निकास(काष्ठा machine *machine)
-अणु
-	पूर्णांक i;
+void machine__exit(struct machine *machine)
+{
+	int i;
 
-	अगर (machine == शून्य)
-		वापस;
+	if (machine == NULL)
+		return;
 
 	machine__destroy_kernel_maps(machine);
-	maps__निकास(&machine->kmaps);
-	dsos__निकास(&machine->dsos);
-	machine__निकास_vdso(machine);
-	zमुक्त(&machine->root_dir);
-	zमुक्त(&machine->mmap_name);
-	zमुक्त(&machine->current_tid);
+	maps__exit(&machine->kmaps);
+	dsos__exit(&machine->dsos);
+	machine__exit_vdso(machine);
+	zfree(&machine->root_dir);
+	zfree(&machine->mmap_name);
+	zfree(&machine->current_tid);
 
-	क्रम (i = 0; i < THREADS__TABLE_SIZE; i++) अणु
-		काष्ठा thपढ़ोs *thपढ़ोs = &machine->thपढ़ोs[i];
-		काष्ठा thपढ़ो *thपढ़ो, *n;
+	for (i = 0; i < THREADS__TABLE_SIZE; i++) {
+		struct threads *threads = &machine->threads[i];
+		struct thread *thread, *n;
 		/*
-		 * Forget about the dead, at this poपूर्णांक whatever thपढ़ोs were
+		 * Forget about the dead, at this point whatever threads were
 		 * left in the dead lists better have a reference count taken
 		 * by who is using them, and then, when they drop those references
-		 * and it finally hits zero, thपढ़ो__put() will check and see that
-		 * its not in the dead thपढ़ोs list and will not try to हटाओ it
-		 * from there, just calling thपढ़ो__delete() straight away.
+		 * and it finally hits zero, thread__put() will check and see that
+		 * its not in the dead threads list and will not try to remove it
+		 * from there, just calling thread__delete() straight away.
 		 */
-		list_क्रम_each_entry_safe(thपढ़ो, n, &thपढ़ोs->dead, node)
-			list_del_init(&thपढ़ो->node);
+		list_for_each_entry_safe(thread, n, &threads->dead, node)
+			list_del_init(&thread->node);
 
-		निकास_rwsem(&thपढ़ोs->lock);
-	पूर्ण
-पूर्ण
+		exit_rwsem(&threads->lock);
+	}
+}
 
-व्योम machine__delete(काष्ठा machine *machine)
-अणु
-	अगर (machine) अणु
-		machine__निकास(machine);
-		मुक्त(machine);
-	पूर्ण
-पूर्ण
+void machine__delete(struct machine *machine)
+{
+	if (machine) {
+		machine__exit(machine);
+		free(machine);
+	}
+}
 
-व्योम machines__init(काष्ठा machines *machines)
-अणु
+void machines__init(struct machines *machines)
+{
 	machine__init(&machines->host, "", HOST_KERNEL_ID);
 	machines->guests = RB_ROOT_CACHED;
-पूर्ण
+}
 
-व्योम machines__निकास(काष्ठा machines *machines)
-अणु
-	machine__निकास(&machines->host);
-	/* XXX निकास guest */
-पूर्ण
+void machines__exit(struct machines *machines)
+{
+	machine__exit(&machines->host);
+	/* XXX exit guest */
+}
 
-काष्ठा machine *machines__add(काष्ठा machines *machines, pid_t pid,
-			      स्थिर अक्षर *root_dir)
-अणु
-	काष्ठा rb_node **p = &machines->guests.rb_root.rb_node;
-	काष्ठा rb_node *parent = शून्य;
-	काष्ठा machine *pos, *machine = दो_स्मृति(माप(*machine));
-	bool lefपंचांगost = true;
+struct machine *machines__add(struct machines *machines, pid_t pid,
+			      const char *root_dir)
+{
+	struct rb_node **p = &machines->guests.rb_root.rb_node;
+	struct rb_node *parent = NULL;
+	struct machine *pos, *machine = malloc(sizeof(*machine));
+	bool leftmost = true;
 
-	अगर (machine == शून्य)
-		वापस शून्य;
+	if (machine == NULL)
+		return NULL;
 
-	अगर (machine__init(machine, root_dir, pid) != 0) अणु
-		मुक्त(machine);
-		वापस शून्य;
-	पूर्ण
+	if (machine__init(machine, root_dir, pid) != 0) {
+		free(machine);
+		return NULL;
+	}
 
-	जबतक (*p != शून्य) अणु
+	while (*p != NULL) {
 		parent = *p;
-		pos = rb_entry(parent, काष्ठा machine, rb_node);
-		अगर (pid < pos->pid)
+		pos = rb_entry(parent, struct machine, rb_node);
+		if (pid < pos->pid)
 			p = &(*p)->rb_left;
-		अन्यथा अणु
+		else {
 			p = &(*p)->rb_right;
-			lefपंचांगost = false;
-		पूर्ण
-	पूर्ण
+			leftmost = false;
+		}
+	}
 
 	rb_link_node(&machine->rb_node, parent, p);
-	rb_insert_color_cached(&machine->rb_node, &machines->guests, lefपंचांगost);
+	rb_insert_color_cached(&machine->rb_node, &machines->guests, leftmost);
 
-	वापस machine;
-पूर्ण
+	return machine;
+}
 
-व्योम machines__set_comm_exec(काष्ठा machines *machines, bool comm_exec)
-अणु
-	काष्ठा rb_node *nd;
+void machines__set_comm_exec(struct machines *machines, bool comm_exec)
+{
+	struct rb_node *nd;
 
 	machines->host.comm_exec = comm_exec;
 
-	क्रम (nd = rb_first_cached(&machines->guests); nd; nd = rb_next(nd)) अणु
-		काष्ठा machine *machine = rb_entry(nd, काष्ठा machine, rb_node);
+	for (nd = rb_first_cached(&machines->guests); nd; nd = rb_next(nd)) {
+		struct machine *machine = rb_entry(nd, struct machine, rb_node);
 
 		machine->comm_exec = comm_exec;
-	पूर्ण
-पूर्ण
+	}
+}
 
-काष्ठा machine *machines__find(काष्ठा machines *machines, pid_t pid)
-अणु
-	काष्ठा rb_node **p = &machines->guests.rb_root.rb_node;
-	काष्ठा rb_node *parent = शून्य;
-	काष्ठा machine *machine;
-	काष्ठा machine *शेष_machine = शून्य;
+struct machine *machines__find(struct machines *machines, pid_t pid)
+{
+	struct rb_node **p = &machines->guests.rb_root.rb_node;
+	struct rb_node *parent = NULL;
+	struct machine *machine;
+	struct machine *default_machine = NULL;
 
-	अगर (pid == HOST_KERNEL_ID)
-		वापस &machines->host;
+	if (pid == HOST_KERNEL_ID)
+		return &machines->host;
 
-	जबतक (*p != शून्य) अणु
+	while (*p != NULL) {
 		parent = *p;
-		machine = rb_entry(parent, काष्ठा machine, rb_node);
-		अगर (pid < machine->pid)
+		machine = rb_entry(parent, struct machine, rb_node);
+		if (pid < machine->pid)
 			p = &(*p)->rb_left;
-		अन्यथा अगर (pid > machine->pid)
+		else if (pid > machine->pid)
 			p = &(*p)->rb_right;
-		अन्यथा
-			वापस machine;
-		अगर (!machine->pid)
-			शेष_machine = machine;
-	पूर्ण
+		else
+			return machine;
+		if (!machine->pid)
+			default_machine = machine;
+	}
 
-	वापस शेष_machine;
-पूर्ण
+	return default_machine;
+}
 
-काष्ठा machine *machines__findnew(काष्ठा machines *machines, pid_t pid)
-अणु
-	अक्षर path[PATH_MAX];
-	स्थिर अक्षर *root_dir = "";
-	काष्ठा machine *machine = machines__find(machines, pid);
+struct machine *machines__findnew(struct machines *machines, pid_t pid)
+{
+	char path[PATH_MAX];
+	const char *root_dir = "";
+	struct machine *machine = machines__find(machines, pid);
 
-	अगर (machine && (machine->pid == pid))
-		जाओ out;
+	if (machine && (machine->pid == pid))
+		goto out;
 
-	अगर ((pid != HOST_KERNEL_ID) &&
+	if ((pid != HOST_KERNEL_ID) &&
 	    (pid != DEFAULT_GUEST_KERNEL_ID) &&
-	    (symbol_conf.guesपंचांगount)) अणु
-		प्र_लिखो(path, "%s/%d", symbol_conf.guesपंचांगount, pid);
-		अगर (access(path, R_OK)) अणु
-			अटल काष्ठा strlist *seen;
+	    (symbol_conf.guestmount)) {
+		sprintf(path, "%s/%d", symbol_conf.guestmount, pid);
+		if (access(path, R_OK)) {
+			static struct strlist *seen;
 
-			अगर (!seen)
-				seen = strlist__new(शून्य, शून्य);
+			if (!seen)
+				seen = strlist__new(NULL, NULL);
 
-			अगर (!strlist__has_entry(seen, path)) अणु
+			if (!strlist__has_entry(seen, path)) {
 				pr_err("Can't access file %s\n", path);
 				strlist__add(seen, path);
-			पूर्ण
-			machine = शून्य;
-			जाओ out;
-		पूर्ण
+			}
+			machine = NULL;
+			goto out;
+		}
 		root_dir = path;
-	पूर्ण
+	}
 
 	machine = machines__add(machines, pid, root_dir);
 out:
-	वापस machine;
-पूर्ण
+	return machine;
+}
 
-काष्ठा machine *machines__find_guest(काष्ठा machines *machines, pid_t pid)
-अणु
-	काष्ठा machine *machine = machines__find(machines, pid);
+struct machine *machines__find_guest(struct machines *machines, pid_t pid)
+{
+	struct machine *machine = machines__find(machines, pid);
 
-	अगर (!machine)
+	if (!machine)
 		machine = machines__findnew(machines, DEFAULT_GUEST_KERNEL_ID);
-	वापस machine;
-पूर्ण
+	return machine;
+}
 
-व्योम machines__process_guests(काष्ठा machines *machines,
-			      machine__process_t process, व्योम *data)
-अणु
-	काष्ठा rb_node *nd;
+void machines__process_guests(struct machines *machines,
+			      machine__process_t process, void *data)
+{
+	struct rb_node *nd;
 
-	क्रम (nd = rb_first_cached(&machines->guests); nd; nd = rb_next(nd)) अणु
-		काष्ठा machine *pos = rb_entry(nd, काष्ठा machine, rb_node);
+	for (nd = rb_first_cached(&machines->guests); nd; nd = rb_next(nd)) {
+		struct machine *pos = rb_entry(nd, struct machine, rb_node);
 		process(pos, data);
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम machines__set_id_hdr_size(काष्ठा machines *machines, u16 id_hdr_size)
-अणु
-	काष्ठा rb_node *node;
-	काष्ठा machine *machine;
+void machines__set_id_hdr_size(struct machines *machines, u16 id_hdr_size)
+{
+	struct rb_node *node;
+	struct machine *machine;
 
 	machines->host.id_hdr_size = id_hdr_size;
 
-	क्रम (node = rb_first_cached(&machines->guests); node;
-	     node = rb_next(node)) अणु
-		machine = rb_entry(node, काष्ठा machine, rb_node);
+	for (node = rb_first_cached(&machines->guests); node;
+	     node = rb_next(node)) {
+		machine = rb_entry(node, struct machine, rb_node);
 		machine->id_hdr_size = id_hdr_size;
-	पूर्ण
+	}
 
-	वापस;
-पूर्ण
+	return;
+}
 
-अटल व्योम machine__update_thपढ़ो_pid(काष्ठा machine *machine,
-				       काष्ठा thपढ़ो *th, pid_t pid)
-अणु
-	काष्ठा thपढ़ो *leader;
+static void machine__update_thread_pid(struct machine *machine,
+				       struct thread *th, pid_t pid)
+{
+	struct thread *leader;
 
-	अगर (pid == th->pid_ || pid == -1 || th->pid_ != -1)
-		वापस;
+	if (pid == th->pid_ || pid == -1 || th->pid_ != -1)
+		return;
 
 	th->pid_ = pid;
 
-	अगर (th->pid_ == th->tid)
-		वापस;
+	if (th->pid_ == th->tid)
+		return;
 
-	leader = __machine__findnew_thपढ़ो(machine, th->pid_, th->pid_);
-	अगर (!leader)
-		जाओ out_err;
+	leader = __machine__findnew_thread(machine, th->pid_, th->pid_);
+	if (!leader)
+		goto out_err;
 
-	अगर (!leader->maps)
+	if (!leader->maps)
 		leader->maps = maps__new(machine);
 
-	अगर (!leader->maps)
-		जाओ out_err;
+	if (!leader->maps)
+		goto out_err;
 
-	अगर (th->maps == leader->maps)
-		वापस;
+	if (th->maps == leader->maps)
+		return;
 
-	अगर (th->maps) अणु
+	if (th->maps) {
 		/*
 		 * Maps are created from MMAP events which provide the pid and
-		 * tid.  Consequently there never should be any maps on a thपढ़ो
-		 * with an unknown pid.  Just prपूर्णांक an error अगर there are.
+		 * tid.  Consequently there never should be any maps on a thread
+		 * with an unknown pid.  Just print an error if there are.
 		 */
-		अगर (!maps__empty(th->maps))
+		if (!maps__empty(th->maps))
 			pr_err("Discarding thread maps for %d:%d\n",
 			       th->pid_, th->tid);
 		maps__put(th->maps);
-	पूर्ण
+	}
 
 	th->maps = maps__get(leader->maps);
 out_put:
-	thपढ़ो__put(leader);
-	वापस;
+	thread__put(leader);
+	return;
 out_err:
 	pr_err("Failed to join map groups for %d:%d\n", th->pid_, th->tid);
-	जाओ out_put;
-पूर्ण
+	goto out_put;
+}
 
 /*
  * Front-end cache - TID lookups come in blocks,
- * so most of the समय we करोnt have to look up
+ * so most of the time we dont have to look up
  * the full rbtree:
  */
-अटल काष्ठा thपढ़ो*
-__thपढ़ोs__get_last_match(काष्ठा thपढ़ोs *thपढ़ोs, काष्ठा machine *machine,
-			  पूर्णांक pid, पूर्णांक tid)
-अणु
-	काष्ठा thपढ़ो *th;
+static struct thread*
+__threads__get_last_match(struct threads *threads, struct machine *machine,
+			  int pid, int tid)
+{
+	struct thread *th;
 
-	th = thपढ़ोs->last_match;
-	अगर (th != शून्य) अणु
-		अगर (th->tid == tid) अणु
-			machine__update_thपढ़ो_pid(machine, th, pid);
-			वापस thपढ़ो__get(th);
-		पूर्ण
+	th = threads->last_match;
+	if (th != NULL) {
+		if (th->tid == tid) {
+			machine__update_thread_pid(machine, th, pid);
+			return thread__get(th);
+		}
 
-		thपढ़ोs->last_match = शून्य;
-	पूर्ण
+		threads->last_match = NULL;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल काष्ठा thपढ़ो*
-thपढ़ोs__get_last_match(काष्ठा thपढ़ोs *thपढ़ोs, काष्ठा machine *machine,
-			पूर्णांक pid, पूर्णांक tid)
-अणु
-	काष्ठा thपढ़ो *th = शून्य;
+static struct thread*
+threads__get_last_match(struct threads *threads, struct machine *machine,
+			int pid, int tid)
+{
+	struct thread *th = NULL;
 
-	अगर (perf_singlethपढ़ोed)
-		th = __thपढ़ोs__get_last_match(thपढ़ोs, machine, pid, tid);
+	if (perf_singlethreaded)
+		th = __threads__get_last_match(threads, machine, pid, tid);
 
-	वापस th;
-पूर्ण
+	return th;
+}
 
-अटल व्योम
-__thपढ़ोs__set_last_match(काष्ठा thपढ़ोs *thपढ़ोs, काष्ठा thपढ़ो *th)
-अणु
-	thपढ़ोs->last_match = th;
-पूर्ण
+static void
+__threads__set_last_match(struct threads *threads, struct thread *th)
+{
+	threads->last_match = th;
+}
 
-अटल व्योम
-thपढ़ोs__set_last_match(काष्ठा thपढ़ोs *thपढ़ोs, काष्ठा thपढ़ो *th)
-अणु
-	अगर (perf_singlethपढ़ोed)
-		__thपढ़ोs__set_last_match(thपढ़ोs, th);
-पूर्ण
+static void
+threads__set_last_match(struct threads *threads, struct thread *th)
+{
+	if (perf_singlethreaded)
+		__threads__set_last_match(threads, th);
+}
 
 /*
- * Caller must eventually drop thपढ़ो->refcnt वापसed with a successful
- * lookup/new thपढ़ो inserted.
+ * Caller must eventually drop thread->refcnt returned with a successful
+ * lookup/new thread inserted.
  */
-अटल काष्ठा thपढ़ो *____machine__findnew_thपढ़ो(काष्ठा machine *machine,
-						  काष्ठा thपढ़ोs *thपढ़ोs,
+static struct thread *____machine__findnew_thread(struct machine *machine,
+						  struct threads *threads,
 						  pid_t pid, pid_t tid,
 						  bool create)
-अणु
-	काष्ठा rb_node **p = &thपढ़ोs->entries.rb_root.rb_node;
-	काष्ठा rb_node *parent = शून्य;
-	काष्ठा thपढ़ो *th;
-	bool lefपंचांगost = true;
+{
+	struct rb_node **p = &threads->entries.rb_root.rb_node;
+	struct rb_node *parent = NULL;
+	struct thread *th;
+	bool leftmost = true;
 
-	th = thपढ़ोs__get_last_match(thपढ़ोs, machine, pid, tid);
-	अगर (th)
-		वापस th;
+	th = threads__get_last_match(threads, machine, pid, tid);
+	if (th)
+		return th;
 
-	जबतक (*p != शून्य) अणु
+	while (*p != NULL) {
 		parent = *p;
-		th = rb_entry(parent, काष्ठा thपढ़ो, rb_node);
+		th = rb_entry(parent, struct thread, rb_node);
 
-		अगर (th->tid == tid) अणु
-			thपढ़ोs__set_last_match(thपढ़ोs, th);
-			machine__update_thपढ़ो_pid(machine, th, pid);
-			वापस thपढ़ो__get(th);
-		पूर्ण
+		if (th->tid == tid) {
+			threads__set_last_match(threads, th);
+			machine__update_thread_pid(machine, th, pid);
+			return thread__get(th);
+		}
 
-		अगर (tid < th->tid)
+		if (tid < th->tid)
 			p = &(*p)->rb_left;
-		अन्यथा अणु
+		else {
 			p = &(*p)->rb_right;
-			lefपंचांगost = false;
-		पूर्ण
-	पूर्ण
+			leftmost = false;
+		}
+	}
 
-	अगर (!create)
-		वापस शून्य;
+	if (!create)
+		return NULL;
 
-	th = thपढ़ो__new(pid, tid);
-	अगर (th != शून्य) अणु
+	th = thread__new(pid, tid);
+	if (th != NULL) {
 		rb_link_node(&th->rb_node, parent, p);
-		rb_insert_color_cached(&th->rb_node, &thपढ़ोs->entries, lefपंचांगost);
+		rb_insert_color_cached(&th->rb_node, &threads->entries, leftmost);
 
 		/*
 		 * We have to initialize maps separately after rb tree is updated.
 		 *
-		 * The reason is that we call machine__findnew_thपढ़ो
-		 * within thपढ़ो__init_maps to find the thपढ़ो
+		 * The reason is that we call machine__findnew_thread
+		 * within thread__init_maps to find the thread
 		 * leader and that would screwed the rb tree.
 		 */
-		अगर (thपढ़ो__init_maps(th, machine)) अणु
-			rb_erase_cached(&th->rb_node, &thपढ़ोs->entries);
+		if (thread__init_maps(th, machine)) {
+			rb_erase_cached(&th->rb_node, &threads->entries);
 			RB_CLEAR_NODE(&th->rb_node);
-			thपढ़ो__put(th);
-			वापस शून्य;
-		पूर्ण
+			thread__put(th);
+			return NULL;
+		}
 		/*
 		 * It is now in the rbtree, get a ref
 		 */
-		thपढ़ो__get(th);
-		thपढ़ोs__set_last_match(thपढ़ोs, th);
-		++thपढ़ोs->nr;
-	पूर्ण
+		thread__get(th);
+		threads__set_last_match(threads, th);
+		++threads->nr;
+	}
 
-	वापस th;
-पूर्ण
+	return th;
+}
 
-काष्ठा thपढ़ो *__machine__findnew_thपढ़ो(काष्ठा machine *machine, pid_t pid, pid_t tid)
-अणु
-	वापस ____machine__findnew_thपढ़ो(machine, machine__thपढ़ोs(machine, tid), pid, tid, true);
-पूर्ण
+struct thread *__machine__findnew_thread(struct machine *machine, pid_t pid, pid_t tid)
+{
+	return ____machine__findnew_thread(machine, machine__threads(machine, tid), pid, tid, true);
+}
 
-काष्ठा thपढ़ो *machine__findnew_thपढ़ो(काष्ठा machine *machine, pid_t pid,
+struct thread *machine__findnew_thread(struct machine *machine, pid_t pid,
 				       pid_t tid)
-अणु
-	काष्ठा thपढ़ोs *thपढ़ोs = machine__thपढ़ोs(machine, tid);
-	काष्ठा thपढ़ो *th;
+{
+	struct threads *threads = machine__threads(machine, tid);
+	struct thread *th;
 
-	करोwn_ग_लिखो(&thपढ़ोs->lock);
-	th = __machine__findnew_thपढ़ो(machine, pid, tid);
-	up_ग_लिखो(&thपढ़ोs->lock);
-	वापस th;
-पूर्ण
+	down_write(&threads->lock);
+	th = __machine__findnew_thread(machine, pid, tid);
+	up_write(&threads->lock);
+	return th;
+}
 
-काष्ठा thपढ़ो *machine__find_thपढ़ो(काष्ठा machine *machine, pid_t pid,
+struct thread *machine__find_thread(struct machine *machine, pid_t pid,
 				    pid_t tid)
-अणु
-	काष्ठा thपढ़ोs *thपढ़ोs = machine__thपढ़ोs(machine, tid);
-	काष्ठा thपढ़ो *th;
+{
+	struct threads *threads = machine__threads(machine, tid);
+	struct thread *th;
 
-	करोwn_पढ़ो(&thपढ़ोs->lock);
-	th =  ____machine__findnew_thपढ़ो(machine, thपढ़ोs, pid, tid, false);
-	up_पढ़ो(&thपढ़ोs->lock);
-	वापस th;
-पूर्ण
+	down_read(&threads->lock);
+	th =  ____machine__findnew_thread(machine, threads, pid, tid, false);
+	up_read(&threads->lock);
+	return th;
+}
 
 /*
- * Thपढ़ोs are identअगरied by pid and tid, and the idle task has pid == tid == 0.
- * So here a single thपढ़ो is created क्रम that, but actually there is a separate
+ * Threads are identified by pid and tid, and the idle task has pid == tid == 0.
+ * So here a single thread is created for that, but actually there is a separate
  * idle task per cpu, so there should be one 'struct thread' per cpu, but there
- * is only 1. That causes problems क्रम some tools, requiring workarounds. For
- * example get_idle_thपढ़ो() in builtin-sched.c, or thपढ़ो_stack__per_cpu().
+ * is only 1. That causes problems for some tools, requiring workarounds. For
+ * example get_idle_thread() in builtin-sched.c, or thread_stack__per_cpu().
  */
-काष्ठा thपढ़ो *machine__idle_thपढ़ो(काष्ठा machine *machine)
-अणु
-	काष्ठा thपढ़ो *thपढ़ो = machine__findnew_thपढ़ो(machine, 0, 0);
+struct thread *machine__idle_thread(struct machine *machine)
+{
+	struct thread *thread = machine__findnew_thread(machine, 0, 0);
 
-	अगर (!thपढ़ो || thपढ़ो__set_comm(thपढ़ो, "swapper", 0) ||
-	    thपढ़ो__set_namespaces(thपढ़ो, 0, शून्य))
+	if (!thread || thread__set_comm(thread, "swapper", 0) ||
+	    thread__set_namespaces(thread, 0, NULL))
 		pr_err("problem inserting idle task for machine pid %d\n", machine->pid);
 
-	वापस thपढ़ो;
-पूर्ण
+	return thread;
+}
 
-काष्ठा comm *machine__thपढ़ो_exec_comm(काष्ठा machine *machine,
-				       काष्ठा thपढ़ो *thपढ़ो)
-अणु
-	अगर (machine->comm_exec)
-		वापस thपढ़ो__exec_comm(thपढ़ो);
-	अन्यथा
-		वापस thपढ़ो__comm(thपढ़ो);
-पूर्ण
+struct comm *machine__thread_exec_comm(struct machine *machine,
+				       struct thread *thread)
+{
+	if (machine->comm_exec)
+		return thread__exec_comm(thread);
+	else
+		return thread__comm(thread);
+}
 
-पूर्णांक machine__process_comm_event(काष्ठा machine *machine, जोड़ perf_event *event,
-				काष्ठा perf_sample *sample)
-अणु
-	काष्ठा thपढ़ो *thपढ़ो = machine__findnew_thपढ़ो(machine,
+int machine__process_comm_event(struct machine *machine, union perf_event *event,
+				struct perf_sample *sample)
+{
+	struct thread *thread = machine__findnew_thread(machine,
 							event->comm.pid,
 							event->comm.tid);
 	bool exec = event->header.misc & PERF_RECORD_MISC_COMM_EXEC;
-	पूर्णांक err = 0;
+	int err = 0;
 
-	अगर (exec)
+	if (exec)
 		machine->comm_exec = true;
 
-	अगर (dump_trace)
-		perf_event__ख_लिखो_comm(event, मानक_निकास);
+	if (dump_trace)
+		perf_event__fprintf_comm(event, stdout);
 
-	अगर (thपढ़ो == शून्य ||
-	    __thपढ़ो__set_comm(thपढ़ो, event->comm.comm, sample->समय, exec)) अणु
-		dump_म_लिखो("problem processing PERF_RECORD_COMM, skipping event.\n");
+	if (thread == NULL ||
+	    __thread__set_comm(thread, event->comm.comm, sample->time, exec)) {
+		dump_printf("problem processing PERF_RECORD_COMM, skipping event.\n");
 		err = -1;
-	पूर्ण
+	}
 
-	thपढ़ो__put(thपढ़ो);
+	thread__put(thread);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक machine__process_namespaces_event(काष्ठा machine *machine __maybe_unused,
-				      जोड़ perf_event *event,
-				      काष्ठा perf_sample *sample __maybe_unused)
-अणु
-	काष्ठा thपढ़ो *thपढ़ो = machine__findnew_thपढ़ो(machine,
+int machine__process_namespaces_event(struct machine *machine __maybe_unused,
+				      union perf_event *event,
+				      struct perf_sample *sample __maybe_unused)
+{
+	struct thread *thread = machine__findnew_thread(machine,
 							event->namespaces.pid,
 							event->namespaces.tid);
-	पूर्णांक err = 0;
+	int err = 0;
 
 	WARN_ONCE(event->namespaces.nr_namespaces > NR_NAMESPACES,
 		  "\nWARNING: kernel seems to support more namespaces than perf"
@@ -669,126 +668,126 @@ thपढ़ोs__set_last_match(काष्ठा thपढ़ोs *thपढ़�
 		  "\nWARNING: perf tool seems to support more namespaces than"
 		  " the kernel.\nTry updating the kernel..\n\n");
 
-	अगर (dump_trace)
-		perf_event__ख_लिखो_namespaces(event, मानक_निकास);
+	if (dump_trace)
+		perf_event__fprintf_namespaces(event, stdout);
 
-	अगर (thपढ़ो == शून्य ||
-	    thपढ़ो__set_namespaces(thपढ़ो, sample->समय, &event->namespaces)) अणु
-		dump_म_लिखो("problem processing PERF_RECORD_NAMESPACES, skipping event.\n");
+	if (thread == NULL ||
+	    thread__set_namespaces(thread, sample->time, &event->namespaces)) {
+		dump_printf("problem processing PERF_RECORD_NAMESPACES, skipping event.\n");
 		err = -1;
-	पूर्ण
+	}
 
-	thपढ़ो__put(thपढ़ो);
+	thread__put(thread);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक machine__process_cgroup_event(काष्ठा machine *machine,
-				  जोड़ perf_event *event,
-				  काष्ठा perf_sample *sample __maybe_unused)
-अणु
-	काष्ठा cgroup *cgrp;
+int machine__process_cgroup_event(struct machine *machine,
+				  union perf_event *event,
+				  struct perf_sample *sample __maybe_unused)
+{
+	struct cgroup *cgrp;
 
-	अगर (dump_trace)
-		perf_event__ख_लिखो_cgroup(event, मानक_निकास);
+	if (dump_trace)
+		perf_event__fprintf_cgroup(event, stdout);
 
 	cgrp = cgroup__findnew(machine->env, event->cgroup.id, event->cgroup.path);
-	अगर (cgrp == शून्य)
-		वापस -ENOMEM;
+	if (cgrp == NULL)
+		return -ENOMEM;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक machine__process_lost_event(काष्ठा machine *machine __maybe_unused,
-				जोड़ perf_event *event, काष्ठा perf_sample *sample __maybe_unused)
-अणु
-	dump_म_लिखो(": id:%" PRI_lu64 ": lost:%" PRI_lu64 "\n",
+int machine__process_lost_event(struct machine *machine __maybe_unused,
+				union perf_event *event, struct perf_sample *sample __maybe_unused)
+{
+	dump_printf(": id:%" PRI_lu64 ": lost:%" PRI_lu64 "\n",
 		    event->lost.id, event->lost.lost);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक machine__process_lost_samples_event(काष्ठा machine *machine __maybe_unused,
-					जोड़ perf_event *event, काष्ठा perf_sample *sample)
-अणु
-	dump_म_लिखो(": id:%" PRIu64 ": lost samples :%" PRI_lu64 "\n",
+int machine__process_lost_samples_event(struct machine *machine __maybe_unused,
+					union perf_event *event, struct perf_sample *sample)
+{
+	dump_printf(": id:%" PRIu64 ": lost samples :%" PRI_lu64 "\n",
 		    sample->id, event->lost_samples.lost);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा dso *machine__findnew_module_dso(काष्ठा machine *machine,
-					       काष्ठा kmod_path *m,
-					       स्थिर अक्षर *filename)
-अणु
-	काष्ठा dso *dso;
+static struct dso *machine__findnew_module_dso(struct machine *machine,
+					       struct kmod_path *m,
+					       const char *filename)
+{
+	struct dso *dso;
 
-	करोwn_ग_लिखो(&machine->dsos.lock);
+	down_write(&machine->dsos.lock);
 
 	dso = __dsos__find(&machine->dsos, m->name, true);
-	अगर (!dso) अणु
+	if (!dso) {
 		dso = __dsos__addnew(&machine->dsos, m->name);
-		अगर (dso == शून्य)
-			जाओ out_unlock;
+		if (dso == NULL)
+			goto out_unlock;
 
 		dso__set_module_info(dso, m, machine);
-		dso__set_दीर्घ_name(dso, strdup(filename), true);
+		dso__set_long_name(dso, strdup(filename), true);
 		dso->kernel = DSO_SPACE__KERNEL;
-	पूर्ण
+	}
 
 	dso__get(dso);
 out_unlock:
-	up_ग_लिखो(&machine->dsos.lock);
-	वापस dso;
-पूर्ण
+	up_write(&machine->dsos.lock);
+	return dso;
+}
 
-पूर्णांक machine__process_aux_event(काष्ठा machine *machine __maybe_unused,
-			       जोड़ perf_event *event)
-अणु
-	अगर (dump_trace)
-		perf_event__ख_लिखो_aux(event, मानक_निकास);
-	वापस 0;
-पूर्ण
+int machine__process_aux_event(struct machine *machine __maybe_unused,
+			       union perf_event *event)
+{
+	if (dump_trace)
+		perf_event__fprintf_aux(event, stdout);
+	return 0;
+}
 
-पूर्णांक machine__process_itrace_start_event(काष्ठा machine *machine __maybe_unused,
-					जोड़ perf_event *event)
-अणु
-	अगर (dump_trace)
-		perf_event__ख_लिखो_itrace_start(event, मानक_निकास);
-	वापस 0;
-पूर्ण
+int machine__process_itrace_start_event(struct machine *machine __maybe_unused,
+					union perf_event *event)
+{
+	if (dump_trace)
+		perf_event__fprintf_itrace_start(event, stdout);
+	return 0;
+}
 
-पूर्णांक machine__process_चयन_event(काष्ठा machine *machine __maybe_unused,
-				  जोड़ perf_event *event)
-अणु
-	अगर (dump_trace)
-		perf_event__ख_लिखो_चयन(event, मानक_निकास);
-	वापस 0;
-पूर्ण
+int machine__process_switch_event(struct machine *machine __maybe_unused,
+				  union perf_event *event)
+{
+	if (dump_trace)
+		perf_event__fprintf_switch(event, stdout);
+	return 0;
+}
 
-अटल पूर्णांक machine__process_ksymbol_रेजिस्टर(काष्ठा machine *machine,
-					     जोड़ perf_event *event,
-					     काष्ठा perf_sample *sample __maybe_unused)
-अणु
-	काष्ठा symbol *sym;
-	काष्ठा map *map = maps__find(&machine->kmaps, event->ksymbol.addr);
+static int machine__process_ksymbol_register(struct machine *machine,
+					     union perf_event *event,
+					     struct perf_sample *sample __maybe_unused)
+{
+	struct symbol *sym;
+	struct map *map = maps__find(&machine->kmaps, event->ksymbol.addr);
 
-	अगर (!map) अणु
-		काष्ठा dso *dso = dso__new(event->ksymbol.name);
+	if (!map) {
+		struct dso *dso = dso__new(event->ksymbol.name);
 
-		अगर (dso) अणु
+		if (dso) {
 			dso->kernel = DSO_SPACE__KERNEL;
 			map = map__new2(0, dso);
 			dso__put(dso);
-		पूर्ण
+		}
 
-		अगर (!dso || !map) अणु
-			वापस -ENOMEM;
-		पूर्ण
+		if (!dso || !map) {
+			return -ENOMEM;
+		}
 
-		अगर (event->ksymbol.ksym_type == PERF_RECORD_KSYMBOL_TYPE_OOL) अणु
+		if (event->ksymbol.ksym_type == PERF_RECORD_KSYMBOL_TYPE_OOL) {
 			map->dso->binary_type = DSO_BINARY_TYPE__OOL;
 			map->dso->data.file_size = event->ksymbol.len;
 			dso__set_loaded(map->dso);
-		पूर्ण
+		}
 
 		map->start = event->ksymbol.addr;
 		map->end = map->start + event->ksymbol.len;
@@ -796,293 +795,293 @@ out_unlock:
 		map__put(map);
 		dso__set_loaded(dso);
 
-		अगर (is_bpf_image(event->ksymbol.name)) अणु
+		if (is_bpf_image(event->ksymbol.name)) {
 			dso->binary_type = DSO_BINARY_TYPE__BPF_IMAGE;
-			dso__set_दीर्घ_name(dso, "", false);
-		पूर्ण
-	पूर्ण
+			dso__set_long_name(dso, "", false);
+		}
+	}
 
 	sym = symbol__new(map->map_ip(map, map->start),
 			  event->ksymbol.len,
 			  0, 0, event->ksymbol.name);
-	अगर (!sym)
-		वापस -ENOMEM;
+	if (!sym)
+		return -ENOMEM;
 	dso__insert_symbol(map->dso, sym);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक machine__process_ksymbol_unरेजिस्टर(काष्ठा machine *machine,
-					       जोड़ perf_event *event,
-					       काष्ठा perf_sample *sample __maybe_unused)
-अणु
-	काष्ठा symbol *sym;
-	काष्ठा map *map;
+static int machine__process_ksymbol_unregister(struct machine *machine,
+					       union perf_event *event,
+					       struct perf_sample *sample __maybe_unused)
+{
+	struct symbol *sym;
+	struct map *map;
 
 	map = maps__find(&machine->kmaps, event->ksymbol.addr);
-	अगर (!map)
-		वापस 0;
+	if (!map)
+		return 0;
 
-	अगर (map != machine->vmlinux_map)
-		maps__हटाओ(&machine->kmaps, map);
-	अन्यथा अणु
+	if (map != machine->vmlinux_map)
+		maps__remove(&machine->kmaps, map);
+	else {
 		sym = dso__find_symbol(map->dso, map->map_ip(map, map->start));
-		अगर (sym)
+		if (sym)
 			dso__delete_symbol(map->dso, sym);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक machine__process_ksymbol(काष्ठा machine *machine __maybe_unused,
-			     जोड़ perf_event *event,
-			     काष्ठा perf_sample *sample)
-अणु
-	अगर (dump_trace)
-		perf_event__ख_लिखो_ksymbol(event, मानक_निकास);
+int machine__process_ksymbol(struct machine *machine __maybe_unused,
+			     union perf_event *event,
+			     struct perf_sample *sample)
+{
+	if (dump_trace)
+		perf_event__fprintf_ksymbol(event, stdout);
 
-	अगर (event->ksymbol.flags & PERF_RECORD_KSYMBOL_FLAGS_UNREGISTER)
-		वापस machine__process_ksymbol_unरेजिस्टर(machine, event,
+	if (event->ksymbol.flags & PERF_RECORD_KSYMBOL_FLAGS_UNREGISTER)
+		return machine__process_ksymbol_unregister(machine, event,
 							   sample);
-	वापस machine__process_ksymbol_रेजिस्टर(machine, event, sample);
-पूर्ण
+	return machine__process_ksymbol_register(machine, event, sample);
+}
 
-पूर्णांक machine__process_text_poke(काष्ठा machine *machine, जोड़ perf_event *event,
-			       काष्ठा perf_sample *sample __maybe_unused)
-अणु
-	काष्ठा map *map = maps__find(&machine->kmaps, event->text_poke.addr);
+int machine__process_text_poke(struct machine *machine, union perf_event *event,
+			       struct perf_sample *sample __maybe_unused)
+{
+	struct map *map = maps__find(&machine->kmaps, event->text_poke.addr);
 	u8 cpumode = event->header.misc & PERF_RECORD_MISC_CPUMODE_MASK;
 
-	अगर (dump_trace)
-		perf_event__ख_लिखो_text_poke(event, machine, मानक_निकास);
+	if (dump_trace)
+		perf_event__fprintf_text_poke(event, machine, stdout);
 
-	अगर (!event->text_poke.new_len)
-		वापस 0;
+	if (!event->text_poke.new_len)
+		return 0;
 
-	अगर (cpumode != PERF_RECORD_MISC_KERNEL) अणु
+	if (cpumode != PERF_RECORD_MISC_KERNEL) {
 		pr_debug("%s: unsupported cpumode - ignoring\n", __func__);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (map && map->dso) अणु
+	if (map && map->dso) {
 		u8 *new_bytes = event->text_poke.bytes + event->text_poke.old_len;
-		पूर्णांक ret;
+		int ret;
 
 		/*
 		 * Kernel maps might be changed when loading symbols so loading
-		 * must be करोne prior to using kernel maps.
+		 * must be done prior to using kernel maps.
 		 */
 		map__load(map);
-		ret = dso__data_ग_लिखो_cache_addr(map->dso, map, machine,
+		ret = dso__data_write_cache_addr(map->dso, map, machine,
 						 event->text_poke.addr,
 						 new_bytes,
 						 event->text_poke.new_len);
-		अगर (ret != event->text_poke.new_len)
+		if (ret != event->text_poke.new_len)
 			pr_debug("Failed to write kernel text poke at %#" PRI_lx64 "\n",
 				 event->text_poke.addr);
-	पूर्ण अन्यथा अणु
+	} else {
 		pr_debug("Failed to find kernel text poke address map for %#" PRI_lx64 "\n",
 			 event->text_poke.addr);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा map *machine__addnew_module_map(काष्ठा machine *machine, u64 start,
-					      स्थिर अक्षर *filename)
-अणु
-	काष्ठा map *map = शून्य;
-	काष्ठा kmod_path m;
-	काष्ठा dso *dso;
+static struct map *machine__addnew_module_map(struct machine *machine, u64 start,
+					      const char *filename)
+{
+	struct map *map = NULL;
+	struct kmod_path m;
+	struct dso *dso;
 
-	अगर (kmod_path__parse_name(&m, filename))
-		वापस शून्य;
+	if (kmod_path__parse_name(&m, filename))
+		return NULL;
 
 	dso = machine__findnew_module_dso(machine, &m, filename);
-	अगर (dso == शून्य)
-		जाओ out;
+	if (dso == NULL)
+		goto out;
 
 	map = map__new2(start, dso);
-	अगर (map == शून्य)
-		जाओ out;
+	if (map == NULL)
+		goto out;
 
 	maps__insert(&machine->kmaps, map);
 
-	/* Put the map here because maps__insert alपढ़ोy got it */
+	/* Put the map here because maps__insert already got it */
 	map__put(map);
 out:
 	/* put the dso here, corresponding to  machine__findnew_module_dso */
 	dso__put(dso);
-	zमुक्त(&m.name);
-	वापस map;
-पूर्ण
+	zfree(&m.name);
+	return map;
+}
 
-माप_प्रकार machines__ख_लिखो_dsos(काष्ठा machines *machines, खाता *fp)
-अणु
-	काष्ठा rb_node *nd;
-	माप_प्रकार ret = __dsos__ख_लिखो(&machines->host.dsos.head, fp);
+size_t machines__fprintf_dsos(struct machines *machines, FILE *fp)
+{
+	struct rb_node *nd;
+	size_t ret = __dsos__fprintf(&machines->host.dsos.head, fp);
 
-	क्रम (nd = rb_first_cached(&machines->guests); nd; nd = rb_next(nd)) अणु
-		काष्ठा machine *pos = rb_entry(nd, काष्ठा machine, rb_node);
-		ret += __dsos__ख_लिखो(&pos->dsos.head, fp);
-	पूर्ण
+	for (nd = rb_first_cached(&machines->guests); nd; nd = rb_next(nd)) {
+		struct machine *pos = rb_entry(nd, struct machine, rb_node);
+		ret += __dsos__fprintf(&pos->dsos.head, fp);
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-माप_प्रकार machine__ख_लिखो_dsos_buildid(काष्ठा machine *m, खाता *fp,
-				     bool (skip)(काष्ठा dso *dso, पूर्णांक parm), पूर्णांक parm)
-अणु
-	वापस __dsos__ख_लिखो_buildid(&m->dsos.head, fp, skip, parm);
-पूर्ण
+size_t machine__fprintf_dsos_buildid(struct machine *m, FILE *fp,
+				     bool (skip)(struct dso *dso, int parm), int parm)
+{
+	return __dsos__fprintf_buildid(&m->dsos.head, fp, skip, parm);
+}
 
-माप_प्रकार machines__ख_लिखो_dsos_buildid(काष्ठा machines *machines, खाता *fp,
-				     bool (skip)(काष्ठा dso *dso, पूर्णांक parm), पूर्णांक parm)
-अणु
-	काष्ठा rb_node *nd;
-	माप_प्रकार ret = machine__ख_लिखो_dsos_buildid(&machines->host, fp, skip, parm);
+size_t machines__fprintf_dsos_buildid(struct machines *machines, FILE *fp,
+				     bool (skip)(struct dso *dso, int parm), int parm)
+{
+	struct rb_node *nd;
+	size_t ret = machine__fprintf_dsos_buildid(&machines->host, fp, skip, parm);
 
-	क्रम (nd = rb_first_cached(&machines->guests); nd; nd = rb_next(nd)) अणु
-		काष्ठा machine *pos = rb_entry(nd, काष्ठा machine, rb_node);
-		ret += machine__ख_लिखो_dsos_buildid(pos, fp, skip, parm);
-	पूर्ण
-	वापस ret;
-पूर्ण
+	for (nd = rb_first_cached(&machines->guests); nd; nd = rb_next(nd)) {
+		struct machine *pos = rb_entry(nd, struct machine, rb_node);
+		ret += machine__fprintf_dsos_buildid(pos, fp, skip, parm);
+	}
+	return ret;
+}
 
-माप_प्रकार machine__ख_लिखो_vmlinux_path(काष्ठा machine *machine, खाता *fp)
-अणु
-	पूर्णांक i;
-	माप_प्रकार prपूर्णांकed = 0;
-	काष्ठा dso *kdso = machine__kernel_dso(machine);
+size_t machine__fprintf_vmlinux_path(struct machine *machine, FILE *fp)
+{
+	int i;
+	size_t printed = 0;
+	struct dso *kdso = machine__kernel_dso(machine);
 
-	अगर (kdso->has_build_id) अणु
-		अक्षर filename[PATH_MAX];
-		अगर (dso__build_id_filename(kdso, filename, माप(filename),
+	if (kdso->has_build_id) {
+		char filename[PATH_MAX];
+		if (dso__build_id_filename(kdso, filename, sizeof(filename),
 					   false))
-			prपूर्णांकed += ख_लिखो(fp, "[0] %s\n", filename);
-	पूर्ण
+			printed += fprintf(fp, "[0] %s\n", filename);
+	}
 
-	क्रम (i = 0; i < vmlinux_path__nr_entries; ++i)
-		prपूर्णांकed += ख_लिखो(fp, "[%d] %s\n",
+	for (i = 0; i < vmlinux_path__nr_entries; ++i)
+		printed += fprintf(fp, "[%d] %s\n",
 				   i + kdso->has_build_id, vmlinux_path[i]);
 
-	वापस prपूर्णांकed;
-पूर्ण
+	return printed;
+}
 
-माप_प्रकार machine__ख_लिखो(काष्ठा machine *machine, खाता *fp)
-अणु
-	काष्ठा rb_node *nd;
-	माप_प्रकार ret;
-	पूर्णांक i;
+size_t machine__fprintf(struct machine *machine, FILE *fp)
+{
+	struct rb_node *nd;
+	size_t ret;
+	int i;
 
-	क्रम (i = 0; i < THREADS__TABLE_SIZE; i++) अणु
-		काष्ठा thपढ़ोs *thपढ़ोs = &machine->thपढ़ोs[i];
+	for (i = 0; i < THREADS__TABLE_SIZE; i++) {
+		struct threads *threads = &machine->threads[i];
 
-		करोwn_पढ़ो(&thपढ़ोs->lock);
+		down_read(&threads->lock);
 
-		ret = ख_लिखो(fp, "Threads: %u\n", thपढ़ोs->nr);
+		ret = fprintf(fp, "Threads: %u\n", threads->nr);
 
-		क्रम (nd = rb_first_cached(&thपढ़ोs->entries); nd;
-		     nd = rb_next(nd)) अणु
-			काष्ठा thपढ़ो *pos = rb_entry(nd, काष्ठा thपढ़ो, rb_node);
+		for (nd = rb_first_cached(&threads->entries); nd;
+		     nd = rb_next(nd)) {
+			struct thread *pos = rb_entry(nd, struct thread, rb_node);
 
-			ret += thपढ़ो__ख_लिखो(pos, fp);
-		पूर्ण
+			ret += thread__fprintf(pos, fp);
+		}
 
-		up_पढ़ो(&thपढ़ोs->lock);
-	पूर्ण
-	वापस ret;
-पूर्ण
+		up_read(&threads->lock);
+	}
+	return ret;
+}
 
-अटल काष्ठा dso *machine__get_kernel(काष्ठा machine *machine)
-अणु
-	स्थिर अक्षर *vmlinux_name = machine->mmap_name;
-	काष्ठा dso *kernel;
+static struct dso *machine__get_kernel(struct machine *machine)
+{
+	const char *vmlinux_name = machine->mmap_name;
+	struct dso *kernel;
 
-	अगर (machine__is_host(machine)) अणु
-		अगर (symbol_conf.vmlinux_name)
+	if (machine__is_host(machine)) {
+		if (symbol_conf.vmlinux_name)
 			vmlinux_name = symbol_conf.vmlinux_name;
 
 		kernel = machine__findnew_kernel(machine, vmlinux_name,
 						 "[kernel]", DSO_SPACE__KERNEL);
-	पूर्ण अन्यथा अणु
-		अगर (symbol_conf.शेष_guest_vmlinux_name)
-			vmlinux_name = symbol_conf.शेष_guest_vmlinux_name;
+	} else {
+		if (symbol_conf.default_guest_vmlinux_name)
+			vmlinux_name = symbol_conf.default_guest_vmlinux_name;
 
 		kernel = machine__findnew_kernel(machine, vmlinux_name,
 						 "[guest.kernel]",
 						 DSO_SPACE__KERNEL_GUEST);
-	पूर्ण
+	}
 
-	अगर (kernel != शून्य && (!kernel->has_build_id))
-		dso__पढ़ो_running_kernel_build_id(kernel, machine);
+	if (kernel != NULL && (!kernel->has_build_id))
+		dso__read_running_kernel_build_id(kernel, machine);
 
-	वापस kernel;
-पूर्ण
+	return kernel;
+}
 
-काष्ठा process_args अणु
+struct process_args {
 	u64 start;
-पूर्ण;
+};
 
-व्योम machine__get_kallsyms_filename(काष्ठा machine *machine, अक्षर *buf,
-				    माप_प्रकार bufsz)
-अणु
-	अगर (machine__is_शेष_guest(machine))
-		scnम_लिखो(buf, bufsz, "%s", symbol_conf.शेष_guest_kallsyms);
-	अन्यथा
-		scnम_लिखो(buf, bufsz, "%s/proc/kallsyms", machine->root_dir);
-पूर्ण
+void machine__get_kallsyms_filename(struct machine *machine, char *buf,
+				    size_t bufsz)
+{
+	if (machine__is_default_guest(machine))
+		scnprintf(buf, bufsz, "%s", symbol_conf.default_guest_kallsyms);
+	else
+		scnprintf(buf, bufsz, "%s/proc/kallsyms", machine->root_dir);
+}
 
-स्थिर अक्षर *ref_reloc_sym_names[] = अणु"_text", "_stext", शून्यपूर्ण;
+const char *ref_reloc_sym_names[] = {"_text", "_stext", NULL};
 
 /* Figure out the start address of kernel map from /proc/kallsyms.
- * Returns the name of the start symbol in *symbol_name. Pass in शून्य as
- * symbol_name अगर it's not that important.
+ * Returns the name of the start symbol in *symbol_name. Pass in NULL as
+ * symbol_name if it's not that important.
  */
-अटल पूर्णांक machine__get_running_kernel_start(काष्ठा machine *machine,
-					     स्थिर अक्षर **symbol_name,
+static int machine__get_running_kernel_start(struct machine *machine,
+					     const char **symbol_name,
 					     u64 *start, u64 *end)
-अणु
-	अक्षर filename[PATH_MAX];
-	पूर्णांक i, err = -1;
-	स्थिर अक्षर *name;
+{
+	char filename[PATH_MAX];
+	int i, err = -1;
+	const char *name;
 	u64 addr = 0;
 
 	machine__get_kallsyms_filename(machine, filename, PATH_MAX);
 
-	अगर (symbol__restricted_filename(filename, "/proc/kallsyms"))
-		वापस 0;
+	if (symbol__restricted_filename(filename, "/proc/kallsyms"))
+		return 0;
 
-	क्रम (i = 0; (name = ref_reloc_sym_names[i]) != शून्य; i++) अणु
+	for (i = 0; (name = ref_reloc_sym_names[i]) != NULL; i++) {
 		err = kallsyms__get_function_start(filename, name, &addr);
-		अगर (!err)
-			अवरोध;
-	पूर्ण
+		if (!err)
+			break;
+	}
 
-	अगर (err)
-		वापस -1;
+	if (err)
+		return -1;
 
-	अगर (symbol_name)
+	if (symbol_name)
 		*symbol_name = name;
 
 	*start = addr;
 
 	err = kallsyms__get_function_start(filename, "_etext", &addr);
-	अगर (!err)
+	if (!err)
 		*end = addr;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक machine__create_extra_kernel_map(काष्ठा machine *machine,
-				     काष्ठा dso *kernel,
-				     काष्ठा extra_kernel_map *xm)
-अणु
-	काष्ठा kmap *kmap;
-	काष्ठा map *map;
+int machine__create_extra_kernel_map(struct machine *machine,
+				     struct dso *kernel,
+				     struct extra_kernel_map *xm)
+{
+	struct kmap *kmap;
+	struct map *map;
 
 	map = map__new2(xm->start, kernel);
-	अगर (!map)
-		वापस -1;
+	if (!map)
+		return -1;
 
 	map->end   = xm->end;
 	map->pgoff = xm->pgoff;
@@ -1098,578 +1097,578 @@ out:
 
 	map__put(map);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल u64 find_entry_trampoline(काष्ठा dso *dso)
-अणु
-	/* Duplicates are हटाओd so lookup all aliases */
-	स्थिर अक्षर *syms[] = अणु
+static u64 find_entry_trampoline(struct dso *dso)
+{
+	/* Duplicates are removed so lookup all aliases */
+	const char *syms[] = {
 		"_entry_trampoline",
 		"__entry_trampoline_start",
 		"entry_SYSCALL_64_trampoline",
-	पूर्ण;
-	काष्ठा symbol *sym = dso__first_symbol(dso);
-	अचिन्हित पूर्णांक i;
+	};
+	struct symbol *sym = dso__first_symbol(dso);
+	unsigned int i;
 
-	क्रम (; sym; sym = dso__next_symbol(sym)) अणु
-		अगर (sym->binding != STB_GLOBAL)
-			जारी;
-		क्रम (i = 0; i < ARRAY_SIZE(syms); i++) अणु
-			अगर (!म_भेद(sym->name, syms[i]))
-				वापस sym->start;
-		पूर्ण
-	पूर्ण
+	for (; sym; sym = dso__next_symbol(sym)) {
+		if (sym->binding != STB_GLOBAL)
+			continue;
+		for (i = 0; i < ARRAY_SIZE(syms); i++) {
+			if (!strcmp(sym->name, syms[i]))
+				return sym->start;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * These values can be used क्रम kernels that करो not have symbols क्रम the entry
+ * These values can be used for kernels that do not have symbols for the entry
  * trampolines in kallsyms.
  */
-#घोषणा X86_64_CPU_ENTRY_AREA_PER_CPU	0xfffffe0000000000ULL
-#घोषणा X86_64_CPU_ENTRY_AREA_SIZE	0x2c000
-#घोषणा X86_64_ENTRY_TRAMPOLINE		0x6000
+#define X86_64_CPU_ENTRY_AREA_PER_CPU	0xfffffe0000000000ULL
+#define X86_64_CPU_ENTRY_AREA_SIZE	0x2c000
+#define X86_64_ENTRY_TRAMPOLINE		0x6000
 
 /* Map x86_64 PTI entry trampolines */
-पूर्णांक machine__map_x86_64_entry_trampolines(काष्ठा machine *machine,
-					  काष्ठा dso *kernel)
-अणु
-	काष्ठा maps *kmaps = &machine->kmaps;
-	पूर्णांक nr_cpus_avail, cpu;
+int machine__map_x86_64_entry_trampolines(struct machine *machine,
+					  struct dso *kernel)
+{
+	struct maps *kmaps = &machine->kmaps;
+	int nr_cpus_avail, cpu;
 	bool found = false;
-	काष्ठा map *map;
+	struct map *map;
 	u64 pgoff;
 
 	/*
-	 * In the vmlinux हाल, pgoff is a भव address which must now be
+	 * In the vmlinux case, pgoff is a virtual address which must now be
 	 * mapped to a vmlinux offset.
 	 */
-	maps__क्रम_each_entry(kmaps, map) अणु
-		काष्ठा kmap *kmap = __map__kmap(map);
-		काष्ठा map *dest_map;
+	maps__for_each_entry(kmaps, map) {
+		struct kmap *kmap = __map__kmap(map);
+		struct map *dest_map;
 
-		अगर (!kmap || !is_entry_trampoline(kmap->name))
-			जारी;
+		if (!kmap || !is_entry_trampoline(kmap->name))
+			continue;
 
 		dest_map = maps__find(kmaps, map->pgoff);
-		अगर (dest_map != map)
+		if (dest_map != map)
 			map->pgoff = dest_map->map_ip(dest_map, map->pgoff);
 		found = true;
-	पूर्ण
-	अगर (found || machine->trampolines_mapped)
-		वापस 0;
+	}
+	if (found || machine->trampolines_mapped)
+		return 0;
 
 	pgoff = find_entry_trampoline(kernel);
-	अगर (!pgoff)
-		वापस 0;
+	if (!pgoff)
+		return 0;
 
 	nr_cpus_avail = machine__nr_cpus_avail(machine);
 
-	/* Add a 1 page map क्रम each CPU's entry trampoline */
-	क्रम (cpu = 0; cpu < nr_cpus_avail; cpu++) अणु
+	/* Add a 1 page map for each CPU's entry trampoline */
+	for (cpu = 0; cpu < nr_cpus_avail; cpu++) {
 		u64 va = X86_64_CPU_ENTRY_AREA_PER_CPU +
 			 cpu * X86_64_CPU_ENTRY_AREA_SIZE +
 			 X86_64_ENTRY_TRAMPOLINE;
-		काष्ठा extra_kernel_map xm = अणु
+		struct extra_kernel_map xm = {
 			.start = va,
 			.end   = va + page_size,
 			.pgoff = pgoff,
-		पूर्ण;
+		};
 
 		strlcpy(xm.name, ENTRY_TRAMPOLINE_NAME, KMAP_NAME_LEN);
 
-		अगर (machine__create_extra_kernel_map(machine, kernel, &xm) < 0)
-			वापस -1;
-	पूर्ण
+		if (machine__create_extra_kernel_map(machine, kernel, &xm) < 0)
+			return -1;
+	}
 
 	machine->trampolines_mapped = nr_cpus_avail;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक __weak machine__create_extra_kernel_maps(काष्ठा machine *machine __maybe_unused,
-					     काष्ठा dso *kernel __maybe_unused)
-अणु
-	वापस 0;
-पूर्ण
+int __weak machine__create_extra_kernel_maps(struct machine *machine __maybe_unused,
+					     struct dso *kernel __maybe_unused)
+{
+	return 0;
+}
 
-अटल पूर्णांक
-__machine__create_kernel_maps(काष्ठा machine *machine, काष्ठा dso *kernel)
-अणु
-	/* In हाल of renewal the kernel map, destroy previous one */
+static int
+__machine__create_kernel_maps(struct machine *machine, struct dso *kernel)
+{
+	/* In case of renewal the kernel map, destroy previous one */
 	machine__destroy_kernel_maps(machine);
 
 	machine->vmlinux_map = map__new2(0, kernel);
-	अगर (machine->vmlinux_map == शून्य)
-		वापस -1;
+	if (machine->vmlinux_map == NULL)
+		return -1;
 
 	machine->vmlinux_map->map_ip = machine->vmlinux_map->unmap_ip = identity__map_ip;
 	maps__insert(&machine->kmaps, machine->vmlinux_map);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम machine__destroy_kernel_maps(काष्ठा machine *machine)
-अणु
-	काष्ठा kmap *kmap;
-	काष्ठा map *map = machine__kernel_map(machine);
+void machine__destroy_kernel_maps(struct machine *machine)
+{
+	struct kmap *kmap;
+	struct map *map = machine__kernel_map(machine);
 
-	अगर (map == शून्य)
-		वापस;
+	if (map == NULL)
+		return;
 
 	kmap = map__kmap(map);
-	maps__हटाओ(&machine->kmaps, map);
-	अगर (kmap && kmap->ref_reloc_sym) अणु
-		zमुक्त((अक्षर **)&kmap->ref_reloc_sym->name);
-		zमुक्त(&kmap->ref_reloc_sym);
-	पूर्ण
+	maps__remove(&machine->kmaps, map);
+	if (kmap && kmap->ref_reloc_sym) {
+		zfree((char **)&kmap->ref_reloc_sym->name);
+		zfree(&kmap->ref_reloc_sym);
+	}
 
 	map__zput(machine->vmlinux_map);
-पूर्ण
+}
 
-पूर्णांक machines__create_guest_kernel_maps(काष्ठा machines *machines)
-अणु
-	पूर्णांक ret = 0;
-	काष्ठा dirent **namelist = शून्य;
-	पूर्णांक i, items = 0;
-	अक्षर path[PATH_MAX];
+int machines__create_guest_kernel_maps(struct machines *machines)
+{
+	int ret = 0;
+	struct dirent **namelist = NULL;
+	int i, items = 0;
+	char path[PATH_MAX];
 	pid_t pid;
-	अक्षर *endp;
+	char *endp;
 
-	अगर (symbol_conf.शेष_guest_vmlinux_name ||
-	    symbol_conf.शेष_guest_modules ||
-	    symbol_conf.शेष_guest_kallsyms) अणु
+	if (symbol_conf.default_guest_vmlinux_name ||
+	    symbol_conf.default_guest_modules ||
+	    symbol_conf.default_guest_kallsyms) {
 		machines__create_kernel_maps(machines, DEFAULT_GUEST_KERNEL_ID);
-	पूर्ण
+	}
 
-	अगर (symbol_conf.guesपंचांगount) अणु
-		items = scandir(symbol_conf.guesपंचांगount, &namelist, शून्य, शून्य);
-		अगर (items <= 0)
-			वापस -ENOENT;
-		क्रम (i = 0; i < items; i++) अणु
-			अगर (!है_अंक(namelist[i]->d_name[0])) अणु
+	if (symbol_conf.guestmount) {
+		items = scandir(symbol_conf.guestmount, &namelist, NULL, NULL);
+		if (items <= 0)
+			return -ENOENT;
+		for (i = 0; i < items; i++) {
+			if (!isdigit(namelist[i]->d_name[0])) {
 				/* Filter out . and .. */
-				जारी;
-			पूर्ण
-			pid = (pid_t)म_से_दीर्घ(namelist[i]->d_name, &endp, 10);
-			अगर ((*endp != '\0') ||
+				continue;
+			}
+			pid = (pid_t)strtol(namelist[i]->d_name, &endp, 10);
+			if ((*endp != '\0') ||
 			    (endp == namelist[i]->d_name) ||
-			    (त्रुटि_सं == दुस्फल)) अणु
+			    (errno == ERANGE)) {
 				pr_debug("invalid directory (%s). Skipping.\n",
 					 namelist[i]->d_name);
-				जारी;
-			पूर्ण
-			प्र_लिखो(path, "%s/%s/proc/kallsyms",
-				symbol_conf.guesपंचांगount,
+				continue;
+			}
+			sprintf(path, "%s/%s/proc/kallsyms",
+				symbol_conf.guestmount,
 				namelist[i]->d_name);
 			ret = access(path, R_OK);
-			अगर (ret) अणु
+			if (ret) {
 				pr_debug("Can't access file %s\n", path);
-				जाओ failure;
-			पूर्ण
+				goto failure;
+			}
 			machines__create_kernel_maps(machines, pid);
-		पूर्ण
+		}
 failure:
-		मुक्त(namelist);
-	पूर्ण
+		free(namelist);
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम machines__destroy_kernel_maps(काष्ठा machines *machines)
-अणु
-	काष्ठा rb_node *next = rb_first_cached(&machines->guests);
+void machines__destroy_kernel_maps(struct machines *machines)
+{
+	struct rb_node *next = rb_first_cached(&machines->guests);
 
 	machine__destroy_kernel_maps(&machines->host);
 
-	जबतक (next) अणु
-		काष्ठा machine *pos = rb_entry(next, काष्ठा machine, rb_node);
+	while (next) {
+		struct machine *pos = rb_entry(next, struct machine, rb_node);
 
 		next = rb_next(&pos->rb_node);
 		rb_erase_cached(&pos->rb_node, &machines->guests);
 		machine__delete(pos);
-	पूर्ण
-पूर्ण
+	}
+}
 
-पूर्णांक machines__create_kernel_maps(काष्ठा machines *machines, pid_t pid)
-अणु
-	काष्ठा machine *machine = machines__findnew(machines, pid);
+int machines__create_kernel_maps(struct machines *machines, pid_t pid)
+{
+	struct machine *machine = machines__findnew(machines, pid);
 
-	अगर (machine == शून्य)
-		वापस -1;
+	if (machine == NULL)
+		return -1;
 
-	वापस machine__create_kernel_maps(machine);
-पूर्ण
+	return machine__create_kernel_maps(machine);
+}
 
-पूर्णांक machine__load_kallsyms(काष्ठा machine *machine, स्थिर अक्षर *filename)
-अणु
-	काष्ठा map *map = machine__kernel_map(machine);
-	पूर्णांक ret = __dso__load_kallsyms(map->dso, filename, map, true);
+int machine__load_kallsyms(struct machine *machine, const char *filename)
+{
+	struct map *map = machine__kernel_map(machine);
+	int ret = __dso__load_kallsyms(map->dso, filename, map, true);
 
-	अगर (ret > 0) अणु
+	if (ret > 0) {
 		dso__set_loaded(map->dso);
 		/*
-		 * Since /proc/kallsyms will have multiple sessions क्रम the
+		 * Since /proc/kallsyms will have multiple sessions for the
 		 * kernel, with modules between them, fixup the end of all
 		 * sections.
 		 */
 		maps__fixup_end(&machine->kmaps);
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक machine__load_vmlinux_path(काष्ठा machine *machine)
-अणु
-	काष्ठा map *map = machine__kernel_map(machine);
-	पूर्णांक ret = dso__load_vmlinux_path(map->dso, map);
+int machine__load_vmlinux_path(struct machine *machine)
+{
+	struct map *map = machine__kernel_map(machine);
+	int ret = dso__load_vmlinux_path(map->dso, map);
 
-	अगर (ret > 0)
+	if (ret > 0)
 		dso__set_loaded(map->dso);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल अक्षर *get_kernel_version(स्थिर अक्षर *root_dir)
-अणु
-	अक्षर version[PATH_MAX];
-	खाता *file;
-	अक्षर *name, *पंचांगp;
-	स्थिर अक्षर *prefix = "Linux version ";
+static char *get_kernel_version(const char *root_dir)
+{
+	char version[PATH_MAX];
+	FILE *file;
+	char *name, *tmp;
+	const char *prefix = "Linux version ";
 
-	प्र_लिखो(version, "%s/proc/version", root_dir);
-	file = ख_खोलो(version, "r");
-	अगर (!file)
-		वापस शून्य;
+	sprintf(version, "%s/proc/version", root_dir);
+	file = fopen(version, "r");
+	if (!file)
+		return NULL;
 
-	पंचांगp = ख_माला_लो(version, माप(version), file);
-	ख_बंद(file);
-	अगर (!पंचांगp)
-		वापस शून्य;
+	tmp = fgets(version, sizeof(version), file);
+	fclose(file);
+	if (!tmp)
+		return NULL;
 
-	name = म_माला(version, prefix);
-	अगर (!name)
-		वापस शून्य;
-	name += म_माप(prefix);
-	पंचांगp = म_अक्षर(name, ' ');
-	अगर (पंचांगp)
-		*पंचांगp = '\0';
+	name = strstr(version, prefix);
+	if (!name)
+		return NULL;
+	name += strlen(prefix);
+	tmp = strchr(name, ' ');
+	if (tmp)
+		*tmp = '\0';
 
-	वापस strdup(name);
-पूर्ण
+	return strdup(name);
+}
 
-अटल bool is_kmod_dso(काष्ठा dso *dso)
-अणु
-	वापस dso->symtab_type == DSO_BINARY_TYPE__SYSTEM_PATH_KMODULE ||
+static bool is_kmod_dso(struct dso *dso)
+{
+	return dso->symtab_type == DSO_BINARY_TYPE__SYSTEM_PATH_KMODULE ||
 	       dso->symtab_type == DSO_BINARY_TYPE__GUEST_KMODULE;
-पूर्ण
+}
 
-अटल पूर्णांक maps__set_module_path(काष्ठा maps *maps, स्थिर अक्षर *path, काष्ठा kmod_path *m)
-अणु
-	अक्षर *दीर्घ_name;
-	काष्ठा map *map = maps__find_by_name(maps, m->name);
+static int maps__set_module_path(struct maps *maps, const char *path, struct kmod_path *m)
+{
+	char *long_name;
+	struct map *map = maps__find_by_name(maps, m->name);
 
-	अगर (map == शून्य)
-		वापस 0;
+	if (map == NULL)
+		return 0;
 
-	दीर्घ_name = strdup(path);
-	अगर (दीर्घ_name == शून्य)
-		वापस -ENOMEM;
+	long_name = strdup(path);
+	if (long_name == NULL)
+		return -ENOMEM;
 
-	dso__set_दीर्घ_name(map->dso, दीर्घ_name, true);
+	dso__set_long_name(map->dso, long_name, true);
 	dso__kernel_module_get_build_id(map->dso, "");
 
 	/*
 	 * Full name could reveal us kmod compression, so
-	 * we need to update the symtab_type अगर needed.
+	 * we need to update the symtab_type if needed.
 	 */
-	अगर (m->comp && is_kmod_dso(map->dso)) अणु
+	if (m->comp && is_kmod_dso(map->dso)) {
 		map->dso->symtab_type++;
 		map->dso->comp = m->comp;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक maps__set_modules_path_dir(काष्ठा maps *maps, स्थिर अक्षर *dir_name, पूर्णांक depth)
-अणु
-	काष्ठा dirent *dent;
-	सूची *dir = सूची_खोलो(dir_name);
-	पूर्णांक ret = 0;
+static int maps__set_modules_path_dir(struct maps *maps, const char *dir_name, int depth)
+{
+	struct dirent *dent;
+	DIR *dir = opendir(dir_name);
+	int ret = 0;
 
-	अगर (!dir) अणु
+	if (!dir) {
 		pr_debug("%s: cannot open %s dir\n", __func__, dir_name);
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	जबतक ((dent = सूची_पढ़ो(dir)) != शून्य) अणु
-		अक्षर path[PATH_MAX];
-		काष्ठा stat st;
+	while ((dent = readdir(dir)) != NULL) {
+		char path[PATH_MAX];
+		struct stat st;
 
-		/*sshfs might वापस bad dent->d_type, so we have to stat*/
-		snम_लिखो(path, माप(path), "%s/%s", dir_name, dent->d_name);
-		अगर (stat(path, &st))
-			जारी;
+		/*sshfs might return bad dent->d_type, so we have to stat*/
+		snprintf(path, sizeof(path), "%s/%s", dir_name, dent->d_name);
+		if (stat(path, &st))
+			continue;
 
-		अगर (S_ISसूची(st.st_mode)) अणु
-			अगर (!म_भेद(dent->d_name, ".") ||
-			    !म_भेद(dent->d_name, ".."))
-				जारी;
+		if (S_ISDIR(st.st_mode)) {
+			if (!strcmp(dent->d_name, ".") ||
+			    !strcmp(dent->d_name, ".."))
+				continue;
 
 			/* Do not follow top-level source and build symlinks */
-			अगर (depth == 0) अणु
-				अगर (!म_भेद(dent->d_name, "source") ||
-				    !म_भेद(dent->d_name, "build"))
-					जारी;
-			पूर्ण
+			if (depth == 0) {
+				if (!strcmp(dent->d_name, "source") ||
+				    !strcmp(dent->d_name, "build"))
+					continue;
+			}
 
 			ret = maps__set_modules_path_dir(maps, path, depth + 1);
-			अगर (ret < 0)
-				जाओ out;
-		पूर्ण अन्यथा अणु
-			काष्ठा kmod_path m;
+			if (ret < 0)
+				goto out;
+		} else {
+			struct kmod_path m;
 
 			ret = kmod_path__parse_name(&m, dent->d_name);
-			अगर (ret)
-				जाओ out;
+			if (ret)
+				goto out;
 
-			अगर (m.kmod)
+			if (m.kmod)
 				ret = maps__set_module_path(maps, path, &m);
 
-			zमुक्त(&m.name);
+			zfree(&m.name);
 
-			अगर (ret)
-				जाओ out;
-		पूर्ण
-	पूर्ण
+			if (ret)
+				goto out;
+		}
+	}
 
 out:
-	बंद_सूची(dir);
-	वापस ret;
-पूर्ण
+	closedir(dir);
+	return ret;
+}
 
-अटल पूर्णांक machine__set_modules_path(काष्ठा machine *machine)
-अणु
-	अक्षर *version;
-	अक्षर modules_path[PATH_MAX];
+static int machine__set_modules_path(struct machine *machine)
+{
+	char *version;
+	char modules_path[PATH_MAX];
 
 	version = get_kernel_version(machine->root_dir);
-	अगर (!version)
-		वापस -1;
+	if (!version)
+		return -1;
 
-	snम_लिखो(modules_path, माप(modules_path), "%s/lib/modules/%s",
+	snprintf(modules_path, sizeof(modules_path), "%s/lib/modules/%s",
 		 machine->root_dir, version);
-	मुक्त(version);
+	free(version);
 
-	वापस maps__set_modules_path_dir(&machine->kmaps, modules_path, 0);
-पूर्ण
-पूर्णांक __weak arch__fix_module_text_start(u64 *start __maybe_unused,
+	return maps__set_modules_path_dir(&machine->kmaps, modules_path, 0);
+}
+int __weak arch__fix_module_text_start(u64 *start __maybe_unused,
 				u64 *size __maybe_unused,
-				स्थिर अक्षर *name __maybe_unused)
-अणु
-	वापस 0;
-पूर्ण
+				const char *name __maybe_unused)
+{
+	return 0;
+}
 
-अटल पूर्णांक machine__create_module(व्योम *arg, स्थिर अक्षर *name, u64 start,
+static int machine__create_module(void *arg, const char *name, u64 start,
 				  u64 size)
-अणु
-	काष्ठा machine *machine = arg;
-	काष्ठा map *map;
+{
+	struct machine *machine = arg;
+	struct map *map;
 
-	अगर (arch__fix_module_text_start(&start, &size, name) < 0)
-		वापस -1;
+	if (arch__fix_module_text_start(&start, &size, name) < 0)
+		return -1;
 
 	map = machine__addnew_module_map(machine, start, name);
-	अगर (map == शून्य)
-		वापस -1;
+	if (map == NULL)
+		return -1;
 	map->end = start + size;
 
 	dso__kernel_module_get_build_id(map->dso, machine->root_dir);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक machine__create_modules(काष्ठा machine *machine)
-अणु
-	स्थिर अक्षर *modules;
-	अक्षर path[PATH_MAX];
+static int machine__create_modules(struct machine *machine)
+{
+	const char *modules;
+	char path[PATH_MAX];
 
-	अगर (machine__is_शेष_guest(machine)) अणु
-		modules = symbol_conf.शेष_guest_modules;
-	पूर्ण अन्यथा अणु
-		snम_लिखो(path, PATH_MAX, "%s/proc/modules", machine->root_dir);
+	if (machine__is_default_guest(machine)) {
+		modules = symbol_conf.default_guest_modules;
+	} else {
+		snprintf(path, PATH_MAX, "%s/proc/modules", machine->root_dir);
 		modules = path;
-	पूर्ण
+	}
 
-	अगर (symbol__restricted_filename(modules, "/proc/modules"))
-		वापस -1;
+	if (symbol__restricted_filename(modules, "/proc/modules"))
+		return -1;
 
-	अगर (modules__parse(modules, machine, machine__create_module))
-		वापस -1;
+	if (modules__parse(modules, machine, machine__create_module))
+		return -1;
 
-	अगर (!machine__set_modules_path(machine))
-		वापस 0;
+	if (!machine__set_modules_path(machine))
+		return 0;
 
 	pr_debug("Problems setting modules path maps, continuing anyway...\n");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम machine__set_kernel_mmap(काष्ठा machine *machine,
+static void machine__set_kernel_mmap(struct machine *machine,
 				     u64 start, u64 end)
-अणु
+{
 	machine->vmlinux_map->start = start;
 	machine->vmlinux_map->end   = end;
 	/*
 	 * Be a bit paranoid here, some perf.data file came with
-	 * a zero sized synthesized MMAP event क्रम the kernel.
+	 * a zero sized synthesized MMAP event for the kernel.
 	 */
-	अगर (start == 0 && end == 0)
+	if (start == 0 && end == 0)
 		machine->vmlinux_map->end = ~0ULL;
-पूर्ण
+}
 
-अटल व्योम machine__update_kernel_mmap(काष्ठा machine *machine,
+static void machine__update_kernel_mmap(struct machine *machine,
 				     u64 start, u64 end)
-अणु
-	काष्ठा map *map = machine__kernel_map(machine);
+{
+	struct map *map = machine__kernel_map(machine);
 
 	map__get(map);
-	maps__हटाओ(&machine->kmaps, map);
+	maps__remove(&machine->kmaps, map);
 
 	machine__set_kernel_mmap(machine, start, end);
 
 	maps__insert(&machine->kmaps, map);
 	map__put(map);
-पूर्ण
+}
 
-पूर्णांक machine__create_kernel_maps(काष्ठा machine *machine)
-अणु
-	काष्ठा dso *kernel = machine__get_kernel(machine);
-	स्थिर अक्षर *name = शून्य;
-	काष्ठा map *map;
+int machine__create_kernel_maps(struct machine *machine)
+{
+	struct dso *kernel = machine__get_kernel(machine);
+	const char *name = NULL;
+	struct map *map;
 	u64 start = 0, end = ~0ULL;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (kernel == शून्य)
-		वापस -1;
+	if (kernel == NULL)
+		return -1;
 
 	ret = __machine__create_kernel_maps(machine, kernel);
-	अगर (ret < 0)
-		जाओ out_put;
+	if (ret < 0)
+		goto out_put;
 
-	अगर (symbol_conf.use_modules && machine__create_modules(machine) < 0) अणु
-		अगर (machine__is_host(machine))
+	if (symbol_conf.use_modules && machine__create_modules(machine) < 0) {
+		if (machine__is_host(machine))
 			pr_debug("Problems creating module maps, "
 				 "continuing anyway...\n");
-		अन्यथा
+		else
 			pr_debug("Problems creating module maps for guest %d, "
 				 "continuing anyway...\n", machine->pid);
-	पूर्ण
+	}
 
-	अगर (!machine__get_running_kernel_start(machine, &name, &start, &end)) अणु
-		अगर (name &&
-		    map__set_kallsyms_ref_reloc_sym(machine->vmlinux_map, name, start)) अणु
+	if (!machine__get_running_kernel_start(machine, &name, &start, &end)) {
+		if (name &&
+		    map__set_kallsyms_ref_reloc_sym(machine->vmlinux_map, name, start)) {
 			machine__destroy_kernel_maps(machine);
 			ret = -1;
-			जाओ out_put;
-		पूर्ण
+			goto out_put;
+		}
 
 		/*
 		 * we have a real start address now, so re-order the kmaps
 		 * assume it's the last in the kmaps
 		 */
 		machine__update_kernel_mmap(machine, start, end);
-	पूर्ण
+	}
 
-	अगर (machine__create_extra_kernel_maps(machine, kernel))
+	if (machine__create_extra_kernel_maps(machine, kernel))
 		pr_debug("Problems creating extra kernel maps, continuing anyway...\n");
 
-	अगर (end == ~0ULL) अणु
+	if (end == ~0ULL) {
 		/* update end address of the kernel map using adjacent module address */
 		map = map__next(machine__kernel_map(machine));
-		अगर (map)
+		if (map)
 			machine__set_kernel_mmap(machine, start, map->start);
-	पूर्ण
+	}
 
 out_put:
 	dso__put(kernel);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल bool machine__uses_kcore(काष्ठा machine *machine)
-अणु
-	काष्ठा dso *dso;
+static bool machine__uses_kcore(struct machine *machine)
+{
+	struct dso *dso;
 
-	list_क्रम_each_entry(dso, &machine->dsos.head, node) अणु
-		अगर (dso__is_kcore(dso))
-			वापस true;
-	पूर्ण
+	list_for_each_entry(dso, &machine->dsos.head, node) {
+		if (dso__is_kcore(dso))
+			return true;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल bool perf_event__is_extra_kernel_mmap(काष्ठा machine *machine,
-					     काष्ठा extra_kernel_map *xm)
-अणु
-	वापस machine__is(machine, "x86_64") &&
+static bool perf_event__is_extra_kernel_mmap(struct machine *machine,
+					     struct extra_kernel_map *xm)
+{
+	return machine__is(machine, "x86_64") &&
 	       is_entry_trampoline(xm->name);
-पूर्ण
+}
 
-अटल पूर्णांक machine__process_extra_kernel_map(काष्ठा machine *machine,
-					     काष्ठा extra_kernel_map *xm)
-अणु
-	काष्ठा dso *kernel = machine__kernel_dso(machine);
+static int machine__process_extra_kernel_map(struct machine *machine,
+					     struct extra_kernel_map *xm)
+{
+	struct dso *kernel = machine__kernel_dso(machine);
 
-	अगर (kernel == शून्य)
-		वापस -1;
+	if (kernel == NULL)
+		return -1;
 
-	वापस machine__create_extra_kernel_map(machine, kernel, xm);
-पूर्ण
+	return machine__create_extra_kernel_map(machine, kernel, xm);
+}
 
-अटल पूर्णांक machine__process_kernel_mmap_event(काष्ठा machine *machine,
-					      काष्ठा extra_kernel_map *xm,
-					      काष्ठा build_id *bid)
-अणु
-	काष्ठा map *map;
-	क्रमागत dso_space_type dso_space;
+static int machine__process_kernel_mmap_event(struct machine *machine,
+					      struct extra_kernel_map *xm,
+					      struct build_id *bid)
+{
+	struct map *map;
+	enum dso_space_type dso_space;
 	bool is_kernel_mmap;
 
-	/* If we have maps from kcore then we करो not need or want any others */
-	अगर (machine__uses_kcore(machine))
-		वापस 0;
+	/* If we have maps from kcore then we do not need or want any others */
+	if (machine__uses_kcore(machine))
+		return 0;
 
-	अगर (machine__is_host(machine))
+	if (machine__is_host(machine))
 		dso_space = DSO_SPACE__KERNEL;
-	अन्यथा
+	else
 		dso_space = DSO_SPACE__KERNEL_GUEST;
 
-	is_kernel_mmap = स_भेद(xm->name, machine->mmap_name,
-				म_माप(machine->mmap_name) - 1) == 0;
-	अगर (xm->name[0] == '/' ||
-	    (!is_kernel_mmap && xm->name[0] == '[')) अणु
+	is_kernel_mmap = memcmp(xm->name, machine->mmap_name,
+				strlen(machine->mmap_name) - 1) == 0;
+	if (xm->name[0] == '/' ||
+	    (!is_kernel_mmap && xm->name[0] == '[')) {
 		map = machine__addnew_module_map(machine, xm->start,
 						 xm->name);
-		अगर (map == शून्य)
-			जाओ out_problem;
+		if (map == NULL)
+			goto out_problem;
 
 		map->end = map->start + xm->end - xm->start;
 
-		अगर (build_id__is_defined(bid))
+		if (build_id__is_defined(bid))
 			dso__set_build_id(map->dso, bid);
 
-	पूर्ण अन्यथा अगर (is_kernel_mmap) अणु
-		स्थिर अक्षर *symbol_name = (xm->name + म_माप(machine->mmap_name));
+	} else if (is_kernel_mmap) {
+		const char *symbol_name = (xm->name + strlen(machine->mmap_name));
 		/*
-		 * Should be there alपढ़ोy, from the build-id table in
+		 * Should be there already, from the build-id table in
 		 * the header.
 		 */
-		काष्ठा dso *kernel = शून्य;
-		काष्ठा dso *dso;
+		struct dso *kernel = NULL;
+		struct dso *dso;
 
-		करोwn_पढ़ो(&machine->dsos.lock);
+		down_read(&machine->dsos.lock);
 
-		list_क्रम_each_entry(dso, &machine->dsos.head, node) अणु
+		list_for_each_entry(dso, &machine->dsos.head, node) {
 
 			/*
 			 * The cpumode passed to is_kernel_module is not the
@@ -1678,387 +1677,387 @@ out_put:
 			 * record the cpumode when we adding this dso to the
 			 * linked list.
 			 *
-			 * However we करोn't really need passing correct
+			 * However we don't really need passing correct
 			 * cpumode.  We know the correct cpumode must be kernel
-			 * mode (अगर not, we should not link it onto kernel_dsos
+			 * mode (if not, we should not link it onto kernel_dsos
 			 * list).
 			 *
-			 * Thereक्रमe, we pass PERF_RECORD_MISC_CPUMODE_UNKNOWN.
+			 * Therefore, we pass PERF_RECORD_MISC_CPUMODE_UNKNOWN.
 			 * is_kernel_module() treats it as a kernel cpumode.
 			 */
 
-			अगर (!dso->kernel ||
-			    is_kernel_module(dso->दीर्घ_name,
+			if (!dso->kernel ||
+			    is_kernel_module(dso->long_name,
 					     PERF_RECORD_MISC_CPUMODE_UNKNOWN))
-				जारी;
+				continue;
 
 
 			kernel = dso;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		up_पढ़ो(&machine->dsos.lock);
+		up_read(&machine->dsos.lock);
 
-		अगर (kernel == शून्य)
+		if (kernel == NULL)
 			kernel = machine__findnew_dso(machine, machine->mmap_name);
-		अगर (kernel == शून्य)
-			जाओ out_problem;
+		if (kernel == NULL)
+			goto out_problem;
 
 		kernel->kernel = dso_space;
-		अगर (__machine__create_kernel_maps(machine, kernel) < 0) अणु
+		if (__machine__create_kernel_maps(machine, kernel) < 0) {
 			dso__put(kernel);
-			जाओ out_problem;
-		पूर्ण
+			goto out_problem;
+		}
 
-		अगर (म_माला(kernel->दीर्घ_name, "vmlinux"))
-			dso__set_लघु_name(kernel, "[kernel.vmlinux]", false);
+		if (strstr(kernel->long_name, "vmlinux"))
+			dso__set_short_name(kernel, "[kernel.vmlinux]", false);
 
 		machine__update_kernel_mmap(machine, xm->start, xm->end);
 
-		अगर (build_id__is_defined(bid))
+		if (build_id__is_defined(bid))
 			dso__set_build_id(kernel, bid);
 
 		/*
-		 * Aव्योम using a zero address (kptr_restrict) क्रम the ref reloc
+		 * Avoid using a zero address (kptr_restrict) for the ref reloc
 		 * symbol. Effectively having zero here means that at record
-		 * समय /proc/sys/kernel/kptr_restrict was non zero.
+		 * time /proc/sys/kernel/kptr_restrict was non zero.
 		 */
-		अगर (xm->pgoff != 0) अणु
+		if (xm->pgoff != 0) {
 			map__set_kallsyms_ref_reloc_sym(machine->vmlinux_map,
 							symbol_name,
 							xm->pgoff);
-		पूर्ण
+		}
 
-		अगर (machine__is_शेष_guest(machine)) अणु
+		if (machine__is_default_guest(machine)) {
 			/*
 			 * preload dso of guest kernel and modules
 			 */
 			dso__load(kernel, machine__kernel_map(machine));
-		पूर्ण
-	पूर्ण अन्यथा अगर (perf_event__is_extra_kernel_mmap(machine, xm)) अणु
-		वापस machine__process_extra_kernel_map(machine, xm);
-	पूर्ण
-	वापस 0;
+		}
+	} else if (perf_event__is_extra_kernel_mmap(machine, xm)) {
+		return machine__process_extra_kernel_map(machine, xm);
+	}
+	return 0;
 out_problem:
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
-पूर्णांक machine__process_mmap2_event(काष्ठा machine *machine,
-				 जोड़ perf_event *event,
-				 काष्ठा perf_sample *sample)
-अणु
-	काष्ठा thपढ़ो *thपढ़ो;
-	काष्ठा map *map;
-	काष्ठा dso_id dso_id = अणु
+int machine__process_mmap2_event(struct machine *machine,
+				 union perf_event *event,
+				 struct perf_sample *sample)
+{
+	struct thread *thread;
+	struct map *map;
+	struct dso_id dso_id = {
 		.maj = event->mmap2.maj,
 		.min = event->mmap2.min,
 		.ino = event->mmap2.ino,
 		.ino_generation = event->mmap2.ino_generation,
-	पूर्ण;
-	काष्ठा build_id __bid, *bid = शून्य;
-	पूर्णांक ret = 0;
+	};
+	struct build_id __bid, *bid = NULL;
+	int ret = 0;
 
-	अगर (dump_trace)
-		perf_event__ख_लिखो_mmap2(event, मानक_निकास);
+	if (dump_trace)
+		perf_event__fprintf_mmap2(event, stdout);
 
-	अगर (event->header.misc & PERF_RECORD_MISC_MMAP_BUILD_ID) अणु
+	if (event->header.misc & PERF_RECORD_MISC_MMAP_BUILD_ID) {
 		bid = &__bid;
 		build_id__init(bid, event->mmap2.build_id, event->mmap2.build_id_size);
-	पूर्ण
+	}
 
-	अगर (sample->cpumode == PERF_RECORD_MISC_GUEST_KERNEL ||
-	    sample->cpumode == PERF_RECORD_MISC_KERNEL) अणु
-		काष्ठा extra_kernel_map xm = अणु
+	if (sample->cpumode == PERF_RECORD_MISC_GUEST_KERNEL ||
+	    sample->cpumode == PERF_RECORD_MISC_KERNEL) {
+		struct extra_kernel_map xm = {
 			.start = event->mmap2.start,
 			.end   = event->mmap2.start + event->mmap2.len,
 			.pgoff = event->mmap2.pgoff,
-		पूर्ण;
+		};
 
 		strlcpy(xm.name, event->mmap2.filename, KMAP_NAME_LEN);
 		ret = machine__process_kernel_mmap_event(machine, &xm, bid);
-		अगर (ret < 0)
-			जाओ out_problem;
-		वापस 0;
-	पूर्ण
+		if (ret < 0)
+			goto out_problem;
+		return 0;
+	}
 
-	thपढ़ो = machine__findnew_thपढ़ो(machine, event->mmap2.pid,
+	thread = machine__findnew_thread(machine, event->mmap2.pid,
 					event->mmap2.tid);
-	अगर (thपढ़ो == शून्य)
-		जाओ out_problem;
+	if (thread == NULL)
+		goto out_problem;
 
 	map = map__new(machine, event->mmap2.start,
 			event->mmap2.len, event->mmap2.pgoff,
 			&dso_id, event->mmap2.prot,
 			event->mmap2.flags, bid,
-			event->mmap2.filename, thपढ़ो);
+			event->mmap2.filename, thread);
 
-	अगर (map == शून्य)
-		जाओ out_problem_map;
+	if (map == NULL)
+		goto out_problem_map;
 
-	ret = thपढ़ो__insert_map(thपढ़ो, map);
-	अगर (ret)
-		जाओ out_problem_insert;
+	ret = thread__insert_map(thread, map);
+	if (ret)
+		goto out_problem_insert;
 
-	thपढ़ो__put(thपढ़ो);
+	thread__put(thread);
 	map__put(map);
-	वापस 0;
+	return 0;
 
 out_problem_insert:
 	map__put(map);
 out_problem_map:
-	thपढ़ो__put(thपढ़ो);
+	thread__put(thread);
 out_problem:
-	dump_म_लिखो("problem processing PERF_RECORD_MMAP2, skipping event.\n");
-	वापस 0;
-पूर्ण
+	dump_printf("problem processing PERF_RECORD_MMAP2, skipping event.\n");
+	return 0;
+}
 
-पूर्णांक machine__process_mmap_event(काष्ठा machine *machine, जोड़ perf_event *event,
-				काष्ठा perf_sample *sample)
-अणु
-	काष्ठा thपढ़ो *thपढ़ो;
-	काष्ठा map *map;
+int machine__process_mmap_event(struct machine *machine, union perf_event *event,
+				struct perf_sample *sample)
+{
+	struct thread *thread;
+	struct map *map;
 	u32 prot = 0;
-	पूर्णांक ret = 0;
+	int ret = 0;
 
-	अगर (dump_trace)
-		perf_event__ख_लिखो_mmap(event, मानक_निकास);
+	if (dump_trace)
+		perf_event__fprintf_mmap(event, stdout);
 
-	अगर (sample->cpumode == PERF_RECORD_MISC_GUEST_KERNEL ||
-	    sample->cpumode == PERF_RECORD_MISC_KERNEL) अणु
-		काष्ठा extra_kernel_map xm = अणु
+	if (sample->cpumode == PERF_RECORD_MISC_GUEST_KERNEL ||
+	    sample->cpumode == PERF_RECORD_MISC_KERNEL) {
+		struct extra_kernel_map xm = {
 			.start = event->mmap.start,
 			.end   = event->mmap.start + event->mmap.len,
 			.pgoff = event->mmap.pgoff,
-		पूर्ण;
+		};
 
 		strlcpy(xm.name, event->mmap.filename, KMAP_NAME_LEN);
-		ret = machine__process_kernel_mmap_event(machine, &xm, शून्य);
-		अगर (ret < 0)
-			जाओ out_problem;
-		वापस 0;
-	पूर्ण
+		ret = machine__process_kernel_mmap_event(machine, &xm, NULL);
+		if (ret < 0)
+			goto out_problem;
+		return 0;
+	}
 
-	thपढ़ो = machine__findnew_thपढ़ो(machine, event->mmap.pid,
+	thread = machine__findnew_thread(machine, event->mmap.pid,
 					 event->mmap.tid);
-	अगर (thपढ़ो == शून्य)
-		जाओ out_problem;
+	if (thread == NULL)
+		goto out_problem;
 
-	अगर (!(event->header.misc & PERF_RECORD_MISC_MMAP_DATA))
+	if (!(event->header.misc & PERF_RECORD_MISC_MMAP_DATA))
 		prot = PROT_EXEC;
 
 	map = map__new(machine, event->mmap.start,
 			event->mmap.len, event->mmap.pgoff,
-			शून्य, prot, 0, शून्य, event->mmap.filename, thपढ़ो);
+			NULL, prot, 0, NULL, event->mmap.filename, thread);
 
-	अगर (map == शून्य)
-		जाओ out_problem_map;
+	if (map == NULL)
+		goto out_problem_map;
 
-	ret = thपढ़ो__insert_map(thपढ़ो, map);
-	अगर (ret)
-		जाओ out_problem_insert;
+	ret = thread__insert_map(thread, map);
+	if (ret)
+		goto out_problem_insert;
 
-	thपढ़ो__put(thपढ़ो);
+	thread__put(thread);
 	map__put(map);
-	वापस 0;
+	return 0;
 
 out_problem_insert:
 	map__put(map);
 out_problem_map:
-	thपढ़ो__put(thपढ़ो);
+	thread__put(thread);
 out_problem:
-	dump_म_लिखो("problem processing PERF_RECORD_MMAP, skipping event.\n");
-	वापस 0;
-पूर्ण
+	dump_printf("problem processing PERF_RECORD_MMAP, skipping event.\n");
+	return 0;
+}
 
-अटल व्योम __machine__हटाओ_thपढ़ो(काष्ठा machine *machine, काष्ठा thपढ़ो *th, bool lock)
-अणु
-	काष्ठा thपढ़ोs *thपढ़ोs = machine__thपढ़ोs(machine, th->tid);
+static void __machine__remove_thread(struct machine *machine, struct thread *th, bool lock)
+{
+	struct threads *threads = machine__threads(machine, th->tid);
 
-	अगर (thपढ़ोs->last_match == th)
-		thपढ़ोs__set_last_match(thपढ़ोs, शून्य);
+	if (threads->last_match == th)
+		threads__set_last_match(threads, NULL);
 
-	अगर (lock)
-		करोwn_ग_लिखो(&thपढ़ोs->lock);
+	if (lock)
+		down_write(&threads->lock);
 
-	BUG_ON(refcount_पढ़ो(&th->refcnt) == 0);
+	BUG_ON(refcount_read(&th->refcnt) == 0);
 
-	rb_erase_cached(&th->rb_node, &thपढ़ोs->entries);
+	rb_erase_cached(&th->rb_node, &threads->entries);
 	RB_CLEAR_NODE(&th->rb_node);
-	--thपढ़ोs->nr;
+	--threads->nr;
 	/*
-	 * Move it first to the dead_thपढ़ोs list, then drop the reference,
-	 * अगर this is the last reference, then the thपढ़ो__delete deकाष्ठाor
-	 * will be called and we will हटाओ it from the dead_thपढ़ोs list.
+	 * Move it first to the dead_threads list, then drop the reference,
+	 * if this is the last reference, then the thread__delete destructor
+	 * will be called and we will remove it from the dead_threads list.
 	 */
-	list_add_tail(&th->node, &thपढ़ोs->dead);
+	list_add_tail(&th->node, &threads->dead);
 
 	/*
-	 * We need to करो the put here because अगर this is the last refcount,
-	 * then we will be touching the thपढ़ोs->dead head when removing the
-	 * thपढ़ो.
+	 * We need to do the put here because if this is the last refcount,
+	 * then we will be touching the threads->dead head when removing the
+	 * thread.
 	 */
-	thपढ़ो__put(th);
+	thread__put(th);
 
-	अगर (lock)
-		up_ग_लिखो(&thपढ़ोs->lock);
-पूर्ण
+	if (lock)
+		up_write(&threads->lock);
+}
 
-व्योम machine__हटाओ_thपढ़ो(काष्ठा machine *machine, काष्ठा thपढ़ो *th)
-अणु
-	वापस __machine__हटाओ_thपढ़ो(machine, th, true);
-पूर्ण
+void machine__remove_thread(struct machine *machine, struct thread *th)
+{
+	return __machine__remove_thread(machine, th, true);
+}
 
-पूर्णांक machine__process_विभाजन_event(काष्ठा machine *machine, जोड़ perf_event *event,
-				काष्ठा perf_sample *sample)
-अणु
-	काष्ठा thपढ़ो *thपढ़ो = machine__find_thपढ़ो(machine,
-						     event->विभाजन.pid,
-						     event->विभाजन.tid);
-	काष्ठा thपढ़ो *parent = machine__findnew_thपढ़ो(machine,
-							event->विभाजन.ppid,
-							event->विभाजन.ptid);
-	bool करो_maps_clone = true;
-	पूर्णांक err = 0;
+int machine__process_fork_event(struct machine *machine, union perf_event *event,
+				struct perf_sample *sample)
+{
+	struct thread *thread = machine__find_thread(machine,
+						     event->fork.pid,
+						     event->fork.tid);
+	struct thread *parent = machine__findnew_thread(machine,
+							event->fork.ppid,
+							event->fork.ptid);
+	bool do_maps_clone = true;
+	int err = 0;
 
-	अगर (dump_trace)
-		perf_event__ख_लिखो_task(event, मानक_निकास);
+	if (dump_trace)
+		perf_event__fprintf_task(event, stdout);
 
 	/*
-	 * There may be an existing thपढ़ो that is not actually the parent,
+	 * There may be an existing thread that is not actually the parent,
 	 * either because we are processing events out of order, or because the
-	 * (विभाजन) event that would have हटाओd the thपढ़ो was lost. Assume the
-	 * latter हाल and जारी on as best we can.
+	 * (fork) event that would have removed the thread was lost. Assume the
+	 * latter case and continue on as best we can.
 	 */
-	अगर (parent->pid_ != (pid_t)event->विभाजन.ppid) अणु
-		dump_म_लिखो("removing erroneous parent thread %d/%d\n",
+	if (parent->pid_ != (pid_t)event->fork.ppid) {
+		dump_printf("removing erroneous parent thread %d/%d\n",
 			    parent->pid_, parent->tid);
-		machine__हटाओ_thपढ़ो(machine, parent);
-		thपढ़ो__put(parent);
-		parent = machine__findnew_thपढ़ो(machine, event->विभाजन.ppid,
-						 event->विभाजन.ptid);
-	पूर्ण
+		machine__remove_thread(machine, parent);
+		thread__put(parent);
+		parent = machine__findnew_thread(machine, event->fork.ppid,
+						 event->fork.ptid);
+	}
 
-	/* अगर a thपढ़ो currently exists क्रम the thपढ़ो id हटाओ it */
-	अगर (thपढ़ो != शून्य) अणु
-		machine__हटाओ_thपढ़ो(machine, thपढ़ो);
-		thपढ़ो__put(thपढ़ो);
-	पूर्ण
+	/* if a thread currently exists for the thread id remove it */
+	if (thread != NULL) {
+		machine__remove_thread(machine, thread);
+		thread__put(thread);
+	}
 
-	thपढ़ो = machine__findnew_thपढ़ो(machine, event->विभाजन.pid,
-					 event->विभाजन.tid);
+	thread = machine__findnew_thread(machine, event->fork.pid,
+					 event->fork.tid);
 	/*
-	 * When synthesizing FORK events, we are trying to create thपढ़ो
-	 * objects क्रम the alपढ़ोy running tasks on the machine.
+	 * When synthesizing FORK events, we are trying to create thread
+	 * objects for the already running tasks on the machine.
 	 *
-	 * Normally, क्रम a kernel FORK event, we want to clone the parent's
+	 * Normally, for a kernel FORK event, we want to clone the parent's
 	 * maps because that is what the kernel just did.
 	 *
-	 * But when synthesizing, this should not be करोne.  If we करो, we end up
+	 * But when synthesizing, this should not be done.  If we do, we end up
 	 * with overlapping maps as we process the synthesized MMAP2 events that
-	 * get delivered लघुly thereafter.
+	 * get delivered shortly thereafter.
 	 *
-	 * Use the FORK event misc flags in an पूर्णांकernal way to संकेत this
+	 * Use the FORK event misc flags in an internal way to signal this
 	 * situation, so we can elide the map clone when appropriate.
 	 */
-	अगर (event->विभाजन.header.misc & PERF_RECORD_MISC_FORK_EXEC)
-		करो_maps_clone = false;
+	if (event->fork.header.misc & PERF_RECORD_MISC_FORK_EXEC)
+		do_maps_clone = false;
 
-	अगर (thपढ़ो == शून्य || parent == शून्य ||
-	    thपढ़ो__विभाजन(thपढ़ो, parent, sample->समय, करो_maps_clone) < 0) अणु
-		dump_म_लिखो("problem processing PERF_RECORD_FORK, skipping event.\n");
+	if (thread == NULL || parent == NULL ||
+	    thread__fork(thread, parent, sample->time, do_maps_clone) < 0) {
+		dump_printf("problem processing PERF_RECORD_FORK, skipping event.\n");
 		err = -1;
-	पूर्ण
-	thपढ़ो__put(thपढ़ो);
-	thपढ़ो__put(parent);
+	}
+	thread__put(thread);
+	thread__put(parent);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक machine__process_निकास_event(काष्ठा machine *machine, जोड़ perf_event *event,
-				काष्ठा perf_sample *sample __maybe_unused)
-अणु
-	काष्ठा thपढ़ो *thपढ़ो = machine__find_thपढ़ो(machine,
-						     event->विभाजन.pid,
-						     event->विभाजन.tid);
+int machine__process_exit_event(struct machine *machine, union perf_event *event,
+				struct perf_sample *sample __maybe_unused)
+{
+	struct thread *thread = machine__find_thread(machine,
+						     event->fork.pid,
+						     event->fork.tid);
 
-	अगर (dump_trace)
-		perf_event__ख_लिखो_task(event, मानक_निकास);
+	if (dump_trace)
+		perf_event__fprintf_task(event, stdout);
 
-	अगर (thपढ़ो != शून्य) अणु
-		thपढ़ो__निकासed(thपढ़ो);
-		thपढ़ो__put(thपढ़ो);
-	पूर्ण
+	if (thread != NULL) {
+		thread__exited(thread);
+		thread__put(thread);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक machine__process_event(काष्ठा machine *machine, जोड़ perf_event *event,
-			   काष्ठा perf_sample *sample)
-अणु
-	पूर्णांक ret;
+int machine__process_event(struct machine *machine, union perf_event *event,
+			   struct perf_sample *sample)
+{
+	int ret;
 
-	चयन (event->header.type) अणु
-	हाल PERF_RECORD_COMM:
-		ret = machine__process_comm_event(machine, event, sample); अवरोध;
-	हाल PERF_RECORD_MMAP:
-		ret = machine__process_mmap_event(machine, event, sample); अवरोध;
-	हाल PERF_RECORD_NAMESPACES:
-		ret = machine__process_namespaces_event(machine, event, sample); अवरोध;
-	हाल PERF_RECORD_CGROUP:
-		ret = machine__process_cgroup_event(machine, event, sample); अवरोध;
-	हाल PERF_RECORD_MMAP2:
-		ret = machine__process_mmap2_event(machine, event, sample); अवरोध;
-	हाल PERF_RECORD_FORK:
-		ret = machine__process_विभाजन_event(machine, event, sample); अवरोध;
-	हाल PERF_RECORD_EXIT:
-		ret = machine__process_निकास_event(machine, event, sample); अवरोध;
-	हाल PERF_RECORD_LOST:
-		ret = machine__process_lost_event(machine, event, sample); अवरोध;
-	हाल PERF_RECORD_AUX:
-		ret = machine__process_aux_event(machine, event); अवरोध;
-	हाल PERF_RECORD_ITRACE_START:
-		ret = machine__process_itrace_start_event(machine, event); अवरोध;
-	हाल PERF_RECORD_LOST_SAMPLES:
-		ret = machine__process_lost_samples_event(machine, event, sample); अवरोध;
-	हाल PERF_RECORD_SWITCH:
-	हाल PERF_RECORD_SWITCH_CPU_WIDE:
-		ret = machine__process_चयन_event(machine, event); अवरोध;
-	हाल PERF_RECORD_KSYMBOL:
-		ret = machine__process_ksymbol(machine, event, sample); अवरोध;
-	हाल PERF_RECORD_BPF_EVENT:
-		ret = machine__process_bpf(machine, event, sample); अवरोध;
-	हाल PERF_RECORD_TEXT_POKE:
-		ret = machine__process_text_poke(machine, event, sample); अवरोध;
-	शेष:
+	switch (event->header.type) {
+	case PERF_RECORD_COMM:
+		ret = machine__process_comm_event(machine, event, sample); break;
+	case PERF_RECORD_MMAP:
+		ret = machine__process_mmap_event(machine, event, sample); break;
+	case PERF_RECORD_NAMESPACES:
+		ret = machine__process_namespaces_event(machine, event, sample); break;
+	case PERF_RECORD_CGROUP:
+		ret = machine__process_cgroup_event(machine, event, sample); break;
+	case PERF_RECORD_MMAP2:
+		ret = machine__process_mmap2_event(machine, event, sample); break;
+	case PERF_RECORD_FORK:
+		ret = machine__process_fork_event(machine, event, sample); break;
+	case PERF_RECORD_EXIT:
+		ret = machine__process_exit_event(machine, event, sample); break;
+	case PERF_RECORD_LOST:
+		ret = machine__process_lost_event(machine, event, sample); break;
+	case PERF_RECORD_AUX:
+		ret = machine__process_aux_event(machine, event); break;
+	case PERF_RECORD_ITRACE_START:
+		ret = machine__process_itrace_start_event(machine, event); break;
+	case PERF_RECORD_LOST_SAMPLES:
+		ret = machine__process_lost_samples_event(machine, event, sample); break;
+	case PERF_RECORD_SWITCH:
+	case PERF_RECORD_SWITCH_CPU_WIDE:
+		ret = machine__process_switch_event(machine, event); break;
+	case PERF_RECORD_KSYMBOL:
+		ret = machine__process_ksymbol(machine, event, sample); break;
+	case PERF_RECORD_BPF_EVENT:
+		ret = machine__process_bpf(machine, event, sample); break;
+	case PERF_RECORD_TEXT_POKE:
+		ret = machine__process_text_poke(machine, event, sample); break;
+	default:
 		ret = -1;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल bool symbol__match_regex(काष्ठा symbol *sym, regex_t *regex)
-अणु
-	अगर (!regexec(regex, sym->name, 0, शून्य, 0))
-		वापस true;
-	वापस false;
-पूर्ण
+static bool symbol__match_regex(struct symbol *sym, regex_t *regex)
+{
+	if (!regexec(regex, sym->name, 0, NULL, 0))
+		return true;
+	return false;
+}
 
-अटल व्योम ip__resolve_ams(काष्ठा thपढ़ो *thपढ़ो,
-			    काष्ठा addr_map_symbol *ams,
+static void ip__resolve_ams(struct thread *thread,
+			    struct addr_map_symbol *ams,
 			    u64 ip)
-अणु
-	काष्ठा addr_location al;
+{
+	struct addr_location al;
 
-	स_रखो(&al, 0, माप(al));
+	memset(&al, 0, sizeof(al));
 	/*
-	 * We cannot use the header.misc hपूर्णांक to determine whether a
+	 * We cannot use the header.misc hint to determine whether a
 	 * branch stack address is user, kernel, guest, hypervisor.
 	 * Branches may straddle the kernel/user/hypervisor boundaries.
 	 * Thus, we have to try consecutively until we find a match
-	 * or अन्यथा, the symbol is unknown
+	 * or else, the symbol is unknown
 	 */
-	thपढ़ो__find_cpumode_addr_location(thपढ़ो, ip, &al);
+	thread__find_cpumode_addr_location(thread, ip, &al);
 
 	ams->addr = ip;
 	ams->al_addr = al.addr;
@@ -2067,17 +2066,17 @@ out_problem:
 	ams->ms.map = al.map;
 	ams->phys_addr = 0;
 	ams->data_page_size = 0;
-पूर्ण
+}
 
-अटल व्योम ip__resolve_data(काष्ठा thपढ़ो *thपढ़ो,
-			     u8 m, काष्ठा addr_map_symbol *ams,
+static void ip__resolve_data(struct thread *thread,
+			     u8 m, struct addr_map_symbol *ams,
 			     u64 addr, u64 phys_addr, u64 daddr_page_size)
-अणु
-	काष्ठा addr_location al;
+{
+	struct addr_location al;
 
-	स_रखो(&al, 0, माप(al));
+	memset(&al, 0, sizeof(al));
 
-	thपढ़ो__find_symbol(thपढ़ो, m, addr, &al);
+	thread__find_symbol(thread, m, addr, &al);
 
 	ams->addr = addr;
 	ams->al_addr = al.addr;
@@ -2086,85 +2085,85 @@ out_problem:
 	ams->ms.map = al.map;
 	ams->phys_addr = phys_addr;
 	ams->data_page_size = daddr_page_size;
-पूर्ण
+}
 
-काष्ठा mem_info *sample__resolve_mem(काष्ठा perf_sample *sample,
-				     काष्ठा addr_location *al)
-अणु
-	काष्ठा mem_info *mi = mem_info__new();
+struct mem_info *sample__resolve_mem(struct perf_sample *sample,
+				     struct addr_location *al)
+{
+	struct mem_info *mi = mem_info__new();
 
-	अगर (!mi)
-		वापस शून्य;
+	if (!mi)
+		return NULL;
 
-	ip__resolve_ams(al->thपढ़ो, &mi->iaddr, sample->ip);
-	ip__resolve_data(al->thपढ़ो, al->cpumode, &mi->daddr,
+	ip__resolve_ams(al->thread, &mi->iaddr, sample->ip);
+	ip__resolve_data(al->thread, al->cpumode, &mi->daddr,
 			 sample->addr, sample->phys_addr,
 			 sample->data_page_size);
 	mi->data_src.val = sample->data_src;
 
-	वापस mi;
-पूर्ण
+	return mi;
+}
 
-अटल अक्षर *callchain_srcline(काष्ठा map_symbol *ms, u64 ip)
-अणु
-	काष्ठा map *map = ms->map;
-	अक्षर *srcline = शून्य;
+static char *callchain_srcline(struct map_symbol *ms, u64 ip)
+{
+	struct map *map = ms->map;
+	char *srcline = NULL;
 
-	अगर (!map || callchain_param.key == CCKEY_FUNCTION)
-		वापस srcline;
+	if (!map || callchain_param.key == CCKEY_FUNCTION)
+		return srcline;
 
 	srcline = srcline__tree_find(&map->dso->srclines, ip);
-	अगर (!srcline) अणु
+	if (!srcline) {
 		bool show_sym = false;
 		bool show_addr = callchain_param.key == CCKEY_ADDRESS;
 
 		srcline = get_srcline(map->dso, map__rip_2objdump(map, ip),
 				      ms->sym, show_sym, show_addr, ip);
 		srcline__tree_insert(&map->dso->srclines, ip, srcline);
-	पूर्ण
+	}
 
-	वापस srcline;
-पूर्ण
+	return srcline;
+}
 
-काष्ठा iterations अणु
-	पूर्णांक nr_loop_iter;
+struct iterations {
+	int nr_loop_iter;
 	u64 cycles;
-पूर्ण;
+};
 
-अटल पूर्णांक add_callchain_ip(काष्ठा thपढ़ो *thपढ़ो,
-			    काष्ठा callchain_cursor *cursor,
-			    काष्ठा symbol **parent,
-			    काष्ठा addr_location *root_al,
+static int add_callchain_ip(struct thread *thread,
+			    struct callchain_cursor *cursor,
+			    struct symbol **parent,
+			    struct addr_location *root_al,
 			    u8 *cpumode,
 			    u64 ip,
 			    bool branch,
-			    काष्ठा branch_flags *flags,
-			    काष्ठा iterations *iter,
+			    struct branch_flags *flags,
+			    struct iterations *iter,
 			    u64 branch_from)
-अणु
-	काष्ठा map_symbol ms;
-	काष्ठा addr_location al;
-	पूर्णांक nr_loop_iter = 0;
+{
+	struct map_symbol ms;
+	struct addr_location al;
+	int nr_loop_iter = 0;
 	u64 iter_cycles = 0;
-	स्थिर अक्षर *srcline = शून्य;
+	const char *srcline = NULL;
 
 	al.filtered = 0;
-	al.sym = शून्य;
-	अगर (!cpumode) अणु
-		thपढ़ो__find_cpumode_addr_location(thपढ़ो, ip, &al);
-	पूर्ण अन्यथा अणु
-		अगर (ip >= PERF_CONTEXT_MAX) अणु
-			चयन (ip) अणु
-			हाल PERF_CONTEXT_HV:
+	al.sym = NULL;
+	if (!cpumode) {
+		thread__find_cpumode_addr_location(thread, ip, &al);
+	} else {
+		if (ip >= PERF_CONTEXT_MAX) {
+			switch (ip) {
+			case PERF_CONTEXT_HV:
 				*cpumode = PERF_RECORD_MISC_HYPERVISOR;
-				अवरोध;
-			हाल PERF_CONTEXT_KERNEL:
+				break;
+			case PERF_CONTEXT_KERNEL:
 				*cpumode = PERF_RECORD_MISC_KERNEL;
-				अवरोध;
-			हाल PERF_CONTEXT_USER:
+				break;
+			case PERF_CONTEXT_USER:
 				*cpumode = PERF_RECORD_MISC_USER;
-				अवरोध;
-			शेष:
+				break;
+			default:
 				pr_debug("invalid callchain context: "
 					 "%"PRId64"\n", (s64) ip);
 				/*
@@ -2172,293 +2171,293 @@ out_problem:
 				 * Discard all.
 				 */
 				callchain_cursor_reset(cursor);
-				वापस 1;
-			पूर्ण
-			वापस 0;
-		पूर्ण
-		thपढ़ो__find_symbol(thपढ़ो, *cpumode, ip, &al);
-	पूर्ण
+				return 1;
+			}
+			return 0;
+		}
+		thread__find_symbol(thread, *cpumode, ip, &al);
+	}
 
-	अगर (al.sym != शून्य) अणु
-		अगर (perf_hpp_list.parent && !*parent &&
+	if (al.sym != NULL) {
+		if (perf_hpp_list.parent && !*parent &&
 		    symbol__match_regex(al.sym, &parent_regex))
 			*parent = al.sym;
-		अन्यथा अगर (have_ignore_callees && root_al &&
-		  symbol__match_regex(al.sym, &ignore_callees_regex)) अणु
+		else if (have_ignore_callees && root_al &&
+		  symbol__match_regex(al.sym, &ignore_callees_regex)) {
 			/* Treat this symbol as the root,
-			   क्रमgetting its callees. */
+			   forgetting its callees. */
 			*root_al = al;
 			callchain_cursor_reset(cursor);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (symbol_conf.hide_unresolved && al.sym == शून्य)
-		वापस 0;
+	if (symbol_conf.hide_unresolved && al.sym == NULL)
+		return 0;
 
-	अगर (iter) अणु
+	if (iter) {
 		nr_loop_iter = iter->nr_loop_iter;
 		iter_cycles = iter->cycles;
-	पूर्ण
+	}
 
 	ms.maps = al.maps;
 	ms.map = al.map;
 	ms.sym = al.sym;
 	srcline = callchain_srcline(&ms, al.addr);
-	वापस callchain_cursor_append(cursor, ip, &ms,
+	return callchain_cursor_append(cursor, ip, &ms,
 				       branch, flags, nr_loop_iter,
 				       iter_cycles, branch_from, srcline);
-पूर्ण
+}
 
-काष्ठा branch_info *sample__resolve_bstack(काष्ठा perf_sample *sample,
-					   काष्ठा addr_location *al)
-अणु
-	अचिन्हित पूर्णांक i;
-	स्थिर काष्ठा branch_stack *bs = sample->branch_stack;
-	काष्ठा branch_entry *entries = perf_sample__branch_entries(sample);
-	काष्ठा branch_info *bi = सुस्मृति(bs->nr, माप(काष्ठा branch_info));
+struct branch_info *sample__resolve_bstack(struct perf_sample *sample,
+					   struct addr_location *al)
+{
+	unsigned int i;
+	const struct branch_stack *bs = sample->branch_stack;
+	struct branch_entry *entries = perf_sample__branch_entries(sample);
+	struct branch_info *bi = calloc(bs->nr, sizeof(struct branch_info));
 
-	अगर (!bi)
-		वापस शून्य;
+	if (!bi)
+		return NULL;
 
-	क्रम (i = 0; i < bs->nr; i++) अणु
-		ip__resolve_ams(al->thपढ़ो, &bi[i].to, entries[i].to);
-		ip__resolve_ams(al->thपढ़ो, &bi[i].from, entries[i].from);
+	for (i = 0; i < bs->nr; i++) {
+		ip__resolve_ams(al->thread, &bi[i].to, entries[i].to);
+		ip__resolve_ams(al->thread, &bi[i].from, entries[i].from);
 		bi[i].flags = entries[i].flags;
-	पूर्ण
-	वापस bi;
-पूर्ण
+	}
+	return bi;
+}
 
-अटल व्योम save_iterations(काष्ठा iterations *iter,
-			    काष्ठा branch_entry *be, पूर्णांक nr)
-अणु
-	पूर्णांक i;
+static void save_iterations(struct iterations *iter,
+			    struct branch_entry *be, int nr)
+{
+	int i;
 
 	iter->nr_loop_iter++;
 	iter->cycles = 0;
 
-	क्रम (i = 0; i < nr; i++)
+	for (i = 0; i < nr; i++)
 		iter->cycles += be[i].flags.cycles;
-पूर्ण
+}
 
-#घोषणा CHASHSZ 127
-#घोषणा CHASHBITS 7
-#घोषणा NO_ENTRY 0xff
+#define CHASHSZ 127
+#define CHASHBITS 7
+#define NO_ENTRY 0xff
 
-#घोषणा PERF_MAX_BRANCH_DEPTH 127
+#define PERF_MAX_BRANCH_DEPTH 127
 
 /* Remove loops. */
-अटल पूर्णांक हटाओ_loops(काष्ठा branch_entry *l, पूर्णांक nr,
-			काष्ठा iterations *iter)
-अणु
-	पूर्णांक i, j, off;
-	अचिन्हित अक्षर chash[CHASHSZ];
+static int remove_loops(struct branch_entry *l, int nr,
+			struct iterations *iter)
+{
+	int i, j, off;
+	unsigned char chash[CHASHSZ];
 
-	स_रखो(chash, NO_ENTRY, माप(chash));
+	memset(chash, NO_ENTRY, sizeof(chash));
 
 	BUG_ON(PERF_MAX_BRANCH_DEPTH > 255);
 
-	क्रम (i = 0; i < nr; i++) अणु
-		पूर्णांक h = hash_64(l[i].from, CHASHBITS) % CHASHSZ;
+	for (i = 0; i < nr; i++) {
+		int h = hash_64(l[i].from, CHASHBITS) % CHASHSZ;
 
-		/* no collision handling क्रम now */
-		अगर (chash[h] == NO_ENTRY) अणु
+		/* no collision handling for now */
+		if (chash[h] == NO_ENTRY) {
 			chash[h] = i;
-		पूर्ण अन्यथा अगर (l[chash[h]].from == l[i].from) अणु
+		} else if (l[chash[h]].from == l[i].from) {
 			bool is_loop = true;
-			/* check अगर it is a real loop */
+			/* check if it is a real loop */
 			off = 0;
-			क्रम (j = chash[h]; j < i && i + off < nr; j++, off++)
-				अगर (l[j].from != l[i + off].from) अणु
+			for (j = chash[h]; j < i && i + off < nr; j++, off++)
+				if (l[j].from != l[i + off].from) {
 					is_loop = false;
-					अवरोध;
-				पूर्ण
-			अगर (is_loop) अणु
+					break;
+				}
+			if (is_loop) {
 				j = nr - (i + off);
-				अगर (j > 0) अणु
+				if (j > 0) {
 					save_iterations(iter + i + off,
 						l + i, off);
 
-					स_हटाओ(iter + i, iter + i + off,
-						j * माप(*iter));
+					memmove(iter + i, iter + i + off,
+						j * sizeof(*iter));
 
-					स_हटाओ(l + i, l + i + off,
-						j * माप(*l));
-				पूर्ण
+					memmove(l + i, l + i + off,
+						j * sizeof(*l));
+				}
 
 				nr -= off;
-			पूर्ण
-		पूर्ण
-	पूर्ण
-	वापस nr;
-पूर्ण
+			}
+		}
+	}
+	return nr;
+}
 
-अटल पूर्णांक lbr_callchain_add_kernel_ip(काष्ठा thपढ़ो *thपढ़ो,
-				       काष्ठा callchain_cursor *cursor,
-				       काष्ठा perf_sample *sample,
-				       काष्ठा symbol **parent,
-				       काष्ठा addr_location *root_al,
+static int lbr_callchain_add_kernel_ip(struct thread *thread,
+				       struct callchain_cursor *cursor,
+				       struct perf_sample *sample,
+				       struct symbol **parent,
+				       struct addr_location *root_al,
 				       u64 branch_from,
-				       bool callee, पूर्णांक end)
-अणु
-	काष्ठा ip_callchain *chain = sample->callchain;
+				       bool callee, int end)
+{
+	struct ip_callchain *chain = sample->callchain;
 	u8 cpumode = PERF_RECORD_MISC_USER;
-	पूर्णांक err, i;
+	int err, i;
 
-	अगर (callee) अणु
-		क्रम (i = 0; i < end + 1; i++) अणु
-			err = add_callchain_ip(thपढ़ो, cursor, parent,
+	if (callee) {
+		for (i = 0; i < end + 1; i++) {
+			err = add_callchain_ip(thread, cursor, parent,
 					       root_al, &cpumode, chain->ips[i],
-					       false, शून्य, शून्य, branch_from);
-			अगर (err)
-				वापस err;
-		पूर्ण
-		वापस 0;
-	पूर्ण
+					       false, NULL, NULL, branch_from);
+			if (err)
+				return err;
+		}
+		return 0;
+	}
 
-	क्रम (i = end; i >= 0; i--) अणु
-		err = add_callchain_ip(thपढ़ो, cursor, parent,
+	for (i = end; i >= 0; i--) {
+		err = add_callchain_ip(thread, cursor, parent,
 				       root_al, &cpumode, chain->ips[i],
-				       false, शून्य, शून्य, branch_from);
-		अगर (err)
-			वापस err;
-	पूर्ण
+				       false, NULL, NULL, branch_from);
+		if (err)
+			return err;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम save_lbr_cursor_node(काष्ठा thपढ़ो *thपढ़ो,
-				 काष्ठा callchain_cursor *cursor,
-				 पूर्णांक idx)
-अणु
-	काष्ठा lbr_stitch *lbr_stitch = thपढ़ो->lbr_stitch;
+static void save_lbr_cursor_node(struct thread *thread,
+				 struct callchain_cursor *cursor,
+				 int idx)
+{
+	struct lbr_stitch *lbr_stitch = thread->lbr_stitch;
 
-	अगर (!lbr_stitch)
-		वापस;
+	if (!lbr_stitch)
+		return;
 
-	अगर (cursor->pos == cursor->nr) अणु
+	if (cursor->pos == cursor->nr) {
 		lbr_stitch->prev_lbr_cursor[idx].valid = false;
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (!cursor->curr)
+	if (!cursor->curr)
 		cursor->curr = cursor->first;
-	अन्यथा
+	else
 		cursor->curr = cursor->curr->next;
-	स_नकल(&lbr_stitch->prev_lbr_cursor[idx], cursor->curr,
-	       माप(काष्ठा callchain_cursor_node));
+	memcpy(&lbr_stitch->prev_lbr_cursor[idx], cursor->curr,
+	       sizeof(struct callchain_cursor_node));
 
 	lbr_stitch->prev_lbr_cursor[idx].valid = true;
 	cursor->pos++;
-पूर्ण
+}
 
-अटल पूर्णांक lbr_callchain_add_lbr_ip(काष्ठा thपढ़ो *thपढ़ो,
-				    काष्ठा callchain_cursor *cursor,
-				    काष्ठा perf_sample *sample,
-				    काष्ठा symbol **parent,
-				    काष्ठा addr_location *root_al,
+static int lbr_callchain_add_lbr_ip(struct thread *thread,
+				    struct callchain_cursor *cursor,
+				    struct perf_sample *sample,
+				    struct symbol **parent,
+				    struct addr_location *root_al,
 				    u64 *branch_from,
 				    bool callee)
-अणु
-	काष्ठा branch_stack *lbr_stack = sample->branch_stack;
-	काष्ठा branch_entry *entries = perf_sample__branch_entries(sample);
+{
+	struct branch_stack *lbr_stack = sample->branch_stack;
+	struct branch_entry *entries = perf_sample__branch_entries(sample);
 	u8 cpumode = PERF_RECORD_MISC_USER;
-	पूर्णांक lbr_nr = lbr_stack->nr;
-	काष्ठा branch_flags *flags;
-	पूर्णांक err, i;
+	int lbr_nr = lbr_stack->nr;
+	struct branch_flags *flags;
+	int err, i;
 	u64 ip;
 
 	/*
 	 * The curr and pos are not used in writing session. They are cleared
-	 * in callchain_cursor_commit() when the writing session is बंदd.
+	 * in callchain_cursor_commit() when the writing session is closed.
 	 * Using curr and pos to track the current cursor node.
 	 */
-	अगर (thपढ़ो->lbr_stitch) अणु
-		cursor->curr = शून्य;
+	if (thread->lbr_stitch) {
+		cursor->curr = NULL;
 		cursor->pos = cursor->nr;
-		अगर (cursor->nr) अणु
+		if (cursor->nr) {
 			cursor->curr = cursor->first;
-			क्रम (i = 0; i < (पूर्णांक)(cursor->nr - 1); i++)
+			for (i = 0; i < (int)(cursor->nr - 1); i++)
 				cursor->curr = cursor->curr->next;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (callee) अणु
+	if (callee) {
 		/* Add LBR ip from first entries.to */
 		ip = entries[0].to;
 		flags = &entries[0].flags;
 		*branch_from = entries[0].from;
-		err = add_callchain_ip(thपढ़ो, cursor, parent,
+		err = add_callchain_ip(thread, cursor, parent,
 				       root_al, &cpumode, ip,
-				       true, flags, शून्य,
+				       true, flags, NULL,
 				       *branch_from);
-		अगर (err)
-			वापस err;
+		if (err)
+			return err;
 
 		/*
 		 * The number of cursor node increases.
 		 * Move the current cursor node.
-		 * But करोes not need to save current cursor node क्रम entry 0.
+		 * But does not need to save current cursor node for entry 0.
 		 * It's impossible to stitch the whole LBRs of previous sample.
 		 */
-		अगर (thपढ़ो->lbr_stitch && (cursor->pos != cursor->nr)) अणु
-			अगर (!cursor->curr)
+		if (thread->lbr_stitch && (cursor->pos != cursor->nr)) {
+			if (!cursor->curr)
 				cursor->curr = cursor->first;
-			अन्यथा
+			else
 				cursor->curr = cursor->curr->next;
 			cursor->pos++;
-		पूर्ण
+		}
 
 		/* Add LBR ip from entries.from one by one. */
-		क्रम (i = 0; i < lbr_nr; i++) अणु
+		for (i = 0; i < lbr_nr; i++) {
 			ip = entries[i].from;
 			flags = &entries[i].flags;
-			err = add_callchain_ip(thपढ़ो, cursor, parent,
+			err = add_callchain_ip(thread, cursor, parent,
 					       root_al, &cpumode, ip,
-					       true, flags, शून्य,
+					       true, flags, NULL,
 					       *branch_from);
-			अगर (err)
-				वापस err;
-			save_lbr_cursor_node(thपढ़ो, cursor, i);
-		पूर्ण
-		वापस 0;
-	पूर्ण
+			if (err)
+				return err;
+			save_lbr_cursor_node(thread, cursor, i);
+		}
+		return 0;
+	}
 
 	/* Add LBR ip from entries.from one by one. */
-	क्रम (i = lbr_nr - 1; i >= 0; i--) अणु
+	for (i = lbr_nr - 1; i >= 0; i--) {
 		ip = entries[i].from;
 		flags = &entries[i].flags;
-		err = add_callchain_ip(thपढ़ो, cursor, parent,
+		err = add_callchain_ip(thread, cursor, parent,
 				       root_al, &cpumode, ip,
-				       true, flags, शून्य,
+				       true, flags, NULL,
 				       *branch_from);
-		अगर (err)
-			वापस err;
-		save_lbr_cursor_node(thपढ़ो, cursor, i);
-	पूर्ण
+		if (err)
+			return err;
+		save_lbr_cursor_node(thread, cursor, i);
+	}
 
 	/* Add LBR ip from first entries.to */
 	ip = entries[0].to;
 	flags = &entries[0].flags;
 	*branch_from = entries[0].from;
-	err = add_callchain_ip(thपढ़ो, cursor, parent,
+	err = add_callchain_ip(thread, cursor, parent,
 			       root_al, &cpumode, ip,
-			       true, flags, शून्य,
+			       true, flags, NULL,
 			       *branch_from);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक lbr_callchain_add_stitched_lbr_ip(काष्ठा thपढ़ो *thपढ़ो,
-					     काष्ठा callchain_cursor *cursor)
-अणु
-	काष्ठा lbr_stitch *lbr_stitch = thपढ़ो->lbr_stitch;
-	काष्ठा callchain_cursor_node *cnode;
-	काष्ठा stitch_list *stitch_node;
-	पूर्णांक err;
+static int lbr_callchain_add_stitched_lbr_ip(struct thread *thread,
+					     struct callchain_cursor *cursor)
+{
+	struct lbr_stitch *lbr_stitch = thread->lbr_stitch;
+	struct callchain_cursor_node *cnode;
+	struct stitch_list *stitch_node;
+	int err;
 
-	list_क्रम_each_entry(stitch_node, &lbr_stitch->lists, node) अणु
+	list_for_each_entry(stitch_node, &lbr_stitch->lists, node) {
 		cnode = &stitch_node->cursor;
 
 		err = callchain_cursor_append(cursor, cnode->ip,
@@ -2469,705 +2468,705 @@ out_problem:
 					      cnode->iter_cycles,
 					      cnode->branch_from,
 					      cnode->srcline);
-		अगर (err)
-			वापस err;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		if (err)
+			return err;
+	}
+	return 0;
+}
 
-अटल काष्ठा stitch_list *get_stitch_node(काष्ठा thपढ़ो *thपढ़ो)
-अणु
-	काष्ठा lbr_stitch *lbr_stitch = thपढ़ो->lbr_stitch;
-	काष्ठा stitch_list *stitch_node;
+static struct stitch_list *get_stitch_node(struct thread *thread)
+{
+	struct lbr_stitch *lbr_stitch = thread->lbr_stitch;
+	struct stitch_list *stitch_node;
 
-	अगर (!list_empty(&lbr_stitch->मुक्त_lists)) अणु
-		stitch_node = list_first_entry(&lbr_stitch->मुक्त_lists,
-					       काष्ठा stitch_list, node);
+	if (!list_empty(&lbr_stitch->free_lists)) {
+		stitch_node = list_first_entry(&lbr_stitch->free_lists,
+					       struct stitch_list, node);
 		list_del(&stitch_node->node);
 
-		वापस stitch_node;
-	पूर्ण
+		return stitch_node;
+	}
 
-	वापस दो_स्मृति(माप(काष्ठा stitch_list));
-पूर्ण
+	return malloc(sizeof(struct stitch_list));
+}
 
-अटल bool has_stitched_lbr(काष्ठा thपढ़ो *thपढ़ो,
-			     काष्ठा perf_sample *cur,
-			     काष्ठा perf_sample *prev,
-			     अचिन्हित पूर्णांक max_lbr,
+static bool has_stitched_lbr(struct thread *thread,
+			     struct perf_sample *cur,
+			     struct perf_sample *prev,
+			     unsigned int max_lbr,
 			     bool callee)
-अणु
-	काष्ठा branch_stack *cur_stack = cur->branch_stack;
-	काष्ठा branch_entry *cur_entries = perf_sample__branch_entries(cur);
-	काष्ठा branch_stack *prev_stack = prev->branch_stack;
-	काष्ठा branch_entry *prev_entries = perf_sample__branch_entries(prev);
-	काष्ठा lbr_stitch *lbr_stitch = thपढ़ो->lbr_stitch;
-	पूर्णांक i, j, nr_identical_branches = 0;
-	काष्ठा stitch_list *stitch_node;
+{
+	struct branch_stack *cur_stack = cur->branch_stack;
+	struct branch_entry *cur_entries = perf_sample__branch_entries(cur);
+	struct branch_stack *prev_stack = prev->branch_stack;
+	struct branch_entry *prev_entries = perf_sample__branch_entries(prev);
+	struct lbr_stitch *lbr_stitch = thread->lbr_stitch;
+	int i, j, nr_identical_branches = 0;
+	struct stitch_list *stitch_node;
 	u64 cur_base, distance;
 
-	अगर (!cur_stack || !prev_stack)
-		वापस false;
+	if (!cur_stack || !prev_stack)
+		return false;
 
-	/* Find the physical index of the base-of-stack क्रम current sample. */
+	/* Find the physical index of the base-of-stack for current sample. */
 	cur_base = max_lbr - cur_stack->nr + cur_stack->hw_idx + 1;
 
 	distance = (prev_stack->hw_idx > cur_base) ? (prev_stack->hw_idx - cur_base) :
 						     (max_lbr + prev_stack->hw_idx - cur_base);
-	/* Previous sample has लघुer stack. Nothing can be stitched. */
-	अगर (distance + 1 > prev_stack->nr)
-		वापस false;
+	/* Previous sample has shorter stack. Nothing can be stitched. */
+	if (distance + 1 > prev_stack->nr)
+		return false;
 
 	/*
-	 * Check अगर there are identical LBRs between two samples.
+	 * Check if there are identical LBRs between two samples.
 	 * Identical LBRs must have same from, to and flags values. Also,
-	 * they have to be saved in the same LBR रेजिस्टरs (same physical
+	 * they have to be saved in the same LBR registers (same physical
 	 * index).
 	 *
 	 * Starts from the base-of-stack of current sample.
 	 */
-	क्रम (i = distance, j = cur_stack->nr - 1; (i >= 0) && (j >= 0); i--, j--) अणु
-		अगर ((prev_entries[i].from != cur_entries[j].from) ||
+	for (i = distance, j = cur_stack->nr - 1; (i >= 0) && (j >= 0); i--, j--) {
+		if ((prev_entries[i].from != cur_entries[j].from) ||
 		    (prev_entries[i].to != cur_entries[j].to) ||
 		    (prev_entries[i].flags.value != cur_entries[j].flags.value))
-			अवरोध;
+			break;
 		nr_identical_branches++;
-	पूर्ण
+	}
 
-	अगर (!nr_identical_branches)
-		वापस false;
+	if (!nr_identical_branches)
+		return false;
 
 	/*
 	 * Save the LBRs between the base-of-stack of previous sample
-	 * and the base-of-stack of current sample पूर्णांकo lbr_stitch->lists.
+	 * and the base-of-stack of current sample into lbr_stitch->lists.
 	 * These LBRs will be stitched later.
 	 */
-	क्रम (i = prev_stack->nr - 1; i > (पूर्णांक)distance; i--) अणु
+	for (i = prev_stack->nr - 1; i > (int)distance; i--) {
 
-		अगर (!lbr_stitch->prev_lbr_cursor[i].valid)
-			जारी;
+		if (!lbr_stitch->prev_lbr_cursor[i].valid)
+			continue;
 
-		stitch_node = get_stitch_node(thपढ़ो);
-		अगर (!stitch_node)
-			वापस false;
+		stitch_node = get_stitch_node(thread);
+		if (!stitch_node)
+			return false;
 
-		स_नकल(&stitch_node->cursor, &lbr_stitch->prev_lbr_cursor[i],
-		       माप(काष्ठा callchain_cursor_node));
+		memcpy(&stitch_node->cursor, &lbr_stitch->prev_lbr_cursor[i],
+		       sizeof(struct callchain_cursor_node));
 
-		अगर (callee)
+		if (callee)
 			list_add(&stitch_node->node, &lbr_stitch->lists);
-		अन्यथा
+		else
 			list_add_tail(&stitch_node->node, &lbr_stitch->lists);
-	पूर्ण
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल bool alloc_lbr_stitch(काष्ठा thपढ़ो *thपढ़ो, अचिन्हित पूर्णांक max_lbr)
-अणु
-	अगर (thपढ़ो->lbr_stitch)
-		वापस true;
+static bool alloc_lbr_stitch(struct thread *thread, unsigned int max_lbr)
+{
+	if (thread->lbr_stitch)
+		return true;
 
-	thपढ़ो->lbr_stitch = zalloc(माप(*thपढ़ो->lbr_stitch));
-	अगर (!thपढ़ो->lbr_stitch)
-		जाओ err;
+	thread->lbr_stitch = zalloc(sizeof(*thread->lbr_stitch));
+	if (!thread->lbr_stitch)
+		goto err;
 
-	thपढ़ो->lbr_stitch->prev_lbr_cursor = सुस्मृति(max_lbr + 1, माप(काष्ठा callchain_cursor_node));
-	अगर (!thपढ़ो->lbr_stitch->prev_lbr_cursor)
-		जाओ मुक्त_lbr_stitch;
+	thread->lbr_stitch->prev_lbr_cursor = calloc(max_lbr + 1, sizeof(struct callchain_cursor_node));
+	if (!thread->lbr_stitch->prev_lbr_cursor)
+		goto free_lbr_stitch;
 
-	INIT_LIST_HEAD(&thपढ़ो->lbr_stitch->lists);
-	INIT_LIST_HEAD(&thपढ़ो->lbr_stitch->मुक्त_lists);
+	INIT_LIST_HEAD(&thread->lbr_stitch->lists);
+	INIT_LIST_HEAD(&thread->lbr_stitch->free_lists);
 
-	वापस true;
+	return true;
 
-मुक्त_lbr_stitch:
-	zमुक्त(&thपढ़ो->lbr_stitch);
+free_lbr_stitch:
+	zfree(&thread->lbr_stitch);
 err:
 	pr_warning("Failed to allocate space for stitched LBRs. Disable LBR stitch\n");
-	thपढ़ो->lbr_stitch_enable = false;
-	वापस false;
-पूर्ण
+	thread->lbr_stitch_enable = false;
+	return false;
+}
 
 /*
  * Resolve LBR callstack chain sample
  * Return:
- * 1 on success get LBR callchain inक्रमmation
- * 0 no available LBR callchain inक्रमmation, should try fp
+ * 1 on success get LBR callchain information
+ * 0 no available LBR callchain information, should try fp
  * negative error code on other errors.
  */
-अटल पूर्णांक resolve_lbr_callchain_sample(काष्ठा thपढ़ो *thपढ़ो,
-					काष्ठा callchain_cursor *cursor,
-					काष्ठा perf_sample *sample,
-					काष्ठा symbol **parent,
-					काष्ठा addr_location *root_al,
-					पूर्णांक max_stack,
-					अचिन्हित पूर्णांक max_lbr)
-अणु
+static int resolve_lbr_callchain_sample(struct thread *thread,
+					struct callchain_cursor *cursor,
+					struct perf_sample *sample,
+					struct symbol **parent,
+					struct addr_location *root_al,
+					int max_stack,
+					unsigned int max_lbr)
+{
 	bool callee = (callchain_param.order == ORDER_CALLEE);
-	काष्ठा ip_callchain *chain = sample->callchain;
-	पूर्णांक chain_nr = min(max_stack, (पूर्णांक)chain->nr), i;
-	काष्ठा lbr_stitch *lbr_stitch;
+	struct ip_callchain *chain = sample->callchain;
+	int chain_nr = min(max_stack, (int)chain->nr), i;
+	struct lbr_stitch *lbr_stitch;
 	bool stitched_lbr = false;
 	u64 branch_from = 0;
-	पूर्णांक err;
+	int err;
 
-	क्रम (i = 0; i < chain_nr; i++) अणु
-		अगर (chain->ips[i] == PERF_CONTEXT_USER)
-			अवरोध;
-	पूर्ण
+	for (i = 0; i < chain_nr; i++) {
+		if (chain->ips[i] == PERF_CONTEXT_USER)
+			break;
+	}
 
 	/* LBR only affects the user callchain */
-	अगर (i == chain_nr)
-		वापस 0;
+	if (i == chain_nr)
+		return 0;
 
-	अगर (thपढ़ो->lbr_stitch_enable && !sample->no_hw_idx &&
-	    (max_lbr > 0) && alloc_lbr_stitch(thपढ़ो, max_lbr)) अणु
-		lbr_stitch = thपढ़ो->lbr_stitch;
+	if (thread->lbr_stitch_enable && !sample->no_hw_idx &&
+	    (max_lbr > 0) && alloc_lbr_stitch(thread, max_lbr)) {
+		lbr_stitch = thread->lbr_stitch;
 
-		stitched_lbr = has_stitched_lbr(thपढ़ो, sample,
+		stitched_lbr = has_stitched_lbr(thread, sample,
 						&lbr_stitch->prev_sample,
 						max_lbr, callee);
 
-		अगर (!stitched_lbr && !list_empty(&lbr_stitch->lists)) अणु
+		if (!stitched_lbr && !list_empty(&lbr_stitch->lists)) {
 			list_replace_init(&lbr_stitch->lists,
-					  &lbr_stitch->मुक्त_lists);
-		पूर्ण
-		स_नकल(&lbr_stitch->prev_sample, sample, माप(*sample));
-	पूर्ण
+					  &lbr_stitch->free_lists);
+		}
+		memcpy(&lbr_stitch->prev_sample, sample, sizeof(*sample));
+	}
 
-	अगर (callee) अणु
+	if (callee) {
 		/* Add kernel ip */
-		err = lbr_callchain_add_kernel_ip(thपढ़ो, cursor, sample,
+		err = lbr_callchain_add_kernel_ip(thread, cursor, sample,
 						  parent, root_al, branch_from,
 						  true, i);
-		अगर (err)
-			जाओ error;
+		if (err)
+			goto error;
 
-		err = lbr_callchain_add_lbr_ip(thपढ़ो, cursor, sample, parent,
+		err = lbr_callchain_add_lbr_ip(thread, cursor, sample, parent,
 					       root_al, &branch_from, true);
-		अगर (err)
-			जाओ error;
+		if (err)
+			goto error;
 
-		अगर (stitched_lbr) अणु
-			err = lbr_callchain_add_stitched_lbr_ip(thपढ़ो, cursor);
-			अगर (err)
-				जाओ error;
-		पूर्ण
+		if (stitched_lbr) {
+			err = lbr_callchain_add_stitched_lbr_ip(thread, cursor);
+			if (err)
+				goto error;
+		}
 
-	पूर्ण अन्यथा अणु
-		अगर (stitched_lbr) अणु
-			err = lbr_callchain_add_stitched_lbr_ip(thपढ़ो, cursor);
-			अगर (err)
-				जाओ error;
-		पूर्ण
-		err = lbr_callchain_add_lbr_ip(thपढ़ो, cursor, sample, parent,
+	} else {
+		if (stitched_lbr) {
+			err = lbr_callchain_add_stitched_lbr_ip(thread, cursor);
+			if (err)
+				goto error;
+		}
+		err = lbr_callchain_add_lbr_ip(thread, cursor, sample, parent,
 					       root_al, &branch_from, false);
-		अगर (err)
-			जाओ error;
+		if (err)
+			goto error;
 
 		/* Add kernel ip */
-		err = lbr_callchain_add_kernel_ip(thपढ़ो, cursor, sample,
+		err = lbr_callchain_add_kernel_ip(thread, cursor, sample,
 						  parent, root_al, branch_from,
 						  false, i);
-		अगर (err)
-			जाओ error;
-	पूर्ण
-	वापस 1;
+		if (err)
+			goto error;
+	}
+	return 1;
 
 error:
-	वापस (err < 0) ? err : 0;
-पूर्ण
+	return (err < 0) ? err : 0;
+}
 
-अटल पूर्णांक find_prev_cpumode(काष्ठा ip_callchain *chain, काष्ठा thपढ़ो *thपढ़ो,
-			     काष्ठा callchain_cursor *cursor,
-			     काष्ठा symbol **parent,
-			     काष्ठा addr_location *root_al,
-			     u8 *cpumode, पूर्णांक ent)
-अणु
-	पूर्णांक err = 0;
+static int find_prev_cpumode(struct ip_callchain *chain, struct thread *thread,
+			     struct callchain_cursor *cursor,
+			     struct symbol **parent,
+			     struct addr_location *root_al,
+			     u8 *cpumode, int ent)
+{
+	int err = 0;
 
-	जबतक (--ent >= 0) अणु
+	while (--ent >= 0) {
 		u64 ip = chain->ips[ent];
 
-		अगर (ip >= PERF_CONTEXT_MAX) अणु
-			err = add_callchain_ip(thपढ़ो, cursor, parent,
+		if (ip >= PERF_CONTEXT_MAX) {
+			err = add_callchain_ip(thread, cursor, parent,
 					       root_al, cpumode, ip,
-					       false, शून्य, शून्य, 0);
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	वापस err;
-पूर्ण
+					       false, NULL, NULL, 0);
+			break;
+		}
+	}
+	return err;
+}
 
-अटल पूर्णांक thपढ़ो__resolve_callchain_sample(काष्ठा thपढ़ो *thपढ़ो,
-					    काष्ठा callchain_cursor *cursor,
-					    काष्ठा evsel *evsel,
-					    काष्ठा perf_sample *sample,
-					    काष्ठा symbol **parent,
-					    काष्ठा addr_location *root_al,
-					    पूर्णांक max_stack)
-अणु
-	काष्ठा branch_stack *branch = sample->branch_stack;
-	काष्ठा branch_entry *entries = perf_sample__branch_entries(sample);
-	काष्ठा ip_callchain *chain = sample->callchain;
-	पूर्णांक chain_nr = 0;
+static int thread__resolve_callchain_sample(struct thread *thread,
+					    struct callchain_cursor *cursor,
+					    struct evsel *evsel,
+					    struct perf_sample *sample,
+					    struct symbol **parent,
+					    struct addr_location *root_al,
+					    int max_stack)
+{
+	struct branch_stack *branch = sample->branch_stack;
+	struct branch_entry *entries = perf_sample__branch_entries(sample);
+	struct ip_callchain *chain = sample->callchain;
+	int chain_nr = 0;
 	u8 cpumode = PERF_RECORD_MISC_USER;
-	पूर्णांक i, j, err, nr_entries;
-	पूर्णांक skip_idx = -1;
-	पूर्णांक first_call = 0;
+	int i, j, err, nr_entries;
+	int skip_idx = -1;
+	int first_call = 0;
 
-	अगर (chain)
+	if (chain)
 		chain_nr = chain->nr;
 
-	अगर (evsel__has_branch_callstack(evsel)) अणु
-		काष्ठा perf_env *env = evsel__env(evsel);
+	if (evsel__has_branch_callstack(evsel)) {
+		struct perf_env *env = evsel__env(evsel);
 
-		err = resolve_lbr_callchain_sample(thपढ़ो, cursor, sample, parent,
+		err = resolve_lbr_callchain_sample(thread, cursor, sample, parent,
 						   root_al, max_stack,
 						   !env ? 0 : env->max_branches);
-		अगर (err)
-			वापस (err < 0) ? err : 0;
-	पूर्ण
+		if (err)
+			return (err < 0) ? err : 0;
+	}
 
 	/*
-	 * Based on DWARF debug inक्रमmation, some architectures skip
+	 * Based on DWARF debug information, some architectures skip
 	 * a callchain entry saved by the kernel.
 	 */
-	skip_idx = arch_skip_callchain_idx(thपढ़ो, chain);
+	skip_idx = arch_skip_callchain_idx(thread, chain);
 
 	/*
-	 * Add branches to call stack क्रम easier browsing. This gives
-	 * more context क्रम a sample than just the callers.
+	 * Add branches to call stack for easier browsing. This gives
+	 * more context for a sample than just the callers.
 	 *
-	 * This uses inभागidual histograms of paths compared to the
+	 * This uses individual histograms of paths compared to the
 	 * aggregated histograms the normal LBR mode uses.
 	 *
-	 * Limitations क्रम now:
+	 * Limitations for now:
 	 * - No extra filters
 	 * - No annotations (should annotate somehow)
 	 */
 
-	अगर (branch && callchain_param.branch_callstack) अणु
-		पूर्णांक nr = min(max_stack, (पूर्णांक)branch->nr);
-		काष्ठा branch_entry be[nr];
-		काष्ठा iterations iter[nr];
+	if (branch && callchain_param.branch_callstack) {
+		int nr = min(max_stack, (int)branch->nr);
+		struct branch_entry be[nr];
+		struct iterations iter[nr];
 
-		अगर (branch->nr > PERF_MAX_BRANCH_DEPTH) अणु
+		if (branch->nr > PERF_MAX_BRANCH_DEPTH) {
 			pr_warning("corrupted branch chain. skipping...\n");
-			जाओ check_calls;
-		पूर्ण
+			goto check_calls;
+		}
 
-		क्रम (i = 0; i < nr; i++) अणु
-			अगर (callchain_param.order == ORDER_CALLEE) अणु
+		for (i = 0; i < nr; i++) {
+			if (callchain_param.order == ORDER_CALLEE) {
 				be[i] = entries[i];
 
-				अगर (chain == शून्य)
-					जारी;
+				if (chain == NULL)
+					continue;
 
 				/*
-				 * Check क्रम overlap पूर्णांकo the callchain.
-				 * The वापस address is one off compared to
-				 * the branch entry. To adjust क्रम this
-				 * assume the calling inकाष्ठाion is not दीर्घer
+				 * Check for overlap into the callchain.
+				 * The return address is one off compared to
+				 * the branch entry. To adjust for this
+				 * assume the calling instruction is not longer
 				 * than 8 bytes.
 				 */
-				अगर (i == skip_idx ||
+				if (i == skip_idx ||
 				    chain->ips[first_call] >= PERF_CONTEXT_MAX)
 					first_call++;
-				अन्यथा अगर (be[i].from < chain->ips[first_call] &&
+				else if (be[i].from < chain->ips[first_call] &&
 				    be[i].from >= chain->ips[first_call] - 8)
 					first_call++;
-			पूर्ण अन्यथा
+			} else
 				be[i] = entries[branch->nr - i - 1];
-		पूर्ण
+		}
 
-		स_रखो(iter, 0, माप(काष्ठा iterations) * nr);
-		nr = हटाओ_loops(be, nr, iter);
+		memset(iter, 0, sizeof(struct iterations) * nr);
+		nr = remove_loops(be, nr, iter);
 
-		क्रम (i = 0; i < nr; i++) अणु
-			err = add_callchain_ip(thपढ़ो, cursor, parent,
+		for (i = 0; i < nr; i++) {
+			err = add_callchain_ip(thread, cursor, parent,
 					       root_al,
-					       शून्य, be[i].to,
+					       NULL, be[i].to,
 					       true, &be[i].flags,
-					       शून्य, be[i].from);
+					       NULL, be[i].from);
 
-			अगर (!err)
-				err = add_callchain_ip(thपढ़ो, cursor, parent, root_al,
-						       शून्य, be[i].from,
+			if (!err)
+				err = add_callchain_ip(thread, cursor, parent, root_al,
+						       NULL, be[i].from,
 						       true, &be[i].flags,
 						       &iter[i], 0);
-			अगर (err == -EINVAL)
-				अवरोध;
-			अगर (err)
-				वापस err;
-		पूर्ण
+			if (err == -EINVAL)
+				break;
+			if (err)
+				return err;
+		}
 
-		अगर (chain_nr == 0)
-			वापस 0;
+		if (chain_nr == 0)
+			return 0;
 
 		chain_nr -= nr;
-	पूर्ण
+	}
 
 check_calls:
-	अगर (chain && callchain_param.order != ORDER_CALLEE) अणु
-		err = find_prev_cpumode(chain, thपढ़ो, cursor, parent, root_al,
+	if (chain && callchain_param.order != ORDER_CALLEE) {
+		err = find_prev_cpumode(chain, thread, cursor, parent, root_al,
 					&cpumode, chain->nr - first_call);
-		अगर (err)
-			वापस (err < 0) ? err : 0;
-	पूर्ण
-	क्रम (i = first_call, nr_entries = 0;
-	     i < chain_nr && nr_entries < max_stack; i++) अणु
+		if (err)
+			return (err < 0) ? err : 0;
+	}
+	for (i = first_call, nr_entries = 0;
+	     i < chain_nr && nr_entries < max_stack; i++) {
 		u64 ip;
 
-		अगर (callchain_param.order == ORDER_CALLEE)
+		if (callchain_param.order == ORDER_CALLEE)
 			j = i;
-		अन्यथा
+		else
 			j = chain->nr - i - 1;
 
-#अगर_घोषित HAVE_SKIP_CALLCHAIN_IDX
-		अगर (j == skip_idx)
-			जारी;
-#पूर्ण_अगर
+#ifdef HAVE_SKIP_CALLCHAIN_IDX
+		if (j == skip_idx)
+			continue;
+#endif
 		ip = chain->ips[j];
-		अगर (ip < PERF_CONTEXT_MAX)
+		if (ip < PERF_CONTEXT_MAX)
                        ++nr_entries;
-		अन्यथा अगर (callchain_param.order != ORDER_CALLEE) अणु
-			err = find_prev_cpumode(chain, thपढ़ो, cursor, parent,
+		else if (callchain_param.order != ORDER_CALLEE) {
+			err = find_prev_cpumode(chain, thread, cursor, parent,
 						root_al, &cpumode, j);
-			अगर (err)
-				वापस (err < 0) ? err : 0;
-			जारी;
-		पूर्ण
+			if (err)
+				return (err < 0) ? err : 0;
+			continue;
+		}
 
-		err = add_callchain_ip(thपढ़ो, cursor, parent,
+		err = add_callchain_ip(thread, cursor, parent,
 				       root_al, &cpumode, ip,
-				       false, शून्य, शून्य, 0);
+				       false, NULL, NULL, 0);
 
-		अगर (err)
-			वापस (err < 0) ? err : 0;
-	पूर्ण
+		if (err)
+			return (err < 0) ? err : 0;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक append_अंतरभूतs(काष्ठा callchain_cursor *cursor, काष्ठा map_symbol *ms, u64 ip)
-अणु
-	काष्ठा symbol *sym = ms->sym;
-	काष्ठा map *map = ms->map;
-	काष्ठा अंतरभूत_node *अंतरभूत_node;
-	काष्ठा अंतरभूत_list *ilist;
+static int append_inlines(struct callchain_cursor *cursor, struct map_symbol *ms, u64 ip)
+{
+	struct symbol *sym = ms->sym;
+	struct map *map = ms->map;
+	struct inline_node *inline_node;
+	struct inline_list *ilist;
 	u64 addr;
-	पूर्णांक ret = 1;
+	int ret = 1;
 
-	अगर (!symbol_conf.अंतरभूत_name || !map || !sym)
-		वापस ret;
+	if (!symbol_conf.inline_name || !map || !sym)
+		return ret;
 
 	addr = map__map_ip(map, ip);
 	addr = map__rip_2objdump(map, addr);
 
-	अंतरभूत_node = अंतरभूतs__tree_find(&map->dso->अंतरभूतd_nodes, addr);
-	अगर (!अंतरभूत_node) अणु
-		अंतरभूत_node = dso__parse_addr_अंतरभूतs(map->dso, addr, sym);
-		अगर (!अंतरभूत_node)
-			वापस ret;
-		अंतरभूतs__tree_insert(&map->dso->अंतरभूतd_nodes, अंतरभूत_node);
-	पूर्ण
+	inline_node = inlines__tree_find(&map->dso->inlined_nodes, addr);
+	if (!inline_node) {
+		inline_node = dso__parse_addr_inlines(map->dso, addr, sym);
+		if (!inline_node)
+			return ret;
+		inlines__tree_insert(&map->dso->inlined_nodes, inline_node);
+	}
 
-	list_क्रम_each_entry(ilist, &अंतरभूत_node->val, list) अणु
-		काष्ठा map_symbol ilist_ms = अणु
+	list_for_each_entry(ilist, &inline_node->val, list) {
+		struct map_symbol ilist_ms = {
 			.maps = ms->maps,
 			.map = map,
 			.sym = ilist->symbol,
-		पूर्ण;
+		};
 		ret = callchain_cursor_append(cursor, ip, &ilist_ms, false,
-					      शून्य, 0, 0, 0, ilist->srcline);
+					      NULL, 0, 0, 0, ilist->srcline);
 
-		अगर (ret != 0)
-			वापस ret;
-	पूर्ण
+		if (ret != 0)
+			return ret;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक unwind_entry(काष्ठा unwind_entry *entry, व्योम *arg)
-अणु
-	काष्ठा callchain_cursor *cursor = arg;
-	स्थिर अक्षर *srcline = शून्य;
+static int unwind_entry(struct unwind_entry *entry, void *arg)
+{
+	struct callchain_cursor *cursor = arg;
+	const char *srcline = NULL;
 	u64 addr = entry->ip;
 
-	अगर (symbol_conf.hide_unresolved && entry->ms.sym == शून्य)
-		वापस 0;
+	if (symbol_conf.hide_unresolved && entry->ms.sym == NULL)
+		return 0;
 
-	अगर (append_अंतरभूतs(cursor, &entry->ms, entry->ip) == 0)
-		वापस 0;
+	if (append_inlines(cursor, &entry->ms, entry->ip) == 0)
+		return 0;
 
 	/*
-	 * Convert entry->ip from a भव address to an offset in
+	 * Convert entry->ip from a virtual address to an offset in
 	 * its corresponding binary.
 	 */
-	अगर (entry->ms.map)
+	if (entry->ms.map)
 		addr = map__map_ip(entry->ms.map, entry->ip);
 
 	srcline = callchain_srcline(&entry->ms, addr);
-	वापस callchain_cursor_append(cursor, entry->ip, &entry->ms,
-				       false, शून्य, 0, 0, 0, srcline);
-पूर्ण
+	return callchain_cursor_append(cursor, entry->ip, &entry->ms,
+				       false, NULL, 0, 0, 0, srcline);
+}
 
-अटल पूर्णांक thपढ़ो__resolve_callchain_unwind(काष्ठा thपढ़ो *thपढ़ो,
-					    काष्ठा callchain_cursor *cursor,
-					    काष्ठा evsel *evsel,
-					    काष्ठा perf_sample *sample,
-					    पूर्णांक max_stack)
-अणु
-	/* Can we करो dwarf post unwind? */
-	अगर (!((evsel->core.attr.sample_type & PERF_SAMPLE_REGS_USER) &&
+static int thread__resolve_callchain_unwind(struct thread *thread,
+					    struct callchain_cursor *cursor,
+					    struct evsel *evsel,
+					    struct perf_sample *sample,
+					    int max_stack)
+{
+	/* Can we do dwarf post unwind? */
+	if (!((evsel->core.attr.sample_type & PERF_SAMPLE_REGS_USER) &&
 	      (evsel->core.attr.sample_type & PERF_SAMPLE_STACK_USER)))
-		वापस 0;
+		return 0;
 
-	/* Bail out अगर nothing was captured. */
-	अगर ((!sample->user_regs.regs) ||
+	/* Bail out if nothing was captured. */
+	if ((!sample->user_regs.regs) ||
 	    (!sample->user_stack.size))
-		वापस 0;
+		return 0;
 
-	वापस unwind__get_entries(unwind_entry, cursor,
-				   thपढ़ो, sample, max_stack);
-पूर्ण
+	return unwind__get_entries(unwind_entry, cursor,
+				   thread, sample, max_stack);
+}
 
-पूर्णांक thपढ़ो__resolve_callchain(काष्ठा thपढ़ो *thपढ़ो,
-			      काष्ठा callchain_cursor *cursor,
-			      काष्ठा evsel *evsel,
-			      काष्ठा perf_sample *sample,
-			      काष्ठा symbol **parent,
-			      काष्ठा addr_location *root_al,
-			      पूर्णांक max_stack)
-अणु
-	पूर्णांक ret = 0;
+int thread__resolve_callchain(struct thread *thread,
+			      struct callchain_cursor *cursor,
+			      struct evsel *evsel,
+			      struct perf_sample *sample,
+			      struct symbol **parent,
+			      struct addr_location *root_al,
+			      int max_stack)
+{
+	int ret = 0;
 
 	callchain_cursor_reset(cursor);
 
-	अगर (callchain_param.order == ORDER_CALLEE) अणु
-		ret = thपढ़ो__resolve_callchain_sample(thपढ़ो, cursor,
+	if (callchain_param.order == ORDER_CALLEE) {
+		ret = thread__resolve_callchain_sample(thread, cursor,
 						       evsel, sample,
 						       parent, root_al,
 						       max_stack);
-		अगर (ret)
-			वापस ret;
-		ret = thपढ़ो__resolve_callchain_unwind(thपढ़ो, cursor,
+		if (ret)
+			return ret;
+		ret = thread__resolve_callchain_unwind(thread, cursor,
 						       evsel, sample,
 						       max_stack);
-	पूर्ण अन्यथा अणु
-		ret = thपढ़ो__resolve_callchain_unwind(thपढ़ो, cursor,
+	} else {
+		ret = thread__resolve_callchain_unwind(thread, cursor,
 						       evsel, sample,
 						       max_stack);
-		अगर (ret)
-			वापस ret;
-		ret = thपढ़ो__resolve_callchain_sample(thपढ़ो, cursor,
+		if (ret)
+			return ret;
+		ret = thread__resolve_callchain_sample(thread, cursor,
 						       evsel, sample,
 						       parent, root_al,
 						       max_stack);
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक machine__क्रम_each_thपढ़ो(काष्ठा machine *machine,
-			     पूर्णांक (*fn)(काष्ठा thपढ़ो *thपढ़ो, व्योम *p),
-			     व्योम *priv)
-अणु
-	काष्ठा thपढ़ोs *thपढ़ोs;
-	काष्ठा rb_node *nd;
-	काष्ठा thपढ़ो *thपढ़ो;
-	पूर्णांक rc = 0;
-	पूर्णांक i;
+int machine__for_each_thread(struct machine *machine,
+			     int (*fn)(struct thread *thread, void *p),
+			     void *priv)
+{
+	struct threads *threads;
+	struct rb_node *nd;
+	struct thread *thread;
+	int rc = 0;
+	int i;
 
-	क्रम (i = 0; i < THREADS__TABLE_SIZE; i++) अणु
-		thपढ़ोs = &machine->thपढ़ोs[i];
-		क्रम (nd = rb_first_cached(&thपढ़ोs->entries); nd;
-		     nd = rb_next(nd)) अणु
-			thपढ़ो = rb_entry(nd, काष्ठा thपढ़ो, rb_node);
-			rc = fn(thपढ़ो, priv);
-			अगर (rc != 0)
-				वापस rc;
-		पूर्ण
+	for (i = 0; i < THREADS__TABLE_SIZE; i++) {
+		threads = &machine->threads[i];
+		for (nd = rb_first_cached(&threads->entries); nd;
+		     nd = rb_next(nd)) {
+			thread = rb_entry(nd, struct thread, rb_node);
+			rc = fn(thread, priv);
+			if (rc != 0)
+				return rc;
+		}
 
-		list_क्रम_each_entry(thपढ़ो, &thपढ़ोs->dead, node) अणु
-			rc = fn(thपढ़ो, priv);
-			अगर (rc != 0)
-				वापस rc;
-		पूर्ण
-	पूर्ण
-	वापस rc;
-पूर्ण
+		list_for_each_entry(thread, &threads->dead, node) {
+			rc = fn(thread, priv);
+			if (rc != 0)
+				return rc;
+		}
+	}
+	return rc;
+}
 
-पूर्णांक machines__क्रम_each_thपढ़ो(काष्ठा machines *machines,
-			      पूर्णांक (*fn)(काष्ठा thपढ़ो *thपढ़ो, व्योम *p),
-			      व्योम *priv)
-अणु
-	काष्ठा rb_node *nd;
-	पूर्णांक rc = 0;
+int machines__for_each_thread(struct machines *machines,
+			      int (*fn)(struct thread *thread, void *p),
+			      void *priv)
+{
+	struct rb_node *nd;
+	int rc = 0;
 
-	rc = machine__क्रम_each_thपढ़ो(&machines->host, fn, priv);
-	अगर (rc != 0)
-		वापस rc;
+	rc = machine__for_each_thread(&machines->host, fn, priv);
+	if (rc != 0)
+		return rc;
 
-	क्रम (nd = rb_first_cached(&machines->guests); nd; nd = rb_next(nd)) अणु
-		काष्ठा machine *machine = rb_entry(nd, काष्ठा machine, rb_node);
+	for (nd = rb_first_cached(&machines->guests); nd; nd = rb_next(nd)) {
+		struct machine *machine = rb_entry(nd, struct machine, rb_node);
 
-		rc = machine__क्रम_each_thपढ़ो(machine, fn, priv);
-		अगर (rc != 0)
-			वापस rc;
-	पूर्ण
-	वापस rc;
-पूर्ण
+		rc = machine__for_each_thread(machine, fn, priv);
+		if (rc != 0)
+			return rc;
+	}
+	return rc;
+}
 
-pid_t machine__get_current_tid(काष्ठा machine *machine, पूर्णांक cpu)
-अणु
-	पूर्णांक nr_cpus = min(machine->env->nr_cpus_avail, MAX_NR_CPUS);
+pid_t machine__get_current_tid(struct machine *machine, int cpu)
+{
+	int nr_cpus = min(machine->env->nr_cpus_avail, MAX_NR_CPUS);
 
-	अगर (cpu < 0 || cpu >= nr_cpus || !machine->current_tid)
-		वापस -1;
+	if (cpu < 0 || cpu >= nr_cpus || !machine->current_tid)
+		return -1;
 
-	वापस machine->current_tid[cpu];
-पूर्ण
+	return machine->current_tid[cpu];
+}
 
-पूर्णांक machine__set_current_tid(काष्ठा machine *machine, पूर्णांक cpu, pid_t pid,
+int machine__set_current_tid(struct machine *machine, int cpu, pid_t pid,
 			     pid_t tid)
-अणु
-	काष्ठा thपढ़ो *thपढ़ो;
-	पूर्णांक nr_cpus = min(machine->env->nr_cpus_avail, MAX_NR_CPUS);
+{
+	struct thread *thread;
+	int nr_cpus = min(machine->env->nr_cpus_avail, MAX_NR_CPUS);
 
-	अगर (cpu < 0)
-		वापस -EINVAL;
+	if (cpu < 0)
+		return -EINVAL;
 
-	अगर (!machine->current_tid) अणु
-		पूर्णांक i;
+	if (!machine->current_tid) {
+		int i;
 
-		machine->current_tid = सुस्मृति(nr_cpus, माप(pid_t));
-		अगर (!machine->current_tid)
-			वापस -ENOMEM;
-		क्रम (i = 0; i < nr_cpus; i++)
+		machine->current_tid = calloc(nr_cpus, sizeof(pid_t));
+		if (!machine->current_tid)
+			return -ENOMEM;
+		for (i = 0; i < nr_cpus; i++)
 			machine->current_tid[i] = -1;
-	पूर्ण
+	}
 
-	अगर (cpu >= nr_cpus) अणु
+	if (cpu >= nr_cpus) {
 		pr_err("Requested CPU %d too large. ", cpu);
 		pr_err("Consider raising MAX_NR_CPUS\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	machine->current_tid[cpu] = tid;
 
-	thपढ़ो = machine__findnew_thपढ़ो(machine, pid, tid);
-	अगर (!thपढ़ो)
-		वापस -ENOMEM;
+	thread = machine__findnew_thread(machine, pid, tid);
+	if (!thread)
+		return -ENOMEM;
 
-	thपढ़ो->cpu = cpu;
-	thपढ़ो__put(thपढ़ो);
+	thread->cpu = cpu;
+	thread__put(thread);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Compares the raw arch string. N.B. see instead perf_env__arch() अगर a
+ * Compares the raw arch string. N.B. see instead perf_env__arch() if a
  * normalized arch is needed.
  */
-bool machine__is(काष्ठा machine *machine, स्थिर अक्षर *arch)
-अणु
-	वापस machine && !म_भेद(perf_env__raw_arch(machine->env), arch);
-पूर्ण
+bool machine__is(struct machine *machine, const char *arch)
+{
+	return machine && !strcmp(perf_env__raw_arch(machine->env), arch);
+}
 
-पूर्णांक machine__nr_cpus_avail(काष्ठा machine *machine)
-अणु
-	वापस machine ? perf_env__nr_cpus_avail(machine->env) : 0;
-पूर्ण
+int machine__nr_cpus_avail(struct machine *machine)
+{
+	return machine ? perf_env__nr_cpus_avail(machine->env) : 0;
+}
 
-पूर्णांक machine__get_kernel_start(काष्ठा machine *machine)
-अणु
-	काष्ठा map *map = machine__kernel_map(machine);
-	पूर्णांक err = 0;
+int machine__get_kernel_start(struct machine *machine)
+{
+	struct map *map = machine__kernel_map(machine);
+	int err = 0;
 
 	/*
 	 * The only addresses above 2^63 are kernel addresses of a 64-bit
-	 * kernel.  Note that addresses are अचिन्हित so that on a 32-bit प्रणाली
+	 * kernel.  Note that addresses are unsigned so that on a 32-bit system
 	 * all addresses including kernel addresses are less than 2^32.  In
-	 * that हाल (32-bit प्रणाली), अगर the kernel mapping is unknown, all
+	 * that case (32-bit system), if the kernel mapping is unknown, all
 	 * addresses will be assumed to be in user space - see
 	 * machine__kernel_ip().
 	 */
 	machine->kernel_start = 1ULL << 63;
-	अगर (map) अणु
+	if (map) {
 		err = map__load(map);
 		/*
 		 * On x86_64, PTI entry trampolines are less than the
 		 * start of kernel text, but still above 2^63. So leave
-		 * kernel_start = 1ULL << 63 क्रम x86_64.
+		 * kernel_start = 1ULL << 63 for x86_64.
 		 */
-		अगर (!err && !machine__is(machine, "x86_64"))
+		if (!err && !machine__is(machine, "x86_64"))
 			machine->kernel_start = map->start;
-	पूर्ण
-	वापस err;
-पूर्ण
+	}
+	return err;
+}
 
-u8 machine__addr_cpumode(काष्ठा machine *machine, u8 cpumode, u64 addr)
-अणु
+u8 machine__addr_cpumode(struct machine *machine, u8 cpumode, u64 addr)
+{
 	u8 addr_cpumode = cpumode;
 	bool kernel_ip;
 
-	अगर (!machine->single_address_space)
-		जाओ out;
+	if (!machine->single_address_space)
+		goto out;
 
 	kernel_ip = machine__kernel_ip(machine, addr);
-	चयन (cpumode) अणु
-	हाल PERF_RECORD_MISC_KERNEL:
-	हाल PERF_RECORD_MISC_USER:
+	switch (cpumode) {
+	case PERF_RECORD_MISC_KERNEL:
+	case PERF_RECORD_MISC_USER:
 		addr_cpumode = kernel_ip ? PERF_RECORD_MISC_KERNEL :
 					   PERF_RECORD_MISC_USER;
-		अवरोध;
-	हाल PERF_RECORD_MISC_GUEST_KERNEL:
-	हाल PERF_RECORD_MISC_GUEST_USER:
+		break;
+	case PERF_RECORD_MISC_GUEST_KERNEL:
+	case PERF_RECORD_MISC_GUEST_USER:
 		addr_cpumode = kernel_ip ? PERF_RECORD_MISC_GUEST_KERNEL :
 					   PERF_RECORD_MISC_GUEST_USER;
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+		break;
+	default:
+		break;
+	}
 out:
-	वापस addr_cpumode;
-पूर्ण
+	return addr_cpumode;
+}
 
-काष्ठा dso *machine__findnew_dso_id(काष्ठा machine *machine, स्थिर अक्षर *filename, काष्ठा dso_id *id)
-अणु
-	वापस dsos__findnew_id(&machine->dsos, filename, id);
-पूर्ण
+struct dso *machine__findnew_dso_id(struct machine *machine, const char *filename, struct dso_id *id)
+{
+	return dsos__findnew_id(&machine->dsos, filename, id);
+}
 
-काष्ठा dso *machine__findnew_dso(काष्ठा machine *machine, स्थिर अक्षर *filename)
-अणु
-	वापस machine__findnew_dso_id(machine, filename, शून्य);
-पूर्ण
+struct dso *machine__findnew_dso(struct machine *machine, const char *filename)
+{
+	return machine__findnew_dso_id(machine, filename, NULL);
+}
 
-अक्षर *machine__resolve_kernel_addr(व्योम *vmachine, अचिन्हित दीर्घ दीर्घ *addrp, अक्षर **modp)
-अणु
-	काष्ठा machine *machine = vmachine;
-	काष्ठा map *map;
-	काष्ठा symbol *sym = machine__find_kernel_symbol(machine, *addrp, &map);
+char *machine__resolve_kernel_addr(void *vmachine, unsigned long long *addrp, char **modp)
+{
+	struct machine *machine = vmachine;
+	struct map *map;
+	struct symbol *sym = machine__find_kernel_symbol(machine, *addrp, &map);
 
-	अगर (sym == शून्य)
-		वापस शून्य;
+	if (sym == NULL)
+		return NULL;
 
-	*modp = __map__is_kmodule(map) ? (अक्षर *)map->dso->लघु_name : शून्य;
+	*modp = __map__is_kmodule(map) ? (char *)map->dso->short_name : NULL;
 	*addrp = map->unmap_ip(map, sym->start);
-	वापस sym->name;
-पूर्ण
+	return sym->name;
+}
 
-पूर्णांक machine__क्रम_each_dso(काष्ठा machine *machine, machine__dso_t fn, व्योम *priv)
-अणु
-	काष्ठा dso *pos;
-	पूर्णांक err = 0;
+int machine__for_each_dso(struct machine *machine, machine__dso_t fn, void *priv)
+{
+	struct dso *pos;
+	int err = 0;
 
-	list_क्रम_each_entry(pos, &machine->dsos.head, node) अणु
-		अगर (fn(pos, machine, priv))
+	list_for_each_entry(pos, &machine->dsos.head, node) {
+		if (fn(pos, machine, priv))
 			err = -1;
-	पूर्ण
-	वापस err;
-पूर्ण
+	}
+	return err;
+}

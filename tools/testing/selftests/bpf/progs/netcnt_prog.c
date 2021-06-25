@@ -1,36 +1,35 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <linux/bpf.h>
-#समावेश <linux/version.h>
+// SPDX-License-Identifier: GPL-2.0
+#include <linux/bpf.h>
+#include <linux/version.h>
 
-#समावेश <bpf/bpf_helpers.h>
-#समावेश "netcnt_common.h"
+#include <bpf/bpf_helpers.h>
+#include "netcnt_common.h"
 
-#घोषणा MAX_BPS	(3 * 1024 * 1024)
+#define MAX_BPS	(3 * 1024 * 1024)
 
-#घोषणा REFRESH_TIME_NS	100000000
-#घोषणा NS_PER_SEC	1000000000
+#define REFRESH_TIME_NS	100000000
+#define NS_PER_SEC	1000000000
 
-काष्ठा अणु
-	__uपूर्णांक(type, BPF_MAP_TYPE_PERCPU_CGROUP_STORAGE);
-	__type(key, काष्ठा bpf_cgroup_storage_key);
-	__type(value, काष्ठा percpu_net_cnt);
-पूर्ण percpu_netcnt SEC(".maps");
+struct {
+	__uint(type, BPF_MAP_TYPE_PERCPU_CGROUP_STORAGE);
+	__type(key, struct bpf_cgroup_storage_key);
+	__type(value, struct percpu_net_cnt);
+} percpu_netcnt SEC(".maps");
 
-काष्ठा अणु
-	__uपूर्णांक(type, BPF_MAP_TYPE_CGROUP_STORAGE);
-	__type(key, काष्ठा bpf_cgroup_storage_key);
-	__type(value, काष्ठा net_cnt);
-पूर्ण netcnt SEC(".maps");
+struct {
+	__uint(type, BPF_MAP_TYPE_CGROUP_STORAGE);
+	__type(key, struct bpf_cgroup_storage_key);
+	__type(value, struct net_cnt);
+} netcnt SEC(".maps");
 
 SEC("cgroup/skb")
-पूर्णांक bpf_nextcnt(काष्ठा __sk_buff *skb)
-अणु
-	काष्ठा percpu_net_cnt *percpu_cnt;
-	अक्षर fmt[] = "%d %llu %llu\n";
-	काष्ठा net_cnt *cnt;
+int bpf_nextcnt(struct __sk_buff *skb)
+{
+	struct percpu_net_cnt *percpu_cnt;
+	char fmt[] = "%d %llu %llu\n";
+	struct net_cnt *cnt;
 	__u64 ts, dt;
-	पूर्णांक ret;
+	int ret;
 
 	cnt = bpf_get_local_storage(&netcnt, 0);
 	percpu_cnt = bpf_get_local_storage(&percpu_netcnt, 0);
@@ -38,7 +37,7 @@ SEC("cgroup/skb")
 	percpu_cnt->packets++;
 	percpu_cnt->bytes += skb->len;
 
-	अगर (percpu_cnt->packets > MAX_PERCPU_PACKETS) अणु
+	if (percpu_cnt->packets > MAX_PERCPU_PACKETS) {
 		__sync_fetch_and_add(&cnt->packets,
 				     percpu_cnt->packets);
 		percpu_cnt->packets = 0;
@@ -46,27 +45,27 @@ SEC("cgroup/skb")
 		__sync_fetch_and_add(&cnt->bytes,
 				     percpu_cnt->bytes);
 		percpu_cnt->bytes = 0;
-	पूर्ण
+	}
 
-	ts = bpf_kसमय_get_ns();
+	ts = bpf_ktime_get_ns();
 	dt = ts - percpu_cnt->prev_ts;
 
 	dt *= MAX_BPS;
 	dt /= NS_PER_SEC;
 
-	अगर (cnt->bytes + percpu_cnt->bytes - percpu_cnt->prev_bytes < dt)
+	if (cnt->bytes + percpu_cnt->bytes - percpu_cnt->prev_bytes < dt)
 		ret = 1;
-	अन्यथा
+	else
 		ret = 0;
 
-	अगर (dt > REFRESH_TIME_NS) अणु
+	if (dt > REFRESH_TIME_NS) {
 		percpu_cnt->prev_ts = ts;
 		percpu_cnt->prev_packets = cnt->packets;
 		percpu_cnt->prev_bytes = cnt->bytes;
-	पूर्ण
+	}
 
-	वापस !!ret;
-पूर्ण
+	return !!ret;
+}
 
-अक्षर _license[] SEC("license") = "GPL";
+char _license[] SEC("license") = "GPL";
 __u32 _version SEC("version") = LINUX_VERSION_CODE;

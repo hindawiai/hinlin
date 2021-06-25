@@ -1,49 +1,48 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _ASM_M68K_NUBUS_H
-#घोषणा _ASM_M68K_NUBUS_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _ASM_M68K_NUBUS_H
+#define _ASM_M68K_NUBUS_H
 
-#समावेश <यंत्र/raw_पन.स>
-#समावेश <यंत्र/kmap.h>
+#include <asm/raw_io.h>
+#include <asm/kmap.h>
 
-#घोषणा nubus_पढ़ोb raw_inb
-#घोषणा nubus_पढ़ोw raw_inw
-#घोषणा nubus_पढ़ोl raw_inl
+#define nubus_readb raw_inb
+#define nubus_readw raw_inw
+#define nubus_readl raw_inl
 
-#घोषणा nubus_ग_लिखोb raw_outb
-#घोषणा nubus_ग_लिखोw raw_outw
-#घोषणा nubus_ग_लिखोl raw_outl
+#define nubus_writeb raw_outb
+#define nubus_writew raw_outw
+#define nubus_writel raw_outl
 
-#घोषणा nubus_स_रखो_io(a,b,c)		स_रखो((व्योम *)(a),(b),(c))
-#घोषणा nubus_स_नकल_fromio(a,b,c)	स_नकल((a),(व्योम *)(b),(c))
-#घोषणा nubus_स_नकल_toio(a,b,c)	स_नकल((व्योम *)(a),(b),(c))
+#define nubus_memset_io(a,b,c)		memset((void *)(a),(b),(c))
+#define nubus_memcpy_fromio(a,b,c)	memcpy((a),(void *)(b),(c))
+#define nubus_memcpy_toio(a,b,c)	memcpy((void *)(a),(b),(c))
 
-अटल अंतरभूत व्योम *nubus_remap_nocache_ser(अचिन्हित दीर्घ physaddr,
-					    अचिन्हित दीर्घ size)
-अणु
-	वापस __ioremap(physaddr, size, IOMAP_NOCACHE_SER);
-पूर्ण
+static inline void *nubus_remap_nocache_ser(unsigned long physaddr,
+					    unsigned long size)
+{
+	return __ioremap(physaddr, size, IOMAP_NOCACHE_SER);
+}
 
-अटल अंतरभूत व्योम *nubus_remap_nocache_nonser(अचिन्हित दीर्घ physaddr,
-					       अचिन्हित दीर्घ size)
-अणु
-	वापस __ioremap(physaddr, size, IOMAP_NOCACHE_NONSER);
-पूर्ण
+static inline void *nubus_remap_nocache_nonser(unsigned long physaddr,
+					       unsigned long size)
+{
+	return __ioremap(physaddr, size, IOMAP_NOCACHE_NONSER);
+}
 
-अटल अंतरभूत व्योम *nbus_remap_ग_लिखोthrough(अचिन्हित दीर्घ physaddr,
-					    अचिन्हित दीर्घ size)
-अणु
-	वापस __ioremap(physaddr, size, IOMAP_WRITETHROUGH);
-पूर्ण
+static inline void *nbus_remap_writethrough(unsigned long physaddr,
+					    unsigned long size)
+{
+	return __ioremap(physaddr, size, IOMAP_WRITETHROUGH);
+}
 
-अटल अंतरभूत व्योम *nubus_remap_fullcache(अचिन्हित दीर्घ physaddr,
-					  अचिन्हित दीर्घ size)
-अणु
-	वापस __ioremap(physaddr, size, IOMAP_FULL_CACHING);
-पूर्ण
+static inline void *nubus_remap_fullcache(unsigned long physaddr,
+					  unsigned long size)
+{
+	return __ioremap(physaddr, size, IOMAP_FULL_CACHING);
+}
 
-#घोषणा nubus_unmap iounmap
-#घोषणा nubus_iounmap iounmap
-#घोषणा nubus_ioremap nubus_remap_nocache_ser
+#define nubus_unmap iounmap
+#define nubus_iounmap iounmap
+#define nubus_ioremap nubus_remap_nocache_ser
 
-#पूर्ण_अगर /* _ASM_NUBUS_H */
+#endif /* _ASM_NUBUS_H */

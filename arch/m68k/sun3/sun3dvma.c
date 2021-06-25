@@ -1,212 +1,211 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * linux/arch/m68k/sun3/sun3dvma.c
  *
  * Copyright (C) 2000 Sam Creasey
  *
- * Contains common routines क्रम sun3/sun3x DVMA management.
+ * Contains common routines for sun3/sun3x DVMA management.
  */
 
-#समावेश <linux/memblock.h>
-#समावेश <linux/init.h>
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/gfp.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/list.h>
+#include <linux/memblock.h>
+#include <linux/init.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/gfp.h>
+#include <linux/mm.h>
+#include <linux/list.h>
 
-#समावेश <यंत्र/page.h>
-#समावेश <यंत्र/dvma.h>
+#include <asm/page.h>
+#include <asm/dvma.h>
 
-#अघोषित DVMA_DEBUG
+#undef DVMA_DEBUG
 
-#अगर_घोषित CONFIG_SUN3X
-बाह्य व्योम dvma_unmap_iommu(अचिन्हित दीर्घ baddr, पूर्णांक len);
-#अन्यथा
-अटल अंतरभूत व्योम dvma_unmap_iommu(अचिन्हित दीर्घ a, पूर्णांक b)
-अणु
-पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_SUN3X
+extern void dvma_unmap_iommu(unsigned long baddr, int len);
+#else
+static inline void dvma_unmap_iommu(unsigned long a, int b)
+{
+}
+#endif
 
-#अगर_घोषित CONFIG_SUN3
-बाह्य व्योम sun3_dvma_init(व्योम);
-#पूर्ण_अगर
+#ifdef CONFIG_SUN3
+extern void sun3_dvma_init(void);
+#endif
 
-अटल अचिन्हित दीर्घ *iommu_use;
+static unsigned long *iommu_use;
 
-#घोषणा dvma_index(baddr) ((baddr - DVMA_START) >> DVMA_PAGE_SHIFT)
+#define dvma_index(baddr) ((baddr - DVMA_START) >> DVMA_PAGE_SHIFT)
 
-#घोषणा dvma_entry_use(baddr)		(iommu_use[dvma_index(baddr)])
+#define dvma_entry_use(baddr)		(iommu_use[dvma_index(baddr)])
 
-काष्ठा hole अणु
-	अचिन्हित दीर्घ start;
-	अचिन्हित दीर्घ end;
-	अचिन्हित दीर्घ size;
-	काष्ठा list_head list;
-पूर्ण;
+struct hole {
+	unsigned long start;
+	unsigned long end;
+	unsigned long size;
+	struct list_head list;
+};
 
-अटल काष्ठा list_head hole_list;
-अटल काष्ठा list_head hole_cache;
-अटल काष्ठा hole initholes[64];
+static struct list_head hole_list;
+static struct list_head hole_cache;
+static struct hole initholes[64];
 
-#अगर_घोषित DVMA_DEBUG
+#ifdef DVMA_DEBUG
 
-अटल अचिन्हित दीर्घ dvma_allocs;
-अटल अचिन्हित दीर्घ dvma_मुक्तs;
-अटल अचिन्हित दीर्घ दीर्घ dvma_alloc_bytes;
-अटल अचिन्हित दीर्घ दीर्घ dvma_मुक्त_bytes;
+static unsigned long dvma_allocs;
+static unsigned long dvma_frees;
+static unsigned long long dvma_alloc_bytes;
+static unsigned long long dvma_free_bytes;
 
-अटल व्योम prपूर्णांक_use(व्योम)
-अणु
+static void print_use(void)
+{
 
-	पूर्णांक i;
-	पूर्णांक j = 0;
+	int i;
+	int j = 0;
 
 	pr_info("dvma entry usage:\n");
 
-	क्रम(i = 0; i < IOMMU_TOTAL_ENTRIES; i++) अणु
-		अगर(!iommu_use[i])
-			जारी;
+	for(i = 0; i < IOMMU_TOTAL_ENTRIES; i++) {
+		if(!iommu_use[i])
+			continue;
 
 		j++;
 
 		pr_info("dvma entry: %08x len %08lx\n",
 			(i << DVMA_PAGE_SHIFT) + DVMA_START, iommu_use[i]);
-	पूर्ण
+	}
 
 	pr_info("%d entries in use total\n", j);
 
-	pr_info("allocation/free calls: %lu/%lu\n", dvma_allocs, dvma_मुक्तs);
+	pr_info("allocation/free calls: %lu/%lu\n", dvma_allocs, dvma_frees);
 	pr_info("allocation/free bytes: %Lx/%Lx\n", dvma_alloc_bytes,
-		dvma_मुक्त_bytes);
-पूर्ण
+		dvma_free_bytes);
+}
 
-अटल व्योम prपूर्णांक_holes(काष्ठा list_head *holes)
-अणु
+static void print_holes(struct list_head *holes)
+{
 
-	काष्ठा list_head *cur;
-	काष्ठा hole *hole;
+	struct list_head *cur;
+	struct hole *hole;
 
 	pr_info("listing dvma holes\n");
-	list_क्रम_each(cur, holes) अणु
-		hole = list_entry(cur, काष्ठा hole, list);
+	list_for_each(cur, holes) {
+		hole = list_entry(cur, struct hole, list);
 
-		अगर((hole->start == 0) && (hole->end == 0) && (hole->size == 0))
-			जारी;
+		if((hole->start == 0) && (hole->end == 0) && (hole->size == 0))
+			continue;
 
 		pr_info("hole: start %08lx end %08lx size %08lx\n",
 			hole->start, hole->end, hole->size);
-	पूर्ण
+	}
 
 	pr_info("end of hole listing...\n");
-पूर्ण
-#पूर्ण_अगर /* DVMA_DEBUG */
+}
+#endif /* DVMA_DEBUG */
 
-अटल अंतरभूत पूर्णांक refill(व्योम)
-अणु
+static inline int refill(void)
+{
 
-	काष्ठा hole *hole;
-	काष्ठा hole *prev = शून्य;
-	काष्ठा list_head *cur;
-	पूर्णांक ret = 0;
+	struct hole *hole;
+	struct hole *prev = NULL;
+	struct list_head *cur;
+	int ret = 0;
 
-	list_क्रम_each(cur, &hole_list) अणु
-		hole = list_entry(cur, काष्ठा hole, list);
+	list_for_each(cur, &hole_list) {
+		hole = list_entry(cur, struct hole, list);
 
-		अगर(!prev) अणु
+		if(!prev) {
 			prev = hole;
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		अगर(hole->end == prev->start) अणु
+		if(hole->end == prev->start) {
 			hole->size += prev->size;
 			hole->end = prev->end;
 			list_move(&(prev->list), &hole_cache);
 			ret++;
-		पूर्ण
+		}
 
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल अंतरभूत काष्ठा hole *rmcache(व्योम)
-अणु
-	काष्ठा hole *ret;
+static inline struct hole *rmcache(void)
+{
+	struct hole *ret;
 
-	अगर(list_empty(&hole_cache)) अणु
-		अगर(!refill()) अणु
+	if(list_empty(&hole_cache)) {
+		if(!refill()) {
 			pr_crit("out of dvma hole cache!\n");
 			BUG();
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	ret = list_entry(hole_cache.next, काष्ठा hole, list);
+	ret = list_entry(hole_cache.next, struct hole, list);
 	list_del(&(ret->list));
 
-	वापस ret;
+	return ret;
 
-पूर्ण
+}
 
-अटल अंतरभूत अचिन्हित दीर्घ get_baddr(पूर्णांक len, अचिन्हित दीर्घ align)
-अणु
+static inline unsigned long get_baddr(int len, unsigned long align)
+{
 
-	काष्ठा list_head *cur;
-	काष्ठा hole *hole;
+	struct list_head *cur;
+	struct hole *hole;
 
-	अगर(list_empty(&hole_list)) अणु
-#अगर_घोषित DVMA_DEBUG
+	if(list_empty(&hole_list)) {
+#ifdef DVMA_DEBUG
 		pr_crit("out of dvma holes! (printing hole cache)\n");
-		prपूर्णांक_holes(&hole_cache);
-		prपूर्णांक_use();
-#पूर्ण_अगर
+		print_holes(&hole_cache);
+		print_use();
+#endif
 		BUG();
-	पूर्ण
+	}
 
-	list_क्रम_each(cur, &hole_list) अणु
-		अचिन्हित दीर्घ newlen;
+	list_for_each(cur, &hole_list) {
+		unsigned long newlen;
 
-		hole = list_entry(cur, काष्ठा hole, list);
+		hole = list_entry(cur, struct hole, list);
 
-		अगर(align > DVMA_PAGE_SIZE)
+		if(align > DVMA_PAGE_SIZE)
 			newlen = len + ((hole->end - len) & (align-1));
-		अन्यथा
+		else
 			newlen = len;
 
-		अगर(hole->size > newlen) अणु
+		if(hole->size > newlen) {
 			hole->end -= newlen;
 			hole->size -= newlen;
 			dvma_entry_use(hole->end) = newlen;
-#अगर_घोषित DVMA_DEBUG
+#ifdef DVMA_DEBUG
 			dvma_allocs++;
 			dvma_alloc_bytes += newlen;
-#पूर्ण_अगर
-			वापस hole->end;
-		पूर्ण अन्यथा अगर(hole->size == newlen) अणु
+#endif
+			return hole->end;
+		} else if(hole->size == newlen) {
 			list_move(&(hole->list), &hole_cache);
 			dvma_entry_use(hole->start) = newlen;
-#अगर_घोषित DVMA_DEBUG
+#ifdef DVMA_DEBUG
 			dvma_allocs++;
 			dvma_alloc_bytes += newlen;
-#पूर्ण_अगर
-			वापस hole->start;
-		पूर्ण
+#endif
+			return hole->start;
+		}
 
-	पूर्ण
+	}
 
 	pr_crit("unable to find dvma hole!\n");
 	BUG();
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक मुक्त_baddr(अचिन्हित दीर्घ baddr)
-अणु
+static inline int free_baddr(unsigned long baddr)
+{
 
-	अचिन्हित दीर्घ len;
-	काष्ठा hole *hole;
-	काष्ठा list_head *cur;
-	अचिन्हित दीर्घ orig_baddr;
+	unsigned long len;
+	struct hole *hole;
+	struct list_head *cur;
+	unsigned long orig_baddr;
 
 	orig_baddr = baddr;
 	len = dvma_entry_use(baddr);
@@ -214,25 +213,25 @@
 	baddr &= DVMA_PAGE_MASK;
 	dvma_unmap_iommu(baddr, len);
 
-#अगर_घोषित DVMA_DEBUG
-	dvma_मुक्तs++;
-	dvma_मुक्त_bytes += len;
-#पूर्ण_अगर
+#ifdef DVMA_DEBUG
+	dvma_frees++;
+	dvma_free_bytes += len;
+#endif
 
-	list_क्रम_each(cur, &hole_list) अणु
-		hole = list_entry(cur, काष्ठा hole, list);
+	list_for_each(cur, &hole_list) {
+		hole = list_entry(cur, struct hole, list);
 
-		अगर(hole->end == baddr) अणु
+		if(hole->end == baddr) {
 			hole->end += len;
 			hole->size += len;
-			वापस 0;
-		पूर्ण अन्यथा अगर(hole->start == (baddr + len)) अणु
+			return 0;
+		} else if(hole->start == (baddr + len)) {
 			hole->start = baddr;
 			hole->size += len;
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 
-	पूर्ण
+	}
 
 	hole = rmcache();
 
@@ -243,21 +242,21 @@
 //	list_add_tail(&(hole->list), cur);
 	list_add(&(hole->list), cur);
 
-	वापस 0;
+	return 0;
 
-पूर्ण
+}
 
-व्योम __init dvma_init(व्योम)
-अणु
+void __init dvma_init(void)
+{
 
-	काष्ठा hole *hole;
-	पूर्णांक i;
+	struct hole *hole;
+	int i;
 
 	INIT_LIST_HEAD(&hole_list);
 	INIT_LIST_HEAD(&hole_cache);
 
 	/* prepare the hole cache */
-	क्रम(i = 0; i < 64; i++)
+	for(i = 0; i < 64; i++)
 		list_add(&(initholes[i].list), &hole_cache);
 
 	hole = rmcache();
@@ -267,34 +266,34 @@
 
 	list_add(&(hole->list), &hole_list);
 
-	iommu_use = memblock_alloc(IOMMU_TOTAL_ENTRIES * माप(अचिन्हित दीर्घ),
+	iommu_use = memblock_alloc(IOMMU_TOTAL_ENTRIES * sizeof(unsigned long),
 				   SMP_CACHE_BYTES);
-	अगर (!iommu_use)
+	if (!iommu_use)
 		panic("%s: Failed to allocate %zu bytes\n", __func__,
-		      IOMMU_TOTAL_ENTRIES * माप(अचिन्हित दीर्घ));
+		      IOMMU_TOTAL_ENTRIES * sizeof(unsigned long));
 
 	dvma_unmap_iommu(DVMA_START, DVMA_SIZE);
 
-#अगर_घोषित CONFIG_SUN3
+#ifdef CONFIG_SUN3
 	sun3_dvma_init();
-#पूर्ण_अगर
+#endif
 
-पूर्ण
+}
 
-अचिन्हित दीर्घ dvma_map_align(अचिन्हित दीर्घ kaddr, पूर्णांक len, पूर्णांक align)
-अणु
+unsigned long dvma_map_align(unsigned long kaddr, int len, int align)
+{
 
-	अचिन्हित दीर्घ baddr;
-	अचिन्हित दीर्घ off;
+	unsigned long baddr;
+	unsigned long off;
 
-	अगर(!len)
+	if(!len)
 		len = 0x800;
 
-	अगर(!kaddr || !len) अणु
+	if(!kaddr || !len) {
 //		pr_err("error: kaddr %lx len %x\n", kaddr, len);
-//		*(पूर्णांक *)4 = 0;
-		वापस 0;
-	पूर्ण
+//		*(int *)4 = 0;
+		return 0;
+	}
 
 	pr_debug("dvma_map request %08x bytes from %08lx\n", len, kaddr);
 	off = kaddr & ~DVMA_PAGE_MASK;
@@ -302,80 +301,80 @@
 	len += off;
 	len = ((len + (DVMA_PAGE_SIZE-1)) & DVMA_PAGE_MASK);
 
-	अगर(align == 0)
+	if(align == 0)
 		align = DVMA_PAGE_SIZE;
-	अन्यथा
+	else
 		align = ((align + (DVMA_PAGE_SIZE-1)) & DVMA_PAGE_MASK);
 
 	baddr = get_baddr(len, align);
 //	pr_info("using baddr %lx\n", baddr);
 
-	अगर(!dvma_map_iommu(kaddr, baddr, len))
-		वापस (baddr + off);
+	if(!dvma_map_iommu(kaddr, baddr, len))
+		return (baddr + off);
 
 	pr_crit("dvma_map failed kaddr %lx baddr %lx len %x\n", kaddr, baddr,
 	len);
 	BUG();
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL(dvma_map_align);
 
-व्योम dvma_unmap(व्योम *baddr)
-अणु
-	अचिन्हित दीर्घ addr;
+void dvma_unmap(void *baddr)
+{
+	unsigned long addr;
 
-	addr = (अचिन्हित दीर्घ)baddr;
-	/* check अगर this is a vme mapping */
-	अगर(!(addr & 0x00f00000))
+	addr = (unsigned long)baddr;
+	/* check if this is a vme mapping */
+	if(!(addr & 0x00f00000))
 		addr |= 0xf00000;
 
-	मुक्त_baddr(addr);
+	free_baddr(addr);
 
-	वापस;
+	return;
 
-पूर्ण
+}
 EXPORT_SYMBOL(dvma_unmap);
 
-व्योम *dvma_दो_स्मृति_align(अचिन्हित दीर्घ len, अचिन्हित दीर्घ align)
-अणु
-	अचिन्हित दीर्घ kaddr;
-	अचिन्हित दीर्घ baddr;
-	अचिन्हित दीर्घ vaddr;
+void *dvma_malloc_align(unsigned long len, unsigned long align)
+{
+	unsigned long kaddr;
+	unsigned long baddr;
+	unsigned long vaddr;
 
-	अगर(!len)
-		वापस शून्य;
+	if(!len)
+		return NULL;
 
 	pr_debug("dvma_malloc request %lx bytes\n", len);
 	len = ((len + (DVMA_PAGE_SIZE-1)) & DVMA_PAGE_MASK);
 
-        अगर((kaddr = __get_मुक्त_pages(GFP_ATOMIC, get_order(len))) == 0)
-		वापस शून्य;
+        if((kaddr = __get_free_pages(GFP_ATOMIC, get_order(len))) == 0)
+		return NULL;
 
-	अगर((baddr = (अचिन्हित दीर्घ)dvma_map_align(kaddr, len, align)) == 0) अणु
-		मुक्त_pages(kaddr, get_order(len));
-		वापस शून्य;
-	पूर्ण
+	if((baddr = (unsigned long)dvma_map_align(kaddr, len, align)) == 0) {
+		free_pages(kaddr, get_order(len));
+		return NULL;
+	}
 
 	vaddr = dvma_btov(baddr);
 
-	अगर(dvma_map_cpu(kaddr, vaddr, len) < 0) अणु
-		dvma_unmap((व्योम *)baddr);
-		मुक्त_pages(kaddr, get_order(len));
-		वापस शून्य;
-	पूर्ण
+	if(dvma_map_cpu(kaddr, vaddr, len) < 0) {
+		dvma_unmap((void *)baddr);
+		free_pages(kaddr, get_order(len));
+		return NULL;
+	}
 
 	pr_debug("mapped %08lx bytes %08lx kern -> %08lx bus\n", len, kaddr,
 		 baddr);
 
-	वापस (व्योम *)vaddr;
+	return (void *)vaddr;
 
-पूर्ण
-EXPORT_SYMBOL(dvma_दो_स्मृति_align);
+}
+EXPORT_SYMBOL(dvma_malloc_align);
 
-व्योम dvma_मुक्त(व्योम *vaddr)
-अणु
+void dvma_free(void *vaddr)
+{
 
-	वापस;
+	return;
 
-पूर्ण
-EXPORT_SYMBOL(dvma_मुक्त);
+}
+EXPORT_SYMBOL(dvma_free);

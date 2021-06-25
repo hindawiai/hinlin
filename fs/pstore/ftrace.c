@@ -1,97 +1,96 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright 2012  Google, Inc.
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/compiler.h>
-#समावेश <linux/irqflags.h>
-#समावेश <linux/percpu.h>
-#समावेश <linux/smp.h>
-#समावेश <linux/atomic.h>
-#समावेश <linux/types.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/ftrace.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/debugfs.h>
-#समावेश <linux/err.h>
-#समावेश <linux/cache.h>
-#समावेश <linux/slab.h>
-#समावेश <यंत्र/barrier.h>
-#समावेश "internal.h"
+#include <linux/kernel.h>
+#include <linux/compiler.h>
+#include <linux/irqflags.h>
+#include <linux/percpu.h>
+#include <linux/smp.h>
+#include <linux/atomic.h>
+#include <linux/types.h>
+#include <linux/mutex.h>
+#include <linux/ftrace.h>
+#include <linux/fs.h>
+#include <linux/debugfs.h>
+#include <linux/err.h>
+#include <linux/cache.h>
+#include <linux/slab.h>
+#include <asm/barrier.h>
+#include "internal.h"
 
-/* This करोesn't need to be atomic: speed is chosen over correctness here. */
-अटल u64 pstore_ftrace_stamp;
+/* This doesn't need to be atomic: speed is chosen over correctness here. */
+static u64 pstore_ftrace_stamp;
 
-अटल व्योम notrace pstore_ftrace_call(अचिन्हित दीर्घ ip,
-				       अचिन्हित दीर्घ parent_ip,
-				       काष्ठा ftrace_ops *op,
-				       काष्ठा ftrace_regs *fregs)
-अणु
-	पूर्णांक bit;
-	अचिन्हित दीर्घ flags;
-	काष्ठा pstore_ftrace_record rec = अणुपूर्ण;
-	काष्ठा pstore_record record = अणु
+static void notrace pstore_ftrace_call(unsigned long ip,
+				       unsigned long parent_ip,
+				       struct ftrace_ops *op,
+				       struct ftrace_regs *fregs)
+{
+	int bit;
+	unsigned long flags;
+	struct pstore_ftrace_record rec = {};
+	struct pstore_record record = {
 		.type = PSTORE_TYPE_FTRACE,
-		.buf = (अक्षर *)&rec,
-		.size = माप(rec),
+		.buf = (char *)&rec,
+		.size = sizeof(rec),
 		.psi = psinfo,
-	पूर्ण;
+	};
 
-	अगर (unlikely(oops_in_progress))
-		वापस;
+	if (unlikely(oops_in_progress))
+		return;
 
 	bit = ftrace_test_recursion_trylock(ip, parent_ip);
-	अगर (bit < 0)
-		वापस;
+	if (bit < 0)
+		return;
 
 	local_irq_save(flags);
 
 	rec.ip = ip;
 	rec.parent_ip = parent_ip;
-	pstore_ftrace_ग_लिखो_बारtamp(&rec, pstore_ftrace_stamp++);
+	pstore_ftrace_write_timestamp(&rec, pstore_ftrace_stamp++);
 	pstore_ftrace_encode_cpu(&rec, raw_smp_processor_id());
-	psinfo->ग_लिखो(&record);
+	psinfo->write(&record);
 
 	local_irq_restore(flags);
 	ftrace_test_recursion_unlock(bit);
-पूर्ण
+}
 
-अटल काष्ठा ftrace_ops pstore_ftrace_ops __पढ़ो_mostly = अणु
+static struct ftrace_ops pstore_ftrace_ops __read_mostly = {
 	.func	= pstore_ftrace_call,
-पूर्ण;
+};
 
-अटल DEFINE_MUTEX(pstore_ftrace_lock);
-अटल bool pstore_ftrace_enabled;
+static DEFINE_MUTEX(pstore_ftrace_lock);
+static bool pstore_ftrace_enabled;
 
-अटल sमाप_प्रकार pstore_ftrace_knob_ग_लिखो(काष्ठा file *f, स्थिर अक्षर __user *buf,
-					माप_प्रकार count, loff_t *ppos)
-अणु
+static ssize_t pstore_ftrace_knob_write(struct file *f, const char __user *buf,
+					size_t count, loff_t *ppos)
+{
 	u8 on;
-	sमाप_प्रकार ret;
+	ssize_t ret;
 
 	ret = kstrtou8_from_user(buf, count, 2, &on);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	mutex_lock(&pstore_ftrace_lock);
 
-	अगर (!on ^ pstore_ftrace_enabled)
-		जाओ out;
+	if (!on ^ pstore_ftrace_enabled)
+		goto out;
 
-	अगर (on) अणु
+	if (on) {
 		ftrace_ops_set_global_filter(&pstore_ftrace_ops);
-		ret = रेजिस्टर_ftrace_function(&pstore_ftrace_ops);
-	पूर्ण अन्यथा अणु
-		ret = unरेजिस्टर_ftrace_function(&pstore_ftrace_ops);
-	पूर्ण
+		ret = register_ftrace_function(&pstore_ftrace_ops);
+	} else {
+		ret = unregister_ftrace_function(&pstore_ftrace_ops);
+	}
 
-	अगर (ret) अणु
+	if (ret) {
 		pr_err("%s: unable to %sregister ftrace ops: %zd\n",
 		       __func__, on ? "" : "un", ret);
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	pstore_ftrace_enabled = on;
 out:
@@ -99,56 +98,56 @@ out:
 err:
 	mutex_unlock(&pstore_ftrace_lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल sमाप_प्रकार pstore_ftrace_knob_पढ़ो(काष्ठा file *f, अक्षर __user *buf,
-				       माप_प्रकार count, loff_t *ppos)
-अणु
-	अक्षर val[] = अणु '0' + pstore_ftrace_enabled, '\n' पूर्ण;
+static ssize_t pstore_ftrace_knob_read(struct file *f, char __user *buf,
+				       size_t count, loff_t *ppos)
+{
+	char val[] = { '0' + pstore_ftrace_enabled, '\n' };
 
-	वापस simple_पढ़ो_from_buffer(buf, count, ppos, val, माप(val));
-पूर्ण
+	return simple_read_from_buffer(buf, count, ppos, val, sizeof(val));
+}
 
-अटल स्थिर काष्ठा file_operations pstore_knob_fops = अणु
-	.खोलो	= simple_खोलो,
-	.पढ़ो	= pstore_ftrace_knob_पढ़ो,
-	.ग_लिखो	= pstore_ftrace_knob_ग_लिखो,
-पूर्ण;
+static const struct file_operations pstore_knob_fops = {
+	.open	= simple_open,
+	.read	= pstore_ftrace_knob_read,
+	.write	= pstore_ftrace_knob_write,
+};
 
-अटल काष्ठा dentry *pstore_ftrace_dir;
+static struct dentry *pstore_ftrace_dir;
 
-व्योम pstore_रेजिस्टर_ftrace(व्योम)
-अणु
-	अगर (!psinfo->ग_लिखो)
-		वापस;
+void pstore_register_ftrace(void)
+{
+	if (!psinfo->write)
+		return;
 
-	pstore_ftrace_dir = debugfs_create_dir("pstore", शून्य);
+	pstore_ftrace_dir = debugfs_create_dir("pstore", NULL);
 
-	debugfs_create_file("record_ftrace", 0600, pstore_ftrace_dir, शून्य,
+	debugfs_create_file("record_ftrace", 0600, pstore_ftrace_dir, NULL,
 			    &pstore_knob_fops);
-पूर्ण
+}
 
-व्योम pstore_unरेजिस्टर_ftrace(व्योम)
-अणु
+void pstore_unregister_ftrace(void)
+{
 	mutex_lock(&pstore_ftrace_lock);
-	अगर (pstore_ftrace_enabled) अणु
-		unरेजिस्टर_ftrace_function(&pstore_ftrace_ops);
+	if (pstore_ftrace_enabled) {
+		unregister_ftrace_function(&pstore_ftrace_ops);
 		pstore_ftrace_enabled = false;
-	पूर्ण
+	}
 	mutex_unlock(&pstore_ftrace_lock);
 
-	debugfs_हटाओ_recursive(pstore_ftrace_dir);
-पूर्ण
+	debugfs_remove_recursive(pstore_ftrace_dir);
+}
 
-sमाप_प्रकार pstore_ftrace_combine_log(अक्षर **dest_log, माप_प्रकार *dest_log_size,
-				  स्थिर अक्षर *src_log, माप_प्रकार src_log_size)
-अणु
-	माप_प्रकार dest_size, src_size, total, dest_off, src_off;
-	माप_प्रकार dest_idx = 0, src_idx = 0, merged_idx = 0;
-	व्योम *merged_buf;
-	काष्ठा pstore_ftrace_record *drec, *srec, *mrec;
-	माप_प्रकार record_size = माप(काष्ठा pstore_ftrace_record);
+ssize_t pstore_ftrace_combine_log(char **dest_log, size_t *dest_log_size,
+				  const char *src_log, size_t src_log_size)
+{
+	size_t dest_size, src_size, total, dest_off, src_off;
+	size_t dest_idx = 0, src_idx = 0, merged_idx = 0;
+	void *merged_buf;
+	struct pstore_ftrace_record *drec, *srec, *mrec;
+	size_t record_size = sizeof(struct pstore_ftrace_record);
 
 	dest_off = *dest_log_size % record_size;
 	dest_size = *dest_log_size - dest_off;
@@ -157,39 +156,39 @@ sमाप_प्रकार pstore_ftrace_combine_log(अक्षर **dest_l
 	src_size = src_log_size - src_off;
 
 	total = dest_size + src_size;
-	merged_buf = kदो_स्मृति(total, GFP_KERNEL);
-	अगर (!merged_buf)
-		वापस -ENOMEM;
+	merged_buf = kmalloc(total, GFP_KERNEL);
+	if (!merged_buf)
+		return -ENOMEM;
 
-	drec = (काष्ठा pstore_ftrace_record *)(*dest_log + dest_off);
-	srec = (काष्ठा pstore_ftrace_record *)(src_log + src_off);
-	mrec = (काष्ठा pstore_ftrace_record *)(merged_buf);
+	drec = (struct pstore_ftrace_record *)(*dest_log + dest_off);
+	srec = (struct pstore_ftrace_record *)(src_log + src_off);
+	mrec = (struct pstore_ftrace_record *)(merged_buf);
 
-	जबतक (dest_size > 0 && src_size > 0) अणु
-		अगर (pstore_ftrace_पढ़ो_बारtamp(&drec[dest_idx]) <
-		    pstore_ftrace_पढ़ो_बारtamp(&srec[src_idx])) अणु
+	while (dest_size > 0 && src_size > 0) {
+		if (pstore_ftrace_read_timestamp(&drec[dest_idx]) <
+		    pstore_ftrace_read_timestamp(&srec[src_idx])) {
 			mrec[merged_idx++] = drec[dest_idx++];
 			dest_size -= record_size;
-		पूर्ण अन्यथा अणु
+		} else {
 			mrec[merged_idx++] = srec[src_idx++];
 			src_size -= record_size;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	जबतक (dest_size > 0) अणु
+	while (dest_size > 0) {
 		mrec[merged_idx++] = drec[dest_idx++];
 		dest_size -= record_size;
-	पूर्ण
+	}
 
-	जबतक (src_size > 0) अणु
+	while (src_size > 0) {
 		mrec[merged_idx++] = srec[src_idx++];
 		src_size -= record_size;
-	पूर्ण
+	}
 
-	kमुक्त(*dest_log);
+	kfree(*dest_log);
 	*dest_log = merged_buf;
 	*dest_log_size = total;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(pstore_ftrace_combine_log);

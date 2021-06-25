@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0
+// SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
 /******************************************************************************
  *
  * Module Name: dsobject - Dispatcher object management routines
@@ -8,24 +7,24 @@
  *
  *****************************************************************************/
 
-#समावेश <acpi/acpi.h>
-#समावेश "accommon.h"
-#समावेश "acparser.h"
-#समावेश "amlcode.h"
-#समावेश "acdispat.h"
-#समावेश "acnamesp.h"
-#समावेश "acinterp.h"
+#include <acpi/acpi.h>
+#include "accommon.h"
+#include "acparser.h"
+#include "amlcode.h"
+#include "acdispat.h"
+#include "acnamesp.h"
+#include "acinterp.h"
 
-#घोषणा _COMPONENT          ACPI_DISPATCHER
+#define _COMPONENT          ACPI_DISPATCHER
 ACPI_MODULE_NAME("dsobject")
 
 /*******************************************************************************
  *
- * FUNCTION:    acpi_ds_build_पूर्णांकernal_object
+ * FUNCTION:    acpi_ds_build_internal_object
  *
  * PARAMETERS:  walk_state      - Current walk state
  *              op              - Parser object to be translated
- *              obj_desc_ptr    - Where the ACPI पूर्णांकernal object is वापसed
+ *              obj_desc_ptr    - Where the ACPI internal object is returned
  *
  * RETURN:      Status
  *
@@ -34,112 +33,112 @@ ACPI_MODULE_NAME("dsobject")
  *
  ******************************************************************************/
 acpi_status
-acpi_ds_build_पूर्णांकernal_object(काष्ठा acpi_walk_state *walk_state,
-			      जोड़ acpi_parse_object *op,
-			      जोड़ acpi_opeअक्रम_object **obj_desc_ptr)
-अणु
-	जोड़ acpi_opeअक्रम_object *obj_desc;
+acpi_ds_build_internal_object(struct acpi_walk_state *walk_state,
+			      union acpi_parse_object *op,
+			      union acpi_operand_object **obj_desc_ptr)
+{
+	union acpi_operand_object *obj_desc;
 	acpi_status status;
 
-	ACPI_FUNCTION_TRACE(ds_build_पूर्णांकernal_object);
+	ACPI_FUNCTION_TRACE(ds_build_internal_object);
 
-	*obj_desc_ptr = शून्य;
-	अगर (op->common.aml_opcode == AML_INT_NAMEPATH_OP) अणु
+	*obj_desc_ptr = NULL;
+	if (op->common.aml_opcode == AML_INT_NAMEPATH_OP) {
 		/*
 		 * This is a named object reference. If this name was
 		 * previously looked up in the namespace, it was stored in
 		 * this op. Otherwise, go ahead and look it up now
 		 */
-		अगर (!op->common.node) अणु
+		if (!op->common.node) {
 
-			/* Check अगर we are resolving a named reference within a package */
+			/* Check if we are resolving a named reference within a package */
 
-			अगर ((op->common.parent->common.aml_opcode ==
+			if ((op->common.parent->common.aml_opcode ==
 			     AML_PACKAGE_OP)
 			    || (op->common.parent->common.aml_opcode ==
-				AML_VARIABLE_PACKAGE_OP)) अणु
+				AML_VARIABLE_PACKAGE_OP)) {
 				/*
-				 * We won't resolve package elements here, we will करो this
-				 * after all ACPI tables are loaded पूर्णांकo the namespace. This
-				 * behavior supports both क्रमward references to named objects
-				 * and बाह्यal references to objects in other tables.
+				 * We won't resolve package elements here, we will do this
+				 * after all ACPI tables are loaded into the namespace. This
+				 * behavior supports both forward references to named objects
+				 * and external references to objects in other tables.
 				 */
-				जाओ create_new_object;
-			पूर्ण अन्यथा अणु
+				goto create_new_object;
+			} else {
 				status = acpi_ns_lookup(walk_state->scope_info,
 							op->common.value.string,
 							ACPI_TYPE_ANY,
 							ACPI_IMODE_EXECUTE,
 							ACPI_NS_SEARCH_PARENT |
 							ACPI_NS_DONT_OPEN_SCOPE,
-							शून्य,
-							ACPI_CAST_INसूचीECT_PTR
-							(काष्ठा
+							NULL,
+							ACPI_CAST_INDIRECT_PTR
+							(struct
 							 acpi_namespace_node,
 							 &(op->common.node)));
-				अगर (ACPI_FAILURE(status)) अणु
+				if (ACPI_FAILURE(status)) {
 					ACPI_ERROR_NAMESPACE(walk_state->
 							     scope_info,
 							     op->common.value.
 							     string, status);
-					वापस_ACPI_STATUS(status);
-				पूर्ण
-			पूर्ण
-		पूर्ण
-	पूर्ण
+					return_ACPI_STATUS(status);
+				}
+			}
+		}
+	}
 
 create_new_object:
 
-	/* Create and init a new पूर्णांकernal ACPI object */
+	/* Create and init a new internal ACPI object */
 
-	obj_desc = acpi_ut_create_पूर्णांकernal_object((acpi_ps_get_opcode_info
+	obj_desc = acpi_ut_create_internal_object((acpi_ps_get_opcode_info
 						   (op->common.aml_opcode))->
 						  object_type);
-	अगर (!obj_desc) अणु
-		वापस_ACPI_STATUS(AE_NO_MEMORY);
-	पूर्ण
+	if (!obj_desc) {
+		return_ACPI_STATUS(AE_NO_MEMORY);
+	}
 
 	status =
 	    acpi_ds_init_object_from_op(walk_state, op, op->common.aml_opcode,
 					&obj_desc);
-	अगर (ACPI_FAILURE(status)) अणु
-		acpi_ut_हटाओ_reference(obj_desc);
-		वापस_ACPI_STATUS(status);
-	पूर्ण
+	if (ACPI_FAILURE(status)) {
+		acpi_ut_remove_reference(obj_desc);
+		return_ACPI_STATUS(status);
+	}
 
 	/*
-	 * Handling क्रम unresolved package reference elements.
+	 * Handling for unresolved package reference elements.
 	 * These are elements that are namepaths.
 	 */
-	अगर ((op->common.parent->common.aml_opcode == AML_PACKAGE_OP) ||
-	    (op->common.parent->common.aml_opcode == AML_VARIABLE_PACKAGE_OP)) अणु
+	if ((op->common.parent->common.aml_opcode == AML_PACKAGE_OP) ||
+	    (op->common.parent->common.aml_opcode == AML_VARIABLE_PACKAGE_OP)) {
 		obj_desc->reference.resolved = TRUE;
 
-		अगर ((op->common.aml_opcode == AML_INT_NAMEPATH_OP) &&
-		    !obj_desc->reference.node) अणु
+		if ((op->common.aml_opcode == AML_INT_NAMEPATH_OP) &&
+		    !obj_desc->reference.node) {
 			/*
 			 * Name was unresolved above.
-			 * Get the prefix node क्रम later lookup
+			 * Get the prefix node for later lookup
 			 */
 			obj_desc->reference.node =
 			    walk_state->scope_info->scope.node;
 			obj_desc->reference.aml = op->common.aml;
 			obj_desc->reference.resolved = FALSE;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	*obj_desc_ptr = obj_desc;
-	वापस_ACPI_STATUS(status);
-पूर्ण
+	return_ACPI_STATUS(status);
+}
 
 /*******************************************************************************
  *
- * FUNCTION:    acpi_ds_build_पूर्णांकernal_buffer_obj
+ * FUNCTION:    acpi_ds_build_internal_buffer_obj
  *
  * PARAMETERS:  walk_state      - Current walk state
  *              op              - Parser object to be translated
  *              buffer_length   - Length of the buffer
- *              obj_desc_ptr    - Where the ACPI पूर्णांकernal object is वापसed
+ *              obj_desc_ptr    - Where the ACPI internal object is returned
  *
  * RETURN:      Status
  *
@@ -149,92 +148,92 @@ create_new_object:
  ******************************************************************************/
 
 acpi_status
-acpi_ds_build_पूर्णांकernal_buffer_obj(काष्ठा acpi_walk_state *walk_state,
-				  जोड़ acpi_parse_object *op,
+acpi_ds_build_internal_buffer_obj(struct acpi_walk_state *walk_state,
+				  union acpi_parse_object *op,
 				  u32 buffer_length,
-				  जोड़ acpi_opeअक्रम_object **obj_desc_ptr)
-अणु
-	जोड़ acpi_parse_object *arg;
-	जोड़ acpi_opeअक्रम_object *obj_desc;
-	जोड़ acpi_parse_object *byte_list;
+				  union acpi_operand_object **obj_desc_ptr)
+{
+	union acpi_parse_object *arg;
+	union acpi_operand_object *obj_desc;
+	union acpi_parse_object *byte_list;
 	u32 byte_list_length = 0;
 
-	ACPI_FUNCTION_TRACE(ds_build_पूर्णांकernal_buffer_obj);
+	ACPI_FUNCTION_TRACE(ds_build_internal_buffer_obj);
 
 	/*
 	 * If we are evaluating a Named buffer object "Name (xxxx, Buffer)".
-	 * The buffer object alपढ़ोy exists (from the NS node), otherwise it must
+	 * The buffer object already exists (from the NS node), otherwise it must
 	 * be created.
 	 */
 	obj_desc = *obj_desc_ptr;
-	अगर (!obj_desc) अणु
+	if (!obj_desc) {
 
 		/* Create a new buffer object */
 
-		obj_desc = acpi_ut_create_पूर्णांकernal_object(ACPI_TYPE_BUFFER);
+		obj_desc = acpi_ut_create_internal_object(ACPI_TYPE_BUFFER);
 		*obj_desc_ptr = obj_desc;
-		अगर (!obj_desc) अणु
-			वापस_ACPI_STATUS(AE_NO_MEMORY);
-		पूर्ण
-	पूर्ण
+		if (!obj_desc) {
+			return_ACPI_STATUS(AE_NO_MEMORY);
+		}
+	}
 
 	/*
 	 * Second arg is the buffer data (optional) byte_list can be either
-	 * inभागidual bytes or a string initializer. In either हाल, a
+	 * individual bytes or a string initializer. In either case, a
 	 * byte_list appears in the AML.
 	 */
 	arg = op->common.value.arg;	/* skip first arg */
 
 	byte_list = arg->named.next;
-	अगर (byte_list) अणु
-		अगर (byte_list->common.aml_opcode != AML_INT_BYTELIST_OP) अणु
+	if (byte_list) {
+		if (byte_list->common.aml_opcode != AML_INT_BYTELIST_OP) {
 			ACPI_ERROR((AE_INFO,
 				    "Expecting bytelist, found AML opcode 0x%X in op %p",
 				    byte_list->common.aml_opcode, byte_list));
 
-			acpi_ut_हटाओ_reference(obj_desc);
-			वापस (AE_TYPE);
-		पूर्ण
+			acpi_ut_remove_reference(obj_desc);
+			return (AE_TYPE);
+		}
 
-		byte_list_length = (u32) byte_list->common.value.पूर्णांकeger;
-	पूर्ण
+		byte_list_length = (u32) byte_list->common.value.integer;
+	}
 
 	/*
 	 * The buffer length (number of bytes) will be the larger of:
-	 * 1) The specअगरied buffer length and
+	 * 1) The specified buffer length and
 	 * 2) The length of the initializer byte list
 	 */
 	obj_desc->buffer.length = buffer_length;
-	अगर (byte_list_length > buffer_length) अणु
+	if (byte_list_length > buffer_length) {
 		obj_desc->buffer.length = byte_list_length;
-	पूर्ण
+	}
 
 	/* Allocate the buffer */
 
-	अगर (obj_desc->buffer.length == 0) अणु
-		obj_desc->buffer.poपूर्णांकer = शून्य;
+	if (obj_desc->buffer.length == 0) {
+		obj_desc->buffer.pointer = NULL;
 		ACPI_DEBUG_PRINT((ACPI_DB_EXEC,
 				  "Buffer defined with zero length in AML, creating\n"));
-	पूर्ण अन्यथा अणु
-		obj_desc->buffer.poपूर्णांकer =
+	} else {
+		obj_desc->buffer.pointer =
 		    ACPI_ALLOCATE_ZEROED(obj_desc->buffer.length);
-		अगर (!obj_desc->buffer.poपूर्णांकer) अणु
+		if (!obj_desc->buffer.pointer) {
 			acpi_ut_delete_object_desc(obj_desc);
-			वापस_ACPI_STATUS(AE_NO_MEMORY);
-		पूर्ण
+			return_ACPI_STATUS(AE_NO_MEMORY);
+		}
 
-		/* Initialize buffer from the byte_list (अगर present) */
+		/* Initialize buffer from the byte_list (if present) */
 
-		अगर (byte_list) अणु
-			स_नकल(obj_desc->buffer.poपूर्णांकer, byte_list->named.data,
+		if (byte_list) {
+			memcpy(obj_desc->buffer.pointer, byte_list->named.data,
 			       byte_list_length);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	obj_desc->buffer.flags |= AOPOBJ_DATA_VALID;
-	op->common.node = ACPI_CAST_PTR(काष्ठा acpi_namespace_node, obj_desc);
-	वापस_ACPI_STATUS(AE_OK);
-पूर्ण
+	op->common.node = ACPI_CAST_PTR(struct acpi_namespace_node, obj_desc);
+	return_ACPI_STATUS(AE_OK);
+}
 
 /*******************************************************************************
  *
@@ -251,39 +250,39 @@ acpi_ds_build_पूर्णांकernal_buffer_obj(काष्ठा acpi_w
  ******************************************************************************/
 
 acpi_status
-acpi_ds_create_node(काष्ठा acpi_walk_state *walk_state,
-		    काष्ठा acpi_namespace_node *node,
-		    जोड़ acpi_parse_object *op)
-अणु
+acpi_ds_create_node(struct acpi_walk_state *walk_state,
+		    struct acpi_namespace_node *node,
+		    union acpi_parse_object *op)
+{
 	acpi_status status;
-	जोड़ acpi_opeअक्रम_object *obj_desc;
+	union acpi_operand_object *obj_desc;
 
 	ACPI_FUNCTION_TRACE_PTR(ds_create_node, op);
 
 	/*
 	 * Because of the execution pass through the non-control-method
 	 * parts of the table, we can arrive here twice. Only init
-	 * the named object node the first समय through
+	 * the named object node the first time through
 	 */
-	अगर (acpi_ns_get_attached_object(node)) अणु
-		वापस_ACPI_STATUS(AE_OK);
-	पूर्ण
+	if (acpi_ns_get_attached_object(node)) {
+		return_ACPI_STATUS(AE_OK);
+	}
 
-	अगर (!op->common.value.arg) अणु
+	if (!op->common.value.arg) {
 
-		/* No arguments, there is nothing to करो */
+		/* No arguments, there is nothing to do */
 
-		वापस_ACPI_STATUS(AE_OK);
-	पूर्ण
+		return_ACPI_STATUS(AE_OK);
+	}
 
-	/* Build an पूर्णांकernal object क्रम the argument(s) */
+	/* Build an internal object for the argument(s) */
 
 	status =
-	    acpi_ds_build_पूर्णांकernal_object(walk_state, op->common.value.arg,
+	    acpi_ds_build_internal_object(walk_state, op->common.value.arg,
 					  &obj_desc);
-	अगर (ACPI_FAILURE(status)) अणु
-		वापस_ACPI_STATUS(status);
-	पूर्ण
+	if (ACPI_FAILURE(status)) {
+		return_ACPI_STATUS(status);
+	}
 
 	/* Re-type the object according to its argument */
 
@@ -295,16 +294,16 @@ acpi_ds_create_node(काष्ठा acpi_walk_state *walk_state,
 
 	/* Remove local reference to the object */
 
-	acpi_ut_हटाओ_reference(obj_desc);
-	वापस_ACPI_STATUS(status);
-पूर्ण
+	acpi_ut_remove_reference(obj_desc);
+	return_ACPI_STATUS(status);
+}
 
 /*******************************************************************************
  *
  * FUNCTION:    acpi_ds_init_object_from_op
  *
  * PARAMETERS:  walk_state      - Current walk state
- *              op              - Parser op used to init the पूर्णांकernal object
+ *              op              - Parser op used to init the internal object
  *              opcode          - AML opcode associated with the object
  *              ret_obj_desc    - Namespace object to be initialized
  *
@@ -317,153 +316,153 @@ acpi_ds_create_node(काष्ठा acpi_walk_state *walk_state,
  ******************************************************************************/
 
 acpi_status
-acpi_ds_init_object_from_op(काष्ठा acpi_walk_state *walk_state,
-			    जोड़ acpi_parse_object *op,
+acpi_ds_init_object_from_op(struct acpi_walk_state *walk_state,
+			    union acpi_parse_object *op,
 			    u16 opcode,
-			    जोड़ acpi_opeअक्रम_object **ret_obj_desc)
-अणु
-	स्थिर काष्ठा acpi_opcode_info *op_info;
-	जोड़ acpi_opeअक्रम_object *obj_desc;
+			    union acpi_operand_object **ret_obj_desc)
+{
+	const struct acpi_opcode_info *op_info;
+	union acpi_operand_object *obj_desc;
 	acpi_status status = AE_OK;
 
 	ACPI_FUNCTION_TRACE(ds_init_object_from_op);
 
 	obj_desc = *ret_obj_desc;
 	op_info = acpi_ps_get_opcode_info(opcode);
-	अगर (op_info->class == AML_CLASS_UNKNOWN) अणु
+	if (op_info->class == AML_CLASS_UNKNOWN) {
 
 		/* Unknown opcode */
 
-		वापस_ACPI_STATUS(AE_TYPE);
-	पूर्ण
+		return_ACPI_STATUS(AE_TYPE);
+	}
 
-	/* Perक्रमm per-object initialization */
+	/* Perform per-object initialization */
 
-	चयन (obj_desc->common.type) अणु
-	हाल ACPI_TYPE_BUFFER:
+	switch (obj_desc->common.type) {
+	case ACPI_TYPE_BUFFER:
 		/*
-		 * Defer evaluation of Buffer term_arg opeअक्रम
+		 * Defer evaluation of Buffer term_arg operand
 		 */
 		obj_desc->buffer.node =
-		    ACPI_CAST_PTR(काष्ठा acpi_namespace_node,
-				  walk_state->opeअक्रमs[0]);
+		    ACPI_CAST_PTR(struct acpi_namespace_node,
+				  walk_state->operands[0]);
 		obj_desc->buffer.aml_start = op->named.data;
 		obj_desc->buffer.aml_length = op->named.length;
-		अवरोध;
+		break;
 
-	हाल ACPI_TYPE_PACKAGE:
+	case ACPI_TYPE_PACKAGE:
 		/*
-		 * Defer evaluation of Package term_arg opeअक्रम and all
+		 * Defer evaluation of Package term_arg operand and all
 		 * package elements. (01/2017): We defer the element
-		 * resolution to allow क्रमward references from the package
+		 * resolution to allow forward references from the package
 		 * in order to provide compatibility with other ACPI
 		 * implementations.
 		 */
 		obj_desc->package.node =
-		    ACPI_CAST_PTR(काष्ठा acpi_namespace_node,
-				  walk_state->opeअक्रमs[0]);
+		    ACPI_CAST_PTR(struct acpi_namespace_node,
+				  walk_state->operands[0]);
 
-		अगर (!op->named.data) अणु
-			वापस_ACPI_STATUS(AE_OK);
-		पूर्ण
+		if (!op->named.data) {
+			return_ACPI_STATUS(AE_OK);
+		}
 
 		obj_desc->package.aml_start = op->named.data;
 		obj_desc->package.aml_length = op->named.length;
-		अवरोध;
+		break;
 
-	हाल ACPI_TYPE_INTEGER:
+	case ACPI_TYPE_INTEGER:
 
-		चयन (op_info->type) अणु
-		हाल AML_TYPE_CONSTANT:
+		switch (op_info->type) {
+		case AML_TYPE_CONSTANT:
 			/*
 			 * Resolve AML Constants here - AND ONLY HERE!
-			 * All स्थिरants are पूर्णांकegers.
-			 * We mark the पूर्णांकeger with a flag that indicates that it started
-			 * lअगरe as a स्थिरant -- so that stores to स्थिरants will perक्रमm
-			 * as expected (noop). zero_op is used as a placeholder क्रम optional
-			 * target opeअक्रमs.
+			 * All constants are integers.
+			 * We mark the integer with a flag that indicates that it started
+			 * life as a constant -- so that stores to constants will perform
+			 * as expected (noop). zero_op is used as a placeholder for optional
+			 * target operands.
 			 */
 			obj_desc->common.flags = AOPOBJ_AML_CONSTANT;
 
-			चयन (opcode) अणु
-			हाल AML_ZERO_OP:
+			switch (opcode) {
+			case AML_ZERO_OP:
 
-				obj_desc->पूर्णांकeger.value = 0;
-				अवरोध;
+				obj_desc->integer.value = 0;
+				break;
 
-			हाल AML_ONE_OP:
+			case AML_ONE_OP:
 
-				obj_desc->पूर्णांकeger.value = 1;
-				अवरोध;
+				obj_desc->integer.value = 1;
+				break;
 
-			हाल AML_ONES_OP:
+			case AML_ONES_OP:
 
-				obj_desc->पूर्णांकeger.value = ACPI_UINT64_MAX;
+				obj_desc->integer.value = ACPI_UINT64_MAX;
 
-				/* Truncate value अगर we are executing from a 32-bit ACPI table */
+				/* Truncate value if we are executing from a 32-bit ACPI table */
 
-				(व्योम)acpi_ex_truncate_क्रम32bit_table(obj_desc);
-				अवरोध;
+				(void)acpi_ex_truncate_for32bit_table(obj_desc);
+				break;
 
-			हाल AML_REVISION_OP:
+			case AML_REVISION_OP:
 
-				obj_desc->पूर्णांकeger.value = ACPI_CA_VERSION;
-				अवरोध;
+				obj_desc->integer.value = ACPI_CA_VERSION;
+				break;
 
-			शेष:
+			default:
 
 				ACPI_ERROR((AE_INFO,
 					    "Unknown constant opcode 0x%X",
 					    opcode));
 				status = AE_AML_OPERAND_TYPE;
-				अवरोध;
-			पूर्ण
-			अवरोध;
+				break;
+			}
+			break;
 
-		हाल AML_TYPE_LITERAL:
+		case AML_TYPE_LITERAL:
 
-			obj_desc->पूर्णांकeger.value = op->common.value.पूर्णांकeger;
+			obj_desc->integer.value = op->common.value.integer;
 
-			अगर (acpi_ex_truncate_क्रम32bit_table(obj_desc)) अणु
+			if (acpi_ex_truncate_for32bit_table(obj_desc)) {
 
-				/* Warn अगर we found a 64-bit स्थिरant in a 32-bit table */
+				/* Warn if we found a 64-bit constant in a 32-bit table */
 
 				ACPI_WARNING((AE_INFO,
 					      "Truncated 64-bit constant found in 32-bit table: %8.8X%8.8X => %8.8X",
 					      ACPI_FORMAT_UINT64(op->common.
-								 value.पूर्णांकeger),
-					      (u32)obj_desc->पूर्णांकeger.value));
-			पूर्ण
-			अवरोध;
+								 value.integer),
+					      (u32)obj_desc->integer.value));
+			}
+			break;
 
-		शेष:
+		default:
 
 			ACPI_ERROR((AE_INFO, "Unknown Integer type 0x%X",
 				    op_info->type));
 			status = AE_AML_OPERAND_TYPE;
-			अवरोध;
-		पूर्ण
-		अवरोध;
+			break;
+		}
+		break;
 
-	हाल ACPI_TYPE_STRING:
+	case ACPI_TYPE_STRING:
 
-		obj_desc->string.poपूर्णांकer = op->common.value.string;
-		obj_desc->string.length = (u32)म_माप(op->common.value.string);
+		obj_desc->string.pointer = op->common.value.string;
+		obj_desc->string.length = (u32)strlen(op->common.value.string);
 
 		/*
-		 * The string is contained in the ACPI table, करोn't ever try
+		 * The string is contained in the ACPI table, don't ever try
 		 * to delete it
 		 */
 		obj_desc->common.flags |= AOPOBJ_STATIC_POINTER;
-		अवरोध;
+		break;
 
-	हाल ACPI_TYPE_METHOD:
-		अवरोध;
+	case ACPI_TYPE_METHOD:
+		break;
 
-	हाल ACPI_TYPE_LOCAL_REFERENCE:
+	case ACPI_TYPE_LOCAL_REFERENCE:
 
-		चयन (op_info->type) अणु
-		हाल AML_TYPE_LOCAL_VARIABLE:
+		switch (op_info->type) {
+		case AML_TYPE_LOCAL_VARIABLE:
 
 			/* Local ID (0-7) is (AML opcode - base AML_FIRST_LOCAL_OP) */
 
@@ -475,14 +474,14 @@ acpi_ds_init_object_from_op(काष्ठा acpi_walk_state *walk_state,
 			    acpi_ds_method_data_get_node(ACPI_REFCLASS_LOCAL,
 							 obj_desc->reference.
 							 value, walk_state,
-							 ACPI_CAST_INसूचीECT_PTR
-							 (काष्ठा
+							 ACPI_CAST_INDIRECT_PTR
+							 (struct
 							  acpi_namespace_node,
 							  &obj_desc->reference.
 							  object));
-			अवरोध;
+			break;
 
-		हाल AML_TYPE_METHOD_ARGUMENT:
+		case AML_TYPE_METHOD_ARGUMENT:
 
 			/* Arg ID (0-6) is (AML opcode - base AML_FIRST_ARG_OP) */
 
@@ -494,53 +493,53 @@ acpi_ds_init_object_from_op(काष्ठा acpi_walk_state *walk_state,
 							      obj_desc->
 							      reference.value,
 							      walk_state,
-							      ACPI_CAST_INसूचीECT_PTR
-							      (काष्ठा
+							      ACPI_CAST_INDIRECT_PTR
+							      (struct
 							       acpi_namespace_node,
 							       &obj_desc->
 							       reference.
 							       object));
-			अवरोध;
+			break;
 
-		शेष:	/* Object name or Debug object */
+		default:	/* Object name or Debug object */
 
-			चयन (op->common.aml_opcode) अणु
-			हाल AML_INT_NAMEPATH_OP:
+			switch (op->common.aml_opcode) {
+			case AML_INT_NAMEPATH_OP:
 
 				/* Node was saved in Op */
 
 				obj_desc->reference.node = op->common.node;
 				obj_desc->reference.class = ACPI_REFCLASS_NAME;
-				अगर (op->common.node) अणु
+				if (op->common.node) {
 					obj_desc->reference.object =
 					    op->common.node->object;
-				पूर्ण
-				अवरोध;
+				}
+				break;
 
-			हाल AML_DEBUG_OP:
+			case AML_DEBUG_OP:
 
 				obj_desc->reference.class = ACPI_REFCLASS_DEBUG;
-				अवरोध;
+				break;
 
-			शेष:
+			default:
 
 				ACPI_ERROR((AE_INFO,
 					    "Unimplemented reference type for AML opcode: 0x%4.4X",
 					    opcode));
-				वापस_ACPI_STATUS(AE_AML_OPERAND_TYPE);
-			पूर्ण
-			अवरोध;
-		पूर्ण
-		अवरोध;
+				return_ACPI_STATUS(AE_AML_OPERAND_TYPE);
+			}
+			break;
+		}
+		break;
 
-	शेष:
+	default:
 
 		ACPI_ERROR((AE_INFO, "Unimplemented data type: 0x%X",
 			    obj_desc->common.type));
 
 		status = AE_AML_OPERAND_TYPE;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस_ACPI_STATUS(status);
-पूर्ण
+	return_ACPI_STATUS(status);
+}

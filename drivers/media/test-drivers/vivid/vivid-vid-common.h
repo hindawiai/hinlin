@@ -1,39 +1,38 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * vivid-vid-common.h - common video support functions.
  *
  * Copyright 2014 Cisco Systems, Inc. and/or its affiliates. All rights reserved.
  */
 
-#अगर_अघोषित _VIVID_VID_COMMON_H_
-#घोषणा _VIVID_VID_COMMON_H_
+#ifndef _VIVID_VID_COMMON_H_
+#define _VIVID_VID_COMMON_H_
 
-प्रकार पूर्णांक (*fmtfunc)(काष्ठा file *file, व्योम *priv, काष्ठा v4l2_क्रमmat *f);
+typedef int (*fmtfunc)(struct file *file, void *priv, struct v4l2_format *f);
 
 /*
- * Conversion function that converts a single-planar क्रमmat to a
- * single-plane multiplanar क्रमmat.
+ * Conversion function that converts a single-planar format to a
+ * single-plane multiplanar format.
  */
-व्योम fmt_sp2mp(स्थिर काष्ठा v4l2_क्रमmat *sp_fmt, काष्ठा v4l2_क्रमmat *mp_fmt);
-पूर्णांक fmt_sp2mp_func(काष्ठा file *file, व्योम *priv,
-		काष्ठा v4l2_क्रमmat *f, fmtfunc func);
+void fmt_sp2mp(const struct v4l2_format *sp_fmt, struct v4l2_format *mp_fmt);
+int fmt_sp2mp_func(struct file *file, void *priv,
+		struct v4l2_format *f, fmtfunc func);
 
-बाह्य स्थिर काष्ठा v4l2_dv_timings_cap vivid_dv_timings_cap;
+extern const struct v4l2_dv_timings_cap vivid_dv_timings_cap;
 
-स्थिर काष्ठा vivid_fmt *vivid_get_क्रमmat(काष्ठा vivid_dev *dev, u32 pixelक्रमmat);
+const struct vivid_fmt *vivid_get_format(struct vivid_dev *dev, u32 pixelformat);
 
-bool vivid_vid_can_loop(काष्ठा vivid_dev *dev);
-व्योम vivid_send_source_change(काष्ठा vivid_dev *dev, अचिन्हित type);
+bool vivid_vid_can_loop(struct vivid_dev *dev);
+void vivid_send_source_change(struct vivid_dev *dev, unsigned type);
 
-पूर्णांक vivid_vid_adjust_sel(अचिन्हित flags, काष्ठा v4l2_rect *r);
+int vivid_vid_adjust_sel(unsigned flags, struct v4l2_rect *r);
 
-पूर्णांक vivid_क्रमागत_fmt_vid(काष्ठा file *file, व्योम  *priv, काष्ठा v4l2_fmtdesc *f);
-पूर्णांक vidioc_g_std(काष्ठा file *file, व्योम *priv, v4l2_std_id *id);
-पूर्णांक vidioc_g_dv_timings(काष्ठा file *file, व्योम *_fh, काष्ठा v4l2_dv_timings *timings);
-पूर्णांक vidioc_क्रमागत_dv_timings(काष्ठा file *file, व्योम *_fh, काष्ठा v4l2_क्रमागत_dv_timings *timings);
-पूर्णांक vidioc_dv_timings_cap(काष्ठा file *file, व्योम *_fh, काष्ठा v4l2_dv_timings_cap *cap);
-पूर्णांक vidioc_g_edid(काष्ठा file *file, व्योम *_fh, काष्ठा v4l2_edid *edid);
-पूर्णांक vidioc_subscribe_event(काष्ठा v4l2_fh *fh, स्थिर काष्ठा v4l2_event_subscription *sub);
+int vivid_enum_fmt_vid(struct file *file, void  *priv, struct v4l2_fmtdesc *f);
+int vidioc_g_std(struct file *file, void *priv, v4l2_std_id *id);
+int vidioc_g_dv_timings(struct file *file, void *_fh, struct v4l2_dv_timings *timings);
+int vidioc_enum_dv_timings(struct file *file, void *_fh, struct v4l2_enum_dv_timings *timings);
+int vidioc_dv_timings_cap(struct file *file, void *_fh, struct v4l2_dv_timings_cap *cap);
+int vidioc_g_edid(struct file *file, void *_fh, struct v4l2_edid *edid);
+int vidioc_subscribe_event(struct v4l2_fh *fh, const struct v4l2_event_subscription *sub);
 
-#पूर्ण_अगर
+#endif

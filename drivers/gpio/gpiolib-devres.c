@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * devres.c - managed gpio resources
  * This file is based on kernel/irq/devres.c
@@ -7,42 +6,42 @@
  * Copyright (c) 2011 John Crispin <john@phrozen.org>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/err.h>
-#समावेश <linux/gpपन.स>
-#समावेश <linux/gpio/consumer.h>
-#समावेश <linux/device.h>
-#समावेश <linux/gfp.h>
+#include <linux/module.h>
+#include <linux/err.h>
+#include <linux/gpio.h>
+#include <linux/gpio/consumer.h>
+#include <linux/device.h>
+#include <linux/gfp.h>
 
-#समावेश "gpiolib.h"
+#include "gpiolib.h"
 
-अटल व्योम devm_gpiod_release(काष्ठा device *dev, व्योम *res)
-अणु
-	काष्ठा gpio_desc **desc = res;
+static void devm_gpiod_release(struct device *dev, void *res)
+{
+	struct gpio_desc **desc = res;
 
 	gpiod_put(*desc);
-पूर्ण
+}
 
-अटल पूर्णांक devm_gpiod_match(काष्ठा device *dev, व्योम *res, व्योम *data)
-अणु
-	काष्ठा gpio_desc **this = res, **gpio = data;
+static int devm_gpiod_match(struct device *dev, void *res, void *data)
+{
+	struct gpio_desc **this = res, **gpio = data;
 
-	वापस *this == *gpio;
-पूर्ण
+	return *this == *gpio;
+}
 
-अटल व्योम devm_gpiod_release_array(काष्ठा device *dev, व्योम *res)
-अणु
-	काष्ठा gpio_descs **descs = res;
+static void devm_gpiod_release_array(struct device *dev, void *res)
+{
+	struct gpio_descs **descs = res;
 
 	gpiod_put_array(*descs);
-पूर्ण
+}
 
-अटल पूर्णांक devm_gpiod_match_array(काष्ठा device *dev, व्योम *res, व्योम *data)
-अणु
-	काष्ठा gpio_descs **this = res, **gpios = data;
+static int devm_gpiod_match_array(struct device *dev, void *res, void *data)
+{
+	struct gpio_descs **this = res, **gpios = data;
 
-	वापस *this == *gpios;
-पूर्ण
+	return *this == *gpios;
+}
 
 /**
  * devm_gpiod_get - Resource-managed gpiod_get()
@@ -50,16 +49,16 @@
  * @con_id:	function within the GPIO consumer
  * @flags:	optional GPIO initialization flags
  *
- * Managed gpiod_get(). GPIO descriptors वापसed from this function are
- * स्वतःmatically disposed on driver detach. See gpiod_get() क्रम detailed
- * inक्रमmation about behavior and वापस values.
+ * Managed gpiod_get(). GPIO descriptors returned from this function are
+ * automatically disposed on driver detach. See gpiod_get() for detailed
+ * information about behavior and return values.
  */
-काष्ठा gpio_desc *__must_check devm_gpiod_get(काष्ठा device *dev,
-					      स्थिर अक्षर *con_id,
-					      क्रमागत gpiod_flags flags)
-अणु
-	वापस devm_gpiod_get_index(dev, con_id, 0, flags);
-पूर्ण
+struct gpio_desc *__must_check devm_gpiod_get(struct device *dev,
+					      const char *con_id,
+					      enum gpiod_flags flags)
+{
+	return devm_gpiod_get_index(dev, con_id, 0, flags);
+}
 EXPORT_SYMBOL_GPL(devm_gpiod_get);
 
 /**
@@ -68,16 +67,16 @@ EXPORT_SYMBOL_GPL(devm_gpiod_get);
  * @con_id: function within the GPIO consumer
  * @flags: optional GPIO initialization flags
  *
- * Managed gpiod_get_optional(). GPIO descriptors वापसed from this function
- * are स्वतःmatically disposed on driver detach. See gpiod_get_optional() क्रम
- * detailed inक्रमmation about behavior and वापस values.
+ * Managed gpiod_get_optional(). GPIO descriptors returned from this function
+ * are automatically disposed on driver detach. See gpiod_get_optional() for
+ * detailed information about behavior and return values.
  */
-काष्ठा gpio_desc *__must_check devm_gpiod_get_optional(काष्ठा device *dev,
-						       स्थिर अक्षर *con_id,
-						       क्रमागत gpiod_flags flags)
-अणु
-	वापस devm_gpiod_get_index_optional(dev, con_id, 0, flags);
-पूर्ण
+struct gpio_desc *__must_check devm_gpiod_get_optional(struct device *dev,
+						       const char *con_id,
+						       enum gpiod_flags flags)
+{
+	return devm_gpiod_get_index_optional(dev, con_id, 0, flags);
+}
 EXPORT_SYMBOL_GPL(devm_gpiod_get_optional);
 
 /**
@@ -87,55 +86,55 @@ EXPORT_SYMBOL_GPL(devm_gpiod_get_optional);
  * @idx:	index of the GPIO to obtain in the consumer
  * @flags:	optional GPIO initialization flags
  *
- * Managed gpiod_get_index(). GPIO descriptors वापसed from this function are
- * स्वतःmatically disposed on driver detach. See gpiod_get_index() क्रम detailed
- * inक्रमmation about behavior and वापस values.
+ * Managed gpiod_get_index(). GPIO descriptors returned from this function are
+ * automatically disposed on driver detach. See gpiod_get_index() for detailed
+ * information about behavior and return values.
  */
-काष्ठा gpio_desc *__must_check devm_gpiod_get_index(काष्ठा device *dev,
-						    स्थिर अक्षर *con_id,
-						    अचिन्हित पूर्णांक idx,
-						    क्रमागत gpiod_flags flags)
-अणु
-	काष्ठा gpio_desc **dr;
-	काष्ठा gpio_desc *desc;
+struct gpio_desc *__must_check devm_gpiod_get_index(struct device *dev,
+						    const char *con_id,
+						    unsigned int idx,
+						    enum gpiod_flags flags)
+{
+	struct gpio_desc **dr;
+	struct gpio_desc *desc;
 
 	desc = gpiod_get_index(dev, con_id, idx, flags);
-	अगर (IS_ERR(desc))
-		वापस desc;
+	if (IS_ERR(desc))
+		return desc;
 
 	/*
-	 * For non-exclusive GPIO descriptors, check अगर this descriptor is
-	 * alपढ़ोy under resource management by this device.
+	 * For non-exclusive GPIO descriptors, check if this descriptor is
+	 * already under resource management by this device.
 	 */
-	अगर (flags & GPIOD_FLAGS_BIT_NONEXCLUSIVE) अणु
-		काष्ठा devres *dres;
+	if (flags & GPIOD_FLAGS_BIT_NONEXCLUSIVE) {
+		struct devres *dres;
 
 		dres = devres_find(dev, devm_gpiod_release,
 				   devm_gpiod_match, &desc);
-		अगर (dres)
-			वापस desc;
-	पूर्ण
+		if (dres)
+			return desc;
+	}
 
-	dr = devres_alloc(devm_gpiod_release, माप(काष्ठा gpio_desc *),
+	dr = devres_alloc(devm_gpiod_release, sizeof(struct gpio_desc *),
 			  GFP_KERNEL);
-	अगर (!dr) अणु
+	if (!dr) {
 		gpiod_put(desc);
-		वापस ERR_PTR(-ENOMEM);
-	पूर्ण
+		return ERR_PTR(-ENOMEM);
+	}
 
 	*dr = desc;
 	devres_add(dev, dr);
 
-	वापस desc;
-पूर्ण
+	return desc;
+}
 EXPORT_SYMBOL_GPL(devm_gpiod_get_index);
 
 /**
  * devm_gpiod_get_from_of_node() - obtain a GPIO from an OF node
- * @dev:	device क्रम lअगरecycle management
+ * @dev:	device for lifecycle management
  * @node:	handle of the OF node
  * @propname:	name of the DT property representing the GPIO
- * @index:	index of the GPIO to obtain क्रम the consumer
+ * @index:	index of the GPIO to obtain for the consumer
  * @dflags:	GPIO initialization flags
  * @label:	label to attach to the requested GPIO
  *
@@ -143,46 +142,46 @@ EXPORT_SYMBOL_GPL(devm_gpiod_get_index);
  * On successful request the GPIO pin is configured in accordance with
  * provided @dflags.
  *
- * In हाल of error an ERR_PTR() is वापसed.
+ * In case of error an ERR_PTR() is returned.
  */
-काष्ठा gpio_desc *devm_gpiod_get_from_of_node(काष्ठा device *dev,
-					      काष्ठा device_node *node,
-					      स्थिर अक्षर *propname, पूर्णांक index,
-					      क्रमागत gpiod_flags dflags,
-					      स्थिर अक्षर *label)
-अणु
-	काष्ठा gpio_desc **dr;
-	काष्ठा gpio_desc *desc;
+struct gpio_desc *devm_gpiod_get_from_of_node(struct device *dev,
+					      struct device_node *node,
+					      const char *propname, int index,
+					      enum gpiod_flags dflags,
+					      const char *label)
+{
+	struct gpio_desc **dr;
+	struct gpio_desc *desc;
 
 	desc = gpiod_get_from_of_node(node, propname, index, dflags, label);
-	अगर (IS_ERR(desc))
-		वापस desc;
+	if (IS_ERR(desc))
+		return desc;
 
 	/*
-	 * For non-exclusive GPIO descriptors, check अगर this descriptor is
-	 * alपढ़ोy under resource management by this device.
+	 * For non-exclusive GPIO descriptors, check if this descriptor is
+	 * already under resource management by this device.
 	 */
-	अगर (dflags & GPIOD_FLAGS_BIT_NONEXCLUSIVE) अणु
-		काष्ठा devres *dres;
+	if (dflags & GPIOD_FLAGS_BIT_NONEXCLUSIVE) {
+		struct devres *dres;
 
 		dres = devres_find(dev, devm_gpiod_release,
 				   devm_gpiod_match, &desc);
-		अगर (dres)
-			वापस desc;
-	पूर्ण
+		if (dres)
+			return desc;
+	}
 
-	dr = devres_alloc(devm_gpiod_release, माप(काष्ठा gpio_desc *),
+	dr = devres_alloc(devm_gpiod_release, sizeof(struct gpio_desc *),
 			  GFP_KERNEL);
-	अगर (!dr) अणु
+	if (!dr) {
 		gpiod_put(desc);
-		वापस ERR_PTR(-ENOMEM);
-	पूर्ण
+		return ERR_PTR(-ENOMEM);
+	}
 
 	*dr = desc;
 	devres_add(dev, dr);
 
-	वापस desc;
-पूर्ण
+	return desc;
+}
 EXPORT_SYMBOL_GPL(devm_gpiod_get_from_of_node);
 
 /**
@@ -194,37 +193,37 @@ EXPORT_SYMBOL_GPL(devm_gpiod_get_from_of_node);
  * @flags:	GPIO initialization flags
  * @label:	label to attach to the requested GPIO
  *
- * GPIO descriptors वापसed from this function are स्वतःmatically disposed on
+ * GPIO descriptors returned from this function are automatically disposed on
  * driver detach.
  *
  * On successful request the GPIO pin is configured in accordance with
  * provided @flags.
  */
-काष्ठा gpio_desc *devm_fwnode_gpiod_get_index(काष्ठा device *dev,
-					      काष्ठा fwnode_handle *fwnode,
-					      स्थिर अक्षर *con_id, पूर्णांक index,
-					      क्रमागत gpiod_flags flags,
-					      स्थिर अक्षर *label)
-अणु
-	काष्ठा gpio_desc **dr;
-	काष्ठा gpio_desc *desc;
+struct gpio_desc *devm_fwnode_gpiod_get_index(struct device *dev,
+					      struct fwnode_handle *fwnode,
+					      const char *con_id, int index,
+					      enum gpiod_flags flags,
+					      const char *label)
+{
+	struct gpio_desc **dr;
+	struct gpio_desc *desc;
 
-	dr = devres_alloc(devm_gpiod_release, माप(काष्ठा gpio_desc *),
+	dr = devres_alloc(devm_gpiod_release, sizeof(struct gpio_desc *),
 			  GFP_KERNEL);
-	अगर (!dr)
-		वापस ERR_PTR(-ENOMEM);
+	if (!dr)
+		return ERR_PTR(-ENOMEM);
 
 	desc = fwnode_gpiod_get_index(fwnode, con_id, index, flags, label);
-	अगर (IS_ERR(desc)) अणु
-		devres_मुक्त(dr);
-		वापस desc;
-	पूर्ण
+	if (IS_ERR(desc)) {
+		devres_free(dr);
+		return desc;
+	}
 
 	*dr = desc;
 	devres_add(dev, dr);
 
-	वापस desc;
-पूर्ण
+	return desc;
+}
 EXPORT_SYMBOL_GPL(devm_fwnode_gpiod_get_index);
 
 /**
@@ -234,24 +233,24 @@ EXPORT_SYMBOL_GPL(devm_fwnode_gpiod_get_index);
  * @index: index of the GPIO to obtain in the consumer
  * @flags: optional GPIO initialization flags
  *
- * Managed gpiod_get_index_optional(). GPIO descriptors वापसed from this
- * function are स्वतःmatically disposed on driver detach. See
- * gpiod_get_index_optional() क्रम detailed inक्रमmation about behavior and
- * वापस values.
+ * Managed gpiod_get_index_optional(). GPIO descriptors returned from this
+ * function are automatically disposed on driver detach. See
+ * gpiod_get_index_optional() for detailed information about behavior and
+ * return values.
  */
-काष्ठा gpio_desc *__must_check devm_gpiod_get_index_optional(काष्ठा device *dev,
-							     स्थिर अक्षर *con_id,
-							     अचिन्हित पूर्णांक index,
-							     क्रमागत gpiod_flags flags)
-अणु
-	काष्ठा gpio_desc *desc;
+struct gpio_desc *__must_check devm_gpiod_get_index_optional(struct device *dev,
+							     const char *con_id,
+							     unsigned int index,
+							     enum gpiod_flags flags)
+{
+	struct gpio_desc *desc;
 
 	desc = devm_gpiod_get_index(dev, con_id, index, flags);
-	अगर (gpiod_not_found(desc))
-		वापस शून्य;
+	if (gpiod_not_found(desc))
+		return NULL;
 
-	वापस desc;
-पूर्ण
+	return desc;
+}
 EXPORT_SYMBOL_GPL(devm_gpiod_get_index_optional);
 
 /**
@@ -260,33 +259,33 @@ EXPORT_SYMBOL_GPL(devm_gpiod_get_index_optional);
  * @con_id:	function within the GPIO consumer
  * @flags:	optional GPIO initialization flags
  *
- * Managed gpiod_get_array(). GPIO descriptors वापसed from this function are
- * स्वतःmatically disposed on driver detach. See gpiod_get_array() क्रम detailed
- * inक्रमmation about behavior and वापस values.
+ * Managed gpiod_get_array(). GPIO descriptors returned from this function are
+ * automatically disposed on driver detach. See gpiod_get_array() for detailed
+ * information about behavior and return values.
  */
-काष्ठा gpio_descs *__must_check devm_gpiod_get_array(काष्ठा device *dev,
-						     स्थिर अक्षर *con_id,
-						     क्रमागत gpiod_flags flags)
-अणु
-	काष्ठा gpio_descs **dr;
-	काष्ठा gpio_descs *descs;
+struct gpio_descs *__must_check devm_gpiod_get_array(struct device *dev,
+						     const char *con_id,
+						     enum gpiod_flags flags)
+{
+	struct gpio_descs **dr;
+	struct gpio_descs *descs;
 
 	dr = devres_alloc(devm_gpiod_release_array,
-			  माप(काष्ठा gpio_descs *), GFP_KERNEL);
-	अगर (!dr)
-		वापस ERR_PTR(-ENOMEM);
+			  sizeof(struct gpio_descs *), GFP_KERNEL);
+	if (!dr)
+		return ERR_PTR(-ENOMEM);
 
 	descs = gpiod_get_array(dev, con_id, flags);
-	अगर (IS_ERR(descs)) अणु
-		devres_मुक्त(dr);
-		वापस descs;
-	पूर्ण
+	if (IS_ERR(descs)) {
+		devres_free(dr);
+		return descs;
+	}
 
 	*dr = descs;
 	devres_add(dev, dr);
 
-	वापस descs;
-पूर्ण
+	return descs;
+}
 EXPORT_SYMBOL_GPL(devm_gpiod_get_array);
 
 /**
@@ -295,23 +294,23 @@ EXPORT_SYMBOL_GPL(devm_gpiod_get_array);
  * @con_id:	function within the GPIO consumer
  * @flags:	optional GPIO initialization flags
  *
- * Managed gpiod_get_array_optional(). GPIO descriptors वापसed from this
- * function are स्वतःmatically disposed on driver detach.
- * See gpiod_get_array_optional() क्रम detailed inक्रमmation about behavior and
- * वापस values.
+ * Managed gpiod_get_array_optional(). GPIO descriptors returned from this
+ * function are automatically disposed on driver detach.
+ * See gpiod_get_array_optional() for detailed information about behavior and
+ * return values.
  */
-काष्ठा gpio_descs *__must_check
-devm_gpiod_get_array_optional(काष्ठा device *dev, स्थिर अक्षर *con_id,
-			      क्रमागत gpiod_flags flags)
-अणु
-	काष्ठा gpio_descs *descs;
+struct gpio_descs *__must_check
+devm_gpiod_get_array_optional(struct device *dev, const char *con_id,
+			      enum gpiod_flags flags)
+{
+	struct gpio_descs *descs;
 
 	descs = devm_gpiod_get_array(dev, con_id, flags);
-	अगर (gpiod_not_found(descs))
-		वापस शून्य;
+	if (gpiod_not_found(descs))
+		return NULL;
 
-	वापस descs;
-पूर्ण
+	return descs;
+}
 EXPORT_SYMBOL_GPL(devm_gpiod_get_array_optional);
 
 /**
@@ -323,41 +322,41 @@ EXPORT_SYMBOL_GPL(devm_gpiod_get_array_optional);
  * devm_gpiod_get_index(). Normally this function will not be called as the GPIO
  * will be disposed of by the resource management code.
  */
-व्योम devm_gpiod_put(काष्ठा device *dev, काष्ठा gpio_desc *desc)
-अणु
+void devm_gpiod_put(struct device *dev, struct gpio_desc *desc)
+{
 	WARN_ON(devres_release(dev, devm_gpiod_release, devm_gpiod_match,
 		&desc));
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(devm_gpiod_put);
 
 /**
  * devm_gpiod_unhinge - Remove resource management from a gpio descriptor
  * @dev:	GPIO consumer
- * @desc:	GPIO descriptor to हटाओ resource management from
+ * @desc:	GPIO descriptor to remove resource management from
  *
  * Remove resource management from a GPIO descriptor. This is needed when
- * you want to hand over lअगरecycle management of a descriptor to another
+ * you want to hand over lifecycle management of a descriptor to another
  * mechanism.
  */
 
-व्योम devm_gpiod_unhinge(काष्ठा device *dev, काष्ठा gpio_desc *desc)
-अणु
-	पूर्णांक ret;
+void devm_gpiod_unhinge(struct device *dev, struct gpio_desc *desc)
+{
+	int ret;
 
-	अगर (IS_ERR_OR_शून्य(desc))
-		वापस;
+	if (IS_ERR_OR_NULL(desc))
+		return;
 	ret = devres_destroy(dev, devm_gpiod_release,
 			     devm_gpiod_match, &desc);
 	/*
 	 * If the GPIO descriptor is requested as nonexclusive, we
-	 * may call this function several बार on the same descriptor
-	 * so it is OK अगर devres_destroy() वापसs -ENOENT.
+	 * may call this function several times on the same descriptor
+	 * so it is OK if devres_destroy() returns -ENOENT.
 	 */
-	अगर (ret == -ENOENT)
-		वापस;
-	/* Anything अन्यथा we should warn about */
+	if (ret == -ENOENT)
+		return;
+	/* Anything else we should warn about */
 	WARN_ON(ret);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(devm_gpiod_unhinge);
 
 /**
@@ -369,149 +368,149 @@ EXPORT_SYMBOL_GPL(devm_gpiod_unhinge);
  * Normally this function will not be called as the GPIOs will be disposed of
  * by the resource management code.
  */
-व्योम devm_gpiod_put_array(काष्ठा device *dev, काष्ठा gpio_descs *descs)
-अणु
+void devm_gpiod_put_array(struct device *dev, struct gpio_descs *descs)
+{
 	WARN_ON(devres_release(dev, devm_gpiod_release_array,
 			       devm_gpiod_match_array, &descs));
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(devm_gpiod_put_array);
 
 
 
 
-अटल व्योम devm_gpio_release(काष्ठा device *dev, व्योम *res)
-अणु
-	अचिन्हित *gpio = res;
+static void devm_gpio_release(struct device *dev, void *res)
+{
+	unsigned *gpio = res;
 
-	gpio_मुक्त(*gpio);
-पूर्ण
+	gpio_free(*gpio);
+}
 
-अटल पूर्णांक devm_gpio_match(काष्ठा device *dev, व्योम *res, व्योम *data)
-अणु
-	अचिन्हित *this = res, *gpio = data;
+static int devm_gpio_match(struct device *dev, void *res, void *data)
+{
+	unsigned *this = res, *gpio = data;
 
-	वापस *this == *gpio;
-पूर्ण
+	return *this == *gpio;
+}
 
 /**
- *      devm_gpio_request - request a GPIO क्रम a managed device
- *      @dev: device to request the GPIO क्रम
+ *      devm_gpio_request - request a GPIO for a managed device
+ *      @dev: device to request the GPIO for
  *      @gpio: GPIO to allocate
  *      @label: the name of the requested GPIO
  *
- *      Except क्रम the extra @dev argument, this function takes the
- *      same arguments and perक्रमms the same function as
+ *      Except for the extra @dev argument, this function takes the
+ *      same arguments and performs the same function as
  *      gpio_request().  GPIOs requested with this function will be
- *      स्वतःmatically मुक्तd on driver detach.
+ *      automatically freed on driver detach.
  *
- *      If an GPIO allocated with this function needs to be मुक्तd
- *      separately, devm_gpio_मुक्त() must be used.
+ *      If an GPIO allocated with this function needs to be freed
+ *      separately, devm_gpio_free() must be used.
  */
 
-पूर्णांक devm_gpio_request(काष्ठा device *dev, अचिन्हित gpio, स्थिर अक्षर *label)
-अणु
-	अचिन्हित *dr;
-	पूर्णांक rc;
+int devm_gpio_request(struct device *dev, unsigned gpio, const char *label)
+{
+	unsigned *dr;
+	int rc;
 
-	dr = devres_alloc(devm_gpio_release, माप(अचिन्हित), GFP_KERNEL);
-	अगर (!dr)
-		वापस -ENOMEM;
+	dr = devres_alloc(devm_gpio_release, sizeof(unsigned), GFP_KERNEL);
+	if (!dr)
+		return -ENOMEM;
 
 	rc = gpio_request(gpio, label);
-	अगर (rc) अणु
-		devres_मुक्त(dr);
-		वापस rc;
-	पूर्ण
+	if (rc) {
+		devres_free(dr);
+		return rc;
+	}
 
 	*dr = gpio;
 	devres_add(dev, dr);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(devm_gpio_request);
 
 /**
  *	devm_gpio_request_one - request a single GPIO with initial setup
- *	@dev:   device to request क्रम
+ *	@dev:   device to request for
  *	@gpio:	the GPIO number
- *	@flags:	GPIO configuration as specअगरied by GPIOF_*
+ *	@flags:	GPIO configuration as specified by GPIOF_*
  *	@label:	a literal description string of this GPIO
  */
-पूर्णांक devm_gpio_request_one(काष्ठा device *dev, अचिन्हित gpio,
-			  अचिन्हित दीर्घ flags, स्थिर अक्षर *label)
-अणु
-	अचिन्हित *dr;
-	पूर्णांक rc;
+int devm_gpio_request_one(struct device *dev, unsigned gpio,
+			  unsigned long flags, const char *label)
+{
+	unsigned *dr;
+	int rc;
 
-	dr = devres_alloc(devm_gpio_release, माप(अचिन्हित), GFP_KERNEL);
-	अगर (!dr)
-		वापस -ENOMEM;
+	dr = devres_alloc(devm_gpio_release, sizeof(unsigned), GFP_KERNEL);
+	if (!dr)
+		return -ENOMEM;
 
 	rc = gpio_request_one(gpio, flags, label);
-	अगर (rc) अणु
-		devres_मुक्त(dr);
-		वापस rc;
-	पूर्ण
+	if (rc) {
+		devres_free(dr);
+		return rc;
+	}
 
 	*dr = gpio;
 	devres_add(dev, dr);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(devm_gpio_request_one);
 
 /**
- *      devm_gpio_मुक्त - मुक्त a GPIO
- *      @dev: device to मुक्त GPIO क्रम
- *      @gpio: GPIO to मुक्त
+ *      devm_gpio_free - free a GPIO
+ *      @dev: device to free GPIO for
+ *      @gpio: GPIO to free
  *
- *      Except क्रम the extra @dev argument, this function takes the
- *      same arguments and perक्रमms the same function as gpio_मुक्त().
- *      This function instead of gpio_मुक्त() should be used to manually
- *      मुक्त GPIOs allocated with devm_gpio_request().
+ *      Except for the extra @dev argument, this function takes the
+ *      same arguments and performs the same function as gpio_free().
+ *      This function instead of gpio_free() should be used to manually
+ *      free GPIOs allocated with devm_gpio_request().
  */
-व्योम devm_gpio_मुक्त(काष्ठा device *dev, अचिन्हित पूर्णांक gpio)
-अणु
+void devm_gpio_free(struct device *dev, unsigned int gpio)
+{
 
 	WARN_ON(devres_release(dev, devm_gpio_release, devm_gpio_match,
 		&gpio));
-पूर्ण
-EXPORT_SYMBOL_GPL(devm_gpio_मुक्त);
+}
+EXPORT_SYMBOL_GPL(devm_gpio_free);
 
-अटल व्योम devm_gpio_chip_release(व्योम *data)
-अणु
-	काष्ठा gpio_chip *gc = data;
+static void devm_gpio_chip_release(void *data)
+{
+	struct gpio_chip *gc = data;
 
-	gpiochip_हटाओ(gc);
-पूर्ण
+	gpiochip_remove(gc);
+}
 
 /**
  * devm_gpiochip_add_data_with_key() - Resource managed gpiochip_add_data_with_key()
- * @dev: poपूर्णांकer to the device that gpio_chip beदीर्घs to.
- * @gc: the GPIO chip to रेजिस्टर
- * @data: driver-निजी data associated with this chip
- * @lock_key: lockdep class क्रम IRQ lock
- * @request_key: lockdep class क्रम IRQ request
+ * @dev: pointer to the device that gpio_chip belongs to.
+ * @gc: the GPIO chip to register
+ * @data: driver-private data associated with this chip
+ * @lock_key: lockdep class for IRQ lock
+ * @request_key: lockdep class for IRQ request
  *
- * Context: potentially beक्रमe irqs will work
+ * Context: potentially before irqs will work
  *
- * The gpio chip स्वतःmatically be released when the device is unbound.
+ * The gpio chip automatically be released when the device is unbound.
  *
  * Returns:
- * A negative त्रुटि_सं अगर the chip can't be रेजिस्टरed, such as because the
- * gc->base is invalid or alपढ़ोy associated with a dअगरferent chip.
- * Otherwise it वापसs zero as a success code.
+ * A negative errno if the chip can't be registered, such as because the
+ * gc->base is invalid or already associated with a different chip.
+ * Otherwise it returns zero as a success code.
  */
-पूर्णांक devm_gpiochip_add_data_with_key(काष्ठा device *dev, काष्ठा gpio_chip *gc, व्योम *data,
-				    काष्ठा lock_class_key *lock_key,
-				    काष्ठा lock_class_key *request_key)
-अणु
-	पूर्णांक ret;
+int devm_gpiochip_add_data_with_key(struct device *dev, struct gpio_chip *gc, void *data,
+				    struct lock_class_key *lock_key,
+				    struct lock_class_key *request_key)
+{
+	int ret;
 
 	ret = gpiochip_add_data_with_key(gc, data, lock_key, request_key);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	वापस devm_add_action_or_reset(dev, devm_gpio_chip_release, gc);
-पूर्ण
+	return devm_add_action_or_reset(dev, devm_gpio_chip_release, gc);
+}
 EXPORT_SYMBOL_GPL(devm_gpiochip_add_data_with_key);

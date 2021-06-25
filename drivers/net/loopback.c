@@ -1,11 +1,10 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * INET		An implementation of the TCP/IP protocol suite क्रम the LINUX
- *		operating प्रणाली.  INET is implemented using the  BSD Socket
- *		पूर्णांकerface as the means of communication with the user level.
+ * INET		An implementation of the TCP/IP protocol suite for the LINUX
+ *		operating system.  INET is implemented using the  BSD Socket
+ *		interface as the means of communication with the user level.
  *
- *		Pseuकरो-driver क्रम the loopback पूर्णांकerface.
+ *		Pseudo-driver for the loopback interface.
  *
  * Version:	@(#)loopback.c	1.0.4b	08/16/93
  *
@@ -13,160 +12,160 @@
  *		Fred N. van Kempen, <waltje@uWalt.NL.Mugnet.ORG>
  *		Donald Becker, <becker@scyld.com>
  *
- *		Alan Cox	:	Fixed oddments क्रम NET3.014
- *		Alan Cox	:	Rejig क्रम NET3.029 snap #3
+ *		Alan Cox	:	Fixed oddments for NET3.014
+ *		Alan Cox	:	Rejig for NET3.029 snap #3
  *		Alan Cox	:	Fixed NET3.029 bugs and sped up
- *		Larry McVoy	:	Tiny tweak to द्विगुन perक्रमmance
+ *		Larry McVoy	:	Tiny tweak to double performance
  *		Alan Cox	:	Backed out LMV's tweak - the linux mm
  *					can't take it...
- *              Michael Grअगरfith:       Don't bother computing the checksums
+ *              Michael Griffith:       Don't bother computing the checksums
  *                                      on packets received on the loopback
- *                                      पूर्णांकerface.
+ *                                      interface.
  *		Alexey Kuznetsov:	Potential hang under some extreme
- *					हालs हटाओd.
+ *					cases removed.
  */
-#समावेश <linux/kernel.h>
-#समावेश <linux/jअगरfies.h>
-#समावेश <linux/module.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/types.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/socket.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/fcntl.h>
-#समावेश <linux/in.h>
+#include <linux/kernel.h>
+#include <linux/jiffies.h>
+#include <linux/module.h>
+#include <linux/interrupt.h>
+#include <linux/fs.h>
+#include <linux/types.h>
+#include <linux/string.h>
+#include <linux/socket.h>
+#include <linux/errno.h>
+#include <linux/fcntl.h>
+#include <linux/in.h>
 
-#समावेश <linux/uaccess.h>
-#समावेश <linux/पन.स>
+#include <linux/uaccess.h>
+#include <linux/io.h>
 
-#समावेश <linux/inet.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/etherdevice.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/ethtool.h>
-#समावेश <net/sock.h>
-#समावेश <net/checksum.h>
-#समावेश <linux/अगर_ether.h>	/* For the statistics काष्ठाure. */
-#समावेश <linux/अगर_arp.h>	/* For ARPHRD_ETHER */
-#समावेश <linux/ip.h>
-#समावेश <linux/tcp.h>
-#समावेश <linux/percpu.h>
-#समावेश <linux/net_tstamp.h>
-#समावेश <net/net_namespace.h>
-#समावेश <linux/u64_stats_sync.h>
+#include <linux/inet.h>
+#include <linux/netdevice.h>
+#include <linux/etherdevice.h>
+#include <linux/skbuff.h>
+#include <linux/ethtool.h>
+#include <net/sock.h>
+#include <net/checksum.h>
+#include <linux/if_ether.h>	/* For the statistics structure. */
+#include <linux/if_arp.h>	/* For ARPHRD_ETHER */
+#include <linux/ip.h>
+#include <linux/tcp.h>
+#include <linux/percpu.h>
+#include <linux/net_tstamp.h>
+#include <net/net_namespace.h>
+#include <linux/u64_stats_sync.h>
 
-/* blackhole_netdev - a device used क्रम dsts that are marked expired!
+/* blackhole_netdev - a device used for dsts that are marked expired!
  * This is global device (instead of per-net-ns) since it's not needed
- * to be per-ns and माला_लो initialized at boot समय.
+ * to be per-ns and gets initialized at boot time.
  */
-काष्ठा net_device *blackhole_netdev;
+struct net_device *blackhole_netdev;
 EXPORT_SYMBOL(blackhole_netdev);
 
 /* The higher levels take care of making this non-reentrant (it's
  * called with bh's disabled).
  */
-अटल netdev_tx_t loopback_xmit(काष्ठा sk_buff *skb,
-				 काष्ठा net_device *dev)
-अणु
-	पूर्णांक len;
+static netdev_tx_t loopback_xmit(struct sk_buff *skb,
+				 struct net_device *dev)
+{
+	int len;
 
-	skb_tx_बारtamp(skb);
+	skb_tx_timestamp(skb);
 
-	/* करो not fool net_बारtamp_check() with various घड़ी bases */
+	/* do not fool net_timestamp_check() with various clock bases */
 	skb->tstamp = 0;
 
 	skb_orphan(skb);
 
-	/* Beक्रमe queueing this packet to netअगर_rx(),
+	/* Before queueing this packet to netif_rx(),
 	 * make sure dst is refcounted.
 	 */
-	skb_dst_क्रमce(skb);
+	skb_dst_force(skb);
 
 	skb->protocol = eth_type_trans(skb, dev);
 
 	len = skb->len;
-	अगर (likely(netअगर_rx(skb) == NET_RX_SUCCESS))
+	if (likely(netif_rx(skb) == NET_RX_SUCCESS))
 		dev_lstats_add(dev, len);
 
-	वापस NETDEV_TX_OK;
-पूर्ण
+	return NETDEV_TX_OK;
+}
 
-व्योम dev_lstats_पढ़ो(काष्ठा net_device *dev, u64 *packets, u64 *bytes)
-अणु
-	पूर्णांक i;
+void dev_lstats_read(struct net_device *dev, u64 *packets, u64 *bytes)
+{
+	int i;
 
 	*packets = 0;
 	*bytes = 0;
 
-	क्रम_each_possible_cpu(i) अणु
-		स्थिर काष्ठा pcpu_lstats *lb_stats;
+	for_each_possible_cpu(i) {
+		const struct pcpu_lstats *lb_stats;
 		u64 tbytes, tpackets;
-		अचिन्हित पूर्णांक start;
+		unsigned int start;
 
 		lb_stats = per_cpu_ptr(dev->lstats, i);
-		करो अणु
+		do {
 			start = u64_stats_fetch_begin_irq(&lb_stats->syncp);
-			tpackets = u64_stats_पढ़ो(&lb_stats->packets);
-			tbytes = u64_stats_पढ़ो(&lb_stats->bytes);
-		पूर्ण जबतक (u64_stats_fetch_retry_irq(&lb_stats->syncp, start));
+			tpackets = u64_stats_read(&lb_stats->packets);
+			tbytes = u64_stats_read(&lb_stats->bytes);
+		} while (u64_stats_fetch_retry_irq(&lb_stats->syncp, start));
 		*bytes   += tbytes;
 		*packets += tpackets;
-	पूर्ण
-पूर्ण
-EXPORT_SYMBOL(dev_lstats_पढ़ो);
+	}
+}
+EXPORT_SYMBOL(dev_lstats_read);
 
-अटल व्योम loopback_get_stats64(काष्ठा net_device *dev,
-				 काष्ठा rtnl_link_stats64 *stats)
-अणु
+static void loopback_get_stats64(struct net_device *dev,
+				 struct rtnl_link_stats64 *stats)
+{
 	u64 packets, bytes;
 
-	dev_lstats_पढ़ो(dev, &packets, &bytes);
+	dev_lstats_read(dev, &packets, &bytes);
 
 	stats->rx_packets = packets;
 	stats->tx_packets = packets;
 	stats->rx_bytes   = bytes;
 	stats->tx_bytes   = bytes;
-पूर्ण
+}
 
-अटल u32 always_on(काष्ठा net_device *dev)
-अणु
-	वापस 1;
-पूर्ण
+static u32 always_on(struct net_device *dev)
+{
+	return 1;
+}
 
-अटल स्थिर काष्ठा ethtool_ops loopback_ethtool_ops = अणु
+static const struct ethtool_ops loopback_ethtool_ops = {
 	.get_link		= always_on,
 	.get_ts_info		= ethtool_op_get_ts_info,
-पूर्ण;
+};
 
-अटल पूर्णांक loopback_dev_init(काष्ठा net_device *dev)
-अणु
-	dev->lstats = netdev_alloc_pcpu_stats(काष्ठा pcpu_lstats);
-	अगर (!dev->lstats)
-		वापस -ENOMEM;
-	वापस 0;
-पूर्ण
+static int loopback_dev_init(struct net_device *dev)
+{
+	dev->lstats = netdev_alloc_pcpu_stats(struct pcpu_lstats);
+	if (!dev->lstats)
+		return -ENOMEM;
+	return 0;
+}
 
-अटल व्योम loopback_dev_मुक्त(काष्ठा net_device *dev)
-अणु
-	dev_net(dev)->loopback_dev = शून्य;
-	मुक्त_percpu(dev->lstats);
-पूर्ण
+static void loopback_dev_free(struct net_device *dev)
+{
+	dev_net(dev)->loopback_dev = NULL;
+	free_percpu(dev->lstats);
+}
 
-अटल स्थिर काष्ठा net_device_ops loopback_ops = अणु
-	.nकरो_init        = loopback_dev_init,
-	.nकरो_start_xmit  = loopback_xmit,
-	.nकरो_get_stats64 = loopback_get_stats64,
-	.nकरो_set_mac_address = eth_mac_addr,
-पूर्ण;
+static const struct net_device_ops loopback_ops = {
+	.ndo_init        = loopback_dev_init,
+	.ndo_start_xmit  = loopback_xmit,
+	.ndo_get_stats64 = loopback_get_stats64,
+	.ndo_set_mac_address = eth_mac_addr,
+};
 
-अटल व्योम gen_lo_setup(काष्ठा net_device *dev,
-			 अचिन्हित पूर्णांक mtu,
-			 स्थिर काष्ठा ethtool_ops *eth_ops,
-			 स्थिर काष्ठा header_ops *hdr_ops,
-			 स्थिर काष्ठा net_device_ops *dev_ops,
-			 व्योम (*dev_deकाष्ठाor)(काष्ठा net_device *dev))
-अणु
+static void gen_lo_setup(struct net_device *dev,
+			 unsigned int mtu,
+			 const struct ethtool_ops *eth_ops,
+			 const struct header_ops *hdr_ops,
+			 const struct net_device_ops *dev_ops,
+			 void (*dev_destructor)(struct net_device *dev))
+{
 	dev->mtu		= mtu;
 	dev->hard_header_len	= ETH_HLEN;	/* 14	*/
 	dev->min_header_len	= ETH_HLEN;	/* 14	*/
@@ -174,7 +173,7 @@ EXPORT_SYMBOL(dev_lstats_पढ़ो);
 	dev->type		= ARPHRD_LOOPBACK;	/* 0x0001*/
 	dev->flags		= IFF_LOOPBACK;
 	dev->priv_flags		|= IFF_LIVE_ADDR_CHANGE | IFF_NO_QUEUE;
-	netअगर_keep_dst(dev);
+	netif_keep_dst(dev);
 	dev->hw_features	= NETIF_F_GSO_SOFTWARE;
 	dev->features		= NETIF_F_SG | NETIF_F_FRAGLIST
 		| NETIF_F_GSO_SOFTWARE
@@ -189,80 +188,80 @@ EXPORT_SYMBOL(dev_lstats_पढ़ो);
 	dev->ethtool_ops	= eth_ops;
 	dev->header_ops		= hdr_ops;
 	dev->netdev_ops		= dev_ops;
-	dev->needs_मुक्त_netdev	= true;
-	dev->priv_deकाष्ठाor	= dev_deकाष्ठाor;
-पूर्ण
+	dev->needs_free_netdev	= true;
+	dev->priv_destructor	= dev_destructor;
+}
 
 /* The loopback device is special. There is only one instance
  * per network namespace.
  */
-अटल व्योम loopback_setup(काष्ठा net_device *dev)
-अणु
+static void loopback_setup(struct net_device *dev)
+{
 	gen_lo_setup(dev, (64 * 1024), &loopback_ethtool_ops, &eth_header_ops,
-		     &loopback_ops, loopback_dev_मुक्त);
-पूर्ण
+		     &loopback_ops, loopback_dev_free);
+}
 
-/* Setup and रेजिस्टर the loopback device. */
-अटल __net_init पूर्णांक loopback_net_init(काष्ठा net *net)
-अणु
-	काष्ठा net_device *dev;
-	पूर्णांक err;
+/* Setup and register the loopback device. */
+static __net_init int loopback_net_init(struct net *net)
+{
+	struct net_device *dev;
+	int err;
 
 	err = -ENOMEM;
 	dev = alloc_netdev(0, "lo", NET_NAME_UNKNOWN, loopback_setup);
-	अगर (!dev)
-		जाओ out;
+	if (!dev)
+		goto out;
 
 	dev_net_set(dev, net);
-	err = रेजिस्टर_netdev(dev);
-	अगर (err)
-		जाओ out_मुक्त_netdev;
+	err = register_netdev(dev);
+	if (err)
+		goto out_free_netdev;
 
-	BUG_ON(dev->अगरindex != LOOPBACK_IFINDEX);
+	BUG_ON(dev->ifindex != LOOPBACK_IFINDEX);
 	net->loopback_dev = dev;
-	वापस 0;
+	return 0;
 
-out_मुक्त_netdev:
-	मुक्त_netdev(dev);
+out_free_netdev:
+	free_netdev(dev);
 out:
-	अगर (net_eq(net, &init_net))
+	if (net_eq(net, &init_net))
 		panic("loopback: Failed to register netdevice: %d\n", err);
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /* Registered in net/core/dev.c */
-काष्ठा pernet_operations __net_initdata loopback_net_ops = अणु
+struct pernet_operations __net_initdata loopback_net_ops = {
 	.init = loopback_net_init,
-पूर्ण;
+};
 
 /* blackhole netdevice */
-अटल netdev_tx_t blackhole_netdev_xmit(काष्ठा sk_buff *skb,
-					 काष्ठा net_device *dev)
-अणु
-	kमुक्त_skb(skb);
+static netdev_tx_t blackhole_netdev_xmit(struct sk_buff *skb,
+					 struct net_device *dev)
+{
+	kfree_skb(skb);
 	net_warn_ratelimited("%s(): Dropping skb.\n", __func__);
-	वापस NETDEV_TX_OK;
-पूर्ण
+	return NETDEV_TX_OK;
+}
 
-अटल स्थिर काष्ठा net_device_ops blackhole_netdev_ops = अणु
-	.nकरो_start_xmit = blackhole_netdev_xmit,
-पूर्ण;
+static const struct net_device_ops blackhole_netdev_ops = {
+	.ndo_start_xmit = blackhole_netdev_xmit,
+};
 
-/* This is a dst-dummy device used specअगरically क्रम invalidated
+/* This is a dst-dummy device used specifically for invalidated
  * DSTs and unlike loopback, this is not per-ns.
  */
-अटल व्योम blackhole_netdev_setup(काष्ठा net_device *dev)
-अणु
-	gen_lo_setup(dev, ETH_MIN_MTU, शून्य, शून्य, &blackhole_netdev_ops, शून्य);
-पूर्ण
+static void blackhole_netdev_setup(struct net_device *dev)
+{
+	gen_lo_setup(dev, ETH_MIN_MTU, NULL, NULL, &blackhole_netdev_ops, NULL);
+}
 
-/* Setup and रेजिस्टर the blackhole_netdev. */
-अटल पूर्णांक __init blackhole_netdev_init(व्योम)
-अणु
+/* Setup and register the blackhole_netdev. */
+static int __init blackhole_netdev_init(void)
+{
 	blackhole_netdev = alloc_netdev(0, "blackhole_dev", NET_NAME_UNKNOWN,
 					blackhole_netdev_setup);
-	अगर (!blackhole_netdev)
-		वापस -ENOMEM;
+	if (!blackhole_netdev)
+		return -ENOMEM;
 
 	rtnl_lock();
 	dev_init_scheduler(blackhole_netdev);
@@ -272,7 +271,7 @@ out:
 	blackhole_netdev->flags |= IFF_UP | IFF_RUNNING;
 	dev_net_set(blackhole_netdev, &init_net);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 device_initcall(blackhole_netdev_init);

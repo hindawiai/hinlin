@@ -1,24 +1,23 @@
-<शैली गुरु>
 /*
  * Copyright (c) 2013-2015, Mellanox Technologies. All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the मुख्य directory of this source tree, or the
+ * COPYING in the main directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary क्रमms, with or
- *     without modअगरication, are permitted provided that the following
+ *     Redistribution and use in source and binary forms, with or
+ *     without modification, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary क्रमm must reproduce the above
+ *      - Redistributions in binary form must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the करोcumentation and/or other materials
+ *        disclaimer in the documentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -31,219 +30,219 @@
  * SOFTWARE.
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/io-mapping.h>
-#समावेश <linux/mlx5/driver.h>
-#समावेश "mlx5_core.h"
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/io-mapping.h>
+#include <linux/mlx5/driver.h>
+#include "mlx5_core.h"
 
-पूर्णांक mlx5_cmd_alloc_uar(काष्ठा mlx5_core_dev *dev, u32 *uarn)
-अणु
-	u32 out[MLX5_ST_SZ_DW(alloc_uar_out)] = अणुपूर्ण;
-	u32 in[MLX5_ST_SZ_DW(alloc_uar_in)] = अणुपूर्ण;
-	पूर्णांक err;
+int mlx5_cmd_alloc_uar(struct mlx5_core_dev *dev, u32 *uarn)
+{
+	u32 out[MLX5_ST_SZ_DW(alloc_uar_out)] = {};
+	u32 in[MLX5_ST_SZ_DW(alloc_uar_in)] = {};
+	int err;
 
 	MLX5_SET(alloc_uar_in, in, opcode, MLX5_CMD_OP_ALLOC_UAR);
 	err = mlx5_cmd_exec_inout(dev, alloc_uar, in, out);
-	अगर (!err)
+	if (!err)
 		*uarn = MLX5_GET(alloc_uar_out, out, uar);
-	वापस err;
-पूर्ण
+	return err;
+}
 EXPORT_SYMBOL(mlx5_cmd_alloc_uar);
 
-पूर्णांक mlx5_cmd_मुक्त_uar(काष्ठा mlx5_core_dev *dev, u32 uarn)
-अणु
-	u32 in[MLX5_ST_SZ_DW(dealloc_uar_in)] = अणुपूर्ण;
+int mlx5_cmd_free_uar(struct mlx5_core_dev *dev, u32 uarn)
+{
+	u32 in[MLX5_ST_SZ_DW(dealloc_uar_in)] = {};
 
 	MLX5_SET(dealloc_uar_in, in, opcode, MLX5_CMD_OP_DEALLOC_UAR);
 	MLX5_SET(dealloc_uar_in, in, uar, uarn);
-	वापस mlx5_cmd_exec_in(dev, dealloc_uar, in);
-पूर्ण
-EXPORT_SYMBOL(mlx5_cmd_मुक्त_uar);
+	return mlx5_cmd_exec_in(dev, dealloc_uar, in);
+}
+EXPORT_SYMBOL(mlx5_cmd_free_uar);
 
-अटल पूर्णांक uars_per_sys_page(काष्ठा mlx5_core_dev *mdev)
-अणु
-	अगर (MLX5_CAP_GEN(mdev, uar_4k))
-		वापस MLX5_CAP_GEN(mdev, num_of_uars_per_page);
+static int uars_per_sys_page(struct mlx5_core_dev *mdev)
+{
+	if (MLX5_CAP_GEN(mdev, uar_4k))
+		return MLX5_CAP_GEN(mdev, num_of_uars_per_page);
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल u64 uar2pfn(काष्ठा mlx5_core_dev *mdev, u32 index)
-अणु
-	u32 प्रणाली_page_index;
+static u64 uar2pfn(struct mlx5_core_dev *mdev, u32 index)
+{
+	u32 system_page_index;
 
-	अगर (MLX5_CAP_GEN(mdev, uar_4k))
-		प्रणाली_page_index = index >> (PAGE_SHIFT - MLX5_ADAPTER_PAGE_SHIFT);
-	अन्यथा
-		प्रणाली_page_index = index;
+	if (MLX5_CAP_GEN(mdev, uar_4k))
+		system_page_index = index >> (PAGE_SHIFT - MLX5_ADAPTER_PAGE_SHIFT);
+	else
+		system_page_index = index;
 
-	वापस (mdev->bar_addr >> PAGE_SHIFT) + प्रणाली_page_index;
-पूर्ण
+	return (mdev->bar_addr >> PAGE_SHIFT) + system_page_index;
+}
 
-अटल व्योम up_rel_func(काष्ठा kref *kref)
-अणु
-	काष्ठा mlx5_uars_page *up = container_of(kref, काष्ठा mlx5_uars_page, ref_count);
+static void up_rel_func(struct kref *kref)
+{
+	struct mlx5_uars_page *up = container_of(kref, struct mlx5_uars_page, ref_count);
 
 	list_del(&up->list);
 	iounmap(up->map);
-	अगर (mlx5_cmd_मुक्त_uar(up->mdev, up->index))
+	if (mlx5_cmd_free_uar(up->mdev, up->index))
 		mlx5_core_warn(up->mdev, "failed to free uar index %d\n", up->index);
-	biपंचांगap_मुक्त(up->reg_biपंचांगap);
-	biपंचांगap_मुक्त(up->fp_biपंचांगap);
-	kमुक्त(up);
-पूर्ण
+	bitmap_free(up->reg_bitmap);
+	bitmap_free(up->fp_bitmap);
+	kfree(up);
+}
 
-अटल काष्ठा mlx5_uars_page *alloc_uars_page(काष्ठा mlx5_core_dev *mdev,
+static struct mlx5_uars_page *alloc_uars_page(struct mlx5_core_dev *mdev,
 					      bool map_wc)
-अणु
-	काष्ठा mlx5_uars_page *up;
-	पूर्णांक err = -ENOMEM;
+{
+	struct mlx5_uars_page *up;
+	int err = -ENOMEM;
 	phys_addr_t pfn;
-	पूर्णांक bfregs;
-	पूर्णांक i;
+	int bfregs;
+	int i;
 
 	bfregs = uars_per_sys_page(mdev) * MLX5_BFREGS_PER_UAR;
-	up = kzalloc(माप(*up), GFP_KERNEL);
-	अगर (!up)
-		वापस ERR_PTR(err);
+	up = kzalloc(sizeof(*up), GFP_KERNEL);
+	if (!up)
+		return ERR_PTR(err);
 
 	up->mdev = mdev;
-	up->reg_biपंचांगap = biपंचांगap_zalloc(bfregs, GFP_KERNEL);
-	अगर (!up->reg_biपंचांगap)
-		जाओ error1;
+	up->reg_bitmap = bitmap_zalloc(bfregs, GFP_KERNEL);
+	if (!up->reg_bitmap)
+		goto error1;
 
-	up->fp_biपंचांगap = biपंचांगap_zalloc(bfregs, GFP_KERNEL);
-	अगर (!up->fp_biपंचांगap)
-		जाओ error1;
+	up->fp_bitmap = bitmap_zalloc(bfregs, GFP_KERNEL);
+	if (!up->fp_bitmap)
+		goto error1;
 
-	क्रम (i = 0; i < bfregs; i++)
-		अगर ((i % MLX5_BFREGS_PER_UAR) < MLX5_NON_FP_BFREGS_PER_UAR)
-			set_bit(i, up->reg_biपंचांगap);
-		अन्यथा
-			set_bit(i, up->fp_biपंचांगap);
+	for (i = 0; i < bfregs; i++)
+		if ((i % MLX5_BFREGS_PER_UAR) < MLX5_NON_FP_BFREGS_PER_UAR)
+			set_bit(i, up->reg_bitmap);
+		else
+			set_bit(i, up->fp_bitmap);
 
 	up->bfregs = bfregs;
 	up->fp_avail = bfregs * MLX5_FP_BFREGS_PER_UAR / MLX5_BFREGS_PER_UAR;
 	up->reg_avail = bfregs * MLX5_NON_FP_BFREGS_PER_UAR / MLX5_BFREGS_PER_UAR;
 
 	err = mlx5_cmd_alloc_uar(mdev, &up->index);
-	अगर (err) अणु
+	if (err) {
 		mlx5_core_warn(mdev, "mlx5_cmd_alloc_uar() failed, %d\n", err);
-		जाओ error1;
-	पूर्ण
+		goto error1;
+	}
 
 	pfn = uar2pfn(mdev, up->index);
-	अगर (map_wc) अणु
+	if (map_wc) {
 		up->map = ioremap_wc(pfn << PAGE_SHIFT, PAGE_SIZE);
-		अगर (!up->map) अणु
+		if (!up->map) {
 			err = -EAGAIN;
-			जाओ error2;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			goto error2;
+		}
+	} else {
 		up->map = ioremap(pfn << PAGE_SHIFT, PAGE_SIZE);
-		अगर (!up->map) अणु
+		if (!up->map) {
 			err = -ENOMEM;
-			जाओ error2;
-		पूर्ण
-	पूर्ण
+			goto error2;
+		}
+	}
 	kref_init(&up->ref_count);
 	mlx5_core_dbg(mdev, "allocated UAR page: index %d, total bfregs %d\n",
 		      up->index, up->bfregs);
-	वापस up;
+	return up;
 
 error2:
-	अगर (mlx5_cmd_मुक्त_uar(mdev, up->index))
+	if (mlx5_cmd_free_uar(mdev, up->index))
 		mlx5_core_warn(mdev, "failed to free uar index %d\n", up->index);
 error1:
-	biपंचांगap_मुक्त(up->fp_biपंचांगap);
-	biपंचांगap_मुक्त(up->reg_biपंचांगap);
-	kमुक्त(up);
-	वापस ERR_PTR(err);
-पूर्ण
+	bitmap_free(up->fp_bitmap);
+	bitmap_free(up->reg_bitmap);
+	kfree(up);
+	return ERR_PTR(err);
+}
 
-काष्ठा mlx5_uars_page *mlx5_get_uars_page(काष्ठा mlx5_core_dev *mdev)
-अणु
-	काष्ठा mlx5_uars_page *ret;
+struct mlx5_uars_page *mlx5_get_uars_page(struct mlx5_core_dev *mdev)
+{
+	struct mlx5_uars_page *ret;
 
 	mutex_lock(&mdev->priv.bfregs.reg_head.lock);
-	अगर (!list_empty(&mdev->priv.bfregs.reg_head.list)) अणु
+	if (!list_empty(&mdev->priv.bfregs.reg_head.list)) {
 		ret = list_first_entry(&mdev->priv.bfregs.reg_head.list,
-				       काष्ठा mlx5_uars_page, list);
+				       struct mlx5_uars_page, list);
 		kref_get(&ret->ref_count);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	ret = alloc_uars_page(mdev, false);
-	अगर (IS_ERR(ret))
-		जाओ out;
+	if (IS_ERR(ret))
+		goto out;
 	list_add(&ret->list, &mdev->priv.bfregs.reg_head.list);
 out:
 	mutex_unlock(&mdev->priv.bfregs.reg_head.lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL(mlx5_get_uars_page);
 
-व्योम mlx5_put_uars_page(काष्ठा mlx5_core_dev *mdev, काष्ठा mlx5_uars_page *up)
-अणु
+void mlx5_put_uars_page(struct mlx5_core_dev *mdev, struct mlx5_uars_page *up)
+{
 	mutex_lock(&mdev->priv.bfregs.reg_head.lock);
 	kref_put(&up->ref_count, up_rel_func);
 	mutex_unlock(&mdev->priv.bfregs.reg_head.lock);
-पूर्ण
+}
 EXPORT_SYMBOL(mlx5_put_uars_page);
 
-अटल अचिन्हित दीर्घ map_offset(काष्ठा mlx5_core_dev *mdev, पूर्णांक dbi)
-अणु
-	/* वापस the offset in bytes from the start of the page to the
+static unsigned long map_offset(struct mlx5_core_dev *mdev, int dbi)
+{
+	/* return the offset in bytes from the start of the page to the
 	 * blue flame area of the UAR
 	 */
-	वापस dbi / MLX5_BFREGS_PER_UAR * MLX5_ADAPTER_PAGE_SIZE +
+	return dbi / MLX5_BFREGS_PER_UAR * MLX5_ADAPTER_PAGE_SIZE +
 	       (dbi % MLX5_BFREGS_PER_UAR) *
 	       (1 << MLX5_CAP_GEN(mdev, log_bf_reg_size)) + MLX5_BF_OFFSET;
-पूर्ण
+}
 
-अटल पूर्णांक alloc_bfreg(काष्ठा mlx5_core_dev *mdev, काष्ठा mlx5_sq_bfreg *bfreg,
+static int alloc_bfreg(struct mlx5_core_dev *mdev, struct mlx5_sq_bfreg *bfreg,
 		       bool map_wc, bool fast_path)
-अणु
-	काष्ठा mlx5_bfreg_data *bfregs;
-	काष्ठा mlx5_uars_page *up;
-	काष्ठा list_head *head;
-	अचिन्हित दीर्घ *biपंचांगap;
-	अचिन्हित पूर्णांक *avail;
-	काष्ठा mutex *lock;  /* poपूर्णांकer to right mutex */
-	पूर्णांक dbi;
+{
+	struct mlx5_bfreg_data *bfregs;
+	struct mlx5_uars_page *up;
+	struct list_head *head;
+	unsigned long *bitmap;
+	unsigned int *avail;
+	struct mutex *lock;  /* pointer to right mutex */
+	int dbi;
 
 	bfregs = &mdev->priv.bfregs;
-	अगर (map_wc) अणु
+	if (map_wc) {
 		head = &bfregs->wc_head.list;
 		lock = &bfregs->wc_head.lock;
-	पूर्ण अन्यथा अणु
+	} else {
 		head = &bfregs->reg_head.list;
 		lock = &bfregs->reg_head.lock;
-	पूर्ण
+	}
 	mutex_lock(lock);
-	अगर (list_empty(head)) अणु
+	if (list_empty(head)) {
 		up = alloc_uars_page(mdev, map_wc);
-		अगर (IS_ERR(up)) अणु
+		if (IS_ERR(up)) {
 			mutex_unlock(lock);
-			वापस PTR_ERR(up);
-		पूर्ण
+			return PTR_ERR(up);
+		}
 		list_add(&up->list, head);
-	पूर्ण अन्यथा अणु
-		up = list_entry(head->next, काष्ठा mlx5_uars_page, list);
+	} else {
+		up = list_entry(head->next, struct mlx5_uars_page, list);
 		kref_get(&up->ref_count);
-	पूर्ण
-	अगर (fast_path) अणु
-		biपंचांगap = up->fp_biपंचांगap;
+	}
+	if (fast_path) {
+		bitmap = up->fp_bitmap;
 		avail = &up->fp_avail;
-	पूर्ण अन्यथा अणु
-		biपंचांगap = up->reg_biपंचांगap;
+	} else {
+		bitmap = up->reg_bitmap;
 		avail = &up->reg_avail;
-	पूर्ण
-	dbi = find_first_bit(biपंचांगap, up->bfregs);
-	clear_bit(dbi, biपंचांगap);
+	}
+	dbi = find_first_bit(bitmap, up->bfregs);
+	clear_bit(dbi, bitmap);
 	(*avail)--;
-	अगर (!(*avail))
+	if (!(*avail))
 		list_del(&up->list);
 
 	bfreg->map = up->map + map_offset(mdev, dbi);
@@ -252,77 +251,77 @@ EXPORT_SYMBOL(mlx5_put_uars_page);
 	bfreg->index = up->index + dbi / MLX5_BFREGS_PER_UAR;
 	mutex_unlock(lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक mlx5_alloc_bfreg(काष्ठा mlx5_core_dev *mdev, काष्ठा mlx5_sq_bfreg *bfreg,
+int mlx5_alloc_bfreg(struct mlx5_core_dev *mdev, struct mlx5_sq_bfreg *bfreg,
 		     bool map_wc, bool fast_path)
-अणु
-	पूर्णांक err;
+{
+	int err;
 
 	err = alloc_bfreg(mdev, bfreg, map_wc, fast_path);
-	अगर (!err)
-		वापस 0;
+	if (!err)
+		return 0;
 
-	अगर (err == -EAGAIN && map_wc)
-		वापस alloc_bfreg(mdev, bfreg, false, fast_path);
+	if (err == -EAGAIN && map_wc)
+		return alloc_bfreg(mdev, bfreg, false, fast_path);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 EXPORT_SYMBOL(mlx5_alloc_bfreg);
 
-अटल अचिन्हित पूर्णांक addr_to_dbi_in_syspage(काष्ठा mlx5_core_dev *dev,
-					   काष्ठा mlx5_uars_page *up,
-					   काष्ठा mlx5_sq_bfreg *bfreg)
-अणु
-	अचिन्हित पूर्णांक uar_idx;
-	अचिन्हित पूर्णांक bfreg_idx;
-	अचिन्हित पूर्णांक bf_reg_size;
+static unsigned int addr_to_dbi_in_syspage(struct mlx5_core_dev *dev,
+					   struct mlx5_uars_page *up,
+					   struct mlx5_sq_bfreg *bfreg)
+{
+	unsigned int uar_idx;
+	unsigned int bfreg_idx;
+	unsigned int bf_reg_size;
 
 	bf_reg_size = 1 << MLX5_CAP_GEN(dev, log_bf_reg_size);
 
 	uar_idx = (bfreg->map - up->map) >> MLX5_ADAPTER_PAGE_SHIFT;
-	bfreg_idx = (((uपूर्णांकptr_t)bfreg->map % MLX5_ADAPTER_PAGE_SIZE) - MLX5_BF_OFFSET) / bf_reg_size;
+	bfreg_idx = (((uintptr_t)bfreg->map % MLX5_ADAPTER_PAGE_SIZE) - MLX5_BF_OFFSET) / bf_reg_size;
 
-	वापस uar_idx * MLX5_BFREGS_PER_UAR + bfreg_idx;
-पूर्ण
+	return uar_idx * MLX5_BFREGS_PER_UAR + bfreg_idx;
+}
 
-व्योम mlx5_मुक्त_bfreg(काष्ठा mlx5_core_dev *mdev, काष्ठा mlx5_sq_bfreg *bfreg)
-अणु
-	काष्ठा mlx5_bfreg_data *bfregs;
-	काष्ठा mlx5_uars_page *up;
-	काष्ठा mutex *lock; /* poपूर्णांकer to right mutex */
-	अचिन्हित पूर्णांक dbi;
+void mlx5_free_bfreg(struct mlx5_core_dev *mdev, struct mlx5_sq_bfreg *bfreg)
+{
+	struct mlx5_bfreg_data *bfregs;
+	struct mlx5_uars_page *up;
+	struct mutex *lock; /* pointer to right mutex */
+	unsigned int dbi;
 	bool fp;
-	अचिन्हित पूर्णांक *avail;
-	अचिन्हित दीर्घ *biपंचांगap;
-	काष्ठा list_head *head;
+	unsigned int *avail;
+	unsigned long *bitmap;
+	struct list_head *head;
 
 	bfregs = &mdev->priv.bfregs;
-	अगर (bfreg->wc) अणु
+	if (bfreg->wc) {
 		head = &bfregs->wc_head.list;
 		lock = &bfregs->wc_head.lock;
-	पूर्ण अन्यथा अणु
+	} else {
 		head = &bfregs->reg_head.list;
 		lock = &bfregs->reg_head.lock;
-	पूर्ण
+	}
 	up = bfreg->up;
 	dbi = addr_to_dbi_in_syspage(mdev, up, bfreg);
 	fp = (dbi % MLX5_BFREGS_PER_UAR) >= MLX5_NON_FP_BFREGS_PER_UAR;
-	अगर (fp) अणु
+	if (fp) {
 		avail = &up->fp_avail;
-		biपंचांगap = up->fp_biपंचांगap;
-	पूर्ण अन्यथा अणु
+		bitmap = up->fp_bitmap;
+	} else {
 		avail = &up->reg_avail;
-		biपंचांगap = up->reg_biपंचांगap;
-	पूर्ण
+		bitmap = up->reg_bitmap;
+	}
 	mutex_lock(lock);
 	(*avail)++;
-	set_bit(dbi, biपंचांगap);
-	अगर (*avail == 1)
+	set_bit(dbi, bitmap);
+	if (*avail == 1)
 		list_add_tail(&up->list, head);
 
 	kref_put(&up->ref_count, up_rel_func);
 	mutex_unlock(lock);
-पूर्ण
-EXPORT_SYMBOL(mlx5_मुक्त_bfreg);
+}
+EXPORT_SYMBOL(mlx5_free_bfreg);

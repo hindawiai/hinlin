@@ -1,73 +1,72 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (C) 2011 Riअक्षरd Weinberger <richrd@nod.at>
+ * Copyright (C) 2011 Richard Weinberger <richrd@nod.at>
  */
 
-#समावेश <linux/slab.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/mm.h>
-#समावेश <यंत्र/page.h>
-#समावेश <यंत्र/elf.h>
-#समावेश <linux/init.h>
+#include <linux/slab.h>
+#include <linux/sched.h>
+#include <linux/mm.h>
+#include <asm/page.h>
+#include <asm/elf.h>
+#include <linux/init.h>
 
-अटल अचिन्हित पूर्णांक __पढ़ो_mostly vdso_enabled = 1;
-अचिन्हित दीर्घ um_vdso_addr;
+static unsigned int __read_mostly vdso_enabled = 1;
+unsigned long um_vdso_addr;
 
-बाह्य अचिन्हित दीर्घ task_size;
-बाह्य अक्षर vdso_start[], vdso_end[];
+extern unsigned long task_size;
+extern char vdso_start[], vdso_end[];
 
-अटल काष्ठा page **vdsop;
+static struct page **vdsop;
 
-अटल पूर्णांक __init init_vdso(व्योम)
-अणु
-	काष्ठा page *um_vdso;
+static int __init init_vdso(void)
+{
+	struct page *um_vdso;
 
 	BUG_ON(vdso_end - vdso_start > PAGE_SIZE);
 
 	um_vdso_addr = task_size - PAGE_SIZE;
 
-	vdsop = kदो_स्मृति(माप(काष्ठा page *), GFP_KERNEL);
-	अगर (!vdsop)
-		जाओ oom;
+	vdsop = kmalloc(sizeof(struct page *), GFP_KERNEL);
+	if (!vdsop)
+		goto oom;
 
 	um_vdso = alloc_page(GFP_KERNEL);
-	अगर (!um_vdso) अणु
-		kमुक्त(vdsop);
+	if (!um_vdso) {
+		kfree(vdsop);
 
-		जाओ oom;
-	पूर्ण
+		goto oom;
+	}
 
 	copy_page(page_address(um_vdso), vdso_start);
 	*vdsop = um_vdso;
 
-	वापस 0;
+	return 0;
 
 oom:
-	prपूर्णांकk(KERN_ERR "Cannot allocate vdso\n");
+	printk(KERN_ERR "Cannot allocate vdso\n");
 	vdso_enabled = 0;
 
-	वापस -ENOMEM;
-पूर्ण
+	return -ENOMEM;
+}
 subsys_initcall(init_vdso);
 
-पूर्णांक arch_setup_additional_pages(काष्ठा linux_binprm *bprm, पूर्णांक uses_पूर्णांकerp)
-अणु
-	पूर्णांक err;
-	काष्ठा mm_काष्ठा *mm = current->mm;
+int arch_setup_additional_pages(struct linux_binprm *bprm, int uses_interp)
+{
+	int err;
+	struct mm_struct *mm = current->mm;
 
-	अगर (!vdso_enabled)
-		वापस 0;
+	if (!vdso_enabled)
+		return 0;
 
-	अगर (mmap_ग_लिखो_lock_समाप्तable(mm))
-		वापस -EINTR;
+	if (mmap_write_lock_killable(mm))
+		return -EINTR;
 
 	err = install_special_mapping(mm, um_vdso_addr, PAGE_SIZE,
 		VM_READ|VM_EXEC|
 		VM_MAYREAD|VM_MAYWRITE|VM_MAYEXEC,
 		vdsop);
 
-	mmap_ग_लिखो_unlock(mm);
+	mmap_write_unlock(mm);
 
-	वापस err;
-पूर्ण
+	return err;
+}

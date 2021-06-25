@@ -1,6 +1,5 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
-/* SIP extension क्रम IP connection tracking.
+// SPDX-License-Identifier: GPL-2.0-only
+/* SIP extension for IP connection tracking.
  *
  * (C) 2005 by Christian Hentschel <chentschel@arnet.com.ar>
  * based on RR's ip_conntrack_ftp.c and other modules.
@@ -8,27 +7,27 @@
  * (C) 2007, 2008 Patrick McHardy <kaber@trash.net>
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/module.h>
-#समावेश <linux/प्रकार.स>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/inet.h>
-#समावेश <linux/in.h>
-#समावेश <linux/udp.h>
-#समावेश <linux/tcp.h>
-#समावेश <linux/netfilter.h>
-#समावेश <linux/netfilter_ipv4.h>
-#समावेश <linux/netfilter_ipv6.h>
+#include <linux/module.h>
+#include <linux/ctype.h>
+#include <linux/skbuff.h>
+#include <linux/inet.h>
+#include <linux/in.h>
+#include <linux/udp.h>
+#include <linux/tcp.h>
+#include <linux/netfilter.h>
+#include <linux/netfilter_ipv4.h>
+#include <linux/netfilter_ipv6.h>
 
-#समावेश <net/netfilter/nf_conntrack.h>
-#समावेश <net/netfilter/nf_conntrack_core.h>
-#समावेश <net/netfilter/nf_conntrack_expect.h>
-#समावेश <net/netfilter/nf_conntrack_helper.h>
-#समावेश <net/netfilter/nf_conntrack_zones.h>
-#समावेश <linux/netfilter/nf_conntrack_sip.h>
+#include <net/netfilter/nf_conntrack.h>
+#include <net/netfilter/nf_conntrack_core.h>
+#include <net/netfilter/nf_conntrack_expect.h>
+#include <net/netfilter/nf_conntrack_helper.h>
+#include <net/netfilter/nf_conntrack_zones.h>
+#include <linux/netfilter/nf_conntrack_sip.h>
 
-#घोषणा HELPER_NAME "sip"
+#define HELPER_NAME "sip"
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Christian Hentschel <chentschel@arnet.com.ar>");
@@ -36,654 +35,654 @@ MODULE_DESCRIPTION("SIP connection tracking helper");
 MODULE_ALIAS("ip_conntrack_sip");
 MODULE_ALIAS_NFCT_HELPER(HELPER_NAME);
 
-#घोषणा MAX_PORTS	8
-अटल अचिन्हित लघु ports[MAX_PORTS];
-अटल अचिन्हित पूर्णांक ports_c;
-module_param_array(ports, uलघु, &ports_c, 0400);
+#define MAX_PORTS	8
+static unsigned short ports[MAX_PORTS];
+static unsigned int ports_c;
+module_param_array(ports, ushort, &ports_c, 0400);
 MODULE_PARM_DESC(ports, "port numbers of SIP servers");
 
-अटल अचिन्हित पूर्णांक sip_समयout __पढ़ो_mostly = SIP_TIMEOUT;
-module_param(sip_समयout, uपूर्णांक, 0600);
-MODULE_PARM_DESC(sip_समयout, "timeout for the master SIP session");
+static unsigned int sip_timeout __read_mostly = SIP_TIMEOUT;
+module_param(sip_timeout, uint, 0600);
+MODULE_PARM_DESC(sip_timeout, "timeout for the master SIP session");
 
-अटल पूर्णांक sip_direct_संकेतling __पढ़ो_mostly = 1;
-module_param(sip_direct_संकेतling, पूर्णांक, 0600);
-MODULE_PARM_DESC(sip_direct_संकेतling, "expect incoming calls from registrar "
+static int sip_direct_signalling __read_mostly = 1;
+module_param(sip_direct_signalling, int, 0600);
+MODULE_PARM_DESC(sip_direct_signalling, "expect incoming calls from registrar "
 					"only (default 1)");
 
-अटल पूर्णांक sip_direct_media __पढ़ो_mostly = 1;
-module_param(sip_direct_media, पूर्णांक, 0600);
+static int sip_direct_media __read_mostly = 1;
+module_param(sip_direct_media, int, 0600);
 MODULE_PARM_DESC(sip_direct_media, "Expect Media streams between signalling "
 				   "endpoints only (default 1)");
 
-अटल पूर्णांक sip_बाह्यal_media __पढ़ो_mostly = 0;
-module_param(sip_बाह्यal_media, पूर्णांक, 0600);
-MODULE_PARM_DESC(sip_बाह्यal_media, "Expect Media streams between external "
+static int sip_external_media __read_mostly = 0;
+module_param(sip_external_media, int, 0600);
+MODULE_PARM_DESC(sip_external_media, "Expect Media streams between external "
 				     "endpoints (default 0)");
 
-स्थिर काष्ठा nf_nat_sip_hooks *nf_nat_sip_hooks;
+const struct nf_nat_sip_hooks *nf_nat_sip_hooks;
 EXPORT_SYMBOL_GPL(nf_nat_sip_hooks);
 
-अटल पूर्णांक string_len(स्थिर काष्ठा nf_conn *ct, स्थिर अक्षर *dptr,
-		      स्थिर अक्षर *limit, पूर्णांक *shअगरt)
-अणु
-	पूर्णांक len = 0;
+static int string_len(const struct nf_conn *ct, const char *dptr,
+		      const char *limit, int *shift)
+{
+	int len = 0;
 
-	जबतक (dptr < limit && है_अक्षर(*dptr)) अणु
+	while (dptr < limit && isalpha(*dptr)) {
 		dptr++;
 		len++;
-	पूर्ण
-	वापस len;
-पूर्ण
+	}
+	return len;
+}
 
-अटल पूर्णांक digits_len(स्थिर काष्ठा nf_conn *ct, स्थिर अक्षर *dptr,
-		      स्थिर अक्षर *limit, पूर्णांक *shअगरt)
-अणु
-	पूर्णांक len = 0;
-	जबतक (dptr < limit && है_अंक(*dptr)) अणु
+static int digits_len(const struct nf_conn *ct, const char *dptr,
+		      const char *limit, int *shift)
+{
+	int len = 0;
+	while (dptr < limit && isdigit(*dptr)) {
 		dptr++;
 		len++;
-	पूर्ण
-	वापस len;
-पूर्ण
+	}
+	return len;
+}
 
-अटल पूर्णांक iswordc(स्थिर अक्षर c)
-अणु
-	अगर (है_अक्षर_अंक(c) || c == '!' || c == '"' || c == '%' ||
+static int iswordc(const char c)
+{
+	if (isalnum(c) || c == '!' || c == '"' || c == '%' ||
 	    (c >= '(' && c <= '+') || c == ':' || c == '<' || c == '>' ||
 	    c == '?' || (c >= '[' && c <= ']') || c == '_' || c == '`' ||
 	    c == '{' || c == '}' || c == '~' || (c >= '-' && c <= '/') ||
 	    c == '\'')
-		वापस 1;
-	वापस 0;
-पूर्ण
+		return 1;
+	return 0;
+}
 
-अटल पूर्णांक word_len(स्थिर अक्षर *dptr, स्थिर अक्षर *limit)
-अणु
-	पूर्णांक len = 0;
-	जबतक (dptr < limit && iswordc(*dptr)) अणु
+static int word_len(const char *dptr, const char *limit)
+{
+	int len = 0;
+	while (dptr < limit && iswordc(*dptr)) {
 		dptr++;
 		len++;
-	पूर्ण
-	वापस len;
-पूर्ण
+	}
+	return len;
+}
 
-अटल पूर्णांक callid_len(स्थिर काष्ठा nf_conn *ct, स्थिर अक्षर *dptr,
-		      स्थिर अक्षर *limit, पूर्णांक *shअगरt)
-अणु
-	पूर्णांक len, करोमुख्य_len;
+static int callid_len(const struct nf_conn *ct, const char *dptr,
+		      const char *limit, int *shift)
+{
+	int len, domain_len;
 
 	len = word_len(dptr, limit);
 	dptr += len;
-	अगर (!len || dptr == limit || *dptr != '@')
-		वापस len;
+	if (!len || dptr == limit || *dptr != '@')
+		return len;
 	dptr++;
 	len++;
 
-	करोमुख्य_len = word_len(dptr, limit);
-	अगर (!करोमुख्य_len)
-		वापस 0;
-	वापस len + करोमुख्य_len;
-पूर्ण
+	domain_len = word_len(dptr, limit);
+	if (!domain_len)
+		return 0;
+	return len + domain_len;
+}
 
 /* get media type + port length */
-अटल पूर्णांक media_len(स्थिर काष्ठा nf_conn *ct, स्थिर अक्षर *dptr,
-		     स्थिर अक्षर *limit, पूर्णांक *shअगरt)
-अणु
-	पूर्णांक len = string_len(ct, dptr, limit, shअगरt);
+static int media_len(const struct nf_conn *ct, const char *dptr,
+		     const char *limit, int *shift)
+{
+	int len = string_len(ct, dptr, limit, shift);
 
 	dptr += len;
-	अगर (dptr >= limit || *dptr != ' ')
-		वापस 0;
+	if (dptr >= limit || *dptr != ' ')
+		return 0;
 	len++;
 	dptr++;
 
-	वापस len + digits_len(ct, dptr, limit, shअगरt);
-पूर्ण
+	return len + digits_len(ct, dptr, limit, shift);
+}
 
-अटल पूर्णांक sip_parse_addr(स्थिर काष्ठा nf_conn *ct, स्थिर अक्षर *cp,
-			  स्थिर अक्षर **endp, जोड़ nf_inet_addr *addr,
-			  स्थिर अक्षर *limit, bool delim)
-अणु
-	स्थिर अक्षर *end;
-	पूर्णांक ret;
+static int sip_parse_addr(const struct nf_conn *ct, const char *cp,
+			  const char **endp, union nf_inet_addr *addr,
+			  const char *limit, bool delim)
+{
+	const char *end;
+	int ret;
 
-	अगर (!ct)
-		वापस 0;
+	if (!ct)
+		return 0;
 
-	स_रखो(addr, 0, माप(*addr));
-	चयन (nf_ct_l3num(ct)) अणु
-	हाल AF_INET:
+	memset(addr, 0, sizeof(*addr));
+	switch (nf_ct_l3num(ct)) {
+	case AF_INET:
 		ret = in4_pton(cp, limit - cp, (u8 *)&addr->ip, -1, &end);
-		अगर (ret == 0)
-			वापस 0;
-		अवरोध;
-	हाल AF_INET6:
-		अगर (cp < limit && *cp == '[')
+		if (ret == 0)
+			return 0;
+		break;
+	case AF_INET6:
+		if (cp < limit && *cp == '[')
 			cp++;
-		अन्यथा अगर (delim)
-			वापस 0;
+		else if (delim)
+			return 0;
 
 		ret = in6_pton(cp, limit - cp, (u8 *)&addr->ip6, -1, &end);
-		अगर (ret == 0)
-			वापस 0;
+		if (ret == 0)
+			return 0;
 
-		अगर (end < limit && *end == ']')
+		if (end < limit && *end == ']')
 			end++;
-		अन्यथा अगर (delim)
-			वापस 0;
-		अवरोध;
-	शेष:
+		else if (delim)
+			return 0;
+		break;
+	default:
 		BUG();
-	पूर्ण
+	}
 
-	अगर (endp)
+	if (endp)
 		*endp = end;
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-/* skip ip address. वापसs its length. */
-अटल पूर्णांक epaddr_len(स्थिर काष्ठा nf_conn *ct, स्थिर अक्षर *dptr,
-		      स्थिर अक्षर *limit, पूर्णांक *shअगरt)
-अणु
-	जोड़ nf_inet_addr addr;
-	स्थिर अक्षर *aux = dptr;
+/* skip ip address. returns its length. */
+static int epaddr_len(const struct nf_conn *ct, const char *dptr,
+		      const char *limit, int *shift)
+{
+	union nf_inet_addr addr;
+	const char *aux = dptr;
 
-	अगर (!sip_parse_addr(ct, dptr, &dptr, &addr, limit, true)) अणु
+	if (!sip_parse_addr(ct, dptr, &dptr, &addr, limit, true)) {
 		pr_debug("ip: %s parse failed.!\n", dptr);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	/* Port number */
-	अगर (*dptr == ':') अणु
+	if (*dptr == ':') {
 		dptr++;
-		dptr += digits_len(ct, dptr, limit, shअगरt);
-	पूर्ण
-	वापस dptr - aux;
-पूर्ण
+		dptr += digits_len(ct, dptr, limit, shift);
+	}
+	return dptr - aux;
+}
 
 /* get address length, skiping user info. */
-अटल पूर्णांक skp_epaddr_len(स्थिर काष्ठा nf_conn *ct, स्थिर अक्षर *dptr,
-			  स्थिर अक्षर *limit, पूर्णांक *shअगरt)
-अणु
-	स्थिर अक्षर *start = dptr;
-	पूर्णांक s = *shअगरt;
+static int skp_epaddr_len(const struct nf_conn *ct, const char *dptr,
+			  const char *limit, int *shift)
+{
+	const char *start = dptr;
+	int s = *shift;
 
-	/* Search क्रम @, but stop at the end of the line.
-	 * We are inside a sip: URI, so we करोn't need to worry about
+	/* Search for @, but stop at the end of the line.
+	 * We are inside a sip: URI, so we don't need to worry about
 	 * continuation lines. */
-	जबतक (dptr < limit &&
-	       *dptr != '@' && *dptr != '\r' && *dptr != '\n') अणु
-		(*shअगरt)++;
+	while (dptr < limit &&
+	       *dptr != '@' && *dptr != '\r' && *dptr != '\n') {
+		(*shift)++;
 		dptr++;
-	पूर्ण
+	}
 
-	अगर (dptr < limit && *dptr == '@') अणु
+	if (dptr < limit && *dptr == '@') {
 		dptr++;
-		(*shअगरt)++;
-	पूर्ण अन्यथा अणु
+		(*shift)++;
+	} else {
 		dptr = start;
-		*shअगरt = s;
-	पूर्ण
+		*shift = s;
+	}
 
-	वापस epaddr_len(ct, dptr, limit, shअगरt);
-पूर्ण
+	return epaddr_len(ct, dptr, limit, shift);
+}
 
-/* Parse a SIP request line of the क्रमm:
+/* Parse a SIP request line of the form:
  *
  * Request-Line = Method SP Request-URI SP SIP-Version CRLF
  *
- * and वापस the offset and length of the address contained in the Request-URI.
+ * and return the offset and length of the address contained in the Request-URI.
  */
-पूर्णांक ct_sip_parse_request(स्थिर काष्ठा nf_conn *ct,
-			 स्थिर अक्षर *dptr, अचिन्हित पूर्णांक datalen,
-			 अचिन्हित पूर्णांक *matchoff, अचिन्हित पूर्णांक *matchlen,
-			 जोड़ nf_inet_addr *addr, __be16 *port)
-अणु
-	स्थिर अक्षर *start = dptr, *limit = dptr + datalen, *end;
-	अचिन्हित पूर्णांक mlen;
-	अचिन्हित पूर्णांक p;
-	पूर्णांक shअगरt = 0;
+int ct_sip_parse_request(const struct nf_conn *ct,
+			 const char *dptr, unsigned int datalen,
+			 unsigned int *matchoff, unsigned int *matchlen,
+			 union nf_inet_addr *addr, __be16 *port)
+{
+	const char *start = dptr, *limit = dptr + datalen, *end;
+	unsigned int mlen;
+	unsigned int p;
+	int shift = 0;
 
 	/* Skip method and following whitespace */
-	mlen = string_len(ct, dptr, limit, शून्य);
-	अगर (!mlen)
-		वापस 0;
+	mlen = string_len(ct, dptr, limit, NULL);
+	if (!mlen)
+		return 0;
 	dptr += mlen;
-	अगर (++dptr >= limit)
-		वापस 0;
+	if (++dptr >= limit)
+		return 0;
 
 	/* Find SIP URI */
-	क्रम (; dptr < limit - म_माप("sip:"); dptr++) अणु
-		अगर (*dptr == '\r' || *dptr == '\n')
-			वापस -1;
-		अगर (strnहालcmp(dptr, "sip:", म_माप("sip:")) == 0) अणु
-			dptr += म_माप("sip:");
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	अगर (!skp_epaddr_len(ct, dptr, limit, &shअगरt))
-		वापस 0;
-	dptr += shअगरt;
+	for (; dptr < limit - strlen("sip:"); dptr++) {
+		if (*dptr == '\r' || *dptr == '\n')
+			return -1;
+		if (strncasecmp(dptr, "sip:", strlen("sip:")) == 0) {
+			dptr += strlen("sip:");
+			break;
+		}
+	}
+	if (!skp_epaddr_len(ct, dptr, limit, &shift))
+		return 0;
+	dptr += shift;
 
-	अगर (!sip_parse_addr(ct, dptr, &end, addr, limit, true))
-		वापस -1;
-	अगर (end < limit && *end == ':') अणु
+	if (!sip_parse_addr(ct, dptr, &end, addr, limit, true))
+		return -1;
+	if (end < limit && *end == ':') {
 		end++;
-		p = simple_म_से_अदीर्घ(end, (अक्षर **)&end, 10);
-		अगर (p < 1024 || p > 65535)
-			वापस -1;
+		p = simple_strtoul(end, (char **)&end, 10);
+		if (p < 1024 || p > 65535)
+			return -1;
 		*port = htons(p);
-	पूर्ण अन्यथा
+	} else
 		*port = htons(SIP_PORT);
 
-	अगर (end == dptr)
-		वापस 0;
+	if (end == dptr)
+		return 0;
 	*matchoff = dptr - start;
 	*matchlen = end - dptr;
-	वापस 1;
-पूर्ण
+	return 1;
+}
 EXPORT_SYMBOL_GPL(ct_sip_parse_request);
 
 /* SIP header parsing: SIP headers are located at the beginning of a line, but
- * may span several lines, in which हाल the continuation lines begin with a
- * whitespace अक्षरacter. RFC 2543 allows lines to be terminated with CR, LF or
+ * may span several lines, in which case the continuation lines begin with a
+ * whitespace character. RFC 2543 allows lines to be terminated with CR, LF or
  * CRLF, RFC 3261 allows only CRLF, we support both.
  *
  * Headers are followed by (optionally) whitespace, a colon, again (optionally)
  * whitespace and the values. Whitespace in this context means any amount of
- * tअसल, spaces and continuation lines, which are treated as a single whitespace
- * अक्षरacter.
+ * tabs, spaces and continuation lines, which are treated as a single whitespace
+ * character.
  *
- * Some headers may appear multiple बार. A comma separated list of values is
+ * Some headers may appear multiple times. A comma separated list of values is
  * equivalent to multiple headers.
  */
-अटल स्थिर काष्ठा sip_header ct_sip_hdrs[] = अणु
-	[SIP_HDR_CSEQ]			= SIP_HDR("CSeq", शून्य, शून्य, digits_len),
+static const struct sip_header ct_sip_hdrs[] = {
+	[SIP_HDR_CSEQ]			= SIP_HDR("CSeq", NULL, NULL, digits_len),
 	[SIP_HDR_FROM]			= SIP_HDR("From", "f", "sip:", skp_epaddr_len),
 	[SIP_HDR_TO]			= SIP_HDR("To", "t", "sip:", skp_epaddr_len),
 	[SIP_HDR_CONTACT]		= SIP_HDR("Contact", "m", "sip:", skp_epaddr_len),
 	[SIP_HDR_VIA_UDP]		= SIP_HDR("Via", "v", "UDP ", epaddr_len),
 	[SIP_HDR_VIA_TCP]		= SIP_HDR("Via", "v", "TCP ", epaddr_len),
-	[SIP_HDR_EXPIRES]		= SIP_HDR("Expires", शून्य, शून्य, digits_len),
-	[SIP_HDR_CONTENT_LENGTH]	= SIP_HDR("Content-Length", "l", शून्य, digits_len),
-	[SIP_HDR_CALL_ID]		= SIP_HDR("Call-Id", "i", शून्य, callid_len),
-पूर्ण;
+	[SIP_HDR_EXPIRES]		= SIP_HDR("Expires", NULL, NULL, digits_len),
+	[SIP_HDR_CONTENT_LENGTH]	= SIP_HDR("Content-Length", "l", NULL, digits_len),
+	[SIP_HDR_CALL_ID]		= SIP_HDR("Call-Id", "i", NULL, callid_len),
+};
 
-अटल स्थिर अक्षर *sip_follow_continuation(स्थिर अक्षर *dptr, स्थिर अक्षर *limit)
-अणु
+static const char *sip_follow_continuation(const char *dptr, const char *limit)
+{
 	/* Walk past newline */
-	अगर (++dptr >= limit)
-		वापस शून्य;
+	if (++dptr >= limit)
+		return NULL;
 
 	/* Skip '\n' in CR LF */
-	अगर (*(dptr - 1) == '\r' && *dptr == '\n') अणु
-		अगर (++dptr >= limit)
-			वापस शून्य;
-	पूर्ण
+	if (*(dptr - 1) == '\r' && *dptr == '\n') {
+		if (++dptr >= limit)
+			return NULL;
+	}
 
 	/* Continuation line? */
-	अगर (*dptr != ' ' && *dptr != '\t')
-		वापस शून्य;
+	if (*dptr != ' ' && *dptr != '\t')
+		return NULL;
 
 	/* skip leading whitespace */
-	क्रम (; dptr < limit; dptr++) अणु
-		अगर (*dptr != ' ' && *dptr != '\t')
-			अवरोध;
-	पूर्ण
-	वापस dptr;
-पूर्ण
+	for (; dptr < limit; dptr++) {
+		if (*dptr != ' ' && *dptr != '\t')
+			break;
+	}
+	return dptr;
+}
 
-अटल स्थिर अक्षर *sip_skip_whitespace(स्थिर अक्षर *dptr, स्थिर अक्षर *limit)
-अणु
-	क्रम (; dptr < limit; dptr++) अणु
-		अगर (*dptr == ' ' || *dptr == '\t')
-			जारी;
-		अगर (*dptr != '\r' && *dptr != '\n')
-			अवरोध;
+static const char *sip_skip_whitespace(const char *dptr, const char *limit)
+{
+	for (; dptr < limit; dptr++) {
+		if (*dptr == ' ' || *dptr == '\t')
+			continue;
+		if (*dptr != '\r' && *dptr != '\n')
+			break;
 		dptr = sip_follow_continuation(dptr, limit);
-		अवरोध;
-	पूर्ण
-	वापस dptr;
-पूर्ण
+		break;
+	}
+	return dptr;
+}
 
 /* Search within a SIP header value, dealing with continuation lines */
-अटल स्थिर अक्षर *ct_sip_header_search(स्थिर अक्षर *dptr, स्थिर अक्षर *limit,
-					स्थिर अक्षर *needle, अचिन्हित पूर्णांक len)
-अणु
-	क्रम (limit -= len; dptr < limit; dptr++) अणु
-		अगर (*dptr == '\r' || *dptr == '\n') अणु
+static const char *ct_sip_header_search(const char *dptr, const char *limit,
+					const char *needle, unsigned int len)
+{
+	for (limit -= len; dptr < limit; dptr++) {
+		if (*dptr == '\r' || *dptr == '\n') {
 			dptr = sip_follow_continuation(dptr, limit);
-			अगर (dptr == शून्य)
-				अवरोध;
-			जारी;
-		पूर्ण
+			if (dptr == NULL)
+				break;
+			continue;
+		}
 
-		अगर (strnहालcmp(dptr, needle, len) == 0)
-			वापस dptr;
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+		if (strncasecmp(dptr, needle, len) == 0)
+			return dptr;
+	}
+	return NULL;
+}
 
-पूर्णांक ct_sip_get_header(स्थिर काष्ठा nf_conn *ct, स्थिर अक्षर *dptr,
-		      अचिन्हित पूर्णांक dataoff, अचिन्हित पूर्णांक datalen,
-		      क्रमागत sip_header_types type,
-		      अचिन्हित पूर्णांक *matchoff, अचिन्हित पूर्णांक *matchlen)
-अणु
-	स्थिर काष्ठा sip_header *hdr = &ct_sip_hdrs[type];
-	स्थिर अक्षर *start = dptr, *limit = dptr + datalen;
-	पूर्णांक shअगरt = 0;
+int ct_sip_get_header(const struct nf_conn *ct, const char *dptr,
+		      unsigned int dataoff, unsigned int datalen,
+		      enum sip_header_types type,
+		      unsigned int *matchoff, unsigned int *matchlen)
+{
+	const struct sip_header *hdr = &ct_sip_hdrs[type];
+	const char *start = dptr, *limit = dptr + datalen;
+	int shift = 0;
 
-	क्रम (dptr += dataoff; dptr < limit; dptr++) अणु
+	for (dptr += dataoff; dptr < limit; dptr++) {
 		/* Find beginning of line */
-		अगर (*dptr != '\r' && *dptr != '\n')
-			जारी;
-		अगर (++dptr >= limit)
-			अवरोध;
-		अगर (*(dptr - 1) == '\r' && *dptr == '\n') अणु
-			अगर (++dptr >= limit)
-				अवरोध;
-		पूर्ण
+		if (*dptr != '\r' && *dptr != '\n')
+			continue;
+		if (++dptr >= limit)
+			break;
+		if (*(dptr - 1) == '\r' && *dptr == '\n') {
+			if (++dptr >= limit)
+				break;
+		}
 
 		/* Skip continuation lines */
-		अगर (*dptr == ' ' || *dptr == '\t')
-			जारी;
+		if (*dptr == ' ' || *dptr == '\t')
+			continue;
 
 		/* Find header. Compact headers must be followed by a
-		 * non-alphabetic अक्षरacter to aव्योम mismatches. */
-		अगर (limit - dptr >= hdr->len &&
-		    strnहालcmp(dptr, hdr->name, hdr->len) == 0)
+		 * non-alphabetic character to avoid mismatches. */
+		if (limit - dptr >= hdr->len &&
+		    strncasecmp(dptr, hdr->name, hdr->len) == 0)
 			dptr += hdr->len;
-		अन्यथा अगर (hdr->cname && limit - dptr >= hdr->clen + 1 &&
-			 strnहालcmp(dptr, hdr->cname, hdr->clen) == 0 &&
-			 !है_अक्षर(*(dptr + hdr->clen)))
+		else if (hdr->cname && limit - dptr >= hdr->clen + 1 &&
+			 strncasecmp(dptr, hdr->cname, hdr->clen) == 0 &&
+			 !isalpha(*(dptr + hdr->clen)))
 			dptr += hdr->clen;
-		अन्यथा
-			जारी;
+		else
+			continue;
 
 		/* Find and skip colon */
 		dptr = sip_skip_whitespace(dptr, limit);
-		अगर (dptr == शून्य)
-			अवरोध;
-		अगर (*dptr != ':' || ++dptr >= limit)
-			अवरोध;
+		if (dptr == NULL)
+			break;
+		if (*dptr != ':' || ++dptr >= limit)
+			break;
 
 		/* Skip whitespace after colon */
 		dptr = sip_skip_whitespace(dptr, limit);
-		अगर (dptr == शून्य)
-			अवरोध;
+		if (dptr == NULL)
+			break;
 
 		*matchoff = dptr - start;
-		अगर (hdr->search) अणु
+		if (hdr->search) {
 			dptr = ct_sip_header_search(dptr, limit, hdr->search,
 						    hdr->slen);
-			अगर (!dptr)
-				वापस -1;
+			if (!dptr)
+				return -1;
 			dptr += hdr->slen;
-		पूर्ण
+		}
 
-		*matchlen = hdr->match_len(ct, dptr, limit, &shअगरt);
-		अगर (!*matchlen)
-			वापस -1;
-		*matchoff = dptr - start + shअगरt;
-		वापस 1;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		*matchlen = hdr->match_len(ct, dptr, limit, &shift);
+		if (!*matchlen)
+			return -1;
+		*matchoff = dptr - start + shift;
+		return 1;
+	}
+	return 0;
+}
 EXPORT_SYMBOL_GPL(ct_sip_get_header);
 
 /* Get next header field in a list of comma separated values */
-अटल पूर्णांक ct_sip_next_header(स्थिर काष्ठा nf_conn *ct, स्थिर अक्षर *dptr,
-			      अचिन्हित पूर्णांक dataoff, अचिन्हित पूर्णांक datalen,
-			      क्रमागत sip_header_types type,
-			      अचिन्हित पूर्णांक *matchoff, अचिन्हित पूर्णांक *matchlen)
-अणु
-	स्थिर काष्ठा sip_header *hdr = &ct_sip_hdrs[type];
-	स्थिर अक्षर *start = dptr, *limit = dptr + datalen;
-	पूर्णांक shअगरt = 0;
+static int ct_sip_next_header(const struct nf_conn *ct, const char *dptr,
+			      unsigned int dataoff, unsigned int datalen,
+			      enum sip_header_types type,
+			      unsigned int *matchoff, unsigned int *matchlen)
+{
+	const struct sip_header *hdr = &ct_sip_hdrs[type];
+	const char *start = dptr, *limit = dptr + datalen;
+	int shift = 0;
 
 	dptr += dataoff;
 
-	dptr = ct_sip_header_search(dptr, limit, ",", म_माप(","));
-	अगर (!dptr)
-		वापस 0;
+	dptr = ct_sip_header_search(dptr, limit, ",", strlen(","));
+	if (!dptr)
+		return 0;
 
 	dptr = ct_sip_header_search(dptr, limit, hdr->search, hdr->slen);
-	अगर (!dptr)
-		वापस 0;
+	if (!dptr)
+		return 0;
 	dptr += hdr->slen;
 
 	*matchoff = dptr - start;
-	*matchlen = hdr->match_len(ct, dptr, limit, &shअगरt);
-	अगर (!*matchlen)
-		वापस -1;
-	*matchoff += shअगरt;
-	वापस 1;
-पूर्ण
+	*matchlen = hdr->match_len(ct, dptr, limit, &shift);
+	if (!*matchlen)
+		return -1;
+	*matchoff += shift;
+	return 1;
+}
 
 /* Walk through headers until a parsable one is found or no header of the
  * given type is left. */
-अटल पूर्णांक ct_sip_walk_headers(स्थिर काष्ठा nf_conn *ct, स्थिर अक्षर *dptr,
-			       अचिन्हित पूर्णांक dataoff, अचिन्हित पूर्णांक datalen,
-			       क्रमागत sip_header_types type, पूर्णांक *in_header,
-			       अचिन्हित पूर्णांक *matchoff, अचिन्हित पूर्णांक *matchlen)
-अणु
-	पूर्णांक ret;
+static int ct_sip_walk_headers(const struct nf_conn *ct, const char *dptr,
+			       unsigned int dataoff, unsigned int datalen,
+			       enum sip_header_types type, int *in_header,
+			       unsigned int *matchoff, unsigned int *matchlen)
+{
+	int ret;
 
-	अगर (in_header && *in_header) अणु
-		जबतक (1) अणु
+	if (in_header && *in_header) {
+		while (1) {
 			ret = ct_sip_next_header(ct, dptr, dataoff, datalen,
 						 type, matchoff, matchlen);
-			अगर (ret > 0)
-				वापस ret;
-			अगर (ret == 0)
-				अवरोध;
+			if (ret > 0)
+				return ret;
+			if (ret == 0)
+				break;
 			dataoff += *matchoff;
-		पूर्ण
+		}
 		*in_header = 0;
-	पूर्ण
+	}
 
-	जबतक (1) अणु
+	while (1) {
 		ret = ct_sip_get_header(ct, dptr, dataoff, datalen,
 					type, matchoff, matchlen);
-		अगर (ret > 0)
-			अवरोध;
-		अगर (ret == 0)
-			वापस ret;
+		if (ret > 0)
+			break;
+		if (ret == 0)
+			return ret;
 		dataoff += *matchoff;
-	पूर्ण
+	}
 
-	अगर (in_header)
+	if (in_header)
 		*in_header = 1;
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-/* Locate a SIP header, parse the URI and वापस the offset and length of
+/* Locate a SIP header, parse the URI and return the offset and length of
  * the address as well as the address and port themselves. A stream of
- * headers can be parsed by handing in a non-शून्य datalen and in_header
- * poपूर्णांकer.
+ * headers can be parsed by handing in a non-NULL datalen and in_header
+ * pointer.
  */
-पूर्णांक ct_sip_parse_header_uri(स्थिर काष्ठा nf_conn *ct, स्थिर अक्षर *dptr,
-			    अचिन्हित पूर्णांक *dataoff, अचिन्हित पूर्णांक datalen,
-			    क्रमागत sip_header_types type, पूर्णांक *in_header,
-			    अचिन्हित पूर्णांक *matchoff, अचिन्हित पूर्णांक *matchlen,
-			    जोड़ nf_inet_addr *addr, __be16 *port)
-अणु
-	स्थिर अक्षर *c, *limit = dptr + datalen;
-	अचिन्हित पूर्णांक p;
-	पूर्णांक ret;
+int ct_sip_parse_header_uri(const struct nf_conn *ct, const char *dptr,
+			    unsigned int *dataoff, unsigned int datalen,
+			    enum sip_header_types type, int *in_header,
+			    unsigned int *matchoff, unsigned int *matchlen,
+			    union nf_inet_addr *addr, __be16 *port)
+{
+	const char *c, *limit = dptr + datalen;
+	unsigned int p;
+	int ret;
 
 	ret = ct_sip_walk_headers(ct, dptr, dataoff ? *dataoff : 0, datalen,
 				  type, in_header, matchoff, matchlen);
 	WARN_ON(ret < 0);
-	अगर (ret == 0)
-		वापस ret;
+	if (ret == 0)
+		return ret;
 
-	अगर (!sip_parse_addr(ct, dptr + *matchoff, &c, addr, limit, true))
-		वापस -1;
-	अगर (*c == ':') अणु
+	if (!sip_parse_addr(ct, dptr + *matchoff, &c, addr, limit, true))
+		return -1;
+	if (*c == ':') {
 		c++;
-		p = simple_म_से_अदीर्घ(c, (अक्षर **)&c, 10);
-		अगर (p < 1024 || p > 65535)
-			वापस -1;
+		p = simple_strtoul(c, (char **)&c, 10);
+		if (p < 1024 || p > 65535)
+			return -1;
 		*port = htons(p);
-	पूर्ण अन्यथा
+	} else
 		*port = htons(SIP_PORT);
 
-	अगर (dataoff)
+	if (dataoff)
 		*dataoff = c - dptr;
-	वापस 1;
-पूर्ण
+	return 1;
+}
 EXPORT_SYMBOL_GPL(ct_sip_parse_header_uri);
 
-अटल पूर्णांक ct_sip_parse_param(स्थिर काष्ठा nf_conn *ct, स्थिर अक्षर *dptr,
-			      अचिन्हित पूर्णांक dataoff, अचिन्हित पूर्णांक datalen,
-			      स्थिर अक्षर *name,
-			      अचिन्हित पूर्णांक *matchoff, अचिन्हित पूर्णांक *matchlen)
-अणु
-	स्थिर अक्षर *limit = dptr + datalen;
-	स्थिर अक्षर *start;
-	स्थिर अक्षर *end;
+static int ct_sip_parse_param(const struct nf_conn *ct, const char *dptr,
+			      unsigned int dataoff, unsigned int datalen,
+			      const char *name,
+			      unsigned int *matchoff, unsigned int *matchlen)
+{
+	const char *limit = dptr + datalen;
+	const char *start;
+	const char *end;
 
-	limit = ct_sip_header_search(dptr + dataoff, limit, ",", म_माप(","));
-	अगर (!limit)
+	limit = ct_sip_header_search(dptr + dataoff, limit, ",", strlen(","));
+	if (!limit)
 		limit = dptr + datalen;
 
-	start = ct_sip_header_search(dptr + dataoff, limit, name, म_माप(name));
-	अगर (!start)
-		वापस 0;
-	start += म_माप(name);
+	start = ct_sip_header_search(dptr + dataoff, limit, name, strlen(name));
+	if (!start)
+		return 0;
+	start += strlen(name);
 
-	end = ct_sip_header_search(start, limit, ";", म_माप(";"));
-	अगर (!end)
+	end = ct_sip_header_search(start, limit, ";", strlen(";"));
+	if (!end)
 		end = limit;
 
 	*matchoff = start - dptr;
 	*matchlen = end - start;
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-/* Parse address from header parameter and वापस address, offset and length */
-पूर्णांक ct_sip_parse_address_param(स्थिर काष्ठा nf_conn *ct, स्थिर अक्षर *dptr,
-			       अचिन्हित पूर्णांक dataoff, अचिन्हित पूर्णांक datalen,
-			       स्थिर अक्षर *name,
-			       अचिन्हित पूर्णांक *matchoff, अचिन्हित पूर्णांक *matchlen,
-			       जोड़ nf_inet_addr *addr, bool delim)
-अणु
-	स्थिर अक्षर *limit = dptr + datalen;
-	स्थिर अक्षर *start, *end;
+/* Parse address from header parameter and return address, offset and length */
+int ct_sip_parse_address_param(const struct nf_conn *ct, const char *dptr,
+			       unsigned int dataoff, unsigned int datalen,
+			       const char *name,
+			       unsigned int *matchoff, unsigned int *matchlen,
+			       union nf_inet_addr *addr, bool delim)
+{
+	const char *limit = dptr + datalen;
+	const char *start, *end;
 
-	limit = ct_sip_header_search(dptr + dataoff, limit, ",", म_माप(","));
-	अगर (!limit)
+	limit = ct_sip_header_search(dptr + dataoff, limit, ",", strlen(","));
+	if (!limit)
 		limit = dptr + datalen;
 
-	start = ct_sip_header_search(dptr + dataoff, limit, name, म_माप(name));
-	अगर (!start)
-		वापस 0;
+	start = ct_sip_header_search(dptr + dataoff, limit, name, strlen(name));
+	if (!start)
+		return 0;
 
-	start += म_माप(name);
-	अगर (!sip_parse_addr(ct, start, &end, addr, limit, delim))
-		वापस 0;
+	start += strlen(name);
+	if (!sip_parse_addr(ct, start, &end, addr, limit, delim))
+		return 0;
 	*matchoff = start - dptr;
 	*matchlen = end - start;
-	वापस 1;
-पूर्ण
+	return 1;
+}
 EXPORT_SYMBOL_GPL(ct_sip_parse_address_param);
 
-/* Parse numerical header parameter and वापस value, offset and length */
-पूर्णांक ct_sip_parse_numerical_param(स्थिर काष्ठा nf_conn *ct, स्थिर अक्षर *dptr,
-				 अचिन्हित पूर्णांक dataoff, अचिन्हित पूर्णांक datalen,
-				 स्थिर अक्षर *name,
-				 अचिन्हित पूर्णांक *matchoff, अचिन्हित पूर्णांक *matchlen,
-				 अचिन्हित पूर्णांक *val)
-अणु
-	स्थिर अक्षर *limit = dptr + datalen;
-	स्थिर अक्षर *start;
-	अक्षर *end;
+/* Parse numerical header parameter and return value, offset and length */
+int ct_sip_parse_numerical_param(const struct nf_conn *ct, const char *dptr,
+				 unsigned int dataoff, unsigned int datalen,
+				 const char *name,
+				 unsigned int *matchoff, unsigned int *matchlen,
+				 unsigned int *val)
+{
+	const char *limit = dptr + datalen;
+	const char *start;
+	char *end;
 
-	limit = ct_sip_header_search(dptr + dataoff, limit, ",", म_माप(","));
-	अगर (!limit)
+	limit = ct_sip_header_search(dptr + dataoff, limit, ",", strlen(","));
+	if (!limit)
 		limit = dptr + datalen;
 
-	start = ct_sip_header_search(dptr + dataoff, limit, name, म_माप(name));
-	अगर (!start)
-		वापस 0;
+	start = ct_sip_header_search(dptr + dataoff, limit, name, strlen(name));
+	if (!start)
+		return 0;
 
-	start += म_माप(name);
-	*val = simple_म_से_अदीर्घ(start, &end, 0);
-	अगर (start == end)
-		वापस 0;
-	अगर (matchoff && matchlen) अणु
+	start += strlen(name);
+	*val = simple_strtoul(start, &end, 0);
+	if (start == end)
+		return 0;
+	if (matchoff && matchlen) {
 		*matchoff = start - dptr;
 		*matchlen = end - start;
-	पूर्ण
-	वापस 1;
-पूर्ण
+	}
+	return 1;
+}
 EXPORT_SYMBOL_GPL(ct_sip_parse_numerical_param);
 
-अटल पूर्णांक ct_sip_parse_transport(काष्ठा nf_conn *ct, स्थिर अक्षर *dptr,
-				  अचिन्हित पूर्णांक dataoff, अचिन्हित पूर्णांक datalen,
+static int ct_sip_parse_transport(struct nf_conn *ct, const char *dptr,
+				  unsigned int dataoff, unsigned int datalen,
 				  u8 *proto)
-अणु
-	अचिन्हित पूर्णांक matchoff, matchlen;
+{
+	unsigned int matchoff, matchlen;
 
-	अगर (ct_sip_parse_param(ct, dptr, dataoff, datalen, "transport=",
-			       &matchoff, &matchlen)) अणु
-		अगर (!strnहालcmp(dptr + matchoff, "TCP", म_माप("TCP")))
+	if (ct_sip_parse_param(ct, dptr, dataoff, datalen, "transport=",
+			       &matchoff, &matchlen)) {
+		if (!strncasecmp(dptr + matchoff, "TCP", strlen("TCP")))
 			*proto = IPPROTO_TCP;
-		अन्यथा अगर (!strnहालcmp(dptr + matchoff, "UDP", म_माप("UDP")))
+		else if (!strncasecmp(dptr + matchoff, "UDP", strlen("UDP")))
 			*proto = IPPROTO_UDP;
-		अन्यथा
-			वापस 0;
+		else
+			return 0;
 
-		अगर (*proto != nf_ct_protonum(ct))
-			वापस 0;
-	पूर्ण अन्यथा
+		if (*proto != nf_ct_protonum(ct))
+			return 0;
+	} else
 		*proto = nf_ct_protonum(ct);
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल पूर्णांक sdp_parse_addr(स्थिर काष्ठा nf_conn *ct, स्थिर अक्षर *cp,
-			  स्थिर अक्षर **endp, जोड़ nf_inet_addr *addr,
-			  स्थिर अक्षर *limit)
-अणु
-	स्थिर अक्षर *end;
-	पूर्णांक ret;
+static int sdp_parse_addr(const struct nf_conn *ct, const char *cp,
+			  const char **endp, union nf_inet_addr *addr,
+			  const char *limit)
+{
+	const char *end;
+	int ret;
 
-	स_रखो(addr, 0, माप(*addr));
-	चयन (nf_ct_l3num(ct)) अणु
-	हाल AF_INET:
+	memset(addr, 0, sizeof(*addr));
+	switch (nf_ct_l3num(ct)) {
+	case AF_INET:
 		ret = in4_pton(cp, limit - cp, (u8 *)&addr->ip, -1, &end);
-		अवरोध;
-	हाल AF_INET6:
+		break;
+	case AF_INET6:
 		ret = in6_pton(cp, limit - cp, (u8 *)&addr->ip6, -1, &end);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		BUG();
-	पूर्ण
+	}
 
-	अगर (ret == 0)
-		वापस 0;
-	अगर (endp)
+	if (ret == 0)
+		return 0;
+	if (endp)
 		*endp = end;
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-/* skip ip address. वापसs its length. */
-अटल पूर्णांक sdp_addr_len(स्थिर काष्ठा nf_conn *ct, स्थिर अक्षर *dptr,
-			स्थिर अक्षर *limit, पूर्णांक *shअगरt)
-अणु
-	जोड़ nf_inet_addr addr;
-	स्थिर अक्षर *aux = dptr;
+/* skip ip address. returns its length. */
+static int sdp_addr_len(const struct nf_conn *ct, const char *dptr,
+			const char *limit, int *shift)
+{
+	union nf_inet_addr addr;
+	const char *aux = dptr;
 
-	अगर (!sdp_parse_addr(ct, dptr, &dptr, &addr, limit)) अणु
+	if (!sdp_parse_addr(ct, dptr, &dptr, &addr, limit)) {
 		pr_debug("ip: %s parse failed.!\n", dptr);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	वापस dptr - aux;
-पूर्ण
+	return dptr - aux;
+}
 
 /* SDP header parsing: a SDP session description contains an ordered set of
  * headers, starting with a section containing general session parameters,
@@ -692,1012 +691,1012 @@ EXPORT_SYMBOL_GPL(ct_sip_parse_numerical_param);
  * SDP headers always start at the beginning of a line. According to RFC 2327:
  * "The sequence CRLF (0x0d0a) is used to end a record, although parsers should
  * be tolerant and also accept records terminated with a single newline
- * अक्षरacter". We handle both हालs.
+ * character". We handle both cases.
  */
-अटल स्थिर काष्ठा sip_header ct_sdp_hdrs_v4[] = अणु
-	[SDP_HDR_VERSION]	= SDP_HDR("v=", शून्य, digits_len),
+static const struct sip_header ct_sdp_hdrs_v4[] = {
+	[SDP_HDR_VERSION]	= SDP_HDR("v=", NULL, digits_len),
 	[SDP_HDR_OWNER]		= SDP_HDR("o=", "IN IP4 ", sdp_addr_len),
 	[SDP_HDR_CONNECTION]	= SDP_HDR("c=", "IN IP4 ", sdp_addr_len),
-	[SDP_HDR_MEDIA]		= SDP_HDR("m=", शून्य, media_len),
-पूर्ण;
+	[SDP_HDR_MEDIA]		= SDP_HDR("m=", NULL, media_len),
+};
 
-अटल स्थिर काष्ठा sip_header ct_sdp_hdrs_v6[] = अणु
-	[SDP_HDR_VERSION]	= SDP_HDR("v=", शून्य, digits_len),
+static const struct sip_header ct_sdp_hdrs_v6[] = {
+	[SDP_HDR_VERSION]	= SDP_HDR("v=", NULL, digits_len),
 	[SDP_HDR_OWNER]		= SDP_HDR("o=", "IN IP6 ", sdp_addr_len),
 	[SDP_HDR_CONNECTION]	= SDP_HDR("c=", "IN IP6 ", sdp_addr_len),
-	[SDP_HDR_MEDIA]		= SDP_HDR("m=", शून्य, media_len),
-पूर्ण;
+	[SDP_HDR_MEDIA]		= SDP_HDR("m=", NULL, media_len),
+};
 
 /* Linear string search within SDP header values */
-अटल स्थिर अक्षर *ct_sdp_header_search(स्थिर अक्षर *dptr, स्थिर अक्षर *limit,
-					स्थिर अक्षर *needle, अचिन्हित पूर्णांक len)
-अणु
-	क्रम (limit -= len; dptr < limit; dptr++) अणु
-		अगर (*dptr == '\r' || *dptr == '\n')
-			अवरोध;
-		अगर (म_भेदन(dptr, needle, len) == 0)
-			वापस dptr;
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+static const char *ct_sdp_header_search(const char *dptr, const char *limit,
+					const char *needle, unsigned int len)
+{
+	for (limit -= len; dptr < limit; dptr++) {
+		if (*dptr == '\r' || *dptr == '\n')
+			break;
+		if (strncmp(dptr, needle, len) == 0)
+			return dptr;
+	}
+	return NULL;
+}
 
 /* Locate a SDP header (optionally a substring within the header value),
  * optionally stopping at the first occurrence of the term header, parse
- * it and वापस the offset and length of the data we're पूर्णांकerested in.
+ * it and return the offset and length of the data we're interested in.
  */
-पूर्णांक ct_sip_get_sdp_header(स्थिर काष्ठा nf_conn *ct, स्थिर अक्षर *dptr,
-			  अचिन्हित पूर्णांक dataoff, अचिन्हित पूर्णांक datalen,
-			  क्रमागत sdp_header_types type,
-			  क्रमागत sdp_header_types term,
-			  अचिन्हित पूर्णांक *matchoff, अचिन्हित पूर्णांक *matchlen)
-अणु
-	स्थिर काष्ठा sip_header *hdrs, *hdr, *thdr;
-	स्थिर अक्षर *start = dptr, *limit = dptr + datalen;
-	पूर्णांक shअगरt = 0;
+int ct_sip_get_sdp_header(const struct nf_conn *ct, const char *dptr,
+			  unsigned int dataoff, unsigned int datalen,
+			  enum sdp_header_types type,
+			  enum sdp_header_types term,
+			  unsigned int *matchoff, unsigned int *matchlen)
+{
+	const struct sip_header *hdrs, *hdr, *thdr;
+	const char *start = dptr, *limit = dptr + datalen;
+	int shift = 0;
 
 	hdrs = nf_ct_l3num(ct) == NFPROTO_IPV4 ? ct_sdp_hdrs_v4 : ct_sdp_hdrs_v6;
 	hdr = &hdrs[type];
 	thdr = &hdrs[term];
 
-	क्रम (dptr += dataoff; dptr < limit; dptr++) अणु
+	for (dptr += dataoff; dptr < limit; dptr++) {
 		/* Find beginning of line */
-		अगर (*dptr != '\r' && *dptr != '\n')
-			जारी;
-		अगर (++dptr >= limit)
-			अवरोध;
-		अगर (*(dptr - 1) == '\r' && *dptr == '\n') अणु
-			अगर (++dptr >= limit)
-				अवरोध;
-		पूर्ण
+		if (*dptr != '\r' && *dptr != '\n')
+			continue;
+		if (++dptr >= limit)
+			break;
+		if (*(dptr - 1) == '\r' && *dptr == '\n') {
+			if (++dptr >= limit)
+				break;
+		}
 
-		अगर (term != SDP_HDR_UNSPEC &&
+		if (term != SDP_HDR_UNSPEC &&
 		    limit - dptr >= thdr->len &&
-		    strnहालcmp(dptr, thdr->name, thdr->len) == 0)
-			अवरोध;
-		अन्यथा अगर (limit - dptr >= hdr->len &&
-			 strnहालcmp(dptr, hdr->name, hdr->len) == 0)
+		    strncasecmp(dptr, thdr->name, thdr->len) == 0)
+			break;
+		else if (limit - dptr >= hdr->len &&
+			 strncasecmp(dptr, hdr->name, hdr->len) == 0)
 			dptr += hdr->len;
-		अन्यथा
-			जारी;
+		else
+			continue;
 
 		*matchoff = dptr - start;
-		अगर (hdr->search) अणु
+		if (hdr->search) {
 			dptr = ct_sdp_header_search(dptr, limit, hdr->search,
 						    hdr->slen);
-			अगर (!dptr)
-				वापस -1;
+			if (!dptr)
+				return -1;
 			dptr += hdr->slen;
-		पूर्ण
+		}
 
-		*matchlen = hdr->match_len(ct, dptr, limit, &shअगरt);
-		अगर (!*matchlen)
-			वापस -1;
-		*matchoff = dptr - start + shअगरt;
-		वापस 1;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		*matchlen = hdr->match_len(ct, dptr, limit, &shift);
+		if (!*matchlen)
+			return -1;
+		*matchoff = dptr - start + shift;
+		return 1;
+	}
+	return 0;
+}
 EXPORT_SYMBOL_GPL(ct_sip_get_sdp_header);
 
-अटल पूर्णांक ct_sip_parse_sdp_addr(स्थिर काष्ठा nf_conn *ct, स्थिर अक्षर *dptr,
-				 अचिन्हित पूर्णांक dataoff, अचिन्हित पूर्णांक datalen,
-				 क्रमागत sdp_header_types type,
-				 क्रमागत sdp_header_types term,
-				 अचिन्हित पूर्णांक *matchoff, अचिन्हित पूर्णांक *matchlen,
-				 जोड़ nf_inet_addr *addr)
-अणु
-	पूर्णांक ret;
+static int ct_sip_parse_sdp_addr(const struct nf_conn *ct, const char *dptr,
+				 unsigned int dataoff, unsigned int datalen,
+				 enum sdp_header_types type,
+				 enum sdp_header_types term,
+				 unsigned int *matchoff, unsigned int *matchlen,
+				 union nf_inet_addr *addr)
+{
+	int ret;
 
 	ret = ct_sip_get_sdp_header(ct, dptr, dataoff, datalen, type, term,
 				    matchoff, matchlen);
-	अगर (ret <= 0)
-		वापस ret;
+	if (ret <= 0)
+		return ret;
 
-	अगर (!sdp_parse_addr(ct, dptr + *matchoff, शून्य, addr,
+	if (!sdp_parse_addr(ct, dptr + *matchoff, NULL, addr,
 			    dptr + *matchoff + *matchlen))
-		वापस -1;
-	वापस 1;
-पूर्ण
+		return -1;
+	return 1;
+}
 
-अटल पूर्णांक refresh_संकेतling_expectation(काष्ठा nf_conn *ct,
-					  जोड़ nf_inet_addr *addr,
+static int refresh_signalling_expectation(struct nf_conn *ct,
+					  union nf_inet_addr *addr,
 					  u8 proto, __be16 port,
-					  अचिन्हित पूर्णांक expires)
-अणु
-	काष्ठा nf_conn_help *help = nfct_help(ct);
-	काष्ठा nf_conntrack_expect *exp;
-	काष्ठा hlist_node *next;
-	पूर्णांक found = 0;
+					  unsigned int expires)
+{
+	struct nf_conn_help *help = nfct_help(ct);
+	struct nf_conntrack_expect *exp;
+	struct hlist_node *next;
+	int found = 0;
 
 	spin_lock_bh(&nf_conntrack_expect_lock);
-	hlist_क्रम_each_entry_safe(exp, next, &help->expectations, lnode) अणु
-		अगर (exp->class != SIP_EXPECT_SIGNALLING ||
+	hlist_for_each_entry_safe(exp, next, &help->expectations, lnode) {
+		if (exp->class != SIP_EXPECT_SIGNALLING ||
 		    !nf_inet_addr_cmp(&exp->tuple.dst.u3, addr) ||
 		    exp->tuple.dst.protonum != proto ||
 		    exp->tuple.dst.u.udp.port != port)
-			जारी;
-		अगर (mod_समयr_pending(&exp->समयout, jअगरfies + expires * HZ)) अणु
+			continue;
+		if (mod_timer_pending(&exp->timeout, jiffies + expires * HZ)) {
 			exp->flags &= ~NF_CT_EXPECT_INACTIVE;
 			found = 1;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 	spin_unlock_bh(&nf_conntrack_expect_lock);
-	वापस found;
-पूर्ण
+	return found;
+}
 
-अटल व्योम flush_expectations(काष्ठा nf_conn *ct, bool media)
-अणु
-	काष्ठा nf_conn_help *help = nfct_help(ct);
-	काष्ठा nf_conntrack_expect *exp;
-	काष्ठा hlist_node *next;
+static void flush_expectations(struct nf_conn *ct, bool media)
+{
+	struct nf_conn_help *help = nfct_help(ct);
+	struct nf_conntrack_expect *exp;
+	struct hlist_node *next;
 
 	spin_lock_bh(&nf_conntrack_expect_lock);
-	hlist_क्रम_each_entry_safe(exp, next, &help->expectations, lnode) अणु
-		अगर ((exp->class != SIP_EXPECT_SIGNALLING) ^ media)
-			जारी;
-		अगर (!nf_ct_हटाओ_expect(exp))
-			जारी;
-		अगर (!media)
-			अवरोध;
-	पूर्ण
+	hlist_for_each_entry_safe(exp, next, &help->expectations, lnode) {
+		if ((exp->class != SIP_EXPECT_SIGNALLING) ^ media)
+			continue;
+		if (!nf_ct_remove_expect(exp))
+			continue;
+		if (!media)
+			break;
+	}
 	spin_unlock_bh(&nf_conntrack_expect_lock);
-पूर्ण
+}
 
-अटल पूर्णांक set_expected_rtp_rtcp(काष्ठा sk_buff *skb, अचिन्हित पूर्णांक protoff,
-				 अचिन्हित पूर्णांक dataoff,
-				 स्थिर अक्षर **dptr, अचिन्हित पूर्णांक *datalen,
-				 जोड़ nf_inet_addr *daddr, __be16 port,
-				 क्रमागत sip_expectation_classes class,
-				 अचिन्हित पूर्णांक mediaoff, अचिन्हित पूर्णांक medialen)
-अणु
-	काष्ठा nf_conntrack_expect *exp, *rtp_exp, *rtcp_exp;
-	क्रमागत ip_conntrack_info ctinfo;
-	काष्ठा nf_conn *ct = nf_ct_get(skb, &ctinfo);
-	काष्ठा net *net = nf_ct_net(ct);
-	क्रमागत ip_conntrack_dir dir = CTINFO2सूची(ctinfo);
-	जोड़ nf_inet_addr *saddr;
-	काष्ठा nf_conntrack_tuple tuple;
-	पूर्णांक direct_rtp = 0, skip_expect = 0, ret = NF_DROP;
-	u_पूर्णांक16_t base_port;
+static int set_expected_rtp_rtcp(struct sk_buff *skb, unsigned int protoff,
+				 unsigned int dataoff,
+				 const char **dptr, unsigned int *datalen,
+				 union nf_inet_addr *daddr, __be16 port,
+				 enum sip_expectation_classes class,
+				 unsigned int mediaoff, unsigned int medialen)
+{
+	struct nf_conntrack_expect *exp, *rtp_exp, *rtcp_exp;
+	enum ip_conntrack_info ctinfo;
+	struct nf_conn *ct = nf_ct_get(skb, &ctinfo);
+	struct net *net = nf_ct_net(ct);
+	enum ip_conntrack_dir dir = CTINFO2DIR(ctinfo);
+	union nf_inet_addr *saddr;
+	struct nf_conntrack_tuple tuple;
+	int direct_rtp = 0, skip_expect = 0, ret = NF_DROP;
+	u_int16_t base_port;
 	__be16 rtp_port, rtcp_port;
-	स्थिर काष्ठा nf_nat_sip_hooks *hooks;
+	const struct nf_nat_sip_hooks *hooks;
 
-	saddr = शून्य;
-	अगर (sip_direct_media) अणु
-		अगर (!nf_inet_addr_cmp(daddr, &ct->tuplehash[dir].tuple.src.u3))
-			वापस NF_ACCEPT;
+	saddr = NULL;
+	if (sip_direct_media) {
+		if (!nf_inet_addr_cmp(daddr, &ct->tuplehash[dir].tuple.src.u3))
+			return NF_ACCEPT;
 		saddr = &ct->tuplehash[!dir].tuple.src.u3;
-	पूर्ण अन्यथा अगर (sip_बाह्यal_media) अणु
-		काष्ठा net_device *dev = skb_dst(skb)->dev;
-		काष्ठा net *net = dev_net(dev);
-		काष्ठा flowi fl;
-		काष्ठा dst_entry *dst = शून्य;
+	} else if (sip_external_media) {
+		struct net_device *dev = skb_dst(skb)->dev;
+		struct net *net = dev_net(dev);
+		struct flowi fl;
+		struct dst_entry *dst = NULL;
 
-		स_रखो(&fl, 0, माप(fl));
+		memset(&fl, 0, sizeof(fl));
 
-		चयन (nf_ct_l3num(ct)) अणु
-			हाल NFPROTO_IPV4:
+		switch (nf_ct_l3num(ct)) {
+			case NFPROTO_IPV4:
 				fl.u.ip4.daddr = daddr->ip;
 				nf_ip_route(net, &dst, &fl, false);
-				अवरोध;
+				break;
 
-			हाल NFPROTO_IPV6:
+			case NFPROTO_IPV6:
 				fl.u.ip6.daddr = daddr->in6;
 				nf_ip6_route(net, &dst, &fl, false);
-				अवरोध;
-		पूर्ण
+				break;
+		}
 
-		/* Don't predict any conntracks when media endpoपूर्णांक is reachable
-		 * through the same पूर्णांकerface as the संकेतling peer.
+		/* Don't predict any conntracks when media endpoint is reachable
+		 * through the same interface as the signalling peer.
 		 */
-		अगर (dst) अणु
-			bool बाह्यal_media = (dst->dev == dev);
+		if (dst) {
+			bool external_media = (dst->dev == dev);
 
 			dst_release(dst);
-			अगर (बाह्यal_media)
-				वापस NF_ACCEPT;
-		पूर्ण
-	पूर्ण
+			if (external_media)
+				return NF_ACCEPT;
+		}
+	}
 
-	/* We need to check whether the registration exists beक्रमe attempting
-	 * to रेजिस्टर it since we can see the same media description multiple
-	 * बार on dअगरferent connections in हाल multiple endpoपूर्णांकs receive
+	/* We need to check whether the registration exists before attempting
+	 * to register it since we can see the same media description multiple
+	 * times on different connections in case multiple endpoints receive
 	 * the same call.
 	 *
-	 * RTP optimization: अगर we find a matching media channel expectation
+	 * RTP optimization: if we find a matching media channel expectation
 	 * and both the expectation and this connection are SNATed, we assume
 	 * both sides can reach each other directly and use the final
 	 * destination address from the expectation. We still need to keep
-	 * the NATed expectations क्रम media that might arrive from the
+	 * the NATed expectations for media that might arrive from the
 	 * outside, and additionally need to expect the direct RTP stream
-	 * in हाल it passes through us even without NAT.
+	 * in case it passes through us even without NAT.
 	 */
-	स_रखो(&tuple, 0, माप(tuple));
-	अगर (saddr)
+	memset(&tuple, 0, sizeof(tuple));
+	if (saddr)
 		tuple.src.u3 = *saddr;
 	tuple.src.l3num		= nf_ct_l3num(ct);
 	tuple.dst.protonum	= IPPROTO_UDP;
 	tuple.dst.u3		= *daddr;
 	tuple.dst.u.udp.port	= port;
 
-	करो अणु
+	do {
 		exp = __nf_ct_expect_find(net, nf_ct_zone(ct), &tuple);
 
-		अगर (!exp || exp->master == ct ||
+		if (!exp || exp->master == ct ||
 		    nfct_help(exp->master)->helper != nfct_help(ct)->helper ||
 		    exp->class != class)
-			अवरोध;
-#अगर IS_ENABLED(CONFIG_NF_NAT)
-		अगर (!direct_rtp &&
+			break;
+#if IS_ENABLED(CONFIG_NF_NAT)
+		if (!direct_rtp &&
 		    (!nf_inet_addr_cmp(&exp->saved_addr, &exp->tuple.dst.u3) ||
 		     exp->saved_proto.udp.port != exp->tuple.dst.u.udp.port) &&
-		    ct->status & IPS_NAT_MASK) अणु
+		    ct->status & IPS_NAT_MASK) {
 			*daddr			= exp->saved_addr;
 			tuple.dst.u3		= exp->saved_addr;
 			tuple.dst.u.udp.port	= exp->saved_proto.udp.port;
 			direct_rtp = 1;
-		पूर्ण अन्यथा
-#पूर्ण_अगर
+		} else
+#endif
 			skip_expect = 1;
-	पूर्ण जबतक (!skip_expect);
+	} while (!skip_expect);
 
 	base_port = ntohs(tuple.dst.u.udp.port) & ~1;
 	rtp_port = htons(base_port);
 	rtcp_port = htons(base_port + 1);
 
-	अगर (direct_rtp) अणु
+	if (direct_rtp) {
 		hooks = rcu_dereference(nf_nat_sip_hooks);
-		अगर (hooks &&
+		if (hooks &&
 		    !hooks->sdp_port(skb, protoff, dataoff, dptr, datalen,
 				     mediaoff, medialen, ntohs(rtp_port)))
-			जाओ err1;
-	पूर्ण
+			goto err1;
+	}
 
-	अगर (skip_expect)
-		वापस NF_ACCEPT;
+	if (skip_expect)
+		return NF_ACCEPT;
 
 	rtp_exp = nf_ct_expect_alloc(ct);
-	अगर (rtp_exp == शून्य)
-		जाओ err1;
+	if (rtp_exp == NULL)
+		goto err1;
 	nf_ct_expect_init(rtp_exp, class, nf_ct_l3num(ct), saddr, daddr,
-			  IPPROTO_UDP, शून्य, &rtp_port);
+			  IPPROTO_UDP, NULL, &rtp_port);
 
 	rtcp_exp = nf_ct_expect_alloc(ct);
-	अगर (rtcp_exp == शून्य)
-		जाओ err2;
+	if (rtcp_exp == NULL)
+		goto err2;
 	nf_ct_expect_init(rtcp_exp, class, nf_ct_l3num(ct), saddr, daddr,
-			  IPPROTO_UDP, शून्य, &rtcp_port);
+			  IPPROTO_UDP, NULL, &rtcp_port);
 
 	hooks = rcu_dereference(nf_nat_sip_hooks);
-	अगर (hooks && ct->status & IPS_NAT_MASK && !direct_rtp)
+	if (hooks && ct->status & IPS_NAT_MASK && !direct_rtp)
 		ret = hooks->sdp_media(skb, protoff, dataoff, dptr,
 				       datalen, rtp_exp, rtcp_exp,
 				       mediaoff, medialen, daddr);
-	अन्यथा अणु
-		/* -EALREADY handling works around end-poपूर्णांकs that send
-		 * SDP messages with identical port but dअगरferent media type,
+	else {
+		/* -EALREADY handling works around end-points that send
+		 * SDP messages with identical port but different media type,
 		 * we pretend expectation was set up.
-		 * It also works in the हाल that SDP messages are sent with
-		 * identical expect tuples but क्रम dअगरferent master conntracks.
+		 * It also works in the case that SDP messages are sent with
+		 * identical expect tuples but for different master conntracks.
 		 */
-		पूर्णांक errp = nf_ct_expect_related(rtp_exp,
+		int errp = nf_ct_expect_related(rtp_exp,
 						NF_CT_EXP_F_SKIP_MASTER);
 
-		अगर (errp == 0 || errp == -EALREADY) अणु
-			पूर्णांक errcp = nf_ct_expect_related(rtcp_exp,
+		if (errp == 0 || errp == -EALREADY) {
+			int errcp = nf_ct_expect_related(rtcp_exp,
 						NF_CT_EXP_F_SKIP_MASTER);
 
-			अगर (errcp == 0 || errcp == -EALREADY)
+			if (errcp == 0 || errcp == -EALREADY)
 				ret = NF_ACCEPT;
-			अन्यथा अगर (errp == 0)
+			else if (errp == 0)
 				nf_ct_unexpect_related(rtp_exp);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	nf_ct_expect_put(rtcp_exp);
 err2:
 	nf_ct_expect_put(rtp_exp);
 err1:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा sdp_media_type sdp_media_types[] = अणु
+static const struct sdp_media_type sdp_media_types[] = {
 	SDP_MEDIA_TYPE("audio ", SIP_EXPECT_AUDIO),
 	SDP_MEDIA_TYPE("video ", SIP_EXPECT_VIDEO),
 	SDP_MEDIA_TYPE("image ", SIP_EXPECT_IMAGE),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा sdp_media_type *sdp_media_type(स्थिर अक्षर *dptr,
-						   अचिन्हित पूर्णांक matchoff,
-						   अचिन्हित पूर्णांक matchlen)
-अणु
-	स्थिर काष्ठा sdp_media_type *t;
-	अचिन्हित पूर्णांक i;
+static const struct sdp_media_type *sdp_media_type(const char *dptr,
+						   unsigned int matchoff,
+						   unsigned int matchlen)
+{
+	const struct sdp_media_type *t;
+	unsigned int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(sdp_media_types); i++) अणु
+	for (i = 0; i < ARRAY_SIZE(sdp_media_types); i++) {
 		t = &sdp_media_types[i];
-		अगर (matchlen < t->len ||
-		    म_भेदन(dptr + matchoff, t->name, t->len))
-			जारी;
-		वापस t;
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+		if (matchlen < t->len ||
+		    strncmp(dptr + matchoff, t->name, t->len))
+			continue;
+		return t;
+	}
+	return NULL;
+}
 
-अटल पूर्णांक process_sdp(काष्ठा sk_buff *skb, अचिन्हित पूर्णांक protoff,
-		       अचिन्हित पूर्णांक dataoff,
-		       स्थिर अक्षर **dptr, अचिन्हित पूर्णांक *datalen,
-		       अचिन्हित पूर्णांक cseq)
-अणु
-	क्रमागत ip_conntrack_info ctinfo;
-	काष्ठा nf_conn *ct = nf_ct_get(skb, &ctinfo);
-	अचिन्हित पूर्णांक matchoff, matchlen;
-	अचिन्हित पूर्णांक mediaoff, medialen;
-	अचिन्हित पूर्णांक sdpoff;
-	अचिन्हित पूर्णांक caddr_len, maddr_len;
-	अचिन्हित पूर्णांक i;
-	जोड़ nf_inet_addr caddr, maddr, rtp_addr;
-	स्थिर काष्ठा nf_nat_sip_hooks *hooks;
-	अचिन्हित पूर्णांक port;
-	स्थिर काष्ठा sdp_media_type *t;
-	पूर्णांक ret = NF_ACCEPT;
+static int process_sdp(struct sk_buff *skb, unsigned int protoff,
+		       unsigned int dataoff,
+		       const char **dptr, unsigned int *datalen,
+		       unsigned int cseq)
+{
+	enum ip_conntrack_info ctinfo;
+	struct nf_conn *ct = nf_ct_get(skb, &ctinfo);
+	unsigned int matchoff, matchlen;
+	unsigned int mediaoff, medialen;
+	unsigned int sdpoff;
+	unsigned int caddr_len, maddr_len;
+	unsigned int i;
+	union nf_inet_addr caddr, maddr, rtp_addr;
+	const struct nf_nat_sip_hooks *hooks;
+	unsigned int port;
+	const struct sdp_media_type *t;
+	int ret = NF_ACCEPT;
 
 	hooks = rcu_dereference(nf_nat_sip_hooks);
 
 	/* Find beginning of session description */
-	अगर (ct_sip_get_sdp_header(ct, *dptr, 0, *datalen,
+	if (ct_sip_get_sdp_header(ct, *dptr, 0, *datalen,
 				  SDP_HDR_VERSION, SDP_HDR_UNSPEC,
 				  &matchoff, &matchlen) <= 0)
-		वापस NF_ACCEPT;
+		return NF_ACCEPT;
 	sdpoff = matchoff;
 
-	/* The connection inक्रमmation is contained in the session description
+	/* The connection information is contained in the session description
 	 * and/or once per media description. The first media description marks
 	 * the end of the session description. */
 	caddr_len = 0;
-	अगर (ct_sip_parse_sdp_addr(ct, *dptr, sdpoff, *datalen,
+	if (ct_sip_parse_sdp_addr(ct, *dptr, sdpoff, *datalen,
 				  SDP_HDR_CONNECTION, SDP_HDR_MEDIA,
 				  &matchoff, &matchlen, &caddr) > 0)
 		caddr_len = matchlen;
 
 	mediaoff = sdpoff;
-	क्रम (i = 0; i < ARRAY_SIZE(sdp_media_types); ) अणु
-		अगर (ct_sip_get_sdp_header(ct, *dptr, mediaoff, *datalen,
+	for (i = 0; i < ARRAY_SIZE(sdp_media_types); ) {
+		if (ct_sip_get_sdp_header(ct, *dptr, mediaoff, *datalen,
 					  SDP_HDR_MEDIA, SDP_HDR_UNSPEC,
 					  &mediaoff, &medialen) <= 0)
-			अवरोध;
+			break;
 
 		/* Get media type and port number. A media port value of zero
 		 * indicates an inactive stream. */
 		t = sdp_media_type(*dptr, mediaoff, medialen);
-		अगर (!t) अणु
+		if (!t) {
 			mediaoff += medialen;
-			जारी;
-		पूर्ण
+			continue;
+		}
 		mediaoff += t->len;
 		medialen -= t->len;
 
-		port = simple_म_से_अदीर्घ(*dptr + mediaoff, शून्य, 10);
-		अगर (port == 0)
-			जारी;
-		अगर (port < 1024 || port > 65535) अणु
+		port = simple_strtoul(*dptr + mediaoff, NULL, 10);
+		if (port == 0)
+			continue;
+		if (port < 1024 || port > 65535) {
 			nf_ct_helper_log(skb, ct, "wrong port %u", port);
-			वापस NF_DROP;
-		पूर्ण
+			return NF_DROP;
+		}
 
 		/* The media description overrides the session description. */
 		maddr_len = 0;
-		अगर (ct_sip_parse_sdp_addr(ct, *dptr, mediaoff, *datalen,
+		if (ct_sip_parse_sdp_addr(ct, *dptr, mediaoff, *datalen,
 					  SDP_HDR_CONNECTION, SDP_HDR_MEDIA,
-					  &matchoff, &matchlen, &maddr) > 0) अणु
+					  &matchoff, &matchlen, &maddr) > 0) {
 			maddr_len = matchlen;
-			स_नकल(&rtp_addr, &maddr, माप(rtp_addr));
-		पूर्ण अन्यथा अगर (caddr_len)
-			स_नकल(&rtp_addr, &caddr, माप(rtp_addr));
-		अन्यथा अणु
+			memcpy(&rtp_addr, &maddr, sizeof(rtp_addr));
+		} else if (caddr_len)
+			memcpy(&rtp_addr, &caddr, sizeof(rtp_addr));
+		else {
 			nf_ct_helper_log(skb, ct, "cannot parse SDP message");
-			वापस NF_DROP;
-		पूर्ण
+			return NF_DROP;
+		}
 
 		ret = set_expected_rtp_rtcp(skb, protoff, dataoff,
 					    dptr, datalen,
 					    &rtp_addr, htons(port), t->class,
 					    mediaoff, medialen);
-		अगर (ret != NF_ACCEPT) अणु
+		if (ret != NF_ACCEPT) {
 			nf_ct_helper_log(skb, ct,
 					 "cannot add expectation for voice");
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 
-		/* Update media connection address अगर present */
-		अगर (maddr_len && hooks && ct->status & IPS_NAT_MASK) अणु
+		/* Update media connection address if present */
+		if (maddr_len && hooks && ct->status & IPS_NAT_MASK) {
 			ret = hooks->sdp_addr(skb, protoff, dataoff,
 					      dptr, datalen, mediaoff,
 					      SDP_HDR_CONNECTION,
 					      SDP_HDR_MEDIA,
 					      &rtp_addr);
-			अगर (ret != NF_ACCEPT) अणु
+			if (ret != NF_ACCEPT) {
 				nf_ct_helper_log(skb, ct, "cannot mangle SDP");
-				वापस ret;
-			पूर्ण
-		पूर्ण
+				return ret;
+			}
+		}
 		i++;
-	पूर्ण
+	}
 
 	/* Update session connection and owner addresses */
 	hooks = rcu_dereference(nf_nat_sip_hooks);
-	अगर (hooks && ct->status & IPS_NAT_MASK)
+	if (hooks && ct->status & IPS_NAT_MASK)
 		ret = hooks->sdp_session(skb, protoff, dataoff,
 					 dptr, datalen, sdpoff,
 					 &rtp_addr);
 
-	वापस ret;
-पूर्ण
-अटल पूर्णांक process_invite_response(काष्ठा sk_buff *skb, अचिन्हित पूर्णांक protoff,
-				   अचिन्हित पूर्णांक dataoff,
-				   स्थिर अक्षर **dptr, अचिन्हित पूर्णांक *datalen,
-				   अचिन्हित पूर्णांक cseq, अचिन्हित पूर्णांक code)
-अणु
-	क्रमागत ip_conntrack_info ctinfo;
-	काष्ठा nf_conn *ct = nf_ct_get(skb, &ctinfo);
-	काष्ठा nf_ct_sip_master *ct_sip_info = nfct_help_data(ct);
+	return ret;
+}
+static int process_invite_response(struct sk_buff *skb, unsigned int protoff,
+				   unsigned int dataoff,
+				   const char **dptr, unsigned int *datalen,
+				   unsigned int cseq, unsigned int code)
+{
+	enum ip_conntrack_info ctinfo;
+	struct nf_conn *ct = nf_ct_get(skb, &ctinfo);
+	struct nf_ct_sip_master *ct_sip_info = nfct_help_data(ct);
 
-	अगर ((code >= 100 && code <= 199) ||
+	if ((code >= 100 && code <= 199) ||
 	    (code >= 200 && code <= 299))
-		वापस process_sdp(skb, protoff, dataoff, dptr, datalen, cseq);
-	अन्यथा अगर (ct_sip_info->invite_cseq == cseq)
+		return process_sdp(skb, protoff, dataoff, dptr, datalen, cseq);
+	else if (ct_sip_info->invite_cseq == cseq)
 		flush_expectations(ct, true);
-	वापस NF_ACCEPT;
-पूर्ण
+	return NF_ACCEPT;
+}
 
-अटल पूर्णांक process_update_response(काष्ठा sk_buff *skb, अचिन्हित पूर्णांक protoff,
-				   अचिन्हित पूर्णांक dataoff,
-				   स्थिर अक्षर **dptr, अचिन्हित पूर्णांक *datalen,
-				   अचिन्हित पूर्णांक cseq, अचिन्हित पूर्णांक code)
-अणु
-	क्रमागत ip_conntrack_info ctinfo;
-	काष्ठा nf_conn *ct = nf_ct_get(skb, &ctinfo);
-	काष्ठा nf_ct_sip_master *ct_sip_info = nfct_help_data(ct);
+static int process_update_response(struct sk_buff *skb, unsigned int protoff,
+				   unsigned int dataoff,
+				   const char **dptr, unsigned int *datalen,
+				   unsigned int cseq, unsigned int code)
+{
+	enum ip_conntrack_info ctinfo;
+	struct nf_conn *ct = nf_ct_get(skb, &ctinfo);
+	struct nf_ct_sip_master *ct_sip_info = nfct_help_data(ct);
 
-	अगर ((code >= 100 && code <= 199) ||
+	if ((code >= 100 && code <= 199) ||
 	    (code >= 200 && code <= 299))
-		वापस process_sdp(skb, protoff, dataoff, dptr, datalen, cseq);
-	अन्यथा अगर (ct_sip_info->invite_cseq == cseq)
+		return process_sdp(skb, protoff, dataoff, dptr, datalen, cseq);
+	else if (ct_sip_info->invite_cseq == cseq)
 		flush_expectations(ct, true);
-	वापस NF_ACCEPT;
-पूर्ण
+	return NF_ACCEPT;
+}
 
-अटल पूर्णांक process_prack_response(काष्ठा sk_buff *skb, अचिन्हित पूर्णांक protoff,
-				  अचिन्हित पूर्णांक dataoff,
-				  स्थिर अक्षर **dptr, अचिन्हित पूर्णांक *datalen,
-				  अचिन्हित पूर्णांक cseq, अचिन्हित पूर्णांक code)
-अणु
-	क्रमागत ip_conntrack_info ctinfo;
-	काष्ठा nf_conn *ct = nf_ct_get(skb, &ctinfo);
-	काष्ठा nf_ct_sip_master *ct_sip_info = nfct_help_data(ct);
+static int process_prack_response(struct sk_buff *skb, unsigned int protoff,
+				  unsigned int dataoff,
+				  const char **dptr, unsigned int *datalen,
+				  unsigned int cseq, unsigned int code)
+{
+	enum ip_conntrack_info ctinfo;
+	struct nf_conn *ct = nf_ct_get(skb, &ctinfo);
+	struct nf_ct_sip_master *ct_sip_info = nfct_help_data(ct);
 
-	अगर ((code >= 100 && code <= 199) ||
+	if ((code >= 100 && code <= 199) ||
 	    (code >= 200 && code <= 299))
-		वापस process_sdp(skb, protoff, dataoff, dptr, datalen, cseq);
-	अन्यथा अगर (ct_sip_info->invite_cseq == cseq)
+		return process_sdp(skb, protoff, dataoff, dptr, datalen, cseq);
+	else if (ct_sip_info->invite_cseq == cseq)
 		flush_expectations(ct, true);
-	वापस NF_ACCEPT;
-पूर्ण
+	return NF_ACCEPT;
+}
 
-अटल पूर्णांक process_invite_request(काष्ठा sk_buff *skb, अचिन्हित पूर्णांक protoff,
-				  अचिन्हित पूर्णांक dataoff,
-				  स्थिर अक्षर **dptr, अचिन्हित पूर्णांक *datalen,
-				  अचिन्हित पूर्णांक cseq)
-अणु
-	क्रमागत ip_conntrack_info ctinfo;
-	काष्ठा nf_conn *ct = nf_ct_get(skb, &ctinfo);
-	काष्ठा nf_ct_sip_master *ct_sip_info = nfct_help_data(ct);
-	अचिन्हित पूर्णांक ret;
+static int process_invite_request(struct sk_buff *skb, unsigned int protoff,
+				  unsigned int dataoff,
+				  const char **dptr, unsigned int *datalen,
+				  unsigned int cseq)
+{
+	enum ip_conntrack_info ctinfo;
+	struct nf_conn *ct = nf_ct_get(skb, &ctinfo);
+	struct nf_ct_sip_master *ct_sip_info = nfct_help_data(ct);
+	unsigned int ret;
 
 	flush_expectations(ct, true);
 	ret = process_sdp(skb, protoff, dataoff, dptr, datalen, cseq);
-	अगर (ret == NF_ACCEPT)
+	if (ret == NF_ACCEPT)
 		ct_sip_info->invite_cseq = cseq;
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक process_bye_request(काष्ठा sk_buff *skb, अचिन्हित पूर्णांक protoff,
-			       अचिन्हित पूर्णांक dataoff,
-			       स्थिर अक्षर **dptr, अचिन्हित पूर्णांक *datalen,
-			       अचिन्हित पूर्णांक cseq)
-अणु
-	क्रमागत ip_conntrack_info ctinfo;
-	काष्ठा nf_conn *ct = nf_ct_get(skb, &ctinfo);
+static int process_bye_request(struct sk_buff *skb, unsigned int protoff,
+			       unsigned int dataoff,
+			       const char **dptr, unsigned int *datalen,
+			       unsigned int cseq)
+{
+	enum ip_conntrack_info ctinfo;
+	struct nf_conn *ct = nf_ct_get(skb, &ctinfo);
 
 	flush_expectations(ct, true);
-	वापस NF_ACCEPT;
-पूर्ण
+	return NF_ACCEPT;
+}
 
-/* Parse a REGISTER request and create a permanent expectation क्रम incoming
- * संकेतling connections. The expectation is marked inactive and is activated
+/* Parse a REGISTER request and create a permanent expectation for incoming
+ * signalling connections. The expectation is marked inactive and is activated
  * when receiving a response indicating success from the registrar.
  */
-अटल पूर्णांक process_रेजिस्टर_request(काष्ठा sk_buff *skb, अचिन्हित पूर्णांक protoff,
-				    अचिन्हित पूर्णांक dataoff,
-				    स्थिर अक्षर **dptr, अचिन्हित पूर्णांक *datalen,
-				    अचिन्हित पूर्णांक cseq)
-अणु
-	क्रमागत ip_conntrack_info ctinfo;
-	काष्ठा nf_conn *ct = nf_ct_get(skb, &ctinfo);
-	काष्ठा nf_ct_sip_master *ct_sip_info = nfct_help_data(ct);
-	क्रमागत ip_conntrack_dir dir = CTINFO2सूची(ctinfo);
-	अचिन्हित पूर्णांक matchoff, matchlen;
-	काष्ठा nf_conntrack_expect *exp;
-	जोड़ nf_inet_addr *saddr, daddr;
-	स्थिर काष्ठा nf_nat_sip_hooks *hooks;
+static int process_register_request(struct sk_buff *skb, unsigned int protoff,
+				    unsigned int dataoff,
+				    const char **dptr, unsigned int *datalen,
+				    unsigned int cseq)
+{
+	enum ip_conntrack_info ctinfo;
+	struct nf_conn *ct = nf_ct_get(skb, &ctinfo);
+	struct nf_ct_sip_master *ct_sip_info = nfct_help_data(ct);
+	enum ip_conntrack_dir dir = CTINFO2DIR(ctinfo);
+	unsigned int matchoff, matchlen;
+	struct nf_conntrack_expect *exp;
+	union nf_inet_addr *saddr, daddr;
+	const struct nf_nat_sip_hooks *hooks;
 	__be16 port;
 	u8 proto;
-	अचिन्हित पूर्णांक expires = 0;
-	पूर्णांक ret;
+	unsigned int expires = 0;
+	int ret;
 
-	/* Expected connections can not रेजिस्टर again. */
-	अगर (ct->status & IPS_EXPECTED)
-		वापस NF_ACCEPT;
+	/* Expected connections can not register again. */
+	if (ct->status & IPS_EXPECTED)
+		return NF_ACCEPT;
 
-	/* We must check the expiration समय: a value of zero संकेतs the
-	 * registrar to release the binding. We'll हटाओ our expectation
-	 * when receiving the new bindings in the response, but we करोn't
+	/* We must check the expiration time: a value of zero signals the
+	 * registrar to release the binding. We'll remove our expectation
+	 * when receiving the new bindings in the response, but we don't
 	 * want to create new ones.
 	 *
-	 * The expiration समय may be contained in Expires: header, the
+	 * The expiration time may be contained in Expires: header, the
 	 * Contact: header parameters or the URI parameters.
 	 */
-	अगर (ct_sip_get_header(ct, *dptr, 0, *datalen, SIP_HDR_EXPIRES,
+	if (ct_sip_get_header(ct, *dptr, 0, *datalen, SIP_HDR_EXPIRES,
 			      &matchoff, &matchlen) > 0)
-		expires = simple_म_से_अदीर्घ(*dptr + matchoff, शून्य, 10);
+		expires = simple_strtoul(*dptr + matchoff, NULL, 10);
 
-	ret = ct_sip_parse_header_uri(ct, *dptr, शून्य, *datalen,
-				      SIP_HDR_CONTACT, शून्य,
+	ret = ct_sip_parse_header_uri(ct, *dptr, NULL, *datalen,
+				      SIP_HDR_CONTACT, NULL,
 				      &matchoff, &matchlen, &daddr, &port);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		nf_ct_helper_log(skb, ct, "cannot parse contact");
-		वापस NF_DROP;
-	पूर्ण अन्यथा अगर (ret == 0)
-		वापस NF_ACCEPT;
+		return NF_DROP;
+	} else if (ret == 0)
+		return NF_ACCEPT;
 
-	/* We करोn't support third-party registrations */
-	अगर (!nf_inet_addr_cmp(&ct->tuplehash[dir].tuple.src.u3, &daddr))
-		वापस NF_ACCEPT;
+	/* We don't support third-party registrations */
+	if (!nf_inet_addr_cmp(&ct->tuplehash[dir].tuple.src.u3, &daddr))
+		return NF_ACCEPT;
 
-	अगर (ct_sip_parse_transport(ct, *dptr, matchoff + matchlen, *datalen,
+	if (ct_sip_parse_transport(ct, *dptr, matchoff + matchlen, *datalen,
 				   &proto) == 0)
-		वापस NF_ACCEPT;
+		return NF_ACCEPT;
 
-	अगर (ct_sip_parse_numerical_param(ct, *dptr,
+	if (ct_sip_parse_numerical_param(ct, *dptr,
 					 matchoff + matchlen, *datalen,
-					 "expires=", शून्य, शून्य, &expires) < 0) अणु
+					 "expires=", NULL, NULL, &expires) < 0) {
 		nf_ct_helper_log(skb, ct, "cannot parse expires");
-		वापस NF_DROP;
-	पूर्ण
+		return NF_DROP;
+	}
 
-	अगर (expires == 0) अणु
+	if (expires == 0) {
 		ret = NF_ACCEPT;
-		जाओ store_cseq;
-	पूर्ण
+		goto store_cseq;
+	}
 
 	exp = nf_ct_expect_alloc(ct);
-	अगर (!exp) अणु
+	if (!exp) {
 		nf_ct_helper_log(skb, ct, "cannot alloc expectation");
-		वापस NF_DROP;
-	पूर्ण
+		return NF_DROP;
+	}
 
-	saddr = शून्य;
-	अगर (sip_direct_संकेतling)
+	saddr = NULL;
+	if (sip_direct_signalling)
 		saddr = &ct->tuplehash[!dir].tuple.src.u3;
 
 	nf_ct_expect_init(exp, SIP_EXPECT_SIGNALLING, nf_ct_l3num(ct),
-			  saddr, &daddr, proto, शून्य, &port);
-	exp->समयout.expires = sip_समयout * HZ;
+			  saddr, &daddr, proto, NULL, &port);
+	exp->timeout.expires = sip_timeout * HZ;
 	exp->helper = nfct_help(ct)->helper;
 	exp->flags = NF_CT_EXPECT_PERMANENT | NF_CT_EXPECT_INACTIVE;
 
 	hooks = rcu_dereference(nf_nat_sip_hooks);
-	अगर (hooks && ct->status & IPS_NAT_MASK)
+	if (hooks && ct->status & IPS_NAT_MASK)
 		ret = hooks->expect(skb, protoff, dataoff, dptr, datalen,
 				    exp, matchoff, matchlen);
-	अन्यथा अणु
-		अगर (nf_ct_expect_related(exp, 0) != 0) अणु
+	else {
+		if (nf_ct_expect_related(exp, 0) != 0) {
 			nf_ct_helper_log(skb, ct, "cannot add expectation");
 			ret = NF_DROP;
-		पूर्ण अन्यथा
+		} else
 			ret = NF_ACCEPT;
-	पूर्ण
+	}
 	nf_ct_expect_put(exp);
 
 store_cseq:
-	अगर (ret == NF_ACCEPT)
-		ct_sip_info->रेजिस्टर_cseq = cseq;
-	वापस ret;
-पूर्ण
+	if (ret == NF_ACCEPT)
+		ct_sip_info->register_cseq = cseq;
+	return ret;
+}
 
-अटल पूर्णांक process_रेजिस्टर_response(काष्ठा sk_buff *skb, अचिन्हित पूर्णांक protoff,
-				     अचिन्हित पूर्णांक dataoff,
-				     स्थिर अक्षर **dptr, अचिन्हित पूर्णांक *datalen,
-				     अचिन्हित पूर्णांक cseq, अचिन्हित पूर्णांक code)
-अणु
-	क्रमागत ip_conntrack_info ctinfo;
-	काष्ठा nf_conn *ct = nf_ct_get(skb, &ctinfo);
-	काष्ठा nf_ct_sip_master *ct_sip_info = nfct_help_data(ct);
-	क्रमागत ip_conntrack_dir dir = CTINFO2सूची(ctinfo);
-	जोड़ nf_inet_addr addr;
+static int process_register_response(struct sk_buff *skb, unsigned int protoff,
+				     unsigned int dataoff,
+				     const char **dptr, unsigned int *datalen,
+				     unsigned int cseq, unsigned int code)
+{
+	enum ip_conntrack_info ctinfo;
+	struct nf_conn *ct = nf_ct_get(skb, &ctinfo);
+	struct nf_ct_sip_master *ct_sip_info = nfct_help_data(ct);
+	enum ip_conntrack_dir dir = CTINFO2DIR(ctinfo);
+	union nf_inet_addr addr;
 	__be16 port;
 	u8 proto;
-	अचिन्हित पूर्णांक matchoff, matchlen, coff = 0;
-	अचिन्हित पूर्णांक expires = 0;
-	पूर्णांक in_contact = 0, ret;
+	unsigned int matchoff, matchlen, coff = 0;
+	unsigned int expires = 0;
+	int in_contact = 0, ret;
 
 	/* According to RFC 3261, "UAs MUST NOT send a new registration until
-	 * they have received a final response from the registrar क्रम the
-	 * previous one or the previous REGISTER request has समयd out".
+	 * they have received a final response from the registrar for the
+	 * previous one or the previous REGISTER request has timed out".
 	 *
 	 * However, some servers fail to detect retransmissions and send late
 	 * responses, so we store the sequence number of the last valid
 	 * request and compare it here.
 	 */
-	अगर (ct_sip_info->रेजिस्टर_cseq != cseq)
-		वापस NF_ACCEPT;
+	if (ct_sip_info->register_cseq != cseq)
+		return NF_ACCEPT;
 
-	अगर (code >= 100 && code <= 199)
-		वापस NF_ACCEPT;
-	अगर (code < 200 || code > 299)
-		जाओ flush;
+	if (code >= 100 && code <= 199)
+		return NF_ACCEPT;
+	if (code < 200 || code > 299)
+		goto flush;
 
-	अगर (ct_sip_get_header(ct, *dptr, 0, *datalen, SIP_HDR_EXPIRES,
+	if (ct_sip_get_header(ct, *dptr, 0, *datalen, SIP_HDR_EXPIRES,
 			      &matchoff, &matchlen) > 0)
-		expires = simple_म_से_अदीर्घ(*dptr + matchoff, शून्य, 10);
+		expires = simple_strtoul(*dptr + matchoff, NULL, 10);
 
-	जबतक (1) अणु
-		अचिन्हित पूर्णांक c_expires = expires;
+	while (1) {
+		unsigned int c_expires = expires;
 
 		ret = ct_sip_parse_header_uri(ct, *dptr, &coff, *datalen,
 					      SIP_HDR_CONTACT, &in_contact,
 					      &matchoff, &matchlen,
 					      &addr, &port);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			nf_ct_helper_log(skb, ct, "cannot parse contact");
-			वापस NF_DROP;
-		पूर्ण अन्यथा अगर (ret == 0)
-			अवरोध;
+			return NF_DROP;
+		} else if (ret == 0)
+			break;
 
-		/* We करोn't support third-party registrations */
-		अगर (!nf_inet_addr_cmp(&ct->tuplehash[dir].tuple.dst.u3, &addr))
-			जारी;
+		/* We don't support third-party registrations */
+		if (!nf_inet_addr_cmp(&ct->tuplehash[dir].tuple.dst.u3, &addr))
+			continue;
 
-		अगर (ct_sip_parse_transport(ct, *dptr, matchoff + matchlen,
+		if (ct_sip_parse_transport(ct, *dptr, matchoff + matchlen,
 					   *datalen, &proto) == 0)
-			जारी;
+			continue;
 
 		ret = ct_sip_parse_numerical_param(ct, *dptr,
 						   matchoff + matchlen,
 						   *datalen, "expires=",
-						   शून्य, शून्य, &c_expires);
-		अगर (ret < 0) अणु
+						   NULL, NULL, &c_expires);
+		if (ret < 0) {
 			nf_ct_helper_log(skb, ct, "cannot parse expires");
-			वापस NF_DROP;
-		पूर्ण
-		अगर (c_expires == 0)
-			अवरोध;
-		अगर (refresh_संकेतling_expectation(ct, &addr, proto, port,
+			return NF_DROP;
+		}
+		if (c_expires == 0)
+			break;
+		if (refresh_signalling_expectation(ct, &addr, proto, port,
 						   c_expires))
-			वापस NF_ACCEPT;
-	पूर्ण
+			return NF_ACCEPT;
+	}
 
 flush:
 	flush_expectations(ct, false);
-	वापस NF_ACCEPT;
-पूर्ण
+	return NF_ACCEPT;
+}
 
-अटल स्थिर काष्ठा sip_handler sip_handlers[] = अणु
+static const struct sip_handler sip_handlers[] = {
 	SIP_HANDLER("INVITE", process_invite_request, process_invite_response),
 	SIP_HANDLER("UPDATE", process_sdp, process_update_response),
-	SIP_HANDLER("ACK", process_sdp, शून्य),
+	SIP_HANDLER("ACK", process_sdp, NULL),
 	SIP_HANDLER("PRACK", process_sdp, process_prack_response),
-	SIP_HANDLER("BYE", process_bye_request, शून्य),
-	SIP_HANDLER("REGISTER", process_रेजिस्टर_request, process_रेजिस्टर_response),
-पूर्ण;
+	SIP_HANDLER("BYE", process_bye_request, NULL),
+	SIP_HANDLER("REGISTER", process_register_request, process_register_response),
+};
 
-अटल पूर्णांक process_sip_response(काष्ठा sk_buff *skb, अचिन्हित पूर्णांक protoff,
-				अचिन्हित पूर्णांक dataoff,
-				स्थिर अक्षर **dptr, अचिन्हित पूर्णांक *datalen)
-अणु
-	क्रमागत ip_conntrack_info ctinfo;
-	काष्ठा nf_conn *ct = nf_ct_get(skb, &ctinfo);
-	अचिन्हित पूर्णांक matchoff, matchlen, matchend;
-	अचिन्हित पूर्णांक code, cseq, i;
+static int process_sip_response(struct sk_buff *skb, unsigned int protoff,
+				unsigned int dataoff,
+				const char **dptr, unsigned int *datalen)
+{
+	enum ip_conntrack_info ctinfo;
+	struct nf_conn *ct = nf_ct_get(skb, &ctinfo);
+	unsigned int matchoff, matchlen, matchend;
+	unsigned int code, cseq, i;
 
-	अगर (*datalen < म_माप("SIP/2.0 200"))
-		वापस NF_ACCEPT;
-	code = simple_म_से_अदीर्घ(*dptr + म_माप("SIP/2.0 "), शून्य, 10);
-	अगर (!code) अणु
+	if (*datalen < strlen("SIP/2.0 200"))
+		return NF_ACCEPT;
+	code = simple_strtoul(*dptr + strlen("SIP/2.0 "), NULL, 10);
+	if (!code) {
 		nf_ct_helper_log(skb, ct, "cannot get code");
-		वापस NF_DROP;
-	पूर्ण
+		return NF_DROP;
+	}
 
-	अगर (ct_sip_get_header(ct, *dptr, 0, *datalen, SIP_HDR_CSEQ,
-			      &matchoff, &matchlen) <= 0) अणु
+	if (ct_sip_get_header(ct, *dptr, 0, *datalen, SIP_HDR_CSEQ,
+			      &matchoff, &matchlen) <= 0) {
 		nf_ct_helper_log(skb, ct, "cannot parse cseq");
-		वापस NF_DROP;
-	पूर्ण
-	cseq = simple_म_से_अदीर्घ(*dptr + matchoff, शून्य, 10);
-	अगर (!cseq && *(*dptr + matchoff) != '0') अणु
+		return NF_DROP;
+	}
+	cseq = simple_strtoul(*dptr + matchoff, NULL, 10);
+	if (!cseq && *(*dptr + matchoff) != '0') {
 		nf_ct_helper_log(skb, ct, "cannot get cseq");
-		वापस NF_DROP;
-	पूर्ण
+		return NF_DROP;
+	}
 	matchend = matchoff + matchlen + 1;
 
-	क्रम (i = 0; i < ARRAY_SIZE(sip_handlers); i++) अणु
-		स्थिर काष्ठा sip_handler *handler;
+	for (i = 0; i < ARRAY_SIZE(sip_handlers); i++) {
+		const struct sip_handler *handler;
 
 		handler = &sip_handlers[i];
-		अगर (handler->response == शून्य)
-			जारी;
-		अगर (*datalen < matchend + handler->len ||
-		    strnहालcmp(*dptr + matchend, handler->method, handler->len))
-			जारी;
-		वापस handler->response(skb, protoff, dataoff, dptr, datalen,
+		if (handler->response == NULL)
+			continue;
+		if (*datalen < matchend + handler->len ||
+		    strncasecmp(*dptr + matchend, handler->method, handler->len))
+			continue;
+		return handler->response(skb, protoff, dataoff, dptr, datalen,
 					 cseq, code);
-	पूर्ण
-	वापस NF_ACCEPT;
-पूर्ण
+	}
+	return NF_ACCEPT;
+}
 
-अटल पूर्णांक process_sip_request(काष्ठा sk_buff *skb, अचिन्हित पूर्णांक protoff,
-			       अचिन्हित पूर्णांक dataoff,
-			       स्थिर अक्षर **dptr, अचिन्हित पूर्णांक *datalen)
-अणु
-	क्रमागत ip_conntrack_info ctinfo;
-	काष्ठा nf_conn *ct = nf_ct_get(skb, &ctinfo);
-	काष्ठा nf_ct_sip_master *ct_sip_info = nfct_help_data(ct);
-	क्रमागत ip_conntrack_dir dir = CTINFO2सूची(ctinfo);
-	अचिन्हित पूर्णांक matchoff, matchlen;
-	अचिन्हित पूर्णांक cseq, i;
-	जोड़ nf_inet_addr addr;
+static int process_sip_request(struct sk_buff *skb, unsigned int protoff,
+			       unsigned int dataoff,
+			       const char **dptr, unsigned int *datalen)
+{
+	enum ip_conntrack_info ctinfo;
+	struct nf_conn *ct = nf_ct_get(skb, &ctinfo);
+	struct nf_ct_sip_master *ct_sip_info = nfct_help_data(ct);
+	enum ip_conntrack_dir dir = CTINFO2DIR(ctinfo);
+	unsigned int matchoff, matchlen;
+	unsigned int cseq, i;
+	union nf_inet_addr addr;
 	__be16 port;
 
-	/* Many Cisco IP phones use a high source port क्रम SIP requests, but
-	 * listen क्रम the response on port 5060.  If we are the local
-	 * router क्रम one of these phones, save the port number from the
+	/* Many Cisco IP phones use a high source port for SIP requests, but
+	 * listen for the response on port 5060.  If we are the local
+	 * router for one of these phones, save the port number from the
 	 * Via: header so that nf_nat_sip can redirect the responses to
 	 * the correct port.
 	 */
-	अगर (ct_sip_parse_header_uri(ct, *dptr, शून्य, *datalen,
-				    SIP_HDR_VIA_UDP, शून्य, &matchoff,
+	if (ct_sip_parse_header_uri(ct, *dptr, NULL, *datalen,
+				    SIP_HDR_VIA_UDP, NULL, &matchoff,
 				    &matchlen, &addr, &port) > 0 &&
 	    port != ct->tuplehash[dir].tuple.src.u.udp.port &&
 	    nf_inet_addr_cmp(&addr, &ct->tuplehash[dir].tuple.src.u3))
-		ct_sip_info->क्रमced_dport = port;
+		ct_sip_info->forced_dport = port;
 
-	क्रम (i = 0; i < ARRAY_SIZE(sip_handlers); i++) अणु
-		स्थिर काष्ठा sip_handler *handler;
+	for (i = 0; i < ARRAY_SIZE(sip_handlers); i++) {
+		const struct sip_handler *handler;
 
 		handler = &sip_handlers[i];
-		अगर (handler->request == शून्य)
-			जारी;
-		अगर (*datalen < handler->len + 2 ||
-		    strnहालcmp(*dptr, handler->method, handler->len))
-			जारी;
-		अगर ((*dptr)[handler->len] != ' ' ||
-		    !है_अक्षर((*dptr)[handler->len+1]))
-			जारी;
+		if (handler->request == NULL)
+			continue;
+		if (*datalen < handler->len + 2 ||
+		    strncasecmp(*dptr, handler->method, handler->len))
+			continue;
+		if ((*dptr)[handler->len] != ' ' ||
+		    !isalpha((*dptr)[handler->len+1]))
+			continue;
 
-		अगर (ct_sip_get_header(ct, *dptr, 0, *datalen, SIP_HDR_CSEQ,
-				      &matchoff, &matchlen) <= 0) अणु
+		if (ct_sip_get_header(ct, *dptr, 0, *datalen, SIP_HDR_CSEQ,
+				      &matchoff, &matchlen) <= 0) {
 			nf_ct_helper_log(skb, ct, "cannot parse cseq");
-			वापस NF_DROP;
-		पूर्ण
-		cseq = simple_म_से_अदीर्घ(*dptr + matchoff, शून्य, 10);
-		अगर (!cseq && *(*dptr + matchoff) != '0') अणु
+			return NF_DROP;
+		}
+		cseq = simple_strtoul(*dptr + matchoff, NULL, 10);
+		if (!cseq && *(*dptr + matchoff) != '0') {
 			nf_ct_helper_log(skb, ct, "cannot get cseq");
-			वापस NF_DROP;
-		पूर्ण
+			return NF_DROP;
+		}
 
-		वापस handler->request(skb, protoff, dataoff, dptr, datalen,
+		return handler->request(skb, protoff, dataoff, dptr, datalen,
 					cseq);
-	पूर्ण
-	वापस NF_ACCEPT;
-पूर्ण
+	}
+	return NF_ACCEPT;
+}
 
-अटल पूर्णांक process_sip_msg(काष्ठा sk_buff *skb, काष्ठा nf_conn *ct,
-			   अचिन्हित पूर्णांक protoff, अचिन्हित पूर्णांक dataoff,
-			   स्थिर अक्षर **dptr, अचिन्हित पूर्णांक *datalen)
-अणु
-	स्थिर काष्ठा nf_nat_sip_hooks *hooks;
-	पूर्णांक ret;
+static int process_sip_msg(struct sk_buff *skb, struct nf_conn *ct,
+			   unsigned int protoff, unsigned int dataoff,
+			   const char **dptr, unsigned int *datalen)
+{
+	const struct nf_nat_sip_hooks *hooks;
+	int ret;
 
-	अगर (strnहालcmp(*dptr, "SIP/2.0 ", म_माप("SIP/2.0 ")) != 0)
+	if (strncasecmp(*dptr, "SIP/2.0 ", strlen("SIP/2.0 ")) != 0)
 		ret = process_sip_request(skb, protoff, dataoff, dptr, datalen);
-	अन्यथा
+	else
 		ret = process_sip_response(skb, protoff, dataoff, dptr, datalen);
 
-	अगर (ret == NF_ACCEPT && ct->status & IPS_NAT_MASK) अणु
+	if (ret == NF_ACCEPT && ct->status & IPS_NAT_MASK) {
 		hooks = rcu_dereference(nf_nat_sip_hooks);
-		अगर (hooks && !hooks->msg(skb, protoff, dataoff,
-					 dptr, datalen)) अणु
+		if (hooks && !hooks->msg(skb, protoff, dataoff,
+					 dptr, datalen)) {
 			nf_ct_helper_log(skb, ct, "cannot NAT SIP message");
 			ret = NF_DROP;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक sip_help_tcp(काष्ठा sk_buff *skb, अचिन्हित पूर्णांक protoff,
-			काष्ठा nf_conn *ct, क्रमागत ip_conntrack_info ctinfo)
-अणु
-	काष्ठा tcphdr *th, _tcph;
-	अचिन्हित पूर्णांक dataoff, datalen;
-	अचिन्हित पूर्णांक matchoff, matchlen, clen;
-	अचिन्हित पूर्णांक msglen, origlen;
-	स्थिर अक्षर *dptr, *end;
-	s16 dअगरf, tdअगरf = 0;
-	पूर्णांक ret = NF_ACCEPT;
+static int sip_help_tcp(struct sk_buff *skb, unsigned int protoff,
+			struct nf_conn *ct, enum ip_conntrack_info ctinfo)
+{
+	struct tcphdr *th, _tcph;
+	unsigned int dataoff, datalen;
+	unsigned int matchoff, matchlen, clen;
+	unsigned int msglen, origlen;
+	const char *dptr, *end;
+	s16 diff, tdiff = 0;
+	int ret = NF_ACCEPT;
 	bool term;
 
-	अगर (ctinfo != IP_CT_ESTABLISHED &&
+	if (ctinfo != IP_CT_ESTABLISHED &&
 	    ctinfo != IP_CT_ESTABLISHED_REPLY)
-		वापस NF_ACCEPT;
+		return NF_ACCEPT;
 
 	/* No Data ? */
-	th = skb_header_poपूर्णांकer(skb, protoff, माप(_tcph), &_tcph);
-	अगर (th == शून्य)
-		वापस NF_ACCEPT;
-	dataoff = protoff + th->करोff * 4;
-	अगर (dataoff >= skb->len)
-		वापस NF_ACCEPT;
+	th = skb_header_pointer(skb, protoff, sizeof(_tcph), &_tcph);
+	if (th == NULL)
+		return NF_ACCEPT;
+	dataoff = protoff + th->doff * 4;
+	if (dataoff >= skb->len)
+		return NF_ACCEPT;
 
-	nf_ct_refresh(ct, skb, sip_समयout * HZ);
+	nf_ct_refresh(ct, skb, sip_timeout * HZ);
 
-	अगर (unlikely(skb_linearize(skb)))
-		वापस NF_DROP;
+	if (unlikely(skb_linearize(skb)))
+		return NF_DROP;
 
 	dptr = skb->data + dataoff;
 	datalen = skb->len - dataoff;
-	अगर (datalen < म_माप("SIP/2.0 200"))
-		वापस NF_ACCEPT;
+	if (datalen < strlen("SIP/2.0 200"))
+		return NF_ACCEPT;
 
-	जबतक (1) अणु
-		अगर (ct_sip_get_header(ct, dptr, 0, datalen,
+	while (1) {
+		if (ct_sip_get_header(ct, dptr, 0, datalen,
 				      SIP_HDR_CONTENT_LENGTH,
 				      &matchoff, &matchlen) <= 0)
-			अवरोध;
+			break;
 
-		clen = simple_म_से_अदीर्घ(dptr + matchoff, (अक्षर **)&end, 10);
-		अगर (dptr + matchoff == end)
-			अवरोध;
+		clen = simple_strtoul(dptr + matchoff, (char **)&end, 10);
+		if (dptr + matchoff == end)
+			break;
 
 		term = false;
-		क्रम (; end + म_माप("\r\n\r\n") <= dptr + datalen; end++) अणु
-			अगर (end[0] == '\r' && end[1] == '\n' &&
-			    end[2] == '\r' && end[3] == '\n') अणु
+		for (; end + strlen("\r\n\r\n") <= dptr + datalen; end++) {
+			if (end[0] == '\r' && end[1] == '\n' &&
+			    end[2] == '\r' && end[3] == '\n') {
 				term = true;
-				अवरोध;
-			पूर्ण
-		पूर्ण
-		अगर (!term)
-			अवरोध;
-		end += म_माप("\r\n\r\n") + clen;
+				break;
+			}
+		}
+		if (!term)
+			break;
+		end += strlen("\r\n\r\n") + clen;
 
 		msglen = origlen = end - dptr;
-		अगर (msglen > datalen)
-			वापस NF_ACCEPT;
+		if (msglen > datalen)
+			return NF_ACCEPT;
 
 		ret = process_sip_msg(skb, ct, protoff, dataoff,
 				      &dptr, &msglen);
 		/* process_sip_* functions report why this packet is dropped */
-		अगर (ret != NF_ACCEPT)
-			अवरोध;
-		dअगरf     = msglen - origlen;
-		tdअगरf   += dअगरf;
+		if (ret != NF_ACCEPT)
+			break;
+		diff     = msglen - origlen;
+		tdiff   += diff;
 
 		dataoff += msglen;
 		dptr    += msglen;
-		datalen  = datalen + dअगरf - msglen;
-	पूर्ण
+		datalen  = datalen + diff - msglen;
+	}
 
-	अगर (ret == NF_ACCEPT && ct->status & IPS_NAT_MASK) अणु
-		स्थिर काष्ठा nf_nat_sip_hooks *hooks;
+	if (ret == NF_ACCEPT && ct->status & IPS_NAT_MASK) {
+		const struct nf_nat_sip_hooks *hooks;
 
 		hooks = rcu_dereference(nf_nat_sip_hooks);
-		अगर (hooks)
-			hooks->seq_adjust(skb, protoff, tdअगरf);
-	पूर्ण
+		if (hooks)
+			hooks->seq_adjust(skb, protoff, tdiff);
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक sip_help_udp(काष्ठा sk_buff *skb, अचिन्हित पूर्णांक protoff,
-			काष्ठा nf_conn *ct, क्रमागत ip_conntrack_info ctinfo)
-अणु
-	अचिन्हित पूर्णांक dataoff, datalen;
-	स्थिर अक्षर *dptr;
+static int sip_help_udp(struct sk_buff *skb, unsigned int protoff,
+			struct nf_conn *ct, enum ip_conntrack_info ctinfo)
+{
+	unsigned int dataoff, datalen;
+	const char *dptr;
 
 	/* No Data ? */
-	dataoff = protoff + माप(काष्ठा udphdr);
-	अगर (dataoff >= skb->len)
-		वापस NF_ACCEPT;
+	dataoff = protoff + sizeof(struct udphdr);
+	if (dataoff >= skb->len)
+		return NF_ACCEPT;
 
-	nf_ct_refresh(ct, skb, sip_समयout * HZ);
+	nf_ct_refresh(ct, skb, sip_timeout * HZ);
 
-	अगर (unlikely(skb_linearize(skb)))
-		वापस NF_DROP;
+	if (unlikely(skb_linearize(skb)))
+		return NF_DROP;
 
 	dptr = skb->data + dataoff;
 	datalen = skb->len - dataoff;
-	अगर (datalen < म_माप("SIP/2.0 200"))
-		वापस NF_ACCEPT;
+	if (datalen < strlen("SIP/2.0 200"))
+		return NF_ACCEPT;
 
-	वापस process_sip_msg(skb, ct, protoff, dataoff, &dptr, &datalen);
-पूर्ण
+	return process_sip_msg(skb, ct, protoff, dataoff, &dptr, &datalen);
+}
 
-अटल काष्ठा nf_conntrack_helper sip[MAX_PORTS * 4] __पढ़ो_mostly;
+static struct nf_conntrack_helper sip[MAX_PORTS * 4] __read_mostly;
 
-अटल स्थिर काष्ठा nf_conntrack_expect_policy sip_exp_policy[SIP_EXPECT_MAX + 1] = अणु
-	[SIP_EXPECT_SIGNALLING] = अणु
+static const struct nf_conntrack_expect_policy sip_exp_policy[SIP_EXPECT_MAX + 1] = {
+	[SIP_EXPECT_SIGNALLING] = {
 		.name		= "signalling",
 		.max_expected	= 1,
-		.समयout	= 3 * 60,
-	पूर्ण,
-	[SIP_EXPECT_AUDIO] = अणु
+		.timeout	= 3 * 60,
+	},
+	[SIP_EXPECT_AUDIO] = {
 		.name		= "audio",
-		.max_expected	= 2 * IP_CT_सूची_MAX,
-		.समयout	= 3 * 60,
-	पूर्ण,
-	[SIP_EXPECT_VIDEO] = अणु
+		.max_expected	= 2 * IP_CT_DIR_MAX,
+		.timeout	= 3 * 60,
+	},
+	[SIP_EXPECT_VIDEO] = {
 		.name		= "video",
-		.max_expected	= 2 * IP_CT_सूची_MAX,
-		.समयout	= 3 * 60,
-	पूर्ण,
-	[SIP_EXPECT_IMAGE] = अणु
+		.max_expected	= 2 * IP_CT_DIR_MAX,
+		.timeout	= 3 * 60,
+	},
+	[SIP_EXPECT_IMAGE] = {
 		.name		= "image",
-		.max_expected	= IP_CT_सूची_MAX,
-		.समयout	= 3 * 60,
-	पूर्ण,
-पूर्ण;
+		.max_expected	= IP_CT_DIR_MAX,
+		.timeout	= 3 * 60,
+	},
+};
 
-अटल व्योम __निकास nf_conntrack_sip_fini(व्योम)
-अणु
-	nf_conntrack_helpers_unरेजिस्टर(sip, ports_c * 4);
-पूर्ण
+static void __exit nf_conntrack_sip_fini(void)
+{
+	nf_conntrack_helpers_unregister(sip, ports_c * 4);
+}
 
-अटल पूर्णांक __init nf_conntrack_sip_init(व्योम)
-अणु
-	पूर्णांक i, ret;
+static int __init nf_conntrack_sip_init(void)
+{
+	int i, ret;
 
-	NF_CT_HELPER_BUILD_BUG_ON(माप(काष्ठा nf_ct_sip_master));
+	NF_CT_HELPER_BUILD_BUG_ON(sizeof(struct nf_ct_sip_master));
 
-	अगर (ports_c == 0)
+	if (ports_c == 0)
 		ports[ports_c++] = SIP_PORT;
 
-	क्रम (i = 0; i < ports_c; i++) अणु
+	for (i = 0; i < ports_c; i++) {
 		nf_ct_helper_init(&sip[4 * i], AF_INET, IPPROTO_UDP,
 				  HELPER_NAME, SIP_PORT, ports[i], i,
 				  sip_exp_policy, SIP_EXPECT_MAX, sip_help_udp,
-				  शून्य, THIS_MODULE);
+				  NULL, THIS_MODULE);
 		nf_ct_helper_init(&sip[4 * i + 1], AF_INET, IPPROTO_TCP,
 				  HELPER_NAME, SIP_PORT, ports[i], i,
 				  sip_exp_policy, SIP_EXPECT_MAX, sip_help_tcp,
-				  शून्य, THIS_MODULE);
+				  NULL, THIS_MODULE);
 		nf_ct_helper_init(&sip[4 * i + 2], AF_INET6, IPPROTO_UDP,
 				  HELPER_NAME, SIP_PORT, ports[i], i,
 				  sip_exp_policy, SIP_EXPECT_MAX, sip_help_udp,
-				  शून्य, THIS_MODULE);
+				  NULL, THIS_MODULE);
 		nf_ct_helper_init(&sip[4 * i + 3], AF_INET6, IPPROTO_TCP,
 				  HELPER_NAME, SIP_PORT, ports[i], i,
 				  sip_exp_policy, SIP_EXPECT_MAX, sip_help_tcp,
-				  शून्य, THIS_MODULE);
-	पूर्ण
+				  NULL, THIS_MODULE);
+	}
 
-	ret = nf_conntrack_helpers_रेजिस्टर(sip, ports_c * 4);
-	अगर (ret < 0) अणु
+	ret = nf_conntrack_helpers_register(sip, ports_c * 4);
+	if (ret < 0) {
 		pr_err("failed to register helpers\n");
-		वापस ret;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return ret;
+	}
+	return 0;
+}
 
 module_init(nf_conntrack_sip_init);
-module_निकास(nf_conntrack_sip_fini);
+module_exit(nf_conntrack_sip_fini);

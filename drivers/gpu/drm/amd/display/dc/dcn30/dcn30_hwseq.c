@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2020 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -25,778 +24,778 @@
  */
 
 
-#समावेश "dm_services.h"
-#समावेश "dm_helpers.h"
-#समावेश "core_types.h"
-#समावेश "resource.h"
-#समावेश "dcn30_hwseq.h"
-#समावेश "dccg.h"
-#समावेश "dce/dce_hwseq.h"
-#समावेश "dcn30_mpc.h"
-#समावेश "dcn30_dpp.h"
-#समावेश "dcn10/dcn10_cm_common.h"
-#समावेश "dcn30_cm_common.h"
-#समावेश "reg_helper.h"
-#समावेश "abm.h"
-#समावेश "clk_mgr.h"
-#समावेश "hubp.h"
-#समावेश "dchubbub.h"
-#समावेश "timing_generator.h"
-#समावेश "opp.h"
-#समावेश "ipp.h"
-#समावेश "mpc.h"
-#समावेश "mcif_wb.h"
-#समावेश "dc_dmub_srv.h"
-#समावेश "link_hwss.h"
-#समावेश "dpcd_defs.h"
+#include "dm_services.h"
+#include "dm_helpers.h"
+#include "core_types.h"
+#include "resource.h"
+#include "dcn30_hwseq.h"
+#include "dccg.h"
+#include "dce/dce_hwseq.h"
+#include "dcn30_mpc.h"
+#include "dcn30_dpp.h"
+#include "dcn10/dcn10_cm_common.h"
+#include "dcn30_cm_common.h"
+#include "reg_helper.h"
+#include "abm.h"
+#include "clk_mgr.h"
+#include "hubp.h"
+#include "dchubbub.h"
+#include "timing_generator.h"
+#include "opp.h"
+#include "ipp.h"
+#include "mpc.h"
+#include "mcif_wb.h"
+#include "dc_dmub_srv.h"
+#include "link_hwss.h"
+#include "dpcd_defs.h"
 
 
 
 
-#घोषणा DC_LOGGER_INIT(logger)
+#define DC_LOGGER_INIT(logger)
 
-#घोषणा CTX \
+#define CTX \
 	hws->ctx
-#घोषणा REG(reg)\
+#define REG(reg)\
 	hws->regs->reg
-#घोषणा DC_LOGGER \
+#define DC_LOGGER \
 		dc->ctx->logger
 
 
-#अघोषित FN
-#घोषणा FN(reg_name, field_name) \
-	hws->shअगरts->field_name, hws->masks->field_name
+#undef FN
+#define FN(reg_name, field_name) \
+	hws->shifts->field_name, hws->masks->field_name
 
 bool dcn30_set_blend_lut(
-	काष्ठा pipe_ctx *pipe_ctx, स्थिर काष्ठा dc_plane_state *plane_state)
-अणु
-	काष्ठा dpp *dpp_base = pipe_ctx->plane_res.dpp;
+	struct pipe_ctx *pipe_ctx, const struct dc_plane_state *plane_state)
+{
+	struct dpp *dpp_base = pipe_ctx->plane_res.dpp;
 	bool result = true;
-	काष्ठा pwl_params *blend_lut = शून्य;
+	struct pwl_params *blend_lut = NULL;
 
-	अगर (plane_state->blend_tf) अणु
-		अगर (plane_state->blend_tf->type == TF_TYPE_HWPWL)
+	if (plane_state->blend_tf) {
+		if (plane_state->blend_tf->type == TF_TYPE_HWPWL)
 			blend_lut = &plane_state->blend_tf->pwl;
-		अन्यथा अगर (plane_state->blend_tf->type == TF_TYPE_DISTRIBUTED_POINTS) अणु
-			cm3_helper_translate_curve_to_hw_क्रमmat(
+		else if (plane_state->blend_tf->type == TF_TYPE_DISTRIBUTED_POINTS) {
+			cm3_helper_translate_curve_to_hw_format(
 					plane_state->blend_tf, &dpp_base->regamma_params, false);
 			blend_lut = &dpp_base->regamma_params;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	result = dpp_base->funcs->dpp_program_blnd_lut(dpp_base, blend_lut);
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
-अटल bool dcn30_set_mpc_shaper_3dlut(
-	काष्ठा pipe_ctx *pipe_ctx, स्थिर काष्ठा dc_stream_state *stream)
-अणु
-	काष्ठा dpp *dpp_base = pipe_ctx->plane_res.dpp;
-	पूर्णांक mpcc_id = pipe_ctx->plane_res.hubp->inst;
-	काष्ठा mpc *mpc = pipe_ctx->stream_res.opp->ctx->dc->res_pool->mpc;
+static bool dcn30_set_mpc_shaper_3dlut(
+	struct pipe_ctx *pipe_ctx, const struct dc_stream_state *stream)
+{
+	struct dpp *dpp_base = pipe_ctx->plane_res.dpp;
+	int mpcc_id = pipe_ctx->plane_res.hubp->inst;
+	struct mpc *mpc = pipe_ctx->stream_res.opp->ctx->dc->res_pool->mpc;
 	bool result = false;
-	पूर्णांक acquired_rmu = 0;
-	पूर्णांक mpcc_id_projected = 0;
+	int acquired_rmu = 0;
+	int mpcc_id_projected = 0;
 
-	स्थिर काष्ठा pwl_params *shaper_lut = शून्य;
+	const struct pwl_params *shaper_lut = NULL;
 	//get the shaper lut params
-	अगर (stream->func_shaper) अणु
-		अगर (stream->func_shaper->type == TF_TYPE_HWPWL)
+	if (stream->func_shaper) {
+		if (stream->func_shaper->type == TF_TYPE_HWPWL)
 			shaper_lut = &stream->func_shaper->pwl;
-		अन्यथा अगर (stream->func_shaper->type == TF_TYPE_DISTRIBUTED_POINTS) अणु
-			cm_helper_translate_curve_to_hw_क्रमmat(
+		else if (stream->func_shaper->type == TF_TYPE_DISTRIBUTED_POINTS) {
+			cm_helper_translate_curve_to_hw_format(
 					stream->func_shaper,
 					&dpp_base->shaper_params, true);
 			shaper_lut = &dpp_base->shaper_params;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (stream->lut3d_func &&
+	if (stream->lut3d_func &&
 		stream->lut3d_func->state.bits.initialized == 1 &&
-		stream->lut3d_func->state.bits.rmu_idx_valid == 1) अणु
-		अगर (stream->lut3d_func->state.bits.rmu_mux_num == 0)
+		stream->lut3d_func->state.bits.rmu_idx_valid == 1) {
+		if (stream->lut3d_func->state.bits.rmu_mux_num == 0)
 			mpcc_id_projected = stream->lut3d_func->state.bits.mpc_rmu0_mux;
-		अन्यथा अगर (stream->lut3d_func->state.bits.rmu_mux_num == 1)
+		else if (stream->lut3d_func->state.bits.rmu_mux_num == 1)
 			mpcc_id_projected = stream->lut3d_func->state.bits.mpc_rmu1_mux;
-		अन्यथा अगर (stream->lut3d_func->state.bits.rmu_mux_num == 2)
+		else if (stream->lut3d_func->state.bits.rmu_mux_num == 2)
 			mpcc_id_projected = stream->lut3d_func->state.bits.mpc_rmu2_mux;
-		अगर (mpcc_id_projected != mpcc_id)
+		if (mpcc_id_projected != mpcc_id)
 			BREAK_TO_DEBUGGER();
-		/*find the reason why logical layer asचिन्हित a dअगरferant mpcc_id पूर्णांकo acquire_post_bldn_3dlut*/
+		/*find the reason why logical layer assigned a differant mpcc_id into acquire_post_bldn_3dlut*/
 		acquired_rmu = mpc->funcs->acquire_rmu(mpc, mpcc_id,
 				stream->lut3d_func->state.bits.rmu_mux_num);
-		अगर (acquired_rmu != stream->lut3d_func->state.bits.rmu_mux_num)
+		if (acquired_rmu != stream->lut3d_func->state.bits.rmu_mux_num)
 			BREAK_TO_DEBUGGER();
 		result = mpc->funcs->program_3dlut(mpc,
 								&stream->lut3d_func->lut_3d,
 								stream->lut3d_func->state.bits.rmu_mux_num);
 		result = mpc->funcs->program_shaper(mpc, shaper_lut,
 				stream->lut3d_func->state.bits.rmu_mux_num);
-	पूर्ण अन्यथा
+	} else
 		/*loop through the available mux and release the requested mpcc_id*/
 		mpc->funcs->release_rmu(mpc, mpcc_id);
 
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
-bool dcn30_set_input_transfer_func(काष्ठा dc *dc,
-				काष्ठा pipe_ctx *pipe_ctx,
-				स्थिर काष्ठा dc_plane_state *plane_state)
-अणु
-	काष्ठा dce_hwseq *hws = dc->hwseq;
-	काष्ठा dpp *dpp_base = pipe_ctx->plane_res.dpp;
-	क्रमागत dc_transfer_func_predefined tf;
+bool dcn30_set_input_transfer_func(struct dc *dc,
+				struct pipe_ctx *pipe_ctx,
+				const struct dc_plane_state *plane_state)
+{
+	struct dce_hwseq *hws = dc->hwseq;
+	struct dpp *dpp_base = pipe_ctx->plane_res.dpp;
+	enum dc_transfer_func_predefined tf;
 	bool result = true;
-	काष्ठा pwl_params *params = शून्य;
+	struct pwl_params *params = NULL;
 
-	अगर (dpp_base == शून्य || plane_state == शून्य)
-		वापस false;
+	if (dpp_base == NULL || plane_state == NULL)
+		return false;
 
 	tf = TRANSFER_FUNCTION_UNITY;
 
-	अगर (plane_state->in_transfer_func &&
+	if (plane_state->in_transfer_func &&
 		plane_state->in_transfer_func->type == TF_TYPE_PREDEFINED)
 		tf = plane_state->in_transfer_func->tf;
 
 	dpp_base->funcs->dpp_set_pre_degam(dpp_base, tf);
 
-	अगर (plane_state->in_transfer_func) अणु
-		अगर (plane_state->in_transfer_func->type == TF_TYPE_HWPWL)
+	if (plane_state->in_transfer_func) {
+		if (plane_state->in_transfer_func->type == TF_TYPE_HWPWL)
 			params = &plane_state->in_transfer_func->pwl;
-		अन्यथा अगर (plane_state->in_transfer_func->type == TF_TYPE_DISTRIBUTED_POINTS &&
-			cm3_helper_translate_curve_to_hw_क्रमmat(plane_state->in_transfer_func,
+		else if (plane_state->in_transfer_func->type == TF_TYPE_DISTRIBUTED_POINTS &&
+			cm3_helper_translate_curve_to_hw_format(plane_state->in_transfer_func,
 					&dpp_base->degamma_params, false))
 			params = &dpp_base->degamma_params;
-	पूर्ण
+	}
 
 	result = dpp_base->funcs->dpp_program_gamcor_lut(dpp_base, params);
 
-	अगर (pipe_ctx->stream_res.opp && pipe_ctx->stream_res.opp->ctx) अणु
-		अगर (dpp_base->funcs->dpp_program_blnd_lut)
+	if (pipe_ctx->stream_res.opp && pipe_ctx->stream_res.opp->ctx) {
+		if (dpp_base->funcs->dpp_program_blnd_lut)
 			hws->funcs.set_blend_lut(pipe_ctx, plane_state);
-		अगर (dpp_base->funcs->dpp_program_shaper_lut &&
+		if (dpp_base->funcs->dpp_program_shaper_lut &&
 				dpp_base->funcs->dpp_program_3dlut)
 			hws->funcs.set_shaper_3dlut(pipe_ctx, plane_state);
-	पूर्ण
+	}
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
-bool dcn30_set_output_transfer_func(काष्ठा dc *dc,
-				काष्ठा pipe_ctx *pipe_ctx,
-				स्थिर काष्ठा dc_stream_state *stream)
-अणु
-	पूर्णांक mpcc_id = pipe_ctx->plane_res.hubp->inst;
-	काष्ठा mpc *mpc = pipe_ctx->stream_res.opp->ctx->dc->res_pool->mpc;
-	काष्ठा pwl_params *params = शून्य;
+bool dcn30_set_output_transfer_func(struct dc *dc,
+				struct pipe_ctx *pipe_ctx,
+				const struct dc_stream_state *stream)
+{
+	int mpcc_id = pipe_ctx->plane_res.hubp->inst;
+	struct mpc *mpc = pipe_ctx->stream_res.opp->ctx->dc->res_pool->mpc;
+	struct pwl_params *params = NULL;
 	bool ret = false;
 
-	/* program OGAM or 3DLUT only क्रम the top pipe*/
-	अगर (pipe_ctx->top_pipe == शून्य) अणु
+	/* program OGAM or 3DLUT only for the top pipe*/
+	if (pipe_ctx->top_pipe == NULL) {
 		/*program rmu shaper and 3dlut in MPC*/
 		ret = dcn30_set_mpc_shaper_3dlut(pipe_ctx, stream);
-		अगर (ret == false && mpc->funcs->set_output_gamma && stream->out_transfer_func) अणु
-			अगर (stream->out_transfer_func->type == TF_TYPE_HWPWL)
+		if (ret == false && mpc->funcs->set_output_gamma && stream->out_transfer_func) {
+			if (stream->out_transfer_func->type == TF_TYPE_HWPWL)
 				params = &stream->out_transfer_func->pwl;
-			अन्यथा अगर (pipe_ctx->stream->out_transfer_func->type ==
+			else if (pipe_ctx->stream->out_transfer_func->type ==
 					TF_TYPE_DISTRIBUTED_POINTS &&
-					cm3_helper_translate_curve_to_hw_क्रमmat(
+					cm3_helper_translate_curve_to_hw_format(
 					stream->out_transfer_func,
 					&mpc->blender_params, false))
 				params = &mpc->blender_params;
 			 /* there are no ROM LUTs in OUTGAM */
-			अगर (stream->out_transfer_func->type == TF_TYPE_PREDEFINED)
+			if (stream->out_transfer_func->type == TF_TYPE_PREDEFINED)
 				BREAK_TO_DEBUGGER();
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	mpc->funcs->set_output_gamma(mpc, mpcc_id, params);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम dcn30_set_ग_लिखोback(
-		काष्ठा dc *dc,
-		काष्ठा dc_ग_लिखोback_info *wb_info,
-		काष्ठा dc_state *context)
-अणु
-	काष्ठा mcअगर_wb *mcअगर_wb;
-	काष्ठा mcअगर_buf_params *mcअगर_buf_params;
+static void dcn30_set_writeback(
+		struct dc *dc,
+		struct dc_writeback_info *wb_info,
+		struct dc_state *context)
+{
+	struct mcif_wb *mcif_wb;
+	struct mcif_buf_params *mcif_buf_params;
 
 	ASSERT(wb_info->dwb_pipe_inst < MAX_DWB_PIPES);
 	ASSERT(wb_info->wb_enabled);
 	ASSERT(wb_info->mpcc_inst >= 0);
 	ASSERT(wb_info->mpcc_inst < dc->res_pool->mpcc_count);
-	mcअगर_wb = dc->res_pool->mcअगर_wb[wb_info->dwb_pipe_inst];
-	mcअगर_buf_params = &wb_info->mcअगर_buf_params;
+	mcif_wb = dc->res_pool->mcif_wb[wb_info->dwb_pipe_inst];
+	mcif_buf_params = &wb_info->mcif_buf_params;
 
 	/* set DWB MPC mux */
 	dc->res_pool->mpc->funcs->set_dwb_mux(dc->res_pool->mpc,
 			wb_info->dwb_pipe_inst, wb_info->mpcc_inst);
 	/* set MCIF_WB buffer and arbitration configuration */
-	mcअगर_wb->funcs->config_mcअगर_buf(mcअगर_wb, mcअगर_buf_params, wb_info->dwb_params.dest_height);
-	mcअगर_wb->funcs->config_mcअगर_arb(mcअगर_wb, &context->bw_ctx.bw.dcn.bw_ग_लिखोback.mcअगर_wb_arb[wb_info->dwb_pipe_inst]);
-पूर्ण
+	mcif_wb->funcs->config_mcif_buf(mcif_wb, mcif_buf_params, wb_info->dwb_params.dest_height);
+	mcif_wb->funcs->config_mcif_arb(mcif_wb, &context->bw_ctx.bw.dcn.bw_writeback.mcif_wb_arb[wb_info->dwb_pipe_inst]);
+}
 
-व्योम dcn30_update_ग_लिखोback(
-		काष्ठा dc *dc,
-		काष्ठा dc_ग_लिखोback_info *wb_info,
-		काष्ठा dc_state *context)
-अणु
-	काष्ठा dwbc *dwb;
+void dcn30_update_writeback(
+		struct dc *dc,
+		struct dc_writeback_info *wb_info,
+		struct dc_state *context)
+{
+	struct dwbc *dwb;
 	dwb = dc->res_pool->dwbc[wb_info->dwb_pipe_inst];
 	DC_LOG_DWB("%s dwb_pipe_inst = %d, mpcc_inst = %d",\
 		__func__, wb_info->dwb_pipe_inst,\
 		wb_info->mpcc_inst);
 
-	dcn30_set_ग_लिखोback(dc, wb_info, context);
+	dcn30_set_writeback(dc, wb_info, context);
 
 	/* update DWB */
 	dwb->funcs->update(dwb, &wb_info->dwb_params);
-पूर्ण
+}
 
 bool dcn30_mmhubbub_warmup(
-	काष्ठा dc *dc,
-	अचिन्हित पूर्णांक num_dwb,
-	काष्ठा dc_ग_लिखोback_info *wb_info)
-अणु
-	काष्ठा dwbc *dwb;
-	काष्ठा mcअगर_wb *mcअगर_wb;
-	काष्ठा mcअगर_warmup_params warmup_params = अणु0पूर्ण;
-	अचिन्हित पूर्णांक  i, i_buf;
+	struct dc *dc,
+	unsigned int num_dwb,
+	struct dc_writeback_info *wb_info)
+{
+	struct dwbc *dwb;
+	struct mcif_wb *mcif_wb;
+	struct mcif_warmup_params warmup_params = {0};
+	unsigned int  i, i_buf;
 	/*make sure there is no active DWB eanbled */
-	क्रम (i = 0; i < num_dwb; i++) अणु
+	for (i = 0; i < num_dwb; i++) {
 		dwb = dc->res_pool->dwbc[wb_info[i].dwb_pipe_inst];
-		अगर (dwb->dwb_is_efc_transition || dwb->dwb_is_drc) अणु
-			/*can not करो warmup जबतक any dwb enabled*/
-			वापस false;
-		पूर्ण
-	पूर्ण
+		if (dwb->dwb_is_efc_transition || dwb->dwb_is_drc) {
+			/*can not do warmup while any dwb enabled*/
+			return false;
+		}
+	}
 
-	अगर (wb_info->mcअगर_warmup_params.p_vmid == 0)
-		वापस false;
+	if (wb_info->mcif_warmup_params.p_vmid == 0)
+		return false;
 
-	/*check whether this is new पूर्णांकerface: warmup big buffer once*/
-	अगर (wb_info->mcअगर_warmup_params.start_address.quad_part != 0 &&
-		wb_info->mcअगर_warmup_params.region_size != 0) अणु
-		/*mmhubbub is shared, so it करोes not matter which MCIF*/
-		mcअगर_wb = dc->res_pool->mcअगर_wb[0];
+	/*check whether this is new interface: warmup big buffer once*/
+	if (wb_info->mcif_warmup_params.start_address.quad_part != 0 &&
+		wb_info->mcif_warmup_params.region_size != 0) {
+		/*mmhubbub is shared, so it does not matter which MCIF*/
+		mcif_wb = dc->res_pool->mcif_wb[0];
 		/*warmup a big chunk of VM buffer at once*/
-		warmup_params.start_address.quad_part = wb_info->mcअगर_warmup_params.start_address.quad_part;
-		warmup_params.address_increment =  wb_info->mcअगर_warmup_params.region_size;
-		warmup_params.region_size = wb_info->mcअगर_warmup_params.region_size;
-		warmup_params.p_vmid = wb_info->mcअगर_warmup_params.p_vmid;
+		warmup_params.start_address.quad_part = wb_info->mcif_warmup_params.start_address.quad_part;
+		warmup_params.address_increment =  wb_info->mcif_warmup_params.region_size;
+		warmup_params.region_size = wb_info->mcif_warmup_params.region_size;
+		warmup_params.p_vmid = wb_info->mcif_warmup_params.p_vmid;
 
-		अगर (warmup_params.address_increment == 0)
+		if (warmup_params.address_increment == 0)
 			warmup_params.address_increment = dc->dml.soc.vmm_page_size_bytes;
 
-		mcअगर_wb->funcs->warmup_mcअगर(mcअगर_wb, &warmup_params);
-		वापस true;
-	पूर्ण
-	/*following is the original: warmup each DWB's mcअगर buffer*/
-	क्रम (i = 0; i < num_dwb; i++) अणु
+		mcif_wb->funcs->warmup_mcif(mcif_wb, &warmup_params);
+		return true;
+	}
+	/*following is the original: warmup each DWB's mcif buffer*/
+	for (i = 0; i < num_dwb; i++) {
 		dwb = dc->res_pool->dwbc[wb_info[i].dwb_pipe_inst];
-		mcअगर_wb = dc->res_pool->mcअगर_wb[wb_info[i].dwb_pipe_inst];
-		/*warmup is क्रम VM mode only*/
-		अगर (wb_info[i].mcअगर_buf_params.p_vmid == 0)
-			वापस false;
+		mcif_wb = dc->res_pool->mcif_wb[wb_info[i].dwb_pipe_inst];
+		/*warmup is for VM mode only*/
+		if (wb_info[i].mcif_buf_params.p_vmid == 0)
+			return false;
 
 		/* Warmup MCIF_WB */
-		क्रम (i_buf = 0; i_buf < MCIF_BUF_COUNT; i_buf++) अणु
-			warmup_params.start_address.quad_part = wb_info[i].mcअगर_buf_params.luma_address[i_buf];
+		for (i_buf = 0; i_buf < MCIF_BUF_COUNT; i_buf++) {
+			warmup_params.start_address.quad_part = wb_info[i].mcif_buf_params.luma_address[i_buf];
 			warmup_params.address_increment = dc->dml.soc.vmm_page_size_bytes;
-			warmup_params.region_size = wb_info[i].mcअगर_buf_params.luma_pitch * wb_info[i].dwb_params.dest_height;
-			warmup_params.p_vmid = wb_info[i].mcअगर_buf_params.p_vmid;
-			mcअगर_wb->funcs->warmup_mcअगर(mcअगर_wb, &warmup_params);
-		पूर्ण
-	पूर्ण
-	वापस true;
-पूर्ण
+			warmup_params.region_size = wb_info[i].mcif_buf_params.luma_pitch * wb_info[i].dwb_params.dest_height;
+			warmup_params.p_vmid = wb_info[i].mcif_buf_params.p_vmid;
+			mcif_wb->funcs->warmup_mcif(mcif_wb, &warmup_params);
+		}
+	}
+	return true;
+}
 
-व्योम dcn30_enable_ग_लिखोback(
-		काष्ठा dc *dc,
-		काष्ठा dc_ग_लिखोback_info *wb_info,
-		काष्ठा dc_state *context)
-अणु
-	काष्ठा dwbc *dwb;
-	काष्ठा mcअगर_wb *mcअगर_wb;
-	काष्ठा timing_generator *optc;
+void dcn30_enable_writeback(
+		struct dc *dc,
+		struct dc_writeback_info *wb_info,
+		struct dc_state *context)
+{
+	struct dwbc *dwb;
+	struct mcif_wb *mcif_wb;
+	struct timing_generator *optc;
 
 	dwb = dc->res_pool->dwbc[wb_info->dwb_pipe_inst];
-	mcअगर_wb = dc->res_pool->mcअगर_wb[wb_info->dwb_pipe_inst];
+	mcif_wb = dc->res_pool->mcif_wb[wb_info->dwb_pipe_inst];
 
 	/* set the OPTC source mux */
 	optc = dc->res_pool->timing_generators[dwb->otg_inst];
 	DC_LOG_DWB("%s dwb_pipe_inst = %d, mpcc_inst = %d",\
 		__func__, wb_info->dwb_pipe_inst,\
 		wb_info->mpcc_inst);
-	अगर (IS_DIAG_DC(dc->ctx->dce_environment)) अणु
-		/*till diags चयन to warmup पूर्णांकerface*/
+	if (IS_DIAG_DC(dc->ctx->dce_environment)) {
+		/*till diags switch to warmup interface*/
 		dcn30_mmhubbub_warmup(dc, 1, wb_info);
-	पूर्ण
-	/* Update ग_लिखोback pipe */
-	dcn30_set_ग_लिखोback(dc, wb_info, context);
+	}
+	/* Update writeback pipe */
+	dcn30_set_writeback(dc, wb_info, context);
 
 	/* Enable MCIF_WB */
-	mcअगर_wb->funcs->enable_mcअगर(mcअगर_wb);
+	mcif_wb->funcs->enable_mcif(mcif_wb);
 	/* Enable DWB */
 	dwb->funcs->enable(dwb, &wb_info->dwb_params);
-पूर्ण
+}
 
-व्योम dcn30_disable_ग_लिखोback(
-		काष्ठा dc *dc,
-		अचिन्हित पूर्णांक dwb_pipe_inst)
-अणु
-	काष्ठा dwbc *dwb;
-	काष्ठा mcअगर_wb *mcअगर_wb;
+void dcn30_disable_writeback(
+		struct dc *dc,
+		unsigned int dwb_pipe_inst)
+{
+	struct dwbc *dwb;
+	struct mcif_wb *mcif_wb;
 
 	ASSERT(dwb_pipe_inst < MAX_DWB_PIPES);
 	dwb = dc->res_pool->dwbc[dwb_pipe_inst];
-	mcअगर_wb = dc->res_pool->mcअगर_wb[dwb_pipe_inst];
+	mcif_wb = dc->res_pool->mcif_wb[dwb_pipe_inst];
 	DC_LOG_DWB("%s dwb_pipe_inst = %d",\
 		__func__, dwb_pipe_inst);
 
 	/* disable DWB */
 	dwb->funcs->disable(dwb);
 	/* disable MCIF */
-	mcअगर_wb->funcs->disable_mcअगर(mcअगर_wb);
+	mcif_wb->funcs->disable_mcif(mcif_wb);
 	/* disable MPC DWB mux */
 	dc->res_pool->mpc->funcs->disable_dwb_mux(dc->res_pool->mpc, dwb_pipe_inst);
-पूर्ण
+}
 
-व्योम dcn30_program_all_ग_लिखोback_pipes_in_tree(
-		काष्ठा dc *dc,
-		स्थिर काष्ठा dc_stream_state *stream,
-		काष्ठा dc_state *context)
-अणु
-	काष्ठा dc_ग_लिखोback_info wb_info;
-	काष्ठा dwbc *dwb;
-	काष्ठा dc_stream_status *stream_status = शून्य;
-	पूर्णांक i_wb, i_pipe, i_stream;
+void dcn30_program_all_writeback_pipes_in_tree(
+		struct dc *dc,
+		const struct dc_stream_state *stream,
+		struct dc_state *context)
+{
+	struct dc_writeback_info wb_info;
+	struct dwbc *dwb;
+	struct dc_stream_status *stream_status = NULL;
+	int i_wb, i_pipe, i_stream;
 	DC_LOG_DWB("%s", __func__);
 
 	ASSERT(stream);
-	क्रम (i_stream = 0; i_stream < context->stream_count; i_stream++) अणु
-		अगर (context->streams[i_stream] == stream) अणु
+	for (i_stream = 0; i_stream < context->stream_count; i_stream++) {
+		if (context->streams[i_stream] == stream) {
 			stream_status = &context->stream_status[i_stream];
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 	ASSERT(stream_status);
 
 	ASSERT(stream->num_wb_info <= dc->res_pool->res_cap->num_dwb);
-	/* For each ग_लिखोback pipe */
-	क्रम (i_wb = 0; i_wb < stream->num_wb_info; i_wb++) अणु
+	/* For each writeback pipe */
+	for (i_wb = 0; i_wb < stream->num_wb_info; i_wb++) {
 
-		/* copy ग_लिखोback info to local non-स्थिर so mpcc_inst can be set */
-		wb_info = stream->ग_लिखोback_info[i_wb];
-		अगर (wb_info.wb_enabled) अणु
+		/* copy writeback info to local non-const so mpcc_inst can be set */
+		wb_info = stream->writeback_info[i_wb];
+		if (wb_info.wb_enabled) {
 
-			/* get the MPCC instance क्रम ग_लिखोback_source_plane */
+			/* get the MPCC instance for writeback_source_plane */
 			wb_info.mpcc_inst = -1;
-			क्रम (i_pipe = 0; i_pipe < dc->res_pool->pipe_count; i_pipe++) अणु
-				काष्ठा pipe_ctx *pipe_ctx = &context->res_ctx.pipe_ctx[i_pipe];
+			for (i_pipe = 0; i_pipe < dc->res_pool->pipe_count; i_pipe++) {
+				struct pipe_ctx *pipe_ctx = &context->res_ctx.pipe_ctx[i_pipe];
 
-				अगर (pipe_ctx->plane_state == wb_info.ग_लिखोback_source_plane) अणु
+				if (pipe_ctx->plane_state == wb_info.writeback_source_plane) {
 					wb_info.mpcc_inst = pipe_ctx->plane_res.mpcc_inst;
-					अवरोध;
-				पूर्ण
-			पूर्ण
+					break;
+				}
+			}
 			ASSERT(wb_info.mpcc_inst != -1);
 
 			ASSERT(wb_info.dwb_pipe_inst < dc->res_pool->res_cap->num_dwb);
 			dwb = dc->res_pool->dwbc[wb_info.dwb_pipe_inst];
-			अगर (dwb->funcs->is_enabled(dwb)) अणु
-				/* ग_लिखोback pipe alपढ़ोy enabled, only need to update */
-				dc->hwss.update_ग_लिखोback(dc, &wb_info, context);
-			पूर्ण अन्यथा अणु
-				/* Enable ग_लिखोback pipe and connect to MPCC */
-				dc->hwss.enable_ग_लिखोback(dc, &wb_info, context);
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			/* Disable ग_लिखोback pipe and disconnect from MPCC */
-			dc->hwss.disable_ग_लिखोback(dc, wb_info.dwb_pipe_inst);
-		पूर्ण
-	पूर्ण
-पूर्ण
+			if (dwb->funcs->is_enabled(dwb)) {
+				/* writeback pipe already enabled, only need to update */
+				dc->hwss.update_writeback(dc, &wb_info, context);
+			} else {
+				/* Enable writeback pipe and connect to MPCC */
+				dc->hwss.enable_writeback(dc, &wb_info, context);
+			}
+		} else {
+			/* Disable writeback pipe and disconnect from MPCC */
+			dc->hwss.disable_writeback(dc, wb_info.dwb_pipe_inst);
+		}
+	}
+}
 
-व्योम dcn30_init_hw(काष्ठा dc *dc)
-अणु
-	काष्ठा abm **abms = dc->res_pool->multiple_abms;
-	काष्ठा dce_hwseq *hws = dc->hwseq;
-	काष्ठा dc_bios *dcb = dc->ctx->dc_bios;
-	काष्ठा resource_pool *res_pool = dc->res_pool;
-	पूर्णांक i, j;
-	पूर्णांक edp_num;
-	uपूर्णांक32_t backlight = MAX_BACKLIGHT_LEVEL;
+void dcn30_init_hw(struct dc *dc)
+{
+	struct abm **abms = dc->res_pool->multiple_abms;
+	struct dce_hwseq *hws = dc->hwseq;
+	struct dc_bios *dcb = dc->ctx->dc_bios;
+	struct resource_pool *res_pool = dc->res_pool;
+	int i, j;
+	int edp_num;
+	uint32_t backlight = MAX_BACKLIGHT_LEVEL;
 
-	अगर (dc->clk_mgr && dc->clk_mgr->funcs->init_घड़ीs)
-		dc->clk_mgr->funcs->init_घड़ीs(dc->clk_mgr);
+	if (dc->clk_mgr && dc->clk_mgr->funcs->init_clocks)
+		dc->clk_mgr->funcs->init_clocks(dc->clk_mgr);
 
 	// Initialize the dccg
-	अगर (res_pool->dccg->funcs->dccg_init)
+	if (res_pool->dccg->funcs->dccg_init)
 		res_pool->dccg->funcs->dccg_init(res_pool->dccg);
 
-	अगर (IS_FPGA_MAXIMUS_DC(dc->ctx->dce_environment)) अणु
+	if (IS_FPGA_MAXIMUS_DC(dc->ctx->dce_environment)) {
 
 		REG_WRITE(REFCLK_CNTL, 0);
 		REG_UPDATE(DCHUBBUB_GLOBAL_TIMER_CNTL, DCHUBBUB_GLOBAL_TIMER_ENABLE, 1);
 		REG_WRITE(DIO_MEM_PWR_CTRL, 0);
 
-		अगर (!dc->debug.disable_घड़ी_gate) अणु
-			/* enable all DCN घड़ी gating */
+		if (!dc->debug.disable_clock_gate) {
+			/* enable all DCN clock gating */
 			REG_WRITE(DCCG_GATE_DISABLE_CNTL, 0);
 
 			REG_WRITE(DCCG_GATE_DISABLE_CNTL2, 0);
 
 			REG_UPDATE(DCFCLK_CNTL, DCFCLK_GATE_DIS, 0);
-		पूर्ण
+		}
 
-		//Enable ability to घातer gate / करोn't क्रमce घातer on permanently
-		अगर (hws->funcs.enable_घातer_gating_plane)
-			hws->funcs.enable_घातer_gating_plane(hws, true);
+		//Enable ability to power gate / don't force power on permanently
+		if (hws->funcs.enable_power_gating_plane)
+			hws->funcs.enable_power_gating_plane(hws, true);
 
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (!dcb->funcs->is_accelerated_mode(dcb)) अणु
+	if (!dcb->funcs->is_accelerated_mode(dcb)) {
 		hws->funcs.bios_golden_init(dc);
 		hws->funcs.disable_vga(dc->hwseq);
-	पूर्ण
+	}
 
-	अगर (dc->debug.enable_mem_low_घातer.bits.dmcu) अणु
-		// Force ERAM to shutकरोwn अगर DMCU is not enabled
-		अगर (dc->debug.disable_dmcu || dc->config.disable_dmcu) अणु
+	if (dc->debug.enable_mem_low_power.bits.dmcu) {
+		// Force ERAM to shutdown if DMCU is not enabled
+		if (dc->debug.disable_dmcu || dc->config.disable_dmcu) {
 			REG_UPDATE(DMU_MEM_PWR_CNTL, DMCU_ERAM_MEM_PWR_FORCE, 3);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	// Set शेष OPTC memory घातer states
-	अगर (dc->debug.enable_mem_low_घातer.bits.optc) अणु
-		// Shutकरोwn when unasचिन्हित and light sleep in VBLANK
+	// Set default OPTC memory power states
+	if (dc->debug.enable_mem_low_power.bits.optc) {
+		// Shutdown when unassigned and light sleep in VBLANK
 		REG_SET_2(ODM_MEM_PWR_CTRL3, 0, ODM_MEM_UNASSIGNED_PWR_MODE, 3, ODM_MEM_VBLANK_PWR_MODE, 1);
-	पूर्ण
+	}
 
-	अगर (dc->ctx->dc_bios->fw_info_valid) अणु
-		res_pool->ref_घड़ीs.xtalin_घड़ी_inKhz =
+	if (dc->ctx->dc_bios->fw_info_valid) {
+		res_pool->ref_clocks.xtalin_clock_inKhz =
 				dc->ctx->dc_bios->fw_info.pll_info.crystal_frequency;
 
-		अगर (!IS_FPGA_MAXIMUS_DC(dc->ctx->dce_environment)) अणु
-			अगर (res_pool->dccg && res_pool->hubbub) अणु
+		if (!IS_FPGA_MAXIMUS_DC(dc->ctx->dce_environment)) {
+			if (res_pool->dccg && res_pool->hubbub) {
 
 				(res_pool->dccg->funcs->get_dccg_ref_freq)(res_pool->dccg,
 						dc->ctx->dc_bios->fw_info.pll_info.crystal_frequency,
-						&res_pool->ref_घड़ीs.dccg_ref_घड़ी_inKhz);
+						&res_pool->ref_clocks.dccg_ref_clock_inKhz);
 
 				(res_pool->hubbub->funcs->get_dchub_ref_freq)(res_pool->hubbub,
-						res_pool->ref_घड़ीs.dccg_ref_घड़ी_inKhz,
-						&res_pool->ref_घड़ीs.dchub_ref_घड़ी_inKhz);
-			पूर्ण अन्यथा अणु
+						res_pool->ref_clocks.dccg_ref_clock_inKhz,
+						&res_pool->ref_clocks.dchub_ref_clock_inKhz);
+			} else {
 				// Not all ASICs have DCCG sw component
-				res_pool->ref_घड़ीs.dccg_ref_घड़ी_inKhz =
-						res_pool->ref_घड़ीs.xtalin_घड़ी_inKhz;
-				res_pool->ref_घड़ीs.dchub_ref_घड़ी_inKhz =
-						res_pool->ref_घड़ीs.xtalin_घड़ी_inKhz;
-			पूर्ण
-		पूर्ण
-	पूर्ण अन्यथा
+				res_pool->ref_clocks.dccg_ref_clock_inKhz =
+						res_pool->ref_clocks.xtalin_clock_inKhz;
+				res_pool->ref_clocks.dchub_ref_clock_inKhz =
+						res_pool->ref_clocks.xtalin_clock_inKhz;
+			}
+		}
+	} else
 		ASSERT_CRITICAL(false);
 
-	क्रम (i = 0; i < dc->link_count; i++) अणु
+	for (i = 0; i < dc->link_count; i++) {
 		/* Power up AND update implementation according to the
-		 * required संकेत (which may be dअगरferent from the
-		 * शेष संकेत on connector).
+		 * required signal (which may be different from the
+		 * default signal on connector).
 		 */
-		काष्ठा dc_link *link = dc->links[i];
+		struct dc_link *link = dc->links[i];
 
 		link->link_enc->funcs->hw_init(link->link_enc);
 
-		/* Check क्रम enabled DIG to identअगरy enabled display */
-		अगर (link->link_enc->funcs->is_dig_enabled &&
+		/* Check for enabled DIG to identify enabled display */
+		if (link->link_enc->funcs->is_dig_enabled &&
 			link->link_enc->funcs->is_dig_enabled(link->link_enc))
 			link->link_status.link_active = true;
-	पूर्ण
+	}
 
 	/* Power gate DSCs */
-	क्रम (i = 0; i < res_pool->res_cap->num_dsc; i++)
-		अगर (hws->funcs.dsc_pg_control != शून्य)
+	for (i = 0; i < res_pool->res_cap->num_dsc; i++)
+		if (hws->funcs.dsc_pg_control != NULL)
 			hws->funcs.dsc_pg_control(hws, res_pool->dscs[i]->inst, false);
 
-	/* we want to turn off all dp displays beक्रमe करोing detection */
-	अगर (dc->config.घातer_करोwn_display_on_boot) अणु
-		uपूर्णांक8_t dpcd_घातer_state = '\0';
-		क्रमागत dc_status status = DC_ERROR_UNEXPECTED;
+	/* we want to turn off all dp displays before doing detection */
+	if (dc->config.power_down_display_on_boot) {
+		uint8_t dpcd_power_state = '\0';
+		enum dc_status status = DC_ERROR_UNEXPECTED;
 
-		क्रम (i = 0; i < dc->link_count; i++) अणु
-			अगर (dc->links[i]->connector_संकेत != SIGNAL_TYPE_DISPLAY_PORT)
-				जारी;
+		for (i = 0; i < dc->link_count; i++) {
+			if (dc->links[i]->connector_signal != SIGNAL_TYPE_DISPLAY_PORT)
+				continue;
 
-			/* अगर any of the displays are lit up turn them off */
-			status = core_link_पढ़ो_dpcd(dc->links[i], DP_SET_POWER,
-						     &dpcd_घातer_state, माप(dpcd_घातer_state));
-			अगर (status == DC_OK && dpcd_घातer_state == DP_POWER_STATE_D0) अणु
-				/* blank dp stream beक्रमe घातer off receiver*/
-				अगर (dc->links[i]->link_enc->funcs->get_dig_frontend) अणु
-					अचिन्हित पूर्णांक fe;
+			/* if any of the displays are lit up turn them off */
+			status = core_link_read_dpcd(dc->links[i], DP_SET_POWER,
+						     &dpcd_power_state, sizeof(dpcd_power_state));
+			if (status == DC_OK && dpcd_power_state == DP_POWER_STATE_D0) {
+				/* blank dp stream before power off receiver*/
+				if (dc->links[i]->link_enc->funcs->get_dig_frontend) {
+					unsigned int fe;
 
 					fe = dc->links[i]->link_enc->funcs->get_dig_frontend(
 										dc->links[i]->link_enc);
-					अगर (fe == ENGINE_ID_UNKNOWN)
-						जारी;
+					if (fe == ENGINE_ID_UNKNOWN)
+						continue;
 
-					क्रम (j = 0; j < dc->res_pool->stream_enc_count; j++) अणु
-						अगर (fe == dc->res_pool->stream_enc[j]->id) अणु
+					for (j = 0; j < dc->res_pool->stream_enc_count; j++) {
+						if (fe == dc->res_pool->stream_enc[j]->id) {
 							dc->res_pool->stream_enc[j]->funcs->dp_blank(
 										dc->res_pool->stream_enc[j]);
-							अवरोध;
-						पूर्ण
-					पूर्ण
-				पूर्ण
-				dp_receiver_घातer_ctrl(dc->links[i], false);
-			पूर्ण
-		पूर्ण
-	पूर्ण
+							break;
+						}
+					}
+				}
+				dp_receiver_power_ctrl(dc->links[i], false);
+			}
+		}
+	}
 
 	/* If taking control over from VBIOS, we may want to optimize our first
-	 * mode set, so we need to skip घातering करोwn pipes until we know which
+	 * mode set, so we need to skip powering down pipes until we know which
 	 * pipes we want to use.
-	 * Otherwise, अगर taking control is not possible, we need to घातer
-	 * everything करोwn.
+	 * Otherwise, if taking control is not possible, we need to power
+	 * everything down.
 	 */
-	अगर (dcb->funcs->is_accelerated_mode(dcb) || dc->config.घातer_करोwn_display_on_boot) अणु
+	if (dcb->funcs->is_accelerated_mode(dcb) || dc->config.power_down_display_on_boot) {
 		hws->funcs.init_pipes(dc, dc->current_state);
-		अगर (dc->res_pool->hubbub->funcs->allow_self_refresh_control)
+		if (dc->res_pool->hubbub->funcs->allow_self_refresh_control)
 			dc->res_pool->hubbub->funcs->allow_self_refresh_control(dc->res_pool->hubbub,
 					!dc->res_pool->hubbub->ctx->dc->debug.disable_stutter);
-	पूर्ण
+	}
 
-	/* In headless boot हालs, DIG may be turned
+	/* In headless boot cases, DIG may be turned
 	 * on which causes HW/SW discrepancies.
-	 * To aव्योम this, घातer करोwn hardware on boot
-	 * अगर DIG is turned on and seamless boot not enabled
+	 * To avoid this, power down hardware on boot
+	 * if DIG is turned on and seamless boot not enabled
 	 */
-	अगर (dc->config.घातer_करोwn_display_on_boot) अणु
-		काष्ठा dc_link *edp_links[MAX_NUM_EDP];
-		काष्ठा dc_link *edp_link;
+	if (dc->config.power_down_display_on_boot) {
+		struct dc_link *edp_links[MAX_NUM_EDP];
+		struct dc_link *edp_link;
 
 		get_edp_links(dc, edp_links, &edp_num);
-		अगर (edp_num) अणु
-			क्रम (i = 0; i < edp_num; i++) अणु
+		if (edp_num) {
+			for (i = 0; i < edp_num; i++) {
 				edp_link = edp_links[i];
-				अगर (edp_link->link_enc->funcs->is_dig_enabled &&
+				if (edp_link->link_enc->funcs->is_dig_enabled &&
 						edp_link->link_enc->funcs->is_dig_enabled(edp_link->link_enc) &&
 						dc->hwss.edp_backlight_control &&
-						dc->hwss.घातer_करोwn &&
-						dc->hwss.edp_घातer_control) अणु
+						dc->hwss.power_down &&
+						dc->hwss.edp_power_control) {
 					dc->hwss.edp_backlight_control(edp_link, false);
-					dc->hwss.घातer_करोwn(dc);
-					dc->hwss.edp_घातer_control(edp_link, false);
-				पूर्ण
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			क्रम (i = 0; i < dc->link_count; i++) अणु
-				काष्ठा dc_link *link = dc->links[i];
+					dc->hwss.power_down(dc);
+					dc->hwss.edp_power_control(edp_link, false);
+				}
+			}
+		} else {
+			for (i = 0; i < dc->link_count; i++) {
+				struct dc_link *link = dc->links[i];
 
-				अगर (link->link_enc->funcs->is_dig_enabled &&
+				if (link->link_enc->funcs->is_dig_enabled &&
 						link->link_enc->funcs->is_dig_enabled(link->link_enc) &&
-						dc->hwss.घातer_करोwn) अणु
-					dc->hwss.घातer_करोwn(dc);
-					अवरोध;
-				पूर्ण
+						dc->hwss.power_down) {
+					dc->hwss.power_down(dc);
+					break;
+				}
 
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
-	क्रम (i = 0; i < res_pool->audio_count; i++) अणु
-		काष्ठा audio *audio = res_pool->audios[i];
+	for (i = 0; i < res_pool->audio_count; i++) {
+		struct audio *audio = res_pool->audios[i];
 
 		audio->funcs->hw_init(audio);
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < dc->link_count; i++) अणु
-		काष्ठा dc_link *link = dc->links[i];
+	for (i = 0; i < dc->link_count; i++) {
+		struct dc_link *link = dc->links[i];
 
-		अगर (link->panel_cntl)
+		if (link->panel_cntl)
 			backlight = link->panel_cntl->funcs->hw_init(link->panel_cntl);
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < dc->res_pool->pipe_count; i++) अणु
-		अगर (abms[i] != शून्य)
+	for (i = 0; i < dc->res_pool->pipe_count; i++) {
+		if (abms[i] != NULL)
 			abms[i]->funcs->abm_init(abms[i], backlight);
-	पूर्ण
+	}
 
-	/* घातer AFMT HDMI memory TODO: may move to dis/en output save घातer*/
+	/* power AFMT HDMI memory TODO: may move to dis/en output save power*/
 	REG_WRITE(DIO_MEM_PWR_CTRL, 0);
 
-	अगर (!dc->debug.disable_घड़ी_gate) अणु
-		/* enable all DCN घड़ी gating */
+	if (!dc->debug.disable_clock_gate) {
+		/* enable all DCN clock gating */
 		REG_WRITE(DCCG_GATE_DISABLE_CNTL, 0);
 
 		REG_WRITE(DCCG_GATE_DISABLE_CNTL2, 0);
 
 		REG_UPDATE(DCFCLK_CNTL, DCFCLK_GATE_DIS, 0);
-	पूर्ण
-	अगर (hws->funcs.enable_घातer_gating_plane)
-		hws->funcs.enable_घातer_gating_plane(dc->hwseq, true);
+	}
+	if (hws->funcs.enable_power_gating_plane)
+		hws->funcs.enable_power_gating_plane(dc->hwseq, true);
 
-	अगर (!dcb->funcs->is_accelerated_mode(dcb) && dc->res_pool->hubbub->funcs->init_watermarks)
+	if (!dcb->funcs->is_accelerated_mode(dcb) && dc->res_pool->hubbub->funcs->init_watermarks)
 		dc->res_pool->hubbub->funcs->init_watermarks(dc->res_pool->hubbub);
 
-	अगर (dc->clk_mgr->funcs->notअगरy_wm_ranges)
-		dc->clk_mgr->funcs->notअगरy_wm_ranges(dc->clk_mgr);
+	if (dc->clk_mgr->funcs->notify_wm_ranges)
+		dc->clk_mgr->funcs->notify_wm_ranges(dc->clk_mgr);
 
-	अगर (dc->clk_mgr->funcs->set_hard_max_memclk)
+	if (dc->clk_mgr->funcs->set_hard_max_memclk)
 		dc->clk_mgr->funcs->set_hard_max_memclk(dc->clk_mgr);
 
-	अगर (dc->res_pool->hubbub->funcs->क्रमce_pstate_change_control)
-		dc->res_pool->hubbub->funcs->क्रमce_pstate_change_control(
+	if (dc->res_pool->hubbub->funcs->force_pstate_change_control)
+		dc->res_pool->hubbub->funcs->force_pstate_change_control(
 				dc->res_pool->hubbub, false, false);
-पूर्ण
+}
 
-व्योम dcn30_set_avmute(काष्ठा pipe_ctx *pipe_ctx, bool enable)
-अणु
-	अगर (pipe_ctx == शून्य)
-		वापस;
+void dcn30_set_avmute(struct pipe_ctx *pipe_ctx, bool enable)
+{
+	if (pipe_ctx == NULL)
+		return;
 
-	अगर (dc_is_hdmi_संकेत(pipe_ctx->stream->संकेत) && pipe_ctx->stream_res.stream_enc != शून्य)
+	if (dc_is_hdmi_signal(pipe_ctx->stream->signal) && pipe_ctx->stream_res.stream_enc != NULL)
 		pipe_ctx->stream_res.stream_enc->funcs->set_avmute(
 				pipe_ctx->stream_res.stream_enc,
 				enable);
-पूर्ण
+}
 
-व्योम dcn30_update_info_frame(काष्ठा pipe_ctx *pipe_ctx)
-अणु
-	bool is_hdmi_पंचांगds;
+void dcn30_update_info_frame(struct pipe_ctx *pipe_ctx)
+{
+	bool is_hdmi_tmds;
 	bool is_dp;
 
 	ASSERT(pipe_ctx->stream);
 
-	अगर (pipe_ctx->stream_res.stream_enc == शून्य)
-		वापस;  /* this is not root pipe */
+	if (pipe_ctx->stream_res.stream_enc == NULL)
+		return;  /* this is not root pipe */
 
-	is_hdmi_पंचांगds = dc_is_hdmi_पंचांगds_संकेत(pipe_ctx->stream->संकेत);
-	is_dp = dc_is_dp_संकेत(pipe_ctx->stream->संकेत);
+	is_hdmi_tmds = dc_is_hdmi_tmds_signal(pipe_ctx->stream->signal);
+	is_dp = dc_is_dp_signal(pipe_ctx->stream->signal);
 
-	अगर (!is_hdmi_पंचांगds && !is_dp)
-		वापस;
+	if (!is_hdmi_tmds && !is_dp)
+		return;
 
-	अगर (is_hdmi_पंचांगds)
+	if (is_hdmi_tmds)
 		pipe_ctx->stream_res.stream_enc->funcs->update_hdmi_info_packets(
 			pipe_ctx->stream_res.stream_enc,
 			&pipe_ctx->stream_res.encoder_info_frame);
-	अन्यथा
+	else
 		pipe_ctx->stream_res.stream_enc->funcs->update_dp_info_packets(
 			pipe_ctx->stream_res.stream_enc,
 			&pipe_ctx->stream_res.encoder_info_frame);
-पूर्ण
+}
 
-व्योम dcn30_program_dmdata_engine(काष्ठा pipe_ctx *pipe_ctx)
-अणु
-	काष्ठा dc_stream_state    *stream     = pipe_ctx->stream;
-	काष्ठा hubp               *hubp       = pipe_ctx->plane_res.hubp;
+void dcn30_program_dmdata_engine(struct pipe_ctx *pipe_ctx)
+{
+	struct dc_stream_state    *stream     = pipe_ctx->stream;
+	struct hubp               *hubp       = pipe_ctx->plane_res.hubp;
 	bool                       enable     = false;
-	काष्ठा stream_encoder     *stream_enc = pipe_ctx->stream_res.stream_enc;
-	क्रमागत dynamic_metadata_mode mode       = dc_is_dp_संकेत(stream->संकेत)
+	struct stream_encoder     *stream_enc = pipe_ctx->stream_res.stream_enc;
+	enum dynamic_metadata_mode mode       = dc_is_dp_signal(stream->signal)
 							? dmdata_dp
 							: dmdata_hdmi;
 
-	/* अगर using dynamic meta, करोn't set up generic infopackets */
-	अगर (pipe_ctx->stream->dmdata_address.quad_part != 0) अणु
+	/* if using dynamic meta, don't set up generic infopackets */
+	if (pipe_ctx->stream->dmdata_address.quad_part != 0) {
 		pipe_ctx->stream_res.encoder_info_frame.hdrsmd.valid = false;
 		enable = true;
-	पूर्ण
+	}
 
-	अगर (!hubp)
-		वापस;
+	if (!hubp)
+		return;
 
-	अगर (!stream_enc || !stream_enc->funcs->set_dynamic_metadata)
-		वापस;
+	if (!stream_enc || !stream_enc->funcs->set_dynamic_metadata)
+		return;
 
 	stream_enc->funcs->set_dynamic_metadata(stream_enc, enable,
 							hubp->inst, mode);
-पूर्ण
+}
 
-bool dcn30_apply_idle_घातer_optimizations(काष्ठा dc *dc, bool enable)
-अणु
-	जोड़ dmub_rb_cmd cmd;
-	uपूर्णांक32_t पंचांगr_delay = 0, पंचांगr_scale = 0;
-	काष्ठा dc_cursor_attributes cursor_attr;
+bool dcn30_apply_idle_power_optimizations(struct dc *dc, bool enable)
+{
+	union dmub_rb_cmd cmd;
+	uint32_t tmr_delay = 0, tmr_scale = 0;
+	struct dc_cursor_attributes cursor_attr;
 	bool cursor_cache_enable = false;
-	काष्ठा dc_stream_state *stream = शून्य;
-	काष्ठा dc_plane_state *plane = शून्य;
+	struct dc_stream_state *stream = NULL;
+	struct dc_plane_state *plane = NULL;
 
-	अगर (!dc->ctx->dmub_srv)
-		वापस false;
+	if (!dc->ctx->dmub_srv)
+		return false;
 
-	अगर (enable) अणु
-		अगर (dc->current_state) अणु
-			पूर्णांक i;
+	if (enable) {
+		if (dc->current_state) {
+			int i;
 
-			/* First, check no-memory-requests हाल */
-			क्रम (i = 0; i < dc->current_state->stream_count; i++) अणु
-				अगर (dc->current_state->stream_status[i].plane_count)
+			/* First, check no-memory-requests case */
+			for (i = 0; i < dc->current_state->stream_count; i++) {
+				if (dc->current_state->stream_status[i].plane_count)
 					/* Fail eligibility on a visible stream */
-					अवरोध;
-			पूर्ण
+					break;
+			}
 
-			अगर (i == dc->current_state->stream_count) अणु
-				/* Enable no-memory-requests हाल */
-				स_रखो(&cmd, 0, माप(cmd));
+			if (i == dc->current_state->stream_count) {
+				/* Enable no-memory-requests case */
+				memset(&cmd, 0, sizeof(cmd));
 				cmd.mall.header.type = DMUB_CMD__MALL;
 				cmd.mall.header.sub_type = DMUB_CMD__MALL_ACTION_NO_DF_REQ;
-				cmd.mall.header.payload_bytes = माप(cmd.mall) - माप(cmd.mall.header);
+				cmd.mall.header.payload_bytes = sizeof(cmd.mall) - sizeof(cmd.mall.header);
 
 				dc_dmub_srv_cmd_queue(dc->ctx->dmub_srv, &cmd);
 				dc_dmub_srv_cmd_execute(dc->ctx->dmub_srv);
 
-				वापस true;
-			पूर्ण
+				return true;
+			}
 
 			stream = dc->current_state->streams[0];
-			plane = (stream ? dc->current_state->stream_status[0].plane_states[0] : शून्य);
+			plane = (stream ? dc->current_state->stream_status[0].plane_states[0] : NULL);
 
-			अगर (stream && plane) अणु
+			if (stream && plane) {
 				cursor_cache_enable = stream->cursor_position.enable &&
 						plane->address.grph.cursor_cache_addr.quad_part;
 				cursor_attr = stream->cursor_attributes;
-			पूर्ण
+			}
 
 			/*
 			 * Second, check MALL eligibility
 			 *
-			 * single display only, single surface only, 8 and 16 bit क्रमmats only, no VM,
-			 * करो not use MALL क्रम displays that support PSR as they use D0i3.2 in DMCUB FW
+			 * single display only, single surface only, 8 and 16 bit formats only, no VM,
+			 * do not use MALL for displays that support PSR as they use D0i3.2 in DMCUB FW
 			 *
-			 * TODO: When we implement multi-display, PSR displays will be allowed अगर there is
-			 * a non-PSR display present, since in that हाल we can't करो D0i3.2
+			 * TODO: When we implement multi-display, PSR displays will be allowed if there is
+			 * a non-PSR display present, since in that case we can't do D0i3.2
 			 */
-			अगर (dc->current_state->stream_count == 1 &&
+			if (dc->current_state->stream_count == 1 &&
 					stream->link->psr_settings.psr_version == DC_PSR_VERSION_UNSUPPORTED &&
 					dc->current_state->stream_status[0].plane_count == 1 &&
-					plane->क्रमmat <= SURFACE_PIXEL_FORMAT_GRPH_ABGR16161616F &&
-					plane->क्रमmat >= SURFACE_PIXEL_FORMAT_GRPH_ARGB8888 &&
+					plane->format <= SURFACE_PIXEL_FORMAT_GRPH_ABGR16161616F &&
+					plane->format >= SURFACE_PIXEL_FORMAT_GRPH_ARGB8888 &&
 					plane->address.page_table_base.quad_part == 0 &&
-					dc->hwss.करोes_plane_fit_in_mall &&
-					dc->hwss.करोes_plane_fit_in_mall(dc, plane,
-							cursor_cache_enable ? &cursor_attr : शून्य)) अणु
-				अचिन्हित पूर्णांक v_total = stream->adjust.v_total_max ?
+					dc->hwss.does_plane_fit_in_mall &&
+					dc->hwss.does_plane_fit_in_mall(dc, plane,
+							cursor_cache_enable ? &cursor_attr : NULL)) {
+				unsigned int v_total = stream->adjust.v_total_max ?
 						stream->adjust.v_total_max : stream->timing.v_total;
-				अचिन्हित पूर्णांक refresh_hz = भाग_u64((अचिन्हित दीर्घ दीर्घ) stream->timing.pix_clk_100hz *
+				unsigned int refresh_hz = div_u64((unsigned long long) stream->timing.pix_clk_100hz *
 						100LL, (v_total * stream->timing.h_total));
 
 				/*
-				 * one frame समय in microsec:
+				 * one frame time in microsec:
 				 * Delay_Us = 1000000 / refresh
 				 * dynamic_delay_us = 1000000 / refresh + 2 * stutter_period
 				 *
-				 * one frame समय modअगरied by 'additional timer percent' (p):
-				 * Delay_Us_modअगरied = dynamic_delay_us + dynamic_delay_us * p / 100
+				 * one frame time modified by 'additional timer percent' (p):
+				 * Delay_Us_modified = dynamic_delay_us + dynamic_delay_us * p / 100
 				 *                   = dynamic_delay_us * (1 + p / 100)
 				 *                   = (1000000 / refresh + 2 * stutter_period) * (100 + p) / 100
 				 *                   = (1000000 + 2 * stutter_period * refresh) * (100 + p) / (100 * refresh)
 				 *
-				 * क्रमmula क्रम समयr duration based on parameters, from regspec:
+				 * formula for timer duration based on parameters, from regspec:
 				 * dynamic_delay_us = 65.28 * (64 + MallFrameCacheTmrDly) * 2^MallFrameCacheTmrScale
 				 *
 				 * dynamic_delay_us / 65.28 = (64 + MallFrameCacheTmrDly) * 2^MallFrameCacheTmrScale
@@ -805,54 +804,54 @@ bool dcn30_apply_idle_घातer_optimizations(काष्ठा dc *dc, bool 
 				 *                      = (1000000 + 2 * stutter_period * refresh) * (100 + p) / (100 * refresh) / 65.28 / 2^MallFrameCacheTmrScale - 64
 				 *                      = (1000000 + 2 * stutter_period * refresh) * (100 + p) / (refresh * 6528 * 2^MallFrameCacheTmrScale) - 64
 				 *
-				 * need to round up the result of the भागision beक्रमe the subtraction
+				 * need to round up the result of the division before the subtraction
 				 */
-				अचिन्हित पूर्णांक denom = refresh_hz * 6528;
-				अचिन्हित पूर्णांक stutter_period = dc->current_state->perf_params.stutter_period_us;
+				unsigned int denom = refresh_hz * 6528;
+				unsigned int stutter_period = dc->current_state->perf_params.stutter_period_us;
 
-				पंचांगr_delay = भाग_u64(((1000000LL + 2 * stutter_period * refresh_hz) *
-						(100LL + dc->debug.mall_additional_समयr_percent) + denom - 1),
+				tmr_delay = div_u64(((1000000LL + 2 * stutter_period * refresh_hz) *
+						(100LL + dc->debug.mall_additional_timer_percent) + denom - 1),
 						denom) - 64LL;
 
-				/* scale should be increased until it fits पूर्णांकo 6 bits */
-				जबतक (पंचांगr_delay & ~0x3F) अणु
-					पंचांगr_scale++;
+				/* scale should be increased until it fits into 6 bits */
+				while (tmr_delay & ~0x3F) {
+					tmr_scale++;
 
-					अगर (पंचांगr_scale > 3) अणु
-						/* Delay exceeds range of hysteresis समयr */
+					if (tmr_scale > 3) {
+						/* Delay exceeds range of hysteresis timer */
 						ASSERT(false);
-						वापस false;
-					पूर्ण
+						return false;
+					}
 
 					denom *= 2;
-					पंचांगr_delay = भाग_u64(((1000000LL + 2 * stutter_period * refresh_hz) *
-							(100LL + dc->debug.mall_additional_समयr_percent) + denom - 1),
+					tmr_delay = div_u64(((1000000LL + 2 * stutter_period * refresh_hz) *
+							(100LL + dc->debug.mall_additional_timer_percent) + denom - 1),
 							denom) - 64LL;
-				पूर्ण
+				}
 
 				/* Copy HW cursor */
-				अगर (cursor_cache_enable) अणु
-					स_रखो(&cmd, 0, माप(cmd));
+				if (cursor_cache_enable) {
+					memset(&cmd, 0, sizeof(cmd));
 					cmd.mall.header.type = DMUB_CMD__MALL;
 					cmd.mall.header.sub_type = DMUB_CMD__MALL_ACTION_COPY_CURSOR;
 					cmd.mall.header.payload_bytes =
-							माप(cmd.mall) - माप(cmd.mall.header);
+							sizeof(cmd.mall) - sizeof(cmd.mall.header);
 
-					चयन (cursor_attr.color_क्रमmat) अणु
-					हाल CURSOR_MODE_MONO:
+					switch (cursor_attr.color_format) {
+					case CURSOR_MODE_MONO:
 						cmd.mall.cursor_bpp = 2;
-						अवरोध;
-					हाल CURSOR_MODE_COLOR_1BIT_AND:
-					हाल CURSOR_MODE_COLOR_PRE_MULTIPLIED_ALPHA:
-					हाल CURSOR_MODE_COLOR_UN_PRE_MULTIPLIED_ALPHA:
+						break;
+					case CURSOR_MODE_COLOR_1BIT_AND:
+					case CURSOR_MODE_COLOR_PRE_MULTIPLIED_ALPHA:
+					case CURSOR_MODE_COLOR_UN_PRE_MULTIPLIED_ALPHA:
 						cmd.mall.cursor_bpp = 32;
-						अवरोध;
+						break;
 
-					हाल CURSOR_MODE_COLOR_64BIT_FP_PRE_MULTIPLIED:
-					हाल CURSOR_MODE_COLOR_64BIT_FP_UN_PRE_MULTIPLIED:
+					case CURSOR_MODE_COLOR_64BIT_FP_PRE_MULTIPLIED:
+					case CURSOR_MODE_COLOR_64BIT_FP_UN_PRE_MULTIPLIED:
 						cmd.mall.cursor_bpp = 64;
-						अवरोध;
-					पूर्ण
+						break;
+					}
 
 					cmd.mall.cursor_copy_src.quad_part = cursor_attr.address.quad_part;
 					cmd.mall.cursor_copy_dst.quad_part =
@@ -863,126 +862,126 @@ bool dcn30_apply_idle_घातer_optimizations(काष्ठा dc *dc, bool 
 
 					dc_dmub_srv_cmd_queue(dc->ctx->dmub_srv, &cmd);
 					dc_dmub_srv_cmd_execute(dc->ctx->dmub_srv);
-					dc_dmub_srv_रुको_idle(dc->ctx->dmub_srv);
+					dc_dmub_srv_wait_idle(dc->ctx->dmub_srv);
 
-					/* Use copied cursor, and it's okay to not चयन back */
+					/* Use copied cursor, and it's okay to not switch back */
 					cursor_attr.address.quad_part = cmd.mall.cursor_copy_dst.quad_part;
 					dc_stream_set_cursor_attributes(stream, &cursor_attr);
-				पूर्ण
+				}
 
 				/* Enable MALL */
-				स_रखो(&cmd, 0, माप(cmd));
+				memset(&cmd, 0, sizeof(cmd));
 				cmd.mall.header.type = DMUB_CMD__MALL;
 				cmd.mall.header.sub_type = DMUB_CMD__MALL_ACTION_ALLOW;
-				cmd.mall.header.payload_bytes = माप(cmd.mall) - माप(cmd.mall.header);
-				cmd.mall.पंचांगr_delay = पंचांगr_delay;
-				cmd.mall.पंचांगr_scale = पंचांगr_scale;
+				cmd.mall.header.payload_bytes = sizeof(cmd.mall) - sizeof(cmd.mall.header);
+				cmd.mall.tmr_delay = tmr_delay;
+				cmd.mall.tmr_scale = tmr_scale;
 				cmd.mall.debug_bits = dc->debug.mall_error_as_fatal;
 
 				dc_dmub_srv_cmd_queue(dc->ctx->dmub_srv, &cmd);
 				dc_dmub_srv_cmd_execute(dc->ctx->dmub_srv);
 
-				वापस true;
-			पूर्ण
-		पूर्ण
+				return true;
+			}
+		}
 
 		/* No applicable optimizations */
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
 	/* Disable MALL */
-	स_रखो(&cmd, 0, माप(cmd));
+	memset(&cmd, 0, sizeof(cmd));
 	cmd.mall.header.type = DMUB_CMD__MALL;
 	cmd.mall.header.sub_type = DMUB_CMD__MALL_ACTION_DISALLOW;
 	cmd.mall.header.payload_bytes =
-		माप(cmd.mall) - माप(cmd.mall.header);
+		sizeof(cmd.mall) - sizeof(cmd.mall.header);
 
 	dc_dmub_srv_cmd_queue(dc->ctx->dmub_srv, &cmd);
 	dc_dmub_srv_cmd_execute(dc->ctx->dmub_srv);
-	dc_dmub_srv_रुको_idle(dc->ctx->dmub_srv);
+	dc_dmub_srv_wait_idle(dc->ctx->dmub_srv);
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-bool dcn30_करोes_plane_fit_in_mall(काष्ठा dc *dc, काष्ठा dc_plane_state *plane, काष्ठा dc_cursor_attributes *cursor_attr)
-अणु
+bool dcn30_does_plane_fit_in_mall(struct dc *dc, struct dc_plane_state *plane, struct dc_cursor_attributes *cursor_attr)
+{
 	// add meta size?
-	अचिन्हित पूर्णांक surface_size = plane->plane_size.surface_pitch * plane->plane_size.surface_size.height *
-			(plane->क्रमmat >= SURFACE_PIXEL_FORMAT_GRPH_ARGB16161616 ? 8 : 4);
-	अचिन्हित पूर्णांक mall_size = dc->caps.mall_माप_प्रकारotal;
-	अचिन्हित पूर्णांक cursor_size = 0;
+	unsigned int surface_size = plane->plane_size.surface_pitch * plane->plane_size.surface_size.height *
+			(plane->format >= SURFACE_PIXEL_FORMAT_GRPH_ARGB16161616 ? 8 : 4);
+	unsigned int mall_size = dc->caps.mall_size_total;
+	unsigned int cursor_size = 0;
 
-	अगर (dc->debug.mall_size_override)
+	if (dc->debug.mall_size_override)
 		mall_size = 1024 * 1024 * dc->debug.mall_size_override;
 
-	अगर (cursor_attr) अणु
+	if (cursor_attr) {
 		cursor_size = dc->caps.max_cursor_size * dc->caps.max_cursor_size;
 
-		चयन (cursor_attr->color_क्रमmat) अणु
-		हाल CURSOR_MODE_MONO:
+		switch (cursor_attr->color_format) {
+		case CURSOR_MODE_MONO:
 			cursor_size /= 2;
-			अवरोध;
-		हाल CURSOR_MODE_COLOR_1BIT_AND:
-		हाल CURSOR_MODE_COLOR_PRE_MULTIPLIED_ALPHA:
-		हाल CURSOR_MODE_COLOR_UN_PRE_MULTIPLIED_ALPHA:
+			break;
+		case CURSOR_MODE_COLOR_1BIT_AND:
+		case CURSOR_MODE_COLOR_PRE_MULTIPLIED_ALPHA:
+		case CURSOR_MODE_COLOR_UN_PRE_MULTIPLIED_ALPHA:
 			cursor_size *= 4;
-			अवरोध;
+			break;
 
-		हाल CURSOR_MODE_COLOR_64BIT_FP_PRE_MULTIPLIED:
-		हाल CURSOR_MODE_COLOR_64BIT_FP_UN_PRE_MULTIPLIED:
+		case CURSOR_MODE_COLOR_64BIT_FP_PRE_MULTIPLIED:
+		case CURSOR_MODE_COLOR_64BIT_FP_UN_PRE_MULTIPLIED:
 			cursor_size *= 8;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	वापस (surface_size + cursor_size) < mall_size;
-पूर्ण
+	return (surface_size + cursor_size) < mall_size;
+}
 
-व्योम dcn30_hardware_release(काष्ठा dc *dc)
-अणु
-	/* अगर pstate unsupported, क्रमce it supported */
-	अगर (!dc->clk_mgr->clks.p_state_change_support &&
-			dc->res_pool->hubbub->funcs->क्रमce_pstate_change_control)
-		dc->res_pool->hubbub->funcs->क्रमce_pstate_change_control(
+void dcn30_hardware_release(struct dc *dc)
+{
+	/* if pstate unsupported, force it supported */
+	if (!dc->clk_mgr->clks.p_state_change_support &&
+			dc->res_pool->hubbub->funcs->force_pstate_change_control)
+		dc->res_pool->hubbub->funcs->force_pstate_change_control(
 				dc->res_pool->hubbub, true, true);
-पूर्ण
+}
 
-व्योम dcn30_set_disp_pattern_generator(स्थिर काष्ठा dc *dc,
-		काष्ठा pipe_ctx *pipe_ctx,
-		क्रमागत controller_dp_test_pattern test_pattern,
-		क्रमागत controller_dp_color_space color_space,
-		क्रमागत dc_color_depth color_depth,
-		स्थिर काष्ठा tg_color *solid_color,
-		पूर्णांक width, पूर्णांक height, पूर्णांक offset)
-अणु
-	काष्ठा stream_resource *stream_res = &pipe_ctx->stream_res;
-	काष्ठा pipe_ctx *mpcc_pipe;
+void dcn30_set_disp_pattern_generator(const struct dc *dc,
+		struct pipe_ctx *pipe_ctx,
+		enum controller_dp_test_pattern test_pattern,
+		enum controller_dp_color_space color_space,
+		enum dc_color_depth color_depth,
+		const struct tg_color *solid_color,
+		int width, int height, int offset)
+{
+	struct stream_resource *stream_res = &pipe_ctx->stream_res;
+	struct pipe_ctx *mpcc_pipe;
 
-	अगर (test_pattern != CONTROLLER_DP_TEST_PATTERN_VIDEOMODE) अणु
+	if (test_pattern != CONTROLLER_DP_TEST_PATTERN_VIDEOMODE) {
 		pipe_ctx->vtp_locked = false;
 		/* turning on DPG */
 		stream_res->opp->funcs->opp_set_disp_pattern_generator(stream_res->opp, test_pattern, color_space,
 				color_depth, solid_color, width, height, offset);
 
-		/* Defer hubp blank अगर tg is locked */
-		अगर (stream_res->tg->funcs->is_tg_enabled(stream_res->tg)) अणु
-			अगर (stream_res->tg->funcs->is_locked(stream_res->tg))
+		/* Defer hubp blank if tg is locked */
+		if (stream_res->tg->funcs->is_tg_enabled(stream_res->tg)) {
+			if (stream_res->tg->funcs->is_locked(stream_res->tg))
 				pipe_ctx->vtp_locked = true;
-			अन्यथा अणु
+			else {
 				/* Blank HUBP to allow p-state during blank on all timings */
 				pipe_ctx->plane_res.hubp->funcs->set_blank(pipe_ctx->plane_res.hubp, true);
 
-				क्रम (mpcc_pipe = pipe_ctx->bottom_pipe; mpcc_pipe; mpcc_pipe = mpcc_pipe->bottom_pipe)
+				for (mpcc_pipe = pipe_ctx->bottom_pipe; mpcc_pipe; mpcc_pipe = mpcc_pipe->bottom_pipe)
 					mpcc_pipe->plane_res.hubp->funcs->set_blank(mpcc_pipe->plane_res.hubp, true);
-			पूर्ण
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			}
+		}
+	} else {
 		/* turning off DPG */
 		pipe_ctx->plane_res.hubp->funcs->set_blank(pipe_ctx->plane_res.hubp, false);
-		क्रम (mpcc_pipe = pipe_ctx->bottom_pipe; mpcc_pipe; mpcc_pipe = mpcc_pipe->bottom_pipe)
+		for (mpcc_pipe = pipe_ctx->bottom_pipe; mpcc_pipe; mpcc_pipe = mpcc_pipe->bottom_pipe)
 			mpcc_pipe->plane_res.hubp->funcs->set_blank(mpcc_pipe->plane_res.hubp, false);
 
 		stream_res->opp->funcs->opp_set_disp_pattern_generator(stream_res->opp, test_pattern, color_space,
 				color_depth, solid_color, width, height, offset);
-	पूर्ण
-पूर्ण
+	}
+}

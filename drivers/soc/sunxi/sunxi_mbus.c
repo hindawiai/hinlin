@@ -1,18 +1,17 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /* Copyright (C) 2020 Maxime Ripard <maxime@cerno.tech> */
 
-#समावेश <linux/device.h>
-#समावेश <linux/dma-map-ops.h>
-#समावेश <linux/init.h>
-#समावेश <linux/notअगरier.h>
-#समावेश <linux/of.h>
-#समावेश <linux/platक्रमm_device.h>
+#include <linux/device.h>
+#include <linux/dma-map-ops.h>
+#include <linux/init.h>
+#include <linux/notifier.h>
+#include <linux/of.h>
+#include <linux/platform_device.h>
 
-अटल स्थिर अक्षर * स्थिर sunxi_mbus_devices[] = अणु
+static const char * const sunxi_mbus_devices[] = {
 	/*
-	 * The display engine भव devices are not strictly speaking
-	 * connected to the MBUS, but since DRM will perक्रमm all the
+	 * The display engine virtual devices are not strictly speaking
+	 * connected to the MBUS, but since DRM will perform all the
 	 * memory allocations and DMA operations through that device, we
 	 * need to have the quirk on those devices too.
 	 */
@@ -55,49 +54,49 @@
 	"allwinner,sun50i-a64-csi",
 	"allwinner,sun50i-a64-video-engine",
 	"allwinner,sun50i-h5-video-engine",
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल पूर्णांक sunxi_mbus_notअगरier(काष्ठा notअगरier_block *nb,
-			       अचिन्हित दीर्घ event, व्योम *__dev)
-अणु
-	काष्ठा device *dev = __dev;
-	पूर्णांक ret;
+static int sunxi_mbus_notifier(struct notifier_block *nb,
+			       unsigned long event, void *__dev)
+{
+	struct device *dev = __dev;
+	int ret;
 
-	अगर (event != BUS_NOTIFY_ADD_DEVICE)
-		वापस NOTIFY_DONE;
+	if (event != BUS_NOTIFY_ADD_DEVICE)
+		return NOTIFY_DONE;
 
 	/*
-	 * Only the devices that need a large memory bandwidth करो DMA
+	 * Only the devices that need a large memory bandwidth do DMA
 	 * directly over the memory bus (called MBUS), instead of going
-	 * through the regular प्रणाली bus.
+	 * through the regular system bus.
 	 */
-	अगर (!of_device_compatible_match(dev->of_node, sunxi_mbus_devices))
-		वापस NOTIFY_DONE;
+	if (!of_device_compatible_match(dev->of_node, sunxi_mbus_devices))
+		return NOTIFY_DONE;
 
 	/*
-	 * Devices with an पूर्णांकerconnects property have the MBUS
+	 * Devices with an interconnects property have the MBUS
 	 * relationship described in their DT and dealt with by
 	 * of_dma_configure, so we can just skip them.
 	 *
 	 * Older DTs or SoCs who are not clearly understood need to set
 	 * that DMA offset though.
 	 */
-	अगर (of_find_property(dev->of_node, "interconnects", शून्य))
-		वापस NOTIFY_DONE;
+	if (of_find_property(dev->of_node, "interconnects", NULL))
+		return NOTIFY_DONE;
 
 	ret = dma_direct_set_offset(dev, PHYS_OFFSET, 0, SZ_4G);
-	अगर (ret)
+	if (ret)
 		dev_err(dev, "Couldn't setup our DMA offset: %d\n", ret);
 
-	वापस NOTIFY_DONE;
-पूर्ण
+	return NOTIFY_DONE;
+}
 
-अटल काष्ठा notअगरier_block sunxi_mbus_nb = अणु
-	.notअगरier_call = sunxi_mbus_notअगरier,
-पूर्ण;
+static struct notifier_block sunxi_mbus_nb = {
+	.notifier_call = sunxi_mbus_notifier,
+};
 
-अटल स्थिर अक्षर * स्थिर sunxi_mbus_platक्रमms[] __initस्थिर = अणु
+static const char * const sunxi_mbus_platforms[] __initconst = {
 	"allwinner,sun4i-a10",
 	"allwinner,sun5i-a10s",
 	"allwinner,sun5i-a13",
@@ -114,15 +113,15 @@
 	"allwinner,sun50i-a64",
 	"allwinner,sun50i-h5",
 	"nextthing,gr8",
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल पूर्णांक __init sunxi_mbus_init(व्योम)
-अणु
-	अगर (!of_device_compatible_match(of_root, sunxi_mbus_platक्रमms))
-		वापस 0;
+static int __init sunxi_mbus_init(void)
+{
+	if (!of_device_compatible_match(of_root, sunxi_mbus_platforms))
+		return 0;
 
-	bus_रेजिस्टर_notअगरier(&platक्रमm_bus_type, &sunxi_mbus_nb);
-	वापस 0;
-पूर्ण
+	bus_register_notifier(&platform_bus_type, &sunxi_mbus_nb);
+	return 0;
+}
 arch_initcall(sunxi_mbus_init);

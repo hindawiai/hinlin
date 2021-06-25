@@ -1,8 +1,7 @@
-<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the मुख्य directory of this archive
- * क्रम more details.
+ * License.  See the file "COPYING" in the main directory of this archive
+ * for more details.
  *
  * Copyright (C) 2000, 05 by Ralf Baechle (ralf@linux-mips.org)
  * Copyright (C) 2000 by Silicon Graphics, Inc.
@@ -11,276 +10,276 @@
  * On SGI IP27 the ARC memory configuration data is completely bogus but
  * alternate easier to use mechanisms are available.
  */
-#समावेश <linux/init.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/memblock.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/mmzone.h>
-#समावेश <linux/export.h>
-#समावेश <linux/nodemask.h>
-#समावेश <linux/swap.h>
-#समावेश <linux/pfn.h>
-#समावेश <linux/highस्मृति.स>
-#समावेश <यंत्र/page.h>
-#समावेश <यंत्र/pgभाग.स>
-#समावेश <यंत्र/sections.h>
+#include <linux/init.h>
+#include <linux/kernel.h>
+#include <linux/memblock.h>
+#include <linux/mm.h>
+#include <linux/mmzone.h>
+#include <linux/export.h>
+#include <linux/nodemask.h>
+#include <linux/swap.h>
+#include <linux/pfn.h>
+#include <linux/highmem.h>
+#include <asm/page.h>
+#include <asm/pgalloc.h>
+#include <asm/sections.h>
 
-#समावेश <यंत्र/sn/arch.h>
-#समावेश <यंत्र/sn/agent.h>
-#समावेश <यंत्र/sn/klconfig.h>
+#include <asm/sn/arch.h>
+#include <asm/sn/agent.h>
+#include <asm/sn/klconfig.h>
 
-#समावेश "ip27-common.h"
+#include "ip27-common.h"
 
-#घोषणा SLOT_PFNSHIFT		(SLOT_SHIFT - PAGE_SHIFT)
-#घोषणा PFN_NASIDSHFT		(NASID_SHFT - PAGE_SHIFT)
+#define SLOT_PFNSHIFT		(SLOT_SHIFT - PAGE_SHIFT)
+#define PFN_NASIDSHFT		(NASID_SHFT - PAGE_SHIFT)
 
-काष्ठा node_data *__node_data[MAX_NUMNODES];
+struct node_data *__node_data[MAX_NUMNODES];
 
 EXPORT_SYMBOL(__node_data);
 
-अटल u64 gen_region_mask(व्योम)
-अणु
-	पूर्णांक region_shअगरt;
+static u64 gen_region_mask(void)
+{
+	int region_shift;
 	u64 region_mask;
 	nasid_t nasid;
 
-	region_shअगरt = get_region_shअगरt();
+	region_shift = get_region_shift();
 	region_mask = 0;
-	क्रम_each_online_node(nasid)
-		region_mask |= BIT_ULL(nasid >> region_shअगरt);
+	for_each_online_node(nasid)
+		region_mask |= BIT_ULL(nasid >> region_shift);
 
-	वापस region_mask;
-पूर्ण
+	return region_mask;
+}
 
-#घोषणा rou_rflag	rou_flags
+#define rou_rflag	rou_flags
 
-अटल पूर्णांक router_distance;
+static int router_distance;
 
-अटल व्योम router_recurse(klrou_t *router_a, klrou_t *router_b, पूर्णांक depth)
-अणु
+static void router_recurse(klrou_t *router_a, klrou_t *router_b, int depth)
+{
 	klrou_t *router;
 	lboard_t *brd;
-	पूर्णांक	port;
+	int	port;
 
-	अगर (router_a->rou_rflag == 1)
-		वापस;
+	if (router_a->rou_rflag == 1)
+		return;
 
-	अगर (depth >= router_distance)
-		वापस;
+	if (depth >= router_distance)
+		return;
 
 	router_a->rou_rflag = 1;
 
-	क्रम (port = 1; port <= MAX_ROUTER_PORTS; port++) अणु
-		अगर (router_a->rou_port[port].port_nasid == INVALID_NASID)
-			जारी;
+	for (port = 1; port <= MAX_ROUTER_PORTS; port++) {
+		if (router_a->rou_port[port].port_nasid == INVALID_NASID)
+			continue;
 
 		brd = (lboard_t *)NODE_OFFSET_TO_K0(
 			router_a->rou_port[port].port_nasid,
 			router_a->rou_port[port].port_offset);
 
-		अगर (brd->brd_type == KLTYPE_ROUTER) अणु
+		if (brd->brd_type == KLTYPE_ROUTER) {
 			router = (klrou_t *)NODE_OFFSET_TO_K0(NASID_GET(brd), brd->brd_compts[0]);
-			अगर (router == router_b) अणु
-				अगर (depth < router_distance)
+			if (router == router_b) {
+				if (depth < router_distance)
 					router_distance = depth;
-			पूर्ण
-			अन्यथा
+			}
+			else
 				router_recurse(router, router_b, depth + 1);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	router_a->rou_rflag = 0;
-पूर्ण
+}
 
-अचिन्हित अक्षर __node_distances[MAX_NUMNODES][MAX_NUMNODES];
+unsigned char __node_distances[MAX_NUMNODES][MAX_NUMNODES];
 EXPORT_SYMBOL(__node_distances);
 
-अटल पूर्णांक __init compute_node_distance(nasid_t nasid_a, nasid_t nasid_b)
-अणु
-	klrou_t *router, *router_a = शून्य, *router_b = शून्य;
+static int __init compute_node_distance(nasid_t nasid_a, nasid_t nasid_b)
+{
+	klrou_t *router, *router_a = NULL, *router_b = NULL;
 	lboard_t *brd, *dest_brd;
 	nasid_t nasid;
-	पूर्णांक port;
+	int port;
 
 	/* Figure out which routers nodes in question are connected to */
-	क्रम_each_online_node(nasid) अणु
+	for_each_online_node(nasid) {
 		brd = find_lboard_class((lboard_t *)KL_CONFIG_INFO(nasid),
 					KLTYPE_ROUTER);
 
-		अगर (!brd)
-			जारी;
+		if (!brd)
+			continue;
 
-		करो अणु
-			अगर (brd->brd_flags & DUPLICATE_BOARD)
-				जारी;
+		do {
+			if (brd->brd_flags & DUPLICATE_BOARD)
+				continue;
 
 			router = (klrou_t *)NODE_OFFSET_TO_K0(NASID_GET(brd), brd->brd_compts[0]);
 			router->rou_rflag = 0;
 
-			क्रम (port = 1; port <= MAX_ROUTER_PORTS; port++) अणु
-				अगर (router->rou_port[port].port_nasid == INVALID_NASID)
-					जारी;
+			for (port = 1; port <= MAX_ROUTER_PORTS; port++) {
+				if (router->rou_port[port].port_nasid == INVALID_NASID)
+					continue;
 
 				dest_brd = (lboard_t *)NODE_OFFSET_TO_K0(
 					router->rou_port[port].port_nasid,
 					router->rou_port[port].port_offset);
 
-				अगर (dest_brd->brd_type == KLTYPE_IP27) अणु
-					अगर (dest_brd->brd_nasid == nasid_a)
+				if (dest_brd->brd_type == KLTYPE_IP27) {
+					if (dest_brd->brd_nasid == nasid_a)
 						router_a = router;
-					अगर (dest_brd->brd_nasid == nasid_b)
+					if (dest_brd->brd_nasid == nasid_b)
 						router_b = router;
-				पूर्ण
-			पूर्ण
+				}
+			}
 
-		पूर्ण जबतक ((brd = find_lboard_class(KLCF_NEXT(brd), KLTYPE_ROUTER)));
-	पूर्ण
+		} while ((brd = find_lboard_class(KLCF_NEXT(brd), KLTYPE_ROUTER)));
+	}
 
-	अगर (nasid_a == nasid_b)
-		वापस LOCAL_DISTANCE;
+	if (nasid_a == nasid_b)
+		return LOCAL_DISTANCE;
 
-	अगर (router_a == router_b)
-		वापस LOCAL_DISTANCE + 1;
+	if (router_a == router_b)
+		return LOCAL_DISTANCE + 1;
 
-	अगर (router_a == शून्य) अणु
+	if (router_a == NULL) {
 		pr_info("node_distance: router_a NULL\n");
-		वापस 255;
-	पूर्ण
-	अगर (router_b == शून्य) अणु
+		return 255;
+	}
+	if (router_b == NULL) {
 		pr_info("node_distance: router_b NULL\n");
-		वापस 255;
-	पूर्ण
+		return 255;
+	}
 
 	router_distance = 100;
 	router_recurse(router_a, router_b, 2);
 
-	वापस LOCAL_DISTANCE + router_distance;
-पूर्ण
+	return LOCAL_DISTANCE + router_distance;
+}
 
-अटल व्योम __init init_topology_matrix(व्योम)
-अणु
+static void __init init_topology_matrix(void)
+{
 	nasid_t row, col;
 
-	क्रम (row = 0; row < MAX_NUMNODES; row++)
-		क्रम (col = 0; col < MAX_NUMNODES; col++)
+	for (row = 0; row < MAX_NUMNODES; row++)
+		for (col = 0; col < MAX_NUMNODES; col++)
 			__node_distances[row][col] = -1;
 
-	क्रम_each_online_node(row) अणु
-		क्रम_each_online_node(col) अणु
+	for_each_online_node(row) {
+		for_each_online_node(col) {
 			__node_distances[row][col] =
 				compute_node_distance(row, col);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल व्योम __init dump_topology(व्योम)
-अणु
+static void __init dump_topology(void)
+{
 	nasid_t nasid;
 	lboard_t *brd, *dest_brd;
-	पूर्णांक port;
-	पूर्णांक router_num = 0;
+	int port;
+	int router_num = 0;
 	klrou_t *router;
 	nasid_t row, col;
 
 	pr_info("************** Topology ********************\n");
 
 	pr_info("    ");
-	क्रम_each_online_node(col)
+	for_each_online_node(col)
 		pr_cont("%02d ", col);
 	pr_cont("\n");
-	क्रम_each_online_node(row) अणु
+	for_each_online_node(row) {
 		pr_info("%02d  ", row);
-		क्रम_each_online_node(col)
+		for_each_online_node(col)
 			pr_cont("%2d ", node_distance(row, col));
 		pr_cont("\n");
-	पूर्ण
+	}
 
-	क्रम_each_online_node(nasid) अणु
+	for_each_online_node(nasid) {
 		brd = find_lboard_class((lboard_t *)KL_CONFIG_INFO(nasid),
 					KLTYPE_ROUTER);
 
-		अगर (!brd)
-			जारी;
+		if (!brd)
+			continue;
 
-		करो अणु
-			अगर (brd->brd_flags & DUPLICATE_BOARD)
-				जारी;
+		do {
+			if (brd->brd_flags & DUPLICATE_BOARD)
+				continue;
 			pr_cont("Router %d:", router_num);
 			router_num++;
 
 			router = (klrou_t *)NODE_OFFSET_TO_K0(NASID_GET(brd), brd->brd_compts[0]);
 
-			क्रम (port = 1; port <= MAX_ROUTER_PORTS; port++) अणु
-				अगर (router->rou_port[port].port_nasid == INVALID_NASID)
-					जारी;
+			for (port = 1; port <= MAX_ROUTER_PORTS; port++) {
+				if (router->rou_port[port].port_nasid == INVALID_NASID)
+					continue;
 
 				dest_brd = (lboard_t *)NODE_OFFSET_TO_K0(
 					router->rou_port[port].port_nasid,
 					router->rou_port[port].port_offset);
 
-				अगर (dest_brd->brd_type == KLTYPE_IP27)
+				if (dest_brd->brd_type == KLTYPE_IP27)
 					pr_cont(" %d", dest_brd->brd_nasid);
-				अगर (dest_brd->brd_type == KLTYPE_ROUTER)
+				if (dest_brd->brd_type == KLTYPE_ROUTER)
 					pr_cont(" r");
-			पूर्ण
+			}
 			pr_cont("\n");
 
-		पूर्ण जबतक ( (brd = find_lboard_class(KLCF_NEXT(brd), KLTYPE_ROUTER)) );
-	पूर्ण
-पूर्ण
+		} while ( (brd = find_lboard_class(KLCF_NEXT(brd), KLTYPE_ROUTER)) );
+	}
+}
 
-अटल अचिन्हित दीर्घ __init slot_getbasepfn(nasid_t nasid, पूर्णांक slot)
-अणु
-	वापस ((अचिन्हित दीर्घ)nasid << PFN_NASIDSHFT) | (slot << SLOT_PFNSHIFT);
-पूर्ण
+static unsigned long __init slot_getbasepfn(nasid_t nasid, int slot)
+{
+	return ((unsigned long)nasid << PFN_NASIDSHFT) | (slot << SLOT_PFNSHIFT);
+}
 
-अटल अचिन्हित दीर्घ __init slot_psize_compute(nasid_t nasid, पूर्णांक slot)
-अणु
+static unsigned long __init slot_psize_compute(nasid_t nasid, int slot)
+{
 	lboard_t *brd;
 	klmembnk_t *banks;
-	अचिन्हित दीर्घ size;
+	unsigned long size;
 
 	/* Find the node board */
 	brd = find_lboard((lboard_t *)KL_CONFIG_INFO(nasid), KLTYPE_IP27);
-	अगर (!brd)
-		वापस 0;
+	if (!brd)
+		return 0;
 
-	/* Get the memory bank काष्ठाure */
+	/* Get the memory bank structure */
 	banks = (klmembnk_t *) find_first_component(brd, KLSTRUCT_MEMBNK);
-	अगर (!banks)
-		वापस 0;
+	if (!banks)
+		return 0;
 
 	/* Size in _Megabytes_ */
-	size = (अचिन्हित दीर्घ)banks->membnk_bnksz[slot/4];
+	size = (unsigned long)banks->membnk_bnksz[slot/4];
 
-	/* hack क्रम 128 dimm banks */
-	अगर (size <= 128) अणु
-		अगर (slot % 4 == 0) अणु
+	/* hack for 128 dimm banks */
+	if (size <= 128) {
+		if (slot % 4 == 0) {
 			size <<= 20;		/* size in bytes */
-			वापस size >> PAGE_SHIFT;
-		पूर्ण अन्यथा
-			वापस 0;
-	पूर्ण अन्यथा अणु
+			return size >> PAGE_SHIFT;
+		} else
+			return 0;
+	} else {
 		size /= 4;
 		size <<= 20;
-		वापस size >> PAGE_SHIFT;
-	पूर्ण
-पूर्ण
+		return size >> PAGE_SHIFT;
+	}
+}
 
-अटल व्योम __init mlreset(व्योम)
-अणु
+static void __init mlreset(void)
+{
 	u64 region_mask;
 	nasid_t nasid;
 
 	master_nasid = get_nasid();
 
 	/*
-	 * Probe क्रम all CPUs - this creates the cpumask and sets up the
-	 * mapping tables.  We need to करो this as early as possible.
+	 * Probe for all CPUs - this creates the cpumask and sets up the
+	 * mapping tables.  We need to do this as early as possible.
 	 */
-#अगर_घोषित CONFIG_SMP
+#ifdef CONFIG_SMP
 	cpu_node_probe();
-#पूर्ण_अगर
+#endif
 
 	init_topology_matrix();
 	dump_topology();
@@ -292,7 +291,7 @@ EXPORT_SYMBOL(__node_distances);
 	/*
 	 * Set all nodes' calias sizes to 8k
 	 */
-	क्रम_each_online_node(nasid) अणु
+	for_each_online_node(nasid) {
 		/*
 		 * Always have node 0 in the region mask, otherwise
 		 * CALIAS accesses get exceptions since the hub
@@ -301,29 +300,29 @@ EXPORT_SYMBOL(__node_distances);
 		REMOTE_HUB_S(nasid, PI_REGION_PRESENT, (region_mask | 1));
 		REMOTE_HUB_S(nasid, PI_CALIAS_SIZE, PI_CALIAS_SIZE_0);
 
-#अगर_घोषित LATER
+#ifdef LATER
 		/*
-		 * Set up all hubs to have a big winकरोw poपूर्णांकing at
+		 * Set up all hubs to have a big window pointing at
 		 * widget 0. Memory mode, widget 0, offset 0
 		 */
 		REMOTE_HUB_S(nasid, IIO_ITTE(SWIN0_BIGWIN),
 			((HUB_PIO_MAP_TO_MEM << IIO_ITTE_IOSP_SHIFT) |
 			(0 << IIO_ITTE_WIDGET_SHIFT)));
-#पूर्ण_अगर
-	पूर्ण
-पूर्ण
+#endif
+	}
+}
 
-अटल व्योम __init szmem(व्योम)
-अणु
-	अचिन्हित दीर्घ slot_psize, slot0sz = 0, nodebytes;	/* Hack to detect problem configs */
-	पूर्णांक slot;
+static void __init szmem(void)
+{
+	unsigned long slot_psize, slot0sz = 0, nodebytes;	/* Hack to detect problem configs */
+	int slot;
 	nasid_t node;
 
-	क्रम_each_online_node(node) अणु
+	for_each_online_node(node) {
 		nodebytes = 0;
-		क्रम (slot = 0; slot < MAX_MEM_SLOTS; slot++) अणु
+		for (slot = 0; slot < MAX_MEM_SLOTS; slot++) {
 			slot_psize = slot_psize_compute(node, slot);
-			अगर (slot == 0)
+			if (slot == 0)
 				slot0sz = slot_psize;
 			/*
 			 * We need to refine the hack when we have replicated
@@ -331,94 +330,94 @@ EXPORT_SYMBOL(__node_distances);
 			 */
 			nodebytes += (1LL << SLOT_SHIFT);
 
-			अगर (!slot_psize)
-				जारी;
+			if (!slot_psize)
+				continue;
 
-			अगर ((nodebytes >> PAGE_SHIFT) * (माप(काष्ठा page)) >
-						(slot0sz << PAGE_SHIFT)) अणु
+			if ((nodebytes >> PAGE_SHIFT) * (sizeof(struct page)) >
+						(slot0sz << PAGE_SHIFT)) {
 				pr_info("Ignoring slot %d onwards on node %d\n",
 								slot, node);
 				slot = MAX_MEM_SLOTS;
-				जारी;
-			पूर्ण
+				continue;
+			}
 			memblock_add_node(PFN_PHYS(slot_getbasepfn(node, slot)),
 					  PFN_PHYS(slot_psize), node);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल व्योम __init node_mem_init(nasid_t node)
-अणु
-	अचिन्हित दीर्घ slot_firstpfn = slot_getbasepfn(node, 0);
-	अचिन्हित दीर्घ slot_मुक्तpfn = node_getfirstमुक्त(node);
-	अचिन्हित दीर्घ start_pfn, end_pfn;
+static void __init node_mem_init(nasid_t node)
+{
+	unsigned long slot_firstpfn = slot_getbasepfn(node, 0);
+	unsigned long slot_freepfn = node_getfirstfree(node);
+	unsigned long start_pfn, end_pfn;
 
-	get_pfn_range_क्रम_nid(node, &start_pfn, &end_pfn);
+	get_pfn_range_for_nid(node, &start_pfn, &end_pfn);
 
 	/*
-	 * Allocate the node data काष्ठाures on the node first.
+	 * Allocate the node data structures on the node first.
 	 */
-	__node_data[node] = __va(slot_मुक्तpfn << PAGE_SHIFT);
-	स_रखो(__node_data[node], 0, PAGE_SIZE);
+	__node_data[node] = __va(slot_freepfn << PAGE_SHIFT);
+	memset(__node_data[node], 0, PAGE_SIZE);
 
 	NODE_DATA(node)->node_start_pfn = start_pfn;
 	NODE_DATA(node)->node_spanned_pages = end_pfn - start_pfn;
 
 	cpumask_clear(&hub_data(node)->h_cpus);
 
-	slot_मुक्तpfn += PFN_UP(माप(काष्ठा pglist_data) +
-			       माप(काष्ठा hub_data));
+	slot_freepfn += PFN_UP(sizeof(struct pglist_data) +
+			       sizeof(struct hub_data));
 
 	memblock_reserve(slot_firstpfn << PAGE_SHIFT,
-			 ((slot_मुक्तpfn - slot_firstpfn) << PAGE_SHIFT));
-पूर्ण
+			 ((slot_freepfn - slot_firstpfn) << PAGE_SHIFT));
+}
 
 /*
- * A node with nothing.	 We use it to aव्योम any special casing in
+ * A node with nothing.	 We use it to avoid any special casing in
  * cpumask_of_node
  */
-अटल काष्ठा node_data null_node = अणु
-	.hub = अणु
+static struct node_data null_node = {
+	.hub = {
 		.h_cpus = CPU_MASK_NONE
-	पूर्ण
-पूर्ण;
+	}
+};
 
 /*
- * Currently, the पूर्णांकranode memory hole support assumes that each slot
- * contains at least 32 MBytes of memory. We assume all booपंचांगem data
+ * Currently, the intranode memory hole support assumes that each slot
+ * contains at least 32 MBytes of memory. We assume all bootmem data
  * fits on the first slot.
  */
-व्योम __init prom_meminit(व्योम)
-अणु
+void __init prom_meminit(void)
+{
 	nasid_t node;
 
 	mlreset();
 	szmem();
 	max_low_pfn = PHYS_PFN(memblock_end_of_DRAM());
 
-	क्रम (node = 0; node < MAX_NUMNODES; node++) अणु
-		अगर (node_online(node)) अणु
+	for (node = 0; node < MAX_NUMNODES; node++) {
+		if (node_online(node)) {
 			node_mem_init(node);
-			जारी;
-		पूर्ण
+			continue;
+		}
 		__node_data[node] = &null_node;
-	पूर्ण
-पूर्ण
+	}
+}
 
-बाह्य व्योम setup_zero_pages(व्योम);
+extern void setup_zero_pages(void);
 
-व्योम __init paging_init(व्योम)
-अणु
-	अचिन्हित दीर्घ zones_size[MAX_NR_ZONES] = अणु0, पूर्ण;
+void __init paging_init(void)
+{
+	unsigned long zones_size[MAX_NR_ZONES] = {0, };
 
 	pagetable_init();
 	zones_size[ZONE_NORMAL] = max_low_pfn;
-	मुक्त_area_init(zones_size);
-पूर्ण
+	free_area_init(zones_size);
+}
 
-व्योम __init mem_init(व्योम)
-अणु
-	high_memory = (व्योम *) __va(get_num_physpages() << PAGE_SHIFT);
-	memblock_मुक्त_all();
+void __init mem_init(void)
+{
+	high_memory = (void *) __va(get_num_physpages() << PAGE_SHIFT);
+	memblock_free_all();
 	setup_zero_pages();	/* This comes from node 0 */
-पूर्ण
+}

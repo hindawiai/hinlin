@@ -1,110 +1,109 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /* Copyright (C) B.A.T.M.A.N. contributors:
  *
- * Eकरो Monticelli, Antonio Quartulli
+ * Edo Monticelli, Antonio Quartulli
  */
 
-#समावेश "tp_meter.h"
-#समावेश "main.h"
+#include "tp_meter.h"
+#include "main.h"
 
-#समावेश <linux/atomic.h>
-#समावेश <linux/build_bug.h>
-#समावेश <linux/byteorder/generic.h>
-#समावेश <linux/cache.h>
-#समावेश <linux/compiler.h>
-#समावेश <linux/err.h>
-#समावेश <linux/etherdevice.h>
-#समावेश <linux/gfp.h>
-#समावेश <linux/अगर_ether.h>
-#समावेश <linux/init.h>
-#समावेश <linux/jअगरfies.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/kref.h>
-#समावेश <linux/kthपढ़ो.h>
-#समावेश <linux/सीमा.स>
-#समावेश <linux/list.h>
-#समावेश <linux/minmax.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/param.h>
-#समावेश <linux/prपूर्णांकk.h>
-#समावेश <linux/अक्रमom.h>
-#समावेश <linux/rculist.h>
-#समावेश <linux/rcupdate.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/मानकघोष.स>
-#समावेश <linux/माला.स>
-#समावेश <linux/समयr.h>
-#समावेश <linux/रुको.h>
-#समावेश <linux/workqueue.h>
-#समावेश <uapi/linux/batadv_packet.h>
-#समावेश <uapi/linux/baपंचांगan_adv.h>
+#include <linux/atomic.h>
+#include <linux/build_bug.h>
+#include <linux/byteorder/generic.h>
+#include <linux/cache.h>
+#include <linux/compiler.h>
+#include <linux/err.h>
+#include <linux/etherdevice.h>
+#include <linux/gfp.h>
+#include <linux/if_ether.h>
+#include <linux/init.h>
+#include <linux/jiffies.h>
+#include <linux/kernel.h>
+#include <linux/kref.h>
+#include <linux/kthread.h>
+#include <linux/limits.h>
+#include <linux/list.h>
+#include <linux/minmax.h>
+#include <linux/netdevice.h>
+#include <linux/param.h>
+#include <linux/printk.h>
+#include <linux/random.h>
+#include <linux/rculist.h>
+#include <linux/rcupdate.h>
+#include <linux/sched.h>
+#include <linux/skbuff.h>
+#include <linux/slab.h>
+#include <linux/spinlock.h>
+#include <linux/stddef.h>
+#include <linux/string.h>
+#include <linux/timer.h>
+#include <linux/wait.h>
+#include <linux/workqueue.h>
+#include <uapi/linux/batadv_packet.h>
+#include <uapi/linux/batman_adv.h>
 
-#समावेश "hard-interface.h"
-#समावेश "log.h"
-#समावेश "netlink.h"
-#समावेश "originator.h"
-#समावेश "send.h"
+#include "hard-interface.h"
+#include "log.h"
+#include "netlink.h"
+#include "originator.h"
+#include "send.h"
 
 /**
- * BATADV_TP_DEF_TEST_LENGTH - Default test length अगर not specअगरied by the user
+ * BATADV_TP_DEF_TEST_LENGTH - Default test length if not specified by the user
  *  in milliseconds
  */
-#घोषणा BATADV_TP_DEF_TEST_LENGTH 10000
+#define BATADV_TP_DEF_TEST_LENGTH 10000
 
 /**
- * BATADV_TP_AWND - Advertised winकरोw by the receiver (in bytes)
+ * BATADV_TP_AWND - Advertised window by the receiver (in bytes)
  */
-#घोषणा BATADV_TP_AWND 0x20000000
+#define BATADV_TP_AWND 0x20000000
 
 /**
- * BATADV_TP_RECV_TIMEOUT - Receiver activity समयout. If the receiver करोes not
- *  get anything क्रम such amount of milliseconds, the connection is समाप्तed
+ * BATADV_TP_RECV_TIMEOUT - Receiver activity timeout. If the receiver does not
+ *  get anything for such amount of milliseconds, the connection is killed
  */
-#घोषणा BATADV_TP_RECV_TIMEOUT 1000
+#define BATADV_TP_RECV_TIMEOUT 1000
 
 /**
- * BATADV_TP_MAX_RTO - Maximum sender समयout. If the sender RTO माला_लो beyond
+ * BATADV_TP_MAX_RTO - Maximum sender timeout. If the sender RTO gets beyond
  * such amount of milliseconds, the receiver is considered unreachable and the
- * connection is समाप्तed
+ * connection is killed
  */
-#घोषणा BATADV_TP_MAX_RTO 30000
+#define BATADV_TP_MAX_RTO 30000
 
 /**
  * BATADV_TP_FIRST_SEQ - First seqno of each session. The number is rather high
  *  in order to immediately trigger a wrap around (test purposes)
  */
-#घोषणा BATADV_TP_FIRST_SEQ ((u32)-1 - 2000)
+#define BATADV_TP_FIRST_SEQ ((u32)-1 - 2000)
 
 /**
  * BATADV_TP_PLEN - length of the payload (data after the batadv_unicast header)
  *  to simulate
  */
-#घोषणा BATADV_TP_PLEN (BATADV_TP_PACKET_LEN - ETH_HLEN - \
-			माप(काष्ठा batadv_unicast_packet))
+#define BATADV_TP_PLEN (BATADV_TP_PACKET_LEN - ETH_HLEN - \
+			sizeof(struct batadv_unicast_packet))
 
-अटल u8 batadv_tp_preअक्रमom[4096] __पढ़ो_mostly;
+static u8 batadv_tp_prerandom[4096] __read_mostly;
 
 /**
  * batadv_tp_session_cookie() - generate session cookie based on session ids
- * @session: TP session identअगरier
- * @icmp_uid: icmp pseuकरो uid of the tp session
+ * @session: TP session identifier
+ * @icmp_uid: icmp pseudo uid of the tp session
  *
  * Return: 32 bit tp_meter session cookie
  */
-अटल u32 batadv_tp_session_cookie(स्थिर u8 session[2], u8 icmp_uid)
-अणु
+static u32 batadv_tp_session_cookie(const u8 session[2], u8 icmp_uid)
+{
 	u32 cookie;
 
 	cookie = icmp_uid << 16;
 	cookie |= session[0] << 8;
 	cookie |= session[1];
 
-	वापस cookie;
-पूर्ण
+	return cookie;
+}
 
 /**
  * batadv_tp_cwnd() - compute the new cwnd size
@@ -112,70 +111,70 @@
  * @increment: the value to add to base to get the new size
  * @min: minimum cwnd value (usually MSS)
  *
- * Return the new cwnd size and ensure it करोes not exceed the Advertised
- * Receiver Winकरोw size. It is wrapped around safely.
+ * Return the new cwnd size and ensure it does not exceed the Advertised
+ * Receiver Window size. It is wrapped around safely.
  * For details refer to Section 3.1 of RFC5681
  *
- * Return: new congestion winकरोw size in bytes
+ * Return: new congestion window size in bytes
  */
-अटल u32 batadv_tp_cwnd(u32 base, u32 increment, u32 min)
-अणु
+static u32 batadv_tp_cwnd(u32 base, u32 increment, u32 min)
+{
 	u32 new_size = base + increment;
 
-	/* check क्रम wrap-around */
-	अगर (new_size < base)
-		new_size = (u32)अच_दीर्घ_उच्च;
+	/* check for wrap-around */
+	if (new_size < base)
+		new_size = (u32)ULONG_MAX;
 
 	new_size = min_t(u32, new_size, BATADV_TP_AWND);
 
-	वापस max_t(u32, new_size, min);
-पूर्ण
+	return max_t(u32, new_size, min);
+}
 
 /**
- * batadv_tp_update_cwnd() - update the Congestion Winकरोws
- * @tp_vars: the निजी data of the current TP meter session
+ * batadv_tp_update_cwnd() - update the Congestion Windows
+ * @tp_vars: the private data of the current TP meter session
  * @mss: maximum segment size of transmission
  *
- * 1) अगर the session is in Slow Start, the CWND has to be increased by 1
+ * 1) if the session is in Slow Start, the CWND has to be increased by 1
  * MSS every unique received ACK
- * 2) अगर the session is in Congestion Aव्योमance, the CWND has to be
- * increased by MSS * MSS / CWND क्रम every unique received ACK
+ * 2) if the session is in Congestion Avoidance, the CWND has to be
+ * increased by MSS * MSS / CWND for every unique received ACK
  */
-अटल व्योम batadv_tp_update_cwnd(काष्ठा batadv_tp_vars *tp_vars, u32 mss)
-अणु
+static void batadv_tp_update_cwnd(struct batadv_tp_vars *tp_vars, u32 mss)
+{
 	spin_lock_bh(&tp_vars->cwnd_lock);
 
 	/* slow start... */
-	अगर (tp_vars->cwnd <= tp_vars->ss_threshold) अणु
+	if (tp_vars->cwnd <= tp_vars->ss_threshold) {
 		tp_vars->dec_cwnd = 0;
 		tp_vars->cwnd = batadv_tp_cwnd(tp_vars->cwnd, mss, mss);
 		spin_unlock_bh(&tp_vars->cwnd_lock);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/* increment CWND at least of 1 (section 3.1 of RFC5681) */
 	tp_vars->dec_cwnd += max_t(u32, 1U << 3,
 				   ((mss * mss) << 6) / (tp_vars->cwnd << 3));
-	अगर (tp_vars->dec_cwnd < (mss << 3)) अणु
+	if (tp_vars->dec_cwnd < (mss << 3)) {
 		spin_unlock_bh(&tp_vars->cwnd_lock);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	tp_vars->cwnd = batadv_tp_cwnd(tp_vars->cwnd, mss, mss);
 	tp_vars->dec_cwnd = 0;
 
 	spin_unlock_bh(&tp_vars->cwnd_lock);
-पूर्ण
+}
 
 /**
- * batadv_tp_update_rto() - calculate new retransmission समयout
- * @tp_vars: the निजी data of the current TP meter session
- * @new_rtt: new roundtrip समय in msec
+ * batadv_tp_update_rto() - calculate new retransmission timeout
+ * @tp_vars: the private data of the current TP meter session
+ * @new_rtt: new roundtrip time in msec
  */
-अटल व्योम batadv_tp_update_rto(काष्ठा batadv_tp_vars *tp_vars,
+static void batadv_tp_update_rto(struct batadv_tp_vars *tp_vars,
 				 u32 new_rtt)
-अणु
-	दीर्घ m = new_rtt;
+{
+	long m = new_rtt;
 
 	/* RTT update
 	 * Details in Section 2.2 and 2.3 of RFC6298
@@ -183,193 +182,193 @@
 	 * It's tricky to understand. Don't lose hair please.
 	 * Inspired by tcp_rtt_estimator() tcp_input.c
 	 */
-	अगर (tp_vars->srtt != 0) अणु
+	if (tp_vars->srtt != 0) {
 		m -= (tp_vars->srtt >> 3); /* m is now error in rtt est */
 		tp_vars->srtt += m; /* rtt = 7/8 srtt + 1/8 new */
-		अगर (m < 0)
+		if (m < 0)
 			m = -m;
 
 		m -= (tp_vars->rttvar >> 2);
 		tp_vars->rttvar += m; /* mdev ~= 3/4 rttvar + 1/4 new */
-	पूर्ण अन्यथा अणु
+	} else {
 		/* first measure getting in */
-		tp_vars->srtt = m << 3;	/* take the measured समय to be srtt */
+		tp_vars->srtt = m << 3;	/* take the measured time to be srtt */
 		tp_vars->rttvar = m << 1; /* new_rtt / 2 */
-	पूर्ण
+	}
 
 	/* rto = srtt + 4 * rttvar.
-	 * rttvar is scaled by 4, thereक्रमe करोesn't need to be multiplied
+	 * rttvar is scaled by 4, therefore doesn't need to be multiplied
 	 */
 	tp_vars->rto = (tp_vars->srtt >> 3) + tp_vars->rttvar;
-पूर्ण
+}
 
 /**
- * batadv_tp_batctl_notअगरy() - send client status result to client
- * @reason: reason क्रम tp meter session stop
+ * batadv_tp_batctl_notify() - send client status result to client
+ * @reason: reason for tp meter session stop
  * @dst: destination of tp_meter session
- * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
- * @start_समय: start of transmission in jअगरfies
+ * @bat_priv: the bat priv with all the soft interface information
+ * @start_time: start of transmission in jiffies
  * @total_sent: bytes acked to the receiver
  * @cookie: cookie of tp_meter session
  */
-अटल व्योम batadv_tp_batctl_notअगरy(क्रमागत batadv_tp_meter_reason reason,
-				    स्थिर u8 *dst, काष्ठा batadv_priv *bat_priv,
-				    अचिन्हित दीर्घ start_समय, u64 total_sent,
+static void batadv_tp_batctl_notify(enum batadv_tp_meter_reason reason,
+				    const u8 *dst, struct batadv_priv *bat_priv,
+				    unsigned long start_time, u64 total_sent,
 				    u32 cookie)
-अणु
-	u32 test_समय;
+{
+	u32 test_time;
 	u8 result;
 	u32 total_bytes;
 
-	अगर (!batadv_tp_is_error(reason)) अणु
+	if (!batadv_tp_is_error(reason)) {
 		result = BATADV_TP_REASON_COMPLETE;
-		test_समय = jअगरfies_to_msecs(jअगरfies - start_समय);
+		test_time = jiffies_to_msecs(jiffies - start_time);
 		total_bytes = total_sent;
-	पूर्ण अन्यथा अणु
+	} else {
 		result = reason;
-		test_समय = 0;
+		test_time = 0;
 		total_bytes = 0;
-	पूर्ण
+	}
 
-	batadv_netlink_tpmeter_notअगरy(bat_priv, dst, result, test_समय,
+	batadv_netlink_tpmeter_notify(bat_priv, dst, result, test_time,
 				      total_bytes, cookie);
-पूर्ण
+}
 
 /**
- * batadv_tp_batctl_error_notअगरy() - send client error result to client
- * @reason: reason क्रम tp meter session stop
+ * batadv_tp_batctl_error_notify() - send client error result to client
+ * @reason: reason for tp meter session stop
  * @dst: destination of tp_meter session
- * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
+ * @bat_priv: the bat priv with all the soft interface information
  * @cookie: cookie of tp_meter session
  */
-अटल व्योम batadv_tp_batctl_error_notअगरy(क्रमागत batadv_tp_meter_reason reason,
-					  स्थिर u8 *dst,
-					  काष्ठा batadv_priv *bat_priv,
+static void batadv_tp_batctl_error_notify(enum batadv_tp_meter_reason reason,
+					  const u8 *dst,
+					  struct batadv_priv *bat_priv,
 					  u32 cookie)
-अणु
-	batadv_tp_batctl_notअगरy(reason, dst, bat_priv, 0, 0, cookie);
-पूर्ण
+{
+	batadv_tp_batctl_notify(reason, dst, bat_priv, 0, 0, cookie);
+}
 
 /**
  * batadv_tp_list_find() - find a tp_vars object in the global list
- * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
- * @dst: the other endpoपूर्णांक MAC address to look क्रम
+ * @bat_priv: the bat priv with all the soft interface information
+ * @dst: the other endpoint MAC address to look for
  *
- * Look क्रम a tp_vars object matching dst as end_poपूर्णांक and वापस it after
- * having increment the refcounter. Return शून्य is not found
+ * Look for a tp_vars object matching dst as end_point and return it after
+ * having increment the refcounter. Return NULL is not found
  *
- * Return: matching tp_vars or शून्य when no tp_vars with @dst was found
+ * Return: matching tp_vars or NULL when no tp_vars with @dst was found
  */
-अटल काष्ठा batadv_tp_vars *batadv_tp_list_find(काष्ठा batadv_priv *bat_priv,
-						  स्थिर u8 *dst)
-अणु
-	काष्ठा batadv_tp_vars *pos, *tp_vars = शून्य;
+static struct batadv_tp_vars *batadv_tp_list_find(struct batadv_priv *bat_priv,
+						  const u8 *dst)
+{
+	struct batadv_tp_vars *pos, *tp_vars = NULL;
 
-	rcu_पढ़ो_lock();
-	hlist_क्रम_each_entry_rcu(pos, &bat_priv->tp_list, list) अणु
-		अगर (!batadv_compare_eth(pos->other_end, dst))
-			जारी;
+	rcu_read_lock();
+	hlist_for_each_entry_rcu(pos, &bat_priv->tp_list, list) {
+		if (!batadv_compare_eth(pos->other_end, dst))
+			continue;
 
-		/* most of the समय this function is invoked during the normal
+		/* most of the time this function is invoked during the normal
 		 * process..it makes sens to pay more when the session is
 		 * finished and to speed the process up during the measurement
 		 */
-		अगर (unlikely(!kref_get_unless_zero(&pos->refcount)))
-			जारी;
+		if (unlikely(!kref_get_unless_zero(&pos->refcount)))
+			continue;
 
 		tp_vars = pos;
-		अवरोध;
-	पूर्ण
-	rcu_पढ़ो_unlock();
+		break;
+	}
+	rcu_read_unlock();
 
-	वापस tp_vars;
-पूर्ण
+	return tp_vars;
+}
 
 /**
  * batadv_tp_list_find_session() - find tp_vars session object in the global
  *  list
- * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
- * @dst: the other endpoपूर्णांक MAC address to look क्रम
- * @session: session identअगरier
+ * @bat_priv: the bat priv with all the soft interface information
+ * @dst: the other endpoint MAC address to look for
+ * @session: session identifier
  *
- * Look क्रम a tp_vars object matching dst as end_poपूर्णांक, session as tp meter
- * session and वापस it after having increment the refcounter. Return शून्य
+ * Look for a tp_vars object matching dst as end_point, session as tp meter
+ * session and return it after having increment the refcounter. Return NULL
  * is not found
  *
- * Return: matching tp_vars or शून्य when no tp_vars was found
+ * Return: matching tp_vars or NULL when no tp_vars was found
  */
-अटल काष्ठा batadv_tp_vars *
-batadv_tp_list_find_session(काष्ठा batadv_priv *bat_priv, स्थिर u8 *dst,
-			    स्थिर u8 *session)
-अणु
-	काष्ठा batadv_tp_vars *pos, *tp_vars = शून्य;
+static struct batadv_tp_vars *
+batadv_tp_list_find_session(struct batadv_priv *bat_priv, const u8 *dst,
+			    const u8 *session)
+{
+	struct batadv_tp_vars *pos, *tp_vars = NULL;
 
-	rcu_पढ़ो_lock();
-	hlist_क्रम_each_entry_rcu(pos, &bat_priv->tp_list, list) अणु
-		अगर (!batadv_compare_eth(pos->other_end, dst))
-			जारी;
+	rcu_read_lock();
+	hlist_for_each_entry_rcu(pos, &bat_priv->tp_list, list) {
+		if (!batadv_compare_eth(pos->other_end, dst))
+			continue;
 
-		अगर (स_भेद(pos->session, session, माप(pos->session)) != 0)
-			जारी;
+		if (memcmp(pos->session, session, sizeof(pos->session)) != 0)
+			continue;
 
-		/* most of the समय this function is invoked during the normal
+		/* most of the time this function is invoked during the normal
 		 * process..it makes sense to pay more when the session is
 		 * finished and to speed the process up during the measurement
 		 */
-		अगर (unlikely(!kref_get_unless_zero(&pos->refcount)))
-			जारी;
+		if (unlikely(!kref_get_unless_zero(&pos->refcount)))
+			continue;
 
 		tp_vars = pos;
-		अवरोध;
-	पूर्ण
-	rcu_पढ़ो_unlock();
+		break;
+	}
+	rcu_read_unlock();
 
-	वापस tp_vars;
-पूर्ण
+	return tp_vars;
+}
 
 /**
- * batadv_tp_vars_release() - release batadv_tp_vars from lists and queue क्रम
- *  मुक्त after rcu grace period
- * @ref: kref poपूर्णांकer of the batadv_tp_vars
+ * batadv_tp_vars_release() - release batadv_tp_vars from lists and queue for
+ *  free after rcu grace period
+ * @ref: kref pointer of the batadv_tp_vars
  */
-अटल व्योम batadv_tp_vars_release(काष्ठा kref *ref)
-अणु
-	काष्ठा batadv_tp_vars *tp_vars;
-	काष्ठा batadv_tp_unacked *un, *safe;
+static void batadv_tp_vars_release(struct kref *ref)
+{
+	struct batadv_tp_vars *tp_vars;
+	struct batadv_tp_unacked *un, *safe;
 
-	tp_vars = container_of(ref, काष्ठा batadv_tp_vars, refcount);
+	tp_vars = container_of(ref, struct batadv_tp_vars, refcount);
 
 	/* lock should not be needed because this object is now out of any
 	 * context!
 	 */
 	spin_lock_bh(&tp_vars->unacked_lock);
-	list_क्रम_each_entry_safe(un, safe, &tp_vars->unacked_list, list) अणु
+	list_for_each_entry_safe(un, safe, &tp_vars->unacked_list, list) {
 		list_del(&un->list);
-		kमुक्त(un);
-	पूर्ण
+		kfree(un);
+	}
 	spin_unlock_bh(&tp_vars->unacked_lock);
 
-	kमुक्त_rcu(tp_vars, rcu);
-पूर्ण
+	kfree_rcu(tp_vars, rcu);
+}
 
 /**
  * batadv_tp_vars_put() - decrement the batadv_tp_vars refcounter and possibly
  *  release it
- * @tp_vars: the निजी data of the current TP meter session to be मुक्त'd
+ * @tp_vars: the private data of the current TP meter session to be free'd
  */
-अटल व्योम batadv_tp_vars_put(काष्ठा batadv_tp_vars *tp_vars)
-अणु
+static void batadv_tp_vars_put(struct batadv_tp_vars *tp_vars)
+{
 	kref_put(&tp_vars->refcount, batadv_tp_vars_release);
-पूर्ण
+}
 
 /**
- * batadv_tp_sender_cleanup() - cleanup sender data and drop and समयr
- * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
- * @tp_vars: the निजी data of the current TP meter session to cleanup
+ * batadv_tp_sender_cleanup() - cleanup sender data and drop and timer
+ * @bat_priv: the bat priv with all the soft interface information
+ * @tp_vars: the private data of the current TP meter session to cleanup
  */
-अटल व्योम batadv_tp_sender_cleanup(काष्ठा batadv_priv *bat_priv,
-				     काष्ठा batadv_tp_vars *tp_vars)
-अणु
+static void batadv_tp_sender_cleanup(struct batadv_priv *bat_priv,
+				     struct batadv_tp_vars *tp_vars)
+{
 	cancel_delayed_work(&tp_vars->finish_work);
 
 	spin_lock_bh(&tp_vars->bat_priv->tp_list_lock);
@@ -381,25 +380,25 @@ batadv_tp_list_find_session(काष्ठा batadv_priv *bat_priv, स्थ�
 
 	atomic_dec(&tp_vars->bat_priv->tp_num);
 
-	/* समाप्त the समयr and हटाओ its reference */
-	del_समयr_sync(&tp_vars->समयr);
-	/* the worker might have rearmed itself thereक्रमe we समाप्त it again. Note
-	 * that अगर the worker should run again beक्रमe invoking the following
-	 * del_समयr(), it would not re-arm itself once again because the status
+	/* kill the timer and remove its reference */
+	del_timer_sync(&tp_vars->timer);
+	/* the worker might have rearmed itself therefore we kill it again. Note
+	 * that if the worker should run again before invoking the following
+	 * del_timer(), it would not re-arm itself once again because the status
 	 * is OFF now
 	 */
-	del_समयr(&tp_vars->समयr);
+	del_timer(&tp_vars->timer);
 	batadv_tp_vars_put(tp_vars);
-पूर्ण
+}
 
 /**
- * batadv_tp_sender_end() - prपूर्णांक info about ended session and inक्रमm client
- * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
- * @tp_vars: the निजी data of the current TP meter session
+ * batadv_tp_sender_end() - print info about ended session and inform client
+ * @bat_priv: the bat priv with all the soft interface information
+ * @tp_vars: the private data of the current TP meter session
  */
-अटल व्योम batadv_tp_sender_end(काष्ठा batadv_priv *bat_priv,
-				 काष्ठा batadv_tp_vars *tp_vars)
-अणु
+static void batadv_tp_sender_end(struct batadv_priv *bat_priv,
+				 struct batadv_tp_vars *tp_vars)
+{
 	u32 session_cookie;
 
 	batadv_dbg(BATADV_DBG_TP_METER, bat_priv,
@@ -417,84 +416,84 @@ batadv_tp_list_find_session(काष्ठा batadv_priv *bat_priv, स्थ�
 	session_cookie = batadv_tp_session_cookie(tp_vars->session,
 						  tp_vars->icmp_uid);
 
-	batadv_tp_batctl_notअगरy(tp_vars->reason,
+	batadv_tp_batctl_notify(tp_vars->reason,
 				tp_vars->other_end,
 				bat_priv,
-				tp_vars->start_समय,
-				atomic64_पढ़ो(&tp_vars->tot_sent),
+				tp_vars->start_time,
+				atomic64_read(&tp_vars->tot_sent),
 				session_cookie);
-पूर्ण
+}
 
 /**
- * batadv_tp_sender_shutकरोwn() - let sender thपढ़ो/समयr stop gracefully
- * @tp_vars: the निजी data of the current TP meter session
- * @reason: reason क्रम tp meter session stop
+ * batadv_tp_sender_shutdown() - let sender thread/timer stop gracefully
+ * @tp_vars: the private data of the current TP meter session
+ * @reason: reason for tp meter session stop
  */
-अटल व्योम batadv_tp_sender_shutकरोwn(काष्ठा batadv_tp_vars *tp_vars,
-				      क्रमागत batadv_tp_meter_reason reason)
-अणु
-	अगर (!atomic_dec_and_test(&tp_vars->sending))
-		वापस;
+static void batadv_tp_sender_shutdown(struct batadv_tp_vars *tp_vars,
+				      enum batadv_tp_meter_reason reason)
+{
+	if (!atomic_dec_and_test(&tp_vars->sending))
+		return;
 
 	tp_vars->reason = reason;
-पूर्ण
+}
 
 /**
  * batadv_tp_sender_finish() - stop sender session after test_length was reached
  * @work: delayed work reference of the related tp_vars
  */
-अटल व्योम batadv_tp_sender_finish(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा delayed_work *delayed_work;
-	काष्ठा batadv_tp_vars *tp_vars;
+static void batadv_tp_sender_finish(struct work_struct *work)
+{
+	struct delayed_work *delayed_work;
+	struct batadv_tp_vars *tp_vars;
 
 	delayed_work = to_delayed_work(work);
-	tp_vars = container_of(delayed_work, काष्ठा batadv_tp_vars,
+	tp_vars = container_of(delayed_work, struct batadv_tp_vars,
 			       finish_work);
 
-	batadv_tp_sender_shutकरोwn(tp_vars, BATADV_TP_REASON_COMPLETE);
-पूर्ण
+	batadv_tp_sender_shutdown(tp_vars, BATADV_TP_REASON_COMPLETE);
+}
 
 /**
- * batadv_tp_reset_sender_समयr() - reschedule the sender समयr
- * @tp_vars: the निजी TP meter data क्रम this session
+ * batadv_tp_reset_sender_timer() - reschedule the sender timer
+ * @tp_vars: the private TP meter data for this session
  *
- * Reschedule the समयr using tp_vars->rto as delay
+ * Reschedule the timer using tp_vars->rto as delay
  */
-अटल व्योम batadv_tp_reset_sender_समयr(काष्ठा batadv_tp_vars *tp_vars)
-अणु
-	/* most of the समय this function is invoked जबतक normal packet
+static void batadv_tp_reset_sender_timer(struct batadv_tp_vars *tp_vars)
+{
+	/* most of the time this function is invoked while normal packet
 	 * reception...
 	 */
-	अगर (unlikely(atomic_पढ़ो(&tp_vars->sending) == 0))
-		/* समयr ref will be dropped in batadv_tp_sender_cleanup */
-		वापस;
+	if (unlikely(atomic_read(&tp_vars->sending) == 0))
+		/* timer ref will be dropped in batadv_tp_sender_cleanup */
+		return;
 
-	mod_समयr(&tp_vars->समयr, jअगरfies + msecs_to_jअगरfies(tp_vars->rto));
-पूर्ण
+	mod_timer(&tp_vars->timer, jiffies + msecs_to_jiffies(tp_vars->rto));
+}
 
 /**
- * batadv_tp_sender_समयout() - समयr that fires in हाल of packet loss
- * @t: address to समयr_list inside tp_vars
+ * batadv_tp_sender_timeout() - timer that fires in case of packet loss
+ * @t: address to timer_list inside tp_vars
  *
  * If fired it means that there was packet loss.
  * Switch to Slow Start, set the ss_threshold to half of the current cwnd and
  * reset the cwnd to 3*MSS
  */
-अटल व्योम batadv_tp_sender_समयout(काष्ठा समयr_list *t)
-अणु
-	काष्ठा batadv_tp_vars *tp_vars = from_समयr(tp_vars, t, समयr);
-	काष्ठा batadv_priv *bat_priv = tp_vars->bat_priv;
+static void batadv_tp_sender_timeout(struct timer_list *t)
+{
+	struct batadv_tp_vars *tp_vars = from_timer(tp_vars, t, timer);
+	struct batadv_priv *bat_priv = tp_vars->bat_priv;
 
-	अगर (atomic_पढ़ो(&tp_vars->sending) == 0)
-		वापस;
+	if (atomic_read(&tp_vars->sending) == 0)
+		return;
 
-	/* अगर the user रुकोed दीर्घ enough...shutकरोwn the test */
-	अगर (unlikely(tp_vars->rto >= BATADV_TP_MAX_RTO)) अणु
-		batadv_tp_sender_shutकरोwn(tp_vars,
+	/* if the user waited long enough...shutdown the test */
+	if (unlikely(tp_vars->rto >= BATADV_TP_MAX_RTO)) {
+		batadv_tp_sender_shutdown(tp_vars,
 					  BATADV_TP_REASON_DST_UNREACHABLE);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/* RTO exponential backoff
 	 * Details in Section 5.5 of RFC6298
@@ -504,91 +503,91 @@ batadv_tp_list_find_session(काष्ठा batadv_priv *bat_priv, स्थ�
 	spin_lock_bh(&tp_vars->cwnd_lock);
 
 	tp_vars->ss_threshold = tp_vars->cwnd >> 1;
-	अगर (tp_vars->ss_threshold < BATADV_TP_PLEN * 2)
+	if (tp_vars->ss_threshold < BATADV_TP_PLEN * 2)
 		tp_vars->ss_threshold = BATADV_TP_PLEN * 2;
 
 	batadv_dbg(BATADV_DBG_TP_METER, bat_priv,
 		   "Meter: RTO fired during test towards %pM! cwnd=%u new ss_thr=%u, resetting last_sent to %u\n",
 		   tp_vars->other_end, tp_vars->cwnd, tp_vars->ss_threshold,
-		   atomic_पढ़ो(&tp_vars->last_acked));
+		   atomic_read(&tp_vars->last_acked));
 
 	tp_vars->cwnd = BATADV_TP_PLEN * 3;
 
 	spin_unlock_bh(&tp_vars->cwnd_lock);
 
 	/* resend the non-ACKed packets.. */
-	tp_vars->last_sent = atomic_पढ़ो(&tp_vars->last_acked);
+	tp_vars->last_sent = atomic_read(&tp_vars->last_acked);
 	wake_up(&tp_vars->more_bytes);
 
-	batadv_tp_reset_sender_समयr(tp_vars);
-पूर्ण
+	batadv_tp_reset_sender_timer(tp_vars);
+}
 
 /**
- * batadv_tp_fill_preअक्रमom() - Fill buffer with prefetched अक्रमom bytes
- * @tp_vars: the निजी TP meter data क्रम this session
+ * batadv_tp_fill_prerandom() - Fill buffer with prefetched random bytes
+ * @tp_vars: the private TP meter data for this session
  * @buf: Buffer to fill with bytes
- * @nbytes: amount of pseuकरोअक्रमom bytes
+ * @nbytes: amount of pseudorandom bytes
  */
-अटल व्योम batadv_tp_fill_preअक्रमom(काष्ठा batadv_tp_vars *tp_vars,
-				     u8 *buf, माप_प्रकार nbytes)
-अणु
+static void batadv_tp_fill_prerandom(struct batadv_tp_vars *tp_vars,
+				     u8 *buf, size_t nbytes)
+{
 	u32 local_offset;
-	माप_प्रकार bytes_inbuf;
-	माप_प्रकार to_copy;
-	माप_प्रकार pos = 0;
+	size_t bytes_inbuf;
+	size_t to_copy;
+	size_t pos = 0;
 
-	spin_lock_bh(&tp_vars->preअक्रमom_lock);
-	local_offset = tp_vars->preअक्रमom_offset;
-	tp_vars->preअक्रमom_offset += nbytes;
-	tp_vars->preअक्रमom_offset %= माप(batadv_tp_preअक्रमom);
-	spin_unlock_bh(&tp_vars->preअक्रमom_lock);
+	spin_lock_bh(&tp_vars->prerandom_lock);
+	local_offset = tp_vars->prerandom_offset;
+	tp_vars->prerandom_offset += nbytes;
+	tp_vars->prerandom_offset %= sizeof(batadv_tp_prerandom);
+	spin_unlock_bh(&tp_vars->prerandom_lock);
 
-	जबतक (nbytes) अणु
-		local_offset %= माप(batadv_tp_preअक्रमom);
-		bytes_inbuf = माप(batadv_tp_preअक्रमom) - local_offset;
+	while (nbytes) {
+		local_offset %= sizeof(batadv_tp_prerandom);
+		bytes_inbuf = sizeof(batadv_tp_prerandom) - local_offset;
 		to_copy = min(nbytes, bytes_inbuf);
 
-		स_नकल(&buf[pos], &batadv_tp_preअक्रमom[local_offset], to_copy);
+		memcpy(&buf[pos], &batadv_tp_prerandom[local_offset], to_copy);
 		pos += to_copy;
 		nbytes -= to_copy;
 		local_offset = 0;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
  * batadv_tp_send_msg() - send a single message
- * @tp_vars: the निजी TP meter data क्रम this session
+ * @tp_vars: the private TP meter data for this session
  * @src: source mac address
  * @orig_node: the originator of the destination
  * @seqno: sequence number of this packet
  * @len: length of the entire packet
- * @session: session identअगरier
+ * @session: session identifier
  * @uid: local ICMP "socket" index
- * @बारtamp: बारtamp in jअगरfies which is replied in ack
+ * @timestamp: timestamp in jiffies which is replied in ack
  *
  * Create and send a single TP Meter message.
  *
- * Return: 0 on success, BATADV_TP_REASON_DST_UNREACHABLE अगर the destination is
- * not reachable, BATADV_TP_REASON_MEMORY_ERROR अगर the packet couldn't be
+ * Return: 0 on success, BATADV_TP_REASON_DST_UNREACHABLE if the destination is
+ * not reachable, BATADV_TP_REASON_MEMORY_ERROR if the packet couldn't be
  * allocated
  */
-अटल पूर्णांक batadv_tp_send_msg(काष्ठा batadv_tp_vars *tp_vars, स्थिर u8 *src,
-			      काष्ठा batadv_orig_node *orig_node,
-			      u32 seqno, माप_प्रकार len, स्थिर u8 *session,
-			      पूर्णांक uid, u32 बारtamp)
-अणु
-	काष्ठा batadv_icmp_tp_packet *icmp;
-	काष्ठा sk_buff *skb;
-	पूर्णांक r;
+static int batadv_tp_send_msg(struct batadv_tp_vars *tp_vars, const u8 *src,
+			      struct batadv_orig_node *orig_node,
+			      u32 seqno, size_t len, const u8 *session,
+			      int uid, u32 timestamp)
+{
+	struct batadv_icmp_tp_packet *icmp;
+	struct sk_buff *skb;
+	int r;
 	u8 *data;
-	माप_प्रकार data_len;
+	size_t data_len;
 
-	skb = netdev_alloc_skb_ip_align(शून्य, len + ETH_HLEN);
-	अगर (unlikely(!skb))
-		वापस BATADV_TP_REASON_MEMORY_ERROR;
+	skb = netdev_alloc_skb_ip_align(NULL, len + ETH_HLEN);
+	if (unlikely(!skb))
+		return BATADV_TP_REASON_MEMORY_ERROR;
 
 	skb_reserve(skb, ETH_HLEN);
-	icmp = skb_put(skb, माप(*icmp));
+	icmp = skb_put(skb, sizeof(*icmp));
 
 	/* fill the icmp header */
 	ether_addr_copy(icmp->dst, orig_node->orig);
@@ -600,91 +599,91 @@ batadv_tp_list_find_session(काष्ठा batadv_priv *bat_priv, स्थ�
 	icmp->uid = uid;
 
 	icmp->subtype = BATADV_TP_MSG;
-	स_नकल(icmp->session, session, माप(icmp->session));
+	memcpy(icmp->session, session, sizeof(icmp->session));
 	icmp->seqno = htonl(seqno);
-	icmp->बारtamp = htonl(बारtamp);
+	icmp->timestamp = htonl(timestamp);
 
-	data_len = len - माप(*icmp);
+	data_len = len - sizeof(*icmp);
 	data = skb_put(skb, data_len);
-	batadv_tp_fill_preअक्रमom(tp_vars, data, data_len);
+	batadv_tp_fill_prerandom(tp_vars, data, data_len);
 
-	r = batadv_send_skb_to_orig(skb, orig_node, शून्य);
-	अगर (r == NET_XMIT_SUCCESS)
-		वापस 0;
+	r = batadv_send_skb_to_orig(skb, orig_node, NULL);
+	if (r == NET_XMIT_SUCCESS)
+		return 0;
 
-	वापस BATADV_TP_REASON_CANT_SEND;
-पूर्ण
+	return BATADV_TP_REASON_CANT_SEND;
+}
 
 /**
  * batadv_tp_recv_ack() - ACK receiving function
- * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
+ * @bat_priv: the bat priv with all the soft interface information
  * @skb: the buffer containing the received packet
  *
  * Process a received TP ACK packet
  */
-अटल व्योम batadv_tp_recv_ack(काष्ठा batadv_priv *bat_priv,
-			       स्थिर काष्ठा sk_buff *skb)
-अणु
-	काष्ठा batadv_hard_अगरace *primary_अगर = शून्य;
-	काष्ठा batadv_orig_node *orig_node = शून्य;
-	स्थिर काष्ठा batadv_icmp_tp_packet *icmp;
-	काष्ठा batadv_tp_vars *tp_vars;
-	माप_प्रकार packet_len, mss;
+static void batadv_tp_recv_ack(struct batadv_priv *bat_priv,
+			       const struct sk_buff *skb)
+{
+	struct batadv_hard_iface *primary_if = NULL;
+	struct batadv_orig_node *orig_node = NULL;
+	const struct batadv_icmp_tp_packet *icmp;
+	struct batadv_tp_vars *tp_vars;
+	size_t packet_len, mss;
 	u32 rtt, recv_ack, cwnd;
-	अचिन्हित अक्षर *dev_addr;
+	unsigned char *dev_addr;
 
 	packet_len = BATADV_TP_PLEN;
 	mss = BATADV_TP_PLEN;
-	packet_len += माप(काष्ठा batadv_unicast_packet);
+	packet_len += sizeof(struct batadv_unicast_packet);
 
-	icmp = (काष्ठा batadv_icmp_tp_packet *)skb->data;
+	icmp = (struct batadv_icmp_tp_packet *)skb->data;
 
 	/* find the tp_vars */
 	tp_vars = batadv_tp_list_find_session(bat_priv, icmp->orig,
 					      icmp->session);
-	अगर (unlikely(!tp_vars))
-		वापस;
+	if (unlikely(!tp_vars))
+		return;
 
-	अगर (unlikely(atomic_पढ़ो(&tp_vars->sending) == 0))
-		जाओ out;
+	if (unlikely(atomic_read(&tp_vars->sending) == 0))
+		goto out;
 
 	/* old ACK? silently drop it.. */
-	अगर (batadv_seq_beक्रमe(ntohl(icmp->seqno),
-			      (u32)atomic_पढ़ो(&tp_vars->last_acked)))
-		जाओ out;
+	if (batadv_seq_before(ntohl(icmp->seqno),
+			      (u32)atomic_read(&tp_vars->last_acked)))
+		goto out;
 
-	primary_अगर = batadv_primary_अगर_get_selected(bat_priv);
-	अगर (unlikely(!primary_अगर))
-		जाओ out;
+	primary_if = batadv_primary_if_get_selected(bat_priv);
+	if (unlikely(!primary_if))
+		goto out;
 
 	orig_node = batadv_orig_hash_find(bat_priv, icmp->orig);
-	अगर (unlikely(!orig_node))
-		जाओ out;
+	if (unlikely(!orig_node))
+		goto out;
 
-	/* update RTO with the new sampled RTT, अगर any */
-	rtt = jअगरfies_to_msecs(jअगरfies) - ntohl(icmp->बारtamp);
-	अगर (icmp->बारtamp && rtt)
+	/* update RTO with the new sampled RTT, if any */
+	rtt = jiffies_to_msecs(jiffies) - ntohl(icmp->timestamp);
+	if (icmp->timestamp && rtt)
 		batadv_tp_update_rto(tp_vars, rtt);
 
-	/* ACK क्रम new data... reset the समयr */
-	batadv_tp_reset_sender_समयr(tp_vars);
+	/* ACK for new data... reset the timer */
+	batadv_tp_reset_sender_timer(tp_vars);
 
 	recv_ack = ntohl(icmp->seqno);
 
-	/* check अगर this ACK is a duplicate */
-	अगर (atomic_पढ़ो(&tp_vars->last_acked) == recv_ack) अणु
+	/* check if this ACK is a duplicate */
+	if (atomic_read(&tp_vars->last_acked) == recv_ack) {
 		atomic_inc(&tp_vars->dup_acks);
-		अगर (atomic_पढ़ो(&tp_vars->dup_acks) != 3)
-			जाओ out;
+		if (atomic_read(&tp_vars->dup_acks) != 3)
+			goto out;
 
-		अगर (recv_ack >= tp_vars->recover)
-			जाओ out;
+		if (recv_ack >= tp_vars->recover)
+			goto out;
 
-		/* अगर this is the third duplicate ACK करो Fast Retransmit */
-		batadv_tp_send_msg(tp_vars, primary_अगर->net_dev->dev_addr,
+		/* if this is the third duplicate ACK do Fast Retransmit */
+		batadv_tp_send_msg(tp_vars, primary_if->net_dev->dev_addr,
 				   orig_node, recv_ack, packet_len,
 				   icmp->session, icmp->uid,
-				   jअगरfies_to_msecs(jअगरfies));
+				   jiffies_to_msecs(jiffies));
 
 		spin_lock_bh(&tp_vars->cwnd_lock);
 
@@ -705,29 +704,29 @@ batadv_tp_list_find_session(काष्ठा batadv_priv *bat_priv, स्थ�
 		tp_vars->last_sent = recv_ack;
 
 		spin_unlock_bh(&tp_vars->cwnd_lock);
-	पूर्ण अन्यथा अणु
+	} else {
 		/* count the acked data */
-		atomic64_add(recv_ack - atomic_पढ़ो(&tp_vars->last_acked),
+		atomic64_add(recv_ack - atomic_read(&tp_vars->last_acked),
 			     &tp_vars->tot_sent);
 		/* reset the duplicate ACKs counter */
 		atomic_set(&tp_vars->dup_acks, 0);
 
-		अगर (tp_vars->fast_recovery) अणु
+		if (tp_vars->fast_recovery) {
 			/* partial ACK */
-			अगर (batadv_seq_beक्रमe(recv_ack, tp_vars->recover)) अणु
-				/* this is another hole in the winकरोw. React
-				 * immediately as specअगरied by NewReno (see
-				 * Section 3.2 of RFC6582 क्रम details)
+			if (batadv_seq_before(recv_ack, tp_vars->recover)) {
+				/* this is another hole in the window. React
+				 * immediately as specified by NewReno (see
+				 * Section 3.2 of RFC6582 for details)
 				 */
-				dev_addr = primary_अगर->net_dev->dev_addr;
+				dev_addr = primary_if->net_dev->dev_addr;
 				batadv_tp_send_msg(tp_vars, dev_addr,
 						   orig_node, recv_ack,
 						   packet_len, icmp->session,
 						   icmp->uid,
-						   jअगरfies_to_msecs(jअगरfies));
+						   jiffies_to_msecs(jiffies));
 				tp_vars->cwnd = batadv_tp_cwnd(tp_vars->cwnd,
 							       mss, mss);
-			पूर्ण अन्यथा अणु
+			} else {
 				tp_vars->fast_recovery = false;
 				/* set cwnd to the value of ss_threshold at the
 				 * moment that Fast Recovery was entered.
@@ -736,156 +735,156 @@ batadv_tp_list_find_session(काष्ठा batadv_priv *bat_priv, स्थ�
 				cwnd = batadv_tp_cwnd(tp_vars->ss_threshold, 0,
 						      mss);
 				tp_vars->cwnd = cwnd;
-			पूर्ण
-			जाओ move_twnd;
-		पूर्ण
+			}
+			goto move_twnd;
+		}
 
-		अगर (recv_ack - atomic_पढ़ो(&tp_vars->last_acked) >= mss)
+		if (recv_ack - atomic_read(&tp_vars->last_acked) >= mss)
 			batadv_tp_update_cwnd(tp_vars, mss);
 move_twnd:
-		/* move the Transmit Winकरोw */
+		/* move the Transmit Window */
 		atomic_set(&tp_vars->last_acked, recv_ack);
-	पूर्ण
+	}
 
 	wake_up(&tp_vars->more_bytes);
 out:
-	अगर (likely(primary_अगर))
-		batadv_hardअगर_put(primary_अगर);
-	अगर (likely(orig_node))
+	if (likely(primary_if))
+		batadv_hardif_put(primary_if);
+	if (likely(orig_node))
 		batadv_orig_node_put(orig_node);
-	अगर (likely(tp_vars))
+	if (likely(tp_vars))
 		batadv_tp_vars_put(tp_vars);
-पूर्ण
+}
 
 /**
- * batadv_tp_avail() - check अगर congestion winकरोw is not full
- * @tp_vars: the निजी data of the current TP meter session
+ * batadv_tp_avail() - check if congestion window is not full
+ * @tp_vars: the private data of the current TP meter session
  * @payload_len: size of the payload of a single message
  *
- * Return: true when congestion winकरोw is not full, false otherwise
+ * Return: true when congestion window is not full, false otherwise
  */
-अटल bool batadv_tp_avail(काष्ठा batadv_tp_vars *tp_vars,
-			    माप_प्रकार payload_len)
-अणु
+static bool batadv_tp_avail(struct batadv_tp_vars *tp_vars,
+			    size_t payload_len)
+{
 	u32 win_left, win_limit;
 
-	win_limit = atomic_पढ़ो(&tp_vars->last_acked) + tp_vars->cwnd;
+	win_limit = atomic_read(&tp_vars->last_acked) + tp_vars->cwnd;
 	win_left = win_limit - tp_vars->last_sent;
 
-	वापस win_left >= payload_len;
-पूर्ण
+	return win_left >= payload_len;
+}
 
 /**
- * batadv_tp_रुको_available() - रुको until congestion winकरोw becomes मुक्त or
- *  समयout is reached
- * @tp_vars: the निजी data of the current TP meter session
+ * batadv_tp_wait_available() - wait until congestion window becomes free or
+ *  timeout is reached
+ * @tp_vars: the private data of the current TP meter session
  * @plen: size of the payload of a single message
  *
- * Return: 0 अगर the condition evaluated to false after the समयout elapsed,
- *  1 अगर the condition evaluated to true after the समयout elapsed, the
- *  reमुख्यing jअगरfies (at least 1) अगर the condition evaluated to true beक्रमe
- *  the समयout elapsed, or -ERESTARTSYS अगर it was पूर्णांकerrupted by a संकेत.
+ * Return: 0 if the condition evaluated to false after the timeout elapsed,
+ *  1 if the condition evaluated to true after the timeout elapsed, the
+ *  remaining jiffies (at least 1) if the condition evaluated to true before
+ *  the timeout elapsed, or -ERESTARTSYS if it was interrupted by a signal.
  */
-अटल पूर्णांक batadv_tp_रुको_available(काष्ठा batadv_tp_vars *tp_vars, माप_प्रकार plen)
-अणु
-	पूर्णांक ret;
+static int batadv_tp_wait_available(struct batadv_tp_vars *tp_vars, size_t plen)
+{
+	int ret;
 
-	ret = रुको_event_पूर्णांकerruptible_समयout(tp_vars->more_bytes,
+	ret = wait_event_interruptible_timeout(tp_vars->more_bytes,
 					       batadv_tp_avail(tp_vars, plen),
 					       HZ / 10);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * batadv_tp_send() - मुख्य sending thपढ़ो of a tp meter session
+ * batadv_tp_send() - main sending thread of a tp meter session
  * @arg: address of the related tp_vars
  *
- * Return: nothing, this function never वापसs
+ * Return: nothing, this function never returns
  */
-अटल पूर्णांक batadv_tp_send(व्योम *arg)
-अणु
-	काष्ठा batadv_tp_vars *tp_vars = arg;
-	काष्ठा batadv_priv *bat_priv = tp_vars->bat_priv;
-	काष्ठा batadv_hard_अगरace *primary_अगर = शून्य;
-	काष्ठा batadv_orig_node *orig_node = शून्य;
-	माप_प्रकार payload_len, packet_len;
-	पूर्णांक err = 0;
+static int batadv_tp_send(void *arg)
+{
+	struct batadv_tp_vars *tp_vars = arg;
+	struct batadv_priv *bat_priv = tp_vars->bat_priv;
+	struct batadv_hard_iface *primary_if = NULL;
+	struct batadv_orig_node *orig_node = NULL;
+	size_t payload_len, packet_len;
+	int err = 0;
 
-	अगर (unlikely(tp_vars->role != BATADV_TP_SENDER)) अणु
+	if (unlikely(tp_vars->role != BATADV_TP_SENDER)) {
 		err = BATADV_TP_REASON_DST_UNREACHABLE;
 		tp_vars->reason = err;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	orig_node = batadv_orig_hash_find(bat_priv, tp_vars->other_end);
-	अगर (unlikely(!orig_node)) अणु
+	if (unlikely(!orig_node)) {
 		err = BATADV_TP_REASON_DST_UNREACHABLE;
 		tp_vars->reason = err;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	primary_अगर = batadv_primary_अगर_get_selected(bat_priv);
-	अगर (unlikely(!primary_अगर)) अणु
+	primary_if = batadv_primary_if_get_selected(bat_priv);
+	if (unlikely(!primary_if)) {
 		err = BATADV_TP_REASON_DST_UNREACHABLE;
 		tp_vars->reason = err;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	/* assume that all the hard_पूर्णांकerfaces have a correctly
-	 * configured MTU, so use the soft_अगरace MTU as MSS.
-	 * This might not be true and in that हाल the fragmentation
+	/* assume that all the hard_interfaces have a correctly
+	 * configured MTU, so use the soft_iface MTU as MSS.
+	 * This might not be true and in that case the fragmentation
 	 * should be used.
 	 * Now, try to send the packet as it is
 	 */
 	payload_len = BATADV_TP_PLEN;
-	BUILD_BUG_ON(माप(काष्ठा batadv_icmp_tp_packet) > BATADV_TP_PLEN);
+	BUILD_BUG_ON(sizeof(struct batadv_icmp_tp_packet) > BATADV_TP_PLEN);
 
-	batadv_tp_reset_sender_समयr(tp_vars);
+	batadv_tp_reset_sender_timer(tp_vars);
 
-	/* queue the worker in अक्षरge of terminating the test */
+	/* queue the worker in charge of terminating the test */
 	queue_delayed_work(batadv_event_workqueue, &tp_vars->finish_work,
-			   msecs_to_jअगरfies(tp_vars->test_length));
+			   msecs_to_jiffies(tp_vars->test_length));
 
-	जबतक (atomic_पढ़ो(&tp_vars->sending) != 0) अणु
-		अगर (unlikely(!batadv_tp_avail(tp_vars, payload_len))) अणु
-			batadv_tp_रुको_available(tp_vars, payload_len);
-			जारी;
-		पूर्ण
+	while (atomic_read(&tp_vars->sending) != 0) {
+		if (unlikely(!batadv_tp_avail(tp_vars, payload_len))) {
+			batadv_tp_wait_available(tp_vars, payload_len);
+			continue;
+		}
 
 		/* to emulate normal unicast traffic, add to the payload len
 		 * the size of the unicast header
 		 */
-		packet_len = payload_len + माप(काष्ठा batadv_unicast_packet);
+		packet_len = payload_len + sizeof(struct batadv_unicast_packet);
 
-		err = batadv_tp_send_msg(tp_vars, primary_अगर->net_dev->dev_addr,
+		err = batadv_tp_send_msg(tp_vars, primary_if->net_dev->dev_addr,
 					 orig_node, tp_vars->last_sent,
 					 packet_len,
 					 tp_vars->session, tp_vars->icmp_uid,
-					 jअगरfies_to_msecs(jअगरfies));
+					 jiffies_to_msecs(jiffies));
 
 		/* something went wrong during the preparation/transmission */
-		अगर (unlikely(err && err != BATADV_TP_REASON_CANT_SEND)) अणु
+		if (unlikely(err && err != BATADV_TP_REASON_CANT_SEND)) {
 			batadv_dbg(BATADV_DBG_TP_METER, bat_priv,
 				   "Meter: %s() cannot send packets (%d)\n",
 				   __func__, err);
-			/* ensure nobody अन्यथा tries to stop the thपढ़ो now */
-			अगर (atomic_dec_and_test(&tp_vars->sending))
+			/* ensure nobody else tries to stop the thread now */
+			if (atomic_dec_and_test(&tp_vars->sending))
 				tp_vars->reason = err;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		/* right-shअगरt the TWND */
-		अगर (!err)
+		/* right-shift the TWND */
+		if (!err)
 			tp_vars->last_sent += payload_len;
 
 		cond_resched();
-	पूर्ण
+	}
 
 out:
-	अगर (likely(primary_अगर))
-		batadv_hardअगर_put(primary_अगर);
-	अगर (likely(orig_node))
+	if (likely(primary_if))
+		batadv_hardif_put(primary_if);
+	if (likely(orig_node))
 		batadv_orig_node_put(orig_node);
 
 	batadv_tp_sender_end(bat_priv, tp_vars);
@@ -893,100 +892,100 @@ out:
 
 	batadv_tp_vars_put(tp_vars);
 
-	करो_निकास(0);
-पूर्ण
+	do_exit(0);
+}
 
 /**
- * batadv_tp_start_kthपढ़ो() - start new thपढ़ो which manages the tp meter
+ * batadv_tp_start_kthread() - start new thread which manages the tp meter
  *  sender
- * @tp_vars: the निजी data of the current TP meter session
+ * @tp_vars: the private data of the current TP meter session
  */
-अटल व्योम batadv_tp_start_kthपढ़ो(काष्ठा batadv_tp_vars *tp_vars)
-अणु
-	काष्ठा task_काष्ठा *kthपढ़ो;
-	काष्ठा batadv_priv *bat_priv = tp_vars->bat_priv;
+static void batadv_tp_start_kthread(struct batadv_tp_vars *tp_vars)
+{
+	struct task_struct *kthread;
+	struct batadv_priv *bat_priv = tp_vars->bat_priv;
 	u32 session_cookie;
 
 	kref_get(&tp_vars->refcount);
-	kthपढ़ो = kthपढ़ो_create(batadv_tp_send, tp_vars, "kbatadv_tp_meter");
-	अगर (IS_ERR(kthपढ़ो)) अणु
+	kthread = kthread_create(batadv_tp_send, tp_vars, "kbatadv_tp_meter");
+	if (IS_ERR(kthread)) {
 		session_cookie = batadv_tp_session_cookie(tp_vars->session,
 							  tp_vars->icmp_uid);
 		pr_err("batadv: cannot create tp meter kthread\n");
-		batadv_tp_batctl_error_notअगरy(BATADV_TP_REASON_MEMORY_ERROR,
+		batadv_tp_batctl_error_notify(BATADV_TP_REASON_MEMORY_ERROR,
 					      tp_vars->other_end,
 					      bat_priv, session_cookie);
 
-		/* drop reserved reference क्रम kthपढ़ो */
+		/* drop reserved reference for kthread */
 		batadv_tp_vars_put(tp_vars);
 
 		/* cleanup of failed tp meter variables */
 		batadv_tp_sender_cleanup(bat_priv, tp_vars);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	wake_up_process(kthपढ़ो);
-पूर्ण
+	wake_up_process(kthread);
+}
 
 /**
  * batadv_tp_start() - start a new tp meter session
- * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
+ * @bat_priv: the bat priv with all the soft interface information
  * @dst: the receiver MAC address
  * @test_length: test length in milliseconds
  * @cookie: session cookie
  */
-व्योम batadv_tp_start(काष्ठा batadv_priv *bat_priv, स्थिर u8 *dst,
+void batadv_tp_start(struct batadv_priv *bat_priv, const u8 *dst,
 		     u32 test_length, u32 *cookie)
-अणु
-	काष्ठा batadv_tp_vars *tp_vars;
+{
+	struct batadv_tp_vars *tp_vars;
 	u8 session_id[2];
 	u8 icmp_uid;
 	u32 session_cookie;
 
-	get_अक्रमom_bytes(session_id, माप(session_id));
-	get_अक्रमom_bytes(&icmp_uid, 1);
+	get_random_bytes(session_id, sizeof(session_id));
+	get_random_bytes(&icmp_uid, 1);
 	session_cookie = batadv_tp_session_cookie(session_id, icmp_uid);
 	*cookie = session_cookie;
 
-	/* look क्रम an alपढ़ोy existing test towards this node */
+	/* look for an already existing test towards this node */
 	spin_lock_bh(&bat_priv->tp_list_lock);
 	tp_vars = batadv_tp_list_find(bat_priv, dst);
-	अगर (tp_vars) अणु
+	if (tp_vars) {
 		spin_unlock_bh(&bat_priv->tp_list_lock);
 		batadv_tp_vars_put(tp_vars);
 		batadv_dbg(BATADV_DBG_TP_METER, bat_priv,
 			   "Meter: test to or from the same node already ongoing, aborting\n");
-		batadv_tp_batctl_error_notअगरy(BATADV_TP_REASON_ALREADY_ONGOING,
+		batadv_tp_batctl_error_notify(BATADV_TP_REASON_ALREADY_ONGOING,
 					      dst, bat_priv, session_cookie);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (!atomic_add_unless(&bat_priv->tp_num, 1, BATADV_TP_MAX_NUM)) अणु
+	if (!atomic_add_unless(&bat_priv->tp_num, 1, BATADV_TP_MAX_NUM)) {
 		spin_unlock_bh(&bat_priv->tp_list_lock);
 		batadv_dbg(BATADV_DBG_TP_METER, bat_priv,
 			   "Meter: too many ongoing sessions, aborting (SEND)\n");
-		batadv_tp_batctl_error_notअगरy(BATADV_TP_REASON_TOO_MANY, dst,
+		batadv_tp_batctl_error_notify(BATADV_TP_REASON_TOO_MANY, dst,
 					      bat_priv, session_cookie);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	tp_vars = kदो_स्मृति(माप(*tp_vars), GFP_ATOMIC);
-	अगर (!tp_vars) अणु
+	tp_vars = kmalloc(sizeof(*tp_vars), GFP_ATOMIC);
+	if (!tp_vars) {
 		spin_unlock_bh(&bat_priv->tp_list_lock);
 		batadv_dbg(BATADV_DBG_TP_METER, bat_priv,
 			   "Meter: %s cannot allocate list elements\n",
 			   __func__);
-		batadv_tp_batctl_error_notअगरy(BATADV_TP_REASON_MEMORY_ERROR,
+		batadv_tp_batctl_error_notify(BATADV_TP_REASON_MEMORY_ERROR,
 					      dst, bat_priv, session_cookie);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/* initialize tp_vars */
 	ether_addr_copy(tp_vars->other_end, dst);
 	kref_init(&tp_vars->refcount);
 	tp_vars->role = BATADV_TP_SENDER;
 	atomic_set(&tp_vars->sending, 1);
-	स_नकल(tp_vars->session, session_id, माप(session_id));
+	memcpy(tp_vars->session, session_id, sizeof(session_id));
 	tp_vars->icmp_uid = icmp_uid;
 
 	tp_vars->last_sent = BATADV_TP_FIRST_SEQ;
@@ -995,12 +994,12 @@ out:
 	tp_vars->recover = BATADV_TP_FIRST_SEQ;
 
 	/* initialise the CWND to 3*MSS (Section 3.1 in RFC5681).
-	 * For baपंचांगan-adv the MSS is the size of the payload received by the
-	 * soft_पूर्णांकerface, hence its MTU
+	 * For batman-adv the MSS is the size of the payload received by the
+	 * soft_interface, hence its MTU
 	 */
 	tp_vars->cwnd = BATADV_TP_PLEN * 3;
 	/* at the beginning initialise the SS threshold to the biggest possible
-	 * winकरोw size, hence the AWND size
+	 * window size, hence the AWND size
 	 */
 	tp_vars->ss_threshold = BATADV_TP_AWND;
 
@@ -1014,109 +1013,109 @@ out:
 	atomic64_set(&tp_vars->tot_sent, 0);
 
 	kref_get(&tp_vars->refcount);
-	समयr_setup(&tp_vars->समयr, batadv_tp_sender_समयout, 0);
+	timer_setup(&tp_vars->timer, batadv_tp_sender_timeout, 0);
 
 	tp_vars->bat_priv = bat_priv;
-	tp_vars->start_समय = jअगरfies;
+	tp_vars->start_time = jiffies;
 
-	init_रुकोqueue_head(&tp_vars->more_bytes);
+	init_waitqueue_head(&tp_vars->more_bytes);
 
 	spin_lock_init(&tp_vars->unacked_lock);
 	INIT_LIST_HEAD(&tp_vars->unacked_list);
 
 	spin_lock_init(&tp_vars->cwnd_lock);
 
-	tp_vars->preअक्रमom_offset = 0;
-	spin_lock_init(&tp_vars->preअक्रमom_lock);
+	tp_vars->prerandom_offset = 0;
+	spin_lock_init(&tp_vars->prerandom_lock);
 
 	kref_get(&tp_vars->refcount);
 	hlist_add_head_rcu(&tp_vars->list, &bat_priv->tp_list);
 	spin_unlock_bh(&bat_priv->tp_list_lock);
 
 	tp_vars->test_length = test_length;
-	अगर (!tp_vars->test_length)
+	if (!tp_vars->test_length)
 		tp_vars->test_length = BATADV_TP_DEF_TEST_LENGTH;
 
 	batadv_dbg(BATADV_DBG_TP_METER, bat_priv,
 		   "Meter: starting throughput meter towards %pM (length=%ums)\n",
 		   dst, test_length);
 
-	/* init work item क्रम finished tp tests */
+	/* init work item for finished tp tests */
 	INIT_DELAYED_WORK(&tp_vars->finish_work, batadv_tp_sender_finish);
 
-	/* start tp kthपढ़ो. This way the ग_लिखो() call issued from userspace can
-	 * happily वापस and aव्योम to block
+	/* start tp kthread. This way the write() call issued from userspace can
+	 * happily return and avoid to block
 	 */
-	batadv_tp_start_kthपढ़ो(tp_vars);
+	batadv_tp_start_kthread(tp_vars);
 
-	/* करोn't वापस reference to new tp_vars */
+	/* don't return reference to new tp_vars */
 	batadv_tp_vars_put(tp_vars);
-पूर्ण
+}
 
 /**
  * batadv_tp_stop() - stop currently running tp meter session
- * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
+ * @bat_priv: the bat priv with all the soft interface information
  * @dst: the receiver MAC address
- * @वापस_value: reason क्रम tp meter session stop
+ * @return_value: reason for tp meter session stop
  */
-व्योम batadv_tp_stop(काष्ठा batadv_priv *bat_priv, स्थिर u8 *dst,
-		    u8 वापस_value)
-अणु
-	काष्ठा batadv_orig_node *orig_node;
-	काष्ठा batadv_tp_vars *tp_vars;
+void batadv_tp_stop(struct batadv_priv *bat_priv, const u8 *dst,
+		    u8 return_value)
+{
+	struct batadv_orig_node *orig_node;
+	struct batadv_tp_vars *tp_vars;
 
 	batadv_dbg(BATADV_DBG_TP_METER, bat_priv,
 		   "Meter: stopping test towards %pM\n", dst);
 
 	orig_node = batadv_orig_hash_find(bat_priv, dst);
-	अगर (!orig_node)
-		वापस;
+	if (!orig_node)
+		return;
 
 	tp_vars = batadv_tp_list_find(bat_priv, orig_node->orig);
-	अगर (!tp_vars) अणु
+	if (!tp_vars) {
 		batadv_dbg(BATADV_DBG_TP_METER, bat_priv,
 			   "Meter: trying to interrupt an already over connection\n");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	batadv_tp_sender_shutकरोwn(tp_vars, वापस_value);
+	batadv_tp_sender_shutdown(tp_vars, return_value);
 	batadv_tp_vars_put(tp_vars);
 out:
 	batadv_orig_node_put(orig_node);
-पूर्ण
+}
 
 /**
- * batadv_tp_reset_receiver_समयr() - reset the receiver shutकरोwn समयr
- * @tp_vars: the निजी data of the current TP meter session
+ * batadv_tp_reset_receiver_timer() - reset the receiver shutdown timer
+ * @tp_vars: the private data of the current TP meter session
  *
- * start the receiver shutकरोwn समयr or reset it अगर alपढ़ोy started
+ * start the receiver shutdown timer or reset it if already started
  */
-अटल व्योम batadv_tp_reset_receiver_समयr(काष्ठा batadv_tp_vars *tp_vars)
-अणु
-	mod_समयr(&tp_vars->समयr,
-		  jअगरfies + msecs_to_jअगरfies(BATADV_TP_RECV_TIMEOUT));
-पूर्ण
+static void batadv_tp_reset_receiver_timer(struct batadv_tp_vars *tp_vars)
+{
+	mod_timer(&tp_vars->timer,
+		  jiffies + msecs_to_jiffies(BATADV_TP_RECV_TIMEOUT));
+}
 
 /**
- * batadv_tp_receiver_shutकरोwn() - stop a tp meter receiver when समयout is
+ * batadv_tp_receiver_shutdown() - stop a tp meter receiver when timeout is
  *  reached without received ack
- * @t: address to समयr_list inside tp_vars
+ * @t: address to timer_list inside tp_vars
  */
-अटल व्योम batadv_tp_receiver_shutकरोwn(काष्ठा समयr_list *t)
-अणु
-	काष्ठा batadv_tp_vars *tp_vars = from_समयr(tp_vars, t, समयr);
-	काष्ठा batadv_tp_unacked *un, *safe;
-	काष्ठा batadv_priv *bat_priv;
+static void batadv_tp_receiver_shutdown(struct timer_list *t)
+{
+	struct batadv_tp_vars *tp_vars = from_timer(tp_vars, t, timer);
+	struct batadv_tp_unacked *un, *safe;
+	struct batadv_priv *bat_priv;
 
 	bat_priv = tp_vars->bat_priv;
 
-	/* अगर there is recent activity rearm the समयr */
-	अगर (!batadv_has_समयd_out(tp_vars->last_recv_समय,
-				  BATADV_TP_RECV_TIMEOUT)) अणु
-		/* reset the receiver shutकरोwn समयr */
-		batadv_tp_reset_receiver_समयr(tp_vars);
-		वापस;
-	पूर्ण
+	/* if there is recent activity rearm the timer */
+	if (!batadv_has_timed_out(tp_vars->last_recv_time,
+				  BATADV_TP_RECV_TIMEOUT)) {
+		/* reset the receiver shutdown timer */
+		batadv_tp_reset_receiver_timer(tp_vars);
+		return;
+	}
 
 	batadv_dbg(BATADV_DBG_TP_METER, bat_priv,
 		   "Shutting down for inactivity (more than %dms) from %pM\n",
@@ -1132,144 +1131,144 @@ out:
 	atomic_dec(&bat_priv->tp_num);
 
 	spin_lock_bh(&tp_vars->unacked_lock);
-	list_क्रम_each_entry_safe(un, safe, &tp_vars->unacked_list, list) अणु
+	list_for_each_entry_safe(un, safe, &tp_vars->unacked_list, list) {
 		list_del(&un->list);
-		kमुक्त(un);
-	पूर्ण
+		kfree(un);
+	}
 	spin_unlock_bh(&tp_vars->unacked_lock);
 
-	/* drop reference of समयr */
+	/* drop reference of timer */
 	batadv_tp_vars_put(tp_vars);
-पूर्ण
+}
 
 /**
  * batadv_tp_send_ack() - send an ACK packet
- * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
+ * @bat_priv: the bat priv with all the soft interface information
  * @dst: the mac address of the destination originator
  * @seq: the sequence number to ACK
- * @बारtamp: the बारtamp to echo back in the ACK
- * @session: session identअगरier
- * @socket_index: local ICMP socket identअगरier
+ * @timestamp: the timestamp to echo back in the ACK
+ * @session: session identifier
+ * @socket_index: local ICMP socket identifier
  *
- * Return: 0 on success, a positive पूर्णांकeger representing the reason of the
+ * Return: 0 on success, a positive integer representing the reason of the
  * failure otherwise
  */
-अटल पूर्णांक batadv_tp_send_ack(काष्ठा batadv_priv *bat_priv, स्थिर u8 *dst,
-			      u32 seq, __be32 बारtamp, स्थिर u8 *session,
-			      पूर्णांक socket_index)
-अणु
-	काष्ठा batadv_hard_अगरace *primary_अगर = शून्य;
-	काष्ठा batadv_orig_node *orig_node;
-	काष्ठा batadv_icmp_tp_packet *icmp;
-	काष्ठा sk_buff *skb;
-	पूर्णांक r, ret;
+static int batadv_tp_send_ack(struct batadv_priv *bat_priv, const u8 *dst,
+			      u32 seq, __be32 timestamp, const u8 *session,
+			      int socket_index)
+{
+	struct batadv_hard_iface *primary_if = NULL;
+	struct batadv_orig_node *orig_node;
+	struct batadv_icmp_tp_packet *icmp;
+	struct sk_buff *skb;
+	int r, ret;
 
 	orig_node = batadv_orig_hash_find(bat_priv, dst);
-	अगर (unlikely(!orig_node)) अणु
+	if (unlikely(!orig_node)) {
 		ret = BATADV_TP_REASON_DST_UNREACHABLE;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	primary_अगर = batadv_primary_अगर_get_selected(bat_priv);
-	अगर (unlikely(!primary_अगर)) अणु
+	primary_if = batadv_primary_if_get_selected(bat_priv);
+	if (unlikely(!primary_if)) {
 		ret = BATADV_TP_REASON_DST_UNREACHABLE;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	skb = netdev_alloc_skb_ip_align(शून्य, माप(*icmp) + ETH_HLEN);
-	अगर (unlikely(!skb)) अणु
+	skb = netdev_alloc_skb_ip_align(NULL, sizeof(*icmp) + ETH_HLEN);
+	if (unlikely(!skb)) {
 		ret = BATADV_TP_REASON_MEMORY_ERROR;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	skb_reserve(skb, ETH_HLEN);
-	icmp = skb_put(skb, माप(*icmp));
+	icmp = skb_put(skb, sizeof(*icmp));
 	icmp->packet_type = BATADV_ICMP;
 	icmp->version = BATADV_COMPAT_VERSION;
 	icmp->ttl = BATADV_TTL;
 	icmp->msg_type = BATADV_TP;
 	ether_addr_copy(icmp->dst, orig_node->orig);
-	ether_addr_copy(icmp->orig, primary_अगर->net_dev->dev_addr);
+	ether_addr_copy(icmp->orig, primary_if->net_dev->dev_addr);
 	icmp->uid = socket_index;
 
 	icmp->subtype = BATADV_TP_ACK;
-	स_नकल(icmp->session, session, माप(icmp->session));
+	memcpy(icmp->session, session, sizeof(icmp->session));
 	icmp->seqno = htonl(seq);
-	icmp->बारtamp = बारtamp;
+	icmp->timestamp = timestamp;
 
 	/* send the ack */
-	r = batadv_send_skb_to_orig(skb, orig_node, शून्य);
-	अगर (unlikely(r < 0) || r == NET_XMIT_DROP) अणु
+	r = batadv_send_skb_to_orig(skb, orig_node, NULL);
+	if (unlikely(r < 0) || r == NET_XMIT_DROP) {
 		ret = BATADV_TP_REASON_DST_UNREACHABLE;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	ret = 0;
 
 out:
-	अगर (likely(orig_node))
+	if (likely(orig_node))
 		batadv_orig_node_put(orig_node);
-	अगर (likely(primary_अगर))
-		batadv_hardअगर_put(primary_अगर);
+	if (likely(primary_if))
+		batadv_hardif_put(primary_if);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
  * batadv_tp_handle_out_of_order() - store an out of order packet
- * @tp_vars: the निजी data of the current TP meter session
+ * @tp_vars: the private data of the current TP meter session
  * @skb: the buffer containing the received packet
  *
- * Store the out of order packet in the unacked list क्रम late processing. This
+ * Store the out of order packet in the unacked list for late processing. This
  * packets are kept in this list so that they can be ACKed at once as soon as
  * all the previous packets have been received
  *
- * Return: true अगर the packed has been successfully processed, false otherwise
+ * Return: true if the packed has been successfully processed, false otherwise
  */
-अटल bool batadv_tp_handle_out_of_order(काष्ठा batadv_tp_vars *tp_vars,
-					  स्थिर काष्ठा sk_buff *skb)
-अणु
-	स्थिर काष्ठा batadv_icmp_tp_packet *icmp;
-	काष्ठा batadv_tp_unacked *un, *new;
+static bool batadv_tp_handle_out_of_order(struct batadv_tp_vars *tp_vars,
+					  const struct sk_buff *skb)
+{
+	const struct batadv_icmp_tp_packet *icmp;
+	struct batadv_tp_unacked *un, *new;
 	u32 payload_len;
 	bool added = false;
 
-	new = kदो_स्मृति(माप(*new), GFP_ATOMIC);
-	अगर (unlikely(!new))
-		वापस false;
+	new = kmalloc(sizeof(*new), GFP_ATOMIC);
+	if (unlikely(!new))
+		return false;
 
-	icmp = (काष्ठा batadv_icmp_tp_packet *)skb->data;
+	icmp = (struct batadv_icmp_tp_packet *)skb->data;
 
 	new->seqno = ntohl(icmp->seqno);
-	payload_len = skb->len - माप(काष्ठा batadv_unicast_packet);
+	payload_len = skb->len - sizeof(struct batadv_unicast_packet);
 	new->len = payload_len;
 
 	spin_lock_bh(&tp_vars->unacked_lock);
-	/* अगर the list is empty immediately attach this new object */
-	अगर (list_empty(&tp_vars->unacked_list)) अणु
+	/* if the list is empty immediately attach this new object */
+	if (list_empty(&tp_vars->unacked_list)) {
 		list_add(&new->list, &tp_vars->unacked_list);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/* otherwise loop over the list and either drop the packet because this
 	 * is a duplicate or store it at the right position.
 	 *
-	 * The iteration is करोne in the reverse way because it is likely that
+	 * The iteration is done in the reverse way because it is likely that
 	 * the last received packet (the one being processed now) has a bigger
-	 * seqno than all the others alपढ़ोy stored.
+	 * seqno than all the others already stored.
 	 */
-	list_क्रम_each_entry_reverse(un, &tp_vars->unacked_list, list) अणु
-		/* check क्रम duplicates */
-		अगर (new->seqno == un->seqno) अणु
-			अगर (new->len > un->len)
+	list_for_each_entry_reverse(un, &tp_vars->unacked_list, list) {
+		/* check for duplicates */
+		if (new->seqno == un->seqno) {
+			if (new->len > un->len)
 				un->len = new->len;
-			kमुक्त(new);
+			kfree(new);
 			added = true;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		/* look क्रम the right position */
-		अगर (batadv_seq_beक्रमe(new->seqno, un->seqno))
-			जारी;
+		/* look for the right position */
+		if (batadv_seq_before(new->seqno, un->seqno))
+			continue;
 
 		/* as soon as an entry having a bigger seqno is found, the new
 		 * one is attached _after_ it. In this way the list is kept in
@@ -1277,84 +1276,84 @@ out:
 		 */
 		list_add_tail(&new->list, &un->list);
 		added = true;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	/* received packet with smallest seqno out of order; add it to front */
-	अगर (!added)
+	if (!added)
 		list_add(&new->list, &tp_vars->unacked_list);
 
 out:
 	spin_unlock_bh(&tp_vars->unacked_lock);
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
 /**
  * batadv_tp_ack_unordered() - update number received bytes in current stream
  *  without gaps
- * @tp_vars: the निजी data of the current TP meter session
+ * @tp_vars: the private data of the current TP meter session
  */
-अटल व्योम batadv_tp_ack_unordered(काष्ठा batadv_tp_vars *tp_vars)
-अणु
-	काष्ठा batadv_tp_unacked *un, *safe;
+static void batadv_tp_ack_unordered(struct batadv_tp_vars *tp_vars)
+{
+	struct batadv_tp_unacked *un, *safe;
 	u32 to_ack;
 
 	/* go through the unacked packet list and possibly ACK them as
 	 * well
 	 */
 	spin_lock_bh(&tp_vars->unacked_lock);
-	list_क्रम_each_entry_safe(un, safe, &tp_vars->unacked_list, list) अणु
-		/* the list is ordered, thereक्रमe it is possible to stop as soon
+	list_for_each_entry_safe(un, safe, &tp_vars->unacked_list, list) {
+		/* the list is ordered, therefore it is possible to stop as soon
 		 * there is a gap between the last acked seqno and the seqno of
 		 * the packet under inspection
 		 */
-		अगर (batadv_seq_beक्रमe(tp_vars->last_recv, un->seqno))
-			अवरोध;
+		if (batadv_seq_before(tp_vars->last_recv, un->seqno))
+			break;
 
 		to_ack = un->seqno + un->len - tp_vars->last_recv;
 
-		अगर (batadv_seq_beक्रमe(tp_vars->last_recv, un->seqno + un->len))
+		if (batadv_seq_before(tp_vars->last_recv, un->seqno + un->len))
 			tp_vars->last_recv += to_ack;
 
 		list_del(&un->list);
-		kमुक्त(un);
-	पूर्ण
+		kfree(un);
+	}
 	spin_unlock_bh(&tp_vars->unacked_lock);
-पूर्ण
+}
 
 /**
- * batadv_tp_init_recv() - वापस matching or create new receiver tp_vars
- * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
+ * batadv_tp_init_recv() - return matching or create new receiver tp_vars
+ * @bat_priv: the bat priv with all the soft interface information
  * @icmp: received icmp tp msg
  *
- * Return: corresponding tp_vars or शून्य on errors
+ * Return: corresponding tp_vars or NULL on errors
  */
-अटल काष्ठा batadv_tp_vars *
-batadv_tp_init_recv(काष्ठा batadv_priv *bat_priv,
-		    स्थिर काष्ठा batadv_icmp_tp_packet *icmp)
-अणु
-	काष्ठा batadv_tp_vars *tp_vars;
+static struct batadv_tp_vars *
+batadv_tp_init_recv(struct batadv_priv *bat_priv,
+		    const struct batadv_icmp_tp_packet *icmp)
+{
+	struct batadv_tp_vars *tp_vars;
 
 	spin_lock_bh(&bat_priv->tp_list_lock);
 	tp_vars = batadv_tp_list_find_session(bat_priv, icmp->orig,
 					      icmp->session);
-	अगर (tp_vars)
-		जाओ out_unlock;
+	if (tp_vars)
+		goto out_unlock;
 
-	अगर (!atomic_add_unless(&bat_priv->tp_num, 1, BATADV_TP_MAX_NUM)) अणु
+	if (!atomic_add_unless(&bat_priv->tp_num, 1, BATADV_TP_MAX_NUM)) {
 		batadv_dbg(BATADV_DBG_TP_METER, bat_priv,
 			   "Meter: too many ongoing sessions, aborting (RECV)\n");
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 
-	tp_vars = kदो_स्मृति(माप(*tp_vars), GFP_ATOMIC);
-	अगर (!tp_vars)
-		जाओ out_unlock;
+	tp_vars = kmalloc(sizeof(*tp_vars), GFP_ATOMIC);
+	if (!tp_vars)
+		goto out_unlock;
 
 	ether_addr_copy(tp_vars->other_end, icmp->orig);
 	tp_vars->role = BATADV_TP_RECEIVER;
-	स_नकल(tp_vars->session, icmp->session, माप(tp_vars->session));
+	memcpy(tp_vars->session, icmp->session, sizeof(tp_vars->session));
 	tp_vars->last_recv = BATADV_TP_FIRST_SEQ;
 	tp_vars->bat_priv = bat_priv;
 	kref_init(&tp_vars->refcount);
@@ -1366,87 +1365,87 @@ batadv_tp_init_recv(काष्ठा batadv_priv *bat_priv,
 	hlist_add_head_rcu(&tp_vars->list, &bat_priv->tp_list);
 
 	kref_get(&tp_vars->refcount);
-	समयr_setup(&tp_vars->समयr, batadv_tp_receiver_shutकरोwn, 0);
+	timer_setup(&tp_vars->timer, batadv_tp_receiver_shutdown, 0);
 
-	batadv_tp_reset_receiver_समयr(tp_vars);
+	batadv_tp_reset_receiver_timer(tp_vars);
 
 out_unlock:
 	spin_unlock_bh(&bat_priv->tp_list_lock);
 
-	वापस tp_vars;
-पूर्ण
+	return tp_vars;
+}
 
 /**
  * batadv_tp_recv_msg() - process a single data message
- * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
+ * @bat_priv: the bat priv with all the soft interface information
  * @skb: the buffer containing the received packet
  *
  * Process a received TP MSG packet
  */
-अटल व्योम batadv_tp_recv_msg(काष्ठा batadv_priv *bat_priv,
-			       स्थिर काष्ठा sk_buff *skb)
-अणु
-	स्थिर काष्ठा batadv_icmp_tp_packet *icmp;
-	काष्ठा batadv_tp_vars *tp_vars;
-	माप_प्रकार packet_size;
+static void batadv_tp_recv_msg(struct batadv_priv *bat_priv,
+			       const struct sk_buff *skb)
+{
+	const struct batadv_icmp_tp_packet *icmp;
+	struct batadv_tp_vars *tp_vars;
+	size_t packet_size;
 	u32 seqno;
 
-	icmp = (काष्ठा batadv_icmp_tp_packet *)skb->data;
+	icmp = (struct batadv_icmp_tp_packet *)skb->data;
 
 	seqno = ntohl(icmp->seqno);
-	/* check अगर this is the first seqno. This means that अगर the
-	 * first packet is lost, the tp meter करोes not work anymore!
+	/* check if this is the first seqno. This means that if the
+	 * first packet is lost, the tp meter does not work anymore!
 	 */
-	अगर (seqno == BATADV_TP_FIRST_SEQ) अणु
+	if (seqno == BATADV_TP_FIRST_SEQ) {
 		tp_vars = batadv_tp_init_recv(bat_priv, icmp);
-		अगर (!tp_vars) अणु
+		if (!tp_vars) {
 			batadv_dbg(BATADV_DBG_TP_METER, bat_priv,
 				   "Meter: seqno != BATADV_TP_FIRST_SEQ cannot initiate connection\n");
-			जाओ out;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			goto out;
+		}
+	} else {
 		tp_vars = batadv_tp_list_find_session(bat_priv, icmp->orig,
 						      icmp->session);
-		अगर (!tp_vars) अणु
+		if (!tp_vars) {
 			batadv_dbg(BATADV_DBG_TP_METER, bat_priv,
 				   "Unexpected packet from %pM!\n",
 				   icmp->orig);
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 
-	अगर (unlikely(tp_vars->role != BATADV_TP_RECEIVER)) अणु
+	if (unlikely(tp_vars->role != BATADV_TP_RECEIVER)) {
 		batadv_dbg(BATADV_DBG_TP_METER, bat_priv,
 			   "Meter: dropping packet: not expected (role=%u)\n",
 			   tp_vars->role);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	tp_vars->last_recv_समय = jअगरfies;
+	tp_vars->last_recv_time = jiffies;
 
-	/* अगर the packet is a duplicate, it may be the हाल that an ACK has been
+	/* if the packet is a duplicate, it may be the case that an ACK has been
 	 * lost. Resend the ACK
 	 */
-	अगर (batadv_seq_beक्रमe(seqno, tp_vars->last_recv))
-		जाओ send_ack;
+	if (batadv_seq_before(seqno, tp_vars->last_recv))
+		goto send_ack;
 
-	/* अगर the packet is out of order enqueue it */
-	अगर (ntohl(icmp->seqno) != tp_vars->last_recv) अणु
-		/* निकास immediately (and करो not send any ACK) अगर the packet has
+	/* if the packet is out of order enqueue it */
+	if (ntohl(icmp->seqno) != tp_vars->last_recv) {
+		/* exit immediately (and do not send any ACK) if the packet has
 		 * not been enqueued correctly
 		 */
-		अगर (!batadv_tp_handle_out_of_order(tp_vars, skb))
-			जाओ out;
+		if (!batadv_tp_handle_out_of_order(tp_vars, skb))
+			goto out;
 
 		/* send a duplicate ACK */
-		जाओ send_ack;
-	पूर्ण
+		goto send_ack;
+	}
 
-	/* अगर everything was fine count the ACKed bytes */
-	packet_size = skb->len - माप(काष्ठा batadv_unicast_packet);
+	/* if everything was fine count the ACKed bytes */
+	packet_size = skb->len - sizeof(struct batadv_unicast_packet);
 	tp_vars->last_recv += packet_size;
 
-	/* check अगर this ordered message filled a gap.... */
+	/* check if this ordered message filled a gap.... */
 	batadv_tp_ack_unordered(tp_vars);
 
 send_ack:
@@ -1455,42 +1454,42 @@ send_ack:
 	 * possibly enter Fast Retransmit as soon as it has reached 3)
 	 */
 	batadv_tp_send_ack(bat_priv, icmp->orig, tp_vars->last_recv,
-			   icmp->बारtamp, icmp->session, icmp->uid);
+			   icmp->timestamp, icmp->session, icmp->uid);
 out:
-	अगर (likely(tp_vars))
+	if (likely(tp_vars))
 		batadv_tp_vars_put(tp_vars);
-पूर्ण
+}
 
 /**
- * batadv_tp_meter_recv() - मुख्य TP Meter receiving function
- * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
+ * batadv_tp_meter_recv() - main TP Meter receiving function
+ * @bat_priv: the bat priv with all the soft interface information
  * @skb: the buffer containing the received packet
  */
-व्योम batadv_tp_meter_recv(काष्ठा batadv_priv *bat_priv, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा batadv_icmp_tp_packet *icmp;
+void batadv_tp_meter_recv(struct batadv_priv *bat_priv, struct sk_buff *skb)
+{
+	struct batadv_icmp_tp_packet *icmp;
 
-	icmp = (काष्ठा batadv_icmp_tp_packet *)skb->data;
+	icmp = (struct batadv_icmp_tp_packet *)skb->data;
 
-	चयन (icmp->subtype) अणु
-	हाल BATADV_TP_MSG:
+	switch (icmp->subtype) {
+	case BATADV_TP_MSG:
 		batadv_tp_recv_msg(bat_priv, skb);
-		अवरोध;
-	हाल BATADV_TP_ACK:
+		break;
+	case BATADV_TP_ACK:
 		batadv_tp_recv_ack(bat_priv, skb);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		batadv_dbg(BATADV_DBG_TP_METER, bat_priv,
 			   "Received unknown TP Metric packet type %u\n",
 			   icmp->subtype);
-	पूर्ण
+	}
 	consume_skb(skb);
-पूर्ण
+}
 
 /**
- * batadv_tp_meter_init() - initialize global tp_meter काष्ठाures
+ * batadv_tp_meter_init() - initialize global tp_meter structures
  */
-व्योम __init batadv_tp_meter_init(व्योम)
-अणु
-	get_अक्रमom_bytes(batadv_tp_preअक्रमom, माप(batadv_tp_preअक्रमom));
-पूर्ण
+void __init batadv_tp_meter_init(void)
+{
+	get_random_bytes(batadv_tp_prerandom, sizeof(batadv_tp_prerandom));
+}

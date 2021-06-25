@@ -1,50 +1,49 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /* 
- * Copyright (C) 2002 - 2007 Jeff Dike (jdike@अणुaddtoit,linux.पूर्णांकelपूर्ण.com)
+ * Copyright (C) 2002 - 2007 Jeff Dike (jdike@{addtoit,linux.intel}.com)
  */
 
-#अगर_अघोषित __UM_MMU_CONTEXT_H
-#घोषणा __UM_MMU_CONTEXT_H
+#ifndef __UM_MMU_CONTEXT_H
+#define __UM_MMU_CONTEXT_H
 
-#समावेश <linux/sched.h>
-#समावेश <linux/mm_types.h>
-#समावेश <linux/mmap_lock.h>
+#include <linux/sched.h>
+#include <linux/mm_types.h>
+#include <linux/mmap_lock.h>
 
-#समावेश <यंत्र/mm_hooks.h>
-#समावेश <यंत्र/mmu.h>
+#include <asm/mm_hooks.h>
+#include <asm/mmu.h>
 
-बाह्य व्योम क्रमce_flush_all(व्योम);
+extern void force_flush_all(void);
 
-#घोषणा activate_mm activate_mm
-अटल अंतरभूत व्योम activate_mm(काष्ठा mm_काष्ठा *old, काष्ठा mm_काष्ठा *new)
-अणु
+#define activate_mm activate_mm
+static inline void activate_mm(struct mm_struct *old, struct mm_struct *new)
+{
 	/*
 	 * This is called by fs/exec.c and sys_unshare()
-	 * when the new ->mm is used क्रम the first समय.
+	 * when the new ->mm is used for the first time.
 	 */
-	__चयन_mm(&new->context.id);
-पूर्ण
+	__switch_mm(&new->context.id);
+}
 
-अटल अंतरभूत व्योम चयन_mm(काष्ठा mm_काष्ठा *prev, काष्ठा mm_काष्ठा *next, 
-			     काष्ठा task_काष्ठा *tsk)
-अणु
-	अचिन्हित cpu = smp_processor_id();
+static inline void switch_mm(struct mm_struct *prev, struct mm_struct *next, 
+			     struct task_struct *tsk)
+{
+	unsigned cpu = smp_processor_id();
 
-	अगर(prev != next)अणु
+	if(prev != next){
 		cpumask_clear_cpu(cpu, mm_cpumask(prev));
 		cpumask_set_cpu(cpu, mm_cpumask(next));
-		अगर(next != &init_mm)
-			__चयन_mm(&next->context.id);
-	पूर्ण
-पूर्ण
+		if(next != &init_mm)
+			__switch_mm(&next->context.id);
+	}
+}
 
-#घोषणा init_new_context init_new_context
-बाह्य पूर्णांक init_new_context(काष्ठा task_काष्ठा *task, काष्ठा mm_काष्ठा *mm);
+#define init_new_context init_new_context
+extern int init_new_context(struct task_struct *task, struct mm_struct *mm);
 
-#घोषणा destroy_context destroy_context
-बाह्य व्योम destroy_context(काष्ठा mm_काष्ठा *mm);
+#define destroy_context destroy_context
+extern void destroy_context(struct mm_struct *mm);
 
-#समावेश <यंत्र-generic/mmu_context.h>
+#include <asm-generic/mmu_context.h>
 
-#पूर्ण_अगर
+#endif

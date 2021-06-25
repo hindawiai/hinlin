@@ -1,61 +1,60 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <linux/fs.h>
-#समावेश <linux/init.h>
-#समावेश <linux/proc_fs.h>
-#समावेश <linux/seq_file.h>
-#समावेश <linux/blkdev.h>
+// SPDX-License-Identifier: GPL-2.0
+#include <linux/fs.h>
+#include <linux/init.h>
+#include <linux/proc_fs.h>
+#include <linux/seq_file.h>
+#include <linux/blkdev.h>
 
-अटल पूर्णांक devinfo_show(काष्ठा seq_file *f, व्योम *v)
-अणु
-	पूर्णांक i = *(loff_t *) v;
+static int devinfo_show(struct seq_file *f, void *v)
+{
+	int i = *(loff_t *) v;
 
-	अगर (i < CHRDEV_MAJOR_MAX) अणु
-		अगर (i == 0)
-			seq_माला_दो(f, "Character devices:\n");
+	if (i < CHRDEV_MAJOR_MAX) {
+		if (i == 0)
+			seq_puts(f, "Character devices:\n");
 		chrdev_show(f, i);
-	पूर्ण
-#अगर_घोषित CONFIG_BLOCK
-	अन्यथा अणु
+	}
+#ifdef CONFIG_BLOCK
+	else {
 		i -= CHRDEV_MAJOR_MAX;
-		अगर (i == 0)
-			seq_माला_दो(f, "\nBlock devices:\n");
+		if (i == 0)
+			seq_puts(f, "\nBlock devices:\n");
 		blkdev_show(f, i);
-	पूर्ण
-#पूर्ण_अगर
-	वापस 0;
-पूर्ण
+	}
+#endif
+	return 0;
+}
 
-अटल व्योम *devinfo_start(काष्ठा seq_file *f, loff_t *pos)
-अणु
-	अगर (*pos < (BLKDEV_MAJOR_MAX + CHRDEV_MAJOR_MAX))
-		वापस pos;
-	वापस शून्य;
-पूर्ण
+static void *devinfo_start(struct seq_file *f, loff_t *pos)
+{
+	if (*pos < (BLKDEV_MAJOR_MAX + CHRDEV_MAJOR_MAX))
+		return pos;
+	return NULL;
+}
 
-अटल व्योम *devinfo_next(काष्ठा seq_file *f, व्योम *v, loff_t *pos)
-अणु
+static void *devinfo_next(struct seq_file *f, void *v, loff_t *pos)
+{
 	(*pos)++;
-	अगर (*pos >= (BLKDEV_MAJOR_MAX + CHRDEV_MAJOR_MAX))
-		वापस शून्य;
-	वापस pos;
-पूर्ण
+	if (*pos >= (BLKDEV_MAJOR_MAX + CHRDEV_MAJOR_MAX))
+		return NULL;
+	return pos;
+}
 
-अटल व्योम devinfo_stop(काष्ठा seq_file *f, व्योम *v)
-अणु
-	/* Nothing to करो */
-पूर्ण
+static void devinfo_stop(struct seq_file *f, void *v)
+{
+	/* Nothing to do */
+}
 
-अटल स्थिर काष्ठा seq_operations devinfo_ops = अणु
+static const struct seq_operations devinfo_ops = {
 	.start = devinfo_start,
 	.next  = devinfo_next,
 	.stop  = devinfo_stop,
 	.show  = devinfo_show
-पूर्ण;
+};
 
-अटल पूर्णांक __init proc_devices_init(व्योम)
-अणु
-	proc_create_seq("devices", 0, शून्य, &devinfo_ops);
-	वापस 0;
-पूर्ण
+static int __init proc_devices_init(void)
+{
+	proc_create_seq("devices", 0, NULL, &devinfo_ops);
+	return 0;
+}
 fs_initcall(proc_devices_init);

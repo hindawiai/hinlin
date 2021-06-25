@@ -1,27 +1,26 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Copyright (C) 2004 PathScale, Inc
  */
 
-#अगर_अघोषित __REGISTERS_H
-#घोषणा __REGISTERS_H
+#ifndef __REGISTERS_H
+#define __REGISTERS_H
 
-#समावेश <sysdep/ptrace.h>
-#समावेश <sysdep/archसमलाँघ.स>
+#include <sysdep/ptrace.h>
+#include <sysdep/archsetjmp.h>
 
-बाह्य पूर्णांक save_i387_रेजिस्टरs(पूर्णांक pid, अचिन्हित दीर्घ *fp_regs);
-बाह्य पूर्णांक restore_i387_रेजिस्टरs(पूर्णांक pid, अचिन्हित दीर्घ *fp_regs);
-बाह्य पूर्णांक save_fp_रेजिस्टरs(पूर्णांक pid, अचिन्हित दीर्घ *fp_regs);
-बाह्य पूर्णांक restore_fp_रेजिस्टरs(पूर्णांक pid, अचिन्हित दीर्घ *fp_regs);
-बाह्य पूर्णांक save_fpx_रेजिस्टरs(पूर्णांक pid, अचिन्हित दीर्घ *fp_regs);
-बाह्य पूर्णांक restore_fpx_रेजिस्टरs(पूर्णांक pid, अचिन्हित दीर्घ *fp_regs);
-बाह्य पूर्णांक save_रेजिस्टरs(पूर्णांक pid, काष्ठा uml_pt_regs *regs);
-बाह्य पूर्णांक restore_रेजिस्टरs(पूर्णांक pid, काष्ठा uml_pt_regs *regs);
-बाह्य पूर्णांक init_रेजिस्टरs(पूर्णांक pid);
-बाह्य व्योम get_safe_रेजिस्टरs(अचिन्हित दीर्घ *regs, अचिन्हित दीर्घ *fp_regs);
-बाह्य अचिन्हित दीर्घ get_thपढ़ो_reg(पूर्णांक reg, लाँघ_बफ *buf);
-बाह्य पूर्णांक get_fp_रेजिस्टरs(पूर्णांक pid, अचिन्हित दीर्घ *regs);
-बाह्य पूर्णांक put_fp_रेजिस्टरs(पूर्णांक pid, अचिन्हित दीर्घ *regs);
+extern int save_i387_registers(int pid, unsigned long *fp_regs);
+extern int restore_i387_registers(int pid, unsigned long *fp_regs);
+extern int save_fp_registers(int pid, unsigned long *fp_regs);
+extern int restore_fp_registers(int pid, unsigned long *fp_regs);
+extern int save_fpx_registers(int pid, unsigned long *fp_regs);
+extern int restore_fpx_registers(int pid, unsigned long *fp_regs);
+extern int save_registers(int pid, struct uml_pt_regs *regs);
+extern int restore_registers(int pid, struct uml_pt_regs *regs);
+extern int init_registers(int pid);
+extern void get_safe_registers(unsigned long *regs, unsigned long *fp_regs);
+extern unsigned long get_thread_reg(int reg, jmp_buf *buf);
+extern int get_fp_registers(int pid, unsigned long *regs);
+extern int put_fp_registers(int pid, unsigned long *regs);
 
-#पूर्ण_अगर
+#endif

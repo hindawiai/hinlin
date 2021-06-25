@@ -1,4 +1,3 @@
-<शैली गुरु>
 /* bnx2x_sriov.h: QLogic Everest network driver.
  *
  * Copyright 2009-2013 Broadcom Corporation
@@ -8,45 +7,45 @@
  * Unless you and QLogic execute a separate written software license
  * agreement governing use of this software, this software is licensed to you
  * under the terms of the GNU General Public License version 2, available
- * at http://www.gnu.org/licenses/old-licenses/gpl-2.0.hपंचांगl (the "GPL").
+ * at http://www.gnu.org/licenses/old-licenses/gpl-2.0.html (the "GPL").
  *
  * Notwithstanding the above, under no circumstances may you combine this
  * software in any way with any other QLogic software provided under a
  * license other than the GPL, without QLogic's express prior written
  * consent.
  *
- * Maपूर्णांकained by: Ariel Elior <ariel.elior@qlogic.com>
+ * Maintained by: Ariel Elior <ariel.elior@qlogic.com>
  * Written by: Shmulik Ravid
  *	       Ariel Elior <ariel.elior@qlogic.com>
  */
-#अगर_अघोषित BNX2X_SRIOV_H
-#घोषणा BNX2X_SRIOV_H
+#ifndef BNX2X_SRIOV_H
+#define BNX2X_SRIOV_H
 
-#समावेश "bnx2x_vfpf.h"
-#समावेश "bnx2x.h"
+#include "bnx2x_vfpf.h"
+#include "bnx2x.h"
 
-क्रमागत sample_bulletin_result अणु
+enum sample_bulletin_result {
 	   PFVF_BULLETIN_UNCHANGED,
 	   PFVF_BULLETIN_UPDATED,
 	   PFVF_BULLETIN_CRC_ERR
-पूर्ण;
+};
 
-#अगर_घोषित CONFIG_BNX2X_SRIOV
+#ifdef CONFIG_BNX2X_SRIOV
 
-बाह्य काष्ठा workqueue_काष्ठा *bnx2x_iov_wq;
+extern struct workqueue_struct *bnx2x_iov_wq;
 
-/* The bnx2x device काष्ठाure holds vfdb काष्ठाure described below.
+/* The bnx2x device structure holds vfdb structure described below.
  * The VF array is indexed by the relative vfid.
  */
-#घोषणा BNX2X_VF_MAX_QUEUES		16
-#घोषणा BNX2X_VF_MAX_TPA_AGG_QUEUES	8
+#define BNX2X_VF_MAX_QUEUES		16
+#define BNX2X_VF_MAX_TPA_AGG_QUEUES	8
 
-काष्ठा bnx2x_sriov अणु
+struct bnx2x_sriov {
 	u32 first_vf_in_pf;
 
-	/* standard SRIOV capability fields, mostly क्रम debugging */
-	पूर्णांक pos;		/* capability position */
-	पूर्णांक nres;		/* number of resources */
+	/* standard SRIOV capability fields, mostly for debugging */
+	int pos;		/* capability position */
+	int nres;		/* number of resources */
 	u32 cap;		/* SR-IOV Capabilities */
 	u16 ctrl;		/* SR-IOV Control */
 	u16 total;		/* total VFs associated with the PF */
@@ -54,97 +53,97 @@
 	u16 nr_virtfn;		/* number of VFs available */
 	u16 offset;		/* first VF Routing ID offset */
 	u16 stride;		/* following VF stride */
-	u32 pgsz;		/* page size क्रम BAR alignment */
+	u32 pgsz;		/* page size for BAR alignment */
 	u8 link;		/* Function Dependency Link */
-पूर्ण;
+};
 
 /* bars */
-काष्ठा bnx2x_vf_bar अणु
+struct bnx2x_vf_bar {
 	u64 bar;
 	u32 size;
-पूर्ण;
+};
 
-काष्ठा bnx2x_vf_bar_info अणु
-	काष्ठा bnx2x_vf_bar bars[PCI_SRIOV_NUM_BARS];
+struct bnx2x_vf_bar_info {
+	struct bnx2x_vf_bar bars[PCI_SRIOV_NUM_BARS];
 	u8 nr_bars;
-पूर्ण;
+};
 
-/* vf queue (used both क्रम rx or tx) */
-काष्ठा bnx2x_vf_queue अणु
-	काष्ठा eth_context		*cxt;
+/* vf queue (used both for rx or tx) */
+struct bnx2x_vf_queue {
+	struct eth_context		*cxt;
 
 	/* MACs object */
-	काष्ठा bnx2x_vlan_mac_obj	mac_obj;
+	struct bnx2x_vlan_mac_obj	mac_obj;
 
 	/* VLANs object */
-	काष्ठा bnx2x_vlan_mac_obj	vlan_obj;
+	struct bnx2x_vlan_mac_obj	vlan_obj;
 
 	/* VLAN-MACs object */
-	काष्ठा bnx2x_vlan_mac_obj	vlan_mac_obj;
+	struct bnx2x_vlan_mac_obj	vlan_mac_obj;
 
-	अचिन्हित दीर्घ accept_flags;	/* last accept flags configured */
+	unsigned long accept_flags;	/* last accept flags configured */
 
 	/* Queue Slow-path State object */
-	काष्ठा bnx2x_queue_sp_obj	sp_obj;
+	struct bnx2x_queue_sp_obj	sp_obj;
 
 	u32 cid;
 	u16 index;
 	u16 sb_idx;
 	bool is_leading;
 	bool sp_initialized;
-पूर्ण;
+};
 
-/* काष्ठा bnx2x_vf_queue_स्थिरruct_params - prepare queue स्थिरruction
+/* struct bnx2x_vf_queue_construct_params - prepare queue construction
  * parameters: q-init, q-setup and SB index
  */
-काष्ठा bnx2x_vf_queue_स्थिरruct_params अणु
-	काष्ठा bnx2x_queue_state_params		qstate;
-	काष्ठा bnx2x_queue_setup_params		prep_qsetup;
-पूर्ण;
+struct bnx2x_vf_queue_construct_params {
+	struct bnx2x_queue_state_params		qstate;
+	struct bnx2x_queue_setup_params		prep_qsetup;
+};
 
-/* क्रमward */
-काष्ठा bnx2x_virtf;
+/* forward */
+struct bnx2x_virtf;
 
 /* VFOP definitions */
 
-काष्ठा bnx2x_vf_mac_vlan_filter अणु
-	पूर्णांक type;
-#घोषणा BNX2X_VF_FILTER_MAC	BIT(0)
-#घोषणा BNX2X_VF_FILTER_VLAN	BIT(1)
-#घोषणा BNX2X_VF_FILTER_VLAN_MAC \
-	(BNX2X_VF_FILTER_MAC | BNX2X_VF_FILTER_VLAN) /*लघुcut*/
+struct bnx2x_vf_mac_vlan_filter {
+	int type;
+#define BNX2X_VF_FILTER_MAC	BIT(0)
+#define BNX2X_VF_FILTER_VLAN	BIT(1)
+#define BNX2X_VF_FILTER_VLAN_MAC \
+	(BNX2X_VF_FILTER_MAC | BNX2X_VF_FILTER_VLAN) /*shortcut*/
 
 	bool add;
 	bool applied;
 	u8 *mac;
 	u16 vid;
-पूर्ण;
+};
 
-काष्ठा bnx2x_vf_mac_vlan_filters अणु
-	पूर्णांक count;
-	काष्ठा bnx2x_vf_mac_vlan_filter filters[];
-पूर्ण;
+struct bnx2x_vf_mac_vlan_filters {
+	int count;
+	struct bnx2x_vf_mac_vlan_filter filters[];
+};
 
 /* vf context */
-काष्ठा bnx2x_virtf अणु
+struct bnx2x_virtf {
 	u16 cfg_flags;
-#घोषणा VF_CFG_STATS_COALESCE	0x1
-#घोषणा VF_CFG_EXT_BULLETIN	0x2
-#घोषणा VF_CFG_VLAN_FILTER	0x4
+#define VF_CFG_STATS_COALESCE	0x1
+#define VF_CFG_EXT_BULLETIN	0x2
+#define VF_CFG_VLAN_FILTER	0x4
 	u8 link_cfg;		/* IFLA_VF_LINK_STATE_AUTO
 				 * IFLA_VF_LINK_STATE_ENABLE
 				 * IFLA_VF_LINK_STATE_DISABLE
 				 */
 	u8 state;
-#घोषणा VF_FREE		0	/* VF पढ़ोy to be acquired holds no resc */
-#घोषणा VF_ACQUIRED	1	/* VF acquired, but not initialized */
-#घोषणा VF_ENABLED	2	/* VF Enabled */
-#घोषणा VF_RESET	3	/* VF FLR'd, pending cleanup */
-#घोषणा VF_LOST		4	/* Recovery जबतक VFs are loaded */
+#define VF_FREE		0	/* VF ready to be acquired holds no resc */
+#define VF_ACQUIRED	1	/* VF acquired, but not initialized */
+#define VF_ENABLED	2	/* VF Enabled */
+#define VF_RESET	3	/* VF FLR'd, pending cleanup */
+#define VF_LOST		4	/* Recovery while VFs are loaded */
 
 	bool flr_clnup_stage;	/* true during flr cleanup */
-	bool malicious;		/* true अगर FW indicated so, until FLR */
-	/* 1(true) अगर spoof check is enabled */
+	bool malicious;		/* true if FW indicated so, until FLR */
+	/* 1(true) if spoof check is enabled */
 	u8 spoofchk;
 
 	/* dma */
@@ -152,483 +151,483 @@
 	u16 stats_stride;
 	dma_addr_t bulletin_map;
 
-	/* Allocated resources counters. Beक्रमe the VF is acquired, the
+	/* Allocated resources counters. Before the VF is acquired, the
 	 * counters hold the following values:
 	 *
 	 * - xxq_count = 0 as the queues memory is not allocated yet.
 	 *
-	 * - sb_count  = The number of status blocks configured क्रम this VF in
-	 *		 the IGU CAM. Initially पढ़ो during probe.
+	 * - sb_count  = The number of status blocks configured for this VF in
+	 *		 the IGU CAM. Initially read during probe.
 	 *
-	 * - xx_rules_count = The number of rules अटलally and equally
-	 *		      allocated क्रम each VF, during PF load.
+	 * - xx_rules_count = The number of rules statically and equally
+	 *		      allocated for each VF, during PF load.
 	 */
-	काष्ठा vf_pf_resc_request	alloc_resc;
-#घोषणा vf_rxq_count(vf)		((vf)->alloc_resc.num_rxqs)
-#घोषणा vf_txq_count(vf)		((vf)->alloc_resc.num_txqs)
-#घोषणा vf_sb_count(vf)			((vf)->alloc_resc.num_sbs)
-#घोषणा vf_mac_rules_cnt(vf)		((vf)->alloc_resc.num_mac_filters)
-#घोषणा vf_vlan_rules_cnt(vf)		((vf)->alloc_resc.num_vlan_filters)
-#घोषणा vf_mc_rules_cnt(vf)		((vf)->alloc_resc.num_mc_filters)
+	struct vf_pf_resc_request	alloc_resc;
+#define vf_rxq_count(vf)		((vf)->alloc_resc.num_rxqs)
+#define vf_txq_count(vf)		((vf)->alloc_resc.num_txqs)
+#define vf_sb_count(vf)			((vf)->alloc_resc.num_sbs)
+#define vf_mac_rules_cnt(vf)		((vf)->alloc_resc.num_mac_filters)
+#define vf_vlan_rules_cnt(vf)		((vf)->alloc_resc.num_vlan_filters)
+#define vf_mc_rules_cnt(vf)		((vf)->alloc_resc.num_mc_filters)
 
 	u8 sb_count;	/* actual number of SBs */
 	u8 igu_base_id;	/* base igu status block id */
 
-	काष्ठा bnx2x_vf_queue	*vfqs;
-#घोषणा LEADING_IDX			0
-#घोषणा bnx2x_vfq_is_leading(vfq)	((vfq)->index == LEADING_IDX)
-#घोषणा bnx2x_vfq(vf, nr, var)		((vf)->vfqs[(nr)].var)
-#घोषणा bnx2x_leading_vfq(vf, var)	((vf)->vfqs[LEADING_IDX].var)
+	struct bnx2x_vf_queue	*vfqs;
+#define LEADING_IDX			0
+#define bnx2x_vfq_is_leading(vfq)	((vfq)->index == LEADING_IDX)
+#define bnx2x_vfq(vf, nr, var)		((vf)->vfqs[(nr)].var)
+#define bnx2x_leading_vfq(vf, var)	((vf)->vfqs[LEADING_IDX].var)
 
 	u8 index;	/* index in the vf array */
-	u8 असल_vfid;
+	u8 abs_vfid;
 	u8 sp_cl_id;
 	u32 error;	/* 0 means all's-well */
 
 	/* BDF */
-	अचिन्हित पूर्णांक करोमुख्य;
-	अचिन्हित पूर्णांक bus;
-	अचिन्हित पूर्णांक devfn;
+	unsigned int domain;
+	unsigned int bus;
+	unsigned int devfn;
 
 	/* bars */
-	काष्ठा bnx2x_vf_bar bars[PCI_SRIOV_NUM_BARS];
+	struct bnx2x_vf_bar bars[PCI_SRIOV_NUM_BARS];
 
-	/* set-mac ramrod state 1-pending, 0-करोne */
-	अचिन्हित दीर्घ	filter_state;
+	/* set-mac ramrod state 1-pending, 0-done */
+	unsigned long	filter_state;
 
 	/* leading rss client id ~~ the client id of the first rxq, must be
-	 * set क्रम each txq.
+	 * set for each txq.
 	 */
-	पूर्णांक leading_rss;
+	int leading_rss;
 
 	/* MCAST object */
-	काष्ठा bnx2x_mcast_obj		mcast_obj;
+	struct bnx2x_mcast_obj		mcast_obj;
 
 	/* RSS configuration object */
-	काष्ठा bnx2x_rss_config_obj     rss_conf_obj;
+	struct bnx2x_rss_config_obj     rss_conf_obj;
 
 	/* slow-path operations */
-	काष्ठा mutex			op_mutex; /* one vfop at a समय mutex */
-	क्रमागत channel_tlvs		op_current;
+	struct mutex			op_mutex; /* one vfop at a time mutex */
+	enum channel_tlvs		op_current;
 
 	u8 fp_hsi;
 
-	काष्ठा bnx2x_credit_pool_obj	vf_vlans_pool;
-	काष्ठा bnx2x_credit_pool_obj	vf_macs_pool;
-पूर्ण;
+	struct bnx2x_credit_pool_obj	vf_vlans_pool;
+	struct bnx2x_credit_pool_obj	vf_macs_pool;
+};
 
-#घोषणा BNX2X_NR_VIRTFN(bp)	((bp)->vfdb->sriov.nr_virtfn)
+#define BNX2X_NR_VIRTFN(bp)	((bp)->vfdb->sriov.nr_virtfn)
 
-#घोषणा क्रम_each_vf(bp, var) \
-		क्रम ((var) = 0; (var) < BNX2X_NR_VIRTFN(bp); (var)++)
+#define for_each_vf(bp, var) \
+		for ((var) = 0; (var) < BNX2X_NR_VIRTFN(bp); (var)++)
 
-#घोषणा क्रम_each_vfq(vf, var) \
-		क्रम ((var) = 0; (var) < vf_rxq_count(vf); (var)++)
+#define for_each_vfq(vf, var) \
+		for ((var) = 0; (var) < vf_rxq_count(vf); (var)++)
 
-#घोषणा क्रम_each_vf_sb(vf, var) \
-		क्रम ((var) = 0; (var) < vf_sb_count(vf); (var)++)
+#define for_each_vf_sb(vf, var) \
+		for ((var) = 0; (var) < vf_sb_count(vf); (var)++)
 
-#घोषणा is_vf_multi(vf)	(vf_rxq_count(vf) > 1)
+#define is_vf_multi(vf)	(vf_rxq_count(vf) > 1)
 
-#घोषणा HW_VF_HANDLE(bp, असल_vfid) \
-	(u16)(BP_ABS_FUNC((bp)) | (1<<3) |  ((u16)(असल_vfid) << 4))
+#define HW_VF_HANDLE(bp, abs_vfid) \
+	(u16)(BP_ABS_FUNC((bp)) | (1<<3) |  ((u16)(abs_vfid) << 4))
 
-#घोषणा FW_PF_MAX_HANDLE	8
+#define FW_PF_MAX_HANDLE	8
 
-#घोषणा FW_VF_HANDLE(असल_vfid)	\
-	(असल_vfid + FW_PF_MAX_HANDLE)
+#define FW_VF_HANDLE(abs_vfid)	\
+	(abs_vfid + FW_PF_MAX_HANDLE)
 
-#घोषणा GET_NUM_VFS_PER_PATH(bp)	64 /* use max possible value */
-#घोषणा GET_NUM_VFS_PER_PF(bp)		((bp)->vfdb ? (bp)->vfdb->sriov.total \
+#define GET_NUM_VFS_PER_PATH(bp)	64 /* use max possible value */
+#define GET_NUM_VFS_PER_PF(bp)		((bp)->vfdb ? (bp)->vfdb->sriov.total \
 						    : 0)
-#घोषणा VF_MAC_CREDIT_CNT		1
-#घोषणा VF_VLAN_CREDIT_CNT		2 /* VLAN0 + 'real' VLAN */
+#define VF_MAC_CREDIT_CNT		1
+#define VF_VLAN_CREDIT_CNT		2 /* VLAN0 + 'real' VLAN */
 
 /* locking and unlocking the channel mutex */
-व्योम bnx2x_lock_vf_pf_channel(काष्ठा bnx2x *bp, काष्ठा bnx2x_virtf *vf,
-			      क्रमागत channel_tlvs tlv);
+void bnx2x_lock_vf_pf_channel(struct bnx2x *bp, struct bnx2x_virtf *vf,
+			      enum channel_tlvs tlv);
 
-व्योम bnx2x_unlock_vf_pf_channel(काष्ठा bnx2x *bp, काष्ठा bnx2x_virtf *vf,
-				क्रमागत channel_tlvs expected_tlv);
+void bnx2x_unlock_vf_pf_channel(struct bnx2x *bp, struct bnx2x_virtf *vf,
+				enum channel_tlvs expected_tlv);
 
 /* VF mail box (aka vf-pf channel) */
 
-/* a container क्रम the bi-directional vf<-->pf messages.
+/* a container for the bi-directional vf<-->pf messages.
  *  The actual response will be placed according to the offset parameter
  *  provided in the request
  */
 
-#घोषणा MBX_MSG_ALIGN	8
-#घोषणा MBX_MSG_ALIGNED_SIZE	(roundup(माप(काष्ठा bnx2x_vf_mbx_msg), \
+#define MBX_MSG_ALIGN	8
+#define MBX_MSG_ALIGNED_SIZE	(roundup(sizeof(struct bnx2x_vf_mbx_msg), \
 				MBX_MSG_ALIGN))
 
-काष्ठा bnx2x_vf_mbx_msg अणु
-	जोड़ vfpf_tlvs req;
-	जोड़ pfvf_tlvs resp;
-पूर्ण;
+struct bnx2x_vf_mbx_msg {
+	union vfpf_tlvs req;
+	union pfvf_tlvs resp;
+};
 
-काष्ठा bnx2x_vf_mbx अणु
-	काष्ठा bnx2x_vf_mbx_msg *msg;
+struct bnx2x_vf_mbx {
+	struct bnx2x_vf_mbx_msg *msg;
 	dma_addr_t msg_mapping;
 
 	/* VF GPA address */
 	u32 vf_addr_lo;
 	u32 vf_addr_hi;
 
-	काष्ठा vfpf_first_tlv first_tlv;	/* saved VF request header */
-पूर्ण;
+	struct vfpf_first_tlv first_tlv;	/* saved VF request header */
+};
 
-काष्ठा bnx2x_vf_sp अणु
-	जोड़ अणु
-		काष्ठा eth_classअगरy_rules_ramrod_data	e2;
-	पूर्ण mac_rdata;
+struct bnx2x_vf_sp {
+	union {
+		struct eth_classify_rules_ramrod_data	e2;
+	} mac_rdata;
 
-	जोड़ अणु
-		काष्ठा eth_classअगरy_rules_ramrod_data	e2;
-	पूर्ण vlan_rdata;
+	union {
+		struct eth_classify_rules_ramrod_data	e2;
+	} vlan_rdata;
 
-	जोड़ अणु
-		काष्ठा eth_classअगरy_rules_ramrod_data	e2;
-	पूर्ण vlan_mac_rdata;
+	union {
+		struct eth_classify_rules_ramrod_data	e2;
+	} vlan_mac_rdata;
 
-	जोड़ अणु
-		काष्ठा eth_filter_rules_ramrod_data	e2;
-	पूर्ण rx_mode_rdata;
+	union {
+		struct eth_filter_rules_ramrod_data	e2;
+	} rx_mode_rdata;
 
-	जोड़ अणु
-		काष्ठा eth_multicast_rules_ramrod_data  e2;
-	पूर्ण mcast_rdata;
+	union {
+		struct eth_multicast_rules_ramrod_data  e2;
+	} mcast_rdata;
 
-	जोड़ अणु
-		काष्ठा client_init_ramrod_data  init_data;
-		काष्ठा client_update_ramrod_data update_data;
-	पूर्ण q_data;
+	union {
+		struct client_init_ramrod_data  init_data;
+		struct client_update_ramrod_data update_data;
+	} q_data;
 
-	जोड़ अणु
-		काष्ठा eth_rss_update_ramrod_data e2;
-	पूर्ण rss_rdata;
-पूर्ण;
+	union {
+		struct eth_rss_update_ramrod_data e2;
+	} rss_rdata;
+};
 
-काष्ठा hw_dma अणु
-	व्योम *addr;
+struct hw_dma {
+	void *addr;
 	dma_addr_t mapping;
-	माप_प्रकार size;
-पूर्ण;
+	size_t size;
+};
 
-काष्ठा bnx2x_vfdb अणु
-#घोषणा BP_VFDB(bp)		((bp)->vfdb)
+struct bnx2x_vfdb {
+#define BP_VFDB(bp)		((bp)->vfdb)
 	/* vf array */
-	काष्ठा bnx2x_virtf	*vfs;
-#घोषणा BP_VF(bp, idx)		((BP_VFDB(bp) && (bp)->vfdb->vfs) ? \
-					&((bp)->vfdb->vfs[idx]) : शून्य)
-#घोषणा bnx2x_vf(bp, idx, var)	((bp)->vfdb->vfs[idx].var)
+	struct bnx2x_virtf	*vfs;
+#define BP_VF(bp, idx)		((BP_VFDB(bp) && (bp)->vfdb->vfs) ? \
+					&((bp)->vfdb->vfs[idx]) : NULL)
+#define bnx2x_vf(bp, idx, var)	((bp)->vfdb->vfs[idx].var)
 
-	/* queue array - क्रम all vfs */
-	काष्ठा bnx2x_vf_queue *vfqs;
+	/* queue array - for all vfs */
+	struct bnx2x_vf_queue *vfqs;
 
 	/* vf HW contexts */
-	काष्ठा hw_dma		context[BNX2X_VF_CIDS/ILT_PAGE_CIDS];
-#घोषणा	BP_VF_CXT_PAGE(bp, i)	(&(bp)->vfdb->context[i])
+	struct hw_dma		context[BNX2X_VF_CIDS/ILT_PAGE_CIDS];
+#define	BP_VF_CXT_PAGE(bp, i)	(&(bp)->vfdb->context[i])
 
-	/* SR-IOV inक्रमmation */
-	काष्ठा bnx2x_sriov	sriov;
-	काष्ठा hw_dma		mbx_dma;
-#घोषणा BP_VF_MBX_DMA(bp)	(&((bp)->vfdb->mbx_dma))
-	काष्ठा bnx2x_vf_mbx	mbxs[BNX2X_MAX_NUM_OF_VFS];
-#घोषणा BP_VF_MBX(bp, vfid)	(&((bp)->vfdb->mbxs[vfid]))
+	/* SR-IOV information */
+	struct bnx2x_sriov	sriov;
+	struct hw_dma		mbx_dma;
+#define BP_VF_MBX_DMA(bp)	(&((bp)->vfdb->mbx_dma))
+	struct bnx2x_vf_mbx	mbxs[BNX2X_MAX_NUM_OF_VFS];
+#define BP_VF_MBX(bp, vfid)	(&((bp)->vfdb->mbxs[vfid]))
 
-	काष्ठा hw_dma		bulletin_dma;
-#घोषणा BP_VF_BULLETIN_DMA(bp)	(&((bp)->vfdb->bulletin_dma))
-#घोषणा	BP_VF_BULLETIN(bp, vf) \
-	(((काष्ठा pf_vf_bulletin_content *)(BP_VF_BULLETIN_DMA(bp)->addr)) \
+	struct hw_dma		bulletin_dma;
+#define BP_VF_BULLETIN_DMA(bp)	(&((bp)->vfdb->bulletin_dma))
+#define	BP_VF_BULLETIN(bp, vf) \
+	(((struct pf_vf_bulletin_content *)(BP_VF_BULLETIN_DMA(bp)->addr)) \
 	 + (vf))
 
-	काष्ठा hw_dma		sp_dma;
-#घोषणा bnx2x_vf_sp(bp, vf, field) ((bp)->vfdb->sp_dma.addr +		\
-		(vf)->index * माप(काष्ठा bnx2x_vf_sp) +		\
-		दुरत्व(काष्ठा bnx2x_vf_sp, field))
-#घोषणा bnx2x_vf_sp_map(bp, vf, field) ((bp)->vfdb->sp_dma.mapping +	\
-		(vf)->index * माप(काष्ठा bnx2x_vf_sp) +		\
-		दुरत्व(काष्ठा bnx2x_vf_sp, field))
+	struct hw_dma		sp_dma;
+#define bnx2x_vf_sp(bp, vf, field) ((bp)->vfdb->sp_dma.addr +		\
+		(vf)->index * sizeof(struct bnx2x_vf_sp) +		\
+		offsetof(struct bnx2x_vf_sp, field))
+#define bnx2x_vf_sp_map(bp, vf, field) ((bp)->vfdb->sp_dma.mapping +	\
+		(vf)->index * sizeof(struct bnx2x_vf_sp) +		\
+		offsetof(struct bnx2x_vf_sp, field))
 
-#घोषणा FLRD_VFS_DWORDS (BNX2X_MAX_NUM_OF_VFS / 32)
+#define FLRD_VFS_DWORDS (BNX2X_MAX_NUM_OF_VFS / 32)
 	u32 flrd_vfs[FLRD_VFS_DWORDS];
 
-	/* the number of msix vectors beदीर्घing to this PF designated क्रम VFs */
+	/* the number of msix vectors belonging to this PF designated for VFs */
 	u16 vf_sbs_pool;
 	u16 first_vf_igu_entry;
 
 	/* sp_rtnl synchronization */
-	काष्ठा mutex			event_mutex;
+	struct mutex			event_mutex;
 	u64				event_occur;
 
 	/* bulletin board update synchronization */
-	काष्ठा mutex			bulletin_mutex;
-पूर्ण;
+	struct mutex			bulletin_mutex;
+};
 
 /* queue access */
-अटल अंतरभूत काष्ठा bnx2x_vf_queue *vfq_get(काष्ठा bnx2x_virtf *vf, u8 index)
-अणु
-	वापस &(vf->vfqs[index]);
-पूर्ण
+static inline struct bnx2x_vf_queue *vfq_get(struct bnx2x_virtf *vf, u8 index)
+{
+	return &(vf->vfqs[index]);
+}
 
 /* FW ids */
-अटल अंतरभूत u8 vf_igu_sb(काष्ठा bnx2x_virtf *vf, u16 sb_idx)
-अणु
-	वापस vf->igu_base_id + sb_idx;
-पूर्ण
+static inline u8 vf_igu_sb(struct bnx2x_virtf *vf, u16 sb_idx)
+{
+	return vf->igu_base_id + sb_idx;
+}
 
-अटल अंतरभूत u8 vf_hc_qzone(काष्ठा bnx2x_virtf *vf, u16 sb_idx)
-अणु
-	वापस vf_igu_sb(vf, sb_idx);
-पूर्ण
+static inline u8 vf_hc_qzone(struct bnx2x_virtf *vf, u16 sb_idx)
+{
+	return vf_igu_sb(vf, sb_idx);
+}
 
-अटल u8 vfq_cl_id(काष्ठा bnx2x_virtf *vf, काष्ठा bnx2x_vf_queue *q)
-अणु
-	वापस vf->igu_base_id + q->index;
-पूर्ण
+static u8 vfq_cl_id(struct bnx2x_virtf *vf, struct bnx2x_vf_queue *q)
+{
+	return vf->igu_base_id + q->index;
+}
 
-अटल अंतरभूत u8 vfq_stat_id(काष्ठा bnx2x_virtf *vf, काष्ठा bnx2x_vf_queue *q)
-अणु
-	अगर (vf->cfg_flags & VF_CFG_STATS_COALESCE)
-		वापस vf->leading_rss;
-	अन्यथा
-		वापस vfq_cl_id(vf, q);
-पूर्ण
+static inline u8 vfq_stat_id(struct bnx2x_virtf *vf, struct bnx2x_vf_queue *q)
+{
+	if (vf->cfg_flags & VF_CFG_STATS_COALESCE)
+		return vf->leading_rss;
+	else
+		return vfq_cl_id(vf, q);
+}
 
-अटल अंतरभूत u8 vfq_qzone_id(काष्ठा bnx2x_virtf *vf, काष्ठा bnx2x_vf_queue *q)
-अणु
-	वापस vfq_cl_id(vf, q);
-पूर्ण
+static inline u8 vfq_qzone_id(struct bnx2x_virtf *vf, struct bnx2x_vf_queue *q)
+{
+	return vfq_cl_id(vf, q);
+}
 
 /* global iov routines */
-पूर्णांक bnx2x_iov_init_ilt(काष्ठा bnx2x *bp, u16 line);
-पूर्णांक bnx2x_iov_init_one(काष्ठा bnx2x *bp, पूर्णांक पूर्णांक_mode_param, पूर्णांक num_vfs_param);
-व्योम bnx2x_iov_हटाओ_one(काष्ठा bnx2x *bp);
-व्योम bnx2x_iov_मुक्त_mem(काष्ठा bnx2x *bp);
-पूर्णांक bnx2x_iov_alloc_mem(काष्ठा bnx2x *bp);
-पूर्णांक bnx2x_iov_nic_init(काष्ठा bnx2x *bp);
-पूर्णांक bnx2x_iov_chip_cleanup(काष्ठा bnx2x *bp);
-व्योम bnx2x_iov_init_dq(काष्ठा bnx2x *bp);
-व्योम bnx2x_iov_init_dmae(काष्ठा bnx2x *bp);
-व्योम bnx2x_iov_set_queue_sp_obj(काष्ठा bnx2x *bp, पूर्णांक vf_cid,
-				काष्ठा bnx2x_queue_sp_obj **q_obj);
-पूर्णांक bnx2x_iov_eq_sp_event(काष्ठा bnx2x *bp, जोड़ event_ring_elem *elem);
-व्योम bnx2x_iov_adjust_stats_req(काष्ठा bnx2x *bp);
-व्योम bnx2x_iov_storm_stats_update(काष्ठा bnx2x *bp);
+int bnx2x_iov_init_ilt(struct bnx2x *bp, u16 line);
+int bnx2x_iov_init_one(struct bnx2x *bp, int int_mode_param, int num_vfs_param);
+void bnx2x_iov_remove_one(struct bnx2x *bp);
+void bnx2x_iov_free_mem(struct bnx2x *bp);
+int bnx2x_iov_alloc_mem(struct bnx2x *bp);
+int bnx2x_iov_nic_init(struct bnx2x *bp);
+int bnx2x_iov_chip_cleanup(struct bnx2x *bp);
+void bnx2x_iov_init_dq(struct bnx2x *bp);
+void bnx2x_iov_init_dmae(struct bnx2x *bp);
+void bnx2x_iov_set_queue_sp_obj(struct bnx2x *bp, int vf_cid,
+				struct bnx2x_queue_sp_obj **q_obj);
+int bnx2x_iov_eq_sp_event(struct bnx2x *bp, union event_ring_elem *elem);
+void bnx2x_iov_adjust_stats_req(struct bnx2x *bp);
+void bnx2x_iov_storm_stats_update(struct bnx2x *bp);
 /* global vf mailbox routines */
-व्योम bnx2x_vf_mbx(काष्ठा bnx2x *bp);
-व्योम bnx2x_vf_mbx_schedule(काष्ठा bnx2x *bp,
-			   काष्ठा vf_pf_event_data *vfpf_event);
-व्योम bnx2x_vf_enable_mbx(काष्ठा bnx2x *bp, u8 असल_vfid);
+void bnx2x_vf_mbx(struct bnx2x *bp);
+void bnx2x_vf_mbx_schedule(struct bnx2x *bp,
+			   struct vf_pf_event_data *vfpf_event);
+void bnx2x_vf_enable_mbx(struct bnx2x *bp, u8 abs_vfid);
 
 /* CORE VF API */
-प्रकार u8 bnx2x_mac_addr_t[ETH_ALEN];
+typedef u8 bnx2x_mac_addr_t[ETH_ALEN];
 
 /* acquire */
-पूर्णांक bnx2x_vf_acquire(काष्ठा bnx2x *bp, काष्ठा bnx2x_virtf *vf,
-		     काष्ठा vf_pf_resc_request *resc);
+int bnx2x_vf_acquire(struct bnx2x *bp, struct bnx2x_virtf *vf,
+		     struct vf_pf_resc_request *resc);
 /* init */
-पूर्णांक bnx2x_vf_init(काष्ठा bnx2x *bp, काष्ठा bnx2x_virtf *vf,
+int bnx2x_vf_init(struct bnx2x *bp, struct bnx2x_virtf *vf,
 		  dma_addr_t *sb_map);
 
-/* VFOP queue स्थिरruction helpers */
-व्योम bnx2x_vfop_qctor_dump_tx(काष्ठा bnx2x *bp, काष्ठा bnx2x_virtf *vf,
-			    काष्ठा bnx2x_queue_init_params *init_params,
-			    काष्ठा bnx2x_queue_setup_params *setup_params,
+/* VFOP queue construction helpers */
+void bnx2x_vfop_qctor_dump_tx(struct bnx2x *bp, struct bnx2x_virtf *vf,
+			    struct bnx2x_queue_init_params *init_params,
+			    struct bnx2x_queue_setup_params *setup_params,
 			    u16 q_idx, u16 sb_idx);
 
-व्योम bnx2x_vfop_qctor_dump_rx(काष्ठा bnx2x *bp, काष्ठा bnx2x_virtf *vf,
-			    काष्ठा bnx2x_queue_init_params *init_params,
-			    काष्ठा bnx2x_queue_setup_params *setup_params,
+void bnx2x_vfop_qctor_dump_rx(struct bnx2x *bp, struct bnx2x_virtf *vf,
+			    struct bnx2x_queue_init_params *init_params,
+			    struct bnx2x_queue_setup_params *setup_params,
 			    u16 q_idx, u16 sb_idx);
 
-व्योम bnx2x_vfop_qctor_prep(काष्ठा bnx2x *bp,
-			   काष्ठा bnx2x_virtf *vf,
-			   काष्ठा bnx2x_vf_queue *q,
-			   काष्ठा bnx2x_vf_queue_स्थिरruct_params *p,
-			   अचिन्हित दीर्घ q_type);
+void bnx2x_vfop_qctor_prep(struct bnx2x *bp,
+			   struct bnx2x_virtf *vf,
+			   struct bnx2x_vf_queue *q,
+			   struct bnx2x_vf_queue_construct_params *p,
+			   unsigned long q_type);
 
-पूर्णांक bnx2x_vf_mac_vlan_config_list(काष्ठा bnx2x *bp, काष्ठा bnx2x_virtf *vf,
-				  काष्ठा bnx2x_vf_mac_vlan_filters *filters,
-				  पूर्णांक qid, bool drv_only);
+int bnx2x_vf_mac_vlan_config_list(struct bnx2x *bp, struct bnx2x_virtf *vf,
+				  struct bnx2x_vf_mac_vlan_filters *filters,
+				  int qid, bool drv_only);
 
-पूर्णांक bnx2x_vf_queue_setup(काष्ठा bnx2x *bp, काष्ठा bnx2x_virtf *vf, पूर्णांक qid,
-			 काष्ठा bnx2x_vf_queue_स्थिरruct_params *qctor);
+int bnx2x_vf_queue_setup(struct bnx2x *bp, struct bnx2x_virtf *vf, int qid,
+			 struct bnx2x_vf_queue_construct_params *qctor);
 
-पूर्णांक bnx2x_vf_queue_tearकरोwn(काष्ठा bnx2x *bp, काष्ठा bnx2x_virtf *vf, पूर्णांक qid);
+int bnx2x_vf_queue_teardown(struct bnx2x *bp, struct bnx2x_virtf *vf, int qid);
 
-पूर्णांक bnx2x_vf_mcast(काष्ठा bnx2x *bp, काष्ठा bnx2x_virtf *vf,
-		   bnx2x_mac_addr_t *mcasts, पूर्णांक mc_num, bool drv_only);
+int bnx2x_vf_mcast(struct bnx2x *bp, struct bnx2x_virtf *vf,
+		   bnx2x_mac_addr_t *mcasts, int mc_num, bool drv_only);
 
-पूर्णांक bnx2x_vf_rxmode(काष्ठा bnx2x *bp, काष्ठा bnx2x_virtf *vf,
-		    पूर्णांक qid, अचिन्हित दीर्घ accept_flags);
+int bnx2x_vf_rxmode(struct bnx2x *bp, struct bnx2x_virtf *vf,
+		    int qid, unsigned long accept_flags);
 
-पूर्णांक bnx2x_vf_बंद(काष्ठा bnx2x *bp, काष्ठा bnx2x_virtf *vf);
+int bnx2x_vf_close(struct bnx2x *bp, struct bnx2x_virtf *vf);
 
-पूर्णांक bnx2x_vf_मुक्त(काष्ठा bnx2x *bp, काष्ठा bnx2x_virtf *vf);
+int bnx2x_vf_free(struct bnx2x *bp, struct bnx2x_virtf *vf);
 
-पूर्णांक bnx2x_vf_rss_update(काष्ठा bnx2x *bp, काष्ठा bnx2x_virtf *vf,
-			काष्ठा bnx2x_config_rss_params *rss);
+int bnx2x_vf_rss_update(struct bnx2x *bp, struct bnx2x_virtf *vf,
+			struct bnx2x_config_rss_params *rss);
 
-पूर्णांक bnx2x_vf_tpa_update(काष्ठा bnx2x *bp, काष्ठा bnx2x_virtf *vf,
-			काष्ठा vfpf_tpa_tlv *tlv,
-			काष्ठा bnx2x_queue_update_tpa_params *params);
+int bnx2x_vf_tpa_update(struct bnx2x *bp, struct bnx2x_virtf *vf,
+			struct vfpf_tpa_tlv *tlv,
+			struct bnx2x_queue_update_tpa_params *params);
 
-/* VF release ~ VF बंद + VF release-resources
+/* VF release ~ VF close + VF release-resources
  *
- * Release is the ultimate SW shutकरोwn and is called whenever an
+ * Release is the ultimate SW shutdown and is called whenever an
  * irrecoverable error is encountered.
  */
-पूर्णांक bnx2x_vf_release(काष्ठा bnx2x *bp, काष्ठा bnx2x_virtf *vf);
-पूर्णांक bnx2x_vf_idx_by_असल_fid(काष्ठा bnx2x *bp, u16 असल_vfid);
-u8 bnx2x_vf_max_queue_cnt(काष्ठा bnx2x *bp, काष्ठा bnx2x_virtf *vf);
+int bnx2x_vf_release(struct bnx2x *bp, struct bnx2x_virtf *vf);
+int bnx2x_vf_idx_by_abs_fid(struct bnx2x *bp, u16 abs_vfid);
+u8 bnx2x_vf_max_queue_cnt(struct bnx2x *bp, struct bnx2x_virtf *vf);
 
 /* FLR routines */
 
 /* VF FLR helpers */
-पूर्णांक bnx2x_vf_flr_clnup_epilog(काष्ठा bnx2x *bp, u8 असल_vfid);
-व्योम bnx2x_vf_enable_access(काष्ठा bnx2x *bp, u8 असल_vfid);
+int bnx2x_vf_flr_clnup_epilog(struct bnx2x *bp, u8 abs_vfid);
+void bnx2x_vf_enable_access(struct bnx2x *bp, u8 abs_vfid);
 
-/* Handles an FLR (or VF_DISABLE) notअगरication क्रमm the MCP */
-व्योम bnx2x_vf_handle_flr_event(काष्ठा bnx2x *bp);
+/* Handles an FLR (or VF_DISABLE) notification form the MCP */
+void bnx2x_vf_handle_flr_event(struct bnx2x *bp);
 
 bool bnx2x_tlv_supported(u16 tlvtype);
 
-u32 bnx2x_crc_vf_bulletin(काष्ठा pf_vf_bulletin_content *bulletin);
-पूर्णांक bnx2x_post_vf_bulletin(काष्ठा bnx2x *bp, पूर्णांक vf);
-व्योम bnx2x_vf_bulletin_finalize(काष्ठा pf_vf_bulletin_content *bulletin,
-				bool support_दीर्घ);
+u32 bnx2x_crc_vf_bulletin(struct pf_vf_bulletin_content *bulletin);
+int bnx2x_post_vf_bulletin(struct bnx2x *bp, int vf);
+void bnx2x_vf_bulletin_finalize(struct pf_vf_bulletin_content *bulletin,
+				bool support_long);
 
-क्रमागत sample_bulletin_result bnx2x_sample_bulletin(काष्ठा bnx2x *bp);
+enum sample_bulletin_result bnx2x_sample_bulletin(struct bnx2x *bp);
 
 /* VF side vfpf channel functions */
-पूर्णांक bnx2x_vfpf_acquire(काष्ठा bnx2x *bp, u8 tx_count, u8 rx_count);
-पूर्णांक bnx2x_vfpf_release(काष्ठा bnx2x *bp);
-पूर्णांक bnx2x_vfpf_release(काष्ठा bnx2x *bp);
-पूर्णांक bnx2x_vfpf_init(काष्ठा bnx2x *bp);
-व्योम bnx2x_vfpf_बंद_vf(काष्ठा bnx2x *bp);
-पूर्णांक bnx2x_vfpf_setup_q(काष्ठा bnx2x *bp, काष्ठा bnx2x_fastpath *fp,
+int bnx2x_vfpf_acquire(struct bnx2x *bp, u8 tx_count, u8 rx_count);
+int bnx2x_vfpf_release(struct bnx2x *bp);
+int bnx2x_vfpf_release(struct bnx2x *bp);
+int bnx2x_vfpf_init(struct bnx2x *bp);
+void bnx2x_vfpf_close_vf(struct bnx2x *bp);
+int bnx2x_vfpf_setup_q(struct bnx2x *bp, struct bnx2x_fastpath *fp,
 		       bool is_leading);
-पूर्णांक bnx2x_vfpf_config_mac(काष्ठा bnx2x *bp, u8 *addr, u8 vf_qid, bool set);
-पूर्णांक bnx2x_vfpf_config_rss(काष्ठा bnx2x *bp,
-			  काष्ठा bnx2x_config_rss_params *params);
-पूर्णांक bnx2x_vfpf_set_mcast(काष्ठा net_device *dev);
-पूर्णांक bnx2x_vfpf_storm_rx_mode(काष्ठा bnx2x *bp);
+int bnx2x_vfpf_config_mac(struct bnx2x *bp, u8 *addr, u8 vf_qid, bool set);
+int bnx2x_vfpf_config_rss(struct bnx2x *bp,
+			  struct bnx2x_config_rss_params *params);
+int bnx2x_vfpf_set_mcast(struct net_device *dev);
+int bnx2x_vfpf_storm_rx_mode(struct bnx2x *bp);
 
-अटल अंतरभूत व्योम bnx2x_vf_fill_fw_str(काष्ठा bnx2x *bp, अक्षर *buf,
-					माप_प्रकार buf_len)
-अणु
+static inline void bnx2x_vf_fill_fw_str(struct bnx2x *bp, char *buf,
+					size_t buf_len)
+{
 	strlcpy(buf, bp->acquire_resp.pfdev_info.fw_ver, buf_len);
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक bnx2x_vf_ustorm_prods_offset(काष्ठा bnx2x *bp,
-					       काष्ठा bnx2x_fastpath *fp)
-अणु
-	वापस PXP_VF_ADDR_USDM_QUEUES_START +
+static inline int bnx2x_vf_ustorm_prods_offset(struct bnx2x *bp,
+					       struct bnx2x_fastpath *fp)
+{
+	return PXP_VF_ADDR_USDM_QUEUES_START +
 		bp->acquire_resp.resc.hw_qid[fp->index] *
-		माप(काष्ठा ustorm_queue_zone_data);
-पूर्ण
+		sizeof(struct ustorm_queue_zone_data);
+}
 
-क्रमागत sample_bulletin_result bnx2x_sample_bulletin(काष्ठा bnx2x *bp);
-व्योम bnx2x_समयr_sriov(काष्ठा bnx2x *bp);
-व्योम __iomem *bnx2x_vf_करोorbells(काष्ठा bnx2x *bp);
-व्योम bnx2x_vf_pci_dealloc(काष्ठा bnx2x *bp);
-पूर्णांक bnx2x_vf_pci_alloc(काष्ठा bnx2x *bp);
-पूर्णांक bnx2x_enable_sriov(काष्ठा bnx2x *bp);
-व्योम bnx2x_disable_sriov(काष्ठा bnx2x *bp);
-अटल अंतरभूत पूर्णांक bnx2x_vf_headroom(काष्ठा bnx2x *bp)
-अणु
-	वापस bp->vfdb->sriov.nr_virtfn * BNX2X_CIDS_PER_VF;
-पूर्ण
-व्योम bnx2x_pf_set_vfs_vlan(काष्ठा bnx2x *bp);
-पूर्णांक bnx2x_sriov_configure(काष्ठा pci_dev *dev, पूर्णांक num_vfs);
-व्योम bnx2x_iov_channel_करोwn(काष्ठा bnx2x *bp);
+enum sample_bulletin_result bnx2x_sample_bulletin(struct bnx2x *bp);
+void bnx2x_timer_sriov(struct bnx2x *bp);
+void __iomem *bnx2x_vf_doorbells(struct bnx2x *bp);
+void bnx2x_vf_pci_dealloc(struct bnx2x *bp);
+int bnx2x_vf_pci_alloc(struct bnx2x *bp);
+int bnx2x_enable_sriov(struct bnx2x *bp);
+void bnx2x_disable_sriov(struct bnx2x *bp);
+static inline int bnx2x_vf_headroom(struct bnx2x *bp)
+{
+	return bp->vfdb->sriov.nr_virtfn * BNX2X_CIDS_PER_VF;
+}
+void bnx2x_pf_set_vfs_vlan(struct bnx2x *bp);
+int bnx2x_sriov_configure(struct pci_dev *dev, int num_vfs);
+void bnx2x_iov_channel_down(struct bnx2x *bp);
 
-व्योम bnx2x_iov_task(काष्ठा work_काष्ठा *work);
+void bnx2x_iov_task(struct work_struct *work);
 
-व्योम bnx2x_schedule_iov_task(काष्ठा bnx2x *bp, क्रमागत bnx2x_iov_flag flag);
+void bnx2x_schedule_iov_task(struct bnx2x *bp, enum bnx2x_iov_flag flag);
 
-व्योम bnx2x_iov_link_update(काष्ठा bnx2x *bp);
-पूर्णांक bnx2x_iov_link_update_vf(काष्ठा bnx2x *bp, पूर्णांक idx);
+void bnx2x_iov_link_update(struct bnx2x *bp);
+int bnx2x_iov_link_update_vf(struct bnx2x *bp, int idx);
 
-पूर्णांक bnx2x_set_vf_link_state(काष्ठा net_device *dev, पूर्णांक vf, पूर्णांक link_state);
+int bnx2x_set_vf_link_state(struct net_device *dev, int vf, int link_state);
 
-पूर्णांक bnx2x_vfpf_update_vlan(काष्ठा bnx2x *bp, u16 vid, u8 vf_qid, bool add);
-#अन्यथा /* CONFIG_BNX2X_SRIOV */
+int bnx2x_vfpf_update_vlan(struct bnx2x *bp, u16 vid, u8 vf_qid, bool add);
+#else /* CONFIG_BNX2X_SRIOV */
 
-#घोषणा GET_NUM_VFS_PER_PATH(bp)	0
-#घोषणा GET_NUM_VFS_PER_PF(bp)		0
-#घोषणा VF_MAC_CREDIT_CNT		0
-#घोषणा VF_VLAN_CREDIT_CNT		0
+#define GET_NUM_VFS_PER_PATH(bp)	0
+#define GET_NUM_VFS_PER_PF(bp)		0
+#define VF_MAC_CREDIT_CNT		0
+#define VF_VLAN_CREDIT_CNT		0
 
-अटल अंतरभूत व्योम bnx2x_iov_set_queue_sp_obj(काष्ठा bnx2x *bp, पूर्णांक vf_cid,
-				काष्ठा bnx2x_queue_sp_obj **q_obj) अणुपूर्ण
-अटल अंतरभूत व्योम bnx2x_vf_handle_flr_event(काष्ठा bnx2x *bp) अणुपूर्ण
-अटल अंतरभूत पूर्णांक bnx2x_iov_eq_sp_event(काष्ठा bnx2x *bp,
-					जोड़ event_ring_elem *elem) अणुवापस 1; पूर्ण
-अटल अंतरभूत व्योम bnx2x_vf_mbx(काष्ठा bnx2x *bp) अणुपूर्ण
-अटल अंतरभूत व्योम bnx2x_vf_mbx_schedule(काष्ठा bnx2x *bp,
-					 काष्ठा vf_pf_event_data *vfpf_event) अणुपूर्ण
-अटल अंतरभूत पूर्णांक bnx2x_iov_init_ilt(काष्ठा bnx2x *bp, u16 line) अणुवापस line; पूर्ण
-अटल अंतरभूत व्योम bnx2x_iov_init_dq(काष्ठा bnx2x *bp) अणुपूर्ण
-अटल अंतरभूत पूर्णांक bnx2x_iov_alloc_mem(काष्ठा bnx2x *bp) अणुवापस 0; पूर्ण
-अटल अंतरभूत व्योम bnx2x_iov_मुक्त_mem(काष्ठा bnx2x *bp) अणुपूर्ण
-अटल अंतरभूत पूर्णांक bnx2x_iov_chip_cleanup(काष्ठा bnx2x *bp) अणुवापस 0; पूर्ण
-अटल अंतरभूत व्योम bnx2x_iov_init_dmae(काष्ठा bnx2x *bp) अणुपूर्ण
-अटल अंतरभूत पूर्णांक bnx2x_iov_init_one(काष्ठा bnx2x *bp, पूर्णांक पूर्णांक_mode_param,
-				     पूर्णांक num_vfs_param) अणुवापस 0; पूर्ण
-अटल अंतरभूत व्योम bnx2x_iov_हटाओ_one(काष्ठा bnx2x *bp) अणुपूर्ण
-अटल अंतरभूत पूर्णांक bnx2x_enable_sriov(काष्ठा bnx2x *bp) अणुवापस 0; पूर्ण
-अटल अंतरभूत व्योम bnx2x_disable_sriov(काष्ठा bnx2x *bp) अणुपूर्ण
-अटल अंतरभूत पूर्णांक bnx2x_vfpf_acquire(काष्ठा bnx2x *bp,
-				     u8 tx_count, u8 rx_count) अणुवापस 0; पूर्ण
-अटल अंतरभूत पूर्णांक bnx2x_vfpf_release(काष्ठा bnx2x *bp) अणुवापस 0; पूर्ण
-अटल अंतरभूत पूर्णांक bnx2x_vfpf_init(काष्ठा bnx2x *bp) अणुवापस 0; पूर्ण
-अटल अंतरभूत व्योम bnx2x_vfpf_बंद_vf(काष्ठा bnx2x *bp) अणुपूर्ण
-अटल अंतरभूत पूर्णांक bnx2x_vfpf_setup_q(काष्ठा bnx2x *bp, काष्ठा bnx2x_fastpath *fp, bool is_leading) अणुवापस 0; पूर्ण
-अटल अंतरभूत पूर्णांक bnx2x_vfpf_config_mac(काष्ठा bnx2x *bp, u8 *addr,
-					u8 vf_qid, bool set) अणुवापस 0; पूर्ण
-अटल अंतरभूत पूर्णांक bnx2x_vfpf_config_rss(काष्ठा bnx2x *bp,
-					काष्ठा bnx2x_config_rss_params *params) अणुवापस 0; पूर्ण
-अटल अंतरभूत पूर्णांक bnx2x_vfpf_set_mcast(काष्ठा net_device *dev) अणुवापस 0; पूर्ण
-अटल अंतरभूत पूर्णांक bnx2x_vfpf_storm_rx_mode(काष्ठा bnx2x *bp) अणुवापस 0; पूर्ण
-अटल अंतरभूत पूर्णांक bnx2x_iov_nic_init(काष्ठा bnx2x *bp) अणुवापस 0; पूर्ण
-अटल अंतरभूत पूर्णांक bnx2x_vf_headroom(काष्ठा bnx2x *bp) अणुवापस 0; पूर्ण
-अटल अंतरभूत व्योम bnx2x_iov_adjust_stats_req(काष्ठा bnx2x *bp) अणुपूर्ण
-अटल अंतरभूत व्योम bnx2x_vf_fill_fw_str(काष्ठा bnx2x *bp, अक्षर *buf,
-					माप_प्रकार buf_len) अणुपूर्ण
-अटल अंतरभूत पूर्णांक bnx2x_vf_ustorm_prods_offset(काष्ठा bnx2x *bp,
-					       काष्ठा bnx2x_fastpath *fp) अणुवापस 0; पूर्ण
-अटल अंतरभूत क्रमागत sample_bulletin_result bnx2x_sample_bulletin(काष्ठा bnx2x *bp)
-अणु
-	वापस PFVF_BULLETIN_UNCHANGED;
-पूर्ण
-अटल अंतरभूत व्योम bnx2x_समयr_sriov(काष्ठा bnx2x *bp) अणुपूर्ण
+static inline void bnx2x_iov_set_queue_sp_obj(struct bnx2x *bp, int vf_cid,
+				struct bnx2x_queue_sp_obj **q_obj) {}
+static inline void bnx2x_vf_handle_flr_event(struct bnx2x *bp) {}
+static inline int bnx2x_iov_eq_sp_event(struct bnx2x *bp,
+					union event_ring_elem *elem) {return 1; }
+static inline void bnx2x_vf_mbx(struct bnx2x *bp) {}
+static inline void bnx2x_vf_mbx_schedule(struct bnx2x *bp,
+					 struct vf_pf_event_data *vfpf_event) {}
+static inline int bnx2x_iov_init_ilt(struct bnx2x *bp, u16 line) {return line; }
+static inline void bnx2x_iov_init_dq(struct bnx2x *bp) {}
+static inline int bnx2x_iov_alloc_mem(struct bnx2x *bp) {return 0; }
+static inline void bnx2x_iov_free_mem(struct bnx2x *bp) {}
+static inline int bnx2x_iov_chip_cleanup(struct bnx2x *bp) {return 0; }
+static inline void bnx2x_iov_init_dmae(struct bnx2x *bp) {}
+static inline int bnx2x_iov_init_one(struct bnx2x *bp, int int_mode_param,
+				     int num_vfs_param) {return 0; }
+static inline void bnx2x_iov_remove_one(struct bnx2x *bp) {}
+static inline int bnx2x_enable_sriov(struct bnx2x *bp) {return 0; }
+static inline void bnx2x_disable_sriov(struct bnx2x *bp) {}
+static inline int bnx2x_vfpf_acquire(struct bnx2x *bp,
+				     u8 tx_count, u8 rx_count) {return 0; }
+static inline int bnx2x_vfpf_release(struct bnx2x *bp) {return 0; }
+static inline int bnx2x_vfpf_init(struct bnx2x *bp) {return 0; }
+static inline void bnx2x_vfpf_close_vf(struct bnx2x *bp) {}
+static inline int bnx2x_vfpf_setup_q(struct bnx2x *bp, struct bnx2x_fastpath *fp, bool is_leading) {return 0; }
+static inline int bnx2x_vfpf_config_mac(struct bnx2x *bp, u8 *addr,
+					u8 vf_qid, bool set) {return 0; }
+static inline int bnx2x_vfpf_config_rss(struct bnx2x *bp,
+					struct bnx2x_config_rss_params *params) {return 0; }
+static inline int bnx2x_vfpf_set_mcast(struct net_device *dev) {return 0; }
+static inline int bnx2x_vfpf_storm_rx_mode(struct bnx2x *bp) {return 0; }
+static inline int bnx2x_iov_nic_init(struct bnx2x *bp) {return 0; }
+static inline int bnx2x_vf_headroom(struct bnx2x *bp) {return 0; }
+static inline void bnx2x_iov_adjust_stats_req(struct bnx2x *bp) {}
+static inline void bnx2x_vf_fill_fw_str(struct bnx2x *bp, char *buf,
+					size_t buf_len) {}
+static inline int bnx2x_vf_ustorm_prods_offset(struct bnx2x *bp,
+					       struct bnx2x_fastpath *fp) {return 0; }
+static inline enum sample_bulletin_result bnx2x_sample_bulletin(struct bnx2x *bp)
+{
+	return PFVF_BULLETIN_UNCHANGED;
+}
+static inline void bnx2x_timer_sriov(struct bnx2x *bp) {}
 
-अटल अंतरभूत व्योम __iomem *bnx2x_vf_करोorbells(काष्ठा bnx2x *bp)
-अणु
-	वापस शून्य;
-पूर्ण
+static inline void __iomem *bnx2x_vf_doorbells(struct bnx2x *bp)
+{
+	return NULL;
+}
 
-अटल अंतरभूत व्योम bnx2x_vf_pci_dealloc(काष्ठा bnx2x *bp) अणुपूर्ण
-अटल अंतरभूत पूर्णांक bnx2x_vf_pci_alloc(काष्ठा bnx2x *bp) अणुवापस 0; पूर्ण
-अटल अंतरभूत व्योम bnx2x_pf_set_vfs_vlan(काष्ठा bnx2x *bp) अणुपूर्ण
-अटल अंतरभूत पूर्णांक bnx2x_sriov_configure(काष्ठा pci_dev *dev, पूर्णांक num_vfs) अणुवापस 0; पूर्ण
-अटल अंतरभूत व्योम bnx2x_iov_channel_करोwn(काष्ठा bnx2x *bp) अणुपूर्ण
+static inline void bnx2x_vf_pci_dealloc(struct bnx2x *bp) {}
+static inline int bnx2x_vf_pci_alloc(struct bnx2x *bp) {return 0; }
+static inline void bnx2x_pf_set_vfs_vlan(struct bnx2x *bp) {}
+static inline int bnx2x_sriov_configure(struct pci_dev *dev, int num_vfs) {return 0; }
+static inline void bnx2x_iov_channel_down(struct bnx2x *bp) {}
 
-अटल अंतरभूत व्योम bnx2x_iov_task(काष्ठा work_काष्ठा *work) अणुपूर्ण
-अटल अंतरभूत व्योम bnx2x_schedule_iov_task(काष्ठा bnx2x *bp, क्रमागत bnx2x_iov_flag flag) अणुपूर्ण
-अटल अंतरभूत व्योम bnx2x_iov_link_update(काष्ठा bnx2x *bp) अणुपूर्ण
-अटल अंतरभूत पूर्णांक bnx2x_iov_link_update_vf(काष्ठा bnx2x *bp, पूर्णांक idx) अणुवापस 0; पूर्ण
+static inline void bnx2x_iov_task(struct work_struct *work) {}
+static inline void bnx2x_schedule_iov_task(struct bnx2x *bp, enum bnx2x_iov_flag flag) {}
+static inline void bnx2x_iov_link_update(struct bnx2x *bp) {}
+static inline int bnx2x_iov_link_update_vf(struct bnx2x *bp, int idx) {return 0; }
 
-अटल अंतरभूत पूर्णांक bnx2x_set_vf_link_state(काष्ठा net_device *dev, पूर्णांक vf,
-					  पूर्णांक link_state) अणुवापस 0; पूर्ण
-काष्ठा pf_vf_bulletin_content;
-अटल अंतरभूत व्योम bnx2x_vf_bulletin_finalize(काष्ठा pf_vf_bulletin_content *bulletin,
-					      bool support_दीर्घ) अणुपूर्ण
+static inline int bnx2x_set_vf_link_state(struct net_device *dev, int vf,
+					  int link_state) {return 0; }
+struct pf_vf_bulletin_content;
+static inline void bnx2x_vf_bulletin_finalize(struct pf_vf_bulletin_content *bulletin,
+					      bool support_long) {}
 
-अटल अंतरभूत पूर्णांक bnx2x_vfpf_update_vlan(काष्ठा bnx2x *bp, u16 vid, u8 vf_qid, bool add) अणुवापस 0; पूर्ण
+static inline int bnx2x_vfpf_update_vlan(struct bnx2x *bp, u16 vid, u8 vf_qid, bool add) {return 0; }
 
-#पूर्ण_अगर /* CONFIG_BNX2X_SRIOV */
-#पूर्ण_अगर /* bnx2x_sriov.h */
+#endif /* CONFIG_BNX2X_SRIOV */
+#endif /* bnx2x_sriov.h */

@@ -1,6 +1,5 @@
-<शैली गुरु>
 /*
- *  Server-side XDR क्रम NFSv4
+ *  Server-side XDR for NFSv4
  *
  *  Copyright (c) 2002 The Regents of the University of Michigan.
  *  All rights reserved.
@@ -8,24 +7,24 @@
  *  Kendrick Smith <kmsmith@umich.edu>
  *  Andy Adamson   <andros@umich.edu>
  *
- *  Redistribution and use in source and binary क्रमms, with or without
- *  modअगरication, are permitted provided that the following conditions
+ *  Redistribution and use in source and binary forms, with or without
+ *  modification, are permitted provided that the following conditions
  *  are met:
  *
  *  1. Redistributions of source code must retain the above copyright
  *     notice, this list of conditions and the following disclaimer.
- *  2. Redistributions in binary क्रमm must reproduce the above copyright
+ *  2. Redistributions in binary form must reproduce the above copyright
  *     notice, this list of conditions and the following disclaimer in the
- *     करोcumentation and/or other materials provided with the distribution.
+ *     documentation and/or other materials provided with the distribution.
  *  3. Neither the name of the University nor the names of its
- *     contributors may be used to enकरोrse or promote products derived
- *     from this software without specअगरic prior written permission.
+ *     contributors may be used to endorse or promote products derived
+ *     from this software without specific prior written permission.
  *
  *  THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED
  *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
  *  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
  *  DISCLAIMED. IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- *  FOR ANY सूचीECT, INसूचीECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ *  FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
  *  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
  *  SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
  *  BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
@@ -34,100 +33,100 @@
  *  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#समावेश <linux/file.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/namei.h>
-#समावेश <linux/statfs.h>
-#समावेश <linux/utsname.h>
-#समावेश <linux/pagemap.h>
-#समावेश <linux/sunrpc/svcauth_gss.h>
-#समावेश <linux/sunrpc/addr.h>
-#समावेश <linux/xattr.h>
-#समावेश <uapi/linux/xattr.h>
+#include <linux/file.h>
+#include <linux/slab.h>
+#include <linux/namei.h>
+#include <linux/statfs.h>
+#include <linux/utsname.h>
+#include <linux/pagemap.h>
+#include <linux/sunrpc/svcauth_gss.h>
+#include <linux/sunrpc/addr.h>
+#include <linux/xattr.h>
+#include <uapi/linux/xattr.h>
 
-#समावेश "idmap.h"
-#समावेश "acl.h"
-#समावेश "xdr4.h"
-#समावेश "vfs.h"
-#समावेश "state.h"
-#समावेश "cache.h"
-#समावेश "netns.h"
-#समावेश "pnfs.h"
-#समावेश "filecache.h"
+#include "idmap.h"
+#include "acl.h"
+#include "xdr4.h"
+#include "vfs.h"
+#include "state.h"
+#include "cache.h"
+#include "netns.h"
+#include "pnfs.h"
+#include "filecache.h"
 
-#समावेश "trace.h"
+#include "trace.h"
 
-#अगर_घोषित CONFIG_NFSD_V4_SECURITY_LABEL
-#समावेश <linux/security.h>
-#पूर्ण_अगर
+#ifdef CONFIG_NFSD_V4_SECURITY_LABEL
+#include <linux/security.h>
+#endif
 
 
-#घोषणा NFSDDBG_FACILITY		NFSDDBG_XDR
+#define NFSDDBG_FACILITY		NFSDDBG_XDR
 
-स्थिर u32 nfsd_suppattrs[3][3] = अणु
-	अणुNFSD4_SUPPORTED_ATTRS_WORD0,
+const u32 nfsd_suppattrs[3][3] = {
+	{NFSD4_SUPPORTED_ATTRS_WORD0,
 	 NFSD4_SUPPORTED_ATTRS_WORD1,
-	 NFSD4_SUPPORTED_ATTRS_WORD2पूर्ण,
+	 NFSD4_SUPPORTED_ATTRS_WORD2},
 
-	अणुNFSD4_1_SUPPORTED_ATTRS_WORD0,
+	{NFSD4_1_SUPPORTED_ATTRS_WORD0,
 	 NFSD4_1_SUPPORTED_ATTRS_WORD1,
-	 NFSD4_1_SUPPORTED_ATTRS_WORD2पूर्ण,
+	 NFSD4_1_SUPPORTED_ATTRS_WORD2},
 
-	अणुNFSD4_1_SUPPORTED_ATTRS_WORD0,
+	{NFSD4_1_SUPPORTED_ATTRS_WORD0,
 	 NFSD4_1_SUPPORTED_ATTRS_WORD1,
-	 NFSD4_2_SUPPORTED_ATTRS_WORD2पूर्ण,
-पूर्ण;
+	 NFSD4_2_SUPPORTED_ATTRS_WORD2},
+};
 
 /*
- * As per referral draft, the fsid क्रम a referral MUST be dअगरferent from the fsid of the containing
- * directory in order to indicate to the client that a fileप्रणाली boundary is present
- * We use a fixed fsid क्रम a referral
+ * As per referral draft, the fsid for a referral MUST be different from the fsid of the containing
+ * directory in order to indicate to the client that a filesystem boundary is present
+ * We use a fixed fsid for a referral
  */
-#घोषणा NFS4_REFERRAL_FSID_MAJOR	0x8000000ULL
-#घोषणा NFS4_REFERRAL_FSID_MINOR	0x8000000ULL
+#define NFS4_REFERRAL_FSID_MAJOR	0x8000000ULL
+#define NFS4_REFERRAL_FSID_MINOR	0x8000000ULL
 
-अटल __be32
-check_filename(अक्षर *str, पूर्णांक len)
-अणु
-	पूर्णांक i;
+static __be32
+check_filename(char *str, int len)
+{
+	int i;
 
-	अगर (len == 0)
-		वापस nfserr_inval;
-	अगर (len > NFS4_MAXNAMLEN)
-		वापस nfserr_nametooदीर्घ;
-	अगर (isकरोtent(str, len))
-		वापस nfserr_badname;
-	क्रम (i = 0; i < len; i++)
-		अगर (str[i] == '/')
-			वापस nfserr_badname;
-	वापस 0;
-पूर्ण
+	if (len == 0)
+		return nfserr_inval;
+	if (len > NFS4_MAXNAMLEN)
+		return nfserr_nametoolong;
+	if (isdotent(str, len))
+		return nfserr_badname;
+	for (i = 0; i < len; i++)
+		if (str[i] == '/')
+			return nfserr_badname;
+	return 0;
+}
 
-अटल पूर्णांक zero_clientid(clientid_t *clid)
-अणु
-	वापस (clid->cl_boot == 0) && (clid->cl_id == 0);
-पूर्ण
+static int zero_clientid(clientid_t *clid)
+{
+	return (clid->cl_boot == 0) && (clid->cl_id == 0);
+}
 
 /**
- * svcxdr_पंचांगpalloc - allocate memory to be मुक्तd after compound processing
- * @argp: NFSv4 compound argument काष्ठाure
+ * svcxdr_tmpalloc - allocate memory to be freed after compound processing
+ * @argp: NFSv4 compound argument structure
  * @len: length of buffer to allocate
  *
- * Allocates a buffer of size @len to be मुक्तd when processing the compound
+ * Allocates a buffer of size @len to be freed when processing the compound
  * operation described in @argp finishes.
  */
-अटल व्योम *
-svcxdr_पंचांगpalloc(काष्ठा nfsd4_compoundargs *argp, u32 len)
-अणु
-	काष्ठा svcxdr_पंचांगpbuf *tb;
+static void *
+svcxdr_tmpalloc(struct nfsd4_compoundargs *argp, u32 len)
+{
+	struct svcxdr_tmpbuf *tb;
 
-	tb = kदो_स्मृति(माप(*tb) + len, GFP_KERNEL);
-	अगर (!tb)
-		वापस शून्य;
-	tb->next = argp->to_मुक्त;
-	argp->to_मुक्त = tb;
-	वापस tb->buf;
-पूर्ण
+	tb = kmalloc(sizeof(*tb) + len, GFP_KERNEL);
+	if (!tb)
+		return NULL;
+	tb->next = argp->to_free;
+	argp->to_free = tb;
+	return tb->buf;
+}
 
 /*
  * For xdr strings that need to be passed to other kernel api's
@@ -136,1482 +135,1482 @@ svcxdr_पंचांगpalloc(काष्ठा nfsd4_compoundargs *argp, u32
  * Note null-terminating in place usually isn't safe since the
  * buffer might end on a page boundary.
  */
-अटल अक्षर *
-svcxdr_dupstr(काष्ठा nfsd4_compoundargs *argp, व्योम *buf, u32 len)
-अणु
-	अक्षर *p = svcxdr_पंचांगpalloc(argp, len + 1);
+static char *
+svcxdr_dupstr(struct nfsd4_compoundargs *argp, void *buf, u32 len)
+{
+	char *p = svcxdr_tmpalloc(argp, len + 1);
 
-	अगर (!p)
-		वापस शून्य;
-	स_नकल(p, buf, len);
+	if (!p)
+		return NULL;
+	memcpy(p, buf, len);
 	p[len] = '\0';
-	वापस p;
-पूर्ण
+	return p;
+}
 
-अटल व्योम *
-svcxdr_savemem(काष्ठा nfsd4_compoundargs *argp, __be32 *p, u32 len)
-अणु
-	__be32 *पंचांगp;
+static void *
+svcxdr_savemem(struct nfsd4_compoundargs *argp, __be32 *p, u32 len)
+{
+	__be32 *tmp;
 
 	/*
 	 * The location of the decoded data item is stable,
-	 * so @p is OK to use. This is the common हाल.
+	 * so @p is OK to use. This is the common case.
 	 */
-	अगर (p != argp->xdr->scratch.iov_base)
-		वापस p;
+	if (p != argp->xdr->scratch.iov_base)
+		return p;
 
-	पंचांगp = svcxdr_पंचांगpalloc(argp, len);
-	अगर (!पंचांगp)
-		वापस शून्य;
-	स_नकल(पंचांगp, p, len);
-	वापस पंचांगp;
-पूर्ण
+	tmp = svcxdr_tmpalloc(argp, len);
+	if (!tmp)
+		return NULL;
+	memcpy(tmp, p, len);
+	return tmp;
+}
 
 /*
  * NFSv4 basic data type decoders
  */
 
 /*
- * This helper handles variable-length opaques which beदीर्घ to protocol
- * elements that this implementation करोes not support.
+ * This helper handles variable-length opaques which belong to protocol
+ * elements that this implementation does not support.
  */
-अटल __be32
-nfsd4_decode_ignored_string(काष्ठा nfsd4_compoundargs *argp, u32 maxlen)
-अणु
+static __be32
+nfsd4_decode_ignored_string(struct nfsd4_compoundargs *argp, u32 maxlen)
+{
 	u32 len;
 
-	अगर (xdr_stream_decode_u32(argp->xdr, &len) < 0)
-		वापस nfserr_bad_xdr;
-	अगर (maxlen && len > maxlen)
-		वापस nfserr_bad_xdr;
-	अगर (!xdr_अंतरभूत_decode(argp->xdr, len))
-		वापस nfserr_bad_xdr;
+	if (xdr_stream_decode_u32(argp->xdr, &len) < 0)
+		return nfserr_bad_xdr;
+	if (maxlen && len > maxlen)
+		return nfserr_bad_xdr;
+	if (!xdr_inline_decode(argp->xdr, len))
+		return nfserr_bad_xdr;
 
-	वापस nfs_ok;
-पूर्ण
+	return nfs_ok;
+}
 
-अटल __be32
-nfsd4_decode_opaque(काष्ठा nfsd4_compoundargs *argp, काष्ठा xdr_netobj *o)
-अणु
+static __be32
+nfsd4_decode_opaque(struct nfsd4_compoundargs *argp, struct xdr_netobj *o)
+{
 	__be32 *p;
 	u32 len;
 
-	अगर (xdr_stream_decode_u32(argp->xdr, &len) < 0)
-		वापस nfserr_bad_xdr;
-	अगर (len == 0 || len > NFS4_OPAQUE_LIMIT)
-		वापस nfserr_bad_xdr;
-	p = xdr_अंतरभूत_decode(argp->xdr, len);
-	अगर (!p)
-		वापस nfserr_bad_xdr;
+	if (xdr_stream_decode_u32(argp->xdr, &len) < 0)
+		return nfserr_bad_xdr;
+	if (len == 0 || len > NFS4_OPAQUE_LIMIT)
+		return nfserr_bad_xdr;
+	p = xdr_inline_decode(argp->xdr, len);
+	if (!p)
+		return nfserr_bad_xdr;
 	o->data = svcxdr_savemem(argp, p, len);
-	अगर (!o->data)
-		वापस nfserr_jukebox;
+	if (!o->data)
+		return nfserr_jukebox;
 	o->len = len;
 
-	वापस nfs_ok;
-पूर्ण
+	return nfs_ok;
+}
 
-अटल __be32
-nfsd4_decode_component4(काष्ठा nfsd4_compoundargs *argp, अक्षर **namp, u32 *lenp)
-अणु
+static __be32
+nfsd4_decode_component4(struct nfsd4_compoundargs *argp, char **namp, u32 *lenp)
+{
 	__be32 *p, status;
 
-	अगर (xdr_stream_decode_u32(argp->xdr, lenp) < 0)
-		वापस nfserr_bad_xdr;
-	p = xdr_अंतरभूत_decode(argp->xdr, *lenp);
-	अगर (!p)
-		वापस nfserr_bad_xdr;
-	status = check_filename((अक्षर *)p, *lenp);
-	अगर (status)
-		वापस status;
+	if (xdr_stream_decode_u32(argp->xdr, lenp) < 0)
+		return nfserr_bad_xdr;
+	p = xdr_inline_decode(argp->xdr, *lenp);
+	if (!p)
+		return nfserr_bad_xdr;
+	status = check_filename((char *)p, *lenp);
+	if (status)
+		return status;
 	*namp = svcxdr_savemem(argp, p, *lenp);
-	अगर (!*namp)
-		वापस nfserr_jukebox;
+	if (!*namp)
+		return nfserr_jukebox;
 
-	वापस nfs_ok;
-पूर्ण
+	return nfs_ok;
+}
 
-अटल __be32
-nfsd4_decode_nfsसमय4(काष्ठा nfsd4_compoundargs *argp, काष्ठा बारpec64 *tv)
-अणु
+static __be32
+nfsd4_decode_nfstime4(struct nfsd4_compoundargs *argp, struct timespec64 *tv)
+{
 	__be32 *p;
 
-	p = xdr_अंतरभूत_decode(argp->xdr, XDR_UNIT * 3);
-	अगर (!p)
-		वापस nfserr_bad_xdr;
+	p = xdr_inline_decode(argp->xdr, XDR_UNIT * 3);
+	if (!p)
+		return nfserr_bad_xdr;
 	p = xdr_decode_hyper(p, &tv->tv_sec);
 	tv->tv_nsec = be32_to_cpup(p++);
-	अगर (tv->tv_nsec >= (u32)1000000000)
-		वापस nfserr_inval;
-	वापस nfs_ok;
-पूर्ण
+	if (tv->tv_nsec >= (u32)1000000000)
+		return nfserr_inval;
+	return nfs_ok;
+}
 
-अटल __be32
-nfsd4_decode_verअगरier4(काष्ठा nfsd4_compoundargs *argp, nfs4_verअगरier *verf)
-अणु
+static __be32
+nfsd4_decode_verifier4(struct nfsd4_compoundargs *argp, nfs4_verifier *verf)
+{
 	__be32 *p;
 
-	p = xdr_अंतरभूत_decode(argp->xdr, NFS4_VERIFIER_SIZE);
-	अगर (!p)
-		वापस nfserr_bad_xdr;
-	स_नकल(verf->data, p, माप(verf->data));
-	वापस nfs_ok;
-पूर्ण
+	p = xdr_inline_decode(argp->xdr, NFS4_VERIFIER_SIZE);
+	if (!p)
+		return nfserr_bad_xdr;
+	memcpy(verf->data, p, sizeof(verf->data));
+	return nfs_ok;
+}
 
 /**
- * nfsd4_decode_biपंचांगap4 - Decode an NFSv4 biपंचांगap4
- * @argp: NFSv4 compound argument काष्ठाure
- * @bmval: poपूर्णांकer to an array of u32's to decode पूर्णांकo
+ * nfsd4_decode_bitmap4 - Decode an NFSv4 bitmap4
+ * @argp: NFSv4 compound argument structure
+ * @bmval: pointer to an array of u32's to decode into
  * @bmlen: size of the @bmval array
  *
- * The server needs to वापस nfs_ok rather than nfserr_bad_xdr when
- * encountering biपंचांगaps containing bits it करोes not recognize. This
- * includes bits in biपंचांगap words past WORDn, where WORDn is the last
- * biपंचांगap WORD the implementation currently supports. Thus we are
- * careful here to simply ignore bits in biपंचांगap words that this
+ * The server needs to return nfs_ok rather than nfserr_bad_xdr when
+ * encountering bitmaps containing bits it does not recognize. This
+ * includes bits in bitmap words past WORDn, where WORDn is the last
+ * bitmap WORD the implementation currently supports. Thus we are
+ * careful here to simply ignore bits in bitmap words that this
  * implementation has yet to support explicitly.
  *
  * Return values:
  *   %nfs_ok: @bmval populated successfully
- *   %nfserr_bad_xdr: the encoded biपंचांगap was invalid
+ *   %nfserr_bad_xdr: the encoded bitmap was invalid
  */
-अटल __be32
-nfsd4_decode_biपंचांगap4(काष्ठा nfsd4_compoundargs *argp, u32 *bmval, u32 bmlen)
-अणु
+static __be32
+nfsd4_decode_bitmap4(struct nfsd4_compoundargs *argp, u32 *bmval, u32 bmlen)
+{
 	u32 i, count;
 	__be32 *p;
 
-	अगर (xdr_stream_decode_u32(argp->xdr, &count) < 0)
-		वापस nfserr_bad_xdr;
+	if (xdr_stream_decode_u32(argp->xdr, &count) < 0)
+		return nfserr_bad_xdr;
 	/* request sanity */
-	अगर (count > 1000)
-		वापस nfserr_bad_xdr;
-	p = xdr_अंतरभूत_decode(argp->xdr, count << 2);
-	अगर (!p)
-		वापस nfserr_bad_xdr;
+	if (count > 1000)
+		return nfserr_bad_xdr;
+	p = xdr_inline_decode(argp->xdr, count << 2);
+	if (!p)
+		return nfserr_bad_xdr;
 	i = 0;
-	जबतक (i < count)
+	while (i < count)
 		bmval[i++] = be32_to_cpup(p++);
-	जबतक (i < bmlen)
+	while (i < bmlen)
 		bmval[i++] = 0;
 
-	वापस nfs_ok;
-पूर्ण
+	return nfs_ok;
+}
 
-अटल __be32
-nfsd4_decode_nfsace4(काष्ठा nfsd4_compoundargs *argp, काष्ठा nfs4_ace *ace)
-अणु
+static __be32
+nfsd4_decode_nfsace4(struct nfsd4_compoundargs *argp, struct nfs4_ace *ace)
+{
 	__be32 *p, status;
 	u32 length;
 
-	अगर (xdr_stream_decode_u32(argp->xdr, &ace->type) < 0)
-		वापस nfserr_bad_xdr;
-	अगर (xdr_stream_decode_u32(argp->xdr, &ace->flag) < 0)
-		वापस nfserr_bad_xdr;
-	अगर (xdr_stream_decode_u32(argp->xdr, &ace->access_mask) < 0)
-		वापस nfserr_bad_xdr;
+	if (xdr_stream_decode_u32(argp->xdr, &ace->type) < 0)
+		return nfserr_bad_xdr;
+	if (xdr_stream_decode_u32(argp->xdr, &ace->flag) < 0)
+		return nfserr_bad_xdr;
+	if (xdr_stream_decode_u32(argp->xdr, &ace->access_mask) < 0)
+		return nfserr_bad_xdr;
 
-	अगर (xdr_stream_decode_u32(argp->xdr, &length) < 0)
-		वापस nfserr_bad_xdr;
-	p = xdr_अंतरभूत_decode(argp->xdr, length);
-	अगर (!p)
-		वापस nfserr_bad_xdr;
-	ace->whotype = nfs4_acl_get_whotype((अक्षर *)p, length);
-	अगर (ace->whotype != NFS4_ACL_WHO_NAMED)
+	if (xdr_stream_decode_u32(argp->xdr, &length) < 0)
+		return nfserr_bad_xdr;
+	p = xdr_inline_decode(argp->xdr, length);
+	if (!p)
+		return nfserr_bad_xdr;
+	ace->whotype = nfs4_acl_get_whotype((char *)p, length);
+	if (ace->whotype != NFS4_ACL_WHO_NAMED)
 		status = nfs_ok;
-	अन्यथा अगर (ace->flag & NFS4_ACE_IDENTIFIER_GROUP)
+	else if (ace->flag & NFS4_ACE_IDENTIFIER_GROUP)
 		status = nfsd_map_name_to_gid(argp->rqstp,
-				(अक्षर *)p, length, &ace->who_gid);
-	अन्यथा
+				(char *)p, length, &ace->who_gid);
+	else
 		status = nfsd_map_name_to_uid(argp->rqstp,
-				(अक्षर *)p, length, &ace->who_uid);
+				(char *)p, length, &ace->who_uid);
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /* A counted array of nfsace4's */
-अटल noअंतरभूत __be32
-nfsd4_decode_acl(काष्ठा nfsd4_compoundargs *argp, काष्ठा nfs4_acl **acl)
-अणु
-	काष्ठा nfs4_ace *ace;
+static noinline __be32
+nfsd4_decode_acl(struct nfsd4_compoundargs *argp, struct nfs4_acl **acl)
+{
+	struct nfs4_ace *ace;
 	__be32 status;
 	u32 count;
 
-	अगर (xdr_stream_decode_u32(argp->xdr, &count) < 0)
-		वापस nfserr_bad_xdr;
+	if (xdr_stream_decode_u32(argp->xdr, &count) < 0)
+		return nfserr_bad_xdr;
 
-	अगर (count > xdr_stream_reमुख्यing(argp->xdr) / 20)
+	if (count > xdr_stream_remaining(argp->xdr) / 20)
 		/*
 		 * Even with 4-byte names there wouldn't be
-		 * space क्रम that many aces; something fishy is
+		 * space for that many aces; something fishy is
 		 * going on:
 		 */
-		वापस nfserr_fbig;
+		return nfserr_fbig;
 
-	*acl = svcxdr_पंचांगpalloc(argp, nfs4_acl_bytes(count));
-	अगर (*acl == शून्य)
-		वापस nfserr_jukebox;
+	*acl = svcxdr_tmpalloc(argp, nfs4_acl_bytes(count));
+	if (*acl == NULL)
+		return nfserr_jukebox;
 
 	(*acl)->naces = count;
-	क्रम (ace = (*acl)->aces; ace < (*acl)->aces + count; ace++) अणु
+	for (ace = (*acl)->aces; ace < (*acl)->aces + count; ace++) {
 		status = nfsd4_decode_nfsace4(argp, ace);
-		अगर (status)
-			वापस status;
-	पूर्ण
+		if (status)
+			return status;
+	}
 
-	वापस nfs_ok;
-पूर्ण
+	return nfs_ok;
+}
 
-अटल noअंतरभूत __be32
-nfsd4_decode_security_label(काष्ठा nfsd4_compoundargs *argp,
-			    काष्ठा xdr_netobj *label)
-अणु
+static noinline __be32
+nfsd4_decode_security_label(struct nfsd4_compoundargs *argp,
+			    struct xdr_netobj *label)
+{
 	u32 lfs, pi, length;
 	__be32 *p;
 
-	अगर (xdr_stream_decode_u32(argp->xdr, &lfs) < 0)
-		वापस nfserr_bad_xdr;
-	अगर (xdr_stream_decode_u32(argp->xdr, &pi) < 0)
-		वापस nfserr_bad_xdr;
+	if (xdr_stream_decode_u32(argp->xdr, &lfs) < 0)
+		return nfserr_bad_xdr;
+	if (xdr_stream_decode_u32(argp->xdr, &pi) < 0)
+		return nfserr_bad_xdr;
 
-	अगर (xdr_stream_decode_u32(argp->xdr, &length) < 0)
-		वापस nfserr_bad_xdr;
-	अगर (length > NFS4_MAXLABELLEN)
-		वापस nfserr_badlabel;
-	p = xdr_अंतरभूत_decode(argp->xdr, length);
-	अगर (!p)
-		वापस nfserr_bad_xdr;
+	if (xdr_stream_decode_u32(argp->xdr, &length) < 0)
+		return nfserr_bad_xdr;
+	if (length > NFS4_MAXLABELLEN)
+		return nfserr_badlabel;
+	p = xdr_inline_decode(argp->xdr, length);
+	if (!p)
+		return nfserr_bad_xdr;
 	label->len = length;
 	label->data = svcxdr_dupstr(argp, p, length);
-	अगर (!label->data)
-		वापस nfserr_jukebox;
+	if (!label->data)
+		return nfserr_jukebox;
 
-	वापस nfs_ok;
-पूर्ण
+	return nfs_ok;
+}
 
-अटल __be32
-nfsd4_decode_fattr4(काष्ठा nfsd4_compoundargs *argp, u32 *bmval, u32 bmlen,
-		    काष्ठा iattr *iattr, काष्ठा nfs4_acl **acl,
-		    काष्ठा xdr_netobj *label, पूर्णांक *umask)
-अणु
-	अचिन्हित पूर्णांक starting_pos;
+static __be32
+nfsd4_decode_fattr4(struct nfsd4_compoundargs *argp, u32 *bmval, u32 bmlen,
+		    struct iattr *iattr, struct nfs4_acl **acl,
+		    struct xdr_netobj *label, int *umask)
+{
+	unsigned int starting_pos;
 	u32 attrlist4_count;
 	__be32 *p, status;
 
 	iattr->ia_valid = 0;
-	status = nfsd4_decode_biपंचांगap4(argp, bmval, bmlen);
-	अगर (status)
-		वापस nfserr_bad_xdr;
+	status = nfsd4_decode_bitmap4(argp, bmval, bmlen);
+	if (status)
+		return nfserr_bad_xdr;
 
-	अगर (bmval[0] & ~NFSD_WRITEABLE_ATTRS_WORD0
+	if (bmval[0] & ~NFSD_WRITEABLE_ATTRS_WORD0
 	    || bmval[1] & ~NFSD_WRITEABLE_ATTRS_WORD1
-	    || bmval[2] & ~NFSD_WRITEABLE_ATTRS_WORD2) अणु
-		अगर (nfsd_attrs_supported(argp->minorversion, bmval))
-			वापस nfserr_inval;
-		वापस nfserr_attrnotsupp;
-	पूर्ण
+	    || bmval[2] & ~NFSD_WRITEABLE_ATTRS_WORD2) {
+		if (nfsd_attrs_supported(argp->minorversion, bmval))
+			return nfserr_inval;
+		return nfserr_attrnotsupp;
+	}
 
-	अगर (xdr_stream_decode_u32(argp->xdr, &attrlist4_count) < 0)
-		वापस nfserr_bad_xdr;
+	if (xdr_stream_decode_u32(argp->xdr, &attrlist4_count) < 0)
+		return nfserr_bad_xdr;
 	starting_pos = xdr_stream_pos(argp->xdr);
 
-	अगर (bmval[0] & FATTR4_WORD0_SIZE) अणु
+	if (bmval[0] & FATTR4_WORD0_SIZE) {
 		u64 size;
 
-		अगर (xdr_stream_decode_u64(argp->xdr, &size) < 0)
-			वापस nfserr_bad_xdr;
+		if (xdr_stream_decode_u64(argp->xdr, &size) < 0)
+			return nfserr_bad_xdr;
 		iattr->ia_size = size;
 		iattr->ia_valid |= ATTR_SIZE;
-	पूर्ण
-	अगर (bmval[0] & FATTR4_WORD0_ACL) अणु
+	}
+	if (bmval[0] & FATTR4_WORD0_ACL) {
 		status = nfsd4_decode_acl(argp, acl);
-		अगर (status)
-			वापस status;
-	पूर्ण अन्यथा
-		*acl = शून्य;
-	अगर (bmval[1] & FATTR4_WORD1_MODE) अणु
+		if (status)
+			return status;
+	} else
+		*acl = NULL;
+	if (bmval[1] & FATTR4_WORD1_MODE) {
 		u32 mode;
 
-		अगर (xdr_stream_decode_u32(argp->xdr, &mode) < 0)
-			वापस nfserr_bad_xdr;
+		if (xdr_stream_decode_u32(argp->xdr, &mode) < 0)
+			return nfserr_bad_xdr;
 		iattr->ia_mode = mode;
 		iattr->ia_mode &= (S_IFMT | S_IALLUGO);
 		iattr->ia_valid |= ATTR_MODE;
-	पूर्ण
-	अगर (bmval[1] & FATTR4_WORD1_OWNER) अणु
+	}
+	if (bmval[1] & FATTR4_WORD1_OWNER) {
 		u32 length;
 
-		अगर (xdr_stream_decode_u32(argp->xdr, &length) < 0)
-			वापस nfserr_bad_xdr;
-		p = xdr_अंतरभूत_decode(argp->xdr, length);
-		अगर (!p)
-			वापस nfserr_bad_xdr;
-		status = nfsd_map_name_to_uid(argp->rqstp, (अक्षर *)p, length,
+		if (xdr_stream_decode_u32(argp->xdr, &length) < 0)
+			return nfserr_bad_xdr;
+		p = xdr_inline_decode(argp->xdr, length);
+		if (!p)
+			return nfserr_bad_xdr;
+		status = nfsd_map_name_to_uid(argp->rqstp, (char *)p, length,
 					      &iattr->ia_uid);
-		अगर (status)
-			वापस status;
+		if (status)
+			return status;
 		iattr->ia_valid |= ATTR_UID;
-	पूर्ण
-	अगर (bmval[1] & FATTR4_WORD1_OWNER_GROUP) अणु
+	}
+	if (bmval[1] & FATTR4_WORD1_OWNER_GROUP) {
 		u32 length;
 
-		अगर (xdr_stream_decode_u32(argp->xdr, &length) < 0)
-			वापस nfserr_bad_xdr;
-		p = xdr_अंतरभूत_decode(argp->xdr, length);
-		अगर (!p)
-			वापस nfserr_bad_xdr;
-		status = nfsd_map_name_to_gid(argp->rqstp, (अक्षर *)p, length,
+		if (xdr_stream_decode_u32(argp->xdr, &length) < 0)
+			return nfserr_bad_xdr;
+		p = xdr_inline_decode(argp->xdr, length);
+		if (!p)
+			return nfserr_bad_xdr;
+		status = nfsd_map_name_to_gid(argp->rqstp, (char *)p, length,
 					      &iattr->ia_gid);
-		अगर (status)
-			वापस status;
+		if (status)
+			return status;
 		iattr->ia_valid |= ATTR_GID;
-	पूर्ण
-	अगर (bmval[1] & FATTR4_WORD1_TIME_ACCESS_SET) अणु
+	}
+	if (bmval[1] & FATTR4_WORD1_TIME_ACCESS_SET) {
 		u32 set_it;
 
-		अगर (xdr_stream_decode_u32(argp->xdr, &set_it) < 0)
-			वापस nfserr_bad_xdr;
-		चयन (set_it) अणु
-		हाल NFS4_SET_TO_CLIENT_TIME:
-			status = nfsd4_decode_nfsसमय4(argp, &iattr->ia_aसमय);
-			अगर (status)
-				वापस status;
+		if (xdr_stream_decode_u32(argp->xdr, &set_it) < 0)
+			return nfserr_bad_xdr;
+		switch (set_it) {
+		case NFS4_SET_TO_CLIENT_TIME:
+			status = nfsd4_decode_nfstime4(argp, &iattr->ia_atime);
+			if (status)
+				return status;
 			iattr->ia_valid |= (ATTR_ATIME | ATTR_ATIME_SET);
-			अवरोध;
-		हाल NFS4_SET_TO_SERVER_TIME:
+			break;
+		case NFS4_SET_TO_SERVER_TIME:
 			iattr->ia_valid |= ATTR_ATIME;
-			अवरोध;
-		शेष:
-			वापस nfserr_bad_xdr;
-		पूर्ण
-	पूर्ण
-	अगर (bmval[1] & FATTR4_WORD1_TIME_MODIFY_SET) अणु
+			break;
+		default:
+			return nfserr_bad_xdr;
+		}
+	}
+	if (bmval[1] & FATTR4_WORD1_TIME_MODIFY_SET) {
 		u32 set_it;
 
-		अगर (xdr_stream_decode_u32(argp->xdr, &set_it) < 0)
-			वापस nfserr_bad_xdr;
-		चयन (set_it) अणु
-		हाल NFS4_SET_TO_CLIENT_TIME:
-			status = nfsd4_decode_nfsसमय4(argp, &iattr->ia_mसमय);
-			अगर (status)
-				वापस status;
+		if (xdr_stream_decode_u32(argp->xdr, &set_it) < 0)
+			return nfserr_bad_xdr;
+		switch (set_it) {
+		case NFS4_SET_TO_CLIENT_TIME:
+			status = nfsd4_decode_nfstime4(argp, &iattr->ia_mtime);
+			if (status)
+				return status;
 			iattr->ia_valid |= (ATTR_MTIME | ATTR_MTIME_SET);
-			अवरोध;
-		हाल NFS4_SET_TO_SERVER_TIME:
+			break;
+		case NFS4_SET_TO_SERVER_TIME:
 			iattr->ia_valid |= ATTR_MTIME;
-			अवरोध;
-		शेष:
-			वापस nfserr_bad_xdr;
-		पूर्ण
-	पूर्ण
+			break;
+		default:
+			return nfserr_bad_xdr;
+		}
+	}
 	label->len = 0;
-	अगर (IS_ENABLED(CONFIG_NFSD_V4_SECURITY_LABEL) &&
-	    bmval[2] & FATTR4_WORD2_SECURITY_LABEL) अणु
+	if (IS_ENABLED(CONFIG_NFSD_V4_SECURITY_LABEL) &&
+	    bmval[2] & FATTR4_WORD2_SECURITY_LABEL) {
 		status = nfsd4_decode_security_label(argp, label);
-		अगर (status)
-			वापस status;
-	पूर्ण
-	अगर (bmval[2] & FATTR4_WORD2_MODE_UMASK) अणु
+		if (status)
+			return status;
+	}
+	if (bmval[2] & FATTR4_WORD2_MODE_UMASK) {
 		u32 mode, mask;
 
-		अगर (!umask)
-			वापस nfserr_bad_xdr;
-		अगर (xdr_stream_decode_u32(argp->xdr, &mode) < 0)
-			वापस nfserr_bad_xdr;
+		if (!umask)
+			return nfserr_bad_xdr;
+		if (xdr_stream_decode_u32(argp->xdr, &mode) < 0)
+			return nfserr_bad_xdr;
 		iattr->ia_mode = mode & (S_IFMT | S_IALLUGO);
-		अगर (xdr_stream_decode_u32(argp->xdr, &mask) < 0)
-			वापस nfserr_bad_xdr;
+		if (xdr_stream_decode_u32(argp->xdr, &mask) < 0)
+			return nfserr_bad_xdr;
 		*umask = mask & S_IRWXUGO;
 		iattr->ia_valid |= ATTR_MODE;
-	पूर्ण
+	}
 
 	/* request sanity: did attrlist4 contain the expected number of words? */
-	अगर (attrlist4_count != xdr_stream_pos(argp->xdr) - starting_pos)
-		वापस nfserr_bad_xdr;
+	if (attrlist4_count != xdr_stream_pos(argp->xdr) - starting_pos)
+		return nfserr_bad_xdr;
 
-	वापस nfs_ok;
-पूर्ण
+	return nfs_ok;
+}
 
-अटल __be32
-nfsd4_decode_stateid4(काष्ठा nfsd4_compoundargs *argp, stateid_t *sid)
-अणु
+static __be32
+nfsd4_decode_stateid4(struct nfsd4_compoundargs *argp, stateid_t *sid)
+{
 	__be32 *p;
 
-	p = xdr_अंतरभूत_decode(argp->xdr, NFS4_STATEID_SIZE);
-	अगर (!p)
-		वापस nfserr_bad_xdr;
+	p = xdr_inline_decode(argp->xdr, NFS4_STATEID_SIZE);
+	if (!p)
+		return nfserr_bad_xdr;
 	sid->si_generation = be32_to_cpup(p++);
-	स_नकल(&sid->si_opaque, p, माप(sid->si_opaque));
-	वापस nfs_ok;
-पूर्ण
+	memcpy(&sid->si_opaque, p, sizeof(sid->si_opaque));
+	return nfs_ok;
+}
 
-अटल __be32
-nfsd4_decode_clientid4(काष्ठा nfsd4_compoundargs *argp, clientid_t *clientid)
-अणु
+static __be32
+nfsd4_decode_clientid4(struct nfsd4_compoundargs *argp, clientid_t *clientid)
+{
 	__be32 *p;
 
-	p = xdr_अंतरभूत_decode(argp->xdr, माप(__be64));
-	अगर (!p)
-		वापस nfserr_bad_xdr;
-	स_नकल(clientid, p, माप(*clientid));
-	वापस nfs_ok;
-पूर्ण
+	p = xdr_inline_decode(argp->xdr, sizeof(__be64));
+	if (!p)
+		return nfserr_bad_xdr;
+	memcpy(clientid, p, sizeof(*clientid));
+	return nfs_ok;
+}
 
-अटल __be32
-nfsd4_decode_state_owner4(काष्ठा nfsd4_compoundargs *argp,
-			  clientid_t *clientid, काष्ठा xdr_netobj *owner)
-अणु
+static __be32
+nfsd4_decode_state_owner4(struct nfsd4_compoundargs *argp,
+			  clientid_t *clientid, struct xdr_netobj *owner)
+{
 	__be32 status;
 
 	status = nfsd4_decode_clientid4(argp, clientid);
-	अगर (status)
-		वापस status;
-	वापस nfsd4_decode_opaque(argp, owner);
-पूर्ण
+	if (status)
+		return status;
+	return nfsd4_decode_opaque(argp, owner);
+}
 
-#अगर_घोषित CONFIG_NFSD_PNFS
-अटल __be32
-nfsd4_decode_deviceid4(काष्ठा nfsd4_compoundargs *argp,
-		       काष्ठा nfsd4_deviceid *devid)
-अणु
+#ifdef CONFIG_NFSD_PNFS
+static __be32
+nfsd4_decode_deviceid4(struct nfsd4_compoundargs *argp,
+		       struct nfsd4_deviceid *devid)
+{
 	__be32 *p;
 
-	p = xdr_अंतरभूत_decode(argp->xdr, NFS4_DEVICEID4_SIZE);
-	अगर (!p)
-		वापस nfserr_bad_xdr;
-	स_नकल(devid, p, माप(*devid));
-	वापस nfs_ok;
-पूर्ण
+	p = xdr_inline_decode(argp->xdr, NFS4_DEVICEID4_SIZE);
+	if (!p)
+		return nfserr_bad_xdr;
+	memcpy(devid, p, sizeof(*devid));
+	return nfs_ok;
+}
 
-अटल __be32
-nfsd4_decode_layoutupdate4(काष्ठा nfsd4_compoundargs *argp,
-			   काष्ठा nfsd4_layoutcommit *lcp)
-अणु
-	अगर (xdr_stream_decode_u32(argp->xdr, &lcp->lc_layout_type) < 0)
-		वापस nfserr_bad_xdr;
-	अगर (lcp->lc_layout_type < LAYOUT_NFSV4_1_खाताS)
-		वापस nfserr_bad_xdr;
-	अगर (lcp->lc_layout_type >= LAYOUT_TYPE_MAX)
-		वापस nfserr_bad_xdr;
+static __be32
+nfsd4_decode_layoutupdate4(struct nfsd4_compoundargs *argp,
+			   struct nfsd4_layoutcommit *lcp)
+{
+	if (xdr_stream_decode_u32(argp->xdr, &lcp->lc_layout_type) < 0)
+		return nfserr_bad_xdr;
+	if (lcp->lc_layout_type < LAYOUT_NFSV4_1_FILES)
+		return nfserr_bad_xdr;
+	if (lcp->lc_layout_type >= LAYOUT_TYPE_MAX)
+		return nfserr_bad_xdr;
 
-	अगर (xdr_stream_decode_u32(argp->xdr, &lcp->lc_up_len) < 0)
-		वापस nfserr_bad_xdr;
-	अगर (lcp->lc_up_len > 0) अणु
-		lcp->lc_up_layout = xdr_अंतरभूत_decode(argp->xdr, lcp->lc_up_len);
-		अगर (!lcp->lc_up_layout)
-			वापस nfserr_bad_xdr;
-	पूर्ण
+	if (xdr_stream_decode_u32(argp->xdr, &lcp->lc_up_len) < 0)
+		return nfserr_bad_xdr;
+	if (lcp->lc_up_len > 0) {
+		lcp->lc_up_layout = xdr_inline_decode(argp->xdr, lcp->lc_up_len);
+		if (!lcp->lc_up_layout)
+			return nfserr_bad_xdr;
+	}
 
-	वापस nfs_ok;
-पूर्ण
+	return nfs_ok;
+}
 
-अटल __be32
-nfsd4_decode_layoutवापस4(काष्ठा nfsd4_compoundargs *argp,
-			   काष्ठा nfsd4_layoutवापस *lrp)
-अणु
+static __be32
+nfsd4_decode_layoutreturn4(struct nfsd4_compoundargs *argp,
+			   struct nfsd4_layoutreturn *lrp)
+{
 	__be32 status;
 
-	अगर (xdr_stream_decode_u32(argp->xdr, &lrp->lr_वापस_type) < 0)
-		वापस nfserr_bad_xdr;
-	चयन (lrp->lr_वापस_type) अणु
-	हाल RETURN_खाता:
-		अगर (xdr_stream_decode_u64(argp->xdr, &lrp->lr_seg.offset) < 0)
-			वापस nfserr_bad_xdr;
-		अगर (xdr_stream_decode_u64(argp->xdr, &lrp->lr_seg.length) < 0)
-			वापस nfserr_bad_xdr;
+	if (xdr_stream_decode_u32(argp->xdr, &lrp->lr_return_type) < 0)
+		return nfserr_bad_xdr;
+	switch (lrp->lr_return_type) {
+	case RETURN_FILE:
+		if (xdr_stream_decode_u64(argp->xdr, &lrp->lr_seg.offset) < 0)
+			return nfserr_bad_xdr;
+		if (xdr_stream_decode_u64(argp->xdr, &lrp->lr_seg.length) < 0)
+			return nfserr_bad_xdr;
 		status = nfsd4_decode_stateid4(argp, &lrp->lr_sid);
-		अगर (status)
-			वापस status;
-		अगर (xdr_stream_decode_u32(argp->xdr, &lrp->lrf_body_len) < 0)
-			वापस nfserr_bad_xdr;
-		अगर (lrp->lrf_body_len > 0) अणु
-			lrp->lrf_body = xdr_अंतरभूत_decode(argp->xdr, lrp->lrf_body_len);
-			अगर (!lrp->lrf_body)
-				वापस nfserr_bad_xdr;
-		पूर्ण
-		अवरोध;
-	हाल RETURN_FSID:
-	हाल RETURN_ALL:
+		if (status)
+			return status;
+		if (xdr_stream_decode_u32(argp->xdr, &lrp->lrf_body_len) < 0)
+			return nfserr_bad_xdr;
+		if (lrp->lrf_body_len > 0) {
+			lrp->lrf_body = xdr_inline_decode(argp->xdr, lrp->lrf_body_len);
+			if (!lrp->lrf_body)
+				return nfserr_bad_xdr;
+		}
+		break;
+	case RETURN_FSID:
+	case RETURN_ALL:
 		lrp->lr_seg.offset = 0;
 		lrp->lr_seg.length = NFS4_MAX_UINT64;
-		अवरोध;
-	शेष:
-		वापस nfserr_bad_xdr;
-	पूर्ण
+		break;
+	default:
+		return nfserr_bad_xdr;
+	}
 
-	वापस nfs_ok;
-पूर्ण
+	return nfs_ok;
+}
 
-#पूर्ण_अगर /* CONFIG_NFSD_PNFS */
+#endif /* CONFIG_NFSD_PNFS */
 
-अटल __be32
-nfsd4_decode_sessionid4(काष्ठा nfsd4_compoundargs *argp,
-			काष्ठा nfs4_sessionid *sessionid)
-अणु
+static __be32
+nfsd4_decode_sessionid4(struct nfsd4_compoundargs *argp,
+			struct nfs4_sessionid *sessionid)
+{
 	__be32 *p;
 
-	p = xdr_अंतरभूत_decode(argp->xdr, NFS4_MAX_SESSIONID_LEN);
-	अगर (!p)
-		वापस nfserr_bad_xdr;
-	स_नकल(sessionid->data, p, माप(sessionid->data));
-	वापस nfs_ok;
-पूर्ण
+	p = xdr_inline_decode(argp->xdr, NFS4_MAX_SESSIONID_LEN);
+	if (!p)
+		return nfserr_bad_xdr;
+	memcpy(sessionid->data, p, sizeof(sessionid->data));
+	return nfs_ok;
+}
 
 /* Defined in Appendix A of RFC 5531 */
-अटल __be32
-nfsd4_decode_authsys_parms(काष्ठा nfsd4_compoundargs *argp,
-			   काष्ठा nfsd4_cb_sec *cbs)
-अणु
+static __be32
+nfsd4_decode_authsys_parms(struct nfsd4_compoundargs *argp,
+			   struct nfsd4_cb_sec *cbs)
+{
 	u32 stamp, gidcount, uid, gid;
 	__be32 *p, status;
 
-	अगर (xdr_stream_decode_u32(argp->xdr, &stamp) < 0)
-		वापस nfserr_bad_xdr;
+	if (xdr_stream_decode_u32(argp->xdr, &stamp) < 0)
+		return nfserr_bad_xdr;
 	/* machine name */
 	status = nfsd4_decode_ignored_string(argp, 255);
-	अगर (status)
-		वापस status;
-	अगर (xdr_stream_decode_u32(argp->xdr, &uid) < 0)
-		वापस nfserr_bad_xdr;
-	अगर (xdr_stream_decode_u32(argp->xdr, &gid) < 0)
-		वापस nfserr_bad_xdr;
-	अगर (xdr_stream_decode_u32(argp->xdr, &gidcount) < 0)
-		वापस nfserr_bad_xdr;
-	अगर (gidcount > 16)
-		वापस nfserr_bad_xdr;
-	p = xdr_अंतरभूत_decode(argp->xdr, gidcount << 2);
-	अगर (!p)
-		वापस nfserr_bad_xdr;
-	अगर (cbs->flavor == (u32)(-1)) अणु
-		काष्ठा user_namespace *userns = nfsd_user_namespace(argp->rqstp);
+	if (status)
+		return status;
+	if (xdr_stream_decode_u32(argp->xdr, &uid) < 0)
+		return nfserr_bad_xdr;
+	if (xdr_stream_decode_u32(argp->xdr, &gid) < 0)
+		return nfserr_bad_xdr;
+	if (xdr_stream_decode_u32(argp->xdr, &gidcount) < 0)
+		return nfserr_bad_xdr;
+	if (gidcount > 16)
+		return nfserr_bad_xdr;
+	p = xdr_inline_decode(argp->xdr, gidcount << 2);
+	if (!p)
+		return nfserr_bad_xdr;
+	if (cbs->flavor == (u32)(-1)) {
+		struct user_namespace *userns = nfsd_user_namespace(argp->rqstp);
 
 		kuid_t kuid = make_kuid(userns, uid);
 		kgid_t kgid = make_kgid(userns, gid);
-		अगर (uid_valid(kuid) && gid_valid(kgid)) अणु
+		if (uid_valid(kuid) && gid_valid(kgid)) {
 			cbs->uid = kuid;
 			cbs->gid = kgid;
 			cbs->flavor = RPC_AUTH_UNIX;
-		पूर्ण अन्यथा अणु
-			dprपूर्णांकk("RPC_AUTH_UNIX with invalid uid or gid, ignoring!\n");
-		पूर्ण
-	पूर्ण
+		} else {
+			dprintk("RPC_AUTH_UNIX with invalid uid or gid, ignoring!\n");
+		}
+	}
 
-	वापस nfs_ok;
-पूर्ण
+	return nfs_ok;
+}
 
-अटल __be32
-nfsd4_decode_gss_cb_handles4(काष्ठा nfsd4_compoundargs *argp,
-			     काष्ठा nfsd4_cb_sec *cbs)
-अणु
+static __be32
+nfsd4_decode_gss_cb_handles4(struct nfsd4_compoundargs *argp,
+			     struct nfsd4_cb_sec *cbs)
+{
 	__be32 status;
 	u32 service;
 
-	dprपूर्णांकk("RPC_AUTH_GSS callback secflavor not supported!\n");
+	dprintk("RPC_AUTH_GSS callback secflavor not supported!\n");
 
-	अगर (xdr_stream_decode_u32(argp->xdr, &service) < 0)
-		वापस nfserr_bad_xdr;
-	अगर (service < RPC_GSS_SVC_NONE || service > RPC_GSS_SVC_PRIVACY)
-		वापस nfserr_bad_xdr;
+	if (xdr_stream_decode_u32(argp->xdr, &service) < 0)
+		return nfserr_bad_xdr;
+	if (service < RPC_GSS_SVC_NONE || service > RPC_GSS_SVC_PRIVACY)
+		return nfserr_bad_xdr;
 	/* gcbp_handle_from_server */
 	status = nfsd4_decode_ignored_string(argp, 0);
-	अगर (status)
-		वापस status;
+	if (status)
+		return status;
 	/* gcbp_handle_from_client */
 	status = nfsd4_decode_ignored_string(argp, 0);
-	अगर (status)
-		वापस status;
+	if (status)
+		return status;
 
-	वापस nfs_ok;
-पूर्ण
+	return nfs_ok;
+}
 
 /* a counted array of callback_sec_parms4 items */
-अटल __be32
-nfsd4_decode_cb_sec(काष्ठा nfsd4_compoundargs *argp, काष्ठा nfsd4_cb_sec *cbs)
-अणु
+static __be32
+nfsd4_decode_cb_sec(struct nfsd4_compoundargs *argp, struct nfsd4_cb_sec *cbs)
+{
 	u32 i, secflavor, nr_secflavs;
 	__be32 status;
 
 	/* callback_sec_params4 */
-	अगर (xdr_stream_decode_u32(argp->xdr, &nr_secflavs) < 0)
-		वापस nfserr_bad_xdr;
-	अगर (nr_secflavs)
+	if (xdr_stream_decode_u32(argp->xdr, &nr_secflavs) < 0)
+		return nfserr_bad_xdr;
+	if (nr_secflavs)
 		cbs->flavor = (u32)(-1);
-	अन्यथा
+	else
 		/* Is this legal? Be generous, take it to mean AUTH_NONE: */
 		cbs->flavor = 0;
 
-	क्रम (i = 0; i < nr_secflavs; ++i) अणु
-		अगर (xdr_stream_decode_u32(argp->xdr, &secflavor) < 0)
-			वापस nfserr_bad_xdr;
-		चयन (secflavor) अणु
-		हाल RPC_AUTH_शून्य:
-			/* व्योम */
-			अगर (cbs->flavor == (u32)(-1))
-				cbs->flavor = RPC_AUTH_शून्य;
-			अवरोध;
-		हाल RPC_AUTH_UNIX:
+	for (i = 0; i < nr_secflavs; ++i) {
+		if (xdr_stream_decode_u32(argp->xdr, &secflavor) < 0)
+			return nfserr_bad_xdr;
+		switch (secflavor) {
+		case RPC_AUTH_NULL:
+			/* void */
+			if (cbs->flavor == (u32)(-1))
+				cbs->flavor = RPC_AUTH_NULL;
+			break;
+		case RPC_AUTH_UNIX:
 			status = nfsd4_decode_authsys_parms(argp, cbs);
-			अगर (status)
-				वापस status;
-			अवरोध;
-		हाल RPC_AUTH_GSS:
+			if (status)
+				return status;
+			break;
+		case RPC_AUTH_GSS:
 			status = nfsd4_decode_gss_cb_handles4(argp, cbs);
-			अगर (status)
-				वापस status;
-			अवरोध;
-		शेष:
-			वापस nfserr_inval;
-		पूर्ण
-	पूर्ण
+			if (status)
+				return status;
+			break;
+		default:
+			return nfserr_inval;
+		}
+	}
 
-	वापस nfs_ok;
-पूर्ण
+	return nfs_ok;
+}
 
 
 /*
  * NFSv4 operation argument decoders
  */
 
-अटल __be32
-nfsd4_decode_access(काष्ठा nfsd4_compoundargs *argp,
-		    काष्ठा nfsd4_access *access)
-अणु
-	अगर (xdr_stream_decode_u32(argp->xdr, &access->ac_req_access) < 0)
-		वापस nfserr_bad_xdr;
-	वापस nfs_ok;
-पूर्ण
+static __be32
+nfsd4_decode_access(struct nfsd4_compoundargs *argp,
+		    struct nfsd4_access *access)
+{
+	if (xdr_stream_decode_u32(argp->xdr, &access->ac_req_access) < 0)
+		return nfserr_bad_xdr;
+	return nfs_ok;
+}
 
-अटल __be32
-nfsd4_decode_बंद(काष्ठा nfsd4_compoundargs *argp, काष्ठा nfsd4_बंद *बंद)
-अणु
-	अगर (xdr_stream_decode_u32(argp->xdr, &बंद->cl_seqid) < 0)
-		वापस nfserr_bad_xdr;
-	वापस nfsd4_decode_stateid4(argp, &बंद->cl_stateid);
-पूर्ण
+static __be32
+nfsd4_decode_close(struct nfsd4_compoundargs *argp, struct nfsd4_close *close)
+{
+	if (xdr_stream_decode_u32(argp->xdr, &close->cl_seqid) < 0)
+		return nfserr_bad_xdr;
+	return nfsd4_decode_stateid4(argp, &close->cl_stateid);
+}
 
 
-अटल __be32
-nfsd4_decode_commit(काष्ठा nfsd4_compoundargs *argp, काष्ठा nfsd4_commit *commit)
-अणु
-	अगर (xdr_stream_decode_u64(argp->xdr, &commit->co_offset) < 0)
-		वापस nfserr_bad_xdr;
-	अगर (xdr_stream_decode_u32(argp->xdr, &commit->co_count) < 0)
-		वापस nfserr_bad_xdr;
-	वापस nfs_ok;
-पूर्ण
+static __be32
+nfsd4_decode_commit(struct nfsd4_compoundargs *argp, struct nfsd4_commit *commit)
+{
+	if (xdr_stream_decode_u64(argp->xdr, &commit->co_offset) < 0)
+		return nfserr_bad_xdr;
+	if (xdr_stream_decode_u32(argp->xdr, &commit->co_count) < 0)
+		return nfserr_bad_xdr;
+	return nfs_ok;
+}
 
-अटल __be32
-nfsd4_decode_create(काष्ठा nfsd4_compoundargs *argp, काष्ठा nfsd4_create *create)
-अणु
+static __be32
+nfsd4_decode_create(struct nfsd4_compoundargs *argp, struct nfsd4_create *create)
+{
 	__be32 *p, status;
 
-	अगर (xdr_stream_decode_u32(argp->xdr, &create->cr_type) < 0)
-		वापस nfserr_bad_xdr;
-	चयन (create->cr_type) अणु
-	हाल NF4LNK:
-		अगर (xdr_stream_decode_u32(argp->xdr, &create->cr_datalen) < 0)
-			वापस nfserr_bad_xdr;
-		p = xdr_अंतरभूत_decode(argp->xdr, create->cr_datalen);
-		अगर (!p)
-			वापस nfserr_bad_xdr;
+	if (xdr_stream_decode_u32(argp->xdr, &create->cr_type) < 0)
+		return nfserr_bad_xdr;
+	switch (create->cr_type) {
+	case NF4LNK:
+		if (xdr_stream_decode_u32(argp->xdr, &create->cr_datalen) < 0)
+			return nfserr_bad_xdr;
+		p = xdr_inline_decode(argp->xdr, create->cr_datalen);
+		if (!p)
+			return nfserr_bad_xdr;
 		create->cr_data = svcxdr_dupstr(argp, p, create->cr_datalen);
-		अगर (!create->cr_data)
-			वापस nfserr_jukebox;
-		अवरोध;
-	हाल NF4BLK:
-	हाल NF4CHR:
-		अगर (xdr_stream_decode_u32(argp->xdr, &create->cr_specdata1) < 0)
-			वापस nfserr_bad_xdr;
-		अगर (xdr_stream_decode_u32(argp->xdr, &create->cr_specdata2) < 0)
-			वापस nfserr_bad_xdr;
-		अवरोध;
-	हाल NF4SOCK:
-	हाल NF4FIFO:
-	हाल NF4सूची:
-	शेष:
-		अवरोध;
-	पूर्ण
+		if (!create->cr_data)
+			return nfserr_jukebox;
+		break;
+	case NF4BLK:
+	case NF4CHR:
+		if (xdr_stream_decode_u32(argp->xdr, &create->cr_specdata1) < 0)
+			return nfserr_bad_xdr;
+		if (xdr_stream_decode_u32(argp->xdr, &create->cr_specdata2) < 0)
+			return nfserr_bad_xdr;
+		break;
+	case NF4SOCK:
+	case NF4FIFO:
+	case NF4DIR:
+	default:
+		break;
+	}
 	status = nfsd4_decode_component4(argp, &create->cr_name,
 					 &create->cr_namelen);
-	अगर (status)
-		वापस status;
+	if (status)
+		return status;
 	status = nfsd4_decode_fattr4(argp, create->cr_bmval,
 				    ARRAY_SIZE(create->cr_bmval),
 				    &create->cr_iattr, &create->cr_acl,
 				    &create->cr_label, &create->cr_umask);
-	अगर (status)
-		वापस status;
+	if (status)
+		return status;
 
-	वापस nfs_ok;
-पूर्ण
+	return nfs_ok;
+}
 
-अटल अंतरभूत __be32
-nfsd4_decode_delegवापस(काष्ठा nfsd4_compoundargs *argp, काष्ठा nfsd4_delegवापस *dr)
-अणु
-	वापस nfsd4_decode_stateid4(argp, &dr->dr_stateid);
-पूर्ण
+static inline __be32
+nfsd4_decode_delegreturn(struct nfsd4_compoundargs *argp, struct nfsd4_delegreturn *dr)
+{
+	return nfsd4_decode_stateid4(argp, &dr->dr_stateid);
+}
 
-अटल अंतरभूत __be32
-nfsd4_decode_getattr(काष्ठा nfsd4_compoundargs *argp, काष्ठा nfsd4_getattr *getattr)
-अणु
-	वापस nfsd4_decode_biपंचांगap4(argp, getattr->ga_bmval,
+static inline __be32
+nfsd4_decode_getattr(struct nfsd4_compoundargs *argp, struct nfsd4_getattr *getattr)
+{
+	return nfsd4_decode_bitmap4(argp, getattr->ga_bmval,
 				    ARRAY_SIZE(getattr->ga_bmval));
-पूर्ण
+}
 
-अटल __be32
-nfsd4_decode_link(काष्ठा nfsd4_compoundargs *argp, काष्ठा nfsd4_link *link)
-अणु
-	वापस nfsd4_decode_component4(argp, &link->li_name, &link->li_namelen);
-पूर्ण
+static __be32
+nfsd4_decode_link(struct nfsd4_compoundargs *argp, struct nfsd4_link *link)
+{
+	return nfsd4_decode_component4(argp, &link->li_name, &link->li_namelen);
+}
 
-अटल __be32
-nfsd4_decode_खोलो_to_lock_owner4(काष्ठा nfsd4_compoundargs *argp,
-				 काष्ठा nfsd4_lock *lock)
-अणु
+static __be32
+nfsd4_decode_open_to_lock_owner4(struct nfsd4_compoundargs *argp,
+				 struct nfsd4_lock *lock)
+{
 	__be32 status;
 
-	अगर (xdr_stream_decode_u32(argp->xdr, &lock->lk_new_खोलो_seqid) < 0)
-		वापस nfserr_bad_xdr;
-	status = nfsd4_decode_stateid4(argp, &lock->lk_new_खोलो_stateid);
-	अगर (status)
-		वापस status;
-	अगर (xdr_stream_decode_u32(argp->xdr, &lock->lk_new_lock_seqid) < 0)
-		वापस nfserr_bad_xdr;
-	वापस nfsd4_decode_state_owner4(argp, &lock->lk_new_clientid,
+	if (xdr_stream_decode_u32(argp->xdr, &lock->lk_new_open_seqid) < 0)
+		return nfserr_bad_xdr;
+	status = nfsd4_decode_stateid4(argp, &lock->lk_new_open_stateid);
+	if (status)
+		return status;
+	if (xdr_stream_decode_u32(argp->xdr, &lock->lk_new_lock_seqid) < 0)
+		return nfserr_bad_xdr;
+	return nfsd4_decode_state_owner4(argp, &lock->lk_new_clientid,
 					 &lock->lk_new_owner);
-पूर्ण
+}
 
-अटल __be32
-nfsd4_decode_exist_lock_owner4(काष्ठा nfsd4_compoundargs *argp,
-			       काष्ठा nfsd4_lock *lock)
-अणु
+static __be32
+nfsd4_decode_exist_lock_owner4(struct nfsd4_compoundargs *argp,
+			       struct nfsd4_lock *lock)
+{
 	__be32 status;
 
 	status = nfsd4_decode_stateid4(argp, &lock->lk_old_lock_stateid);
-	अगर (status)
-		वापस status;
-	अगर (xdr_stream_decode_u32(argp->xdr, &lock->lk_old_lock_seqid) < 0)
-		वापस nfserr_bad_xdr;
+	if (status)
+		return status;
+	if (xdr_stream_decode_u32(argp->xdr, &lock->lk_old_lock_seqid) < 0)
+		return nfserr_bad_xdr;
 
-	वापस nfs_ok;
-पूर्ण
+	return nfs_ok;
+}
 
-अटल __be32
-nfsd4_decode_locker4(काष्ठा nfsd4_compoundargs *argp, काष्ठा nfsd4_lock *lock)
-अणु
-	अगर (xdr_stream_decode_bool(argp->xdr, &lock->lk_is_new) < 0)
-		वापस nfserr_bad_xdr;
-	अगर (lock->lk_is_new)
-		वापस nfsd4_decode_खोलो_to_lock_owner4(argp, lock);
-	वापस nfsd4_decode_exist_lock_owner4(argp, lock);
-पूर्ण
+static __be32
+nfsd4_decode_locker4(struct nfsd4_compoundargs *argp, struct nfsd4_lock *lock)
+{
+	if (xdr_stream_decode_bool(argp->xdr, &lock->lk_is_new) < 0)
+		return nfserr_bad_xdr;
+	if (lock->lk_is_new)
+		return nfsd4_decode_open_to_lock_owner4(argp, lock);
+	return nfsd4_decode_exist_lock_owner4(argp, lock);
+}
 
-अटल __be32
-nfsd4_decode_lock(काष्ठा nfsd4_compoundargs *argp, काष्ठा nfsd4_lock *lock)
-अणु
-	अगर (xdr_stream_decode_u32(argp->xdr, &lock->lk_type) < 0)
-		वापस nfserr_bad_xdr;
-	अगर ((lock->lk_type < NFS4_READ_LT) || (lock->lk_type > NFS4_WRITEW_LT))
-		वापस nfserr_bad_xdr;
-	अगर (xdr_stream_decode_bool(argp->xdr, &lock->lk_reclaim) < 0)
-		वापस nfserr_bad_xdr;
-	अगर (xdr_stream_decode_u64(argp->xdr, &lock->lk_offset) < 0)
-		वापस nfserr_bad_xdr;
-	अगर (xdr_stream_decode_u64(argp->xdr, &lock->lk_length) < 0)
-		वापस nfserr_bad_xdr;
-	वापस nfsd4_decode_locker4(argp, lock);
-पूर्ण
+static __be32
+nfsd4_decode_lock(struct nfsd4_compoundargs *argp, struct nfsd4_lock *lock)
+{
+	if (xdr_stream_decode_u32(argp->xdr, &lock->lk_type) < 0)
+		return nfserr_bad_xdr;
+	if ((lock->lk_type < NFS4_READ_LT) || (lock->lk_type > NFS4_WRITEW_LT))
+		return nfserr_bad_xdr;
+	if (xdr_stream_decode_bool(argp->xdr, &lock->lk_reclaim) < 0)
+		return nfserr_bad_xdr;
+	if (xdr_stream_decode_u64(argp->xdr, &lock->lk_offset) < 0)
+		return nfserr_bad_xdr;
+	if (xdr_stream_decode_u64(argp->xdr, &lock->lk_length) < 0)
+		return nfserr_bad_xdr;
+	return nfsd4_decode_locker4(argp, lock);
+}
 
-अटल __be32
-nfsd4_decode_lockt(काष्ठा nfsd4_compoundargs *argp, काष्ठा nfsd4_lockt *lockt)
-अणु
-	अगर (xdr_stream_decode_u32(argp->xdr, &lockt->lt_type) < 0)
-		वापस nfserr_bad_xdr;
-	अगर ((lockt->lt_type < NFS4_READ_LT) || (lockt->lt_type > NFS4_WRITEW_LT))
-		वापस nfserr_bad_xdr;
-	अगर (xdr_stream_decode_u64(argp->xdr, &lockt->lt_offset) < 0)
-		वापस nfserr_bad_xdr;
-	अगर (xdr_stream_decode_u64(argp->xdr, &lockt->lt_length) < 0)
-		वापस nfserr_bad_xdr;
-	वापस nfsd4_decode_state_owner4(argp, &lockt->lt_clientid,
+static __be32
+nfsd4_decode_lockt(struct nfsd4_compoundargs *argp, struct nfsd4_lockt *lockt)
+{
+	if (xdr_stream_decode_u32(argp->xdr, &lockt->lt_type) < 0)
+		return nfserr_bad_xdr;
+	if ((lockt->lt_type < NFS4_READ_LT) || (lockt->lt_type > NFS4_WRITEW_LT))
+		return nfserr_bad_xdr;
+	if (xdr_stream_decode_u64(argp->xdr, &lockt->lt_offset) < 0)
+		return nfserr_bad_xdr;
+	if (xdr_stream_decode_u64(argp->xdr, &lockt->lt_length) < 0)
+		return nfserr_bad_xdr;
+	return nfsd4_decode_state_owner4(argp, &lockt->lt_clientid,
 					 &lockt->lt_owner);
-पूर्ण
+}
 
-अटल __be32
-nfsd4_decode_locku(काष्ठा nfsd4_compoundargs *argp, काष्ठा nfsd4_locku *locku)
-अणु
+static __be32
+nfsd4_decode_locku(struct nfsd4_compoundargs *argp, struct nfsd4_locku *locku)
+{
 	__be32 status;
 
-	अगर (xdr_stream_decode_u32(argp->xdr, &locku->lu_type) < 0)
-		वापस nfserr_bad_xdr;
-	अगर ((locku->lu_type < NFS4_READ_LT) || (locku->lu_type > NFS4_WRITEW_LT))
-		वापस nfserr_bad_xdr;
-	अगर (xdr_stream_decode_u32(argp->xdr, &locku->lu_seqid) < 0)
-		वापस nfserr_bad_xdr;
+	if (xdr_stream_decode_u32(argp->xdr, &locku->lu_type) < 0)
+		return nfserr_bad_xdr;
+	if ((locku->lu_type < NFS4_READ_LT) || (locku->lu_type > NFS4_WRITEW_LT))
+		return nfserr_bad_xdr;
+	if (xdr_stream_decode_u32(argp->xdr, &locku->lu_seqid) < 0)
+		return nfserr_bad_xdr;
 	status = nfsd4_decode_stateid4(argp, &locku->lu_stateid);
-	अगर (status)
-		वापस status;
-	अगर (xdr_stream_decode_u64(argp->xdr, &locku->lu_offset) < 0)
-		वापस nfserr_bad_xdr;
-	अगर (xdr_stream_decode_u64(argp->xdr, &locku->lu_length) < 0)
-		वापस nfserr_bad_xdr;
+	if (status)
+		return status;
+	if (xdr_stream_decode_u64(argp->xdr, &locku->lu_offset) < 0)
+		return nfserr_bad_xdr;
+	if (xdr_stream_decode_u64(argp->xdr, &locku->lu_length) < 0)
+		return nfserr_bad_xdr;
 
-	वापस nfs_ok;
-पूर्ण
+	return nfs_ok;
+}
 
-अटल __be32
-nfsd4_decode_lookup(काष्ठा nfsd4_compoundargs *argp, काष्ठा nfsd4_lookup *lookup)
-अणु
-	वापस nfsd4_decode_component4(argp, &lookup->lo_name, &lookup->lo_len);
-पूर्ण
+static __be32
+nfsd4_decode_lookup(struct nfsd4_compoundargs *argp, struct nfsd4_lookup *lookup)
+{
+	return nfsd4_decode_component4(argp, &lookup->lo_name, &lookup->lo_len);
+}
 
-अटल __be32
-nfsd4_decode_createhow4(काष्ठा nfsd4_compoundargs *argp, काष्ठा nfsd4_खोलो *खोलो)
-अणु
+static __be32
+nfsd4_decode_createhow4(struct nfsd4_compoundargs *argp, struct nfsd4_open *open)
+{
 	__be32 status;
 
-	अगर (xdr_stream_decode_u32(argp->xdr, &खोलो->op_createmode) < 0)
-		वापस nfserr_bad_xdr;
-	चयन (खोलो->op_createmode) अणु
-	हाल NFS4_CREATE_UNCHECKED:
-	हाल NFS4_CREATE_GUARDED:
-		status = nfsd4_decode_fattr4(argp, खोलो->op_bmval,
-					     ARRAY_SIZE(खोलो->op_bmval),
-					     &खोलो->op_iattr, &खोलो->op_acl,
-					     &खोलो->op_label, &खोलो->op_umask);
-		अगर (status)
-			वापस status;
-		अवरोध;
-	हाल NFS4_CREATE_EXCLUSIVE:
-		status = nfsd4_decode_verअगरier4(argp, &खोलो->op_verf);
-		अगर (status)
-			वापस status;
-		अवरोध;
-	हाल NFS4_CREATE_EXCLUSIVE4_1:
-		अगर (argp->minorversion < 1)
-			वापस nfserr_bad_xdr;
-		status = nfsd4_decode_verअगरier4(argp, &खोलो->op_verf);
-		अगर (status)
-			वापस status;
-		status = nfsd4_decode_fattr4(argp, खोलो->op_bmval,
-					     ARRAY_SIZE(खोलो->op_bmval),
-					     &खोलो->op_iattr, &खोलो->op_acl,
-					     &खोलो->op_label, &खोलो->op_umask);
-		अगर (status)
-			वापस status;
-		अवरोध;
-	शेष:
-		वापस nfserr_bad_xdr;
-	पूर्ण
+	if (xdr_stream_decode_u32(argp->xdr, &open->op_createmode) < 0)
+		return nfserr_bad_xdr;
+	switch (open->op_createmode) {
+	case NFS4_CREATE_UNCHECKED:
+	case NFS4_CREATE_GUARDED:
+		status = nfsd4_decode_fattr4(argp, open->op_bmval,
+					     ARRAY_SIZE(open->op_bmval),
+					     &open->op_iattr, &open->op_acl,
+					     &open->op_label, &open->op_umask);
+		if (status)
+			return status;
+		break;
+	case NFS4_CREATE_EXCLUSIVE:
+		status = nfsd4_decode_verifier4(argp, &open->op_verf);
+		if (status)
+			return status;
+		break;
+	case NFS4_CREATE_EXCLUSIVE4_1:
+		if (argp->minorversion < 1)
+			return nfserr_bad_xdr;
+		status = nfsd4_decode_verifier4(argp, &open->op_verf);
+		if (status)
+			return status;
+		status = nfsd4_decode_fattr4(argp, open->op_bmval,
+					     ARRAY_SIZE(open->op_bmval),
+					     &open->op_iattr, &open->op_acl,
+					     &open->op_label, &open->op_umask);
+		if (status)
+			return status;
+		break;
+	default:
+		return nfserr_bad_xdr;
+	}
 
-	वापस nfs_ok;
-पूर्ण
+	return nfs_ok;
+}
 
-अटल __be32
-nfsd4_decode_खोलोflag4(काष्ठा nfsd4_compoundargs *argp, काष्ठा nfsd4_खोलो *खोलो)
-अणु
+static __be32
+nfsd4_decode_openflag4(struct nfsd4_compoundargs *argp, struct nfsd4_open *open)
+{
 	__be32 status;
 
-	अगर (xdr_stream_decode_u32(argp->xdr, &खोलो->op_create) < 0)
-		वापस nfserr_bad_xdr;
-	चयन (खोलो->op_create) अणु
-	हाल NFS4_OPEN_NOCREATE:
-		अवरोध;
-	हाल NFS4_OPEN_CREATE:
-		status = nfsd4_decode_createhow4(argp, खोलो);
-		अगर (status)
-			वापस status;
-		अवरोध;
-	शेष:
-		वापस nfserr_bad_xdr;
-	पूर्ण
+	if (xdr_stream_decode_u32(argp->xdr, &open->op_create) < 0)
+		return nfserr_bad_xdr;
+	switch (open->op_create) {
+	case NFS4_OPEN_NOCREATE:
+		break;
+	case NFS4_OPEN_CREATE:
+		status = nfsd4_decode_createhow4(argp, open);
+		if (status)
+			return status;
+		break;
+	default:
+		return nfserr_bad_xdr;
+	}
 
-	वापस nfs_ok;
-पूर्ण
+	return nfs_ok;
+}
 
-अटल __be32 nfsd4_decode_share_access(काष्ठा nfsd4_compoundargs *argp, u32 *share_access, u32 *deleg_want, u32 *deleg_when)
-अणु
+static __be32 nfsd4_decode_share_access(struct nfsd4_compoundargs *argp, u32 *share_access, u32 *deleg_want, u32 *deleg_when)
+{
 	u32 w;
 
-	अगर (xdr_stream_decode_u32(argp->xdr, &w) < 0)
-		वापस nfserr_bad_xdr;
+	if (xdr_stream_decode_u32(argp->xdr, &w) < 0)
+		return nfserr_bad_xdr;
 	*share_access = w & NFS4_SHARE_ACCESS_MASK;
 	*deleg_want = w & NFS4_SHARE_WANT_MASK;
-	अगर (deleg_when)
+	if (deleg_when)
 		*deleg_when = w & NFS4_SHARE_WHEN_MASK;
 
-	चयन (w & NFS4_SHARE_ACCESS_MASK) अणु
-	हाल NFS4_SHARE_ACCESS_READ:
-	हाल NFS4_SHARE_ACCESS_WRITE:
-	हाल NFS4_SHARE_ACCESS_BOTH:
-		अवरोध;
-	शेष:
-		वापस nfserr_bad_xdr;
-	पूर्ण
+	switch (w & NFS4_SHARE_ACCESS_MASK) {
+	case NFS4_SHARE_ACCESS_READ:
+	case NFS4_SHARE_ACCESS_WRITE:
+	case NFS4_SHARE_ACCESS_BOTH:
+		break;
+	default:
+		return nfserr_bad_xdr;
+	}
 	w &= ~NFS4_SHARE_ACCESS_MASK;
-	अगर (!w)
-		वापस nfs_ok;
-	अगर (!argp->minorversion)
-		वापस nfserr_bad_xdr;
-	चयन (w & NFS4_SHARE_WANT_MASK) अणु
-	हाल NFS4_SHARE_WANT_NO_PREFERENCE:
-	हाल NFS4_SHARE_WANT_READ_DELEG:
-	हाल NFS4_SHARE_WANT_WRITE_DELEG:
-	हाल NFS4_SHARE_WANT_ANY_DELEG:
-	हाल NFS4_SHARE_WANT_NO_DELEG:
-	हाल NFS4_SHARE_WANT_CANCEL:
-		अवरोध;
-	शेष:
-		वापस nfserr_bad_xdr;
-	पूर्ण
+	if (!w)
+		return nfs_ok;
+	if (!argp->minorversion)
+		return nfserr_bad_xdr;
+	switch (w & NFS4_SHARE_WANT_MASK) {
+	case NFS4_SHARE_WANT_NO_PREFERENCE:
+	case NFS4_SHARE_WANT_READ_DELEG:
+	case NFS4_SHARE_WANT_WRITE_DELEG:
+	case NFS4_SHARE_WANT_ANY_DELEG:
+	case NFS4_SHARE_WANT_NO_DELEG:
+	case NFS4_SHARE_WANT_CANCEL:
+		break;
+	default:
+		return nfserr_bad_xdr;
+	}
 	w &= ~NFS4_SHARE_WANT_MASK;
-	अगर (!w)
-		वापस nfs_ok;
+	if (!w)
+		return nfs_ok;
 
-	अगर (!deleg_when)	/* खोलो_करोwngrade */
-		वापस nfserr_inval;
-	चयन (w) अणु
-	हाल NFS4_SHARE_SIGNAL_DELEG_WHEN_RESRC_AVAIL:
-	हाल NFS4_SHARE_PUSH_DELEG_WHEN_UNCONTENDED:
-	हाल (NFS4_SHARE_SIGNAL_DELEG_WHEN_RESRC_AVAIL |
+	if (!deleg_when)	/* open_downgrade */
+		return nfserr_inval;
+	switch (w) {
+	case NFS4_SHARE_SIGNAL_DELEG_WHEN_RESRC_AVAIL:
+	case NFS4_SHARE_PUSH_DELEG_WHEN_UNCONTENDED:
+	case (NFS4_SHARE_SIGNAL_DELEG_WHEN_RESRC_AVAIL |
 	      NFS4_SHARE_PUSH_DELEG_WHEN_UNCONTENDED):
-		वापस nfs_ok;
-	पूर्ण
-	वापस nfserr_bad_xdr;
-पूर्ण
+		return nfs_ok;
+	}
+	return nfserr_bad_xdr;
+}
 
-अटल __be32 nfsd4_decode_share_deny(काष्ठा nfsd4_compoundargs *argp, u32 *x)
-अणु
-	अगर (xdr_stream_decode_u32(argp->xdr, x) < 0)
-		वापस nfserr_bad_xdr;
+static __be32 nfsd4_decode_share_deny(struct nfsd4_compoundargs *argp, u32 *x)
+{
+	if (xdr_stream_decode_u32(argp->xdr, x) < 0)
+		return nfserr_bad_xdr;
 	/* Note: unlike access bits, deny bits may be zero. */
-	अगर (*x & ~NFS4_SHARE_DENY_BOTH)
-		वापस nfserr_bad_xdr;
+	if (*x & ~NFS4_SHARE_DENY_BOTH)
+		return nfserr_bad_xdr;
 
-	वापस nfs_ok;
-पूर्ण
+	return nfs_ok;
+}
 
-अटल __be32
-nfsd4_decode_खोलो_claim4(काष्ठा nfsd4_compoundargs *argp,
-			 काष्ठा nfsd4_खोलो *खोलो)
-अणु
+static __be32
+nfsd4_decode_open_claim4(struct nfsd4_compoundargs *argp,
+			 struct nfsd4_open *open)
+{
 	__be32 status;
 
-	अगर (xdr_stream_decode_u32(argp->xdr, &खोलो->op_claim_type) < 0)
-		वापस nfserr_bad_xdr;
-	चयन (खोलो->op_claim_type) अणु
-	हाल NFS4_OPEN_CLAIM_शून्य:
-	हाल NFS4_OPEN_CLAIM_DELEGATE_PREV:
-		status = nfsd4_decode_component4(argp, &खोलो->op_fname,
-						 &खोलो->op_fnamelen);
-		अगर (status)
-			वापस status;
-		अवरोध;
-	हाल NFS4_OPEN_CLAIM_PREVIOUS:
-		अगर (xdr_stream_decode_u32(argp->xdr, &खोलो->op_delegate_type) < 0)
-			वापस nfserr_bad_xdr;
-		अवरोध;
-	हाल NFS4_OPEN_CLAIM_DELEGATE_CUR:
-		status = nfsd4_decode_stateid4(argp, &खोलो->op_delegate_stateid);
-		अगर (status)
-			वापस status;
-		status = nfsd4_decode_component4(argp, &खोलो->op_fname,
-						 &खोलो->op_fnamelen);
-		अगर (status)
-			वापस status;
-		अवरोध;
-	हाल NFS4_OPEN_CLAIM_FH:
-	हाल NFS4_OPEN_CLAIM_DELEG_PREV_FH:
-		अगर (argp->minorversion < 1)
-			वापस nfserr_bad_xdr;
-		/* व्योम */
-		अवरोध;
-	हाल NFS4_OPEN_CLAIM_DELEG_CUR_FH:
-		अगर (argp->minorversion < 1)
-			वापस nfserr_bad_xdr;
-		status = nfsd4_decode_stateid4(argp, &खोलो->op_delegate_stateid);
-		अगर (status)
-			वापस status;
-		अवरोध;
-	शेष:
-		वापस nfserr_bad_xdr;
-	पूर्ण
+	if (xdr_stream_decode_u32(argp->xdr, &open->op_claim_type) < 0)
+		return nfserr_bad_xdr;
+	switch (open->op_claim_type) {
+	case NFS4_OPEN_CLAIM_NULL:
+	case NFS4_OPEN_CLAIM_DELEGATE_PREV:
+		status = nfsd4_decode_component4(argp, &open->op_fname,
+						 &open->op_fnamelen);
+		if (status)
+			return status;
+		break;
+	case NFS4_OPEN_CLAIM_PREVIOUS:
+		if (xdr_stream_decode_u32(argp->xdr, &open->op_delegate_type) < 0)
+			return nfserr_bad_xdr;
+		break;
+	case NFS4_OPEN_CLAIM_DELEGATE_CUR:
+		status = nfsd4_decode_stateid4(argp, &open->op_delegate_stateid);
+		if (status)
+			return status;
+		status = nfsd4_decode_component4(argp, &open->op_fname,
+						 &open->op_fnamelen);
+		if (status)
+			return status;
+		break;
+	case NFS4_OPEN_CLAIM_FH:
+	case NFS4_OPEN_CLAIM_DELEG_PREV_FH:
+		if (argp->minorversion < 1)
+			return nfserr_bad_xdr;
+		/* void */
+		break;
+	case NFS4_OPEN_CLAIM_DELEG_CUR_FH:
+		if (argp->minorversion < 1)
+			return nfserr_bad_xdr;
+		status = nfsd4_decode_stateid4(argp, &open->op_delegate_stateid);
+		if (status)
+			return status;
+		break;
+	default:
+		return nfserr_bad_xdr;
+	}
 
-	वापस nfs_ok;
-पूर्ण
+	return nfs_ok;
+}
 
-अटल __be32
-nfsd4_decode_खोलो(काष्ठा nfsd4_compoundargs *argp, काष्ठा nfsd4_खोलो *खोलो)
-अणु
+static __be32
+nfsd4_decode_open(struct nfsd4_compoundargs *argp, struct nfsd4_open *open)
+{
 	__be32 status;
 	u32 dummy;
 
-	स_रखो(खोलो->op_bmval, 0, माप(खोलो->op_bmval));
-	खोलो->op_iattr.ia_valid = 0;
-	खोलो->op_खोलोowner = शून्य;
+	memset(open->op_bmval, 0, sizeof(open->op_bmval));
+	open->op_iattr.ia_valid = 0;
+	open->op_openowner = NULL;
 
-	खोलो->op_xdr_error = 0;
-	अगर (xdr_stream_decode_u32(argp->xdr, &खोलो->op_seqid) < 0)
-		वापस nfserr_bad_xdr;
+	open->op_xdr_error = 0;
+	if (xdr_stream_decode_u32(argp->xdr, &open->op_seqid) < 0)
+		return nfserr_bad_xdr;
 	/* deleg_want is ignored */
-	status = nfsd4_decode_share_access(argp, &खोलो->op_share_access,
-					   &खोलो->op_deleg_want, &dummy);
-	अगर (status)
-		वापस status;
-	status = nfsd4_decode_share_deny(argp, &खोलो->op_share_deny);
-	अगर (status)
-		वापस status;
-	status = nfsd4_decode_state_owner4(argp, &खोलो->op_clientid,
-					   &खोलो->op_owner);
-	अगर (status)
-		वापस status;
-	status = nfsd4_decode_खोलोflag4(argp, खोलो);
-	अगर (status)
-		वापस status;
-	वापस nfsd4_decode_खोलो_claim4(argp, खोलो);
-पूर्ण
+	status = nfsd4_decode_share_access(argp, &open->op_share_access,
+					   &open->op_deleg_want, &dummy);
+	if (status)
+		return status;
+	status = nfsd4_decode_share_deny(argp, &open->op_share_deny);
+	if (status)
+		return status;
+	status = nfsd4_decode_state_owner4(argp, &open->op_clientid,
+					   &open->op_owner);
+	if (status)
+		return status;
+	status = nfsd4_decode_openflag4(argp, open);
+	if (status)
+		return status;
+	return nfsd4_decode_open_claim4(argp, open);
+}
 
-अटल __be32
-nfsd4_decode_खोलो_confirm(काष्ठा nfsd4_compoundargs *argp, काष्ठा nfsd4_खोलो_confirm *खोलो_conf)
-अणु
+static __be32
+nfsd4_decode_open_confirm(struct nfsd4_compoundargs *argp, struct nfsd4_open_confirm *open_conf)
+{
 	__be32 status;
 
-	अगर (argp->minorversion >= 1)
-		वापस nfserr_notsupp;
+	if (argp->minorversion >= 1)
+		return nfserr_notsupp;
 
-	status = nfsd4_decode_stateid4(argp, &खोलो_conf->oc_req_stateid);
-	अगर (status)
-		वापस status;
-	अगर (xdr_stream_decode_u32(argp->xdr, &खोलो_conf->oc_seqid) < 0)
-		वापस nfserr_bad_xdr;
+	status = nfsd4_decode_stateid4(argp, &open_conf->oc_req_stateid);
+	if (status)
+		return status;
+	if (xdr_stream_decode_u32(argp->xdr, &open_conf->oc_seqid) < 0)
+		return nfserr_bad_xdr;
 
-	वापस nfs_ok;
-पूर्ण
+	return nfs_ok;
+}
 
-अटल __be32
-nfsd4_decode_खोलो_करोwngrade(काष्ठा nfsd4_compoundargs *argp, काष्ठा nfsd4_खोलो_करोwngrade *खोलो_करोwn)
-अणु
+static __be32
+nfsd4_decode_open_downgrade(struct nfsd4_compoundargs *argp, struct nfsd4_open_downgrade *open_down)
+{
 	__be32 status;
 
-	status = nfsd4_decode_stateid4(argp, &खोलो_करोwn->od_stateid);
-	अगर (status)
-		वापस status;
-	अगर (xdr_stream_decode_u32(argp->xdr, &खोलो_करोwn->od_seqid) < 0)
-		वापस nfserr_bad_xdr;
+	status = nfsd4_decode_stateid4(argp, &open_down->od_stateid);
+	if (status)
+		return status;
+	if (xdr_stream_decode_u32(argp->xdr, &open_down->od_seqid) < 0)
+		return nfserr_bad_xdr;
 	/* deleg_want is ignored */
-	status = nfsd4_decode_share_access(argp, &खोलो_करोwn->od_share_access,
-					   &खोलो_करोwn->od_deleg_want, शून्य);
-	अगर (status)
-		वापस status;
-	वापस nfsd4_decode_share_deny(argp, &खोलो_करोwn->od_share_deny);
-पूर्ण
+	status = nfsd4_decode_share_access(argp, &open_down->od_share_access,
+					   &open_down->od_deleg_want, NULL);
+	if (status)
+		return status;
+	return nfsd4_decode_share_deny(argp, &open_down->od_share_deny);
+}
 
-अटल __be32
-nfsd4_decode_putfh(काष्ठा nfsd4_compoundargs *argp, काष्ठा nfsd4_putfh *putfh)
-अणु
+static __be32
+nfsd4_decode_putfh(struct nfsd4_compoundargs *argp, struct nfsd4_putfh *putfh)
+{
 	__be32 *p;
 
-	अगर (xdr_stream_decode_u32(argp->xdr, &putfh->pf_fhlen) < 0)
-		वापस nfserr_bad_xdr;
-	अगर (putfh->pf_fhlen > NFS4_FHSIZE)
-		वापस nfserr_bad_xdr;
-	p = xdr_अंतरभूत_decode(argp->xdr, putfh->pf_fhlen);
-	अगर (!p)
-		वापस nfserr_bad_xdr;
+	if (xdr_stream_decode_u32(argp->xdr, &putfh->pf_fhlen) < 0)
+		return nfserr_bad_xdr;
+	if (putfh->pf_fhlen > NFS4_FHSIZE)
+		return nfserr_bad_xdr;
+	p = xdr_inline_decode(argp->xdr, putfh->pf_fhlen);
+	if (!p)
+		return nfserr_bad_xdr;
 	putfh->pf_fhval = svcxdr_savemem(argp, p, putfh->pf_fhlen);
-	अगर (!putfh->pf_fhval)
-		वापस nfserr_jukebox;
+	if (!putfh->pf_fhval)
+		return nfserr_jukebox;
 
-	वापस nfs_ok;
-पूर्ण
+	return nfs_ok;
+}
 
-अटल __be32
-nfsd4_decode_putpubfh(काष्ठा nfsd4_compoundargs *argp, व्योम *p)
-अणु
-	अगर (argp->minorversion == 0)
-		वापस nfs_ok;
-	वापस nfserr_notsupp;
-पूर्ण
+static __be32
+nfsd4_decode_putpubfh(struct nfsd4_compoundargs *argp, void *p)
+{
+	if (argp->minorversion == 0)
+		return nfs_ok;
+	return nfserr_notsupp;
+}
 
-अटल __be32
-nfsd4_decode_पढ़ो(काष्ठा nfsd4_compoundargs *argp, काष्ठा nfsd4_पढ़ो *पढ़ो)
-अणु
+static __be32
+nfsd4_decode_read(struct nfsd4_compoundargs *argp, struct nfsd4_read *read)
+{
 	__be32 status;
 
-	status = nfsd4_decode_stateid4(argp, &पढ़ो->rd_stateid);
-	अगर (status)
-		वापस status;
-	अगर (xdr_stream_decode_u64(argp->xdr, &पढ़ो->rd_offset) < 0)
-		वापस nfserr_bad_xdr;
-	अगर (xdr_stream_decode_u32(argp->xdr, &पढ़ो->rd_length) < 0)
-		वापस nfserr_bad_xdr;
+	status = nfsd4_decode_stateid4(argp, &read->rd_stateid);
+	if (status)
+		return status;
+	if (xdr_stream_decode_u64(argp->xdr, &read->rd_offset) < 0)
+		return nfserr_bad_xdr;
+	if (xdr_stream_decode_u32(argp->xdr, &read->rd_length) < 0)
+		return nfserr_bad_xdr;
 
-	वापस nfs_ok;
-पूर्ण
+	return nfs_ok;
+}
 
-अटल __be32
-nfsd4_decode_सूची_पढ़ो(काष्ठा nfsd4_compoundargs *argp, काष्ठा nfsd4_सूची_पढ़ो *सूची_पढ़ो)
-अणु
+static __be32
+nfsd4_decode_readdir(struct nfsd4_compoundargs *argp, struct nfsd4_readdir *readdir)
+{
 	__be32 status;
 
-	अगर (xdr_stream_decode_u64(argp->xdr, &सूची_पढ़ो->rd_cookie) < 0)
-		वापस nfserr_bad_xdr;
-	status = nfsd4_decode_verअगरier4(argp, &सूची_पढ़ो->rd_verf);
-	अगर (status)
-		वापस status;
-	अगर (xdr_stream_decode_u32(argp->xdr, &सूची_पढ़ो->rd_dircount) < 0)
-		वापस nfserr_bad_xdr;
-	अगर (xdr_stream_decode_u32(argp->xdr, &सूची_पढ़ो->rd_maxcount) < 0)
-		वापस nfserr_bad_xdr;
-	अगर (xdr_stream_decode_uपूर्णांक32_array(argp->xdr, सूची_पढ़ो->rd_bmval,
-					   ARRAY_SIZE(सूची_पढ़ो->rd_bmval)) < 0)
-		वापस nfserr_bad_xdr;
+	if (xdr_stream_decode_u64(argp->xdr, &readdir->rd_cookie) < 0)
+		return nfserr_bad_xdr;
+	status = nfsd4_decode_verifier4(argp, &readdir->rd_verf);
+	if (status)
+		return status;
+	if (xdr_stream_decode_u32(argp->xdr, &readdir->rd_dircount) < 0)
+		return nfserr_bad_xdr;
+	if (xdr_stream_decode_u32(argp->xdr, &readdir->rd_maxcount) < 0)
+		return nfserr_bad_xdr;
+	if (xdr_stream_decode_uint32_array(argp->xdr, readdir->rd_bmval,
+					   ARRAY_SIZE(readdir->rd_bmval)) < 0)
+		return nfserr_bad_xdr;
 
-	वापस nfs_ok;
-पूर्ण
+	return nfs_ok;
+}
 
-अटल __be32
-nfsd4_decode_हटाओ(काष्ठा nfsd4_compoundargs *argp, काष्ठा nfsd4_हटाओ *हटाओ)
-अणु
-	वापस nfsd4_decode_component4(argp, &हटाओ->rm_name, &हटाओ->rm_namelen);
-पूर्ण
+static __be32
+nfsd4_decode_remove(struct nfsd4_compoundargs *argp, struct nfsd4_remove *remove)
+{
+	return nfsd4_decode_component4(argp, &remove->rm_name, &remove->rm_namelen);
+}
 
-अटल __be32
-nfsd4_decode_नाम(काष्ठा nfsd4_compoundargs *argp, काष्ठा nfsd4_नाम *नाम)
-अणु
+static __be32
+nfsd4_decode_rename(struct nfsd4_compoundargs *argp, struct nfsd4_rename *rename)
+{
 	__be32 status;
 
-	status = nfsd4_decode_component4(argp, &नाम->rn_sname, &नाम->rn_snamelen);
-	अगर (status)
-		वापस status;
-	वापस nfsd4_decode_component4(argp, &नाम->rn_tname, &नाम->rn_tnamelen);
-पूर्ण
+	status = nfsd4_decode_component4(argp, &rename->rn_sname, &rename->rn_snamelen);
+	if (status)
+		return status;
+	return nfsd4_decode_component4(argp, &rename->rn_tname, &rename->rn_tnamelen);
+}
 
-अटल __be32
-nfsd4_decode_renew(काष्ठा nfsd4_compoundargs *argp, clientid_t *clientid)
-अणु
-	वापस nfsd4_decode_clientid4(argp, clientid);
-पूर्ण
+static __be32
+nfsd4_decode_renew(struct nfsd4_compoundargs *argp, clientid_t *clientid)
+{
+	return nfsd4_decode_clientid4(argp, clientid);
+}
 
-अटल __be32
-nfsd4_decode_secinfo(काष्ठा nfsd4_compoundargs *argp,
-		     काष्ठा nfsd4_secinfo *secinfo)
-अणु
-	वापस nfsd4_decode_component4(argp, &secinfo->si_name, &secinfo->si_namelen);
-पूर्ण
+static __be32
+nfsd4_decode_secinfo(struct nfsd4_compoundargs *argp,
+		     struct nfsd4_secinfo *secinfo)
+{
+	return nfsd4_decode_component4(argp, &secinfo->si_name, &secinfo->si_namelen);
+}
 
-अटल __be32
-nfsd4_decode_setattr(काष्ठा nfsd4_compoundargs *argp, काष्ठा nfsd4_setattr *setattr)
-अणु
+static __be32
+nfsd4_decode_setattr(struct nfsd4_compoundargs *argp, struct nfsd4_setattr *setattr)
+{
 	__be32 status;
 
 	status = nfsd4_decode_stateid4(argp, &setattr->sa_stateid);
-	अगर (status)
-		वापस status;
-	वापस nfsd4_decode_fattr4(argp, setattr->sa_bmval,
+	if (status)
+		return status;
+	return nfsd4_decode_fattr4(argp, setattr->sa_bmval,
 				   ARRAY_SIZE(setattr->sa_bmval),
 				   &setattr->sa_iattr, &setattr->sa_acl,
-				   &setattr->sa_label, शून्य);
-पूर्ण
+				   &setattr->sa_label, NULL);
+}
 
-अटल __be32
-nfsd4_decode_setclientid(काष्ठा nfsd4_compoundargs *argp, काष्ठा nfsd4_setclientid *setclientid)
-अणु
+static __be32
+nfsd4_decode_setclientid(struct nfsd4_compoundargs *argp, struct nfsd4_setclientid *setclientid)
+{
 	__be32 *p, status;
 
-	अगर (argp->minorversion >= 1)
-		वापस nfserr_notsupp;
+	if (argp->minorversion >= 1)
+		return nfserr_notsupp;
 
-	status = nfsd4_decode_verअगरier4(argp, &setclientid->se_verf);
-	अगर (status)
-		वापस status;
+	status = nfsd4_decode_verifier4(argp, &setclientid->se_verf);
+	if (status)
+		return status;
 	status = nfsd4_decode_opaque(argp, &setclientid->se_name);
-	अगर (status)
-		वापस status;
-	अगर (xdr_stream_decode_u32(argp->xdr, &setclientid->se_callback_prog) < 0)
-		वापस nfserr_bad_xdr;
-	अगर (xdr_stream_decode_u32(argp->xdr, &setclientid->se_callback_netid_len) < 0)
-		वापस nfserr_bad_xdr;
-	p = xdr_अंतरभूत_decode(argp->xdr, setclientid->se_callback_netid_len);
-	अगर (!p)
-		वापस nfserr_bad_xdr;
+	if (status)
+		return status;
+	if (xdr_stream_decode_u32(argp->xdr, &setclientid->se_callback_prog) < 0)
+		return nfserr_bad_xdr;
+	if (xdr_stream_decode_u32(argp->xdr, &setclientid->se_callback_netid_len) < 0)
+		return nfserr_bad_xdr;
+	p = xdr_inline_decode(argp->xdr, setclientid->se_callback_netid_len);
+	if (!p)
+		return nfserr_bad_xdr;
 	setclientid->se_callback_netid_val = svcxdr_savemem(argp, p,
 						setclientid->se_callback_netid_len);
-	अगर (!setclientid->se_callback_netid_val)
-		वापस nfserr_jukebox;
+	if (!setclientid->se_callback_netid_val)
+		return nfserr_jukebox;
 
-	अगर (xdr_stream_decode_u32(argp->xdr, &setclientid->se_callback_addr_len) < 0)
-		वापस nfserr_bad_xdr;
-	p = xdr_अंतरभूत_decode(argp->xdr, setclientid->se_callback_addr_len);
-	अगर (!p)
-		वापस nfserr_bad_xdr;
+	if (xdr_stream_decode_u32(argp->xdr, &setclientid->se_callback_addr_len) < 0)
+		return nfserr_bad_xdr;
+	p = xdr_inline_decode(argp->xdr, setclientid->se_callback_addr_len);
+	if (!p)
+		return nfserr_bad_xdr;
 	setclientid->se_callback_addr_val = svcxdr_savemem(argp, p,
 						setclientid->se_callback_addr_len);
-	अगर (!setclientid->se_callback_addr_val)
-		वापस nfserr_jukebox;
-	अगर (xdr_stream_decode_u32(argp->xdr, &setclientid->se_callback_ident) < 0)
-		वापस nfserr_bad_xdr;
+	if (!setclientid->se_callback_addr_val)
+		return nfserr_jukebox;
+	if (xdr_stream_decode_u32(argp->xdr, &setclientid->se_callback_ident) < 0)
+		return nfserr_bad_xdr;
 
-	वापस nfs_ok;
-पूर्ण
+	return nfs_ok;
+}
 
-अटल __be32
-nfsd4_decode_setclientid_confirm(काष्ठा nfsd4_compoundargs *argp, काष्ठा nfsd4_setclientid_confirm *scd_c)
-अणु
+static __be32
+nfsd4_decode_setclientid_confirm(struct nfsd4_compoundargs *argp, struct nfsd4_setclientid_confirm *scd_c)
+{
 	__be32 status;
 
-	अगर (argp->minorversion >= 1)
-		वापस nfserr_notsupp;
+	if (argp->minorversion >= 1)
+		return nfserr_notsupp;
 
 	status = nfsd4_decode_clientid4(argp, &scd_c->sc_clientid);
-	अगर (status)
-		वापस status;
-	वापस nfsd4_decode_verअगरier4(argp, &scd_c->sc_confirm);
-पूर्ण
+	if (status)
+		return status;
+	return nfsd4_decode_verifier4(argp, &scd_c->sc_confirm);
+}
 
-/* Also used क्रम NVERIFY */
-अटल __be32
-nfsd4_decode_verअगरy(काष्ठा nfsd4_compoundargs *argp, काष्ठा nfsd4_verअगरy *verअगरy)
-अणु
+/* Also used for NVERIFY */
+static __be32
+nfsd4_decode_verify(struct nfsd4_compoundargs *argp, struct nfsd4_verify *verify)
+{
 	__be32 *p, status;
 
-	status = nfsd4_decode_biपंचांगap4(argp, verअगरy->ve_bmval,
-				      ARRAY_SIZE(verअगरy->ve_bmval));
-	अगर (status)
-		वापस status;
+	status = nfsd4_decode_bitmap4(argp, verify->ve_bmval,
+				      ARRAY_SIZE(verify->ve_bmval));
+	if (status)
+		return status;
 
 	/* For convenience's sake, we compare raw xdr'd attributes in
-	 * nfsd4_proc_verअगरy */
+	 * nfsd4_proc_verify */
 
-	अगर (xdr_stream_decode_u32(argp->xdr, &verअगरy->ve_attrlen) < 0)
-		वापस nfserr_bad_xdr;
-	p = xdr_अंतरभूत_decode(argp->xdr, verअगरy->ve_attrlen);
-	अगर (!p)
-		वापस nfserr_bad_xdr;
-	verअगरy->ve_attrval = svcxdr_savemem(argp, p, verअगरy->ve_attrlen);
-	अगर (!verअगरy->ve_attrval)
-		वापस nfserr_jukebox;
+	if (xdr_stream_decode_u32(argp->xdr, &verify->ve_attrlen) < 0)
+		return nfserr_bad_xdr;
+	p = xdr_inline_decode(argp->xdr, verify->ve_attrlen);
+	if (!p)
+		return nfserr_bad_xdr;
+	verify->ve_attrval = svcxdr_savemem(argp, p, verify->ve_attrlen);
+	if (!verify->ve_attrval)
+		return nfserr_jukebox;
 
-	वापस nfs_ok;
-पूर्ण
+	return nfs_ok;
+}
 
-अटल __be32
-nfsd4_decode_ग_लिखो(काष्ठा nfsd4_compoundargs *argp, काष्ठा nfsd4_ग_लिखो *ग_लिखो)
-अणु
+static __be32
+nfsd4_decode_write(struct nfsd4_compoundargs *argp, struct nfsd4_write *write)
+{
 	__be32 status;
 
-	status = nfsd4_decode_stateid4(argp, &ग_लिखो->wr_stateid);
-	अगर (status)
-		वापस status;
-	अगर (xdr_stream_decode_u64(argp->xdr, &ग_लिखो->wr_offset) < 0)
-		वापस nfserr_bad_xdr;
-	अगर (xdr_stream_decode_u32(argp->xdr, &ग_लिखो->wr_stable_how) < 0)
-		वापस nfserr_bad_xdr;
-	अगर (ग_लिखो->wr_stable_how > NFS_खाता_SYNC)
-		वापस nfserr_bad_xdr;
-	अगर (xdr_stream_decode_u32(argp->xdr, &ग_लिखो->wr_buflen) < 0)
-		वापस nfserr_bad_xdr;
-	अगर (!xdr_stream_subsegment(argp->xdr, &ग_लिखो->wr_payload, ग_लिखो->wr_buflen))
-		वापस nfserr_bad_xdr;
+	status = nfsd4_decode_stateid4(argp, &write->wr_stateid);
+	if (status)
+		return status;
+	if (xdr_stream_decode_u64(argp->xdr, &write->wr_offset) < 0)
+		return nfserr_bad_xdr;
+	if (xdr_stream_decode_u32(argp->xdr, &write->wr_stable_how) < 0)
+		return nfserr_bad_xdr;
+	if (write->wr_stable_how > NFS_FILE_SYNC)
+		return nfserr_bad_xdr;
+	if (xdr_stream_decode_u32(argp->xdr, &write->wr_buflen) < 0)
+		return nfserr_bad_xdr;
+	if (!xdr_stream_subsegment(argp->xdr, &write->wr_payload, write->wr_buflen))
+		return nfserr_bad_xdr;
 
-	वापस nfs_ok;
-पूर्ण
+	return nfs_ok;
+}
 
-अटल __be32
-nfsd4_decode_release_lockowner(काष्ठा nfsd4_compoundargs *argp, काष्ठा nfsd4_release_lockowner *rlockowner)
-अणु
+static __be32
+nfsd4_decode_release_lockowner(struct nfsd4_compoundargs *argp, struct nfsd4_release_lockowner *rlockowner)
+{
 	__be32 status;
 
-	अगर (argp->minorversion >= 1)
-		वापस nfserr_notsupp;
+	if (argp->minorversion >= 1)
+		return nfserr_notsupp;
 
 	status = nfsd4_decode_state_owner4(argp, &rlockowner->rl_clientid,
 					   &rlockowner->rl_owner);
-	अगर (status)
-		वापस status;
+	if (status)
+		return status;
 
-	अगर (argp->minorversion && !zero_clientid(&rlockowner->rl_clientid))
-		वापस nfserr_inval;
+	if (argp->minorversion && !zero_clientid(&rlockowner->rl_clientid))
+		return nfserr_inval;
 
-	वापस nfs_ok;
-पूर्ण
+	return nfs_ok;
+}
 
-अटल __be32 nfsd4_decode_backchannel_ctl(काष्ठा nfsd4_compoundargs *argp, काष्ठा nfsd4_backchannel_ctl *bc)
-अणु
-	अगर (xdr_stream_decode_u32(argp->xdr, &bc->bc_cb_program) < 0)
-		वापस nfserr_bad_xdr;
-	वापस nfsd4_decode_cb_sec(argp, &bc->bc_cb_sec);
-पूर्ण
+static __be32 nfsd4_decode_backchannel_ctl(struct nfsd4_compoundargs *argp, struct nfsd4_backchannel_ctl *bc)
+{
+	if (xdr_stream_decode_u32(argp->xdr, &bc->bc_cb_program) < 0)
+		return nfserr_bad_xdr;
+	return nfsd4_decode_cb_sec(argp, &bc->bc_cb_sec);
+}
 
-अटल __be32 nfsd4_decode_bind_conn_to_session(काष्ठा nfsd4_compoundargs *argp, काष्ठा nfsd4_bind_conn_to_session *bcts)
-अणु
+static __be32 nfsd4_decode_bind_conn_to_session(struct nfsd4_compoundargs *argp, struct nfsd4_bind_conn_to_session *bcts)
+{
 	u32 use_conn_in_rdma_mode;
 	__be32 status;
 
 	status = nfsd4_decode_sessionid4(argp, &bcts->sessionid);
-	अगर (status)
-		वापस status;
-	अगर (xdr_stream_decode_u32(argp->xdr, &bcts->dir) < 0)
-		वापस nfserr_bad_xdr;
-	अगर (xdr_stream_decode_u32(argp->xdr, &use_conn_in_rdma_mode) < 0)
-		वापस nfserr_bad_xdr;
+	if (status)
+		return status;
+	if (xdr_stream_decode_u32(argp->xdr, &bcts->dir) < 0)
+		return nfserr_bad_xdr;
+	if (xdr_stream_decode_u32(argp->xdr, &use_conn_in_rdma_mode) < 0)
+		return nfserr_bad_xdr;
 
-	वापस nfs_ok;
-पूर्ण
+	return nfs_ok;
+}
 
-अटल __be32
-nfsd4_decode_state_protect_ops(काष्ठा nfsd4_compoundargs *argp,
-			       काष्ठा nfsd4_exchange_id *exid)
-अणु
+static __be32
+nfsd4_decode_state_protect_ops(struct nfsd4_compoundargs *argp,
+			       struct nfsd4_exchange_id *exid)
+{
 	__be32 status;
 
-	status = nfsd4_decode_biपंचांगap4(argp, exid->spo_must_enक्रमce,
-				      ARRAY_SIZE(exid->spo_must_enक्रमce));
-	अगर (status)
-		वापस nfserr_bad_xdr;
-	status = nfsd4_decode_biपंचांगap4(argp, exid->spo_must_allow,
+	status = nfsd4_decode_bitmap4(argp, exid->spo_must_enforce,
+				      ARRAY_SIZE(exid->spo_must_enforce));
+	if (status)
+		return nfserr_bad_xdr;
+	status = nfsd4_decode_bitmap4(argp, exid->spo_must_allow,
 				      ARRAY_SIZE(exid->spo_must_allow));
-	अगर (status)
-		वापस nfserr_bad_xdr;
+	if (status)
+		return nfserr_bad_xdr;
 
-	वापस nfs_ok;
-पूर्ण
+	return nfs_ok;
+}
 
 /*
- * This implementation currently करोes not support SP4_SSV.
+ * This implementation currently does not support SP4_SSV.
  * This decoder simply skips over these arguments.
  */
-अटल noअंतरभूत __be32
-nfsd4_decode_ssv_sp_parms(काष्ठा nfsd4_compoundargs *argp,
-			  काष्ठा nfsd4_exchange_id *exid)
-अणु
-	u32 count, winकरोw, num_gss_handles;
+static noinline __be32
+nfsd4_decode_ssv_sp_parms(struct nfsd4_compoundargs *argp,
+			  struct nfsd4_exchange_id *exid)
+{
+	u32 count, window, num_gss_handles;
 	__be32 status;
 
 	/* ssp_ops */
 	status = nfsd4_decode_state_protect_ops(argp, exid);
-	अगर (status)
-		वापस status;
+	if (status)
+		return status;
 
 	/* ssp_hash_algs<> */
-	अगर (xdr_stream_decode_u32(argp->xdr, &count) < 0)
-		वापस nfserr_bad_xdr;
-	जबतक (count--) अणु
+	if (xdr_stream_decode_u32(argp->xdr, &count) < 0)
+		return nfserr_bad_xdr;
+	while (count--) {
 		status = nfsd4_decode_ignored_string(argp, 0);
-		अगर (status)
-			वापस status;
-	पूर्ण
+		if (status)
+			return status;
+	}
 
 	/* ssp_encr_algs<> */
-	अगर (xdr_stream_decode_u32(argp->xdr, &count) < 0)
-		वापस nfserr_bad_xdr;
-	जबतक (count--) अणु
+	if (xdr_stream_decode_u32(argp->xdr, &count) < 0)
+		return nfserr_bad_xdr;
+	while (count--) {
 		status = nfsd4_decode_ignored_string(argp, 0);
-		अगर (status)
-			वापस status;
-	पूर्ण
+		if (status)
+			return status;
+	}
 
-	अगर (xdr_stream_decode_u32(argp->xdr, &winकरोw) < 0)
-		वापस nfserr_bad_xdr;
-	अगर (xdr_stream_decode_u32(argp->xdr, &num_gss_handles) < 0)
-		वापस nfserr_bad_xdr;
+	if (xdr_stream_decode_u32(argp->xdr, &window) < 0)
+		return nfserr_bad_xdr;
+	if (xdr_stream_decode_u32(argp->xdr, &num_gss_handles) < 0)
+		return nfserr_bad_xdr;
 
-	वापस nfs_ok;
-पूर्ण
+	return nfs_ok;
+}
 
-अटल __be32
-nfsd4_decode_state_protect4_a(काष्ठा nfsd4_compoundargs *argp,
-			      काष्ठा nfsd4_exchange_id *exid)
-अणु
+static __be32
+nfsd4_decode_state_protect4_a(struct nfsd4_compoundargs *argp,
+			      struct nfsd4_exchange_id *exid)
+{
 	__be32 status;
 
-	अगर (xdr_stream_decode_u32(argp->xdr, &exid->spa_how) < 0)
-		वापस nfserr_bad_xdr;
-	चयन (exid->spa_how) अणु
-	हाल SP4_NONE:
-		अवरोध;
-	हाल SP4_MACH_CRED:
+	if (xdr_stream_decode_u32(argp->xdr, &exid->spa_how) < 0)
+		return nfserr_bad_xdr;
+	switch (exid->spa_how) {
+	case SP4_NONE:
+		break;
+	case SP4_MACH_CRED:
 		status = nfsd4_decode_state_protect_ops(argp, exid);
-		अगर (status)
-			वापस status;
-		अवरोध;
-	हाल SP4_SSV:
+		if (status)
+			return status;
+		break;
+	case SP4_SSV:
 		status = nfsd4_decode_ssv_sp_parms(argp, exid);
-		अगर (status)
-			वापस status;
-		अवरोध;
-	शेष:
-		वापस nfserr_bad_xdr;
-	पूर्ण
+		if (status)
+			return status;
+		break;
+	default:
+		return nfserr_bad_xdr;
+	}
 
-	वापस nfs_ok;
-पूर्ण
+	return nfs_ok;
+}
 
-अटल __be32
-nfsd4_decode_nfs_impl_id4(काष्ठा nfsd4_compoundargs *argp,
-			  काष्ठा nfsd4_exchange_id *exid)
-अणु
+static __be32
+nfsd4_decode_nfs_impl_id4(struct nfsd4_compoundargs *argp,
+			  struct nfsd4_exchange_id *exid)
+{
 	__be32 status;
 	u32 count;
 
-	अगर (xdr_stream_decode_u32(argp->xdr, &count) < 0)
-		वापस nfserr_bad_xdr;
-	चयन (count) अणु
-	हाल 0:
-		अवरोध;
-	हाल 1:
+	if (xdr_stream_decode_u32(argp->xdr, &count) < 0)
+		return nfserr_bad_xdr;
+	switch (count) {
+	case 0:
+		break;
+	case 1:
 		/* Note that RFC 8881 places no length limit on
-		 * nii_करोमुख्य, but this implementation permits no
+		 * nii_domain, but this implementation permits no
 		 * more than NFS4_OPAQUE_LIMIT bytes */
-		status = nfsd4_decode_opaque(argp, &exid->nii_करोमुख्य);
-		अगर (status)
-			वापस status;
+		status = nfsd4_decode_opaque(argp, &exid->nii_domain);
+		if (status)
+			return status;
 		/* Note that RFC 8881 places no length limit on
 		 * nii_name, but this implementation permits no
 		 * more than NFS4_OPAQUE_LIMIT bytes */
 		status = nfsd4_decode_opaque(argp, &exid->nii_name);
-		अगर (status)
-			वापस status;
-		status = nfsd4_decode_nfsसमय4(argp, &exid->nii_समय);
-		अगर (status)
-			वापस status;
-		अवरोध;
-	शेष:
-		वापस nfserr_bad_xdr;
-	पूर्ण
+		if (status)
+			return status;
+		status = nfsd4_decode_nfstime4(argp, &exid->nii_time);
+		if (status)
+			return status;
+		break;
+	default:
+		return nfserr_bad_xdr;
+	}
 
-	वापस nfs_ok;
-पूर्ण
+	return nfs_ok;
+}
 
-अटल __be32
-nfsd4_decode_exchange_id(काष्ठा nfsd4_compoundargs *argp,
-			 काष्ठा nfsd4_exchange_id *exid)
-अणु
+static __be32
+nfsd4_decode_exchange_id(struct nfsd4_compoundargs *argp,
+			 struct nfsd4_exchange_id *exid)
+{
 	__be32 status;
 
-	status = nfsd4_decode_verअगरier4(argp, &exid->verअगरier);
-	अगर (status)
-		वापस status;
+	status = nfsd4_decode_verifier4(argp, &exid->verifier);
+	if (status)
+		return status;
 	status = nfsd4_decode_opaque(argp, &exid->clname);
-	अगर (status)
-		वापस status;
-	अगर (xdr_stream_decode_u32(argp->xdr, &exid->flags) < 0)
-		वापस nfserr_bad_xdr;
+	if (status)
+		return status;
+	if (xdr_stream_decode_u32(argp->xdr, &exid->flags) < 0)
+		return nfserr_bad_xdr;
 	status = nfsd4_decode_state_protect4_a(argp, exid);
-	अगर (status)
-		वापस status;
-	वापस nfsd4_decode_nfs_impl_id4(argp, exid);
-पूर्ण
+	if (status)
+		return status;
+	return nfsd4_decode_nfs_impl_id4(argp, exid);
+}
 
-अटल __be32
-nfsd4_decode_channel_attrs4(काष्ठा nfsd4_compoundargs *argp,
-			    काष्ठा nfsd4_channel_attrs *ca)
-अणु
+static __be32
+nfsd4_decode_channel_attrs4(struct nfsd4_compoundargs *argp,
+			    struct nfsd4_channel_attrs *ca)
+{
 	__be32 *p;
 
-	p = xdr_अंतरभूत_decode(argp->xdr, XDR_UNIT * 7);
-	अगर (!p)
-		वापस nfserr_bad_xdr;
+	p = xdr_inline_decode(argp->xdr, XDR_UNIT * 7);
+	if (!p)
+		return nfserr_bad_xdr;
 
 	/* headerpadsz is ignored */
 	p++;
@@ -1621,612 +1620,612 @@ nfsd4_decode_channel_attrs4(काष्ठा nfsd4_compoundargs *argp,
 	ca->maxops = be32_to_cpup(p++);
 	ca->maxreqs = be32_to_cpup(p++);
 	ca->nr_rdma_attrs = be32_to_cpup(p);
-	चयन (ca->nr_rdma_attrs) अणु
-	हाल 0:
-		अवरोध;
-	हाल 1:
-		अगर (xdr_stream_decode_u32(argp->xdr, &ca->rdma_attrs) < 0)
-			वापस nfserr_bad_xdr;
-		अवरोध;
-	शेष:
-		वापस nfserr_bad_xdr;
-	पूर्ण
+	switch (ca->nr_rdma_attrs) {
+	case 0:
+		break;
+	case 1:
+		if (xdr_stream_decode_u32(argp->xdr, &ca->rdma_attrs) < 0)
+			return nfserr_bad_xdr;
+		break;
+	default:
+		return nfserr_bad_xdr;
+	}
 
-	वापस nfs_ok;
-पूर्ण
+	return nfs_ok;
+}
 
-अटल __be32
-nfsd4_decode_create_session(काष्ठा nfsd4_compoundargs *argp,
-			    काष्ठा nfsd4_create_session *sess)
-अणु
+static __be32
+nfsd4_decode_create_session(struct nfsd4_compoundargs *argp,
+			    struct nfsd4_create_session *sess)
+{
 	__be32 status;
 
 	status = nfsd4_decode_clientid4(argp, &sess->clientid);
-	अगर (status)
-		वापस status;
-	अगर (xdr_stream_decode_u32(argp->xdr, &sess->seqid) < 0)
-		वापस nfserr_bad_xdr;
-	अगर (xdr_stream_decode_u32(argp->xdr, &sess->flags) < 0)
-		वापस nfserr_bad_xdr;
-	status = nfsd4_decode_channel_attrs4(argp, &sess->क्रमe_channel);
-	अगर (status)
-		वापस status;
+	if (status)
+		return status;
+	if (xdr_stream_decode_u32(argp->xdr, &sess->seqid) < 0)
+		return nfserr_bad_xdr;
+	if (xdr_stream_decode_u32(argp->xdr, &sess->flags) < 0)
+		return nfserr_bad_xdr;
+	status = nfsd4_decode_channel_attrs4(argp, &sess->fore_channel);
+	if (status)
+		return status;
 	status = nfsd4_decode_channel_attrs4(argp, &sess->back_channel);
-	अगर (status)
-		वापस status;
-	अगर (xdr_stream_decode_u32(argp->xdr, &sess->callback_prog) < 0)
-		वापस nfserr_bad_xdr;
+	if (status)
+		return status;
+	if (xdr_stream_decode_u32(argp->xdr, &sess->callback_prog) < 0)
+		return nfserr_bad_xdr;
 	status = nfsd4_decode_cb_sec(argp, &sess->cb_sec);
-	अगर (status)
-		वापस status;
+	if (status)
+		return status;
 
-	वापस nfs_ok;
-पूर्ण
+	return nfs_ok;
+}
 
-अटल __be32
-nfsd4_decode_destroy_session(काष्ठा nfsd4_compoundargs *argp,
-			     काष्ठा nfsd4_destroy_session *destroy_session)
-अणु
-	वापस nfsd4_decode_sessionid4(argp, &destroy_session->sessionid);
-पूर्ण
+static __be32
+nfsd4_decode_destroy_session(struct nfsd4_compoundargs *argp,
+			     struct nfsd4_destroy_session *destroy_session)
+{
+	return nfsd4_decode_sessionid4(argp, &destroy_session->sessionid);
+}
 
-अटल __be32
-nfsd4_decode_मुक्त_stateid(काष्ठा nfsd4_compoundargs *argp,
-			  काष्ठा nfsd4_मुक्त_stateid *मुक्त_stateid)
-अणु
-	वापस nfsd4_decode_stateid4(argp, &मुक्त_stateid->fr_stateid);
-पूर्ण
+static __be32
+nfsd4_decode_free_stateid(struct nfsd4_compoundargs *argp,
+			  struct nfsd4_free_stateid *free_stateid)
+{
+	return nfsd4_decode_stateid4(argp, &free_stateid->fr_stateid);
+}
 
-#अगर_घोषित CONFIG_NFSD_PNFS
-अटल __be32
-nfsd4_decode_getdeviceinfo(काष्ठा nfsd4_compoundargs *argp,
-		काष्ठा nfsd4_getdeviceinfo *gdev)
-अणु
+#ifdef CONFIG_NFSD_PNFS
+static __be32
+nfsd4_decode_getdeviceinfo(struct nfsd4_compoundargs *argp,
+		struct nfsd4_getdeviceinfo *gdev)
+{
 	__be32 status;
 
 	status = nfsd4_decode_deviceid4(argp, &gdev->gd_devid);
-	अगर (status)
-		वापस status;
-	अगर (xdr_stream_decode_u32(argp->xdr, &gdev->gd_layout_type) < 0)
-		वापस nfserr_bad_xdr;
-	अगर (xdr_stream_decode_u32(argp->xdr, &gdev->gd_maxcount) < 0)
-		वापस nfserr_bad_xdr;
-	अगर (xdr_stream_decode_uपूर्णांक32_array(argp->xdr,
-					   &gdev->gd_notअगरy_types, 1) < 0)
-		वापस nfserr_bad_xdr;
+	if (status)
+		return status;
+	if (xdr_stream_decode_u32(argp->xdr, &gdev->gd_layout_type) < 0)
+		return nfserr_bad_xdr;
+	if (xdr_stream_decode_u32(argp->xdr, &gdev->gd_maxcount) < 0)
+		return nfserr_bad_xdr;
+	if (xdr_stream_decode_uint32_array(argp->xdr,
+					   &gdev->gd_notify_types, 1) < 0)
+		return nfserr_bad_xdr;
 
-	वापस nfs_ok;
-पूर्ण
+	return nfs_ok;
+}
 
-अटल __be32
-nfsd4_decode_layoutcommit(काष्ठा nfsd4_compoundargs *argp,
-			  काष्ठा nfsd4_layoutcommit *lcp)
-अणु
+static __be32
+nfsd4_decode_layoutcommit(struct nfsd4_compoundargs *argp,
+			  struct nfsd4_layoutcommit *lcp)
+{
 	__be32 *p, status;
 
-	अगर (xdr_stream_decode_u64(argp->xdr, &lcp->lc_seg.offset) < 0)
-		वापस nfserr_bad_xdr;
-	अगर (xdr_stream_decode_u64(argp->xdr, &lcp->lc_seg.length) < 0)
-		वापस nfserr_bad_xdr;
-	अगर (xdr_stream_decode_bool(argp->xdr, &lcp->lc_reclaim) < 0)
-		वापस nfserr_bad_xdr;
+	if (xdr_stream_decode_u64(argp->xdr, &lcp->lc_seg.offset) < 0)
+		return nfserr_bad_xdr;
+	if (xdr_stream_decode_u64(argp->xdr, &lcp->lc_seg.length) < 0)
+		return nfserr_bad_xdr;
+	if (xdr_stream_decode_bool(argp->xdr, &lcp->lc_reclaim) < 0)
+		return nfserr_bad_xdr;
 	status = nfsd4_decode_stateid4(argp, &lcp->lc_sid);
-	अगर (status)
-		वापस status;
-	अगर (xdr_stream_decode_u32(argp->xdr, &lcp->lc_newoffset) < 0)
-		वापस nfserr_bad_xdr;
-	अगर (lcp->lc_newoffset) अणु
-		अगर (xdr_stream_decode_u64(argp->xdr, &lcp->lc_last_wr) < 0)
-			वापस nfserr_bad_xdr;
-	पूर्ण अन्यथा
+	if (status)
+		return status;
+	if (xdr_stream_decode_u32(argp->xdr, &lcp->lc_newoffset) < 0)
+		return nfserr_bad_xdr;
+	if (lcp->lc_newoffset) {
+		if (xdr_stream_decode_u64(argp->xdr, &lcp->lc_last_wr) < 0)
+			return nfserr_bad_xdr;
+	} else
 		lcp->lc_last_wr = 0;
-	p = xdr_अंतरभूत_decode(argp->xdr, XDR_UNIT);
-	अगर (!p)
-		वापस nfserr_bad_xdr;
-	अगर (xdr_item_is_present(p)) अणु
-		status = nfsd4_decode_nfsसमय4(argp, &lcp->lc_mसमय);
-		अगर (status)
-			वापस status;
-	पूर्ण अन्यथा अणु
-		lcp->lc_mसमय.tv_nsec = UTIME_NOW;
-	पूर्ण
-	वापस nfsd4_decode_layoutupdate4(argp, lcp);
-पूर्ण
+	p = xdr_inline_decode(argp->xdr, XDR_UNIT);
+	if (!p)
+		return nfserr_bad_xdr;
+	if (xdr_item_is_present(p)) {
+		status = nfsd4_decode_nfstime4(argp, &lcp->lc_mtime);
+		if (status)
+			return status;
+	} else {
+		lcp->lc_mtime.tv_nsec = UTIME_NOW;
+	}
+	return nfsd4_decode_layoutupdate4(argp, lcp);
+}
 
-अटल __be32
-nfsd4_decode_layoutget(काष्ठा nfsd4_compoundargs *argp,
-		काष्ठा nfsd4_layoutget *lgp)
-अणु
+static __be32
+nfsd4_decode_layoutget(struct nfsd4_compoundargs *argp,
+		struct nfsd4_layoutget *lgp)
+{
 	__be32 status;
 
-	अगर (xdr_stream_decode_u32(argp->xdr, &lgp->lg_संकेत) < 0)
-		वापस nfserr_bad_xdr;
-	अगर (xdr_stream_decode_u32(argp->xdr, &lgp->lg_layout_type) < 0)
-		वापस nfserr_bad_xdr;
-	अगर (xdr_stream_decode_u32(argp->xdr, &lgp->lg_seg.iomode) < 0)
-		वापस nfserr_bad_xdr;
-	अगर (xdr_stream_decode_u64(argp->xdr, &lgp->lg_seg.offset) < 0)
-		वापस nfserr_bad_xdr;
-	अगर (xdr_stream_decode_u64(argp->xdr, &lgp->lg_seg.length) < 0)
-		वापस nfserr_bad_xdr;
-	अगर (xdr_stream_decode_u64(argp->xdr, &lgp->lg_minlength) < 0)
-		वापस nfserr_bad_xdr;
+	if (xdr_stream_decode_u32(argp->xdr, &lgp->lg_signal) < 0)
+		return nfserr_bad_xdr;
+	if (xdr_stream_decode_u32(argp->xdr, &lgp->lg_layout_type) < 0)
+		return nfserr_bad_xdr;
+	if (xdr_stream_decode_u32(argp->xdr, &lgp->lg_seg.iomode) < 0)
+		return nfserr_bad_xdr;
+	if (xdr_stream_decode_u64(argp->xdr, &lgp->lg_seg.offset) < 0)
+		return nfserr_bad_xdr;
+	if (xdr_stream_decode_u64(argp->xdr, &lgp->lg_seg.length) < 0)
+		return nfserr_bad_xdr;
+	if (xdr_stream_decode_u64(argp->xdr, &lgp->lg_minlength) < 0)
+		return nfserr_bad_xdr;
 	status = nfsd4_decode_stateid4(argp, &lgp->lg_sid);
-	अगर (status)
-		वापस status;
-	अगर (xdr_stream_decode_u32(argp->xdr, &lgp->lg_maxcount) < 0)
-		वापस nfserr_bad_xdr;
+	if (status)
+		return status;
+	if (xdr_stream_decode_u32(argp->xdr, &lgp->lg_maxcount) < 0)
+		return nfserr_bad_xdr;
 
-	वापस nfs_ok;
-पूर्ण
+	return nfs_ok;
+}
 
-अटल __be32
-nfsd4_decode_layoutवापस(काष्ठा nfsd4_compoundargs *argp,
-		काष्ठा nfsd4_layoutवापस *lrp)
-अणु
-	अगर (xdr_stream_decode_bool(argp->xdr, &lrp->lr_reclaim) < 0)
-		वापस nfserr_bad_xdr;
-	अगर (xdr_stream_decode_u32(argp->xdr, &lrp->lr_layout_type) < 0)
-		वापस nfserr_bad_xdr;
-	अगर (xdr_stream_decode_u32(argp->xdr, &lrp->lr_seg.iomode) < 0)
-		वापस nfserr_bad_xdr;
-	वापस nfsd4_decode_layoutवापस4(argp, lrp);
-पूर्ण
-#पूर्ण_अगर /* CONFIG_NFSD_PNFS */
+static __be32
+nfsd4_decode_layoutreturn(struct nfsd4_compoundargs *argp,
+		struct nfsd4_layoutreturn *lrp)
+{
+	if (xdr_stream_decode_bool(argp->xdr, &lrp->lr_reclaim) < 0)
+		return nfserr_bad_xdr;
+	if (xdr_stream_decode_u32(argp->xdr, &lrp->lr_layout_type) < 0)
+		return nfserr_bad_xdr;
+	if (xdr_stream_decode_u32(argp->xdr, &lrp->lr_seg.iomode) < 0)
+		return nfserr_bad_xdr;
+	return nfsd4_decode_layoutreturn4(argp, lrp);
+}
+#endif /* CONFIG_NFSD_PNFS */
 
-अटल __be32 nfsd4_decode_secinfo_no_name(काष्ठा nfsd4_compoundargs *argp,
-					   काष्ठा nfsd4_secinfo_no_name *sin)
-अणु
-	अगर (xdr_stream_decode_u32(argp->xdr, &sin->sin_style) < 0)
-		वापस nfserr_bad_xdr;
-	वापस nfs_ok;
-पूर्ण
+static __be32 nfsd4_decode_secinfo_no_name(struct nfsd4_compoundargs *argp,
+					   struct nfsd4_secinfo_no_name *sin)
+{
+	if (xdr_stream_decode_u32(argp->xdr, &sin->sin_style) < 0)
+		return nfserr_bad_xdr;
+	return nfs_ok;
+}
 
-अटल __be32
-nfsd4_decode_sequence(काष्ठा nfsd4_compoundargs *argp,
-		      काष्ठा nfsd4_sequence *seq)
-अणु
+static __be32
+nfsd4_decode_sequence(struct nfsd4_compoundargs *argp,
+		      struct nfsd4_sequence *seq)
+{
 	__be32 *p, status;
 
 	status = nfsd4_decode_sessionid4(argp, &seq->sessionid);
-	अगर (status)
-		वापस status;
-	p = xdr_अंतरभूत_decode(argp->xdr, XDR_UNIT * 4);
-	अगर (!p)
-		वापस nfserr_bad_xdr;
+	if (status)
+		return status;
+	p = xdr_inline_decode(argp->xdr, XDR_UNIT * 4);
+	if (!p)
+		return nfserr_bad_xdr;
 	seq->seqid = be32_to_cpup(p++);
 	seq->slotid = be32_to_cpup(p++);
 	seq->maxslots = be32_to_cpup(p++);
 	seq->cachethis = be32_to_cpup(p);
 
-	वापस nfs_ok;
-पूर्ण
+	return nfs_ok;
+}
 
-अटल __be32
-nfsd4_decode_test_stateid(काष्ठा nfsd4_compoundargs *argp, काष्ठा nfsd4_test_stateid *test_stateid)
-अणु
-	काष्ठा nfsd4_test_stateid_id *stateid;
+static __be32
+nfsd4_decode_test_stateid(struct nfsd4_compoundargs *argp, struct nfsd4_test_stateid *test_stateid)
+{
+	struct nfsd4_test_stateid_id *stateid;
 	__be32 status;
 	u32 i;
 
-	अगर (xdr_stream_decode_u32(argp->xdr, &test_stateid->ts_num_ids) < 0)
-		वापस nfserr_bad_xdr;
+	if (xdr_stream_decode_u32(argp->xdr, &test_stateid->ts_num_ids) < 0)
+		return nfserr_bad_xdr;
 
 	INIT_LIST_HEAD(&test_stateid->ts_stateid_list);
-	क्रम (i = 0; i < test_stateid->ts_num_ids; i++) अणु
-		stateid = svcxdr_पंचांगpalloc(argp, माप(*stateid));
-		अगर (!stateid)
-			वापस nfsत्रुटि_सं(-ENOMEM);	/* XXX: not jukebox? */
+	for (i = 0; i < test_stateid->ts_num_ids; i++) {
+		stateid = svcxdr_tmpalloc(argp, sizeof(*stateid));
+		if (!stateid)
+			return nfserrno(-ENOMEM);	/* XXX: not jukebox? */
 		INIT_LIST_HEAD(&stateid->ts_id_list);
 		list_add_tail(&stateid->ts_id_list, &test_stateid->ts_stateid_list);
 		status = nfsd4_decode_stateid4(argp, &stateid->ts_id_stateid);
-		अगर (status)
-			वापस status;
-	पूर्ण
+		if (status)
+			return status;
+	}
 
-	वापस nfs_ok;
-पूर्ण
+	return nfs_ok;
+}
 
-अटल __be32 nfsd4_decode_destroy_clientid(काष्ठा nfsd4_compoundargs *argp,
-					    काष्ठा nfsd4_destroy_clientid *dc)
-अणु
-	वापस nfsd4_decode_clientid4(argp, &dc->clientid);
-पूर्ण
+static __be32 nfsd4_decode_destroy_clientid(struct nfsd4_compoundargs *argp,
+					    struct nfsd4_destroy_clientid *dc)
+{
+	return nfsd4_decode_clientid4(argp, &dc->clientid);
+}
 
-अटल __be32 nfsd4_decode_reclaim_complete(काष्ठा nfsd4_compoundargs *argp,
-					    काष्ठा nfsd4_reclaim_complete *rc)
-अणु
-	अगर (xdr_stream_decode_bool(argp->xdr, &rc->rca_one_fs) < 0)
-		वापस nfserr_bad_xdr;
-	वापस nfs_ok;
-पूर्ण
+static __be32 nfsd4_decode_reclaim_complete(struct nfsd4_compoundargs *argp,
+					    struct nfsd4_reclaim_complete *rc)
+{
+	if (xdr_stream_decode_bool(argp->xdr, &rc->rca_one_fs) < 0)
+		return nfserr_bad_xdr;
+	return nfs_ok;
+}
 
-अटल __be32
-nfsd4_decode_fallocate(काष्ठा nfsd4_compoundargs *argp,
-		       काष्ठा nfsd4_fallocate *fallocate)
-अणु
+static __be32
+nfsd4_decode_fallocate(struct nfsd4_compoundargs *argp,
+		       struct nfsd4_fallocate *fallocate)
+{
 	__be32 status;
 
 	status = nfsd4_decode_stateid4(argp, &fallocate->falloc_stateid);
-	अगर (status)
-		वापस status;
-	अगर (xdr_stream_decode_u64(argp->xdr, &fallocate->falloc_offset) < 0)
-		वापस nfserr_bad_xdr;
-	अगर (xdr_stream_decode_u64(argp->xdr, &fallocate->falloc_length) < 0)
-		वापस nfserr_bad_xdr;
+	if (status)
+		return status;
+	if (xdr_stream_decode_u64(argp->xdr, &fallocate->falloc_offset) < 0)
+		return nfserr_bad_xdr;
+	if (xdr_stream_decode_u64(argp->xdr, &fallocate->falloc_length) < 0)
+		return nfserr_bad_xdr;
 
-	वापस nfs_ok;
-पूर्ण
+	return nfs_ok;
+}
 
-अटल __be32 nfsd4_decode_nl4_server(काष्ठा nfsd4_compoundargs *argp,
-				      काष्ठा nl4_server *ns)
-अणु
-	काष्ठा nfs42_netaddr *naddr;
+static __be32 nfsd4_decode_nl4_server(struct nfsd4_compoundargs *argp,
+				      struct nl4_server *ns)
+{
+	struct nfs42_netaddr *naddr;
 	__be32 *p;
 
-	अगर (xdr_stream_decode_u32(argp->xdr, &ns->nl4_type) < 0)
-		वापस nfserr_bad_xdr;
+	if (xdr_stream_decode_u32(argp->xdr, &ns->nl4_type) < 0)
+		return nfserr_bad_xdr;
 
-	/* currently support क्रम 1 पूर्णांकer-server source server */
-	चयन (ns->nl4_type) अणु
-	हाल NL4_NETADDR:
+	/* currently support for 1 inter-server source server */
+	switch (ns->nl4_type) {
+	case NL4_NETADDR:
 		naddr = &ns->u.nl4_addr;
 
-		अगर (xdr_stream_decode_u32(argp->xdr, &naddr->netid_len) < 0)
-			वापस nfserr_bad_xdr;
-		अगर (naddr->netid_len > RPCBIND_MAXNETIDLEN)
-			वापस nfserr_bad_xdr;
+		if (xdr_stream_decode_u32(argp->xdr, &naddr->netid_len) < 0)
+			return nfserr_bad_xdr;
+		if (naddr->netid_len > RPCBIND_MAXNETIDLEN)
+			return nfserr_bad_xdr;
 
-		p = xdr_अंतरभूत_decode(argp->xdr, naddr->netid_len);
-		अगर (!p)
-			वापस nfserr_bad_xdr;
-		स_नकल(naddr->netid, p, naddr->netid_len);
+		p = xdr_inline_decode(argp->xdr, naddr->netid_len);
+		if (!p)
+			return nfserr_bad_xdr;
+		memcpy(naddr->netid, p, naddr->netid_len);
 
-		अगर (xdr_stream_decode_u32(argp->xdr, &naddr->addr_len) < 0)
-			वापस nfserr_bad_xdr;
-		अगर (naddr->addr_len > RPCBIND_MAXUADDRLEN)
-			वापस nfserr_bad_xdr;
+		if (xdr_stream_decode_u32(argp->xdr, &naddr->addr_len) < 0)
+			return nfserr_bad_xdr;
+		if (naddr->addr_len > RPCBIND_MAXUADDRLEN)
+			return nfserr_bad_xdr;
 
-		p = xdr_अंतरभूत_decode(argp->xdr, naddr->addr_len);
-		अगर (!p)
-			वापस nfserr_bad_xdr;
-		स_नकल(naddr->addr, p, naddr->addr_len);
-		अवरोध;
-	शेष:
-		वापस nfserr_bad_xdr;
-	पूर्ण
+		p = xdr_inline_decode(argp->xdr, naddr->addr_len);
+		if (!p)
+			return nfserr_bad_xdr;
+		memcpy(naddr->addr, p, naddr->addr_len);
+		break;
+	default:
+		return nfserr_bad_xdr;
+	}
 
-	वापस nfs_ok;
-पूर्ण
+	return nfs_ok;
+}
 
-अटल __be32
-nfsd4_decode_copy(काष्ठा nfsd4_compoundargs *argp, काष्ठा nfsd4_copy *copy)
-अणु
-	काष्ठा nl4_server *ns_dummy;
+static __be32
+nfsd4_decode_copy(struct nfsd4_compoundargs *argp, struct nfsd4_copy *copy)
+{
+	struct nl4_server *ns_dummy;
 	u32 consecutive, i, count;
 	__be32 status;
 
 	status = nfsd4_decode_stateid4(argp, &copy->cp_src_stateid);
-	अगर (status)
-		वापस status;
+	if (status)
+		return status;
 	status = nfsd4_decode_stateid4(argp, &copy->cp_dst_stateid);
-	अगर (status)
-		वापस status;
-	अगर (xdr_stream_decode_u64(argp->xdr, &copy->cp_src_pos) < 0)
-		वापस nfserr_bad_xdr;
-	अगर (xdr_stream_decode_u64(argp->xdr, &copy->cp_dst_pos) < 0)
-		वापस nfserr_bad_xdr;
-	अगर (xdr_stream_decode_u64(argp->xdr, &copy->cp_count) < 0)
-		वापस nfserr_bad_xdr;
-	/* ca_consecutive: we always करो consecutive copies */
-	अगर (xdr_stream_decode_u32(argp->xdr, &consecutive) < 0)
-		वापस nfserr_bad_xdr;
-	अगर (xdr_stream_decode_u32(argp->xdr, &copy->cp_synchronous) < 0)
-		वापस nfserr_bad_xdr;
+	if (status)
+		return status;
+	if (xdr_stream_decode_u64(argp->xdr, &copy->cp_src_pos) < 0)
+		return nfserr_bad_xdr;
+	if (xdr_stream_decode_u64(argp->xdr, &copy->cp_dst_pos) < 0)
+		return nfserr_bad_xdr;
+	if (xdr_stream_decode_u64(argp->xdr, &copy->cp_count) < 0)
+		return nfserr_bad_xdr;
+	/* ca_consecutive: we always do consecutive copies */
+	if (xdr_stream_decode_u32(argp->xdr, &consecutive) < 0)
+		return nfserr_bad_xdr;
+	if (xdr_stream_decode_u32(argp->xdr, &copy->cp_synchronous) < 0)
+		return nfserr_bad_xdr;
 
-	अगर (xdr_stream_decode_u32(argp->xdr, &count) < 0)
-		वापस nfserr_bad_xdr;
-	copy->cp_पूर्णांकra = false;
-	अगर (count == 0) अणु /* पूर्णांकra-server copy */
-		copy->cp_पूर्णांकra = true;
-		वापस nfs_ok;
-	पूर्ण
+	if (xdr_stream_decode_u32(argp->xdr, &count) < 0)
+		return nfserr_bad_xdr;
+	copy->cp_intra = false;
+	if (count == 0) { /* intra-server copy */
+		copy->cp_intra = true;
+		return nfs_ok;
+	}
 
 	/* decode all the supplied server addresses but use only the first */
 	status = nfsd4_decode_nl4_server(argp, &copy->cp_src);
-	अगर (status)
-		वापस status;
+	if (status)
+		return status;
 
-	ns_dummy = kदो_स्मृति(माप(काष्ठा nl4_server), GFP_KERNEL);
-	अगर (ns_dummy == शून्य)
-		वापस nfsत्रुटि_सं(-ENOMEM);	/* XXX: jukebox? */
-	क्रम (i = 0; i < count - 1; i++) अणु
+	ns_dummy = kmalloc(sizeof(struct nl4_server), GFP_KERNEL);
+	if (ns_dummy == NULL)
+		return nfserrno(-ENOMEM);	/* XXX: jukebox? */
+	for (i = 0; i < count - 1; i++) {
 		status = nfsd4_decode_nl4_server(argp, ns_dummy);
-		अगर (status) अणु
-			kमुक्त(ns_dummy);
-			वापस status;
-		पूर्ण
-	पूर्ण
-	kमुक्त(ns_dummy);
+		if (status) {
+			kfree(ns_dummy);
+			return status;
+		}
+	}
+	kfree(ns_dummy);
 
-	वापस nfs_ok;
-पूर्ण
+	return nfs_ok;
+}
 
-अटल __be32
-nfsd4_decode_copy_notअगरy(काष्ठा nfsd4_compoundargs *argp,
-			 काष्ठा nfsd4_copy_notअगरy *cn)
-अणु
+static __be32
+nfsd4_decode_copy_notify(struct nfsd4_compoundargs *argp,
+			 struct nfsd4_copy_notify *cn)
+{
 	__be32 status;
 
 	status = nfsd4_decode_stateid4(argp, &cn->cpn_src_stateid);
-	अगर (status)
-		वापस status;
-	वापस nfsd4_decode_nl4_server(argp, &cn->cpn_dst);
-पूर्ण
+	if (status)
+		return status;
+	return nfsd4_decode_nl4_server(argp, &cn->cpn_dst);
+}
 
-अटल __be32
-nfsd4_decode_offload_status(काष्ठा nfsd4_compoundargs *argp,
-			    काष्ठा nfsd4_offload_status *os)
-अणु
-	वापस nfsd4_decode_stateid4(argp, &os->stateid);
-पूर्ण
+static __be32
+nfsd4_decode_offload_status(struct nfsd4_compoundargs *argp,
+			    struct nfsd4_offload_status *os)
+{
+	return nfsd4_decode_stateid4(argp, &os->stateid);
+}
 
-अटल __be32
-nfsd4_decode_seek(काष्ठा nfsd4_compoundargs *argp, काष्ठा nfsd4_seek *seek)
-अणु
+static __be32
+nfsd4_decode_seek(struct nfsd4_compoundargs *argp, struct nfsd4_seek *seek)
+{
 	__be32 status;
 
 	status = nfsd4_decode_stateid4(argp, &seek->seek_stateid);
-	अगर (status)
-		वापस status;
-	अगर (xdr_stream_decode_u64(argp->xdr, &seek->seek_offset) < 0)
-		वापस nfserr_bad_xdr;
-	अगर (xdr_stream_decode_u32(argp->xdr, &seek->seek_whence) < 0)
-		वापस nfserr_bad_xdr;
+	if (status)
+		return status;
+	if (xdr_stream_decode_u64(argp->xdr, &seek->seek_offset) < 0)
+		return nfserr_bad_xdr;
+	if (xdr_stream_decode_u32(argp->xdr, &seek->seek_whence) < 0)
+		return nfserr_bad_xdr;
 
-	वापस nfs_ok;
-पूर्ण
+	return nfs_ok;
+}
 
-अटल __be32
-nfsd4_decode_clone(काष्ठा nfsd4_compoundargs *argp, काष्ठा nfsd4_clone *clone)
-अणु
+static __be32
+nfsd4_decode_clone(struct nfsd4_compoundargs *argp, struct nfsd4_clone *clone)
+{
 	__be32 status;
 
 	status = nfsd4_decode_stateid4(argp, &clone->cl_src_stateid);
-	अगर (status)
-		वापस status;
+	if (status)
+		return status;
 	status = nfsd4_decode_stateid4(argp, &clone->cl_dst_stateid);
-	अगर (status)
-		वापस status;
-	अगर (xdr_stream_decode_u64(argp->xdr, &clone->cl_src_pos) < 0)
-		वापस nfserr_bad_xdr;
-	अगर (xdr_stream_decode_u64(argp->xdr, &clone->cl_dst_pos) < 0)
-		वापस nfserr_bad_xdr;
-	अगर (xdr_stream_decode_u64(argp->xdr, &clone->cl_count) < 0)
-		वापस nfserr_bad_xdr;
+	if (status)
+		return status;
+	if (xdr_stream_decode_u64(argp->xdr, &clone->cl_src_pos) < 0)
+		return nfserr_bad_xdr;
+	if (xdr_stream_decode_u64(argp->xdr, &clone->cl_dst_pos) < 0)
+		return nfserr_bad_xdr;
+	if (xdr_stream_decode_u64(argp->xdr, &clone->cl_count) < 0)
+		return nfserr_bad_xdr;
 
-	वापस nfs_ok;
-पूर्ण
+	return nfs_ok;
+}
 
 /*
  * XDR data that is more than PAGE_SIZE in size is normally part of a
- * पढ़ो or ग_लिखो. However, the size of extended attributes is limited
+ * read or write. However, the size of extended attributes is limited
  * by the maximum request size, and then further limited by the underlying
- * fileप्रणाली limits. This can exceed PAGE_SIZE (currently, XATTR_SIZE_MAX
- * is 64k). Since there is no kvec- or page-based पूर्णांकerface to xattrs,
- * and we're not dealing with contiguous pages, we need to करो some copying.
+ * filesystem limits. This can exceed PAGE_SIZE (currently, XATTR_SIZE_MAX
+ * is 64k). Since there is no kvec- or page-based interface to xattrs,
+ * and we're not dealing with contiguous pages, we need to do some copying.
  */
 
 /*
- * Decode data पूर्णांकo buffer.
+ * Decode data into buffer.
  */
-अटल __be32
-nfsd4_vbuf_from_vector(काष्ठा nfsd4_compoundargs *argp, काष्ठा xdr_buf *xdr,
-		       अक्षर **bufp, u32 buflen)
-अणु
-	काष्ठा page **pages = xdr->pages;
-	काष्ठा kvec *head = xdr->head;
-	अक्षर *पंचांगp, *dp;
+static __be32
+nfsd4_vbuf_from_vector(struct nfsd4_compoundargs *argp, struct xdr_buf *xdr,
+		       char **bufp, u32 buflen)
+{
+	struct page **pages = xdr->pages;
+	struct kvec *head = xdr->head;
+	char *tmp, *dp;
 	u32 len;
 
-	अगर (buflen <= head->iov_len) अणु
+	if (buflen <= head->iov_len) {
 		/*
-		 * We're in luck, the head has enough space. Just वापस
-		 * the head, no need क्रम copying.
+		 * We're in luck, the head has enough space. Just return
+		 * the head, no need for copying.
 		 */
 		*bufp = head->iov_base;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	पंचांगp = svcxdr_पंचांगpalloc(argp, buflen);
-	अगर (पंचांगp == शून्य)
-		वापस nfserr_jukebox;
+	tmp = svcxdr_tmpalloc(argp, buflen);
+	if (tmp == NULL)
+		return nfserr_jukebox;
 
-	dp = पंचांगp;
-	स_नकल(dp, head->iov_base, head->iov_len);
+	dp = tmp;
+	memcpy(dp, head->iov_base, head->iov_len);
 	buflen -= head->iov_len;
 	dp += head->iov_len;
 
-	जबतक (buflen > 0) अणु
+	while (buflen > 0) {
 		len = min_t(u32, buflen, PAGE_SIZE);
-		स_नकल(dp, page_address(*pages), len);
+		memcpy(dp, page_address(*pages), len);
 
 		buflen -= len;
 		dp += len;
 		pages++;
-	पूर्ण
+	}
 
-	*bufp = पंचांगp;
-	वापस 0;
-पूर्ण
+	*bufp = tmp;
+	return 0;
+}
 
 /*
  * Get a user extended attribute name from the XDR buffer.
  * It will not have the "user." prefix, so prepend it.
- * Lastly, check क्रम nul अक्षरacters in the name.
+ * Lastly, check for nul characters in the name.
  */
-अटल __be32
-nfsd4_decode_xattr_name(काष्ठा nfsd4_compoundargs *argp, अक्षर **namep)
-अणु
-	अक्षर *name, *sp, *dp;
+static __be32
+nfsd4_decode_xattr_name(struct nfsd4_compoundargs *argp, char **namep)
+{
+	char *name, *sp, *dp;
 	u32 namelen, cnt;
 	__be32 *p;
 
-	अगर (xdr_stream_decode_u32(argp->xdr, &namelen) < 0)
-		वापस nfserr_bad_xdr;
-	अगर (namelen > (XATTR_NAME_MAX - XATTR_USER_PREFIX_LEN))
-		वापस nfserr_nametooदीर्घ;
-	अगर (namelen == 0)
-		वापस nfserr_bad_xdr;
-	p = xdr_अंतरभूत_decode(argp->xdr, namelen);
-	अगर (!p)
-		वापस nfserr_bad_xdr;
-	name = svcxdr_पंचांगpalloc(argp, namelen + XATTR_USER_PREFIX_LEN + 1);
-	अगर (!name)
-		वापस nfserr_jukebox;
-	स_नकल(name, XATTR_USER_PREFIX, XATTR_USER_PREFIX_LEN);
+	if (xdr_stream_decode_u32(argp->xdr, &namelen) < 0)
+		return nfserr_bad_xdr;
+	if (namelen > (XATTR_NAME_MAX - XATTR_USER_PREFIX_LEN))
+		return nfserr_nametoolong;
+	if (namelen == 0)
+		return nfserr_bad_xdr;
+	p = xdr_inline_decode(argp->xdr, namelen);
+	if (!p)
+		return nfserr_bad_xdr;
+	name = svcxdr_tmpalloc(argp, namelen + XATTR_USER_PREFIX_LEN + 1);
+	if (!name)
+		return nfserr_jukebox;
+	memcpy(name, XATTR_USER_PREFIX, XATTR_USER_PREFIX_LEN);
 
 	/*
-	 * Copy the extended attribute name over जबतक checking क्रम 0
-	 * अक्षरacters.
+	 * Copy the extended attribute name over while checking for 0
+	 * characters.
 	 */
-	sp = (अक्षर *)p;
+	sp = (char *)p;
 	dp = name + XATTR_USER_PREFIX_LEN;
 	cnt = namelen;
 
-	जबतक (cnt-- > 0) अणु
-		अगर (*sp == '\0')
-			वापस nfserr_bad_xdr;
+	while (cnt-- > 0) {
+		if (*sp == '\0')
+			return nfserr_bad_xdr;
 		*dp++ = *sp++;
-	पूर्ण
+	}
 	*dp = '\0';
 
 	*namep = name;
 
-	वापस nfs_ok;
-पूर्ण
+	return nfs_ok;
+}
 
 /*
- * A GETXATTR op request comes without a length specअगरier. We just set the
- * maximum length क्रम the reply based on XATTR_SIZE_MAX and the maximum
+ * A GETXATTR op request comes without a length specifier. We just set the
+ * maximum length for the reply based on XATTR_SIZE_MAX and the maximum
  * channel reply size. nfsd_getxattr will probe the length of the xattr,
- * check it against getxa_len, and allocate + वापस the value.
+ * check it against getxa_len, and allocate + return the value.
  */
-अटल __be32
-nfsd4_decode_getxattr(काष्ठा nfsd4_compoundargs *argp,
-		      काष्ठा nfsd4_getxattr *getxattr)
-अणु
+static __be32
+nfsd4_decode_getxattr(struct nfsd4_compoundargs *argp,
+		      struct nfsd4_getxattr *getxattr)
+{
 	__be32 status;
 	u32 maxcount;
 
 	status = nfsd4_decode_xattr_name(argp, &getxattr->getxa_name);
-	अगर (status)
-		वापस status;
+	if (status)
+		return status;
 
 	maxcount = svc_max_payload(argp->rqstp);
 	maxcount = min_t(u32, XATTR_SIZE_MAX, maxcount);
 
 	getxattr->getxa_len = maxcount;
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल __be32
-nfsd4_decode_setxattr(काष्ठा nfsd4_compoundargs *argp,
-		      काष्ठा nfsd4_setxattr *setxattr)
-अणु
+static __be32
+nfsd4_decode_setxattr(struct nfsd4_compoundargs *argp,
+		      struct nfsd4_setxattr *setxattr)
+{
 	u32 flags, maxcount, size;
 	__be32 status;
 
-	अगर (xdr_stream_decode_u32(argp->xdr, &flags) < 0)
-		वापस nfserr_bad_xdr;
+	if (xdr_stream_decode_u32(argp->xdr, &flags) < 0)
+		return nfserr_bad_xdr;
 
-	अगर (flags > SETXATTR4_REPLACE)
-		वापस nfserr_inval;
+	if (flags > SETXATTR4_REPLACE)
+		return nfserr_inval;
 	setxattr->setxa_flags = flags;
 
 	status = nfsd4_decode_xattr_name(argp, &setxattr->setxa_name);
-	अगर (status)
-		वापस status;
+	if (status)
+		return status;
 
 	maxcount = svc_max_payload(argp->rqstp);
 	maxcount = min_t(u32, XATTR_SIZE_MAX, maxcount);
 
-	अगर (xdr_stream_decode_u32(argp->xdr, &size) < 0)
-		वापस nfserr_bad_xdr;
-	अगर (size > maxcount)
-		वापस nfserr_xattr2big;
+	if (xdr_stream_decode_u32(argp->xdr, &size) < 0)
+		return nfserr_bad_xdr;
+	if (size > maxcount)
+		return nfserr_xattr2big;
 
 	setxattr->setxa_len = size;
-	अगर (size > 0) अणु
-		काष्ठा xdr_buf payload;
+	if (size > 0) {
+		struct xdr_buf payload;
 
-		अगर (!xdr_stream_subsegment(argp->xdr, &payload, size))
-			वापस nfserr_bad_xdr;
+		if (!xdr_stream_subsegment(argp->xdr, &payload, size))
+			return nfserr_bad_xdr;
 		status = nfsd4_vbuf_from_vector(argp, &payload,
 						&setxattr->setxa_buf, size);
-	पूर्ण
+	}
 
-	वापस nfs_ok;
-पूर्ण
+	return nfs_ok;
+}
 
-अटल __be32
-nfsd4_decode_listxattrs(काष्ठा nfsd4_compoundargs *argp,
-			काष्ठा nfsd4_listxattrs *listxattrs)
-अणु
+static __be32
+nfsd4_decode_listxattrs(struct nfsd4_compoundargs *argp,
+			struct nfsd4_listxattrs *listxattrs)
+{
 	u32 maxcount;
 
-	अगर (xdr_stream_decode_u64(argp->xdr, &listxattrs->lsxa_cookie) < 0)
-		वापस nfserr_bad_xdr;
+	if (xdr_stream_decode_u64(argp->xdr, &listxattrs->lsxa_cookie) < 0)
+		return nfserr_bad_xdr;
 
 	/*
 	 * If the cookie  is too large to have even one user.x attribute
 	 * plus trailing '\0' left in a maximum size buffer, it's invalid.
 	 */
-	अगर (listxattrs->lsxa_cookie >=
+	if (listxattrs->lsxa_cookie >=
 	    (XATTR_LIST_MAX / (XATTR_USER_PREFIX_LEN + 2)))
-		वापस nfserr_badcookie;
+		return nfserr_badcookie;
 
-	अगर (xdr_stream_decode_u32(argp->xdr, &maxcount) < 0)
-		वापस nfserr_bad_xdr;
-	अगर (maxcount < 8)
-		/* Always need at least 2 words (length and one अक्षरacter) */
-		वापस nfserr_inval;
+	if (xdr_stream_decode_u32(argp->xdr, &maxcount) < 0)
+		return nfserr_bad_xdr;
+	if (maxcount < 8)
+		/* Always need at least 2 words (length and one character) */
+		return nfserr_inval;
 
 	maxcount = min(maxcount, svc_max_payload(argp->rqstp));
 	listxattrs->lsxa_maxcount = maxcount;
 
-	वापस nfs_ok;
-पूर्ण
+	return nfs_ok;
+}
 
-अटल __be32
-nfsd4_decode_हटाओxattr(काष्ठा nfsd4_compoundargs *argp,
-			 काष्ठा nfsd4_हटाओxattr *हटाओxattr)
-अणु
-	वापस nfsd4_decode_xattr_name(argp, &हटाओxattr->rmxa_name);
-पूर्ण
+static __be32
+nfsd4_decode_removexattr(struct nfsd4_compoundargs *argp,
+			 struct nfsd4_removexattr *removexattr)
+{
+	return nfsd4_decode_xattr_name(argp, &removexattr->rmxa_name);
+}
 
-अटल __be32
-nfsd4_decode_noop(काष्ठा nfsd4_compoundargs *argp, व्योम *p)
-अणु
-	वापस nfs_ok;
-पूर्ण
+static __be32
+nfsd4_decode_noop(struct nfsd4_compoundargs *argp, void *p)
+{
+	return nfs_ok;
+}
 
-अटल __be32
-nfsd4_decode_notsupp(काष्ठा nfsd4_compoundargs *argp, व्योम *p)
-अणु
-	वापस nfserr_notsupp;
-पूर्ण
+static __be32
+nfsd4_decode_notsupp(struct nfsd4_compoundargs *argp, void *p)
+{
+	return nfserr_notsupp;
+}
 
-प्रकार __be32(*nfsd4_dec)(काष्ठा nfsd4_compoundargs *argp, व्योम *);
+typedef __be32(*nfsd4_dec)(struct nfsd4_compoundargs *argp, void *);
 
-अटल स्थिर nfsd4_dec nfsd4_dec_ops[] = अणु
+static const nfsd4_dec nfsd4_dec_ops[] = {
 	[OP_ACCESS]		= (nfsd4_dec)nfsd4_decode_access,
-	[OP_CLOSE]		= (nfsd4_dec)nfsd4_decode_बंद,
+	[OP_CLOSE]		= (nfsd4_dec)nfsd4_decode_close,
 	[OP_COMMIT]		= (nfsd4_dec)nfsd4_decode_commit,
 	[OP_CREATE]		= (nfsd4_dec)nfsd4_decode_create,
 	[OP_DELEGPURGE]		= (nfsd4_dec)nfsd4_decode_notsupp,
-	[OP_DELEGRETURN]	= (nfsd4_dec)nfsd4_decode_delegवापस,
+	[OP_DELEGRETURN]	= (nfsd4_dec)nfsd4_decode_delegreturn,
 	[OP_GETATTR]		= (nfsd4_dec)nfsd4_decode_getattr,
 	[OP_GETFH]		= (nfsd4_dec)nfsd4_decode_noop,
 	[OP_LINK]		= (nfsd4_dec)nfsd4_decode_link,
@@ -2235,19 +2234,19 @@ nfsd4_decode_notsupp(काष्ठा nfsd4_compoundargs *argp, व्यो�
 	[OP_LOCKU]		= (nfsd4_dec)nfsd4_decode_locku,
 	[OP_LOOKUP]		= (nfsd4_dec)nfsd4_decode_lookup,
 	[OP_LOOKUPP]		= (nfsd4_dec)nfsd4_decode_noop,
-	[OP_NVERIFY]		= (nfsd4_dec)nfsd4_decode_verअगरy,
-	[OP_OPEN]		= (nfsd4_dec)nfsd4_decode_खोलो,
+	[OP_NVERIFY]		= (nfsd4_dec)nfsd4_decode_verify,
+	[OP_OPEN]		= (nfsd4_dec)nfsd4_decode_open,
 	[OP_OPENATTR]		= (nfsd4_dec)nfsd4_decode_notsupp,
-	[OP_OPEN_CONFIRM]	= (nfsd4_dec)nfsd4_decode_खोलो_confirm,
-	[OP_OPEN_DOWNGRADE]	= (nfsd4_dec)nfsd4_decode_खोलो_करोwngrade,
+	[OP_OPEN_CONFIRM]	= (nfsd4_dec)nfsd4_decode_open_confirm,
+	[OP_OPEN_DOWNGRADE]	= (nfsd4_dec)nfsd4_decode_open_downgrade,
 	[OP_PUTFH]		= (nfsd4_dec)nfsd4_decode_putfh,
 	[OP_PUTPUBFH]		= (nfsd4_dec)nfsd4_decode_putpubfh,
 	[OP_PUTROOTFH]		= (nfsd4_dec)nfsd4_decode_noop,
-	[OP_READ]		= (nfsd4_dec)nfsd4_decode_पढ़ो,
-	[OP_READसूची]		= (nfsd4_dec)nfsd4_decode_सूची_पढ़ो,
+	[OP_READ]		= (nfsd4_dec)nfsd4_decode_read,
+	[OP_READDIR]		= (nfsd4_dec)nfsd4_decode_readdir,
 	[OP_READLINK]		= (nfsd4_dec)nfsd4_decode_noop,
-	[OP_REMOVE]		= (nfsd4_dec)nfsd4_decode_हटाओ,
-	[OP_RENAME]		= (nfsd4_dec)nfsd4_decode_नाम,
+	[OP_REMOVE]		= (nfsd4_dec)nfsd4_decode_remove,
+	[OP_RENAME]		= (nfsd4_dec)nfsd4_decode_rename,
 	[OP_RENEW]		= (nfsd4_dec)nfsd4_decode_renew,
 	[OP_RESTOREFH]		= (nfsd4_dec)nfsd4_decode_noop,
 	[OP_SAVEFH]		= (nfsd4_dec)nfsd4_decode_noop,
@@ -2255,31 +2254,31 @@ nfsd4_decode_notsupp(काष्ठा nfsd4_compoundargs *argp, व्यो�
 	[OP_SETATTR]		= (nfsd4_dec)nfsd4_decode_setattr,
 	[OP_SETCLIENTID]	= (nfsd4_dec)nfsd4_decode_setclientid,
 	[OP_SETCLIENTID_CONFIRM] = (nfsd4_dec)nfsd4_decode_setclientid_confirm,
-	[OP_VERIFY]		= (nfsd4_dec)nfsd4_decode_verअगरy,
-	[OP_WRITE]		= (nfsd4_dec)nfsd4_decode_ग_लिखो,
+	[OP_VERIFY]		= (nfsd4_dec)nfsd4_decode_verify,
+	[OP_WRITE]		= (nfsd4_dec)nfsd4_decode_write,
 	[OP_RELEASE_LOCKOWNER]	= (nfsd4_dec)nfsd4_decode_release_lockowner,
 
-	/* new operations क्रम NFSv4.1 */
+	/* new operations for NFSv4.1 */
 	[OP_BACKCHANNEL_CTL]	= (nfsd4_dec)nfsd4_decode_backchannel_ctl,
 	[OP_BIND_CONN_TO_SESSION]= (nfsd4_dec)nfsd4_decode_bind_conn_to_session,
 	[OP_EXCHANGE_ID]	= (nfsd4_dec)nfsd4_decode_exchange_id,
 	[OP_CREATE_SESSION]	= (nfsd4_dec)nfsd4_decode_create_session,
 	[OP_DESTROY_SESSION]	= (nfsd4_dec)nfsd4_decode_destroy_session,
-	[OP_FREE_STATEID]	= (nfsd4_dec)nfsd4_decode_मुक्त_stateid,
-	[OP_GET_सूची_DELEGATION]	= (nfsd4_dec)nfsd4_decode_notsupp,
-#अगर_घोषित CONFIG_NFSD_PNFS
+	[OP_FREE_STATEID]	= (nfsd4_dec)nfsd4_decode_free_stateid,
+	[OP_GET_DIR_DELEGATION]	= (nfsd4_dec)nfsd4_decode_notsupp,
+#ifdef CONFIG_NFSD_PNFS
 	[OP_GETDEVICEINFO]	= (nfsd4_dec)nfsd4_decode_getdeviceinfo,
 	[OP_GETDEVICELIST]	= (nfsd4_dec)nfsd4_decode_notsupp,
 	[OP_LAYOUTCOMMIT]	= (nfsd4_dec)nfsd4_decode_layoutcommit,
 	[OP_LAYOUTGET]		= (nfsd4_dec)nfsd4_decode_layoutget,
-	[OP_LAYOUTRETURN]	= (nfsd4_dec)nfsd4_decode_layoutवापस,
-#अन्यथा
+	[OP_LAYOUTRETURN]	= (nfsd4_dec)nfsd4_decode_layoutreturn,
+#else
 	[OP_GETDEVICEINFO]	= (nfsd4_dec)nfsd4_decode_notsupp,
 	[OP_GETDEVICELIST]	= (nfsd4_dec)nfsd4_decode_notsupp,
 	[OP_LAYOUTCOMMIT]	= (nfsd4_dec)nfsd4_decode_notsupp,
 	[OP_LAYOUTGET]		= (nfsd4_dec)nfsd4_decode_notsupp,
 	[OP_LAYOUTRETURN]	= (nfsd4_dec)nfsd4_decode_notsupp,
-#पूर्ण_अगर
+#endif
 	[OP_SECINFO_NO_NAME]	= (nfsd4_dec)nfsd4_decode_secinfo_no_name,
 	[OP_SEQUENCE]		= (nfsd4_dec)nfsd4_decode_sequence,
 	[OP_SET_SSV]		= (nfsd4_dec)nfsd4_decode_notsupp,
@@ -2288,17 +2287,17 @@ nfsd4_decode_notsupp(काष्ठा nfsd4_compoundargs *argp, व्यो�
 	[OP_DESTROY_CLIENTID]	= (nfsd4_dec)nfsd4_decode_destroy_clientid,
 	[OP_RECLAIM_COMPLETE]	= (nfsd4_dec)nfsd4_decode_reclaim_complete,
 
-	/* new operations क्रम NFSv4.2 */
+	/* new operations for NFSv4.2 */
 	[OP_ALLOCATE]		= (nfsd4_dec)nfsd4_decode_fallocate,
 	[OP_COPY]		= (nfsd4_dec)nfsd4_decode_copy,
-	[OP_COPY_NOTIFY]	= (nfsd4_dec)nfsd4_decode_copy_notअगरy,
+	[OP_COPY_NOTIFY]	= (nfsd4_dec)nfsd4_decode_copy_notify,
 	[OP_DEALLOCATE]		= (nfsd4_dec)nfsd4_decode_fallocate,
 	[OP_IO_ADVISE]		= (nfsd4_dec)nfsd4_decode_notsupp,
 	[OP_LAYOUTERROR]	= (nfsd4_dec)nfsd4_decode_notsupp,
 	[OP_LAYOUTSTATS]	= (nfsd4_dec)nfsd4_decode_notsupp,
 	[OP_OFFLOAD_CANCEL]	= (nfsd4_dec)nfsd4_decode_offload_status,
 	[OP_OFFLOAD_STATUS]	= (nfsd4_dec)nfsd4_decode_offload_status,
-	[OP_READ_PLUS]		= (nfsd4_dec)nfsd4_decode_पढ़ो,
+	[OP_READ_PLUS]		= (nfsd4_dec)nfsd4_decode_read,
 	[OP_SEEK]		= (nfsd4_dec)nfsd4_decode_seek,
 	[OP_WRITE_SAME]		= (nfsd4_dec)nfsd4_decode_notsupp,
 	[OP_CLONE]		= (nfsd4_dec)nfsd4_decode_clone,
@@ -2306,435 +2305,435 @@ nfsd4_decode_notsupp(काष्ठा nfsd4_compoundargs *argp, व्यो�
 	[OP_GETXATTR]		= (nfsd4_dec)nfsd4_decode_getxattr,
 	[OP_SETXATTR]		= (nfsd4_dec)nfsd4_decode_setxattr,
 	[OP_LISTXATTRS]		= (nfsd4_dec)nfsd4_decode_listxattrs,
-	[OP_REMOVEXATTR]	= (nfsd4_dec)nfsd4_decode_हटाओxattr,
-पूर्ण;
+	[OP_REMOVEXATTR]	= (nfsd4_dec)nfsd4_decode_removexattr,
+};
 
-अटल अंतरभूत bool
-nfsd4_opnum_in_range(काष्ठा nfsd4_compoundargs *argp, काष्ठा nfsd4_op *op)
-अणु
-	अगर (op->opnum < FIRST_NFS4_OP)
-		वापस false;
-	अन्यथा अगर (argp->minorversion == 0 && op->opnum > LAST_NFS40_OP)
-		वापस false;
-	अन्यथा अगर (argp->minorversion == 1 && op->opnum > LAST_NFS41_OP)
-		वापस false;
-	अन्यथा अगर (argp->minorversion == 2 && op->opnum > LAST_NFS42_OP)
-		वापस false;
-	वापस true;
-पूर्ण
+static inline bool
+nfsd4_opnum_in_range(struct nfsd4_compoundargs *argp, struct nfsd4_op *op)
+{
+	if (op->opnum < FIRST_NFS4_OP)
+		return false;
+	else if (argp->minorversion == 0 && op->opnum > LAST_NFS40_OP)
+		return false;
+	else if (argp->minorversion == 1 && op->opnum > LAST_NFS41_OP)
+		return false;
+	else if (argp->minorversion == 2 && op->opnum > LAST_NFS42_OP)
+		return false;
+	return true;
+}
 
-अटल पूर्णांक
-nfsd4_decode_compound(काष्ठा nfsd4_compoundargs *argp)
-अणु
-	काष्ठा nfsd4_op *op;
+static int
+nfsd4_decode_compound(struct nfsd4_compoundargs *argp)
+{
+	struct nfsd4_op *op;
 	bool cachethis = false;
-	पूर्णांक auth_slack= argp->rqstp->rq_auth_slack;
-	पूर्णांक max_reply = auth_slack + 8; /* opcnt, status */
-	पूर्णांक पढ़ोcount = 0;
-	पूर्णांक पढ़ोbytes = 0;
+	int auth_slack= argp->rqstp->rq_auth_slack;
+	int max_reply = auth_slack + 8; /* opcnt, status */
+	int readcount = 0;
+	int readbytes = 0;
 	__be32 *p;
-	पूर्णांक i;
+	int i;
 
-	अगर (xdr_stream_decode_u32(argp->xdr, &argp->taglen) < 0)
-		वापस 0;
+	if (xdr_stream_decode_u32(argp->xdr, &argp->taglen) < 0)
+		return 0;
 	max_reply += XDR_UNIT;
-	argp->tag = शून्य;
-	अगर (unlikely(argp->taglen)) अणु
-		अगर (argp->taglen > NFSD4_MAX_TAGLEN)
-			वापस 0;
-		p = xdr_अंतरभूत_decode(argp->xdr, argp->taglen);
-		अगर (!p)
-			वापस 0;
+	argp->tag = NULL;
+	if (unlikely(argp->taglen)) {
+		if (argp->taglen > NFSD4_MAX_TAGLEN)
+			return 0;
+		p = xdr_inline_decode(argp->xdr, argp->taglen);
+		if (!p)
+			return 0;
 		argp->tag = svcxdr_savemem(argp, p, argp->taglen);
-		अगर (!argp->tag)
-			वापस 0;
+		if (!argp->tag)
+			return 0;
 		max_reply += xdr_align_size(argp->taglen);
-	पूर्ण
+	}
 
-	अगर (xdr_stream_decode_u32(argp->xdr, &argp->minorversion) < 0)
-		वापस 0;
-	अगर (xdr_stream_decode_u32(argp->xdr, &argp->opcnt) < 0)
-		वापस 0;
+	if (xdr_stream_decode_u32(argp->xdr, &argp->minorversion) < 0)
+		return 0;
+	if (xdr_stream_decode_u32(argp->xdr, &argp->opcnt) < 0)
+		return 0;
 
 	/*
 	 * NFS4ERR_RESOURCE is a more helpful error than GARBAGE_ARGS
-	 * here, so we वापस success at the xdr level so that
+	 * here, so we return success at the xdr level so that
 	 * nfsd4_proc can handle this is an NFS-level error.
 	 */
-	अगर (argp->opcnt > NFSD_MAX_OPS_PER_COMPOUND)
-		वापस 1;
+	if (argp->opcnt > NFSD_MAX_OPS_PER_COMPOUND)
+		return 1;
 
-	अगर (argp->opcnt > ARRAY_SIZE(argp->iops)) अणु
-		argp->ops = kzalloc(argp->opcnt * माप(*argp->ops), GFP_KERNEL);
-		अगर (!argp->ops) अणु
+	if (argp->opcnt > ARRAY_SIZE(argp->iops)) {
+		argp->ops = kzalloc(argp->opcnt * sizeof(*argp->ops), GFP_KERNEL);
+		if (!argp->ops) {
 			argp->ops = argp->iops;
-			dprपूर्णांकk("nfsd: couldn't allocate room for COMPOUND\n");
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			dprintk("nfsd: couldn't allocate room for COMPOUND\n");
+			return 0;
+		}
+	}
 
-	अगर (argp->minorversion > NFSD_SUPPORTED_MINOR_VERSION)
+	if (argp->minorversion > NFSD_SUPPORTED_MINOR_VERSION)
 		argp->opcnt = 0;
 
-	क्रम (i = 0; i < argp->opcnt; i++) अणु
+	for (i = 0; i < argp->opcnt; i++) {
 		op = &argp->ops[i];
-		op->replay = शून्य;
+		op->replay = NULL;
 
-		अगर (xdr_stream_decode_u32(argp->xdr, &op->opnum) < 0)
-			वापस 0;
-		अगर (nfsd4_opnum_in_range(argp, op)) अणु
+		if (xdr_stream_decode_u32(argp->xdr, &op->opnum) < 0)
+			return 0;
+		if (nfsd4_opnum_in_range(argp, op)) {
 			op->status = nfsd4_dec_ops[op->opnum](argp, &op->u);
-			अगर (op->status != nfs_ok)
+			if (op->status != nfs_ok)
 				trace_nfsd_compound_decode_err(argp->rqstp,
 							       argp->opcnt, i,
 							       op->opnum,
 							       op->status);
-		पूर्ण अन्यथा अणु
+		} else {
 			op->opnum = OP_ILLEGAL;
 			op->status = nfserr_op_illegal;
-		पूर्ण
+		}
 		op->opdesc = OPDESC(op);
 		/*
-		 * We'll try to cache the result in the DRC अगर any one
+		 * We'll try to cache the result in the DRC if any one
 		 * op in the compound wants to be cached:
 		 */
 		cachethis |= nfsd4_cache_this_op(op);
 
-		अगर (op->opnum == OP_READ || op->opnum == OP_READ_PLUS) अणु
-			पढ़ोcount++;
-			पढ़ोbytes += nfsd4_max_reply(argp->rqstp, op);
-		पूर्ण अन्यथा
+		if (op->opnum == OP_READ || op->opnum == OP_READ_PLUS) {
+			readcount++;
+			readbytes += nfsd4_max_reply(argp->rqstp, op);
+		} else
 			max_reply += nfsd4_max_reply(argp->rqstp, op);
 		/*
-		 * OP_LOCK and OP_LOCKT may वापस a conflicting lock.
-		 * (Special हाल because it will just skip encoding this
-		 * अगर it runs out of xdr buffer space, and it is the only
+		 * OP_LOCK and OP_LOCKT may return a conflicting lock.
+		 * (Special case because it will just skip encoding this
+		 * if it runs out of xdr buffer space, and it is the only
 		 * operation that behaves this way.)
 		 */
-		अगर (op->opnum == OP_LOCK || op->opnum == OP_LOCKT)
+		if (op->opnum == OP_LOCK || op->opnum == OP_LOCKT)
 			max_reply += NFS4_OPAQUE_LIMIT;
 
-		अगर (op->status) अणु
+		if (op->status) {
 			argp->opcnt = i+1;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 	/* Sessions make the DRC unnecessary: */
-	अगर (argp->minorversion)
+	if (argp->minorversion)
 		cachethis = false;
-	svc_reserve(argp->rqstp, max_reply + पढ़ोbytes);
+	svc_reserve(argp->rqstp, max_reply + readbytes);
 	argp->rqstp->rq_cachetype = cachethis ? RC_REPLBUFF : RC_NOCACHE;
 
-	अगर (पढ़ोcount > 1 || max_reply > PAGE_SIZE - auth_slack)
+	if (readcount > 1 || max_reply > PAGE_SIZE - auth_slack)
 		clear_bit(RQ_SPLICE_OK, &argp->rqstp->rq_flags);
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल __be32 *encode_change(__be32 *p, काष्ठा kstat *stat, काष्ठा inode *inode,
-			     काष्ठा svc_export *exp)
-अणु
-	अगर (exp->ex_flags & NFSEXP_V4ROOT) अणु
-		*p++ = cpu_to_be32(convert_to_wallघड़ी(exp->cd->flush_समय));
+static __be32 *encode_change(__be32 *p, struct kstat *stat, struct inode *inode,
+			     struct svc_export *exp)
+{
+	if (exp->ex_flags & NFSEXP_V4ROOT) {
+		*p++ = cpu_to_be32(convert_to_wallclock(exp->cd->flush_time));
 		*p++ = 0;
-	पूर्ण अन्यथा
+	} else
 		p = xdr_encode_hyper(p, nfsd4_change_attribute(stat, inode));
-	वापस p;
-पूर्ण
+	return p;
+}
 
 /*
- * स_समय (in NFSv4, समय_metadata) is not ग_लिखोable, and the client
- * करोesn't really care what resolution could theoretically be stored by
- * the fileप्रणाली.
+ * ctime (in NFSv4, time_metadata) is not writeable, and the client
+ * doesn't really care what resolution could theoretically be stored by
+ * the filesystem.
  *
- * The client cares how बंद together changes can be जबतक still
- * guaranteeing स_समय changes.  For most fileप्रणालीs (which have
- * बारtamps with nanosecond fields) that is limited by the resolution
- * of the समय वापसed from current_समय() (which I'm assuming to be
+ * The client cares how close together changes can be while still
+ * guaranteeing ctime changes.  For most filesystems (which have
+ * timestamps with nanosecond fields) that is limited by the resolution
+ * of the time returned from current_time() (which I'm assuming to be
  * 1/HZ).
  */
-अटल __be32 *encode_समय_delta(__be32 *p, काष्ठा inode *inode)
-अणु
-	काष्ठा बारpec64 ts;
+static __be32 *encode_time_delta(__be32 *p, struct inode *inode)
+{
+	struct timespec64 ts;
 	u32 ns;
 
-	ns = max_t(u32, NSEC_PER_SEC/HZ, inode->i_sb->s_समय_gran);
-	ts = ns_to_बारpec64(ns);
+	ns = max_t(u32, NSEC_PER_SEC/HZ, inode->i_sb->s_time_gran);
+	ts = ns_to_timespec64(ns);
 
 	p = xdr_encode_hyper(p, ts.tv_sec);
 	*p++ = cpu_to_be32(ts.tv_nsec);
 
-	वापस p;
-पूर्ण
+	return p;
+}
 
-अटल __be32 *encode_cinfo(__be32 *p, काष्ठा nfsd4_change_info *c)
-अणु
+static __be32 *encode_cinfo(__be32 *p, struct nfsd4_change_info *c)
+{
 	*p++ = cpu_to_be32(c->atomic);
-	p = xdr_encode_hyper(p, c->beक्रमe_change);
+	p = xdr_encode_hyper(p, c->before_change);
 	p = xdr_encode_hyper(p, c->after_change);
-	वापस p;
-पूर्ण
+	return p;
+}
 
 /* Encode as an array of strings the string given with components
- * separated @sep, escaped with esc_enter and esc_निकास.
+ * separated @sep, escaped with esc_enter and esc_exit.
  */
-अटल __be32 nfsd4_encode_components_esc(काष्ठा xdr_stream *xdr, अक्षर sep,
-					  अक्षर *components, अक्षर esc_enter,
-					  अक्षर esc_निकास)
-अणु
+static __be32 nfsd4_encode_components_esc(struct xdr_stream *xdr, char sep,
+					  char *components, char esc_enter,
+					  char esc_exit)
+{
 	__be32 *p;
 	__be32 pathlen;
-	पूर्णांक pathlen_offset;
-	पूर्णांक म_माप, count=0;
-	अक्षर *str, *end, *next;
+	int pathlen_offset;
+	int strlen, count=0;
+	char *str, *end, *next;
 
-	dprपूर्णांकk("nfsd4_encode_components(%s)\n", components);
+	dprintk("nfsd4_encode_components(%s)\n", components);
 
 	pathlen_offset = xdr->buf->len;
 	p = xdr_reserve_space(xdr, 4);
-	अगर (!p)
-		वापस nfserr_resource;
+	if (!p)
+		return nfserr_resource;
 	p++; /* We will fill this in with @count later */
 
 	end = str = components;
-	जबतक (*end) अणु
+	while (*end) {
 		bool found_esc = false;
 
 		/* try to parse as esc_start, ..., esc_end, sep */
-		अगर (*str == esc_enter) अणु
-			क्रम (; *end && (*end != esc_निकास); end++)
-				/* find esc_निकास or end of string */;
+		if (*str == esc_enter) {
+			for (; *end && (*end != esc_exit); end++)
+				/* find esc_exit or end of string */;
 			next = end + 1;
-			अगर (*end && (!*next || *next == sep)) अणु
+			if (*end && (!*next || *next == sep)) {
 				str++;
 				found_esc = true;
-			पूर्ण
-		पूर्ण
+			}
+		}
 
-		अगर (!found_esc)
-			क्रम (; *end && (*end != sep); end++)
+		if (!found_esc)
+			for (; *end && (*end != sep); end++)
 				/* find sep or end of string */;
 
-		म_माप = end - str;
-		अगर (म_माप) अणु
-			p = xdr_reserve_space(xdr, म_माप + 4);
-			अगर (!p)
-				वापस nfserr_resource;
-			p = xdr_encode_opaque(p, str, म_माप);
+		strlen = end - str;
+		if (strlen) {
+			p = xdr_reserve_space(xdr, strlen + 4);
+			if (!p)
+				return nfserr_resource;
+			p = xdr_encode_opaque(p, str, strlen);
 			count++;
-		पूर्ण
-		अन्यथा
+		}
+		else
 			end++;
-		अगर (found_esc)
+		if (found_esc)
 			end = next;
 
 		str = end;
-	पूर्ण
+	}
 	pathlen = htonl(count);
-	ग_लिखो_bytes_to_xdr_buf(xdr->buf, pathlen_offset, &pathlen, 4);
-	वापस 0;
-पूर्ण
+	write_bytes_to_xdr_buf(xdr->buf, pathlen_offset, &pathlen, 4);
+	return 0;
+}
 
 /* Encode as an array of strings the string given with components
  * separated @sep.
  */
-अटल __be32 nfsd4_encode_components(काष्ठा xdr_stream *xdr, अक्षर sep,
-				      अक्षर *components)
-अणु
-	वापस nfsd4_encode_components_esc(xdr, sep, components, 0, 0);
-पूर्ण
+static __be32 nfsd4_encode_components(struct xdr_stream *xdr, char sep,
+				      char *components)
+{
+	return nfsd4_encode_components_esc(xdr, sep, components, 0, 0);
+}
 
 /*
- * encode a location element of a fs_locations काष्ठाure
+ * encode a location element of a fs_locations structure
  */
-अटल __be32 nfsd4_encode_fs_location4(काष्ठा xdr_stream *xdr,
-					काष्ठा nfsd4_fs_location *location)
-अणु
+static __be32 nfsd4_encode_fs_location4(struct xdr_stream *xdr,
+					struct nfsd4_fs_location *location)
+{
 	__be32 status;
 
 	status = nfsd4_encode_components_esc(xdr, ':', location->hosts,
 						'[', ']');
-	अगर (status)
-		वापस status;
+	if (status)
+		return status;
 	status = nfsd4_encode_components(xdr, '/', location->path);
-	अगर (status)
-		वापस status;
-	वापस 0;
-पूर्ण
+	if (status)
+		return status;
+	return 0;
+}
 
 /*
- * Encode a path in RFC3530 'pathname4' क्रमmat
+ * Encode a path in RFC3530 'pathname4' format
  */
-अटल __be32 nfsd4_encode_path(काष्ठा xdr_stream *xdr,
-				स्थिर काष्ठा path *root,
-				स्थिर काष्ठा path *path)
-अणु
-	काष्ठा path cur = *path;
+static __be32 nfsd4_encode_path(struct xdr_stream *xdr,
+				const struct path *root,
+				const struct path *path)
+{
+	struct path cur = *path;
 	__be32 *p;
-	काष्ठा dentry **components = शून्य;
-	अचिन्हित पूर्णांक ncomponents = 0;
+	struct dentry **components = NULL;
+	unsigned int ncomponents = 0;
 	__be32 err = nfserr_jukebox;
 
-	dprपूर्णांकk("nfsd4_encode_components(");
+	dprintk("nfsd4_encode_components(");
 
 	path_get(&cur);
 	/* First walk the path up to the nfsd root, and store the
 	 * dentries/path components in an array.
 	 */
-	क्रम (;;) अणु
-		अगर (path_equal(&cur, root))
-			अवरोध;
-		अगर (cur.dentry == cur.mnt->mnt_root) अणु
-			अगर (follow_up(&cur))
-				जारी;
-			जाओ out_मुक्त;
-		पूर्ण
-		अगर ((ncomponents & 15) == 0) अणु
-			काष्ठा dentry **new;
-			new = kपुनः_स्मृति(components,
-					माप(*new) * (ncomponents + 16),
+	for (;;) {
+		if (path_equal(&cur, root))
+			break;
+		if (cur.dentry == cur.mnt->mnt_root) {
+			if (follow_up(&cur))
+				continue;
+			goto out_free;
+		}
+		if ((ncomponents & 15) == 0) {
+			struct dentry **new;
+			new = krealloc(components,
+					sizeof(*new) * (ncomponents + 16),
 					GFP_KERNEL);
-			अगर (!new)
-				जाओ out_मुक्त;
+			if (!new)
+				goto out_free;
 			components = new;
-		पूर्ण
+		}
 		components[ncomponents++] = cur.dentry;
 		cur.dentry = dget_parent(cur.dentry);
-	पूर्ण
+	}
 	err = nfserr_resource;
 	p = xdr_reserve_space(xdr, 4);
-	अगर (!p)
-		जाओ out_मुक्त;
+	if (!p)
+		goto out_free;
 	*p++ = cpu_to_be32(ncomponents);
 
-	जबतक (ncomponents) अणु
-		काष्ठा dentry *dentry = components[ncomponents - 1];
-		अचिन्हित पूर्णांक len;
+	while (ncomponents) {
+		struct dentry *dentry = components[ncomponents - 1];
+		unsigned int len;
 
 		spin_lock(&dentry->d_lock);
 		len = dentry->d_name.len;
 		p = xdr_reserve_space(xdr, len + 4);
-		अगर (!p) अणु
+		if (!p) {
 			spin_unlock(&dentry->d_lock);
-			जाओ out_मुक्त;
-		पूर्ण
+			goto out_free;
+		}
 		p = xdr_encode_opaque(p, dentry->d_name.name, len);
-		dprपूर्णांकk("/%pd", dentry);
+		dprintk("/%pd", dentry);
 		spin_unlock(&dentry->d_lock);
 		dput(dentry);
 		ncomponents--;
-	पूर्ण
+	}
 
 	err = 0;
-out_मुक्त:
-	dprपूर्णांकk(")\n");
-	जबतक (ncomponents)
+out_free:
+	dprintk(")\n");
+	while (ncomponents)
 		dput(components[--ncomponents]);
-	kमुक्त(components);
+	kfree(components);
 	path_put(&cur);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल __be32 nfsd4_encode_fsloc_fsroot(काष्ठा xdr_stream *xdr,
-			काष्ठा svc_rqst *rqstp, स्थिर काष्ठा path *path)
-अणु
-	काष्ठा svc_export *exp_ps;
+static __be32 nfsd4_encode_fsloc_fsroot(struct xdr_stream *xdr,
+			struct svc_rqst *rqstp, const struct path *path)
+{
+	struct svc_export *exp_ps;
 	__be32 res;
 
 	exp_ps = rqst_find_fsidzero_export(rqstp);
-	अगर (IS_ERR(exp_ps))
-		वापस nfsत्रुटि_सं(PTR_ERR(exp_ps));
+	if (IS_ERR(exp_ps))
+		return nfserrno(PTR_ERR(exp_ps));
 	res = nfsd4_encode_path(xdr, &exp_ps->ex_path, path);
 	exp_put(exp_ps);
-	वापस res;
-पूर्ण
+	return res;
+}
 
 /*
- *  encode a fs_locations काष्ठाure
+ *  encode a fs_locations structure
  */
-अटल __be32 nfsd4_encode_fs_locations(काष्ठा xdr_stream *xdr,
-			काष्ठा svc_rqst *rqstp, काष्ठा svc_export *exp)
-अणु
+static __be32 nfsd4_encode_fs_locations(struct xdr_stream *xdr,
+			struct svc_rqst *rqstp, struct svc_export *exp)
+{
 	__be32 status;
-	पूर्णांक i;
+	int i;
 	__be32 *p;
-	काष्ठा nfsd4_fs_locations *fslocs = &exp->ex_fslocs;
+	struct nfsd4_fs_locations *fslocs = &exp->ex_fslocs;
 
 	status = nfsd4_encode_fsloc_fsroot(xdr, rqstp, &exp->ex_path);
-	अगर (status)
-		वापस status;
+	if (status)
+		return status;
 	p = xdr_reserve_space(xdr, 4);
-	अगर (!p)
-		वापस nfserr_resource;
+	if (!p)
+		return nfserr_resource;
 	*p++ = cpu_to_be32(fslocs->locations_count);
-	क्रम (i=0; i<fslocs->locations_count; i++) अणु
+	for (i=0; i<fslocs->locations_count; i++) {
 		status = nfsd4_encode_fs_location4(xdr, &fslocs->locations[i]);
-		अगर (status)
-			वापस status;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		if (status)
+			return status;
+	}
+	return 0;
+}
 
-अटल u32 nfs4_file_type(umode_t mode)
-अणु
-	चयन (mode & S_IFMT) अणु
-	हाल S_IFIFO:	वापस NF4FIFO;
-	हाल S_IFCHR:	वापस NF4CHR;
-	हाल S_IFसूची:	वापस NF4सूची;
-	हाल S_IFBLK:	वापस NF4BLK;
-	हाल S_IFLNK:	वापस NF4LNK;
-	हाल S_IFREG:	वापस NF4REG;
-	हाल S_IFSOCK:	वापस NF4SOCK;
-	शेष:	वापस NF4BAD;
-	पूर्ण
-पूर्ण
+static u32 nfs4_file_type(umode_t mode)
+{
+	switch (mode & S_IFMT) {
+	case S_IFIFO:	return NF4FIFO;
+	case S_IFCHR:	return NF4CHR;
+	case S_IFDIR:	return NF4DIR;
+	case S_IFBLK:	return NF4BLK;
+	case S_IFLNK:	return NF4LNK;
+	case S_IFREG:	return NF4REG;
+	case S_IFSOCK:	return NF4SOCK;
+	default:	return NF4BAD;
+	}
+}
 
-अटल अंतरभूत __be32
-nfsd4_encode_aclname(काष्ठा xdr_stream *xdr, काष्ठा svc_rqst *rqstp,
-		     काष्ठा nfs4_ace *ace)
-अणु
-	अगर (ace->whotype != NFS4_ACL_WHO_NAMED)
-		वापस nfs4_acl_ग_लिखो_who(xdr, ace->whotype);
-	अन्यथा अगर (ace->flag & NFS4_ACE_IDENTIFIER_GROUP)
-		वापस nfsd4_encode_group(xdr, rqstp, ace->who_gid);
-	अन्यथा
-		वापस nfsd4_encode_user(xdr, rqstp, ace->who_uid);
-पूर्ण
+static inline __be32
+nfsd4_encode_aclname(struct xdr_stream *xdr, struct svc_rqst *rqstp,
+		     struct nfs4_ace *ace)
+{
+	if (ace->whotype != NFS4_ACL_WHO_NAMED)
+		return nfs4_acl_write_who(xdr, ace->whotype);
+	else if (ace->flag & NFS4_ACE_IDENTIFIER_GROUP)
+		return nfsd4_encode_group(xdr, rqstp, ace->who_gid);
+	else
+		return nfsd4_encode_user(xdr, rqstp, ace->who_uid);
+}
 
-अटल अंतरभूत __be32
-nfsd4_encode_layout_types(काष्ठा xdr_stream *xdr, u32 layout_types)
-अणु
+static inline __be32
+nfsd4_encode_layout_types(struct xdr_stream *xdr, u32 layout_types)
+{
 	__be32		*p;
-	अचिन्हित दीर्घ	i = hweight_दीर्घ(layout_types);
+	unsigned long	i = hweight_long(layout_types);
 
 	p = xdr_reserve_space(xdr, 4 + 4 * i);
-	अगर (!p)
-		वापस nfserr_resource;
+	if (!p)
+		return nfserr_resource;
 
 	*p++ = cpu_to_be32(i);
 
-	क्रम (i = LAYOUT_NFSV4_1_खाताS; i < LAYOUT_TYPE_MAX; ++i)
-		अगर (layout_types & (1 << i))
+	for (i = LAYOUT_NFSV4_1_FILES; i < LAYOUT_TYPE_MAX; ++i)
+		if (layout_types & (1 << i))
 			*p++ = cpu_to_be32(i);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#घोषणा WORD0_ABSENT_FS_ATTRS (FATTR4_WORD0_FS_LOCATIONS | FATTR4_WORD0_FSID | \
+#define WORD0_ABSENT_FS_ATTRS (FATTR4_WORD0_FS_LOCATIONS | FATTR4_WORD0_FSID | \
 			      FATTR4_WORD0_RDATTR_ERROR)
-#घोषणा WORD1_ABSENT_FS_ATTRS FATTR4_WORD1_MOUNTED_ON_खाताID
-#घोषणा WORD2_ABSENT_FS_ATTRS 0
+#define WORD1_ABSENT_FS_ATTRS FATTR4_WORD1_MOUNTED_ON_FILEID
+#define WORD2_ABSENT_FS_ATTRS 0
 
-#अगर_घोषित CONFIG_NFSD_V4_SECURITY_LABEL
-अटल अंतरभूत __be32
-nfsd4_encode_security_label(काष्ठा xdr_stream *xdr, काष्ठा svc_rqst *rqstp,
-			    व्योम *context, पूर्णांक len)
-अणु
+#ifdef CONFIG_NFSD_V4_SECURITY_LABEL
+static inline __be32
+nfsd4_encode_security_label(struct xdr_stream *xdr, struct svc_rqst *rqstp,
+			    void *context, int len)
+{
 	__be32 *p;
 
 	p = xdr_reserve_space(xdr, len + 4 + 4 + 4);
-	अगर (!p)
-		वापस nfserr_resource;
+	if (!p)
+		return nfserr_resource;
 
 	/*
 	 * For now we use a 0 here to indicate the null translation; in
@@ -2743,1056 +2742,1056 @@ nfsd4_encode_security_label(काष्ठा xdr_stream *xdr, काष्ठ�
 	*p++ = cpu_to_be32(0); /* lfs */
 	*p++ = cpu_to_be32(0); /* pi */
 	p = xdr_encode_opaque(p, context, len);
-	वापस 0;
-पूर्ण
-#अन्यथा
-अटल अंतरभूत __be32
-nfsd4_encode_security_label(काष्ठा xdr_stream *xdr, काष्ठा svc_rqst *rqstp,
-			    व्योम *context, पूर्णांक len)
-अणु वापस 0; पूर्ण
-#पूर्ण_अगर
+	return 0;
+}
+#else
+static inline __be32
+nfsd4_encode_security_label(struct xdr_stream *xdr, struct svc_rqst *rqstp,
+			    void *context, int len)
+{ return 0; }
+#endif
 
-अटल __be32 fattr_handle_असलent_fs(u32 *bmval0, u32 *bmval1, u32 *bmval2, u32 *rdattr_err)
-अणु
+static __be32 fattr_handle_absent_fs(u32 *bmval0, u32 *bmval1, u32 *bmval2, u32 *rdattr_err)
+{
 	/* As per referral draft:  */
-	अगर (*bmval0 & ~WORD0_ABSENT_FS_ATTRS ||
-	    *bmval1 & ~WORD1_ABSENT_FS_ATTRS) अणु
-		अगर (*bmval0 & FATTR4_WORD0_RDATTR_ERROR ||
+	if (*bmval0 & ~WORD0_ABSENT_FS_ATTRS ||
+	    *bmval1 & ~WORD1_ABSENT_FS_ATTRS) {
+		if (*bmval0 & FATTR4_WORD0_RDATTR_ERROR ||
 	            *bmval0 & FATTR4_WORD0_FS_LOCATIONS)
 			*rdattr_err = NFSERR_MOVED;
-		अन्यथा
-			वापस nfserr_moved;
-	पूर्ण
+		else
+			return nfserr_moved;
+	}
 	*bmval0 &= WORD0_ABSENT_FS_ATTRS;
 	*bmval1 &= WORD1_ABSENT_FS_ATTRS;
 	*bmval2 &= WORD2_ABSENT_FS_ATTRS;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-अटल पूर्णांक get_parent_attributes(काष्ठा svc_export *exp, काष्ठा kstat *stat)
-अणु
-	काष्ठा path path = exp->ex_path;
-	पूर्णांक err;
+static int get_parent_attributes(struct svc_export *exp, struct kstat *stat)
+{
+	struct path path = exp->ex_path;
+	int err;
 
 	path_get(&path);
-	जबतक (follow_up(&path)) अणु
-		अगर (path.dentry != path.mnt->mnt_root)
-			अवरोध;
-	पूर्ण
+	while (follow_up(&path)) {
+		if (path.dentry != path.mnt->mnt_root)
+			break;
+	}
 	err = vfs_getattr(&path, stat, STATX_BASIC_STATS, AT_STATX_SYNC_AS_STAT);
 	path_put(&path);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल __be32
-nfsd4_encode_biपंचांगap(काष्ठा xdr_stream *xdr, u32 bmval0, u32 bmval1, u32 bmval2)
-अणु
+static __be32
+nfsd4_encode_bitmap(struct xdr_stream *xdr, u32 bmval0, u32 bmval1, u32 bmval2)
+{
 	__be32 *p;
 
-	अगर (bmval2) अणु
+	if (bmval2) {
 		p = xdr_reserve_space(xdr, 16);
-		अगर (!p)
-			जाओ out_resource;
+		if (!p)
+			goto out_resource;
 		*p++ = cpu_to_be32(3);
 		*p++ = cpu_to_be32(bmval0);
 		*p++ = cpu_to_be32(bmval1);
 		*p++ = cpu_to_be32(bmval2);
-	पूर्ण अन्यथा अगर (bmval1) अणु
+	} else if (bmval1) {
 		p = xdr_reserve_space(xdr, 12);
-		अगर (!p)
-			जाओ out_resource;
+		if (!p)
+			goto out_resource;
 		*p++ = cpu_to_be32(2);
 		*p++ = cpu_to_be32(bmval0);
 		*p++ = cpu_to_be32(bmval1);
-	पूर्ण अन्यथा अणु
+	} else {
 		p = xdr_reserve_space(xdr, 8);
-		अगर (!p)
-			जाओ out_resource;
+		if (!p)
+			goto out_resource;
 		*p++ = cpu_to_be32(1);
 		*p++ = cpu_to_be32(bmval0);
-	पूर्ण
+	}
 
-	वापस 0;
+	return 0;
 out_resource:
-	वापस nfserr_resource;
-पूर्ण
+	return nfserr_resource;
+}
 
 /*
- * Note: @fhp can be शून्य; in this हाल, we might have to compose the filehandle
+ * Note: @fhp can be NULL; in this case, we might have to compose the filehandle
  * ourselves.
  */
-अटल __be32
-nfsd4_encode_fattr(काष्ठा xdr_stream *xdr, काष्ठा svc_fh *fhp,
-		काष्ठा svc_export *exp,
-		काष्ठा dentry *dentry, u32 *bmval,
-		काष्ठा svc_rqst *rqstp, पूर्णांक ignore_crossmnt)
-अणु
+static __be32
+nfsd4_encode_fattr(struct xdr_stream *xdr, struct svc_fh *fhp,
+		struct svc_export *exp,
+		struct dentry *dentry, u32 *bmval,
+		struct svc_rqst *rqstp, int ignore_crossmnt)
+{
 	u32 bmval0 = bmval[0];
 	u32 bmval1 = bmval[1];
 	u32 bmval2 = bmval[2];
-	काष्ठा kstat stat;
-	काष्ठा svc_fh *tempfh = शून्य;
-	काष्ठा kstatfs statfs;
+	struct kstat stat;
+	struct svc_fh *tempfh = NULL;
+	struct kstatfs statfs;
 	__be32 *p;
-	पूर्णांक starting_len = xdr->buf->len;
-	पूर्णांक attrlen_offset;
+	int starting_len = xdr->buf->len;
+	int attrlen_offset;
 	__be32 attrlen;
 	u32 dummy;
 	u64 dummy64;
 	u32 rdattr_err = 0;
 	__be32 status;
-	पूर्णांक err;
-	काष्ठा nfs4_acl *acl = शून्य;
-#अगर_घोषित CONFIG_NFSD_V4_SECURITY_LABEL
-	व्योम *context = शून्य;
-	पूर्णांक contextlen;
-#पूर्ण_अगर
+	int err;
+	struct nfs4_acl *acl = NULL;
+#ifdef CONFIG_NFSD_V4_SECURITY_LABEL
+	void *context = NULL;
+	int contextlen;
+#endif
 	bool contextsupport = false;
-	काष्ठा nfsd4_compoundres *resp = rqstp->rq_resp;
+	struct nfsd4_compoundres *resp = rqstp->rq_resp;
 	u32 minorversion = resp->cstate.minorversion;
-	काष्ठा path path = अणु
+	struct path path = {
 		.mnt	= exp->ex_path.mnt,
 		.dentry	= dentry,
-	पूर्ण;
-	काष्ठा nfsd_net *nn = net_generic(SVC_NET(rqstp), nfsd_net_id);
+	};
+	struct nfsd_net *nn = net_generic(SVC_NET(rqstp), nfsd_net_id);
 
 	BUG_ON(bmval1 & NFSD_WRITEONLY_ATTRS_WORD1);
 	BUG_ON(!nfsd_attrs_supported(minorversion, bmval));
 
-	अगर (exp->ex_fslocs.migrated) अणु
-		status = fattr_handle_असलent_fs(&bmval0, &bmval1, &bmval2, &rdattr_err);
-		अगर (status)
-			जाओ out;
-	पूर्ण
+	if (exp->ex_fslocs.migrated) {
+		status = fattr_handle_absent_fs(&bmval0, &bmval1, &bmval2, &rdattr_err);
+		if (status)
+			goto out;
+	}
 
 	err = vfs_getattr(&path, &stat, STATX_BASIC_STATS, AT_STATX_SYNC_AS_STAT);
-	अगर (err)
-		जाओ out_nfserr;
-	अगर ((bmval0 & (FATTR4_WORD0_खाताS_AVAIL | FATTR4_WORD0_खाताS_FREE |
-			FATTR4_WORD0_खाताS_TOTAL | FATTR4_WORD0_MAXNAME)) ||
+	if (err)
+		goto out_nfserr;
+	if ((bmval0 & (FATTR4_WORD0_FILES_AVAIL | FATTR4_WORD0_FILES_FREE |
+			FATTR4_WORD0_FILES_TOTAL | FATTR4_WORD0_MAXNAME)) ||
 	    (bmval1 & (FATTR4_WORD1_SPACE_AVAIL | FATTR4_WORD1_SPACE_FREE |
-		       FATTR4_WORD1_SPACE_TOTAL))) अणु
+		       FATTR4_WORD1_SPACE_TOTAL))) {
 		err = vfs_statfs(&path, &statfs);
-		अगर (err)
-			जाओ out_nfserr;
-	पूर्ण
-	अगर ((bmval0 & (FATTR4_WORD0_खाताHANDLE | FATTR4_WORD0_FSID)) && !fhp) अणु
-		tempfh = kदो_स्मृति(माप(काष्ठा svc_fh), GFP_KERNEL);
+		if (err)
+			goto out_nfserr;
+	}
+	if ((bmval0 & (FATTR4_WORD0_FILEHANDLE | FATTR4_WORD0_FSID)) && !fhp) {
+		tempfh = kmalloc(sizeof(struct svc_fh), GFP_KERNEL);
 		status = nfserr_jukebox;
-		अगर (!tempfh)
-			जाओ out;
+		if (!tempfh)
+			goto out;
 		fh_init(tempfh, NFS4_FHSIZE);
-		status = fh_compose(tempfh, exp, dentry, शून्य);
-		अगर (status)
-			जाओ out;
+		status = fh_compose(tempfh, exp, dentry, NULL);
+		if (status)
+			goto out;
 		fhp = tempfh;
-	पूर्ण
-	अगर (bmval0 & FATTR4_WORD0_ACL) अणु
+	}
+	if (bmval0 & FATTR4_WORD0_ACL) {
 		err = nfsd4_get_nfs4_acl(rqstp, dentry, &acl);
-		अगर (err == -EOPNOTSUPP)
+		if (err == -EOPNOTSUPP)
 			bmval0 &= ~FATTR4_WORD0_ACL;
-		अन्यथा अगर (err == -EINVAL) अणु
+		else if (err == -EINVAL) {
 			status = nfserr_attrnotsupp;
-			जाओ out;
-		पूर्ण अन्यथा अगर (err != 0)
-			जाओ out_nfserr;
-	पूर्ण
+			goto out;
+		} else if (err != 0)
+			goto out_nfserr;
+	}
 
-#अगर_घोषित CONFIG_NFSD_V4_SECURITY_LABEL
-	अगर ((bmval2 & FATTR4_WORD2_SECURITY_LABEL) ||
-	     bmval0 & FATTR4_WORD0_SUPPORTED_ATTRS) अणु
-		अगर (exp->ex_flags & NFSEXP_SECURITY_LABEL)
-			err = security_inode_माला_लोecctx(d_inode(dentry),
+#ifdef CONFIG_NFSD_V4_SECURITY_LABEL
+	if ((bmval2 & FATTR4_WORD2_SECURITY_LABEL) ||
+	     bmval0 & FATTR4_WORD0_SUPPORTED_ATTRS) {
+		if (exp->ex_flags & NFSEXP_SECURITY_LABEL)
+			err = security_inode_getsecctx(d_inode(dentry),
 						&context, &contextlen);
-		अन्यथा
+		else
 			err = -EOPNOTSUPP;
 		contextsupport = (err == 0);
-		अगर (bmval2 & FATTR4_WORD2_SECURITY_LABEL) अणु
-			अगर (err == -EOPNOTSUPP)
+		if (bmval2 & FATTR4_WORD2_SECURITY_LABEL) {
+			if (err == -EOPNOTSUPP)
 				bmval2 &= ~FATTR4_WORD2_SECURITY_LABEL;
-			अन्यथा अगर (err)
-				जाओ out_nfserr;
-		पूर्ण
-	पूर्ण
-#पूर्ण_अगर /* CONFIG_NFSD_V4_SECURITY_LABEL */
+			else if (err)
+				goto out_nfserr;
+		}
+	}
+#endif /* CONFIG_NFSD_V4_SECURITY_LABEL */
 
-	status = nfsd4_encode_biपंचांगap(xdr, bmval0, bmval1, bmval2);
-	अगर (status)
-		जाओ out;
+	status = nfsd4_encode_bitmap(xdr, bmval0, bmval1, bmval2);
+	if (status)
+		goto out;
 
 	attrlen_offset = xdr->buf->len;
 	p = xdr_reserve_space(xdr, 4);
-	अगर (!p)
-		जाओ out_resource;
+	if (!p)
+		goto out_resource;
 	p++;                /* to be backfilled later */
 
-	अगर (bmval0 & FATTR4_WORD0_SUPPORTED_ATTRS) अणु
+	if (bmval0 & FATTR4_WORD0_SUPPORTED_ATTRS) {
 		u32 supp[3];
 
-		स_नकल(supp, nfsd_suppattrs[minorversion], माप(supp));
+		memcpy(supp, nfsd_suppattrs[minorversion], sizeof(supp));
 
-		अगर (!IS_POSIXACL(dentry->d_inode))
+		if (!IS_POSIXACL(dentry->d_inode))
 			supp[0] &= ~FATTR4_WORD0_ACL;
-		अगर (!contextsupport)
+		if (!contextsupport)
 			supp[2] &= ~FATTR4_WORD2_SECURITY_LABEL;
-		अगर (!supp[2]) अणु
+		if (!supp[2]) {
 			p = xdr_reserve_space(xdr, 12);
-			अगर (!p)
-				जाओ out_resource;
+			if (!p)
+				goto out_resource;
 			*p++ = cpu_to_be32(2);
 			*p++ = cpu_to_be32(supp[0]);
 			*p++ = cpu_to_be32(supp[1]);
-		पूर्ण अन्यथा अणु
+		} else {
 			p = xdr_reserve_space(xdr, 16);
-			अगर (!p)
-				जाओ out_resource;
+			if (!p)
+				goto out_resource;
 			*p++ = cpu_to_be32(3);
 			*p++ = cpu_to_be32(supp[0]);
 			*p++ = cpu_to_be32(supp[1]);
 			*p++ = cpu_to_be32(supp[2]);
-		पूर्ण
-	पूर्ण
-	अगर (bmval0 & FATTR4_WORD0_TYPE) अणु
+		}
+	}
+	if (bmval0 & FATTR4_WORD0_TYPE) {
 		p = xdr_reserve_space(xdr, 4);
-		अगर (!p)
-			जाओ out_resource;
+		if (!p)
+			goto out_resource;
 		dummy = nfs4_file_type(stat.mode);
-		अगर (dummy == NF4BAD) अणु
+		if (dummy == NF4BAD) {
 			status = nfserr_serverfault;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		*p++ = cpu_to_be32(dummy);
-	पूर्ण
-	अगर (bmval0 & FATTR4_WORD0_FH_EXPIRE_TYPE) अणु
+	}
+	if (bmval0 & FATTR4_WORD0_FH_EXPIRE_TYPE) {
 		p = xdr_reserve_space(xdr, 4);
-		अगर (!p)
-			जाओ out_resource;
-		अगर (exp->ex_flags & NFSEXP_NOSUBTREECHECK)
+		if (!p)
+			goto out_resource;
+		if (exp->ex_flags & NFSEXP_NOSUBTREECHECK)
 			*p++ = cpu_to_be32(NFS4_FH_PERSISTENT);
-		अन्यथा
+		else
 			*p++ = cpu_to_be32(NFS4_FH_PERSISTENT|
 						NFS4_FH_VOL_RENAME);
-	पूर्ण
-	अगर (bmval0 & FATTR4_WORD0_CHANGE) अणु
+	}
+	if (bmval0 & FATTR4_WORD0_CHANGE) {
 		p = xdr_reserve_space(xdr, 8);
-		अगर (!p)
-			जाओ out_resource;
+		if (!p)
+			goto out_resource;
 		p = encode_change(p, &stat, d_inode(dentry), exp);
-	पूर्ण
-	अगर (bmval0 & FATTR4_WORD0_SIZE) अणु
+	}
+	if (bmval0 & FATTR4_WORD0_SIZE) {
 		p = xdr_reserve_space(xdr, 8);
-		अगर (!p)
-			जाओ out_resource;
+		if (!p)
+			goto out_resource;
 		p = xdr_encode_hyper(p, stat.size);
-	पूर्ण
-	अगर (bmval0 & FATTR4_WORD0_LINK_SUPPORT) अणु
+	}
+	if (bmval0 & FATTR4_WORD0_LINK_SUPPORT) {
 		p = xdr_reserve_space(xdr, 4);
-		अगर (!p)
-			जाओ out_resource;
+		if (!p)
+			goto out_resource;
 		*p++ = cpu_to_be32(1);
-	पूर्ण
-	अगर (bmval0 & FATTR4_WORD0_SYMLINK_SUPPORT) अणु
+	}
+	if (bmval0 & FATTR4_WORD0_SYMLINK_SUPPORT) {
 		p = xdr_reserve_space(xdr, 4);
-		अगर (!p)
-			जाओ out_resource;
+		if (!p)
+			goto out_resource;
 		*p++ = cpu_to_be32(1);
-	पूर्ण
-	अगर (bmval0 & FATTR4_WORD0_NAMED_ATTR) अणु
+	}
+	if (bmval0 & FATTR4_WORD0_NAMED_ATTR) {
 		p = xdr_reserve_space(xdr, 4);
-		अगर (!p)
-			जाओ out_resource;
+		if (!p)
+			goto out_resource;
 		*p++ = cpu_to_be32(0);
-	पूर्ण
-	अगर (bmval0 & FATTR4_WORD0_FSID) अणु
+	}
+	if (bmval0 & FATTR4_WORD0_FSID) {
 		p = xdr_reserve_space(xdr, 16);
-		अगर (!p)
-			जाओ out_resource;
-		अगर (exp->ex_fslocs.migrated) अणु
+		if (!p)
+			goto out_resource;
+		if (exp->ex_fslocs.migrated) {
 			p = xdr_encode_hyper(p, NFS4_REFERRAL_FSID_MAJOR);
 			p = xdr_encode_hyper(p, NFS4_REFERRAL_FSID_MINOR);
-		पूर्ण अन्यथा चयन(fsid_source(fhp)) अणु
-		हाल FSIDSOURCE_FSID:
+		} else switch(fsid_source(fhp)) {
+		case FSIDSOURCE_FSID:
 			p = xdr_encode_hyper(p, (u64)exp->ex_fsid);
 			p = xdr_encode_hyper(p, (u64)0);
-			अवरोध;
-		हाल FSIDSOURCE_DEV:
+			break;
+		case FSIDSOURCE_DEV:
 			*p++ = cpu_to_be32(0);
 			*p++ = cpu_to_be32(MAJOR(stat.dev));
 			*p++ = cpu_to_be32(0);
 			*p++ = cpu_to_be32(MINOR(stat.dev));
-			अवरोध;
-		हाल FSIDSOURCE_UUID:
+			break;
+		case FSIDSOURCE_UUID:
 			p = xdr_encode_opaque_fixed(p, exp->ex_uuid,
 								EX_UUID_LEN);
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	अगर (bmval0 & FATTR4_WORD0_UNIQUE_HANDLES) अणु
+			break;
+		}
+	}
+	if (bmval0 & FATTR4_WORD0_UNIQUE_HANDLES) {
 		p = xdr_reserve_space(xdr, 4);
-		अगर (!p)
-			जाओ out_resource;
+		if (!p)
+			goto out_resource;
 		*p++ = cpu_to_be32(0);
-	पूर्ण
-	अगर (bmval0 & FATTR4_WORD0_LEASE_TIME) अणु
+	}
+	if (bmval0 & FATTR4_WORD0_LEASE_TIME) {
 		p = xdr_reserve_space(xdr, 4);
-		अगर (!p)
-			जाओ out_resource;
+		if (!p)
+			goto out_resource;
 		*p++ = cpu_to_be32(nn->nfsd4_lease);
-	पूर्ण
-	अगर (bmval0 & FATTR4_WORD0_RDATTR_ERROR) अणु
+	}
+	if (bmval0 & FATTR4_WORD0_RDATTR_ERROR) {
 		p = xdr_reserve_space(xdr, 4);
-		अगर (!p)
-			जाओ out_resource;
+		if (!p)
+			goto out_resource;
 		*p++ = cpu_to_be32(rdattr_err);
-	पूर्ण
-	अगर (bmval0 & FATTR4_WORD0_ACL) अणु
-		काष्ठा nfs4_ace *ace;
+	}
+	if (bmval0 & FATTR4_WORD0_ACL) {
+		struct nfs4_ace *ace;
 
-		अगर (acl == शून्य) अणु
+		if (acl == NULL) {
 			p = xdr_reserve_space(xdr, 4);
-			अगर (!p)
-				जाओ out_resource;
+			if (!p)
+				goto out_resource;
 
 			*p++ = cpu_to_be32(0);
-			जाओ out_acl;
-		पूर्ण
+			goto out_acl;
+		}
 		p = xdr_reserve_space(xdr, 4);
-		अगर (!p)
-			जाओ out_resource;
+		if (!p)
+			goto out_resource;
 		*p++ = cpu_to_be32(acl->naces);
 
-		क्रम (ace = acl->aces; ace < acl->aces + acl->naces; ace++) अणु
+		for (ace = acl->aces; ace < acl->aces + acl->naces; ace++) {
 			p = xdr_reserve_space(xdr, 4*3);
-			अगर (!p)
-				जाओ out_resource;
+			if (!p)
+				goto out_resource;
 			*p++ = cpu_to_be32(ace->type);
 			*p++ = cpu_to_be32(ace->flag);
 			*p++ = cpu_to_be32(ace->access_mask &
 							NFS4_ACE_MASK_ALL);
 			status = nfsd4_encode_aclname(xdr, rqstp, ace);
-			अगर (status)
-				जाओ out;
-		पूर्ण
-	पूर्ण
+			if (status)
+				goto out;
+		}
+	}
 out_acl:
-	अगर (bmval0 & FATTR4_WORD0_ACLSUPPORT) अणु
+	if (bmval0 & FATTR4_WORD0_ACLSUPPORT) {
 		p = xdr_reserve_space(xdr, 4);
-		अगर (!p)
-			जाओ out_resource;
+		if (!p)
+			goto out_resource;
 		*p++ = cpu_to_be32(IS_POSIXACL(dentry->d_inode) ?
 			ACL4_SUPPORT_ALLOW_ACL|ACL4_SUPPORT_DENY_ACL : 0);
-	पूर्ण
-	अगर (bmval0 & FATTR4_WORD0_CANSETTIME) अणु
+	}
+	if (bmval0 & FATTR4_WORD0_CANSETTIME) {
 		p = xdr_reserve_space(xdr, 4);
-		अगर (!p)
-			जाओ out_resource;
+		if (!p)
+			goto out_resource;
 		*p++ = cpu_to_be32(1);
-	पूर्ण
-	अगर (bmval0 & FATTR4_WORD0_CASE_INSENSITIVE) अणु
+	}
+	if (bmval0 & FATTR4_WORD0_CASE_INSENSITIVE) {
 		p = xdr_reserve_space(xdr, 4);
-		अगर (!p)
-			जाओ out_resource;
+		if (!p)
+			goto out_resource;
 		*p++ = cpu_to_be32(0);
-	पूर्ण
-	अगर (bmval0 & FATTR4_WORD0_CASE_PRESERVING) अणु
+	}
+	if (bmval0 & FATTR4_WORD0_CASE_PRESERVING) {
 		p = xdr_reserve_space(xdr, 4);
-		अगर (!p)
-			जाओ out_resource;
+		if (!p)
+			goto out_resource;
 		*p++ = cpu_to_be32(1);
-	पूर्ण
-	अगर (bmval0 & FATTR4_WORD0_CHOWN_RESTRICTED) अणु
+	}
+	if (bmval0 & FATTR4_WORD0_CHOWN_RESTRICTED) {
 		p = xdr_reserve_space(xdr, 4);
-		अगर (!p)
-			जाओ out_resource;
+		if (!p)
+			goto out_resource;
 		*p++ = cpu_to_be32(1);
-	पूर्ण
-	अगर (bmval0 & FATTR4_WORD0_खाताHANDLE) अणु
+	}
+	if (bmval0 & FATTR4_WORD0_FILEHANDLE) {
 		p = xdr_reserve_space(xdr, fhp->fh_handle.fh_size + 4);
-		अगर (!p)
-			जाओ out_resource;
+		if (!p)
+			goto out_resource;
 		p = xdr_encode_opaque(p, &fhp->fh_handle.fh_base,
 					fhp->fh_handle.fh_size);
-	पूर्ण
-	अगर (bmval0 & FATTR4_WORD0_खाताID) अणु
+	}
+	if (bmval0 & FATTR4_WORD0_FILEID) {
 		p = xdr_reserve_space(xdr, 8);
-		अगर (!p)
-			जाओ out_resource;
+		if (!p)
+			goto out_resource;
 		p = xdr_encode_hyper(p, stat.ino);
-	पूर्ण
-	अगर (bmval0 & FATTR4_WORD0_खाताS_AVAIL) अणु
+	}
+	if (bmval0 & FATTR4_WORD0_FILES_AVAIL) {
 		p = xdr_reserve_space(xdr, 8);
-		अगर (!p)
-			जाओ out_resource;
-		p = xdr_encode_hyper(p, (u64) statfs.f_fमुक्त);
-	पूर्ण
-	अगर (bmval0 & FATTR4_WORD0_खाताS_FREE) अणु
+		if (!p)
+			goto out_resource;
+		p = xdr_encode_hyper(p, (u64) statfs.f_ffree);
+	}
+	if (bmval0 & FATTR4_WORD0_FILES_FREE) {
 		p = xdr_reserve_space(xdr, 8);
-		अगर (!p)
-			जाओ out_resource;
-		p = xdr_encode_hyper(p, (u64) statfs.f_fमुक्त);
-	पूर्ण
-	अगर (bmval0 & FATTR4_WORD0_खाताS_TOTAL) अणु
+		if (!p)
+			goto out_resource;
+		p = xdr_encode_hyper(p, (u64) statfs.f_ffree);
+	}
+	if (bmval0 & FATTR4_WORD0_FILES_TOTAL) {
 		p = xdr_reserve_space(xdr, 8);
-		अगर (!p)
-			जाओ out_resource;
+		if (!p)
+			goto out_resource;
 		p = xdr_encode_hyper(p, (u64) statfs.f_files);
-	पूर्ण
-	अगर (bmval0 & FATTR4_WORD0_FS_LOCATIONS) अणु
+	}
+	if (bmval0 & FATTR4_WORD0_FS_LOCATIONS) {
 		status = nfsd4_encode_fs_locations(xdr, rqstp, exp);
-		अगर (status)
-			जाओ out;
-	पूर्ण
-	अगर (bmval0 & FATTR4_WORD0_HOMOGENEOUS) अणु
+		if (status)
+			goto out;
+	}
+	if (bmval0 & FATTR4_WORD0_HOMOGENEOUS) {
 		p = xdr_reserve_space(xdr, 4);
-		अगर (!p)
-			जाओ out_resource;
+		if (!p)
+			goto out_resource;
 		*p++ = cpu_to_be32(1);
-	पूर्ण
-	अगर (bmval0 & FATTR4_WORD0_MAXखाताSIZE) अणु
+	}
+	if (bmval0 & FATTR4_WORD0_MAXFILESIZE) {
 		p = xdr_reserve_space(xdr, 8);
-		अगर (!p)
-			जाओ out_resource;
+		if (!p)
+			goto out_resource;
 		p = xdr_encode_hyper(p, exp->ex_path.mnt->mnt_sb->s_maxbytes);
-	पूर्ण
-	अगर (bmval0 & FATTR4_WORD0_MAXLINK) अणु
+	}
+	if (bmval0 & FATTR4_WORD0_MAXLINK) {
 		p = xdr_reserve_space(xdr, 4);
-		अगर (!p)
-			जाओ out_resource;
+		if (!p)
+			goto out_resource;
 		*p++ = cpu_to_be32(255);
-	पूर्ण
-	अगर (bmval0 & FATTR4_WORD0_MAXNAME) अणु
+	}
+	if (bmval0 & FATTR4_WORD0_MAXNAME) {
 		p = xdr_reserve_space(xdr, 4);
-		अगर (!p)
-			जाओ out_resource;
+		if (!p)
+			goto out_resource;
 		*p++ = cpu_to_be32(statfs.f_namelen);
-	पूर्ण
-	अगर (bmval0 & FATTR4_WORD0_MAXREAD) अणु
+	}
+	if (bmval0 & FATTR4_WORD0_MAXREAD) {
 		p = xdr_reserve_space(xdr, 8);
-		अगर (!p)
-			जाओ out_resource;
+		if (!p)
+			goto out_resource;
 		p = xdr_encode_hyper(p, (u64) svc_max_payload(rqstp));
-	पूर्ण
-	अगर (bmval0 & FATTR4_WORD0_MAXWRITE) अणु
+	}
+	if (bmval0 & FATTR4_WORD0_MAXWRITE) {
 		p = xdr_reserve_space(xdr, 8);
-		अगर (!p)
-			जाओ out_resource;
+		if (!p)
+			goto out_resource;
 		p = xdr_encode_hyper(p, (u64) svc_max_payload(rqstp));
-	पूर्ण
-	अगर (bmval1 & FATTR4_WORD1_MODE) अणु
+	}
+	if (bmval1 & FATTR4_WORD1_MODE) {
 		p = xdr_reserve_space(xdr, 4);
-		अगर (!p)
-			जाओ out_resource;
+		if (!p)
+			goto out_resource;
 		*p++ = cpu_to_be32(stat.mode & S_IALLUGO);
-	पूर्ण
-	अगर (bmval1 & FATTR4_WORD1_NO_TRUNC) अणु
+	}
+	if (bmval1 & FATTR4_WORD1_NO_TRUNC) {
 		p = xdr_reserve_space(xdr, 4);
-		अगर (!p)
-			जाओ out_resource;
+		if (!p)
+			goto out_resource;
 		*p++ = cpu_to_be32(1);
-	पूर्ण
-	अगर (bmval1 & FATTR4_WORD1_NUMLINKS) अणु
+	}
+	if (bmval1 & FATTR4_WORD1_NUMLINKS) {
 		p = xdr_reserve_space(xdr, 4);
-		अगर (!p)
-			जाओ out_resource;
+		if (!p)
+			goto out_resource;
 		*p++ = cpu_to_be32(stat.nlink);
-	पूर्ण
-	अगर (bmval1 & FATTR4_WORD1_OWNER) अणु
+	}
+	if (bmval1 & FATTR4_WORD1_OWNER) {
 		status = nfsd4_encode_user(xdr, rqstp, stat.uid);
-		अगर (status)
-			जाओ out;
-	पूर्ण
-	अगर (bmval1 & FATTR4_WORD1_OWNER_GROUP) अणु
+		if (status)
+			goto out;
+	}
+	if (bmval1 & FATTR4_WORD1_OWNER_GROUP) {
 		status = nfsd4_encode_group(xdr, rqstp, stat.gid);
-		अगर (status)
-			जाओ out;
-	पूर्ण
-	अगर (bmval1 & FATTR4_WORD1_RAWDEV) अणु
+		if (status)
+			goto out;
+	}
+	if (bmval1 & FATTR4_WORD1_RAWDEV) {
 		p = xdr_reserve_space(xdr, 8);
-		अगर (!p)
-			जाओ out_resource;
+		if (!p)
+			goto out_resource;
 		*p++ = cpu_to_be32((u32) MAJOR(stat.rdev));
 		*p++ = cpu_to_be32((u32) MINOR(stat.rdev));
-	पूर्ण
-	अगर (bmval1 & FATTR4_WORD1_SPACE_AVAIL) अणु
+	}
+	if (bmval1 & FATTR4_WORD1_SPACE_AVAIL) {
 		p = xdr_reserve_space(xdr, 8);
-		अगर (!p)
-			जाओ out_resource;
+		if (!p)
+			goto out_resource;
 		dummy64 = (u64)statfs.f_bavail * (u64)statfs.f_bsize;
 		p = xdr_encode_hyper(p, dummy64);
-	पूर्ण
-	अगर (bmval1 & FATTR4_WORD1_SPACE_FREE) अणु
+	}
+	if (bmval1 & FATTR4_WORD1_SPACE_FREE) {
 		p = xdr_reserve_space(xdr, 8);
-		अगर (!p)
-			जाओ out_resource;
-		dummy64 = (u64)statfs.f_bमुक्त * (u64)statfs.f_bsize;
+		if (!p)
+			goto out_resource;
+		dummy64 = (u64)statfs.f_bfree * (u64)statfs.f_bsize;
 		p = xdr_encode_hyper(p, dummy64);
-	पूर्ण
-	अगर (bmval1 & FATTR4_WORD1_SPACE_TOTAL) अणु
+	}
+	if (bmval1 & FATTR4_WORD1_SPACE_TOTAL) {
 		p = xdr_reserve_space(xdr, 8);
-		अगर (!p)
-			जाओ out_resource;
+		if (!p)
+			goto out_resource;
 		dummy64 = (u64)statfs.f_blocks * (u64)statfs.f_bsize;
 		p = xdr_encode_hyper(p, dummy64);
-	पूर्ण
-	अगर (bmval1 & FATTR4_WORD1_SPACE_USED) अणु
+	}
+	if (bmval1 & FATTR4_WORD1_SPACE_USED) {
 		p = xdr_reserve_space(xdr, 8);
-		अगर (!p)
-			जाओ out_resource;
+		if (!p)
+			goto out_resource;
 		dummy64 = (u64)stat.blocks << 9;
 		p = xdr_encode_hyper(p, dummy64);
-	पूर्ण
-	अगर (bmval1 & FATTR4_WORD1_TIME_ACCESS) अणु
+	}
+	if (bmval1 & FATTR4_WORD1_TIME_ACCESS) {
 		p = xdr_reserve_space(xdr, 12);
-		अगर (!p)
-			जाओ out_resource;
-		p = xdr_encode_hyper(p, (s64)stat.aसमय.tv_sec);
-		*p++ = cpu_to_be32(stat.aसमय.tv_nsec);
-	पूर्ण
-	अगर (bmval1 & FATTR4_WORD1_TIME_DELTA) अणु
+		if (!p)
+			goto out_resource;
+		p = xdr_encode_hyper(p, (s64)stat.atime.tv_sec);
+		*p++ = cpu_to_be32(stat.atime.tv_nsec);
+	}
+	if (bmval1 & FATTR4_WORD1_TIME_DELTA) {
 		p = xdr_reserve_space(xdr, 12);
-		अगर (!p)
-			जाओ out_resource;
-		p = encode_समय_delta(p, d_inode(dentry));
-	पूर्ण
-	अगर (bmval1 & FATTR4_WORD1_TIME_METADATA) अणु
+		if (!p)
+			goto out_resource;
+		p = encode_time_delta(p, d_inode(dentry));
+	}
+	if (bmval1 & FATTR4_WORD1_TIME_METADATA) {
 		p = xdr_reserve_space(xdr, 12);
-		अगर (!p)
-			जाओ out_resource;
-		p = xdr_encode_hyper(p, (s64)stat.स_समय.tv_sec);
-		*p++ = cpu_to_be32(stat.स_समय.tv_nsec);
-	पूर्ण
-	अगर (bmval1 & FATTR4_WORD1_TIME_MODIFY) अणु
+		if (!p)
+			goto out_resource;
+		p = xdr_encode_hyper(p, (s64)stat.ctime.tv_sec);
+		*p++ = cpu_to_be32(stat.ctime.tv_nsec);
+	}
+	if (bmval1 & FATTR4_WORD1_TIME_MODIFY) {
 		p = xdr_reserve_space(xdr, 12);
-		अगर (!p)
-			जाओ out_resource;
-		p = xdr_encode_hyper(p, (s64)stat.mसमय.tv_sec);
-		*p++ = cpu_to_be32(stat.mसमय.tv_nsec);
-	पूर्ण
-	अगर (bmval1 & FATTR4_WORD1_MOUNTED_ON_खाताID) अणु
-		काष्ठा kstat parent_stat;
+		if (!p)
+			goto out_resource;
+		p = xdr_encode_hyper(p, (s64)stat.mtime.tv_sec);
+		*p++ = cpu_to_be32(stat.mtime.tv_nsec);
+	}
+	if (bmval1 & FATTR4_WORD1_MOUNTED_ON_FILEID) {
+		struct kstat parent_stat;
 		u64 ino = stat.ino;
 
 		p = xdr_reserve_space(xdr, 8);
-		अगर (!p)
-                	जाओ out_resource;
+		if (!p)
+                	goto out_resource;
 		/*
-		 * Get parent's attributes अगर not ignoring crossmount
-		 * and this is the root of a cross-mounted fileप्रणाली.
+		 * Get parent's attributes if not ignoring crossmount
+		 * and this is the root of a cross-mounted filesystem.
 		 */
-		अगर (ignore_crossmnt == 0 &&
-		    dentry == exp->ex_path.mnt->mnt_root) अणु
+		if (ignore_crossmnt == 0 &&
+		    dentry == exp->ex_path.mnt->mnt_root) {
 			err = get_parent_attributes(exp, &parent_stat);
-			अगर (err)
-				जाओ out_nfserr;
+			if (err)
+				goto out_nfserr;
 			ino = parent_stat.ino;
-		पूर्ण
+		}
 		p = xdr_encode_hyper(p, ino);
-	पूर्ण
-#अगर_घोषित CONFIG_NFSD_PNFS
-	अगर (bmval1 & FATTR4_WORD1_FS_LAYOUT_TYPES) अणु
+	}
+#ifdef CONFIG_NFSD_PNFS
+	if (bmval1 & FATTR4_WORD1_FS_LAYOUT_TYPES) {
 		status = nfsd4_encode_layout_types(xdr, exp->ex_layout_types);
-		अगर (status)
-			जाओ out;
-	पूर्ण
+		if (status)
+			goto out;
+	}
 
-	अगर (bmval2 & FATTR4_WORD2_LAYOUT_TYPES) अणु
+	if (bmval2 & FATTR4_WORD2_LAYOUT_TYPES) {
 		status = nfsd4_encode_layout_types(xdr, exp->ex_layout_types);
-		अगर (status)
-			जाओ out;
-	पूर्ण
+		if (status)
+			goto out;
+	}
 
-	अगर (bmval2 & FATTR4_WORD2_LAYOUT_BLKSIZE) अणु
+	if (bmval2 & FATTR4_WORD2_LAYOUT_BLKSIZE) {
 		p = xdr_reserve_space(xdr, 4);
-		अगर (!p)
-			जाओ out_resource;
+		if (!p)
+			goto out_resource;
 		*p++ = cpu_to_be32(stat.blksize);
-	पूर्ण
-#पूर्ण_अगर /* CONFIG_NFSD_PNFS */
-	अगर (bmval2 & FATTR4_WORD2_SUPPATTR_EXCLCREAT) अणु
+	}
+#endif /* CONFIG_NFSD_PNFS */
+	if (bmval2 & FATTR4_WORD2_SUPPATTR_EXCLCREAT) {
 		u32 supp[3];
 
-		स_नकल(supp, nfsd_suppattrs[minorversion], माप(supp));
+		memcpy(supp, nfsd_suppattrs[minorversion], sizeof(supp));
 		supp[0] &= NFSD_SUPPATTR_EXCLCREAT_WORD0;
 		supp[1] &= NFSD_SUPPATTR_EXCLCREAT_WORD1;
 		supp[2] &= NFSD_SUPPATTR_EXCLCREAT_WORD2;
 
-		status = nfsd4_encode_biपंचांगap(xdr, supp[0], supp[1], supp[2]);
-		अगर (status)
-			जाओ out;
-	पूर्ण
+		status = nfsd4_encode_bitmap(xdr, supp[0], supp[1], supp[2]);
+		if (status)
+			goto out;
+	}
 
-#अगर_घोषित CONFIG_NFSD_V4_SECURITY_LABEL
-	अगर (bmval2 & FATTR4_WORD2_SECURITY_LABEL) अणु
+#ifdef CONFIG_NFSD_V4_SECURITY_LABEL
+	if (bmval2 & FATTR4_WORD2_SECURITY_LABEL) {
 		status = nfsd4_encode_security_label(xdr, rqstp, context,
 								contextlen);
-		अगर (status)
-			जाओ out;
-	पूर्ण
-#पूर्ण_अगर
+		if (status)
+			goto out;
+	}
+#endif
 
-	अगर (bmval2 & FATTR4_WORD2_XATTR_SUPPORT) अणु
+	if (bmval2 & FATTR4_WORD2_XATTR_SUPPORT) {
 		p = xdr_reserve_space(xdr, 4);
-		अगर (!p)
-			जाओ out_resource;
+		if (!p)
+			goto out_resource;
 		err = xattr_supported_namespace(d_inode(dentry),
 						XATTR_USER_PREFIX);
 		*p++ = cpu_to_be32(err == 0);
-	पूर्ण
+	}
 
 	attrlen = htonl(xdr->buf->len - attrlen_offset - 4);
-	ग_लिखो_bytes_to_xdr_buf(xdr->buf, attrlen_offset, &attrlen, 4);
+	write_bytes_to_xdr_buf(xdr->buf, attrlen_offset, &attrlen, 4);
 	status = nfs_ok;
 
 out:
-#अगर_घोषित CONFIG_NFSD_V4_SECURITY_LABEL
-	अगर (context)
+#ifdef CONFIG_NFSD_V4_SECURITY_LABEL
+	if (context)
 		security_release_secctx(context, contextlen);
-#पूर्ण_अगर /* CONFIG_NFSD_V4_SECURITY_LABEL */
-	kमुक्त(acl);
-	अगर (tempfh) अणु
+#endif /* CONFIG_NFSD_V4_SECURITY_LABEL */
+	kfree(acl);
+	if (tempfh) {
 		fh_put(tempfh);
-		kमुक्त(tempfh);
-	पूर्ण
-	अगर (status)
+		kfree(tempfh);
+	}
+	if (status)
 		xdr_truncate_encode(xdr, starting_len);
-	वापस status;
+	return status;
 out_nfserr:
-	status = nfsत्रुटि_सं(err);
-	जाओ out;
+	status = nfserrno(err);
+	goto out;
 out_resource:
 	status = nfserr_resource;
-	जाओ out;
-पूर्ण
+	goto out;
+}
 
-अटल व्योम svcxdr_init_encode_from_buffer(काष्ठा xdr_stream *xdr,
-				काष्ठा xdr_buf *buf, __be32 *p, पूर्णांक bytes)
-अणु
+static void svcxdr_init_encode_from_buffer(struct xdr_stream *xdr,
+				struct xdr_buf *buf, __be32 *p, int bytes)
+{
 	xdr->scratch.iov_len = 0;
-	स_रखो(buf, 0, माप(काष्ठा xdr_buf));
+	memset(buf, 0, sizeof(struct xdr_buf));
 	buf->head[0].iov_base = p;
 	buf->head[0].iov_len = 0;
 	buf->len = 0;
 	xdr->buf = buf;
 	xdr->iov = buf->head;
 	xdr->p = p;
-	xdr->end = (व्योम *)p + bytes;
+	xdr->end = (void *)p + bytes;
 	buf->buflen = bytes;
-पूर्ण
+}
 
-__be32 nfsd4_encode_fattr_to_buf(__be32 **p, पूर्णांक words,
-			काष्ठा svc_fh *fhp, काष्ठा svc_export *exp,
-			काष्ठा dentry *dentry, u32 *bmval,
-			काष्ठा svc_rqst *rqstp, पूर्णांक ignore_crossmnt)
-अणु
-	काष्ठा xdr_buf dummy;
-	काष्ठा xdr_stream xdr;
+__be32 nfsd4_encode_fattr_to_buf(__be32 **p, int words,
+			struct svc_fh *fhp, struct svc_export *exp,
+			struct dentry *dentry, u32 *bmval,
+			struct svc_rqst *rqstp, int ignore_crossmnt)
+{
+	struct xdr_buf dummy;
+	struct xdr_stream xdr;
 	__be32 ret;
 
 	svcxdr_init_encode_from_buffer(&xdr, &dummy, *p, words << 2);
 	ret = nfsd4_encode_fattr(&xdr, fhp, exp, dentry, bmval, rqstp,
 							ignore_crossmnt);
 	*p = xdr.p;
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल अंतरभूत पूर्णांक attributes_need_mount(u32 *bmval)
-अणु
-	अगर (bmval[0] & ~(FATTR4_WORD0_RDATTR_ERROR | FATTR4_WORD0_LEASE_TIME))
-		वापस 1;
-	अगर (bmval[1] & ~FATTR4_WORD1_MOUNTED_ON_खाताID)
-		वापस 1;
-	वापस 0;
-पूर्ण
+static inline int attributes_need_mount(u32 *bmval)
+{
+	if (bmval[0] & ~(FATTR4_WORD0_RDATTR_ERROR | FATTR4_WORD0_LEASE_TIME))
+		return 1;
+	if (bmval[1] & ~FATTR4_WORD1_MOUNTED_ON_FILEID)
+		return 1;
+	return 0;
+}
 
-अटल __be32
-nfsd4_encode_dirent_fattr(काष्ठा xdr_stream *xdr, काष्ठा nfsd4_सूची_पढ़ो *cd,
-			स्थिर अक्षर *name, पूर्णांक namlen)
-अणु
-	काष्ठा svc_export *exp = cd->rd_fhp->fh_export;
-	काष्ठा dentry *dentry;
+static __be32
+nfsd4_encode_dirent_fattr(struct xdr_stream *xdr, struct nfsd4_readdir *cd,
+			const char *name, int namlen)
+{
+	struct svc_export *exp = cd->rd_fhp->fh_export;
+	struct dentry *dentry;
 	__be32 nfserr;
-	पूर्णांक ignore_crossmnt = 0;
+	int ignore_crossmnt = 0;
 
 	dentry = lookup_positive_unlocked(name, cd->rd_fhp->fh_dentry, namlen);
-	अगर (IS_ERR(dentry))
-		वापस nfsत्रुटि_सं(PTR_ERR(dentry));
+	if (IS_ERR(dentry))
+		return nfserrno(PTR_ERR(dentry));
 
 	exp_get(exp);
 	/*
-	 * In the हाल of a mountpoपूर्णांक, the client may be asking क्रम
-	 * attributes that are only properties of the underlying fileप्रणाली
-	 * as opposed to the cross-mounted file प्रणाली. In such a हाल,
+	 * In the case of a mountpoint, the client may be asking for
+	 * attributes that are only properties of the underlying filesystem
+	 * as opposed to the cross-mounted file system. In such a case,
 	 * we will not follow the cross mount and will fill the attribtutes
-	 * directly from the mountpoपूर्णांक dentry.
+	 * directly from the mountpoint dentry.
 	 */
-	अगर (nfsd_mountpoपूर्णांक(dentry, exp)) अणु
-		पूर्णांक err;
+	if (nfsd_mountpoint(dentry, exp)) {
+		int err;
 
-		अगर (!(exp->ex_flags & NFSEXP_V4ROOT)
-				&& !attributes_need_mount(cd->rd_bmval)) अणु
+		if (!(exp->ex_flags & NFSEXP_V4ROOT)
+				&& !attributes_need_mount(cd->rd_bmval)) {
 			ignore_crossmnt = 1;
-			जाओ out_encode;
-		पूर्ण
+			goto out_encode;
+		}
 		/*
 		 * Why the heck aren't we just using nfsd_lookup??
-		 * Dअगरferent "."/".." handling?  Something अन्यथा?
+		 * Different "."/".." handling?  Something else?
 		 * At least, add a comment here to explain....
 		 */
 		err = nfsd_cross_mnt(cd->rd_rqstp, &dentry, &exp);
-		अगर (err) अणु
-			nfserr = nfsत्रुटि_सं(err);
-			जाओ out_put;
-		पूर्ण
+		if (err) {
+			nfserr = nfserrno(err);
+			goto out_put;
+		}
 		nfserr = check_nfsd_access(exp, cd->rd_rqstp);
-		अगर (nfserr)
-			जाओ out_put;
+		if (nfserr)
+			goto out_put;
 
-	पूर्ण
+	}
 out_encode:
-	nfserr = nfsd4_encode_fattr(xdr, शून्य, exp, dentry, cd->rd_bmval,
+	nfserr = nfsd4_encode_fattr(xdr, NULL, exp, dentry, cd->rd_bmval,
 					cd->rd_rqstp, ignore_crossmnt);
 out_put:
 	dput(dentry);
 	exp_put(exp);
-	वापस nfserr;
-पूर्ण
+	return nfserr;
+}
 
-अटल __be32 *
-nfsd4_encode_rdattr_error(काष्ठा xdr_stream *xdr, __be32 nfserr)
-अणु
+static __be32 *
+nfsd4_encode_rdattr_error(struct xdr_stream *xdr, __be32 nfserr)
+{
 	__be32 *p;
 
 	p = xdr_reserve_space(xdr, 20);
-	अगर (!p)
-		वापस शून्य;
+	if (!p)
+		return NULL;
 	*p++ = htonl(2);
 	*p++ = htonl(FATTR4_WORD0_RDATTR_ERROR); /* bmval0 */
 	*p++ = htonl(0);			 /* bmval1 */
 
 	*p++ = htonl(4);     /* attribute length */
 	*p++ = nfserr;       /* no htonl */
-	वापस p;
-पूर्ण
+	return p;
+}
 
-अटल पूर्णांक
-nfsd4_encode_dirent(व्योम *ccdv, स्थिर अक्षर *name, पूर्णांक namlen,
-		    loff_t offset, u64 ino, अचिन्हित पूर्णांक d_type)
-अणु
-	काष्ठा सूची_पढ़ो_cd *ccd = ccdv;
-	काष्ठा nfsd4_सूची_पढ़ो *cd = container_of(ccd, काष्ठा nfsd4_सूची_पढ़ो, common);
-	काष्ठा xdr_stream *xdr = cd->xdr;
-	पूर्णांक start_offset = xdr->buf->len;
-	पूर्णांक cookie_offset;
+static int
+nfsd4_encode_dirent(void *ccdv, const char *name, int namlen,
+		    loff_t offset, u64 ino, unsigned int d_type)
+{
+	struct readdir_cd *ccd = ccdv;
+	struct nfsd4_readdir *cd = container_of(ccd, struct nfsd4_readdir, common);
+	struct xdr_stream *xdr = cd->xdr;
+	int start_offset = xdr->buf->len;
+	int cookie_offset;
 	u32 name_and_cookie;
-	पूर्णांक entry_bytes;
+	int entry_bytes;
 	__be32 nfserr = nfserr_toosmall;
 	__be64 wire_offset;
 	__be32 *p;
 
 	/* In nfsv4, "." and ".." never make it onto the wire.. */
-	अगर (name && isकरोtent(name, namlen)) अणु
+	if (name && isdotent(name, namlen)) {
 		cd->common.err = nfs_ok;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (cd->cookie_offset) अणु
+	if (cd->cookie_offset) {
 		wire_offset = cpu_to_be64(offset);
-		ग_लिखो_bytes_to_xdr_buf(xdr->buf, cd->cookie_offset,
+		write_bytes_to_xdr_buf(xdr->buf, cd->cookie_offset,
 							&wire_offset, 8);
-	पूर्ण
+	}
 
 	p = xdr_reserve_space(xdr, 4);
-	अगर (!p)
-		जाओ fail;
+	if (!p)
+		goto fail;
 	*p++ = xdr_one;                             /* mark entry present */
 	cookie_offset = xdr->buf->len;
 	p = xdr_reserve_space(xdr, 3*4 + namlen);
-	अगर (!p)
-		जाओ fail;
+	if (!p)
+		goto fail;
 	p = xdr_encode_hyper(p, NFS_OFFSET_MAX);    /* offset of next entry */
 	p = xdr_encode_array(p, name, namlen);      /* name length & name */
 
 	nfserr = nfsd4_encode_dirent_fattr(xdr, cd, name, namlen);
-	चयन (nfserr) अणु
-	हाल nfs_ok:
-		अवरोध;
-	हाल nfserr_resource:
+	switch (nfserr) {
+	case nfs_ok:
+		break;
+	case nfserr_resource:
 		nfserr = nfserr_toosmall;
-		जाओ fail;
-	हाल nfserr_noent:
+		goto fail;
+	case nfserr_noent:
 		xdr_truncate_encode(xdr, start_offset);
-		जाओ skip_entry;
-	शेष:
+		goto skip_entry;
+	default:
 		/*
 		 * If the client requested the RDATTR_ERROR attribute,
-		 * we stuff the error code पूर्णांकo this attribute
-		 * and जारी.  If this attribute was not requested,
+		 * we stuff the error code into this attribute
+		 * and continue.  If this attribute was not requested,
 		 * then in accordance with the spec, we fail the
-		 * entire READसूची operation(!)
+		 * entire READDIR operation(!)
 		 */
-		अगर (!(cd->rd_bmval[0] & FATTR4_WORD0_RDATTR_ERROR))
-			जाओ fail;
+		if (!(cd->rd_bmval[0] & FATTR4_WORD0_RDATTR_ERROR))
+			goto fail;
 		p = nfsd4_encode_rdattr_error(xdr, nfserr);
-		अगर (p == शून्य) अणु
+		if (p == NULL) {
 			nfserr = nfserr_toosmall;
-			जाओ fail;
-		पूर्ण
-	पूर्ण
+			goto fail;
+		}
+	}
 	nfserr = nfserr_toosmall;
 	entry_bytes = xdr->buf->len - start_offset;
-	अगर (entry_bytes > cd->rd_maxcount)
-		जाओ fail;
+	if (entry_bytes > cd->rd_maxcount)
+		goto fail;
 	cd->rd_maxcount -= entry_bytes;
 	/*
 	 * RFC 3530 14.2.24 describes rd_dircount as only a "hint", so
 	 * let's always let through the first entry, at least:
 	 */
-	अगर (!cd->rd_dircount)
-		जाओ fail;
+	if (!cd->rd_dircount)
+		goto fail;
 	name_and_cookie = 4 + 4 * XDR_QUADLEN(namlen) + 8;
-	अगर (name_and_cookie > cd->rd_dircount && cd->cookie_offset)
-		जाओ fail;
+	if (name_and_cookie > cd->rd_dircount && cd->cookie_offset)
+		goto fail;
 	cd->rd_dircount -= min(cd->rd_dircount, name_and_cookie);
 
 	cd->cookie_offset = cookie_offset;
 skip_entry:
 	cd->common.err = nfs_ok;
-	वापस 0;
+	return 0;
 fail:
 	xdr_truncate_encode(xdr, start_offset);
 	cd->common.err = nfserr;
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल __be32
-nfsd4_encode_stateid(काष्ठा xdr_stream *xdr, stateid_t *sid)
-अणु
+static __be32
+nfsd4_encode_stateid(struct xdr_stream *xdr, stateid_t *sid)
+{
 	__be32 *p;
 
-	p = xdr_reserve_space(xdr, माप(stateid_t));
-	अगर (!p)
-		वापस nfserr_resource;
+	p = xdr_reserve_space(xdr, sizeof(stateid_t));
+	if (!p)
+		return nfserr_resource;
 	*p++ = cpu_to_be32(sid->si_generation);
 	p = xdr_encode_opaque_fixed(p, &sid->si_opaque,
-					माप(stateid_opaque_t));
-	वापस 0;
-पूर्ण
+					sizeof(stateid_opaque_t));
+	return 0;
+}
 
-अटल __be32
-nfsd4_encode_access(काष्ठा nfsd4_compoundres *resp, __be32 nfserr, काष्ठा nfsd4_access *access)
-अणु
-	काष्ठा xdr_stream *xdr = resp->xdr;
+static __be32
+nfsd4_encode_access(struct nfsd4_compoundres *resp, __be32 nfserr, struct nfsd4_access *access)
+{
+	struct xdr_stream *xdr = resp->xdr;
 	__be32 *p;
 
 	p = xdr_reserve_space(xdr, 8);
-	अगर (!p)
-		वापस nfserr_resource;
+	if (!p)
+		return nfserr_resource;
 	*p++ = cpu_to_be32(access->ac_supported);
 	*p++ = cpu_to_be32(access->ac_resp_access);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल __be32 nfsd4_encode_bind_conn_to_session(काष्ठा nfsd4_compoundres *resp, __be32 nfserr, काष्ठा nfsd4_bind_conn_to_session *bcts)
-अणु
-	काष्ठा xdr_stream *xdr = resp->xdr;
+static __be32 nfsd4_encode_bind_conn_to_session(struct nfsd4_compoundres *resp, __be32 nfserr, struct nfsd4_bind_conn_to_session *bcts)
+{
+	struct xdr_stream *xdr = resp->xdr;
 	__be32 *p;
 
 	p = xdr_reserve_space(xdr, NFS4_MAX_SESSIONID_LEN + 8);
-	अगर (!p)
-		वापस nfserr_resource;
+	if (!p)
+		return nfserr_resource;
 	p = xdr_encode_opaque_fixed(p, bcts->sessionid.data,
 					NFS4_MAX_SESSIONID_LEN);
 	*p++ = cpu_to_be32(bcts->dir);
-	/* Upshअगरting from TCP to RDMA is not supported */
+	/* Upshifting from TCP to RDMA is not supported */
 	*p++ = cpu_to_be32(0);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल __be32
-nfsd4_encode_बंद(काष्ठा nfsd4_compoundres *resp, __be32 nfserr, काष्ठा nfsd4_बंद *बंद)
-अणु
-	काष्ठा xdr_stream *xdr = resp->xdr;
+static __be32
+nfsd4_encode_close(struct nfsd4_compoundres *resp, __be32 nfserr, struct nfsd4_close *close)
+{
+	struct xdr_stream *xdr = resp->xdr;
 
-	वापस nfsd4_encode_stateid(xdr, &बंद->cl_stateid);
-पूर्ण
+	return nfsd4_encode_stateid(xdr, &close->cl_stateid);
+}
 
 
-अटल __be32
-nfsd4_encode_commit(काष्ठा nfsd4_compoundres *resp, __be32 nfserr, काष्ठा nfsd4_commit *commit)
-अणु
-	काष्ठा xdr_stream *xdr = resp->xdr;
+static __be32
+nfsd4_encode_commit(struct nfsd4_compoundres *resp, __be32 nfserr, struct nfsd4_commit *commit)
+{
+	struct xdr_stream *xdr = resp->xdr;
 	__be32 *p;
 
 	p = xdr_reserve_space(xdr, NFS4_VERIFIER_SIZE);
-	अगर (!p)
-		वापस nfserr_resource;
+	if (!p)
+		return nfserr_resource;
 	p = xdr_encode_opaque_fixed(p, commit->co_verf.data,
 						NFS4_VERIFIER_SIZE);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल __be32
-nfsd4_encode_create(काष्ठा nfsd4_compoundres *resp, __be32 nfserr, काष्ठा nfsd4_create *create)
-अणु
-	काष्ठा xdr_stream *xdr = resp->xdr;
+static __be32
+nfsd4_encode_create(struct nfsd4_compoundres *resp, __be32 nfserr, struct nfsd4_create *create)
+{
+	struct xdr_stream *xdr = resp->xdr;
 	__be32 *p;
 
 	p = xdr_reserve_space(xdr, 20);
-	अगर (!p)
-		वापस nfserr_resource;
+	if (!p)
+		return nfserr_resource;
 	encode_cinfo(p, &create->cr_cinfo);
-	वापस nfsd4_encode_biपंचांगap(xdr, create->cr_bmval[0],
+	return nfsd4_encode_bitmap(xdr, create->cr_bmval[0],
 			create->cr_bmval[1], create->cr_bmval[2]);
-पूर्ण
+}
 
-अटल __be32
-nfsd4_encode_getattr(काष्ठा nfsd4_compoundres *resp, __be32 nfserr, काष्ठा nfsd4_getattr *getattr)
-अणु
-	काष्ठा svc_fh *fhp = getattr->ga_fhp;
-	काष्ठा xdr_stream *xdr = resp->xdr;
+static __be32
+nfsd4_encode_getattr(struct nfsd4_compoundres *resp, __be32 nfserr, struct nfsd4_getattr *getattr)
+{
+	struct svc_fh *fhp = getattr->ga_fhp;
+	struct xdr_stream *xdr = resp->xdr;
 
-	वापस nfsd4_encode_fattr(xdr, fhp, fhp->fh_export, fhp->fh_dentry,
+	return nfsd4_encode_fattr(xdr, fhp, fhp->fh_export, fhp->fh_dentry,
 				    getattr->ga_bmval, resp->rqstp, 0);
-पूर्ण
+}
 
-अटल __be32
-nfsd4_encode_getfh(काष्ठा nfsd4_compoundres *resp, __be32 nfserr, काष्ठा svc_fh **fhpp)
-अणु
-	काष्ठा xdr_stream *xdr = resp->xdr;
-	काष्ठा svc_fh *fhp = *fhpp;
-	अचिन्हित पूर्णांक len;
+static __be32
+nfsd4_encode_getfh(struct nfsd4_compoundres *resp, __be32 nfserr, struct svc_fh **fhpp)
+{
+	struct xdr_stream *xdr = resp->xdr;
+	struct svc_fh *fhp = *fhpp;
+	unsigned int len;
 	__be32 *p;
 
 	len = fhp->fh_handle.fh_size;
 	p = xdr_reserve_space(xdr, len + 4);
-	अगर (!p)
-		वापस nfserr_resource;
+	if (!p)
+		return nfserr_resource;
 	p = xdr_encode_opaque(p, &fhp->fh_handle.fh_base, len);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
-* Including all fields other than the name, a LOCK4denied काष्ठाure requires
+* Including all fields other than the name, a LOCK4denied structure requires
 *   8(clientid) + 4(namelen) + 8(offset) + 8(length) + 4(type) = 32 bytes.
 */
-अटल __be32
-nfsd4_encode_lock_denied(काष्ठा xdr_stream *xdr, काष्ठा nfsd4_lock_denied *ld)
-अणु
-	काष्ठा xdr_netobj *conf = &ld->ld_owner;
+static __be32
+nfsd4_encode_lock_denied(struct xdr_stream *xdr, struct nfsd4_lock_denied *ld)
+{
+	struct xdr_netobj *conf = &ld->ld_owner;
 	__be32 *p;
 
 again:
 	p = xdr_reserve_space(xdr, 32 + XDR_LEN(conf->len));
-	अगर (!p) अणु
+	if (!p) {
 		/*
 		 * Don't fail to return the result just because we can't
-		 * वापस the conflicting खोलो:
+		 * return the conflicting open:
 		 */
-		अगर (conf->len) अणु
-			kमुक्त(conf->data);
+		if (conf->len) {
+			kfree(conf->data);
 			conf->len = 0;
-			conf->data = शून्य;
-			जाओ again;
-		पूर्ण
-		वापस nfserr_resource;
-	पूर्ण
+			conf->data = NULL;
+			goto again;
+		}
+		return nfserr_resource;
+	}
 	p = xdr_encode_hyper(p, ld->ld_start);
 	p = xdr_encode_hyper(p, ld->ld_length);
 	*p++ = cpu_to_be32(ld->ld_type);
-	अगर (conf->len) अणु
+	if (conf->len) {
 		p = xdr_encode_opaque_fixed(p, &ld->ld_clientid, 8);
 		p = xdr_encode_opaque(p, conf->data, conf->len);
-		kमुक्त(conf->data);
-	पूर्ण  अन्यथा अणु  /* non - nfsv4 lock in conflict, no clientid nor owner */
+		kfree(conf->data);
+	}  else {  /* non - nfsv4 lock in conflict, no clientid nor owner */
 		p = xdr_encode_hyper(p, (u64)0); /* clientid */
 		*p++ = cpu_to_be32(0); /* length of owner name */
-	पूर्ण
-	वापस nfserr_denied;
-पूर्ण
+	}
+	return nfserr_denied;
+}
 
-अटल __be32
-nfsd4_encode_lock(काष्ठा nfsd4_compoundres *resp, __be32 nfserr, काष्ठा nfsd4_lock *lock)
-अणु
-	काष्ठा xdr_stream *xdr = resp->xdr;
+static __be32
+nfsd4_encode_lock(struct nfsd4_compoundres *resp, __be32 nfserr, struct nfsd4_lock *lock)
+{
+	struct xdr_stream *xdr = resp->xdr;
 
-	अगर (!nfserr)
+	if (!nfserr)
 		nfserr = nfsd4_encode_stateid(xdr, &lock->lk_resp_stateid);
-	अन्यथा अगर (nfserr == nfserr_denied)
+	else if (nfserr == nfserr_denied)
 		nfserr = nfsd4_encode_lock_denied(xdr, &lock->lk_denied);
 
-	वापस nfserr;
-पूर्ण
+	return nfserr;
+}
 
-अटल __be32
-nfsd4_encode_lockt(काष्ठा nfsd4_compoundres *resp, __be32 nfserr, काष्ठा nfsd4_lockt *lockt)
-अणु
-	काष्ठा xdr_stream *xdr = resp->xdr;
+static __be32
+nfsd4_encode_lockt(struct nfsd4_compoundres *resp, __be32 nfserr, struct nfsd4_lockt *lockt)
+{
+	struct xdr_stream *xdr = resp->xdr;
 
-	अगर (nfserr == nfserr_denied)
+	if (nfserr == nfserr_denied)
 		nfsd4_encode_lock_denied(xdr, &lockt->lt_denied);
-	वापस nfserr;
-पूर्ण
+	return nfserr;
+}
 
-अटल __be32
-nfsd4_encode_locku(काष्ठा nfsd4_compoundres *resp, __be32 nfserr, काष्ठा nfsd4_locku *locku)
-अणु
-	काष्ठा xdr_stream *xdr = resp->xdr;
+static __be32
+nfsd4_encode_locku(struct nfsd4_compoundres *resp, __be32 nfserr, struct nfsd4_locku *locku)
+{
+	struct xdr_stream *xdr = resp->xdr;
 
-	वापस nfsd4_encode_stateid(xdr, &locku->lu_stateid);
-पूर्ण
+	return nfsd4_encode_stateid(xdr, &locku->lu_stateid);
+}
 
 
-अटल __be32
-nfsd4_encode_link(काष्ठा nfsd4_compoundres *resp, __be32 nfserr, काष्ठा nfsd4_link *link)
-अणु
-	काष्ठा xdr_stream *xdr = resp->xdr;
+static __be32
+nfsd4_encode_link(struct nfsd4_compoundres *resp, __be32 nfserr, struct nfsd4_link *link)
+{
+	struct xdr_stream *xdr = resp->xdr;
 	__be32 *p;
 
 	p = xdr_reserve_space(xdr, 20);
-	अगर (!p)
-		वापस nfserr_resource;
+	if (!p)
+		return nfserr_resource;
 	p = encode_cinfo(p, &link->li_cinfo);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-अटल __be32
-nfsd4_encode_खोलो(काष्ठा nfsd4_compoundres *resp, __be32 nfserr, काष्ठा nfsd4_खोलो *खोलो)
-अणु
-	काष्ठा xdr_stream *xdr = resp->xdr;
+static __be32
+nfsd4_encode_open(struct nfsd4_compoundres *resp, __be32 nfserr, struct nfsd4_open *open)
+{
+	struct xdr_stream *xdr = resp->xdr;
 	__be32 *p;
 
-	nfserr = nfsd4_encode_stateid(xdr, &खोलो->op_stateid);
-	अगर (nfserr)
-		वापस nfserr;
+	nfserr = nfsd4_encode_stateid(xdr, &open->op_stateid);
+	if (nfserr)
+		return nfserr;
 	p = xdr_reserve_space(xdr, 24);
-	अगर (!p)
-		वापस nfserr_resource;
-	p = encode_cinfo(p, &खोलो->op_cinfo);
-	*p++ = cpu_to_be32(खोलो->op_rflags);
+	if (!p)
+		return nfserr_resource;
+	p = encode_cinfo(p, &open->op_cinfo);
+	*p++ = cpu_to_be32(open->op_rflags);
 
-	nfserr = nfsd4_encode_biपंचांगap(xdr, खोलो->op_bmval[0], खोलो->op_bmval[1],
-					खोलो->op_bmval[2]);
-	अगर (nfserr)
-		वापस nfserr;
+	nfserr = nfsd4_encode_bitmap(xdr, open->op_bmval[0], open->op_bmval[1],
+					open->op_bmval[2]);
+	if (nfserr)
+		return nfserr;
 
 	p = xdr_reserve_space(xdr, 4);
-	अगर (!p)
-		वापस nfserr_resource;
+	if (!p)
+		return nfserr_resource;
 
-	*p++ = cpu_to_be32(खोलो->op_delegate_type);
-	चयन (खोलो->op_delegate_type) अणु
-	हाल NFS4_OPEN_DELEGATE_NONE:
-		अवरोध;
-	हाल NFS4_OPEN_DELEGATE_READ:
-		nfserr = nfsd4_encode_stateid(xdr, &खोलो->op_delegate_stateid);
-		अगर (nfserr)
-			वापस nfserr;
+	*p++ = cpu_to_be32(open->op_delegate_type);
+	switch (open->op_delegate_type) {
+	case NFS4_OPEN_DELEGATE_NONE:
+		break;
+	case NFS4_OPEN_DELEGATE_READ:
+		nfserr = nfsd4_encode_stateid(xdr, &open->op_delegate_stateid);
+		if (nfserr)
+			return nfserr;
 		p = xdr_reserve_space(xdr, 20);
-		अगर (!p)
-			वापस nfserr_resource;
-		*p++ = cpu_to_be32(खोलो->op_recall);
+		if (!p)
+			return nfserr_resource;
+		*p++ = cpu_to_be32(open->op_recall);
 
 		/*
 		 * TODO: ACE's in delegations
@@ -3800,15 +3799,15 @@ nfsd4_encode_खोलो(काष्ठा nfsd4_compoundres *resp, __be32 nfs
 		*p++ = cpu_to_be32(NFS4_ACE_ACCESS_ALLOWED_ACE_TYPE);
 		*p++ = cpu_to_be32(0);
 		*p++ = cpu_to_be32(0);
-		*p++ = cpu_to_be32(0);   /* XXX: is शून्य principal ok? */
-		अवरोध;
-	हाल NFS4_OPEN_DELEGATE_WRITE:
-		nfserr = nfsd4_encode_stateid(xdr, &खोलो->op_delegate_stateid);
-		अगर (nfserr)
-			वापस nfserr;
+		*p++ = cpu_to_be32(0);   /* XXX: is NULL principal ok? */
+		break;
+	case NFS4_OPEN_DELEGATE_WRITE:
+		nfserr = nfsd4_encode_stateid(xdr, &open->op_delegate_stateid);
+		if (nfserr)
+			return nfserr;
 		p = xdr_reserve_space(xdr, 32);
-		अगर (!p)
-			वापस nfserr_resource;
+		if (!p)
+			return nfserr_resource;
 		*p++ = cpu_to_be32(0);
 
 		/*
@@ -3824,76 +3823,76 @@ nfsd4_encode_खोलो(काष्ठा nfsd4_compoundres *resp, __be32 nfs
 		*p++ = cpu_to_be32(NFS4_ACE_ACCESS_ALLOWED_ACE_TYPE);
 		*p++ = cpu_to_be32(0);
 		*p++ = cpu_to_be32(0);
-		*p++ = cpu_to_be32(0);   /* XXX: is शून्य principal ok? */
-		अवरोध;
-	हाल NFS4_OPEN_DELEGATE_NONE_EXT: /* 4.1 */
-		चयन (खोलो->op_why_no_deleg) अणु
-		हाल WND4_CONTENTION:
-		हाल WND4_RESOURCE:
+		*p++ = cpu_to_be32(0);   /* XXX: is NULL principal ok? */
+		break;
+	case NFS4_OPEN_DELEGATE_NONE_EXT: /* 4.1 */
+		switch (open->op_why_no_deleg) {
+		case WND4_CONTENTION:
+		case WND4_RESOURCE:
 			p = xdr_reserve_space(xdr, 8);
-			अगर (!p)
-				वापस nfserr_resource;
-			*p++ = cpu_to_be32(खोलो->op_why_no_deleg);
-			/* deleg संकेतing not supported yet: */
+			if (!p)
+				return nfserr_resource;
+			*p++ = cpu_to_be32(open->op_why_no_deleg);
+			/* deleg signaling not supported yet: */
 			*p++ = cpu_to_be32(0);
-			अवरोध;
-		शेष:
+			break;
+		default:
 			p = xdr_reserve_space(xdr, 4);
-			अगर (!p)
-				वापस nfserr_resource;
-			*p++ = cpu_to_be32(खोलो->op_why_no_deleg);
-		पूर्ण
-		अवरोध;
-	शेष:
+			if (!p)
+				return nfserr_resource;
+			*p++ = cpu_to_be32(open->op_why_no_deleg);
+		}
+		break;
+	default:
 		BUG();
-	पूर्ण
+	}
 	/* XXX save filehandle here */
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल __be32
-nfsd4_encode_खोलो_confirm(काष्ठा nfsd4_compoundres *resp, __be32 nfserr, काष्ठा nfsd4_खोलो_confirm *oc)
-अणु
-	काष्ठा xdr_stream *xdr = resp->xdr;
+static __be32
+nfsd4_encode_open_confirm(struct nfsd4_compoundres *resp, __be32 nfserr, struct nfsd4_open_confirm *oc)
+{
+	struct xdr_stream *xdr = resp->xdr;
 
-	वापस nfsd4_encode_stateid(xdr, &oc->oc_resp_stateid);
-पूर्ण
+	return nfsd4_encode_stateid(xdr, &oc->oc_resp_stateid);
+}
 
-अटल __be32
-nfsd4_encode_खोलो_करोwngrade(काष्ठा nfsd4_compoundres *resp, __be32 nfserr, काष्ठा nfsd4_खोलो_करोwngrade *od)
-अणु
-	काष्ठा xdr_stream *xdr = resp->xdr;
+static __be32
+nfsd4_encode_open_downgrade(struct nfsd4_compoundres *resp, __be32 nfserr, struct nfsd4_open_downgrade *od)
+{
+	struct xdr_stream *xdr = resp->xdr;
 
-	वापस nfsd4_encode_stateid(xdr, &od->od_stateid);
-पूर्ण
+	return nfsd4_encode_stateid(xdr, &od->od_stateid);
+}
 
-अटल __be32 nfsd4_encode_splice_पढ़ो(
-				काष्ठा nfsd4_compoundres *resp,
-				काष्ठा nfsd4_पढ़ो *पढ़ो,
-				काष्ठा file *file, अचिन्हित दीर्घ maxcount)
-अणु
-	काष्ठा xdr_stream *xdr = resp->xdr;
-	काष्ठा xdr_buf *buf = xdr->buf;
-	पूर्णांक status, space_left;
+static __be32 nfsd4_encode_splice_read(
+				struct nfsd4_compoundres *resp,
+				struct nfsd4_read *read,
+				struct file *file, unsigned long maxcount)
+{
+	struct xdr_stream *xdr = resp->xdr;
+	struct xdr_buf *buf = xdr->buf;
+	int status, space_left;
 	u32 eof;
 	__be32 nfserr;
 	__be32 *p = xdr->p - 2;
 
-	/* Make sure there will be room क्रम padding अगर needed */
-	अगर (xdr->end - xdr->p < 1)
-		वापस nfserr_resource;
+	/* Make sure there will be room for padding if needed */
+	if (xdr->end - xdr->p < 1)
+		return nfserr_resource;
 
-	nfserr = nfsd_splice_पढ़ो(पढ़ो->rd_rqstp, पढ़ो->rd_fhp,
-				  file, पढ़ो->rd_offset, &maxcount, &eof);
-	पढ़ो->rd_length = maxcount;
-	अगर (nfserr)
-		जाओ out_err;
-	status = svc_encode_result_payload(पढ़ो->rd_rqstp,
+	nfserr = nfsd_splice_read(read->rd_rqstp, read->rd_fhp,
+				  file, read->rd_offset, &maxcount, &eof);
+	read->rd_length = maxcount;
+	if (nfserr)
+		goto out_err;
+	status = svc_encode_result_payload(read->rd_rqstp,
 					   buf->head[0].iov_len, maxcount);
-	अगर (status) अणु
-		nfserr = nfsत्रुटि_सं(status);
-		जाओ out_err;
-	पूर्ण
+	if (status) {
+		nfserr = nfserrno(status);
+		goto out_err;
+	}
 
 	*(p++) = htonl(eof);
 	*(p++) = htonl(maxcount);
@@ -3903,466 +3902,466 @@ nfsd4_encode_खोलो_करोwngrade(काष्ठा nfsd4_compoundres 
 	xdr->page_ptr += (buf->page_base + maxcount + PAGE_SIZE - 1)
 							/ PAGE_SIZE;
 
-	/* Use rest of head क्रम padding and reमुख्यing ops: */
+	/* Use rest of head for padding and remaining ops: */
 	buf->tail[0].iov_base = xdr->p;
 	buf->tail[0].iov_len = 0;
 	xdr->iov = buf->tail;
-	अगर (maxcount&3) अणु
-		पूर्णांक pad = 4 - (maxcount&3);
+	if (maxcount&3) {
+		int pad = 4 - (maxcount&3);
 
 		*(xdr->p++) = 0;
 
 		buf->tail[0].iov_base += maxcount&3;
 		buf->tail[0].iov_len = pad;
 		buf->len += pad;
-	पूर्ण
+	}
 
-	space_left = min_t(पूर्णांक, (व्योम *)xdr->end - (व्योम *)xdr->p,
+	space_left = min_t(int, (void *)xdr->end - (void *)xdr->p,
 				buf->buflen - buf->len);
 	buf->buflen = buf->len + space_left;
-	xdr->end = (__be32 *)((व्योम *)xdr->end + space_left);
+	xdr->end = (__be32 *)((void *)xdr->end + space_left);
 
-	वापस 0;
+	return 0;
 
 out_err:
 	/*
-	 * nfsd_splice_actor may have alपढ़ोy messed with the
+	 * nfsd_splice_actor may have already messed with the
 	 * page length; reset it so as not to confuse
 	 * xdr_truncate_encode in our caller.
 	 */
 	buf->page_len = 0;
-	वापस nfserr;
-पूर्ण
+	return nfserr;
+}
 
-अटल __be32 nfsd4_encode_पढ़ोv(काष्ठा nfsd4_compoundres *resp,
-				 काष्ठा nfsd4_पढ़ो *पढ़ो,
-				 काष्ठा file *file, अचिन्हित दीर्घ maxcount)
-अणु
-	काष्ठा xdr_stream *xdr = resp->xdr;
+static __be32 nfsd4_encode_readv(struct nfsd4_compoundres *resp,
+				 struct nfsd4_read *read,
+				 struct file *file, unsigned long maxcount)
+{
+	struct xdr_stream *xdr = resp->xdr;
 	u32 eof;
-	पूर्णांक starting_len = xdr->buf->len - 8;
+	int starting_len = xdr->buf->len - 8;
 	__be32 nfserr;
-	__be32 पंचांगp;
-	पूर्णांक pad;
+	__be32 tmp;
+	int pad;
 
-	पढ़ो->rd_vlen = xdr_reserve_space_vec(xdr, resp->rqstp->rq_vec, maxcount);
-	अगर (पढ़ो->rd_vlen < 0)
-		वापस nfserr_resource;
+	read->rd_vlen = xdr_reserve_space_vec(xdr, resp->rqstp->rq_vec, maxcount);
+	if (read->rd_vlen < 0)
+		return nfserr_resource;
 
-	nfserr = nfsd_पढ़ोv(resp->rqstp, पढ़ो->rd_fhp, file, पढ़ो->rd_offset,
-			    resp->rqstp->rq_vec, पढ़ो->rd_vlen, &maxcount,
+	nfserr = nfsd_readv(resp->rqstp, read->rd_fhp, file, read->rd_offset,
+			    resp->rqstp->rq_vec, read->rd_vlen, &maxcount,
 			    &eof);
-	पढ़ो->rd_length = maxcount;
-	अगर (nfserr)
-		वापस nfserr;
-	अगर (svc_encode_result_payload(resp->rqstp, starting_len + 8, maxcount))
-		वापस nfserr_io;
+	read->rd_length = maxcount;
+	if (nfserr)
+		return nfserr;
+	if (svc_encode_result_payload(resp->rqstp, starting_len + 8, maxcount))
+		return nfserr_io;
 	xdr_truncate_encode(xdr, starting_len + 8 + xdr_align_size(maxcount));
 
-	पंचांगp = htonl(eof);
-	ग_लिखो_bytes_to_xdr_buf(xdr->buf, starting_len    , &पंचांगp, 4);
-	पंचांगp = htonl(maxcount);
-	ग_लिखो_bytes_to_xdr_buf(xdr->buf, starting_len + 4, &पंचांगp, 4);
+	tmp = htonl(eof);
+	write_bytes_to_xdr_buf(xdr->buf, starting_len    , &tmp, 4);
+	tmp = htonl(maxcount);
+	write_bytes_to_xdr_buf(xdr->buf, starting_len + 4, &tmp, 4);
 
-	पंचांगp = xdr_zero;
+	tmp = xdr_zero;
 	pad = (maxcount&3) ? 4 - (maxcount&3) : 0;
-	ग_लिखो_bytes_to_xdr_buf(xdr->buf, starting_len + 8 + maxcount,
-								&पंचांगp, pad);
-	वापस 0;
+	write_bytes_to_xdr_buf(xdr->buf, starting_len + 8 + maxcount,
+								&tmp, pad);
+	return 0;
 
-पूर्ण
+}
 
-अटल __be32
-nfsd4_encode_पढ़ो(काष्ठा nfsd4_compoundres *resp, __be32 nfserr,
-		  काष्ठा nfsd4_पढ़ो *पढ़ो)
-अणु
-	अचिन्हित दीर्घ maxcount;
-	काष्ठा xdr_stream *xdr = resp->xdr;
-	काष्ठा file *file;
-	पूर्णांक starting_len = xdr->buf->len;
+static __be32
+nfsd4_encode_read(struct nfsd4_compoundres *resp, __be32 nfserr,
+		  struct nfsd4_read *read)
+{
+	unsigned long maxcount;
+	struct xdr_stream *xdr = resp->xdr;
+	struct file *file;
+	int starting_len = xdr->buf->len;
 	__be32 *p;
 
-	अगर (nfserr)
-		वापस nfserr;
-	file = पढ़ो->rd_nf->nf_file;
+	if (nfserr)
+		return nfserr;
+	file = read->rd_nf->nf_file;
 
 	p = xdr_reserve_space(xdr, 8); /* eof flag and byte count */
-	अगर (!p) अणु
+	if (!p) {
 		WARN_ON_ONCE(test_bit(RQ_SPLICE_OK, &resp->rqstp->rq_flags));
-		वापस nfserr_resource;
-	पूर्ण
-	अगर (resp->xdr->buf->page_len &&
-	    test_bit(RQ_SPLICE_OK, &resp->rqstp->rq_flags)) अणु
+		return nfserr_resource;
+	}
+	if (resp->xdr->buf->page_len &&
+	    test_bit(RQ_SPLICE_OK, &resp->rqstp->rq_flags)) {
 		WARN_ON_ONCE(1);
-		वापस nfserr_resource;
-	पूर्ण
+		return nfserr_resource;
+	}
 	xdr_commit_encode(xdr);
 
 	maxcount = svc_max_payload(resp->rqstp);
-	maxcount = min_t(अचिन्हित दीर्घ, maxcount,
+	maxcount = min_t(unsigned long, maxcount,
 			 (xdr->buf->buflen - xdr->buf->len));
-	maxcount = min_t(अचिन्हित दीर्घ, maxcount, पढ़ो->rd_length);
+	maxcount = min_t(unsigned long, maxcount, read->rd_length);
 
-	अगर (file->f_op->splice_पढ़ो &&
+	if (file->f_op->splice_read &&
 	    test_bit(RQ_SPLICE_OK, &resp->rqstp->rq_flags))
-		nfserr = nfsd4_encode_splice_पढ़ो(resp, पढ़ो, file, maxcount);
-	अन्यथा
-		nfserr = nfsd4_encode_पढ़ोv(resp, पढ़ो, file, maxcount);
+		nfserr = nfsd4_encode_splice_read(resp, read, file, maxcount);
+	else
+		nfserr = nfsd4_encode_readv(resp, read, file, maxcount);
 
-	अगर (nfserr)
+	if (nfserr)
 		xdr_truncate_encode(xdr, starting_len);
 
-	वापस nfserr;
-पूर्ण
+	return nfserr;
+}
 
-अटल __be32
-nfsd4_encode_पढ़ोlink(काष्ठा nfsd4_compoundres *resp, __be32 nfserr, काष्ठा nfsd4_पढ़ोlink *पढ़ोlink)
-अणु
-	पूर्णांक maxcount;
+static __be32
+nfsd4_encode_readlink(struct nfsd4_compoundres *resp, __be32 nfserr, struct nfsd4_readlink *readlink)
+{
+	int maxcount;
 	__be32 wire_count;
-	पूर्णांक zero = 0;
-	काष्ठा xdr_stream *xdr = resp->xdr;
-	पूर्णांक length_offset = xdr->buf->len;
-	पूर्णांक status;
+	int zero = 0;
+	struct xdr_stream *xdr = resp->xdr;
+	int length_offset = xdr->buf->len;
+	int status;
 	__be32 *p;
 
 	p = xdr_reserve_space(xdr, 4);
-	अगर (!p)
-		वापस nfserr_resource;
+	if (!p)
+		return nfserr_resource;
 	maxcount = PAGE_SIZE;
 
 	p = xdr_reserve_space(xdr, maxcount);
-	अगर (!p)
-		वापस nfserr_resource;
+	if (!p)
+		return nfserr_resource;
 	/*
-	 * XXX: By शेष, vfs_पढ़ोlink() will truncate symlinks अगर they
+	 * XXX: By default, vfs_readlink() will truncate symlinks if they
 	 * would overflow the buffer.  Is this kosher in NFSv4?  If not, one
-	 * easy fix is: अगर vfs_पढ़ोlink() precisely fills the buffer, assume
-	 * that truncation occurred, and वापस NFS4ERR_RESOURCE.
+	 * easy fix is: if vfs_readlink() precisely fills the buffer, assume
+	 * that truncation occurred, and return NFS4ERR_RESOURCE.
 	 */
-	nfserr = nfsd_पढ़ोlink(पढ़ोlink->rl_rqstp, पढ़ोlink->rl_fhp,
-						(अक्षर *)p, &maxcount);
-	अगर (nfserr == nfserr_isdir)
+	nfserr = nfsd_readlink(readlink->rl_rqstp, readlink->rl_fhp,
+						(char *)p, &maxcount);
+	if (nfserr == nfserr_isdir)
 		nfserr = nfserr_inval;
-	अगर (nfserr)
-		जाओ out_err;
-	status = svc_encode_result_payload(पढ़ोlink->rl_rqstp, length_offset,
+	if (nfserr)
+		goto out_err;
+	status = svc_encode_result_payload(readlink->rl_rqstp, length_offset,
 					   maxcount);
-	अगर (status) अणु
-		nfserr = nfsत्रुटि_सं(status);
-		जाओ out_err;
-	पूर्ण
+	if (status) {
+		nfserr = nfserrno(status);
+		goto out_err;
+	}
 
 	wire_count = htonl(maxcount);
-	ग_लिखो_bytes_to_xdr_buf(xdr->buf, length_offset, &wire_count, 4);
+	write_bytes_to_xdr_buf(xdr->buf, length_offset, &wire_count, 4);
 	xdr_truncate_encode(xdr, length_offset + 4 + ALIGN(maxcount, 4));
-	अगर (maxcount & 3)
-		ग_लिखो_bytes_to_xdr_buf(xdr->buf, length_offset + 4 + maxcount,
+	if (maxcount & 3)
+		write_bytes_to_xdr_buf(xdr->buf, length_offset + 4 + maxcount,
 						&zero, 4 - (maxcount&3));
-	वापस 0;
+	return 0;
 
 out_err:
 	xdr_truncate_encode(xdr, length_offset);
-	वापस nfserr;
-पूर्ण
+	return nfserr;
+}
 
-अटल __be32
-nfsd4_encode_सूची_पढ़ो(काष्ठा nfsd4_compoundres *resp, __be32 nfserr, काष्ठा nfsd4_सूची_पढ़ो *सूची_पढ़ो)
-अणु
-	पूर्णांक maxcount;
-	पूर्णांक bytes_left;
+static __be32
+nfsd4_encode_readdir(struct nfsd4_compoundres *resp, __be32 nfserr, struct nfsd4_readdir *readdir)
+{
+	int maxcount;
+	int bytes_left;
 	loff_t offset;
 	__be64 wire_offset;
-	काष्ठा xdr_stream *xdr = resp->xdr;
-	पूर्णांक starting_len = xdr->buf->len;
+	struct xdr_stream *xdr = resp->xdr;
+	int starting_len = xdr->buf->len;
 	__be32 *p;
 
 	p = xdr_reserve_space(xdr, NFS4_VERIFIER_SIZE);
-	अगर (!p)
-		वापस nfserr_resource;
+	if (!p)
+		return nfserr_resource;
 
-	/* XXX: Following NFSv3, we ignore the READसूची verअगरier क्रम now. */
+	/* XXX: Following NFSv3, we ignore the READDIR verifier for now. */
 	*p++ = cpu_to_be32(0);
 	*p++ = cpu_to_be32(0);
-	xdr->buf->head[0].iov_len = (अक्षर *)xdr->p -
-				    (अक्षर *)xdr->buf->head[0].iov_base;
+	xdr->buf->head[0].iov_len = (char *)xdr->p -
+				    (char *)xdr->buf->head[0].iov_base;
 
 	/*
-	 * Number of bytes left क्रम directory entries allowing क्रम the
-	 * final 8 bytes of the सूची_पढ़ो and a following failed op:
+	 * Number of bytes left for directory entries allowing for the
+	 * final 8 bytes of the readdir and a following failed op:
 	 */
 	bytes_left = xdr->buf->buflen - xdr->buf->len
 			- COMPOUND_ERR_SLACK_SPACE - 8;
-	अगर (bytes_left < 0) अणु
+	if (bytes_left < 0) {
 		nfserr = nfserr_resource;
-		जाओ err_no_verf;
-	पूर्ण
+		goto err_no_verf;
+	}
 	maxcount = svc_max_payload(resp->rqstp);
-	maxcount = min_t(u32, सूची_पढ़ो->rd_maxcount, maxcount);
+	maxcount = min_t(u32, readdir->rd_maxcount, maxcount);
 	/*
 	 * Note the rfc defines rd_maxcount as the size of the
-	 * READसूची4resok काष्ठाure, which includes the verअगरier above
+	 * READDIR4resok structure, which includes the verifier above
 	 * and the 8 bytes encoded at the end of this function:
 	 */
-	अगर (maxcount < 16) अणु
+	if (maxcount < 16) {
 		nfserr = nfserr_toosmall;
-		जाओ err_no_verf;
-	पूर्ण
-	maxcount = min_t(पूर्णांक, maxcount-16, bytes_left);
+		goto err_no_verf;
+	}
+	maxcount = min_t(int, maxcount-16, bytes_left);
 
 	/* RFC 3530 14.2.24 allows us to ignore dircount when it's 0: */
-	अगर (!सूची_पढ़ो->rd_dircount)
-		सूची_पढ़ो->rd_dircount = svc_max_payload(resp->rqstp);
+	if (!readdir->rd_dircount)
+		readdir->rd_dircount = svc_max_payload(resp->rqstp);
 
-	सूची_पढ़ो->xdr = xdr;
-	सूची_पढ़ो->rd_maxcount = maxcount;
-	सूची_पढ़ो->common.err = 0;
-	सूची_पढ़ो->cookie_offset = 0;
+	readdir->xdr = xdr;
+	readdir->rd_maxcount = maxcount;
+	readdir->common.err = 0;
+	readdir->cookie_offset = 0;
 
-	offset = सूची_पढ़ो->rd_cookie;
-	nfserr = nfsd_सूची_पढ़ो(सूची_पढ़ो->rd_rqstp, सूची_पढ़ो->rd_fhp,
+	offset = readdir->rd_cookie;
+	nfserr = nfsd_readdir(readdir->rd_rqstp, readdir->rd_fhp,
 			      &offset,
-			      &सूची_पढ़ो->common, nfsd4_encode_dirent);
-	अगर (nfserr == nfs_ok &&
-	    सूची_पढ़ो->common.err == nfserr_toosmall &&
-	    xdr->buf->len == starting_len + 8) अणु
+			      &readdir->common, nfsd4_encode_dirent);
+	if (nfserr == nfs_ok &&
+	    readdir->common.err == nfserr_toosmall &&
+	    xdr->buf->len == starting_len + 8) {
 		/* nothing encoded; which limit did we hit?: */
-		अगर (maxcount - 16 < bytes_left)
+		if (maxcount - 16 < bytes_left)
 			/* It was the fault of rd_maxcount: */
 			nfserr = nfserr_toosmall;
-		अन्यथा
+		else
 			/* We ran out of buffer space: */
 			nfserr = nfserr_resource;
-	पूर्ण
-	अगर (nfserr)
-		जाओ err_no_verf;
+	}
+	if (nfserr)
+		goto err_no_verf;
 
-	अगर (सूची_पढ़ो->cookie_offset) अणु
+	if (readdir->cookie_offset) {
 		wire_offset = cpu_to_be64(offset);
-		ग_लिखो_bytes_to_xdr_buf(xdr->buf, सूची_पढ़ो->cookie_offset,
+		write_bytes_to_xdr_buf(xdr->buf, readdir->cookie_offset,
 							&wire_offset, 8);
-	पूर्ण
+	}
 
 	p = xdr_reserve_space(xdr, 8);
-	अगर (!p) अणु
+	if (!p) {
 		WARN_ON_ONCE(1);
-		जाओ err_no_verf;
-	पूर्ण
+		goto err_no_verf;
+	}
 	*p++ = 0;	/* no more entries */
-	*p++ = htonl(सूची_पढ़ो->common.err == nfserr_eof);
+	*p++ = htonl(readdir->common.err == nfserr_eof);
 
-	वापस 0;
+	return 0;
 err_no_verf:
 	xdr_truncate_encode(xdr, starting_len);
-	वापस nfserr;
-पूर्ण
+	return nfserr;
+}
 
-अटल __be32
-nfsd4_encode_हटाओ(काष्ठा nfsd4_compoundres *resp, __be32 nfserr, काष्ठा nfsd4_हटाओ *हटाओ)
-अणु
-	काष्ठा xdr_stream *xdr = resp->xdr;
+static __be32
+nfsd4_encode_remove(struct nfsd4_compoundres *resp, __be32 nfserr, struct nfsd4_remove *remove)
+{
+	struct xdr_stream *xdr = resp->xdr;
 	__be32 *p;
 
 	p = xdr_reserve_space(xdr, 20);
-	अगर (!p)
-		वापस nfserr_resource;
-	p = encode_cinfo(p, &हटाओ->rm_cinfo);
-	वापस 0;
-पूर्ण
+	if (!p)
+		return nfserr_resource;
+	p = encode_cinfo(p, &remove->rm_cinfo);
+	return 0;
+}
 
-अटल __be32
-nfsd4_encode_नाम(काष्ठा nfsd4_compoundres *resp, __be32 nfserr, काष्ठा nfsd4_नाम *नाम)
-अणु
-	काष्ठा xdr_stream *xdr = resp->xdr;
+static __be32
+nfsd4_encode_rename(struct nfsd4_compoundres *resp, __be32 nfserr, struct nfsd4_rename *rename)
+{
+	struct xdr_stream *xdr = resp->xdr;
 	__be32 *p;
 
 	p = xdr_reserve_space(xdr, 40);
-	अगर (!p)
-		वापस nfserr_resource;
-	p = encode_cinfo(p, &नाम->rn_sinfo);
-	p = encode_cinfo(p, &नाम->rn_tinfo);
-	वापस 0;
-पूर्ण
+	if (!p)
+		return nfserr_resource;
+	p = encode_cinfo(p, &rename->rn_sinfo);
+	p = encode_cinfo(p, &rename->rn_tinfo);
+	return 0;
+}
 
-अटल __be32
-nfsd4_करो_encode_secinfo(काष्ठा xdr_stream *xdr, काष्ठा svc_export *exp)
-अणु
+static __be32
+nfsd4_do_encode_secinfo(struct xdr_stream *xdr, struct svc_export *exp)
+{
 	u32 i, nflavs, supported;
-	काष्ठा exp_flavor_info *flavs;
-	काष्ठा exp_flavor_info def_flavs[2];
+	struct exp_flavor_info *flavs;
+	struct exp_flavor_info def_flavs[2];
 	__be32 *p, *flavorsp;
-	अटल bool report = true;
+	static bool report = true;
 
-	अगर (exp->ex_nflavors) अणु
+	if (exp->ex_nflavors) {
 		flavs = exp->ex_flavors;
 		nflavs = exp->ex_nflavors;
-	पूर्ण अन्यथा अणु /* Handling of some शेषs in असलence of real secinfo: */
+	} else { /* Handling of some defaults in absence of real secinfo: */
 		flavs = def_flavs;
-		अगर (exp->ex_client->flavour->flavour == RPC_AUTH_UNIX) अणु
+		if (exp->ex_client->flavour->flavour == RPC_AUTH_UNIX) {
 			nflavs = 2;
-			flavs[0].pseuकरोflavor = RPC_AUTH_UNIX;
-			flavs[1].pseuकरोflavor = RPC_AUTH_शून्य;
-		पूर्ण अन्यथा अगर (exp->ex_client->flavour->flavour == RPC_AUTH_GSS) अणु
+			flavs[0].pseudoflavor = RPC_AUTH_UNIX;
+			flavs[1].pseudoflavor = RPC_AUTH_NULL;
+		} else if (exp->ex_client->flavour->flavour == RPC_AUTH_GSS) {
 			nflavs = 1;
-			flavs[0].pseuकरोflavor
+			flavs[0].pseudoflavor
 					= svcauth_gss_flavor(exp->ex_client);
-		पूर्ण अन्यथा अणु
+		} else {
 			nflavs = 1;
-			flavs[0].pseuकरोflavor
+			flavs[0].pseudoflavor
 					= exp->ex_client->flavour->flavour;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	supported = 0;
 	p = xdr_reserve_space(xdr, 4);
-	अगर (!p)
-		वापस nfserr_resource;
+	if (!p)
+		return nfserr_resource;
 	flavorsp = p++;		/* to be backfilled later */
 
-	क्रम (i = 0; i < nflavs; i++) अणु
-		rpc_authflavor_t pf = flavs[i].pseuकरोflavor;
-		काष्ठा rpcsec_gss_info info;
+	for (i = 0; i < nflavs; i++) {
+		rpc_authflavor_t pf = flavs[i].pseudoflavor;
+		struct rpcsec_gss_info info;
 
-		अगर (rpcauth_get_gssinfo(pf, &info) == 0) अणु
+		if (rpcauth_get_gssinfo(pf, &info) == 0) {
 			supported++;
 			p = xdr_reserve_space(xdr, 4 + 4 +
 					      XDR_LEN(info.oid.len) + 4 + 4);
-			अगर (!p)
-				वापस nfserr_resource;
+			if (!p)
+				return nfserr_resource;
 			*p++ = cpu_to_be32(RPC_AUTH_GSS);
 			p = xdr_encode_opaque(p,  info.oid.data, info.oid.len);
 			*p++ = cpu_to_be32(info.qop);
 			*p++ = cpu_to_be32(info.service);
-		पूर्ण अन्यथा अगर (pf < RPC_AUTH_MAXFLAVOR) अणु
+		} else if (pf < RPC_AUTH_MAXFLAVOR) {
 			supported++;
 			p = xdr_reserve_space(xdr, 4);
-			अगर (!p)
-				वापस nfserr_resource;
+			if (!p)
+				return nfserr_resource;
 			*p++ = cpu_to_be32(pf);
-		पूर्ण अन्यथा अणु
-			अगर (report)
+		} else {
+			if (report)
 				pr_warn("NFS: SECINFO: security flavor %u "
 					"is not supported\n", pf);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (nflavs != supported)
+	if (nflavs != supported)
 		report = false;
 	*flavorsp = htonl(supported);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल __be32
-nfsd4_encode_secinfo(काष्ठा nfsd4_compoundres *resp, __be32 nfserr,
-		     काष्ठा nfsd4_secinfo *secinfo)
-अणु
-	काष्ठा xdr_stream *xdr = resp->xdr;
+static __be32
+nfsd4_encode_secinfo(struct nfsd4_compoundres *resp, __be32 nfserr,
+		     struct nfsd4_secinfo *secinfo)
+{
+	struct xdr_stream *xdr = resp->xdr;
 
-	वापस nfsd4_करो_encode_secinfo(xdr, secinfo->si_exp);
-पूर्ण
+	return nfsd4_do_encode_secinfo(xdr, secinfo->si_exp);
+}
 
-अटल __be32
-nfsd4_encode_secinfo_no_name(काष्ठा nfsd4_compoundres *resp, __be32 nfserr,
-		     काष्ठा nfsd4_secinfo_no_name *secinfo)
-अणु
-	काष्ठा xdr_stream *xdr = resp->xdr;
+static __be32
+nfsd4_encode_secinfo_no_name(struct nfsd4_compoundres *resp, __be32 nfserr,
+		     struct nfsd4_secinfo_no_name *secinfo)
+{
+	struct xdr_stream *xdr = resp->xdr;
 
-	वापस nfsd4_करो_encode_secinfo(xdr, secinfo->sin_exp);
-पूर्ण
+	return nfsd4_do_encode_secinfo(xdr, secinfo->sin_exp);
+}
 
 /*
- * The SETATTR encode routine is special -- it always encodes a biपंचांगap,
+ * The SETATTR encode routine is special -- it always encodes a bitmap,
  * regardless of the error status.
  */
-अटल __be32
-nfsd4_encode_setattr(काष्ठा nfsd4_compoundres *resp, __be32 nfserr, काष्ठा nfsd4_setattr *setattr)
-अणु
-	काष्ठा xdr_stream *xdr = resp->xdr;
+static __be32
+nfsd4_encode_setattr(struct nfsd4_compoundres *resp, __be32 nfserr, struct nfsd4_setattr *setattr)
+{
+	struct xdr_stream *xdr = resp->xdr;
 	__be32 *p;
 
 	p = xdr_reserve_space(xdr, 16);
-	अगर (!p)
-		वापस nfserr_resource;
-	अगर (nfserr) अणु
+	if (!p)
+		return nfserr_resource;
+	if (nfserr) {
 		*p++ = cpu_to_be32(3);
 		*p++ = cpu_to_be32(0);
 		*p++ = cpu_to_be32(0);
 		*p++ = cpu_to_be32(0);
-	पूर्ण
-	अन्यथा अणु
+	}
+	else {
 		*p++ = cpu_to_be32(3);
 		*p++ = cpu_to_be32(setattr->sa_bmval[0]);
 		*p++ = cpu_to_be32(setattr->sa_bmval[1]);
 		*p++ = cpu_to_be32(setattr->sa_bmval[2]);
-	पूर्ण
-	वापस nfserr;
-पूर्ण
+	}
+	return nfserr;
+}
 
-अटल __be32
-nfsd4_encode_setclientid(काष्ठा nfsd4_compoundres *resp, __be32 nfserr, काष्ठा nfsd4_setclientid *scd)
-अणु
-	काष्ठा xdr_stream *xdr = resp->xdr;
+static __be32
+nfsd4_encode_setclientid(struct nfsd4_compoundres *resp, __be32 nfserr, struct nfsd4_setclientid *scd)
+{
+	struct xdr_stream *xdr = resp->xdr;
 	__be32 *p;
 
-	अगर (!nfserr) अणु
+	if (!nfserr) {
 		p = xdr_reserve_space(xdr, 8 + NFS4_VERIFIER_SIZE);
-		अगर (!p)
-			वापस nfserr_resource;
+		if (!p)
+			return nfserr_resource;
 		p = xdr_encode_opaque_fixed(p, &scd->se_clientid, 8);
 		p = xdr_encode_opaque_fixed(p, &scd->se_confirm,
 						NFS4_VERIFIER_SIZE);
-	पूर्ण
-	अन्यथा अगर (nfserr == nfserr_clid_inuse) अणु
+	}
+	else if (nfserr == nfserr_clid_inuse) {
 		p = xdr_reserve_space(xdr, 8);
-		अगर (!p)
-			वापस nfserr_resource;
+		if (!p)
+			return nfserr_resource;
 		*p++ = cpu_to_be32(0);
 		*p++ = cpu_to_be32(0);
-	पूर्ण
-	वापस nfserr;
-पूर्ण
+	}
+	return nfserr;
+}
 
-अटल __be32
-nfsd4_encode_ग_लिखो(काष्ठा nfsd4_compoundres *resp, __be32 nfserr, काष्ठा nfsd4_ग_लिखो *ग_लिखो)
-अणु
-	काष्ठा xdr_stream *xdr = resp->xdr;
+static __be32
+nfsd4_encode_write(struct nfsd4_compoundres *resp, __be32 nfserr, struct nfsd4_write *write)
+{
+	struct xdr_stream *xdr = resp->xdr;
 	__be32 *p;
 
 	p = xdr_reserve_space(xdr, 16);
-	अगर (!p)
-		वापस nfserr_resource;
-	*p++ = cpu_to_be32(ग_लिखो->wr_bytes_written);
-	*p++ = cpu_to_be32(ग_लिखो->wr_how_written);
-	p = xdr_encode_opaque_fixed(p, ग_लिखो->wr_verअगरier.data,
+	if (!p)
+		return nfserr_resource;
+	*p++ = cpu_to_be32(write->wr_bytes_written);
+	*p++ = cpu_to_be32(write->wr_how_written);
+	p = xdr_encode_opaque_fixed(p, write->wr_verifier.data,
 						NFS4_VERIFIER_SIZE);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल __be32
-nfsd4_encode_exchange_id(काष्ठा nfsd4_compoundres *resp, __be32 nfserr,
-			 काष्ठा nfsd4_exchange_id *exid)
-अणु
-	काष्ठा xdr_stream *xdr = resp->xdr;
+static __be32
+nfsd4_encode_exchange_id(struct nfsd4_compoundres *resp, __be32 nfserr,
+			 struct nfsd4_exchange_id *exid)
+{
+	struct xdr_stream *xdr = resp->xdr;
 	__be32 *p;
-	अक्षर *major_id;
-	अक्षर *server_scope;
-	पूर्णांक major_id_sz;
-	पूर्णांक server_scope_sz;
-	uपूर्णांक64_t minor_id = 0;
-	काष्ठा nfsd_net *nn = net_generic(SVC_NET(resp->rqstp), nfsd_net_id);
+	char *major_id;
+	char *server_scope;
+	int major_id_sz;
+	int server_scope_sz;
+	uint64_t minor_id = 0;
+	struct nfsd_net *nn = net_generic(SVC_NET(resp->rqstp), nfsd_net_id);
 
 	major_id = nn->nfsd_name;
-	major_id_sz = म_माप(nn->nfsd_name);
+	major_id_sz = strlen(nn->nfsd_name);
 	server_scope = nn->nfsd_name;
-	server_scope_sz = म_माप(nn->nfsd_name);
+	server_scope_sz = strlen(nn->nfsd_name);
 
 	p = xdr_reserve_space(xdr,
 		8 /* eir_clientid */ +
 		4 /* eir_sequenceid */ +
 		4 /* eir_flags */ +
 		4 /* spr_how */);
-	अगर (!p)
-		वापस nfserr_resource;
+	if (!p)
+		return nfserr_resource;
 
 	p = xdr_encode_opaque_fixed(p, &exid->clientid, 8);
 	*p++ = cpu_to_be32(exid->seqid);
@@ -4370,28 +4369,28 @@ nfsd4_encode_exchange_id(काष्ठा nfsd4_compoundres *resp, __be32 nfse
 
 	*p++ = cpu_to_be32(exid->spa_how);
 
-	चयन (exid->spa_how) अणु
-	हाल SP4_NONE:
-		अवरोध;
-	हाल SP4_MACH_CRED:
-		/* spo_must_enक्रमce biपंचांगap: */
-		nfserr = nfsd4_encode_biपंचांगap(xdr,
-					exid->spo_must_enक्रमce[0],
-					exid->spo_must_enक्रमce[1],
-					exid->spo_must_enक्रमce[2]);
-		अगर (nfserr)
-			वापस nfserr;
-		/* spo_must_allow biपंचांगap: */
-		nfserr = nfsd4_encode_biपंचांगap(xdr,
+	switch (exid->spa_how) {
+	case SP4_NONE:
+		break;
+	case SP4_MACH_CRED:
+		/* spo_must_enforce bitmap: */
+		nfserr = nfsd4_encode_bitmap(xdr,
+					exid->spo_must_enforce[0],
+					exid->spo_must_enforce[1],
+					exid->spo_must_enforce[2]);
+		if (nfserr)
+			return nfserr;
+		/* spo_must_allow bitmap: */
+		nfserr = nfsd4_encode_bitmap(xdr,
 					exid->spo_must_allow[0],
 					exid->spo_must_allow[1],
 					exid->spo_must_allow[2]);
-		अगर (nfserr)
-			वापस nfserr;
-		अवरोध;
-	शेष:
+		if (nfserr)
+			return nfserr;
+		break;
+	default:
 		WARN_ON_ONCE(1);
-	पूर्ण
+	}
 
 	p = xdr_reserve_space(xdr,
 		8 /* so_minor_id */ +
@@ -4400,10 +4399,10 @@ nfsd4_encode_exchange_id(काष्ठा nfsd4_compoundres *resp, __be32 nfse
 		4 /* eir_server_scope.len */ +
 		(XDR_QUADLEN(server_scope_sz) * 4) +
 		4 /* eir_server_impl_id.count (0) */);
-	अगर (!p)
-		वापस nfserr_resource;
+	if (!p)
+		return nfserr_resource;
 
-	/* The server_owner काष्ठा */
+	/* The server_owner struct */
 	p = xdr_encode_hyper(p, minor_id);      /* Minor id */
 	/* major id */
 	p = xdr_encode_opaque(p, major_id, major_id_sz);
@@ -4413,45 +4412,45 @@ nfsd4_encode_exchange_id(काष्ठा nfsd4_compoundres *resp, __be32 nfse
 
 	/* Implementation id */
 	*p++ = cpu_to_be32(0);	/* zero length nfs_impl_id4 array */
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल __be32
-nfsd4_encode_create_session(काष्ठा nfsd4_compoundres *resp, __be32 nfserr,
-			    काष्ठा nfsd4_create_session *sess)
-अणु
-	काष्ठा xdr_stream *xdr = resp->xdr;
+static __be32
+nfsd4_encode_create_session(struct nfsd4_compoundres *resp, __be32 nfserr,
+			    struct nfsd4_create_session *sess)
+{
+	struct xdr_stream *xdr = resp->xdr;
 	__be32 *p;
 
 	p = xdr_reserve_space(xdr, 24);
-	अगर (!p)
-		वापस nfserr_resource;
+	if (!p)
+		return nfserr_resource;
 	p = xdr_encode_opaque_fixed(p, sess->sessionid.data,
 					NFS4_MAX_SESSIONID_LEN);
 	*p++ = cpu_to_be32(sess->seqid);
 	*p++ = cpu_to_be32(sess->flags);
 
 	p = xdr_reserve_space(xdr, 28);
-	अगर (!p)
-		वापस nfserr_resource;
+	if (!p)
+		return nfserr_resource;
 	*p++ = cpu_to_be32(0); /* headerpadsz */
-	*p++ = cpu_to_be32(sess->क्रमe_channel.maxreq_sz);
-	*p++ = cpu_to_be32(sess->क्रमe_channel.maxresp_sz);
-	*p++ = cpu_to_be32(sess->क्रमe_channel.maxresp_cached);
-	*p++ = cpu_to_be32(sess->क्रमe_channel.maxops);
-	*p++ = cpu_to_be32(sess->क्रमe_channel.maxreqs);
-	*p++ = cpu_to_be32(sess->क्रमe_channel.nr_rdma_attrs);
+	*p++ = cpu_to_be32(sess->fore_channel.maxreq_sz);
+	*p++ = cpu_to_be32(sess->fore_channel.maxresp_sz);
+	*p++ = cpu_to_be32(sess->fore_channel.maxresp_cached);
+	*p++ = cpu_to_be32(sess->fore_channel.maxops);
+	*p++ = cpu_to_be32(sess->fore_channel.maxreqs);
+	*p++ = cpu_to_be32(sess->fore_channel.nr_rdma_attrs);
 
-	अगर (sess->क्रमe_channel.nr_rdma_attrs) अणु
+	if (sess->fore_channel.nr_rdma_attrs) {
 		p = xdr_reserve_space(xdr, 4);
-		अगर (!p)
-			वापस nfserr_resource;
-		*p++ = cpu_to_be32(sess->क्रमe_channel.rdma_attrs);
-	पूर्ण
+		if (!p)
+			return nfserr_resource;
+		*p++ = cpu_to_be32(sess->fore_channel.rdma_attrs);
+	}
 
 	p = xdr_reserve_space(xdr, 28);
-	अगर (!p)
-		वापस nfserr_resource;
+	if (!p)
+		return nfserr_resource;
 	*p++ = cpu_to_be32(0); /* headerpadsz */
 	*p++ = cpu_to_be32(sess->back_channel.maxreq_sz);
 	*p++ = cpu_to_be32(sess->back_channel.maxresp_sz);
@@ -4460,25 +4459,25 @@ nfsd4_encode_create_session(काष्ठा nfsd4_compoundres *resp, __be32 n
 	*p++ = cpu_to_be32(sess->back_channel.maxreqs);
 	*p++ = cpu_to_be32(sess->back_channel.nr_rdma_attrs);
 
-	अगर (sess->back_channel.nr_rdma_attrs) अणु
+	if (sess->back_channel.nr_rdma_attrs) {
 		p = xdr_reserve_space(xdr, 4);
-		अगर (!p)
-			वापस nfserr_resource;
+		if (!p)
+			return nfserr_resource;
 		*p++ = cpu_to_be32(sess->back_channel.rdma_attrs);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल __be32
-nfsd4_encode_sequence(काष्ठा nfsd4_compoundres *resp, __be32 nfserr,
-		      काष्ठा nfsd4_sequence *seq)
-अणु
-	काष्ठा xdr_stream *xdr = resp->xdr;
+static __be32
+nfsd4_encode_sequence(struct nfsd4_compoundres *resp, __be32 nfserr,
+		      struct nfsd4_sequence *seq)
+{
+	struct xdr_stream *xdr = resp->xdr;
 	__be32 *p;
 
 	p = xdr_reserve_space(xdr, NFS4_MAX_SESSIONID_LEN + 20);
-	अगर (!p)
-		वापस nfserr_resource;
+	if (!p)
+		return nfserr_resource;
 	p = xdr_encode_opaque_fixed(p, seq->sessionid.data,
 					NFS4_MAX_SESSIONID_LEN);
 	*p++ = cpu_to_be32(seq->seqid);
@@ -4488,193 +4487,193 @@ nfsd4_encode_sequence(काष्ठा nfsd4_compoundres *resp, __be32 nfserr,
 	*p++ = cpu_to_be32(seq->maxslots - 1); /* sr_target_highest_slotid */
 	*p++ = cpu_to_be32(seq->status_flags);
 
-	resp->cstate.data_offset = xdr->buf->len; /* DRC cache data poपूर्णांकer */
-	वापस 0;
-पूर्ण
+	resp->cstate.data_offset = xdr->buf->len; /* DRC cache data pointer */
+	return 0;
+}
 
-अटल __be32
-nfsd4_encode_test_stateid(काष्ठा nfsd4_compoundres *resp, __be32 nfserr,
-			  काष्ठा nfsd4_test_stateid *test_stateid)
-अणु
-	काष्ठा xdr_stream *xdr = resp->xdr;
-	काष्ठा nfsd4_test_stateid_id *stateid, *next;
+static __be32
+nfsd4_encode_test_stateid(struct nfsd4_compoundres *resp, __be32 nfserr,
+			  struct nfsd4_test_stateid *test_stateid)
+{
+	struct xdr_stream *xdr = resp->xdr;
+	struct nfsd4_test_stateid_id *stateid, *next;
 	__be32 *p;
 
 	p = xdr_reserve_space(xdr, 4 + (4 * test_stateid->ts_num_ids));
-	अगर (!p)
-		वापस nfserr_resource;
+	if (!p)
+		return nfserr_resource;
 	*p++ = htonl(test_stateid->ts_num_ids);
 
-	list_क्रम_each_entry_safe(stateid, next, &test_stateid->ts_stateid_list, ts_id_list) अणु
+	list_for_each_entry_safe(stateid, next, &test_stateid->ts_stateid_list, ts_id_list) {
 		*p++ = stateid->ts_id_status;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_NFSD_PNFS
-अटल __be32
-nfsd4_encode_getdeviceinfo(काष्ठा nfsd4_compoundres *resp, __be32 nfserr,
-		काष्ठा nfsd4_getdeviceinfo *gdev)
-अणु
-	काष्ठा xdr_stream *xdr = resp->xdr;
-	स्थिर काष्ठा nfsd4_layout_ops *ops;
+#ifdef CONFIG_NFSD_PNFS
+static __be32
+nfsd4_encode_getdeviceinfo(struct nfsd4_compoundres *resp, __be32 nfserr,
+		struct nfsd4_getdeviceinfo *gdev)
+{
+	struct xdr_stream *xdr = resp->xdr;
+	const struct nfsd4_layout_ops *ops;
 	u32 starting_len = xdr->buf->len, needed_len;
 	__be32 *p;
 
 	p = xdr_reserve_space(xdr, 4);
-	अगर (!p)
-		वापस nfserr_resource;
+	if (!p)
+		return nfserr_resource;
 
 	*p++ = cpu_to_be32(gdev->gd_layout_type);
 
-	/* If maxcount is 0 then just update notअगरications */
-	अगर (gdev->gd_maxcount != 0) अणु
+	/* If maxcount is 0 then just update notifications */
+	if (gdev->gd_maxcount != 0) {
 		ops = nfsd4_layout_ops[gdev->gd_layout_type];
 		nfserr = ops->encode_getdeviceinfo(xdr, gdev);
-		अगर (nfserr) अणु
+		if (nfserr) {
 			/*
-			 * We करोn't bother to burden the layout drivers with
-			 * enक्रमcing gd_maxcount, just tell the client to
-			 * come back with a bigger buffer अगर it's not enough.
+			 * We don't bother to burden the layout drivers with
+			 * enforcing gd_maxcount, just tell the client to
+			 * come back with a bigger buffer if it's not enough.
 			 */
-			अगर (xdr->buf->len + 4 > gdev->gd_maxcount)
-				जाओ toosmall;
-			वापस nfserr;
-		पूर्ण
-	पूर्ण
+			if (xdr->buf->len + 4 > gdev->gd_maxcount)
+				goto toosmall;
+			return nfserr;
+		}
+	}
 
-	अगर (gdev->gd_notअगरy_types) अणु
+	if (gdev->gd_notify_types) {
 		p = xdr_reserve_space(xdr, 4 + 4);
-		अगर (!p)
-			वापस nfserr_resource;
-		*p++ = cpu_to_be32(1);			/* biपंचांगap length */
-		*p++ = cpu_to_be32(gdev->gd_notअगरy_types);
-	पूर्ण अन्यथा अणु
+		if (!p)
+			return nfserr_resource;
+		*p++ = cpu_to_be32(1);			/* bitmap length */
+		*p++ = cpu_to_be32(gdev->gd_notify_types);
+	} else {
 		p = xdr_reserve_space(xdr, 4);
-		अगर (!p)
-			वापस nfserr_resource;
+		if (!p)
+			return nfserr_resource;
 		*p++ = 0;
-	पूर्ण
+	}
 
-	वापस 0;
+	return 0;
 toosmall:
-	dprपूर्णांकk("%s: maxcount too small\n", __func__);
-	needed_len = xdr->buf->len + 4 /* notअगरications */;
+	dprintk("%s: maxcount too small\n", __func__);
+	needed_len = xdr->buf->len + 4 /* notifications */;
 	xdr_truncate_encode(xdr, starting_len);
 	p = xdr_reserve_space(xdr, 4);
-	अगर (!p)
-		वापस nfserr_resource;
+	if (!p)
+		return nfserr_resource;
 	*p++ = cpu_to_be32(needed_len);
-	वापस nfserr_toosmall;
-पूर्ण
+	return nfserr_toosmall;
+}
 
-अटल __be32
-nfsd4_encode_layoutget(काष्ठा nfsd4_compoundres *resp, __be32 nfserr,
-		काष्ठा nfsd4_layoutget *lgp)
-अणु
-	काष्ठा xdr_stream *xdr = resp->xdr;
-	स्थिर काष्ठा nfsd4_layout_ops *ops;
+static __be32
+nfsd4_encode_layoutget(struct nfsd4_compoundres *resp, __be32 nfserr,
+		struct nfsd4_layoutget *lgp)
+{
+	struct xdr_stream *xdr = resp->xdr;
+	const struct nfsd4_layout_ops *ops;
 	__be32 *p;
 
-	p = xdr_reserve_space(xdr, 36 + माप(stateid_opaque_t));
-	अगर (!p)
-		वापस nfserr_resource;
+	p = xdr_reserve_space(xdr, 36 + sizeof(stateid_opaque_t));
+	if (!p)
+		return nfserr_resource;
 
-	*p++ = cpu_to_be32(1);	/* we always set वापस-on-बंद */
+	*p++ = cpu_to_be32(1);	/* we always set return-on-close */
 	*p++ = cpu_to_be32(lgp->lg_sid.si_generation);
 	p = xdr_encode_opaque_fixed(p, &lgp->lg_sid.si_opaque,
-				    माप(stateid_opaque_t));
+				    sizeof(stateid_opaque_t));
 
-	*p++ = cpu_to_be32(1);	/* we always वापस a single layout */
+	*p++ = cpu_to_be32(1);	/* we always return a single layout */
 	p = xdr_encode_hyper(p, lgp->lg_seg.offset);
 	p = xdr_encode_hyper(p, lgp->lg_seg.length);
 	*p++ = cpu_to_be32(lgp->lg_seg.iomode);
 	*p++ = cpu_to_be32(lgp->lg_layout_type);
 
 	ops = nfsd4_layout_ops[lgp->lg_layout_type];
-	वापस ops->encode_layoutget(xdr, lgp);
-पूर्ण
+	return ops->encode_layoutget(xdr, lgp);
+}
 
-अटल __be32
-nfsd4_encode_layoutcommit(काष्ठा nfsd4_compoundres *resp, __be32 nfserr,
-			  काष्ठा nfsd4_layoutcommit *lcp)
-अणु
-	काष्ठा xdr_stream *xdr = resp->xdr;
+static __be32
+nfsd4_encode_layoutcommit(struct nfsd4_compoundres *resp, __be32 nfserr,
+			  struct nfsd4_layoutcommit *lcp)
+{
+	struct xdr_stream *xdr = resp->xdr;
 	__be32 *p;
 
 	p = xdr_reserve_space(xdr, 4);
-	अगर (!p)
-		वापस nfserr_resource;
+	if (!p)
+		return nfserr_resource;
 	*p++ = cpu_to_be32(lcp->lc_size_chg);
-	अगर (lcp->lc_size_chg) अणु
+	if (lcp->lc_size_chg) {
 		p = xdr_reserve_space(xdr, 8);
-		अगर (!p)
-			वापस nfserr_resource;
+		if (!p)
+			return nfserr_resource;
 		p = xdr_encode_hyper(p, lcp->lc_newsize);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल __be32
-nfsd4_encode_layoutवापस(काष्ठा nfsd4_compoundres *resp, __be32 nfserr,
-		काष्ठा nfsd4_layoutवापस *lrp)
-अणु
-	काष्ठा xdr_stream *xdr = resp->xdr;
+static __be32
+nfsd4_encode_layoutreturn(struct nfsd4_compoundres *resp, __be32 nfserr,
+		struct nfsd4_layoutreturn *lrp)
+{
+	struct xdr_stream *xdr = resp->xdr;
 	__be32 *p;
 
 	p = xdr_reserve_space(xdr, 4);
-	अगर (!p)
-		वापस nfserr_resource;
+	if (!p)
+		return nfserr_resource;
 	*p++ = cpu_to_be32(lrp->lrs_present);
-	अगर (lrp->lrs_present)
-		वापस nfsd4_encode_stateid(xdr, &lrp->lr_sid);
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_NFSD_PNFS */
+	if (lrp->lrs_present)
+		return nfsd4_encode_stateid(xdr, &lrp->lr_sid);
+	return 0;
+}
+#endif /* CONFIG_NFSD_PNFS */
 
-अटल __be32
-nfsd42_encode_ग_लिखो_res(काष्ठा nfsd4_compoundres *resp,
-		काष्ठा nfsd42_ग_लिखो_res *ग_लिखो, bool sync)
-अणु
+static __be32
+nfsd42_encode_write_res(struct nfsd4_compoundres *resp,
+		struct nfsd42_write_res *write, bool sync)
+{
 	__be32 *p;
 	p = xdr_reserve_space(resp->xdr, 4);
-	अगर (!p)
-		वापस nfserr_resource;
+	if (!p)
+		return nfserr_resource;
 
-	अगर (sync)
+	if (sync)
 		*p++ = cpu_to_be32(0);
-	अन्यथा अणु
+	else {
 		__be32 nfserr;
 		*p++ = cpu_to_be32(1);
-		nfserr = nfsd4_encode_stateid(resp->xdr, &ग_लिखो->cb_stateid);
-		अगर (nfserr)
-			वापस nfserr;
-	पूर्ण
+		nfserr = nfsd4_encode_stateid(resp->xdr, &write->cb_stateid);
+		if (nfserr)
+			return nfserr;
+	}
 	p = xdr_reserve_space(resp->xdr, 8 + 4 + NFS4_VERIFIER_SIZE);
-	अगर (!p)
-		वापस nfserr_resource;
+	if (!p)
+		return nfserr_resource;
 
-	p = xdr_encode_hyper(p, ग_लिखो->wr_bytes_written);
-	*p++ = cpu_to_be32(ग_लिखो->wr_stable_how);
-	p = xdr_encode_opaque_fixed(p, ग_लिखो->wr_verअगरier.data,
+	p = xdr_encode_hyper(p, write->wr_bytes_written);
+	*p++ = cpu_to_be32(write->wr_stable_how);
+	p = xdr_encode_opaque_fixed(p, write->wr_verifier.data,
 				    NFS4_VERIFIER_SIZE);
-	वापस nfs_ok;
-पूर्ण
+	return nfs_ok;
+}
 
-अटल __be32
-nfsd42_encode_nl4_server(काष्ठा nfsd4_compoundres *resp, काष्ठा nl4_server *ns)
-अणु
-	काष्ठा xdr_stream *xdr = resp->xdr;
-	काष्ठा nfs42_netaddr *addr;
+static __be32
+nfsd42_encode_nl4_server(struct nfsd4_compoundres *resp, struct nl4_server *ns)
+{
+	struct xdr_stream *xdr = resp->xdr;
+	struct nfs42_netaddr *addr;
 	__be32 *p;
 
 	p = xdr_reserve_space(xdr, 4);
 	*p++ = cpu_to_be32(ns->nl4_type);
 
-	चयन (ns->nl4_type) अणु
-	हाल NL4_NETADDR:
+	switch (ns->nl4_type) {
+	case NL4_NETADDR:
 		addr = &ns->u.nl4_addr;
 
 		/* netid_len, netid, uaddr_len, uaddr (port included
@@ -4685,8 +4684,8 @@ nfsd42_encode_nl4_server(काष्ठा nfsd4_compoundres *resp, काष�
 			(XDR_QUADLEN(addr->netid_len) * 4) +
 			4 /* uaddr len */ +
 			(XDR_QUADLEN(addr->addr_len) * 4));
-		अगर (!p)
-			वापस nfserr_resource;
+		if (!p)
+			return nfserr_resource;
 
 		*p++ = cpu_to_be32(addr->netid_len);
 		p = xdr_encode_opaque_fixed(p, addr->netid,
@@ -4694,390 +4693,390 @@ nfsd42_encode_nl4_server(काष्ठा nfsd4_compoundres *resp, काष�
 		*p++ = cpu_to_be32(addr->addr_len);
 		p = xdr_encode_opaque_fixed(p, addr->addr,
 					addr->addr_len);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		WARN_ON_ONCE(ns->nl4_type != NL4_NETADDR);
-		वापस nfserr_inval;
-	पूर्ण
+		return nfserr_inval;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल __be32
-nfsd4_encode_copy(काष्ठा nfsd4_compoundres *resp, __be32 nfserr,
-		  काष्ठा nfsd4_copy *copy)
-अणु
+static __be32
+nfsd4_encode_copy(struct nfsd4_compoundres *resp, __be32 nfserr,
+		  struct nfsd4_copy *copy)
+{
 	__be32 *p;
 
-	nfserr = nfsd42_encode_ग_लिखो_res(resp, &copy->cp_res,
+	nfserr = nfsd42_encode_write_res(resp, &copy->cp_res,
 					 !!copy->cp_synchronous);
-	अगर (nfserr)
-		वापस nfserr;
+	if (nfserr)
+		return nfserr;
 
 	p = xdr_reserve_space(resp->xdr, 4 + 4);
 	*p++ = xdr_one; /* cr_consecutive */
 	*p++ = cpu_to_be32(copy->cp_synchronous);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल __be32
-nfsd4_encode_offload_status(काष्ठा nfsd4_compoundres *resp, __be32 nfserr,
-			    काष्ठा nfsd4_offload_status *os)
-अणु
-	काष्ठा xdr_stream *xdr = resp->xdr;
+static __be32
+nfsd4_encode_offload_status(struct nfsd4_compoundres *resp, __be32 nfserr,
+			    struct nfsd4_offload_status *os)
+{
+	struct xdr_stream *xdr = resp->xdr;
 	__be32 *p;
 
 	p = xdr_reserve_space(xdr, 8 + 4);
-	अगर (!p)
-		वापस nfserr_resource;
+	if (!p)
+		return nfserr_resource;
 	p = xdr_encode_hyper(p, os->count);
 	*p++ = cpu_to_be32(0);
-	वापस nfserr;
-पूर्ण
+	return nfserr;
+}
 
-अटल __be32
-nfsd4_encode_पढ़ो_plus_data(काष्ठा nfsd4_compoundres *resp,
-			    काष्ठा nfsd4_पढ़ो *पढ़ो,
-			    अचिन्हित दीर्घ *maxcount, u32 *eof,
+static __be32
+nfsd4_encode_read_plus_data(struct nfsd4_compoundres *resp,
+			    struct nfsd4_read *read,
+			    unsigned long *maxcount, u32 *eof,
 			    loff_t *pos)
-अणु
-	काष्ठा xdr_stream *xdr = resp->xdr;
-	काष्ठा file *file = पढ़ो->rd_nf->nf_file;
-	पूर्णांक starting_len = xdr->buf->len;
+{
+	struct xdr_stream *xdr = resp->xdr;
+	struct file *file = read->rd_nf->nf_file;
+	int starting_len = xdr->buf->len;
 	loff_t hole_pos;
 	__be32 nfserr;
-	__be32 *p, पंचांगp;
-	__be64 पंचांगp64;
+	__be32 *p, tmp;
+	__be64 tmp64;
 
-	hole_pos = pos ? *pos : vfs_llseek(file, पढ़ो->rd_offset, SEEK_HOLE);
-	अगर (hole_pos > पढ़ो->rd_offset)
-		*maxcount = min_t(अचिन्हित दीर्घ, *maxcount, hole_pos - पढ़ो->rd_offset);
-	*maxcount = min_t(अचिन्हित दीर्घ, *maxcount, (xdr->buf->buflen - xdr->buf->len));
+	hole_pos = pos ? *pos : vfs_llseek(file, read->rd_offset, SEEK_HOLE);
+	if (hole_pos > read->rd_offset)
+		*maxcount = min_t(unsigned long, *maxcount, hole_pos - read->rd_offset);
+	*maxcount = min_t(unsigned long, *maxcount, (xdr->buf->buflen - xdr->buf->len));
 
 	/* Content type, offset, byte count */
 	p = xdr_reserve_space(xdr, 4 + 8 + 4);
-	अगर (!p)
-		वापस nfserr_resource;
+	if (!p)
+		return nfserr_resource;
 
-	पढ़ो->rd_vlen = xdr_reserve_space_vec(xdr, resp->rqstp->rq_vec, *maxcount);
-	अगर (पढ़ो->rd_vlen < 0)
-		वापस nfserr_resource;
+	read->rd_vlen = xdr_reserve_space_vec(xdr, resp->rqstp->rq_vec, *maxcount);
+	if (read->rd_vlen < 0)
+		return nfserr_resource;
 
-	nfserr = nfsd_पढ़ोv(resp->rqstp, पढ़ो->rd_fhp, file, पढ़ो->rd_offset,
-			    resp->rqstp->rq_vec, पढ़ो->rd_vlen, maxcount, eof);
-	अगर (nfserr)
-		वापस nfserr;
+	nfserr = nfsd_readv(resp->rqstp, read->rd_fhp, file, read->rd_offset,
+			    resp->rqstp->rq_vec, read->rd_vlen, maxcount, eof);
+	if (nfserr)
+		return nfserr;
 	xdr_truncate_encode(xdr, starting_len + 16 + xdr_align_size(*maxcount));
 
-	पंचांगp = htonl(NFS4_CONTENT_DATA);
-	ग_लिखो_bytes_to_xdr_buf(xdr->buf, starting_len,      &पंचांगp,   4);
-	पंचांगp64 = cpu_to_be64(पढ़ो->rd_offset);
-	ग_लिखो_bytes_to_xdr_buf(xdr->buf, starting_len + 4,  &पंचांगp64, 8);
-	पंचांगp = htonl(*maxcount);
-	ग_लिखो_bytes_to_xdr_buf(xdr->buf, starting_len + 12, &पंचांगp,   4);
+	tmp = htonl(NFS4_CONTENT_DATA);
+	write_bytes_to_xdr_buf(xdr->buf, starting_len,      &tmp,   4);
+	tmp64 = cpu_to_be64(read->rd_offset);
+	write_bytes_to_xdr_buf(xdr->buf, starting_len + 4,  &tmp64, 8);
+	tmp = htonl(*maxcount);
+	write_bytes_to_xdr_buf(xdr->buf, starting_len + 12, &tmp,   4);
 
-	पंचांगp = xdr_zero;
-	ग_लिखो_bytes_to_xdr_buf(xdr->buf, starting_len + 16 + *maxcount, &पंचांगp,
+	tmp = xdr_zero;
+	write_bytes_to_xdr_buf(xdr->buf, starting_len + 16 + *maxcount, &tmp,
 			       xdr_pad_size(*maxcount));
-	वापस nfs_ok;
-पूर्ण
+	return nfs_ok;
+}
 
-अटल __be32
-nfsd4_encode_पढ़ो_plus_hole(काष्ठा nfsd4_compoundres *resp,
-			    काष्ठा nfsd4_पढ़ो *पढ़ो,
-			    अचिन्हित दीर्घ *maxcount, u32 *eof)
-अणु
-	काष्ठा file *file = पढ़ो->rd_nf->nf_file;
-	loff_t data_pos = vfs_llseek(file, पढ़ो->rd_offset, SEEK_DATA);
-	loff_t f_size = i_size_पढ़ो(file_inode(file));
-	अचिन्हित दीर्घ count;
+static __be32
+nfsd4_encode_read_plus_hole(struct nfsd4_compoundres *resp,
+			    struct nfsd4_read *read,
+			    unsigned long *maxcount, u32 *eof)
+{
+	struct file *file = read->rd_nf->nf_file;
+	loff_t data_pos = vfs_llseek(file, read->rd_offset, SEEK_DATA);
+	loff_t f_size = i_size_read(file_inode(file));
+	unsigned long count;
 	__be32 *p;
 
-	अगर (data_pos == -ENXIO)
+	if (data_pos == -ENXIO)
 		data_pos = f_size;
-	अन्यथा अगर (data_pos <= पढ़ो->rd_offset || (data_pos < f_size && data_pos % PAGE_SIZE))
-		वापस nfsd4_encode_पढ़ो_plus_data(resp, पढ़ो, maxcount, eof, &f_size);
-	count = data_pos - पढ़ो->rd_offset;
+	else if (data_pos <= read->rd_offset || (data_pos < f_size && data_pos % PAGE_SIZE))
+		return nfsd4_encode_read_plus_data(resp, read, maxcount, eof, &f_size);
+	count = data_pos - read->rd_offset;
 
 	/* Content type, offset, byte count */
 	p = xdr_reserve_space(resp->xdr, 4 + 8 + 8);
-	अगर (!p)
-		वापस nfserr_resource;
+	if (!p)
+		return nfserr_resource;
 
 	*p++ = htonl(NFS4_CONTENT_HOLE);
-	 p   = xdr_encode_hyper(p, पढ़ो->rd_offset);
+	 p   = xdr_encode_hyper(p, read->rd_offset);
 	 p   = xdr_encode_hyper(p, count);
 
-	*eof = (पढ़ो->rd_offset + count) >= f_size;
-	*maxcount = min_t(अचिन्हित दीर्घ, count, *maxcount);
-	वापस nfs_ok;
-पूर्ण
+	*eof = (read->rd_offset + count) >= f_size;
+	*maxcount = min_t(unsigned long, count, *maxcount);
+	return nfs_ok;
+}
 
-अटल __be32
-nfsd4_encode_पढ़ो_plus(काष्ठा nfsd4_compoundres *resp, __be32 nfserr,
-		       काष्ठा nfsd4_पढ़ो *पढ़ो)
-अणु
-	अचिन्हित दीर्घ maxcount, count;
-	काष्ठा xdr_stream *xdr = resp->xdr;
-	काष्ठा file *file;
-	पूर्णांक starting_len = xdr->buf->len;
-	पूर्णांक last_segment = xdr->buf->len;
-	पूर्णांक segments = 0;
-	__be32 *p, पंचांगp;
+static __be32
+nfsd4_encode_read_plus(struct nfsd4_compoundres *resp, __be32 nfserr,
+		       struct nfsd4_read *read)
+{
+	unsigned long maxcount, count;
+	struct xdr_stream *xdr = resp->xdr;
+	struct file *file;
+	int starting_len = xdr->buf->len;
+	int last_segment = xdr->buf->len;
+	int segments = 0;
+	__be32 *p, tmp;
 	bool is_data;
 	loff_t pos;
 	u32 eof;
 
-	अगर (nfserr)
-		वापस nfserr;
-	file = पढ़ो->rd_nf->nf_file;
+	if (nfserr)
+		return nfserr;
+	file = read->rd_nf->nf_file;
 
 	/* eof flag, segment count */
 	p = xdr_reserve_space(xdr, 4 + 4);
-	अगर (!p)
-		वापस nfserr_resource;
+	if (!p)
+		return nfserr_resource;
 	xdr_commit_encode(xdr);
 
 	maxcount = svc_max_payload(resp->rqstp);
-	maxcount = min_t(अचिन्हित दीर्घ, maxcount,
+	maxcount = min_t(unsigned long, maxcount,
 			 (xdr->buf->buflen - xdr->buf->len));
-	maxcount = min_t(अचिन्हित दीर्घ, maxcount, पढ़ो->rd_length);
+	maxcount = min_t(unsigned long, maxcount, read->rd_length);
 	count    = maxcount;
 
-	eof = पढ़ो->rd_offset >= i_size_पढ़ो(file_inode(file));
-	अगर (eof)
-		जाओ out;
+	eof = read->rd_offset >= i_size_read(file_inode(file));
+	if (eof)
+		goto out;
 
-	pos = vfs_llseek(file, पढ़ो->rd_offset, SEEK_HOLE);
-	is_data = pos > पढ़ो->rd_offset;
+	pos = vfs_llseek(file, read->rd_offset, SEEK_HOLE);
+	is_data = pos > read->rd_offset;
 
-	जबतक (count > 0 && !eof) अणु
+	while (count > 0 && !eof) {
 		maxcount = count;
-		अगर (is_data)
-			nfserr = nfsd4_encode_पढ़ो_plus_data(resp, पढ़ो, &maxcount, &eof,
-						segments == 0 ? &pos : शून्य);
-		अन्यथा
-			nfserr = nfsd4_encode_पढ़ो_plus_hole(resp, पढ़ो, &maxcount, &eof);
-		अगर (nfserr)
-			जाओ out;
+		if (is_data)
+			nfserr = nfsd4_encode_read_plus_data(resp, read, &maxcount, &eof,
+						segments == 0 ? &pos : NULL);
+		else
+			nfserr = nfsd4_encode_read_plus_hole(resp, read, &maxcount, &eof);
+		if (nfserr)
+			goto out;
 		count -= maxcount;
-		पढ़ो->rd_offset += maxcount;
+		read->rd_offset += maxcount;
 		is_data = !is_data;
 		last_segment = xdr->buf->len;
 		segments++;
-	पूर्ण
+	}
 
 out:
-	अगर (nfserr && segments == 0)
+	if (nfserr && segments == 0)
 		xdr_truncate_encode(xdr, starting_len);
-	अन्यथा अणु
-		अगर (nfserr) अणु
+	else {
+		if (nfserr) {
 			xdr_truncate_encode(xdr, last_segment);
 			nfserr = nfs_ok;
 			eof = 0;
-		पूर्ण
-		पंचांगp = htonl(eof);
-		ग_लिखो_bytes_to_xdr_buf(xdr->buf, starting_len,     &पंचांगp, 4);
-		पंचांगp = htonl(segments);
-		ग_लिखो_bytes_to_xdr_buf(xdr->buf, starting_len + 4, &पंचांगp, 4);
-	पूर्ण
+		}
+		tmp = htonl(eof);
+		write_bytes_to_xdr_buf(xdr->buf, starting_len,     &tmp, 4);
+		tmp = htonl(segments);
+		write_bytes_to_xdr_buf(xdr->buf, starting_len + 4, &tmp, 4);
+	}
 
-	वापस nfserr;
-पूर्ण
+	return nfserr;
+}
 
-अटल __be32
-nfsd4_encode_copy_notअगरy(काष्ठा nfsd4_compoundres *resp, __be32 nfserr,
-			 काष्ठा nfsd4_copy_notअगरy *cn)
-अणु
-	काष्ठा xdr_stream *xdr = resp->xdr;
+static __be32
+nfsd4_encode_copy_notify(struct nfsd4_compoundres *resp, __be32 nfserr,
+			 struct nfsd4_copy_notify *cn)
+{
+	struct xdr_stream *xdr = resp->xdr;
 	__be32 *p;
 
-	अगर (nfserr)
-		वापस nfserr;
+	if (nfserr)
+		return nfserr;
 
 	/* 8 sec, 4 nsec */
 	p = xdr_reserve_space(xdr, 12);
-	अगर (!p)
-		वापस nfserr_resource;
+	if (!p)
+		return nfserr_resource;
 
-	/* cnr_lease_समय */
+	/* cnr_lease_time */
 	p = xdr_encode_hyper(p, cn->cpn_sec);
 	*p++ = cpu_to_be32(cn->cpn_nsec);
 
 	/* cnr_stateid */
 	nfserr = nfsd4_encode_stateid(xdr, &cn->cpn_cnr_stateid);
-	अगर (nfserr)
-		वापस nfserr;
+	if (nfserr)
+		return nfserr;
 
 	/* cnr_src.nl_nsvr */
 	p = xdr_reserve_space(xdr, 4);
-	अगर (!p)
-		वापस nfserr_resource;
+	if (!p)
+		return nfserr_resource;
 
 	*p++ = cpu_to_be32(1);
 
-	वापस nfsd42_encode_nl4_server(resp, &cn->cpn_src);
-पूर्ण
+	return nfsd42_encode_nl4_server(resp, &cn->cpn_src);
+}
 
-अटल __be32
-nfsd4_encode_seek(काष्ठा nfsd4_compoundres *resp, __be32 nfserr,
-		  काष्ठा nfsd4_seek *seek)
-अणु
+static __be32
+nfsd4_encode_seek(struct nfsd4_compoundres *resp, __be32 nfserr,
+		  struct nfsd4_seek *seek)
+{
 	__be32 *p;
 
 	p = xdr_reserve_space(resp->xdr, 4 + 8);
 	*p++ = cpu_to_be32(seek->seek_eof);
 	p = xdr_encode_hyper(p, seek->seek_pos);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल __be32
-nfsd4_encode_noop(काष्ठा nfsd4_compoundres *resp, __be32 nfserr, व्योम *p)
-अणु
-	वापस nfserr;
-पूर्ण
+static __be32
+nfsd4_encode_noop(struct nfsd4_compoundres *resp, __be32 nfserr, void *p)
+{
+	return nfserr;
+}
 
 /*
- * Encode kदो_स्मृति-ed buffer in to XDR stream.
+ * Encode kmalloc-ed buffer in to XDR stream.
  */
-अटल __be32
-nfsd4_vbuf_to_stream(काष्ठा xdr_stream *xdr, अक्षर *buf, u32 buflen)
-अणु
+static __be32
+nfsd4_vbuf_to_stream(struct xdr_stream *xdr, char *buf, u32 buflen)
+{
 	u32 cplen;
 	__be32 *p;
 
-	cplen = min_t(अचिन्हित दीर्घ, buflen,
-		      ((व्योम *)xdr->end - (व्योम *)xdr->p));
+	cplen = min_t(unsigned long, buflen,
+		      ((void *)xdr->end - (void *)xdr->p));
 	p = xdr_reserve_space(xdr, cplen);
-	अगर (!p)
-		वापस nfserr_resource;
+	if (!p)
+		return nfserr_resource;
 
-	स_नकल(p, buf, cplen);
+	memcpy(p, buf, cplen);
 	buf += cplen;
 	buflen -= cplen;
 
-	जबतक (buflen) अणु
+	while (buflen) {
 		cplen = min_t(u32, buflen, PAGE_SIZE);
 		p = xdr_reserve_space(xdr, cplen);
-		अगर (!p)
-			वापस nfserr_resource;
+		if (!p)
+			return nfserr_resource;
 
-		स_नकल(p, buf, cplen);
+		memcpy(p, buf, cplen);
 
-		अगर (cplen < PAGE_SIZE) अणु
+		if (cplen < PAGE_SIZE) {
 			/*
 			 * We're done, with a length that wasn't page
 			 * aligned, so possibly not word aligned. Pad
 			 * any trailing bytes with 0.
 			 */
-			xdr_encode_opaque_fixed(p, शून्य, cplen);
-			अवरोध;
-		पूर्ण
+			xdr_encode_opaque_fixed(p, NULL, cplen);
+			break;
+		}
 
 		buflen -= PAGE_SIZE;
 		buf += PAGE_SIZE;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल __be32
-nfsd4_encode_getxattr(काष्ठा nfsd4_compoundres *resp, __be32 nfserr,
-		      काष्ठा nfsd4_getxattr *getxattr)
-अणु
-	काष्ठा xdr_stream *xdr = resp->xdr;
+static __be32
+nfsd4_encode_getxattr(struct nfsd4_compoundres *resp, __be32 nfserr,
+		      struct nfsd4_getxattr *getxattr)
+{
+	struct xdr_stream *xdr = resp->xdr;
 	__be32 *p, err;
 
 	p = xdr_reserve_space(xdr, 4);
-	अगर (!p)
-		वापस nfserr_resource;
+	if (!p)
+		return nfserr_resource;
 
 	*p = cpu_to_be32(getxattr->getxa_len);
 
-	अगर (getxattr->getxa_len == 0)
-		वापस 0;
+	if (getxattr->getxa_len == 0)
+		return 0;
 
 	err = nfsd4_vbuf_to_stream(xdr, getxattr->getxa_buf,
 				    getxattr->getxa_len);
 
-	kvमुक्त(getxattr->getxa_buf);
+	kvfree(getxattr->getxa_buf);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल __be32
-nfsd4_encode_setxattr(काष्ठा nfsd4_compoundres *resp, __be32 nfserr,
-		      काष्ठा nfsd4_setxattr *setxattr)
-अणु
-	काष्ठा xdr_stream *xdr = resp->xdr;
+static __be32
+nfsd4_encode_setxattr(struct nfsd4_compoundres *resp, __be32 nfserr,
+		      struct nfsd4_setxattr *setxattr)
+{
+	struct xdr_stream *xdr = resp->xdr;
 	__be32 *p;
 
 	p = xdr_reserve_space(xdr, 20);
-	अगर (!p)
-		वापस nfserr_resource;
+	if (!p)
+		return nfserr_resource;
 
 	encode_cinfo(p, &setxattr->setxa_cinfo);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * See अगर there are cookie values that can be rejected outright.
+ * See if there are cookie values that can be rejected outright.
  */
-अटल __be32
-nfsd4_listxattr_validate_cookie(काष्ठा nfsd4_listxattrs *listxattrs,
+static __be32
+nfsd4_listxattr_validate_cookie(struct nfsd4_listxattrs *listxattrs,
 				u32 *offsetp)
-अणु
+{
 	u64 cookie = listxattrs->lsxa_cookie;
 
 	/*
 	 * If the cookie is larger than the maximum number we can fit
 	 * in either the buffer we just got back from vfs_listxattr, or,
-	 * XDR-encoded, in the वापस buffer, it's invalid.
+	 * XDR-encoded, in the return buffer, it's invalid.
 	 */
-	अगर (cookie > (listxattrs->lsxa_len) / (XATTR_USER_PREFIX_LEN + 2))
-		वापस nfserr_badcookie;
+	if (cookie > (listxattrs->lsxa_len) / (XATTR_USER_PREFIX_LEN + 2))
+		return nfserr_badcookie;
 
-	अगर (cookie > (listxattrs->lsxa_maxcount /
+	if (cookie > (listxattrs->lsxa_maxcount /
 		      (XDR_QUADLEN(XATTR_USER_PREFIX_LEN + 2) + 4)))
-		वापस nfserr_badcookie;
+		return nfserr_badcookie;
 
 	*offsetp = (u32)cookie;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल __be32
-nfsd4_encode_listxattrs(काष्ठा nfsd4_compoundres *resp, __be32 nfserr,
-			काष्ठा nfsd4_listxattrs *listxattrs)
-अणु
-	काष्ठा xdr_stream *xdr = resp->xdr;
+static __be32
+nfsd4_encode_listxattrs(struct nfsd4_compoundres *resp, __be32 nfserr,
+			struct nfsd4_listxattrs *listxattrs)
+{
+	struct xdr_stream *xdr = resp->xdr;
 	u32 cookie_offset, count_offset, eof;
 	u32 left, xdrleft, slen, count;
 	u32 xdrlen, offset;
 	u64 cookie;
-	अक्षर *sp;
-	__be32 status, पंचांगp;
+	char *sp;
+	__be32 status, tmp;
 	__be32 *p;
 	u32 nuser;
 
 	eof = 1;
 
 	status = nfsd4_listxattr_validate_cookie(listxattrs, &offset);
-	अगर (status)
-		जाओ out;
+	if (status)
+		goto out;
 
 	/*
-	 * Reserve space क्रम the cookie and the name array count. Record
+	 * Reserve space for the cookie and the name array count. Record
 	 * the offsets to save them later.
 	 */
 	cookie_offset = xdr->buf->len;
 	count_offset = cookie_offset + 8;
 	p = xdr_reserve_space(xdr, 12);
-	अगर (!p) अणु
+	if (!p) {
 		status = nfserr_resource;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	count = 0;
 	left = listxattrs->lsxa_len;
@@ -5086,40 +5085,40 @@ nfsd4_encode_listxattrs(काष्ठा nfsd4_compoundres *resp, __be32 nfser
 
 	xdrleft = listxattrs->lsxa_maxcount;
 
-	जबतक (left > 0 && xdrleft > 0) अणु
-		slen = म_माप(sp);
+	while (left > 0 && xdrleft > 0) {
+		slen = strlen(sp);
 
 		/*
-		 * Check अगर this is a "user." attribute, skip it अगर not.
+		 * Check if this is a "user." attribute, skip it if not.
 		 */
-		अगर (म_भेदन(sp, XATTR_USER_PREFIX, XATTR_USER_PREFIX_LEN))
-			जाओ contloop;
+		if (strncmp(sp, XATTR_USER_PREFIX, XATTR_USER_PREFIX_LEN))
+			goto contloop;
 
 		slen -= XATTR_USER_PREFIX_LEN;
 		xdrlen = 4 + ((slen + 3) & ~3);
-		अगर (xdrlen > xdrleft) अणु
-			अगर (count == 0) अणु
+		if (xdrlen > xdrleft) {
+			if (count == 0) {
 				/*
 				 * Can't even fit the first attribute name.
 				 */
 				status = nfserr_toosmall;
-				जाओ out;
-			पूर्ण
+				goto out;
+			}
 			eof = 0;
-			जाओ wreof;
-		पूर्ण
+			goto wreof;
+		}
 
 		left -= XATTR_USER_PREFIX_LEN;
 		sp += XATTR_USER_PREFIX_LEN;
-		अगर (nuser++ < offset)
-			जाओ contloop;
+		if (nuser++ < offset)
+			goto contloop;
 
 
 		p = xdr_reserve_space(xdr, xdrlen);
-		अगर (!p) अणु
+		if (!p) {
 			status = nfserr_resource;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		xdr_encode_opaque(p, sp, slen);
 
@@ -5128,61 +5127,61 @@ nfsd4_encode_listxattrs(काष्ठा nfsd4_compoundres *resp, __be32 nfser
 contloop:
 		sp += slen + 1;
 		left -= slen + 1;
-	पूर्ण
+	}
 
 	/*
 	 * If there were user attributes to copy, but we didn't copy
 	 * any, the offset was too large (e.g. the cookie was invalid).
 	 */
-	अगर (nuser > 0 && count == 0) अणु
+	if (nuser > 0 && count == 0) {
 		status = nfserr_badcookie;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 wreof:
 	p = xdr_reserve_space(xdr, 4);
-	अगर (!p) अणु
+	if (!p) {
 		status = nfserr_resource;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	*p = cpu_to_be32(eof);
 
 	cookie = offset + count;
 
-	ग_लिखो_bytes_to_xdr_buf(xdr->buf, cookie_offset, &cookie, 8);
-	पंचांगp = cpu_to_be32(count);
-	ग_लिखो_bytes_to_xdr_buf(xdr->buf, count_offset, &पंचांगp, 4);
+	write_bytes_to_xdr_buf(xdr->buf, cookie_offset, &cookie, 8);
+	tmp = cpu_to_be32(count);
+	write_bytes_to_xdr_buf(xdr->buf, count_offset, &tmp, 4);
 out:
-	अगर (listxattrs->lsxa_len)
-		kvमुक्त(listxattrs->lsxa_buf);
-	वापस status;
-पूर्ण
+	if (listxattrs->lsxa_len)
+		kvfree(listxattrs->lsxa_buf);
+	return status;
+}
 
-अटल __be32
-nfsd4_encode_हटाओxattr(काष्ठा nfsd4_compoundres *resp, __be32 nfserr,
-			 काष्ठा nfsd4_हटाओxattr *हटाओxattr)
-अणु
-	काष्ठा xdr_stream *xdr = resp->xdr;
+static __be32
+nfsd4_encode_removexattr(struct nfsd4_compoundres *resp, __be32 nfserr,
+			 struct nfsd4_removexattr *removexattr)
+{
+	struct xdr_stream *xdr = resp->xdr;
 	__be32 *p;
 
 	p = xdr_reserve_space(xdr, 20);
-	अगर (!p)
-		वापस nfserr_resource;
+	if (!p)
+		return nfserr_resource;
 
-	p = encode_cinfo(p, &हटाओxattr->rmxa_cinfo);
-	वापस 0;
-पूर्ण
+	p = encode_cinfo(p, &removexattr->rmxa_cinfo);
+	return 0;
+}
 
-प्रकार __be32(* nfsd4_enc)(काष्ठा nfsd4_compoundres *, __be32, व्योम *);
+typedef __be32(* nfsd4_enc)(struct nfsd4_compoundres *, __be32, void *);
 
 /*
- * Note: nfsd4_enc_ops vector is shared क्रम v4.0 and v4.1
- * since we करोn't need to filter out obsolete ops as this is
- * करोne in the decoding phase.
+ * Note: nfsd4_enc_ops vector is shared for v4.0 and v4.1
+ * since we don't need to filter out obsolete ops as this is
+ * done in the decoding phase.
  */
-अटल स्थिर nfsd4_enc nfsd4_enc_ops[] = अणु
+static const nfsd4_enc nfsd4_enc_ops[] = {
 	[OP_ACCESS]		= (nfsd4_enc)nfsd4_encode_access,
-	[OP_CLOSE]		= (nfsd4_enc)nfsd4_encode_बंद,
+	[OP_CLOSE]		= (nfsd4_enc)nfsd4_encode_close,
 	[OP_COMMIT]		= (nfsd4_enc)nfsd4_encode_commit,
 	[OP_CREATE]		= (nfsd4_enc)nfsd4_encode_create,
 	[OP_DELEGPURGE]		= (nfsd4_enc)nfsd4_encode_noop,
@@ -5196,18 +5195,18 @@ nfsd4_encode_हटाओxattr(काष्ठा nfsd4_compoundres *resp, __be3
 	[OP_LOOKUP]		= (nfsd4_enc)nfsd4_encode_noop,
 	[OP_LOOKUPP]		= (nfsd4_enc)nfsd4_encode_noop,
 	[OP_NVERIFY]		= (nfsd4_enc)nfsd4_encode_noop,
-	[OP_OPEN]		= (nfsd4_enc)nfsd4_encode_खोलो,
+	[OP_OPEN]		= (nfsd4_enc)nfsd4_encode_open,
 	[OP_OPENATTR]		= (nfsd4_enc)nfsd4_encode_noop,
-	[OP_OPEN_CONFIRM]	= (nfsd4_enc)nfsd4_encode_खोलो_confirm,
-	[OP_OPEN_DOWNGRADE]	= (nfsd4_enc)nfsd4_encode_खोलो_करोwngrade,
+	[OP_OPEN_CONFIRM]	= (nfsd4_enc)nfsd4_encode_open_confirm,
+	[OP_OPEN_DOWNGRADE]	= (nfsd4_enc)nfsd4_encode_open_downgrade,
 	[OP_PUTFH]		= (nfsd4_enc)nfsd4_encode_noop,
 	[OP_PUTPUBFH]		= (nfsd4_enc)nfsd4_encode_noop,
 	[OP_PUTROOTFH]		= (nfsd4_enc)nfsd4_encode_noop,
-	[OP_READ]		= (nfsd4_enc)nfsd4_encode_पढ़ो,
-	[OP_READसूची]		= (nfsd4_enc)nfsd4_encode_सूची_पढ़ो,
-	[OP_READLINK]		= (nfsd4_enc)nfsd4_encode_पढ़ोlink,
-	[OP_REMOVE]		= (nfsd4_enc)nfsd4_encode_हटाओ,
-	[OP_RENAME]		= (nfsd4_enc)nfsd4_encode_नाम,
+	[OP_READ]		= (nfsd4_enc)nfsd4_encode_read,
+	[OP_READDIR]		= (nfsd4_enc)nfsd4_encode_readdir,
+	[OP_READLINK]		= (nfsd4_enc)nfsd4_encode_readlink,
+	[OP_REMOVE]		= (nfsd4_enc)nfsd4_encode_remove,
+	[OP_RENAME]		= (nfsd4_enc)nfsd4_encode_rename,
 	[OP_RENEW]		= (nfsd4_enc)nfsd4_encode_noop,
 	[OP_RESTOREFH]		= (nfsd4_enc)nfsd4_encode_noop,
 	[OP_SAVEFH]		= (nfsd4_enc)nfsd4_encode_noop,
@@ -5216,7 +5215,7 @@ nfsd4_encode_हटाओxattr(काष्ठा nfsd4_compoundres *resp, __be3
 	[OP_SETCLIENTID]	= (nfsd4_enc)nfsd4_encode_setclientid,
 	[OP_SETCLIENTID_CONFIRM] = (nfsd4_enc)nfsd4_encode_noop,
 	[OP_VERIFY]		= (nfsd4_enc)nfsd4_encode_noop,
-	[OP_WRITE]		= (nfsd4_enc)nfsd4_encode_ग_लिखो,
+	[OP_WRITE]		= (nfsd4_enc)nfsd4_encode_write,
 	[OP_RELEASE_LOCKOWNER]	= (nfsd4_enc)nfsd4_encode_noop,
 
 	/* NFSv4.1 operations */
@@ -5226,20 +5225,20 @@ nfsd4_encode_हटाओxattr(काष्ठा nfsd4_compoundres *resp, __be3
 	[OP_CREATE_SESSION]	= (nfsd4_enc)nfsd4_encode_create_session,
 	[OP_DESTROY_SESSION]	= (nfsd4_enc)nfsd4_encode_noop,
 	[OP_FREE_STATEID]	= (nfsd4_enc)nfsd4_encode_noop,
-	[OP_GET_सूची_DELEGATION]	= (nfsd4_enc)nfsd4_encode_noop,
-#अगर_घोषित CONFIG_NFSD_PNFS
+	[OP_GET_DIR_DELEGATION]	= (nfsd4_enc)nfsd4_encode_noop,
+#ifdef CONFIG_NFSD_PNFS
 	[OP_GETDEVICEINFO]	= (nfsd4_enc)nfsd4_encode_getdeviceinfo,
 	[OP_GETDEVICELIST]	= (nfsd4_enc)nfsd4_encode_noop,
 	[OP_LAYOUTCOMMIT]	= (nfsd4_enc)nfsd4_encode_layoutcommit,
 	[OP_LAYOUTGET]		= (nfsd4_enc)nfsd4_encode_layoutget,
-	[OP_LAYOUTRETURN]	= (nfsd4_enc)nfsd4_encode_layoutवापस,
-#अन्यथा
+	[OP_LAYOUTRETURN]	= (nfsd4_enc)nfsd4_encode_layoutreturn,
+#else
 	[OP_GETDEVICEINFO]	= (nfsd4_enc)nfsd4_encode_noop,
 	[OP_GETDEVICELIST]	= (nfsd4_enc)nfsd4_encode_noop,
 	[OP_LAYOUTCOMMIT]	= (nfsd4_enc)nfsd4_encode_noop,
 	[OP_LAYOUTGET]		= (nfsd4_enc)nfsd4_encode_noop,
 	[OP_LAYOUTRETURN]	= (nfsd4_enc)nfsd4_encode_noop,
-#पूर्ण_अगर
+#endif
 	[OP_SECINFO_NO_NAME]	= (nfsd4_enc)nfsd4_encode_secinfo_no_name,
 	[OP_SEQUENCE]		= (nfsd4_enc)nfsd4_encode_sequence,
 	[OP_SET_SSV]		= (nfsd4_enc)nfsd4_encode_noop,
@@ -5251,14 +5250,14 @@ nfsd4_encode_हटाओxattr(काष्ठा nfsd4_compoundres *resp, __be3
 	/* NFSv4.2 operations */
 	[OP_ALLOCATE]		= (nfsd4_enc)nfsd4_encode_noop,
 	[OP_COPY]		= (nfsd4_enc)nfsd4_encode_copy,
-	[OP_COPY_NOTIFY]	= (nfsd4_enc)nfsd4_encode_copy_notअगरy,
+	[OP_COPY_NOTIFY]	= (nfsd4_enc)nfsd4_encode_copy_notify,
 	[OP_DEALLOCATE]		= (nfsd4_enc)nfsd4_encode_noop,
 	[OP_IO_ADVISE]		= (nfsd4_enc)nfsd4_encode_noop,
 	[OP_LAYOUTERROR]	= (nfsd4_enc)nfsd4_encode_noop,
 	[OP_LAYOUTSTATS]	= (nfsd4_enc)nfsd4_encode_noop,
 	[OP_OFFLOAD_CANCEL]	= (nfsd4_enc)nfsd4_encode_noop,
 	[OP_OFFLOAD_STATUS]	= (nfsd4_enc)nfsd4_encode_offload_status,
-	[OP_READ_PLUS]		= (nfsd4_enc)nfsd4_encode_पढ़ो_plus,
+	[OP_READ_PLUS]		= (nfsd4_enc)nfsd4_encode_read_plus,
 	[OP_SEEK]		= (nfsd4_enc)nfsd4_encode_seek,
 	[OP_WRITE_SAME]		= (nfsd4_enc)nfsd4_encode_noop,
 	[OP_CLONE]		= (nfsd4_enc)nfsd4_encode_noop,
@@ -5267,171 +5266,171 @@ nfsd4_encode_हटाओxattr(काष्ठा nfsd4_compoundres *resp, __be3
 	[OP_GETXATTR]		= (nfsd4_enc)nfsd4_encode_getxattr,
 	[OP_SETXATTR]		= (nfsd4_enc)nfsd4_encode_setxattr,
 	[OP_LISTXATTRS]		= (nfsd4_enc)nfsd4_encode_listxattrs,
-	[OP_REMOVEXATTR]	= (nfsd4_enc)nfsd4_encode_हटाओxattr,
-पूर्ण;
+	[OP_REMOVEXATTR]	= (nfsd4_enc)nfsd4_encode_removexattr,
+};
 
 /*
  * Calculate whether we still have space to encode repsize bytes.
  * There are two considerations:
  *     - For NFS versions >=4.1, the size of the reply must stay within
  *       session limits
- *     - For all NFS versions, we must stay within limited pपुनः_स्मृतिated
+ *     - For all NFS versions, we must stay within limited preallocated
  *       buffer space.
  *
- * This is called beक्रमe the operation is processed, so can only provide
+ * This is called before the operation is processed, so can only provide
  * an upper estimate.  For some nonidempotent operations (such as
- * getattr), it's not necessarily a problem अगर that estimate is wrong,
- * as we can fail it after processing without signअगरicant side effects.
+ * getattr), it's not necessarily a problem if that estimate is wrong,
+ * as we can fail it after processing without significant side effects.
  */
-__be32 nfsd4_check_resp_size(काष्ठा nfsd4_compoundres *resp, u32 respsize)
-अणु
-	काष्ठा xdr_buf *buf = &resp->rqstp->rq_res;
-	काष्ठा nfsd4_slot *slot = resp->cstate.slot;
+__be32 nfsd4_check_resp_size(struct nfsd4_compoundres *resp, u32 respsize)
+{
+	struct xdr_buf *buf = &resp->rqstp->rq_res;
+	struct nfsd4_slot *slot = resp->cstate.slot;
 
-	अगर (buf->len + respsize <= buf->buflen)
-		वापस nfs_ok;
-	अगर (!nfsd4_has_session(&resp->cstate))
-		वापस nfserr_resource;
-	अगर (slot->sl_flags & NFSD4_SLOT_CACHETHIS) अणु
+	if (buf->len + respsize <= buf->buflen)
+		return nfs_ok;
+	if (!nfsd4_has_session(&resp->cstate))
+		return nfserr_resource;
+	if (slot->sl_flags & NFSD4_SLOT_CACHETHIS) {
 		WARN_ON_ONCE(1);
-		वापस nfserr_rep_too_big_to_cache;
-	पूर्ण
-	वापस nfserr_rep_too_big;
-पूर्ण
+		return nfserr_rep_too_big_to_cache;
+	}
+	return nfserr_rep_too_big;
+}
 
-व्योम
-nfsd4_encode_operation(काष्ठा nfsd4_compoundres *resp, काष्ठा nfsd4_op *op)
-अणु
-	काष्ठा xdr_stream *xdr = resp->xdr;
-	काष्ठा nfs4_stateowner *so = resp->cstate.replay_owner;
-	काष्ठा svc_rqst *rqstp = resp->rqstp;
-	स्थिर काष्ठा nfsd4_operation *opdesc = op->opdesc;
-	पूर्णांक post_err_offset;
+void
+nfsd4_encode_operation(struct nfsd4_compoundres *resp, struct nfsd4_op *op)
+{
+	struct xdr_stream *xdr = resp->xdr;
+	struct nfs4_stateowner *so = resp->cstate.replay_owner;
+	struct svc_rqst *rqstp = resp->rqstp;
+	const struct nfsd4_operation *opdesc = op->opdesc;
+	int post_err_offset;
 	nfsd4_enc encoder;
 	__be32 *p;
 
 	p = xdr_reserve_space(xdr, 8);
-	अगर (!p) अणु
+	if (!p) {
 		WARN_ON_ONCE(1);
-		वापस;
-	पूर्ण
+		return;
+	}
 	*p++ = cpu_to_be32(op->opnum);
 	post_err_offset = xdr->buf->len;
 
-	अगर (op->opnum == OP_ILLEGAL)
-		जाओ status;
-	अगर (op->status && opdesc &&
+	if (op->opnum == OP_ILLEGAL)
+		goto status;
+	if (op->status && opdesc &&
 			!(opdesc->op_flags & OP_NONTRIVIAL_ERROR_ENCODE))
-		जाओ status;
+		goto status;
 	BUG_ON(op->opnum >= ARRAY_SIZE(nfsd4_enc_ops) ||
 	       !nfsd4_enc_ops[op->opnum]);
 	encoder = nfsd4_enc_ops[op->opnum];
 	op->status = encoder(resp, op->status, &op->u);
-	अगर (op->status)
+	if (op->status)
 		trace_nfsd_compound_encode_err(rqstp, op->opnum, op->status);
-	अगर (opdesc && opdesc->op_release)
+	if (opdesc && opdesc->op_release)
 		opdesc->op_release(&op->u);
 	xdr_commit_encode(xdr);
 
-	/* nfsd4_check_resp_size guarantees enough room क्रम error status */
-	अगर (!op->status) अणु
-		पूर्णांक space_needed = 0;
-		अगर (!nfsd4_last_compound_op(rqstp))
+	/* nfsd4_check_resp_size guarantees enough room for error status */
+	if (!op->status) {
+		int space_needed = 0;
+		if (!nfsd4_last_compound_op(rqstp))
 			space_needed = COMPOUND_ERR_SLACK_SPACE;
 		op->status = nfsd4_check_resp_size(resp, space_needed);
-	पूर्ण
-	अगर (op->status == nfserr_resource && nfsd4_has_session(&resp->cstate)) अणु
-		काष्ठा nfsd4_slot *slot = resp->cstate.slot;
+	}
+	if (op->status == nfserr_resource && nfsd4_has_session(&resp->cstate)) {
+		struct nfsd4_slot *slot = resp->cstate.slot;
 
-		अगर (slot->sl_flags & NFSD4_SLOT_CACHETHIS)
+		if (slot->sl_flags & NFSD4_SLOT_CACHETHIS)
 			op->status = nfserr_rep_too_big_to_cache;
-		अन्यथा
+		else
 			op->status = nfserr_rep_too_big;
-	पूर्ण
-	अगर (op->status == nfserr_resource ||
+	}
+	if (op->status == nfserr_resource ||
 	    op->status == nfserr_rep_too_big ||
-	    op->status == nfserr_rep_too_big_to_cache) अणु
+	    op->status == nfserr_rep_too_big_to_cache) {
 		/*
-		 * The operation may have alपढ़ोy been encoded or
-		 * partially encoded.  No op वापसs anything additional
-		 * in the हाल of one of these three errors, so we can
+		 * The operation may have already been encoded or
+		 * partially encoded.  No op returns anything additional
+		 * in the case of one of these three errors, so we can
 		 * just truncate back to after the status.  But it's a
-		 * bug अगर we had to करो this on a non-idempotent op:
+		 * bug if we had to do this on a non-idempotent op:
 		 */
 		warn_on_nonidempotent_op(op);
 		xdr_truncate_encode(xdr, post_err_offset);
-	पूर्ण
-	अगर (so) अणु
-		पूर्णांक len = xdr->buf->len - post_err_offset;
+	}
+	if (so) {
+		int len = xdr->buf->len - post_err_offset;
 
 		so->so_replay.rp_status = op->status;
 		so->so_replay.rp_buflen = len;
-		पढ़ो_bytes_from_xdr_buf(xdr->buf, post_err_offset,
+		read_bytes_from_xdr_buf(xdr->buf, post_err_offset,
 						so->so_replay.rp_buf, len);
-	पूर्ण
+	}
 status:
-	/* Note that op->status is alपढ़ोy in network byte order: */
-	ग_लिखो_bytes_to_xdr_buf(xdr->buf, post_err_offset - 4, &op->status, 4);
-पूर्ण
+	/* Note that op->status is already in network byte order: */
+	write_bytes_to_xdr_buf(xdr->buf, post_err_offset - 4, &op->status, 4);
+}
 
 /* 
  * Encode the reply stored in the stateowner reply cache 
  * 
- * XDR note: करो not encode rp->rp_buflen: the buffer contains the
- * previously sent alपढ़ोy encoded operation.
+ * XDR note: do not encode rp->rp_buflen: the buffer contains the
+ * previously sent already encoded operation.
  */
-व्योम
-nfsd4_encode_replay(काष्ठा xdr_stream *xdr, काष्ठा nfsd4_op *op)
-अणु
+void
+nfsd4_encode_replay(struct xdr_stream *xdr, struct nfsd4_op *op)
+{
 	__be32 *p;
-	काष्ठा nfs4_replay *rp = op->replay;
+	struct nfs4_replay *rp = op->replay;
 
 	p = xdr_reserve_space(xdr, 8 + rp->rp_buflen);
-	अगर (!p) अणु
+	if (!p) {
 		WARN_ON_ONCE(1);
-		वापस;
-	पूर्ण
+		return;
+	}
 	*p++ = cpu_to_be32(op->opnum);
-	*p++ = rp->rp_status;  /* alपढ़ोy xdr'ed */
+	*p++ = rp->rp_status;  /* already xdr'ed */
 
 	p = xdr_encode_opaque_fixed(p, rp->rp_buf, rp->rp_buflen);
-पूर्ण
+}
 
-व्योम nfsd4_release_compoundargs(काष्ठा svc_rqst *rqstp)
-अणु
-	काष्ठा nfsd4_compoundargs *args = rqstp->rq_argp;
+void nfsd4_release_compoundargs(struct svc_rqst *rqstp)
+{
+	struct nfsd4_compoundargs *args = rqstp->rq_argp;
 
-	अगर (args->ops != args->iops) अणु
-		kमुक्त(args->ops);
+	if (args->ops != args->iops) {
+		kfree(args->ops);
 		args->ops = args->iops;
-	पूर्ण
-	जबतक (args->to_मुक्त) अणु
-		काष्ठा svcxdr_पंचांगpbuf *tb = args->to_मुक्त;
-		args->to_मुक्त = tb->next;
-		kमुक्त(tb);
-	पूर्ण
-पूर्ण
+	}
+	while (args->to_free) {
+		struct svcxdr_tmpbuf *tb = args->to_free;
+		args->to_free = tb->next;
+		kfree(tb);
+	}
+}
 
-पूर्णांक
-nfs4svc_decode_compoundargs(काष्ठा svc_rqst *rqstp, __be32 *p)
-अणु
-	काष्ठा nfsd4_compoundargs *args = rqstp->rq_argp;
+int
+nfs4svc_decode_compoundargs(struct svc_rqst *rqstp, __be32 *p)
+{
+	struct nfsd4_compoundargs *args = rqstp->rq_argp;
 
-	/* svcxdr_पंचांगp_alloc */
-	args->to_मुक्त = शून्य;
+	/* svcxdr_tmp_alloc */
+	args->to_free = NULL;
 
 	args->xdr = &rqstp->rq_arg_stream;
 	args->ops = args->iops;
 	args->rqstp = rqstp;
 
-	वापस nfsd4_decode_compound(args);
-पूर्ण
+	return nfsd4_decode_compound(args);
+}
 
-पूर्णांक
-nfs4svc_encode_compoundres(काष्ठा svc_rqst *rqstp, __be32 *p)
-अणु
-	काष्ठा nfsd4_compoundres *resp = rqstp->rq_resp;
-	काष्ठा xdr_buf *buf = resp->xdr->buf;
+int
+nfs4svc_encode_compoundres(struct svc_rqst *rqstp, __be32 *p)
+{
+	struct nfsd4_compoundres *resp = rqstp->rq_resp;
+	struct xdr_buf *buf = resp->xdr->buf;
 
 	WARN_ON_ONCE(buf->len != buf->head[0].iov_len + buf->page_len +
 				 buf->tail[0].iov_len);
@@ -5442,10 +5441,10 @@ nfs4svc_encode_compoundres(काष्ठा svc_rqst *rqstp, __be32 *p)
 
 	p = resp->tagp;
 	*p++ = htonl(resp->taglen);
-	स_नकल(p, resp->tag, resp->taglen);
+	memcpy(p, resp->tag, resp->taglen);
 	p += XDR_QUADLEN(resp->taglen);
 	*p++ = htonl(resp->opcnt);
 
-	nfsd4_sequence_करोne(resp);
-	वापस 1;
-पूर्ण
+	nfsd4_sequence_done(resp);
+	return 1;
+}

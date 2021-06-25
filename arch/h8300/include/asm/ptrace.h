@@ -1,40 +1,39 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _H8300_PTRACE_H
-#घोषणा _H8300_PTRACE_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _H8300_PTRACE_H
+#define _H8300_PTRACE_H
 
-#समावेश <uapi/यंत्र/ptrace.h>
+#include <uapi/asm/ptrace.h>
 
-काष्ठा task_काष्ठा;
+struct task_struct;
 
-#अगर_अघोषित __ASSEMBLY__
-#अगर_अघोषित PS_S
-#घोषणा PS_S  (0x10)
-#पूर्ण_अगर
+#ifndef __ASSEMBLY__
+#ifndef PS_S
+#define PS_S  (0x10)
+#endif
 
-#अगर defined(CONFIG_CPU_H8300H)
-#घोषणा H8300_REGS_NO 11
-#पूर्ण_अगर
-#अगर defined(CONFIG_CPU_H8S)
-#घोषणा H8300_REGS_NO 12
-#पूर्ण_अगर
+#if defined(CONFIG_CPU_H8300H)
+#define H8300_REGS_NO 11
+#endif
+#if defined(CONFIG_CPU_H8S)
+#define H8300_REGS_NO 12
+#endif
 
-#घोषणा arch_has_single_step()	(1)
+#define arch_has_single_step()	(1)
 
-#घोषणा user_mode(regs) (!((regs)->ccr & PS_S))
-#घोषणा inकाष्ठाion_poपूर्णांकer(regs) ((regs)->pc)
-#घोषणा profile_pc(regs) inकाष्ठाion_poपूर्णांकer(regs)
-#घोषणा user_stack_poपूर्णांकer(regs) ((regs)->sp)
-#घोषणा current_pt_regs() ((काष्ठा pt_regs *) \
-	(THREAD_SIZE + (अचिन्हित दीर्घ)current_thपढ़ो_info()) - 1)
-#घोषणा संकेत_pt_regs() ((काष्ठा pt_regs *)current->thपढ़ो.esp0)
-#घोषणा current_user_stack_poपूर्णांकer() rdusp()
-#घोषणा task_pt_regs(task) \
-	((काष्ठा pt_regs *) (task_stack_page(task) + THREAD_SIZE) - 1)
+#define user_mode(regs) (!((regs)->ccr & PS_S))
+#define instruction_pointer(regs) ((regs)->pc)
+#define profile_pc(regs) instruction_pointer(regs)
+#define user_stack_pointer(regs) ((regs)->sp)
+#define current_pt_regs() ((struct pt_regs *) \
+	(THREAD_SIZE + (unsigned long)current_thread_info()) - 1)
+#define signal_pt_regs() ((struct pt_regs *)current->thread.esp0)
+#define current_user_stack_pointer() rdusp()
+#define task_pt_regs(task) \
+	((struct pt_regs *) (task_stack_page(task) + THREAD_SIZE) - 1)
 
-बाह्य दीर्घ h8300_get_reg(काष्ठा task_काष्ठा *task, पूर्णांक regno);
-बाह्य पूर्णांक h8300_put_reg(काष्ठा task_काष्ठा *task, पूर्णांक regno,
-			 अचिन्हित दीर्घ data);
+extern long h8300_get_reg(struct task_struct *task, int regno);
+extern int h8300_put_reg(struct task_struct *task, int regno,
+			 unsigned long data);
 
-#पूर्ण_अगर /* __ASSEMBLY__ */
-#पूर्ण_अगर /* _H8300_PTRACE_H */
+#endif /* __ASSEMBLY__ */
+#endif /* _H8300_PTRACE_H */

@@ -1,212 +1,211 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2007-2014 Nicira, Inc.
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/init.h>
-#समावेश <linux/module.h>
-#समावेश <linux/अगर_arp.h>
-#समावेश <linux/अगर_vlan.h>
-#समावेश <linux/in.h>
-#समावेश <linux/ip.h>
-#समावेश <linux/jhash.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/समय.स>
-#समावेश <linux/etherdevice.h>
-#समावेश <linux/genetlink.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/kthपढ़ो.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/percpu.h>
-#समावेश <linux/rcupdate.h>
-#समावेश <linux/tcp.h>
-#समावेश <linux/udp.h>
-#समावेश <linux/ethtool.h>
-#समावेश <linux/रुको.h>
-#समावेश <यंत्र/भाग64.h>
-#समावेश <linux/highस्मृति.स>
-#समावेश <linux/netfilter_bridge.h>
-#समावेश <linux/netfilter_ipv4.h>
-#समावेश <linux/inetdevice.h>
-#समावेश <linux/list.h>
-#समावेश <linux/खोलोvचयन.h>
-#समावेश <linux/rculist.h>
-#समावेश <linux/dmi.h>
-#समावेश <net/genetlink.h>
-#समावेश <net/net_namespace.h>
-#समावेश <net/netns/generic.h>
+#include <linux/init.h>
+#include <linux/module.h>
+#include <linux/if_arp.h>
+#include <linux/if_vlan.h>
+#include <linux/in.h>
+#include <linux/ip.h>
+#include <linux/jhash.h>
+#include <linux/delay.h>
+#include <linux/time.h>
+#include <linux/etherdevice.h>
+#include <linux/genetlink.h>
+#include <linux/kernel.h>
+#include <linux/kthread.h>
+#include <linux/mutex.h>
+#include <linux/percpu.h>
+#include <linux/rcupdate.h>
+#include <linux/tcp.h>
+#include <linux/udp.h>
+#include <linux/ethtool.h>
+#include <linux/wait.h>
+#include <asm/div64.h>
+#include <linux/highmem.h>
+#include <linux/netfilter_bridge.h>
+#include <linux/netfilter_ipv4.h>
+#include <linux/inetdevice.h>
+#include <linux/list.h>
+#include <linux/openvswitch.h>
+#include <linux/rculist.h>
+#include <linux/dmi.h>
+#include <net/genetlink.h>
+#include <net/net_namespace.h>
+#include <net/netns/generic.h>
 
-#समावेश "datapath.h"
-#समावेश "flow.h"
-#समावेश "flow_table.h"
-#समावेश "flow_netlink.h"
-#समावेश "meter.h"
-#समावेश "vport-internal_dev.h"
-#समावेश "vport-netdev.h"
+#include "datapath.h"
+#include "flow.h"
+#include "flow_table.h"
+#include "flow_netlink.h"
+#include "meter.h"
+#include "vport-internal_dev.h"
+#include "vport-netdev.h"
 
-अचिन्हित पूर्णांक ovs_net_id __पढ़ो_mostly;
+unsigned int ovs_net_id __read_mostly;
 
-अटल काष्ठा genl_family dp_packet_genl_family;
-अटल काष्ठा genl_family dp_flow_genl_family;
-अटल काष्ठा genl_family dp_datapath_genl_family;
+static struct genl_family dp_packet_genl_family;
+static struct genl_family dp_flow_genl_family;
+static struct genl_family dp_datapath_genl_family;
 
-अटल स्थिर काष्ठा nla_policy flow_policy[];
+static const struct nla_policy flow_policy[];
 
-अटल स्थिर काष्ठा genl_multicast_group ovs_dp_flow_multicast_group = अणु
+static const struct genl_multicast_group ovs_dp_flow_multicast_group = {
 	.name = OVS_FLOW_MCGROUP,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा genl_multicast_group ovs_dp_datapath_multicast_group = अणु
+static const struct genl_multicast_group ovs_dp_datapath_multicast_group = {
 	.name = OVS_DATAPATH_MCGROUP,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा genl_multicast_group ovs_dp_vport_multicast_group = अणु
+static const struct genl_multicast_group ovs_dp_vport_multicast_group = {
 	.name = OVS_VPORT_MCGROUP,
-पूर्ण;
+};
 
-/* Check अगर need to build a reply message.
- * OVS userspace sets the NLM_F_ECHO flag अगर it needs the reply. */
-अटल bool ovs_must_notअगरy(काष्ठा genl_family *family, काष्ठा genl_info *info,
-			    अचिन्हित पूर्णांक group)
-अणु
-	वापस info->nlhdr->nlmsg_flags & NLM_F_ECHO ||
+/* Check if need to build a reply message.
+ * OVS userspace sets the NLM_F_ECHO flag if it needs the reply. */
+static bool ovs_must_notify(struct genl_family *family, struct genl_info *info,
+			    unsigned int group)
+{
+	return info->nlhdr->nlmsg_flags & NLM_F_ECHO ||
 	       genl_has_listeners(family, genl_info_net(info), group);
-पूर्ण
+}
 
-अटल व्योम ovs_notअगरy(काष्ठा genl_family *family,
-		       काष्ठा sk_buff *skb, काष्ठा genl_info *info)
-अणु
-	genl_notअगरy(family, skb, info, 0, GFP_KERNEL);
-पूर्ण
+static void ovs_notify(struct genl_family *family,
+		       struct sk_buff *skb, struct genl_info *info)
+{
+	genl_notify(family, skb, info, 0, GFP_KERNEL);
+}
 
 /**
  * DOC: Locking:
  *
- * All ग_लिखोs e.g. Writes to device state (add/हटाओ datapath, port, set
+ * All writes e.g. Writes to device state (add/remove datapath, port, set
  * operations on vports, etc.), Writes to other state (flow table
- * modअगरications, set miscellaneous datapath parameters, etc.) are रक्षित
+ * modifications, set miscellaneous datapath parameters, etc.) are protected
  * by ovs_lock.
  *
- * Reads are रक्षित by RCU.
+ * Reads are protected by RCU.
  *
- * There are a few special हालs (mostly stats) that have their own
- * synchronization but they nest under all of above and करोn't पूर्णांकeract with
+ * There are a few special cases (mostly stats) that have their own
+ * synchronization but they nest under all of above and don't interact with
  * each other.
  *
  * The RTNL lock nests inside ovs_mutex.
  */
 
-अटल DEFINE_MUTEX(ovs_mutex);
+static DEFINE_MUTEX(ovs_mutex);
 
-व्योम ovs_lock(व्योम)
-अणु
+void ovs_lock(void)
+{
 	mutex_lock(&ovs_mutex);
-पूर्ण
+}
 
-व्योम ovs_unlock(व्योम)
-अणु
+void ovs_unlock(void)
+{
 	mutex_unlock(&ovs_mutex);
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_LOCKDEP
-पूर्णांक lockdep_ovsl_is_held(व्योम)
-अणु
-	अगर (debug_locks)
-		वापस lockdep_is_held(&ovs_mutex);
-	अन्यथा
-		वापस 1;
-पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_LOCKDEP
+int lockdep_ovsl_is_held(void)
+{
+	if (debug_locks)
+		return lockdep_is_held(&ovs_mutex);
+	else
+		return 1;
+}
+#endif
 
-अटल काष्ठा vport *new_vport(स्थिर काष्ठा vport_parms *);
-अटल पूर्णांक queue_gso_packets(काष्ठा datapath *dp, काष्ठा sk_buff *,
-			     स्थिर काष्ठा sw_flow_key *,
-			     स्थिर काष्ठा dp_upcall_info *,
-			     uपूर्णांक32_t cutlen);
-अटल पूर्णांक queue_userspace_packet(काष्ठा datapath *dp, काष्ठा sk_buff *,
-				  स्थिर काष्ठा sw_flow_key *,
-				  स्थिर काष्ठा dp_upcall_info *,
-				  uपूर्णांक32_t cutlen);
+static struct vport *new_vport(const struct vport_parms *);
+static int queue_gso_packets(struct datapath *dp, struct sk_buff *,
+			     const struct sw_flow_key *,
+			     const struct dp_upcall_info *,
+			     uint32_t cutlen);
+static int queue_userspace_packet(struct datapath *dp, struct sk_buff *,
+				  const struct sw_flow_key *,
+				  const struct dp_upcall_info *,
+				  uint32_t cutlen);
 
-अटल व्योम ovs_dp_masks_rebalance(काष्ठा work_काष्ठा *work);
+static void ovs_dp_masks_rebalance(struct work_struct *work);
 
-/* Must be called with rcu_पढ़ो_lock or ovs_mutex. */
-स्थिर अक्षर *ovs_dp_name(स्थिर काष्ठा datapath *dp)
-अणु
-	काष्ठा vport *vport = ovs_vport_ovsl_rcu(dp, OVSP_LOCAL);
-	वापस ovs_vport_name(vport);
-पूर्ण
+/* Must be called with rcu_read_lock or ovs_mutex. */
+const char *ovs_dp_name(const struct datapath *dp)
+{
+	struct vport *vport = ovs_vport_ovsl_rcu(dp, OVSP_LOCAL);
+	return ovs_vport_name(vport);
+}
 
-अटल पूर्णांक get_dpअगरindex(स्थिर काष्ठा datapath *dp)
-अणु
-	काष्ठा vport *local;
-	पूर्णांक अगरindex;
+static int get_dpifindex(const struct datapath *dp)
+{
+	struct vport *local;
+	int ifindex;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 
 	local = ovs_vport_rcu(dp, OVSP_LOCAL);
-	अगर (local)
-		अगरindex = local->dev->अगरindex;
-	अन्यथा
-		अगरindex = 0;
+	if (local)
+		ifindex = local->dev->ifindex;
+	else
+		ifindex = 0;
 
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 
-	वापस अगरindex;
-पूर्ण
+	return ifindex;
+}
 
-अटल व्योम destroy_dp_rcu(काष्ठा rcu_head *rcu)
-अणु
-	काष्ठा datapath *dp = container_of(rcu, काष्ठा datapath, rcu);
+static void destroy_dp_rcu(struct rcu_head *rcu)
+{
+	struct datapath *dp = container_of(rcu, struct datapath, rcu);
 
 	ovs_flow_tbl_destroy(&dp->table);
-	मुक्त_percpu(dp->stats_percpu);
-	kमुक्त(dp->ports);
-	ovs_meters_निकास(dp);
-	kमुक्त(dp);
-पूर्ण
+	free_percpu(dp->stats_percpu);
+	kfree(dp->ports);
+	ovs_meters_exit(dp);
+	kfree(dp);
+}
 
-अटल काष्ठा hlist_head *vport_hash_bucket(स्थिर काष्ठा datapath *dp,
+static struct hlist_head *vport_hash_bucket(const struct datapath *dp,
 					    u16 port_no)
-अणु
-	वापस &dp->ports[port_no & (DP_VPORT_HASH_BUCKETS - 1)];
-पूर्ण
+{
+	return &dp->ports[port_no & (DP_VPORT_HASH_BUCKETS - 1)];
+}
 
-/* Called with ovs_mutex or RCU पढ़ो lock. */
-काष्ठा vport *ovs_lookup_vport(स्थिर काष्ठा datapath *dp, u16 port_no)
-अणु
-	काष्ठा vport *vport;
-	काष्ठा hlist_head *head;
+/* Called with ovs_mutex or RCU read lock. */
+struct vport *ovs_lookup_vport(const struct datapath *dp, u16 port_no)
+{
+	struct vport *vport;
+	struct hlist_head *head;
 
 	head = vport_hash_bucket(dp, port_no);
-	hlist_क्रम_each_entry_rcu(vport, head, dp_hash_node,
-				 lockdep_ovsl_is_held()) अणु
-		अगर (vport->port_no == port_no)
-			वापस vport;
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+	hlist_for_each_entry_rcu(vport, head, dp_hash_node,
+				 lockdep_ovsl_is_held()) {
+		if (vport->port_no == port_no)
+			return vport;
+	}
+	return NULL;
+}
 
 /* Called with ovs_mutex. */
-अटल काष्ठा vport *new_vport(स्थिर काष्ठा vport_parms *parms)
-अणु
-	काष्ठा vport *vport;
+static struct vport *new_vport(const struct vport_parms *parms)
+{
+	struct vport *vport;
 
 	vport = ovs_vport_add(parms);
-	अगर (!IS_ERR(vport)) अणु
-		काष्ठा datapath *dp = parms->dp;
-		काष्ठा hlist_head *head = vport_hash_bucket(dp, vport->port_no);
+	if (!IS_ERR(vport)) {
+		struct datapath *dp = parms->dp;
+		struct hlist_head *head = vport_hash_bucket(dp, vport->port_no);
 
 		hlist_add_head_rcu(&vport->dp_hash_node, head);
-	पूर्ण
-	वापस vport;
-पूर्ण
+	}
+	return vport;
+}
 
-व्योम ovs_dp_detach_port(काष्ठा vport *p)
-अणु
+void ovs_dp_detach_port(struct vport *p)
+{
 	ASSERT_OVSL();
 
 	/* First drop references to device. */
@@ -214,46 +213,46 @@
 
 	/* Then destroy it. */
 	ovs_vport_del(p);
-पूर्ण
+}
 
-/* Must be called with rcu_पढ़ो_lock. */
-व्योम ovs_dp_process_packet(काष्ठा sk_buff *skb, काष्ठा sw_flow_key *key)
-अणु
-	स्थिर काष्ठा vport *p = OVS_CB(skb)->input_vport;
-	काष्ठा datapath *dp = p->dp;
-	काष्ठा sw_flow *flow;
-	काष्ठा sw_flow_actions *sf_acts;
-	काष्ठा dp_stats_percpu *stats;
+/* Must be called with rcu_read_lock. */
+void ovs_dp_process_packet(struct sk_buff *skb, struct sw_flow_key *key)
+{
+	const struct vport *p = OVS_CB(skb)->input_vport;
+	struct datapath *dp = p->dp;
+	struct sw_flow *flow;
+	struct sw_flow_actions *sf_acts;
+	struct dp_stats_percpu *stats;
 	u64 *stats_counter;
 	u32 n_mask_hit;
 	u32 n_cache_hit;
-	पूर्णांक error;
+	int error;
 
 	stats = this_cpu_ptr(dp->stats_percpu);
 
 	/* Look up flow. */
 	flow = ovs_flow_tbl_lookup_stats(&dp->table, key, skb_get_hash(skb),
 					 &n_mask_hit, &n_cache_hit);
-	अगर (unlikely(!flow)) अणु
-		काष्ठा dp_upcall_info upcall;
+	if (unlikely(!flow)) {
+		struct dp_upcall_info upcall;
 
-		स_रखो(&upcall, 0, माप(upcall));
+		memset(&upcall, 0, sizeof(upcall));
 		upcall.cmd = OVS_PACKET_CMD_MISS;
 		upcall.portid = ovs_vport_find_upcall_portid(p, skb);
 		upcall.mru = OVS_CB(skb)->mru;
 		error = ovs_dp_upcall(dp, skb, key, &upcall, 0);
-		अगर (unlikely(error))
-			kमुक्त_skb(skb);
-		अन्यथा
+		if (unlikely(error))
+			kfree_skb(skb);
+		else
 			consume_skb(skb);
 		stats_counter = &stats->n_missed;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	ovs_flow_stats_update(flow, key->tp.flags, skb);
 	sf_acts = rcu_dereference(flow->sf_acts);
 	error = ovs_execute_actions(dp, skb, sf_acts, key);
-	अगर (unlikely(error))
+	if (unlikely(error))
 		net_dbg_ratelimited("ovs: action execution error on datapath %s: %d\n",
 				    ovs_dp_name(dp), error);
 
@@ -266,29 +265,29 @@ out:
 	stats->n_mask_hit += n_mask_hit;
 	stats->n_cache_hit += n_cache_hit;
 	u64_stats_update_end(&stats->syncp);
-पूर्ण
+}
 
-पूर्णांक ovs_dp_upcall(काष्ठा datapath *dp, काष्ठा sk_buff *skb,
-		  स्थिर काष्ठा sw_flow_key *key,
-		  स्थिर काष्ठा dp_upcall_info *upcall_info,
-		  uपूर्णांक32_t cutlen)
-अणु
-	काष्ठा dp_stats_percpu *stats;
-	पूर्णांक err;
+int ovs_dp_upcall(struct datapath *dp, struct sk_buff *skb,
+		  const struct sw_flow_key *key,
+		  const struct dp_upcall_info *upcall_info,
+		  uint32_t cutlen)
+{
+	struct dp_stats_percpu *stats;
+	int err;
 
-	अगर (upcall_info->portid == 0) अणु
+	if (upcall_info->portid == 0) {
 		err = -ENOTCONN;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	अगर (!skb_is_gso(skb))
+	if (!skb_is_gso(skb))
 		err = queue_userspace_packet(dp, skb, key, upcall_info, cutlen);
-	अन्यथा
+	else
 		err = queue_gso_packets(dp, skb, key, upcall_info, cutlen);
-	अगर (err)
-		जाओ err;
+	if (err)
+		goto err;
 
-	वापस 0;
+	return 0;
 
 err:
 	stats = this_cpu_ptr(dp->stats_percpu);
@@ -297,330 +296,330 @@ err:
 	stats->n_lost++;
 	u64_stats_update_end(&stats->syncp);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक queue_gso_packets(काष्ठा datapath *dp, काष्ठा sk_buff *skb,
-			     स्थिर काष्ठा sw_flow_key *key,
-			     स्थिर काष्ठा dp_upcall_info *upcall_info,
-			     uपूर्णांक32_t cutlen)
-अणु
-	अचिन्हित पूर्णांक gso_type = skb_shinfo(skb)->gso_type;
-	काष्ठा sw_flow_key later_key;
-	काष्ठा sk_buff *segs, *nskb;
-	पूर्णांक err;
+static int queue_gso_packets(struct datapath *dp, struct sk_buff *skb,
+			     const struct sw_flow_key *key,
+			     const struct dp_upcall_info *upcall_info,
+			     uint32_t cutlen)
+{
+	unsigned int gso_type = skb_shinfo(skb)->gso_type;
+	struct sw_flow_key later_key;
+	struct sk_buff *segs, *nskb;
+	int err;
 
-	BUILD_BUG_ON(माप(*OVS_CB(skb)) > SKB_GSO_CB_OFFSET);
+	BUILD_BUG_ON(sizeof(*OVS_CB(skb)) > SKB_GSO_CB_OFFSET);
 	segs = __skb_gso_segment(skb, NETIF_F_SG, false);
-	अगर (IS_ERR(segs))
-		वापस PTR_ERR(segs);
-	अगर (segs == शून्य)
-		वापस -EINVAL;
+	if (IS_ERR(segs))
+		return PTR_ERR(segs);
+	if (segs == NULL)
+		return -EINVAL;
 
-	अगर (gso_type & SKB_GSO_UDP) अणु
+	if (gso_type & SKB_GSO_UDP) {
 		/* The initial flow key extracted by ovs_flow_key_extract()
-		 * in this हाल is क्रम a first fragment, so we need to
+		 * in this case is for a first fragment, so we need to
 		 * properly mark later fragments.
 		 */
 		later_key = *key;
 		later_key.ip.frag = OVS_FRAG_TYPE_LATER;
-	पूर्ण
+	}
 
 	/* Queue all of the segments. */
-	skb_list_walk_safe(segs, skb, nskb) अणु
-		अगर (gso_type & SKB_GSO_UDP && skb != segs)
+	skb_list_walk_safe(segs, skb, nskb) {
+		if (gso_type & SKB_GSO_UDP && skb != segs)
 			key = &later_key;
 
 		err = queue_userspace_packet(dp, skb, key, upcall_info, cutlen);
-		अगर (err)
-			अवरोध;
+		if (err)
+			break;
 
-	पूर्ण
+	}
 
 	/* Free all of the segments. */
-	skb_list_walk_safe(segs, skb, nskb) अणु
-		अगर (err)
-			kमुक्त_skb(skb);
-		अन्यथा
+	skb_list_walk_safe(segs, skb, nskb) {
+		if (err)
+			kfree_skb(skb);
+		else
 			consume_skb(skb);
-	पूर्ण
-	वापस err;
-पूर्ण
+	}
+	return err;
+}
 
-अटल माप_प्रकार upcall_msg_size(स्थिर काष्ठा dp_upcall_info *upcall_info,
-			      अचिन्हित पूर्णांक hdrlen, पूर्णांक actions_attrlen)
-अणु
-	माप_प्रकार size = NLMSG_ALIGN(माप(काष्ठा ovs_header))
+static size_t upcall_msg_size(const struct dp_upcall_info *upcall_info,
+			      unsigned int hdrlen, int actions_attrlen)
+{
+	size_t size = NLMSG_ALIGN(sizeof(struct ovs_header))
 		+ nla_total_size(hdrlen) /* OVS_PACKET_ATTR_PACKET */
 		+ nla_total_size(ovs_key_attr_size()) /* OVS_PACKET_ATTR_KEY */
-		+ nla_total_size(माप(अचिन्हित पूर्णांक)) /* OVS_PACKET_ATTR_LEN */
-		+ nla_total_size(माप(u64)); /* OVS_PACKET_ATTR_HASH */
+		+ nla_total_size(sizeof(unsigned int)) /* OVS_PACKET_ATTR_LEN */
+		+ nla_total_size(sizeof(u64)); /* OVS_PACKET_ATTR_HASH */
 
 	/* OVS_PACKET_ATTR_USERDATA */
-	अगर (upcall_info->userdata)
+	if (upcall_info->userdata)
 		size += NLA_ALIGN(upcall_info->userdata->nla_len);
 
 	/* OVS_PACKET_ATTR_EGRESS_TUN_KEY */
-	अगर (upcall_info->egress_tun_info)
+	if (upcall_info->egress_tun_info)
 		size += nla_total_size(ovs_tun_key_attr_size());
 
 	/* OVS_PACKET_ATTR_ACTIONS */
-	अगर (upcall_info->actions_len)
+	if (upcall_info->actions_len)
 		size += nla_total_size(actions_attrlen);
 
 	/* OVS_PACKET_ATTR_MRU */
-	अगर (upcall_info->mru)
-		size += nla_total_size(माप(upcall_info->mru));
+	if (upcall_info->mru)
+		size += nla_total_size(sizeof(upcall_info->mru));
 
-	वापस size;
-पूर्ण
+	return size;
+}
 
-अटल व्योम pad_packet(काष्ठा datapath *dp, काष्ठा sk_buff *skb)
-अणु
-	अगर (!(dp->user_features & OVS_DP_F_UNALIGNED)) अणु
-		माप_प्रकार plen = NLA_ALIGN(skb->len) - skb->len;
+static void pad_packet(struct datapath *dp, struct sk_buff *skb)
+{
+	if (!(dp->user_features & OVS_DP_F_UNALIGNED)) {
+		size_t plen = NLA_ALIGN(skb->len) - skb->len;
 
-		अगर (plen > 0)
+		if (plen > 0)
 			skb_put_zero(skb, plen);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक queue_userspace_packet(काष्ठा datapath *dp, काष्ठा sk_buff *skb,
-				  स्थिर काष्ठा sw_flow_key *key,
-				  स्थिर काष्ठा dp_upcall_info *upcall_info,
-				  uपूर्णांक32_t cutlen)
-अणु
-	काष्ठा ovs_header *upcall;
-	काष्ठा sk_buff *nskb = शून्य;
-	काष्ठा sk_buff *user_skb = शून्य; /* to be queued to userspace */
-	काष्ठा nlattr *nla;
-	माप_प्रकार len;
-	अचिन्हित पूर्णांक hlen;
-	पूर्णांक err, dp_अगरindex;
+static int queue_userspace_packet(struct datapath *dp, struct sk_buff *skb,
+				  const struct sw_flow_key *key,
+				  const struct dp_upcall_info *upcall_info,
+				  uint32_t cutlen)
+{
+	struct ovs_header *upcall;
+	struct sk_buff *nskb = NULL;
+	struct sk_buff *user_skb = NULL; /* to be queued to userspace */
+	struct nlattr *nla;
+	size_t len;
+	unsigned int hlen;
+	int err, dp_ifindex;
 	u64 hash;
 
-	dp_अगरindex = get_dpअगरindex(dp);
-	अगर (!dp_अगरindex)
-		वापस -ENODEV;
+	dp_ifindex = get_dpifindex(dp);
+	if (!dp_ifindex)
+		return -ENODEV;
 
-	अगर (skb_vlan_tag_present(skb)) अणु
+	if (skb_vlan_tag_present(skb)) {
 		nskb = skb_clone(skb, GFP_ATOMIC);
-		अगर (!nskb)
-			वापस -ENOMEM;
+		if (!nskb)
+			return -ENOMEM;
 
 		nskb = __vlan_hwaccel_push_inside(nskb);
-		अगर (!nskb)
-			वापस -ENOMEM;
+		if (!nskb)
+			return -ENOMEM;
 
 		skb = nskb;
-	पूर्ण
+	}
 
-	अगर (nla_attr_size(skb->len) > अच_लघु_उच्च) अणु
+	if (nla_attr_size(skb->len) > USHRT_MAX) {
 		err = -EFBIG;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	/* Complete checksum अगर needed */
-	अगर (skb->ip_summed == CHECKSUM_PARTIAL &&
+	/* Complete checksum if needed */
+	if (skb->ip_summed == CHECKSUM_PARTIAL &&
 	    (err = skb_csum_hwoffload_help(skb, 0)))
-		जाओ out;
+		goto out;
 
-	/* Older versions of OVS user space enक्रमce alignment of the last
+	/* Older versions of OVS user space enforce alignment of the last
 	 * Netlink attribute to NLA_ALIGNTO which would require extensive
-	 * padding logic. Only perक्रमm zerocopy अगर padding is not required.
+	 * padding logic. Only perform zerocopy if padding is not required.
 	 */
-	अगर (dp->user_features & OVS_DP_F_UNALIGNED)
+	if (dp->user_features & OVS_DP_F_UNALIGNED)
 		hlen = skb_zerocopy_headlen(skb);
-	अन्यथा
+	else
 		hlen = skb->len;
 
 	len = upcall_msg_size(upcall_info, hlen - cutlen,
 			      OVS_CB(skb)->acts_origlen);
 	user_skb = genlmsg_new(len, GFP_ATOMIC);
-	अगर (!user_skb) अणु
+	if (!user_skb) {
 		err = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	upcall = genlmsg_put(user_skb, 0, 0, &dp_packet_genl_family,
 			     0, upcall_info->cmd);
-	अगर (!upcall) अणु
+	if (!upcall) {
 		err = -EINVAL;
-		जाओ out;
-	पूर्ण
-	upcall->dp_अगरindex = dp_अगरindex;
+		goto out;
+	}
+	upcall->dp_ifindex = dp_ifindex;
 
 	err = ovs_nla_put_key(key, key, OVS_PACKET_ATTR_KEY, false, user_skb);
-	अगर (err)
-		जाओ out;
+	if (err)
+		goto out;
 
-	अगर (upcall_info->userdata)
+	if (upcall_info->userdata)
 		__nla_put(user_skb, OVS_PACKET_ATTR_USERDATA,
 			  nla_len(upcall_info->userdata),
 			  nla_data(upcall_info->userdata));
 
-	अगर (upcall_info->egress_tun_info) अणु
+	if (upcall_info->egress_tun_info) {
 		nla = nla_nest_start_noflag(user_skb,
 					    OVS_PACKET_ATTR_EGRESS_TUN_KEY);
-		अगर (!nla) अणु
+		if (!nla) {
 			err = -EMSGSIZE;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		err = ovs_nla_put_tunnel_info(user_skb,
 					      upcall_info->egress_tun_info);
-		अगर (err)
-			जाओ out;
+		if (err)
+			goto out;
 
 		nla_nest_end(user_skb, nla);
-	पूर्ण
+	}
 
-	अगर (upcall_info->actions_len) अणु
+	if (upcall_info->actions_len) {
 		nla = nla_nest_start_noflag(user_skb, OVS_PACKET_ATTR_ACTIONS);
-		अगर (!nla) अणु
+		if (!nla) {
 			err = -EMSGSIZE;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		err = ovs_nla_put_actions(upcall_info->actions,
 					  upcall_info->actions_len,
 					  user_skb);
-		अगर (!err)
+		if (!err)
 			nla_nest_end(user_skb, nla);
-		अन्यथा
+		else
 			nla_nest_cancel(user_skb, nla);
-	पूर्ण
+	}
 
 	/* Add OVS_PACKET_ATTR_MRU */
-	अगर (upcall_info->mru &&
-	    nla_put_u16(user_skb, OVS_PACKET_ATTR_MRU, upcall_info->mru)) अणु
+	if (upcall_info->mru &&
+	    nla_put_u16(user_skb, OVS_PACKET_ATTR_MRU, upcall_info->mru)) {
 		err = -ENOBUFS;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/* Add OVS_PACKET_ATTR_LEN when packet is truncated */
-	अगर (cutlen > 0 &&
-	    nla_put_u32(user_skb, OVS_PACKET_ATTR_LEN, skb->len)) अणु
+	if (cutlen > 0 &&
+	    nla_put_u32(user_skb, OVS_PACKET_ATTR_LEN, skb->len)) {
 		err = -ENOBUFS;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/* Add OVS_PACKET_ATTR_HASH */
 	hash = skb_get_hash_raw(skb);
-	अगर (skb->sw_hash)
+	if (skb->sw_hash)
 		hash |= OVS_PACKET_HASH_SW_BIT;
 
-	अगर (skb->l4_hash)
+	if (skb->l4_hash)
 		hash |= OVS_PACKET_HASH_L4_BIT;
 
-	अगर (nla_put(user_skb, OVS_PACKET_ATTR_HASH, माप (u64), &hash)) अणु
+	if (nla_put(user_skb, OVS_PACKET_ATTR_HASH, sizeof (u64), &hash)) {
 		err = -ENOBUFS;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	/* Only reserve room क्रम attribute header, packet data is added
+	/* Only reserve room for attribute header, packet data is added
 	 * in skb_zerocopy() */
-	अगर (!(nla = nla_reserve(user_skb, OVS_PACKET_ATTR_PACKET, 0))) अणु
+	if (!(nla = nla_reserve(user_skb, OVS_PACKET_ATTR_PACKET, 0))) {
 		err = -ENOBUFS;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	nla->nla_len = nla_attr_size(skb->len - cutlen);
 
 	err = skb_zerocopy(user_skb, skb, skb->len - cutlen, hlen);
-	अगर (err)
-		जाओ out;
+	if (err)
+		goto out;
 
-	/* Pad OVS_PACKET_ATTR_PACKET अगर linear copy was perक्रमmed */
+	/* Pad OVS_PACKET_ATTR_PACKET if linear copy was performed */
 	pad_packet(dp, user_skb);
 
-	((काष्ठा nlmsghdr *) user_skb->data)->nlmsg_len = user_skb->len;
+	((struct nlmsghdr *) user_skb->data)->nlmsg_len = user_skb->len;
 
 	err = genlmsg_unicast(ovs_dp_get_net(dp), user_skb, upcall_info->portid);
-	user_skb = शून्य;
+	user_skb = NULL;
 out:
-	अगर (err)
+	if (err)
 		skb_tx_error(skb);
-	kमुक्त_skb(user_skb);
-	kमुक्त_skb(nskb);
-	वापस err;
-पूर्ण
+	kfree_skb(user_skb);
+	kfree_skb(nskb);
+	return err;
+}
 
-अटल पूर्णांक ovs_packet_cmd_execute(काष्ठा sk_buff *skb, काष्ठा genl_info *info)
-अणु
-	काष्ठा ovs_header *ovs_header = info->userhdr;
-	काष्ठा net *net = sock_net(skb->sk);
-	काष्ठा nlattr **a = info->attrs;
-	काष्ठा sw_flow_actions *acts;
-	काष्ठा sk_buff *packet;
-	काष्ठा sw_flow *flow;
-	काष्ठा sw_flow_actions *sf_acts;
-	काष्ठा datapath *dp;
-	काष्ठा vport *input_vport;
+static int ovs_packet_cmd_execute(struct sk_buff *skb, struct genl_info *info)
+{
+	struct ovs_header *ovs_header = info->userhdr;
+	struct net *net = sock_net(skb->sk);
+	struct nlattr **a = info->attrs;
+	struct sw_flow_actions *acts;
+	struct sk_buff *packet;
+	struct sw_flow *flow;
+	struct sw_flow_actions *sf_acts;
+	struct datapath *dp;
+	struct vport *input_vport;
 	u16 mru = 0;
 	u64 hash;
-	पूर्णांक len;
-	पूर्णांक err;
+	int len;
+	int err;
 	bool log = !a[OVS_PACKET_ATTR_PROBE];
 
 	err = -EINVAL;
-	अगर (!a[OVS_PACKET_ATTR_PACKET] || !a[OVS_PACKET_ATTR_KEY] ||
+	if (!a[OVS_PACKET_ATTR_PACKET] || !a[OVS_PACKET_ATTR_KEY] ||
 	    !a[OVS_PACKET_ATTR_ACTIONS])
-		जाओ err;
+		goto err;
 
 	len = nla_len(a[OVS_PACKET_ATTR_PACKET]);
 	packet = __dev_alloc_skb(NET_IP_ALIGN + len, GFP_KERNEL);
 	err = -ENOMEM;
-	अगर (!packet)
-		जाओ err;
+	if (!packet)
+		goto err;
 	skb_reserve(packet, NET_IP_ALIGN);
 
-	nla_स_नकल(__skb_put(packet, len), a[OVS_PACKET_ATTR_PACKET], len);
+	nla_memcpy(__skb_put(packet, len), a[OVS_PACKET_ATTR_PACKET], len);
 
 	/* Set packet's mru */
-	अगर (a[OVS_PACKET_ATTR_MRU]) अणु
+	if (a[OVS_PACKET_ATTR_MRU]) {
 		mru = nla_get_u16(a[OVS_PACKET_ATTR_MRU]);
 		packet->ignore_df = 1;
-	पूर्ण
+	}
 	OVS_CB(packet)->mru = mru;
 
-	अगर (a[OVS_PACKET_ATTR_HASH]) अणु
+	if (a[OVS_PACKET_ATTR_HASH]) {
 		hash = nla_get_u64(a[OVS_PACKET_ATTR_HASH]);
 
 		__skb_set_hash(packet, hash & 0xFFFFFFFFULL,
 			       !!(hash & OVS_PACKET_HASH_SW_BIT),
 			       !!(hash & OVS_PACKET_HASH_L4_BIT));
-	पूर्ण
+	}
 
-	/* Build an sw_flow क्रम sending this packet. */
+	/* Build an sw_flow for sending this packet. */
 	flow = ovs_flow_alloc();
 	err = PTR_ERR(flow);
-	अगर (IS_ERR(flow))
-		जाओ err_kमुक्त_skb;
+	if (IS_ERR(flow))
+		goto err_kfree_skb;
 
 	err = ovs_flow_key_extract_userspace(net, a[OVS_PACKET_ATTR_KEY],
 					     packet, &flow->key, log);
-	अगर (err)
-		जाओ err_flow_मुक्त;
+	if (err)
+		goto err_flow_free;
 
 	err = ovs_nla_copy_actions(net, a[OVS_PACKET_ATTR_ACTIONS],
 				   &flow->key, &acts, log);
-	अगर (err)
-		जाओ err_flow_मुक्त;
+	if (err)
+		goto err_flow_free;
 
-	rcu_assign_poपूर्णांकer(flow->sf_acts, acts);
+	rcu_assign_pointer(flow->sf_acts, acts);
 	packet->priority = flow->key.phy.priority;
 	packet->mark = flow->key.phy.skb_mark;
 
-	rcu_पढ़ो_lock();
-	dp = get_dp_rcu(net, ovs_header->dp_अगरindex);
+	rcu_read_lock();
+	dp = get_dp_rcu(net, ovs_header->dp_ifindex);
 	err = -ENODEV;
-	अगर (!dp)
-		जाओ err_unlock;
+	if (!dp)
+		goto err_unlock;
 
 	input_vport = ovs_vport_rcu(dp, flow->key.phy.in_port);
-	अगर (!input_vport)
+	if (!input_vport)
 		input_vport = ovs_vport_rcu(dp, OVSP_LOCAL);
 
-	अगर (!input_vport)
-		जाओ err_unlock;
+	if (!input_vport)
+		goto err_unlock;
 
 	packet->dev = input_vport->dev;
 	OVS_CB(packet)->input_vport = input_vport;
@@ -629,40 +628,40 @@ out:
 	local_bh_disable();
 	err = ovs_execute_actions(dp, packet, sf_acts, &flow->key);
 	local_bh_enable();
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 
-	ovs_flow_मुक्त(flow, false);
-	वापस err;
+	ovs_flow_free(flow, false);
+	return err;
 
 err_unlock:
-	rcu_पढ़ो_unlock();
-err_flow_मुक्त:
-	ovs_flow_मुक्त(flow, false);
-err_kमुक्त_skb:
-	kमुक्त_skb(packet);
+	rcu_read_unlock();
+err_flow_free:
+	ovs_flow_free(flow, false);
+err_kfree_skb:
+	kfree_skb(packet);
 err:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल स्थिर काष्ठा nla_policy packet_policy[OVS_PACKET_ATTR_MAX + 1] = अणु
-	[OVS_PACKET_ATTR_PACKET] = अणु .len = ETH_HLEN पूर्ण,
-	[OVS_PACKET_ATTR_KEY] = अणु .type = NLA_NESTED पूर्ण,
-	[OVS_PACKET_ATTR_ACTIONS] = अणु .type = NLA_NESTED पूर्ण,
-	[OVS_PACKET_ATTR_PROBE] = अणु .type = NLA_FLAG पूर्ण,
-	[OVS_PACKET_ATTR_MRU] = अणु .type = NLA_U16 पूर्ण,
-	[OVS_PACKET_ATTR_HASH] = अणु .type = NLA_U64 पूर्ण,
-पूर्ण;
+static const struct nla_policy packet_policy[OVS_PACKET_ATTR_MAX + 1] = {
+	[OVS_PACKET_ATTR_PACKET] = { .len = ETH_HLEN },
+	[OVS_PACKET_ATTR_KEY] = { .type = NLA_NESTED },
+	[OVS_PACKET_ATTR_ACTIONS] = { .type = NLA_NESTED },
+	[OVS_PACKET_ATTR_PROBE] = { .type = NLA_FLAG },
+	[OVS_PACKET_ATTR_MRU] = { .type = NLA_U16 },
+	[OVS_PACKET_ATTR_HASH] = { .type = NLA_U64 },
+};
 
-अटल स्थिर काष्ठा genl_small_ops dp_packet_genl_ops[] = अणु
-	अणु .cmd = OVS_PACKET_CMD_EXECUTE,
+static const struct genl_small_ops dp_packet_genl_ops[] = {
+	{ .cmd = OVS_PACKET_CMD_EXECUTE,
 	  .validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
 	  .flags = GENL_UNS_ADMIN_PERM, /* Requires CAP_NET_ADMIN privilege. */
-	  .करोit = ovs_packet_cmd_execute
-	पूर्ण
-पूर्ण;
+	  .doit = ovs_packet_cmd_execute
+	}
+};
 
-अटल काष्ठा genl_family dp_packet_genl_family __ro_after_init = अणु
-	.hdrsize = माप(काष्ठा ovs_header),
+static struct genl_family dp_packet_genl_family __ro_after_init = {
+	.hdrsize = sizeof(struct ovs_header),
 	.name = OVS_PACKET_FAMILY,
 	.version = OVS_PACKET_VERSION,
 	.maxattr = OVS_PACKET_ATTR_MAX,
@@ -672,301 +671,301 @@ err:
 	.small_ops = dp_packet_genl_ops,
 	.n_small_ops = ARRAY_SIZE(dp_packet_genl_ops),
 	.module = THIS_MODULE,
-पूर्ण;
+};
 
-अटल व्योम get_dp_stats(स्थिर काष्ठा datapath *dp, काष्ठा ovs_dp_stats *stats,
-			 काष्ठा ovs_dp_megaflow_stats *mega_stats)
-अणु
-	पूर्णांक i;
+static void get_dp_stats(const struct datapath *dp, struct ovs_dp_stats *stats,
+			 struct ovs_dp_megaflow_stats *mega_stats)
+{
+	int i;
 
-	स_रखो(mega_stats, 0, माप(*mega_stats));
+	memset(mega_stats, 0, sizeof(*mega_stats));
 
 	stats->n_flows = ovs_flow_tbl_count(&dp->table);
 	mega_stats->n_masks = ovs_flow_tbl_num_masks(&dp->table);
 
 	stats->n_hit = stats->n_missed = stats->n_lost = 0;
 
-	क्रम_each_possible_cpu(i) अणु
-		स्थिर काष्ठा dp_stats_percpu *percpu_stats;
-		काष्ठा dp_stats_percpu local_stats;
-		अचिन्हित पूर्णांक start;
+	for_each_possible_cpu(i) {
+		const struct dp_stats_percpu *percpu_stats;
+		struct dp_stats_percpu local_stats;
+		unsigned int start;
 
 		percpu_stats = per_cpu_ptr(dp->stats_percpu, i);
 
-		करो अणु
+		do {
 			start = u64_stats_fetch_begin_irq(&percpu_stats->syncp);
 			local_stats = *percpu_stats;
-		पूर्ण जबतक (u64_stats_fetch_retry_irq(&percpu_stats->syncp, start));
+		} while (u64_stats_fetch_retry_irq(&percpu_stats->syncp, start));
 
 		stats->n_hit += local_stats.n_hit;
 		stats->n_missed += local_stats.n_missed;
 		stats->n_lost += local_stats.n_lost;
 		mega_stats->n_mask_hit += local_stats.n_mask_hit;
 		mega_stats->n_cache_hit += local_stats.n_cache_hit;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल bool should_fill_key(स्थिर काष्ठा sw_flow_id *sfid, uपूर्णांक32_t ufid_flags)
-अणु
-	वापस ovs_identअगरier_is_ufid(sfid) &&
+static bool should_fill_key(const struct sw_flow_id *sfid, uint32_t ufid_flags)
+{
+	return ovs_identifier_is_ufid(sfid) &&
 	       !(ufid_flags & OVS_UFID_F_OMIT_KEY);
-पूर्ण
+}
 
-अटल bool should_fill_mask(uपूर्णांक32_t ufid_flags)
-अणु
-	वापस !(ufid_flags & OVS_UFID_F_OMIT_MASK);
-पूर्ण
+static bool should_fill_mask(uint32_t ufid_flags)
+{
+	return !(ufid_flags & OVS_UFID_F_OMIT_MASK);
+}
 
-अटल bool should_fill_actions(uपूर्णांक32_t ufid_flags)
-अणु
-	वापस !(ufid_flags & OVS_UFID_F_OMIT_ACTIONS);
-पूर्ण
+static bool should_fill_actions(uint32_t ufid_flags)
+{
+	return !(ufid_flags & OVS_UFID_F_OMIT_ACTIONS);
+}
 
-अटल माप_प्रकार ovs_flow_cmd_msg_size(स्थिर काष्ठा sw_flow_actions *acts,
-				    स्थिर काष्ठा sw_flow_id *sfid,
-				    uपूर्णांक32_t ufid_flags)
-अणु
-	माप_प्रकार len = NLMSG_ALIGN(माप(काष्ठा ovs_header));
+static size_t ovs_flow_cmd_msg_size(const struct sw_flow_actions *acts,
+				    const struct sw_flow_id *sfid,
+				    uint32_t ufid_flags)
+{
+	size_t len = NLMSG_ALIGN(sizeof(struct ovs_header));
 
 	/* OVS_FLOW_ATTR_UFID, or unmasked flow key as fallback
-	 * see ovs_nla_put_identअगरier()
+	 * see ovs_nla_put_identifier()
 	 */
-	अगर (sfid && ovs_identअगरier_is_ufid(sfid))
+	if (sfid && ovs_identifier_is_ufid(sfid))
 		len += nla_total_size(sfid->ufid_len);
-	अन्यथा
+	else
 		len += nla_total_size(ovs_key_attr_size());
 
 	/* OVS_FLOW_ATTR_KEY */
-	अगर (!sfid || should_fill_key(sfid, ufid_flags))
+	if (!sfid || should_fill_key(sfid, ufid_flags))
 		len += nla_total_size(ovs_key_attr_size());
 
 	/* OVS_FLOW_ATTR_MASK */
-	अगर (should_fill_mask(ufid_flags))
+	if (should_fill_mask(ufid_flags))
 		len += nla_total_size(ovs_key_attr_size());
 
 	/* OVS_FLOW_ATTR_ACTIONS */
-	अगर (should_fill_actions(ufid_flags))
+	if (should_fill_actions(ufid_flags))
 		len += nla_total_size(acts->orig_len);
 
-	वापस len
-		+ nla_total_size_64bit(माप(काष्ठा ovs_flow_stats)) /* OVS_FLOW_ATTR_STATS */
+	return len
+		+ nla_total_size_64bit(sizeof(struct ovs_flow_stats)) /* OVS_FLOW_ATTR_STATS */
 		+ nla_total_size(1) /* OVS_FLOW_ATTR_TCP_FLAGS */
 		+ nla_total_size_64bit(8); /* OVS_FLOW_ATTR_USED */
-पूर्ण
+}
 
-/* Called with ovs_mutex or RCU पढ़ो lock. */
-अटल पूर्णांक ovs_flow_cmd_fill_stats(स्थिर काष्ठा sw_flow *flow,
-				   काष्ठा sk_buff *skb)
-अणु
-	काष्ठा ovs_flow_stats stats;
+/* Called with ovs_mutex or RCU read lock. */
+static int ovs_flow_cmd_fill_stats(const struct sw_flow *flow,
+				   struct sk_buff *skb)
+{
+	struct ovs_flow_stats stats;
 	__be16 tcp_flags;
-	अचिन्हित दीर्घ used;
+	unsigned long used;
 
 	ovs_flow_stats_get(flow, &stats, &used, &tcp_flags);
 
-	अगर (used &&
-	    nla_put_u64_64bit(skb, OVS_FLOW_ATTR_USED, ovs_flow_used_समय(used),
+	if (used &&
+	    nla_put_u64_64bit(skb, OVS_FLOW_ATTR_USED, ovs_flow_used_time(used),
 			      OVS_FLOW_ATTR_PAD))
-		वापस -EMSGSIZE;
+		return -EMSGSIZE;
 
-	अगर (stats.n_packets &&
+	if (stats.n_packets &&
 	    nla_put_64bit(skb, OVS_FLOW_ATTR_STATS,
-			  माप(काष्ठा ovs_flow_stats), &stats,
+			  sizeof(struct ovs_flow_stats), &stats,
 			  OVS_FLOW_ATTR_PAD))
-		वापस -EMSGSIZE;
+		return -EMSGSIZE;
 
-	अगर ((u8)ntohs(tcp_flags) &&
+	if ((u8)ntohs(tcp_flags) &&
 	     nla_put_u8(skb, OVS_FLOW_ATTR_TCP_FLAGS, (u8)ntohs(tcp_flags)))
-		वापस -EMSGSIZE;
+		return -EMSGSIZE;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Called with ovs_mutex or RCU पढ़ो lock. */
-अटल पूर्णांक ovs_flow_cmd_fill_actions(स्थिर काष्ठा sw_flow *flow,
-				     काष्ठा sk_buff *skb, पूर्णांक skb_orig_len)
-अणु
-	काष्ठा nlattr *start;
-	पूर्णांक err;
+/* Called with ovs_mutex or RCU read lock. */
+static int ovs_flow_cmd_fill_actions(const struct sw_flow *flow,
+				     struct sk_buff *skb, int skb_orig_len)
+{
+	struct nlattr *start;
+	int err;
 
-	/* If OVS_FLOW_ATTR_ACTIONS करोesn't fit, skip dumping the actions अगर
-	 * this is the first flow to be dumped पूर्णांकo 'skb'.  This is unusual क्रम
-	 * Netlink but inभागidual action lists can be दीर्घer than
-	 * NLMSG_GOODSIZE and thus entirely undumpable अगर we didn't करो this.
-	 * The userspace caller can always fetch the actions separately अगर it
-	 * really wants them.  (Most userspace callers in fact करोn't care.)
+	/* If OVS_FLOW_ATTR_ACTIONS doesn't fit, skip dumping the actions if
+	 * this is the first flow to be dumped into 'skb'.  This is unusual for
+	 * Netlink but individual action lists can be longer than
+	 * NLMSG_GOODSIZE and thus entirely undumpable if we didn't do this.
+	 * The userspace caller can always fetch the actions separately if it
+	 * really wants them.  (Most userspace callers in fact don't care.)
 	 *
-	 * This can only fail क्रम dump operations because the skb is always
-	 * properly sized क्रम single flows.
+	 * This can only fail for dump operations because the skb is always
+	 * properly sized for single flows.
 	 */
 	start = nla_nest_start_noflag(skb, OVS_FLOW_ATTR_ACTIONS);
-	अगर (start) अणु
-		स्थिर काष्ठा sw_flow_actions *sf_acts;
+	if (start) {
+		const struct sw_flow_actions *sf_acts;
 
 		sf_acts = rcu_dereference_ovsl(flow->sf_acts);
 		err = ovs_nla_put_actions(sf_acts->actions,
 					  sf_acts->actions_len, skb);
 
-		अगर (!err)
+		if (!err)
 			nla_nest_end(skb, start);
-		अन्यथा अणु
-			अगर (skb_orig_len)
-				वापस err;
+		else {
+			if (skb_orig_len)
+				return err;
 
 			nla_nest_cancel(skb, start);
-		पूर्ण
-	पूर्ण अन्यथा अगर (skb_orig_len) अणु
-		वापस -EMSGSIZE;
-	पूर्ण
+		}
+	} else if (skb_orig_len) {
+		return -EMSGSIZE;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Called with ovs_mutex or RCU पढ़ो lock. */
-अटल पूर्णांक ovs_flow_cmd_fill_info(स्थिर काष्ठा sw_flow *flow, पूर्णांक dp_अगरindex,
-				  काष्ठा sk_buff *skb, u32 portid,
+/* Called with ovs_mutex or RCU read lock. */
+static int ovs_flow_cmd_fill_info(const struct sw_flow *flow, int dp_ifindex,
+				  struct sk_buff *skb, u32 portid,
 				  u32 seq, u32 flags, u8 cmd, u32 ufid_flags)
-अणु
-	स्थिर पूर्णांक skb_orig_len = skb->len;
-	काष्ठा ovs_header *ovs_header;
-	पूर्णांक err;
+{
+	const int skb_orig_len = skb->len;
+	struct ovs_header *ovs_header;
+	int err;
 
 	ovs_header = genlmsg_put(skb, portid, seq, &dp_flow_genl_family,
 				 flags, cmd);
-	अगर (!ovs_header)
-		वापस -EMSGSIZE;
+	if (!ovs_header)
+		return -EMSGSIZE;
 
-	ovs_header->dp_अगरindex = dp_अगरindex;
+	ovs_header->dp_ifindex = dp_ifindex;
 
-	err = ovs_nla_put_identअगरier(flow, skb);
-	अगर (err)
-		जाओ error;
+	err = ovs_nla_put_identifier(flow, skb);
+	if (err)
+		goto error;
 
-	अगर (should_fill_key(&flow->id, ufid_flags)) अणु
+	if (should_fill_key(&flow->id, ufid_flags)) {
 		err = ovs_nla_put_masked_key(flow, skb);
-		अगर (err)
-			जाओ error;
-	पूर्ण
+		if (err)
+			goto error;
+	}
 
-	अगर (should_fill_mask(ufid_flags)) अणु
+	if (should_fill_mask(ufid_flags)) {
 		err = ovs_nla_put_mask(flow, skb);
-		अगर (err)
-			जाओ error;
-	पूर्ण
+		if (err)
+			goto error;
+	}
 
 	err = ovs_flow_cmd_fill_stats(flow, skb);
-	अगर (err)
-		जाओ error;
+	if (err)
+		goto error;
 
-	अगर (should_fill_actions(ufid_flags)) अणु
+	if (should_fill_actions(ufid_flags)) {
 		err = ovs_flow_cmd_fill_actions(flow, skb, skb_orig_len);
-		अगर (err)
-			जाओ error;
-	पूर्ण
+		if (err)
+			goto error;
+	}
 
 	genlmsg_end(skb, ovs_header);
-	वापस 0;
+	return 0;
 
 error:
 	genlmsg_cancel(skb, ovs_header);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-/* May not be called with RCU पढ़ो lock. */
-अटल काष्ठा sk_buff *ovs_flow_cmd_alloc_info(स्थिर काष्ठा sw_flow_actions *acts,
-					       स्थिर काष्ठा sw_flow_id *sfid,
-					       काष्ठा genl_info *info,
+/* May not be called with RCU read lock. */
+static struct sk_buff *ovs_flow_cmd_alloc_info(const struct sw_flow_actions *acts,
+					       const struct sw_flow_id *sfid,
+					       struct genl_info *info,
 					       bool always,
-					       uपूर्णांक32_t ufid_flags)
-अणु
-	काष्ठा sk_buff *skb;
-	माप_प्रकार len;
+					       uint32_t ufid_flags)
+{
+	struct sk_buff *skb;
+	size_t len;
 
-	अगर (!always && !ovs_must_notअगरy(&dp_flow_genl_family, info, 0))
-		वापस शून्य;
+	if (!always && !ovs_must_notify(&dp_flow_genl_family, info, 0))
+		return NULL;
 
 	len = ovs_flow_cmd_msg_size(acts, sfid, ufid_flags);
 	skb = genlmsg_new(len, GFP_KERNEL);
-	अगर (!skb)
-		वापस ERR_PTR(-ENOMEM);
+	if (!skb)
+		return ERR_PTR(-ENOMEM);
 
-	वापस skb;
-पूर्ण
+	return skb;
+}
 
 /* Called with ovs_mutex. */
-अटल काष्ठा sk_buff *ovs_flow_cmd_build_info(स्थिर काष्ठा sw_flow *flow,
-					       पूर्णांक dp_अगरindex,
-					       काष्ठा genl_info *info, u8 cmd,
+static struct sk_buff *ovs_flow_cmd_build_info(const struct sw_flow *flow,
+					       int dp_ifindex,
+					       struct genl_info *info, u8 cmd,
 					       bool always, u32 ufid_flags)
-अणु
-	काष्ठा sk_buff *skb;
-	पूर्णांक retval;
+{
+	struct sk_buff *skb;
+	int retval;
 
 	skb = ovs_flow_cmd_alloc_info(ovsl_dereference(flow->sf_acts),
 				      &flow->id, info, always, ufid_flags);
-	अगर (IS_ERR_OR_शून्य(skb))
-		वापस skb;
+	if (IS_ERR_OR_NULL(skb))
+		return skb;
 
-	retval = ovs_flow_cmd_fill_info(flow, dp_अगरindex, skb,
+	retval = ovs_flow_cmd_fill_info(flow, dp_ifindex, skb,
 					info->snd_portid, info->snd_seq, 0,
 					cmd, ufid_flags);
-	अगर (WARN_ON_ONCE(retval < 0)) अणु
-		kमुक्त_skb(skb);
+	if (WARN_ON_ONCE(retval < 0)) {
+		kfree_skb(skb);
 		skb = ERR_PTR(retval);
-	पूर्ण
-	वापस skb;
-पूर्ण
+	}
+	return skb;
+}
 
-अटल पूर्णांक ovs_flow_cmd_new(काष्ठा sk_buff *skb, काष्ठा genl_info *info)
-अणु
-	काष्ठा net *net = sock_net(skb->sk);
-	काष्ठा nlattr **a = info->attrs;
-	काष्ठा ovs_header *ovs_header = info->userhdr;
-	काष्ठा sw_flow *flow = शून्य, *new_flow;
-	काष्ठा sw_flow_mask mask;
-	काष्ठा sk_buff *reply;
-	काष्ठा datapath *dp;
-	काष्ठा sw_flow_actions *acts;
-	काष्ठा sw_flow_match match;
+static int ovs_flow_cmd_new(struct sk_buff *skb, struct genl_info *info)
+{
+	struct net *net = sock_net(skb->sk);
+	struct nlattr **a = info->attrs;
+	struct ovs_header *ovs_header = info->userhdr;
+	struct sw_flow *flow = NULL, *new_flow;
+	struct sw_flow_mask mask;
+	struct sk_buff *reply;
+	struct datapath *dp;
+	struct sw_flow_actions *acts;
+	struct sw_flow_match match;
 	u32 ufid_flags = ovs_nla_get_ufid_flags(a[OVS_FLOW_ATTR_UFID_FLAGS]);
-	पूर्णांक error;
+	int error;
 	bool log = !a[OVS_FLOW_ATTR_PROBE];
 
 	/* Must have key and actions. */
 	error = -EINVAL;
-	अगर (!a[OVS_FLOW_ATTR_KEY]) अणु
+	if (!a[OVS_FLOW_ATTR_KEY]) {
 		OVS_NLERR(log, "Flow key attr not present in new flow.");
-		जाओ error;
-	पूर्ण
-	अगर (!a[OVS_FLOW_ATTR_ACTIONS]) अणु
+		goto error;
+	}
+	if (!a[OVS_FLOW_ATTR_ACTIONS]) {
 		OVS_NLERR(log, "Flow actions attr not present in new flow.");
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
-	/* Most of the समय we need to allocate a new flow, करो it beक्रमe
+	/* Most of the time we need to allocate a new flow, do it before
 	 * locking.
 	 */
 	new_flow = ovs_flow_alloc();
-	अगर (IS_ERR(new_flow)) अणु
+	if (IS_ERR(new_flow)) {
 		error = PTR_ERR(new_flow);
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
 	/* Extract key. */
 	ovs_match_init(&match, &new_flow->key, false, &mask);
 	error = ovs_nla_get_match(net, &match, a[OVS_FLOW_ATTR_KEY],
 				  a[OVS_FLOW_ATTR_MASK], log);
-	अगर (error)
-		जाओ err_kमुक्त_flow;
+	if (error)
+		goto err_kfree_flow;
 
-	/* Extract flow identअगरier. */
-	error = ovs_nla_get_identअगरier(&new_flow->id, a[OVS_FLOW_ATTR_UFID],
+	/* Extract flow identifier. */
+	error = ovs_nla_get_identifier(&new_flow->id, a[OVS_FLOW_ATTR_UFID],
 				       &new_flow->key, log);
-	अगर (error)
-		जाओ err_kमुक्त_flow;
+	if (error)
+		goto err_kfree_flow;
 
 	/* unmasked key is needed to match when ufid is not used. */
-	अगर (ovs_identअगरier_is_key(&new_flow->id))
+	if (ovs_identifier_is_key(&new_flow->id))
 		match.key = new_flow->id.unmasked_key;
 
 	ovs_flow_mask_key(&new_flow->key, &new_flow->key, true, &mask);
@@ -974,512 +973,512 @@ error:
 	/* Validate actions. */
 	error = ovs_nla_copy_actions(net, a[OVS_FLOW_ATTR_ACTIONS],
 				     &new_flow->key, &acts, log);
-	अगर (error) अणु
+	if (error) {
 		OVS_NLERR(log, "Flow actions may not be safe on all matching packets.");
-		जाओ err_kमुक्त_flow;
-	पूर्ण
+		goto err_kfree_flow;
+	}
 
 	reply = ovs_flow_cmd_alloc_info(acts, &new_flow->id, info, false,
 					ufid_flags);
-	अगर (IS_ERR(reply)) अणु
+	if (IS_ERR(reply)) {
 		error = PTR_ERR(reply);
-		जाओ err_kमुक्त_acts;
-	पूर्ण
+		goto err_kfree_acts;
+	}
 
 	ovs_lock();
-	dp = get_dp(net, ovs_header->dp_अगरindex);
-	अगर (unlikely(!dp)) अणु
+	dp = get_dp(net, ovs_header->dp_ifindex);
+	if (unlikely(!dp)) {
 		error = -ENODEV;
-		जाओ err_unlock_ovs;
-	पूर्ण
+		goto err_unlock_ovs;
+	}
 
-	/* Check अगर this is a duplicate flow */
-	अगर (ovs_identअगरier_is_ufid(&new_flow->id))
+	/* Check if this is a duplicate flow */
+	if (ovs_identifier_is_ufid(&new_flow->id))
 		flow = ovs_flow_tbl_lookup_ufid(&dp->table, &new_flow->id);
-	अगर (!flow)
+	if (!flow)
 		flow = ovs_flow_tbl_lookup(&dp->table, &new_flow->key);
-	अगर (likely(!flow)) अणु
-		rcu_assign_poपूर्णांकer(new_flow->sf_acts, acts);
+	if (likely(!flow)) {
+		rcu_assign_pointer(new_flow->sf_acts, acts);
 
 		/* Put flow in bucket. */
 		error = ovs_flow_tbl_insert(&dp->table, new_flow, &mask);
-		अगर (unlikely(error)) अणु
-			acts = शून्य;
-			जाओ err_unlock_ovs;
-		पूर्ण
+		if (unlikely(error)) {
+			acts = NULL;
+			goto err_unlock_ovs;
+		}
 
-		अगर (unlikely(reply)) अणु
+		if (unlikely(reply)) {
 			error = ovs_flow_cmd_fill_info(new_flow,
-						       ovs_header->dp_अगरindex,
+						       ovs_header->dp_ifindex,
 						       reply, info->snd_portid,
 						       info->snd_seq, 0,
 						       OVS_FLOW_CMD_NEW,
 						       ufid_flags);
 			BUG_ON(error < 0);
-		पूर्ण
+		}
 		ovs_unlock();
-	पूर्ण अन्यथा अणु
-		काष्ठा sw_flow_actions *old_acts;
+	} else {
+		struct sw_flow_actions *old_acts;
 
-		/* Bail out अगर we're not allowed to modअगरy an existing flow.
-		 * We accept NLM_F_CREATE in place of the पूर्णांकended NLM_F_EXCL
+		/* Bail out if we're not allowed to modify an existing flow.
+		 * We accept NLM_F_CREATE in place of the intended NLM_F_EXCL
 		 * because Generic Netlink treats the latter as a dump
-		 * request.  We also accept NLM_F_EXCL in हाल that bug ever
-		 * माला_लो fixed.
+		 * request.  We also accept NLM_F_EXCL in case that bug ever
+		 * gets fixed.
 		 */
-		अगर (unlikely(info->nlhdr->nlmsg_flags & (NLM_F_CREATE
-							 | NLM_F_EXCL))) अणु
+		if (unlikely(info->nlhdr->nlmsg_flags & (NLM_F_CREATE
+							 | NLM_F_EXCL))) {
 			error = -EEXIST;
-			जाओ err_unlock_ovs;
-		पूर्ण
-		/* The flow identअगरier has to be the same क्रम flow updates.
-		 * Look क्रम any overlapping flow.
+			goto err_unlock_ovs;
+		}
+		/* The flow identifier has to be the same for flow updates.
+		 * Look for any overlapping flow.
 		 */
-		अगर (unlikely(!ovs_flow_cmp(flow, &match))) अणु
-			अगर (ovs_identअगरier_is_key(&flow->id))
+		if (unlikely(!ovs_flow_cmp(flow, &match))) {
+			if (ovs_identifier_is_key(&flow->id))
 				flow = ovs_flow_tbl_lookup_exact(&dp->table,
 								 &match);
-			अन्यथा /* UFID matches but key is dअगरferent */
-				flow = शून्य;
-			अगर (!flow) अणु
+			else /* UFID matches but key is different */
+				flow = NULL;
+			if (!flow) {
 				error = -ENOENT;
-				जाओ err_unlock_ovs;
-			पूर्ण
-		पूर्ण
+				goto err_unlock_ovs;
+			}
+		}
 		/* Update actions. */
 		old_acts = ovsl_dereference(flow->sf_acts);
-		rcu_assign_poपूर्णांकer(flow->sf_acts, acts);
+		rcu_assign_pointer(flow->sf_acts, acts);
 
-		अगर (unlikely(reply)) अणु
+		if (unlikely(reply)) {
 			error = ovs_flow_cmd_fill_info(flow,
-						       ovs_header->dp_अगरindex,
+						       ovs_header->dp_ifindex,
 						       reply, info->snd_portid,
 						       info->snd_seq, 0,
 						       OVS_FLOW_CMD_NEW,
 						       ufid_flags);
 			BUG_ON(error < 0);
-		पूर्ण
+		}
 		ovs_unlock();
 
-		ovs_nla_मुक्त_flow_actions_rcu(old_acts);
-		ovs_flow_मुक्त(new_flow, false);
-	पूर्ण
+		ovs_nla_free_flow_actions_rcu(old_acts);
+		ovs_flow_free(new_flow, false);
+	}
 
-	अगर (reply)
-		ovs_notअगरy(&dp_flow_genl_family, reply, info);
-	वापस 0;
+	if (reply)
+		ovs_notify(&dp_flow_genl_family, reply, info);
+	return 0;
 
 err_unlock_ovs:
 	ovs_unlock();
-	kमुक्त_skb(reply);
-err_kमुक्त_acts:
-	ovs_nla_मुक्त_flow_actions(acts);
-err_kमुक्त_flow:
-	ovs_flow_मुक्त(new_flow, false);
+	kfree_skb(reply);
+err_kfree_acts:
+	ovs_nla_free_flow_actions(acts);
+err_kfree_flow:
+	ovs_flow_free(new_flow, false);
 error:
-	वापस error;
-पूर्ण
+	return error;
+}
 
-/* Factor out action copy to aव्योम "Wframe-larger-than=1024" warning. */
-अटल noअंतरभूत_क्रम_stack
-काष्ठा sw_flow_actions *get_flow_actions(काष्ठा net *net,
-					 स्थिर काष्ठा nlattr *a,
-					 स्थिर काष्ठा sw_flow_key *key,
-					 स्थिर काष्ठा sw_flow_mask *mask,
+/* Factor out action copy to avoid "Wframe-larger-than=1024" warning. */
+static noinline_for_stack
+struct sw_flow_actions *get_flow_actions(struct net *net,
+					 const struct nlattr *a,
+					 const struct sw_flow_key *key,
+					 const struct sw_flow_mask *mask,
 					 bool log)
-अणु
-	काष्ठा sw_flow_actions *acts;
-	काष्ठा sw_flow_key masked_key;
-	पूर्णांक error;
+{
+	struct sw_flow_actions *acts;
+	struct sw_flow_key masked_key;
+	int error;
 
 	ovs_flow_mask_key(&masked_key, key, true, mask);
 	error = ovs_nla_copy_actions(net, a, &masked_key, &acts, log);
-	अगर (error) अणु
+	if (error) {
 		OVS_NLERR(log,
 			  "Actions may not be safe on all matching packets");
-		वापस ERR_PTR(error);
-	पूर्ण
+		return ERR_PTR(error);
+	}
 
-	वापस acts;
-पूर्ण
+	return acts;
+}
 
-/* Factor out match-init and action-copy to aव्योम
+/* Factor out match-init and action-copy to avoid
  * "Wframe-larger-than=1024" warning. Because mask is only
  * used to get actions, we new a function to save some
  * stack space.
  *
- * If there are not key and action attrs, we वापस 0
- * directly. In the हाल, the caller will also not use the
- * match as beक्रमe. If there is action attr, we try to get
- * actions and save them to *acts. Beक्रमe वापसing from
- * the function, we reset the match->mask poपूर्णांकer. Because
- * we should not to वापस match object with dangling reference
+ * If there are not key and action attrs, we return 0
+ * directly. In the case, the caller will also not use the
+ * match as before. If there is action attr, we try to get
+ * actions and save them to *acts. Before returning from
+ * the function, we reset the match->mask pointer. Because
+ * we should not to return match object with dangling reference
  * to mask.
  * */
-अटल noअंतरभूत_क्रम_stack पूर्णांक
-ovs_nla_init_match_and_action(काष्ठा net *net,
-			      काष्ठा sw_flow_match *match,
-			      काष्ठा sw_flow_key *key,
-			      काष्ठा nlattr **a,
-			      काष्ठा sw_flow_actions **acts,
+static noinline_for_stack int
+ovs_nla_init_match_and_action(struct net *net,
+			      struct sw_flow_match *match,
+			      struct sw_flow_key *key,
+			      struct nlattr **a,
+			      struct sw_flow_actions **acts,
 			      bool log)
-अणु
-	काष्ठा sw_flow_mask mask;
-	पूर्णांक error = 0;
+{
+	struct sw_flow_mask mask;
+	int error = 0;
 
-	अगर (a[OVS_FLOW_ATTR_KEY]) अणु
+	if (a[OVS_FLOW_ATTR_KEY]) {
 		ovs_match_init(match, key, true, &mask);
 		error = ovs_nla_get_match(net, match, a[OVS_FLOW_ATTR_KEY],
 					  a[OVS_FLOW_ATTR_MASK], log);
-		अगर (error)
-			जाओ error;
-	पूर्ण
+		if (error)
+			goto error;
+	}
 
-	अगर (a[OVS_FLOW_ATTR_ACTIONS]) अणु
-		अगर (!a[OVS_FLOW_ATTR_KEY]) अणु
+	if (a[OVS_FLOW_ATTR_ACTIONS]) {
+		if (!a[OVS_FLOW_ATTR_KEY]) {
 			OVS_NLERR(log,
 				  "Flow key attribute not present in set flow.");
 			error = -EINVAL;
-			जाओ error;
-		पूर्ण
+			goto error;
+		}
 
 		*acts = get_flow_actions(net, a[OVS_FLOW_ATTR_ACTIONS], key,
 					 &mask, log);
-		अगर (IS_ERR(*acts)) अणु
+		if (IS_ERR(*acts)) {
 			error = PTR_ERR(*acts);
-			जाओ error;
-		पूर्ण
-	पूर्ण
+			goto error;
+		}
+	}
 
 	/* On success, error is 0. */
 error:
-	match->mask = शून्य;
-	वापस error;
-पूर्ण
+	match->mask = NULL;
+	return error;
+}
 
-अटल पूर्णांक ovs_flow_cmd_set(काष्ठा sk_buff *skb, काष्ठा genl_info *info)
-अणु
-	काष्ठा net *net = sock_net(skb->sk);
-	काष्ठा nlattr **a = info->attrs;
-	काष्ठा ovs_header *ovs_header = info->userhdr;
-	काष्ठा sw_flow_key key;
-	काष्ठा sw_flow *flow;
-	काष्ठा sk_buff *reply = शून्य;
-	काष्ठा datapath *dp;
-	काष्ठा sw_flow_actions *old_acts = शून्य, *acts = शून्य;
-	काष्ठा sw_flow_match match;
-	काष्ठा sw_flow_id sfid;
+static int ovs_flow_cmd_set(struct sk_buff *skb, struct genl_info *info)
+{
+	struct net *net = sock_net(skb->sk);
+	struct nlattr **a = info->attrs;
+	struct ovs_header *ovs_header = info->userhdr;
+	struct sw_flow_key key;
+	struct sw_flow *flow;
+	struct sk_buff *reply = NULL;
+	struct datapath *dp;
+	struct sw_flow_actions *old_acts = NULL, *acts = NULL;
+	struct sw_flow_match match;
+	struct sw_flow_id sfid;
 	u32 ufid_flags = ovs_nla_get_ufid_flags(a[OVS_FLOW_ATTR_UFID_FLAGS]);
-	पूर्णांक error = 0;
+	int error = 0;
 	bool log = !a[OVS_FLOW_ATTR_PROBE];
 	bool ufid_present;
 
 	ufid_present = ovs_nla_get_ufid(&sfid, a[OVS_FLOW_ATTR_UFID], log);
-	अगर (!a[OVS_FLOW_ATTR_KEY] && !ufid_present) अणु
+	if (!a[OVS_FLOW_ATTR_KEY] && !ufid_present) {
 		OVS_NLERR(log,
 			  "Flow set message rejected, Key attribute missing.");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	error = ovs_nla_init_match_and_action(net, &match, &key, a,
 					      &acts, log);
-	अगर (error)
-		जाओ error;
+	if (error)
+		goto error;
 
-	अगर (acts) अणु
-		/* Can allocate beक्रमe locking अगर have acts. */
+	if (acts) {
+		/* Can allocate before locking if have acts. */
 		reply = ovs_flow_cmd_alloc_info(acts, &sfid, info, false,
 						ufid_flags);
-		अगर (IS_ERR(reply)) अणु
+		if (IS_ERR(reply)) {
 			error = PTR_ERR(reply);
-			जाओ err_kमुक्त_acts;
-		पूर्ण
-	पूर्ण
+			goto err_kfree_acts;
+		}
+	}
 
 	ovs_lock();
-	dp = get_dp(net, ovs_header->dp_अगरindex);
-	अगर (unlikely(!dp)) अणु
+	dp = get_dp(net, ovs_header->dp_ifindex);
+	if (unlikely(!dp)) {
 		error = -ENODEV;
-		जाओ err_unlock_ovs;
-	पूर्ण
+		goto err_unlock_ovs;
+	}
 	/* Check that the flow exists. */
-	अगर (ufid_present)
+	if (ufid_present)
 		flow = ovs_flow_tbl_lookup_ufid(&dp->table, &sfid);
-	अन्यथा
+	else
 		flow = ovs_flow_tbl_lookup_exact(&dp->table, &match);
-	अगर (unlikely(!flow)) अणु
+	if (unlikely(!flow)) {
 		error = -ENOENT;
-		जाओ err_unlock_ovs;
-	पूर्ण
+		goto err_unlock_ovs;
+	}
 
-	/* Update actions, अगर present. */
-	अगर (likely(acts)) अणु
+	/* Update actions, if present. */
+	if (likely(acts)) {
 		old_acts = ovsl_dereference(flow->sf_acts);
-		rcu_assign_poपूर्णांकer(flow->sf_acts, acts);
+		rcu_assign_pointer(flow->sf_acts, acts);
 
-		अगर (unlikely(reply)) अणु
+		if (unlikely(reply)) {
 			error = ovs_flow_cmd_fill_info(flow,
-						       ovs_header->dp_अगरindex,
+						       ovs_header->dp_ifindex,
 						       reply, info->snd_portid,
 						       info->snd_seq, 0,
 						       OVS_FLOW_CMD_SET,
 						       ufid_flags);
 			BUG_ON(error < 0);
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		/* Could not alloc without acts beक्रमe locking. */
-		reply = ovs_flow_cmd_build_info(flow, ovs_header->dp_अगरindex,
+		}
+	} else {
+		/* Could not alloc without acts before locking. */
+		reply = ovs_flow_cmd_build_info(flow, ovs_header->dp_ifindex,
 						info, OVS_FLOW_CMD_SET, false,
 						ufid_flags);
 
-		अगर (IS_ERR(reply)) अणु
+		if (IS_ERR(reply)) {
 			error = PTR_ERR(reply);
-			जाओ err_unlock_ovs;
-		पूर्ण
-	पूर्ण
+			goto err_unlock_ovs;
+		}
+	}
 
 	/* Clear stats. */
-	अगर (a[OVS_FLOW_ATTR_CLEAR])
+	if (a[OVS_FLOW_ATTR_CLEAR])
 		ovs_flow_stats_clear(flow);
 	ovs_unlock();
 
-	अगर (reply)
-		ovs_notअगरy(&dp_flow_genl_family, reply, info);
-	अगर (old_acts)
-		ovs_nla_मुक्त_flow_actions_rcu(old_acts);
+	if (reply)
+		ovs_notify(&dp_flow_genl_family, reply, info);
+	if (old_acts)
+		ovs_nla_free_flow_actions_rcu(old_acts);
 
-	वापस 0;
+	return 0;
 
 err_unlock_ovs:
 	ovs_unlock();
-	kमुक्त_skb(reply);
-err_kमुक्त_acts:
-	ovs_nla_मुक्त_flow_actions(acts);
+	kfree_skb(reply);
+err_kfree_acts:
+	ovs_nla_free_flow_actions(acts);
 error:
-	वापस error;
-पूर्ण
+	return error;
+}
 
-अटल पूर्णांक ovs_flow_cmd_get(काष्ठा sk_buff *skb, काष्ठा genl_info *info)
-अणु
-	काष्ठा nlattr **a = info->attrs;
-	काष्ठा ovs_header *ovs_header = info->userhdr;
-	काष्ठा net *net = sock_net(skb->sk);
-	काष्ठा sw_flow_key key;
-	काष्ठा sk_buff *reply;
-	काष्ठा sw_flow *flow;
-	काष्ठा datapath *dp;
-	काष्ठा sw_flow_match match;
-	काष्ठा sw_flow_id ufid;
+static int ovs_flow_cmd_get(struct sk_buff *skb, struct genl_info *info)
+{
+	struct nlattr **a = info->attrs;
+	struct ovs_header *ovs_header = info->userhdr;
+	struct net *net = sock_net(skb->sk);
+	struct sw_flow_key key;
+	struct sk_buff *reply;
+	struct sw_flow *flow;
+	struct datapath *dp;
+	struct sw_flow_match match;
+	struct sw_flow_id ufid;
 	u32 ufid_flags = ovs_nla_get_ufid_flags(a[OVS_FLOW_ATTR_UFID_FLAGS]);
-	पूर्णांक err = 0;
+	int err = 0;
 	bool log = !a[OVS_FLOW_ATTR_PROBE];
 	bool ufid_present;
 
 	ufid_present = ovs_nla_get_ufid(&ufid, a[OVS_FLOW_ATTR_UFID], log);
-	अगर (a[OVS_FLOW_ATTR_KEY]) अणु
-		ovs_match_init(&match, &key, true, शून्य);
-		err = ovs_nla_get_match(net, &match, a[OVS_FLOW_ATTR_KEY], शून्य,
+	if (a[OVS_FLOW_ATTR_KEY]) {
+		ovs_match_init(&match, &key, true, NULL);
+		err = ovs_nla_get_match(net, &match, a[OVS_FLOW_ATTR_KEY], NULL,
 					log);
-	पूर्ण अन्यथा अगर (!ufid_present) अणु
+	} else if (!ufid_present) {
 		OVS_NLERR(log,
 			  "Flow get message rejected, Key attribute missing.");
 		err = -EINVAL;
-	पूर्ण
-	अगर (err)
-		वापस err;
+	}
+	if (err)
+		return err;
 
 	ovs_lock();
-	dp = get_dp(sock_net(skb->sk), ovs_header->dp_अगरindex);
-	अगर (!dp) अणु
+	dp = get_dp(sock_net(skb->sk), ovs_header->dp_ifindex);
+	if (!dp) {
 		err = -ENODEV;
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
-	अगर (ufid_present)
+	if (ufid_present)
 		flow = ovs_flow_tbl_lookup_ufid(&dp->table, &ufid);
-	अन्यथा
+	else
 		flow = ovs_flow_tbl_lookup_exact(&dp->table, &match);
-	अगर (!flow) अणु
+	if (!flow) {
 		err = -ENOENT;
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
-	reply = ovs_flow_cmd_build_info(flow, ovs_header->dp_अगरindex, info,
+	reply = ovs_flow_cmd_build_info(flow, ovs_header->dp_ifindex, info,
 					OVS_FLOW_CMD_GET, true, ufid_flags);
-	अगर (IS_ERR(reply)) अणु
+	if (IS_ERR(reply)) {
 		err = PTR_ERR(reply);
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
 	ovs_unlock();
-	वापस genlmsg_reply(reply, info);
+	return genlmsg_reply(reply, info);
 unlock:
 	ovs_unlock();
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक ovs_flow_cmd_del(काष्ठा sk_buff *skb, काष्ठा genl_info *info)
-अणु
-	काष्ठा nlattr **a = info->attrs;
-	काष्ठा ovs_header *ovs_header = info->userhdr;
-	काष्ठा net *net = sock_net(skb->sk);
-	काष्ठा sw_flow_key key;
-	काष्ठा sk_buff *reply;
-	काष्ठा sw_flow *flow = शून्य;
-	काष्ठा datapath *dp;
-	काष्ठा sw_flow_match match;
-	काष्ठा sw_flow_id ufid;
+static int ovs_flow_cmd_del(struct sk_buff *skb, struct genl_info *info)
+{
+	struct nlattr **a = info->attrs;
+	struct ovs_header *ovs_header = info->userhdr;
+	struct net *net = sock_net(skb->sk);
+	struct sw_flow_key key;
+	struct sk_buff *reply;
+	struct sw_flow *flow = NULL;
+	struct datapath *dp;
+	struct sw_flow_match match;
+	struct sw_flow_id ufid;
 	u32 ufid_flags = ovs_nla_get_ufid_flags(a[OVS_FLOW_ATTR_UFID_FLAGS]);
-	पूर्णांक err;
+	int err;
 	bool log = !a[OVS_FLOW_ATTR_PROBE];
 	bool ufid_present;
 
 	ufid_present = ovs_nla_get_ufid(&ufid, a[OVS_FLOW_ATTR_UFID], log);
-	अगर (a[OVS_FLOW_ATTR_KEY]) अणु
-		ovs_match_init(&match, &key, true, शून्य);
+	if (a[OVS_FLOW_ATTR_KEY]) {
+		ovs_match_init(&match, &key, true, NULL);
 		err = ovs_nla_get_match(net, &match, a[OVS_FLOW_ATTR_KEY],
-					शून्य, log);
-		अगर (unlikely(err))
-			वापस err;
-	पूर्ण
+					NULL, log);
+		if (unlikely(err))
+			return err;
+	}
 
 	ovs_lock();
-	dp = get_dp(sock_net(skb->sk), ovs_header->dp_अगरindex);
-	अगर (unlikely(!dp)) अणु
+	dp = get_dp(sock_net(skb->sk), ovs_header->dp_ifindex);
+	if (unlikely(!dp)) {
 		err = -ENODEV;
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
-	अगर (unlikely(!a[OVS_FLOW_ATTR_KEY] && !ufid_present)) अणु
+	if (unlikely(!a[OVS_FLOW_ATTR_KEY] && !ufid_present)) {
 		err = ovs_flow_tbl_flush(&dp->table);
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
-	अगर (ufid_present)
+	if (ufid_present)
 		flow = ovs_flow_tbl_lookup_ufid(&dp->table, &ufid);
-	अन्यथा
+	else
 		flow = ovs_flow_tbl_lookup_exact(&dp->table, &match);
-	अगर (unlikely(!flow)) अणु
+	if (unlikely(!flow)) {
 		err = -ENOENT;
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
-	ovs_flow_tbl_हटाओ(&dp->table, flow);
+	ovs_flow_tbl_remove(&dp->table, flow);
 	ovs_unlock();
 
-	reply = ovs_flow_cmd_alloc_info((स्थिर काष्ठा sw_flow_actions __क्रमce *) flow->sf_acts,
+	reply = ovs_flow_cmd_alloc_info((const struct sw_flow_actions __force *) flow->sf_acts,
 					&flow->id, info, false, ufid_flags);
-	अगर (likely(reply)) अणु
-		अगर (!IS_ERR(reply)) अणु
-			rcu_पढ़ो_lock();	/*To keep RCU checker happy. */
-			err = ovs_flow_cmd_fill_info(flow, ovs_header->dp_अगरindex,
+	if (likely(reply)) {
+		if (!IS_ERR(reply)) {
+			rcu_read_lock();	/*To keep RCU checker happy. */
+			err = ovs_flow_cmd_fill_info(flow, ovs_header->dp_ifindex,
 						     reply, info->snd_portid,
 						     info->snd_seq, 0,
 						     OVS_FLOW_CMD_DEL,
 						     ufid_flags);
-			rcu_पढ़ो_unlock();
-			अगर (WARN_ON_ONCE(err < 0)) अणु
-				kमुक्त_skb(reply);
-				जाओ out_मुक्त;
-			पूर्ण
+			rcu_read_unlock();
+			if (WARN_ON_ONCE(err < 0)) {
+				kfree_skb(reply);
+				goto out_free;
+			}
 
-			ovs_notअगरy(&dp_flow_genl_family, reply, info);
-		पूर्ण अन्यथा अणु
+			ovs_notify(&dp_flow_genl_family, reply, info);
+		} else {
 			netlink_set_err(sock_net(skb->sk)->genl_sock, 0, 0,
 					PTR_ERR(reply));
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-out_मुक्त:
-	ovs_flow_मुक्त(flow, true);
-	वापस 0;
+out_free:
+	ovs_flow_free(flow, true);
+	return 0;
 unlock:
 	ovs_unlock();
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक ovs_flow_cmd_dump(काष्ठा sk_buff *skb, काष्ठा netlink_callback *cb)
-अणु
-	काष्ठा nlattr *a[__OVS_FLOW_ATTR_MAX];
-	काष्ठा ovs_header *ovs_header = genlmsg_data(nlmsg_data(cb->nlh));
-	काष्ठा table_instance *ti;
-	काष्ठा datapath *dp;
+static int ovs_flow_cmd_dump(struct sk_buff *skb, struct netlink_callback *cb)
+{
+	struct nlattr *a[__OVS_FLOW_ATTR_MAX];
+	struct ovs_header *ovs_header = genlmsg_data(nlmsg_data(cb->nlh));
+	struct table_instance *ti;
+	struct datapath *dp;
 	u32 ufid_flags;
-	पूर्णांक err;
+	int err;
 
 	err = genlmsg_parse_deprecated(cb->nlh, &dp_flow_genl_family, a,
-				       OVS_FLOW_ATTR_MAX, flow_policy, शून्य);
-	अगर (err)
-		वापस err;
+				       OVS_FLOW_ATTR_MAX, flow_policy, NULL);
+	if (err)
+		return err;
 	ufid_flags = ovs_nla_get_ufid_flags(a[OVS_FLOW_ATTR_UFID_FLAGS]);
 
-	rcu_पढ़ो_lock();
-	dp = get_dp_rcu(sock_net(skb->sk), ovs_header->dp_अगरindex);
-	अगर (!dp) अणु
-		rcu_पढ़ो_unlock();
-		वापस -ENODEV;
-	पूर्ण
+	rcu_read_lock();
+	dp = get_dp_rcu(sock_net(skb->sk), ovs_header->dp_ifindex);
+	if (!dp) {
+		rcu_read_unlock();
+		return -ENODEV;
+	}
 
 	ti = rcu_dereference(dp->table.ti);
-	क्रम (;;) अणु
-		काष्ठा sw_flow *flow;
+	for (;;) {
+		struct sw_flow *flow;
 		u32 bucket, obj;
 
 		bucket = cb->args[0];
 		obj = cb->args[1];
 		flow = ovs_flow_tbl_dump_next(ti, &bucket, &obj);
-		अगर (!flow)
-			अवरोध;
+		if (!flow)
+			break;
 
-		अगर (ovs_flow_cmd_fill_info(flow, ovs_header->dp_अगरindex, skb,
+		if (ovs_flow_cmd_fill_info(flow, ovs_header->dp_ifindex, skb,
 					   NETLINK_CB(cb->skb).portid,
 					   cb->nlh->nlmsg_seq, NLM_F_MULTI,
 					   OVS_FLOW_CMD_GET, ufid_flags) < 0)
-			अवरोध;
+			break;
 
 		cb->args[0] = bucket;
 		cb->args[1] = obj;
-	पूर्ण
-	rcu_पढ़ो_unlock();
-	वापस skb->len;
-पूर्ण
+	}
+	rcu_read_unlock();
+	return skb->len;
+}
 
-अटल स्थिर काष्ठा nla_policy flow_policy[OVS_FLOW_ATTR_MAX + 1] = अणु
-	[OVS_FLOW_ATTR_KEY] = अणु .type = NLA_NESTED पूर्ण,
-	[OVS_FLOW_ATTR_MASK] = अणु .type = NLA_NESTED पूर्ण,
-	[OVS_FLOW_ATTR_ACTIONS] = अणु .type = NLA_NESTED पूर्ण,
-	[OVS_FLOW_ATTR_CLEAR] = अणु .type = NLA_FLAG पूर्ण,
-	[OVS_FLOW_ATTR_PROBE] = अणु .type = NLA_FLAG पूर्ण,
-	[OVS_FLOW_ATTR_UFID] = अणु .type = NLA_UNSPEC, .len = 1 पूर्ण,
-	[OVS_FLOW_ATTR_UFID_FLAGS] = अणु .type = NLA_U32 पूर्ण,
-पूर्ण;
+static const struct nla_policy flow_policy[OVS_FLOW_ATTR_MAX + 1] = {
+	[OVS_FLOW_ATTR_KEY] = { .type = NLA_NESTED },
+	[OVS_FLOW_ATTR_MASK] = { .type = NLA_NESTED },
+	[OVS_FLOW_ATTR_ACTIONS] = { .type = NLA_NESTED },
+	[OVS_FLOW_ATTR_CLEAR] = { .type = NLA_FLAG },
+	[OVS_FLOW_ATTR_PROBE] = { .type = NLA_FLAG },
+	[OVS_FLOW_ATTR_UFID] = { .type = NLA_UNSPEC, .len = 1 },
+	[OVS_FLOW_ATTR_UFID_FLAGS] = { .type = NLA_U32 },
+};
 
-अटल स्थिर काष्ठा genl_small_ops dp_flow_genl_ops[] = अणु
-	अणु .cmd = OVS_FLOW_CMD_NEW,
+static const struct genl_small_ops dp_flow_genl_ops[] = {
+	{ .cmd = OVS_FLOW_CMD_NEW,
 	  .validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
 	  .flags = GENL_UNS_ADMIN_PERM, /* Requires CAP_NET_ADMIN privilege. */
-	  .करोit = ovs_flow_cmd_new
-	पूर्ण,
-	अणु .cmd = OVS_FLOW_CMD_DEL,
+	  .doit = ovs_flow_cmd_new
+	},
+	{ .cmd = OVS_FLOW_CMD_DEL,
 	  .validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
 	  .flags = GENL_UNS_ADMIN_PERM, /* Requires CAP_NET_ADMIN privilege. */
-	  .करोit = ovs_flow_cmd_del
-	पूर्ण,
-	अणु .cmd = OVS_FLOW_CMD_GET,
+	  .doit = ovs_flow_cmd_del
+	},
+	{ .cmd = OVS_FLOW_CMD_GET,
 	  .validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
-	  .flags = 0,		    /* OK क्रम unprivileged users. */
-	  .करोit = ovs_flow_cmd_get,
+	  .flags = 0,		    /* OK for unprivileged users. */
+	  .doit = ovs_flow_cmd_get,
 	  .dumpit = ovs_flow_cmd_dump
-	पूर्ण,
-	अणु .cmd = OVS_FLOW_CMD_SET,
+	},
+	{ .cmd = OVS_FLOW_CMD_SET,
 	  .validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
 	  .flags = GENL_UNS_ADMIN_PERM, /* Requires CAP_NET_ADMIN privilege. */
-	  .करोit = ovs_flow_cmd_set,
-	पूर्ण,
-पूर्ण;
+	  .doit = ovs_flow_cmd_set,
+	},
+};
 
-अटल काष्ठा genl_family dp_flow_genl_family __ro_after_init = अणु
-	.hdrsize = माप(काष्ठा ovs_header),
+static struct genl_family dp_flow_genl_family __ro_after_init = {
+	.hdrsize = sizeof(struct ovs_header),
 	.name = OVS_FLOW_FAMILY,
 	.version = OVS_FLOW_VERSION,
 	.maxattr = OVS_FLOW_ATTR_MAX,
@@ -1491,215 +1490,215 @@ unlock:
 	.mcgrps = &ovs_dp_flow_multicast_group,
 	.n_mcgrps = 1,
 	.module = THIS_MODULE,
-पूर्ण;
+};
 
-अटल माप_प्रकार ovs_dp_cmd_msg_size(व्योम)
-अणु
-	माप_प्रकार msgsize = NLMSG_ALIGN(माप(काष्ठा ovs_header));
+static size_t ovs_dp_cmd_msg_size(void)
+{
+	size_t msgsize = NLMSG_ALIGN(sizeof(struct ovs_header));
 
 	msgsize += nla_total_size(IFNAMSIZ);
-	msgsize += nla_total_size_64bit(माप(काष्ठा ovs_dp_stats));
-	msgsize += nla_total_size_64bit(माप(काष्ठा ovs_dp_megaflow_stats));
-	msgsize += nla_total_size(माप(u32)); /* OVS_DP_ATTR_USER_FEATURES */
-	msgsize += nla_total_size(माप(u32)); /* OVS_DP_ATTR_MASKS_CACHE_SIZE */
+	msgsize += nla_total_size_64bit(sizeof(struct ovs_dp_stats));
+	msgsize += nla_total_size_64bit(sizeof(struct ovs_dp_megaflow_stats));
+	msgsize += nla_total_size(sizeof(u32)); /* OVS_DP_ATTR_USER_FEATURES */
+	msgsize += nla_total_size(sizeof(u32)); /* OVS_DP_ATTR_MASKS_CACHE_SIZE */
 
-	वापस msgsize;
-पूर्ण
+	return msgsize;
+}
 
 /* Called with ovs_mutex. */
-अटल पूर्णांक ovs_dp_cmd_fill_info(काष्ठा datapath *dp, काष्ठा sk_buff *skb,
+static int ovs_dp_cmd_fill_info(struct datapath *dp, struct sk_buff *skb,
 				u32 portid, u32 seq, u32 flags, u8 cmd)
-अणु
-	काष्ठा ovs_header *ovs_header;
-	काष्ठा ovs_dp_stats dp_stats;
-	काष्ठा ovs_dp_megaflow_stats dp_megaflow_stats;
-	पूर्णांक err;
+{
+	struct ovs_header *ovs_header;
+	struct ovs_dp_stats dp_stats;
+	struct ovs_dp_megaflow_stats dp_megaflow_stats;
+	int err;
 
 	ovs_header = genlmsg_put(skb, portid, seq, &dp_datapath_genl_family,
 				 flags, cmd);
-	अगर (!ovs_header)
-		जाओ error;
+	if (!ovs_header)
+		goto error;
 
-	ovs_header->dp_अगरindex = get_dpअगरindex(dp);
+	ovs_header->dp_ifindex = get_dpifindex(dp);
 
 	err = nla_put_string(skb, OVS_DP_ATTR_NAME, ovs_dp_name(dp));
-	अगर (err)
-		जाओ nla_put_failure;
+	if (err)
+		goto nla_put_failure;
 
 	get_dp_stats(dp, &dp_stats, &dp_megaflow_stats);
-	अगर (nla_put_64bit(skb, OVS_DP_ATTR_STATS, माप(काष्ठा ovs_dp_stats),
+	if (nla_put_64bit(skb, OVS_DP_ATTR_STATS, sizeof(struct ovs_dp_stats),
 			  &dp_stats, OVS_DP_ATTR_PAD))
-		जाओ nla_put_failure;
+		goto nla_put_failure;
 
-	अगर (nla_put_64bit(skb, OVS_DP_ATTR_MEGAFLOW_STATS,
-			  माप(काष्ठा ovs_dp_megaflow_stats),
+	if (nla_put_64bit(skb, OVS_DP_ATTR_MEGAFLOW_STATS,
+			  sizeof(struct ovs_dp_megaflow_stats),
 			  &dp_megaflow_stats, OVS_DP_ATTR_PAD))
-		जाओ nla_put_failure;
+		goto nla_put_failure;
 
-	अगर (nla_put_u32(skb, OVS_DP_ATTR_USER_FEATURES, dp->user_features))
-		जाओ nla_put_failure;
+	if (nla_put_u32(skb, OVS_DP_ATTR_USER_FEATURES, dp->user_features))
+		goto nla_put_failure;
 
-	अगर (nla_put_u32(skb, OVS_DP_ATTR_MASKS_CACHE_SIZE,
+	if (nla_put_u32(skb, OVS_DP_ATTR_MASKS_CACHE_SIZE,
 			ovs_flow_tbl_masks_cache_size(&dp->table)))
-		जाओ nla_put_failure;
+		goto nla_put_failure;
 
 	genlmsg_end(skb, ovs_header);
-	वापस 0;
+	return 0;
 
 nla_put_failure:
 	genlmsg_cancel(skb, ovs_header);
 error:
-	वापस -EMSGSIZE;
-पूर्ण
+	return -EMSGSIZE;
+}
 
-अटल काष्ठा sk_buff *ovs_dp_cmd_alloc_info(व्योम)
-अणु
-	वापस genlmsg_new(ovs_dp_cmd_msg_size(), GFP_KERNEL);
-पूर्ण
+static struct sk_buff *ovs_dp_cmd_alloc_info(void)
+{
+	return genlmsg_new(ovs_dp_cmd_msg_size(), GFP_KERNEL);
+}
 
-/* Called with rcu_पढ़ो_lock or ovs_mutex. */
-अटल काष्ठा datapath *lookup_datapath(काष्ठा net *net,
-					स्थिर काष्ठा ovs_header *ovs_header,
-					काष्ठा nlattr *a[OVS_DP_ATTR_MAX + 1])
-अणु
-	काष्ठा datapath *dp;
+/* Called with rcu_read_lock or ovs_mutex. */
+static struct datapath *lookup_datapath(struct net *net,
+					const struct ovs_header *ovs_header,
+					struct nlattr *a[OVS_DP_ATTR_MAX + 1])
+{
+	struct datapath *dp;
 
-	अगर (!a[OVS_DP_ATTR_NAME])
-		dp = get_dp(net, ovs_header->dp_अगरindex);
-	अन्यथा अणु
-		काष्ठा vport *vport;
+	if (!a[OVS_DP_ATTR_NAME])
+		dp = get_dp(net, ovs_header->dp_ifindex);
+	else {
+		struct vport *vport;
 
 		vport = ovs_vport_locate(net, nla_data(a[OVS_DP_ATTR_NAME]));
-		dp = vport && vport->port_no == OVSP_LOCAL ? vport->dp : शून्य;
-	पूर्ण
-	वापस dp ? dp : ERR_PTR(-ENODEV);
-पूर्ण
+		dp = vport && vport->port_no == OVSP_LOCAL ? vport->dp : NULL;
+	}
+	return dp ? dp : ERR_PTR(-ENODEV);
+}
 
-अटल व्योम ovs_dp_reset_user_features(काष्ठा sk_buff *skb,
-				       काष्ठा genl_info *info)
-अणु
-	काष्ठा datapath *dp;
+static void ovs_dp_reset_user_features(struct sk_buff *skb,
+				       struct genl_info *info)
+{
+	struct datapath *dp;
 
 	dp = lookup_datapath(sock_net(skb->sk), info->userhdr,
 			     info->attrs);
-	अगर (IS_ERR(dp))
-		वापस;
+	if (IS_ERR(dp))
+		return;
 
 	WARN(dp->user_features, "Dropping previously announced user features\n");
 	dp->user_features = 0;
-पूर्ण
+}
 
 DEFINE_STATIC_KEY_FALSE(tc_recirc_sharing_support);
 
-अटल पूर्णांक ovs_dp_change(काष्ठा datapath *dp, काष्ठा nlattr *a[])
-अणु
+static int ovs_dp_change(struct datapath *dp, struct nlattr *a[])
+{
 	u32 user_features = 0;
 
-	अगर (a[OVS_DP_ATTR_USER_FEATURES]) अणु
+	if (a[OVS_DP_ATTR_USER_FEATURES]) {
 		user_features = nla_get_u32(a[OVS_DP_ATTR_USER_FEATURES]);
 
-		अगर (user_features & ~(OVS_DP_F_VPORT_PIDS |
+		if (user_features & ~(OVS_DP_F_VPORT_PIDS |
 				      OVS_DP_F_UNALIGNED |
 				      OVS_DP_F_TC_RECIRC_SHARING))
-			वापस -EOPNOTSUPP;
+			return -EOPNOTSUPP;
 
-#अगर !IS_ENABLED(CONFIG_NET_TC_SKB_EXT)
-		अगर (user_features & OVS_DP_F_TC_RECIRC_SHARING)
-			वापस -EOPNOTSUPP;
-#पूर्ण_अगर
-	पूर्ण
+#if !IS_ENABLED(CONFIG_NET_TC_SKB_EXT)
+		if (user_features & OVS_DP_F_TC_RECIRC_SHARING)
+			return -EOPNOTSUPP;
+#endif
+	}
 
-	अगर (a[OVS_DP_ATTR_MASKS_CACHE_SIZE]) अणु
-		पूर्णांक err;
+	if (a[OVS_DP_ATTR_MASKS_CACHE_SIZE]) {
+		int err;
 		u32 cache_size;
 
 		cache_size = nla_get_u32(a[OVS_DP_ATTR_MASKS_CACHE_SIZE]);
 		err = ovs_flow_tbl_masks_cache_resize(&dp->table, cache_size);
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 
 	dp->user_features = user_features;
 
-	अगर (dp->user_features & OVS_DP_F_TC_RECIRC_SHARING)
-		अटल_branch_enable(&tc_recirc_sharing_support);
-	अन्यथा
-		अटल_branch_disable(&tc_recirc_sharing_support);
+	if (dp->user_features & OVS_DP_F_TC_RECIRC_SHARING)
+		static_branch_enable(&tc_recirc_sharing_support);
+	else
+		static_branch_disable(&tc_recirc_sharing_support);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ovs_dp_stats_init(काष्ठा datapath *dp)
-अणु
-	dp->stats_percpu = netdev_alloc_pcpu_stats(काष्ठा dp_stats_percpu);
-	अगर (!dp->stats_percpu)
-		वापस -ENOMEM;
+static int ovs_dp_stats_init(struct datapath *dp)
+{
+	dp->stats_percpu = netdev_alloc_pcpu_stats(struct dp_stats_percpu);
+	if (!dp->stats_percpu)
+		return -ENOMEM;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ovs_dp_vport_init(काष्ठा datapath *dp)
-अणु
-	पूर्णांक i;
+static int ovs_dp_vport_init(struct datapath *dp)
+{
+	int i;
 
-	dp->ports = kदो_स्मृति_array(DP_VPORT_HASH_BUCKETS,
-				  माप(काष्ठा hlist_head),
+	dp->ports = kmalloc_array(DP_VPORT_HASH_BUCKETS,
+				  sizeof(struct hlist_head),
 				  GFP_KERNEL);
-	अगर (!dp->ports)
-		वापस -ENOMEM;
+	if (!dp->ports)
+		return -ENOMEM;
 
-	क्रम (i = 0; i < DP_VPORT_HASH_BUCKETS; i++)
+	for (i = 0; i < DP_VPORT_HASH_BUCKETS; i++)
 		INIT_HLIST_HEAD(&dp->ports[i]);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ovs_dp_cmd_new(काष्ठा sk_buff *skb, काष्ठा genl_info *info)
-अणु
-	काष्ठा nlattr **a = info->attrs;
-	काष्ठा vport_parms parms;
-	काष्ठा sk_buff *reply;
-	काष्ठा datapath *dp;
-	काष्ठा vport *vport;
-	काष्ठा ovs_net *ovs_net;
-	पूर्णांक err;
+static int ovs_dp_cmd_new(struct sk_buff *skb, struct genl_info *info)
+{
+	struct nlattr **a = info->attrs;
+	struct vport_parms parms;
+	struct sk_buff *reply;
+	struct datapath *dp;
+	struct vport *vport;
+	struct ovs_net *ovs_net;
+	int err;
 
 	err = -EINVAL;
-	अगर (!a[OVS_DP_ATTR_NAME] || !a[OVS_DP_ATTR_UPCALL_PID])
-		जाओ err;
+	if (!a[OVS_DP_ATTR_NAME] || !a[OVS_DP_ATTR_UPCALL_PID])
+		goto err;
 
 	reply = ovs_dp_cmd_alloc_info();
-	अगर (!reply)
-		वापस -ENOMEM;
+	if (!reply)
+		return -ENOMEM;
 
 	err = -ENOMEM;
-	dp = kzalloc(माप(*dp), GFP_KERNEL);
-	अगर (dp == शून्य)
-		जाओ err_destroy_reply;
+	dp = kzalloc(sizeof(*dp), GFP_KERNEL);
+	if (dp == NULL)
+		goto err_destroy_reply;
 
 	ovs_dp_set_net(dp, sock_net(skb->sk));
 
 	/* Allocate table. */
 	err = ovs_flow_tbl_init(&dp->table);
-	अगर (err)
-		जाओ err_destroy_dp;
+	if (err)
+		goto err_destroy_dp;
 
 	err = ovs_dp_stats_init(dp);
-	अगर (err)
-		जाओ err_destroy_table;
+	if (err)
+		goto err_destroy_table;
 
 	err = ovs_dp_vport_init(dp);
-	अगर (err)
-		जाओ err_destroy_stats;
+	if (err)
+		goto err_destroy_stats;
 
 	err = ovs_meters_init(dp);
-	अगर (err)
-		जाओ err_destroy_ports;
+	if (err)
+		goto err_destroy_ports;
 
 	/* Set up our datapath device. */
 	parms.name = nla_data(a[OVS_DP_ATTR_NAME]);
 	parms.type = OVS_VPORT_TYPE_INTERNAL;
-	parms.options = शून्य;
+	parms.options = NULL;
 	parms.dp = dp;
 	parms.port_no = OVSP_LOCAL;
 	parms.upcall_portids = a[OVS_DP_ATTR_UPCALL_PID];
@@ -1708,26 +1707,26 @@ DEFINE_STATIC_KEY_FALSE(tc_recirc_sharing_support);
 	ovs_lock();
 
 	err = ovs_dp_change(dp, a);
-	अगर (err)
-		जाओ err_unlock_and_destroy_meters;
+	if (err)
+		goto err_unlock_and_destroy_meters;
 
 	vport = new_vport(&parms);
-	अगर (IS_ERR(vport)) अणु
+	if (IS_ERR(vport)) {
 		err = PTR_ERR(vport);
-		अगर (err == -EBUSY)
+		if (err == -EBUSY)
 			err = -EEXIST;
 
-		अगर (err == -EEXIST) अणु
-			/* An outdated user space instance that करोes not understand
+		if (err == -EEXIST) {
+			/* An outdated user space instance that does not understand
 			 * the concept of user_features has attempted to create a new
 			 * datapath and is likely to reuse it. Drop all user features.
 			 */
-			अगर (info->genlhdr->version < OVS_DP_VER_FEATURES)
+			if (info->genlhdr->version < OVS_DP_VER_FEATURES)
 				ovs_dp_reset_user_features(skb, info);
-		पूर्ण
+		}
 
-		जाओ err_unlock_and_destroy_meters;
-	पूर्ण
+		goto err_unlock_and_destroy_meters;
+	}
 
 	err = ovs_dp_cmd_fill_info(dp, reply, info->snd_portid,
 				   info->snd_seq, 0, OVS_DP_CMD_NEW);
@@ -1738,50 +1737,50 @@ DEFINE_STATIC_KEY_FALSE(tc_recirc_sharing_support);
 
 	ovs_unlock();
 
-	ovs_notअगरy(&dp_datapath_genl_family, reply, info);
-	वापस 0;
+	ovs_notify(&dp_datapath_genl_family, reply, info);
+	return 0;
 
 err_unlock_and_destroy_meters:
 	ovs_unlock();
-	ovs_meters_निकास(dp);
+	ovs_meters_exit(dp);
 err_destroy_ports:
-	kमुक्त(dp->ports);
+	kfree(dp->ports);
 err_destroy_stats:
-	मुक्त_percpu(dp->stats_percpu);
+	free_percpu(dp->stats_percpu);
 err_destroy_table:
 	ovs_flow_tbl_destroy(&dp->table);
 err_destroy_dp:
-	kमुक्त(dp);
+	kfree(dp);
 err_destroy_reply:
-	kमुक्त_skb(reply);
+	kfree_skb(reply);
 err:
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /* Called with ovs_mutex. */
-अटल व्योम __dp_destroy(काष्ठा datapath *dp)
-अणु
-	काष्ठा flow_table *table = &dp->table;
-	पूर्णांक i;
+static void __dp_destroy(struct datapath *dp)
+{
+	struct flow_table *table = &dp->table;
+	int i;
 
-	क्रम (i = 0; i < DP_VPORT_HASH_BUCKETS; i++) अणु
-		काष्ठा vport *vport;
-		काष्ठा hlist_node *n;
+	for (i = 0; i < DP_VPORT_HASH_BUCKETS; i++) {
+		struct vport *vport;
+		struct hlist_node *n;
 
-		hlist_क्रम_each_entry_safe(vport, n, &dp->ports[i], dp_hash_node)
-			अगर (vport->port_no != OVSP_LOCAL)
+		hlist_for_each_entry_safe(vport, n, &dp->ports[i], dp_hash_node)
+			if (vport->port_no != OVSP_LOCAL)
 				ovs_dp_detach_port(vport);
-	पूर्ण
+	}
 
 	list_del_rcu(&dp->list_node);
 
-	/* OVSP_LOCAL is datapath पूर्णांकernal port. We need to make sure that
-	 * all ports in datapath are destroyed first beक्रमe मुक्तing datapath.
+	/* OVSP_LOCAL is datapath internal port. We need to make sure that
+	 * all ports in datapath are destroyed first before freeing datapath.
 	 */
 	ovs_dp_detach_port(ovs_vport_ovsl(dp, OVSP_LOCAL));
 
 	/* Flush sw_flow in the tables. RCU cb only releases resource
-	 * such as dp, ports and tables. That may aव्योम some issues
+	 * such as dp, ports and tables. That may avoid some issues
 	 * such as RCU usage warning.
 	 */
 	table_instance_flow_flush(table, ovsl_dereference(table->ti),
@@ -1789,23 +1788,23 @@ err:
 
 	/* RCU destroy the ports, meters and flow tables. */
 	call_rcu(&dp->rcu, destroy_dp_rcu);
-पूर्ण
+}
 
-अटल पूर्णांक ovs_dp_cmd_del(काष्ठा sk_buff *skb, काष्ठा genl_info *info)
-अणु
-	काष्ठा sk_buff *reply;
-	काष्ठा datapath *dp;
-	पूर्णांक err;
+static int ovs_dp_cmd_del(struct sk_buff *skb, struct genl_info *info)
+{
+	struct sk_buff *reply;
+	struct datapath *dp;
+	int err;
 
 	reply = ovs_dp_cmd_alloc_info();
-	अगर (!reply)
-		वापस -ENOMEM;
+	if (!reply)
+		return -ENOMEM;
 
 	ovs_lock();
 	dp = lookup_datapath(sock_net(skb->sk), info->userhdr, info->attrs);
 	err = PTR_ERR(dp);
-	अगर (IS_ERR(dp))
-		जाओ err_unlock_मुक्त;
+	if (IS_ERR(dp))
+		goto err_unlock_free;
 
 	err = ovs_dp_cmd_fill_info(dp, reply, info->snd_portid,
 				   info->snd_seq, 0, OVS_DP_CMD_DEL);
@@ -1814,137 +1813,137 @@ err:
 	__dp_destroy(dp);
 	ovs_unlock();
 
-	ovs_notअगरy(&dp_datapath_genl_family, reply, info);
+	ovs_notify(&dp_datapath_genl_family, reply, info);
 
-	वापस 0;
+	return 0;
 
-err_unlock_मुक्त:
+err_unlock_free:
 	ovs_unlock();
-	kमुक्त_skb(reply);
-	वापस err;
-पूर्ण
+	kfree_skb(reply);
+	return err;
+}
 
-अटल पूर्णांक ovs_dp_cmd_set(काष्ठा sk_buff *skb, काष्ठा genl_info *info)
-अणु
-	काष्ठा sk_buff *reply;
-	काष्ठा datapath *dp;
-	पूर्णांक err;
+static int ovs_dp_cmd_set(struct sk_buff *skb, struct genl_info *info)
+{
+	struct sk_buff *reply;
+	struct datapath *dp;
+	int err;
 
 	reply = ovs_dp_cmd_alloc_info();
-	अगर (!reply)
-		वापस -ENOMEM;
+	if (!reply)
+		return -ENOMEM;
 
 	ovs_lock();
 	dp = lookup_datapath(sock_net(skb->sk), info->userhdr, info->attrs);
 	err = PTR_ERR(dp);
-	अगर (IS_ERR(dp))
-		जाओ err_unlock_मुक्त;
+	if (IS_ERR(dp))
+		goto err_unlock_free;
 
 	err = ovs_dp_change(dp, info->attrs);
-	अगर (err)
-		जाओ err_unlock_मुक्त;
+	if (err)
+		goto err_unlock_free;
 
 	err = ovs_dp_cmd_fill_info(dp, reply, info->snd_portid,
 				   info->snd_seq, 0, OVS_DP_CMD_SET);
 	BUG_ON(err < 0);
 
 	ovs_unlock();
-	ovs_notअगरy(&dp_datapath_genl_family, reply, info);
+	ovs_notify(&dp_datapath_genl_family, reply, info);
 
-	वापस 0;
+	return 0;
 
-err_unlock_मुक्त:
+err_unlock_free:
 	ovs_unlock();
-	kमुक्त_skb(reply);
-	वापस err;
-पूर्ण
+	kfree_skb(reply);
+	return err;
+}
 
-अटल पूर्णांक ovs_dp_cmd_get(काष्ठा sk_buff *skb, काष्ठा genl_info *info)
-अणु
-	काष्ठा sk_buff *reply;
-	काष्ठा datapath *dp;
-	पूर्णांक err;
+static int ovs_dp_cmd_get(struct sk_buff *skb, struct genl_info *info)
+{
+	struct sk_buff *reply;
+	struct datapath *dp;
+	int err;
 
 	reply = ovs_dp_cmd_alloc_info();
-	अगर (!reply)
-		वापस -ENOMEM;
+	if (!reply)
+		return -ENOMEM;
 
 	ovs_lock();
 	dp = lookup_datapath(sock_net(skb->sk), info->userhdr, info->attrs);
-	अगर (IS_ERR(dp)) अणु
+	if (IS_ERR(dp)) {
 		err = PTR_ERR(dp);
-		जाओ err_unlock_मुक्त;
-	पूर्ण
+		goto err_unlock_free;
+	}
 	err = ovs_dp_cmd_fill_info(dp, reply, info->snd_portid,
 				   info->snd_seq, 0, OVS_DP_CMD_GET);
 	BUG_ON(err < 0);
 	ovs_unlock();
 
-	वापस genlmsg_reply(reply, info);
+	return genlmsg_reply(reply, info);
 
-err_unlock_मुक्त:
+err_unlock_free:
 	ovs_unlock();
-	kमुक्त_skb(reply);
-	वापस err;
-पूर्ण
+	kfree_skb(reply);
+	return err;
+}
 
-अटल पूर्णांक ovs_dp_cmd_dump(काष्ठा sk_buff *skb, काष्ठा netlink_callback *cb)
-अणु
-	काष्ठा ovs_net *ovs_net = net_generic(sock_net(skb->sk), ovs_net_id);
-	काष्ठा datapath *dp;
-	पूर्णांक skip = cb->args[0];
-	पूर्णांक i = 0;
+static int ovs_dp_cmd_dump(struct sk_buff *skb, struct netlink_callback *cb)
+{
+	struct ovs_net *ovs_net = net_generic(sock_net(skb->sk), ovs_net_id);
+	struct datapath *dp;
+	int skip = cb->args[0];
+	int i = 0;
 
 	ovs_lock();
-	list_क्रम_each_entry(dp, &ovs_net->dps, list_node) अणु
-		अगर (i >= skip &&
+	list_for_each_entry(dp, &ovs_net->dps, list_node) {
+		if (i >= skip &&
 		    ovs_dp_cmd_fill_info(dp, skb, NETLINK_CB(cb->skb).portid,
 					 cb->nlh->nlmsg_seq, NLM_F_MULTI,
 					 OVS_DP_CMD_GET) < 0)
-			अवरोध;
+			break;
 		i++;
-	पूर्ण
+	}
 	ovs_unlock();
 
 	cb->args[0] = i;
 
-	वापस skb->len;
-पूर्ण
+	return skb->len;
+}
 
-अटल स्थिर काष्ठा nla_policy datapath_policy[OVS_DP_ATTR_MAX + 1] = अणु
-	[OVS_DP_ATTR_NAME] = अणु .type = NLA_NUL_STRING, .len = IFNAMSIZ - 1 पूर्ण,
-	[OVS_DP_ATTR_UPCALL_PID] = अणु .type = NLA_U32 पूर्ण,
-	[OVS_DP_ATTR_USER_FEATURES] = अणु .type = NLA_U32 पूर्ण,
+static const struct nla_policy datapath_policy[OVS_DP_ATTR_MAX + 1] = {
+	[OVS_DP_ATTR_NAME] = { .type = NLA_NUL_STRING, .len = IFNAMSIZ - 1 },
+	[OVS_DP_ATTR_UPCALL_PID] = { .type = NLA_U32 },
+	[OVS_DP_ATTR_USER_FEATURES] = { .type = NLA_U32 },
 	[OVS_DP_ATTR_MASKS_CACHE_SIZE] =  NLA_POLICY_RANGE(NLA_U32, 0,
-		PCPU_MIN_UNIT_SIZE / माप(काष्ठा mask_cache_entry)),
-पूर्ण;
+		PCPU_MIN_UNIT_SIZE / sizeof(struct mask_cache_entry)),
+};
 
-अटल स्थिर काष्ठा genl_small_ops dp_datapath_genl_ops[] = अणु
-	अणु .cmd = OVS_DP_CMD_NEW,
+static const struct genl_small_ops dp_datapath_genl_ops[] = {
+	{ .cmd = OVS_DP_CMD_NEW,
 	  .validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
 	  .flags = GENL_UNS_ADMIN_PERM, /* Requires CAP_NET_ADMIN privilege. */
-	  .करोit = ovs_dp_cmd_new
-	पूर्ण,
-	अणु .cmd = OVS_DP_CMD_DEL,
+	  .doit = ovs_dp_cmd_new
+	},
+	{ .cmd = OVS_DP_CMD_DEL,
 	  .validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
 	  .flags = GENL_UNS_ADMIN_PERM, /* Requires CAP_NET_ADMIN privilege. */
-	  .करोit = ovs_dp_cmd_del
-	पूर्ण,
-	अणु .cmd = OVS_DP_CMD_GET,
+	  .doit = ovs_dp_cmd_del
+	},
+	{ .cmd = OVS_DP_CMD_GET,
 	  .validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
-	  .flags = 0,		    /* OK क्रम unprivileged users. */
-	  .करोit = ovs_dp_cmd_get,
+	  .flags = 0,		    /* OK for unprivileged users. */
+	  .doit = ovs_dp_cmd_get,
 	  .dumpit = ovs_dp_cmd_dump
-	पूर्ण,
-	अणु .cmd = OVS_DP_CMD_SET,
+	},
+	{ .cmd = OVS_DP_CMD_SET,
 	  .validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
 	  .flags = GENL_UNS_ADMIN_PERM, /* Requires CAP_NET_ADMIN privilege. */
-	  .करोit = ovs_dp_cmd_set,
-	पूर्ण,
-पूर्ण;
+	  .doit = ovs_dp_cmd_set,
+	},
+};
 
-अटल काष्ठा genl_family dp_datapath_genl_family __ro_after_init = अणु
-	.hdrsize = माप(काष्ठा ovs_header),
+static struct genl_family dp_datapath_genl_family __ro_after_init = {
+	.hdrsize = sizeof(struct ovs_header),
 	.name = OVS_DATAPATH_FAMILY,
 	.version = OVS_DATAPATH_VERSION,
 	.maxattr = OVS_DP_ATTR_MAX,
@@ -1956,205 +1955,205 @@ err_unlock_मुक्त:
 	.mcgrps = &ovs_dp_datapath_multicast_group,
 	.n_mcgrps = 1,
 	.module = THIS_MODULE,
-पूर्ण;
+};
 
-/* Called with ovs_mutex or RCU पढ़ो lock. */
-अटल पूर्णांक ovs_vport_cmd_fill_info(काष्ठा vport *vport, काष्ठा sk_buff *skb,
-				   काष्ठा net *net, u32 portid, u32 seq,
+/* Called with ovs_mutex or RCU read lock. */
+static int ovs_vport_cmd_fill_info(struct vport *vport, struct sk_buff *skb,
+				   struct net *net, u32 portid, u32 seq,
 				   u32 flags, u8 cmd, gfp_t gfp)
-अणु
-	काष्ठा ovs_header *ovs_header;
-	काष्ठा ovs_vport_stats vport_stats;
-	पूर्णांक err;
+{
+	struct ovs_header *ovs_header;
+	struct ovs_vport_stats vport_stats;
+	int err;
 
 	ovs_header = genlmsg_put(skb, portid, seq, &dp_vport_genl_family,
 				 flags, cmd);
-	अगर (!ovs_header)
-		वापस -EMSGSIZE;
+	if (!ovs_header)
+		return -EMSGSIZE;
 
-	ovs_header->dp_अगरindex = get_dpअगरindex(vport->dp);
+	ovs_header->dp_ifindex = get_dpifindex(vport->dp);
 
-	अगर (nla_put_u32(skb, OVS_VPORT_ATTR_PORT_NO, vport->port_no) ||
+	if (nla_put_u32(skb, OVS_VPORT_ATTR_PORT_NO, vport->port_no) ||
 	    nla_put_u32(skb, OVS_VPORT_ATTR_TYPE, vport->ops->type) ||
 	    nla_put_string(skb, OVS_VPORT_ATTR_NAME,
 			   ovs_vport_name(vport)) ||
-	    nla_put_u32(skb, OVS_VPORT_ATTR_IFINDEX, vport->dev->अगरindex))
-		जाओ nla_put_failure;
+	    nla_put_u32(skb, OVS_VPORT_ATTR_IFINDEX, vport->dev->ifindex))
+		goto nla_put_failure;
 
-	अगर (!net_eq(net, dev_net(vport->dev))) अणु
-		पूर्णांक id = peernet2id_alloc(net, dev_net(vport->dev), gfp);
+	if (!net_eq(net, dev_net(vport->dev))) {
+		int id = peernet2id_alloc(net, dev_net(vport->dev), gfp);
 
-		अगर (nla_put_s32(skb, OVS_VPORT_ATTR_NETNSID, id))
-			जाओ nla_put_failure;
-	पूर्ण
+		if (nla_put_s32(skb, OVS_VPORT_ATTR_NETNSID, id))
+			goto nla_put_failure;
+	}
 
 	ovs_vport_get_stats(vport, &vport_stats);
-	अगर (nla_put_64bit(skb, OVS_VPORT_ATTR_STATS,
-			  माप(काष्ठा ovs_vport_stats), &vport_stats,
+	if (nla_put_64bit(skb, OVS_VPORT_ATTR_STATS,
+			  sizeof(struct ovs_vport_stats), &vport_stats,
 			  OVS_VPORT_ATTR_PAD))
-		जाओ nla_put_failure;
+		goto nla_put_failure;
 
-	अगर (ovs_vport_get_upcall_portids(vport, skb))
-		जाओ nla_put_failure;
+	if (ovs_vport_get_upcall_portids(vport, skb))
+		goto nla_put_failure;
 
 	err = ovs_vport_get_options(vport, skb);
-	अगर (err == -EMSGSIZE)
-		जाओ error;
+	if (err == -EMSGSIZE)
+		goto error;
 
 	genlmsg_end(skb, ovs_header);
-	वापस 0;
+	return 0;
 
 nla_put_failure:
 	err = -EMSGSIZE;
 error:
 	genlmsg_cancel(skb, ovs_header);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल काष्ठा sk_buff *ovs_vport_cmd_alloc_info(व्योम)
-अणु
-	वापस nlmsg_new(NLMSG_DEFAULT_SIZE, GFP_KERNEL);
-पूर्ण
+static struct sk_buff *ovs_vport_cmd_alloc_info(void)
+{
+	return nlmsg_new(NLMSG_DEFAULT_SIZE, GFP_KERNEL);
+}
 
-/* Called with ovs_mutex, only via ovs_dp_notअगरy_wq(). */
-काष्ठा sk_buff *ovs_vport_cmd_build_info(काष्ठा vport *vport, काष्ठा net *net,
+/* Called with ovs_mutex, only via ovs_dp_notify_wq(). */
+struct sk_buff *ovs_vport_cmd_build_info(struct vport *vport, struct net *net,
 					 u32 portid, u32 seq, u8 cmd)
-अणु
-	काष्ठा sk_buff *skb;
-	पूर्णांक retval;
+{
+	struct sk_buff *skb;
+	int retval;
 
 	skb = nlmsg_new(NLMSG_DEFAULT_SIZE, GFP_KERNEL);
-	अगर (!skb)
-		वापस ERR_PTR(-ENOMEM);
+	if (!skb)
+		return ERR_PTR(-ENOMEM);
 
 	retval = ovs_vport_cmd_fill_info(vport, skb, net, portid, seq, 0, cmd,
 					 GFP_KERNEL);
 	BUG_ON(retval < 0);
 
-	वापस skb;
-पूर्ण
+	return skb;
+}
 
-/* Called with ovs_mutex or RCU पढ़ो lock. */
-अटल काष्ठा vport *lookup_vport(काष्ठा net *net,
-				  स्थिर काष्ठा ovs_header *ovs_header,
-				  काष्ठा nlattr *a[OVS_VPORT_ATTR_MAX + 1])
-अणु
-	काष्ठा datapath *dp;
-	काष्ठा vport *vport;
+/* Called with ovs_mutex or RCU read lock. */
+static struct vport *lookup_vport(struct net *net,
+				  const struct ovs_header *ovs_header,
+				  struct nlattr *a[OVS_VPORT_ATTR_MAX + 1])
+{
+	struct datapath *dp;
+	struct vport *vport;
 
-	अगर (a[OVS_VPORT_ATTR_IFINDEX])
-		वापस ERR_PTR(-EOPNOTSUPP);
-	अगर (a[OVS_VPORT_ATTR_NAME]) अणु
+	if (a[OVS_VPORT_ATTR_IFINDEX])
+		return ERR_PTR(-EOPNOTSUPP);
+	if (a[OVS_VPORT_ATTR_NAME]) {
 		vport = ovs_vport_locate(net, nla_data(a[OVS_VPORT_ATTR_NAME]));
-		अगर (!vport)
-			वापस ERR_PTR(-ENODEV);
-		अगर (ovs_header->dp_अगरindex &&
-		    ovs_header->dp_अगरindex != get_dpअगरindex(vport->dp))
-			वापस ERR_PTR(-ENODEV);
-		वापस vport;
-	पूर्ण अन्यथा अगर (a[OVS_VPORT_ATTR_PORT_NO]) अणु
+		if (!vport)
+			return ERR_PTR(-ENODEV);
+		if (ovs_header->dp_ifindex &&
+		    ovs_header->dp_ifindex != get_dpifindex(vport->dp))
+			return ERR_PTR(-ENODEV);
+		return vport;
+	} else if (a[OVS_VPORT_ATTR_PORT_NO]) {
 		u32 port_no = nla_get_u32(a[OVS_VPORT_ATTR_PORT_NO]);
 
-		अगर (port_no >= DP_MAX_PORTS)
-			वापस ERR_PTR(-EFBIG);
+		if (port_no >= DP_MAX_PORTS)
+			return ERR_PTR(-EFBIG);
 
-		dp = get_dp(net, ovs_header->dp_अगरindex);
-		अगर (!dp)
-			वापस ERR_PTR(-ENODEV);
+		dp = get_dp(net, ovs_header->dp_ifindex);
+		if (!dp)
+			return ERR_PTR(-ENODEV);
 
 		vport = ovs_vport_ovsl_rcu(dp, port_no);
-		अगर (!vport)
-			वापस ERR_PTR(-ENODEV);
-		वापस vport;
-	पूर्ण अन्यथा
-		वापस ERR_PTR(-EINVAL);
+		if (!vport)
+			return ERR_PTR(-ENODEV);
+		return vport;
+	} else
+		return ERR_PTR(-EINVAL);
 
-पूर्ण
+}
 
-अटल अचिन्हित पूर्णांक ovs_get_max_headroom(काष्ठा datapath *dp)
-अणु
-	अचिन्हित पूर्णांक dev_headroom, max_headroom = 0;
-	काष्ठा net_device *dev;
-	काष्ठा vport *vport;
-	पूर्णांक i;
+static unsigned int ovs_get_max_headroom(struct datapath *dp)
+{
+	unsigned int dev_headroom, max_headroom = 0;
+	struct net_device *dev;
+	struct vport *vport;
+	int i;
 
-	क्रम (i = 0; i < DP_VPORT_HASH_BUCKETS; i++) अणु
-		hlist_क्रम_each_entry_rcu(vport, &dp->ports[i], dp_hash_node,
-					 lockdep_ovsl_is_held()) अणु
+	for (i = 0; i < DP_VPORT_HASH_BUCKETS; i++) {
+		hlist_for_each_entry_rcu(vport, &dp->ports[i], dp_hash_node,
+					 lockdep_ovsl_is_held()) {
 			dev = vport->dev;
 			dev_headroom = netdev_get_fwd_headroom(dev);
-			अगर (dev_headroom > max_headroom)
+			if (dev_headroom > max_headroom)
 				max_headroom = dev_headroom;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस max_headroom;
-पूर्ण
+	return max_headroom;
+}
 
 /* Called with ovs_mutex */
-अटल व्योम ovs_update_headroom(काष्ठा datapath *dp, अचिन्हित पूर्णांक new_headroom)
-अणु
-	काष्ठा vport *vport;
-	पूर्णांक i;
+static void ovs_update_headroom(struct datapath *dp, unsigned int new_headroom)
+{
+	struct vport *vport;
+	int i;
 
 	dp->max_headroom = new_headroom;
-	क्रम (i = 0; i < DP_VPORT_HASH_BUCKETS; i++) अणु
-		hlist_क्रम_each_entry_rcu(vport, &dp->ports[i], dp_hash_node,
+	for (i = 0; i < DP_VPORT_HASH_BUCKETS; i++) {
+		hlist_for_each_entry_rcu(vport, &dp->ports[i], dp_hash_node,
 					 lockdep_ovsl_is_held())
 			netdev_set_rx_headroom(vport->dev, new_headroom);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक ovs_vport_cmd_new(काष्ठा sk_buff *skb, काष्ठा genl_info *info)
-अणु
-	काष्ठा nlattr **a = info->attrs;
-	काष्ठा ovs_header *ovs_header = info->userhdr;
-	काष्ठा vport_parms parms;
-	काष्ठा sk_buff *reply;
-	काष्ठा vport *vport;
-	काष्ठा datapath *dp;
-	अचिन्हित पूर्णांक new_headroom;
+static int ovs_vport_cmd_new(struct sk_buff *skb, struct genl_info *info)
+{
+	struct nlattr **a = info->attrs;
+	struct ovs_header *ovs_header = info->userhdr;
+	struct vport_parms parms;
+	struct sk_buff *reply;
+	struct vport *vport;
+	struct datapath *dp;
+	unsigned int new_headroom;
 	u32 port_no;
-	पूर्णांक err;
+	int err;
 
-	अगर (!a[OVS_VPORT_ATTR_NAME] || !a[OVS_VPORT_ATTR_TYPE] ||
+	if (!a[OVS_VPORT_ATTR_NAME] || !a[OVS_VPORT_ATTR_TYPE] ||
 	    !a[OVS_VPORT_ATTR_UPCALL_PID])
-		वापस -EINVAL;
-	अगर (a[OVS_VPORT_ATTR_IFINDEX])
-		वापस -EOPNOTSUPP;
+		return -EINVAL;
+	if (a[OVS_VPORT_ATTR_IFINDEX])
+		return -EOPNOTSUPP;
 
 	port_no = a[OVS_VPORT_ATTR_PORT_NO]
 		? nla_get_u32(a[OVS_VPORT_ATTR_PORT_NO]) : 0;
-	अगर (port_no >= DP_MAX_PORTS)
-		वापस -EFBIG;
+	if (port_no >= DP_MAX_PORTS)
+		return -EFBIG;
 
 	reply = ovs_vport_cmd_alloc_info();
-	अगर (!reply)
-		वापस -ENOMEM;
+	if (!reply)
+		return -ENOMEM;
 
 	ovs_lock();
 restart:
-	dp = get_dp(sock_net(skb->sk), ovs_header->dp_अगरindex);
+	dp = get_dp(sock_net(skb->sk), ovs_header->dp_ifindex);
 	err = -ENODEV;
-	अगर (!dp)
-		जाओ निकास_unlock_मुक्त;
+	if (!dp)
+		goto exit_unlock_free;
 
-	अगर (port_no) अणु
+	if (port_no) {
 		vport = ovs_vport_ovsl(dp, port_no);
 		err = -EBUSY;
-		अगर (vport)
-			जाओ निकास_unlock_मुक्त;
-	पूर्ण अन्यथा अणु
-		क्रम (port_no = 1; ; port_no++) अणु
-			अगर (port_no >= DP_MAX_PORTS) अणु
+		if (vport)
+			goto exit_unlock_free;
+	} else {
+		for (port_no = 1; ; port_no++) {
+			if (port_no >= DP_MAX_PORTS) {
 				err = -EFBIG;
-				जाओ निकास_unlock_मुक्त;
-			पूर्ण
+				goto exit_unlock_free;
+			}
 			vport = ovs_vport_ovsl(dp, port_no);
-			अगर (!vport)
-				अवरोध;
-		पूर्ण
-	पूर्ण
+			if (!vport)
+				break;
+		}
+	}
 
 	parms.name = nla_data(a[OVS_VPORT_ATTR_NAME]);
 	parms.type = nla_get_u32(a[OVS_VPORT_ATTR_TYPE]);
@@ -2165,11 +2164,11 @@ restart:
 
 	vport = new_vport(&parms);
 	err = PTR_ERR(vport);
-	अगर (IS_ERR(vport)) अणु
-		अगर (err == -EAGAIN)
-			जाओ restart;
-		जाओ निकास_unlock_मुक्त;
-	पूर्ण
+	if (IS_ERR(vport)) {
+		if (err == -EAGAIN)
+			goto restart;
+		goto exit_unlock_free;
+	}
 
 	err = ovs_vport_cmd_fill_info(vport, reply, genl_info_net(info),
 				      info->snd_portid, info->snd_seq, 0,
@@ -2177,60 +2176,60 @@ restart:
 
 	new_headroom = netdev_get_fwd_headroom(vport->dev);
 
-	अगर (new_headroom > dp->max_headroom)
+	if (new_headroom > dp->max_headroom)
 		ovs_update_headroom(dp, new_headroom);
-	अन्यथा
+	else
 		netdev_set_rx_headroom(vport->dev, dp->max_headroom);
 
 	BUG_ON(err < 0);
 	ovs_unlock();
 
-	ovs_notअगरy(&dp_vport_genl_family, reply, info);
-	वापस 0;
+	ovs_notify(&dp_vport_genl_family, reply, info);
+	return 0;
 
-निकास_unlock_मुक्त:
+exit_unlock_free:
 	ovs_unlock();
-	kमुक्त_skb(reply);
-	वापस err;
-पूर्ण
+	kfree_skb(reply);
+	return err;
+}
 
-अटल पूर्णांक ovs_vport_cmd_set(काष्ठा sk_buff *skb, काष्ठा genl_info *info)
-अणु
-	काष्ठा nlattr **a = info->attrs;
-	काष्ठा sk_buff *reply;
-	काष्ठा vport *vport;
-	पूर्णांक err;
+static int ovs_vport_cmd_set(struct sk_buff *skb, struct genl_info *info)
+{
+	struct nlattr **a = info->attrs;
+	struct sk_buff *reply;
+	struct vport *vport;
+	int err;
 
 	reply = ovs_vport_cmd_alloc_info();
-	अगर (!reply)
-		वापस -ENOMEM;
+	if (!reply)
+		return -ENOMEM;
 
 	ovs_lock();
 	vport = lookup_vport(sock_net(skb->sk), info->userhdr, a);
 	err = PTR_ERR(vport);
-	अगर (IS_ERR(vport))
-		जाओ निकास_unlock_मुक्त;
+	if (IS_ERR(vport))
+		goto exit_unlock_free;
 
-	अगर (a[OVS_VPORT_ATTR_TYPE] &&
-	    nla_get_u32(a[OVS_VPORT_ATTR_TYPE]) != vport->ops->type) अणु
+	if (a[OVS_VPORT_ATTR_TYPE] &&
+	    nla_get_u32(a[OVS_VPORT_ATTR_TYPE]) != vport->ops->type) {
 		err = -EINVAL;
-		जाओ निकास_unlock_मुक्त;
-	पूर्ण
+		goto exit_unlock_free;
+	}
 
-	अगर (a[OVS_VPORT_ATTR_OPTIONS]) अणु
+	if (a[OVS_VPORT_ATTR_OPTIONS]) {
 		err = ovs_vport_set_options(vport, a[OVS_VPORT_ATTR_OPTIONS]);
-		अगर (err)
-			जाओ निकास_unlock_मुक्त;
-	पूर्ण
+		if (err)
+			goto exit_unlock_free;
+	}
 
 
-	अगर (a[OVS_VPORT_ATTR_UPCALL_PID]) अणु
-		काष्ठा nlattr *ids = a[OVS_VPORT_ATTR_UPCALL_PID];
+	if (a[OVS_VPORT_ATTR_UPCALL_PID]) {
+		struct nlattr *ids = a[OVS_VPORT_ATTR_UPCALL_PID];
 
 		err = ovs_vport_set_upcall_portids(vport, ids);
-		अगर (err)
-			जाओ निकास_unlock_मुक्त;
-	पूर्ण
+		if (err)
+			goto exit_unlock_free;
+	}
 
 	err = ovs_vport_cmd_fill_info(vport, reply, genl_info_net(info),
 				      info->snd_portid, info->snd_seq, 0,
@@ -2238,39 +2237,39 @@ restart:
 	BUG_ON(err < 0);
 
 	ovs_unlock();
-	ovs_notअगरy(&dp_vport_genl_family, reply, info);
-	वापस 0;
+	ovs_notify(&dp_vport_genl_family, reply, info);
+	return 0;
 
-निकास_unlock_मुक्त:
+exit_unlock_free:
 	ovs_unlock();
-	kमुक्त_skb(reply);
-	वापस err;
-पूर्ण
+	kfree_skb(reply);
+	return err;
+}
 
-अटल पूर्णांक ovs_vport_cmd_del(काष्ठा sk_buff *skb, काष्ठा genl_info *info)
-अणु
+static int ovs_vport_cmd_del(struct sk_buff *skb, struct genl_info *info)
+{
 	bool update_headroom = false;
-	काष्ठा nlattr **a = info->attrs;
-	काष्ठा sk_buff *reply;
-	काष्ठा datapath *dp;
-	काष्ठा vport *vport;
-	अचिन्हित पूर्णांक new_headroom;
-	पूर्णांक err;
+	struct nlattr **a = info->attrs;
+	struct sk_buff *reply;
+	struct datapath *dp;
+	struct vport *vport;
+	unsigned int new_headroom;
+	int err;
 
 	reply = ovs_vport_cmd_alloc_info();
-	अगर (!reply)
-		वापस -ENOMEM;
+	if (!reply)
+		return -ENOMEM;
 
 	ovs_lock();
 	vport = lookup_vport(sock_net(skb->sk), info->userhdr, a);
 	err = PTR_ERR(vport);
-	अगर (IS_ERR(vport))
-		जाओ निकास_unlock_मुक्त;
+	if (IS_ERR(vport))
+		goto exit_unlock_free;
 
-	अगर (vport->port_no == OVSP_LOCAL) अणु
+	if (vport->port_no == OVSP_LOCAL) {
 		err = -EINVAL;
-		जाओ निकास_unlock_मुक्त;
-	पूर्ण
+		goto exit_unlock_free;
+	}
 
 	err = ovs_vport_cmd_fill_info(vport, reply, genl_info_net(info),
 				      info->snd_portid, info->snd_seq, 0,
@@ -2279,79 +2278,79 @@ restart:
 
 	/* the vport deletion may trigger dp headroom update */
 	dp = vport->dp;
-	अगर (netdev_get_fwd_headroom(vport->dev) == dp->max_headroom)
+	if (netdev_get_fwd_headroom(vport->dev) == dp->max_headroom)
 		update_headroom = true;
 
 	netdev_reset_rx_headroom(vport->dev);
 	ovs_dp_detach_port(vport);
 
-	अगर (update_headroom) अणु
+	if (update_headroom) {
 		new_headroom = ovs_get_max_headroom(dp);
 
-		अगर (new_headroom < dp->max_headroom)
+		if (new_headroom < dp->max_headroom)
 			ovs_update_headroom(dp, new_headroom);
-	पूर्ण
+	}
 	ovs_unlock();
 
-	ovs_notअगरy(&dp_vport_genl_family, reply, info);
-	वापस 0;
+	ovs_notify(&dp_vport_genl_family, reply, info);
+	return 0;
 
-निकास_unlock_मुक्त:
+exit_unlock_free:
 	ovs_unlock();
-	kमुक्त_skb(reply);
-	वापस err;
-पूर्ण
+	kfree_skb(reply);
+	return err;
+}
 
-अटल पूर्णांक ovs_vport_cmd_get(काष्ठा sk_buff *skb, काष्ठा genl_info *info)
-अणु
-	काष्ठा nlattr **a = info->attrs;
-	काष्ठा ovs_header *ovs_header = info->userhdr;
-	काष्ठा sk_buff *reply;
-	काष्ठा vport *vport;
-	पूर्णांक err;
+static int ovs_vport_cmd_get(struct sk_buff *skb, struct genl_info *info)
+{
+	struct nlattr **a = info->attrs;
+	struct ovs_header *ovs_header = info->userhdr;
+	struct sk_buff *reply;
+	struct vport *vport;
+	int err;
 
 	reply = ovs_vport_cmd_alloc_info();
-	अगर (!reply)
-		वापस -ENOMEM;
+	if (!reply)
+		return -ENOMEM;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	vport = lookup_vport(sock_net(skb->sk), ovs_header, a);
 	err = PTR_ERR(vport);
-	अगर (IS_ERR(vport))
-		जाओ निकास_unlock_मुक्त;
+	if (IS_ERR(vport))
+		goto exit_unlock_free;
 	err = ovs_vport_cmd_fill_info(vport, reply, genl_info_net(info),
 				      info->snd_portid, info->snd_seq, 0,
 				      OVS_VPORT_CMD_GET, GFP_ATOMIC);
 	BUG_ON(err < 0);
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 
-	वापस genlmsg_reply(reply, info);
+	return genlmsg_reply(reply, info);
 
-निकास_unlock_मुक्त:
-	rcu_पढ़ो_unlock();
-	kमुक्त_skb(reply);
-	वापस err;
-पूर्ण
+exit_unlock_free:
+	rcu_read_unlock();
+	kfree_skb(reply);
+	return err;
+}
 
-अटल पूर्णांक ovs_vport_cmd_dump(काष्ठा sk_buff *skb, काष्ठा netlink_callback *cb)
-अणु
-	काष्ठा ovs_header *ovs_header = genlmsg_data(nlmsg_data(cb->nlh));
-	काष्ठा datapath *dp;
-	पूर्णांक bucket = cb->args[0], skip = cb->args[1];
-	पूर्णांक i, j = 0;
+static int ovs_vport_cmd_dump(struct sk_buff *skb, struct netlink_callback *cb)
+{
+	struct ovs_header *ovs_header = genlmsg_data(nlmsg_data(cb->nlh));
+	struct datapath *dp;
+	int bucket = cb->args[0], skip = cb->args[1];
+	int i, j = 0;
 
-	rcu_पढ़ो_lock();
-	dp = get_dp_rcu(sock_net(skb->sk), ovs_header->dp_अगरindex);
-	अगर (!dp) अणु
-		rcu_पढ़ो_unlock();
-		वापस -ENODEV;
-	पूर्ण
-	क्रम (i = bucket; i < DP_VPORT_HASH_BUCKETS; i++) अणु
-		काष्ठा vport *vport;
+	rcu_read_lock();
+	dp = get_dp_rcu(sock_net(skb->sk), ovs_header->dp_ifindex);
+	if (!dp) {
+		rcu_read_unlock();
+		return -ENODEV;
+	}
+	for (i = bucket; i < DP_VPORT_HASH_BUCKETS; i++) {
+		struct vport *vport;
 
 		j = 0;
-		hlist_क्रम_each_entry_rcu(vport, &dp->ports[i], dp_hash_node) अणु
-			अगर (j >= skip &&
+		hlist_for_each_entry_rcu(vport, &dp->ports[i], dp_hash_node) {
+			if (j >= skip &&
 			    ovs_vport_cmd_fill_info(vport, skb,
 						    sock_net(skb->sk),
 						    NETLINK_CB(cb->skb).portid,
@@ -2359,75 +2358,75 @@ restart:
 						    NLM_F_MULTI,
 						    OVS_VPORT_CMD_GET,
 						    GFP_ATOMIC) < 0)
-				जाओ out;
+				goto out;
 
 			j++;
-		पूर्ण
+		}
 		skip = 0;
-	पूर्ण
+	}
 out:
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 
 	cb->args[0] = i;
 	cb->args[1] = j;
 
-	वापस skb->len;
-पूर्ण
+	return skb->len;
+}
 
-अटल व्योम ovs_dp_masks_rebalance(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा ovs_net *ovs_net = container_of(work, काष्ठा ovs_net,
+static void ovs_dp_masks_rebalance(struct work_struct *work)
+{
+	struct ovs_net *ovs_net = container_of(work, struct ovs_net,
 					       masks_rebalance.work);
-	काष्ठा datapath *dp;
+	struct datapath *dp;
 
 	ovs_lock();
 
-	list_क्रम_each_entry(dp, &ovs_net->dps, list_node)
+	list_for_each_entry(dp, &ovs_net->dps, list_node)
 		ovs_flow_masks_rebalance(&dp->table);
 
 	ovs_unlock();
 
 	schedule_delayed_work(&ovs_net->masks_rebalance,
-			      msecs_to_jअगरfies(DP_MASKS_REBALANCE_INTERVAL));
-पूर्ण
+			      msecs_to_jiffies(DP_MASKS_REBALANCE_INTERVAL));
+}
 
-अटल स्थिर काष्ठा nla_policy vport_policy[OVS_VPORT_ATTR_MAX + 1] = अणु
-	[OVS_VPORT_ATTR_NAME] = अणु .type = NLA_NUL_STRING, .len = IFNAMSIZ - 1 पूर्ण,
-	[OVS_VPORT_ATTR_STATS] = अणु .len = माप(काष्ठा ovs_vport_stats) पूर्ण,
-	[OVS_VPORT_ATTR_PORT_NO] = अणु .type = NLA_U32 पूर्ण,
-	[OVS_VPORT_ATTR_TYPE] = अणु .type = NLA_U32 पूर्ण,
-	[OVS_VPORT_ATTR_UPCALL_PID] = अणु .type = NLA_UNSPEC पूर्ण,
-	[OVS_VPORT_ATTR_OPTIONS] = अणु .type = NLA_NESTED पूर्ण,
-	[OVS_VPORT_ATTR_IFINDEX] = अणु .type = NLA_U32 पूर्ण,
-	[OVS_VPORT_ATTR_NETNSID] = अणु .type = NLA_S32 पूर्ण,
-पूर्ण;
+static const struct nla_policy vport_policy[OVS_VPORT_ATTR_MAX + 1] = {
+	[OVS_VPORT_ATTR_NAME] = { .type = NLA_NUL_STRING, .len = IFNAMSIZ - 1 },
+	[OVS_VPORT_ATTR_STATS] = { .len = sizeof(struct ovs_vport_stats) },
+	[OVS_VPORT_ATTR_PORT_NO] = { .type = NLA_U32 },
+	[OVS_VPORT_ATTR_TYPE] = { .type = NLA_U32 },
+	[OVS_VPORT_ATTR_UPCALL_PID] = { .type = NLA_UNSPEC },
+	[OVS_VPORT_ATTR_OPTIONS] = { .type = NLA_NESTED },
+	[OVS_VPORT_ATTR_IFINDEX] = { .type = NLA_U32 },
+	[OVS_VPORT_ATTR_NETNSID] = { .type = NLA_S32 },
+};
 
-अटल स्थिर काष्ठा genl_small_ops dp_vport_genl_ops[] = अणु
-	अणु .cmd = OVS_VPORT_CMD_NEW,
+static const struct genl_small_ops dp_vport_genl_ops[] = {
+	{ .cmd = OVS_VPORT_CMD_NEW,
 	  .validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
 	  .flags = GENL_UNS_ADMIN_PERM, /* Requires CAP_NET_ADMIN privilege. */
-	  .करोit = ovs_vport_cmd_new
-	पूर्ण,
-	अणु .cmd = OVS_VPORT_CMD_DEL,
+	  .doit = ovs_vport_cmd_new
+	},
+	{ .cmd = OVS_VPORT_CMD_DEL,
 	  .validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
 	  .flags = GENL_UNS_ADMIN_PERM, /* Requires CAP_NET_ADMIN privilege. */
-	  .करोit = ovs_vport_cmd_del
-	पूर्ण,
-	अणु .cmd = OVS_VPORT_CMD_GET,
+	  .doit = ovs_vport_cmd_del
+	},
+	{ .cmd = OVS_VPORT_CMD_GET,
 	  .validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
-	  .flags = 0,		    /* OK क्रम unprivileged users. */
-	  .करोit = ovs_vport_cmd_get,
+	  .flags = 0,		    /* OK for unprivileged users. */
+	  .doit = ovs_vport_cmd_get,
 	  .dumpit = ovs_vport_cmd_dump
-	पूर्ण,
-	अणु .cmd = OVS_VPORT_CMD_SET,
+	},
+	{ .cmd = OVS_VPORT_CMD_SET,
 	  .validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
 	  .flags = GENL_UNS_ADMIN_PERM, /* Requires CAP_NET_ADMIN privilege. */
-	  .करोit = ovs_vport_cmd_set,
-	पूर्ण,
-पूर्ण;
+	  .doit = ovs_vport_cmd_set,
+	},
+};
 
-काष्ठा genl_family dp_vport_genl_family __ro_after_init = अणु
-	.hdrsize = माप(काष्ठा ovs_header),
+struct genl_family dp_vport_genl_family __ro_after_init = {
+	.hdrsize = sizeof(struct ovs_header),
 	.name = OVS_VPORT_FAMILY,
 	.version = OVS_VPORT_VERSION,
 	.maxattr = OVS_VPORT_ATTR_MAX,
@@ -2439,202 +2438,202 @@ out:
 	.mcgrps = &ovs_dp_vport_multicast_group,
 	.n_mcgrps = 1,
 	.module = THIS_MODULE,
-पूर्ण;
+};
 
-अटल काष्ठा genl_family * स्थिर dp_genl_families[] = अणु
+static struct genl_family * const dp_genl_families[] = {
 	&dp_datapath_genl_family,
 	&dp_vport_genl_family,
 	&dp_flow_genl_family,
 	&dp_packet_genl_family,
 	&dp_meter_genl_family,
-#अगर	IS_ENABLED(CONFIG_NETFILTER_CONNCOUNT)
+#if	IS_ENABLED(CONFIG_NETFILTER_CONNCOUNT)
 	&dp_ct_limit_genl_family,
-#पूर्ण_अगर
-पूर्ण;
+#endif
+};
 
-अटल व्योम dp_unरेजिस्टर_genl(पूर्णांक n_families)
-अणु
-	पूर्णांक i;
+static void dp_unregister_genl(int n_families)
+{
+	int i;
 
-	क्रम (i = 0; i < n_families; i++)
-		genl_unरेजिस्टर_family(dp_genl_families[i]);
-पूर्ण
+	for (i = 0; i < n_families; i++)
+		genl_unregister_family(dp_genl_families[i]);
+}
 
-अटल पूर्णांक __init dp_रेजिस्टर_genl(व्योम)
-अणु
-	पूर्णांक err;
-	पूर्णांक i;
+static int __init dp_register_genl(void)
+{
+	int err;
+	int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(dp_genl_families); i++) अणु
+	for (i = 0; i < ARRAY_SIZE(dp_genl_families); i++) {
 
-		err = genl_रेजिस्टर_family(dp_genl_families[i]);
-		अगर (err)
-			जाओ error;
-	पूर्ण
+		err = genl_register_family(dp_genl_families[i]);
+		if (err)
+			goto error;
+	}
 
-	वापस 0;
+	return 0;
 
 error:
-	dp_unरेजिस्टर_genl(i);
-	वापस err;
-पूर्ण
+	dp_unregister_genl(i);
+	return err;
+}
 
-अटल पूर्णांक __net_init ovs_init_net(काष्ठा net *net)
-अणु
-	काष्ठा ovs_net *ovs_net = net_generic(net, ovs_net_id);
-	पूर्णांक err;
+static int __net_init ovs_init_net(struct net *net)
+{
+	struct ovs_net *ovs_net = net_generic(net, ovs_net_id);
+	int err;
 
 	INIT_LIST_HEAD(&ovs_net->dps);
-	INIT_WORK(&ovs_net->dp_notअगरy_work, ovs_dp_notअगरy_wq);
+	INIT_WORK(&ovs_net->dp_notify_work, ovs_dp_notify_wq);
 	INIT_DELAYED_WORK(&ovs_net->masks_rebalance, ovs_dp_masks_rebalance);
 
 	err = ovs_ct_init(net);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	schedule_delayed_work(&ovs_net->masks_rebalance,
-			      msecs_to_jअगरfies(DP_MASKS_REBALANCE_INTERVAL));
-	वापस 0;
-पूर्ण
+			      msecs_to_jiffies(DP_MASKS_REBALANCE_INTERVAL));
+	return 0;
+}
 
-अटल व्योम __net_निकास list_vports_from_net(काष्ठा net *net, काष्ठा net *dnet,
-					    काष्ठा list_head *head)
-अणु
-	काष्ठा ovs_net *ovs_net = net_generic(net, ovs_net_id);
-	काष्ठा datapath *dp;
+static void __net_exit list_vports_from_net(struct net *net, struct net *dnet,
+					    struct list_head *head)
+{
+	struct ovs_net *ovs_net = net_generic(net, ovs_net_id);
+	struct datapath *dp;
 
-	list_क्रम_each_entry(dp, &ovs_net->dps, list_node) अणु
-		पूर्णांक i;
+	list_for_each_entry(dp, &ovs_net->dps, list_node) {
+		int i;
 
-		क्रम (i = 0; i < DP_VPORT_HASH_BUCKETS; i++) अणु
-			काष्ठा vport *vport;
+		for (i = 0; i < DP_VPORT_HASH_BUCKETS; i++) {
+			struct vport *vport;
 
-			hlist_क्रम_each_entry(vport, &dp->ports[i], dp_hash_node) अणु
-				अगर (vport->ops->type != OVS_VPORT_TYPE_INTERNAL)
-					जारी;
+			hlist_for_each_entry(vport, &dp->ports[i], dp_hash_node) {
+				if (vport->ops->type != OVS_VPORT_TYPE_INTERNAL)
+					continue;
 
-				अगर (dev_net(vport->dev) == dnet)
+				if (dev_net(vport->dev) == dnet)
 					list_add(&vport->detach_list, head);
-			पूर्ण
-		पूर्ण
-	पूर्ण
-पूर्ण
+			}
+		}
+	}
+}
 
-अटल व्योम __net_निकास ovs_निकास_net(काष्ठा net *dnet)
-अणु
-	काष्ठा datapath *dp, *dp_next;
-	काष्ठा ovs_net *ovs_net = net_generic(dnet, ovs_net_id);
-	काष्ठा vport *vport, *vport_next;
-	काष्ठा net *net;
+static void __net_exit ovs_exit_net(struct net *dnet)
+{
+	struct datapath *dp, *dp_next;
+	struct ovs_net *ovs_net = net_generic(dnet, ovs_net_id);
+	struct vport *vport, *vport_next;
+	struct net *net;
 	LIST_HEAD(head);
 
 	ovs_lock();
 
-	ovs_ct_निकास(dnet);
+	ovs_ct_exit(dnet);
 
-	list_क्रम_each_entry_safe(dp, dp_next, &ovs_net->dps, list_node)
+	list_for_each_entry_safe(dp, dp_next, &ovs_net->dps, list_node)
 		__dp_destroy(dp);
 
-	करोwn_पढ़ो(&net_rwsem);
-	क्रम_each_net(net)
+	down_read(&net_rwsem);
+	for_each_net(net)
 		list_vports_from_net(net, dnet, &head);
-	up_पढ़ो(&net_rwsem);
+	up_read(&net_rwsem);
 
 	/* Detach all vports from given namespace. */
-	list_क्रम_each_entry_safe(vport, vport_next, &head, detach_list) अणु
+	list_for_each_entry_safe(vport, vport_next, &head, detach_list) {
 		list_del(&vport->detach_list);
 		ovs_dp_detach_port(vport);
-	पूर्ण
+	}
 
 	ovs_unlock();
 
 	cancel_delayed_work_sync(&ovs_net->masks_rebalance);
-	cancel_work_sync(&ovs_net->dp_notअगरy_work);
-पूर्ण
+	cancel_work_sync(&ovs_net->dp_notify_work);
+}
 
-अटल काष्ठा pernet_operations ovs_net_ops = अणु
+static struct pernet_operations ovs_net_ops = {
 	.init = ovs_init_net,
-	.निकास = ovs_निकास_net,
+	.exit = ovs_exit_net,
 	.id   = &ovs_net_id,
-	.size = माप(काष्ठा ovs_net),
-पूर्ण;
+	.size = sizeof(struct ovs_net),
+};
 
-अटल पूर्णांक __init dp_init(व्योम)
-अणु
-	पूर्णांक err;
+static int __init dp_init(void)
+{
+	int err;
 
-	BUILD_BUG_ON(माप(काष्ठा ovs_skb_cb) >
-		     माप_field(काष्ठा sk_buff, cb));
+	BUILD_BUG_ON(sizeof(struct ovs_skb_cb) >
+		     sizeof_field(struct sk_buff, cb));
 
 	pr_info("Open vSwitch switching datapath\n");
 
-	err = action_fअगरos_init();
-	अगर (err)
-		जाओ error;
+	err = action_fifos_init();
+	if (err)
+		goto error;
 
-	err = ovs_पूर्णांकernal_dev_rtnl_link_रेजिस्टर();
-	अगर (err)
-		जाओ error_action_fअगरos_निकास;
+	err = ovs_internal_dev_rtnl_link_register();
+	if (err)
+		goto error_action_fifos_exit;
 
 	err = ovs_flow_init();
-	अगर (err)
-		जाओ error_unreg_rtnl_link;
+	if (err)
+		goto error_unreg_rtnl_link;
 
 	err = ovs_vport_init();
-	अगर (err)
-		जाओ error_flow_निकास;
+	if (err)
+		goto error_flow_exit;
 
-	err = रेजिस्टर_pernet_device(&ovs_net_ops);
-	अगर (err)
-		जाओ error_vport_निकास;
+	err = register_pernet_device(&ovs_net_ops);
+	if (err)
+		goto error_vport_exit;
 
-	err = रेजिस्टर_netdevice_notअगरier(&ovs_dp_device_notअगरier);
-	अगर (err)
-		जाओ error_netns_निकास;
+	err = register_netdevice_notifier(&ovs_dp_device_notifier);
+	if (err)
+		goto error_netns_exit;
 
 	err = ovs_netdev_init();
-	अगर (err)
-		जाओ error_unreg_notअगरier;
+	if (err)
+		goto error_unreg_notifier;
 
-	err = dp_रेजिस्टर_genl();
-	अगर (err < 0)
-		जाओ error_unreg_netdev;
+	err = dp_register_genl();
+	if (err < 0)
+		goto error_unreg_netdev;
 
-	वापस 0;
+	return 0;
 
 error_unreg_netdev:
-	ovs_netdev_निकास();
-error_unreg_notअगरier:
-	unरेजिस्टर_netdevice_notअगरier(&ovs_dp_device_notअगरier);
-error_netns_निकास:
-	unरेजिस्टर_pernet_device(&ovs_net_ops);
-error_vport_निकास:
-	ovs_vport_निकास();
-error_flow_निकास:
-	ovs_flow_निकास();
+	ovs_netdev_exit();
+error_unreg_notifier:
+	unregister_netdevice_notifier(&ovs_dp_device_notifier);
+error_netns_exit:
+	unregister_pernet_device(&ovs_net_ops);
+error_vport_exit:
+	ovs_vport_exit();
+error_flow_exit:
+	ovs_flow_exit();
 error_unreg_rtnl_link:
-	ovs_पूर्णांकernal_dev_rtnl_link_unरेजिस्टर();
-error_action_fअगरos_निकास:
-	action_fअगरos_निकास();
+	ovs_internal_dev_rtnl_link_unregister();
+error_action_fifos_exit:
+	action_fifos_exit();
 error:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम dp_cleanup(व्योम)
-अणु
-	dp_unरेजिस्टर_genl(ARRAY_SIZE(dp_genl_families));
-	ovs_netdev_निकास();
-	unरेजिस्टर_netdevice_notअगरier(&ovs_dp_device_notअगरier);
-	unरेजिस्टर_pernet_device(&ovs_net_ops);
+static void dp_cleanup(void)
+{
+	dp_unregister_genl(ARRAY_SIZE(dp_genl_families));
+	ovs_netdev_exit();
+	unregister_netdevice_notifier(&ovs_dp_device_notifier);
+	unregister_pernet_device(&ovs_net_ops);
 	rcu_barrier();
-	ovs_vport_निकास();
-	ovs_flow_निकास();
-	ovs_पूर्णांकernal_dev_rtnl_link_unरेजिस्टर();
-	action_fअगरos_निकास();
-पूर्ण
+	ovs_vport_exit();
+	ovs_flow_exit();
+	ovs_internal_dev_rtnl_link_unregister();
+	action_fifos_exit();
+}
 
 module_init(dp_init);
-module_निकास(dp_cleanup);
+module_exit(dp_cleanup);
 
 MODULE_DESCRIPTION("Open vSwitch switching datapath");
 MODULE_LICENSE("GPL");

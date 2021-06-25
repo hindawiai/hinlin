@@ -1,11 +1,10 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <EXTERN.h>
-#समावेश <perl.h>
+// SPDX-License-Identifier: GPL-2.0
+#include <EXTERN.h>
+#include <perl.h>
 
-पूर्णांक मुख्य(व्योम)
-अणु
+int main(void)
+{
 	perl_alloc();
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

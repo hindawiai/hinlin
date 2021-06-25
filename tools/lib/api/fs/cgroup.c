@@ -1,103 +1,102 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <linux/stringअगरy.h>
-#समावेश <sys/types.h>
-#समावेश <sys/स्थिति.स>
-#समावेश <fcntl.h>
-#समावेश <मानकपन.स>
-#समावेश <मानककोष.स>
-#समावेश <माला.स>
-#समावेश "fs.h"
+// SPDX-License-Identifier: GPL-2.0
+#include <linux/stringify.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include "fs.h"
 
-काष्ठा cgroupfs_cache_entry अणु
-	अक्षर	subsys[32];
-	अक्षर	mountpoपूर्णांक[PATH_MAX];
-पूर्ण;
+struct cgroupfs_cache_entry {
+	char	subsys[32];
+	char	mountpoint[PATH_MAX];
+};
 
 /* just cache last used one */
-अटल काष्ठा cgroupfs_cache_entry cached;
+static struct cgroupfs_cache_entry cached;
 
-पूर्णांक cgroupfs_find_mountpoपूर्णांक(अक्षर *buf, माप_प्रकार maxlen, स्थिर अक्षर *subsys)
-अणु
-	खाता *fp;
-	अक्षर *line = शून्य;
-	माप_प्रकार len = 0;
-	अक्षर *p, *path;
-	अक्षर mountpoपूर्णांक[PATH_MAX];
+int cgroupfs_find_mountpoint(char *buf, size_t maxlen, const char *subsys)
+{
+	FILE *fp;
+	char *line = NULL;
+	size_t len = 0;
+	char *p, *path;
+	char mountpoint[PATH_MAX];
 
-	अगर (!म_भेद(cached.subsys, subsys)) अणु
-		अगर (म_माप(cached.mountpoपूर्णांक) < maxlen) अणु
-			म_नकल(buf, cached.mountpoपूर्णांक);
-			वापस 0;
-		पूर्ण
-		वापस -1;
-	पूर्ण
+	if (!strcmp(cached.subsys, subsys)) {
+		if (strlen(cached.mountpoint) < maxlen) {
+			strcpy(buf, cached.mountpoint);
+			return 0;
+		}
+		return -1;
+	}
 
-	fp = ख_खोलो("/proc/mounts", "r");
-	अगर (!fp)
-		वापस -1;
+	fp = fopen("/proc/mounts", "r");
+	if (!fp)
+		return -1;
 
 	/*
 	 * in order to handle split hierarchy, we need to scan /proc/mounts
-	 * and inspect every cgroupfs mount poपूर्णांक to find one that has
-	 * the given subप्रणाली.  If we found v1, just use it.  If not we can
+	 * and inspect every cgroupfs mount point to find one that has
+	 * the given subsystem.  If we found v1, just use it.  If not we can
 	 * use v2 path as a fallback.
 	 */
-	mountpoपूर्णांक[0] = '\0';
+	mountpoint[0] = '\0';
 
 	/*
-	 * The /proc/mounts has the follow क्रमmat:
+	 * The /proc/mounts has the follow format:
 	 *
-	 *   <devname> <mount poपूर्णांक> <fs type> <options> ...
+	 *   <devname> <mount point> <fs type> <options> ...
 	 *
 	 */
-	जबतक (getline(&line, &len, fp) != -1) अणु
+	while (getline(&line, &len, fp) != -1) {
 		/* skip devname */
-		p = म_अक्षर(line, ' ');
-		अगर (p == शून्य)
-			जारी;
+		p = strchr(line, ' ');
+		if (p == NULL)
+			continue;
 
-		/* save the mount poपूर्णांक */
+		/* save the mount point */
 		path = ++p;
-		p = म_अक्षर(p, ' ');
-		अगर (p == शून्य)
-			जारी;
+		p = strchr(p, ' ');
+		if (p == NULL)
+			continue;
 
 		*p++ = '\0';
 
-		/* check fileप्रणाली type */
-		अगर (म_भेदन(p, "cgroup", 6))
-			जारी;
+		/* check filesystem type */
+		if (strncmp(p, "cgroup", 6))
+			continue;
 
-		अगर (p[6] == '2') अणु
+		if (p[6] == '2') {
 			/* save cgroup v2 path */
-			म_नकल(mountpoपूर्णांक, path);
-			जारी;
-		पूर्ण
+			strcpy(mountpoint, path);
+			continue;
+		}
 
-		/* now we have cgroup v1, check the options क्रम subप्रणाली */
+		/* now we have cgroup v1, check the options for subsystem */
 		p += 7;
 
-		p = म_माला(p, subsys);
-		अगर (p == शून्य)
-			जारी;
+		p = strstr(p, subsys);
+		if (p == NULL)
+			continue;
 
 		/* sanity check: it should be separated by a space or a comma */
-		अगर (!म_अक्षर(" ,", p[-1]) || !म_अक्षर(" ,", p[म_माप(subsys)]))
-			जारी;
+		if (!strchr(" ,", p[-1]) || !strchr(" ,", p[strlen(subsys)]))
+			continue;
 
-		म_नकल(mountpoपूर्णांक, path);
-		अवरोध;
-	पूर्ण
-	मुक्त(line);
-	ख_बंद(fp);
+		strcpy(mountpoint, path);
+		break;
+	}
+	free(line);
+	fclose(fp);
 
-	म_नकलन(cached.subsys, subsys, माप(cached.subsys) - 1);
-	म_नकल(cached.mountpoपूर्णांक, mountpoपूर्णांक);
+	strncpy(cached.subsys, subsys, sizeof(cached.subsys) - 1);
+	strcpy(cached.mountpoint, mountpoint);
 
-	अगर (mountpoपूर्णांक[0] && म_माप(mountpoपूर्णांक) < maxlen) अणु
-		म_नकल(buf, mountpoपूर्णांक);
-		वापस 0;
-	पूर्ण
-	वापस -1;
-पूर्ण
+	if (mountpoint[0] && strlen(mountpoint) < maxlen) {
+		strcpy(buf, mountpoint);
+		return 0;
+	}
+	return -1;
+}

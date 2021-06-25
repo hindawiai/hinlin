@@ -1,19 +1,18 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
  * Copyright (c) 2021, Linaro Limited
  *
  */
 
-#समावेश <linux/पूर्णांकerconnect-provider.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of_device.h>
-#समावेश <dt-bindings/पूर्णांकerconnect/qcom,sm8350.h>
+#include <linux/interconnect-provider.h>
+#include <linux/module.h>
+#include <linux/of_device.h>
+#include <dt-bindings/interconnect/qcom,sm8350.h>
 
-#समावेश "bcm-voter.h"
-#समावेश "icc-rpmh.h"
-#समावेश "sm8350.h"
+#include "bcm-voter.h"
+#include "icc-rpmh.h"
+#include "sm8350.h"
 
 DEFINE_QNODE(qhm_qspi, SM8350_MASTER_QSPI_0, 1, 4, SM8350_SLAVE_A1NOC_SNOC);
 DEFINE_QNODE(qhm_qup0, SM8350_MASTER_QUP_0, 1, 4, SM8350_SLAVE_A2NOC_SNOC);
@@ -134,7 +133,7 @@ DEFINE_QNODE(qxs_pimem, SM8350_SLAVE_PIMEM, 1, 8);
 DEFINE_QNODE(srvc_cnoc, SM8350_SLAVE_SERVICE_CNOC, 1, 4);
 DEFINE_QNODE(xs_pcie_0, SM8350_SLAVE_PCIE_0, 1, 8);
 DEFINE_QNODE(xs_pcie_1, SM8350_SLAVE_PCIE_1, 1, 8);
-DEFINE_QNODE(xs_qdss_sपंचांग, SM8350_SLAVE_QDSS_STM, 1, 4);
+DEFINE_QNODE(xs_qdss_stm, SM8350_SLAVE_QDSS_STM, 1, 4);
 DEFINE_QNODE(xs_sys_tcu_cfg, SM8350_SLAVE_TCU, 1, 8);
 DEFINE_QNODE(qhs_llcc, SM8350_SLAVE_LLCC_CFG, 1, 4);
 DEFINE_QNODE(qns_gemnoc, SM8350_SLAVE_GEM_NOC_CFG, 1, 4);
@@ -185,7 +184,7 @@ DEFINE_QBCM(bcm_sh4, "SH4", false, &chm_apps);
 DEFINE_QBCM(bcm_sn0, "SN0", true, &qns_gemnoc_sf);
 DEFINE_QBCM(bcm_sn2, "SN2", false, &qns_gemnoc_gc);
 DEFINE_QBCM(bcm_sn3, "SN3", false, &qxs_pimem);
-DEFINE_QBCM(bcm_sn4, "SN4", false, &xs_qdss_sपंचांग);
+DEFINE_QBCM(bcm_sn4, "SN4", false, &xs_qdss_stm);
 DEFINE_QBCM(bcm_sn5, "SN5", false, &xm_pcie3_0);
 DEFINE_QBCM(bcm_sn6, "SN6", false, &xm_pcie3_1);
 DEFINE_QBCM(bcm_sn7, "SN7", false, &qnm_aggre1_noc);
@@ -199,10 +198,10 @@ DEFINE_QBCM(bcm_mm4_disp, "MM4", false, &qns_mem_noc_sf_disp);
 DEFINE_QBCM(bcm_mm5_disp, "MM5", false, &qxm_rot_disp);
 DEFINE_QBCM(bcm_sh0_disp, "SH0", false, &qns_llcc_disp);
 
-अटल काष्ठा qcom_icc_bcm *aggre1_noc_bcms[] = अणु
-पूर्ण;
+static struct qcom_icc_bcm *aggre1_noc_bcms[] = {
+};
 
-अटल काष्ठा qcom_icc_node *aggre1_noc_nodes[] = अणु
+static struct qcom_icc_node *aggre1_noc_nodes[] = {
 	[MASTER_QSPI_0] = &qhm_qspi,
 	[MASTER_QUP_1] = &qhm_qup1,
 	[MASTER_A1NOC_CFG] = &qnm_a1noc_cfg,
@@ -212,23 +211,23 @@ DEFINE_QBCM(bcm_sh0_disp, "SH0", false, &qns_llcc_disp);
 	[MASTER_USB3_1] = &xm_usb3_1,
 	[SLAVE_A1NOC_SNOC] = &qns_a1noc_snoc,
 	[SLAVE_SERVICE_A1NOC] = &srvc_aggre1_noc,
-पूर्ण;
+};
 
-अटल काष्ठा qcom_icc_desc sm8350_aggre1_noc = अणु
+static struct qcom_icc_desc sm8350_aggre1_noc = {
 	.nodes = aggre1_noc_nodes,
 	.num_nodes = ARRAY_SIZE(aggre1_noc_nodes),
 	.bcms = aggre1_noc_bcms,
 	.num_bcms = ARRAY_SIZE(aggre1_noc_bcms),
-पूर्ण;
+};
 
-अटल काष्ठा qcom_icc_bcm *aggre2_noc_bcms[] = अणु
+static struct qcom_icc_bcm *aggre2_noc_bcms[] = {
 	&bcm_ce0,
 	&bcm_sn5,
 	&bcm_sn6,
 	&bcm_sn14,
-पूर्ण;
+};
 
-अटल काष्ठा qcom_icc_node *aggre2_noc_nodes[] = अणु
+static struct qcom_icc_node *aggre2_noc_nodes[] = {
 	[MASTER_QDSS_BAM] = &qhm_qdss_bam,
 	[MASTER_QUP_0] = &qhm_qup0,
 	[MASTER_QUP_2] = &qhm_qup2,
@@ -243,24 +242,24 @@ DEFINE_QBCM(bcm_sh0_disp, "SH0", false, &qns_llcc_disp);
 	[SLAVE_A2NOC_SNOC] = &qns_a2noc_snoc,
 	[SLAVE_ANOC_PCIE_GEM_NOC] = &qns_pcie_mem_noc,
 	[SLAVE_SERVICE_A2NOC] = &srvc_aggre2_noc,
-पूर्ण;
+};
 
-अटल काष्ठा qcom_icc_desc sm8350_aggre2_noc = अणु
+static struct qcom_icc_desc sm8350_aggre2_noc = {
 	.nodes = aggre2_noc_nodes,
 	.num_nodes = ARRAY_SIZE(aggre2_noc_nodes),
 	.bcms = aggre2_noc_bcms,
 	.num_bcms = ARRAY_SIZE(aggre2_noc_bcms),
-पूर्ण;
+};
 
-अटल काष्ठा qcom_icc_bcm *config_noc_bcms[] = अणु
+static struct qcom_icc_bcm *config_noc_bcms[] = {
 	&bcm_cn0,
 	&bcm_cn1,
 	&bcm_cn2,
 	&bcm_sn3,
 	&bcm_sn4,
-पूर्ण;
+};
 
-अटल काष्ठा qcom_icc_node *config_noc_nodes[] = अणु
+static struct qcom_icc_node *config_noc_nodes[] = {
 	[MASTER_GEM_NOC_CNOC] = &qnm_gemnoc_cnoc,
 	[MASTER_GEM_NOC_PCIE_SNOC] = &qnm_gemnoc_pcie,
 	[MASTER_QDSS_DAP] = &xm_qdss_dap,
@@ -320,42 +319,42 @@ DEFINE_QBCM(bcm_sh0_disp, "SH0", false, &qns_llcc_disp);
 	[SLAVE_SERVICE_CNOC] = &srvc_cnoc,
 	[SLAVE_PCIE_0] = &xs_pcie_0,
 	[SLAVE_PCIE_1] = &xs_pcie_1,
-	[SLAVE_QDSS_STM] = &xs_qdss_sपंचांग,
+	[SLAVE_QDSS_STM] = &xs_qdss_stm,
 	[SLAVE_TCU] = &xs_sys_tcu_cfg,
-पूर्ण;
+};
 
-अटल काष्ठा qcom_icc_desc sm8350_config_noc = अणु
+static struct qcom_icc_desc sm8350_config_noc = {
 	.nodes = config_noc_nodes,
 	.num_nodes = ARRAY_SIZE(config_noc_nodes),
 	.bcms = config_noc_bcms,
 	.num_bcms = ARRAY_SIZE(config_noc_bcms),
-पूर्ण;
+};
 
-अटल काष्ठा qcom_icc_bcm *dc_noc_bcms[] = अणु
-पूर्ण;
+static struct qcom_icc_bcm *dc_noc_bcms[] = {
+};
 
-अटल काष्ठा qcom_icc_node *dc_noc_nodes[] = अणु
+static struct qcom_icc_node *dc_noc_nodes[] = {
 	[MASTER_CNOC_DC_NOC] = &qnm_cnoc_dc_noc,
 	[SLAVE_LLCC_CFG] = &qhs_llcc,
 	[SLAVE_GEM_NOC_CFG] = &qns_gemnoc,
-पूर्ण;
+};
 
-अटल काष्ठा qcom_icc_desc sm8350_dc_noc = अणु
+static struct qcom_icc_desc sm8350_dc_noc = {
 	.nodes = dc_noc_nodes,
 	.num_nodes = ARRAY_SIZE(dc_noc_nodes),
 	.bcms = dc_noc_bcms,
 	.num_bcms = ARRAY_SIZE(dc_noc_bcms),
-पूर्ण;
+};
 
-अटल काष्ठा qcom_icc_bcm *gem_noc_bcms[] = अणु
+static struct qcom_icc_bcm *gem_noc_bcms[] = {
 	&bcm_sh0,
 	&bcm_sh2,
 	&bcm_sh3,
 	&bcm_sh4,
 	&bcm_sh0_disp,
-पूर्ण;
+};
 
-अटल काष्ठा qcom_icc_node *gem_noc_nodes[] = अणु
+static struct qcom_icc_node *gem_noc_nodes[] = {
 	[MASTER_GPU_TCU] = &alm_gpu_tcu,
 	[MASTER_SYS_TCU] = &alm_sys_tcu,
 	[MASTER_APPSS_PROC] = &chm_apps,
@@ -378,19 +377,19 @@ DEFINE_QBCM(bcm_sh0_disp, "SH0", false, &qns_llcc_disp);
 	[MASTER_MNOC_HF_MEM_NOC_DISP] = &qnm_mnoc_hf_disp,
 	[MASTER_MNOC_SF_MEM_NOC_DISP] = &qnm_mnoc_sf_disp,
 	[SLAVE_LLCC_DISP] = &qns_llcc_disp,
-पूर्ण;
+};
 
-अटल काष्ठा qcom_icc_desc sm8350_gem_noc = अणु
+static struct qcom_icc_desc sm8350_gem_noc = {
 	.nodes = gem_noc_nodes,
 	.num_nodes = ARRAY_SIZE(gem_noc_nodes),
 	.bcms = gem_noc_bcms,
 	.num_bcms = ARRAY_SIZE(gem_noc_bcms),
-पूर्ण;
+};
 
-अटल काष्ठा qcom_icc_bcm *lpass_ag_noc_bcms[] = अणु
-पूर्ण;
+static struct qcom_icc_bcm *lpass_ag_noc_bcms[] = {
+};
 
-अटल काष्ठा qcom_icc_node *lpass_ag_noc_nodes[] = अणु
+static struct qcom_icc_node *lpass_ag_noc_nodes[] = {
 	[MASTER_CNOC_LPASS_AG_NOC] = &qhm_config_noc,
 	[SLAVE_LPASS_CORE_CFG] = &qhs_lpass_core,
 	[SLAVE_LPASS_LPI_CFG] = &qhs_lpass_lpi,
@@ -398,37 +397,37 @@ DEFINE_QBCM(bcm_sh0_disp, "SH0", false, &qns_llcc_disp);
 	[SLAVE_LPASS_TOP_CFG] = &qhs_lpass_top,
 	[SLAVE_SERVICES_LPASS_AML_NOC] = &srvc_niu_aml_noc,
 	[SLAVE_SERVICE_LPASS_AG_NOC] = &srvc_niu_lpass_agnoc,
-पूर्ण;
+};
 
-अटल काष्ठा qcom_icc_desc sm8350_lpass_ag_noc = अणु
+static struct qcom_icc_desc sm8350_lpass_ag_noc = {
 	.nodes = lpass_ag_noc_nodes,
 	.num_nodes = ARRAY_SIZE(lpass_ag_noc_nodes),
 	.bcms = lpass_ag_noc_bcms,
 	.num_bcms = ARRAY_SIZE(lpass_ag_noc_bcms),
-पूर्ण;
+};
 
-अटल काष्ठा qcom_icc_bcm *mc_virt_bcms[] = अणु
+static struct qcom_icc_bcm *mc_virt_bcms[] = {
 	&bcm_acv,
 	&bcm_mc0,
 	&bcm_acv_disp,
 	&bcm_mc0_disp,
-पूर्ण;
+};
 
-अटल काष्ठा qcom_icc_node *mc_virt_nodes[] = अणु
+static struct qcom_icc_node *mc_virt_nodes[] = {
 	[MASTER_LLCC] = &llcc_mc,
 	[SLAVE_EBI1] = &ebi,
 	[MASTER_LLCC_DISP] = &llcc_mc_disp,
 	[SLAVE_EBI1_DISP] = &ebi_disp,
-पूर्ण;
+};
 
-अटल काष्ठा qcom_icc_desc sm8350_mc_virt = अणु
+static struct qcom_icc_desc sm8350_mc_virt = {
 	.nodes = mc_virt_nodes,
 	.num_nodes = ARRAY_SIZE(mc_virt_nodes),
 	.bcms = mc_virt_bcms,
 	.num_bcms = ARRAY_SIZE(mc_virt_bcms),
-पूर्ण;
+};
 
-अटल काष्ठा qcom_icc_bcm *mmss_noc_bcms[] = अणु
+static struct qcom_icc_bcm *mmss_noc_bcms[] = {
 	&bcm_mm0,
 	&bcm_mm1,
 	&bcm_mm4,
@@ -437,9 +436,9 @@ DEFINE_QBCM(bcm_sh0_disp, "SH0", false, &qns_llcc_disp);
 	&bcm_mm1_disp,
 	&bcm_mm4_disp,
 	&bcm_mm5_disp,
-पूर्ण;
+};
 
-अटल काष्ठा qcom_icc_node *mmss_noc_nodes[] = अणु
+static struct qcom_icc_node *mmss_noc_nodes[] = {
 	[MASTER_CAMNOC_HF] = &qnm_camnoc_hf,
 	[MASTER_CAMNOC_ICP] = &qnm_camnoc_icp,
 	[MASTER_CAMNOC_SF] = &qnm_camnoc_sf,
@@ -458,42 +457,42 @@ DEFINE_QBCM(bcm_sh0_disp, "SH0", false, &qns_llcc_disp);
 	[MASTER_ROTATOR_DISP] = &qxm_rot_disp,
 	[SLAVE_MNOC_HF_MEM_NOC_DISP] = &qns_mem_noc_hf_disp,
 	[SLAVE_MNOC_SF_MEM_NOC_DISP] = &qns_mem_noc_sf_disp,
-पूर्ण;
+};
 
-अटल काष्ठा qcom_icc_desc sm8350_mmss_noc = अणु
+static struct qcom_icc_desc sm8350_mmss_noc = {
 	.nodes = mmss_noc_nodes,
 	.num_nodes = ARRAY_SIZE(mmss_noc_nodes),
 	.bcms = mmss_noc_bcms,
 	.num_bcms = ARRAY_SIZE(mmss_noc_bcms),
-पूर्ण;
+};
 
-अटल काष्ठा qcom_icc_bcm *nsp_noc_bcms[] = अणु
+static struct qcom_icc_bcm *nsp_noc_bcms[] = {
 	&bcm_co0,
 	&bcm_co3,
-पूर्ण;
+};
 
-अटल काष्ठा qcom_icc_node *nsp_noc_nodes[] = अणु
+static struct qcom_icc_node *nsp_noc_nodes[] = {
 	[MASTER_CDSP_NOC_CFG] = &qhm_nsp_noc_config,
 	[MASTER_CDSP_PROC] = &qxm_nsp,
 	[SLAVE_CDSP_MEM_NOC] = &qns_nsp_gemnoc,
 	[SLAVE_SERVICE_NSP_NOC] = &service_nsp_noc,
-पूर्ण;
+};
 
-अटल काष्ठा qcom_icc_desc sm8350_compute_noc = अणु
+static struct qcom_icc_desc sm8350_compute_noc = {
 	.nodes = nsp_noc_nodes,
 	.num_nodes = ARRAY_SIZE(nsp_noc_nodes),
 	.bcms = nsp_noc_bcms,
 	.num_bcms = ARRAY_SIZE(nsp_noc_bcms),
-पूर्ण;
+};
 
-अटल काष्ठा qcom_icc_bcm *प्रणाली_noc_bcms[] = अणु
+static struct qcom_icc_bcm *system_noc_bcms[] = {
 	&bcm_sn0,
 	&bcm_sn2,
 	&bcm_sn7,
 	&bcm_sn8,
-पूर्ण;
+};
 
-अटल काष्ठा qcom_icc_node *प्रणाली_noc_nodes[] = अणु
+static struct qcom_icc_node *system_noc_nodes[] = {
 	[MASTER_A1NOC_SNOC] = &qnm_aggre1_noc,
 	[MASTER_A2NOC_SNOC] = &qnm_aggre2_noc,
 	[MASTER_SNOC_CFG] = &qnm_snoc_cfg,
@@ -502,40 +501,40 @@ DEFINE_QBCM(bcm_sh0_disp, "SH0", false, &qns_llcc_disp);
 	[SLAVE_SNOC_GEM_NOC_GC] = &qns_gemnoc_gc,
 	[SLAVE_SNOC_GEM_NOC_SF] = &qns_gemnoc_sf,
 	[SLAVE_SERVICE_SNOC] = &srvc_snoc,
-पूर्ण;
+};
 
-अटल काष्ठा qcom_icc_desc sm8350_प्रणाली_noc = अणु
-	.nodes = प्रणाली_noc_nodes,
-	.num_nodes = ARRAY_SIZE(प्रणाली_noc_nodes),
-	.bcms = प्रणाली_noc_bcms,
-	.num_bcms = ARRAY_SIZE(प्रणाली_noc_bcms),
-पूर्ण;
+static struct qcom_icc_desc sm8350_system_noc = {
+	.nodes = system_noc_nodes,
+	.num_nodes = ARRAY_SIZE(system_noc_nodes),
+	.bcms = system_noc_bcms,
+	.num_bcms = ARRAY_SIZE(system_noc_bcms),
+};
 
-अटल पूर्णांक qnoc_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	स्थिर काष्ठा qcom_icc_desc *desc;
-	काष्ठा icc_onecell_data *data;
-	काष्ठा icc_provider *provider;
-	काष्ठा qcom_icc_node **qnodes;
-	काष्ठा qcom_icc_provider *qp;
-	काष्ठा icc_node *node;
-	माप_प्रकार num_nodes, i;
-	पूर्णांक ret;
+static int qnoc_probe(struct platform_device *pdev)
+{
+	const struct qcom_icc_desc *desc;
+	struct icc_onecell_data *data;
+	struct icc_provider *provider;
+	struct qcom_icc_node **qnodes;
+	struct qcom_icc_provider *qp;
+	struct icc_node *node;
+	size_t num_nodes, i;
+	int ret;
 
 	desc = of_device_get_match_data(&pdev->dev);
-	अगर (!desc)
-		वापस -EINVAL;
+	if (!desc)
+		return -EINVAL;
 
 	qnodes = desc->nodes;
 	num_nodes = desc->num_nodes;
 
-	qp = devm_kzalloc(&pdev->dev, माप(*qp), GFP_KERNEL);
-	अगर (!qp)
-		वापस -ENOMEM;
+	qp = devm_kzalloc(&pdev->dev, sizeof(*qp), GFP_KERNEL);
+	if (!qp)
+		return -ENOMEM;
 
-	data = devm_kसुस्मृति(&pdev->dev, num_nodes, माप(*node), GFP_KERNEL);
-	अगर (!data)
-		वापस -ENOMEM;
+	data = devm_kcalloc(&pdev->dev, num_nodes, sizeof(*node), GFP_KERNEL);
+	if (!data)
+		return -ENOMEM;
 
 	provider = &qp->provider;
 	provider->dev = &pdev->dev;
@@ -550,85 +549,85 @@ DEFINE_QBCM(bcm_sh0_disp, "SH0", false, &qns_llcc_disp);
 	qp->bcms = desc->bcms;
 	qp->num_bcms = desc->num_bcms;
 
-	qp->voter = of_bcm_voter_get(qp->dev, शून्य);
-	अगर (IS_ERR(qp->voter))
-		वापस PTR_ERR(qp->voter);
+	qp->voter = of_bcm_voter_get(qp->dev, NULL);
+	if (IS_ERR(qp->voter))
+		return PTR_ERR(qp->voter);
 
 	ret = icc_provider_add(provider);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&pdev->dev, "error adding interconnect provider\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	क्रम (i = 0; i < qp->num_bcms; i++)
+	for (i = 0; i < qp->num_bcms; i++)
 		qcom_icc_bcm_init(qp->bcms[i], &pdev->dev);
 
-	क्रम (i = 0; i < num_nodes; i++) अणु
-		माप_प्रकार j;
+	for (i = 0; i < num_nodes; i++) {
+		size_t j;
 
-		अगर (!qnodes[i])
-			जारी;
+		if (!qnodes[i])
+			continue;
 
 		node = icc_node_create(qnodes[i]->id);
-		अगर (IS_ERR(node)) अणु
+		if (IS_ERR(node)) {
 			ret = PTR_ERR(node);
-			जाओ err;
-		पूर्ण
+			goto err;
+		}
 
 		node->name = qnodes[i]->name;
 		node->data = qnodes[i];
 		icc_node_add(node, provider);
 
-		क्रम (j = 0; j < qnodes[i]->num_links; j++)
+		for (j = 0; j < qnodes[i]->num_links; j++)
 			icc_link_create(node, qnodes[i]->links[j]);
 
 		data->nodes[i] = node;
-	पूर्ण
+	}
 	data->num_nodes = num_nodes;
 
-	platक्रमm_set_drvdata(pdev, qp);
+	platform_set_drvdata(pdev, qp);
 
-	वापस ret;
+	return ret;
 
 err:
-	icc_nodes_हटाओ(provider);
+	icc_nodes_remove(provider);
 	icc_provider_del(provider);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक qnoc_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा qcom_icc_provider *qp = platक्रमm_get_drvdata(pdev);
+static int qnoc_remove(struct platform_device *pdev)
+{
+	struct qcom_icc_provider *qp = platform_get_drvdata(pdev);
 
-	icc_nodes_हटाओ(&qp->provider);
-	वापस icc_provider_del(&qp->provider);
-पूर्ण
+	icc_nodes_remove(&qp->provider);
+	return icc_provider_del(&qp->provider);
+}
 
-अटल स्थिर काष्ठा of_device_id qnoc_of_match[] = अणु
-	अणु .compatible = "qcom,sm8350-aggre1-noc", .data = &sm8350_aggre1_nocपूर्ण,
-	अणु .compatible = "qcom,sm8350-aggre2-noc", .data = &sm8350_aggre2_nocपूर्ण,
-	अणु .compatible = "qcom,sm8350-config-noc", .data = &sm8350_config_nocपूर्ण,
-	अणु .compatible = "qcom,sm8350-dc-noc", .data = &sm8350_dc_nocपूर्ण,
-	अणु .compatible = "qcom,sm8350-gem-noc", .data = &sm8350_gem_nocपूर्ण,
-	अणु .compatible = "qcom,sm8350-lpass-ag-noc", .data = &sm8350_lpass_ag_nocपूर्ण,
-	अणु .compatible = "qcom,sm8350-mc-virt", .data = &sm8350_mc_virtपूर्ण,
-	अणु .compatible = "qcom,sm8350-mmss-noc", .data = &sm8350_mmss_nocपूर्ण,
-	अणु .compatible = "qcom,sm8350-compute-noc", .data = &sm8350_compute_nocपूर्ण,
-	अणु .compatible = "qcom,sm8350-system-noc", .data = &sm8350_प्रणाली_nocपूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct of_device_id qnoc_of_match[] = {
+	{ .compatible = "qcom,sm8350-aggre1-noc", .data = &sm8350_aggre1_noc},
+	{ .compatible = "qcom,sm8350-aggre2-noc", .data = &sm8350_aggre2_noc},
+	{ .compatible = "qcom,sm8350-config-noc", .data = &sm8350_config_noc},
+	{ .compatible = "qcom,sm8350-dc-noc", .data = &sm8350_dc_noc},
+	{ .compatible = "qcom,sm8350-gem-noc", .data = &sm8350_gem_noc},
+	{ .compatible = "qcom,sm8350-lpass-ag-noc", .data = &sm8350_lpass_ag_noc},
+	{ .compatible = "qcom,sm8350-mc-virt", .data = &sm8350_mc_virt},
+	{ .compatible = "qcom,sm8350-mmss-noc", .data = &sm8350_mmss_noc},
+	{ .compatible = "qcom,sm8350-compute-noc", .data = &sm8350_compute_noc},
+	{ .compatible = "qcom,sm8350-system-noc", .data = &sm8350_system_noc},
+	{ }
+};
 MODULE_DEVICE_TABLE(of, qnoc_of_match);
 
-अटल काष्ठा platक्रमm_driver qnoc_driver = अणु
+static struct platform_driver qnoc_driver = {
 	.probe = qnoc_probe,
-	.हटाओ = qnoc_हटाओ,
-	.driver = अणु
+	.remove = qnoc_remove,
+	.driver = {
 		.name = "qnoc-sm8350",
 		.of_match_table = qnoc_of_match,
 		.sync_state = icc_sync_state,
-	पूर्ण,
-पूर्ण;
-module_platक्रमm_driver(qnoc_driver);
+	},
+};
+module_platform_driver(qnoc_driver);
 
 MODULE_DESCRIPTION("SM8350 NoC driver");
 MODULE_LICENSE("GPL v2");

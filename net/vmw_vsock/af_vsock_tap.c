@@ -1,24 +1,23 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * Tap functions क्रम AF_VSOCK sockets.
+ * Tap functions for AF_VSOCK sockets.
  *
  * Code based on net/netlink/af_netlink.c tap functions.
  */
 
-#समावेश <linux/module.h>
-#समावेश <net/sock.h>
-#समावेश <net/af_vsock.h>
-#समावेश <linux/अगर_arp.h>
+#include <linux/module.h>
+#include <net/sock.h>
+#include <net/af_vsock.h>
+#include <linux/if_arp.h>
 
-अटल DEFINE_SPINLOCK(vsock_tap_lock);
-अटल काष्ठा list_head vsock_tap_all __पढ़ो_mostly =
+static DEFINE_SPINLOCK(vsock_tap_lock);
+static struct list_head vsock_tap_all __read_mostly =
 				LIST_HEAD_INIT(vsock_tap_all);
 
-पूर्णांक vsock_add_tap(काष्ठा vsock_tap *vt)
-अणु
-	अगर (unlikely(vt->dev->type != ARPHRD_VSOCKMON))
-		वापस -EINVAL;
+int vsock_add_tap(struct vsock_tap *vt)
+{
+	if (unlikely(vt->dev->type != ARPHRD_VSOCKMON))
+		return -EINVAL;
 
 	__module_get(vt->module);
 
@@ -26,24 +25,24 @@
 	list_add_rcu(&vt->list, &vsock_tap_all);
 	spin_unlock(&vsock_tap_lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(vsock_add_tap);
 
-पूर्णांक vsock_हटाओ_tap(काष्ठा vsock_tap *vt)
-अणु
-	काष्ठा vsock_tap *पंचांगp;
+int vsock_remove_tap(struct vsock_tap *vt)
+{
+	struct vsock_tap *tmp;
 	bool found = false;
 
 	spin_lock(&vsock_tap_lock);
 
-	list_क्रम_each_entry(पंचांगp, &vsock_tap_all, list) अणु
-		अगर (vt == पंचांगp) अणु
+	list_for_each_entry(tmp, &vsock_tap_all, list) {
+		if (vt == tmp) {
 			list_del_rcu(&vt->list);
 			found = true;
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 
 	pr_warn("vsock_remove_tap: %p not found\n", vt);
 out:
@@ -51,61 +50,61 @@ out:
 
 	synchronize_net();
 
-	अगर (found)
+	if (found)
 		module_put(vt->module);
 
-	वापस found ? 0 : -ENODEV;
-पूर्ण
-EXPORT_SYMBOL_GPL(vsock_हटाओ_tap);
+	return found ? 0 : -ENODEV;
+}
+EXPORT_SYMBOL_GPL(vsock_remove_tap);
 
-अटल पूर्णांक __vsock_deliver_tap_skb(काष्ठा sk_buff *skb,
-				   काष्ठा net_device *dev)
-अणु
-	पूर्णांक ret = 0;
-	काष्ठा sk_buff *nskb = skb_clone(skb, GFP_ATOMIC);
+static int __vsock_deliver_tap_skb(struct sk_buff *skb,
+				   struct net_device *dev)
+{
+	int ret = 0;
+	struct sk_buff *nskb = skb_clone(skb, GFP_ATOMIC);
 
-	अगर (nskb) अणु
+	if (nskb) {
 		dev_hold(dev);
 
 		nskb->dev = dev;
 		ret = dev_queue_xmit(nskb);
-		अगर (unlikely(ret > 0))
-			ret = net_xmit_त्रुटि_सं(ret);
+		if (unlikely(ret > 0))
+			ret = net_xmit_errno(ret);
 
 		dev_put(dev);
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम __vsock_deliver_tap(काष्ठा sk_buff *skb)
-अणु
-	पूर्णांक ret;
-	काष्ठा vsock_tap *पंचांगp;
+static void __vsock_deliver_tap(struct sk_buff *skb)
+{
+	int ret;
+	struct vsock_tap *tmp;
 
-	list_क्रम_each_entry_rcu(पंचांगp, &vsock_tap_all, list) अणु
-		ret = __vsock_deliver_tap_skb(skb, पंचांगp->dev);
-		अगर (unlikely(ret))
-			अवरोध;
-	पूर्ण
-पूर्ण
+	list_for_each_entry_rcu(tmp, &vsock_tap_all, list) {
+		ret = __vsock_deliver_tap_skb(skb, tmp->dev);
+		if (unlikely(ret))
+			break;
+	}
+}
 
-व्योम vsock_deliver_tap(काष्ठा sk_buff *build_skb(व्योम *opaque), व्योम *opaque)
-अणु
-	काष्ठा sk_buff *skb;
+void vsock_deliver_tap(struct sk_buff *build_skb(void *opaque), void *opaque)
+{
+	struct sk_buff *skb;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 
-	अगर (likely(list_empty(&vsock_tap_all)))
-		जाओ out;
+	if (likely(list_empty(&vsock_tap_all)))
+		goto out;
 
 	skb = build_skb(opaque);
-	अगर (skb) अणु
+	if (skb) {
 		__vsock_deliver_tap(skb);
 		consume_skb(skb);
-	पूर्ण
+	}
 
 out:
-	rcu_पढ़ो_unlock();
-पूर्ण
+	rcu_read_unlock();
+}
 EXPORT_SYMBOL_GPL(vsock_deliver_tap);

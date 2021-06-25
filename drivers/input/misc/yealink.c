@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * drivers/usb/input/yealink.c
  *
@@ -7,176 +6,176 @@
  */
 /*
  * Description:
- *   Driver क्रम the USB-P1K voip usb phone.
+ *   Driver for the USB-P1K voip usb phone.
  *   This device is produced by Yealink Network Technology Co Ltd
- *   but may be bअक्रमed under several names:
+ *   but may be branded under several names:
  *	- Yealink usb-p1k
  *	- Tiptel 115
  *	- ...
  *
  * This driver is based on:
  *   - the usbb2k-api	http://savannah.nongnu.org/projects/usbb2k-api/
- *   - inक्रमmation from	http://memeteau.मुक्त.fr/usbb2k
+ *   - information from	http://memeteau.free.fr/usbb2k
  *   - the xpad-driver	drivers/input/joystick/xpad.c
  *
  * Thanks to:
- *   - Olivier Vanकरोrpe, क्रम providing the usbb2k-api.
- *   - Martin Diehl, क्रम spotting my memory allocation bug.
+ *   - Olivier Vandorpe, for providing the usbb2k-api.
+ *   - Martin Diehl, for spotting my memory allocation bug.
  *
  * History:
  *   20050527 henk	First version, functional keyboard. Keyboard events
  *			will pop-up on the ../input/eventX bus.
- *   20050531 henk	Added led, LCD, dialtone and sysfs पूर्णांकerface.
- *   20050610 henk	Cleanups, make it पढ़ोy क्रम खुला consumption.
+ *   20050531 henk	Added led, LCD, dialtone and sysfs interface.
+ *   20050610 henk	Cleanups, make it ready for public consumption.
  *   20050630 henk	Cleanups, fixes in response to comments.
- *   20050701 henk	sysfs ग_लिखो serialisation, fix potential unload races
- *   20050801 henk	Added ringtone, reकाष्ठाure USB
+ *   20050701 henk	sysfs write serialisation, fix potential unload races
+ *   20050801 henk	Added ringtone, restructure USB
  *   20050816 henk	Merge 2.6.13-rc6
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/module.h>
-#समावेश <linux/rwsem.h>
-#समावेश <linux/usb/input.h>
-#समावेश <linux/map_to_7segment.h>
+#include <linux/kernel.h>
+#include <linux/slab.h>
+#include <linux/module.h>
+#include <linux/rwsem.h>
+#include <linux/usb/input.h>
+#include <linux/map_to_7segment.h>
 
-#समावेश "yealink.h"
+#include "yealink.h"
 
-#घोषणा DRIVER_VERSION "yld-20051230"
+#define DRIVER_VERSION "yld-20051230"
 
-#घोषणा YEALINK_POLLING_FREQUENCY	10	/* in [Hz] */
+#define YEALINK_POLLING_FREQUENCY	10	/* in [Hz] */
 
-काष्ठा yld_status अणु
+struct yld_status {
 	u8	lcd[24];
 	u8	led;
 	u8	dialtone;
 	u8	ringtone;
 	u8	keynum;
-पूर्ण __attribute__ ((packed));
+} __attribute__ ((packed));
 
 /*
  * Register the LCD segment and icon map
  */
-#घोषणा _LOC(k,l)	अणु .a = (k), .m = (l) पूर्ण
-#घोषणा _SEG(t, a, am, b, bm, c, cm, d, dm, e, em, f, fm, g, gm)	\
-	अणु .type	= (t),							\
-	  .u = अणु .s = अणु	_LOC(a, am), _LOC(b, bm), _LOC(c, cm),		\
+#define _LOC(k,l)	{ .a = (k), .m = (l) }
+#define _SEG(t, a, am, b, bm, c, cm, d, dm, e, em, f, fm, g, gm)	\
+	{ .type	= (t),							\
+	  .u = { .s = {	_LOC(a, am), _LOC(b, bm), _LOC(c, cm),		\
 		        _LOC(d, dm), _LOC(e, em), _LOC(g, gm),		\
-			_LOC(f, fm) पूर्ण पूर्ण पूर्ण
-#घोषणा _PIC(t, h, hm, n)						\
-	अणु .type	= (t),							\
- 	  .u = अणु .p = अणु .name = (n), .a = (h), .m = (hm) पूर्ण पूर्ण पूर्ण
+			_LOC(f, fm) } } }
+#define _PIC(t, h, hm, n)						\
+	{ .type	= (t),							\
+ 	  .u = { .p = { .name = (n), .a = (h), .m = (hm) } } }
 
-अटल स्थिर काष्ठा lcd_segment_map अणु
-	अक्षर	type;
-	जोड़ अणु
-		काष्ठा pictogram_map अणु
+static const struct lcd_segment_map {
+	char	type;
+	union {
+		struct pictogram_map {
 			u8	a,m;
-			अक्षर	name[10];
-		पूर्ण	p;
-		काष्ठा segment_map अणु
+			char	name[10];
+		}	p;
+		struct segment_map {
 			u8	a,m;
-		पूर्ण s[7];
-	पूर्ण u;
-पूर्ण lcdMap[] = अणु
-#समावेश "yealink.h"
-पूर्ण;
+		} s[7];
+	} u;
+} lcdMap[] = {
+#include "yealink.h"
+};
 
-काष्ठा yealink_dev अणु
-	काष्ठा input_dev *idev;		/* input device */
-	काष्ठा usb_device *udev;	/* usb device */
-	काष्ठा usb_पूर्णांकerface *पूर्णांकf;	/* usb पूर्णांकerface */
+struct yealink_dev {
+	struct input_dev *idev;		/* input device */
+	struct usb_device *udev;	/* usb device */
+	struct usb_interface *intf;	/* usb interface */
 
 	/* irq input channel */
-	काष्ठा yld_ctl_packet	*irq_data;
+	struct yld_ctl_packet	*irq_data;
 	dma_addr_t		irq_dma;
-	काष्ठा urb		*urb_irq;
+	struct urb		*urb_irq;
 
 	/* control output channel */
-	काष्ठा yld_ctl_packet	*ctl_data;
+	struct yld_ctl_packet	*ctl_data;
 	dma_addr_t		ctl_dma;
-	काष्ठा usb_ctrlrequest	*ctl_req;
-	काष्ठा urb		*urb_ctl;
+	struct usb_ctrlrequest	*ctl_req;
+	struct urb		*urb_ctl;
 
-	अक्षर phys[64];			/* physical device path */
+	char phys[64];			/* physical device path */
 
 	u8 lcdMap[ARRAY_SIZE(lcdMap)];	/* state of LCD, LED ... */
-	पूर्णांक key_code;			/* last reported key	 */
+	int key_code;			/* last reported key	 */
 
-	अचिन्हित पूर्णांक shutकरोwn:1;
+	unsigned int shutdown:1;
 
-	पूर्णांक	stat_ix;
-	जोड़ अणु
-		काष्ठा yld_status s;
-		u8		  b[माप(काष्ठा yld_status)];
-	पूर्ण master, copy;
-पूर्ण;
+	int	stat_ix;
+	union {
+		struct yld_status s;
+		u8		  b[sizeof(struct yld_status)];
+	} master, copy;
+};
 
 
 /*******************************************************************************
- * Yealink lcd पूर्णांकerface
+ * Yealink lcd interface
  ******************************************************************************/
 
 /*
- * Register a शेष 7 segment अक्षरacter set
+ * Register a default 7 segment character set
  */
-अटल SEG7_DEFAULT_MAP(map_seg7);
+static SEG7_DEFAULT_MAP(map_seg7);
 
- /* Display a अक्षर,
-  * अक्षर '\9' and '\n' are placeholders and करो not overग_लिखो the original text.
+ /* Display a char,
+  * char '\9' and '\n' are placeholders and do not overwrite the original text.
   * A space will always hide an icon.
   */
-अटल पूर्णांक setChar(काष्ठा yealink_dev *yld, पूर्णांक el, पूर्णांक chr)
-अणु
-	पूर्णांक i, a, m, val;
+static int setChar(struct yealink_dev *yld, int el, int chr)
+{
+	int i, a, m, val;
 
-	अगर (el >= ARRAY_SIZE(lcdMap))
-		वापस -EINVAL;
+	if (el >= ARRAY_SIZE(lcdMap))
+		return -EINVAL;
 
-	अगर (chr == '\t' || chr == '\n')
-	    वापस 0;
+	if (chr == '\t' || chr == '\n')
+	    return 0;
 
 	yld->lcdMap[el] = chr;
 
-	अगर (lcdMap[el].type == '.') अणु
+	if (lcdMap[el].type == '.') {
 		a = lcdMap[el].u.p.a;
 		m = lcdMap[el].u.p.m;
-		अगर (chr != ' ')
+		if (chr != ' ')
 			yld->master.b[a] |= m;
-		अन्यथा
+		else
 			yld->master.b[a] &= ~m;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	val = map_to_seg7(&map_seg7, chr);
-	क्रम (i = 0; i < ARRAY_SIZE(lcdMap[0].u.s); i++) अणु
+	for (i = 0; i < ARRAY_SIZE(lcdMap[0].u.s); i++) {
 		m = lcdMap[el].u.s[i].m;
 
-		अगर (m == 0)
-			जारी;
+		if (m == 0)
+			continue;
 
 		a = lcdMap[el].u.s[i].a;
-		अगर (val & 1)
+		if (val & 1)
 			yld->master.b[a] |= m;
-		अन्यथा
+		else
 			yld->master.b[a] &= ~m;
 		val = val >> 1;
-	पूर्ण
-	वापस 0;
-पूर्ण;
+	}
+	return 0;
+};
 
 /*******************************************************************************
- * Yealink key पूर्णांकerface
+ * Yealink key interface
  ******************************************************************************/
 
-/* Map device buttons to पूर्णांकernal key events.
+/* Map device buttons to internal key events.
  *
  * USB-P1K button layout:
  *
  *             up
  *       IN           OUT
- *            करोwn
+ *            down
  *
  *     pickup   C    hangup
  *       1      2      3
@@ -188,82 +187,82 @@
  * The "pickup" and "hangup" keys are symbolised by a green and red phone
  * on the button.
  */
-अटल पूर्णांक map_p1k_to_key(पूर्णांक scancode)
-अणु
-	चयन(scancode) अणु		/* phone key:	*/
-	हाल 0x23: वापस KEY_LEFT;	/*   IN		*/
-	हाल 0x33: वापस KEY_UP;	/*   up		*/
-	हाल 0x04: वापस KEY_RIGHT;	/*   OUT	*/
-	हाल 0x24: वापस KEY_DOWN;	/*   करोwn	*/
-	हाल 0x03: वापस KEY_ENTER;	/*   pickup	*/
-	हाल 0x14: वापस KEY_BACKSPACE; /*  C		*/
-	हाल 0x13: वापस KEY_ESC;	/*   hangup	*/
-	हाल 0x00: वापस KEY_1;	/*   1		*/
-	हाल 0x01: वापस KEY_2;	/*   2 		*/
-	हाल 0x02: वापस KEY_3;	/*   3		*/
-	हाल 0x10: वापस KEY_4;	/*   4		*/
-	हाल 0x11: वापस KEY_5;	/*   5		*/
-	हाल 0x12: वापस KEY_6;	/*   6		*/
-	हाल 0x20: वापस KEY_7;	/*   7		*/
-	हाल 0x21: वापस KEY_8;	/*   8		*/
-	हाल 0x22: वापस KEY_9;	/*   9		*/
-	हाल 0x30: वापस KEY_KPASTERISK; /* *		*/
-	हाल 0x31: वापस KEY_0;	/*   0		*/
-	हाल 0x32: वापस KEY_LEFTSHIFT |
+static int map_p1k_to_key(int scancode)
+{
+	switch(scancode) {		/* phone key:	*/
+	case 0x23: return KEY_LEFT;	/*   IN		*/
+	case 0x33: return KEY_UP;	/*   up		*/
+	case 0x04: return KEY_RIGHT;	/*   OUT	*/
+	case 0x24: return KEY_DOWN;	/*   down	*/
+	case 0x03: return KEY_ENTER;	/*   pickup	*/
+	case 0x14: return KEY_BACKSPACE; /*  C		*/
+	case 0x13: return KEY_ESC;	/*   hangup	*/
+	case 0x00: return KEY_1;	/*   1		*/
+	case 0x01: return KEY_2;	/*   2 		*/
+	case 0x02: return KEY_3;	/*   3		*/
+	case 0x10: return KEY_4;	/*   4		*/
+	case 0x11: return KEY_5;	/*   5		*/
+	case 0x12: return KEY_6;	/*   6		*/
+	case 0x20: return KEY_7;	/*   7		*/
+	case 0x21: return KEY_8;	/*   8		*/
+	case 0x22: return KEY_9;	/*   9		*/
+	case 0x30: return KEY_KPASTERISK; /* *		*/
+	case 0x31: return KEY_0;	/*   0		*/
+	case 0x32: return KEY_LEFTSHIFT |
 			  KEY_3 << 8;	/*   #		*/
-	पूर्ण
-	वापस -EINVAL;
-पूर्ण
+	}
+	return -EINVAL;
+}
 
-/* Completes a request by converting the data पूर्णांकo events क्रम the
- * input subप्रणाली.
+/* Completes a request by converting the data into events for the
+ * input subsystem.
  *
  * The key parameter can be cascaded: key2 << 8 | key1
  */
-अटल व्योम report_key(काष्ठा yealink_dev *yld, पूर्णांक key)
-अणु
-	काष्ठा input_dev *idev = yld->idev;
+static void report_key(struct yealink_dev *yld, int key)
+{
+	struct input_dev *idev = yld->idev;
 
-	अगर (yld->key_code >= 0) अणु
+	if (yld->key_code >= 0) {
 		/* old key up */
 		input_report_key(idev, yld->key_code & 0xff, 0);
-		अगर (yld->key_code >> 8)
+		if (yld->key_code >> 8)
 			input_report_key(idev, yld->key_code >> 8, 0);
-	पूर्ण
+	}
 
 	yld->key_code = key;
-	अगर (key >= 0) अणु
+	if (key >= 0) {
 		/* new valid key */
 		input_report_key(idev, key & 0xff, 1);
-		अगर (key >> 8)
+		if (key >> 8)
 			input_report_key(idev, key >> 8, 1);
-	पूर्ण
+	}
 	input_sync(idev);
-पूर्ण
+}
 
 /*******************************************************************************
- * Yealink usb communication पूर्णांकerface
+ * Yealink usb communication interface
  ******************************************************************************/
 
-अटल पूर्णांक yealink_cmd(काष्ठा yealink_dev *yld, काष्ठा yld_ctl_packet *p)
-अणु
+static int yealink_cmd(struct yealink_dev *yld, struct yld_ctl_packet *p)
+{
 	u8	*buf = (u8 *)p;
-	पूर्णांक	i;
+	int	i;
 	u8	sum = 0;
 
-	क्रम(i=0; i<USB_PKT_LEN-1; i++)
+	for(i=0; i<USB_PKT_LEN-1; i++)
 		sum -= buf[i];
 	p->sum = sum;
-	वापस usb_control_msg(yld->udev,
+	return usb_control_msg(yld->udev,
 			usb_sndctrlpipe(yld->udev, 0),
 			USB_REQ_SET_CONFIGURATION,
-			USB_TYPE_CLASS | USB_RECIP_INTERFACE | USB_सूची_OUT,
+			USB_TYPE_CLASS | USB_RECIP_INTERFACE | USB_DIR_OUT,
 			0x200, 3,
-			p, माप(*p),
+			p, sizeof(*p),
 			USB_CTRL_SET_TIMEOUT);
-पूर्ण
+}
 
-अटल u8 शेष_ringtone[] = अणु
+static u8 default_ringtone[] = {
 	0xEF,			/* volume [0-255] */
 	0xFB, 0x1E, 0x00, 0x0C,	/* 1250 [hz], 12/100 [s] */
 	0xFC, 0x18, 0x00, 0x0C,	/* 1000 [hz], 12/100 [s] */
@@ -275,18 +274,18 @@
 	0xFC, 0x18, 0x00, 0x0C,
 	0xFF, 0xFF, 0x01, 0x90,	/* silent, 400/100 [s] */
 	0x00, 0x00		/* end of sequence */
-पूर्ण;
+};
 
-अटल पूर्णांक yealink_set_ringtone(काष्ठा yealink_dev *yld, u8 *buf, माप_प्रकार size)
-अणु
-	काष्ठा yld_ctl_packet *p = yld->ctl_data;
-	पूर्णांक	ix, len;
+static int yealink_set_ringtone(struct yealink_dev *yld, u8 *buf, size_t size)
+{
+	struct yld_ctl_packet *p = yld->ctl_data;
+	int	ix, len;
 
-	अगर (size <= 0)
-		वापस -EINVAL;
+	if (size <= 0)
+		return -EINVAL;
 
 	/* Set the ringtone volume */
-	स_रखो(yld->ctl_data, 0, माप(*(yld->ctl_data)));
+	memset(yld->ctl_data, 0, sizeof(*(yld->ctl_data)));
 	yld->ctl_data->cmd	= CMD_RING_VOLUME;
 	yld->ctl_data->size	= 1;
 	yld->ctl_data->data[0]	= buf[0];
@@ -297,52 +296,52 @@
 
 	p->cmd = CMD_RING_NOTE;
 	ix = 0;
-	जबतक (size != ix) अणु
+	while (size != ix) {
 		len = size - ix;
-		अगर (len > माप(p->data))
-			len = माप(p->data);
+		if (len > sizeof(p->data))
+			len = sizeof(p->data);
 		p->size	  = len;
 		p->offset = cpu_to_be16(ix);
-		स_नकल(p->data, &buf[ix], len);
+		memcpy(p->data, &buf[ix], len);
 		yealink_cmd(yld, p);
 		ix += len;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
 /* keep stat_master & stat_copy in sync.
  */
-अटल पूर्णांक yealink_करो_idle_tasks(काष्ठा yealink_dev *yld)
-अणु
+static int yealink_do_idle_tasks(struct yealink_dev *yld)
+{
 	u8 val;
-	पूर्णांक i, ix, len;
+	int i, ix, len;
 
 	ix = yld->stat_ix;
 
-	स_रखो(yld->ctl_data, 0, माप(*(yld->ctl_data)));
+	memset(yld->ctl_data, 0, sizeof(*(yld->ctl_data)));
 	yld->ctl_data->cmd  = CMD_KEYPRESS;
 	yld->ctl_data->size = 1;
 	yld->ctl_data->sum  = 0xff - CMD_KEYPRESS;
 
-	/* If state update poपूर्णांकer wraps करो a KEYPRESS first. */
-	अगर (ix >= माप(yld->master)) अणु
+	/* If state update pointer wraps do a KEYPRESS first. */
+	if (ix >= sizeof(yld->master)) {
 		yld->stat_ix = 0;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	/* find update candidates: copy != master */
-	करो अणु
+	do {
 		val = yld->master.b[ix];
-		अगर (val != yld->copy.b[ix])
-			जाओ send_update;
-	पूर्ण जबतक (++ix < माप(yld->master));
+		if (val != yld->copy.b[ix])
+			goto send_update;
+	} while (++ix < sizeof(yld->master));
 
-	/* nothing toकरो, रुको a bit and poll क्रम a KEYPRESS */
+	/* nothing todo, wait a bit and poll for a KEYPRESS */
 	yld->stat_ix = 0;
-	/* TODO how can we रुको abit. ??
-	 * msleep_पूर्णांकerruptible(1000 / YEALINK_POLLING_FREQUENCY);
+	/* TODO how can we wait abit. ??
+	 * msleep_interruptible(1000 / YEALINK_POLLING_FREQUENCY);
 	 */
-	वापस 0;
+	return 0;
 
 send_update:
 
@@ -350,31 +349,31 @@ send_update:
 	yld->copy.b[ix] = val;
 	yld->ctl_data->data[0] = val;
 
-	चयन(ix) अणु
-	हाल दुरत्व(काष्ठा yld_status, led):
+	switch(ix) {
+	case offsetof(struct yld_status, led):
 		yld->ctl_data->cmd	= CMD_LED;
 		yld->ctl_data->sum	= -1 - CMD_LED - val;
-		अवरोध;
-	हाल दुरत्व(काष्ठा yld_status, dialtone):
+		break;
+	case offsetof(struct yld_status, dialtone):
 		yld->ctl_data->cmd	= CMD_DIALTONE;
 		yld->ctl_data->sum	= -1 - CMD_DIALTONE - val;
-		अवरोध;
-	हाल दुरत्व(काष्ठा yld_status, ringtone):
+		break;
+	case offsetof(struct yld_status, ringtone):
 		yld->ctl_data->cmd	= CMD_RINGTONE;
 		yld->ctl_data->sum	= -1 - CMD_RINGTONE - val;
-		अवरोध;
-	हाल दुरत्व(काष्ठा yld_status, keynum):
+		break;
+	case offsetof(struct yld_status, keynum):
 		val--;
 		val &= 0x1f;
 		yld->ctl_data->cmd	= CMD_SCANCODE;
 		yld->ctl_data->offset	= cpu_to_be16(val);
 		yld->ctl_data->data[0]	= 0;
 		yld->ctl_data->sum	= -1 - CMD_SCANCODE - val;
-		अवरोध;
-	शेष:
-		len = माप(yld->master.s.lcd) - ix;
-		अगर (len > माप(yld->ctl_data->data))
-			len = माप(yld->ctl_data->data);
+		break;
+	default:
+		len = sizeof(yld->master.s.lcd) - ix;
+		if (len > sizeof(yld->ctl_data->data))
+			len = sizeof(yld->ctl_data->data);
 
 		/* Combine up to <len> consecutive LCD bytes in a singe request
 		 */
@@ -382,17 +381,17 @@ send_update:
 		yld->ctl_data->offset	= cpu_to_be16(ix);
 		yld->ctl_data->size	= len;
 		yld->ctl_data->sum	= -CMD_LCD - ix - val - len;
-		क्रम(i=1; i<len; i++) अणु
+		for(i=1; i<len; i++) {
 			ix++;
 			val = yld->master.b[ix];
 			yld->copy.b[ix]		= val;
 			yld->ctl_data->data[i]	= val;
 			yld->ctl_data->sum     -= val;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	yld->stat_ix = ix + 1;
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
 /* Decide on how to handle responses
  *
@@ -402,377 +401,377 @@ send_update:
  *               |      |
  *               |    idle
  *              \|/     |
- * init --ok--> रुकोForKey --ok--> getKey
+ * init --ok--> waitForKey --ok--> getKey
  *  ^               ^                |
  *  |               +-------ok-------+
  * error,start
  *
  */
-अटल व्योम urb_irq_callback(काष्ठा urb *urb)
-अणु
-	काष्ठा yealink_dev *yld = urb->context;
-	पूर्णांक ret, status = urb->status;
+static void urb_irq_callback(struct urb *urb)
+{
+	struct yealink_dev *yld = urb->context;
+	int ret, status = urb->status;
 
-	अगर (status)
-		dev_err(&yld->पूर्णांकf->dev, "%s - urb status %d\n",
+	if (status)
+		dev_err(&yld->intf->dev, "%s - urb status %d\n",
 			__func__, status);
 
-	चयन (yld->irq_data->cmd) अणु
-	हाल CMD_KEYPRESS:
+	switch (yld->irq_data->cmd) {
+	case CMD_KEYPRESS:
 
 		yld->master.s.keynum = yld->irq_data->data[0];
-		अवरोध;
+		break;
 
-	हाल CMD_SCANCODE:
-		dev_dbg(&yld->पूर्णांकf->dev, "get scancode %x\n",
+	case CMD_SCANCODE:
+		dev_dbg(&yld->intf->dev, "get scancode %x\n",
 			yld->irq_data->data[0]);
 
 		report_key(yld, map_p1k_to_key(yld->irq_data->data[0]));
-		अवरोध;
+		break;
 
-	शेष:
-		dev_err(&yld->पूर्णांकf->dev, "unexpected response %x\n",
+	default:
+		dev_err(&yld->intf->dev, "unexpected response %x\n",
 			yld->irq_data->cmd);
-	पूर्ण
+	}
 
-	yealink_करो_idle_tasks(yld);
+	yealink_do_idle_tasks(yld);
 
-	अगर (!yld->shutकरोwn) अणु
+	if (!yld->shutdown) {
 		ret = usb_submit_urb(yld->urb_ctl, GFP_ATOMIC);
-		अगर (ret && ret != -EPERM)
-			dev_err(&yld->पूर्णांकf->dev,
+		if (ret && ret != -EPERM)
+			dev_err(&yld->intf->dev,
 				"%s - usb_submit_urb failed %d\n",
 				__func__, ret);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम urb_ctl_callback(काष्ठा urb *urb)
-अणु
-	काष्ठा yealink_dev *yld = urb->context;
-	पूर्णांक ret = 0, status = urb->status;
+static void urb_ctl_callback(struct urb *urb)
+{
+	struct yealink_dev *yld = urb->context;
+	int ret = 0, status = urb->status;
 
-	अगर (status)
-		dev_err(&yld->पूर्णांकf->dev, "%s - urb status %d\n",
+	if (status)
+		dev_err(&yld->intf->dev, "%s - urb status %d\n",
 			__func__, status);
 
-	चयन (yld->ctl_data->cmd) अणु
-	हाल CMD_KEYPRESS:
-	हाल CMD_SCANCODE:
-		/* ask क्रम a response */
-		अगर (!yld->shutकरोwn)
+	switch (yld->ctl_data->cmd) {
+	case CMD_KEYPRESS:
+	case CMD_SCANCODE:
+		/* ask for a response */
+		if (!yld->shutdown)
 			ret = usb_submit_urb(yld->urb_irq, GFP_ATOMIC);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		/* send new command */
-		yealink_करो_idle_tasks(yld);
-		अगर (!yld->shutकरोwn)
+		yealink_do_idle_tasks(yld);
+		if (!yld->shutdown)
 			ret = usb_submit_urb(yld->urb_ctl, GFP_ATOMIC);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	अगर (ret && ret != -EPERM)
-		dev_err(&yld->पूर्णांकf->dev, "%s - usb_submit_urb failed %d\n",
+	if (ret && ret != -EPERM)
+		dev_err(&yld->intf->dev, "%s - usb_submit_urb failed %d\n",
 			__func__, ret);
-पूर्ण
+}
 
 /*******************************************************************************
- * input event पूर्णांकerface
+ * input event interface
  ******************************************************************************/
 
 /* TODO should we issue a ringtone on a SND_BELL event?
-अटल पूर्णांक input_ev(काष्ठा input_dev *dev, अचिन्हित पूर्णांक type,
-		अचिन्हित पूर्णांक code, पूर्णांक value)
-अणु
+static int input_ev(struct input_dev *dev, unsigned int type,
+		unsigned int code, int value)
+{
 
-	अगर (type != EV_SND)
-		वापस -EINVAL;
+	if (type != EV_SND)
+		return -EINVAL;
 
-	चयन (code) अणु
-	हाल SND_BELL:
-	हाल SND_TONE:
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+	switch (code) {
+	case SND_BELL:
+	case SND_TONE:
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 */
 
-अटल पूर्णांक input_खोलो(काष्ठा input_dev *dev)
-अणु
-	काष्ठा yealink_dev *yld = input_get_drvdata(dev);
-	पूर्णांक i, ret;
+static int input_open(struct input_dev *dev)
+{
+	struct yealink_dev *yld = input_get_drvdata(dev);
+	int i, ret;
 
-	dev_dbg(&yld->पूर्णांकf->dev, "%s\n", __func__);
+	dev_dbg(&yld->intf->dev, "%s\n", __func__);
 
-	/* क्रमce updates to device */
-	क्रम (i = 0; i<माप(yld->master); i++)
+	/* force updates to device */
+	for (i = 0; i<sizeof(yld->master); i++)
 		yld->copy.b[i] = ~yld->master.b[i];
 	yld->key_code = -1;	/* no keys pressed */
 
-        yealink_set_ringtone(yld, शेष_ringtone, माप(शेष_ringtone));
+        yealink_set_ringtone(yld, default_ringtone, sizeof(default_ringtone));
 
 	/* issue INIT */
-	स_रखो(yld->ctl_data, 0, माप(*(yld->ctl_data)));
+	memset(yld->ctl_data, 0, sizeof(*(yld->ctl_data)));
 	yld->ctl_data->cmd	= CMD_INIT;
 	yld->ctl_data->size	= 10;
 	yld->ctl_data->sum	= 0x100-CMD_INIT-10;
-	अगर ((ret = usb_submit_urb(yld->urb_ctl, GFP_KERNEL)) != 0) अणु
-		dev_dbg(&yld->पूर्णांकf->dev,
+	if ((ret = usb_submit_urb(yld->urb_ctl, GFP_KERNEL)) != 0) {
+		dev_dbg(&yld->intf->dev,
 			"%s - usb_submit_urb failed with result %d\n",
 			__func__, ret);
-		वापस ret;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return ret;
+	}
+	return 0;
+}
 
-अटल व्योम input_बंद(काष्ठा input_dev *dev)
-अणु
-	काष्ठा yealink_dev *yld = input_get_drvdata(dev);
+static void input_close(struct input_dev *dev)
+{
+	struct yealink_dev *yld = input_get_drvdata(dev);
 
-	yld->shutकरोwn = 1;
+	yld->shutdown = 1;
 	/*
-	 * Make sure the flag is seen by other CPUs beक्रमe we start
-	 * समाप्तing URBs so new URBs won't be submitted
+	 * Make sure the flag is seen by other CPUs before we start
+	 * killing URBs so new URBs won't be submitted
 	 */
 	smp_wmb();
 
-	usb_समाप्त_urb(yld->urb_ctl);
-	usb_समाप्त_urb(yld->urb_irq);
+	usb_kill_urb(yld->urb_ctl);
+	usb_kill_urb(yld->urb_irq);
 
-	yld->shutकरोwn = 0;
+	yld->shutdown = 0;
 	smp_wmb();
-पूर्ण
+}
 
 /*******************************************************************************
- * sysfs पूर्णांकerface
+ * sysfs interface
  ******************************************************************************/
 
-अटल DECLARE_RWSEM(sysfs_rwsema);
+static DECLARE_RWSEM(sysfs_rwsema);
 
-/* Interface to the 7-segments translation table aka. अक्षर set.
+/* Interface to the 7-segments translation table aka. char set.
  */
-अटल sमाप_प्रकार show_map(काष्ठा device *dev, काष्ठा device_attribute *attr,
-				अक्षर *buf)
-अणु
-	स_नकल(buf, &map_seg7, माप(map_seg7));
-	वापस माप(map_seg7);
-पूर्ण
+static ssize_t show_map(struct device *dev, struct device_attribute *attr,
+				char *buf)
+{
+	memcpy(buf, &map_seg7, sizeof(map_seg7));
+	return sizeof(map_seg7);
+}
 
-अटल sमाप_प्रकार store_map(काष्ठा device *dev, काष्ठा device_attribute *attr,
-				स्थिर अक्षर *buf, माप_प्रकार cnt)
-अणु
-	अगर (cnt != माप(map_seg7))
-		वापस -EINVAL;
-	स_नकल(&map_seg7, buf, माप(map_seg7));
-	वापस माप(map_seg7);
-पूर्ण
+static ssize_t store_map(struct device *dev, struct device_attribute *attr,
+				const char *buf, size_t cnt)
+{
+	if (cnt != sizeof(map_seg7))
+		return -EINVAL;
+	memcpy(&map_seg7, buf, sizeof(map_seg7));
+	return sizeof(map_seg7);
+}
 
 /* Interface to the LCD.
  */
 
-/* Reading /sys/../lineX will वापस the क्रमmat string with its settings:
+/* Reading /sys/../lineX will return the format string with its settings:
  *
  * Example:
  * cat ./line3
  * 888888888888
  * Linux Rocks!
  */
-अटल sमाप_प्रकार show_line(काष्ठा device *dev, अक्षर *buf, पूर्णांक a, पूर्णांक b)
-अणु
-	काष्ठा yealink_dev *yld;
-	पूर्णांक i;
+static ssize_t show_line(struct device *dev, char *buf, int a, int b)
+{
+	struct yealink_dev *yld;
+	int i;
 
-	करोwn_पढ़ो(&sysfs_rwsema);
+	down_read(&sysfs_rwsema);
 	yld = dev_get_drvdata(dev);
-	अगर (yld == शून्य) अणु
-		up_पढ़ो(&sysfs_rwsema);
-		वापस -ENODEV;
-	पूर्ण
+	if (yld == NULL) {
+		up_read(&sysfs_rwsema);
+		return -ENODEV;
+	}
 
-	क्रम (i = a; i < b; i++)
+	for (i = a; i < b; i++)
 		*buf++ = lcdMap[i].type;
 	*buf++ = '\n';
-	क्रम (i = a; i < b; i++)
+	for (i = a; i < b; i++)
 		*buf++ = yld->lcdMap[i];
 	*buf++ = '\n';
 	*buf = 0;
 
-	up_पढ़ो(&sysfs_rwsema);
-	वापस 3 + ((b - a) << 1);
-पूर्ण
+	up_read(&sysfs_rwsema);
+	return 3 + ((b - a) << 1);
+}
 
-अटल sमाप_प्रकार show_line1(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			अक्षर *buf)
-अणु
-	वापस show_line(dev, buf, LCD_LINE1_OFFSET, LCD_LINE2_OFFSET);
-पूर्ण
+static ssize_t show_line1(struct device *dev, struct device_attribute *attr,
+			char *buf)
+{
+	return show_line(dev, buf, LCD_LINE1_OFFSET, LCD_LINE2_OFFSET);
+}
 
-अटल sमाप_प्रकार show_line2(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			अक्षर *buf)
-अणु
-	वापस show_line(dev, buf, LCD_LINE2_OFFSET, LCD_LINE3_OFFSET);
-पूर्ण
+static ssize_t show_line2(struct device *dev, struct device_attribute *attr,
+			char *buf)
+{
+	return show_line(dev, buf, LCD_LINE2_OFFSET, LCD_LINE3_OFFSET);
+}
 
-अटल sमाप_प्रकार show_line3(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			अक्षर *buf)
-अणु
-	वापस show_line(dev, buf, LCD_LINE3_OFFSET, LCD_LINE4_OFFSET);
-पूर्ण
+static ssize_t show_line3(struct device *dev, struct device_attribute *attr,
+			char *buf)
+{
+	return show_line(dev, buf, LCD_LINE3_OFFSET, LCD_LINE4_OFFSET);
+}
 
 /* Writing to /sys/../lineX will set the coresponding LCD line.
- * - Excess अक्षरacters are ignored.
- * - If less अक्षरacters are written than allowed, the reमुख्यing digits are
+ * - Excess characters are ignored.
+ * - If less characters are written than allowed, the remaining digits are
  *   unchanged.
- * - The '\n' or '\t' अक्षर is a placeholder, it करोes not overग_लिखो the
+ * - The '\n' or '\t' char is a placeholder, it does not overwrite the
  *   original content.
  */
-अटल sमाप_प्रकार store_line(काष्ठा device *dev, स्थिर अक्षर *buf, माप_प्रकार count,
-		पूर्णांक el, माप_प्रकार len)
-अणु
-	काष्ठा yealink_dev *yld;
-	पूर्णांक i;
+static ssize_t store_line(struct device *dev, const char *buf, size_t count,
+		int el, size_t len)
+{
+	struct yealink_dev *yld;
+	int i;
 
-	करोwn_ग_लिखो(&sysfs_rwsema);
+	down_write(&sysfs_rwsema);
 	yld = dev_get_drvdata(dev);
-	अगर (yld == शून्य) अणु
-		up_ग_लिखो(&sysfs_rwsema);
-		वापस -ENODEV;
-	पूर्ण
+	if (yld == NULL) {
+		up_write(&sysfs_rwsema);
+		return -ENODEV;
+	}
 
-	अगर (len > count)
+	if (len > count)
 		len = count;
-	क्रम (i = 0; i < len; i++)
+	for (i = 0; i < len; i++)
 		setChar(yld, el++, buf[i]);
 
-	up_ग_लिखो(&sysfs_rwsema);
-	वापस count;
-पूर्ण
+	up_write(&sysfs_rwsema);
+	return count;
+}
 
-अटल sमाप_प्रकार store_line1(काष्ठा device *dev, काष्ठा device_attribute *attr,
-				स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	वापस store_line(dev, buf, count, LCD_LINE1_OFFSET, LCD_LINE1_SIZE);
-पूर्ण
+static ssize_t store_line1(struct device *dev, struct device_attribute *attr,
+				const char *buf, size_t count)
+{
+	return store_line(dev, buf, count, LCD_LINE1_OFFSET, LCD_LINE1_SIZE);
+}
 
-अटल sमाप_प्रकार store_line2(काष्ठा device *dev, काष्ठा device_attribute *attr,
-				स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	वापस store_line(dev, buf, count, LCD_LINE2_OFFSET, LCD_LINE2_SIZE);
-पूर्ण
+static ssize_t store_line2(struct device *dev, struct device_attribute *attr,
+				const char *buf, size_t count)
+{
+	return store_line(dev, buf, count, LCD_LINE2_OFFSET, LCD_LINE2_SIZE);
+}
 
-अटल sमाप_प्रकार store_line3(काष्ठा device *dev, काष्ठा device_attribute *attr,
-				स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	वापस store_line(dev, buf, count, LCD_LINE3_OFFSET, LCD_LINE3_SIZE);
-पूर्ण
+static ssize_t store_line3(struct device *dev, struct device_attribute *attr,
+				const char *buf, size_t count)
+{
+	return store_line(dev, buf, count, LCD_LINE3_OFFSET, LCD_LINE3_SIZE);
+}
 
 /* Interface to visible and audible "icons", these include:
- * pictures on the LCD, the LED, and the dialtone संकेत.
+ * pictures on the LCD, the LED, and the dialtone signal.
  */
 
 /* Get a list of "switchable elements" with their current state. */
-अटल sमाप_प्रकार get_icons(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			अक्षर *buf)
-अणु
-	काष्ठा yealink_dev *yld;
-	पूर्णांक i, ret = 1;
+static ssize_t get_icons(struct device *dev, struct device_attribute *attr,
+			char *buf)
+{
+	struct yealink_dev *yld;
+	int i, ret = 1;
 
-	करोwn_पढ़ो(&sysfs_rwsema);
+	down_read(&sysfs_rwsema);
 	yld = dev_get_drvdata(dev);
-	अगर (yld == शून्य) अणु
-		up_पढ़ो(&sysfs_rwsema);
-		वापस -ENODEV;
-	पूर्ण
+	if (yld == NULL) {
+		up_read(&sysfs_rwsema);
+		return -ENODEV;
+	}
 
-	क्रम (i = 0; i < ARRAY_SIZE(lcdMap); i++) अणु
-		अगर (lcdMap[i].type != '.')
-			जारी;
-		ret += प्र_लिखो(&buf[ret], "%s %s\n",
+	for (i = 0; i < ARRAY_SIZE(lcdMap); i++) {
+		if (lcdMap[i].type != '.')
+			continue;
+		ret += sprintf(&buf[ret], "%s %s\n",
 				yld->lcdMap[i] == ' ' ? "  " : "on",
 				lcdMap[i].u.p.name);
-	पूर्ण
-	up_पढ़ो(&sysfs_rwsema);
-	वापस ret;
-पूर्ण
+	}
+	up_read(&sysfs_rwsema);
+	return ret;
+}
 
 /* Change the visibility of a particular element. */
-अटल sमाप_प्रकार set_icon(काष्ठा device *dev, स्थिर अक्षर *buf, माप_प्रकार count,
-			पूर्णांक chr)
-अणु
-	काष्ठा yealink_dev *yld;
-	पूर्णांक i;
+static ssize_t set_icon(struct device *dev, const char *buf, size_t count,
+			int chr)
+{
+	struct yealink_dev *yld;
+	int i;
 
-	करोwn_ग_लिखो(&sysfs_rwsema);
+	down_write(&sysfs_rwsema);
 	yld = dev_get_drvdata(dev);
-	अगर (yld == शून्य) अणु
-		up_ग_लिखो(&sysfs_rwsema);
-		वापस -ENODEV;
-	पूर्ण
+	if (yld == NULL) {
+		up_write(&sysfs_rwsema);
+		return -ENODEV;
+	}
 
-	क्रम (i = 0; i < ARRAY_SIZE(lcdMap); i++) अणु
-		अगर (lcdMap[i].type != '.')
-			जारी;
-		अगर (म_भेदन(buf, lcdMap[i].u.p.name, count) == 0) अणु
+	for (i = 0; i < ARRAY_SIZE(lcdMap); i++) {
+		if (lcdMap[i].type != '.')
+			continue;
+		if (strncmp(buf, lcdMap[i].u.p.name, count) == 0) {
 			setChar(yld, i, chr);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	up_ग_लिखो(&sysfs_rwsema);
-	वापस count;
-पूर्ण
+	up_write(&sysfs_rwsema);
+	return count;
+}
 
-अटल sमाप_प्रकार show_icon(काष्ठा device *dev, काष्ठा device_attribute *attr,
-		स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	वापस set_icon(dev, buf, count, buf[0]);
-पूर्ण
+static ssize_t show_icon(struct device *dev, struct device_attribute *attr,
+		const char *buf, size_t count)
+{
+	return set_icon(dev, buf, count, buf[0]);
+}
 
-अटल sमाप_प्रकार hide_icon(काष्ठा device *dev, काष्ठा device_attribute *attr,
-		स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	वापस set_icon(dev, buf, count, ' ');
-पूर्ण
+static ssize_t hide_icon(struct device *dev, struct device_attribute *attr,
+		const char *buf, size_t count)
+{
+	return set_icon(dev, buf, count, ' ');
+}
 
 /* Upload a ringtone to the device.
  */
 
 /* Stores raw ringtone data in the phone */
-अटल sमाप_प्रकार store_ringtone(काष्ठा device *dev,
-		काष्ठा device_attribute *attr,
-		स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा yealink_dev *yld;
+static ssize_t store_ringtone(struct device *dev,
+		struct device_attribute *attr,
+		const char *buf, size_t count)
+{
+	struct yealink_dev *yld;
 
-	करोwn_ग_लिखो(&sysfs_rwsema);
+	down_write(&sysfs_rwsema);
 	yld = dev_get_drvdata(dev);
-	अगर (yld == शून्य) अणु
-		up_ग_लिखो(&sysfs_rwsema);
-		वापस -ENODEV;
-	पूर्ण
+	if (yld == NULL) {
+		up_write(&sysfs_rwsema);
+		return -ENODEV;
+	}
 
-	/* TODO locking with async usb control पूर्णांकerface??? */
-	yealink_set_ringtone(yld, (अक्षर *)buf, count);
-	up_ग_लिखो(&sysfs_rwsema);
-	वापस count;
-पूर्ण
+	/* TODO locking with async usb control interface??? */
+	yealink_set_ringtone(yld, (char *)buf, count);
+	up_write(&sysfs_rwsema);
+	return count;
+}
 
-#घोषणा _M444	S_IRUGO
-#घोषणा _M664	S_IRUGO|S_IWUSR|S_IWGRP
-#घोषणा _M220	S_IWUSR|S_IWGRP
+#define _M444	S_IRUGO
+#define _M664	S_IRUGO|S_IWUSR|S_IWGRP
+#define _M220	S_IWUSR|S_IWGRP
 
-अटल DEVICE_ATTR(map_seg7	, _M664, show_map	, store_map	);
-अटल DEVICE_ATTR(line1	, _M664, show_line1	, store_line1	);
-अटल DEVICE_ATTR(line2	, _M664, show_line2	, store_line2	);
-अटल DEVICE_ATTR(line3	, _M664, show_line3	, store_line3	);
-अटल DEVICE_ATTR(get_icons	, _M444, get_icons	, शून्य		);
-अटल DEVICE_ATTR(show_icon	, _M220, शून्य		, show_icon	);
-अटल DEVICE_ATTR(hide_icon	, _M220, शून्य		, hide_icon	);
-अटल DEVICE_ATTR(ringtone	, _M220, शून्य		, store_ringtone);
+static DEVICE_ATTR(map_seg7	, _M664, show_map	, store_map	);
+static DEVICE_ATTR(line1	, _M664, show_line1	, store_line1	);
+static DEVICE_ATTR(line2	, _M664, show_line2	, store_line2	);
+static DEVICE_ATTR(line3	, _M664, show_line3	, store_line3	);
+static DEVICE_ATTR(get_icons	, _M444, get_icons	, NULL		);
+static DEVICE_ATTR(show_icon	, _M220, NULL		, show_icon	);
+static DEVICE_ATTR(hide_icon	, _M220, NULL		, hide_icon	);
+static DEVICE_ATTR(ringtone	, _M220, NULL		, store_ringtone);
 
-अटल काष्ठा attribute *yld_attributes[] = अणु
+static struct attribute *yld_attributes[] = {
 	&dev_attr_line1.attr,
 	&dev_attr_line2.attr,
 	&dev_attr_line3.attr,
@@ -781,212 +780,212 @@ send_update:
 	&dev_attr_hide_icon.attr,
 	&dev_attr_map_seg7.attr,
 	&dev_attr_ringtone.attr,
-	शून्य
-पूर्ण;
+	NULL
+};
 
-अटल स्थिर काष्ठा attribute_group yld_attr_group = अणु
+static const struct attribute_group yld_attr_group = {
 	.attrs = yld_attributes
-पूर्ण;
+};
 
 /*******************************************************************************
- * Linux पूर्णांकerface and usb initialisation
+ * Linux interface and usb initialisation
  ******************************************************************************/
 
-काष्ठा driver_info अणु
-	अक्षर *name;
-पूर्ण;
+struct driver_info {
+	char *name;
+};
 
-अटल स्थिर काष्ठा driver_info info_P1K = अणु
+static const struct driver_info info_P1K = {
 	.name	= "Yealink usb-p1k",
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा usb_device_id usb_table [] = अणु
-	अणु
+static const struct usb_device_id usb_table [] = {
+	{
 		.match_flags		= USB_DEVICE_ID_MATCH_DEVICE |
 						USB_DEVICE_ID_MATCH_INT_INFO,
-		.idVenकरोr		= 0x6993,
+		.idVendor		= 0x6993,
 		.idProduct		= 0xb001,
 		.bInterfaceClass	= USB_CLASS_HID,
 		.bInterfaceSubClass	= 0,
 		.bInterfaceProtocol	= 0,
-		.driver_info		= (kernel_uदीर्घ_t)&info_P1K
-	पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+		.driver_info		= (kernel_ulong_t)&info_P1K
+	},
+	{ }
+};
 
-अटल पूर्णांक usb_cleanup(काष्ठा yealink_dev *yld, पूर्णांक err)
-अणु
-	अगर (yld == शून्य)
-		वापस err;
+static int usb_cleanup(struct yealink_dev *yld, int err)
+{
+	if (yld == NULL)
+		return err;
 
-        अगर (yld->idev) अणु
-		अगर (err)
-			input_मुक्त_device(yld->idev);
-		अन्यथा
-			input_unरेजिस्टर_device(yld->idev);
-	पूर्ण
+        if (yld->idev) {
+		if (err)
+			input_free_device(yld->idev);
+		else
+			input_unregister_device(yld->idev);
+	}
 
-	usb_मुक्त_urb(yld->urb_irq);
-	usb_मुक्त_urb(yld->urb_ctl);
+	usb_free_urb(yld->urb_irq);
+	usb_free_urb(yld->urb_ctl);
 
-	kमुक्त(yld->ctl_req);
-	usb_मुक्त_coherent(yld->udev, USB_PKT_LEN, yld->ctl_data, yld->ctl_dma);
-	usb_मुक्त_coherent(yld->udev, USB_PKT_LEN, yld->irq_data, yld->irq_dma);
+	kfree(yld->ctl_req);
+	usb_free_coherent(yld->udev, USB_PKT_LEN, yld->ctl_data, yld->ctl_dma);
+	usb_free_coherent(yld->udev, USB_PKT_LEN, yld->irq_data, yld->irq_dma);
 
-	kमुक्त(yld);
-	वापस err;
-पूर्ण
+	kfree(yld);
+	return err;
+}
 
-अटल व्योम usb_disconnect(काष्ठा usb_पूर्णांकerface *पूर्णांकf)
-अणु
-	काष्ठा yealink_dev *yld;
+static void usb_disconnect(struct usb_interface *intf)
+{
+	struct yealink_dev *yld;
 
-	करोwn_ग_लिखो(&sysfs_rwsema);
-	yld = usb_get_पूर्णांकfdata(पूर्णांकf);
-	sysfs_हटाओ_group(&पूर्णांकf->dev.kobj, &yld_attr_group);
-	usb_set_पूर्णांकfdata(पूर्णांकf, शून्य);
-	up_ग_लिखो(&sysfs_rwsema);
+	down_write(&sysfs_rwsema);
+	yld = usb_get_intfdata(intf);
+	sysfs_remove_group(&intf->dev.kobj, &yld_attr_group);
+	usb_set_intfdata(intf, NULL);
+	up_write(&sysfs_rwsema);
 
 	usb_cleanup(yld, 0);
-पूर्ण
+}
 
-अटल पूर्णांक usb_probe(काष्ठा usb_पूर्णांकerface *पूर्णांकf, स्थिर काष्ठा usb_device_id *id)
-अणु
-	काष्ठा usb_device *udev = पूर्णांकerface_to_usbdev (पूर्णांकf);
-	काष्ठा driver_info *nfo = (काष्ठा driver_info *)id->driver_info;
-	काष्ठा usb_host_पूर्णांकerface *पूर्णांकerface;
-	काष्ठा usb_endpoपूर्णांक_descriptor *endpoपूर्णांक;
-	काष्ठा yealink_dev *yld;
-	काष्ठा input_dev *input_dev;
-	पूर्णांक ret, pipe, i;
+static int usb_probe(struct usb_interface *intf, const struct usb_device_id *id)
+{
+	struct usb_device *udev = interface_to_usbdev (intf);
+	struct driver_info *nfo = (struct driver_info *)id->driver_info;
+	struct usb_host_interface *interface;
+	struct usb_endpoint_descriptor *endpoint;
+	struct yealink_dev *yld;
+	struct input_dev *input_dev;
+	int ret, pipe, i;
 
-	पूर्णांकerface = पूर्णांकf->cur_altsetting;
+	interface = intf->cur_altsetting;
 
-	अगर (पूर्णांकerface->desc.bNumEndpoपूर्णांकs < 1)
-		वापस -ENODEV;
+	if (interface->desc.bNumEndpoints < 1)
+		return -ENODEV;
 
-	endpoपूर्णांक = &पूर्णांकerface->endpoपूर्णांक[0].desc;
-	अगर (!usb_endpoपूर्णांक_is_पूर्णांक_in(endpoपूर्णांक))
-		वापस -ENODEV;
+	endpoint = &interface->endpoint[0].desc;
+	if (!usb_endpoint_is_int_in(endpoint))
+		return -ENODEV;
 
-	yld = kzalloc(माप(काष्ठा yealink_dev), GFP_KERNEL);
-	अगर (!yld)
-		वापस -ENOMEM;
+	yld = kzalloc(sizeof(struct yealink_dev), GFP_KERNEL);
+	if (!yld)
+		return -ENOMEM;
 
 	yld->udev = udev;
-	yld->पूर्णांकf = पूर्णांकf;
+	yld->intf = intf;
 
 	yld->idev = input_dev = input_allocate_device();
-	अगर (!input_dev)
-		वापस usb_cleanup(yld, -ENOMEM);
+	if (!input_dev)
+		return usb_cleanup(yld, -ENOMEM);
 
 	/* allocate usb buffers */
 	yld->irq_data = usb_alloc_coherent(udev, USB_PKT_LEN,
 					   GFP_KERNEL, &yld->irq_dma);
-	अगर (yld->irq_data == शून्य)
-		वापस usb_cleanup(yld, -ENOMEM);
+	if (yld->irq_data == NULL)
+		return usb_cleanup(yld, -ENOMEM);
 
 	yld->ctl_data = usb_alloc_coherent(udev, USB_PKT_LEN,
 					   GFP_KERNEL, &yld->ctl_dma);
-	अगर (!yld->ctl_data)
-		वापस usb_cleanup(yld, -ENOMEM);
+	if (!yld->ctl_data)
+		return usb_cleanup(yld, -ENOMEM);
 
-	yld->ctl_req = kदो_स्मृति(माप(*(yld->ctl_req)), GFP_KERNEL);
-	अगर (yld->ctl_req == शून्य)
-		वापस usb_cleanup(yld, -ENOMEM);
+	yld->ctl_req = kmalloc(sizeof(*(yld->ctl_req)), GFP_KERNEL);
+	if (yld->ctl_req == NULL)
+		return usb_cleanup(yld, -ENOMEM);
 
-	/* allocate urb काष्ठाures */
+	/* allocate urb structures */
 	yld->urb_irq = usb_alloc_urb(0, GFP_KERNEL);
-        अगर (yld->urb_irq == शून्य)
-		वापस usb_cleanup(yld, -ENOMEM);
+        if (yld->urb_irq == NULL)
+		return usb_cleanup(yld, -ENOMEM);
 
 	yld->urb_ctl = usb_alloc_urb(0, GFP_KERNEL);
-        अगर (yld->urb_ctl == शून्य)
-		वापस usb_cleanup(yld, -ENOMEM);
+        if (yld->urb_ctl == NULL)
+		return usb_cleanup(yld, -ENOMEM);
 
-	/* get a handle to the पूर्णांकerrupt data pipe */
-	pipe = usb_rcvपूर्णांकpipe(udev, endpoपूर्णांक->bEndpoपूर्णांकAddress);
+	/* get a handle to the interrupt data pipe */
+	pipe = usb_rcvintpipe(udev, endpoint->bEndpointAddress);
 	ret = usb_maxpacket(udev, pipe, usb_pipeout(pipe));
-	अगर (ret != USB_PKT_LEN)
-		dev_err(&पूर्णांकf->dev, "invalid payload size %d, expected %zd\n",
+	if (ret != USB_PKT_LEN)
+		dev_err(&intf->dev, "invalid payload size %d, expected %zd\n",
 			ret, USB_PKT_LEN);
 
 	/* initialise irq urb */
-	usb_fill_पूर्णांक_urb(yld->urb_irq, udev, pipe, yld->irq_data,
+	usb_fill_int_urb(yld->urb_irq, udev, pipe, yld->irq_data,
 			USB_PKT_LEN,
 			urb_irq_callback,
-			yld, endpoपूर्णांक->bInterval);
+			yld, endpoint->bInterval);
 	yld->urb_irq->transfer_dma = yld->irq_dma;
 	yld->urb_irq->transfer_flags |= URB_NO_TRANSFER_DMA_MAP;
 	yld->urb_irq->dev = udev;
 
 	/* initialise ctl urb */
 	yld->ctl_req->bRequestType = USB_TYPE_CLASS | USB_RECIP_INTERFACE |
-				      USB_सूची_OUT;
+				      USB_DIR_OUT;
 	yld->ctl_req->bRequest	= USB_REQ_SET_CONFIGURATION;
 	yld->ctl_req->wValue	= cpu_to_le16(0x200);
-	yld->ctl_req->wIndex	= cpu_to_le16(पूर्णांकerface->desc.bInterfaceNumber);
+	yld->ctl_req->wIndex	= cpu_to_le16(interface->desc.bInterfaceNumber);
 	yld->ctl_req->wLength	= cpu_to_le16(USB_PKT_LEN);
 
 	usb_fill_control_urb(yld->urb_ctl, udev, usb_sndctrlpipe(udev, 0),
-			(व्योम *)yld->ctl_req, yld->ctl_data, USB_PKT_LEN,
+			(void *)yld->ctl_req, yld->ctl_data, USB_PKT_LEN,
 			urb_ctl_callback, yld);
 	yld->urb_ctl->transfer_dma	= yld->ctl_dma;
 	yld->urb_ctl->transfer_flags	|= URB_NO_TRANSFER_DMA_MAP;
 	yld->urb_ctl->dev = udev;
 
 	/* find out the physical bus location */
-	usb_make_path(udev, yld->phys, माप(yld->phys));
-	strlcat(yld->phys,  "/input0", माप(yld->phys));
+	usb_make_path(udev, yld->phys, sizeof(yld->phys));
+	strlcat(yld->phys,  "/input0", sizeof(yld->phys));
 
-	/* रेजिस्टर settings क्रम the input device */
+	/* register settings for the input device */
 	input_dev->name = nfo->name;
 	input_dev->phys = yld->phys;
 	usb_to_input_id(udev, &input_dev->id);
-	input_dev->dev.parent = &पूर्णांकf->dev;
+	input_dev->dev.parent = &intf->dev;
 
 	input_set_drvdata(input_dev, yld);
 
-	input_dev->खोलो = input_खोलो;
-	input_dev->बंद = input_बंद;
+	input_dev->open = input_open;
+	input_dev->close = input_close;
 	/* input_dev->event = input_ev;	TODO */
 
-	/* रेजिस्टर available key events */
+	/* register available key events */
 	input_dev->evbit[0] = BIT_MASK(EV_KEY);
-	क्रम (i = 0; i < 256; i++) अणु
-		पूर्णांक k = map_p1k_to_key(i);
-		अगर (k >= 0) अणु
+	for (i = 0; i < 256; i++) {
+		int k = map_p1k_to_key(i);
+		if (k >= 0) {
 			set_bit(k & 0xff, input_dev->keybit);
-			अगर (k >> 8)
+			if (k >> 8)
 				set_bit(k >> 8, input_dev->keybit);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	ret = input_रेजिस्टर_device(yld->idev);
-	अगर (ret)
-		वापस usb_cleanup(yld, ret);
+	ret = input_register_device(yld->idev);
+	if (ret)
+		return usb_cleanup(yld, ret);
 
-	usb_set_पूर्णांकfdata(पूर्णांकf, yld);
+	usb_set_intfdata(intf, yld);
 
 	/* clear visible elements */
-	क्रम (i = 0; i < ARRAY_SIZE(lcdMap); i++)
+	for (i = 0; i < ARRAY_SIZE(lcdMap); i++)
 		setChar(yld, i, ' ');
 
 	/* display driver version on LCD line 3 */
-	store_line3(&पूर्णांकf->dev, शून्य,
-			DRIVER_VERSION, माप(DRIVER_VERSION));
+	store_line3(&intf->dev, NULL,
+			DRIVER_VERSION, sizeof(DRIVER_VERSION));
 
-	/* Register sysfs hooks (करोn't care about failure) */
-	ret = sysfs_create_group(&पूर्णांकf->dev.kobj, &yld_attr_group);
-	वापस 0;
-पूर्ण
+	/* Register sysfs hooks (don't care about failure) */
+	ret = sysfs_create_group(&intf->dev.kobj, &yld_attr_group);
+	return 0;
+}
 
-अटल काष्ठा usb_driver yealink_driver = अणु
+static struct usb_driver yealink_driver = {
 	.name		= "yealink",
 	.probe		= usb_probe,
 	.disconnect	= usb_disconnect,
 	.id_table	= usb_table,
-पूर्ण;
+};
 
 module_usb_driver(yealink_driver);
 

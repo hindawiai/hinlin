@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-1.0+
+// SPDX-License-Identifier: GPL-1.0+
 /*
  * Renesas USB
  *
@@ -10,204 +9,204 @@
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License क्रम more details.
+ * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * aदीर्घ with this program; अगर not, ग_लिखो to the Free Software
- * Foundation, Inc., 51 Franklin St, Fअगरth Floor, Boston, MA  02110-1301  USA
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
-#अगर_अघोषित RENESAS_USB_H
-#घोषणा RENESAS_USB_H
-#समावेश <linux/notअगरier.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/usb/ch9.h>
+#ifndef RENESAS_USB_H
+#define RENESAS_USB_H
+#include <linux/notifier.h>
+#include <linux/platform_device.h>
+#include <linux/usb/ch9.h>
 
 /*
  * module type
  *
- * it will be वापस value from get_id
+ * it will be return value from get_id
  */
-क्रमागत अणु
+enum {
 	USBHS_HOST = 0,
 	USBHS_GADGET,
 	USBHS_MAX,
-पूर्ण;
+};
 
 /*
- * callback functions क्रम platक्रमm
+ * callback functions for platform
  *
- * These functions are called from driver क्रम platक्रमm
+ * These functions are called from driver for platform
  */
-काष्ठा renesas_usbhs_platक्रमm_callback अणु
+struct renesas_usbhs_platform_callback {
 
 	/*
 	 * option:
 	 *
-	 * Hardware init function क्रम platक्रमm.
+	 * Hardware init function for platform.
 	 * it is called when driver was probed.
 	 */
-	पूर्णांक (*hardware_init)(काष्ठा platक्रमm_device *pdev);
+	int (*hardware_init)(struct platform_device *pdev);
 
 	/*
 	 * option:
 	 *
-	 * Hardware निकास function क्रम platक्रमm.
-	 * it is called when driver was हटाओd
+	 * Hardware exit function for platform.
+	 * it is called when driver was removed
 	 */
-	पूर्णांक (*hardware_निकास)(काष्ठा platक्रमm_device *pdev);
+	int (*hardware_exit)(struct platform_device *pdev);
 
 	/*
 	 * option:
 	 *
-	 * क्रम board specअगरic घड़ी control
+	 * for board specific clock control
 	 */
-	पूर्णांक (*घातer_ctrl)(काष्ठा platक्रमm_device *pdev,
-			   व्योम __iomem *base, पूर्णांक enable);
+	int (*power_ctrl)(struct platform_device *pdev,
+			   void __iomem *base, int enable);
 
 	/*
 	 * option:
 	 *
-	 * Phy reset क्रम platक्रमm
+	 * Phy reset for platform
 	 */
-	पूर्णांक (*phy_reset)(काष्ठा platक्रमm_device *pdev);
+	int (*phy_reset)(struct platform_device *pdev);
 
 	/*
 	 * get USB ID function
 	 *  - USBHS_HOST
 	 *  - USBHS_GADGET
 	 */
-	पूर्णांक (*get_id)(काष्ठा platक्रमm_device *pdev);
+	int (*get_id)(struct platform_device *pdev);
 
 	/*
 	 * get VBUS status function.
 	 */
-	पूर्णांक (*get_vbus)(काष्ठा platक्रमm_device *pdev);
+	int (*get_vbus)(struct platform_device *pdev);
 
 	/*
 	 * option:
 	 *
-	 * VBUS control is needed क्रम Host
+	 * VBUS control is needed for Host
 	 */
-	पूर्णांक (*set_vbus)(काष्ठा platक्रमm_device *pdev, पूर्णांक enable);
+	int (*set_vbus)(struct platform_device *pdev, int enable);
 
 	/*
 	 * option:
-	 * extcon notअगरier to set host/peripheral mode.
+	 * extcon notifier to set host/peripheral mode.
 	 */
-	पूर्णांक (*notअगरier)(काष्ठा notअगरier_block *nb, अचिन्हित दीर्घ event,
-			व्योम *data);
-पूर्ण;
+	int (*notifier)(struct notifier_block *nb, unsigned long event,
+			void *data);
+};
 
 /*
- * parameters क्रम renesas usbhs
+ * parameters for renesas usbhs
  *
- * some रेजिस्टर needs USB chip specअगरic parameters.
- * This काष्ठा show it to driver
+ * some register needs USB chip specific parameters.
+ * This struct show it to driver
  */
 
-काष्ठा renesas_usbhs_driver_pipe_config अणु
+struct renesas_usbhs_driver_pipe_config {
 	u8 type;	/* USB_ENDPOINT_XFER_xxx */
 	u16 bufsize;
 	u8 bufnum;
-	bool द्विगुन_buf;
-पूर्ण;
-#घोषणा RENESAS_USBHS_PIPE(_type, _size, _num, _द्विगुन_buf)	अणु	\
+	bool double_buf;
+};
+#define RENESAS_USBHS_PIPE(_type, _size, _num, _double_buf)	{	\
 			.type = (_type),		\
 			.bufsize = (_size),		\
 			.bufnum = (_num),		\
-			.द्विगुन_buf = (_द्विगुन_buf),	\
-	पूर्ण
+			.double_buf = (_double_buf),	\
+	}
 
-काष्ठा renesas_usbhs_driver_param अणु
+struct renesas_usbhs_driver_param {
 	/*
 	 * pipe settings
 	 */
-	काष्ठा renesas_usbhs_driver_pipe_config *pipe_configs;
-	पूर्णांक pipe_size; /* pipe_configs array size */
+	struct renesas_usbhs_driver_pipe_config *pipe_configs;
+	int pipe_size; /* pipe_configs array size */
 
 	/*
 	 * option:
 	 *
-	 * क्रम BUSWAIT :: BWAIT
+	 * for BUSWAIT :: BWAIT
 	 * see
-	 *	renesas_usbhs/common.c :: usbhsc_set_busरुको()
+	 *	renesas_usbhs/common.c :: usbhsc_set_buswait()
 	 * */
-	पूर्णांक busरुको_bरुको;
+	int buswait_bwait;
 
 	/*
 	 * option:
 	 *
-	 * delay समय from notअगरy_hotplug callback
+	 * delay time from notify_hotplug callback
 	 */
-	पूर्णांक detection_delay; /* msec */
+	int detection_delay; /* msec */
 
 	/*
 	 * option:
 	 *
-	 * dma id क्रम dmaengine
+	 * dma id for dmaengine
 	 * The data transfer direction on D0FIFO/D1FIFO should be
-	 * fixed क्रम keeping consistency.
-	 * So, the platक्रमm id settings will be..
+	 * fixed for keeping consistency.
+	 * So, the platform id settings will be..
 	 *	.d0_tx_id = xx_TX,
 	 *	.d1_rx_id = xx_RX,
 	 * or
 	 *	.d1_tx_id = xx_TX,
 	 *	.d0_rx_id = xx_RX,
 	 */
-	पूर्णांक d0_tx_id;
-	पूर्णांक d0_rx_id;
-	पूर्णांक d1_tx_id;
-	पूर्णांक d1_rx_id;
-	पूर्णांक d2_tx_id;
-	पूर्णांक d2_rx_id;
-	पूर्णांक d3_tx_id;
-	पूर्णांक d3_rx_id;
+	int d0_tx_id;
+	int d0_rx_id;
+	int d1_tx_id;
+	int d1_rx_id;
+	int d2_tx_id;
+	int d2_rx_id;
+	int d3_tx_id;
+	int d3_rx_id;
 
 	/*
 	 * option:
 	 *
 	 * pio <--> dma border.
 	 */
-	पूर्णांक pio_dma_border; /* शेष is 64byte */
+	int pio_dma_border; /* default is 64byte */
 
 	/*
 	 * option:
 	 */
-	u32 has_usb_dmac:1; /* क्रम USB-DMAC */
-	u32 runसमय_pwctrl:1;
+	u32 has_usb_dmac:1; /* for USB-DMAC */
+	u32 runtime_pwctrl:1;
 	u32 has_cnen:1;
-	u32 cfअगरo_byte_addr:1; /* CFIFO is byte addressable */
-#घोषणा USBHS_USB_DMAC_XFER_SIZE	32	/* hardcode the xfer size */
+	u32 cfifo_byte_addr:1; /* CFIFO is byte addressable */
+#define USBHS_USB_DMAC_XFER_SIZE	32	/* hardcode the xfer size */
 	u32 multi_clks:1;
 	u32 has_new_pipe_configs:1;
-पूर्ण;
+};
 
 /*
  * option:
  *
- * platक्रमm inक्रमmation क्रम renesas_usbhs driver.
+ * platform information for renesas_usbhs driver.
  */
-काष्ठा renesas_usbhs_platक्रमm_info अणु
+struct renesas_usbhs_platform_info {
 	/*
 	 * option:
 	 *
-	 * platक्रमm set these functions beक्रमe
-	 * call platक्रमm_add_devices अगर needed
+	 * platform set these functions before
+	 * call platform_add_devices if needed
 	 */
-	काष्ठा renesas_usbhs_platक्रमm_callback	platक्रमm_callback;
+	struct renesas_usbhs_platform_callback	platform_callback;
 
 	/*
 	 * option:
 	 *
-	 * driver use these param क्रम some रेजिस्टर
+	 * driver use these param for some register
 	 */
-	काष्ठा renesas_usbhs_driver_param	driver_param;
-पूर्ण;
+	struct renesas_usbhs_driver_param	driver_param;
+};
 
 /*
- * macro क्रम platक्रमm
+ * macro for platform
  */
-#घोषणा renesas_usbhs_get_info(pdev)\
-	((काष्ठा renesas_usbhs_platक्रमm_info *)(pdev)->dev.platक्रमm_data)
-#पूर्ण_अगर /* RENESAS_USB_H */
+#define renesas_usbhs_get_info(pdev)\
+	((struct renesas_usbhs_platform_info *)(pdev)->dev.platform_data)
+#endif /* RENESAS_USB_H */

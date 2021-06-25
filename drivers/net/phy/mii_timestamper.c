@@ -1,133 +1,132 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 //
-// Support क्रम generic समय stamping devices on MII buses.
-// Copyright (C) 2018 Riअक्षरd Cochran <riअक्षरdcochran@gmail.com>
+// Support for generic time stamping devices on MII buses.
+// Copyright (C) 2018 Richard Cochran <richardcochran@gmail.com>
 //
 
-#समावेश <linux/mii_बारtamper.h>
+#include <linux/mii_timestamper.h>
 
-अटल LIST_HEAD(mii_बारtamping_devices);
-अटल DEFINE_MUTEX(tstamping_devices_lock);
+static LIST_HEAD(mii_timestamping_devices);
+static DEFINE_MUTEX(tstamping_devices_lock);
 
-काष्ठा mii_बारtamping_desc अणु
-	काष्ठा list_head list;
-	काष्ठा mii_बारtamping_ctrl *ctrl;
-	काष्ठा device *device;
-पूर्ण;
+struct mii_timestamping_desc {
+	struct list_head list;
+	struct mii_timestamping_ctrl *ctrl;
+	struct device *device;
+};
 
 /**
- * रेजिस्टर_mii_tstamp_controller() - रेजिस्टरs an MII समय stamping device.
+ * register_mii_tstamp_controller() - registers an MII time stamping device.
  *
- * @device:	The device to be रेजिस्टरed.
- * @ctrl:	Poपूर्णांकer to device's control पूर्णांकerface.
+ * @device:	The device to be registered.
+ * @ctrl:	Pointer to device's control interface.
  *
  * Returns zero on success or non-zero on failure.
  */
-पूर्णांक रेजिस्टर_mii_tstamp_controller(काष्ठा device *device,
-				   काष्ठा mii_बारtamping_ctrl *ctrl)
-अणु
-	काष्ठा mii_बारtamping_desc *desc;
+int register_mii_tstamp_controller(struct device *device,
+				   struct mii_timestamping_ctrl *ctrl)
+{
+	struct mii_timestamping_desc *desc;
 
-	desc = kzalloc(माप(*desc), GFP_KERNEL);
-	अगर (!desc)
-		वापस -ENOMEM;
+	desc = kzalloc(sizeof(*desc), GFP_KERNEL);
+	if (!desc)
+		return -ENOMEM;
 
 	INIT_LIST_HEAD(&desc->list);
 	desc->ctrl = ctrl;
 	desc->device = device;
 
 	mutex_lock(&tstamping_devices_lock);
-	list_add_tail(&mii_बारtamping_devices, &desc->list);
+	list_add_tail(&mii_timestamping_devices, &desc->list);
 	mutex_unlock(&tstamping_devices_lock);
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL(रेजिस्टर_mii_tstamp_controller);
+	return 0;
+}
+EXPORT_SYMBOL(register_mii_tstamp_controller);
 
 /**
- * unरेजिस्टर_mii_tstamp_controller() - unरेजिस्टरs an MII समय stamping device.
+ * unregister_mii_tstamp_controller() - unregisters an MII time stamping device.
  *
- * @device:	A device previously passed to रेजिस्टर_mii_tstamp_controller().
+ * @device:	A device previously passed to register_mii_tstamp_controller().
  */
-व्योम unरेजिस्टर_mii_tstamp_controller(काष्ठा device *device)
-अणु
-	काष्ठा mii_बारtamping_desc *desc;
-	काष्ठा list_head *this, *next;
+void unregister_mii_tstamp_controller(struct device *device)
+{
+	struct mii_timestamping_desc *desc;
+	struct list_head *this, *next;
 
 	mutex_lock(&tstamping_devices_lock);
-	list_क्रम_each_safe(this, next, &mii_बारtamping_devices) अणु
-		desc = list_entry(this, काष्ठा mii_बारtamping_desc, list);
-		अगर (desc->device == device) अणु
+	list_for_each_safe(this, next, &mii_timestamping_devices) {
+		desc = list_entry(this, struct mii_timestamping_desc, list);
+		if (desc->device == device) {
 			list_del_init(&desc->list);
-			kमुक्त(desc);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			kfree(desc);
+			break;
+		}
+	}
 	mutex_unlock(&tstamping_devices_lock);
-पूर्ण
-EXPORT_SYMBOL(unरेजिस्टर_mii_tstamp_controller);
+}
+EXPORT_SYMBOL(unregister_mii_tstamp_controller);
 
 /**
- * रेजिस्टर_mii_बारtamper - Enables a given port of an MII समय stamper.
+ * register_mii_timestamper - Enables a given port of an MII time stamper.
  *
- * @node:	The device tree node of the MII समय stamp controller.
+ * @node:	The device tree node of the MII time stamp controller.
  * @port:	The index of the port to be enabled.
  *
- * Returns a valid पूर्णांकerface on success or ERR_PTR otherwise.
+ * Returns a valid interface on success or ERR_PTR otherwise.
  */
-काष्ठा mii_बारtamper *रेजिस्टर_mii_बारtamper(काष्ठा device_node *node,
-						 अचिन्हित पूर्णांक port)
-अणु
-	काष्ठा mii_बारtamper *mii_ts = शून्य;
-	काष्ठा mii_बारtamping_desc *desc;
-	काष्ठा list_head *this;
+struct mii_timestamper *register_mii_timestamper(struct device_node *node,
+						 unsigned int port)
+{
+	struct mii_timestamper *mii_ts = NULL;
+	struct mii_timestamping_desc *desc;
+	struct list_head *this;
 
 	mutex_lock(&tstamping_devices_lock);
-	list_क्रम_each(this, &mii_बारtamping_devices) अणु
-		desc = list_entry(this, काष्ठा mii_बारtamping_desc, list);
-		अगर (desc->device->of_node == node) अणु
+	list_for_each(this, &mii_timestamping_devices) {
+		desc = list_entry(this, struct mii_timestamping_desc, list);
+		if (desc->device->of_node == node) {
 			mii_ts = desc->ctrl->probe_channel(desc->device, port);
-			अगर (!IS_ERR(mii_ts)) अणु
+			if (!IS_ERR(mii_ts)) {
 				mii_ts->device = desc->device;
 				get_device(desc->device);
-			पूर्ण
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			}
+			break;
+		}
+	}
 	mutex_unlock(&tstamping_devices_lock);
 
-	वापस mii_ts ? mii_ts : ERR_PTR(-EPROBE_DEFER);
-पूर्ण
-EXPORT_SYMBOL(रेजिस्टर_mii_बारtamper);
+	return mii_ts ? mii_ts : ERR_PTR(-EPROBE_DEFER);
+}
+EXPORT_SYMBOL(register_mii_timestamper);
 
 /**
- * unरेजिस्टर_mii_बारtamper - Disables a given MII समय stamper.
+ * unregister_mii_timestamper - Disables a given MII time stamper.
  *
- * @mii_ts:	An पूर्णांकerface obtained via रेजिस्टर_mii_बारtamper().
+ * @mii_ts:	An interface obtained via register_mii_timestamper().
  *
  */
-व्योम unरेजिस्टर_mii_बारtamper(काष्ठा mii_बारtamper *mii_ts)
-अणु
-	काष्ठा mii_बारtamping_desc *desc;
-	काष्ठा list_head *this;
+void unregister_mii_timestamper(struct mii_timestamper *mii_ts)
+{
+	struct mii_timestamping_desc *desc;
+	struct list_head *this;
 
-	/* mii_बारtamper अटलally रेजिस्टरed by the PHY driver won't use the
-	 * रेजिस्टर_mii_बारtamper() and thus करोn't have ->device set. Don't
-	 * try to unरेजिस्टर these.
+	/* mii_timestamper statically registered by the PHY driver won't use the
+	 * register_mii_timestamper() and thus don't have ->device set. Don't
+	 * try to unregister these.
 	 */
-	अगर (!mii_ts->device)
-		वापस;
+	if (!mii_ts->device)
+		return;
 
 	mutex_lock(&tstamping_devices_lock);
-	list_क्रम_each(this, &mii_बारtamping_devices) अणु
-		desc = list_entry(this, काष्ठा mii_बारtamping_desc, list);
-		अगर (desc->device == mii_ts->device) अणु
+	list_for_each(this, &mii_timestamping_devices) {
+		desc = list_entry(this, struct mii_timestamping_desc, list);
+		if (desc->device == mii_ts->device) {
 			desc->ctrl->release_channel(desc->device, mii_ts);
 			put_device(desc->device);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 	mutex_unlock(&tstamping_devices_lock);
-पूर्ण
-EXPORT_SYMBOL(unरेजिस्टर_mii_बारtamper);
+}
+EXPORT_SYMBOL(unregister_mii_timestamper);

@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright (c) 2006 ARM Ltd.
  * Copyright (c) 2010 ST-Ericsson SA
@@ -12,24 +11,24 @@
  * Documentation: ARM DDI 0218E == PL081
  * Documentation: S3C6410 User's Manual == PL080S
  *
- * PL080 & PL081 both have 16 sets of DMA संकेतs that can be routed to any
+ * PL080 & PL081 both have 16 sets of DMA signals that can be routed to any
  * channel.
  *
- * The PL080 has 8 channels available क्रम simultaneous use, and the PL081
+ * The PL080 has 8 channels available for simultaneous use, and the PL081
  * has only two channels. So on these DMA controllers the number of channels
- * and the number of incoming DMA संकेतs are two totally dअगरferent things.
- * It is usually not possible to theoretically handle all physical संकेतs,
+ * and the number of incoming DMA signals are two totally different things.
+ * It is usually not possible to theoretically handle all physical signals,
  * so a multiplexing scheme with possible denial of use is necessary.
  *
  * The PL080 has a dual bus master, PL081 has a single master.
  *
- * PL080S is a version modअगरied by Samsung and used in S3C64xx SoCs.
- * It dअगरfers in following aspects:
- * - CH_CONFIG रेजिस्टर at dअगरferent offset,
- * - separate CH_CONTROL2 रेजिस्टर क्रम transfer size,
+ * PL080S is a version modified by Samsung and used in S3C64xx SoCs.
+ * It differs in following aspects:
+ * - CH_CONFIG register at different offset,
+ * - separate CH_CONTROL2 register for transfer size,
  * - bigger maximum transfer size,
  * - 8-word aligned LLI, instead of 4-word, due to extra CCTL2 word,
- * - no support क्रम peripheral flow control.
+ * - no support for peripheral flow control.
  *
  * Memory to peripheral transfer may be visualized as
  *	Get data from memory to DMAC
@@ -37,396 +36,396 @@
  *		On burst request from peripheral
  *			Destination burst from DMAC to peripheral
  *			Clear burst request
- *	Raise terminal count पूर्णांकerrupt
+ *	Raise terminal count interrupt
  *
  * For peripherals with a FIFO:
  * Source      burst size == half the depth of the peripheral FIFO
  * Destination burst size == the depth of the peripheral FIFO
  *
- * (Bursts are irrelevant क्रम mem to mem transfers - there are no burst
- * संकेतs, the DMA controller will simply facilitate its AHB master.)
+ * (Bursts are irrelevant for mem to mem transfers - there are no burst
+ * signals, the DMA controller will simply facilitate its AHB master.)
  *
- * ASSUMES शेष (little) endianness क्रम DMA transfers
+ * ASSUMES default (little) endianness for DMA transfers
  *
  * The PL08x has two flow control settings:
  *  - DMAC flow control: the transfer size defines the number of transfers
- *    which occur क्रम the current LLI entry, and the DMAC उठाओs TC at the
+ *    which occur for the current LLI entry, and the DMAC raises TC at the
  *    end of every LLI entry.  Observed behaviour shows the DMAC listening
- *    to both the BREQ and SREQ संकेतs (contrary to करोcumented),
- *    transferring data अगर either is active.  The LBREQ and LSREQ संकेतs
+ *    to both the BREQ and SREQ signals (contrary to documented),
+ *    transferring data if either is active.  The LBREQ and LSREQ signals
  *    are ignored.
  *
  *  - Peripheral flow control: the transfer size is ignored (and should be
  *    zero).  The data is transferred from the current LLI entry, until
- *    after the final transfer संकेतled by LBREQ or LSREQ.  The DMAC
+ *    after the final transfer signalled by LBREQ or LSREQ.  The DMAC
  *    will then move to the next LLI entry. Unsupported by PL080S.
  */
-#समावेश <linux/amba/bus.h>
-#समावेश <linux/amba/pl08x.h>
-#समावेश <linux/debugfs.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/device.h>
-#समावेश <linux/dmaengine.h>
-#समावेश <linux/dmapool.h>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/export.h>
-#समावेश <linux/init.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_dma.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <linux/seq_file.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/amba/pl080.h>
+#include <linux/amba/bus.h>
+#include <linux/amba/pl08x.h>
+#include <linux/debugfs.h>
+#include <linux/delay.h>
+#include <linux/device.h>
+#include <linux/dmaengine.h>
+#include <linux/dmapool.h>
+#include <linux/dma-mapping.h>
+#include <linux/export.h>
+#include <linux/init.h>
+#include <linux/interrupt.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/of_dma.h>
+#include <linux/pm_runtime.h>
+#include <linux/seq_file.h>
+#include <linux/slab.h>
+#include <linux/amba/pl080.h>
 
-#समावेश "dmaengine.h"
-#समावेश "virt-dma.h"
+#include "dmaengine.h"
+#include "virt-dma.h"
 
-#घोषणा DRIVER_NAME	"pl08xdmac"
+#define DRIVER_NAME	"pl08xdmac"
 
-#घोषणा PL80X_DMA_BUSWIDTHS \
+#define PL80X_DMA_BUSWIDTHS \
 	BIT(DMA_SLAVE_BUSWIDTH_UNDEFINED) | \
 	BIT(DMA_SLAVE_BUSWIDTH_1_BYTE) | \
 	BIT(DMA_SLAVE_BUSWIDTH_2_BYTES) | \
 	BIT(DMA_SLAVE_BUSWIDTH_4_BYTES)
 
-अटल काष्ठा amba_driver pl08x_amba_driver;
-काष्ठा pl08x_driver_data;
+static struct amba_driver pl08x_amba_driver;
+struct pl08x_driver_data;
 
 /**
- * काष्ठा venकरोr_data - venकरोr-specअगरic config parameters क्रम PL08x derivatives
- * @config_offset: offset to the configuration रेजिस्टर
+ * struct vendor_data - vendor-specific config parameters for PL08x derivatives
+ * @config_offset: offset to the configuration register
  * @channels: the number of channels available in this variant
- * @संकेतs: the number of request संकेतs available from the hardware
+ * @signals: the number of request signals available from the hardware
  * @dualmaster: whether this version supports dual AHB masters or not.
  * @nomadik: whether this variant is a ST Microelectronics Nomadik, where the
  *	channels have Nomadik security extension bits that need to be checked
- *	क्रम permission beक्रमe use and some रेजिस्टरs are missing
+ *	for permission before use and some registers are missing
  * @pl080s: whether this variant is a Samsung PL080S, which has separate
- *	रेजिस्टर and LLI word क्रम transfer size.
+ *	register and LLI word for transfer size.
  * @ftdmac020: whether this variant is a Faraday Technology FTDMAC020
- * @max_transfer_size: the maximum single element transfer size क्रम this
+ * @max_transfer_size: the maximum single element transfer size for this
  *	PL08x variant.
  */
-काष्ठा venकरोr_data अणु
+struct vendor_data {
 	u8 config_offset;
 	u8 channels;
-	u8 संकेतs;
+	u8 signals;
 	bool dualmaster;
 	bool nomadik;
 	bool pl080s;
 	bool ftdmac020;
 	u32 max_transfer_size;
-पूर्ण;
+};
 
 /**
- * काष्ठा pl08x_bus_data - inक्रमmation of source or destination
- * busses क्रम a transfer
+ * struct pl08x_bus_data - information of source or destination
+ * busses for a transfer
  * @addr: current address
  * @maxwidth: the maximum width of a transfer on this bus
  * @buswidth: the width of this bus in bytes: 1, 2 or 4
  */
-काष्ठा pl08x_bus_data अणु
+struct pl08x_bus_data {
 	dma_addr_t addr;
 	u8 maxwidth;
 	u8 buswidth;
-पूर्ण;
+};
 
-#घोषणा IS_BUS_ALIGNED(bus) IS_ALIGNED((bus)->addr, (bus)->buswidth)
+#define IS_BUS_ALIGNED(bus) IS_ALIGNED((bus)->addr, (bus)->buswidth)
 
 /**
- * काष्ठा pl08x_phy_chan - holder क्रम the physical channels
+ * struct pl08x_phy_chan - holder for the physical channels
  * @id: physical index to this channel
- * @base: memory base address क्रम this physical channel
- * @reg_config: configuration address क्रम this physical channel
- * @reg_control: control address क्रम this physical channel
- * @reg_src: transfer source address रेजिस्टर
- * @reg_dst: transfer destination address रेजिस्टर
- * @reg_lli: transfer LLI address रेजिस्टर
- * @reg_busy: अगर the variant has a special per-channel busy रेजिस्टर,
- * this contains a poपूर्णांकer to it
- * @lock: a lock to use when altering an instance of this काष्ठा
- * @serving: the भव channel currently being served by this physical
+ * @base: memory base address for this physical channel
+ * @reg_config: configuration address for this physical channel
+ * @reg_control: control address for this physical channel
+ * @reg_src: transfer source address register
+ * @reg_dst: transfer destination address register
+ * @reg_lli: transfer LLI address register
+ * @reg_busy: if the variant has a special per-channel busy register,
+ * this contains a pointer to it
+ * @lock: a lock to use when altering an instance of this struct
+ * @serving: the virtual channel currently being served by this physical
  * channel
- * @locked: channel unavailable क्रम the प्रणाली, e.g. dedicated to secure
+ * @locked: channel unavailable for the system, e.g. dedicated to secure
  * world
  * @ftdmac020: channel is on a FTDMAC020
  * @pl080s: channel is on a PL08s
  */
-काष्ठा pl08x_phy_chan अणु
-	अचिन्हित पूर्णांक id;
-	व्योम __iomem *base;
-	व्योम __iomem *reg_config;
-	व्योम __iomem *reg_control;
-	व्योम __iomem *reg_src;
-	व्योम __iomem *reg_dst;
-	व्योम __iomem *reg_lli;
-	व्योम __iomem *reg_busy;
+struct pl08x_phy_chan {
+	unsigned int id;
+	void __iomem *base;
+	void __iomem *reg_config;
+	void __iomem *reg_control;
+	void __iomem *reg_src;
+	void __iomem *reg_dst;
+	void __iomem *reg_lli;
+	void __iomem *reg_busy;
 	spinlock_t lock;
-	काष्ठा pl08x_dma_chan *serving;
+	struct pl08x_dma_chan *serving;
 	bool locked;
 	bool ftdmac020;
 	bool pl080s;
-पूर्ण;
+};
 
 /**
- * काष्ठा pl08x_sg - काष्ठाure containing data per sg
+ * struct pl08x_sg - structure containing data per sg
  * @src_addr: src address of sg
  * @dst_addr: dst address of sg
  * @len: transfer len in bytes
- * @node: node क्रम txd's dsg_list
+ * @node: node for txd's dsg_list
  */
-काष्ठा pl08x_sg अणु
+struct pl08x_sg {
 	dma_addr_t src_addr;
 	dma_addr_t dst_addr;
-	माप_प्रकार len;
-	काष्ठा list_head node;
-पूर्ण;
+	size_t len;
+	struct list_head node;
+};
 
 /**
- * काष्ठा pl08x_txd - wrapper क्रम काष्ठा dma_async_tx_descriptor
- * @vd: भव DMA descriptor
+ * struct pl08x_txd - wrapper for struct dma_async_tx_descriptor
+ * @vd: virtual DMA descriptor
  * @dsg_list: list of children sg's
- * @llis_bus: DMA memory address (physical) start क्रम the LLIs
- * @llis_va: भव memory address start क्रम the LLIs
- * @cctl: control reg values क्रम current txd
- * @ccfg: config reg values क्रम current txd
- * @करोne: this marks completed descriptors, which should not have their
+ * @llis_bus: DMA memory address (physical) start for the LLIs
+ * @llis_va: virtual memory address start for the LLIs
+ * @cctl: control reg values for current txd
+ * @ccfg: config reg values for current txd
+ * @done: this marks completed descriptors, which should not have their
  *   mux released.
  * @cyclic: indicate cyclic transfers
  */
-काष्ठा pl08x_txd अणु
-	काष्ठा virt_dma_desc vd;
-	काष्ठा list_head dsg_list;
+struct pl08x_txd {
+	struct virt_dma_desc vd;
+	struct list_head dsg_list;
 	dma_addr_t llis_bus;
 	u32 *llis_va;
-	/* Default cctl value क्रम LLIs */
+	/* Default cctl value for LLIs */
 	u32 cctl;
 	/*
-	 * Settings to be put पूर्णांकo the physical channel when we
-	 * trigger this txd.  Other रेजिस्टरs are in llis_va[0].
+	 * Settings to be put into the physical channel when we
+	 * trigger this txd.  Other registers are in llis_va[0].
 	 */
 	u32 ccfg;
-	bool करोne;
+	bool done;
 	bool cyclic;
-पूर्ण;
+};
 
 /**
- * क्रमागत pl08x_dma_chan_state - holds the PL08x specअगरic भव channel
+ * enum pl08x_dma_chan_state - holds the PL08x specific virtual channel
  * states
  * @PL08X_CHAN_IDLE: the channel is idle
  * @PL08X_CHAN_RUNNING: the channel has allocated a physical transport
  * channel and is running a transfer on it
  * @PL08X_CHAN_PAUSED: the channel has allocated a physical transport
- * channel, but the transfer is currently छोड़ोd
- * @PL08X_CHAN_WAITING: the channel is रुकोing क्रम a physical transport
- * channel to become available (only pertains to स_नकल channels)
+ * channel, but the transfer is currently paused
+ * @PL08X_CHAN_WAITING: the channel is waiting for a physical transport
+ * channel to become available (only pertains to memcpy channels)
  */
-क्रमागत pl08x_dma_chan_state अणु
+enum pl08x_dma_chan_state {
 	PL08X_CHAN_IDLE,
 	PL08X_CHAN_RUNNING,
 	PL08X_CHAN_PAUSED,
 	PL08X_CHAN_WAITING,
-पूर्ण;
+};
 
 /**
- * काष्ठा pl08x_dma_chan - this काष्ठाure wraps a DMA ENGINE channel
- * @vc: wrappped भव channel
- * @phychan: the physical channel utilized by this channel, अगर there is one
+ * struct pl08x_dma_chan - this structure wraps a DMA ENGINE channel
+ * @vc: wrappped virtual channel
+ * @phychan: the physical channel utilized by this channel, if there is one
  * @name: name of channel
- * @cd: channel platक्रमm data
+ * @cd: channel platform data
  * @cfg: slave configuration
  * @at: active transaction on this channel
- * @host: a poपूर्णांकer to the host (पूर्णांकernal use)
- * @state: whether the channel is idle, छोड़ोd, running etc
- * @slave: whether this channel is a device (slave) or क्रम स_नकल
- * @संकेत: the physical DMA request संकेत which this channel is using
- * @mux_use: count of descriptors using this DMA request संकेत setting
- * @रुकोing_at: समय in jअगरfies when this channel moved to रुकोing state
+ * @host: a pointer to the host (internal use)
+ * @state: whether the channel is idle, paused, running etc
+ * @slave: whether this channel is a device (slave) or for memcpy
+ * @signal: the physical DMA request signal which this channel is using
+ * @mux_use: count of descriptors using this DMA request signal setting
+ * @waiting_at: time in jiffies when this channel moved to waiting state
  */
-काष्ठा pl08x_dma_chan अणु
-	काष्ठा virt_dma_chan vc;
-	काष्ठा pl08x_phy_chan *phychan;
-	स्थिर अक्षर *name;
-	काष्ठा pl08x_channel_data *cd;
-	काष्ठा dma_slave_config cfg;
-	काष्ठा pl08x_txd *at;
-	काष्ठा pl08x_driver_data *host;
-	क्रमागत pl08x_dma_chan_state state;
+struct pl08x_dma_chan {
+	struct virt_dma_chan vc;
+	struct pl08x_phy_chan *phychan;
+	const char *name;
+	struct pl08x_channel_data *cd;
+	struct dma_slave_config cfg;
+	struct pl08x_txd *at;
+	struct pl08x_driver_data *host;
+	enum pl08x_dma_chan_state state;
 	bool slave;
-	पूर्णांक संकेत;
-	अचिन्हित mux_use;
-	अचिन्हित दीर्घ रुकोing_at;
-पूर्ण;
+	int signal;
+	unsigned mux_use;
+	unsigned long waiting_at;
+};
 
 /**
- * काष्ठा pl08x_driver_data - the local state holder क्रम the PL08x
- * @slave: optional slave engine क्रम this instance
- * @स_नकल: स_नकल engine क्रम this instance
- * @has_slave: the PL08x has a slave engine (routed संकेतs)
- * @base: भव memory base (remapped) क्रम the PL08x
+ * struct pl08x_driver_data - the local state holder for the PL08x
+ * @slave: optional slave engine for this instance
+ * @memcpy: memcpy engine for this instance
+ * @has_slave: the PL08x has a slave engine (routed signals)
+ * @base: virtual memory base (remapped) for the PL08x
  * @adev: the corresponding AMBA (PrimeCell) bus entry
- * @vd: venकरोr data क्रम this PL08x variant
- * @pd: platक्रमm data passed in from the platक्रमm/machine
- * @phy_chans: array of data क्रम the physical channels
- * @pool: a pool क्रम the LLI descriptors
- * @lli_buses: biपंचांगask to or in to LLI poपूर्णांकer selecting AHB port क्रम LLI
+ * @vd: vendor data for this PL08x variant
+ * @pd: platform data passed in from the platform/machine
+ * @phy_chans: array of data for the physical channels
+ * @pool: a pool for the LLI descriptors
+ * @lli_buses: bitmask to or in to LLI pointer selecting AHB port for LLI
  * fetches
  * @mem_buses: set to indicate memory transfers on AHB2.
- * @lli_words: how many words are used in each LLI item क्रम this variant
+ * @lli_words: how many words are used in each LLI item for this variant
  */
-काष्ठा pl08x_driver_data अणु
-	काष्ठा dma_device slave;
-	काष्ठा dma_device स_नकल;
+struct pl08x_driver_data {
+	struct dma_device slave;
+	struct dma_device memcpy;
 	bool has_slave;
-	व्योम __iomem *base;
-	काष्ठा amba_device *adev;
-	स्थिर काष्ठा venकरोr_data *vd;
-	काष्ठा pl08x_platक्रमm_data *pd;
-	काष्ठा pl08x_phy_chan *phy_chans;
-	काष्ठा dma_pool *pool;
+	void __iomem *base;
+	struct amba_device *adev;
+	const struct vendor_data *vd;
+	struct pl08x_platform_data *pd;
+	struct pl08x_phy_chan *phy_chans;
+	struct dma_pool *pool;
 	u8 lli_buses;
 	u8 mem_buses;
 	u8 lli_words;
-पूर्ण;
+};
 
 /*
- * PL08X specअगरic defines
+ * PL08X specific defines
  */
 
 /* The order of words in an LLI. */
-#घोषणा PL080_LLI_SRC		0
-#घोषणा PL080_LLI_DST		1
-#घोषणा PL080_LLI_LLI		2
-#घोषणा PL080_LLI_CCTL		3
-#घोषणा PL080S_LLI_CCTL2	4
+#define PL080_LLI_SRC		0
+#define PL080_LLI_DST		1
+#define PL080_LLI_LLI		2
+#define PL080_LLI_CCTL		3
+#define PL080S_LLI_CCTL2	4
 
 /* Total words in an LLI. */
-#घोषणा PL080_LLI_WORDS		4
-#घोषणा PL080S_LLI_WORDS	8
+#define PL080_LLI_WORDS		4
+#define PL080S_LLI_WORDS	8
 
 /*
- * Number of LLIs in each LLI buffer allocated क्रम one transfer
- * (maximum बार we call dma_pool_alloc on this pool without मुक्तing)
+ * Number of LLIs in each LLI buffer allocated for one transfer
+ * (maximum times we call dma_pool_alloc on this pool without freeing)
  */
-#घोषणा MAX_NUM_TSFR_LLIS	512
-#घोषणा PL08X_ALIGN		8
+#define MAX_NUM_TSFR_LLIS	512
+#define PL08X_ALIGN		8
 
-अटल अंतरभूत काष्ठा pl08x_dma_chan *to_pl08x_chan(काष्ठा dma_chan *chan)
-अणु
-	वापस container_of(chan, काष्ठा pl08x_dma_chan, vc.chan);
-पूर्ण
+static inline struct pl08x_dma_chan *to_pl08x_chan(struct dma_chan *chan)
+{
+	return container_of(chan, struct pl08x_dma_chan, vc.chan);
+}
 
-अटल अंतरभूत काष्ठा pl08x_txd *to_pl08x_txd(काष्ठा dma_async_tx_descriptor *tx)
-अणु
-	वापस container_of(tx, काष्ठा pl08x_txd, vd.tx);
-पूर्ण
+static inline struct pl08x_txd *to_pl08x_txd(struct dma_async_tx_descriptor *tx)
+{
+	return container_of(tx, struct pl08x_txd, vd.tx);
+}
 
 /*
  * Mux handling.
  *
  * This gives us the DMA request input to the PL08x primecell which the
  * peripheral described by the channel data will be routed to, possibly
- * via a board/SoC specअगरic बाह्यal MUX.  One important poपूर्णांक to note
- * here is that this करोes not depend on the physical channel.
+ * via a board/SoC specific external MUX.  One important point to note
+ * here is that this does not depend on the physical channel.
  */
-अटल पूर्णांक pl08x_request_mux(काष्ठा pl08x_dma_chan *plchan)
-अणु
-	स्थिर काष्ठा pl08x_platक्रमm_data *pd = plchan->host->pd;
-	पूर्णांक ret;
+static int pl08x_request_mux(struct pl08x_dma_chan *plchan)
+{
+	const struct pl08x_platform_data *pd = plchan->host->pd;
+	int ret;
 
-	अगर (plchan->mux_use++ == 0 && pd->get_xfer_संकेत) अणु
-		ret = pd->get_xfer_संकेत(plchan->cd);
-		अगर (ret < 0) अणु
+	if (plchan->mux_use++ == 0 && pd->get_xfer_signal) {
+		ret = pd->get_xfer_signal(plchan->cd);
+		if (ret < 0) {
 			plchan->mux_use = 0;
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 
-		plchan->संकेत = ret;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		plchan->signal = ret;
+	}
+	return 0;
+}
 
-अटल व्योम pl08x_release_mux(काष्ठा pl08x_dma_chan *plchan)
-अणु
-	स्थिर काष्ठा pl08x_platक्रमm_data *pd = plchan->host->pd;
+static void pl08x_release_mux(struct pl08x_dma_chan *plchan)
+{
+	const struct pl08x_platform_data *pd = plchan->host->pd;
 
-	अगर (plchan->संकेत >= 0) अणु
+	if (plchan->signal >= 0) {
 		WARN_ON(plchan->mux_use == 0);
 
-		अगर (--plchan->mux_use == 0 && pd->put_xfer_संकेत) अणु
-			pd->put_xfer_संकेत(plchan->cd, plchan->संकेत);
-			plchan->संकेत = -1;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		if (--plchan->mux_use == 0 && pd->put_xfer_signal) {
+			pd->put_xfer_signal(plchan->cd, plchan->signal);
+			plchan->signal = -1;
+		}
+	}
+}
 
 /*
  * Physical channel handling
  */
 
 /* Whether a certain channel is busy or not */
-अटल पूर्णांक pl08x_phy_channel_busy(काष्ठा pl08x_phy_chan *ch)
-अणु
-	अचिन्हित पूर्णांक val;
+static int pl08x_phy_channel_busy(struct pl08x_phy_chan *ch)
+{
+	unsigned int val;
 
-	/* If we have a special busy रेजिस्टर, take a लघुcut */
-	अगर (ch->reg_busy) अणु
-		val = पढ़ोl(ch->reg_busy);
-		वापस !!(val & BIT(ch->id));
-	पूर्ण
-	val = पढ़ोl(ch->reg_config);
-	वापस val & PL080_CONFIG_ACTIVE;
-पूर्ण
+	/* If we have a special busy register, take a shortcut */
+	if (ch->reg_busy) {
+		val = readl(ch->reg_busy);
+		return !!(val & BIT(ch->id));
+	}
+	val = readl(ch->reg_config);
+	return val & PL080_CONFIG_ACTIVE;
+}
 
 /*
- * pl08x_ग_लिखो_lli() - Write an LLI पूर्णांकo the DMA controller.
+ * pl08x_write_lli() - Write an LLI into the DMA controller.
  *
  * The PL08x derivatives support linked lists, but the first item of the
  * list containing the source, destination, control word and next LLI is
- * ignored. Instead the driver has to ग_लिखो those values directly पूर्णांकo the
- * SRC, DST, LLI and control रेजिस्टरs. On FTDMAC020 also the SIZE
- * रेजिस्टर need to be set up क्रम the first transfer.
+ * ignored. Instead the driver has to write those values directly into the
+ * SRC, DST, LLI and control registers. On FTDMAC020 also the SIZE
+ * register need to be set up for the first transfer.
  */
-अटल व्योम pl08x_ग_लिखो_lli(काष्ठा pl08x_driver_data *pl08x,
-		काष्ठा pl08x_phy_chan *phychan, स्थिर u32 *lli, u32 ccfg)
-अणु
-	अगर (pl08x->vd->pl080s)
+static void pl08x_write_lli(struct pl08x_driver_data *pl08x,
+		struct pl08x_phy_chan *phychan, const u32 *lli, u32 ccfg)
+{
+	if (pl08x->vd->pl080s)
 		dev_vdbg(&pl08x->adev->dev,
 			"WRITE channel %d: csrc=0x%08x, cdst=0x%08x, "
 			"clli=0x%08x, cctl=0x%08x, cctl2=0x%08x, ccfg=0x%08x\n",
 			phychan->id, lli[PL080_LLI_SRC], lli[PL080_LLI_DST],
 			lli[PL080_LLI_LLI], lli[PL080_LLI_CCTL],
 			lli[PL080S_LLI_CCTL2], ccfg);
-	अन्यथा
+	else
 		dev_vdbg(&pl08x->adev->dev,
 			"WRITE channel %d: csrc=0x%08x, cdst=0x%08x, "
 			"clli=0x%08x, cctl=0x%08x, ccfg=0x%08x\n",
 			phychan->id, lli[PL080_LLI_SRC], lli[PL080_LLI_DST],
 			lli[PL080_LLI_LLI], lli[PL080_LLI_CCTL], ccfg);
 
-	ग_लिखोl_relaxed(lli[PL080_LLI_SRC], phychan->reg_src);
-	ग_लिखोl_relaxed(lli[PL080_LLI_DST], phychan->reg_dst);
-	ग_लिखोl_relaxed(lli[PL080_LLI_LLI], phychan->reg_lli);
+	writel_relaxed(lli[PL080_LLI_SRC], phychan->reg_src);
+	writel_relaxed(lli[PL080_LLI_DST], phychan->reg_dst);
+	writel_relaxed(lli[PL080_LLI_LLI], phychan->reg_lli);
 
 	/*
-	 * The FTMAC020 has a dअगरferent layout in the CCTL word of the LLI
-	 * and the CCTL रेजिस्टर which is split in CSR and SIZE रेजिस्टरs.
-	 * Convert the LLI item CCTL पूर्णांकo the proper values to ग_लिखो पूर्णांकo
-	 * the CSR and SIZE रेजिस्टरs.
+	 * The FTMAC020 has a different layout in the CCTL word of the LLI
+	 * and the CCTL register which is split in CSR and SIZE registers.
+	 * Convert the LLI item CCTL into the proper values to write into
+	 * the CSR and SIZE registers.
 	 */
-	अगर (phychan->ftdmac020) अणु
+	if (phychan->ftdmac020) {
 		u32 llictl = lli[PL080_LLI_CCTL];
 		u32 val = 0;
 
-		/* Write the transfer size (12 bits) to the size रेजिस्टर */
-		ग_लिखोl_relaxed(llictl & FTDMAC020_LLI_TRANSFER_SIZE_MASK,
+		/* Write the transfer size (12 bits) to the size register */
+		writel_relaxed(llictl & FTDMAC020_LLI_TRANSFER_SIZE_MASK,
 			       phychan->base + FTDMAC020_CH_SIZE);
 		/*
-		 * Then ग_लिखो the control bits 28..16 to the control रेजिस्टर
+		 * Then write the control bits 28..16 to the control register
 		 * by shuffleing the bits around to where they are in the
-		 * मुख्य रेजिस्टर. The mapping is as follows:
+		 * main register. The mapping is as follows:
 		 * Bit 28: TC_MSK - mask on all except last LLI
 		 * Bit 27..25: SRC_WIDTH
 		 * Bit 24..22: DST_WIDTH
@@ -435,7 +434,7 @@
 		 * Bit 17: SRC_SEL
 		 * Bit 16: DST_SEL
 		 */
-		अगर (llictl & FTDMAC020_LLI_TC_MSK)
+		if (llictl & FTDMAC020_LLI_TC_MSK)
 			val |= FTDMAC020_CH_CSR_TC_MSK;
 		val |= ((llictl  & FTDMAC020_LLI_SRC_WIDTH_MSK) >>
 			(FTDMAC020_LLI_SRC_WIDTH_SHIFT -
@@ -449,426 +448,426 @@
 		val |= ((llictl  & FTDMAC020_LLI_DSTAD_CTL_MSK) >>
 			(FTDMAC020_LLI_DSTAD_CTL_SHIFT -
 			 FTDMAC020_CH_CSR_DSTAD_CTL_SHIFT));
-		अगर (llictl & FTDMAC020_LLI_SRC_SEL)
+		if (llictl & FTDMAC020_LLI_SRC_SEL)
 			val |= FTDMAC020_CH_CSR_SRC_SEL;
-		अगर (llictl & FTDMAC020_LLI_DST_SEL)
+		if (llictl & FTDMAC020_LLI_DST_SEL)
 			val |= FTDMAC020_CH_CSR_DST_SEL;
 
 		/*
 		 * Set up the bits that exist in the CSR but are not
-		 * part the LLI, i.e. only माला_लो written to the control
-		 * रेजिस्टर right here.
+		 * part the LLI, i.e. only gets written to the control
+		 * register right here.
 		 *
-		 * FIXME: करो not just handle स_नकल, also handle slave DMA.
+		 * FIXME: do not just handle memcpy, also handle slave DMA.
 		 */
-		चयन (pl08x->pd->स_नकल_burst_size) अणु
-		शेष:
-		हाल PL08X_BURST_SZ_1:
+		switch (pl08x->pd->memcpy_burst_size) {
+		default:
+		case PL08X_BURST_SZ_1:
 			val |= PL080_BSIZE_1 <<
 				FTDMAC020_CH_CSR_SRC_SIZE_SHIFT;
-			अवरोध;
-		हाल PL08X_BURST_SZ_4:
+			break;
+		case PL08X_BURST_SZ_4:
 			val |= PL080_BSIZE_4 <<
 				FTDMAC020_CH_CSR_SRC_SIZE_SHIFT;
-			अवरोध;
-		हाल PL08X_BURST_SZ_8:
+			break;
+		case PL08X_BURST_SZ_8:
 			val |= PL080_BSIZE_8 <<
 				FTDMAC020_CH_CSR_SRC_SIZE_SHIFT;
-			अवरोध;
-		हाल PL08X_BURST_SZ_16:
+			break;
+		case PL08X_BURST_SZ_16:
 			val |= PL080_BSIZE_16 <<
 				FTDMAC020_CH_CSR_SRC_SIZE_SHIFT;
-			अवरोध;
-		हाल PL08X_BURST_SZ_32:
+			break;
+		case PL08X_BURST_SZ_32:
 			val |= PL080_BSIZE_32 <<
 				FTDMAC020_CH_CSR_SRC_SIZE_SHIFT;
-			अवरोध;
-		हाल PL08X_BURST_SZ_64:
+			break;
+		case PL08X_BURST_SZ_64:
 			val |= PL080_BSIZE_64 <<
 				FTDMAC020_CH_CSR_SRC_SIZE_SHIFT;
-			अवरोध;
-		हाल PL08X_BURST_SZ_128:
+			break;
+		case PL08X_BURST_SZ_128:
 			val |= PL080_BSIZE_128 <<
 				FTDMAC020_CH_CSR_SRC_SIZE_SHIFT;
-			अवरोध;
-		हाल PL08X_BURST_SZ_256:
+			break;
+		case PL08X_BURST_SZ_256:
 			val |= PL080_BSIZE_256 <<
 				FTDMAC020_CH_CSR_SRC_SIZE_SHIFT;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		/* Protection flags */
-		अगर (pl08x->pd->स_नकल_prot_buff)
+		if (pl08x->pd->memcpy_prot_buff)
 			val |= FTDMAC020_CH_CSR_PROT2;
-		अगर (pl08x->pd->स_नकल_prot_cache)
+		if (pl08x->pd->memcpy_prot_cache)
 			val |= FTDMAC020_CH_CSR_PROT3;
 		/* We are the kernel, so we are in privileged mode */
 		val |= FTDMAC020_CH_CSR_PROT1;
 
-		ग_लिखोl_relaxed(val, phychan->reg_control);
-	पूर्ण अन्यथा अणु
+		writel_relaxed(val, phychan->reg_control);
+	} else {
 		/* Bits are just identical */
-		ग_लिखोl_relaxed(lli[PL080_LLI_CCTL], phychan->reg_control);
-	पूर्ण
+		writel_relaxed(lli[PL080_LLI_CCTL], phychan->reg_control);
+	}
 
 	/* Second control word on the PL080s */
-	अगर (pl08x->vd->pl080s)
-		ग_लिखोl_relaxed(lli[PL080S_LLI_CCTL2],
+	if (pl08x->vd->pl080s)
+		writel_relaxed(lli[PL080S_LLI_CCTL2],
 				phychan->base + PL080S_CH_CONTROL2);
 
-	ग_लिखोl(ccfg, phychan->reg_config);
-पूर्ण
+	writel(ccfg, phychan->reg_config);
+}
 
 /*
- * Set the initial DMA रेजिस्टर values i.e. those क्रम the first LLI
- * The next LLI poपूर्णांकer and the configuration पूर्णांकerrupt bit have
- * been set when the LLIs were स्थिरructed.  Poke them पूर्णांकo the hardware
+ * Set the initial DMA register values i.e. those for the first LLI
+ * The next LLI pointer and the configuration interrupt bit have
+ * been set when the LLIs were constructed.  Poke them into the hardware
  * and start the transfer.
  */
-अटल व्योम pl08x_start_next_txd(काष्ठा pl08x_dma_chan *plchan)
-अणु
-	काष्ठा pl08x_driver_data *pl08x = plchan->host;
-	काष्ठा pl08x_phy_chan *phychan = plchan->phychan;
-	काष्ठा virt_dma_desc *vd = vchan_next_desc(&plchan->vc);
-	काष्ठा pl08x_txd *txd = to_pl08x_txd(&vd->tx);
+static void pl08x_start_next_txd(struct pl08x_dma_chan *plchan)
+{
+	struct pl08x_driver_data *pl08x = plchan->host;
+	struct pl08x_phy_chan *phychan = plchan->phychan;
+	struct virt_dma_desc *vd = vchan_next_desc(&plchan->vc);
+	struct pl08x_txd *txd = to_pl08x_txd(&vd->tx);
 	u32 val;
 
 	list_del(&txd->vd.node);
 
 	plchan->at = txd;
 
-	/* Wait क्रम channel inactive */
-	जबतक (pl08x_phy_channel_busy(phychan))
+	/* Wait for channel inactive */
+	while (pl08x_phy_channel_busy(phychan))
 		cpu_relax();
 
-	pl08x_ग_लिखो_lli(pl08x, phychan, &txd->llis_va[0], txd->ccfg);
+	pl08x_write_lli(pl08x, phychan, &txd->llis_va[0], txd->ccfg);
 
 	/* Enable the DMA channel */
-	/* Do not access config रेजिस्टर until channel shows as disabled */
-	जबतक (पढ़ोl(pl08x->base + PL080_EN_CHAN) & BIT(phychan->id))
+	/* Do not access config register until channel shows as disabled */
+	while (readl(pl08x->base + PL080_EN_CHAN) & BIT(phychan->id))
 		cpu_relax();
 
-	/* Do not access config रेजिस्टर until channel shows as inactive */
-	अगर (phychan->ftdmac020) अणु
-		val = पढ़ोl(phychan->reg_config);
-		जबतक (val & FTDMAC020_CH_CFG_BUSY)
-			val = पढ़ोl(phychan->reg_config);
+	/* Do not access config register until channel shows as inactive */
+	if (phychan->ftdmac020) {
+		val = readl(phychan->reg_config);
+		while (val & FTDMAC020_CH_CFG_BUSY)
+			val = readl(phychan->reg_config);
 
-		val = पढ़ोl(phychan->reg_control);
-		जबतक (val & FTDMAC020_CH_CSR_EN)
-			val = पढ़ोl(phychan->reg_control);
+		val = readl(phychan->reg_control);
+		while (val & FTDMAC020_CH_CSR_EN)
+			val = readl(phychan->reg_control);
 
-		ग_लिखोl(val | FTDMAC020_CH_CSR_EN,
+		writel(val | FTDMAC020_CH_CSR_EN,
 		       phychan->reg_control);
-	पूर्ण अन्यथा अणु
-		val = पढ़ोl(phychan->reg_config);
-		जबतक ((val & PL080_CONFIG_ACTIVE) ||
+	} else {
+		val = readl(phychan->reg_config);
+		while ((val & PL080_CONFIG_ACTIVE) ||
 		       (val & PL080_CONFIG_ENABLE))
-			val = पढ़ोl(phychan->reg_config);
+			val = readl(phychan->reg_config);
 
-		ग_लिखोl(val | PL080_CONFIG_ENABLE, phychan->reg_config);
-	पूर्ण
-पूर्ण
+		writel(val | PL080_CONFIG_ENABLE, phychan->reg_config);
+	}
+}
 
 /*
  * Pause the channel by setting the HALT bit.
  *
- * For M->P transfers, छोड़ो the DMAC first and then stop the peripheral -
- * the FIFO can only drain अगर the peripheral is still requesting data.
- * (note: this can still समयout अगर the DMAC FIFO never drains of data.)
+ * For M->P transfers, pause the DMAC first and then stop the peripheral -
+ * the FIFO can only drain if the peripheral is still requesting data.
+ * (note: this can still timeout if the DMAC FIFO never drains of data.)
  *
  * For P->M transfers, disable the peripheral first to stop it filling
- * the DMAC FIFO, and then छोड़ो the DMAC.
+ * the DMAC FIFO, and then pause the DMAC.
  */
-अटल व्योम pl08x_छोड़ो_phy_chan(काष्ठा pl08x_phy_chan *ch)
-अणु
+static void pl08x_pause_phy_chan(struct pl08x_phy_chan *ch)
+{
 	u32 val;
-	पूर्णांक समयout;
+	int timeout;
 
-	अगर (ch->ftdmac020) अणु
+	if (ch->ftdmac020) {
 		/* Use the enable bit on the FTDMAC020 */
-		val = पढ़ोl(ch->reg_control);
+		val = readl(ch->reg_control);
 		val &= ~FTDMAC020_CH_CSR_EN;
-		ग_लिखोl(val, ch->reg_control);
-		वापस;
-	पूर्ण
+		writel(val, ch->reg_control);
+		return;
+	}
 
-	/* Set the HALT bit and रुको क्रम the FIFO to drain */
-	val = पढ़ोl(ch->reg_config);
+	/* Set the HALT bit and wait for the FIFO to drain */
+	val = readl(ch->reg_config);
 	val |= PL080_CONFIG_HALT;
-	ग_लिखोl(val, ch->reg_config);
+	writel(val, ch->reg_config);
 
-	/* Wait क्रम channel inactive */
-	क्रम (समयout = 1000; समयout; समयout--) अणु
-		अगर (!pl08x_phy_channel_busy(ch))
-			अवरोध;
+	/* Wait for channel inactive */
+	for (timeout = 1000; timeout; timeout--) {
+		if (!pl08x_phy_channel_busy(ch))
+			break;
 		udelay(1);
-	पूर्ण
-	अगर (pl08x_phy_channel_busy(ch))
+	}
+	if (pl08x_phy_channel_busy(ch))
 		pr_err("pl08x: channel%u timeout waiting for pause\n", ch->id);
-पूर्ण
+}
 
-अटल व्योम pl08x_resume_phy_chan(काष्ठा pl08x_phy_chan *ch)
-अणु
+static void pl08x_resume_phy_chan(struct pl08x_phy_chan *ch)
+{
 	u32 val;
 
 	/* Use the enable bit on the FTDMAC020 */
-	अगर (ch->ftdmac020) अणु
-		val = पढ़ोl(ch->reg_control);
+	if (ch->ftdmac020) {
+		val = readl(ch->reg_control);
 		val |= FTDMAC020_CH_CSR_EN;
-		ग_लिखोl(val, ch->reg_control);
-		वापस;
-	पूर्ण
+		writel(val, ch->reg_control);
+		return;
+	}
 
 	/* Clear the HALT bit */
-	val = पढ़ोl(ch->reg_config);
+	val = readl(ch->reg_config);
 	val &= ~PL080_CONFIG_HALT;
-	ग_लिखोl(val, ch->reg_config);
-पूर्ण
+	writel(val, ch->reg_config);
+}
 
 /*
  * pl08x_terminate_phy_chan() stops the channel, clears the FIFO and
- * clears any pending पूर्णांकerrupt status.  This should not be used क्रम
- * an on-going transfer, but as a method of shutting करोwn a channel
- * (eg, when it's no दीर्घer used) or terminating a transfer.
+ * clears any pending interrupt status.  This should not be used for
+ * an on-going transfer, but as a method of shutting down a channel
+ * (eg, when it's no longer used) or terminating a transfer.
  */
-अटल व्योम pl08x_terminate_phy_chan(काष्ठा pl08x_driver_data *pl08x,
-	काष्ठा pl08x_phy_chan *ch)
-अणु
+static void pl08x_terminate_phy_chan(struct pl08x_driver_data *pl08x,
+	struct pl08x_phy_chan *ch)
+{
 	u32 val;
 
-	/* The layout क्रम the FTDMAC020 is dअगरferent */
-	अगर (ch->ftdmac020) अणु
-		/* Disable all पूर्णांकerrupts */
-		val = पढ़ोl(ch->reg_config);
+	/* The layout for the FTDMAC020 is different */
+	if (ch->ftdmac020) {
+		/* Disable all interrupts */
+		val = readl(ch->reg_config);
 		val |= (FTDMAC020_CH_CFG_INT_ABT_MASK |
 			FTDMAC020_CH_CFG_INT_ERR_MASK |
 			FTDMAC020_CH_CFG_INT_TC_MASK);
-		ग_लिखोl(val, ch->reg_config);
+		writel(val, ch->reg_config);
 
 		/* Abort and disable channel */
-		val = पढ़ोl(ch->reg_control);
+		val = readl(ch->reg_control);
 		val &= ~FTDMAC020_CH_CSR_EN;
 		val |= FTDMAC020_CH_CSR_ABT;
-		ग_लिखोl(val, ch->reg_control);
+		writel(val, ch->reg_control);
 
-		/* Clear ABT and ERR पूर्णांकerrupt flags */
-		ग_लिखोl(BIT(ch->id) | BIT(ch->id + 16),
+		/* Clear ABT and ERR interrupt flags */
+		writel(BIT(ch->id) | BIT(ch->id + 16),
 		       pl08x->base + PL080_ERR_CLEAR);
-		ग_लिखोl(BIT(ch->id), pl08x->base + PL080_TC_CLEAR);
+		writel(BIT(ch->id), pl08x->base + PL080_TC_CLEAR);
 
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	val = पढ़ोl(ch->reg_config);
+	val = readl(ch->reg_config);
 	val &= ~(PL080_CONFIG_ENABLE | PL080_CONFIG_ERR_IRQ_MASK |
 		 PL080_CONFIG_TC_IRQ_MASK);
-	ग_लिखोl(val, ch->reg_config);
+	writel(val, ch->reg_config);
 
-	ग_लिखोl(BIT(ch->id), pl08x->base + PL080_ERR_CLEAR);
-	ग_लिखोl(BIT(ch->id), pl08x->base + PL080_TC_CLEAR);
-पूर्ण
+	writel(BIT(ch->id), pl08x->base + PL080_ERR_CLEAR);
+	writel(BIT(ch->id), pl08x->base + PL080_TC_CLEAR);
+}
 
-अटल u32 get_bytes_in_phy_channel(काष्ठा pl08x_phy_chan *ch)
-अणु
+static u32 get_bytes_in_phy_channel(struct pl08x_phy_chan *ch)
+{
 	u32 val;
 	u32 bytes;
 
-	अगर (ch->ftdmac020) अणु
-		bytes = पढ़ोl(ch->base + FTDMAC020_CH_SIZE);
+	if (ch->ftdmac020) {
+		bytes = readl(ch->base + FTDMAC020_CH_SIZE);
 
-		val = पढ़ोl(ch->reg_control);
+		val = readl(ch->reg_control);
 		val &= FTDMAC020_CH_CSR_SRC_WIDTH_MSK;
 		val >>= FTDMAC020_CH_CSR_SRC_WIDTH_SHIFT;
-	पूर्ण अन्यथा अगर (ch->pl080s) अणु
-		val = पढ़ोl(ch->base + PL080S_CH_CONTROL2);
+	} else if (ch->pl080s) {
+		val = readl(ch->base + PL080S_CH_CONTROL2);
 		bytes = val & PL080S_CONTROL_TRANSFER_SIZE_MASK;
 
-		val = पढ़ोl(ch->reg_control);
+		val = readl(ch->reg_control);
 		val &= PL080_CONTROL_SWIDTH_MASK;
 		val >>= PL080_CONTROL_SWIDTH_SHIFT;
-	पूर्ण अन्यथा अणु
+	} else {
 		/* Plain PL08x */
-		val = पढ़ोl(ch->reg_control);
+		val = readl(ch->reg_control);
 		bytes = val & PL080_CONTROL_TRANSFER_SIZE_MASK;
 
 		val &= PL080_CONTROL_SWIDTH_MASK;
 		val >>= PL080_CONTROL_SWIDTH_SHIFT;
-	पूर्ण
+	}
 
-	चयन (val) अणु
-	हाल PL080_WIDTH_8BIT:
-		अवरोध;
-	हाल PL080_WIDTH_16BIT:
+	switch (val) {
+	case PL080_WIDTH_8BIT:
+		break;
+	case PL080_WIDTH_16BIT:
 		bytes *= 2;
-		अवरोध;
-	हाल PL080_WIDTH_32BIT:
+		break;
+	case PL080_WIDTH_32BIT:
 		bytes *= 4;
-		अवरोध;
-	पूर्ण
-	वापस bytes;
-पूर्ण
+		break;
+	}
+	return bytes;
+}
 
-अटल u32 get_bytes_in_lli(काष्ठा pl08x_phy_chan *ch, स्थिर u32 *llis_va)
-अणु
+static u32 get_bytes_in_lli(struct pl08x_phy_chan *ch, const u32 *llis_va)
+{
 	u32 val;
 	u32 bytes;
 
-	अगर (ch->ftdmac020) अणु
+	if (ch->ftdmac020) {
 		val = llis_va[PL080_LLI_CCTL];
 		bytes = val & FTDMAC020_LLI_TRANSFER_SIZE_MASK;
 
 		val = llis_va[PL080_LLI_CCTL];
 		val &= FTDMAC020_LLI_SRC_WIDTH_MSK;
 		val >>= FTDMAC020_LLI_SRC_WIDTH_SHIFT;
-	पूर्ण अन्यथा अगर (ch->pl080s) अणु
+	} else if (ch->pl080s) {
 		val = llis_va[PL080S_LLI_CCTL2];
 		bytes = val & PL080S_CONTROL_TRANSFER_SIZE_MASK;
 
 		val = llis_va[PL080_LLI_CCTL];
 		val &= PL080_CONTROL_SWIDTH_MASK;
 		val >>= PL080_CONTROL_SWIDTH_SHIFT;
-	पूर्ण अन्यथा अणु
+	} else {
 		/* Plain PL08x */
 		val = llis_va[PL080_LLI_CCTL];
 		bytes = val & PL080_CONTROL_TRANSFER_SIZE_MASK;
 
 		val &= PL080_CONTROL_SWIDTH_MASK;
 		val >>= PL080_CONTROL_SWIDTH_SHIFT;
-	पूर्ण
+	}
 
-	चयन (val) अणु
-	हाल PL080_WIDTH_8BIT:
-		अवरोध;
-	हाल PL080_WIDTH_16BIT:
+	switch (val) {
+	case PL080_WIDTH_8BIT:
+		break;
+	case PL080_WIDTH_16BIT:
 		bytes *= 2;
-		अवरोध;
-	हाल PL080_WIDTH_32BIT:
+		break;
+	case PL080_WIDTH_32BIT:
 		bytes *= 4;
-		अवरोध;
-	पूर्ण
-	वापस bytes;
-पूर्ण
+		break;
+	}
+	return bytes;
+}
 
-/* The channel should be छोड़ोd when calling this */
-अटल u32 pl08x_getbytes_chan(काष्ठा pl08x_dma_chan *plchan)
-अणु
-	काष्ठा pl08x_driver_data *pl08x = plchan->host;
-	स्थिर u32 *llis_va, *llis_va_limit;
-	काष्ठा pl08x_phy_chan *ch;
+/* The channel should be paused when calling this */
+static u32 pl08x_getbytes_chan(struct pl08x_dma_chan *plchan)
+{
+	struct pl08x_driver_data *pl08x = plchan->host;
+	const u32 *llis_va, *llis_va_limit;
+	struct pl08x_phy_chan *ch;
 	dma_addr_t llis_bus;
-	काष्ठा pl08x_txd *txd;
+	struct pl08x_txd *txd;
 	u32 llis_max_words;
-	माप_प्रकार bytes;
+	size_t bytes;
 	u32 clli;
 
 	ch = plchan->phychan;
 	txd = plchan->at;
 
-	अगर (!ch || !txd)
-		वापस 0;
+	if (!ch || !txd)
+		return 0;
 
 	/*
-	 * Follow the LLIs to get the number of reमुख्यing
+	 * Follow the LLIs to get the number of remaining
 	 * bytes in the currently active transaction.
 	 */
-	clli = पढ़ोl(ch->reg_lli) & ~PL080_LLI_LM_AHB2;
+	clli = readl(ch->reg_lli) & ~PL080_LLI_LM_AHB2;
 
-	/* First get the reमुख्यing bytes in the active transfer */
+	/* First get the remaining bytes in the active transfer */
 	bytes = get_bytes_in_phy_channel(ch);
 
-	अगर (!clli)
-		वापस bytes;
+	if (!clli)
+		return bytes;
 
 	llis_va = txd->llis_va;
 	llis_bus = txd->llis_bus;
 
 	llis_max_words = pl08x->lli_words * MAX_NUM_TSFR_LLIS;
 	BUG_ON(clli < llis_bus || clli >= llis_bus +
-						माप(u32) * llis_max_words);
+						sizeof(u32) * llis_max_words);
 
 	/*
 	 * Locate the next LLI - as this is an array,
 	 * it's simple maths to find.
 	 */
-	llis_va += (clli - llis_bus) / माप(u32);
+	llis_va += (clli - llis_bus) / sizeof(u32);
 
 	llis_va_limit = llis_va + llis_max_words;
 
-	क्रम (; llis_va < llis_va_limit; llis_va += pl08x->lli_words) अणु
+	for (; llis_va < llis_va_limit; llis_va += pl08x->lli_words) {
 		bytes += get_bytes_in_lli(ch, llis_va);
 
 		/*
-		 * A LLI poपूर्णांकer going backward terminates the LLI list
+		 * A LLI pointer going backward terminates the LLI list
 		 */
-		अगर (llis_va[PL080_LLI_LLI] <= clli)
-			अवरोध;
-	पूर्ण
+		if (llis_va[PL080_LLI_LLI] <= clli)
+			break;
+	}
 
-	वापस bytes;
-पूर्ण
+	return bytes;
+}
 
 /*
- * Allocate a physical channel क्रम a भव channel
+ * Allocate a physical channel for a virtual channel
  *
- * Try to locate a physical channel to be used क्रम this transfer. If all
- * are taken वापस शून्य and the requester will have to cope by using
+ * Try to locate a physical channel to be used for this transfer. If all
+ * are taken return NULL and the requester will have to cope by using
  * some fallback PIO mode or retrying later.
  */
-अटल काष्ठा pl08x_phy_chan *
-pl08x_get_phy_channel(काष्ठा pl08x_driver_data *pl08x,
-		      काष्ठा pl08x_dma_chan *virt_chan)
-अणु
-	काष्ठा pl08x_phy_chan *ch = शून्य;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक i;
+static struct pl08x_phy_chan *
+pl08x_get_phy_channel(struct pl08x_driver_data *pl08x,
+		      struct pl08x_dma_chan *virt_chan)
+{
+	struct pl08x_phy_chan *ch = NULL;
+	unsigned long flags;
+	int i;
 
-	क्रम (i = 0; i < pl08x->vd->channels; i++) अणु
+	for (i = 0; i < pl08x->vd->channels; i++) {
 		ch = &pl08x->phy_chans[i];
 
 		spin_lock_irqsave(&ch->lock, flags);
 
-		अगर (!ch->locked && !ch->serving) अणु
+		if (!ch->locked && !ch->serving) {
 			ch->serving = virt_chan;
 			spin_unlock_irqrestore(&ch->lock, flags);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		spin_unlock_irqrestore(&ch->lock, flags);
-	पूर्ण
+	}
 
-	अगर (i == pl08x->vd->channels) अणु
+	if (i == pl08x->vd->channels) {
 		/* No physical channel available, cope with it */
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	वापस ch;
-पूर्ण
+	return ch;
+}
 
-/* Mark the physical channel as मुक्त.  Note, this ग_लिखो is atomic. */
-अटल अंतरभूत व्योम pl08x_put_phy_channel(काष्ठा pl08x_driver_data *pl08x,
-					 काष्ठा pl08x_phy_chan *ch)
-अणु
-	ch->serving = शून्य;
-पूर्ण
+/* Mark the physical channel as free.  Note, this write is atomic. */
+static inline void pl08x_put_phy_channel(struct pl08x_driver_data *pl08x,
+					 struct pl08x_phy_chan *ch)
+{
+	ch->serving = NULL;
+}
 
 /*
  * Try to allocate a physical channel.  When successful, assign it to
- * this भव channel, and initiate the next descriptor.  The
- * भव channel lock must be held at this poपूर्णांक.
+ * this virtual channel, and initiate the next descriptor.  The
+ * virtual channel lock must be held at this point.
  */
-अटल व्योम pl08x_phy_alloc_and_start(काष्ठा pl08x_dma_chan *plchan)
-अणु
-	काष्ठा pl08x_driver_data *pl08x = plchan->host;
-	काष्ठा pl08x_phy_chan *ch;
+static void pl08x_phy_alloc_and_start(struct pl08x_dma_chan *plchan)
+{
+	struct pl08x_driver_data *pl08x = plchan->host;
+	struct pl08x_phy_chan *ch;
 
 	ch = pl08x_get_phy_channel(pl08x, plchan);
-	अगर (!ch) अणु
+	if (!ch) {
 		dev_dbg(&pl08x->adev->dev, "no physical channel available for xfer on %s\n", plchan->name);
 		plchan->state = PL08X_CHAN_WAITING;
-		plchan->रुकोing_at = jअगरfies;
-		वापस;
-	पूर्ण
+		plchan->waiting_at = jiffies;
+		return;
+	}
 
 	dev_dbg(&pl08x->adev->dev, "allocated physical channel %d for xfer on %s\n",
 		ch->id, plchan->name);
@@ -876,257 +875,257 @@ pl08x_get_phy_channel(काष्ठा pl08x_driver_data *pl08x,
 	plchan->phychan = ch;
 	plchan->state = PL08X_CHAN_RUNNING;
 	pl08x_start_next_txd(plchan);
-पूर्ण
+}
 
-अटल व्योम pl08x_phy_reassign_start(काष्ठा pl08x_phy_chan *ch,
-	काष्ठा pl08x_dma_chan *plchan)
-अणु
-	काष्ठा pl08x_driver_data *pl08x = plchan->host;
+static void pl08x_phy_reassign_start(struct pl08x_phy_chan *ch,
+	struct pl08x_dma_chan *plchan)
+{
+	struct pl08x_driver_data *pl08x = plchan->host;
 
 	dev_dbg(&pl08x->adev->dev, "reassigned physical channel %d for xfer on %s\n",
 		ch->id, plchan->name);
 
 	/*
-	 * We करो this without taking the lock; we're really only concerned
-	 * about whether this poपूर्णांकer is शून्य or not, and we're guaranteed
-	 * that this will only be called when it _alपढ़ोy_ is non-शून्य.
+	 * We do this without taking the lock; we're really only concerned
+	 * about whether this pointer is NULL or not, and we're guaranteed
+	 * that this will only be called when it _already_ is non-NULL.
 	 */
 	ch->serving = plchan;
 	plchan->phychan = ch;
 	plchan->state = PL08X_CHAN_RUNNING;
 	pl08x_start_next_txd(plchan);
-पूर्ण
+}
 
 /*
- * Free a physical DMA channel, potentially पुनः_स्मृतिating it to another
- * भव channel अगर we have any pending.
+ * Free a physical DMA channel, potentially reallocating it to another
+ * virtual channel if we have any pending.
  */
-अटल व्योम pl08x_phy_मुक्त(काष्ठा pl08x_dma_chan *plchan)
-अणु
-	काष्ठा pl08x_driver_data *pl08x = plchan->host;
-	काष्ठा pl08x_dma_chan *p, *next;
-	अचिन्हित दीर्घ रुकोing_at;
+static void pl08x_phy_free(struct pl08x_dma_chan *plchan)
+{
+	struct pl08x_driver_data *pl08x = plchan->host;
+	struct pl08x_dma_chan *p, *next;
+	unsigned long waiting_at;
  retry:
-	next = शून्य;
-	रुकोing_at = jअगरfies;
+	next = NULL;
+	waiting_at = jiffies;
 
 	/*
-	 * Find a रुकोing भव channel क्रम the next transfer.
-	 * To be fair, समय when each channel reached रुकोing state is compared
-	 * to select channel that is रुकोing क्रम the दीर्घest समय.
+	 * Find a waiting virtual channel for the next transfer.
+	 * To be fair, time when each channel reached waiting state is compared
+	 * to select channel that is waiting for the longest time.
 	 */
-	list_क्रम_each_entry(p, &pl08x->स_नकल.channels, vc.chan.device_node)
-		अगर (p->state == PL08X_CHAN_WAITING &&
-		    p->रुकोing_at <= रुकोing_at) अणु
+	list_for_each_entry(p, &pl08x->memcpy.channels, vc.chan.device_node)
+		if (p->state == PL08X_CHAN_WAITING &&
+		    p->waiting_at <= waiting_at) {
 			next = p;
-			रुकोing_at = p->रुकोing_at;
-		पूर्ण
+			waiting_at = p->waiting_at;
+		}
 
-	अगर (!next && pl08x->has_slave) अणु
-		list_क्रम_each_entry(p, &pl08x->slave.channels, vc.chan.device_node)
-			अगर (p->state == PL08X_CHAN_WAITING &&
-			    p->रुकोing_at <= रुकोing_at) अणु
+	if (!next && pl08x->has_slave) {
+		list_for_each_entry(p, &pl08x->slave.channels, vc.chan.device_node)
+			if (p->state == PL08X_CHAN_WAITING &&
+			    p->waiting_at <= waiting_at) {
 				next = p;
-				रुकोing_at = p->रुकोing_at;
-			पूर्ण
-	पूर्ण
+				waiting_at = p->waiting_at;
+			}
+	}
 
 	/* Ensure that the physical channel is stopped */
 	pl08x_terminate_phy_chan(pl08x, plchan->phychan);
 
-	अगर (next) अणु
+	if (next) {
 		bool success;
 
 		/*
 		 * Eww.  We know this isn't going to deadlock
-		 * but lockdep probably करोesn't.
+		 * but lockdep probably doesn't.
 		 */
 		spin_lock(&next->vc.lock);
 		/* Re-check the state now that we have the lock */
 		success = next->state == PL08X_CHAN_WAITING;
-		अगर (success)
+		if (success)
 			pl08x_phy_reassign_start(plchan->phychan, next);
 		spin_unlock(&next->vc.lock);
 
 		/* If the state changed, try to find another channel */
-		अगर (!success)
-			जाओ retry;
-	पूर्ण अन्यथा अणु
-		/* No more jobs, so मुक्त up the physical channel */
+		if (!success)
+			goto retry;
+	} else {
+		/* No more jobs, so free up the physical channel */
 		pl08x_put_phy_channel(pl08x, plchan->phychan);
-	पूर्ण
+	}
 
-	plchan->phychan = शून्य;
+	plchan->phychan = NULL;
 	plchan->state = PL08X_CHAN_IDLE;
-पूर्ण
+}
 
 /*
  * LLI handling
  */
 
-अटल अंतरभूत अचिन्हित पूर्णांक
-pl08x_get_bytes_क्रम_lli(काष्ठा pl08x_driver_data *pl08x,
+static inline unsigned int
+pl08x_get_bytes_for_lli(struct pl08x_driver_data *pl08x,
 			u32 cctl,
 			bool source)
-अणु
+{
 	u32 val;
 
-	अगर (pl08x->vd->ftdmac020) अणु
-		अगर (source)
+	if (pl08x->vd->ftdmac020) {
+		if (source)
 			val = (cctl & FTDMAC020_LLI_SRC_WIDTH_MSK) >>
 				FTDMAC020_LLI_SRC_WIDTH_SHIFT;
-		अन्यथा
+		else
 			val = (cctl & FTDMAC020_LLI_DST_WIDTH_MSK) >>
 				FTDMAC020_LLI_DST_WIDTH_SHIFT;
-	पूर्ण अन्यथा अणु
-		अगर (source)
+	} else {
+		if (source)
 			val = (cctl & PL080_CONTROL_SWIDTH_MASK) >>
 				PL080_CONTROL_SWIDTH_SHIFT;
-		अन्यथा
+		else
 			val = (cctl & PL080_CONTROL_DWIDTH_MASK) >>
 				PL080_CONTROL_DWIDTH_SHIFT;
-	पूर्ण
+	}
 
-	चयन (val) अणु
-	हाल PL080_WIDTH_8BIT:
-		वापस 1;
-	हाल PL080_WIDTH_16BIT:
-		वापस 2;
-	हाल PL080_WIDTH_32BIT:
-		वापस 4;
-	शेष:
-		अवरोध;
-	पूर्ण
+	switch (val) {
+	case PL080_WIDTH_8BIT:
+		return 1;
+	case PL080_WIDTH_16BIT:
+		return 2;
+	case PL080_WIDTH_32BIT:
+		return 4;
+	default:
+		break;
+	}
 	BUG();
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत u32 pl08x_lli_control_bits(काष्ठा pl08x_driver_data *pl08x,
+static inline u32 pl08x_lli_control_bits(struct pl08x_driver_data *pl08x,
 					 u32 cctl,
 					 u8 srcwidth, u8 dstwidth,
-					 माप_प्रकार tsize)
-अणु
+					 size_t tsize)
+{
 	u32 retbits = cctl;
 
 	/*
 	 * Remove all src, dst and transfer size bits, then set the
 	 * width and size according to the parameters. The bit offsets
-	 * are dअगरferent in the FTDMAC020 so we need to accound क्रम this.
+	 * are different in the FTDMAC020 so we need to accound for this.
 	 */
-	अगर (pl08x->vd->ftdmac020) अणु
+	if (pl08x->vd->ftdmac020) {
 		retbits &= ~FTDMAC020_LLI_DST_WIDTH_MSK;
 		retbits &= ~FTDMAC020_LLI_SRC_WIDTH_MSK;
 		retbits &= ~FTDMAC020_LLI_TRANSFER_SIZE_MASK;
 
-		चयन (srcwidth) अणु
-		हाल 1:
+		switch (srcwidth) {
+		case 1:
 			retbits |= PL080_WIDTH_8BIT <<
 				FTDMAC020_LLI_SRC_WIDTH_SHIFT;
-			अवरोध;
-		हाल 2:
+			break;
+		case 2:
 			retbits |= PL080_WIDTH_16BIT <<
 				FTDMAC020_LLI_SRC_WIDTH_SHIFT;
-			अवरोध;
-		हाल 4:
+			break;
+		case 4:
 			retbits |= PL080_WIDTH_32BIT <<
 				FTDMAC020_LLI_SRC_WIDTH_SHIFT;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			BUG();
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		चयन (dstwidth) अणु
-		हाल 1:
+		switch (dstwidth) {
+		case 1:
 			retbits |= PL080_WIDTH_8BIT <<
 				FTDMAC020_LLI_DST_WIDTH_SHIFT;
-			अवरोध;
-		हाल 2:
+			break;
+		case 2:
 			retbits |= PL080_WIDTH_16BIT <<
 				FTDMAC020_LLI_DST_WIDTH_SHIFT;
-			अवरोध;
-		हाल 4:
+			break;
+		case 4:
 			retbits |= PL080_WIDTH_32BIT <<
 				FTDMAC020_LLI_DST_WIDTH_SHIFT;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			BUG();
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		tsize &= FTDMAC020_LLI_TRANSFER_SIZE_MASK;
 		retbits |= tsize << FTDMAC020_LLI_TRANSFER_SIZE_SHIFT;
-	पूर्ण अन्यथा अणु
+	} else {
 		retbits &= ~PL080_CONTROL_DWIDTH_MASK;
 		retbits &= ~PL080_CONTROL_SWIDTH_MASK;
 		retbits &= ~PL080_CONTROL_TRANSFER_SIZE_MASK;
 
-		चयन (srcwidth) अणु
-		हाल 1:
+		switch (srcwidth) {
+		case 1:
 			retbits |= PL080_WIDTH_8BIT <<
 				PL080_CONTROL_SWIDTH_SHIFT;
-			अवरोध;
-		हाल 2:
+			break;
+		case 2:
 			retbits |= PL080_WIDTH_16BIT <<
 				PL080_CONTROL_SWIDTH_SHIFT;
-			अवरोध;
-		हाल 4:
+			break;
+		case 4:
 			retbits |= PL080_WIDTH_32BIT <<
 				PL080_CONTROL_SWIDTH_SHIFT;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			BUG();
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		चयन (dstwidth) अणु
-		हाल 1:
+		switch (dstwidth) {
+		case 1:
 			retbits |= PL080_WIDTH_8BIT <<
 				PL080_CONTROL_DWIDTH_SHIFT;
-			अवरोध;
-		हाल 2:
+			break;
+		case 2:
 			retbits |= PL080_WIDTH_16BIT <<
 				PL080_CONTROL_DWIDTH_SHIFT;
-			अवरोध;
-		हाल 4:
+			break;
+		case 4:
 			retbits |= PL080_WIDTH_32BIT <<
 				PL080_CONTROL_DWIDTH_SHIFT;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			BUG();
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		tsize &= PL080_CONTROL_TRANSFER_SIZE_MASK;
 		retbits |= tsize << PL080_CONTROL_TRANSFER_SIZE_SHIFT;
-	पूर्ण
+	}
 
-	वापस retbits;
-पूर्ण
+	return retbits;
+}
 
-काष्ठा pl08x_lli_build_data अणु
-	काष्ठा pl08x_txd *txd;
-	काष्ठा pl08x_bus_data srcbus;
-	काष्ठा pl08x_bus_data dstbus;
-	माप_प्रकार reमुख्यder;
+struct pl08x_lli_build_data {
+	struct pl08x_txd *txd;
+	struct pl08x_bus_data srcbus;
+	struct pl08x_bus_data dstbus;
+	size_t remainder;
 	u32 lli_bus;
-पूर्ण;
+};
 
 /*
- * Autoselect a master bus to use क्रम the transfer. Slave will be the chosen as
- * victim in हाल src & dest are not similarly aligned. i.e. If after aligning
+ * Autoselect a master bus to use for the transfer. Slave will be the chosen as
+ * victim in case src & dest are not similarly aligned. i.e. If after aligning
  * masters address with width requirements of transfer (by sending few byte by
  * byte data), slave is still not aligned, then its width will be reduced to
  * BYTE.
- * - prefers the destination bus अगर both available
+ * - prefers the destination bus if both available
  * - prefers bus with fixed address (i.e. peripheral)
  */
-अटल व्योम pl08x_choose_master_bus(काष्ठा pl08x_driver_data *pl08x,
-				    काष्ठा pl08x_lli_build_data *bd,
-				    काष्ठा pl08x_bus_data **mbus,
-				    काष्ठा pl08x_bus_data **sbus,
+static void pl08x_choose_master_bus(struct pl08x_driver_data *pl08x,
+				    struct pl08x_lli_build_data *bd,
+				    struct pl08x_bus_data **mbus,
+				    struct pl08x_bus_data **sbus,
 				    u32 cctl)
-अणु
+{
 	bool dst_incr;
 	bool src_incr;
 
@@ -1134,42 +1133,42 @@ pl08x_get_bytes_क्रम_lli(काष्ठा pl08x_driver_data *pl08x,
 	 * The FTDMAC020 only supports memory-to-memory transfer, so
 	 * source and destination always increase.
 	 */
-	अगर (pl08x->vd->ftdmac020) अणु
+	if (pl08x->vd->ftdmac020) {
 		dst_incr = true;
 		src_incr = true;
-	पूर्ण अन्यथा अणु
+	} else {
 		dst_incr = !!(cctl & PL080_CONTROL_DST_INCR);
 		src_incr = !!(cctl & PL080_CONTROL_SRC_INCR);
-	पूर्ण
+	}
 
 	/*
 	 * If either bus is not advancing, i.e. it is a peripheral, that
 	 * one becomes master
 	 */
-	अगर (!dst_incr) अणु
+	if (!dst_incr) {
 		*mbus = &bd->dstbus;
 		*sbus = &bd->srcbus;
-	पूर्ण अन्यथा अगर (!src_incr) अणु
+	} else if (!src_incr) {
 		*mbus = &bd->srcbus;
 		*sbus = &bd->dstbus;
-	पूर्ण अन्यथा अणु
-		अगर (bd->dstbus.buswidth >= bd->srcbus.buswidth) अणु
+	} else {
+		if (bd->dstbus.buswidth >= bd->srcbus.buswidth) {
 			*mbus = &bd->dstbus;
 			*sbus = &bd->srcbus;
-		पूर्ण अन्यथा अणु
+		} else {
 			*mbus = &bd->srcbus;
 			*sbus = &bd->dstbus;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
 /*
- * Fills in one LLI क्रम a certain transfer descriptor and advance the counter
+ * Fills in one LLI for a certain transfer descriptor and advance the counter
  */
-अटल व्योम pl08x_fill_lli_क्रम_desc(काष्ठा pl08x_driver_data *pl08x,
-				    काष्ठा pl08x_lli_build_data *bd,
-				    पूर्णांक num_llis, पूर्णांक len, u32 cctl, u32 cctl2)
-अणु
+static void pl08x_fill_lli_for_desc(struct pl08x_driver_data *pl08x,
+				    struct pl08x_lli_build_data *bd,
+				    int num_llis, int len, u32 cctl, u32 cctl2)
+{
 	u32 offset = num_llis * pl08x->lli_words;
 	u32 *llis_va = bd->txd->llis_va + offset;
 	dma_addr_t llis_bus = bd->txd->llis_bus;
@@ -1181,48 +1180,48 @@ pl08x_get_bytes_क्रम_lli(काष्ठा pl08x_driver_data *pl08x,
 
 	llis_va[PL080_LLI_SRC] = bd->srcbus.addr;
 	llis_va[PL080_LLI_DST] = bd->dstbus.addr;
-	llis_va[PL080_LLI_LLI] = (llis_bus + माप(u32) * offset);
+	llis_va[PL080_LLI_LLI] = (llis_bus + sizeof(u32) * offset);
 	llis_va[PL080_LLI_LLI] |= bd->lli_bus;
 	llis_va[PL080_LLI_CCTL] = cctl;
-	अगर (pl08x->vd->pl080s)
+	if (pl08x->vd->pl080s)
 		llis_va[PL080S_LLI_CCTL2] = cctl2;
 
-	अगर (pl08x->vd->ftdmac020) अणु
-		/* FIXME: only स_नकल so far so both increase */
+	if (pl08x->vd->ftdmac020) {
+		/* FIXME: only memcpy so far so both increase */
 		bd->srcbus.addr += len;
 		bd->dstbus.addr += len;
-	पूर्ण अन्यथा अणु
-		अगर (cctl & PL080_CONTROL_SRC_INCR)
+	} else {
+		if (cctl & PL080_CONTROL_SRC_INCR)
 			bd->srcbus.addr += len;
-		अगर (cctl & PL080_CONTROL_DST_INCR)
+		if (cctl & PL080_CONTROL_DST_INCR)
 			bd->dstbus.addr += len;
-	पूर्ण
+	}
 
-	BUG_ON(bd->reमुख्यder < len);
+	BUG_ON(bd->remainder < len);
 
-	bd->reमुख्यder -= len;
-पूर्ण
+	bd->remainder -= len;
+}
 
-अटल अंतरभूत व्योम prep_byte_width_lli(काष्ठा pl08x_driver_data *pl08x,
-			काष्ठा pl08x_lli_build_data *bd, u32 *cctl, u32 len,
-			पूर्णांक num_llis, माप_प्रकार *total_bytes)
-अणु
+static inline void prep_byte_width_lli(struct pl08x_driver_data *pl08x,
+			struct pl08x_lli_build_data *bd, u32 *cctl, u32 len,
+			int num_llis, size_t *total_bytes)
+{
 	*cctl = pl08x_lli_control_bits(pl08x, *cctl, 1, 1, len);
-	pl08x_fill_lli_क्रम_desc(pl08x, bd, num_llis, len, *cctl, len);
+	pl08x_fill_lli_for_desc(pl08x, bd, num_llis, len, *cctl, len);
 	(*total_bytes) += len;
-पूर्ण
+}
 
-#अगर 1
-अटल व्योम pl08x_dump_lli(काष्ठा pl08x_driver_data *pl08x,
-			   स्थिर u32 *llis_va, पूर्णांक num_llis)
-अणु
-	पूर्णांक i;
+#if 1
+static void pl08x_dump_lli(struct pl08x_driver_data *pl08x,
+			   const u32 *llis_va, int num_llis)
+{
+	int i;
 
-	अगर (pl08x->vd->pl080s) अणु
+	if (pl08x->vd->pl080s) {
 		dev_vdbg(&pl08x->adev->dev,
 			"%-3s %-9s  %-10s %-10s %-10s %-10s %s\n",
 			"lli", "", "csrc", "cdst", "clli", "cctl", "cctl2");
-		क्रम (i = 0; i < num_llis; i++) अणु
+		for (i = 0; i < num_llis; i++) {
 			dev_vdbg(&pl08x->adev->dev,
 				"%3d @%p: 0x%08x 0x%08x 0x%08x 0x%08x 0x%08x\n",
 				i, llis_va, llis_va[PL080_LLI_SRC],
@@ -1230,65 +1229,65 @@ pl08x_get_bytes_क्रम_lli(काष्ठा pl08x_driver_data *pl08x,
 				llis_va[PL080_LLI_CCTL],
 				llis_va[PL080S_LLI_CCTL2]);
 			llis_va += pl08x->lli_words;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		dev_vdbg(&pl08x->adev->dev,
 			"%-3s %-9s  %-10s %-10s %-10s %s\n",
 			"lli", "", "csrc", "cdst", "clli", "cctl");
-		क्रम (i = 0; i < num_llis; i++) अणु
+		for (i = 0; i < num_llis; i++) {
 			dev_vdbg(&pl08x->adev->dev,
 				"%3d @%p: 0x%08x 0x%08x 0x%08x 0x%08x\n",
 				i, llis_va, llis_va[PL080_LLI_SRC],
 				llis_va[PL080_LLI_DST], llis_va[PL080_LLI_LLI],
 				llis_va[PL080_LLI_CCTL]);
 			llis_va += pl08x->lli_words;
-		पूर्ण
-	पूर्ण
-पूर्ण
-#अन्यथा
-अटल अंतरभूत व्योम pl08x_dump_lli(काष्ठा pl08x_driver_data *pl08x,
-				  स्थिर u32 *llis_va, पूर्णांक num_llis) अणुपूर्ण
-#पूर्ण_अगर
+		}
+	}
+}
+#else
+static inline void pl08x_dump_lli(struct pl08x_driver_data *pl08x,
+				  const u32 *llis_va, int num_llis) {}
+#endif
 
 /*
- * This fills in the table of LLIs क्रम the transfer descriptor
+ * This fills in the table of LLIs for the transfer descriptor
  * Note that we assume we never have to change the burst sizes
- * Return 0 क्रम error
+ * Return 0 for error
  */
-अटल पूर्णांक pl08x_fill_llis_क्रम_desc(काष्ठा pl08x_driver_data *pl08x,
-			      काष्ठा pl08x_txd *txd)
-अणु
-	काष्ठा pl08x_bus_data *mbus, *sbus;
-	काष्ठा pl08x_lli_build_data bd;
-	पूर्णांक num_llis = 0;
+static int pl08x_fill_llis_for_desc(struct pl08x_driver_data *pl08x,
+			      struct pl08x_txd *txd)
+{
+	struct pl08x_bus_data *mbus, *sbus;
+	struct pl08x_lli_build_data bd;
+	int num_llis = 0;
 	u32 cctl, early_bytes = 0;
-	माप_प्रकार max_bytes_per_lli, total_bytes;
+	size_t max_bytes_per_lli, total_bytes;
 	u32 *llis_va, *last_lli;
-	काष्ठा pl08x_sg *dsg;
+	struct pl08x_sg *dsg;
 
 	txd->llis_va = dma_pool_alloc(pl08x->pool, GFP_NOWAIT, &txd->llis_bus);
-	अगर (!txd->llis_va) अणु
+	if (!txd->llis_va) {
 		dev_err(&pl08x->adev->dev, "%s no memory for llis\n", __func__);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	bd.txd = txd;
 	bd.lli_bus = (pl08x->lli_buses & PL08X_AHB2) ? PL080_LLI_LM_AHB2 : 0;
 	cctl = txd->cctl;
 
 	/* Find maximum width of the source bus */
-	bd.srcbus.maxwidth = pl08x_get_bytes_क्रम_lli(pl08x, cctl, true);
+	bd.srcbus.maxwidth = pl08x_get_bytes_for_lli(pl08x, cctl, true);
 
 	/* Find maximum width of the destination bus */
-	bd.dstbus.maxwidth = pl08x_get_bytes_क्रम_lli(pl08x, cctl, false);
+	bd.dstbus.maxwidth = pl08x_get_bytes_for_lli(pl08x, cctl, false);
 
-	list_क्रम_each_entry(dsg, &txd->dsg_list, node) अणु
+	list_for_each_entry(dsg, &txd->dsg_list, node) {
 		total_bytes = 0;
 		cctl = txd->cctl;
 
 		bd.srcbus.addr = dsg->src_addr;
 		bd.dstbus.addr = dsg->dst_addr;
-		bd.reमुख्यder = dsg->len;
+		bd.remainder = dsg->len;
 		bd.srcbus.buswidth = bd.srcbus.maxwidth;
 		bd.dstbus.buswidth = bd.dstbus.maxwidth;
 
@@ -1302,19 +1301,19 @@ pl08x_get_bytes_क्रम_lli(काष्ठा pl08x_driver_data *pl08x,
 			(u64)bd.dstbus.addr,
 			cctl & PL080_CONTROL_DST_INCR ? "+" : "",
 			bd.dstbus.buswidth,
-			bd.reमुख्यder);
+			bd.remainder);
 		dev_vdbg(&pl08x->adev->dev, "mbus=%s sbus=%s\n",
 			mbus == &bd.srcbus ? "src" : "dst",
 			sbus == &bd.srcbus ? "src" : "dst");
 
 		/*
-		 * Zero length is only allowed अगर all these requirements are
+		 * Zero length is only allowed if all these requirements are
 		 * met:
 		 * - flow controller is peripheral.
 		 * - src.addr is aligned to src.width
 		 * - dst.addr is aligned to dst.width
 		 *
-		 * sg_len == 1 should be true, as there can be two हालs here:
+		 * sg_len == 1 should be true, as there can be two cases here:
 		 *
 		 * - Memory addresses are contiguous and are not scattered.
 		 *   Here, Only one sg will be passed by user driver, with
@@ -1323,78 +1322,78 @@ pl08x_get_bytes_क्रम_lli(काष्ठा pl08x_driver_data *pl08x,
 		 *   request from peripheral and so transfer finishes.
 		 *
 		 * - Memory addresses are scattered and are not contiguous.
-		 *   Here, Obviously as DMA controller करोesn't know when a lli's
-		 *   transfer माला_लो over, it can't load next lli. So in this
-		 *   हाल, there has to be an assumption that only one lli is
+		 *   Here, Obviously as DMA controller doesn't know when a lli's
+		 *   transfer gets over, it can't load next lli. So in this
+		 *   case, there has to be an assumption that only one lli is
 		 *   supported. Thus, we can't have scattered addresses.
 		 */
-		अगर (!bd.reमुख्यder) अणु
+		if (!bd.remainder) {
 			u32 fc;
 
-			/* FTDMAC020 only करोes memory-to-memory */
-			अगर (pl08x->vd->ftdmac020)
+			/* FTDMAC020 only does memory-to-memory */
+			if (pl08x->vd->ftdmac020)
 				fc = PL080_FLOW_MEM2MEM;
-			अन्यथा
+			else
 				fc = (txd->ccfg & PL080_CONFIG_FLOW_CONTROL_MASK) >>
 					PL080_CONFIG_FLOW_CONTROL_SHIFT;
-			अगर (!((fc >= PL080_FLOW_SRC2DST_DST) &&
-					(fc <= PL080_FLOW_SRC2DST_SRC))) अणु
+			if (!((fc >= PL080_FLOW_SRC2DST_DST) &&
+					(fc <= PL080_FLOW_SRC2DST_SRC))) {
 				dev_err(&pl08x->adev->dev, "%s sg len can't be zero",
 					__func__);
-				वापस 0;
-			पूर्ण
+				return 0;
+			}
 
-			अगर (!IS_BUS_ALIGNED(&bd.srcbus) ||
-				!IS_BUS_ALIGNED(&bd.dstbus)) अणु
+			if (!IS_BUS_ALIGNED(&bd.srcbus) ||
+				!IS_BUS_ALIGNED(&bd.dstbus)) {
 				dev_err(&pl08x->adev->dev,
 					"%s src & dst address must be aligned to src"
 					" & dst width if peripheral is flow controller",
 					__func__);
-				वापस 0;
-			पूर्ण
+				return 0;
+			}
 
 			cctl = pl08x_lli_control_bits(pl08x, cctl,
 					bd.srcbus.buswidth, bd.dstbus.buswidth,
 					0);
-			pl08x_fill_lli_क्रम_desc(pl08x, &bd, num_llis++,
+			pl08x_fill_lli_for_desc(pl08x, &bd, num_llis++,
 					0, cctl, 0);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		/*
-		 * Send byte by byte क्रम following हालs
+		 * Send byte by byte for following cases
 		 * - Less than a bus width available
 		 * - until master bus is aligned
 		 */
-		अगर (bd.reमुख्यder < mbus->buswidth)
-			early_bytes = bd.reमुख्यder;
-		अन्यथा अगर (!IS_BUS_ALIGNED(mbus)) अणु
+		if (bd.remainder < mbus->buswidth)
+			early_bytes = bd.remainder;
+		else if (!IS_BUS_ALIGNED(mbus)) {
 			early_bytes = mbus->buswidth -
 				(mbus->addr & (mbus->buswidth - 1));
-			अगर ((bd.reमुख्यder - early_bytes) < mbus->buswidth)
-				early_bytes = bd.reमुख्यder;
-		पूर्ण
+			if ((bd.remainder - early_bytes) < mbus->buswidth)
+				early_bytes = bd.remainder;
+		}
 
-		अगर (early_bytes) अणु
+		if (early_bytes) {
 			dev_vdbg(&pl08x->adev->dev,
 				"%s byte width LLIs (remain 0x%08zx)\n",
-				__func__, bd.reमुख्यder);
+				__func__, bd.remainder);
 			prep_byte_width_lli(pl08x, &bd, &cctl, early_bytes,
 				num_llis++, &total_bytes);
-		पूर्ण
+		}
 
-		अगर (bd.reमुख्यder) अणु
+		if (bd.remainder) {
 			/*
 			 * Master now aligned
-			 * - अगर slave is not then we must set its width करोwn
+			 * - if slave is not then we must set its width down
 			 */
-			अगर (!IS_BUS_ALIGNED(sbus)) अणु
+			if (!IS_BUS_ALIGNED(sbus)) {
 				dev_dbg(&pl08x->adev->dev,
 					"%s set down bus width to one byte\n",
 					__func__);
 
 				sbus->buswidth = 1;
-			पूर्ण
+			}
 
 			/*
 			 * Bytes transferred = tsize * src width, not
@@ -1410,19 +1409,19 @@ pl08x_get_bytes_क्रम_lli(काष्ठा pl08x_driver_data *pl08x,
 			 * Make largest possible LLIs until less than one bus
 			 * width left
 			 */
-			जबतक (bd.reमुख्यder > (mbus->buswidth - 1)) अणु
-				माप_प्रकार lli_len, tsize, width;
+			while (bd.remainder > (mbus->buswidth - 1)) {
+				size_t lli_len, tsize, width;
 
 				/*
 				 * If enough left try to send max possible,
-				 * otherwise try to send the reमुख्यder
+				 * otherwise try to send the remainder
 				 */
-				lli_len = min(bd.reमुख्यder, max_bytes_per_lli);
+				lli_len = min(bd.remainder, max_bytes_per_lli);
 
 				/*
 				 * Check against maximum bus alignment:
 				 * Calculate actual transfer size in relation to
-				 * bus width an get a maximum reमुख्यder of the
+				 * bus width an get a maximum remainder of the
 				 * highest bus width - 1
 				 */
 				width = max(mbus->buswidth, sbus->buswidth);
@@ -1432,161 +1431,161 @@ pl08x_get_bytes_क्रम_lli(काष्ठा pl08x_driver_data *pl08x,
 				dev_vdbg(&pl08x->adev->dev,
 					"%s fill lli with single lli chunk of "
 					"size 0x%08zx (remainder 0x%08zx)\n",
-					__func__, lli_len, bd.reमुख्यder);
+					__func__, lli_len, bd.remainder);
 
 				cctl = pl08x_lli_control_bits(pl08x, cctl,
 					bd.srcbus.buswidth, bd.dstbus.buswidth,
 					tsize);
-				pl08x_fill_lli_क्रम_desc(pl08x, &bd, num_llis++,
+				pl08x_fill_lli_for_desc(pl08x, &bd, num_llis++,
 						lli_len, cctl, tsize);
 				total_bytes += lli_len;
-			पूर्ण
+			}
 
 			/*
 			 * Send any odd bytes
 			 */
-			अगर (bd.reमुख्यder) अणु
+			if (bd.remainder) {
 				dev_vdbg(&pl08x->adev->dev,
 					"%s align with boundary, send odd bytes (remain %zu)\n",
-					__func__, bd.reमुख्यder);
+					__func__, bd.remainder);
 				prep_byte_width_lli(pl08x, &bd, &cctl,
-					bd.reमुख्यder, num_llis++, &total_bytes);
-			पूर्ण
-		पूर्ण
+					bd.remainder, num_llis++, &total_bytes);
+			}
+		}
 
-		अगर (total_bytes != dsg->len) अणु
+		if (total_bytes != dsg->len) {
 			dev_err(&pl08x->adev->dev,
 				"%s size of encoded lli:s don't match total txd, transferred 0x%08zx from size 0x%08zx\n",
 				__func__, total_bytes, dsg->len);
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 
-		अगर (num_llis >= MAX_NUM_TSFR_LLIS) अणु
+		if (num_llis >= MAX_NUM_TSFR_LLIS) {
 			dev_err(&pl08x->adev->dev,
 				"%s need to increase MAX_NUM_TSFR_LLIS from 0x%08x\n",
 				__func__, MAX_NUM_TSFR_LLIS);
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			return 0;
+		}
+	}
 
 	llis_va = txd->llis_va;
 	last_lli = llis_va + (num_llis - 1) * pl08x->lli_words;
 
-	अगर (txd->cyclic) अणु
+	if (txd->cyclic) {
 		/* Link back to the first LLI. */
 		last_lli[PL080_LLI_LLI] = txd->llis_bus | bd.lli_bus;
-	पूर्ण अन्यथा अणु
+	} else {
 		/* The final LLI terminates the LLI. */
 		last_lli[PL080_LLI_LLI] = 0;
-		/* The final LLI element shall also fire an पूर्णांकerrupt. */
-		अगर (pl08x->vd->ftdmac020)
+		/* The final LLI element shall also fire an interrupt. */
+		if (pl08x->vd->ftdmac020)
 			last_lli[PL080_LLI_CCTL] &= ~FTDMAC020_LLI_TC_MSK;
-		अन्यथा
+		else
 			last_lli[PL080_LLI_CCTL] |= PL080_CONTROL_TC_IRQ_EN;
-	पूर्ण
+	}
 
 	pl08x_dump_lli(pl08x, llis_va, num_llis);
 
-	वापस num_llis;
-पूर्ण
+	return num_llis;
+}
 
-अटल व्योम pl08x_मुक्त_txd(काष्ठा pl08x_driver_data *pl08x,
-			   काष्ठा pl08x_txd *txd)
-अणु
-	काष्ठा pl08x_sg *dsg, *_dsg;
+static void pl08x_free_txd(struct pl08x_driver_data *pl08x,
+			   struct pl08x_txd *txd)
+{
+	struct pl08x_sg *dsg, *_dsg;
 
-	अगर (txd->llis_va)
-		dma_pool_मुक्त(pl08x->pool, txd->llis_va, txd->llis_bus);
+	if (txd->llis_va)
+		dma_pool_free(pl08x->pool, txd->llis_va, txd->llis_bus);
 
-	list_क्रम_each_entry_safe(dsg, _dsg, &txd->dsg_list, node) अणु
+	list_for_each_entry_safe(dsg, _dsg, &txd->dsg_list, node) {
 		list_del(&dsg->node);
-		kमुक्त(dsg);
-	पूर्ण
+		kfree(dsg);
+	}
 
-	kमुक्त(txd);
-पूर्ण
+	kfree(txd);
+}
 
-अटल व्योम pl08x_desc_मुक्त(काष्ठा virt_dma_desc *vd)
-अणु
-	काष्ठा pl08x_txd *txd = to_pl08x_txd(&vd->tx);
-	काष्ठा pl08x_dma_chan *plchan = to_pl08x_chan(vd->tx.chan);
+static void pl08x_desc_free(struct virt_dma_desc *vd)
+{
+	struct pl08x_txd *txd = to_pl08x_txd(&vd->tx);
+	struct pl08x_dma_chan *plchan = to_pl08x_chan(vd->tx.chan);
 
 	dma_descriptor_unmap(&vd->tx);
-	अगर (!txd->करोne)
+	if (!txd->done)
 		pl08x_release_mux(plchan);
 
-	pl08x_मुक्त_txd(plchan->host, txd);
-पूर्ण
+	pl08x_free_txd(plchan->host, txd);
+}
 
-अटल व्योम pl08x_मुक्त_txd_list(काष्ठा pl08x_driver_data *pl08x,
-				काष्ठा pl08x_dma_chan *plchan)
-अणु
+static void pl08x_free_txd_list(struct pl08x_driver_data *pl08x,
+				struct pl08x_dma_chan *plchan)
+{
 	LIST_HEAD(head);
 
 	vchan_get_all_descriptors(&plchan->vc, &head);
-	vchan_dma_desc_मुक्त_list(&plchan->vc, &head);
-पूर्ण
+	vchan_dma_desc_free_list(&plchan->vc, &head);
+}
 
 /*
  * The DMA ENGINE API
  */
-अटल व्योम pl08x_मुक्त_chan_resources(काष्ठा dma_chan *chan)
-अणु
-	/* Ensure all queued descriptors are मुक्तd */
-	vchan_मुक्त_chan_resources(to_virt_chan(chan));
-पूर्ण
+static void pl08x_free_chan_resources(struct dma_chan *chan)
+{
+	/* Ensure all queued descriptors are freed */
+	vchan_free_chan_resources(to_virt_chan(chan));
+}
 
-अटल काष्ठा dma_async_tx_descriptor *pl08x_prep_dma_पूर्णांकerrupt(
-		काष्ठा dma_chan *chan, अचिन्हित दीर्घ flags)
-अणु
-	काष्ठा dma_async_tx_descriptor *retval = शून्य;
+static struct dma_async_tx_descriptor *pl08x_prep_dma_interrupt(
+		struct dma_chan *chan, unsigned long flags)
+{
+	struct dma_async_tx_descriptor *retval = NULL;
 
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
 /*
  * Code accessing dma_async_is_complete() in a tight loop may give problems.
- * If slaves are relying on पूर्णांकerrupts to संकेत completion this function
- * must not be called with पूर्णांकerrupts disabled.
+ * If slaves are relying on interrupts to signal completion this function
+ * must not be called with interrupts disabled.
  */
-अटल क्रमागत dma_status pl08x_dma_tx_status(काष्ठा dma_chan *chan,
-		dma_cookie_t cookie, काष्ठा dma_tx_state *txstate)
-अणु
-	काष्ठा pl08x_dma_chan *plchan = to_pl08x_chan(chan);
-	काष्ठा virt_dma_desc *vd;
-	अचिन्हित दीर्घ flags;
-	क्रमागत dma_status ret;
-	माप_प्रकार bytes = 0;
+static enum dma_status pl08x_dma_tx_status(struct dma_chan *chan,
+		dma_cookie_t cookie, struct dma_tx_state *txstate)
+{
+	struct pl08x_dma_chan *plchan = to_pl08x_chan(chan);
+	struct virt_dma_desc *vd;
+	unsigned long flags;
+	enum dma_status ret;
+	size_t bytes = 0;
 
 	ret = dma_cookie_status(chan, cookie, txstate);
-	अगर (ret == DMA_COMPLETE)
-		वापस ret;
+	if (ret == DMA_COMPLETE)
+		return ret;
 
 	/*
 	 * There's no point calculating the residue if there's
 	 * no txstate to store the value.
 	 */
-	अगर (!txstate) अणु
-		अगर (plchan->state == PL08X_CHAN_PAUSED)
+	if (!txstate) {
+		if (plchan->state == PL08X_CHAN_PAUSED)
 			ret = DMA_PAUSED;
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	spin_lock_irqsave(&plchan->vc.lock, flags);
 	ret = dma_cookie_status(chan, cookie, txstate);
-	अगर (ret != DMA_COMPLETE) अणु
+	if (ret != DMA_COMPLETE) {
 		vd = vchan_find_desc(&plchan->vc, cookie);
-		अगर (vd) अणु
+		if (vd) {
 			/* On the issued list, so hasn't been processed yet */
-			काष्ठा pl08x_txd *txd = to_pl08x_txd(&vd->tx);
-			काष्ठा pl08x_sg *dsg;
+			struct pl08x_txd *txd = to_pl08x_txd(&vd->tx);
+			struct pl08x_sg *dsg;
 
-			list_क्रम_each_entry(dsg, &txd->dsg_list, node)
+			list_for_each_entry(dsg, &txd->dsg_list, node)
 				bytes += dsg->len;
-		पूर्ण अन्यथा अणु
+		} else {
 			bytes = pl08x_getbytes_chan(plchan);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	spin_unlock_irqrestore(&plchan->vc.lock, flags);
 
 	/*
@@ -1595,279 +1594,279 @@ pl08x_get_bytes_क्रम_lli(काष्ठा pl08x_driver_data *pl08x,
 	 */
 	dma_set_residue(txstate, bytes);
 
-	अगर (plchan->state == PL08X_CHAN_PAUSED && ret == DMA_IN_PROGRESS)
+	if (plchan->state == PL08X_CHAN_PAUSED && ret == DMA_IN_PROGRESS)
 		ret = DMA_PAUSED;
 
-	/* Whether रुकोing or running, we're in progress */
-	वापस ret;
-पूर्ण
+	/* Whether waiting or running, we're in progress */
+	return ret;
+}
 
 /* PrimeCell DMA extension */
-काष्ठा burst_table अणु
+struct burst_table {
 	u32 burstwords;
 	u32 reg;
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा burst_table burst_sizes[] = अणु
-	अणु
+static const struct burst_table burst_sizes[] = {
+	{
 		.burstwords = 256,
 		.reg = PL080_BSIZE_256,
-	पूर्ण,
-	अणु
+	},
+	{
 		.burstwords = 128,
 		.reg = PL080_BSIZE_128,
-	पूर्ण,
-	अणु
+	},
+	{
 		.burstwords = 64,
 		.reg = PL080_BSIZE_64,
-	पूर्ण,
-	अणु
+	},
+	{
 		.burstwords = 32,
 		.reg = PL080_BSIZE_32,
-	पूर्ण,
-	अणु
+	},
+	{
 		.burstwords = 16,
 		.reg = PL080_BSIZE_16,
-	पूर्ण,
-	अणु
+	},
+	{
 		.burstwords = 8,
 		.reg = PL080_BSIZE_8,
-	पूर्ण,
-	अणु
+	},
+	{
 		.burstwords = 4,
 		.reg = PL080_BSIZE_4,
-	पूर्ण,
-	अणु
+	},
+	{
 		.burstwords = 0,
 		.reg = PL080_BSIZE_1,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
 /*
  * Given the source and destination available bus masks, select which
  * will be routed to each port.  We try to have source and destination
  * on separate ports, but always respect the allowable settings.
  */
-अटल u32 pl08x_select_bus(bool ftdmac020, u8 src, u8 dst)
-अणु
+static u32 pl08x_select_bus(bool ftdmac020, u8 src, u8 dst)
+{
 	u32 cctl = 0;
 	u32 dst_ahb2;
 	u32 src_ahb2;
 
-	/* The FTDMAC020 use dअगरferent bits to indicate src/dst bus */
-	अगर (ftdmac020) अणु
+	/* The FTDMAC020 use different bits to indicate src/dst bus */
+	if (ftdmac020) {
 		dst_ahb2 = FTDMAC020_LLI_DST_SEL;
 		src_ahb2 = FTDMAC020_LLI_SRC_SEL;
-	पूर्ण अन्यथा अणु
+	} else {
 		dst_ahb2 = PL080_CONTROL_DST_AHB2;
 		src_ahb2 = PL080_CONTROL_SRC_AHB2;
-	पूर्ण
+	}
 
-	अगर (!(dst & PL08X_AHB1) || ((dst & PL08X_AHB2) && (src & PL08X_AHB1)))
+	if (!(dst & PL08X_AHB1) || ((dst & PL08X_AHB2) && (src & PL08X_AHB1)))
 		cctl |= dst_ahb2;
-	अगर (!(src & PL08X_AHB1) || ((src & PL08X_AHB2) && !(dst & PL08X_AHB2)))
+	if (!(src & PL08X_AHB1) || ((src & PL08X_AHB2) && !(dst & PL08X_AHB2)))
 		cctl |= src_ahb2;
 
-	वापस cctl;
-पूर्ण
+	return cctl;
+}
 
-अटल u32 pl08x_cctl(u32 cctl)
-अणु
+static u32 pl08x_cctl(u32 cctl)
+{
 	cctl &= ~(PL080_CONTROL_SRC_AHB2 | PL080_CONTROL_DST_AHB2 |
 		  PL080_CONTROL_SRC_INCR | PL080_CONTROL_DST_INCR |
 		  PL080_CONTROL_PROT_MASK);
 
 	/* Access the cell in privileged mode, non-bufferable, non-cacheable */
-	वापस cctl | PL080_CONTROL_PROT_SYS;
-पूर्ण
+	return cctl | PL080_CONTROL_PROT_SYS;
+}
 
-अटल u32 pl08x_width(क्रमागत dma_slave_buswidth width)
-अणु
-	चयन (width) अणु
-	हाल DMA_SLAVE_BUSWIDTH_1_BYTE:
-		वापस PL080_WIDTH_8BIT;
-	हाल DMA_SLAVE_BUSWIDTH_2_BYTES:
-		वापस PL080_WIDTH_16BIT;
-	हाल DMA_SLAVE_BUSWIDTH_4_BYTES:
-		वापस PL080_WIDTH_32BIT;
-	शेष:
-		वापस ~0;
-	पूर्ण
-पूर्ण
+static u32 pl08x_width(enum dma_slave_buswidth width)
+{
+	switch (width) {
+	case DMA_SLAVE_BUSWIDTH_1_BYTE:
+		return PL080_WIDTH_8BIT;
+	case DMA_SLAVE_BUSWIDTH_2_BYTES:
+		return PL080_WIDTH_16BIT;
+	case DMA_SLAVE_BUSWIDTH_4_BYTES:
+		return PL080_WIDTH_32BIT;
+	default:
+		return ~0;
+	}
+}
 
-अटल u32 pl08x_burst(u32 maxburst)
-अणु
-	पूर्णांक i;
+static u32 pl08x_burst(u32 maxburst)
+{
+	int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(burst_sizes); i++)
-		अगर (burst_sizes[i].burstwords <= maxburst)
-			अवरोध;
+	for (i = 0; i < ARRAY_SIZE(burst_sizes); i++)
+		if (burst_sizes[i].burstwords <= maxburst)
+			break;
 
-	वापस burst_sizes[i].reg;
-पूर्ण
+	return burst_sizes[i].reg;
+}
 
-अटल u32 pl08x_get_cctl(काष्ठा pl08x_dma_chan *plchan,
-	क्रमागत dma_slave_buswidth addr_width, u32 maxburst)
-अणु
+static u32 pl08x_get_cctl(struct pl08x_dma_chan *plchan,
+	enum dma_slave_buswidth addr_width, u32 maxburst)
+{
 	u32 width, burst, cctl = 0;
 
 	width = pl08x_width(addr_width);
-	अगर (width == ~0)
-		वापस ~0;
+	if (width == ~0)
+		return ~0;
 
 	cctl |= width << PL080_CONTROL_SWIDTH_SHIFT;
 	cctl |= width << PL080_CONTROL_DWIDTH_SHIFT;
 
 	/*
 	 * If this channel will only request single transfers, set this
-	 * करोwn to ONE element.  Also select one element अगर no maxburst
-	 * is specअगरied.
+	 * down to ONE element.  Also select one element if no maxburst
+	 * is specified.
 	 */
-	अगर (plchan->cd->single)
+	if (plchan->cd->single)
 		maxburst = 1;
 
 	burst = pl08x_burst(maxburst);
 	cctl |= burst << PL080_CONTROL_SB_SIZE_SHIFT;
 	cctl |= burst << PL080_CONTROL_DB_SIZE_SHIFT;
 
-	वापस pl08x_cctl(cctl);
-पूर्ण
+	return pl08x_cctl(cctl);
+}
 
 /*
  * Slave transactions callback to the slave device to allow
- * synchronization of slave DMA संकेतs with the DMAC enable
+ * synchronization of slave DMA signals with the DMAC enable
  */
-अटल व्योम pl08x_issue_pending(काष्ठा dma_chan *chan)
-अणु
-	काष्ठा pl08x_dma_chan *plchan = to_pl08x_chan(chan);
-	अचिन्हित दीर्घ flags;
+static void pl08x_issue_pending(struct dma_chan *chan)
+{
+	struct pl08x_dma_chan *plchan = to_pl08x_chan(chan);
+	unsigned long flags;
 
 	spin_lock_irqsave(&plchan->vc.lock, flags);
-	अगर (vchan_issue_pending(&plchan->vc)) अणु
-		अगर (!plchan->phychan && plchan->state != PL08X_CHAN_WAITING)
+	if (vchan_issue_pending(&plchan->vc)) {
+		if (!plchan->phychan && plchan->state != PL08X_CHAN_WAITING)
 			pl08x_phy_alloc_and_start(plchan);
-	पूर्ण
+	}
 	spin_unlock_irqrestore(&plchan->vc.lock, flags);
-पूर्ण
+}
 
-अटल काष्ठा pl08x_txd *pl08x_get_txd(काष्ठा pl08x_dma_chan *plchan)
-अणु
-	काष्ठा pl08x_txd *txd = kzalloc(माप(*txd), GFP_NOWAIT);
+static struct pl08x_txd *pl08x_get_txd(struct pl08x_dma_chan *plchan)
+{
+	struct pl08x_txd *txd = kzalloc(sizeof(*txd), GFP_NOWAIT);
 
-	अगर (txd)
+	if (txd)
 		INIT_LIST_HEAD(&txd->dsg_list);
-	वापस txd;
-पूर्ण
+	return txd;
+}
 
-अटल u32 pl08x_स_नकल_cctl(काष्ठा pl08x_driver_data *pl08x)
-अणु
+static u32 pl08x_memcpy_cctl(struct pl08x_driver_data *pl08x)
+{
 	u32 cctl = 0;
 
 	/* Conjure cctl */
-	चयन (pl08x->pd->स_नकल_burst_size) अणु
-	शेष:
+	switch (pl08x->pd->memcpy_burst_size) {
+	default:
 		dev_err(&pl08x->adev->dev,
 			"illegal burst size for memcpy, set to 1\n");
 		fallthrough;
-	हाल PL08X_BURST_SZ_1:
+	case PL08X_BURST_SZ_1:
 		cctl |= PL080_BSIZE_1 << PL080_CONTROL_SB_SIZE_SHIFT |
 			PL080_BSIZE_1 << PL080_CONTROL_DB_SIZE_SHIFT;
-		अवरोध;
-	हाल PL08X_BURST_SZ_4:
+		break;
+	case PL08X_BURST_SZ_4:
 		cctl |= PL080_BSIZE_4 << PL080_CONTROL_SB_SIZE_SHIFT |
 			PL080_BSIZE_4 << PL080_CONTROL_DB_SIZE_SHIFT;
-		अवरोध;
-	हाल PL08X_BURST_SZ_8:
+		break;
+	case PL08X_BURST_SZ_8:
 		cctl |= PL080_BSIZE_8 << PL080_CONTROL_SB_SIZE_SHIFT |
 			PL080_BSIZE_8 << PL080_CONTROL_DB_SIZE_SHIFT;
-		अवरोध;
-	हाल PL08X_BURST_SZ_16:
+		break;
+	case PL08X_BURST_SZ_16:
 		cctl |= PL080_BSIZE_16 << PL080_CONTROL_SB_SIZE_SHIFT |
 			PL080_BSIZE_16 << PL080_CONTROL_DB_SIZE_SHIFT;
-		अवरोध;
-	हाल PL08X_BURST_SZ_32:
+		break;
+	case PL08X_BURST_SZ_32:
 		cctl |= PL080_BSIZE_32 << PL080_CONTROL_SB_SIZE_SHIFT |
 			PL080_BSIZE_32 << PL080_CONTROL_DB_SIZE_SHIFT;
-		अवरोध;
-	हाल PL08X_BURST_SZ_64:
+		break;
+	case PL08X_BURST_SZ_64:
 		cctl |= PL080_BSIZE_64 << PL080_CONTROL_SB_SIZE_SHIFT |
 			PL080_BSIZE_64 << PL080_CONTROL_DB_SIZE_SHIFT;
-		अवरोध;
-	हाल PL08X_BURST_SZ_128:
+		break;
+	case PL08X_BURST_SZ_128:
 		cctl |= PL080_BSIZE_128 << PL080_CONTROL_SB_SIZE_SHIFT |
 			PL080_BSIZE_128 << PL080_CONTROL_DB_SIZE_SHIFT;
-		अवरोध;
-	हाल PL08X_BURST_SZ_256:
+		break;
+	case PL08X_BURST_SZ_256:
 		cctl |= PL080_BSIZE_256 << PL080_CONTROL_SB_SIZE_SHIFT |
 			PL080_BSIZE_256 << PL080_CONTROL_DB_SIZE_SHIFT;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	चयन (pl08x->pd->स_नकल_bus_width) अणु
-	शेष:
+	switch (pl08x->pd->memcpy_bus_width) {
+	default:
 		dev_err(&pl08x->adev->dev,
 			"illegal bus width for memcpy, set to 8 bits\n");
 		fallthrough;
-	हाल PL08X_BUS_WIDTH_8_BITS:
+	case PL08X_BUS_WIDTH_8_BITS:
 		cctl |= PL080_WIDTH_8BIT << PL080_CONTROL_SWIDTH_SHIFT |
 			PL080_WIDTH_8BIT << PL080_CONTROL_DWIDTH_SHIFT;
-		अवरोध;
-	हाल PL08X_BUS_WIDTH_16_BITS:
+		break;
+	case PL08X_BUS_WIDTH_16_BITS:
 		cctl |= PL080_WIDTH_16BIT << PL080_CONTROL_SWIDTH_SHIFT |
 			PL080_WIDTH_16BIT << PL080_CONTROL_DWIDTH_SHIFT;
-		अवरोध;
-	हाल PL08X_BUS_WIDTH_32_BITS:
+		break;
+	case PL08X_BUS_WIDTH_32_BITS:
 		cctl |= PL080_WIDTH_32BIT << PL080_CONTROL_SWIDTH_SHIFT |
 			PL080_WIDTH_32BIT << PL080_CONTROL_DWIDTH_SHIFT;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	/* Protection flags */
-	अगर (pl08x->pd->स_नकल_prot_buff)
+	if (pl08x->pd->memcpy_prot_buff)
 		cctl |= PL080_CONTROL_PROT_BUFF;
-	अगर (pl08x->pd->स_नकल_prot_cache)
+	if (pl08x->pd->memcpy_prot_cache)
 		cctl |= PL080_CONTROL_PROT_CACHE;
 
 	/* We are the kernel, so we are in privileged mode */
 	cctl |= PL080_CONTROL_PROT_SYS;
 
-	/* Both to be incremented or the code will अवरोध */
+	/* Both to be incremented or the code will break */
 	cctl |= PL080_CONTROL_SRC_INCR | PL080_CONTROL_DST_INCR;
 
-	अगर (pl08x->vd->dualmaster)
+	if (pl08x->vd->dualmaster)
 		cctl |= pl08x_select_bus(false,
 					 pl08x->mem_buses,
 					 pl08x->mem_buses);
 
-	वापस cctl;
-पूर्ण
+	return cctl;
+}
 
-अटल u32 pl08x_ftdmac020_स_नकल_cctl(काष्ठा pl08x_driver_data *pl08x)
-अणु
+static u32 pl08x_ftdmac020_memcpy_cctl(struct pl08x_driver_data *pl08x)
+{
 	u32 cctl = 0;
 
 	/* Conjure cctl */
-	चयन (pl08x->pd->स_नकल_bus_width) अणु
-	शेष:
+	switch (pl08x->pd->memcpy_bus_width) {
+	default:
 		dev_err(&pl08x->adev->dev,
 			"illegal bus width for memcpy, set to 8 bits\n");
 		fallthrough;
-	हाल PL08X_BUS_WIDTH_8_BITS:
+	case PL08X_BUS_WIDTH_8_BITS:
 		cctl |= PL080_WIDTH_8BIT << FTDMAC020_LLI_SRC_WIDTH_SHIFT |
 			PL080_WIDTH_8BIT << FTDMAC020_LLI_DST_WIDTH_SHIFT;
-		अवरोध;
-	हाल PL08X_BUS_WIDTH_16_BITS:
+		break;
+	case PL08X_BUS_WIDTH_16_BITS:
 		cctl |= PL080_WIDTH_16BIT << FTDMAC020_LLI_SRC_WIDTH_SHIFT |
 			PL080_WIDTH_16BIT << FTDMAC020_LLI_DST_WIDTH_SHIFT;
-		अवरोध;
-	हाल PL08X_BUS_WIDTH_32_BITS:
+		break;
+	case PL08X_BUS_WIDTH_32_BITS:
 		cctl |= PL080_WIDTH_32BIT << FTDMAC020_LLI_SRC_WIDTH_SHIFT |
 			PL080_WIDTH_32BIT << FTDMAC020_LLI_DST_WIDTH_SHIFT;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	/*
-	 * By शेष mask the TC IRQ on all LLIs, it will be unmasked on
+	 * By default mask the TC IRQ on all LLIs, it will be unmasked on
 	 * the last LLI item by other code.
 	 */
 	cctl |= FTDMAC020_LLI_TC_MSK;
@@ -1876,228 +1875,228 @@ pl08x_get_bytes_क्रम_lli(काष्ठा pl08x_driver_data *pl08x,
 	 * Both to be incremented so leave bits FTDMAC020_LLI_SRCAD_CTL
 	 * and FTDMAC020_LLI_DSTAD_CTL as zero
 	 */
-	अगर (pl08x->vd->dualmaster)
+	if (pl08x->vd->dualmaster)
 		cctl |= pl08x_select_bus(true,
 					 pl08x->mem_buses,
 					 pl08x->mem_buses);
 
-	वापस cctl;
-पूर्ण
+	return cctl;
+}
 
 /*
- * Initialize a descriptor to be used by स_नकल submit
+ * Initialize a descriptor to be used by memcpy submit
  */
-अटल काष्ठा dma_async_tx_descriptor *pl08x_prep_dma_स_नकल(
-		काष्ठा dma_chan *chan, dma_addr_t dest, dma_addr_t src,
-		माप_प्रकार len, अचिन्हित दीर्घ flags)
-अणु
-	काष्ठा pl08x_dma_chan *plchan = to_pl08x_chan(chan);
-	काष्ठा pl08x_driver_data *pl08x = plchan->host;
-	काष्ठा pl08x_txd *txd;
-	काष्ठा pl08x_sg *dsg;
-	पूर्णांक ret;
+static struct dma_async_tx_descriptor *pl08x_prep_dma_memcpy(
+		struct dma_chan *chan, dma_addr_t dest, dma_addr_t src,
+		size_t len, unsigned long flags)
+{
+	struct pl08x_dma_chan *plchan = to_pl08x_chan(chan);
+	struct pl08x_driver_data *pl08x = plchan->host;
+	struct pl08x_txd *txd;
+	struct pl08x_sg *dsg;
+	int ret;
 
 	txd = pl08x_get_txd(plchan);
-	अगर (!txd) अणु
+	if (!txd) {
 		dev_err(&pl08x->adev->dev,
 			"%s no memory for descriptor\n", __func__);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	dsg = kzalloc(माप(काष्ठा pl08x_sg), GFP_NOWAIT);
-	अगर (!dsg) अणु
-		pl08x_मुक्त_txd(pl08x, txd);
-		वापस शून्य;
-	पूर्ण
+	dsg = kzalloc(sizeof(struct pl08x_sg), GFP_NOWAIT);
+	if (!dsg) {
+		pl08x_free_txd(pl08x, txd);
+		return NULL;
+	}
 	list_add_tail(&dsg->node, &txd->dsg_list);
 
 	dsg->src_addr = src;
 	dsg->dst_addr = dest;
 	dsg->len = len;
-	अगर (pl08x->vd->ftdmac020) अणु
-		/* Writing CCFG zero ENABLES all पूर्णांकerrupts */
+	if (pl08x->vd->ftdmac020) {
+		/* Writing CCFG zero ENABLES all interrupts */
 		txd->ccfg = 0;
-		txd->cctl = pl08x_ftdmac020_स_नकल_cctl(pl08x);
-	पूर्ण अन्यथा अणु
+		txd->cctl = pl08x_ftdmac020_memcpy_cctl(pl08x);
+	} else {
 		txd->ccfg = PL080_CONFIG_ERR_IRQ_MASK |
 			PL080_CONFIG_TC_IRQ_MASK |
 			PL080_FLOW_MEM2MEM << PL080_CONFIG_FLOW_CONTROL_SHIFT;
-		txd->cctl = pl08x_स_नकल_cctl(pl08x);
-	पूर्ण
+		txd->cctl = pl08x_memcpy_cctl(pl08x);
+	}
 
-	ret = pl08x_fill_llis_क्रम_desc(plchan->host, txd);
-	अगर (!ret) अणु
-		pl08x_मुक्त_txd(pl08x, txd);
-		वापस शून्य;
-	पूर्ण
+	ret = pl08x_fill_llis_for_desc(plchan->host, txd);
+	if (!ret) {
+		pl08x_free_txd(pl08x, txd);
+		return NULL;
+	}
 
-	वापस vchan_tx_prep(&plchan->vc, &txd->vd, flags);
-पूर्ण
+	return vchan_tx_prep(&plchan->vc, &txd->vd, flags);
+}
 
-अटल काष्ठा pl08x_txd *pl08x_init_txd(
-		काष्ठा dma_chan *chan,
-		क्रमागत dma_transfer_direction direction,
+static struct pl08x_txd *pl08x_init_txd(
+		struct dma_chan *chan,
+		enum dma_transfer_direction direction,
 		dma_addr_t *slave_addr)
-अणु
-	काष्ठा pl08x_dma_chan *plchan = to_pl08x_chan(chan);
-	काष्ठा pl08x_driver_data *pl08x = plchan->host;
-	काष्ठा pl08x_txd *txd;
-	क्रमागत dma_slave_buswidth addr_width;
-	पूर्णांक ret, पंचांगp;
+{
+	struct pl08x_dma_chan *plchan = to_pl08x_chan(chan);
+	struct pl08x_driver_data *pl08x = plchan->host;
+	struct pl08x_txd *txd;
+	enum dma_slave_buswidth addr_width;
+	int ret, tmp;
 	u8 src_buses, dst_buses;
 	u32 maxburst, cctl;
 
 	txd = pl08x_get_txd(plchan);
-	अगर (!txd) अणु
+	if (!txd) {
 		dev_err(&pl08x->adev->dev, "%s no txd\n", __func__);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
 	/*
 	 * Set up addresses, the PrimeCell configured address
 	 * will take precedence since this may configure the
-	 * channel target address dynamically at runसमय.
+	 * channel target address dynamically at runtime.
 	 */
-	अगर (direction == DMA_MEM_TO_DEV) अणु
+	if (direction == DMA_MEM_TO_DEV) {
 		cctl = PL080_CONTROL_SRC_INCR;
 		*slave_addr = plchan->cfg.dst_addr;
 		addr_width = plchan->cfg.dst_addr_width;
 		maxburst = plchan->cfg.dst_maxburst;
 		src_buses = pl08x->mem_buses;
 		dst_buses = plchan->cd->periph_buses;
-	पूर्ण अन्यथा अगर (direction == DMA_DEV_TO_MEM) अणु
+	} else if (direction == DMA_DEV_TO_MEM) {
 		cctl = PL080_CONTROL_DST_INCR;
 		*slave_addr = plchan->cfg.src_addr;
 		addr_width = plchan->cfg.src_addr_width;
 		maxburst = plchan->cfg.src_maxburst;
 		src_buses = plchan->cd->periph_buses;
 		dst_buses = pl08x->mem_buses;
-	पूर्ण अन्यथा अणु
-		pl08x_मुक्त_txd(pl08x, txd);
+	} else {
+		pl08x_free_txd(pl08x, txd);
 		dev_err(&pl08x->adev->dev,
 			"%s direction unsupported\n", __func__);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
 	cctl |= pl08x_get_cctl(plchan, addr_width, maxburst);
-	अगर (cctl == ~0) अणु
-		pl08x_मुक्त_txd(pl08x, txd);
+	if (cctl == ~0) {
+		pl08x_free_txd(pl08x, txd);
 		dev_err(&pl08x->adev->dev,
 			"DMA slave configuration botched?\n");
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
 	txd->cctl = cctl | pl08x_select_bus(false, src_buses, dst_buses);
 
-	अगर (plchan->cfg.device_fc)
-		पंचांगp = (direction == DMA_MEM_TO_DEV) ? PL080_FLOW_MEM2PER_PER :
+	if (plchan->cfg.device_fc)
+		tmp = (direction == DMA_MEM_TO_DEV) ? PL080_FLOW_MEM2PER_PER :
 			PL080_FLOW_PER2MEM_PER;
-	अन्यथा
-		पंचांगp = (direction == DMA_MEM_TO_DEV) ? PL080_FLOW_MEM2PER :
+	else
+		tmp = (direction == DMA_MEM_TO_DEV) ? PL080_FLOW_MEM2PER :
 			PL080_FLOW_PER2MEM;
 
 	txd->ccfg = PL080_CONFIG_ERR_IRQ_MASK |
 		PL080_CONFIG_TC_IRQ_MASK |
-		पंचांगp << PL080_CONFIG_FLOW_CONTROL_SHIFT;
+		tmp << PL080_CONFIG_FLOW_CONTROL_SHIFT;
 
 	ret = pl08x_request_mux(plchan);
-	अगर (ret < 0) अणु
-		pl08x_मुक्त_txd(pl08x, txd);
+	if (ret < 0) {
+		pl08x_free_txd(pl08x, txd);
 		dev_dbg(&pl08x->adev->dev,
 			"unable to mux for transfer on %s due to platform restrictions\n",
 			plchan->name);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
 	dev_dbg(&pl08x->adev->dev, "allocated DMA request signal %d for xfer on %s\n",
-		 plchan->संकेत, plchan->name);
+		 plchan->signal, plchan->name);
 
-	/* Assign the flow control संकेत to this channel */
-	अगर (direction == DMA_MEM_TO_DEV)
-		txd->ccfg |= plchan->संकेत << PL080_CONFIG_DST_SEL_SHIFT;
-	अन्यथा
-		txd->ccfg |= plchan->संकेत << PL080_CONFIG_SRC_SEL_SHIFT;
+	/* Assign the flow control signal to this channel */
+	if (direction == DMA_MEM_TO_DEV)
+		txd->ccfg |= plchan->signal << PL080_CONFIG_DST_SEL_SHIFT;
+	else
+		txd->ccfg |= plchan->signal << PL080_CONFIG_SRC_SEL_SHIFT;
 
-	वापस txd;
-पूर्ण
+	return txd;
+}
 
-अटल पूर्णांक pl08x_tx_add_sg(काष्ठा pl08x_txd *txd,
-			   क्रमागत dma_transfer_direction direction,
+static int pl08x_tx_add_sg(struct pl08x_txd *txd,
+			   enum dma_transfer_direction direction,
 			   dma_addr_t slave_addr,
 			   dma_addr_t buf_addr,
-			   अचिन्हित पूर्णांक len)
-अणु
-	काष्ठा pl08x_sg *dsg;
+			   unsigned int len)
+{
+	struct pl08x_sg *dsg;
 
-	dsg = kzalloc(माप(काष्ठा pl08x_sg), GFP_NOWAIT);
-	अगर (!dsg)
-		वापस -ENOMEM;
+	dsg = kzalloc(sizeof(struct pl08x_sg), GFP_NOWAIT);
+	if (!dsg)
+		return -ENOMEM;
 
 	list_add_tail(&dsg->node, &txd->dsg_list);
 
 	dsg->len = len;
-	अगर (direction == DMA_MEM_TO_DEV) अणु
+	if (direction == DMA_MEM_TO_DEV) {
 		dsg->src_addr = buf_addr;
 		dsg->dst_addr = slave_addr;
-	पूर्ण अन्यथा अणु
+	} else {
 		dsg->src_addr = slave_addr;
 		dsg->dst_addr = buf_addr;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा dma_async_tx_descriptor *pl08x_prep_slave_sg(
-		काष्ठा dma_chan *chan, काष्ठा scatterlist *sgl,
-		अचिन्हित पूर्णांक sg_len, क्रमागत dma_transfer_direction direction,
-		अचिन्हित दीर्घ flags, व्योम *context)
-अणु
-	काष्ठा pl08x_dma_chan *plchan = to_pl08x_chan(chan);
-	काष्ठा pl08x_driver_data *pl08x = plchan->host;
-	काष्ठा pl08x_txd *txd;
-	काष्ठा scatterlist *sg;
-	पूर्णांक ret, पंचांगp;
+static struct dma_async_tx_descriptor *pl08x_prep_slave_sg(
+		struct dma_chan *chan, struct scatterlist *sgl,
+		unsigned int sg_len, enum dma_transfer_direction direction,
+		unsigned long flags, void *context)
+{
+	struct pl08x_dma_chan *plchan = to_pl08x_chan(chan);
+	struct pl08x_driver_data *pl08x = plchan->host;
+	struct pl08x_txd *txd;
+	struct scatterlist *sg;
+	int ret, tmp;
 	dma_addr_t slave_addr;
 
 	dev_dbg(&pl08x->adev->dev, "%s prepare transaction of %d bytes from %s\n",
 			__func__, sg_dma_len(sgl), plchan->name);
 
 	txd = pl08x_init_txd(chan, direction, &slave_addr);
-	अगर (!txd)
-		वापस शून्य;
+	if (!txd)
+		return NULL;
 
-	क्रम_each_sg(sgl, sg, sg_len, पंचांगp) अणु
+	for_each_sg(sgl, sg, sg_len, tmp) {
 		ret = pl08x_tx_add_sg(txd, direction, slave_addr,
 				      sg_dma_address(sg),
 				      sg_dma_len(sg));
-		अगर (ret) अणु
+		if (ret) {
 			pl08x_release_mux(plchan);
-			pl08x_मुक्त_txd(pl08x, txd);
+			pl08x_free_txd(pl08x, txd);
 			dev_err(&pl08x->adev->dev, "%s no mem for pl080 sg\n",
 					__func__);
-			वापस शून्य;
-		पूर्ण
-	पूर्ण
+			return NULL;
+		}
+	}
 
-	ret = pl08x_fill_llis_क्रम_desc(plchan->host, txd);
-	अगर (!ret) अणु
+	ret = pl08x_fill_llis_for_desc(plchan->host, txd);
+	if (!ret) {
 		pl08x_release_mux(plchan);
-		pl08x_मुक्त_txd(pl08x, txd);
-		वापस शून्य;
-	पूर्ण
+		pl08x_free_txd(pl08x, txd);
+		return NULL;
+	}
 
-	वापस vchan_tx_prep(&plchan->vc, &txd->vd, flags);
-पूर्ण
+	return vchan_tx_prep(&plchan->vc, &txd->vd, flags);
+}
 
-अटल काष्ठा dma_async_tx_descriptor *pl08x_prep_dma_cyclic(
-		काष्ठा dma_chan *chan, dma_addr_t buf_addr, माप_प्रकार buf_len,
-		माप_प्रकार period_len, क्रमागत dma_transfer_direction direction,
-		अचिन्हित दीर्घ flags)
-अणु
-	काष्ठा pl08x_dma_chan *plchan = to_pl08x_chan(chan);
-	काष्ठा pl08x_driver_data *pl08x = plchan->host;
-	काष्ठा pl08x_txd *txd;
-	पूर्णांक ret, पंचांगp;
+static struct dma_async_tx_descriptor *pl08x_prep_dma_cyclic(
+		struct dma_chan *chan, dma_addr_t buf_addr, size_t buf_len,
+		size_t period_len, enum dma_transfer_direction direction,
+		unsigned long flags)
+{
+	struct pl08x_dma_chan *plchan = to_pl08x_chan(chan);
+	struct pl08x_driver_data *pl08x = plchan->host;
+	struct pl08x_txd *txd;
+	int ret, tmp;
 	dma_addr_t slave_addr;
 
 	dev_dbg(&pl08x->adev->dev,
@@ -2107,640 +2106,640 @@ pl08x_get_bytes_क्रम_lli(काष्ठा pl08x_driver_data *pl08x,
 		plchan->name);
 
 	txd = pl08x_init_txd(chan, direction, &slave_addr);
-	अगर (!txd)
-		वापस शून्य;
+	if (!txd)
+		return NULL;
 
 	txd->cyclic = true;
 	txd->cctl |= PL080_CONTROL_TC_IRQ_EN;
-	क्रम (पंचांगp = 0; पंचांगp < buf_len; पंचांगp += period_len) अणु
+	for (tmp = 0; tmp < buf_len; tmp += period_len) {
 		ret = pl08x_tx_add_sg(txd, direction, slave_addr,
-				      buf_addr + पंचांगp, period_len);
-		अगर (ret) अणु
+				      buf_addr + tmp, period_len);
+		if (ret) {
 			pl08x_release_mux(plchan);
-			pl08x_मुक्त_txd(pl08x, txd);
-			वापस शून्य;
-		पूर्ण
-	पूर्ण
+			pl08x_free_txd(pl08x, txd);
+			return NULL;
+		}
+	}
 
-	ret = pl08x_fill_llis_क्रम_desc(plchan->host, txd);
-	अगर (!ret) अणु
+	ret = pl08x_fill_llis_for_desc(plchan->host, txd);
+	if (!ret) {
 		pl08x_release_mux(plchan);
-		pl08x_मुक्त_txd(pl08x, txd);
-		वापस शून्य;
-	पूर्ण
+		pl08x_free_txd(pl08x, txd);
+		return NULL;
+	}
 
-	वापस vchan_tx_prep(&plchan->vc, &txd->vd, flags);
-पूर्ण
+	return vchan_tx_prep(&plchan->vc, &txd->vd, flags);
+}
 
-अटल पूर्णांक pl08x_config(काष्ठा dma_chan *chan,
-			काष्ठा dma_slave_config *config)
-अणु
-	काष्ठा pl08x_dma_chan *plchan = to_pl08x_chan(chan);
-	काष्ठा pl08x_driver_data *pl08x = plchan->host;
+static int pl08x_config(struct dma_chan *chan,
+			struct dma_slave_config *config)
+{
+	struct pl08x_dma_chan *plchan = to_pl08x_chan(chan);
+	struct pl08x_driver_data *pl08x = plchan->host;
 
-	अगर (!plchan->slave)
-		वापस -EINVAL;
+	if (!plchan->slave)
+		return -EINVAL;
 
 	/* Reject definitely invalid configurations */
-	अगर (config->src_addr_width == DMA_SLAVE_BUSWIDTH_8_BYTES ||
+	if (config->src_addr_width == DMA_SLAVE_BUSWIDTH_8_BYTES ||
 	    config->dst_addr_width == DMA_SLAVE_BUSWIDTH_8_BYTES)
-		वापस -EINVAL;
+		return -EINVAL;
 
-	अगर (config->device_fc && pl08x->vd->pl080s) अणु
+	if (config->device_fc && pl08x->vd->pl080s) {
 		dev_err(&pl08x->adev->dev,
 			"%s: PL080S does not support peripheral flow control\n",
 			__func__);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	plchan->cfg = *config;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक pl08x_terminate_all(काष्ठा dma_chan *chan)
-अणु
-	काष्ठा pl08x_dma_chan *plchan = to_pl08x_chan(chan);
-	काष्ठा pl08x_driver_data *pl08x = plchan->host;
-	अचिन्हित दीर्घ flags;
+static int pl08x_terminate_all(struct dma_chan *chan)
+{
+	struct pl08x_dma_chan *plchan = to_pl08x_chan(chan);
+	struct pl08x_driver_data *pl08x = plchan->host;
+	unsigned long flags;
 
 	spin_lock_irqsave(&plchan->vc.lock, flags);
-	अगर (!plchan->phychan && !plchan->at) अणु
+	if (!plchan->phychan && !plchan->at) {
 		spin_unlock_irqrestore(&plchan->vc.lock, flags);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	plchan->state = PL08X_CHAN_IDLE;
 
-	अगर (plchan->phychan) अणु
+	if (plchan->phychan) {
 		/*
-		 * Mark physical channel as मुक्त and मुक्त any slave
-		 * संकेत
+		 * Mark physical channel as free and free any slave
+		 * signal
 		 */
-		pl08x_phy_मुक्त(plchan);
-	पूर्ण
-	/* Dequeue jobs and मुक्त LLIs */
-	अगर (plchan->at) अणु
+		pl08x_phy_free(plchan);
+	}
+	/* Dequeue jobs and free LLIs */
+	if (plchan->at) {
 		vchan_terminate_vdesc(&plchan->at->vd);
-		plchan->at = शून्य;
-	पूर्ण
+		plchan->at = NULL;
+	}
 	/* Dequeue jobs not yet fired as well */
-	pl08x_मुक्त_txd_list(pl08x, plchan);
+	pl08x_free_txd_list(pl08x, plchan);
 
 	spin_unlock_irqrestore(&plchan->vc.lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम pl08x_synchronize(काष्ठा dma_chan *chan)
-अणु
-	काष्ठा pl08x_dma_chan *plchan = to_pl08x_chan(chan);
+static void pl08x_synchronize(struct dma_chan *chan)
+{
+	struct pl08x_dma_chan *plchan = to_pl08x_chan(chan);
 
 	vchan_synchronize(&plchan->vc);
-पूर्ण
+}
 
-अटल पूर्णांक pl08x_छोड़ो(काष्ठा dma_chan *chan)
-अणु
-	काष्ठा pl08x_dma_chan *plchan = to_pl08x_chan(chan);
-	अचिन्हित दीर्घ flags;
+static int pl08x_pause(struct dma_chan *chan)
+{
+	struct pl08x_dma_chan *plchan = to_pl08x_chan(chan);
+	unsigned long flags;
 
 	/*
 	 * Anything succeeds on channels with no physical allocation and
 	 * no queued transfers.
 	 */
 	spin_lock_irqsave(&plchan->vc.lock, flags);
-	अगर (!plchan->phychan && !plchan->at) अणु
+	if (!plchan->phychan && !plchan->at) {
 		spin_unlock_irqrestore(&plchan->vc.lock, flags);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	pl08x_छोड़ो_phy_chan(plchan->phychan);
+	pl08x_pause_phy_chan(plchan->phychan);
 	plchan->state = PL08X_CHAN_PAUSED;
 
 	spin_unlock_irqrestore(&plchan->vc.lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक pl08x_resume(काष्ठा dma_chan *chan)
-अणु
-	काष्ठा pl08x_dma_chan *plchan = to_pl08x_chan(chan);
-	अचिन्हित दीर्घ flags;
+static int pl08x_resume(struct dma_chan *chan)
+{
+	struct pl08x_dma_chan *plchan = to_pl08x_chan(chan);
+	unsigned long flags;
 
 	/*
 	 * Anything succeeds on channels with no physical allocation and
 	 * no queued transfers.
 	 */
 	spin_lock_irqsave(&plchan->vc.lock, flags);
-	अगर (!plchan->phychan && !plchan->at) अणु
+	if (!plchan->phychan && !plchan->at) {
 		spin_unlock_irqrestore(&plchan->vc.lock, flags);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	pl08x_resume_phy_chan(plchan->phychan);
 	plchan->state = PL08X_CHAN_RUNNING;
 
 	spin_unlock_irqrestore(&plchan->vc.lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-bool pl08x_filter_id(काष्ठा dma_chan *chan, व्योम *chan_id)
-अणु
-	काष्ठा pl08x_dma_chan *plchan;
-	अक्षर *name = chan_id;
+bool pl08x_filter_id(struct dma_chan *chan, void *chan_id)
+{
+	struct pl08x_dma_chan *plchan;
+	char *name = chan_id;
 
-	/* Reject channels क्रम devices not bound to this driver */
-	अगर (chan->device->dev->driver != &pl08x_amba_driver.drv)
-		वापस false;
+	/* Reject channels for devices not bound to this driver */
+	if (chan->device->dev->driver != &pl08x_amba_driver.drv)
+		return false;
 
 	plchan = to_pl08x_chan(chan);
 
 	/* Check that the channel is not taken! */
-	अगर (!म_भेद(plchan->name, name))
-		वापस true;
+	if (!strcmp(plchan->name, name))
+		return true;
 
-	वापस false;
-पूर्ण
+	return false;
+}
 EXPORT_SYMBOL_GPL(pl08x_filter_id);
 
-अटल bool pl08x_filter_fn(काष्ठा dma_chan *chan, व्योम *chan_id)
-अणु
-	काष्ठा pl08x_dma_chan *plchan = to_pl08x_chan(chan);
+static bool pl08x_filter_fn(struct dma_chan *chan, void *chan_id)
+{
+	struct pl08x_dma_chan *plchan = to_pl08x_chan(chan);
 
-	वापस plchan->cd == chan_id;
-पूर्ण
+	return plchan->cd == chan_id;
+}
 
 /*
  * Just check that the device is there and active
  * TODO: turn this bit on/off depending on the number of physical channels
- * actually used, अगर it is zero... well shut it off. That will save some
- * घातer. Cut the घड़ी at the same समय.
+ * actually used, if it is zero... well shut it off. That will save some
+ * power. Cut the clock at the same time.
  */
-अटल व्योम pl08x_ensure_on(काष्ठा pl08x_driver_data *pl08x)
-अणु
-	/* The Nomadik variant करोes not have the config रेजिस्टर */
-	अगर (pl08x->vd->nomadik)
-		वापस;
-	/* The FTDMAC020 variant करोes this in another रेजिस्टर */
-	अगर (pl08x->vd->ftdmac020) अणु
-		ग_लिखोl(PL080_CONFIG_ENABLE, pl08x->base + FTDMAC020_CSR);
-		वापस;
-	पूर्ण
-	ग_लिखोl(PL080_CONFIG_ENABLE, pl08x->base + PL080_CONFIG);
-पूर्ण
+static void pl08x_ensure_on(struct pl08x_driver_data *pl08x)
+{
+	/* The Nomadik variant does not have the config register */
+	if (pl08x->vd->nomadik)
+		return;
+	/* The FTDMAC020 variant does this in another register */
+	if (pl08x->vd->ftdmac020) {
+		writel(PL080_CONFIG_ENABLE, pl08x->base + FTDMAC020_CSR);
+		return;
+	}
+	writel(PL080_CONFIG_ENABLE, pl08x->base + PL080_CONFIG);
+}
 
-अटल irqवापस_t pl08x_irq(पूर्णांक irq, व्योम *dev)
-अणु
-	काष्ठा pl08x_driver_data *pl08x = dev;
+static irqreturn_t pl08x_irq(int irq, void *dev)
+{
+	struct pl08x_driver_data *pl08x = dev;
 	u32 mask = 0, err, tc, i;
 
-	/* check & clear - ERR & TC पूर्णांकerrupts */
-	err = पढ़ोl(pl08x->base + PL080_ERR_STATUS);
-	अगर (err) अणु
+	/* check & clear - ERR & TC interrupts */
+	err = readl(pl08x->base + PL080_ERR_STATUS);
+	if (err) {
 		dev_err(&pl08x->adev->dev, "%s error interrupt, register value 0x%08x\n",
 			__func__, err);
-		ग_लिखोl(err, pl08x->base + PL080_ERR_CLEAR);
-	पूर्ण
-	tc = पढ़ोl(pl08x->base + PL080_TC_STATUS);
-	अगर (tc)
-		ग_लिखोl(tc, pl08x->base + PL080_TC_CLEAR);
+		writel(err, pl08x->base + PL080_ERR_CLEAR);
+	}
+	tc = readl(pl08x->base + PL080_TC_STATUS);
+	if (tc)
+		writel(tc, pl08x->base + PL080_TC_CLEAR);
 
-	अगर (!err && !tc)
-		वापस IRQ_NONE;
+	if (!err && !tc)
+		return IRQ_NONE;
 
-	क्रम (i = 0; i < pl08x->vd->channels; i++) अणु
-		अगर ((BIT(i) & err) || (BIT(i) & tc)) अणु
+	for (i = 0; i < pl08x->vd->channels; i++) {
+		if ((BIT(i) & err) || (BIT(i) & tc)) {
 			/* Locate physical channel */
-			काष्ठा pl08x_phy_chan *phychan = &pl08x->phy_chans[i];
-			काष्ठा pl08x_dma_chan *plchan = phychan->serving;
-			काष्ठा pl08x_txd *tx;
+			struct pl08x_phy_chan *phychan = &pl08x->phy_chans[i];
+			struct pl08x_dma_chan *plchan = phychan->serving;
+			struct pl08x_txd *tx;
 
-			अगर (!plchan) अणु
+			if (!plchan) {
 				dev_err(&pl08x->adev->dev,
 					"%s Error TC interrupt on unused channel: 0x%08x\n",
 					__func__, i);
-				जारी;
-			पूर्ण
+				continue;
+			}
 
 			spin_lock(&plchan->vc.lock);
 			tx = plchan->at;
-			अगर (tx && tx->cyclic) अणु
+			if (tx && tx->cyclic) {
 				vchan_cyclic_callback(&tx->vd);
-			पूर्ण अन्यथा अगर (tx) अणु
-				plchan->at = शून्य;
+			} else if (tx) {
+				plchan->at = NULL;
 				/*
-				 * This descriptor is करोne, release its mux
+				 * This descriptor is done, release its mux
 				 * reservation.
 				 */
 				pl08x_release_mux(plchan);
-				tx->करोne = true;
+				tx->done = true;
 				vchan_cookie_complete(&tx->vd);
 
 				/*
-				 * And start the next descriptor (अगर any),
-				 * otherwise मुक्त this channel.
+				 * And start the next descriptor (if any),
+				 * otherwise free this channel.
 				 */
-				अगर (vchan_next_desc(&plchan->vc))
+				if (vchan_next_desc(&plchan->vc))
 					pl08x_start_next_txd(plchan);
-				अन्यथा
-					pl08x_phy_मुक्त(plchan);
-			पूर्ण
+				else
+					pl08x_phy_free(plchan);
+			}
 			spin_unlock(&plchan->vc.lock);
 
 			mask |= BIT(i);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस mask ? IRQ_HANDLED : IRQ_NONE;
-पूर्ण
+	return mask ? IRQ_HANDLED : IRQ_NONE;
+}
 
-अटल व्योम pl08x_dma_slave_init(काष्ठा pl08x_dma_chan *chan)
-अणु
+static void pl08x_dma_slave_init(struct pl08x_dma_chan *chan)
+{
 	chan->slave = true;
 	chan->name = chan->cd->bus_id;
 	chan->cfg.src_addr = chan->cd->addr;
 	chan->cfg.dst_addr = chan->cd->addr;
-पूर्ण
+}
 
 /*
- * Initialise the DMAC स_नकल/slave channels.
+ * Initialise the DMAC memcpy/slave channels.
  * Make a local wrapper to hold required data
  */
-अटल पूर्णांक pl08x_dma_init_भव_channels(काष्ठा pl08x_driver_data *pl08x,
-		काष्ठा dma_device *dmadev, अचिन्हित पूर्णांक channels, bool slave)
-अणु
-	काष्ठा pl08x_dma_chan *chan;
-	पूर्णांक i;
+static int pl08x_dma_init_virtual_channels(struct pl08x_driver_data *pl08x,
+		struct dma_device *dmadev, unsigned int channels, bool slave)
+{
+	struct pl08x_dma_chan *chan;
+	int i;
 
 	INIT_LIST_HEAD(&dmadev->channels);
 
 	/*
-	 * Register as many many स_नकल as we have physical channels,
+	 * Register as many many memcpy as we have physical channels,
 	 * we won't always be able to use all but the code will have
 	 * to cope with that situation.
 	 */
-	क्रम (i = 0; i < channels; i++) अणु
-		chan = kzalloc(माप(*chan), GFP_KERNEL);
-		अगर (!chan)
-			वापस -ENOMEM;
+	for (i = 0; i < channels; i++) {
+		chan = kzalloc(sizeof(*chan), GFP_KERNEL);
+		if (!chan)
+			return -ENOMEM;
 
 		chan->host = pl08x;
 		chan->state = PL08X_CHAN_IDLE;
-		chan->संकेत = -1;
+		chan->signal = -1;
 
-		अगर (slave) अणु
+		if (slave) {
 			chan->cd = &pl08x->pd->slave_channels[i];
 			/*
-			 * Some implementations have muxed संकेतs, whereas some
-			 * use a mux in front of the संकेतs and need dynamic
-			 * assignment of संकेतs.
+			 * Some implementations have muxed signals, whereas some
+			 * use a mux in front of the signals and need dynamic
+			 * assignment of signals.
 			 */
-			chan->संकेत = i;
+			chan->signal = i;
 			pl08x_dma_slave_init(chan);
-		पूर्ण अन्यथा अणु
-			chan->cd = kzalloc(माप(*chan->cd), GFP_KERNEL);
-			अगर (!chan->cd) अणु
-				kमुक्त(chan);
-				वापस -ENOMEM;
-			पूर्ण
+		} else {
+			chan->cd = kzalloc(sizeof(*chan->cd), GFP_KERNEL);
+			if (!chan->cd) {
+				kfree(chan);
+				return -ENOMEM;
+			}
 			chan->cd->bus_id = "memcpy";
 			chan->cd->periph_buses = pl08x->pd->mem_buses;
-			chan->name = kaप्र_लिखो(GFP_KERNEL, "memcpy%d", i);
-			अगर (!chan->name) अणु
-				kमुक्त(chan->cd);
-				kमुक्त(chan);
-				वापस -ENOMEM;
-			पूर्ण
-		पूर्ण
+			chan->name = kasprintf(GFP_KERNEL, "memcpy%d", i);
+			if (!chan->name) {
+				kfree(chan->cd);
+				kfree(chan);
+				return -ENOMEM;
+			}
+		}
 		dev_dbg(&pl08x->adev->dev,
 			 "initialize virtual channel \"%s\"\n",
 			 chan->name);
 
-		chan->vc.desc_मुक्त = pl08x_desc_मुक्त;
+		chan->vc.desc_free = pl08x_desc_free;
 		vchan_init(&chan->vc, dmadev);
-	पूर्ण
+	}
 	dev_info(&pl08x->adev->dev, "initialized %d virtual %s channels\n",
 		 i, slave ? "slave" : "memcpy");
-	वापस i;
-पूर्ण
+	return i;
+}
 
-अटल व्योम pl08x_मुक्त_भव_channels(काष्ठा dma_device *dmadev)
-अणु
-	काष्ठा pl08x_dma_chan *chan = शून्य;
-	काष्ठा pl08x_dma_chan *next;
+static void pl08x_free_virtual_channels(struct dma_device *dmadev)
+{
+	struct pl08x_dma_chan *chan = NULL;
+	struct pl08x_dma_chan *next;
 
-	list_क्रम_each_entry_safe(chan,
-				 next, &dmadev->channels, vc.chan.device_node) अणु
+	list_for_each_entry_safe(chan,
+				 next, &dmadev->channels, vc.chan.device_node) {
 		list_del(&chan->vc.chan.device_node);
-		kमुक्त(chan);
-	पूर्ण
-पूर्ण
+		kfree(chan);
+	}
+}
 
-#अगर_घोषित CONFIG_DEBUG_FS
-अटल स्थिर अक्षर *pl08x_state_str(क्रमागत pl08x_dma_chan_state state)
-अणु
-	चयन (state) अणु
-	हाल PL08X_CHAN_IDLE:
-		वापस "idle";
-	हाल PL08X_CHAN_RUNNING:
-		वापस "running";
-	हाल PL08X_CHAN_PAUSED:
-		वापस "paused";
-	हाल PL08X_CHAN_WAITING:
-		वापस "waiting";
-	शेष:
-		अवरोध;
-	पूर्ण
-	वापस "UNKNOWN STATE";
-पूर्ण
+#ifdef CONFIG_DEBUG_FS
+static const char *pl08x_state_str(enum pl08x_dma_chan_state state)
+{
+	switch (state) {
+	case PL08X_CHAN_IDLE:
+		return "idle";
+	case PL08X_CHAN_RUNNING:
+		return "running";
+	case PL08X_CHAN_PAUSED:
+		return "paused";
+	case PL08X_CHAN_WAITING:
+		return "waiting";
+	default:
+		break;
+	}
+	return "UNKNOWN STATE";
+}
 
-अटल पूर्णांक pl08x_debugfs_show(काष्ठा seq_file *s, व्योम *data)
-अणु
-	काष्ठा pl08x_driver_data *pl08x = s->निजी;
-	काष्ठा pl08x_dma_chan *chan;
-	काष्ठा pl08x_phy_chan *ch;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक i;
+static int pl08x_debugfs_show(struct seq_file *s, void *data)
+{
+	struct pl08x_driver_data *pl08x = s->private;
+	struct pl08x_dma_chan *chan;
+	struct pl08x_phy_chan *ch;
+	unsigned long flags;
+	int i;
 
-	seq_म_लिखो(s, "PL08x physical channels:\n");
-	seq_म_लिखो(s, "CHANNEL:\tUSER:\n");
-	seq_म_लिखो(s, "--------\t-----\n");
-	क्रम (i = 0; i < pl08x->vd->channels; i++) अणु
-		काष्ठा pl08x_dma_chan *virt_chan;
+	seq_printf(s, "PL08x physical channels:\n");
+	seq_printf(s, "CHANNEL:\tUSER:\n");
+	seq_printf(s, "--------\t-----\n");
+	for (i = 0; i < pl08x->vd->channels; i++) {
+		struct pl08x_dma_chan *virt_chan;
 
 		ch = &pl08x->phy_chans[i];
 
 		spin_lock_irqsave(&ch->lock, flags);
 		virt_chan = ch->serving;
 
-		seq_म_लिखो(s, "%d\t\t%s%s\n",
+		seq_printf(s, "%d\t\t%s%s\n",
 			   ch->id,
 			   virt_chan ? virt_chan->name : "(none)",
 			   ch->locked ? " LOCKED" : "");
 
 		spin_unlock_irqrestore(&ch->lock, flags);
-	पूर्ण
+	}
 
-	seq_म_लिखो(s, "\nPL08x virtual memcpy channels:\n");
-	seq_म_लिखो(s, "CHANNEL:\tSTATE:\n");
-	seq_म_लिखो(s, "--------\t------\n");
-	list_क्रम_each_entry(chan, &pl08x->स_नकल.channels, vc.chan.device_node) अणु
-		seq_म_लिखो(s, "%s\t\t%s\n", chan->name,
+	seq_printf(s, "\nPL08x virtual memcpy channels:\n");
+	seq_printf(s, "CHANNEL:\tSTATE:\n");
+	seq_printf(s, "--------\t------\n");
+	list_for_each_entry(chan, &pl08x->memcpy.channels, vc.chan.device_node) {
+		seq_printf(s, "%s\t\t%s\n", chan->name,
 			   pl08x_state_str(chan->state));
-	पूर्ण
+	}
 
-	अगर (pl08x->has_slave) अणु
-		seq_म_लिखो(s, "\nPL08x virtual slave channels:\n");
-		seq_म_लिखो(s, "CHANNEL:\tSTATE:\n");
-		seq_म_लिखो(s, "--------\t------\n");
-		list_क्रम_each_entry(chan, &pl08x->slave.channels,
-				    vc.chan.device_node) अणु
-			seq_म_लिखो(s, "%s\t\t%s\n", chan->name,
+	if (pl08x->has_slave) {
+		seq_printf(s, "\nPL08x virtual slave channels:\n");
+		seq_printf(s, "CHANNEL:\tSTATE:\n");
+		seq_printf(s, "--------\t------\n");
+		list_for_each_entry(chan, &pl08x->slave.channels,
+				    vc.chan.device_node) {
+			seq_printf(s, "%s\t\t%s\n", chan->name,
 				   pl08x_state_str(chan->state));
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 DEFINE_SHOW_ATTRIBUTE(pl08x_debugfs);
 
-अटल व्योम init_pl08x_debugfs(काष्ठा pl08x_driver_data *pl08x)
-अणु
-	/* Expose a simple debugfs पूर्णांकerface to view all घड़ीs */
+static void init_pl08x_debugfs(struct pl08x_driver_data *pl08x)
+{
+	/* Expose a simple debugfs interface to view all clocks */
 	debugfs_create_file(dev_name(&pl08x->adev->dev), S_IFREG | S_IRUGO,
-			    शून्य, pl08x, &pl08x_debugfs_fops);
-पूर्ण
+			    NULL, pl08x, &pl08x_debugfs_fops);
+}
 
-#अन्यथा
-अटल अंतरभूत व्योम init_pl08x_debugfs(काष्ठा pl08x_driver_data *pl08x)
-अणु
-पूर्ण
-#पूर्ण_अगर
+#else
+static inline void init_pl08x_debugfs(struct pl08x_driver_data *pl08x)
+{
+}
+#endif
 
-#अगर_घोषित CONFIG_OF
-अटल काष्ठा dma_chan *pl08x_find_chan_id(काष्ठा pl08x_driver_data *pl08x,
+#ifdef CONFIG_OF
+static struct dma_chan *pl08x_find_chan_id(struct pl08x_driver_data *pl08x,
 					 u32 id)
-अणु
-	काष्ठा pl08x_dma_chan *chan;
+{
+	struct pl08x_dma_chan *chan;
 
 	/* Trying to get a slave channel from something with no slave support */
-	अगर (!pl08x->has_slave)
-		वापस शून्य;
+	if (!pl08x->has_slave)
+		return NULL;
 
-	list_क्रम_each_entry(chan, &pl08x->slave.channels, vc.chan.device_node) अणु
-		अगर (chan->संकेत == id)
-			वापस &chan->vc.chan;
-	पूर्ण
+	list_for_each_entry(chan, &pl08x->slave.channels, vc.chan.device_node) {
+		if (chan->signal == id)
+			return &chan->vc.chan;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल काष्ठा dma_chan *pl08x_of_xlate(काष्ठा of_phandle_args *dma_spec,
-				       काष्ठा of_dma *ofdma)
-अणु
-	काष्ठा pl08x_driver_data *pl08x = ofdma->of_dma_data;
-	काष्ठा dma_chan *dma_chan;
-	काष्ठा pl08x_dma_chan *plchan;
+static struct dma_chan *pl08x_of_xlate(struct of_phandle_args *dma_spec,
+				       struct of_dma *ofdma)
+{
+	struct pl08x_driver_data *pl08x = ofdma->of_dma_data;
+	struct dma_chan *dma_chan;
+	struct pl08x_dma_chan *plchan;
 
-	अगर (!pl08x)
-		वापस शून्य;
+	if (!pl08x)
+		return NULL;
 
-	अगर (dma_spec->args_count != 2) अणु
+	if (dma_spec->args_count != 2) {
 		dev_err(&pl08x->adev->dev,
 			"DMA channel translation requires two cells\n");
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
 	dma_chan = pl08x_find_chan_id(pl08x, dma_spec->args[0]);
-	अगर (!dma_chan) अणु
+	if (!dma_chan) {
 		dev_err(&pl08x->adev->dev,
 			"DMA slave channel not found\n");
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
 	plchan = to_pl08x_chan(dma_chan);
 	dev_dbg(&pl08x->adev->dev,
 		"translated channel for signal %d\n",
 		dma_spec->args[0]);
 
-	/* Augment channel data क्रम applicable AHB buses */
+	/* Augment channel data for applicable AHB buses */
 	plchan->cd->periph_buses = dma_spec->args[1];
-	वापस dma_get_slave_channel(dma_chan);
-पूर्ण
+	return dma_get_slave_channel(dma_chan);
+}
 
-अटल पूर्णांक pl08x_of_probe(काष्ठा amba_device *adev,
-			  काष्ठा pl08x_driver_data *pl08x,
-			  काष्ठा device_node *np)
-अणु
-	काष्ठा pl08x_platक्रमm_data *pd;
-	काष्ठा pl08x_channel_data *chanp = शून्य;
+static int pl08x_of_probe(struct amba_device *adev,
+			  struct pl08x_driver_data *pl08x,
+			  struct device_node *np)
+{
+	struct pl08x_platform_data *pd;
+	struct pl08x_channel_data *chanp = NULL;
 	u32 val;
-	पूर्णांक ret;
-	पूर्णांक i;
+	int ret;
+	int i;
 
-	pd = devm_kzalloc(&adev->dev, माप(*pd), GFP_KERNEL);
-	अगर (!pd)
-		वापस -ENOMEM;
+	pd = devm_kzalloc(&adev->dev, sizeof(*pd), GFP_KERNEL);
+	if (!pd)
+		return -ENOMEM;
 
-	/* Eligible bus masters क्रम fetching LLIs */
-	अगर (of_property_पढ़ो_bool(np, "lli-bus-interface-ahb1"))
+	/* Eligible bus masters for fetching LLIs */
+	if (of_property_read_bool(np, "lli-bus-interface-ahb1"))
 		pd->lli_buses |= PL08X_AHB1;
-	अगर (of_property_पढ़ो_bool(np, "lli-bus-interface-ahb2"))
+	if (of_property_read_bool(np, "lli-bus-interface-ahb2"))
 		pd->lli_buses |= PL08X_AHB2;
-	अगर (!pd->lli_buses) अणु
+	if (!pd->lli_buses) {
 		dev_info(&adev->dev, "no bus masters for LLIs stated, assume all\n");
 		pd->lli_buses |= PL08X_AHB1 | PL08X_AHB2;
-	पूर्ण
+	}
 
-	/* Eligible bus masters क्रम memory access */
-	अगर (of_property_पढ़ो_bool(np, "mem-bus-interface-ahb1"))
+	/* Eligible bus masters for memory access */
+	if (of_property_read_bool(np, "mem-bus-interface-ahb1"))
 		pd->mem_buses |= PL08X_AHB1;
-	अगर (of_property_पढ़ो_bool(np, "mem-bus-interface-ahb2"))
+	if (of_property_read_bool(np, "mem-bus-interface-ahb2"))
 		pd->mem_buses |= PL08X_AHB2;
-	अगर (!pd->mem_buses) अणु
+	if (!pd->mem_buses) {
 		dev_info(&adev->dev, "no bus masters for memory stated, assume all\n");
 		pd->mem_buses |= PL08X_AHB1 | PL08X_AHB2;
-	पूर्ण
+	}
 
-	/* Parse the स_नकल channel properties */
-	ret = of_property_पढ़ो_u32(np, "memcpy-burst-size", &val);
-	अगर (ret) अणु
+	/* Parse the memcpy channel properties */
+	ret = of_property_read_u32(np, "memcpy-burst-size", &val);
+	if (ret) {
 		dev_info(&adev->dev, "no memcpy burst size specified, using 1 byte\n");
 		val = 1;
-	पूर्ण
-	चयन (val) अणु
-	शेष:
+	}
+	switch (val) {
+	default:
 		dev_err(&adev->dev, "illegal burst size for memcpy, set to 1\n");
 		fallthrough;
-	हाल 1:
-		pd->स_नकल_burst_size = PL08X_BURST_SZ_1;
-		अवरोध;
-	हाल 4:
-		pd->स_नकल_burst_size = PL08X_BURST_SZ_4;
-		अवरोध;
-	हाल 8:
-		pd->स_नकल_burst_size = PL08X_BURST_SZ_8;
-		अवरोध;
-	हाल 16:
-		pd->स_नकल_burst_size = PL08X_BURST_SZ_16;
-		अवरोध;
-	हाल 32:
-		pd->स_नकल_burst_size = PL08X_BURST_SZ_32;
-		अवरोध;
-	हाल 64:
-		pd->स_नकल_burst_size = PL08X_BURST_SZ_64;
-		अवरोध;
-	हाल 128:
-		pd->स_नकल_burst_size = PL08X_BURST_SZ_128;
-		अवरोध;
-	हाल 256:
-		pd->स_नकल_burst_size = PL08X_BURST_SZ_256;
-		अवरोध;
-	पूर्ण
+	case 1:
+		pd->memcpy_burst_size = PL08X_BURST_SZ_1;
+		break;
+	case 4:
+		pd->memcpy_burst_size = PL08X_BURST_SZ_4;
+		break;
+	case 8:
+		pd->memcpy_burst_size = PL08X_BURST_SZ_8;
+		break;
+	case 16:
+		pd->memcpy_burst_size = PL08X_BURST_SZ_16;
+		break;
+	case 32:
+		pd->memcpy_burst_size = PL08X_BURST_SZ_32;
+		break;
+	case 64:
+		pd->memcpy_burst_size = PL08X_BURST_SZ_64;
+		break;
+	case 128:
+		pd->memcpy_burst_size = PL08X_BURST_SZ_128;
+		break;
+	case 256:
+		pd->memcpy_burst_size = PL08X_BURST_SZ_256;
+		break;
+	}
 
-	ret = of_property_पढ़ो_u32(np, "memcpy-bus-width", &val);
-	अगर (ret) अणु
+	ret = of_property_read_u32(np, "memcpy-bus-width", &val);
+	if (ret) {
 		dev_info(&adev->dev, "no memcpy bus width specified, using 8 bits\n");
 		val = 8;
-	पूर्ण
-	चयन (val) अणु
-	शेष:
+	}
+	switch (val) {
+	default:
 		dev_err(&adev->dev, "illegal bus width for memcpy, set to 8 bits\n");
 		fallthrough;
-	हाल 8:
-		pd->स_नकल_bus_width = PL08X_BUS_WIDTH_8_BITS;
-		अवरोध;
-	हाल 16:
-		pd->स_नकल_bus_width = PL08X_BUS_WIDTH_16_BITS;
-		अवरोध;
-	हाल 32:
-		pd->स_नकल_bus_width = PL08X_BUS_WIDTH_32_BITS;
-		अवरोध;
-	पूर्ण
+	case 8:
+		pd->memcpy_bus_width = PL08X_BUS_WIDTH_8_BITS;
+		break;
+	case 16:
+		pd->memcpy_bus_width = PL08X_BUS_WIDTH_16_BITS;
+		break;
+	case 32:
+		pd->memcpy_bus_width = PL08X_BUS_WIDTH_32_BITS;
+		break;
+	}
 
 	/*
-	 * Allocate channel data क्रम all possible slave channels (one
-	 * क्रम each possible संकेत), channels will then be allocated
-	 * क्रम a device and have it's AHB पूर्णांकerfaces set up at
-	 * translation समय.
+	 * Allocate channel data for all possible slave channels (one
+	 * for each possible signal), channels will then be allocated
+	 * for a device and have it's AHB interfaces set up at
+	 * translation time.
 	 */
-	अगर (pl08x->vd->संकेतs) अणु
-		chanp = devm_kसुस्मृति(&adev->dev,
-				     pl08x->vd->संकेतs,
-				     माप(काष्ठा pl08x_channel_data),
+	if (pl08x->vd->signals) {
+		chanp = devm_kcalloc(&adev->dev,
+				     pl08x->vd->signals,
+				     sizeof(struct pl08x_channel_data),
 				     GFP_KERNEL);
-		अगर (!chanp)
-			वापस -ENOMEM;
+		if (!chanp)
+			return -ENOMEM;
 
 		pd->slave_channels = chanp;
-		क्रम (i = 0; i < pl08x->vd->संकेतs; i++) अणु
+		for (i = 0; i < pl08x->vd->signals; i++) {
 			/*
-			 * chanp->periph_buses will be asचिन्हित at translation
+			 * chanp->periph_buses will be assigned at translation
 			 */
-			chanp->bus_id = kaप्र_लिखो(GFP_KERNEL, "slave%d", i);
+			chanp->bus_id = kasprintf(GFP_KERNEL, "slave%d", i);
 			chanp++;
-		पूर्ण
-		pd->num_slave_channels = pl08x->vd->संकेतs;
-	पूर्ण
+		}
+		pd->num_slave_channels = pl08x->vd->signals;
+	}
 
 	pl08x->pd = pd;
 
-	वापस of_dma_controller_रेजिस्टर(adev->dev.of_node, pl08x_of_xlate,
+	return of_dma_controller_register(adev->dev.of_node, pl08x_of_xlate,
 					  pl08x);
-पूर्ण
-#अन्यथा
-अटल अंतरभूत पूर्णांक pl08x_of_probe(काष्ठा amba_device *adev,
-				 काष्ठा pl08x_driver_data *pl08x,
-				 काष्ठा device_node *np)
-अणु
-	वापस -EINVAL;
-पूर्ण
-#पूर्ण_अगर
+}
+#else
+static inline int pl08x_of_probe(struct amba_device *adev,
+				 struct pl08x_driver_data *pl08x,
+				 struct device_node *np)
+{
+	return -EINVAL;
+}
+#endif
 
-अटल पूर्णांक pl08x_probe(काष्ठा amba_device *adev, स्थिर काष्ठा amba_id *id)
-अणु
-	काष्ठा pl08x_driver_data *pl08x;
-	काष्ठा venकरोr_data *vd = id->data;
-	काष्ठा device_node *np = adev->dev.of_node;
+static int pl08x_probe(struct amba_device *adev, const struct amba_id *id)
+{
+	struct pl08x_driver_data *pl08x;
+	struct vendor_data *vd = id->data;
+	struct device_node *np = adev->dev.of_node;
 	u32 tsfr_size;
-	पूर्णांक ret = 0;
-	पूर्णांक i;
+	int ret = 0;
+	int i;
 
-	ret = amba_request_regions(adev, शून्य);
-	अगर (ret)
-		वापस ret;
+	ret = amba_request_regions(adev, NULL);
+	if (ret)
+		return ret;
 
-	/* Ensure that we can करो DMA */
+	/* Ensure that we can do DMA */
 	ret = dma_set_mask_and_coherent(&adev->dev, DMA_BIT_MASK(32));
-	अगर (ret)
-		जाओ out_no_pl08x;
+	if (ret)
+		goto out_no_pl08x;
 
 	/* Create the driver state holder */
-	pl08x = kzalloc(माप(*pl08x), GFP_KERNEL);
-	अगर (!pl08x) अणु
+	pl08x = kzalloc(sizeof(*pl08x), GFP_KERNEL);
+	if (!pl08x) {
 		ret = -ENOMEM;
-		जाओ out_no_pl08x;
-	पूर्ण
+		goto out_no_pl08x;
+	}
 
-	/* Assign useful poपूर्णांकers to the driver state */
+	/* Assign useful pointers to the driver state */
 	pl08x->adev = adev;
 	pl08x->vd = vd;
 
 	pl08x->base = ioremap(adev->res.start, resource_size(&adev->res));
-	अगर (!pl08x->base) अणु
+	if (!pl08x->base) {
 		ret = -ENOMEM;
-		जाओ out_no_ioremap;
-	पूर्ण
+		goto out_no_ioremap;
+	}
 
-	अगर (vd->ftdmac020) अणु
+	if (vd->ftdmac020) {
 		u32 val;
 
-		val = पढ़ोl(pl08x->base + FTDMAC020_REVISION);
+		val = readl(pl08x->base + FTDMAC020_REVISION);
 		dev_info(&pl08x->adev->dev, "FTDMAC020 %d.%d rel %d\n",
 			 (val >> 16) & 0xff, (val >> 8) & 0xff, val & 0xff);
-		val = पढ़ोl(pl08x->base + FTDMAC020_FEATURE);
+		val = readl(pl08x->base + FTDMAC020_FEATURE);
 		dev_info(&pl08x->adev->dev, "FTDMAC020 %d channels, "
 			 "%s built-in bridge, %s, %s linked lists\n",
 			 (val >> 12) & 0x0f,
@@ -2748,54 +2747,54 @@ DEFINE_SHOW_ATTRIBUTE(pl08x_debugfs);
 			 (val & BIT(9)) ? "AHB0 and AHB1" : "AHB0",
 			 (val & BIT(8)) ? "supports" : "does not support");
 
-		/* Venकरोr data from feature रेजिस्टर */
-		अगर (!(val & BIT(8)))
+		/* Vendor data from feature register */
+		if (!(val & BIT(8)))
 			dev_warn(&pl08x->adev->dev,
 				 "linked lists not supported, required\n");
 		vd->channels = (val >> 12) & 0x0f;
 		vd->dualmaster = !!(val & BIT(9));
-	पूर्ण
+	}
 
-	/* Initialize स_नकल engine */
-	dma_cap_set(DMA_MEMCPY, pl08x->स_नकल.cap_mask);
-	pl08x->स_नकल.dev = &adev->dev;
-	pl08x->स_नकल.device_मुक्त_chan_resources = pl08x_मुक्त_chan_resources;
-	pl08x->स_नकल.device_prep_dma_स_नकल = pl08x_prep_dma_स_नकल;
-	pl08x->स_नकल.device_prep_dma_पूर्णांकerrupt = pl08x_prep_dma_पूर्णांकerrupt;
-	pl08x->स_नकल.device_tx_status = pl08x_dma_tx_status;
-	pl08x->स_नकल.device_issue_pending = pl08x_issue_pending;
-	pl08x->स_नकल.device_config = pl08x_config;
-	pl08x->स_नकल.device_छोड़ो = pl08x_छोड़ो;
-	pl08x->स_नकल.device_resume = pl08x_resume;
-	pl08x->स_नकल.device_terminate_all = pl08x_terminate_all;
-	pl08x->स_नकल.device_synchronize = pl08x_synchronize;
-	pl08x->स_नकल.src_addr_widths = PL80X_DMA_BUSWIDTHS;
-	pl08x->स_नकल.dst_addr_widths = PL80X_DMA_BUSWIDTHS;
-	pl08x->स_नकल.directions = BIT(DMA_MEM_TO_MEM);
-	pl08x->स_नकल.residue_granularity = DMA_RESIDUE_GRANULARITY_SEGMENT;
-	अगर (vd->ftdmac020)
-		pl08x->स_नकल.copy_align = DMAENGINE_ALIGN_4_BYTES;
+	/* Initialize memcpy engine */
+	dma_cap_set(DMA_MEMCPY, pl08x->memcpy.cap_mask);
+	pl08x->memcpy.dev = &adev->dev;
+	pl08x->memcpy.device_free_chan_resources = pl08x_free_chan_resources;
+	pl08x->memcpy.device_prep_dma_memcpy = pl08x_prep_dma_memcpy;
+	pl08x->memcpy.device_prep_dma_interrupt = pl08x_prep_dma_interrupt;
+	pl08x->memcpy.device_tx_status = pl08x_dma_tx_status;
+	pl08x->memcpy.device_issue_pending = pl08x_issue_pending;
+	pl08x->memcpy.device_config = pl08x_config;
+	pl08x->memcpy.device_pause = pl08x_pause;
+	pl08x->memcpy.device_resume = pl08x_resume;
+	pl08x->memcpy.device_terminate_all = pl08x_terminate_all;
+	pl08x->memcpy.device_synchronize = pl08x_synchronize;
+	pl08x->memcpy.src_addr_widths = PL80X_DMA_BUSWIDTHS;
+	pl08x->memcpy.dst_addr_widths = PL80X_DMA_BUSWIDTHS;
+	pl08x->memcpy.directions = BIT(DMA_MEM_TO_MEM);
+	pl08x->memcpy.residue_granularity = DMA_RESIDUE_GRANULARITY_SEGMENT;
+	if (vd->ftdmac020)
+		pl08x->memcpy.copy_align = DMAENGINE_ALIGN_4_BYTES;
 
 
 	/*
-	 * Initialize slave engine, अगर the block has no संकेतs, that means
+	 * Initialize slave engine, if the block has no signals, that means
 	 * we have no slave support.
 	 */
-	अगर (vd->संकेतs) अणु
+	if (vd->signals) {
 		pl08x->has_slave = true;
 		dma_cap_set(DMA_SLAVE, pl08x->slave.cap_mask);
 		dma_cap_set(DMA_CYCLIC, pl08x->slave.cap_mask);
 		pl08x->slave.dev = &adev->dev;
-		pl08x->slave.device_मुक्त_chan_resources =
-			pl08x_मुक्त_chan_resources;
-		pl08x->slave.device_prep_dma_पूर्णांकerrupt =
-			pl08x_prep_dma_पूर्णांकerrupt;
+		pl08x->slave.device_free_chan_resources =
+			pl08x_free_chan_resources;
+		pl08x->slave.device_prep_dma_interrupt =
+			pl08x_prep_dma_interrupt;
 		pl08x->slave.device_tx_status = pl08x_dma_tx_status;
 		pl08x->slave.device_issue_pending = pl08x_issue_pending;
 		pl08x->slave.device_prep_slave_sg = pl08x_prep_slave_sg;
 		pl08x->slave.device_prep_dma_cyclic = pl08x_prep_dma_cyclic;
 		pl08x->slave.device_config = pl08x_config;
-		pl08x->slave.device_छोड़ो = pl08x_छोड़ो;
+		pl08x->slave.device_pause = pl08x_pause;
 		pl08x->slave.device_resume = pl08x_resume;
 		pl08x->slave.device_terminate_all = pl08x_terminate_all;
 		pl08x->slave.device_synchronize = pl08x_synchronize;
@@ -2805,82 +2804,82 @@ DEFINE_SHOW_ATTRIBUTE(pl08x_debugfs);
 			BIT(DMA_DEV_TO_MEM) | BIT(DMA_MEM_TO_DEV);
 		pl08x->slave.residue_granularity =
 			DMA_RESIDUE_GRANULARITY_SEGMENT;
-	पूर्ण
+	}
 
-	/* Get the platक्रमm data */
+	/* Get the platform data */
 	pl08x->pd = dev_get_platdata(&adev->dev);
-	अगर (!pl08x->pd) अणु
-		अगर (np) अणु
+	if (!pl08x->pd) {
+		if (np) {
 			ret = pl08x_of_probe(adev, pl08x, np);
-			अगर (ret)
-				जाओ out_no_platdata;
-		पूर्ण अन्यथा अणु
+			if (ret)
+				goto out_no_platdata;
+		} else {
 			dev_err(&adev->dev, "no platform data supplied\n");
 			ret = -EINVAL;
-			जाओ out_no_platdata;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			goto out_no_platdata;
+		}
+	} else {
 		pl08x->slave.filter.map = pl08x->pd->slave_map;
 		pl08x->slave.filter.mapcnt = pl08x->pd->slave_map_len;
 		pl08x->slave.filter.fn = pl08x_filter_fn;
-	पूर्ण
+	}
 
-	/* By शेष, AHB1 only.  If dualmaster, from platक्रमm */
+	/* By default, AHB1 only.  If dualmaster, from platform */
 	pl08x->lli_buses = PL08X_AHB1;
 	pl08x->mem_buses = PL08X_AHB1;
-	अगर (pl08x->vd->dualmaster) अणु
+	if (pl08x->vd->dualmaster) {
 		pl08x->lli_buses = pl08x->pd->lli_buses;
 		pl08x->mem_buses = pl08x->pd->mem_buses;
-	पूर्ण
+	}
 
-	अगर (vd->pl080s)
+	if (vd->pl080s)
 		pl08x->lli_words = PL080S_LLI_WORDS;
-	अन्यथा
+	else
 		pl08x->lli_words = PL080_LLI_WORDS;
-	tsfr_size = MAX_NUM_TSFR_LLIS * pl08x->lli_words * माप(u32);
+	tsfr_size = MAX_NUM_TSFR_LLIS * pl08x->lli_words * sizeof(u32);
 
-	/* A DMA memory pool क्रम LLIs, align on 1-byte boundary */
+	/* A DMA memory pool for LLIs, align on 1-byte boundary */
 	pl08x->pool = dma_pool_create(DRIVER_NAME, &pl08x->adev->dev,
 						tsfr_size, PL08X_ALIGN, 0);
-	अगर (!pl08x->pool) अणु
+	if (!pl08x->pool) {
 		ret = -ENOMEM;
-		जाओ out_no_lli_pool;
-	पूर्ण
+		goto out_no_lli_pool;
+	}
 
 	/* Turn on the PL08x */
 	pl08x_ensure_on(pl08x);
 
-	/* Clear any pending पूर्णांकerrupts */
-	अगर (vd->ftdmac020)
+	/* Clear any pending interrupts */
+	if (vd->ftdmac020)
 		/* This variant has error IRQs in bits 16-19 */
-		ग_लिखोl(0x0000FFFF, pl08x->base + PL080_ERR_CLEAR);
-	अन्यथा
-		ग_लिखोl(0x000000FF, pl08x->base + PL080_ERR_CLEAR);
-	ग_लिखोl(0x000000FF, pl08x->base + PL080_TC_CLEAR);
+		writel(0x0000FFFF, pl08x->base + PL080_ERR_CLEAR);
+	else
+		writel(0x000000FF, pl08x->base + PL080_ERR_CLEAR);
+	writel(0x000000FF, pl08x->base + PL080_TC_CLEAR);
 
-	/* Attach the पूर्णांकerrupt handler */
+	/* Attach the interrupt handler */
 	ret = request_irq(adev->irq[0], pl08x_irq, 0, DRIVER_NAME, pl08x);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&adev->dev, "%s failed to request interrupt %d\n",
 			__func__, adev->irq[0]);
-		जाओ out_no_irq;
-	पूर्ण
+		goto out_no_irq;
+	}
 
 	/* Initialize physical channels */
-	pl08x->phy_chans = kzalloc((vd->channels * माप(*pl08x->phy_chans)),
+	pl08x->phy_chans = kzalloc((vd->channels * sizeof(*pl08x->phy_chans)),
 			GFP_KERNEL);
-	अगर (!pl08x->phy_chans) अणु
+	if (!pl08x->phy_chans) {
 		ret = -ENOMEM;
-		जाओ out_no_phychans;
-	पूर्ण
+		goto out_no_phychans;
+	}
 
-	क्रम (i = 0; i < vd->channels; i++) अणु
-		काष्ठा pl08x_phy_chan *ch = &pl08x->phy_chans[i];
+	for (i = 0; i < vd->channels; i++) {
+		struct pl08x_phy_chan *ch = &pl08x->phy_chans[i];
 
 		ch->id = i;
 		ch->base = pl08x->base + PL080_Cx_BASE(i);
-		अगर (vd->ftdmac020) अणु
-			/* FTDMA020 has a special channel busy रेजिस्टर */
+		if (vd->ftdmac020) {
+			/* FTDMA020 has a special channel busy register */
 			ch->reg_busy = ch->base + FTDMAC020_CH_BUSY;
 			ch->reg_config = ch->base + FTDMAC020_CH_CFG;
 			ch->reg_control = ch->base + FTDMAC020_CH_CSR;
@@ -2888,198 +2887,198 @@ DEFINE_SHOW_ATTRIBUTE(pl08x_debugfs);
 			ch->reg_dst = ch->base + FTDMAC020_CH_DST_ADDR;
 			ch->reg_lli = ch->base + FTDMAC020_CH_LLP;
 			ch->ftdmac020 = true;
-		पूर्ण अन्यथा अणु
+		} else {
 			ch->reg_config = ch->base + vd->config_offset;
 			ch->reg_control = ch->base + PL080_CH_CONTROL;
 			ch->reg_src = ch->base + PL080_CH_SRC_ADDR;
 			ch->reg_dst = ch->base + PL080_CH_DST_ADDR;
 			ch->reg_lli = ch->base + PL080_CH_LLI;
-		पूर्ण
-		अगर (vd->pl080s)
+		}
+		if (vd->pl080s)
 			ch->pl080s = true;
 
 		spin_lock_init(&ch->lock);
 
 		/*
 		 * Nomadik variants can have channels that are locked
-		 * करोwn क्रम the secure world only. Lock up these channels
-		 * by perpetually serving a dummy भव channel.
+		 * down for the secure world only. Lock up these channels
+		 * by perpetually serving a dummy virtual channel.
 		 */
-		अगर (vd->nomadik) अणु
+		if (vd->nomadik) {
 			u32 val;
 
-			val = पढ़ोl(ch->reg_config);
-			अगर (val & (PL080N_CONFIG_ITPROT | PL080N_CONFIG_SECPROT)) अणु
+			val = readl(ch->reg_config);
+			if (val & (PL080N_CONFIG_ITPROT | PL080N_CONFIG_SECPROT)) {
 				dev_info(&adev->dev, "physical channel %d reserved for secure access only\n", i);
 				ch->locked = true;
-			पूर्ण
-		पूर्ण
+			}
+		}
 
 		dev_dbg(&adev->dev, "physical channel %d is %s\n",
 			i, pl08x_phy_channel_busy(ch) ? "BUSY" : "FREE");
-	पूर्ण
+	}
 
-	/* Register as many स_नकल channels as there are physical channels */
-	ret = pl08x_dma_init_भव_channels(pl08x, &pl08x->स_नकल,
+	/* Register as many memcpy channels as there are physical channels */
+	ret = pl08x_dma_init_virtual_channels(pl08x, &pl08x->memcpy,
 					      pl08x->vd->channels, false);
-	अगर (ret <= 0) अणु
+	if (ret <= 0) {
 		dev_warn(&pl08x->adev->dev,
 			 "%s failed to enumerate memcpy channels - %d\n",
 			 __func__, ret);
-		जाओ out_no_स_नकल;
-	पूर्ण
+		goto out_no_memcpy;
+	}
 
 	/* Register slave channels */
-	अगर (pl08x->has_slave) अणु
-		ret = pl08x_dma_init_भव_channels(pl08x, &pl08x->slave,
+	if (pl08x->has_slave) {
+		ret = pl08x_dma_init_virtual_channels(pl08x, &pl08x->slave,
 					pl08x->pd->num_slave_channels, true);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			dev_warn(&pl08x->adev->dev,
 				 "%s failed to enumerate slave channels - %d\n",
 				 __func__, ret);
-			जाओ out_no_slave;
-		पूर्ण
-	पूर्ण
+			goto out_no_slave;
+		}
+	}
 
-	ret = dma_async_device_रेजिस्टर(&pl08x->स_नकल);
-	अगर (ret) अणु
+	ret = dma_async_device_register(&pl08x->memcpy);
+	if (ret) {
 		dev_warn(&pl08x->adev->dev,
 			"%s failed to register memcpy as an async device - %d\n",
 			__func__, ret);
-		जाओ out_no_स_नकल_reg;
-	पूर्ण
+		goto out_no_memcpy_reg;
+	}
 
-	अगर (pl08x->has_slave) अणु
-		ret = dma_async_device_रेजिस्टर(&pl08x->slave);
-		अगर (ret) अणु
+	if (pl08x->has_slave) {
+		ret = dma_async_device_register(&pl08x->slave);
+		if (ret) {
 			dev_warn(&pl08x->adev->dev,
 			"%s failed to register slave as an async device - %d\n",
 			__func__, ret);
-			जाओ out_no_slave_reg;
-		पूर्ण
-	पूर्ण
+			goto out_no_slave_reg;
+		}
+	}
 
 	amba_set_drvdata(adev, pl08x);
 	init_pl08x_debugfs(pl08x);
 	dev_info(&pl08x->adev->dev, "DMA: PL%03x%s rev%u at 0x%08llx irq %d\n",
 		 amba_part(adev), pl08x->vd->pl080s ? "s" : "", amba_rev(adev),
-		 (अचिन्हित दीर्घ दीर्घ)adev->res.start, adev->irq[0]);
+		 (unsigned long long)adev->res.start, adev->irq[0]);
 
-	वापस 0;
+	return 0;
 
 out_no_slave_reg:
-	dma_async_device_unरेजिस्टर(&pl08x->स_नकल);
-out_no_स_नकल_reg:
-	अगर (pl08x->has_slave)
-		pl08x_मुक्त_भव_channels(&pl08x->slave);
+	dma_async_device_unregister(&pl08x->memcpy);
+out_no_memcpy_reg:
+	if (pl08x->has_slave)
+		pl08x_free_virtual_channels(&pl08x->slave);
 out_no_slave:
-	pl08x_मुक्त_भव_channels(&pl08x->स_नकल);
-out_no_स_नकल:
-	kमुक्त(pl08x->phy_chans);
+	pl08x_free_virtual_channels(&pl08x->memcpy);
+out_no_memcpy:
+	kfree(pl08x->phy_chans);
 out_no_phychans:
-	मुक्त_irq(adev->irq[0], pl08x);
+	free_irq(adev->irq[0], pl08x);
 out_no_irq:
 	dma_pool_destroy(pl08x->pool);
 out_no_lli_pool:
 out_no_platdata:
 	iounmap(pl08x->base);
 out_no_ioremap:
-	kमुक्त(pl08x);
+	kfree(pl08x);
 out_no_pl08x:
 	amba_release_regions(adev);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /* PL080 has 8 channels and the PL080 have just 2 */
-अटल काष्ठा venकरोr_data venकरोr_pl080 = अणु
+static struct vendor_data vendor_pl080 = {
 	.config_offset = PL080_CH_CONFIG,
 	.channels = 8,
-	.संकेतs = 16,
+	.signals = 16,
 	.dualmaster = true,
 	.max_transfer_size = PL080_CONTROL_TRANSFER_SIZE_MASK,
-पूर्ण;
+};
 
-अटल काष्ठा venकरोr_data venकरोr_nomadik = अणु
+static struct vendor_data vendor_nomadik = {
 	.config_offset = PL080_CH_CONFIG,
 	.channels = 8,
-	.संकेतs = 32,
+	.signals = 32,
 	.dualmaster = true,
 	.nomadik = true,
 	.max_transfer_size = PL080_CONTROL_TRANSFER_SIZE_MASK,
-पूर्ण;
+};
 
-अटल काष्ठा venकरोr_data venकरोr_pl080s = अणु
+static struct vendor_data vendor_pl080s = {
 	.config_offset = PL080S_CH_CONFIG,
 	.channels = 8,
-	.संकेतs = 32,
+	.signals = 32,
 	.pl080s = true,
 	.max_transfer_size = PL080S_CONTROL_TRANSFER_SIZE_MASK,
-पूर्ण;
+};
 
-अटल काष्ठा venकरोr_data venकरोr_pl081 = अणु
+static struct vendor_data vendor_pl081 = {
 	.config_offset = PL080_CH_CONFIG,
 	.channels = 2,
-	.संकेतs = 16,
+	.signals = 16,
 	.dualmaster = false,
 	.max_transfer_size = PL080_CONTROL_TRANSFER_SIZE_MASK,
-पूर्ण;
+};
 
-अटल काष्ठा venकरोr_data venकरोr_ftdmac020 = अणु
+static struct vendor_data vendor_ftdmac020 = {
 	.config_offset = PL080_CH_CONFIG,
 	.ftdmac020 = true,
 	.max_transfer_size = PL080_CONTROL_TRANSFER_SIZE_MASK,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा amba_id pl08x_ids[] = अणु
+static const struct amba_id pl08x_ids[] = {
 	/* Samsung PL080S variant */
-	अणु
+	{
 		.id	= 0x0a141080,
 		.mask	= 0xffffffff,
-		.data	= &venकरोr_pl080s,
-	पूर्ण,
+		.data	= &vendor_pl080s,
+	},
 	/* PL080 */
-	अणु
+	{
 		.id	= 0x00041080,
 		.mask	= 0x000fffff,
-		.data	= &venकरोr_pl080,
-	पूर्ण,
+		.data	= &vendor_pl080,
+	},
 	/* PL081 */
-	अणु
+	{
 		.id	= 0x00041081,
 		.mask	= 0x000fffff,
-		.data	= &venकरोr_pl081,
-	पूर्ण,
+		.data	= &vendor_pl081,
+	},
 	/* Nomadik 8815 PL080 variant */
-	अणु
+	{
 		.id	= 0x00280080,
 		.mask	= 0x00ffffff,
-		.data	= &venकरोr_nomadik,
-	पूर्ण,
+		.data	= &vendor_nomadik,
+	},
 	/* Faraday Technology FTDMAC020 */
-	अणु
+	{
 		.id	= 0x0003b080,
 		.mask	= 0x000fffff,
-		.data	= &venकरोr_ftdmac020,
-	पूर्ण,
-	अणु 0, 0 पूर्ण,
-पूर्ण;
+		.data	= &vendor_ftdmac020,
+	},
+	{ 0, 0 },
+};
 
 MODULE_DEVICE_TABLE(amba, pl08x_ids);
 
-अटल काष्ठा amba_driver pl08x_amba_driver = अणु
+static struct amba_driver pl08x_amba_driver = {
 	.drv.name	= DRIVER_NAME,
 	.id_table	= pl08x_ids,
 	.probe		= pl08x_probe,
-पूर्ण;
+};
 
-अटल पूर्णांक __init pl08x_init(व्योम)
-अणु
-	पूर्णांक retval;
-	retval = amba_driver_रेजिस्टर(&pl08x_amba_driver);
-	अगर (retval)
-		prपूर्णांकk(KERN_WARNING DRIVER_NAME
+static int __init pl08x_init(void)
+{
+	int retval;
+	retval = amba_driver_register(&pl08x_amba_driver);
+	if (retval)
+		printk(KERN_WARNING DRIVER_NAME
 		       "failed to register as an AMBA device (%d)\n",
 		       retval);
-	वापस retval;
-पूर्ण
+	return retval;
+}
 subsys_initcall(pl08x_init);

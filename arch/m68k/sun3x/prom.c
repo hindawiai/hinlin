@@ -1,166 +1,165 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-/* Prom access routines क्रम the sun3x */
+// SPDX-License-Identifier: GPL-2.0
+/* Prom access routines for the sun3x */
 
-#समावेश <linux/types.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/tty.h>
-#समावेश <linux/console.h>
-#समावेश <linux/init.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/माला.स>
+#include <linux/types.h>
+#include <linux/kernel.h>
+#include <linux/tty.h>
+#include <linux/console.h>
+#include <linux/init.h>
+#include <linux/mm.h>
+#include <linux/string.h>
 
-#समावेश <यंत्र/page.h>
-#समावेश <यंत्र/setup.h>
-#समावेश <यंत्र/traps.h>
-#समावेश <यंत्र/sun3xprom.h>
-#समावेश <यंत्र/idprom.h>
-#समावेश <यंत्र/segment.h>
-#समावेश <यंत्र/sun3पूर्णांकs.h>
-#समावेश <यंत्र/खोलोprom.h>
-#समावेश <यंत्र/machines.h>
+#include <asm/page.h>
+#include <asm/setup.h>
+#include <asm/traps.h>
+#include <asm/sun3xprom.h>
+#include <asm/idprom.h>
+#include <asm/segment.h>
+#include <asm/sun3ints.h>
+#include <asm/openprom.h>
+#include <asm/machines.h>
 
-व्योम (*sun3x_अक्षर_दो)(पूर्णांक);
-पूर्णांक (*sun3x_अक्षर_लो)(व्योम);
-पूर्णांक (*sun3x_mayget)(व्योम);
-पूर्णांक (*sun3x_mayput)(पूर्णांक);
-व्योम (*sun3x_prom_reboot)(व्योम);
-e_vector sun3x_prom_पात;
-काष्ठा linux_romvec *romvec;
+void (*sun3x_putchar)(int);
+int (*sun3x_getchar)(void);
+int (*sun3x_mayget)(void);
+int (*sun3x_mayput)(int);
+void (*sun3x_prom_reboot)(void);
+e_vector sun3x_prom_abort;
+struct linux_romvec *romvec;
 
 /* prom vector table */
 e_vector *sun3x_prom_vbr;
 
-/* Handle वापसing to the prom */
-व्योम sun3x_halt(व्योम)
-अणु
-	अचिन्हित दीर्घ flags;
+/* Handle returning to the prom */
+void sun3x_halt(void)
+{
+	unsigned long flags;
 
-	/* Disable पूर्णांकerrupts जबतक we mess with things */
+	/* Disable interrupts while we mess with things */
 	local_irq_save(flags);
 
 	/* Restore prom vbr */
-	यंत्र अस्थिर ("movec %0,%%vbr" : : "r" ((व्योम*)sun3x_prom_vbr));
+	asm volatile ("movec %0,%%vbr" : : "r" ((void*)sun3x_prom_vbr));
 
-	/* Restore prom NMI घड़ी */
-//	sun3x_disable_पूर्णांकreg(5);
+	/* Restore prom NMI clock */
+//	sun3x_disable_intreg(5);
 	sun3_enable_irq(7);
 
 	/* Let 'er rip */
-	यंत्र अस्थिर ("trap #14");
+	asm volatile ("trap #14");
 
 	/* Restore everything */
 	sun3_disable_irq(7);
 	sun3_enable_irq(5);
 
-	यंत्र अस्थिर ("movec %0,%%vbr" : : "r" ((व्योम*)vectors));
+	asm volatile ("movec %0,%%vbr" : : "r" ((void*)vectors));
 	local_irq_restore(flags);
-पूर्ण
+}
 
-व्योम sun3x_reboot(व्योम)
-अणु
-	/* This never वापसs, करोn't bother saving things */
+void sun3x_reboot(void)
+{
+	/* This never returns, don't bother saving things */
 	local_irq_disable();
 
 	/* Restore prom vbr */
-	यंत्र अस्थिर ("movec %0,%%vbr" : : "r" ((व्योम*)sun3x_prom_vbr));
+	asm volatile ("movec %0,%%vbr" : : "r" ((void*)sun3x_prom_vbr));
 
-	/* Restore prom NMI घड़ी */
+	/* Restore prom NMI clock */
 	sun3_disable_irq(5);
 	sun3_enable_irq(7);
 
 	/* Let 'er rip */
 	(*romvec->pv_reboot)("vmlinux");
-पूर्ण
+}
 
-अटल व्योम sun3x_prom_ग_लिखो(काष्ठा console *co, स्थिर अक्षर *s,
-                             अचिन्हित पूर्णांक count)
-अणु
-	जबतक (count--) अणु
-		अगर (*s == '\n')
-			sun3x_अक्षर_दो('\r');
-		sun3x_अक्षर_दो(*s++);
-	पूर्ण
-पूर्ण
+static void sun3x_prom_write(struct console *co, const char *s,
+                             unsigned int count)
+{
+	while (count--) {
+		if (*s == '\n')
+			sun3x_putchar('\r');
+		sun3x_putchar(*s++);
+	}
+}
 
-/* debug console - ग_लिखो-only */
+/* debug console - write-only */
 
-अटल काष्ठा console sun3x_debug = अणु
+static struct console sun3x_debug = {
 	.name	= "debug",
-	.ग_लिखो	= sun3x_prom_ग_लिखो,
+	.write	= sun3x_prom_write,
 	.flags	= CON_PRINTBUFFER,
 	.index	= -1,
-पूर्ण;
+};
 
-व्योम __init sun3x_prom_init(व्योम)
-अणु
+void __init sun3x_prom_init(void)
+{
 	/* Read the vector table */
 
-	sun3x_अक्षर_दो = *(व्योम (**)(पूर्णांक)) (SUN3X_P_PUTCHAR);
-	sun3x_अक्षर_लो = *(पूर्णांक (**)(व्योम)) (SUN3X_P_GETCHAR);
-	sun3x_mayget = *(पूर्णांक (**)(व्योम))  (SUN3X_P_MAYGET);
-	sun3x_mayput = *(पूर्णांक (**)(पूर्णांक))   (SUN3X_P_MAYPUT);
-	sun3x_prom_reboot = *(व्योम (**)(व्योम)) (SUN3X_P_REBOOT);
-	sun3x_prom_पात = *(e_vector *)  (SUN3X_P_ABORT);
-	romvec = (काष्ठा linux_romvec *)SUN3X_PROM_BASE;
+	sun3x_putchar = *(void (**)(int)) (SUN3X_P_PUTCHAR);
+	sun3x_getchar = *(int (**)(void)) (SUN3X_P_GETCHAR);
+	sun3x_mayget = *(int (**)(void))  (SUN3X_P_MAYGET);
+	sun3x_mayput = *(int (**)(int))   (SUN3X_P_MAYPUT);
+	sun3x_prom_reboot = *(void (**)(void)) (SUN3X_P_REBOOT);
+	sun3x_prom_abort = *(e_vector *)  (SUN3X_P_ABORT);
+	romvec = (struct linux_romvec *)SUN3X_PROM_BASE;
 
 	idprom_init();
 
-	अगर (!((idprom->id_machtype & SM_ARCH_MASK) == SM_SUN3X)) अणु
+	if (!((idprom->id_machtype & SM_ARCH_MASK) == SM_SUN3X)) {
 		pr_warn("Machine reports strange type %02x\n",
 			idprom->id_machtype);
 		pr_warn("Pretending it's a 3/80, but very afraid...\n");
 		idprom->id_machtype = SM_SUN3X | SM_3_80;
-	पूर्ण
+	}
 
-	/* poपूर्णांक trap #14 at पात.
+	/* point trap #14 at abort.
 	 * XXX this is futile since we restore the vbr first - oops
 	 */
-	vectors[VEC_TRAP14] = sun3x_prom_पात;
-पूर्ण
+	vectors[VEC_TRAP14] = sun3x_prom_abort;
+}
 
-अटल पूर्णांक __init sun3x_debug_setup(अक्षर *arg)
-अणु
-	/* If debug=prom was specअगरied, start the debug console */
-	अगर (MACH_IS_SUN3X && !म_भेद(arg, "prom"))
-		रेजिस्टर_console(&sun3x_debug);
-	वापस 0;
-पूर्ण
+static int __init sun3x_debug_setup(char *arg)
+{
+	/* If debug=prom was specified, start the debug console */
+	if (MACH_IS_SUN3X && !strcmp(arg, "prom"))
+		register_console(&sun3x_debug);
+	return 0;
+}
 
 early_param("debug", sun3x_debug_setup);
 
 /* some prom functions to export */
-पूर्णांक prom_getपूर्णांकशेष(पूर्णांक node, अक्षर *property, पूर्णांक deflt)
-अणु
-	वापस deflt;
-पूर्ण
+int prom_getintdefault(int node, char *property, int deflt)
+{
+	return deflt;
+}
 
-पूर्णांक prom_getbool (पूर्णांक node, अक्षर *prop)
-अणु
-	वापस 1;
-पूर्ण
+int prom_getbool (int node, char *prop)
+{
+	return 1;
+}
 
-व्योम prom_म_लिखो(अक्षर *fmt, ...)
-अणु
-पूर्ण
+void prom_printf(char *fmt, ...)
+{
+}
 
-व्योम prom_halt (व्योम)
-अणु
+void prom_halt (void)
+{
 	sun3x_halt();
-पूर्ण
+}
 
-/* Get the idprom and stuff it पूर्णांकo buffer 'idbuf'.  Returns the
- * क्रमmat type.  'num_bytes' is the number of bytes that your idbuf
- * has space क्रम.  Returns 0xff on error.
+/* Get the idprom and stuff it into buffer 'idbuf'.  Returns the
+ * format type.  'num_bytes' is the number of bytes that your idbuf
+ * has space for.  Returns 0xff on error.
  */
-अचिन्हित अक्षर
-prom_get_idprom(अक्षर *idbuf, पूर्णांक num_bytes)
-अणु
-        पूर्णांक i;
+unsigned char
+prom_get_idprom(char *idbuf, int num_bytes)
+{
+        int i;
 
-	/* make a copy of the idprom काष्ठाure */
-	क्रम (i = 0; i < num_bytes; i++)
-		idbuf[i] = ((अक्षर *)SUN3X_IDPROM)[i];
+	/* make a copy of the idprom structure */
+	for (i = 0; i < num_bytes; i++)
+		idbuf[i] = ((char *)SUN3X_IDPROM)[i];
 
-        वापस idbuf[0];
-पूर्ण
+        return idbuf[0];
+}

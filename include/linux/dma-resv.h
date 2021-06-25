@@ -1,6 +1,5 @@
-<शैली गुरु>
 /*
- * Header file क्रम reservations क्रम dma-buf and tपंचांग
+ * Header file for reservations for dma-buf and ttm
  *
  * Copyright(C) 2011 Linaro Limited. All rights reserved.
  * Copyright (C) 2012-2013 Canonical Ltd
@@ -9,7 +8,7 @@
  * Authors:
  * Rob Clark <robdclark@gmail.com>
  * Maarten Lankhorst <maarten.lankhorst@canonical.com>
- * Thomas Hellstrom <thellstrom-at-vmware-करोt-com>
+ * Thomas Hellstrom <thellstrom-at-vmware-dot-com>
  *
  * Based on bo.c which bears the following copyright notice,
  * but is dual licensed:
@@ -17,12 +16,12 @@
  * Copyright (c) 2006-2009 VMware, Inc., Palo Alto, CA., USA
  * All Rights Reserved.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modअगरy, merge, publish,
+ * without limitation the rights to use, copy, modify, merge, publish,
  * distribute, sub license, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to करो so, subject to
+ * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
  *
  * The above copyright notice and this permission notice (including the
@@ -37,47 +36,47 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
  * USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-#अगर_अघोषित _LINUX_RESERVATION_H
-#घोषणा _LINUX_RESERVATION_H
+#ifndef _LINUX_RESERVATION_H
+#define _LINUX_RESERVATION_H
 
-#समावेश <linux/ww_mutex.h>
-#समावेश <linux/dma-fence.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/seqlock.h>
-#समावेश <linux/rcupdate.h>
+#include <linux/ww_mutex.h>
+#include <linux/dma-fence.h>
+#include <linux/slab.h>
+#include <linux/seqlock.h>
+#include <linux/rcupdate.h>
 
-बाह्य काष्ठा ww_class reservation_ww_class;
+extern struct ww_class reservation_ww_class;
 
 /**
- * काष्ठा dma_resv_list - a list of shared fences
- * @rcu: क्रम पूर्णांकernal use
+ * struct dma_resv_list - a list of shared fences
+ * @rcu: for internal use
  * @shared_count: table of shared fences
- * @shared_max: क्रम growing shared fence table
+ * @shared_max: for growing shared fence table
  * @shared: shared fence table
  */
-काष्ठा dma_resv_list अणु
-	काष्ठा rcu_head rcu;
+struct dma_resv_list {
+	struct rcu_head rcu;
 	u32 shared_count, shared_max;
-	काष्ठा dma_fence __rcu *shared[];
-पूर्ण;
+	struct dma_fence __rcu *shared[];
+};
 
 /**
- * काष्ठा dma_resv - a reservation object manages fences क्रम a buffer
+ * struct dma_resv - a reservation object manages fences for a buffer
  * @lock: update side lock
- * @seq: sequence count क्रम managing RCU पढ़ो-side synchronization
- * @fence_excl: the exclusive fence, अगर there is one currently
+ * @seq: sequence count for managing RCU read-side synchronization
+ * @fence_excl: the exclusive fence, if there is one currently
  * @fence: list of current shared fences
  */
-काष्ठा dma_resv अणु
-	काष्ठा ww_mutex lock;
+struct dma_resv {
+	struct ww_mutex lock;
 	seqcount_ww_mutex_t seq;
 
-	काष्ठा dma_fence __rcu *fence_excl;
-	काष्ठा dma_resv_list __rcu *fence;
-पूर्ण;
+	struct dma_fence __rcu *fence_excl;
+	struct dma_resv_list __rcu *fence;
+};
 
-#घोषणा dma_resv_held(obj) lockdep_is_held(&(obj)->lock.base)
-#घोषणा dma_resv_निश्चित_held(obj) lockdep_निश्चित_held(&(obj)->lock.base)
+#define dma_resv_held(obj) lockdep_is_held(&(obj)->lock.base)
+#define dma_resv_assert_held(obj) lockdep_assert_held(&(obj)->lock.base)
 
 /**
  * dma_resv_get_list - get the reservation object's
@@ -87,126 +86,126 @@
  * Returns the shared fence list.  Does NOT take references to
  * the fence.  The obj->lock must be held.
  */
-अटल अंतरभूत काष्ठा dma_resv_list *dma_resv_get_list(काष्ठा dma_resv *obj)
-अणु
-	वापस rcu_dereference_रक्षित(obj->fence,
+static inline struct dma_resv_list *dma_resv_get_list(struct dma_resv *obj)
+{
+	return rcu_dereference_protected(obj->fence,
 					 dma_resv_held(obj));
-पूर्ण
+}
 
 /**
  * dma_resv_lock - lock the reservation object
  * @obj: the reservation object
  * @ctx: the locking context
  *
- * Locks the reservation object क्रम exclusive access and modअगरication. Note,
- * that the lock is only against other ग_लिखोrs, पढ़ोers will run concurrently
- * with a ग_लिखोr under RCU. The seqlock is used to notअगरy पढ़ोers अगर they
- * overlap with a ग_लिखोr.
+ * Locks the reservation object for exclusive access and modification. Note,
+ * that the lock is only against other writers, readers will run concurrently
+ * with a writer under RCU. The seqlock is used to notify readers if they
+ * overlap with a writer.
  *
  * As the reservation object may be locked by multiple parties in an
- * undefined order, a #ww_acquire_ctx is passed to unwind अगर a cycle
+ * undefined order, a #ww_acquire_ctx is passed to unwind if a cycle
  * is detected. See ww_mutex_lock() and ww_acquire_init(). A reservation
- * object may be locked by itself by passing शून्य as @ctx.
+ * object may be locked by itself by passing NULL as @ctx.
  */
-अटल अंतरभूत पूर्णांक dma_resv_lock(काष्ठा dma_resv *obj,
-				काष्ठा ww_acquire_ctx *ctx)
-अणु
-	वापस ww_mutex_lock(&obj->lock, ctx);
-पूर्ण
+static inline int dma_resv_lock(struct dma_resv *obj,
+				struct ww_acquire_ctx *ctx)
+{
+	return ww_mutex_lock(&obj->lock, ctx);
+}
 
 /**
- * dma_resv_lock_पूर्णांकerruptible - lock the reservation object
+ * dma_resv_lock_interruptible - lock the reservation object
  * @obj: the reservation object
  * @ctx: the locking context
  *
- * Locks the reservation object पूर्णांकerruptible क्रम exclusive access and
- * modअगरication. Note, that the lock is only against other ग_लिखोrs, पढ़ोers
- * will run concurrently with a ग_लिखोr under RCU. The seqlock is used to
- * notअगरy पढ़ोers अगर they overlap with a ग_लिखोr.
+ * Locks the reservation object interruptible for exclusive access and
+ * modification. Note, that the lock is only against other writers, readers
+ * will run concurrently with a writer under RCU. The seqlock is used to
+ * notify readers if they overlap with a writer.
  *
  * As the reservation object may be locked by multiple parties in an
- * undefined order, a #ww_acquire_ctx is passed to unwind अगर a cycle
+ * undefined order, a #ww_acquire_ctx is passed to unwind if a cycle
  * is detected. See ww_mutex_lock() and ww_acquire_init(). A reservation
- * object may be locked by itself by passing शून्य as @ctx.
+ * object may be locked by itself by passing NULL as @ctx.
  */
-अटल अंतरभूत पूर्णांक dma_resv_lock_पूर्णांकerruptible(काष्ठा dma_resv *obj,
-					      काष्ठा ww_acquire_ctx *ctx)
-अणु
-	वापस ww_mutex_lock_पूर्णांकerruptible(&obj->lock, ctx);
-पूर्ण
+static inline int dma_resv_lock_interruptible(struct dma_resv *obj,
+					      struct ww_acquire_ctx *ctx)
+{
+	return ww_mutex_lock_interruptible(&obj->lock, ctx);
+}
 
 /**
  * dma_resv_lock_slow - slowpath lock the reservation object
  * @obj: the reservation object
  * @ctx: the locking context
  *
- * Acquires the reservation object after a die हाल. This function
+ * Acquires the reservation object after a die case. This function
  * will sleep until the lock becomes available. See dma_resv_lock() as
  * well.
  */
-अटल अंतरभूत व्योम dma_resv_lock_slow(काष्ठा dma_resv *obj,
-				      काष्ठा ww_acquire_ctx *ctx)
-अणु
+static inline void dma_resv_lock_slow(struct dma_resv *obj,
+				      struct ww_acquire_ctx *ctx)
+{
 	ww_mutex_lock_slow(&obj->lock, ctx);
-पूर्ण
+}
 
 /**
- * dma_resv_lock_slow_पूर्णांकerruptible - slowpath lock the reservation
- * object, पूर्णांकerruptible
+ * dma_resv_lock_slow_interruptible - slowpath lock the reservation
+ * object, interruptible
  * @obj: the reservation object
  * @ctx: the locking context
  *
- * Acquires the reservation object पूर्णांकerruptible after a die हाल. This function
+ * Acquires the reservation object interruptible after a die case. This function
  * will sleep until the lock becomes available. See
- * dma_resv_lock_पूर्णांकerruptible() as well.
+ * dma_resv_lock_interruptible() as well.
  */
-अटल अंतरभूत पूर्णांक dma_resv_lock_slow_पूर्णांकerruptible(काष्ठा dma_resv *obj,
-						   काष्ठा ww_acquire_ctx *ctx)
-अणु
-	वापस ww_mutex_lock_slow_पूर्णांकerruptible(&obj->lock, ctx);
-पूर्ण
+static inline int dma_resv_lock_slow_interruptible(struct dma_resv *obj,
+						   struct ww_acquire_ctx *ctx)
+{
+	return ww_mutex_lock_slow_interruptible(&obj->lock, ctx);
+}
 
 /**
  * dma_resv_trylock - trylock the reservation object
  * @obj: the reservation object
  *
- * Tries to lock the reservation object क्रम exclusive access and modअगरication.
- * Note, that the lock is only against other ग_लिखोrs, पढ़ोers will run
- * concurrently with a ग_लिखोr under RCU. The seqlock is used to notअगरy पढ़ोers
- * अगर they overlap with a ग_लिखोr.
+ * Tries to lock the reservation object for exclusive access and modification.
+ * Note, that the lock is only against other writers, readers will run
+ * concurrently with a writer under RCU. The seqlock is used to notify readers
+ * if they overlap with a writer.
  *
  * Also note that since no context is provided, no deadlock protection is
  * possible.
  *
- * Returns true अगर the lock was acquired, false otherwise.
+ * Returns true if the lock was acquired, false otherwise.
  */
-अटल अंतरभूत bool __must_check dma_resv_trylock(काष्ठा dma_resv *obj)
-अणु
-	वापस ww_mutex_trylock(&obj->lock);
-पूर्ण
+static inline bool __must_check dma_resv_trylock(struct dma_resv *obj)
+{
+	return ww_mutex_trylock(&obj->lock);
+}
 
 /**
  * dma_resv_is_locked - is the reservation object locked
  * @obj: the reservation object
  *
- * Returns true अगर the mutex is locked, false अगर unlocked.
+ * Returns true if the mutex is locked, false if unlocked.
  */
-अटल अंतरभूत bool dma_resv_is_locked(काष्ठा dma_resv *obj)
-अणु
-	वापस ww_mutex_is_locked(&obj->lock);
-पूर्ण
+static inline bool dma_resv_is_locked(struct dma_resv *obj)
+{
+	return ww_mutex_is_locked(&obj->lock);
+}
 
 /**
- * dma_resv_locking_ctx - वापसs the context used to lock the object
+ * dma_resv_locking_ctx - returns the context used to lock the object
  * @obj: the reservation object
  *
- * Returns the context used to lock a reservation object or शून्य अगर no context
+ * Returns the context used to lock a reservation object or NULL if no context
  * was used or the object is not locked at all.
  */
-अटल अंतरभूत काष्ठा ww_acquire_ctx *dma_resv_locking_ctx(काष्ठा dma_resv *obj)
-अणु
-	वापस READ_ONCE(obj->lock.ctx);
-पूर्ण
+static inline struct ww_acquire_ctx *dma_resv_locking_ctx(struct dma_resv *obj)
+{
+	return READ_ONCE(obj->lock.ctx);
+}
 
 /**
  * dma_resv_unlock - unlock the reservation object
@@ -214,37 +213,37 @@
  *
  * Unlocks the reservation object following exclusive access.
  */
-अटल अंतरभूत व्योम dma_resv_unlock(काष्ठा dma_resv *obj)
-अणु
-#अगर_घोषित CONFIG_DEBUG_MUTEXES
+static inline void dma_resv_unlock(struct dma_resv *obj)
+{
+#ifdef CONFIG_DEBUG_MUTEXES
 	/* Test shared fence slot reservation */
-	अगर (rcu_access_poपूर्णांकer(obj->fence)) अणु
-		काष्ठा dma_resv_list *fence = dma_resv_get_list(obj);
+	if (rcu_access_pointer(obj->fence)) {
+		struct dma_resv_list *fence = dma_resv_get_list(obj);
 
 		fence->shared_max = fence->shared_count;
-	पूर्ण
-#पूर्ण_अगर
+	}
+#endif
 	ww_mutex_unlock(&obj->lock);
-पूर्ण
+}
 
 /**
  * dma_resv_get_excl - get the reservation object's
  * exclusive fence, with update-side lock held
  * @obj: the reservation object
  *
- * Returns the exclusive fence (अगर any).  Does NOT take a
- * reference. Writers must hold obj->lock, पढ़ोers may only
- * hold a RCU पढ़ो side lock.
+ * Returns the exclusive fence (if any).  Does NOT take a
+ * reference. Writers must hold obj->lock, readers may only
+ * hold a RCU read side lock.
  *
  * RETURNS
- * The exclusive fence or शून्य
+ * The exclusive fence or NULL
  */
-अटल अंतरभूत काष्ठा dma_fence *
-dma_resv_get_excl(काष्ठा dma_resv *obj)
-अणु
-	वापस rcu_dereference_रक्षित(obj->fence_excl,
+static inline struct dma_fence *
+dma_resv_get_excl(struct dma_resv *obj)
+{
+	return rcu_dereference_protected(obj->fence_excl,
 					 dma_resv_held(obj));
-पूर्ण
+}
 
 /**
  * dma_resv_get_excl_rcu - get the reservation object's
@@ -252,43 +251,43 @@ dma_resv_get_excl(काष्ठा dma_resv *obj)
  * @obj: the reservation object
  *
  * If there is an exclusive fence, this atomically increments it's
- * reference count and वापसs it.
+ * reference count and returns it.
  *
  * RETURNS
- * The exclusive fence or शून्य अगर none
+ * The exclusive fence or NULL if none
  */
-अटल अंतरभूत काष्ठा dma_fence *
-dma_resv_get_excl_rcu(काष्ठा dma_resv *obj)
-अणु
-	काष्ठा dma_fence *fence;
+static inline struct dma_fence *
+dma_resv_get_excl_rcu(struct dma_resv *obj)
+{
+	struct dma_fence *fence;
 
-	अगर (!rcu_access_poपूर्णांकer(obj->fence_excl))
-		वापस शून्य;
+	if (!rcu_access_pointer(obj->fence_excl))
+		return NULL;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	fence = dma_fence_get_rcu_safe(&obj->fence_excl);
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 
-	वापस fence;
-पूर्ण
+	return fence;
+}
 
-व्योम dma_resv_init(काष्ठा dma_resv *obj);
-व्योम dma_resv_fini(काष्ठा dma_resv *obj);
-पूर्णांक dma_resv_reserve_shared(काष्ठा dma_resv *obj, अचिन्हित पूर्णांक num_fences);
-व्योम dma_resv_add_shared_fence(काष्ठा dma_resv *obj, काष्ठा dma_fence *fence);
+void dma_resv_init(struct dma_resv *obj);
+void dma_resv_fini(struct dma_resv *obj);
+int dma_resv_reserve_shared(struct dma_resv *obj, unsigned int num_fences);
+void dma_resv_add_shared_fence(struct dma_resv *obj, struct dma_fence *fence);
 
-व्योम dma_resv_add_excl_fence(काष्ठा dma_resv *obj, काष्ठा dma_fence *fence);
+void dma_resv_add_excl_fence(struct dma_resv *obj, struct dma_fence *fence);
 
-पूर्णांक dma_resv_get_fences_rcu(काष्ठा dma_resv *obj,
-			    काष्ठा dma_fence **pfence_excl,
-			    अचिन्हित *pshared_count,
-			    काष्ठा dma_fence ***pshared);
+int dma_resv_get_fences_rcu(struct dma_resv *obj,
+			    struct dma_fence **pfence_excl,
+			    unsigned *pshared_count,
+			    struct dma_fence ***pshared);
 
-पूर्णांक dma_resv_copy_fences(काष्ठा dma_resv *dst, काष्ठा dma_resv *src);
+int dma_resv_copy_fences(struct dma_resv *dst, struct dma_resv *src);
 
-दीर्घ dma_resv_रुको_समयout_rcu(काष्ठा dma_resv *obj, bool रुको_all, bool पूर्णांकr,
-			       अचिन्हित दीर्घ समयout);
+long dma_resv_wait_timeout_rcu(struct dma_resv *obj, bool wait_all, bool intr,
+			       unsigned long timeout);
 
-bool dma_resv_test_संकेतed_rcu(काष्ठा dma_resv *obj, bool test_all);
+bool dma_resv_test_signaled_rcu(struct dma_resv *obj, bool test_all);
 
-#पूर्ण_अगर /* _LINUX_RESERVATION_H */
+#endif /* _LINUX_RESERVATION_H */

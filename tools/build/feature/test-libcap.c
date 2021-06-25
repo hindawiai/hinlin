@@ -1,21 +1,20 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <sys/capability.h>
-#समावेश <linux/capability.h>
+// SPDX-License-Identifier: GPL-2.0
+#include <sys/capability.h>
+#include <linux/capability.h>
 
-पूर्णांक मुख्य(व्योम)
-अणु
+int main(void)
+{
 	cap_flag_value_t val;
 	cap_t caps = cap_get_proc();
 
-	अगर (!caps)
-		वापस 1;
+	if (!caps)
+		return 1;
 
-	अगर (cap_get_flag(caps, CAP_SYS_ADMIN, CAP_EFFECTIVE, &val) != 0)
-		वापस 1;
+	if (cap_get_flag(caps, CAP_SYS_ADMIN, CAP_EFFECTIVE, &val) != 0)
+		return 1;
 
-	अगर (cap_मुक्त(caps) != 0)
-		वापस 1;
+	if (cap_free(caps) != 0)
+		return 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

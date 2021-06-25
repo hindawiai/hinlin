@@ -1,11 +1,10 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /***************************************************************************/
 
 /*
- *	m527x.c  -- platक्रमm support क्रम ColdFire 527x based boards
+ *	m527x.c  -- platform support for ColdFire 527x based boards
  *
- *	Sub-architcture dependent initialization code क्रम the Freescale
+ *	Sub-architcture dependent initialization code for the Freescale
  *	5270/5271 and 5274/5275 CPUs.
  *
  *	Copyright (C) 1999-2004, Greg Ungerer (gerg@snapgear.com)
@@ -14,15 +13,15 @@
 
 /***************************************************************************/
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/param.h>
-#समावेश <linux/init.h>
-#समावेश <linux/पन.स>
-#समावेश <यंत्र/machdep.h>
-#समावेश <यंत्र/coldfire.h>
-#समावेश <यंत्र/mcfsim.h>
-#समावेश <यंत्र/mcfuart.h>
-#समावेश <यंत्र/mcfclk.h>
+#include <linux/kernel.h>
+#include <linux/param.h>
+#include <linux/init.h>
+#include <linux/io.h>
+#include <asm/machdep.h>
+#include <asm/coldfire.h>
+#include <asm/mcfsim.h>
+#include <asm/mcfuart.h>
+#include <asm/mcfclk.h>
 
 /***************************************************************************/
 
@@ -40,7 +39,7 @@ DEFINE_CLK(fec0, "fec.0", MCF_BUSCLK);
 DEFINE_CLK(fec1, "fec.1", MCF_BUSCLK);
 DEFINE_CLK(mcfi2c0, "imx1-i2c.0", MCF_BUSCLK);
 
-काष्ठा clk *mcf_clks[] = अणु
+struct clk *mcf_clks[] = {
 	&clk_pll,
 	&clk_sys,
 	&clk_mcfpit0,
@@ -54,104 +53,104 @@ DEFINE_CLK(mcfi2c0, "imx1-i2c.0", MCF_BUSCLK);
 	&clk_fec0,
 	&clk_fec1,
 	&clk_mcfi2c0,
-	शून्य
-पूर्ण;
+	NULL
+};
 
 /***************************************************************************/
 
-अटल व्योम __init m527x_qspi_init(व्योम)
-अणु
-#अगर IS_ENABLED(CONFIG_SPI_COLDFIRE_QSPI)
-#अगर defined(CONFIG_M5271)
+static void __init m527x_qspi_init(void)
+{
+#if IS_ENABLED(CONFIG_SPI_COLDFIRE_QSPI)
+#if defined(CONFIG_M5271)
 	u16 par;
 
-	/* setup QSPS pins क्रम QSPI with gpio CS control */
-	ग_लिखोb(0x1f, MCFGPIO_PAR_QSPI);
+	/* setup QSPS pins for QSPI with gpio CS control */
+	writeb(0x1f, MCFGPIO_PAR_QSPI);
 	/* and CS2 & CS3 as gpio */
-	par = पढ़ोw(MCFGPIO_PAR_TIMER);
+	par = readw(MCFGPIO_PAR_TIMER);
 	par &= 0x3f3f;
-	ग_लिखोw(par, MCFGPIO_PAR_TIMER);
-#या_अगर defined(CONFIG_M5275)
-	/* setup QSPS pins क्रम QSPI with gpio CS control */
-	ग_लिखोw(0x003e, MCFGPIO_PAR_QSPI);
-#पूर्ण_अगर
-#पूर्ण_अगर /* IS_ENABLED(CONFIG_SPI_COLDFIRE_QSPI) */
-पूर्ण
+	writew(par, MCFGPIO_PAR_TIMER);
+#elif defined(CONFIG_M5275)
+	/* setup QSPS pins for QSPI with gpio CS control */
+	writew(0x003e, MCFGPIO_PAR_QSPI);
+#endif
+#endif /* IS_ENABLED(CONFIG_SPI_COLDFIRE_QSPI) */
+}
 
 /***************************************************************************/
 
-अटल व्योम __init m527x_i2c_init(व्योम)
-अणु
-#अगर IS_ENABLED(CONFIG_I2C_IMX)
-#अगर defined(CONFIG_M5271)
+static void __init m527x_i2c_init(void)
+{
+#if IS_ENABLED(CONFIG_I2C_IMX)
+#if defined(CONFIG_M5271)
 	u8 par;
 
-	/* setup Port FECI2C Pin Assignment Register क्रम I2C */
+	/* setup Port FECI2C Pin Assignment Register for I2C */
 	/*  set PAR_SCL to SCL and PAR_SDA to SDA */
-	par = पढ़ोb(MCFGPIO_PAR_FECI2C);
+	par = readb(MCFGPIO_PAR_FECI2C);
 	par |= 0x0f;
-	ग_लिखोb(par, MCFGPIO_PAR_FECI2C);
-#या_अगर defined(CONFIG_M5275)
+	writeb(par, MCFGPIO_PAR_FECI2C);
+#elif defined(CONFIG_M5275)
 	u16 par;
 
-	/* setup Port FECI2C Pin Assignment Register क्रम I2C */
+	/* setup Port FECI2C Pin Assignment Register for I2C */
 	/*  set PAR_SCL to SCL and PAR_SDA to SDA */
-	par = पढ़ोw(MCFGPIO_PAR_FECI2C);
+	par = readw(MCFGPIO_PAR_FECI2C);
 	par |= 0x0f;
-	ग_लिखोw(par, MCFGPIO_PAR_FECI2C);
-#पूर्ण_अगर
-#पूर्ण_अगर /* IS_ENABLED(CONFIG_I2C_IMX) */
-पूर्ण
+	writew(par, MCFGPIO_PAR_FECI2C);
+#endif
+#endif /* IS_ENABLED(CONFIG_I2C_IMX) */
+}
 
 /***************************************************************************/
 
-अटल व्योम __init m527x_uarts_init(व्योम)
-अणु
+static void __init m527x_uarts_init(void)
+{
 	u16 sepmask;
 
 	/*
-	 * External Pin Mask Setting & Enable External Pin क्रम Interface
+	 * External Pin Mask Setting & Enable External Pin for Interface
 	 */
-	sepmask = पढ़ोw(MCFGPIO_PAR_UART);
+	sepmask = readw(MCFGPIO_PAR_UART);
 	sepmask |= UART0_ENABLE_MASK | UART1_ENABLE_MASK | UART2_ENABLE_MASK;
-	ग_लिखोw(sepmask, MCFGPIO_PAR_UART);
-पूर्ण
+	writew(sepmask, MCFGPIO_PAR_UART);
+}
 
 /***************************************************************************/
 
-अटल व्योम __init m527x_fec_init(व्योम)
-अणु
+static void __init m527x_fec_init(void)
+{
 	u8 v;
 
-	/* Set multi-function pins to ethernet mode क्रम fec0 */
-#अगर defined(CONFIG_M5271)
-	v = पढ़ोb(MCFGPIO_PAR_FECI2C);
-	ग_लिखोb(v | 0xf0, MCFGPIO_PAR_FECI2C);
-#अन्यथा
+	/* Set multi-function pins to ethernet mode for fec0 */
+#if defined(CONFIG_M5271)
+	v = readb(MCFGPIO_PAR_FECI2C);
+	writeb(v | 0xf0, MCFGPIO_PAR_FECI2C);
+#else
 	u16 par;
 
-	par = पढ़ोw(MCFGPIO_PAR_FECI2C);
-	ग_लिखोw(par | 0xf00, MCFGPIO_PAR_FECI2C);
-	v = पढ़ोb(MCFGPIO_PAR_FEC0HL);
-	ग_लिखोb(v | 0xc0, MCFGPIO_PAR_FEC0HL);
+	par = readw(MCFGPIO_PAR_FECI2C);
+	writew(par | 0xf00, MCFGPIO_PAR_FECI2C);
+	v = readb(MCFGPIO_PAR_FEC0HL);
+	writeb(v | 0xc0, MCFGPIO_PAR_FEC0HL);
 
-	/* Set multi-function pins to ethernet mode क्रम fec1 */
-	par = पढ़ोw(MCFGPIO_PAR_FECI2C);
-	ग_लिखोw(par | 0xa0, MCFGPIO_PAR_FECI2C);
-	v = पढ़ोb(MCFGPIO_PAR_FEC1HL);
-	ग_लिखोb(v | 0xc0, MCFGPIO_PAR_FEC1HL);
-#पूर्ण_अगर
-पूर्ण
+	/* Set multi-function pins to ethernet mode for fec1 */
+	par = readw(MCFGPIO_PAR_FECI2C);
+	writew(par | 0xa0, MCFGPIO_PAR_FECI2C);
+	v = readb(MCFGPIO_PAR_FEC1HL);
+	writeb(v | 0xc0, MCFGPIO_PAR_FEC1HL);
+#endif
+}
 
 /***************************************************************************/
 
-व्योम __init config_BSP(अक्षर *commandp, पूर्णांक size)
-अणु
-	mach_sched_init = hw_समयr_init;
+void __init config_BSP(char *commandp, int size)
+{
+	mach_sched_init = hw_timer_init;
 	m527x_uarts_init();
 	m527x_fec_init();
 	m527x_qspi_init();
 	m527x_i2c_init();
-पूर्ण
+}
 
 /***************************************************************************/

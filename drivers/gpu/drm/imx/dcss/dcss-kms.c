@@ -1,33 +1,32 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright 2019 NXP.
  */
 
-#समावेश <drm/drm_atomic.h>
-#समावेश <drm/drm_atomic_helper.h>
-#समावेश <drm/drm_bridge_connector.h>
-#समावेश <drm/drm_drv.h>
-#समावेश <drm/drm_fb_helper.h>
-#समावेश <drm/drm_gem_cma_helper.h>
-#समावेश <drm/drm_gem_framebuffer_helper.h>
-#समावेश <drm/drm_of.h>
-#समावेश <drm/drm_probe_helper.h>
-#समावेश <drm/drm_vblank.h>
+#include <drm/drm_atomic.h>
+#include <drm/drm_atomic_helper.h>
+#include <drm/drm_bridge_connector.h>
+#include <drm/drm_drv.h>
+#include <drm/drm_fb_helper.h>
+#include <drm/drm_gem_cma_helper.h>
+#include <drm/drm_gem_framebuffer_helper.h>
+#include <drm/drm_of.h>
+#include <drm/drm_probe_helper.h>
+#include <drm/drm_vblank.h>
 
-#समावेश "dcss-dev.h"
-#समावेश "dcss-kms.h"
+#include "dcss-dev.h"
+#include "dcss-kms.h"
 
 DEFINE_DRM_GEM_CMA_FOPS(dcss_cma_fops);
 
-अटल स्थिर काष्ठा drm_mode_config_funcs dcss_drm_mode_config_funcs = अणु
+static const struct drm_mode_config_funcs dcss_drm_mode_config_funcs = {
 	.fb_create = drm_gem_fb_create,
 	.output_poll_changed = drm_fb_helper_output_poll_changed,
 	.atomic_check = drm_atomic_helper_check,
 	.atomic_commit = drm_atomic_helper_commit,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा drm_driver dcss_kms_driver = अणु
+static const struct drm_driver dcss_kms_driver = {
 	.driver_features	= DRIVER_MODESET | DRIVER_GEM | DRIVER_ATOMIC,
 	DRM_GEM_CMA_DRIVER_OPS,
 	.fops			= &dcss_cma_fops,
@@ -37,15 +36,15 @@ DEFINE_DRM_GEM_CMA_FOPS(dcss_cma_fops);
 	.major			= 1,
 	.minor			= 0,
 	.patchlevel		= 0,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा drm_mode_config_helper_funcs dcss_mode_config_helpers = अणु
+static const struct drm_mode_config_helper_funcs dcss_mode_config_helpers = {
 	.atomic_commit_tail = drm_atomic_helper_commit_tail_rpm,
-पूर्ण;
+};
 
-अटल व्योम dcss_kms_mode_config_init(काष्ठा dcss_kms_dev *kms)
-अणु
-	काष्ठा drm_mode_config *config = &kms->base.mode_config;
+static void dcss_kms_mode_config_init(struct dcss_kms_dev *kms)
+{
+	struct drm_mode_config *config = &kms->base.mode_config;
 
 	drm_mode_config_init(&kms->base);
 
@@ -53,97 +52,97 @@ DEFINE_DRM_GEM_CMA_FOPS(dcss_cma_fops);
 	config->min_height = 1;
 	config->max_width = 4096;
 	config->max_height = 4096;
-	config->allow_fb_modअगरiers = true;
+	config->allow_fb_modifiers = true;
 	config->normalize_zpos = true;
 
 	config->funcs = &dcss_drm_mode_config_funcs;
-	config->helper_निजी = &dcss_mode_config_helpers;
-पूर्ण
+	config->helper_private = &dcss_mode_config_helpers;
+}
 
-अटल स्थिर काष्ठा drm_encoder_funcs dcss_kms_simple_encoder_funcs = अणु
+static const struct drm_encoder_funcs dcss_kms_simple_encoder_funcs = {
 	.destroy = drm_encoder_cleanup,
-पूर्ण;
+};
 
-अटल पूर्णांक dcss_kms_bridge_connector_init(काष्ठा dcss_kms_dev *kms)
-अणु
-	काष्ठा drm_device *ddev = &kms->base;
-	काष्ठा drm_encoder *encoder = &kms->encoder;
-	काष्ठा drm_crtc *crtc = (काष्ठा drm_crtc *)&kms->crtc;
-	काष्ठा drm_panel *panel;
-	काष्ठा drm_bridge *bridge;
-	पूर्णांक ret;
+static int dcss_kms_bridge_connector_init(struct dcss_kms_dev *kms)
+{
+	struct drm_device *ddev = &kms->base;
+	struct drm_encoder *encoder = &kms->encoder;
+	struct drm_crtc *crtc = (struct drm_crtc *)&kms->crtc;
+	struct drm_panel *panel;
+	struct drm_bridge *bridge;
+	int ret;
 
 	ret = drm_of_find_panel_or_bridge(ddev->dev->of_node, 0, 0,
 					  &panel, &bridge);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (!bridge) अणु
+	if (!bridge) {
 		dev_err(ddev->dev, "No bridge found %d.\n", ret);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	encoder->possible_crtcs = drm_crtc_mask(crtc);
 
 	ret = drm_encoder_init(&kms->base, encoder,
 			       &dcss_kms_simple_encoder_funcs,
-			       DRM_MODE_ENCODER_NONE, शून्य);
-	अगर (ret) अणु
+			       DRM_MODE_ENCODER_NONE, NULL);
+	if (ret) {
 		dev_err(ddev->dev, "Failed initializing encoder %d.\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = drm_bridge_attach(encoder, bridge, शून्य,
+	ret = drm_bridge_attach(encoder, bridge, NULL,
 				DRM_BRIDGE_ATTACH_NO_CONNECTOR);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(ddev->dev, "Unable to attach bridge %pOF\n",
 			bridge->of_node);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	kms->connector = drm_bridge_connector_init(ddev, encoder);
-	अगर (IS_ERR(kms->connector)) अणु
+	if (IS_ERR(kms->connector)) {
 		dev_err(ddev->dev, "Unable to create bridge connector.\n");
-		वापस PTR_ERR(kms->connector);
-	पूर्ण
+		return PTR_ERR(kms->connector);
+	}
 
 	drm_connector_attach_encoder(kms->connector, encoder);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-काष्ठा dcss_kms_dev *dcss_kms_attach(काष्ठा dcss_dev *dcss)
-अणु
-	काष्ठा dcss_kms_dev *kms;
-	काष्ठा drm_device *drm;
-	काष्ठा dcss_crtc *crtc;
-	पूर्णांक ret;
+struct dcss_kms_dev *dcss_kms_attach(struct dcss_dev *dcss)
+{
+	struct dcss_kms_dev *kms;
+	struct drm_device *drm;
+	struct dcss_crtc *crtc;
+	int ret;
 
 	kms = devm_drm_dev_alloc(dcss->dev, &dcss_kms_driver,
-				 काष्ठा dcss_kms_dev, base);
-	अगर (IS_ERR(kms))
-		वापस kms;
+				 struct dcss_kms_dev, base);
+	if (IS_ERR(kms))
+		return kms;
 
 	drm = &kms->base;
 	crtc = &kms->crtc;
 
-	drm->dev_निजी = dcss;
+	drm->dev_private = dcss;
 
 	dcss_kms_mode_config_init(kms);
 
 	ret = drm_vblank_init(drm, 1);
-	अगर (ret)
-		जाओ cleanup_mode_config;
+	if (ret)
+		goto cleanup_mode_config;
 
 	drm->irq_enabled = true;
 
 	ret = dcss_kms_bridge_connector_init(kms);
-	अगर (ret)
-		जाओ cleanup_mode_config;
+	if (ret)
+		goto cleanup_mode_config;
 
 	ret = dcss_crtc_init(crtc, drm);
-	अगर (ret)
-		जाओ cleanup_mode_config;
+	if (ret)
+		goto cleanup_mode_config;
 
 	drm_mode_config_reset(drm);
 
@@ -151,13 +150,13 @@ DEFINE_DRM_GEM_CMA_FOPS(dcss_cma_fops);
 
 	drm_bridge_connector_enable_hpd(kms->connector);
 
-	ret = drm_dev_रेजिस्टर(drm, 0);
-	अगर (ret)
-		जाओ cleanup_crtc;
+	ret = drm_dev_register(drm, 0);
+	if (ret)
+		goto cleanup_crtc;
 
 	drm_fbdev_generic_setup(drm, 32);
 
-	वापस kms;
+	return kms;
 
 cleanup_crtc:
 	drm_bridge_connector_disable_hpd(kms->connector);
@@ -166,22 +165,22 @@ cleanup_crtc:
 
 cleanup_mode_config:
 	drm_mode_config_cleanup(drm);
-	drm->dev_निजी = शून्य;
+	drm->dev_private = NULL;
 
-	वापस ERR_PTR(ret);
-पूर्ण
+	return ERR_PTR(ret);
+}
 
-व्योम dcss_kms_detach(काष्ठा dcss_kms_dev *kms)
-अणु
-	काष्ठा drm_device *drm = &kms->base;
+void dcss_kms_detach(struct dcss_kms_dev *kms)
+{
+	struct drm_device *drm = &kms->base;
 
-	drm_dev_unरेजिस्टर(drm);
+	drm_dev_unregister(drm);
 	drm_bridge_connector_disable_hpd(kms->connector);
 	drm_kms_helper_poll_fini(drm);
-	drm_atomic_helper_shutकरोwn(drm);
+	drm_atomic_helper_shutdown(drm);
 	drm_crtc_vblank_off(&kms->crtc.base);
 	drm->irq_enabled = false;
 	drm_mode_config_cleanup(drm);
 	dcss_crtc_deinit(&kms->crtc, drm);
-	drm->dev_निजी = शून्य;
-पूर्ण
+	drm->dev_private = NULL;
+}

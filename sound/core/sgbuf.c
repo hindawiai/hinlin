@@ -1,164 +1,163 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Scatter-Gather buffer
  *
  *  Copyright (c) by Takashi Iwai <tiwai@suse.de>
  */
 
-#समावेश <linux/slab.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/vदो_स्मृति.h>
-#समावेश <linux/export.h>
-#समावेश <sound/meदो_स्मृति.h>
+#include <linux/slab.h>
+#include <linux/mm.h>
+#include <linux/vmalloc.h>
+#include <linux/export.h>
+#include <sound/memalloc.h>
 
 
 /* table entries are align to 32 */
-#घोषणा SGBUF_TBL_ALIGN		32
-#घोषणा sgbuf_align_table(tbl)	ALIGN((tbl), SGBUF_TBL_ALIGN)
+#define SGBUF_TBL_ALIGN		32
+#define sgbuf_align_table(tbl)	ALIGN((tbl), SGBUF_TBL_ALIGN)
 
-पूर्णांक snd_मुक्त_sgbuf_pages(काष्ठा snd_dma_buffer *dmab)
-अणु
-	काष्ठा snd_sg_buf *sgbuf = dmab->निजी_data;
-	काष्ठा snd_dma_buffer पंचांगpb;
-	पूर्णांक i;
+int snd_free_sgbuf_pages(struct snd_dma_buffer *dmab)
+{
+	struct snd_sg_buf *sgbuf = dmab->private_data;
+	struct snd_dma_buffer tmpb;
+	int i;
 
-	अगर (! sgbuf)
-		वापस -EINVAL;
+	if (! sgbuf)
+		return -EINVAL;
 
 	vunmap(dmab->area);
-	dmab->area = शून्य;
+	dmab->area = NULL;
 
-	पंचांगpb.dev.type = SNDRV_DMA_TYPE_DEV;
-	अगर (dmab->dev.type == SNDRV_DMA_TYPE_DEV_UC_SG)
-		पंचांगpb.dev.type = SNDRV_DMA_TYPE_DEV_UC;
-	पंचांगpb.dev.dev = sgbuf->dev;
-	क्रम (i = 0; i < sgbuf->pages; i++) अणु
-		अगर (!(sgbuf->table[i].addr & ~PAGE_MASK))
-			जारी; /* continuous pages */
-		पंचांगpb.area = sgbuf->table[i].buf;
-		पंचांगpb.addr = sgbuf->table[i].addr & PAGE_MASK;
-		पंचांगpb.bytes = (sgbuf->table[i].addr & ~PAGE_MASK) << PAGE_SHIFT;
-		snd_dma_मुक्त_pages(&पंचांगpb);
-	पूर्ण
+	tmpb.dev.type = SNDRV_DMA_TYPE_DEV;
+	if (dmab->dev.type == SNDRV_DMA_TYPE_DEV_UC_SG)
+		tmpb.dev.type = SNDRV_DMA_TYPE_DEV_UC;
+	tmpb.dev.dev = sgbuf->dev;
+	for (i = 0; i < sgbuf->pages; i++) {
+		if (!(sgbuf->table[i].addr & ~PAGE_MASK))
+			continue; /* continuous pages */
+		tmpb.area = sgbuf->table[i].buf;
+		tmpb.addr = sgbuf->table[i].addr & PAGE_MASK;
+		tmpb.bytes = (sgbuf->table[i].addr & ~PAGE_MASK) << PAGE_SHIFT;
+		snd_dma_free_pages(&tmpb);
+	}
 
-	kमुक्त(sgbuf->table);
-	kमुक्त(sgbuf->page_table);
-	kमुक्त(sgbuf);
-	dmab->निजी_data = शून्य;
+	kfree(sgbuf->table);
+	kfree(sgbuf->page_table);
+	kfree(sgbuf);
+	dmab->private_data = NULL;
 	
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#घोषणा MAX_ALLOC_PAGES		32
+#define MAX_ALLOC_PAGES		32
 
-व्योम *snd_दो_स्मृति_sgbuf_pages(काष्ठा device *device,
-			     माप_प्रकार size, काष्ठा snd_dma_buffer *dmab,
-			     माप_प्रकार *res_size)
-अणु
-	काष्ठा snd_sg_buf *sgbuf;
-	अचिन्हित पूर्णांक i, pages, chunk, maxpages;
-	काष्ठा snd_dma_buffer पंचांगpb;
-	काष्ठा snd_sg_page *table;
-	काष्ठा page **pgtable;
-	पूर्णांक type = SNDRV_DMA_TYPE_DEV;
+void *snd_malloc_sgbuf_pages(struct device *device,
+			     size_t size, struct snd_dma_buffer *dmab,
+			     size_t *res_size)
+{
+	struct snd_sg_buf *sgbuf;
+	unsigned int i, pages, chunk, maxpages;
+	struct snd_dma_buffer tmpb;
+	struct snd_sg_page *table;
+	struct page **pgtable;
+	int type = SNDRV_DMA_TYPE_DEV;
 	pgprot_t prot = PAGE_KERNEL;
 
-	dmab->area = शून्य;
+	dmab->area = NULL;
 	dmab->addr = 0;
-	dmab->निजी_data = sgbuf = kzalloc(माप(*sgbuf), GFP_KERNEL);
-	अगर (! sgbuf)
-		वापस शून्य;
-	अगर (dmab->dev.type == SNDRV_DMA_TYPE_DEV_UC_SG) अणु
+	dmab->private_data = sgbuf = kzalloc(sizeof(*sgbuf), GFP_KERNEL);
+	if (! sgbuf)
+		return NULL;
+	if (dmab->dev.type == SNDRV_DMA_TYPE_DEV_UC_SG) {
 		type = SNDRV_DMA_TYPE_DEV_UC;
-#अगर_घोषित pgprot_noncached
+#ifdef pgprot_noncached
 		prot = pgprot_noncached(PAGE_KERNEL);
-#पूर्ण_अगर
-	पूर्ण
+#endif
+	}
 	sgbuf->dev = device;
 	pages = snd_sgbuf_aligned_pages(size);
 	sgbuf->tblsize = sgbuf_align_table(pages);
-	table = kसुस्मृति(sgbuf->tblsize, माप(*table), GFP_KERNEL);
-	अगर (!table)
-		जाओ _failed;
+	table = kcalloc(sgbuf->tblsize, sizeof(*table), GFP_KERNEL);
+	if (!table)
+		goto _failed;
 	sgbuf->table = table;
-	pgtable = kसुस्मृति(sgbuf->tblsize, माप(*pgtable), GFP_KERNEL);
-	अगर (!pgtable)
-		जाओ _failed;
+	pgtable = kcalloc(sgbuf->tblsize, sizeof(*pgtable), GFP_KERNEL);
+	if (!pgtable)
+		goto _failed;
 	sgbuf->page_table = pgtable;
 
 	/* allocate pages */
 	maxpages = MAX_ALLOC_PAGES;
-	जबतक (pages > 0) अणु
+	while (pages > 0) {
 		chunk = pages;
-		/* करोn't be too eager to take a huge chunk */
-		अगर (chunk > maxpages)
+		/* don't be too eager to take a huge chunk */
+		if (chunk > maxpages)
 			chunk = maxpages;
 		chunk <<= PAGE_SHIFT;
-		अगर (snd_dma_alloc_pages_fallback(type, device,
-						 chunk, &पंचांगpb) < 0) अणु
-			अगर (!sgbuf->pages)
-				जाओ _failed;
-			अगर (!res_size)
-				जाओ _failed;
+		if (snd_dma_alloc_pages_fallback(type, device,
+						 chunk, &tmpb) < 0) {
+			if (!sgbuf->pages)
+				goto _failed;
+			if (!res_size)
+				goto _failed;
 			size = sgbuf->pages * PAGE_SIZE;
-			अवरोध;
-		पूर्ण
-		chunk = पंचांगpb.bytes >> PAGE_SHIFT;
-		क्रम (i = 0; i < chunk; i++) अणु
-			table->buf = पंचांगpb.area;
-			table->addr = पंचांगpb.addr;
-			अगर (!i)
+			break;
+		}
+		chunk = tmpb.bytes >> PAGE_SHIFT;
+		for (i = 0; i < chunk; i++) {
+			table->buf = tmpb.area;
+			table->addr = tmpb.addr;
+			if (!i)
 				table->addr |= chunk; /* mark head */
 			table++;
-			*pgtable++ = virt_to_page(पंचांगpb.area);
-			पंचांगpb.area += PAGE_SIZE;
-			पंचांगpb.addr += PAGE_SIZE;
-		पूर्ण
+			*pgtable++ = virt_to_page(tmpb.area);
+			tmpb.area += PAGE_SIZE;
+			tmpb.addr += PAGE_SIZE;
+		}
 		sgbuf->pages += chunk;
 		pages -= chunk;
-		अगर (chunk < maxpages)
+		if (chunk < maxpages)
 			maxpages = chunk;
-	पूर्ण
+	}
 
 	sgbuf->size = size;
 	dmab->area = vmap(sgbuf->page_table, sgbuf->pages, VM_MAP, prot);
-	अगर (! dmab->area)
-		जाओ _failed;
-	अगर (res_size)
+	if (! dmab->area)
+		goto _failed;
+	if (res_size)
 		*res_size = sgbuf->size;
-	वापस dmab->area;
+	return dmab->area;
 
  _failed:
-	snd_मुक्त_sgbuf_pages(dmab); /* मुक्त the table */
-	वापस शून्य;
-पूर्ण
+	snd_free_sgbuf_pages(dmab); /* free the table */
+	return NULL;
+}
 
 /*
  * compute the max chunk size with continuous pages on sg-buffer
  */
-अचिन्हित पूर्णांक snd_sgbuf_get_chunk_size(काष्ठा snd_dma_buffer *dmab,
-				      अचिन्हित पूर्णांक ofs, अचिन्हित पूर्णांक size)
-अणु
-	काष्ठा snd_sg_buf *sg = dmab->निजी_data;
-	अचिन्हित पूर्णांक start, end, pg;
+unsigned int snd_sgbuf_get_chunk_size(struct snd_dma_buffer *dmab,
+				      unsigned int ofs, unsigned int size)
+{
+	struct snd_sg_buf *sg = dmab->private_data;
+	unsigned int start, end, pg;
 
-	अगर (!sg)
-		वापस size;
+	if (!sg)
+		return size;
 
 	start = ofs >> PAGE_SHIFT;
 	end = (ofs + size - 1) >> PAGE_SHIFT;
 	/* check page continuity */
 	pg = sg->table[start].addr >> PAGE_SHIFT;
-	क्रम (;;) अणु
+	for (;;) {
 		start++;
-		अगर (start > end)
-			अवरोध;
+		if (start > end)
+			break;
 		pg++;
-		अगर ((sg->table[start].addr >> PAGE_SHIFT) != pg)
-			वापस (start << PAGE_SHIFT) - ofs;
-	पूर्ण
+		if ((sg->table[start].addr >> PAGE_SHIFT) != pg)
+			return (start << PAGE_SHIFT) - ofs;
+	}
 	/* ok, all on continuous pages */
-	वापस size;
-पूर्ण
+	return size;
+}
 EXPORT_SYMBOL(snd_sgbuf_get_chunk_size);

@@ -1,96 +1,95 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <linux/in.h>
-#समावेश <linux/inet.h>
-#समावेश <linux/list.h>
-#समावेश <linux/module.h>
-#समावेश <linux/net.h>
-#समावेश <linux/proc_fs.h>
-#समावेश <linux/rculist.h>
-#समावेश <linux/seq_file.h>
-#समावेश <linux/socket.h>
-#समावेश <net/inet_sock.h>
-#समावेश <net/kcm.h>
-#समावेश <net/net_namespace.h>
-#समावेश <net/netns/generic.h>
-#समावेश <net/tcp.h>
+// SPDX-License-Identifier: GPL-2.0
+#include <linux/in.h>
+#include <linux/inet.h>
+#include <linux/list.h>
+#include <linux/module.h>
+#include <linux/net.h>
+#include <linux/proc_fs.h>
+#include <linux/rculist.h>
+#include <linux/seq_file.h>
+#include <linux/socket.h>
+#include <net/inet_sock.h>
+#include <net/kcm.h>
+#include <net/net_namespace.h>
+#include <net/netns/generic.h>
+#include <net/tcp.h>
 
-#अगर_घोषित CONFIG_PROC_FS
-अटल काष्ठा kcm_mux *kcm_get_first(काष्ठा seq_file *seq)
-अणु
-	काष्ठा net *net = seq_file_net(seq);
-	काष्ठा kcm_net *knet = net_generic(net, kcm_net_id);
+#ifdef CONFIG_PROC_FS
+static struct kcm_mux *kcm_get_first(struct seq_file *seq)
+{
+	struct net *net = seq_file_net(seq);
+	struct kcm_net *knet = net_generic(net, kcm_net_id);
 
-	वापस list_first_or_null_rcu(&knet->mux_list,
-				      काष्ठा kcm_mux, kcm_mux_list);
-पूर्ण
+	return list_first_or_null_rcu(&knet->mux_list,
+				      struct kcm_mux, kcm_mux_list);
+}
 
-अटल काष्ठा kcm_mux *kcm_get_next(काष्ठा kcm_mux *mux)
-अणु
-	काष्ठा kcm_net *knet = mux->knet;
+static struct kcm_mux *kcm_get_next(struct kcm_mux *mux)
+{
+	struct kcm_net *knet = mux->knet;
 
-	वापस list_next_or_null_rcu(&knet->mux_list, &mux->kcm_mux_list,
-				     काष्ठा kcm_mux, kcm_mux_list);
-पूर्ण
+	return list_next_or_null_rcu(&knet->mux_list, &mux->kcm_mux_list,
+				     struct kcm_mux, kcm_mux_list);
+}
 
-अटल काष्ठा kcm_mux *kcm_get_idx(काष्ठा seq_file *seq, loff_t pos)
-अणु
-	काष्ठा net *net = seq_file_net(seq);
-	काष्ठा kcm_net *knet = net_generic(net, kcm_net_id);
-	काष्ठा kcm_mux *m;
+static struct kcm_mux *kcm_get_idx(struct seq_file *seq, loff_t pos)
+{
+	struct net *net = seq_file_net(seq);
+	struct kcm_net *knet = net_generic(net, kcm_net_id);
+	struct kcm_mux *m;
 
-	list_क्रम_each_entry_rcu(m, &knet->mux_list, kcm_mux_list) अणु
-		अगर (!pos)
-			वापस m;
+	list_for_each_entry_rcu(m, &knet->mux_list, kcm_mux_list) {
+		if (!pos)
+			return m;
 		--pos;
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+	}
+	return NULL;
+}
 
-अटल व्योम *kcm_seq_next(काष्ठा seq_file *seq, व्योम *v, loff_t *pos)
-अणु
-	व्योम *p;
+static void *kcm_seq_next(struct seq_file *seq, void *v, loff_t *pos)
+{
+	void *p;
 
-	अगर (v == SEQ_START_TOKEN)
+	if (v == SEQ_START_TOKEN)
 		p = kcm_get_first(seq);
-	अन्यथा
+	else
 		p = kcm_get_next(v);
 	++*pos;
-	वापस p;
-पूर्ण
+	return p;
+}
 
-अटल व्योम *kcm_seq_start(काष्ठा seq_file *seq, loff_t *pos)
+static void *kcm_seq_start(struct seq_file *seq, loff_t *pos)
 	__acquires(rcu)
-अणु
-	rcu_पढ़ो_lock();
+{
+	rcu_read_lock();
 
-	अगर (!*pos)
-		वापस SEQ_START_TOKEN;
-	अन्यथा
-		वापस kcm_get_idx(seq, *pos - 1);
-पूर्ण
+	if (!*pos)
+		return SEQ_START_TOKEN;
+	else
+		return kcm_get_idx(seq, *pos - 1);
+}
 
-अटल व्योम kcm_seq_stop(काष्ठा seq_file *seq, व्योम *v)
+static void kcm_seq_stop(struct seq_file *seq, void *v)
 	__releases(rcu)
-अणु
-	rcu_पढ़ो_unlock();
-पूर्ण
+{
+	rcu_read_unlock();
+}
 
-काष्ठा kcm_proc_mux_state अणु
-	काष्ठा seq_net_निजी p;
-	पूर्णांक idx;
-पूर्ण;
+struct kcm_proc_mux_state {
+	struct seq_net_private p;
+	int idx;
+};
 
-अटल व्योम kcm_क्रमmat_mux_header(काष्ठा seq_file *seq)
-अणु
-	काष्ठा net *net = seq_file_net(seq);
-	काष्ठा kcm_net *knet = net_generic(net, kcm_net_id);
+static void kcm_format_mux_header(struct seq_file *seq)
+{
+	struct net *net = seq_file_net(seq);
+	struct kcm_net *knet = net_generic(net, kcm_net_id);
 
-	seq_म_लिखो(seq,
+	seq_printf(seq,
 		   "*** KCM statistics (%d MUX) ****\n",
 		   knet->count);
 
-	seq_म_लिखो(seq,
+	seq_printf(seq,
 		   "%-14s %-10s %-16s %-10s %-16s %-8s %-8s %-8s %-8s %s",
 		   "Object",
 		   "RX-Msgs",
@@ -104,13 +103,13 @@
 		   "Status");
 
 	/* XXX: pdsts header stuff here */
-	seq_माला_दो(seq, "\n");
-पूर्ण
+	seq_puts(seq, "\n");
+}
 
-अटल व्योम kcm_क्रमmat_sock(काष्ठा kcm_sock *kcm, काष्ठा seq_file *seq,
-			    पूर्णांक i, पूर्णांक *len)
-अणु
-	seq_म_लिखो(seq,
+static void kcm_format_sock(struct kcm_sock *kcm, struct seq_file *seq,
+			    int i, int *len)
+{
+	seq_printf(seq,
 		   "   kcm-%-7u %-10llu %-16llu %-10llu %-16llu %-8d %-8d %-8d %-8s ",
 		   kcm->index,
 		   kcm->stats.rx_msgs,
@@ -119,28 +118,28 @@
 		   kcm->stats.tx_bytes,
 		   kcm->sk.sk_receive_queue.qlen,
 		   sk_rmem_alloc_get(&kcm->sk),
-		   kcm->sk.sk_ग_लिखो_queue.qlen,
+		   kcm->sk.sk_write_queue.qlen,
 		   "-");
 
-	अगर (kcm->tx_psock)
-		seq_म_लिखो(seq, "Psck-%u ", kcm->tx_psock->index);
+	if (kcm->tx_psock)
+		seq_printf(seq, "Psck-%u ", kcm->tx_psock->index);
 
-	अगर (kcm->tx_रुको)
-		seq_माला_दो(seq, "TxWait ");
+	if (kcm->tx_wait)
+		seq_puts(seq, "TxWait ");
 
-	अगर (kcm->tx_रुको_more)
-		seq_माला_दो(seq, "WMore ");
+	if (kcm->tx_wait_more)
+		seq_puts(seq, "WMore ");
 
-	अगर (kcm->rx_रुको)
-		seq_माला_दो(seq, "RxWait ");
+	if (kcm->rx_wait)
+		seq_puts(seq, "RxWait ");
 
-	seq_माला_दो(seq, "\n");
-पूर्ण
+	seq_puts(seq, "\n");
+}
 
-अटल व्योम kcm_क्रमmat_psock(काष्ठा kcm_psock *psock, काष्ठा seq_file *seq,
-			     पूर्णांक i, पूर्णांक *len)
-अणु
-	seq_म_लिखो(seq,
+static void kcm_format_psock(struct kcm_psock *psock, struct seq_file *seq,
+			     int i, int *len)
+{
+	seq_printf(seq,
 		   "   psock-%-5u %-10llu %-16llu %-10llu %-16llu %-8d %-8d %-8d %-8d ",
 		   psock->index,
 		   psock->strp.stats.msgs,
@@ -148,50 +147,50 @@
 		   psock->stats.tx_msgs,
 		   psock->stats.tx_bytes,
 		   psock->sk->sk_receive_queue.qlen,
-		   atomic_पढ़ो(&psock->sk->sk_rmem_alloc),
-		   psock->sk->sk_ग_लिखो_queue.qlen,
-		   refcount_पढ़ो(&psock->sk->sk_wmem_alloc));
+		   atomic_read(&psock->sk->sk_rmem_alloc),
+		   psock->sk->sk_write_queue.qlen,
+		   refcount_read(&psock->sk->sk_wmem_alloc));
 
-	अगर (psock->करोne)
-		seq_माला_दो(seq, "Done ");
+	if (psock->done)
+		seq_puts(seq, "Done ");
 
-	अगर (psock->tx_stopped)
-		seq_माला_दो(seq, "TxStop ");
+	if (psock->tx_stopped)
+		seq_puts(seq, "TxStop ");
 
-	अगर (psock->strp.stopped)
-		seq_माला_दो(seq, "RxStop ");
+	if (psock->strp.stopped)
+		seq_puts(seq, "RxStop ");
 
-	अगर (psock->tx_kcm)
-		seq_म_लिखो(seq, "Rsvd-%d ", psock->tx_kcm->index);
+	if (psock->tx_kcm)
+		seq_printf(seq, "Rsvd-%d ", psock->tx_kcm->index);
 
-	अगर (!psock->strp.छोड़ोd && !psock->पढ़ोy_rx_msg) अणु
-		अगर (psock->sk->sk_receive_queue.qlen) अणु
-			अगर (psock->strp.need_bytes)
-				seq_म_लिखो(seq, "RxWait=%u ",
+	if (!psock->strp.paused && !psock->ready_rx_msg) {
+		if (psock->sk->sk_receive_queue.qlen) {
+			if (psock->strp.need_bytes)
+				seq_printf(seq, "RxWait=%u ",
 					   psock->strp.need_bytes);
-			अन्यथा
-				seq_म_लिखो(seq, "RxWait ");
-		पूर्ण
-	पूर्ण अन्यथा  अणु
-		अगर (psock->strp.छोड़ोd)
-			seq_माला_दो(seq, "RxPause ");
+			else
+				seq_printf(seq, "RxWait ");
+		}
+	} else  {
+		if (psock->strp.paused)
+			seq_puts(seq, "RxPause ");
 
-		अगर (psock->पढ़ोy_rx_msg)
-			seq_माला_दो(seq, "RdyRx ");
-	पूर्ण
+		if (psock->ready_rx_msg)
+			seq_puts(seq, "RdyRx ");
+	}
 
-	seq_माला_दो(seq, "\n");
-पूर्ण
+	seq_puts(seq, "\n");
+}
 
-अटल व्योम
-kcm_क्रमmat_mux(काष्ठा kcm_mux *mux, loff_t idx, काष्ठा seq_file *seq)
-अणु
-	पूर्णांक i, len;
-	काष्ठा kcm_sock *kcm;
-	काष्ठा kcm_psock *psock;
+static void
+kcm_format_mux(struct kcm_mux *mux, loff_t idx, struct seq_file *seq)
+{
+	int i, len;
+	struct kcm_sock *kcm;
+	struct kcm_psock *psock;
 
-	/* mux inक्रमmation */
-	seq_म_लिखो(seq,
+	/* mux information */
+	seq_printf(seq,
 		   "%-6s%-8s %-10llu %-16llu %-10llu %-16llu %-8s %-8s %-8s %-8s ",
 		   "mux", "",
 		   mux->stats.rx_msgs,
@@ -200,59 +199,59 @@ kcm_क्रमmat_mux(काष्ठा kcm_mux *mux, loff_t idx, काष�
 		   mux->stats.tx_bytes,
 		   "-", "-", "-", "-");
 
-	seq_म_लिखो(seq, "KCMs: %d, Psocks %d\n",
+	seq_printf(seq, "KCMs: %d, Psocks %d\n",
 		   mux->kcm_socks_cnt, mux->psocks_cnt);
 
-	/* kcm sock inक्रमmation */
+	/* kcm sock information */
 	i = 0;
 	spin_lock_bh(&mux->lock);
-	list_क्रम_each_entry(kcm, &mux->kcm_socks, kcm_sock_list) अणु
-		kcm_क्रमmat_sock(kcm, seq, i, &len);
+	list_for_each_entry(kcm, &mux->kcm_socks, kcm_sock_list) {
+		kcm_format_sock(kcm, seq, i, &len);
 		i++;
-	पूर्ण
+	}
 	i = 0;
-	list_क्रम_each_entry(psock, &mux->psocks, psock_list) अणु
-		kcm_क्रमmat_psock(psock, seq, i, &len);
+	list_for_each_entry(psock, &mux->psocks, psock_list) {
+		kcm_format_psock(psock, seq, i, &len);
 		i++;
-	पूर्ण
+	}
 	spin_unlock_bh(&mux->lock);
-पूर्ण
+}
 
-अटल पूर्णांक kcm_seq_show(काष्ठा seq_file *seq, व्योम *v)
-अणु
-	काष्ठा kcm_proc_mux_state *mux_state;
+static int kcm_seq_show(struct seq_file *seq, void *v)
+{
+	struct kcm_proc_mux_state *mux_state;
 
-	mux_state = seq->निजी;
-	अगर (v == SEQ_START_TOKEN) अणु
+	mux_state = seq->private;
+	if (v == SEQ_START_TOKEN) {
 		mux_state->idx = 0;
-		kcm_क्रमmat_mux_header(seq);
-	पूर्ण अन्यथा अणु
-		kcm_क्रमmat_mux(v, mux_state->idx, seq);
+		kcm_format_mux_header(seq);
+	} else {
+		kcm_format_mux(v, mux_state->idx, seq);
 		mux_state->idx++;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल स्थिर काष्ठा seq_operations kcm_seq_ops = अणु
+static const struct seq_operations kcm_seq_ops = {
 	.show	= kcm_seq_show,
 	.start	= kcm_seq_start,
 	.next	= kcm_seq_next,
 	.stop	= kcm_seq_stop,
-पूर्ण;
+};
 
-अटल पूर्णांक kcm_stats_seq_show(काष्ठा seq_file *seq, व्योम *v)
-अणु
-	काष्ठा kcm_psock_stats psock_stats;
-	काष्ठा kcm_mux_stats mux_stats;
-	काष्ठा strp_aggr_stats strp_stats;
-	काष्ठा kcm_mux *mux;
-	काष्ठा kcm_psock *psock;
-	काष्ठा net *net = seq->निजी;
-	काष्ठा kcm_net *knet = net_generic(net, kcm_net_id);
+static int kcm_stats_seq_show(struct seq_file *seq, void *v)
+{
+	struct kcm_psock_stats psock_stats;
+	struct kcm_mux_stats mux_stats;
+	struct strp_aggr_stats strp_stats;
+	struct kcm_mux *mux;
+	struct kcm_psock *psock;
+	struct net *net = seq->private;
+	struct kcm_net *knet = net_generic(net, kcm_net_id);
 
-	स_रखो(&mux_stats, 0, माप(mux_stats));
-	स_रखो(&psock_stats, 0, माप(psock_stats));
-	स_रखो(&strp_stats, 0, माप(strp_stats));
+	memset(&mux_stats, 0, sizeof(mux_stats));
+	memset(&psock_stats, 0, sizeof(psock_stats));
+	memset(&strp_stats, 0, sizeof(strp_stats));
 
 	mutex_lock(&knet->mutex);
 
@@ -262,24 +261,24 @@ kcm_क्रमmat_mux(काष्ठा kcm_mux *mux, loff_t idx, काष�
 	aggregate_strp_stats(&knet->aggregate_strp_stats,
 			     &strp_stats);
 
-	list_क्रम_each_entry(mux, &knet->mux_list, kcm_mux_list) अणु
+	list_for_each_entry(mux, &knet->mux_list, kcm_mux_list) {
 		spin_lock_bh(&mux->lock);
 		aggregate_mux_stats(&mux->stats, &mux_stats);
 		aggregate_psock_stats(&mux->aggregate_psock_stats,
 				      &psock_stats);
 		aggregate_strp_stats(&mux->aggregate_strp_stats,
 				     &strp_stats);
-		list_क्रम_each_entry(psock, &mux->psocks, psock_list) अणु
+		list_for_each_entry(psock, &mux->psocks, psock_list) {
 			aggregate_psock_stats(&psock->stats, &psock_stats);
 			save_strp_stats(&psock->strp, &strp_stats);
-		पूर्ण
+		}
 
 		spin_unlock_bh(&mux->lock);
-	पूर्ण
+	}
 
 	mutex_unlock(&knet->mutex);
 
-	seq_म_लिखो(seq,
+	seq_printf(seq,
 		   "%-8s %-10s %-16s %-10s %-16s %-10s %-10s %-10s %-10s %-10s\n",
 		   "MUX",
 		   "RX-Msgs",
@@ -292,7 +291,7 @@ kcm_क्रमmat_mux(काष्ठा kcm_mux *mux, loff_t idx, काष�
 		   "UnattchRsvd",
 		   "RX-RdyDrops");
 
-	seq_म_लिखो(seq,
+	seq_printf(seq,
 		   "%-8s %-10llu %-16llu %-10llu %-16llu %-10u %-10u %-10u %-10u %-10u\n",
 		   "",
 		   mux_stats.rx_msgs,
@@ -303,9 +302,9 @@ kcm_क्रमmat_mux(काष्ठा kcm_mux *mux, loff_t idx, काष�
 		   mux_stats.psock_attach,
 		   mux_stats.psock_unattach_rsvd,
 		   mux_stats.psock_unattach,
-		   mux_stats.rx_पढ़ोy_drops);
+		   mux_stats.rx_ready_drops);
 
-	seq_म_लिखो(seq,
+	seq_printf(seq,
 		   "%-8s %-10s %-16s %-10s %-16s %-10s %-10s %-10s %-10s %-10s %-10s %-10s %-10s %-10s %-10s %-10s\n",
 		   "Psock",
 		   "RX-Msgs",
@@ -324,7 +323,7 @@ kcm_क्रमmat_mux(काष्ठा kcm_mux *mux, loff_t idx, काष�
 		   "RX-Timeout",
 		   "TX-Aborts");
 
-	seq_म_लिखो(seq,
+	seq_printf(seq,
 		   "%-8s %-10llu %-16llu %-10llu %-16llu %-10llu %-10llu %-10u %-10u %-10u %-10u %-10u %-10u %-10u %-10u %-10u\n",
 		   "",
 		   strp_stats.msgs,
@@ -333,56 +332,56 @@ kcm_क्रमmat_mux(काष्ठा kcm_mux *mux, loff_t idx, काष�
 		   psock_stats.tx_bytes,
 		   psock_stats.reserved,
 		   psock_stats.unreserved,
-		   strp_stats.पातs,
-		   strp_stats.पूर्णांकerrupted,
-		   strp_stats.unrecov_पूर्णांकr,
+		   strp_stats.aborts,
+		   strp_stats.interrupted,
+		   strp_stats.unrecov_intr,
 		   strp_stats.mem_fail,
 		   strp_stats.need_more_hdr,
 		   strp_stats.bad_hdr_len,
 		   strp_stats.msg_too_big,
-		   strp_stats.msg_समयouts,
-		   psock_stats.tx_पातs);
+		   strp_stats.msg_timeouts,
+		   psock_stats.tx_aborts);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक kcm_proc_init_net(काष्ठा net *net)
-अणु
-	अगर (!proc_create_net_single("kcm_stats", 0444, net->proc_net,
-			 kcm_stats_seq_show, शून्य))
-		जाओ out_kcm_stats;
+static int kcm_proc_init_net(struct net *net)
+{
+	if (!proc_create_net_single("kcm_stats", 0444, net->proc_net,
+			 kcm_stats_seq_show, NULL))
+		goto out_kcm_stats;
 
-	अगर (!proc_create_net("kcm", 0444, net->proc_net, &kcm_seq_ops,
-			माप(काष्ठा kcm_proc_mux_state)))
-		जाओ out_kcm;
+	if (!proc_create_net("kcm", 0444, net->proc_net, &kcm_seq_ops,
+			sizeof(struct kcm_proc_mux_state)))
+		goto out_kcm;
 
-	वापस 0;
+	return 0;
 
 out_kcm:
-	हटाओ_proc_entry("kcm_stats", net->proc_net);
+	remove_proc_entry("kcm_stats", net->proc_net);
 out_kcm_stats:
-	वापस -ENOMEM;
-पूर्ण
+	return -ENOMEM;
+}
 
-अटल व्योम kcm_proc_निकास_net(काष्ठा net *net)
-अणु
-	हटाओ_proc_entry("kcm", net->proc_net);
-	हटाओ_proc_entry("kcm_stats", net->proc_net);
-पूर्ण
+static void kcm_proc_exit_net(struct net *net)
+{
+	remove_proc_entry("kcm", net->proc_net);
+	remove_proc_entry("kcm_stats", net->proc_net);
+}
 
-अटल काष्ठा pernet_operations kcm_net_ops = अणु
+static struct pernet_operations kcm_net_ops = {
 	.init = kcm_proc_init_net,
-	.निकास = kcm_proc_निकास_net,
-पूर्ण;
+	.exit = kcm_proc_exit_net,
+};
 
-पूर्णांक __init kcm_proc_init(व्योम)
-अणु
-	वापस रेजिस्टर_pernet_subsys(&kcm_net_ops);
-पूर्ण
+int __init kcm_proc_init(void)
+{
+	return register_pernet_subsys(&kcm_net_ops);
+}
 
-व्योम __निकास kcm_proc_निकास(व्योम)
-अणु
-	unरेजिस्टर_pernet_subsys(&kcm_net_ops);
-पूर्ण
+void __exit kcm_proc_exit(void)
+{
+	unregister_pernet_subsys(&kcm_net_ops);
+}
 
-#पूर्ण_अगर /* CONFIG_PROC_FS */
+#endif /* CONFIG_PROC_FS */

@@ -1,123 +1,122 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /* Copyright (c) 2019 Facebook */
-#समावेश <test_progs.h>
-#समावेश <network_helpers.h>
-#समावेश <bpf/btf.h>
+#include <test_progs.h>
+#include <network_helpers.h>
+#include <bpf/btf.h>
 
-प्रकार पूर्णांक (*test_cb)(काष्ठा bpf_object *obj);
+typedef int (*test_cb)(struct bpf_object *obj);
 
-अटल पूर्णांक check_data_map(काष्ठा bpf_object *obj, पूर्णांक prog_cnt, bool reset)
-अणु
-	काष्ठा bpf_map *data_map = शून्य, *map;
-	__u64 *result = शून्य;
-	स्थिर पूर्णांक zero = 0;
+static int check_data_map(struct bpf_object *obj, int prog_cnt, bool reset)
+{
+	struct bpf_map *data_map = NULL, *map;
+	__u64 *result = NULL;
+	const int zero = 0;
 	__u32 duration = 0;
-	पूर्णांक ret = -1, i;
+	int ret = -1, i;
 
-	result = दो_स्मृति((prog_cnt + 32 /* spare */) * माप(__u64));
-	अगर (CHECK(!result, "alloc_memory", "failed to alloc memory"))
-		वापस -ENOMEM;
+	result = malloc((prog_cnt + 32 /* spare */) * sizeof(__u64));
+	if (CHECK(!result, "alloc_memory", "failed to alloc memory"))
+		return -ENOMEM;
 
-	bpf_object__क्रम_each_map(map, obj)
-		अगर (bpf_map__is_पूर्णांकernal(map)) अणु
+	bpf_object__for_each_map(map, obj)
+		if (bpf_map__is_internal(map)) {
 			data_map = map;
-			अवरोध;
-		पूर्ण
-	अगर (CHECK(!data_map, "find_data_map", "data map not found\n"))
-		जाओ out;
+			break;
+		}
+	if (CHECK(!data_map, "find_data_map", "data map not found\n"))
+		goto out;
 
 	ret = bpf_map_lookup_elem(bpf_map__fd(data_map), &zero, result);
-	अगर (CHECK(ret, "get_result",
+	if (CHECK(ret, "get_result",
 		  "failed to get output data: %d\n", ret))
-		जाओ out;
+		goto out;
 
-	क्रम (i = 0; i < prog_cnt; i++) अणु
-		अगर (CHECK(result[i] != 1, "result",
+	for (i = 0; i < prog_cnt; i++) {
+		if (CHECK(result[i] != 1, "result",
 			  "fexit_bpf2bpf result[%d] failed err %llu\n",
 			  i, result[i]))
-			जाओ out;
+			goto out;
 		result[i] = 0;
-	पूर्ण
-	अगर (reset) अणु
+	}
+	if (reset) {
 		ret = bpf_map_update_elem(bpf_map__fd(data_map), &zero, result, 0);
-		अगर (CHECK(ret, "reset_result", "failed to reset result\n"))
-			जाओ out;
-	पूर्ण
+		if (CHECK(ret, "reset_result", "failed to reset result\n"))
+			goto out;
+	}
 
 	ret = 0;
 out:
-	मुक्त(result);
-	वापस ret;
-पूर्ण
+	free(result);
+	return ret;
+}
 
-अटल व्योम test_fनिकास_bpf2bpf_common(स्थिर अक्षर *obj_file,
-				      स्थिर अक्षर *target_obj_file,
-				      पूर्णांक prog_cnt,
-				      स्थिर अक्षर **prog_name,
+static void test_fexit_bpf2bpf_common(const char *obj_file,
+				      const char *target_obj_file,
+				      int prog_cnt,
+				      const char **prog_name,
 				      bool run_prog,
 				      test_cb cb)
-अणु
-	काष्ठा bpf_object *obj = शून्य, *tgt_obj;
+{
+	struct bpf_object *obj = NULL, *tgt_obj;
 	__u32 retval, tgt_prog_id, info_len;
-	काष्ठा bpf_prog_info prog_info = अणुपूर्ण;
-	काष्ठा bpf_program **prog = शून्य;
-	काष्ठा bpf_link **link = शून्य;
-	पूर्णांक err, tgt_fd, i;
-	काष्ठा btf *btf;
+	struct bpf_prog_info prog_info = {};
+	struct bpf_program **prog = NULL;
+	struct bpf_link **link = NULL;
+	int err, tgt_fd, i;
+	struct btf *btf;
 
 	err = bpf_prog_load(target_obj_file, BPF_PROG_TYPE_UNSPEC,
 			    &tgt_obj, &tgt_fd);
-	अगर (!ASSERT_OK(err, "tgt_prog_load"))
-		वापस;
-	DECLARE_LIBBPF_OPTS(bpf_object_खोलो_opts, opts,
+	if (!ASSERT_OK(err, "tgt_prog_load"))
+		return;
+	DECLARE_LIBBPF_OPTS(bpf_object_open_opts, opts,
 			    .attach_prog_fd = tgt_fd,
 			   );
 
-	info_len = माप(prog_info);
+	info_len = sizeof(prog_info);
 	err = bpf_obj_get_info_by_fd(tgt_fd, &prog_info, &info_len);
-	अगर (!ASSERT_OK(err, "tgt_fd_get_info"))
-		जाओ बंद_prog;
+	if (!ASSERT_OK(err, "tgt_fd_get_info"))
+		goto close_prog;
 
 	tgt_prog_id = prog_info.id;
 	btf = bpf_object__btf(tgt_obj);
 
-	link = सुस्मृति(माप(काष्ठा bpf_link *), prog_cnt);
-	अगर (!ASSERT_OK_PTR(link, "link_ptr"))
-		जाओ बंद_prog;
+	link = calloc(sizeof(struct bpf_link *), prog_cnt);
+	if (!ASSERT_OK_PTR(link, "link_ptr"))
+		goto close_prog;
 
-	prog = सुस्मृति(माप(काष्ठा bpf_program *), prog_cnt);
-	अगर (!ASSERT_OK_PTR(prog, "prog_ptr"))
-		जाओ बंद_prog;
+	prog = calloc(sizeof(struct bpf_program *), prog_cnt);
+	if (!ASSERT_OK_PTR(prog, "prog_ptr"))
+		goto close_prog;
 
-	obj = bpf_object__खोलो_file(obj_file, &opts);
-	अगर (!ASSERT_OK_PTR(obj, "obj_open"))
-		जाओ बंद_prog;
+	obj = bpf_object__open_file(obj_file, &opts);
+	if (!ASSERT_OK_PTR(obj, "obj_open"))
+		goto close_prog;
 
 	err = bpf_object__load(obj);
-	अगर (!ASSERT_OK(err, "obj_load"))
-		जाओ बंद_prog;
+	if (!ASSERT_OK(err, "obj_load"))
+		goto close_prog;
 
-	क्रम (i = 0; i < prog_cnt; i++) अणु
-		काष्ठा bpf_link_info link_info;
-		अक्षर *tgt_name;
+	for (i = 0; i < prog_cnt; i++) {
+		struct bpf_link_info link_info;
+		char *tgt_name;
 		__s32 btf_id;
 
-		tgt_name = म_माला(prog_name[i], "/");
-		अगर (!ASSERT_OK_PTR(tgt_name, "tgt_name"))
-			जाओ बंद_prog;
+		tgt_name = strstr(prog_name[i], "/");
+		if (!ASSERT_OK_PTR(tgt_name, "tgt_name"))
+			goto close_prog;
 		btf_id = btf__find_by_name_kind(btf, tgt_name + 1, BTF_KIND_FUNC);
 
 		prog[i] = bpf_object__find_program_by_title(obj, prog_name[i]);
-		अगर (!ASSERT_OK_PTR(prog[i], prog_name[i]))
-			जाओ बंद_prog;
+		if (!ASSERT_OK_PTR(prog[i], prog_name[i]))
+			goto close_prog;
 
 		link[i] = bpf_program__attach_trace(prog[i]);
-		अगर (!ASSERT_OK_PTR(link[i], "attach_trace"))
-			जाओ बंद_prog;
+		if (!ASSERT_OK_PTR(link[i], "attach_trace"))
+			goto close_prog;
 
-		info_len = माप(link_info);
-		स_रखो(&link_info, 0, माप(link_info));
+		info_len = sizeof(link_info);
+		memset(&link_info, 0, sizeof(link_info));
 		err = bpf_obj_get_info_by_fd(bpf_link__fd(link[i]),
 					     &link_info, &info_len);
 		ASSERT_OK(err, "link_fd_get_info");
@@ -126,64 +125,64 @@ out:
 			  "link_attach_type");
 		ASSERT_EQ(link_info.tracing.target_obj_id, tgt_prog_id, "link_tgt_obj_id");
 		ASSERT_EQ(link_info.tracing.target_btf_id, btf_id, "link_tgt_btf_id");
-	पूर्ण
+	}
 
-	अगर (cb) अणु
+	if (cb) {
 		err = cb(obj);
-		अगर (err)
-			जाओ बंद_prog;
-	पूर्ण
+		if (err)
+			goto close_prog;
+	}
 
-	अगर (!run_prog)
-		जाओ बंद_prog;
+	if (!run_prog)
+		goto close_prog;
 
-	err = bpf_prog_test_run(tgt_fd, 1, &pkt_v6, माप(pkt_v6),
-				शून्य, शून्य, &retval, शून्य);
+	err = bpf_prog_test_run(tgt_fd, 1, &pkt_v6, sizeof(pkt_v6),
+				NULL, NULL, &retval, NULL);
 	ASSERT_OK(err, "prog_run");
 	ASSERT_EQ(retval, 0, "prog_run_ret");
 
-	अगर (check_data_map(obj, prog_cnt, false))
-		जाओ बंद_prog;
+	if (check_data_map(obj, prog_cnt, false))
+		goto close_prog;
 
-बंद_prog:
-	क्रम (i = 0; i < prog_cnt; i++)
-		अगर (!IS_ERR_OR_शून्य(link[i]))
+close_prog:
+	for (i = 0; i < prog_cnt; i++)
+		if (!IS_ERR_OR_NULL(link[i]))
 			bpf_link__destroy(link[i]);
-	अगर (!IS_ERR_OR_शून्य(obj))
-		bpf_object__बंद(obj);
-	bpf_object__बंद(tgt_obj);
-	मुक्त(link);
-	मुक्त(prog);
-पूर्ण
+	if (!IS_ERR_OR_NULL(obj))
+		bpf_object__close(obj);
+	bpf_object__close(tgt_obj);
+	free(link);
+	free(prog);
+}
 
-अटल व्योम test_target_no_callees(व्योम)
-अणु
-	स्थिर अक्षर *prog_name[] = अणु
+static void test_target_no_callees(void)
+{
+	const char *prog_name[] = {
 		"fexit/test_pkt_md_access",
-	पूर्ण;
-	test_fनिकास_bpf2bpf_common("./fexit_bpf2bpf_simple.o",
+	};
+	test_fexit_bpf2bpf_common("./fexit_bpf2bpf_simple.o",
 				  "./test_pkt_md_access.o",
 				  ARRAY_SIZE(prog_name),
-				  prog_name, true, शून्य);
-पूर्ण
+				  prog_name, true, NULL);
+}
 
-अटल व्योम test_target_yes_callees(व्योम)
-अणु
-	स्थिर अक्षर *prog_name[] = अणु
+static void test_target_yes_callees(void)
+{
+	const char *prog_name[] = {
 		"fexit/test_pkt_access",
 		"fexit/test_pkt_access_subprog1",
 		"fexit/test_pkt_access_subprog2",
 		"fexit/test_pkt_access_subprog3",
-	पूर्ण;
-	test_fनिकास_bpf2bpf_common("./fexit_bpf2bpf.o",
+	};
+	test_fexit_bpf2bpf_common("./fexit_bpf2bpf.o",
 				  "./test_pkt_access.o",
 				  ARRAY_SIZE(prog_name),
-				  prog_name, true, शून्य);
-पूर्ण
+				  prog_name, true, NULL);
+}
 
-अटल व्योम test_func_replace(व्योम)
-अणु
-	स्थिर अक्षर *prog_name[] = अणु
+static void test_func_replace(void)
+{
+	const char *prog_name[] = {
 		"fexit/test_pkt_access",
 		"fexit/test_pkt_access_subprog1",
 		"fexit/test_pkt_access_subprog2",
@@ -192,213 +191,213 @@ out:
 		"freplace/get_skb_ifindex",
 		"freplace/get_constant",
 		"freplace/test_pkt_write_access_subprog",
-	पूर्ण;
-	test_fनिकास_bpf2bpf_common("./fexit_bpf2bpf.o",
+	};
+	test_fexit_bpf2bpf_common("./fexit_bpf2bpf.o",
 				  "./test_pkt_access.o",
 				  ARRAY_SIZE(prog_name),
-				  prog_name, true, शून्य);
-पूर्ण
+				  prog_name, true, NULL);
+}
 
-अटल व्योम test_func_replace_verअगरy(व्योम)
-अणु
-	स्थिर अक्षर *prog_name[] = अणु
+static void test_func_replace_verify(void)
+{
+	const char *prog_name[] = {
 		"freplace/do_bind",
-	पूर्ण;
-	test_fनिकास_bpf2bpf_common("./freplace_connect4.o",
+	};
+	test_fexit_bpf2bpf_common("./freplace_connect4.o",
 				  "./connect4_prog.o",
 				  ARRAY_SIZE(prog_name),
-				  prog_name, false, शून्य);
-पूर्ण
+				  prog_name, false, NULL);
+}
 
-अटल पूर्णांक test_second_attach(काष्ठा bpf_object *obj)
-अणु
-	स्थिर अक्षर *prog_name = "freplace/get_constant";
-	स्थिर अक्षर *tgt_name = prog_name + 9; /* cut off freplace/ */
-	स्थिर अक्षर *tgt_obj_file = "./test_pkt_access.o";
-	काष्ठा bpf_program *prog = शून्य;
-	काष्ठा bpf_object *tgt_obj;
+static int test_second_attach(struct bpf_object *obj)
+{
+	const char *prog_name = "freplace/get_constant";
+	const char *tgt_name = prog_name + 9; /* cut off freplace/ */
+	const char *tgt_obj_file = "./test_pkt_access.o";
+	struct bpf_program *prog = NULL;
+	struct bpf_object *tgt_obj;
 	__u32 duration = 0, retval;
-	काष्ठा bpf_link *link;
-	पूर्णांक err = 0, tgt_fd;
+	struct bpf_link *link;
+	int err = 0, tgt_fd;
 
 	prog = bpf_object__find_program_by_title(obj, prog_name);
-	अगर (CHECK(!prog, "find_prog", "prog %s not found\n", prog_name))
-		वापस -ENOENT;
+	if (CHECK(!prog, "find_prog", "prog %s not found\n", prog_name))
+		return -ENOENT;
 
 	err = bpf_prog_load(tgt_obj_file, BPF_PROG_TYPE_UNSPEC,
 			    &tgt_obj, &tgt_fd);
-	अगर (CHECK(err, "second_prog_load", "file %s err %d errno %d\n",
-		  tgt_obj_file, err, त्रुटि_सं))
-		वापस err;
+	if (CHECK(err, "second_prog_load", "file %s err %d errno %d\n",
+		  tgt_obj_file, err, errno))
+		return err;
 
 	link = bpf_program__attach_freplace(prog, tgt_fd, tgt_name);
-	अगर (CHECK(IS_ERR(link), "second_link", "failed to attach second link prog_fd %d tgt_fd %d\n", bpf_program__fd(prog), tgt_fd))
-		जाओ out;
+	if (CHECK(IS_ERR(link), "second_link", "failed to attach second link prog_fd %d tgt_fd %d\n", bpf_program__fd(prog), tgt_fd))
+		goto out;
 
-	err = bpf_prog_test_run(tgt_fd, 1, &pkt_v6, माप(pkt_v6),
-				शून्य, शून्य, &retval, &duration);
-	अगर (CHECK(err || retval, "ipv6",
+	err = bpf_prog_test_run(tgt_fd, 1, &pkt_v6, sizeof(pkt_v6),
+				NULL, NULL, &retval, &duration);
+	if (CHECK(err || retval, "ipv6",
 		  "err %d errno %d retval %d duration %d\n",
-		  err, त्रुटि_सं, retval, duration))
-		जाओ out;
+		  err, errno, retval, duration))
+		goto out;
 
 	err = check_data_map(obj, 1, true);
-	अगर (err)
-		जाओ out;
+	if (err)
+		goto out;
 
 out:
 	bpf_link__destroy(link);
-	bpf_object__बंद(tgt_obj);
-	वापस err;
-पूर्ण
+	bpf_object__close(tgt_obj);
+	return err;
+}
 
-अटल व्योम test_func_replace_multi(व्योम)
-अणु
-	स्थिर अक्षर *prog_name[] = अणु
+static void test_func_replace_multi(void)
+{
+	const char *prog_name[] = {
 		"freplace/get_constant",
-	पूर्ण;
-	test_fनिकास_bpf2bpf_common("./freplace_get_constant.o",
+	};
+	test_fexit_bpf2bpf_common("./freplace_get_constant.o",
 				  "./test_pkt_access.o",
 				  ARRAY_SIZE(prog_name),
 				  prog_name, true, test_second_attach);
-पूर्ण
+}
 
-अटल व्योम test_भ_शेष_ret_freplace(व्योम)
-अणु
-	काष्ठा bpf_object *freplace_obj = शून्य, *pkt_obj, *भ_शेष_obj = शून्य;
-	स्थिर अक्षर *freplace_name = "./freplace_get_constant.o";
-	स्थिर अक्षर *भ_शेष_ret_name = "./fmod_ret_freplace.o";
-	DECLARE_LIBBPF_OPTS(bpf_object_खोलो_opts, opts);
-	स्थिर अक्षर *tgt_name = "./test_pkt_access.o";
-	काष्ठा bpf_link *freplace_link = शून्य;
-	काष्ठा bpf_program *prog;
+static void test_fmod_ret_freplace(void)
+{
+	struct bpf_object *freplace_obj = NULL, *pkt_obj, *fmod_obj = NULL;
+	const char *freplace_name = "./freplace_get_constant.o";
+	const char *fmod_ret_name = "./fmod_ret_freplace.o";
+	DECLARE_LIBBPF_OPTS(bpf_object_open_opts, opts);
+	const char *tgt_name = "./test_pkt_access.o";
+	struct bpf_link *freplace_link = NULL;
+	struct bpf_program *prog;
 	__u32 duration = 0;
-	पूर्णांक err, pkt_fd;
+	int err, pkt_fd;
 
 	err = bpf_prog_load(tgt_name, BPF_PROG_TYPE_UNSPEC,
 			    &pkt_obj, &pkt_fd);
 	/* the target prog should load fine */
-	अगर (CHECK(err, "tgt_prog_load", "file %s err %d errno %d\n",
-		  tgt_name, err, त्रुटि_सं))
-		वापस;
+	if (CHECK(err, "tgt_prog_load", "file %s err %d errno %d\n",
+		  tgt_name, err, errno))
+		return;
 	opts.attach_prog_fd = pkt_fd;
 
-	freplace_obj = bpf_object__खोलो_file(freplace_name, &opts);
-	अगर (CHECK(IS_ERR_OR_शून्य(freplace_obj), "freplace_obj_open",
+	freplace_obj = bpf_object__open_file(freplace_name, &opts);
+	if (CHECK(IS_ERR_OR_NULL(freplace_obj), "freplace_obj_open",
 		  "failed to open %s: %ld\n", freplace_name,
 		  PTR_ERR(freplace_obj)))
-		जाओ out;
+		goto out;
 
 	err = bpf_object__load(freplace_obj);
-	अगर (CHECK(err, "freplace_obj_load", "err %d\n", err))
-		जाओ out;
+	if (CHECK(err, "freplace_obj_load", "err %d\n", err))
+		goto out;
 
-	prog = bpf_program__next(शून्य, freplace_obj);
+	prog = bpf_program__next(NULL, freplace_obj);
 	freplace_link = bpf_program__attach_trace(prog);
-	अगर (CHECK(IS_ERR(freplace_link), "freplace_attach_trace", "failed to link\n"))
-		जाओ out;
+	if (CHECK(IS_ERR(freplace_link), "freplace_attach_trace", "failed to link\n"))
+		goto out;
 
 	opts.attach_prog_fd = bpf_program__fd(prog);
-	भ_शेष_obj = bpf_object__खोलो_file(भ_शेष_ret_name, &opts);
-	अगर (CHECK(IS_ERR_OR_शून्य(भ_शेष_obj), "fmod_obj_open",
-		  "failed to open %s: %ld\n", भ_शेष_ret_name,
-		  PTR_ERR(भ_शेष_obj)))
-		जाओ out;
+	fmod_obj = bpf_object__open_file(fmod_ret_name, &opts);
+	if (CHECK(IS_ERR_OR_NULL(fmod_obj), "fmod_obj_open",
+		  "failed to open %s: %ld\n", fmod_ret_name,
+		  PTR_ERR(fmod_obj)))
+		goto out;
 
-	err = bpf_object__load(भ_शेष_obj);
-	अगर (CHECK(!err, "fmod_obj_load", "loading fmod_ret should fail\n"))
-		जाओ out;
+	err = bpf_object__load(fmod_obj);
+	if (CHECK(!err, "fmod_obj_load", "loading fmod_ret should fail\n"))
+		goto out;
 
 out:
 	bpf_link__destroy(freplace_link);
-	bpf_object__बंद(freplace_obj);
-	bpf_object__बंद(भ_शेष_obj);
-	bpf_object__बंद(pkt_obj);
-पूर्ण
+	bpf_object__close(freplace_obj);
+	bpf_object__close(fmod_obj);
+	bpf_object__close(pkt_obj);
+}
 
 
-अटल व्योम test_func_sockmap_update(व्योम)
-अणु
-	स्थिर अक्षर *prog_name[] = अणु
+static void test_func_sockmap_update(void)
+{
+	const char *prog_name[] = {
 		"freplace/cls_redirect",
-	पूर्ण;
-	test_fनिकास_bpf2bpf_common("./freplace_cls_redirect.o",
+	};
+	test_fexit_bpf2bpf_common("./freplace_cls_redirect.o",
 				  "./test_cls_redirect.o",
 				  ARRAY_SIZE(prog_name),
-				  prog_name, false, शून्य);
-पूर्ण
+				  prog_name, false, NULL);
+}
 
-अटल व्योम test_obj_load_failure_common(स्थिर अक्षर *obj_file,
-					  स्थिर अक्षर *target_obj_file)
+static void test_obj_load_failure_common(const char *obj_file,
+					  const char *target_obj_file)
 
-अणु
+{
 	/*
-	 * standalone test that निश्चितs failure to load freplace prog
-	 * because of invalid वापस code.
+	 * standalone test that asserts failure to load freplace prog
+	 * because of invalid return code.
 	 */
-	काष्ठा bpf_object *obj = शून्य, *pkt_obj;
-	पूर्णांक err, pkt_fd;
+	struct bpf_object *obj = NULL, *pkt_obj;
+	int err, pkt_fd;
 	__u32 duration = 0;
 
 	err = bpf_prog_load(target_obj_file, BPF_PROG_TYPE_UNSPEC,
 			    &pkt_obj, &pkt_fd);
 	/* the target prog should load fine */
-	अगर (CHECK(err, "tgt_prog_load", "file %s err %d errno %d\n",
-		  target_obj_file, err, त्रुटि_सं))
-		वापस;
-	DECLARE_LIBBPF_OPTS(bpf_object_खोलो_opts, opts,
+	if (CHECK(err, "tgt_prog_load", "file %s err %d errno %d\n",
+		  target_obj_file, err, errno))
+		return;
+	DECLARE_LIBBPF_OPTS(bpf_object_open_opts, opts,
 			    .attach_prog_fd = pkt_fd,
 			   );
 
-	obj = bpf_object__खोलो_file(obj_file, &opts);
-	अगर (CHECK(IS_ERR_OR_शून्य(obj), "obj_open",
+	obj = bpf_object__open_file(obj_file, &opts);
+	if (CHECK(IS_ERR_OR_NULL(obj), "obj_open",
 		  "failed to open %s: %ld\n", obj_file,
 		  PTR_ERR(obj)))
-		जाओ बंद_prog;
+		goto close_prog;
 
 	/* It should fail to load the program */
 	err = bpf_object__load(obj);
-	अगर (CHECK(!err, "bpf_obj_load should fail", "err %d\n", err))
-		जाओ बंद_prog;
+	if (CHECK(!err, "bpf_obj_load should fail", "err %d\n", err))
+		goto close_prog;
 
-बंद_prog:
-	अगर (!IS_ERR_OR_शून्य(obj))
-		bpf_object__बंद(obj);
-	bpf_object__बंद(pkt_obj);
-पूर्ण
+close_prog:
+	if (!IS_ERR_OR_NULL(obj))
+		bpf_object__close(obj);
+	bpf_object__close(pkt_obj);
+}
 
-अटल व्योम test_func_replace_वापस_code(व्योम)
-अणु
-	/* test invalid वापस code in the replaced program */
+static void test_func_replace_return_code(void)
+{
+	/* test invalid return code in the replaced program */
 	test_obj_load_failure_common("./freplace_connect_v4_prog.o",
 				     "./connect4_prog.o");
-पूर्ण
+}
 
-अटल व्योम test_func_map_prog_compatibility(व्योम)
-अणु
+static void test_func_map_prog_compatibility(void)
+{
 	/* test with spin lock map value in the replaced program */
 	test_obj_load_failure_common("./freplace_attach_probe.o",
 				     "./test_attach_probe.o");
-पूर्ण
+}
 
-व्योम test_fनिकास_bpf2bpf(व्योम)
-अणु
-	अगर (test__start_subtest("target_no_callees"))
+void test_fexit_bpf2bpf(void)
+{
+	if (test__start_subtest("target_no_callees"))
 		test_target_no_callees();
-	अगर (test__start_subtest("target_yes_callees"))
+	if (test__start_subtest("target_yes_callees"))
 		test_target_yes_callees();
-	अगर (test__start_subtest("func_replace"))
+	if (test__start_subtest("func_replace"))
 		test_func_replace();
-	अगर (test__start_subtest("func_replace_verify"))
-		test_func_replace_verअगरy();
-	अगर (test__start_subtest("func_sockmap_update"))
+	if (test__start_subtest("func_replace_verify"))
+		test_func_replace_verify();
+	if (test__start_subtest("func_sockmap_update"))
 		test_func_sockmap_update();
-	अगर (test__start_subtest("func_replace_return_code"))
-		test_func_replace_वापस_code();
-	अगर (test__start_subtest("func_map_prog_compatibility"))
+	if (test__start_subtest("func_replace_return_code"))
+		test_func_replace_return_code();
+	if (test__start_subtest("func_map_prog_compatibility"))
 		test_func_map_prog_compatibility();
-	अगर (test__start_subtest("func_replace_multi"))
+	if (test__start_subtest("func_replace_multi"))
 		test_func_replace_multi();
-	अगर (test__start_subtest("fmod_ret_freplace"))
-		test_भ_शेष_ret_freplace();
-पूर्ण
+	if (test__start_subtest("fmod_ret_freplace"))
+		test_fmod_ret_freplace();
+}

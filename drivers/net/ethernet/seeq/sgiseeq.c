@@ -1,401 +1,400 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * sgiseeq.c: Seeq8003 ethernet driver क्रम SGI machines.
+ * sgiseeq.c: Seeq8003 ethernet driver for SGI machines.
  *
  * Copyright (C) 1996 David S. Miller (davem@davemloft.net)
  */
 
-#अघोषित DEBUG
+#undef DEBUG
 
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/types.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/delay.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/etherdevice.h>
-#समावेश <linux/skbuff.h>
+#include <linux/dma-mapping.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/errno.h>
+#include <linux/types.h>
+#include <linux/interrupt.h>
+#include <linux/string.h>
+#include <linux/delay.h>
+#include <linux/netdevice.h>
+#include <linux/platform_device.h>
+#include <linux/etherdevice.h>
+#include <linux/skbuff.h>
 
-#समावेश <यंत्र/sgi/hpc3.h>
-#समावेश <यंत्र/sgi/ip22.h>
-#समावेश <यंत्र/sgi/seeq.h>
+#include <asm/sgi/hpc3.h>
+#include <asm/sgi/ip22.h>
+#include <asm/sgi/seeq.h>
 
-#समावेश "sgiseeq.h"
+#include "sgiseeq.h"
 
-अटल अक्षर *sgiseeqstr = "SGI Seeq8003";
+static char *sgiseeqstr = "SGI Seeq8003";
 
 /*
- * If you want speed, you करो something silly, it always has worked क्रम me.  So,
+ * If you want speed, you do something silly, it always has worked for me.  So,
  * with that in mind, I've decided to make this driver look completely like a
- * stupid Lance from a driver architecture perspective.  Only dअगरference is that
- * here our "ring buffer" looks and acts like a real Lance one करोes but is
+ * stupid Lance from a driver architecture perspective.  Only difference is that
+ * here our "ring buffer" looks and acts like a real Lance one does but is
  * laid out like how the HPC DMA and the Seeq want it to.  You'd be surprised
- * how a stupid idea like this can pay off in perक्रमmance, not to mention
- * making this driver 2,000 बार easier to ग_लिखो. ;-)
+ * how a stupid idea like this can pay off in performance, not to mention
+ * making this driver 2,000 times easier to write. ;-)
  */
 
-/* Tune these अगर we tend to run out often etc. */
-#घोषणा SEEQ_RX_BUFFERS  16
-#घोषणा SEEQ_TX_BUFFERS  16
+/* Tune these if we tend to run out often etc. */
+#define SEEQ_RX_BUFFERS  16
+#define SEEQ_TX_BUFFERS  16
 
-#घोषणा PKT_BUF_SZ       1584
+#define PKT_BUF_SZ       1584
 
-#घोषणा NEXT_RX(i)  (((i) + 1) & (SEEQ_RX_BUFFERS - 1))
-#घोषणा NEXT_TX(i)  (((i) + 1) & (SEEQ_TX_BUFFERS - 1))
-#घोषणा PREV_RX(i)  (((i) - 1) & (SEEQ_RX_BUFFERS - 1))
-#घोषणा PREV_TX(i)  (((i) - 1) & (SEEQ_TX_BUFFERS - 1))
+#define NEXT_RX(i)  (((i) + 1) & (SEEQ_RX_BUFFERS - 1))
+#define NEXT_TX(i)  (((i) + 1) & (SEEQ_TX_BUFFERS - 1))
+#define PREV_RX(i)  (((i) - 1) & (SEEQ_RX_BUFFERS - 1))
+#define PREV_TX(i)  (((i) - 1) & (SEEQ_TX_BUFFERS - 1))
 
-#घोषणा TX_BUFFS_AVAIL(sp) ((sp->tx_old <= sp->tx_new) ? \
+#define TX_BUFFS_AVAIL(sp) ((sp->tx_old <= sp->tx_new) ? \
 			    sp->tx_old + (SEEQ_TX_BUFFERS - 1) - sp->tx_new : \
 			    sp->tx_old - sp->tx_new - 1)
 
-#घोषणा VIRT_TO_DMA(sp, v) ((sp)->srings_dma +                                 \
-				  (dma_addr_t)((अचिन्हित दीर्घ)(v) -            \
-					       (अचिन्हित दीर्घ)((sp)->rx_desc)))
+#define VIRT_TO_DMA(sp, v) ((sp)->srings_dma +                                 \
+				  (dma_addr_t)((unsigned long)(v) -            \
+					       (unsigned long)((sp)->rx_desc)))
 
-/* Copy frames लघुer than rx_copyअवरोध, otherwise pass on up in
+/* Copy frames shorter than rx_copybreak, otherwise pass on up in
  * a full sized sk_buff.  Value of 100 stolen from tulip.c (!alpha).
  */
-अटल पूर्णांक rx_copyअवरोध = 100;
+static int rx_copybreak = 100;
 
-#घोषणा PAD_SIZE    (128 - माप(काष्ठा hpc_dma_desc) - माप(व्योम *))
+#define PAD_SIZE    (128 - sizeof(struct hpc_dma_desc) - sizeof(void *))
 
-काष्ठा sgiseeq_rx_desc अणु
-	अस्थिर काष्ठा hpc_dma_desc rdma;
+struct sgiseeq_rx_desc {
+	volatile struct hpc_dma_desc rdma;
 	u8 padding[PAD_SIZE];
-	काष्ठा sk_buff *skb;
-पूर्ण;
+	struct sk_buff *skb;
+};
 
-काष्ठा sgiseeq_tx_desc अणु
-	अस्थिर काष्ठा hpc_dma_desc tdma;
+struct sgiseeq_tx_desc {
+	volatile struct hpc_dma_desc tdma;
 	u8 padding[PAD_SIZE];
-	काष्ठा sk_buff *skb;
-पूर्ण;
+	struct sk_buff *skb;
+};
 
 /*
- * Warning: This काष्ठाure is laid out in a certain way because HPC dma
- *          descriptors must be 8-byte aligned.  So करोn't touch this without
+ * Warning: This structure is laid out in a certain way because HPC dma
+ *          descriptors must be 8-byte aligned.  So don't touch this without
  *          some care.
  */
-काष्ठा sgiseeq_init_block अणु /* Note the name ;-) */
-	काष्ठा sgiseeq_rx_desc rxvector[SEEQ_RX_BUFFERS];
-	काष्ठा sgiseeq_tx_desc txvector[SEEQ_TX_BUFFERS];
-पूर्ण;
+struct sgiseeq_init_block { /* Note the name ;-) */
+	struct sgiseeq_rx_desc rxvector[SEEQ_RX_BUFFERS];
+	struct sgiseeq_tx_desc txvector[SEEQ_TX_BUFFERS];
+};
 
-काष्ठा sgiseeq_निजी अणु
-	काष्ठा sgiseeq_init_block *srings;
+struct sgiseeq_private {
+	struct sgiseeq_init_block *srings;
 	dma_addr_t srings_dma;
 
 	/* Ptrs to the descriptors in uncached space. */
-	काष्ठा sgiseeq_rx_desc *rx_desc;
-	काष्ठा sgiseeq_tx_desc *tx_desc;
+	struct sgiseeq_rx_desc *rx_desc;
+	struct sgiseeq_tx_desc *tx_desc;
 
-	अक्षर *name;
-	काष्ठा hpc3_ethregs *hregs;
-	काष्ठा sgiseeq_regs *sregs;
+	char *name;
+	struct hpc3_ethregs *hregs;
+	struct sgiseeq_regs *sregs;
 
 	/* Ring entry counters. */
-	अचिन्हित पूर्णांक rx_new, tx_new;
-	अचिन्हित पूर्णांक rx_old, tx_old;
+	unsigned int rx_new, tx_new;
+	unsigned int rx_old, tx_old;
 
-	पूर्णांक is_edlc;
-	अचिन्हित अक्षर control;
-	अचिन्हित अक्षर mode;
+	int is_edlc;
+	unsigned char control;
+	unsigned char mode;
 
 	spinlock_t tx_lock;
-पूर्ण;
+};
 
-अटल अंतरभूत व्योम dma_sync_desc_cpu(काष्ठा net_device *dev, व्योम *addr)
-अणु
-	काष्ठा sgiseeq_निजी *sp = netdev_priv(dev);
+static inline void dma_sync_desc_cpu(struct net_device *dev, void *addr)
+{
+	struct sgiseeq_private *sp = netdev_priv(dev);
 
-	dma_sync_single_क्रम_cpu(dev->dev.parent, VIRT_TO_DMA(sp, addr),
-			माप(काष्ठा sgiseeq_rx_desc), DMA_BIसूचीECTIONAL);
-पूर्ण
+	dma_sync_single_for_cpu(dev->dev.parent, VIRT_TO_DMA(sp, addr),
+			sizeof(struct sgiseeq_rx_desc), DMA_BIDIRECTIONAL);
+}
 
-अटल अंतरभूत व्योम dma_sync_desc_dev(काष्ठा net_device *dev, व्योम *addr)
-अणु
-	काष्ठा sgiseeq_निजी *sp = netdev_priv(dev);
+static inline void dma_sync_desc_dev(struct net_device *dev, void *addr)
+{
+	struct sgiseeq_private *sp = netdev_priv(dev);
 
-	dma_sync_single_क्रम_device(dev->dev.parent, VIRT_TO_DMA(sp, addr),
-			माप(काष्ठा sgiseeq_rx_desc), DMA_BIसूचीECTIONAL);
-पूर्ण
+	dma_sync_single_for_device(dev->dev.parent, VIRT_TO_DMA(sp, addr),
+			sizeof(struct sgiseeq_rx_desc), DMA_BIDIRECTIONAL);
+}
 
-अटल अंतरभूत व्योम hpc3_eth_reset(काष्ठा hpc3_ethregs *hregs)
-अणु
+static inline void hpc3_eth_reset(struct hpc3_ethregs *hregs)
+{
 	hregs->reset = HPC3_ERST_CRESET | HPC3_ERST_CLRIRQ;
 	udelay(20);
 	hregs->reset = 0;
-पूर्ण
+}
 
-अटल अंतरभूत व्योम reset_hpc3_and_seeq(काष्ठा hpc3_ethregs *hregs,
-				       काष्ठा sgiseeq_regs *sregs)
-अणु
+static inline void reset_hpc3_and_seeq(struct hpc3_ethregs *hregs,
+				       struct sgiseeq_regs *sregs)
+{
 	hregs->rx_ctrl = hregs->tx_ctrl = 0;
 	hpc3_eth_reset(hregs);
-पूर्ण
+}
 
-#घोषणा RSTAT_GO_BITS (SEEQ_RCMD_IGOOD | SEEQ_RCMD_Iखातापूर्ण | SEEQ_RCMD_ISHORT | \
+#define RSTAT_GO_BITS (SEEQ_RCMD_IGOOD | SEEQ_RCMD_IEOF | SEEQ_RCMD_ISHORT | \
 		       SEEQ_RCMD_IDRIB | SEEQ_RCMD_ICRC)
 
-अटल अंतरभूत व्योम seeq_go(काष्ठा sgiseeq_निजी *sp,
-			   काष्ठा hpc3_ethregs *hregs,
-			   काष्ठा sgiseeq_regs *sregs)
-अणु
+static inline void seeq_go(struct sgiseeq_private *sp,
+			   struct hpc3_ethregs *hregs,
+			   struct sgiseeq_regs *sregs)
+{
 	sregs->rstat = sp->mode | RSTAT_GO_BITS;
 	hregs->rx_ctrl = HPC3_ERXCTRL_ACTIVE;
-पूर्ण
+}
 
-अटल अंतरभूत व्योम __sgiseeq_set_mac_address(काष्ठा net_device *dev)
-अणु
-	काष्ठा sgiseeq_निजी *sp = netdev_priv(dev);
-	काष्ठा sgiseeq_regs *sregs = sp->sregs;
-	पूर्णांक i;
+static inline void __sgiseeq_set_mac_address(struct net_device *dev)
+{
+	struct sgiseeq_private *sp = netdev_priv(dev);
+	struct sgiseeq_regs *sregs = sp->sregs;
+	int i;
 
 	sregs->tstat = SEEQ_TCMD_RB0;
-	क्रम (i = 0; i < 6; i++)
+	for (i = 0; i < 6; i++)
 		sregs->rw.eth_addr[i] = dev->dev_addr[i];
-पूर्ण
+}
 
-अटल पूर्णांक sgiseeq_set_mac_address(काष्ठा net_device *dev, व्योम *addr)
-अणु
-	काष्ठा sgiseeq_निजी *sp = netdev_priv(dev);
-	काष्ठा sockaddr *sa = addr;
+static int sgiseeq_set_mac_address(struct net_device *dev, void *addr)
+{
+	struct sgiseeq_private *sp = netdev_priv(dev);
+	struct sockaddr *sa = addr;
 
-	स_नकल(dev->dev_addr, sa->sa_data, dev->addr_len);
+	memcpy(dev->dev_addr, sa->sa_data, dev->addr_len);
 
 	spin_lock_irq(&sp->tx_lock);
 	__sgiseeq_set_mac_address(dev);
 	spin_unlock_irq(&sp->tx_lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#घोषणा TCNTINFO_INIT (HPCDMA_EOX | HPCDMA_ETXD)
-#घोषणा RCNTCFG_INIT  (HPCDMA_OWN | HPCDMA_EORP | HPCDMA_XIE)
-#घोषणा RCNTINFO_INIT (RCNTCFG_INIT | (PKT_BUF_SZ & HPCDMA_BCNT))
+#define TCNTINFO_INIT (HPCDMA_EOX | HPCDMA_ETXD)
+#define RCNTCFG_INIT  (HPCDMA_OWN | HPCDMA_EORP | HPCDMA_XIE)
+#define RCNTINFO_INIT (RCNTCFG_INIT | (PKT_BUF_SZ & HPCDMA_BCNT))
 
-अटल पूर्णांक seeq_init_ring(काष्ठा net_device *dev)
-अणु
-	काष्ठा sgiseeq_निजी *sp = netdev_priv(dev);
-	पूर्णांक i;
+static int seeq_init_ring(struct net_device *dev)
+{
+	struct sgiseeq_private *sp = netdev_priv(dev);
+	int i;
 
-	netअगर_stop_queue(dev);
+	netif_stop_queue(dev);
 	sp->rx_new = sp->tx_new = 0;
 	sp->rx_old = sp->tx_old = 0;
 
 	__sgiseeq_set_mac_address(dev);
 
 	/* Setup tx ring. */
-	क्रम(i = 0; i < SEEQ_TX_BUFFERS; i++) अणु
+	for(i = 0; i < SEEQ_TX_BUFFERS; i++) {
 		sp->tx_desc[i].tdma.cntinfo = TCNTINFO_INIT;
 		dma_sync_desc_dev(dev, &sp->tx_desc[i]);
-	पूर्ण
+	}
 
 	/* And now the rx ring. */
-	क्रम (i = 0; i < SEEQ_RX_BUFFERS; i++) अणु
-		अगर (!sp->rx_desc[i].skb) अणु
+	for (i = 0; i < SEEQ_RX_BUFFERS; i++) {
+		if (!sp->rx_desc[i].skb) {
 			dma_addr_t dma_addr;
-			काष्ठा sk_buff *skb = netdev_alloc_skb(dev, PKT_BUF_SZ);
+			struct sk_buff *skb = netdev_alloc_skb(dev, PKT_BUF_SZ);
 
-			अगर (skb == शून्य)
-				वापस -ENOMEM;
+			if (skb == NULL)
+				return -ENOMEM;
 			skb_reserve(skb, 2);
 			dma_addr = dma_map_single(dev->dev.parent,
 						  skb->data - 2,
 						  PKT_BUF_SZ, DMA_FROM_DEVICE);
 			sp->rx_desc[i].skb = skb;
 			sp->rx_desc[i].rdma.pbuf = dma_addr;
-		पूर्ण
+		}
 		sp->rx_desc[i].rdma.cntinfo = RCNTINFO_INIT;
 		dma_sync_desc_dev(dev, &sp->rx_desc[i]);
-	पूर्ण
+	}
 	sp->rx_desc[i - 1].rdma.cntinfo |= HPCDMA_EOR;
 	dma_sync_desc_dev(dev, &sp->rx_desc[i - 1]);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम seeq_purge_ring(काष्ठा net_device *dev)
-अणु
-	काष्ठा sgiseeq_निजी *sp = netdev_priv(dev);
-	पूर्णांक i;
+static void seeq_purge_ring(struct net_device *dev)
+{
+	struct sgiseeq_private *sp = netdev_priv(dev);
+	int i;
 
 	/* clear tx ring. */
-	क्रम (i = 0; i < SEEQ_TX_BUFFERS; i++) अणु
-		अगर (sp->tx_desc[i].skb) अणु
-			dev_kमुक्त_skb(sp->tx_desc[i].skb);
-			sp->tx_desc[i].skb = शून्य;
-		पूर्ण
-	पूर्ण
+	for (i = 0; i < SEEQ_TX_BUFFERS; i++) {
+		if (sp->tx_desc[i].skb) {
+			dev_kfree_skb(sp->tx_desc[i].skb);
+			sp->tx_desc[i].skb = NULL;
+		}
+	}
 
 	/* And now the rx ring. */
-	क्रम (i = 0; i < SEEQ_RX_BUFFERS; i++) अणु
-		अगर (sp->rx_desc[i].skb) अणु
-			dev_kमुक्त_skb(sp->rx_desc[i].skb);
-			sp->rx_desc[i].skb = शून्य;
-		पूर्ण
-	पूर्ण
-पूर्ण
+	for (i = 0; i < SEEQ_RX_BUFFERS; i++) {
+		if (sp->rx_desc[i].skb) {
+			dev_kfree_skb(sp->rx_desc[i].skb);
+			sp->rx_desc[i].skb = NULL;
+		}
+	}
+}
 
-#अगर_घोषित DEBUG
-अटल काष्ठा sgiseeq_निजी *gpriv;
-अटल काष्ठा net_device *gdev;
+#ifdef DEBUG
+static struct sgiseeq_private *gpriv;
+static struct net_device *gdev;
 
-अटल व्योम sgiseeq_dump_rings(व्योम)
-अणु
-	अटल पूर्णांक once;
-	काष्ठा sgiseeq_rx_desc *r = gpriv->rx_desc;
-	काष्ठा sgiseeq_tx_desc *t = gpriv->tx_desc;
-	काष्ठा hpc3_ethregs *hregs = gpriv->hregs;
-	पूर्णांक i;
+static void sgiseeq_dump_rings(void)
+{
+	static int once;
+	struct sgiseeq_rx_desc *r = gpriv->rx_desc;
+	struct sgiseeq_tx_desc *t = gpriv->tx_desc;
+	struct hpc3_ethregs *hregs = gpriv->hregs;
+	int i;
 
-	अगर (once)
-		वापस;
+	if (once)
+		return;
 	once++;
-	prपूर्णांकk("RING DUMP:\n");
-	क्रम (i = 0; i < SEEQ_RX_BUFFERS; i++) अणु
-		prपूर्णांकk("RX [%d]: @(%p) [%08x,%08x,%08x] ",
+	printk("RING DUMP:\n");
+	for (i = 0; i < SEEQ_RX_BUFFERS; i++) {
+		printk("RX [%d]: @(%p) [%08x,%08x,%08x] ",
 		       i, (&r[i]), r[i].rdma.pbuf, r[i].rdma.cntinfo,
 		       r[i].rdma.pnext);
 		i += 1;
-		prपूर्णांकk("-- [%d]: @(%p) [%08x,%08x,%08x]\n",
+		printk("-- [%d]: @(%p) [%08x,%08x,%08x]\n",
 		       i, (&r[i]), r[i].rdma.pbuf, r[i].rdma.cntinfo,
 		       r[i].rdma.pnext);
-	पूर्ण
-	क्रम (i = 0; i < SEEQ_TX_BUFFERS; i++) अणु
-		prपूर्णांकk("TX [%d]: @(%p) [%08x,%08x,%08x] ",
+	}
+	for (i = 0; i < SEEQ_TX_BUFFERS; i++) {
+		printk("TX [%d]: @(%p) [%08x,%08x,%08x] ",
 		       i, (&t[i]), t[i].tdma.pbuf, t[i].tdma.cntinfo,
 		       t[i].tdma.pnext);
 		i += 1;
-		prपूर्णांकk("-- [%d]: @(%p) [%08x,%08x,%08x]\n",
+		printk("-- [%d]: @(%p) [%08x,%08x,%08x]\n",
 		       i, (&t[i]), t[i].tdma.pbuf, t[i].tdma.cntinfo,
 		       t[i].tdma.pnext);
-	पूर्ण
-	prपूर्णांकk("INFO: [rx_new = %d rx_old=%d] [tx_new = %d tx_old = %d]\n",
+	}
+	printk("INFO: [rx_new = %d rx_old=%d] [tx_new = %d tx_old = %d]\n",
 	       gpriv->rx_new, gpriv->rx_old, gpriv->tx_new, gpriv->tx_old);
-	prपूर्णांकk("RREGS: rx_cbptr[%08x] rx_ndptr[%08x] rx_ctrl[%08x]\n",
+	printk("RREGS: rx_cbptr[%08x] rx_ndptr[%08x] rx_ctrl[%08x]\n",
 	       hregs->rx_cbptr, hregs->rx_ndptr, hregs->rx_ctrl);
-	prपूर्णांकk("TREGS: tx_cbptr[%08x] tx_ndptr[%08x] tx_ctrl[%08x]\n",
+	printk("TREGS: tx_cbptr[%08x] tx_ndptr[%08x] tx_ctrl[%08x]\n",
 	       hregs->tx_cbptr, hregs->tx_ndptr, hregs->tx_ctrl);
-पूर्ण
-#पूर्ण_अगर
+}
+#endif
 
-#घोषणा TSTAT_INIT_SEEQ (SEEQ_TCMD_IPT|SEEQ_TCMD_I16|SEEQ_TCMD_IC|SEEQ_TCMD_IUF)
-#घोषणा TSTAT_INIT_EDLC ((TSTAT_INIT_SEEQ) | SEEQ_TCMD_RB2)
+#define TSTAT_INIT_SEEQ (SEEQ_TCMD_IPT|SEEQ_TCMD_I16|SEEQ_TCMD_IC|SEEQ_TCMD_IUF)
+#define TSTAT_INIT_EDLC ((TSTAT_INIT_SEEQ) | SEEQ_TCMD_RB2)
 
-अटल पूर्णांक init_seeq(काष्ठा net_device *dev, काष्ठा sgiseeq_निजी *sp,
-		     काष्ठा sgiseeq_regs *sregs)
-अणु
-	काष्ठा hpc3_ethregs *hregs = sp->hregs;
-	पूर्णांक err;
+static int init_seeq(struct net_device *dev, struct sgiseeq_private *sp,
+		     struct sgiseeq_regs *sregs)
+{
+	struct hpc3_ethregs *hregs = sp->hregs;
+	int err;
 
 	reset_hpc3_and_seeq(hregs, sregs);
 	err = seeq_init_ring(dev);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	/* Setup to field the proper पूर्णांकerrupt types. */
-	अगर (sp->is_edlc) अणु
+	/* Setup to field the proper interrupt types. */
+	if (sp->is_edlc) {
 		sregs->tstat = TSTAT_INIT_EDLC;
 		sregs->rw.wregs.control = sp->control;
 		sregs->rw.wregs.frame_gap = 0;
-	पूर्ण अन्यथा अणु
+	} else {
 		sregs->tstat = TSTAT_INIT_SEEQ;
-	पूर्ण
+	}
 
 	hregs->rx_ndptr = VIRT_TO_DMA(sp, sp->rx_desc);
 	hregs->tx_ndptr = VIRT_TO_DMA(sp, sp->tx_desc);
 
 	seeq_go(sp, hregs, sregs);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम record_rx_errors(काष्ठा net_device *dev, अचिन्हित अक्षर status)
-अणु
-	अगर (status & SEEQ_RSTAT_OVERF ||
+static void record_rx_errors(struct net_device *dev, unsigned char status)
+{
+	if (status & SEEQ_RSTAT_OVERF ||
 	    status & SEEQ_RSTAT_SFRAME)
 		dev->stats.rx_over_errors++;
-	अगर (status & SEEQ_RSTAT_CERROR)
+	if (status & SEEQ_RSTAT_CERROR)
 		dev->stats.rx_crc_errors++;
-	अगर (status & SEEQ_RSTAT_DERROR)
+	if (status & SEEQ_RSTAT_DERROR)
 		dev->stats.rx_frame_errors++;
-	अगर (status & SEEQ_RSTAT_Rखातापूर्ण)
+	if (status & SEEQ_RSTAT_REOF)
 		dev->stats.rx_errors++;
-पूर्ण
+}
 
-अटल अंतरभूत व्योम rx_maybe_restart(काष्ठा sgiseeq_निजी *sp,
-				    काष्ठा hpc3_ethregs *hregs,
-				    काष्ठा sgiseeq_regs *sregs)
-अणु
-	अगर (!(hregs->rx_ctrl & HPC3_ERXCTRL_ACTIVE)) अणु
+static inline void rx_maybe_restart(struct sgiseeq_private *sp,
+				    struct hpc3_ethregs *hregs,
+				    struct sgiseeq_regs *sregs)
+{
+	if (!(hregs->rx_ctrl & HPC3_ERXCTRL_ACTIVE)) {
 		hregs->rx_ndptr = VIRT_TO_DMA(sp, sp->rx_desc + sp->rx_new);
 		seeq_go(sp, hregs, sregs);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल अंतरभूत व्योम sgiseeq_rx(काष्ठा net_device *dev, काष्ठा sgiseeq_निजी *sp,
-			      काष्ठा hpc3_ethregs *hregs,
-			      काष्ठा sgiseeq_regs *sregs)
-अणु
-	काष्ठा sgiseeq_rx_desc *rd;
-	काष्ठा sk_buff *skb = शून्य;
-	काष्ठा sk_buff *newskb;
-	अचिन्हित अक्षर pkt_status;
-	पूर्णांक len = 0;
-	अचिन्हित पूर्णांक orig_end = PREV_RX(sp->rx_new);
+static inline void sgiseeq_rx(struct net_device *dev, struct sgiseeq_private *sp,
+			      struct hpc3_ethregs *hregs,
+			      struct sgiseeq_regs *sregs)
+{
+	struct sgiseeq_rx_desc *rd;
+	struct sk_buff *skb = NULL;
+	struct sk_buff *newskb;
+	unsigned char pkt_status;
+	int len = 0;
+	unsigned int orig_end = PREV_RX(sp->rx_new);
 
 	/* Service every received packet. */
 	rd = &sp->rx_desc[sp->rx_new];
 	dma_sync_desc_cpu(dev, rd);
-	जबतक (!(rd->rdma.cntinfo & HPCDMA_OWN)) अणु
+	while (!(rd->rdma.cntinfo & HPCDMA_OWN)) {
 		len = PKT_BUF_SZ - (rd->rdma.cntinfo & HPCDMA_BCNT) - 3;
 		dma_unmap_single(dev->dev.parent, rd->rdma.pbuf,
 				 PKT_BUF_SZ, DMA_FROM_DEVICE);
 		pkt_status = rd->skb->data[len];
-		अगर (pkt_status & SEEQ_RSTAT_FIG) अणु
+		if (pkt_status & SEEQ_RSTAT_FIG) {
 			/* Packet is OK. */
-			/* We करोn't want to receive our own packets */
-			अगर (!ether_addr_equal(rd->skb->data + 6, dev->dev_addr)) अणु
-				अगर (len > rx_copyअवरोध) अणु
+			/* We don't want to receive our own packets */
+			if (!ether_addr_equal(rd->skb->data + 6, dev->dev_addr)) {
+				if (len > rx_copybreak) {
 					skb = rd->skb;
 					newskb = netdev_alloc_skb(dev, PKT_BUF_SZ);
-					अगर (!newskb) अणु
+					if (!newskb) {
 						newskb = skb;
-						skb = शून्य;
-						जाओ memory_squeeze;
-					पूर्ण
+						skb = NULL;
+						goto memory_squeeze;
+					}
 					skb_reserve(newskb, 2);
-				पूर्ण अन्यथा अणु
+				} else {
 					skb = netdev_alloc_skb_ip_align(dev, len);
-					अगर (skb)
+					if (skb)
 						skb_copy_to_linear_data(skb, rd->skb->data, len);
 
 					newskb = rd->skb;
-				पूर्ण
+				}
 memory_squeeze:
-				अगर (skb) अणु
+				if (skb) {
 					skb_put(skb, len);
 					skb->protocol = eth_type_trans(skb, dev);
-					netअगर_rx(skb);
+					netif_rx(skb);
 					dev->stats.rx_packets++;
 					dev->stats.rx_bytes += len;
-				पूर्ण अन्यथा अणु
+				} else {
 					dev->stats.rx_dropped++;
-				पूर्ण
-			पूर्ण अन्यथा अणु
+				}
+			} else {
 				/* Silently drop my own packets */
 				newskb = rd->skb;
-			पूर्ण
-		पूर्ण अन्यथा अणु
+			}
+		} else {
 			record_rx_errors(dev, pkt_status);
 			newskb = rd->skb;
-		पूर्ण
+		}
 		rd->skb = newskb;
 		rd->rdma.pbuf = dma_map_single(dev->dev.parent,
 					       newskb->data - 2,
@@ -407,7 +406,7 @@ memory_squeeze:
 		dma_sync_desc_dev(dev, rd);
 		rd = &sp->rx_desc[sp->rx_new];
 		dma_sync_desc_cpu(dev, rd);
-	पूर्ण
+	}
 	dma_sync_desc_dev(dev, rd);
 
 	dma_sync_desc_cpu(dev, &sp->rx_desc[orig_end]);
@@ -417,197 +416,197 @@ memory_squeeze:
 	sp->rx_desc[PREV_RX(sp->rx_new)].rdma.cntinfo |= HPCDMA_EOR;
 	dma_sync_desc_dev(dev, &sp->rx_desc[PREV_RX(sp->rx_new)]);
 	rx_maybe_restart(sp, hregs, sregs);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम tx_maybe_reset_collisions(काष्ठा sgiseeq_निजी *sp,
-					     काष्ठा sgiseeq_regs *sregs)
-अणु
-	अगर (sp->is_edlc) अणु
+static inline void tx_maybe_reset_collisions(struct sgiseeq_private *sp,
+					     struct sgiseeq_regs *sregs)
+{
+	if (sp->is_edlc) {
 		sregs->rw.wregs.control = sp->control & ~(SEEQ_CTRL_XCNT);
 		sregs->rw.wregs.control = sp->control;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल अंतरभूत व्योम kick_tx(काष्ठा net_device *dev,
-			   काष्ठा sgiseeq_निजी *sp,
-			   काष्ठा hpc3_ethregs *hregs)
-अणु
-	काष्ठा sgiseeq_tx_desc *td;
-	पूर्णांक i = sp->tx_old;
+static inline void kick_tx(struct net_device *dev,
+			   struct sgiseeq_private *sp,
+			   struct hpc3_ethregs *hregs)
+{
+	struct sgiseeq_tx_desc *td;
+	int i = sp->tx_old;
 
-	/* If the HPC aपूर्णांक करोin nothin, and there are more packets
+	/* If the HPC aint doin nothin, and there are more packets
 	 * with ETXD cleared and XIU set we must make very certain
-	 * that we restart the HPC अन्यथा we risk locking up the
-	 * adapter.  The following code is only safe अगरf the HPCDMA
+	 * that we restart the HPC else we risk locking up the
+	 * adapter.  The following code is only safe iff the HPCDMA
 	 * is not active!
 	 */
 	td = &sp->tx_desc[i];
 	dma_sync_desc_cpu(dev, td);
-	जबतक ((td->tdma.cntinfo & (HPCDMA_XIU | HPCDMA_ETXD)) ==
-	      (HPCDMA_XIU | HPCDMA_ETXD)) अणु
+	while ((td->tdma.cntinfo & (HPCDMA_XIU | HPCDMA_ETXD)) ==
+	      (HPCDMA_XIU | HPCDMA_ETXD)) {
 		i = NEXT_TX(i);
 		td = &sp->tx_desc[i];
 		dma_sync_desc_cpu(dev, td);
-	पूर्ण
-	अगर (td->tdma.cntinfo & HPCDMA_XIU) अणु
+	}
+	if (td->tdma.cntinfo & HPCDMA_XIU) {
 		dma_sync_desc_dev(dev, td);
 		hregs->tx_ndptr = VIRT_TO_DMA(sp, td);
 		hregs->tx_ctrl = HPC3_ETXCTRL_ACTIVE;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल अंतरभूत व्योम sgiseeq_tx(काष्ठा net_device *dev, काष्ठा sgiseeq_निजी *sp,
-			      काष्ठा hpc3_ethregs *hregs,
-			      काष्ठा sgiseeq_regs *sregs)
-अणु
-	काष्ठा sgiseeq_tx_desc *td;
-	अचिन्हित दीर्घ status = hregs->tx_ctrl;
-	पूर्णांक j;
+static inline void sgiseeq_tx(struct net_device *dev, struct sgiseeq_private *sp,
+			      struct hpc3_ethregs *hregs,
+			      struct sgiseeq_regs *sregs)
+{
+	struct sgiseeq_tx_desc *td;
+	unsigned long status = hregs->tx_ctrl;
+	int j;
 
 	tx_maybe_reset_collisions(sp, sregs);
 
-	अगर (!(status & (HPC3_ETXCTRL_ACTIVE | SEEQ_TSTAT_PTRANS))) अणु
+	if (!(status & (HPC3_ETXCTRL_ACTIVE | SEEQ_TSTAT_PTRANS))) {
 		/* Oops, HPC detected some sort of error. */
-		अगर (status & SEEQ_TSTAT_R16)
-			dev->stats.tx_पातed_errors++;
-		अगर (status & SEEQ_TSTAT_UFLOW)
-			dev->stats.tx_fअगरo_errors++;
-		अगर (status & SEEQ_TSTAT_LCLS)
+		if (status & SEEQ_TSTAT_R16)
+			dev->stats.tx_aborted_errors++;
+		if (status & SEEQ_TSTAT_UFLOW)
+			dev->stats.tx_fifo_errors++;
+		if (status & SEEQ_TSTAT_LCLS)
 			dev->stats.collisions++;
-	पूर्ण
+	}
 
 	/* Ack 'em... */
-	क्रम (j = sp->tx_old; j != sp->tx_new; j = NEXT_TX(j)) अणु
+	for (j = sp->tx_old; j != sp->tx_new; j = NEXT_TX(j)) {
 		td = &sp->tx_desc[j];
 
 		dma_sync_desc_cpu(dev, td);
-		अगर (!(td->tdma.cntinfo & (HPCDMA_XIU)))
-			अवरोध;
-		अगर (!(td->tdma.cntinfo & (HPCDMA_ETXD))) अणु
+		if (!(td->tdma.cntinfo & (HPCDMA_XIU)))
+			break;
+		if (!(td->tdma.cntinfo & (HPCDMA_ETXD))) {
 			dma_sync_desc_dev(dev, td);
-			अगर (!(status & HPC3_ETXCTRL_ACTIVE)) अणु
+			if (!(status & HPC3_ETXCTRL_ACTIVE)) {
 				hregs->tx_ndptr = VIRT_TO_DMA(sp, td);
 				hregs->tx_ctrl = HPC3_ETXCTRL_ACTIVE;
-			पूर्ण
-			अवरोध;
-		पूर्ण
+			}
+			break;
+		}
 		dev->stats.tx_packets++;
 		sp->tx_old = NEXT_TX(sp->tx_old);
 		td->tdma.cntinfo &= ~(HPCDMA_XIU | HPCDMA_XIE);
 		td->tdma.cntinfo |= HPCDMA_EOX;
-		अगर (td->skb) अणु
-			dev_kमुक्त_skb_any(td->skb);
-			td->skb = शून्य;
-		पूर्ण
+		if (td->skb) {
+			dev_kfree_skb_any(td->skb);
+			td->skb = NULL;
+		}
 		dma_sync_desc_dev(dev, td);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल irqवापस_t sgiseeq_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा net_device *dev = (काष्ठा net_device *) dev_id;
-	काष्ठा sgiseeq_निजी *sp = netdev_priv(dev);
-	काष्ठा hpc3_ethregs *hregs = sp->hregs;
-	काष्ठा sgiseeq_regs *sregs = sp->sregs;
+static irqreturn_t sgiseeq_interrupt(int irq, void *dev_id)
+{
+	struct net_device *dev = (struct net_device *) dev_id;
+	struct sgiseeq_private *sp = netdev_priv(dev);
+	struct hpc3_ethregs *hregs = sp->hregs;
+	struct sgiseeq_regs *sregs = sp->sregs;
 
 	spin_lock(&sp->tx_lock);
 
 	/* Ack the IRQ and set software state. */
 	hregs->reset = HPC3_ERST_CLRIRQ;
 
-	/* Always check क्रम received packets. */
+	/* Always check for received packets. */
 	sgiseeq_rx(dev, sp, hregs, sregs);
 
-	/* Only check क्रम tx acks अगर we have something queued. */
-	अगर (sp->tx_old != sp->tx_new)
+	/* Only check for tx acks if we have something queued. */
+	if (sp->tx_old != sp->tx_new)
 		sgiseeq_tx(dev, sp, hregs, sregs);
 
-	अगर ((TX_BUFFS_AVAIL(sp) > 0) && netअगर_queue_stopped(dev)) अणु
-		netअगर_wake_queue(dev);
-	पूर्ण
+	if ((TX_BUFFS_AVAIL(sp) > 0) && netif_queue_stopped(dev)) {
+		netif_wake_queue(dev);
+	}
 	spin_unlock(&sp->tx_lock);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक sgiseeq_खोलो(काष्ठा net_device *dev)
-अणु
-	काष्ठा sgiseeq_निजी *sp = netdev_priv(dev);
-	काष्ठा sgiseeq_regs *sregs = sp->sregs;
-	अचिन्हित पूर्णांक irq = dev->irq;
-	पूर्णांक err;
+static int sgiseeq_open(struct net_device *dev)
+{
+	struct sgiseeq_private *sp = netdev_priv(dev);
+	struct sgiseeq_regs *sregs = sp->sregs;
+	unsigned int irq = dev->irq;
+	int err;
 
-	अगर (request_irq(irq, sgiseeq_पूर्णांकerrupt, 0, sgiseeqstr, dev)) अणु
-		prपूर्णांकk(KERN_ERR "Seeq8003: Can't get irq %d\n", dev->irq);
-		वापस -EAGAIN;
-	पूर्ण
+	if (request_irq(irq, sgiseeq_interrupt, 0, sgiseeqstr, dev)) {
+		printk(KERN_ERR "Seeq8003: Can't get irq %d\n", dev->irq);
+		return -EAGAIN;
+	}
 
 	err = init_seeq(dev, sp, sregs);
-	अगर (err)
-		जाओ out_मुक्त_irq;
+	if (err)
+		goto out_free_irq;
 
-	netअगर_start_queue(dev);
+	netif_start_queue(dev);
 
-	वापस 0;
+	return 0;
 
-out_मुक्त_irq:
-	मुक्त_irq(irq, dev);
+out_free_irq:
+	free_irq(irq, dev);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक sgiseeq_बंद(काष्ठा net_device *dev)
-अणु
-	काष्ठा sgiseeq_निजी *sp = netdev_priv(dev);
-	काष्ठा sgiseeq_regs *sregs = sp->sregs;
-	अचिन्हित पूर्णांक irq = dev->irq;
+static int sgiseeq_close(struct net_device *dev)
+{
+	struct sgiseeq_private *sp = netdev_priv(dev);
+	struct sgiseeq_regs *sregs = sp->sregs;
+	unsigned int irq = dev->irq;
 
-	netअगर_stop_queue(dev);
+	netif_stop_queue(dev);
 
-	/* Shutकरोwn the Seeq. */
+	/* Shutdown the Seeq. */
 	reset_hpc3_and_seeq(sp->hregs, sregs);
-	मुक्त_irq(irq, dev);
+	free_irq(irq, dev);
 	seeq_purge_ring(dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक sgiseeq_reset(काष्ठा net_device *dev)
-अणु
-	काष्ठा sgiseeq_निजी *sp = netdev_priv(dev);
-	काष्ठा sgiseeq_regs *sregs = sp->sregs;
-	पूर्णांक err;
+static inline int sgiseeq_reset(struct net_device *dev)
+{
+	struct sgiseeq_private *sp = netdev_priv(dev);
+	struct sgiseeq_regs *sregs = sp->sregs;
+	int err;
 
 	err = init_seeq(dev, sp, sregs);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	netअगर_trans_update(dev); /* prevent tx समयout */
-	netअगर_wake_queue(dev);
+	netif_trans_update(dev); /* prevent tx timeout */
+	netif_wake_queue(dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल netdev_tx_t
-sgiseeq_start_xmit(काष्ठा sk_buff *skb, काष्ठा net_device *dev)
-अणु
-	काष्ठा sgiseeq_निजी *sp = netdev_priv(dev);
-	काष्ठा hpc3_ethregs *hregs = sp->hregs;
-	अचिन्हित दीर्घ flags;
-	काष्ठा sgiseeq_tx_desc *td;
-	पूर्णांक len, entry;
+static netdev_tx_t
+sgiseeq_start_xmit(struct sk_buff *skb, struct net_device *dev)
+{
+	struct sgiseeq_private *sp = netdev_priv(dev);
+	struct hpc3_ethregs *hregs = sp->hregs;
+	unsigned long flags;
+	struct sgiseeq_tx_desc *td;
+	int len, entry;
 
 	spin_lock_irqsave(&sp->tx_lock, flags);
 
 	/* Setup... */
 	len = skb->len;
-	अगर (len < ETH_ZLEN) अणु
-		अगर (skb_padto(skb, ETH_ZLEN)) अणु
+	if (len < ETH_ZLEN) {
+		if (skb_padto(skb, ETH_ZLEN)) {
 			spin_unlock_irqrestore(&sp->tx_lock, flags);
-			वापस NETDEV_TX_OK;
-		पूर्ण
+			return NETDEV_TX_OK;
+		}
 		len = ETH_ZLEN;
-	पूर्ण
+	}
 
 	dev->stats.tx_bytes += len;
 	entry = sp->tx_new;
@@ -616,15 +615,15 @@ sgiseeq_start_xmit(काष्ठा sk_buff *skb, काष्ठा net_devic
 
 	/* Create entry.  There are so many races with adding a new
 	 * descriptor to the chain:
-	 * 1) Assume that the HPC is off processing a DMA chain जबतक
+	 * 1) Assume that the HPC is off processing a DMA chain while
 	 *    we are changing all of the following.
 	 * 2) Do no allow the HPC to look at a new descriptor until
-	 *    we have completely set up it's state.  This means, करो
+	 *    we have completely set up it's state.  This means, do
 	 *    not clear HPCDMA_EOX in the current last descritptor
 	 *    until the one we are adding looks consistent and could
 	 *    be processes right now.
-	 * 3) The tx पूर्णांकerrupt code must notice when we've added a new
-	 *    entry and the HPC got to the end of the chain beक्रमe we
+	 * 3) The tx interrupt code must notice when we've added a new
+	 *    entry and the HPC got to the end of the chain before we
 	 *    added this new entry and restarted it.
 	 */
 	td->skb = skb;
@@ -633,129 +632,129 @@ sgiseeq_start_xmit(काष्ठा sk_buff *skb, काष्ठा net_devic
 	td->tdma.cntinfo = (len & HPCDMA_BCNT) |
 	                   HPCDMA_XIU | HPCDMA_EOXP | HPCDMA_XIE | HPCDMA_EOX;
 	dma_sync_desc_dev(dev, td);
-	अगर (sp->tx_old != sp->tx_new) अणु
-		काष्ठा sgiseeq_tx_desc *backend;
+	if (sp->tx_old != sp->tx_new) {
+		struct sgiseeq_tx_desc *backend;
 
 		backend = &sp->tx_desc[PREV_TX(sp->tx_new)];
 		dma_sync_desc_cpu(dev, backend);
 		backend->tdma.cntinfo &= ~HPCDMA_EOX;
 		dma_sync_desc_dev(dev, backend);
-	पूर्ण
+	}
 	sp->tx_new = NEXT_TX(sp->tx_new); /* Advance. */
 
-	/* Maybe kick the HPC back पूर्णांकo motion. */
-	अगर (!(hregs->tx_ctrl & HPC3_ETXCTRL_ACTIVE))
+	/* Maybe kick the HPC back into motion. */
+	if (!(hregs->tx_ctrl & HPC3_ETXCTRL_ACTIVE))
 		kick_tx(dev, sp, hregs);
 
-	अगर (!TX_BUFFS_AVAIL(sp))
-		netअगर_stop_queue(dev);
+	if (!TX_BUFFS_AVAIL(sp))
+		netif_stop_queue(dev);
 	spin_unlock_irqrestore(&sp->tx_lock, flags);
 
-	वापस NETDEV_TX_OK;
-पूर्ण
+	return NETDEV_TX_OK;
+}
 
-अटल व्योम समयout(काष्ठा net_device *dev, अचिन्हित पूर्णांक txqueue)
-अणु
-	prपूर्णांकk(KERN_NOTICE "%s: transmit timed out, resetting\n", dev->name);
+static void timeout(struct net_device *dev, unsigned int txqueue)
+{
+	printk(KERN_NOTICE "%s: transmit timed out, resetting\n", dev->name);
 	sgiseeq_reset(dev);
 
-	netअगर_trans_update(dev); /* prevent tx समयout */
-	netअगर_wake_queue(dev);
-पूर्ण
+	netif_trans_update(dev); /* prevent tx timeout */
+	netif_wake_queue(dev);
+}
 
-अटल व्योम sgiseeq_set_multicast(काष्ठा net_device *dev)
-अणु
-	काष्ठा sgiseeq_निजी *sp = netdev_priv(dev);
-	अचिन्हित अक्षर oldmode = sp->mode;
+static void sgiseeq_set_multicast(struct net_device *dev)
+{
+	struct sgiseeq_private *sp = netdev_priv(dev);
+	unsigned char oldmode = sp->mode;
 
-	अगर(dev->flags & IFF_PROMISC)
+	if(dev->flags & IFF_PROMISC)
 		sp->mode = SEEQ_RCMD_RANY;
-	अन्यथा अगर ((dev->flags & IFF_ALLMULTI) || !netdev_mc_empty(dev))
+	else if ((dev->flags & IFF_ALLMULTI) || !netdev_mc_empty(dev))
 		sp->mode = SEEQ_RCMD_RBMCAST;
-	अन्यथा
+	else
 		sp->mode = SEEQ_RCMD_RBCAST;
 
 	/* XXX I know this sucks, but is there a better way to reprogram
 	 * XXX the receiver? At least, this shouldn't happen too often.
 	 */
 
-	अगर (oldmode != sp->mode)
+	if (oldmode != sp->mode)
 		sgiseeq_reset(dev);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम setup_tx_ring(काष्ठा net_device *dev,
-				 काष्ठा sgiseeq_tx_desc *buf,
-				 पूर्णांक nbufs)
-अणु
-	काष्ठा sgiseeq_निजी *sp = netdev_priv(dev);
-	पूर्णांक i = 0;
+static inline void setup_tx_ring(struct net_device *dev,
+				 struct sgiseeq_tx_desc *buf,
+				 int nbufs)
+{
+	struct sgiseeq_private *sp = netdev_priv(dev);
+	int i = 0;
 
-	जबतक (i < (nbufs - 1)) अणु
+	while (i < (nbufs - 1)) {
 		buf[i].tdma.pnext = VIRT_TO_DMA(sp, buf + i + 1);
 		buf[i].tdma.pbuf = 0;
 		dma_sync_desc_dev(dev, &buf[i]);
 		i++;
-	पूर्ण
+	}
 	buf[i].tdma.pnext = VIRT_TO_DMA(sp, buf);
 	dma_sync_desc_dev(dev, &buf[i]);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम setup_rx_ring(काष्ठा net_device *dev,
-				 काष्ठा sgiseeq_rx_desc *buf,
-				 पूर्णांक nbufs)
-अणु
-	काष्ठा sgiseeq_निजी *sp = netdev_priv(dev);
-	पूर्णांक i = 0;
+static inline void setup_rx_ring(struct net_device *dev,
+				 struct sgiseeq_rx_desc *buf,
+				 int nbufs)
+{
+	struct sgiseeq_private *sp = netdev_priv(dev);
+	int i = 0;
 
-	जबतक (i < (nbufs - 1)) अणु
+	while (i < (nbufs - 1)) {
 		buf[i].rdma.pnext = VIRT_TO_DMA(sp, buf + i + 1);
 		buf[i].rdma.pbuf = 0;
 		dma_sync_desc_dev(dev, &buf[i]);
 		i++;
-	पूर्ण
+	}
 	buf[i].rdma.pbuf = 0;
 	buf[i].rdma.pnext = VIRT_TO_DMA(sp, buf);
 	dma_sync_desc_dev(dev, &buf[i]);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा net_device_ops sgiseeq_netdev_ops = अणु
-	.nकरो_खोलो		= sgiseeq_खोलो,
-	.nकरो_stop		= sgiseeq_बंद,
-	.nकरो_start_xmit		= sgiseeq_start_xmit,
-	.nकरो_tx_समयout		= समयout,
-	.nकरो_set_rx_mode	= sgiseeq_set_multicast,
-	.nकरो_set_mac_address	= sgiseeq_set_mac_address,
-	.nकरो_validate_addr	= eth_validate_addr,
-पूर्ण;
+static const struct net_device_ops sgiseeq_netdev_ops = {
+	.ndo_open		= sgiseeq_open,
+	.ndo_stop		= sgiseeq_close,
+	.ndo_start_xmit		= sgiseeq_start_xmit,
+	.ndo_tx_timeout		= timeout,
+	.ndo_set_rx_mode	= sgiseeq_set_multicast,
+	.ndo_set_mac_address	= sgiseeq_set_mac_address,
+	.ndo_validate_addr	= eth_validate_addr,
+};
 
-अटल पूर्णांक sgiseeq_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा sgiseeq_platक्रमm_data *pd = dev_get_platdata(&pdev->dev);
-	काष्ठा hpc3_regs *hpcregs = pd->hpc;
-	काष्ठा sgiseeq_init_block *sr;
-	अचिन्हित पूर्णांक irq = pd->irq;
-	काष्ठा sgiseeq_निजी *sp;
-	काष्ठा net_device *dev;
-	पूर्णांक err;
+static int sgiseeq_probe(struct platform_device *pdev)
+{
+	struct sgiseeq_platform_data *pd = dev_get_platdata(&pdev->dev);
+	struct hpc3_regs *hpcregs = pd->hpc;
+	struct sgiseeq_init_block *sr;
+	unsigned int irq = pd->irq;
+	struct sgiseeq_private *sp;
+	struct net_device *dev;
+	int err;
 
-	dev = alloc_etherdev(माप (काष्ठा sgiseeq_निजी));
-	अगर (!dev) अणु
+	dev = alloc_etherdev(sizeof (struct sgiseeq_private));
+	if (!dev) {
 		err = -ENOMEM;
-		जाओ err_out;
-	पूर्ण
+		goto err_out;
+	}
 
-	platक्रमm_set_drvdata(pdev, dev);
+	platform_set_drvdata(pdev, dev);
 	SET_NETDEV_DEV(dev, &pdev->dev);
 	sp = netdev_priv(dev);
 
-	/* Make निजी data page aligned */
-	sr = dma_alloc_noncoherent(&pdev->dev, माप(*sp->srings),
-			&sp->srings_dma, DMA_BIसूचीECTIONAL, GFP_KERNEL);
-	अगर (!sr) अणु
-		prपूर्णांकk(KERN_ERR "Sgiseeq: Page alloc failed, aborting.\n");
+	/* Make private data page aligned */
+	sr = dma_alloc_noncoherent(&pdev->dev, sizeof(*sp->srings),
+			&sp->srings_dma, DMA_BIDIRECTIONAL, GFP_KERNEL);
+	if (!sr) {
+		printk(KERN_ERR "Sgiseeq: Page alloc failed, aborting.\n");
 		err = -ENOMEM;
-		जाओ err_out_मुक्त_dev;
-	पूर्ण
+		goto err_out_free_dev;
+	}
 	sp->srings = sr;
 	sp->rx_desc = sp->srings->rxvector;
 	sp->tx_desc = sp->srings->txvector;
@@ -765,13 +764,13 @@ sgiseeq_start_xmit(काष्ठा sk_buff *skb, काष्ठा net_devic
 	setup_rx_ring(dev, sp->rx_desc, SEEQ_RX_BUFFERS);
 	setup_tx_ring(dev, sp->tx_desc, SEEQ_TX_BUFFERS);
 
-	स_नकल(dev->dev_addr, pd->mac, ETH_ALEN);
+	memcpy(dev->dev_addr, pd->mac, ETH_ALEN);
 
-#अगर_घोषित DEBUG
+#ifdef DEBUG
 	gpriv = sp;
 	gdev = dev;
-#पूर्ण_अगर
-	sp->sregs = (काष्ठा sgiseeq_regs *) &hpcregs->eth_ext[0];
+#endif
+	sp->sregs = (struct sgiseeq_regs *) &hpcregs->eth_ext[0];
 	sp->hregs = &hpcregs->ethregs;
 	sp->name = sgiseeqstr;
 	sp->mode = SEEQ_RCMD_RBCAST;
@@ -790,58 +789,58 @@ sgiseeq_start_xmit(काष्ठा sk_buff *skb, काष्ठा net_devic
 	hpc3_eth_reset(sp->hregs);
 
 	sp->is_edlc = !(sp->sregs->rw.rregs.collision_tx[0] & 0xff);
-	अगर (sp->is_edlc)
+	if (sp->is_edlc)
 		sp->control = SEEQ_CTRL_XCNT | SEEQ_CTRL_ACCNT |
 			      SEEQ_CTRL_SFLAG | SEEQ_CTRL_ESHORT |
 			      SEEQ_CTRL_ENCARR;
 
 	dev->netdev_ops		= &sgiseeq_netdev_ops;
-	dev->watchकरोg_समयo	= (200 * HZ) / 1000;
+	dev->watchdog_timeo	= (200 * HZ) / 1000;
 	dev->irq		= irq;
 
-	अगर (रेजिस्टर_netdev(dev)) अणु
-		prपूर्णांकk(KERN_ERR "Sgiseeq: Cannot register net device, "
+	if (register_netdev(dev)) {
+		printk(KERN_ERR "Sgiseeq: Cannot register net device, "
 		       "aborting.\n");
 		err = -ENODEV;
-		जाओ err_out_मुक्त_attrs;
-	पूर्ण
+		goto err_out_free_attrs;
+	}
 
-	prपूर्णांकk(KERN_INFO "%s: %s %pM\n", dev->name, sgiseeqstr, dev->dev_addr);
+	printk(KERN_INFO "%s: %s %pM\n", dev->name, sgiseeqstr, dev->dev_addr);
 
-	वापस 0;
+	return 0;
 
-err_out_मुक्त_attrs:
-	dma_मुक्त_noncoherent(&pdev->dev, माप(*sp->srings), sp->srings,
-		       sp->srings_dma, DMA_BIसूचीECTIONAL);
-err_out_मुक्त_dev:
-	मुक्त_netdev(dev);
+err_out_free_attrs:
+	dma_free_noncoherent(&pdev->dev, sizeof(*sp->srings), sp->srings,
+		       sp->srings_dma, DMA_BIDIRECTIONAL);
+err_out_free_dev:
+	free_netdev(dev);
 
 err_out:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक sgiseeq_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा net_device *dev = platक्रमm_get_drvdata(pdev);
-	काष्ठा sgiseeq_निजी *sp = netdev_priv(dev);
+static int sgiseeq_remove(struct platform_device *pdev)
+{
+	struct net_device *dev = platform_get_drvdata(pdev);
+	struct sgiseeq_private *sp = netdev_priv(dev);
 
-	unरेजिस्टर_netdev(dev);
-	dma_मुक्त_noncoherent(&pdev->dev, माप(*sp->srings), sp->srings,
-		       sp->srings_dma, DMA_BIसूचीECTIONAL);
-	मुक्त_netdev(dev);
+	unregister_netdev(dev);
+	dma_free_noncoherent(&pdev->dev, sizeof(*sp->srings), sp->srings,
+		       sp->srings_dma, DMA_BIDIRECTIONAL);
+	free_netdev(dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver sgiseeq_driver = अणु
+static struct platform_driver sgiseeq_driver = {
 	.probe	= sgiseeq_probe,
-	.हटाओ	= sgiseeq_हटाओ,
-	.driver = अणु
+	.remove	= sgiseeq_remove,
+	.driver = {
 		.name	= "sgiseeq",
-	पूर्ण
-पूर्ण;
+	}
+};
 
-module_platक्रमm_driver(sgiseeq_driver);
+module_platform_driver(sgiseeq_driver);
 
 MODULE_DESCRIPTION("SGI Seeq 8003 driver");
 MODULE_AUTHOR("Linux/MIPS Mailing List <linux-mips@linux-mips.org>");

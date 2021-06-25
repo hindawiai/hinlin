@@ -1,60 +1,59 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright(c) 2008 - 2010 Realtek Corporation. All rights reserved.
  *
- * Contact Inक्रमmation: wlanfae <wlanfae@realtek.com>
+ * Contact Information: wlanfae <wlanfae@realtek.com>
  */
-#समावेश <linux/माला.स>
-#समावेश "rtl_core.h"
-#समावेश "rtl_wx.h"
+#include <linux/string.h>
+#include "rtl_core.h"
+#include "rtl_wx.h"
 
-#घोषणा RATE_COUNT 12
-अटल u32 rtl8192_rates[] = अणु
+#define RATE_COUNT 12
+static u32 rtl8192_rates[] = {
 	1000000, 2000000, 5500000, 11000000, 6000000, 9000000, 12000000,
 	18000000, 24000000, 36000000, 48000000, 54000000
-पूर्ण;
+};
 
-#अगर_अघोषित ENETDOWN
-#घोषणा ENETDOWN 1
-#पूर्ण_अगर
+#ifndef ENETDOWN
+#define ENETDOWN 1
+#endif
 
-अटल पूर्णांक _rtl92e_wx_get_freq(काष्ठा net_device *dev,
-			       काष्ठा iw_request_info *a,
-			       जोड़ iwreq_data *wrqu, अक्षर *b)
-अणु
-	काष्ठा r8192_priv *priv = rtllib_priv(dev);
+static int _rtl92e_wx_get_freq(struct net_device *dev,
+			       struct iw_request_info *a,
+			       union iwreq_data *wrqu, char *b)
+{
+	struct r8192_priv *priv = rtllib_priv(dev);
 
-	वापस rtllib_wx_get_freq(priv->rtllib, a, wrqu, b);
-पूर्ण
+	return rtllib_wx_get_freq(priv->rtllib, a, wrqu, b);
+}
 
-अटल पूर्णांक _rtl92e_wx_get_mode(काष्ठा net_device *dev,
-			       काष्ठा iw_request_info *a,
-			       जोड़ iwreq_data *wrqu, अक्षर *b)
-अणु
-	काष्ठा r8192_priv *priv = rtllib_priv(dev);
+static int _rtl92e_wx_get_mode(struct net_device *dev,
+			       struct iw_request_info *a,
+			       union iwreq_data *wrqu, char *b)
+{
+	struct r8192_priv *priv = rtllib_priv(dev);
 
-	वापस rtllib_wx_get_mode(priv->rtllib, a, wrqu, b);
-पूर्ण
+	return rtllib_wx_get_mode(priv->rtllib, a, wrqu, b);
+}
 
-अटल पूर्णांक _rtl92e_wx_get_rate(काष्ठा net_device *dev,
-			       काष्ठा iw_request_info *info,
-			       जोड़ iwreq_data *wrqu, अक्षर *extra)
-अणु
-	काष्ठा r8192_priv *priv = rtllib_priv(dev);
+static int _rtl92e_wx_get_rate(struct net_device *dev,
+			       struct iw_request_info *info,
+			       union iwreq_data *wrqu, char *extra)
+{
+	struct r8192_priv *priv = rtllib_priv(dev);
 
-	वापस rtllib_wx_get_rate(priv->rtllib, info, wrqu, extra);
-पूर्ण
+	return rtllib_wx_get_rate(priv->rtllib, info, wrqu, extra);
+}
 
-अटल पूर्णांक _rtl92e_wx_set_rate(काष्ठा net_device *dev,
-			       काष्ठा iw_request_info *info,
-			       जोड़ iwreq_data *wrqu, अक्षर *extra)
-अणु
-	पूर्णांक ret;
-	काष्ठा r8192_priv *priv = rtllib_priv(dev);
+static int _rtl92e_wx_set_rate(struct net_device *dev,
+			       struct iw_request_info *info,
+			       union iwreq_data *wrqu, char *extra)
+{
+	int ret;
+	struct r8192_priv *priv = rtllib_priv(dev);
 
-	अगर (priv->bHwRadioOff)
-		वापस 0;
+	if (priv->bHwRadioOff)
+		return 0;
 
 	mutex_lock(&priv->wx_mutex);
 
@@ -62,18 +61,18 @@
 
 	mutex_unlock(&priv->wx_mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक _rtl92e_wx_set_rts(काष्ठा net_device *dev,
-			      काष्ठा iw_request_info *info,
-			      जोड़ iwreq_data *wrqu, अक्षर *extra)
-अणु
-	पूर्णांक ret;
-	काष्ठा r8192_priv *priv = rtllib_priv(dev);
+static int _rtl92e_wx_set_rts(struct net_device *dev,
+			      struct iw_request_info *info,
+			      union iwreq_data *wrqu, char *extra)
+{
+	int ret;
+	struct r8192_priv *priv = rtllib_priv(dev);
 
-	अगर (priv->bHwRadioOff)
-		वापस 0;
+	if (priv->bHwRadioOff)
+		return 0;
 
 	mutex_lock(&priv->wx_mutex);
 
@@ -81,57 +80,57 @@
 
 	mutex_unlock(&priv->wx_mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक _rtl92e_wx_get_rts(काष्ठा net_device *dev,
-			      काष्ठा iw_request_info *info,
-			      जोड़ iwreq_data *wrqu, अक्षर *extra)
-अणु
-	काष्ठा r8192_priv *priv = rtllib_priv(dev);
+static int _rtl92e_wx_get_rts(struct net_device *dev,
+			      struct iw_request_info *info,
+			      union iwreq_data *wrqu, char *extra)
+{
+	struct r8192_priv *priv = rtllib_priv(dev);
 
-	वापस rtllib_wx_get_rts(priv->rtllib, info, wrqu, extra);
-पूर्ण
+	return rtllib_wx_get_rts(priv->rtllib, info, wrqu, extra);
+}
 
-अटल पूर्णांक _rtl92e_wx_set_घातer(काष्ठा net_device *dev,
-				काष्ठा iw_request_info *info,
-				जोड़ iwreq_data *wrqu, अक्षर *extra)
-अणु
-	पूर्णांक ret;
-	काष्ठा r8192_priv *priv = rtllib_priv(dev);
+static int _rtl92e_wx_set_power(struct net_device *dev,
+				struct iw_request_info *info,
+				union iwreq_data *wrqu, char *extra)
+{
+	int ret;
+	struct r8192_priv *priv = rtllib_priv(dev);
 
-	अगर (priv->bHwRadioOff) अणु
+	if (priv->bHwRadioOff) {
 		netdev_warn(dev, "%s(): Can't set Power: Radio is Off.\n",
 			    __func__);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 	mutex_lock(&priv->wx_mutex);
 
-	ret = rtllib_wx_set_घातer(priv->rtllib, info, wrqu, extra);
+	ret = rtllib_wx_set_power(priv->rtllib, info, wrqu, extra);
 
 	mutex_unlock(&priv->wx_mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक _rtl92e_wx_get_घातer(काष्ठा net_device *dev,
-				काष्ठा iw_request_info *info,
-				जोड़ iwreq_data *wrqu, अक्षर *extra)
-अणु
-	काष्ठा r8192_priv *priv = rtllib_priv(dev);
+static int _rtl92e_wx_get_power(struct net_device *dev,
+				struct iw_request_info *info,
+				union iwreq_data *wrqu, char *extra)
+{
+	struct r8192_priv *priv = rtllib_priv(dev);
 
-	वापस rtllib_wx_get_घातer(priv->rtllib, info, wrqu, extra);
-पूर्ण
+	return rtllib_wx_get_power(priv->rtllib, info, wrqu, extra);
+}
 
-अटल पूर्णांक _rtl92e_wx_set_rawtx(काष्ठा net_device *dev,
-				काष्ठा iw_request_info *info,
-				जोड़ iwreq_data *wrqu, अक्षर *extra)
-अणु
-	काष्ठा r8192_priv *priv = rtllib_priv(dev);
-	पूर्णांक ret;
+static int _rtl92e_wx_set_rawtx(struct net_device *dev,
+				struct iw_request_info *info,
+				union iwreq_data *wrqu, char *extra)
+{
+	struct r8192_priv *priv = rtllib_priv(dev);
+	int ret;
 
-	अगर (priv->bHwRadioOff)
-		वापस 0;
+	if (priv->bHwRadioOff)
+		return 0;
 
 	mutex_lock(&priv->wx_mutex);
 
@@ -139,61 +138,61 @@
 
 	mutex_unlock(&priv->wx_mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक _rtl92e_wx_क्रमce_reset(काष्ठा net_device *dev,
-				  काष्ठा iw_request_info *info,
-				  जोड़ iwreq_data *wrqu, अक्षर *extra)
-अणु
-	काष्ठा r8192_priv *priv = rtllib_priv(dev);
+static int _rtl92e_wx_force_reset(struct net_device *dev,
+				  struct iw_request_info *info,
+				  union iwreq_data *wrqu, char *extra)
+{
+	struct r8192_priv *priv = rtllib_priv(dev);
 
 	mutex_lock(&priv->wx_mutex);
 
 	RT_TRACE(COMP_DBG, "%s(): force reset ! extra is %d\n",
 		 __func__, *extra);
-	priv->क्रमce_reset = *extra;
+	priv->force_reset = *extra;
 	mutex_unlock(&priv->wx_mutex);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक _rtl92e_wx_adapter_घातer_status(काष्ठा net_device *dev,
-					   काष्ठा iw_request_info *info,
-					   जोड़ iwreq_data *wrqu, अक्षर *extra)
-अणु
-	काष्ठा r8192_priv *priv = rtllib_priv(dev);
-	काष्ठा rt_pwr_save_ctrl *pPSC = (काष्ठा rt_pwr_save_ctrl *)
+static int _rtl92e_wx_adapter_power_status(struct net_device *dev,
+					   struct iw_request_info *info,
+					   union iwreq_data *wrqu, char *extra)
+{
+	struct r8192_priv *priv = rtllib_priv(dev);
+	struct rt_pwr_save_ctrl *pPSC = (struct rt_pwr_save_ctrl *)
 					(&priv->rtllib->PowerSaveControl);
-	काष्ठा rtllib_device *ieee = priv->rtllib;
+	struct rtllib_device *ieee = priv->rtllib;
 
 	mutex_lock(&priv->wx_mutex);
 
 	RT_TRACE(COMP_POWER, "%s(): %s\n", __func__, (*extra == 6) ?
 		 "DC power" : "AC power");
-	अगर (*extra || priv->क्रमce_lps) अणु
-		priv->ps_क्रमce = false;
+	if (*extra || priv->force_lps) {
+		priv->ps_force = false;
 		pPSC->bLeisurePs = true;
-	पूर्ण अन्यथा अणु
-		अगर (priv->rtllib->state == RTLLIB_LINKED)
+	} else {
+		if (priv->rtllib->state == RTLLIB_LINKED)
 			rtl92e_leisure_ps_leave(dev);
 
-		priv->ps_क्रमce = true;
+		priv->ps_force = true;
 		pPSC->bLeisurePs = false;
 		ieee->ps = *extra;
-	पूर्ण
+	}
 
 	mutex_unlock(&priv->wx_mutex);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक _rtl92e_wx_set_lps_awake_पूर्णांकerval(काष्ठा net_device *dev,
-					     काष्ठा iw_request_info *info,
-					     जोड़ iwreq_data *wrqu,
-					     अक्षर *extra)
-अणु
-	काष्ठा r8192_priv *priv = rtllib_priv(dev);
-	काष्ठा rt_pwr_save_ctrl *pPSC = (काष्ठा rt_pwr_save_ctrl *)
+static int _rtl92e_wx_set_lps_awake_interval(struct net_device *dev,
+					     struct iw_request_info *info,
+					     union iwreq_data *wrqu,
+					     char *extra)
+{
+	struct r8192_priv *priv = rtllib_priv(dev);
+	struct rt_pwr_save_ctrl *pPSC = (struct rt_pwr_save_ctrl *)
 					(&priv->rtllib->PowerSaveControl);
 
 	mutex_lock(&priv->wx_mutex);
@@ -203,86 +202,86 @@
 
 	pPSC->RegMaxLPSAwakeIntvl = *extra;
 	mutex_unlock(&priv->wx_mutex);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक _rtl92e_wx_set_क्रमce_lps(काष्ठा net_device *dev,
-				    काष्ठा iw_request_info *info,
-				    जोड़ iwreq_data *wrqu, अक्षर *extra)
-अणु
-	काष्ठा r8192_priv *priv = rtllib_priv(dev);
+static int _rtl92e_wx_set_force_lps(struct net_device *dev,
+				    struct iw_request_info *info,
+				    union iwreq_data *wrqu, char *extra)
+{
+	struct r8192_priv *priv = rtllib_priv(dev);
 
 	mutex_lock(&priv->wx_mutex);
 
 	netdev_info(dev,
 		    "%s(): force LPS ! extra is %d (1 is open 0 is close)\n",
 		    __func__, *extra);
-	priv->क्रमce_lps = *extra;
+	priv->force_lps = *extra;
 	mutex_unlock(&priv->wx_mutex);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक _rtl92e_wx_set_debug(काष्ठा net_device *dev,
-				काष्ठा iw_request_info *info,
-				जोड़ iwreq_data *wrqu, अक्षर *extra)
-अणु
-	काष्ठा r8192_priv *priv = rtllib_priv(dev);
+static int _rtl92e_wx_set_debug(struct net_device *dev,
+				struct iw_request_info *info,
+				union iwreq_data *wrqu, char *extra)
+{
+	struct r8192_priv *priv = rtllib_priv(dev);
 	u8 c = *extra;
 
-	अगर (priv->bHwRadioOff)
-		वापस 0;
+	if (priv->bHwRadioOff)
+		return 0;
 
 	netdev_info(dev, "=====>%s(), *extra:%x, debugflag:%x\n", __func__,
 		    *extra, rt_global_debug_component);
-	अगर (c > 0)
+	if (c > 0)
 		rt_global_debug_component |= (1 << c);
-	अन्यथा
+	else
 		rt_global_debug_component &= BIT31;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक _rtl92e_wx_set_mode(काष्ठा net_device *dev,
-			       काष्ठा iw_request_info *a,
-			       जोड़ iwreq_data *wrqu, अक्षर *b)
-अणु
-	काष्ठा r8192_priv *priv = rtllib_priv(dev);
-	काष्ठा rtllib_device *ieee = netdev_priv_rsl(dev);
+static int _rtl92e_wx_set_mode(struct net_device *dev,
+			       struct iw_request_info *a,
+			       union iwreq_data *wrqu, char *b)
+{
+	struct r8192_priv *priv = rtllib_priv(dev);
+	struct rtllib_device *ieee = netdev_priv_rsl(dev);
 
-	क्रमागत rt_rf_घातer_state rtState;
-	पूर्णांक ret;
+	enum rt_rf_power_state rtState;
+	int ret;
 
-	अगर (priv->bHwRadioOff)
-		वापस 0;
+	if (priv->bHwRadioOff)
+		return 0;
 	rtState = priv->rtllib->eRFPowerState;
 	mutex_lock(&priv->wx_mutex);
-	अगर (wrqu->mode == IW_MODE_ADHOC || wrqu->mode == IW_MODE_MONITOR ||
-	    ieee->bNetPromiscuousMode) अणु
-		अगर (priv->rtllib->PowerSaveControl.bInactivePs) अणु
-			अगर (rtState == eRfOff) अणु
-				अगर (priv->rtllib->RfOffReason >
-				    RF_CHANGE_BY_IPS) अणु
+	if (wrqu->mode == IW_MODE_ADHOC || wrqu->mode == IW_MODE_MONITOR ||
+	    ieee->bNetPromiscuousMode) {
+		if (priv->rtllib->PowerSaveControl.bInactivePs) {
+			if (rtState == eRfOff) {
+				if (priv->rtllib->RfOffReason >
+				    RF_CHANGE_BY_IPS) {
 					netdev_warn(dev, "%s(): RF is OFF.\n",
 						    __func__);
 					mutex_unlock(&priv->wx_mutex);
-					वापस -1;
-				पूर्ण
+					return -1;
+				}
 				netdev_info(dev,
 					    "=========>%s(): rtl92e_ips_leave\n",
 					    __func__);
 				mutex_lock(&priv->rtllib->ips_mutex);
 				rtl92e_ips_leave(dev);
 				mutex_unlock(&priv->rtllib->ips_mutex);
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 	ret = rtllib_wx_set_mode(priv->rtllib, a, wrqu, b);
 
 	mutex_unlock(&priv->wx_mutex);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-काष्ठा  iw_range_with_scan_capa अणु
-	/* Inक्रमmative stuff (to choose between dअगरferent पूर्णांकerface) */
+struct  iw_range_with_scan_capa {
+	/* Informative stuff (to choose between different interface) */
 	__u32	   throughput;     /* To give an idea... */
 	/* In theory this value should be the maximum benchmarked
 	 * TCP/IP throughput, because with most of these devices the
@@ -291,7 +290,7 @@
 	 * I suggest people to play with Netperf or any benchmark...
 	 */
 
-	/* NWID (or करोमुख्य id) */
+	/* NWID (or domain id) */
 	__u32	   min_nwid;	/* Minimal NWID we are able to set */
 	__u32	   max_nwid;	/* Maximal NWID we are able to set */
 
@@ -301,25 +300,25 @@
 
 	/* Scan capabilities */
 	__u8	    scan_capa;
-पूर्ण;
+};
 
-अटल पूर्णांक _rtl92e_wx_get_range(काष्ठा net_device *dev,
-				काष्ठा iw_request_info *info,
-				जोड़ iwreq_data *wrqu, अक्षर *extra)
-अणु
-	काष्ठा iw_range *range = (काष्ठा iw_range *)extra;
-	काष्ठा r8192_priv *priv = rtllib_priv(dev);
+static int _rtl92e_wx_get_range(struct net_device *dev,
+				struct iw_request_info *info,
+				union iwreq_data *wrqu, char *extra)
+{
+	struct iw_range *range = (struct iw_range *)extra;
+	struct r8192_priv *priv = rtllib_priv(dev);
 	u16 val;
-	पूर्णांक i;
+	int i;
 
-	wrqu->data.length = माप(*range);
-	स_रखो(range, 0, माप(*range));
+	wrqu->data.length = sizeof(*range);
+	memset(range, 0, sizeof(*range));
 
 	/* ~130 Mb/s real (802.11n) */
 	range->throughput = 130 * 1000 * 1000;
 
-	अगर (priv->rf_set_sens != शून्य)
-		/* संकेत level threshold range */
+	if (priv->rf_set_sens != NULL)
+		/* signal level threshold range */
 		range->sensitivity = priv->max_sens;
 
 	range->max_qual.qual = 100;
@@ -334,7 +333,7 @@
 
 	range->num_bitrates = min(RATE_COUNT, IW_MAX_BITRATES);
 
-	क्रम (i = 0; i < range->num_bitrates; i++)
+	for (i = 0; i < range->num_bitrates; i++)
 		range->bitrate[i] = rtl8192_rates[i];
 
 	range->max_rts = DEFAULT_RTS_THRESHOLD;
@@ -351,18 +350,18 @@
 	range->we_version_compiled = WIRELESS_EXT;
 	range->we_version_source = 18;
 
-	क्रम (i = 0, val = 0; i < 14; i++) अणु
-		अगर ((priv->rtllib->active_channel_map)[i + 1]) अणु
+	for (i = 0, val = 0; i < 14; i++) {
+		if ((priv->rtllib->active_channel_map)[i + 1]) {
 			range->freq[val].i = i + 1;
 			range->freq[val].m = rtllib_wlan_frequencies[i] *
 					     100000;
 			range->freq[val].e = 1;
 			val++;
-		पूर्ण
+		}
 
-		अगर (val == IW_MAX_FREQUENCIES)
-			अवरोध;
-	पूर्ण
+		if (val == IW_MAX_FREQUENCIES)
+			break;
+	}
 	range->num_frequency = val;
 	range->num_channels = val;
 	range->enc_capa = IW_ENC_CAPA_WPA | IW_ENC_CAPA_WPA2 |
@@ -371,111 +370,111 @@
 
 	/* Event capability (kernel + driver) */
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक _rtl92e_wx_set_scan(काष्ठा net_device *dev,
-			       काष्ठा iw_request_info *a,
-			       जोड़ iwreq_data *wrqu, अक्षर *b)
-अणु
-	काष्ठा r8192_priv *priv = rtllib_priv(dev);
-	काष्ठा rtllib_device *ieee = priv->rtllib;
-	क्रमागत rt_rf_घातer_state rtState;
-	पूर्णांक ret;
+static int _rtl92e_wx_set_scan(struct net_device *dev,
+			       struct iw_request_info *a,
+			       union iwreq_data *wrqu, char *b)
+{
+	struct r8192_priv *priv = rtllib_priv(dev);
+	struct rtllib_device *ieee = priv->rtllib;
+	enum rt_rf_power_state rtState;
+	int ret;
 
-	अगर (!(ieee->sofपंचांगac_features & IEEE_SOFTMAC_SCAN)) अणु
-		अगर ((ieee->state >= RTLLIB_ASSOCIATING) &&
+	if (!(ieee->softmac_features & IEEE_SOFTMAC_SCAN)) {
+		if ((ieee->state >= RTLLIB_ASSOCIATING) &&
 		    (ieee->state <= RTLLIB_ASSOCIATING_AUTHENTICATED))
-			वापस 0;
-		अगर ((priv->rtllib->state == RTLLIB_LINKED) &&
+			return 0;
+		if ((priv->rtllib->state == RTLLIB_LINKED) &&
 		    (priv->rtllib->CntAfterLink < 2))
-			वापस 0;
-	पूर्ण
+			return 0;
+	}
 
-	अगर (priv->bHwRadioOff) अणु
+	if (priv->bHwRadioOff) {
 		netdev_info(dev, "================>%s(): hwradio off\n",
 			    __func__);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 	rtState = priv->rtllib->eRFPowerState;
-	अगर (!priv->up)
-		वापस -ENETDOWN;
-	अगर (priv->rtllib->LinkDetectInfo.bBusyTraffic == true)
-		वापस -EAGAIN;
+	if (!priv->up)
+		return -ENETDOWN;
+	if (priv->rtllib->LinkDetectInfo.bBusyTraffic == true)
+		return -EAGAIN;
 
-	अगर (wrqu->data.flags & IW_SCAN_THIS_ESSID) अणु
-		काष्ठा iw_scan_req *req = (काष्ठा iw_scan_req *)b;
+	if (wrqu->data.flags & IW_SCAN_THIS_ESSID) {
+		struct iw_scan_req *req = (struct iw_scan_req *)b;
 
-		अगर (req->essid_len) अणु
-			पूर्णांक len = min_t(पूर्णांक, req->essid_len, IW_ESSID_MAX_SIZE);
+		if (req->essid_len) {
+			int len = min_t(int, req->essid_len, IW_ESSID_MAX_SIZE);
 
 			ieee->current_network.ssid_len = len;
-			स_नकल(ieee->current_network.ssid, req->essid, len);
-		पूर्ण
-	पूर्ण
+			memcpy(ieee->current_network.ssid, req->essid, len);
+		}
+	}
 
 	mutex_lock(&priv->wx_mutex);
 
 	priv->rtllib->FirstIe_InScan = true;
 
-	अगर (priv->rtllib->state != RTLLIB_LINKED) अणु
-		अगर (priv->rtllib->PowerSaveControl.bInactivePs) अणु
-			अगर (rtState == eRfOff) अणु
-				अगर (priv->rtllib->RfOffReason >
-				    RF_CHANGE_BY_IPS) अणु
+	if (priv->rtllib->state != RTLLIB_LINKED) {
+		if (priv->rtllib->PowerSaveControl.bInactivePs) {
+			if (rtState == eRfOff) {
+				if (priv->rtllib->RfOffReason >
+				    RF_CHANGE_BY_IPS) {
 					netdev_warn(dev, "%s(): RF is OFF.\n",
 						    __func__);
 					mutex_unlock(&priv->wx_mutex);
-					वापस -1;
-				पूर्ण
+					return -1;
+				}
 				RT_TRACE(COMP_PS,
 					 "=========>%s(): rtl92e_ips_leave\n",
 					 __func__);
 				mutex_lock(&priv->rtllib->ips_mutex);
 				rtl92e_ips_leave(dev);
 				mutex_unlock(&priv->rtllib->ips_mutex);
-			पूर्ण
-		पूर्ण
+			}
+		}
 		rtllib_stop_scan(priv->rtllib);
-		अगर (priv->rtllib->LedControlHandler)
+		if (priv->rtllib->LedControlHandler)
 			priv->rtllib->LedControlHandler(dev,
 							 LED_CTL_SITE_SURVEY);
 
-		अगर (priv->rtllib->eRFPowerState != eRfOff) अणु
+		if (priv->rtllib->eRFPowerState != eRfOff) {
 			priv->rtllib->actscanning = true;
 
-			अगर (ieee->ScanOperationBackupHandler)
+			if (ieee->ScanOperationBackupHandler)
 				ieee->ScanOperationBackupHandler(ieee->dev,
 							 SCAN_OPT_BACKUP);
 
 			rtllib_start_scan_syncro(priv->rtllib, 0);
 
-			अगर (ieee->ScanOperationBackupHandler)
+			if (ieee->ScanOperationBackupHandler)
 				ieee->ScanOperationBackupHandler(ieee->dev,
 							 SCAN_OPT_RESTORE);
-		पूर्ण
+		}
 		ret = 0;
-	पूर्ण अन्यथा अणु
+	} else {
 		priv->rtllib->actscanning = true;
 		ret = rtllib_wx_set_scan(priv->rtllib, a, wrqu, b);
-	पूर्ण
+	}
 
 	mutex_unlock(&priv->wx_mutex);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक _rtl92e_wx_get_scan(काष्ठा net_device *dev,
-			       काष्ठा iw_request_info *a,
-			       जोड़ iwreq_data *wrqu, अक्षर *b)
-अणु
-	पूर्णांक ret;
-	काष्ठा r8192_priv *priv = rtllib_priv(dev);
+static int _rtl92e_wx_get_scan(struct net_device *dev,
+			       struct iw_request_info *a,
+			       union iwreq_data *wrqu, char *b)
+{
+	int ret;
+	struct r8192_priv *priv = rtllib_priv(dev);
 
-	अगर (!priv->up)
-		वापस -ENETDOWN;
+	if (!priv->up)
+		return -ENETDOWN;
 
-	अगर (priv->bHwRadioOff)
-		वापस 0;
+	if (priv->bHwRadioOff)
+		return 0;
 
 	mutex_lock(&priv->wx_mutex);
 
@@ -483,36 +482,36 @@
 
 	mutex_unlock(&priv->wx_mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक _rtl92e_wx_set_essid(काष्ठा net_device *dev,
-				काष्ठा iw_request_info *a,
-				जोड़ iwreq_data *wrqu, अक्षर *b)
-अणु
-	काष्ठा r8192_priv *priv = rtllib_priv(dev);
-	पूर्णांक ret;
+static int _rtl92e_wx_set_essid(struct net_device *dev,
+				struct iw_request_info *a,
+				union iwreq_data *wrqu, char *b)
+{
+	struct r8192_priv *priv = rtllib_priv(dev);
+	int ret;
 
-	अगर (priv->bHwRadioOff) अणु
+	if (priv->bHwRadioOff) {
 		netdev_info(dev,
 			    "=========>%s():hw radio off,or Rf state is eRfOff, return\n",
 			    __func__);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 	mutex_lock(&priv->wx_mutex);
 	ret = rtllib_wx_set_essid(priv->rtllib, a, wrqu, b);
 
 	mutex_unlock(&priv->wx_mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक _rtl92e_wx_get_essid(काष्ठा net_device *dev,
-				काष्ठा iw_request_info *a,
-				जोड़ iwreq_data *wrqu, अक्षर *b)
-अणु
-	पूर्णांक ret;
-	काष्ठा r8192_priv *priv = rtllib_priv(dev);
+static int _rtl92e_wx_get_essid(struct net_device *dev,
+				struct iw_request_info *a,
+				union iwreq_data *wrqu, char *b)
+{
+	int ret;
+	struct r8192_priv *priv = rtllib_priv(dev);
 
 	mutex_lock(&priv->wx_mutex);
 
@@ -520,111 +519,111 @@
 
 	mutex_unlock(&priv->wx_mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक _rtl92e_wx_set_nick(काष्ठा net_device *dev,
-			       काष्ठा iw_request_info *info,
-			       जोड़ iwreq_data *wrqu, अक्षर *extra)
-अणु
-	काष्ठा r8192_priv *priv = rtllib_priv(dev);
+static int _rtl92e_wx_set_nick(struct net_device *dev,
+			       struct iw_request_info *info,
+			       union iwreq_data *wrqu, char *extra)
+{
+	struct r8192_priv *priv = rtllib_priv(dev);
 
-	अगर (wrqu->data.length > IW_ESSID_MAX_SIZE)
-		वापस -E2BIG;
+	if (wrqu->data.length > IW_ESSID_MAX_SIZE)
+		return -E2BIG;
 	mutex_lock(&priv->wx_mutex);
-	wrqu->data.length = min_t(माप_प्रकार, wrqu->data.length,
-				  माप(priv->nick));
-	स_रखो(priv->nick, 0, माप(priv->nick));
-	स_नकल(priv->nick, extra, wrqu->data.length);
+	wrqu->data.length = min_t(size_t, wrqu->data.length,
+				  sizeof(priv->nick));
+	memset(priv->nick, 0, sizeof(priv->nick));
+	memcpy(priv->nick, extra, wrqu->data.length);
 	mutex_unlock(&priv->wx_mutex);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक _rtl92e_wx_get_nick(काष्ठा net_device *dev,
-			       काष्ठा iw_request_info *info,
-			       जोड़ iwreq_data *wrqu, अक्षर *extra)
-अणु
-	काष्ठा r8192_priv *priv = rtllib_priv(dev);
+static int _rtl92e_wx_get_nick(struct net_device *dev,
+			       struct iw_request_info *info,
+			       union iwreq_data *wrqu, char *extra)
+{
+	struct r8192_priv *priv = rtllib_priv(dev);
 
 	mutex_lock(&priv->wx_mutex);
-	wrqu->data.length = म_माप(priv->nick);
-	स_नकल(extra, priv->nick, wrqu->data.length);
+	wrqu->data.length = strlen(priv->nick);
+	memcpy(extra, priv->nick, wrqu->data.length);
 	wrqu->data.flags = 1;   /* active */
 	mutex_unlock(&priv->wx_mutex);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक _rtl92e_wx_set_freq(काष्ठा net_device *dev,
-			       काष्ठा iw_request_info *a,
-			       जोड़ iwreq_data *wrqu, अक्षर *b)
-अणु
-	पूर्णांक ret;
-	काष्ठा r8192_priv *priv = rtllib_priv(dev);
+static int _rtl92e_wx_set_freq(struct net_device *dev,
+			       struct iw_request_info *a,
+			       union iwreq_data *wrqu, char *b)
+{
+	int ret;
+	struct r8192_priv *priv = rtllib_priv(dev);
 
-	अगर (priv->bHwRadioOff)
-		वापस 0;
+	if (priv->bHwRadioOff)
+		return 0;
 
 	mutex_lock(&priv->wx_mutex);
 
 	ret = rtllib_wx_set_freq(priv->rtllib, a, wrqu, b);
 
 	mutex_unlock(&priv->wx_mutex);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक _rtl92e_wx_get_name(काष्ठा net_device *dev,
-			       काष्ठा iw_request_info *info,
-			       जोड़ iwreq_data *wrqu, अक्षर *extra)
-अणु
-	काष्ठा r8192_priv *priv = rtllib_priv(dev);
+static int _rtl92e_wx_get_name(struct net_device *dev,
+			       struct iw_request_info *info,
+			       union iwreq_data *wrqu, char *extra)
+{
+	struct r8192_priv *priv = rtllib_priv(dev);
 
-	वापस rtllib_wx_get_name(priv->rtllib, info, wrqu, extra);
-पूर्ण
+	return rtllib_wx_get_name(priv->rtllib, info, wrqu, extra);
+}
 
-अटल पूर्णांक _rtl92e_wx_set_frag(काष्ठा net_device *dev,
-			       काष्ठा iw_request_info *info,
-			       जोड़ iwreq_data *wrqu, अक्षर *extra)
-अणु
-	काष्ठा r8192_priv *priv = rtllib_priv(dev);
+static int _rtl92e_wx_set_frag(struct net_device *dev,
+			       struct iw_request_info *info,
+			       union iwreq_data *wrqu, char *extra)
+{
+	struct r8192_priv *priv = rtllib_priv(dev);
 
-	अगर (priv->bHwRadioOff)
-		वापस 0;
+	if (priv->bHwRadioOff)
+		return 0;
 
-	अगर (wrqu->frag.disabled)
+	if (wrqu->frag.disabled)
 		priv->rtllib->fts = DEFAULT_FRAG_THRESHOLD;
-	अन्यथा अणु
-		अगर (wrqu->frag.value < MIN_FRAG_THRESHOLD ||
+	else {
+		if (wrqu->frag.value < MIN_FRAG_THRESHOLD ||
 		    wrqu->frag.value > MAX_FRAG_THRESHOLD)
-			वापस -EINVAL;
+			return -EINVAL;
 
 		priv->rtllib->fts = wrqu->frag.value & ~0x1;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक _rtl92e_wx_get_frag(काष्ठा net_device *dev,
-			       काष्ठा iw_request_info *info,
-			       जोड़ iwreq_data *wrqu, अक्षर *extra)
-अणु
-	काष्ठा r8192_priv *priv = rtllib_priv(dev);
+static int _rtl92e_wx_get_frag(struct net_device *dev,
+			       struct iw_request_info *info,
+			       union iwreq_data *wrqu, char *extra)
+{
+	struct r8192_priv *priv = rtllib_priv(dev);
 
 	wrqu->frag.value = priv->rtllib->fts;
-	wrqu->frag.fixed = 0;	/* no स्वतः select */
+	wrqu->frag.fixed = 0;	/* no auto select */
 	wrqu->frag.disabled = (wrqu->frag.value == DEFAULT_FRAG_THRESHOLD);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक _rtl92e_wx_set_wap(काष्ठा net_device *dev,
-			      काष्ठा iw_request_info *info,
-			      जोड़ iwreq_data *awrq, अक्षर *extra)
-अणु
-	पूर्णांक ret;
-	काष्ठा r8192_priv *priv = rtllib_priv(dev);
+static int _rtl92e_wx_set_wap(struct net_device *dev,
+			      struct iw_request_info *info,
+			      union iwreq_data *awrq, char *extra)
+{
+	int ret;
+	struct r8192_priv *priv = rtllib_priv(dev);
 
-	अगर (priv->bHwRadioOff)
-		वापस 0;
+	if (priv->bHwRadioOff)
+		return 0;
 
 	mutex_lock(&priv->wx_mutex);
 
@@ -632,49 +631,49 @@
 
 	mutex_unlock(&priv->wx_mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक _rtl92e_wx_get_wap(काष्ठा net_device *dev,
-			      काष्ठा iw_request_info *info,
-			      जोड़ iwreq_data *wrqu, अक्षर *extra)
-अणु
-	काष्ठा r8192_priv *priv = rtllib_priv(dev);
+static int _rtl92e_wx_get_wap(struct net_device *dev,
+			      struct iw_request_info *info,
+			      union iwreq_data *wrqu, char *extra)
+{
+	struct r8192_priv *priv = rtllib_priv(dev);
 
-	वापस rtllib_wx_get_wap(priv->rtllib, info, wrqu, extra);
-पूर्ण
+	return rtllib_wx_get_wap(priv->rtllib, info, wrqu, extra);
+}
 
-अटल पूर्णांक _rtl92e_wx_get_enc(काष्ठा net_device *dev,
-			      काष्ठा iw_request_info *info,
-			      जोड़ iwreq_data *wrqu, अक्षर *key)
-अणु
-	काष्ठा r8192_priv *priv = rtllib_priv(dev);
+static int _rtl92e_wx_get_enc(struct net_device *dev,
+			      struct iw_request_info *info,
+			      union iwreq_data *wrqu, char *key)
+{
+	struct r8192_priv *priv = rtllib_priv(dev);
 
-	वापस rtllib_wx_get_encode(priv->rtllib, info, wrqu, key);
-पूर्ण
+	return rtllib_wx_get_encode(priv->rtllib, info, wrqu, key);
+}
 
-अटल पूर्णांक _rtl92e_wx_set_enc(काष्ठा net_device *dev,
-			      काष्ठा iw_request_info *info,
-			      जोड़ iwreq_data *wrqu, अक्षर *key)
-अणु
-	काष्ठा r8192_priv *priv = rtllib_priv(dev);
-	पूर्णांक ret;
+static int _rtl92e_wx_set_enc(struct net_device *dev,
+			      struct iw_request_info *info,
+			      union iwreq_data *wrqu, char *key)
+{
+	struct r8192_priv *priv = rtllib_priv(dev);
+	int ret;
 
-	काष्ठा rtllib_device *ieee = priv->rtllib;
-	u32 hwkey[4] = अणु0, 0, 0, 0पूर्ण;
+	struct rtllib_device *ieee = priv->rtllib;
+	u32 hwkey[4] = {0, 0, 0, 0};
 	u8 mask = 0xff;
 	u32 key_idx = 0;
-	u8 zero_addr[4][6] = अणुअणु0x00, 0x00, 0x00, 0x00, 0x00, 0x00पूर्ण,
-			     अणु0x00, 0x00, 0x00, 0x00, 0x00, 0x01पूर्ण,
-			     अणु0x00, 0x00, 0x00, 0x00, 0x00, 0x02पूर्ण,
-			     अणु0x00, 0x00, 0x00, 0x00, 0x00, 0x03पूर्ण पूर्ण;
-	पूर्णांक i;
+	u8 zero_addr[4][6] = {{0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+			     {0x00, 0x00, 0x00, 0x00, 0x00, 0x01},
+			     {0x00, 0x00, 0x00, 0x00, 0x00, 0x02},
+			     {0x00, 0x00, 0x00, 0x00, 0x00, 0x03} };
+	int i;
 
-	अगर (priv->bHwRadioOff)
-		वापस 0;
+	if (priv->bHwRadioOff)
+		return 0;
 
-	अगर (!priv->up)
-		वापस -ENETDOWN;
+	if (!priv->up)
+		return -ENETDOWN;
 
 	priv->rtllib->wx_set_enc = 1;
 	mutex_lock(&priv->rtllib->ips_mutex);
@@ -686,193 +685,193 @@
 	ret = rtllib_wx_set_encode(priv->rtllib, info, wrqu, key);
 	mutex_unlock(&priv->wx_mutex);
 
-	अगर (wrqu->encoding.flags & IW_ENCODE_DISABLED) अणु
+	if (wrqu->encoding.flags & IW_ENCODE_DISABLED) {
 		ieee->pairwise_key_type = ieee->group_key_type = KEY_TYPE_NA;
 		rtl92e_cam_reset(dev);
-		स_रखो(priv->rtllib->swcamtable, 0,
-		       माप(काष्ठा sw_cam_table) * 32);
-		जाओ end_hw_sec;
-	पूर्ण
-	अगर (wrqu->encoding.length != 0) अणु
-		क्रम (i = 0; i < 4; i++) अणु
+		memset(priv->rtllib->swcamtable, 0,
+		       sizeof(struct sw_cam_table) * 32);
+		goto end_hw_sec;
+	}
+	if (wrqu->encoding.length != 0) {
+		for (i = 0; i < 4; i++) {
 			hwkey[i] |=  key[4 * i + 0] & mask;
-			अगर (i == 1 && (4 * i + 1) == wrqu->encoding.length)
+			if (i == 1 && (4 * i + 1) == wrqu->encoding.length)
 				mask = 0x00;
-			अगर (i == 3 && (4 * i + 1) == wrqu->encoding.length)
+			if (i == 3 && (4 * i + 1) == wrqu->encoding.length)
 				mask = 0x00;
 			hwkey[i] |= (key[4 * i + 1] & mask) << 8;
 			hwkey[i] |= (key[4 * i + 2] & mask) << 16;
 			hwkey[i] |= (key[4 * i + 3] & mask) << 24;
-		पूर्ण
+		}
 
-		चयन (wrqu->encoding.flags & IW_ENCODE_INDEX) अणु
-		हाल 0:
+		switch (wrqu->encoding.flags & IW_ENCODE_INDEX) {
+		case 0:
 			key_idx = ieee->crypt_info.tx_keyidx;
-			अवरोध;
-		हाल 1:
+			break;
+		case 1:
 			key_idx = 0;
-			अवरोध;
-		हाल 2:
+			break;
+		case 2:
 			key_idx = 1;
-			अवरोध;
-		हाल 3:
+			break;
+		case 3:
 			key_idx = 2;
-			अवरोध;
-		हाल 4:
+			break;
+		case 4:
 			key_idx	= 3;
-			अवरोध;
-		शेष:
-			अवरोध;
-		पूर्ण
-		अगर (wrqu->encoding.length == 0x5) अणु
+			break;
+		default:
+			break;
+		}
+		if (wrqu->encoding.length == 0x5) {
 			ieee->pairwise_key_type = KEY_TYPE_WEP40;
 			rtl92e_enable_hw_security_config(dev);
-		पूर्ण
+		}
 
-		अन्यथा अगर (wrqu->encoding.length == 0xd) अणु
+		else if (wrqu->encoding.length == 0xd) {
 			ieee->pairwise_key_type = KEY_TYPE_WEP104;
 			rtl92e_enable_hw_security_config(dev);
 			rtl92e_set_key(dev, key_idx, key_idx, KEY_TYPE_WEP104,
 				       zero_addr[key_idx], 0, hwkey);
 			rtl92e_set_swcam(dev, key_idx, key_idx, KEY_TYPE_WEP104,
 					 zero_addr[key_idx], 0, hwkey, 0);
-		पूर्ण अन्यथा अणु
+		} else {
 			netdev_info(dev,
 				    "wrong type in WEP, not WEP40 and WEP104\n");
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 end_hw_sec:
 	priv->rtllib->wx_set_enc = 0;
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक _rtl92e_wx_set_scan_type(काष्ठा net_device *dev,
-				    काष्ठा iw_request_info *aa,
-				    जोड़ iwreq_data *wrqu, अक्षर *p)
-अणु
-	काष्ठा r8192_priv *priv = rtllib_priv(dev);
-	पूर्णांक *parms = (पूर्णांक *)p;
-	पूर्णांक mode = parms[0];
+static int _rtl92e_wx_set_scan_type(struct net_device *dev,
+				    struct iw_request_info *aa,
+				    union iwreq_data *wrqu, char *p)
+{
+	struct r8192_priv *priv = rtllib_priv(dev);
+	int *parms = (int *)p;
+	int mode = parms[0];
 
-	अगर (priv->bHwRadioOff)
-		वापस 0;
+	if (priv->bHwRadioOff)
+		return 0;
 
 	priv->rtllib->active_scan = mode;
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-#घोषणा R8192_MAX_RETRY 255
-अटल पूर्णांक _rtl92e_wx_set_retry(काष्ठा net_device *dev,
-				काष्ठा iw_request_info *info,
-				जोड़ iwreq_data *wrqu, अक्षर *extra)
-अणु
-	काष्ठा r8192_priv *priv = rtllib_priv(dev);
-	पूर्णांक err = 0;
+#define R8192_MAX_RETRY 255
+static int _rtl92e_wx_set_retry(struct net_device *dev,
+				struct iw_request_info *info,
+				union iwreq_data *wrqu, char *extra)
+{
+	struct r8192_priv *priv = rtllib_priv(dev);
+	int err = 0;
 
-	अगर (priv->bHwRadioOff)
-		वापस 0;
+	if (priv->bHwRadioOff)
+		return 0;
 
 	mutex_lock(&priv->wx_mutex);
 
-	अगर (wrqu->retry.flags & IW_RETRY_LIFETIME ||
-	    wrqu->retry.disabled) अणु
+	if (wrqu->retry.flags & IW_RETRY_LIFETIME ||
+	    wrqu->retry.disabled) {
 		err = -EINVAL;
-		जाओ निकास;
-	पूर्ण
-	अगर (!(wrqu->retry.flags & IW_RETRY_LIMIT)) अणु
+		goto exit;
+	}
+	if (!(wrqu->retry.flags & IW_RETRY_LIMIT)) {
 		err = -EINVAL;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
-	अगर (wrqu->retry.value > R8192_MAX_RETRY) अणु
+	if (wrqu->retry.value > R8192_MAX_RETRY) {
 		err = -EINVAL;
-		जाओ निकास;
-	पूर्ण
-	अगर (wrqu->retry.flags & IW_RETRY_MAX)
+		goto exit;
+	}
+	if (wrqu->retry.flags & IW_RETRY_MAX)
 		priv->retry_rts = wrqu->retry.value;
-	अन्यथा
+	else
 		priv->retry_data = wrqu->retry.value;
 
 	rtl92e_commit(dev);
-निकास:
+exit:
 	mutex_unlock(&priv->wx_mutex);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक _rtl92e_wx_get_retry(काष्ठा net_device *dev,
-				काष्ठा iw_request_info *info,
-				जोड़ iwreq_data *wrqu, अक्षर *extra)
-अणु
-	काष्ठा r8192_priv *priv = rtllib_priv(dev);
+static int _rtl92e_wx_get_retry(struct net_device *dev,
+				struct iw_request_info *info,
+				union iwreq_data *wrqu, char *extra)
+{
+	struct r8192_priv *priv = rtllib_priv(dev);
 
 	wrqu->retry.disabled = 0; /* can't be disabled */
 
-	अगर ((wrqu->retry.flags & IW_RETRY_TYPE) ==
+	if ((wrqu->retry.flags & IW_RETRY_TYPE) ==
 	    IW_RETRY_LIFETIME)
-		वापस -EINVAL;
+		return -EINVAL;
 
-	अगर (wrqu->retry.flags & IW_RETRY_MAX) अणु
+	if (wrqu->retry.flags & IW_RETRY_MAX) {
 		wrqu->retry.flags = IW_RETRY_LIMIT | IW_RETRY_MAX;
 		wrqu->retry.value = priv->retry_rts;
-	पूर्ण अन्यथा अणु
+	} else {
 		wrqu->retry.flags = IW_RETRY_LIMIT | IW_RETRY_MIN;
 		wrqu->retry.value = priv->retry_data;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल पूर्णांक _rtl92e_wx_get_sens(काष्ठा net_device *dev,
-			       काष्ठा iw_request_info *info,
-			       जोड़ iwreq_data *wrqu, अक्षर *extra)
-अणु
-	काष्ठा r8192_priv *priv = rtllib_priv(dev);
+static int _rtl92e_wx_get_sens(struct net_device *dev,
+			       struct iw_request_info *info,
+			       union iwreq_data *wrqu, char *extra)
+{
+	struct r8192_priv *priv = rtllib_priv(dev);
 
-	अगर (priv->rf_set_sens == शून्य)
-		वापस -1; /* we have not this support क्रम this radio */
+	if (priv->rf_set_sens == NULL)
+		return -1; /* we have not this support for this radio */
 	wrqu->sens.value = priv->sens;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक _rtl92e_wx_set_sens(काष्ठा net_device *dev,
-			       काष्ठा iw_request_info *info,
-			       जोड़ iwreq_data *wrqu, अक्षर *extra)
-अणु
-	काष्ठा r8192_priv *priv = rtllib_priv(dev);
+static int _rtl92e_wx_set_sens(struct net_device *dev,
+			       struct iw_request_info *info,
+			       union iwreq_data *wrqu, char *extra)
+{
+	struct r8192_priv *priv = rtllib_priv(dev);
 
-	लघु err = 0;
+	short err = 0;
 
-	अगर (priv->bHwRadioOff)
-		वापस 0;
+	if (priv->bHwRadioOff)
+		return 0;
 
 	mutex_lock(&priv->wx_mutex);
-	अगर (priv->rf_set_sens == शून्य) अणु
-		err = -1; /* we have not this support क्रम this radio */
-		जाओ निकास;
-	पूर्ण
-	अगर (priv->rf_set_sens(dev, wrqu->sens.value) == 0)
+	if (priv->rf_set_sens == NULL) {
+		err = -1; /* we have not this support for this radio */
+		goto exit;
+	}
+	if (priv->rf_set_sens(dev, wrqu->sens.value) == 0)
 		priv->sens = wrqu->sens.value;
-	अन्यथा
+	else
 		err = -EINVAL;
 
-निकास:
+exit:
 	mutex_unlock(&priv->wx_mutex);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक _rtl92e_wx_set_encode_ext(काष्ठा net_device *dev,
-				     काष्ठा iw_request_info *info,
-				     जोड़ iwreq_data *wrqu, अक्षर *extra)
-अणु
-	पूर्णांक ret = 0;
-	काष्ठा r8192_priv *priv = rtllib_priv(dev);
-	काष्ठा rtllib_device *ieee = priv->rtllib;
+static int _rtl92e_wx_set_encode_ext(struct net_device *dev,
+				     struct iw_request_info *info,
+				     union iwreq_data *wrqu, char *extra)
+{
+	int ret = 0;
+	struct r8192_priv *priv = rtllib_priv(dev);
+	struct rtllib_device *ieee = priv->rtllib;
 
-	अगर (priv->bHwRadioOff)
-		वापस 0;
+	if (priv->bHwRadioOff)
+		return 0;
 
 	mutex_lock(&priv->wx_mutex);
 
@@ -882,147 +881,147 @@ end_hw_sec:
 	mutex_unlock(&priv->rtllib->ips_mutex);
 
 	ret = rtllib_wx_set_encode_ext(ieee, info, wrqu, extra);
-	अणु
-		स्थिर u8 broadcast_addr[ETH_ALEN] = अणु0xff, 0xff, 0xff, 0xff, 0xff, 0xffपूर्ण;
-		स्थिर u8 zero[ETH_ALEN] = अणु0पूर्ण;
-		u32 key[4] = अणु0पूर्ण;
-		काष्ठा iw_encode_ext *ext = (काष्ठा iw_encode_ext *)extra;
-		काष्ठा iw_poपूर्णांक *encoding = &wrqu->encoding;
+	{
+		const u8 broadcast_addr[ETH_ALEN] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
+		const u8 zero[ETH_ALEN] = {0};
+		u32 key[4] = {0};
+		struct iw_encode_ext *ext = (struct iw_encode_ext *)extra;
+		struct iw_point *encoding = &wrqu->encoding;
 		u8 idx = 0, alg = 0, group = 0;
 
-		अगर ((encoding->flags & IW_ENCODE_DISABLED) ||
-		     ext->alg == IW_ENCODE_ALG_NONE) अणु
+		if ((encoding->flags & IW_ENCODE_DISABLED) ||
+		     ext->alg == IW_ENCODE_ALG_NONE) {
 			ieee->pairwise_key_type = ieee->group_key_type
 						= KEY_TYPE_NA;
 			rtl92e_cam_reset(dev);
-			स_रखो(priv->rtllib->swcamtable, 0,
-			       माप(काष्ठा sw_cam_table) * 32);
-			जाओ end_hw_sec;
-		पूर्ण
+			memset(priv->rtllib->swcamtable, 0,
+			       sizeof(struct sw_cam_table) * 32);
+			goto end_hw_sec;
+		}
 		alg = (ext->alg == IW_ENCODE_ALG_CCMP) ? KEY_TYPE_CCMP :
 		      ext->alg;
 		idx = encoding->flags & IW_ENCODE_INDEX;
-		अगर (idx)
+		if (idx)
 			idx--;
 		group = ext->ext_flags & IW_ENCODE_EXT_GROUP_KEY;
 
-		अगर ((!group) || (ieee->iw_mode == IW_MODE_ADHOC) ||
-		    (alg ==  KEY_TYPE_WEP40)) अणु
-			अगर ((ext->key_len == 13) && (alg == KEY_TYPE_WEP40))
+		if ((!group) || (ieee->iw_mode == IW_MODE_ADHOC) ||
+		    (alg ==  KEY_TYPE_WEP40)) {
+			if ((ext->key_len == 13) && (alg == KEY_TYPE_WEP40))
 				alg = KEY_TYPE_WEP104;
 			ieee->pairwise_key_type = alg;
 			rtl92e_enable_hw_security_config(dev);
-		पूर्ण
-		स_नकल((u8 *)key, ext->key, 16);
+		}
+		memcpy((u8 *)key, ext->key, 16);
 
-		अगर ((alg & KEY_TYPE_WEP40) && (ieee->auth_mode != 2)) अणु
-			अगर (ext->key_len == 13)
+		if ((alg & KEY_TYPE_WEP40) && (ieee->auth_mode != 2)) {
+			if (ext->key_len == 13)
 				ieee->pairwise_key_type = alg = KEY_TYPE_WEP104;
 			rtl92e_set_key(dev, idx, idx, alg, zero, 0, key);
 			rtl92e_set_swcam(dev, idx, idx, alg, zero, 0, key, 0);
-		पूर्ण अन्यथा अगर (group) अणु
+		} else if (group) {
 			ieee->group_key_type = alg;
 			rtl92e_set_key(dev, idx, idx, alg, broadcast_addr, 0,
 				       key);
 			rtl92e_set_swcam(dev, idx, idx, alg, broadcast_addr, 0,
 					 key, 0);
-		पूर्ण अन्यथा अणु
-			अगर ((ieee->pairwise_key_type == KEY_TYPE_CCMP) &&
+		} else {
+			if ((ieee->pairwise_key_type == KEY_TYPE_CCMP) &&
 			     ieee->pHTInfo->bCurrentHTSupport)
-				rtl92e_ग_लिखोb(dev, 0x173, 1);
+				rtl92e_writeb(dev, 0x173, 1);
 			rtl92e_set_key(dev, 4, idx, alg,
 				       (u8 *)ieee->ap_mac_addr, 0, key);
 			rtl92e_set_swcam(dev, 4, idx, alg,
 					 (u8 *)ieee->ap_mac_addr, 0, key, 0);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 end_hw_sec:
 	priv->rtllib->wx_set_enc = 0;
 	mutex_unlock(&priv->wx_mutex);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक _rtl92e_wx_set_auth(काष्ठा net_device *dev,
-			       काष्ठा iw_request_info *info,
-			       जोड़ iwreq_data *data, अक्षर *extra)
-अणु
-	पूर्णांक ret = 0;
+static int _rtl92e_wx_set_auth(struct net_device *dev,
+			       struct iw_request_info *info,
+			       union iwreq_data *data, char *extra)
+{
+	int ret = 0;
 
-	काष्ठा r8192_priv *priv = rtllib_priv(dev);
+	struct r8192_priv *priv = rtllib_priv(dev);
 
-	अगर (priv->bHwRadioOff)
-		वापस 0;
+	if (priv->bHwRadioOff)
+		return 0;
 
 	mutex_lock(&priv->wx_mutex);
 	ret = rtllib_wx_set_auth(priv->rtllib, info, &data->param, extra);
 	mutex_unlock(&priv->wx_mutex);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक _rtl92e_wx_set_mlme(काष्ठा net_device *dev,
-			       काष्ठा iw_request_info *info,
-			       जोड़ iwreq_data *wrqu, अक्षर *extra)
-अणु
-	पूर्णांक ret = 0;
+static int _rtl92e_wx_set_mlme(struct net_device *dev,
+			       struct iw_request_info *info,
+			       union iwreq_data *wrqu, char *extra)
+{
+	int ret = 0;
 
-	काष्ठा r8192_priv *priv = rtllib_priv(dev);
+	struct r8192_priv *priv = rtllib_priv(dev);
 
-	अगर (priv->bHwRadioOff)
-		वापस 0;
+	if (priv->bHwRadioOff)
+		return 0;
 
 	mutex_lock(&priv->wx_mutex);
 	ret = rtllib_wx_set_mlme(priv->rtllib, info, wrqu, extra);
 	mutex_unlock(&priv->wx_mutex);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक _rtl92e_wx_set_gen_ie(काष्ठा net_device *dev,
-				 काष्ठा iw_request_info *info,
-				 जोड़ iwreq_data *data, अक्षर *extra)
-अणु
-	पूर्णांक ret = 0;
+static int _rtl92e_wx_set_gen_ie(struct net_device *dev,
+				 struct iw_request_info *info,
+				 union iwreq_data *data, char *extra)
+{
+	int ret = 0;
 
-	काष्ठा r8192_priv *priv = rtllib_priv(dev);
+	struct r8192_priv *priv = rtllib_priv(dev);
 
-	अगर (priv->bHwRadioOff)
-		वापस 0;
+	if (priv->bHwRadioOff)
+		return 0;
 
 	mutex_lock(&priv->wx_mutex);
 	ret = rtllib_wx_set_gen_ie(priv->rtllib, extra, data->data.length);
 	mutex_unlock(&priv->wx_mutex);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक _rtl92e_wx_get_gen_ie(काष्ठा net_device *dev,
-				 काष्ठा iw_request_info *info,
-				 जोड़ iwreq_data *data, अक्षर *extra)
-अणु
-	पूर्णांक ret = 0;
-	काष्ठा r8192_priv *priv = rtllib_priv(dev);
-	काष्ठा rtllib_device *ieee = priv->rtllib;
+static int _rtl92e_wx_get_gen_ie(struct net_device *dev,
+				 struct iw_request_info *info,
+				 union iwreq_data *data, char *extra)
+{
+	int ret = 0;
+	struct r8192_priv *priv = rtllib_priv(dev);
+	struct rtllib_device *ieee = priv->rtllib;
 
-	अगर (ieee->wpa_ie_len == 0 || ieee->wpa_ie == शून्य) अणु
+	if (ieee->wpa_ie_len == 0 || ieee->wpa_ie == NULL) {
 		data->data.length = 0;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (data->data.length < ieee->wpa_ie_len)
-		वापस -E2BIG;
+	if (data->data.length < ieee->wpa_ie_len)
+		return -E2BIG;
 
 	data->data.length = ieee->wpa_ie_len;
-	स_नकल(extra, ieee->wpa_ie, ieee->wpa_ie_len);
-	वापस ret;
-पूर्ण
+	memcpy(extra, ieee->wpa_ie, ieee->wpa_ie_len);
+	return ret;
+}
 
-#घोषणा OID_RT_INTEL_PROMISCUOUS_MODE	0xFF0101F6
+#define OID_RT_INTEL_PROMISCUOUS_MODE	0xFF0101F6
 
-अटल पूर्णांक _rtl92e_wx_set_promisc_mode(काष्ठा net_device *dev,
-				       काष्ठा iw_request_info *info,
-				       जोड़ iwreq_data *wrqu, अक्षर *extra)
-अणु
-	काष्ठा r8192_priv *priv = rtllib_priv(dev);
-	काष्ठा rtllib_device *ieee = priv->rtllib;
+static int _rtl92e_wx_set_promisc_mode(struct net_device *dev,
+				       struct iw_request_info *info,
+				       union iwreq_data *wrqu, char *extra)
+{
+	struct r8192_priv *priv = rtllib_priv(dev);
+	struct rtllib_device *ieee = priv->rtllib;
 
 	u32 info_buf[3];
 
@@ -1030,14 +1029,14 @@ end_hw_sec:
 	u32 bPromiscuousOn;
 	u32 bFilterSourceStationFrame;
 
-	अगर (copy_from_user(info_buf, wrqu->data.poपूर्णांकer, माप(info_buf)))
-		वापस -EFAULT;
+	if (copy_from_user(info_buf, wrqu->data.pointer, sizeof(info_buf)))
+		return -EFAULT;
 
 	oid = info_buf[0];
 	bPromiscuousOn = info_buf[1];
 	bFilterSourceStationFrame = info_buf[2];
 
-	अगर (oid == OID_RT_INTEL_PROMISCUOUS_MODE) अणु
+	if (oid == OID_RT_INTEL_PROMISCUOUS_MODE) {
 		ieee->IntelPromiscuousModeInfo.bPromiscuousOn =
 					(bPromiscuousOn) ? (true) : (false);
 		ieee->IntelPromiscuousModeInfo.bFilterSourceStationFrame =
@@ -1050,34 +1049,34 @@ end_hw_sec:
 			    "=======>%s(), on = %d, filter src sta = %d\n",
 			    __func__, bPromiscuousOn,
 			    bFilterSourceStationFrame);
-	पूर्ण अन्यथा अणु
-		वापस -1;
-	पूर्ण
+	} else {
+		return -1;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक _rtl92e_wx_get_promisc_mode(काष्ठा net_device *dev,
-				       काष्ठा iw_request_info *info,
-				       जोड़ iwreq_data *wrqu, अक्षर *extra)
-अणु
-	काष्ठा r8192_priv *priv = rtllib_priv(dev);
-	काष्ठा rtllib_device *ieee = priv->rtllib;
+static int _rtl92e_wx_get_promisc_mode(struct net_device *dev,
+				       struct iw_request_info *info,
+				       union iwreq_data *wrqu, char *extra)
+{
+	struct r8192_priv *priv = rtllib_priv(dev);
+	struct rtllib_device *ieee = priv->rtllib;
 
 	mutex_lock(&priv->wx_mutex);
 
-	snम_लिखो(extra, 45, "PromiscuousMode:%d, FilterSrcSTAFrame:%d",
+	snprintf(extra, 45, "PromiscuousMode:%d, FilterSrcSTAFrame:%d",
 		 ieee->IntelPromiscuousModeInfo.bPromiscuousOn,
 		 ieee->IntelPromiscuousModeInfo.bFilterSourceStationFrame);
-	wrqu->data.length = म_माप(extra) + 1;
+	wrqu->data.length = strlen(extra) + 1;
 
 	mutex_unlock(&priv->wx_mutex);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#घोषणा IW_IOCTL(x) ((x) - SIOCSIWCOMMIT)
-अटल iw_handler r8192_wx_handlers[] = अणु
+#define IW_IOCTL(x) ((x) - SIOCSIWCOMMIT)
+static iw_handler r8192_wx_handlers[] = {
 	[IW_IOCTL(SIOCGIWNAME)] = _rtl92e_wx_get_name,
 	[IW_IOCTL(SIOCSIWFREQ)] = _rtl92e_wx_set_freq,
 	[IW_IOCTL(SIOCGIWFREQ)] = _rtl92e_wx_get_freq,
@@ -1104,116 +1103,116 @@ end_hw_sec:
 	[IW_IOCTL(SIOCGIWRETRY)] = _rtl92e_wx_get_retry,
 	[IW_IOCTL(SIOCSIWENCODE)] = _rtl92e_wx_set_enc,
 	[IW_IOCTL(SIOCGIWENCODE)] = _rtl92e_wx_get_enc,
-	[IW_IOCTL(SIOCSIWPOWER)] = _rtl92e_wx_set_घातer,
-	[IW_IOCTL(SIOCGIWPOWER)] = _rtl92e_wx_get_घातer,
+	[IW_IOCTL(SIOCSIWPOWER)] = _rtl92e_wx_set_power,
+	[IW_IOCTL(SIOCGIWPOWER)] = _rtl92e_wx_get_power,
 	[IW_IOCTL(SIOCSIWGENIE)] = _rtl92e_wx_set_gen_ie,
 	[IW_IOCTL(SIOCGIWGENIE)] = _rtl92e_wx_get_gen_ie,
 	[IW_IOCTL(SIOCSIWMLME)] = _rtl92e_wx_set_mlme,
 	[IW_IOCTL(SIOCSIWAUTH)] = _rtl92e_wx_set_auth,
 	[IW_IOCTL(SIOCSIWENCODEEXT)] = _rtl92e_wx_set_encode_ext,
-पूर्ण;
+};
 
 /* the following rule need to be following,
  * Odd : get (world access),
  * even : set (root access)
  */
-अटल स्थिर काष्ठा iw_priv_args r8192_निजी_args[] = अणु
-	अणु
+static const struct iw_priv_args r8192_private_args[] = {
+	{
 		SIOCIWFIRSTPRIV + 0x0,
 		IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, 0, "set_debugflag"
-	पूर्ण, अणु
+	}, {
 		SIOCIWFIRSTPRIV + 0x1,
 		IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, 0, "activescan"
-	पूर्ण, अणु
+	}, {
 		SIOCIWFIRSTPRIV + 0x2,
 		IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, 0, "rawtx"
-	पूर्ण, अणु
+	}, {
 		SIOCIWFIRSTPRIV + 0x3,
 		IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, 0, "forcereset"
-	पूर्ण, अणु
+	}, {
 		SIOCIWFIRSTPRIV + 0x6,
 		IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, IW_PRIV_TYPE_NONE,
 		"set_power"
-	पूर्ण, अणु
+	}, {
 		SIOCIWFIRSTPRIV + 0xa,
 		IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, IW_PRIV_TYPE_NONE,
 		"lps_interv"
-	पूर्ण, अणु
+	}, {
 		SIOCIWFIRSTPRIV + 0xb,
 		IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, IW_PRIV_TYPE_NONE,
 		"lps_force"
-	पूर्ण, अणु
+	}, {
 		SIOCIWFIRSTPRIV + 0x16,
 		IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 3, 0, "setpromisc"
-	पूर्ण, अणु
+	}, {
 		SIOCIWFIRSTPRIV + 0x17,
 		0, IW_PRIV_TYPE_CHAR | IW_PRIV_SIZE_FIXED | 45, "getpromisc"
-	पूर्ण
+	}
 
-पूर्ण;
+};
 
-अटल iw_handler r8192_निजी_handler[] = अणु
+static iw_handler r8192_private_handler[] = {
 	(iw_handler)_rtl92e_wx_set_debug,   /*SIOCIWSECONDPRIV*/
 	(iw_handler)_rtl92e_wx_set_scan_type,
 	(iw_handler)_rtl92e_wx_set_rawtx,
-	(iw_handler)_rtl92e_wx_क्रमce_reset,
-	(iw_handler)शून्य,
-	(iw_handler)शून्य,
-	(iw_handler)_rtl92e_wx_adapter_घातer_status,
-	(iw_handler)शून्य,
-	(iw_handler)शून्य,
-	(iw_handler)शून्य,
-	(iw_handler)_rtl92e_wx_set_lps_awake_पूर्णांकerval,
-	(iw_handler)_rtl92e_wx_set_क्रमce_lps,
-	(iw_handler)शून्य,
-	(iw_handler)शून्य,
-	(iw_handler)शून्य,
-	(iw_handler)शून्य,
-	(iw_handler)शून्य,
-	(iw_handler)शून्य,
-	(iw_handler)शून्य,
-	(iw_handler)शून्य,
-	(iw_handler)शून्य,
-	(iw_handler)शून्य,
+	(iw_handler)_rtl92e_wx_force_reset,
+	(iw_handler)NULL,
+	(iw_handler)NULL,
+	(iw_handler)_rtl92e_wx_adapter_power_status,
+	(iw_handler)NULL,
+	(iw_handler)NULL,
+	(iw_handler)NULL,
+	(iw_handler)_rtl92e_wx_set_lps_awake_interval,
+	(iw_handler)_rtl92e_wx_set_force_lps,
+	(iw_handler)NULL,
+	(iw_handler)NULL,
+	(iw_handler)NULL,
+	(iw_handler)NULL,
+	(iw_handler)NULL,
+	(iw_handler)NULL,
+	(iw_handler)NULL,
+	(iw_handler)NULL,
+	(iw_handler)NULL,
+	(iw_handler)NULL,
 	(iw_handler)_rtl92e_wx_set_promisc_mode,
 	(iw_handler)_rtl92e_wx_get_promisc_mode,
-पूर्ण;
+};
 
-अटल काष्ठा iw_statistics *_rtl92e_get_wireless_stats(काष्ठा net_device *dev)
-अणु
-	काष्ठा r8192_priv *priv = rtllib_priv(dev);
-	काष्ठा rtllib_device *ieee = priv->rtllib;
-	काष्ठा iw_statistics *wstats = &priv->wstats;
-	पूर्णांक पंचांगp_level = 0;
-	पूर्णांक पंचांगp_qual = 0;
-	पूर्णांक पंचांगp_noise = 0;
+static struct iw_statistics *_rtl92e_get_wireless_stats(struct net_device *dev)
+{
+	struct r8192_priv *priv = rtllib_priv(dev);
+	struct rtllib_device *ieee = priv->rtllib;
+	struct iw_statistics *wstats = &priv->wstats;
+	int tmp_level = 0;
+	int tmp_qual = 0;
+	int tmp_noise = 0;
 
-	अगर (ieee->state < RTLLIB_LINKED) अणु
+	if (ieee->state < RTLLIB_LINKED) {
 		wstats->qual.qual = 10;
 		wstats->qual.level = 0;
 		wstats->qual.noise = 0x100 - 100;	/* -100 dBm */
 		wstats->qual.updated = IW_QUAL_ALL_UPDATED | IW_QUAL_DBM;
-		वापस wstats;
-	पूर्ण
+		return wstats;
+	}
 
-	पंचांगp_level = (&ieee->current_network)->stats.rssi;
-	पंचांगp_qual = (&ieee->current_network)->stats.संकेत;
-	पंचांगp_noise = (&ieee->current_network)->stats.noise;
+	tmp_level = (&ieee->current_network)->stats.rssi;
+	tmp_qual = (&ieee->current_network)->stats.signal;
+	tmp_noise = (&ieee->current_network)->stats.noise;
 
-	wstats->qual.level = पंचांगp_level;
-	wstats->qual.qual = पंचांगp_qual;
-	wstats->qual.noise = पंचांगp_noise;
+	wstats->qual.level = tmp_level;
+	wstats->qual.qual = tmp_qual;
+	wstats->qual.noise = tmp_noise;
 	wstats->qual.updated = IW_QUAL_ALL_UPDATED | IW_QUAL_DBM;
-	वापस wstats;
-पूर्ण
+	return wstats;
+}
 
-स्थिर काष्ठा iw_handler_def r8192_wx_handlers_def = अणु
+const struct iw_handler_def r8192_wx_handlers_def = {
 	.standard = r8192_wx_handlers,
 	.num_standard = ARRAY_SIZE(r8192_wx_handlers),
-	.निजी = r8192_निजी_handler,
-	.num_निजी = ARRAY_SIZE(r8192_निजी_handler),
-	.num_निजी_args = माप(r8192_निजी_args) /
-			    माप(काष्ठा iw_priv_args),
+	.private = r8192_private_handler,
+	.num_private = ARRAY_SIZE(r8192_private_handler),
+	.num_private_args = sizeof(r8192_private_args) /
+			    sizeof(struct iw_priv_args),
 	.get_wireless_stats = _rtl92e_get_wireless_stats,
-	.निजी_args = (काष्ठा iw_priv_args *)r8192_निजी_args,
-पूर्ण;
+	.private_args = (struct iw_priv_args *)r8192_private_args,
+};

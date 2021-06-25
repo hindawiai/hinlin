@@ -1,27 +1,26 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * OMAP5 thermal driver.
  *
  * Copyright (C) 2011-2012 Texas Instruments Inc.
  * Contact:
- *	Eduarकरो Valentin <eduarकरो.valentin@ti.com>
+ *	Eduardo Valentin <eduardo.valentin@ti.com>
  */
 
-#समावेश "ti-thermal.h"
-#समावेश "ti-bandgap.h"
-#समावेश "omap5xxx-bandgap.h"
-
-/*
- * OMAP5430 has three instances of thermal sensor क्रम MPU, GPU & CORE,
- * need to describe the inभागidual रेजिस्टरs and bit fields.
- */
+#include "ti-thermal.h"
+#include "ti-bandgap.h"
+#include "omap5xxx-bandgap.h"
 
 /*
- * OMAP5430 MPU thermal sensor रेजिस्टर offset and bit-fields
+ * OMAP5430 has three instances of thermal sensor for MPU, GPU & CORE,
+ * need to describe the individual registers and bit fields.
  */
-अटल काष्ठा temp_sensor_रेजिस्टरs
-omap5430_mpu_temp_sensor_रेजिस्टरs = अणु
+
+/*
+ * OMAP5430 MPU thermal sensor register offset and bit-fields
+ */
+static struct temp_sensor_registers
+omap5430_mpu_temp_sensor_registers = {
 	.temp_sensor_ctrl = OMAP5430_TEMP_SENSOR_MPU_OFFSET,
 	.bgap_tempsoff_mask = OMAP5430_BGAP_TEMPSOFF_MASK,
 	.bgap_eocz_mask = OMAP5430_BGAP_TEMP_SENSOR_EOCZ_MASK,
@@ -31,7 +30,7 @@ omap5430_mpu_temp_sensor_रेजिस्टरs = अणु
 	.mask_hot_mask = OMAP5430_MASK_HOT_MPU_MASK,
 	.mask_cold_mask = OMAP5430_MASK_COLD_MPU_MASK,
 	.mask_counter_delay_mask = OMAP5430_MASK_COUNTER_DELAY_MASK,
-	.mask_मुक्तze_mask = OMAP5430_MASK_FREEZE_MPU_MASK,
+	.mask_freeze_mask = OMAP5430_MASK_FREEZE_MPU_MASK,
 
 	.bgap_counter = OMAP5430_BGAP_CTRL_OFFSET,
 	.counter_mask = OMAP5430_COUNTER_MASK,
@@ -51,13 +50,13 @@ omap5430_mpu_temp_sensor_रेजिस्टरs = अणु
 	.ctrl_dtemp_1 = OMAP5430_BGAP_DTEMP_MPU_1_OFFSET,
 	.ctrl_dtemp_2 = OMAP5430_BGAP_DTEMP_MPU_2_OFFSET,
 	.bgap_efuse = OMAP5430_FUSE_OPP_BGAP_MPU,
-पूर्ण;
+};
 
 /*
- * OMAP5430 GPU thermal sensor रेजिस्टर offset and bit-fields
+ * OMAP5430 GPU thermal sensor register offset and bit-fields
  */
-अटल काष्ठा temp_sensor_रेजिस्टरs
-omap5430_gpu_temp_sensor_रेजिस्टरs = अणु
+static struct temp_sensor_registers
+omap5430_gpu_temp_sensor_registers = {
 	.temp_sensor_ctrl = OMAP5430_TEMP_SENSOR_GPU_OFFSET,
 	.bgap_tempsoff_mask = OMAP5430_BGAP_TEMPSOFF_MASK,
 	.bgap_eocz_mask = OMAP5430_BGAP_TEMP_SENSOR_EOCZ_MASK,
@@ -67,7 +66,7 @@ omap5430_gpu_temp_sensor_रेजिस्टरs = अणु
 	.mask_hot_mask = OMAP5430_MASK_HOT_GPU_MASK,
 	.mask_cold_mask = OMAP5430_MASK_COLD_GPU_MASK,
 	.mask_counter_delay_mask = OMAP5430_MASK_COUNTER_DELAY_MASK,
-	.mask_मुक्तze_mask = OMAP5430_MASK_FREEZE_GPU_MASK,
+	.mask_freeze_mask = OMAP5430_MASK_FREEZE_GPU_MASK,
 
 	.bgap_counter = OMAP5430_BGAP_CTRL_OFFSET,
 	.counter_mask = OMAP5430_COUNTER_MASK,
@@ -88,13 +87,13 @@ omap5430_gpu_temp_sensor_रेजिस्टरs = अणु
 	.ctrl_dtemp_2 = OMAP5430_BGAP_DTEMP_GPU_2_OFFSET,
 
 	.bgap_efuse = OMAP5430_FUSE_OPP_BGAP_GPU,
-पूर्ण;
+};
 
 /*
- * OMAP5430 CORE thermal sensor रेजिस्टर offset and bit-fields
+ * OMAP5430 CORE thermal sensor register offset and bit-fields
  */
-अटल काष्ठा temp_sensor_रेजिस्टरs
-omap5430_core_temp_sensor_रेजिस्टरs = अणु
+static struct temp_sensor_registers
+omap5430_core_temp_sensor_registers = {
 	.temp_sensor_ctrl = OMAP5430_TEMP_SENSOR_CORE_OFFSET,
 	.bgap_tempsoff_mask = OMAP5430_BGAP_TEMPSOFF_MASK,
 	.bgap_eocz_mask = OMAP5430_BGAP_TEMP_SENSOR_EOCZ_MASK,
@@ -104,7 +103,7 @@ omap5430_core_temp_sensor_रेजिस्टरs = अणु
 	.mask_hot_mask = OMAP5430_MASK_HOT_CORE_MASK,
 	.mask_cold_mask = OMAP5430_MASK_COLD_CORE_MASK,
 	.mask_counter_delay_mask = OMAP5430_MASK_COUNTER_DELAY_MASK,
-	.mask_मुक्तze_mask = OMAP5430_MASK_FREEZE_CORE_MASK,
+	.mask_freeze_mask = OMAP5430_MASK_FREEZE_CORE_MASK,
 
 	.bgap_counter = OMAP5430_BGAP_CTRL_OFFSET,
 	.counter_mask = OMAP5430_COUNTER_MASK,
@@ -125,45 +124,45 @@ omap5430_core_temp_sensor_रेजिस्टरs = अणु
 	.ctrl_dtemp_2 = OMAP5430_BGAP_DTEMP_CORE_2_OFFSET,
 
 	.bgap_efuse = OMAP5430_FUSE_OPP_BGAP_CORE,
-पूर्ण;
+};
 
-/* Thresholds and limits क्रम OMAP5430 MPU temperature sensor */
-अटल काष्ठा temp_sensor_data omap5430_mpu_temp_sensor_data = अणु
+/* Thresholds and limits for OMAP5430 MPU temperature sensor */
+static struct temp_sensor_data omap5430_mpu_temp_sensor_data = {
 	.tshut_hot = OMAP5430_MPU_TSHUT_HOT,
 	.tshut_cold = OMAP5430_MPU_TSHUT_COLD,
 	.t_hot = OMAP5430_MPU_T_HOT,
 	.t_cold = OMAP5430_MPU_T_COLD,
 	.min_freq = OMAP5430_MPU_MIN_FREQ,
 	.max_freq = OMAP5430_MPU_MAX_FREQ,
-पूर्ण;
+};
 
-/* Thresholds and limits क्रम OMAP5430 GPU temperature sensor */
-अटल काष्ठा temp_sensor_data omap5430_gpu_temp_sensor_data = अणु
+/* Thresholds and limits for OMAP5430 GPU temperature sensor */
+static struct temp_sensor_data omap5430_gpu_temp_sensor_data = {
 	.tshut_hot = OMAP5430_GPU_TSHUT_HOT,
 	.tshut_cold = OMAP5430_GPU_TSHUT_COLD,
 	.t_hot = OMAP5430_GPU_T_HOT,
 	.t_cold = OMAP5430_GPU_T_COLD,
 	.min_freq = OMAP5430_GPU_MIN_FREQ,
 	.max_freq = OMAP5430_GPU_MAX_FREQ,
-पूर्ण;
+};
 
-/* Thresholds and limits क्रम OMAP5430 CORE temperature sensor */
-अटल काष्ठा temp_sensor_data omap5430_core_temp_sensor_data = अणु
+/* Thresholds and limits for OMAP5430 CORE temperature sensor */
+static struct temp_sensor_data omap5430_core_temp_sensor_data = {
 	.tshut_hot = OMAP5430_CORE_TSHUT_HOT,
 	.tshut_cold = OMAP5430_CORE_TSHUT_COLD,
 	.t_hot = OMAP5430_CORE_T_HOT,
 	.t_cold = OMAP5430_CORE_T_COLD,
 	.min_freq = OMAP5430_CORE_MIN_FREQ,
 	.max_freq = OMAP5430_CORE_MAX_FREQ,
-पूर्ण;
+};
 
 /*
  * OMAP54xx ES2.0 : Temperature values in milli degree celsius
  * ADC code values from 540 to 945
  */
-अटल पूर्णांक
+static int
 omap5430_adc_to_temp[
-	OMAP5430_ADC_END_VALUE - OMAP5430_ADC_START_VALUE + 1] = अणु
+	OMAP5430_ADC_END_VALUE - OMAP5430_ADC_START_VALUE + 1] = {
 	/* Index 540 - 549 */
 	-40000, -40000, -40000, -40000, -39800, -39400, -39000, -38600, -38200,
 	-37800,
@@ -260,45 +259,45 @@ omap5430_adc_to_temp[
 	123400,
 	/* Index 940 - 945 */
 	123800, 124200, 124600, 124900, 125000, 125000,
-पूर्ण;
+};
 
 /* OMAP54xx ES2.0 data */
-स्थिर काष्ठा ti_bandgap_data omap5430_data = अणु
+const struct ti_bandgap_data omap5430_data = {
 	.features = TI_BANDGAP_FEATURE_TSHUT_CONFIG |
 			TI_BANDGAP_FEATURE_FREEZE_BIT |
 			TI_BANDGAP_FEATURE_TALERT |
 			TI_BANDGAP_FEATURE_COUNTER_DELAY |
 			TI_BANDGAP_FEATURE_HISTORY_BUFFER,
-	.fघड़ी_name = "l3instr_ts_gclk_div",
-	.भाग_ck_name = "l3instr_ts_gclk_div",
+	.fclock_name = "l3instr_ts_gclk_div",
+	.div_ck_name = "l3instr_ts_gclk_div",
 	.conv_table = omap5430_adc_to_temp,
 	.adc_start_val = OMAP5430_ADC_START_VALUE,
 	.adc_end_val = OMAP5430_ADC_END_VALUE,
 	.expose_sensor = ti_thermal_expose_sensor,
-	.हटाओ_sensor = ti_thermal_हटाओ_sensor,
+	.remove_sensor = ti_thermal_remove_sensor,
 	.report_temperature = ti_thermal_report_sensor_temperature,
-	.sensors = अणु
-		अणु
-		.रेजिस्टरs = &omap5430_mpu_temp_sensor_रेजिस्टरs,
+	.sensors = {
+		{
+		.registers = &omap5430_mpu_temp_sensor_registers,
 		.ts_data = &omap5430_mpu_temp_sensor_data,
-		.करोमुख्य = "cpu",
-		.रेजिस्टर_cooling = ti_thermal_रेजिस्टर_cpu_cooling,
-		.unरेजिस्टर_cooling = ti_thermal_unरेजिस्टर_cpu_cooling,
+		.domain = "cpu",
+		.register_cooling = ti_thermal_register_cpu_cooling,
+		.unregister_cooling = ti_thermal_unregister_cpu_cooling,
 		.slope_pcb = OMAP_GRADIENT_SLOPE_W_PCB_5430_CPU,
-		.स्थिरant_pcb = OMAP_GRADIENT_CONST_W_PCB_5430_CPU,
-		पूर्ण,
-		अणु
-		.रेजिस्टरs = &omap5430_gpu_temp_sensor_रेजिस्टरs,
+		.constant_pcb = OMAP_GRADIENT_CONST_W_PCB_5430_CPU,
+		},
+		{
+		.registers = &omap5430_gpu_temp_sensor_registers,
 		.ts_data = &omap5430_gpu_temp_sensor_data,
-		.करोमुख्य = "gpu",
+		.domain = "gpu",
 		.slope_pcb = OMAP_GRADIENT_SLOPE_W_PCB_5430_GPU,
-		.स्थिरant_pcb = OMAP_GRADIENT_CONST_W_PCB_5430_GPU,
-		पूर्ण,
-		अणु
-		.रेजिस्टरs = &omap5430_core_temp_sensor_रेजिस्टरs,
+		.constant_pcb = OMAP_GRADIENT_CONST_W_PCB_5430_GPU,
+		},
+		{
+		.registers = &omap5430_core_temp_sensor_registers,
 		.ts_data = &omap5430_core_temp_sensor_data,
-		.करोमुख्य = "core",
-		पूर्ण,
-	पूर्ण,
+		.domain = "core",
+		},
+	},
 	.sensor_count = 3,
-पूर्ण;
+};

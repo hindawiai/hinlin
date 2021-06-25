@@ -1,21 +1,20 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
 * linux/spear_dma.h
 *
 * Copyright (ST) 2012 Rajeev Kumar (rajeevkumar.linux@gmail.com)
 */
 
-#अगर_अघोषित SPEAR_DMA_H
-#घोषणा SPEAR_DMA_H
+#ifndef SPEAR_DMA_H
+#define SPEAR_DMA_H
 
-#समावेश <linux/dmaengine.h>
+#include <linux/dmaengine.h>
 
-काष्ठा spear_dma_data अणु
-	व्योम *data;
+struct spear_dma_data {
+	void *data;
 	dma_addr_t addr;
 	u32 max_burst;
-	क्रमागत dma_slave_buswidth addr_width;
-पूर्ण;
+	enum dma_slave_buswidth addr_width;
+};
 
-#पूर्ण_अगर /* SPEAR_DMA_H */
+#endif /* SPEAR_DMA_H */

@@ -1,49 +1,48 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Provides code common क्रम host and device side USB.
+ * Provides code common for host and device side USB.
  *
  * If either host side (ie. CONFIG_USB=y) or device side USB stack
  * (ie. CONFIG_USB_GADGET=y) is compiled in the kernel, this module is
- * compiled-in as well.  Otherwise, अगर either of the two stacks is
+ * compiled-in as well.  Otherwise, if either of the two stacks is
  * compiled as module, this file is compiled as module as well.
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/usb/ch9.h>
-#समावेश <linux/usb/of.h>
-#समावेश <linux/usb/otg.h>
-#समावेश <linux/of_platक्रमm.h>
-#समावेश <linux/debugfs.h>
-#समावेश "common.h"
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/usb/ch9.h>
+#include <linux/usb/of.h>
+#include <linux/usb/otg.h>
+#include <linux/of_platform.h>
+#include <linux/debugfs.h>
+#include "common.h"
 
-अटल स्थिर अक्षर *स्थिर ep_type_names[] = अणु
+static const char *const ep_type_names[] = {
 	[USB_ENDPOINT_XFER_CONTROL] = "ctrl",
 	[USB_ENDPOINT_XFER_ISOC] = "isoc",
 	[USB_ENDPOINT_XFER_BULK] = "bulk",
 	[USB_ENDPOINT_XFER_INT] = "intr",
-पूर्ण;
+};
 
 /**
- * usb_ep_type_string() - Returns human पढ़ोable-name of the endpoपूर्णांक type.
- * @ep_type: The endpoपूर्णांक type to वापस human-पढ़ोable name क्रम.  If it's not
- *   any of the types: USB_ENDPOINT_XFER_अणुCONTROL, ISOC, BULK, INTपूर्ण,
- *   usually got by usb_endpoपूर्णांक_type(), the string 'unknown' will be वापसed.
+ * usb_ep_type_string() - Returns human readable-name of the endpoint type.
+ * @ep_type: The endpoint type to return human-readable name for.  If it's not
+ *   any of the types: USB_ENDPOINT_XFER_{CONTROL, ISOC, BULK, INT},
+ *   usually got by usb_endpoint_type(), the string 'unknown' will be returned.
  */
-स्थिर अक्षर *usb_ep_type_string(पूर्णांक ep_type)
-अणु
-	अगर (ep_type < 0 || ep_type >= ARRAY_SIZE(ep_type_names))
-		वापस "unknown";
+const char *usb_ep_type_string(int ep_type)
+{
+	if (ep_type < 0 || ep_type >= ARRAY_SIZE(ep_type_names))
+		return "unknown";
 
-	वापस ep_type_names[ep_type];
-पूर्ण
+	return ep_type_names[ep_type];
+}
 EXPORT_SYMBOL_GPL(usb_ep_type_string);
 
-स्थिर अक्षर *usb_otg_state_string(क्रमागत usb_otg_state state)
-अणु
-	अटल स्थिर अक्षर *स्थिर names[] = अणु
+const char *usb_otg_state_string(enum usb_otg_state state)
+{
+	static const char *const names[] = {
 		[OTG_STATE_A_IDLE] = "a_idle",
 		[OTG_STATE_A_WAIT_VRISE] = "a_wait_vrise",
 		[OTG_STATE_A_WAIT_BCON] = "a_wait_bcon",
@@ -57,16 +56,16 @@ EXPORT_SYMBOL_GPL(usb_ep_type_string);
 		[OTG_STATE_B_PERIPHERAL] = "b_peripheral",
 		[OTG_STATE_B_WAIT_ACON] = "b_wait_acon",
 		[OTG_STATE_B_HOST] = "b_host",
-	पूर्ण;
+	};
 
-	अगर (state < 0 || state >= ARRAY_SIZE(names))
-		वापस "UNDEFINED";
+	if (state < 0 || state >= ARRAY_SIZE(names))
+		return "UNDEFINED";
 
-	वापस names[state];
-पूर्ण
+	return names[state];
+}
 EXPORT_SYMBOL_GPL(usb_otg_state_string);
 
-अटल स्थिर अक्षर *स्थिर speed_names[] = अणु
+static const char *const speed_names[] = {
 	[USB_SPEED_UNKNOWN] = "UNKNOWN",
 	[USB_SPEED_LOW] = "low-speed",
 	[USB_SPEED_FULL] = "full-speed",
@@ -74,87 +73,87 @@ EXPORT_SYMBOL_GPL(usb_otg_state_string);
 	[USB_SPEED_WIRELESS] = "wireless",
 	[USB_SPEED_SUPER] = "super-speed",
 	[USB_SPEED_SUPER_PLUS] = "super-speed-plus",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर *स्थिर ssp_rate[] = अणु
+static const char *const ssp_rate[] = {
 	[USB_SSP_GEN_UNKNOWN] = "UNKNOWN",
 	[USB_SSP_GEN_2x1] = "super-speed-plus-gen2x1",
 	[USB_SSP_GEN_1x2] = "super-speed-plus-gen1x2",
 	[USB_SSP_GEN_2x2] = "super-speed-plus-gen2x2",
-पूर्ण;
+};
 
 /**
- * usb_speed_string() - Returns human पढ़ोable-name of the speed.
- * @speed: The speed to वापस human-पढ़ोable name क्रम.  If it's not
- *   any of the speeds defined in usb_device_speed क्रमागत, string क्रम
- *   USB_SPEED_UNKNOWN will be वापसed.
+ * usb_speed_string() - Returns human readable-name of the speed.
+ * @speed: The speed to return human-readable name for.  If it's not
+ *   any of the speeds defined in usb_device_speed enum, string for
+ *   USB_SPEED_UNKNOWN will be returned.
  */
-स्थिर अक्षर *usb_speed_string(क्रमागत usb_device_speed speed)
-अणु
-	अगर (speed < 0 || speed >= ARRAY_SIZE(speed_names))
+const char *usb_speed_string(enum usb_device_speed speed)
+{
+	if (speed < 0 || speed >= ARRAY_SIZE(speed_names))
 		speed = USB_SPEED_UNKNOWN;
-	वापस speed_names[speed];
-पूर्ण
+	return speed_names[speed];
+}
 EXPORT_SYMBOL_GPL(usb_speed_string);
 
 /**
- * usb_get_maximum_speed - Get maximum requested speed क्रम a given USB
+ * usb_get_maximum_speed - Get maximum requested speed for a given USB
  * controller.
- * @dev: Poपूर्णांकer to the given USB controller device
+ * @dev: Pointer to the given USB controller device
  *
- * The function माला_लो the maximum speed string from property "maximum-speed",
- * and वापसs the corresponding क्रमागत usb_device_speed.
+ * The function gets the maximum speed string from property "maximum-speed",
+ * and returns the corresponding enum usb_device_speed.
  */
-क्रमागत usb_device_speed usb_get_maximum_speed(काष्ठा device *dev)
-अणु
-	स्थिर अक्षर *maximum_speed;
-	पूर्णांक ret;
+enum usb_device_speed usb_get_maximum_speed(struct device *dev)
+{
+	const char *maximum_speed;
+	int ret;
 
-	ret = device_property_पढ़ो_string(dev, "maximum-speed", &maximum_speed);
-	अगर (ret < 0)
-		वापस USB_SPEED_UNKNOWN;
+	ret = device_property_read_string(dev, "maximum-speed", &maximum_speed);
+	if (ret < 0)
+		return USB_SPEED_UNKNOWN;
 
 	ret = match_string(ssp_rate, ARRAY_SIZE(ssp_rate), maximum_speed);
-	अगर (ret > 0)
-		वापस USB_SPEED_SUPER_PLUS;
+	if (ret > 0)
+		return USB_SPEED_SUPER_PLUS;
 
 	ret = match_string(speed_names, ARRAY_SIZE(speed_names), maximum_speed);
-	वापस (ret < 0) ? USB_SPEED_UNKNOWN : ret;
-पूर्ण
+	return (ret < 0) ? USB_SPEED_UNKNOWN : ret;
+}
 EXPORT_SYMBOL_GPL(usb_get_maximum_speed);
 
 /**
- * usb_get_maximum_ssp_rate - Get the संकेतing rate generation and lane count
+ * usb_get_maximum_ssp_rate - Get the signaling rate generation and lane count
  *	of a SuperSpeed Plus capable device.
- * @dev: Poपूर्णांकer to the given USB controller device
+ * @dev: Pointer to the given USB controller device
  *
  * If the string from "maximum-speed" property is super-speed-plus-genXxY where
  * 'X' is the generation number and 'Y' is the number of lanes, then this
- * function वापसs the corresponding क्रमागत usb_ssp_rate.
+ * function returns the corresponding enum usb_ssp_rate.
  */
-क्रमागत usb_ssp_rate usb_get_maximum_ssp_rate(काष्ठा device *dev)
-अणु
-	स्थिर अक्षर *maximum_speed;
-	पूर्णांक ret;
+enum usb_ssp_rate usb_get_maximum_ssp_rate(struct device *dev)
+{
+	const char *maximum_speed;
+	int ret;
 
-	ret = device_property_पढ़ो_string(dev, "maximum-speed", &maximum_speed);
-	अगर (ret < 0)
-		वापस USB_SSP_GEN_UNKNOWN;
+	ret = device_property_read_string(dev, "maximum-speed", &maximum_speed);
+	if (ret < 0)
+		return USB_SSP_GEN_UNKNOWN;
 
 	ret = match_string(ssp_rate, ARRAY_SIZE(ssp_rate), maximum_speed);
-	वापस (ret < 0) ? USB_SSP_GEN_UNKNOWN : ret;
-पूर्ण
+	return (ret < 0) ? USB_SSP_GEN_UNKNOWN : ret;
+}
 EXPORT_SYMBOL_GPL(usb_get_maximum_ssp_rate);
 
 /**
- * usb_state_string - Returns human पढ़ोable name क्रम the state.
- * @state: The state to वापस a human-पढ़ोable name क्रम. If it's not
- *	any of the states devices in usb_device_state_string क्रमागत,
- *	the string UNKNOWN will be वापसed.
+ * usb_state_string - Returns human readable name for the state.
+ * @state: The state to return a human-readable name for. If it's not
+ *	any of the states devices in usb_device_state_string enum,
+ *	the string UNKNOWN will be returned.
  */
-स्थिर अक्षर *usb_state_string(क्रमागत usb_device_state state)
-अणु
-	अटल स्थिर अक्षर *स्थिर names[] = अणु
+const char *usb_state_string(enum usb_device_state state)
+{
+	static const char *const names[] = {
 		[USB_STATE_NOTATTACHED] = "not attached",
 		[USB_STATE_ATTACHED] = "attached",
 		[USB_STATE_POWERED] = "powered",
@@ -164,253 +163,253 @@ EXPORT_SYMBOL_GPL(usb_get_maximum_ssp_rate);
 		[USB_STATE_ADDRESS] = "addressed",
 		[USB_STATE_CONFIGURED] = "configured",
 		[USB_STATE_SUSPENDED] = "suspended",
-	पूर्ण;
+	};
 
-	अगर (state < 0 || state >= ARRAY_SIZE(names))
-		वापस "UNKNOWN";
+	if (state < 0 || state >= ARRAY_SIZE(names))
+		return "UNKNOWN";
 
-	वापस names[state];
-पूर्ण
+	return names[state];
+}
 EXPORT_SYMBOL_GPL(usb_state_string);
 
-अटल स्थिर अक्षर *स्थिर usb_dr_modes[] = अणु
+static const char *const usb_dr_modes[] = {
 	[USB_DR_MODE_UNKNOWN]		= "",
 	[USB_DR_MODE_HOST]		= "host",
 	[USB_DR_MODE_PERIPHERAL]	= "peripheral",
 	[USB_DR_MODE_OTG]		= "otg",
-पूर्ण;
+};
 
-अटल क्रमागत usb_dr_mode usb_get_dr_mode_from_string(स्थिर अक्षर *str)
-अणु
-	पूर्णांक ret;
+static enum usb_dr_mode usb_get_dr_mode_from_string(const char *str)
+{
+	int ret;
 
 	ret = match_string(usb_dr_modes, ARRAY_SIZE(usb_dr_modes), str);
-	वापस (ret < 0) ? USB_DR_MODE_UNKNOWN : ret;
-पूर्ण
+	return (ret < 0) ? USB_DR_MODE_UNKNOWN : ret;
+}
 
-क्रमागत usb_dr_mode usb_get_dr_mode(काष्ठा device *dev)
-अणु
-	स्थिर अक्षर *dr_mode;
-	पूर्णांक err;
+enum usb_dr_mode usb_get_dr_mode(struct device *dev)
+{
+	const char *dr_mode;
+	int err;
 
-	err = device_property_पढ़ो_string(dev, "dr_mode", &dr_mode);
-	अगर (err < 0)
-		वापस USB_DR_MODE_UNKNOWN;
+	err = device_property_read_string(dev, "dr_mode", &dr_mode);
+	if (err < 0)
+		return USB_DR_MODE_UNKNOWN;
 
-	वापस usb_get_dr_mode_from_string(dr_mode);
-पूर्ण
+	return usb_get_dr_mode_from_string(dr_mode);
+}
 EXPORT_SYMBOL_GPL(usb_get_dr_mode);
 
 /**
- * usb_decode_पूर्णांकerval - Decode bInterval पूर्णांकo the समय expressed in 1us unit
- * @epd: The descriptor of the endpoपूर्णांक
- * @speed: The speed that the endpoपूर्णांक works as
+ * usb_decode_interval - Decode bInterval into the time expressed in 1us unit
+ * @epd: The descriptor of the endpoint
+ * @speed: The speed that the endpoint works as
  *
- * Function वापसs the पूर्णांकerval expressed in 1us unit क्रम servicing
- * endpoपूर्णांक क्रम data transfers.
+ * Function returns the interval expressed in 1us unit for servicing
+ * endpoint for data transfers.
  */
-अचिन्हित पूर्णांक usb_decode_पूर्णांकerval(स्थिर काष्ठा usb_endpoपूर्णांक_descriptor *epd,
-				 क्रमागत usb_device_speed speed)
-अणु
-	अचिन्हित पूर्णांक पूर्णांकerval = 0;
+unsigned int usb_decode_interval(const struct usb_endpoint_descriptor *epd,
+				 enum usb_device_speed speed)
+{
+	unsigned int interval = 0;
 
-	चयन (usb_endpoपूर्णांक_type(epd)) अणु
-	हाल USB_ENDPOINT_XFER_CONTROL:
+	switch (usb_endpoint_type(epd)) {
+	case USB_ENDPOINT_XFER_CONTROL:
 		/* uframes per NAK */
-		अगर (speed == USB_SPEED_HIGH)
-			पूर्णांकerval = epd->bInterval;
-		अवरोध;
-	हाल USB_ENDPOINT_XFER_ISOC:
-		पूर्णांकerval = 1 << (epd->bInterval - 1);
-		अवरोध;
-	हाल USB_ENDPOINT_XFER_BULK:
+		if (speed == USB_SPEED_HIGH)
+			interval = epd->bInterval;
+		break;
+	case USB_ENDPOINT_XFER_ISOC:
+		interval = 1 << (epd->bInterval - 1);
+		break;
+	case USB_ENDPOINT_XFER_BULK:
 		/* uframes per NAK */
-		अगर (speed == USB_SPEED_HIGH && usb_endpoपूर्णांक_dir_out(epd))
-			पूर्णांकerval = epd->bInterval;
-		अवरोध;
-	हाल USB_ENDPOINT_XFER_INT:
-		अगर (speed >= USB_SPEED_HIGH)
-			पूर्णांकerval = 1 << (epd->bInterval - 1);
-		अन्यथा
-			पूर्णांकerval = epd->bInterval;
-		अवरोध;
-	पूर्ण
+		if (speed == USB_SPEED_HIGH && usb_endpoint_dir_out(epd))
+			interval = epd->bInterval;
+		break;
+	case USB_ENDPOINT_XFER_INT:
+		if (speed >= USB_SPEED_HIGH)
+			interval = 1 << (epd->bInterval - 1);
+		else
+			interval = epd->bInterval;
+		break;
+	}
 
-	पूर्णांकerval *= (speed >= USB_SPEED_HIGH) ? 125 : 1000;
+	interval *= (speed >= USB_SPEED_HIGH) ? 125 : 1000;
 
-	वापस पूर्णांकerval;
-पूर्ण
-EXPORT_SYMBOL_GPL(usb_decode_पूर्णांकerval);
+	return interval;
+}
+EXPORT_SYMBOL_GPL(usb_decode_interval);
 
-#अगर_घोषित CONFIG_OF
+#ifdef CONFIG_OF
 /**
- * of_usb_get_dr_mode_by_phy - Get dual role mode क्रम the controller device
+ * of_usb_get_dr_mode_by_phy - Get dual role mode for the controller device
  * which is associated with the given phy device_node
- * @np:	Poपूर्णांकer to the given phy device_node
- * @arg0: phandle args[0] क्रम phy's with #phy-cells >= 1, or -1 क्रम
- *        phys which करो not have phy-cells
+ * @np:	Pointer to the given phy device_node
+ * @arg0: phandle args[0] for phy's with #phy-cells >= 1, or -1 for
+ *        phys which do not have phy-cells
  *
- * In dts a usb controller associates with phy devices.  The function माला_लो
+ * In dts a usb controller associates with phy devices.  The function gets
  * the string from property 'dr_mode' of the controller associated with the
- * given phy device node, and वापसs the correspondig क्रमागत usb_dr_mode.
+ * given phy device node, and returns the correspondig enum usb_dr_mode.
  */
-क्रमागत usb_dr_mode of_usb_get_dr_mode_by_phy(काष्ठा device_node *np, पूर्णांक arg0)
-अणु
-	काष्ठा device_node *controller = शून्य;
-	काष्ठा of_phandle_args args;
-	स्थिर अक्षर *dr_mode;
-	पूर्णांक index;
-	पूर्णांक err;
+enum usb_dr_mode of_usb_get_dr_mode_by_phy(struct device_node *np, int arg0)
+{
+	struct device_node *controller = NULL;
+	struct of_phandle_args args;
+	const char *dr_mode;
+	int index;
+	int err;
 
-	करो अणु
+	do {
 		controller = of_find_node_with_property(controller, "phys");
-		अगर (!of_device_is_available(controller))
-			जारी;
+		if (!of_device_is_available(controller))
+			continue;
 		index = 0;
-		करो अणु
-			अगर (arg0 == -1) अणु
+		do {
+			if (arg0 == -1) {
 				args.np = of_parse_phandle(controller, "phys",
 							index);
 				args.args_count = 0;
-			पूर्ण अन्यथा अणु
+			} else {
 				err = of_parse_phandle_with_args(controller,
 							"phys", "#phy-cells",
 							index, &args);
-				अगर (err)
-					अवरोध;
-			पूर्ण
+				if (err)
+					break;
+			}
 
 			of_node_put(args.np);
-			अगर (args.np == np && (args.args_count == 0 ||
+			if (args.np == np && (args.args_count == 0 ||
 					      args.args[0] == arg0))
-				जाओ finish;
+				goto finish;
 			index++;
-		पूर्ण जबतक (args.np);
-	पूर्ण जबतक (controller);
+		} while (args.np);
+	} while (controller);
 
 finish:
-	err = of_property_पढ़ो_string(controller, "dr_mode", &dr_mode);
+	err = of_property_read_string(controller, "dr_mode", &dr_mode);
 	of_node_put(controller);
 
-	अगर (err < 0)
-		वापस USB_DR_MODE_UNKNOWN;
+	if (err < 0)
+		return USB_DR_MODE_UNKNOWN;
 
-	वापस usb_get_dr_mode_from_string(dr_mode);
-पूर्ण
+	return usb_get_dr_mode_from_string(dr_mode);
+}
 EXPORT_SYMBOL_GPL(of_usb_get_dr_mode_by_phy);
 
 /**
- * of_usb_host_tpl_support - to get अगर Targeted Peripheral List is supported
- * क्रम given targeted hosts (non-PC hosts)
- * @np: Poपूर्णांकer to the given device_node
+ * of_usb_host_tpl_support - to get if Targeted Peripheral List is supported
+ * for given targeted hosts (non-PC hosts)
+ * @np: Pointer to the given device_node
  *
- * The function माला_लो अगर the targeted hosts support TPL or not
+ * The function gets if the targeted hosts support TPL or not
  */
-bool of_usb_host_tpl_support(काष्ठा device_node *np)
-अणु
-	वापस of_property_पढ़ो_bool(np, "tpl-support");
-पूर्ण
+bool of_usb_host_tpl_support(struct device_node *np)
+{
+	return of_property_read_bool(np, "tpl-support");
+}
 EXPORT_SYMBOL_GPL(of_usb_host_tpl_support);
 
 /**
  * of_usb_update_otg_caps - to update usb otg capabilities according to
  * the passed properties in DT.
- * @np: Poपूर्णांकer to the given device_node
- * @otg_caps: Poपूर्णांकer to the target usb_otg_caps to be set
+ * @np: Pointer to the given device_node
+ * @otg_caps: Pointer to the target usb_otg_caps to be set
  *
  * The function updates the otg capabilities
  */
-पूर्णांक of_usb_update_otg_caps(काष्ठा device_node *np,
-			काष्ठा usb_otg_caps *otg_caps)
-अणु
+int of_usb_update_otg_caps(struct device_node *np,
+			struct usb_otg_caps *otg_caps)
+{
 	u32 otg_rev;
 
-	अगर (!otg_caps)
-		वापस -EINVAL;
+	if (!otg_caps)
+		return -EINVAL;
 
-	अगर (!of_property_पढ़ो_u32(np, "otg-rev", &otg_rev)) अणु
-		चयन (otg_rev) अणु
-		हाल 0x0100:
-		हाल 0x0120:
-		हाल 0x0130:
-		हाल 0x0200:
-			/* Choose the lesser one अगर it's alपढ़ोy been set */
-			अगर (otg_caps->otg_rev)
+	if (!of_property_read_u32(np, "otg-rev", &otg_rev)) {
+		switch (otg_rev) {
+		case 0x0100:
+		case 0x0120:
+		case 0x0130:
+		case 0x0200:
+			/* Choose the lesser one if it's already been set */
+			if (otg_caps->otg_rev)
 				otg_caps->otg_rev = min_t(u16, otg_rev,
 							otg_caps->otg_rev);
-			अन्यथा
+			else
 				otg_caps->otg_rev = otg_rev;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			pr_err("%pOF: unsupported otg-rev: 0x%x\n",
 						np, otg_rev);
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			return -EINVAL;
+		}
+	} else {
 		/*
-		 * otg-rev is mandatory क्रम otg properties, अगर not passed
+		 * otg-rev is mandatory for otg properties, if not passed
 		 * we set it to be 0 and assume it's a legacy otg device.
-		 * Non-dt platक्रमm can set it afterwards.
+		 * Non-dt platform can set it afterwards.
 		 */
 		otg_caps->otg_rev = 0;
-	पूर्ण
+	}
 
-	अगर (of_property_पढ़ो_bool(np, "hnp-disable"))
+	if (of_property_read_bool(np, "hnp-disable"))
 		otg_caps->hnp_support = false;
-	अगर (of_property_पढ़ो_bool(np, "srp-disable"))
+	if (of_property_read_bool(np, "srp-disable"))
 		otg_caps->srp_support = false;
-	अगर (of_property_पढ़ो_bool(np, "adp-disable") ||
+	if (of_property_read_bool(np, "adp-disable") ||
 				(otg_caps->otg_rev < 0x0200))
 		otg_caps->adp_support = false;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(of_usb_update_otg_caps);
 
 /**
  * usb_of_get_companion_dev - Find the companion device
- * @dev: the device poपूर्णांकer to find a companion
+ * @dev: the device pointer to find a companion
  *
- * Find the companion device from platक्रमm bus.
+ * Find the companion device from platform bus.
  *
- * Takes a reference to the वापसed काष्ठा device which needs to be dropped
+ * Takes a reference to the returned struct device which needs to be dropped
  * after use.
  *
- * Return: On success, a poपूर्णांकer to the companion device, %शून्य on failure.
+ * Return: On success, a pointer to the companion device, %NULL on failure.
  */
-काष्ठा device *usb_of_get_companion_dev(काष्ठा device *dev)
-अणु
-	काष्ठा device_node *node;
-	काष्ठा platक्रमm_device *pdev = शून्य;
+struct device *usb_of_get_companion_dev(struct device *dev)
+{
+	struct device_node *node;
+	struct platform_device *pdev = NULL;
 
 	node = of_parse_phandle(dev->of_node, "companion", 0);
-	अगर (node)
+	if (node)
 		pdev = of_find_device_by_node(node);
 
 	of_node_put(node);
 
-	वापस pdev ? &pdev->dev : शून्य;
-पूर्ण
+	return pdev ? &pdev->dev : NULL;
+}
 EXPORT_SYMBOL_GPL(usb_of_get_companion_dev);
-#पूर्ण_अगर
+#endif
 
-काष्ठा dentry *usb_debug_root;
+struct dentry *usb_debug_root;
 EXPORT_SYMBOL_GPL(usb_debug_root);
 
-अटल पूर्णांक __init usb_common_init(व्योम)
-अणु
-	usb_debug_root = debugfs_create_dir("usb", शून्य);
+static int __init usb_common_init(void)
+{
+	usb_debug_root = debugfs_create_dir("usb", NULL);
 	ledtrig_usb_init();
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम __निकास usb_common_निकास(व्योम)
-अणु
-	ledtrig_usb_निकास();
-	debugfs_हटाओ_recursive(usb_debug_root);
-पूर्ण
+static void __exit usb_common_exit(void)
+{
+	ledtrig_usb_exit();
+	debugfs_remove_recursive(usb_debug_root);
+}
 
 subsys_initcall(usb_common_init);
-module_निकास(usb_common_निकास);
+module_exit(usb_common_exit);
 
 MODULE_LICENSE("GPL");

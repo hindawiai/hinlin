@@ -1,109 +1,108 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0 OR Linux-OpenIB
+// SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB
 // Copyright (c) 2021 Mellanox Technologies.
 
-#समावेश "eswitch.h"
+#include "eswitch.h"
 
-/* This काष्ठा is used as a key to the hash table and we need it to be packed
+/* This struct is used as a key to the hash table and we need it to be packed
  * so hash result is consistent
  */
-काष्ठा mlx5_vport_key अणु
+struct mlx5_vport_key {
 	u32 chain;
 	u16 prio;
 	u16 vport;
 	u16 vhca_id;
-	स्थिर काष्ठा esw_vport_tbl_namespace *vport_ns;
-पूर्ण __packed;
+	const struct esw_vport_tbl_namespace *vport_ns;
+} __packed;
 
-काष्ठा mlx5_vport_table अणु
-	काष्ठा hlist_node hlist;
-	काष्ठा mlx5_flow_table *fdb;
+struct mlx5_vport_table {
+	struct hlist_node hlist;
+	struct mlx5_flow_table *fdb;
 	u32 num_rules;
-	काष्ठा mlx5_vport_key key;
-पूर्ण;
+	struct mlx5_vport_key key;
+};
 
-अटल काष्ठा mlx5_flow_table *
-esw_vport_tbl_create(काष्ठा mlx5_eचयन *esw, काष्ठा mlx5_flow_namespace *ns,
-		     स्थिर काष्ठा esw_vport_tbl_namespace *vport_ns)
-अणु
-	काष्ठा mlx5_flow_table_attr ft_attr = अणुपूर्ण;
-	काष्ठा mlx5_flow_table *fdb;
+static struct mlx5_flow_table *
+esw_vport_tbl_create(struct mlx5_eswitch *esw, struct mlx5_flow_namespace *ns,
+		     const struct esw_vport_tbl_namespace *vport_ns)
+{
+	struct mlx5_flow_table_attr ft_attr = {};
+	struct mlx5_flow_table *fdb;
 
-	अगर (vport_ns->max_num_groups)
-		ft_attr.स्वतःgroup.max_num_groups = vport_ns->max_num_groups;
-	अन्यथा
-		ft_attr.स्वतःgroup.max_num_groups = esw->params.large_group_num;
+	if (vport_ns->max_num_groups)
+		ft_attr.autogroup.max_num_groups = vport_ns->max_num_groups;
+	else
+		ft_attr.autogroup.max_num_groups = esw->params.large_group_num;
 	ft_attr.max_fte = vport_ns->max_fte;
 	ft_attr.prio = FDB_PER_VPORT;
 	ft_attr.flags = vport_ns->flags;
-	fdb = mlx5_create_स्वतः_grouped_flow_table(ns, &ft_attr);
-	अगर (IS_ERR(fdb)) अणु
+	fdb = mlx5_create_auto_grouped_flow_table(ns, &ft_attr);
+	if (IS_ERR(fdb)) {
 		esw_warn(esw->dev, "Failed to create per vport FDB Table err %ld\n",
 			 PTR_ERR(fdb));
-	पूर्ण
+	}
 
-	वापस fdb;
-पूर्ण
+	return fdb;
+}
 
-अटल u32 flow_attr_to_vport_key(काष्ठा mlx5_eचयन *esw,
-				  काष्ठा mlx5_vport_tbl_attr *attr,
-				  काष्ठा mlx5_vport_key *key)
-अणु
+static u32 flow_attr_to_vport_key(struct mlx5_eswitch *esw,
+				  struct mlx5_vport_tbl_attr *attr,
+				  struct mlx5_vport_key *key)
+{
 	key->vport = attr->vport;
 	key->chain = attr->chain;
 	key->prio = attr->prio;
 	key->vhca_id = MLX5_CAP_GEN(esw->dev, vhca_id);
 	key->vport_ns  = attr->vport_ns;
-	वापस jhash(key, माप(*key), 0);
-पूर्ण
+	return jhash(key, sizeof(*key), 0);
+}
 
 /* caller must hold vports.lock */
-अटल काष्ठा mlx5_vport_table *
-esw_vport_tbl_lookup(काष्ठा mlx5_eचयन *esw, काष्ठा mlx5_vport_key *skey, u32 key)
-अणु
-	काष्ठा mlx5_vport_table *e;
+static struct mlx5_vport_table *
+esw_vport_tbl_lookup(struct mlx5_eswitch *esw, struct mlx5_vport_key *skey, u32 key)
+{
+	struct mlx5_vport_table *e;
 
-	hash_क्रम_each_possible(esw->fdb_table.offloads.vports.table, e, hlist, key)
-		अगर (!स_भेद(&e->key, skey, माप(*skey)))
-			वापस e;
+	hash_for_each_possible(esw->fdb_table.offloads.vports.table, e, hlist, key)
+		if (!memcmp(&e->key, skey, sizeof(*skey)))
+			return e;
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-काष्ठा mlx5_flow_table *
-mlx5_esw_vporttbl_get(काष्ठा mlx5_eचयन *esw, काष्ठा mlx5_vport_tbl_attr *attr)
-अणु
-	काष्ठा mlx5_core_dev *dev = esw->dev;
-	काष्ठा mlx5_flow_namespace *ns;
-	काष्ठा mlx5_flow_table *fdb;
-	काष्ठा mlx5_vport_table *e;
-	काष्ठा mlx5_vport_key skey;
+struct mlx5_flow_table *
+mlx5_esw_vporttbl_get(struct mlx5_eswitch *esw, struct mlx5_vport_tbl_attr *attr)
+{
+	struct mlx5_core_dev *dev = esw->dev;
+	struct mlx5_flow_namespace *ns;
+	struct mlx5_flow_table *fdb;
+	struct mlx5_vport_table *e;
+	struct mlx5_vport_key skey;
 	u32 hkey;
 
 	mutex_lock(&esw->fdb_table.offloads.vports.lock);
 	hkey = flow_attr_to_vport_key(esw, attr, &skey);
 	e = esw_vport_tbl_lookup(esw, &skey, hkey);
-	अगर (e) अणु
+	if (e) {
 		e->num_rules++;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	e = kzalloc(माप(*e), GFP_KERNEL);
-	अगर (!e) अणु
+	e = kzalloc(sizeof(*e), GFP_KERNEL);
+	if (!e) {
 		fdb = ERR_PTR(-ENOMEM);
-		जाओ err_alloc;
-	पूर्ण
+		goto err_alloc;
+	}
 
 	ns = mlx5_get_flow_namespace(dev, MLX5_FLOW_NAMESPACE_FDB);
-	अगर (!ns) अणु
+	if (!ns) {
 		esw_warn(dev, "Failed to get FDB namespace\n");
 		fdb = ERR_PTR(-ENOENT);
-		जाओ err_ns;
-	पूर्ण
+		goto err_ns;
+	}
 
 	fdb = esw_vport_tbl_create(esw, ns, attr->vport_ns);
-	अगर (IS_ERR(fdb))
-		जाओ err_ns;
+	if (IS_ERR(fdb))
+		goto err_ns;
 
 	e->fdb = fdb;
 	e->num_rules = 1;
@@ -111,31 +110,31 @@ mlx5_esw_vporttbl_get(काष्ठा mlx5_eचयन *esw, काष्ठ�
 	hash_add(esw->fdb_table.offloads.vports.table, &e->hlist, hkey);
 out:
 	mutex_unlock(&esw->fdb_table.offloads.vports.lock);
-	वापस e->fdb;
+	return e->fdb;
 
 err_ns:
-	kमुक्त(e);
+	kfree(e);
 err_alloc:
 	mutex_unlock(&esw->fdb_table.offloads.vports.lock);
-	वापस fdb;
-पूर्ण
+	return fdb;
+}
 
-व्योम
-mlx5_esw_vporttbl_put(काष्ठा mlx5_eचयन *esw, काष्ठा mlx5_vport_tbl_attr *attr)
-अणु
-	काष्ठा mlx5_vport_table *e;
-	काष्ठा mlx5_vport_key key;
+void
+mlx5_esw_vporttbl_put(struct mlx5_eswitch *esw, struct mlx5_vport_tbl_attr *attr)
+{
+	struct mlx5_vport_table *e;
+	struct mlx5_vport_key key;
 	u32 hkey;
 
 	mutex_lock(&esw->fdb_table.offloads.vports.lock);
 	hkey = flow_attr_to_vport_key(esw, attr, &key);
 	e = esw_vport_tbl_lookup(esw, &key, hkey);
-	अगर (!e || --e->num_rules)
-		जाओ out;
+	if (!e || --e->num_rules)
+		goto out;
 
 	hash_del(&e->hlist);
 	mlx5_destroy_flow_table(e->fdb);
-	kमुक्त(e);
+	kfree(e);
 out:
 	mutex_unlock(&esw->fdb_table.offloads.vports.lock);
-पूर्ण
+}

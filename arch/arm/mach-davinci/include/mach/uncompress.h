@@ -1,6 +1,5 @@
-<शैली गुरु>
 /*
- * Serial port stubs क्रम kernel decompress status messages
+ * Serial port stubs for kernel decompress status messages
  *
  * Initially based on:
  * arch/arm/plat-omap/include/mach/uncompress.h
@@ -19,65 +18,65 @@
  * kind, whether express or implied.
  */
 
-#समावेश <linux/types.h>
-#समावेश <linux/serial_reg.h>
+#include <linux/types.h>
+#include <linux/serial_reg.h>
 
-#समावेश <यंत्र/mach-types.h>
+#include <asm/mach-types.h>
 
-#समावेश <mach/serial.h>
+#include <mach/serial.h>
 
-#घोषणा IOMEM(x)	((व्योम __क्रमce __iomem *)(x))
+#define IOMEM(x)	((void __force __iomem *)(x))
 
 u32 *uart;
 
-/* PORT_16C550A, in polled non-fअगरo mode */
-अटल अंतरभूत व्योम अ_दो(अक्षर c)
-अणु
-	अगर (!uart)
-		वापस;
+/* PORT_16C550A, in polled non-fifo mode */
+static inline void putc(char c)
+{
+	if (!uart)
+		return;
 
-	जबतक (!(uart[UART_LSR] & UART_LSR_THRE))
+	while (!(uart[UART_LSR] & UART_LSR_THRE))
 		barrier();
 	uart[UART_TX] = c;
-पूर्ण
+}
 
-अटल अंतरभूत व्योम flush(व्योम)
-अणु
-	अगर (!uart)
-		वापस;
+static inline void flush(void)
+{
+	if (!uart)
+		return;
 
-	जबतक (!(uart[UART_LSR] & UART_LSR_THRE))
+	while (!(uart[UART_LSR] & UART_LSR_THRE))
 		barrier();
-पूर्ण
+}
 
-अटल अंतरभूत व्योम set_uart_info(u32 phys)
-अणु
+static inline void set_uart_info(u32 phys)
+{
 	uart = (u32 *)phys;
-पूर्ण
+}
 
-#घोषणा _DEBUG_LL_ENTRY(machine, phys)				\
-	अणु							\
-		अगर (machine_is_##machine()) अणु			\
+#define _DEBUG_LL_ENTRY(machine, phys)				\
+	{							\
+		if (machine_is_##machine()) {			\
 			set_uart_info(phys);			\
-			अवरोध;					\
-		पूर्ण						\
-	पूर्ण
+			break;					\
+		}						\
+	}
 
-#घोषणा DEBUG_LL_DAVINCI(machine, port)				\
+#define DEBUG_LL_DAVINCI(machine, port)				\
 	_DEBUG_LL_ENTRY(machine, DAVINCI_UART##port##_BASE)
 
-#घोषणा DEBUG_LL_DA8XX(machine, port)				\
+#define DEBUG_LL_DA8XX(machine, port)				\
 	_DEBUG_LL_ENTRY(machine, DA8XX_UART##port##_BASE)
 
-अटल अंतरभूत व्योम __arch_decomp_setup(अचिन्हित दीर्घ arch_id)
-अणु
+static inline void __arch_decomp_setup(unsigned long arch_id)
+{
 	/*
 	 * Initialize the port based on the machine ID from the bootloader.
-	 * Note that we're using macros here instead of चयन statement
-	 * as machine_is functions are optimized out क्रम the boards that
+	 * Note that we're using macros here instead of switch statement
+	 * as machine_is functions are optimized out for the boards that
 	 * are not selected.
 	 */
-	करो अणु
+	do {
 		/* Davinci boards */
 		DEBUG_LL_DAVINCI(davinci_evm,		0);
 		DEBUG_LL_DAVINCI(sffsdr,		0);
@@ -92,7 +91,7 @@ u32 *uart;
 		DEBUG_LL_DA8XX(davinci_da850_evm,	2);
 		DEBUG_LL_DA8XX(mityomapl138,		1);
 		DEBUG_LL_DA8XX(omapl138_hawkboard,	2);
-	पूर्ण जबतक (0);
-पूर्ण
+	} while (0);
+}
 
-#घोषणा arch_decomp_setup()	__arch_decomp_setup(arch_id)
+#define arch_decomp_setup()	__arch_decomp_setup(arch_id)

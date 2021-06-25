@@ -1,21 +1,20 @@
-<शैली गुरु>
 /*
  * net/tipc/monitor.c
  *
  * Copyright (c) 2016, Ericsson AB
  * All rights reserved.
  *
- * Redistribution and use in source and binary क्रमms, with or without
- * modअगरication, are permitted provided that the following conditions are met:
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
  *
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary क्रमm must reproduce the above copyright
+ * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
- *    करोcumentation and/or other materials provided with the distribution.
+ *    documentation and/or other materials provided with the distribution.
  * 3. Neither the names of the copyright holders nor the names of its
- *    contributors may be used to enकरोrse or promote products derived from
- *    this software without specअगरic prior written permission.
+ *    contributors may be used to endorse or promote products derived from
+ *    this software without specific prior written permission.
  *
  * Alternatively, this software may be distributed under the terms of the
  * GNU General Public License ("GPL") version 2 as published by the Free
@@ -25,7 +24,7 @@
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
  * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
- * LIABLE FOR ANY सूचीECT, INसूचीECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
  * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
  * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
  * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
@@ -34,840 +33,840 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#समावेश <net/genetlink.h>
-#समावेश "core.h"
-#समावेश "addr.h"
-#समावेश "monitor.h"
-#समावेश "bearer.h"
+#include <net/genetlink.h>
+#include "core.h"
+#include "addr.h"
+#include "monitor.h"
+#include "bearer.h"
 
-#घोषणा MAX_MON_DOMAIN       64
-#घोषणा MON_TIMEOUT          120000
-#घोषणा MAX_PEER_DOWN_EVENTS 4
+#define MAX_MON_DOMAIN       64
+#define MON_TIMEOUT          120000
+#define MAX_PEER_DOWN_EVENTS 4
 
-/* काष्ठा tipc_mon_करोमुख्य: करोमुख्य record to be transferred between peers
- * @len: actual size of करोमुख्य record
- * @gen: current generation of sender's करोमुख्य
- * @ack_gen: most recent generation of self's करोमुख्य acked by peer
- * @member_cnt: number of करोमुख्य member nodes described in this record
+/* struct tipc_mon_domain: domain record to be transferred between peers
+ * @len: actual size of domain record
+ * @gen: current generation of sender's domain
+ * @ack_gen: most recent generation of self's domain acked by peer
+ * @member_cnt: number of domain member nodes described in this record
  * @up_map: bit map indicating which of the members the sender considers up
- * @members: identity of the करोमुख्य members
+ * @members: identity of the domain members
  */
-काष्ठा tipc_mon_करोमुख्य अणु
+struct tipc_mon_domain {
 	u16 len;
 	u16 gen;
 	u16 ack_gen;
 	u16 member_cnt;
 	u64 up_map;
 	u32 members[MAX_MON_DOMAIN];
-पूर्ण;
+};
 
-/* काष्ठा tipc_peer: state of a peer node and its करोमुख्य
+/* struct tipc_peer: state of a peer node and its domain
  * @addr: tipc node identity of peer
  * @head_map: shows which other nodes currently consider peer 'up'
- * @करोमुख्य: most recent करोमुख्य record from peer
+ * @domain: most recent domain record from peer
  * @hash: position in hashed lookup list
  * @list: position in linked list, in circular ascending order by 'addr'
- * @applied: number of reported करोमुख्य members applied on this monitor list
+ * @applied: number of reported domain members applied on this monitor list
  * @is_up: peer is up as seen from this node
- * @is_head: peer is asचिन्हित करोमुख्य head as seen from this node
- * @is_local: peer is in local करोमुख्य and should be continuously monitored
- * @करोwn_cnt: - numbers of other peers which have reported this on lost
+ * @is_head: peer is assigned domain head as seen from this node
+ * @is_local: peer is in local domain and should be continuously monitored
+ * @down_cnt: - numbers of other peers which have reported this on lost
  */
-काष्ठा tipc_peer अणु
+struct tipc_peer {
 	u32 addr;
-	काष्ठा tipc_mon_करोमुख्य *करोमुख्य;
-	काष्ठा hlist_node hash;
-	काष्ठा list_head list;
+	struct tipc_mon_domain *domain;
+	struct hlist_node hash;
+	struct list_head list;
 	u8 applied;
-	u8 करोwn_cnt;
+	u8 down_cnt;
 	bool is_up;
 	bool is_head;
 	bool is_local;
-पूर्ण;
+};
 
-काष्ठा tipc_monitor अणु
-	काष्ठा hlist_head peers[NODE_HTABLE_SIZE];
-	पूर्णांक peer_cnt;
-	काष्ठा tipc_peer *self;
+struct tipc_monitor {
+	struct hlist_head peers[NODE_HTABLE_SIZE];
+	int peer_cnt;
+	struct tipc_peer *self;
 	rwlock_t lock;
-	काष्ठा tipc_mon_करोमुख्य cache;
+	struct tipc_mon_domain cache;
 	u16 list_gen;
-	u16 करोm_gen;
-	काष्ठा net *net;
-	काष्ठा समयr_list समयr;
-	अचिन्हित दीर्घ समयr_पूर्णांकv;
-पूर्ण;
+	u16 dom_gen;
+	struct net *net;
+	struct timer_list timer;
+	unsigned long timer_intv;
+};
 
-अटल काष्ठा tipc_monitor *tipc_monitor(काष्ठा net *net, पूर्णांक bearer_id)
-अणु
-	वापस tipc_net(net)->monitors[bearer_id];
-पूर्ण
+static struct tipc_monitor *tipc_monitor(struct net *net, int bearer_id)
+{
+	return tipc_net(net)->monitors[bearer_id];
+}
 
-स्थिर पूर्णांक tipc_max_करोमुख्य_size = माप(काष्ठा tipc_mon_करोमुख्य);
+const int tipc_max_domain_size = sizeof(struct tipc_mon_domain);
 
-अटल अंतरभूत u16 mon_cpu_to_le16(u16 val)
-अणु
-	वापस (__क्रमce __u16)htons(val);
-पूर्ण
+static inline u16 mon_cpu_to_le16(u16 val)
+{
+	return (__force __u16)htons(val);
+}
 
-अटल अंतरभूत u32 mon_cpu_to_le32(u32 val)
-अणु
-	वापस (__क्रमce __u32)htonl(val);
-पूर्ण
+static inline u32 mon_cpu_to_le32(u32 val)
+{
+	return (__force __u32)htonl(val);
+}
 
-अटल अंतरभूत u64 mon_cpu_to_le64(u64 val)
-अणु
-	वापस (__क्रमce __u64)cpu_to_be64(val);
-पूर्ण
+static inline u64 mon_cpu_to_le64(u64 val)
+{
+	return (__force __u64)cpu_to_be64(val);
+}
 
-अटल अंतरभूत u16 mon_le16_to_cpu(u16 val)
-अणु
-	वापस ntohs((__क्रमce __be16)val);
-पूर्ण
+static inline u16 mon_le16_to_cpu(u16 val)
+{
+	return ntohs((__force __be16)val);
+}
 
-अटल अंतरभूत u32 mon_le32_to_cpu(u32 val)
-अणु
-	वापस ntohl((__क्रमce __be32)val);
-पूर्ण
+static inline u32 mon_le32_to_cpu(u32 val)
+{
+	return ntohl((__force __be32)val);
+}
 
-अटल अंतरभूत u64 mon_le64_to_cpu(u64 val)
-अणु
-	वापस be64_to_cpu((__क्रमce __be64)val);
-पूर्ण
+static inline u64 mon_le64_to_cpu(u64 val)
+{
+	return be64_to_cpu((__force __be64)val);
+}
 
-/* करोm_rec_len(): actual length of करोमुख्य record क्रम transport
+/* dom_rec_len(): actual length of domain record for transport
  */
-अटल पूर्णांक करोm_rec_len(काष्ठा tipc_mon_करोमुख्य *करोm, u16 mcnt)
-अणु
-	वापस (दुरत्व(काष्ठा tipc_mon_करोमुख्य, members)) + (mcnt * माप(u32));
-पूर्ण
+static int dom_rec_len(struct tipc_mon_domain *dom, u16 mcnt)
+{
+	return (offsetof(struct tipc_mon_domain, members)) + (mcnt * sizeof(u32));
+}
 
-/* करोm_size() : calculate size of own करोमुख्य based on number of peers
+/* dom_size() : calculate size of own domain based on number of peers
  */
-अटल पूर्णांक करोm_size(पूर्णांक peers)
-अणु
-	पूर्णांक i = 0;
+static int dom_size(int peers)
+{
+	int i = 0;
 
-	जबतक ((i * i) < peers)
+	while ((i * i) < peers)
 		i++;
-	वापस i < MAX_MON_DOMAIN ? i : MAX_MON_DOMAIN;
-पूर्ण
+	return i < MAX_MON_DOMAIN ? i : MAX_MON_DOMAIN;
+}
 
-अटल व्योम map_set(u64 *up_map, पूर्णांक i, अचिन्हित पूर्णांक v)
-अणु
+static void map_set(u64 *up_map, int i, unsigned int v)
+{
 	*up_map &= ~(1ULL << i);
 	*up_map |= ((u64)v << i);
-पूर्ण
+}
 
-अटल पूर्णांक map_get(u64 up_map, पूर्णांक i)
-अणु
-	वापस (up_map & (1 << i)) >> i;
-पूर्ण
+static int map_get(u64 up_map, int i)
+{
+	return (up_map & (1 << i)) >> i;
+}
 
-अटल काष्ठा tipc_peer *peer_prev(काष्ठा tipc_peer *peer)
-अणु
-	वापस list_last_entry(&peer->list, काष्ठा tipc_peer, list);
-पूर्ण
+static struct tipc_peer *peer_prev(struct tipc_peer *peer)
+{
+	return list_last_entry(&peer->list, struct tipc_peer, list);
+}
 
-अटल काष्ठा tipc_peer *peer_nxt(काष्ठा tipc_peer *peer)
-अणु
-	वापस list_first_entry(&peer->list, काष्ठा tipc_peer, list);
-पूर्ण
+static struct tipc_peer *peer_nxt(struct tipc_peer *peer)
+{
+	return list_first_entry(&peer->list, struct tipc_peer, list);
+}
 
-अटल काष्ठा tipc_peer *peer_head(काष्ठा tipc_peer *peer)
-अणु
-	जबतक (!peer->is_head)
+static struct tipc_peer *peer_head(struct tipc_peer *peer)
+{
+	while (!peer->is_head)
 		peer = peer_prev(peer);
-	वापस peer;
-पूर्ण
+	return peer;
+}
 
-अटल काष्ठा tipc_peer *get_peer(काष्ठा tipc_monitor *mon, u32 addr)
-अणु
-	काष्ठा tipc_peer *peer;
-	अचिन्हित पूर्णांक thash = tipc_hashfn(addr);
+static struct tipc_peer *get_peer(struct tipc_monitor *mon, u32 addr)
+{
+	struct tipc_peer *peer;
+	unsigned int thash = tipc_hashfn(addr);
 
-	hlist_क्रम_each_entry(peer, &mon->peers[thash], hash) अणु
-		अगर (peer->addr == addr)
-			वापस peer;
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+	hlist_for_each_entry(peer, &mon->peers[thash], hash) {
+		if (peer->addr == addr)
+			return peer;
+	}
+	return NULL;
+}
 
-अटल काष्ठा tipc_peer *get_self(काष्ठा net *net, पूर्णांक bearer_id)
-अणु
-	काष्ठा tipc_monitor *mon = tipc_monitor(net, bearer_id);
+static struct tipc_peer *get_self(struct net *net, int bearer_id)
+{
+	struct tipc_monitor *mon = tipc_monitor(net, bearer_id);
 
-	वापस mon->self;
-पूर्ण
+	return mon->self;
+}
 
-अटल अंतरभूत bool tipc_mon_is_active(काष्ठा net *net, काष्ठा tipc_monitor *mon)
-अणु
-	काष्ठा tipc_net *tn = tipc_net(net);
+static inline bool tipc_mon_is_active(struct net *net, struct tipc_monitor *mon)
+{
+	struct tipc_net *tn = tipc_net(net);
 
-	वापस mon->peer_cnt > tn->mon_threshold;
-पूर्ण
+	return mon->peer_cnt > tn->mon_threshold;
+}
 
-/* mon_identअगरy_lost_members() : - identअगरy amd mark potentially lost members
+/* mon_identify_lost_members() : - identify amd mark potentially lost members
  */
-अटल व्योम mon_identअगरy_lost_members(काष्ठा tipc_peer *peer,
-				      काष्ठा tipc_mon_करोमुख्य *करोm_bef,
-				      पूर्णांक applied_bef)
-अणु
-	काष्ठा tipc_peer *member = peer;
-	काष्ठा tipc_mon_करोमुख्य *करोm_aft = peer->करोमुख्य;
-	पूर्णांक applied_aft = peer->applied;
-	पूर्णांक i;
+static void mon_identify_lost_members(struct tipc_peer *peer,
+				      struct tipc_mon_domain *dom_bef,
+				      int applied_bef)
+{
+	struct tipc_peer *member = peer;
+	struct tipc_mon_domain *dom_aft = peer->domain;
+	int applied_aft = peer->applied;
+	int i;
 
-	क्रम (i = 0; i < applied_bef; i++) अणु
+	for (i = 0; i < applied_bef; i++) {
 		member = peer_nxt(member);
 
-		/* Do nothing अगर self or peer alपढ़ोy see member as करोwn */
-		अगर (!member->is_up || !map_get(करोm_bef->up_map, i))
-			जारी;
+		/* Do nothing if self or peer already see member as down */
+		if (!member->is_up || !map_get(dom_bef->up_map, i))
+			continue;
 
 		/* Loss of local node must be detected by active probing */
-		अगर (member->is_local)
-			जारी;
+		if (member->is_local)
+			continue;
 
-		/* Start probing अगर member was हटाओd from applied करोमुख्य */
-		अगर (!applied_aft || (applied_aft < i)) अणु
-			member->करोwn_cnt = 1;
-			जारी;
-		पूर्ण
+		/* Start probing if member was removed from applied domain */
+		if (!applied_aft || (applied_aft < i)) {
+			member->down_cnt = 1;
+			continue;
+		}
 
-		/* Member loss is confirmed अगर it is still in applied करोमुख्य */
-		अगर (!map_get(करोm_aft->up_map, i))
-			member->करोwn_cnt++;
-	पूर्ण
-पूर्ण
+		/* Member loss is confirmed if it is still in applied domain */
+		if (!map_get(dom_aft->up_map, i))
+			member->down_cnt++;
+	}
+}
 
-/* mon_apply_करोमुख्य() : match a peer's करोमुख्य record against monitor list
+/* mon_apply_domain() : match a peer's domain record against monitor list
  */
-अटल व्योम mon_apply_करोमुख्य(काष्ठा tipc_monitor *mon,
-			     काष्ठा tipc_peer *peer)
-अणु
-	काष्ठा tipc_mon_करोमुख्य *करोm = peer->करोमुख्य;
-	काष्ठा tipc_peer *member;
+static void mon_apply_domain(struct tipc_monitor *mon,
+			     struct tipc_peer *peer)
+{
+	struct tipc_mon_domain *dom = peer->domain;
+	struct tipc_peer *member;
 	u32 addr;
-	पूर्णांक i;
+	int i;
 
-	अगर (!करोm || !peer->is_up)
-		वापस;
+	if (!dom || !peer->is_up)
+		return;
 
-	/* Scan across करोमुख्य members and match against monitor list */
+	/* Scan across domain members and match against monitor list */
 	peer->applied = 0;
 	member = peer_nxt(peer);
-	क्रम (i = 0; i < करोm->member_cnt; i++) अणु
-		addr = करोm->members[i];
-		अगर (addr != member->addr)
-			वापस;
+	for (i = 0; i < dom->member_cnt; i++) {
+		addr = dom->members[i];
+		if (addr != member->addr)
+			return;
 		peer->applied++;
 		member = peer_nxt(member);
-	पूर्ण
-पूर्ण
+	}
+}
 
-/* mon_update_local_करोमुख्य() : update after peer addition/removal/up/करोwn
+/* mon_update_local_domain() : update after peer addition/removal/up/down
  */
-अटल व्योम mon_update_local_करोमुख्य(काष्ठा tipc_monitor *mon)
-अणु
-	काष्ठा tipc_peer *self = mon->self;
-	काष्ठा tipc_mon_करोमुख्य *cache = &mon->cache;
-	काष्ठा tipc_mon_करोमुख्य *करोm = self->करोमुख्य;
-	काष्ठा tipc_peer *peer = self;
-	u64 prev_up_map = करोm->up_map;
+static void mon_update_local_domain(struct tipc_monitor *mon)
+{
+	struct tipc_peer *self = mon->self;
+	struct tipc_mon_domain *cache = &mon->cache;
+	struct tipc_mon_domain *dom = self->domain;
+	struct tipc_peer *peer = self;
+	u64 prev_up_map = dom->up_map;
 	u16 member_cnt, i;
-	bool dअगरf;
+	bool diff;
 
-	/* Update local करोमुख्य size based on current size of cluster */
-	member_cnt = करोm_size(mon->peer_cnt) - 1;
+	/* Update local domain size based on current size of cluster */
+	member_cnt = dom_size(mon->peer_cnt) - 1;
 	self->applied = member_cnt;
 
-	/* Update native and cached outgoing local करोमुख्य records */
-	करोm->len = करोm_rec_len(करोm, member_cnt);
-	dअगरf = करोm->member_cnt != member_cnt;
-	करोm->member_cnt = member_cnt;
-	क्रम (i = 0; i < member_cnt; i++) अणु
+	/* Update native and cached outgoing local domain records */
+	dom->len = dom_rec_len(dom, member_cnt);
+	diff = dom->member_cnt != member_cnt;
+	dom->member_cnt = member_cnt;
+	for (i = 0; i < member_cnt; i++) {
 		peer = peer_nxt(peer);
-		dअगरf |= करोm->members[i] != peer->addr;
-		करोm->members[i] = peer->addr;
-		map_set(&करोm->up_map, i, peer->is_up);
+		diff |= dom->members[i] != peer->addr;
+		dom->members[i] = peer->addr;
+		map_set(&dom->up_map, i, peer->is_up);
 		cache->members[i] = mon_cpu_to_le32(peer->addr);
-	पूर्ण
-	dअगरf |= करोm->up_map != prev_up_map;
-	अगर (!dअगरf)
-		वापस;
-	करोm->gen = ++mon->करोm_gen;
-	cache->len = mon_cpu_to_le16(करोm->len);
-	cache->gen = mon_cpu_to_le16(करोm->gen);
+	}
+	diff |= dom->up_map != prev_up_map;
+	if (!diff)
+		return;
+	dom->gen = ++mon->dom_gen;
+	cache->len = mon_cpu_to_le16(dom->len);
+	cache->gen = mon_cpu_to_le16(dom->gen);
 	cache->member_cnt = mon_cpu_to_le16(member_cnt);
-	cache->up_map = mon_cpu_to_le64(करोm->up_map);
-	mon_apply_करोमुख्य(mon, self);
-पूर्ण
+	cache->up_map = mon_cpu_to_le64(dom->up_map);
+	mon_apply_domain(mon, self);
+}
 
-/* mon_update_neighbors() : update preceding neighbors of added/हटाओd peer
+/* mon_update_neighbors() : update preceding neighbors of added/removed peer
  */
-अटल व्योम mon_update_neighbors(काष्ठा tipc_monitor *mon,
-				 काष्ठा tipc_peer *peer)
-अणु
-	पूर्णांक dz, i;
+static void mon_update_neighbors(struct tipc_monitor *mon,
+				 struct tipc_peer *peer)
+{
+	int dz, i;
 
-	dz = करोm_size(mon->peer_cnt);
-	क्रम (i = 0; i < dz; i++) अणु
-		mon_apply_करोमुख्य(mon, peer);
+	dz = dom_size(mon->peer_cnt);
+	for (i = 0; i < dz; i++) {
+		mon_apply_domain(mon, peer);
 		peer = peer_prev(peer);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /* mon_assign_roles() : reassign peer roles after a network change
  * The monitor list is consistent at this stage; i.e., each peer is monitoring
- * a set of करोमुख्य members as matched between करोमुख्य record and the monitor list
+ * a set of domain members as matched between domain record and the monitor list
  */
-अटल व्योम mon_assign_roles(काष्ठा tipc_monitor *mon, काष्ठा tipc_peer *head)
-अणु
-	काष्ठा tipc_peer *peer = peer_nxt(head);
-	काष्ठा tipc_peer *self = mon->self;
-	पूर्णांक i = 0;
+static void mon_assign_roles(struct tipc_monitor *mon, struct tipc_peer *head)
+{
+	struct tipc_peer *peer = peer_nxt(head);
+	struct tipc_peer *self = mon->self;
+	int i = 0;
 
-	क्रम (; peer != self; peer = peer_nxt(peer)) अणु
+	for (; peer != self; peer = peer_nxt(peer)) {
 		peer->is_local = false;
 
-		/* Update करोमुख्य member */
-		अगर (i++ < head->applied) अणु
+		/* Update domain member */
+		if (i++ < head->applied) {
 			peer->is_head = false;
-			अगर (head == self)
+			if (head == self)
 				peer->is_local = true;
-			जारी;
-		पूर्ण
-		/* Assign next करोमुख्य head */
-		अगर (!peer->is_up)
-			जारी;
-		अगर (peer->is_head)
-			अवरोध;
+			continue;
+		}
+		/* Assign next domain head */
+		if (!peer->is_up)
+			continue;
+		if (peer->is_head)
+			break;
 		head = peer;
 		head->is_head = true;
 		i = 0;
-	पूर्ण
+	}
 	mon->list_gen++;
-पूर्ण
+}
 
-व्योम tipc_mon_हटाओ_peer(काष्ठा net *net, u32 addr, पूर्णांक bearer_id)
-अणु
-	काष्ठा tipc_monitor *mon = tipc_monitor(net, bearer_id);
-	काष्ठा tipc_peer *self;
-	काष्ठा tipc_peer *peer, *prev, *head;
+void tipc_mon_remove_peer(struct net *net, u32 addr, int bearer_id)
+{
+	struct tipc_monitor *mon = tipc_monitor(net, bearer_id);
+	struct tipc_peer *self;
+	struct tipc_peer *peer, *prev, *head;
 
-	अगर (!mon)
-		वापस;
+	if (!mon)
+		return;
 
 	self = get_self(net, bearer_id);
-	ग_लिखो_lock_bh(&mon->lock);
+	write_lock_bh(&mon->lock);
 	peer = get_peer(mon, addr);
-	अगर (!peer)
-		जाओ निकास;
+	if (!peer)
+		goto exit;
 	prev = peer_prev(peer);
 	list_del(&peer->list);
 	hlist_del(&peer->hash);
-	kमुक्त(peer->करोमुख्य);
-	kमुक्त(peer);
+	kfree(peer->domain);
+	kfree(peer);
 	mon->peer_cnt--;
 	head = peer_head(prev);
-	अगर (head == self)
-		mon_update_local_करोमुख्य(mon);
+	if (head == self)
+		mon_update_local_domain(mon);
 	mon_update_neighbors(mon, prev);
 
-	/* Revert to full-mesh monitoring अगर we reach threshold */
-	अगर (!tipc_mon_is_active(net, mon)) अणु
-		list_क्रम_each_entry(peer, &self->list, list) अणु
-			kमुक्त(peer->करोमुख्य);
-			peer->करोमुख्य = शून्य;
+	/* Revert to full-mesh monitoring if we reach threshold */
+	if (!tipc_mon_is_active(net, mon)) {
+		list_for_each_entry(peer, &self->list, list) {
+			kfree(peer->domain);
+			peer->domain = NULL;
 			peer->applied = 0;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	mon_assign_roles(mon, head);
-निकास:
-	ग_लिखो_unlock_bh(&mon->lock);
-पूर्ण
+exit:
+	write_unlock_bh(&mon->lock);
+}
 
-अटल bool tipc_mon_add_peer(काष्ठा tipc_monitor *mon, u32 addr,
-			      काष्ठा tipc_peer **peer)
-अणु
-	काष्ठा tipc_peer *self = mon->self;
-	काष्ठा tipc_peer *cur, *prev, *p;
+static bool tipc_mon_add_peer(struct tipc_monitor *mon, u32 addr,
+			      struct tipc_peer **peer)
+{
+	struct tipc_peer *self = mon->self;
+	struct tipc_peer *cur, *prev, *p;
 
-	p = kzalloc(माप(*p), GFP_ATOMIC);
+	p = kzalloc(sizeof(*p), GFP_ATOMIC);
 	*peer = p;
-	अगर (!p)
-		वापस false;
+	if (!p)
+		return false;
 	p->addr = addr;
 
 	/* Add new peer to lookup list */
 	INIT_LIST_HEAD(&p->list);
 	hlist_add_head(&p->hash, &mon->peers[tipc_hashfn(addr)]);
 
-	/* Sort new peer पूर्णांकo iterator list, in ascending circular order */
+	/* Sort new peer into iterator list, in ascending circular order */
 	prev = self;
-	list_क्रम_each_entry(cur, &self->list, list) अणु
-		अगर ((addr > prev->addr) && (addr < cur->addr))
-			अवरोध;
-		अगर (((addr < cur->addr) || (addr > prev->addr)) &&
+	list_for_each_entry(cur, &self->list, list) {
+		if ((addr > prev->addr) && (addr < cur->addr))
+			break;
+		if (((addr < cur->addr) || (addr > prev->addr)) &&
 		    (prev->addr > cur->addr))
-			अवरोध;
+			break;
 		prev = cur;
-	पूर्ण
+	}
 	list_add_tail(&p->list, &cur->list);
 	mon->peer_cnt++;
 	mon_update_neighbors(mon, p);
-	वापस true;
-पूर्ण
+	return true;
+}
 
-व्योम tipc_mon_peer_up(काष्ठा net *net, u32 addr, पूर्णांक bearer_id)
-अणु
-	काष्ठा tipc_monitor *mon = tipc_monitor(net, bearer_id);
-	काष्ठा tipc_peer *self = get_self(net, bearer_id);
-	काष्ठा tipc_peer *peer, *head;
+void tipc_mon_peer_up(struct net *net, u32 addr, int bearer_id)
+{
+	struct tipc_monitor *mon = tipc_monitor(net, bearer_id);
+	struct tipc_peer *self = get_self(net, bearer_id);
+	struct tipc_peer *peer, *head;
 
-	ग_लिखो_lock_bh(&mon->lock);
+	write_lock_bh(&mon->lock);
 	peer = get_peer(mon, addr);
-	अगर (!peer && !tipc_mon_add_peer(mon, addr, &peer))
-		जाओ निकास;
+	if (!peer && !tipc_mon_add_peer(mon, addr, &peer))
+		goto exit;
 	peer->is_up = true;
 	head = peer_head(peer);
-	अगर (head == self)
-		mon_update_local_करोमुख्य(mon);
+	if (head == self)
+		mon_update_local_domain(mon);
 	mon_assign_roles(mon, head);
-निकास:
-	ग_लिखो_unlock_bh(&mon->lock);
-पूर्ण
+exit:
+	write_unlock_bh(&mon->lock);
+}
 
-व्योम tipc_mon_peer_करोwn(काष्ठा net *net, u32 addr, पूर्णांक bearer_id)
-अणु
-	काष्ठा tipc_monitor *mon = tipc_monitor(net, bearer_id);
-	काष्ठा tipc_peer *self;
-	काष्ठा tipc_peer *peer, *head;
-	काष्ठा tipc_mon_करोमुख्य *करोm;
-	पूर्णांक applied;
+void tipc_mon_peer_down(struct net *net, u32 addr, int bearer_id)
+{
+	struct tipc_monitor *mon = tipc_monitor(net, bearer_id);
+	struct tipc_peer *self;
+	struct tipc_peer *peer, *head;
+	struct tipc_mon_domain *dom;
+	int applied;
 
-	अगर (!mon)
-		वापस;
+	if (!mon)
+		return;
 
 	self = get_self(net, bearer_id);
-	ग_लिखो_lock_bh(&mon->lock);
+	write_lock_bh(&mon->lock);
 	peer = get_peer(mon, addr);
-	अगर (!peer) अणु
+	if (!peer) {
 		pr_warn("Mon: unknown link %x/%u DOWN\n", addr, bearer_id);
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 	applied = peer->applied;
 	peer->applied = 0;
-	करोm = peer->करोमुख्य;
-	peer->करोमुख्य = शून्य;
-	अगर (peer->is_head)
-		mon_identअगरy_lost_members(peer, करोm, applied);
-	kमुक्त(करोm);
+	dom = peer->domain;
+	peer->domain = NULL;
+	if (peer->is_head)
+		mon_identify_lost_members(peer, dom, applied);
+	kfree(dom);
 	peer->is_up = false;
 	peer->is_head = false;
 	peer->is_local = false;
-	peer->करोwn_cnt = 0;
+	peer->down_cnt = 0;
 	head = peer_head(peer);
-	अगर (head == self)
-		mon_update_local_करोमुख्य(mon);
+	if (head == self)
+		mon_update_local_domain(mon);
 	mon_assign_roles(mon, head);
-निकास:
-	ग_लिखो_unlock_bh(&mon->lock);
-पूर्ण
+exit:
+	write_unlock_bh(&mon->lock);
+}
 
-/* tipc_mon_rcv - process monitor करोमुख्य event message
+/* tipc_mon_rcv - process monitor domain event message
  */
-व्योम tipc_mon_rcv(काष्ठा net *net, व्योम *data, u16 dlen, u32 addr,
-		  काष्ठा tipc_mon_state *state, पूर्णांक bearer_id)
-अणु
-	काष्ठा tipc_monitor *mon = tipc_monitor(net, bearer_id);
-	काष्ठा tipc_mon_करोमुख्य *arrv_करोm = data;
-	काष्ठा tipc_mon_करोमुख्य करोm_bef;
-	काष्ठा tipc_mon_करोमुख्य *करोm;
-	काष्ठा tipc_peer *peer;
-	u16 new_member_cnt = mon_le16_to_cpu(arrv_करोm->member_cnt);
-	पूर्णांक new_dlen = करोm_rec_len(arrv_करोm, new_member_cnt);
-	u16 new_gen = mon_le16_to_cpu(arrv_करोm->gen);
-	u16 acked_gen = mon_le16_to_cpu(arrv_करोm->ack_gen);
-	u16 arrv_dlen = mon_le16_to_cpu(arrv_करोm->len);
+void tipc_mon_rcv(struct net *net, void *data, u16 dlen, u32 addr,
+		  struct tipc_mon_state *state, int bearer_id)
+{
+	struct tipc_monitor *mon = tipc_monitor(net, bearer_id);
+	struct tipc_mon_domain *arrv_dom = data;
+	struct tipc_mon_domain dom_bef;
+	struct tipc_mon_domain *dom;
+	struct tipc_peer *peer;
+	u16 new_member_cnt = mon_le16_to_cpu(arrv_dom->member_cnt);
+	int new_dlen = dom_rec_len(arrv_dom, new_member_cnt);
+	u16 new_gen = mon_le16_to_cpu(arrv_dom->gen);
+	u16 acked_gen = mon_le16_to_cpu(arrv_dom->ack_gen);
+	u16 arrv_dlen = mon_le16_to_cpu(arrv_dom->len);
 	bool probing = state->probing;
-	पूर्णांक i, applied_bef;
+	int i, applied_bef;
 
 	state->probing = false;
 
-	/* Sanity check received करोमुख्य record */
-	अगर (dlen < करोm_rec_len(arrv_करोm, 0))
-		वापस;
-	अगर (dlen != करोm_rec_len(arrv_करोm, new_member_cnt))
-		वापस;
-	अगर (dlen < new_dlen || arrv_dlen != new_dlen)
-		वापस;
+	/* Sanity check received domain record */
+	if (dlen < dom_rec_len(arrv_dom, 0))
+		return;
+	if (dlen != dom_rec_len(arrv_dom, new_member_cnt))
+		return;
+	if (dlen < new_dlen || arrv_dlen != new_dlen)
+		return;
 
-	/* Synch generation numbers with peer अगर link just came up */
-	अगर (!state->synched) अणु
+	/* Synch generation numbers with peer if link just came up */
+	if (!state->synched) {
 		state->peer_gen = new_gen - 1;
 		state->acked_gen = acked_gen;
 		state->synched = true;
-	पूर्ण
+	}
 
-	अगर (more(acked_gen, state->acked_gen))
+	if (more(acked_gen, state->acked_gen))
 		state->acked_gen = acked_gen;
 
-	/* Drop duplicate unless we are रुकोing क्रम a probe response */
-	अगर (!more(new_gen, state->peer_gen) && !probing)
-		वापस;
+	/* Drop duplicate unless we are waiting for a probe response */
+	if (!more(new_gen, state->peer_gen) && !probing)
+		return;
 
-	ग_लिखो_lock_bh(&mon->lock);
+	write_lock_bh(&mon->lock);
 	peer = get_peer(mon, addr);
-	अगर (!peer || !peer->is_up)
-		जाओ निकास;
+	if (!peer || !peer->is_up)
+		goto exit;
 
 	/* Peer is confirmed, stop any ongoing probing */
-	peer->करोwn_cnt = 0;
+	peer->down_cnt = 0;
 
-	/* Task is करोne क्रम duplicate record */
-	अगर (!more(new_gen, state->peer_gen))
-		जाओ निकास;
+	/* Task is done for duplicate record */
+	if (!more(new_gen, state->peer_gen))
+		goto exit;
 
 	state->peer_gen = new_gen;
 
-	/* Cache current करोमुख्य record क्रम later use */
-	करोm_bef.member_cnt = 0;
-	करोm = peer->करोमुख्य;
-	अगर (करोm)
-		स_नकल(&करोm_bef, करोm, करोm->len);
+	/* Cache current domain record for later use */
+	dom_bef.member_cnt = 0;
+	dom = peer->domain;
+	if (dom)
+		memcpy(&dom_bef, dom, dom->len);
 
-	/* Transक्रमm and store received करोमुख्य record */
-	अगर (!करोm || (करोm->len < new_dlen)) अणु
-		kमुक्त(करोm);
-		करोm = kदो_स्मृति(new_dlen, GFP_ATOMIC);
-		peer->करोमुख्य = करोm;
-		अगर (!करोm)
-			जाओ निकास;
-	पूर्ण
-	करोm->len = new_dlen;
-	करोm->gen = new_gen;
-	करोm->member_cnt = new_member_cnt;
-	करोm->up_map = mon_le64_to_cpu(arrv_करोm->up_map);
-	क्रम (i = 0; i < new_member_cnt; i++)
-		करोm->members[i] = mon_le32_to_cpu(arrv_करोm->members[i]);
+	/* Transform and store received domain record */
+	if (!dom || (dom->len < new_dlen)) {
+		kfree(dom);
+		dom = kmalloc(new_dlen, GFP_ATOMIC);
+		peer->domain = dom;
+		if (!dom)
+			goto exit;
+	}
+	dom->len = new_dlen;
+	dom->gen = new_gen;
+	dom->member_cnt = new_member_cnt;
+	dom->up_map = mon_le64_to_cpu(arrv_dom->up_map);
+	for (i = 0; i < new_member_cnt; i++)
+		dom->members[i] = mon_le32_to_cpu(arrv_dom->members[i]);
 
-	/* Update peers affected by this करोमुख्य record */
+	/* Update peers affected by this domain record */
 	applied_bef = peer->applied;
-	mon_apply_करोमुख्य(mon, peer);
-	mon_identअगरy_lost_members(peer, &करोm_bef, applied_bef);
+	mon_apply_domain(mon, peer);
+	mon_identify_lost_members(peer, &dom_bef, applied_bef);
 	mon_assign_roles(mon, peer_head(peer));
-निकास:
-	ग_लिखो_unlock_bh(&mon->lock);
-पूर्ण
+exit:
+	write_unlock_bh(&mon->lock);
+}
 
-व्योम tipc_mon_prep(काष्ठा net *net, व्योम *data, पूर्णांक *dlen,
-		   काष्ठा tipc_mon_state *state, पूर्णांक bearer_id)
-अणु
-	काष्ठा tipc_monitor *mon = tipc_monitor(net, bearer_id);
-	काष्ठा tipc_mon_करोमुख्य *करोm = data;
-	u16 gen = mon->करोm_gen;
+void tipc_mon_prep(struct net *net, void *data, int *dlen,
+		   struct tipc_mon_state *state, int bearer_id)
+{
+	struct tipc_monitor *mon = tipc_monitor(net, bearer_id);
+	struct tipc_mon_domain *dom = data;
+	u16 gen = mon->dom_gen;
 	u16 len;
 
-	/* Send invalid record अगर not active */
-	अगर (!tipc_mon_is_active(net, mon)) अणु
-		करोm->len = 0;
-		वापस;
-	पूर्ण
+	/* Send invalid record if not active */
+	if (!tipc_mon_is_active(net, mon)) {
+		dom->len = 0;
+		return;
+	}
 
-	/* Send only a dummy record with ack अगर peer has acked our last sent */
-	अगर (likely(state->acked_gen == gen)) अणु
-		len = करोm_rec_len(करोm, 0);
+	/* Send only a dummy record with ack if peer has acked our last sent */
+	if (likely(state->acked_gen == gen)) {
+		len = dom_rec_len(dom, 0);
 		*dlen = len;
-		करोm->len = mon_cpu_to_le16(len);
-		करोm->gen = mon_cpu_to_le16(gen);
-		करोm->ack_gen = mon_cpu_to_le16(state->peer_gen);
-		करोm->member_cnt = 0;
-		वापस;
-	पूर्ण
+		dom->len = mon_cpu_to_le16(len);
+		dom->gen = mon_cpu_to_le16(gen);
+		dom->ack_gen = mon_cpu_to_le16(state->peer_gen);
+		dom->member_cnt = 0;
+		return;
+	}
 	/* Send the full record */
-	पढ़ो_lock_bh(&mon->lock);
+	read_lock_bh(&mon->lock);
 	len = mon_le16_to_cpu(mon->cache.len);
 	*dlen = len;
-	स_नकल(data, &mon->cache, len);
-	पढ़ो_unlock_bh(&mon->lock);
-	करोm->ack_gen = mon_cpu_to_le16(state->peer_gen);
-पूर्ण
+	memcpy(data, &mon->cache, len);
+	read_unlock_bh(&mon->lock);
+	dom->ack_gen = mon_cpu_to_le16(state->peer_gen);
+}
 
-व्योम tipc_mon_get_state(काष्ठा net *net, u32 addr,
-			काष्ठा tipc_mon_state *state,
-			पूर्णांक bearer_id)
-अणु
-	काष्ठा tipc_monitor *mon = tipc_monitor(net, bearer_id);
-	काष्ठा tipc_peer *peer;
+void tipc_mon_get_state(struct net *net, u32 addr,
+			struct tipc_mon_state *state,
+			int bearer_id)
+{
+	struct tipc_monitor *mon = tipc_monitor(net, bearer_id);
+	struct tipc_peer *peer;
 
-	अगर (!tipc_mon_is_active(net, mon)) अणु
+	if (!tipc_mon_is_active(net, mon)) {
 		state->probing = false;
 		state->monitoring = true;
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	/* Used cached state अगर table has not changed */
-	अगर (!state->probing &&
+	/* Used cached state if table has not changed */
+	if (!state->probing &&
 	    (state->list_gen == mon->list_gen) &&
-	    (state->acked_gen == mon->करोm_gen))
-		वापस;
+	    (state->acked_gen == mon->dom_gen))
+		return;
 
-	पढ़ो_lock_bh(&mon->lock);
+	read_lock_bh(&mon->lock);
 	peer = get_peer(mon, addr);
-	अगर (peer) अणु
-		state->probing = state->acked_gen != mon->करोm_gen;
-		state->probing |= peer->करोwn_cnt;
-		state->reset |= peer->करोwn_cnt >= MAX_PEER_DOWN_EVENTS;
+	if (peer) {
+		state->probing = state->acked_gen != mon->dom_gen;
+		state->probing |= peer->down_cnt;
+		state->reset |= peer->down_cnt >= MAX_PEER_DOWN_EVENTS;
 		state->monitoring = peer->is_local;
 		state->monitoring |= peer->is_head;
 		state->list_gen = mon->list_gen;
-	पूर्ण
-	पढ़ो_unlock_bh(&mon->lock);
-पूर्ण
+	}
+	read_unlock_bh(&mon->lock);
+}
 
-अटल व्योम mon_समयout(काष्ठा समयr_list *t)
-अणु
-	काष्ठा tipc_monitor *mon = from_समयr(mon, t, समयr);
-	काष्ठा tipc_peer *self;
-	पूर्णांक best_member_cnt = करोm_size(mon->peer_cnt) - 1;
+static void mon_timeout(struct timer_list *t)
+{
+	struct tipc_monitor *mon = from_timer(mon, t, timer);
+	struct tipc_peer *self;
+	int best_member_cnt = dom_size(mon->peer_cnt) - 1;
 
-	ग_लिखो_lock_bh(&mon->lock);
+	write_lock_bh(&mon->lock);
 	self = mon->self;
-	अगर (self && (best_member_cnt != self->applied)) अणु
-		mon_update_local_करोमुख्य(mon);
+	if (self && (best_member_cnt != self->applied)) {
+		mon_update_local_domain(mon);
 		mon_assign_roles(mon, self);
-	पूर्ण
-	ग_लिखो_unlock_bh(&mon->lock);
-	mod_समयr(&mon->समयr, jअगरfies + mon->समयr_पूर्णांकv);
-पूर्ण
+	}
+	write_unlock_bh(&mon->lock);
+	mod_timer(&mon->timer, jiffies + mon->timer_intv);
+}
 
-पूर्णांक tipc_mon_create(काष्ठा net *net, पूर्णांक bearer_id)
-अणु
-	काष्ठा tipc_net *tn = tipc_net(net);
-	काष्ठा tipc_monitor *mon;
-	काष्ठा tipc_peer *self;
-	काष्ठा tipc_mon_करोमुख्य *करोm;
+int tipc_mon_create(struct net *net, int bearer_id)
+{
+	struct tipc_net *tn = tipc_net(net);
+	struct tipc_monitor *mon;
+	struct tipc_peer *self;
+	struct tipc_mon_domain *dom;
 
-	अगर (tn->monitors[bearer_id])
-		वापस 0;
+	if (tn->monitors[bearer_id])
+		return 0;
 
-	mon = kzalloc(माप(*mon), GFP_ATOMIC);
-	self = kzalloc(माप(*self), GFP_ATOMIC);
-	करोm = kzalloc(माप(*करोm), GFP_ATOMIC);
-	अगर (!mon || !self || !करोm) अणु
-		kमुक्त(mon);
-		kमुक्त(self);
-		kमुक्त(करोm);
-		वापस -ENOMEM;
-	पूर्ण
+	mon = kzalloc(sizeof(*mon), GFP_ATOMIC);
+	self = kzalloc(sizeof(*self), GFP_ATOMIC);
+	dom = kzalloc(sizeof(*dom), GFP_ATOMIC);
+	if (!mon || !self || !dom) {
+		kfree(mon);
+		kfree(self);
+		kfree(dom);
+		return -ENOMEM;
+	}
 	tn->monitors[bearer_id] = mon;
 	rwlock_init(&mon->lock);
 	mon->net = net;
 	mon->peer_cnt = 1;
 	mon->self = self;
-	self->करोमुख्य = करोm;
+	self->domain = dom;
 	self->addr = tipc_own_addr(net);
 	self->is_up = true;
 	self->is_head = true;
 	INIT_LIST_HEAD(&self->list);
-	समयr_setup(&mon->समयr, mon_समयout, 0);
-	mon->समयr_पूर्णांकv = msecs_to_jअगरfies(MON_TIMEOUT + (tn->अक्रमom & 0xffff));
-	mod_समयr(&mon->समयr, jअगरfies + mon->समयr_पूर्णांकv);
-	वापस 0;
-पूर्ण
+	timer_setup(&mon->timer, mon_timeout, 0);
+	mon->timer_intv = msecs_to_jiffies(MON_TIMEOUT + (tn->random & 0xffff));
+	mod_timer(&mon->timer, jiffies + mon->timer_intv);
+	return 0;
+}
 
-व्योम tipc_mon_delete(काष्ठा net *net, पूर्णांक bearer_id)
-अणु
-	काष्ठा tipc_net *tn = tipc_net(net);
-	काष्ठा tipc_monitor *mon = tipc_monitor(net, bearer_id);
-	काष्ठा tipc_peer *self;
-	काष्ठा tipc_peer *peer, *पंचांगp;
+void tipc_mon_delete(struct net *net, int bearer_id)
+{
+	struct tipc_net *tn = tipc_net(net);
+	struct tipc_monitor *mon = tipc_monitor(net, bearer_id);
+	struct tipc_peer *self;
+	struct tipc_peer *peer, *tmp;
 
-	अगर (!mon)
-		वापस;
+	if (!mon)
+		return;
 
 	self = get_self(net, bearer_id);
-	ग_लिखो_lock_bh(&mon->lock);
-	tn->monitors[bearer_id] = शून्य;
-	list_क्रम_each_entry_safe(peer, पंचांगp, &self->list, list) अणु
+	write_lock_bh(&mon->lock);
+	tn->monitors[bearer_id] = NULL;
+	list_for_each_entry_safe(peer, tmp, &self->list, list) {
 		list_del(&peer->list);
 		hlist_del(&peer->hash);
-		kमुक्त(peer->करोमुख्य);
-		kमुक्त(peer);
-	पूर्ण
-	mon->self = शून्य;
-	ग_लिखो_unlock_bh(&mon->lock);
-	del_समयr_sync(&mon->समयr);
-	kमुक्त(self->करोमुख्य);
-	kमुक्त(self);
-	kमुक्त(mon);
-पूर्ण
+		kfree(peer->domain);
+		kfree(peer);
+	}
+	mon->self = NULL;
+	write_unlock_bh(&mon->lock);
+	del_timer_sync(&mon->timer);
+	kfree(self->domain);
+	kfree(self);
+	kfree(mon);
+}
 
-व्योम tipc_mon_reinit_self(काष्ठा net *net)
-अणु
-	काष्ठा tipc_monitor *mon;
-	पूर्णांक bearer_id;
+void tipc_mon_reinit_self(struct net *net)
+{
+	struct tipc_monitor *mon;
+	int bearer_id;
 
-	क्रम (bearer_id = 0; bearer_id < MAX_BEARERS; bearer_id++) अणु
+	for (bearer_id = 0; bearer_id < MAX_BEARERS; bearer_id++) {
 		mon = tipc_monitor(net, bearer_id);
-		अगर (!mon)
-			जारी;
-		ग_लिखो_lock_bh(&mon->lock);
+		if (!mon)
+			continue;
+		write_lock_bh(&mon->lock);
 		mon->self->addr = tipc_own_addr(net);
-		ग_लिखो_unlock_bh(&mon->lock);
-	पूर्ण
-पूर्ण
+		write_unlock_bh(&mon->lock);
+	}
+}
 
-पूर्णांक tipc_nl_monitor_set_threshold(काष्ठा net *net, u32 cluster_size)
-अणु
-	काष्ठा tipc_net *tn = tipc_net(net);
+int tipc_nl_monitor_set_threshold(struct net *net, u32 cluster_size)
+{
+	struct tipc_net *tn = tipc_net(net);
 
-	अगर (cluster_size > TIPC_CLUSTER_SIZE)
-		वापस -EINVAL;
+	if (cluster_size > TIPC_CLUSTER_SIZE)
+		return -EINVAL;
 
 	tn->mon_threshold = cluster_size;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक tipc_nl_monitor_get_threshold(काष्ठा net *net)
-अणु
-	काष्ठा tipc_net *tn = tipc_net(net);
+int tipc_nl_monitor_get_threshold(struct net *net)
+{
+	struct tipc_net *tn = tipc_net(net);
 
-	वापस tn->mon_threshold;
-पूर्ण
+	return tn->mon_threshold;
+}
 
-अटल पूर्णांक __tipc_nl_add_monitor_peer(काष्ठा tipc_peer *peer,
-				      काष्ठा tipc_nl_msg *msg)
-अणु
-	काष्ठा tipc_mon_करोमुख्य *करोm = peer->करोमुख्य;
-	काष्ठा nlattr *attrs;
-	व्योम *hdr;
+static int __tipc_nl_add_monitor_peer(struct tipc_peer *peer,
+				      struct tipc_nl_msg *msg)
+{
+	struct tipc_mon_domain *dom = peer->domain;
+	struct nlattr *attrs;
+	void *hdr;
 
 	hdr = genlmsg_put(msg->skb, msg->portid, msg->seq, &tipc_genl_family,
 			  NLM_F_MULTI, TIPC_NL_MON_PEER_GET);
-	अगर (!hdr)
-		वापस -EMSGSIZE;
+	if (!hdr)
+		return -EMSGSIZE;
 
 	attrs = nla_nest_start_noflag(msg->skb, TIPC_NLA_MON_PEER);
-	अगर (!attrs)
-		जाओ msg_full;
+	if (!attrs)
+		goto msg_full;
 
-	अगर (nla_put_u32(msg->skb, TIPC_NLA_MON_PEER_ADDR, peer->addr))
-		जाओ attr_msg_full;
-	अगर (nla_put_u32(msg->skb, TIPC_NLA_MON_PEER_APPLIED, peer->applied))
-		जाओ attr_msg_full;
+	if (nla_put_u32(msg->skb, TIPC_NLA_MON_PEER_ADDR, peer->addr))
+		goto attr_msg_full;
+	if (nla_put_u32(msg->skb, TIPC_NLA_MON_PEER_APPLIED, peer->applied))
+		goto attr_msg_full;
 
-	अगर (peer->is_up)
-		अगर (nla_put_flag(msg->skb, TIPC_NLA_MON_PEER_UP))
-			जाओ attr_msg_full;
-	अगर (peer->is_local)
-		अगर (nla_put_flag(msg->skb, TIPC_NLA_MON_PEER_LOCAL))
-			जाओ attr_msg_full;
-	अगर (peer->is_head)
-		अगर (nla_put_flag(msg->skb, TIPC_NLA_MON_PEER_HEAD))
-			जाओ attr_msg_full;
+	if (peer->is_up)
+		if (nla_put_flag(msg->skb, TIPC_NLA_MON_PEER_UP))
+			goto attr_msg_full;
+	if (peer->is_local)
+		if (nla_put_flag(msg->skb, TIPC_NLA_MON_PEER_LOCAL))
+			goto attr_msg_full;
+	if (peer->is_head)
+		if (nla_put_flag(msg->skb, TIPC_NLA_MON_PEER_HEAD))
+			goto attr_msg_full;
 
-	अगर (करोm) अणु
-		अगर (nla_put_u32(msg->skb, TIPC_NLA_MON_PEER_DOMGEN, करोm->gen))
-			जाओ attr_msg_full;
-		अगर (nla_put_u64_64bit(msg->skb, TIPC_NLA_MON_PEER_UPMAP,
-				      करोm->up_map, TIPC_NLA_MON_PEER_PAD))
-			जाओ attr_msg_full;
-		अगर (nla_put(msg->skb, TIPC_NLA_MON_PEER_MEMBERS,
-			    करोm->member_cnt * माप(u32), &करोm->members))
-			जाओ attr_msg_full;
-	पूर्ण
+	if (dom) {
+		if (nla_put_u32(msg->skb, TIPC_NLA_MON_PEER_DOMGEN, dom->gen))
+			goto attr_msg_full;
+		if (nla_put_u64_64bit(msg->skb, TIPC_NLA_MON_PEER_UPMAP,
+				      dom->up_map, TIPC_NLA_MON_PEER_PAD))
+			goto attr_msg_full;
+		if (nla_put(msg->skb, TIPC_NLA_MON_PEER_MEMBERS,
+			    dom->member_cnt * sizeof(u32), &dom->members))
+			goto attr_msg_full;
+	}
 
 	nla_nest_end(msg->skb, attrs);
 	genlmsg_end(msg->skb, hdr);
-	वापस 0;
+	return 0;
 
 attr_msg_full:
 	nla_nest_cancel(msg->skb, attrs);
 msg_full:
 	genlmsg_cancel(msg->skb, hdr);
 
-	वापस -EMSGSIZE;
-पूर्ण
+	return -EMSGSIZE;
+}
 
-पूर्णांक tipc_nl_add_monitor_peer(काष्ठा net *net, काष्ठा tipc_nl_msg *msg,
+int tipc_nl_add_monitor_peer(struct net *net, struct tipc_nl_msg *msg,
 			     u32 bearer_id, u32 *prev_node)
-अणु
-	काष्ठा tipc_monitor *mon = tipc_monitor(net, bearer_id);
-	काष्ठा tipc_peer *peer;
+{
+	struct tipc_monitor *mon = tipc_monitor(net, bearer_id);
+	struct tipc_peer *peer;
 
-	अगर (!mon)
-		वापस -EINVAL;
+	if (!mon)
+		return -EINVAL;
 
-	पढ़ो_lock_bh(&mon->lock);
+	read_lock_bh(&mon->lock);
 	peer = mon->self;
-	करो अणु
-		अगर (*prev_node) अणु
-			अगर (peer->addr == *prev_node)
+	do {
+		if (*prev_node) {
+			if (peer->addr == *prev_node)
 				*prev_node = 0;
-			अन्यथा
-				जारी;
-		पूर्ण
-		अगर (__tipc_nl_add_monitor_peer(peer, msg)) अणु
+			else
+				continue;
+		}
+		if (__tipc_nl_add_monitor_peer(peer, msg)) {
 			*prev_node = peer->addr;
-			पढ़ो_unlock_bh(&mon->lock);
-			वापस -EMSGSIZE;
-		पूर्ण
-	पूर्ण जबतक ((peer = peer_nxt(peer)) != mon->self);
-	पढ़ो_unlock_bh(&mon->lock);
+			read_unlock_bh(&mon->lock);
+			return -EMSGSIZE;
+		}
+	} while ((peer = peer_nxt(peer)) != mon->self);
+	read_unlock_bh(&mon->lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक __tipc_nl_add_monitor(काष्ठा net *net, काष्ठा tipc_nl_msg *msg,
+int __tipc_nl_add_monitor(struct net *net, struct tipc_nl_msg *msg,
 			  u32 bearer_id)
-अणु
-	काष्ठा tipc_monitor *mon = tipc_monitor(net, bearer_id);
-	अक्षर bearer_name[TIPC_MAX_BEARER_NAME];
-	काष्ठा nlattr *attrs;
-	व्योम *hdr;
-	पूर्णांक ret;
+{
+	struct tipc_monitor *mon = tipc_monitor(net, bearer_id);
+	char bearer_name[TIPC_MAX_BEARER_NAME];
+	struct nlattr *attrs;
+	void *hdr;
+	int ret;
 
 	ret = tipc_bearer_get_name(net, bearer_name, bearer_id);
-	अगर (ret || !mon)
-		वापस 0;
+	if (ret || !mon)
+		return 0;
 
 	hdr = genlmsg_put(msg->skb, msg->portid, msg->seq, &tipc_genl_family,
 			  NLM_F_MULTI, TIPC_NL_MON_GET);
-	अगर (!hdr)
-		वापस -EMSGSIZE;
+	if (!hdr)
+		return -EMSGSIZE;
 
 	attrs = nla_nest_start_noflag(msg->skb, TIPC_NLA_MON);
-	अगर (!attrs)
-		जाओ msg_full;
+	if (!attrs)
+		goto msg_full;
 
-	पढ़ो_lock_bh(&mon->lock);
-	अगर (nla_put_u32(msg->skb, TIPC_NLA_MON_REF, bearer_id))
-		जाओ attr_msg_full;
-	अगर (tipc_mon_is_active(net, mon))
-		अगर (nla_put_flag(msg->skb, TIPC_NLA_MON_ACTIVE))
-			जाओ attr_msg_full;
-	अगर (nla_put_string(msg->skb, TIPC_NLA_MON_BEARER_NAME, bearer_name))
-		जाओ attr_msg_full;
-	अगर (nla_put_u32(msg->skb, TIPC_NLA_MON_PEERCNT, mon->peer_cnt))
-		जाओ attr_msg_full;
-	अगर (nla_put_u32(msg->skb, TIPC_NLA_MON_LISTGEN, mon->list_gen))
-		जाओ attr_msg_full;
+	read_lock_bh(&mon->lock);
+	if (nla_put_u32(msg->skb, TIPC_NLA_MON_REF, bearer_id))
+		goto attr_msg_full;
+	if (tipc_mon_is_active(net, mon))
+		if (nla_put_flag(msg->skb, TIPC_NLA_MON_ACTIVE))
+			goto attr_msg_full;
+	if (nla_put_string(msg->skb, TIPC_NLA_MON_BEARER_NAME, bearer_name))
+		goto attr_msg_full;
+	if (nla_put_u32(msg->skb, TIPC_NLA_MON_PEERCNT, mon->peer_cnt))
+		goto attr_msg_full;
+	if (nla_put_u32(msg->skb, TIPC_NLA_MON_LISTGEN, mon->list_gen))
+		goto attr_msg_full;
 
-	पढ़ो_unlock_bh(&mon->lock);
+	read_unlock_bh(&mon->lock);
 	nla_nest_end(msg->skb, attrs);
 	genlmsg_end(msg->skb, hdr);
 
-	वापस 0;
+	return 0;
 
 attr_msg_full:
-	पढ़ो_unlock_bh(&mon->lock);
+	read_unlock_bh(&mon->lock);
 	nla_nest_cancel(msg->skb, attrs);
 msg_full:
 	genlmsg_cancel(msg->skb, hdr);
 
-	वापस -EMSGSIZE;
-पूर्ण
+	return -EMSGSIZE;
+}

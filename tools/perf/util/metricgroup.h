@@ -1,65 +1,64 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
-#अगर_अघोषित METRICGROUP_H
-#घोषणा METRICGROUP_H 1
+// SPDX-License-Identifier: GPL-2.0-only
+#ifndef METRICGROUP_H
+#define METRICGROUP_H 1
 
-#समावेश <linux/list.h>
-#समावेश <linux/rbtree.h>
-#समावेश <stdbool.h>
-#समावेश "pmu-events/pmu-events.h"
+#include <linux/list.h>
+#include <linux/rbtree.h>
+#include <stdbool.h>
+#include "pmu-events/pmu-events.h"
 
-काष्ठा evlist;
-काष्ठा evsel;
-काष्ठा option;
-काष्ठा rblist;
-काष्ठा pmu_events_map;
-काष्ठा cgroup;
+struct evlist;
+struct evsel;
+struct option;
+struct rblist;
+struct pmu_events_map;
+struct cgroup;
 
-काष्ठा metric_event अणु
-	काष्ठा rb_node nd;
-	काष्ठा evsel *evsel;
-	काष्ठा list_head head; /* list of metric_expr */
-पूर्ण;
+struct metric_event {
+	struct rb_node nd;
+	struct evsel *evsel;
+	struct list_head head; /* list of metric_expr */
+};
 
-काष्ठा metric_ref अणु
-	स्थिर अक्षर *metric_name;
-	स्थिर अक्षर *metric_expr;
-पूर्ण;
+struct metric_ref {
+	const char *metric_name;
+	const char *metric_expr;
+};
 
-काष्ठा metric_expr अणु
-	काष्ठा list_head nd;
-	स्थिर अक्षर *metric_expr;
-	स्थिर अक्षर *metric_name;
-	स्थिर अक्षर *metric_unit;
-	काष्ठा evsel **metric_events;
-	काष्ठा metric_ref *metric_refs;
-	पूर्णांक runसमय;
-पूर्ण;
+struct metric_expr {
+	struct list_head nd;
+	const char *metric_expr;
+	const char *metric_name;
+	const char *metric_unit;
+	struct evsel **metric_events;
+	struct metric_ref *metric_refs;
+	int runtime;
+};
 
-काष्ठा metric_event *metricgroup__lookup(काष्ठा rblist *metric_events,
-					 काष्ठा evsel *evsel,
+struct metric_event *metricgroup__lookup(struct rblist *metric_events,
+					 struct evsel *evsel,
 					 bool create);
-पूर्णांक metricgroup__parse_groups(स्थिर काष्ठा option *opt,
-			      स्थिर अक्षर *str,
+int metricgroup__parse_groups(const struct option *opt,
+			      const char *str,
 			      bool metric_no_group,
 			      bool metric_no_merge,
-			      काष्ठा rblist *metric_events);
-काष्ठा pmu_event *metricgroup__find_metric(स्थिर अक्षर *metric,
-					   काष्ठा pmu_events_map *map);
-पूर्णांक metricgroup__parse_groups_test(काष्ठा evlist *evlist,
-				   काष्ठा pmu_events_map *map,
-				   स्थिर अक्षर *str,
+			      struct rblist *metric_events);
+struct pmu_event *metricgroup__find_metric(const char *metric,
+					   struct pmu_events_map *map);
+int metricgroup__parse_groups_test(struct evlist *evlist,
+				   struct pmu_events_map *map,
+				   const char *str,
 				   bool metric_no_group,
 				   bool metric_no_merge,
-				   काष्ठा rblist *metric_events);
+				   struct rblist *metric_events);
 
-व्योम metricgroup__prपूर्णांक(bool metrics, bool groups, अक्षर *filter,
+void metricgroup__print(bool metrics, bool groups, char *filter,
 			bool raw, bool details);
-bool metricgroup__has_metric(स्थिर अक्षर *metric);
-पूर्णांक arch_get_runसमयparam(काष्ठा pmu_event *pe __maybe_unused);
-व्योम metricgroup__rblist_निकास(काष्ठा rblist *metric_events);
+bool metricgroup__has_metric(const char *metric);
+int arch_get_runtimeparam(struct pmu_event *pe __maybe_unused);
+void metricgroup__rblist_exit(struct rblist *metric_events);
 
-पूर्णांक metricgroup__copy_metric_events(काष्ठा evlist *evlist, काष्ठा cgroup *cgrp,
-				    काष्ठा rblist *new_metric_events,
-				    काष्ठा rblist *old_metric_events);
-#पूर्ण_अगर
+int metricgroup__copy_metric_events(struct evlist *evlist, struct cgroup *cgrp,
+				    struct rblist *new_metric_events,
+				    struct rblist *old_metric_events);
+#endif

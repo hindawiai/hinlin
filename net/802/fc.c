@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * NET3:	Fibre Channel device handling subroutines
  *
@@ -7,77 +6,77 @@
  *		v 1.0 03/22/99
  */
 
-#समावेश <linux/uaccess.h>
-#समावेश <linux/types.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/mm.h>
-#समावेश <linux/socket.h>
-#समावेश <linux/in.h>
-#समावेश <linux/inet.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/fcdevice.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/समयr.h>
-#समावेश <linux/net.h>
-#समावेश <linux/proc_fs.h>
-#समावेश <linux/init.h>
-#समावेश <linux/export.h>
-#समावेश <net/arp.h>
+#include <linux/uaccess.h>
+#include <linux/types.h>
+#include <linux/kernel.h>
+#include <linux/string.h>
+#include <linux/mm.h>
+#include <linux/socket.h>
+#include <linux/in.h>
+#include <linux/inet.h>
+#include <linux/netdevice.h>
+#include <linux/fcdevice.h>
+#include <linux/skbuff.h>
+#include <linux/errno.h>
+#include <linux/timer.h>
+#include <linux/net.h>
+#include <linux/proc_fs.h>
+#include <linux/init.h>
+#include <linux/export.h>
+#include <net/arp.h>
 
 /*
  *	Put the headers on a Fibre Channel packet.
  */
 
-अटल पूर्णांक fc_header(काष्ठा sk_buff *skb, काष्ठा net_device *dev,
-		     अचिन्हित लघु type,
-		     स्थिर व्योम *daddr, स्थिर व्योम *saddr, अचिन्हित पूर्णांक len)
-अणु
-	काष्ठा fch_hdr *fch;
-	पूर्णांक hdr_len;
+static int fc_header(struct sk_buff *skb, struct net_device *dev,
+		     unsigned short type,
+		     const void *daddr, const void *saddr, unsigned int len)
+{
+	struct fch_hdr *fch;
+	int hdr_len;
 
 	/*
-	 * Add the 802.2 SNAP header अगर IP as the IPv4 code calls
+	 * Add the 802.2 SNAP header if IP as the IPv4 code calls
 	 * dev->hard_header directly.
 	 */
-	अगर (type == ETH_P_IP || type == ETH_P_ARP)
-	अणु
-		काष्ठा fcllc *fcllc;
+	if (type == ETH_P_IP || type == ETH_P_ARP)
+	{
+		struct fcllc *fcllc;
 
-		hdr_len = माप(काष्ठा fch_hdr) + माप(काष्ठा fcllc);
+		hdr_len = sizeof(struct fch_hdr) + sizeof(struct fcllc);
 		fch = skb_push(skb, hdr_len);
-		fcllc = (काष्ठा fcllc *)(fch+1);
+		fcllc = (struct fcllc *)(fch+1);
 		fcllc->dsap = fcllc->ssap = EXTENDED_SAP;
 		fcllc->llc = UI_CMD;
 		fcllc->protid[0] = fcllc->protid[1] = fcllc->protid[2] = 0x00;
 		fcllc->ethertype = htons(type);
-	पूर्ण
-	अन्यथा
-	अणु
-		hdr_len = माप(काष्ठा fch_hdr);
+	}
+	else
+	{
+		hdr_len = sizeof(struct fch_hdr);
 		fch = skb_push(skb, hdr_len);
-	पूर्ण
+	}
 
-	अगर(saddr)
-		स_नकल(fch->saddr,saddr,dev->addr_len);
-	अन्यथा
-		स_नकल(fch->saddr,dev->dev_addr,dev->addr_len);
+	if(saddr)
+		memcpy(fch->saddr,saddr,dev->addr_len);
+	else
+		memcpy(fch->saddr,dev->dev_addr,dev->addr_len);
 
-	अगर(daddr)
-	अणु
-		स_नकल(fch->daddr,daddr,dev->addr_len);
-		वापस hdr_len;
-	पूर्ण
-	वापस -hdr_len;
-पूर्ण
+	if(daddr)
+	{
+		memcpy(fch->daddr,daddr,dev->addr_len);
+		return hdr_len;
+	}
+	return -hdr_len;
+}
 
-अटल स्थिर काष्ठा header_ops fc_header_ops = अणु
+static const struct header_ops fc_header_ops = {
 	.create	 = fc_header,
-पूर्ण;
+};
 
-अटल व्योम fc_setup(काष्ठा net_device *dev)
-अणु
+static void fc_setup(struct net_device *dev)
+{
 	dev->header_ops		= &fc_header_ops;
 	dev->type		= ARPHRD_IEEE802;
 	dev->hard_header_len	= FC_HLEN;
@@ -86,22 +85,22 @@
 	dev->tx_queue_len	= 100; /* Long queues on fc */
 	dev->flags		= IFF_BROADCAST;
 
-	स_रखो(dev->broadcast, 0xFF, FC_ALEN);
-पूर्ण
+	memset(dev->broadcast, 0xFF, FC_ALEN);
+}
 
 /**
  * alloc_fcdev - Register fibre channel device
- * @माप_priv: Size of additional driver-निजी काष्ठाure to be allocated
- *	क्रम this fibre channel device
+ * @sizeof_priv: Size of additional driver-private structure to be allocated
+ *	for this fibre channel device
  *
- * Fill in the fields of the device काष्ठाure with fibre channel-generic values.
+ * Fill in the fields of the device structure with fibre channel-generic values.
  *
- * Conकाष्ठाs a new net device, complete with a निजी data area of
- * size @माप_priv.  A 32-byte (not bit) alignment is enक्रमced क्रम
- * this निजी data area.
+ * Constructs a new net device, complete with a private data area of
+ * size @sizeof_priv.  A 32-byte (not bit) alignment is enforced for
+ * this private data area.
  */
-काष्ठा net_device *alloc_fcdev(पूर्णांक माप_priv)
-अणु
-	वापस alloc_netdev(माप_priv, "fc%d", NET_NAME_UNKNOWN, fc_setup);
-पूर्ण
+struct net_device *alloc_fcdev(int sizeof_priv)
+{
+	return alloc_netdev(sizeof_priv, "fc%d", NET_NAME_UNKNOWN, fc_setup);
+}
 EXPORT_SYMBOL(alloc_fcdev);

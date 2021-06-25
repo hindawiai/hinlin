@@ -1,69 +1,68 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _BPF_NETNS_H
-#घोषणा _BPF_NETNS_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _BPF_NETNS_H
+#define _BPF_NETNS_H
 
-#समावेश <linux/mutex.h>
-#समावेश <uapi/linux/bpf.h>
+#include <linux/mutex.h>
+#include <uapi/linux/bpf.h>
 
-क्रमागत netns_bpf_attach_type अणु
+enum netns_bpf_attach_type {
 	NETNS_BPF_INVALID = -1,
 	NETNS_BPF_FLOW_DISSECTOR = 0,
 	NETNS_BPF_SK_LOOKUP,
 	MAX_NETNS_BPF_ATTACH_TYPE
-पूर्ण;
+};
 
-अटल अंतरभूत क्रमागत netns_bpf_attach_type
-to_netns_bpf_attach_type(क्रमागत bpf_attach_type attach_type)
-अणु
-	चयन (attach_type) अणु
-	हाल BPF_FLOW_DISSECTOR:
-		वापस NETNS_BPF_FLOW_DISSECTOR;
-	हाल BPF_SK_LOOKUP:
-		वापस NETNS_BPF_SK_LOOKUP;
-	शेष:
-		वापस NETNS_BPF_INVALID;
-	पूर्ण
-पूर्ण
+static inline enum netns_bpf_attach_type
+to_netns_bpf_attach_type(enum bpf_attach_type attach_type)
+{
+	switch (attach_type) {
+	case BPF_FLOW_DISSECTOR:
+		return NETNS_BPF_FLOW_DISSECTOR;
+	case BPF_SK_LOOKUP:
+		return NETNS_BPF_SK_LOOKUP;
+	default:
+		return NETNS_BPF_INVALID;
+	}
+}
 
 /* Protects updates to netns_bpf */
-बाह्य काष्ठा mutex netns_bpf_mutex;
+extern struct mutex netns_bpf_mutex;
 
-जोड़ bpf_attr;
-काष्ठा bpf_prog;
+union bpf_attr;
+struct bpf_prog;
 
-#अगर_घोषित CONFIG_NET
-पूर्णांक netns_bpf_prog_query(स्थिर जोड़ bpf_attr *attr,
-			 जोड़ bpf_attr __user *uattr);
-पूर्णांक netns_bpf_prog_attach(स्थिर जोड़ bpf_attr *attr,
-			  काष्ठा bpf_prog *prog);
-पूर्णांक netns_bpf_prog_detach(स्थिर जोड़ bpf_attr *attr, क्रमागत bpf_prog_type ptype);
-पूर्णांक netns_bpf_link_create(स्थिर जोड़ bpf_attr *attr,
-			  काष्ठा bpf_prog *prog);
-#अन्यथा
-अटल अंतरभूत पूर्णांक netns_bpf_prog_query(स्थिर जोड़ bpf_attr *attr,
-				       जोड़ bpf_attr __user *uattr)
-अणु
-	वापस -EOPNOTSUPP;
-पूर्ण
+#ifdef CONFIG_NET
+int netns_bpf_prog_query(const union bpf_attr *attr,
+			 union bpf_attr __user *uattr);
+int netns_bpf_prog_attach(const union bpf_attr *attr,
+			  struct bpf_prog *prog);
+int netns_bpf_prog_detach(const union bpf_attr *attr, enum bpf_prog_type ptype);
+int netns_bpf_link_create(const union bpf_attr *attr,
+			  struct bpf_prog *prog);
+#else
+static inline int netns_bpf_prog_query(const union bpf_attr *attr,
+				       union bpf_attr __user *uattr)
+{
+	return -EOPNOTSUPP;
+}
 
-अटल अंतरभूत पूर्णांक netns_bpf_prog_attach(स्थिर जोड़ bpf_attr *attr,
-					काष्ठा bpf_prog *prog)
-अणु
-	वापस -EOPNOTSUPP;
-पूर्ण
+static inline int netns_bpf_prog_attach(const union bpf_attr *attr,
+					struct bpf_prog *prog)
+{
+	return -EOPNOTSUPP;
+}
 
-अटल अंतरभूत पूर्णांक netns_bpf_prog_detach(स्थिर जोड़ bpf_attr *attr,
-					क्रमागत bpf_prog_type ptype)
-अणु
-	वापस -EOPNOTSUPP;
-पूर्ण
+static inline int netns_bpf_prog_detach(const union bpf_attr *attr,
+					enum bpf_prog_type ptype)
+{
+	return -EOPNOTSUPP;
+}
 
-अटल अंतरभूत पूर्णांक netns_bpf_link_create(स्थिर जोड़ bpf_attr *attr,
-					काष्ठा bpf_prog *prog)
-अणु
-	वापस -EOPNOTSUPP;
-पूर्ण
-#पूर्ण_अगर
+static inline int netns_bpf_link_create(const union bpf_attr *attr,
+					struct bpf_prog *prog)
+{
+	return -EOPNOTSUPP;
+}
+#endif
 
-#पूर्ण_अगर /* _BPF_NETNS_H */
+#endif /* _BPF_NETNS_H */

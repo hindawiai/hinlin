@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Traps/Non-MMU Exception handling क्रम ARC
+ * Traps/Non-MMU Exception handling for ARC
  *
  * Copyright (C) 2004, 2007-2010, 2011-2012 Synopsys, Inc. (www.synopsys.com)
  *
@@ -11,155 +10,155 @@
  * Rahul Trivedi: Codito Technologies 2004
  */
 
-#समावेश <linux/sched/संकेत.स>
-#समावेश <linux/kdebug.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/ptrace.h>
-#समावेश <linux/kprobes.h>
-#समावेश <linux/kgdb.h>
-#समावेश <यंत्र/setup.h>
-#समावेश <यंत्र/unaligned.h>
-#समावेश <यंत्र/kprobes.h>
+#include <linux/sched/signal.h>
+#include <linux/kdebug.h>
+#include <linux/uaccess.h>
+#include <linux/ptrace.h>
+#include <linux/kprobes.h>
+#include <linux/kgdb.h>
+#include <asm/setup.h>
+#include <asm/unaligned.h>
+#include <asm/kprobes.h>
 
-व्योम __init trap_init(व्योम)
-अणु
-	वापस;
-पूर्ण
+void __init trap_init(void)
+{
+	return;
+}
 
-व्योम die(स्थिर अक्षर *str, काष्ठा pt_regs *regs, अचिन्हित दीर्घ address)
-अणु
+void die(const char *str, struct pt_regs *regs, unsigned long address)
+{
 	show_kernel_fault_diag(str, regs, address);
 
 	/* DEAD END */
-	__यंत्र__("flag 1");
-पूर्ण
+	__asm__("flag 1");
+}
 
 /*
- * Helper called क्रम bulk of exceptions NOT needing specअगरic handling
- *  -क्रम user faults enqueues requested संकेत
- *  -क्रम kernel, chk अगर due to copy_(to|from)_user, otherwise die()
+ * Helper called for bulk of exceptions NOT needing specific handling
+ *  -for user faults enqueues requested signal
+ *  -for kernel, chk if due to copy_(to|from)_user, otherwise die()
  */
-अटल noअंतरभूत पूर्णांक
-unhandled_exception(स्थिर अक्षर *str, काष्ठा pt_regs *regs,
-		    पूर्णांक signo, पूर्णांक si_code, व्योम __user *addr)
-अणु
-	अगर (user_mode(regs)) अणु
-		काष्ठा task_काष्ठा *tsk = current;
+static noinline int
+unhandled_exception(const char *str, struct pt_regs *regs,
+		    int signo, int si_code, void __user *addr)
+{
+	if (user_mode(regs)) {
+		struct task_struct *tsk = current;
 
-		tsk->thपढ़ो.fault_address = (__क्रमce अचिन्हित पूर्णांक)addr;
+		tsk->thread.fault_address = (__force unsigned int)addr;
 
-		क्रमce_sig_fault(signo, si_code, addr);
+		force_sig_fault(signo, si_code, addr);
 
-	पूर्ण अन्यथा अणु
-		/* If not due to copy_(to|from)_user, we are करोomed */
-		अगर (fixup_exception(regs))
-			वापस 0;
+	} else {
+		/* If not due to copy_(to|from)_user, we are doomed */
+		if (fixup_exception(regs))
+			return 0;
 
-		die(str, regs, (अचिन्हित दीर्घ)addr);
-	पूर्ण
+		die(str, regs, (unsigned long)addr);
+	}
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-#घोषणा DO_ERROR_INFO(signr, str, name, sicode) \
-पूर्णांक name(अचिन्हित दीर्घ address, काष्ठा pt_regs *regs) \
-अणु								\
-	वापस unhandled_exception(str, regs, signr, sicode,	\
-				   (व्योम __user *)address);	\
-पूर्ण
+#define DO_ERROR_INFO(signr, str, name, sicode) \
+int name(unsigned long address, struct pt_regs *regs) \
+{								\
+	return unhandled_exception(str, regs, signr, sicode,	\
+				   (void __user *)address);	\
+}
 
 /*
- * Entry poपूर्णांकs क्रम exceptions NOT needing specअगरic handling
+ * Entry points for exceptions NOT needing specific handling
  */
-DO_ERROR_INFO(संक_अवैध, "Priv Op/Disabled Extn", करो_privilege_fault, ILL_PRVOPC)
-DO_ERROR_INFO(संक_अवैध, "Invalid Extn Insn", करो_extension_fault, ILL_ILLOPC)
-DO_ERROR_INFO(संक_अवैध, "Illegal Insn (or Seq)", insterror_is_error, ILL_ILLOPC)
-DO_ERROR_INFO(SIGBUS, "Invalid Mem Access", __weak करो_memory_error, BUS_ADRERR)
+DO_ERROR_INFO(SIGILL, "Priv Op/Disabled Extn", do_privilege_fault, ILL_PRVOPC)
+DO_ERROR_INFO(SIGILL, "Invalid Extn Insn", do_extension_fault, ILL_ILLOPC)
+DO_ERROR_INFO(SIGILL, "Illegal Insn (or Seq)", insterror_is_error, ILL_ILLOPC)
+DO_ERROR_INFO(SIGBUS, "Invalid Mem Access", __weak do_memory_error, BUS_ADRERR)
 DO_ERROR_INFO(SIGTRAP, "Breakpoint Set", trap_is_brkpt, TRAP_BRKPT)
-DO_ERROR_INFO(SIGBUS, "Misaligned Access", करो_misaligned_error, BUS_ADRALN)
-DO_ERROR_INFO(संक_अंश, "gcc generated __builtin_trap", करो_trap5_error, 0)
+DO_ERROR_INFO(SIGBUS, "Misaligned Access", do_misaligned_error, BUS_ADRALN)
+DO_ERROR_INFO(SIGSEGV, "gcc generated __builtin_trap", do_trap5_error, 0)
 
 /*
- * Entry Poपूर्णांक क्रम Misaligned Data access Exception, क्रम emulating in software
+ * Entry Point for Misaligned Data access Exception, for emulating in software
  */
-पूर्णांक करो_misaligned_access(अचिन्हित दीर्घ address, काष्ठा pt_regs *regs,
-			 काष्ठा callee_regs *cregs)
-अणु
-	/* If emulation not enabled, or failed, समाप्त the task */
-	अगर (misaligned_fixup(address, regs, cregs) != 0)
-		वापस करो_misaligned_error(address, regs);
+int do_misaligned_access(unsigned long address, struct pt_regs *regs,
+			 struct callee_regs *cregs)
+{
+	/* If emulation not enabled, or failed, kill the task */
+	if (misaligned_fixup(address, regs, cregs) != 0)
+		return do_misaligned_error(address, regs);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Entry poपूर्णांक क्रम miscll errors such as Nested Exceptions
+ * Entry point for miscll errors such as Nested Exceptions
  *  -Duplicate TLB entry is handled seperately though
  */
-व्योम करो_machine_check_fault(अचिन्हित दीर्घ address, काष्ठा pt_regs *regs)
-अणु
+void do_machine_check_fault(unsigned long address, struct pt_regs *regs)
+{
 	die("Unhandled Machine Check Exception", regs, address);
-पूर्ण
+}
 
 
 /*
- * Entry poपूर्णांक क्रम traps induced by ARCompact TRAP_S <n> insn
+ * Entry point for traps induced by ARCompact TRAP_S <n> insn
  * This is same family as TRAP0/SWI insn (use the same vector).
- * The only dअगरference being SWI insn take no opeअक्रम, जबतक TRAP_S करोes
+ * The only difference being SWI insn take no operand, while TRAP_S does
  * which reflects in ECR Reg as 8 bit param.
- * Thus TRAP_S <n> can be used क्रम specअगरic purpose
- *  -1 used क्रम software अवरोधpoपूर्णांकing (gdb)
+ * Thus TRAP_S <n> can be used for specific purpose
+ *  -1 used for software breakpointing (gdb)
  *  -2 used by kprobes
- *  -5 __builtin_trap() generated by gcc (2018.03 onwards) क्रम toggle such as
+ *  -5 __builtin_trap() generated by gcc (2018.03 onwards) for toggle such as
  *     -fno-isolate-erroneous-paths-dereference
  */
-व्योम करो_non_swi_trap(अचिन्हित दीर्घ address, काष्ठा pt_regs *regs)
-अणु
-	अचिन्हित पूर्णांक param = regs->ecr_param;
+void do_non_swi_trap(unsigned long address, struct pt_regs *regs)
+{
+	unsigned int param = regs->ecr_param;
 
-	चयन (param) अणु
-	हाल 1:
+	switch (param) {
+	case 1:
 		trap_is_brkpt(address, regs);
-		अवरोध;
+		break;
 
-	हाल 2:
+	case 2:
 		trap_is_kprobe(address, regs);
-		अवरोध;
+		break;
 
-	हाल 3:
-	हाल 4:
+	case 3:
+	case 4:
 		kgdb_trap(regs);
-		अवरोध;
+		break;
 
-	हाल 5:
-		करो_trap5_error(address, regs);
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-पूर्ण
+	case 5:
+		do_trap5_error(address, regs);
+		break;
+	default:
+		break;
+	}
+}
 
 /*
- * Entry poपूर्णांक क्रम Inकाष्ठाion Error Exception
- *  -For a corner हाल, ARC kprobes implementation resorts to using
+ * Entry point for Instruction Error Exception
+ *  -For a corner case, ARC kprobes implementation resorts to using
  *   this exception, hence the check
  */
-व्योम करो_insterror_or_kprobe(अचिन्हित दीर्घ address, काष्ठा pt_regs *regs)
-अणु
-	पूर्णांक rc;
+void do_insterror_or_kprobe(unsigned long address, struct pt_regs *regs)
+{
+	int rc;
 
-	/* Check अगर this exception is caused by kprobes */
-	rc = notअगरy_die(DIE_IERR, "kprobe_ierr", regs, address, 0, संक_अवैध);
-	अगर (rc == NOTIFY_STOP)
-		वापस;
+	/* Check if this exception is caused by kprobes */
+	rc = notify_die(DIE_IERR, "kprobe_ierr", regs, address, 0, SIGILL);
+	if (rc == NOTIFY_STOP)
+		return;
 
 	insterror_is_error(address, regs);
-पूर्ण
+}
 
 /*
- * पात() call generated by older gcc क्रम __builtin_trap()
+ * abort() call generated by older gcc for __builtin_trap()
  */
-व्योम पात(व्योम)
-अणु
-	__यंत्र__ __अस्थिर__("trap_s  5\n");
-पूर्ण
+void abort(void)
+{
+	__asm__ __volatile__("trap_s  5\n");
+}

@@ -1,30 +1,29 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * Copyright (C) 2017 Free Electrons
- * Maxime Ripard <maxime.ripard@मुक्त-electrons.com>
+ * Maxime Ripard <maxime.ripard@free-electrons.com>
  */
 
-#समावेश <linux/clk.h>
-#समावेश <linux/component.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <linux/regmap.h>
-#समावेश <linux/reset.h>
+#include <linux/clk.h>
+#include <linux/component.h>
+#include <linux/module.h>
+#include <linux/of_device.h>
+#include <linux/platform_device.h>
+#include <linux/pm_runtime.h>
+#include <linux/regmap.h>
+#include <linux/reset.h>
 
-#समावेश <drm/drm_device.h>
-#समावेश <drm/drm_fb_cma_helper.h>
-#समावेश <drm/drm_fourcc.h>
-#समावेश <drm/drm_framebuffer.h>
-#समावेश <drm/drm_gem_cma_helper.h>
-#समावेश <drm/drm_plane.h>
+#include <drm/drm_device.h>
+#include <drm/drm_fb_cma_helper.h>
+#include <drm/drm_fourcc.h>
+#include <drm/drm_framebuffer.h>
+#include <drm/drm_gem_cma_helper.h>
+#include <drm/drm_plane.h>
 
-#समावेश "sun4i_drv.h"
-#समावेश "sun4i_frontend.h"
+#include "sun4i_drv.h"
+#include "sun4i_frontend.h"
 
-अटल स्थिर u32 sun4i_frontend_vert_coef[32] = अणु
+static const u32 sun4i_frontend_vert_coef[32] = {
 	0x00004000, 0x000140ff, 0x00033ffe, 0x00043ffd,
 	0x00063efc, 0xff083dfc, 0x000a3bfb, 0xff0d39fb,
 	0xff0f37fb, 0xff1136fa, 0xfe1433fb, 0xfe1631fb,
@@ -33,9 +32,9 @@
 	0xfb2f19fd, 0xfb3116fe, 0xfb3314fe, 0xfa3611ff,
 	0xfb370fff, 0xfb390dff, 0xfb3b0a00, 0xfc3d08ff,
 	0xfc3e0600, 0xfd3f0400, 0xfe3f0300, 0xff400100,
-पूर्ण;
+};
 
-अटल स्थिर u32 sun4i_frontend_horz_coef[64] = अणु
+static const u32 sun4i_frontend_horz_coef[64] = {
 	0x40000000, 0x00000000, 0x40fe0000, 0x0000ff03,
 	0x3ffd0000, 0x0000ff05, 0x3ffc0000, 0x0000ff06,
 	0x3efb0000, 0x0000ff08, 0x3dfb0000, 0x0000ff09,
@@ -52,14 +51,14 @@
 	0x0afe0000, 0x0000fa3e, 0x08ff0000, 0x0000fb3e,
 	0x06ff0000, 0x0000fb40, 0x05ff0000, 0x0000fc40,
 	0x03ff0000, 0x0000fd41, 0x01ff0000, 0x0000fe42,
-पूर्ण;
+};
 
 /*
  * These coefficients are taken from the A33 BSP from Allwinner.
  *
- * The first three values of each row are coded as 13-bit चिन्हित fixed-poपूर्णांक
- * numbers, with 10 bits क्रम the fractional part. The fourth value is a
- * स्थिरant coded as a 14-bit चिन्हित fixed-poपूर्णांक number with 4 bits क्रम the
+ * The first three values of each row are coded as 13-bit signed fixed-point
+ * numbers, with 10 bits for the fractional part. The fourth value is a
+ * constant coded as a 14-bit signed fixed-point number with 4 bits for the
  * fractional part.
  *
  * The values in table order give the following colorspace translation:
@@ -70,300 +69,300 @@
  * This seems to be a conversion from Y[16:235] UV[16:240] to RGB[0:255],
  * following the BT601 spec.
  */
-स्थिर u32 sunxi_bt601_yuv2rgb_coef[12] = अणु
+const u32 sunxi_bt601_yuv2rgb_coef[12] = {
 	0x000004a7, 0x00001e6f, 0x00001cbf, 0x00000877,
 	0x000004a7, 0x00000000, 0x00000662, 0x00003211,
 	0x000004a7, 0x00000812, 0x00000000, 0x00002eb1,
-पूर्ण;
+};
 EXPORT_SYMBOL(sunxi_bt601_yuv2rgb_coef);
 
-अटल व्योम sun4i_frontend_scaler_init(काष्ठा sun4i_frontend *frontend)
-अणु
-	पूर्णांक i;
+static void sun4i_frontend_scaler_init(struct sun4i_frontend *frontend)
+{
+	int i;
 
-	अगर (frontend->data->has_coef_access_ctrl)
-		regmap_ग_लिखो_bits(frontend->regs, SUN4I_FRONTEND_FRM_CTRL_REG,
+	if (frontend->data->has_coef_access_ctrl)
+		regmap_write_bits(frontend->regs, SUN4I_FRONTEND_FRM_CTRL_REG,
 				  SUN4I_FRONTEND_FRM_CTRL_COEF_ACCESS_CTRL,
 				  SUN4I_FRONTEND_FRM_CTRL_COEF_ACCESS_CTRL);
 
-	क्रम (i = 0; i < 32; i++) अणु
-		regmap_ग_लिखो(frontend->regs, SUN4I_FRONTEND_CH0_HORZCOEF0_REG(i),
+	for (i = 0; i < 32; i++) {
+		regmap_write(frontend->regs, SUN4I_FRONTEND_CH0_HORZCOEF0_REG(i),
 			     sun4i_frontend_horz_coef[2 * i]);
-		regmap_ग_लिखो(frontend->regs, SUN4I_FRONTEND_CH1_HORZCOEF0_REG(i),
+		regmap_write(frontend->regs, SUN4I_FRONTEND_CH1_HORZCOEF0_REG(i),
 			     sun4i_frontend_horz_coef[2 * i]);
-		regmap_ग_लिखो(frontend->regs, SUN4I_FRONTEND_CH0_HORZCOEF1_REG(i),
+		regmap_write(frontend->regs, SUN4I_FRONTEND_CH0_HORZCOEF1_REG(i),
 			     sun4i_frontend_horz_coef[2 * i + 1]);
-		regmap_ग_लिखो(frontend->regs, SUN4I_FRONTEND_CH1_HORZCOEF1_REG(i),
+		regmap_write(frontend->regs, SUN4I_FRONTEND_CH1_HORZCOEF1_REG(i),
 			     sun4i_frontend_horz_coef[2 * i + 1]);
-		regmap_ग_लिखो(frontend->regs, SUN4I_FRONTEND_CH0_VERTCOEF_REG(i),
+		regmap_write(frontend->regs, SUN4I_FRONTEND_CH0_VERTCOEF_REG(i),
 			     sun4i_frontend_vert_coef[i]);
-		regmap_ग_लिखो(frontend->regs, SUN4I_FRONTEND_CH1_VERTCOEF_REG(i),
+		regmap_write(frontend->regs, SUN4I_FRONTEND_CH1_VERTCOEF_REG(i),
 			     sun4i_frontend_vert_coef[i]);
-	पूर्ण
+	}
 
-	अगर (frontend->data->has_coef_rdy)
-		regmap_ग_लिखो_bits(frontend->regs,
+	if (frontend->data->has_coef_rdy)
+		regmap_write_bits(frontend->regs,
 				  SUN4I_FRONTEND_FRM_CTRL_REG,
 				  SUN4I_FRONTEND_FRM_CTRL_COEF_RDY,
 				  SUN4I_FRONTEND_FRM_CTRL_COEF_RDY);
-पूर्ण
+}
 
-पूर्णांक sun4i_frontend_init(काष्ठा sun4i_frontend *frontend)
-अणु
-	वापस pm_runसमय_get_sync(frontend->dev);
-पूर्ण
+int sun4i_frontend_init(struct sun4i_frontend *frontend)
+{
+	return pm_runtime_get_sync(frontend->dev);
+}
 EXPORT_SYMBOL(sun4i_frontend_init);
 
-व्योम sun4i_frontend_निकास(काष्ठा sun4i_frontend *frontend)
-अणु
-	pm_runसमय_put(frontend->dev);
-पूर्ण
-EXPORT_SYMBOL(sun4i_frontend_निकास);
+void sun4i_frontend_exit(struct sun4i_frontend *frontend)
+{
+	pm_runtime_put(frontend->dev);
+}
+EXPORT_SYMBOL(sun4i_frontend_exit);
 
-अटल bool sun4i_frontend_क्रमmat_chroma_requires_swap(uपूर्णांक32_t fmt)
-अणु
-	चयन (fmt) अणु
-	हाल DRM_FORMAT_YVU411:
-	हाल DRM_FORMAT_YVU420:
-	हाल DRM_FORMAT_YVU422:
-	हाल DRM_FORMAT_YVU444:
-		वापस true;
+static bool sun4i_frontend_format_chroma_requires_swap(uint32_t fmt)
+{
+	switch (fmt) {
+	case DRM_FORMAT_YVU411:
+	case DRM_FORMAT_YVU420:
+	case DRM_FORMAT_YVU422:
+	case DRM_FORMAT_YVU444:
+		return true;
 
-	शेष:
-		वापस false;
-	पूर्ण
-पूर्ण
+	default:
+		return false;
+	}
+}
 
-अटल bool sun4i_frontend_क्रमmat_supports_tiling(uपूर्णांक32_t fmt)
-अणु
-	चयन (fmt) अणु
-	हाल DRM_FORMAT_NV12:
-	हाल DRM_FORMAT_NV16:
-	हाल DRM_FORMAT_NV21:
-	हाल DRM_FORMAT_NV61:
-	हाल DRM_FORMAT_YUV411:
-	हाल DRM_FORMAT_YUV420:
-	हाल DRM_FORMAT_YUV422:
-	हाल DRM_FORMAT_YVU420:
-	हाल DRM_FORMAT_YVU422:
-	हाल DRM_FORMAT_YVU411:
-		वापस true;
+static bool sun4i_frontend_format_supports_tiling(uint32_t fmt)
+{
+	switch (fmt) {
+	case DRM_FORMAT_NV12:
+	case DRM_FORMAT_NV16:
+	case DRM_FORMAT_NV21:
+	case DRM_FORMAT_NV61:
+	case DRM_FORMAT_YUV411:
+	case DRM_FORMAT_YUV420:
+	case DRM_FORMAT_YUV422:
+	case DRM_FORMAT_YVU420:
+	case DRM_FORMAT_YVU422:
+	case DRM_FORMAT_YVU411:
+		return true;
 
-	शेष:
-		वापस false;
-	पूर्ण
-पूर्ण
+	default:
+		return false;
+	}
+}
 
-व्योम sun4i_frontend_update_buffer(काष्ठा sun4i_frontend *frontend,
-				  काष्ठा drm_plane *plane)
-अणु
-	काष्ठा drm_plane_state *state = plane->state;
-	काष्ठा drm_framebuffer *fb = state->fb;
-	अचिन्हित पूर्णांक strides[3] = अणुपूर्ण;
+void sun4i_frontend_update_buffer(struct sun4i_frontend *frontend,
+				  struct drm_plane *plane)
+{
+	struct drm_plane_state *state = plane->state;
+	struct drm_framebuffer *fb = state->fb;
+	unsigned int strides[3] = {};
 
 	dma_addr_t paddr;
 	bool swap;
 
-	अगर (fb->modअगरier == DRM_FORMAT_MOD_ALLWINNER_TILED) अणु
-		अचिन्हित पूर्णांक width = state->src_w >> 16;
-		अचिन्हित पूर्णांक offset;
+	if (fb->modifier == DRM_FORMAT_MOD_ALLWINNER_TILED) {
+		unsigned int width = state->src_w >> 16;
+		unsigned int offset;
 
 		strides[0] = SUN4I_FRONTEND_LINESTRD_TILED(fb->pitches[0]);
 
 		/*
-		 * The X1 offset is the offset to the bottom-right poपूर्णांक in the
+		 * The X1 offset is the offset to the bottom-right point in the
 		 * end tile, which is the final pixel (at offset width - 1)
 		 * within the end tile (with a 32-byte mask).
 		 */
 		offset = (width - 1) & (32 - 1);
 
-		regmap_ग_लिखो(frontend->regs, SUN4I_FRONTEND_TB_OFF0_REG,
+		regmap_write(frontend->regs, SUN4I_FRONTEND_TB_OFF0_REG,
 			     SUN4I_FRONTEND_TB_OFF_X1(offset));
 
-		अगर (fb->क्रमmat->num_planes > 1) अणु
+		if (fb->format->num_planes > 1) {
 			strides[1] =
 				SUN4I_FRONTEND_LINESTRD_TILED(fb->pitches[1]);
 
-			regmap_ग_लिखो(frontend->regs, SUN4I_FRONTEND_TB_OFF1_REG,
+			regmap_write(frontend->regs, SUN4I_FRONTEND_TB_OFF1_REG,
 				     SUN4I_FRONTEND_TB_OFF_X1(offset));
-		पूर्ण
+		}
 
-		अगर (fb->क्रमmat->num_planes > 2) अणु
+		if (fb->format->num_planes > 2) {
 			strides[2] =
 				SUN4I_FRONTEND_LINESTRD_TILED(fb->pitches[2]);
 
-			regmap_ग_लिखो(frontend->regs, SUN4I_FRONTEND_TB_OFF2_REG,
+			regmap_write(frontend->regs, SUN4I_FRONTEND_TB_OFF2_REG,
 				     SUN4I_FRONTEND_TB_OFF_X1(offset));
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		strides[0] = fb->pitches[0];
 
-		अगर (fb->क्रमmat->num_planes > 1)
+		if (fb->format->num_planes > 1)
 			strides[1] = fb->pitches[1];
 
-		अगर (fb->क्रमmat->num_planes > 2)
+		if (fb->format->num_planes > 2)
 			strides[2] = fb->pitches[2];
-	पूर्ण
+	}
 
 	/* Set the line width */
 	DRM_DEBUG_DRIVER("Frontend stride: %d bytes\n", fb->pitches[0]);
-	regmap_ग_लिखो(frontend->regs, SUN4I_FRONTEND_LINESTRD0_REG,
+	regmap_write(frontend->regs, SUN4I_FRONTEND_LINESTRD0_REG,
 		     strides[0]);
 
-	अगर (fb->क्रमmat->num_planes > 1)
-		regmap_ग_लिखो(frontend->regs, SUN4I_FRONTEND_LINESTRD1_REG,
+	if (fb->format->num_planes > 1)
+		regmap_write(frontend->regs, SUN4I_FRONTEND_LINESTRD1_REG,
 			     strides[1]);
 
-	अगर (fb->क्रमmat->num_planes > 2)
-		regmap_ग_लिखो(frontend->regs, SUN4I_FRONTEND_LINESTRD2_REG,
+	if (fb->format->num_planes > 2)
+		regmap_write(frontend->regs, SUN4I_FRONTEND_LINESTRD2_REG,
 			     strides[2]);
 
-	/* Some planar क्रमmats require chroma channel swapping by hand. */
-	swap = sun4i_frontend_क्रमmat_chroma_requires_swap(fb->क्रमmat->क्रमmat);
+	/* Some planar formats require chroma channel swapping by hand. */
+	swap = sun4i_frontend_format_chroma_requires_swap(fb->format->format);
 
 	/* Set the physical address of the buffer in memory */
 	paddr = drm_fb_cma_get_gem_addr(fb, state, 0);
 	paddr -= PHYS_OFFSET;
 	DRM_DEBUG_DRIVER("Setting buffer #0 address to %pad\n", &paddr);
-	regmap_ग_लिखो(frontend->regs, SUN4I_FRONTEND_BUF_ADDR0_REG, paddr);
+	regmap_write(frontend->regs, SUN4I_FRONTEND_BUF_ADDR0_REG, paddr);
 
-	अगर (fb->क्रमmat->num_planes > 1) अणु
+	if (fb->format->num_planes > 1) {
 		paddr = drm_fb_cma_get_gem_addr(fb, state, swap ? 2 : 1);
 		paddr -= PHYS_OFFSET;
 		DRM_DEBUG_DRIVER("Setting buffer #1 address to %pad\n", &paddr);
-		regmap_ग_लिखो(frontend->regs, SUN4I_FRONTEND_BUF_ADDR1_REG,
+		regmap_write(frontend->regs, SUN4I_FRONTEND_BUF_ADDR1_REG,
 			     paddr);
-	पूर्ण
+	}
 
-	अगर (fb->क्रमmat->num_planes > 2) अणु
+	if (fb->format->num_planes > 2) {
 		paddr = drm_fb_cma_get_gem_addr(fb, state, swap ? 1 : 2);
 		paddr -= PHYS_OFFSET;
 		DRM_DEBUG_DRIVER("Setting buffer #2 address to %pad\n", &paddr);
-		regmap_ग_लिखो(frontend->regs, SUN4I_FRONTEND_BUF_ADDR2_REG,
+		regmap_write(frontend->regs, SUN4I_FRONTEND_BUF_ADDR2_REG,
 			     paddr);
-	पूर्ण
-पूर्ण
+	}
+}
 EXPORT_SYMBOL(sun4i_frontend_update_buffer);
 
-अटल पूर्णांक
-sun4i_frontend_drm_क्रमmat_to_input_fmt(स्थिर काष्ठा drm_क्रमmat_info *क्रमmat,
+static int
+sun4i_frontend_drm_format_to_input_fmt(const struct drm_format_info *format,
 				       u32 *val)
-अणु
-	अगर (!क्रमmat->is_yuv)
+{
+	if (!format->is_yuv)
 		*val = SUN4I_FRONTEND_INPUT_FMT_DATA_FMT_RGB;
-	अन्यथा अगर (drm_क्रमmat_info_is_yuv_sampling_411(क्रमmat))
+	else if (drm_format_info_is_yuv_sampling_411(format))
 		*val = SUN4I_FRONTEND_INPUT_FMT_DATA_FMT_YUV411;
-	अन्यथा अगर (drm_क्रमmat_info_is_yuv_sampling_420(क्रमmat))
+	else if (drm_format_info_is_yuv_sampling_420(format))
 		*val = SUN4I_FRONTEND_INPUT_FMT_DATA_FMT_YUV420;
-	अन्यथा अगर (drm_क्रमmat_info_is_yuv_sampling_422(क्रमmat))
+	else if (drm_format_info_is_yuv_sampling_422(format))
 		*val = SUN4I_FRONTEND_INPUT_FMT_DATA_FMT_YUV422;
-	अन्यथा अगर (drm_क्रमmat_info_is_yuv_sampling_444(क्रमmat))
+	else if (drm_format_info_is_yuv_sampling_444(format))
 		*val = SUN4I_FRONTEND_INPUT_FMT_DATA_FMT_YUV444;
-	अन्यथा
-		वापस -EINVAL;
+	else
+		return -EINVAL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-sun4i_frontend_drm_क्रमmat_to_input_mode(स्थिर काष्ठा drm_क्रमmat_info *क्रमmat,
-					uपूर्णांक64_t modअगरier, u32 *val)
-अणु
-	bool tiled = (modअगरier == DRM_FORMAT_MOD_ALLWINNER_TILED);
+static int
+sun4i_frontend_drm_format_to_input_mode(const struct drm_format_info *format,
+					uint64_t modifier, u32 *val)
+{
+	bool tiled = (modifier == DRM_FORMAT_MOD_ALLWINNER_TILED);
 
-	चयन (क्रमmat->num_planes) अणु
-	हाल 1:
+	switch (format->num_planes) {
+	case 1:
 		*val = SUN4I_FRONTEND_INPUT_FMT_DATA_MOD_PACKED;
-		वापस 0;
+		return 0;
 
-	हाल 2:
+	case 2:
 		*val = tiled ? SUN4I_FRONTEND_INPUT_FMT_DATA_MOD_MB32_SEMIPLANAR
 			     : SUN4I_FRONTEND_INPUT_FMT_DATA_MOD_SEMIPLANAR;
-		वापस 0;
+		return 0;
 
-	हाल 3:
+	case 3:
 		*val = tiled ? SUN4I_FRONTEND_INPUT_FMT_DATA_MOD_MB32_PLANAR
 			     : SUN4I_FRONTEND_INPUT_FMT_DATA_MOD_PLANAR;
-		वापस 0;
+		return 0;
 
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-पूर्ण
+	default:
+		return -EINVAL;
+	}
+}
 
-अटल पूर्णांक
-sun4i_frontend_drm_क्रमmat_to_input_sequence(स्थिर काष्ठा drm_क्रमmat_info *क्रमmat,
+static int
+sun4i_frontend_drm_format_to_input_sequence(const struct drm_format_info *format,
 					    u32 *val)
-अणु
-	/* Planar क्रमmats have an explicit input sequence. */
-	अगर (drm_क्रमmat_info_is_yuv_planar(क्रमmat)) अणु
+{
+	/* Planar formats have an explicit input sequence. */
+	if (drm_format_info_is_yuv_planar(format)) {
 		*val = 0;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	चयन (क्रमmat->क्रमmat) अणु
-	हाल DRM_FORMAT_BGRX8888:
+	switch (format->format) {
+	case DRM_FORMAT_BGRX8888:
 		*val = SUN4I_FRONTEND_INPUT_FMT_DATA_PS_BGRX;
-		वापस 0;
+		return 0;
 
-	हाल DRM_FORMAT_NV12:
+	case DRM_FORMAT_NV12:
 		*val = SUN4I_FRONTEND_INPUT_FMT_DATA_PS_UV;
-		वापस 0;
+		return 0;
 
-	हाल DRM_FORMAT_NV16:
+	case DRM_FORMAT_NV16:
 		*val = SUN4I_FRONTEND_INPUT_FMT_DATA_PS_UV;
-		वापस 0;
+		return 0;
 
-	हाल DRM_FORMAT_NV21:
+	case DRM_FORMAT_NV21:
 		*val = SUN4I_FRONTEND_INPUT_FMT_DATA_PS_VU;
-		वापस 0;
+		return 0;
 
-	हाल DRM_FORMAT_NV61:
+	case DRM_FORMAT_NV61:
 		*val = SUN4I_FRONTEND_INPUT_FMT_DATA_PS_VU;
-		वापस 0;
+		return 0;
 
-	हाल DRM_FORMAT_UYVY:
+	case DRM_FORMAT_UYVY:
 		*val = SUN4I_FRONTEND_INPUT_FMT_DATA_PS_UYVY;
-		वापस 0;
+		return 0;
 
-	हाल DRM_FORMAT_VYUY:
+	case DRM_FORMAT_VYUY:
 		*val = SUN4I_FRONTEND_INPUT_FMT_DATA_PS_VYUY;
-		वापस 0;
+		return 0;
 
-	हाल DRM_FORMAT_XRGB8888:
+	case DRM_FORMAT_XRGB8888:
 		*val = SUN4I_FRONTEND_INPUT_FMT_DATA_PS_XRGB;
-		वापस 0;
+		return 0;
 
-	हाल DRM_FORMAT_YUYV:
+	case DRM_FORMAT_YUYV:
 		*val = SUN4I_FRONTEND_INPUT_FMT_DATA_PS_YUYV;
-		वापस 0;
+		return 0;
 
-	हाल DRM_FORMAT_YVYU:
+	case DRM_FORMAT_YVYU:
 		*val = SUN4I_FRONTEND_INPUT_FMT_DATA_PS_YVYU;
-		वापस 0;
+		return 0;
 
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-पूर्ण
+	default:
+		return -EINVAL;
+	}
+}
 
-अटल पूर्णांक sun4i_frontend_drm_क्रमmat_to_output_fmt(uपूर्णांक32_t fmt, u32 *val)
-अणु
-	चयन (fmt) अणु
-	हाल DRM_FORMAT_BGRX8888:
+static int sun4i_frontend_drm_format_to_output_fmt(uint32_t fmt, u32 *val)
+{
+	switch (fmt) {
+	case DRM_FORMAT_BGRX8888:
 		*val = SUN4I_FRONTEND_OUTPUT_FMT_DATA_FMT_BGRX8888;
-		वापस 0;
+		return 0;
 
-	हाल DRM_FORMAT_XRGB8888:
+	case DRM_FORMAT_XRGB8888:
 		*val = SUN4I_FRONTEND_OUTPUT_FMT_DATA_FMT_XRGB8888;
-		वापस 0;
+		return 0;
 
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-पूर्ण
+	default:
+		return -EINVAL;
+	}
+}
 
-अटल स्थिर uपूर्णांक32_t sun4i_frontend_क्रमmats[] = अणु
+static const uint32_t sun4i_frontend_formats[] = {
 	DRM_FORMAT_BGRX8888,
 	DRM_FORMAT_NV12,
 	DRM_FORMAT_NV16,
@@ -382,125 +381,125 @@ sun4i_frontend_drm_क्रमmat_to_input_sequence(स्थिर काष�
 	DRM_FORMAT_YVU422,
 	DRM_FORMAT_YVU444,
 	DRM_FORMAT_YVYU,
-पूर्ण;
+};
 
-bool sun4i_frontend_क्रमmat_is_supported(uपूर्णांक32_t fmt, uपूर्णांक64_t modअगरier)
-अणु
-	अचिन्हित पूर्णांक i;
+bool sun4i_frontend_format_is_supported(uint32_t fmt, uint64_t modifier)
+{
+	unsigned int i;
 
-	अगर (modअगरier == DRM_FORMAT_MOD_ALLWINNER_TILED)
-		वापस sun4i_frontend_क्रमmat_supports_tiling(fmt);
-	अन्यथा अगर (modअगरier != DRM_FORMAT_MOD_LINEAR)
-		वापस false;
+	if (modifier == DRM_FORMAT_MOD_ALLWINNER_TILED)
+		return sun4i_frontend_format_supports_tiling(fmt);
+	else if (modifier != DRM_FORMAT_MOD_LINEAR)
+		return false;
 
-	क्रम (i = 0; i < ARRAY_SIZE(sun4i_frontend_क्रमmats); i++)
-		अगर (sun4i_frontend_क्रमmats[i] == fmt)
-			वापस true;
+	for (i = 0; i < ARRAY_SIZE(sun4i_frontend_formats); i++)
+		if (sun4i_frontend_formats[i] == fmt)
+			return true;
 
-	वापस false;
-पूर्ण
-EXPORT_SYMBOL(sun4i_frontend_क्रमmat_is_supported);
+	return false;
+}
+EXPORT_SYMBOL(sun4i_frontend_format_is_supported);
 
-पूर्णांक sun4i_frontend_update_क्रमmats(काष्ठा sun4i_frontend *frontend,
-				  काष्ठा drm_plane *plane, uपूर्णांक32_t out_fmt)
-अणु
-	काष्ठा drm_plane_state *state = plane->state;
-	काष्ठा drm_framebuffer *fb = state->fb;
-	स्थिर काष्ठा drm_क्रमmat_info *क्रमmat = fb->क्रमmat;
-	uपूर्णांक64_t modअगरier = fb->modअगरier;
-	अचिन्हित पूर्णांक ch1_phase_idx;
+int sun4i_frontend_update_formats(struct sun4i_frontend *frontend,
+				  struct drm_plane *plane, uint32_t out_fmt)
+{
+	struct drm_plane_state *state = plane->state;
+	struct drm_framebuffer *fb = state->fb;
+	const struct drm_format_info *format = fb->format;
+	uint64_t modifier = fb->modifier;
+	unsigned int ch1_phase_idx;
 	u32 out_fmt_val;
 	u32 in_fmt_val, in_mod_val, in_ps_val;
-	अचिन्हित पूर्णांक i;
+	unsigned int i;
 	u32 bypass;
-	पूर्णांक ret;
+	int ret;
 
-	ret = sun4i_frontend_drm_क्रमmat_to_input_fmt(क्रमmat, &in_fmt_val);
-	अगर (ret) अणु
+	ret = sun4i_frontend_drm_format_to_input_fmt(format, &in_fmt_val);
+	if (ret) {
 		DRM_DEBUG_DRIVER("Invalid input format\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = sun4i_frontend_drm_क्रमmat_to_input_mode(क्रमmat, modअगरier,
+	ret = sun4i_frontend_drm_format_to_input_mode(format, modifier,
 						      &in_mod_val);
-	अगर (ret) अणु
+	if (ret) {
 		DRM_DEBUG_DRIVER("Invalid input mode\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = sun4i_frontend_drm_क्रमmat_to_input_sequence(क्रमmat, &in_ps_val);
-	अगर (ret) अणु
+	ret = sun4i_frontend_drm_format_to_input_sequence(format, &in_ps_val);
+	if (ret) {
 		DRM_DEBUG_DRIVER("Invalid pixel sequence\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = sun4i_frontend_drm_क्रमmat_to_output_fmt(out_fmt, &out_fmt_val);
-	अगर (ret) अणु
+	ret = sun4i_frontend_drm_format_to_output_fmt(out_fmt, &out_fmt_val);
+	if (ret) {
 		DRM_DEBUG_DRIVER("Invalid output format\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	/*
-	 * I have no idea what this करोes exactly, but it seems to be
+	 * I have no idea what this does exactly, but it seems to be
 	 * related to the scaler FIR filter phase parameters.
 	 */
-	ch1_phase_idx = (क्रमmat->num_planes > 1) ? 1 : 0;
-	regmap_ग_लिखो(frontend->regs, SUN4I_FRONTEND_CH0_HORZPHASE_REG,
+	ch1_phase_idx = (format->num_planes > 1) ? 1 : 0;
+	regmap_write(frontend->regs, SUN4I_FRONTEND_CH0_HORZPHASE_REG,
 		     frontend->data->ch_phase[0]);
-	regmap_ग_लिखो(frontend->regs, SUN4I_FRONTEND_CH1_HORZPHASE_REG,
+	regmap_write(frontend->regs, SUN4I_FRONTEND_CH1_HORZPHASE_REG,
 		     frontend->data->ch_phase[ch1_phase_idx]);
-	regmap_ग_लिखो(frontend->regs, SUN4I_FRONTEND_CH0_VERTPHASE0_REG,
+	regmap_write(frontend->regs, SUN4I_FRONTEND_CH0_VERTPHASE0_REG,
 		     frontend->data->ch_phase[0]);
-	regmap_ग_लिखो(frontend->regs, SUN4I_FRONTEND_CH1_VERTPHASE0_REG,
+	regmap_write(frontend->regs, SUN4I_FRONTEND_CH1_VERTPHASE0_REG,
 		     frontend->data->ch_phase[ch1_phase_idx]);
-	regmap_ग_लिखो(frontend->regs, SUN4I_FRONTEND_CH0_VERTPHASE1_REG,
+	regmap_write(frontend->regs, SUN4I_FRONTEND_CH0_VERTPHASE1_REG,
 		     frontend->data->ch_phase[0]);
-	regmap_ग_लिखो(frontend->regs, SUN4I_FRONTEND_CH1_VERTPHASE1_REG,
+	regmap_write(frontend->regs, SUN4I_FRONTEND_CH1_VERTPHASE1_REG,
 		     frontend->data->ch_phase[ch1_phase_idx]);
 
 	/*
-	 * Checking the input क्रमmat is sufficient since we currently only
-	 * support RGB output क्रमmats to the backend. If YUV output क्रमmats
+	 * Checking the input format is sufficient since we currently only
+	 * support RGB output formats to the backend. If YUV output formats
 	 * ever get supported, an YUV input and output would require bypassing
 	 * the CSC engine too.
 	 */
-	अगर (क्रमmat->is_yuv) अणु
-		/* Setup the CSC engine क्रम YUV to RGB conversion. */
+	if (format->is_yuv) {
+		/* Setup the CSC engine for YUV to RGB conversion. */
 		bypass = 0;
 
-		क्रम (i = 0; i < ARRAY_SIZE(sunxi_bt601_yuv2rgb_coef); i++)
-			regmap_ग_लिखो(frontend->regs,
+		for (i = 0; i < ARRAY_SIZE(sunxi_bt601_yuv2rgb_coef); i++)
+			regmap_write(frontend->regs,
 				     SUN4I_FRONTEND_CSC_COEF_REG(i),
 				     sunxi_bt601_yuv2rgb_coef[i]);
-	पूर्ण अन्यथा अणु
+	} else {
 		bypass = SUN4I_FRONTEND_BYPASS_CSC_EN;
-	पूर्ण
+	}
 
 	regmap_update_bits(frontend->regs, SUN4I_FRONTEND_BYPASS_REG,
 			   SUN4I_FRONTEND_BYPASS_CSC_EN, bypass);
 
-	regmap_ग_लिखो(frontend->regs, SUN4I_FRONTEND_INPUT_FMT_REG,
+	regmap_write(frontend->regs, SUN4I_FRONTEND_INPUT_FMT_REG,
 		     in_mod_val | in_fmt_val | in_ps_val);
 
 	/*
 	 * TODO: It look like the A31 and A80 at least will need the
-	 * bit 7 (ALPHA_EN) enabled when using a क्रमmat with alpha (so
+	 * bit 7 (ALPHA_EN) enabled when using a format with alpha (so
 	 * ARGB8888).
 	 */
-	regmap_ग_लिखो(frontend->regs, SUN4I_FRONTEND_OUTPUT_FMT_REG,
+	regmap_write(frontend->regs, SUN4I_FRONTEND_OUTPUT_FMT_REG,
 		     out_fmt_val);
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL(sun4i_frontend_update_क्रमmats);
+	return 0;
+}
+EXPORT_SYMBOL(sun4i_frontend_update_formats);
 
-व्योम sun4i_frontend_update_coord(काष्ठा sun4i_frontend *frontend,
-				 काष्ठा drm_plane *plane)
-अणु
-	काष्ठा drm_plane_state *state = plane->state;
-	काष्ठा drm_framebuffer *fb = state->fb;
-	uपूर्णांक32_t luma_width, luma_height;
-	uपूर्णांक32_t chroma_width, chroma_height;
+void sun4i_frontend_update_coord(struct sun4i_frontend *frontend,
+				 struct drm_plane *plane)
+{
+	struct drm_plane_state *state = plane->state;
+	struct drm_framebuffer *fb = state->fb;
+	uint32_t luma_width, luma_height;
+	uint32_t chroma_width, chroma_height;
 
 	/* Set height and width */
 	DRM_DEBUG_DRIVER("Frontend size W: %u H: %u\n",
@@ -509,146 +508,146 @@ EXPORT_SYMBOL(sun4i_frontend_update_क्रमmats);
 	luma_width = state->src_w >> 16;
 	luma_height = state->src_h >> 16;
 
-	chroma_width = DIV_ROUND_UP(luma_width, fb->क्रमmat->hsub);
-	chroma_height = DIV_ROUND_UP(luma_height, fb->क्रमmat->vsub);
+	chroma_width = DIV_ROUND_UP(luma_width, fb->format->hsub);
+	chroma_height = DIV_ROUND_UP(luma_height, fb->format->vsub);
 
-	regmap_ग_लिखो(frontend->regs, SUN4I_FRONTEND_CH0_INSIZE_REG,
+	regmap_write(frontend->regs, SUN4I_FRONTEND_CH0_INSIZE_REG,
 		     SUN4I_FRONTEND_INSIZE(luma_height, luma_width));
-	regmap_ग_लिखो(frontend->regs, SUN4I_FRONTEND_CH1_INSIZE_REG,
+	regmap_write(frontend->regs, SUN4I_FRONTEND_CH1_INSIZE_REG,
 		     SUN4I_FRONTEND_INSIZE(chroma_height, chroma_width));
 
-	regmap_ग_लिखो(frontend->regs, SUN4I_FRONTEND_CH0_OUTSIZE_REG,
+	regmap_write(frontend->regs, SUN4I_FRONTEND_CH0_OUTSIZE_REG,
 		     SUN4I_FRONTEND_OUTSIZE(state->crtc_h, state->crtc_w));
-	regmap_ग_लिखो(frontend->regs, SUN4I_FRONTEND_CH1_OUTSIZE_REG,
+	regmap_write(frontend->regs, SUN4I_FRONTEND_CH1_OUTSIZE_REG,
 		     SUN4I_FRONTEND_OUTSIZE(state->crtc_h, state->crtc_w));
 
-	regmap_ग_लिखो(frontend->regs, SUN4I_FRONTEND_CH0_HORZFACT_REG,
+	regmap_write(frontend->regs, SUN4I_FRONTEND_CH0_HORZFACT_REG,
 		     (luma_width << 16) / state->crtc_w);
-	regmap_ग_लिखो(frontend->regs, SUN4I_FRONTEND_CH1_HORZFACT_REG,
+	regmap_write(frontend->regs, SUN4I_FRONTEND_CH1_HORZFACT_REG,
 		     (chroma_width << 16) / state->crtc_w);
 
-	regmap_ग_लिखो(frontend->regs, SUN4I_FRONTEND_CH0_VERTFACT_REG,
+	regmap_write(frontend->regs, SUN4I_FRONTEND_CH0_VERTFACT_REG,
 		     (luma_height << 16) / state->crtc_h);
-	regmap_ग_लिखो(frontend->regs, SUN4I_FRONTEND_CH1_VERTFACT_REG,
+	regmap_write(frontend->regs, SUN4I_FRONTEND_CH1_VERTFACT_REG,
 		     (chroma_height << 16) / state->crtc_h);
 
-	regmap_ग_लिखो_bits(frontend->regs, SUN4I_FRONTEND_FRM_CTRL_REG,
+	regmap_write_bits(frontend->regs, SUN4I_FRONTEND_FRM_CTRL_REG,
 			  SUN4I_FRONTEND_FRM_CTRL_REG_RDY,
 			  SUN4I_FRONTEND_FRM_CTRL_REG_RDY);
-पूर्ण
+}
 EXPORT_SYMBOL(sun4i_frontend_update_coord);
 
-पूर्णांक sun4i_frontend_enable(काष्ठा sun4i_frontend *frontend)
-अणु
-	regmap_ग_लिखो_bits(frontend->regs, SUN4I_FRONTEND_FRM_CTRL_REG,
+int sun4i_frontend_enable(struct sun4i_frontend *frontend)
+{
+	regmap_write_bits(frontend->regs, SUN4I_FRONTEND_FRM_CTRL_REG,
 			  SUN4I_FRONTEND_FRM_CTRL_FRM_START,
 			  SUN4I_FRONTEND_FRM_CTRL_FRM_START);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL(sun4i_frontend_enable);
 
-अटल स्थिर काष्ठा regmap_config sun4i_frontend_regmap_config = अणु
+static const struct regmap_config sun4i_frontend_regmap_config = {
 	.reg_bits	= 32,
 	.val_bits	= 32,
 	.reg_stride	= 4,
-	.max_रेजिस्टर	= 0x0a14,
-पूर्ण;
+	.max_register	= 0x0a14,
+};
 
-अटल पूर्णांक sun4i_frontend_bind(काष्ठा device *dev, काष्ठा device *master,
-			 व्योम *data)
-अणु
-	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(dev);
-	काष्ठा sun4i_frontend *frontend;
-	काष्ठा drm_device *drm = data;
-	काष्ठा sun4i_drv *drv = drm->dev_निजी;
-	काष्ठा resource *res;
-	व्योम __iomem *regs;
+static int sun4i_frontend_bind(struct device *dev, struct device *master,
+			 void *data)
+{
+	struct platform_device *pdev = to_platform_device(dev);
+	struct sun4i_frontend *frontend;
+	struct drm_device *drm = data;
+	struct sun4i_drv *drv = drm->dev_private;
+	struct resource *res;
+	void __iomem *regs;
 
-	frontend = devm_kzalloc(dev, माप(*frontend), GFP_KERNEL);
-	अगर (!frontend)
-		वापस -ENOMEM;
+	frontend = devm_kzalloc(dev, sizeof(*frontend), GFP_KERNEL);
+	if (!frontend)
+		return -ENOMEM;
 
 	dev_set_drvdata(dev, frontend);
 	frontend->dev = dev;
 	frontend->node = dev->of_node;
 
 	frontend->data = of_device_get_match_data(dev);
-	अगर (!frontend->data)
-		वापस -ENODEV;
+	if (!frontend->data)
+		return -ENODEV;
 
-	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	regs = devm_ioremap_resource(dev, res);
-	अगर (IS_ERR(regs))
-		वापस PTR_ERR(regs);
+	if (IS_ERR(regs))
+		return PTR_ERR(regs);
 
 	frontend->regs = devm_regmap_init_mmio(dev, regs,
 					       &sun4i_frontend_regmap_config);
-	अगर (IS_ERR(frontend->regs)) अणु
+	if (IS_ERR(frontend->regs)) {
 		dev_err(dev, "Couldn't create the frontend regmap\n");
-		वापस PTR_ERR(frontend->regs);
-	पूर्ण
+		return PTR_ERR(frontend->regs);
+	}
 
-	frontend->reset = devm_reset_control_get(dev, शून्य);
-	अगर (IS_ERR(frontend->reset)) अणु
+	frontend->reset = devm_reset_control_get(dev, NULL);
+	if (IS_ERR(frontend->reset)) {
 		dev_err(dev, "Couldn't get our reset line\n");
-		वापस PTR_ERR(frontend->reset);
-	पूर्ण
+		return PTR_ERR(frontend->reset);
+	}
 
 	frontend->bus_clk = devm_clk_get(dev, "ahb");
-	अगर (IS_ERR(frontend->bus_clk)) अणु
+	if (IS_ERR(frontend->bus_clk)) {
 		dev_err(dev, "Couldn't get our bus clock\n");
-		वापस PTR_ERR(frontend->bus_clk);
-	पूर्ण
+		return PTR_ERR(frontend->bus_clk);
+	}
 
 	frontend->mod_clk = devm_clk_get(dev, "mod");
-	अगर (IS_ERR(frontend->mod_clk)) अणु
+	if (IS_ERR(frontend->mod_clk)) {
 		dev_err(dev, "Couldn't get our mod clock\n");
-		वापस PTR_ERR(frontend->mod_clk);
-	पूर्ण
+		return PTR_ERR(frontend->mod_clk);
+	}
 
 	frontend->ram_clk = devm_clk_get(dev, "ram");
-	अगर (IS_ERR(frontend->ram_clk)) अणु
+	if (IS_ERR(frontend->ram_clk)) {
 		dev_err(dev, "Couldn't get our ram clock\n");
-		वापस PTR_ERR(frontend->ram_clk);
-	पूर्ण
+		return PTR_ERR(frontend->ram_clk);
+	}
 
 	list_add_tail(&frontend->list, &drv->frontend_list);
-	pm_runसमय_enable(dev);
+	pm_runtime_enable(dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम sun4i_frontend_unbind(काष्ठा device *dev, काष्ठा device *master,
-			    व्योम *data)
-अणु
-	काष्ठा sun4i_frontend *frontend = dev_get_drvdata(dev);
+static void sun4i_frontend_unbind(struct device *dev, struct device *master,
+			    void *data)
+{
+	struct sun4i_frontend *frontend = dev_get_drvdata(dev);
 
 	list_del(&frontend->list);
-	pm_runसमय_क्रमce_suspend(dev);
-पूर्ण
+	pm_runtime_force_suspend(dev);
+}
 
-अटल स्थिर काष्ठा component_ops sun4i_frontend_ops = अणु
+static const struct component_ops sun4i_frontend_ops = {
 	.bind	= sun4i_frontend_bind,
 	.unbind	= sun4i_frontend_unbind,
-पूर्ण;
+};
 
-अटल पूर्णांक sun4i_frontend_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	वापस component_add(&pdev->dev, &sun4i_frontend_ops);
-पूर्ण
+static int sun4i_frontend_probe(struct platform_device *pdev)
+{
+	return component_add(&pdev->dev, &sun4i_frontend_ops);
+}
 
-अटल पूर्णांक sun4i_frontend_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
+static int sun4i_frontend_remove(struct platform_device *pdev)
+{
 	component_del(&pdev->dev, &sun4i_frontend_ops);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sun4i_frontend_runसमय_resume(काष्ठा device *dev)
-अणु
-	काष्ठा sun4i_frontend *frontend = dev_get_drvdata(dev);
-	पूर्णांक ret;
+static int sun4i_frontend_runtime_resume(struct device *dev)
+{
+	struct sun4i_frontend *frontend = dev_get_drvdata(dev);
+	int ret;
 
 	clk_set_rate(frontend->mod_clk, 300000000);
 
@@ -657,10 +656,10 @@ EXPORT_SYMBOL(sun4i_frontend_enable);
 	clk_prepare_enable(frontend->ram_clk);
 
 	ret = reset_control_reset(frontend->reset);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "Couldn't reset our device\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	regmap_update_bits(frontend->regs, SUN4I_FRONTEND_EN_REG,
 			   SUN4I_FRONTEND_EN_EN,
@@ -668,69 +667,69 @@ EXPORT_SYMBOL(sun4i_frontend_enable);
 
 	sun4i_frontend_scaler_init(frontend);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sun4i_frontend_runसमय_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा sun4i_frontend *frontend = dev_get_drvdata(dev);
+static int sun4i_frontend_runtime_suspend(struct device *dev)
+{
+	struct sun4i_frontend *frontend = dev_get_drvdata(dev);
 
 	clk_disable_unprepare(frontend->ram_clk);
 	clk_disable_unprepare(frontend->mod_clk);
 	clk_disable_unprepare(frontend->bus_clk);
 
-	reset_control_निश्चित(frontend->reset);
+	reset_control_assert(frontend->reset);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा dev_pm_ops sun4i_frontend_pm_ops = अणु
-	.runसमय_resume		= sun4i_frontend_runसमय_resume,
-	.runसमय_suspend	= sun4i_frontend_runसमय_suspend,
-पूर्ण;
+static const struct dev_pm_ops sun4i_frontend_pm_ops = {
+	.runtime_resume		= sun4i_frontend_runtime_resume,
+	.runtime_suspend	= sun4i_frontend_runtime_suspend,
+};
 
-अटल स्थिर काष्ठा sun4i_frontend_data sun4i_a10_frontend = अणु
-	.ch_phase		= अणु 0x000, 0xfc000 पूर्ण,
+static const struct sun4i_frontend_data sun4i_a10_frontend = {
+	.ch_phase		= { 0x000, 0xfc000 },
 	.has_coef_rdy		= true,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा sun4i_frontend_data sun8i_a33_frontend = अणु
-	.ch_phase		= अणु 0x400, 0xfc400 पूर्ण,
+static const struct sun4i_frontend_data sun8i_a33_frontend = {
+	.ch_phase		= { 0x400, 0xfc400 },
 	.has_coef_access_ctrl	= true,
-पूर्ण;
+};
 
-स्थिर काष्ठा of_device_id sun4i_frontend_of_table[] = अणु
-	अणु
+const struct of_device_id sun4i_frontend_of_table[] = {
+	{
 		.compatible = "allwinner,sun4i-a10-display-frontend",
 		.data = &sun4i_a10_frontend
-	पूर्ण,
-	अणु
+	},
+	{
 		.compatible = "allwinner,sun7i-a20-display-frontend",
 		.data = &sun4i_a10_frontend
-	पूर्ण,
-	अणु
+	},
+	{
 		.compatible = "allwinner,sun8i-a23-display-frontend",
 		.data = &sun8i_a33_frontend
-	पूर्ण,
-	अणु
+	},
+	{
 		.compatible = "allwinner,sun8i-a33-display-frontend",
 		.data = &sun8i_a33_frontend
-	पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+	},
+	{ }
+};
 EXPORT_SYMBOL(sun4i_frontend_of_table);
 MODULE_DEVICE_TABLE(of, sun4i_frontend_of_table);
 
-अटल काष्ठा platक्रमm_driver sun4i_frontend_driver = अणु
+static struct platform_driver sun4i_frontend_driver = {
 	.probe		= sun4i_frontend_probe,
-	.हटाओ		= sun4i_frontend_हटाओ,
-	.driver		= अणु
+	.remove		= sun4i_frontend_remove,
+	.driver		= {
 		.name		= "sun4i-frontend",
 		.of_match_table	= sun4i_frontend_of_table,
 		.pm		= &sun4i_frontend_pm_ops,
-	पूर्ण,
-पूर्ण;
-module_platक्रमm_driver(sun4i_frontend_driver);
+	},
+};
+module_platform_driver(sun4i_frontend_driver);
 
 MODULE_AUTHOR("Maxime Ripard <maxime.ripard@free-electrons.com>");
 MODULE_DESCRIPTION("Allwinner A10 Display Engine Frontend Driver");

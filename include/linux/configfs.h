@@ -1,259 +1,258 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
- * configfs.h - definitions क्रम the device driver fileप्रणाली
+ * configfs.h - definitions for the device driver filesystem
  *
  * Based on sysfs:
  * 	sysfs is Copyright (C) 2001, 2002, 2003 Patrick Mochel
  *
  * Based on kobject.h:
  *      Copyright (c) 2002-2003	Patrick Mochel
- *      Copyright (c) 2002-2003	Open Source Development Lअसल
+ *      Copyright (c) 2002-2003	Open Source Development Labs
  *
  * configfs Copyright (C) 2005 Oracle.  All rights reserved.
  *
- * Please पढ़ो Documentation/fileप्रणालीs/configfs.rst beक्रमe using
- * the configfs पूर्णांकerface, ESPECIALLY the parts about reference counts and
- * item deकाष्ठाors.
+ * Please read Documentation/filesystems/configfs.rst before using
+ * the configfs interface, ESPECIALLY the parts about reference counts and
+ * item destructors.
  */
 
-#अगर_अघोषित _CONFIGFS_H_
-#घोषणा _CONFIGFS_H_
+#ifndef _CONFIGFS_H_
+#define _CONFIGFS_H_
 
-#समावेश <linux/स्थिति.स>   /* S_IRUGO */
-#समावेश <linux/types.h>  /* sमाप_प्रकार */
-#समावेश <linux/list.h>   /* काष्ठा list_head */
-#समावेश <linux/kref.h>   /* काष्ठा kref */
-#समावेश <linux/mutex.h>  /* काष्ठा mutex */
+#include <linux/stat.h>   /* S_IRUGO */
+#include <linux/types.h>  /* ssize_t */
+#include <linux/list.h>   /* struct list_head */
+#include <linux/kref.h>   /* struct kref */
+#include <linux/mutex.h>  /* struct mutex */
 
-#घोषणा CONFIGFS_ITEM_NAME_LEN	20
+#define CONFIGFS_ITEM_NAME_LEN	20
 
-काष्ठा module;
+struct module;
 
-काष्ठा configfs_item_operations;
-काष्ठा configfs_group_operations;
-काष्ठा configfs_attribute;
-काष्ठा configfs_bin_attribute;
-काष्ठा configfs_subप्रणाली;
+struct configfs_item_operations;
+struct configfs_group_operations;
+struct configfs_attribute;
+struct configfs_bin_attribute;
+struct configfs_subsystem;
 
-काष्ठा config_item अणु
-	अक्षर			*ci_name;
-	अक्षर			ci_namebuf[CONFIGFS_ITEM_NAME_LEN];
-	काष्ठा kref		ci_kref;
-	काष्ठा list_head	ci_entry;
-	काष्ठा config_item	*ci_parent;
-	काष्ठा config_group	*ci_group;
-	स्थिर काष्ठा config_item_type	*ci_type;
-	काष्ठा dentry		*ci_dentry;
-पूर्ण;
+struct config_item {
+	char			*ci_name;
+	char			ci_namebuf[CONFIGFS_ITEM_NAME_LEN];
+	struct kref		ci_kref;
+	struct list_head	ci_entry;
+	struct config_item	*ci_parent;
+	struct config_group	*ci_group;
+	const struct config_item_type	*ci_type;
+	struct dentry		*ci_dentry;
+};
 
-बाह्य __म_लिखो(2, 3)
-पूर्णांक config_item_set_name(काष्ठा config_item *, स्थिर अक्षर *, ...);
+extern __printf(2, 3)
+int config_item_set_name(struct config_item *, const char *, ...);
 
-अटल अंतरभूत अक्षर *config_item_name(काष्ठा config_item * item)
-अणु
-	वापस item->ci_name;
-पूर्ण
+static inline char *config_item_name(struct config_item * item)
+{
+	return item->ci_name;
+}
 
-बाह्य व्योम config_item_init_type_name(काष्ठा config_item *item,
-				       स्थिर अक्षर *name,
-				       स्थिर काष्ठा config_item_type *type);
+extern void config_item_init_type_name(struct config_item *item,
+				       const char *name,
+				       const struct config_item_type *type);
 
-बाह्य काष्ठा config_item *config_item_get(काष्ठा config_item *);
-बाह्य काष्ठा config_item *config_item_get_unless_zero(काष्ठा config_item *);
-बाह्य व्योम config_item_put(काष्ठा config_item *);
+extern struct config_item *config_item_get(struct config_item *);
+extern struct config_item *config_item_get_unless_zero(struct config_item *);
+extern void config_item_put(struct config_item *);
 
-काष्ठा config_item_type अणु
-	काष्ठा module				*ct_owner;
-	काष्ठा configfs_item_operations		*ct_item_ops;
-	काष्ठा configfs_group_operations	*ct_group_ops;
-	काष्ठा configfs_attribute		**ct_attrs;
-	काष्ठा configfs_bin_attribute		**ct_bin_attrs;
-पूर्ण;
+struct config_item_type {
+	struct module				*ct_owner;
+	struct configfs_item_operations		*ct_item_ops;
+	struct configfs_group_operations	*ct_group_ops;
+	struct configfs_attribute		**ct_attrs;
+	struct configfs_bin_attribute		**ct_bin_attrs;
+};
 
 /**
- *	group - a group of config_items of a specअगरic type, beदीर्घing
- *	to a specअगरic subप्रणाली.
+ *	group - a group of config_items of a specific type, belonging
+ *	to a specific subsystem.
  */
-काष्ठा config_group अणु
-	काष्ठा config_item		cg_item;
-	काष्ठा list_head		cg_children;
-	काष्ठा configfs_subप्रणाली 	*cg_subsys;
-	काष्ठा list_head		शेष_groups;
-	काष्ठा list_head		group_entry;
-पूर्ण;
+struct config_group {
+	struct config_item		cg_item;
+	struct list_head		cg_children;
+	struct configfs_subsystem 	*cg_subsys;
+	struct list_head		default_groups;
+	struct list_head		group_entry;
+};
 
-बाह्य व्योम config_group_init(काष्ठा config_group *group);
-बाह्य व्योम config_group_init_type_name(काष्ठा config_group *group,
-					स्थिर अक्षर *name,
-					स्थिर काष्ठा config_item_type *type);
+extern void config_group_init(struct config_group *group);
+extern void config_group_init_type_name(struct config_group *group,
+					const char *name,
+					const struct config_item_type *type);
 
-अटल अंतरभूत काष्ठा config_group *to_config_group(काष्ठा config_item *item)
-अणु
-	वापस item ? container_of(item,काष्ठा config_group,cg_item) : शून्य;
-पूर्ण
+static inline struct config_group *to_config_group(struct config_item *item)
+{
+	return item ? container_of(item,struct config_group,cg_item) : NULL;
+}
 
-अटल अंतरभूत काष्ठा config_group *config_group_get(काष्ठा config_group *group)
-अणु
-	वापस group ? to_config_group(config_item_get(&group->cg_item)) : शून्य;
-पूर्ण
+static inline struct config_group *config_group_get(struct config_group *group)
+{
+	return group ? to_config_group(config_item_get(&group->cg_item)) : NULL;
+}
 
-अटल अंतरभूत व्योम config_group_put(काष्ठा config_group *group)
-अणु
+static inline void config_group_put(struct config_group *group)
+{
 	config_item_put(&group->cg_item);
-पूर्ण
+}
 
-बाह्य काष्ठा config_item *config_group_find_item(काष्ठा config_group *,
-						  स्थिर अक्षर *);
+extern struct config_item *config_group_find_item(struct config_group *,
+						  const char *);
 
 
-अटल अंतरभूत व्योम configfs_add_शेष_group(काष्ठा config_group *new_group,
-		काष्ठा config_group *group)
-अणु
-	list_add_tail(&new_group->group_entry, &group->शेष_groups);
-पूर्ण
+static inline void configfs_add_default_group(struct config_group *new_group,
+		struct config_group *group)
+{
+	list_add_tail(&new_group->group_entry, &group->default_groups);
+}
 
-काष्ठा configfs_attribute अणु
-	स्थिर अक्षर		*ca_name;
-	काष्ठा module 		*ca_owner;
+struct configfs_attribute {
+	const char		*ca_name;
+	struct module 		*ca_owner;
 	umode_t			ca_mode;
-	sमाप_प्रकार (*show)(काष्ठा config_item *, अक्षर *);
-	sमाप_प्रकार (*store)(काष्ठा config_item *, स्थिर अक्षर *, माप_प्रकार);
-पूर्ण;
+	ssize_t (*show)(struct config_item *, char *);
+	ssize_t (*store)(struct config_item *, const char *, size_t);
+};
 
-#घोषणा CONFIGFS_ATTR(_pfx, _name)			\
-अटल काष्ठा configfs_attribute _pfx##attr_##_name = अणु	\
-	.ca_name	= __stringअगरy(_name),		\
+#define CONFIGFS_ATTR(_pfx, _name)			\
+static struct configfs_attribute _pfx##attr_##_name = {	\
+	.ca_name	= __stringify(_name),		\
 	.ca_mode	= S_IRUGO | S_IWUSR,		\
 	.ca_owner	= THIS_MODULE,			\
 	.show		= _pfx##_name##_show,		\
 	.store		= _pfx##_name##_store,		\
-पूर्ण
+}
 
-#घोषणा CONFIGFS_ATTR_RO(_pfx, _name)			\
-अटल काष्ठा configfs_attribute _pfx##attr_##_name = अणु	\
-	.ca_name	= __stringअगरy(_name),		\
+#define CONFIGFS_ATTR_RO(_pfx, _name)			\
+static struct configfs_attribute _pfx##attr_##_name = {	\
+	.ca_name	= __stringify(_name),		\
 	.ca_mode	= S_IRUGO,			\
 	.ca_owner	= THIS_MODULE,			\
 	.show		= _pfx##_name##_show,		\
-पूर्ण
+}
 
-#घोषणा CONFIGFS_ATTR_WO(_pfx, _name)			\
-अटल काष्ठा configfs_attribute _pfx##attr_##_name = अणु	\
-	.ca_name	= __stringअगरy(_name),		\
+#define CONFIGFS_ATTR_WO(_pfx, _name)			\
+static struct configfs_attribute _pfx##attr_##_name = {	\
+	.ca_name	= __stringify(_name),		\
 	.ca_mode	= S_IWUSR,			\
 	.ca_owner	= THIS_MODULE,			\
 	.store		= _pfx##_name##_store,		\
-पूर्ण
+}
 
-काष्ठा file;
-काष्ठा vm_area_काष्ठा;
+struct file;
+struct vm_area_struct;
 
-काष्ठा configfs_bin_attribute अणु
-	काष्ठा configfs_attribute cb_attr;	/* std. attribute */
-	व्योम *cb_निजी;			/* क्रम user       */
-	माप_प्रकार cb_max_size;			/* max core size  */
-	sमाप_प्रकार (*पढ़ो)(काष्ठा config_item *, व्योम *, माप_प्रकार);
-	sमाप_प्रकार (*ग_लिखो)(काष्ठा config_item *, स्थिर व्योम *, माप_प्रकार);
-पूर्ण;
+struct configfs_bin_attribute {
+	struct configfs_attribute cb_attr;	/* std. attribute */
+	void *cb_private;			/* for user       */
+	size_t cb_max_size;			/* max core size  */
+	ssize_t (*read)(struct config_item *, void *, size_t);
+	ssize_t (*write)(struct config_item *, const void *, size_t);
+};
 
-#घोषणा CONFIGFS_BIN_ATTR(_pfx, _name, _priv, _maxsz)		\
-अटल काष्ठा configfs_bin_attribute _pfx##attr_##_name = अणु	\
-	.cb_attr = अणु						\
-		.ca_name	= __stringअगरy(_name),		\
+#define CONFIGFS_BIN_ATTR(_pfx, _name, _priv, _maxsz)		\
+static struct configfs_bin_attribute _pfx##attr_##_name = {	\
+	.cb_attr = {						\
+		.ca_name	= __stringify(_name),		\
 		.ca_mode	= S_IRUGO | S_IWUSR,		\
 		.ca_owner	= THIS_MODULE,			\
-	पूर्ण,							\
-	.cb_निजी	= _priv,				\
+	},							\
+	.cb_private	= _priv,				\
 	.cb_max_size	= _maxsz,				\
-	.पढ़ो		= _pfx##_name##_पढ़ो,			\
-	.ग_लिखो		= _pfx##_name##_ग_लिखो,			\
-पूर्ण
+	.read		= _pfx##_name##_read,			\
+	.write		= _pfx##_name##_write,			\
+}
 
-#घोषणा CONFIGFS_BIN_ATTR_RO(_pfx, _name, _priv, _maxsz)	\
-अटल काष्ठा configfs_bin_attribute _pfx##attr_##_name = अणु	\
-	.cb_attr = अणु						\
-		.ca_name	= __stringअगरy(_name),		\
+#define CONFIGFS_BIN_ATTR_RO(_pfx, _name, _priv, _maxsz)	\
+static struct configfs_bin_attribute _pfx##attr_##_name = {	\
+	.cb_attr = {						\
+		.ca_name	= __stringify(_name),		\
 		.ca_mode	= S_IRUGO,			\
 		.ca_owner	= THIS_MODULE,			\
-	पूर्ण,							\
-	.cb_निजी	= _priv,				\
+	},							\
+	.cb_private	= _priv,				\
 	.cb_max_size	= _maxsz,				\
-	.पढ़ो		= _pfx##_name##_पढ़ो,			\
-पूर्ण
+	.read		= _pfx##_name##_read,			\
+}
 
-#घोषणा CONFIGFS_BIN_ATTR_WO(_pfx, _name, _priv, _maxsz)	\
-अटल काष्ठा configfs_bin_attribute _pfx##attr_##_name = अणु	\
-	.cb_attr = अणु						\
-		.ca_name	= __stringअगरy(_name),		\
+#define CONFIGFS_BIN_ATTR_WO(_pfx, _name, _priv, _maxsz)	\
+static struct configfs_bin_attribute _pfx##attr_##_name = {	\
+	.cb_attr = {						\
+		.ca_name	= __stringify(_name),		\
 		.ca_mode	= S_IWUSR,			\
 		.ca_owner	= THIS_MODULE,			\
-	पूर्ण,							\
-	.cb_निजी	= _priv,				\
+	},							\
+	.cb_private	= _priv,				\
 	.cb_max_size	= _maxsz,				\
-	.ग_लिखो		= _pfx##_name##_ग_लिखो,			\
-पूर्ण
+	.write		= _pfx##_name##_write,			\
+}
 
 /*
  * If allow_link() exists, the item can symlink(2) out to other
- * items.  If the item is a group, it may support सूची_गढ़ो(2).
+ * items.  If the item is a group, it may support mkdir(2).
  * Groups supply one of make_group() and make_item().  If the
  * group supports make_group(), one can create group children.  If it
  * supports make_item(), one can create config_item children.  make_group()
- * and make_item() वापस ERR_PTR() on errors.  If it has
- * शेष_groups on group->शेष_groups, it has स्वतःmatically created
- * group children.  शेष_groups may coexist aदीर्घsize make_group() or
- * make_item(), but अगर the group wishes to have only शेष_groups
- * children (disallowing सूची_गढ़ो(2)), it need not provide either function.
+ * and make_item() return ERR_PTR() on errors.  If it has
+ * default_groups on group->default_groups, it has automatically created
+ * group children.  default_groups may coexist alongsize make_group() or
+ * make_item(), but if the group wishes to have only default_groups
+ * children (disallowing mkdir(2)), it need not provide either function.
  * If the group has commit(), it supports pending and committed (active)
  * items.
  */
-काष्ठा configfs_item_operations अणु
-	व्योम (*release)(काष्ठा config_item *);
-	पूर्णांक (*allow_link)(काष्ठा config_item *src, काष्ठा config_item *target);
-	व्योम (*drop_link)(काष्ठा config_item *src, काष्ठा config_item *target);
-पूर्ण;
+struct configfs_item_operations {
+	void (*release)(struct config_item *);
+	int (*allow_link)(struct config_item *src, struct config_item *target);
+	void (*drop_link)(struct config_item *src, struct config_item *target);
+};
 
-काष्ठा configfs_group_operations अणु
-	काष्ठा config_item *(*make_item)(काष्ठा config_group *group, स्थिर अक्षर *name);
-	काष्ठा config_group *(*make_group)(काष्ठा config_group *group, स्थिर अक्षर *name);
-	पूर्णांक (*commit_item)(काष्ठा config_item *item);
-	व्योम (*disconnect_notअगरy)(काष्ठा config_group *group, काष्ठा config_item *item);
-	व्योम (*drop_item)(काष्ठा config_group *group, काष्ठा config_item *item);
-पूर्ण;
+struct configfs_group_operations {
+	struct config_item *(*make_item)(struct config_group *group, const char *name);
+	struct config_group *(*make_group)(struct config_group *group, const char *name);
+	int (*commit_item)(struct config_item *item);
+	void (*disconnect_notify)(struct config_group *group, struct config_item *item);
+	void (*drop_item)(struct config_group *group, struct config_item *item);
+};
 
-काष्ठा configfs_subप्रणाली अणु
-	काष्ठा config_group	su_group;
-	काष्ठा mutex		su_mutex;
-पूर्ण;
+struct configfs_subsystem {
+	struct config_group	su_group;
+	struct mutex		su_mutex;
+};
 
-अटल अंतरभूत काष्ठा configfs_subप्रणाली *to_configfs_subप्रणाली(काष्ठा config_group *group)
-अणु
-	वापस group ?
-		container_of(group, काष्ठा configfs_subप्रणाली, su_group) :
-		शून्य;
-पूर्ण
+static inline struct configfs_subsystem *to_configfs_subsystem(struct config_group *group)
+{
+	return group ?
+		container_of(group, struct configfs_subsystem, su_group) :
+		NULL;
+}
 
-पूर्णांक configfs_रेजिस्टर_subप्रणाली(काष्ठा configfs_subप्रणाली *subsys);
-व्योम configfs_unरेजिस्टर_subप्रणाली(काष्ठा configfs_subप्रणाली *subsys);
+int configfs_register_subsystem(struct configfs_subsystem *subsys);
+void configfs_unregister_subsystem(struct configfs_subsystem *subsys);
 
-पूर्णांक configfs_रेजिस्टर_group(काष्ठा config_group *parent_group,
-			    काष्ठा config_group *group);
-व्योम configfs_unरेजिस्टर_group(काष्ठा config_group *group);
+int configfs_register_group(struct config_group *parent_group,
+			    struct config_group *group);
+void configfs_unregister_group(struct config_group *group);
 
-व्योम configfs_हटाओ_शेष_groups(काष्ठा config_group *group);
+void configfs_remove_default_groups(struct config_group *group);
 
-काष्ठा config_group *
-configfs_रेजिस्टर_शेष_group(काष्ठा config_group *parent_group,
-				स्थिर अक्षर *name,
-				स्थिर काष्ठा config_item_type *item_type);
-व्योम configfs_unरेजिस्टर_शेष_group(काष्ठा config_group *group);
+struct config_group *
+configfs_register_default_group(struct config_group *parent_group,
+				const char *name,
+				const struct config_item_type *item_type);
+void configfs_unregister_default_group(struct config_group *group);
 
 /* These functions can sleep and can alloc with GFP_KERNEL */
 /* WARNING: These cannot be called underneath configfs callbacks!! */
-पूर्णांक configfs_depend_item(काष्ठा configfs_subप्रणाली *subsys,
-			 काष्ठा config_item *target);
-व्योम configfs_undepend_item(काष्ठा config_item *target);
+int configfs_depend_item(struct configfs_subsystem *subsys,
+			 struct config_item *target);
+void configfs_undepend_item(struct config_item *target);
 
 /*
  * These functions can sleep and can alloc with GFP_KERNEL
@@ -262,13 +261,13 @@ configfs_रेजिस्टर_शेष_group(काष्ठा config_grou
  * WARNING: These cannot be called on newly created item
  *        (in make_group()/make_item() callback)
  */
-पूर्णांक configfs_depend_item_unlocked(काष्ठा configfs_subप्रणाली *caller_subsys,
-				  काष्ठा config_item *target);
+int configfs_depend_item_unlocked(struct configfs_subsystem *caller_subsys,
+				  struct config_item *target);
 
 
-अटल अंतरभूत व्योम configfs_undepend_item_unlocked(काष्ठा config_item *target)
-अणु
+static inline void configfs_undepend_item_unlocked(struct config_item *target)
+{
 	configfs_undepend_item(target);
-पूर्ण
+}
 
-#पूर्ण_अगर /* _CONFIGFS_H_ */
+#endif /* _CONFIGFS_H_ */

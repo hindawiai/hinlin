@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  *  linux/drivers/acorn/scsi/fas216.h
  *
@@ -7,168 +6,168 @@
  *
  *  FAS216 generic driver
  */
-#अगर_अघोषित FAS216_H
-#घोषणा FAS216_H
+#ifndef FAS216_H
+#define FAS216_H
 
-#समावेश <scsi/scsi_eh.h>
+#include <scsi/scsi_eh.h>
 
-#समावेश "queue.h"
-#समावेश "msgqueue.h"
+#include "queue.h"
+#include "msgqueue.h"
 
-/* FAS रेजिस्टर definitions */
+/* FAS register definitions */
 
 /* transfer count low */
-#घोषणा REG_CTCL		(0)
-#घोषणा REG_STCL		(0)
+#define REG_CTCL		(0)
+#define REG_STCL		(0)
 
 /* transfer count medium */
-#घोषणा REG_CTCM		(1)
-#घोषणा REG_STCM		(1)
+#define REG_CTCM		(1)
+#define REG_STCM		(1)
 
-/* fअगरo data */
-#घोषणा REG_FF			(2)
+/* fifo data */
+#define REG_FF			(2)
 
 /* command */
-#घोषणा REG_CMD			(3)
-#घोषणा CMD_NOP			0x00
-#घोषणा CMD_FLUSHFIFO		0x01
-#घोषणा CMD_RESETCHIP		0x02
-#घोषणा CMD_RESETSCSI		0x03
+#define REG_CMD			(3)
+#define CMD_NOP			0x00
+#define CMD_FLUSHFIFO		0x01
+#define CMD_RESETCHIP		0x02
+#define CMD_RESETSCSI		0x03
 
-#घोषणा CMD_TRANSFERINFO	0x10
-#घोषणा CMD_INITCMDCOMPLETE	0x11
-#घोषणा CMD_MSGACCEPTED		0x12
-#घोषणा CMD_PADBYTES		0x18
-#घोषणा CMD_SETATN		0x1a
-#घोषणा CMD_RSETATN		0x1b
+#define CMD_TRANSFERINFO	0x10
+#define CMD_INITCMDCOMPLETE	0x11
+#define CMD_MSGACCEPTED		0x12
+#define CMD_PADBYTES		0x18
+#define CMD_SETATN		0x1a
+#define CMD_RSETATN		0x1b
 
-#घोषणा CMD_SELECTWOATN		0x41
-#घोषणा CMD_SELECTATN		0x42
-#घोषणा CMD_SELECTATNSTOP	0x43
-#घोषणा CMD_ENABLESEL		0x44
-#घोषणा CMD_DISABLESEL		0x45
-#घोषणा CMD_SELECTATN3		0x46
-#घोषणा CMD_RESEL3		0x47
+#define CMD_SELECTWOATN		0x41
+#define CMD_SELECTATN		0x42
+#define CMD_SELECTATNSTOP	0x43
+#define CMD_ENABLESEL		0x44
+#define CMD_DISABLESEL		0x45
+#define CMD_SELECTATN3		0x46
+#define CMD_RESEL3		0x47
 
-#घोषणा CMD_WITHDMA		0x80
+#define CMD_WITHDMA		0x80
 
-/* status रेजिस्टर (पढ़ो) */
-#घोषणा REG_STAT		(4)
-#घोषणा STAT_IO			(1 << 0)			/* IO phase		*/
-#घोषणा STAT_CD			(1 << 1)			/* CD phase		*/
-#घोषणा STAT_MSG		(1 << 2)			/* MSG phase		*/
-#घोषणा STAT_TRANSFERDONE	(1 << 3)			/* Transfer completed	*/
-#घोषणा STAT_TRANSFERCNTZ	(1 << 4)			/* Transfer counter is zero */
-#घोषणा STAT_PARITYERROR	(1 << 5)			/* Parity error		*/
-#घोषणा STAT_REALBAD		(1 << 6)			/* Something bad	*/
-#घोषणा STAT_INT		(1 << 7)			/* Interrupt		*/
+/* status register (read) */
+#define REG_STAT		(4)
+#define STAT_IO			(1 << 0)			/* IO phase		*/
+#define STAT_CD			(1 << 1)			/* CD phase		*/
+#define STAT_MSG		(1 << 2)			/* MSG phase		*/
+#define STAT_TRANSFERDONE	(1 << 3)			/* Transfer completed	*/
+#define STAT_TRANSFERCNTZ	(1 << 4)			/* Transfer counter is zero */
+#define STAT_PARITYERROR	(1 << 5)			/* Parity error		*/
+#define STAT_REALBAD		(1 << 6)			/* Something bad	*/
+#define STAT_INT		(1 << 7)			/* Interrupt		*/
 
-#घोषणा STAT_BUSMASK		(STAT_MSG|STAT_CD|STAT_IO)
-#घोषणा STAT_DATAOUT		(0)				/* Data out		*/
-#घोषणा STAT_DATAIN		(STAT_IO)			/* Data in		*/
-#घोषणा STAT_COMMAND		(STAT_CD)			/* Command out		*/
-#घोषणा STAT_STATUS		(STAT_CD|STAT_IO)		/* Status In		*/
-#घोषणा STAT_MESGOUT		(STAT_MSG|STAT_CD)		/* Message out		*/
-#घोषणा STAT_MESGIN		(STAT_MSG|STAT_CD|STAT_IO)	/* Message In		*/
+#define STAT_BUSMASK		(STAT_MSG|STAT_CD|STAT_IO)
+#define STAT_DATAOUT		(0)				/* Data out		*/
+#define STAT_DATAIN		(STAT_IO)			/* Data in		*/
+#define STAT_COMMAND		(STAT_CD)			/* Command out		*/
+#define STAT_STATUS		(STAT_CD|STAT_IO)		/* Status In		*/
+#define STAT_MESGOUT		(STAT_MSG|STAT_CD)		/* Message out		*/
+#define STAT_MESGIN		(STAT_MSG|STAT_CD|STAT_IO)	/* Message In		*/
 
-/* bus ID क्रम select / reselect */
-#घोषणा REG_SDID		(4)
-#घोषणा BUSID(target)		((target) & 7)
+/* bus ID for select / reselect */
+#define REG_SDID		(4)
+#define BUSID(target)		((target) & 7)
 
-/* Interrupt status रेजिस्टर (पढ़ो) */
-#घोषणा REG_INST		(5)
-#घोषणा INST_SELWOATN		(1 << 0)			/* Select w/o ATN	*/
-#घोषणा INST_SELATN		(1 << 1)			/* Select w/ATN		*/
-#घोषणा INST_RESELECTED		(1 << 2)			/* Reselected		*/
-#घोषणा INST_FUNCDONE		(1 << 3)			/* Function करोne	*/
-#घोषणा INST_BUSSERVICE		(1 << 4)			/* Bus service		*/
-#घोषणा INST_DISCONNECT		(1 << 5)			/* Disconnect		*/
-#घोषणा INST_ILLEGALCMD		(1 << 6)			/* Illegal command	*/
-#घोषणा INST_BUSRESET		(1 << 7)			/* SCSI Bus reset	*/
+/* Interrupt status register (read) */
+#define REG_INST		(5)
+#define INST_SELWOATN		(1 << 0)			/* Select w/o ATN	*/
+#define INST_SELATN		(1 << 1)			/* Select w/ATN		*/
+#define INST_RESELECTED		(1 << 2)			/* Reselected		*/
+#define INST_FUNCDONE		(1 << 3)			/* Function done	*/
+#define INST_BUSSERVICE		(1 << 4)			/* Bus service		*/
+#define INST_DISCONNECT		(1 << 5)			/* Disconnect		*/
+#define INST_ILLEGALCMD		(1 << 6)			/* Illegal command	*/
+#define INST_BUSRESET		(1 << 7)			/* SCSI Bus reset	*/
 
-/* Timeout रेजिस्टर (ग_लिखो) */
-#घोषणा REG_STIM		(5)
+/* Timeout register (write) */
+#define REG_STIM		(5)
 
-/* Sequence step रेजिस्टर (पढ़ो) */
-#घोषणा REG_IS			(6)
-#घोषणा IS_BITS			0x07
-#घोषणा IS_SELARB		0x00				/* Select & Arb ok	*/
-#घोषणा IS_MSGBYTESENT		0x01				/* One byte message sent*/
-#घोषणा IS_NOTCOMMAND		0x02				/* Not in command state	*/
-#घोषणा IS_EARLYPHASE		0x03				/* Early phase change	*/
-#घोषणा IS_COMPLETE		0x04				/* Command ok		*/
-#घोषणा IS_SOF			0x08				/* Sync off flag	*/
+/* Sequence step register (read) */
+#define REG_IS			(6)
+#define IS_BITS			0x07
+#define IS_SELARB		0x00				/* Select & Arb ok	*/
+#define IS_MSGBYTESENT		0x01				/* One byte message sent*/
+#define IS_NOTCOMMAND		0x02				/* Not in command state	*/
+#define IS_EARLYPHASE		0x03				/* Early phase change	*/
+#define IS_COMPLETE		0x04				/* Command ok		*/
+#define IS_SOF			0x08				/* Sync off flag	*/
 
-/* Transfer period step (ग_लिखो) */
-#घोषणा REG_STP			(6)
+/* Transfer period step (write) */
+#define REG_STP			(6)
 
-/* Synchronous Offset (ग_लिखो) */
-#घोषणा REG_SOF			(7)
+/* Synchronous Offset (write) */
+#define REG_SOF			(7)
 
-/* Fअगरo state रेजिस्टर (पढ़ो) */
-#घोषणा REG_CFIS		(7)
-#घोषणा CFIS_CF			0x1f				/* Num bytes in FIFO	*/
-#घोषणा CFIS_IS			0xe0				/* Step			*/
+/* Fifo state register (read) */
+#define REG_CFIS		(7)
+#define CFIS_CF			0x1f				/* Num bytes in FIFO	*/
+#define CFIS_IS			0xe0				/* Step			*/
 
-/* config रेजिस्टर 1 */
-#घोषणा REG_CNTL1		(8)
-#घोषणा CNTL1_CID		(7 << 0)			/* Chip ID			*/
-#घोषणा CNTL1_STE		(1 << 3)			/* Self test enable		*/
-#घोषणा CNTL1_PERE		(1 << 4)			/* Parity enable reporting en.	*/
-#घोषणा CNTL1_PTE		(1 << 5)			/* Parity test enable		*/
-#घोषणा CNTL1_DISR		(1 << 6)			/* Disable Irq on SCSI reset	*/
-#घोषणा CNTL1_ETM		(1 << 7)			/* Extended Timing Mode		*/
+/* config register 1 */
+#define REG_CNTL1		(8)
+#define CNTL1_CID		(7 << 0)			/* Chip ID			*/
+#define CNTL1_STE		(1 << 3)			/* Self test enable		*/
+#define CNTL1_PERE		(1 << 4)			/* Parity enable reporting en.	*/
+#define CNTL1_PTE		(1 << 5)			/* Parity test enable		*/
+#define CNTL1_DISR		(1 << 6)			/* Disable Irq on SCSI reset	*/
+#define CNTL1_ETM		(1 << 7)			/* Extended Timing Mode		*/
 
-/* Clock conversion factor (पढ़ो) */
-#घोषणा REG_CLKF		(9)
-#घोषणा CLKF_F37MHZ		0x00				/* 35.01 - 40 MHz		*/
-#घोषणा CLKF_F10MHZ		0x02				/* 10 MHz			*/
-#घोषणा CLKF_F12MHZ		0x03				/* 10.01 - 15 MHz		*/
-#घोषणा CLKF_F17MHZ		0x04				/* 15.01 - 20 MHz		*/
-#घोषणा CLKF_F22MHZ		0x05				/* 20.01 - 25 MHz		*/
-#घोषणा CLKF_F27MHZ		0x06				/* 25.01 - 30 MHz		*/
-#घोषणा CLKF_F32MHZ		0x07				/* 30.01 - 35 MHz		*/
+/* Clock conversion factor (read) */
+#define REG_CLKF		(9)
+#define CLKF_F37MHZ		0x00				/* 35.01 - 40 MHz		*/
+#define CLKF_F10MHZ		0x02				/* 10 MHz			*/
+#define CLKF_F12MHZ		0x03				/* 10.01 - 15 MHz		*/
+#define CLKF_F17MHZ		0x04				/* 15.01 - 20 MHz		*/
+#define CLKF_F22MHZ		0x05				/* 20.01 - 25 MHz		*/
+#define CLKF_F27MHZ		0x06				/* 25.01 - 30 MHz		*/
+#define CLKF_F32MHZ		0x07				/* 30.01 - 35 MHz		*/
 
-/* Chip test रेजिस्टर (ग_लिखो) */
-#घोषणा REG_FTM			(10)
-#घोषणा TEST_FTM		0x01				/* Force target mode		*/
-#घोषणा TEST_FIM		0x02				/* Force initiator mode		*/
-#घोषणा TEST_FHI		0x04				/* Force high impedance mode	*/
+/* Chip test register (write) */
+#define REG_FTM			(10)
+#define TEST_FTM		0x01				/* Force target mode		*/
+#define TEST_FIM		0x02				/* Force initiator mode		*/
+#define TEST_FHI		0x04				/* Force high impedance mode	*/
 
-/* Configuration रेजिस्टर 2 (पढ़ो/ग_लिखो) */
-#घोषणा REG_CNTL2		(11)
-#घोषणा CNTL2_PGDP		(1 << 0)			/* Pass Th/Generate Data Parity	*/
-#घोषणा CNTL2_PGRP		(1 << 1)			/* Pass Th/Generate Reg Parity	*/
-#घोषणा CNTL2_ACDPE		(1 << 2)			/* Abort on Cmd/Data Parity Err	*/
-#घोषणा CNTL2_S2FE		(1 << 3)			/* SCSI2 Features Enable	*/
-#घोषणा CNTL2_TSDR		(1 << 4)			/* Tristate DREQ		*/
-#घोषणा CNTL2_SBO		(1 << 5)			/* Select Byte Order		*/
-#घोषणा CNTL2_ENF		(1 << 6)			/* Enable features		*/
-#घोषणा CNTL2_DAE		(1 << 7)			/* Data Alignment Enable	*/
+/* Configuration register 2 (read/write) */
+#define REG_CNTL2		(11)
+#define CNTL2_PGDP		(1 << 0)			/* Pass Th/Generate Data Parity	*/
+#define CNTL2_PGRP		(1 << 1)			/* Pass Th/Generate Reg Parity	*/
+#define CNTL2_ACDPE		(1 << 2)			/* Abort on Cmd/Data Parity Err	*/
+#define CNTL2_S2FE		(1 << 3)			/* SCSI2 Features Enable	*/
+#define CNTL2_TSDR		(1 << 4)			/* Tristate DREQ		*/
+#define CNTL2_SBO		(1 << 5)			/* Select Byte Order		*/
+#define CNTL2_ENF		(1 << 6)			/* Enable features		*/
+#define CNTL2_DAE		(1 << 7)			/* Data Alignment Enable	*/
 
-/* Configuration रेजिस्टर 3 (पढ़ो/ग_लिखो) */
-#घोषणा REG_CNTL3		(12)
-#घोषणा CNTL3_BS8		(1 << 0)			/* Burst size 8			*/
-#घोषणा CNTL3_MDM		(1 << 1)			/* Modअगरy DMA mode		*/
-#घोषणा CNTL3_LBTM		(1 << 2)			/* Last Byte Transfer mode	*/
-#घोषणा CNTL3_FASTCLK		(1 << 3)			/* Fast SCSI घड़ीing		*/
-#घोषणा CNTL3_FASTSCSI		(1 << 4)			/* Fast SCSI			*/
-#घोषणा CNTL3_G2CB		(1 << 5)			/* Group2 SCSI support		*/
-#घोषणा CNTL3_QTAG		(1 << 6)			/* Enable 3 byte msgs		*/
-#घोषणा CNTL3_ADIDCHK		(1 << 7)			/* Additional ID check		*/
+/* Configuration register 3 (read/write) */
+#define REG_CNTL3		(12)
+#define CNTL3_BS8		(1 << 0)			/* Burst size 8			*/
+#define CNTL3_MDM		(1 << 1)			/* Modify DMA mode		*/
+#define CNTL3_LBTM		(1 << 2)			/* Last Byte Transfer mode	*/
+#define CNTL3_FASTCLK		(1 << 3)			/* Fast SCSI clocking		*/
+#define CNTL3_FASTSCSI		(1 << 4)			/* Fast SCSI			*/
+#define CNTL3_G2CB		(1 << 5)			/* Group2 SCSI support		*/
+#define CNTL3_QTAG		(1 << 6)			/* Enable 3 byte msgs		*/
+#define CNTL3_ADIDCHK		(1 << 7)			/* Additional ID check		*/
 
-/* High transfer count (पढ़ो/ग_लिखो) */
-#घोषणा REG_CTCH		(14)
-#घोषणा REG_STCH		(14)
+/* High transfer count (read/write) */
+#define REG_CTCH		(14)
+#define REG_STCH		(14)
 
-/* ID रेजिस्टर (पढ़ो only) */
-#घोषणा REG_ID			(14)
+/* ID register (read only) */
+#define REG_ID			(14)
 
 /* Data alignment */
-#घोषणा REG_DAL			(15)
+#define REG_DAL			(15)
 
-प्रकार क्रमागत अणु
-	PHASE_IDLE,					/* we're not planning on करोing anything	*/
+typedef enum {
+	PHASE_IDLE,					/* we're not planning on doing anything	*/
 	PHASE_SELECTION,				/* selecting a device			*/
 	PHASE_SELSTEPS,					/* selection with command steps		*/
 	PHASE_COMMAND,					/* command sent				*/
@@ -181,211 +180,211 @@
 	PHASE_MSGOUT_EXPECT,				/* expecting message out		*/
 	PHASE_STATUS,					/* status from device			*/
 	PHASE_DONE					/* Command complete			*/
-पूर्ण phase_t;
+} phase_t;
 
-प्रकार क्रमागत अणु
+typedef enum {
 	DMA_OUT,					/* DMA from memory to chip		*/
 	DMA_IN						/* DMA from chip to memory		*/
-पूर्ण fasdmadir_t;
+} fasdmadir_t;
 
-प्रकार क्रमागत अणु
+typedef enum {
 	fasdma_none,					/* No dma				*/
 	fasdma_pio,					/* PIO mode				*/
-	fasdma_pseuकरो,					/* Pseuकरो DMA				*/
+	fasdma_pseudo,					/* Pseudo DMA				*/
 	fasdma_real_block,				/* Real DMA, on block by block basis	*/
 	fasdma_real_all					/* Real DMA, on request by request	*/
-पूर्ण fasdmatype_t;
+} fasdmatype_t;
 
-प्रकार क्रमागत अणु
-	neg_रुको,					/* Negotiate with device		*/
+typedef enum {
+	neg_wait,					/* Negotiate with device		*/
 	neg_inprogress,					/* Negotiation sent			*/
 	neg_complete,					/* Negotiation complete			*/
 	neg_targcomplete,				/* Target completed negotiation		*/
 	neg_invalid					/* Negotiation not supported		*/
-पूर्ण neg_t;
+} neg_t;
 
-#घोषणा MAGIC	0x441296bdUL
-#घोषणा NR_MSGS	8
+#define MAGIC	0x441296bdUL
+#define NR_MSGS	8
 
-#घोषणा FASCAP_DMA		(1 << 0)
-#घोषणा FASCAP_PSEUDODMA	(1 << 1)
+#define FASCAP_DMA		(1 << 0)
+#define FASCAP_PSEUDODMA	(1 << 1)
 
-प्रकार काष्ठा अणु
-	अचिन्हित दीर्घ		magic_start;
+typedef struct {
+	unsigned long		magic_start;
 	spinlock_t		host_lock;
-	काष्ठा Scsi_Host	*host;			/* host					*/
-	काष्ठा scsi_cmnd	*SCpnt;			/* currently processing command		*/
-	काष्ठा scsi_cmnd	*origSCpnt;		/* original connecting command		*/
-	काष्ठा scsi_cmnd	*reqSCpnt;		/* request sense command		*/
-	काष्ठा scsi_cmnd	*rstSCpnt;		/* reset command			*/
-	काष्ठा scsi_cmnd	*pending_SCpnt[8];	/* per-device pending commands		*/
-	पूर्णांक			next_pending;		/* next pending device			*/
+	struct Scsi_Host	*host;			/* host					*/
+	struct scsi_cmnd	*SCpnt;			/* currently processing command		*/
+	struct scsi_cmnd	*origSCpnt;		/* original connecting command		*/
+	struct scsi_cmnd	*reqSCpnt;		/* request sense command		*/
+	struct scsi_cmnd	*rstSCpnt;		/* reset command			*/
+	struct scsi_cmnd	*pending_SCpnt[8];	/* per-device pending commands		*/
+	int			next_pending;		/* next pending device			*/
 
 	/*
 	 * Error recovery
 	 */
-	रुको_queue_head_t	eh_रुको;
-	काष्ठा समयr_list	eh_समयr;
-	अचिन्हित पूर्णांक		rst_dev_status;
-	अचिन्हित पूर्णांक		rst_bus_status;
+	wait_queue_head_t	eh_wait;
+	struct timer_list	eh_timer;
+	unsigned int		rst_dev_status;
+	unsigned int		rst_bus_status;
 
-	/* driver inक्रमmation */
-	काष्ठा अणु
+	/* driver information */
+	struct {
 		phase_t		phase;			/* current phase			*/
-		व्योम __iomem	*io_base;		/* iomem base of FAS216			*/
-		अचिन्हित पूर्णांक	io_shअगरt;		/* shअगरt to adjust reg offsets by	*/
-		अचिन्हित अक्षर	cfg[4];			/* configuration रेजिस्टरs		*/
-		स्थिर अक्षर	*type;			/* chip type				*/
-		अचिन्हित पूर्णांक	irq;			/* पूर्णांकerrupt				*/
-		पूर्णांक		dma;			/* dma channel				*/
+		void __iomem	*io_base;		/* iomem base of FAS216			*/
+		unsigned int	io_shift;		/* shift to adjust reg offsets by	*/
+		unsigned char	cfg[4];			/* configuration registers		*/
+		const char	*type;			/* chip type				*/
+		unsigned int	irq;			/* interrupt				*/
+		int		dma;			/* dma channel				*/
 
-		काष्ठा scsi_poपूर्णांकer	SCp;			/* current commands data poपूर्णांकer	*/
+		struct scsi_pointer	SCp;			/* current commands data pointer	*/
 
-		MsgQueue_t	msgs;			/* message queue क्रम connected device	*/
+		MsgQueue_t	msgs;			/* message queue for connected device	*/
 
-		अचिन्हित पूर्णांक	async_stp;		/* Async transfer STP value		*/
-		अचिन्हित अक्षर	msgin_fअगरo;		/* bytes in fअगरo at समय of message in	*/
-		अचिन्हित अक्षर	message[256];		/* last message received from device	*/
+		unsigned int	async_stp;		/* Async transfer STP value		*/
+		unsigned char	msgin_fifo;		/* bytes in fifo at time of message in	*/
+		unsigned char	message[256];		/* last message received from device	*/
 
-		अचिन्हित अक्षर	disconnectable:1;	/* this command can be disconnected	*/
-		अचिन्हित अक्षर	पातing:1;		/* पातing command			*/
-	पूर्ण scsi;
+		unsigned char	disconnectable:1;	/* this command can be disconnected	*/
+		unsigned char	aborting:1;		/* aborting command			*/
+	} scsi;
 
-	/* statistics inक्रमmation */
-	काष्ठा अणु
-		अचिन्हित पूर्णांक	queues;
-		अचिन्हित पूर्णांक	हटाओs;
-		अचिन्हित पूर्णांक	fins;
-		अचिन्हित पूर्णांक	पढ़ोs;
-		अचिन्हित पूर्णांक	ग_लिखोs;
-		अचिन्हित पूर्णांक	miscs;
-		अचिन्हित पूर्णांक	disconnects;
-		अचिन्हित पूर्णांक	पातs;
-		अचिन्हित पूर्णांक	bus_resets;
-		अचिन्हित पूर्णांक	host_resets;
-	पूर्ण stats;
+	/* statistics information */
+	struct {
+		unsigned int	queues;
+		unsigned int	removes;
+		unsigned int	fins;
+		unsigned int	reads;
+		unsigned int	writes;
+		unsigned int	miscs;
+		unsigned int	disconnects;
+		unsigned int	aborts;
+		unsigned int	bus_resets;
+		unsigned int	host_resets;
+	} stats;
 
-	/* configuration inक्रमmation */
-	काष्ठा अणु
-		अचिन्हित अक्षर	घड़ीrate;		/* घड़ी rate of FAS device (MHz)	*/
-		अचिन्हित अक्षर	select_समयout;		/* समयout (R5)				*/
-		अचिन्हित अक्षर	sync_max_depth;		/* Synchronous xfer max fअगरo depth	*/
-		अचिन्हित अक्षर	wide_max_size;		/* Maximum wide transfer size		*/
-		अचिन्हित अक्षर	cntl3;			/* Control Reg 3			*/
-		अचिन्हित पूर्णांक	asyncperiod;		/* Async transfer period (ns)		*/
-		अचिन्हित पूर्णांक	capabilities;		/* driver capabilities			*/
-		अचिन्हित पूर्णांक	disconnect_ok:1;	/* Disconnects allowed?			*/
-	पूर्ण अगरcfg;
+	/* configuration information */
+	struct {
+		unsigned char	clockrate;		/* clock rate of FAS device (MHz)	*/
+		unsigned char	select_timeout;		/* timeout (R5)				*/
+		unsigned char	sync_max_depth;		/* Synchronous xfer max fifo depth	*/
+		unsigned char	wide_max_size;		/* Maximum wide transfer size		*/
+		unsigned char	cntl3;			/* Control Reg 3			*/
+		unsigned int	asyncperiod;		/* Async transfer period (ns)		*/
+		unsigned int	capabilities;		/* driver capabilities			*/
+		unsigned int	disconnect_ok:1;	/* Disconnects allowed?			*/
+	} ifcfg;
 
 	/* queue handling */
-	काष्ठा अणु
+	struct {
 	    	Queue_t		issue;			/* issue queue				*/
     		Queue_t		disconnected;		/* disconnected command queue		*/
-	पूर्ण queues;
+	} queues;
 
 	/* per-device info */
-	काष्ठा fas216_device अणु
-		अचिन्हित अक्षर	disconnect_ok:1;	/* device can disconnect		*/
-		अचिन्हित अक्षर	parity_enabled:1;	/* parity checking enabled		*/
-		अचिन्हित अक्षर	parity_check:1;		/* need to check parity checking	*/
-		अचिन्हित अक्षर	period;			/* sync xfer period in (*4ns)		*/
-		अचिन्हित अक्षर	stp;			/* synchronous transfer period		*/
-		अचिन्हित अक्षर	sof;			/* synchronous offset रेजिस्टर		*/
-		अचिन्हित अक्षर	wide_xfer;		/* currently negociated wide transfer	*/
+	struct fas216_device {
+		unsigned char	disconnect_ok:1;	/* device can disconnect		*/
+		unsigned char	parity_enabled:1;	/* parity checking enabled		*/
+		unsigned char	parity_check:1;		/* need to check parity checking	*/
+		unsigned char	period;			/* sync xfer period in (*4ns)		*/
+		unsigned char	stp;			/* synchronous transfer period		*/
+		unsigned char	sof;			/* synchronous offset register		*/
+		unsigned char	wide_xfer;		/* currently negociated wide transfer	*/
 		neg_t		sync_state;		/* synchronous transfer mode		*/
 		neg_t		wide_state;		/* wide transfer mode			*/
-	पूर्ण device[8];
-	अचिन्हित दीर्घ	busyluns[64/माप(अचिन्हित दीर्घ)];/* array of bits indicating LUNs busy	*/
+	} device[8];
+	unsigned long	busyluns[64/sizeof(unsigned long)];/* array of bits indicating LUNs busy	*/
 
 	/* dma */
-	काष्ठा अणु
+	struct {
 		fasdmatype_t	transfer_type;		/* current type of DMA transfer		*/
-		fasdmatype_t	(*setup) (काष्ठा Scsi_Host *host, काष्ठा scsi_poपूर्णांकer *SCp, fasdmadir_t direction, fasdmatype_t min_dma);
-		व्योम		(*pseuकरो)(काष्ठा Scsi_Host *host, काष्ठा scsi_poपूर्णांकer *SCp, fasdmadir_t direction, पूर्णांक transfer);
-		व्योम		(*stop)  (काष्ठा Scsi_Host *host, काष्ठा scsi_poपूर्णांकer *SCp);
-	पूर्ण dma;
+		fasdmatype_t	(*setup) (struct Scsi_Host *host, struct scsi_pointer *SCp, fasdmadir_t direction, fasdmatype_t min_dma);
+		void		(*pseudo)(struct Scsi_Host *host, struct scsi_pointer *SCp, fasdmadir_t direction, int transfer);
+		void		(*stop)  (struct Scsi_Host *host, struct scsi_pointer *SCp);
+	} dma;
 
 	/* miscellaneous */
-	पूर्णांक			पूर्णांकernal_करोne;		/* flag to indicate request करोne */
-	काष्ठा scsi_eh_save	ses;		/* holds request sense restore info */
-	अचिन्हित दीर्घ		magic_end;
-पूर्ण FAS216_Info;
+	int			internal_done;		/* flag to indicate request done */
+	struct scsi_eh_save	ses;		/* holds request sense restore info */
+	unsigned long		magic_end;
+} FAS216_Info;
 
-/* Function: पूर्णांक fas216_init (काष्ठा Scsi_Host *instance)
- * Purpose : initialise FAS/NCR/AMD SCSI काष्ठाures.
- * Params  : instance - a driver-specअगरic filled-out काष्ठाure
+/* Function: int fas216_init (struct Scsi_Host *instance)
+ * Purpose : initialise FAS/NCR/AMD SCSI structures.
+ * Params  : instance - a driver-specific filled-out structure
  * Returns : 0 on success
  */
-बाह्य पूर्णांक fas216_init (काष्ठा Scsi_Host *instance);
+extern int fas216_init (struct Scsi_Host *instance);
 
-/* Function: पूर्णांक fas216_add (काष्ठा Scsi_Host *instance, काष्ठा device *dev)
+/* Function: int fas216_add (struct Scsi_Host *instance, struct device *dev)
  * Purpose : initialise FAS/NCR/AMD SCSI ic.
- * Params  : instance - a driver-specअगरic filled-out काष्ठाure
+ * Params  : instance - a driver-specific filled-out structure
  * Returns : 0 on success
  */
-बाह्य पूर्णांक fas216_add (काष्ठा Scsi_Host *instance, काष्ठा device *dev);
+extern int fas216_add (struct Scsi_Host *instance, struct device *dev);
 
-/* Function: पूर्णांक fas216_queue_command(काष्ठा Scsi_Host *h, काष्ठा scsi_cmnd *SCpnt)
- * Purpose : queue a command क्रम adapter to process.
+/* Function: int fas216_queue_command(struct Scsi_Host *h, struct scsi_cmnd *SCpnt)
+ * Purpose : queue a command for adapter to process.
  * Params  : h - host adapter
  *	   : SCpnt - Command to queue
- * Returns : 0 - success, अन्यथा error
+ * Returns : 0 - success, else error
  */
-बाह्य पूर्णांक fas216_queue_command(काष्ठा Scsi_Host *h, काष्ठा scsi_cmnd *SCpnt);
+extern int fas216_queue_command(struct Scsi_Host *h, struct scsi_cmnd *SCpnt);
 
-/* Function: पूर्णांक fas216_noqueue_command(काष्ठा Scsi_Host *h, काष्ठा scsi_cmnd *SCpnt)
- * Purpose : queue a command क्रम adapter to process, and process it to completion.
+/* Function: int fas216_noqueue_command(struct Scsi_Host *h, struct scsi_cmnd *SCpnt)
+ * Purpose : queue a command for adapter to process, and process it to completion.
  * Params  : h - host adapter
  *	   : SCpnt - Command to queue
- * Returns : 0 - success, अन्यथा error
+ * Returns : 0 - success, else error
  */
-बाह्य पूर्णांक fas216_noqueue_command(काष्ठा Scsi_Host *, काष्ठा scsi_cmnd *);
+extern int fas216_noqueue_command(struct Scsi_Host *, struct scsi_cmnd *);
 
-/* Function: irqवापस_t fas216_पूर्णांकr (FAS216_Info *info)
- * Purpose : handle पूर्णांकerrupts from the पूर्णांकerface to progress a command
- * Params  : info - पूर्णांकerface to service
+/* Function: irqreturn_t fas216_intr (FAS216_Info *info)
+ * Purpose : handle interrupts from the interface to progress a command
+ * Params  : info - interface to service
  */
-बाह्य irqवापस_t fas216_पूर्णांकr (FAS216_Info *info);
+extern irqreturn_t fas216_intr (FAS216_Info *info);
 
-बाह्य व्योम fas216_हटाओ (काष्ठा Scsi_Host *instance);
+extern void fas216_remove (struct Scsi_Host *instance);
 
-/* Function: व्योम fas216_release (काष्ठा Scsi_Host *instance)
- * Purpose : release all resources and put everything to bed क्रम FAS/NCR/AMD SCSI ic.
- * Params  : instance - a driver-specअगरic filled-out काष्ठाure
+/* Function: void fas216_release (struct Scsi_Host *instance)
+ * Purpose : release all resources and put everything to bed for FAS/NCR/AMD SCSI ic.
+ * Params  : instance - a driver-specific filled-out structure
  * Returns : 0 on success
  */
-बाह्य व्योम fas216_release (काष्ठा Scsi_Host *instance);
+extern void fas216_release (struct Scsi_Host *instance);
 
-बाह्य व्योम fas216_prपूर्णांक_host(FAS216_Info *info, काष्ठा seq_file *m);
-बाह्य व्योम fas216_prपूर्णांक_stats(FAS216_Info *info, काष्ठा seq_file *m);
-बाह्य व्योम fas216_prपूर्णांक_devices(FAS216_Info *info, काष्ठा seq_file *m);
+extern void fas216_print_host(FAS216_Info *info, struct seq_file *m);
+extern void fas216_print_stats(FAS216_Info *info, struct seq_file *m);
+extern void fas216_print_devices(FAS216_Info *info, struct seq_file *m);
 
-/* Function: पूर्णांक fas216_eh_पात(काष्ठा scsi_cmnd *SCpnt)
- * Purpose : पात this command
- * Params  : SCpnt - command to पात
- * Returns : FAILED अगर unable to पात
+/* Function: int fas216_eh_abort(struct scsi_cmnd *SCpnt)
+ * Purpose : abort this command
+ * Params  : SCpnt - command to abort
+ * Returns : FAILED if unable to abort
  */
-बाह्य पूर्णांक fas216_eh_पात(काष्ठा scsi_cmnd *SCpnt);
+extern int fas216_eh_abort(struct scsi_cmnd *SCpnt);
 
-/* Function: पूर्णांक fas216_eh_device_reset(काष्ठा scsi_cmnd *SCpnt)
+/* Function: int fas216_eh_device_reset(struct scsi_cmnd *SCpnt)
  * Purpose : Reset the device associated with this command
- * Params  : SCpnt - command specअगरing device to reset
- * Returns : FAILED अगर unable to reset
+ * Params  : SCpnt - command specifing device to reset
+ * Returns : FAILED if unable to reset
  */
-बाह्य पूर्णांक fas216_eh_device_reset(काष्ठा scsi_cmnd *SCpnt);
+extern int fas216_eh_device_reset(struct scsi_cmnd *SCpnt);
 
-/* Function: पूर्णांक fas216_eh_bus_reset(काष्ठा scsi_cmnd *SCpnt)
+/* Function: int fas216_eh_bus_reset(struct scsi_cmnd *SCpnt)
  * Purpose : Reset the complete bus associated with this command
- * Params  : SCpnt - command specअगरing bus to reset
- * Returns : FAILED अगर unable to reset
+ * Params  : SCpnt - command specifing bus to reset
+ * Returns : FAILED if unable to reset
  */
-बाह्य पूर्णांक fas216_eh_bus_reset(काष्ठा scsi_cmnd *SCpnt);
+extern int fas216_eh_bus_reset(struct scsi_cmnd *SCpnt);
 
-/* Function: पूर्णांक fas216_eh_host_reset(काष्ठा scsi_cmnd *SCpnt)
+/* Function: int fas216_eh_host_reset(struct scsi_cmnd *SCpnt)
  * Purpose : Reset the host associated with this command
- * Params  : SCpnt - command specअगरing host to reset
- * Returns : FAILED अगर unable to reset
+ * Params  : SCpnt - command specifing host to reset
+ * Returns : FAILED if unable to reset
  */
-बाह्य पूर्णांक fas216_eh_host_reset(काष्ठा scsi_cmnd *SCpnt);
+extern int fas216_eh_host_reset(struct scsi_cmnd *SCpnt);
 
-#पूर्ण_अगर /* FAS216_H */
+#endif /* FAS216_H */

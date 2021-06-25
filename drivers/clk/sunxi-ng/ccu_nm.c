@@ -1,157 +1,156 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright (C) 2016 Maxime Ripard
- * Maxime Ripard <maxime.ripard@मुक्त-electrons.com>
+ * Maxime Ripard <maxime.ripard@free-electrons.com>
  */
 
-#समावेश <linux/clk-provider.h>
-#समावेश <linux/पन.स>
+#include <linux/clk-provider.h>
+#include <linux/io.h>
 
-#समावेश "ccu_frac.h"
-#समावेश "ccu_gate.h"
-#समावेश "ccu_nm.h"
+#include "ccu_frac.h"
+#include "ccu_gate.h"
+#include "ccu_nm.h"
 
-काष्ठा _ccu_nm अणु
-	अचिन्हित दीर्घ	n, min_n, max_n;
-	अचिन्हित दीर्घ	m, min_m, max_m;
-पूर्ण;
+struct _ccu_nm {
+	unsigned long	n, min_n, max_n;
+	unsigned long	m, min_m, max_m;
+};
 
-अटल अचिन्हित दीर्घ ccu_nm_calc_rate(अचिन्हित दीर्घ parent,
-				      अचिन्हित दीर्घ n, अचिन्हित दीर्घ m)
-अणु
+static unsigned long ccu_nm_calc_rate(unsigned long parent,
+				      unsigned long n, unsigned long m)
+{
 	u64 rate = parent;
 
 	rate *= n;
-	करो_भाग(rate, m);
+	do_div(rate, m);
 
-	वापस rate;
-पूर्ण
+	return rate;
+}
 
-अटल व्योम ccu_nm_find_best(अचिन्हित दीर्घ parent, अचिन्हित दीर्घ rate,
-			     काष्ठा _ccu_nm *nm)
-अणु
-	अचिन्हित दीर्घ best_rate = 0;
-	अचिन्हित दीर्घ best_n = 0, best_m = 0;
-	अचिन्हित दीर्घ _n, _m;
+static void ccu_nm_find_best(unsigned long parent, unsigned long rate,
+			     struct _ccu_nm *nm)
+{
+	unsigned long best_rate = 0;
+	unsigned long best_n = 0, best_m = 0;
+	unsigned long _n, _m;
 
-	क्रम (_n = nm->min_n; _n <= nm->max_n; _n++) अणु
-		क्रम (_m = nm->min_m; _m <= nm->max_m; _m++) अणु
-			अचिन्हित दीर्घ पंचांगp_rate = ccu_nm_calc_rate(parent,
+	for (_n = nm->min_n; _n <= nm->max_n; _n++) {
+		for (_m = nm->min_m; _m <= nm->max_m; _m++) {
+			unsigned long tmp_rate = ccu_nm_calc_rate(parent,
 								  _n, _m);
 
-			अगर (पंचांगp_rate > rate)
-				जारी;
+			if (tmp_rate > rate)
+				continue;
 
-			अगर ((rate - पंचांगp_rate) < (rate - best_rate)) अणु
-				best_rate = पंचांगp_rate;
+			if ((rate - tmp_rate) < (rate - best_rate)) {
+				best_rate = tmp_rate;
 				best_n = _n;
 				best_m = _m;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
 	nm->n = best_n;
 	nm->m = best_m;
-पूर्ण
+}
 
-अटल व्योम ccu_nm_disable(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा ccu_nm *nm = hw_to_ccu_nm(hw);
+static void ccu_nm_disable(struct clk_hw *hw)
+{
+	struct ccu_nm *nm = hw_to_ccu_nm(hw);
 
-	वापस ccu_gate_helper_disable(&nm->common, nm->enable);
-पूर्ण
+	return ccu_gate_helper_disable(&nm->common, nm->enable);
+}
 
-अटल पूर्णांक ccu_nm_enable(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा ccu_nm *nm = hw_to_ccu_nm(hw);
+static int ccu_nm_enable(struct clk_hw *hw)
+{
+	struct ccu_nm *nm = hw_to_ccu_nm(hw);
 
-	वापस ccu_gate_helper_enable(&nm->common, nm->enable);
-पूर्ण
+	return ccu_gate_helper_enable(&nm->common, nm->enable);
+}
 
-अटल पूर्णांक ccu_nm_is_enabled(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा ccu_nm *nm = hw_to_ccu_nm(hw);
+static int ccu_nm_is_enabled(struct clk_hw *hw)
+{
+	struct ccu_nm *nm = hw_to_ccu_nm(hw);
 
-	वापस ccu_gate_helper_is_enabled(&nm->common, nm->enable);
-पूर्ण
+	return ccu_gate_helper_is_enabled(&nm->common, nm->enable);
+}
 
-अटल अचिन्हित दीर्घ ccu_nm_recalc_rate(काष्ठा clk_hw *hw,
-					अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा ccu_nm *nm = hw_to_ccu_nm(hw);
-	अचिन्हित दीर्घ rate;
-	अचिन्हित दीर्घ n, m;
+static unsigned long ccu_nm_recalc_rate(struct clk_hw *hw,
+					unsigned long parent_rate)
+{
+	struct ccu_nm *nm = hw_to_ccu_nm(hw);
+	unsigned long rate;
+	unsigned long n, m;
 	u32 reg;
 
-	अगर (ccu_frac_helper_is_enabled(&nm->common, &nm->frac)) अणु
-		rate = ccu_frac_helper_पढ़ो_rate(&nm->common, &nm->frac);
+	if (ccu_frac_helper_is_enabled(&nm->common, &nm->frac)) {
+		rate = ccu_frac_helper_read_rate(&nm->common, &nm->frac);
 
-		अगर (nm->common.features & CCU_FEATURE_FIXED_POSTDIV)
-			rate /= nm->fixed_post_भाग;
+		if (nm->common.features & CCU_FEATURE_FIXED_POSTDIV)
+			rate /= nm->fixed_post_div;
 
-		वापस rate;
-	पूर्ण
+		return rate;
+	}
 
-	reg = पढ़ोl(nm->common.base + nm->common.reg);
+	reg = readl(nm->common.base + nm->common.reg);
 
-	n = reg >> nm->n.shअगरt;
+	n = reg >> nm->n.shift;
 	n &= (1 << nm->n.width) - 1;
 	n += nm->n.offset;
-	अगर (!n)
+	if (!n)
 		n++;
 
-	m = reg >> nm->m.shअगरt;
+	m = reg >> nm->m.shift;
 	m &= (1 << nm->m.width) - 1;
 	m += nm->m.offset;
-	अगर (!m)
+	if (!m)
 		m++;
 
-	अगर (ccu_sdm_helper_is_enabled(&nm->common, &nm->sdm))
-		rate = ccu_sdm_helper_पढ़ो_rate(&nm->common, &nm->sdm, m, n);
-	अन्यथा
+	if (ccu_sdm_helper_is_enabled(&nm->common, &nm->sdm))
+		rate = ccu_sdm_helper_read_rate(&nm->common, &nm->sdm, m, n);
+	else
 		rate = ccu_nm_calc_rate(parent_rate, n, m);
 
-	अगर (nm->common.features & CCU_FEATURE_FIXED_POSTDIV)
-		rate /= nm->fixed_post_भाग;
+	if (nm->common.features & CCU_FEATURE_FIXED_POSTDIV)
+		rate /= nm->fixed_post_div;
 
-	वापस rate;
-पूर्ण
+	return rate;
+}
 
-अटल दीर्घ ccu_nm_round_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
-			      अचिन्हित दीर्घ *parent_rate)
-अणु
-	काष्ठा ccu_nm *nm = hw_to_ccu_nm(hw);
-	काष्ठा _ccu_nm _nm;
+static long ccu_nm_round_rate(struct clk_hw *hw, unsigned long rate,
+			      unsigned long *parent_rate)
+{
+	struct ccu_nm *nm = hw_to_ccu_nm(hw);
+	struct _ccu_nm _nm;
 
-	अगर (nm->common.features & CCU_FEATURE_FIXED_POSTDIV)
-		rate *= nm->fixed_post_भाग;
+	if (nm->common.features & CCU_FEATURE_FIXED_POSTDIV)
+		rate *= nm->fixed_post_div;
 
-	अगर (rate < nm->min_rate) अणु
+	if (rate < nm->min_rate) {
 		rate = nm->min_rate;
-		अगर (nm->common.features & CCU_FEATURE_FIXED_POSTDIV)
-			rate /= nm->fixed_post_भाग;
-		वापस rate;
-	पूर्ण
+		if (nm->common.features & CCU_FEATURE_FIXED_POSTDIV)
+			rate /= nm->fixed_post_div;
+		return rate;
+	}
 
-	अगर (nm->max_rate && rate > nm->max_rate) अणु
+	if (nm->max_rate && rate > nm->max_rate) {
 		rate = nm->max_rate;
-		अगर (nm->common.features & CCU_FEATURE_FIXED_POSTDIV)
-			rate /= nm->fixed_post_भाग;
-		वापस rate;
-	पूर्ण
+		if (nm->common.features & CCU_FEATURE_FIXED_POSTDIV)
+			rate /= nm->fixed_post_div;
+		return rate;
+	}
 
-	अगर (ccu_frac_helper_has_rate(&nm->common, &nm->frac, rate)) अणु
-		अगर (nm->common.features & CCU_FEATURE_FIXED_POSTDIV)
-			rate /= nm->fixed_post_भाग;
-		वापस rate;
-	पूर्ण
+	if (ccu_frac_helper_has_rate(&nm->common, &nm->frac, rate)) {
+		if (nm->common.features & CCU_FEATURE_FIXED_POSTDIV)
+			rate /= nm->fixed_post_div;
+		return rate;
+	}
 
-	अगर (ccu_sdm_helper_has_rate(&nm->common, &nm->sdm, rate)) अणु
-		अगर (nm->common.features & CCU_FEATURE_FIXED_POSTDIV)
-			rate /= nm->fixed_post_भाग;
-		वापस rate;
-	पूर्ण
+	if (ccu_sdm_helper_has_rate(&nm->common, &nm->sdm, rate)) {
+		if (nm->common.features & CCU_FEATURE_FIXED_POSTDIV)
+			rate /= nm->fixed_post_div;
+		return rate;
+	}
 
 	_nm.min_n = nm->n.min ?: 1;
 	_nm.max_n = nm->n.max ?: 1 << nm->n.width;
@@ -161,76 +160,76 @@
 	ccu_nm_find_best(*parent_rate, rate, &_nm);
 	rate = ccu_nm_calc_rate(*parent_rate, _nm.n, _nm.m);
 
-	अगर (nm->common.features & CCU_FEATURE_FIXED_POSTDIV)
-		rate /= nm->fixed_post_भाग;
+	if (nm->common.features & CCU_FEATURE_FIXED_POSTDIV)
+		rate /= nm->fixed_post_div;
 
-	वापस rate;
-पूर्ण
+	return rate;
+}
 
-अटल पूर्णांक ccu_nm_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
-			   अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा ccu_nm *nm = hw_to_ccu_nm(hw);
-	काष्ठा _ccu_nm _nm;
-	अचिन्हित दीर्घ flags;
+static int ccu_nm_set_rate(struct clk_hw *hw, unsigned long rate,
+			   unsigned long parent_rate)
+{
+	struct ccu_nm *nm = hw_to_ccu_nm(hw);
+	struct _ccu_nm _nm;
+	unsigned long flags;
 	u32 reg;
 
-	/* Adjust target rate according to post-भागiders */
-	अगर (nm->common.features & CCU_FEATURE_FIXED_POSTDIV)
-		rate = rate * nm->fixed_post_भाग;
+	/* Adjust target rate according to post-dividers */
+	if (nm->common.features & CCU_FEATURE_FIXED_POSTDIV)
+		rate = rate * nm->fixed_post_div;
 
-	अगर (ccu_frac_helper_has_rate(&nm->common, &nm->frac, rate)) अणु
+	if (ccu_frac_helper_has_rate(&nm->common, &nm->frac, rate)) {
 		spin_lock_irqsave(nm->common.lock, flags);
 
-		/* most SoCs require M to be 0 अगर fractional mode is used */
-		reg = पढ़ोl(nm->common.base + nm->common.reg);
-		reg &= ~GENMASK(nm->m.width + nm->m.shअगरt - 1, nm->m.shअगरt);
-		ग_लिखोl(reg, nm->common.base + nm->common.reg);
+		/* most SoCs require M to be 0 if fractional mode is used */
+		reg = readl(nm->common.base + nm->common.reg);
+		reg &= ~GENMASK(nm->m.width + nm->m.shift - 1, nm->m.shift);
+		writel(reg, nm->common.base + nm->common.reg);
 
 		spin_unlock_irqrestore(nm->common.lock, flags);
 
 		ccu_frac_helper_enable(&nm->common, &nm->frac);
 
-		वापस ccu_frac_helper_set_rate(&nm->common, &nm->frac,
+		return ccu_frac_helper_set_rate(&nm->common, &nm->frac,
 						rate, nm->lock);
-	पूर्ण अन्यथा अणु
+	} else {
 		ccu_frac_helper_disable(&nm->common, &nm->frac);
-	पूर्ण
+	}
 
 	_nm.min_n = nm->n.min ?: 1;
 	_nm.max_n = nm->n.max ?: 1 << nm->n.width;
 	_nm.min_m = 1;
 	_nm.max_m = nm->m.max ?: 1 << nm->m.width;
 
-	अगर (ccu_sdm_helper_has_rate(&nm->common, &nm->sdm, rate)) अणु
+	if (ccu_sdm_helper_has_rate(&nm->common, &nm->sdm, rate)) {
 		ccu_sdm_helper_enable(&nm->common, &nm->sdm, rate);
 
-		/* Sigma delta modulation requires specअगरic N and M factors */
+		/* Sigma delta modulation requires specific N and M factors */
 		ccu_sdm_helper_get_factors(&nm->common, &nm->sdm, rate,
 					   &_nm.m, &_nm.n);
-	पूर्ण अन्यथा अणु
+	} else {
 		ccu_sdm_helper_disable(&nm->common, &nm->sdm);
 		ccu_nm_find_best(parent_rate, rate, &_nm);
-	पूर्ण
+	}
 
 	spin_lock_irqsave(nm->common.lock, flags);
 
-	reg = पढ़ोl(nm->common.base + nm->common.reg);
-	reg &= ~GENMASK(nm->n.width + nm->n.shअगरt - 1, nm->n.shअगरt);
-	reg &= ~GENMASK(nm->m.width + nm->m.shअगरt - 1, nm->m.shअगरt);
+	reg = readl(nm->common.base + nm->common.reg);
+	reg &= ~GENMASK(nm->n.width + nm->n.shift - 1, nm->n.shift);
+	reg &= ~GENMASK(nm->m.width + nm->m.shift - 1, nm->m.shift);
 
-	reg |= (_nm.n - nm->n.offset) << nm->n.shअगरt;
-	reg |= (_nm.m - nm->m.offset) << nm->m.shअगरt;
-	ग_लिखोl(reg, nm->common.base + nm->common.reg);
+	reg |= (_nm.n - nm->n.offset) << nm->n.shift;
+	reg |= (_nm.m - nm->m.offset) << nm->m.shift;
+	writel(reg, nm->common.base + nm->common.reg);
 
 	spin_unlock_irqrestore(nm->common.lock, flags);
 
-	ccu_helper_रुको_क्रम_lock(&nm->common, nm->lock);
+	ccu_helper_wait_for_lock(&nm->common, nm->lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-स्थिर काष्ठा clk_ops ccu_nm_ops = अणु
+const struct clk_ops ccu_nm_ops = {
 	.disable	= ccu_nm_disable,
 	.enable		= ccu_nm_enable,
 	.is_enabled	= ccu_nm_is_enabled,
@@ -238,4 +237,4 @@
 	.recalc_rate	= ccu_nm_recalc_rate,
 	.round_rate	= ccu_nm_round_rate,
 	.set_rate	= ccu_nm_set_rate,
-पूर्ण;
+};

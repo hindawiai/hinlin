@@ -1,69 +1,68 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: LGPL-2.1 */
+/* SPDX-License-Identifier: LGPL-2.1 */
 /*
  * Copyright (C) 2012 Red Hat Inc, Steven Rostedt <srostedt@redhat.com>
  *
  */
-#अगर_अघोषित _KBUFFER_H
-#घोषणा _KBUFFER_H
+#ifndef _KBUFFER_H
+#define _KBUFFER_H
 
-#अगर_अघोषित TS_SHIFT
-#घोषणा TS_SHIFT		27
-#पूर्ण_अगर
+#ifndef TS_SHIFT
+#define TS_SHIFT		27
+#endif
 
-क्रमागत kbuffer_endian अणु
+enum kbuffer_endian {
 	KBUFFER_ENDIAN_BIG,
 	KBUFFER_ENDIAN_LITTLE,
-पूर्ण;
+};
 
-क्रमागत kbuffer_दीर्घ_size अणु
+enum kbuffer_long_size {
 	KBUFFER_LSIZE_4,
 	KBUFFER_LSIZE_8,
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	KBUFFER_TYPE_PADDING		= 29,
 	KBUFFER_TYPE_TIME_EXTEND	= 30,
 	KBUFFER_TYPE_TIME_STAMP		= 31,
-पूर्ण;
+};
 
-काष्ठा kbuffer;
+struct kbuffer;
 
-काष्ठा kbuffer *kbuffer_alloc(क्रमागत kbuffer_दीर्घ_size size, क्रमागत kbuffer_endian endian);
-व्योम kbuffer_मुक्त(काष्ठा kbuffer *kbuf);
-पूर्णांक kbuffer_load_subbuffer(काष्ठा kbuffer *kbuf, व्योम *subbuffer);
-व्योम *kbuffer_पढ़ो_event(काष्ठा kbuffer *kbuf, अचिन्हित दीर्घ दीर्घ *ts);
-व्योम *kbuffer_next_event(काष्ठा kbuffer *kbuf, अचिन्हित दीर्घ दीर्घ *ts);
-अचिन्हित दीर्घ दीर्घ kbuffer_बारtamp(काष्ठा kbuffer *kbuf);
-अचिन्हित दीर्घ दीर्घ kbuffer_subbuf_बारtamp(काष्ठा kbuffer *kbuf, व्योम *subbuf);
-अचिन्हित पूर्णांक kbuffer_ptr_delta(काष्ठा kbuffer *kbuf, व्योम *ptr);
+struct kbuffer *kbuffer_alloc(enum kbuffer_long_size size, enum kbuffer_endian endian);
+void kbuffer_free(struct kbuffer *kbuf);
+int kbuffer_load_subbuffer(struct kbuffer *kbuf, void *subbuffer);
+void *kbuffer_read_event(struct kbuffer *kbuf, unsigned long long *ts);
+void *kbuffer_next_event(struct kbuffer *kbuf, unsigned long long *ts);
+unsigned long long kbuffer_timestamp(struct kbuffer *kbuf);
+unsigned long long kbuffer_subbuf_timestamp(struct kbuffer *kbuf, void *subbuf);
+unsigned int kbuffer_ptr_delta(struct kbuffer *kbuf, void *ptr);
 
-व्योम *kbuffer_translate_data(पूर्णांक swap, व्योम *data, अचिन्हित पूर्णांक *size);
+void *kbuffer_translate_data(int swap, void *data, unsigned int *size);
 
-व्योम *kbuffer_पढ़ो_at_offset(काष्ठा kbuffer *kbuf, पूर्णांक offset, अचिन्हित दीर्घ दीर्घ *ts);
+void *kbuffer_read_at_offset(struct kbuffer *kbuf, int offset, unsigned long long *ts);
 
-पूर्णांक kbuffer_curr_index(काष्ठा kbuffer *kbuf);
+int kbuffer_curr_index(struct kbuffer *kbuf);
 
-पूर्णांक kbuffer_curr_offset(काष्ठा kbuffer *kbuf);
-पूर्णांक kbuffer_curr_size(काष्ठा kbuffer *kbuf);
-पूर्णांक kbuffer_event_size(काष्ठा kbuffer *kbuf);
-पूर्णांक kbuffer_missed_events(काष्ठा kbuffer *kbuf);
-पूर्णांक kbuffer_subbuffer_size(काष्ठा kbuffer *kbuf);
+int kbuffer_curr_offset(struct kbuffer *kbuf);
+int kbuffer_curr_size(struct kbuffer *kbuf);
+int kbuffer_event_size(struct kbuffer *kbuf);
+int kbuffer_missed_events(struct kbuffer *kbuf);
+int kbuffer_subbuffer_size(struct kbuffer *kbuf);
 
-व्योम kbuffer_set_old_क्रमmat(काष्ठा kbuffer *kbuf);
-पूर्णांक kbuffer_start_of_data(काष्ठा kbuffer *kbuf);
+void kbuffer_set_old_format(struct kbuffer *kbuf);
+int kbuffer_start_of_data(struct kbuffer *kbuf);
 
 /* Debugging */
 
-काष्ठा kbuffer_raw_info अणु
-	पूर्णांक			type;
-	पूर्णांक			length;
-	अचिन्हित दीर्घ दीर्घ	delta;
-	व्योम			*next;
-पूर्ण;
+struct kbuffer_raw_info {
+	int			type;
+	int			length;
+	unsigned long long	delta;
+	void			*next;
+};
 
 /* Read raw data */
-काष्ठा kbuffer_raw_info *kbuffer_raw_get(काष्ठा kbuffer *kbuf, व्योम *subbuf,
-					 काष्ठा kbuffer_raw_info *info);
+struct kbuffer_raw_info *kbuffer_raw_get(struct kbuffer *kbuf, void *subbuf,
+					 struct kbuffer_raw_info *info);
 
-#पूर्ण_अगर /* _K_BUFFER_H */
+#endif /* _K_BUFFER_H */

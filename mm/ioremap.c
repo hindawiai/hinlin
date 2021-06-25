@@ -1,51 +1,50 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Re-map IO memory to kernel address space so that we can access it.
- * This is needed क्रम high PCI addresses that aren't mapped in the
+ * This is needed for high PCI addresses that aren't mapped in the
  * 640k-1MB IO memory area on PC's
  *
  * (C) Copyright 1995 1996 Linus Torvalds
  */
-#समावेश <linux/vदो_स्मृति.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/export.h>
-#समावेश <यंत्र/cacheflush.h>
+#include <linux/vmalloc.h>
+#include <linux/mm.h>
+#include <linux/sched.h>
+#include <linux/io.h>
+#include <linux/export.h>
+#include <asm/cacheflush.h>
 
-#समावेश "pgalloc-track.h"
+#include "pgalloc-track.h"
 
-#अगर_घोषित CONFIG_HAVE_ARCH_HUGE_VMAP
-अटल अचिन्हित पूर्णांक __ro_after_init iomap_max_page_shअगरt = BITS_PER_LONG - 1;
+#ifdef CONFIG_HAVE_ARCH_HUGE_VMAP
+static unsigned int __ro_after_init iomap_max_page_shift = BITS_PER_LONG - 1;
 
-अटल पूर्णांक __init set_nohugeiomap(अक्षर *str)
-अणु
-	iomap_max_page_shअगरt = PAGE_SHIFT;
-	वापस 0;
-पूर्ण
+static int __init set_nohugeiomap(char *str)
+{
+	iomap_max_page_shift = PAGE_SHIFT;
+	return 0;
+}
 early_param("nohugeiomap", set_nohugeiomap);
-#अन्यथा /* CONFIG_HAVE_ARCH_HUGE_VMAP */
-अटल स्थिर अचिन्हित पूर्णांक iomap_max_page_shअगरt = PAGE_SHIFT;
-#पूर्ण_अगर	/* CONFIG_HAVE_ARCH_HUGE_VMAP */
+#else /* CONFIG_HAVE_ARCH_HUGE_VMAP */
+static const unsigned int iomap_max_page_shift = PAGE_SHIFT;
+#endif	/* CONFIG_HAVE_ARCH_HUGE_VMAP */
 
-पूर्णांक ioremap_page_range(अचिन्हित दीर्घ addr,
-		       अचिन्हित दीर्घ end, phys_addr_t phys_addr, pgprot_t prot)
-अणु
-	वापस vmap_range(addr, end, phys_addr, prot, iomap_max_page_shअगरt);
-पूर्ण
+int ioremap_page_range(unsigned long addr,
+		       unsigned long end, phys_addr_t phys_addr, pgprot_t prot)
+{
+	return vmap_range(addr, end, phys_addr, prot, iomap_max_page_shift);
+}
 
-#अगर_घोषित CONFIG_GENERIC_IOREMAP
-व्योम __iomem *ioremap_prot(phys_addr_t addr, माप_प्रकार size, अचिन्हित दीर्घ prot)
-अणु
-	अचिन्हित दीर्घ offset, vaddr;
+#ifdef CONFIG_GENERIC_IOREMAP
+void __iomem *ioremap_prot(phys_addr_t addr, size_t size, unsigned long prot)
+{
+	unsigned long offset, vaddr;
 	phys_addr_t last_addr;
-	काष्ठा vm_काष्ठा *area;
+	struct vm_struct *area;
 
 	/* Disallow wrap-around or zero size */
 	last_addr = addr + size - 1;
-	अगर (!size || last_addr < addr)
-		वापस शून्य;
+	if (!size || last_addr < addr)
+		return NULL;
 
 	/* Page-align mappings */
 	offset = addr & (~PAGE_MASK);
@@ -53,23 +52,23 @@ early_param("nohugeiomap", set_nohugeiomap);
 	size = PAGE_ALIGN(size + offset);
 
 	area = get_vm_area_caller(size, VM_IOREMAP,
-			__builtin_वापस_address(0));
-	अगर (!area)
-		वापस शून्य;
-	vaddr = (अचिन्हित दीर्घ)area->addr;
+			__builtin_return_address(0));
+	if (!area)
+		return NULL;
+	vaddr = (unsigned long)area->addr;
 
-	अगर (ioremap_page_range(vaddr, vaddr + size, addr, __pgprot(prot))) अणु
-		मुक्त_vm_area(area);
-		वापस शून्य;
-	पूर्ण
+	if (ioremap_page_range(vaddr, vaddr + size, addr, __pgprot(prot))) {
+		free_vm_area(area);
+		return NULL;
+	}
 
-	वापस (व्योम __iomem *)(vaddr + offset);
-पूर्ण
+	return (void __iomem *)(vaddr + offset);
+}
 EXPORT_SYMBOL(ioremap_prot);
 
-व्योम iounmap(अस्थिर व्योम __iomem *addr)
-अणु
-	vunmap((व्योम *)((अचिन्हित दीर्घ)addr & PAGE_MASK));
-पूर्ण
+void iounmap(volatile void __iomem *addr)
+{
+	vunmap((void *)((unsigned long)addr & PAGE_MASK));
+}
 EXPORT_SYMBOL(iounmap);
-#पूर्ण_अगर /* CONFIG_GENERIC_IOREMAP */
+#endif /* CONFIG_GENERIC_IOREMAP */

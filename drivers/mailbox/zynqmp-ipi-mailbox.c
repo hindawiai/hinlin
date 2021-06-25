@@ -1,63 +1,62 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Xilinx Inter Processor Interrupt(IPI) Mailbox Driver
  *
  * Copyright (C) 2018 Xilinx, Inc.
  */
 
-#समावेश <linux/arm-smccc.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/device.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/mailbox_controller.h>
-#समावेश <linux/mailbox/zynqmp-ipi-message.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/of_irq.h>
-#समावेश <linux/platक्रमm_device.h>
+#include <linux/arm-smccc.h>
+#include <linux/delay.h>
+#include <linux/device.h>
+#include <linux/interrupt.h>
+#include <linux/io.h>
+#include <linux/kernel.h>
+#include <linux/mailbox_controller.h>
+#include <linux/mailbox/zynqmp-ipi-message.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/of_address.h>
+#include <linux/of_device.h>
+#include <linux/of_irq.h>
+#include <linux/platform_device.h>
 
 /* IPI agent ID any */
-#घोषणा IPI_ID_ANY 0xFFUL
+#define IPI_ID_ANY 0xFFUL
 
-/* indicate अगर ZynqMP IPI mailbox driver uses SMC calls or HVC calls */
-#घोषणा USE_SMC 0
-#घोषणा USE_HVC 1
+/* indicate if ZynqMP IPI mailbox driver uses SMC calls or HVC calls */
+#define USE_SMC 0
+#define USE_HVC 1
 
 /* Default IPI SMC function IDs */
-#घोषणा SMC_IPI_MAILBOX_OPEN		0x82001000U
-#घोषणा SMC_IPI_MAILBOX_RELEASE		0x82001001U
-#घोषणा SMC_IPI_MAILBOX_STATUS_ENQUIRY	0x82001002U
-#घोषणा SMC_IPI_MAILBOX_NOTIFY		0x82001003U
-#घोषणा SMC_IPI_MAILBOX_ACK		0x82001004U
-#घोषणा SMC_IPI_MAILBOX_ENABLE_IRQ	0x82001005U
-#घोषणा SMC_IPI_MAILBOX_DISABLE_IRQ	0x82001006U
+#define SMC_IPI_MAILBOX_OPEN		0x82001000U
+#define SMC_IPI_MAILBOX_RELEASE		0x82001001U
+#define SMC_IPI_MAILBOX_STATUS_ENQUIRY	0x82001002U
+#define SMC_IPI_MAILBOX_NOTIFY		0x82001003U
+#define SMC_IPI_MAILBOX_ACK		0x82001004U
+#define SMC_IPI_MAILBOX_ENABLE_IRQ	0x82001005U
+#define SMC_IPI_MAILBOX_DISABLE_IRQ	0x82001006U
 
 /* IPI SMC Macros */
-#घोषणा IPI_SMC_ENQUIRY_सूचीQ_MASK	0x00000001UL /* Flag to indicate अगर
-						      * notअगरication पूर्णांकerrupt
+#define IPI_SMC_ENQUIRY_DIRQ_MASK	0x00000001UL /* Flag to indicate if
+						      * notification interrupt
 						      * to be disabled.
 						      */
-#घोषणा IPI_SMC_ACK_EIRQ_MASK		0x00000001UL /* Flag to indicate अगर
-						      * notअगरication पूर्णांकerrupt
+#define IPI_SMC_ACK_EIRQ_MASK		0x00000001UL /* Flag to indicate if
+						      * notification interrupt
 						      * to be enabled.
 						      */
 
 /* IPI mailbox status */
-#घोषणा IPI_MB_STATUS_IDLE		0
-#घोषणा IPI_MB_STATUS_SEND_PENDING	1
-#घोषणा IPI_MB_STATUS_RECV_PENDING	2
+#define IPI_MB_STATUS_IDLE		0
+#define IPI_MB_STATUS_SEND_PENDING	1
+#define IPI_MB_STATUS_RECV_PENDING	2
 
-#घोषणा IPI_MB_CHNL_TX	0 /* IPI mailbox TX channel */
-#घोषणा IPI_MB_CHNL_RX	1 /* IPI mailbox RX channel */
+#define IPI_MB_CHNL_TX	0 /* IPI mailbox TX channel */
+#define IPI_MB_CHNL_RX	1 /* IPI mailbox RX channel */
 
 /**
- * काष्ठा zynqmp_ipi_mchan - Description of a Xilinx ZynqMP IPI mailbox channel
- * @is_खोलोed: indicate अगर the IPI channel is खोलोed
+ * struct zynqmp_ipi_mchan - Description of a Xilinx ZynqMP IPI mailbox channel
+ * @is_opened: indicate if the IPI channel is opened
  * @req_buf: local to remote request buffer start address
  * @resp_buf: local to remote response buffer start address
  * @req_buf_size: request buffer size
@@ -65,364 +64,364 @@
  * @rx_buf: receive buffer to pass received message to client
  * @chan_type: channel type
  */
-काष्ठा zynqmp_ipi_mchan अणु
-	पूर्णांक is_खोलोed;
-	व्योम __iomem *req_buf;
-	व्योम __iomem *resp_buf;
-	व्योम *rx_buf;
-	माप_प्रकार req_buf_size;
-	माप_प्रकार resp_buf_size;
-	अचिन्हित पूर्णांक chan_type;
-पूर्ण;
+struct zynqmp_ipi_mchan {
+	int is_opened;
+	void __iomem *req_buf;
+	void __iomem *resp_buf;
+	void *rx_buf;
+	size_t req_buf_size;
+	size_t resp_buf_size;
+	unsigned int chan_type;
+};
 
 /**
- * काष्ठा zynqmp_ipi_mbox - Description of a ZynqMP IPI mailbox
- *                          platक्रमm data.
- * @pdata:		  poपूर्णांकer to the IPI निजी data
- * @dev:                  device poपूर्णांकer corresponding to the Xilinx ZynqMP
+ * struct zynqmp_ipi_mbox - Description of a ZynqMP IPI mailbox
+ *                          platform data.
+ * @pdata:		  pointer to the IPI private data
+ * @dev:                  device pointer corresponding to the Xilinx ZynqMP
  *                        IPI mailbox
  * @remote_id:            remote IPI agent ID
  * @mbox:                 mailbox Controller
- * @mchans:               array क्रम channels, tx channel and rx channel.
- * @irq:                  IPI agent पूर्णांकerrupt ID
+ * @mchans:               array for channels, tx channel and rx channel.
+ * @irq:                  IPI agent interrupt ID
  */
-काष्ठा zynqmp_ipi_mbox अणु
-	काष्ठा zynqmp_ipi_pdata *pdata;
-	काष्ठा device dev;
+struct zynqmp_ipi_mbox {
+	struct zynqmp_ipi_pdata *pdata;
+	struct device dev;
 	u32 remote_id;
-	काष्ठा mbox_controller mbox;
-	काष्ठा zynqmp_ipi_mchan mchans[2];
-पूर्ण;
+	struct mbox_controller mbox;
+	struct zynqmp_ipi_mchan mchans[2];
+};
 
 /**
- * काष्ठा zynqmp_ipi_pdata - Description of z ZynqMP IPI agent platक्रमm data.
+ * struct zynqmp_ipi_pdata - Description of z ZynqMP IPI agent platform data.
  *
- * @dev:                  device poपूर्णांकer corresponding to the Xilinx ZynqMP
+ * @dev:                  device pointer corresponding to the Xilinx ZynqMP
  *                        IPI agent
- * @irq:                  IPI agent पूर्णांकerrupt ID
+ * @irq:                  IPI agent interrupt ID
  * @method:               IPI SMC or HVC is going to be used
  * @local_id:             local IPI agent ID
  * @num_mboxes:           number of mailboxes of this IPI agent
  * @ipi_mboxes:           IPI mailboxes of this IPI agent
  */
-काष्ठा zynqmp_ipi_pdata अणु
-	काष्ठा device *dev;
-	पूर्णांक irq;
-	अचिन्हित पूर्णांक method;
+struct zynqmp_ipi_pdata {
+	struct device *dev;
+	int irq;
+	unsigned int method;
 	u32 local_id;
-	पूर्णांक num_mboxes;
-	काष्ठा zynqmp_ipi_mbox *ipi_mboxes;
-पूर्ण;
+	int num_mboxes;
+	struct zynqmp_ipi_mbox *ipi_mboxes;
+};
 
-अटल काष्ठा device_driver zynqmp_ipi_mbox_driver = अणु
+static struct device_driver zynqmp_ipi_mbox_driver = {
 	.owner = THIS_MODULE,
 	.name = "zynqmp-ipi-mbox",
-पूर्ण;
+};
 
-अटल व्योम zynqmp_ipi_fw_call(काष्ठा zynqmp_ipi_mbox *ipi_mbox,
-			       अचिन्हित दीर्घ a0, अचिन्हित दीर्घ a3,
-			       काष्ठा arm_smccc_res *res)
-अणु
-	काष्ठा zynqmp_ipi_pdata *pdata = ipi_mbox->pdata;
-	अचिन्हित दीर्घ a1, a2;
+static void zynqmp_ipi_fw_call(struct zynqmp_ipi_mbox *ipi_mbox,
+			       unsigned long a0, unsigned long a3,
+			       struct arm_smccc_res *res)
+{
+	struct zynqmp_ipi_pdata *pdata = ipi_mbox->pdata;
+	unsigned long a1, a2;
 
 	a1 = pdata->local_id;
 	a2 = ipi_mbox->remote_id;
-	अगर (pdata->method == USE_SMC)
+	if (pdata->method == USE_SMC)
 		arm_smccc_smc(a0, a1, a2, a3, 0, 0, 0, 0, res);
-	अन्यथा
+	else
 		arm_smccc_hvc(a0, a1, a2, a3, 0, 0, 0, 0, res);
-पूर्ण
+}
 
 /**
- * zynqmp_ipi_पूर्णांकerrupt - Interrupt handler क्रम IPI notअगरication
+ * zynqmp_ipi_interrupt - Interrupt handler for IPI notification
  *
  * @irq:  Interrupt number
- * @data: ZynqMP IPI mailbox platक्रमm data.
+ * @data: ZynqMP IPI mailbox platform data.
  *
- * Return: -EINVAL अगर there is no instance
- * IRQ_NONE अगर the पूर्णांकerrupt is not ours.
- * IRQ_HANDLED अगर the rx पूर्णांकerrupt was successfully handled.
+ * Return: -EINVAL if there is no instance
+ * IRQ_NONE if the interrupt is not ours.
+ * IRQ_HANDLED if the rx interrupt was successfully handled.
  */
-अटल irqवापस_t zynqmp_ipi_पूर्णांकerrupt(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा zynqmp_ipi_pdata *pdata = data;
-	काष्ठा mbox_chan *chan;
-	काष्ठा zynqmp_ipi_mbox *ipi_mbox;
-	काष्ठा zynqmp_ipi_mchan *mchan;
-	काष्ठा zynqmp_ipi_message *msg;
+static irqreturn_t zynqmp_ipi_interrupt(int irq, void *data)
+{
+	struct zynqmp_ipi_pdata *pdata = data;
+	struct mbox_chan *chan;
+	struct zynqmp_ipi_mbox *ipi_mbox;
+	struct zynqmp_ipi_mchan *mchan;
+	struct zynqmp_ipi_message *msg;
 	u64 arg0, arg3;
-	काष्ठा arm_smccc_res res;
-	पूर्णांक ret, i;
+	struct arm_smccc_res res;
+	int ret, i;
 
-	(व्योम)irq;
+	(void)irq;
 	arg0 = SMC_IPI_MAILBOX_STATUS_ENQUIRY;
-	arg3 = IPI_SMC_ENQUIRY_सूचीQ_MASK;
-	क्रम (i = 0; i < pdata->num_mboxes; i++) अणु
+	arg3 = IPI_SMC_ENQUIRY_DIRQ_MASK;
+	for (i = 0; i < pdata->num_mboxes; i++) {
 		ipi_mbox = &pdata->ipi_mboxes[i];
 		mchan = &ipi_mbox->mchans[IPI_MB_CHNL_RX];
 		chan = &ipi_mbox->mbox.chans[IPI_MB_CHNL_RX];
 		zynqmp_ipi_fw_call(ipi_mbox, arg0, arg3, &res);
-		ret = (पूर्णांक)(res.a0 & 0xFFFFFFFF);
-		अगर (ret > 0 && ret & IPI_MB_STATUS_RECV_PENDING) अणु
-			अगर (mchan->is_खोलोed) अणु
+		ret = (int)(res.a0 & 0xFFFFFFFF);
+		if (ret > 0 && ret & IPI_MB_STATUS_RECV_PENDING) {
+			if (mchan->is_opened) {
 				msg = mchan->rx_buf;
 				msg->len = mchan->req_buf_size;
-				स_नकल_fromio(msg->data, mchan->req_buf,
+				memcpy_fromio(msg->data, mchan->req_buf,
 					      msg->len);
-				mbox_chan_received_data(chan, (व्योम *)msg);
-				वापस IRQ_HANDLED;
-			पूर्ण
-		पूर्ण
-	पूर्ण
-	वापस IRQ_NONE;
-पूर्ण
+				mbox_chan_received_data(chan, (void *)msg);
+				return IRQ_HANDLED;
+			}
+		}
+	}
+	return IRQ_NONE;
+}
 
 /**
- * zynqmp_ipi_peek_data - Peek to see अगर there are any rx messages.
+ * zynqmp_ipi_peek_data - Peek to see if there are any rx messages.
  *
- * @chan: Channel Poपूर्णांकer
+ * @chan: Channel Pointer
  *
- * Return: 'true' if there is pending rx data, 'false' अगर there is none.
+ * Return: 'true' if there is pending rx data, 'false' if there is none.
  */
-अटल bool zynqmp_ipi_peek_data(काष्ठा mbox_chan *chan)
-अणु
-	काष्ठा device *dev = chan->mbox->dev;
-	काष्ठा zynqmp_ipi_mbox *ipi_mbox = dev_get_drvdata(dev);
-	काष्ठा zynqmp_ipi_mchan *mchan = chan->con_priv;
-	पूर्णांक ret;
+static bool zynqmp_ipi_peek_data(struct mbox_chan *chan)
+{
+	struct device *dev = chan->mbox->dev;
+	struct zynqmp_ipi_mbox *ipi_mbox = dev_get_drvdata(dev);
+	struct zynqmp_ipi_mchan *mchan = chan->con_priv;
+	int ret;
 	u64 arg0;
-	काष्ठा arm_smccc_res res;
+	struct arm_smccc_res res;
 
-	अगर (WARN_ON(!ipi_mbox)) अणु
+	if (WARN_ON(!ipi_mbox)) {
 		dev_err(dev, "no platform drv data??\n");
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
 	arg0 = SMC_IPI_MAILBOX_STATUS_ENQUIRY;
 	zynqmp_ipi_fw_call(ipi_mbox, arg0, 0, &res);
-	ret = (पूर्णांक)(res.a0 & 0xFFFFFFFF);
+	ret = (int)(res.a0 & 0xFFFFFFFF);
 
-	अगर (mchan->chan_type == IPI_MB_CHNL_TX) अणु
-		/* TX channel, check अगर the message has been acked
-		 * by the remote, अगर yes, response is available.
+	if (mchan->chan_type == IPI_MB_CHNL_TX) {
+		/* TX channel, check if the message has been acked
+		 * by the remote, if yes, response is available.
 		 */
-		अगर (ret < 0 || ret & IPI_MB_STATUS_SEND_PENDING)
-			वापस false;
-		अन्यथा
-			वापस true;
-	पूर्ण अन्यथा अगर (ret > 0 && ret & IPI_MB_STATUS_RECV_PENDING) अणु
-		/* RX channel, check अगर there is message arrived. */
-		वापस true;
-	पूर्ण
-	वापस false;
-पूर्ण
+		if (ret < 0 || ret & IPI_MB_STATUS_SEND_PENDING)
+			return false;
+		else
+			return true;
+	} else if (ret > 0 && ret & IPI_MB_STATUS_RECV_PENDING) {
+		/* RX channel, check if there is message arrived. */
+		return true;
+	}
+	return false;
+}
 
 /**
- * zynqmp_ipi_last_tx_करोne - See अगर the last tx message is sent
+ * zynqmp_ipi_last_tx_done - See if the last tx message is sent
  *
- * @chan: Channel poपूर्णांकer
+ * @chan: Channel pointer
  *
- * Return: 'true' is no pending tx data, 'false' अगर there are any.
+ * Return: 'true' is no pending tx data, 'false' if there are any.
  */
-अटल bool zynqmp_ipi_last_tx_करोne(काष्ठा mbox_chan *chan)
-अणु
-	काष्ठा device *dev = chan->mbox->dev;
-	काष्ठा zynqmp_ipi_mbox *ipi_mbox = dev_get_drvdata(dev);
-	काष्ठा zynqmp_ipi_mchan *mchan = chan->con_priv;
-	पूर्णांक ret;
+static bool zynqmp_ipi_last_tx_done(struct mbox_chan *chan)
+{
+	struct device *dev = chan->mbox->dev;
+	struct zynqmp_ipi_mbox *ipi_mbox = dev_get_drvdata(dev);
+	struct zynqmp_ipi_mchan *mchan = chan->con_priv;
+	int ret;
 	u64 arg0;
-	काष्ठा arm_smccc_res res;
+	struct arm_smccc_res res;
 
-	अगर (WARN_ON(!ipi_mbox)) अणु
+	if (WARN_ON(!ipi_mbox)) {
 		dev_err(dev, "no platform drv data??\n");
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
-	अगर (mchan->chan_type == IPI_MB_CHNL_TX) अणु
-		/* We only need to check अगर the message been taken
+	if (mchan->chan_type == IPI_MB_CHNL_TX) {
+		/* We only need to check if the message been taken
 		 * by the remote in the TX channel
 		 */
 		arg0 = SMC_IPI_MAILBOX_STATUS_ENQUIRY;
 		zynqmp_ipi_fw_call(ipi_mbox, arg0, 0, &res);
 		/* Check the SMC call status, a0 of the result */
-		ret = (पूर्णांक)(res.a0 & 0xFFFFFFFF);
-		अगर (ret < 0 || ret & IPI_MB_STATUS_SEND_PENDING)
-			वापस false;
-		वापस true;
-	पूर्ण
-	/* Always true क्रम the response message in RX channel */
-	वापस true;
-पूर्ण
+		ret = (int)(res.a0 & 0xFFFFFFFF);
+		if (ret < 0 || ret & IPI_MB_STATUS_SEND_PENDING)
+			return false;
+		return true;
+	}
+	/* Always true for the response message in RX channel */
+	return true;
+}
 
 /**
  * zynqmp_ipi_send_data - Send data
  *
- * @chan: Channel Poपूर्णांकer
- * @data: Message Poपूर्णांकer
+ * @chan: Channel Pointer
+ * @data: Message Pointer
  *
- * Return: 0 अगर all goes good, अन्यथा appropriate error messages.
+ * Return: 0 if all goes good, else appropriate error messages.
  */
-अटल पूर्णांक zynqmp_ipi_send_data(काष्ठा mbox_chan *chan, व्योम *data)
-अणु
-	काष्ठा device *dev = chan->mbox->dev;
-	काष्ठा zynqmp_ipi_mbox *ipi_mbox = dev_get_drvdata(dev);
-	काष्ठा zynqmp_ipi_mchan *mchan = chan->con_priv;
-	काष्ठा zynqmp_ipi_message *msg = data;
+static int zynqmp_ipi_send_data(struct mbox_chan *chan, void *data)
+{
+	struct device *dev = chan->mbox->dev;
+	struct zynqmp_ipi_mbox *ipi_mbox = dev_get_drvdata(dev);
+	struct zynqmp_ipi_mchan *mchan = chan->con_priv;
+	struct zynqmp_ipi_message *msg = data;
 	u64 arg0;
-	काष्ठा arm_smccc_res res;
+	struct arm_smccc_res res;
 
-	अगर (WARN_ON(!ipi_mbox)) अणु
+	if (WARN_ON(!ipi_mbox)) {
 		dev_err(dev, "no platform drv data??\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (mchan->chan_type == IPI_MB_CHNL_TX) अणु
+	if (mchan->chan_type == IPI_MB_CHNL_TX) {
 		/* Send request message */
-		अगर (msg && msg->len > mchan->req_buf_size) अणु
+		if (msg && msg->len > mchan->req_buf_size) {
 			dev_err(dev, "channel %d message length %u > max %lu\n",
-				mchan->chan_type, (अचिन्हित पूर्णांक)msg->len,
+				mchan->chan_type, (unsigned int)msg->len,
 				mchan->req_buf_size);
-			वापस -EINVAL;
-		पूर्ण
-		अगर (msg && msg->len)
-			स_नकल_toio(mchan->req_buf, msg->data, msg->len);
+			return -EINVAL;
+		}
+		if (msg && msg->len)
+			memcpy_toio(mchan->req_buf, msg->data, msg->len);
 		/* Kick IPI mailbox to send message */
 		arg0 = SMC_IPI_MAILBOX_NOTIFY;
 		zynqmp_ipi_fw_call(ipi_mbox, arg0, 0, &res);
-	पूर्ण अन्यथा अणु
+	} else {
 		/* Send response message */
-		अगर (msg && msg->len > mchan->resp_buf_size) अणु
+		if (msg && msg->len > mchan->resp_buf_size) {
 			dev_err(dev, "channel %d message length %u > max %lu\n",
-				mchan->chan_type, (अचिन्हित पूर्णांक)msg->len,
+				mchan->chan_type, (unsigned int)msg->len,
 				mchan->resp_buf_size);
-			वापस -EINVAL;
-		पूर्ण
-		अगर (msg && msg->len)
-			स_नकल_toio(mchan->resp_buf, msg->data, msg->len);
+			return -EINVAL;
+		}
+		if (msg && msg->len)
+			memcpy_toio(mchan->resp_buf, msg->data, msg->len);
 		arg0 = SMC_IPI_MAILBOX_ACK;
 		zynqmp_ipi_fw_call(ipi_mbox, arg0, IPI_SMC_ACK_EIRQ_MASK,
 				   &res);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
 /**
  * zynqmp_ipi_startup - Startup the IPI channel
  *
- * @chan: Channel poपूर्णांकer
+ * @chan: Channel pointer
  *
- * Return: 0 अगर all goes good, अन्यथा वापस corresponding error message
+ * Return: 0 if all goes good, else return corresponding error message
  */
-अटल पूर्णांक zynqmp_ipi_startup(काष्ठा mbox_chan *chan)
-अणु
-	काष्ठा device *dev = chan->mbox->dev;
-	काष्ठा zynqmp_ipi_mbox *ipi_mbox = dev_get_drvdata(dev);
-	काष्ठा zynqmp_ipi_mchan *mchan = chan->con_priv;
+static int zynqmp_ipi_startup(struct mbox_chan *chan)
+{
+	struct device *dev = chan->mbox->dev;
+	struct zynqmp_ipi_mbox *ipi_mbox = dev_get_drvdata(dev);
+	struct zynqmp_ipi_mchan *mchan = chan->con_priv;
 	u64 arg0;
-	काष्ठा arm_smccc_res res;
-	पूर्णांक ret = 0;
-	अचिन्हित पूर्णांक nchan_type;
+	struct arm_smccc_res res;
+	int ret = 0;
+	unsigned int nchan_type;
 
-	अगर (mchan->is_खोलोed)
-		वापस 0;
+	if (mchan->is_opened)
+		return 0;
 
-	/* If no channel has been खोलोed, खोलो the IPI mailbox */
+	/* If no channel has been opened, open the IPI mailbox */
 	nchan_type = (mchan->chan_type + 1) % 2;
-	अगर (!ipi_mbox->mchans[nchan_type].is_खोलोed) अणु
+	if (!ipi_mbox->mchans[nchan_type].is_opened) {
 		arg0 = SMC_IPI_MAILBOX_OPEN;
 		zynqmp_ipi_fw_call(ipi_mbox, arg0, 0, &res);
 		/* Check the SMC call status, a0 of the result */
-		ret = (पूर्णांक)(res.a0 & 0xFFFFFFFF);
-		अगर (ret < 0) अणु
+		ret = (int)(res.a0 & 0xFFFFFFFF);
+		if (ret < 0) {
 			dev_err(dev, "SMC to open the IPI channel failed.\n");
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 		ret = 0;
-	पूर्ण
+	}
 
-	/* If it is RX channel, enable the IPI notअगरication पूर्णांकerrupt */
-	अगर (mchan->chan_type == IPI_MB_CHNL_RX) अणु
+	/* If it is RX channel, enable the IPI notification interrupt */
+	if (mchan->chan_type == IPI_MB_CHNL_RX) {
 		arg0 = SMC_IPI_MAILBOX_ENABLE_IRQ;
 		zynqmp_ipi_fw_call(ipi_mbox, arg0, 0, &res);
-	पूर्ण
-	mchan->is_खोलोed = 1;
+	}
+	mchan->is_opened = 1;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * zynqmp_ipi_shutकरोwn - Shutकरोwn the IPI channel
+ * zynqmp_ipi_shutdown - Shutdown the IPI channel
  *
- * @chan: Channel poपूर्णांकer
+ * @chan: Channel pointer
  */
-अटल व्योम zynqmp_ipi_shutकरोwn(काष्ठा mbox_chan *chan)
-अणु
-	काष्ठा device *dev = chan->mbox->dev;
-	काष्ठा zynqmp_ipi_mbox *ipi_mbox = dev_get_drvdata(dev);
-	काष्ठा zynqmp_ipi_mchan *mchan = chan->con_priv;
+static void zynqmp_ipi_shutdown(struct mbox_chan *chan)
+{
+	struct device *dev = chan->mbox->dev;
+	struct zynqmp_ipi_mbox *ipi_mbox = dev_get_drvdata(dev);
+	struct zynqmp_ipi_mchan *mchan = chan->con_priv;
 	u64 arg0;
-	काष्ठा arm_smccc_res res;
-	अचिन्हित पूर्णांक chan_type;
+	struct arm_smccc_res res;
+	unsigned int chan_type;
 
-	अगर (!mchan->is_खोलोed)
-		वापस;
+	if (!mchan->is_opened)
+		return;
 
-	/* If it is RX channel, disable notअगरication पूर्णांकerrupt */
+	/* If it is RX channel, disable notification interrupt */
 	chan_type = mchan->chan_type;
-	अगर (chan_type == IPI_MB_CHNL_RX) अणु
+	if (chan_type == IPI_MB_CHNL_RX) {
 		arg0 = SMC_IPI_MAILBOX_DISABLE_IRQ;
 		zynqmp_ipi_fw_call(ipi_mbox, arg0, 0, &res);
-	पूर्ण
-	/* Release IPI mailbox अगर no other channel is खोलोed */
+	}
+	/* Release IPI mailbox if no other channel is opened */
 	chan_type = (chan_type + 1) % 2;
-	अगर (!ipi_mbox->mchans[chan_type].is_खोलोed) अणु
+	if (!ipi_mbox->mchans[chan_type].is_opened) {
 		arg0 = SMC_IPI_MAILBOX_RELEASE;
 		zynqmp_ipi_fw_call(ipi_mbox, arg0, 0, &res);
-	पूर्ण
+	}
 
-	mchan->is_खोलोed = 0;
-पूर्ण
+	mchan->is_opened = 0;
+}
 
 /* ZynqMP IPI mailbox operations */
-अटल स्थिर काष्ठा mbox_chan_ops zynqmp_ipi_chan_ops = अणु
+static const struct mbox_chan_ops zynqmp_ipi_chan_ops = {
 	.startup = zynqmp_ipi_startup,
-	.shutकरोwn = zynqmp_ipi_shutकरोwn,
+	.shutdown = zynqmp_ipi_shutdown,
 	.peek_data = zynqmp_ipi_peek_data,
-	.last_tx_करोne = zynqmp_ipi_last_tx_करोne,
+	.last_tx_done = zynqmp_ipi_last_tx_done,
 	.send_data = zynqmp_ipi_send_data,
-पूर्ण;
+};
 
 /**
  * zynqmp_ipi_of_xlate - Translate of phandle to IPI mailbox channel
  *
- * @mbox: mailbox controller poपूर्णांकer
- * @p:    phandle poपूर्णांकer
+ * @mbox: mailbox controller pointer
+ * @p:    phandle pointer
  *
- * Return: Mailbox channel, अन्यथा वापस error poपूर्णांकer.
+ * Return: Mailbox channel, else return error pointer.
  */
-अटल काष्ठा mbox_chan *zynqmp_ipi_of_xlate(काष्ठा mbox_controller *mbox,
-					     स्थिर काष्ठा of_phandle_args *p)
-अणु
-	काष्ठा mbox_chan *chan;
-	काष्ठा device *dev = mbox->dev;
-	अचिन्हित पूर्णांक chan_type;
+static struct mbox_chan *zynqmp_ipi_of_xlate(struct mbox_controller *mbox,
+					     const struct of_phandle_args *p)
+{
+	struct mbox_chan *chan;
+	struct device *dev = mbox->dev;
+	unsigned int chan_type;
 
 	/* Only supports TX and RX channels */
 	chan_type = p->args[0];
-	अगर (chan_type != IPI_MB_CHNL_TX && chan_type != IPI_MB_CHNL_RX) अणु
+	if (chan_type != IPI_MB_CHNL_TX && chan_type != IPI_MB_CHNL_RX) {
 		dev_err(dev, "req chnl failure: invalid chnl type %u.\n",
 			chan_type);
-		वापस ERR_PTR(-EINVAL);
-	पूर्ण
+		return ERR_PTR(-EINVAL);
+	}
 	chan = &mbox->chans[chan_type];
-	वापस chan;
-पूर्ण
+	return chan;
+}
 
-अटल स्थिर काष्ठा of_device_id zynqmp_ipi_of_match[] = अणु
-	अणु .compatible = "xlnx,zynqmp-ipi-mailbox" पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct of_device_id zynqmp_ipi_of_match[] = {
+	{ .compatible = "xlnx,zynqmp-ipi-mailbox" },
+	{},
+};
 MODULE_DEVICE_TABLE(of, zynqmp_ipi_of_match);
 
 /**
@@ -430,291 +429,291 @@ MODULE_DEVICE_TABLE(of, zynqmp_ipi_of_match);
  *
  * @node: IPI mbox device child node
  * @name: name of the IPI buffer
- * @res: poपूर्णांकer to where the resource inक्रमmation will be stored.
+ * @res: pointer to where the resource information will be stored.
  *
- * Return: 0 क्रम success, negative value क्रम failure
+ * Return: 0 for success, negative value for failure
  */
-अटल पूर्णांक zynqmp_ipi_mbox_get_buf_res(काष्ठा device_node *node,
-				       स्थिर अक्षर *name,
-				       काष्ठा resource *res)
-अणु
-	पूर्णांक ret, index;
+static int zynqmp_ipi_mbox_get_buf_res(struct device_node *node,
+				       const char *name,
+				       struct resource *res)
+{
+	int ret, index;
 
 	index = of_property_match_string(node, "reg-names", name);
-	अगर (index >= 0) अणु
+	if (index >= 0) {
 		ret = of_address_to_resource(node, index, res);
-		अगर (ret < 0)
-			वापस -EINVAL;
-		वापस 0;
-	पूर्ण
-	वापस -ENODEV;
-पूर्ण
+		if (ret < 0)
+			return -EINVAL;
+		return 0;
+	}
+	return -ENODEV;
+}
 
 /**
  * zynqmp_ipi_mbox_dev_release() - release the existence of a ipi mbox dev
  *
  * @dev: the ipi mailbox device
  *
- * This is to aव्योम the no device release() function kernel warning.
+ * This is to avoid the no device release() function kernel warning.
  *
  */
-अटल व्योम zynqmp_ipi_mbox_dev_release(काष्ठा device *dev)
-अणु
-	(व्योम)dev;
-पूर्ण
+static void zynqmp_ipi_mbox_dev_release(struct device *dev)
+{
+	(void)dev;
+}
 
 /**
  * zynqmp_ipi_mbox_probe - probe IPI mailbox resource from device node
  *
- * @ipi_mbox: poपूर्णांकer to IPI mailbox निजी data काष्ठाure
+ * @ipi_mbox: pointer to IPI mailbox private data structure
  * @node: IPI mailbox device node
  *
- * Return: 0 क्रम success, negative value क्रम failure
+ * Return: 0 for success, negative value for failure
  */
-अटल पूर्णांक zynqmp_ipi_mbox_probe(काष्ठा zynqmp_ipi_mbox *ipi_mbox,
-				 काष्ठा device_node *node)
-अणु
-	काष्ठा zynqmp_ipi_mchan *mchan;
-	काष्ठा mbox_chan *chans;
-	काष्ठा mbox_controller *mbox;
-	काष्ठा resource res;
-	काष्ठा device *dev, *mdev;
-	स्थिर अक्षर *name;
-	पूर्णांक ret;
+static int zynqmp_ipi_mbox_probe(struct zynqmp_ipi_mbox *ipi_mbox,
+				 struct device_node *node)
+{
+	struct zynqmp_ipi_mchan *mchan;
+	struct mbox_chan *chans;
+	struct mbox_controller *mbox;
+	struct resource res;
+	struct device *dev, *mdev;
+	const char *name;
+	int ret;
 
 	dev = ipi_mbox->pdata->dev;
-	/* Initialize dev क्रम IPI mailbox */
+	/* Initialize dev for IPI mailbox */
 	ipi_mbox->dev.parent = dev;
-	ipi_mbox->dev.release = शून्य;
+	ipi_mbox->dev.release = NULL;
 	ipi_mbox->dev.of_node = node;
 	dev_set_name(&ipi_mbox->dev, "%s", of_node_full_name(node));
 	dev_set_drvdata(&ipi_mbox->dev, ipi_mbox);
 	ipi_mbox->dev.release = zynqmp_ipi_mbox_dev_release;
 	ipi_mbox->dev.driver = &zynqmp_ipi_mbox_driver;
-	ret = device_रेजिस्टर(&ipi_mbox->dev);
-	अगर (ret) अणु
+	ret = device_register(&ipi_mbox->dev);
+	if (ret) {
 		dev_err(dev, "Failed to register ipi mbox dev.\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 	mdev = &ipi_mbox->dev;
 
 	mchan = &ipi_mbox->mchans[IPI_MB_CHNL_TX];
 	name = "local_request_region";
 	ret = zynqmp_ipi_mbox_get_buf_res(node, name, &res);
-	अगर (!ret) अणु
+	if (!ret) {
 		mchan->req_buf_size = resource_size(&res);
 		mchan->req_buf = devm_ioremap(mdev, res.start,
 					      mchan->req_buf_size);
-		अगर (!mchan->req_buf) अणु
+		if (!mchan->req_buf) {
 			dev_err(mdev, "Unable to map IPI buffer I/O memory\n");
-			वापस -ENOMEM;
-		पूर्ण
-	पूर्ण अन्यथा अगर (ret != -ENODEV) अणु
+			return -ENOMEM;
+		}
+	} else if (ret != -ENODEV) {
 		dev_err(mdev, "Unmatched resource %s, %d.\n", name, ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	name = "remote_response_region";
 	ret = zynqmp_ipi_mbox_get_buf_res(node, name, &res);
-	अगर (!ret) अणु
+	if (!ret) {
 		mchan->resp_buf_size = resource_size(&res);
 		mchan->resp_buf = devm_ioremap(mdev, res.start,
 					       mchan->resp_buf_size);
-		अगर (!mchan->resp_buf) अणु
+		if (!mchan->resp_buf) {
 			dev_err(mdev, "Unable to map IPI buffer I/O memory\n");
-			वापस -ENOMEM;
-		पूर्ण
-	पूर्ण अन्यथा अगर (ret != -ENODEV) अणु
+			return -ENOMEM;
+		}
+	} else if (ret != -ENODEV) {
 		dev_err(mdev, "Unmatched resource %s.\n", name);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 	mchan->rx_buf = devm_kzalloc(mdev,
 				     mchan->resp_buf_size +
-				     माप(काष्ठा zynqmp_ipi_message),
+				     sizeof(struct zynqmp_ipi_message),
 				     GFP_KERNEL);
-	अगर (!mchan->rx_buf)
-		वापस -ENOMEM;
+	if (!mchan->rx_buf)
+		return -ENOMEM;
 
 	mchan = &ipi_mbox->mchans[IPI_MB_CHNL_RX];
 	name = "remote_request_region";
 	ret = zynqmp_ipi_mbox_get_buf_res(node, name, &res);
-	अगर (!ret) अणु
+	if (!ret) {
 		mchan->req_buf_size = resource_size(&res);
 		mchan->req_buf = devm_ioremap(mdev, res.start,
 					      mchan->req_buf_size);
-		अगर (!mchan->req_buf) अणु
+		if (!mchan->req_buf) {
 			dev_err(mdev, "Unable to map IPI buffer I/O memory\n");
-			वापस -ENOMEM;
-		पूर्ण
-	पूर्ण अन्यथा अगर (ret != -ENODEV) अणु
+			return -ENOMEM;
+		}
+	} else if (ret != -ENODEV) {
 		dev_err(mdev, "Unmatched resource %s.\n", name);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	name = "local_response_region";
 	ret = zynqmp_ipi_mbox_get_buf_res(node, name, &res);
-	अगर (!ret) अणु
+	if (!ret) {
 		mchan->resp_buf_size = resource_size(&res);
 		mchan->resp_buf = devm_ioremap(mdev, res.start,
 					       mchan->resp_buf_size);
-		अगर (!mchan->resp_buf) अणु
+		if (!mchan->resp_buf) {
 			dev_err(mdev, "Unable to map IPI buffer I/O memory\n");
-			वापस -ENOMEM;
-		पूर्ण
-	पूर्ण अन्यथा अगर (ret != -ENODEV) अणु
+			return -ENOMEM;
+		}
+	} else if (ret != -ENODEV) {
 		dev_err(mdev, "Unmatched resource %s.\n", name);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 	mchan->rx_buf = devm_kzalloc(mdev,
 				     mchan->resp_buf_size +
-				     माप(काष्ठा zynqmp_ipi_message),
+				     sizeof(struct zynqmp_ipi_message),
 				     GFP_KERNEL);
-	अगर (!mchan->rx_buf)
-		वापस -ENOMEM;
+	if (!mchan->rx_buf)
+		return -ENOMEM;
 
 	/* Get the IPI remote agent ID */
-	ret = of_property_पढ़ो_u32(node, "xlnx,ipi-id", &ipi_mbox->remote_id);
-	अगर (ret < 0) अणु
+	ret = of_property_read_u32(node, "xlnx,ipi-id", &ipi_mbox->remote_id);
+	if (ret < 0) {
 		dev_err(dev, "No IPI remote ID is specified.\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	mbox = &ipi_mbox->mbox;
 	mbox->dev = mdev;
 	mbox->ops = &zynqmp_ipi_chan_ops;
 	mbox->num_chans = 2;
-	mbox->txकरोne_irq = false;
-	mbox->txकरोne_poll = true;
+	mbox->txdone_irq = false;
+	mbox->txdone_poll = true;
 	mbox->txpoll_period = 5;
 	mbox->of_xlate = zynqmp_ipi_of_xlate;
-	chans = devm_kzalloc(mdev, 2 * माप(*chans), GFP_KERNEL);
-	अगर (!chans)
-		वापस -ENOMEM;
+	chans = devm_kzalloc(mdev, 2 * sizeof(*chans), GFP_KERNEL);
+	if (!chans)
+		return -ENOMEM;
 	mbox->chans = chans;
 	chans[IPI_MB_CHNL_TX].con_priv = &ipi_mbox->mchans[IPI_MB_CHNL_TX];
 	chans[IPI_MB_CHNL_RX].con_priv = &ipi_mbox->mchans[IPI_MB_CHNL_RX];
 	ipi_mbox->mchans[IPI_MB_CHNL_TX].chan_type = IPI_MB_CHNL_TX;
 	ipi_mbox->mchans[IPI_MB_CHNL_RX].chan_type = IPI_MB_CHNL_RX;
-	ret = devm_mbox_controller_रेजिस्टर(mdev, mbox);
-	अगर (ret)
+	ret = devm_mbox_controller_register(mdev, mbox);
+	if (ret)
 		dev_err(mdev,
 			"Failed to register mbox_controller(%d)\n", ret);
-	अन्यथा
+	else
 		dev_info(mdev,
 			 "Registered ZynqMP IPI mbox with TX/RX channels.\n");
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * zynqmp_ipi_मुक्त_mboxes - Free IPI mailboxes devices
+ * zynqmp_ipi_free_mboxes - Free IPI mailboxes devices
  *
- * @pdata: IPI निजी data
+ * @pdata: IPI private data
  */
-अटल व्योम zynqmp_ipi_मुक्त_mboxes(काष्ठा zynqmp_ipi_pdata *pdata)
-अणु
-	काष्ठा zynqmp_ipi_mbox *ipi_mbox;
-	पूर्णांक i;
+static void zynqmp_ipi_free_mboxes(struct zynqmp_ipi_pdata *pdata)
+{
+	struct zynqmp_ipi_mbox *ipi_mbox;
+	int i;
 
 	i = pdata->num_mboxes;
-	क्रम (; i >= 0; i--) अणु
+	for (; i >= 0; i--) {
 		ipi_mbox = &pdata->ipi_mboxes[i];
-		अगर (ipi_mbox->dev.parent) अणु
-			mbox_controller_unरेजिस्टर(&ipi_mbox->mbox);
-			device_unरेजिस्टर(&ipi_mbox->dev);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		if (ipi_mbox->dev.parent) {
+			mbox_controller_unregister(&ipi_mbox->mbox);
+			device_unregister(&ipi_mbox->dev);
+		}
+	}
+}
 
-अटल पूर्णांक zynqmp_ipi_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा device_node *nc, *np = pdev->dev.of_node;
-	काष्ठा zynqmp_ipi_pdata *pdata;
-	काष्ठा zynqmp_ipi_mbox *mbox;
-	पूर्णांक num_mboxes, ret = -EINVAL;
+static int zynqmp_ipi_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	struct device_node *nc, *np = pdev->dev.of_node;
+	struct zynqmp_ipi_pdata *pdata;
+	struct zynqmp_ipi_mbox *mbox;
+	int num_mboxes, ret = -EINVAL;
 
 	num_mboxes = of_get_child_count(np);
-	pdata = devm_kzalloc(dev, माप(*pdata) + (num_mboxes * माप(*mbox)),
+	pdata = devm_kzalloc(dev, sizeof(*pdata) + (num_mboxes * sizeof(*mbox)),
 			     GFP_KERNEL);
-	अगर (!pdata)
-		वापस -ENOMEM;
+	if (!pdata)
+		return -ENOMEM;
 	pdata->dev = dev;
 
 	/* Get the IPI local agents ID */
-	ret = of_property_पढ़ो_u32(np, "xlnx,ipi-id", &pdata->local_id);
-	अगर (ret < 0) अणु
+	ret = of_property_read_u32(np, "xlnx,ipi-id", &pdata->local_id);
+	if (ret < 0) {
 		dev_err(dev, "No IPI local ID is specified.\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	pdata->num_mboxes = num_mboxes;
-	pdata->ipi_mboxes = (काष्ठा zynqmp_ipi_mbox *)
-			    ((अक्षर *)pdata + माप(*pdata));
+	pdata->ipi_mboxes = (struct zynqmp_ipi_mbox *)
+			    ((char *)pdata + sizeof(*pdata));
 
 	mbox = pdata->ipi_mboxes;
-	क्रम_each_available_child_of_node(np, nc) अणु
+	for_each_available_child_of_node(np, nc) {
 		mbox->pdata = pdata;
 		ret = zynqmp_ipi_mbox_probe(mbox, nc);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(dev, "failed to probe subdev.\n");
 			ret = -EINVAL;
-			जाओ मुक्त_mbox_dev;
-		पूर्ण
+			goto free_mbox_dev;
+		}
 		mbox++;
-	पूर्ण
+	}
 
 	/* IPI IRQ */
-	ret = platक्रमm_get_irq(pdev, 0);
-	अगर (ret < 0)
-		जाओ मुक्त_mbox_dev;
+	ret = platform_get_irq(pdev, 0);
+	if (ret < 0)
+		goto free_mbox_dev;
 
 	pdata->irq = ret;
-	ret = devm_request_irq(dev, pdata->irq, zynqmp_ipi_पूर्णांकerrupt,
+	ret = devm_request_irq(dev, pdata->irq, zynqmp_ipi_interrupt,
 			       IRQF_SHARED, dev_name(dev), pdata);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "IRQ %d is not requested successfully.\n",
 			pdata->irq);
-		जाओ मुक्त_mbox_dev;
-	पूर्ण
+		goto free_mbox_dev;
+	}
 
-	platक्रमm_set_drvdata(pdev, pdata);
-	वापस ret;
+	platform_set_drvdata(pdev, pdata);
+	return ret;
 
-मुक्त_mbox_dev:
-	zynqmp_ipi_मुक्त_mboxes(pdata);
-	वापस ret;
-पूर्ण
+free_mbox_dev:
+	zynqmp_ipi_free_mboxes(pdata);
+	return ret;
+}
 
-अटल पूर्णांक zynqmp_ipi_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा zynqmp_ipi_pdata *pdata;
+static int zynqmp_ipi_remove(struct platform_device *pdev)
+{
+	struct zynqmp_ipi_pdata *pdata;
 
-	pdata = platक्रमm_get_drvdata(pdev);
-	zynqmp_ipi_मुक्त_mboxes(pdata);
+	pdata = platform_get_drvdata(pdev);
+	zynqmp_ipi_free_mboxes(pdata);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver zynqmp_ipi_driver = अणु
+static struct platform_driver zynqmp_ipi_driver = {
 	.probe = zynqmp_ipi_probe,
-	.हटाओ = zynqmp_ipi_हटाओ,
-	.driver = अणु
+	.remove = zynqmp_ipi_remove,
+	.driver = {
 		   .name = "zynqmp-ipi",
 		   .of_match_table = of_match_ptr(zynqmp_ipi_of_match),
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक __init zynqmp_ipi_init(व्योम)
-अणु
-	वापस platक्रमm_driver_रेजिस्टर(&zynqmp_ipi_driver);
-पूर्ण
+static int __init zynqmp_ipi_init(void)
+{
+	return platform_driver_register(&zynqmp_ipi_driver);
+}
 subsys_initcall(zynqmp_ipi_init);
 
-अटल व्योम __निकास zynqmp_ipi_निकास(व्योम)
-अणु
-	platक्रमm_driver_unरेजिस्टर(&zynqmp_ipi_driver);
-पूर्ण
-module_निकास(zynqmp_ipi_निकास);
+static void __exit zynqmp_ipi_exit(void)
+{
+	platform_driver_unregister(&zynqmp_ipi_driver);
+}
+module_exit(zynqmp_ipi_exit);
 
 MODULE_LICENSE("GPL v2");
 MODULE_DESCRIPTION("Xilinx ZynqMP IPI Mailbox driver");

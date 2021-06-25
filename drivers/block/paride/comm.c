@@ -1,9 +1,8 @@
-<शैली गुरु>
 /* 
         comm.c    (c) 1997-8  Grant R. Guenther <grant@torque.net>
                               Under the terms of the GNU General Public License.
 
-	comm.c is a low-level protocol driver क्रम some older models
+	comm.c is a low-level protocol driver for some older models
 	of the DataStor "Commuter" parallel to IDE adapter.  Some of
 	the parallel port devices marketed by Arista currently
 	use this adapter.
@@ -15,205 +14,205 @@
 
 */
 
-#घोषणा COMM_VERSION      "1.01"
+#define COMM_VERSION      "1.01"
 
-#समावेश <linux/module.h>
-#समावेश <linux/init.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/types.h>
-#समावेश <linux/रुको.h>
-#समावेश <यंत्र/पन.स>
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/delay.h>
+#include <linux/kernel.h>
+#include <linux/types.h>
+#include <linux/wait.h>
+#include <asm/io.h>
 
-#समावेश "paride.h"
+#include "paride.h"
 
-/* mode codes:  0  nybble पढ़ोs, 8-bit ग_लिखोs
-                1  8-bit पढ़ोs and ग_लिखोs
+/* mode codes:  0  nybble reads, 8-bit writes
+                1  8-bit reads and writes
                 2  8-bit EPP mode
 */
 
-#घोषणा j44(a,b)	(((a>>3)&0x0f)|((b<<1)&0xf0))
+#define j44(a,b)	(((a>>3)&0x0f)|((b<<1)&0xf0))
 
-#घोषणा P1	w2(5);w2(0xd);w2(0xd);w2(5);w2(4);
-#घोषणा P2	w2(5);w2(7);w2(7);w2(5);w2(4);
+#define P1	w2(5);w2(0xd);w2(0xd);w2(5);w2(4);
+#define P2	w2(5);w2(7);w2(7);w2(5);w2(4);
 
-/* cont = 0 - access the IDE रेजिस्टर file 
+/* cont = 0 - access the IDE register file 
    cont = 1 - access the IDE command set 
 */
 
-अटल पूर्णांक  cont_map[2] = अणु 0x08, 0x10 पूर्ण;
+static int  cont_map[2] = { 0x08, 0x10 };
 
-अटल पूर्णांक comm_पढ़ो_regr( PIA *pi, पूर्णांक cont, पूर्णांक regr )
+static int comm_read_regr( PIA *pi, int cont, int regr )
 
-अणु       पूर्णांक     l, h, r;
+{       int     l, h, r;
 
         r = regr + cont_map[cont];
 
-        चयन (pi->mode)  अणु
+        switch (pi->mode)  {
 
-        हाल 0: w0(r); P1; w0(0);
+        case 0: w0(r); P1; w0(0);
         	w2(6); l = r1(); w0(0x80); h = r1(); w2(4);
-                वापस j44(l,h);
+                return j44(l,h);
 
-        हाल 1: w0(r+0x20); P1; 
+        case 1: w0(r+0x20); P1; 
         	w0(0); w2(0x26); h = r0(); w2(4);
-                वापस h;
+                return h;
 
-	हाल 2:
-	हाल 3:
-        हाल 4: w3(r+0x20); (व्योम)r1();
+	case 2:
+	case 3:
+        case 4: w3(r+0x20); (void)r1();
         	w2(0x24); h = r4(); w2(4);
-                वापस h;
+                return h;
 
-        पूर्ण
-        वापस -1;
-पूर्ण       
+        }
+        return -1;
+}       
 
-अटल व्योम comm_ग_लिखो_regr( PIA *pi, पूर्णांक cont, पूर्णांक regr, पूर्णांक val )
+static void comm_write_regr( PIA *pi, int cont, int regr, int val )
 
-अणु       पूर्णांक  r;
+{       int  r;
 
         r = regr + cont_map[cont];
 
-        चयन (pi->mode)  अणु
+        switch (pi->mode)  {
 
-        हाल 0:
-        हाल 1: w0(r); P1; w0(val); P2;
-		अवरोध;
+        case 0:
+        case 1: w0(r); P1; w0(val); P2;
+		break;
 
-	हाल 2:
-	हाल 3:
-        हाल 4: w3(r); (व्योम)r1(); w4(val);
-                अवरोध;
-        पूर्ण
-पूर्ण
+	case 2:
+	case 3:
+        case 4: w3(r); (void)r1(); w4(val);
+                break;
+        }
+}
 
-अटल व्योम comm_connect ( PIA *pi  )
+static void comm_connect ( PIA *pi  )
 
-अणु       pi->saved_r0 = r0();
+{       pi->saved_r0 = r0();
         pi->saved_r2 = r2();
         w2(4); w0(0xff); w2(6);
         w2(4); w0(0xaa); w2(6);
         w2(4); w0(0x00); w2(6);
         w2(4); w0(0x87); w2(6);
         w2(4); w0(0xe0); w2(0xc); w2(0xc); w2(4);
-पूर्ण
+}
 
-अटल व्योम comm_disconnect ( PIA *pi )
+static void comm_disconnect ( PIA *pi )
 
-अणु       w2(0); w2(0); w2(0); w2(4); 
+{       w2(0); w2(0); w2(0); w2(4); 
 	w0(pi->saved_r0);
         w2(pi->saved_r2);
-पूर्ण 
+} 
 
-अटल व्योम comm_पढ़ो_block( PIA *pi, अक्षर * buf, पूर्णांक count )
+static void comm_read_block( PIA *pi, char * buf, int count )
 
-अणु       पूर्णांक     i, l, h;
+{       int     i, l, h;
 
-        चयन (pi->mode) अणु
+        switch (pi->mode) {
         
-        हाल 0: w0(0x48); P1;
-                क्रम(i=0;i<count;i++) अणु
+        case 0: w0(0x48); P1;
+                for(i=0;i<count;i++) {
                         w0(0); w2(6); l = r1();
                         w0(0x80); h = r1(); w2(4);
                         buf[i] = j44(l,h);
-                पूर्ण
-                अवरोध;
+                }
+                break;
 
-        हाल 1: w0(0x68); P1; w0(0);
-                क्रम(i=0;i<count;i++) अणु
+        case 1: w0(0x68); P1; w0(0);
+                for(i=0;i<count;i++) {
                         w2(0x26); buf[i] = r0(); w2(0x24);
-                पूर्ण
+                }
 		w2(4);
-		अवरोध;
+		break;
 		
-	हाल 2: w3(0x68); (व्योम)r1(); w2(0x24);
-		क्रम (i=0;i<count;i++) buf[i] = r4();
+	case 2: w3(0x68); (void)r1(); w2(0x24);
+		for (i=0;i<count;i++) buf[i] = r4();
 		w2(4);
-		अवरोध;
+		break;
 
-        हाल 3: w3(0x68); (व्योम)r1(); w2(0x24);
-                क्रम (i=0;i<count/2;i++) ((u16 *)buf)[i] = r4w();
+        case 3: w3(0x68); (void)r1(); w2(0x24);
+                for (i=0;i<count/2;i++) ((u16 *)buf)[i] = r4w();
                 w2(4);
-                अवरोध;
+                break;
 
-        हाल 4: w3(0x68); (व्योम)r1(); w2(0x24);
-                क्रम (i=0;i<count/4;i++) ((u32 *)buf)[i] = r4l();
+        case 4: w3(0x68); (void)r1(); w2(0x24);
+                for (i=0;i<count/4;i++) ((u32 *)buf)[i] = r4l();
                 w2(4);
-                अवरोध;
+                break;
 		
-	पूर्ण
-पूर्ण
+	}
+}
 
-/* NB: Watch out क्रम the byte swapped ग_लिखोs ! */
+/* NB: Watch out for the byte swapped writes ! */
 
-अटल व्योम comm_ग_लिखो_block( PIA *pi, अक्षर * buf, पूर्णांक count )
+static void comm_write_block( PIA *pi, char * buf, int count )
 
-अणु       पूर्णांक	k;
+{       int	k;
 
-        चयन (pi->mode) अणु
+        switch (pi->mode) {
 
-        हाल 0:
-        हाल 1: w0(0x68); P1;
-        	क्रम (k=0;k<count;k++) अणु
+        case 0:
+        case 1: w0(0x68); P1;
+        	for (k=0;k<count;k++) {
                         w2(5); w0(buf[k^1]); w2(7);
-                पूर्ण
+                }
                 w2(5); w2(4);
-                अवरोध;
+                break;
 
-        हाल 2: w3(0x48); (व्योम)r1();
-                क्रम (k=0;k<count;k++) w4(buf[k^1]);
-                अवरोध;
+        case 2: w3(0x48); (void)r1();
+                for (k=0;k<count;k++) w4(buf[k^1]);
+                break;
 
-        हाल 3: w3(0x48); (व्योम)r1();
-                क्रम (k=0;k<count/2;k++) w4w(pi_swab16(buf,k));
-                अवरोध;
+        case 3: w3(0x48); (void)r1();
+                for (k=0;k<count/2;k++) w4w(pi_swab16(buf,k));
+                break;
 
-        हाल 4: w3(0x48); (व्योम)r1();
-                क्रम (k=0;k<count/4;k++) w4l(pi_swab32(buf,k));
-                अवरोध;
+        case 4: w3(0x48); (void)r1();
+                for (k=0;k<count/4;k++) w4l(pi_swab32(buf,k));
+                break;
 
 
-        पूर्ण
-पूर्ण
+        }
+}
 
-अटल व्योम comm_log_adapter( PIA *pi, अक्षर * scratch, पूर्णांक verbose )
+static void comm_log_adapter( PIA *pi, char * scratch, int verbose )
 
-अणु       अक्षर    *mode_string[5] = अणु"4-bit","8-bit","EPP-8","EPP-16","EPP-32"पूर्ण;
+{       char    *mode_string[5] = {"4-bit","8-bit","EPP-8","EPP-16","EPP-32"};
 
-        prपूर्णांकk("%s: comm %s, DataStor Commuter at 0x%x, ",
+        printk("%s: comm %s, DataStor Commuter at 0x%x, ",
                 pi->device,COMM_VERSION,pi->port);
-        prपूर्णांकk("mode %d (%s), delay %d\n",pi->mode,
+        printk("mode %d (%s), delay %d\n",pi->mode,
 		mode_string[pi->mode],pi->delay);
 
-पूर्ण
+}
 
-अटल काष्ठा pi_protocol comm = अणु
+static struct pi_protocol comm = {
 	.owner		= THIS_MODULE,
 	.name		= "comm",
 	.max_mode	= 5,
 	.epp_first	= 2,
-	.शेष_delay	= 1,
+	.default_delay	= 1,
 	.max_units	= 1,
-	.ग_लिखो_regr	= comm_ग_लिखो_regr,
-	.पढ़ो_regr	= comm_पढ़ो_regr,
-	.ग_लिखो_block	= comm_ग_लिखो_block,
-	.पढ़ो_block	= comm_पढ़ो_block,
+	.write_regr	= comm_write_regr,
+	.read_regr	= comm_read_regr,
+	.write_block	= comm_write_block,
+	.read_block	= comm_read_block,
 	.connect	= comm_connect,
 	.disconnect	= comm_disconnect,
 	.log_adapter	= comm_log_adapter,
-पूर्ण;
+};
 
-अटल पूर्णांक __init comm_init(व्योम)
-अणु
-	वापस paride_रेजिस्टर(&comm);
-पूर्ण
+static int __init comm_init(void)
+{
+	return paride_register(&comm);
+}
 
-अटल व्योम __निकास comm_निकास(व्योम)
-अणु
-	paride_unरेजिस्टर(&comm);
-पूर्ण
+static void __exit comm_exit(void)
+{
+	paride_unregister(&comm);
+}
 
 MODULE_LICENSE("GPL");
 module_init(comm_init)
-module_निकास(comm_निकास)
+module_exit(comm_exit)

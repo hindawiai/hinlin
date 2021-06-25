@@ -1,43 +1,42 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * This is क्रम all the tests relating directly to Control Flow Integrity.
+ * This is for all the tests relating directly to Control Flow Integrity.
  */
-#समावेश "lkdtm.h"
+#include "lkdtm.h"
 
-अटल पूर्णांक called_count;
+static int called_count;
 
-/* Function taking one argument, without a वापस value. */
-अटल noअंतरभूत व्योम lkdपंचांग_increment_व्योम(पूर्णांक *counter)
-अणु
+/* Function taking one argument, without a return value. */
+static noinline void lkdtm_increment_void(int *counter)
+{
 	(*counter)++;
-पूर्ण
+}
 
-/* Function taking one argument, वापसing पूर्णांक. */
-अटल noअंतरभूत पूर्णांक lkdपंचांग_increment_पूर्णांक(पूर्णांक *counter)
-अणु
+/* Function taking one argument, returning int. */
+static noinline int lkdtm_increment_int(int *counter)
+{
 	(*counter)++;
 
-	वापस *counter;
-पूर्ण
+	return *counter;
+}
 /*
  * This tries to call an indirect function with a mismatched prototype.
  */
-व्योम lkdपंचांग_CFI_FORWARD_PROTO(व्योम)
-अणु
+void lkdtm_CFI_FORWARD_PROTO(void)
+{
 	/*
-	 * Matches lkdपंचांग_increment_व्योम()'s prototype, but not
-	 * lkdपंचांग_increment_पूर्णांक()'s prototype.
+	 * Matches lkdtm_increment_void()'s prototype, but not
+	 * lkdtm_increment_int()'s prototype.
 	 */
-	व्योम (*func)(पूर्णांक *);
+	void (*func)(int *);
 
 	pr_info("Calling matched prototype ...\n");
-	func = lkdपंचांग_increment_व्योम;
+	func = lkdtm_increment_void;
 	func(&called_count);
 
 	pr_info("Calling mismatched prototype ...\n");
-	func = (व्योम *)lkdपंचांग_increment_पूर्णांक;
+	func = (void *)lkdtm_increment_int;
 	func(&called_count);
 
 	pr_info("Fail: survived mismatched prototype function call!\n");
-पूर्ण
+}

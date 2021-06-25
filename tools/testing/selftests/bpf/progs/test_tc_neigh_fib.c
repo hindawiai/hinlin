@@ -1,40 +1,39 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <मानक_निवेशt.h>
-#समावेश <stdbool.h>
-#समावेश <मानकघोष.स>
+// SPDX-License-Identifier: GPL-2.0
+#include <stdint.h>
+#include <stdbool.h>
+#include <stddef.h>
 
-#समावेश <linux/bpf.h>
-#समावेश <linux/मानकघोष.स>
-#समावेश <linux/pkt_cls.h>
-#समावेश <linux/अगर_ether.h>
-#समावेश <linux/in.h>
-#समावेश <linux/ip.h>
-#समावेश <linux/ipv6.h>
+#include <linux/bpf.h>
+#include <linux/stddef.h>
+#include <linux/pkt_cls.h>
+#include <linux/if_ether.h>
+#include <linux/in.h>
+#include <linux/ip.h>
+#include <linux/ipv6.h>
 
-#समावेश <bpf/bpf_helpers.h>
-#समावेश <bpf/bpf_endian.h>
+#include <bpf/bpf_helpers.h>
+#include <bpf/bpf_endian.h>
 
-#अगर_अघोषित ctx_ptr
-# define ctx_ptr(field)		(व्योम *)(दीर्घ)(field)
-#पूर्ण_अगर
+#ifndef ctx_ptr
+# define ctx_ptr(field)		(void *)(long)(field)
+#endif
 
-#घोषणा AF_INET 2
-#घोषणा AF_INET6 10
+#define AF_INET 2
+#define AF_INET6 10
 
-अटल __always_अंतरभूत पूर्णांक fill_fib_params_v4(काष्ठा __sk_buff *skb,
-					      काष्ठा bpf_fib_lookup *fib_params)
-अणु
-	व्योम *data_end = ctx_ptr(skb->data_end);
-	व्योम *data = ctx_ptr(skb->data);
-	काष्ठा iphdr *ip4h;
+static __always_inline int fill_fib_params_v4(struct __sk_buff *skb,
+					      struct bpf_fib_lookup *fib_params)
+{
+	void *data_end = ctx_ptr(skb->data_end);
+	void *data = ctx_ptr(skb->data);
+	struct iphdr *ip4h;
 
-	अगर (data + माप(काष्ठा ethhdr) > data_end)
-		वापस -1;
+	if (data + sizeof(struct ethhdr) > data_end)
+		return -1;
 
-	ip4h = (काष्ठा iphdr *)(data + माप(काष्ठा ethhdr));
-	अगर ((व्योम *)(ip4h + 1) > data_end)
-		वापस -1;
+	ip4h = (struct iphdr *)(data + sizeof(struct ethhdr));
+	if ((void *)(ip4h + 1) > data_end)
+		return -1;
 
 	fib_params->family = AF_INET;
 	fib_params->tos = ip4h->tos;
@@ -45,24 +44,24 @@
 	fib_params->ipv4_src = ip4h->saddr;
 	fib_params->ipv4_dst = ip4h->daddr;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल __always_अंतरभूत पूर्णांक fill_fib_params_v6(काष्ठा __sk_buff *skb,
-					      काष्ठा bpf_fib_lookup *fib_params)
-अणु
-	काष्ठा in6_addr *src = (काष्ठा in6_addr *)fib_params->ipv6_src;
-	काष्ठा in6_addr *dst = (काष्ठा in6_addr *)fib_params->ipv6_dst;
-	व्योम *data_end = ctx_ptr(skb->data_end);
-	व्योम *data = ctx_ptr(skb->data);
-	काष्ठा ipv6hdr *ip6h;
+static __always_inline int fill_fib_params_v6(struct __sk_buff *skb,
+					      struct bpf_fib_lookup *fib_params)
+{
+	struct in6_addr *src = (struct in6_addr *)fib_params->ipv6_src;
+	struct in6_addr *dst = (struct in6_addr *)fib_params->ipv6_dst;
+	void *data_end = ctx_ptr(skb->data_end);
+	void *data = ctx_ptr(skb->data);
+	struct ipv6hdr *ip6h;
 
-	अगर (data + माप(काष्ठा ethhdr) > data_end)
-		वापस -1;
+	if (data + sizeof(struct ethhdr) > data_end)
+		return -1;
 
-	ip6h = (काष्ठा ipv6hdr *)(data + माप(काष्ठा ethhdr));
-	अगर ((व्योम *)(ip6h + 1) > data_end)
-		वापस -1;
+	ip6h = (struct ipv6hdr *)(data + sizeof(struct ethhdr));
+	if ((void *)(ip6h + 1) > data_end)
+		return -1;
 
 	fib_params->family = AF_INET6;
 	fib_params->flowinfo = 0;
@@ -73,87 +72,87 @@
 	*src = ip6h->saddr;
 	*dst = ip6h->daddr;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 SEC("classifier/chk_egress")
-पूर्णांक tc_chk(काष्ठा __sk_buff *skb)
-अणु
-	व्योम *data_end = ctx_ptr(skb->data_end);
-	व्योम *data = ctx_ptr(skb->data);
+int tc_chk(struct __sk_buff *skb)
+{
+	void *data_end = ctx_ptr(skb->data_end);
+	void *data = ctx_ptr(skb->data);
 	__u32 *raw = data;
 
-	अगर (data + माप(काष्ठा ethhdr) > data_end)
-		वापस TC_ACT_SHOT;
+	if (data + sizeof(struct ethhdr) > data_end)
+		return TC_ACT_SHOT;
 
-	वापस !raw[0] && !raw[1] && !raw[2] ? TC_ACT_SHOT : TC_ACT_OK;
-पूर्ण
+	return !raw[0] && !raw[1] && !raw[2] ? TC_ACT_SHOT : TC_ACT_OK;
+}
 
-अटल __always_अंतरभूत पूर्णांक tc_redir(काष्ठा __sk_buff *skb)
-अणु
-	काष्ठा bpf_fib_lookup fib_params = अणु .अगरindex = skb->ingress_अगरindex पूर्ण;
+static __always_inline int tc_redir(struct __sk_buff *skb)
+{
+	struct bpf_fib_lookup fib_params = { .ifindex = skb->ingress_ifindex };
 	__u8 zero[ETH_ALEN * 2];
-	पूर्णांक ret = -1;
+	int ret = -1;
 
-	चयन (skb->protocol) अणु
-	हाल __bpf_स्थिरant_htons(ETH_P_IP):
+	switch (skb->protocol) {
+	case __bpf_constant_htons(ETH_P_IP):
 		ret = fill_fib_params_v4(skb, &fib_params);
-		अवरोध;
-	हाल __bpf_स्थिरant_htons(ETH_P_IPV6):
+		break;
+	case __bpf_constant_htons(ETH_P_IPV6):
 		ret = fill_fib_params_v6(skb, &fib_params);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	अगर (ret)
-		वापस TC_ACT_OK;
+	if (ret)
+		return TC_ACT_OK;
 
-	ret = bpf_fib_lookup(skb, &fib_params, माप(fib_params), 0);
-	अगर (ret == BPF_FIB_LKUP_RET_NOT_FWDED || ret < 0)
-		वापस TC_ACT_OK;
+	ret = bpf_fib_lookup(skb, &fib_params, sizeof(fib_params), 0);
+	if (ret == BPF_FIB_LKUP_RET_NOT_FWDED || ret < 0)
+		return TC_ACT_OK;
 
-	__builtin_स_रखो(&zero, 0, माप(zero));
-	अगर (bpf_skb_store_bytes(skb, 0, &zero, माप(zero), 0) < 0)
-		वापस TC_ACT_SHOT;
+	__builtin_memset(&zero, 0, sizeof(zero));
+	if (bpf_skb_store_bytes(skb, 0, &zero, sizeof(zero), 0) < 0)
+		return TC_ACT_SHOT;
 
-	अगर (ret == BPF_FIB_LKUP_RET_NO_NEIGH) अणु
-		काष्ठा bpf_redir_neigh nh_params = अणुपूर्ण;
+	if (ret == BPF_FIB_LKUP_RET_NO_NEIGH) {
+		struct bpf_redir_neigh nh_params = {};
 
 		nh_params.nh_family = fib_params.family;
-		__builtin_स_नकल(&nh_params.ipv6_nh, &fib_params.ipv6_dst,
-				 माप(nh_params.ipv6_nh));
+		__builtin_memcpy(&nh_params.ipv6_nh, &fib_params.ipv6_dst,
+				 sizeof(nh_params.ipv6_nh));
 
-		वापस bpf_redirect_neigh(fib_params.अगरindex, &nh_params,
-					  माप(nh_params), 0);
+		return bpf_redirect_neigh(fib_params.ifindex, &nh_params,
+					  sizeof(nh_params), 0);
 
-	पूर्ण अन्यथा अगर (ret == BPF_FIB_LKUP_RET_SUCCESS) अणु
-		व्योम *data_end = ctx_ptr(skb->data_end);
-		काष्ठा ethhdr *eth = ctx_ptr(skb->data);
+	} else if (ret == BPF_FIB_LKUP_RET_SUCCESS) {
+		void *data_end = ctx_ptr(skb->data_end);
+		struct ethhdr *eth = ctx_ptr(skb->data);
 
-		अगर (eth + 1 > data_end)
-			वापस TC_ACT_SHOT;
+		if (eth + 1 > data_end)
+			return TC_ACT_SHOT;
 
-		__builtin_स_नकल(eth->h_dest, fib_params.dmac, ETH_ALEN);
-		__builtin_स_नकल(eth->h_source, fib_params.smac, ETH_ALEN);
+		__builtin_memcpy(eth->h_dest, fib_params.dmac, ETH_ALEN);
+		__builtin_memcpy(eth->h_source, fib_params.smac, ETH_ALEN);
 
-		वापस bpf_redirect(fib_params.अगरindex, 0);
-	पूर्ण
+		return bpf_redirect(fib_params.ifindex, 0);
+	}
 
-	वापस TC_ACT_SHOT;
-पूर्ण
+	return TC_ACT_SHOT;
+}
 
-/* these are identical, but keep them separate क्रम compatibility with the
+/* these are identical, but keep them separate for compatibility with the
  * section names expected by test_tc_redirect.sh
  */
 SEC("classifier/dst_ingress")
-पूर्णांक tc_dst(काष्ठा __sk_buff *skb)
-अणु
-	वापस tc_redir(skb);
-पूर्ण
+int tc_dst(struct __sk_buff *skb)
+{
+	return tc_redir(skb);
+}
 
 SEC("classifier/src_ingress")
-पूर्णांक tc_src(काष्ठा __sk_buff *skb)
-अणु
-	वापस tc_redir(skb);
-पूर्ण
+int tc_src(struct __sk_buff *skb)
+{
+	return tc_redir(skb);
+}
 
-अक्षर __license[] SEC("license") = "GPL";
+char __license[] SEC("license") = "GPL";

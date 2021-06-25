@@ -1,139 +1,138 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: MIT */
-#अगर_अघोषित __NVKM_FLCNEN_H__
-#घोषणा __NVKM_FLCNEN_H__
-#घोषणा nvkm_falcon(p) container_of((p), काष्ठा nvkm_falcon, engine)
-#समावेश <core/engine.h>
-काष्ठा nvkm_fअगरo_chan;
-काष्ठा nvkm_gpuobj;
+/* SPDX-License-Identifier: MIT */
+#ifndef __NVKM_FLCNEN_H__
+#define __NVKM_FLCNEN_H__
+#define nvkm_falcon(p) container_of((p), struct nvkm_falcon, engine)
+#include <core/engine.h>
+struct nvkm_fifo_chan;
+struct nvkm_gpuobj;
 
-क्रमागत nvkm_falcon_dmaidx अणु
+enum nvkm_falcon_dmaidx {
 	FALCON_DMAIDX_UCODE		= 0,
 	FALCON_DMAIDX_VIRT		= 1,
 	FALCON_DMAIDX_PHYS_VID		= 2,
 	FALCON_DMAIDX_PHYS_SYS_COH	= 3,
 	FALCON_DMAIDX_PHYS_SYS_NCOH	= 4,
 	FALCON_SEC2_DMAIDX_UCODE	= 6,
-पूर्ण;
+};
 
-काष्ठा nvkm_falcon अणु
-	स्थिर काष्ठा nvkm_falcon_func *func;
-	स्थिर काष्ठा nvkm_subdev *owner;
-	स्थिर अक्षर *name;
+struct nvkm_falcon {
+	const struct nvkm_falcon_func *func;
+	const struct nvkm_subdev *owner;
+	const char *name;
 	u32 addr;
 
-	काष्ठा mutex mutex;
-	काष्ठा mutex dmem_mutex;
+	struct mutex mutex;
+	struct mutex dmem_mutex;
 	bool oneinit;
 
-	स्थिर काष्ठा nvkm_subdev *user;
+	const struct nvkm_subdev *user;
 
 	u8 version;
 	u8 secret;
 	bool debug;
 
-	काष्ठा nvkm_memory *core;
-	bool बाह्यal;
+	struct nvkm_memory *core;
+	bool external;
 
-	काष्ठा अणु
+	struct {
 		u32 limit;
 		u32 *data;
 		u32  size;
 		u8 ports;
-	पूर्ण code;
+	} code;
 
-	काष्ठा अणु
+	struct {
 		u32 limit;
 		u32 *data;
 		u32  size;
 		u8 ports;
-	पूर्ण data;
+	} data;
 
-	काष्ठा nvkm_engine engine;
-पूर्ण;
+	struct nvkm_engine engine;
+};
 
-/* This स्थिरructor must be called from the owner's oneinit() hook and
- * *not* its स्थिरructor.  This is to ensure that DEVINIT has been
- * completed, and that the device is correctly enabled beक्रमe we touch
- * falcon रेजिस्टरs.
+/* This constructor must be called from the owner's oneinit() hook and
+ * *not* its constructor.  This is to ensure that DEVINIT has been
+ * completed, and that the device is correctly enabled before we touch
+ * falcon registers.
  */
-पूर्णांक nvkm_falcon_v1_new(काष्ठा nvkm_subdev *owner, स्थिर अक्षर *name, u32 addr,
-		       काष्ठा nvkm_falcon **);
+int nvkm_falcon_v1_new(struct nvkm_subdev *owner, const char *name, u32 addr,
+		       struct nvkm_falcon **);
 
-व्योम nvkm_falcon_del(काष्ठा nvkm_falcon **);
-पूर्णांक nvkm_falcon_get(काष्ठा nvkm_falcon *, स्थिर काष्ठा nvkm_subdev *);
-व्योम nvkm_falcon_put(काष्ठा nvkm_falcon *, स्थिर काष्ठा nvkm_subdev *);
+void nvkm_falcon_del(struct nvkm_falcon **);
+int nvkm_falcon_get(struct nvkm_falcon *, const struct nvkm_subdev *);
+void nvkm_falcon_put(struct nvkm_falcon *, const struct nvkm_subdev *);
 
-पूर्णांक nvkm_falcon_new_(स्थिर काष्ठा nvkm_falcon_func *, काष्ठा nvkm_device *,
-		     क्रमागत nvkm_subdev_type, पूर्णांक inst, bool enable, u32 addr, काष्ठा nvkm_engine **);
+int nvkm_falcon_new_(const struct nvkm_falcon_func *, struct nvkm_device *,
+		     enum nvkm_subdev_type, int inst, bool enable, u32 addr, struct nvkm_engine **);
 
-काष्ठा nvkm_falcon_func अणु
-	काष्ठा अणु
+struct nvkm_falcon_func {
+	struct {
 		u32 *data;
 		u32  size;
-	पूर्ण code;
-	काष्ठा अणु
+	} code;
+	struct {
 		u32 *data;
 		u32  size;
-	पूर्ण data;
-	व्योम (*init)(काष्ठा nvkm_falcon *);
-	व्योम (*पूर्णांकr)(काष्ठा nvkm_falcon *, काष्ठा nvkm_fअगरo_chan *);
+	} data;
+	void (*init)(struct nvkm_falcon *);
+	void (*intr)(struct nvkm_falcon *, struct nvkm_fifo_chan *);
 
 	u32 debug;
-	u32 fbअगर;
+	u32 fbif;
 
-	व्योम (*load_imem)(काष्ठा nvkm_falcon *, व्योम *, u32, u32, u16, u8, bool);
-	व्योम (*load_dmem)(काष्ठा nvkm_falcon *, व्योम *, u32, u32, u8);
-	व्योम (*पढ़ो_dmem)(काष्ठा nvkm_falcon *, u32, u32, u8, व्योम *);
+	void (*load_imem)(struct nvkm_falcon *, void *, u32, u32, u16, u8, bool);
+	void (*load_dmem)(struct nvkm_falcon *, void *, u32, u32, u8);
+	void (*read_dmem)(struct nvkm_falcon *, u32, u32, u8, void *);
 	u32 emem_addr;
-	व्योम (*bind_context)(काष्ठा nvkm_falcon *, काष्ठा nvkm_memory *);
-	पूर्णांक (*रुको_क्रम_halt)(काष्ठा nvkm_falcon *, u32);
-	पूर्णांक (*clear_पूर्णांकerrupt)(काष्ठा nvkm_falcon *, u32);
-	व्योम (*set_start_addr)(काष्ठा nvkm_falcon *, u32 start_addr);
-	व्योम (*start)(काष्ठा nvkm_falcon *);
-	पूर्णांक (*enable)(काष्ठा nvkm_falcon *falcon);
-	व्योम (*disable)(काष्ठा nvkm_falcon *falcon);
-	पूर्णांक (*reset)(काष्ठा nvkm_falcon *);
+	void (*bind_context)(struct nvkm_falcon *, struct nvkm_memory *);
+	int (*wait_for_halt)(struct nvkm_falcon *, u32);
+	int (*clear_interrupt)(struct nvkm_falcon *, u32);
+	void (*set_start_addr)(struct nvkm_falcon *, u32 start_addr);
+	void (*start)(struct nvkm_falcon *);
+	int (*enable)(struct nvkm_falcon *falcon);
+	void (*disable)(struct nvkm_falcon *falcon);
+	int (*reset)(struct nvkm_falcon *);
 
-	काष्ठा अणु
+	struct {
 		u32 head;
 		u32 tail;
 		u32 stride;
-	पूर्ण cmdq, msgq;
+	} cmdq, msgq;
 
-	काष्ठा nvkm_sclass sclass[];
-पूर्ण;
+	struct nvkm_sclass sclass[];
+};
 
-अटल अंतरभूत u32
-nvkm_falcon_rd32(काष्ठा nvkm_falcon *falcon, u32 addr)
-अणु
-	वापस nvkm_rd32(falcon->owner->device, falcon->addr + addr);
-पूर्ण
+static inline u32
+nvkm_falcon_rd32(struct nvkm_falcon *falcon, u32 addr)
+{
+	return nvkm_rd32(falcon->owner->device, falcon->addr + addr);
+}
 
-अटल अंतरभूत व्योम
-nvkm_falcon_wr32(काष्ठा nvkm_falcon *falcon, u32 addr, u32 data)
-अणु
+static inline void
+nvkm_falcon_wr32(struct nvkm_falcon *falcon, u32 addr, u32 data)
+{
 	nvkm_wr32(falcon->owner->device, falcon->addr + addr, data);
-पूर्ण
+}
 
-अटल अंतरभूत u32
-nvkm_falcon_mask(काष्ठा nvkm_falcon *falcon, u32 addr, u32 mask, u32 val)
-अणु
-	काष्ठा nvkm_device *device = falcon->owner->device;
+static inline u32
+nvkm_falcon_mask(struct nvkm_falcon *falcon, u32 addr, u32 mask, u32 val)
+{
+	struct nvkm_device *device = falcon->owner->device;
 
-	वापस nvkm_mask(device, falcon->addr + addr, mask, val);
-पूर्ण
+	return nvkm_mask(device, falcon->addr + addr, mask, val);
+}
 
-व्योम nvkm_falcon_load_imem(काष्ठा nvkm_falcon *, व्योम *, u32, u32, u16, u8,
+void nvkm_falcon_load_imem(struct nvkm_falcon *, void *, u32, u32, u16, u8,
 			   bool);
-व्योम nvkm_falcon_load_dmem(काष्ठा nvkm_falcon *, व्योम *, u32, u32, u8);
-व्योम nvkm_falcon_पढ़ो_dmem(काष्ठा nvkm_falcon *, u32, u32, u8, व्योम *);
-व्योम nvkm_falcon_bind_context(काष्ठा nvkm_falcon *, काष्ठा nvkm_memory *);
-व्योम nvkm_falcon_set_start_addr(काष्ठा nvkm_falcon *, u32);
-व्योम nvkm_falcon_start(काष्ठा nvkm_falcon *);
-पूर्णांक nvkm_falcon_रुको_क्रम_halt(काष्ठा nvkm_falcon *, u32);
-पूर्णांक nvkm_falcon_clear_पूर्णांकerrupt(काष्ठा nvkm_falcon *, u32);
-पूर्णांक nvkm_falcon_enable(काष्ठा nvkm_falcon *);
-व्योम nvkm_falcon_disable(काष्ठा nvkm_falcon *);
-पूर्णांक nvkm_falcon_reset(काष्ठा nvkm_falcon *);
-#पूर्ण_अगर
+void nvkm_falcon_load_dmem(struct nvkm_falcon *, void *, u32, u32, u8);
+void nvkm_falcon_read_dmem(struct nvkm_falcon *, u32, u32, u8, void *);
+void nvkm_falcon_bind_context(struct nvkm_falcon *, struct nvkm_memory *);
+void nvkm_falcon_set_start_addr(struct nvkm_falcon *, u32);
+void nvkm_falcon_start(struct nvkm_falcon *);
+int nvkm_falcon_wait_for_halt(struct nvkm_falcon *, u32);
+int nvkm_falcon_clear_interrupt(struct nvkm_falcon *, u32);
+int nvkm_falcon_enable(struct nvkm_falcon *);
+void nvkm_falcon_disable(struct nvkm_falcon *);
+int nvkm_falcon_reset(struct nvkm_falcon *);
+#endif

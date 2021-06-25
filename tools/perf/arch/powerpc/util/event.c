@@ -1,54 +1,53 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <linux/types.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/zभाग.स>
+// SPDX-License-Identifier: GPL-2.0
+#include <linux/types.h>
+#include <linux/string.h>
+#include <linux/zalloc.h>
 
-#समावेश "../../../util/event.h"
-#समावेश "../../../util/synthetic-events.h"
-#समावेश "../../../util/machine.h"
-#समावेश "../../../util/tool.h"
-#समावेश "../../../util/map.h"
-#समावेश "../../../util/debug.h"
+#include "../../../util/event.h"
+#include "../../../util/synthetic-events.h"
+#include "../../../util/machine.h"
+#include "../../../util/tool.h"
+#include "../../../util/map.h"
+#include "../../../util/debug.h"
 
-व्योम arch_perf_parse_sample_weight(काष्ठा perf_sample *data,
-				   स्थिर __u64 *array, u64 type)
-अणु
-	जोड़ perf_sample_weight weight;
+void arch_perf_parse_sample_weight(struct perf_sample *data,
+				   const __u64 *array, u64 type)
+{
+	union perf_sample_weight weight;
 
 	weight.full = *array;
-	अगर (type & PERF_SAMPLE_WEIGHT)
+	if (type & PERF_SAMPLE_WEIGHT)
 		data->weight = weight.full;
-	अन्यथा अणु
+	else {
 		data->weight = weight.var1_dw;
 		data->ins_lat = weight.var2_w;
 		data->p_stage_cyc = weight.var3_w;
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम arch_perf_synthesize_sample_weight(स्थिर काष्ठा perf_sample *data,
+void arch_perf_synthesize_sample_weight(const struct perf_sample *data,
 					__u64 *array, u64 type)
-अणु
+{
 	*array = data->weight;
 
-	अगर (type & PERF_SAMPLE_WEIGHT_STRUCT) अणु
+	if (type & PERF_SAMPLE_WEIGHT_STRUCT) {
 		*array &= 0xffffffff;
 		*array |= ((u64)data->ins_lat << 32);
-	पूर्ण
-पूर्ण
+	}
+}
 
-स्थिर अक्षर *arch_perf_header_entry(स्थिर अक्षर *se_header)
-अणु
-	अगर (!म_भेद(se_header, "Local INSTR Latency"))
-		वापस "Finish Cyc";
-	अन्यथा अगर (!म_भेद(se_header, "Pipeline Stage Cycle"))
-		वापस "Dispatch Cyc";
-	वापस se_header;
-पूर्ण
+const char *arch_perf_header_entry(const char *se_header)
+{
+	if (!strcmp(se_header, "Local INSTR Latency"))
+		return "Finish Cyc";
+	else if (!strcmp(se_header, "Pipeline Stage Cycle"))
+		return "Dispatch Cyc";
+	return se_header;
+}
 
-पूर्णांक arch_support_sort_key(स्थिर अक्षर *sort_key)
-अणु
-	अगर (!म_भेद(sort_key, "p_stage_cyc"))
-		वापस 1;
-	वापस 0;
-पूर्ण
+int arch_support_sort_key(const char *sort_key)
+{
+	if (!strcmp(sort_key, "p_stage_cyc"))
+		return 1;
+	return 0;
+}

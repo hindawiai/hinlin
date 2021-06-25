@@ -1,9 +1,8 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * Roccat Lua driver क्रम Linux
+ * Roccat Lua driver for Linux
  *
- * Copyright (c) 2012 Stefan Achatz <erazor_de@users.sourceक्रमge.net>
+ * Copyright (c) 2012 Stefan Achatz <erazor_de@users.sourceforge.net>
  */
 
 /*
@@ -14,198 +13,198 @@
  * configured.
  */
 
-#समावेश <linux/device.h>
-#समावेश <linux/input.h>
-#समावेश <linux/hid.h>
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/hid-roccat.h>
-#समावेश "hid-ids.h"
-#समावेश "hid-roccat-common.h"
-#समावेश "hid-roccat-lua.h"
+#include <linux/device.h>
+#include <linux/input.h>
+#include <linux/hid.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/hid-roccat.h>
+#include "hid-ids.h"
+#include "hid-roccat-common.h"
+#include "hid-roccat-lua.h"
 
-अटल sमाप_प्रकार lua_sysfs_पढ़ो(काष्ठा file *fp, काष्ठा kobject *kobj,
-		अक्षर *buf, loff_t off, माप_प्रकार count,
-		माप_प्रकार real_size, uपूर्णांक command)
-अणु
-	काष्ठा device *dev = kobj_to_dev(kobj);
-	काष्ठा lua_device *lua = hid_get_drvdata(dev_get_drvdata(dev));
-	काष्ठा usb_device *usb_dev = पूर्णांकerface_to_usbdev(to_usb_पूर्णांकerface(dev));
-	पूर्णांक retval;
+static ssize_t lua_sysfs_read(struct file *fp, struct kobject *kobj,
+		char *buf, loff_t off, size_t count,
+		size_t real_size, uint command)
+{
+	struct device *dev = kobj_to_dev(kobj);
+	struct lua_device *lua = hid_get_drvdata(dev_get_drvdata(dev));
+	struct usb_device *usb_dev = interface_to_usbdev(to_usb_interface(dev));
+	int retval;
 
-	अगर (off >= real_size)
-		वापस 0;
+	if (off >= real_size)
+		return 0;
 
-	अगर (off != 0 || count != real_size)
-		वापस -EINVAL;
+	if (off != 0 || count != real_size)
+		return -EINVAL;
 
 	mutex_lock(&lua->lua_lock);
 	retval = roccat_common2_receive(usb_dev, command, buf, real_size);
 	mutex_unlock(&lua->lua_lock);
 
-	वापस retval ? retval : real_size;
-पूर्ण
+	return retval ? retval : real_size;
+}
 
-अटल sमाप_प्रकार lua_sysfs_ग_लिखो(काष्ठा file *fp, काष्ठा kobject *kobj,
-		व्योम स्थिर *buf, loff_t off, माप_प्रकार count,
-		माप_प्रकार real_size, uपूर्णांक command)
-अणु
-	काष्ठा device *dev = kobj_to_dev(kobj);
-	काष्ठा lua_device *lua = hid_get_drvdata(dev_get_drvdata(dev));
-	काष्ठा usb_device *usb_dev = पूर्णांकerface_to_usbdev(to_usb_पूर्णांकerface(dev));
-	पूर्णांक retval;
+static ssize_t lua_sysfs_write(struct file *fp, struct kobject *kobj,
+		void const *buf, loff_t off, size_t count,
+		size_t real_size, uint command)
+{
+	struct device *dev = kobj_to_dev(kobj);
+	struct lua_device *lua = hid_get_drvdata(dev_get_drvdata(dev));
+	struct usb_device *usb_dev = interface_to_usbdev(to_usb_interface(dev));
+	int retval;
 
-	अगर (off != 0 || count != real_size)
-		वापस -EINVAL;
+	if (off != 0 || count != real_size)
+		return -EINVAL;
 
 	mutex_lock(&lua->lua_lock);
 	retval = roccat_common2_send(usb_dev, command, buf, real_size);
 	mutex_unlock(&lua->lua_lock);
 
-	वापस retval ? retval : real_size;
-पूर्ण
+	return retval ? retval : real_size;
+}
 
-#घोषणा LUA_SYSFS_W(thingy, THINGY) \
-अटल sमाप_प्रकार lua_sysfs_ग_लिखो_ ## thingy(काष्ठा file *fp, \
-		काष्ठा kobject *kobj, काष्ठा bin_attribute *attr, \
-		अक्षर *buf, loff_t off, माप_प्रकार count) \
-अणु \
-	वापस lua_sysfs_ग_लिखो(fp, kobj, buf, off, count, \
+#define LUA_SYSFS_W(thingy, THINGY) \
+static ssize_t lua_sysfs_write_ ## thingy(struct file *fp, \
+		struct kobject *kobj, struct bin_attribute *attr, \
+		char *buf, loff_t off, size_t count) \
+{ \
+	return lua_sysfs_write(fp, kobj, buf, off, count, \
 			LUA_SIZE_ ## THINGY, LUA_COMMAND_ ## THINGY); \
-पूर्ण
+}
 
-#घोषणा LUA_SYSFS_R(thingy, THINGY) \
-अटल sमाप_प्रकार lua_sysfs_पढ़ो_ ## thingy(काष्ठा file *fp, \
-		काष्ठा kobject *kobj, काष्ठा bin_attribute *attr, \
-		अक्षर *buf, loff_t off, माप_प्रकार count) \
-अणु \
-	वापस lua_sysfs_पढ़ो(fp, kobj, buf, off, count, \
+#define LUA_SYSFS_R(thingy, THINGY) \
+static ssize_t lua_sysfs_read_ ## thingy(struct file *fp, \
+		struct kobject *kobj, struct bin_attribute *attr, \
+		char *buf, loff_t off, size_t count) \
+{ \
+	return lua_sysfs_read(fp, kobj, buf, off, count, \
 			LUA_SIZE_ ## THINGY, LUA_COMMAND_ ## THINGY); \
-पूर्ण
+}
 
-#घोषणा LUA_BIN_ATTRIBUTE_RW(thingy, THINGY) \
+#define LUA_BIN_ATTRIBUTE_RW(thingy, THINGY) \
 LUA_SYSFS_W(thingy, THINGY) \
 LUA_SYSFS_R(thingy, THINGY) \
-अटल काष्ठा bin_attribute lua_ ## thingy ## _attr = अणु \
-	.attr = अणु .name = #thingy, .mode = 0660 पूर्ण, \
+static struct bin_attribute lua_ ## thingy ## _attr = { \
+	.attr = { .name = #thingy, .mode = 0660 }, \
 	.size = LUA_SIZE_ ## THINGY, \
-	.पढ़ो = lua_sysfs_पढ़ो_ ## thingy, \
-	.ग_लिखो = lua_sysfs_ग_लिखो_ ## thingy \
-पूर्ण;
+	.read = lua_sysfs_read_ ## thingy, \
+	.write = lua_sysfs_write_ ## thingy \
+};
 
 LUA_BIN_ATTRIBUTE_RW(control, CONTROL)
 
-अटल पूर्णांक lua_create_sysfs_attributes(काष्ठा usb_पूर्णांकerface *पूर्णांकf)
-अणु
-	वापस sysfs_create_bin_file(&पूर्णांकf->dev.kobj, &lua_control_attr);
-पूर्ण
+static int lua_create_sysfs_attributes(struct usb_interface *intf)
+{
+	return sysfs_create_bin_file(&intf->dev.kobj, &lua_control_attr);
+}
 
-अटल व्योम lua_हटाओ_sysfs_attributes(काष्ठा usb_पूर्णांकerface *पूर्णांकf)
-अणु
-	sysfs_हटाओ_bin_file(&पूर्णांकf->dev.kobj, &lua_control_attr);
-पूर्ण
+static void lua_remove_sysfs_attributes(struct usb_interface *intf)
+{
+	sysfs_remove_bin_file(&intf->dev.kobj, &lua_control_attr);
+}
 
-अटल पूर्णांक lua_init_lua_device_काष्ठा(काष्ठा usb_device *usb_dev,
-		काष्ठा lua_device *lua)
-अणु
+static int lua_init_lua_device_struct(struct usb_device *usb_dev,
+		struct lua_device *lua)
+{
 	mutex_init(&lua->lua_lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक lua_init_specials(काष्ठा hid_device *hdev)
-अणु
-	काष्ठा usb_पूर्णांकerface *पूर्णांकf = to_usb_पूर्णांकerface(hdev->dev.parent);
-	काष्ठा usb_device *usb_dev = पूर्णांकerface_to_usbdev(पूर्णांकf);
-	काष्ठा lua_device *lua;
-	पूर्णांक retval;
+static int lua_init_specials(struct hid_device *hdev)
+{
+	struct usb_interface *intf = to_usb_interface(hdev->dev.parent);
+	struct usb_device *usb_dev = interface_to_usbdev(intf);
+	struct lua_device *lua;
+	int retval;
 
-	lua = kzalloc(माप(*lua), GFP_KERNEL);
-	अगर (!lua) अणु
+	lua = kzalloc(sizeof(*lua), GFP_KERNEL);
+	if (!lua) {
 		hid_err(hdev, "can't alloc device descriptor\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 	hid_set_drvdata(hdev, lua);
 
-	retval = lua_init_lua_device_काष्ठा(usb_dev, lua);
-	अगर (retval) अणु
+	retval = lua_init_lua_device_struct(usb_dev, lua);
+	if (retval) {
 		hid_err(hdev, "couldn't init struct lua_device\n");
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
-	retval = lua_create_sysfs_attributes(पूर्णांकf);
-	अगर (retval) अणु
+	retval = lua_create_sysfs_attributes(intf);
+	if (retval) {
 		hid_err(hdev, "cannot create sysfs files\n");
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
-	वापस 0;
-निकास:
-	kमुक्त(lua);
-	वापस retval;
-पूर्ण
+	return 0;
+exit:
+	kfree(lua);
+	return retval;
+}
 
-अटल व्योम lua_हटाओ_specials(काष्ठा hid_device *hdev)
-अणु
-	काष्ठा usb_पूर्णांकerface *पूर्णांकf = to_usb_पूर्णांकerface(hdev->dev.parent);
-	काष्ठा lua_device *lua;
+static void lua_remove_specials(struct hid_device *hdev)
+{
+	struct usb_interface *intf = to_usb_interface(hdev->dev.parent);
+	struct lua_device *lua;
 
-	lua_हटाओ_sysfs_attributes(पूर्णांकf);
+	lua_remove_sysfs_attributes(intf);
 
 	lua = hid_get_drvdata(hdev);
-	kमुक्त(lua);
-पूर्ण
+	kfree(lua);
+}
 
-अटल पूर्णांक lua_probe(काष्ठा hid_device *hdev,
-		स्थिर काष्ठा hid_device_id *id)
-अणु
-	पूर्णांक retval;
+static int lua_probe(struct hid_device *hdev,
+		const struct hid_device_id *id)
+{
+	int retval;
 
 	retval = hid_parse(hdev);
-	अगर (retval) अणु
+	if (retval) {
 		hid_err(hdev, "parse failed\n");
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
 	retval = hid_hw_start(hdev, HID_CONNECT_DEFAULT);
-	अगर (retval) अणु
+	if (retval) {
 		hid_err(hdev, "hw start failed\n");
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
 	retval = lua_init_specials(hdev);
-	अगर (retval) अणु
+	if (retval) {
 		hid_err(hdev, "couldn't install mouse\n");
-		जाओ निकास_stop;
-	पूर्ण
+		goto exit_stop;
+	}
 
-	वापस 0;
+	return 0;
 
-निकास_stop:
+exit_stop:
 	hid_hw_stop(hdev);
-निकास:
-	वापस retval;
-पूर्ण
+exit:
+	return retval;
+}
 
-अटल व्योम lua_हटाओ(काष्ठा hid_device *hdev)
-अणु
-	lua_हटाओ_specials(hdev);
+static void lua_remove(struct hid_device *hdev)
+{
+	lua_remove_specials(hdev);
 	hid_hw_stop(hdev);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा hid_device_id lua_devices[] = अणु
-	अणु HID_USB_DEVICE(USB_VENDOR_ID_ROCCAT, USB_DEVICE_ID_ROCCAT_LUA) पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct hid_device_id lua_devices[] = {
+	{ HID_USB_DEVICE(USB_VENDOR_ID_ROCCAT, USB_DEVICE_ID_ROCCAT_LUA) },
+	{ }
+};
 
 MODULE_DEVICE_TABLE(hid, lua_devices);
 
-अटल काष्ठा hid_driver lua_driver = अणु
+static struct hid_driver lua_driver = {
 		.name = "lua",
 		.id_table = lua_devices,
 		.probe = lua_probe,
-		.हटाओ = lua_हटाओ
-पूर्ण;
+		.remove = lua_remove
+};
 module_hid_driver(lua_driver);
 
 MODULE_AUTHOR("Stefan Achatz");

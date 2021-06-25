@@ -1,9 +1,8 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * drivers/net/ethernet/ibm/emac/rgmii.h
  *
- * Driver क्रम PowerPC 4xx on-chip ethernet controller, RGMII bridge support.
+ * Driver for PowerPC 4xx on-chip ethernet controller, RGMII bridge support.
  *
  * Copyright 2007 Benjamin Herrenschmidt, IBM Corp.
  *                <benh@kernel.crashing.org>
@@ -20,60 +19,60 @@
  * Eugene Surovegin <eugene.surovegin@zultys.com> or <ebs@ebshome.net>
  */
 
-#अगर_अघोषित __IBM_NEWEMAC_RGMII_H
-#घोषणा __IBM_NEWEMAC_RGMII_H
+#ifndef __IBM_NEWEMAC_RGMII_H
+#define __IBM_NEWEMAC_RGMII_H
 
 /* RGMII bridge type */
-#घोषणा RGMII_STANDARD		0
-#घोषणा RGMII_AXON		1
+#define RGMII_STANDARD		0
+#define RGMII_AXON		1
 
 /* RGMII bridge */
-काष्ठा rgmii_regs अणु
-	u32 fer;		/* Function enable रेजिस्टर */
-	u32 ssr;		/* Speed select रेजिस्टर */
-पूर्ण;
+struct rgmii_regs {
+	u32 fer;		/* Function enable register */
+	u32 ssr;		/* Speed select register */
+};
 
 /* RGMII device */
-काष्ठा rgmii_instance अणु
-	काष्ठा rgmii_regs __iomem	*base;
+struct rgmii_instance {
+	struct rgmii_regs __iomem	*base;
 
 	/* RGMII bridge flags */
-	पूर्णांक				flags;
-#घोषणा EMAC_RGMII_FLAG_HAS_MDIO	0x00000001
+	int				flags;
+#define EMAC_RGMII_FLAG_HAS_MDIO	0x00000001
 
-	/* Only one EMAC whacks us at a समय */
-	काष्ठा mutex			lock;
+	/* Only one EMAC whacks us at a time */
+	struct mutex			lock;
 
 	/* number of EMACs using this RGMII bridge */
-	पूर्णांक				users;
+	int				users;
 
 	/* OF device instance */
-	काष्ठा platक्रमm_device		*ofdev;
-पूर्ण;
+	struct platform_device		*ofdev;
+};
 
-#अगर_घोषित CONFIG_IBM_EMAC_RGMII
+#ifdef CONFIG_IBM_EMAC_RGMII
 
-पूर्णांक rgmii_init(व्योम);
-व्योम rgmii_निकास(व्योम);
-पूर्णांक rgmii_attach(काष्ठा platक्रमm_device *ofdev, पूर्णांक input, पूर्णांक mode);
-व्योम rgmii_detach(काष्ठा platक्रमm_device *ofdev, पूर्णांक input);
-व्योम rgmii_get_mdio(काष्ठा platक्रमm_device *ofdev, पूर्णांक input);
-व्योम rgmii_put_mdio(काष्ठा platक्रमm_device *ofdev, पूर्णांक input);
-व्योम rgmii_set_speed(काष्ठा platक्रमm_device *ofdev, पूर्णांक input, पूर्णांक speed);
-पूर्णांक rgmii_get_regs_len(काष्ठा platक्रमm_device *ofdev);
-व्योम *rgmii_dump_regs(काष्ठा platक्रमm_device *ofdev, व्योम *buf);
+int rgmii_init(void);
+void rgmii_exit(void);
+int rgmii_attach(struct platform_device *ofdev, int input, int mode);
+void rgmii_detach(struct platform_device *ofdev, int input);
+void rgmii_get_mdio(struct platform_device *ofdev, int input);
+void rgmii_put_mdio(struct platform_device *ofdev, int input);
+void rgmii_set_speed(struct platform_device *ofdev, int input, int speed);
+int rgmii_get_regs_len(struct platform_device *ofdev);
+void *rgmii_dump_regs(struct platform_device *ofdev, void *buf);
 
-#अन्यथा
+#else
 
 # define rgmii_init()		0
-# define rgmii_निकास()		करो अणु पूर्ण जबतक(0)
+# define rgmii_exit()		do { } while(0)
 # define rgmii_attach(x,y,z)	(-ENXIO)
-# define rgmii_detach(x,y)	करो अणु पूर्ण जबतक(0)
-# define rgmii_get_mdio(o,i)	करो अणु पूर्ण जबतक (0)
-# define rgmii_put_mdio(o,i)	करो अणु पूर्ण जबतक (0)
-# define rgmii_set_speed(x,y,z)	करो अणु पूर्ण जबतक(0)
+# define rgmii_detach(x,y)	do { } while(0)
+# define rgmii_get_mdio(o,i)	do { } while (0)
+# define rgmii_put_mdio(o,i)	do { } while (0)
+# define rgmii_set_speed(x,y,z)	do { } while(0)
 # define rgmii_get_regs_len(x)	0
 # define rgmii_dump_regs(x,buf)	(buf)
-#पूर्ण_अगर				/* !CONFIG_IBM_EMAC_RGMII */
+#endif				/* !CONFIG_IBM_EMAC_RGMII */
 
-#पूर्ण_अगर /* __IBM_NEWEMAC_RGMII_H */
+#endif /* __IBM_NEWEMAC_RGMII_H */

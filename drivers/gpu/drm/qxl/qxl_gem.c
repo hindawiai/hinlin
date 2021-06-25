@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2013 Red Hat Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -24,100 +23,100 @@
  *          Alon Levy
  */
 
-#समावेश <drm/drm.h>
+#include <drm/drm.h>
 
-#समावेश "qxl_drv.h"
-#समावेश "qxl_object.h"
+#include "qxl_drv.h"
+#include "qxl_object.h"
 
-व्योम qxl_gem_object_मुक्त(काष्ठा drm_gem_object *gobj)
-अणु
-	काष्ठा qxl_bo *qobj = gem_to_qxl_bo(gobj);
-	काष्ठा qxl_device *qdev;
-	काष्ठा tपंचांग_buffer_object *tbo;
+void qxl_gem_object_free(struct drm_gem_object *gobj)
+{
+	struct qxl_bo *qobj = gem_to_qxl_bo(gobj);
+	struct qxl_device *qdev;
+	struct ttm_buffer_object *tbo;
 
 	qdev = to_qxl(gobj->dev);
 
 	qxl_surface_evict(qdev, qobj, false);
 
 	tbo = &qobj->tbo;
-	tपंचांग_bo_put(tbo);
-पूर्ण
+	ttm_bo_put(tbo);
+}
 
-पूर्णांक qxl_gem_object_create(काष्ठा qxl_device *qdev, पूर्णांक size,
-			  पूर्णांक alignment, पूर्णांक initial_करोमुख्य,
+int qxl_gem_object_create(struct qxl_device *qdev, int size,
+			  int alignment, int initial_domain,
 			  bool discardable, bool kernel,
-			  काष्ठा qxl_surface *surf,
-			  काष्ठा drm_gem_object **obj)
-अणु
-	काष्ठा qxl_bo *qbo;
-	पूर्णांक r;
+			  struct qxl_surface *surf,
+			  struct drm_gem_object **obj)
+{
+	struct qxl_bo *qbo;
+	int r;
 
-	*obj = शून्य;
+	*obj = NULL;
 	/* At least align on page size */
-	अगर (alignment < PAGE_SIZE)
+	if (alignment < PAGE_SIZE)
 		alignment = PAGE_SIZE;
-	r = qxl_bo_create(qdev, size, kernel, false, initial_करोमुख्य, 0, surf, &qbo);
-	अगर (r) अणु
-		अगर (r != -ERESTARTSYS)
+	r = qxl_bo_create(qdev, size, kernel, false, initial_domain, 0, surf, &qbo);
+	if (r) {
+		if (r != -ERESTARTSYS)
 			DRM_ERROR(
 			"Failed to allocate GEM object (%d, %d, %u, %d)\n",
-				  size, initial_करोमुख्य, alignment, r);
-		वापस r;
-	पूर्ण
+				  size, initial_domain, alignment, r);
+		return r;
+	}
 	*obj = &qbo->tbo.base;
 
 	mutex_lock(&qdev->gem.mutex);
 	list_add_tail(&qbo->list, &qdev->gem.objects);
 	mutex_unlock(&qdev->gem.mutex);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक qxl_gem_object_create_with_handle(काष्ठा qxl_device *qdev,
-				      काष्ठा drm_file *file_priv,
-				      u32 करोमुख्य,
-				      माप_प्रकार size,
-				      काष्ठा qxl_surface *surf,
-				      काष्ठा qxl_bo **qobj,
-				      uपूर्णांक32_t *handle)
-अणु
-	काष्ठा drm_gem_object *gobj;
-	पूर्णांक r;
+int qxl_gem_object_create_with_handle(struct qxl_device *qdev,
+				      struct drm_file *file_priv,
+				      u32 domain,
+				      size_t size,
+				      struct qxl_surface *surf,
+				      struct qxl_bo **qobj,
+				      uint32_t *handle)
+{
+	struct drm_gem_object *gobj;
+	int r;
 
 	BUG_ON(!qobj);
 	BUG_ON(!handle);
 
 	r = qxl_gem_object_create(qdev, size, 0,
-				  करोमुख्य,
+				  domain,
 				  false, false, surf,
 				  &gobj);
-	अगर (r)
-		वापस -ENOMEM;
+	if (r)
+		return -ENOMEM;
 	r = drm_gem_handle_create(file_priv, gobj, handle);
-	अगर (r)
-		वापस r;
+	if (r)
+		return r;
 	/* drop reference from allocate - handle holds it now */
 	*qobj = gem_to_qxl_bo(gobj);
 	drm_gem_object_put(gobj);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक qxl_gem_object_खोलो(काष्ठा drm_gem_object *obj, काष्ठा drm_file *file_priv)
-अणु
-	वापस 0;
-पूर्ण
+int qxl_gem_object_open(struct drm_gem_object *obj, struct drm_file *file_priv)
+{
+	return 0;
+}
 
-व्योम qxl_gem_object_बंद(काष्ठा drm_gem_object *obj,
-			  काष्ठा drm_file *file_priv)
-अणु
-पूर्ण
+void qxl_gem_object_close(struct drm_gem_object *obj,
+			  struct drm_file *file_priv)
+{
+}
 
-व्योम qxl_gem_init(काष्ठा qxl_device *qdev)
-अणु
+void qxl_gem_init(struct qxl_device *qdev)
+{
 	INIT_LIST_HEAD(&qdev->gem.objects);
-पूर्ण
+}
 
-व्योम qxl_gem_fini(काष्ठा qxl_device *qdev)
-अणु
-	qxl_bo_क्रमce_delete(qdev);
-पूर्ण
+void qxl_gem_fini(struct qxl_device *qdev)
+{
+	qxl_bo_force_delete(qdev);
+}

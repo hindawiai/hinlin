@@ -1,23 +1,22 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Fujitsu B-series Lअगरebook PS/2 TouchScreen driver
+ * Fujitsu B-series Lifebook PS/2 TouchScreen driver
  *
  * Copyright (c) 2005 Vojtech Pavlik
  */
 
-#अगर_अघोषित _LIFEBOOK_H
-#घोषणा _LIFEBOOK_H
+#ifndef _LIFEBOOK_H
+#define _LIFEBOOK_H
 
-पूर्णांक lअगरebook_detect(काष्ठा psmouse *psmouse, bool set_properties);
-पूर्णांक lअगरebook_init(काष्ठा psmouse *psmouse);
+int lifebook_detect(struct psmouse *psmouse, bool set_properties);
+int lifebook_init(struct psmouse *psmouse);
 
-#अगर_घोषित CONFIG_MOUSE_PS2_LIFEBOOK
-व्योम lअगरebook_module_init(व्योम);
-#अन्यथा
-अटल अंतरभूत व्योम lअगरebook_module_init(व्योम)
-अणु
-पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_MOUSE_PS2_LIFEBOOK
+void lifebook_module_init(void);
+#else
+static inline void lifebook_module_init(void)
+{
+}
+#endif
 
-#पूर्ण_अगर
+#endif

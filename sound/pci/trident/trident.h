@@ -1,70 +1,69 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
-#अगर_अघोषित __SOUND_TRIDENT_H
-#घोषणा __SOUND_TRIDENT_H
+/* SPDX-License-Identifier: GPL-2.0-or-later */
+#ifndef __SOUND_TRIDENT_H
+#define __SOUND_TRIDENT_H
 
 /*
- *  audio@tridenपंचांगicro.com
+ *  audio@tridentmicro.com
  *  Fri Feb 19 15:55:28 MST 1999
- *  Definitions क्रम Trident 4DWave DX/NX chips
+ *  Definitions for Trident 4DWave DX/NX chips
  */
 
-#समावेश <sound/pcm.h>
-#समावेश <sound/mpu401.h>
-#समावेश <sound/ac97_codec.h>
-#समावेश <sound/util_स्मृति.स>
+#include <sound/pcm.h>
+#include <sound/mpu401.h>
+#include <sound/ac97_codec.h>
+#include <sound/util_mem.h>
 
-#घोषणा TRIDENT_DEVICE_ID_DX		((PCI_VENDOR_ID_TRIDENT<<16)|PCI_DEVICE_ID_TRIDENT_4DWAVE_DX)
-#घोषणा TRIDENT_DEVICE_ID_NX		((PCI_VENDOR_ID_TRIDENT<<16)|PCI_DEVICE_ID_TRIDENT_4DWAVE_NX)
-#घोषणा TRIDENT_DEVICE_ID_SI7018	((PCI_VENDOR_ID_SI<<16)|PCI_DEVICE_ID_SI_7018)
+#define TRIDENT_DEVICE_ID_DX		((PCI_VENDOR_ID_TRIDENT<<16)|PCI_DEVICE_ID_TRIDENT_4DWAVE_DX)
+#define TRIDENT_DEVICE_ID_NX		((PCI_VENDOR_ID_TRIDENT<<16)|PCI_DEVICE_ID_TRIDENT_4DWAVE_NX)
+#define TRIDENT_DEVICE_ID_SI7018	((PCI_VENDOR_ID_SI<<16)|PCI_DEVICE_ID_SI_7018)
 
-#घोषणा SNDRV_TRIDENT_VOICE_TYPE_PCM		0
-#घोषणा SNDRV_TRIDENT_VOICE_TYPE_SYNTH		1
-#घोषणा SNDRV_TRIDENT_VOICE_TYPE_MIDI		2
+#define SNDRV_TRIDENT_VOICE_TYPE_PCM		0
+#define SNDRV_TRIDENT_VOICE_TYPE_SYNTH		1
+#define SNDRV_TRIDENT_VOICE_TYPE_MIDI		2
 
-#घोषणा SNDRV_TRIDENT_VFLG_RUNNING		(1<<0)
+#define SNDRV_TRIDENT_VFLG_RUNNING		(1<<0)
 
-/* TLB code स्थिरants */
-#घोषणा SNDRV_TRIDENT_PAGE_SIZE			4096
-#घोषणा SNDRV_TRIDENT_PAGE_SHIFT			12
-#घोषणा SNDRV_TRIDENT_PAGE_MASK			((1<<SNDRV_TRIDENT_PAGE_SHIFT)-1)
-#घोषणा SNDRV_TRIDENT_MAX_PAGES			4096
+/* TLB code constants */
+#define SNDRV_TRIDENT_PAGE_SIZE			4096
+#define SNDRV_TRIDENT_PAGE_SHIFT			12
+#define SNDRV_TRIDENT_PAGE_MASK			((1<<SNDRV_TRIDENT_PAGE_SHIFT)-1)
+#define SNDRV_TRIDENT_MAX_PAGES			4096
 
 /*
- * Direct रेजिस्टरs
+ * Direct registers
  */
 
-#घोषणा TRID_REG(trident, x) ((trident)->port + (x))
+#define TRID_REG(trident, x) ((trident)->port + (x))
 
-#घोषणा ID_4DWAVE_DX        0x2000
-#घोषणा ID_4DWAVE_NX        0x2001
+#define ID_4DWAVE_DX        0x2000
+#define ID_4DWAVE_NX        0x2001
 
 /* Bank definitions */
 
-#घोषणा T4D_BANK_A	0
-#घोषणा T4D_BANK_B	1
-#घोषणा T4D_NUM_BANKS	2
+#define T4D_BANK_A	0
+#define T4D_BANK_B	1
+#define T4D_NUM_BANKS	2
 
 /* Register definitions */
 
-/* Global रेजिस्टरs */
+/* Global registers */
 
-क्रमागत global_control_bits अणु
+enum global_control_bits {
 	CHANNEL_IDX	= 0x0000003f,
-	OVERRUN_IE	= 0x00000400,	/* पूर्णांकerrupt enable: capture overrun */
-	UNDERRUN_IE	= 0x00000800,	/* पूर्णांकerrupt enable: playback underrun */
-	ENDLP_IE	= 0x00001000,	/* पूर्णांकerrupt enable: end of buffer */
-	MIDLP_IE	= 0x00002000,	/* पूर्णांकerrupt enable: middle buffer */
-	ETOG_IE		= 0x00004000,	/* पूर्णांकerrupt enable: envelope toggling */
-	EDROP_IE	= 0x00008000,	/* पूर्णांकerrupt enable: envelope drop */
+	OVERRUN_IE	= 0x00000400,	/* interrupt enable: capture overrun */
+	UNDERRUN_IE	= 0x00000800,	/* interrupt enable: playback underrun */
+	ENDLP_IE	= 0x00001000,	/* interrupt enable: end of buffer */
+	MIDLP_IE	= 0x00002000,	/* interrupt enable: middle buffer */
+	ETOG_IE		= 0x00004000,	/* interrupt enable: envelope toggling */
+	EDROP_IE	= 0x00008000,	/* interrupt enable: envelope drop */
 	BANK_B_EN	= 0x00010000,	/* SiS: enable bank B (64 channels) */
 	PCMIN_B_MIX	= 0x00020000,	/* SiS: PCM IN B mixing enable */
 	I2S_OUT_ASSIGN	= 0x00040000,	/* SiS: I2S Out contains surround PCM */
 	SPDIF_OUT_ASSIGN= 0x00080000,	/* SiS: 0=S/PDIF L/R | 1=PCM Out FIFO */
 	MAIN_OUT_ASSIGN = 0x00100000,	/* SiS: 0=PCM Out FIFO | 1=MMC Out buffer */
-पूर्ण;
+};
 
-क्रमागत miscपूर्णांक_bits अणु
+enum miscint_bits {
 	PB_UNDERRUN_IRQ = 0x00000001, REC_OVERRUN_IRQ = 0x00000002,
 	SB_IRQ		= 0x00000004, MPU401_IRQ      = 0x00000008,
 	OPL3_IRQ        = 0x00000010, ADDRESS_IRQ     = 0x00000020,
@@ -74,96 +73,96 @@
         ST_TARGET_REACHED = 0x00008000,
 	PB_24K_MODE     = 0x00010000, ST_IRQ_EN       = 0x00800000,
 	ACGPIO_IRQ	= 0x01000000
-पूर्ण;
+};
 
-/* T2 legacy dma control रेजिस्टरs. */
-#घोषणा LEGACY_DMAR0                0x00  // ADR0
-#घोषणा LEGACY_DMAR4                0x04  // CNT0
-#घोषणा LEGACY_DMAR6		    0x06  // CNT0 - High bits
-#घोषणा LEGACY_DMAR11               0x0b  // MOD 
-#घोषणा LEGACY_DMAR15               0x0f  // MMR 
+/* T2 legacy dma control registers. */
+#define LEGACY_DMAR0                0x00  // ADR0
+#define LEGACY_DMAR4                0x04  // CNT0
+#define LEGACY_DMAR6		    0x06  // CNT0 - High bits
+#define LEGACY_DMAR11               0x0b  // MOD 
+#define LEGACY_DMAR15               0x0f  // MMR 
 
-#घोषणा T4D_START_A		     0x80
-#घोषणा T4D_STOP_A		     0x84
-#घोषणा T4D_DLY_A		     0x88
-#घोषणा T4D_SIGN_CSO_A		     0x8c
-#घोषणा T4D_CSPF_A		     0x90
-#घोषणा T4D_CSPF_B		     0xbc
-#घोषणा T4D_CEBC_A		     0x94
-#घोषणा T4D_AINT_A		     0x98
-#घोषणा T4D_AINTEN_A		     0x9c
-#घोषणा T4D_LFO_GC_CIR               0xa0
-#घोषणा T4D_MUSICVOL_WAVEVOL         0xa8
-#घोषणा T4D_SBDELTA_DELTA_R          0xac
-#घोषणा T4D_MISCINT                  0xb0
-#घोषणा T4D_START_B                  0xb4
-#घोषणा T4D_STOP_B                   0xb8
-#घोषणा T4D_SBBL_SBCL                0xc0
-#घोषणा T4D_SBCTRL_SBE2R_SBDD        0xc4
-#घोषणा T4D_STIMER		     0xc8
-#घोषणा T4D_AINT_B                   0xd8
-#घोषणा T4D_AINTEN_B                 0xdc
-#घोषणा T4D_RCI                      0x70
+#define T4D_START_A		     0x80
+#define T4D_STOP_A		     0x84
+#define T4D_DLY_A		     0x88
+#define T4D_SIGN_CSO_A		     0x8c
+#define T4D_CSPF_A		     0x90
+#define T4D_CSPF_B		     0xbc
+#define T4D_CEBC_A		     0x94
+#define T4D_AINT_A		     0x98
+#define T4D_AINTEN_A		     0x9c
+#define T4D_LFO_GC_CIR               0xa0
+#define T4D_MUSICVOL_WAVEVOL         0xa8
+#define T4D_SBDELTA_DELTA_R          0xac
+#define T4D_MISCINT                  0xb0
+#define T4D_START_B                  0xb4
+#define T4D_STOP_B                   0xb8
+#define T4D_SBBL_SBCL                0xc0
+#define T4D_SBCTRL_SBE2R_SBDD        0xc4
+#define T4D_STIMER		     0xc8
+#define T4D_AINT_B                   0xd8
+#define T4D_AINTEN_B                 0xdc
+#define T4D_RCI                      0x70
 
 /* MPU-401 UART */
-#घोषणा T4D_MPU401_BASE             0x20
-#घोषणा T4D_MPUR0                   0x20
-#घोषणा T4D_MPUR1                   0x21
-#घोषणा T4D_MPUR2                   0x22
-#घोषणा T4D_MPUR3                   0x23
+#define T4D_MPU401_BASE             0x20
+#define T4D_MPUR0                   0x20
+#define T4D_MPUR1                   0x21
+#define T4D_MPUR2                   0x22
+#define T4D_MPUR3                   0x23
 
 /* S/PDIF Registers */
-#घोषणा NX_SPCTRL_SPCSO             0x24
-#घोषणा NX_SPLBA                    0x28
-#घोषणा NX_SPESO                    0x2c
-#घोषणा NX_SPCSTATUS                0x64
+#define NX_SPCTRL_SPCSO             0x24
+#define NX_SPLBA                    0x28
+#define NX_SPESO                    0x2c
+#define NX_SPCSTATUS                0x64
 
 /* Joystick */
-#घोषणा GAMEPORT_GCR                0x30
-#घोषणा GAMEPORT_MODE_ADC           0x80
-#घोषणा GAMEPORT_LEGACY             0x31
-#घोषणा GAMEPORT_AXES               0x34
+#define GAMEPORT_GCR                0x30
+#define GAMEPORT_MODE_ADC           0x80
+#define GAMEPORT_LEGACY             0x31
+#define GAMEPORT_AXES               0x34
 
-/* NX Specअगरic Registers */
-#घोषणा NX_TLBC                     0x6c
+/* NX Specific Registers */
+#define NX_TLBC                     0x6c
 
 /* Channel Registers */
 
-#घोषणा CH_START		    0xe0
+#define CH_START		    0xe0
 
-#घोषणा CH_DX_CSO_ALPHA_FMS         0xe0
-#घोषणा CH_DX_ESO_DELTA             0xe8
-#घोषणा CH_DX_FMC_RVOL_CVOL         0xec
+#define CH_DX_CSO_ALPHA_FMS         0xe0
+#define CH_DX_ESO_DELTA             0xe8
+#define CH_DX_FMC_RVOL_CVOL         0xec
 
-#घोषणा CH_NX_DELTA_CSO             0xe0
-#घोषणा CH_NX_DELTA_ESO             0xe8
-#घोषणा CH_NX_ALPHA_FMS_FMC_RVOL_CVOL 0xec
+#define CH_NX_DELTA_CSO             0xe0
+#define CH_NX_DELTA_ESO             0xe8
+#define CH_NX_ALPHA_FMS_FMC_RVOL_CVOL 0xec
 
-#घोषणा CH_LBA                      0xe4
-#घोषणा CH_GVSEL_PAN_VOL_CTRL_EC    0xf0
-#घोषणा CH_EBUF1                    0xf4
-#घोषणा CH_EBUF2                    0xf8
+#define CH_LBA                      0xe4
+#define CH_GVSEL_PAN_VOL_CTRL_EC    0xf0
+#define CH_EBUF1                    0xf4
+#define CH_EBUF2                    0xf8
 
 /* AC-97 Registers */
 
-#घोषणा DX_ACR0_AC97_W              0x40
-#घोषणा DX_ACR1_AC97_R              0x44
-#घोषणा DX_ACR2_AC97_COM_STAT       0x48
+#define DX_ACR0_AC97_W              0x40
+#define DX_ACR1_AC97_R              0x44
+#define DX_ACR2_AC97_COM_STAT       0x48
 
-#घोषणा NX_ACR0_AC97_COM_STAT       0x40
-#घोषणा NX_ACR1_AC97_W              0x44
-#घोषणा NX_ACR2_AC97_R_PRIMARY      0x48
-#घोषणा NX_ACR3_AC97_R_SECONDARY    0x4c
+#define NX_ACR0_AC97_COM_STAT       0x40
+#define NX_ACR1_AC97_W              0x44
+#define NX_ACR2_AC97_R_PRIMARY      0x48
+#define NX_ACR3_AC97_R_SECONDARY    0x4c
 
-#घोषणा SI_AC97_WRITE		    0x40
-#घोषणा SI_AC97_READ		    0x44
-#घोषणा SI_SERIAL_INTF_CTRL	    0x48
-#घोषणा SI_AC97_GPIO		    0x4c
-#घोषणा SI_ASR0			    0x50
-#घोषणा SI_SPDIF_CS		    0x70
-#घोषणा SI_GPIO			    0x7c
+#define SI_AC97_WRITE		    0x40
+#define SI_AC97_READ		    0x44
+#define SI_SERIAL_INTF_CTRL	    0x48
+#define SI_AC97_GPIO		    0x4c
+#define SI_ASR0			    0x50
+#define SI_SPDIF_CS		    0x70
+#define SI_GPIO			    0x7c
 
-क्रमागत trident_nx_ac97_bits अणु
+enum trident_nx_ac97_bits {
 	/* ACR1-3 */
 	NX_AC97_BUSY_WRITE 	= 0x0800,
 	NX_AC97_BUSY_READ	= 0x0800,
@@ -177,25 +176,25 @@
 	NX_AC97_PRIMARY_RECORD	= 0x0004,
 	NX_AC97_PCM_OUTPUT	= 0x0002,
 	NX_AC97_WARM_RESET	= 0x0001
-पूर्ण;
+};
 
-क्रमागत trident_dx_ac97_bits अणु
+enum trident_dx_ac97_bits {
 	DX_AC97_BUSY_WRITE	= 0x8000,
 	DX_AC97_BUSY_READ	= 0x8000,
 	DX_AC97_READY		= 0x0010,
 	DX_AC97_RECORD		= 0x0008,
 	DX_AC97_PLAYBACK	= 0x0002
-पूर्ण;
+};
 
-क्रमागत sis7018_ac97_bits अणु
+enum sis7018_ac97_bits {
 	SI_AC97_BUSY_WRITE =	0x00008000,
 	SI_AC97_AUDIO_BUSY =	0x00004000,
 	SI_AC97_MODEM_BUSY =	0x00002000,
 	SI_AC97_BUSY_READ =	0x00008000,
 	SI_AC97_SECONDARY =	0x00000080,
-पूर्ण;
+};
 
-क्रमागत serial_पूर्णांकf_ctrl_bits अणु
+enum serial_intf_ctrl_bits {
 	WARM_RESET	= 0x00000001,
 	COLD_RESET	= 0x00000002,
 	I2S_CLOCK	= 0x00000004,
@@ -223,208 +222,208 @@
 	SI_AC97_PRIMARY_READY = 0x01000000,
 	SI_AC97_SECONDARY_READY = 0x02000000,
 	SI_AC97_POWERDOWN = 0x04000000,
-पूर्ण;
+};
                                                                                                                                    
-/* PCM शेषs */
+/* PCM defaults */
 
-#घोषणा T4D_DEFAULT_PCM_VOL	10	/* 0 - 255 */
-#घोषणा T4D_DEFAULT_PCM_PAN	0	/* 0 - 127 */
-#घोषणा T4D_DEFAULT_PCM_RVOL	127	/* 0 - 127 */
-#घोषणा T4D_DEFAULT_PCM_CVOL	127	/* 0 - 127 */
+#define T4D_DEFAULT_PCM_VOL	10	/* 0 - 255 */
+#define T4D_DEFAULT_PCM_PAN	0	/* 0 - 127 */
+#define T4D_DEFAULT_PCM_RVOL	127	/* 0 - 127 */
+#define T4D_DEFAULT_PCM_CVOL	127	/* 0 - 127 */
 
-काष्ठा snd_trident;
-काष्ठा snd_trident_voice;
-काष्ठा snd_trident_pcm_mixer;
+struct snd_trident;
+struct snd_trident_voice;
+struct snd_trident_pcm_mixer;
 
-काष्ठा snd_trident_port अणु
-	काष्ठा snd_midi_channel_set * chset;
-	काष्ठा snd_trident * trident;
-	पूर्णांक mode;		/* operation mode */
-	पूर्णांक client;		/* sequencer client number */
-	पूर्णांक port;		/* sequencer port number */
-	अचिन्हित पूर्णांक midi_has_voices: 1;
-पूर्ण;
+struct snd_trident_port {
+	struct snd_midi_channel_set * chset;
+	struct snd_trident * trident;
+	int mode;		/* operation mode */
+	int client;		/* sequencer client number */
+	int port;		/* sequencer port number */
+	unsigned int midi_has_voices: 1;
+};
 
-काष्ठा snd_trident_memblk_arg अणु
-	लघु first_page, last_page;
-पूर्ण;
+struct snd_trident_memblk_arg {
+	short first_page, last_page;
+};
 
-काष्ठा snd_trident_tlb अणु
+struct snd_trident_tlb {
 	__le32 *entries;		/* 16k-aligned TLB table */
 	dma_addr_t entries_dmaaddr;	/* 16k-aligned PCI address to TLB table */
-	अचिन्हित दीर्घ * shaकरोw_entries;	/* shaकरोw entries with भव addresses */
-	काष्ठा snd_dma_buffer buffer;
-	काष्ठा snd_util_memhdr * memhdr;	/* page allocation list */
-	काष्ठा snd_dma_buffer silent_page;
-पूर्ण;
+	unsigned long * shadow_entries;	/* shadow entries with virtual addresses */
+	struct snd_dma_buffer buffer;
+	struct snd_util_memhdr * memhdr;	/* page allocation list */
+	struct snd_dma_buffer silent_page;
+};
 
-काष्ठा snd_trident_voice अणु
-	अचिन्हित पूर्णांक number;
-	अचिन्हित पूर्णांक use: 1,
+struct snd_trident_voice {
+	unsigned int number;
+	unsigned int use: 1,
 	    pcm: 1,
 	    synth:1,
 	    midi: 1;
-	अचिन्हित पूर्णांक flags;
-	अचिन्हित अक्षर client;
-	अचिन्हित अक्षर port;
-	अचिन्हित अक्षर index;
+	unsigned int flags;
+	unsigned char client;
+	unsigned char port;
+	unsigned char index;
 
-	काष्ठा snd_trident_sample_ops *sample_ops;
+	struct snd_trident_sample_ops *sample_ops;
 
 	/* channel parameters */
-	अचिन्हित पूर्णांक CSO;		/* 24 bits (16 on DX) */
-	अचिन्हित पूर्णांक ESO;		/* 24 bits (16 on DX) */
-	अचिन्हित पूर्णांक LBA;		/* 30 bits */
-	अचिन्हित लघु EC;		/* 12 bits */
-	अचिन्हित लघु Alpha;		/* 12 bits */
-	अचिन्हित लघु Delta;		/* 16 bits */
-	अचिन्हित लघु Attribute;	/* 16 bits - SiS 7018 */
-	अचिन्हित लघु Vol;		/* 12 bits (6.6) */
-	अचिन्हित अक्षर Pan;		/* 7 bits (1.4.2) */
-	अचिन्हित अक्षर GVSel;		/* 1 bit */
-	अचिन्हित अक्षर RVol;		/* 7 bits (5.2) */
-	अचिन्हित अक्षर CVol;		/* 7 bits (5.2) */
-	अचिन्हित अक्षर FMC;		/* 2 bits */
-	अचिन्हित अक्षर CTRL;		/* 4 bits */
-	अचिन्हित अक्षर FMS;		/* 4 bits */
-	अचिन्हित अक्षर LFO;		/* 8 bits */
+	unsigned int CSO;		/* 24 bits (16 on DX) */
+	unsigned int ESO;		/* 24 bits (16 on DX) */
+	unsigned int LBA;		/* 30 bits */
+	unsigned short EC;		/* 12 bits */
+	unsigned short Alpha;		/* 12 bits */
+	unsigned short Delta;		/* 16 bits */
+	unsigned short Attribute;	/* 16 bits - SiS 7018 */
+	unsigned short Vol;		/* 12 bits (6.6) */
+	unsigned char Pan;		/* 7 bits (1.4.2) */
+	unsigned char GVSel;		/* 1 bit */
+	unsigned char RVol;		/* 7 bits (5.2) */
+	unsigned char CVol;		/* 7 bits (5.2) */
+	unsigned char FMC;		/* 2 bits */
+	unsigned char CTRL;		/* 4 bits */
+	unsigned char FMS;		/* 4 bits */
+	unsigned char LFO;		/* 8 bits */
 
-	अचिन्हित पूर्णांक negCSO;	/* nonzero - use negative CSO */
+	unsigned int negCSO;	/* nonzero - use negative CSO */
 
-	काष्ठा snd_util_memblk *memblk;	/* memory block अगर TLB enabled */
+	struct snd_util_memblk *memblk;	/* memory block if TLB enabled */
 
 	/* PCM data */
 
-	काष्ठा snd_trident *trident;
-	काष्ठा snd_pcm_substream *substream;
-	काष्ठा snd_trident_voice *extra;	/* extra PCM voice (acts as पूर्णांकerrupt generator) */
-	अचिन्हित पूर्णांक running: 1,
+	struct snd_trident *trident;
+	struct snd_pcm_substream *substream;
+	struct snd_trident_voice *extra;	/* extra PCM voice (acts as interrupt generator) */
+	unsigned int running: 1,
             capture: 1,
-            spdअगर: 1,
+            spdif: 1,
             foldback: 1,
             isync: 1,
             isync2: 1,
             isync3: 1;
-	पूर्णांक foldback_chan;		/* foldback subdevice number */
-	अचिन्हित पूर्णांक sसमयr;		/* global sample समयr (to detect spurious पूर्णांकerrupts) */
-	अचिन्हित पूर्णांक spurious_threshold; /* spurious threshold */
-	अचिन्हित पूर्णांक isync_mark;
-	अचिन्हित पूर्णांक isync_max;
-	अचिन्हित पूर्णांक isync_ESO;
+	int foldback_chan;		/* foldback subdevice number */
+	unsigned int stimer;		/* global sample timer (to detect spurious interrupts) */
+	unsigned int spurious_threshold; /* spurious threshold */
+	unsigned int isync_mark;
+	unsigned int isync_max;
+	unsigned int isync_ESO;
 
 	/* --- */
 
-	व्योम *निजी_data;
-	व्योम (*निजी_मुक्त)(काष्ठा snd_trident_voice *voice);
-पूर्ण;
+	void *private_data;
+	void (*private_free)(struct snd_trident_voice *voice);
+};
 
-काष्ठा snd_4dwave अणु
-	पूर्णांक seq_client;
+struct snd_4dwave {
+	int seq_client;
 
-	काष्ठा snd_trident_port seq_ports[4];
-	काष्ठा snd_trident_voice voices[64];	
+	struct snd_trident_port seq_ports[4];
+	struct snd_trident_voice voices[64];	
 
-	पूर्णांक ChanSynthCount;		/* number of allocated synth channels */
-	पूर्णांक max_size;			/* maximum synth memory size in bytes */
-	पूर्णांक current_size;		/* current allocated synth mem in bytes */
-पूर्ण;
+	int ChanSynthCount;		/* number of allocated synth channels */
+	int max_size;			/* maximum synth memory size in bytes */
+	int current_size;		/* current allocated synth mem in bytes */
+};
 
-काष्ठा snd_trident_pcm_mixer अणु
-	काष्ठा snd_trident_voice *voice;	/* active voice */
-	अचिन्हित लघु vol;		/* front volume */
-	अचिन्हित अक्षर pan;		/* pan control */
-	अचिन्हित अक्षर rvol;		/* rear volume */
-	अचिन्हित अक्षर cvol;		/* center volume */
-	अचिन्हित अक्षर pad;
-पूर्ण;
+struct snd_trident_pcm_mixer {
+	struct snd_trident_voice *voice;	/* active voice */
+	unsigned short vol;		/* front volume */
+	unsigned char pan;		/* pan control */
+	unsigned char rvol;		/* rear volume */
+	unsigned char cvol;		/* center volume */
+	unsigned char pad;
+};
 
-काष्ठा snd_trident अणु
-	पूर्णांक irq;
+struct snd_trident {
+	int irq;
 
-	अचिन्हित पूर्णांक device;	/* device ID */
+	unsigned int device;	/* device ID */
 
-        अचिन्हित अक्षर  bDMAStart;
+        unsigned char  bDMAStart;
 
-	अचिन्हित दीर्घ port;
-	अचिन्हित दीर्घ midi_port;
+	unsigned long port;
+	unsigned long midi_port;
 
-	अचिन्हित पूर्णांक spurious_irq_count;
-	अचिन्हित पूर्णांक spurious_irq_max_delta;
+	unsigned int spurious_irq_count;
+	unsigned int spurious_irq_max_delta;
 
-        काष्ठा snd_trident_tlb tlb;	/* TLB entries क्रम NX cards */
+        struct snd_trident_tlb tlb;	/* TLB entries for NX cards */
 
-	अचिन्हित अक्षर spdअगर_ctrl;
-	अचिन्हित अक्षर spdअगर_pcm_ctrl;
-	अचिन्हित पूर्णांक spdअगर_bits;
-	अचिन्हित पूर्णांक spdअगर_pcm_bits;
-	काष्ठा snd_kcontrol *spdअगर_pcm_ctl;	/* S/PDIF settings */
-	अचिन्हित पूर्णांक ac97_ctrl;
+	unsigned char spdif_ctrl;
+	unsigned char spdif_pcm_ctrl;
+	unsigned int spdif_bits;
+	unsigned int spdif_pcm_bits;
+	struct snd_kcontrol *spdif_pcm_ctl;	/* S/PDIF settings */
+	unsigned int ac97_ctrl;
         
-        अचिन्हित पूर्णांक ChanMap[2];	/* allocation map क्रम hardware channels */
+        unsigned int ChanMap[2];	/* allocation map for hardware channels */
         
-        पूर्णांक ChanPCM;			/* max number of PCM channels */
-	पूर्णांक ChanPCMcnt;			/* actual number of PCM channels */
+        int ChanPCM;			/* max number of PCM channels */
+	int ChanPCMcnt;			/* actual number of PCM channels */
 
-	अचिन्हित पूर्णांक ac97_detect: 1;	/* 1 = AC97 in detection phase */
-	अचिन्हित पूर्णांक in_suspend: 1;	/* 1 during suspend/resume */
+	unsigned int ac97_detect: 1;	/* 1 = AC97 in detection phase */
+	unsigned int in_suspend: 1;	/* 1 during suspend/resume */
 
-	काष्ठा snd_4dwave synth;	/* synth specअगरic variables */
+	struct snd_4dwave synth;	/* synth specific variables */
 
 	spinlock_t event_lock;
 	spinlock_t voice_alloc;
 
-	काष्ठा snd_dma_device dma_dev;
+	struct snd_dma_device dma_dev;
 
-	काष्ठा pci_dev *pci;
-	काष्ठा snd_card *card;
-	काष्ठा snd_pcm *pcm;		/* ADC/DAC PCM */
-	काष्ठा snd_pcm *foldback;	/* Foldback PCM */
-	काष्ठा snd_pcm *spdअगर;	/* SPDIF PCM */
-	काष्ठा snd_rawmidi *rmidi;
+	struct pci_dev *pci;
+	struct snd_card *card;
+	struct snd_pcm *pcm;		/* ADC/DAC PCM */
+	struct snd_pcm *foldback;	/* Foldback PCM */
+	struct snd_pcm *spdif;	/* SPDIF PCM */
+	struct snd_rawmidi *rmidi;
 
-	काष्ठा snd_ac97_bus *ac97_bus;
-	काष्ठा snd_ac97 *ac97;
-	काष्ठा snd_ac97 *ac97_sec;
+	struct snd_ac97_bus *ac97_bus;
+	struct snd_ac97 *ac97;
+	struct snd_ac97 *ac97_sec;
 
-	अचिन्हित पूर्णांक musicvol_wavevol;
-	काष्ठा snd_trident_pcm_mixer pcm_mixer[32];
-	काष्ठा snd_kcontrol *ctl_vol;	/* front volume */
-	काष्ठा snd_kcontrol *ctl_pan;	/* pan */
-	काष्ठा snd_kcontrol *ctl_rvol;	/* rear volume */
-	काष्ठा snd_kcontrol *ctl_cvol;	/* center volume */
+	unsigned int musicvol_wavevol;
+	struct snd_trident_pcm_mixer pcm_mixer[32];
+	struct snd_kcontrol *ctl_vol;	/* front volume */
+	struct snd_kcontrol *ctl_pan;	/* pan */
+	struct snd_kcontrol *ctl_rvol;	/* rear volume */
+	struct snd_kcontrol *ctl_cvol;	/* center volume */
 
 	spinlock_t reg_lock;
 
-	काष्ठा gameport *gameport;
-पूर्ण;
+	struct gameport *gameport;
+};
 
-पूर्णांक snd_trident_create(काष्ठा snd_card *card,
-		       काष्ठा pci_dev *pci,
-		       पूर्णांक pcm_streams,
-		       पूर्णांक pcm_spdअगर_device,
-		       पूर्णांक max_wavetable_size,
-		       काष्ठा snd_trident ** rtrident);
-पूर्णांक snd_trident_create_gameport(काष्ठा snd_trident *trident);
+int snd_trident_create(struct snd_card *card,
+		       struct pci_dev *pci,
+		       int pcm_streams,
+		       int pcm_spdif_device,
+		       int max_wavetable_size,
+		       struct snd_trident ** rtrident);
+int snd_trident_create_gameport(struct snd_trident *trident);
 
-पूर्णांक snd_trident_pcm(काष्ठा snd_trident *trident, पूर्णांक device);
-पूर्णांक snd_trident_foldback_pcm(काष्ठा snd_trident *trident, पूर्णांक device);
-पूर्णांक snd_trident_spdअगर_pcm(काष्ठा snd_trident *trident, पूर्णांक device);
-पूर्णांक snd_trident_attach_synthesizer(काष्ठा snd_trident * trident);
-काष्ठा snd_trident_voice *snd_trident_alloc_voice(काष्ठा snd_trident * trident, पूर्णांक type,
-					     पूर्णांक client, पूर्णांक port);
-व्योम snd_trident_मुक्त_voice(काष्ठा snd_trident * trident, काष्ठा snd_trident_voice *voice);
-व्योम snd_trident_start_voice(काष्ठा snd_trident * trident, अचिन्हित पूर्णांक voice);
-व्योम snd_trident_stop_voice(काष्ठा snd_trident * trident, अचिन्हित पूर्णांक voice);
-व्योम snd_trident_ग_लिखो_voice_regs(काष्ठा snd_trident * trident, काष्ठा snd_trident_voice *voice);
-बाह्य स्थिर काष्ठा dev_pm_ops snd_trident_pm;
+int snd_trident_pcm(struct snd_trident *trident, int device);
+int snd_trident_foldback_pcm(struct snd_trident *trident, int device);
+int snd_trident_spdif_pcm(struct snd_trident *trident, int device);
+int snd_trident_attach_synthesizer(struct snd_trident * trident);
+struct snd_trident_voice *snd_trident_alloc_voice(struct snd_trident * trident, int type,
+					     int client, int port);
+void snd_trident_free_voice(struct snd_trident * trident, struct snd_trident_voice *voice);
+void snd_trident_start_voice(struct snd_trident * trident, unsigned int voice);
+void snd_trident_stop_voice(struct snd_trident * trident, unsigned int voice);
+void snd_trident_write_voice_regs(struct snd_trident * trident, struct snd_trident_voice *voice);
+extern const struct dev_pm_ops snd_trident_pm;
 
 /* TLB memory allocation */
-काष्ठा snd_util_memblk *snd_trident_alloc_pages(काष्ठा snd_trident *trident,
-						काष्ठा snd_pcm_substream *substream);
-पूर्णांक snd_trident_मुक्त_pages(काष्ठा snd_trident *trident, काष्ठा snd_util_memblk *blk);
-काष्ठा snd_util_memblk *snd_trident_synth_alloc(काष्ठा snd_trident *trident, अचिन्हित पूर्णांक size);
-पूर्णांक snd_trident_synth_मुक्त(काष्ठा snd_trident *trident, काष्ठा snd_util_memblk *blk);
-पूर्णांक snd_trident_synth_copy_from_user(काष्ठा snd_trident *trident, काष्ठा snd_util_memblk *blk,
-				     पूर्णांक offset, स्थिर अक्षर __user *data, पूर्णांक size);
+struct snd_util_memblk *snd_trident_alloc_pages(struct snd_trident *trident,
+						struct snd_pcm_substream *substream);
+int snd_trident_free_pages(struct snd_trident *trident, struct snd_util_memblk *blk);
+struct snd_util_memblk *snd_trident_synth_alloc(struct snd_trident *trident, unsigned int size);
+int snd_trident_synth_free(struct snd_trident *trident, struct snd_util_memblk *blk);
+int snd_trident_synth_copy_from_user(struct snd_trident *trident, struct snd_util_memblk *blk,
+				     int offset, const char __user *data, int size);
 
-#पूर्ण_अगर /* __SOUND_TRIDENT_H */
+#endif /* __SOUND_TRIDENT_H */

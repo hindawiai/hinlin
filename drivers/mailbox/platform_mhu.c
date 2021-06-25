@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (C) 2016 BayLibre SAS.
  * Author: Neil Armstrong <narmstrong@baylibre.com>
@@ -9,178 +8,178 @@
  * Author: Jassi Brar <jaswinder.singh@linaro.org>
  */
 
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/err.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/module.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/mailbox_controller.h>
+#include <linux/interrupt.h>
+#include <linux/spinlock.h>
+#include <linux/mutex.h>
+#include <linux/delay.h>
+#include <linux/slab.h>
+#include <linux/err.h>
+#include <linux/io.h>
+#include <linux/module.h>
+#include <linux/platform_device.h>
+#include <linux/mailbox_controller.h>
 
-#घोषणा INTR_SET_OFS	0x0
-#घोषणा INTR_STAT_OFS	0x4
-#घोषणा INTR_CLR_OFS	0x8
+#define INTR_SET_OFS	0x0
+#define INTR_STAT_OFS	0x4
+#define INTR_CLR_OFS	0x8
 
-#घोषणा MHU_SEC_OFFSET	0x0
-#घोषणा MHU_LP_OFFSET	0xc
-#घोषणा MHU_HP_OFFSET	0x18
-#घोषणा TX_REG_OFFSET	0x24
+#define MHU_SEC_OFFSET	0x0
+#define MHU_LP_OFFSET	0xc
+#define MHU_HP_OFFSET	0x18
+#define TX_REG_OFFSET	0x24
 
-#घोषणा MHU_CHANS	3
+#define MHU_CHANS	3
 
-काष्ठा platक्रमm_mhu_link अणु
-	पूर्णांक irq;
-	व्योम __iomem *tx_reg;
-	व्योम __iomem *rx_reg;
-पूर्ण;
+struct platform_mhu_link {
+	int irq;
+	void __iomem *tx_reg;
+	void __iomem *rx_reg;
+};
 
-काष्ठा platक्रमm_mhu अणु
-	व्योम __iomem *base;
-	काष्ठा platक्रमm_mhu_link mlink[MHU_CHANS];
-	काष्ठा mbox_chan chan[MHU_CHANS];
-	काष्ठा mbox_controller mbox;
-पूर्ण;
+struct platform_mhu {
+	void __iomem *base;
+	struct platform_mhu_link mlink[MHU_CHANS];
+	struct mbox_chan chan[MHU_CHANS];
+	struct mbox_controller mbox;
+};
 
-अटल irqवापस_t platक्रमm_mhu_rx_पूर्णांकerrupt(पूर्णांक irq, व्योम *p)
-अणु
-	काष्ठा mbox_chan *chan = p;
-	काष्ठा platक्रमm_mhu_link *mlink = chan->con_priv;
+static irqreturn_t platform_mhu_rx_interrupt(int irq, void *p)
+{
+	struct mbox_chan *chan = p;
+	struct platform_mhu_link *mlink = chan->con_priv;
 	u32 val;
 
-	val = पढ़ोl_relaxed(mlink->rx_reg + INTR_STAT_OFS);
-	अगर (!val)
-		वापस IRQ_NONE;
+	val = readl_relaxed(mlink->rx_reg + INTR_STAT_OFS);
+	if (!val)
+		return IRQ_NONE;
 
-	mbox_chan_received_data(chan, (व्योम *)&val);
+	mbox_chan_received_data(chan, (void *)&val);
 
-	ग_लिखोl_relaxed(val, mlink->rx_reg + INTR_CLR_OFS);
+	writel_relaxed(val, mlink->rx_reg + INTR_CLR_OFS);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल bool platक्रमm_mhu_last_tx_करोne(काष्ठा mbox_chan *chan)
-अणु
-	काष्ठा platक्रमm_mhu_link *mlink = chan->con_priv;
-	u32 val = पढ़ोl_relaxed(mlink->tx_reg + INTR_STAT_OFS);
+static bool platform_mhu_last_tx_done(struct mbox_chan *chan)
+{
+	struct platform_mhu_link *mlink = chan->con_priv;
+	u32 val = readl_relaxed(mlink->tx_reg + INTR_STAT_OFS);
 
-	वापस (val == 0);
-पूर्ण
+	return (val == 0);
+}
 
-अटल पूर्णांक platक्रमm_mhu_send_data(काष्ठा mbox_chan *chan, व्योम *data)
-अणु
-	काष्ठा platक्रमm_mhu_link *mlink = chan->con_priv;
+static int platform_mhu_send_data(struct mbox_chan *chan, void *data)
+{
+	struct platform_mhu_link *mlink = chan->con_priv;
 	u32 *arg = data;
 
-	ग_लिखोl_relaxed(*arg, mlink->tx_reg + INTR_SET_OFS);
+	writel_relaxed(*arg, mlink->tx_reg + INTR_SET_OFS);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक platक्रमm_mhu_startup(काष्ठा mbox_chan *chan)
-अणु
-	काष्ठा platक्रमm_mhu_link *mlink = chan->con_priv;
+static int platform_mhu_startup(struct mbox_chan *chan)
+{
+	struct platform_mhu_link *mlink = chan->con_priv;
 	u32 val;
-	पूर्णांक ret;
+	int ret;
 
-	val = पढ़ोl_relaxed(mlink->tx_reg + INTR_STAT_OFS);
-	ग_लिखोl_relaxed(val, mlink->tx_reg + INTR_CLR_OFS);
+	val = readl_relaxed(mlink->tx_reg + INTR_STAT_OFS);
+	writel_relaxed(val, mlink->tx_reg + INTR_CLR_OFS);
 
-	ret = request_irq(mlink->irq, platक्रमm_mhu_rx_पूर्णांकerrupt,
+	ret = request_irq(mlink->irq, platform_mhu_rx_interrupt,
 			  IRQF_SHARED, "platform_mhu_link", chan);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(chan->mbox->dev,
 			"Unable to acquire IRQ %d\n", mlink->irq);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम platक्रमm_mhu_shutकरोwn(काष्ठा mbox_chan *chan)
-अणु
-	काष्ठा platक्रमm_mhu_link *mlink = chan->con_priv;
+static void platform_mhu_shutdown(struct mbox_chan *chan)
+{
+	struct platform_mhu_link *mlink = chan->con_priv;
 
-	मुक्त_irq(mlink->irq, chan);
-पूर्ण
+	free_irq(mlink->irq, chan);
+}
 
-अटल स्थिर काष्ठा mbox_chan_ops platक्रमm_mhu_ops = अणु
-	.send_data = platक्रमm_mhu_send_data,
-	.startup = platक्रमm_mhu_startup,
-	.shutकरोwn = platक्रमm_mhu_shutकरोwn,
-	.last_tx_करोne = platक्रमm_mhu_last_tx_करोne,
-पूर्ण;
+static const struct mbox_chan_ops platform_mhu_ops = {
+	.send_data = platform_mhu_send_data,
+	.startup = platform_mhu_startup,
+	.shutdown = platform_mhu_shutdown,
+	.last_tx_done = platform_mhu_last_tx_done,
+};
 
-अटल पूर्णांक platक्रमm_mhu_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	पूर्णांक i, err;
-	काष्ठा platक्रमm_mhu *mhu;
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा resource *res;
-	पूर्णांक platक्रमm_mhu_reg[MHU_CHANS] = अणु
+static int platform_mhu_probe(struct platform_device *pdev)
+{
+	int i, err;
+	struct platform_mhu *mhu;
+	struct device *dev = &pdev->dev;
+	struct resource *res;
+	int platform_mhu_reg[MHU_CHANS] = {
 		MHU_SEC_OFFSET, MHU_LP_OFFSET, MHU_HP_OFFSET
-	पूर्ण;
+	};
 
-	/* Allocate memory क्रम device */
-	mhu = devm_kzalloc(dev, माप(*mhu), GFP_KERNEL);
-	अगर (!mhu)
-		वापस -ENOMEM;
+	/* Allocate memory for device */
+	mhu = devm_kzalloc(dev, sizeof(*mhu), GFP_KERNEL);
+	if (!mhu)
+		return -ENOMEM;
 
-	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	mhu->base = devm_ioremap_resource(dev, res);
-	अगर (IS_ERR(mhu->base)) अणु
+	if (IS_ERR(mhu->base)) {
 		dev_err(dev, "ioremap failed\n");
-		वापस PTR_ERR(mhu->base);
-	पूर्ण
+		return PTR_ERR(mhu->base);
+	}
 
-	क्रम (i = 0; i < MHU_CHANS; i++) अणु
+	for (i = 0; i < MHU_CHANS; i++) {
 		mhu->chan[i].con_priv = &mhu->mlink[i];
-		mhu->mlink[i].irq = platक्रमm_get_irq(pdev, i);
-		अगर (mhu->mlink[i].irq < 0) अणु
+		mhu->mlink[i].irq = platform_get_irq(pdev, i);
+		if (mhu->mlink[i].irq < 0) {
 			dev_err(dev, "failed to get irq%d\n", i);
-			वापस mhu->mlink[i].irq;
-		पूर्ण
-		mhu->mlink[i].rx_reg = mhu->base + platक्रमm_mhu_reg[i];
+			return mhu->mlink[i].irq;
+		}
+		mhu->mlink[i].rx_reg = mhu->base + platform_mhu_reg[i];
 		mhu->mlink[i].tx_reg = mhu->mlink[i].rx_reg + TX_REG_OFFSET;
-	पूर्ण
+	}
 
 	mhu->mbox.dev = dev;
 	mhu->mbox.chans = &mhu->chan[0];
 	mhu->mbox.num_chans = MHU_CHANS;
-	mhu->mbox.ops = &platक्रमm_mhu_ops;
-	mhu->mbox.txकरोne_irq = false;
-	mhu->mbox.txकरोne_poll = true;
+	mhu->mbox.ops = &platform_mhu_ops;
+	mhu->mbox.txdone_irq = false;
+	mhu->mbox.txdone_poll = true;
 	mhu->mbox.txpoll_period = 1;
 
-	platक्रमm_set_drvdata(pdev, mhu);
+	platform_set_drvdata(pdev, mhu);
 
-	err = devm_mbox_controller_रेजिस्टर(dev, &mhu->mbox);
-	अगर (err) अणु
+	err = devm_mbox_controller_register(dev, &mhu->mbox);
+	if (err) {
 		dev_err(dev, "Failed to register mailboxes %d\n", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	dev_info(dev, "Platform MHU Mailbox registered\n");
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id platक्रमm_mhu_dt_ids[] = अणु
-	अणु .compatible = "amlogic,meson-gxbb-mhu", पूर्ण,
-	अणु /* sentinel */ पूर्ण,
-पूर्ण;
-MODULE_DEVICE_TABLE(of, platक्रमm_mhu_dt_ids);
+static const struct of_device_id platform_mhu_dt_ids[] = {
+	{ .compatible = "amlogic,meson-gxbb-mhu", },
+	{ /* sentinel */ },
+};
+MODULE_DEVICE_TABLE(of, platform_mhu_dt_ids);
 
-अटल काष्ठा platक्रमm_driver platक्रमm_mhu_driver = अणु
-	.probe	= platक्रमm_mhu_probe,
-	.driver = अणु
+static struct platform_driver platform_mhu_driver = {
+	.probe	= platform_mhu_probe,
+	.driver = {
 		.name = "platform-mhu",
-		.of_match_table	= platक्रमm_mhu_dt_ids,
-	पूर्ण,
-पूर्ण;
+		.of_match_table	= platform_mhu_dt_ids,
+	},
+};
 
-module_platक्रमm_driver(platक्रमm_mhu_driver);
+module_platform_driver(platform_mhu_driver);
 
 MODULE_LICENSE("GPL v2");
 MODULE_ALIAS("platform:platform-mhu");

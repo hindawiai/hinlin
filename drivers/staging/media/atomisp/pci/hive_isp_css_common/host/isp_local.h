@@ -1,50 +1,49 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * Support क्रम Intel Camera Imaging ISP subप्रणाली.
+ * Support for Intel Camera Imaging ISP subsystem.
  * Copyright (c) 2010-2015, Intel Corporation.
  *
- * This program is मुक्त software; you can redistribute it and/or modअगरy it
+ * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
  * version 2, as published by the Free Software Foundation.
  *
  * This program is distributed in the hope it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License क्रम
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
  * more details.
  */
 
-#अगर_अघोषित __ISP_LOCAL_H_INCLUDED__
-#घोषणा __ISP_LOCAL_H_INCLUDED__
+#ifndef __ISP_LOCAL_H_INCLUDED__
+#define __ISP_LOCAL_H_INCLUDED__
 
-#समावेश <stdbool.h>
+#include <stdbool.h>
 
-#समावेश "isp_global.h"
+#include "isp_global.h"
 
-#समावेश <isp2400_support.h>
+#include <isp2400_support.h>
 
-#घोषणा HIVE_ISP_VMEM_MASK	((1U << ISP_VMEM_ELEMBITS) - 1)
+#define HIVE_ISP_VMEM_MASK	((1U << ISP_VMEM_ELEMBITS) - 1)
 
-प्रकार काष्ठा isp_state_s		isp_state_t;
-प्रकार काष्ठा isp_stall_s		isp_stall_t;
+typedef struct isp_state_s		isp_state_t;
+typedef struct isp_stall_s		isp_stall_t;
 
-काष्ठा isp_state_s अणु
-	पूर्णांक	pc;
-	पूर्णांक	status_रेजिस्टर;
+struct isp_state_s {
+	int	pc;
+	int	status_register;
 	bool	is_broken;
 	bool	is_idle;
 	bool	is_sleeping;
 	bool	is_stalling;
-पूर्ण;
+};
 
-काष्ठा isp_stall_s अणु
-	bool	fअगरo0;
-	bool	fअगरo1;
-	bool	fअगरo2;
-	bool	fअगरo3;
-	bool	fअगरo4;
-	bool	fअगरo5;
-	bool	fअगरo6;
+struct isp_stall_s {
+	bool	fifo0;
+	bool	fifo1;
+	bool	fifo2;
+	bool	fifo3;
+	bool	fifo4;
+	bool	fifo5;
+	bool	fifo6;
 	bool	stat_ctrl;
 	bool	dmem;
 	bool	vmem;
@@ -54,6 +53,6 @@
 	bool	hmem;
 	bool	pmem;
 	bool	icache_master;
-पूर्ण;
+};
 
-#पूर्ण_अगर /* __ISP_LOCAL_H_INCLUDED__ */
+#endif /* __ISP_LOCAL_H_INCLUDED__ */

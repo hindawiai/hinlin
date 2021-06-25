@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * VFIO platक्रमm driver specialized क्रम Calxeda xgmac reset
+ * VFIO platform driver specialized for Calxeda xgmac reset
  * reset code is inherited from calxeda xgmac native driver
  *
  * Copyright 2010-2011 Calxeda, Inc.
@@ -9,65 +8,65 @@
  *              www.linaro.org
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/init.h>
-#समावेश <linux/पन.स>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/init.h>
+#include <linux/io.h>
 
-#समावेश "../vfio_platform_private.h"
+#include "../vfio_platform_private.h"
 
-#घोषणा DRIVER_VERSION  "0.1"
-#घोषणा DRIVER_AUTHOR   "Eric Auger <eric.auger@linaro.org>"
-#घोषणा DRIVER_DESC     "Reset support for Calxeda xgmac vfio platform device"
+#define DRIVER_VERSION  "0.1"
+#define DRIVER_AUTHOR   "Eric Auger <eric.auger@linaro.org>"
+#define DRIVER_DESC     "Reset support for Calxeda xgmac vfio platform device"
 
 /* XGMAC Register definitions */
-#घोषणा XGMAC_CONTROL           0x00000000      /* MAC Configuration */
+#define XGMAC_CONTROL           0x00000000      /* MAC Configuration */
 
 /* DMA Control and Status Registers */
-#घोषणा XGMAC_DMA_CONTROL       0x00000f18      /* Ctrl (Operational Mode) */
-#घोषणा XGMAC_DMA_INTR_ENA      0x00000f1c      /* Interrupt Enable */
+#define XGMAC_DMA_CONTROL       0x00000f18      /* Ctrl (Operational Mode) */
+#define XGMAC_DMA_INTR_ENA      0x00000f1c      /* Interrupt Enable */
 
-/* DMA Control रेजिस्टर defines */
-#घोषणा DMA_CONTROL_ST          0x00002000      /* Start/Stop Transmission */
-#घोषणा DMA_CONTROL_SR          0x00000002      /* Start/Stop Receive */
+/* DMA Control register defines */
+#define DMA_CONTROL_ST          0x00002000      /* Start/Stop Transmission */
+#define DMA_CONTROL_SR          0x00000002      /* Start/Stop Receive */
 
 /* Common MAC defines */
-#घोषणा MAC_ENABLE_TX           0x00000008      /* Transmitter Enable */
-#घोषणा MAC_ENABLE_RX           0x00000004      /* Receiver Enable */
+#define MAC_ENABLE_TX           0x00000008      /* Transmitter Enable */
+#define MAC_ENABLE_RX           0x00000004      /* Receiver Enable */
 
-अटल अंतरभूत व्योम xgmac_mac_disable(व्योम __iomem *ioaddr)
-अणु
-	u32 value = पढ़ोl(ioaddr + XGMAC_DMA_CONTROL);
+static inline void xgmac_mac_disable(void __iomem *ioaddr)
+{
+	u32 value = readl(ioaddr + XGMAC_DMA_CONTROL);
 
 	value &= ~(DMA_CONTROL_ST | DMA_CONTROL_SR);
-	ग_लिखोl(value, ioaddr + XGMAC_DMA_CONTROL);
+	writel(value, ioaddr + XGMAC_DMA_CONTROL);
 
-	value = पढ़ोl(ioaddr + XGMAC_CONTROL);
+	value = readl(ioaddr + XGMAC_CONTROL);
 	value &= ~(MAC_ENABLE_TX | MAC_ENABLE_RX);
-	ग_लिखोl(value, ioaddr + XGMAC_CONTROL);
-पूर्ण
+	writel(value, ioaddr + XGMAC_CONTROL);
+}
 
-अटल पूर्णांक vfio_platक्रमm_calxedaxgmac_reset(काष्ठा vfio_platक्रमm_device *vdev)
-अणु
-	काष्ठा vfio_platक्रमm_region *reg = &vdev->regions[0];
+static int vfio_platform_calxedaxgmac_reset(struct vfio_platform_device *vdev)
+{
+	struct vfio_platform_region *reg = &vdev->regions[0];
 
-	अगर (!reg->ioaddr) अणु
+	if (!reg->ioaddr) {
 		reg->ioaddr =
 			ioremap(reg->addr, reg->size);
-		अगर (!reg->ioaddr)
-			वापस -ENOMEM;
-	पूर्ण
+		if (!reg->ioaddr)
+			return -ENOMEM;
+	}
 
 	/* disable IRQ */
-	ग_लिखोl(0, reg->ioaddr + XGMAC_DMA_INTR_ENA);
+	writel(0, reg->ioaddr + XGMAC_DMA_INTR_ENA);
 
 	/* Disable the MAC core */
 	xgmac_mac_disable(reg->ioaddr);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-module_vfio_reset_handler("calxeda,hb-xgmac", vfio_platक्रमm_calxedaxgmac_reset);
+module_vfio_reset_handler("calxeda,hb-xgmac", vfio_platform_calxedaxgmac_reset);
 
 MODULE_VERSION(DRIVER_VERSION);
 MODULE_LICENSE("GPL v2");

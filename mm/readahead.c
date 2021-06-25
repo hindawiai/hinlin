@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * mm/पढ़ोahead.c - address_space-level file पढ़ोahead.
+ * mm/readahead.c - address_space-level file readahead.
  *
  * Copyright (C) 2002, Linus Torvalds
  *
@@ -9,708 +8,708 @@
  *		Initial version.
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/dax.h>
-#समावेश <linux/gfp.h>
-#समावेश <linux/export.h>
-#समावेश <linux/blkdev.h>
-#समावेश <linux/backing-dev.h>
-#समावेश <linux/task_io_accounting_ops.h>
-#समावेश <linux/pagevec.h>
-#समावेश <linux/pagemap.h>
-#समावेश <linux/syscalls.h>
-#समावेश <linux/file.h>
-#समावेश <linux/mm_अंतरभूत.h>
-#समावेश <linux/blk-cgroup.h>
-#समावेश <linux/fadvise.h>
-#समावेश <linux/sched/mm.h>
+#include <linux/kernel.h>
+#include <linux/dax.h>
+#include <linux/gfp.h>
+#include <linux/export.h>
+#include <linux/blkdev.h>
+#include <linux/backing-dev.h>
+#include <linux/task_io_accounting_ops.h>
+#include <linux/pagevec.h>
+#include <linux/pagemap.h>
+#include <linux/syscalls.h>
+#include <linux/file.h>
+#include <linux/mm_inline.h>
+#include <linux/blk-cgroup.h>
+#include <linux/fadvise.h>
+#include <linux/sched/mm.h>
 
-#समावेश "internal.h"
+#include "internal.h"
 
 /*
- * Initialise a काष्ठा file's पढ़ोahead state.  Assumes that the caller has
- * स_रखो *ra to zero.
+ * Initialise a struct file's readahead state.  Assumes that the caller has
+ * memset *ra to zero.
  */
-व्योम
-file_ra_state_init(काष्ठा file_ra_state *ra, काष्ठा address_space *mapping)
-अणु
+void
+file_ra_state_init(struct file_ra_state *ra, struct address_space *mapping)
+{
 	ra->ra_pages = inode_to_bdi(mapping->host)->ra_pages;
 	ra->prev_pos = -1;
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(file_ra_state_init);
 
 /*
- * see अगर a page needs releasing upon पढ़ो_cache_pages() failure
- * - the caller of पढ़ो_cache_pages() may have set PG_निजी or PG_fscache
- *   beक्रमe calling, such as the NFS fs marking pages that are cached locally
+ * see if a page needs releasing upon read_cache_pages() failure
+ * - the caller of read_cache_pages() may have set PG_private or PG_fscache
+ *   before calling, such as the NFS fs marking pages that are cached locally
  *   on disk, thus we need to give the fs a chance to clean up in the event of
  *   an error
  */
-अटल व्योम पढ़ो_cache_pages_invalidate_page(काष्ठा address_space *mapping,
-					     काष्ठा page *page)
-अणु
-	अगर (page_has_निजी(page)) अणु
-		अगर (!trylock_page(page))
+static void read_cache_pages_invalidate_page(struct address_space *mapping,
+					     struct page *page)
+{
+	if (page_has_private(page)) {
+		if (!trylock_page(page))
 			BUG();
 		page->mapping = mapping;
-		करो_invalidatepage(page, 0, PAGE_SIZE);
-		page->mapping = शून्य;
+		do_invalidatepage(page, 0, PAGE_SIZE);
+		page->mapping = NULL;
 		unlock_page(page);
-	पूर्ण
+	}
 	put_page(page);
-पूर्ण
+}
 
 /*
- * release a list of pages, invalidating them first अगर need be
+ * release a list of pages, invalidating them first if need be
  */
-अटल व्योम पढ़ो_cache_pages_invalidate_pages(काष्ठा address_space *mapping,
-					      काष्ठा list_head *pages)
-अणु
-	काष्ठा page *victim;
+static void read_cache_pages_invalidate_pages(struct address_space *mapping,
+					      struct list_head *pages)
+{
+	struct page *victim;
 
-	जबतक (!list_empty(pages)) अणु
+	while (!list_empty(pages)) {
 		victim = lru_to_page(pages);
 		list_del(&victim->lru);
-		पढ़ो_cache_pages_invalidate_page(mapping, victim);
-	पूर्ण
-पूर्ण
+		read_cache_pages_invalidate_page(mapping, victim);
+	}
+}
 
 /**
- * पढ़ो_cache_pages - populate an address space with some pages & start पढ़ोs against them
+ * read_cache_pages - populate an address space with some pages & start reads against them
  * @mapping: the address_space
  * @pages: The address of a list_head which contains the target pages.  These
  *   pages have their ->index populated and are otherwise uninitialised.
- * @filler: callback routine क्रम filling a single page.
- * @data: निजी data क्रम the callback routine.
+ * @filler: callback routine for filling a single page.
+ * @data: private data for the callback routine.
  *
- * Hides the details of the LRU cache etc from the fileप्रणालीs.
+ * Hides the details of the LRU cache etc from the filesystems.
  *
- * Returns: %0 on success, error वापस by @filler otherwise
+ * Returns: %0 on success, error return by @filler otherwise
  */
-पूर्णांक पढ़ो_cache_pages(काष्ठा address_space *mapping, काष्ठा list_head *pages,
-			पूर्णांक (*filler)(व्योम *, काष्ठा page *), व्योम *data)
-अणु
-	काष्ठा page *page;
-	पूर्णांक ret = 0;
+int read_cache_pages(struct address_space *mapping, struct list_head *pages,
+			int (*filler)(void *, struct page *), void *data)
+{
+	struct page *page;
+	int ret = 0;
 
-	जबतक (!list_empty(pages)) अणु
+	while (!list_empty(pages)) {
 		page = lru_to_page(pages);
 		list_del(&page->lru);
-		अगर (add_to_page_cache_lru(page, mapping, page->index,
-				पढ़ोahead_gfp_mask(mapping))) अणु
-			पढ़ो_cache_pages_invalidate_page(mapping, page);
-			जारी;
-		पूर्ण
+		if (add_to_page_cache_lru(page, mapping, page->index,
+				readahead_gfp_mask(mapping))) {
+			read_cache_pages_invalidate_page(mapping, page);
+			continue;
+		}
 		put_page(page);
 
 		ret = filler(data, page);
-		अगर (unlikely(ret)) अणु
-			पढ़ो_cache_pages_invalidate_pages(mapping, pages);
-			अवरोध;
-		पूर्ण
-		task_io_account_पढ़ो(PAGE_SIZE);
-	पूर्ण
-	वापस ret;
-पूर्ण
+		if (unlikely(ret)) {
+			read_cache_pages_invalidate_pages(mapping, pages);
+			break;
+		}
+		task_io_account_read(PAGE_SIZE);
+	}
+	return ret;
+}
 
-EXPORT_SYMBOL(पढ़ो_cache_pages);
+EXPORT_SYMBOL(read_cache_pages);
 
-अटल व्योम पढ़ो_pages(काष्ठा पढ़ोahead_control *rac, काष्ठा list_head *pages,
+static void read_pages(struct readahead_control *rac, struct list_head *pages,
 		bool skip_page)
-अणु
-	स्थिर काष्ठा address_space_operations *aops = rac->mapping->a_ops;
-	काष्ठा page *page;
-	काष्ठा blk_plug plug;
+{
+	const struct address_space_operations *aops = rac->mapping->a_ops;
+	struct page *page;
+	struct blk_plug plug;
 
-	अगर (!पढ़ोahead_count(rac))
-		जाओ out;
+	if (!readahead_count(rac))
+		goto out;
 
 	blk_start_plug(&plug);
 
-	अगर (aops->पढ़ोahead) अणु
-		aops->पढ़ोahead(rac);
-		/* Clean up the reमुख्यing pages */
-		जबतक ((page = पढ़ोahead_page(rac))) अणु
+	if (aops->readahead) {
+		aops->readahead(rac);
+		/* Clean up the remaining pages */
+		while ((page = readahead_page(rac))) {
 			unlock_page(page);
 			put_page(page);
-		पूर्ण
-	पूर्ण अन्यथा अगर (aops->पढ़ोpages) अणु
-		aops->पढ़ोpages(rac->file, rac->mapping, pages,
-				पढ़ोahead_count(rac));
-		/* Clean up the reमुख्यing pages */
+		}
+	} else if (aops->readpages) {
+		aops->readpages(rac->file, rac->mapping, pages,
+				readahead_count(rac));
+		/* Clean up the remaining pages */
 		put_pages_list(pages);
 		rac->_index += rac->_nr_pages;
 		rac->_nr_pages = 0;
-	पूर्ण अन्यथा अणु
-		जबतक ((page = पढ़ोahead_page(rac))) अणु
-			aops->पढ़ोpage(rac->file, page);
+	} else {
+		while ((page = readahead_page(rac))) {
+			aops->readpage(rac->file, page);
 			put_page(page);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	blk_finish_plug(&plug);
 
 	BUG_ON(!list_empty(pages));
-	BUG_ON(पढ़ोahead_count(rac));
+	BUG_ON(readahead_count(rac));
 
 out:
-	अगर (skip_page)
+	if (skip_page)
 		rac->_index++;
-पूर्ण
+}
 
 /**
- * page_cache_ra_unbounded - Start unchecked पढ़ोahead.
+ * page_cache_ra_unbounded - Start unchecked readahead.
  * @ractl: Readahead control.
- * @nr_to_पढ़ो: The number of pages to पढ़ो.
- * @lookahead_size: Where to start the next पढ़ोahead.
+ * @nr_to_read: The number of pages to read.
+ * @lookahead_size: Where to start the next readahead.
  *
- * This function is क्रम fileप्रणालीs to call when they want to start
- * पढ़ोahead beyond a file's stated i_size.  This is almost certainly
- * not the function you want to call.  Use page_cache_async_पढ़ोahead()
- * or page_cache_sync_पढ़ोahead() instead.
+ * This function is for filesystems to call when they want to start
+ * readahead beyond a file's stated i_size.  This is almost certainly
+ * not the function you want to call.  Use page_cache_async_readahead()
+ * or page_cache_sync_readahead() instead.
  *
  * Context: File is referenced by caller.  Mutexes may be held by caller.
- * May sleep, but will not reenter fileप्रणाली to reclaim memory.
+ * May sleep, but will not reenter filesystem to reclaim memory.
  */
-व्योम page_cache_ra_unbounded(काष्ठा पढ़ोahead_control *ractl,
-		अचिन्हित दीर्घ nr_to_पढ़ो, अचिन्हित दीर्घ lookahead_size)
-अणु
-	काष्ठा address_space *mapping = ractl->mapping;
-	अचिन्हित दीर्घ index = पढ़ोahead_index(ractl);
+void page_cache_ra_unbounded(struct readahead_control *ractl,
+		unsigned long nr_to_read, unsigned long lookahead_size)
+{
+	struct address_space *mapping = ractl->mapping;
+	unsigned long index = readahead_index(ractl);
 	LIST_HEAD(page_pool);
-	gfp_t gfp_mask = पढ़ोahead_gfp_mask(mapping);
-	अचिन्हित दीर्घ i;
+	gfp_t gfp_mask = readahead_gfp_mask(mapping);
+	unsigned long i;
 
 	/*
-	 * Partway through the पढ़ोahead operation, we will have added
+	 * Partway through the readahead operation, we will have added
 	 * locked pages to the page cache, but will not yet have submitted
-	 * them क्रम I/O.  Adding another page may need to allocate memory,
+	 * them for I/O.  Adding another page may need to allocate memory,
 	 * which can trigger memory reclaim.  Telling the VM we're in
-	 * the middle of a fileप्रणाली operation will cause it to not
+	 * the middle of a filesystem operation will cause it to not
 	 * touch file-backed pages, preventing a deadlock.  Most (all?)
-	 * fileप्रणालीs alपढ़ोy specअगरy __GFP_NOFS in their mapping's
+	 * filesystems already specify __GFP_NOFS in their mapping's
 	 * gfp_mask, but let's be explicit here.
 	 */
-	अचिन्हित पूर्णांक nofs = meदो_स्मृति_nofs_save();
+	unsigned int nofs = memalloc_nofs_save();
 
 	/*
-	 * Pपुनः_स्मृतिate as many pages as we will need.
+	 * Preallocate as many pages as we will need.
 	 */
-	क्रम (i = 0; i < nr_to_पढ़ो; i++) अणु
-		काष्ठा page *page = xa_load(&mapping->i_pages, index + i);
+	for (i = 0; i < nr_to_read; i++) {
+		struct page *page = xa_load(&mapping->i_pages, index + i);
 
-		अगर (page && !xa_is_value(page)) अणु
+		if (page && !xa_is_value(page)) {
 			/*
-			 * Page alपढ़ोy present?  Kick off the current batch
-			 * of contiguous pages beक्रमe continuing with the
+			 * Page already present?  Kick off the current batch
+			 * of contiguous pages before continuing with the
 			 * next batch.  This page may be the one we would
-			 * have पूर्णांकended to mark as Readahead, but we करोn't
+			 * have intended to mark as Readahead, but we don't
 			 * have a stable reference to this page, and it's
-			 * not worth getting one just क्रम that.
+			 * not worth getting one just for that.
 			 */
-			पढ़ो_pages(ractl, &page_pool, true);
+			read_pages(ractl, &page_pool, true);
 			i = ractl->_index + ractl->_nr_pages - index - 1;
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		page = __page_cache_alloc(gfp_mask);
-		अगर (!page)
-			अवरोध;
-		अगर (mapping->a_ops->पढ़ोpages) अणु
+		if (!page)
+			break;
+		if (mapping->a_ops->readpages) {
 			page->index = index + i;
 			list_add(&page->lru, &page_pool);
-		पूर्ण अन्यथा अगर (add_to_page_cache_lru(page, mapping, index + i,
-					gfp_mask) < 0) अणु
+		} else if (add_to_page_cache_lru(page, mapping, index + i,
+					gfp_mask) < 0) {
 			put_page(page);
-			पढ़ो_pages(ractl, &page_pool, true);
+			read_pages(ractl, &page_pool, true);
 			i = ractl->_index + ractl->_nr_pages - index - 1;
-			जारी;
-		पूर्ण
-		अगर (i == nr_to_पढ़ो - lookahead_size)
+			continue;
+		}
+		if (i == nr_to_read - lookahead_size)
 			SetPageReadahead(page);
 		ractl->_nr_pages++;
-	पूर्ण
+	}
 
 	/*
-	 * Now start the IO.  We ignore I/O errors - अगर the page is not
-	 * uptodate then the caller will launch पढ़ोpage again, and
+	 * Now start the IO.  We ignore I/O errors - if the page is not
+	 * uptodate then the caller will launch readpage again, and
 	 * will then handle the error.
 	 */
-	पढ़ो_pages(ractl, &page_pool, false);
-	meदो_स्मृति_nofs_restore(nofs);
-पूर्ण
+	read_pages(ractl, &page_pool, false);
+	memalloc_nofs_restore(nofs);
+}
 EXPORT_SYMBOL_GPL(page_cache_ra_unbounded);
 
 /*
- * करो_page_cache_ra() actually पढ़ोs a chunk of disk.  It allocates
- * the pages first, then submits them क्रम I/O. This aव्योमs the very bad
- * behaviour which would occur अगर page allocations are causing VM ग_लिखोback.
- * We really करोn't want to पूर्णांकermingle पढ़ोs and ग_लिखोs like that.
+ * do_page_cache_ra() actually reads a chunk of disk.  It allocates
+ * the pages first, then submits them for I/O. This avoids the very bad
+ * behaviour which would occur if page allocations are causing VM writeback.
+ * We really don't want to intermingle reads and writes like that.
  */
-व्योम करो_page_cache_ra(काष्ठा पढ़ोahead_control *ractl,
-		अचिन्हित दीर्घ nr_to_पढ़ो, अचिन्हित दीर्घ lookahead_size)
-अणु
-	काष्ठा inode *inode = ractl->mapping->host;
-	अचिन्हित दीर्घ index = पढ़ोahead_index(ractl);
-	loff_t isize = i_size_पढ़ो(inode);
-	pgoff_t end_index;	/* The last page we want to पढ़ो */
+void do_page_cache_ra(struct readahead_control *ractl,
+		unsigned long nr_to_read, unsigned long lookahead_size)
+{
+	struct inode *inode = ractl->mapping->host;
+	unsigned long index = readahead_index(ractl);
+	loff_t isize = i_size_read(inode);
+	pgoff_t end_index;	/* The last page we want to read */
 
-	अगर (isize == 0)
-		वापस;
+	if (isize == 0)
+		return;
 
 	end_index = (isize - 1) >> PAGE_SHIFT;
-	अगर (index > end_index)
-		वापस;
-	/* Don't पढ़ो past the page containing the last byte of the file */
-	अगर (nr_to_पढ़ो > end_index - index)
-		nr_to_पढ़ो = end_index - index + 1;
+	if (index > end_index)
+		return;
+	/* Don't read past the page containing the last byte of the file */
+	if (nr_to_read > end_index - index)
+		nr_to_read = end_index - index + 1;
 
-	page_cache_ra_unbounded(ractl, nr_to_पढ़ो, lookahead_size);
-पूर्ण
+	page_cache_ra_unbounded(ractl, nr_to_read, lookahead_size);
+}
 
 /*
- * Chunk the पढ़ोahead पूर्णांकo 2 megabyte units, so that we करोn't pin too much
+ * Chunk the readahead into 2 megabyte units, so that we don't pin too much
  * memory at once.
  */
-व्योम क्रमce_page_cache_ra(काष्ठा पढ़ोahead_control *ractl,
-		अचिन्हित दीर्घ nr_to_पढ़ो)
-अणु
-	काष्ठा address_space *mapping = ractl->mapping;
-	काष्ठा file_ra_state *ra = ractl->ra;
-	काष्ठा backing_dev_info *bdi = inode_to_bdi(mapping->host);
-	अचिन्हित दीर्घ max_pages, index;
+void force_page_cache_ra(struct readahead_control *ractl,
+		unsigned long nr_to_read)
+{
+	struct address_space *mapping = ractl->mapping;
+	struct file_ra_state *ra = ractl->ra;
+	struct backing_dev_info *bdi = inode_to_bdi(mapping->host);
+	unsigned long max_pages, index;
 
-	अगर (unlikely(!mapping->a_ops->पढ़ोpage && !mapping->a_ops->पढ़ोpages &&
-			!mapping->a_ops->पढ़ोahead))
-		वापस;
+	if (unlikely(!mapping->a_ops->readpage && !mapping->a_ops->readpages &&
+			!mapping->a_ops->readahead))
+		return;
 
 	/*
-	 * If the request exceeds the पढ़ोahead winकरोw, allow the पढ़ो to
+	 * If the request exceeds the readahead window, allow the read to
 	 * be up to the optimal hardware IO size
 	 */
-	index = पढ़ोahead_index(ractl);
-	max_pages = max_t(अचिन्हित दीर्घ, bdi->io_pages, ra->ra_pages);
-	nr_to_पढ़ो = min_t(अचिन्हित दीर्घ, nr_to_पढ़ो, max_pages);
-	जबतक (nr_to_पढ़ो) अणु
-		अचिन्हित दीर्घ this_chunk = (2 * 1024 * 1024) / PAGE_SIZE;
+	index = readahead_index(ractl);
+	max_pages = max_t(unsigned long, bdi->io_pages, ra->ra_pages);
+	nr_to_read = min_t(unsigned long, nr_to_read, max_pages);
+	while (nr_to_read) {
+		unsigned long this_chunk = (2 * 1024 * 1024) / PAGE_SIZE;
 
-		अगर (this_chunk > nr_to_पढ़ो)
-			this_chunk = nr_to_पढ़ो;
+		if (this_chunk > nr_to_read)
+			this_chunk = nr_to_read;
 		ractl->_index = index;
-		करो_page_cache_ra(ractl, this_chunk, 0);
+		do_page_cache_ra(ractl, this_chunk, 0);
 
 		index += this_chunk;
-		nr_to_पढ़ो -= this_chunk;
-	पूर्ण
-पूर्ण
+		nr_to_read -= this_chunk;
+	}
+}
 
 /*
- * Set the initial winकरोw size, round to next घातer of 2 and square
- * क्रम small size, x 4 क्रम medium, and x 2 क्रम large
- * क्रम 128k (32 page) max ra
+ * Set the initial window size, round to next power of 2 and square
+ * for small size, x 4 for medium, and x 2 for large
+ * for 128k (32 page) max ra
  * 1-8 page = 32k initial, > 8 page = 128k initial
  */
-अटल अचिन्हित दीर्घ get_init_ra_size(अचिन्हित दीर्घ size, अचिन्हित दीर्घ max)
-अणु
-	अचिन्हित दीर्घ newsize = roundup_घात_of_two(size);
+static unsigned long get_init_ra_size(unsigned long size, unsigned long max)
+{
+	unsigned long newsize = roundup_pow_of_two(size);
 
-	अगर (newsize <= max / 32)
+	if (newsize <= max / 32)
 		newsize = newsize * 4;
-	अन्यथा अगर (newsize <= max / 4)
+	else if (newsize <= max / 4)
 		newsize = newsize * 2;
-	अन्यथा
+	else
 		newsize = max;
 
-	वापस newsize;
-पूर्ण
+	return newsize;
+}
 
 /*
- *  Get the previous winकरोw size, ramp it up, and
- *  वापस it as the new winकरोw size.
+ *  Get the previous window size, ramp it up, and
+ *  return it as the new window size.
  */
-अटल अचिन्हित दीर्घ get_next_ra_size(काष्ठा file_ra_state *ra,
-				      अचिन्हित दीर्घ max)
-अणु
-	अचिन्हित दीर्घ cur = ra->size;
+static unsigned long get_next_ra_size(struct file_ra_state *ra,
+				      unsigned long max)
+{
+	unsigned long cur = ra->size;
 
-	अगर (cur < max / 16)
-		वापस 4 * cur;
-	अगर (cur <= max / 2)
-		वापस 2 * cur;
-	वापस max;
-पूर्ण
+	if (cur < max / 16)
+		return 4 * cur;
+	if (cur <= max / 2)
+		return 2 * cur;
+	return max;
+}
 
 /*
- * On-demand पढ़ोahead design.
+ * On-demand readahead design.
  *
- * The fields in काष्ठा file_ra_state represent the most-recently-executed
- * पढ़ोahead attempt:
+ * The fields in struct file_ra_state represent the most-recently-executed
+ * readahead attempt:
  *
  *                        |<----- async_size ---------|
  *     |------------------- size -------------------->|
  *     |==================#===========================|
- *     ^start             ^page marked with PG_पढ़ोahead
+ *     ^start             ^page marked with PG_readahead
  *
- * To overlap application thinking समय and disk I/O समय, we करो
- * `पढ़ोahead pipelining': Do not रुको until the application consumed all
- * पढ़ोahead pages and stalled on the missing page at पढ़ोahead_index;
- * Instead, submit an asynchronous पढ़ोahead I/O as soon as there are
- * only async_size pages left in the पढ़ोahead winकरोw. Normally async_size
- * will be equal to size, क्रम maximum pipelining.
+ * To overlap application thinking time and disk I/O time, we do
+ * `readahead pipelining': Do not wait until the application consumed all
+ * readahead pages and stalled on the missing page at readahead_index;
+ * Instead, submit an asynchronous readahead I/O as soon as there are
+ * only async_size pages left in the readahead window. Normally async_size
+ * will be equal to size, for maximum pipelining.
  *
- * In पूर्णांकerleaved sequential पढ़ोs, concurrent streams on the same fd can
- * be invalidating each other's पढ़ोahead state. So we flag the new पढ़ोahead
- * page at (start+size-async_size) with PG_पढ़ोahead, and use it as पढ़ोahead
- * indicator. The flag won't be set on alपढ़ोy cached pages, to aव्योम the
- * पढ़ोahead-क्रम-nothing fuss, saving poपूर्णांकless page cache lookups.
+ * In interleaved sequential reads, concurrent streams on the same fd can
+ * be invalidating each other's readahead state. So we flag the new readahead
+ * page at (start+size-async_size) with PG_readahead, and use it as readahead
+ * indicator. The flag won't be set on already cached pages, to avoid the
+ * readahead-for-nothing fuss, saving pointless page cache lookups.
  *
- * prev_pos tracks the last visited byte in the _previous_ पढ़ो request.
- * It should be मुख्यtained by the caller, and will be used क्रम detecting
- * small अक्रमom पढ़ोs. Note that the पढ़ोahead algorithm checks loosely
- * क्रम sequential patterns. Hence पूर्णांकerleaved पढ़ोs might be served as
+ * prev_pos tracks the last visited byte in the _previous_ read request.
+ * It should be maintained by the caller, and will be used for detecting
+ * small random reads. Note that the readahead algorithm checks loosely
+ * for sequential patterns. Hence interleaved reads might be served as
  * sequential ones.
  *
- * There is a special-हाल: अगर the first page which the application tries to
- * पढ़ो happens to be the first page of the file, it is assumed that a linear
- * पढ़ो is about to happen and the winकरोw is immediately set to the initial size
- * based on I/O request size and the max_पढ़ोahead.
+ * There is a special-case: if the first page which the application tries to
+ * read happens to be the first page of the file, it is assumed that a linear
+ * read is about to happen and the window is immediately set to the initial size
+ * based on I/O request size and the max_readahead.
  *
- * The code ramps up the पढ़ोahead size aggressively at first, but slow करोwn as
- * it approaches max_पढ़ोhead.
+ * The code ramps up the readahead size aggressively at first, but slow down as
+ * it approaches max_readhead.
  */
 
 /*
  * Count contiguously cached pages from @index-1 to @index-@max,
  * this count is a conservative estimation of
- * 	- length of the sequential पढ़ो sequence, or
- * 	- thrashing threshold in memory tight प्रणालीs
+ * 	- length of the sequential read sequence, or
+ * 	- thrashing threshold in memory tight systems
  */
-अटल pgoff_t count_history_pages(काष्ठा address_space *mapping,
-				   pgoff_t index, अचिन्हित दीर्घ max)
-अणु
+static pgoff_t count_history_pages(struct address_space *mapping,
+				   pgoff_t index, unsigned long max)
+{
 	pgoff_t head;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	head = page_cache_prev_miss(mapping, index - 1, max);
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 
-	वापस index - 1 - head;
-पूर्ण
+	return index - 1 - head;
+}
 
 /*
- * page cache context based पढ़ो-ahead
+ * page cache context based read-ahead
  */
-अटल पूर्णांक try_context_पढ़ोahead(काष्ठा address_space *mapping,
-				 काष्ठा file_ra_state *ra,
+static int try_context_readahead(struct address_space *mapping,
+				 struct file_ra_state *ra,
 				 pgoff_t index,
-				 अचिन्हित दीर्घ req_size,
-				 अचिन्हित दीर्घ max)
-अणु
+				 unsigned long req_size,
+				 unsigned long max)
+{
 	pgoff_t size;
 
 	size = count_history_pages(mapping, index, max);
 
 	/*
 	 * not enough history pages:
-	 * it could be a अक्रमom पढ़ो
+	 * it could be a random read
 	 */
-	अगर (size <= req_size)
-		वापस 0;
+	if (size <= req_size)
+		return 0;
 
 	/*
 	 * starts from beginning of file:
-	 * it is a strong indication of दीर्घ-run stream (or whole-file-पढ़ो)
+	 * it is a strong indication of long-run stream (or whole-file-read)
 	 */
-	अगर (size >= index)
+	if (size >= index)
 		size *= 2;
 
 	ra->start = index;
 	ra->size = min(size + req_size, max);
 	ra->async_size = 1;
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
 /*
- * A minimal पढ़ोahead algorithm क्रम trivial sequential/अक्रमom पढ़ोs.
+ * A minimal readahead algorithm for trivial sequential/random reads.
  */
-अटल व्योम ondemand_पढ़ोahead(काष्ठा पढ़ोahead_control *ractl,
-		bool hit_पढ़ोahead_marker, अचिन्हित दीर्घ req_size)
-अणु
-	काष्ठा backing_dev_info *bdi = inode_to_bdi(ractl->mapping->host);
-	काष्ठा file_ra_state *ra = ractl->ra;
-	अचिन्हित दीर्घ max_pages = ra->ra_pages;
-	अचिन्हित दीर्घ add_pages;
-	अचिन्हित दीर्घ index = पढ़ोahead_index(ractl);
+static void ondemand_readahead(struct readahead_control *ractl,
+		bool hit_readahead_marker, unsigned long req_size)
+{
+	struct backing_dev_info *bdi = inode_to_bdi(ractl->mapping->host);
+	struct file_ra_state *ra = ractl->ra;
+	unsigned long max_pages = ra->ra_pages;
+	unsigned long add_pages;
+	unsigned long index = readahead_index(ractl);
 	pgoff_t prev_index;
 
 	/*
-	 * If the request exceeds the पढ़ोahead winकरोw, allow the पढ़ो to
+	 * If the request exceeds the readahead window, allow the read to
 	 * be up to the optimal hardware IO size
 	 */
-	अगर (req_size > max_pages && bdi->io_pages > max_pages)
+	if (req_size > max_pages && bdi->io_pages > max_pages)
 		max_pages = min(req_size, bdi->io_pages);
 
 	/*
 	 * start of file
 	 */
-	अगर (!index)
-		जाओ initial_पढ़ोahead;
+	if (!index)
+		goto initial_readahead;
 
 	/*
 	 * It's the expected callback index, assume sequential access.
-	 * Ramp up sizes, and push क्रमward the पढ़ोahead winकरोw.
+	 * Ramp up sizes, and push forward the readahead window.
 	 */
-	अगर ((index == (ra->start + ra->size - ra->async_size) ||
-	     index == (ra->start + ra->size))) अणु
+	if ((index == (ra->start + ra->size - ra->async_size) ||
+	     index == (ra->start + ra->size))) {
 		ra->start += ra->size;
 		ra->size = get_next_ra_size(ra, max_pages);
 		ra->async_size = ra->size;
-		जाओ पढ़ोit;
-	पूर्ण
+		goto readit;
+	}
 
 	/*
-	 * Hit a marked page without valid पढ़ोahead state.
-	 * E.g. पूर्णांकerleaved पढ़ोs.
-	 * Query the pagecache क्रम async_size, which normally equals to
-	 * पढ़ोahead size. Ramp it up and use it as the new पढ़ोahead size.
+	 * Hit a marked page without valid readahead state.
+	 * E.g. interleaved reads.
+	 * Query the pagecache for async_size, which normally equals to
+	 * readahead size. Ramp it up and use it as the new readahead size.
 	 */
-	अगर (hit_पढ़ोahead_marker) अणु
+	if (hit_readahead_marker) {
 		pgoff_t start;
 
-		rcu_पढ़ो_lock();
+		rcu_read_lock();
 		start = page_cache_next_miss(ractl->mapping, index + 1,
 				max_pages);
-		rcu_पढ़ो_unlock();
+		rcu_read_unlock();
 
-		अगर (!start || start - index > max_pages)
-			वापस;
+		if (!start || start - index > max_pages)
+			return;
 
 		ra->start = start;
 		ra->size = start - index;	/* old async_size */
 		ra->size += req_size;
 		ra->size = get_next_ra_size(ra, max_pages);
 		ra->async_size = ra->size;
-		जाओ पढ़ोit;
-	पूर्ण
+		goto readit;
+	}
 
 	/*
-	 * oversize पढ़ो
+	 * oversize read
 	 */
-	अगर (req_size > max_pages)
-		जाओ initial_पढ़ोahead;
+	if (req_size > max_pages)
+		goto initial_readahead;
 
 	/*
 	 * sequential cache miss
-	 * trivial हाल: (index - prev_index) == 1
-	 * unaligned पढ़ोs: (index - prev_index) == 0
+	 * trivial case: (index - prev_index) == 1
+	 * unaligned reads: (index - prev_index) == 0
 	 */
-	prev_index = (अचिन्हित दीर्घ दीर्घ)ra->prev_pos >> PAGE_SHIFT;
-	अगर (index - prev_index <= 1UL)
-		जाओ initial_पढ़ोahead;
+	prev_index = (unsigned long long)ra->prev_pos >> PAGE_SHIFT;
+	if (index - prev_index <= 1UL)
+		goto initial_readahead;
 
 	/*
-	 * Query the page cache and look क्रम the traces(cached history pages)
+	 * Query the page cache and look for the traces(cached history pages)
 	 * that a sequential stream would leave behind.
 	 */
-	अगर (try_context_पढ़ोahead(ractl->mapping, ra, index, req_size,
+	if (try_context_readahead(ractl->mapping, ra, index, req_size,
 			max_pages))
-		जाओ पढ़ोit;
+		goto readit;
 
 	/*
-	 * standalone, small अक्रमom पढ़ो
-	 * Read as is, and करो not pollute the पढ़ोahead state.
+	 * standalone, small random read
+	 * Read as is, and do not pollute the readahead state.
 	 */
-	करो_page_cache_ra(ractl, req_size, 0);
-	वापस;
+	do_page_cache_ra(ractl, req_size, 0);
+	return;
 
-initial_पढ़ोahead:
+initial_readahead:
 	ra->start = index;
 	ra->size = get_init_ra_size(req_size, max_pages);
 	ra->async_size = ra->size > req_size ? ra->size - req_size : ra->size;
 
-पढ़ोit:
+readit:
 	/*
-	 * Will this पढ़ो hit the पढ़ोahead marker made by itself?
-	 * If so, trigger the पढ़ोahead marker hit now, and merge
-	 * the resulted next पढ़ोahead winकरोw पूर्णांकo the current one.
+	 * Will this read hit the readahead marker made by itself?
+	 * If so, trigger the readahead marker hit now, and merge
+	 * the resulted next readahead window into the current one.
 	 * Take care of maximum IO pages as above.
 	 */
-	अगर (index == ra->start && ra->size == ra->async_size) अणु
+	if (index == ra->start && ra->size == ra->async_size) {
 		add_pages = get_next_ra_size(ra, max_pages);
-		अगर (ra->size + add_pages <= max_pages) अणु
+		if (ra->size + add_pages <= max_pages) {
 			ra->async_size = add_pages;
 			ra->size += add_pages;
-		पूर्ण अन्यथा अणु
+		} else {
 			ra->size = max_pages;
 			ra->async_size = max_pages >> 1;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	ractl->_index = ra->start;
-	करो_page_cache_ra(ractl, ra->size, ra->async_size);
-पूर्ण
+	do_page_cache_ra(ractl, ra->size, ra->async_size);
+}
 
-व्योम page_cache_sync_ra(काष्ठा पढ़ोahead_control *ractl,
-		अचिन्हित दीर्घ req_count)
-अणु
-	bool करो_क्रमced_ra = ractl->file && (ractl->file->f_mode & FMODE_RANDOM);
+void page_cache_sync_ra(struct readahead_control *ractl,
+		unsigned long req_count)
+{
+	bool do_forced_ra = ractl->file && (ractl->file->f_mode & FMODE_RANDOM);
 
 	/*
-	 * Even अगर पढ़ो-ahead is disabled, issue this request as पढ़ो-ahead
-	 * as we'll need it to satisfy the requested range. The क्रमced
-	 * पढ़ो-ahead will करो the right thing and limit the पढ़ो to just the
-	 * requested range, which we'll set to 1 page क्रम this हाल.
+	 * Even if read-ahead is disabled, issue this request as read-ahead
+	 * as we'll need it to satisfy the requested range. The forced
+	 * read-ahead will do the right thing and limit the read to just the
+	 * requested range, which we'll set to 1 page for this case.
 	 */
-	अगर (!ractl->ra->ra_pages || blk_cgroup_congested()) अणु
-		अगर (!ractl->file)
-			वापस;
+	if (!ractl->ra->ra_pages || blk_cgroup_congested()) {
+		if (!ractl->file)
+			return;
 		req_count = 1;
-		करो_क्रमced_ra = true;
-	पूर्ण
+		do_forced_ra = true;
+	}
 
 	/* be dumb */
-	अगर (करो_क्रमced_ra) अणु
-		क्रमce_page_cache_ra(ractl, req_count);
-		वापस;
-	पूर्ण
+	if (do_forced_ra) {
+		force_page_cache_ra(ractl, req_count);
+		return;
+	}
 
-	/* करो पढ़ो-ahead */
-	ondemand_पढ़ोahead(ractl, false, req_count);
-पूर्ण
+	/* do read-ahead */
+	ondemand_readahead(ractl, false, req_count);
+}
 EXPORT_SYMBOL_GPL(page_cache_sync_ra);
 
-व्योम page_cache_async_ra(काष्ठा पढ़ोahead_control *ractl,
-		काष्ठा page *page, अचिन्हित दीर्घ req_count)
-अणु
-	/* no पढ़ो-ahead */
-	अगर (!ractl->ra->ra_pages)
-		वापस;
+void page_cache_async_ra(struct readahead_control *ractl,
+		struct page *page, unsigned long req_count)
+{
+	/* no read-ahead */
+	if (!ractl->ra->ra_pages)
+		return;
 
 	/*
-	 * Same bit is used क्रम PG_पढ़ोahead and PG_reclaim.
+	 * Same bit is used for PG_readahead and PG_reclaim.
 	 */
-	अगर (PageWriteback(page))
-		वापस;
+	if (PageWriteback(page))
+		return;
 
 	ClearPageReadahead(page);
 
 	/*
-	 * Defer asynchronous पढ़ो-ahead on IO congestion.
+	 * Defer asynchronous read-ahead on IO congestion.
 	 */
-	अगर (inode_पढ़ो_congested(ractl->mapping->host))
-		वापस;
+	if (inode_read_congested(ractl->mapping->host))
+		return;
 
-	अगर (blk_cgroup_congested())
-		वापस;
+	if (blk_cgroup_congested())
+		return;
 
-	/* करो पढ़ो-ahead */
-	ondemand_पढ़ोahead(ractl, true, req_count);
-पूर्ण
+	/* do read-ahead */
+	ondemand_readahead(ractl, true, req_count);
+}
 EXPORT_SYMBOL_GPL(page_cache_async_ra);
 
-sमाप_प्रकार ksys_पढ़ोahead(पूर्णांक fd, loff_t offset, माप_प्रकार count)
-अणु
-	sमाप_प्रकार ret;
-	काष्ठा fd f;
+ssize_t ksys_readahead(int fd, loff_t offset, size_t count)
+{
+	ssize_t ret;
+	struct fd f;
 
 	ret = -EBADF;
 	f = fdget(fd);
-	अगर (!f.file || !(f.file->f_mode & FMODE_READ))
-		जाओ out;
+	if (!f.file || !(f.file->f_mode & FMODE_READ))
+		goto out;
 
 	/*
-	 * The पढ़ोahead() syscall is पूर्णांकended to run only on files
-	 * that can execute पढ़ोahead. If पढ़ोahead is not possible
-	 * on this file, then we must वापस -EINVAL.
+	 * The readahead() syscall is intended to run only on files
+	 * that can execute readahead. If readahead is not possible
+	 * on this file, then we must return -EINVAL.
 	 */
 	ret = -EINVAL;
-	अगर (!f.file->f_mapping || !f.file->f_mapping->a_ops ||
+	if (!f.file->f_mapping || !f.file->f_mapping->a_ops ||
 	    !S_ISREG(file_inode(f.file)->i_mode))
-		जाओ out;
+		goto out;
 
 	ret = vfs_fadvise(f.file, offset, count, POSIX_FADV_WILLNEED);
 out:
 	fdput(f);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-SYSCALL_DEFINE3(पढ़ोahead, पूर्णांक, fd, loff_t, offset, माप_प्रकार, count)
-अणु
-	वापस ksys_पढ़ोahead(fd, offset, count);
-पूर्ण
+SYSCALL_DEFINE3(readahead, int, fd, loff_t, offset, size_t, count)
+{
+	return ksys_readahead(fd, offset, count);
+}
 
 /**
- * पढ़ोahead_expand - Expand a पढ़ोahead request
+ * readahead_expand - Expand a readahead request
  * @ractl: The request to be expanded
  * @new_start: The revised start
  * @new_len: The revised size of the request
  *
- * Attempt to expand a पढ़ोahead request outwards from the current size to the
- * specअगरied size by inserting locked pages beक्रमe and after the current winकरोw
- * to increase the size to the new winकरोw.  This may involve the insertion of
- * THPs, in which हाल the winकरोw may get expanded even beyond what was
+ * Attempt to expand a readahead request outwards from the current size to the
+ * specified size by inserting locked pages before and after the current window
+ * to increase the size to the new window.  This may involve the insertion of
+ * THPs, in which case the window may get expanded even beyond what was
  * requested.
  *
- * The algorithm will stop अगर it encounters a conflicting page alपढ़ोy in the
+ * The algorithm will stop if it encounters a conflicting page already in the
  * pagecache and leave a smaller expansion than requested.
  *
- * The caller must check क्रम this by examining the revised @ractl object क्रम a
- * dअगरferent expansion than was requested.
+ * The caller must check for this by examining the revised @ractl object for a
+ * different expansion than was requested.
  */
-व्योम पढ़ोahead_expand(काष्ठा पढ़ोahead_control *ractl,
-		      loff_t new_start, माप_प्रकार new_len)
-अणु
-	काष्ठा address_space *mapping = ractl->mapping;
-	काष्ठा file_ra_state *ra = ractl->ra;
+void readahead_expand(struct readahead_control *ractl,
+		      loff_t new_start, size_t new_len)
+{
+	struct address_space *mapping = ractl->mapping;
+	struct file_ra_state *ra = ractl->ra;
 	pgoff_t new_index, new_nr_pages;
-	gfp_t gfp_mask = पढ़ोahead_gfp_mask(mapping);
+	gfp_t gfp_mask = readahead_gfp_mask(mapping);
 
 	new_index = new_start / PAGE_SIZE;
 
-	/* Expand the leading edge करोwnwards */
-	जबतक (ractl->_index > new_index) अणु
-		अचिन्हित दीर्घ index = ractl->_index - 1;
-		काष्ठा page *page = xa_load(&mapping->i_pages, index);
+	/* Expand the leading edge downwards */
+	while (ractl->_index > new_index) {
+		unsigned long index = ractl->_index - 1;
+		struct page *page = xa_load(&mapping->i_pages, index);
 
-		अगर (page && !xa_is_value(page))
-			वापस; /* Page apparently present */
+		if (page && !xa_is_value(page))
+			return; /* Page apparently present */
 
 		page = __page_cache_alloc(gfp_mask);
-		अगर (!page)
-			वापस;
-		अगर (add_to_page_cache_lru(page, mapping, index, gfp_mask) < 0) अणु
+		if (!page)
+			return;
+		if (add_to_page_cache_lru(page, mapping, index, gfp_mask) < 0) {
 			put_page(page);
-			वापस;
-		पूर्ण
+			return;
+		}
 
 		ractl->_nr_pages++;
 		ractl->_index = page->index;
-	पूर्ण
+	}
 
-	new_len += new_start - पढ़ोahead_pos(ractl);
+	new_len += new_start - readahead_pos(ractl);
 	new_nr_pages = DIV_ROUND_UP(new_len, PAGE_SIZE);
 
 	/* Expand the trailing edge upwards */
-	जबतक (ractl->_nr_pages < new_nr_pages) अणु
-		अचिन्हित दीर्घ index = ractl->_index + ractl->_nr_pages;
-		काष्ठा page *page = xa_load(&mapping->i_pages, index);
+	while (ractl->_nr_pages < new_nr_pages) {
+		unsigned long index = ractl->_index + ractl->_nr_pages;
+		struct page *page = xa_load(&mapping->i_pages, index);
 
-		अगर (page && !xa_is_value(page))
-			वापस; /* Page apparently present */
+		if (page && !xa_is_value(page))
+			return; /* Page apparently present */
 
 		page = __page_cache_alloc(gfp_mask);
-		अगर (!page)
-			वापस;
-		अगर (add_to_page_cache_lru(page, mapping, index, gfp_mask) < 0) अणु
+		if (!page)
+			return;
+		if (add_to_page_cache_lru(page, mapping, index, gfp_mask) < 0) {
 			put_page(page);
-			वापस;
-		पूर्ण
+			return;
+		}
 		ractl->_nr_pages++;
-		अगर (ra) अणु
+		if (ra) {
 			ra->size++;
 			ra->async_size++;
-		पूर्ण
-	पूर्ण
-पूर्ण
-EXPORT_SYMBOL(पढ़ोahead_expand);
+		}
+	}
+}
+EXPORT_SYMBOL(readahead_expand);

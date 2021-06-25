@@ -1,7 +1,6 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * List of cgroup subप्रणालीs.
+ * List of cgroup subsystems.
  *
  * DO NOT ADD ANY SUBSYSTEM WITHOUT EXPLICIT ACKS FROM CGROUP MAINTAINERS.
  */
@@ -10,68 +9,68 @@
  * This file *must* be included with SUBSYS() defined.
  */
 
-#अगर IS_ENABLED(CONFIG_CPUSETS)
+#if IS_ENABLED(CONFIG_CPUSETS)
 SUBSYS(cpuset)
-#पूर्ण_अगर
+#endif
 
-#अगर IS_ENABLED(CONFIG_CGROUP_SCHED)
+#if IS_ENABLED(CONFIG_CGROUP_SCHED)
 SUBSYS(cpu)
-#पूर्ण_अगर
+#endif
 
-#अगर IS_ENABLED(CONFIG_CGROUP_CPUACCT)
+#if IS_ENABLED(CONFIG_CGROUP_CPUACCT)
 SUBSYS(cpuacct)
-#पूर्ण_अगर
+#endif
 
-#अगर IS_ENABLED(CONFIG_BLK_CGROUP)
+#if IS_ENABLED(CONFIG_BLK_CGROUP)
 SUBSYS(io)
-#पूर्ण_अगर
+#endif
 
-#अगर IS_ENABLED(CONFIG_MEMCG)
+#if IS_ENABLED(CONFIG_MEMCG)
 SUBSYS(memory)
-#पूर्ण_अगर
+#endif
 
-#अगर IS_ENABLED(CONFIG_CGROUP_DEVICE)
+#if IS_ENABLED(CONFIG_CGROUP_DEVICE)
 SUBSYS(devices)
-#पूर्ण_अगर
+#endif
 
-#अगर IS_ENABLED(CONFIG_CGROUP_FREEZER)
-SUBSYS(मुक्तzer)
-#पूर्ण_अगर
+#if IS_ENABLED(CONFIG_CGROUP_FREEZER)
+SUBSYS(freezer)
+#endif
 
-#अगर IS_ENABLED(CONFIG_CGROUP_NET_CLASSID)
+#if IS_ENABLED(CONFIG_CGROUP_NET_CLASSID)
 SUBSYS(net_cls)
-#पूर्ण_अगर
+#endif
 
-#अगर IS_ENABLED(CONFIG_CGROUP_PERF)
+#if IS_ENABLED(CONFIG_CGROUP_PERF)
 SUBSYS(perf_event)
-#पूर्ण_अगर
+#endif
 
-#अगर IS_ENABLED(CONFIG_CGROUP_NET_PRIO)
+#if IS_ENABLED(CONFIG_CGROUP_NET_PRIO)
 SUBSYS(net_prio)
-#पूर्ण_अगर
+#endif
 
-#अगर IS_ENABLED(CONFIG_CGROUP_HUGETLB)
+#if IS_ENABLED(CONFIG_CGROUP_HUGETLB)
 SUBSYS(hugetlb)
-#पूर्ण_अगर
+#endif
 
-#अगर IS_ENABLED(CONFIG_CGROUP_PIDS)
+#if IS_ENABLED(CONFIG_CGROUP_PIDS)
 SUBSYS(pids)
-#पूर्ण_अगर
+#endif
 
-#अगर IS_ENABLED(CONFIG_CGROUP_RDMA)
+#if IS_ENABLED(CONFIG_CGROUP_RDMA)
 SUBSYS(rdma)
-#पूर्ण_अगर
+#endif
 
-#अगर IS_ENABLED(CONFIG_CGROUP_MISC)
+#if IS_ENABLED(CONFIG_CGROUP_MISC)
 SUBSYS(misc)
-#पूर्ण_अगर
+#endif
 
 /*
- * The following subप्रणालीs are not supported on the शेष hierarchy.
+ * The following subsystems are not supported on the default hierarchy.
  */
-#अगर IS_ENABLED(CONFIG_CGROUP_DEBUG)
+#if IS_ENABLED(CONFIG_CGROUP_DEBUG)
 SUBSYS(debug)
-#पूर्ण_अगर
+#endif
 
 /*
  * DO NOT ADD ANY SUBSYSTEM WITHOUT EXPLICIT ACKS FROM CGROUP MAINTAINERS.

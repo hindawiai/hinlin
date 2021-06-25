@@ -1,42 +1,41 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Pinctrl क्रम Cirrus Logic CS47L35
+ * Pinctrl for Cirrus Logic CS47L35
  *
  * Copyright (C) 2016-2017 Cirrus Logic
  */
 
-#समावेश <linux/err.h>
-#समावेश <linux/mfd/madera/core.h>
+#include <linux/err.h>
+#include <linux/mfd/madera/core.h>
 
-#समावेश "pinctrl-madera.h"
+#include "pinctrl-madera.h"
 
 /*
  * The alt func groups are the most commonly used functions we place these at
- * the lower function indexes क्रम convenience, and the less commonly used gpio
+ * the lower function indexes for convenience, and the less commonly used gpio
  * functions at higher indexes.
  *
  * To stay consistent with the datasheet the function names are the same as
- * the group names क्रम that function's pins
+ * the group names for that function's pins
  *
  * Note - all 1 less than in datasheet because these are zero-indexed
  */
-अटल स्थिर अचिन्हित पूर्णांक cs47l35_aअगर3_pins[] = अणु 0, 1, 2, 3 पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक cs47l35_spk_pins[] = अणु 4, 5 पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक cs47l35_aअगर1_pins[] = अणु 7, 8, 9, 10 पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक cs47l35_aअगर2_pins[] = अणु 11, 12, 13, 14 पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक cs47l35_mअगर1_pins[] = अणु 6, 15 पूर्ण;
+static const unsigned int cs47l35_aif3_pins[] = { 0, 1, 2, 3 };
+static const unsigned int cs47l35_spk_pins[] = { 4, 5 };
+static const unsigned int cs47l35_aif1_pins[] = { 7, 8, 9, 10 };
+static const unsigned int cs47l35_aif2_pins[] = { 11, 12, 13, 14 };
+static const unsigned int cs47l35_mif1_pins[] = { 6, 15 };
 
-अटल स्थिर काष्ठा madera_pin_groups cs47l35_pin_groups[] = अणु
-	अणु "aif1", cs47l35_aअगर1_pins, ARRAY_SIZE(cs47l35_aअगर1_pins) पूर्ण,
-	अणु "aif2", cs47l35_aअगर2_pins, ARRAY_SIZE(cs47l35_aअगर2_pins) पूर्ण,
-	अणु "aif3", cs47l35_aअगर3_pins, ARRAY_SIZE(cs47l35_aअगर3_pins) पूर्ण,
-	अणु "mif1", cs47l35_mअगर1_pins, ARRAY_SIZE(cs47l35_mअगर1_pins) पूर्ण,
-	अणु "pdmspk1", cs47l35_spk_pins, ARRAY_SIZE(cs47l35_spk_pins) पूर्ण,
-पूर्ण;
+static const struct madera_pin_groups cs47l35_pin_groups[] = {
+	{ "aif1", cs47l35_aif1_pins, ARRAY_SIZE(cs47l35_aif1_pins) },
+	{ "aif2", cs47l35_aif2_pins, ARRAY_SIZE(cs47l35_aif2_pins) },
+	{ "aif3", cs47l35_aif3_pins, ARRAY_SIZE(cs47l35_aif3_pins) },
+	{ "mif1", cs47l35_mif1_pins, ARRAY_SIZE(cs47l35_mif1_pins) },
+	{ "pdmspk1", cs47l35_spk_pins, ARRAY_SIZE(cs47l35_spk_pins) },
+};
 
-स्थिर काष्ठा madera_pin_chip cs47l35_pin_chip = अणु
+const struct madera_pin_chip cs47l35_pin_chip = {
 	.n_pins = CS47L35_NUM_GPIOS,
 	.pin_groups = cs47l35_pin_groups,
 	.n_pin_groups = ARRAY_SIZE(cs47l35_pin_groups),
-पूर्ण;
+};

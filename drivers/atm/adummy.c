@@ -1,203 +1,202 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * adummy.c: a dummy ATM driver
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/types.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/delay.h>
-#समावेश <linux/init.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/समयr.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/slab.h>
-#समावेश <यंत्र/पन.स>
-#समावेश <यंत्र/byteorder.h>
-#समावेश <linux/uaccess.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/skbuff.h>
+#include <linux/errno.h>
+#include <linux/types.h>
+#include <linux/string.h>
+#include <linux/delay.h>
+#include <linux/init.h>
+#include <linux/mm.h>
+#include <linux/timer.h>
+#include <linux/interrupt.h>
+#include <linux/slab.h>
+#include <asm/io.h>
+#include <asm/byteorder.h>
+#include <linux/uaccess.h>
 
-#समावेश <linux/aपंचांगdev.h>
-#समावेश <linux/aपंचांग.h>
-#समावेश <linux/sonet.h>
+#include <linux/atmdev.h>
+#include <linux/atm.h>
+#include <linux/sonet.h>
 
 /* version definition */
 
-#घोषणा DRV_VERSION "1.0"
+#define DRV_VERSION "1.0"
 
-#घोषणा DEV_LABEL "adummy"
+#define DEV_LABEL "adummy"
 
-#घोषणा ADUMMY_DEV(dev) ((काष्ठा adummy_dev *) (dev)->dev_data)
+#define ADUMMY_DEV(dev) ((struct adummy_dev *) (dev)->dev_data)
 
-काष्ठा adummy_dev अणु
-	काष्ठा aपंचांग_dev *aपंचांग_dev;
+struct adummy_dev {
+	struct atm_dev *atm_dev;
 
-	काष्ठा list_head entry;
-पूर्ण;
+	struct list_head entry;
+};
 
 /* globals */
 
-अटल LIST_HEAD(adummy_devs);
+static LIST_HEAD(adummy_devs);
 
-अटल sमाप_प्रकार __set_संकेत(काष्ठा device *dev,
-		काष्ठा device_attribute *attr,
-		स्थिर अक्षर *buf, माप_प्रकार len)
-अणु
-	काष्ठा aपंचांग_dev *aपंचांग_dev = container_of(dev, काष्ठा aपंचांग_dev, class_dev);
-	पूर्णांक संकेत;
+static ssize_t __set_signal(struct device *dev,
+		struct device_attribute *attr,
+		const char *buf, size_t len)
+{
+	struct atm_dev *atm_dev = container_of(dev, struct atm_dev, class_dev);
+	int signal;
 
-	अगर (माला_पूछो(buf, "%d", &संकेत) == 1) अणु
+	if (sscanf(buf, "%d", &signal) == 1) {
 
-		अगर (संकेत < ATM_PHY_SIG_LOST || संकेत > ATM_PHY_SIG_FOUND)
-			संकेत = ATM_PHY_SIG_UNKNOWN;
+		if (signal < ATM_PHY_SIG_LOST || signal > ATM_PHY_SIG_FOUND)
+			signal = ATM_PHY_SIG_UNKNOWN;
 
-		aपंचांग_dev_संकेत_change(aपंचांग_dev, संकेत);
-		वापस 1;
-	पूर्ण
-	वापस -EINVAL;
-पूर्ण
+		atm_dev_signal_change(atm_dev, signal);
+		return 1;
+	}
+	return -EINVAL;
+}
 
-अटल sमाप_प्रकार __show_संकेत(काष्ठा device *dev,
-	काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा aपंचांग_dev *aपंचांग_dev = container_of(dev, काष्ठा aपंचांग_dev, class_dev);
-	वापस प्र_लिखो(buf, "%d\n", aपंचांग_dev->संकेत);
-पूर्ण
-अटल DEVICE_ATTR(संकेत, 0644, __show_संकेत, __set_संकेत);
+static ssize_t __show_signal(struct device *dev,
+	struct device_attribute *attr, char *buf)
+{
+	struct atm_dev *atm_dev = container_of(dev, struct atm_dev, class_dev);
+	return sprintf(buf, "%d\n", atm_dev->signal);
+}
+static DEVICE_ATTR(signal, 0644, __show_signal, __set_signal);
 
-अटल काष्ठा attribute *adummy_attrs[] = अणु
-	&dev_attr_संकेत.attr,
-	शून्य
-पूर्ण;
+static struct attribute *adummy_attrs[] = {
+	&dev_attr_signal.attr,
+	NULL
+};
 
-अटल स्थिर काष्ठा attribute_group adummy_group_attrs = अणु
-	.name = शून्य, /* We want them in dev's root folder */
+static const struct attribute_group adummy_group_attrs = {
+	.name = NULL, /* We want them in dev's root folder */
 	.attrs = adummy_attrs
-पूर्ण;
+};
 
-अटल पूर्णांक __init
-adummy_start(काष्ठा aपंचांग_dev *dev)
-अणु
+static int __init
+adummy_start(struct atm_dev *dev)
+{
 	dev->ci_range.vpi_bits = 4;
 	dev->ci_range.vci_bits = 12;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-adummy_खोलो(काष्ठा aपंचांग_vcc *vcc)
-अणु
-	लघु vpi = vcc->vpi;
-	पूर्णांक vci = vcc->vci;
+static int
+adummy_open(struct atm_vcc *vcc)
+{
+	short vpi = vcc->vpi;
+	int vci = vcc->vci;
 
-	अगर (vci == ATM_VCI_UNSPEC || vpi == ATM_VPI_UNSPEC)
-		वापस 0;
+	if (vci == ATM_VCI_UNSPEC || vpi == ATM_VPI_UNSPEC)
+		return 0;
 
 	set_bit(ATM_VF_ADDR, &vcc->flags);
 	set_bit(ATM_VF_READY, &vcc->flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम
-adummy_बंद(काष्ठा aपंचांग_vcc *vcc)
-अणु
+static void
+adummy_close(struct atm_vcc *vcc)
+{
 	clear_bit(ATM_VF_READY, &vcc->flags);
 	clear_bit(ATM_VF_ADDR, &vcc->flags);
-पूर्ण
+}
 
-अटल पूर्णांक
-adummy_send(काष्ठा aपंचांग_vcc *vcc, काष्ठा sk_buff *skb)
-अणु
-	अगर (vcc->pop)
+static int
+adummy_send(struct atm_vcc *vcc, struct sk_buff *skb)
+{
+	if (vcc->pop)
 		vcc->pop(vcc, skb);
-	अन्यथा
-		dev_kमुक्त_skb_any(skb);
+	else
+		dev_kfree_skb_any(skb);
 	atomic_inc(&vcc->stats->tx);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-adummy_proc_पढ़ो(काष्ठा aपंचांग_dev *dev, loff_t *pos, अक्षर *page)
-अणु
-	पूर्णांक left = *pos;
+static int
+adummy_proc_read(struct atm_dev *dev, loff_t *pos, char *page)
+{
+	int left = *pos;
 
-	अगर (!left--)
-		वापस प्र_लिखो(page, "version %s\n", DRV_VERSION);
+	if (!left--)
+		return sprintf(page, "version %s\n", DRV_VERSION);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा aपंचांगdev_ops adummy_ops =
-अणु
-	.खोलो =		adummy_खोलो,
-	.बंद =	adummy_बंद,	
+static const struct atmdev_ops adummy_ops =
+{
+	.open =		adummy_open,
+	.close =	adummy_close,	
 	.send =		adummy_send,
-	.proc_पढ़ो =	adummy_proc_पढ़ो,
+	.proc_read =	adummy_proc_read,
 	.owner =	THIS_MODULE
-पूर्ण;
+};
 
-अटल पूर्णांक __init adummy_init(व्योम)
-अणु
-	काष्ठा aपंचांग_dev *aपंचांग_dev;
-	काष्ठा adummy_dev *adummy_dev;
-	पूर्णांक err = 0;
+static int __init adummy_init(void)
+{
+	struct atm_dev *atm_dev;
+	struct adummy_dev *adummy_dev;
+	int err = 0;
 
-	prपूर्णांकk(KERN_ERR "adummy: version %s\n", DRV_VERSION);
+	printk(KERN_ERR "adummy: version %s\n", DRV_VERSION);
 
-	adummy_dev = kzalloc(माप(काष्ठा adummy_dev),
+	adummy_dev = kzalloc(sizeof(struct adummy_dev),
 						   GFP_KERNEL);
-	अगर (!adummy_dev) अणु
-		prपूर्णांकk(KERN_ERR DEV_LABEL ": kzalloc() failed\n");
+	if (!adummy_dev) {
+		printk(KERN_ERR DEV_LABEL ": kzalloc() failed\n");
 		err = -ENOMEM;
-		जाओ out;
-	पूर्ण
-	aपंचांग_dev = aपंचांग_dev_रेजिस्टर(DEV_LABEL, शून्य, &adummy_ops, -1, शून्य);
-	अगर (!aपंचांग_dev) अणु
-		prपूर्णांकk(KERN_ERR DEV_LABEL ": atm_dev_register() failed\n");
+		goto out;
+	}
+	atm_dev = atm_dev_register(DEV_LABEL, NULL, &adummy_ops, -1, NULL);
+	if (!atm_dev) {
+		printk(KERN_ERR DEV_LABEL ": atm_dev_register() failed\n");
 		err = -ENODEV;
-		जाओ out_kमुक्त;
-	पूर्ण
+		goto out_kfree;
+	}
 
-	adummy_dev->aपंचांग_dev = aपंचांग_dev;
-	aपंचांग_dev->dev_data = adummy_dev;
+	adummy_dev->atm_dev = atm_dev;
+	atm_dev->dev_data = adummy_dev;
 
-	अगर (sysfs_create_group(&aपंचांग_dev->class_dev.kobj, &adummy_group_attrs))
-		dev_err(&aपंचांग_dev->class_dev, "Could not register attrs for adummy\n");
+	if (sysfs_create_group(&atm_dev->class_dev.kobj, &adummy_group_attrs))
+		dev_err(&atm_dev->class_dev, "Could not register attrs for adummy\n");
 
-	अगर (adummy_start(aपंचांग_dev)) अणु
-		prपूर्णांकk(KERN_ERR DEV_LABEL ": adummy_start() failed\n");
+	if (adummy_start(atm_dev)) {
+		printk(KERN_ERR DEV_LABEL ": adummy_start() failed\n");
 		err = -ENODEV;
-		जाओ out_unरेजिस्टर;
-	पूर्ण
+		goto out_unregister;
+	}
 
 	list_add(&adummy_dev->entry, &adummy_devs);
 out:
-	वापस err;
+	return err;
 
-out_unरेजिस्टर:
-	aपंचांग_dev_deरेजिस्टर(aपंचांग_dev);
-out_kमुक्त:
-	kमुक्त(adummy_dev);
-	जाओ out;
-पूर्ण
+out_unregister:
+	atm_dev_deregister(atm_dev);
+out_kfree:
+	kfree(adummy_dev);
+	goto out;
+}
 
-अटल व्योम __निकास adummy_cleanup(व्योम)
-अणु
-	काष्ठा adummy_dev *adummy_dev, *next;
+static void __exit adummy_cleanup(void)
+{
+	struct adummy_dev *adummy_dev, *next;
 
-	list_क्रम_each_entry_safe(adummy_dev, next, &adummy_devs, entry) अणु
-		aपंचांग_dev_deरेजिस्टर(adummy_dev->aपंचांग_dev);
-		kमुक्त(adummy_dev);
-	पूर्ण
-पूर्ण
+	list_for_each_entry_safe(adummy_dev, next, &adummy_devs, entry) {
+		atm_dev_deregister(adummy_dev->atm_dev);
+		kfree(adummy_dev);
+	}
+}
 
 module_init(adummy_init);
-module_निकास(adummy_cleanup);
+module_exit(adummy_cleanup);
 
 MODULE_AUTHOR("chas williams <chas@cmf.nrl.navy.mil>");
 MODULE_DESCRIPTION("dummy ATM driver");

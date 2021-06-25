@@ -1,345 +1,344 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /* Copyright(c) 2017-2018 Intel Corporation. All rights reserved. */
-#समावेश <linux/memremap.h>
-#समावेश <linux/device.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/list.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/dax.h>
-#समावेश <linux/पन.स>
-#समावेश "dax-private.h"
-#समावेश "bus.h"
+#include <linux/memremap.h>
+#include <linux/device.h>
+#include <linux/mutex.h>
+#include <linux/list.h>
+#include <linux/slab.h>
+#include <linux/dax.h>
+#include <linux/io.h>
+#include "dax-private.h"
+#include "bus.h"
 
-अटल काष्ठा class *dax_class;
+static struct class *dax_class;
 
-अटल DEFINE_MUTEX(dax_bus_lock);
+static DEFINE_MUTEX(dax_bus_lock);
 
-#घोषणा DAX_NAME_LEN 30
-काष्ठा dax_id अणु
-	काष्ठा list_head list;
-	अक्षर dev_name[DAX_NAME_LEN];
-पूर्ण;
+#define DAX_NAME_LEN 30
+struct dax_id {
+	struct list_head list;
+	char dev_name[DAX_NAME_LEN];
+};
 
-अटल पूर्णांक dax_bus_uevent(काष्ठा device *dev, काष्ठा kobj_uevent_env *env)
-अणु
+static int dax_bus_uevent(struct device *dev, struct kobj_uevent_env *env)
+{
 	/*
 	 * We only ever expect to handle device-dax instances, i.e. the
 	 * @type argument to MODULE_ALIAS_DAX_DEVICE() is always zero
 	 */
-	वापस add_uevent_var(env, "MODALIAS=" DAX_DEVICE_MODALIAS_FMT, 0);
-पूर्ण
+	return add_uevent_var(env, "MODALIAS=" DAX_DEVICE_MODALIAS_FMT, 0);
+}
 
-अटल काष्ठा dax_device_driver *to_dax_drv(काष्ठा device_driver *drv)
-अणु
-	वापस container_of(drv, काष्ठा dax_device_driver, drv);
-पूर्ण
+static struct dax_device_driver *to_dax_drv(struct device_driver *drv)
+{
+	return container_of(drv, struct dax_device_driver, drv);
+}
 
-अटल काष्ठा dax_id *__dax_match_id(काष्ठा dax_device_driver *dax_drv,
-		स्थिर अक्षर *dev_name)
-अणु
-	काष्ठा dax_id *dax_id;
+static struct dax_id *__dax_match_id(struct dax_device_driver *dax_drv,
+		const char *dev_name)
+{
+	struct dax_id *dax_id;
 
-	lockdep_निश्चित_held(&dax_bus_lock);
+	lockdep_assert_held(&dax_bus_lock);
 
-	list_क्रम_each_entry(dax_id, &dax_drv->ids, list)
-		अगर (sysfs_streq(dax_id->dev_name, dev_name))
-			वापस dax_id;
-	वापस शून्य;
-पूर्ण
+	list_for_each_entry(dax_id, &dax_drv->ids, list)
+		if (sysfs_streq(dax_id->dev_name, dev_name))
+			return dax_id;
+	return NULL;
+}
 
-अटल पूर्णांक dax_match_id(काष्ठा dax_device_driver *dax_drv, काष्ठा device *dev)
-अणु
-	पूर्णांक match;
+static int dax_match_id(struct dax_device_driver *dax_drv, struct device *dev)
+{
+	int match;
 
 	mutex_lock(&dax_bus_lock);
 	match = !!__dax_match_id(dax_drv, dev_name(dev));
 	mutex_unlock(&dax_bus_lock);
 
-	वापस match;
-पूर्ण
+	return match;
+}
 
-क्रमागत id_action अणु
+enum id_action {
 	ID_REMOVE,
 	ID_ADD,
-पूर्ण;
+};
 
-अटल sमाप_प्रकार करो_id_store(काष्ठा device_driver *drv, स्थिर अक्षर *buf,
-		माप_प्रकार count, क्रमागत id_action action)
-अणु
-	काष्ठा dax_device_driver *dax_drv = to_dax_drv(drv);
-	अचिन्हित पूर्णांक region_id, id;
-	अक्षर devname[DAX_NAME_LEN];
-	काष्ठा dax_id *dax_id;
-	sमाप_प्रकार rc = count;
-	पूर्णांक fields;
+static ssize_t do_id_store(struct device_driver *drv, const char *buf,
+		size_t count, enum id_action action)
+{
+	struct dax_device_driver *dax_drv = to_dax_drv(drv);
+	unsigned int region_id, id;
+	char devname[DAX_NAME_LEN];
+	struct dax_id *dax_id;
+	ssize_t rc = count;
+	int fields;
 
-	fields = माला_पूछो(buf, "dax%d.%d", &region_id, &id);
-	अगर (fields != 2)
-		वापस -EINVAL;
-	प्र_लिखो(devname, "dax%d.%d", region_id, id);
-	अगर (!sysfs_streq(buf, devname))
-		वापस -EINVAL;
+	fields = sscanf(buf, "dax%d.%d", &region_id, &id);
+	if (fields != 2)
+		return -EINVAL;
+	sprintf(devname, "dax%d.%d", region_id, id);
+	if (!sysfs_streq(buf, devname))
+		return -EINVAL;
 
 	mutex_lock(&dax_bus_lock);
 	dax_id = __dax_match_id(dax_drv, buf);
-	अगर (!dax_id) अणु
-		अगर (action == ID_ADD) अणु
-			dax_id = kzalloc(माप(*dax_id), GFP_KERNEL);
-			अगर (dax_id) अणु
-				म_नकलन(dax_id->dev_name, buf, DAX_NAME_LEN);
+	if (!dax_id) {
+		if (action == ID_ADD) {
+			dax_id = kzalloc(sizeof(*dax_id), GFP_KERNEL);
+			if (dax_id) {
+				strncpy(dax_id->dev_name, buf, DAX_NAME_LEN);
 				list_add(&dax_id->list, &dax_drv->ids);
-			पूर्ण अन्यथा
+			} else
 				rc = -ENOMEM;
-		पूर्ण
-	पूर्ण अन्यथा अगर (action == ID_REMOVE) अणु
+		}
+	} else if (action == ID_REMOVE) {
 		list_del(&dax_id->list);
-		kमुक्त(dax_id);
-	पूर्ण
+		kfree(dax_id);
+	}
 	mutex_unlock(&dax_bus_lock);
 
-	अगर (rc < 0)
-		वापस rc;
-	अगर (action == ID_ADD)
+	if (rc < 0)
+		return rc;
+	if (action == ID_ADD)
 		rc = driver_attach(drv);
-	अगर (rc)
-		वापस rc;
-	वापस count;
-पूर्ण
+	if (rc)
+		return rc;
+	return count;
+}
 
-अटल sमाप_प्रकार new_id_store(काष्ठा device_driver *drv, स्थिर अक्षर *buf,
-		माप_प्रकार count)
-अणु
-	वापस करो_id_store(drv, buf, count, ID_ADD);
-पूर्ण
-अटल DRIVER_ATTR_WO(new_id);
+static ssize_t new_id_store(struct device_driver *drv, const char *buf,
+		size_t count)
+{
+	return do_id_store(drv, buf, count, ID_ADD);
+}
+static DRIVER_ATTR_WO(new_id);
 
-अटल sमाप_प्रकार हटाओ_id_store(काष्ठा device_driver *drv, स्थिर अक्षर *buf,
-		माप_प्रकार count)
-अणु
-	वापस करो_id_store(drv, buf, count, ID_REMOVE);
-पूर्ण
-अटल DRIVER_ATTR_WO(हटाओ_id);
+static ssize_t remove_id_store(struct device_driver *drv, const char *buf,
+		size_t count)
+{
+	return do_id_store(drv, buf, count, ID_REMOVE);
+}
+static DRIVER_ATTR_WO(remove_id);
 
-अटल काष्ठा attribute *dax_drv_attrs[] = अणु
+static struct attribute *dax_drv_attrs[] = {
 	&driver_attr_new_id.attr,
-	&driver_attr_हटाओ_id.attr,
-	शून्य,
-पूर्ण;
+	&driver_attr_remove_id.attr,
+	NULL,
+};
 ATTRIBUTE_GROUPS(dax_drv);
 
-अटल पूर्णांक dax_bus_match(काष्ठा device *dev, काष्ठा device_driver *drv);
+static int dax_bus_match(struct device *dev, struct device_driver *drv);
 
-अटल bool is_अटल(काष्ठा dax_region *dax_region)
-अणु
-	वापस (dax_region->res.flags & IORESOURCE_DAX_STATIC) != 0;
-पूर्ण
+static bool is_static(struct dax_region *dax_region)
+{
+	return (dax_region->res.flags & IORESOURCE_DAX_STATIC) != 0;
+}
 
-अटल u64 dev_dax_size(काष्ठा dev_dax *dev_dax)
-अणु
+static u64 dev_dax_size(struct dev_dax *dev_dax)
+{
 	u64 size = 0;
-	पूर्णांक i;
+	int i;
 
-	device_lock_निश्चित(&dev_dax->dev);
+	device_lock_assert(&dev_dax->dev);
 
-	क्रम (i = 0; i < dev_dax->nr_range; i++)
+	for (i = 0; i < dev_dax->nr_range; i++)
 		size += range_len(&dev_dax->ranges[i].range);
 
-	वापस size;
-पूर्ण
+	return size;
+}
 
-अटल पूर्णांक dax_bus_probe(काष्ठा device *dev)
-अणु
-	काष्ठा dax_device_driver *dax_drv = to_dax_drv(dev->driver);
-	काष्ठा dev_dax *dev_dax = to_dev_dax(dev);
-	काष्ठा dax_region *dax_region = dev_dax->region;
-	पूर्णांक rc;
+static int dax_bus_probe(struct device *dev)
+{
+	struct dax_device_driver *dax_drv = to_dax_drv(dev->driver);
+	struct dev_dax *dev_dax = to_dev_dax(dev);
+	struct dax_region *dax_region = dev_dax->region;
+	int rc;
 
-	अगर (dev_dax_size(dev_dax) == 0 || dev_dax->id < 0)
-		वापस -ENXIO;
+	if (dev_dax_size(dev_dax) == 0 || dev_dax->id < 0)
+		return -ENXIO;
 
 	rc = dax_drv->probe(dev_dax);
 
-	अगर (rc || is_अटल(dax_region))
-		वापस rc;
+	if (rc || is_static(dax_region))
+		return rc;
 
 	/*
 	 * Track new seed creation only after successful probe of the
 	 * previous seed.
 	 */
-	अगर (dax_region->seed == dev)
-		dax_region->seed = शून्य;
+	if (dax_region->seed == dev)
+		dax_region->seed = NULL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dax_bus_हटाओ(काष्ठा device *dev)
-अणु
-	काष्ठा dax_device_driver *dax_drv = to_dax_drv(dev->driver);
-	काष्ठा dev_dax *dev_dax = to_dev_dax(dev);
+static int dax_bus_remove(struct device *dev)
+{
+	struct dax_device_driver *dax_drv = to_dax_drv(dev->driver);
+	struct dev_dax *dev_dax = to_dev_dax(dev);
 
-	अगर (dax_drv->हटाओ)
-		dax_drv->हटाओ(dev_dax);
+	if (dax_drv->remove)
+		dax_drv->remove(dev_dax);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा bus_type dax_bus_type = अणु
+static struct bus_type dax_bus_type = {
 	.name = "dax",
 	.uevent = dax_bus_uevent,
 	.match = dax_bus_match,
 	.probe = dax_bus_probe,
-	.हटाओ = dax_bus_हटाओ,
+	.remove = dax_bus_remove,
 	.drv_groups = dax_drv_groups,
-पूर्ण;
+};
 
-अटल पूर्णांक dax_bus_match(काष्ठा device *dev, काष्ठा device_driver *drv)
-अणु
-	काष्ठा dax_device_driver *dax_drv = to_dax_drv(drv);
+static int dax_bus_match(struct device *dev, struct device_driver *drv)
+{
+	struct dax_device_driver *dax_drv = to_dax_drv(drv);
 
 	/*
 	 * All but the 'device-dax' driver, which has 'match_always'
 	 * set, requires an exact id match.
 	 */
-	अगर (dax_drv->match_always)
-		वापस 1;
+	if (dax_drv->match_always)
+		return 1;
 
-	वापस dax_match_id(dax_drv, dev);
-पूर्ण
+	return dax_match_id(dax_drv, dev);
+}
 
 /*
- * Rely on the fact that drvdata is set beक्रमe the attributes are
- * रेजिस्टरed, and that the attributes are unरेजिस्टरed beक्रमe drvdata
+ * Rely on the fact that drvdata is set before the attributes are
+ * registered, and that the attributes are unregistered before drvdata
  * is cleared to assume that drvdata is always valid.
  */
-अटल sमाप_प्रकार id_show(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा dax_region *dax_region = dev_get_drvdata(dev);
+static ssize_t id_show(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	struct dax_region *dax_region = dev_get_drvdata(dev);
 
-	वापस प्र_लिखो(buf, "%d\n", dax_region->id);
-पूर्ण
-अटल DEVICE_ATTR_RO(id);
+	return sprintf(buf, "%d\n", dax_region->id);
+}
+static DEVICE_ATTR_RO(id);
 
-अटल sमाप_प्रकार region_size_show(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा dax_region *dax_region = dev_get_drvdata(dev);
+static ssize_t region_size_show(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	struct dax_region *dax_region = dev_get_drvdata(dev);
 
-	वापस प्र_लिखो(buf, "%llu\n", (अचिन्हित दीर्घ दीर्घ)
+	return sprintf(buf, "%llu\n", (unsigned long long)
 			resource_size(&dax_region->res));
-पूर्ण
-अटल काष्ठा device_attribute dev_attr_region_size = __ATTR(size, 0444,
-		region_size_show, शून्य);
+}
+static struct device_attribute dev_attr_region_size = __ATTR(size, 0444,
+		region_size_show, NULL);
 
-अटल sमाप_प्रकार region_align_show(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा dax_region *dax_region = dev_get_drvdata(dev);
+static ssize_t region_align_show(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	struct dax_region *dax_region = dev_get_drvdata(dev);
 
-	वापस प्र_लिखो(buf, "%u\n", dax_region->align);
-पूर्ण
-अटल काष्ठा device_attribute dev_attr_region_align =
-		__ATTR(align, 0400, region_align_show, शून्य);
+	return sprintf(buf, "%u\n", dax_region->align);
+}
+static struct device_attribute dev_attr_region_align =
+		__ATTR(align, 0400, region_align_show, NULL);
 
-#घोषणा क्रम_each_dax_region_resource(dax_region, res) \
-	क्रम (res = (dax_region)->res.child; res; res = res->sibling)
+#define for_each_dax_region_resource(dax_region, res) \
+	for (res = (dax_region)->res.child; res; res = res->sibling)
 
-अटल अचिन्हित दीर्घ दीर्घ dax_region_avail_size(काष्ठा dax_region *dax_region)
-अणु
-	resource_माप_प्रकार size = resource_size(&dax_region->res);
-	काष्ठा resource *res;
+static unsigned long long dax_region_avail_size(struct dax_region *dax_region)
+{
+	resource_size_t size = resource_size(&dax_region->res);
+	struct resource *res;
 
-	device_lock_निश्चित(dax_region->dev);
+	device_lock_assert(dax_region->dev);
 
-	क्रम_each_dax_region_resource(dax_region, res)
+	for_each_dax_region_resource(dax_region, res)
 		size -= resource_size(res);
-	वापस size;
-पूर्ण
+	return size;
+}
 
-अटल sमाप_प्रकार available_size_show(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा dax_region *dax_region = dev_get_drvdata(dev);
-	अचिन्हित दीर्घ दीर्घ size;
+static ssize_t available_size_show(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	struct dax_region *dax_region = dev_get_drvdata(dev);
+	unsigned long long size;
 
 	device_lock(dev);
 	size = dax_region_avail_size(dax_region);
 	device_unlock(dev);
 
-	वापस प्र_लिखो(buf, "%llu\n", size);
-पूर्ण
-अटल DEVICE_ATTR_RO(available_size);
+	return sprintf(buf, "%llu\n", size);
+}
+static DEVICE_ATTR_RO(available_size);
 
-अटल sमाप_प्रकार seed_show(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा dax_region *dax_region = dev_get_drvdata(dev);
-	काष्ठा device *seed;
-	sमाप_प्रकार rc;
+static ssize_t seed_show(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	struct dax_region *dax_region = dev_get_drvdata(dev);
+	struct device *seed;
+	ssize_t rc;
 
-	अगर (is_अटल(dax_region))
-		वापस -EINVAL;
+	if (is_static(dax_region))
+		return -EINVAL;
 
 	device_lock(dev);
 	seed = dax_region->seed;
-	rc = प्र_लिखो(buf, "%s\n", seed ? dev_name(seed) : "");
+	rc = sprintf(buf, "%s\n", seed ? dev_name(seed) : "");
 	device_unlock(dev);
 
-	वापस rc;
-पूर्ण
-अटल DEVICE_ATTR_RO(seed);
+	return rc;
+}
+static DEVICE_ATTR_RO(seed);
 
-अटल sमाप_प्रकार create_show(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा dax_region *dax_region = dev_get_drvdata(dev);
-	काष्ठा device *youngest;
-	sमाप_प्रकार rc;
+static ssize_t create_show(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	struct dax_region *dax_region = dev_get_drvdata(dev);
+	struct device *youngest;
+	ssize_t rc;
 
-	अगर (is_अटल(dax_region))
-		वापस -EINVAL;
+	if (is_static(dax_region))
+		return -EINVAL;
 
 	device_lock(dev);
 	youngest = dax_region->youngest;
-	rc = प्र_लिखो(buf, "%s\n", youngest ? dev_name(youngest) : "");
+	rc = sprintf(buf, "%s\n", youngest ? dev_name(youngest) : "");
 	device_unlock(dev);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल sमाप_प्रकार create_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
-		स्थिर अक्षर *buf, माप_प्रकार len)
-अणु
-	काष्ठा dax_region *dax_region = dev_get_drvdata(dev);
-	अचिन्हित दीर्घ दीर्घ avail;
-	sमाप_प्रकार rc;
-	पूर्णांक val;
+static ssize_t create_store(struct device *dev, struct device_attribute *attr,
+		const char *buf, size_t len)
+{
+	struct dax_region *dax_region = dev_get_drvdata(dev);
+	unsigned long long avail;
+	ssize_t rc;
+	int val;
 
-	अगर (is_अटल(dax_region))
-		वापस -EINVAL;
+	if (is_static(dax_region))
+		return -EINVAL;
 
-	rc = kstrtoपूर्णांक(buf, 0, &val);
-	अगर (rc)
-		वापस rc;
-	अगर (val != 1)
-		वापस -EINVAL;
+	rc = kstrtoint(buf, 0, &val);
+	if (rc)
+		return rc;
+	if (val != 1)
+		return -EINVAL;
 
 	device_lock(dev);
 	avail = dax_region_avail_size(dax_region);
-	अगर (avail == 0)
+	if (avail == 0)
 		rc = -ENOSPC;
-	अन्यथा अणु
-		काष्ठा dev_dax_data data = अणु
+	else {
+		struct dev_dax_data data = {
 			.dax_region = dax_region,
 			.size = 0,
 			.id = -1,
-		पूर्ण;
-		काष्ठा dev_dax *dev_dax = devm_create_dev_dax(&data);
+		};
+		struct dev_dax *dev_dax = devm_create_dev_dax(&data);
 
-		अगर (IS_ERR(dev_dax))
+		if (IS_ERR(dev_dax))
 			rc = PTR_ERR(dev_dax);
-		अन्यथा अणु
+		else {
 			/*
 			 * In support of crafting multiple new devices
 			 * simultaneously multiple seeds can be created,
@@ -347,157 +346,157 @@ ATTRIBUTE_GROUPS(dax_drv);
 			 * successfully bound is tracked as the region
 			 * seed.
 			 */
-			अगर (!dax_region->seed)
+			if (!dax_region->seed)
 				dax_region->seed = &dev_dax->dev;
 			dax_region->youngest = &dev_dax->dev;
 			rc = len;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	device_unlock(dev);
 
-	वापस rc;
-पूर्ण
-अटल DEVICE_ATTR_RW(create);
+	return rc;
+}
+static DEVICE_ATTR_RW(create);
 
-व्योम समाप्त_dev_dax(काष्ठा dev_dax *dev_dax)
-अणु
-	काष्ठा dax_device *dax_dev = dev_dax->dax_dev;
-	काष्ठा inode *inode = dax_inode(dax_dev);
+void kill_dev_dax(struct dev_dax *dev_dax)
+{
+	struct dax_device *dax_dev = dev_dax->dax_dev;
+	struct inode *inode = dax_inode(dax_dev);
 
-	समाप्त_dax(dax_dev);
+	kill_dax(dax_dev);
 	unmap_mapping_range(inode->i_mapping, 0, 0, 1);
-पूर्ण
-EXPORT_SYMBOL_GPL(समाप्त_dev_dax);
+}
+EXPORT_SYMBOL_GPL(kill_dev_dax);
 
-अटल व्योम trim_dev_dax_range(काष्ठा dev_dax *dev_dax)
-अणु
-	पूर्णांक i = dev_dax->nr_range - 1;
-	काष्ठा range *range = &dev_dax->ranges[i].range;
-	काष्ठा dax_region *dax_region = dev_dax->region;
+static void trim_dev_dax_range(struct dev_dax *dev_dax)
+{
+	int i = dev_dax->nr_range - 1;
+	struct range *range = &dev_dax->ranges[i].range;
+	struct dax_region *dax_region = dev_dax->region;
 
-	device_lock_निश्चित(dax_region->dev);
+	device_lock_assert(dax_region->dev);
 	dev_dbg(&dev_dax->dev, "delete range[%d]: %#llx:%#llx\n", i,
-		(अचिन्हित दीर्घ दीर्घ)range->start,
-		(अचिन्हित दीर्घ दीर्घ)range->end);
+		(unsigned long long)range->start,
+		(unsigned long long)range->end);
 
 	__release_region(&dax_region->res, range->start, range_len(range));
-	अगर (--dev_dax->nr_range == 0) अणु
-		kमुक्त(dev_dax->ranges);
-		dev_dax->ranges = शून्य;
-	पूर्ण
-पूर्ण
+	if (--dev_dax->nr_range == 0) {
+		kfree(dev_dax->ranges);
+		dev_dax->ranges = NULL;
+	}
+}
 
-अटल व्योम मुक्त_dev_dax_ranges(काष्ठा dev_dax *dev_dax)
-अणु
-	जबतक (dev_dax->nr_range)
+static void free_dev_dax_ranges(struct dev_dax *dev_dax)
+{
+	while (dev_dax->nr_range)
 		trim_dev_dax_range(dev_dax);
-पूर्ण
+}
 
-अटल व्योम unरेजिस्टर_dev_dax(व्योम *dev)
-अणु
-	काष्ठा dev_dax *dev_dax = to_dev_dax(dev);
+static void unregister_dev_dax(void *dev)
+{
+	struct dev_dax *dev_dax = to_dev_dax(dev);
 
 	dev_dbg(dev, "%s\n", __func__);
 
-	समाप्त_dev_dax(dev_dax);
-	मुक्त_dev_dax_ranges(dev_dax);
+	kill_dev_dax(dev_dax);
+	free_dev_dax_ranges(dev_dax);
 	device_del(dev);
 	put_device(dev);
-पूर्ण
+}
 
-/* a वापस value >= 0 indicates this invocation invalidated the id */
-अटल पूर्णांक __मुक्त_dev_dax_id(काष्ठा dev_dax *dev_dax)
-अणु
-	काष्ठा dax_region *dax_region = dev_dax->region;
-	काष्ठा device *dev = &dev_dax->dev;
-	पूर्णांक rc = dev_dax->id;
+/* a return value >= 0 indicates this invocation invalidated the id */
+static int __free_dev_dax_id(struct dev_dax *dev_dax)
+{
+	struct dax_region *dax_region = dev_dax->region;
+	struct device *dev = &dev_dax->dev;
+	int rc = dev_dax->id;
 
-	device_lock_निश्चित(dev);
+	device_lock_assert(dev);
 
-	अगर (is_अटल(dax_region) || dev_dax->id < 0)
-		वापस -1;
-	ida_मुक्त(&dax_region->ida, dev_dax->id);
+	if (is_static(dax_region) || dev_dax->id < 0)
+		return -1;
+	ida_free(&dax_region->ida, dev_dax->id);
 	dev_dax->id = -1;
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक मुक्त_dev_dax_id(काष्ठा dev_dax *dev_dax)
-अणु
-	काष्ठा device *dev = &dev_dax->dev;
-	पूर्णांक rc;
+static int free_dev_dax_id(struct dev_dax *dev_dax)
+{
+	struct device *dev = &dev_dax->dev;
+	int rc;
 
 	device_lock(dev);
-	rc = __मुक्त_dev_dax_id(dev_dax);
+	rc = __free_dev_dax_id(dev_dax);
 	device_unlock(dev);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल sमाप_प्रकार delete_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
-		स्थिर अक्षर *buf, माप_प्रकार len)
-अणु
-	काष्ठा dax_region *dax_region = dev_get_drvdata(dev);
-	काष्ठा dev_dax *dev_dax;
-	काष्ठा device *victim;
-	bool करो_del = false;
-	पूर्णांक rc;
+static ssize_t delete_store(struct device *dev, struct device_attribute *attr,
+		const char *buf, size_t len)
+{
+	struct dax_region *dax_region = dev_get_drvdata(dev);
+	struct dev_dax *dev_dax;
+	struct device *victim;
+	bool do_del = false;
+	int rc;
 
-	अगर (is_अटल(dax_region))
-		वापस -EINVAL;
+	if (is_static(dax_region))
+		return -EINVAL;
 
 	victim = device_find_child_by_name(dax_region->dev, buf);
-	अगर (!victim)
-		वापस -ENXIO;
+	if (!victim)
+		return -ENXIO;
 
 	device_lock(dev);
 	device_lock(victim);
 	dev_dax = to_dev_dax(victim);
-	अगर (victim->driver || dev_dax_size(dev_dax))
+	if (victim->driver || dev_dax_size(dev_dax))
 		rc = -EBUSY;
-	अन्यथा अणु
+	else {
 		/*
-		 * Invalidate the device so it करोes not become active
+		 * Invalidate the device so it does not become active
 		 * again, but always preserve device-id-0 so that
-		 * /sys/bus/dax/ is guaranteed to be populated जबतक any
-		 * dax_region is रेजिस्टरed.
+		 * /sys/bus/dax/ is guaranteed to be populated while any
+		 * dax_region is registered.
 		 */
-		अगर (dev_dax->id > 0) अणु
-			करो_del = __मुक्त_dev_dax_id(dev_dax) >= 0;
+		if (dev_dax->id > 0) {
+			do_del = __free_dev_dax_id(dev_dax) >= 0;
 			rc = len;
-			अगर (dax_region->seed == victim)
-				dax_region->seed = शून्य;
-			अगर (dax_region->youngest == victim)
-				dax_region->youngest = शून्य;
-		पूर्ण अन्यथा
+			if (dax_region->seed == victim)
+				dax_region->seed = NULL;
+			if (dax_region->youngest == victim)
+				dax_region->youngest = NULL;
+		} else
 			rc = -EBUSY;
-	पूर्ण
+	}
 	device_unlock(victim);
 
 	/* won the race to invalidate the device, clean it up */
-	अगर (करो_del)
-		devm_release_action(dev, unरेजिस्टर_dev_dax, victim);
+	if (do_del)
+		devm_release_action(dev, unregister_dev_dax, victim);
 	device_unlock(dev);
 	put_device(victim);
 
-	वापस rc;
-पूर्ण
-अटल DEVICE_ATTR_WO(delete);
+	return rc;
+}
+static DEVICE_ATTR_WO(delete);
 
-अटल umode_t dax_region_visible(काष्ठा kobject *kobj, काष्ठा attribute *a,
-		पूर्णांक n)
-अणु
-	काष्ठा device *dev = container_of(kobj, काष्ठा device, kobj);
-	काष्ठा dax_region *dax_region = dev_get_drvdata(dev);
+static umode_t dax_region_visible(struct kobject *kobj, struct attribute *a,
+		int n)
+{
+	struct device *dev = container_of(kobj, struct device, kobj);
+	struct dax_region *dax_region = dev_get_drvdata(dev);
 
-	अगर (is_अटल(dax_region))
-		अगर (a == &dev_attr_available_size.attr
+	if (is_static(dax_region))
+		if (a == &dev_attr_available_size.attr
 				|| a == &dev_attr_create.attr
 				|| a == &dev_attr_seed.attr
 				|| a == &dev_attr_delete.attr)
-			वापस 0;
-	वापस a->mode;
-पूर्ण
+			return 0;
+	return a->mode;
+}
 
-अटल काष्ठा attribute *dax_region_attributes[] = अणु
+static struct attribute *dax_region_attributes[] = {
 	&dev_attr_available_size.attr,
 	&dev_attr_region_size.attr,
 	&dev_attr_region_align.attr,
@@ -505,66 +504,66 @@ EXPORT_SYMBOL_GPL(समाप्त_dev_dax);
 	&dev_attr_seed.attr,
 	&dev_attr_delete.attr,
 	&dev_attr_id.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल स्थिर काष्ठा attribute_group dax_region_attribute_group = अणु
+static const struct attribute_group dax_region_attribute_group = {
 	.name = "dax_region",
 	.attrs = dax_region_attributes,
 	.is_visible = dax_region_visible,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा attribute_group *dax_region_attribute_groups[] = अणु
+static const struct attribute_group *dax_region_attribute_groups[] = {
 	&dax_region_attribute_group,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल व्योम dax_region_मुक्त(काष्ठा kref *kref)
-अणु
-	काष्ठा dax_region *dax_region;
+static void dax_region_free(struct kref *kref)
+{
+	struct dax_region *dax_region;
 
-	dax_region = container_of(kref, काष्ठा dax_region, kref);
-	kमुक्त(dax_region);
-पूर्ण
+	dax_region = container_of(kref, struct dax_region, kref);
+	kfree(dax_region);
+}
 
-व्योम dax_region_put(काष्ठा dax_region *dax_region)
-अणु
-	kref_put(&dax_region->kref, dax_region_मुक्त);
-पूर्ण
+void dax_region_put(struct dax_region *dax_region)
+{
+	kref_put(&dax_region->kref, dax_region_free);
+}
 EXPORT_SYMBOL_GPL(dax_region_put);
 
-अटल व्योम dax_region_unरेजिस्टर(व्योम *region)
-अणु
-	काष्ठा dax_region *dax_region = region;
+static void dax_region_unregister(void *region)
+{
+	struct dax_region *dax_region = region;
 
-	sysfs_हटाओ_groups(&dax_region->dev->kobj,
+	sysfs_remove_groups(&dax_region->dev->kobj,
 			dax_region_attribute_groups);
 	dax_region_put(dax_region);
-पूर्ण
+}
 
-काष्ठा dax_region *alloc_dax_region(काष्ठा device *parent, पूर्णांक region_id,
-		काष्ठा range *range, पूर्णांक target_node, अचिन्हित पूर्णांक align,
-		अचिन्हित दीर्घ flags)
-अणु
-	काष्ठा dax_region *dax_region;
+struct dax_region *alloc_dax_region(struct device *parent, int region_id,
+		struct range *range, int target_node, unsigned int align,
+		unsigned long flags)
+{
+	struct dax_region *dax_region;
 
 	/*
-	 * The DAX core assumes that it can store its निजी data in
-	 * parent->driver_data. This WARN is a reminder / safeguard क्रम
+	 * The DAX core assumes that it can store its private data in
+	 * parent->driver_data. This WARN is a reminder / safeguard for
 	 * developers of device-dax drivers.
 	 */
-	अगर (dev_get_drvdata(parent)) अणु
+	if (dev_get_drvdata(parent)) {
 		dev_WARN(parent, "dax core failed to setup private data\n");
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	अगर (!IS_ALIGNED(range->start, align)
+	if (!IS_ALIGNED(range->start, align)
 			|| !IS_ALIGNED(range_len(range), align))
-		वापस शून्य;
+		return NULL;
 
-	dax_region = kzalloc(माप(*dax_region), GFP_KERNEL);
-	अगर (!dax_region)
-		वापस शून्य;
+	dax_region = kzalloc(sizeof(*dax_region), GFP_KERNEL);
+	if (!dax_region)
+		return NULL;
 
 	dev_set_drvdata(parent, dax_region);
 	kref_init(&dax_region->kref);
@@ -573,166 +572,166 @@ EXPORT_SYMBOL_GPL(dax_region_put);
 	dax_region->dev = parent;
 	dax_region->target_node = target_node;
 	ida_init(&dax_region->ida);
-	dax_region->res = (काष्ठा resource) अणु
+	dax_region->res = (struct resource) {
 		.start = range->start,
 		.end = range->end,
 		.flags = IORESOURCE_MEM | flags,
-	पूर्ण;
+	};
 
-	अगर (sysfs_create_groups(&parent->kobj, dax_region_attribute_groups)) अणु
-		kमुक्त(dax_region);
-		वापस शून्य;
-	पूर्ण
+	if (sysfs_create_groups(&parent->kobj, dax_region_attribute_groups)) {
+		kfree(dax_region);
+		return NULL;
+	}
 
 	kref_get(&dax_region->kref);
-	अगर (devm_add_action_or_reset(parent, dax_region_unरेजिस्टर, dax_region))
-		वापस शून्य;
-	वापस dax_region;
-पूर्ण
+	if (devm_add_action_or_reset(parent, dax_region_unregister, dax_region))
+		return NULL;
+	return dax_region;
+}
 EXPORT_SYMBOL_GPL(alloc_dax_region);
 
-अटल व्योम dax_mapping_release(काष्ठा device *dev)
-अणु
-	काष्ठा dax_mapping *mapping = to_dax_mapping(dev);
-	काष्ठा dev_dax *dev_dax = to_dev_dax(dev->parent);
+static void dax_mapping_release(struct device *dev)
+{
+	struct dax_mapping *mapping = to_dax_mapping(dev);
+	struct dev_dax *dev_dax = to_dev_dax(dev->parent);
 
-	ida_मुक्त(&dev_dax->ida, mapping->id);
-	kमुक्त(mapping);
-पूर्ण
+	ida_free(&dev_dax->ida, mapping->id);
+	kfree(mapping);
+}
 
-अटल व्योम unरेजिस्टर_dax_mapping(व्योम *data)
-अणु
-	काष्ठा device *dev = data;
-	काष्ठा dax_mapping *mapping = to_dax_mapping(dev);
-	काष्ठा dev_dax *dev_dax = to_dev_dax(dev->parent);
-	काष्ठा dax_region *dax_region = dev_dax->region;
+static void unregister_dax_mapping(void *data)
+{
+	struct device *dev = data;
+	struct dax_mapping *mapping = to_dax_mapping(dev);
+	struct dev_dax *dev_dax = to_dev_dax(dev->parent);
+	struct dax_region *dax_region = dev_dax->region;
 
 	dev_dbg(dev, "%s\n", __func__);
 
-	device_lock_निश्चित(dax_region->dev);
+	device_lock_assert(dax_region->dev);
 
-	dev_dax->ranges[mapping->range_id].mapping = शून्य;
+	dev_dax->ranges[mapping->range_id].mapping = NULL;
 	mapping->range_id = -1;
 
 	device_del(dev);
 	put_device(dev);
-पूर्ण
+}
 
-अटल काष्ठा dev_dax_range *get_dax_range(काष्ठा device *dev)
-अणु
-	काष्ठा dax_mapping *mapping = to_dax_mapping(dev);
-	काष्ठा dev_dax *dev_dax = to_dev_dax(dev->parent);
-	काष्ठा dax_region *dax_region = dev_dax->region;
+static struct dev_dax_range *get_dax_range(struct device *dev)
+{
+	struct dax_mapping *mapping = to_dax_mapping(dev);
+	struct dev_dax *dev_dax = to_dev_dax(dev->parent);
+	struct dax_region *dax_region = dev_dax->region;
 
 	device_lock(dax_region->dev);
-	अगर (mapping->range_id < 0) अणु
+	if (mapping->range_id < 0) {
 		device_unlock(dax_region->dev);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	वापस &dev_dax->ranges[mapping->range_id];
-पूर्ण
+	return &dev_dax->ranges[mapping->range_id];
+}
 
-अटल व्योम put_dax_range(काष्ठा dev_dax_range *dax_range)
-अणु
-	काष्ठा dax_mapping *mapping = dax_range->mapping;
-	काष्ठा dev_dax *dev_dax = to_dev_dax(mapping->dev.parent);
-	काष्ठा dax_region *dax_region = dev_dax->region;
+static void put_dax_range(struct dev_dax_range *dax_range)
+{
+	struct dax_mapping *mapping = dax_range->mapping;
+	struct dev_dax *dev_dax = to_dev_dax(mapping->dev.parent);
+	struct dax_region *dax_region = dev_dax->region;
 
 	device_unlock(dax_region->dev);
-पूर्ण
+}
 
-अटल sमाप_प्रकार start_show(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा dev_dax_range *dax_range;
-	sमाप_प्रकार rc;
-
-	dax_range = get_dax_range(dev);
-	अगर (!dax_range)
-		वापस -ENXIO;
-	rc = प्र_लिखो(buf, "%#llx\n", dax_range->range.start);
-	put_dax_range(dax_range);
-
-	वापस rc;
-पूर्ण
-अटल DEVICE_ATTR(start, 0400, start_show, शून्य);
-
-अटल sमाप_प्रकार end_show(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा dev_dax_range *dax_range;
-	sमाप_प्रकार rc;
+static ssize_t start_show(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	struct dev_dax_range *dax_range;
+	ssize_t rc;
 
 	dax_range = get_dax_range(dev);
-	अगर (!dax_range)
-		वापस -ENXIO;
-	rc = प्र_लिखो(buf, "%#llx\n", dax_range->range.end);
+	if (!dax_range)
+		return -ENXIO;
+	rc = sprintf(buf, "%#llx\n", dax_range->range.start);
 	put_dax_range(dax_range);
 
-	वापस rc;
-पूर्ण
-अटल DEVICE_ATTR(end, 0400, end_show, शून्य);
+	return rc;
+}
+static DEVICE_ATTR(start, 0400, start_show, NULL);
 
-अटल sमाप_प्रकार pgoff_show(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा dev_dax_range *dax_range;
-	sमाप_प्रकार rc;
+static ssize_t end_show(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	struct dev_dax_range *dax_range;
+	ssize_t rc;
 
 	dax_range = get_dax_range(dev);
-	अगर (!dax_range)
-		वापस -ENXIO;
-	rc = प्र_लिखो(buf, "%#lx\n", dax_range->pgoff);
+	if (!dax_range)
+		return -ENXIO;
+	rc = sprintf(buf, "%#llx\n", dax_range->range.end);
 	put_dax_range(dax_range);
 
-	वापस rc;
-पूर्ण
-अटल DEVICE_ATTR(page_offset, 0400, pgoff_show, शून्य);
+	return rc;
+}
+static DEVICE_ATTR(end, 0400, end_show, NULL);
 
-अटल काष्ठा attribute *dax_mapping_attributes[] = अणु
+static ssize_t pgoff_show(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	struct dev_dax_range *dax_range;
+	ssize_t rc;
+
+	dax_range = get_dax_range(dev);
+	if (!dax_range)
+		return -ENXIO;
+	rc = sprintf(buf, "%#lx\n", dax_range->pgoff);
+	put_dax_range(dax_range);
+
+	return rc;
+}
+static DEVICE_ATTR(page_offset, 0400, pgoff_show, NULL);
+
+static struct attribute *dax_mapping_attributes[] = {
 	&dev_attr_start.attr,
 	&dev_attr_end.attr,
 	&dev_attr_page_offset.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल स्थिर काष्ठा attribute_group dax_mapping_attribute_group = अणु
+static const struct attribute_group dax_mapping_attribute_group = {
 	.attrs = dax_mapping_attributes,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा attribute_group *dax_mapping_attribute_groups[] = अणु
+static const struct attribute_group *dax_mapping_attribute_groups[] = {
 	&dax_mapping_attribute_group,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल काष्ठा device_type dax_mapping_type = अणु
+static struct device_type dax_mapping_type = {
 	.release = dax_mapping_release,
 	.groups = dax_mapping_attribute_groups,
-पूर्ण;
+};
 
-अटल पूर्णांक devm_रेजिस्टर_dax_mapping(काष्ठा dev_dax *dev_dax, पूर्णांक range_id)
-अणु
-	काष्ठा dax_region *dax_region = dev_dax->region;
-	काष्ठा dax_mapping *mapping;
-	काष्ठा device *dev;
-	पूर्णांक rc;
+static int devm_register_dax_mapping(struct dev_dax *dev_dax, int range_id)
+{
+	struct dax_region *dax_region = dev_dax->region;
+	struct dax_mapping *mapping;
+	struct device *dev;
+	int rc;
 
-	device_lock_निश्चित(dax_region->dev);
+	device_lock_assert(dax_region->dev);
 
-	अगर (dev_WARN_ONCE(&dev_dax->dev, !dax_region->dev->driver,
+	if (dev_WARN_ONCE(&dev_dax->dev, !dax_region->dev->driver,
 				"region disabled\n"))
-		वापस -ENXIO;
+		return -ENXIO;
 
-	mapping = kzalloc(माप(*mapping), GFP_KERNEL);
-	अगर (!mapping)
-		वापस -ENOMEM;
+	mapping = kzalloc(sizeof(*mapping), GFP_KERNEL);
+	if (!mapping)
+		return -ENOMEM;
 	mapping->range_id = range_id;
 	mapping->id = ida_alloc(&dev_dax->ida, GFP_KERNEL);
-	अगर (mapping->id < 0) अणु
-		kमुक्त(mapping);
-		वापस -ENOMEM;
-	पूर्ण
+	if (mapping->id < 0) {
+		kfree(mapping);
+		return -ENOMEM;
+	}
 	dev_dax->ranges[range_id].mapping = mapping;
 	dev = &mapping->dev;
 	device_initialize(dev);
@@ -740,497 +739,497 @@ EXPORT_SYMBOL_GPL(alloc_dax_region);
 	dev->type = &dax_mapping_type;
 	dev_set_name(dev, "mapping%d", mapping->id);
 	rc = device_add(dev);
-	अगर (rc) अणु
+	if (rc) {
 		put_device(dev);
-		वापस rc;
-	पूर्ण
+		return rc;
+	}
 
-	rc = devm_add_action_or_reset(dax_region->dev, unरेजिस्टर_dax_mapping,
+	rc = devm_add_action_or_reset(dax_region->dev, unregister_dax_mapping,
 			dev);
-	अगर (rc)
-		वापस rc;
-	वापस 0;
-पूर्ण
+	if (rc)
+		return rc;
+	return 0;
+}
 
-अटल पूर्णांक alloc_dev_dax_range(काष्ठा dev_dax *dev_dax, u64 start,
-		resource_माप_प्रकार size)
-अणु
-	काष्ठा dax_region *dax_region = dev_dax->region;
-	काष्ठा resource *res = &dax_region->res;
-	काष्ठा device *dev = &dev_dax->dev;
-	काष्ठा dev_dax_range *ranges;
-	अचिन्हित दीर्घ pgoff = 0;
-	काष्ठा resource *alloc;
-	पूर्णांक i, rc;
+static int alloc_dev_dax_range(struct dev_dax *dev_dax, u64 start,
+		resource_size_t size)
+{
+	struct dax_region *dax_region = dev_dax->region;
+	struct resource *res = &dax_region->res;
+	struct device *dev = &dev_dax->dev;
+	struct dev_dax_range *ranges;
+	unsigned long pgoff = 0;
+	struct resource *alloc;
+	int i, rc;
 
-	device_lock_निश्चित(dax_region->dev);
+	device_lock_assert(dax_region->dev);
 
-	/* handle the seed alloc special हाल */
-	अगर (!size) अणु
-		अगर (dev_WARN_ONCE(dev, dev_dax->nr_range,
+	/* handle the seed alloc special case */
+	if (!size) {
+		if (dev_WARN_ONCE(dev, dev_dax->nr_range,
 					"0-size allocation must be first\n"))
-			वापस -EBUSY;
-		/* nr_range == 0 is अन्यथाwhere special हालd as 0-size device */
-		वापस 0;
-	पूर्ण
+			return -EBUSY;
+		/* nr_range == 0 is elsewhere special cased as 0-size device */
+		return 0;
+	}
 
 	alloc = __request_region(res, start, size, dev_name(dev), 0);
-	अगर (!alloc)
-		वापस -ENOMEM;
+	if (!alloc)
+		return -ENOMEM;
 
-	ranges = kपुनः_स्मृति(dev_dax->ranges, माप(*ranges)
+	ranges = krealloc(dev_dax->ranges, sizeof(*ranges)
 			* (dev_dax->nr_range + 1), GFP_KERNEL);
-	अगर (!ranges) अणु
+	if (!ranges) {
 		__release_region(res, alloc->start, resource_size(alloc));
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	क्रम (i = 0; i < dev_dax->nr_range; i++)
+	for (i = 0; i < dev_dax->nr_range; i++)
 		pgoff += PHYS_PFN(range_len(&ranges[i].range));
 	dev_dax->ranges = ranges;
-	ranges[dev_dax->nr_range++] = (काष्ठा dev_dax_range) अणु
+	ranges[dev_dax->nr_range++] = (struct dev_dax_range) {
 		.pgoff = pgoff,
-		.range = अणु
+		.range = {
 			.start = alloc->start,
 			.end = alloc->end,
-		पूर्ण,
-	पूर्ण;
+		},
+	};
 
 	dev_dbg(dev, "alloc range[%d]: %pa:%pa\n", dev_dax->nr_range - 1,
 			&alloc->start, &alloc->end);
 	/*
-	 * A dev_dax instance must be रेजिस्टरed beक्रमe mapping device
+	 * A dev_dax instance must be registered before mapping device
 	 * children can be added. Defer to devm_create_dev_dax() to add
 	 * the initial mapping device.
 	 */
-	अगर (!device_is_रेजिस्टरed(&dev_dax->dev))
-		वापस 0;
+	if (!device_is_registered(&dev_dax->dev))
+		return 0;
 
-	rc = devm_रेजिस्टर_dax_mapping(dev_dax, dev_dax->nr_range - 1);
-	अगर (rc)
+	rc = devm_register_dax_mapping(dev_dax, dev_dax->nr_range - 1);
+	if (rc)
 		trim_dev_dax_range(dev_dax);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक adjust_dev_dax_range(काष्ठा dev_dax *dev_dax, काष्ठा resource *res, resource_माप_प्रकार size)
-अणु
-	पूर्णांक last_range = dev_dax->nr_range - 1;
-	काष्ठा dev_dax_range *dax_range = &dev_dax->ranges[last_range];
-	काष्ठा dax_region *dax_region = dev_dax->region;
+static int adjust_dev_dax_range(struct dev_dax *dev_dax, struct resource *res, resource_size_t size)
+{
+	int last_range = dev_dax->nr_range - 1;
+	struct dev_dax_range *dax_range = &dev_dax->ranges[last_range];
+	struct dax_region *dax_region = dev_dax->region;
 	bool is_shrink = resource_size(res) > size;
-	काष्ठा range *range = &dax_range->range;
-	काष्ठा device *dev = &dev_dax->dev;
-	पूर्णांक rc;
+	struct range *range = &dax_range->range;
+	struct device *dev = &dev_dax->dev;
+	int rc;
 
-	device_lock_निश्चित(dax_region->dev);
+	device_lock_assert(dax_region->dev);
 
-	अगर (dev_WARN_ONCE(dev, !size, "deletion is handled by dev_dax_shrink\n"))
-		वापस -EINVAL;
+	if (dev_WARN_ONCE(dev, !size, "deletion is handled by dev_dax_shrink\n"))
+		return -EINVAL;
 
 	rc = adjust_resource(res, range->start, size);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
-	*range = (काष्ठा range) अणु
+	*range = (struct range) {
 		.start = range->start,
 		.end = range->start + size - 1,
-	पूर्ण;
+	};
 
 	dev_dbg(dev, "%s range[%d]: %#llx:%#llx\n", is_shrink ? "shrink" : "extend",
-			last_range, (अचिन्हित दीर्घ दीर्घ) range->start,
-			(अचिन्हित दीर्घ दीर्घ) range->end);
+			last_range, (unsigned long long) range->start,
+			(unsigned long long) range->end);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल sमाप_प्रकार size_show(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा dev_dax *dev_dax = to_dev_dax(dev);
-	अचिन्हित दीर्घ दीर्घ size;
+static ssize_t size_show(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	struct dev_dax *dev_dax = to_dev_dax(dev);
+	unsigned long long size;
 
 	device_lock(dev);
 	size = dev_dax_size(dev_dax);
 	device_unlock(dev);
 
-	वापस प्र_लिखो(buf, "%llu\n", size);
-पूर्ण
+	return sprintf(buf, "%llu\n", size);
+}
 
-अटल bool alloc_is_aligned(काष्ठा dev_dax *dev_dax, resource_माप_प्रकार size)
-अणु
+static bool alloc_is_aligned(struct dev_dax *dev_dax, resource_size_t size)
+{
 	/*
-	 * The minimum mapping granularity क्रम a device instance is a
+	 * The minimum mapping granularity for a device instance is a
 	 * single subsection, unless the arch says otherwise.
 	 */
-	वापस IS_ALIGNED(size, max_t(अचिन्हित दीर्घ, dev_dax->align, memremap_compat_align()));
-पूर्ण
+	return IS_ALIGNED(size, max_t(unsigned long, dev_dax->align, memremap_compat_align()));
+}
 
-अटल पूर्णांक dev_dax_shrink(काष्ठा dev_dax *dev_dax, resource_माप_प्रकार size)
-अणु
-	resource_माप_प्रकार to_shrink = dev_dax_size(dev_dax) - size;
-	काष्ठा dax_region *dax_region = dev_dax->region;
-	काष्ठा device *dev = &dev_dax->dev;
-	पूर्णांक i;
+static int dev_dax_shrink(struct dev_dax *dev_dax, resource_size_t size)
+{
+	resource_size_t to_shrink = dev_dax_size(dev_dax) - size;
+	struct dax_region *dax_region = dev_dax->region;
+	struct device *dev = &dev_dax->dev;
+	int i;
 
-	क्रम (i = dev_dax->nr_range - 1; i >= 0; i--) अणु
-		काष्ठा range *range = &dev_dax->ranges[i].range;
-		काष्ठा dax_mapping *mapping = dev_dax->ranges[i].mapping;
-		काष्ठा resource *adjust = शून्य, *res;
-		resource_माप_प्रकार shrink;
+	for (i = dev_dax->nr_range - 1; i >= 0; i--) {
+		struct range *range = &dev_dax->ranges[i].range;
+		struct dax_mapping *mapping = dev_dax->ranges[i].mapping;
+		struct resource *adjust = NULL, *res;
+		resource_size_t shrink;
 
 		shrink = min_t(u64, to_shrink, range_len(range));
-		अगर (shrink >= range_len(range)) अणु
+		if (shrink >= range_len(range)) {
 			devm_release_action(dax_region->dev,
-					unरेजिस्टर_dax_mapping, &mapping->dev);
+					unregister_dax_mapping, &mapping->dev);
 			trim_dev_dax_range(dev_dax);
 			to_shrink -= shrink;
-			अगर (!to_shrink)
-				अवरोध;
-			जारी;
-		पूर्ण
+			if (!to_shrink)
+				break;
+			continue;
+		}
 
-		क्रम_each_dax_region_resource(dax_region, res)
-			अगर (म_भेद(res->name, dev_name(dev)) == 0
-					&& res->start == range->start) अणु
+		for_each_dax_region_resource(dax_region, res)
+			if (strcmp(res->name, dev_name(dev)) == 0
+					&& res->start == range->start) {
 				adjust = res;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 
-		अगर (dev_WARN_ONCE(dev, !adjust || i != dev_dax->nr_range - 1,
+		if (dev_WARN_ONCE(dev, !adjust || i != dev_dax->nr_range - 1,
 					"failed to find matching resource\n"))
-			वापस -ENXIO;
-		वापस adjust_dev_dax_range(dev_dax, adjust, range_len(range)
+			return -ENXIO;
+		return adjust_dev_dax_range(dev_dax, adjust, range_len(range)
 				- shrink);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
 /*
- * Only allow adjusपंचांगents that preserve the relative pgoff of existing
+ * Only allow adjustments that preserve the relative pgoff of existing
  * allocations. I.e. the dev_dax->ranges array is ordered by increasing pgoff.
  */
-अटल bool adjust_ok(काष्ठा dev_dax *dev_dax, काष्ठा resource *res)
-अणु
-	काष्ठा dev_dax_range *last;
-	पूर्णांक i;
+static bool adjust_ok(struct dev_dax *dev_dax, struct resource *res)
+{
+	struct dev_dax_range *last;
+	int i;
 
-	अगर (dev_dax->nr_range == 0)
-		वापस false;
-	अगर (म_भेद(res->name, dev_name(&dev_dax->dev)) != 0)
-		वापस false;
+	if (dev_dax->nr_range == 0)
+		return false;
+	if (strcmp(res->name, dev_name(&dev_dax->dev)) != 0)
+		return false;
 	last = &dev_dax->ranges[dev_dax->nr_range - 1];
-	अगर (last->range.start != res->start || last->range.end != res->end)
-		वापस false;
-	क्रम (i = 0; i < dev_dax->nr_range - 1; i++) अणु
-		काष्ठा dev_dax_range *dax_range = &dev_dax->ranges[i];
+	if (last->range.start != res->start || last->range.end != res->end)
+		return false;
+	for (i = 0; i < dev_dax->nr_range - 1; i++) {
+		struct dev_dax_range *dax_range = &dev_dax->ranges[i];
 
-		अगर (dax_range->pgoff > last->pgoff)
-			वापस false;
-	पूर्ण
+		if (dax_range->pgoff > last->pgoff)
+			return false;
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल sमाप_प्रकार dev_dax_resize(काष्ठा dax_region *dax_region,
-		काष्ठा dev_dax *dev_dax, resource_माप_प्रकार size)
-अणु
-	resource_माप_प्रकार avail = dax_region_avail_size(dax_region), to_alloc;
-	resource_माप_प्रकार dev_size = dev_dax_size(dev_dax);
-	काष्ठा resource *region_res = &dax_region->res;
-	काष्ठा device *dev = &dev_dax->dev;
-	काष्ठा resource *res, *first;
-	resource_माप_प्रकार alloc = 0;
-	पूर्णांक rc;
+static ssize_t dev_dax_resize(struct dax_region *dax_region,
+		struct dev_dax *dev_dax, resource_size_t size)
+{
+	resource_size_t avail = dax_region_avail_size(dax_region), to_alloc;
+	resource_size_t dev_size = dev_dax_size(dev_dax);
+	struct resource *region_res = &dax_region->res;
+	struct device *dev = &dev_dax->dev;
+	struct resource *res, *first;
+	resource_size_t alloc = 0;
+	int rc;
 
-	अगर (dev->driver)
-		वापस -EBUSY;
-	अगर (size == dev_size)
-		वापस 0;
-	अगर (size > dev_size && size - dev_size > avail)
-		वापस -ENOSPC;
-	अगर (size < dev_size)
-		वापस dev_dax_shrink(dev_dax, size);
+	if (dev->driver)
+		return -EBUSY;
+	if (size == dev_size)
+		return 0;
+	if (size > dev_size && size - dev_size > avail)
+		return -ENOSPC;
+	if (size < dev_size)
+		return dev_dax_shrink(dev_dax, size);
 
 	to_alloc = size - dev_size;
-	अगर (dev_WARN_ONCE(dev, !alloc_is_aligned(dev_dax, to_alloc),
+	if (dev_WARN_ONCE(dev, !alloc_is_aligned(dev_dax, to_alloc),
 			"resize of %pa misaligned\n", &to_alloc))
-		वापस -ENXIO;
+		return -ENXIO;
 
 	/*
-	 * Expand the device पूर्णांकo the unused portion of the region. This
+	 * Expand the device into the unused portion of the region. This
 	 * may involve adjusting the end of an existing resource, or
 	 * allocating a new resource.
 	 */
 retry:
 	first = region_res->child;
-	अगर (!first)
-		वापस alloc_dev_dax_range(dev_dax, dax_region->res.start, to_alloc);
+	if (!first)
+		return alloc_dev_dax_range(dev_dax, dax_region->res.start, to_alloc);
 
 	rc = -ENOSPC;
-	क्रम (res = first; res; res = res->sibling) अणु
-		काष्ठा resource *next = res->sibling;
+	for (res = first; res; res = res->sibling) {
+		struct resource *next = res->sibling;
 
 		/* space at the beginning of the region */
-		अगर (res == first && res->start > dax_region->res.start) अणु
+		if (res == first && res->start > dax_region->res.start) {
 			alloc = min(res->start - dax_region->res.start, to_alloc);
 			rc = alloc_dev_dax_range(dev_dax, dax_region->res.start, alloc);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		alloc = 0;
 		/* space between allocations */
-		अगर (next && next->start > res->end + 1)
+		if (next && next->start > res->end + 1)
 			alloc = min(next->start - (res->end + 1), to_alloc);
 
 		/* space at the end of the region */
-		अगर (!alloc && !next && res->end < region_res->end)
+		if (!alloc && !next && res->end < region_res->end)
 			alloc = min(region_res->end - res->end, to_alloc);
 
-		अगर (!alloc)
-			जारी;
+		if (!alloc)
+			continue;
 
-		अगर (adjust_ok(dev_dax, res)) अणु
+		if (adjust_ok(dev_dax, res)) {
 			rc = adjust_dev_dax_range(dev_dax, res, resource_size(res) + alloc);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		rc = alloc_dev_dax_range(dev_dax, res->end + 1, alloc);
-		अवरोध;
-	पूर्ण
-	अगर (rc)
-		वापस rc;
+		break;
+	}
+	if (rc)
+		return rc;
 	to_alloc -= alloc;
-	अगर (to_alloc)
-		जाओ retry;
-	वापस 0;
-पूर्ण
+	if (to_alloc)
+		goto retry;
+	return 0;
+}
 
-अटल sमाप_प्रकार size_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
-		स्थिर अक्षर *buf, माप_प्रकार len)
-अणु
-	sमाप_प्रकार rc;
-	अचिन्हित दीर्घ दीर्घ val;
-	काष्ठा dev_dax *dev_dax = to_dev_dax(dev);
-	काष्ठा dax_region *dax_region = dev_dax->region;
+static ssize_t size_store(struct device *dev, struct device_attribute *attr,
+		const char *buf, size_t len)
+{
+	ssize_t rc;
+	unsigned long long val;
+	struct dev_dax *dev_dax = to_dev_dax(dev);
+	struct dax_region *dax_region = dev_dax->region;
 
-	rc = kम_से_अदीर्घl(buf, 0, &val);
-	अगर (rc)
-		वापस rc;
+	rc = kstrtoull(buf, 0, &val);
+	if (rc)
+		return rc;
 
-	अगर (!alloc_is_aligned(dev_dax, val)) अणु
+	if (!alloc_is_aligned(dev_dax, val)) {
 		dev_dbg(dev, "%s: size: %lld misaligned\n", __func__, val);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	device_lock(dax_region->dev);
-	अगर (!dax_region->dev->driver) अणु
+	if (!dax_region->dev->driver) {
 		device_unlock(dax_region->dev);
-		वापस -ENXIO;
-	पूर्ण
+		return -ENXIO;
+	}
 	device_lock(dev);
 	rc = dev_dax_resize(dax_region, dev_dax, val);
 	device_unlock(dev);
 	device_unlock(dax_region->dev);
 
-	वापस rc == 0 ? len : rc;
-पूर्ण
-अटल DEVICE_ATTR_RW(size);
+	return rc == 0 ? len : rc;
+}
+static DEVICE_ATTR_RW(size);
 
-अटल sमाप_प्रकार range_parse(स्थिर अक्षर *opt, माप_प्रकार len, काष्ठा range *range)
-अणु
-	अचिन्हित दीर्घ दीर्घ addr = 0;
-	अक्षर *start, *end, *str;
-	sमाप_प्रकार rc = -EINVAL;
+static ssize_t range_parse(const char *opt, size_t len, struct range *range)
+{
+	unsigned long long addr = 0;
+	char *start, *end, *str;
+	ssize_t rc = -EINVAL;
 
 	str = kstrdup(opt, GFP_KERNEL);
-	अगर (!str)
-		वापस rc;
+	if (!str)
+		return rc;
 
 	end = str;
 	start = strsep(&end, "-");
-	अगर (!start || !end)
-		जाओ err;
+	if (!start || !end)
+		goto err;
 
-	rc = kम_से_अदीर्घl(start, 16, &addr);
-	अगर (rc)
-		जाओ err;
+	rc = kstrtoull(start, 16, &addr);
+	if (rc)
+		goto err;
 	range->start = addr;
 
-	rc = kम_से_अदीर्घl(end, 16, &addr);
-	अगर (rc)
-		जाओ err;
+	rc = kstrtoull(end, 16, &addr);
+	if (rc)
+		goto err;
 	range->end = addr;
 
 err:
-	kमुक्त(str);
-	वापस rc;
-पूर्ण
+	kfree(str);
+	return rc;
+}
 
-अटल sमाप_प्रकार mapping_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
-		स्थिर अक्षर *buf, माप_प्रकार len)
-अणु
-	काष्ठा dev_dax *dev_dax = to_dev_dax(dev);
-	काष्ठा dax_region *dax_region = dev_dax->region;
-	माप_प्रकार to_alloc;
-	काष्ठा range r;
-	sमाप_प्रकार rc;
+static ssize_t mapping_store(struct device *dev, struct device_attribute *attr,
+		const char *buf, size_t len)
+{
+	struct dev_dax *dev_dax = to_dev_dax(dev);
+	struct dax_region *dax_region = dev_dax->region;
+	size_t to_alloc;
+	struct range r;
+	ssize_t rc;
 
 	rc = range_parse(buf, len, &r);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
 	rc = -ENXIO;
 	device_lock(dax_region->dev);
-	अगर (!dax_region->dev->driver) अणु
+	if (!dax_region->dev->driver) {
 		device_unlock(dax_region->dev);
-		वापस rc;
-	पूर्ण
+		return rc;
+	}
 	device_lock(dev);
 
 	to_alloc = range_len(&r);
-	अगर (alloc_is_aligned(dev_dax, to_alloc))
+	if (alloc_is_aligned(dev_dax, to_alloc))
 		rc = alloc_dev_dax_range(dev_dax, r.start, to_alloc);
 	device_unlock(dev);
 	device_unlock(dax_region->dev);
 
-	वापस rc == 0 ? len : rc;
-पूर्ण
-अटल DEVICE_ATTR_WO(mapping);
+	return rc == 0 ? len : rc;
+}
+static DEVICE_ATTR_WO(mapping);
 
-अटल sमाप_प्रकार align_show(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा dev_dax *dev_dax = to_dev_dax(dev);
+static ssize_t align_show(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	struct dev_dax *dev_dax = to_dev_dax(dev);
 
-	वापस प्र_लिखो(buf, "%d\n", dev_dax->align);
-पूर्ण
+	return sprintf(buf, "%d\n", dev_dax->align);
+}
 
-अटल sमाप_प्रकार dev_dax_validate_align(काष्ठा dev_dax *dev_dax)
-अणु
-	काष्ठा device *dev = &dev_dax->dev;
-	पूर्णांक i;
+static ssize_t dev_dax_validate_align(struct dev_dax *dev_dax)
+{
+	struct device *dev = &dev_dax->dev;
+	int i;
 
-	क्रम (i = 0; i < dev_dax->nr_range; i++) अणु
-		माप_प्रकार len = range_len(&dev_dax->ranges[i].range);
+	for (i = 0; i < dev_dax->nr_range; i++) {
+		size_t len = range_len(&dev_dax->ranges[i].range);
 
-		अगर (!alloc_is_aligned(dev_dax, len)) अणु
+		if (!alloc_is_aligned(dev_dax, len)) {
 			dev_dbg(dev, "%s: align %u invalid for range %d\n",
 				__func__, dev_dax->align, i);
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल sमाप_प्रकार align_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
-		स्थिर अक्षर *buf, माप_प्रकार len)
-अणु
-	काष्ठा dev_dax *dev_dax = to_dev_dax(dev);
-	काष्ठा dax_region *dax_region = dev_dax->region;
-	अचिन्हित दीर्घ val, align_save;
-	sमाप_प्रकार rc;
+static ssize_t align_store(struct device *dev, struct device_attribute *attr,
+		const char *buf, size_t len)
+{
+	struct dev_dax *dev_dax = to_dev_dax(dev);
+	struct dax_region *dax_region = dev_dax->region;
+	unsigned long val, align_save;
+	ssize_t rc;
 
-	rc = kम_से_अदीर्घ(buf, 0, &val);
-	अगर (rc)
-		वापस -ENXIO;
+	rc = kstrtoul(buf, 0, &val);
+	if (rc)
+		return -ENXIO;
 
-	अगर (!dax_align_valid(val))
-		वापस -EINVAL;
+	if (!dax_align_valid(val))
+		return -EINVAL;
 
 	device_lock(dax_region->dev);
-	अगर (!dax_region->dev->driver) अणु
+	if (!dax_region->dev->driver) {
 		device_unlock(dax_region->dev);
-		वापस -ENXIO;
-	पूर्ण
+		return -ENXIO;
+	}
 
 	device_lock(dev);
-	अगर (dev->driver) अणु
+	if (dev->driver) {
 		rc = -EBUSY;
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 
 	align_save = dev_dax->align;
 	dev_dax->align = val;
 	rc = dev_dax_validate_align(dev_dax);
-	अगर (rc)
+	if (rc)
 		dev_dax->align = align_save;
 out_unlock:
 	device_unlock(dev);
 	device_unlock(dax_region->dev);
-	वापस rc == 0 ? len : rc;
-पूर्ण
-अटल DEVICE_ATTR_RW(align);
+	return rc == 0 ? len : rc;
+}
+static DEVICE_ATTR_RW(align);
 
-अटल पूर्णांक dev_dax_target_node(काष्ठा dev_dax *dev_dax)
-अणु
-	काष्ठा dax_region *dax_region = dev_dax->region;
+static int dev_dax_target_node(struct dev_dax *dev_dax)
+{
+	struct dax_region *dax_region = dev_dax->region;
 
-	वापस dax_region->target_node;
-पूर्ण
+	return dax_region->target_node;
+}
 
-अटल sमाप_प्रकार target_node_show(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा dev_dax *dev_dax = to_dev_dax(dev);
+static ssize_t target_node_show(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	struct dev_dax *dev_dax = to_dev_dax(dev);
 
-	वापस प्र_लिखो(buf, "%d\n", dev_dax_target_node(dev_dax));
-पूर्ण
-अटल DEVICE_ATTR_RO(target_node);
+	return sprintf(buf, "%d\n", dev_dax_target_node(dev_dax));
+}
+static DEVICE_ATTR_RO(target_node);
 
-अटल sमाप_प्रकार resource_show(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा dev_dax *dev_dax = to_dev_dax(dev);
-	काष्ठा dax_region *dax_region = dev_dax->region;
-	अचिन्हित दीर्घ दीर्घ start;
+static ssize_t resource_show(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	struct dev_dax *dev_dax = to_dev_dax(dev);
+	struct dax_region *dax_region = dev_dax->region;
+	unsigned long long start;
 
-	अगर (dev_dax->nr_range < 1)
+	if (dev_dax->nr_range < 1)
 		start = dax_region->res.start;
-	अन्यथा
+	else
 		start = dev_dax->ranges[0].range.start;
 
-	वापस प्र_लिखो(buf, "%#llx\n", start);
-पूर्ण
-अटल DEVICE_ATTR(resource, 0400, resource_show, शून्य);
+	return sprintf(buf, "%#llx\n", start);
+}
+static DEVICE_ATTR(resource, 0400, resource_show, NULL);
 
-अटल sमाप_प्रकार modalias_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-		अक्षर *buf)
-अणु
+static ssize_t modalias_show(struct device *dev, struct device_attribute *attr,
+		char *buf)
+{
 	/*
 	 * We only ever expect to handle device-dax instances, i.e. the
 	 * @type argument to MODULE_ALIAS_DAX_DEVICE() is always zero
 	 */
-	वापस प्र_लिखो(buf, DAX_DEVICE_MODALIAS_FMT "\n", 0);
-पूर्ण
-अटल DEVICE_ATTR_RO(modalias);
+	return sprintf(buf, DAX_DEVICE_MODALIAS_FMT "\n", 0);
+}
+static DEVICE_ATTR_RO(modalias);
 
-अटल sमाप_प्रकार numa_node_show(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	वापस प्र_लिखो(buf, "%d\n", dev_to_node(dev));
-पूर्ण
-अटल DEVICE_ATTR_RO(numa_node);
+static ssize_t numa_node_show(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	return sprintf(buf, "%d\n", dev_to_node(dev));
+}
+static DEVICE_ATTR_RO(numa_node);
 
-अटल umode_t dev_dax_visible(काष्ठा kobject *kobj, काष्ठा attribute *a, पूर्णांक n)
-अणु
-	काष्ठा device *dev = container_of(kobj, काष्ठा device, kobj);
-	काष्ठा dev_dax *dev_dax = to_dev_dax(dev);
-	काष्ठा dax_region *dax_region = dev_dax->region;
+static umode_t dev_dax_visible(struct kobject *kobj, struct attribute *a, int n)
+{
+	struct device *dev = container_of(kobj, struct device, kobj);
+	struct dev_dax *dev_dax = to_dev_dax(dev);
+	struct dax_region *dax_region = dev_dax->region;
 
-	अगर (a == &dev_attr_target_node.attr && dev_dax_target_node(dev_dax) < 0)
-		वापस 0;
-	अगर (a == &dev_attr_numa_node.attr && !IS_ENABLED(CONFIG_NUMA))
-		वापस 0;
-	अगर (a == &dev_attr_mapping.attr && is_अटल(dax_region))
-		वापस 0;
-	अगर ((a == &dev_attr_align.attr ||
-	     a == &dev_attr_size.attr) && is_अटल(dax_region))
-		वापस 0444;
-	वापस a->mode;
-पूर्ण
+	if (a == &dev_attr_target_node.attr && dev_dax_target_node(dev_dax) < 0)
+		return 0;
+	if (a == &dev_attr_numa_node.attr && !IS_ENABLED(CONFIG_NUMA))
+		return 0;
+	if (a == &dev_attr_mapping.attr && is_static(dax_region))
+		return 0;
+	if ((a == &dev_attr_align.attr ||
+	     a == &dev_attr_size.attr) && is_static(dax_region))
+		return 0444;
+	return a->mode;
+}
 
-अटल काष्ठा attribute *dev_dax_attributes[] = अणु
+static struct attribute *dev_dax_attributes[] = {
 	&dev_attr_modalias.attr,
 	&dev_attr_size.attr,
 	&dev_attr_mapping.attr,
@@ -1238,71 +1237,71 @@ out_unlock:
 	&dev_attr_align.attr,
 	&dev_attr_resource.attr,
 	&dev_attr_numa_node.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल स्थिर काष्ठा attribute_group dev_dax_attribute_group = अणु
+static const struct attribute_group dev_dax_attribute_group = {
 	.attrs = dev_dax_attributes,
 	.is_visible = dev_dax_visible,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा attribute_group *dax_attribute_groups[] = अणु
+static const struct attribute_group *dax_attribute_groups[] = {
 	&dev_dax_attribute_group,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल व्योम dev_dax_release(काष्ठा device *dev)
-अणु
-	काष्ठा dev_dax *dev_dax = to_dev_dax(dev);
-	काष्ठा dax_region *dax_region = dev_dax->region;
-	काष्ठा dax_device *dax_dev = dev_dax->dax_dev;
+static void dev_dax_release(struct device *dev)
+{
+	struct dev_dax *dev_dax = to_dev_dax(dev);
+	struct dax_region *dax_region = dev_dax->region;
+	struct dax_device *dax_dev = dev_dax->dax_dev;
 
 	put_dax(dax_dev);
-	मुक्त_dev_dax_id(dev_dax);
+	free_dev_dax_id(dev_dax);
 	dax_region_put(dax_region);
-	kमुक्त(dev_dax->pgmap);
-	kमुक्त(dev_dax);
-पूर्ण
+	kfree(dev_dax->pgmap);
+	kfree(dev_dax);
+}
 
-अटल स्थिर काष्ठा device_type dev_dax_type = अणु
+static const struct device_type dev_dax_type = {
 	.release = dev_dax_release,
 	.groups = dax_attribute_groups,
-पूर्ण;
+};
 
-काष्ठा dev_dax *devm_create_dev_dax(काष्ठा dev_dax_data *data)
-अणु
-	काष्ठा dax_region *dax_region = data->dax_region;
-	काष्ठा device *parent = dax_region->dev;
-	काष्ठा dax_device *dax_dev;
-	काष्ठा dev_dax *dev_dax;
-	काष्ठा inode *inode;
-	काष्ठा device *dev;
-	पूर्णांक rc;
+struct dev_dax *devm_create_dev_dax(struct dev_dax_data *data)
+{
+	struct dax_region *dax_region = data->dax_region;
+	struct device *parent = dax_region->dev;
+	struct dax_device *dax_dev;
+	struct dev_dax *dev_dax;
+	struct inode *inode;
+	struct device *dev;
+	int rc;
 
-	dev_dax = kzalloc(माप(*dev_dax), GFP_KERNEL);
-	अगर (!dev_dax)
-		वापस ERR_PTR(-ENOMEM);
+	dev_dax = kzalloc(sizeof(*dev_dax), GFP_KERNEL);
+	if (!dev_dax)
+		return ERR_PTR(-ENOMEM);
 
-	अगर (is_अटल(dax_region)) अणु
-		अगर (dev_WARN_ONCE(parent, data->id < 0,
-				"dynamic id specified to static region\n")) अणु
+	if (is_static(dax_region)) {
+		if (dev_WARN_ONCE(parent, data->id < 0,
+				"dynamic id specified to static region\n")) {
 			rc = -EINVAL;
-			जाओ err_id;
-		पूर्ण
+			goto err_id;
+		}
 
 		dev_dax->id = data->id;
-	पूर्ण अन्यथा अणु
-		अगर (dev_WARN_ONCE(parent, data->id >= 0,
-				"static id specified to dynamic region\n")) अणु
+	} else {
+		if (dev_WARN_ONCE(parent, data->id >= 0,
+				"static id specified to dynamic region\n")) {
 			rc = -EINVAL;
-			जाओ err_id;
-		पूर्ण
+			goto err_id;
+		}
 
 		rc = ida_alloc(&dax_region->ida, GFP_KERNEL);
-		अगर (rc < 0)
-			जाओ err_id;
+		if (rc < 0)
+			goto err_id;
 		dev_dax->id = rc;
-	पूर्ण
+	}
 
 	dev_dax->region = dax_region;
 	dev = &dev_dax->dev;
@@ -1310,33 +1309,33 @@ out_unlock:
 	dev_set_name(dev, "dax%d.%d", dax_region->id, dev_dax->id);
 
 	rc = alloc_dev_dax_range(dev_dax, dax_region->res.start, data->size);
-	अगर (rc)
-		जाओ err_range;
+	if (rc)
+		goto err_range;
 
-	अगर (data->pgmap) अणु
-		dev_WARN_ONCE(parent, !is_अटल(dax_region),
+	if (data->pgmap) {
+		dev_WARN_ONCE(parent, !is_static(dax_region),
 			"custom dev_pagemap requires a static dax_region\n");
 
 		dev_dax->pgmap = kmemdup(data->pgmap,
-				माप(काष्ठा dev_pagemap), GFP_KERNEL);
-		अगर (!dev_dax->pgmap) अणु
+				sizeof(struct dev_pagemap), GFP_KERNEL);
+		if (!dev_dax->pgmap) {
 			rc = -ENOMEM;
-			जाओ err_pgmap;
-		पूर्ण
-	पूर्ण
+			goto err_pgmap;
+		}
+	}
 
 	/*
 	 * No 'host' or dax_operations since there is no access to this
-	 * device outside of mmap of the resulting अक्षरacter device.
+	 * device outside of mmap of the resulting character device.
 	 */
-	dax_dev = alloc_dax(dev_dax, शून्य, शून्य, DAXDEV_F_SYNC);
-	अगर (IS_ERR(dax_dev)) अणु
+	dax_dev = alloc_dax(dev_dax, NULL, NULL, DAXDEV_F_SYNC);
+	if (IS_ERR(dax_dev)) {
 		rc = PTR_ERR(dax_dev);
-		जाओ err_alloc_dax;
-	पूर्ण
+		goto err_alloc_dax;
+	}
 
-	/* a device_dax instance is dead जबतक the driver is not attached */
-	समाप्त_dax(dax_dev);
+	/* a device_dax instance is dead while the driver is not attached */
+	kill_dax(dax_dev);
 
 	dev_dax->dax_dev = dax_dev;
 	dev_dax->target_node = dax_region->target_node;
@@ -1346,60 +1345,60 @@ out_unlock:
 
 	inode = dax_inode(dax_dev);
 	dev->devt = inode->i_rdev;
-	अगर (data->subsys == DEV_DAX_BUS)
+	if (data->subsys == DEV_DAX_BUS)
 		dev->bus = &dax_bus_type;
-	अन्यथा
+	else
 		dev->class = dax_class;
 	dev->parent = parent;
 	dev->type = &dev_dax_type;
 
 	rc = device_add(dev);
-	अगर (rc) अणु
-		समाप्त_dev_dax(dev_dax);
+	if (rc) {
+		kill_dev_dax(dev_dax);
 		put_device(dev);
-		वापस ERR_PTR(rc);
-	पूर्ण
+		return ERR_PTR(rc);
+	}
 
-	rc = devm_add_action_or_reset(dax_region->dev, unरेजिस्टर_dev_dax, dev);
-	अगर (rc)
-		वापस ERR_PTR(rc);
+	rc = devm_add_action_or_reset(dax_region->dev, unregister_dev_dax, dev);
+	if (rc)
+		return ERR_PTR(rc);
 
-	/* रेजिस्टर mapping device क्रम the initial allocation range */
-	अगर (dev_dax->nr_range && range_len(&dev_dax->ranges[0].range)) अणु
-		rc = devm_रेजिस्टर_dax_mapping(dev_dax, 0);
-		अगर (rc)
-			वापस ERR_PTR(rc);
-	पूर्ण
+	/* register mapping device for the initial allocation range */
+	if (dev_dax->nr_range && range_len(&dev_dax->ranges[0].range)) {
+		rc = devm_register_dax_mapping(dev_dax, 0);
+		if (rc)
+			return ERR_PTR(rc);
+	}
 
-	वापस dev_dax;
+	return dev_dax;
 
 err_alloc_dax:
-	kमुक्त(dev_dax->pgmap);
+	kfree(dev_dax->pgmap);
 err_pgmap:
-	मुक्त_dev_dax_ranges(dev_dax);
+	free_dev_dax_ranges(dev_dax);
 err_range:
-	मुक्त_dev_dax_id(dev_dax);
+	free_dev_dax_id(dev_dax);
 err_id:
-	kमुक्त(dev_dax);
+	kfree(dev_dax);
 
-	वापस ERR_PTR(rc);
-पूर्ण
+	return ERR_PTR(rc);
+}
 EXPORT_SYMBOL_GPL(devm_create_dev_dax);
 
-अटल पूर्णांक match_always_count;
+static int match_always_count;
 
-पूर्णांक __dax_driver_रेजिस्टर(काष्ठा dax_device_driver *dax_drv,
-		काष्ठा module *module, स्थिर अक्षर *mod_name)
-अणु
-	काष्ठा device_driver *drv = &dax_drv->drv;
-	पूर्णांक rc = 0;
+int __dax_driver_register(struct dax_device_driver *dax_drv,
+		struct module *module, const char *mod_name)
+{
+	struct device_driver *drv = &dax_drv->drv;
+	int rc = 0;
 
 	/*
 	 * dax_bus_probe() calls dax_drv->probe() unconditionally.
 	 * So better be safe than sorry and ensure it is provided.
 	 */
-	अगर (!dax_drv->probe)
-		वापस -EINVAL;
+	if (!dax_drv->probe)
+		return -EINVAL;
 
 	INIT_LIST_HEAD(&dax_drv->ids);
 	drv->owner = module;
@@ -1407,63 +1406,63 @@ EXPORT_SYMBOL_GPL(devm_create_dev_dax);
 	drv->mod_name = mod_name;
 	drv->bus = &dax_bus_type;
 
-	/* there can only be one शेष driver */
+	/* there can only be one default driver */
 	mutex_lock(&dax_bus_lock);
 	match_always_count += dax_drv->match_always;
-	अगर (match_always_count > 1) अणु
+	if (match_always_count > 1) {
 		match_always_count--;
 		WARN_ON(1);
 		rc = -EINVAL;
-	पूर्ण
+	}
 	mutex_unlock(&dax_bus_lock);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
-	rc = driver_रेजिस्टर(drv);
-	अगर (rc && dax_drv->match_always) अणु
+	rc = driver_register(drv);
+	if (rc && dax_drv->match_always) {
 		mutex_lock(&dax_bus_lock);
 		match_always_count -= dax_drv->match_always;
 		mutex_unlock(&dax_bus_lock);
-	पूर्ण
+	}
 
-	वापस rc;
-पूर्ण
-EXPORT_SYMBOL_GPL(__dax_driver_रेजिस्टर);
+	return rc;
+}
+EXPORT_SYMBOL_GPL(__dax_driver_register);
 
-व्योम dax_driver_unरेजिस्टर(काष्ठा dax_device_driver *dax_drv)
-अणु
-	काष्ठा device_driver *drv = &dax_drv->drv;
-	काष्ठा dax_id *dax_id, *_id;
+void dax_driver_unregister(struct dax_device_driver *dax_drv)
+{
+	struct device_driver *drv = &dax_drv->drv;
+	struct dax_id *dax_id, *_id;
 
 	mutex_lock(&dax_bus_lock);
 	match_always_count -= dax_drv->match_always;
-	list_क्रम_each_entry_safe(dax_id, _id, &dax_drv->ids, list) अणु
+	list_for_each_entry_safe(dax_id, _id, &dax_drv->ids, list) {
 		list_del(&dax_id->list);
-		kमुक्त(dax_id);
-	पूर्ण
+		kfree(dax_id);
+	}
 	mutex_unlock(&dax_bus_lock);
-	driver_unरेजिस्टर(drv);
-पूर्ण
-EXPORT_SYMBOL_GPL(dax_driver_unरेजिस्टर);
+	driver_unregister(drv);
+}
+EXPORT_SYMBOL_GPL(dax_driver_unregister);
 
-पूर्णांक __init dax_bus_init(व्योम)
-अणु
-	पूर्णांक rc;
+int __init dax_bus_init(void)
+{
+	int rc;
 
-	अगर (IS_ENABLED(CONFIG_DEV_DAX_PMEM_COMPAT)) अणु
+	if (IS_ENABLED(CONFIG_DEV_DAX_PMEM_COMPAT)) {
 		dax_class = class_create(THIS_MODULE, "dax");
-		अगर (IS_ERR(dax_class))
-			वापस PTR_ERR(dax_class);
-	पूर्ण
+		if (IS_ERR(dax_class))
+			return PTR_ERR(dax_class);
+	}
 
-	rc = bus_रेजिस्टर(&dax_bus_type);
-	अगर (rc)
+	rc = bus_register(&dax_bus_type);
+	if (rc)
 		class_destroy(dax_class);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-व्योम __निकास dax_bus_निकास(व्योम)
-अणु
-	bus_unरेजिस्टर(&dax_bus_type);
+void __exit dax_bus_exit(void)
+{
+	bus_unregister(&dax_bus_type);
 	class_destroy(dax_class);
-पूर्ण
+}

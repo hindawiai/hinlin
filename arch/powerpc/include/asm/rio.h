@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * RapidIO architecture support
  *
@@ -7,13 +6,13 @@
  * Matt Porter <mporter@kernel.crashing.org>
  */
 
-#अगर_अघोषित ASM_PPC_RIO_H
-#घोषणा ASM_PPC_RIO_H
+#ifndef ASM_PPC_RIO_H
+#define ASM_PPC_RIO_H
 
-#अगर_घोषित CONFIG_FSL_RIO
-बाह्य पूर्णांक fsl_rio_mcheck_exception(काष्ठा pt_regs *);
-#अन्यथा
-अटल अंतरभूत पूर्णांक fsl_rio_mcheck_exception(काष्ठा pt_regs *regs) अणुवापस 0; पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_FSL_RIO
+extern int fsl_rio_mcheck_exception(struct pt_regs *);
+#else
+static inline int fsl_rio_mcheck_exception(struct pt_regs *regs) {return 0; }
+#endif
 
-#पूर्ण_अगर				/* ASM_PPC_RIO_H */
+#endif				/* ASM_PPC_RIO_H */

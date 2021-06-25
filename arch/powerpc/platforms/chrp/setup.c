@@ -1,338 +1,337 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  *  Copyright (C) 1995  Linus Torvalds
  *  Adapted from 'alpha' version by Gary Thomas
- *  Modअगरied by Cort Dougan (cort@cs.nmt.edu)
+ *  Modified by Cort Dougan (cort@cs.nmt.edu)
  */
 
 /*
  * bootup setup stuff..
  */
 
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/sched.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/मानकघोष.स>
-#समावेश <linux/unistd.h>
-#समावेश <linux/ptrace.h>
-#समावेश <linux/user.h>
-#समावेश <linux/tty.h>
-#समावेश <linux/major.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/reboot.h>
-#समावेश <linux/init.h>
-#समावेश <linux/pci.h>
-#समावेश <generated/utsrelease.h>
-#समावेश <linux/adb.h>
-#समावेश <linux/module.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/console.h>
-#समावेश <linux/seq_file.h>
-#समावेश <linux/root_dev.h>
-#समावेश <linux/initrd.h>
-#समावेश <linux/समयr.h>
+#include <linux/errno.h>
+#include <linux/sched.h>
+#include <linux/kernel.h>
+#include <linux/mm.h>
+#include <linux/stddef.h>
+#include <linux/unistd.h>
+#include <linux/ptrace.h>
+#include <linux/user.h>
+#include <linux/tty.h>
+#include <linux/major.h>
+#include <linux/interrupt.h>
+#include <linux/reboot.h>
+#include <linux/init.h>
+#include <linux/pci.h>
+#include <generated/utsrelease.h>
+#include <linux/adb.h>
+#include <linux/module.h>
+#include <linux/delay.h>
+#include <linux/console.h>
+#include <linux/seq_file.h>
+#include <linux/root_dev.h>
+#include <linux/initrd.h>
+#include <linux/timer.h>
 
-#समावेश <यंत्र/पन.स>
-#समावेश <यंत्र/prom.h>
-#समावेश <यंत्र/pci-bridge.h>
-#समावेश <यंत्र/dma.h>
-#समावेश <यंत्र/machdep.h>
-#समावेश <यंत्र/irq.h>
-#समावेश <यंत्र/hydra.h>
-#समावेश <यंत्र/sections.h>
-#समावेश <यंत्र/समय.स>
-#समावेश <यंत्र/i8259.h>
-#समावेश <यंत्र/mpic.h>
-#समावेश <यंत्र/rtas.h>
-#समावेश <यंत्र/xmon.h>
+#include <asm/io.h>
+#include <asm/prom.h>
+#include <asm/pci-bridge.h>
+#include <asm/dma.h>
+#include <asm/machdep.h>
+#include <asm/irq.h>
+#include <asm/hydra.h>
+#include <asm/sections.h>
+#include <asm/time.h>
+#include <asm/i8259.h>
+#include <asm/mpic.h>
+#include <asm/rtas.h>
+#include <asm/xmon.h>
 
-#समावेश "chrp.h"
-#समावेश "gg2.h"
+#include "chrp.h"
+#include "gg2.h"
 
-व्योम rtas_indicator_progress(अक्षर *, अचिन्हित लघु);
+void rtas_indicator_progress(char *, unsigned short);
 
-पूर्णांक _chrp_type;
+int _chrp_type;
 EXPORT_SYMBOL(_chrp_type);
 
-अटल काष्ठा mpic *chrp_mpic;
+static struct mpic *chrp_mpic;
 
-/* Used क्रम करोing CHRP event-scans */
-DEFINE_PER_CPU(काष्ठा समयr_list, heartbeat_समयr);
-अचिन्हित दीर्घ event_scan_पूर्णांकerval;
+/* Used for doing CHRP event-scans */
+DEFINE_PER_CPU(struct timer_list, heartbeat_timer);
+unsigned long event_scan_interval;
 
-बाह्य अचिन्हित दीर्घ loops_per_jअगरfy;
+extern unsigned long loops_per_jiffy;
 
 /* To be replaced by RTAS when available */
-अटल अचिन्हित पूर्णांक __iomem *briq_SPOR;
+static unsigned int __iomem *briq_SPOR;
 
-#अगर_घोषित CONFIG_SMP
-बाह्य काष्ठा smp_ops_t chrp_smp_ops;
-#पूर्ण_अगर
+#ifdef CONFIG_SMP
+extern struct smp_ops_t chrp_smp_ops;
+#endif
 
-अटल स्थिर अक्षर *gg2_memtypes[4] = अणु
+static const char *gg2_memtypes[4] = {
 	"FPM", "SDRAM", "EDO", "BEDO"
-पूर्ण;
-अटल स्थिर अक्षर *gg2_cachesizes[4] = अणु
+};
+static const char *gg2_cachesizes[4] = {
 	"256 KB", "512 KB", "1 MB", "Reserved"
-पूर्ण;
-अटल स्थिर अक्षर *gg2_cachetypes[4] = अणु
+};
+static const char *gg2_cachetypes[4] = {
 	"Asynchronous", "Reserved", "Flow-Through Synchronous",
 	"Pipelined Synchronous"
-पूर्ण;
-अटल स्थिर अक्षर *gg2_cachemodes[4] = अणु
+};
+static const char *gg2_cachemodes[4] = {
 	"Disabled", "Write-Through", "Copy-Back", "Transparent Mode"
-पूर्ण;
+};
 
-अटल स्थिर अक्षर *chrp_names[] = अणु
+static const char *chrp_names[] = {
 	"Unknown",
 	"","","",
 	"Motorola",
 	"IBM or Longtrail",
 	"Genesi Pegasos",
 	"Total Impact Briq"
-पूर्ण;
+};
 
-अटल व्योम chrp_show_cpuinfo(काष्ठा seq_file *m)
-अणु
-	पूर्णांक i, sdramen;
-	अचिन्हित पूर्णांक t;
-	काष्ठा device_node *root;
-	स्थिर अक्षर *model = "";
+static void chrp_show_cpuinfo(struct seq_file *m)
+{
+	int i, sdramen;
+	unsigned int t;
+	struct device_node *root;
+	const char *model = "";
 
 	root = of_find_node_by_path("/");
-	अगर (root)
-		model = of_get_property(root, "model", शून्य);
-	seq_म_लिखो(m, "machine\t\t: CHRP %s\n", model);
+	if (root)
+		model = of_get_property(root, "model", NULL);
+	seq_printf(m, "machine\t\t: CHRP %s\n", model);
 
-	/* दीर्घtrail (goldengate) stuff */
-	अगर (model && !म_भेदन(model, "IBM,LongTrail", 13)) अणु
+	/* longtrail (goldengate) stuff */
+	if (model && !strncmp(model, "IBM,LongTrail", 13)) {
 		/* VLSI VAS96011/12 `Golden Gate 2' */
 		/* Memory banks */
 		sdramen = (in_le32(gg2_pci_config_base + GG2_PCI_DRAM_CTRL)
 			   >>31) & 1;
-		क्रम (i = 0; i < (sdramen ? 4 : 6); i++) अणु
+		for (i = 0; i < (sdramen ? 4 : 6); i++) {
 			t = in_le32(gg2_pci_config_base+
 						 GG2_PCI_DRAM_BANK0+
 						 i*4);
-			अगर (!(t & 1))
-				जारी;
-			चयन ((t>>8) & 0x1f) अणु
-			हाल 0x1f:
+			if (!(t & 1))
+				continue;
+			switch ((t>>8) & 0x1f) {
+			case 0x1f:
 				model = "4 MB";
-				अवरोध;
-			हाल 0x1e:
+				break;
+			case 0x1e:
 				model = "8 MB";
-				अवरोध;
-			हाल 0x1c:
+				break;
+			case 0x1c:
 				model = "16 MB";
-				अवरोध;
-			हाल 0x18:
+				break;
+			case 0x18:
 				model = "32 MB";
-				अवरोध;
-			हाल 0x10:
+				break;
+			case 0x10:
 				model = "64 MB";
-				अवरोध;
-			हाल 0x00:
+				break;
+			case 0x00:
 				model = "128 MB";
-				अवरोध;
-			शेष:
+				break;
+			default:
 				model = "Reserved";
-				अवरोध;
-			पूर्ण
-			seq_म_लिखो(m, "memory bank %d\t: %s %s\n", i, model,
+				break;
+			}
+			seq_printf(m, "memory bank %d\t: %s %s\n", i, model,
 				   gg2_memtypes[sdramen ? 1 : ((t>>1) & 3)]);
-		पूर्ण
+		}
 		/* L2 cache */
 		t = in_le32(gg2_pci_config_base+GG2_PCI_CC_CTRL);
-		seq_म_लिखो(m, "board l2\t: %s %s (%s)\n",
+		seq_printf(m, "board l2\t: %s %s (%s)\n",
 			   gg2_cachesizes[(t>>7) & 3],
 			   gg2_cachetypes[(t>>2) & 3],
 			   gg2_cachemodes[t & 3]);
-	पूर्ण
+	}
 	of_node_put(root);
-पूर्ण
+}
 
 /*
- *  Fixes क्रम the National Semiconductor PC78308VUL SuperI/O
+ *  Fixes for the National Semiconductor PC78308VUL SuperI/O
  *
  *  Some versions of Open Firmware incorrectly initialize the IRQ settings
- *  क्रम keyboard and mouse
+ *  for keyboard and mouse
  */
-अटल अंतरभूत व्योम __init sio_ग_लिखो(u8 val, u8 index)
-अणु
+static inline void __init sio_write(u8 val, u8 index)
+{
 	outb(index, 0x15c);
 	outb(val, 0x15d);
-पूर्ण
+}
 
-अटल अंतरभूत u8 __init sio_पढ़ो(u8 index)
-अणु
+static inline u8 __init sio_read(u8 index)
+{
 	outb(index, 0x15c);
-	वापस inb(0x15d);
-पूर्ण
+	return inb(0x15d);
+}
 
-अटल व्योम __init sio_fixup_irq(स्थिर अक्षर *name, u8 device, u8 level,
+static void __init sio_fixup_irq(const char *name, u8 device, u8 level,
 				     u8 type)
-अणु
+{
 	u8 level0, type0, active;
 
 	/* select logical device */
-	sio_ग_लिखो(device, 0x07);
-	active = sio_पढ़ो(0x30);
-	level0 = sio_पढ़ो(0x70);
-	type0 = sio_पढ़ो(0x71);
-	अगर (level0 != level || type0 != type || !active) अणु
-		prपूर्णांकk(KERN_WARNING "sio: %s irq level %d, type %d, %sactive: "
+	sio_write(device, 0x07);
+	active = sio_read(0x30);
+	level0 = sio_read(0x70);
+	type0 = sio_read(0x71);
+	if (level0 != level || type0 != type || !active) {
+		printk(KERN_WARNING "sio: %s irq level %d, type %d, %sactive: "
 		       "remapping to level %d, type %d, active\n",
 		       name, level0, type0, !active ? "in" : "", level, type);
-		sio_ग_लिखो(0x01, 0x30);
-		sio_ग_लिखो(level, 0x70);
-		sio_ग_लिखो(type, 0x71);
-	पूर्ण
-पूर्ण
+		sio_write(0x01, 0x30);
+		sio_write(level, 0x70);
+		sio_write(type, 0x71);
+	}
+}
 
-अटल व्योम __init sio_init(व्योम)
-अणु
-	काष्ठा device_node *root;
-	स्थिर अक्षर *model;
+static void __init sio_init(void)
+{
+	struct device_node *root;
+	const char *model;
 
 	root = of_find_node_by_path("/");
-	अगर (!root)
-		वापस;
+	if (!root)
+		return;
 
-	model = of_get_property(root, "model", शून्य);
-	अगर (model && !म_भेदन(model, "IBM,LongTrail", 13)) अणु
+	model = of_get_property(root, "model", NULL);
+	if (model && !strncmp(model, "IBM,LongTrail", 13)) {
 		/* logical device 0 (KBC/Keyboard) */
 		sio_fixup_irq("keyboard", 0, 1, 2);
 		/* select logical device 1 (KBC/Mouse) */
 		sio_fixup_irq("mouse", 1, 12, 2);
-	पूर्ण
+	}
 
 	of_node_put(root);
-पूर्ण
+}
 
 
-अटल व्योम __init pegasos_set_l2cr(व्योम)
-अणु
-	काष्ठा device_node *np;
+static void __init pegasos_set_l2cr(void)
+{
+	struct device_node *np;
 
-	/* On Pegasos, enable the l2 cache अगर needed, as the OF क्रममाला_लो it */
-	अगर (_chrp_type != _CHRP_Pegasos)
-		वापस;
+	/* On Pegasos, enable the l2 cache if needed, as the OF forgets it */
+	if (_chrp_type != _CHRP_Pegasos)
+		return;
 
-	/* Enable L2 cache अगर needed */
-	np = of_find_node_by_type(शून्य, "cpu");
-	अगर (np != शून्य) अणु
-		स्थिर अचिन्हित पूर्णांक *l2cr = of_get_property(np, "l2cr", शून्य);
-		अगर (l2cr == शून्य) अणु
-			prपूर्णांकk ("Pegasos l2cr : no cpu l2cr property found\n");
-			जाओ out;
-		पूर्ण
-		अगर (!((*l2cr) & 0x80000000)) अणु
-			prपूर्णांकk ("Pegasos l2cr : L2 cache was not active, "
+	/* Enable L2 cache if needed */
+	np = of_find_node_by_type(NULL, "cpu");
+	if (np != NULL) {
+		const unsigned int *l2cr = of_get_property(np, "l2cr", NULL);
+		if (l2cr == NULL) {
+			printk ("Pegasos l2cr : no cpu l2cr property found\n");
+			goto out;
+		}
+		if (!((*l2cr) & 0x80000000)) {
+			printk ("Pegasos l2cr : L2 cache was not active, "
 				"activating\n");
 			_set_L2CR(0);
 			_set_L2CR((*l2cr) | 0x80000000);
-		पूर्ण
-	पूर्ण
+		}
+	}
 out:
 	of_node_put(np);
-पूर्ण
+}
 
-अटल व्योम __noवापस briq_restart(अक्षर *cmd)
-अणु
+static void __noreturn briq_restart(char *cmd)
+{
 	local_irq_disable();
-	अगर (briq_SPOR)
+	if (briq_SPOR)
 		out_be32(briq_SPOR, 0);
-	क्रम(;;);
-पूर्ण
+	for(;;);
+}
 
 /*
- * Per शेष, input/output-device poपूर्णांकs to the keyboard/screen
+ * Per default, input/output-device points to the keyboard/screen
  * If no card is installed, the built-in serial port is used as a fallback.
- * But unक्रमtunately, the firmware करोes not connect /chosen/अणुमानक_निवेश,मानक_निकासपूर्ण
+ * But unfortunately, the firmware does not connect /chosen/{stdin,stdout}
  * the the built-in serial node. Instead, a /failsafe node is created.
  */
-अटल __init व्योम chrp_init(व्योम)
-अणु
-	काष्ठा device_node *node;
-	स्थिर अक्षर *property;
+static __init void chrp_init(void)
+{
+	struct device_node *node;
+	const char *property;
 
-	अगर (म_माला(boot_command_line, "console="))
-		वापस;
-	/* find the boot console from /chosen/मानक_निकास */
-	अगर (!of_chosen)
-		वापस;
+	if (strstr(boot_command_line, "console="))
+		return;
+	/* find the boot console from /chosen/stdout */
+	if (!of_chosen)
+		return;
 	node = of_find_node_by_path("/");
-	अगर (!node)
-		वापस;
-	property = of_get_property(node, "model", शून्य);
-	अगर (!property)
-		जाओ out_put;
-	अगर (म_भेद(property, "Pegasos2"))
-		जाओ out_put;
+	if (!node)
+		return;
+	property = of_get_property(node, "model", NULL);
+	if (!property)
+		goto out_put;
+	if (strcmp(property, "Pegasos2"))
+		goto out_put;
 	/* this is a Pegasos2 */
-	property = of_get_property(of_chosen, "linux,stdout-path", शून्य);
-	अगर (!property)
-		जाओ out_put;
+	property = of_get_property(of_chosen, "linux,stdout-path", NULL);
+	if (!property)
+		goto out_put;
 	of_node_put(node);
 	node = of_find_node_by_path(property);
-	अगर (!node)
-		वापस;
-	अगर (!of_node_is_type(node, "serial"))
-		जाओ out_put;
+	if (!node)
+		return;
+	if (!of_node_is_type(node, "serial"))
+		goto out_put;
 	/*
 	 * The 9pin connector is either /failsafe
 	 * or /pci@80000000/isa@C/serial@i2F8
 	 * The optional graphics card has also type 'serial' in VGA mode.
 	 */
-	अगर (of_node_name_eq(node, "failsafe") || of_node_name_eq(node, "serial"))
-		add_preferred_console("ttyS", 0, शून्य);
+	if (of_node_name_eq(node, "failsafe") || of_node_name_eq(node, "serial"))
+		add_preferred_console("ttyS", 0, NULL);
 out_put:
 	of_node_put(node);
-पूर्ण
+}
 
-अटल व्योम __init chrp_setup_arch(व्योम)
-अणु
-	काष्ठा device_node *root = of_find_node_by_path("/");
-	स्थिर अक्षर *machine = शून्य;
+static void __init chrp_setup_arch(void)
+{
+	struct device_node *root = of_find_node_by_path("/");
+	const char *machine = NULL;
 
 	/* init to some ~sane value until calibrate_delay() runs */
-	loops_per_jअगरfy = 50000000/HZ;
+	loops_per_jiffy = 50000000/HZ;
 
-	अगर (root)
-		machine = of_get_property(root, "model", शून्य);
-	अगर (machine && म_भेदन(machine, "Pegasos", 7) == 0) अणु
+	if (root)
+		machine = of_get_property(root, "model", NULL);
+	if (machine && strncmp(machine, "Pegasos", 7) == 0) {
 		_chrp_type = _CHRP_Pegasos;
-	पूर्ण अन्यथा अगर (machine && म_भेदन(machine, "IBM", 3) == 0) अणु
+	} else if (machine && strncmp(machine, "IBM", 3) == 0) {
 		_chrp_type = _CHRP_IBM;
-	पूर्ण अन्यथा अगर (machine && म_भेदन(machine, "MOT", 3) == 0) अणु
+	} else if (machine && strncmp(machine, "MOT", 3) == 0) {
 		_chrp_type = _CHRP_Motorola;
-	पूर्ण अन्यथा अगर (machine && म_भेदन(machine, "TotalImpact,BRIQ-1", 18) == 0) अणु
+	} else if (machine && strncmp(machine, "TotalImpact,BRIQ-1", 18) == 0) {
 		_chrp_type = _CHRP_briq;
-		/* Map the SPOR रेजिस्टर on briq and change the restart hook */
+		/* Map the SPOR register on briq and change the restart hook */
 		briq_SPOR = ioremap(0xff0000e8, 4);
 		ppc_md.restart = briq_restart;
-	पूर्ण अन्यथा अणु
-		/* Let's assume it is an IBM chrp अगर all अन्यथा fails */
+	} else {
+		/* Let's assume it is an IBM chrp if all else fails */
 		_chrp_type = _CHRP_IBM;
-	पूर्ण
+	}
 	of_node_put(root);
-	prपूर्णांकk("chrp type = %x [%s]\n", _chrp_type, chrp_names[_chrp_type]);
+	printk("chrp type = %x [%s]\n", _chrp_type, chrp_names[_chrp_type]);
 
 	rtas_initialize();
-	अगर (rtas_token("display-character") >= 0)
+	if (rtas_token("display-character") >= 0)
 		ppc_md.progress = rtas_progress;
 
-	/* use RTAS समय-of-day routines अगर available */
-	अगर (rtas_token("get-time-of-day") != RTAS_UNKNOWN_SERVICE) अणु
-		ppc_md.get_boot_समय	= rtas_get_boot_समय;
-		ppc_md.get_rtc_समय	= rtas_get_rtc_समय;
-		ppc_md.set_rtc_समय	= rtas_set_rtc_समय;
-	पूर्ण
+	/* use RTAS time-of-day routines if available */
+	if (rtas_token("get-time-of-day") != RTAS_UNKNOWN_SERVICE) {
+		ppc_md.get_boot_time	= rtas_get_boot_time;
+		ppc_md.get_rtc_time	= rtas_get_rtc_time;
+		ppc_md.set_rtc_time	= rtas_set_rtc_time;
+	}
 
-	/* On pegasos, enable the L2 cache अगर not alपढ़ोy करोne by OF */
+	/* On pegasos, enable the L2 cache if not already done by OF */
 	pegasos_set_l2cr();
 
 	/*
@@ -341,202 +340,202 @@ out_put:
 	sio_init();
 
 	/*
-	 * Prपूर्णांक the banner, then scroll करोwn so boot progress
-	 * can be prपूर्णांकed.  -- Cort
+	 * Print the banner, then scroll down so boot progress
+	 * can be printed.  -- Cort
 	 */
-	अगर (ppc_md.progress) ppc_md.progress("Linux/PPC "UTS_RELEASE"\n", 0x0);
-पूर्ण
+	if (ppc_md.progress) ppc_md.progress("Linux/PPC "UTS_RELEASE"\n", 0x0);
+}
 
-अटल व्योम chrp_8259_cascade(काष्ठा irq_desc *desc)
-अणु
-	काष्ठा irq_chip *chip = irq_desc_get_chip(desc);
-	अचिन्हित पूर्णांक cascade_irq = i8259_irq();
+static void chrp_8259_cascade(struct irq_desc *desc)
+{
+	struct irq_chip *chip = irq_desc_get_chip(desc);
+	unsigned int cascade_irq = i8259_irq();
 
-	अगर (cascade_irq)
+	if (cascade_irq)
 		generic_handle_irq(cascade_irq);
 
 	chip->irq_eoi(&desc->irq_data);
-पूर्ण
+}
 
 /*
- * Finds the खोलो-pic node and sets up the mpic driver.
+ * Finds the open-pic node and sets up the mpic driver.
  */
-अटल व्योम __init chrp_find_खोलोpic(व्योम)
-अणु
-	काष्ठा device_node *np, *root;
-	पूर्णांक len, i, j;
-	पूर्णांक isu_size;
-	स्थिर अचिन्हित पूर्णांक *iranges, *opprop = शून्य;
-	पूर्णांक oplen = 0;
-	अचिन्हित दीर्घ opaddr;
-	पूर्णांक na = 1;
+static void __init chrp_find_openpic(void)
+{
+	struct device_node *np, *root;
+	int len, i, j;
+	int isu_size;
+	const unsigned int *iranges, *opprop = NULL;
+	int oplen = 0;
+	unsigned long opaddr;
+	int na = 1;
 
-	np = of_find_node_by_type(शून्य, "open-pic");
-	अगर (np == शून्य)
-		वापस;
+	np = of_find_node_by_type(NULL, "open-pic");
+	if (np == NULL)
+		return;
 	root = of_find_node_by_path("/");
-	अगर (root) अणु
+	if (root) {
 		opprop = of_get_property(root, "platform-open-pic", &oplen);
 		na = of_n_addr_cells(root);
-	पूर्ण
-	अगर (opprop && oplen >= na * माप(अचिन्हित पूर्णांक)) अणु
+	}
+	if (opprop && oplen >= na * sizeof(unsigned int)) {
 		opaddr = opprop[na-1];	/* assume 32-bit */
-		oplen /= na * माप(अचिन्हित पूर्णांक);
-	पूर्ण अन्यथा अणु
-		काष्ठा resource r;
-		अगर (of_address_to_resource(np, 0, &r)) अणु
-			जाओ bail;
-		पूर्ण
+		oplen /= na * sizeof(unsigned int);
+	} else {
+		struct resource r;
+		if (of_address_to_resource(np, 0, &r)) {
+			goto bail;
+		}
 		opaddr = r.start;
 		oplen = 0;
-	पूर्ण
+	}
 
-	prपूर्णांकk(KERN_INFO "OpenPIC at %lx\n", opaddr);
+	printk(KERN_INFO "OpenPIC at %lx\n", opaddr);
 
 	iranges = of_get_property(np, "interrupt-ranges", &len);
-	अगर (iranges == शून्य)
+	if (iranges == NULL)
 		len = 0;	/* non-distributed mpic */
-	अन्यथा
-		len /= 2 * माप(अचिन्हित पूर्णांक);
+	else
+		len /= 2 * sizeof(unsigned int);
 
 	/*
-	 * The first pair of cells in पूर्णांकerrupt-ranges refers to the
+	 * The first pair of cells in interrupt-ranges refers to the
 	 * IDU; subsequent pairs refer to the ISUs.
 	 */
-	अगर (oplen < len) अणु
-		prपूर्णांकk(KERN_ERR "Insufficient addresses for distributed"
+	if (oplen < len) {
+		printk(KERN_ERR "Insufficient addresses for distributed"
 		       " OpenPIC (%d < %d)\n", oplen, len);
 		len = oplen;
-	पूर्ण
+	}
 
 	isu_size = 0;
-	अगर (len > 0 && iranges[1] != 0) अणु
-		prपूर्णांकk(KERN_INFO "OpenPIC irqs %d..%d in IDU\n",
+	if (len > 0 && iranges[1] != 0) {
+		printk(KERN_INFO "OpenPIC irqs %d..%d in IDU\n",
 		       iranges[0], iranges[0] + iranges[1] - 1);
-	पूर्ण
-	अगर (len > 1)
+	}
+	if (len > 1)
 		isu_size = iranges[3];
 
 	chrp_mpic = mpic_alloc(np, opaddr, MPIC_NO_RESET,
 			isu_size, 0, " MPIC    ");
-	अगर (chrp_mpic == शून्य) अणु
-		prपूर्णांकk(KERN_ERR "Failed to allocate MPIC structure\n");
-		जाओ bail;
-	पूर्ण
+	if (chrp_mpic == NULL) {
+		printk(KERN_ERR "Failed to allocate MPIC structure\n");
+		goto bail;
+	}
 	j = na - 1;
-	क्रम (i = 1; i < len; ++i) अणु
+	for (i = 1; i < len; ++i) {
 		iranges += 2;
 		j += na;
-		prपूर्णांकk(KERN_INFO "OpenPIC irqs %d..%d in ISU at %x\n",
+		printk(KERN_INFO "OpenPIC irqs %d..%d in ISU at %x\n",
 		       iranges[0], iranges[0] + iranges[1] - 1,
 		       opprop[j]);
 		mpic_assign_isu(chrp_mpic, i - 1, opprop[j]);
-	पूर्ण
+	}
 
 	mpic_init(chrp_mpic);
 	ppc_md.get_irq = mpic_get_irq;
  bail:
 	of_node_put(root);
 	of_node_put(np);
-पूर्ण
+}
 
-अटल व्योम __init chrp_find_8259(व्योम)
-अणु
-	काष्ठा device_node *np, *pic = शून्य;
-	अचिन्हित दीर्घ chrp_पूर्णांक_ack = 0;
-	अचिन्हित पूर्णांक cascade_irq;
+static void __init chrp_find_8259(void)
+{
+	struct device_node *np, *pic = NULL;
+	unsigned long chrp_int_ack = 0;
+	unsigned int cascade_irq;
 
-	/* Look क्रम cascade */
-	क्रम_each_node_by_type(np, "interrupt-controller")
-		अगर (of_device_is_compatible(np, "chrp,iic")) अणु
+	/* Look for cascade */
+	for_each_node_by_type(np, "interrupt-controller")
+		if (of_device_is_compatible(np, "chrp,iic")) {
 			pic = np;
-			अवरोध;
-		पूर्ण
-	/* Ok, 8259 wasn't found. We need to handle the हाल where
-	 * we have a pegasos that claims to be chrp but करोesn't have
-	 * a proper पूर्णांकerrupt tree
+			break;
+		}
+	/* Ok, 8259 wasn't found. We need to handle the case where
+	 * we have a pegasos that claims to be chrp but doesn't have
+	 * a proper interrupt tree
 	 */
-	अगर (pic == शून्य && chrp_mpic != शून्य) अणु
-		prपूर्णांकk(KERN_ERR "i8259: Not found in device-tree"
+	if (pic == NULL && chrp_mpic != NULL) {
+		printk(KERN_ERR "i8259: Not found in device-tree"
 		       " assuming no legacy interrupts\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	/* Look क्रम पूर्णांकack. In a perfect world, we would look क्रम it on
+	/* Look for intack. In a perfect world, we would look for it on
 	 * the ISA bus that holds the 8259 but heh... Works that way. If
 	 * we ever see a problem, we can try to re-use the pSeries code here.
-	 * Also, Pegasos-type platक्रमms करोn't have a proper node to start
+	 * Also, Pegasos-type platforms don't have a proper node to start
 	 * from anyway
 	 */
-	क्रम_each_node_by_name(np, "pci") अणु
-		स्थिर अचिन्हित पूर्णांक *addrp = of_get_property(np,
-				"8259-interrupt-acknowledge", शून्य);
+	for_each_node_by_name(np, "pci") {
+		const unsigned int *addrp = of_get_property(np,
+				"8259-interrupt-acknowledge", NULL);
 
-		अगर (addrp == शून्य)
-			जारी;
-		chrp_पूर्णांक_ack = addrp[of_n_addr_cells(np)-1];
-		अवरोध;
-	पूर्ण
+		if (addrp == NULL)
+			continue;
+		chrp_int_ack = addrp[of_n_addr_cells(np)-1];
+		break;
+	}
 	of_node_put(np);
-	अगर (np == शून्य)
-		prपूर्णांकk(KERN_WARNING "Cannot find PCI interrupt acknowledge"
+	if (np == NULL)
+		printk(KERN_WARNING "Cannot find PCI interrupt acknowledge"
 		       " address, polling\n");
 
-	i8259_init(pic, chrp_पूर्णांक_ack);
-	अगर (ppc_md.get_irq == शून्य) अणु
+	i8259_init(pic, chrp_int_ack);
+	if (ppc_md.get_irq == NULL) {
 		ppc_md.get_irq = i8259_irq;
-		irq_set_शेष_host(i8259_get_host());
-	पूर्ण
-	अगर (chrp_mpic != शून्य) अणु
+		irq_set_default_host(i8259_get_host());
+	}
+	if (chrp_mpic != NULL) {
 		cascade_irq = irq_of_parse_and_map(pic, 0);
-		अगर (!cascade_irq)
-			prपूर्णांकk(KERN_ERR "i8259: failed to map cascade irq\n");
-		अन्यथा
+		if (!cascade_irq)
+			printk(KERN_ERR "i8259: failed to map cascade irq\n");
+		else
 			irq_set_chained_handler(cascade_irq,
 						chrp_8259_cascade);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम __init chrp_init_IRQ(व्योम)
-अणु
-#अगर defined(CONFIG_VT) && defined(CONFIG_INPUT_ADBHID) && defined(CONFIG_XMON)
-	काष्ठा device_node *kbd;
-#पूर्ण_अगर
-	chrp_find_खोलोpic();
+static void __init chrp_init_IRQ(void)
+{
+#if defined(CONFIG_VT) && defined(CONFIG_INPUT_ADBHID) && defined(CONFIG_XMON)
+	struct device_node *kbd;
+#endif
+	chrp_find_openpic();
 	chrp_find_8259();
 
-#अगर_घोषित CONFIG_SMP
+#ifdef CONFIG_SMP
 	/* Pegasos has no MPIC, those ops would make it crash. It might be an
 	 * option to move setting them to after we probe the PIC though
 	 */
-	अगर (chrp_mpic != शून्य)
+	if (chrp_mpic != NULL)
 		smp_ops = &chrp_smp_ops;
-#पूर्ण_अगर /* CONFIG_SMP */
+#endif /* CONFIG_SMP */
 
-	अगर (_chrp_type == _CHRP_Pegasos)
+	if (_chrp_type == _CHRP_Pegasos)
 		ppc_md.get_irq        = i8259_irq;
 
-#अगर defined(CONFIG_VT) && defined(CONFIG_INPUT_ADBHID) && defined(CONFIG_XMON)
-	/* see अगर there is a keyboard in the device tree
+#if defined(CONFIG_VT) && defined(CONFIG_INPUT_ADBHID) && defined(CONFIG_XMON)
+	/* see if there is a keyboard in the device tree
 	   with a parent of type "adb" */
-	क्रम_each_node_by_name(kbd, "keyboard")
-		अगर (of_node_is_type(kbd->parent, "adb"))
-			अवरोध;
+	for_each_node_by_name(kbd, "keyboard")
+		if (of_node_is_type(kbd->parent, "adb"))
+			break;
 	of_node_put(kbd);
-	अगर (kbd) अणु
-		अगर (request_irq(HYDRA_INT_ADB_NMI, xmon_irq, 0, "XMON break",
-				शून्य))
+	if (kbd) {
+		if (request_irq(HYDRA_INT_ADB_NMI, xmon_irq, 0, "XMON break",
+				NULL))
 			pr_err("Failed to register XMON break interrupt\n");
-	पूर्ण
-#पूर्ण_अगर
-पूर्ण
+	}
+#endif
+}
 
-अटल व्योम __init
-chrp_init2(व्योम)
-अणु
-#अगर IS_ENABLED(CONFIG_NVRAM)
+static void __init
+chrp_init2(void)
+{
+#if IS_ENABLED(CONFIG_NVRAM)
 	chrp_nvram_init();
-#पूर्ण_अगर
+#endif
 
 	request_region(0x20,0x20,"pic1");
 	request_region(0xa0,0x20,"pic2");
@@ -545,30 +544,30 @@ chrp_init2(व्योम)
 	request_region(0x80,0x10,"dma page reg");
 	request_region(0xc0,0x20,"dma2");
 
-	अगर (ppc_md.progress)
+	if (ppc_md.progress)
 		ppc_md.progress("  Have fun!    ", 0x7777);
-पूर्ण
+}
 
-अटल पूर्णांक __init chrp_probe(व्योम)
-अणु
-	स्थिर अक्षर *dtype = of_get_flat_dt_prop(of_get_flat_dt_root(),
-						"device_type", शून्य);
- 	अगर (dtype == शून्य)
- 		वापस 0;
- 	अगर (म_भेद(dtype, "chrp"))
-		वापस 0;
+static int __init chrp_probe(void)
+{
+	const char *dtype = of_get_flat_dt_prop(of_get_flat_dt_root(),
+						"device_type", NULL);
+ 	if (dtype == NULL)
+ 		return 0;
+ 	if (strcmp(dtype, "chrp"))
+		return 0;
 
 	DMA_MODE_READ = 0x44;
 	DMA_MODE_WRITE = 0x48;
 
-	pm_घातer_off = rtas_घातer_off;
+	pm_power_off = rtas_power_off;
 
 	chrp_init();
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-define_machine(chrp) अणु
+define_machine(chrp) {
 	.name			= "CHRP",
 	.probe			= chrp_probe,
 	.setup_arch		= chrp_setup_arch,
@@ -578,9 +577,9 @@ define_machine(chrp) अणु
 	.init_IRQ		= chrp_init_IRQ,
 	.restart		= rtas_restart,
 	.halt			= rtas_halt,
-	.समय_init		= chrp_समय_init,
-	.set_rtc_समय		= chrp_set_rtc_समय,
-	.get_rtc_समय		= chrp_get_rtc_समय,
+	.time_init		= chrp_time_init,
+	.set_rtc_time		= chrp_set_rtc_time,
+	.get_rtc_time		= chrp_get_rtc_time,
 	.calibrate_decr		= generic_calibrate_decr,
 	.phys_mem_access_prot	= pci_phys_mem_access_prot,
-पूर्ण;
+};

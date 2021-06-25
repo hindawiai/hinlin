@@ -1,6 +1,5 @@
-<शैली गुरु>
 /*
- * Watchकरोg driver क्रम Cirrus Logic EP93xx family of devices.
+ * Watchdog driver for Cirrus Logic EP93xx family of devices.
  *
  * Copyright (c) 2004 Ray Lehtiniemi
  * Copyright (c) 2006 Tower Technologies
@@ -10,135 +9,135 @@
  *	Alessandro Zummo <a.zummo@towertech.it>
  *
  * Copyright (c) 2012 H Hartley Sweeten <hsweeten@visionengravers.com>
- *	Convert to a platक्रमm device and use the watchकरोg framework API
+ *	Convert to a platform device and use the watchdog framework API
  *
  * This file is licensed under the terms of the GNU General Public
  * License version 2. This program is licensed "as is" without any
  * warranty of any kind, whether express or implied.
  *
- * This watchकरोg fires after 250msec, which is a too लघु पूर्णांकerval
- * क्रम us to rely on the user space daemon alone. So we ping the
- * wdt each ~200msec and eventually stop करोing it अगर the user space
+ * This watchdog fires after 250msec, which is a too short interval
+ * for us to rely on the user space daemon alone. So we ping the
+ * wdt each ~200msec and eventually stop doing it if the user space
  * daemon dies.
  */
 
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/module.h>
-#समावेश <linux/watchकरोg.h>
-#समावेश <linux/पन.स>
+#include <linux/platform_device.h>
+#include <linux/module.h>
+#include <linux/watchdog.h>
+#include <linux/io.h>
 
-/* शेष समयout (secs) */
-#घोषणा WDT_TIMEOUT 30
+/* default timeout (secs) */
+#define WDT_TIMEOUT 30
 
-अटल bool nowayout = WATCHDOG_NOWAYOUT;
+static bool nowayout = WATCHDOG_NOWAYOUT;
 module_param(nowayout, bool, 0);
 MODULE_PARM_DESC(nowayout, "Watchdog cannot be stopped once started");
 
-अटल अचिन्हित पूर्णांक समयout;
-module_param(समयout, uपूर्णांक, 0);
-MODULE_PARM_DESC(समयout, "Watchdog timeout in seconds.");
+static unsigned int timeout;
+module_param(timeout, uint, 0);
+MODULE_PARM_DESC(timeout, "Watchdog timeout in seconds.");
 
-#घोषणा EP93XX_WATCHDOG		0x00
-#घोषणा EP93XX_WDSTATUS		0x04
+#define EP93XX_WATCHDOG		0x00
+#define EP93XX_WDSTATUS		0x04
 
-काष्ठा ep93xx_wdt_priv अणु
-	व्योम __iomem *mmio;
-	काष्ठा watchकरोg_device wdd;
-पूर्ण;
+struct ep93xx_wdt_priv {
+	void __iomem *mmio;
+	struct watchdog_device wdd;
+};
 
-अटल पूर्णांक ep93xx_wdt_start(काष्ठा watchकरोg_device *wdd)
-अणु
-	काष्ठा ep93xx_wdt_priv *priv = watchकरोg_get_drvdata(wdd);
+static int ep93xx_wdt_start(struct watchdog_device *wdd)
+{
+	struct ep93xx_wdt_priv *priv = watchdog_get_drvdata(wdd);
 
-	ग_लिखोl(0xaaaa, priv->mmio + EP93XX_WATCHDOG);
+	writel(0xaaaa, priv->mmio + EP93XX_WATCHDOG);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ep93xx_wdt_stop(काष्ठा watchकरोg_device *wdd)
-अणु
-	काष्ठा ep93xx_wdt_priv *priv = watchकरोg_get_drvdata(wdd);
+static int ep93xx_wdt_stop(struct watchdog_device *wdd)
+{
+	struct ep93xx_wdt_priv *priv = watchdog_get_drvdata(wdd);
 
-	ग_लिखोl(0xaa55, priv->mmio + EP93XX_WATCHDOG);
+	writel(0xaa55, priv->mmio + EP93XX_WATCHDOG);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ep93xx_wdt_ping(काष्ठा watchकरोg_device *wdd)
-अणु
-	काष्ठा ep93xx_wdt_priv *priv = watchकरोg_get_drvdata(wdd);
+static int ep93xx_wdt_ping(struct watchdog_device *wdd)
+{
+	struct ep93xx_wdt_priv *priv = watchdog_get_drvdata(wdd);
 
-	ग_लिखोl(0x5555, priv->mmio + EP93XX_WATCHDOG);
+	writel(0x5555, priv->mmio + EP93XX_WATCHDOG);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा watchकरोg_info ep93xx_wdt_ident = अणु
+static const struct watchdog_info ep93xx_wdt_ident = {
 	.options	= WDIOF_CARDRESET |
 			  WDIOF_SETTIMEOUT |
 			  WDIOF_MAGICCLOSE |
 			  WDIOF_KEEPALIVEPING,
 	.identity	= "EP93xx Watchdog",
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा watchकरोg_ops ep93xx_wdt_ops = अणु
+static const struct watchdog_ops ep93xx_wdt_ops = {
 	.owner		= THIS_MODULE,
 	.start		= ep93xx_wdt_start,
 	.stop		= ep93xx_wdt_stop,
 	.ping		= ep93xx_wdt_ping,
-पूर्ण;
+};
 
-अटल पूर्णांक ep93xx_wdt_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा ep93xx_wdt_priv *priv;
-	काष्ठा watchकरोg_device *wdd;
-	अचिन्हित दीर्घ val;
-	पूर्णांक ret;
+static int ep93xx_wdt_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	struct ep93xx_wdt_priv *priv;
+	struct watchdog_device *wdd;
+	unsigned long val;
+	int ret;
 
-	priv = devm_kzalloc(dev, माप(*priv), GFP_KERNEL);
-	अगर (!priv)
-		वापस -ENOMEM;
+	priv = devm_kzalloc(dev, sizeof(*priv), GFP_KERNEL);
+	if (!priv)
+		return -ENOMEM;
 
-	priv->mmio = devm_platक्रमm_ioremap_resource(pdev, 0);
-	अगर (IS_ERR(priv->mmio))
-		वापस PTR_ERR(priv->mmio);
+	priv->mmio = devm_platform_ioremap_resource(pdev, 0);
+	if (IS_ERR(priv->mmio))
+		return PTR_ERR(priv->mmio);
 
-	val = पढ़ोl(priv->mmio + EP93XX_WATCHDOG);
+	val = readl(priv->mmio + EP93XX_WATCHDOG);
 
 	wdd = &priv->wdd;
 	wdd->bootstatus = (val & 0x01) ? WDIOF_CARDRESET : 0;
 	wdd->info = &ep93xx_wdt_ident;
 	wdd->ops = &ep93xx_wdt_ops;
-	wdd->min_समयout = 1;
+	wdd->min_timeout = 1;
 	wdd->max_hw_heartbeat_ms = 200;
 	wdd->parent = dev;
 
-	watchकरोg_set_nowayout(wdd, nowayout);
+	watchdog_set_nowayout(wdd, nowayout);
 
-	wdd->समयout = WDT_TIMEOUT;
-	watchकरोg_init_समयout(wdd, समयout, dev);
+	wdd->timeout = WDT_TIMEOUT;
+	watchdog_init_timeout(wdd, timeout, dev);
 
-	watchकरोg_set_drvdata(wdd, priv);
+	watchdog_set_drvdata(wdd, priv);
 
-	ret = devm_watchकरोg_रेजिस्टर_device(dev, wdd);
-	अगर (ret)
-		वापस ret;
+	ret = devm_watchdog_register_device(dev, wdd);
+	if (ret)
+		return ret;
 
 	dev_info(dev, "EP93XX watchdog driver %s\n",
 		 (val & 0x08) ? " (nCS1 disable detected)" : "");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver ep93xx_wdt_driver = अणु
-	.driver		= अणु
+static struct platform_driver ep93xx_wdt_driver = {
+	.driver		= {
 		.name	= "ep93xx-wdt",
-	पूर्ण,
+	},
 	.probe		= ep93xx_wdt_probe,
-पूर्ण;
+};
 
-module_platक्रमm_driver(ep93xx_wdt_driver);
+module_platform_driver(ep93xx_wdt_driver);
 
 MODULE_AUTHOR("Ray Lehtiniemi <rayl@mail.com>");
 MODULE_AUTHOR("Alessandro Zummo <a.zummo@towertech.it>");

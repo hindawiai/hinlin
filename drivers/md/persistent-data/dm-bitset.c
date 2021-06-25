@@ -1,318 +1,317 @@
-<शैली गुरु>
 /*
  * Copyright (C) 2012 Red Hat, Inc.
  *
  * This file is released under the GPL.
  */
 
-#समावेश "dm-bitset.h"
-#समावेश "dm-transaction-manager.h"
+#include "dm-bitset.h"
+#include "dm-transaction-manager.h"
 
-#समावेश <linux/export.h>
-#समावेश <linux/device-mapper.h>
+#include <linux/export.h>
+#include <linux/device-mapper.h>
 
-#घोषणा DM_MSG_PREFIX "bitset"
-#घोषणा BITS_PER_ARRAY_ENTRY 64
-
-/*----------------------------------------------------------------*/
-
-अटल काष्ठा dm_btree_value_type bitset_bvt = अणु
-	.context = शून्य,
-	.size = माप(__le64),
-	.inc = शून्य,
-	.dec = शून्य,
-	.equal = शून्य,
-पूर्ण;
+#define DM_MSG_PREFIX "bitset"
+#define BITS_PER_ARRAY_ENTRY 64
 
 /*----------------------------------------------------------------*/
 
-व्योम dm_disk_bitset_init(काष्ठा dm_transaction_manager *पंचांग,
-			 काष्ठा dm_disk_bitset *info)
-अणु
-	dm_array_info_init(&info->array_info, पंचांग, &bitset_bvt);
+static struct dm_btree_value_type bitset_bvt = {
+	.context = NULL,
+	.size = sizeof(__le64),
+	.inc = NULL,
+	.dec = NULL,
+	.equal = NULL,
+};
+
+/*----------------------------------------------------------------*/
+
+void dm_disk_bitset_init(struct dm_transaction_manager *tm,
+			 struct dm_disk_bitset *info)
+{
+	dm_array_info_init(&info->array_info, tm, &bitset_bvt);
 	info->current_index_set = false;
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(dm_disk_bitset_init);
 
-पूर्णांक dm_bitset_empty(काष्ठा dm_disk_bitset *info, dm_block_t *root)
-अणु
-	वापस dm_array_empty(&info->array_info, root);
-पूर्ण
+int dm_bitset_empty(struct dm_disk_bitset *info, dm_block_t *root)
+{
+	return dm_array_empty(&info->array_info, root);
+}
 EXPORT_SYMBOL_GPL(dm_bitset_empty);
 
-काष्ठा packer_context अणु
+struct packer_context {
 	bit_value_fn fn;
-	अचिन्हित nr_bits;
-	व्योम *context;
-पूर्ण;
+	unsigned nr_bits;
+	void *context;
+};
 
-अटल पूर्णांक pack_bits(uपूर्णांक32_t index, व्योम *value, व्योम *context)
-अणु
-	पूर्णांक r;
-	काष्ठा packer_context *p = context;
-	अचिन्हित bit, nr = min(64u, p->nr_bits - (index * 64));
-	uपूर्णांक64_t word = 0;
+static int pack_bits(uint32_t index, void *value, void *context)
+{
+	int r;
+	struct packer_context *p = context;
+	unsigned bit, nr = min(64u, p->nr_bits - (index * 64));
+	uint64_t word = 0;
 	bool bv;
 
-	क्रम (bit = 0; bit < nr; bit++) अणु
+	for (bit = 0; bit < nr; bit++) {
 		r = p->fn(index * 64 + bit, &bv, p->context);
-		अगर (r)
-			वापस r;
+		if (r)
+			return r;
 
-		अगर (bv)
-			set_bit(bit, (अचिन्हित दीर्घ *) &word);
-		अन्यथा
-			clear_bit(bit, (अचिन्हित दीर्घ *) &word);
-	पूर्ण
+		if (bv)
+			set_bit(bit, (unsigned long *) &word);
+		else
+			clear_bit(bit, (unsigned long *) &word);
+	}
 
 	*((__le64 *) value) = cpu_to_le64(word);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक dm_bitset_new(काष्ठा dm_disk_bitset *info, dm_block_t *root,
-		  uपूर्णांक32_t size, bit_value_fn fn, व्योम *context)
-अणु
-	काष्ठा packer_context p;
+int dm_bitset_new(struct dm_disk_bitset *info, dm_block_t *root,
+		  uint32_t size, bit_value_fn fn, void *context)
+{
+	struct packer_context p;
 	p.fn = fn;
 	p.nr_bits = size;
 	p.context = context;
 
-	वापस dm_array_new(&info->array_info, root, dm_भाग_up(size, 64), pack_bits, &p);
-पूर्ण
+	return dm_array_new(&info->array_info, root, dm_div_up(size, 64), pack_bits, &p);
+}
 EXPORT_SYMBOL_GPL(dm_bitset_new);
 
-पूर्णांक dm_bitset_resize(काष्ठा dm_disk_bitset *info, dm_block_t root,
-		     uपूर्णांक32_t old_nr_entries, uपूर्णांक32_t new_nr_entries,
-		     bool शेष_value, dm_block_t *new_root)
-अणु
-	uपूर्णांक32_t old_blocks = dm_भाग_up(old_nr_entries, BITS_PER_ARRAY_ENTRY);
-	uपूर्णांक32_t new_blocks = dm_भाग_up(new_nr_entries, BITS_PER_ARRAY_ENTRY);
-	__le64 value = शेष_value ? cpu_to_le64(~0) : cpu_to_le64(0);
+int dm_bitset_resize(struct dm_disk_bitset *info, dm_block_t root,
+		     uint32_t old_nr_entries, uint32_t new_nr_entries,
+		     bool default_value, dm_block_t *new_root)
+{
+	uint32_t old_blocks = dm_div_up(old_nr_entries, BITS_PER_ARRAY_ENTRY);
+	uint32_t new_blocks = dm_div_up(new_nr_entries, BITS_PER_ARRAY_ENTRY);
+	__le64 value = default_value ? cpu_to_le64(~0) : cpu_to_le64(0);
 
-	__dm_bless_क्रम_disk(&value);
-	वापस dm_array_resize(&info->array_info, root, old_blocks, new_blocks,
+	__dm_bless_for_disk(&value);
+	return dm_array_resize(&info->array_info, root, old_blocks, new_blocks,
 			       &value, new_root);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(dm_bitset_resize);
 
-पूर्णांक dm_bitset_del(काष्ठा dm_disk_bitset *info, dm_block_t root)
-अणु
-	वापस dm_array_del(&info->array_info, root);
-पूर्ण
+int dm_bitset_del(struct dm_disk_bitset *info, dm_block_t root)
+{
+	return dm_array_del(&info->array_info, root);
+}
 EXPORT_SYMBOL_GPL(dm_bitset_del);
 
-पूर्णांक dm_bitset_flush(काष्ठा dm_disk_bitset *info, dm_block_t root,
+int dm_bitset_flush(struct dm_disk_bitset *info, dm_block_t root,
 		    dm_block_t *new_root)
-अणु
-	पूर्णांक r;
+{
+	int r;
 	__le64 value;
 
-	अगर (!info->current_index_set || !info->dirty)
-		वापस 0;
+	if (!info->current_index_set || !info->dirty)
+		return 0;
 
 	value = cpu_to_le64(info->current_bits);
 
-	__dm_bless_क्रम_disk(&value);
+	__dm_bless_for_disk(&value);
 	r = dm_array_set_value(&info->array_info, root, info->current_index,
 			       &value, new_root);
-	अगर (r)
-		वापस r;
+	if (r)
+		return r;
 
 	info->current_index_set = false;
 	info->dirty = false;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(dm_bitset_flush);
 
-अटल पूर्णांक पढ़ो_bits(काष्ठा dm_disk_bitset *info, dm_block_t root,
-		     uपूर्णांक32_t array_index)
-अणु
-	पूर्णांक r;
+static int read_bits(struct dm_disk_bitset *info, dm_block_t root,
+		     uint32_t array_index)
+{
+	int r;
 	__le64 value;
 
 	r = dm_array_get_value(&info->array_info, root, array_index, &value);
-	अगर (r)
-		वापस r;
+	if (r)
+		return r;
 
 	info->current_bits = le64_to_cpu(value);
 	info->current_index_set = true;
 	info->current_index = array_index;
 	info->dirty = false;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक get_array_entry(काष्ठा dm_disk_bitset *info, dm_block_t root,
-			   uपूर्णांक32_t index, dm_block_t *new_root)
-अणु
-	पूर्णांक r;
-	अचिन्हित array_index = index / BITS_PER_ARRAY_ENTRY;
+static int get_array_entry(struct dm_disk_bitset *info, dm_block_t root,
+			   uint32_t index, dm_block_t *new_root)
+{
+	int r;
+	unsigned array_index = index / BITS_PER_ARRAY_ENTRY;
 
-	अगर (info->current_index_set) अणु
-		अगर (info->current_index == array_index)
-			वापस 0;
+	if (info->current_index_set) {
+		if (info->current_index == array_index)
+			return 0;
 
 		r = dm_bitset_flush(info, root, new_root);
-		अगर (r)
-			वापस r;
-	पूर्ण
+		if (r)
+			return r;
+	}
 
-	वापस पढ़ो_bits(info, root, array_index);
-पूर्ण
+	return read_bits(info, root, array_index);
+}
 
-पूर्णांक dm_bitset_set_bit(काष्ठा dm_disk_bitset *info, dm_block_t root,
-		      uपूर्णांक32_t index, dm_block_t *new_root)
-अणु
-	पूर्णांक r;
-	अचिन्हित b = index % BITS_PER_ARRAY_ENTRY;
+int dm_bitset_set_bit(struct dm_disk_bitset *info, dm_block_t root,
+		      uint32_t index, dm_block_t *new_root)
+{
+	int r;
+	unsigned b = index % BITS_PER_ARRAY_ENTRY;
 
 	r = get_array_entry(info, root, index, new_root);
-	अगर (r)
-		वापस r;
+	if (r)
+		return r;
 
-	set_bit(b, (अचिन्हित दीर्घ *) &info->current_bits);
+	set_bit(b, (unsigned long *) &info->current_bits);
 	info->dirty = true;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(dm_bitset_set_bit);
 
-पूर्णांक dm_bitset_clear_bit(काष्ठा dm_disk_bitset *info, dm_block_t root,
-			uपूर्णांक32_t index, dm_block_t *new_root)
-अणु
-	पूर्णांक r;
-	अचिन्हित b = index % BITS_PER_ARRAY_ENTRY;
+int dm_bitset_clear_bit(struct dm_disk_bitset *info, dm_block_t root,
+			uint32_t index, dm_block_t *new_root)
+{
+	int r;
+	unsigned b = index % BITS_PER_ARRAY_ENTRY;
 
 	r = get_array_entry(info, root, index, new_root);
-	अगर (r)
-		वापस r;
+	if (r)
+		return r;
 
-	clear_bit(b, (अचिन्हित दीर्घ *) &info->current_bits);
+	clear_bit(b, (unsigned long *) &info->current_bits);
 	info->dirty = true;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(dm_bitset_clear_bit);
 
-पूर्णांक dm_bitset_test_bit(काष्ठा dm_disk_bitset *info, dm_block_t root,
-		       uपूर्णांक32_t index, dm_block_t *new_root, bool *result)
-अणु
-	पूर्णांक r;
-	अचिन्हित b = index % BITS_PER_ARRAY_ENTRY;
+int dm_bitset_test_bit(struct dm_disk_bitset *info, dm_block_t root,
+		       uint32_t index, dm_block_t *new_root, bool *result)
+{
+	int r;
+	unsigned b = index % BITS_PER_ARRAY_ENTRY;
 
 	r = get_array_entry(info, root, index, new_root);
-	अगर (r)
-		वापस r;
+	if (r)
+		return r;
 
-	*result = test_bit(b, (अचिन्हित दीर्घ *) &info->current_bits);
-	वापस 0;
-पूर्ण
+	*result = test_bit(b, (unsigned long *) &info->current_bits);
+	return 0;
+}
 EXPORT_SYMBOL_GPL(dm_bitset_test_bit);
 
-अटल पूर्णांक cursor_next_array_entry(काष्ठा dm_bitset_cursor *c)
-अणु
-	पूर्णांक r;
+static int cursor_next_array_entry(struct dm_bitset_cursor *c)
+{
+	int r;
 	__le64 *value;
 
 	r = dm_array_cursor_next(&c->cursor);
-	अगर (r)
-		वापस r;
+	if (r)
+		return r;
 
-	dm_array_cursor_get_value(&c->cursor, (व्योम **) &value);
+	dm_array_cursor_get_value(&c->cursor, (void **) &value);
 	c->array_index++;
 	c->bit_index = 0;
 	c->current_bits = le64_to_cpu(*value);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक dm_bitset_cursor_begin(काष्ठा dm_disk_bitset *info,
-			   dm_block_t root, uपूर्णांक32_t nr_entries,
-			   काष्ठा dm_bitset_cursor *c)
-अणु
-	पूर्णांक r;
+int dm_bitset_cursor_begin(struct dm_disk_bitset *info,
+			   dm_block_t root, uint32_t nr_entries,
+			   struct dm_bitset_cursor *c)
+{
+	int r;
 	__le64 *value;
 
-	अगर (!nr_entries)
-		वापस -ENODATA;
+	if (!nr_entries)
+		return -ENODATA;
 
 	c->info = info;
-	c->entries_reमुख्यing = nr_entries;
+	c->entries_remaining = nr_entries;
 
 	r = dm_array_cursor_begin(&info->array_info, root, &c->cursor);
-	अगर (r)
-		वापस r;
+	if (r)
+		return r;
 
-	dm_array_cursor_get_value(&c->cursor, (व्योम **) &value);
+	dm_array_cursor_get_value(&c->cursor, (void **) &value);
 	c->array_index = 0;
 	c->bit_index = 0;
 	c->current_bits = le64_to_cpu(*value);
 
-	वापस r;
-पूर्ण
+	return r;
+}
 EXPORT_SYMBOL_GPL(dm_bitset_cursor_begin);
 
-व्योम dm_bitset_cursor_end(काष्ठा dm_bitset_cursor *c)
-अणु
-	वापस dm_array_cursor_end(&c->cursor);
-पूर्ण
+void dm_bitset_cursor_end(struct dm_bitset_cursor *c)
+{
+	return dm_array_cursor_end(&c->cursor);
+}
 EXPORT_SYMBOL_GPL(dm_bitset_cursor_end);
 
-पूर्णांक dm_bitset_cursor_next(काष्ठा dm_bitset_cursor *c)
-अणु
-	पूर्णांक r = 0;
+int dm_bitset_cursor_next(struct dm_bitset_cursor *c)
+{
+	int r = 0;
 
-	अगर (!c->entries_reमुख्यing)
-		वापस -ENODATA;
+	if (!c->entries_remaining)
+		return -ENODATA;
 
-	c->entries_reमुख्यing--;
-	अगर (++c->bit_index > 63)
+	c->entries_remaining--;
+	if (++c->bit_index > 63)
 		r = cursor_next_array_entry(c);
 
-	वापस r;
-पूर्ण
+	return r;
+}
 EXPORT_SYMBOL_GPL(dm_bitset_cursor_next);
 
-पूर्णांक dm_bitset_cursor_skip(काष्ठा dm_bitset_cursor *c, uपूर्णांक32_t count)
-अणु
-	पूर्णांक r;
+int dm_bitset_cursor_skip(struct dm_bitset_cursor *c, uint32_t count)
+{
+	int r;
 	__le64 *value;
-	uपूर्णांक32_t nr_array_skip;
-	uपूर्णांक32_t reमुख्यing_in_word = 64 - c->bit_index;
+	uint32_t nr_array_skip;
+	uint32_t remaining_in_word = 64 - c->bit_index;
 
-	अगर (c->entries_reमुख्यing < count)
-		वापस -ENODATA;
+	if (c->entries_remaining < count)
+		return -ENODATA;
 
-	अगर (count < reमुख्यing_in_word) अणु
+	if (count < remaining_in_word) {
 		c->bit_index += count;
-		c->entries_reमुख्यing -= count;
-		वापस 0;
+		c->entries_remaining -= count;
+		return 0;
 
-	पूर्ण अन्यथा अणु
-		c->entries_reमुख्यing -= reमुख्यing_in_word;
-		count -= reमुख्यing_in_word;
-	पूर्ण
+	} else {
+		c->entries_remaining -= remaining_in_word;
+		count -= remaining_in_word;
+	}
 
 	nr_array_skip = (count / 64) + 1;
 	r = dm_array_cursor_skip(&c->cursor, nr_array_skip);
-	अगर (r)
-		वापस r;
+	if (r)
+		return r;
 
-	dm_array_cursor_get_value(&c->cursor, (व्योम **) &value);
-	c->entries_reमुख्यing -= count;
+	dm_array_cursor_get_value(&c->cursor, (void **) &value);
+	c->entries_remaining -= count;
 	c->array_index += nr_array_skip;
 	c->bit_index = count & 63;
 	c->current_bits = le64_to_cpu(*value);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(dm_bitset_cursor_skip);
 
-bool dm_bitset_cursor_get_value(काष्ठा dm_bitset_cursor *c)
-अणु
-	वापस test_bit(c->bit_index, (अचिन्हित दीर्घ *) &c->current_bits);
-पूर्ण
+bool dm_bitset_cursor_get_value(struct dm_bitset_cursor *c)
+{
+	return test_bit(c->bit_index, (unsigned long *) &c->current_bits);
+}
 EXPORT_SYMBOL_GPL(dm_bitset_cursor_get_value);
 
 /*----------------------------------------------------------------*/

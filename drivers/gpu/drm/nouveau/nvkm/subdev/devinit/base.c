@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2012 Red Hat Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,115 +21,115 @@
  *
  * Authors: Ben Skeggs
  */
-#समावेश "priv.h"
+#include "priv.h"
 
-#समावेश <core/option.h>
-#समावेश <subdev/vga.h>
+#include <core/option.h>
+#include <subdev/vga.h>
 
 u32
-nvkm_devinit_mmio(काष्ठा nvkm_devinit *init, u32 addr)
-अणु
-	अगर (init->func->mmio)
+nvkm_devinit_mmio(struct nvkm_devinit *init, u32 addr)
+{
+	if (init->func->mmio)
 		addr = init->func->mmio(init, addr);
-	वापस addr;
-पूर्ण
+	return addr;
+}
 
-पूर्णांक
-nvkm_devinit_pll_set(काष्ठा nvkm_devinit *init, u32 type, u32 khz)
-अणु
-	वापस init->func->pll_set(init, type, khz);
-पूर्ण
+int
+nvkm_devinit_pll_set(struct nvkm_devinit *init, u32 type, u32 khz)
+{
+	return init->func->pll_set(init, type, khz);
+}
 
-व्योम
-nvkm_devinit_meminit(काष्ठा nvkm_devinit *init)
-अणु
-	अगर (init->func->meminit)
+void
+nvkm_devinit_meminit(struct nvkm_devinit *init)
+{
+	if (init->func->meminit)
 		init->func->meminit(init);
-पूर्ण
+}
 
 u64
-nvkm_devinit_disable(काष्ठा nvkm_devinit *init)
-अणु
-	अगर (init && init->func->disable)
-		वापस init->func->disable(init);
-	वापस 0;
-पूर्ण
+nvkm_devinit_disable(struct nvkm_devinit *init)
+{
+	if (init && init->func->disable)
+		return init->func->disable(init);
+	return 0;
+}
 
-पूर्णांक
-nvkm_devinit_post(काष्ठा nvkm_devinit *init)
-अणु
-	पूर्णांक ret = 0;
-	अगर (init && init->func->post)
+int
+nvkm_devinit_post(struct nvkm_devinit *init)
+{
+	int ret = 0;
+	if (init && init->func->post)
 		ret = init->func->post(init, init->post);
 	nvkm_devinit_disable(init);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक
-nvkm_devinit_fini(काष्ठा nvkm_subdev *subdev, bool suspend)
-अणु
-	काष्ठा nvkm_devinit *init = nvkm_devinit(subdev);
-	/* क्रमce full reinit on resume */
-	अगर (suspend)
+static int
+nvkm_devinit_fini(struct nvkm_subdev *subdev, bool suspend)
+{
+	struct nvkm_devinit *init = nvkm_devinit(subdev);
+	/* force full reinit on resume */
+	if (suspend)
 		init->post = true;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-nvkm_devinit_preinit(काष्ठा nvkm_subdev *subdev)
-अणु
-	काष्ठा nvkm_devinit *init = nvkm_devinit(subdev);
+static int
+nvkm_devinit_preinit(struct nvkm_subdev *subdev)
+{
+	struct nvkm_devinit *init = nvkm_devinit(subdev);
 
-	अगर (init->func->preinit)
+	if (init->func->preinit)
 		init->func->preinit(init);
 
-	/* Override the post flag during the first call अगर NvForcePost is set */
-	अगर (init->क्रमce_post) अणु
-		init->post = init->क्रमce_post;
-		init->क्रमce_post = false;
-	पूर्ण
+	/* Override the post flag during the first call if NvForcePost is set */
+	if (init->force_post) {
+		init->post = init->force_post;
+		init->force_post = false;
+	}
 
 	/* unlock the extended vga crtc regs */
 	nvkm_lockvgac(subdev->device, false);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-nvkm_devinit_init(काष्ठा nvkm_subdev *subdev)
-अणु
-	काष्ठा nvkm_devinit *init = nvkm_devinit(subdev);
-	अगर (init->func->init)
+static int
+nvkm_devinit_init(struct nvkm_subdev *subdev)
+{
+	struct nvkm_devinit *init = nvkm_devinit(subdev);
+	if (init->func->init)
 		init->func->init(init);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम *
-nvkm_devinit_dtor(काष्ठा nvkm_subdev *subdev)
-अणु
-	काष्ठा nvkm_devinit *init = nvkm_devinit(subdev);
-	व्योम *data = init;
+static void *
+nvkm_devinit_dtor(struct nvkm_subdev *subdev)
+{
+	struct nvkm_devinit *init = nvkm_devinit(subdev);
+	void *data = init;
 
-	अगर (init->func->dtor)
+	if (init->func->dtor)
 		data = init->func->dtor(init);
 
 	/* lock crtc regs */
 	nvkm_lockvgac(subdev->device, true);
-	वापस data;
-पूर्ण
+	return data;
+}
 
-अटल स्थिर काष्ठा nvkm_subdev_func
-nvkm_devinit = अणु
+static const struct nvkm_subdev_func
+nvkm_devinit = {
 	.dtor = nvkm_devinit_dtor,
 	.preinit = nvkm_devinit_preinit,
 	.init = nvkm_devinit_init,
 	.fini = nvkm_devinit_fini,
-पूर्ण;
+};
 
-व्योम
-nvkm_devinit_ctor(स्थिर काष्ठा nvkm_devinit_func *func, काष्ठा nvkm_device *device,
-		  क्रमागत nvkm_subdev_type type, पूर्णांक inst, काष्ठा nvkm_devinit *init)
-अणु
+void
+nvkm_devinit_ctor(const struct nvkm_devinit_func *func, struct nvkm_device *device,
+		  enum nvkm_subdev_type type, int inst, struct nvkm_devinit *init)
+{
 	nvkm_subdev_ctor(&nvkm_devinit, device, type, inst, &init->subdev);
 	init->func = func;
-	init->क्रमce_post = nvkm_boolopt(device->cfgopt, "NvForcePost", false);
-पूर्ण
+	init->force_post = nvkm_boolopt(device->cfgopt, "NvForcePost", false);
+}

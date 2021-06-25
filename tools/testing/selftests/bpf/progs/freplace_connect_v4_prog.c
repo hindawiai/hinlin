@@ -1,20 +1,19 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 // Copyright (c) 2020 Facebook
 
-#समावेश <linux/मानकघोष.स>
-#समावेश <linux/ipv6.h>
-#समावेश <linux/bpf.h>
-#समावेश <linux/in.h>
-#समावेश <sys/socket.h>
-#समावेश <bpf/bpf_helpers.h>
-#समावेश <bpf/bpf_endian.h>
+#include <linux/stddef.h>
+#include <linux/ipv6.h>
+#include <linux/bpf.h>
+#include <linux/in.h>
+#include <sys/socket.h>
+#include <bpf/bpf_helpers.h>
+#include <bpf/bpf_endian.h>
 
 SEC("freplace/connect_v4_prog")
-पूर्णांक new_connect_v4_prog(काष्ठा bpf_sock_addr *ctx)
-अणु
-	// वापस value thats in invalid range
-	वापस 255;
-पूर्ण
+int new_connect_v4_prog(struct bpf_sock_addr *ctx)
+{
+	// return value thats in invalid range
+	return 255;
+}
 
-अक्षर _license[] SEC("license") = "GPL";
+char _license[] SEC("license") = "GPL";

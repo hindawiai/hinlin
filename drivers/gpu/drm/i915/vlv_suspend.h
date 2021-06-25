@@ -1,19 +1,18 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: MIT */
+/* SPDX-License-Identifier: MIT */
 /*
- * Copyright तऊ 2020 Intel Corporation
+ * Copyright © 2020 Intel Corporation
  */
 
-#अगर_अघोषित __VLV_SUSPEND_H__
-#घोषणा __VLV_SUSPEND_H__
+#ifndef __VLV_SUSPEND_H__
+#define __VLV_SUSPEND_H__
 
-#समावेश <linux/types.h>
+#include <linux/types.h>
 
-काष्ठा drm_i915_निजी;
+struct drm_i915_private;
 
-पूर्णांक vlv_suspend_init(काष्ठा drm_i915_निजी *i915);
-व्योम vlv_suspend_cleanup(काष्ठा drm_i915_निजी *i915);
-पूर्णांक vlv_suspend_complete(काष्ठा drm_i915_निजी *i915);
-पूर्णांक vlv_resume_prepare(काष्ठा drm_i915_निजी *i915, bool rpm_resume);
+int vlv_suspend_init(struct drm_i915_private *i915);
+void vlv_suspend_cleanup(struct drm_i915_private *i915);
+int vlv_suspend_complete(struct drm_i915_private *i915);
+int vlv_resume_prepare(struct drm_i915_private *i915, bool rpm_resume);
 
-#पूर्ण_अगर /* __VLV_SUSPEND_H__ */
+#endif /* __VLV_SUSPEND_H__ */

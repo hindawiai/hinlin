@@ -1,88 +1,87 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
-#अगर_अघोषित _IPX_H_
-#घोषणा _IPX_H_
-#समावेश <linux/libc-compat.h>	/* क्रम compatibility with glibc netipx/ipx.h */
-#समावेश <linux/types.h>
-#समावेश <linux/sockios.h>
-#समावेश <linux/socket.h>
-#घोषणा IPX_NODE_LEN	6
-#घोषणा IPX_MTU		576
+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+#ifndef _IPX_H_
+#define _IPX_H_
+#include <linux/libc-compat.h>	/* for compatibility with glibc netipx/ipx.h */
+#include <linux/types.h>
+#include <linux/sockios.h>
+#include <linux/socket.h>
+#define IPX_NODE_LEN	6
+#define IPX_MTU		576
 
-#अगर __UAPI_DEF_SOCKADDR_IPX
-काष्ठा sockaddr_ipx अणु
+#if __UAPI_DEF_SOCKADDR_IPX
+struct sockaddr_ipx {
 	__kernel_sa_family_t sipx_family;
 	__be16		sipx_port;
 	__be32		sipx_network;
-	अचिन्हित अक्षर 	sipx_node[IPX_NODE_LEN];
+	unsigned char 	sipx_node[IPX_NODE_LEN];
 	__u8		sipx_type;
-	अचिन्हित अक्षर	sipx_zero;	/* 16 byte fill */
-पूर्ण;
-#पूर्ण_अगर /* __UAPI_DEF_SOCKADDR_IPX */
+	unsigned char	sipx_zero;	/* 16 byte fill */
+};
+#endif /* __UAPI_DEF_SOCKADDR_IPX */
 
 /*
- * So we can fit the extra info क्रम SIOCSIFADDR पूर्णांकo the address nicely
+ * So we can fit the extra info for SIOCSIFADDR into the address nicely
  */
-#घोषणा sipx_special	sipx_port
-#घोषणा sipx_action	sipx_zero
-#घोषणा IPX_DLTITF	0
-#घोषणा IPX_CRTITF	1
+#define sipx_special	sipx_port
+#define sipx_action	sipx_zero
+#define IPX_DLTITF	0
+#define IPX_CRTITF	1
 
-#अगर __UAPI_DEF_IPX_ROUTE_DEFINITION
-काष्ठा ipx_route_definition अणु
+#if __UAPI_DEF_IPX_ROUTE_DEFINITION
+struct ipx_route_definition {
 	__be32        ipx_network;
 	__be32        ipx_router_network;
-	अचिन्हित अक्षर ipx_router_node[IPX_NODE_LEN];
-पूर्ण;
-#पूर्ण_अगर /* __UAPI_DEF_IPX_ROUTE_DEFINITION */
+	unsigned char ipx_router_node[IPX_NODE_LEN];
+};
+#endif /* __UAPI_DEF_IPX_ROUTE_DEFINITION */
 
-#अगर __UAPI_DEF_IPX_INTERFACE_DEFINITION
-काष्ठा ipx_पूर्णांकerface_definition अणु
+#if __UAPI_DEF_IPX_INTERFACE_DEFINITION
+struct ipx_interface_definition {
 	__be32        ipx_network;
-	अचिन्हित अक्षर ipx_device[16];
-	अचिन्हित अक्षर ipx_dlink_type;
-#घोषणा IPX_FRAME_NONE		0
-#घोषणा IPX_FRAME_SNAP		1
-#घोषणा IPX_FRAME_8022		2
-#घोषणा IPX_FRAME_ETHERII	3
-#घोषणा IPX_FRAME_8023		4
-#घोषणा IPX_FRAME_TR_8022       5 /* obsolete */
-	अचिन्हित अक्षर ipx_special;
-#घोषणा IPX_SPECIAL_NONE	0
-#घोषणा IPX_PRIMARY		1
-#घोषणा IPX_INTERNAL		2
-	अचिन्हित अक्षर ipx_node[IPX_NODE_LEN];
-पूर्ण;
-#पूर्ण_अगर /* __UAPI_DEF_IPX_INTERFACE_DEFINITION */
+	unsigned char ipx_device[16];
+	unsigned char ipx_dlink_type;
+#define IPX_FRAME_NONE		0
+#define IPX_FRAME_SNAP		1
+#define IPX_FRAME_8022		2
+#define IPX_FRAME_ETHERII	3
+#define IPX_FRAME_8023		4
+#define IPX_FRAME_TR_8022       5 /* obsolete */
+	unsigned char ipx_special;
+#define IPX_SPECIAL_NONE	0
+#define IPX_PRIMARY		1
+#define IPX_INTERNAL		2
+	unsigned char ipx_node[IPX_NODE_LEN];
+};
+#endif /* __UAPI_DEF_IPX_INTERFACE_DEFINITION */
 
-#अगर __UAPI_DEF_IPX_CONFIG_DATA
-काष्ठा ipx_config_data अणु
-	अचिन्हित अक्षर	ipxcfg_स्वतः_select_primary;
-	अचिन्हित अक्षर	ipxcfg_स्वतः_create_पूर्णांकerfaces;
-पूर्ण;
-#पूर्ण_अगर /* __UAPI_DEF_IPX_CONFIG_DATA */
+#if __UAPI_DEF_IPX_CONFIG_DATA
+struct ipx_config_data {
+	unsigned char	ipxcfg_auto_select_primary;
+	unsigned char	ipxcfg_auto_create_interfaces;
+};
+#endif /* __UAPI_DEF_IPX_CONFIG_DATA */
 
 /*
- * OLD Route Definition क्रम backward compatibility.
+ * OLD Route Definition for backward compatibility.
  */
 
-#अगर __UAPI_DEF_IPX_ROUTE_DEF
-काष्ठा ipx_route_def अणु
+#if __UAPI_DEF_IPX_ROUTE_DEF
+struct ipx_route_def {
 	__be32		ipx_network;
 	__be32		ipx_router_network;
-#घोषणा IPX_ROUTE_NO_ROUTER	0
-	अचिन्हित अक्षर	ipx_router_node[IPX_NODE_LEN];
-	अचिन्हित अक्षर	ipx_device[16];
-	अचिन्हित लघु	ipx_flags;
-#घोषणा IPX_RT_SNAP		8
-#घोषणा IPX_RT_8022		4
-#घोषणा IPX_RT_BLUEBOOK		2
-#घोषणा IPX_RT_ROUTED		1
-पूर्ण;
-#पूर्ण_अगर /* __UAPI_DEF_IPX_ROUTE_DEF */
+#define IPX_ROUTE_NO_ROUTER	0
+	unsigned char	ipx_router_node[IPX_NODE_LEN];
+	unsigned char	ipx_device[16];
+	unsigned short	ipx_flags;
+#define IPX_RT_SNAP		8
+#define IPX_RT_8022		4
+#define IPX_RT_BLUEBOOK		2
+#define IPX_RT_ROUTED		1
+};
+#endif /* __UAPI_DEF_IPX_ROUTE_DEF */
 
-#घोषणा SIOCAIPXITFCRT		(SIOCPROTOPRIVATE)
-#घोषणा SIOCAIPXPRISLT		(SIOCPROTOPRIVATE + 1)
-#घोषणा SIOCIPXCFGDATA		(SIOCPROTOPRIVATE + 2)
-#घोषणा SIOCIPXNCPCONN		(SIOCPROTOPRIVATE + 3)
-#पूर्ण_अगर /* _IPX_H_ */
+#define SIOCAIPXITFCRT		(SIOCPROTOPRIVATE)
+#define SIOCAIPXPRISLT		(SIOCPROTOPRIVATE + 1)
+#define SIOCIPXCFGDATA		(SIOCPROTOPRIVATE + 2)
+#define SIOCIPXNCPCONN		(SIOCPROTOPRIVATE + 3)
+#endif /* _IPX_H_ */

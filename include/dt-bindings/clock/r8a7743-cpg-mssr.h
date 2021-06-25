@@ -1,40 +1,39 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0+
+/* SPDX-License-Identifier: GPL-2.0+
  *
  * Copyright (C) 2016 Cogent Embedded Inc.
  */
-#अगर_अघोषित __DT_BINDINGS_CLOCK_R8A7743_CPG_MSSR_H__
-#घोषणा __DT_BINDINGS_CLOCK_R8A7743_CPG_MSSR_H__
+#ifndef __DT_BINDINGS_CLOCK_R8A7743_CPG_MSSR_H__
+#define __DT_BINDINGS_CLOCK_R8A7743_CPG_MSSR_H__
 
-#समावेश <dt-bindings/घड़ी/renesas-cpg-mssr.h>
+#include <dt-bindings/clock/renesas-cpg-mssr.h>
 
 /* r8a7743 CPG Core Clocks */
-#घोषणा R8A7743_CLK_Z		0
-#घोषणा R8A7743_CLK_ZG		1
-#घोषणा R8A7743_CLK_ZTR		2
-#घोषणा R8A7743_CLK_ZTRD2	3
-#घोषणा R8A7743_CLK_ZT		4
-#घोषणा R8A7743_CLK_ZX		5
-#घोषणा R8A7743_CLK_ZS		6
-#घोषणा R8A7743_CLK_HP		7
-#घोषणा R8A7743_CLK_B		9
-#घोषणा R8A7743_CLK_LB		10
-#घोषणा R8A7743_CLK_P		11
-#घोषणा R8A7743_CLK_CL		12
-#घोषणा R8A7743_CLK_M2		13
-#घोषणा R8A7743_CLK_ZB3		15
-#घोषणा R8A7743_CLK_ZB3D2	16
-#घोषणा R8A7743_CLK_DDR		17
-#घोषणा R8A7743_CLK_SDH		18
-#घोषणा R8A7743_CLK_SD0		19
-#घोषणा R8A7743_CLK_SD2		20
-#घोषणा R8A7743_CLK_SD3		21
-#घोषणा R8A7743_CLK_MMC0	22
-#घोषणा R8A7743_CLK_MP		23
-#घोषणा R8A7743_CLK_QSPI	26
-#घोषणा R8A7743_CLK_CP		27
-#घोषणा R8A7743_CLK_RCAN	28
-#घोषणा R8A7743_CLK_R		29
-#घोषणा R8A7743_CLK_OSC		30
+#define R8A7743_CLK_Z		0
+#define R8A7743_CLK_ZG		1
+#define R8A7743_CLK_ZTR		2
+#define R8A7743_CLK_ZTRD2	3
+#define R8A7743_CLK_ZT		4
+#define R8A7743_CLK_ZX		5
+#define R8A7743_CLK_ZS		6
+#define R8A7743_CLK_HP		7
+#define R8A7743_CLK_B		9
+#define R8A7743_CLK_LB		10
+#define R8A7743_CLK_P		11
+#define R8A7743_CLK_CL		12
+#define R8A7743_CLK_M2		13
+#define R8A7743_CLK_ZB3		15
+#define R8A7743_CLK_ZB3D2	16
+#define R8A7743_CLK_DDR		17
+#define R8A7743_CLK_SDH		18
+#define R8A7743_CLK_SD0		19
+#define R8A7743_CLK_SD2		20
+#define R8A7743_CLK_SD3		21
+#define R8A7743_CLK_MMC0	22
+#define R8A7743_CLK_MP		23
+#define R8A7743_CLK_QSPI	26
+#define R8A7743_CLK_CP		27
+#define R8A7743_CLK_RCAN	28
+#define R8A7743_CLK_R		29
+#define R8A7743_CLK_OSC		30
 
-#पूर्ण_अगर /* __DT_BINDINGS_CLOCK_R8A7743_CPG_MSSR_H__ */
+#endif /* __DT_BINDINGS_CLOCK_R8A7743_CPG_MSSR_H__ */

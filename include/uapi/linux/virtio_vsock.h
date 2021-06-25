@@ -1,25 +1,24 @@
-<शैली गुरु>
 /*
- * This header, excluding the #अगर_घोषित __KERNEL__ part, is BSD licensed so
+ * This header, excluding the #ifdef __KERNEL__ part, is BSD licensed so
  * anyone can use the definitions to implement compatible drivers/servers:
  *
  *
- * Redistribution and use in source and binary क्रमms, with or without
- * modअगरication, are permitted provided that the following conditions
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary क्रमm must reproduce the above copyright
+ * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
- *    करोcumentation and/or other materials provided with the distribution.
+ *    documentation and/or other materials provided with the distribution.
  * 3. Neither the name of IBM nor the names of its contributors
- *    may be used to enकरोrse or promote products derived from this software
- *    without specअगरic prior written permission.
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS ``AS IS''
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
  * ARE DISCLAIMED.  IN NO EVENT SHALL IBM OR CONTRIBUTORS BE LIABLE
- * FOR ANY सूचीECT, INसूचीECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
  * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
  * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
@@ -32,43 +31,43 @@
  * Copyright (C) Stefan Hajnoczi <stefanha@redhat.com>, 2015
  */
 
-#अगर_अघोषित _UAPI_LINUX_VIRTIO_VSOCK_H
-#घोषणा _UAPI_LINUX_VIRTIO_VSOCK_H
+#ifndef _UAPI_LINUX_VIRTIO_VSOCK_H
+#define _UAPI_LINUX_VIRTIO_VSOCK_H
 
-#समावेश <linux/types.h>
-#समावेश <linux/virtio_ids.h>
-#समावेश <linux/virtio_config.h>
+#include <linux/types.h>
+#include <linux/virtio_ids.h>
+#include <linux/virtio_config.h>
 
-काष्ठा virtio_vsock_config अणु
+struct virtio_vsock_config {
 	__le64 guest_cid;
-पूर्ण __attribute__((packed));
+} __attribute__((packed));
 
-क्रमागत virtio_vsock_event_id अणु
+enum virtio_vsock_event_id {
 	VIRTIO_VSOCK_EVENT_TRANSPORT_RESET = 0,
-पूर्ण;
+};
 
-काष्ठा virtio_vsock_event अणु
+struct virtio_vsock_event {
 	__le32 id;
-पूर्ण __attribute__((packed));
+} __attribute__((packed));
 
-काष्ठा virtio_vsock_hdr अणु
+struct virtio_vsock_hdr {
 	__le64	src_cid;
 	__le64	dst_cid;
 	__le32	src_port;
 	__le32	dst_port;
 	__le32	len;
-	__le16	type;		/* क्रमागत virtio_vsock_type */
-	__le16	op;		/* क्रमागत virtio_vsock_op */
+	__le16	type;		/* enum virtio_vsock_type */
+	__le16	op;		/* enum virtio_vsock_op */
 	__le32	flags;
 	__le32	buf_alloc;
 	__le32	fwd_cnt;
-पूर्ण __attribute__((packed));
+} __attribute__((packed));
 
-क्रमागत virtio_vsock_type अणु
+enum virtio_vsock_type {
 	VIRTIO_VSOCK_TYPE_STREAM = 1,
-पूर्ण;
+};
 
-क्रमागत virtio_vsock_op अणु
+enum virtio_vsock_op {
 	VIRTIO_VSOCK_OP_INVALID = 0,
 
 	/* Connect operations */
@@ -84,12 +83,12 @@
 	VIRTIO_VSOCK_OP_CREDIT_UPDATE = 6,
 	/* Request the peer to send the credit info to us */
 	VIRTIO_VSOCK_OP_CREDIT_REQUEST = 7,
-पूर्ण;
+};
 
 /* VIRTIO_VSOCK_OP_SHUTDOWN flags values */
-क्रमागत virtio_vsock_shutकरोwn अणु
+enum virtio_vsock_shutdown {
 	VIRTIO_VSOCK_SHUTDOWN_RCV = 1,
 	VIRTIO_VSOCK_SHUTDOWN_SEND = 2,
-पूर्ण;
+};
 
-#पूर्ण_अगर /* _UAPI_LINUX_VIRTIO_VSOCK_H */
+#endif /* _UAPI_LINUX_VIRTIO_VSOCK_H */

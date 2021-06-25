@@ -1,201 +1,200 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- *  Housekeeping management. Manage the tarमाला_लो क्रम routine code that can run on
- *  any CPU: unbound workqueues, समयrs, kthपढ़ोs and any offloadable work.
+ *  Housekeeping management. Manage the targets for routine code that can run on
+ *  any CPU: unbound workqueues, timers, kthreads and any offloadable work.
  *
  * Copyright (C) 2017 Red Hat, Inc., Frederic Weisbecker
  * Copyright (C) 2017-2018 SUSE, Frederic Weisbecker
  *
  */
-#समावेश "sched.h"
+#include "sched.h"
 
 DEFINE_STATIC_KEY_FALSE(housekeeping_overridden);
 EXPORT_SYMBOL_GPL(housekeeping_overridden);
-अटल cpumask_var_t housekeeping_mask;
-अटल अचिन्हित पूर्णांक housekeeping_flags;
+static cpumask_var_t housekeeping_mask;
+static unsigned int housekeeping_flags;
 
-bool housekeeping_enabled(क्रमागत hk_flags flags)
-अणु
-	वापस !!(housekeeping_flags & flags);
-पूर्ण
+bool housekeeping_enabled(enum hk_flags flags)
+{
+	return !!(housekeeping_flags & flags);
+}
 EXPORT_SYMBOL_GPL(housekeeping_enabled);
 
-पूर्णांक housekeeping_any_cpu(क्रमागत hk_flags flags)
-अणु
-	पूर्णांक cpu;
+int housekeeping_any_cpu(enum hk_flags flags)
+{
+	int cpu;
 
-	अगर (अटल_branch_unlikely(&housekeeping_overridden)) अणु
-		अगर (housekeeping_flags & flags) अणु
-			cpu = sched_numa_find_बंदst(housekeeping_mask, smp_processor_id());
-			अगर (cpu < nr_cpu_ids)
-				वापस cpu;
+	if (static_branch_unlikely(&housekeeping_overridden)) {
+		if (housekeeping_flags & flags) {
+			cpu = sched_numa_find_closest(housekeeping_mask, smp_processor_id());
+			if (cpu < nr_cpu_ids)
+				return cpu;
 
-			वापस cpumask_any_and(housekeeping_mask, cpu_online_mask);
-		पूर्ण
-	पूर्ण
-	वापस smp_processor_id();
-पूर्ण
+			return cpumask_any_and(housekeeping_mask, cpu_online_mask);
+		}
+	}
+	return smp_processor_id();
+}
 EXPORT_SYMBOL_GPL(housekeeping_any_cpu);
 
-स्थिर काष्ठा cpumask *housekeeping_cpumask(क्रमागत hk_flags flags)
-अणु
-	अगर (अटल_branch_unlikely(&housekeeping_overridden))
-		अगर (housekeeping_flags & flags)
-			वापस housekeeping_mask;
-	वापस cpu_possible_mask;
-पूर्ण
+const struct cpumask *housekeeping_cpumask(enum hk_flags flags)
+{
+	if (static_branch_unlikely(&housekeeping_overridden))
+		if (housekeeping_flags & flags)
+			return housekeeping_mask;
+	return cpu_possible_mask;
+}
 EXPORT_SYMBOL_GPL(housekeeping_cpumask);
 
-व्योम housekeeping_affine(काष्ठा task_काष्ठा *t, क्रमागत hk_flags flags)
-अणु
-	अगर (अटल_branch_unlikely(&housekeeping_overridden))
-		अगर (housekeeping_flags & flags)
+void housekeeping_affine(struct task_struct *t, enum hk_flags flags)
+{
+	if (static_branch_unlikely(&housekeeping_overridden))
+		if (housekeeping_flags & flags)
 			set_cpus_allowed_ptr(t, housekeeping_mask);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(housekeeping_affine);
 
-bool housekeeping_test_cpu(पूर्णांक cpu, क्रमागत hk_flags flags)
-अणु
-	अगर (अटल_branch_unlikely(&housekeeping_overridden))
-		अगर (housekeeping_flags & flags)
-			वापस cpumask_test_cpu(cpu, housekeeping_mask);
-	वापस true;
-पूर्ण
+bool housekeeping_test_cpu(int cpu, enum hk_flags flags)
+{
+	if (static_branch_unlikely(&housekeeping_overridden))
+		if (housekeeping_flags & flags)
+			return cpumask_test_cpu(cpu, housekeeping_mask);
+	return true;
+}
 EXPORT_SYMBOL_GPL(housekeeping_test_cpu);
 
-व्योम __init housekeeping_init(व्योम)
-अणु
-	अगर (!housekeeping_flags)
-		वापस;
+void __init housekeeping_init(void)
+{
+	if (!housekeeping_flags)
+		return;
 
-	अटल_branch_enable(&housekeeping_overridden);
+	static_branch_enable(&housekeeping_overridden);
 
-	अगर (housekeeping_flags & HK_FLAG_TICK)
+	if (housekeeping_flags & HK_FLAG_TICK)
 		sched_tick_offload_init();
 
 	/* We need at least one CPU to handle housekeeping work */
 	WARN_ON_ONCE(cpumask_empty(housekeeping_mask));
-पूर्ण
+}
 
-अटल पूर्णांक __init housekeeping_setup(अक्षर *str, क्रमागत hk_flags flags)
-अणु
+static int __init housekeeping_setup(char *str, enum hk_flags flags)
+{
 	cpumask_var_t non_housekeeping_mask;
-	cpumask_var_t पंचांगp;
-	पूर्णांक err;
+	cpumask_var_t tmp;
+	int err;
 
-	alloc_booपंचांगem_cpumask_var(&non_housekeeping_mask);
+	alloc_bootmem_cpumask_var(&non_housekeeping_mask);
 	err = cpulist_parse(str, non_housekeeping_mask);
-	अगर (err < 0 || cpumask_last(non_housekeeping_mask) >= nr_cpu_ids) अणु
+	if (err < 0 || cpumask_last(non_housekeeping_mask) >= nr_cpu_ids) {
 		pr_warn("Housekeeping: nohz_full= or isolcpus= incorrect CPU range\n");
-		मुक्त_booपंचांगem_cpumask_var(non_housekeeping_mask);
-		वापस 0;
-	पूर्ण
+		free_bootmem_cpumask_var(non_housekeeping_mask);
+		return 0;
+	}
 
-	alloc_booपंचांगem_cpumask_var(&पंचांगp);
-	अगर (!housekeeping_flags) अणु
-		alloc_booपंचांगem_cpumask_var(&housekeeping_mask);
+	alloc_bootmem_cpumask_var(&tmp);
+	if (!housekeeping_flags) {
+		alloc_bootmem_cpumask_var(&housekeeping_mask);
 		cpumask_andnot(housekeeping_mask,
 			       cpu_possible_mask, non_housekeeping_mask);
 
-		cpumask_andnot(पंचांगp, cpu_present_mask, non_housekeeping_mask);
-		अगर (cpumask_empty(पंचांगp)) अणु
+		cpumask_andnot(tmp, cpu_present_mask, non_housekeeping_mask);
+		if (cpumask_empty(tmp)) {
 			pr_warn("Housekeeping: must include one present CPU, "
 				"using boot CPU:%d\n", smp_processor_id());
 			__cpumask_set_cpu(smp_processor_id(), housekeeping_mask);
 			__cpumask_clear_cpu(smp_processor_id(), non_housekeeping_mask);
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		cpumask_andnot(पंचांगp, cpu_present_mask, non_housekeeping_mask);
-		अगर (cpumask_empty(पंचांगp))
+		}
+	} else {
+		cpumask_andnot(tmp, cpu_present_mask, non_housekeeping_mask);
+		if (cpumask_empty(tmp))
 			__cpumask_clear_cpu(smp_processor_id(), non_housekeeping_mask);
-		cpumask_andnot(पंचांगp, cpu_possible_mask, non_housekeeping_mask);
-		अगर (!cpumask_equal(पंचांगp, housekeeping_mask)) अणु
+		cpumask_andnot(tmp, cpu_possible_mask, non_housekeeping_mask);
+		if (!cpumask_equal(tmp, housekeeping_mask)) {
 			pr_warn("Housekeeping: nohz_full= must match isolcpus=\n");
-			मुक्त_booपंचांगem_cpumask_var(पंचांगp);
-			मुक्त_booपंचांगem_cpumask_var(non_housekeeping_mask);
-			वापस 0;
-		पूर्ण
-	पूर्ण
-	मुक्त_booपंचांगem_cpumask_var(पंचांगp);
+			free_bootmem_cpumask_var(tmp);
+			free_bootmem_cpumask_var(non_housekeeping_mask);
+			return 0;
+		}
+	}
+	free_bootmem_cpumask_var(tmp);
 
-	अगर ((flags & HK_FLAG_TICK) && !(housekeeping_flags & HK_FLAG_TICK)) अणु
-		अगर (IS_ENABLED(CONFIG_NO_HZ_FULL)) अणु
+	if ((flags & HK_FLAG_TICK) && !(housekeeping_flags & HK_FLAG_TICK)) {
+		if (IS_ENABLED(CONFIG_NO_HZ_FULL)) {
 			tick_nohz_full_setup(non_housekeeping_mask);
-		पूर्ण अन्यथा अणु
+		} else {
 			pr_warn("Housekeeping: nohz unsupported."
 				" Build with CONFIG_NO_HZ_FULL\n");
-			मुक्त_booपंचांगem_cpumask_var(non_housekeeping_mask);
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			free_bootmem_cpumask_var(non_housekeeping_mask);
+			return 0;
+		}
+	}
 
 	housekeeping_flags |= flags;
 
-	मुक्त_booपंचांगem_cpumask_var(non_housekeeping_mask);
+	free_bootmem_cpumask_var(non_housekeeping_mask);
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल पूर्णांक __init housekeeping_nohz_full_setup(अक्षर *str)
-अणु
-	अचिन्हित पूर्णांक flags;
+static int __init housekeeping_nohz_full_setup(char *str)
+{
+	unsigned int flags;
 
 	flags = HK_FLAG_TICK | HK_FLAG_WQ | HK_FLAG_TIMER | HK_FLAG_RCU |
 		HK_FLAG_MISC | HK_FLAG_KTHREAD;
 
-	वापस housekeeping_setup(str, flags);
-पूर्ण
+	return housekeeping_setup(str, flags);
+}
 __setup("nohz_full=", housekeeping_nohz_full_setup);
 
-अटल पूर्णांक __init housekeeping_isolcpus_setup(अक्षर *str)
-अणु
-	अचिन्हित पूर्णांक flags = 0;
+static int __init housekeeping_isolcpus_setup(char *str)
+{
+	unsigned int flags = 0;
 	bool illegal = false;
-	अक्षर *par;
-	पूर्णांक len;
+	char *par;
+	int len;
 
-	जबतक (है_अक्षर(*str)) अणु
-		अगर (!म_भेदन(str, "nohz,", 5)) अणु
+	while (isalpha(*str)) {
+		if (!strncmp(str, "nohz,", 5)) {
 			str += 5;
 			flags |= HK_FLAG_TICK;
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		अगर (!म_भेदन(str, "domain,", 7)) अणु
+		if (!strncmp(str, "domain,", 7)) {
 			str += 7;
 			flags |= HK_FLAG_DOMAIN;
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		अगर (!म_भेदन(str, "managed_irq,", 12)) अणु
+		if (!strncmp(str, "managed_irq,", 12)) {
 			str += 12;
 			flags |= HK_FLAG_MANAGED_IRQ;
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		/*
 		 * Skip unknown sub-parameter and validate that it is not
-		 * containing an invalid अक्षरacter.
+		 * containing an invalid character.
 		 */
-		क्रम (par = str, len = 0; *str && *str != ','; str++, len++) अणु
-			अगर (!है_अक्षर(*str) && *str != '_')
+		for (par = str, len = 0; *str && *str != ','; str++, len++) {
+			if (!isalpha(*str) && *str != '_')
 				illegal = true;
-		पूर्ण
+		}
 
-		अगर (illegal) अणु
+		if (illegal) {
 			pr_warn("isolcpus: Invalid flag %.*s\n", len, par);
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 
 		pr_info("isolcpus: Skipped unknown flag %.*s\n", len, par);
 		str++;
-	पूर्ण
+	}
 
-	/* Default behaviour क्रम isolcpus without flags */
-	अगर (!flags)
+	/* Default behaviour for isolcpus without flags */
+	if (!flags)
 		flags |= HK_FLAG_DOMAIN;
 
-	वापस housekeeping_setup(str, flags);
-पूर्ण
+	return housekeeping_setup(str, flags);
+}
 __setup("isolcpus=", housekeeping_isolcpus_setup);

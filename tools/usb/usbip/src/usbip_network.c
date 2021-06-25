@@ -1,149 +1,148 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright (C) 2011 matt mooney <mfm@muteddisk.com>
  *               2005-2007 Takahiro Hirofuchi
  */
 
-#समावेश <sys/socket.h>
+#include <sys/socket.h>
 
-#समावेश <माला.स>
+#include <string.h>
 
-#समावेश <arpa/inet.h>
-#समावेश <netdb.h>
-#समावेश <netinet/tcp.h>
-#समावेश <unistd.h>
+#include <arpa/inet.h>
+#include <netdb.h>
+#include <netinet/tcp.h>
+#include <unistd.h>
 
-#अगर_घोषित HAVE_LIBWRAP
-#समावेश <tcpd.h>
-#पूर्ण_अगर
+#ifdef HAVE_LIBWRAP
+#include <tcpd.h>
+#endif
 
-#समावेश "usbip_common.h"
-#समावेश "usbip_network.h"
+#include "usbip_common.h"
+#include "usbip_network.h"
 
-पूर्णांक usbip_port = 3240;
-अक्षर *usbip_port_string = "3240";
+int usbip_port = 3240;
+char *usbip_port_string = "3240";
 
-व्योम usbip_setup_port_number(अक्षर *arg)
-अणु
+void usbip_setup_port_number(char *arg)
+{
 	dbg("parsing port arg '%s'", arg);
-	अक्षर *end;
-	अचिन्हित दीर्घ पूर्णांक port = म_से_अदीर्घ(arg, &end, 10);
+	char *end;
+	unsigned long int port = strtoul(arg, &end, 10);
 
-	अगर (end == arg) अणु
+	if (end == arg) {
 		err("port: could not parse '%s' as a decimal integer", arg);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (*end != '\0') अणु
+	if (*end != '\0') {
 		err("port: garbage at end of '%s'", arg);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (port > UINT16_MAX) अणु
+	if (port > UINT16_MAX) {
 		err("port: %s too high (max=%d)",
 		    arg, UINT16_MAX);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	usbip_port = port;
 	usbip_port_string = arg;
 	info("using port %d (\"%s\")", usbip_port, usbip_port_string);
-पूर्ण
+}
 
-uपूर्णांक32_t usbip_net_pack_uपूर्णांक32_t(पूर्णांक pack, uपूर्णांक32_t num)
-अणु
-	uपूर्णांक32_t i;
+uint32_t usbip_net_pack_uint32_t(int pack, uint32_t num)
+{
+	uint32_t i;
 
-	अगर (pack)
+	if (pack)
 		i = htonl(num);
-	अन्यथा
+	else
 		i = ntohl(num);
 
-	वापस i;
-पूर्ण
+	return i;
+}
 
-uपूर्णांक16_t usbip_net_pack_uपूर्णांक16_t(पूर्णांक pack, uपूर्णांक16_t num)
-अणु
-	uपूर्णांक16_t i;
+uint16_t usbip_net_pack_uint16_t(int pack, uint16_t num)
+{
+	uint16_t i;
 
-	अगर (pack)
+	if (pack)
 		i = htons(num);
-	अन्यथा
+	else
 		i = ntohs(num);
 
-	वापस i;
-पूर्ण
+	return i;
+}
 
-व्योम usbip_net_pack_usb_device(पूर्णांक pack, काष्ठा usbip_usb_device *udev)
-अणु
-	udev->busnum = usbip_net_pack_uपूर्णांक32_t(pack, udev->busnum);
-	udev->devnum = usbip_net_pack_uपूर्णांक32_t(pack, udev->devnum);
-	udev->speed = usbip_net_pack_uपूर्णांक32_t(pack, udev->speed);
+void usbip_net_pack_usb_device(int pack, struct usbip_usb_device *udev)
+{
+	udev->busnum = usbip_net_pack_uint32_t(pack, udev->busnum);
+	udev->devnum = usbip_net_pack_uint32_t(pack, udev->devnum);
+	udev->speed = usbip_net_pack_uint32_t(pack, udev->speed);
 
-	udev->idVenकरोr = usbip_net_pack_uपूर्णांक16_t(pack, udev->idVenकरोr);
-	udev->idProduct = usbip_net_pack_uपूर्णांक16_t(pack, udev->idProduct);
-	udev->bcdDevice = usbip_net_pack_uपूर्णांक16_t(pack, udev->bcdDevice);
-पूर्ण
+	udev->idVendor = usbip_net_pack_uint16_t(pack, udev->idVendor);
+	udev->idProduct = usbip_net_pack_uint16_t(pack, udev->idProduct);
+	udev->bcdDevice = usbip_net_pack_uint16_t(pack, udev->bcdDevice);
+}
 
-व्योम usbip_net_pack_usb_पूर्णांकerface(पूर्णांक pack __attribute__((unused)),
-				  काष्ठा usbip_usb_पूर्णांकerface *udev
+void usbip_net_pack_usb_interface(int pack __attribute__((unused)),
+				  struct usbip_usb_interface *udev
 				  __attribute__((unused)))
-अणु
-	/* uपूर्णांक8_t members need nothing */
-पूर्ण
+{
+	/* uint8_t members need nothing */
+}
 
-अटल sमाप_प्रकार usbip_net_xmit(पूर्णांक sockfd, व्योम *buff, माप_प्रकार bufflen,
-			      पूर्णांक sending)
-अणु
-	sमाप_प्रकार nbytes;
-	sमाप_प्रकार total = 0;
+static ssize_t usbip_net_xmit(int sockfd, void *buff, size_t bufflen,
+			      int sending)
+{
+	ssize_t nbytes;
+	ssize_t total = 0;
 
-	अगर (!bufflen)
-		वापस 0;
+	if (!bufflen)
+		return 0;
 
-	करो अणु
-		अगर (sending)
+	do {
+		if (sending)
 			nbytes = send(sockfd, buff, bufflen, 0);
-		अन्यथा
+		else
 			nbytes = recv(sockfd, buff, bufflen, MSG_WAITALL);
 
-		अगर (nbytes <= 0)
-			वापस -1;
+		if (nbytes <= 0)
+			return -1;
 
-		buff	 = (व्योम *)((पूर्णांकptr_t) buff + nbytes);
+		buff	 = (void *)((intptr_t) buff + nbytes);
 		bufflen	-= nbytes;
 		total	+= nbytes;
 
-	पूर्ण जबतक (bufflen > 0);
+	} while (bufflen > 0);
 
-	वापस total;
-पूर्ण
+	return total;
+}
 
-sमाप_प्रकार usbip_net_recv(पूर्णांक sockfd, व्योम *buff, माप_प्रकार bufflen)
-अणु
-	वापस usbip_net_xmit(sockfd, buff, bufflen, 0);
-पूर्ण
+ssize_t usbip_net_recv(int sockfd, void *buff, size_t bufflen)
+{
+	return usbip_net_xmit(sockfd, buff, bufflen, 0);
+}
 
-sमाप_प्रकार usbip_net_send(पूर्णांक sockfd, व्योम *buff, माप_प्रकार bufflen)
-अणु
-	वापस usbip_net_xmit(sockfd, buff, bufflen, 1);
-पूर्ण
+ssize_t usbip_net_send(int sockfd, void *buff, size_t bufflen)
+{
+	return usbip_net_xmit(sockfd, buff, bufflen, 1);
+}
 
-अटल अंतरभूत व्योम usbip_net_pack_op_common(पूर्णांक pack,
-					    काष्ठा op_common *op_common)
-अणु
-	op_common->version = usbip_net_pack_uपूर्णांक16_t(pack, op_common->version);
-	op_common->code = usbip_net_pack_uपूर्णांक16_t(pack, op_common->code);
-	op_common->status = usbip_net_pack_uपूर्णांक32_t(pack, op_common->status);
-पूर्ण
+static inline void usbip_net_pack_op_common(int pack,
+					    struct op_common *op_common)
+{
+	op_common->version = usbip_net_pack_uint16_t(pack, op_common->version);
+	op_common->code = usbip_net_pack_uint16_t(pack, op_common->code);
+	op_common->status = usbip_net_pack_uint32_t(pack, op_common->status);
+}
 
-पूर्णांक usbip_net_send_op_common(पूर्णांक sockfd, uपूर्णांक32_t code, uपूर्णांक32_t status)
-अणु
-	काष्ठा op_common op_common;
-	पूर्णांक rc;
+int usbip_net_send_op_common(int sockfd, uint32_t code, uint32_t status)
+{
+	struct op_common op_common;
+	int rc;
 
-	स_रखो(&op_common, 0, माप(op_common));
+	memset(&op_common, 0, sizeof(op_common));
 
 	op_common.version = USBIP_VERSION;
 	op_common.code    = code;
@@ -151,154 +150,154 @@ sमाप_प्रकार usbip_net_send(पूर्णांक sockfd, �
 
 	usbip_net_pack_op_common(1, &op_common);
 
-	rc = usbip_net_send(sockfd, &op_common, माप(op_common));
-	अगर (rc < 0) अणु
+	rc = usbip_net_send(sockfd, &op_common, sizeof(op_common));
+	if (rc < 0) {
 		dbg("usbip_net_send failed: %d", rc);
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक usbip_net_recv_op_common(पूर्णांक sockfd, uपूर्णांक16_t *code, पूर्णांक *status)
-अणु
-	काष्ठा op_common op_common;
-	पूर्णांक rc;
+int usbip_net_recv_op_common(int sockfd, uint16_t *code, int *status)
+{
+	struct op_common op_common;
+	int rc;
 
-	स_रखो(&op_common, 0, माप(op_common));
+	memset(&op_common, 0, sizeof(op_common));
 
-	rc = usbip_net_recv(sockfd, &op_common, माप(op_common));
-	अगर (rc < 0) अणु
+	rc = usbip_net_recv(sockfd, &op_common, sizeof(op_common));
+	if (rc < 0) {
 		dbg("usbip_net_recv failed: %d", rc);
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	usbip_net_pack_op_common(0, &op_common);
 
-	अगर (op_common.version != USBIP_VERSION) अणु
+	if (op_common.version != USBIP_VERSION) {
 		err("USBIP Kernel and tool version mismatch: %d %d:",
 		    op_common.version, USBIP_VERSION);
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	चयन (*code) अणु
-	हाल OP_UNSPEC:
-		अवरोध;
-	शेष:
-		अगर (op_common.code != *code) अणु
+	switch (*code) {
+	case OP_UNSPEC:
+		break;
+	default:
+		if (op_common.code != *code) {
 			dbg("unexpected pdu %#0x for %#0x", op_common.code,
 			    *code);
-			/* वापस error status */
+			/* return error status */
 			*status = ST_ERROR;
-			जाओ err;
-		पूर्ण
-	पूर्ण
+			goto err;
+		}
+	}
 
 	*status = op_common.status;
 
-	अगर (op_common.status != ST_OK) अणु
+	if (op_common.status != ST_OK) {
 		dbg("request failed at peer: %d", op_common.status);
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	*code = op_common.code;
 
-	वापस 0;
+	return 0;
 err:
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
-पूर्णांक usbip_net_set_reuseaddr(पूर्णांक sockfd)
-अणु
-	स्थिर पूर्णांक val = 1;
-	पूर्णांक ret;
+int usbip_net_set_reuseaddr(int sockfd)
+{
+	const int val = 1;
+	int ret;
 
-	ret = setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &val, माप(val));
-	अगर (ret < 0)
+	ret = setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &val, sizeof(val));
+	if (ret < 0)
 		dbg("setsockopt: SO_REUSEADDR");
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक usbip_net_set_nodelay(पूर्णांक sockfd)
-अणु
-	स्थिर पूर्णांक val = 1;
-	पूर्णांक ret;
+int usbip_net_set_nodelay(int sockfd)
+{
+	const int val = 1;
+	int ret;
 
-	ret = setsockopt(sockfd, IPPROTO_TCP, TCP_NODELAY, &val, माप(val));
-	अगर (ret < 0)
+	ret = setsockopt(sockfd, IPPROTO_TCP, TCP_NODELAY, &val, sizeof(val));
+	if (ret < 0)
 		dbg("setsockopt: TCP_NODELAY");
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक usbip_net_set_keepalive(पूर्णांक sockfd)
-अणु
-	स्थिर पूर्णांक val = 1;
-	पूर्णांक ret;
+int usbip_net_set_keepalive(int sockfd)
+{
+	const int val = 1;
+	int ret;
 
-	ret = setsockopt(sockfd, SOL_SOCKET, SO_KEEPALIVE, &val, माप(val));
-	अगर (ret < 0)
+	ret = setsockopt(sockfd, SOL_SOCKET, SO_KEEPALIVE, &val, sizeof(val));
+	if (ret < 0)
 		dbg("setsockopt: SO_KEEPALIVE");
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक usbip_net_set_v6only(पूर्णांक sockfd)
-अणु
-	स्थिर पूर्णांक val = 1;
-	पूर्णांक ret;
+int usbip_net_set_v6only(int sockfd)
+{
+	const int val = 1;
+	int ret;
 
-	ret = setsockopt(sockfd, IPPROTO_IPV6, IPV6_V6ONLY, &val, माप(val));
-	अगर (ret < 0)
+	ret = setsockopt(sockfd, IPPROTO_IPV6, IPV6_V6ONLY, &val, sizeof(val));
+	if (ret < 0)
 		dbg("setsockopt: IPV6_V6ONLY");
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
  * IPv6 Ready
  */
-पूर्णांक usbip_net_tcp_connect(अक्षर *hostname, अक्षर *service)
-अणु
-	काष्ठा addrinfo hपूर्णांकs, *res, *rp;
-	पूर्णांक sockfd;
-	पूर्णांक ret;
+int usbip_net_tcp_connect(char *hostname, char *service)
+{
+	struct addrinfo hints, *res, *rp;
+	int sockfd;
+	int ret;
 
-	स_रखो(&hपूर्णांकs, 0, माप(hपूर्णांकs));
-	hपूर्णांकs.ai_family = AF_UNSPEC;
-	hपूर्णांकs.ai_socktype = SOCK_STREAM;
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = AF_UNSPEC;
+	hints.ai_socktype = SOCK_STREAM;
 
 	/* get all possible addresses */
-	ret = getaddrinfo(hostname, service, &hपूर्णांकs, &res);
-	अगर (ret < 0) अणु
+	ret = getaddrinfo(hostname, service, &hints, &res);
+	if (ret < 0) {
 		dbg("getaddrinfo: %s service %s: %s", hostname, service,
-		    gai_म_त्रुटि(ret));
-		वापस ret;
-	पूर्ण
+		    gai_strerror(ret));
+		return ret;
+	}
 
 	/* try the addresses */
-	क्रम (rp = res; rp; rp = rp->ai_next) अणु
+	for (rp = res; rp; rp = rp->ai_next) {
 		sockfd = socket(rp->ai_family, rp->ai_socktype,
 				rp->ai_protocol);
-		अगर (sockfd < 0)
-			जारी;
+		if (sockfd < 0)
+			continue;
 
-		/* should set TCP_NODELAY क्रम usbip */
+		/* should set TCP_NODELAY for usbip */
 		usbip_net_set_nodelay(sockfd);
-		/* TODO: ग_लिखो code क्रम heartbeat */
+		/* TODO: write code for heartbeat */
 		usbip_net_set_keepalive(sockfd);
 
-		अगर (connect(sockfd, rp->ai_addr, rp->ai_addrlen) == 0)
-			अवरोध;
+		if (connect(sockfd, rp->ai_addr, rp->ai_addrlen) == 0)
+			break;
 
-		बंद(sockfd);
-	पूर्ण
+		close(sockfd);
+	}
 
-	मुक्तaddrinfo(res);
+	freeaddrinfo(res);
 
-	अगर (!rp)
-		वापस EAI_SYSTEM;
+	if (!rp)
+		return EAI_SYSTEM;
 
-	वापस sockfd;
-पूर्ण
+	return sockfd;
+}

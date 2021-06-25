@@ -1,103 +1,102 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * Support क्रम Intel Camera Imaging ISP subप्रणाली.
+ * Support for Intel Camera Imaging ISP subsystem.
  * Copyright (c) 2010-2015, Intel Corporation.
  *
- * This program is मुक्त software; you can redistribute it and/or modअगरy it
+ * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
  * version 2, as published by the Free Software Foundation.
  *
  * This program is distributed in the hope it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License क्रम
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
  * more details.
  */
 
-#अगर_अघोषित __SP_LOCAL_H_INCLUDED__
-#घोषणा __SP_LOCAL_H_INCLUDED__
+#ifndef __SP_LOCAL_H_INCLUDED__
+#define __SP_LOCAL_H_INCLUDED__
 
-#समावेश <type_support.h>
-#समावेश "sp_global.h"
+#include <type_support.h>
+#include "sp_global.h"
 
-काष्ठा sp_state_s अणु
-	पूर्णांक		pc;
-	पूर्णांक		status_रेजिस्टर;
+struct sp_state_s {
+	int		pc;
+	int		status_register;
 	bool	is_broken;
 	bool	is_idle;
 	bool	is_sleeping;
 	bool	is_stalling;
-पूर्ण;
+};
 
-काष्ठा sp_stall_s अणु
-	bool	fअगरo0;
-	bool	fअगरo1;
-	bool	fअगरo2;
-	bool	fअगरo3;
-	bool	fअगरo4;
-	bool	fअगरo5;
-	bool	fअगरo6;
-	bool	fअगरo7;
-	bool	fअगरo8;
-	bool	fअगरo9;
-	bool	fअगरoa;
+struct sp_stall_s {
+	bool	fifo0;
+	bool	fifo1;
+	bool	fifo2;
+	bool	fifo3;
+	bool	fifo4;
+	bool	fifo5;
+	bool	fifo6;
+	bool	fifo7;
+	bool	fifo8;
+	bool	fifo9;
+	bool	fifoa;
 	bool	dmem;
 	bool	control_master;
 	bool	icache_master;
-पूर्ण;
+};
 
-#घोषणा sp_address_of(var)	(HIVE_ADDR_ ## var)
+#define sp_address_of(var)	(HIVE_ADDR_ ## var)
 
 /*
  * deprecated
  */
-#घोषणा store_sp_पूर्णांक(var, value) \
-	sp_dmem_store_uपूर्णांक32(SP0_ID, (अचिन्हित पूर्णांक)sp_address_of(var), \
-		(uपूर्णांक32_t)(value))
+#define store_sp_int(var, value) \
+	sp_dmem_store_uint32(SP0_ID, (unsigned int)sp_address_of(var), \
+		(uint32_t)(value))
 
-#घोषणा store_sp_ptr(var, value) \
-	sp_dmem_store_uपूर्णांक32(SP0_ID, (अचिन्हित पूर्णांक)sp_address_of(var), \
-		(uपूर्णांक32_t)(value))
+#define store_sp_ptr(var, value) \
+	sp_dmem_store_uint32(SP0_ID, (unsigned int)sp_address_of(var), \
+		(uint32_t)(value))
 
-#घोषणा load_sp_uपूर्णांक(var) \
-	sp_dmem_load_uपूर्णांक32(SP0_ID, (अचिन्हित पूर्णांक)sp_address_of(var))
+#define load_sp_uint(var) \
+	sp_dmem_load_uint32(SP0_ID, (unsigned int)sp_address_of(var))
 
-#घोषणा load_sp_array_uपूर्णांक8(array_name, index) \
-	sp_dmem_load_uपूर्णांक8(SP0_ID, (अचिन्हित पूर्णांक)sp_address_of(array_name) + \
-		(index) * माप(uपूर्णांक8_t))
+#define load_sp_array_uint8(array_name, index) \
+	sp_dmem_load_uint8(SP0_ID, (unsigned int)sp_address_of(array_name) + \
+		(index) * sizeof(uint8_t))
 
-#घोषणा load_sp_array_uपूर्णांक16(array_name, index) \
-	sp_dmem_load_uपूर्णांक16(SP0_ID, (अचिन्हित पूर्णांक)sp_address_of(array_name) + \
-		(index) * माप(uपूर्णांक16_t))
+#define load_sp_array_uint16(array_name, index) \
+	sp_dmem_load_uint16(SP0_ID, (unsigned int)sp_address_of(array_name) + \
+		(index) * sizeof(uint16_t))
 
-#घोषणा load_sp_array_uपूर्णांक(array_name, index) \
-	sp_dmem_load_uपूर्णांक32(SP0_ID, (अचिन्हित पूर्णांक)sp_address_of(array_name) + \
-		(index) * माप(uपूर्णांक32_t))
+#define load_sp_array_uint(array_name, index) \
+	sp_dmem_load_uint32(SP0_ID, (unsigned int)sp_address_of(array_name) + \
+		(index) * sizeof(uint32_t))
 
-#घोषणा store_sp_var(var, data, bytes) \
-	sp_dmem_store(SP0_ID, (अचिन्हित पूर्णांक)sp_address_of(var), data, bytes)
+#define store_sp_var(var, data, bytes) \
+	sp_dmem_store(SP0_ID, (unsigned int)sp_address_of(var), data, bytes)
 
-#घोषणा store_sp_array_uपूर्णांक8(array_name, index, value) \
-	sp_dmem_store_uपूर्णांक8(SP0_ID, (अचिन्हित पूर्णांक)sp_address_of(array_name) + \
-		(index) * माप(uपूर्णांक8_t), value)
+#define store_sp_array_uint8(array_name, index, value) \
+	sp_dmem_store_uint8(SP0_ID, (unsigned int)sp_address_of(array_name) + \
+		(index) * sizeof(uint8_t), value)
 
-#घोषणा store_sp_array_uपूर्णांक16(array_name, index, value) \
-	sp_dmem_store_uपूर्णांक16(SP0_ID, (अचिन्हित पूर्णांक)sp_address_of(array_name) + \
-		(index) * माप(uपूर्णांक16_t), value)
+#define store_sp_array_uint16(array_name, index, value) \
+	sp_dmem_store_uint16(SP0_ID, (unsigned int)sp_address_of(array_name) + \
+		(index) * sizeof(uint16_t), value)
 
-#घोषणा store_sp_array_uपूर्णांक(array_name, index, value) \
-	sp_dmem_store_uपूर्णांक32(SP0_ID, (अचिन्हित पूर्णांक)sp_address_of(array_name) + \
-		(index) * माप(uपूर्णांक32_t), value)
+#define store_sp_array_uint(array_name, index, value) \
+	sp_dmem_store_uint32(SP0_ID, (unsigned int)sp_address_of(array_name) + \
+		(index) * sizeof(uint32_t), value)
 
-#घोषणा store_sp_var_with_offset(var, offset, data, bytes) \
-	sp_dmem_store(SP0_ID, (अचिन्हित पूर्णांक)sp_address_of(var) + \
+#define store_sp_var_with_offset(var, offset, data, bytes) \
+	sp_dmem_store(SP0_ID, (unsigned int)sp_address_of(var) + \
 		offset, data, bytes)
 
-#घोषणा load_sp_var(var, data, bytes) \
-	sp_dmem_load(SP0_ID, (अचिन्हित पूर्णांक)sp_address_of(var), data, bytes)
+#define load_sp_var(var, data, bytes) \
+	sp_dmem_load(SP0_ID, (unsigned int)sp_address_of(var), data, bytes)
 
-#घोषणा load_sp_var_with_offset(var, offset, data, bytes) \
-	sp_dmem_load(SP0_ID, (अचिन्हित पूर्णांक)sp_address_of(var) + offset, \
+#define load_sp_var_with_offset(var, offset, data, bytes) \
+	sp_dmem_load(SP0_ID, (unsigned int)sp_address_of(var) + offset, \
 		data, bytes)
 
-#पूर्ण_अगर /* __SP_LOCAL_H_INCLUDED__ */
+#endif /* __SP_LOCAL_H_INCLUDED__ */

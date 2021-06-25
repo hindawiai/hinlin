@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * TI Camera Access Layer (CAL) - Video Device
  *
@@ -7,165 +6,165 @@
  *
  * Authors:
  *	Benoit Parrot <bparrot@ti.com>
- *	Laurent Pinअक्षरt <laurent.pinअक्षरt@ideasonboard.com>
+ *	Laurent Pinchart <laurent.pinchart@ideasonboard.com>
  */
 
-#समावेश <linux/ioctl.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <linux/videodev2.h>
+#include <linux/ioctl.h>
+#include <linux/pm_runtime.h>
+#include <linux/videodev2.h>
 
-#समावेश <media/media-device.h>
-#समावेश <media/v4l2-common.h>
-#समावेश <media/v4l2-ctrls.h>
-#समावेश <media/v4l2-device.h>
-#समावेश <media/v4l2-event.h>
-#समावेश <media/v4l2-fh.h>
-#समावेश <media/v4l2-ioctl.h>
-#समावेश <media/videobuf2-core.h>
-#समावेश <media/videobuf2-dma-contig.h>
+#include <media/media-device.h>
+#include <media/v4l2-common.h>
+#include <media/v4l2-ctrls.h>
+#include <media/v4l2-device.h>
+#include <media/v4l2-event.h>
+#include <media/v4l2-fh.h>
+#include <media/v4l2-ioctl.h>
+#include <media/videobuf2-core.h>
+#include <media/videobuf2-dma-contig.h>
 
-#समावेश "cal.h"
+#include "cal.h"
 
-/*  Prपूर्णांक Four-अक्षरacter-code (FOURCC) */
-अटल अक्षर *fourcc_to_str(u32 fmt)
-अणु
-	अटल अक्षर code[5];
+/*  Print Four-character-code (FOURCC) */
+static char *fourcc_to_str(u32 fmt)
+{
+	static char code[5];
 
-	code[0] = (अचिन्हित अक्षर)(fmt & 0xff);
-	code[1] = (अचिन्हित अक्षर)((fmt >> 8) & 0xff);
-	code[2] = (अचिन्हित अक्षर)((fmt >> 16) & 0xff);
-	code[3] = (अचिन्हित अक्षर)((fmt >> 24) & 0xff);
+	code[0] = (unsigned char)(fmt & 0xff);
+	code[1] = (unsigned char)((fmt >> 8) & 0xff);
+	code[2] = (unsigned char)((fmt >> 16) & 0xff);
+	code[3] = (unsigned char)((fmt >> 24) & 0xff);
 	code[4] = '\0';
 
-	वापस code;
-पूर्ण
+	return code;
+}
 
 /* ------------------------------------------------------------------
  *	V4L2 Common IOCTLs
  * ------------------------------------------------------------------
  */
 
-अटल पूर्णांक cal_querycap(काष्ठा file *file, व्योम *priv,
-			काष्ठा v4l2_capability *cap)
-अणु
-	काष्ठा cal_ctx *ctx = video_drvdata(file);
+static int cal_querycap(struct file *file, void *priv,
+			struct v4l2_capability *cap)
+{
+	struct cal_ctx *ctx = video_drvdata(file);
 
-	strscpy(cap->driver, CAL_MODULE_NAME, माप(cap->driver));
-	strscpy(cap->card, CAL_MODULE_NAME, माप(cap->card));
+	strscpy(cap->driver, CAL_MODULE_NAME, sizeof(cap->driver));
+	strscpy(cap->card, CAL_MODULE_NAME, sizeof(cap->card));
 
-	snम_लिखो(cap->bus_info, माप(cap->bus_info),
+	snprintf(cap->bus_info, sizeof(cap->bus_info),
 		 "platform:%s", dev_name(ctx->cal->dev));
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक cal_g_fmt_vid_cap(काष्ठा file *file, व्योम *priv,
-			     काष्ठा v4l2_क्रमmat *f)
-अणु
-	काष्ठा cal_ctx *ctx = video_drvdata(file);
+static int cal_g_fmt_vid_cap(struct file *file, void *priv,
+			     struct v4l2_format *f)
+{
+	struct cal_ctx *ctx = video_drvdata(file);
 
 	*f = ctx->v_fmt;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* ------------------------------------------------------------------
  *	V4L2 Video Node Centric IOCTLs
  * ------------------------------------------------------------------
  */
 
-अटल स्थिर काष्ठा cal_क्रमmat_info *find_क्रमmat_by_pix(काष्ठा cal_ctx *ctx,
-							u32 pixelक्रमmat)
-अणु
-	स्थिर काष्ठा cal_क्रमmat_info *fmtinfo;
-	अचिन्हित पूर्णांक k;
+static const struct cal_format_info *find_format_by_pix(struct cal_ctx *ctx,
+							u32 pixelformat)
+{
+	const struct cal_format_info *fmtinfo;
+	unsigned int k;
 
-	क्रम (k = 0; k < ctx->num_active_fmt; k++) अणु
+	for (k = 0; k < ctx->num_active_fmt; k++) {
 		fmtinfo = ctx->active_fmt[k];
-		अगर (fmtinfo->fourcc == pixelक्रमmat)
-			वापस fmtinfo;
-	पूर्ण
+		if (fmtinfo->fourcc == pixelformat)
+			return fmtinfo;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल स्थिर काष्ठा cal_क्रमmat_info *find_क्रमmat_by_code(काष्ठा cal_ctx *ctx,
+static const struct cal_format_info *find_format_by_code(struct cal_ctx *ctx,
 							 u32 code)
-अणु
-	स्थिर काष्ठा cal_क्रमmat_info *fmtinfo;
-	अचिन्हित पूर्णांक k;
+{
+	const struct cal_format_info *fmtinfo;
+	unsigned int k;
 
-	क्रम (k = 0; k < ctx->num_active_fmt; k++) अणु
+	for (k = 0; k < ctx->num_active_fmt; k++) {
 		fmtinfo = ctx->active_fmt[k];
-		अगर (fmtinfo->code == code)
-			वापस fmtinfo;
-	पूर्ण
+		if (fmtinfo->code == code)
+			return fmtinfo;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल पूर्णांक cal_क्रमागत_fmt_vid_cap(काष्ठा file *file, व्योम  *priv,
-				काष्ठा v4l2_fmtdesc *f)
-अणु
-	काष्ठा cal_ctx *ctx = video_drvdata(file);
-	स्थिर काष्ठा cal_क्रमmat_info *fmtinfo;
+static int cal_enum_fmt_vid_cap(struct file *file, void  *priv,
+				struct v4l2_fmtdesc *f)
+{
+	struct cal_ctx *ctx = video_drvdata(file);
+	const struct cal_format_info *fmtinfo;
 
-	अगर (f->index >= ctx->num_active_fmt)
-		वापस -EINVAL;
+	if (f->index >= ctx->num_active_fmt)
+		return -EINVAL;
 
 	fmtinfo = ctx->active_fmt[f->index];
 
-	f->pixelक्रमmat = fmtinfo->fourcc;
+	f->pixelformat = fmtinfo->fourcc;
 	f->type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __subdev_get_क्रमmat(काष्ठा cal_ctx *ctx,
-			       काष्ठा v4l2_mbus_framefmt *fmt)
-अणु
-	काष्ठा v4l2_subdev_क्रमmat sd_fmt;
-	काष्ठा v4l2_mbus_framefmt *mbus_fmt = &sd_fmt.क्रमmat;
-	पूर्णांक ret;
+static int __subdev_get_format(struct cal_ctx *ctx,
+			       struct v4l2_mbus_framefmt *fmt)
+{
+	struct v4l2_subdev_format sd_fmt;
+	struct v4l2_mbus_framefmt *mbus_fmt = &sd_fmt.format;
+	int ret;
 
 	sd_fmt.which = V4L2_SUBDEV_FORMAT_ACTIVE;
 	sd_fmt.pad = 0;
 
-	ret = v4l2_subdev_call(ctx->phy->sensor, pad, get_fmt, शून्य, &sd_fmt);
-	अगर (ret)
-		वापस ret;
+	ret = v4l2_subdev_call(ctx->phy->sensor, pad, get_fmt, NULL, &sd_fmt);
+	if (ret)
+		return ret;
 
 	*fmt = *mbus_fmt;
 
 	ctx_dbg(1, ctx, "%s %dx%d code:%04X\n", __func__,
 		fmt->width, fmt->height, fmt->code);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __subdev_set_क्रमmat(काष्ठा cal_ctx *ctx,
-			       काष्ठा v4l2_mbus_framefmt *fmt)
-अणु
-	काष्ठा v4l2_subdev_क्रमmat sd_fmt;
-	काष्ठा v4l2_mbus_framefmt *mbus_fmt = &sd_fmt.क्रमmat;
-	पूर्णांक ret;
+static int __subdev_set_format(struct cal_ctx *ctx,
+			       struct v4l2_mbus_framefmt *fmt)
+{
+	struct v4l2_subdev_format sd_fmt;
+	struct v4l2_mbus_framefmt *mbus_fmt = &sd_fmt.format;
+	int ret;
 
 	sd_fmt.which = V4L2_SUBDEV_FORMAT_ACTIVE;
 	sd_fmt.pad = 0;
 	*mbus_fmt = *fmt;
 
-	ret = v4l2_subdev_call(ctx->phy->sensor, pad, set_fmt, शून्य, &sd_fmt);
-	अगर (ret)
-		वापस ret;
+	ret = v4l2_subdev_call(ctx->phy->sensor, pad, set_fmt, NULL, &sd_fmt);
+	if (ret)
+		return ret;
 
 	ctx_dbg(1, ctx, "%s %dx%d code:%04X\n", __func__,
 		fmt->width, fmt->height, fmt->code);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम cal_calc_क्रमmat_size(काष्ठा cal_ctx *ctx,
-				 स्थिर काष्ठा cal_क्रमmat_info *fmtinfo,
-				 काष्ठा v4l2_क्रमmat *f)
-अणु
+static void cal_calc_format_size(struct cal_ctx *ctx,
+				 const struct cal_format_info *fmtinfo,
+				 struct v4l2_format *f)
+{
 	u32 bpl, max_width;
 
 	/*
@@ -185,147 +184,147 @@
 			       f->fmt.pix.bytesperline;
 
 	ctx_dbg(3, ctx, "%s: fourcc: %s size: %dx%d bpl:%d img_size:%d\n",
-		__func__, fourcc_to_str(f->fmt.pix.pixelक्रमmat),
+		__func__, fourcc_to_str(f->fmt.pix.pixelformat),
 		f->fmt.pix.width, f->fmt.pix.height,
 		f->fmt.pix.bytesperline, f->fmt.pix.sizeimage);
-पूर्ण
+}
 
-अटल पूर्णांक cal_try_fmt_vid_cap(काष्ठा file *file, व्योम *priv,
-			       काष्ठा v4l2_क्रमmat *f)
-अणु
-	काष्ठा cal_ctx *ctx = video_drvdata(file);
-	स्थिर काष्ठा cal_क्रमmat_info *fmtinfo;
-	काष्ठा v4l2_subdev_frame_size_क्रमागत fse;
-	पूर्णांक ret, found;
+static int cal_try_fmt_vid_cap(struct file *file, void *priv,
+			       struct v4l2_format *f)
+{
+	struct cal_ctx *ctx = video_drvdata(file);
+	const struct cal_format_info *fmtinfo;
+	struct v4l2_subdev_frame_size_enum fse;
+	int ret, found;
 
-	fmtinfo = find_क्रमmat_by_pix(ctx, f->fmt.pix.pixelक्रमmat);
-	अगर (!fmtinfo) अणु
+	fmtinfo = find_format_by_pix(ctx, f->fmt.pix.pixelformat);
+	if (!fmtinfo) {
 		ctx_dbg(3, ctx, "Fourcc format (0x%08x) not found.\n",
-			f->fmt.pix.pixelक्रमmat);
+			f->fmt.pix.pixelformat);
 
-		/* Just get the first one क्रमागतerated */
+		/* Just get the first one enumerated */
 		fmtinfo = ctx->active_fmt[0];
-		f->fmt.pix.pixelक्रमmat = fmtinfo->fourcc;
-	पूर्ण
+		f->fmt.pix.pixelformat = fmtinfo->fourcc;
+	}
 
 	f->fmt.pix.field = ctx->v_fmt.fmt.pix.field;
 
-	/* check क्रम/find a valid width/height */
+	/* check for/find a valid width/height */
 	ret = 0;
 	found = false;
 	fse.pad = 0;
 	fse.code = fmtinfo->code;
 	fse.which = V4L2_SUBDEV_FORMAT_ACTIVE;
-	क्रम (fse.index = 0; ; fse.index++) अणु
-		ret = v4l2_subdev_call(ctx->phy->sensor, pad, क्रमागत_frame_size,
-				       शून्य, &fse);
-		अगर (ret)
-			अवरोध;
+	for (fse.index = 0; ; fse.index++) {
+		ret = v4l2_subdev_call(ctx->phy->sensor, pad, enum_frame_size,
+				       NULL, &fse);
+		if (ret)
+			break;
 
-		अगर ((f->fmt.pix.width == fse.max_width) &&
-		    (f->fmt.pix.height == fse.max_height)) अणु
+		if ((f->fmt.pix.width == fse.max_width) &&
+		    (f->fmt.pix.height == fse.max_height)) {
 			found = true;
-			अवरोध;
-		पूर्ण अन्यथा अगर ((f->fmt.pix.width >= fse.min_width) &&
+			break;
+		} else if ((f->fmt.pix.width >= fse.min_width) &&
 			 (f->fmt.pix.width <= fse.max_width) &&
 			 (f->fmt.pix.height >= fse.min_height) &&
-			 (f->fmt.pix.height <= fse.max_height)) अणु
+			 (f->fmt.pix.height <= fse.max_height)) {
 			found = true;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	अगर (!found) अणु
-		/* use existing values as शेष */
+	if (!found) {
+		/* use existing values as default */
 		f->fmt.pix.width = ctx->v_fmt.fmt.pix.width;
 		f->fmt.pix.height =  ctx->v_fmt.fmt.pix.height;
-	पूर्ण
+	}
 
 	/*
-	 * Use current colorspace क्रम now, it will get
+	 * Use current colorspace for now, it will get
 	 * updated properly during s_fmt
 	 */
 	f->fmt.pix.colorspace = ctx->v_fmt.fmt.pix.colorspace;
-	cal_calc_क्रमmat_size(ctx, fmtinfo, f);
-	वापस 0;
-पूर्ण
+	cal_calc_format_size(ctx, fmtinfo, f);
+	return 0;
+}
 
-अटल पूर्णांक cal_s_fmt_vid_cap(काष्ठा file *file, व्योम *priv,
-			     काष्ठा v4l2_क्रमmat *f)
-अणु
-	काष्ठा cal_ctx *ctx = video_drvdata(file);
-	काष्ठा vb2_queue *q = &ctx->vb_vidq;
-	काष्ठा v4l2_subdev_क्रमmat sd_fmt = अणु
+static int cal_s_fmt_vid_cap(struct file *file, void *priv,
+			     struct v4l2_format *f)
+{
+	struct cal_ctx *ctx = video_drvdata(file);
+	struct vb2_queue *q = &ctx->vb_vidq;
+	struct v4l2_subdev_format sd_fmt = {
 		.which = V4L2_SUBDEV_FORMAT_ACTIVE,
 		.pad = CAL_CAMERARX_PAD_SINK,
-	पूर्ण;
-	स्थिर काष्ठा cal_क्रमmat_info *fmtinfo;
-	पूर्णांक ret;
+	};
+	const struct cal_format_info *fmtinfo;
+	int ret;
 
-	अगर (vb2_is_busy(q)) अणु
+	if (vb2_is_busy(q)) {
 		ctx_dbg(3, ctx, "%s device busy\n", __func__);
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
 	ret = cal_try_fmt_vid_cap(file, priv, f);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	fmtinfo = find_क्रमmat_by_pix(ctx, f->fmt.pix.pixelक्रमmat);
+	fmtinfo = find_format_by_pix(ctx, f->fmt.pix.pixelformat);
 
-	v4l2_fill_mbus_क्रमmat(&sd_fmt.क्रमmat, &f->fmt.pix, fmtinfo->code);
+	v4l2_fill_mbus_format(&sd_fmt.format, &f->fmt.pix, fmtinfo->code);
 
-	ret = __subdev_set_क्रमmat(ctx, &sd_fmt.क्रमmat);
-	अगर (ret)
-		वापस ret;
+	ret = __subdev_set_format(ctx, &sd_fmt.format);
+	if (ret)
+		return ret;
 
-	/* Just द्विगुन check nothing has gone wrong */
-	अगर (sd_fmt.क्रमmat.code != fmtinfo->code) अणु
+	/* Just double check nothing has gone wrong */
+	if (sd_fmt.format.code != fmtinfo->code) {
 		ctx_dbg(3, ctx,
 			"%s subdev changed format on us, this should not happen\n",
 			__func__);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	v4l2_fill_pix_क्रमmat(&ctx->v_fmt.fmt.pix, &sd_fmt.क्रमmat);
+	v4l2_fill_pix_format(&ctx->v_fmt.fmt.pix, &sd_fmt.format);
 	ctx->v_fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-	ctx->v_fmt.fmt.pix.pixelक्रमmat = fmtinfo->fourcc;
-	ctx->v_fmt.fmt.pix.field = sd_fmt.क्रमmat.field;
-	cal_calc_क्रमmat_size(ctx, fmtinfo, &ctx->v_fmt);
+	ctx->v_fmt.fmt.pix.pixelformat = fmtinfo->fourcc;
+	ctx->v_fmt.fmt.pix.field = sd_fmt.format.field;
+	cal_calc_format_size(ctx, fmtinfo, &ctx->v_fmt);
 
-	v4l2_subdev_call(&ctx->phy->subdev, pad, set_fmt, शून्य, &sd_fmt);
+	v4l2_subdev_call(&ctx->phy->subdev, pad, set_fmt, NULL, &sd_fmt);
 
 	ctx->fmtinfo = fmtinfo;
 	*f = ctx->v_fmt;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक cal_क्रमागत_framesizes(काष्ठा file *file, व्योम *fh,
-			       काष्ठा v4l2_frmsizeक्रमागत *fsize)
-अणु
-	काष्ठा cal_ctx *ctx = video_drvdata(file);
-	स्थिर काष्ठा cal_क्रमmat_info *fmtinfo;
-	काष्ठा v4l2_subdev_frame_size_क्रमागत fse;
-	पूर्णांक ret;
+static int cal_enum_framesizes(struct file *file, void *fh,
+			       struct v4l2_frmsizeenum *fsize)
+{
+	struct cal_ctx *ctx = video_drvdata(file);
+	const struct cal_format_info *fmtinfo;
+	struct v4l2_subdev_frame_size_enum fse;
+	int ret;
 
-	/* check क्रम valid क्रमmat */
-	fmtinfo = find_क्रमmat_by_pix(ctx, fsize->pixel_क्रमmat);
-	अगर (!fmtinfo) अणु
+	/* check for valid format */
+	fmtinfo = find_format_by_pix(ctx, fsize->pixel_format);
+	if (!fmtinfo) {
 		ctx_dbg(3, ctx, "Invalid pixel code: %x\n",
-			fsize->pixel_क्रमmat);
-		वापस -EINVAL;
-	पूर्ण
+			fsize->pixel_format);
+		return -EINVAL;
+	}
 
 	fse.index = fsize->index;
 	fse.pad = 0;
 	fse.code = fmtinfo->code;
 	fse.which = V4L2_SUBDEV_FORMAT_ACTIVE;
 
-	ret = v4l2_subdev_call(ctx->phy->sensor, pad, क्रमागत_frame_size, शून्य,
+	ret = v4l2_subdev_call(ctx->phy->sensor, pad, enum_frame_size, NULL,
 			       &fse);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ctx_dbg(1, ctx, "%s: index: %d code: %x W:[%d,%d] H:[%d,%d]\n",
 		__func__, fse.index, fse.code, fse.min_width, fse.max_width,
@@ -335,67 +334,67 @@
 	fsize->discrete.width = fse.max_width;
 	fsize->discrete.height = fse.max_height;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक cal_क्रमागत_input(काष्ठा file *file, व्योम *priv,
-			  काष्ठा v4l2_input *inp)
-अणु
-	अगर (inp->index > 0)
-		वापस -EINVAL;
+static int cal_enum_input(struct file *file, void *priv,
+			  struct v4l2_input *inp)
+{
+	if (inp->index > 0)
+		return -EINVAL;
 
 	inp->type = V4L2_INPUT_TYPE_CAMERA;
-	प्र_लिखो(inp->name, "Camera %u", inp->index);
-	वापस 0;
-पूर्ण
+	sprintf(inp->name, "Camera %u", inp->index);
+	return 0;
+}
 
-अटल पूर्णांक cal_g_input(काष्ठा file *file, व्योम *priv, अचिन्हित पूर्णांक *i)
-अणु
+static int cal_g_input(struct file *file, void *priv, unsigned int *i)
+{
 	*i = 0;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक cal_s_input(काष्ठा file *file, व्योम *priv, अचिन्हित पूर्णांक i)
-अणु
-	वापस i > 0 ? -EINVAL : 0;
-पूर्ण
+static int cal_s_input(struct file *file, void *priv, unsigned int i)
+{
+	return i > 0 ? -EINVAL : 0;
+}
 
-/* समयperframe is arbitrary and continuous */
-अटल पूर्णांक cal_क्रमागत_frameपूर्णांकervals(काष्ठा file *file, व्योम *priv,
-				   काष्ठा v4l2_frmivalक्रमागत *fival)
-अणु
-	काष्ठा cal_ctx *ctx = video_drvdata(file);
-	स्थिर काष्ठा cal_क्रमmat_info *fmtinfo;
-	काष्ठा v4l2_subdev_frame_पूर्णांकerval_क्रमागत fie = अणु
+/* timeperframe is arbitrary and continuous */
+static int cal_enum_frameintervals(struct file *file, void *priv,
+				   struct v4l2_frmivalenum *fival)
+{
+	struct cal_ctx *ctx = video_drvdata(file);
+	const struct cal_format_info *fmtinfo;
+	struct v4l2_subdev_frame_interval_enum fie = {
 		.index = fival->index,
 		.width = fival->width,
 		.height = fival->height,
 		.which = V4L2_SUBDEV_FORMAT_ACTIVE,
-	पूर्ण;
-	पूर्णांक ret;
+	};
+	int ret;
 
-	fmtinfo = find_क्रमmat_by_pix(ctx, fival->pixel_क्रमmat);
-	अगर (!fmtinfo)
-		वापस -EINVAL;
+	fmtinfo = find_format_by_pix(ctx, fival->pixel_format);
+	if (!fmtinfo)
+		return -EINVAL;
 
 	fie.code = fmtinfo->code;
-	ret = v4l2_subdev_call(ctx->phy->sensor, pad, क्रमागत_frame_पूर्णांकerval,
-			       शून्य, &fie);
-	अगर (ret)
-		वापस ret;
+	ret = v4l2_subdev_call(ctx->phy->sensor, pad, enum_frame_interval,
+			       NULL, &fie);
+	if (ret)
+		return ret;
 	fival->type = V4L2_FRMIVAL_TYPE_DISCRETE;
-	fival->discrete = fie.पूर्णांकerval;
+	fival->discrete = fie.interval;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा v4l2_ioctl_ops cal_ioctl_video_ops = अणु
+static const struct v4l2_ioctl_ops cal_ioctl_video_ops = {
 	.vidioc_querycap      = cal_querycap,
-	.vidioc_क्रमागत_fmt_vid_cap  = cal_क्रमागत_fmt_vid_cap,
+	.vidioc_enum_fmt_vid_cap  = cal_enum_fmt_vid_cap,
 	.vidioc_g_fmt_vid_cap     = cal_g_fmt_vid_cap,
 	.vidioc_try_fmt_vid_cap   = cal_try_fmt_vid_cap,
 	.vidioc_s_fmt_vid_cap     = cal_s_fmt_vid_cap,
-	.vidioc_क्रमागत_framesizes   = cal_क्रमागत_framesizes,
+	.vidioc_enum_framesizes   = cal_enum_framesizes,
 	.vidioc_reqbufs       = vb2_ioctl_reqbufs,
 	.vidioc_create_bufs   = vb2_ioctl_create_bufs,
 	.vidioc_prepare_buf   = vb2_ioctl_prepare_buf,
@@ -403,132 +402,132 @@
 	.vidioc_qbuf          = vb2_ioctl_qbuf,
 	.vidioc_dqbuf         = vb2_ioctl_dqbuf,
 	.vidioc_expbuf        = vb2_ioctl_expbuf,
-	.vidioc_क्रमागत_input    = cal_क्रमागत_input,
+	.vidioc_enum_input    = cal_enum_input,
 	.vidioc_g_input       = cal_g_input,
 	.vidioc_s_input       = cal_s_input,
-	.vidioc_क्रमागत_frameपूर्णांकervals = cal_क्रमागत_frameपूर्णांकervals,
+	.vidioc_enum_frameintervals = cal_enum_frameintervals,
 	.vidioc_streamon      = vb2_ioctl_streamon,
 	.vidioc_streamoff     = vb2_ioctl_streamoff,
 	.vidioc_log_status    = v4l2_ctrl_log_status,
 	.vidioc_subscribe_event = v4l2_ctrl_subscribe_event,
 	.vidioc_unsubscribe_event = v4l2_event_unsubscribe,
-पूर्ण;
+};
 
 /* ------------------------------------------------------------------
  *	V4L2 Media Controller Centric IOCTLs
  * ------------------------------------------------------------------
  */
 
-अटल पूर्णांक cal_mc_क्रमागत_fmt_vid_cap(काष्ठा file *file, व्योम  *priv,
-				   काष्ठा v4l2_fmtdesc *f)
-अणु
-	अगर (f->index >= cal_num_क्रमmats)
-		वापस -EINVAL;
+static int cal_mc_enum_fmt_vid_cap(struct file *file, void  *priv,
+				   struct v4l2_fmtdesc *f)
+{
+	if (f->index >= cal_num_formats)
+		return -EINVAL;
 
-	f->pixelक्रमmat = cal_क्रमmats[f->index].fourcc;
+	f->pixelformat = cal_formats[f->index].fourcc;
 	f->type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम cal_mc_try_fmt(काष्ठा cal_ctx *ctx, काष्ठा v4l2_क्रमmat *f,
-			   स्थिर काष्ठा cal_क्रमmat_info **info)
-अणु
-	काष्ठा v4l2_pix_क्रमmat *क्रमmat = &f->fmt.pix;
-	स्थिर काष्ठा cal_क्रमmat_info *fmtinfo;
-	अचिन्हित पूर्णांक bpp;
+static void cal_mc_try_fmt(struct cal_ctx *ctx, struct v4l2_format *f,
+			   const struct cal_format_info **info)
+{
+	struct v4l2_pix_format *format = &f->fmt.pix;
+	const struct cal_format_info *fmtinfo;
+	unsigned int bpp;
 
 	/*
-	 * Default to the first क्रमmat अगर the requested pixel क्रमmat code isn't
+	 * Default to the first format if the requested pixel format code isn't
 	 * supported.
 	 */
-	fmtinfo = cal_क्रमmat_by_fourcc(f->fmt.pix.pixelक्रमmat);
-	अगर (!fmtinfo)
-		fmtinfo = &cal_क्रमmats[0];
+	fmtinfo = cal_format_by_fourcc(f->fmt.pix.pixelformat);
+	if (!fmtinfo)
+		fmtinfo = &cal_formats[0];
 
 	/*
-	 * Clamp the size, update the pixel क्रमmat. The field and colorspace are
-	 * accepted as-is, except क्रम V4L2_FIELD_ANY that is turned पूर्णांकo
+	 * Clamp the size, update the pixel format. The field and colorspace are
+	 * accepted as-is, except for V4L2_FIELD_ANY that is turned into
 	 * V4L2_FIELD_NONE.
 	 */
 	bpp = ALIGN(fmtinfo->bpp, 8);
 
-	क्रमmat->width = clamp_t(अचिन्हित पूर्णांक, क्रमmat->width,
+	format->width = clamp_t(unsigned int, format->width,
 				CAL_MIN_WIDTH_BYTES * 8 / bpp,
 				CAL_MAX_WIDTH_BYTES * 8 / bpp);
-	क्रमmat->height = clamp_t(अचिन्हित पूर्णांक, क्रमmat->height,
+	format->height = clamp_t(unsigned int, format->height,
 				 CAL_MIN_HEIGHT_LINES, CAL_MAX_HEIGHT_LINES);
-	क्रमmat->pixelक्रमmat = fmtinfo->fourcc;
+	format->pixelformat = fmtinfo->fourcc;
 
-	अगर (क्रमmat->field == V4L2_FIELD_ANY)
-		क्रमmat->field = V4L2_FIELD_NONE;
+	if (format->field == V4L2_FIELD_ANY)
+		format->field = V4L2_FIELD_NONE;
 
 	/*
 	 * Calculate the number of bytes per line and the image size. The
 	 * hardware stores the stride as a number of 16 bytes words, in a
-	 * चिन्हित 15-bit value. Only 14 bits are thus usable.
+	 * signed 15-bit value. Only 14 bits are thus usable.
 	 */
-	क्रमmat->bytesperline = ALIGN(clamp(क्रमmat->bytesperline,
-					   क्रमmat->width * bpp / 8,
+	format->bytesperline = ALIGN(clamp(format->bytesperline,
+					   format->width * bpp / 8,
 					   ((1U << 14) - 1) * 16), 16);
 
-	क्रमmat->sizeimage = क्रमmat->height * क्रमmat->bytesperline;
+	format->sizeimage = format->height * format->bytesperline;
 
-	क्रमmat->colorspace = ctx->v_fmt.fmt.pix.colorspace;
+	format->colorspace = ctx->v_fmt.fmt.pix.colorspace;
 
-	अगर (info)
+	if (info)
 		*info = fmtinfo;
 
 	ctx_dbg(3, ctx, "%s: %s %ux%u (bytesperline %u sizeimage %u)\n",
-		__func__, fourcc_to_str(क्रमmat->pixelक्रमmat),
-		क्रमmat->width, क्रमmat->height,
-		क्रमmat->bytesperline, क्रमmat->sizeimage);
-पूर्ण
+		__func__, fourcc_to_str(format->pixelformat),
+		format->width, format->height,
+		format->bytesperline, format->sizeimage);
+}
 
-अटल पूर्णांक cal_mc_try_fmt_vid_cap(काष्ठा file *file, व्योम *priv,
-				  काष्ठा v4l2_क्रमmat *f)
-अणु
-	काष्ठा cal_ctx *ctx = video_drvdata(file);
+static int cal_mc_try_fmt_vid_cap(struct file *file, void *priv,
+				  struct v4l2_format *f)
+{
+	struct cal_ctx *ctx = video_drvdata(file);
 
-	cal_mc_try_fmt(ctx, f, शून्य);
-	वापस 0;
-पूर्ण
+	cal_mc_try_fmt(ctx, f, NULL);
+	return 0;
+}
 
-अटल पूर्णांक cal_mc_s_fmt_vid_cap(काष्ठा file *file, व्योम *priv,
-				काष्ठा v4l2_क्रमmat *f)
-अणु
-	काष्ठा cal_ctx *ctx = video_drvdata(file);
-	स्थिर काष्ठा cal_क्रमmat_info *fmtinfo;
+static int cal_mc_s_fmt_vid_cap(struct file *file, void *priv,
+				struct v4l2_format *f)
+{
+	struct cal_ctx *ctx = video_drvdata(file);
+	const struct cal_format_info *fmtinfo;
 
-	अगर (vb2_is_busy(&ctx->vb_vidq)) अणु
+	if (vb2_is_busy(&ctx->vb_vidq)) {
 		ctx_dbg(3, ctx, "%s device busy\n", __func__);
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
 	cal_mc_try_fmt(ctx, f, &fmtinfo);
 
 	ctx->v_fmt = *f;
 	ctx->fmtinfo = fmtinfo;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक cal_mc_क्रमागत_framesizes(काष्ठा file *file, व्योम *fh,
-				  काष्ठा v4l2_frmsizeक्रमागत *fsize)
-अणु
-	काष्ठा cal_ctx *ctx = video_drvdata(file);
-	स्थिर काष्ठा cal_क्रमmat_info *fmtinfo;
-	अचिन्हित पूर्णांक bpp;
+static int cal_mc_enum_framesizes(struct file *file, void *fh,
+				  struct v4l2_frmsizeenum *fsize)
+{
+	struct cal_ctx *ctx = video_drvdata(file);
+	const struct cal_format_info *fmtinfo;
+	unsigned int bpp;
 
-	अगर (fsize->index > 0)
-		वापस -EINVAL;
+	if (fsize->index > 0)
+		return -EINVAL;
 
-	fmtinfo = cal_क्रमmat_by_fourcc(fsize->pixel_क्रमmat);
-	अगर (!fmtinfo) अणु
+	fmtinfo = cal_format_by_fourcc(fsize->pixel_format);
+	if (!fmtinfo) {
 		ctx_dbg(3, ctx, "Invalid pixel format 0x%08x\n",
-			fsize->pixel_क्रमmat);
-		वापस -EINVAL;
-	पूर्ण
+			fsize->pixel_format);
+		return -EINVAL;
+	}
 
 	bpp = ALIGN(fmtinfo->bpp, 8);
 
@@ -540,16 +539,16 @@
 	fsize->stepwise.max_height = CAL_MAX_HEIGHT_LINES;
 	fsize->stepwise.step_height = 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा v4l2_ioctl_ops cal_ioctl_mc_ops = अणु
+static const struct v4l2_ioctl_ops cal_ioctl_mc_ops = {
 	.vidioc_querycap      = cal_querycap,
-	.vidioc_क्रमागत_fmt_vid_cap  = cal_mc_क्रमागत_fmt_vid_cap,
+	.vidioc_enum_fmt_vid_cap  = cal_mc_enum_fmt_vid_cap,
 	.vidioc_g_fmt_vid_cap     = cal_g_fmt_vid_cap,
 	.vidioc_try_fmt_vid_cap   = cal_mc_try_fmt_vid_cap,
 	.vidioc_s_fmt_vid_cap     = cal_mc_s_fmt_vid_cap,
-	.vidioc_क्रमागत_framesizes   = cal_mc_क्रमागत_framesizes,
+	.vidioc_enum_framesizes   = cal_mc_enum_framesizes,
 	.vidioc_reqbufs       = vb2_ioctl_reqbufs,
 	.vidioc_create_bufs   = vb2_ioctl_create_bufs,
 	.vidioc_prepare_buf   = vb2_ioctl_prepare_buf,
@@ -560,364 +559,364 @@
 	.vidioc_streamon      = vb2_ioctl_streamon,
 	.vidioc_streamoff     = vb2_ioctl_streamoff,
 	.vidioc_log_status    = v4l2_ctrl_log_status,
-पूर्ण;
+};
 
 /* ------------------------------------------------------------------
  *	videobuf2 Common Operations
  * ------------------------------------------------------------------
  */
 
-अटल पूर्णांक cal_queue_setup(काष्ठा vb2_queue *vq,
-			   अचिन्हित पूर्णांक *nbuffers, अचिन्हित पूर्णांक *nplanes,
-			   अचिन्हित पूर्णांक sizes[], काष्ठा device *alloc_devs[])
-अणु
-	काष्ठा cal_ctx *ctx = vb2_get_drv_priv(vq);
-	अचिन्हित पूर्णांक size = ctx->v_fmt.fmt.pix.sizeimage;
+static int cal_queue_setup(struct vb2_queue *vq,
+			   unsigned int *nbuffers, unsigned int *nplanes,
+			   unsigned int sizes[], struct device *alloc_devs[])
+{
+	struct cal_ctx *ctx = vb2_get_drv_priv(vq);
+	unsigned int size = ctx->v_fmt.fmt.pix.sizeimage;
 
-	अगर (vq->num_buffers + *nbuffers < 3)
+	if (vq->num_buffers + *nbuffers < 3)
 		*nbuffers = 3 - vq->num_buffers;
 
-	अगर (*nplanes) अणु
-		अगर (sizes[0] < size)
-			वापस -EINVAL;
+	if (*nplanes) {
+		if (sizes[0] < size)
+			return -EINVAL;
 		size = sizes[0];
-	पूर्ण
+	}
 
 	*nplanes = 1;
 	sizes[0] = size;
 
 	ctx_dbg(3, ctx, "nbuffers=%d, size=%d\n", *nbuffers, sizes[0]);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक cal_buffer_prepare(काष्ठा vb2_buffer *vb)
-अणु
-	काष्ठा cal_ctx *ctx = vb2_get_drv_priv(vb->vb2_queue);
-	काष्ठा cal_buffer *buf = container_of(vb, काष्ठा cal_buffer,
+static int cal_buffer_prepare(struct vb2_buffer *vb)
+{
+	struct cal_ctx *ctx = vb2_get_drv_priv(vb->vb2_queue);
+	struct cal_buffer *buf = container_of(vb, struct cal_buffer,
 					      vb.vb2_buf);
-	अचिन्हित दीर्घ size;
+	unsigned long size;
 
 	size = ctx->v_fmt.fmt.pix.sizeimage;
-	अगर (vb2_plane_size(vb, 0) < size) अणु
+	if (vb2_plane_size(vb, 0) < size) {
 		ctx_err(ctx,
 			"data will not fit into plane (%lu < %lu)\n",
 			vb2_plane_size(vb, 0), size);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	vb2_set_plane_payload(&buf->vb.vb2_buf, 0, size);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम cal_buffer_queue(काष्ठा vb2_buffer *vb)
-अणु
-	काष्ठा cal_ctx *ctx = vb2_get_drv_priv(vb->vb2_queue);
-	काष्ठा cal_buffer *buf = container_of(vb, काष्ठा cal_buffer,
+static void cal_buffer_queue(struct vb2_buffer *vb)
+{
+	struct cal_ctx *ctx = vb2_get_drv_priv(vb->vb2_queue);
+	struct cal_buffer *buf = container_of(vb, struct cal_buffer,
 					      vb.vb2_buf);
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 
 	/* recheck locking */
 	spin_lock_irqsave(&ctx->dma.lock, flags);
 	list_add_tail(&buf->list, &ctx->dma.queue);
 	spin_unlock_irqrestore(&ctx->dma.lock, flags);
-पूर्ण
+}
 
-अटल व्योम cal_release_buffers(काष्ठा cal_ctx *ctx,
-				क्रमागत vb2_buffer_state state)
-अणु
-	काष्ठा cal_buffer *buf, *पंचांगp;
+static void cal_release_buffers(struct cal_ctx *ctx,
+				enum vb2_buffer_state state)
+{
+	struct cal_buffer *buf, *tmp;
 
 	/* Release all queued buffers. */
 	spin_lock_irq(&ctx->dma.lock);
 
-	list_क्रम_each_entry_safe(buf, पंचांगp, &ctx->dma.queue, list) अणु
+	list_for_each_entry_safe(buf, tmp, &ctx->dma.queue, list) {
 		list_del(&buf->list);
-		vb2_buffer_करोne(&buf->vb.vb2_buf, state);
-	पूर्ण
+		vb2_buffer_done(&buf->vb.vb2_buf, state);
+	}
 
-	अगर (ctx->dma.pending) अणु
-		vb2_buffer_करोne(&ctx->dma.pending->vb.vb2_buf, state);
-		ctx->dma.pending = शून्य;
-	पूर्ण
+	if (ctx->dma.pending) {
+		vb2_buffer_done(&ctx->dma.pending->vb.vb2_buf, state);
+		ctx->dma.pending = NULL;
+	}
 
-	अगर (ctx->dma.active) अणु
-		vb2_buffer_करोne(&ctx->dma.active->vb.vb2_buf, state);
-		ctx->dma.active = शून्य;
-	पूर्ण
+	if (ctx->dma.active) {
+		vb2_buffer_done(&ctx->dma.active->vb.vb2_buf, state);
+		ctx->dma.active = NULL;
+	}
 
 	spin_unlock_irq(&ctx->dma.lock);
-पूर्ण
+}
 
 /* ------------------------------------------------------------------
  *	videobuf2 Operations
  * ------------------------------------------------------------------
  */
 
-अटल पूर्णांक cal_video_check_क्रमmat(काष्ठा cal_ctx *ctx)
-अणु
-	स्थिर काष्ठा v4l2_mbus_framefmt *क्रमmat;
+static int cal_video_check_format(struct cal_ctx *ctx)
+{
+	const struct v4l2_mbus_framefmt *format;
 
-	क्रमmat = &ctx->phy->क्रमmats[CAL_CAMERARX_PAD_SOURCE];
+	format = &ctx->phy->formats[CAL_CAMERARX_PAD_SOURCE];
 
-	अगर (ctx->fmtinfo->code != क्रमmat->code ||
-	    ctx->v_fmt.fmt.pix.height != क्रमmat->height ||
-	    ctx->v_fmt.fmt.pix.width != क्रमmat->width ||
-	    ctx->v_fmt.fmt.pix.field != क्रमmat->field)
-		वापस -EPIPE;
+	if (ctx->fmtinfo->code != format->code ||
+	    ctx->v_fmt.fmt.pix.height != format->height ||
+	    ctx->v_fmt.fmt.pix.width != format->width ||
+	    ctx->v_fmt.fmt.pix.field != format->field)
+		return -EPIPE;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक cal_start_streaming(काष्ठा vb2_queue *vq, अचिन्हित पूर्णांक count)
-अणु
-	काष्ठा cal_ctx *ctx = vb2_get_drv_priv(vq);
-	काष्ठा cal_buffer *buf;
+static int cal_start_streaming(struct vb2_queue *vq, unsigned int count)
+{
+	struct cal_ctx *ctx = vb2_get_drv_priv(vq);
+	struct cal_buffer *buf;
 	dma_addr_t addr;
-	पूर्णांक ret;
+	int ret;
 
 	ret = media_pipeline_start(&ctx->vdev.entity, &ctx->phy->pipe);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		ctx_err(ctx, "Failed to start media pipeline: %d\n", ret);
-		जाओ error_release_buffers;
-	पूर्ण
+		goto error_release_buffers;
+	}
 
 	/*
-	 * Verअगरy that the currently configured क्रमmat matches the output of
+	 * Verify that the currently configured format matches the output of
 	 * the connected CAMERARX.
 	 */
-	ret = cal_video_check_क्रमmat(ctx);
-	अगर (ret < 0) अणु
+	ret = cal_video_check_format(ctx);
+	if (ret < 0) {
 		ctx_dbg(3, ctx,
 			"Format mismatch between CAMERARX and video node\n");
-		जाओ error_pipeline;
-	पूर्ण
+		goto error_pipeline;
+	}
 
 	spin_lock_irq(&ctx->dma.lock);
-	buf = list_first_entry(&ctx->dma.queue, काष्ठा cal_buffer, list);
+	buf = list_first_entry(&ctx->dma.queue, struct cal_buffer, list);
 	ctx->dma.pending = buf;
 	list_del(&buf->list);
 	spin_unlock_irq(&ctx->dma.lock);
 
 	addr = vb2_dma_contig_plane_dma_addr(&buf->vb.vb2_buf, 0);
 
-	pm_runसमय_get_sync(ctx->cal->dev);
+	pm_runtime_get_sync(ctx->cal->dev);
 
 	cal_ctx_set_dma_addr(ctx, addr);
 	cal_ctx_start(ctx);
 
 	ret = v4l2_subdev_call(&ctx->phy->subdev, video, s_stream, 1);
-	अगर (ret)
-		जाओ error_stop;
+	if (ret)
+		goto error_stop;
 
-	अगर (cal_debug >= 4)
+	if (cal_debug >= 4)
 		cal_quickdump_regs(ctx->cal);
 
-	वापस 0;
+	return 0;
 
 error_stop:
 	cal_ctx_stop(ctx);
-	pm_runसमय_put_sync(ctx->cal->dev);
+	pm_runtime_put_sync(ctx->cal->dev);
 
 error_pipeline:
 	media_pipeline_stop(&ctx->vdev.entity);
 error_release_buffers:
 	cal_release_buffers(ctx, VB2_BUF_STATE_QUEUED);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम cal_stop_streaming(काष्ठा vb2_queue *vq)
-अणु
-	काष्ठा cal_ctx *ctx = vb2_get_drv_priv(vq);
+static void cal_stop_streaming(struct vb2_queue *vq)
+{
+	struct cal_ctx *ctx = vb2_get_drv_priv(vq);
 
 	cal_ctx_stop(ctx);
 
 	v4l2_subdev_call(&ctx->phy->subdev, video, s_stream, 0);
 
-	pm_runसमय_put_sync(ctx->cal->dev);
+	pm_runtime_put_sync(ctx->cal->dev);
 
 	cal_release_buffers(ctx, VB2_BUF_STATE_ERROR);
 
 	media_pipeline_stop(&ctx->vdev.entity);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा vb2_ops cal_video_qops = अणु
+static const struct vb2_ops cal_video_qops = {
 	.queue_setup		= cal_queue_setup,
 	.buf_prepare		= cal_buffer_prepare,
 	.buf_queue		= cal_buffer_queue,
 	.start_streaming	= cal_start_streaming,
 	.stop_streaming		= cal_stop_streaming,
-	.रुको_prepare		= vb2_ops_रुको_prepare,
-	.रुको_finish		= vb2_ops_रुको_finish,
-पूर्ण;
+	.wait_prepare		= vb2_ops_wait_prepare,
+	.wait_finish		= vb2_ops_wait_finish,
+};
 
 /* ------------------------------------------------------------------
  *	V4L2 Initialization and Registration
  * ------------------------------------------------------------------
  */
 
-अटल स्थिर काष्ठा v4l2_file_operations cal_fops = अणु
+static const struct v4l2_file_operations cal_fops = {
 	.owner		= THIS_MODULE,
-	.खोलो           = v4l2_fh_खोलो,
+	.open           = v4l2_fh_open,
 	.release        = vb2_fop_release,
 	.poll		= vb2_fop_poll,
 	.unlocked_ioctl = video_ioctl2, /* V4L2 ioctl handler */
 	.mmap           = vb2_fop_mmap,
-पूर्ण;
+};
 
-अटल पूर्णांक cal_ctx_v4l2_init_क्रमmats(काष्ठा cal_ctx *ctx)
-अणु
-	काष्ठा v4l2_subdev_mbus_code_क्रमागत mbus_code;
-	काष्ठा v4l2_mbus_framefmt mbus_fmt;
-	स्थिर काष्ठा cal_क्रमmat_info *fmtinfo;
-	अचिन्हित पूर्णांक i, j, k;
-	पूर्णांक ret = 0;
+static int cal_ctx_v4l2_init_formats(struct cal_ctx *ctx)
+{
+	struct v4l2_subdev_mbus_code_enum mbus_code;
+	struct v4l2_mbus_framefmt mbus_fmt;
+	const struct cal_format_info *fmtinfo;
+	unsigned int i, j, k;
+	int ret = 0;
 
-	/* Enumerate sub device क्रमmats and enable all matching local क्रमmats */
-	ctx->active_fmt = devm_kसुस्मृति(ctx->cal->dev, cal_num_क्रमmats,
-				       माप(*ctx->active_fmt), GFP_KERNEL);
+	/* Enumerate sub device formats and enable all matching local formats */
+	ctx->active_fmt = devm_kcalloc(ctx->cal->dev, cal_num_formats,
+				       sizeof(*ctx->active_fmt), GFP_KERNEL);
 	ctx->num_active_fmt = 0;
 
-	क्रम (j = 0, i = 0; ; ++j) अणु
+	for (j = 0, i = 0; ; ++j) {
 
-		स_रखो(&mbus_code, 0, माप(mbus_code));
+		memset(&mbus_code, 0, sizeof(mbus_code));
 		mbus_code.index = j;
 		mbus_code.which = V4L2_SUBDEV_FORMAT_ACTIVE;
-		ret = v4l2_subdev_call(ctx->phy->sensor, pad, क्रमागत_mbus_code,
-				       शून्य, &mbus_code);
-		अगर (ret == -EINVAL)
-			अवरोध;
+		ret = v4l2_subdev_call(ctx->phy->sensor, pad, enum_mbus_code,
+				       NULL, &mbus_code);
+		if (ret == -EINVAL)
+			break;
 
-		अगर (ret) अणु
+		if (ret) {
 			ctx_err(ctx, "Error enumerating mbus codes in subdev %s: %d\n",
 				ctx->phy->sensor->name, ret);
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 
 		ctx_dbg(2, ctx,
 			"subdev %s: code: %04x idx: %u\n",
 			ctx->phy->sensor->name, mbus_code.code, j);
 
-		क्रम (k = 0; k < cal_num_क्रमmats; k++) अणु
-			fmtinfo = &cal_क्रमmats[k];
+		for (k = 0; k < cal_num_formats; k++) {
+			fmtinfo = &cal_formats[k];
 
-			अगर (mbus_code.code == fmtinfo->code) अणु
+			if (mbus_code.code == fmtinfo->code) {
 				ctx->active_fmt[i] = fmtinfo;
 				ctx_dbg(2, ctx,
 					"matched fourcc: %s: code: %04x idx: %u\n",
 					fourcc_to_str(fmtinfo->fourcc),
 					fmtinfo->code, i);
 				ctx->num_active_fmt = ++i;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
-	अगर (i == 0) अणु
+	if (i == 0) {
 		ctx_err(ctx, "No suitable format reported by subdev %s\n",
 			ctx->phy->sensor->name);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	ret = __subdev_get_क्रमmat(ctx, &mbus_fmt);
-	अगर (ret)
-		वापस ret;
+	ret = __subdev_get_format(ctx, &mbus_fmt);
+	if (ret)
+		return ret;
 
-	fmtinfo = find_क्रमmat_by_code(ctx, mbus_fmt.code);
-	अगर (!fmtinfo) अणु
+	fmtinfo = find_format_by_code(ctx, mbus_fmt.code);
+	if (!fmtinfo) {
 		ctx_dbg(3, ctx, "mbus code format (0x%08x) not found.\n",
 			mbus_fmt.code);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	/* Save current क्रमmat */
-	v4l2_fill_pix_क्रमmat(&ctx->v_fmt.fmt.pix, &mbus_fmt);
+	/* Save current format */
+	v4l2_fill_pix_format(&ctx->v_fmt.fmt.pix, &mbus_fmt);
 	ctx->v_fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-	ctx->v_fmt.fmt.pix.pixelक्रमmat = fmtinfo->fourcc;
-	cal_calc_क्रमmat_size(ctx, fmtinfo, &ctx->v_fmt);
+	ctx->v_fmt.fmt.pix.pixelformat = fmtinfo->fourcc;
+	cal_calc_format_size(ctx, fmtinfo, &ctx->v_fmt);
 	ctx->fmtinfo = fmtinfo;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक cal_ctx_v4l2_रेजिस्टर(काष्ठा cal_ctx *ctx)
-अणु
-	काष्ठा video_device *vfd = &ctx->vdev;
-	पूर्णांक ret;
+int cal_ctx_v4l2_register(struct cal_ctx *ctx)
+{
+	struct video_device *vfd = &ctx->vdev;
+	int ret;
 
-	ret = cal_ctx_v4l2_init_क्रमmats(ctx);
-	अगर (ret)
-		वापस ret;
+	ret = cal_ctx_v4l2_init_formats(ctx);
+	if (ret)
+		return ret;
 
-	अगर (!cal_mc_api) अणु
-		काष्ठा v4l2_ctrl_handler *hdl = &ctx->ctrl_handler;
+	if (!cal_mc_api) {
+		struct v4l2_ctrl_handler *hdl = &ctx->ctrl_handler;
 
 		ret = v4l2_ctrl_add_handler(hdl, ctx->phy->sensor->ctrl_handler,
-					    शून्य, true);
-		अगर (ret < 0) अणु
+					    NULL, true);
+		if (ret < 0) {
 			ctx_err(ctx, "Failed to add sensor ctrl handler\n");
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
-	ret = video_रेजिस्टर_device(vfd, VFL_TYPE_VIDEO, cal_video_nr);
-	अगर (ret < 0) अणु
+	ret = video_register_device(vfd, VFL_TYPE_VIDEO, cal_video_nr);
+	if (ret < 0) {
 		ctx_err(ctx, "Failed to register video device\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	ret = media_create_pad_link(&ctx->phy->subdev.entity,
 				    CAL_CAMERARX_PAD_SOURCE,
 				    &vfd->entity, 0,
 				    MEDIA_LNK_FL_IMMUTABLE |
 				    MEDIA_LNK_FL_ENABLED);
-	अगर (ret) अणु
+	if (ret) {
 		ctx_err(ctx, "Failed to create media link for context %u\n",
 			ctx->index);
-		video_unरेजिस्टर_device(vfd);
-		वापस ret;
-	पूर्ण
+		video_unregister_device(vfd);
+		return ret;
+	}
 
 	ctx_info(ctx, "V4L2 device registered as %s\n",
 		 video_device_node_name(vfd));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम cal_ctx_v4l2_unरेजिस्टर(काष्ठा cal_ctx *ctx)
-अणु
+void cal_ctx_v4l2_unregister(struct cal_ctx *ctx)
+{
 	ctx_dbg(1, ctx, "unregistering %s\n",
 		video_device_node_name(&ctx->vdev));
 
-	video_unरेजिस्टर_device(&ctx->vdev);
-पूर्ण
+	video_unregister_device(&ctx->vdev);
+}
 
-पूर्णांक cal_ctx_v4l2_init(काष्ठा cal_ctx *ctx)
-अणु
-	काष्ठा video_device *vfd = &ctx->vdev;
-	काष्ठा vb2_queue *q = &ctx->vb_vidq;
-	पूर्णांक ret;
+int cal_ctx_v4l2_init(struct cal_ctx *ctx)
+{
+	struct video_device *vfd = &ctx->vdev;
+	struct vb2_queue *q = &ctx->vb_vidq;
+	int ret;
 
 	INIT_LIST_HEAD(&ctx->dma.queue);
 	spin_lock_init(&ctx->dma.lock);
 	mutex_init(&ctx->mutex);
-	init_रुकोqueue_head(&ctx->dma.रुको);
+	init_waitqueue_head(&ctx->dma.wait);
 
 	/* Initialize the vb2 queue. */
 	q->type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 	q->io_modes = VB2_MMAP | VB2_DMABUF;
 	q->drv_priv = ctx;
-	q->buf_काष्ठा_size = माप(काष्ठा cal_buffer);
+	q->buf_struct_size = sizeof(struct cal_buffer);
 	q->ops = &cal_video_qops;
 	q->mem_ops = &vb2_dma_contig_memops;
-	q->बारtamp_flags = V4L2_BUF_FLAG_TIMESTAMP_MONOTONIC;
+	q->timestamp_flags = V4L2_BUF_FLAG_TIMESTAMP_MONOTONIC;
 	q->lock = &ctx->mutex;
 	q->min_buffers_needed = 3;
 	q->dev = ctx->cal->dev;
 
 	ret = vb2_queue_init(q);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	/* Initialize the video device and media entity. */
 	vfd->fops = &cal_fops;
@@ -925,7 +924,7 @@ error_release_buffers:
 			 | (cal_mc_api ? V4L2_CAP_IO_MC : 0);
 	vfd->v4l2_dev = &ctx->cal->v4l2_dev;
 	vfd->queue = q;
-	snम_लिखो(vfd->name, माप(vfd->name), "CAL output %u", ctx->index);
+	snprintf(vfd->name, sizeof(vfd->name), "CAL output %u", ctx->index);
 	vfd->release = video_device_release_empty;
 	vfd->ioctl_ops = cal_mc_api ? &cal_ioctl_mc_ops : &cal_ioctl_video_ops;
 	vfd->lock = &ctx->mutex;
@@ -933,33 +932,33 @@ error_release_buffers:
 
 	ctx->pad.flags = MEDIA_PAD_FL_SINK;
 	ret = media_entity_pads_init(&vfd->entity, 1, &ctx->pad);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	अगर (!cal_mc_api) अणु
+	if (!cal_mc_api) {
 		/* Initialize the control handler. */
-		काष्ठा v4l2_ctrl_handler *hdl = &ctx->ctrl_handler;
+		struct v4l2_ctrl_handler *hdl = &ctx->ctrl_handler;
 
 		ret = v4l2_ctrl_handler_init(hdl, 11);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			ctx_err(ctx, "Failed to init ctrl handler\n");
-			जाओ error;
-		पूर्ण
+			goto error;
+		}
 
 		vfd->ctrl_handler = hdl;
-	पूर्ण
+	}
 
-	वापस 0;
+	return 0;
 
 error:
 	media_entity_cleanup(&vfd->entity);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम cal_ctx_v4l2_cleanup(काष्ठा cal_ctx *ctx)
-अणु
-	अगर (!cal_mc_api)
-		v4l2_ctrl_handler_मुक्त(&ctx->ctrl_handler);
+void cal_ctx_v4l2_cleanup(struct cal_ctx *ctx)
+{
+	if (!cal_mc_api)
+		v4l2_ctrl_handler_free(&ctx->ctrl_handler);
 
 	media_entity_cleanup(&ctx->vdev.entity);
-पूर्ण
+}

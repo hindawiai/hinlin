@@ -1,22 +1,21 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 
-#अगर !defined(_TRACE_KVM_PR_H) || defined(TRACE_HEADER_MULTI_READ)
-#घोषणा _TRACE_KVM_PR_H
+#if !defined(_TRACE_KVM_PR_H) || defined(TRACE_HEADER_MULTI_READ)
+#define _TRACE_KVM_PR_H
 
-#समावेश <linux/tracepoपूर्णांक.h>
-#समावेश "trace_book3s.h"
+#include <linux/tracepoint.h>
+#include "trace_book3s.h"
 
-#अघोषित TRACE_SYSTEM
-#घोषणा TRACE_SYSTEM kvm_pr
+#undef TRACE_SYSTEM
+#define TRACE_SYSTEM kvm_pr
 
 TRACE_EVENT(kvm_book3s_reenter,
-	TP_PROTO(पूर्णांक r, काष्ठा kvm_vcpu *vcpu),
+	TP_PROTO(int r, struct kvm_vcpu *vcpu),
 	TP_ARGS(r, vcpu),
 
 	TP_STRUCT__entry(
-		__field(	अचिन्हित पूर्णांक,	r		)
-		__field(	अचिन्हित दीर्घ,	pc		)
+		__field(	unsigned int,	r		)
+		__field(	unsigned long,	pc		)
 	),
 
 	TP_fast_assign(
@@ -24,24 +23,24 @@ TRACE_EVENT(kvm_book3s_reenter,
 		__entry->pc		= kvmppc_get_pc(vcpu);
 	),
 
-	TP_prपूर्णांकk("reentry r=%d | pc=0x%lx", __entry->r, __entry->pc)
+	TP_printk("reentry r=%d | pc=0x%lx", __entry->r, __entry->pc)
 );
 
-#अगर_घोषित CONFIG_PPC_BOOK3S_64
+#ifdef CONFIG_PPC_BOOK3S_64
 
 TRACE_EVENT(kvm_book3s_64_mmu_map,
-	TP_PROTO(पूर्णांक rflags, uदीर्घ hpteg, uदीर्घ va, kvm_pfn_t hpaddr,
-		 काष्ठा kvmppc_pte *orig_pte),
+	TP_PROTO(int rflags, ulong hpteg, ulong va, kvm_pfn_t hpaddr,
+		 struct kvmppc_pte *orig_pte),
 	TP_ARGS(rflags, hpteg, va, hpaddr, orig_pte),
 
 	TP_STRUCT__entry(
-		__field(	अचिन्हित अक्षर,		flag_w		)
-		__field(	अचिन्हित अक्षर,		flag_x		)
-		__field(	अचिन्हित दीर्घ,		eaddr		)
-		__field(	अचिन्हित दीर्घ,		hpteg		)
-		__field(	अचिन्हित दीर्घ,		va		)
-		__field(	अचिन्हित दीर्घ दीर्घ,	vpage		)
-		__field(	अचिन्हित दीर्घ,		hpaddr		)
+		__field(	unsigned char,		flag_w		)
+		__field(	unsigned char,		flag_x		)
+		__field(	unsigned long,		eaddr		)
+		__field(	unsigned long,		hpteg		)
+		__field(	unsigned long,		va		)
+		__field(	unsigned long long,	vpage		)
+		__field(	unsigned long,		hpaddr		)
 	),
 
 	TP_fast_assign(
@@ -54,24 +53,24 @@ TRACE_EVENT(kvm_book3s_64_mmu_map,
 		__entry->hpaddr	= hpaddr;
 	),
 
-	TP_prपूर्णांकk("KVM: %c%c Map 0x%lx: [%lx] 0x%lx (0x%llx) -> %lx",
+	TP_printk("KVM: %c%c Map 0x%lx: [%lx] 0x%lx (0x%llx) -> %lx",
 		  __entry->flag_w, __entry->flag_x, __entry->eaddr,
 		  __entry->hpteg, __entry->va, __entry->vpage, __entry->hpaddr)
 );
 
-#पूर्ण_अगर /* CONFIG_PPC_BOOK3S_64 */
+#endif /* CONFIG_PPC_BOOK3S_64 */
 
 TRACE_EVENT(kvm_book3s_mmu_map,
-	TP_PROTO(काष्ठा hpte_cache *pte),
+	TP_PROTO(struct hpte_cache *pte),
 	TP_ARGS(pte),
 
 	TP_STRUCT__entry(
 		__field(	u64,		host_vpn	)
 		__field(	u64,		pfn		)
-		__field(	uदीर्घ,		eaddr		)
+		__field(	ulong,		eaddr		)
 		__field(	u64,		vpage		)
-		__field(	uदीर्घ,		raddr		)
-		__field(	पूर्णांक,		flags		)
+		__field(	ulong,		raddr		)
+		__field(	int,		flags		)
 	),
 
 	TP_fast_assign(
@@ -80,27 +79,27 @@ TRACE_EVENT(kvm_book3s_mmu_map,
 		__entry->eaddr		= pte->pte.eaddr;
 		__entry->vpage		= pte->pte.vpage;
 		__entry->raddr		= pte->pte.raddr;
-		__entry->flags		= (pte->pte.may_पढ़ो ? 0x4 : 0) |
-					  (pte->pte.may_ग_लिखो ? 0x2 : 0) |
+		__entry->flags		= (pte->pte.may_read ? 0x4 : 0) |
+					  (pte->pte.may_write ? 0x2 : 0) |
 					  (pte->pte.may_execute ? 0x1 : 0);
 	),
 
-	TP_prपूर्णांकk("Map: hvpn=%llx pfn=%llx ea=%lx vp=%llx ra=%lx [%x]",
+	TP_printk("Map: hvpn=%llx pfn=%llx ea=%lx vp=%llx ra=%lx [%x]",
 		  __entry->host_vpn, __entry->pfn, __entry->eaddr,
 		  __entry->vpage, __entry->raddr, __entry->flags)
 );
 
 TRACE_EVENT(kvm_book3s_mmu_invalidate,
-	TP_PROTO(काष्ठा hpte_cache *pte),
+	TP_PROTO(struct hpte_cache *pte),
 	TP_ARGS(pte),
 
 	TP_STRUCT__entry(
 		__field(	u64,		host_vpn	)
 		__field(	u64,		pfn		)
-		__field(	uदीर्घ,		eaddr		)
+		__field(	ulong,		eaddr		)
 		__field(	u64,		vpage		)
-		__field(	uदीर्घ,		raddr		)
-		__field(	पूर्णांक,		flags		)
+		__field(	ulong,		raddr		)
+		__field(	int,		flags		)
 	),
 
 	TP_fast_assign(
@@ -109,26 +108,26 @@ TRACE_EVENT(kvm_book3s_mmu_invalidate,
 		__entry->eaddr		= pte->pte.eaddr;
 		__entry->vpage		= pte->pte.vpage;
 		__entry->raddr		= pte->pte.raddr;
-		__entry->flags		= (pte->pte.may_पढ़ो ? 0x4 : 0) |
-					  (pte->pte.may_ग_लिखो ? 0x2 : 0) |
+		__entry->flags		= (pte->pte.may_read ? 0x4 : 0) |
+					  (pte->pte.may_write ? 0x2 : 0) |
 					  (pte->pte.may_execute ? 0x1 : 0);
 	),
 
-	TP_prपूर्णांकk("Flush: hva=%llx pfn=%llx ea=%lx vp=%llx ra=%lx [%x]",
+	TP_printk("Flush: hva=%llx pfn=%llx ea=%lx vp=%llx ra=%lx [%x]",
 		  __entry->host_vpn, __entry->pfn, __entry->eaddr,
 		  __entry->vpage, __entry->raddr, __entry->flags)
 );
 
 TRACE_EVENT(kvm_book3s_mmu_flush,
-	TP_PROTO(स्थिर अक्षर *type, काष्ठा kvm_vcpu *vcpu, अचिन्हित दीर्घ दीर्घ p1,
-		 अचिन्हित दीर्घ दीर्घ p2),
+	TP_PROTO(const char *type, struct kvm_vcpu *vcpu, unsigned long long p1,
+		 unsigned long long p2),
 	TP_ARGS(type, vcpu, p1, p2),
 
 	TP_STRUCT__entry(
-		__field(	पूर्णांक,			count		)
-		__field(	अचिन्हित दीर्घ दीर्घ,	p1		)
-		__field(	अचिन्हित दीर्घ दीर्घ,	p2		)
-		__field(	स्थिर अक्षर *,		type		)
+		__field(	int,			count		)
+		__field(	unsigned long long,	p1		)
+		__field(	unsigned long long,	p2		)
+		__field(	const char *,		type		)
 	),
 
 	TP_fast_assign(
@@ -138,17 +137,17 @@ TRACE_EVENT(kvm_book3s_mmu_flush,
 		__entry->type		= type;
 	),
 
-	TP_prपूर्णांकk("Flush %d %sPTEs: %llx - %llx",
+	TP_printk("Flush %d %sPTEs: %llx - %llx",
 		  __entry->count, __entry->type, __entry->p1, __entry->p2)
 );
 
 TRACE_EVENT(kvm_book3s_slb_found,
-	TP_PROTO(अचिन्हित दीर्घ दीर्घ gvsid, अचिन्हित दीर्घ दीर्घ hvsid),
+	TP_PROTO(unsigned long long gvsid, unsigned long long hvsid),
 	TP_ARGS(gvsid, hvsid),
 
 	TP_STRUCT__entry(
-		__field(	अचिन्हित दीर्घ दीर्घ,	gvsid		)
-		__field(	अचिन्हित दीर्घ दीर्घ,	hvsid		)
+		__field(	unsigned long long,	gvsid		)
+		__field(	unsigned long long,	hvsid		)
 	),
 
 	TP_fast_assign(
@@ -156,16 +155,16 @@ TRACE_EVENT(kvm_book3s_slb_found,
 		__entry->hvsid		= hvsid;
 	),
 
-	TP_prपूर्णांकk("%llx -> %llx", __entry->gvsid, __entry->hvsid)
+	TP_printk("%llx -> %llx", __entry->gvsid, __entry->hvsid)
 );
 
 TRACE_EVENT(kvm_book3s_slb_fail,
-	TP_PROTO(u16 sid_map_mask, अचिन्हित दीर्घ दीर्घ gvsid),
+	TP_PROTO(u16 sid_map_mask, unsigned long long gvsid),
 	TP_ARGS(sid_map_mask, gvsid),
 
 	TP_STRUCT__entry(
-		__field(	अचिन्हित लघु,		sid_map_mask	)
-		__field(	अचिन्हित दीर्घ दीर्घ,	gvsid		)
+		__field(	unsigned short,		sid_map_mask	)
+		__field(	unsigned long long,	gvsid		)
 	),
 
 	TP_fast_assign(
@@ -173,19 +172,19 @@ TRACE_EVENT(kvm_book3s_slb_fail,
 		__entry->gvsid		= gvsid;
 	),
 
-	TP_prपूर्णांकk("%x/%x: %llx", __entry->sid_map_mask,
+	TP_printk("%x/%x: %llx", __entry->sid_map_mask,
 		  SID_MAP_MASK - __entry->sid_map_mask, __entry->gvsid)
 );
 
 TRACE_EVENT(kvm_book3s_slb_map,
-	TP_PROTO(u16 sid_map_mask, अचिन्हित दीर्घ दीर्घ gvsid,
-		 अचिन्हित दीर्घ दीर्घ hvsid),
+	TP_PROTO(u16 sid_map_mask, unsigned long long gvsid,
+		 unsigned long long hvsid),
 	TP_ARGS(sid_map_mask, gvsid, hvsid),
 
 	TP_STRUCT__entry(
-		__field(	अचिन्हित लघु,		sid_map_mask	)
-		__field(	अचिन्हित दीर्घ दीर्घ,	guest_vsid	)
-		__field(	अचिन्हित दीर्घ दीर्घ,	host_vsid	)
+		__field(	unsigned short,		sid_map_mask	)
+		__field(	unsigned long long,	guest_vsid	)
+		__field(	unsigned long long,	host_vsid	)
 	),
 
 	TP_fast_assign(
@@ -194,7 +193,7 @@ TRACE_EVENT(kvm_book3s_slb_map,
 		__entry->host_vsid	= hvsid;
 	),
 
-	TP_prपूर्णांकk("%x: %llx -> %llx", __entry->sid_map_mask,
+	TP_printk("%x: %llx -> %llx", __entry->sid_map_mask,
 		  __entry->guest_vsid, __entry->host_vsid)
 );
 
@@ -212,39 +211,39 @@ TRACE_EVENT(kvm_book3s_slbmte,
 		__entry->slb_esid	= slb_esid;
 	),
 
-	TP_prपूर्णांकk("%llx, %llx", __entry->slb_vsid, __entry->slb_esid)
+	TP_printk("%llx, %llx", __entry->slb_vsid, __entry->slb_esid)
 );
 
-TRACE_EVENT(kvm_निकास,
-	TP_PROTO(अचिन्हित पूर्णांक निकास_nr, काष्ठा kvm_vcpu *vcpu),
-	TP_ARGS(निकास_nr, vcpu),
+TRACE_EVENT(kvm_exit,
+	TP_PROTO(unsigned int exit_nr, struct kvm_vcpu *vcpu),
+	TP_ARGS(exit_nr, vcpu),
 
 	TP_STRUCT__entry(
-		__field(	अचिन्हित पूर्णांक,	निकास_nr		)
-		__field(	अचिन्हित दीर्घ,	pc		)
-		__field(	अचिन्हित दीर्घ,	msr		)
-		__field(	अचिन्हित दीर्घ,	dar		)
-		__field(	अचिन्हित दीर्घ,	srr1		)
-		__field(	अचिन्हित दीर्घ,	last_inst	)
+		__field(	unsigned int,	exit_nr		)
+		__field(	unsigned long,	pc		)
+		__field(	unsigned long,	msr		)
+		__field(	unsigned long,	dar		)
+		__field(	unsigned long,	srr1		)
+		__field(	unsigned long,	last_inst	)
 	),
 
 	TP_fast_assign(
-		__entry->निकास_nr	= निकास_nr;
+		__entry->exit_nr	= exit_nr;
 		__entry->pc		= kvmppc_get_pc(vcpu);
 		__entry->dar		= kvmppc_get_fault_dar(vcpu);
 		__entry->msr		= kvmppc_get_msr(vcpu);
-		__entry->srr1		= vcpu->arch.shaकरोw_srr1;
+		__entry->srr1		= vcpu->arch.shadow_srr1;
 		__entry->last_inst	= vcpu->arch.last_inst;
 	),
 
-	TP_prपूर्णांकk("exit=%s"
+	TP_printk("exit=%s"
 		" | pc=0x%lx"
 		" | msr=0x%lx"
 		" | dar=0x%lx"
 		" | srr1=0x%lx"
 		" | last_inst=0x%lx"
 		,
-		__prपूर्णांक_symbolic(__entry->निकास_nr, kvm_trace_symbol_निकास),
+		__print_symbolic(__entry->exit_nr, kvm_trace_symbol_exit),
 		__entry->pc,
 		__entry->msr,
 		__entry->dar,
@@ -253,14 +252,14 @@ TRACE_EVENT(kvm_निकास,
 		)
 );
 
-#पूर्ण_अगर /* _TRACE_KVM_H */
+#endif /* _TRACE_KVM_H */
 
 /* This part must be outside protection */
 
-#अघोषित TRACE_INCLUDE_PATH
-#अघोषित TRACE_INCLUDE_खाता
+#undef TRACE_INCLUDE_PATH
+#undef TRACE_INCLUDE_FILE
 
-#घोषणा TRACE_INCLUDE_PATH .
-#घोषणा TRACE_INCLUDE_खाता trace_pr
+#define TRACE_INCLUDE_PATH .
+#define TRACE_INCLUDE_FILE trace_pr
 
-#समावेश <trace/define_trace.h>
+#include <trace/define_trace.h>

@@ -1,28 +1,27 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: BSD-3-Clause-Clear
+// SPDX-License-Identifier: BSD-3-Clause-Clear
 /*
  * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
  */
 
-#समावेश "core.h"
-#समावेश "debug.h"
+#include "core.h"
+#include "debug.h"
 
-अटल पूर्णांक ath11k_dbring_bufs_replenish(काष्ठा ath11k *ar,
-					काष्ठा ath11k_dbring *ring,
-					काष्ठा ath11k_dbring_element *buff,
+static int ath11k_dbring_bufs_replenish(struct ath11k *ar,
+					struct ath11k_dbring *ring,
+					struct ath11k_dbring_element *buff,
 					gfp_t gfp)
-अणु
-	काष्ठा ath11k_base *ab = ar->ab;
-	काष्ठा hal_srng *srng;
+{
+	struct ath11k_base *ab = ar->ab;
+	struct hal_srng *srng;
 	dma_addr_t paddr;
-	व्योम *ptr_aligned, *ptr_unaligned, *desc;
-	पूर्णांक ret;
-	पूर्णांक buf_id;
+	void *ptr_aligned, *ptr_unaligned, *desc;
+	int ret;
+	int buf_id;
 	u32 cookie;
 
 	srng = &ab->hal.srng_list[ring->refill_srng.ring_id];
 
-	lockdep_निश्चित_held(&srng->lock);
+	lockdep_assert_held(&srng->lock);
 
 	ath11k_hal_srng_access_begin(ab, srng);
 
@@ -32,22 +31,22 @@
 			       DMA_FROM_DEVICE);
 
 	ret = dma_mapping_error(ab->dev, paddr);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 
 	spin_lock_bh(&ring->idr_lock);
 	buf_id = idr_alloc(&ring->bufs_idr, buff, 0, ring->bufs_max, gfp);
 	spin_unlock_bh(&ring->idr_lock);
-	अगर (buf_id < 0) अणु
+	if (buf_id < 0) {
 		ret = -ENOBUFS;
-		जाओ err_dma_unmap;
-	पूर्ण
+		goto err_dma_unmap;
+	}
 
 	desc = ath11k_hal_srng_src_get_next_entry(ab, srng);
-	अगर (!desc) अणु
+	if (!desc) {
 		ret = -ENOENT;
-		जाओ err_idr_हटाओ;
-	पूर्ण
+		goto err_idr_remove;
+	}
 
 	buff->paddr = paddr;
 
@@ -58,69 +57,69 @@
 
 	ath11k_hal_srng_access_end(ab, srng);
 
-	वापस 0;
+	return 0;
 
-err_idr_हटाओ:
+err_idr_remove:
 	spin_lock_bh(&ring->idr_lock);
-	idr_हटाओ(&ring->bufs_idr, buf_id);
+	idr_remove(&ring->bufs_idr, buf_id);
 	spin_unlock_bh(&ring->idr_lock);
 err_dma_unmap:
 	dma_unmap_single(ab->dev, paddr, ring->buf_sz,
 			 DMA_FROM_DEVICE);
 err:
 	ath11k_hal_srng_access_end(ab, srng);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक ath11k_dbring_fill_bufs(काष्ठा ath11k *ar,
-				   काष्ठा ath11k_dbring *ring,
+static int ath11k_dbring_fill_bufs(struct ath11k *ar,
+				   struct ath11k_dbring *ring,
 				   gfp_t gfp)
-अणु
-	काष्ठा ath11k_dbring_element *buff;
-	काष्ठा hal_srng *srng;
-	पूर्णांक num_reमुख्य, req_entries, num_मुक्त;
+{
+	struct ath11k_dbring_element *buff;
+	struct hal_srng *srng;
+	int num_remain, req_entries, num_free;
 	u32 align;
-	पूर्णांक size, ret;
+	int size, ret;
 
 	srng = &ar->ab->hal.srng_list[ring->refill_srng.ring_id];
 
 	spin_lock_bh(&srng->lock);
 
-	num_मुक्त = ath11k_hal_srng_src_num_मुक्त(ar->ab, srng, true);
-	req_entries = min(num_मुक्त, ring->bufs_max);
-	num_reमुख्य = req_entries;
+	num_free = ath11k_hal_srng_src_num_free(ar->ab, srng, true);
+	req_entries = min(num_free, ring->bufs_max);
+	num_remain = req_entries;
 	align = ring->buf_align;
-	size = माप(*buff) + ring->buf_sz + align - 1;
+	size = sizeof(*buff) + ring->buf_sz + align - 1;
 
-	जबतक (num_reमुख्य > 0) अणु
+	while (num_remain > 0) {
 		buff = kzalloc(size, gfp);
-		अगर (!buff)
-			अवरोध;
+		if (!buff)
+			break;
 
 		ret = ath11k_dbring_bufs_replenish(ar, ring, buff, gfp);
-		अगर (ret) अणु
+		if (ret) {
 			ath11k_warn(ar->ab, "failed to replenish db ring num_remain %d req_ent %d\n",
-				    num_reमुख्य, req_entries);
-			kमुक्त(buff);
-			अवरोध;
-		पूर्ण
-		num_reमुख्य--;
-	पूर्ण
+				    num_remain, req_entries);
+			kfree(buff);
+			break;
+		}
+		num_remain--;
+	}
 
 	spin_unlock_bh(&srng->lock);
 
-	वापस num_reमुख्य;
-पूर्ण
+	return num_remain;
+}
 
-पूर्णांक ath11k_dbring_wmi_cfg_setup(काष्ठा ath11k *ar,
-				काष्ठा ath11k_dbring *ring,
-				क्रमागत wmi_direct_buffer_module id)
-अणु
-	काष्ठा ath11k_wmi_pdev_dma_ring_cfg_req_cmd param = अणु0पूर्ण;
-	पूर्णांक ret;
+int ath11k_dbring_wmi_cfg_setup(struct ath11k *ar,
+				struct ath11k_dbring *ring,
+				enum wmi_direct_buffer_module id)
+{
+	struct ath11k_wmi_pdev_dma_ring_cfg_req_cmd param = {0};
+	int ret;
 
-	अगर (id >= WMI_सूचीECT_BUF_MAX)
-		वापस -EINVAL;
+	if (id >= WMI_DIRECT_BUF_MAX)
+		return -EINVAL;
 
 	param.pdev_id		= DP_SW2HW_MACID(ring->pdev_id);
 	param.module_id		= id;
@@ -133,43 +132,43 @@ err:
 	param.num_elems		= ring->bufs_max;
 	param.buf_size		= ring->buf_sz;
 	param.num_resp_per_event = ring->num_resp_per_event;
-	param.event_समयout_ms	= ring->event_समयout_ms;
+	param.event_timeout_ms	= ring->event_timeout_ms;
 
 	ret = ath11k_wmi_pdev_dma_ring_cfg(ar, &param);
-	अगर (ret) अणु
+	if (ret) {
 		ath11k_warn(ar->ab, "failed to setup db ring cfg\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक ath11k_dbring_set_cfg(काष्ठा ath11k *ar, काष्ठा ath11k_dbring *ring,
-			  u32 num_resp_per_event, u32 event_समयout_ms,
-			  पूर्णांक (*handler)(काष्ठा ath11k *,
-					 काष्ठा ath11k_dbring_data *))
-अणु
-	अगर (WARN_ON(!ring))
-		वापस -EINVAL;
+int ath11k_dbring_set_cfg(struct ath11k *ar, struct ath11k_dbring *ring,
+			  u32 num_resp_per_event, u32 event_timeout_ms,
+			  int (*handler)(struct ath11k *,
+					 struct ath11k_dbring_data *))
+{
+	if (WARN_ON(!ring))
+		return -EINVAL;
 
 	ring->num_resp_per_event = num_resp_per_event;
-	ring->event_समयout_ms = event_समयout_ms;
+	ring->event_timeout_ms = event_timeout_ms;
 	ring->handler = handler;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक ath11k_dbring_buf_setup(काष्ठा ath11k *ar,
-			    काष्ठा ath11k_dbring *ring,
-			    काष्ठा ath11k_dbring_cap *db_cap)
-अणु
-	काष्ठा ath11k_base *ab = ar->ab;
-	काष्ठा hal_srng *srng;
-	पूर्णांक ret;
+int ath11k_dbring_buf_setup(struct ath11k *ar,
+			    struct ath11k_dbring *ring,
+			    struct ath11k_dbring_cap *db_cap)
+{
+	struct ath11k_base *ab = ar->ab;
+	struct hal_srng *srng;
+	int ret;
 
 	srng = &ab->hal.srng_list[ring->refill_srng.ring_id];
 	ring->bufs_max = ring->refill_srng.size /
-		ath11k_hal_srng_get_entrysize(ab, HAL_RXDMA_सूची_BUF);
+		ath11k_hal_srng_get_entrysize(ab, HAL_RXDMA_DIR_BUF);
 
 	ring->buf_sz = db_cap->min_buf_sz;
 	ring->buf_align = db_cap->min_buf_align;
@@ -179,118 +178,118 @@ err:
 
 	ret = ath11k_dbring_fill_bufs(ar, ring, GFP_KERNEL);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक ath11k_dbring_srng_setup(काष्ठा ath11k *ar, काष्ठा ath11k_dbring *ring,
-			     पूर्णांक ring_num, पूर्णांक num_entries)
-अणु
-	पूर्णांक ret;
+int ath11k_dbring_srng_setup(struct ath11k *ar, struct ath11k_dbring *ring,
+			     int ring_num, int num_entries)
+{
+	int ret;
 
-	ret = ath11k_dp_srng_setup(ar->ab, &ring->refill_srng, HAL_RXDMA_सूची_BUF,
+	ret = ath11k_dp_srng_setup(ar->ab, &ring->refill_srng, HAL_RXDMA_DIR_BUF,
 				   ring_num, ar->pdev_idx, num_entries);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		ath11k_warn(ar->ab, "failed to setup srng: %d ring_id %d\n",
 			    ret, ring_num);
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	वापस 0;
+	return 0;
 err:
 	ath11k_dp_srng_cleanup(ar->ab, &ring->refill_srng);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक ath11k_dbring_get_cap(काष्ठा ath11k_base *ab,
+int ath11k_dbring_get_cap(struct ath11k_base *ab,
 			  u8 pdev_idx,
-			  क्रमागत wmi_direct_buffer_module id,
-			  काष्ठा ath11k_dbring_cap *db_cap)
-अणु
-	पूर्णांक i;
+			  enum wmi_direct_buffer_module id,
+			  struct ath11k_dbring_cap *db_cap)
+{
+	int i;
 
-	अगर (!ab->num_db_cap || !ab->db_caps)
-		वापस -ENOENT;
+	if (!ab->num_db_cap || !ab->db_caps)
+		return -ENOENT;
 
-	अगर (id >= WMI_सूचीECT_BUF_MAX)
-		वापस -EINVAL;
+	if (id >= WMI_DIRECT_BUF_MAX)
+		return -EINVAL;
 
-	क्रम (i = 0; i < ab->num_db_cap; i++) अणु
-		अगर (pdev_idx == ab->db_caps[i].pdev_id &&
-		    id == ab->db_caps[i].id) अणु
+	for (i = 0; i < ab->num_db_cap; i++) {
+		if (pdev_idx == ab->db_caps[i].pdev_id &&
+		    id == ab->db_caps[i].id) {
 			*db_cap = ab->db_caps[i];
 
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			return 0;
+		}
+	}
 
-	वापस -ENOENT;
-पूर्ण
+	return -ENOENT;
+}
 
-पूर्णांक ath11k_dbring_buffer_release_event(काष्ठा ath11k_base *ab,
-				       काष्ठा ath11k_dbring_buf_release_event *ev)
-अणु
-	काष्ठा ath11k_dbring *ring;
-	काष्ठा hal_srng *srng;
-	काष्ठा ath11k *ar;
-	काष्ठा ath11k_dbring_element *buff;
-	काष्ठा ath11k_dbring_data handler_data;
-	काष्ठा ath11k_buffer_addr desc;
+int ath11k_dbring_buffer_release_event(struct ath11k_base *ab,
+				       struct ath11k_dbring_buf_release_event *ev)
+{
+	struct ath11k_dbring *ring;
+	struct hal_srng *srng;
+	struct ath11k *ar;
+	struct ath11k_dbring_element *buff;
+	struct ath11k_dbring_data handler_data;
+	struct ath11k_buffer_addr desc;
 	u8 *vaddr_unalign;
 	u32 num_entry, num_buff_reaped;
 	u8 pdev_idx, rbm;
 	u32 cookie;
-	पूर्णांक buf_id;
-	पूर्णांक size;
+	int buf_id;
+	int size;
 	dma_addr_t paddr;
-	पूर्णांक ret = 0;
+	int ret = 0;
 
 	pdev_idx = ev->fixed.pdev_id;
 
-	अगर (pdev_idx >= ab->num_radios) अणु
+	if (pdev_idx >= ab->num_radios) {
 		ath11k_warn(ab, "Invalid pdev id %d\n", pdev_idx);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (ev->fixed.num_buf_release_entry !=
-	    ev->fixed.num_meta_data_entry) अणु
+	if (ev->fixed.num_buf_release_entry !=
+	    ev->fixed.num_meta_data_entry) {
 		ath11k_warn(ab, "Buffer entry %d mismatch meta entry %d\n",
 			    ev->fixed.num_buf_release_entry,
 			    ev->fixed.num_meta_data_entry);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	ar = ab->pdevs[pdev_idx].ar;
 
-	rcu_पढ़ो_lock();
-	अगर (!rcu_dereference(ab->pdevs_active[pdev_idx])) अणु
+	rcu_read_lock();
+	if (!rcu_dereference(ab->pdevs_active[pdev_idx])) {
 		ret = -EINVAL;
-		जाओ rcu_unlock;
-	पूर्ण
+		goto rcu_unlock;
+	}
 
-	चयन (ev->fixed.module_id) अणु
-	हाल WMI_सूचीECT_BUF_SPECTRAL:
+	switch (ev->fixed.module_id) {
+	case WMI_DIRECT_BUF_SPECTRAL:
 		ring = ath11k_spectral_get_dbring(ar);
-		अवरोध;
-	शेष:
-		ring = शून्य;
+		break;
+	default:
+		ring = NULL;
 		ath11k_warn(ab, "Recv dma buffer release ev on unsupp module %d\n",
 			    ev->fixed.module_id);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	अगर (!ring) अणु
+	if (!ring) {
 		ret = -EINVAL;
-		जाओ rcu_unlock;
-	पूर्ण
+		goto rcu_unlock;
+	}
 
 	srng = &ab->hal.srng_list[ring->refill_srng.ring_id];
 	num_entry = ev->fixed.num_buf_release_entry;
-	size = माप(*buff) + ring->buf_sz + ring->buf_align - 1;
+	size = sizeof(*buff) + ring->buf_sz + ring->buf_align - 1;
 	num_buff_reaped = 0;
 
 	spin_lock_bh(&srng->lock);
 
-	जबतक (num_buff_reaped < num_entry) अणु
+	while (num_buff_reaped < num_entry) {
 		desc.info0 = ev->buf_entry[num_buff_reaped].paddr_lo;
 		desc.info1 = ev->buf_entry[num_buff_reaped].paddr_hi;
 		handler_data.meta = ev->meta_data[num_buff_reaped];
@@ -303,55 +302,55 @@ err:
 
 		spin_lock_bh(&ring->idr_lock);
 		buff = idr_find(&ring->bufs_idr, buf_id);
-		अगर (!buff) अणु
+		if (!buff) {
 			spin_unlock_bh(&ring->idr_lock);
-			जारी;
-		पूर्ण
-		idr_हटाओ(&ring->bufs_idr, buf_id);
+			continue;
+		}
+		idr_remove(&ring->bufs_idr, buf_id);
 		spin_unlock_bh(&ring->idr_lock);
 
 		dma_unmap_single(ab->dev, buff->paddr, ring->buf_sz,
 				 DMA_FROM_DEVICE);
 
-		अगर (ring->handler) अणु
+		if (ring->handler) {
 			vaddr_unalign = buff->payload;
 			handler_data.data = PTR_ALIGN(vaddr_unalign,
 						      ring->buf_align);
 			handler_data.data_sz = ring->buf_sz;
 
 			ring->handler(ar, &handler_data);
-		पूर्ण
+		}
 
-		स_रखो(buff, 0, size);
+		memset(buff, 0, size);
 		ath11k_dbring_bufs_replenish(ar, ring, buff, GFP_ATOMIC);
-	पूर्ण
+	}
 
 	spin_unlock_bh(&srng->lock);
 
 rcu_unlock:
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम ath11k_dbring_srng_cleanup(काष्ठा ath11k *ar, काष्ठा ath11k_dbring *ring)
-अणु
+void ath11k_dbring_srng_cleanup(struct ath11k *ar, struct ath11k_dbring *ring)
+{
 	ath11k_dp_srng_cleanup(ar->ab, &ring->refill_srng);
-पूर्ण
+}
 
-व्योम ath11k_dbring_buf_cleanup(काष्ठा ath11k *ar, काष्ठा ath11k_dbring *ring)
-अणु
-	काष्ठा ath11k_dbring_element *buff;
-	पूर्णांक buf_id;
+void ath11k_dbring_buf_cleanup(struct ath11k *ar, struct ath11k_dbring *ring)
+{
+	struct ath11k_dbring_element *buff;
+	int buf_id;
 
 	spin_lock_bh(&ring->idr_lock);
-	idr_क्रम_each_entry(&ring->bufs_idr, buff, buf_id) अणु
-		idr_हटाओ(&ring->bufs_idr, buf_id);
+	idr_for_each_entry(&ring->bufs_idr, buff, buf_id) {
+		idr_remove(&ring->bufs_idr, buf_id);
 		dma_unmap_single(ar->ab->dev, buff->paddr,
 				 ring->buf_sz, DMA_FROM_DEVICE);
-		kमुक्त(buff);
-	पूर्ण
+		kfree(buff);
+	}
 
 	idr_destroy(&ring->bufs_idr);
 	spin_unlock_bh(&ring->idr_lock);
-पूर्ण
+}

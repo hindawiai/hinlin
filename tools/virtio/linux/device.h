@@ -1,3 +1,2 @@
-<शैली गुरु>
-#अगर_अघोषित LINUX_DEVICE_H
-#पूर्ण_अगर
+#ifndef LINUX_DEVICE_H
+#endif

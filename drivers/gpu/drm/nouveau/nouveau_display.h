@@ -1,74 +1,73 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: MIT */
-#अगर_अघोषित __NOUVEAU_DISPLAY_H__
-#घोषणा __NOUVEAU_DISPLAY_H__
+/* SPDX-License-Identifier: MIT */
+#ifndef __NOUVEAU_DISPLAY_H__
+#define __NOUVEAU_DISPLAY_H__
 
-#समावेश "nouveau_drv.h"
+#include "nouveau_drv.h"
 
-#समावेश <nvअगर/disp.h>
+#include <nvif/disp.h>
 
-#समावेश <drm/drm_framebuffer.h>
+#include <drm/drm_framebuffer.h>
 
-पूर्णांक
-nouveau_framebuffer_new(काष्ठा drm_device *dev,
-			स्थिर काष्ठा drm_mode_fb_cmd2 *mode_cmd,
-			काष्ठा drm_gem_object *gem,
-			काष्ठा drm_framebuffer **pfb);
+int
+nouveau_framebuffer_new(struct drm_device *dev,
+			const struct drm_mode_fb_cmd2 *mode_cmd,
+			struct drm_gem_object *gem,
+			struct drm_framebuffer **pfb);
 
-काष्ठा nouveau_display अणु
-	व्योम *priv;
-	व्योम (*dtor)(काष्ठा drm_device *);
-	पूर्णांक  (*init)(काष्ठा drm_device *, bool resume, bool runसमय);
-	व्योम (*fini)(काष्ठा drm_device *, bool suspend, bool runसमय);
+struct nouveau_display {
+	void *priv;
+	void (*dtor)(struct drm_device *);
+	int  (*init)(struct drm_device *, bool resume, bool runtime);
+	void (*fini)(struct drm_device *, bool suspend, bool runtime);
 
-	काष्ठा nvअगर_disp disp;
+	struct nvif_disp disp;
 
-	काष्ठा drm_property *dithering_mode;
-	काष्ठा drm_property *dithering_depth;
-	काष्ठा drm_property *underscan_property;
-	काष्ठा drm_property *underscan_hborder_property;
-	काष्ठा drm_property *underscan_vborder_property;
+	struct drm_property *dithering_mode;
+	struct drm_property *dithering_depth;
+	struct drm_property *underscan_property;
+	struct drm_property *underscan_hborder_property;
+	struct drm_property *underscan_vborder_property;
 	/* not really hue and saturation: */
-	काष्ठा drm_property *vibrant_hue_property;
-	काष्ठा drm_property *color_vibrance_property;
+	struct drm_property *vibrant_hue_property;
+	struct drm_property *color_vibrance_property;
 
-	काष्ठा drm_atomic_state *suspend;
+	struct drm_atomic_state *suspend;
 
-	स्थिर u64 *क्रमmat_modअगरiers;
-पूर्ण;
+	const u64 *format_modifiers;
+};
 
-अटल अंतरभूत काष्ठा nouveau_display *
-nouveau_display(काष्ठा drm_device *dev)
-अणु
-	वापस nouveau_drm(dev)->display;
-पूर्ण
+static inline struct nouveau_display *
+nouveau_display(struct drm_device *dev)
+{
+	return nouveau_drm(dev)->display;
+}
 
-पूर्णांक  nouveau_display_create(काष्ठा drm_device *dev);
-व्योम nouveau_display_destroy(काष्ठा drm_device *dev);
-पूर्णांक  nouveau_display_init(काष्ठा drm_device *dev, bool resume, bool runसमय);
-व्योम nouveau_display_hpd_resume(काष्ठा drm_device *dev);
-व्योम nouveau_display_fini(काष्ठा drm_device *dev, bool suspend, bool runसमय);
-पूर्णांक  nouveau_display_suspend(काष्ठा drm_device *dev, bool runसमय);
-व्योम nouveau_display_resume(काष्ठा drm_device *dev, bool runसमय);
-पूर्णांक  nouveau_display_vblank_enable(काष्ठा drm_crtc *crtc);
-व्योम nouveau_display_vblank_disable(काष्ठा drm_crtc *crtc);
-bool nouveau_display_scanoutpos(काष्ठा drm_crtc *crtc,
-				bool in_vblank_irq, पूर्णांक *vpos, पूर्णांक *hpos,
-				kसमय_प्रकार *sसमय, kसमय_प्रकार *eसमय,
-				स्थिर काष्ठा drm_display_mode *mode);
+int  nouveau_display_create(struct drm_device *dev);
+void nouveau_display_destroy(struct drm_device *dev);
+int  nouveau_display_init(struct drm_device *dev, bool resume, bool runtime);
+void nouveau_display_hpd_resume(struct drm_device *dev);
+void nouveau_display_fini(struct drm_device *dev, bool suspend, bool runtime);
+int  nouveau_display_suspend(struct drm_device *dev, bool runtime);
+void nouveau_display_resume(struct drm_device *dev, bool runtime);
+int  nouveau_display_vblank_enable(struct drm_crtc *crtc);
+void nouveau_display_vblank_disable(struct drm_crtc *crtc);
+bool nouveau_display_scanoutpos(struct drm_crtc *crtc,
+				bool in_vblank_irq, int *vpos, int *hpos,
+				ktime_t *stime, ktime_t *etime,
+				const struct drm_display_mode *mode);
 
-पूर्णांक  nouveau_display_dumb_create(काष्ठा drm_file *, काष्ठा drm_device *,
-				 काष्ठा drm_mode_create_dumb *args);
-पूर्णांक  nouveau_display_dumb_map_offset(काष्ठा drm_file *, काष्ठा drm_device *,
+int  nouveau_display_dumb_create(struct drm_file *, struct drm_device *,
+				 struct drm_mode_create_dumb *args);
+int  nouveau_display_dumb_map_offset(struct drm_file *, struct drm_device *,
 				     u32 handle, u64 *offset);
 
-व्योम nouveau_hdmi_mode_set(काष्ठा drm_encoder *, काष्ठा drm_display_mode *);
+void nouveau_hdmi_mode_set(struct drm_encoder *, struct drm_display_mode *);
 
-व्योम
-nouveau_framebuffer_get_layout(काष्ठा drm_framebuffer *fb, uपूर्णांक32_t *tile_mode,
-			       uपूर्णांक8_t *kind);
+void
+nouveau_framebuffer_get_layout(struct drm_framebuffer *fb, uint32_t *tile_mode,
+			       uint8_t *kind);
 
-काष्ठा drm_framebuffer *
-nouveau_user_framebuffer_create(काष्ठा drm_device *, काष्ठा drm_file *,
-				स्थिर काष्ठा drm_mode_fb_cmd2 *);
-#पूर्ण_अगर
+struct drm_framebuffer *
+nouveau_user_framebuffer_create(struct drm_device *, struct drm_file *,
+				const struct drm_mode_fb_cmd2 *);
+#endif

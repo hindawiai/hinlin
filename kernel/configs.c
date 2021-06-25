@@ -1,27 +1,26 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * kernel/configs.c
  * Echo the kernel .config file used to build the kernel
  *
  * Copyright (C) 2002 Khalid Aziz <khalid_aziz@hp.com>
- * Copyright (C) 2002 Randy Dunlap <rdunlap@xenoसमय.net>
+ * Copyright (C) 2002 Randy Dunlap <rdunlap@xenotime.net>
  * Copyright (C) 2002 Al Stone <ahs3@fc.hp.com>
  * Copyright (C) 2002 Hewlett-Packard Company
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/proc_fs.h>
-#समावेश <linux/seq_file.h>
-#समावेश <linux/init.h>
-#समावेश <linux/uaccess.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/proc_fs.h>
+#include <linux/seq_file.h>
+#include <linux/init.h>
+#include <linux/uaccess.h>
 
 /*
  * "IKCFG_ST" and "IKCFG_ED" are used to extract the config data from
  * a binary kernel image or a module. See scripts/extract-ikconfig.
  */
-यंत्र (
+asm (
 "	.pushsection .rodata, \"a\"		\n"
 "	.ascii \"IKCFG_ST\"			\n"
 "	.global kernel_config_data		\n"
@@ -33,50 +32,50 @@
 "	.popsection				\n"
 );
 
-#अगर_घोषित CONFIG_IKCONFIG_PROC
+#ifdef CONFIG_IKCONFIG_PROC
 
-बाह्य अक्षर kernel_config_data;
-बाह्य अक्षर kernel_config_data_end;
+extern char kernel_config_data;
+extern char kernel_config_data_end;
 
-अटल sमाप_प्रकार
-ikconfig_पढ़ो_current(काष्ठा file *file, अक्षर __user *buf,
-		      माप_प्रकार len, loff_t * offset)
-अणु
-	वापस simple_पढ़ो_from_buffer(buf, len, offset,
+static ssize_t
+ikconfig_read_current(struct file *file, char __user *buf,
+		      size_t len, loff_t * offset)
+{
+	return simple_read_from_buffer(buf, len, offset,
 				       &kernel_config_data,
 				       &kernel_config_data_end -
 				       &kernel_config_data);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा proc_ops config_gz_proc_ops = अणु
-	.proc_पढ़ो	= ikconfig_पढ़ो_current,
-	.proc_lseek	= शेष_llseek,
-पूर्ण;
+static const struct proc_ops config_gz_proc_ops = {
+	.proc_read	= ikconfig_read_current,
+	.proc_lseek	= default_llseek,
+};
 
-अटल पूर्णांक __init ikconfig_init(व्योम)
-अणु
-	काष्ठा proc_dir_entry *entry;
+static int __init ikconfig_init(void)
+{
+	struct proc_dir_entry *entry;
 
 	/* create the current config file */
-	entry = proc_create("config.gz", S_IFREG | S_IRUGO, शून्य,
+	entry = proc_create("config.gz", S_IFREG | S_IRUGO, NULL,
 			    &config_gz_proc_ops);
-	अगर (!entry)
-		वापस -ENOMEM;
+	if (!entry)
+		return -ENOMEM;
 
 	proc_set_size(entry, &kernel_config_data_end - &kernel_config_data);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम __निकास ikconfig_cleanup(व्योम)
-अणु
-	हटाओ_proc_entry("config.gz", शून्य);
-पूर्ण
+static void __exit ikconfig_cleanup(void)
+{
+	remove_proc_entry("config.gz", NULL);
+}
 
 module_init(ikconfig_init);
-module_निकास(ikconfig_cleanup);
+module_exit(ikconfig_cleanup);
 
-#पूर्ण_अगर /* CONFIG_IKCONFIG_PROC */
+#endif /* CONFIG_IKCONFIG_PROC */
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Randy Dunlap");

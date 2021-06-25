@@ -1,14 +1,13 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  *
- * Copyright (C) 2002,2003 Jun Nakajima <jun.nakajima@पूर्णांकel.com>
- * Copyright (C) 2002,2003 Suresh Siddha <suresh.b.siddha@पूर्णांकel.com>
+ * Copyright (C) 2002,2003 Jun Nakajima <jun.nakajima@intel.com>
+ * Copyright (C) 2002,2003 Suresh Siddha <suresh.b.siddha@intel.com>
  */
-#अगर_अघोषित _ASM_IA64_GCC_INTRIN_H
-#घोषणा _ASM_IA64_GCC_INTRIN_H
+#ifndef _ASM_IA64_GCC_INTRIN_H
+#define _ASM_IA64_GCC_INTRIN_H
 
-#समावेश <uapi/यंत्र/gcc_पूर्णांकrin.h>
+#include <uapi/asm/gcc_intrin.h>
 
-रेजिस्टर अचिन्हित दीर्घ ia64_r13 यंत्र ("r13") __used;
-#पूर्ण_अगर /* _ASM_IA64_GCC_INTRIN_H */
+register unsigned long ia64_r13 asm ("r13") __used;
+#endif /* _ASM_IA64_GCC_INTRIN_H */

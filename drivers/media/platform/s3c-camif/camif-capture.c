@@ -1,160 +1,159 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * s3c24xx/s3c64xx SoC series Camera Interface (CAMIF) driver
  *
  * Copyright (C) 2012 Sylwester Nawrocki <sylvester.nawrocki@gmail.com>
  * Copyright (C) 2012 Tomasz Figa <tomasz.figa@gmail.com>
  *
- * Based on drivers/media/platक्रमm/s5p-fimc,
+ * Based on drivers/media/platform/s5p-fimc,
  * Copyright (C) 2010 - 2012 Samsung Electronics Co., Ltd.
 */
-#घोषणा pr_fmt(fmt) "%s:%d " fmt, __func__, __LINE__
+#define pr_fmt(fmt) "%s:%d " fmt, __func__, __LINE__
 
-#समावेश <linux/bug.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/device.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/i2c.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/list.h>
-#समावेश <linux/module.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <linux/ratelimit.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/types.h>
-#समावेश <linux/videodev2.h>
+#include <linux/bug.h>
+#include <linux/clk.h>
+#include <linux/device.h>
+#include <linux/errno.h>
+#include <linux/i2c.h>
+#include <linux/interrupt.h>
+#include <linux/io.h>
+#include <linux/kernel.h>
+#include <linux/list.h>
+#include <linux/module.h>
+#include <linux/platform_device.h>
+#include <linux/pm_runtime.h>
+#include <linux/ratelimit.h>
+#include <linux/slab.h>
+#include <linux/types.h>
+#include <linux/videodev2.h>
 
-#समावेश <media/media-device.h>
-#समावेश <media/v4l2-ctrls.h>
-#समावेश <media/v4l2-event.h>
-#समावेश <media/v4l2-ioctl.h>
-#समावेश <media/videobuf2-v4l2.h>
-#समावेश <media/videobuf2-dma-contig.h>
+#include <media/media-device.h>
+#include <media/v4l2-ctrls.h>
+#include <media/v4l2-event.h>
+#include <media/v4l2-ioctl.h>
+#include <media/videobuf2-v4l2.h>
+#include <media/videobuf2-dma-contig.h>
 
-#समावेश "camif-core.h"
-#समावेश "camif-regs.h"
+#include "camif-core.h"
+#include "camif-regs.h"
 
-अटल पूर्णांक debug;
-module_param(debug, पूर्णांक, 0644);
+static int debug;
+module_param(debug, int, 0644);
 
-/* Locking: called with vp->camअगर->slock spinlock held */
-अटल व्योम camअगर_cfg_video_path(काष्ठा camअगर_vp *vp)
-अणु
-	WARN_ON(s3c_camअगर_get_scaler_config(vp, &vp->scaler));
-	camअगर_hw_set_scaler(vp);
-	camअगर_hw_set_flip(vp);
-	camअगर_hw_set_target_क्रमmat(vp);
-	camअगर_hw_set_output_dma(vp);
-पूर्ण
+/* Locking: called with vp->camif->slock spinlock held */
+static void camif_cfg_video_path(struct camif_vp *vp)
+{
+	WARN_ON(s3c_camif_get_scaler_config(vp, &vp->scaler));
+	camif_hw_set_scaler(vp);
+	camif_hw_set_flip(vp);
+	camif_hw_set_target_format(vp);
+	camif_hw_set_output_dma(vp);
+}
 
-अटल व्योम camअगर_prepare_dma_offset(काष्ठा camअगर_vp *vp)
-अणु
-	काष्ठा camअगर_frame *f = &vp->out_frame;
+static void camif_prepare_dma_offset(struct camif_vp *vp)
+{
+	struct camif_frame *f = &vp->out_frame;
 
 	f->dma_offset.initial = f->rect.top * f->f_width + f->rect.left;
 	f->dma_offset.line = f->f_width - (f->rect.left + f->rect.width);
 
 	pr_debug("dma_offset: initial: %d, line: %d\n",
 		 f->dma_offset.initial, f->dma_offset.line);
-पूर्ण
+}
 
-/* Locking: called with camअगर->slock spinlock held */
-अटल पूर्णांक s3c_camअगर_hw_init(काष्ठा camअगर_dev *camअगर, काष्ठा camअगर_vp *vp)
-अणु
-	स्थिर काष्ठा s3c_camअगर_variant *variant = camअगर->variant;
+/* Locking: called with camif->slock spinlock held */
+static int s3c_camif_hw_init(struct camif_dev *camif, struct camif_vp *vp)
+{
+	const struct s3c_camif_variant *variant = camif->variant;
 
-	अगर (camअगर->sensor.sd == शून्य || vp->out_fmt == शून्य)
-		वापस -EINVAL;
+	if (camif->sensor.sd == NULL || vp->out_fmt == NULL)
+		return -EINVAL;
 
-	अगर (variant->ip_revision == S3C244X_CAMIF_IP_REV)
-		camअगर_hw_clear_fअगरo_overflow(vp);
-	camअगर_hw_set_camera_bus(camअगर);
-	camअगर_hw_set_source_क्रमmat(camअगर);
-	camअगर_hw_set_camera_crop(camअगर);
-	camअगर_hw_set_test_pattern(camअगर, camअगर->test_pattern);
-	अगर (variant->has_img_effect)
-		camअगर_hw_set_effect(camअगर, camअगर->colorfx,
-				camअगर->colorfx_cr, camअगर->colorfx_cb);
-	अगर (variant->ip_revision == S3C6410_CAMIF_IP_REV)
-		camअगर_hw_set_input_path(vp);
-	camअगर_cfg_video_path(vp);
+	if (variant->ip_revision == S3C244X_CAMIF_IP_REV)
+		camif_hw_clear_fifo_overflow(vp);
+	camif_hw_set_camera_bus(camif);
+	camif_hw_set_source_format(camif);
+	camif_hw_set_camera_crop(camif);
+	camif_hw_set_test_pattern(camif, camif->test_pattern);
+	if (variant->has_img_effect)
+		camif_hw_set_effect(camif, camif->colorfx,
+				camif->colorfx_cr, camif->colorfx_cb);
+	if (variant->ip_revision == S3C6410_CAMIF_IP_REV)
+		camif_hw_set_input_path(vp);
+	camif_cfg_video_path(vp);
 	vp->state &= ~ST_VP_CONFIG;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Initialize the video path, only up from the scaler stage. The camera
- * input पूर्णांकerface set up is skipped. This is useful to enable one of the
- * video paths when the other is alपढ़ोy running.
- * Locking: called with camअगर->slock spinlock held.
+ * input interface set up is skipped. This is useful to enable one of the
+ * video paths when the other is already running.
+ * Locking: called with camif->slock spinlock held.
  */
-अटल पूर्णांक s3c_camअगर_hw_vp_init(काष्ठा camअगर_dev *camअगर, काष्ठा camअगर_vp *vp)
-अणु
-	अचिन्हित पूर्णांक ip_rev = camअगर->variant->ip_revision;
+static int s3c_camif_hw_vp_init(struct camif_dev *camif, struct camif_vp *vp)
+{
+	unsigned int ip_rev = camif->variant->ip_revision;
 
-	अगर (vp->out_fmt == शून्य)
-		वापस -EINVAL;
+	if (vp->out_fmt == NULL)
+		return -EINVAL;
 
-	camअगर_prepare_dma_offset(vp);
-	अगर (ip_rev == S3C244X_CAMIF_IP_REV)
-		camअगर_hw_clear_fअगरo_overflow(vp);
-	camअगर_cfg_video_path(vp);
+	camif_prepare_dma_offset(vp);
+	if (ip_rev == S3C244X_CAMIF_IP_REV)
+		camif_hw_clear_fifo_overflow(vp);
+	camif_cfg_video_path(vp);
 	vp->state &= ~ST_VP_CONFIG;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sensor_set_घातer(काष्ठा camअगर_dev *camअगर, पूर्णांक on)
-अणु
-	काष्ठा cam_sensor *sensor = &camअगर->sensor;
-	पूर्णांक err = 0;
+static int sensor_set_power(struct camif_dev *camif, int on)
+{
+	struct cam_sensor *sensor = &camif->sensor;
+	int err = 0;
 
-	अगर (camअगर->sensor.घातer_count == !on)
-		err = v4l2_subdev_call(sensor->sd, core, s_घातer, on);
-	अगर (err == -ENOIOCTLCMD)
+	if (camif->sensor.power_count == !on)
+		err = v4l2_subdev_call(sensor->sd, core, s_power, on);
+	if (err == -ENOIOCTLCMD)
 		err = 0;
-	अगर (!err)
-		sensor->घातer_count += on ? 1 : -1;
+	if (!err)
+		sensor->power_count += on ? 1 : -1;
 
 	pr_debug("on: %d, power_count: %d, err: %d\n",
-		 on, sensor->घातer_count, err);
+		 on, sensor->power_count, err);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक sensor_set_streaming(काष्ठा camअगर_dev *camअगर, पूर्णांक on)
-अणु
-	काष्ठा cam_sensor *sensor = &camअगर->sensor;
-	पूर्णांक err = 0;
+static int sensor_set_streaming(struct camif_dev *camif, int on)
+{
+	struct cam_sensor *sensor = &camif->sensor;
+	int err = 0;
 
-	अगर (camअगर->sensor.stream_count == !on)
+	if (camif->sensor.stream_count == !on)
 		err = v4l2_subdev_call(sensor->sd, video, s_stream, on);
-	अगर (!err)
+	if (!err)
 		sensor->stream_count += on ? 1 : -1;
 
 	pr_debug("on: %d, stream_count: %d, err: %d\n",
 		 on, sensor->stream_count, err);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /*
- * Reinitialize the driver so it is पढ़ोy to start streaming again.
- * Return any buffers to vb2, perक्रमm CAMIF software reset and
- * turn off streaming at the data pipeline (sensor) अगर required.
+ * Reinitialize the driver so it is ready to start streaming again.
+ * Return any buffers to vb2, perform CAMIF software reset and
+ * turn off streaming at the data pipeline (sensor) if required.
  */
-अटल पूर्णांक camअगर_reinitialize(काष्ठा camअगर_vp *vp)
-अणु
-	काष्ठा camअगर_dev *camअगर = vp->camअगर;
-	काष्ठा camअगर_buffer *buf;
-	अचिन्हित दीर्घ flags;
+static int camif_reinitialize(struct camif_vp *vp)
+{
+	struct camif_dev *camif = vp->camif;
+	struct camif_buffer *buf;
+	unsigned long flags;
 	bool streaming;
 
-	spin_lock_irqsave(&camअगर->slock, flags);
+	spin_lock_irqsave(&camif->slock, flags);
 	streaming = vp->state & ST_VP_SENSOR_STREAMING;
 
 	vp->state &= ~(ST_VP_PENDING | ST_VP_RUNNING | ST_VP_OFF |
@@ -162,91 +161,91 @@ module_param(debug, पूर्णांक, 0644);
 		       ST_VP_SENSOR_STREAMING | ST_VP_LASTIRQ);
 
 	/* Release unused buffers */
-	जबतक (!list_empty(&vp->pending_buf_q)) अणु
-		buf = camअगर_pending_queue_pop(vp);
-		vb2_buffer_करोne(&buf->vb.vb2_buf, VB2_BUF_STATE_ERROR);
-	पूर्ण
+	while (!list_empty(&vp->pending_buf_q)) {
+		buf = camif_pending_queue_pop(vp);
+		vb2_buffer_done(&buf->vb.vb2_buf, VB2_BUF_STATE_ERROR);
+	}
 
-	जबतक (!list_empty(&vp->active_buf_q)) अणु
-		buf = camअगर_active_queue_pop(vp);
-		vb2_buffer_करोne(&buf->vb.vb2_buf, VB2_BUF_STATE_ERROR);
-	पूर्ण
+	while (!list_empty(&vp->active_buf_q)) {
+		buf = camif_active_queue_pop(vp);
+		vb2_buffer_done(&buf->vb.vb2_buf, VB2_BUF_STATE_ERROR);
+	}
 
-	spin_unlock_irqrestore(&camअगर->slock, flags);
+	spin_unlock_irqrestore(&camif->slock, flags);
 
-	अगर (!streaming)
-		वापस 0;
+	if (!streaming)
+		return 0;
 
-	वापस sensor_set_streaming(camअगर, 0);
-पूर्ण
+	return sensor_set_streaming(camif, 0);
+}
 
-अटल bool s3c_vp_active(काष्ठा camअगर_vp *vp)
-अणु
-	काष्ठा camअगर_dev *camअगर = vp->camअगर;
-	अचिन्हित दीर्घ flags;
+static bool s3c_vp_active(struct camif_vp *vp)
+{
+	struct camif_dev *camif = vp->camif;
+	unsigned long flags;
 	bool ret;
 
-	spin_lock_irqsave(&camअगर->slock, flags);
+	spin_lock_irqsave(&camif->slock, flags);
 	ret = (vp->state & ST_VP_RUNNING) || (vp->state & ST_VP_PENDING);
-	spin_unlock_irqrestore(&camअगर->slock, flags);
+	spin_unlock_irqrestore(&camif->slock, flags);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल bool camअगर_is_streaming(काष्ठा camअगर_dev *camअगर)
-अणु
-	अचिन्हित दीर्घ flags;
+static bool camif_is_streaming(struct camif_dev *camif)
+{
+	unsigned long flags;
 	bool status;
 
-	spin_lock_irqsave(&camअगर->slock, flags);
-	status = camअगर->stream_count > 0;
-	spin_unlock_irqrestore(&camअगर->slock, flags);
+	spin_lock_irqsave(&camif->slock, flags);
+	status = camif->stream_count > 0;
+	spin_unlock_irqrestore(&camif->slock, flags);
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल पूर्णांक camअगर_stop_capture(काष्ठा camअगर_vp *vp)
-अणु
-	काष्ठा camअगर_dev *camअगर = vp->camअगर;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret;
+static int camif_stop_capture(struct camif_vp *vp)
+{
+	struct camif_dev *camif = vp->camif;
+	unsigned long flags;
+	int ret;
 
-	अगर (!s3c_vp_active(vp))
-		वापस 0;
+	if (!s3c_vp_active(vp))
+		return 0;
 
-	spin_lock_irqsave(&camअगर->slock, flags);
+	spin_lock_irqsave(&camif->slock, flags);
 	vp->state &= ~(ST_VP_OFF | ST_VP_LASTIRQ);
 	vp->state |= ST_VP_ABORTING;
-	spin_unlock_irqrestore(&camअगर->slock, flags);
+	spin_unlock_irqrestore(&camif->slock, flags);
 
-	ret = रुको_event_समयout(vp->irq_queue,
+	ret = wait_event_timeout(vp->irq_queue,
 			   !(vp->state & ST_VP_ABORTING),
-			   msecs_to_jअगरfies(CAMIF_STOP_TIMEOUT));
+			   msecs_to_jiffies(CAMIF_STOP_TIMEOUT));
 
-	spin_lock_irqsave(&camअगर->slock, flags);
+	spin_lock_irqsave(&camif->slock, flags);
 
-	अगर (ret == 0 && !(vp->state & ST_VP_OFF)) अणु
-		/* Timed out, क्रमcibly stop capture */
+	if (ret == 0 && !(vp->state & ST_VP_OFF)) {
+		/* Timed out, forcibly stop capture */
 		vp->state &= ~(ST_VP_OFF | ST_VP_ABORTING |
 			       ST_VP_LASTIRQ);
 
-		camअगर_hw_disable_capture(vp);
-		camअगर_hw_enable_scaler(vp, false);
-	पूर्ण
+		camif_hw_disable_capture(vp);
+		camif_hw_enable_scaler(vp, false);
+	}
 
-	spin_unlock_irqrestore(&camअगर->slock, flags);
+	spin_unlock_irqrestore(&camif->slock, flags);
 
-	वापस camअगर_reinitialize(vp);
-पूर्ण
+	return camif_reinitialize(vp);
+}
 
-अटल पूर्णांक camअगर_prepare_addr(काष्ठा camअगर_vp *vp, काष्ठा vb2_buffer *vb,
-			      काष्ठा camअगर_addr *paddr)
-अणु
-	काष्ठा camअगर_frame *frame = &vp->out_frame;
+static int camif_prepare_addr(struct camif_vp *vp, struct vb2_buffer *vb,
+			      struct camif_addr *paddr)
+{
+	struct camif_frame *frame = &vp->out_frame;
 	u32 pix_size;
 
-	अगर (vb == शून्य || frame == शून्य)
-		वापस -EINVAL;
+	if (vb == NULL || frame == NULL)
+		return -EINVAL;
 
 	pix_size = frame->rect.width * frame->rect.height;
 
@@ -255,483 +254,483 @@ module_param(debug, पूर्णांक, 0644);
 
 	paddr->y = vb2_dma_contig_plane_dma_addr(vb, 0);
 
-	चयन (vp->out_fmt->colplanes) अणु
-	हाल 1:
+	switch (vp->out_fmt->colplanes) {
+	case 1:
 		paddr->cb = 0;
 		paddr->cr = 0;
-		अवरोध;
-	हाल 2:
-		/* decompose Y पूर्णांकo Y/Cb */
+		break;
+	case 2:
+		/* decompose Y into Y/Cb */
 		paddr->cb = (u32)(paddr->y + pix_size);
 		paddr->cr = 0;
-		अवरोध;
-	हाल 3:
+		break;
+	case 3:
 		paddr->cb = (u32)(paddr->y + pix_size);
-		/* decompose Y पूर्णांकo Y/Cb/Cr */
-		अगर (vp->out_fmt->color == IMG_FMT_YCBCR422P)
+		/* decompose Y into Y/Cb/Cr */
+		if (vp->out_fmt->color == IMG_FMT_YCBCR422P)
 			paddr->cr = (u32)(paddr->cb + (pix_size >> 1));
-		अन्यथा /* 420 */
+		else /* 420 */
 			paddr->cr = (u32)(paddr->cb + (pix_size >> 2));
 
-		अगर (vp->out_fmt->color == IMG_FMT_YCRCB420)
+		if (vp->out_fmt->color == IMG_FMT_YCRCB420)
 			swap(paddr->cb, paddr->cr);
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
 	pr_debug("DMA address: y: %pad  cb: %pad cr: %pad\n",
 		 &paddr->y, &paddr->cb, &paddr->cr);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-irqवापस_t s3c_camअगर_irq_handler(पूर्णांक irq, व्योम *priv)
-अणु
-	काष्ठा camअगर_vp *vp = priv;
-	काष्ठा camअगर_dev *camअगर = vp->camअगर;
-	अचिन्हित पूर्णांक ip_rev = camअगर->variant->ip_revision;
-	अचिन्हित पूर्णांक status;
+irqreturn_t s3c_camif_irq_handler(int irq, void *priv)
+{
+	struct camif_vp *vp = priv;
+	struct camif_dev *camif = vp->camif;
+	unsigned int ip_rev = camif->variant->ip_revision;
+	unsigned int status;
 
-	spin_lock(&camअगर->slock);
+	spin_lock(&camif->slock);
 
-	अगर (ip_rev == S3C6410_CAMIF_IP_REV)
-		camअगर_hw_clear_pending_irq(vp);
+	if (ip_rev == S3C6410_CAMIF_IP_REV)
+		camif_hw_clear_pending_irq(vp);
 
-	status = camअगर_hw_get_status(vp);
+	status = camif_hw_get_status(vp);
 
-	अगर (ip_rev == S3C244X_CAMIF_IP_REV && (status & CISTATUS_OVF_MASK)) अणु
-		camअगर_hw_clear_fअगरo_overflow(vp);
-		जाओ unlock;
-	पूर्ण
+	if (ip_rev == S3C244X_CAMIF_IP_REV && (status & CISTATUS_OVF_MASK)) {
+		camif_hw_clear_fifo_overflow(vp);
+		goto unlock;
+	}
 
-	अगर (vp->state & ST_VP_ABORTING) अणु
-		अगर (vp->state & ST_VP_OFF) अणु
+	if (vp->state & ST_VP_ABORTING) {
+		if (vp->state & ST_VP_OFF) {
 			/* Last IRQ */
 			vp->state &= ~(ST_VP_OFF | ST_VP_ABORTING |
 				       ST_VP_LASTIRQ);
 			wake_up(&vp->irq_queue);
-			जाओ unlock;
-		पूर्ण अन्यथा अगर (vp->state & ST_VP_LASTIRQ) अणु
-			camअगर_hw_disable_capture(vp);
-			camअगर_hw_enable_scaler(vp, false);
-			camअगर_hw_set_lastirq(vp, false);
+			goto unlock;
+		} else if (vp->state & ST_VP_LASTIRQ) {
+			camif_hw_disable_capture(vp);
+			camif_hw_enable_scaler(vp, false);
+			camif_hw_set_lastirq(vp, false);
 			vp->state |= ST_VP_OFF;
-		पूर्ण अन्यथा अणु
+		} else {
 			/* Disable capture, enable last IRQ */
-			camअगर_hw_set_lastirq(vp, true);
+			camif_hw_set_lastirq(vp, true);
 			vp->state |= ST_VP_LASTIRQ;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (!list_empty(&vp->pending_buf_q) && (vp->state & ST_VP_RUNNING) &&
-	    !list_empty(&vp->active_buf_q)) अणु
-		अचिन्हित पूर्णांक index;
-		काष्ठा camअगर_buffer *vbuf;
+	if (!list_empty(&vp->pending_buf_q) && (vp->state & ST_VP_RUNNING) &&
+	    !list_empty(&vp->active_buf_q)) {
+		unsigned int index;
+		struct camif_buffer *vbuf;
 		/*
-		 * Get previous DMA ग_लिखो buffer index:
+		 * Get previous DMA write buffer index:
 		 * 0 => DMA buffer 0, 2;
 		 * 1 => DMA buffer 1, 3.
 		 */
 		index = (CISTATUS_FRAMECNT(status) + 2) & 1;
-		vbuf = camअगर_active_queue_peek(vp, index);
+		vbuf = camif_active_queue_peek(vp, index);
 
-		अगर (!WARN_ON(vbuf == शून्य)) अणु
+		if (!WARN_ON(vbuf == NULL)) {
 			/* Dequeue a filled buffer */
-			vbuf->vb.vb2_buf.बारtamp = kसमय_get_ns();
+			vbuf->vb.vb2_buf.timestamp = ktime_get_ns();
 			vbuf->vb.sequence = vp->frame_sequence++;
-			vb2_buffer_करोne(&vbuf->vb.vb2_buf, VB2_BUF_STATE_DONE);
+			vb2_buffer_done(&vbuf->vb.vb2_buf, VB2_BUF_STATE_DONE);
 
 			/* Set up an empty buffer at the DMA engine */
-			vbuf = camअगर_pending_queue_pop(vp);
+			vbuf = camif_pending_queue_pop(vp);
 			vbuf->index = index;
-			camअगर_hw_set_output_addr(vp, &vbuf->paddr, index);
-			camअगर_hw_set_output_addr(vp, &vbuf->paddr, index + 2);
+			camif_hw_set_output_addr(vp, &vbuf->paddr, index);
+			camif_hw_set_output_addr(vp, &vbuf->paddr, index + 2);
 
 			/* Scheduled in H/W, add to the queue */
-			camअगर_active_queue_add(vp, vbuf);
-		पूर्ण
-	पूर्ण अन्यथा अगर (!(vp->state & ST_VP_ABORTING) &&
-		   (vp->state & ST_VP_PENDING))  अणु
+			camif_active_queue_add(vp, vbuf);
+		}
+	} else if (!(vp->state & ST_VP_ABORTING) &&
+		   (vp->state & ST_VP_PENDING))  {
 		vp->state |= ST_VP_RUNNING;
-	पूर्ण
+	}
 
-	अगर (vp->state & ST_VP_CONFIG) अणु
-		camअगर_prepare_dma_offset(vp);
-		camअगर_hw_set_camera_crop(camअगर);
-		camअगर_hw_set_scaler(vp);
-		camअगर_hw_set_flip(vp);
-		camअगर_hw_set_test_pattern(camअगर, camअगर->test_pattern);
-		अगर (camअगर->variant->has_img_effect)
-			camअगर_hw_set_effect(camअगर, camअगर->colorfx,
-				    camअगर->colorfx_cr, camअगर->colorfx_cb);
+	if (vp->state & ST_VP_CONFIG) {
+		camif_prepare_dma_offset(vp);
+		camif_hw_set_camera_crop(camif);
+		camif_hw_set_scaler(vp);
+		camif_hw_set_flip(vp);
+		camif_hw_set_test_pattern(camif, camif->test_pattern);
+		if (camif->variant->has_img_effect)
+			camif_hw_set_effect(camif, camif->colorfx,
+				    camif->colorfx_cr, camif->colorfx_cb);
 		vp->state &= ~ST_VP_CONFIG;
-	पूर्ण
+	}
 unlock:
-	spin_unlock(&camअगर->slock);
-	वापस IRQ_HANDLED;
-पूर्ण
+	spin_unlock(&camif->slock);
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक start_streaming(काष्ठा vb2_queue *vq, अचिन्हित पूर्णांक count)
-अणु
-	काष्ठा camअगर_vp *vp = vb2_get_drv_priv(vq);
-	काष्ठा camअगर_dev *camअगर = vp->camअगर;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret;
+static int start_streaming(struct vb2_queue *vq, unsigned int count)
+{
+	struct camif_vp *vp = vb2_get_drv_priv(vq);
+	struct camif_dev *camif = vp->camif;
+	unsigned long flags;
+	int ret;
 
 	/*
 	 * We assume the codec capture path is always activated
-	 * first, beक्रमe the preview path starts streaming.
-	 * This is required to aव्योम पूर्णांकernal FIFO overflow and
-	 * a need क्रम CAMIF software reset.
+	 * first, before the preview path starts streaming.
+	 * This is required to avoid internal FIFO overflow and
+	 * a need for CAMIF software reset.
 	 */
-	spin_lock_irqsave(&camअगर->slock, flags);
+	spin_lock_irqsave(&camif->slock, flags);
 
-	अगर (camअगर->stream_count == 0) अणु
-		camअगर_hw_reset(camअगर);
-		ret = s3c_camअगर_hw_init(camअगर, vp);
-	पूर्ण अन्यथा अणु
-		ret = s3c_camअगर_hw_vp_init(camअगर, vp);
-	पूर्ण
-	spin_unlock_irqrestore(&camअगर->slock, flags);
+	if (camif->stream_count == 0) {
+		camif_hw_reset(camif);
+		ret = s3c_camif_hw_init(camif, vp);
+	} else {
+		ret = s3c_camif_hw_vp_init(camif, vp);
+	}
+	spin_unlock_irqrestore(&camif->slock, flags);
 
-	अगर (ret < 0) अणु
-		camअगर_reinitialize(vp);
-		वापस ret;
-	पूर्ण
+	if (ret < 0) {
+		camif_reinitialize(vp);
+		return ret;
+	}
 
-	spin_lock_irqsave(&camअगर->slock, flags);
+	spin_lock_irqsave(&camif->slock, flags);
 	vp->frame_sequence = 0;
 	vp->state |= ST_VP_PENDING;
 
-	अगर (!list_empty(&vp->pending_buf_q) &&
+	if (!list_empty(&vp->pending_buf_q) &&
 	    (!(vp->state & ST_VP_STREAMING) ||
-	     !(vp->state & ST_VP_SENSOR_STREAMING))) अणु
+	     !(vp->state & ST_VP_SENSOR_STREAMING))) {
 
-		camअगर_hw_enable_scaler(vp, vp->scaler.enable);
-		camअगर_hw_enable_capture(vp);
+		camif_hw_enable_scaler(vp, vp->scaler.enable);
+		camif_hw_enable_capture(vp);
 		vp->state |= ST_VP_STREAMING;
 
-		अगर (!(vp->state & ST_VP_SENSOR_STREAMING)) अणु
+		if (!(vp->state & ST_VP_SENSOR_STREAMING)) {
 			vp->state |= ST_VP_SENSOR_STREAMING;
-			spin_unlock_irqrestore(&camअगर->slock, flags);
-			ret = sensor_set_streaming(camअगर, 1);
-			अगर (ret)
+			spin_unlock_irqrestore(&camif->slock, flags);
+			ret = sensor_set_streaming(camif, 1);
+			if (ret)
 				v4l2_err(&vp->vdev, "Sensor s_stream failed\n");
-			अगर (debug)
-				camअगर_hw_dump_regs(camअगर, __func__);
+			if (debug)
+				camif_hw_dump_regs(camif, __func__);
 
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
-	spin_unlock_irqrestore(&camअगर->slock, flags);
-	वापस 0;
-पूर्ण
+	spin_unlock_irqrestore(&camif->slock, flags);
+	return 0;
+}
 
-अटल व्योम stop_streaming(काष्ठा vb2_queue *vq)
-अणु
-	काष्ठा camअगर_vp *vp = vb2_get_drv_priv(vq);
-	camअगर_stop_capture(vp);
-पूर्ण
+static void stop_streaming(struct vb2_queue *vq)
+{
+	struct camif_vp *vp = vb2_get_drv_priv(vq);
+	camif_stop_capture(vp);
+}
 
-अटल पूर्णांक queue_setup(काष्ठा vb2_queue *vq,
-		       अचिन्हित पूर्णांक *num_buffers, अचिन्हित पूर्णांक *num_planes,
-		       अचिन्हित पूर्णांक sizes[], काष्ठा device *alloc_devs[])
-अणु
-	काष्ठा camअगर_vp *vp = vb2_get_drv_priv(vq);
-	काष्ठा camअगर_frame *frame = &vp->out_frame;
-	स्थिर काष्ठा camअगर_fmt *fmt = vp->out_fmt;
-	अचिन्हित पूर्णांक size;
+static int queue_setup(struct vb2_queue *vq,
+		       unsigned int *num_buffers, unsigned int *num_planes,
+		       unsigned int sizes[], struct device *alloc_devs[])
+{
+	struct camif_vp *vp = vb2_get_drv_priv(vq);
+	struct camif_frame *frame = &vp->out_frame;
+	const struct camif_fmt *fmt = vp->out_fmt;
+	unsigned int size;
 
-	अगर (fmt == शून्य)
-		वापस -EINVAL;
+	if (fmt == NULL)
+		return -EINVAL;
 
 	size = (frame->f_width * frame->f_height * fmt->depth) / 8;
 
-	अगर (*num_planes)
-		वापस sizes[0] < size ? -EINVAL : 0;
+	if (*num_planes)
+		return sizes[0] < size ? -EINVAL : 0;
 
 	*num_planes = 1;
 	sizes[0] = size;
 
 	pr_debug("size: %u\n", sizes[0]);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक buffer_prepare(काष्ठा vb2_buffer *vb)
-अणु
-	काष्ठा camअगर_vp *vp = vb2_get_drv_priv(vb->vb2_queue);
+static int buffer_prepare(struct vb2_buffer *vb)
+{
+	struct camif_vp *vp = vb2_get_drv_priv(vb->vb2_queue);
 
-	अगर (vp->out_fmt == शून्य)
-		वापस -EINVAL;
+	if (vp->out_fmt == NULL)
+		return -EINVAL;
 
-	अगर (vb2_plane_size(vb, 0) < vp->payload) अणु
+	if (vb2_plane_size(vb, 0) < vp->payload) {
 		v4l2_err(&vp->vdev, "buffer too small: %lu, required: %u\n",
 			 vb2_plane_size(vb, 0), vp->payload);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	vb2_set_plane_payload(vb, 0, vp->payload);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम buffer_queue(काष्ठा vb2_buffer *vb)
-अणु
-	काष्ठा vb2_v4l2_buffer *vbuf = to_vb2_v4l2_buffer(vb);
-	काष्ठा camअगर_buffer *buf = container_of(vbuf, काष्ठा camअगर_buffer, vb);
-	काष्ठा camअगर_vp *vp = vb2_get_drv_priv(vb->vb2_queue);
-	काष्ठा camअगर_dev *camअगर = vp->camअगर;
-	अचिन्हित दीर्घ flags;
+static void buffer_queue(struct vb2_buffer *vb)
+{
+	struct vb2_v4l2_buffer *vbuf = to_vb2_v4l2_buffer(vb);
+	struct camif_buffer *buf = container_of(vbuf, struct camif_buffer, vb);
+	struct camif_vp *vp = vb2_get_drv_priv(vb->vb2_queue);
+	struct camif_dev *camif = vp->camif;
+	unsigned long flags;
 
-	spin_lock_irqsave(&camअगर->slock, flags);
-	WARN_ON(camअगर_prepare_addr(vp, &buf->vb.vb2_buf, &buf->paddr));
+	spin_lock_irqsave(&camif->slock, flags);
+	WARN_ON(camif_prepare_addr(vp, &buf->vb.vb2_buf, &buf->paddr));
 
-	अगर (!(vp->state & ST_VP_STREAMING) && vp->active_buffers < 2) अणु
+	if (!(vp->state & ST_VP_STREAMING) && vp->active_buffers < 2) {
 		/* Schedule an empty buffer in H/W */
 		buf->index = vp->buf_index;
 
-		camअगर_hw_set_output_addr(vp, &buf->paddr, buf->index);
-		camअगर_hw_set_output_addr(vp, &buf->paddr, buf->index + 2);
+		camif_hw_set_output_addr(vp, &buf->paddr, buf->index);
+		camif_hw_set_output_addr(vp, &buf->paddr, buf->index + 2);
 
-		camअगर_active_queue_add(vp, buf);
+		camif_active_queue_add(vp, buf);
 		vp->buf_index = !vp->buf_index;
-	पूर्ण अन्यथा अणु
-		camअगर_pending_queue_add(vp, buf);
-	पूर्ण
+	} else {
+		camif_pending_queue_add(vp, buf);
+	}
 
-	अगर (vb2_is_streaming(&vp->vb_queue) && !list_empty(&vp->pending_buf_q)
-		&& !(vp->state & ST_VP_STREAMING)) अणु
+	if (vb2_is_streaming(&vp->vb_queue) && !list_empty(&vp->pending_buf_q)
+		&& !(vp->state & ST_VP_STREAMING)) {
 
 		vp->state |= ST_VP_STREAMING;
-		camअगर_hw_enable_scaler(vp, vp->scaler.enable);
-		camअगर_hw_enable_capture(vp);
-		spin_unlock_irqrestore(&camअगर->slock, flags);
+		camif_hw_enable_scaler(vp, vp->scaler.enable);
+		camif_hw_enable_capture(vp);
+		spin_unlock_irqrestore(&camif->slock, flags);
 
-		अगर (!(vp->state & ST_VP_SENSOR_STREAMING)) अणु
-			अगर (sensor_set_streaming(camअगर, 1) == 0)
+		if (!(vp->state & ST_VP_SENSOR_STREAMING)) {
+			if (sensor_set_streaming(camif, 1) == 0)
 				vp->state |= ST_VP_SENSOR_STREAMING;
-			अन्यथा
+			else
 				v4l2_err(&vp->vdev, "Sensor s_stream failed\n");
 
-			अगर (debug)
-				camअगर_hw_dump_regs(camअगर, __func__);
-		पूर्ण
-		वापस;
-	पूर्ण
-	spin_unlock_irqrestore(&camअगर->slock, flags);
-पूर्ण
+			if (debug)
+				camif_hw_dump_regs(camif, __func__);
+		}
+		return;
+	}
+	spin_unlock_irqrestore(&camif->slock, flags);
+}
 
-अटल स्थिर काष्ठा vb2_ops s3c_camअगर_qops = अणु
+static const struct vb2_ops s3c_camif_qops = {
 	.queue_setup	 = queue_setup,
 	.buf_prepare	 = buffer_prepare,
 	.buf_queue	 = buffer_queue,
-	.रुको_prepare	 = vb2_ops_रुको_prepare,
-	.रुको_finish	 = vb2_ops_रुको_finish,
+	.wait_prepare	 = vb2_ops_wait_prepare,
+	.wait_finish	 = vb2_ops_wait_finish,
 	.start_streaming = start_streaming,
 	.stop_streaming	 = stop_streaming,
-पूर्ण;
+};
 
-अटल पूर्णांक s3c_camअगर_खोलो(काष्ठा file *file)
-अणु
-	काष्ठा camअगर_vp *vp = video_drvdata(file);
-	काष्ठा camअगर_dev *camअगर = vp->camअगर;
-	पूर्णांक ret;
+static int s3c_camif_open(struct file *file)
+{
+	struct camif_vp *vp = video_drvdata(file);
+	struct camif_dev *camif = vp->camif;
+	int ret;
 
 	pr_debug("[vp%d] state: %#x,  owner: %p, pid: %d\n", vp->id,
 		 vp->state, vp->owner, task_pid_nr(current));
 
-	अगर (mutex_lock_पूर्णांकerruptible(&camअगर->lock))
-		वापस -ERESTARTSYS;
+	if (mutex_lock_interruptible(&camif->lock))
+		return -ERESTARTSYS;
 
-	ret = v4l2_fh_खोलो(file);
-	अगर (ret < 0)
-		जाओ unlock;
+	ret = v4l2_fh_open(file);
+	if (ret < 0)
+		goto unlock;
 
-	ret = pm_runसमय_get_sync(camअगर->dev);
-	अगर (ret < 0)
-		जाओ err_pm;
+	ret = pm_runtime_get_sync(camif->dev);
+	if (ret < 0)
+		goto err_pm;
 
-	ret = sensor_set_घातer(camअगर, 1);
-	अगर (!ret)
-		जाओ unlock;
+	ret = sensor_set_power(camif, 1);
+	if (!ret)
+		goto unlock;
 
-	pm_runसमय_put(camअगर->dev);
+	pm_runtime_put(camif->dev);
 err_pm:
 	v4l2_fh_release(file);
 unlock:
-	mutex_unlock(&camअगर->lock);
-	वापस ret;
-पूर्ण
+	mutex_unlock(&camif->lock);
+	return ret;
+}
 
-अटल पूर्णांक s3c_camअगर_बंद(काष्ठा file *file)
-अणु
-	काष्ठा camअगर_vp *vp = video_drvdata(file);
-	काष्ठा camअगर_dev *camअगर = vp->camअगर;
-	पूर्णांक ret;
+static int s3c_camif_close(struct file *file)
+{
+	struct camif_vp *vp = video_drvdata(file);
+	struct camif_dev *camif = vp->camif;
+	int ret;
 
 	pr_debug("[vp%d] state: %#x, owner: %p, pid: %d\n", vp->id,
 		 vp->state, vp->owner, task_pid_nr(current));
 
-	mutex_lock(&camअगर->lock);
+	mutex_lock(&camif->lock);
 
-	अगर (vp->owner == file->निजी_data) अणु
-		camअगर_stop_capture(vp);
+	if (vp->owner == file->private_data) {
+		camif_stop_capture(vp);
 		vb2_queue_release(&vp->vb_queue);
-		vp->owner = शून्य;
-	पूर्ण
+		vp->owner = NULL;
+	}
 
-	sensor_set_घातer(camअगर, 0);
+	sensor_set_power(camif, 0);
 
-	pm_runसमय_put(camअगर->dev);
+	pm_runtime_put(camif->dev);
 	ret = v4l2_fh_release(file);
 
-	mutex_unlock(&camअगर->lock);
-	वापस ret;
-पूर्ण
+	mutex_unlock(&camif->lock);
+	return ret;
+}
 
-अटल __poll_t s3c_camअगर_poll(काष्ठा file *file,
-				   काष्ठा poll_table_काष्ठा *रुको)
-अणु
-	काष्ठा camअगर_vp *vp = video_drvdata(file);
-	काष्ठा camअगर_dev *camअगर = vp->camअगर;
+static __poll_t s3c_camif_poll(struct file *file,
+				   struct poll_table_struct *wait)
+{
+	struct camif_vp *vp = video_drvdata(file);
+	struct camif_dev *camif = vp->camif;
 	__poll_t ret;
 
-	mutex_lock(&camअगर->lock);
-	अगर (vp->owner && vp->owner != file->निजी_data)
+	mutex_lock(&camif->lock);
+	if (vp->owner && vp->owner != file->private_data)
 		ret = EPOLLERR;
-	अन्यथा
-		ret = vb2_poll(&vp->vb_queue, file, रुको);
+	else
+		ret = vb2_poll(&vp->vb_queue, file, wait);
 
-	mutex_unlock(&camअगर->lock);
-	वापस ret;
-पूर्ण
+	mutex_unlock(&camif->lock);
+	return ret;
+}
 
-अटल पूर्णांक s3c_camअगर_mmap(काष्ठा file *file, काष्ठा vm_area_काष्ठा *vma)
-अणु
-	काष्ठा camअगर_vp *vp = video_drvdata(file);
-	पूर्णांक ret;
+static int s3c_camif_mmap(struct file *file, struct vm_area_struct *vma)
+{
+	struct camif_vp *vp = video_drvdata(file);
+	int ret;
 
-	अगर (vp->owner && vp->owner != file->निजी_data)
+	if (vp->owner && vp->owner != file->private_data)
 		ret = -EBUSY;
-	अन्यथा
+	else
 		ret = vb2_mmap(&vp->vb_queue, vma);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा v4l2_file_operations s3c_camअगर_fops = अणु
+static const struct v4l2_file_operations s3c_camif_fops = {
 	.owner		= THIS_MODULE,
-	.खोलो		= s3c_camअगर_खोलो,
-	.release	= s3c_camअगर_बंद,
-	.poll		= s3c_camअगर_poll,
+	.open		= s3c_camif_open,
+	.release	= s3c_camif_close,
+	.poll		= s3c_camif_poll,
 	.unlocked_ioctl	= video_ioctl2,
-	.mmap		= s3c_camअगर_mmap,
-पूर्ण;
+	.mmap		= s3c_camif_mmap,
+};
 
 /*
  * Video node IOCTLs
  */
 
-अटल पूर्णांक s3c_camअगर_vidioc_querycap(काष्ठा file *file, व्योम *priv,
-				     काष्ठा v4l2_capability *cap)
-अणु
-	काष्ठा camअगर_vp *vp = video_drvdata(file);
+static int s3c_camif_vidioc_querycap(struct file *file, void *priv,
+				     struct v4l2_capability *cap)
+{
+	struct camif_vp *vp = video_drvdata(file);
 
-	strscpy(cap->driver, S3C_CAMIF_DRIVER_NAME, माप(cap->driver));
-	strscpy(cap->card, S3C_CAMIF_DRIVER_NAME, माप(cap->card));
-	snम_लिखो(cap->bus_info, माप(cap->bus_info), "platform:%s.%d",
-		 dev_name(vp->camअगर->dev), vp->id);
-	वापस 0;
-पूर्ण
+	strscpy(cap->driver, S3C_CAMIF_DRIVER_NAME, sizeof(cap->driver));
+	strscpy(cap->card, S3C_CAMIF_DRIVER_NAME, sizeof(cap->card));
+	snprintf(cap->bus_info, sizeof(cap->bus_info), "platform:%s.%d",
+		 dev_name(vp->camif->dev), vp->id);
+	return 0;
+}
 
-अटल पूर्णांक s3c_camअगर_vidioc_क्रमागत_input(काष्ठा file *file, व्योम *priv,
-				       काष्ठा v4l2_input *input)
-अणु
-	काष्ठा camअगर_vp *vp = video_drvdata(file);
-	काष्ठा v4l2_subdev *sensor = vp->camअगर->sensor.sd;
+static int s3c_camif_vidioc_enum_input(struct file *file, void *priv,
+				       struct v4l2_input *input)
+{
+	struct camif_vp *vp = video_drvdata(file);
+	struct v4l2_subdev *sensor = vp->camif->sensor.sd;
 
-	अगर (input->index || sensor == शून्य)
-		वापस -EINVAL;
+	if (input->index || sensor == NULL)
+		return -EINVAL;
 
 	input->type = V4L2_INPUT_TYPE_CAMERA;
-	strscpy(input->name, sensor->name, माप(input->name));
-	वापस 0;
-पूर्ण
+	strscpy(input->name, sensor->name, sizeof(input->name));
+	return 0;
+}
 
-अटल पूर्णांक s3c_camअगर_vidioc_s_input(काष्ठा file *file, व्योम *priv,
-				    अचिन्हित पूर्णांक i)
-अणु
-	वापस i == 0 ? 0 : -EINVAL;
-पूर्ण
+static int s3c_camif_vidioc_s_input(struct file *file, void *priv,
+				    unsigned int i)
+{
+	return i == 0 ? 0 : -EINVAL;
+}
 
-अटल पूर्णांक s3c_camअगर_vidioc_g_input(काष्ठा file *file, व्योम *priv,
-				    अचिन्हित पूर्णांक *i)
-अणु
+static int s3c_camif_vidioc_g_input(struct file *file, void *priv,
+				    unsigned int *i)
+{
 	*i = 0;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक s3c_camअगर_vidioc_क्रमागत_fmt(काष्ठा file *file, व्योम *priv,
-				     काष्ठा v4l2_fmtdesc *f)
-अणु
-	काष्ठा camअगर_vp *vp = video_drvdata(file);
-	स्थिर काष्ठा camअगर_fmt *fmt;
+static int s3c_camif_vidioc_enum_fmt(struct file *file, void *priv,
+				     struct v4l2_fmtdesc *f)
+{
+	struct camif_vp *vp = video_drvdata(file);
+	const struct camif_fmt *fmt;
 
-	fmt = s3c_camअगर_find_क्रमmat(vp, शून्य, f->index);
-	अगर (!fmt)
-		वापस -EINVAL;
+	fmt = s3c_camif_find_format(vp, NULL, f->index);
+	if (!fmt)
+		return -EINVAL;
 
-	f->pixelक्रमmat = fmt->fourcc;
-	वापस 0;
-पूर्ण
+	f->pixelformat = fmt->fourcc;
+	return 0;
+}
 
-अटल पूर्णांक s3c_camअगर_vidioc_g_fmt(काष्ठा file *file, व्योम *priv,
-				  काष्ठा v4l2_क्रमmat *f)
-अणु
-	काष्ठा camअगर_vp *vp = video_drvdata(file);
-	काष्ठा v4l2_pix_क्रमmat *pix = &f->fmt.pix;
-	काष्ठा camअगर_frame *frame = &vp->out_frame;
-	स्थिर काष्ठा camअगर_fmt *fmt = vp->out_fmt;
+static int s3c_camif_vidioc_g_fmt(struct file *file, void *priv,
+				  struct v4l2_format *f)
+{
+	struct camif_vp *vp = video_drvdata(file);
+	struct v4l2_pix_format *pix = &f->fmt.pix;
+	struct camif_frame *frame = &vp->out_frame;
+	const struct camif_fmt *fmt = vp->out_fmt;
 
 	pix->bytesperline = frame->f_width * fmt->ybpp;
 	pix->sizeimage = vp->payload;
 
-	pix->pixelक्रमmat = fmt->fourcc;
+	pix->pixelformat = fmt->fourcc;
 	pix->width = frame->f_width;
 	pix->height = frame->f_height;
 	pix->field = V4L2_FIELD_NONE;
 	pix->colorspace = V4L2_COLORSPACE_JPEG;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __camअगर_video_try_क्रमmat(काष्ठा camअगर_vp *vp,
-				    काष्ठा v4l2_pix_क्रमmat *pix,
-				    स्थिर काष्ठा camअगर_fmt **ffmt)
-अणु
-	काष्ठा camअगर_dev *camअगर = vp->camअगर;
-	काष्ठा v4l2_rect *crop = &camअगर->camअगर_crop;
-	अचिन्हित पूर्णांक wmin, hmin, sc_hrmax, sc_vrmax;
-	स्थिर काष्ठा vp_pix_limits *pix_lim;
-	स्थिर काष्ठा camअगर_fmt *fmt;
+static int __camif_video_try_format(struct camif_vp *vp,
+				    struct v4l2_pix_format *pix,
+				    const struct camif_fmt **ffmt)
+{
+	struct camif_dev *camif = vp->camif;
+	struct v4l2_rect *crop = &camif->camif_crop;
+	unsigned int wmin, hmin, sc_hrmax, sc_vrmax;
+	const struct vp_pix_limits *pix_lim;
+	const struct camif_fmt *fmt;
 
-	fmt = s3c_camअगर_find_क्रमmat(vp, &pix->pixelक्रमmat, 0);
+	fmt = s3c_camif_find_format(vp, &pix->pixelformat, 0);
 
-	अगर (WARN_ON(fmt == शून्य))
-		वापस -EINVAL;
+	if (WARN_ON(fmt == NULL))
+		return -EINVAL;
 
-	अगर (ffmt)
+	if (ffmt)
 		*ffmt = fmt;
 
-	pix_lim = &camअगर->variant->vp_pix_limits[vp->id];
+	pix_lim = &camif->variant->vp_pix_limits[vp->id];
 
 	pr_debug("fmt: %ux%u, crop: %ux%u, bytesperline: %u\n",
 		 pix->width, pix->height, crop->width, crop->height,
 		 pix->bytesperline);
 	/*
 	 * Calculate minimum width and height according to the configured
-	 * camera input पूर्णांकerface crop rectangle and the resizer's capabilities.
+	 * camera input interface crop rectangle and the resizer's capabilities.
 	 */
 	sc_hrmax = min(SCALER_MAX_RATIO, 1 << (ffs(crop->width) - 3));
 	sc_vrmax = min(SCALER_MAX_RATIO, 1 << (ffs(crop->height) - 1));
@@ -747,40 +746,40 @@ unlock:
 
 	pix->bytesperline = pix->width * fmt->ybpp;
 	pix->sizeimage = (pix->width * pix->height * fmt->depth) / 8;
-	pix->pixelक्रमmat = fmt->fourcc;
+	pix->pixelformat = fmt->fourcc;
 	pix->colorspace = V4L2_COLORSPACE_JPEG;
 	pix->field = V4L2_FIELD_NONE;
 
 	pr_debug("%ux%u, wmin: %d, hmin: %d, sc_hrmax: %d, sc_vrmax: %d\n",
 		 pix->width, pix->height, wmin, hmin, sc_hrmax, sc_vrmax);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक s3c_camअगर_vidioc_try_fmt(काष्ठा file *file, व्योम *priv,
-				    काष्ठा v4l2_क्रमmat *f)
-अणु
-	काष्ठा camअगर_vp *vp = video_drvdata(file);
-	वापस __camअगर_video_try_क्रमmat(vp, &f->fmt.pix, शून्य);
-पूर्ण
+static int s3c_camif_vidioc_try_fmt(struct file *file, void *priv,
+				    struct v4l2_format *f)
+{
+	struct camif_vp *vp = video_drvdata(file);
+	return __camif_video_try_format(vp, &f->fmt.pix, NULL);
+}
 
-अटल पूर्णांक s3c_camअगर_vidioc_s_fmt(काष्ठा file *file, व्योम *priv,
-				  काष्ठा v4l2_क्रमmat *f)
-अणु
-	काष्ठा v4l2_pix_क्रमmat *pix = &f->fmt.pix;
-	काष्ठा camअगर_vp *vp = video_drvdata(file);
-	काष्ठा camअगर_frame *out_frame = &vp->out_frame;
-	स्थिर काष्ठा camअगर_fmt *fmt = शून्य;
-	पूर्णांक ret;
+static int s3c_camif_vidioc_s_fmt(struct file *file, void *priv,
+				  struct v4l2_format *f)
+{
+	struct v4l2_pix_format *pix = &f->fmt.pix;
+	struct camif_vp *vp = video_drvdata(file);
+	struct camif_frame *out_frame = &vp->out_frame;
+	const struct camif_fmt *fmt = NULL;
+	int ret;
 
 	pr_debug("[vp%d]\n", vp->id);
 
-	अगर (vb2_is_busy(&vp->vb_queue))
-		वापस -EBUSY;
+	if (vb2_is_busy(&vp->vb_queue))
+		return -EBUSY;
 
-	ret = __camअगर_video_try_क्रमmat(vp, &f->fmt.pix, &fmt);
-	अगर (ret < 0)
-		वापस ret;
+	ret = __camif_video_try_format(vp, &f->fmt.pix, &fmt);
+	if (ret < 0)
+		return ret;
 
 	vp->out_fmt = fmt;
 	vp->payload = pix->sizeimage;
@@ -793,7 +792,7 @@ unlock:
 	out_frame->rect.left = 0;
 	out_frame->rect.top = 0;
 
-	अगर (vp->owner == शून्य)
+	if (vp->owner == NULL)
 		vp->owner = priv;
 
 	pr_debug("%ux%u. payload: %u. fmt: 0x%08x. %d %d. sizeimage: %d. bpl: %d\n",
@@ -801,597 +800,597 @@ unlock:
 		 fmt->fourcc, pix->width * pix->height * fmt->depth,
 		 fmt->depth, pix->sizeimage, pix->bytesperline);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Only check pixel क्रमmats at the sensor and the camअगर subdev pads */
-अटल पूर्णांक camअगर_pipeline_validate(काष्ठा camअगर_dev *camअगर)
-अणु
-	काष्ठा v4l2_subdev_क्रमmat src_fmt;
-	काष्ठा media_pad *pad;
-	पूर्णांक ret;
+/* Only check pixel formats at the sensor and the camif subdev pads */
+static int camif_pipeline_validate(struct camif_dev *camif)
+{
+	struct v4l2_subdev_format src_fmt;
+	struct media_pad *pad;
+	int ret;
 
-	/* Retrieve क्रमmat at the sensor subdev source pad */
-	pad = media_entity_remote_pad(&camअगर->pads[0]);
-	अगर (!pad || !is_media_entity_v4l2_subdev(pad->entity))
-		वापस -EPIPE;
+	/* Retrieve format at the sensor subdev source pad */
+	pad = media_entity_remote_pad(&camif->pads[0]);
+	if (!pad || !is_media_entity_v4l2_subdev(pad->entity))
+		return -EPIPE;
 
 	src_fmt.pad = pad->index;
 	src_fmt.which = V4L2_SUBDEV_FORMAT_ACTIVE;
-	ret = v4l2_subdev_call(camअगर->sensor.sd, pad, get_fmt, शून्य, &src_fmt);
-	अगर (ret < 0 && ret != -ENOIOCTLCMD)
-		वापस -EPIPE;
+	ret = v4l2_subdev_call(camif->sensor.sd, pad, get_fmt, NULL, &src_fmt);
+	if (ret < 0 && ret != -ENOIOCTLCMD)
+		return -EPIPE;
 
-	अगर (src_fmt.क्रमmat.width != camअगर->mbus_fmt.width ||
-	    src_fmt.क्रमmat.height != camअगर->mbus_fmt.height ||
-	    src_fmt.क्रमmat.code != camअगर->mbus_fmt.code)
-		वापस -EPIPE;
+	if (src_fmt.format.width != camif->mbus_fmt.width ||
+	    src_fmt.format.height != camif->mbus_fmt.height ||
+	    src_fmt.format.code != camif->mbus_fmt.code)
+		return -EPIPE;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक s3c_camअगर_streamon(काष्ठा file *file, व्योम *priv,
-			      क्रमागत v4l2_buf_type type)
-अणु
-	काष्ठा camअगर_vp *vp = video_drvdata(file);
-	काष्ठा camअगर_dev *camअगर = vp->camअगर;
-	काष्ठा media_entity *sensor = &camअगर->sensor.sd->entity;
-	पूर्णांक ret;
+static int s3c_camif_streamon(struct file *file, void *priv,
+			      enum v4l2_buf_type type)
+{
+	struct camif_vp *vp = video_drvdata(file);
+	struct camif_dev *camif = vp->camif;
+	struct media_entity *sensor = &camif->sensor.sd->entity;
+	int ret;
 
 	pr_debug("[vp%d]\n", vp->id);
 
-	अगर (type != V4L2_BUF_TYPE_VIDEO_CAPTURE)
-		वापस -EINVAL;
+	if (type != V4L2_BUF_TYPE_VIDEO_CAPTURE)
+		return -EINVAL;
 
-	अगर (vp->owner && vp->owner != priv)
-		वापस -EBUSY;
+	if (vp->owner && vp->owner != priv)
+		return -EBUSY;
 
-	अगर (s3c_vp_active(vp))
-		वापस 0;
+	if (s3c_vp_active(vp))
+		return 0;
 
-	ret = media_pipeline_start(sensor, camअगर->m_pipeline);
-	अगर (ret < 0)
-		वापस ret;
+	ret = media_pipeline_start(sensor, camif->m_pipeline);
+	if (ret < 0)
+		return ret;
 
-	ret = camअगर_pipeline_validate(camअगर);
-	अगर (ret < 0) अणु
+	ret = camif_pipeline_validate(camif);
+	if (ret < 0) {
 		media_pipeline_stop(sensor);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस vb2_streamon(&vp->vb_queue, type);
-पूर्ण
+	return vb2_streamon(&vp->vb_queue, type);
+}
 
-अटल पूर्णांक s3c_camअगर_streamoff(काष्ठा file *file, व्योम *priv,
-			       क्रमागत v4l2_buf_type type)
-अणु
-	काष्ठा camअगर_vp *vp = video_drvdata(file);
-	काष्ठा camअगर_dev *camअगर = vp->camअगर;
-	पूर्णांक ret;
+static int s3c_camif_streamoff(struct file *file, void *priv,
+			       enum v4l2_buf_type type)
+{
+	struct camif_vp *vp = video_drvdata(file);
+	struct camif_dev *camif = vp->camif;
+	int ret;
 
 	pr_debug("[vp%d]\n", vp->id);
 
-	अगर (type != V4L2_BUF_TYPE_VIDEO_CAPTURE)
-		वापस -EINVAL;
+	if (type != V4L2_BUF_TYPE_VIDEO_CAPTURE)
+		return -EINVAL;
 
-	अगर (vp->owner && vp->owner != priv)
-		वापस -EBUSY;
+	if (vp->owner && vp->owner != priv)
+		return -EBUSY;
 
 	ret = vb2_streamoff(&vp->vb_queue, type);
-	अगर (ret == 0)
-		media_pipeline_stop(&camअगर->sensor.sd->entity);
-	वापस ret;
-पूर्ण
+	if (ret == 0)
+		media_pipeline_stop(&camif->sensor.sd->entity);
+	return ret;
+}
 
-अटल पूर्णांक s3c_camअगर_reqbufs(काष्ठा file *file, व्योम *priv,
-			     काष्ठा v4l2_requestbuffers *rb)
-अणु
-	काष्ठा camअगर_vp *vp = video_drvdata(file);
-	पूर्णांक ret;
+static int s3c_camif_reqbufs(struct file *file, void *priv,
+			     struct v4l2_requestbuffers *rb)
+{
+	struct camif_vp *vp = video_drvdata(file);
+	int ret;
 
 	pr_debug("[vp%d] rb count: %d, owner: %p, priv: %p\n",
 		 vp->id, rb->count, vp->owner, priv);
 
-	अगर (vp->owner && vp->owner != priv)
-		वापस -EBUSY;
+	if (vp->owner && vp->owner != priv)
+		return -EBUSY;
 
-	अगर (rb->count)
+	if (rb->count)
 		rb->count = max_t(u32, CAMIF_REQ_BUFS_MIN, rb->count);
-	अन्यथा
-		vp->owner = शून्य;
+	else
+		vp->owner = NULL;
 
 	ret = vb2_reqbufs(&vp->vb_queue, rb);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	अगर (rb->count && rb->count < CAMIF_REQ_BUFS_MIN) अणु
+	if (rb->count && rb->count < CAMIF_REQ_BUFS_MIN) {
 		rb->count = 0;
 		vb2_reqbufs(&vp->vb_queue, rb);
 		ret = -ENOMEM;
-	पूर्ण
+	}
 
 	vp->reqbufs_count = rb->count;
-	अगर (vp->owner == शून्य && rb->count > 0)
+	if (vp->owner == NULL && rb->count > 0)
 		vp->owner = priv;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक s3c_camअगर_querybuf(काष्ठा file *file, व्योम *priv,
-			      काष्ठा v4l2_buffer *buf)
-अणु
-	काष्ठा camअगर_vp *vp = video_drvdata(file);
-	वापस vb2_querybuf(&vp->vb_queue, buf);
-पूर्ण
+static int s3c_camif_querybuf(struct file *file, void *priv,
+			      struct v4l2_buffer *buf)
+{
+	struct camif_vp *vp = video_drvdata(file);
+	return vb2_querybuf(&vp->vb_queue, buf);
+}
 
-अटल पूर्णांक s3c_camअगर_qbuf(काष्ठा file *file, व्योम *priv,
-			  काष्ठा v4l2_buffer *buf)
-अणु
-	काष्ठा camअगर_vp *vp = video_drvdata(file);
+static int s3c_camif_qbuf(struct file *file, void *priv,
+			  struct v4l2_buffer *buf)
+{
+	struct camif_vp *vp = video_drvdata(file);
 
 	pr_debug("[vp%d]\n", vp->id);
 
-	अगर (vp->owner && vp->owner != priv)
-		वापस -EBUSY;
+	if (vp->owner && vp->owner != priv)
+		return -EBUSY;
 
-	वापस vb2_qbuf(&vp->vb_queue, vp->vdev.v4l2_dev->mdev, buf);
-पूर्ण
+	return vb2_qbuf(&vp->vb_queue, vp->vdev.v4l2_dev->mdev, buf);
+}
 
-अटल पूर्णांक s3c_camअगर_dqbuf(काष्ठा file *file, व्योम *priv,
-			   काष्ठा v4l2_buffer *buf)
-अणु
-	काष्ठा camअगर_vp *vp = video_drvdata(file);
+static int s3c_camif_dqbuf(struct file *file, void *priv,
+			   struct v4l2_buffer *buf)
+{
+	struct camif_vp *vp = video_drvdata(file);
 
 	pr_debug("[vp%d] sequence: %d\n", vp->id, vp->frame_sequence);
 
-	अगर (vp->owner && vp->owner != priv)
-		वापस -EBUSY;
+	if (vp->owner && vp->owner != priv)
+		return -EBUSY;
 
-	वापस vb2_dqbuf(&vp->vb_queue, buf, file->f_flags & O_NONBLOCK);
-पूर्ण
+	return vb2_dqbuf(&vp->vb_queue, buf, file->f_flags & O_NONBLOCK);
+}
 
-अटल पूर्णांक s3c_camअगर_create_bufs(काष्ठा file *file, व्योम *priv,
-				 काष्ठा v4l2_create_buffers *create)
-अणु
-	काष्ठा camअगर_vp *vp = video_drvdata(file);
-	पूर्णांक ret;
+static int s3c_camif_create_bufs(struct file *file, void *priv,
+				 struct v4l2_create_buffers *create)
+{
+	struct camif_vp *vp = video_drvdata(file);
+	int ret;
 
-	अगर (vp->owner && vp->owner != priv)
-		वापस -EBUSY;
+	if (vp->owner && vp->owner != priv)
+		return -EBUSY;
 
 	create->count = max_t(u32, 1, create->count);
 	ret = vb2_create_bufs(&vp->vb_queue, create);
 
-	अगर (!ret && vp->owner == शून्य)
+	if (!ret && vp->owner == NULL)
 		vp->owner = priv;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक s3c_camअगर_prepare_buf(काष्ठा file *file, व्योम *priv,
-				 काष्ठा v4l2_buffer *b)
-अणु
-	काष्ठा camअगर_vp *vp = video_drvdata(file);
-	वापस vb2_prepare_buf(&vp->vb_queue, vp->vdev.v4l2_dev->mdev, b);
-पूर्ण
+static int s3c_camif_prepare_buf(struct file *file, void *priv,
+				 struct v4l2_buffer *b)
+{
+	struct camif_vp *vp = video_drvdata(file);
+	return vb2_prepare_buf(&vp->vb_queue, vp->vdev.v4l2_dev->mdev, b);
+}
 
-अटल पूर्णांक s3c_camअगर_g_selection(काष्ठा file *file, व्योम *priv,
-				 काष्ठा v4l2_selection *sel)
-अणु
-	काष्ठा camअगर_vp *vp = video_drvdata(file);
+static int s3c_camif_g_selection(struct file *file, void *priv,
+				 struct v4l2_selection *sel)
+{
+	struct camif_vp *vp = video_drvdata(file);
 
-	अगर (sel->type != V4L2_BUF_TYPE_VIDEO_CAPTURE)
-		वापस -EINVAL;
+	if (sel->type != V4L2_BUF_TYPE_VIDEO_CAPTURE)
+		return -EINVAL;
 
-	चयन (sel->target) अणु
-	हाल V4L2_SEL_TGT_COMPOSE_BOUNDS:
-	हाल V4L2_SEL_TGT_COMPOSE_DEFAULT:
+	switch (sel->target) {
+	case V4L2_SEL_TGT_COMPOSE_BOUNDS:
+	case V4L2_SEL_TGT_COMPOSE_DEFAULT:
 		sel->r.left = 0;
 		sel->r.top = 0;
 		sel->r.width = vp->out_frame.f_width;
 		sel->r.height = vp->out_frame.f_height;
-		वापस 0;
+		return 0;
 
-	हाल V4L2_SEL_TGT_COMPOSE:
+	case V4L2_SEL_TGT_COMPOSE:
 		sel->r = vp->out_frame.rect;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल व्योम __camअगर_try_compose(काष्ठा camअगर_dev *camअगर, काष्ठा camअगर_vp *vp,
-				काष्ठा v4l2_rect *r)
-अणु
-	/* s3c244x करोesn't support composition */
-	अगर (camअगर->variant->ip_revision == S3C244X_CAMIF_IP_REV) अणु
+static void __camif_try_compose(struct camif_dev *camif, struct camif_vp *vp,
+				struct v4l2_rect *r)
+{
+	/* s3c244x doesn't support composition */
+	if (camif->variant->ip_revision == S3C244X_CAMIF_IP_REV) {
 		*r = vp->out_frame.rect;
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/* TODO: s3c64xx */
-पूर्ण
+}
 
-अटल पूर्णांक s3c_camअगर_s_selection(काष्ठा file *file, व्योम *priv,
-				 काष्ठा v4l2_selection *sel)
-अणु
-	काष्ठा camअगर_vp *vp = video_drvdata(file);
-	काष्ठा camअगर_dev *camअगर = vp->camअगर;
-	काष्ठा v4l2_rect rect = sel->r;
-	अचिन्हित दीर्घ flags;
+static int s3c_camif_s_selection(struct file *file, void *priv,
+				 struct v4l2_selection *sel)
+{
+	struct camif_vp *vp = video_drvdata(file);
+	struct camif_dev *camif = vp->camif;
+	struct v4l2_rect rect = sel->r;
+	unsigned long flags;
 
-	अगर (sel->type != V4L2_BUF_TYPE_VIDEO_CAPTURE ||
+	if (sel->type != V4L2_BUF_TYPE_VIDEO_CAPTURE ||
 	    sel->target != V4L2_SEL_TGT_COMPOSE)
-		वापस -EINVAL;
+		return -EINVAL;
 
-	__camअगर_try_compose(camअगर, vp, &rect);
+	__camif_try_compose(camif, vp, &rect);
 
 	sel->r = rect;
-	spin_lock_irqsave(&camअगर->slock, flags);
+	spin_lock_irqsave(&camif->slock, flags);
 	vp->out_frame.rect = rect;
 	vp->state |= ST_VP_CONFIG;
-	spin_unlock_irqrestore(&camअगर->slock, flags);
+	spin_unlock_irqrestore(&camif->slock, flags);
 
 	pr_debug("type: %#x, target: %#x, flags: %#x, (%d,%d)/%dx%d\n",
 		sel->type, sel->target, sel->flags,
 		sel->r.left, sel->r.top, sel->r.width, sel->r.height);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा v4l2_ioctl_ops s3c_camअगर_ioctl_ops = अणु
-	.vidioc_querycap	  = s3c_camअगर_vidioc_querycap,
-	.vidioc_क्रमागत_input	  = s3c_camअगर_vidioc_क्रमागत_input,
-	.vidioc_g_input		  = s3c_camअगर_vidioc_g_input,
-	.vidioc_s_input		  = s3c_camअगर_vidioc_s_input,
-	.vidioc_क्रमागत_fmt_vid_cap  = s3c_camअगर_vidioc_क्रमागत_fmt,
-	.vidioc_try_fmt_vid_cap	  = s3c_camअगर_vidioc_try_fmt,
-	.vidioc_s_fmt_vid_cap	  = s3c_camअगर_vidioc_s_fmt,
-	.vidioc_g_fmt_vid_cap	  = s3c_camअगर_vidioc_g_fmt,
-	.vidioc_g_selection	  = s3c_camअगर_g_selection,
-	.vidioc_s_selection	  = s3c_camअगर_s_selection,
-	.vidioc_reqbufs		  = s3c_camअगर_reqbufs,
-	.vidioc_querybuf	  = s3c_camअगर_querybuf,
-	.vidioc_prepare_buf	  = s3c_camअगर_prepare_buf,
-	.vidioc_create_bufs	  = s3c_camअगर_create_bufs,
-	.vidioc_qbuf		  = s3c_camअगर_qbuf,
-	.vidioc_dqbuf		  = s3c_camअगर_dqbuf,
-	.vidioc_streamon	  = s3c_camअगर_streamon,
-	.vidioc_streamoff	  = s3c_camअगर_streamoff,
+static const struct v4l2_ioctl_ops s3c_camif_ioctl_ops = {
+	.vidioc_querycap	  = s3c_camif_vidioc_querycap,
+	.vidioc_enum_input	  = s3c_camif_vidioc_enum_input,
+	.vidioc_g_input		  = s3c_camif_vidioc_g_input,
+	.vidioc_s_input		  = s3c_camif_vidioc_s_input,
+	.vidioc_enum_fmt_vid_cap  = s3c_camif_vidioc_enum_fmt,
+	.vidioc_try_fmt_vid_cap	  = s3c_camif_vidioc_try_fmt,
+	.vidioc_s_fmt_vid_cap	  = s3c_camif_vidioc_s_fmt,
+	.vidioc_g_fmt_vid_cap	  = s3c_camif_vidioc_g_fmt,
+	.vidioc_g_selection	  = s3c_camif_g_selection,
+	.vidioc_s_selection	  = s3c_camif_s_selection,
+	.vidioc_reqbufs		  = s3c_camif_reqbufs,
+	.vidioc_querybuf	  = s3c_camif_querybuf,
+	.vidioc_prepare_buf	  = s3c_camif_prepare_buf,
+	.vidioc_create_bufs	  = s3c_camif_create_bufs,
+	.vidioc_qbuf		  = s3c_camif_qbuf,
+	.vidioc_dqbuf		  = s3c_camif_dqbuf,
+	.vidioc_streamon	  = s3c_camif_streamon,
+	.vidioc_streamoff	  = s3c_camif_streamoff,
 	.vidioc_subscribe_event	  = v4l2_ctrl_subscribe_event,
 	.vidioc_unsubscribe_event = v4l2_event_unsubscribe,
 	.vidioc_log_status	  = v4l2_ctrl_log_status,
-पूर्ण;
+};
 
 /*
  * Video node controls
  */
-अटल पूर्णांक s3c_camअगर_video_s_ctrl(काष्ठा v4l2_ctrl *ctrl)
-अणु
-	काष्ठा camअगर_vp *vp = ctrl->priv;
-	काष्ठा camअगर_dev *camअगर = vp->camअगर;
-	अचिन्हित दीर्घ flags;
+static int s3c_camif_video_s_ctrl(struct v4l2_ctrl *ctrl)
+{
+	struct camif_vp *vp = ctrl->priv;
+	struct camif_dev *camif = vp->camif;
+	unsigned long flags;
 
 	pr_debug("[vp%d] ctrl: %s, value: %d\n", vp->id,
 		 ctrl->name, ctrl->val);
 
-	spin_lock_irqsave(&camअगर->slock, flags);
+	spin_lock_irqsave(&camif->slock, flags);
 
-	चयन (ctrl->id) अणु
-	हाल V4L2_CID_HFLIP:
+	switch (ctrl->id) {
+	case V4L2_CID_HFLIP:
 		vp->hflip = ctrl->val;
-		अवरोध;
+		break;
 
-	हाल V4L2_CID_VFLIP:
+	case V4L2_CID_VFLIP:
 		vp->vflip = ctrl->val;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	vp->state |= ST_VP_CONFIG;
-	spin_unlock_irqrestore(&camअगर->slock, flags);
-	वापस 0;
-पूर्ण
+	spin_unlock_irqrestore(&camif->slock, flags);
+	return 0;
+}
 
 /* Codec and preview video node control ops */
-अटल स्थिर काष्ठा v4l2_ctrl_ops s3c_camअगर_video_ctrl_ops = अणु
-	.s_ctrl = s3c_camअगर_video_s_ctrl,
-पूर्ण;
+static const struct v4l2_ctrl_ops s3c_camif_video_ctrl_ops = {
+	.s_ctrl = s3c_camif_video_s_ctrl,
+};
 
-पूर्णांक s3c_camअगर_रेजिस्टर_video_node(काष्ठा camअगर_dev *camअगर, पूर्णांक idx)
-अणु
-	काष्ठा camअगर_vp *vp = &camअगर->vp[idx];
-	काष्ठा vb2_queue *q = &vp->vb_queue;
-	काष्ठा video_device *vfd = &vp->vdev;
-	काष्ठा v4l2_ctrl *ctrl;
-	पूर्णांक ret;
+int s3c_camif_register_video_node(struct camif_dev *camif, int idx)
+{
+	struct camif_vp *vp = &camif->vp[idx];
+	struct vb2_queue *q = &vp->vb_queue;
+	struct video_device *vfd = &vp->vdev;
+	struct v4l2_ctrl *ctrl;
+	int ret;
 
-	स_रखो(vfd, 0, माप(*vfd));
-	snम_लिखो(vfd->name, माप(vfd->name), "camif-%s",
+	memset(vfd, 0, sizeof(*vfd));
+	snprintf(vfd->name, sizeof(vfd->name), "camif-%s",
 		 vp->id == 0 ? "codec" : "preview");
 
-	vfd->fops = &s3c_camअगर_fops;
-	vfd->ioctl_ops = &s3c_camअगर_ioctl_ops;
-	vfd->v4l2_dev = &camअगर->v4l2_dev;
+	vfd->fops = &s3c_camif_fops;
+	vfd->ioctl_ops = &s3c_camif_ioctl_ops;
+	vfd->v4l2_dev = &camif->v4l2_dev;
 	vfd->minor = -1;
 	vfd->release = video_device_release_empty;
-	vfd->lock = &camअगर->lock;
+	vfd->lock = &camif->lock;
 	vp->reqbufs_count = 0;
 
 	INIT_LIST_HEAD(&vp->pending_buf_q);
 	INIT_LIST_HEAD(&vp->active_buf_q);
 
-	स_रखो(q, 0, माप(*q));
+	memset(q, 0, sizeof(*q));
 	q->type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 	q->io_modes = VB2_MMAP | VB2_USERPTR;
-	q->ops = &s3c_camअगर_qops;
+	q->ops = &s3c_camif_qops;
 	q->mem_ops = &vb2_dma_contig_memops;
-	q->buf_काष्ठा_size = माप(काष्ठा camअगर_buffer);
+	q->buf_struct_size = sizeof(struct camif_buffer);
 	q->drv_priv = vp;
-	q->बारtamp_flags = V4L2_BUF_FLAG_TIMESTAMP_MONOTONIC;
-	q->lock = &vp->camअगर->lock;
-	q->dev = camअगर->v4l2_dev.dev;
+	q->timestamp_flags = V4L2_BUF_FLAG_TIMESTAMP_MONOTONIC;
+	q->lock = &vp->camif->lock;
+	q->dev = camif->v4l2_dev.dev;
 
 	ret = vb2_queue_init(q);
-	अगर (ret)
-		जाओ err_vd_rel;
+	if (ret)
+		goto err_vd_rel;
 
 	vp->pad.flags = MEDIA_PAD_FL_SINK;
 	ret = media_entity_pads_init(&vfd->entity, 1, &vp->pad);
-	अगर (ret)
-		जाओ err_vd_rel;
+	if (ret)
+		goto err_vd_rel;
 
 	video_set_drvdata(vfd, vp);
 
 	v4l2_ctrl_handler_init(&vp->ctrl_handler, 1);
-	ctrl = v4l2_ctrl_new_std(&vp->ctrl_handler, &s3c_camअगर_video_ctrl_ops,
+	ctrl = v4l2_ctrl_new_std(&vp->ctrl_handler, &s3c_camif_video_ctrl_ops,
 				 V4L2_CID_HFLIP, 0, 1, 1, 0);
-	अगर (ctrl)
+	if (ctrl)
 		ctrl->priv = vp;
-	ctrl = v4l2_ctrl_new_std(&vp->ctrl_handler, &s3c_camअगर_video_ctrl_ops,
+	ctrl = v4l2_ctrl_new_std(&vp->ctrl_handler, &s3c_camif_video_ctrl_ops,
 				 V4L2_CID_VFLIP, 0, 1, 1, 0);
-	अगर (ctrl)
+	if (ctrl)
 		ctrl->priv = vp;
 
 	ret = vp->ctrl_handler.error;
-	अगर (ret < 0)
-		जाओ err_me_cleanup;
+	if (ret < 0)
+		goto err_me_cleanup;
 
 	vfd->ctrl_handler = &vp->ctrl_handler;
 	vfd->device_caps = V4L2_CAP_STREAMING | V4L2_CAP_VIDEO_CAPTURE;
 
-	ret = video_रेजिस्टर_device(vfd, VFL_TYPE_VIDEO, -1);
-	अगर (ret)
-		जाओ err_ctrlh_मुक्त;
+	ret = video_register_device(vfd, VFL_TYPE_VIDEO, -1);
+	if (ret)
+		goto err_ctrlh_free;
 
-	v4l2_info(&camअगर->v4l2_dev, "registered %s as /dev/%s\n",
+	v4l2_info(&camif->v4l2_dev, "registered %s as /dev/%s\n",
 		  vfd->name, video_device_node_name(vfd));
-	वापस 0;
+	return 0;
 
-err_ctrlh_मुक्त:
-	v4l2_ctrl_handler_मुक्त(&vp->ctrl_handler);
+err_ctrlh_free:
+	v4l2_ctrl_handler_free(&vp->ctrl_handler);
 err_me_cleanup:
 	media_entity_cleanup(&vfd->entity);
 err_vd_rel:
 	video_device_release(vfd);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम s3c_camअगर_unरेजिस्टर_video_node(काष्ठा camअगर_dev *camअगर, पूर्णांक idx)
-अणु
-	काष्ठा video_device *vfd = &camअगर->vp[idx].vdev;
+void s3c_camif_unregister_video_node(struct camif_dev *camif, int idx)
+{
+	struct video_device *vfd = &camif->vp[idx].vdev;
 
-	अगर (video_is_रेजिस्टरed(vfd)) अणु
-		video_unरेजिस्टर_device(vfd);
+	if (video_is_registered(vfd)) {
+		video_unregister_device(vfd);
 		media_entity_cleanup(&vfd->entity);
-		v4l2_ctrl_handler_मुक्त(vfd->ctrl_handler);
-	पूर्ण
-पूर्ण
+		v4l2_ctrl_handler_free(vfd->ctrl_handler);
+	}
+}
 
-/* Media bus pixel क्रमmats supported at the camअगर input */
-अटल स्थिर u32 camअगर_mbus_क्रमmats[] = अणु
+/* Media bus pixel formats supported at the camif input */
+static const u32 camif_mbus_formats[] = {
 	MEDIA_BUS_FMT_YUYV8_2X8,
 	MEDIA_BUS_FMT_YVYU8_2X8,
 	MEDIA_BUS_FMT_UYVY8_2X8,
 	MEDIA_BUS_FMT_VYUY8_2X8,
-पूर्ण;
+};
 
 /*
- *  Camera input पूर्णांकerface subdev operations
+ *  Camera input interface subdev operations
  */
 
-अटल पूर्णांक s3c_camअगर_subdev_क्रमागत_mbus_code(काष्ठा v4l2_subdev *sd,
-					काष्ठा v4l2_subdev_pad_config *cfg,
-					काष्ठा v4l2_subdev_mbus_code_क्रमागत *code)
-अणु
-	अगर (code->index >= ARRAY_SIZE(camअगर_mbus_क्रमmats))
-		वापस -EINVAL;
+static int s3c_camif_subdev_enum_mbus_code(struct v4l2_subdev *sd,
+					struct v4l2_subdev_pad_config *cfg,
+					struct v4l2_subdev_mbus_code_enum *code)
+{
+	if (code->index >= ARRAY_SIZE(camif_mbus_formats))
+		return -EINVAL;
 
-	code->code = camअगर_mbus_क्रमmats[code->index];
-	वापस 0;
-पूर्ण
+	code->code = camif_mbus_formats[code->index];
+	return 0;
+}
 
-अटल पूर्णांक s3c_camअगर_subdev_get_fmt(काष्ठा v4l2_subdev *sd,
-				    काष्ठा v4l2_subdev_pad_config *cfg,
-				    काष्ठा v4l2_subdev_क्रमmat *fmt)
-अणु
-	काष्ठा camअगर_dev *camअगर = v4l2_get_subdevdata(sd);
-	काष्ठा v4l2_mbus_framefmt *mf = &fmt->क्रमmat;
+static int s3c_camif_subdev_get_fmt(struct v4l2_subdev *sd,
+				    struct v4l2_subdev_pad_config *cfg,
+				    struct v4l2_subdev_format *fmt)
+{
+	struct camif_dev *camif = v4l2_get_subdevdata(sd);
+	struct v4l2_mbus_framefmt *mf = &fmt->format;
 
-	अगर (fmt->which == V4L2_SUBDEV_FORMAT_TRY) अणु
-		mf = v4l2_subdev_get_try_क्रमmat(sd, cfg, fmt->pad);
-		fmt->क्रमmat = *mf;
-		वापस 0;
-	पूर्ण
+	if (fmt->which == V4L2_SUBDEV_FORMAT_TRY) {
+		mf = v4l2_subdev_get_try_format(sd, cfg, fmt->pad);
+		fmt->format = *mf;
+		return 0;
+	}
 
-	mutex_lock(&camअगर->lock);
+	mutex_lock(&camif->lock);
 
-	चयन (fmt->pad) अणु
-	हाल CAMIF_SD_PAD_SINK:
+	switch (fmt->pad) {
+	case CAMIF_SD_PAD_SINK:
 		/* full camera input pixel size */
-		*mf = camअगर->mbus_fmt;
-		अवरोध;
+		*mf = camif->mbus_fmt;
+		break;
 
-	हाल CAMIF_SD_PAD_SOURCE_C...CAMIF_SD_PAD_SOURCE_P:
-		/* crop rectangle at camera पूर्णांकerface input */
-		mf->width = camअगर->camअगर_crop.width;
-		mf->height = camअगर->camअगर_crop.height;
-		mf->code = camअगर->mbus_fmt.code;
-		अवरोध;
-	पूर्ण
+	case CAMIF_SD_PAD_SOURCE_C...CAMIF_SD_PAD_SOURCE_P:
+		/* crop rectangle at camera interface input */
+		mf->width = camif->camif_crop.width;
+		mf->height = camif->camif_crop.height;
+		mf->code = camif->mbus_fmt.code;
+		break;
+	}
 
-	mutex_unlock(&camअगर->lock);
+	mutex_unlock(&camif->lock);
 	mf->field = V4L2_FIELD_NONE;
 	mf->colorspace = V4L2_COLORSPACE_JPEG;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम __camअगर_subdev_try_क्रमmat(काष्ठा camअगर_dev *camअगर,
-				काष्ठा v4l2_mbus_framefmt *mf, पूर्णांक pad)
-अणु
-	स्थिर काष्ठा s3c_camअगर_variant *variant = camअगर->variant;
-	स्थिर काष्ठा vp_pix_limits *pix_lim;
-	अचिन्हित पूर्णांक i;
+static void __camif_subdev_try_format(struct camif_dev *camif,
+				struct v4l2_mbus_framefmt *mf, int pad)
+{
+	const struct s3c_camif_variant *variant = camif->variant;
+	const struct vp_pix_limits *pix_lim;
+	unsigned int i;
 
-	/* FIXME: स्थिरraपूर्णांकs against codec or preview path ? */
+	/* FIXME: constraints against codec or preview path ? */
 	pix_lim = &variant->vp_pix_limits[VP_CODEC];
 
-	क्रम (i = 0; i < ARRAY_SIZE(camअगर_mbus_क्रमmats); i++)
-		अगर (camअगर_mbus_क्रमmats[i] == mf->code)
-			अवरोध;
+	for (i = 0; i < ARRAY_SIZE(camif_mbus_formats); i++)
+		if (camif_mbus_formats[i] == mf->code)
+			break;
 
-	अगर (i == ARRAY_SIZE(camअगर_mbus_क्रमmats))
-		mf->code = camअगर_mbus_क्रमmats[0];
+	if (i == ARRAY_SIZE(camif_mbus_formats))
+		mf->code = camif_mbus_formats[0];
 
-	अगर (pad == CAMIF_SD_PAD_SINK) अणु
+	if (pad == CAMIF_SD_PAD_SINK) {
 		v4l_bound_align_image(&mf->width, 8, CAMIF_MAX_PIX_WIDTH,
 				      ffs(pix_lim->out_width_align) - 1,
 				      &mf->height, 8, CAMIF_MAX_PIX_HEIGHT, 0,
 				      0);
-	पूर्ण अन्यथा अणु
-		काष्ठा v4l2_rect *crop = &camअगर->camअगर_crop;
+	} else {
+		struct v4l2_rect *crop = &camif->camif_crop;
 		v4l_bound_align_image(&mf->width, 8, crop->width,
 				      ffs(pix_lim->out_width_align) - 1,
 				      &mf->height, 8, crop->height,
 				      0, 0);
-	पूर्ण
+	}
 
-	v4l2_dbg(1, debug, &camअगर->subdev, "%ux%u\n", mf->width, mf->height);
-पूर्ण
+	v4l2_dbg(1, debug, &camif->subdev, "%ux%u\n", mf->width, mf->height);
+}
 
-अटल पूर्णांक s3c_camअगर_subdev_set_fmt(काष्ठा v4l2_subdev *sd,
-				    काष्ठा v4l2_subdev_pad_config *cfg,
-				    काष्ठा v4l2_subdev_क्रमmat *fmt)
-अणु
-	काष्ठा camअगर_dev *camअगर = v4l2_get_subdevdata(sd);
-	काष्ठा v4l2_mbus_framefmt *mf = &fmt->क्रमmat;
-	काष्ठा v4l2_rect *crop = &camअगर->camअगर_crop;
-	पूर्णांक i;
+static int s3c_camif_subdev_set_fmt(struct v4l2_subdev *sd,
+				    struct v4l2_subdev_pad_config *cfg,
+				    struct v4l2_subdev_format *fmt)
+{
+	struct camif_dev *camif = v4l2_get_subdevdata(sd);
+	struct v4l2_mbus_framefmt *mf = &fmt->format;
+	struct v4l2_rect *crop = &camif->camif_crop;
+	int i;
 
 	v4l2_dbg(1, debug, sd, "pad%d: code: 0x%x, %ux%u\n",
 		 fmt->pad, mf->code, mf->width, mf->height);
 
 	mf->field = V4L2_FIELD_NONE;
 	mf->colorspace = V4L2_COLORSPACE_JPEG;
-	mutex_lock(&camअगर->lock);
+	mutex_lock(&camif->lock);
 
 	/*
-	 * No pixel क्रमmat change at the camera input is allowed
-	 * जबतक streaming.
+	 * No pixel format change at the camera input is allowed
+	 * while streaming.
 	 */
-	अगर (vb2_is_busy(&camअगर->vp[VP_CODEC].vb_queue) ||
-	    vb2_is_busy(&camअगर->vp[VP_PREVIEW].vb_queue)) अणु
-		mutex_unlock(&camअगर->lock);
-		वापस -EBUSY;
-	पूर्ण
+	if (vb2_is_busy(&camif->vp[VP_CODEC].vb_queue) ||
+	    vb2_is_busy(&camif->vp[VP_PREVIEW].vb_queue)) {
+		mutex_unlock(&camif->lock);
+		return -EBUSY;
+	}
 
-	__camअगर_subdev_try_क्रमmat(camअगर, mf, fmt->pad);
+	__camif_subdev_try_format(camif, mf, fmt->pad);
 
-	अगर (fmt->which == V4L2_SUBDEV_FORMAT_TRY) अणु
-		mf = v4l2_subdev_get_try_क्रमmat(sd, cfg, fmt->pad);
-		*mf = fmt->क्रमmat;
-		mutex_unlock(&camअगर->lock);
-		वापस 0;
-	पूर्ण
+	if (fmt->which == V4L2_SUBDEV_FORMAT_TRY) {
+		mf = v4l2_subdev_get_try_format(sd, cfg, fmt->pad);
+		*mf = fmt->format;
+		mutex_unlock(&camif->lock);
+		return 0;
+	}
 
-	चयन (fmt->pad) अणु
-	हाल CAMIF_SD_PAD_SINK:
-		camअगर->mbus_fmt = *mf;
+	switch (fmt->pad) {
+	case CAMIF_SD_PAD_SINK:
+		camif->mbus_fmt = *mf;
 		/* Reset sink crop rectangle. */
 		crop->width = mf->width;
 		crop->height = mf->height;
 		crop->left = 0;
 		crop->top = 0;
 		/*
-		 * Reset source क्रमmat (the camअगर's crop rectangle)
+		 * Reset source format (the camif's crop rectangle)
 		 * and the video output resolution.
 		 */
-		क्रम (i = 0; i < CAMIF_VP_NUM; i++) अणु
-			काष्ठा camअगर_frame *frame = &camअगर->vp[i].out_frame;
+		for (i = 0; i < CAMIF_VP_NUM; i++) {
+			struct camif_frame *frame = &camif->vp[i].out_frame;
 			frame->rect = *crop;
 			frame->f_width = mf->width;
 			frame->f_height = mf->height;
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	हाल CAMIF_SD_PAD_SOURCE_C...CAMIF_SD_PAD_SOURCE_P:
-		/* Pixel क्रमmat can be only changed on the sink pad. */
-		mf->code = camअगर->mbus_fmt.code;
+	case CAMIF_SD_PAD_SOURCE_C...CAMIF_SD_PAD_SOURCE_P:
+		/* Pixel format can be only changed on the sink pad. */
+		mf->code = camif->mbus_fmt.code;
 		mf->width = crop->width;
 		mf->height = crop->height;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	mutex_unlock(&camअगर->lock);
-	वापस 0;
-पूर्ण
+	mutex_unlock(&camif->lock);
+	return 0;
+}
 
-अटल पूर्णांक s3c_camअगर_subdev_get_selection(काष्ठा v4l2_subdev *sd,
-					  काष्ठा v4l2_subdev_pad_config *cfg,
-					  काष्ठा v4l2_subdev_selection *sel)
-अणु
-	काष्ठा camअगर_dev *camअगर = v4l2_get_subdevdata(sd);
-	काष्ठा v4l2_rect *crop = &camअगर->camअगर_crop;
-	काष्ठा v4l2_mbus_framefmt *mf = &camअगर->mbus_fmt;
+static int s3c_camif_subdev_get_selection(struct v4l2_subdev *sd,
+					  struct v4l2_subdev_pad_config *cfg,
+					  struct v4l2_subdev_selection *sel)
+{
+	struct camif_dev *camif = v4l2_get_subdevdata(sd);
+	struct v4l2_rect *crop = &camif->camif_crop;
+	struct v4l2_mbus_framefmt *mf = &camif->mbus_fmt;
 
-	अगर ((sel->target != V4L2_SEL_TGT_CROP &&
+	if ((sel->target != V4L2_SEL_TGT_CROP &&
 	    sel->target != V4L2_SEL_TGT_CROP_BOUNDS) ||
 	    sel->pad != CAMIF_SD_PAD_SINK)
-		वापस -EINVAL;
+		return -EINVAL;
 
-	अगर (sel->which == V4L2_SUBDEV_FORMAT_TRY) अणु
+	if (sel->which == V4L2_SUBDEV_FORMAT_TRY) {
 		sel->r = *v4l2_subdev_get_try_crop(sd, cfg, sel->pad);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	mutex_lock(&camअगर->lock);
+	mutex_lock(&camif->lock);
 
-	अगर (sel->target == V4L2_SEL_TGT_CROP) अणु
+	if (sel->target == V4L2_SEL_TGT_CROP) {
 		sel->r = *crop;
-	पूर्ण अन्यथा अणु /* crop bounds */
+	} else { /* crop bounds */
 		sel->r.width = mf->width;
 		sel->r.height = mf->height;
 		sel->r.left = 0;
 		sel->r.top = 0;
-	पूर्ण
+	}
 
-	mutex_unlock(&camअगर->lock);
+	mutex_unlock(&camif->lock);
 
 	v4l2_dbg(1, debug, sd, "%s: crop: (%d,%d) %dx%d, size: %ux%u\n",
 		 __func__, crop->left, crop->top, crop->width,
 		 crop->height, mf->width, mf->height);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम __camअगर_try_crop(काष्ठा camअगर_dev *camअगर, काष्ठा v4l2_rect *r)
-अणु
-	काष्ठा v4l2_mbus_framefmt *mf = &camअगर->mbus_fmt;
-	स्थिर काष्ठा camअगर_pix_limits *pix_lim = &camअगर->variant->pix_limits;
-	अचिन्हित पूर्णांक left = 2 * r->left;
-	अचिन्हित पूर्णांक top = 2 * r->top;
+static void __camif_try_crop(struct camif_dev *camif, struct v4l2_rect *r)
+{
+	struct v4l2_mbus_framefmt *mf = &camif->mbus_fmt;
+	const struct camif_pix_limits *pix_lim = &camif->variant->pix_limits;
+	unsigned int left = 2 * r->left;
+	unsigned int top = 2 * r->top;
 
 	/*
-	 * Following स्थिरraपूर्णांकs must be met:
+	 * Following constraints must be met:
 	 *  - r->width + 2 * r->left = mf->width;
 	 *  - r->height + 2 * r->top = mf->height;
 	 *  - crop rectangle size and position must be aligned
@@ -1410,224 +1409,224 @@ err_vd_rel:
 	r->width = mf->width - left;
 	r->height = mf->height - top;
 	/*
-	 * Make sure we either करोwnscale or upscale both the pixel
-	 * width and height. Just वापस current crop rectangle अगर
-	 * this scaler स्थिरraपूर्णांक is not met.
+	 * Make sure we either downscale or upscale both the pixel
+	 * width and height. Just return current crop rectangle if
+	 * this scaler constraint is not met.
 	 */
-	अगर (camअगर->variant->ip_revision == S3C244X_CAMIF_IP_REV &&
-	    camअगर_is_streaming(camअगर)) अणु
-		अचिन्हित पूर्णांक i;
+	if (camif->variant->ip_revision == S3C244X_CAMIF_IP_REV &&
+	    camif_is_streaming(camif)) {
+		unsigned int i;
 
-		क्रम (i = 0; i < CAMIF_VP_NUM; i++) अणु
-			काष्ठा v4l2_rect *or = &camअगर->vp[i].out_frame.rect;
-			अगर ((or->width > r->width) == (or->height > r->height))
-				जारी;
-			*r = camअगर->camअगर_crop;
+		for (i = 0; i < CAMIF_VP_NUM; i++) {
+			struct v4l2_rect *or = &camif->vp[i].out_frame.rect;
+			if ((or->width > r->width) == (or->height > r->height))
+				continue;
+			*r = camif->camif_crop;
 			pr_debug("Width/height scaling direction limitation\n");
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	v4l2_dbg(1, debug, &camअगर->v4l2_dev, "crop: (%d,%d)/%dx%d, fmt: %ux%u\n",
+	v4l2_dbg(1, debug, &camif->v4l2_dev, "crop: (%d,%d)/%dx%d, fmt: %ux%u\n",
 		 r->left, r->top, r->width, r->height, mf->width, mf->height);
-पूर्ण
+}
 
-अटल पूर्णांक s3c_camअगर_subdev_set_selection(काष्ठा v4l2_subdev *sd,
-					  काष्ठा v4l2_subdev_pad_config *cfg,
-					  काष्ठा v4l2_subdev_selection *sel)
-अणु
-	काष्ठा camअगर_dev *camअगर = v4l2_get_subdevdata(sd);
-	काष्ठा v4l2_rect *crop = &camअगर->camअगर_crop;
-	काष्ठा camअगर_scaler scaler;
+static int s3c_camif_subdev_set_selection(struct v4l2_subdev *sd,
+					  struct v4l2_subdev_pad_config *cfg,
+					  struct v4l2_subdev_selection *sel)
+{
+	struct camif_dev *camif = v4l2_get_subdevdata(sd);
+	struct v4l2_rect *crop = &camif->camif_crop;
+	struct camif_scaler scaler;
 
-	अगर (sel->target != V4L2_SEL_TGT_CROP || sel->pad != CAMIF_SD_PAD_SINK)
-		वापस -EINVAL;
+	if (sel->target != V4L2_SEL_TGT_CROP || sel->pad != CAMIF_SD_PAD_SINK)
+		return -EINVAL;
 
-	mutex_lock(&camअगर->lock);
-	__camअगर_try_crop(camअगर, &sel->r);
+	mutex_lock(&camif->lock);
+	__camif_try_crop(camif, &sel->r);
 
-	अगर (sel->which == V4L2_SUBDEV_FORMAT_TRY) अणु
+	if (sel->which == V4L2_SUBDEV_FORMAT_TRY) {
 		*v4l2_subdev_get_try_crop(sd, cfg, sel->pad) = sel->r;
-	पूर्ण अन्यथा अणु
-		अचिन्हित दीर्घ flags;
-		अचिन्हित पूर्णांक i;
+	} else {
+		unsigned long flags;
+		unsigned int i;
 
-		spin_lock_irqsave(&camअगर->slock, flags);
+		spin_lock_irqsave(&camif->slock, flags);
 		*crop = sel->r;
 
-		क्रम (i = 0; i < CAMIF_VP_NUM; i++) अणु
-			काष्ठा camअगर_vp *vp = &camअगर->vp[i];
+		for (i = 0; i < CAMIF_VP_NUM; i++) {
+			struct camif_vp *vp = &camif->vp[i];
 			scaler = vp->scaler;
-			अगर (s3c_camअगर_get_scaler_config(vp, &scaler))
-				जारी;
+			if (s3c_camif_get_scaler_config(vp, &scaler))
+				continue;
 			vp->scaler = scaler;
 			vp->state |= ST_VP_CONFIG;
-		पूर्ण
+		}
 
-		spin_unlock_irqrestore(&camअगर->slock, flags);
-	पूर्ण
-	mutex_unlock(&camअगर->lock);
+		spin_unlock_irqrestore(&camif->slock, flags);
+	}
+	mutex_unlock(&camif->lock);
 
 	v4l2_dbg(1, debug, sd, "%s: (%d,%d) %dx%d, f_w: %u, f_h: %u\n",
 		 __func__, crop->left, crop->top, crop->width, crop->height,
-		 camअगर->mbus_fmt.width, camअगर->mbus_fmt.height);
+		 camif->mbus_fmt.width, camif->mbus_fmt.height);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा v4l2_subdev_pad_ops s3c_camअगर_subdev_pad_ops = अणु
-	.क्रमागत_mbus_code = s3c_camअगर_subdev_क्रमागत_mbus_code,
-	.get_selection = s3c_camअगर_subdev_get_selection,
-	.set_selection = s3c_camअगर_subdev_set_selection,
-	.get_fmt = s3c_camअगर_subdev_get_fmt,
-	.set_fmt = s3c_camअगर_subdev_set_fmt,
-पूर्ण;
+static const struct v4l2_subdev_pad_ops s3c_camif_subdev_pad_ops = {
+	.enum_mbus_code = s3c_camif_subdev_enum_mbus_code,
+	.get_selection = s3c_camif_subdev_get_selection,
+	.set_selection = s3c_camif_subdev_set_selection,
+	.get_fmt = s3c_camif_subdev_get_fmt,
+	.set_fmt = s3c_camif_subdev_set_fmt,
+};
 
-अटल स्थिर काष्ठा v4l2_subdev_ops s3c_camअगर_subdev_ops = अणु
-	.pad = &s3c_camअगर_subdev_pad_ops,
-पूर्ण;
+static const struct v4l2_subdev_ops s3c_camif_subdev_ops = {
+	.pad = &s3c_camif_subdev_pad_ops,
+};
 
-अटल पूर्णांक s3c_camअगर_subdev_s_ctrl(काष्ठा v4l2_ctrl *ctrl)
-अणु
-	काष्ठा camअगर_dev *camअगर = container_of(ctrl->handler, काष्ठा camअगर_dev,
+static int s3c_camif_subdev_s_ctrl(struct v4l2_ctrl *ctrl)
+{
+	struct camif_dev *camif = container_of(ctrl->handler, struct camif_dev,
 					       ctrl_handler);
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 
-	spin_lock_irqsave(&camअगर->slock, flags);
+	spin_lock_irqsave(&camif->slock, flags);
 
-	चयन (ctrl->id) अणु
-	हाल V4L2_CID_COLORFX:
-		camअगर->colorfx = camअगर->ctrl_colorfx->val;
+	switch (ctrl->id) {
+	case V4L2_CID_COLORFX:
+		camif->colorfx = camif->ctrl_colorfx->val;
 		/* Set Cb, Cr */
-		चयन (ctrl->val) अणु
-		हाल V4L2_COLORFX_SEPIA:
-			camअगर->colorfx_cb = 115;
-			camअगर->colorfx_cr = 145;
-			अवरोध;
-		हाल V4L2_COLORFX_SET_CBCR:
-			camअगर->colorfx_cb = camअगर->ctrl_colorfx_cbcr->val >> 8;
-			camअगर->colorfx_cr = camअगर->ctrl_colorfx_cbcr->val & 0xff;
-			अवरोध;
-		शेष:
-			/* क्रम V4L2_COLORFX_BW and others */
-			camअगर->colorfx_cb = 128;
-			camअगर->colorfx_cr = 128;
-		पूर्ण
-		अवरोध;
-	हाल V4L2_CID_TEST_PATTERN:
-		camअगर->test_pattern = camअगर->ctrl_test_pattern->val;
-		अवरोध;
-	शेष:
+		switch (ctrl->val) {
+		case V4L2_COLORFX_SEPIA:
+			camif->colorfx_cb = 115;
+			camif->colorfx_cr = 145;
+			break;
+		case V4L2_COLORFX_SET_CBCR:
+			camif->colorfx_cb = camif->ctrl_colorfx_cbcr->val >> 8;
+			camif->colorfx_cr = camif->ctrl_colorfx_cbcr->val & 0xff;
+			break;
+		default:
+			/* for V4L2_COLORFX_BW and others */
+			camif->colorfx_cb = 128;
+			camif->colorfx_cr = 128;
+		}
+		break;
+	case V4L2_CID_TEST_PATTERN:
+		camif->test_pattern = camif->ctrl_test_pattern->val;
+		break;
+	default:
 		WARN_ON(1);
-	पूर्ण
+	}
 
-	camअगर->vp[VP_CODEC].state |= ST_VP_CONFIG;
-	camअगर->vp[VP_PREVIEW].state |= ST_VP_CONFIG;
-	spin_unlock_irqrestore(&camअगर->slock, flags);
+	camif->vp[VP_CODEC].state |= ST_VP_CONFIG;
+	camif->vp[VP_PREVIEW].state |= ST_VP_CONFIG;
+	spin_unlock_irqrestore(&camif->slock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा v4l2_ctrl_ops s3c_camअगर_subdev_ctrl_ops = अणु
-	.s_ctrl	= s3c_camअगर_subdev_s_ctrl,
-पूर्ण;
+static const struct v4l2_ctrl_ops s3c_camif_subdev_ctrl_ops = {
+	.s_ctrl	= s3c_camif_subdev_s_ctrl,
+};
 
-अटल स्थिर अक्षर * स्थिर s3c_camअगर_test_pattern_menu[] = अणु
+static const char * const s3c_camif_test_pattern_menu[] = {
 	"Disabled",
 	"Color bars",
 	"Horizontal increment",
 	"Vertical increment",
-पूर्ण;
+};
 
-पूर्णांक s3c_camअगर_create_subdev(काष्ठा camअगर_dev *camअगर)
-अणु
-	काष्ठा v4l2_ctrl_handler *handler = &camअगर->ctrl_handler;
-	काष्ठा v4l2_subdev *sd = &camअगर->subdev;
-	पूर्णांक ret;
+int s3c_camif_create_subdev(struct camif_dev *camif)
+{
+	struct v4l2_ctrl_handler *handler = &camif->ctrl_handler;
+	struct v4l2_subdev *sd = &camif->subdev;
+	int ret;
 
-	v4l2_subdev_init(sd, &s3c_camअगर_subdev_ops);
+	v4l2_subdev_init(sd, &s3c_camif_subdev_ops);
 	sd->flags |= V4L2_SUBDEV_FL_HAS_DEVNODE;
-	strscpy(sd->name, "S3C-CAMIF", माप(sd->name));
+	strscpy(sd->name, "S3C-CAMIF", sizeof(sd->name));
 
-	camअगर->pads[CAMIF_SD_PAD_SINK].flags = MEDIA_PAD_FL_SINK;
-	camअगर->pads[CAMIF_SD_PAD_SOURCE_C].flags = MEDIA_PAD_FL_SOURCE;
-	camअगर->pads[CAMIF_SD_PAD_SOURCE_P].flags = MEDIA_PAD_FL_SOURCE;
+	camif->pads[CAMIF_SD_PAD_SINK].flags = MEDIA_PAD_FL_SINK;
+	camif->pads[CAMIF_SD_PAD_SOURCE_C].flags = MEDIA_PAD_FL_SOURCE;
+	camif->pads[CAMIF_SD_PAD_SOURCE_P].flags = MEDIA_PAD_FL_SOURCE;
 
 	ret = media_entity_pads_init(&sd->entity, CAMIF_SD_PADS_NUM,
-				camअगर->pads);
-	अगर (ret)
-		वापस ret;
+				camif->pads);
+	if (ret)
+		return ret;
 
 	v4l2_ctrl_handler_init(handler, 3);
-	camअगर->ctrl_test_pattern = v4l2_ctrl_new_std_menu_items(handler,
-			&s3c_camअगर_subdev_ctrl_ops, V4L2_CID_TEST_PATTERN,
-			ARRAY_SIZE(s3c_camअगर_test_pattern_menu) - 1, 0, 0,
-			s3c_camअगर_test_pattern_menu);
+	camif->ctrl_test_pattern = v4l2_ctrl_new_std_menu_items(handler,
+			&s3c_camif_subdev_ctrl_ops, V4L2_CID_TEST_PATTERN,
+			ARRAY_SIZE(s3c_camif_test_pattern_menu) - 1, 0, 0,
+			s3c_camif_test_pattern_menu);
 
-	अगर (camअगर->variant->has_img_effect) अणु
-		camअगर->ctrl_colorfx = v4l2_ctrl_new_std_menu(handler,
-				&s3c_camअगर_subdev_ctrl_ops,
+	if (camif->variant->has_img_effect) {
+		camif->ctrl_colorfx = v4l2_ctrl_new_std_menu(handler,
+				&s3c_camif_subdev_ctrl_ops,
 				V4L2_CID_COLORFX, V4L2_COLORFX_SET_CBCR,
 				~0x981f, V4L2_COLORFX_NONE);
 
-		camअगर->ctrl_colorfx_cbcr = v4l2_ctrl_new_std(handler,
-				&s3c_camअगर_subdev_ctrl_ops,
+		camif->ctrl_colorfx_cbcr = v4l2_ctrl_new_std(handler,
+				&s3c_camif_subdev_ctrl_ops,
 				V4L2_CID_COLORFX_CBCR, 0, 0xffff, 1, 0);
-	पूर्ण
+	}
 
-	अगर (handler->error) अणु
-		v4l2_ctrl_handler_मुक्त(handler);
+	if (handler->error) {
+		v4l2_ctrl_handler_free(handler);
 		media_entity_cleanup(&sd->entity);
-		वापस handler->error;
-	पूर्ण
+		return handler->error;
+	}
 
-	अगर (camअगर->variant->has_img_effect)
-		v4l2_ctrl_स्वतः_cluster(2, &camअगर->ctrl_colorfx,
+	if (camif->variant->has_img_effect)
+		v4l2_ctrl_auto_cluster(2, &camif->ctrl_colorfx,
 			       V4L2_COLORFX_SET_CBCR, false);
 
 	sd->ctrl_handler = handler;
-	v4l2_set_subdevdata(sd, camअगर);
+	v4l2_set_subdevdata(sd, camif);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम s3c_camअगर_unरेजिस्टर_subdev(काष्ठा camअगर_dev *camअगर)
-अणु
-	काष्ठा v4l2_subdev *sd = &camअगर->subdev;
+void s3c_camif_unregister_subdev(struct camif_dev *camif)
+{
+	struct v4l2_subdev *sd = &camif->subdev;
 
-	/* Return अगर not रेजिस्टरed */
-	अगर (v4l2_get_subdevdata(sd) == शून्य)
-		वापस;
+	/* Return if not registered */
+	if (v4l2_get_subdevdata(sd) == NULL)
+		return;
 
-	v4l2_device_unरेजिस्टर_subdev(sd);
+	v4l2_device_unregister_subdev(sd);
 	media_entity_cleanup(&sd->entity);
-	v4l2_ctrl_handler_मुक्त(&camअगर->ctrl_handler);
-	v4l2_set_subdevdata(sd, शून्य);
-पूर्ण
+	v4l2_ctrl_handler_free(&camif->ctrl_handler);
+	v4l2_set_subdevdata(sd, NULL);
+}
 
-पूर्णांक s3c_camअगर_set_शेषs(काष्ठा camअगर_dev *camअगर)
-अणु
-	अचिन्हित पूर्णांक ip_rev = camअगर->variant->ip_revision;
-	पूर्णांक i;
+int s3c_camif_set_defaults(struct camif_dev *camif)
+{
+	unsigned int ip_rev = camif->variant->ip_revision;
+	int i;
 
-	क्रम (i = 0; i < CAMIF_VP_NUM; i++) अणु
-		काष्ठा camअगर_vp *vp = &camअगर->vp[i];
-		काष्ठा camअगर_frame *f = &vp->out_frame;
+	for (i = 0; i < CAMIF_VP_NUM; i++) {
+		struct camif_vp *vp = &camif->vp[i];
+		struct camif_frame *f = &vp->out_frame;
 
-		vp->camअगर = camअगर;
+		vp->camif = camif;
 		vp->id = i;
-		vp->offset = camअगर->variant->vp_offset;
+		vp->offset = camif->variant->vp_offset;
 
-		अगर (ip_rev == S3C244X_CAMIF_IP_REV)
+		if (ip_rev == S3C244X_CAMIF_IP_REV)
 			vp->fmt_flags = i ? FMT_FL_S3C24XX_PREVIEW :
 					FMT_FL_S3C24XX_CODEC;
-		अन्यथा
+		else
 			vp->fmt_flags = FMT_FL_S3C64XX;
 
-		vp->out_fmt = s3c_camअगर_find_क्रमmat(vp, शून्य, 0);
-		BUG_ON(vp->out_fmt == शून्य);
+		vp->out_fmt = s3c_camif_find_format(vp, NULL, 0);
+		BUG_ON(vp->out_fmt == NULL);
 
-		स_रखो(f, 0, माप(*f));
+		memset(f, 0, sizeof(*f));
 		f->f_width = CAMIF_DEF_WIDTH;
 		f->f_height = CAMIF_DEF_HEIGHT;
 		f->rect.width = CAMIF_DEF_WIDTH;
@@ -1638,16 +1637,16 @@ err_vd_rel:
 
 		vp->payload = (f->f_width * f->f_height *
 			       vp->out_fmt->depth) / 8;
-	पूर्ण
+	}
 
-	स_रखो(&camअगर->mbus_fmt, 0, माप(camअगर->mbus_fmt));
-	camअगर->mbus_fmt.width = CAMIF_DEF_WIDTH;
-	camअगर->mbus_fmt.height = CAMIF_DEF_HEIGHT;
-	camअगर->mbus_fmt.code  = camअगर_mbus_क्रमmats[0];
+	memset(&camif->mbus_fmt, 0, sizeof(camif->mbus_fmt));
+	camif->mbus_fmt.width = CAMIF_DEF_WIDTH;
+	camif->mbus_fmt.height = CAMIF_DEF_HEIGHT;
+	camif->mbus_fmt.code  = camif_mbus_formats[0];
 
-	स_रखो(&camअगर->camअगर_crop, 0, माप(camअगर->camअगर_crop));
-	camअगर->camअगर_crop.width = CAMIF_DEF_WIDTH;
-	camअगर->camअगर_crop.height = CAMIF_DEF_HEIGHT;
+	memset(&camif->camif_crop, 0, sizeof(camif->camif_crop));
+	camif->camif_crop.width = CAMIF_DEF_WIDTH;
+	camif->camif_crop.height = CAMIF_DEF_HEIGHT;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

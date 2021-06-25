@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Cryptographic API.
  *
@@ -8,123 +7,123 @@
  * Copyright (c) 2005 Dag Arne Osvik <da@osvik.no>
  */
 
-#समावेश <यंत्र/byteorder.h>
-#समावेश <linux/bitops.h>
-#समावेश <linux/init.h>
-#समावेश <linux/module.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/crypto.h>
+#include <asm/byteorder.h>
+#include <linux/bitops.h>
+#include <linux/init.h>
+#include <linux/module.h>
+#include <linux/errno.h>
+#include <linux/crypto.h>
 
-#समावेश <crypto/पूर्णांकernal/des.h>
+#include <crypto/internal/des.h>
 
-अटल पूर्णांक des_setkey(काष्ठा crypto_tfm *tfm, स्थिर u8 *key,
-		      अचिन्हित पूर्णांक keylen)
-अणु
-	काष्ठा des_ctx *dctx = crypto_tfm_ctx(tfm);
-	पूर्णांक err;
+static int des_setkey(struct crypto_tfm *tfm, const u8 *key,
+		      unsigned int keylen)
+{
+	struct des_ctx *dctx = crypto_tfm_ctx(tfm);
+	int err;
 
 	err = des_expand_key(dctx, key, keylen);
-	अगर (err == -ENOKEY) अणु
-		अगर (crypto_tfm_get_flags(tfm) & CRYPTO_TFM_REQ_FORBID_WEAK_KEYS)
+	if (err == -ENOKEY) {
+		if (crypto_tfm_get_flags(tfm) & CRYPTO_TFM_REQ_FORBID_WEAK_KEYS)
 			err = -EINVAL;
-		अन्यथा
+		else
 			err = 0;
-	पूर्ण
-	अगर (err)
-		स_रखो(dctx, 0, माप(*dctx));
-	वापस err;
-पूर्ण
+	}
+	if (err)
+		memset(dctx, 0, sizeof(*dctx));
+	return err;
+}
 
-अटल व्योम crypto_des_encrypt(काष्ठा crypto_tfm *tfm, u8 *dst, स्थिर u8 *src)
-अणु
-	स्थिर काष्ठा des_ctx *dctx = crypto_tfm_ctx(tfm);
+static void crypto_des_encrypt(struct crypto_tfm *tfm, u8 *dst, const u8 *src)
+{
+	const struct des_ctx *dctx = crypto_tfm_ctx(tfm);
 
 	des_encrypt(dctx, dst, src);
-पूर्ण
+}
 
-अटल व्योम crypto_des_decrypt(काष्ठा crypto_tfm *tfm, u8 *dst, स्थिर u8 *src)
-अणु
-	स्थिर काष्ठा des_ctx *dctx = crypto_tfm_ctx(tfm);
+static void crypto_des_decrypt(struct crypto_tfm *tfm, u8 *dst, const u8 *src)
+{
+	const struct des_ctx *dctx = crypto_tfm_ctx(tfm);
 
 	des_decrypt(dctx, dst, src);
-पूर्ण
+}
 
-अटल पूर्णांक des3_ede_setkey(काष्ठा crypto_tfm *tfm, स्थिर u8 *key,
-			   अचिन्हित पूर्णांक keylen)
-अणु
-	काष्ठा des3_ede_ctx *dctx = crypto_tfm_ctx(tfm);
-	पूर्णांक err;
+static int des3_ede_setkey(struct crypto_tfm *tfm, const u8 *key,
+			   unsigned int keylen)
+{
+	struct des3_ede_ctx *dctx = crypto_tfm_ctx(tfm);
+	int err;
 
 	err = des3_ede_expand_key(dctx, key, keylen);
-	अगर (err == -ENOKEY) अणु
-		अगर (crypto_tfm_get_flags(tfm) & CRYPTO_TFM_REQ_FORBID_WEAK_KEYS)
+	if (err == -ENOKEY) {
+		if (crypto_tfm_get_flags(tfm) & CRYPTO_TFM_REQ_FORBID_WEAK_KEYS)
 			err = -EINVAL;
-		अन्यथा
+		else
 			err = 0;
-	पूर्ण
-	अगर (err)
-		स_रखो(dctx, 0, माप(*dctx));
-	वापस err;
-पूर्ण
+	}
+	if (err)
+		memset(dctx, 0, sizeof(*dctx));
+	return err;
+}
 
-अटल व्योम crypto_des3_ede_encrypt(काष्ठा crypto_tfm *tfm, u8 *dst,
-				    स्थिर u8 *src)
-अणु
-	स्थिर काष्ठा des3_ede_ctx *dctx = crypto_tfm_ctx(tfm);
+static void crypto_des3_ede_encrypt(struct crypto_tfm *tfm, u8 *dst,
+				    const u8 *src)
+{
+	const struct des3_ede_ctx *dctx = crypto_tfm_ctx(tfm);
 
 	des3_ede_encrypt(dctx, dst, src);
-पूर्ण
+}
 
-अटल व्योम crypto_des3_ede_decrypt(काष्ठा crypto_tfm *tfm, u8 *dst,
-				    स्थिर u8 *src)
-अणु
-	स्थिर काष्ठा des3_ede_ctx *dctx = crypto_tfm_ctx(tfm);
+static void crypto_des3_ede_decrypt(struct crypto_tfm *tfm, u8 *dst,
+				    const u8 *src)
+{
+	const struct des3_ede_ctx *dctx = crypto_tfm_ctx(tfm);
 
 	des3_ede_decrypt(dctx, dst, src);
-पूर्ण
+}
 
-अटल काष्ठा crypto_alg des_algs[2] = अणु अणु
+static struct crypto_alg des_algs[2] = { {
 	.cra_name		=	"des",
 	.cra_driver_name	=	"des-generic",
 	.cra_priority		=	100,
 	.cra_flags		=	CRYPTO_ALG_TYPE_CIPHER,
 	.cra_blocksize		=	DES_BLOCK_SIZE,
-	.cra_ctxsize		=	माप(काष्ठा des_ctx),
+	.cra_ctxsize		=	sizeof(struct des_ctx),
 	.cra_module		=	THIS_MODULE,
-	.cra_u			=	अणु .cipher = अणु
+	.cra_u			=	{ .cipher = {
 	.cia_min_keysize	=	DES_KEY_SIZE,
 	.cia_max_keysize	=	DES_KEY_SIZE,
 	.cia_setkey		=	des_setkey,
 	.cia_encrypt		=	crypto_des_encrypt,
-	.cia_decrypt		=	crypto_des_decrypt पूर्ण पूर्ण
-पूर्ण, अणु
+	.cia_decrypt		=	crypto_des_decrypt } }
+}, {
 	.cra_name		=	"des3_ede",
 	.cra_driver_name	=	"des3_ede-generic",
 	.cra_priority		=	100,
 	.cra_flags		=	CRYPTO_ALG_TYPE_CIPHER,
 	.cra_blocksize		=	DES3_EDE_BLOCK_SIZE,
-	.cra_ctxsize		=	माप(काष्ठा des3_ede_ctx),
+	.cra_ctxsize		=	sizeof(struct des3_ede_ctx),
 	.cra_module		=	THIS_MODULE,
-	.cra_u			=	अणु .cipher = अणु
+	.cra_u			=	{ .cipher = {
 	.cia_min_keysize	=	DES3_EDE_KEY_SIZE,
 	.cia_max_keysize	=	DES3_EDE_KEY_SIZE,
 	.cia_setkey		=	des3_ede_setkey,
 	.cia_encrypt		=	crypto_des3_ede_encrypt,
-	.cia_decrypt		=	crypto_des3_ede_decrypt पूर्ण पूर्ण
-पूर्ण पूर्ण;
+	.cia_decrypt		=	crypto_des3_ede_decrypt } }
+} };
 
-अटल पूर्णांक __init des_generic_mod_init(व्योम)
-अणु
-	वापस crypto_रेजिस्टर_algs(des_algs, ARRAY_SIZE(des_algs));
-पूर्ण
+static int __init des_generic_mod_init(void)
+{
+	return crypto_register_algs(des_algs, ARRAY_SIZE(des_algs));
+}
 
-अटल व्योम __निकास des_generic_mod_fini(व्योम)
-अणु
-	crypto_unरेजिस्टर_algs(des_algs, ARRAY_SIZE(des_algs));
-पूर्ण
+static void __exit des_generic_mod_fini(void)
+{
+	crypto_unregister_algs(des_algs, ARRAY_SIZE(des_algs));
+}
 
 subsys_initcall(des_generic_mod_init);
-module_निकास(des_generic_mod_fini);
+module_exit(des_generic_mod_fini);
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("DES & Triple DES EDE Cipher Algorithms");

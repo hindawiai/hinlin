@@ -1,157 +1,156 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  *  Copyright (C) 1991, 1992  Linus Torvalds
- *  Copyright (C) 2000, 2001, 2002 Andi Kleen, SuSE Lअसल
+ *  Copyright (C) 2000, 2001, 2002 Andi Kleen, SuSE Labs
  *  Copyright (C) 2009  Matt Fleming
  *  Copyright (C) 2002 - 2012  Paul Mundt
  */
-#समावेश <linux/kallsyms.h>
-#समावेश <linux/ftrace.h>
-#समावेश <linux/debug_locks.h>
-#समावेश <linux/sched/debug.h>
-#समावेश <linux/sched/task_stack.h>
-#समावेश <linux/kdebug.h>
-#समावेश <linux/export.h>
-#समावेश <linux/uaccess.h>
-#समावेश <यंत्र/unwinder.h>
-#समावेश <यंत्र/stacktrace.h>
+#include <linux/kallsyms.h>
+#include <linux/ftrace.h>
+#include <linux/debug_locks.h>
+#include <linux/sched/debug.h>
+#include <linux/sched/task_stack.h>
+#include <linux/kdebug.h>
+#include <linux/export.h>
+#include <linux/uaccess.h>
+#include <asm/unwinder.h>
+#include <asm/stacktrace.h>
 
-व्योम dump_mem(स्थिर अक्षर *str, स्थिर अक्षर *loglvl, अचिन्हित दीर्घ bottom,
-	      अचिन्हित दीर्घ top)
-अणु
-	अचिन्हित दीर्घ p;
-	पूर्णांक i;
+void dump_mem(const char *str, const char *loglvl, unsigned long bottom,
+	      unsigned long top)
+{
+	unsigned long p;
+	int i;
 
-	prपूर्णांकk("%s%s(0x%08lx to 0x%08lx)\n", loglvl, str, bottom, top);
+	printk("%s%s(0x%08lx to 0x%08lx)\n", loglvl, str, bottom, top);
 
-	क्रम (p = bottom & ~31; p < top; ) अणु
-		prपूर्णांकk("%s%04lx: ", loglvl,  p & 0xffff);
+	for (p = bottom & ~31; p < top; ) {
+		printk("%s%04lx: ", loglvl,  p & 0xffff);
 
-		क्रम (i = 0; i < 8; i++, p += 4) अणु
-			अचिन्हित पूर्णांक val;
+		for (i = 0; i < 8; i++, p += 4) {
+			unsigned int val;
 
-			अगर (p < bottom || p >= top)
+			if (p < bottom || p >= top)
 				pr_cont("         ");
-			अन्यथा अणु
-				अगर (__get_user(val, (अचिन्हित पूर्णांक __user *)p)) अणु
+			else {
+				if (__get_user(val, (unsigned int __user *)p)) {
 					pr_cont("\n");
-					वापस;
-				पूर्ण
+					return;
+				}
 				pr_cont("%08x ", val);
-			पूर्ण
-		पूर्ण
+			}
+		}
 		pr_cont("\n");
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम prपूर्णांकk_address(अचिन्हित दीर्घ address, पूर्णांक reliable)
-अणु
-	pr_cont(" [<%px>] %s%pS\n", (व्योम *) address,
-		reliable ? "" : "? ", (व्योम *) address);
-पूर्ण
+void printk_address(unsigned long address, int reliable)
+{
+	pr_cont(" [<%px>] %s%pS\n", (void *) address,
+		reliable ? "" : "? ", (void *) address);
+}
 
-#अगर_घोषित CONFIG_FUNCTION_GRAPH_TRACER
-अटल व्योम
-prपूर्णांक_ftrace_graph_addr(अचिन्हित दीर्घ addr, व्योम *data,
-			स्थिर काष्ठा stacktrace_ops *ops,
-			काष्ठा thपढ़ो_info *tinfo, पूर्णांक *graph)
-अणु
-	काष्ठा task_काष्ठा *task = tinfo->task;
-	काष्ठा ftrace_ret_stack *ret_stack;
-	अचिन्हित दीर्घ ret_addr;
+#ifdef CONFIG_FUNCTION_GRAPH_TRACER
+static void
+print_ftrace_graph_addr(unsigned long addr, void *data,
+			const struct stacktrace_ops *ops,
+			struct thread_info *tinfo, int *graph)
+{
+	struct task_struct *task = tinfo->task;
+	struct ftrace_ret_stack *ret_stack;
+	unsigned long ret_addr;
 
-	अगर (addr != (अचिन्हित दीर्घ)वापस_to_handler)
-		वापस;
+	if (addr != (unsigned long)return_to_handler)
+		return;
 
-	अगर (!task->ret_stack)
-		वापस;
+	if (!task->ret_stack)
+		return;
 
 	ret_stack = ftrace_graph_get_ret_stack(task, *graph);
-	अगर (!ret_stack)
-		वापस;
+	if (!ret_stack)
+		return;
 
 	ret_addr = ret_stack->ret;
 
 	ops->address(data, ret_addr, 1);
 
 	(*graph)++;
-पूर्ण
-#अन्यथा
-अटल अंतरभूत व्योम
-prपूर्णांक_ftrace_graph_addr(अचिन्हित दीर्घ addr, व्योम *data,
-			स्थिर काष्ठा stacktrace_ops *ops,
-			काष्ठा thपढ़ो_info *tinfo, पूर्णांक *graph)
-अणु पूर्ण
-#पूर्ण_अगर
+}
+#else
+static inline void
+print_ftrace_graph_addr(unsigned long addr, void *data,
+			const struct stacktrace_ops *ops,
+			struct thread_info *tinfo, int *graph)
+{ }
+#endif
 
-व्योम
-stack_पढ़ोer_dump(काष्ठा task_काष्ठा *task, काष्ठा pt_regs *regs,
-		  अचिन्हित दीर्घ *sp, स्थिर काष्ठा stacktrace_ops *ops,
-		  व्योम *data)
-अणु
-	काष्ठा thपढ़ो_info *context;
-	पूर्णांक graph = 0;
+void
+stack_reader_dump(struct task_struct *task, struct pt_regs *regs,
+		  unsigned long *sp, const struct stacktrace_ops *ops,
+		  void *data)
+{
+	struct thread_info *context;
+	int graph = 0;
 
-	context = (काष्ठा thपढ़ो_info *)
-		((अचिन्हित दीर्घ)sp & (~(THREAD_SIZE - 1)));
+	context = (struct thread_info *)
+		((unsigned long)sp & (~(THREAD_SIZE - 1)));
 
-	जबतक (!kstack_end(sp)) अणु
-		अचिन्हित दीर्घ addr = *sp++;
+	while (!kstack_end(sp)) {
+		unsigned long addr = *sp++;
 
-		अगर (__kernel_text_address(addr)) अणु
+		if (__kernel_text_address(addr)) {
 			ops->address(data, addr, 1);
 
-			prपूर्णांक_ftrace_graph_addr(addr, data, ops,
+			print_ftrace_graph_addr(addr, data, ops,
 						context, &graph);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
 /*
- * Prपूर्णांक one address/symbol entries per line.
+ * Print one address/symbol entries per line.
  */
-अटल व्योम prपूर्णांक_trace_address(व्योम *data, अचिन्हित दीर्घ addr, पूर्णांक reliable)
-अणु
-	prपूर्णांकk("%s", (अक्षर *)data);
-	prपूर्णांकk_address(addr, reliable);
-पूर्ण
+static void print_trace_address(void *data, unsigned long addr, int reliable)
+{
+	printk("%s", (char *)data);
+	printk_address(addr, reliable);
+}
 
-अटल स्थिर काष्ठा stacktrace_ops prपूर्णांक_trace_ops = अणु
-	.address = prपूर्णांक_trace_address,
-पूर्ण;
+static const struct stacktrace_ops print_trace_ops = {
+	.address = print_trace_address,
+};
 
-व्योम show_trace(काष्ठा task_काष्ठा *tsk, अचिन्हित दीर्घ *sp,
-		काष्ठा pt_regs *regs, स्थिर अक्षर *loglvl)
-अणु
-	अगर (regs && user_mode(regs))
-		वापस;
+void show_trace(struct task_struct *tsk, unsigned long *sp,
+		struct pt_regs *regs, const char *loglvl)
+{
+	if (regs && user_mode(regs))
+		return;
 
-	prपूर्णांकk("%s\nCall trace:\n", loglvl);
+	printk("%s\nCall trace:\n", loglvl);
 
-	unwind_stack(tsk, regs, sp, &prपूर्णांक_trace_ops, (व्योम *)loglvl);
+	unwind_stack(tsk, regs, sp, &print_trace_ops, (void *)loglvl);
 
 	pr_cont("\n");
 
-	अगर (!tsk)
+	if (!tsk)
 		tsk = current;
 
 	debug_show_held_locks(tsk);
-पूर्ण
+}
 
-व्योम show_stack(काष्ठा task_काष्ठा *tsk, अचिन्हित दीर्घ *sp, स्थिर अक्षर *loglvl)
-अणु
-	अचिन्हित दीर्घ stack;
+void show_stack(struct task_struct *tsk, unsigned long *sp, const char *loglvl)
+{
+	unsigned long stack;
 
-	अगर (!tsk)
+	if (!tsk)
 		tsk = current;
-	अगर (tsk == current)
-		sp = (अचिन्हित दीर्घ *)current_stack_poपूर्णांकer;
-	अन्यथा
-		sp = (अचिन्हित दीर्घ *)tsk->thपढ़ो.sp;
+	if (tsk == current)
+		sp = (unsigned long *)current_stack_pointer;
+	else
+		sp = (unsigned long *)tsk->thread.sp;
 
-	stack = (अचिन्हित दीर्घ)sp;
+	stack = (unsigned long)sp;
 	dump_mem("Stack: ", loglvl, stack, THREAD_SIZE +
-		 (अचिन्हित दीर्घ)task_stack_page(tsk));
-	show_trace(tsk, sp, शून्य, loglvl);
-पूर्ण
+		 (unsigned long)task_stack_page(tsk));
+	show_trace(tsk, sp, NULL, loglvl);
+}

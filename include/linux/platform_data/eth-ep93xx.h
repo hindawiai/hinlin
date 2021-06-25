@@ -1,11 +1,10 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _LINUX_PLATFORM_DATA_ETH_EP93XX
-#घोषणा _LINUX_PLATFORM_DATA_ETH_EP93XX
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _LINUX_PLATFORM_DATA_ETH_EP93XX
+#define _LINUX_PLATFORM_DATA_ETH_EP93XX
 
-काष्ठा ep93xx_eth_data अणु
-	अचिन्हित अक्षर	dev_addr[6];
-	अचिन्हित अक्षर	phy_id;
-पूर्ण;
+struct ep93xx_eth_data {
+	unsigned char	dev_addr[6];
+	unsigned char	phy_id;
+};
 
-#पूर्ण_अगर
+#endif

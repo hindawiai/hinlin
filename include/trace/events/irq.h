@@ -1,17 +1,16 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अघोषित TRACE_SYSTEM
-#घोषणा TRACE_SYSTEM irq
+/* SPDX-License-Identifier: GPL-2.0 */
+#undef TRACE_SYSTEM
+#define TRACE_SYSTEM irq
 
-#अगर !defined(_TRACE_IRQ_H) || defined(TRACE_HEADER_MULTI_READ)
-#घोषणा _TRACE_IRQ_H
+#if !defined(_TRACE_IRQ_H) || defined(TRACE_HEADER_MULTI_READ)
+#define _TRACE_IRQ_H
 
-#समावेश <linux/tracepoपूर्णांक.h>
+#include <linux/tracepoint.h>
 
-काष्ठा irqaction;
-काष्ठा softirq_action;
+struct irqaction;
+struct softirq_action;
 
-#घोषणा SOFTIRQ_NAME_LIST				\
+#define SOFTIRQ_NAME_LIST				\
 			 softirq_name(HI)		\
 			 softirq_name(TIMER)		\
 			 softirq_name(NET_TX)		\
@@ -23,42 +22,42 @@
 			 softirq_name(HRTIMER)		\
 			 softirq_name_end(RCU)
 
-#अघोषित softirq_name
-#अघोषित softirq_name_end
+#undef softirq_name
+#undef softirq_name_end
 
-#घोषणा softirq_name(sirq) TRACE_DEFINE_ENUM(sirq##_SOFTIRQ);
-#घोषणा softirq_name_end(sirq)  TRACE_DEFINE_ENUM(sirq##_SOFTIRQ);
+#define softirq_name(sirq) TRACE_DEFINE_ENUM(sirq##_SOFTIRQ);
+#define softirq_name_end(sirq)  TRACE_DEFINE_ENUM(sirq##_SOFTIRQ);
 
 SOFTIRQ_NAME_LIST
 
-#अघोषित softirq_name
-#अघोषित softirq_name_end
+#undef softirq_name
+#undef softirq_name_end
 
-#घोषणा softirq_name(sirq) अणु sirq##_SOFTIRQ, #sirq पूर्ण,
-#घोषणा softirq_name_end(sirq) अणु sirq##_SOFTIRQ, #sirq पूर्ण
+#define softirq_name(sirq) { sirq##_SOFTIRQ, #sirq },
+#define softirq_name_end(sirq) { sirq##_SOFTIRQ, #sirq }
 
-#घोषणा show_softirq_name(val)				\
-	__prपूर्णांक_symbolic(val, SOFTIRQ_NAME_LIST)
+#define show_softirq_name(val)				\
+	__print_symbolic(val, SOFTIRQ_NAME_LIST)
 
 /**
- * irq_handler_entry - called immediately beक्रमe the irq action handler
+ * irq_handler_entry - called immediately before the irq action handler
  * @irq: irq number
- * @action: poपूर्णांकer to काष्ठा irqaction
+ * @action: pointer to struct irqaction
  *
- * The काष्ठा irqaction poपूर्णांकed to by @action contains various
- * inक्रमmation about the handler, including the device name,
+ * The struct irqaction pointed to by @action contains various
+ * information about the handler, including the device name,
  * @action->name, and the device id, @action->dev_id. When used in
- * conjunction with the irq_handler_निकास tracepoपूर्णांक, we can figure
+ * conjunction with the irq_handler_exit tracepoint, we can figure
  * out irq handler latencies.
  */
 TRACE_EVENT(irq_handler_entry,
 
-	TP_PROTO(पूर्णांक irq, काष्ठा irqaction *action),
+	TP_PROTO(int irq, struct irqaction *action),
 
 	TP_ARGS(irq, action),
 
 	TP_STRUCT__entry(
-		__field(	पूर्णांक,	irq		)
+		__field(	int,	irq		)
 		__string(	name,	action->name	)
 	),
 
@@ -67,29 +66,29 @@ TRACE_EVENT(irq_handler_entry,
 		__assign_str(name, action->name);
 	),
 
-	TP_prपूर्णांकk("irq=%d name=%s", __entry->irq, __get_str(name))
+	TP_printk("irq=%d name=%s", __entry->irq, __get_str(name))
 );
 
 /**
- * irq_handler_निकास - called immediately after the irq action handler वापसs
+ * irq_handler_exit - called immediately after the irq action handler returns
  * @irq: irq number
- * @action: poपूर्णांकer to काष्ठा irqaction
- * @ret: वापस value
+ * @action: pointer to struct irqaction
+ * @ret: return value
  *
  * If the @ret value is set to IRQ_HANDLED, then we know that the corresponding
  * @action->handler successfully handled this irq. Otherwise, the irq might be
  * a shared irq line, or the irq was not handled successfully. Can be used in
  * conjunction with the irq_handler_entry to understand irq handler latencies.
  */
-TRACE_EVENT(irq_handler_निकास,
+TRACE_EVENT(irq_handler_exit,
 
-	TP_PROTO(पूर्णांक irq, काष्ठा irqaction *action, पूर्णांक ret),
+	TP_PROTO(int irq, struct irqaction *action, int ret),
 
 	TP_ARGS(irq, action, ret),
 
 	TP_STRUCT__entry(
-		__field(	पूर्णांक,	irq	)
-		__field(	पूर्णांक,	ret	)
+		__field(	int,	irq	)
+		__field(	int,	ret	)
 	),
 
 	TP_fast_assign(
@@ -97,71 +96,71 @@ TRACE_EVENT(irq_handler_निकास,
 		__entry->ret	= ret;
 	),
 
-	TP_prपूर्णांकk("irq=%d ret=%s",
+	TP_printk("irq=%d ret=%s",
 		  __entry->irq, __entry->ret ? "handled" : "unhandled")
 );
 
 DECLARE_EVENT_CLASS(softirq,
 
-	TP_PROTO(अचिन्हित पूर्णांक vec_nr),
+	TP_PROTO(unsigned int vec_nr),
 
 	TP_ARGS(vec_nr),
 
 	TP_STRUCT__entry(
-		__field(	अचिन्हित पूर्णांक,	vec	)
+		__field(	unsigned int,	vec	)
 	),
 
 	TP_fast_assign(
 		__entry->vec = vec_nr;
 	),
 
-	TP_prपूर्णांकk("vec=%u [action=%s]", __entry->vec,
+	TP_printk("vec=%u [action=%s]", __entry->vec,
 		  show_softirq_name(__entry->vec))
 );
 
 /**
- * softirq_entry - called immediately beक्रमe the softirq handler
+ * softirq_entry - called immediately before the softirq handler
  * @vec_nr:  softirq vector number
  *
- * When used in combination with the softirq_निकास tracepoपूर्णांक
+ * When used in combination with the softirq_exit tracepoint
  * we can determine the softirq handler routine.
  */
 DEFINE_EVENT(softirq, softirq_entry,
 
-	TP_PROTO(अचिन्हित पूर्णांक vec_nr),
+	TP_PROTO(unsigned int vec_nr),
 
 	TP_ARGS(vec_nr)
 );
 
 /**
- * softirq_निकास - called immediately after the softirq handler वापसs
+ * softirq_exit - called immediately after the softirq handler returns
  * @vec_nr:  softirq vector number
  *
- * When used in combination with the softirq_entry tracepoपूर्णांक
+ * When used in combination with the softirq_entry tracepoint
  * we can determine the softirq handler routine.
  */
-DEFINE_EVENT(softirq, softirq_निकास,
+DEFINE_EVENT(softirq, softirq_exit,
 
-	TP_PROTO(अचिन्हित पूर्णांक vec_nr),
+	TP_PROTO(unsigned int vec_nr),
 
 	TP_ARGS(vec_nr)
 );
 
 /**
- * softirq_उठाओ - called immediately when a softirq is उठाओd
+ * softirq_raise - called immediately when a softirq is raised
  * @vec_nr:  softirq vector number
  *
- * When used in combination with the softirq_entry tracepoपूर्णांक
- * we can determine the softirq उठाओ to run latency.
+ * When used in combination with the softirq_entry tracepoint
+ * we can determine the softirq raise to run latency.
  */
-DEFINE_EVENT(softirq, softirq_उठाओ,
+DEFINE_EVENT(softirq, softirq_raise,
 
-	TP_PROTO(अचिन्हित पूर्णांक vec_nr),
+	TP_PROTO(unsigned int vec_nr),
 
 	TP_ARGS(vec_nr)
 );
 
-#पूर्ण_अगर /*  _TRACE_IRQ_H */
+#endif /*  _TRACE_IRQ_H */
 
 /* This part must be outside protection */
-#समावेश <trace/define_trace.h>
+#include <trace/define_trace.h>

@@ -1,85 +1,84 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित ARCH_PERF_REGS_H
-#घोषणा ARCH_PERF_REGS_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef ARCH_PERF_REGS_H
+#define ARCH_PERF_REGS_H
 
-#समावेश <मानककोष.स>
-#समावेश <linux/types.h>
-#समावेश <यंत्र/perf_regs.h>
+#include <stdlib.h>
+#include <linux/types.h>
+#include <asm/perf_regs.h>
 
-#घोषणा PERF_REGS_MAX PERF_REG_MIPS_MAX
-#घोषणा PERF_REG_IP PERF_REG_MIPS_PC
-#घोषणा PERF_REG_SP PERF_REG_MIPS_R29
+#define PERF_REGS_MAX PERF_REG_MIPS_MAX
+#define PERF_REG_IP PERF_REG_MIPS_PC
+#define PERF_REG_SP PERF_REG_MIPS_R29
 
-#घोषणा PERF_REGS_MASK ((1ULL << PERF_REG_MIPS_MAX) - 1)
+#define PERF_REGS_MASK ((1ULL << PERF_REG_MIPS_MAX) - 1)
 
-अटल अंतरभूत स्थिर अक्षर *__perf_reg_name(पूर्णांक id)
-अणु
-	चयन (id) अणु
-	हाल PERF_REG_MIPS_PC:
-		वापस "PC";
-	हाल PERF_REG_MIPS_R1:
-		वापस "$1";
-	हाल PERF_REG_MIPS_R2:
-		वापस "$2";
-	हाल PERF_REG_MIPS_R3:
-		वापस "$3";
-	हाल PERF_REG_MIPS_R4:
-		वापस "$4";
-	हाल PERF_REG_MIPS_R5:
-		वापस "$5";
-	हाल PERF_REG_MIPS_R6:
-		वापस "$6";
-	हाल PERF_REG_MIPS_R7:
-		वापस "$7";
-	हाल PERF_REG_MIPS_R8:
-		वापस "$8";
-	हाल PERF_REG_MIPS_R9:
-		वापस "$9";
-	हाल PERF_REG_MIPS_R10:
-		वापस "$10";
-	हाल PERF_REG_MIPS_R11:
-		वापस "$11";
-	हाल PERF_REG_MIPS_R12:
-		वापस "$12";
-	हाल PERF_REG_MIPS_R13:
-		वापस "$13";
-	हाल PERF_REG_MIPS_R14:
-		वापस "$14";
-	हाल PERF_REG_MIPS_R15:
-		वापस "$15";
-	हाल PERF_REG_MIPS_R16:
-		वापस "$16";
-	हाल PERF_REG_MIPS_R17:
-		वापस "$17";
-	हाल PERF_REG_MIPS_R18:
-		वापस "$18";
-	हाल PERF_REG_MIPS_R19:
-		वापस "$19";
-	हाल PERF_REG_MIPS_R20:
-		वापस "$20";
-	हाल PERF_REG_MIPS_R21:
-		वापस "$21";
-	हाल PERF_REG_MIPS_R22:
-		वापस "$22";
-	हाल PERF_REG_MIPS_R23:
-		वापस "$23";
-	हाल PERF_REG_MIPS_R24:
-		वापस "$24";
-	हाल PERF_REG_MIPS_R25:
-		वापस "$25";
-	हाल PERF_REG_MIPS_R28:
-		वापस "$28";
-	हाल PERF_REG_MIPS_R29:
-		वापस "$29";
-	हाल PERF_REG_MIPS_R30:
-		वापस "$30";
-	हाल PERF_REG_MIPS_R31:
-		वापस "$31";
-	शेष:
-		अवरोध;
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+static inline const char *__perf_reg_name(int id)
+{
+	switch (id) {
+	case PERF_REG_MIPS_PC:
+		return "PC";
+	case PERF_REG_MIPS_R1:
+		return "$1";
+	case PERF_REG_MIPS_R2:
+		return "$2";
+	case PERF_REG_MIPS_R3:
+		return "$3";
+	case PERF_REG_MIPS_R4:
+		return "$4";
+	case PERF_REG_MIPS_R5:
+		return "$5";
+	case PERF_REG_MIPS_R6:
+		return "$6";
+	case PERF_REG_MIPS_R7:
+		return "$7";
+	case PERF_REG_MIPS_R8:
+		return "$8";
+	case PERF_REG_MIPS_R9:
+		return "$9";
+	case PERF_REG_MIPS_R10:
+		return "$10";
+	case PERF_REG_MIPS_R11:
+		return "$11";
+	case PERF_REG_MIPS_R12:
+		return "$12";
+	case PERF_REG_MIPS_R13:
+		return "$13";
+	case PERF_REG_MIPS_R14:
+		return "$14";
+	case PERF_REG_MIPS_R15:
+		return "$15";
+	case PERF_REG_MIPS_R16:
+		return "$16";
+	case PERF_REG_MIPS_R17:
+		return "$17";
+	case PERF_REG_MIPS_R18:
+		return "$18";
+	case PERF_REG_MIPS_R19:
+		return "$19";
+	case PERF_REG_MIPS_R20:
+		return "$20";
+	case PERF_REG_MIPS_R21:
+		return "$21";
+	case PERF_REG_MIPS_R22:
+		return "$22";
+	case PERF_REG_MIPS_R23:
+		return "$23";
+	case PERF_REG_MIPS_R24:
+		return "$24";
+	case PERF_REG_MIPS_R25:
+		return "$25";
+	case PERF_REG_MIPS_R28:
+		return "$28";
+	case PERF_REG_MIPS_R29:
+		return "$29";
+	case PERF_REG_MIPS_R30:
+		return "$30";
+	case PERF_REG_MIPS_R31:
+		return "$31";
+	default:
+		break;
+	}
+	return NULL;
+}
 
-#पूर्ण_अगर /* ARCH_PERF_REGS_H */
+#endif /* ARCH_PERF_REGS_H */

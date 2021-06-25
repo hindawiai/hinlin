@@ -1,486 +1,485 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * arch/parisc/lib/io.c
  *
- * Copyright (c) Matthew Wilcox 2001 क्रम Hewlett-Packard
- * Copyright (c) Ranकरोlph Chung 2001 <tausq@debian.org>
+ * Copyright (c) Matthew Wilcox 2001 for Hewlett-Packard
+ * Copyright (c) Randolph Chung 2001 <tausq@debian.org>
  *
  * IO accessing functions which shouldn't be inlined because they're too big
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <यंत्र/पन.स>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <asm/io.h>
 
 /* Copies a block of memory to a device in an efficient manner.
  * Assumes the device can cope with 32-bit transfers.  If it can't,
- * करोn't use this function.
+ * don't use this function.
  */
-व्योम स_नकल_toio(अस्थिर व्योम __iomem *dst, स्थिर व्योम *src, पूर्णांक count)
-अणु
-	अगर (((अचिन्हित दीर्घ)dst & 3) != ((अचिन्हित दीर्घ)src & 3))
-		जाओ bytecopy;
-	जबतक ((अचिन्हित दीर्घ)dst & 3) अणु
-		ग_लिखोb(*(अक्षर *)src, dst++);
+void memcpy_toio(volatile void __iomem *dst, const void *src, int count)
+{
+	if (((unsigned long)dst & 3) != ((unsigned long)src & 3))
+		goto bytecopy;
+	while ((unsigned long)dst & 3) {
+		writeb(*(char *)src, dst++);
 		src++;
 		count--;
-	पूर्ण
-	जबतक (count > 3) अणु
-		__raw_ग_लिखोl(*(u32 *)src, dst);
+	}
+	while (count > 3) {
+		__raw_writel(*(u32 *)src, dst);
 		src += 4;
 		dst += 4;
 		count -= 4;
-	पूर्ण
+	}
  bytecopy:
-	जबतक (count--) अणु
-		ग_लिखोb(*(अक्षर *)src, dst++);
+	while (count--) {
+		writeb(*(char *)src, dst++);
 		src++;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
 ** Copies a block of memory from a device in an efficient manner.
 ** Assumes the device can cope with 32-bit transfers.  If it can't,
-** करोn't use this function.
+** don't use this function.
 **
-** CR16 counts on C3000 पढ़ोing 256 bytes from Symbios 896 RAM:
-**	27341/64    = 427 cyc per पूर्णांक
-**	61311/128   = 478 cyc per लघु
+** CR16 counts on C3000 reading 256 bytes from Symbios 896 RAM:
+**	27341/64    = 427 cyc per int
+**	61311/128   = 478 cyc per short
 **	122637/256  = 479 cyc per byte
-** Ergo bus latencies करोminant (not transfer size).
+** Ergo bus latencies dominant (not transfer size).
 **      Minimize total number of transfers at cost of CPU cycles.
 **	TODO: only look at src alignment and adjust the stores to dest.
 */
-व्योम स_नकल_fromio(व्योम *dst, स्थिर अस्थिर व्योम __iomem *src, पूर्णांक count)
-अणु
+void memcpy_fromio(void *dst, const volatile void __iomem *src, int count)
+{
 	/* first compare alignment of src/dst */ 
-	अगर ( (((अचिन्हित दीर्घ)dst ^ (अचिन्हित दीर्घ)src) & 1) || (count < 2) )
-		जाओ bytecopy;
+	if ( (((unsigned long)dst ^ (unsigned long)src) & 1) || (count < 2) )
+		goto bytecopy;
 
-	अगर ( (((अचिन्हित दीर्घ)dst ^ (अचिन्हित दीर्घ)src) & 2) || (count < 4) )
-		जाओ लघुcopy;
+	if ( (((unsigned long)dst ^ (unsigned long)src) & 2) || (count < 4) )
+		goto shortcopy;
 
-	/* Then check क्रम misaligned start address */
-	अगर ((अचिन्हित दीर्घ)src & 1) अणु
-		*(u8 *)dst = पढ़ोb(src);
+	/* Then check for misaligned start address */
+	if ((unsigned long)src & 1) {
+		*(u8 *)dst = readb(src);
 		src++;
 		dst++;
 		count--;
-		अगर (count < 2) जाओ bytecopy;
-	पूर्ण
+		if (count < 2) goto bytecopy;
+	}
 
-	अगर ((अचिन्हित दीर्घ)src & 2) अणु
-		*(u16 *)dst = __raw_पढ़ोw(src);
+	if ((unsigned long)src & 2) {
+		*(u16 *)dst = __raw_readw(src);
 		src += 2;
 		dst += 2;
 		count -= 2;
-	पूर्ण
+	}
 
-	जबतक (count > 3) अणु
-		*(u32 *)dst = __raw_पढ़ोl(src);
+	while (count > 3) {
+		*(u32 *)dst = __raw_readl(src);
 		dst += 4;
 		src += 4;
 		count -= 4;
-	पूर्ण
+	}
 
- लघुcopy:
-	जबतक (count > 1) अणु
-		*(u16 *)dst = __raw_पढ़ोw(src);
+ shortcopy:
+	while (count > 1) {
+		*(u16 *)dst = __raw_readw(src);
 		src += 2;
 		dst += 2;
 		count -= 2;
-	पूर्ण
+	}
 
  bytecopy:
-	जबतक (count--) अणु
-		*(अक्षर *)dst = पढ़ोb(src);
+	while (count--) {
+		*(char *)dst = readb(src);
 		src++;
 		dst++;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /* Sets a block of memory on a device to a given value.
  * Assumes the device can cope with 32-bit transfers.  If it can't,
- * करोn't use this function.
+ * don't use this function.
  */
-व्योम स_रखो_io(अस्थिर व्योम __iomem *addr, अचिन्हित अक्षर val, पूर्णांक count)
-अणु
+void memset_io(volatile void __iomem *addr, unsigned char val, int count)
+{
 	u32 val32 = (val << 24) | (val << 16) | (val << 8) | val;
-	जबतक ((अचिन्हित दीर्घ)addr & 3) अणु
-		ग_लिखोb(val, addr++);
+	while ((unsigned long)addr & 3) {
+		writeb(val, addr++);
 		count--;
-	पूर्ण
-	जबतक (count > 3) अणु
-		__raw_ग_लिखोl(val32, addr);
+	}
+	while (count > 3) {
+		__raw_writel(val32, addr);
 		addr += 4;
 		count -= 4;
-	पूर्ण
-	जबतक (count--) अणु
-		ग_लिखोb(val, addr++);
-	पूर्ण
-पूर्ण
+	}
+	while (count--) {
+		writeb(val, addr++);
+	}
+}
 
 /*
- * Read COUNT 8-bit bytes from port PORT पूर्णांकo memory starting at
+ * Read COUNT 8-bit bytes from port PORT into memory starting at
  * SRC.
  */
-व्योम insb (अचिन्हित दीर्घ port, व्योम *dst, अचिन्हित दीर्घ count)
-अणु
-	अचिन्हित अक्षर *p;
+void insb (unsigned long port, void *dst, unsigned long count)
+{
+	unsigned char *p;
 
-	p = (अचिन्हित अक्षर *)dst;
+	p = (unsigned char *)dst;
 
-	जबतक (((अचिन्हित दीर्घ)p) & 0x3) अणु
-		अगर (!count)
-			वापस;
+	while (((unsigned long)p) & 0x3) {
+		if (!count)
+			return;
 		count--;
 		*p = inb(port);
 		p++;
-	पूर्ण
+	}
 
-	जबतक (count >= 4) अणु
-		अचिन्हित पूर्णांक w;
+	while (count >= 4) {
+		unsigned int w;
 		count -= 4;
 		w = inb(port) << 24;
 		w |= inb(port) << 16;
 		w |= inb(port) << 8;
 		w |= inb(port);
-		*(अचिन्हित पूर्णांक *) p = w;
+		*(unsigned int *) p = w;
 		p += 4;
-	पूर्ण
+	}
 
-	जबतक (count) अणु
+	while (count) {
 		--count;
 		*p = inb(port);
 		p++;
-	पूर्ण
-पूर्ण
+	}
+}
 
 
 /*
- * Read COUNT 16-bit words from port PORT पूर्णांकo memory starting at
- * SRC.  SRC must be at least लघु aligned.  This is used by the
- * IDE driver to पढ़ो disk sectors.  Perक्रमmance is important, but
- * the पूर्णांकerfaces seems to be slow: just using the अंतरभूतd version
- * of the inw() अवरोधs things.
+ * Read COUNT 16-bit words from port PORT into memory starting at
+ * SRC.  SRC must be at least short aligned.  This is used by the
+ * IDE driver to read disk sectors.  Performance is important, but
+ * the interfaces seems to be slow: just using the inlined version
+ * of the inw() breaks things.
  */
-व्योम insw (अचिन्हित दीर्घ port, व्योम *dst, अचिन्हित दीर्घ count)
-अणु
-	अचिन्हित पूर्णांक l = 0, l2;
-	अचिन्हित अक्षर *p;
+void insw (unsigned long port, void *dst, unsigned long count)
+{
+	unsigned int l = 0, l2;
+	unsigned char *p;
 
-	p = (अचिन्हित अक्षर *)dst;
+	p = (unsigned char *)dst;
 	
-	अगर (!count)
-		वापस;
+	if (!count)
+		return;
 	
-	चयन (((अचिन्हित दीर्घ)p) & 0x3)
-	अणु
-	 हाल 0x00:			/* Buffer 32-bit aligned */
-		जबतक (count>=2) अणु
+	switch (((unsigned long)p) & 0x3)
+	{
+	 case 0x00:			/* Buffer 32-bit aligned */
+		while (count>=2) {
 			
 			count -= 2;
 			l = cpu_to_le16(inw(port)) << 16;
 			l |= cpu_to_le16(inw(port));
-			*(अचिन्हित पूर्णांक *)p = l;
+			*(unsigned int *)p = l;
 			p += 4;
-		पूर्ण
-		अगर (count) अणु
-			*(अचिन्हित लघु *)p = cpu_to_le16(inw(port));
-		पूर्ण
-		अवरोध;
+		}
+		if (count) {
+			*(unsigned short *)p = cpu_to_le16(inw(port));
+		}
+		break;
 	
-	 हाल 0x02:			/* Buffer 16-bit aligned */
-		*(अचिन्हित लघु *)p = cpu_to_le16(inw(port));
+	 case 0x02:			/* Buffer 16-bit aligned */
+		*(unsigned short *)p = cpu_to_le16(inw(port));
 		p += 2;
 		count--;
-		जबतक (count>=2) अणु
+		while (count>=2) {
 			
 			count -= 2;
 			l = cpu_to_le16(inw(port)) << 16;
 			l |= cpu_to_le16(inw(port));
-			*(अचिन्हित पूर्णांक *)p = l;
+			*(unsigned int *)p = l;
 			p += 4;
-		पूर्ण
-		अगर (count) अणु
-			*(अचिन्हित लघु *)p = cpu_to_le16(inw(port));
-		पूर्ण
-		अवरोध;
+		}
+		if (count) {
+			*(unsigned short *)p = cpu_to_le16(inw(port));
+		}
+		break;
 		
-	 हाल 0x01:			/* Buffer 8-bit aligned */
-	 हाल 0x03:
-		/* I करोn't bother with 32bit transfers
-		 * in this हाल, 16bit will have to करो -- DE */
+	 case 0x01:			/* Buffer 8-bit aligned */
+	 case 0x03:
+		/* I don't bother with 32bit transfers
+		 * in this case, 16bit will have to do -- DE */
 		--count;
 		
 		l = cpu_to_le16(inw(port));
 		*p = l >> 8;
 		p++;
-		जबतक (count--)
-		अणु
+		while (count--)
+		{
 			l2 = cpu_to_le16(inw(port));
-			*(अचिन्हित लघु *)p = (l & 0xff) << 8 | (l2 >> 8);
+			*(unsigned short *)p = (l & 0xff) << 8 | (l2 >> 8);
 			p += 2;
 			l = l2;
-		पूर्ण
+		}
 		*p = l & 0xff;
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
 
 
 /*
- * Read COUNT 32-bit words from port PORT पूर्णांकo memory starting at
- * SRC. Now works with any alignment in SRC. Perक्रमmance is important,
- * but the पूर्णांकerfaces seems to be slow: just using the अंतरभूतd version
- * of the inl() अवरोधs things.
+ * Read COUNT 32-bit words from port PORT into memory starting at
+ * SRC. Now works with any alignment in SRC. Performance is important,
+ * but the interfaces seems to be slow: just using the inlined version
+ * of the inl() breaks things.
  */
-व्योम insl (अचिन्हित दीर्घ port, व्योम *dst, अचिन्हित दीर्घ count)
-अणु
-	अचिन्हित पूर्णांक l = 0, l2;
-	अचिन्हित अक्षर *p;
+void insl (unsigned long port, void *dst, unsigned long count)
+{
+	unsigned int l = 0, l2;
+	unsigned char *p;
 
-	p = (अचिन्हित अक्षर *)dst;
+	p = (unsigned char *)dst;
 	
-	अगर (!count)
-		वापस;
+	if (!count)
+		return;
 	
-	चयन (((अचिन्हित दीर्घ) dst) & 0x3)
-	अणु
-	 हाल 0x00:			/* Buffer 32-bit aligned */
-		जबतक (count--)
-		अणु
-			*(अचिन्हित पूर्णांक *)p = cpu_to_le32(inl(port));
+	switch (((unsigned long) dst) & 0x3)
+	{
+	 case 0x00:			/* Buffer 32-bit aligned */
+		while (count--)
+		{
+			*(unsigned int *)p = cpu_to_le32(inl(port));
 			p += 4;
-		पूर्ण
-		अवरोध;
+		}
+		break;
 	
-	 हाल 0x02:			/* Buffer 16-bit aligned */
+	 case 0x02:			/* Buffer 16-bit aligned */
 		--count;
 		
 		l = cpu_to_le32(inl(port));
-		*(अचिन्हित लघु *)p = l >> 16;
+		*(unsigned short *)p = l >> 16;
 		p += 2;
 		
-		जबतक (count--)
-		अणु
+		while (count--)
+		{
 			l2 = cpu_to_le32(inl(port));
-			*(अचिन्हित पूर्णांक *)p = (l & 0xffff) << 16 | (l2 >> 16);
+			*(unsigned int *)p = (l & 0xffff) << 16 | (l2 >> 16);
 			p += 4;
 			l = l2;
-		पूर्ण
-		*(अचिन्हित लघु *)p = l & 0xffff;
-		अवरोध;
-	 हाल 0x01:			/* Buffer 8-bit aligned */
+		}
+		*(unsigned short *)p = l & 0xffff;
+		break;
+	 case 0x01:			/* Buffer 8-bit aligned */
 		--count;
 		
 		l = cpu_to_le32(inl(port));
-		*(अचिन्हित अक्षर *)p = l >> 24;
+		*(unsigned char *)p = l >> 24;
 		p++;
-		*(अचिन्हित लघु *)p = (l >> 8) & 0xffff;
+		*(unsigned short *)p = (l >> 8) & 0xffff;
 		p += 2;
-		जबतक (count--)
-		अणु
+		while (count--)
+		{
 			l2 = cpu_to_le32(inl(port));
-			*(अचिन्हित पूर्णांक *)p = (l & 0xff) << 24 | (l2 >> 8);
+			*(unsigned int *)p = (l & 0xff) << 24 | (l2 >> 8);
 			p += 4;
 			l = l2;
-		पूर्ण
+		}
 		*p = l & 0xff;
-		अवरोध;
-	 हाल 0x03:			/* Buffer 8-bit aligned */
+		break;
+	 case 0x03:			/* Buffer 8-bit aligned */
 		--count;
 		
 		l = cpu_to_le32(inl(port));
 		*p = l >> 24;
 		p++;
-		जबतक (count--)
-		अणु
+		while (count--)
+		{
 			l2 = cpu_to_le32(inl(port));
-			*(अचिन्हित पूर्णांक *)p = (l & 0xffffff) << 8 | l2 >> 24;
+			*(unsigned int *)p = (l & 0xffffff) << 8 | l2 >> 24;
 			p += 4;
 			l = l2;
-		पूर्ण
-		*(अचिन्हित लघु *)p = (l >> 8) & 0xffff;
+		}
+		*(unsigned short *)p = (l >> 8) & 0xffff;
 		p += 2;
 		*p = l & 0xff;
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
 
 /*
  * Like insb but in the opposite direction.
- * Don't worry as much about करोing aligned memory transfers:
- * करोing byte पढ़ोs the "slow" way isn't nearly as slow as
- * करोing byte ग_लिखोs the slow way (no r-m-w cycle).
+ * Don't worry as much about doing aligned memory transfers:
+ * doing byte reads the "slow" way isn't nearly as slow as
+ * doing byte writes the slow way (no r-m-w cycle).
  */
-व्योम outsb(अचिन्हित दीर्घ port, स्थिर व्योम * src, अचिन्हित दीर्घ count)
-अणु
-	स्थिर अचिन्हित अक्षर *p;
+void outsb(unsigned long port, const void * src, unsigned long count)
+{
+	const unsigned char *p;
 
-	p = (स्थिर अचिन्हित अक्षर *)src;
-	जबतक (count) अणु
+	p = (const unsigned char *)src;
+	while (count) {
 		count--;
 		outb(*p, port);
 		p++;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
  * Like insw but in the opposite direction.  This is used by the IDE
- * driver to ग_लिखो disk sectors.  Perक्रमmance is important, but the
- * पूर्णांकerfaces seems to be slow: just using the अंतरभूतd version of the
- * outw() अवरोधs things.
+ * driver to write disk sectors.  Performance is important, but the
+ * interfaces seems to be slow: just using the inlined version of the
+ * outw() breaks things.
  */
-व्योम outsw (अचिन्हित दीर्घ port, स्थिर व्योम *src, अचिन्हित दीर्घ count)
-अणु
-	अचिन्हित पूर्णांक l = 0, l2;
-	स्थिर अचिन्हित अक्षर *p;
+void outsw (unsigned long port, const void *src, unsigned long count)
+{
+	unsigned int l = 0, l2;
+	const unsigned char *p;
 
-	p = (स्थिर अचिन्हित अक्षर *)src;
+	p = (const unsigned char *)src;
 	
-	अगर (!count)
-		वापस;
+	if (!count)
+		return;
 	
-	चयन (((अचिन्हित दीर्घ)p) & 0x3)
-	अणु
-	 हाल 0x00:			/* Buffer 32-bit aligned */
-		जबतक (count>=2) अणु
+	switch (((unsigned long)p) & 0x3)
+	{
+	 case 0x00:			/* Buffer 32-bit aligned */
+		while (count>=2) {
 			count -= 2;
-			l = *(अचिन्हित पूर्णांक *)p;
+			l = *(unsigned int *)p;
 			p += 4;
 			outw(le16_to_cpu(l >> 16), port);
 			outw(le16_to_cpu(l & 0xffff), port);
-		पूर्ण
-		अगर (count) अणु
-			outw(le16_to_cpu(*(अचिन्हित लघु*)p), port);
-		पूर्ण
-		अवरोध;
+		}
+		if (count) {
+			outw(le16_to_cpu(*(unsigned short*)p), port);
+		}
+		break;
 	
-	 हाल 0x02:			/* Buffer 16-bit aligned */
+	 case 0x02:			/* Buffer 16-bit aligned */
 		
-		outw(le16_to_cpu(*(अचिन्हित लघु*)p), port);
+		outw(le16_to_cpu(*(unsigned short*)p), port);
 		p += 2;
 		count--;
 		
-		जबतक (count>=2) अणु
+		while (count>=2) {
 			count -= 2;
-			l = *(अचिन्हित पूर्णांक *)p;
+			l = *(unsigned int *)p;
 			p += 4;
 			outw(le16_to_cpu(l >> 16), port);
 			outw(le16_to_cpu(l & 0xffff), port);
-		पूर्ण
-		अगर (count) अणु
-			outw(le16_to_cpu(*(अचिन्हित लघु *)p), port);
-		पूर्ण
-		अवरोध;
+		}
+		if (count) {
+			outw(le16_to_cpu(*(unsigned short *)p), port);
+		}
+		break;
 		
-	 हाल 0x01:			/* Buffer 8-bit aligned */	
-		/* I करोn't bother with 32bit transfers
-		 * in this हाल, 16bit will have to करो -- DE */
+	 case 0x01:			/* Buffer 8-bit aligned */	
+		/* I don't bother with 32bit transfers
+		 * in this case, 16bit will have to do -- DE */
 		
 		l  = *p << 8;
 		p++;
 		count--;
-		जबतक (count)
-		अणु
+		while (count)
+		{
 			count--;
-			l2 = *(अचिन्हित लघु *)p;
+			l2 = *(unsigned short *)p;
 			p += 2;
 			outw(le16_to_cpu(l | l2 >> 8), port);
 		        l = l2 << 8;
-		पूर्ण
-		l2 = *(अचिन्हित अक्षर *)p;
+		}
+		l2 = *(unsigned char *)p;
 		outw (le16_to_cpu(l | l2>>8), port);
-		अवरोध;
+		break;
 	
-	पूर्ण
-पूर्ण
+	}
+}
 
 
 /*
  * Like insl but in the opposite direction.  This is used by the IDE
- * driver to ग_लिखो disk sectors.  Works with any alignment in SRC.
- *  Perक्रमmance is important, but the पूर्णांकerfaces seems to be slow:
- * just using the अंतरभूतd version of the outl() अवरोधs things.
+ * driver to write disk sectors.  Works with any alignment in SRC.
+ *  Performance is important, but the interfaces seems to be slow:
+ * just using the inlined version of the outl() breaks things.
  */
-व्योम outsl (अचिन्हित दीर्घ port, स्थिर व्योम *src, अचिन्हित दीर्घ count)
-अणु
-	अचिन्हित पूर्णांक l = 0, l2;
-	स्थिर अचिन्हित अक्षर *p;
+void outsl (unsigned long port, const void *src, unsigned long count)
+{
+	unsigned int l = 0, l2;
+	const unsigned char *p;
 
-	p = (स्थिर अचिन्हित अक्षर *)src;
+	p = (const unsigned char *)src;
 	
-	अगर (!count)
-		वापस;
+	if (!count)
+		return;
 	
-	चयन (((अचिन्हित दीर्घ)p) & 0x3)
-	अणु
-	 हाल 0x00:			/* Buffer 32-bit aligned */
-		जबतक (count--)
-		अणु
-			outl(le32_to_cpu(*(अचिन्हित पूर्णांक *)p), port);
+	switch (((unsigned long)p) & 0x3)
+	{
+	 case 0x00:			/* Buffer 32-bit aligned */
+		while (count--)
+		{
+			outl(le32_to_cpu(*(unsigned int *)p), port);
 			p += 4;
-		पूर्ण
-		अवरोध;
+		}
+		break;
 	
-	 हाल 0x02:			/* Buffer 16-bit aligned */
+	 case 0x02:			/* Buffer 16-bit aligned */
 		--count;
 		
-		l = *(अचिन्हित लघु *)p;
+		l = *(unsigned short *)p;
 		p += 2;
 		
-		जबतक (count--)
-		अणु
-			l2 = *(अचिन्हित पूर्णांक *)p;
+		while (count--)
+		{
+			l2 = *(unsigned int *)p;
 			p += 4;
 			outl (le32_to_cpu(l << 16 | l2 >> 16), port);
 			l = l2;
-		पूर्ण
-		l2 = *(अचिन्हित लघु *)p;
+		}
+		l2 = *(unsigned short *)p;
 		outl (le32_to_cpu(l << 16 | l2), port);
-		अवरोध;
-	 हाल 0x01:			/* Buffer 8-bit aligned */
+		break;
+	 case 0x01:			/* Buffer 8-bit aligned */
 		--count;
 
 		l = *p << 24;
 		p++;
-		l |= *(अचिन्हित लघु *)p << 8;
+		l |= *(unsigned short *)p << 8;
 		p += 2;
 
-		जबतक (count--)
-		अणु
-			l2 = *(अचिन्हित पूर्णांक *)p;
+		while (count--)
+		{
+			l2 = *(unsigned int *)p;
 			p += 4;
 			outl (le32_to_cpu(l | l2 >> 24), port);
 			l = l2 << 8;
-		पूर्ण
+		}
 		l2 = *p;
 		outl (le32_to_cpu(l | l2), port);
-		अवरोध;
-	 हाल 0x03:			/* Buffer 8-bit aligned */
+		break;
+	 case 0x03:			/* Buffer 8-bit aligned */
 		--count;
 		
 		l = *p << 24;
 		p++;
 
-		जबतक (count--)
-		अणु
-			l2 = *(अचिन्हित पूर्णांक *)p;
+		while (count--)
+		{
+			l2 = *(unsigned int *)p;
 			p += 4;
 			outl (le32_to_cpu(l | l2 >> 8), port);
 			l = l2 << 24;
-		पूर्ण
-		l2 = *(अचिन्हित लघु *)p << 16;
+		}
+		l2 = *(unsigned short *)p << 16;
 		p += 2;
 		l2 |= *p;
 		outl (le32_to_cpu(l | l2), port);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
 EXPORT_SYMBOL(insb);
 EXPORT_SYMBOL(insw);

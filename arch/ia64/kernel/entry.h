@@ -1,17 +1,16 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 
 /*
- * Preserved रेजिस्टरs that are shared between code in ivt.S and
+ * Preserved registers that are shared between code in ivt.S and
  * entry.S.  Be careful not to step on these!
  */
-#घोषणा PRED_LEAVE_SYSCALL	1 /* TRUE अगरf leave from syscall */
-#घोषणा PRED_KERNEL_STACK	2 /* वापसing to kernel-stacks? */
-#घोषणा PRED_USER_STACK		3 /* वापसing to user-stacks? */
-#घोषणा PRED_SYSCALL		4 /* inside a प्रणाली call? */
-#घोषणा PRED_NON_SYSCALL	5 /* complement of PRED_SYSCALL */
+#define PRED_LEAVE_SYSCALL	1 /* TRUE iff leave from syscall */
+#define PRED_KERNEL_STACK	2 /* returning to kernel-stacks? */
+#define PRED_USER_STACK		3 /* returning to user-stacks? */
+#define PRED_SYSCALL		4 /* inside a system call? */
+#define PRED_NON_SYSCALL	5 /* complement of PRED_SYSCALL */
 
-#अगर_घोषित __ASSEMBLY__
+#ifdef __ASSEMBLY__
 # define PASTE2(x,y)	x##y
 # define PASTE(x,y)	PASTE2(x,y)
 
@@ -20,13 +19,13 @@
 # define pUStk		PASTE(p,PRED_USER_STACK)
 # define pSys		PASTE(p,PRED_SYSCALL)
 # define pNonSys	PASTE(p,PRED_NON_SYSCALL)
-#पूर्ण_अगर
+#endif
 
-#घोषणा PT(f)		(IA64_PT_REGS_##f##_OFFSET)
-#घोषणा SW(f)		(IA64_SWITCH_STACK_##f##_OFFSET)
-#घोषणा SOS(f)		(IA64_SAL_OS_STATE_##f##_OFFSET)
+#define PT(f)		(IA64_PT_REGS_##f##_OFFSET)
+#define SW(f)		(IA64_SWITCH_STACK_##f##_OFFSET)
+#define SOS(f)		(IA64_SAL_OS_STATE_##f##_OFFSET)
 
-#घोषणा PT_REGS_SAVES(off)			\
+#define PT_REGS_SAVES(off)			\
 	.unwabi 3, 'i';				\
 	.fframe IA64_PT_REGS_SIZE+16+(off);	\
 	.spillsp rp, PT(CR_IIP)+16+(off);	\
@@ -35,12 +34,12 @@
 	.spillsp ar.fpsr, PT(AR_FPSR)+16+(off);	\
 	.spillsp pr, PT(PR)+16+(off);
 
-#घोषणा PT_REGS_UNWIND_INFO(off)		\
+#define PT_REGS_UNWIND_INFO(off)		\
 	.prologue;				\
 	PT_REGS_SAVES(off);			\
 	.body
 
-#घोषणा SWITCH_STACK_SAVES(off)							\
+#define SWITCH_STACK_SAVES(off)							\
 	.savesp ar.unat,SW(CALLER_UNAT)+16+(off);				\
 	.savesp ar.fpsr,SW(AR_FPSR)+16+(off);					\
 	.spillsp f2,SW(F2)+16+(off); .spillsp f3,SW(F3)+16+(off);		\
@@ -64,21 +63,21 @@
 	.spillsp ar.bspstore,SW(AR_BSPSTORE)+16+(off);				\
 	.spillsp pr,SW(PR)+16+(off)
 
-#घोषणा DO_SAVE_SWITCH_STACK			\
+#define DO_SAVE_SWITCH_STACK			\
 	movl r28=1f;				\
 	;;					\
 	.fframe IA64_SWITCH_STACK_SIZE;		\
 	adds sp=-IA64_SWITCH_STACK_SIZE,sp;	\
 	mov.ret.sptk b7=r28,1f;			\
 	SWITCH_STACK_SAVES(0);			\
-	br.cond.sptk.many save_चयन_stack;	\
+	br.cond.sptk.many save_switch_stack;	\
 1:
 
-#घोषणा DO_LOAD_SWITCH_STACK			\
+#define DO_LOAD_SWITCH_STACK			\
 	movl r28=1f;				\
 	;;					\
 	invala;					\
 	mov.ret.sptk b7=r28,1f;			\
-	br.cond.sptk.many load_चयन_stack;	\
+	br.cond.sptk.many load_switch_stack;	\
 1:	.restore sp;				\
 	adds sp=IA64_SWITCH_STACK_SIZE,sp

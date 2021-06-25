@@ -1,127 +1,126 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 // Copyright (c) 2018-2019 MediaTek Inc.
 
-/* A library क्रम MediaTek SGMII circuit
+/* A library for MediaTek SGMII circuit
  *
  * Author: Sean Wang <sean.wang@mediatek.com>
  *
  */
 
-#समावेश <linux/mfd/syscon.h>
-#समावेश <linux/of.h>
-#समावेश <linux/regmap.h>
+#include <linux/mfd/syscon.h>
+#include <linux/of.h>
+#include <linux/regmap.h>
 
-#समावेश "mtk_eth_soc.h"
+#include "mtk_eth_soc.h"
 
-पूर्णांक mtk_sgmii_init(काष्ठा mtk_sgmii *ss, काष्ठा device_node *r, u32 ana_rgc3)
-अणु
-	काष्ठा device_node *np;
-	पूर्णांक i;
+int mtk_sgmii_init(struct mtk_sgmii *ss, struct device_node *r, u32 ana_rgc3)
+{
+	struct device_node *np;
+	int i;
 
 	ss->ana_rgc3 = ana_rgc3;
 
-	क्रम (i = 0; i < MTK_MAX_DEVS; i++) अणु
+	for (i = 0; i < MTK_MAX_DEVS; i++) {
 		np = of_parse_phandle(r, "mediatek,sgmiisys", i);
-		अगर (!np)
-			अवरोध;
+		if (!np)
+			break;
 
 		ss->regmap[i] = syscon_node_to_regmap(np);
-		अगर (IS_ERR(ss->regmap[i]))
-			वापस PTR_ERR(ss->regmap[i]);
-	पूर्ण
+		if (IS_ERR(ss->regmap[i]))
+			return PTR_ERR(ss->regmap[i]);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक mtk_sgmii_setup_mode_an(काष्ठा mtk_sgmii *ss, पूर्णांक id)
-अणु
-	अचिन्हित पूर्णांक val;
+int mtk_sgmii_setup_mode_an(struct mtk_sgmii *ss, int id)
+{
+	unsigned int val;
 
-	अगर (!ss->regmap[id])
-		वापस -EINVAL;
+	if (!ss->regmap[id])
+		return -EINVAL;
 
-	/* Setup the link समयr and QPHY घातer up inside SGMIISYS */
-	regmap_ग_लिखो(ss->regmap[id], SGMSYS_PCS_LINK_TIMER,
+	/* Setup the link timer and QPHY power up inside SGMIISYS */
+	regmap_write(ss->regmap[id], SGMSYS_PCS_LINK_TIMER,
 		     SGMII_LINK_TIMER_DEFAULT);
 
-	regmap_पढ़ो(ss->regmap[id], SGMSYS_SGMII_MODE, &val);
+	regmap_read(ss->regmap[id], SGMSYS_SGMII_MODE, &val);
 	val |= SGMII_REMOTE_FAULT_DIS;
-	regmap_ग_लिखो(ss->regmap[id], SGMSYS_SGMII_MODE, val);
+	regmap_write(ss->regmap[id], SGMSYS_SGMII_MODE, val);
 
-	regmap_पढ़ो(ss->regmap[id], SGMSYS_PCS_CONTROL_1, &val);
+	regmap_read(ss->regmap[id], SGMSYS_PCS_CONTROL_1, &val);
 	val |= SGMII_AN_RESTART;
-	regmap_ग_लिखो(ss->regmap[id], SGMSYS_PCS_CONTROL_1, val);
+	regmap_write(ss->regmap[id], SGMSYS_PCS_CONTROL_1, val);
 
-	regmap_पढ़ो(ss->regmap[id], SGMSYS_QPHY_PWR_STATE_CTRL, &val);
+	regmap_read(ss->regmap[id], SGMSYS_QPHY_PWR_STATE_CTRL, &val);
 	val &= ~SGMII_PHYA_PWD;
-	regmap_ग_लिखो(ss->regmap[id], SGMSYS_QPHY_PWR_STATE_CTRL, val);
+	regmap_write(ss->regmap[id], SGMSYS_QPHY_PWR_STATE_CTRL, val);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक mtk_sgmii_setup_mode_क्रमce(काष्ठा mtk_sgmii *ss, पूर्णांक id,
-			       स्थिर काष्ठा phylink_link_state *state)
-अणु
-	अचिन्हित पूर्णांक val;
+int mtk_sgmii_setup_mode_force(struct mtk_sgmii *ss, int id,
+			       const struct phylink_link_state *state)
+{
+	unsigned int val;
 
-	अगर (!ss->regmap[id])
-		वापस -EINVAL;
+	if (!ss->regmap[id])
+		return -EINVAL;
 
-	regmap_पढ़ो(ss->regmap[id], ss->ana_rgc3, &val);
+	regmap_read(ss->regmap[id], ss->ana_rgc3, &val);
 	val &= ~RG_PHY_SPEED_MASK;
-	अगर (state->पूर्णांकerface == PHY_INTERFACE_MODE_2500BASEX)
+	if (state->interface == PHY_INTERFACE_MODE_2500BASEX)
 		val |= RG_PHY_SPEED_3_125G;
-	regmap_ग_लिखो(ss->regmap[id], ss->ana_rgc3, val);
+	regmap_write(ss->regmap[id], ss->ana_rgc3, val);
 
 	/* Disable SGMII AN */
-	regmap_पढ़ो(ss->regmap[id], SGMSYS_PCS_CONTROL_1, &val);
+	regmap_read(ss->regmap[id], SGMSYS_PCS_CONTROL_1, &val);
 	val &= ~SGMII_AN_ENABLE;
-	regmap_ग_लिखो(ss->regmap[id], SGMSYS_PCS_CONTROL_1, val);
+	regmap_write(ss->regmap[id], SGMSYS_PCS_CONTROL_1, val);
 
-	/* SGMII क्रमce mode setting */
-	regmap_पढ़ो(ss->regmap[id], SGMSYS_SGMII_MODE, &val);
+	/* SGMII force mode setting */
+	regmap_read(ss->regmap[id], SGMSYS_SGMII_MODE, &val);
 	val &= ~SGMII_IF_MODE_MASK;
 
-	चयन (state->speed) अणु
-	हाल SPEED_10:
+	switch (state->speed) {
+	case SPEED_10:
 		val |= SGMII_SPEED_10;
-		अवरोध;
-	हाल SPEED_100:
+		break;
+	case SPEED_100:
 		val |= SGMII_SPEED_100;
-		अवरोध;
-	हाल SPEED_2500:
-	हाल SPEED_1000:
+		break;
+	case SPEED_2500:
+	case SPEED_1000:
 		val |= SGMII_SPEED_1000;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	अगर (state->duplex == DUPLEX_FULL)
+	if (state->duplex == DUPLEX_FULL)
 		val |= SGMII_DUPLEX_FULL;
 
-	regmap_ग_लिखो(ss->regmap[id], SGMSYS_SGMII_MODE, val);
+	regmap_write(ss->regmap[id], SGMSYS_SGMII_MODE, val);
 
-	/* Release PHYA घातer करोwn state */
-	regmap_पढ़ो(ss->regmap[id], SGMSYS_QPHY_PWR_STATE_CTRL, &val);
+	/* Release PHYA power down state */
+	regmap_read(ss->regmap[id], SGMSYS_QPHY_PWR_STATE_CTRL, &val);
 	val &= ~SGMII_PHYA_PWD;
-	regmap_ग_लिखो(ss->regmap[id], SGMSYS_QPHY_PWR_STATE_CTRL, val);
+	regmap_write(ss->regmap[id], SGMSYS_QPHY_PWR_STATE_CTRL, val);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम mtk_sgmii_restart_an(काष्ठा mtk_eth *eth, पूर्णांक mac_id)
-अणु
-	काष्ठा mtk_sgmii *ss = eth->sgmii;
-	अचिन्हित पूर्णांक val, sid;
+void mtk_sgmii_restart_an(struct mtk_eth *eth, int mac_id)
+{
+	struct mtk_sgmii *ss = eth->sgmii;
+	unsigned int val, sid;
 
 	/* Decide how GMAC and SGMIISYS be mapped */
 	sid = (MTK_HAS_CAPS(eth->soc->caps, MTK_SHARED_SGMII)) ?
 	       0 : mac_id;
 
-	अगर (!ss->regmap[sid])
-		वापस;
+	if (!ss->regmap[sid])
+		return;
 
-	regmap_पढ़ो(ss->regmap[sid], SGMSYS_PCS_CONTROL_1, &val);
+	regmap_read(ss->regmap[sid], SGMSYS_PCS_CONTROL_1, &val);
 	val |= SGMII_AN_RESTART;
-	regmap_ग_लिखो(ss->regmap[sid], SGMSYS_PCS_CONTROL_1, val);
-पूर्ण
+	regmap_write(ss->regmap[sid], SGMSYS_PCS_CONTROL_1, val);
+}

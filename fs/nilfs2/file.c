@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * file.c - NILFS regular file handling primitives including fsync().
  *
@@ -8,149 +7,149 @@
  * Written by Amagai Yoshiji and Ryusuke Konishi.
  */
 
-#समावेश <linux/fs.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/ग_लिखोback.h>
-#समावेश "nilfs.h"
-#समावेश "segment.h"
+#include <linux/fs.h>
+#include <linux/mm.h>
+#include <linux/writeback.h>
+#include "nilfs.h"
+#include "segment.h"
 
-पूर्णांक nilfs_sync_file(काष्ठा file *file, loff_t start, loff_t end, पूर्णांक datasync)
-अणु
+int nilfs_sync_file(struct file *file, loff_t start, loff_t end, int datasync)
+{
 	/*
-	 * Called from fsync() प्रणाली call
-	 * This is the only entry poपूर्णांक that can catch ग_लिखो and synch
-	 * timing क्रम both data blocks and पूर्णांकermediate blocks.
+	 * Called from fsync() system call
+	 * This is the only entry point that can catch write and synch
+	 * timing for both data blocks and intermediate blocks.
 	 *
-	 * This function should be implemented when the ग_लिखोback function
+	 * This function should be implemented when the writeback function
 	 * will be implemented.
 	 */
-	काष्ठा the_nilfs *nilfs;
-	काष्ठा inode *inode = file->f_mapping->host;
-	पूर्णांक err = 0;
+	struct the_nilfs *nilfs;
+	struct inode *inode = file->f_mapping->host;
+	int err = 0;
 
-	अगर (nilfs_inode_dirty(inode)) अणु
-		अगर (datasync)
-			err = nilfs_स्थिरruct_dsync_segment(inode->i_sb, inode,
+	if (nilfs_inode_dirty(inode)) {
+		if (datasync)
+			err = nilfs_construct_dsync_segment(inode->i_sb, inode,
 							    start, end);
-		अन्यथा
-			err = nilfs_स्थिरruct_segment(inode->i_sb);
-	पूर्ण
+		else
+			err = nilfs_construct_segment(inode->i_sb);
+	}
 
 	nilfs = inode->i_sb->s_fs_info;
-	अगर (!err)
+	if (!err)
 		err = nilfs_flush_device(nilfs);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल vm_fault_t nilfs_page_mkग_लिखो(काष्ठा vm_fault *vmf)
-अणु
-	काष्ठा vm_area_काष्ठा *vma = vmf->vma;
-	काष्ठा page *page = vmf->page;
-	काष्ठा inode *inode = file_inode(vma->vm_file);
-	काष्ठा nilfs_transaction_info ti;
-	पूर्णांक ret = 0;
+static vm_fault_t nilfs_page_mkwrite(struct vm_fault *vmf)
+{
+	struct vm_area_struct *vma = vmf->vma;
+	struct page *page = vmf->page;
+	struct inode *inode = file_inode(vma->vm_file);
+	struct nilfs_transaction_info ti;
+	int ret = 0;
 
-	अगर (unlikely(nilfs_near_disk_full(inode->i_sb->s_fs_info)))
-		वापस VM_FAULT_SIGBUS; /* -ENOSPC */
+	if (unlikely(nilfs_near_disk_full(inode->i_sb->s_fs_info)))
+		return VM_FAULT_SIGBUS; /* -ENOSPC */
 
 	sb_start_pagefault(inode->i_sb);
 	lock_page(page);
-	अगर (page->mapping != inode->i_mapping ||
-	    page_offset(page) >= i_size_पढ़ो(inode) || !PageUptodate(page)) अणु
+	if (page->mapping != inode->i_mapping ||
+	    page_offset(page) >= i_size_read(inode) || !PageUptodate(page)) {
 		unlock_page(page);
 		ret = -EFAULT;	/* make the VM retry the fault */
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/*
-	 * check to see अगर the page is mapped alपढ़ोy (no holes)
+	 * check to see if the page is mapped already (no holes)
 	 */
-	अगर (PageMappedToDisk(page))
-		जाओ mapped;
+	if (PageMappedToDisk(page))
+		goto mapped;
 
-	अगर (page_has_buffers(page)) अणु
-		काष्ठा buffer_head *bh, *head;
-		पूर्णांक fully_mapped = 1;
+	if (page_has_buffers(page)) {
+		struct buffer_head *bh, *head;
+		int fully_mapped = 1;
 
 		bh = head = page_buffers(page);
-		करो अणु
-			अगर (!buffer_mapped(bh)) अणु
+		do {
+			if (!buffer_mapped(bh)) {
 				fully_mapped = 0;
-				अवरोध;
-			पूर्ण
-		पूर्ण जबतक (bh = bh->b_this_page, bh != head);
+				break;
+			}
+		} while (bh = bh->b_this_page, bh != head);
 
-		अगर (fully_mapped) अणु
+		if (fully_mapped) {
 			SetPageMappedToDisk(page);
-			जाओ mapped;
-		पूर्ण
-	पूर्ण
+			goto mapped;
+		}
+	}
 	unlock_page(page);
 
 	/*
 	 * fill hole blocks
 	 */
 	ret = nilfs_transaction_begin(inode->i_sb, &ti, 1);
-	/* never वापसs -ENOMEM, but may वापस -ENOSPC */
-	अगर (unlikely(ret))
-		जाओ out;
+	/* never returns -ENOMEM, but may return -ENOSPC */
+	if (unlikely(ret))
+		goto out;
 
-	file_update_समय(vma->vm_file);
-	ret = block_page_mkग_लिखो(vma, vmf, nilfs_get_block);
-	अगर (ret) अणु
-		nilfs_transaction_पात(inode->i_sb);
-		जाओ out;
-	पूर्ण
+	file_update_time(vma->vm_file);
+	ret = block_page_mkwrite(vma, vmf, nilfs_get_block);
+	if (ret) {
+		nilfs_transaction_abort(inode->i_sb);
+		goto out;
+	}
 	nilfs_set_file_dirty(inode, 1 << (PAGE_SHIFT - inode->i_blkbits));
 	nilfs_transaction_commit(inode->i_sb);
 
  mapped:
-	रुको_क्रम_stable_page(page);
+	wait_for_stable_page(page);
  out:
 	sb_end_pagefault(inode->i_sb);
-	वापस block_page_mkग_लिखो_वापस(ret);
-पूर्ण
+	return block_page_mkwrite_return(ret);
+}
 
-अटल स्थिर काष्ठा vm_operations_काष्ठा nilfs_file_vm_ops = अणु
+static const struct vm_operations_struct nilfs_file_vm_ops = {
 	.fault		= filemap_fault,
 	.map_pages	= filemap_map_pages,
-	.page_mkग_लिखो	= nilfs_page_mkग_लिखो,
-पूर्ण;
+	.page_mkwrite	= nilfs_page_mkwrite,
+};
 
-अटल पूर्णांक nilfs_file_mmap(काष्ठा file *file, काष्ठा vm_area_काष्ठा *vma)
-अणु
+static int nilfs_file_mmap(struct file *file, struct vm_area_struct *vma)
+{
 	file_accessed(file);
 	vma->vm_ops = &nilfs_file_vm_ops;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * We have mostly शून्य's here: the current शेषs are ok क्रम
- * the nilfs fileप्रणाली.
+ * We have mostly NULL's here: the current defaults are ok for
+ * the nilfs filesystem.
  */
-स्थिर काष्ठा file_operations nilfs_file_operations = अणु
+const struct file_operations nilfs_file_operations = {
 	.llseek		= generic_file_llseek,
-	.पढ़ो_iter	= generic_file_पढ़ो_iter,
-	.ग_लिखो_iter	= generic_file_ग_लिखो_iter,
+	.read_iter	= generic_file_read_iter,
+	.write_iter	= generic_file_write_iter,
 	.unlocked_ioctl	= nilfs_ioctl,
-#अगर_घोषित CONFIG_COMPAT
+#ifdef CONFIG_COMPAT
 	.compat_ioctl	= nilfs_compat_ioctl,
-#पूर्ण_अगर	/* CONFIG_COMPAT */
+#endif	/* CONFIG_COMPAT */
 	.mmap		= nilfs_file_mmap,
-	.खोलो		= generic_file_खोलो,
+	.open		= generic_file_open,
 	/* .release	= nilfs_release_file, */
 	.fsync		= nilfs_sync_file,
-	.splice_पढ़ो	= generic_file_splice_पढ़ो,
-	.splice_ग_लिखो   = iter_file_splice_ग_लिखो,
-पूर्ण;
+	.splice_read	= generic_file_splice_read,
+	.splice_write   = iter_file_splice_write,
+};
 
-स्थिर काष्ठा inode_operations nilfs_file_inode_operations = अणु
+const struct inode_operations nilfs_file_inode_operations = {
 	.setattr	= nilfs_setattr,
 	.permission     = nilfs_permission,
 	.fiemap		= nilfs_fiemap,
 	.fileattr_get	= nilfs_fileattr_get,
 	.fileattr_set	= nilfs_fileattr_set,
-पूर्ण;
+};
 
 /* end of file */

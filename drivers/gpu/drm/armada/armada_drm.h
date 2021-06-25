@@ -1,87 +1,86 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (C) 2012 Russell King
  */
-#अगर_अघोषित ARMADA_DRM_H
-#घोषणा ARMADA_DRM_H
+#ifndef ARMADA_DRM_H
+#define ARMADA_DRM_H
 
-#समावेश <linux/kfअगरo.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/workqueue.h>
+#include <linux/kfifo.h>
+#include <linux/io.h>
+#include <linux/workqueue.h>
 
-#समावेश <drm/drm_device.h>
-#समावेश <drm/drm_mm.h>
+#include <drm/drm_device.h>
+#include <drm/drm_mm.h>
 
-काष्ठा armada_crtc;
-काष्ठा armada_gem_object;
-काष्ठा clk;
-काष्ठा drm_display_mode;
-काष्ठा drm_fb_helper;
+struct armada_crtc;
+struct armada_gem_object;
+struct clk;
+struct drm_display_mode;
+struct drm_fb_helper;
 
-अटल अंतरभूत व्योम
-armada_updatel(uपूर्णांक32_t val, uपूर्णांक32_t mask, व्योम __iomem *ptr)
-अणु
-	uपूर्णांक32_t ov, v;
+static inline void
+armada_updatel(uint32_t val, uint32_t mask, void __iomem *ptr)
+{
+	uint32_t ov, v;
 
-	ov = v = पढ़ोl_relaxed(ptr);
+	ov = v = readl_relaxed(ptr);
 	v = (v & ~mask) | val;
-	अगर (ov != v)
-		ग_लिखोl_relaxed(v, ptr);
-पूर्ण
+	if (ov != v)
+		writel_relaxed(v, ptr);
+}
 
-अटल अंतरभूत uपूर्णांक32_t armada_pitch(uपूर्णांक32_t width, uपूर्णांक32_t bpp)
-अणु
-	uपूर्णांक32_t pitch = bpp != 4 ? width * ((bpp + 7) / 8) : width / 2;
+static inline uint32_t armada_pitch(uint32_t width, uint32_t bpp)
+{
+	uint32_t pitch = bpp != 4 ? width * ((bpp + 7) / 8) : width / 2;
 
 	/* 88AP510 spec recommends pitch be a multiple of 128 */
-	वापस ALIGN(pitch, 128);
-पूर्ण
+	return ALIGN(pitch, 128);
+}
 
 
-काष्ठा armada_निजी;
+struct armada_private;
 
-काष्ठा armada_variant अणु
+struct armada_variant {
 	bool has_spu_adv_reg;
-	पूर्णांक (*init)(काष्ठा armada_crtc *, काष्ठा device *);
-	पूर्णांक (*compute_घड़ी)(काष्ठा armada_crtc *,
-			     स्थिर काष्ठा drm_display_mode *,
-			     uपूर्णांक32_t *);
-	व्योम (*disable)(काष्ठा armada_crtc *);
-	व्योम (*enable)(काष्ठा armada_crtc *, स्थिर काष्ठा drm_display_mode *);
-पूर्ण;
+	int (*init)(struct armada_crtc *, struct device *);
+	int (*compute_clock)(struct armada_crtc *,
+			     const struct drm_display_mode *,
+			     uint32_t *);
+	void (*disable)(struct armada_crtc *);
+	void (*enable)(struct armada_crtc *, const struct drm_display_mode *);
+};
 
 /* Variant ops */
-बाह्य स्थिर काष्ठा armada_variant armada510_ops;
+extern const struct armada_variant armada510_ops;
 
-काष्ठा armada_निजी अणु
-	काष्ठा drm_device	drm;
-	काष्ठा drm_fb_helper	*fbdev;
-	काष्ठा armada_crtc	*dcrtc[2];
-	काष्ठा drm_mm		linear; /* रक्षित by linear_lock */
-	काष्ठा mutex		linear_lock;
-	काष्ठा drm_property	*colorkey_prop;
-	काष्ठा drm_property	*colorkey_min_prop;
-	काष्ठा drm_property	*colorkey_max_prop;
-	काष्ठा drm_property	*colorkey_val_prop;
-	काष्ठा drm_property	*colorkey_alpha_prop;
-	काष्ठा drm_property	*colorkey_mode_prop;
-	काष्ठा drm_property	*brightness_prop;
-	काष्ठा drm_property	*contrast_prop;
-	काष्ठा drm_property	*saturation_prop;
-#अगर_घोषित CONFIG_DEBUG_FS
-	काष्ठा dentry		*de;
-#पूर्ण_अगर
-पूर्ण;
+struct armada_private {
+	struct drm_device	drm;
+	struct drm_fb_helper	*fbdev;
+	struct armada_crtc	*dcrtc[2];
+	struct drm_mm		linear; /* protected by linear_lock */
+	struct mutex		linear_lock;
+	struct drm_property	*colorkey_prop;
+	struct drm_property	*colorkey_min_prop;
+	struct drm_property	*colorkey_max_prop;
+	struct drm_property	*colorkey_val_prop;
+	struct drm_property	*colorkey_alpha_prop;
+	struct drm_property	*colorkey_mode_prop;
+	struct drm_property	*brightness_prop;
+	struct drm_property	*contrast_prop;
+	struct drm_property	*saturation_prop;
+#ifdef CONFIG_DEBUG_FS
+	struct dentry		*de;
+#endif
+};
 
-#घोषणा drm_to_armada_dev(dev) container_of(dev, काष्ठा armada_निजी, drm)
+#define drm_to_armada_dev(dev) container_of(dev, struct armada_private, drm)
 
-पूर्णांक armada_fbdev_init(काष्ठा drm_device *);
-व्योम armada_fbdev_fini(काष्ठा drm_device *);
+int armada_fbdev_init(struct drm_device *);
+void armada_fbdev_fini(struct drm_device *);
 
-पूर्णांक armada_overlay_plane_create(काष्ठा drm_device *, अचिन्हित दीर्घ);
+int armada_overlay_plane_create(struct drm_device *, unsigned long);
 
-व्योम armada_drm_crtc_debugfs_init(काष्ठा armada_crtc *dcrtc);
-पूर्णांक armada_drm_debugfs_init(काष्ठा drm_minor *);
+void armada_drm_crtc_debugfs_init(struct armada_crtc *dcrtc);
+int armada_drm_debugfs_init(struct drm_minor *);
 
-#पूर्ण_अगर
+#endif

@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  *	w1_ds2405.c
  *
@@ -7,94 +6,94 @@
  * Based on w1_therm.c copyright (c) 2004 Evgeniy Polyakov <zbr@ioremap.net>
  */
 
-#समावेश <linux/device.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/types.h>
+#include <linux/device.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/moduleparam.h>
+#include <linux/mutex.h>
+#include <linux/string.h>
+#include <linux/types.h>
 
-#समावेश <linux/w1.h>
+#include <linux/w1.h>
 
-#घोषणा W1_FAMILY_DS2405	0x05
+#define W1_FAMILY_DS2405	0x05
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Maciej S. Szmigiero <mail@maciej.szmigiero.name>");
 MODULE_DESCRIPTION("Driver for 1-wire Dallas DS2405 PIO.");
-MODULE_ALIAS("w1-family-" __stringअगरy(W1_FAMILY_DS2405));
+MODULE_ALIAS("w1-family-" __stringify(W1_FAMILY_DS2405));
 
-अटल पूर्णांक w1_ds2405_select(काष्ठा w1_slave *sl, bool only_active)
-अणु
-	काष्ठा w1_master *dev = sl->master;
+static int w1_ds2405_select(struct w1_slave *sl, bool only_active)
+{
+	struct w1_master *dev = sl->master;
 
 	u64 dev_addr = le64_to_cpu(*(u64 *)&sl->reg_num);
-	अचिन्हित पूर्णांक bit_ctr;
+	unsigned int bit_ctr;
 
-	अगर (w1_reset_bus(dev) != 0)
-		वापस 0;
+	if (w1_reset_bus(dev) != 0)
+		return 0;
 
 	/*
 	 * We cannot use a normal Match ROM command
-	 * since करोing so would toggle PIO state
+	 * since doing so would toggle PIO state
 	 */
-	w1_ग_लिखो_8(dev, only_active ? W1_ALARM_SEARCH : W1_SEARCH);
+	w1_write_8(dev, only_active ? W1_ALARM_SEARCH : W1_SEARCH);
 
-	क्रम (bit_ctr = 0; bit_ctr < 64; bit_ctr++) अणु
-		पूर्णांक bit2send = !!(dev_addr & BIT(bit_ctr));
+	for (bit_ctr = 0; bit_ctr < 64; bit_ctr++) {
+		int bit2send = !!(dev_addr & BIT(bit_ctr));
 		u8 ret;
 
 		ret = w1_triplet(dev, bit2send);
 
-		अगर ((ret & (BIT(0) | BIT(1))) ==
+		if ((ret & (BIT(0) | BIT(1))) ==
 		    (BIT(0) | BIT(1))) /* no devices found */
-			वापस 0;
+			return 0;
 
-		अगर (!!(ret & BIT(2)) != bit2send)
+		if (!!(ret & BIT(2)) != bit2send)
 			/* wrong direction taken - no such device */
-			वापस 0;
-	पूर्ण
+			return 0;
+	}
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल पूर्णांक w1_ds2405_पढ़ो_pio(काष्ठा w1_slave *sl)
-अणु
-	अगर (w1_ds2405_select(sl, true))
-		वापस 0; /* "active" means PIO is low */
+static int w1_ds2405_read_pio(struct w1_slave *sl)
+{
+	if (w1_ds2405_select(sl, true))
+		return 0; /* "active" means PIO is low */
 
-	अगर (w1_ds2405_select(sl, false))
-		वापस 1;
+	if (w1_ds2405_select(sl, false))
+		return 1;
 
-	वापस -ENODEV;
-पूर्ण
+	return -ENODEV;
+}
 
-अटल sमाप_प्रकार state_show(काष्ठा device *device,
-			  काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा w1_slave *sl = dev_to_w1_slave(device);
-	काष्ठा w1_master *dev = sl->master;
+static ssize_t state_show(struct device *device,
+			  struct device_attribute *attr, char *buf)
+{
+	struct w1_slave *sl = dev_to_w1_slave(device);
+	struct w1_master *dev = sl->master;
 
-	पूर्णांक ret;
-	sमाप_प्रकार f_retval;
+	int ret;
+	ssize_t f_retval;
 	u8 state;
 
-	ret = mutex_lock_पूर्णांकerruptible(&dev->bus_mutex);
-	अगर (ret)
-		वापस ret;
+	ret = mutex_lock_interruptible(&dev->bus_mutex);
+	if (ret)
+		return ret;
 
-	अगर (!w1_ds2405_select(sl, false)) अणु
+	if (!w1_ds2405_select(sl, false)) {
 		f_retval = -ENODEV;
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 
-	state = w1_पढ़ो_8(dev);
-	अगर (state != 0 &&
-	    state != 0xff) अणु
+	state = w1_read_8(dev);
+	if (state != 0 &&
+	    state != 0xff) {
 		dev_err(device, "non-consistent state %x\n", state);
 		f_retval = -EIO;
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 
 	*buf = state ? '1' : '0';
 	f_retval = 1;
@@ -103,27 +102,27 @@ out_unlock:
 	w1_reset_bus(dev);
 	mutex_unlock(&dev->bus_mutex);
 
-	वापस f_retval;
-पूर्ण
+	return f_retval;
+}
 
-अटल sमाप_प्रकार output_show(काष्ठा device *device,
-			   काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा w1_slave *sl = dev_to_w1_slave(device);
-	काष्ठा w1_master *dev = sl->master;
+static ssize_t output_show(struct device *device,
+			   struct device_attribute *attr, char *buf)
+{
+	struct w1_slave *sl = dev_to_w1_slave(device);
+	struct w1_master *dev = sl->master;
 
-	पूर्णांक ret;
-	sमाप_प्रकार f_retval;
+	int ret;
+	ssize_t f_retval;
 
-	ret = mutex_lock_पूर्णांकerruptible(&dev->bus_mutex);
-	अगर (ret)
-		वापस ret;
+	ret = mutex_lock_interruptible(&dev->bus_mutex);
+	if (ret)
+		return ret;
 
-	ret = w1_ds2405_पढ़ो_pio(sl);
-	अगर (ret < 0) अणु
+	ret = w1_ds2405_read_pio(sl);
+	if (ret < 0) {
 		f_retval = ret;
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 
 	*buf = ret ? '1' : '0';
 	f_retval = 1;
@@ -132,88 +131,88 @@ out_unlock:
 	w1_reset_bus(dev);
 	mutex_unlock(&dev->bus_mutex);
 
-	वापस f_retval;
-पूर्ण
+	return f_retval;
+}
 
-अटल sमाप_प्रकार output_store(काष्ठा device *device,
-			    काष्ठा device_attribute *attr,
-			    स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा w1_slave *sl = dev_to_w1_slave(device);
-	काष्ठा w1_master *dev = sl->master;
+static ssize_t output_store(struct device *device,
+			    struct device_attribute *attr,
+			    const char *buf, size_t count)
+{
+	struct w1_slave *sl = dev_to_w1_slave(device);
+	struct w1_master *dev = sl->master;
 
-	पूर्णांक ret, current_pio;
-	अचिन्हित पूर्णांक val;
-	sमाप_प्रकार f_retval;
+	int ret, current_pio;
+	unsigned int val;
+	ssize_t f_retval;
 
-	अगर (count < 1)
-		वापस -EINVAL;
+	if (count < 1)
+		return -EINVAL;
 
-	अगर (माला_पूछो(buf, " %u%n", &val, &ret) < 1)
-		वापस -EINVAL;
+	if (sscanf(buf, " %u%n", &val, &ret) < 1)
+		return -EINVAL;
 
-	अगर (val != 0 && val != 1)
-		वापस -EINVAL;
+	if (val != 0 && val != 1)
+		return -EINVAL;
 
 	f_retval = ret;
 
-	ret = mutex_lock_पूर्णांकerruptible(&dev->bus_mutex);
-	अगर (ret)
-		वापस ret;
+	ret = mutex_lock_interruptible(&dev->bus_mutex);
+	if (ret)
+		return ret;
 
-	current_pio = w1_ds2405_पढ़ो_pio(sl);
-	अगर (current_pio < 0) अणु
+	current_pio = w1_ds2405_read_pio(sl);
+	if (current_pio < 0) {
 		f_retval = current_pio;
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 
-	अगर (current_pio == val)
-		जाओ out_unlock;
+	if (current_pio == val)
+		goto out_unlock;
 
-	अगर (w1_reset_bus(dev) != 0) अणु
+	if (w1_reset_bus(dev) != 0) {
 		f_retval = -ENODEV;
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 
 	/*
-	 * can't use w1_reset_select_slave() here since it uses Skip ROM अगर
+	 * can't use w1_reset_select_slave() here since it uses Skip ROM if
 	 * there is only one device on bus
 	 */
-	करो अणु
+	do {
 		u64 dev_addr = le64_to_cpu(*(u64 *)&sl->reg_num);
 		u8 cmd[9];
 
 		cmd[0] = W1_MATCH_ROM;
-		स_नकल(&cmd[1], &dev_addr, माप(dev_addr));
+		memcpy(&cmd[1], &dev_addr, sizeof(dev_addr));
 
-		w1_ग_लिखो_block(dev, cmd, माप(cmd));
-	पूर्ण जबतक (0);
+		w1_write_block(dev, cmd, sizeof(cmd));
+	} while (0);
 
 out_unlock:
 	w1_reset_bus(dev);
 	mutex_unlock(&dev->bus_mutex);
 
-	वापस f_retval;
-पूर्ण
+	return f_retval;
+}
 
-अटल DEVICE_ATTR_RO(state);
-अटल DEVICE_ATTR_RW(output);
+static DEVICE_ATTR_RO(state);
+static DEVICE_ATTR_RW(output);
 
-अटल काष्ठा attribute *w1_ds2405_attrs[] = अणु
+static struct attribute *w1_ds2405_attrs[] = {
 	&dev_attr_state.attr,
 	&dev_attr_output.attr,
-	शून्य
-पूर्ण;
+	NULL
+};
 
 ATTRIBUTE_GROUPS(w1_ds2405);
 
-अटल स्थिर काष्ठा w1_family_ops w1_ds2405_fops = अणु
+static const struct w1_family_ops w1_ds2405_fops = {
 	.groups = w1_ds2405_groups
-पूर्ण;
+};
 
-अटल काष्ठा w1_family w1_family_ds2405 = अणु
+static struct w1_family w1_family_ds2405 = {
 	.fid = W1_FAMILY_DS2405,
 	.fops = &w1_ds2405_fops
-पूर्ण;
+};
 
 module_w1_family(w1_family_ds2405);

@@ -1,147 +1,146 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 
-#समावेश <मानकपन.स>
-#समावेश <त्रुटिसं.स>
-#समावेश <मानककोष.स>
+#include <stdio.h>
+#include <errno.h>
+#include <stdlib.h>
 
-#समावेश "helpers/helpers.h"
-#समावेश "helpers/sysfs.h"
+#include "helpers/helpers.h"
+#include "helpers/sysfs.h"
 
-#अगर defined(__i386__) || defined(__x86_64__)
+#if defined(__i386__) || defined(__x86_64__)
 
-#समावेश "cpupower_intern.h"
+#include "cpupower_intern.h"
 
-#घोषणा MSR_AMD_HWCR	0xc0010015
+#define MSR_AMD_HWCR	0xc0010015
 
-पूर्णांक cpufreq_has_boost_support(अचिन्हित पूर्णांक cpu, पूर्णांक *support, पूर्णांक *active,
-			पूर्णांक *states)
-अणु
-	पूर्णांक ret;
-	अचिन्हित दीर्घ दीर्घ val;
+int cpufreq_has_boost_support(unsigned int cpu, int *support, int *active,
+			int *states)
+{
+	int ret;
+	unsigned long long val;
 
 	*support = *active = *states = 0;
 
-	अगर (cpuघातer_cpu_info.caps & CPUPOWER_CAP_AMD_CPB) अणु
+	if (cpupower_cpu_info.caps & CPUPOWER_CAP_AMD_CPB) {
 		*support = 1;
 
-		/* AMD Family 0x17 करोes not utilize PCI D18F4 like prior
+		/* AMD Family 0x17 does not utilize PCI D18F4 like prior
 		 * families and has no fixed discrete boost states but
 		 * has Hardware determined variable increments instead.
 		 */
 
-		अगर (cpuघातer_cpu_info.caps & CPUPOWER_CAP_AMD_CPB_MSR) अणु
-			अगर (!पढ़ो_msr(cpu, MSR_AMD_HWCR, &val)) अणु
-				अगर (!(val & CPUPOWER_AMD_CPBDIS))
+		if (cpupower_cpu_info.caps & CPUPOWER_CAP_AMD_CPB_MSR) {
+			if (!read_msr(cpu, MSR_AMD_HWCR, &val)) {
+				if (!(val & CPUPOWER_AMD_CPBDIS))
 					*active = 1;
-			पूर्ण
-		पूर्ण अन्यथा अणु
+			}
+		} else {
 			ret = amd_pci_get_num_boost_states(active, states);
-			अगर (ret)
-				वापस ret;
-		पूर्ण
-	पूर्ण अन्यथा अगर (cpuघातer_cpu_info.caps & CPUPOWER_CAP_INTEL_IDA)
+			if (ret)
+				return ret;
+		}
+	} else if (cpupower_cpu_info.caps & CPUPOWER_CAP_INTEL_IDA)
 		*support = *active = 1;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक cpuघातer_पूर्णांकel_get_perf_bias(अचिन्हित पूर्णांक cpu)
-अणु
-	अक्षर linebuf[MAX_LINE_LEN];
-	अक्षर path[SYSFS_PATH_MAX];
-	अचिन्हित दीर्घ val;
-	अक्षर *endp;
+int cpupower_intel_get_perf_bias(unsigned int cpu)
+{
+	char linebuf[MAX_LINE_LEN];
+	char path[SYSFS_PATH_MAX];
+	unsigned long val;
+	char *endp;
 
-	अगर (!(cpuघातer_cpu_info.caps & CPUPOWER_CAP_PERF_BIAS))
-		वापस -1;
+	if (!(cpupower_cpu_info.caps & CPUPOWER_CAP_PERF_BIAS))
+		return -1;
 
-	snम_लिखो(path, माप(path), PATH_TO_CPU "cpu%u/power/energy_perf_bias", cpu);
+	snprintf(path, sizeof(path), PATH_TO_CPU "cpu%u/power/energy_perf_bias", cpu);
 
-	अगर (cpuघातer_पढ़ो_sysfs(path, linebuf, MAX_LINE_LEN) == 0)
-		वापस -1;
+	if (cpupower_read_sysfs(path, linebuf, MAX_LINE_LEN) == 0)
+		return -1;
 
-	val = म_से_दीर्घ(linebuf, &endp, 0);
-	अगर (endp == linebuf || त्रुटि_सं == दुस्फल)
-		वापस -1;
+	val = strtol(linebuf, &endp, 0);
+	if (endp == linebuf || errno == ERANGE)
+		return -1;
 
-	वापस val;
-पूर्ण
+	return val;
+}
 
-पूर्णांक cpuघातer_पूर्णांकel_set_perf_bias(अचिन्हित पूर्णांक cpu, अचिन्हित पूर्णांक val)
-अणु
-	अक्षर path[SYSFS_PATH_MAX];
-	अक्षर linebuf[3] = अणुपूर्ण;
+int cpupower_intel_set_perf_bias(unsigned int cpu, unsigned int val)
+{
+	char path[SYSFS_PATH_MAX];
+	char linebuf[3] = {};
 
-	अगर (!(cpuघातer_cpu_info.caps & CPUPOWER_CAP_PERF_BIAS))
-		वापस -1;
+	if (!(cpupower_cpu_info.caps & CPUPOWER_CAP_PERF_BIAS))
+		return -1;
 
-	snम_लिखो(path, माप(path), PATH_TO_CPU "cpu%u/power/energy_perf_bias", cpu);
-	snम_लिखो(linebuf, माप(linebuf), "%d", val);
+	snprintf(path, sizeof(path), PATH_TO_CPU "cpu%u/power/energy_perf_bias", cpu);
+	snprintf(linebuf, sizeof(linebuf), "%d", val);
 
-	अगर (cpuघातer_ग_लिखो_sysfs(path, linebuf, 3) <= 0)
-		वापस -1;
+	if (cpupower_write_sysfs(path, linebuf, 3) <= 0)
+		return -1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#पूर्ण_अगर /* #अगर defined(__i386__) || defined(__x86_64__) */
+#endif /* #if defined(__i386__) || defined(__x86_64__) */
 
 /* get_cpustate
  *
- * Gather the inक्रमmation of all online CPUs पूर्णांकo biपंचांगask काष्ठा
+ * Gather the information of all online CPUs into bitmask struct
  */
-व्योम get_cpustate(व्योम)
-अणु
-	अचिन्हित पूर्णांक cpu = 0;
+void get_cpustate(void)
+{
+	unsigned int cpu = 0;
 
-	biपंचांगask_clearall(online_cpus);
-	biपंचांगask_clearall(offline_cpus);
+	bitmask_clearall(online_cpus);
+	bitmask_clearall(offline_cpus);
 
-	क्रम (cpu = biपंचांगask_first(cpus_chosen);
-		cpu <= biपंचांगask_last(cpus_chosen); cpu++) अणु
+	for (cpu = bitmask_first(cpus_chosen);
+		cpu <= bitmask_last(cpus_chosen); cpu++) {
 
-		अगर (cpuघातer_is_cpu_online(cpu) == 1)
-			biपंचांगask_setbit(online_cpus, cpu);
-		अन्यथा
-			biपंचांगask_setbit(offline_cpus, cpu);
+		if (cpupower_is_cpu_online(cpu) == 1)
+			bitmask_setbit(online_cpus, cpu);
+		else
+			bitmask_setbit(offline_cpus, cpu);
 
-		जारी;
-	पूर्ण
-पूर्ण
+		continue;
+	}
+}
 
-/* prपूर्णांक_online_cpus
+/* print_online_cpus
  *
- * Prपूर्णांक the CPU numbers of all CPUs that are online currently
+ * Print the CPU numbers of all CPUs that are online currently
  */
-व्योम prपूर्णांक_online_cpus(व्योम)
-अणु
-	पूर्णांक str_len = 0;
-	अक्षर *online_cpus_str = शून्य;
+void print_online_cpus(void)
+{
+	int str_len = 0;
+	char *online_cpus_str = NULL;
 
 	str_len = online_cpus->size * 5;
-	online_cpus_str = (व्योम *)दो_स्मृति(माप(अक्षर) * str_len);
+	online_cpus_str = (void *)malloc(sizeof(char) * str_len);
 
-	अगर (!biपंचांगask_isallclear(online_cpus)) अणु
-		biपंचांगask_displaylist(online_cpus_str, str_len, online_cpus);
-		म_लिखो(_("Following CPUs are online:\n%s\n"), online_cpus_str);
-	पूर्ण
-पूर्ण
+	if (!bitmask_isallclear(online_cpus)) {
+		bitmask_displaylist(online_cpus_str, str_len, online_cpus);
+		printf(_("Following CPUs are online:\n%s\n"), online_cpus_str);
+	}
+}
 
-/* prपूर्णांक_offline_cpus
+/* print_offline_cpus
  *
- * Prपूर्णांक the CPU numbers of all CPUs that are offline currently
+ * Print the CPU numbers of all CPUs that are offline currently
  */
-व्योम prपूर्णांक_offline_cpus(व्योम)
-अणु
-	पूर्णांक str_len = 0;
-	अक्षर *offline_cpus_str = शून्य;
+void print_offline_cpus(void)
+{
+	int str_len = 0;
+	char *offline_cpus_str = NULL;
 
 	str_len = offline_cpus->size * 5;
-	offline_cpus_str = (व्योम *)दो_स्मृति(माप(अक्षर) * str_len);
+	offline_cpus_str = (void *)malloc(sizeof(char) * str_len);
 
-	अगर (!biपंचांगask_isallclear(offline_cpus)) अणु
-		biपंचांगask_displaylist(offline_cpus_str, str_len, offline_cpus);
-		म_लिखो(_("Following CPUs are offline:\n%s\n"), offline_cpus_str);
-		म_लिखो(_("cpupower set operation was not performed on them\n"));
-	पूर्ण
-पूर्ण
+	if (!bitmask_isallclear(offline_cpus)) {
+		bitmask_displaylist(offline_cpus_str, str_len, offline_cpus);
+		printf(_("Following CPUs are offline:\n%s\n"), offline_cpus_str);
+		printf(_("cpupower set operation was not performed on them\n"));
+	}
+}

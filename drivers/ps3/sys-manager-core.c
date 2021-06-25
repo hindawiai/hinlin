@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  *  PS3 System Manager core.
  *
@@ -7,56 +6,56 @@
  *  Copyright 2007 Sony Corp.
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/export.h>
-#समावेश <यंत्र/lv1call.h>
-#समावेश <यंत्र/ps3.h>
+#include <linux/kernel.h>
+#include <linux/export.h>
+#include <asm/lv1call.h>
+#include <asm/ps3.h>
 
 /**
  * Staticly linked routines that allow late binding of a loaded sys-manager
  * module.
  */
 
-अटल काष्ठा ps3_sys_manager_ops ps3_sys_manager_ops;
+static struct ps3_sys_manager_ops ps3_sys_manager_ops;
 
 /**
- * ps3_रेजिस्टर_sys_manager_ops - Bind ps3_sys_manager_ops to a module.
- * @ops: काष्ठा ps3_sys_manager_ops.
+ * ps3_register_sys_manager_ops - Bind ps3_sys_manager_ops to a module.
+ * @ops: struct ps3_sys_manager_ops.
  *
- * To be called from ps3_sys_manager_probe() and ps3_sys_manager_हटाओ() to
- * रेजिस्टर call back ops क्रम घातer control.  Copies data to the अटल
+ * To be called from ps3_sys_manager_probe() and ps3_sys_manager_remove() to
+ * register call back ops for power control.  Copies data to the static
  * variable ps3_sys_manager_ops.
  */
 
-व्योम ps3_sys_manager_रेजिस्टर_ops(स्थिर काष्ठा ps3_sys_manager_ops *ops)
-अणु
+void ps3_sys_manager_register_ops(const struct ps3_sys_manager_ops *ops)
+{
 	BUG_ON(!ops);
 	BUG_ON(!ops->dev);
 	ps3_sys_manager_ops = *ops;
-पूर्ण
-EXPORT_SYMBOL_GPL(ps3_sys_manager_रेजिस्टर_ops);
+}
+EXPORT_SYMBOL_GPL(ps3_sys_manager_register_ops);
 
-व्योम __noवापस ps3_sys_manager_घातer_off(व्योम)
-अणु
-	अगर (ps3_sys_manager_ops.घातer_off)
-		ps3_sys_manager_ops.घातer_off(ps3_sys_manager_ops.dev);
+void __noreturn ps3_sys_manager_power_off(void)
+{
+	if (ps3_sys_manager_ops.power_off)
+		ps3_sys_manager_ops.power_off(ps3_sys_manager_ops.dev);
 
 	ps3_sys_manager_halt();
-पूर्ण
+}
 
-व्योम __noवापस ps3_sys_manager_restart(व्योम)
-अणु
-	अगर (ps3_sys_manager_ops.restart)
+void __noreturn ps3_sys_manager_restart(void)
+{
+	if (ps3_sys_manager_ops.restart)
 		ps3_sys_manager_ops.restart(ps3_sys_manager_ops.dev);
 
 	ps3_sys_manager_halt();
-पूर्ण
+}
 
-व्योम __noवापस ps3_sys_manager_halt(व्योम)
-अणु
+void __noreturn ps3_sys_manager_halt(void)
+{
 	pr_emerg("System Halted, OK to turn off power\n");
 	local_irq_disable();
-	जबतक (1)
-		lv1_छोड़ो(1);
-पूर्ण
+	while (1)
+		lv1_pause(1);
+}
 

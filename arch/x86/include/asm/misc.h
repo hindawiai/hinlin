@@ -1,8 +1,7 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _ASM_X86_MISC_H
-#घोषणा _ASM_X86_MISC_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _ASM_X86_MISC_H
+#define _ASM_X86_MISC_H
 
-पूर्णांक num_digits(पूर्णांक val);
+int num_digits(int val);
 
-#पूर्ण_अगर /* _ASM_X86_MISC_H */
+#endif /* _ASM_X86_MISC_H */

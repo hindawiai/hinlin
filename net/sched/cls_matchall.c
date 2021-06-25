@@ -1,76 +1,75 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * net/sched/cls_matchll.c		Match-all classअगरier
+ * net/sched/cls_matchll.c		Match-all classifier
  *
  * Copyright (c) 2016 Jiri Pirko <jiri@mellanox.com>
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/init.h>
-#समावेश <linux/module.h>
-#समावेश <linux/percpu.h>
+#include <linux/kernel.h>
+#include <linux/init.h>
+#include <linux/module.h>
+#include <linux/percpu.h>
 
-#समावेश <net/sch_generic.h>
-#समावेश <net/pkt_cls.h>
+#include <net/sch_generic.h>
+#include <net/pkt_cls.h>
 
-काष्ठा cls_mall_head अणु
-	काष्ठा tcf_exts exts;
-	काष्ठा tcf_result res;
+struct cls_mall_head {
+	struct tcf_exts exts;
+	struct tcf_result res;
 	u32 handle;
 	u32 flags;
-	अचिन्हित पूर्णांक in_hw_count;
-	काष्ठा tc_matchall_pcnt __percpu *pf;
-	काष्ठा rcu_work rwork;
+	unsigned int in_hw_count;
+	struct tc_matchall_pcnt __percpu *pf;
+	struct rcu_work rwork;
 	bool deleting;
-पूर्ण;
+};
 
-अटल पूर्णांक mall_classअगरy(काष्ठा sk_buff *skb, स्थिर काष्ठा tcf_proto *tp,
-			 काष्ठा tcf_result *res)
-अणु
-	काष्ठा cls_mall_head *head = rcu_dereference_bh(tp->root);
+static int mall_classify(struct sk_buff *skb, const struct tcf_proto *tp,
+			 struct tcf_result *res)
+{
+	struct cls_mall_head *head = rcu_dereference_bh(tp->root);
 
-	अगर (unlikely(!head))
-		वापस -1;
+	if (unlikely(!head))
+		return -1;
 
-	अगर (tc_skip_sw(head->flags))
-		वापस -1;
+	if (tc_skip_sw(head->flags))
+		return -1;
 
 	*res = head->res;
 	__this_cpu_inc(head->pf->rhit);
-	वापस tcf_exts_exec(skb, &head->exts, res);
-पूर्ण
+	return tcf_exts_exec(skb, &head->exts, res);
+}
 
-अटल पूर्णांक mall_init(काष्ठा tcf_proto *tp)
-अणु
-	वापस 0;
-पूर्ण
+static int mall_init(struct tcf_proto *tp)
+{
+	return 0;
+}
 
-अटल व्योम __mall_destroy(काष्ठा cls_mall_head *head)
-अणु
+static void __mall_destroy(struct cls_mall_head *head)
+{
 	tcf_exts_destroy(&head->exts);
 	tcf_exts_put_net(&head->exts);
-	मुक्त_percpu(head->pf);
-	kमुक्त(head);
-पूर्ण
+	free_percpu(head->pf);
+	kfree(head);
+}
 
-अटल व्योम mall_destroy_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा cls_mall_head *head = container_of(to_rcu_work(work),
-						  काष्ठा cls_mall_head,
+static void mall_destroy_work(struct work_struct *work)
+{
+	struct cls_mall_head *head = container_of(to_rcu_work(work),
+						  struct cls_mall_head,
 						  rwork);
 	rtnl_lock();
 	__mall_destroy(head);
 	rtnl_unlock();
-पूर्ण
+}
 
-अटल व्योम mall_destroy_hw_filter(काष्ठा tcf_proto *tp,
-				   काष्ठा cls_mall_head *head,
-				   अचिन्हित दीर्घ cookie,
-				   काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा tc_cls_matchall_offload cls_mall = अणुपूर्ण;
-	काष्ठा tcf_block *block = tp->chain->block;
+static void mall_destroy_hw_filter(struct tcf_proto *tp,
+				   struct cls_mall_head *head,
+				   unsigned long cookie,
+				   struct netlink_ext_ack *extack)
+{
+	struct tc_cls_matchall_offload cls_mall = {};
+	struct tcf_block *block = tp->chain->block;
 
 	tc_cls_common_offload_init(&cls_mall.common, tp, head->flags, extack);
 	cls_mall.command = TC_CLSMATCHALL_DESTROY;
@@ -78,261 +77,261 @@
 
 	tc_setup_cb_destroy(block, tp, TC_SETUP_CLSMATCHALL, &cls_mall, false,
 			    &head->flags, &head->in_hw_count, true);
-पूर्ण
+}
 
-अटल पूर्णांक mall_replace_hw_filter(काष्ठा tcf_proto *tp,
-				  काष्ठा cls_mall_head *head,
-				  अचिन्हित दीर्घ cookie,
-				  काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा tc_cls_matchall_offload cls_mall = अणुपूर्ण;
-	काष्ठा tcf_block *block = tp->chain->block;
+static int mall_replace_hw_filter(struct tcf_proto *tp,
+				  struct cls_mall_head *head,
+				  unsigned long cookie,
+				  struct netlink_ext_ack *extack)
+{
+	struct tc_cls_matchall_offload cls_mall = {};
+	struct tcf_block *block = tp->chain->block;
 	bool skip_sw = tc_skip_sw(head->flags);
-	पूर्णांक err;
+	int err;
 
 	cls_mall.rule =	flow_rule_alloc(tcf_exts_num_actions(&head->exts));
-	अगर (!cls_mall.rule)
-		वापस -ENOMEM;
+	if (!cls_mall.rule)
+		return -ENOMEM;
 
 	tc_cls_common_offload_init(&cls_mall.common, tp, head->flags, extack);
 	cls_mall.command = TC_CLSMATCHALL_REPLACE;
 	cls_mall.cookie = cookie;
 
 	err = tc_setup_flow_action(&cls_mall.rule->action, &head->exts);
-	अगर (err) अणु
-		kमुक्त(cls_mall.rule);
-		mall_destroy_hw_filter(tp, head, cookie, शून्य);
-		अगर (skip_sw)
+	if (err) {
+		kfree(cls_mall.rule);
+		mall_destroy_hw_filter(tp, head, cookie, NULL);
+		if (skip_sw)
 			NL_SET_ERR_MSG_MOD(extack, "Failed to setup flow action");
-		अन्यथा
+		else
 			err = 0;
 
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	err = tc_setup_cb_add(block, tp, TC_SETUP_CLSMATCHALL, &cls_mall,
 			      skip_sw, &head->flags, &head->in_hw_count, true);
 	tc_cleanup_flow_action(&cls_mall.rule->action);
-	kमुक्त(cls_mall.rule);
+	kfree(cls_mall.rule);
 
-	अगर (err) अणु
-		mall_destroy_hw_filter(tp, head, cookie, शून्य);
-		वापस err;
-	पूर्ण
+	if (err) {
+		mall_destroy_hw_filter(tp, head, cookie, NULL);
+		return err;
+	}
 
-	अगर (skip_sw && !(head->flags & TCA_CLS_FLAGS_IN_HW))
-		वापस -EINVAL;
+	if (skip_sw && !(head->flags & TCA_CLS_FLAGS_IN_HW))
+		return -EINVAL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम mall_destroy(काष्ठा tcf_proto *tp, bool rtnl_held,
-			 काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा cls_mall_head *head = rtnl_dereference(tp->root);
+static void mall_destroy(struct tcf_proto *tp, bool rtnl_held,
+			 struct netlink_ext_ack *extack)
+{
+	struct cls_mall_head *head = rtnl_dereference(tp->root);
 
-	अगर (!head)
-		वापस;
+	if (!head)
+		return;
 
 	tcf_unbind_filter(tp, &head->res);
 
-	अगर (!tc_skip_hw(head->flags))
-		mall_destroy_hw_filter(tp, head, (अचिन्हित दीर्घ) head, extack);
+	if (!tc_skip_hw(head->flags))
+		mall_destroy_hw_filter(tp, head, (unsigned long) head, extack);
 
-	अगर (tcf_exts_get_net(&head->exts))
+	if (tcf_exts_get_net(&head->exts))
 		tcf_queue_work(&head->rwork, mall_destroy_work);
-	अन्यथा
+	else
 		__mall_destroy(head);
-पूर्ण
+}
 
-अटल व्योम *mall_get(काष्ठा tcf_proto *tp, u32 handle)
-अणु
-	काष्ठा cls_mall_head *head = rtnl_dereference(tp->root);
+static void *mall_get(struct tcf_proto *tp, u32 handle)
+{
+	struct cls_mall_head *head = rtnl_dereference(tp->root);
 
-	अगर (head && head->handle == handle)
-		वापस head;
+	if (head && head->handle == handle)
+		return head;
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल स्थिर काष्ठा nla_policy mall_policy[TCA_MATCHALL_MAX + 1] = अणु
-	[TCA_MATCHALL_UNSPEC]		= अणु .type = NLA_UNSPEC पूर्ण,
-	[TCA_MATCHALL_CLASSID]		= अणु .type = NLA_U32 पूर्ण,
-	[TCA_MATCHALL_FLAGS]		= अणु .type = NLA_U32 पूर्ण,
-पूर्ण;
+static const struct nla_policy mall_policy[TCA_MATCHALL_MAX + 1] = {
+	[TCA_MATCHALL_UNSPEC]		= { .type = NLA_UNSPEC },
+	[TCA_MATCHALL_CLASSID]		= { .type = NLA_U32 },
+	[TCA_MATCHALL_FLAGS]		= { .type = NLA_U32 },
+};
 
-अटल पूर्णांक mall_set_parms(काष्ठा net *net, काष्ठा tcf_proto *tp,
-			  काष्ठा cls_mall_head *head,
-			  अचिन्हित दीर्घ base, काष्ठा nlattr **tb,
-			  काष्ठा nlattr *est, bool ovr,
-			  काष्ठा netlink_ext_ack *extack)
-अणु
-	पूर्णांक err;
+static int mall_set_parms(struct net *net, struct tcf_proto *tp,
+			  struct cls_mall_head *head,
+			  unsigned long base, struct nlattr **tb,
+			  struct nlattr *est, bool ovr,
+			  struct netlink_ext_ack *extack)
+{
+	int err;
 
 	err = tcf_exts_validate(net, tp, tb, est, &head->exts, ovr, true,
 				extack);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
-	अगर (tb[TCA_MATCHALL_CLASSID]) अणु
+	if (tb[TCA_MATCHALL_CLASSID]) {
 		head->res.classid = nla_get_u32(tb[TCA_MATCHALL_CLASSID]);
 		tcf_bind_filter(tp, &head->res, base);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल पूर्णांक mall_change(काष्ठा net *net, काष्ठा sk_buff *in_skb,
-		       काष्ठा tcf_proto *tp, अचिन्हित दीर्घ base,
-		       u32 handle, काष्ठा nlattr **tca,
-		       व्योम **arg, bool ovr, bool rtnl_held,
-		       काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा cls_mall_head *head = rtnl_dereference(tp->root);
-	काष्ठा nlattr *tb[TCA_MATCHALL_MAX + 1];
-	काष्ठा cls_mall_head *new;
+static int mall_change(struct net *net, struct sk_buff *in_skb,
+		       struct tcf_proto *tp, unsigned long base,
+		       u32 handle, struct nlattr **tca,
+		       void **arg, bool ovr, bool rtnl_held,
+		       struct netlink_ext_ack *extack)
+{
+	struct cls_mall_head *head = rtnl_dereference(tp->root);
+	struct nlattr *tb[TCA_MATCHALL_MAX + 1];
+	struct cls_mall_head *new;
 	u32 flags = 0;
-	पूर्णांक err;
+	int err;
 
-	अगर (!tca[TCA_OPTIONS])
-		वापस -EINVAL;
+	if (!tca[TCA_OPTIONS])
+		return -EINVAL;
 
-	अगर (head)
-		वापस -EEXIST;
+	if (head)
+		return -EEXIST;
 
 	err = nla_parse_nested_deprecated(tb, TCA_MATCHALL_MAX,
-					  tca[TCA_OPTIONS], mall_policy, शून्य);
-	अगर (err < 0)
-		वापस err;
+					  tca[TCA_OPTIONS], mall_policy, NULL);
+	if (err < 0)
+		return err;
 
-	अगर (tb[TCA_MATCHALL_FLAGS]) अणु
+	if (tb[TCA_MATCHALL_FLAGS]) {
 		flags = nla_get_u32(tb[TCA_MATCHALL_FLAGS]);
-		अगर (!tc_flags_valid(flags))
-			वापस -EINVAL;
-	पूर्ण
+		if (!tc_flags_valid(flags))
+			return -EINVAL;
+	}
 
-	new = kzalloc(माप(*new), GFP_KERNEL);
-	अगर (!new)
-		वापस -ENOBUFS;
+	new = kzalloc(sizeof(*new), GFP_KERNEL);
+	if (!new)
+		return -ENOBUFS;
 
 	err = tcf_exts_init(&new->exts, net, TCA_MATCHALL_ACT, 0);
-	अगर (err)
-		जाओ err_exts_init;
+	if (err)
+		goto err_exts_init;
 
-	अगर (!handle)
+	if (!handle)
 		handle = 1;
 	new->handle = handle;
 	new->flags = flags;
-	new->pf = alloc_percpu(काष्ठा tc_matchall_pcnt);
-	अगर (!new->pf) अणु
+	new->pf = alloc_percpu(struct tc_matchall_pcnt);
+	if (!new->pf) {
 		err = -ENOMEM;
-		जाओ err_alloc_percpu;
-	पूर्ण
+		goto err_alloc_percpu;
+	}
 
 	err = mall_set_parms(net, tp, new, base, tb, tca[TCA_RATE], ovr,
 			     extack);
-	अगर (err)
-		जाओ err_set_parms;
+	if (err)
+		goto err_set_parms;
 
-	अगर (!tc_skip_hw(new->flags)) अणु
-		err = mall_replace_hw_filter(tp, new, (अचिन्हित दीर्घ)new,
+	if (!tc_skip_hw(new->flags)) {
+		err = mall_replace_hw_filter(tp, new, (unsigned long)new,
 					     extack);
-		अगर (err)
-			जाओ err_replace_hw_filter;
-	पूर्ण
+		if (err)
+			goto err_replace_hw_filter;
+	}
 
-	अगर (!tc_in_hw(new->flags))
+	if (!tc_in_hw(new->flags))
 		new->flags |= TCA_CLS_FLAGS_NOT_IN_HW;
 
 	*arg = head;
-	rcu_assign_poपूर्णांकer(tp->root, new);
-	वापस 0;
+	rcu_assign_pointer(tp->root, new);
+	return 0;
 
 err_replace_hw_filter:
 err_set_parms:
-	मुक्त_percpu(new->pf);
+	free_percpu(new->pf);
 err_alloc_percpu:
 	tcf_exts_destroy(&new->exts);
 err_exts_init:
-	kमुक्त(new);
-	वापस err;
-पूर्ण
+	kfree(new);
+	return err;
+}
 
-अटल पूर्णांक mall_delete(काष्ठा tcf_proto *tp, व्योम *arg, bool *last,
-		       bool rtnl_held, काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा cls_mall_head *head = rtnl_dereference(tp->root);
+static int mall_delete(struct tcf_proto *tp, void *arg, bool *last,
+		       bool rtnl_held, struct netlink_ext_ack *extack)
+{
+	struct cls_mall_head *head = rtnl_dereference(tp->root);
 
 	head->deleting = true;
 	*last = true;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम mall_walk(काष्ठा tcf_proto *tp, काष्ठा tcf_walker *arg,
+static void mall_walk(struct tcf_proto *tp, struct tcf_walker *arg,
 		      bool rtnl_held)
-अणु
-	काष्ठा cls_mall_head *head = rtnl_dereference(tp->root);
+{
+	struct cls_mall_head *head = rtnl_dereference(tp->root);
 
-	अगर (arg->count < arg->skip)
-		जाओ skip;
+	if (arg->count < arg->skip)
+		goto skip;
 
-	अगर (!head || head->deleting)
-		वापस;
-	अगर (arg->fn(tp, head, arg) < 0)
+	if (!head || head->deleting)
+		return;
+	if (arg->fn(tp, head, arg) < 0)
 		arg->stop = 1;
 skip:
 	arg->count++;
-पूर्ण
+}
 
-अटल पूर्णांक mall_reoffload(काष्ठा tcf_proto *tp, bool add, flow_setup_cb_t *cb,
-			  व्योम *cb_priv, काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा cls_mall_head *head = rtnl_dereference(tp->root);
-	काष्ठा tc_cls_matchall_offload cls_mall = अणुपूर्ण;
-	काष्ठा tcf_block *block = tp->chain->block;
-	पूर्णांक err;
+static int mall_reoffload(struct tcf_proto *tp, bool add, flow_setup_cb_t *cb,
+			  void *cb_priv, struct netlink_ext_ack *extack)
+{
+	struct cls_mall_head *head = rtnl_dereference(tp->root);
+	struct tc_cls_matchall_offload cls_mall = {};
+	struct tcf_block *block = tp->chain->block;
+	int err;
 
-	अगर (tc_skip_hw(head->flags))
-		वापस 0;
+	if (tc_skip_hw(head->flags))
+		return 0;
 
 	cls_mall.rule =	flow_rule_alloc(tcf_exts_num_actions(&head->exts));
-	अगर (!cls_mall.rule)
-		वापस -ENOMEM;
+	if (!cls_mall.rule)
+		return -ENOMEM;
 
 	tc_cls_common_offload_init(&cls_mall.common, tp, head->flags, extack);
 	cls_mall.command = add ?
 		TC_CLSMATCHALL_REPLACE : TC_CLSMATCHALL_DESTROY;
-	cls_mall.cookie = (अचिन्हित दीर्घ)head;
+	cls_mall.cookie = (unsigned long)head;
 
 	err = tc_setup_flow_action(&cls_mall.rule->action, &head->exts);
-	अगर (err) अणु
-		kमुक्त(cls_mall.rule);
-		अगर (add && tc_skip_sw(head->flags)) अणु
+	if (err) {
+		kfree(cls_mall.rule);
+		if (add && tc_skip_sw(head->flags)) {
 			NL_SET_ERR_MSG_MOD(extack, "Failed to setup flow action");
-			वापस err;
-		पूर्ण
-		वापस 0;
-	पूर्ण
+			return err;
+		}
+		return 0;
+	}
 
 	err = tc_setup_cb_reoffload(block, tp, add, cb, TC_SETUP_CLSMATCHALL,
 				    &cls_mall, cb_priv, &head->flags,
 				    &head->in_hw_count);
 	tc_cleanup_flow_action(&cls_mall.rule->action);
-	kमुक्त(cls_mall.rule);
+	kfree(cls_mall.rule);
 
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम mall_stats_hw_filter(काष्ठा tcf_proto *tp,
-				 काष्ठा cls_mall_head *head,
-				 अचिन्हित दीर्घ cookie)
-अणु
-	काष्ठा tc_cls_matchall_offload cls_mall = अणुपूर्ण;
-	काष्ठा tcf_block *block = tp->chain->block;
+static void mall_stats_hw_filter(struct tcf_proto *tp,
+				 struct cls_mall_head *head,
+				 unsigned long cookie)
+{
+	struct tc_cls_matchall_offload cls_mall = {};
+	struct tcf_block *block = tp->chain->block;
 
-	tc_cls_common_offload_init(&cls_mall.common, tp, head->flags, शून्य);
+	tc_cls_common_offload_init(&cls_mall.common, tp, head->flags, NULL);
 	cls_mall.command = TC_CLSMATCHALL_STATS;
 	cls_mall.cookie = cookie;
 
@@ -343,77 +342,77 @@ skip:
 			      cls_mall.stats.lastused,
 			      cls_mall.stats.used_hw_stats,
 			      cls_mall.stats.used_hw_stats_valid);
-पूर्ण
+}
 
-अटल पूर्णांक mall_dump(काष्ठा net *net, काष्ठा tcf_proto *tp, व्योम *fh,
-		     काष्ठा sk_buff *skb, काष्ठा tcmsg *t, bool rtnl_held)
-अणु
-	काष्ठा tc_matchall_pcnt gpf = अणुपूर्ण;
-	काष्ठा cls_mall_head *head = fh;
-	काष्ठा nlattr *nest;
-	पूर्णांक cpu;
+static int mall_dump(struct net *net, struct tcf_proto *tp, void *fh,
+		     struct sk_buff *skb, struct tcmsg *t, bool rtnl_held)
+{
+	struct tc_matchall_pcnt gpf = {};
+	struct cls_mall_head *head = fh;
+	struct nlattr *nest;
+	int cpu;
 
-	अगर (!head)
-		वापस skb->len;
+	if (!head)
+		return skb->len;
 
-	अगर (!tc_skip_hw(head->flags))
-		mall_stats_hw_filter(tp, head, (अचिन्हित दीर्घ)head);
+	if (!tc_skip_hw(head->flags))
+		mall_stats_hw_filter(tp, head, (unsigned long)head);
 
 	t->tcm_handle = head->handle;
 
 	nest = nla_nest_start_noflag(skb, TCA_OPTIONS);
-	अगर (!nest)
-		जाओ nla_put_failure;
+	if (!nest)
+		goto nla_put_failure;
 
-	अगर (head->res.classid &&
+	if (head->res.classid &&
 	    nla_put_u32(skb, TCA_MATCHALL_CLASSID, head->res.classid))
-		जाओ nla_put_failure;
+		goto nla_put_failure;
 
-	अगर (head->flags && nla_put_u32(skb, TCA_MATCHALL_FLAGS, head->flags))
-		जाओ nla_put_failure;
+	if (head->flags && nla_put_u32(skb, TCA_MATCHALL_FLAGS, head->flags))
+		goto nla_put_failure;
 
-	क्रम_each_possible_cpu(cpu) अणु
-		काष्ठा tc_matchall_pcnt *pf = per_cpu_ptr(head->pf, cpu);
+	for_each_possible_cpu(cpu) {
+		struct tc_matchall_pcnt *pf = per_cpu_ptr(head->pf, cpu);
 
 		gpf.rhit += pf->rhit;
-	पूर्ण
+	}
 
-	अगर (nla_put_64bit(skb, TCA_MATCHALL_PCNT,
-			  माप(काष्ठा tc_matchall_pcnt),
+	if (nla_put_64bit(skb, TCA_MATCHALL_PCNT,
+			  sizeof(struct tc_matchall_pcnt),
 			  &gpf, TCA_MATCHALL_PAD))
-		जाओ nla_put_failure;
+		goto nla_put_failure;
 
-	अगर (tcf_exts_dump(skb, &head->exts))
-		जाओ nla_put_failure;
+	if (tcf_exts_dump(skb, &head->exts))
+		goto nla_put_failure;
 
 	nla_nest_end(skb, nest);
 
-	अगर (tcf_exts_dump_stats(skb, &head->exts) < 0)
-		जाओ nla_put_failure;
+	if (tcf_exts_dump_stats(skb, &head->exts) < 0)
+		goto nla_put_failure;
 
-	वापस skb->len;
+	return skb->len;
 
 nla_put_failure:
 	nla_nest_cancel(skb, nest);
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
-अटल व्योम mall_bind_class(व्योम *fh, u32 classid, अचिन्हित दीर्घ cl, व्योम *q,
-			    अचिन्हित दीर्घ base)
-अणु
-	काष्ठा cls_mall_head *head = fh;
+static void mall_bind_class(void *fh, u32 classid, unsigned long cl, void *q,
+			    unsigned long base)
+{
+	struct cls_mall_head *head = fh;
 
-	अगर (head && head->res.classid == classid) अणु
-		अगर (cl)
+	if (head && head->res.classid == classid) {
+		if (cl)
 			__tcf_bind_filter(q, &head->res, base);
-		अन्यथा
+		else
 			__tcf_unbind_filter(q, &head->res);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल काष्ठा tcf_proto_ops cls_mall_ops __पढ़ो_mostly = अणु
+static struct tcf_proto_ops cls_mall_ops __read_mostly = {
 	.kind		= "matchall",
-	.classअगरy	= mall_classअगरy,
+	.classify	= mall_classify,
 	.init		= mall_init,
 	.destroy	= mall_destroy,
 	.get		= mall_get,
@@ -424,20 +423,20 @@ nla_put_failure:
 	.dump		= mall_dump,
 	.bind_class	= mall_bind_class,
 	.owner		= THIS_MODULE,
-पूर्ण;
+};
 
-अटल पूर्णांक __init cls_mall_init(व्योम)
-अणु
-	वापस रेजिस्टर_tcf_proto_ops(&cls_mall_ops);
-पूर्ण
+static int __init cls_mall_init(void)
+{
+	return register_tcf_proto_ops(&cls_mall_ops);
+}
 
-अटल व्योम __निकास cls_mall_निकास(व्योम)
-अणु
-	unरेजिस्टर_tcf_proto_ops(&cls_mall_ops);
-पूर्ण
+static void __exit cls_mall_exit(void)
+{
+	unregister_tcf_proto_ops(&cls_mall_ops);
+}
 
 module_init(cls_mall_init);
-module_निकास(cls_mall_निकास);
+module_exit(cls_mall_exit);
 
 MODULE_AUTHOR("Jiri Pirko <jiri@mellanox.com>");
 MODULE_DESCRIPTION("Match-all classifier");

@@ -1,275 +1,274 @@
-<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the मुख्य directory of this archive
- * क्रम more details.
+ * License.  See the file "COPYING" in the main directory of this archive
+ * for more details.
  *
  * Copyright (C) 2012 MIPS Technologies, Inc.  All rights reserved.
  */
 
-#घोषणा pr_fmt(fmt) "mips-gic-timer: " fmt
+#define pr_fmt(fmt) "mips-gic-timer: " fmt
 
-#समावेश <linux/clk.h>
-#समावेश <linux/घड़ीchips.h>
-#समावेश <linux/cpu.h>
-#समावेश <linux/init.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/notअगरier.h>
-#समावेश <linux/of_irq.h>
-#समावेश <linux/percpu.h>
-#समावेश <linux/sched_घड़ी.h>
-#समावेश <linux/smp.h>
-#समावेश <linux/समय.स>
-#समावेश <यंत्र/mips-cps.h>
+#include <linux/clk.h>
+#include <linux/clockchips.h>
+#include <linux/cpu.h>
+#include <linux/init.h>
+#include <linux/interrupt.h>
+#include <linux/notifier.h>
+#include <linux/of_irq.h>
+#include <linux/percpu.h>
+#include <linux/sched_clock.h>
+#include <linux/smp.h>
+#include <linux/time.h>
+#include <asm/mips-cps.h>
 
-अटल DEFINE_PER_CPU(काष्ठा घड़ी_event_device, gic_घड़ीevent_device);
-अटल पूर्णांक gic_समयr_irq;
-अटल अचिन्हित पूर्णांक gic_frequency;
-अटल bool __पढ़ो_mostly gic_घड़ी_unstable;
+static DEFINE_PER_CPU(struct clock_event_device, gic_clockevent_device);
+static int gic_timer_irq;
+static unsigned int gic_frequency;
+static bool __read_mostly gic_clock_unstable;
 
-अटल व्योम gic_घड़ीsource_unstable(अक्षर *reason);
+static void gic_clocksource_unstable(char *reason);
 
-अटल u64 notrace gic_पढ़ो_count_2x32(व्योम)
-अणु
-	अचिन्हित पूर्णांक hi, hi2, lo;
+static u64 notrace gic_read_count_2x32(void)
+{
+	unsigned int hi, hi2, lo;
 
-	करो अणु
-		hi = पढ़ो_gic_counter_32h();
-		lo = पढ़ो_gic_counter_32l();
-		hi2 = पढ़ो_gic_counter_32h();
-	पूर्ण जबतक (hi2 != hi);
+	do {
+		hi = read_gic_counter_32h();
+		lo = read_gic_counter_32l();
+		hi2 = read_gic_counter_32h();
+	} while (hi2 != hi);
 
-	वापस (((u64) hi) << 32) + lo;
-पूर्ण
+	return (((u64) hi) << 32) + lo;
+}
 
-अटल u64 notrace gic_पढ़ो_count_64(व्योम)
-अणु
-	वापस पढ़ो_gic_counter();
-पूर्ण
+static u64 notrace gic_read_count_64(void)
+{
+	return read_gic_counter();
+}
 
-अटल u64 notrace gic_पढ़ो_count(व्योम)
-अणु
-	अगर (mips_cm_is64)
-		वापस gic_पढ़ो_count_64();
+static u64 notrace gic_read_count(void)
+{
+	if (mips_cm_is64)
+		return gic_read_count_64();
 
-	वापस gic_पढ़ो_count_2x32();
-पूर्ण
+	return gic_read_count_2x32();
+}
 
-अटल पूर्णांक gic_next_event(अचिन्हित दीर्घ delta, काष्ठा घड़ी_event_device *evt)
-अणु
-	पूर्णांक cpu = cpumask_first(evt->cpumask);
+static int gic_next_event(unsigned long delta, struct clock_event_device *evt)
+{
+	int cpu = cpumask_first(evt->cpumask);
 	u64 cnt;
-	पूर्णांक res;
+	int res;
 
-	cnt = gic_पढ़ो_count();
+	cnt = gic_read_count();
 	cnt += (u64)delta;
-	अगर (cpu == raw_smp_processor_id()) अणु
-		ग_लिखो_gic_vl_compare(cnt);
-	पूर्ण अन्यथा अणु
-		ग_लिखो_gic_vl_other(mips_cm_vp_id(cpu));
-		ग_लिखो_gic_vo_compare(cnt);
-	पूर्ण
-	res = ((पूर्णांक)(gic_पढ़ो_count() - cnt) >= 0) ? -ETIME : 0;
-	वापस res;
-पूर्ण
+	if (cpu == raw_smp_processor_id()) {
+		write_gic_vl_compare(cnt);
+	} else {
+		write_gic_vl_other(mips_cm_vp_id(cpu));
+		write_gic_vo_compare(cnt);
+	}
+	res = ((int)(gic_read_count() - cnt) >= 0) ? -ETIME : 0;
+	return res;
+}
 
-अटल irqवापस_t gic_compare_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा घड़ी_event_device *cd = dev_id;
+static irqreturn_t gic_compare_interrupt(int irq, void *dev_id)
+{
+	struct clock_event_device *cd = dev_id;
 
-	ग_लिखो_gic_vl_compare(पढ़ो_gic_vl_compare());
+	write_gic_vl_compare(read_gic_vl_compare());
 	cd->event_handler(cd);
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल काष्ठा irqaction gic_compare_irqaction = अणु
-	.handler = gic_compare_पूर्णांकerrupt,
-	.percpu_dev_id = &gic_घड़ीevent_device,
+static struct irqaction gic_compare_irqaction = {
+	.handler = gic_compare_interrupt,
+	.percpu_dev_id = &gic_clockevent_device,
 	.flags = IRQF_PERCPU | IRQF_TIMER,
 	.name = "timer",
-पूर्ण;
+};
 
-अटल व्योम gic_घड़ीevent_cpu_init(अचिन्हित पूर्णांक cpu,
-				    काष्ठा घड़ी_event_device *cd)
-अणु
+static void gic_clockevent_cpu_init(unsigned int cpu,
+				    struct clock_event_device *cd)
+{
 	cd->name		= "MIPS GIC";
 	cd->features		= CLOCK_EVT_FEAT_ONESHOT |
 				  CLOCK_EVT_FEAT_C3STOP;
 
 	cd->rating		= 350;
-	cd->irq			= gic_समयr_irq;
+	cd->irq			= gic_timer_irq;
 	cd->cpumask		= cpumask_of(cpu);
 	cd->set_next_event	= gic_next_event;
 
-	घड़ीevents_config_and_रेजिस्टर(cd, gic_frequency, 0x300, 0x7fffffff);
+	clockevents_config_and_register(cd, gic_frequency, 0x300, 0x7fffffff);
 
-	enable_percpu_irq(gic_समयr_irq, IRQ_TYPE_NONE);
-पूर्ण
+	enable_percpu_irq(gic_timer_irq, IRQ_TYPE_NONE);
+}
 
-अटल व्योम gic_घड़ीevent_cpu_निकास(काष्ठा घड़ी_event_device *cd)
-अणु
-	disable_percpu_irq(gic_समयr_irq);
-पूर्ण
+static void gic_clockevent_cpu_exit(struct clock_event_device *cd)
+{
+	disable_percpu_irq(gic_timer_irq);
+}
 
-अटल व्योम gic_update_frequency(व्योम *data)
-अणु
-	अचिन्हित दीर्घ rate = (अचिन्हित दीर्घ)data;
+static void gic_update_frequency(void *data)
+{
+	unsigned long rate = (unsigned long)data;
 
-	घड़ीevents_update_freq(this_cpu_ptr(&gic_घड़ीevent_device), rate);
-पूर्ण
+	clockevents_update_freq(this_cpu_ptr(&gic_clockevent_device), rate);
+}
 
-अटल पूर्णांक gic_starting_cpu(अचिन्हित पूर्णांक cpu)
-अणु
-	gic_घड़ीevent_cpu_init(cpu, this_cpu_ptr(&gic_घड़ीevent_device));
-	वापस 0;
-पूर्ण
+static int gic_starting_cpu(unsigned int cpu)
+{
+	gic_clockevent_cpu_init(cpu, this_cpu_ptr(&gic_clockevent_device));
+	return 0;
+}
 
-अटल पूर्णांक gic_clk_notअगरier(काष्ठा notअगरier_block *nb, अचिन्हित दीर्घ action,
-			    व्योम *data)
-अणु
-	काष्ठा clk_notअगरier_data *cnd = data;
+static int gic_clk_notifier(struct notifier_block *nb, unsigned long action,
+			    void *data)
+{
+	struct clk_notifier_data *cnd = data;
 
-	अगर (action == POST_RATE_CHANGE) अणु
-		gic_घड़ीsource_unstable("ref clock rate change");
-		on_each_cpu(gic_update_frequency, (व्योम *)cnd->new_rate, 1);
-	पूर्ण
+	if (action == POST_RATE_CHANGE) {
+		gic_clocksource_unstable("ref clock rate change");
+		on_each_cpu(gic_update_frequency, (void *)cnd->new_rate, 1);
+	}
 
-	वापस NOTIFY_OK;
-पूर्ण
+	return NOTIFY_OK;
+}
 
-अटल पूर्णांक gic_dying_cpu(अचिन्हित पूर्णांक cpu)
-अणु
-	gic_घड़ीevent_cpu_निकास(this_cpu_ptr(&gic_घड़ीevent_device));
-	वापस 0;
-पूर्ण
+static int gic_dying_cpu(unsigned int cpu)
+{
+	gic_clockevent_cpu_exit(this_cpu_ptr(&gic_clockevent_device));
+	return 0;
+}
 
-अटल काष्ठा notअगरier_block gic_clk_nb = अणु
-	.notअगरier_call = gic_clk_notअगरier,
-पूर्ण;
+static struct notifier_block gic_clk_nb = {
+	.notifier_call = gic_clk_notifier,
+};
 
-अटल पूर्णांक gic_घड़ीevent_init(व्योम)
-अणु
-	पूर्णांक ret;
+static int gic_clockevent_init(void)
+{
+	int ret;
 
-	अगर (!gic_frequency)
-		वापस -ENXIO;
+	if (!gic_frequency)
+		return -ENXIO;
 
-	ret = setup_percpu_irq(gic_समयr_irq, &gic_compare_irqaction);
-	अगर (ret < 0) अणु
-		pr_err("IRQ %d setup failed (%d)\n", gic_समयr_irq, ret);
-		वापस ret;
-	पूर्ण
+	ret = setup_percpu_irq(gic_timer_irq, &gic_compare_irqaction);
+	if (ret < 0) {
+		pr_err("IRQ %d setup failed (%d)\n", gic_timer_irq, ret);
+		return ret;
+	}
 
 	cpuhp_setup_state(CPUHP_AP_MIPS_GIC_TIMER_STARTING,
 			  "clockevents/mips/gic/timer:starting",
 			  gic_starting_cpu, gic_dying_cpu);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल u64 gic_hpt_पढ़ो(काष्ठा घड़ीsource *cs)
-अणु
-	वापस gic_पढ़ो_count();
-पूर्ण
+static u64 gic_hpt_read(struct clocksource *cs)
+{
+	return gic_read_count();
+}
 
-अटल काष्ठा घड़ीsource gic_घड़ीsource = अणु
+static struct clocksource gic_clocksource = {
 	.name			= "GIC",
-	.पढ़ो			= gic_hpt_पढ़ो,
+	.read			= gic_hpt_read,
 	.flags			= CLOCK_SOURCE_IS_CONTINUOUS,
-	.vdso_घड़ी_mode	= VDSO_CLOCKMODE_GIC,
-पूर्ण;
+	.vdso_clock_mode	= VDSO_CLOCKMODE_GIC,
+};
 
-अटल व्योम gic_घड़ीsource_unstable(अक्षर *reason)
-अणु
-	अगर (gic_घड़ी_unstable)
-		वापस;
+static void gic_clocksource_unstable(char *reason)
+{
+	if (gic_clock_unstable)
+		return;
 
-	gic_घड़ी_unstable = true;
+	gic_clock_unstable = true;
 
 	pr_info("GIC timer is unstable due to %s\n", reason);
 
-	घड़ीsource_mark_unstable(&gic_घड़ीsource);
-पूर्ण
+	clocksource_mark_unstable(&gic_clocksource);
+}
 
-अटल पूर्णांक __init __gic_घड़ीsource_init(व्योम)
-अणु
-	अचिन्हित पूर्णांक count_width;
-	पूर्णांक ret;
+static int __init __gic_clocksource_init(void)
+{
+	unsigned int count_width;
+	int ret;
 
-	/* Set घड़ीsource mask. */
-	count_width = पढ़ो_gic_config() & GIC_CONFIG_COUNTBITS;
+	/* Set clocksource mask. */
+	count_width = read_gic_config() & GIC_CONFIG_COUNTBITS;
 	count_width >>= __ffs(GIC_CONFIG_COUNTBITS);
 	count_width *= 4;
 	count_width += 32;
-	gic_घड़ीsource.mask = CLOCKSOURCE_MASK(count_width);
+	gic_clocksource.mask = CLOCKSOURCE_MASK(count_width);
 
 	/* Calculate a somewhat reasonable rating value. */
-	gic_घड़ीsource.rating = 200 + gic_frequency / 10000000;
+	gic_clocksource.rating = 200 + gic_frequency / 10000000;
 
-	ret = घड़ीsource_रेजिस्टर_hz(&gic_घड़ीsource, gic_frequency);
-	अगर (ret < 0)
+	ret = clocksource_register_hz(&gic_clocksource, gic_frequency);
+	if (ret < 0)
 		pr_warn("Unable to register clocksource\n");
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक __init gic_घड़ीsource_of_init(काष्ठा device_node *node)
-अणु
-	काष्ठा clk *clk;
-	पूर्णांक ret;
+static int __init gic_clocksource_of_init(struct device_node *node)
+{
+	struct clk *clk;
+	int ret;
 
-	अगर (!mips_gic_present() || !node->parent ||
-	    !of_device_is_compatible(node->parent, "mti,gic")) अणु
+	if (!mips_gic_present() || !node->parent ||
+	    !of_device_is_compatible(node->parent, "mti,gic")) {
 		pr_warn("No DT definition\n");
-		वापस -ENXIO;
-	पूर्ण
+		return -ENXIO;
+	}
 
 	clk = of_clk_get(node, 0);
-	अगर (!IS_ERR(clk)) अणु
+	if (!IS_ERR(clk)) {
 		ret = clk_prepare_enable(clk);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			pr_err("Failed to enable clock\n");
 			clk_put(clk);
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 
 		gic_frequency = clk_get_rate(clk);
-	पूर्ण अन्यथा अगर (of_property_पढ़ो_u32(node, "clock-frequency",
-					&gic_frequency)) अणु
+	} else if (of_property_read_u32(node, "clock-frequency",
+					&gic_frequency)) {
 		pr_err("Frequency not specified\n");
-		वापस -EINVAL;
-	पूर्ण
-	gic_समयr_irq = irq_of_parse_and_map(node, 0);
-	अगर (!gic_समयr_irq) अणु
+		return -EINVAL;
+	}
+	gic_timer_irq = irq_of_parse_and_map(node, 0);
+	if (!gic_timer_irq) {
 		pr_err("IRQ not specified\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	ret = __gic_घड़ीsource_init();
-	अगर (ret)
-		वापस ret;
+	ret = __gic_clocksource_init();
+	if (ret)
+		return ret;
 
-	ret = gic_घड़ीevent_init();
-	अगर (!ret && !IS_ERR(clk)) अणु
-		अगर (clk_notअगरier_रेजिस्टर(clk, &gic_clk_nb) < 0)
+	ret = gic_clockevent_init();
+	if (!ret && !IS_ERR(clk)) {
+		if (clk_notifier_register(clk, &gic_clk_nb) < 0)
 			pr_warn("Unable to register clock notifier\n");
-	पूर्ण
+	}
 
 	/* And finally start the counter */
 	clear_gic_config(GIC_CONFIG_COUNTSTOP);
 
 	/*
-	 * It's safe to use the MIPS GIC समयr as a sched घड़ी source only अगर
-	 * its ticks are stable, which is true on either the platक्रमms with
-	 * stable CPU frequency or on the platक्रमms with CM3 and CPU frequency
-	 * change perक्रमmed by the CPC core घड़ीs भागider.
+	 * It's safe to use the MIPS GIC timer as a sched clock source only if
+	 * its ticks are stable, which is true on either the platforms with
+	 * stable CPU frequency or on the platforms with CM3 and CPU frequency
+	 * change performed by the CPC core clocks divider.
 	 */
-	अगर (mips_cm_revision() >= CM_REV_CM3 || !IS_ENABLED(CONFIG_CPU_FREQ)) अणु
-		sched_घड़ी_रेजिस्टर(mips_cm_is64 ?
-				     gic_पढ़ो_count_64 : gic_पढ़ो_count_2x32,
+	if (mips_cm_revision() >= CM_REV_CM3 || !IS_ENABLED(CONFIG_CPU_FREQ)) {
+		sched_clock_register(mips_cm_is64 ?
+				     gic_read_count_64 : gic_read_count_2x32,
 				     64, gic_frequency);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
-TIMER_OF_DECLARE(mips_gic_समयr, "mti,gic-timer",
-		       gic_घड़ीsource_of_init);
+	return 0;
+}
+TIMER_OF_DECLARE(mips_gic_timer, "mti,gic-timer",
+		       gic_clocksource_of_init);

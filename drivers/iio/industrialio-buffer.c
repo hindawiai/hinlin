@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /* The industrial I/O core
  *
  * Copyright (c) 2008 Jonathan Cameron
@@ -10,506 +9,506 @@
  * - Better memory allocation techniques?
  * - Alternative access techniques?
  */
-#समावेश <linux/anon_inodes.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/export.h>
-#समावेश <linux/device.h>
-#समावेश <linux/file.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/cdev.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/poll.h>
-#समावेश <linux/sched/संकेत.स>
+#include <linux/anon_inodes.h>
+#include <linux/kernel.h>
+#include <linux/export.h>
+#include <linux/device.h>
+#include <linux/file.h>
+#include <linux/fs.h>
+#include <linux/cdev.h>
+#include <linux/slab.h>
+#include <linux/poll.h>
+#include <linux/sched/signal.h>
 
-#समावेश <linux/iio/iपन.स>
-#समावेश <linux/iio/iio-opaque.h>
-#समावेश "iio_core.h"
-#समावेश "iio_core_trigger.h"
-#समावेश <linux/iio/sysfs.h>
-#समावेश <linux/iio/buffer.h>
-#समावेश <linux/iio/buffer_impl.h>
+#include <linux/iio/iio.h>
+#include <linux/iio/iio-opaque.h>
+#include "iio_core.h"
+#include "iio_core_trigger.h"
+#include <linux/iio/sysfs.h>
+#include <linux/iio/buffer.h>
+#include <linux/iio/buffer_impl.h>
 
-अटल स्थिर अक्षर * स्थिर iio_endian_prefix[] = अणु
+static const char * const iio_endian_prefix[] = {
 	[IIO_BE] = "be",
 	[IIO_LE] = "le",
-पूर्ण;
+};
 
-अटल bool iio_buffer_is_active(काष्ठा iio_buffer *buf)
-अणु
-	वापस !list_empty(&buf->buffer_list);
-पूर्ण
+static bool iio_buffer_is_active(struct iio_buffer *buf)
+{
+	return !list_empty(&buf->buffer_list);
+}
 
-अटल माप_प्रकार iio_buffer_data_available(काष्ठा iio_buffer *buf)
-अणु
-	वापस buf->access->data_available(buf);
-पूर्ण
+static size_t iio_buffer_data_available(struct iio_buffer *buf)
+{
+	return buf->access->data_available(buf);
+}
 
-अटल पूर्णांक iio_buffer_flush_hwfअगरo(काष्ठा iio_dev *indio_dev,
-				   काष्ठा iio_buffer *buf, माप_प्रकार required)
-अणु
-	अगर (!indio_dev->info->hwfअगरo_flush_to_buffer)
-		वापस -ENODEV;
+static int iio_buffer_flush_hwfifo(struct iio_dev *indio_dev,
+				   struct iio_buffer *buf, size_t required)
+{
+	if (!indio_dev->info->hwfifo_flush_to_buffer)
+		return -ENODEV;
 
-	वापस indio_dev->info->hwfअगरo_flush_to_buffer(indio_dev, required);
-पूर्ण
+	return indio_dev->info->hwfifo_flush_to_buffer(indio_dev, required);
+}
 
-अटल bool iio_buffer_पढ़ोy(काष्ठा iio_dev *indio_dev, काष्ठा iio_buffer *buf,
-			     माप_प्रकार to_रुको, पूर्णांक to_flush)
-अणु
-	माप_प्रकार avail;
-	पूर्णांक flushed = 0;
+static bool iio_buffer_ready(struct iio_dev *indio_dev, struct iio_buffer *buf,
+			     size_t to_wait, int to_flush)
+{
+	size_t avail;
+	int flushed = 0;
 
-	/* wakeup अगर the device was unरेजिस्टरed */
-	अगर (!indio_dev->info)
-		वापस true;
+	/* wakeup if the device was unregistered */
+	if (!indio_dev->info)
+		return true;
 
-	/* drain the buffer अगर it was disabled */
-	अगर (!iio_buffer_is_active(buf)) अणु
-		to_रुको = min_t(माप_प्रकार, to_रुको, 1);
+	/* drain the buffer if it was disabled */
+	if (!iio_buffer_is_active(buf)) {
+		to_wait = min_t(size_t, to_wait, 1);
 		to_flush = 0;
-	पूर्ण
+	}
 
 	avail = iio_buffer_data_available(buf);
 
-	अगर (avail >= to_रुको) अणु
-		/* क्रमce a flush क्रम non-blocking पढ़ोs */
-		अगर (!to_रुको && avail < to_flush)
-			iio_buffer_flush_hwfअगरo(indio_dev, buf,
+	if (avail >= to_wait) {
+		/* force a flush for non-blocking reads */
+		if (!to_wait && avail < to_flush)
+			iio_buffer_flush_hwfifo(indio_dev, buf,
 						to_flush - avail);
-		वापस true;
-	पूर्ण
+		return true;
+	}
 
-	अगर (to_flush)
-		flushed = iio_buffer_flush_hwfअगरo(indio_dev, buf,
-						  to_रुको - avail);
-	अगर (flushed <= 0)
-		वापस false;
+	if (to_flush)
+		flushed = iio_buffer_flush_hwfifo(indio_dev, buf,
+						  to_wait - avail);
+	if (flushed <= 0)
+		return false;
 
-	अगर (avail + flushed >= to_रुको)
-		वापस true;
+	if (avail + flushed >= to_wait)
+		return true;
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
 /**
- * iio_buffer_पढ़ो() - chrdev पढ़ो क्रम buffer access
- * @filp:	File काष्ठाure poपूर्णांकer क्रम the अक्षर device
- * @buf:	Destination buffer क्रम iio buffer पढ़ो
- * @n:		First n bytes to पढ़ो
+ * iio_buffer_read() - chrdev read for buffer access
+ * @filp:	File structure pointer for the char device
+ * @buf:	Destination buffer for iio buffer read
+ * @n:		First n bytes to read
  * @f_ps:	Long offset provided by the user as a seek position
  *
  * This function relies on all buffer implementations having an
  * iio_buffer as their first element.
  *
  * Return: negative values corresponding to error codes or ret != 0
- *	   क्रम ending the पढ़ोing activity
+ *	   for ending the reading activity
  **/
-अटल sमाप_प्रकार iio_buffer_पढ़ो(काष्ठा file *filp, अक्षर __user *buf,
-			       माप_प्रकार n, loff_t *f_ps)
-अणु
-	काष्ठा iio_dev_buffer_pair *ib = filp->निजी_data;
-	काष्ठा iio_buffer *rb = ib->buffer;
-	काष्ठा iio_dev *indio_dev = ib->indio_dev;
-	DEFINE_WAIT_FUNC(रुको, woken_wake_function);
-	माप_प्रकार datum_size;
-	माप_प्रकार to_रुको;
-	पूर्णांक ret = 0;
+static ssize_t iio_buffer_read(struct file *filp, char __user *buf,
+			       size_t n, loff_t *f_ps)
+{
+	struct iio_dev_buffer_pair *ib = filp->private_data;
+	struct iio_buffer *rb = ib->buffer;
+	struct iio_dev *indio_dev = ib->indio_dev;
+	DEFINE_WAIT_FUNC(wait, woken_wake_function);
+	size_t datum_size;
+	size_t to_wait;
+	int ret = 0;
 
-	अगर (!indio_dev->info)
-		वापस -ENODEV;
+	if (!indio_dev->info)
+		return -ENODEV;
 
-	अगर (!rb || !rb->access->पढ़ो)
-		वापस -EINVAL;
+	if (!rb || !rb->access->read)
+		return -EINVAL;
 
 	datum_size = rb->bytes_per_datum;
 
 	/*
-	 * If datum_size is 0 there will never be anything to पढ़ो from the
-	 * buffer, so संकेत end of file now.
+	 * If datum_size is 0 there will never be anything to read from the
+	 * buffer, so signal end of file now.
 	 */
-	अगर (!datum_size)
-		वापस 0;
+	if (!datum_size)
+		return 0;
 
-	अगर (filp->f_flags & O_NONBLOCK)
-		to_रुको = 0;
-	अन्यथा
-		to_रुको = min_t(माप_प्रकार, n / datum_size, rb->watermark);
+	if (filp->f_flags & O_NONBLOCK)
+		to_wait = 0;
+	else
+		to_wait = min_t(size_t, n / datum_size, rb->watermark);
 
-	add_रुको_queue(&rb->pollq, &रुको);
-	करो अणु
-		अगर (!indio_dev->info) अणु
+	add_wait_queue(&rb->pollq, &wait);
+	do {
+		if (!indio_dev->info) {
 			ret = -ENODEV;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (!iio_buffer_पढ़ोy(indio_dev, rb, to_रुको, n / datum_size)) अणु
-			अगर (संकेत_pending(current)) अणु
+		if (!iio_buffer_ready(indio_dev, rb, to_wait, n / datum_size)) {
+			if (signal_pending(current)) {
 				ret = -ERESTARTSYS;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 
-			रुको_woken(&रुको, TASK_INTERRUPTIBLE,
+			wait_woken(&wait, TASK_INTERRUPTIBLE,
 				   MAX_SCHEDULE_TIMEOUT);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		ret = rb->access->पढ़ो(rb, n, buf);
-		अगर (ret == 0 && (filp->f_flags & O_NONBLOCK))
+		ret = rb->access->read(rb, n, buf);
+		if (ret == 0 && (filp->f_flags & O_NONBLOCK))
 			ret = -EAGAIN;
-	पूर्ण जबतक (ret == 0);
-	हटाओ_रुको_queue(&rb->pollq, &रुको);
+	} while (ret == 0);
+	remove_wait_queue(&rb->pollq, &wait);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * iio_buffer_poll() - poll the buffer to find out अगर it has data
- * @filp:	File काष्ठाure poपूर्णांकer क्रम device access
- * @रुको:	Poll table काष्ठाure poपूर्णांकer क्रम which the driver adds
- *		a रुको queue
+ * iio_buffer_poll() - poll the buffer to find out if it has data
+ * @filp:	File structure pointer for device access
+ * @wait:	Poll table structure pointer for which the driver adds
+ *		a wait queue
  *
- * Return: (EPOLLIN | EPOLLRDNORM) अगर data is available क्रम पढ़ोing
- *	   or 0 क्रम other हालs
+ * Return: (EPOLLIN | EPOLLRDNORM) if data is available for reading
+ *	   or 0 for other cases
  */
-अटल __poll_t iio_buffer_poll(काष्ठा file *filp,
-				काष्ठा poll_table_काष्ठा *रुको)
-अणु
-	काष्ठा iio_dev_buffer_pair *ib = filp->निजी_data;
-	काष्ठा iio_buffer *rb = ib->buffer;
-	काष्ठा iio_dev *indio_dev = ib->indio_dev;
+static __poll_t iio_buffer_poll(struct file *filp,
+				struct poll_table_struct *wait)
+{
+	struct iio_dev_buffer_pair *ib = filp->private_data;
+	struct iio_buffer *rb = ib->buffer;
+	struct iio_dev *indio_dev = ib->indio_dev;
 
-	अगर (!indio_dev->info || rb == शून्य)
-		वापस 0;
+	if (!indio_dev->info || rb == NULL)
+		return 0;
 
-	poll_रुको(filp, &rb->pollq, रुको);
-	अगर (iio_buffer_पढ़ोy(indio_dev, rb, rb->watermark, 0))
-		वापस EPOLLIN | EPOLLRDNORM;
-	वापस 0;
-पूर्ण
+	poll_wait(filp, &rb->pollq, wait);
+	if (iio_buffer_ready(indio_dev, rb, rb->watermark, 0))
+		return EPOLLIN | EPOLLRDNORM;
+	return 0;
+}
 
-sमाप_प्रकार iio_buffer_पढ़ो_wrapper(काष्ठा file *filp, अक्षर __user *buf,
-				माप_प्रकार n, loff_t *f_ps)
-अणु
-	काष्ठा iio_dev_buffer_pair *ib = filp->निजी_data;
-	काष्ठा iio_buffer *rb = ib->buffer;
+ssize_t iio_buffer_read_wrapper(struct file *filp, char __user *buf,
+				size_t n, loff_t *f_ps)
+{
+	struct iio_dev_buffer_pair *ib = filp->private_data;
+	struct iio_buffer *rb = ib->buffer;
 
-	/* check अगर buffer was खोलोed through new API */
-	अगर (test_bit(IIO_BUSY_BIT_POS, &rb->flags))
-		वापस -EBUSY;
+	/* check if buffer was opened through new API */
+	if (test_bit(IIO_BUSY_BIT_POS, &rb->flags))
+		return -EBUSY;
 
-	वापस iio_buffer_पढ़ो(filp, buf, n, f_ps);
-पूर्ण
+	return iio_buffer_read(filp, buf, n, f_ps);
+}
 
-__poll_t iio_buffer_poll_wrapper(काष्ठा file *filp,
-				 काष्ठा poll_table_काष्ठा *रुको)
-अणु
-	काष्ठा iio_dev_buffer_pair *ib = filp->निजी_data;
-	काष्ठा iio_buffer *rb = ib->buffer;
+__poll_t iio_buffer_poll_wrapper(struct file *filp,
+				 struct poll_table_struct *wait)
+{
+	struct iio_dev_buffer_pair *ib = filp->private_data;
+	struct iio_buffer *rb = ib->buffer;
 
-	/* check अगर buffer was खोलोed through new API */
-	अगर (test_bit(IIO_BUSY_BIT_POS, &rb->flags))
-		वापस 0;
+	/* check if buffer was opened through new API */
+	if (test_bit(IIO_BUSY_BIT_POS, &rb->flags))
+		return 0;
 
-	वापस iio_buffer_poll(filp, रुको);
-पूर्ण
+	return iio_buffer_poll(filp, wait);
+}
 
 /**
- * iio_buffer_wakeup_poll - Wakes up the buffer रुकोqueue
+ * iio_buffer_wakeup_poll - Wakes up the buffer waitqueue
  * @indio_dev: The IIO device
  *
- * Wakes up the event रुकोqueue used क्रम poll(). Should usually
- * be called when the device is unरेजिस्टरed.
+ * Wakes up the event waitqueue used for poll(). Should usually
+ * be called when the device is unregistered.
  */
-व्योम iio_buffer_wakeup_poll(काष्ठा iio_dev *indio_dev)
-अणु
-	काष्ठा iio_dev_opaque *iio_dev_opaque = to_iio_dev_opaque(indio_dev);
-	काष्ठा iio_buffer *buffer;
-	अचिन्हित पूर्णांक i;
+void iio_buffer_wakeup_poll(struct iio_dev *indio_dev)
+{
+	struct iio_dev_opaque *iio_dev_opaque = to_iio_dev_opaque(indio_dev);
+	struct iio_buffer *buffer;
+	unsigned int i;
 
-	क्रम (i = 0; i < iio_dev_opaque->attached_buffers_cnt; i++) अणु
+	for (i = 0; i < iio_dev_opaque->attached_buffers_cnt; i++) {
 		buffer = iio_dev_opaque->attached_buffers[i];
 		wake_up(&buffer->pollq);
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम iio_buffer_init(काष्ठा iio_buffer *buffer)
-अणु
+void iio_buffer_init(struct iio_buffer *buffer)
+{
 	INIT_LIST_HEAD(&buffer->demux_list);
 	INIT_LIST_HEAD(&buffer->buffer_list);
-	init_रुकोqueue_head(&buffer->pollq);
+	init_waitqueue_head(&buffer->pollq);
 	kref_init(&buffer->ref);
-	अगर (!buffer->watermark)
+	if (!buffer->watermark)
 		buffer->watermark = 1;
-पूर्ण
+}
 EXPORT_SYMBOL(iio_buffer_init);
 
-व्योम iio_device_detach_buffers(काष्ठा iio_dev *indio_dev)
-अणु
-	काष्ठा iio_dev_opaque *iio_dev_opaque = to_iio_dev_opaque(indio_dev);
-	काष्ठा iio_buffer *buffer;
-	अचिन्हित पूर्णांक i;
+void iio_device_detach_buffers(struct iio_dev *indio_dev)
+{
+	struct iio_dev_opaque *iio_dev_opaque = to_iio_dev_opaque(indio_dev);
+	struct iio_buffer *buffer;
+	unsigned int i;
 
-	क्रम (i = 0; i < iio_dev_opaque->attached_buffers_cnt; i++) अणु
+	for (i = 0; i < iio_dev_opaque->attached_buffers_cnt; i++) {
 		buffer = iio_dev_opaque->attached_buffers[i];
 		iio_buffer_put(buffer);
-	पूर्ण
+	}
 
-	kमुक्त(iio_dev_opaque->attached_buffers);
-पूर्ण
+	kfree(iio_dev_opaque->attached_buffers);
+}
 
-अटल sमाप_प्रकार iio_show_scan_index(काष्ठा device *dev,
-				   काष्ठा device_attribute *attr,
-				   अक्षर *buf)
-अणु
-	वापस sysfs_emit(buf, "%u\n", to_iio_dev_attr(attr)->c->scan_index);
-पूर्ण
+static ssize_t iio_show_scan_index(struct device *dev,
+				   struct device_attribute *attr,
+				   char *buf)
+{
+	return sysfs_emit(buf, "%u\n", to_iio_dev_attr(attr)->c->scan_index);
+}
 
-अटल sमाप_प्रकार iio_show_fixed_type(काष्ठा device *dev,
-				   काष्ठा device_attribute *attr,
-				   अक्षर *buf)
-अणु
-	काष्ठा iio_dev_attr *this_attr = to_iio_dev_attr(attr);
+static ssize_t iio_show_fixed_type(struct device *dev,
+				   struct device_attribute *attr,
+				   char *buf)
+{
+	struct iio_dev_attr *this_attr = to_iio_dev_attr(attr);
 	u8 type = this_attr->c->scan_type.endianness;
 
-	अगर (type == IIO_CPU) अणु
-#अगर_घोषित __LITTLE_ENDIAN
+	if (type == IIO_CPU) {
+#ifdef __LITTLE_ENDIAN
 		type = IIO_LE;
-#अन्यथा
+#else
 		type = IIO_BE;
-#पूर्ण_अगर
-	पूर्ण
-	अगर (this_attr->c->scan_type.repeat > 1)
-		वापस sysfs_emit(buf, "%s:%c%d/%dX%d>>%u\n",
+#endif
+	}
+	if (this_attr->c->scan_type.repeat > 1)
+		return sysfs_emit(buf, "%s:%c%d/%dX%d>>%u\n",
 		       iio_endian_prefix[type],
 		       this_attr->c->scan_type.sign,
 		       this_attr->c->scan_type.realbits,
 		       this_attr->c->scan_type.storagebits,
 		       this_attr->c->scan_type.repeat,
-		       this_attr->c->scan_type.shअगरt);
-	अन्यथा
-		वापस sysfs_emit(buf, "%s:%c%d/%d>>%u\n",
+		       this_attr->c->scan_type.shift);
+	else
+		return sysfs_emit(buf, "%s:%c%d/%d>>%u\n",
 		       iio_endian_prefix[type],
 		       this_attr->c->scan_type.sign,
 		       this_attr->c->scan_type.realbits,
 		       this_attr->c->scan_type.storagebits,
-		       this_attr->c->scan_type.shअगरt);
-पूर्ण
+		       this_attr->c->scan_type.shift);
+}
 
-अटल sमाप_प्रकार iio_scan_el_show(काष्ठा device *dev,
-				काष्ठा device_attribute *attr,
-				अक्षर *buf)
-अणु
-	पूर्णांक ret;
-	काष्ठा iio_buffer *buffer = to_iio_dev_attr(attr)->buffer;
+static ssize_t iio_scan_el_show(struct device *dev,
+				struct device_attribute *attr,
+				char *buf)
+{
+	int ret;
+	struct iio_buffer *buffer = to_iio_dev_attr(attr)->buffer;
 
 	/* Ensure ret is 0 or 1. */
 	ret = !!test_bit(to_iio_dev_attr(attr)->address,
 		       buffer->scan_mask);
 
-	वापस sysfs_emit(buf, "%d\n", ret);
-पूर्ण
+	return sysfs_emit(buf, "%d\n", ret);
+}
 
-/* Note शून्य used as error indicator as it करोesn't make sense. */
-अटल स्थिर अचिन्हित दीर्घ *iio_scan_mask_match(स्थिर अचिन्हित दीर्घ *av_masks,
-					  अचिन्हित पूर्णांक masklength,
-					  स्थिर अचिन्हित दीर्घ *mask,
+/* Note NULL used as error indicator as it doesn't make sense. */
+static const unsigned long *iio_scan_mask_match(const unsigned long *av_masks,
+					  unsigned int masklength,
+					  const unsigned long *mask,
 					  bool strict)
-अणु
-	अगर (biपंचांगap_empty(mask, masklength))
-		वापस शून्य;
-	जबतक (*av_masks) अणु
-		अगर (strict) अणु
-			अगर (biपंचांगap_equal(mask, av_masks, masklength))
-				वापस av_masks;
-		पूर्ण अन्यथा अणु
-			अगर (biपंचांगap_subset(mask, av_masks, masklength))
-				वापस av_masks;
-		पूर्ण
+{
+	if (bitmap_empty(mask, masklength))
+		return NULL;
+	while (*av_masks) {
+		if (strict) {
+			if (bitmap_equal(mask, av_masks, masklength))
+				return av_masks;
+		} else {
+			if (bitmap_subset(mask, av_masks, masklength))
+				return av_masks;
+		}
 		av_masks += BITS_TO_LONGS(masklength);
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+	}
+	return NULL;
+}
 
-अटल bool iio_validate_scan_mask(काष्ठा iio_dev *indio_dev,
-	स्थिर अचिन्हित दीर्घ *mask)
-अणु
-	अगर (!indio_dev->setup_ops->validate_scan_mask)
-		वापस true;
+static bool iio_validate_scan_mask(struct iio_dev *indio_dev,
+	const unsigned long *mask)
+{
+	if (!indio_dev->setup_ops->validate_scan_mask)
+		return true;
 
-	वापस indio_dev->setup_ops->validate_scan_mask(indio_dev, mask);
-पूर्ण
+	return indio_dev->setup_ops->validate_scan_mask(indio_dev, mask);
+}
 
 /**
  * iio_scan_mask_set() - set particular bit in the scan mask
  * @indio_dev: the iio device
- * @buffer: the buffer whose scan mask we are पूर्णांकerested in
+ * @buffer: the buffer whose scan mask we are interested in
  * @bit: the bit to be set.
  *
- * Note that at this poपूर्णांक we have no way of knowing what other
- * buffers might request, hence this code only verअगरies that the
- * inभागidual buffers request is plausible.
+ * Note that at this point we have no way of knowing what other
+ * buffers might request, hence this code only verifies that the
+ * individual buffers request is plausible.
  */
-अटल पूर्णांक iio_scan_mask_set(काष्ठा iio_dev *indio_dev,
-		      काष्ठा iio_buffer *buffer, पूर्णांक bit)
-अणु
-	स्थिर अचिन्हित दीर्घ *mask;
-	अचिन्हित दीर्घ *trialmask;
+static int iio_scan_mask_set(struct iio_dev *indio_dev,
+		      struct iio_buffer *buffer, int bit)
+{
+	const unsigned long *mask;
+	unsigned long *trialmask;
 
-	trialmask = biपंचांगap_zalloc(indio_dev->masklength, GFP_KERNEL);
-	अगर (trialmask == शून्य)
-		वापस -ENOMEM;
-	अगर (!indio_dev->masklength) अणु
+	trialmask = bitmap_zalloc(indio_dev->masklength, GFP_KERNEL);
+	if (trialmask == NULL)
+		return -ENOMEM;
+	if (!indio_dev->masklength) {
 		WARN(1, "Trying to set scanmask prior to registering buffer\n");
-		जाओ err_invalid_mask;
-	पूर्ण
-	biपंचांगap_copy(trialmask, buffer->scan_mask, indio_dev->masklength);
+		goto err_invalid_mask;
+	}
+	bitmap_copy(trialmask, buffer->scan_mask, indio_dev->masklength);
 	set_bit(bit, trialmask);
 
-	अगर (!iio_validate_scan_mask(indio_dev, trialmask))
-		जाओ err_invalid_mask;
+	if (!iio_validate_scan_mask(indio_dev, trialmask))
+		goto err_invalid_mask;
 
-	अगर (indio_dev->available_scan_masks) अणु
+	if (indio_dev->available_scan_masks) {
 		mask = iio_scan_mask_match(indio_dev->available_scan_masks,
 					   indio_dev->masklength,
 					   trialmask, false);
-		अगर (!mask)
-			जाओ err_invalid_mask;
-	पूर्ण
-	biपंचांगap_copy(buffer->scan_mask, trialmask, indio_dev->masklength);
+		if (!mask)
+			goto err_invalid_mask;
+	}
+	bitmap_copy(buffer->scan_mask, trialmask, indio_dev->masklength);
 
-	biपंचांगap_मुक्त(trialmask);
+	bitmap_free(trialmask);
 
-	वापस 0;
+	return 0;
 
 err_invalid_mask:
-	biपंचांगap_मुक्त(trialmask);
-	वापस -EINVAL;
-पूर्ण
+	bitmap_free(trialmask);
+	return -EINVAL;
+}
 
-अटल पूर्णांक iio_scan_mask_clear(काष्ठा iio_buffer *buffer, पूर्णांक bit)
-अणु
+static int iio_scan_mask_clear(struct iio_buffer *buffer, int bit)
+{
 	clear_bit(bit, buffer->scan_mask);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक iio_scan_mask_query(काष्ठा iio_dev *indio_dev,
-			       काष्ठा iio_buffer *buffer, पूर्णांक bit)
-अणु
-	अगर (bit > indio_dev->masklength)
-		वापस -EINVAL;
+static int iio_scan_mask_query(struct iio_dev *indio_dev,
+			       struct iio_buffer *buffer, int bit)
+{
+	if (bit > indio_dev->masklength)
+		return -EINVAL;
 
-	अगर (!buffer->scan_mask)
-		वापस 0;
+	if (!buffer->scan_mask)
+		return 0;
 
-	/* Ensure वापस value is 0 or 1. */
-	वापस !!test_bit(bit, buffer->scan_mask);
-पूर्ण;
+	/* Ensure return value is 0 or 1. */
+	return !!test_bit(bit, buffer->scan_mask);
+};
 
-अटल sमाप_प्रकार iio_scan_el_store(काष्ठा device *dev,
-				 काष्ठा device_attribute *attr,
-				 स्थिर अक्षर *buf,
-				 माप_प्रकार len)
-अणु
-	पूर्णांक ret;
+static ssize_t iio_scan_el_store(struct device *dev,
+				 struct device_attribute *attr,
+				 const char *buf,
+				 size_t len)
+{
+	int ret;
 	bool state;
-	काष्ठा iio_dev *indio_dev = dev_to_iio_dev(dev);
-	काष्ठा iio_dev_attr *this_attr = to_iio_dev_attr(attr);
-	काष्ठा iio_buffer *buffer = this_attr->buffer;
+	struct iio_dev *indio_dev = dev_to_iio_dev(dev);
+	struct iio_dev_attr *this_attr = to_iio_dev_attr(attr);
+	struct iio_buffer *buffer = this_attr->buffer;
 
 	ret = strtobool(buf, &state);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 	mutex_lock(&indio_dev->mlock);
-	अगर (iio_buffer_is_active(buffer)) अणु
+	if (iio_buffer_is_active(buffer)) {
 		ret = -EBUSY;
-		जाओ error_ret;
-	पूर्ण
+		goto error_ret;
+	}
 	ret = iio_scan_mask_query(indio_dev, buffer, this_attr->address);
-	अगर (ret < 0)
-		जाओ error_ret;
-	अगर (!state && ret) अणु
+	if (ret < 0)
+		goto error_ret;
+	if (!state && ret) {
 		ret = iio_scan_mask_clear(buffer, this_attr->address);
-		अगर (ret)
-			जाओ error_ret;
-	पूर्ण अन्यथा अगर (state && !ret) अणु
+		if (ret)
+			goto error_ret;
+	} else if (state && !ret) {
 		ret = iio_scan_mask_set(indio_dev, buffer, this_attr->address);
-		अगर (ret)
-			जाओ error_ret;
-	पूर्ण
+		if (ret)
+			goto error_ret;
+	}
 
 error_ret:
 	mutex_unlock(&indio_dev->mlock);
 
-	वापस ret < 0 ? ret : len;
+	return ret < 0 ? ret : len;
 
-पूर्ण
+}
 
-अटल sमाप_प्रकार iio_scan_el_ts_show(काष्ठा device *dev,
-				   काष्ठा device_attribute *attr,
-				   अक्षर *buf)
-अणु
-	काष्ठा iio_buffer *buffer = to_iio_dev_attr(attr)->buffer;
+static ssize_t iio_scan_el_ts_show(struct device *dev,
+				   struct device_attribute *attr,
+				   char *buf)
+{
+	struct iio_buffer *buffer = to_iio_dev_attr(attr)->buffer;
 
-	वापस sysfs_emit(buf, "%d\n", buffer->scan_बारtamp);
-पूर्ण
+	return sysfs_emit(buf, "%d\n", buffer->scan_timestamp);
+}
 
-अटल sमाप_प्रकार iio_scan_el_ts_store(काष्ठा device *dev,
-				    काष्ठा device_attribute *attr,
-				    स्थिर अक्षर *buf,
-				    माप_प्रकार len)
-अणु
-	पूर्णांक ret;
-	काष्ठा iio_dev *indio_dev = dev_to_iio_dev(dev);
-	काष्ठा iio_buffer *buffer = to_iio_dev_attr(attr)->buffer;
+static ssize_t iio_scan_el_ts_store(struct device *dev,
+				    struct device_attribute *attr,
+				    const char *buf,
+				    size_t len)
+{
+	int ret;
+	struct iio_dev *indio_dev = dev_to_iio_dev(dev);
+	struct iio_buffer *buffer = to_iio_dev_attr(attr)->buffer;
 	bool state;
 
 	ret = strtobool(buf, &state);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	mutex_lock(&indio_dev->mlock);
-	अगर (iio_buffer_is_active(buffer)) अणु
+	if (iio_buffer_is_active(buffer)) {
 		ret = -EBUSY;
-		जाओ error_ret;
-	पूर्ण
-	buffer->scan_बारtamp = state;
+		goto error_ret;
+	}
+	buffer->scan_timestamp = state;
 error_ret:
 	mutex_unlock(&indio_dev->mlock);
 
-	वापस ret ? ret : len;
-पूर्ण
+	return ret ? ret : len;
+}
 
-अटल पूर्णांक iio_buffer_add_channel_sysfs(काष्ठा iio_dev *indio_dev,
-					काष्ठा iio_buffer *buffer,
-					स्थिर काष्ठा iio_chan_spec *chan)
-अणु
-	पूर्णांक ret, attrcount = 0;
+static int iio_buffer_add_channel_sysfs(struct iio_dev *indio_dev,
+					struct iio_buffer *buffer,
+					const struct iio_chan_spec *chan)
+{
+	int ret, attrcount = 0;
 
 	ret = __iio_add_chan_devattr("index",
 				     chan,
 				     &iio_show_scan_index,
-				     शून्य,
+				     NULL,
 				     0,
 				     IIO_SEPARATE,
 				     &indio_dev->dev,
 				     buffer,
 				     &buffer->buffer_attr_list);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 	attrcount++;
 	ret = __iio_add_chan_devattr("type",
 				     chan,
 				     &iio_show_fixed_type,
-				     शून्य,
+				     NULL,
 				     0,
 				     0,
 				     &indio_dev->dev,
 				     buffer,
 				     &buffer->buffer_attr_list);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 	attrcount++;
-	अगर (chan->type != IIO_TIMESTAMP)
+	if (chan->type != IIO_TIMESTAMP)
 		ret = __iio_add_chan_devattr("en",
 					     chan,
 					     &iio_scan_el_show,
@@ -519,7 +518,7 @@ error_ret:
 					     &indio_dev->dev,
 					     buffer,
 					     &buffer->buffer_attr_list);
-	अन्यथा
+	else
 		ret = __iio_add_chan_devattr("en",
 					     chan,
 					     &iio_scan_el_ts_show,
@@ -529,1245 +528,1245 @@ error_ret:
 					     &indio_dev->dev,
 					     buffer,
 					     &buffer->buffer_attr_list);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 	attrcount++;
 	ret = attrcount;
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल sमाप_प्रकार iio_buffer_पढ़ो_length(काष्ठा device *dev,
-				      काष्ठा device_attribute *attr,
-				      अक्षर *buf)
-अणु
-	काष्ठा iio_buffer *buffer = to_iio_dev_attr(attr)->buffer;
+static ssize_t iio_buffer_read_length(struct device *dev,
+				      struct device_attribute *attr,
+				      char *buf)
+{
+	struct iio_buffer *buffer = to_iio_dev_attr(attr)->buffer;
 
-	वापस sysfs_emit(buf, "%d\n", buffer->length);
-पूर्ण
+	return sysfs_emit(buf, "%d\n", buffer->length);
+}
 
-अटल sमाप_प्रकार iio_buffer_ग_लिखो_length(काष्ठा device *dev,
-				       काष्ठा device_attribute *attr,
-				       स्थिर अक्षर *buf, माप_प्रकार len)
-अणु
-	काष्ठा iio_dev *indio_dev = dev_to_iio_dev(dev);
-	काष्ठा iio_buffer *buffer = to_iio_dev_attr(attr)->buffer;
-	अचिन्हित पूर्णांक val;
-	पूर्णांक ret;
+static ssize_t iio_buffer_write_length(struct device *dev,
+				       struct device_attribute *attr,
+				       const char *buf, size_t len)
+{
+	struct iio_dev *indio_dev = dev_to_iio_dev(dev);
+	struct iio_buffer *buffer = to_iio_dev_attr(attr)->buffer;
+	unsigned int val;
+	int ret;
 
-	ret = kstrtouपूर्णांक(buf, 10, &val);
-	अगर (ret)
-		वापस ret;
+	ret = kstrtouint(buf, 10, &val);
+	if (ret)
+		return ret;
 
-	अगर (val == buffer->length)
-		वापस len;
+	if (val == buffer->length)
+		return len;
 
 	mutex_lock(&indio_dev->mlock);
-	अगर (iio_buffer_is_active(buffer)) अणु
+	if (iio_buffer_is_active(buffer)) {
 		ret = -EBUSY;
-	पूर्ण अन्यथा अणु
+	} else {
 		buffer->access->set_length(buffer, val);
 		ret = 0;
-	पूर्ण
-	अगर (ret)
-		जाओ out;
-	अगर (buffer->length && buffer->length < buffer->watermark)
+	}
+	if (ret)
+		goto out;
+	if (buffer->length && buffer->length < buffer->watermark)
 		buffer->watermark = buffer->length;
 out:
 	mutex_unlock(&indio_dev->mlock);
 
-	वापस ret ? ret : len;
-पूर्ण
+	return ret ? ret : len;
+}
 
-अटल sमाप_प्रकार iio_buffer_show_enable(काष्ठा device *dev,
-				      काष्ठा device_attribute *attr,
-				      अक्षर *buf)
-अणु
-	काष्ठा iio_buffer *buffer = to_iio_dev_attr(attr)->buffer;
+static ssize_t iio_buffer_show_enable(struct device *dev,
+				      struct device_attribute *attr,
+				      char *buf)
+{
+	struct iio_buffer *buffer = to_iio_dev_attr(attr)->buffer;
 
-	वापस sysfs_emit(buf, "%d\n", iio_buffer_is_active(buffer));
-पूर्ण
+	return sysfs_emit(buf, "%d\n", iio_buffer_is_active(buffer));
+}
 
-अटल अचिन्हित पूर्णांक iio_storage_bytes_क्रम_si(काष्ठा iio_dev *indio_dev,
-					     अचिन्हित पूर्णांक scan_index)
-अणु
-	स्थिर काष्ठा iio_chan_spec *ch;
-	अचिन्हित पूर्णांक bytes;
+static unsigned int iio_storage_bytes_for_si(struct iio_dev *indio_dev,
+					     unsigned int scan_index)
+{
+	const struct iio_chan_spec *ch;
+	unsigned int bytes;
 
 	ch = iio_find_channel_from_si(indio_dev, scan_index);
 	bytes = ch->scan_type.storagebits / 8;
-	अगर (ch->scan_type.repeat > 1)
+	if (ch->scan_type.repeat > 1)
 		bytes *= ch->scan_type.repeat;
-	वापस bytes;
-पूर्ण
+	return bytes;
+}
 
-अटल अचिन्हित पूर्णांक iio_storage_bytes_क्रम_बारtamp(काष्ठा iio_dev *indio_dev)
-अणु
-	वापस iio_storage_bytes_क्रम_si(indio_dev,
-					indio_dev->scan_index_बारtamp);
-पूर्ण
+static unsigned int iio_storage_bytes_for_timestamp(struct iio_dev *indio_dev)
+{
+	return iio_storage_bytes_for_si(indio_dev,
+					indio_dev->scan_index_timestamp);
+}
 
-अटल पूर्णांक iio_compute_scan_bytes(काष्ठा iio_dev *indio_dev,
-				स्थिर अचिन्हित दीर्घ *mask, bool बारtamp)
-अणु
-	अचिन्हित bytes = 0;
-	पूर्णांक length, i, largest = 0;
+static int iio_compute_scan_bytes(struct iio_dev *indio_dev,
+				const unsigned long *mask, bool timestamp)
+{
+	unsigned bytes = 0;
+	int length, i, largest = 0;
 
 	/* How much space will the demuxed element take? */
-	क्रम_each_set_bit(i, mask,
-			 indio_dev->masklength) अणु
-		length = iio_storage_bytes_क्रम_si(indio_dev, i);
+	for_each_set_bit(i, mask,
+			 indio_dev->masklength) {
+		length = iio_storage_bytes_for_si(indio_dev, i);
 		bytes = ALIGN(bytes, length);
 		bytes += length;
 		largest = max(largest, length);
-	पूर्ण
+	}
 
-	अगर (बारtamp) अणु
-		length = iio_storage_bytes_क्रम_बारtamp(indio_dev);
+	if (timestamp) {
+		length = iio_storage_bytes_for_timestamp(indio_dev);
 		bytes = ALIGN(bytes, length);
 		bytes += length;
 		largest = max(largest, length);
-	पूर्ण
+	}
 
 	bytes = ALIGN(bytes, largest);
-	वापस bytes;
-पूर्ण
+	return bytes;
+}
 
-अटल व्योम iio_buffer_activate(काष्ठा iio_dev *indio_dev,
-	काष्ठा iio_buffer *buffer)
-अणु
-	काष्ठा iio_dev_opaque *iio_dev_opaque = to_iio_dev_opaque(indio_dev);
+static void iio_buffer_activate(struct iio_dev *indio_dev,
+	struct iio_buffer *buffer)
+{
+	struct iio_dev_opaque *iio_dev_opaque = to_iio_dev_opaque(indio_dev);
 
 	iio_buffer_get(buffer);
 	list_add(&buffer->buffer_list, &iio_dev_opaque->buffer_list);
-पूर्ण
+}
 
-अटल व्योम iio_buffer_deactivate(काष्ठा iio_buffer *buffer)
-अणु
+static void iio_buffer_deactivate(struct iio_buffer *buffer)
+{
 	list_del_init(&buffer->buffer_list);
-	wake_up_पूर्णांकerruptible(&buffer->pollq);
+	wake_up_interruptible(&buffer->pollq);
 	iio_buffer_put(buffer);
-पूर्ण
+}
 
-अटल व्योम iio_buffer_deactivate_all(काष्ठा iio_dev *indio_dev)
-अणु
-	काष्ठा iio_dev_opaque *iio_dev_opaque = to_iio_dev_opaque(indio_dev);
-	काष्ठा iio_buffer *buffer, *_buffer;
+static void iio_buffer_deactivate_all(struct iio_dev *indio_dev)
+{
+	struct iio_dev_opaque *iio_dev_opaque = to_iio_dev_opaque(indio_dev);
+	struct iio_buffer *buffer, *_buffer;
 
-	list_क्रम_each_entry_safe(buffer, _buffer,
+	list_for_each_entry_safe(buffer, _buffer,
 			&iio_dev_opaque->buffer_list, buffer_list)
 		iio_buffer_deactivate(buffer);
-पूर्ण
+}
 
-अटल पूर्णांक iio_buffer_enable(काष्ठा iio_buffer *buffer,
-	काष्ठा iio_dev *indio_dev)
-अणु
-	अगर (!buffer->access->enable)
-		वापस 0;
-	वापस buffer->access->enable(buffer, indio_dev);
-पूर्ण
+static int iio_buffer_enable(struct iio_buffer *buffer,
+	struct iio_dev *indio_dev)
+{
+	if (!buffer->access->enable)
+		return 0;
+	return buffer->access->enable(buffer, indio_dev);
+}
 
-अटल पूर्णांक iio_buffer_disable(काष्ठा iio_buffer *buffer,
-	काष्ठा iio_dev *indio_dev)
-अणु
-	अगर (!buffer->access->disable)
-		वापस 0;
-	वापस buffer->access->disable(buffer, indio_dev);
-पूर्ण
+static int iio_buffer_disable(struct iio_buffer *buffer,
+	struct iio_dev *indio_dev)
+{
+	if (!buffer->access->disable)
+		return 0;
+	return buffer->access->disable(buffer, indio_dev);
+}
 
-अटल व्योम iio_buffer_update_bytes_per_datum(काष्ठा iio_dev *indio_dev,
-	काष्ठा iio_buffer *buffer)
-अणु
-	अचिन्हित पूर्णांक bytes;
+static void iio_buffer_update_bytes_per_datum(struct iio_dev *indio_dev,
+	struct iio_buffer *buffer)
+{
+	unsigned int bytes;
 
-	अगर (!buffer->access->set_bytes_per_datum)
-		वापस;
+	if (!buffer->access->set_bytes_per_datum)
+		return;
 
 	bytes = iio_compute_scan_bytes(indio_dev, buffer->scan_mask,
-		buffer->scan_बारtamp);
+		buffer->scan_timestamp);
 
 	buffer->access->set_bytes_per_datum(buffer, bytes);
-पूर्ण
+}
 
-अटल पूर्णांक iio_buffer_request_update(काष्ठा iio_dev *indio_dev,
-	काष्ठा iio_buffer *buffer)
-अणु
-	पूर्णांक ret;
+static int iio_buffer_request_update(struct iio_dev *indio_dev,
+	struct iio_buffer *buffer)
+{
+	int ret;
 
 	iio_buffer_update_bytes_per_datum(indio_dev, buffer);
-	अगर (buffer->access->request_update) अणु
+	if (buffer->access->request_update) {
 		ret = buffer->access->request_update(buffer);
-		अगर (ret) अणु
+		if (ret) {
 			dev_dbg(&indio_dev->dev,
 			       "Buffer not started: buffer parameter update failed (%d)\n",
 				ret);
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम iio_मुक्त_scan_mask(काष्ठा iio_dev *indio_dev,
-	स्थिर अचिन्हित दीर्घ *mask)
-अणु
-	/* If the mask is dynamically allocated मुक्त it, otherwise करो nothing */
-	अगर (!indio_dev->available_scan_masks)
-		biपंचांगap_मुक्त(mask);
-पूर्ण
+static void iio_free_scan_mask(struct iio_dev *indio_dev,
+	const unsigned long *mask)
+{
+	/* If the mask is dynamically allocated free it, otherwise do nothing */
+	if (!indio_dev->available_scan_masks)
+		bitmap_free(mask);
+}
 
-काष्ठा iio_device_config अणु
-	अचिन्हित पूर्णांक mode;
-	अचिन्हित पूर्णांक watermark;
-	स्थिर अचिन्हित दीर्घ *scan_mask;
-	अचिन्हित पूर्णांक scan_bytes;
-	bool scan_बारtamp;
-पूर्ण;
+struct iio_device_config {
+	unsigned int mode;
+	unsigned int watermark;
+	const unsigned long *scan_mask;
+	unsigned int scan_bytes;
+	bool scan_timestamp;
+};
 
-अटल पूर्णांक iio_verअगरy_update(काष्ठा iio_dev *indio_dev,
-	काष्ठा iio_buffer *insert_buffer, काष्ठा iio_buffer *हटाओ_buffer,
-	काष्ठा iio_device_config *config)
-अणु
-	काष्ठा iio_dev_opaque *iio_dev_opaque = to_iio_dev_opaque(indio_dev);
-	अचिन्हित दीर्घ *compound_mask;
-	स्थिर अचिन्हित दीर्घ *scan_mask;
+static int iio_verify_update(struct iio_dev *indio_dev,
+	struct iio_buffer *insert_buffer, struct iio_buffer *remove_buffer,
+	struct iio_device_config *config)
+{
+	struct iio_dev_opaque *iio_dev_opaque = to_iio_dev_opaque(indio_dev);
+	unsigned long *compound_mask;
+	const unsigned long *scan_mask;
 	bool strict_scanmask = false;
-	काष्ठा iio_buffer *buffer;
-	bool scan_बारtamp;
-	अचिन्हित पूर्णांक modes;
+	struct iio_buffer *buffer;
+	bool scan_timestamp;
+	unsigned int modes;
 
-	अगर (insert_buffer &&
-	    biपंचांगap_empty(insert_buffer->scan_mask, indio_dev->masklength)) अणु
+	if (insert_buffer &&
+	    bitmap_empty(insert_buffer->scan_mask, indio_dev->masklength)) {
 		dev_dbg(&indio_dev->dev,
 			"At least one scan element must be enabled first\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	स_रखो(config, 0, माप(*config));
+	memset(config, 0, sizeof(*config));
 	config->watermark = ~0;
 
 	/*
 	 * If there is just one buffer and we are removing it there is nothing
-	 * to verअगरy.
+	 * to verify.
 	 */
-	अगर (हटाओ_buffer && !insert_buffer &&
+	if (remove_buffer && !insert_buffer &&
 		list_is_singular(&iio_dev_opaque->buffer_list))
-			वापस 0;
+			return 0;
 
 	modes = indio_dev->modes;
 
-	list_क्रम_each_entry(buffer, &iio_dev_opaque->buffer_list, buffer_list) अणु
-		अगर (buffer == हटाओ_buffer)
-			जारी;
+	list_for_each_entry(buffer, &iio_dev_opaque->buffer_list, buffer_list) {
+		if (buffer == remove_buffer)
+			continue;
 		modes &= buffer->access->modes;
 		config->watermark = min(config->watermark, buffer->watermark);
-	पूर्ण
+	}
 
-	अगर (insert_buffer) अणु
+	if (insert_buffer) {
 		modes &= insert_buffer->access->modes;
 		config->watermark = min(config->watermark,
 			insert_buffer->watermark);
-	पूर्ण
+	}
 
-	/* Definitely possible क्रम devices to support both of these. */
-	अगर ((modes & INDIO_BUFFER_TRIGGERED) && indio_dev->trig) अणु
+	/* Definitely possible for devices to support both of these. */
+	if ((modes & INDIO_BUFFER_TRIGGERED) && indio_dev->trig) {
 		config->mode = INDIO_BUFFER_TRIGGERED;
-	पूर्ण अन्यथा अगर (modes & INDIO_BUFFER_HARDWARE) अणु
+	} else if (modes & INDIO_BUFFER_HARDWARE) {
 		/*
-		 * Keep things simple क्रम now and only allow a single buffer to
+		 * Keep things simple for now and only allow a single buffer to
 		 * be connected in hardware mode.
 		 */
-		अगर (insert_buffer && !list_empty(&iio_dev_opaque->buffer_list))
-			वापस -EINVAL;
+		if (insert_buffer && !list_empty(&iio_dev_opaque->buffer_list))
+			return -EINVAL;
 		config->mode = INDIO_BUFFER_HARDWARE;
 		strict_scanmask = true;
-	पूर्ण अन्यथा अगर (modes & INDIO_BUFFER_SOFTWARE) अणु
+	} else if (modes & INDIO_BUFFER_SOFTWARE) {
 		config->mode = INDIO_BUFFER_SOFTWARE;
-	पूर्ण अन्यथा अणु
+	} else {
 		/* Can only occur on first buffer */
-		अगर (indio_dev->modes & INDIO_BUFFER_TRIGGERED)
+		if (indio_dev->modes & INDIO_BUFFER_TRIGGERED)
 			dev_dbg(&indio_dev->dev, "Buffer not started: no trigger\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	/* What scan mask करो we actually have? */
-	compound_mask = biपंचांगap_zalloc(indio_dev->masklength, GFP_KERNEL);
-	अगर (compound_mask == शून्य)
-		वापस -ENOMEM;
+	/* What scan mask do we actually have? */
+	compound_mask = bitmap_zalloc(indio_dev->masklength, GFP_KERNEL);
+	if (compound_mask == NULL)
+		return -ENOMEM;
 
-	scan_बारtamp = false;
+	scan_timestamp = false;
 
-	list_क्रम_each_entry(buffer, &iio_dev_opaque->buffer_list, buffer_list) अणु
-		अगर (buffer == हटाओ_buffer)
-			जारी;
-		biपंचांगap_or(compound_mask, compound_mask, buffer->scan_mask,
+	list_for_each_entry(buffer, &iio_dev_opaque->buffer_list, buffer_list) {
+		if (buffer == remove_buffer)
+			continue;
+		bitmap_or(compound_mask, compound_mask, buffer->scan_mask,
 			  indio_dev->masklength);
-		scan_बारtamp |= buffer->scan_बारtamp;
-	पूर्ण
+		scan_timestamp |= buffer->scan_timestamp;
+	}
 
-	अगर (insert_buffer) अणु
-		biपंचांगap_or(compound_mask, compound_mask,
+	if (insert_buffer) {
+		bitmap_or(compound_mask, compound_mask,
 			  insert_buffer->scan_mask, indio_dev->masklength);
-		scan_बारtamp |= insert_buffer->scan_बारtamp;
-	पूर्ण
+		scan_timestamp |= insert_buffer->scan_timestamp;
+	}
 
-	अगर (indio_dev->available_scan_masks) अणु
+	if (indio_dev->available_scan_masks) {
 		scan_mask = iio_scan_mask_match(indio_dev->available_scan_masks,
 				    indio_dev->masklength,
 				    compound_mask,
 				    strict_scanmask);
-		biपंचांगap_मुक्त(compound_mask);
-		अगर (scan_mask == शून्य)
-			वापस -EINVAL;
-	पूर्ण अन्यथा अणु
+		bitmap_free(compound_mask);
+		if (scan_mask == NULL)
+			return -EINVAL;
+	} else {
 	    scan_mask = compound_mask;
-	पूर्ण
+	}
 
 	config->scan_bytes = iio_compute_scan_bytes(indio_dev,
-				    scan_mask, scan_बारtamp);
+				    scan_mask, scan_timestamp);
 	config->scan_mask = scan_mask;
-	config->scan_बारtamp = scan_बारtamp;
+	config->scan_timestamp = scan_timestamp;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * काष्ठा iio_demux_table - table describing demux स_नकल ops
+ * struct iio_demux_table - table describing demux memcpy ops
  * @from:	index to copy from
  * @to:		index to copy to
  * @length:	how many bytes to copy
- * @l:		list head used क्रम management
+ * @l:		list head used for management
  */
-काष्ठा iio_demux_table अणु
-	अचिन्हित from;
-	अचिन्हित to;
-	अचिन्हित length;
-	काष्ठा list_head l;
-पूर्ण;
+struct iio_demux_table {
+	unsigned from;
+	unsigned to;
+	unsigned length;
+	struct list_head l;
+};
 
-अटल व्योम iio_buffer_demux_मुक्त(काष्ठा iio_buffer *buffer)
-अणु
-	काष्ठा iio_demux_table *p, *q;
-	list_क्रम_each_entry_safe(p, q, &buffer->demux_list, l) अणु
+static void iio_buffer_demux_free(struct iio_buffer *buffer)
+{
+	struct iio_demux_table *p, *q;
+	list_for_each_entry_safe(p, q, &buffer->demux_list, l) {
 		list_del(&p->l);
-		kमुक्त(p);
-	पूर्ण
-पूर्ण
+		kfree(p);
+	}
+}
 
-अटल पूर्णांक iio_buffer_add_demux(काष्ठा iio_buffer *buffer,
-	काष्ठा iio_demux_table **p, अचिन्हित पूर्णांक in_loc, अचिन्हित पूर्णांक out_loc,
-	अचिन्हित पूर्णांक length)
-अणु
+static int iio_buffer_add_demux(struct iio_buffer *buffer,
+	struct iio_demux_table **p, unsigned int in_loc, unsigned int out_loc,
+	unsigned int length)
+{
 
-	अगर (*p && (*p)->from + (*p)->length == in_loc &&
-		(*p)->to + (*p)->length == out_loc) अणु
+	if (*p && (*p)->from + (*p)->length == in_loc &&
+		(*p)->to + (*p)->length == out_loc) {
 		(*p)->length += length;
-	पूर्ण अन्यथा अणु
-		*p = kदो_स्मृति(माप(**p), GFP_KERNEL);
-		अगर (*p == शून्य)
-			वापस -ENOMEM;
+	} else {
+		*p = kmalloc(sizeof(**p), GFP_KERNEL);
+		if (*p == NULL)
+			return -ENOMEM;
 		(*p)->from = in_loc;
 		(*p)->to = out_loc;
 		(*p)->length = length;
 		list_add_tail(&(*p)->l, &buffer->demux_list);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक iio_buffer_update_demux(काष्ठा iio_dev *indio_dev,
-				   काष्ठा iio_buffer *buffer)
-अणु
-	पूर्णांक ret, in_ind = -1, out_ind, length;
-	अचिन्हित in_loc = 0, out_loc = 0;
-	काष्ठा iio_demux_table *p = शून्य;
+static int iio_buffer_update_demux(struct iio_dev *indio_dev,
+				   struct iio_buffer *buffer)
+{
+	int ret, in_ind = -1, out_ind, length;
+	unsigned in_loc = 0, out_loc = 0;
+	struct iio_demux_table *p = NULL;
 
 	/* Clear out any old demux */
-	iio_buffer_demux_मुक्त(buffer);
-	kमुक्त(buffer->demux_bounce);
-	buffer->demux_bounce = शून्य;
+	iio_buffer_demux_free(buffer);
+	kfree(buffer->demux_bounce);
+	buffer->demux_bounce = NULL;
 
 	/* First work out which scan mode we will actually have */
-	अगर (biपंचांगap_equal(indio_dev->active_scan_mask,
+	if (bitmap_equal(indio_dev->active_scan_mask,
 			 buffer->scan_mask,
 			 indio_dev->masklength))
-		वापस 0;
+		return 0;
 
 	/* Now we have the two masks, work from least sig and build up sizes */
-	क्रम_each_set_bit(out_ind,
+	for_each_set_bit(out_ind,
 			 buffer->scan_mask,
-			 indio_dev->masklength) अणु
+			 indio_dev->masklength) {
 		in_ind = find_next_bit(indio_dev->active_scan_mask,
 				       indio_dev->masklength,
 				       in_ind + 1);
-		जबतक (in_ind != out_ind) अणु
-			length = iio_storage_bytes_क्रम_si(indio_dev, in_ind);
+		while (in_ind != out_ind) {
+			length = iio_storage_bytes_for_si(indio_dev, in_ind);
 			/* Make sure we are aligned */
 			in_loc = roundup(in_loc, length) + length;
 			in_ind = find_next_bit(indio_dev->active_scan_mask,
 					       indio_dev->masklength,
 					       in_ind + 1);
-		पूर्ण
-		length = iio_storage_bytes_क्रम_si(indio_dev, in_ind);
+		}
+		length = iio_storage_bytes_for_si(indio_dev, in_ind);
 		out_loc = roundup(out_loc, length);
 		in_loc = roundup(in_loc, length);
 		ret = iio_buffer_add_demux(buffer, &p, in_loc, out_loc, length);
-		अगर (ret)
-			जाओ error_clear_mux_table;
+		if (ret)
+			goto error_clear_mux_table;
 		out_loc += length;
 		in_loc += length;
-	पूर्ण
-	/* Relies on scan_बारtamp being last */
-	अगर (buffer->scan_बारtamp) अणु
-		length = iio_storage_bytes_क्रम_बारtamp(indio_dev);
+	}
+	/* Relies on scan_timestamp being last */
+	if (buffer->scan_timestamp) {
+		length = iio_storage_bytes_for_timestamp(indio_dev);
 		out_loc = roundup(out_loc, length);
 		in_loc = roundup(in_loc, length);
 		ret = iio_buffer_add_demux(buffer, &p, in_loc, out_loc, length);
-		अगर (ret)
-			जाओ error_clear_mux_table;
+		if (ret)
+			goto error_clear_mux_table;
 		out_loc += length;
 		in_loc += length;
-	पूर्ण
+	}
 	buffer->demux_bounce = kzalloc(out_loc, GFP_KERNEL);
-	अगर (buffer->demux_bounce == शून्य) अणु
+	if (buffer->demux_bounce == NULL) {
 		ret = -ENOMEM;
-		जाओ error_clear_mux_table;
-	पूर्ण
-	वापस 0;
+		goto error_clear_mux_table;
+	}
+	return 0;
 
 error_clear_mux_table:
-	iio_buffer_demux_मुक्त(buffer);
+	iio_buffer_demux_free(buffer);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक iio_update_demux(काष्ठा iio_dev *indio_dev)
-अणु
-	काष्ठा iio_dev_opaque *iio_dev_opaque = to_iio_dev_opaque(indio_dev);
-	काष्ठा iio_buffer *buffer;
-	पूर्णांक ret;
+static int iio_update_demux(struct iio_dev *indio_dev)
+{
+	struct iio_dev_opaque *iio_dev_opaque = to_iio_dev_opaque(indio_dev);
+	struct iio_buffer *buffer;
+	int ret;
 
-	list_क्रम_each_entry(buffer, &iio_dev_opaque->buffer_list, buffer_list) अणु
+	list_for_each_entry(buffer, &iio_dev_opaque->buffer_list, buffer_list) {
 		ret = iio_buffer_update_demux(indio_dev, buffer);
-		अगर (ret < 0)
-			जाओ error_clear_mux_table;
-	पूर्ण
-	वापस 0;
+		if (ret < 0)
+			goto error_clear_mux_table;
+	}
+	return 0;
 
 error_clear_mux_table:
-	list_क्रम_each_entry(buffer, &iio_dev_opaque->buffer_list, buffer_list)
-		iio_buffer_demux_मुक्त(buffer);
+	list_for_each_entry(buffer, &iio_dev_opaque->buffer_list, buffer_list)
+		iio_buffer_demux_free(buffer);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक iio_enable_buffers(काष्ठा iio_dev *indio_dev,
-	काष्ठा iio_device_config *config)
-अणु
-	काष्ठा iio_dev_opaque *iio_dev_opaque = to_iio_dev_opaque(indio_dev);
-	काष्ठा iio_buffer *buffer;
-	पूर्णांक ret;
+static int iio_enable_buffers(struct iio_dev *indio_dev,
+	struct iio_device_config *config)
+{
+	struct iio_dev_opaque *iio_dev_opaque = to_iio_dev_opaque(indio_dev);
+	struct iio_buffer *buffer;
+	int ret;
 
 	indio_dev->active_scan_mask = config->scan_mask;
-	indio_dev->scan_बारtamp = config->scan_बारtamp;
+	indio_dev->scan_timestamp = config->scan_timestamp;
 	indio_dev->scan_bytes = config->scan_bytes;
-	indio_dev->currenपंचांगode = config->mode;
+	indio_dev->currentmode = config->mode;
 
 	iio_update_demux(indio_dev);
 
 	/* Wind up again */
-	अगर (indio_dev->setup_ops->preenable) अणु
+	if (indio_dev->setup_ops->preenable) {
 		ret = indio_dev->setup_ops->preenable(indio_dev);
-		अगर (ret) अणु
+		if (ret) {
 			dev_dbg(&indio_dev->dev,
 			       "Buffer not started: buffer preenable failed (%d)\n", ret);
-			जाओ err_unकरो_config;
-		पूर्ण
-	पूर्ण
+			goto err_undo_config;
+		}
+	}
 
-	अगर (indio_dev->info->update_scan_mode) अणु
+	if (indio_dev->info->update_scan_mode) {
 		ret = indio_dev->info
 			->update_scan_mode(indio_dev,
 					   indio_dev->active_scan_mask);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			dev_dbg(&indio_dev->dev,
 				"Buffer not started: update scan mode failed (%d)\n",
 				ret);
-			जाओ err_run_postdisable;
-		पूर्ण
-	पूर्ण
+			goto err_run_postdisable;
+		}
+	}
 
-	अगर (indio_dev->info->hwfअगरo_set_watermark)
-		indio_dev->info->hwfअगरo_set_watermark(indio_dev,
+	if (indio_dev->info->hwfifo_set_watermark)
+		indio_dev->info->hwfifo_set_watermark(indio_dev,
 			config->watermark);
 
-	list_क्रम_each_entry(buffer, &iio_dev_opaque->buffer_list, buffer_list) अणु
+	list_for_each_entry(buffer, &iio_dev_opaque->buffer_list, buffer_list) {
 		ret = iio_buffer_enable(buffer, indio_dev);
-		अगर (ret)
-			जाओ err_disable_buffers;
-	पूर्ण
+		if (ret)
+			goto err_disable_buffers;
+	}
 
-	अगर (indio_dev->currenपंचांगode == INDIO_BUFFER_TRIGGERED) अणु
+	if (indio_dev->currentmode == INDIO_BUFFER_TRIGGERED) {
 		ret = iio_trigger_attach_poll_func(indio_dev->trig,
 						   indio_dev->pollfunc);
-		अगर (ret)
-			जाओ err_disable_buffers;
-	पूर्ण
+		if (ret)
+			goto err_disable_buffers;
+	}
 
-	अगर (indio_dev->setup_ops->postenable) अणु
+	if (indio_dev->setup_ops->postenable) {
 		ret = indio_dev->setup_ops->postenable(indio_dev);
-		अगर (ret) अणु
+		if (ret) {
 			dev_dbg(&indio_dev->dev,
 			       "Buffer not started: postenable failed (%d)\n", ret);
-			जाओ err_detach_pollfunc;
-		पूर्ण
-	पूर्ण
+			goto err_detach_pollfunc;
+		}
+	}
 
-	वापस 0;
+	return 0;
 
 err_detach_pollfunc:
-	अगर (indio_dev->currenपंचांगode == INDIO_BUFFER_TRIGGERED) अणु
+	if (indio_dev->currentmode == INDIO_BUFFER_TRIGGERED) {
 		iio_trigger_detach_poll_func(indio_dev->trig,
 					     indio_dev->pollfunc);
-	पूर्ण
+	}
 err_disable_buffers:
-	list_क्रम_each_entry_जारी_reverse(buffer, &iio_dev_opaque->buffer_list,
+	list_for_each_entry_continue_reverse(buffer, &iio_dev_opaque->buffer_list,
 					     buffer_list)
 		iio_buffer_disable(buffer, indio_dev);
 err_run_postdisable:
-	अगर (indio_dev->setup_ops->postdisable)
+	if (indio_dev->setup_ops->postdisable)
 		indio_dev->setup_ops->postdisable(indio_dev);
-err_unकरो_config:
-	indio_dev->currenपंचांगode = INDIO_सूचीECT_MODE;
-	indio_dev->active_scan_mask = शून्य;
+err_undo_config:
+	indio_dev->currentmode = INDIO_DIRECT_MODE;
+	indio_dev->active_scan_mask = NULL;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक iio_disable_buffers(काष्ठा iio_dev *indio_dev)
-अणु
-	काष्ठा iio_dev_opaque *iio_dev_opaque = to_iio_dev_opaque(indio_dev);
-	काष्ठा iio_buffer *buffer;
-	पूर्णांक ret = 0;
-	पूर्णांक ret2;
+static int iio_disable_buffers(struct iio_dev *indio_dev)
+{
+	struct iio_dev_opaque *iio_dev_opaque = to_iio_dev_opaque(indio_dev);
+	struct iio_buffer *buffer;
+	int ret = 0;
+	int ret2;
 
-	/* Wind करोwn existing buffers - अगरf there are any */
-	अगर (list_empty(&iio_dev_opaque->buffer_list))
-		वापस 0;
+	/* Wind down existing buffers - iff there are any */
+	if (list_empty(&iio_dev_opaque->buffer_list))
+		return 0;
 
 	/*
-	 * If things go wrong at some step in disable we still need to जारी
-	 * to perक्रमm the other steps, otherwise we leave the device in a
-	 * inconsistent state. We वापस the error code क्रम the first error we
+	 * If things go wrong at some step in disable we still need to continue
+	 * to perform the other steps, otherwise we leave the device in a
+	 * inconsistent state. We return the error code for the first error we
 	 * encountered.
 	 */
 
-	अगर (indio_dev->setup_ops->predisable) अणु
+	if (indio_dev->setup_ops->predisable) {
 		ret2 = indio_dev->setup_ops->predisable(indio_dev);
-		अगर (ret2 && !ret)
+		if (ret2 && !ret)
 			ret = ret2;
-	पूर्ण
+	}
 
-	अगर (indio_dev->currenपंचांगode == INDIO_BUFFER_TRIGGERED) अणु
+	if (indio_dev->currentmode == INDIO_BUFFER_TRIGGERED) {
 		iio_trigger_detach_poll_func(indio_dev->trig,
 					     indio_dev->pollfunc);
-	पूर्ण
+	}
 
-	list_क्रम_each_entry(buffer, &iio_dev_opaque->buffer_list, buffer_list) अणु
+	list_for_each_entry(buffer, &iio_dev_opaque->buffer_list, buffer_list) {
 		ret2 = iio_buffer_disable(buffer, indio_dev);
-		अगर (ret2 && !ret)
+		if (ret2 && !ret)
 			ret = ret2;
-	पूर्ण
+	}
 
-	अगर (indio_dev->setup_ops->postdisable) अणु
+	if (indio_dev->setup_ops->postdisable) {
 		ret2 = indio_dev->setup_ops->postdisable(indio_dev);
-		अगर (ret2 && !ret)
+		if (ret2 && !ret)
 			ret = ret2;
-	पूर्ण
+	}
 
-	iio_मुक्त_scan_mask(indio_dev, indio_dev->active_scan_mask);
-	indio_dev->active_scan_mask = शून्य;
-	indio_dev->currenपंचांगode = INDIO_सूचीECT_MODE;
+	iio_free_scan_mask(indio_dev, indio_dev->active_scan_mask);
+	indio_dev->active_scan_mask = NULL;
+	indio_dev->currentmode = INDIO_DIRECT_MODE;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक __iio_update_buffers(काष्ठा iio_dev *indio_dev,
-		       काष्ठा iio_buffer *insert_buffer,
-		       काष्ठा iio_buffer *हटाओ_buffer)
-अणु
-	काष्ठा iio_dev_opaque *iio_dev_opaque = to_iio_dev_opaque(indio_dev);
-	काष्ठा iio_device_config new_config;
-	पूर्णांक ret;
+static int __iio_update_buffers(struct iio_dev *indio_dev,
+		       struct iio_buffer *insert_buffer,
+		       struct iio_buffer *remove_buffer)
+{
+	struct iio_dev_opaque *iio_dev_opaque = to_iio_dev_opaque(indio_dev);
+	struct iio_device_config new_config;
+	int ret;
 
-	ret = iio_verअगरy_update(indio_dev, insert_buffer, हटाओ_buffer,
+	ret = iio_verify_update(indio_dev, insert_buffer, remove_buffer,
 		&new_config);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (insert_buffer) अणु
+	if (insert_buffer) {
 		ret = iio_buffer_request_update(indio_dev, insert_buffer);
-		अगर (ret)
-			जाओ err_मुक्त_config;
-	पूर्ण
+		if (ret)
+			goto err_free_config;
+	}
 
 	ret = iio_disable_buffers(indio_dev);
-	अगर (ret)
-		जाओ err_deactivate_all;
+	if (ret)
+		goto err_deactivate_all;
 
-	अगर (हटाओ_buffer)
-		iio_buffer_deactivate(हटाओ_buffer);
-	अगर (insert_buffer)
+	if (remove_buffer)
+		iio_buffer_deactivate(remove_buffer);
+	if (insert_buffer)
 		iio_buffer_activate(indio_dev, insert_buffer);
 
-	/* If no buffers in list, we are करोne */
-	अगर (list_empty(&iio_dev_opaque->buffer_list))
-		वापस 0;
+	/* If no buffers in list, we are done */
+	if (list_empty(&iio_dev_opaque->buffer_list))
+		return 0;
 
 	ret = iio_enable_buffers(indio_dev, &new_config);
-	अगर (ret)
-		जाओ err_deactivate_all;
+	if (ret)
+		goto err_deactivate_all;
 
-	वापस 0;
+	return 0;
 
 err_deactivate_all:
 	/*
-	 * We've alपढ़ोy verअगरied that the config is valid earlier. If things go
+	 * We've already verified that the config is valid earlier. If things go
 	 * wrong in either enable or disable the most likely reason is an IO
-	 * error from the device. In this हाल there is no good recovery
+	 * error from the device. In this case there is no good recovery
 	 * strategy. Just make sure to disable everything and leave the device
 	 * in a sane state.  With a bit of luck the device might come back to
-	 * lअगरe again later and userspace can try again.
+	 * life again later and userspace can try again.
 	 */
 	iio_buffer_deactivate_all(indio_dev);
 
-err_मुक्त_config:
-	iio_मुक्त_scan_mask(indio_dev, new_config.scan_mask);
-	वापस ret;
-पूर्ण
+err_free_config:
+	iio_free_scan_mask(indio_dev, new_config.scan_mask);
+	return ret;
+}
 
-पूर्णांक iio_update_buffers(काष्ठा iio_dev *indio_dev,
-		       काष्ठा iio_buffer *insert_buffer,
-		       काष्ठा iio_buffer *हटाओ_buffer)
-अणु
-	पूर्णांक ret;
+int iio_update_buffers(struct iio_dev *indio_dev,
+		       struct iio_buffer *insert_buffer,
+		       struct iio_buffer *remove_buffer)
+{
+	int ret;
 
-	अगर (insert_buffer == हटाओ_buffer)
-		वापस 0;
+	if (insert_buffer == remove_buffer)
+		return 0;
 
 	mutex_lock(&indio_dev->info_exist_lock);
 	mutex_lock(&indio_dev->mlock);
 
-	अगर (insert_buffer && iio_buffer_is_active(insert_buffer))
-		insert_buffer = शून्य;
+	if (insert_buffer && iio_buffer_is_active(insert_buffer))
+		insert_buffer = NULL;
 
-	अगर (हटाओ_buffer && !iio_buffer_is_active(हटाओ_buffer))
-		हटाओ_buffer = शून्य;
+	if (remove_buffer && !iio_buffer_is_active(remove_buffer))
+		remove_buffer = NULL;
 
-	अगर (!insert_buffer && !हटाओ_buffer) अणु
+	if (!insert_buffer && !remove_buffer) {
 		ret = 0;
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 
-	अगर (indio_dev->info == शून्य) अणु
+	if (indio_dev->info == NULL) {
 		ret = -ENODEV;
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 
-	ret = __iio_update_buffers(indio_dev, insert_buffer, हटाओ_buffer);
+	ret = __iio_update_buffers(indio_dev, insert_buffer, remove_buffer);
 
 out_unlock:
 	mutex_unlock(&indio_dev->mlock);
 	mutex_unlock(&indio_dev->info_exist_lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(iio_update_buffers);
 
-व्योम iio_disable_all_buffers(काष्ठा iio_dev *indio_dev)
-अणु
+void iio_disable_all_buffers(struct iio_dev *indio_dev)
+{
 	iio_disable_buffers(indio_dev);
 	iio_buffer_deactivate_all(indio_dev);
-पूर्ण
+}
 
-अटल sमाप_प्रकार iio_buffer_store_enable(काष्ठा device *dev,
-				       काष्ठा device_attribute *attr,
-				       स्थिर अक्षर *buf,
-				       माप_प्रकार len)
-अणु
-	पूर्णांक ret;
+static ssize_t iio_buffer_store_enable(struct device *dev,
+				       struct device_attribute *attr,
+				       const char *buf,
+				       size_t len)
+{
+	int ret;
 	bool requested_state;
-	काष्ठा iio_dev *indio_dev = dev_to_iio_dev(dev);
-	काष्ठा iio_buffer *buffer = to_iio_dev_attr(attr)->buffer;
+	struct iio_dev *indio_dev = dev_to_iio_dev(dev);
+	struct iio_buffer *buffer = to_iio_dev_attr(attr)->buffer;
 	bool inlist;
 
 	ret = strtobool(buf, &requested_state);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	mutex_lock(&indio_dev->mlock);
 
-	/* Find out अगर it is in the list */
+	/* Find out if it is in the list */
 	inlist = iio_buffer_is_active(buffer);
-	/* Alपढ़ोy in desired state */
-	अगर (inlist == requested_state)
-		जाओ करोne;
+	/* Already in desired state */
+	if (inlist == requested_state)
+		goto done;
 
-	अगर (requested_state)
-		ret = __iio_update_buffers(indio_dev, buffer, शून्य);
-	अन्यथा
-		ret = __iio_update_buffers(indio_dev, शून्य, buffer);
+	if (requested_state)
+		ret = __iio_update_buffers(indio_dev, buffer, NULL);
+	else
+		ret = __iio_update_buffers(indio_dev, NULL, buffer);
 
-करोne:
+done:
 	mutex_unlock(&indio_dev->mlock);
-	वापस (ret < 0) ? ret : len;
-पूर्ण
+	return (ret < 0) ? ret : len;
+}
 
-अटल sमाप_प्रकार iio_buffer_show_watermark(काष्ठा device *dev,
-					 काष्ठा device_attribute *attr,
-					 अक्षर *buf)
-अणु
-	काष्ठा iio_buffer *buffer = to_iio_dev_attr(attr)->buffer;
+static ssize_t iio_buffer_show_watermark(struct device *dev,
+					 struct device_attribute *attr,
+					 char *buf)
+{
+	struct iio_buffer *buffer = to_iio_dev_attr(attr)->buffer;
 
-	वापस sysfs_emit(buf, "%u\n", buffer->watermark);
-पूर्ण
+	return sysfs_emit(buf, "%u\n", buffer->watermark);
+}
 
-अटल sमाप_प्रकार iio_buffer_store_watermark(काष्ठा device *dev,
-					  काष्ठा device_attribute *attr,
-					  स्थिर अक्षर *buf,
-					  माप_प्रकार len)
-अणु
-	काष्ठा iio_dev *indio_dev = dev_to_iio_dev(dev);
-	काष्ठा iio_buffer *buffer = to_iio_dev_attr(attr)->buffer;
-	अचिन्हित पूर्णांक val;
-	पूर्णांक ret;
+static ssize_t iio_buffer_store_watermark(struct device *dev,
+					  struct device_attribute *attr,
+					  const char *buf,
+					  size_t len)
+{
+	struct iio_dev *indio_dev = dev_to_iio_dev(dev);
+	struct iio_buffer *buffer = to_iio_dev_attr(attr)->buffer;
+	unsigned int val;
+	int ret;
 
-	ret = kstrtouपूर्णांक(buf, 10, &val);
-	अगर (ret)
-		वापस ret;
-	अगर (!val)
-		वापस -EINVAL;
+	ret = kstrtouint(buf, 10, &val);
+	if (ret)
+		return ret;
+	if (!val)
+		return -EINVAL;
 
 	mutex_lock(&indio_dev->mlock);
 
-	अगर (val > buffer->length) अणु
+	if (val > buffer->length) {
 		ret = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (iio_buffer_is_active(buffer)) अणु
+	if (iio_buffer_is_active(buffer)) {
 		ret = -EBUSY;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	buffer->watermark = val;
 out:
 	mutex_unlock(&indio_dev->mlock);
 
-	वापस ret ? ret : len;
-पूर्ण
+	return ret ? ret : len;
+}
 
-अटल sमाप_प्रकार iio_dma_show_data_available(काष्ठा device *dev,
-						काष्ठा device_attribute *attr,
-						अक्षर *buf)
-अणु
-	काष्ठा iio_buffer *buffer = to_iio_dev_attr(attr)->buffer;
+static ssize_t iio_dma_show_data_available(struct device *dev,
+						struct device_attribute *attr,
+						char *buf)
+{
+	struct iio_buffer *buffer = to_iio_dev_attr(attr)->buffer;
 
-	वापस sysfs_emit(buf, "%zu\n", iio_buffer_data_available(buffer));
-पूर्ण
+	return sysfs_emit(buf, "%zu\n", iio_buffer_data_available(buffer));
+}
 
-अटल DEVICE_ATTR(length, S_IRUGO | S_IWUSR, iio_buffer_पढ़ो_length,
-		   iio_buffer_ग_लिखो_length);
-अटल काष्ठा device_attribute dev_attr_length_ro = __ATTR(length,
-	S_IRUGO, iio_buffer_पढ़ो_length, शून्य);
-अटल DEVICE_ATTR(enable, S_IRUGO | S_IWUSR,
+static DEVICE_ATTR(length, S_IRUGO | S_IWUSR, iio_buffer_read_length,
+		   iio_buffer_write_length);
+static struct device_attribute dev_attr_length_ro = __ATTR(length,
+	S_IRUGO, iio_buffer_read_length, NULL);
+static DEVICE_ATTR(enable, S_IRUGO | S_IWUSR,
 		   iio_buffer_show_enable, iio_buffer_store_enable);
-अटल DEVICE_ATTR(watermark, S_IRUGO | S_IWUSR,
+static DEVICE_ATTR(watermark, S_IRUGO | S_IWUSR,
 		   iio_buffer_show_watermark, iio_buffer_store_watermark);
-अटल काष्ठा device_attribute dev_attr_watermark_ro = __ATTR(watermark,
-	S_IRUGO, iio_buffer_show_watermark, शून्य);
-अटल DEVICE_ATTR(data_available, S_IRUGO,
-		iio_dma_show_data_available, शून्य);
+static struct device_attribute dev_attr_watermark_ro = __ATTR(watermark,
+	S_IRUGO, iio_buffer_show_watermark, NULL);
+static DEVICE_ATTR(data_available, S_IRUGO,
+		iio_dma_show_data_available, NULL);
 
-अटल काष्ठा attribute *iio_buffer_attrs[] = अणु
+static struct attribute *iio_buffer_attrs[] = {
 	&dev_attr_length.attr,
 	&dev_attr_enable.attr,
 	&dev_attr_watermark.attr,
 	&dev_attr_data_available.attr,
-पूर्ण;
+};
 
-#घोषणा to_dev_attr(_attr) container_of(_attr, काष्ठा device_attribute, attr)
+#define to_dev_attr(_attr) container_of(_attr, struct device_attribute, attr)
 
-अटल काष्ठा attribute *iio_buffer_wrap_attr(काष्ठा iio_buffer *buffer,
-					      काष्ठा attribute *attr)
-अणु
-	काष्ठा device_attribute *dattr = to_dev_attr(attr);
-	काष्ठा iio_dev_attr *iio_attr;
+static struct attribute *iio_buffer_wrap_attr(struct iio_buffer *buffer,
+					      struct attribute *attr)
+{
+	struct device_attribute *dattr = to_dev_attr(attr);
+	struct iio_dev_attr *iio_attr;
 
-	iio_attr = kzalloc(माप(*iio_attr), GFP_KERNEL);
-	अगर (!iio_attr)
-		वापस शून्य;
+	iio_attr = kzalloc(sizeof(*iio_attr), GFP_KERNEL);
+	if (!iio_attr)
+		return NULL;
 
 	iio_attr->buffer = buffer;
-	स_नकल(&iio_attr->dev_attr, dattr, माप(iio_attr->dev_attr));
-	iio_attr->dev_attr.attr.name = kstrdup_स्थिर(attr->name, GFP_KERNEL);
+	memcpy(&iio_attr->dev_attr, dattr, sizeof(iio_attr->dev_attr));
+	iio_attr->dev_attr.attr.name = kstrdup_const(attr->name, GFP_KERNEL);
 	sysfs_attr_init(&iio_attr->dev_attr.attr);
 
 	list_add(&iio_attr->l, &buffer->buffer_attr_list);
 
-	वापस &iio_attr->dev_attr.attr;
-पूर्ण
+	return &iio_attr->dev_attr.attr;
+}
 
-अटल पूर्णांक iio_buffer_रेजिस्टर_legacy_sysfs_groups(काष्ठा iio_dev *indio_dev,
-						   काष्ठा attribute **buffer_attrs,
-						   पूर्णांक buffer_attrcount,
-						   पूर्णांक scan_el_attrcount)
-अणु
-	काष्ठा iio_dev_opaque *iio_dev_opaque = to_iio_dev_opaque(indio_dev);
-	काष्ठा attribute_group *group;
-	काष्ठा attribute **attrs;
-	पूर्णांक ret;
+static int iio_buffer_register_legacy_sysfs_groups(struct iio_dev *indio_dev,
+						   struct attribute **buffer_attrs,
+						   int buffer_attrcount,
+						   int scan_el_attrcount)
+{
+	struct iio_dev_opaque *iio_dev_opaque = to_iio_dev_opaque(indio_dev);
+	struct attribute_group *group;
+	struct attribute **attrs;
+	int ret;
 
-	attrs = kसुस्मृति(buffer_attrcount + 1, माप(*attrs), GFP_KERNEL);
-	अगर (!attrs)
-		वापस -ENOMEM;
+	attrs = kcalloc(buffer_attrcount + 1, sizeof(*attrs), GFP_KERNEL);
+	if (!attrs)
+		return -ENOMEM;
 
-	स_नकल(attrs, buffer_attrs, buffer_attrcount * माप(*attrs));
+	memcpy(attrs, buffer_attrs, buffer_attrcount * sizeof(*attrs));
 
 	group = &iio_dev_opaque->legacy_buffer_group;
 	group->attrs = attrs;
 	group->name = "buffer";
 
-	ret = iio_device_रेजिस्टर_sysfs_group(indio_dev, group);
-	अगर (ret)
-		जाओ error_मुक्त_buffer_attrs;
+	ret = iio_device_register_sysfs_group(indio_dev, group);
+	if (ret)
+		goto error_free_buffer_attrs;
 
-	attrs = kसुस्मृति(scan_el_attrcount + 1, माप(*attrs), GFP_KERNEL);
-	अगर (!attrs) अणु
+	attrs = kcalloc(scan_el_attrcount + 1, sizeof(*attrs), GFP_KERNEL);
+	if (!attrs) {
 		ret = -ENOMEM;
-		जाओ error_मुक्त_buffer_attrs;
-	पूर्ण
+		goto error_free_buffer_attrs;
+	}
 
-	स_नकल(attrs, &buffer_attrs[buffer_attrcount],
-	       scan_el_attrcount * माप(*attrs));
+	memcpy(attrs, &buffer_attrs[buffer_attrcount],
+	       scan_el_attrcount * sizeof(*attrs));
 
 	group = &iio_dev_opaque->legacy_scan_el_group;
 	group->attrs = attrs;
 	group->name = "scan_elements";
 
-	ret = iio_device_रेजिस्टर_sysfs_group(indio_dev, group);
-	अगर (ret)
-		जाओ error_मुक्त_scan_el_attrs;
+	ret = iio_device_register_sysfs_group(indio_dev, group);
+	if (ret)
+		goto error_free_scan_el_attrs;
 
-	वापस 0;
+	return 0;
 
-error_मुक्त_buffer_attrs:
-	kमुक्त(iio_dev_opaque->legacy_buffer_group.attrs);
-error_मुक्त_scan_el_attrs:
-	kमुक्त(iio_dev_opaque->legacy_scan_el_group.attrs);
+error_free_buffer_attrs:
+	kfree(iio_dev_opaque->legacy_buffer_group.attrs);
+error_free_scan_el_attrs:
+	kfree(iio_dev_opaque->legacy_scan_el_group.attrs);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम iio_buffer_unरेजिस्टर_legacy_sysfs_groups(काष्ठा iio_dev *indio_dev)
-अणु
-	काष्ठा iio_dev_opaque *iio_dev_opaque = to_iio_dev_opaque(indio_dev);
+static void iio_buffer_unregister_legacy_sysfs_groups(struct iio_dev *indio_dev)
+{
+	struct iio_dev_opaque *iio_dev_opaque = to_iio_dev_opaque(indio_dev);
 
-	kमुक्त(iio_dev_opaque->legacy_buffer_group.attrs);
-	kमुक्त(iio_dev_opaque->legacy_scan_el_group.attrs);
-पूर्ण
+	kfree(iio_dev_opaque->legacy_buffer_group.attrs);
+	kfree(iio_dev_opaque->legacy_scan_el_group.attrs);
+}
 
-अटल पूर्णांक iio_buffer_chrdev_release(काष्ठा inode *inode, काष्ठा file *filep)
-अणु
-	काष्ठा iio_dev_buffer_pair *ib = filep->निजी_data;
-	काष्ठा iio_dev *indio_dev = ib->indio_dev;
-	काष्ठा iio_buffer *buffer = ib->buffer;
+static int iio_buffer_chrdev_release(struct inode *inode, struct file *filep)
+{
+	struct iio_dev_buffer_pair *ib = filep->private_data;
+	struct iio_dev *indio_dev = ib->indio_dev;
+	struct iio_buffer *buffer = ib->buffer;
 
 	wake_up(&buffer->pollq);
 
-	kमुक्त(ib);
+	kfree(ib);
 	clear_bit(IIO_BUSY_BIT_POS, &buffer->flags);
 	iio_device_put(indio_dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा file_operations iio_buffer_chrdev_fileops = अणु
+static const struct file_operations iio_buffer_chrdev_fileops = {
 	.owner = THIS_MODULE,
 	.llseek = noop_llseek,
-	.पढ़ो = iio_buffer_पढ़ो,
+	.read = iio_buffer_read,
 	.poll = iio_buffer_poll,
 	.release = iio_buffer_chrdev_release,
-पूर्ण;
+};
 
-अटल दीर्घ iio_device_buffer_getfd(काष्ठा iio_dev *indio_dev, अचिन्हित दीर्घ arg)
-अणु
-	काष्ठा iio_dev_opaque *iio_dev_opaque = to_iio_dev_opaque(indio_dev);
-	पूर्णांक __user *ival = (पूर्णांक __user *)arg;
-	काष्ठा iio_dev_buffer_pair *ib;
-	काष्ठा iio_buffer *buffer;
-	पूर्णांक fd, idx, ret;
+static long iio_device_buffer_getfd(struct iio_dev *indio_dev, unsigned long arg)
+{
+	struct iio_dev_opaque *iio_dev_opaque = to_iio_dev_opaque(indio_dev);
+	int __user *ival = (int __user *)arg;
+	struct iio_dev_buffer_pair *ib;
+	struct iio_buffer *buffer;
+	int fd, idx, ret;
 
-	अगर (copy_from_user(&idx, ival, माप(idx)))
-		वापस -EFAULT;
+	if (copy_from_user(&idx, ival, sizeof(idx)))
+		return -EFAULT;
 
-	अगर (idx >= iio_dev_opaque->attached_buffers_cnt)
-		वापस -ENODEV;
+	if (idx >= iio_dev_opaque->attached_buffers_cnt)
+		return -ENODEV;
 
 	iio_device_get(indio_dev);
 
 	buffer = iio_dev_opaque->attached_buffers[idx];
 
-	अगर (test_and_set_bit(IIO_BUSY_BIT_POS, &buffer->flags)) अणु
+	if (test_and_set_bit(IIO_BUSY_BIT_POS, &buffer->flags)) {
 		ret = -EBUSY;
-		जाओ error_iio_dev_put;
-	पूर्ण
+		goto error_iio_dev_put;
+	}
 
-	ib = kzalloc(माप(*ib), GFP_KERNEL);
-	अगर (!ib) अणु
+	ib = kzalloc(sizeof(*ib), GFP_KERNEL);
+	if (!ib) {
 		ret = -ENOMEM;
-		जाओ error_clear_busy_bit;
-	पूर्ण
+		goto error_clear_busy_bit;
+	}
 
 	ib->indio_dev = indio_dev;
 	ib->buffer = buffer;
 
 	fd = anon_inode_getfd("iio:buffer", &iio_buffer_chrdev_fileops,
 			      ib, O_RDWR | O_CLOEXEC);
-	अगर (fd < 0) अणु
+	if (fd < 0) {
 		ret = fd;
-		जाओ error_मुक्त_ib;
-	पूर्ण
+		goto error_free_ib;
+	}
 
-	अगर (copy_to_user(ival, &fd, माप(fd))) अणु
+	if (copy_to_user(ival, &fd, sizeof(fd))) {
 		put_unused_fd(fd);
 		ret = -EFAULT;
-		जाओ error_मुक्त_ib;
-	पूर्ण
+		goto error_free_ib;
+	}
 
-	वापस 0;
+	return 0;
 
-error_मुक्त_ib:
-	kमुक्त(ib);
+error_free_ib:
+	kfree(ib);
 error_clear_busy_bit:
 	clear_bit(IIO_BUSY_BIT_POS, &buffer->flags);
 error_iio_dev_put:
 	iio_device_put(indio_dev);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल दीर्घ iio_device_buffer_ioctl(काष्ठा iio_dev *indio_dev, काष्ठा file *filp,
-				    अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
-अणु
-	चयन (cmd) अणु
-	हाल IIO_BUFFER_GET_FD_IOCTL:
-		वापस iio_device_buffer_getfd(indio_dev, arg);
-	शेष:
-		वापस IIO_IOCTL_UNHANDLED;
-	पूर्ण
-पूर्ण
+static long iio_device_buffer_ioctl(struct iio_dev *indio_dev, struct file *filp,
+				    unsigned int cmd, unsigned long arg)
+{
+	switch (cmd) {
+	case IIO_BUFFER_GET_FD_IOCTL:
+		return iio_device_buffer_getfd(indio_dev, arg);
+	default:
+		return IIO_IOCTL_UNHANDLED;
+	}
+}
 
-अटल पूर्णांक __iio_buffer_alloc_sysfs_and_mask(काष्ठा iio_buffer *buffer,
-					     काष्ठा iio_dev *indio_dev,
-					     पूर्णांक index)
-अणु
-	काष्ठा iio_dev_attr *p;
-	काष्ठा attribute **attr;
-	पूर्णांक ret, i, attrn, scan_el_attrcount, buffer_attrcount;
-	स्थिर काष्ठा iio_chan_spec *channels;
+static int __iio_buffer_alloc_sysfs_and_mask(struct iio_buffer *buffer,
+					     struct iio_dev *indio_dev,
+					     int index)
+{
+	struct iio_dev_attr *p;
+	struct attribute **attr;
+	int ret, i, attrn, scan_el_attrcount, buffer_attrcount;
+	const struct iio_chan_spec *channels;
 
 	buffer_attrcount = 0;
-	अगर (buffer->attrs) अणु
-		जबतक (buffer->attrs[buffer_attrcount] != शून्य)
+	if (buffer->attrs) {
+		while (buffer->attrs[buffer_attrcount] != NULL)
 			buffer_attrcount++;
-	पूर्ण
+	}
 
 	scan_el_attrcount = 0;
 	INIT_LIST_HEAD(&buffer->buffer_attr_list);
 	channels = indio_dev->channels;
-	अगर (channels) अणु
+	if (channels) {
 		/* new magic */
-		क्रम (i = 0; i < indio_dev->num_channels; i++) अणु
-			अगर (channels[i].scan_index < 0)
-				जारी;
+		for (i = 0; i < indio_dev->num_channels; i++) {
+			if (channels[i].scan_index < 0)
+				continue;
 
 			ret = iio_buffer_add_channel_sysfs(indio_dev, buffer,
 							 &channels[i]);
-			अगर (ret < 0)
-				जाओ error_cleanup_dynamic;
+			if (ret < 0)
+				goto error_cleanup_dynamic;
 			scan_el_attrcount += ret;
-			अगर (channels[i].type == IIO_TIMESTAMP)
-				indio_dev->scan_index_बारtamp =
+			if (channels[i].type == IIO_TIMESTAMP)
+				indio_dev->scan_index_timestamp =
 					channels[i].scan_index;
-		पूर्ण
-		अगर (indio_dev->masklength && buffer->scan_mask == शून्य) अणु
-			buffer->scan_mask = biपंचांगap_zalloc(indio_dev->masklength,
+		}
+		if (indio_dev->masklength && buffer->scan_mask == NULL) {
+			buffer->scan_mask = bitmap_zalloc(indio_dev->masklength,
 							  GFP_KERNEL);
-			अगर (buffer->scan_mask == शून्य) अणु
+			if (buffer->scan_mask == NULL) {
 				ret = -ENOMEM;
-				जाओ error_cleanup_dynamic;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				goto error_cleanup_dynamic;
+			}
+		}
+	}
 
 	attrn = buffer_attrcount + scan_el_attrcount + ARRAY_SIZE(iio_buffer_attrs);
-	attr = kसुस्मृति(attrn + 1, माप(* attr), GFP_KERNEL);
-	अगर (!attr) अणु
+	attr = kcalloc(attrn + 1, sizeof(* attr), GFP_KERNEL);
+	if (!attr) {
 		ret = -ENOMEM;
-		जाओ error_मुक्त_scan_mask;
-	पूर्ण
+		goto error_free_scan_mask;
+	}
 
-	स_नकल(attr, iio_buffer_attrs, माप(iio_buffer_attrs));
-	अगर (!buffer->access->set_length)
+	memcpy(attr, iio_buffer_attrs, sizeof(iio_buffer_attrs));
+	if (!buffer->access->set_length)
 		attr[0] = &dev_attr_length_ro.attr;
 
-	अगर (buffer->access->flags & INDIO_BUFFER_FLAG_FIXED_WATERMARK)
+	if (buffer->access->flags & INDIO_BUFFER_FLAG_FIXED_WATERMARK)
 		attr[2] = &dev_attr_watermark_ro.attr;
 
-	अगर (buffer->attrs)
-		स_नकल(&attr[ARRAY_SIZE(iio_buffer_attrs)], buffer->attrs,
-		       माप(काष्ठा attribute *) * buffer_attrcount);
+	if (buffer->attrs)
+		memcpy(&attr[ARRAY_SIZE(iio_buffer_attrs)], buffer->attrs,
+		       sizeof(struct attribute *) * buffer_attrcount);
 
 	buffer_attrcount += ARRAY_SIZE(iio_buffer_attrs);
 
-	क्रम (i = 0; i < buffer_attrcount; i++) अणु
-		काष्ठा attribute *wrapped;
+	for (i = 0; i < buffer_attrcount; i++) {
+		struct attribute *wrapped;
 
 		wrapped = iio_buffer_wrap_attr(buffer, attr[i]);
-		अगर (!wrapped) अणु
+		if (!wrapped) {
 			ret = -ENOMEM;
-			जाओ error_मुक्त_scan_mask;
-		पूर्ण
+			goto error_free_scan_mask;
+		}
 		attr[i] = wrapped;
-	पूर्ण
+	}
 
 	attrn = 0;
-	list_क्रम_each_entry(p, &buffer->buffer_attr_list, l)
+	list_for_each_entry(p, &buffer->buffer_attr_list, l)
 		attr[attrn++] = &p->dev_attr.attr;
 
-	buffer->buffer_group.name = kaप्र_लिखो(GFP_KERNEL, "buffer%d", index);
-	अगर (!buffer->buffer_group.name) अणु
+	buffer->buffer_group.name = kasprintf(GFP_KERNEL, "buffer%d", index);
+	if (!buffer->buffer_group.name) {
 		ret = -ENOMEM;
-		जाओ error_मुक्त_buffer_attrs;
-	पूर्ण
+		goto error_free_buffer_attrs;
+	}
 
 	buffer->buffer_group.attrs = attr;
 
-	ret = iio_device_रेजिस्टर_sysfs_group(indio_dev, &buffer->buffer_group);
-	अगर (ret)
-		जाओ error_मुक्त_buffer_attr_group_name;
+	ret = iio_device_register_sysfs_group(indio_dev, &buffer->buffer_group);
+	if (ret)
+		goto error_free_buffer_attr_group_name;
 
-	/* we only need to रेजिस्टर the legacy groups क्रम the first buffer */
-	अगर (index > 0)
-		वापस 0;
+	/* we only need to register the legacy groups for the first buffer */
+	if (index > 0)
+		return 0;
 
-	ret = iio_buffer_रेजिस्टर_legacy_sysfs_groups(indio_dev, attr,
+	ret = iio_buffer_register_legacy_sysfs_groups(indio_dev, attr,
 						      buffer_attrcount,
 						      scan_el_attrcount);
-	अगर (ret)
-		जाओ error_मुक्त_buffer_attr_group_name;
+	if (ret)
+		goto error_free_buffer_attr_group_name;
 
-	वापस 0;
+	return 0;
 
-error_मुक्त_buffer_attr_group_name:
-	kमुक्त(buffer->buffer_group.name);
-error_मुक्त_buffer_attrs:
-	kमुक्त(buffer->buffer_group.attrs);
-error_मुक्त_scan_mask:
-	biपंचांगap_मुक्त(buffer->scan_mask);
+error_free_buffer_attr_group_name:
+	kfree(buffer->buffer_group.name);
+error_free_buffer_attrs:
+	kfree(buffer->buffer_group.attrs);
+error_free_scan_mask:
+	bitmap_free(buffer->scan_mask);
 error_cleanup_dynamic:
-	iio_मुक्त_chan_devattr_list(&buffer->buffer_attr_list);
+	iio_free_chan_devattr_list(&buffer->buffer_attr_list);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम __iio_buffer_मुक्त_sysfs_and_mask(काष्ठा iio_buffer *buffer)
-अणु
-	biपंचांगap_मुक्त(buffer->scan_mask);
-	kमुक्त(buffer->buffer_group.name);
-	kमुक्त(buffer->buffer_group.attrs);
-	iio_मुक्त_chan_devattr_list(&buffer->buffer_attr_list);
-पूर्ण
+static void __iio_buffer_free_sysfs_and_mask(struct iio_buffer *buffer)
+{
+	bitmap_free(buffer->scan_mask);
+	kfree(buffer->buffer_group.name);
+	kfree(buffer->buffer_group.attrs);
+	iio_free_chan_devattr_list(&buffer->buffer_attr_list);
+}
 
-पूर्णांक iio_buffers_alloc_sysfs_and_mask(काष्ठा iio_dev *indio_dev)
-अणु
-	काष्ठा iio_dev_opaque *iio_dev_opaque = to_iio_dev_opaque(indio_dev);
-	स्थिर काष्ठा iio_chan_spec *channels;
-	काष्ठा iio_buffer *buffer;
-	पूर्णांक unwind_idx;
-	पूर्णांक ret, i;
-	माप_प्रकार sz;
+int iio_buffers_alloc_sysfs_and_mask(struct iio_dev *indio_dev)
+{
+	struct iio_dev_opaque *iio_dev_opaque = to_iio_dev_opaque(indio_dev);
+	const struct iio_chan_spec *channels;
+	struct iio_buffer *buffer;
+	int unwind_idx;
+	int ret, i;
+	size_t sz;
 
 	channels = indio_dev->channels;
-	अगर (channels) अणु
-		पूर्णांक ml = indio_dev->masklength;
+	if (channels) {
+		int ml = indio_dev->masklength;
 
-		क्रम (i = 0; i < indio_dev->num_channels; i++)
+		for (i = 0; i < indio_dev->num_channels; i++)
 			ml = max(ml, channels[i].scan_index + 1);
 		indio_dev->masklength = ml;
-	पूर्ण
+	}
 
-	अगर (!iio_dev_opaque->attached_buffers_cnt)
-		वापस 0;
+	if (!iio_dev_opaque->attached_buffers_cnt)
+		return 0;
 
-	क्रम (i = 0; i < iio_dev_opaque->attached_buffers_cnt; i++) अणु
+	for (i = 0; i < iio_dev_opaque->attached_buffers_cnt; i++) {
 		buffer = iio_dev_opaque->attached_buffers[i];
 		ret = __iio_buffer_alloc_sysfs_and_mask(buffer, indio_dev, i);
-		अगर (ret) अणु
+		if (ret) {
 			unwind_idx = i;
-			जाओ error_unwind_sysfs_and_mask;
-		पूर्ण
-	पूर्ण
+			goto error_unwind_sysfs_and_mask;
+		}
+	}
 	unwind_idx = iio_dev_opaque->attached_buffers_cnt - 1;
 
-	sz = माप(*(iio_dev_opaque->buffer_ioctl_handler));
+	sz = sizeof(*(iio_dev_opaque->buffer_ioctl_handler));
 	iio_dev_opaque->buffer_ioctl_handler = kzalloc(sz, GFP_KERNEL);
-	अगर (!iio_dev_opaque->buffer_ioctl_handler) अणु
+	if (!iio_dev_opaque->buffer_ioctl_handler) {
 		ret = -ENOMEM;
-		जाओ error_unwind_sysfs_and_mask;
-	पूर्ण
+		goto error_unwind_sysfs_and_mask;
+	}
 
 	iio_dev_opaque->buffer_ioctl_handler->ioctl = iio_device_buffer_ioctl;
-	iio_device_ioctl_handler_रेजिस्टर(indio_dev,
+	iio_device_ioctl_handler_register(indio_dev,
 					  iio_dev_opaque->buffer_ioctl_handler);
 
-	वापस 0;
+	return 0;
 
 error_unwind_sysfs_and_mask:
-	क्रम (; unwind_idx >= 0; unwind_idx--) अणु
+	for (; unwind_idx >= 0; unwind_idx--) {
 		buffer = iio_dev_opaque->attached_buffers[unwind_idx];
-		__iio_buffer_मुक्त_sysfs_and_mask(buffer);
-	पूर्ण
-	वापस ret;
-पूर्ण
+		__iio_buffer_free_sysfs_and_mask(buffer);
+	}
+	return ret;
+}
 
-व्योम iio_buffers_मुक्त_sysfs_and_mask(काष्ठा iio_dev *indio_dev)
-अणु
-	काष्ठा iio_dev_opaque *iio_dev_opaque = to_iio_dev_opaque(indio_dev);
-	काष्ठा iio_buffer *buffer;
-	पूर्णांक i;
+void iio_buffers_free_sysfs_and_mask(struct iio_dev *indio_dev)
+{
+	struct iio_dev_opaque *iio_dev_opaque = to_iio_dev_opaque(indio_dev);
+	struct iio_buffer *buffer;
+	int i;
 
-	अगर (!iio_dev_opaque->attached_buffers_cnt)
-		वापस;
+	if (!iio_dev_opaque->attached_buffers_cnt)
+		return;
 
-	iio_device_ioctl_handler_unरेजिस्टर(iio_dev_opaque->buffer_ioctl_handler);
-	kमुक्त(iio_dev_opaque->buffer_ioctl_handler);
+	iio_device_ioctl_handler_unregister(iio_dev_opaque->buffer_ioctl_handler);
+	kfree(iio_dev_opaque->buffer_ioctl_handler);
 
-	iio_buffer_unरेजिस्टर_legacy_sysfs_groups(indio_dev);
+	iio_buffer_unregister_legacy_sysfs_groups(indio_dev);
 
-	क्रम (i = iio_dev_opaque->attached_buffers_cnt - 1; i >= 0; i--) अणु
+	for (i = iio_dev_opaque->attached_buffers_cnt - 1; i >= 0; i--) {
 		buffer = iio_dev_opaque->attached_buffers[i];
-		__iio_buffer_मुक्त_sysfs_and_mask(buffer);
-	पूर्ण
-पूर्ण
+		__iio_buffer_free_sysfs_and_mask(buffer);
+	}
+}
 
 /**
  * iio_validate_scan_mask_onehot() - Validates that exactly one channel is selected
  * @indio_dev: the iio device
  * @mask: scan mask to be checked
  *
- * Return true अगर exactly one bit is set in the scan mask, false otherwise. It
- * can be used क्रम devices where only one channel can be active क्रम sampling at
- * a समय.
+ * Return true if exactly one bit is set in the scan mask, false otherwise. It
+ * can be used for devices where only one channel can be active for sampling at
+ * a time.
  */
-bool iio_validate_scan_mask_onehot(काष्ठा iio_dev *indio_dev,
-	स्थिर अचिन्हित दीर्घ *mask)
-अणु
-	वापस biपंचांगap_weight(mask, indio_dev->masklength) == 1;
-पूर्ण
+bool iio_validate_scan_mask_onehot(struct iio_dev *indio_dev,
+	const unsigned long *mask)
+{
+	return bitmap_weight(mask, indio_dev->masklength) == 1;
+}
 EXPORT_SYMBOL_GPL(iio_validate_scan_mask_onehot);
 
-अटल स्थिर व्योम *iio_demux(काष्ठा iio_buffer *buffer,
-				 स्थिर व्योम *datain)
-अणु
-	काष्ठा iio_demux_table *t;
+static const void *iio_demux(struct iio_buffer *buffer,
+				 const void *datain)
+{
+	struct iio_demux_table *t;
 
-	अगर (list_empty(&buffer->demux_list))
-		वापस datain;
-	list_क्रम_each_entry(t, &buffer->demux_list, l)
-		स_नकल(buffer->demux_bounce + t->to,
+	if (list_empty(&buffer->demux_list))
+		return datain;
+	list_for_each_entry(t, &buffer->demux_list, l)
+		memcpy(buffer->demux_bounce + t->to,
 		       datain + t->from, t->length);
 
-	वापस buffer->demux_bounce;
-पूर्ण
+	return buffer->demux_bounce;
+}
 
-अटल पूर्णांक iio_push_to_buffer(काष्ठा iio_buffer *buffer, स्थिर व्योम *data)
-अणु
-	स्थिर व्योम *dataout = iio_demux(buffer, data);
-	पूर्णांक ret;
+static int iio_push_to_buffer(struct iio_buffer *buffer, const void *data)
+{
+	const void *dataout = iio_demux(buffer, data);
+	int ret;
 
 	ret = buffer->access->store_to(buffer, dataout);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	/*
-	 * We can't just test क्रम watermark to decide अगर we wake the poll queue
-	 * because पढ़ो may request less samples than the watermark.
+	 * We can't just test for watermark to decide if we wake the poll queue
+	 * because read may request less samples than the watermark.
 	 */
-	wake_up_पूर्णांकerruptible_poll(&buffer->pollq, EPOLLIN | EPOLLRDNORM);
-	वापस 0;
-पूर्ण
+	wake_up_interruptible_poll(&buffer->pollq, EPOLLIN | EPOLLRDNORM);
+	return 0;
+}
 
 /**
- * iio_push_to_buffers() - push to a रेजिस्टरed buffer.
- * @indio_dev:		iio_dev काष्ठाure क्रम device.
+ * iio_push_to_buffers() - push to a registered buffer.
+ * @indio_dev:		iio_dev structure for device.
  * @data:		Full scan.
  */
-पूर्णांक iio_push_to_buffers(काष्ठा iio_dev *indio_dev, स्थिर व्योम *data)
-अणु
-	काष्ठा iio_dev_opaque *iio_dev_opaque = to_iio_dev_opaque(indio_dev);
-	पूर्णांक ret;
-	काष्ठा iio_buffer *buf;
+int iio_push_to_buffers(struct iio_dev *indio_dev, const void *data)
+{
+	struct iio_dev_opaque *iio_dev_opaque = to_iio_dev_opaque(indio_dev);
+	int ret;
+	struct iio_buffer *buf;
 
-	list_क्रम_each_entry(buf, &iio_dev_opaque->buffer_list, buffer_list) अणु
+	list_for_each_entry(buf, &iio_dev_opaque->buffer_list, buffer_list) {
 		ret = iio_push_to_buffer(buf, data);
-		अगर (ret < 0)
-			वापस ret;
-	पूर्ण
+		if (ret < 0)
+			return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(iio_push_to_buffers);
 
 /**
  * iio_buffer_release() - Free a buffer's resources
- * @ref: Poपूर्णांकer to the kref embedded in the iio_buffer काष्ठा
+ * @ref: Pointer to the kref embedded in the iio_buffer struct
  *
  * This function is called when the last reference to the buffer has been
- * dropped. It will typically मुक्त all resources allocated by the buffer. Do not
- * call this function manually, always use iio_buffer_put() when करोne using a
+ * dropped. It will typically free all resources allocated by the buffer. Do not
+ * call this function manually, always use iio_buffer_put() when done using a
  * buffer.
  */
-अटल व्योम iio_buffer_release(काष्ठा kref *ref)
-अणु
-	काष्ठा iio_buffer *buffer = container_of(ref, काष्ठा iio_buffer, ref);
+static void iio_buffer_release(struct kref *ref)
+{
+	struct iio_buffer *buffer = container_of(ref, struct iio_buffer, ref);
 
 	buffer->access->release(buffer);
-पूर्ण
+}
 
 /**
  * iio_buffer_get() - Grab a reference to the buffer
- * @buffer: The buffer to grab a reference क्रम, may be शून्य
+ * @buffer: The buffer to grab a reference for, may be NULL
  *
- * Returns the poपूर्णांकer to the buffer that was passed पूर्णांकo the function.
+ * Returns the pointer to the buffer that was passed into the function.
  */
-काष्ठा iio_buffer *iio_buffer_get(काष्ठा iio_buffer *buffer)
-अणु
-	अगर (buffer)
+struct iio_buffer *iio_buffer_get(struct iio_buffer *buffer)
+{
+	if (buffer)
 		kref_get(&buffer->ref);
 
-	वापस buffer;
-पूर्ण
+	return buffer;
+}
 EXPORT_SYMBOL_GPL(iio_buffer_get);
 
 /**
  * iio_buffer_put() - Release the reference to the buffer
- * @buffer: The buffer to release the reference क्रम, may be शून्य
+ * @buffer: The buffer to release the reference for, may be NULL
  */
-व्योम iio_buffer_put(काष्ठा iio_buffer *buffer)
-अणु
-	अगर (buffer)
+void iio_buffer_put(struct iio_buffer *buffer)
+{
+	if (buffer)
 		kref_put(&buffer->ref, iio_buffer_release);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(iio_buffer_put);
 
 /**
@@ -1775,37 +1774,37 @@ EXPORT_SYMBOL_GPL(iio_buffer_put);
  * @indio_dev: The device the buffer should be attached to
  * @buffer: The buffer to attach to the device
  *
- * Return 0 अगर successful, negative अगर error.
+ * Return 0 if successful, negative if error.
  *
  * This function attaches a buffer to a IIO device. The buffer stays attached to
- * the device until the device is मुक्तd. For legacy reasons, the first attached
- * buffer will also be asचिन्हित to 'indio_dev->buffer'.
- * The array allocated here, will be मुक्त'd via the iio_device_detach_buffers()
- * call which is handled by the iio_device_मुक्त().
+ * the device until the device is freed. For legacy reasons, the first attached
+ * buffer will also be assigned to 'indio_dev->buffer'.
+ * The array allocated here, will be free'd via the iio_device_detach_buffers()
+ * call which is handled by the iio_device_free().
  */
-पूर्णांक iio_device_attach_buffer(काष्ठा iio_dev *indio_dev,
-			     काष्ठा iio_buffer *buffer)
-अणु
-	काष्ठा iio_dev_opaque *iio_dev_opaque = to_iio_dev_opaque(indio_dev);
-	काष्ठा iio_buffer **new, **old = iio_dev_opaque->attached_buffers;
-	अचिन्हित पूर्णांक cnt = iio_dev_opaque->attached_buffers_cnt;
+int iio_device_attach_buffer(struct iio_dev *indio_dev,
+			     struct iio_buffer *buffer)
+{
+	struct iio_dev_opaque *iio_dev_opaque = to_iio_dev_opaque(indio_dev);
+	struct iio_buffer **new, **old = iio_dev_opaque->attached_buffers;
+	unsigned int cnt = iio_dev_opaque->attached_buffers_cnt;
 
 	cnt++;
 
-	new = kपुनः_स्मृति(old, माप(*new) * cnt, GFP_KERNEL);
-	अगर (!new)
-		वापस -ENOMEM;
+	new = krealloc(old, sizeof(*new) * cnt, GFP_KERNEL);
+	if (!new)
+		return -ENOMEM;
 	iio_dev_opaque->attached_buffers = new;
 
 	buffer = iio_buffer_get(buffer);
 
 	/* first buffer is legacy; attach it to the IIO device directly */
-	अगर (!indio_dev->buffer)
+	if (!indio_dev->buffer)
 		indio_dev->buffer = buffer;
 
 	iio_dev_opaque->attached_buffers[cnt - 1] = buffer;
 	iio_dev_opaque->attached_buffers_cnt = cnt;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(iio_device_attach_buffer);

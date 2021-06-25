@@ -1,350 +1,349 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * linux/fs/lockd/xdr4.c
  *
- * XDR support क्रम lockd and the lock client.
+ * XDR support for lockd and the lock client.
  *
  * Copyright (C) 1995, 1996 Olaf Kirch <okir@monad.swb.de>
  * Copyright (C) 1999, Trond Myklebust <trond.myklebust@fys.uio.no>
  */
 
-#समावेश <linux/types.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/nfs.h>
+#include <linux/types.h>
+#include <linux/sched.h>
+#include <linux/nfs.h>
 
-#समावेश <linux/sunrpc/xdr.h>
-#समावेश <linux/sunrpc/clnt.h>
-#समावेश <linux/sunrpc/svc.h>
-#समावेश <linux/sunrpc/stats.h>
-#समावेश <linux/lockd/lockd.h>
+#include <linux/sunrpc/xdr.h>
+#include <linux/sunrpc/clnt.h>
+#include <linux/sunrpc/svc.h>
+#include <linux/sunrpc/stats.h>
+#include <linux/lockd/lockd.h>
 
-#घोषणा NLMDBG_FACILITY		NLMDBG_XDR
+#define NLMDBG_FACILITY		NLMDBG_XDR
 
-अटल अंतरभूत loff_t
+static inline loff_t
 s64_to_loff_t(__s64 offset)
-अणु
-	वापस (loff_t)offset;
-पूर्ण
+{
+	return (loff_t)offset;
+}
 
 
-अटल अंतरभूत s64
+static inline s64
 loff_t_to_s64(loff_t offset)
-अणु
+{
 	s64 res;
-	अगर (offset > NLM4_OFFSET_MAX)
+	if (offset > NLM4_OFFSET_MAX)
 		res = NLM4_OFFSET_MAX;
-	अन्यथा अगर (offset < -NLM4_OFFSET_MAX)
+	else if (offset < -NLM4_OFFSET_MAX)
 		res = -NLM4_OFFSET_MAX;
-	अन्यथा
+	else
 		res = offset;
-	वापस res;
-पूर्ण
+	return res;
+}
 
 /*
- * XDR functions क्रम basic NLM types
+ * XDR functions for basic NLM types
  */
-अटल __be32 *
-nlm4_decode_cookie(__be32 *p, काष्ठा nlm_cookie *c)
-अणु
-	अचिन्हित पूर्णांक	len;
+static __be32 *
+nlm4_decode_cookie(__be32 *p, struct nlm_cookie *c)
+{
+	unsigned int	len;
 
 	len = ntohl(*p++);
 	
-	अगर(len==0)
-	अणु
+	if(len==0)
+	{
 		c->len=4;
-		स_रखो(c->data, 0, 4);	/* hockeypux brain damage */
-	पूर्ण
-	अन्यथा अगर(len<=NLM_MAXCOOKIELEN)
-	अणु
+		memset(c->data, 0, 4);	/* hockeypux brain damage */
+	}
+	else if(len<=NLM_MAXCOOKIELEN)
+	{
 		c->len=len;
-		स_नकल(c->data, p, len);
+		memcpy(c->data, p, len);
 		p+=XDR_QUADLEN(len);
-	पूर्ण
-	अन्यथा 
-	अणु
-		dprपूर्णांकk("lockd: bad cookie size %d (only cookies under "
+	}
+	else 
+	{
+		dprintk("lockd: bad cookie size %d (only cookies under "
 			"%d bytes are supported.)\n",
 				len, NLM_MAXCOOKIELEN);
-		वापस शून्य;
-	पूर्ण
-	वापस p;
-पूर्ण
+		return NULL;
+	}
+	return p;
+}
 
-अटल __be32 *
-nlm4_encode_cookie(__be32 *p, काष्ठा nlm_cookie *c)
-अणु
+static __be32 *
+nlm4_encode_cookie(__be32 *p, struct nlm_cookie *c)
+{
 	*p++ = htonl(c->len);
-	स_नकल(p, c->data, c->len);
+	memcpy(p, c->data, c->len);
 	p+=XDR_QUADLEN(c->len);
-	वापस p;
-पूर्ण
+	return p;
+}
 
-अटल __be32 *
-nlm4_decode_fh(__be32 *p, काष्ठा nfs_fh *f)
-अणु
-	स_रखो(f->data, 0, माप(f->data));
+static __be32 *
+nlm4_decode_fh(__be32 *p, struct nfs_fh *f)
+{
+	memset(f->data, 0, sizeof(f->data));
 	f->size = ntohl(*p++);
-	अगर (f->size > NFS_MAXFHSIZE) अणु
-		dprपूर्णांकk("lockd: bad fhandle size %d (should be <=%d)\n",
+	if (f->size > NFS_MAXFHSIZE) {
+		dprintk("lockd: bad fhandle size %d (should be <=%d)\n",
 			f->size, NFS_MAXFHSIZE);
-		वापस शून्य;
-	पूर्ण
-      	स_नकल(f->data, p, f->size);
-	वापस p + XDR_QUADLEN(f->size);
-पूर्ण
+		return NULL;
+	}
+      	memcpy(f->data, p, f->size);
+	return p + XDR_QUADLEN(f->size);
+}
 
 /*
  * Encode and decode owner handle
  */
-अटल __be32 *
-nlm4_decode_oh(__be32 *p, काष्ठा xdr_netobj *oh)
-अणु
-	वापस xdr_decode_netobj(p, oh);
-पूर्ण
+static __be32 *
+nlm4_decode_oh(__be32 *p, struct xdr_netobj *oh)
+{
+	return xdr_decode_netobj(p, oh);
+}
 
-अटल __be32 *
-nlm4_decode_lock(__be32 *p, काष्ठा nlm_lock *lock)
-अणु
-	काष्ठा file_lock	*fl = &lock->fl;
+static __be32 *
+nlm4_decode_lock(__be32 *p, struct nlm_lock *lock)
+{
+	struct file_lock	*fl = &lock->fl;
 	__u64			len, start;
 	__s64			end;
 
-	अगर (!(p = xdr_decode_string_inplace(p, &lock->caller,
+	if (!(p = xdr_decode_string_inplace(p, &lock->caller,
 					    &lock->len, NLM_MAXSTRLEN))
 	 || !(p = nlm4_decode_fh(p, &lock->fh))
 	 || !(p = nlm4_decode_oh(p, &lock->oh)))
-		वापस शून्य;
+		return NULL;
 	lock->svid  = ntohl(*p++);
 
 	locks_init_lock(fl);
 	fl->fl_flags = FL_POSIX;
-	fl->fl_type  = F_RDLCK;		/* as good as anything अन्यथा */
+	fl->fl_type  = F_RDLCK;		/* as good as anything else */
 	p = xdr_decode_hyper(p, &start);
 	p = xdr_decode_hyper(p, &len);
 	end = start + len - 1;
 
 	fl->fl_start = s64_to_loff_t(start);
 
-	अगर (len == 0 || end < 0)
+	if (len == 0 || end < 0)
 		fl->fl_end = OFFSET_MAX;
-	अन्यथा
+	else
 		fl->fl_end = s64_to_loff_t(end);
-	वापस p;
-पूर्ण
+	return p;
+}
 
 /*
  * Encode result of a TEST/TEST_MSG call
  */
-अटल __be32 *
-nlm4_encode_testres(__be32 *p, काष्ठा nlm_res *resp)
-अणु
+static __be32 *
+nlm4_encode_testres(__be32 *p, struct nlm_res *resp)
+{
 	s64		start, len;
 
-	dprपूर्णांकk("xdr: before encode_testres (p %p resp %p)\n", p, resp);
-	अगर (!(p = nlm4_encode_cookie(p, &resp->cookie)))
-		वापस शून्य;
+	dprintk("xdr: before encode_testres (p %p resp %p)\n", p, resp);
+	if (!(p = nlm4_encode_cookie(p, &resp->cookie)))
+		return NULL;
 	*p++ = resp->status;
 
-	अगर (resp->status == nlm_lck_denied) अणु
-		काष्ठा file_lock	*fl = &resp->lock.fl;
+	if (resp->status == nlm_lck_denied) {
+		struct file_lock	*fl = &resp->lock.fl;
 
 		*p++ = (fl->fl_type == F_RDLCK)? xdr_zero : xdr_one;
 		*p++ = htonl(resp->lock.svid);
 
 		/* Encode owner handle. */
-		अगर (!(p = xdr_encode_netobj(p, &resp->lock.oh)))
-			वापस शून्य;
+		if (!(p = xdr_encode_netobj(p, &resp->lock.oh)))
+			return NULL;
 
 		start = loff_t_to_s64(fl->fl_start);
-		अगर (fl->fl_end == OFFSET_MAX)
+		if (fl->fl_end == OFFSET_MAX)
 			len = 0;
-		अन्यथा
+		else
 			len = loff_t_to_s64(fl->fl_end - fl->fl_start + 1);
 		
 		p = xdr_encode_hyper(p, start);
 		p = xdr_encode_hyper(p, len);
-		dprपूर्णांकk("xdr: encode_testres (status %u pid %d type %d start %Ld end %Ld)\n",
-			resp->status, (पूर्णांक)resp->lock.svid, fl->fl_type,
-			(दीर्घ दीर्घ)fl->fl_start,  (दीर्घ दीर्घ)fl->fl_end);
-	पूर्ण
+		dprintk("xdr: encode_testres (status %u pid %d type %d start %Ld end %Ld)\n",
+			resp->status, (int)resp->lock.svid, fl->fl_type,
+			(long long)fl->fl_start,  (long long)fl->fl_end);
+	}
 
-	dprपूर्णांकk("xdr: after encode_testres (p %p resp %p)\n", p, resp);
-	वापस p;
-पूर्ण
+	dprintk("xdr: after encode_testres (p %p resp %p)\n", p, resp);
+	return p;
+}
 
 
 /*
  * First, the server side XDR functions
  */
-पूर्णांक
-nlm4svc_decode_testargs(काष्ठा svc_rqst *rqstp, __be32 *p)
-अणु
-	काष्ठा nlm_args *argp = rqstp->rq_argp;
+int
+nlm4svc_decode_testargs(struct svc_rqst *rqstp, __be32 *p)
+{
+	struct nlm_args *argp = rqstp->rq_argp;
 	u32	exclusive;
 
-	अगर (!(p = nlm4_decode_cookie(p, &argp->cookie)))
-		वापस 0;
+	if (!(p = nlm4_decode_cookie(p, &argp->cookie)))
+		return 0;
 
 	exclusive = ntohl(*p++);
-	अगर (!(p = nlm4_decode_lock(p, &argp->lock)))
-		वापस 0;
-	अगर (exclusive)
+	if (!(p = nlm4_decode_lock(p, &argp->lock)))
+		return 0;
+	if (exclusive)
 		argp->lock.fl.fl_type = F_WRLCK;
 
-	वापस xdr_argsize_check(rqstp, p);
-पूर्ण
+	return xdr_argsize_check(rqstp, p);
+}
 
-पूर्णांक
-nlm4svc_encode_testres(काष्ठा svc_rqst *rqstp, __be32 *p)
-अणु
-	काष्ठा nlm_res *resp = rqstp->rq_resp;
+int
+nlm4svc_encode_testres(struct svc_rqst *rqstp, __be32 *p)
+{
+	struct nlm_res *resp = rqstp->rq_resp;
 
-	अगर (!(p = nlm4_encode_testres(p, resp)))
-		वापस 0;
-	वापस xdr_ressize_check(rqstp, p);
-पूर्ण
+	if (!(p = nlm4_encode_testres(p, resp)))
+		return 0;
+	return xdr_ressize_check(rqstp, p);
+}
 
-पूर्णांक
-nlm4svc_decode_lockargs(काष्ठा svc_rqst *rqstp, __be32 *p)
-अणु
-	काष्ठा nlm_args *argp = rqstp->rq_argp;
+int
+nlm4svc_decode_lockargs(struct svc_rqst *rqstp, __be32 *p)
+{
+	struct nlm_args *argp = rqstp->rq_argp;
 	u32	exclusive;
 
-	अगर (!(p = nlm4_decode_cookie(p, &argp->cookie)))
-		वापस 0;
+	if (!(p = nlm4_decode_cookie(p, &argp->cookie)))
+		return 0;
 	argp->block  = ntohl(*p++);
 	exclusive    = ntohl(*p++);
-	अगर (!(p = nlm4_decode_lock(p, &argp->lock)))
-		वापस 0;
-	अगर (exclusive)
+	if (!(p = nlm4_decode_lock(p, &argp->lock)))
+		return 0;
+	if (exclusive)
 		argp->lock.fl.fl_type = F_WRLCK;
 	argp->reclaim = ntohl(*p++);
 	argp->state   = ntohl(*p++);
-	argp->monitor = 1;		/* monitor client by शेष */
+	argp->monitor = 1;		/* monitor client by default */
 
-	वापस xdr_argsize_check(rqstp, p);
-पूर्ण
+	return xdr_argsize_check(rqstp, p);
+}
 
-पूर्णांक
-nlm4svc_decode_cancargs(काष्ठा svc_rqst *rqstp, __be32 *p)
-अणु
-	काष्ठा nlm_args *argp = rqstp->rq_argp;
+int
+nlm4svc_decode_cancargs(struct svc_rqst *rqstp, __be32 *p)
+{
+	struct nlm_args *argp = rqstp->rq_argp;
 	u32	exclusive;
 
-	अगर (!(p = nlm4_decode_cookie(p, &argp->cookie)))
-		वापस 0;
+	if (!(p = nlm4_decode_cookie(p, &argp->cookie)))
+		return 0;
 	argp->block = ntohl(*p++);
 	exclusive = ntohl(*p++);
-	अगर (!(p = nlm4_decode_lock(p, &argp->lock)))
-		वापस 0;
-	अगर (exclusive)
+	if (!(p = nlm4_decode_lock(p, &argp->lock)))
+		return 0;
+	if (exclusive)
 		argp->lock.fl.fl_type = F_WRLCK;
-	वापस xdr_argsize_check(rqstp, p);
-पूर्ण
+	return xdr_argsize_check(rqstp, p);
+}
 
-पूर्णांक
-nlm4svc_decode_unlockargs(काष्ठा svc_rqst *rqstp, __be32 *p)
-अणु
-	काष्ठा nlm_args *argp = rqstp->rq_argp;
+int
+nlm4svc_decode_unlockargs(struct svc_rqst *rqstp, __be32 *p)
+{
+	struct nlm_args *argp = rqstp->rq_argp;
 
-	अगर (!(p = nlm4_decode_cookie(p, &argp->cookie))
+	if (!(p = nlm4_decode_cookie(p, &argp->cookie))
 	 || !(p = nlm4_decode_lock(p, &argp->lock)))
-		वापस 0;
+		return 0;
 	argp->lock.fl.fl_type = F_UNLCK;
-	वापस xdr_argsize_check(rqstp, p);
-पूर्ण
+	return xdr_argsize_check(rqstp, p);
+}
 
-पूर्णांक
-nlm4svc_decode_shareargs(काष्ठा svc_rqst *rqstp, __be32 *p)
-अणु
-	काष्ठा nlm_args *argp = rqstp->rq_argp;
-	काष्ठा nlm_lock	*lock = &argp->lock;
+int
+nlm4svc_decode_shareargs(struct svc_rqst *rqstp, __be32 *p)
+{
+	struct nlm_args *argp = rqstp->rq_argp;
+	struct nlm_lock	*lock = &argp->lock;
 
-	स_रखो(lock, 0, माप(*lock));
+	memset(lock, 0, sizeof(*lock));
 	locks_init_lock(&lock->fl);
 	lock->svid = ~(u32) 0;
 
-	अगर (!(p = nlm4_decode_cookie(p, &argp->cookie))
+	if (!(p = nlm4_decode_cookie(p, &argp->cookie))
 	 || !(p = xdr_decode_string_inplace(p, &lock->caller,
 					    &lock->len, NLM_MAXSTRLEN))
 	 || !(p = nlm4_decode_fh(p, &lock->fh))
 	 || !(p = nlm4_decode_oh(p, &lock->oh)))
-		वापस 0;
+		return 0;
 	argp->fsm_mode = ntohl(*p++);
 	argp->fsm_access = ntohl(*p++);
-	वापस xdr_argsize_check(rqstp, p);
-पूर्ण
+	return xdr_argsize_check(rqstp, p);
+}
 
-पूर्णांक
-nlm4svc_encode_shareres(काष्ठा svc_rqst *rqstp, __be32 *p)
-अणु
-	काष्ठा nlm_res *resp = rqstp->rq_resp;
+int
+nlm4svc_encode_shareres(struct svc_rqst *rqstp, __be32 *p)
+{
+	struct nlm_res *resp = rqstp->rq_resp;
 
-	अगर (!(p = nlm4_encode_cookie(p, &resp->cookie)))
-		वापस 0;
+	if (!(p = nlm4_encode_cookie(p, &resp->cookie)))
+		return 0;
 	*p++ = resp->status;
 	*p++ = xdr_zero;		/* sequence argument */
-	वापस xdr_ressize_check(rqstp, p);
-पूर्ण
+	return xdr_ressize_check(rqstp, p);
+}
 
-पूर्णांक
-nlm4svc_encode_res(काष्ठा svc_rqst *rqstp, __be32 *p)
-अणु
-	काष्ठा nlm_res *resp = rqstp->rq_resp;
+int
+nlm4svc_encode_res(struct svc_rqst *rqstp, __be32 *p)
+{
+	struct nlm_res *resp = rqstp->rq_resp;
 
-	अगर (!(p = nlm4_encode_cookie(p, &resp->cookie)))
-		वापस 0;
+	if (!(p = nlm4_encode_cookie(p, &resp->cookie)))
+		return 0;
 	*p++ = resp->status;
-	वापस xdr_ressize_check(rqstp, p);
-पूर्ण
+	return xdr_ressize_check(rqstp, p);
+}
 
-पूर्णांक
-nlm4svc_decode_notअगरy(काष्ठा svc_rqst *rqstp, __be32 *p)
-अणु
-	काष्ठा nlm_args *argp = rqstp->rq_argp;
-	काष्ठा nlm_lock	*lock = &argp->lock;
+int
+nlm4svc_decode_notify(struct svc_rqst *rqstp, __be32 *p)
+{
+	struct nlm_args *argp = rqstp->rq_argp;
+	struct nlm_lock	*lock = &argp->lock;
 
-	अगर (!(p = xdr_decode_string_inplace(p, &lock->caller,
+	if (!(p = xdr_decode_string_inplace(p, &lock->caller,
 					    &lock->len, NLM_MAXSTRLEN)))
-		वापस 0;
+		return 0;
 	argp->state = ntohl(*p++);
-	वापस xdr_argsize_check(rqstp, p);
-पूर्ण
+	return xdr_argsize_check(rqstp, p);
+}
 
-पूर्णांक
-nlm4svc_decode_reboot(काष्ठा svc_rqst *rqstp, __be32 *p)
-अणु
-	काष्ठा nlm_reboot *argp = rqstp->rq_argp;
+int
+nlm4svc_decode_reboot(struct svc_rqst *rqstp, __be32 *p)
+{
+	struct nlm_reboot *argp = rqstp->rq_argp;
 
-	अगर (!(p = xdr_decode_string_inplace(p, &argp->mon, &argp->len, SM_MAXSTRLEN)))
-		वापस 0;
+	if (!(p = xdr_decode_string_inplace(p, &argp->mon, &argp->len, SM_MAXSTRLEN)))
+		return 0;
 	argp->state = ntohl(*p++);
-	स_नकल(&argp->priv.data, p, माप(argp->priv.data));
+	memcpy(&argp->priv.data, p, sizeof(argp->priv.data));
 	p += XDR_QUADLEN(SM_PRIV_SIZE);
-	वापस xdr_argsize_check(rqstp, p);
-पूर्ण
+	return xdr_argsize_check(rqstp, p);
+}
 
-पूर्णांक
-nlm4svc_decode_res(काष्ठा svc_rqst *rqstp, __be32 *p)
-अणु
-	काष्ठा nlm_res *resp = rqstp->rq_argp;
+int
+nlm4svc_decode_res(struct svc_rqst *rqstp, __be32 *p)
+{
+	struct nlm_res *resp = rqstp->rq_argp;
 
-	अगर (!(p = nlm4_decode_cookie(p, &resp->cookie)))
-		वापस 0;
+	if (!(p = nlm4_decode_cookie(p, &resp->cookie)))
+		return 0;
 	resp->status = *p++;
-	वापस xdr_argsize_check(rqstp, p);
-पूर्ण
+	return xdr_argsize_check(rqstp, p);
+}
 
-पूर्णांक
-nlm4svc_decode_व्योम(काष्ठा svc_rqst *rqstp, __be32 *p)
-अणु
-	वापस xdr_argsize_check(rqstp, p);
-पूर्ण
+int
+nlm4svc_decode_void(struct svc_rqst *rqstp, __be32 *p)
+{
+	return xdr_argsize_check(rqstp, p);
+}
 
-पूर्णांक
-nlm4svc_encode_व्योम(काष्ठा svc_rqst *rqstp, __be32 *p)
-अणु
-	वापस xdr_ressize_check(rqstp, p);
-पूर्ण
+int
+nlm4svc_encode_void(struct svc_rqst *rqstp, __be32 *p)
+{
+	return xdr_ressize_check(rqstp, p);
+}

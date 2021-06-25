@@ -1,157 +1,156 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /******************************************************************************
  *
  * Copyright(c) 2007 - 2011 Realtek Corporation. All rights reserved.
  *
  ******************************************************************************/
-#अगर_अघोषित __RTW_MLME_H_
-#घोषणा __RTW_MLME_H_
+#ifndef __RTW_MLME_H_
+#define __RTW_MLME_H_
 
-#समावेश <osdep_service.h>
-#समावेश <mlme_osdep.h>
-#समावेश <drv_types.h>
-#समावेश <wlan_bssdef.h>
+#include <osdep_service.h>
+#include <mlme_osdep.h>
+#include <drv_types.h>
+#include <wlan_bssdef.h>
 
-#घोषणा	MAX_BSS_CNT	128
-#घोषणा   MAX_JOIN_TIMEOUT	6500
+#define	MAX_BSS_CNT	128
+#define   MAX_JOIN_TIMEOUT	6500
 
-/* Increase the scanning समयout because of increasing the SURVEY_TO value. */
+/* Increase the scanning timeout because of increasing the SURVEY_TO value. */
 
-#घोषणा		SCANNING_TIMEOUT	8000
+#define		SCANNING_TIMEOUT	8000
 
-#घोषणा	SCAN_INTERVAL	(30) /*  unit:2sec, 30*2=60sec */
+#define	SCAN_INTERVAL	(30) /*  unit:2sec, 30*2=60sec */
 
-#घोषणा	SCANQUEUE_LIFETIME 20 /*  unit:sec */
+#define	SCANQUEUE_LIFETIME 20 /*  unit:sec */
 
-#घोषणा	WIFI_शून्य_STATE			0x00000000
+#define	WIFI_NULL_STATE			0x00000000
 
-#घोषणा	WIFI_ASOC_STATE			0x00000001	/* Under Linked state */
-#घोषणा	WIFI_REASOC_STATE		0x00000002
-#घोषणा	WIFI_SLEEP_STATE		0x00000004
-#घोषणा	WIFI_STATION_STATE		0x00000008
+#define	WIFI_ASOC_STATE			0x00000001	/* Under Linked state */
+#define	WIFI_REASOC_STATE		0x00000002
+#define	WIFI_SLEEP_STATE		0x00000004
+#define	WIFI_STATION_STATE		0x00000008
 
-#घोषणा	WIFI_AP_STATE			0x00000010
-#घोषणा	WIFI_ADHOC_STATE		0x00000020
-#घोषणा WIFI_ADHOC_MASTER_STATE		0x00000040
-#घोषणा WIFI_UNDER_LINKING		0x00000080
+#define	WIFI_AP_STATE			0x00000010
+#define	WIFI_ADHOC_STATE		0x00000020
+#define WIFI_ADHOC_MASTER_STATE		0x00000040
+#define WIFI_UNDER_LINKING		0x00000080
 
-#घोषणा	WIFI_UNDER_WPS			0x00000100
-#घोषणा	WIFI_STA_ALIVE_CHK_STATE	0x00000400
-#घोषणा	WIFI_SITE_MONITOR		0x00000800	/* to indicate the station is under site surveying */
+#define	WIFI_UNDER_WPS			0x00000100
+#define	WIFI_STA_ALIVE_CHK_STATE	0x00000400
+#define	WIFI_SITE_MONITOR		0x00000800	/* to indicate the station is under site surveying */
 
-#घोषणा _FW_UNDER_LINKING	WIFI_UNDER_LINKING
-#घोषणा _FW_LINKED			WIFI_ASOC_STATE
-#घोषणा _FW_UNDER_SURVEY	WIFI_SITE_MONITOR
+#define _FW_UNDER_LINKING	WIFI_UNDER_LINKING
+#define _FW_LINKED			WIFI_ASOC_STATE
+#define _FW_UNDER_SURVEY	WIFI_SITE_MONITOR
 
-क्रमागत करोt11AuthAlgrthmNum अणु
-	करोt11AuthAlgrthm_Open = 0, /* खोलो प्रणाली */
-	करोt11AuthAlgrthm_Shared,
-	करोt11AuthAlgrthm_8021X,
-	करोt11AuthAlgrthm_Auto,
-	करोt11AuthAlgrthm_WAPI,
-	करोt11AuthAlgrthm_MaxNum
-पूर्ण;
+enum dot11AuthAlgrthmNum {
+	dot11AuthAlgrthm_Open = 0, /* open system */
+	dot11AuthAlgrthm_Shared,
+	dot11AuthAlgrthm_8021X,
+	dot11AuthAlgrthm_Auto,
+	dot11AuthAlgrthm_WAPI,
+	dot11AuthAlgrthm_MaxNum
+};
 
 /*  Scan type including active and passive scan. */
-क्रमागत rt_scan_type अणु
+enum rt_scan_type {
 	SCAN_PASSIVE,
 	SCAN_ACTIVE,
 	SCAN_MIX,
-पूर्ण;
+};
 
-क्रमागत SCAN_RESULT_TYPE अणु
-	SCAN_RESULT_P2P_ONLY = 0,	/* Will वापस all the P2P devices. */
-	SCAN_RESULT_ALL = 1,		/* Will वापस all the scanned device,
+enum SCAN_RESULT_TYPE {
+	SCAN_RESULT_P2P_ONLY = 0,	/* Will return all the P2P devices. */
+	SCAN_RESULT_ALL = 1,		/* Will return all the scanned device,
 					 * include AP.
 					 */
-	SCAN_RESULT_WFD_TYPE = 2	/* Will just वापस the correct WFD
+	SCAN_RESULT_WFD_TYPE = 2	/* Will just return the correct WFD
 					 * device.
 					 */
 					/* If this device is Miracast sink
-					 * device, it will just वापस all the
+					 * device, it will just return all the
 					 * Miracast source devices.
 					 */
-पूर्ण;
+};
 
 /*
  * there are several "locks" in mlme_priv,
- * since mlme_priv is a shared resource between many thपढ़ोs,
- * like ISR/Call-Back functions, the OID handlers, and even समयr functions.
+ * since mlme_priv is a shared resource between many threads,
+ * like ISR/Call-Back functions, the OID handlers, and even timer functions.
  *
- * Each _queue has its own locks, alपढ़ोy.
- * Other items are रक्षित by mlme_priv.lock.
+ * Each _queue has its own locks, already.
+ * Other items are protected by mlme_priv.lock.
  *
- * To aव्योम possible dead lock, any thपढ़ो trying to modअगरiying mlme_priv
- * SHALL not lock up more than one lock at a समय!
+ * To avoid possible dead lock, any thread trying to modifiying mlme_priv
+ * SHALL not lock up more than one lock at a time!
  */
 
-#घोषणा traffic_threshold	10
-#घोषणा	traffic_scan_period	500
+#define traffic_threshold	10
+#define	traffic_scan_period	500
 
-काष्ठा rt_link_detect अणु
+struct rt_link_detect {
 	u32	NumTxOkInPeriod;
 	u32	NumRxOkInPeriod;
 	u32	NumRxUnicastOkInPeriod;
 	bool	bBusyTraffic;
 	bool	bTxBusyTraffic;
 	bool	bRxBusyTraffic;
-	bool	bHigherBusyTraffic; /*  For पूर्णांकerrupt migration purpose. */
-	bool	bHigherBusyRxTraffic; /* We may disable Tx पूर्णांकerrupt according
+	bool	bHigherBusyTraffic; /*  For interrupt migration purpose. */
+	bool	bHigherBusyRxTraffic; /* We may disable Tx interrupt according
 				       * to Rx traffic.
 				       */
-	bool	bHigherBusyTxTraffic; /* We may disable Tx पूर्णांकerrupt according
+	bool	bHigherBusyTxTraffic; /* We may disable Tx interrupt according
 				       * to Tx traffic.
 				       */
-पूर्ण;
+};
 
-काष्ठा mlme_priv अणु
+struct mlme_priv {
 	spinlock_t lock;
-	पूर्णांक fw_state;	/* shall we protect this variable? maybe not necessarily... */
+	int fw_state;	/* shall we protect this variable? maybe not necessarily... */
 	u8 bScanInProcess;
 	u8 to_join; /* flag */
-	u8 to_roaming; /*  roaming trying बार */
+	u8 to_roaming; /*  roaming trying times */
 
 	u8 *nic_hdl;
 
-	काष्ठा list_head *pscanned;
-	काष्ठा __queue मुक्त_bss_pool;
-	काष्ठा __queue scanned_queue;
-	u8 *मुक्त_bss_buf;
+	struct list_head *pscanned;
+	struct __queue free_bss_pool;
+	struct __queue scanned_queue;
+	u8 *free_bss_buf;
 
-	काष्ठा ndis_802_11_ssid	assoc_ssid;
+	struct ndis_802_11_ssid	assoc_ssid;
 	u8	assoc_bssid[6];
 
-	काष्ठा wlan_network	cur_network;
+	struct wlan_network	cur_network;
 
-	u32	scan_पूर्णांकerval;
+	u32	scan_interval;
 
-	काष्ठा समयr_list assoc_समयr;
+	struct timer_list assoc_timer;
 
-	uपूर्णांक assoc_by_bssid;
+	uint assoc_by_bssid;
 
-	काष्ठा समयr_list scan_to_समयr; /*  driver itself handles scan_समयout status. */
+	struct timer_list scan_to_timer; /*  driver itself handles scan_timeout status. */
 
-	काष्ठा qos_priv qospriv;
+	struct qos_priv qospriv;
 
 	/* Number of non-HT AP/stations */
-	पूर्णांक num_sta_no_ht;
+	int num_sta_no_ht;
 
 	/* Number of HT AP/stations 20 MHz */
-	/* पूर्णांक num_sta_ht_20mhz; */
+	/* int num_sta_ht_20mhz; */
 
-	पूर्णांक num_FortyMHzIntolerant;
-	काष्ठा ht_priv	htpriv;
-	काष्ठा rt_link_detect LinkDetectInfo;
-	काष्ठा समयr_list dynamic_chk_समयr; /* dynamic/periodic check समयr */
+	int num_FortyMHzIntolerant;
+	struct ht_priv	htpriv;
+	struct rt_link_detect LinkDetectInfo;
+	struct timer_list dynamic_chk_timer; /* dynamic/periodic check timer */
 
-	u8	key_mask; /* use क्रम ips to set wep key after ips_leave */
-	u8	acm_mask; /*  क्रम wmm acm mask */
+	u8	key_mask; /* use for ips to set wep key after ips_leave */
+	u8	acm_mask; /*  for wmm acm mask */
 	u8	ChannelPlan;
-	क्रमागत rt_scan_type scan_mode; /*  active: 1, passive: 0 */
+	enum rt_scan_type scan_mode; /*  active: 1, passive: 0 */
 
 	/* u8 probereq_wpsie[MAX_WPS_IE_LEN];added in probe req */
-	/* पूर्णांक probereq_wpsie_len; */
+	/* int probereq_wpsie_len; */
 	u8 *wps_probe_req_ie;
 	u32 wps_probe_req_ie_len;
 
@@ -160,31 +159,31 @@
 	u8 *assoc_rsp;
 	u32 assoc_rsp_len;
 
-#अगर defined(CONFIG_88EU_AP_MODE)
+#if defined(CONFIG_88EU_AP_MODE)
 	/* Number of associated Non-ERP stations (i.e., stations using 802.11b
 	 * in 802.11g BSS)
 	 */
-	पूर्णांक num_sta_non_erp;
+	int num_sta_non_erp;
 
-	/* Number of associated stations that करो not support Short Slot Time */
-	पूर्णांक num_sta_no_लघु_slot_समय;
+	/* Number of associated stations that do not support Short Slot Time */
+	int num_sta_no_short_slot_time;
 
-	/* Number of associated stations that करो not support Short Preamble */
-	पूर्णांक num_sta_no_लघु_preamble;
+	/* Number of associated stations that do not support Short Preamble */
+	int num_sta_no_short_preamble;
 
-	पूर्णांक olbc; /* Overlapping Legacy BSS Condition */
+	int olbc; /* Overlapping Legacy BSS Condition */
 
-	/* Number of HT assoc sta that करो not support greenfield */
-	पूर्णांक num_sta_ht_no_gf;
+	/* Number of HT assoc sta that do not support greenfield */
+	int num_sta_ht_no_gf;
 
 	/* Number of associated non-HT stations */
-	/* पूर्णांक num_sta_no_ht; */
+	/* int num_sta_no_ht; */
 
 	/* Number of HT associated stations 20 MHz */
-	पूर्णांक num_sta_ht_20mhz;
+	int num_sta_ht_20mhz;
 
-	/* Overlapping BSS inक्रमmation */
-	पूर्णांक olbc_ht;
+	/* Overlapping BSS information */
+	int olbc_ht;
 
 	u16 ht_op_mode;
 
@@ -199,162 +198,162 @@
 
 	spinlock_t bcn_update_lock;
 	u8		update_bcn;
-#पूर्ण_अगर /* अगर defined (CONFIG_88EU_AP_MODE) */
-पूर्ण;
+#endif /* if defined (CONFIG_88EU_AP_MODE) */
+};
 
-#अगर_घोषित CONFIG_88EU_AP_MODE
+#ifdef CONFIG_88EU_AP_MODE
 
-काष्ठा hostapd_priv अणु
-	काष्ठा adapter *padapter;
-पूर्ण;
+struct hostapd_priv {
+	struct adapter *padapter;
+};
 
-पूर्णांक hostapd_mode_init(काष्ठा adapter *padapter);
-व्योम hostapd_mode_unload(काष्ठा adapter *padapter);
-#पूर्ण_अगर
+int hostapd_mode_init(struct adapter *padapter);
+void hostapd_mode_unload(struct adapter *padapter);
+#endif
 
-बाह्य स्थिर u8 WPA_TKIP_CIPHER[4];
-बाह्य स्थिर u8 RSN_TKIP_CIPHER[4];
-बाह्य u8 REALTEK_96B_IE[];
-बाह्य स्थिर u8 MCS_rate_1R[16];
+extern const u8 WPA_TKIP_CIPHER[4];
+extern const u8 RSN_TKIP_CIPHER[4];
+extern u8 REALTEK_96B_IE[];
+extern const u8 MCS_rate_1R[16];
 
-व्योम rtw_joinbss_event_prehandle(काष्ठा adapter *adapter, u8 *pbuf);
-व्योम rtw_survey_event_callback(काष्ठा adapter *adapter, u8 *pbuf);
-व्योम rtw_surveyकरोne_event_callback(काष्ठा adapter *adapter, u8 *pbuf);
-व्योम rtw_joinbss_event_callback(काष्ठा adapter *adapter, u8 *pbuf);
-व्योम rtw_stassoc_event_callback(काष्ठा adapter *adapter, u8 *pbuf);
-व्योम rtw_stadel_event_callback(काष्ठा adapter *adapter, u8 *pbuf);
-व्योम rtw_atimकरोne_event_callback(काष्ठा adapter *adapter, u8 *pbuf);
-व्योम rtw_cpwm_event_callback(काष्ठा adapter *adapter, u8 *pbuf);
-व्योम indicate_wx_scan_complete_event(काष्ठा adapter *padapter);
-व्योम rtw_indicate_wx_assoc_event(काष्ठा adapter *padapter);
-व्योम rtw_indicate_wx_disassoc_event(काष्ठा adapter *padapter);
-पूर्णांक event_thपढ़ो(व्योम *context);
-व्योम rtw_मुक्त_network_queue(काष्ठा adapter *adapter, u8 isमुक्तall);
-पूर्णांक rtw_init_mlme_priv(काष्ठा adapter *adapter);
-व्योम rtw_मुक्त_mlme_priv(काष्ठा mlme_priv *pmlmepriv);
-पूर्णांक rtw_select_and_join_from_scanned_queue(काष्ठा mlme_priv *pmlmepriv);
-पूर्णांक rtw_set_key(काष्ठा adapter *adapter, काष्ठा security_priv *psecuritypriv,
-		पूर्णांक keyid, u8 set_tx);
-पूर्णांक rtw_set_auth(काष्ठा adapter *adapter, काष्ठा security_priv *psecuritypriv);
+void rtw_joinbss_event_prehandle(struct adapter *adapter, u8 *pbuf);
+void rtw_survey_event_callback(struct adapter *adapter, u8 *pbuf);
+void rtw_surveydone_event_callback(struct adapter *adapter, u8 *pbuf);
+void rtw_joinbss_event_callback(struct adapter *adapter, u8 *pbuf);
+void rtw_stassoc_event_callback(struct adapter *adapter, u8 *pbuf);
+void rtw_stadel_event_callback(struct adapter *adapter, u8 *pbuf);
+void rtw_atimdone_event_callback(struct adapter *adapter, u8 *pbuf);
+void rtw_cpwm_event_callback(struct adapter *adapter, u8 *pbuf);
+void indicate_wx_scan_complete_event(struct adapter *padapter);
+void rtw_indicate_wx_assoc_event(struct adapter *padapter);
+void rtw_indicate_wx_disassoc_event(struct adapter *padapter);
+int event_thread(void *context);
+void rtw_free_network_queue(struct adapter *adapter, u8 isfreeall);
+int rtw_init_mlme_priv(struct adapter *adapter);
+void rtw_free_mlme_priv(struct mlme_priv *pmlmepriv);
+int rtw_select_and_join_from_scanned_queue(struct mlme_priv *pmlmepriv);
+int rtw_set_key(struct adapter *adapter, struct security_priv *psecuritypriv,
+		int keyid, u8 set_tx);
+int rtw_set_auth(struct adapter *adapter, struct security_priv *psecuritypriv);
 
-अटल अंतरभूत u8 *get_bssid(काष्ठा mlme_priv *pmlmepriv)
-अणु	/* अगर sta_mode:pmlmepriv->cur_network.network.MacAddress=> bssid */
-	/*  अगर adhoc_mode:pmlmepriv->cur_network.network.MacAddress=> ibss mac address */
-	वापस pmlmepriv->cur_network.network.MacAddress;
-पूर्ण
+static inline u8 *get_bssid(struct mlme_priv *pmlmepriv)
+{	/* if sta_mode:pmlmepriv->cur_network.network.MacAddress=> bssid */
+	/*  if adhoc_mode:pmlmepriv->cur_network.network.MacAddress=> ibss mac address */
+	return pmlmepriv->cur_network.network.MacAddress;
+}
 
-अटल अंतरभूत पूर्णांक check_fwstate(काष्ठा mlme_priv *pmlmepriv, पूर्णांक state)
-अणु
-	अगर (pmlmepriv->fw_state & state)
-		वापस true;
+static inline int check_fwstate(struct mlme_priv *pmlmepriv, int state)
+{
+	if (pmlmepriv->fw_state & state)
+		return true;
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल अंतरभूत पूर्णांक get_fwstate(काष्ठा mlme_priv *pmlmepriv)
-अणु
-	वापस pmlmepriv->fw_state;
-पूर्ण
+static inline int get_fwstate(struct mlme_priv *pmlmepriv)
+{
+	return pmlmepriv->fw_state;
+}
 
 /*
  * No Limit on the calling context,
- * thereक्रमe set it to be the critical section...
+ * therefore set it to be the critical section...
  *
  * ### NOTE:#### (!!!!)
  * MUST TAKE CARE THAT BEFORE CALLING THIS FUNC, YOU SHOULD HAVE LOCKED pmlmepriv->lock
  */
-अटल अंतरभूत व्योम set_fwstate(काष्ठा mlme_priv *pmlmepriv, पूर्णांक state)
-अणु
+static inline void set_fwstate(struct mlme_priv *pmlmepriv, int state)
+{
 	pmlmepriv->fw_state |= state;
-	/* FOR HW पूर्णांकegration */
-	अगर (state == _FW_UNDER_SURVEY)
+	/* FOR HW integration */
+	if (state == _FW_UNDER_SURVEY)
 		pmlmepriv->bScanInProcess = true;
-पूर्ण
+}
 
-अटल अंतरभूत व्योम _clr_fwstate_(काष्ठा mlme_priv *pmlmepriv, पूर्णांक state)
-अणु
+static inline void _clr_fwstate_(struct mlme_priv *pmlmepriv, int state)
+{
 	pmlmepriv->fw_state &= ~state;
-	/* FOR HW पूर्णांकegration */
-	अगर (state == _FW_UNDER_SURVEY)
+	/* FOR HW integration */
+	if (state == _FW_UNDER_SURVEY)
 		pmlmepriv->bScanInProcess = false;
-पूर्ण
+}
 
 /*
  * No Limit on the calling context,
- * thereक्रमe set it to be the critical section...
+ * therefore set it to be the critical section...
  */
-अटल अंतरभूत व्योम clr_fwstate(काष्ठा mlme_priv *pmlmepriv, पूर्णांक state)
-अणु
+static inline void clr_fwstate(struct mlme_priv *pmlmepriv, int state)
+{
 	spin_lock_bh(&pmlmepriv->lock);
-	अगर (check_fwstate(pmlmepriv, state))
+	if (check_fwstate(pmlmepriv, state))
 		pmlmepriv->fw_state ^= state;
 	spin_unlock_bh(&pmlmepriv->lock);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम clr_fwstate_ex(काष्ठा mlme_priv *pmlmepriv, पूर्णांक state)
-अणु
+static inline void clr_fwstate_ex(struct mlme_priv *pmlmepriv, int state)
+{
 	spin_lock_bh(&pmlmepriv->lock);
 	_clr_fwstate_(pmlmepriv, state);
 	spin_unlock_bh(&pmlmepriv->lock);
-पूर्ण
+}
 
-u16 rtw_get_capability(काष्ठा wlan_bssid_ex *bss);
-व्योम rtw_update_scanned_network(काष्ठा adapter *adapter,
-				काष्ठा wlan_bssid_ex *target);
-व्योम rtw_disconnect_hdl_under_linked(काष्ठा adapter *adapter,
-				     काष्ठा sta_info *psta, u8 मुक्त_assoc);
-व्योम rtw_generate_अक्रमom_ibss(u8 *pibss);
-काष्ठा wlan_network *rtw_find_network(काष्ठा __queue *scanned_queue, u8 *addr);
-काष्ठा wlan_network *rtw_get_oldest_wlan_network(काष्ठा __queue *scanned_queue);
+u16 rtw_get_capability(struct wlan_bssid_ex *bss);
+void rtw_update_scanned_network(struct adapter *adapter,
+				struct wlan_bssid_ex *target);
+void rtw_disconnect_hdl_under_linked(struct adapter *adapter,
+				     struct sta_info *psta, u8 free_assoc);
+void rtw_generate_random_ibss(u8 *pibss);
+struct wlan_network *rtw_find_network(struct __queue *scanned_queue, u8 *addr);
+struct wlan_network *rtw_get_oldest_wlan_network(struct __queue *scanned_queue);
 
-व्योम rtw_मुक्त_assoc_resources(काष्ठा adapter *adapter);
-व्योम rtw_मुक्त_assoc_resources_locked(काष्ठा adapter *adapter);
-व्योम rtw_indicate_disconnect(काष्ठा adapter *adapter);
-व्योम rtw_indicate_connect(काष्ठा adapter *adapter);
-व्योम rtw_indicate_scan_करोne(काष्ठा adapter *padapter, bool पातed);
+void rtw_free_assoc_resources(struct adapter *adapter);
+void rtw_free_assoc_resources_locked(struct adapter *adapter);
+void rtw_indicate_disconnect(struct adapter *adapter);
+void rtw_indicate_connect(struct adapter *adapter);
+void rtw_indicate_scan_done(struct adapter *padapter, bool aborted);
 
-पूर्णांक rtw_reकाष्ठा_sec_ie(काष्ठा adapter *adapter, u8 *in_ie, u8 *out_ie,
-			uपूर्णांक in_len);
-पूर्णांक rtw_reकाष्ठा_wmm_ie(काष्ठा adapter *adapter, u8 *in_ie, u8 *out_ie,
-			uपूर्णांक in_len, uपूर्णांक initial_out_len);
-व्योम rtw_init_registrypriv_dev_network(काष्ठा adapter *adapter);
+int rtw_restruct_sec_ie(struct adapter *adapter, u8 *in_ie, u8 *out_ie,
+			uint in_len);
+int rtw_restruct_wmm_ie(struct adapter *adapter, u8 *in_ie, u8 *out_ie,
+			uint in_len, uint initial_out_len);
+void rtw_init_registrypriv_dev_network(struct adapter *adapter);
 
-व्योम rtw_update_registrypriv_dev_network(काष्ठा adapter *adapter);
+void rtw_update_registrypriv_dev_network(struct adapter *adapter);
 
-व्योम rtw_get_encrypt_decrypt_from_registrypriv(काष्ठा adapter *adapter);
+void rtw_get_encrypt_decrypt_from_registrypriv(struct adapter *adapter);
 
-व्योम _rtw_join_समयout_handler(काष्ठा समयr_list *t);
-व्योम rtw_scan_समयout_handler(काष्ठा समयr_list *t);
+void _rtw_join_timeout_handler(struct timer_list *t);
+void rtw_scan_timeout_handler(struct timer_list *t);
 
-व्योम rtw_dynamic_check_समयr_handlder(काष्ठा समयr_list *t);
-#घोषणा rtw_is_scan_deny(adapter) false
-#घोषणा rtw_clear_scan_deny(adapter) करो अणुपूर्ण जबतक (0)
-#घोषणा rtw_set_scan_deny_समयr_hdl(adapter) करो अणुपूर्ण जबतक (0)
-#घोषणा rtw_set_scan_deny(adapter, ms) करो अणुपूर्ण जबतक (0)
+void rtw_dynamic_check_timer_handlder(struct timer_list *t);
+#define rtw_is_scan_deny(adapter) false
+#define rtw_clear_scan_deny(adapter) do {} while (0)
+#define rtw_set_scan_deny_timer_hdl(adapter) do {} while (0)
+#define rtw_set_scan_deny(adapter, ms) do {} while (0)
 
-व्योम rtw_मुक्त_mlme_priv_ie_data(काष्ठा mlme_priv *pmlmepriv);
+void rtw_free_mlme_priv_ie_data(struct mlme_priv *pmlmepriv);
 
-काष्ठा wlan_network *rtw_alloc_network(काष्ठा mlme_priv *pmlmepriv);
+struct wlan_network *rtw_alloc_network(struct mlme_priv *pmlmepriv);
 
-पूर्णांक rtw_अगर_up(काष्ठा adapter *padapter);
+int rtw_if_up(struct adapter *padapter);
 
 u8 *rtw_get_capability_from_ie(u8 *ie);
-u8 *rtw_get_beacon_पूर्णांकerval_from_ie(u8 *ie);
+u8 *rtw_get_beacon_interval_from_ie(u8 *ie);
 
-व्योम rtw_joinbss_reset(काष्ठा adapter *padapter);
+void rtw_joinbss_reset(struct adapter *padapter);
 
-अचिन्हित पूर्णांक rtw_reकाष्ठाure_ht_ie(काष्ठा adapter *padapter, u8 *in_ie,
-				   u8 *out_ie, uपूर्णांक in_len, uपूर्णांक *pout_len);
-व्योम rtw_update_ht_cap(काष्ठा adapter *padapter, u8 *pie, uपूर्णांक ie_len);
-व्योम rtw_issue_addbareq_cmd(काष्ठा adapter *padapter,
-			    काष्ठा xmit_frame *pxmitframe);
+unsigned int rtw_restructure_ht_ie(struct adapter *padapter, u8 *in_ie,
+				   u8 *out_ie, uint in_len, uint *pout_len);
+void rtw_update_ht_cap(struct adapter *padapter, u8 *pie, uint ie_len);
+void rtw_issue_addbareq_cmd(struct adapter *padapter,
+			    struct xmit_frame *pxmitframe);
 
-पूर्णांक rtw_is_same_ibss(काष्ठा adapter *adapter, काष्ठा wlan_network *pnetwork);
-पूर्णांक is_same_network(काष्ठा wlan_bssid_ex *src, काष्ठा wlan_bssid_ex *dst);
+int rtw_is_same_ibss(struct adapter *adapter, struct wlan_network *pnetwork);
+int is_same_network(struct wlan_bssid_ex *src, struct wlan_bssid_ex *dst);
 
-व्योम rtw_roaming(काष्ठा adapter *padapter, काष्ठा wlan_network *tgt_network);
-व्योम _rtw_roaming(काष्ठा adapter *padapter, काष्ठा wlan_network *tgt_network);
+void rtw_roaming(struct adapter *padapter, struct wlan_network *tgt_network);
+void _rtw_roaming(struct adapter *padapter, struct wlan_network *tgt_network);
 
-व्योम rtw_stassoc_hw_rpt(काष्ठा adapter *adapter, काष्ठा sta_info *psta);
+void rtw_stassoc_hw_rpt(struct adapter *adapter, struct sta_info *psta);
 
-#पूर्ण_अगर /* __RTL871X_MLME_H_ */
+#endif /* __RTL871X_MLME_H_ */

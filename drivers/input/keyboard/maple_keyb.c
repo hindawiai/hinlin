@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * SEGA Dreamcast keyboard driver
  * Based on drivers/usb/usbkbd.c
@@ -7,31 +6,31 @@
  * Porting to 2.6 Copyright (c) Adrian McMenamin, 2007 - 2009
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/input.h>
-#समावेश <linux/module.h>
-#समावेश <linux/init.h>
-#समावेश <linux/समयr.h>
-#समावेश <linux/maple.h>
+#include <linux/kernel.h>
+#include <linux/slab.h>
+#include <linux/input.h>
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/timer.h>
+#include <linux/maple.h>
 
 /* Very simple mutex to ensure proper cleanup */
-अटल DEFINE_MUTEX(maple_keyb_mutex);
+static DEFINE_MUTEX(maple_keyb_mutex);
 
-#घोषणा NR_SCANCODES 256
+#define NR_SCANCODES 256
 
 MODULE_AUTHOR("Adrian McMenamin <adrian@mcmen.demon.co.uk");
 MODULE_DESCRIPTION("SEGA Dreamcast keyboard driver");
 MODULE_LICENSE("GPL");
 
-काष्ठा dc_kbd अणु
-	काष्ठा input_dev *dev;
-	अचिन्हित लघु keycode[NR_SCANCODES];
-	अचिन्हित अक्षर new[8];
-	अचिन्हित अक्षर old[8];
-पूर्ण;
+struct dc_kbd {
+	struct input_dev *dev;
+	unsigned short keycode[NR_SCANCODES];
+	unsigned char new[8];
+	unsigned char old[8];
+};
 
-अटल स्थिर अचिन्हित लघु dc_kbd_keycode[NR_SCANCODES] = अणु
+static const unsigned short dc_kbd_keycode[NR_SCANCODES] = {
 	KEY_RESERVED, KEY_RESERVED, KEY_RESERVED, KEY_RESERVED, KEY_A, KEY_B,
 	KEY_C, KEY_D, KEY_E, KEY_F, KEY_G, KEY_H, KEY_I, KEY_J, KEY_K, KEY_L,
 	KEY_M, KEY_N, KEY_O, KEY_P, KEY_Q, KEY_R, KEY_S, KEY_T, KEY_U, KEY_V,
@@ -77,170 +76,170 @@ MODULE_LICENSE("GPL");
 	KEY_WWW, KEY_BACK, KEY_FORWARD, KEY_STOP, KEY_FIND, KEY_SCROLLUP,
 	KEY_SCROLLDOWN, KEY_EDIT, KEY_SLEEP, KEY_SCREENLOCK, KEY_REFRESH,
 	KEY_CALC, KEY_RESERVED, KEY_RESERVED, KEY_RESERVED, KEY_RESERVED
-पूर्ण;
+};
 
-अटल व्योम dc_scan_kbd(काष्ठा dc_kbd *kbd)
-अणु
-	काष्ठा input_dev *dev = kbd->dev;
-	व्योम *ptr;
-	पूर्णांक code, keycode;
-	पूर्णांक i;
+static void dc_scan_kbd(struct dc_kbd *kbd)
+{
+	struct input_dev *dev = kbd->dev;
+	void *ptr;
+	int code, keycode;
+	int i;
 
-	क्रम (i = 0; i < 8; i++) अणु
+	for (i = 0; i < 8; i++) {
 		code = i + 224;
 		keycode = kbd->keycode[code];
 		input_event(dev, EV_MSC, MSC_SCAN, code);
 		input_report_key(dev, keycode, (kbd->new[0] >> i) & 1);
-	पूर्ण
+	}
 
-	क्रम (i = 2; i < 8; i++) अणु
-		ptr = स_प्रथम(kbd->new + 2, kbd->old[i], 6);
+	for (i = 2; i < 8; i++) {
+		ptr = memchr(kbd->new + 2, kbd->old[i], 6);
 		code = kbd->old[i];
-		अगर (code > 3 && ptr == शून्य) अणु
+		if (code > 3 && ptr == NULL) {
 			keycode = kbd->keycode[code];
-			अगर (keycode) अणु
+			if (keycode) {
 				input_event(dev, EV_MSC, MSC_SCAN, code);
 				input_report_key(dev, keycode, 0);
-			पूर्ण अन्यथा
+			} else
 				dev_dbg(&dev->dev,
 					"Unknown key (scancode %#x) released.",
 					code);
-		पूर्ण
-		ptr = स_प्रथम(kbd->old + 2, kbd->new[i], 6);
+		}
+		ptr = memchr(kbd->old + 2, kbd->new[i], 6);
 		code = kbd->new[i];
-		अगर (code > 3 && ptr) अणु
+		if (code > 3 && ptr) {
 			keycode = kbd->keycode[code];
-			अगर (keycode) अणु
+			if (keycode) {
 				input_event(dev, EV_MSC, MSC_SCAN, code);
 				input_report_key(dev, keycode, 1);
-			पूर्ण अन्यथा
+			} else
 				dev_dbg(&dev->dev,
 					"Unknown key (scancode %#x) pressed.",
 					code);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	input_sync(dev);
-	स_नकल(kbd->old, kbd->new, 8);
-पूर्ण
+	memcpy(kbd->old, kbd->new, 8);
+}
 
-अटल व्योम dc_kbd_callback(काष्ठा mapleq *mq)
-अणु
-	काष्ठा maple_device *mapledev = mq->dev;
-	काष्ठा dc_kbd *kbd = maple_get_drvdata(mapledev);
-	अचिन्हित दीर्घ *buf = (अचिन्हित दीर्घ *)(mq->recvbuf->buf);
+static void dc_kbd_callback(struct mapleq *mq)
+{
+	struct maple_device *mapledev = mq->dev;
+	struct dc_kbd *kbd = maple_get_drvdata(mapledev);
+	unsigned long *buf = (unsigned long *)(mq->recvbuf->buf);
 
 	/*
 	 * We should always get the lock because the only
-	 * समय it may be locked is अगर the driver is in the cleanup phase.
+	 * time it may be locked is if the driver is in the cleanup phase.
 	 */
-	अगर (likely(mutex_trylock(&maple_keyb_mutex))) अणु
+	if (likely(mutex_trylock(&maple_keyb_mutex))) {
 
-		अगर (buf[1] == mapledev->function) अणु
-			स_नकल(kbd->new, buf + 2, 8);
+		if (buf[1] == mapledev->function) {
+			memcpy(kbd->new, buf + 2, 8);
 			dc_scan_kbd(kbd);
-		पूर्ण
+		}
 
 		mutex_unlock(&maple_keyb_mutex);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक probe_maple_kbd(काष्ठा device *dev)
-अणु
-	काष्ठा maple_device *mdev;
-	काष्ठा maple_driver *mdrv;
-	पूर्णांक i, error;
-	काष्ठा dc_kbd *kbd;
-	काष्ठा input_dev *idev;
+static int probe_maple_kbd(struct device *dev)
+{
+	struct maple_device *mdev;
+	struct maple_driver *mdrv;
+	int i, error;
+	struct dc_kbd *kbd;
+	struct input_dev *idev;
 
 	mdev = to_maple_dev(dev);
 	mdrv = to_maple_driver(dev->driver);
 
-	kbd = kzalloc(माप(काष्ठा dc_kbd), GFP_KERNEL);
-	अगर (!kbd) अणु
+	kbd = kzalloc(sizeof(struct dc_kbd), GFP_KERNEL);
+	if (!kbd) {
 		error = -ENOMEM;
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
 	idev = input_allocate_device();
-	अगर (!idev) अणु
+	if (!idev) {
 		error = -ENOMEM;
-		जाओ fail_idev_alloc;
-	पूर्ण
+		goto fail_idev_alloc;
+	}
 
 	kbd->dev = idev;
-	स_नकल(kbd->keycode, dc_kbd_keycode, माप(kbd->keycode));
+	memcpy(kbd->keycode, dc_kbd_keycode, sizeof(kbd->keycode));
 
 	idev->name = mdev->product_name;
 	idev->evbit[0] = BIT(EV_KEY) | BIT(EV_REP);
 	idev->keycode = kbd->keycode;
-	idev->keycodesize = माप(अचिन्हित लघु);
+	idev->keycodesize = sizeof(unsigned short);
 	idev->keycodemax = ARRAY_SIZE(kbd->keycode);
 	idev->id.bustype = BUS_HOST;
 	idev->dev.parent = &mdev->dev;
 
-	क्रम (i = 0; i < NR_SCANCODES; i++)
+	for (i = 0; i < NR_SCANCODES; i++)
 		__set_bit(dc_kbd_keycode[i], idev->keybit);
 	__clear_bit(KEY_RESERVED, idev->keybit);
 
 	input_set_capability(idev, EV_MSC, MSC_SCAN);
 
-	error = input_रेजिस्टर_device(idev);
-	अगर (error)
-		जाओ fail_रेजिस्टर;
+	error = input_register_device(idev);
+	if (error)
+		goto fail_register;
 
 	/* Maple polling is locked to VBLANK - which may be just 50/s */
-	maple_अ_लोond_callback(mdev, dc_kbd_callback, HZ/50,
+	maple_getcond_callback(mdev, dc_kbd_callback, HZ/50,
 		MAPLE_FUNC_KEYBOARD);
 
 	mdev->driver = mdrv;
 
 	maple_set_drvdata(mdev, kbd);
 
-	वापस error;
+	return error;
 
-fail_रेजिस्टर:
-	maple_set_drvdata(mdev, शून्य);
-	input_मुक्त_device(idev);
+fail_register:
+	maple_set_drvdata(mdev, NULL);
+	input_free_device(idev);
 fail_idev_alloc:
-	kमुक्त(kbd);
+	kfree(kbd);
 fail:
-	वापस error;
-पूर्ण
+	return error;
+}
 
-अटल पूर्णांक हटाओ_maple_kbd(काष्ठा device *dev)
-अणु
-	काष्ठा maple_device *mdev = to_maple_dev(dev);
-	काष्ठा dc_kbd *kbd = maple_get_drvdata(mdev);
+static int remove_maple_kbd(struct device *dev)
+{
+	struct maple_device *mdev = to_maple_dev(dev);
+	struct dc_kbd *kbd = maple_get_drvdata(mdev);
 
 	mutex_lock(&maple_keyb_mutex);
 
-	input_unरेजिस्टर_device(kbd->dev);
-	kमुक्त(kbd);
+	input_unregister_device(kbd->dev);
+	kfree(kbd);
 
-	maple_set_drvdata(mdev, शून्य);
+	maple_set_drvdata(mdev, NULL);
 
 	mutex_unlock(&maple_keyb_mutex);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा maple_driver dc_kbd_driver = अणु
+static struct maple_driver dc_kbd_driver = {
 	.function = MAPLE_FUNC_KEYBOARD,
-	.drv = अणु
+	.drv = {
 		.name = "Dreamcast_keyboard",
 		.probe = probe_maple_kbd,
-		.हटाओ = हटाओ_maple_kbd,
-	पूर्ण,
-पूर्ण;
+		.remove = remove_maple_kbd,
+	},
+};
 
-अटल पूर्णांक __init dc_kbd_init(व्योम)
-अणु
-	वापस maple_driver_रेजिस्टर(&dc_kbd_driver);
-पूर्ण
+static int __init dc_kbd_init(void)
+{
+	return maple_driver_register(&dc_kbd_driver);
+}
 
-अटल व्योम __निकास dc_kbd_निकास(व्योम)
-अणु
-	maple_driver_unरेजिस्टर(&dc_kbd_driver);
-पूर्ण
+static void __exit dc_kbd_exit(void)
+{
+	maple_driver_unregister(&dc_kbd_driver);
+}
 
 module_init(dc_kbd_init);
-module_निकास(dc_kbd_निकास);
+module_exit(dc_kbd_exit);

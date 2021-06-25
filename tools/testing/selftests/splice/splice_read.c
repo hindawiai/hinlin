@@ -1,58 +1,57 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#घोषणा _GNU_SOURCE
-#समावेश <त्रुटिसं.स>
-#समावेश <fcntl.h>
-#समावेश <सीमा.स>
-#समावेश <मानकपन.स>
-#समावेश <मानककोष.स>
-#समावेश <unistd.h>
-#समावेश <sys/types.h>
-#समावेश <sys/स्थिति.स>
+// SPDX-License-Identifier: GPL-2.0
+#define _GNU_SOURCE
+#include <errno.h>
+#include <fcntl.h>
+#include <limits.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 
-पूर्णांक मुख्य(पूर्णांक argc, अक्षर *argv[])
-अणु
-	पूर्णांक fd;
-	माप_प्रकार size;
-	sमाप_प्रकार spliced;
+int main(int argc, char *argv[])
+{
+	int fd;
+	size_t size;
+	ssize_t spliced;
 
-	अगर (argc < 2) अणु
-		ख_लिखो(मानक_त्रुटि, "Usage: %s INPUT [BYTES]\n", argv[0]);
-		वापस निकास_त्रुटि;
-	पूर्ण
+	if (argc < 2) {
+		fprintf(stderr, "Usage: %s INPUT [BYTES]\n", argv[0]);
+		return EXIT_FAILURE;
+	}
 
-	fd = खोलो(argv[1], O_RDONLY);
-	अगर (fd < 0) अणु
-		लिखो_त्रुटि(argv[1]);
-		वापस निकास_त्रुटि;
-	पूर्ण
+	fd = open(argv[1], O_RDONLY);
+	if (fd < 0) {
+		perror(argv[1]);
+		return EXIT_FAILURE;
+	}
 
-	अगर (argc == 3)
-		size = म_से_द(argv[2]);
-	अन्यथा अणु
-		काष्ठा stat statbuf;
+	if (argc == 3)
+		size = atol(argv[2]);
+	else {
+		struct stat statbuf;
 
-		अगर (ख_स्थिति(fd, &statbuf) < 0) अणु
-			लिखो_त्रुटि(argv[1]);
-			वापस निकास_त्रुटि;
-		पूर्ण
+		if (fstat(fd, &statbuf) < 0) {
+			perror(argv[1]);
+			return EXIT_FAILURE;
+		}
 
-		अगर (statbuf.st_size > पूर्णांक_उच्च) अणु
-			ख_लिखो(मानक_त्रुटि, "%s: Too big\n", argv[1]);
-			वापस निकास_त्रुटि;
-		पूर्ण
+		if (statbuf.st_size > INT_MAX) {
+			fprintf(stderr, "%s: Too big\n", argv[1]);
+			return EXIT_FAILURE;
+		}
 
 		size = statbuf.st_size;
-	पूर्ण
+	}
 
-	/* splice(2) file to मानक_निकास. */
-	spliced = splice(fd, शून्य, STDOUT_खाताNO, शून्य,
+	/* splice(2) file to stdout. */
+	spliced = splice(fd, NULL, STDOUT_FILENO, NULL,
 		      size, SPLICE_F_MOVE);
-	अगर (spliced < 0) अणु
-		लिखो_त्रुटि("splice");
-		वापस निकास_त्रुटि;
-	पूर्ण
+	if (spliced < 0) {
+		perror("splice");
+		return EXIT_FAILURE;
+	}
 
-	बंद(fd);
-	वापस निकास_सफल;
-पूर्ण
+	close(fd);
+	return EXIT_SUCCESS;
+}

@@ -1,25 +1,24 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _COMPAT_SIGNAL_H
-#घोषणा _COMPAT_SIGNAL_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _COMPAT_SIGNAL_H
+#define _COMPAT_SIGNAL_H
 
-#समावेश <linux/compat.h>
-#समावेश <यंत्र/संकेत.स>
+#include <linux/compat.h>
+#include <asm/signal.h>
 
-#अगर_घोषित CONFIG_COMPAT
-काष्ठा __new_sigaction32 अणु
-	अचिन्हित पूर्णांक		sa_handler;
-	अचिन्हित पूर्णांक    	sa_flags;
-	अचिन्हित पूर्णांक		sa_restorer;     /* not used by Linux/SPARC yet */
+#ifdef CONFIG_COMPAT
+struct __new_sigaction32 {
+	unsigned int		sa_handler;
+	unsigned int    	sa_flags;
+	unsigned int		sa_restorer;     /* not used by Linux/SPARC yet */
 	compat_sigset_t 	sa_mask;
-पूर्ण;
+};
 
-काष्ठा __old_sigaction32 अणु
-	अचिन्हित पूर्णांक		sa_handler;
+struct __old_sigaction32 {
+	unsigned int		sa_handler;
 	compat_old_sigset_t  	sa_mask;
-	अचिन्हित पूर्णांक    	sa_flags;
-	अचिन्हित पूर्णांक		sa_restorer;     /* not used by Linux/SPARC yet */
-पूर्ण;
-#पूर्ण_अगर
+	unsigned int    	sa_flags;
+	unsigned int		sa_restorer;     /* not used by Linux/SPARC yet */
+};
+#endif
 
-#पूर्ण_अगर /* !(_COMPAT_SIGNAL_H) */
+#endif /* !(_COMPAT_SIGNAL_H) */

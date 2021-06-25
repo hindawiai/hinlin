@@ -1,104 +1,103 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright 2012 Freescale Semiconductor, Inc.
  */
 
-#समावेश <linux/clk-provider.h>
-#समावेश <linux/err.h>
-#समावेश <linux/slab.h>
-#समावेश "clk.h"
+#include <linux/clk-provider.h>
+#include <linux/err.h>
+#include <linux/slab.h>
+#include "clk.h"
 
 /**
- * काष्ठा clk_भाग - mxs पूर्णांकeger भागider घड़ी
- * @भागider: the parent class
- * @ops: poपूर्णांकer to clk_ops of parent class
- * @reg: रेजिस्टर address
- * @busy: busy bit shअगरt
+ * struct clk_div - mxs integer divider clock
+ * @divider: the parent class
+ * @ops: pointer to clk_ops of parent class
+ * @reg: register address
+ * @busy: busy bit shift
  *
- * The mxs भागider घड़ी is a subclass of basic clk_भागider with an
+ * The mxs divider clock is a subclass of basic clk_divider with an
  * addtional busy bit.
  */
-काष्ठा clk_भाग अणु
-	काष्ठा clk_भागider भागider;
-	स्थिर काष्ठा clk_ops *ops;
-	व्योम __iomem *reg;
+struct clk_div {
+	struct clk_divider divider;
+	const struct clk_ops *ops;
+	void __iomem *reg;
 	u8 busy;
-पूर्ण;
+};
 
-अटल अंतरभूत काष्ठा clk_भाग *to_clk_भाग(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा clk_भागider *भागider = to_clk_भागider(hw);
+static inline struct clk_div *to_clk_div(struct clk_hw *hw)
+{
+	struct clk_divider *divider = to_clk_divider(hw);
 
-	वापस container_of(भागider, काष्ठा clk_भाग, भागider);
-पूर्ण
+	return container_of(divider, struct clk_div, divider);
+}
 
-अटल अचिन्हित दीर्घ clk_भाग_recalc_rate(काष्ठा clk_hw *hw,
-					 अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा clk_भाग *भाग = to_clk_भाग(hw);
+static unsigned long clk_div_recalc_rate(struct clk_hw *hw,
+					 unsigned long parent_rate)
+{
+	struct clk_div *div = to_clk_div(hw);
 
-	वापस भाग->ops->recalc_rate(&भाग->भागider.hw, parent_rate);
-पूर्ण
+	return div->ops->recalc_rate(&div->divider.hw, parent_rate);
+}
 
-अटल दीर्घ clk_भाग_round_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
-			       अचिन्हित दीर्घ *prate)
-अणु
-	काष्ठा clk_भाग *भाग = to_clk_भाग(hw);
+static long clk_div_round_rate(struct clk_hw *hw, unsigned long rate,
+			       unsigned long *prate)
+{
+	struct clk_div *div = to_clk_div(hw);
 
-	वापस भाग->ops->round_rate(&भाग->भागider.hw, rate, prate);
-पूर्ण
+	return div->ops->round_rate(&div->divider.hw, rate, prate);
+}
 
-अटल पूर्णांक clk_भाग_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
-			    अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा clk_भाग *भाग = to_clk_भाग(hw);
-	पूर्णांक ret;
+static int clk_div_set_rate(struct clk_hw *hw, unsigned long rate,
+			    unsigned long parent_rate)
+{
+	struct clk_div *div = to_clk_div(hw);
+	int ret;
 
-	ret = भाग->ops->set_rate(&भाग->भागider.hw, rate, parent_rate);
-	अगर (!ret)
-		ret = mxs_clk_रुको(भाग->reg, भाग->busy);
+	ret = div->ops->set_rate(&div->divider.hw, rate, parent_rate);
+	if (!ret)
+		ret = mxs_clk_wait(div->reg, div->busy);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा clk_ops clk_भाग_ops = अणु
-	.recalc_rate = clk_भाग_recalc_rate,
-	.round_rate = clk_भाग_round_rate,
-	.set_rate = clk_भाग_set_rate,
-पूर्ण;
+static const struct clk_ops clk_div_ops = {
+	.recalc_rate = clk_div_recalc_rate,
+	.round_rate = clk_div_round_rate,
+	.set_rate = clk_div_set_rate,
+};
 
-काष्ठा clk *mxs_clk_भाग(स्थिर अक्षर *name, स्थिर अक्षर *parent_name,
-			व्योम __iomem *reg, u8 shअगरt, u8 width, u8 busy)
-अणु
-	काष्ठा clk_भाग *भाग;
-	काष्ठा clk *clk;
-	काष्ठा clk_init_data init;
+struct clk *mxs_clk_div(const char *name, const char *parent_name,
+			void __iomem *reg, u8 shift, u8 width, u8 busy)
+{
+	struct clk_div *div;
+	struct clk *clk;
+	struct clk_init_data init;
 
-	भाग = kzalloc(माप(*भाग), GFP_KERNEL);
-	अगर (!भाग)
-		वापस ERR_PTR(-ENOMEM);
+	div = kzalloc(sizeof(*div), GFP_KERNEL);
+	if (!div)
+		return ERR_PTR(-ENOMEM);
 
 	init.name = name;
-	init.ops = &clk_भाग_ops;
+	init.ops = &clk_div_ops;
 	init.flags = CLK_SET_RATE_PARENT;
-	init.parent_names = (parent_name ? &parent_name: शून्य);
+	init.parent_names = (parent_name ? &parent_name: NULL);
 	init.num_parents = (parent_name ? 1 : 0);
 
-	भाग->reg = reg;
-	भाग->busy = busy;
+	div->reg = reg;
+	div->busy = busy;
 
-	भाग->भागider.reg = reg;
-	भाग->भागider.shअगरt = shअगरt;
-	भाग->भागider.width = width;
-	भाग->भागider.flags = CLK_DIVIDER_ONE_BASED;
-	भाग->भागider.lock = &mxs_lock;
-	भाग->भागider.hw.init = &init;
-	भाग->ops = &clk_भागider_ops;
+	div->divider.reg = reg;
+	div->divider.shift = shift;
+	div->divider.width = width;
+	div->divider.flags = CLK_DIVIDER_ONE_BASED;
+	div->divider.lock = &mxs_lock;
+	div->divider.hw.init = &init;
+	div->ops = &clk_divider_ops;
 
-	clk = clk_रेजिस्टर(शून्य, &भाग->भागider.hw);
-	अगर (IS_ERR(clk))
-		kमुक्त(भाग);
+	clk = clk_register(NULL, &div->divider.hw);
+	if (IS_ERR(clk))
+		kfree(div);
 
-	वापस clk;
-पूर्ण
+	return clk;
+}

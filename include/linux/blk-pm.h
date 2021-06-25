@@ -1,25 +1,24 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 
-#अगर_अघोषित _BLK_PM_H_
-#घोषणा _BLK_PM_H_
+#ifndef _BLK_PM_H_
+#define _BLK_PM_H_
 
-काष्ठा device;
-काष्ठा request_queue;
+struct device;
+struct request_queue;
 
 /*
- * block layer runसमय pm functions
+ * block layer runtime pm functions
  */
-#अगर_घोषित CONFIG_PM
-बाह्य व्योम blk_pm_runसमय_init(काष्ठा request_queue *q, काष्ठा device *dev);
-बाह्य पूर्णांक blk_pre_runसमय_suspend(काष्ठा request_queue *q);
-बाह्य व्योम blk_post_runसमय_suspend(काष्ठा request_queue *q, पूर्णांक err);
-बाह्य व्योम blk_pre_runसमय_resume(काष्ठा request_queue *q);
-बाह्य व्योम blk_post_runसमय_resume(काष्ठा request_queue *q, पूर्णांक err);
-बाह्य व्योम blk_set_runसमय_active(काष्ठा request_queue *q);
-#अन्यथा
-अटल अंतरभूत व्योम blk_pm_runसमय_init(काष्ठा request_queue *q,
-				       काष्ठा device *dev) अणुपूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_PM
+extern void blk_pm_runtime_init(struct request_queue *q, struct device *dev);
+extern int blk_pre_runtime_suspend(struct request_queue *q);
+extern void blk_post_runtime_suspend(struct request_queue *q, int err);
+extern void blk_pre_runtime_resume(struct request_queue *q);
+extern void blk_post_runtime_resume(struct request_queue *q, int err);
+extern void blk_set_runtime_active(struct request_queue *q);
+#else
+static inline void blk_pm_runtime_init(struct request_queue *q,
+				       struct device *dev) {}
+#endif
 
-#पूर्ण_अगर /* _BLK_PM_H_ */
+#endif /* _BLK_PM_H_ */

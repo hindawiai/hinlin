@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0
+// SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
 /******************************************************************************
  *
  * Module Name: evgpeblk - GPE block creation and initialization.
@@ -8,28 +7,28 @@
  *
  *****************************************************************************/
 
-#समावेश <acpi/acpi.h>
-#समावेश "accommon.h"
-#समावेश "acevents.h"
-#समावेश "acnamesp.h"
+#include <acpi/acpi.h>
+#include "accommon.h"
+#include "acevents.h"
+#include "acnamesp.h"
 
-#घोषणा _COMPONENT          ACPI_EVENTS
+#define _COMPONENT          ACPI_EVENTS
 ACPI_MODULE_NAME("evgpeblk")
-#अगर (!ACPI_REDUCED_HARDWARE)	/* Entire module */
+#if (!ACPI_REDUCED_HARDWARE)	/* Entire module */
 /* Local prototypes */
-अटल acpi_status
-acpi_ev_install_gpe_block(काष्ठा acpi_gpe_block_info *gpe_block,
-			  u32 पूर्णांकerrupt_number);
+static acpi_status
+acpi_ev_install_gpe_block(struct acpi_gpe_block_info *gpe_block,
+			  u32 interrupt_number);
 
-अटल acpi_status
-acpi_ev_create_gpe_info_blocks(काष्ठा acpi_gpe_block_info *gpe_block);
+static acpi_status
+acpi_ev_create_gpe_info_blocks(struct acpi_gpe_block_info *gpe_block);
 
 /*******************************************************************************
  *
  * FUNCTION:    acpi_ev_install_gpe_block
  *
  * PARAMETERS:  gpe_block               - New GPE block
- *              पूर्णांकerrupt_number        - Xrupt to be associated with this
+ *              interrupt_number        - Xrupt to be associated with this
  *                                        GPE block
  *
  * RETURN:      Status
@@ -38,50 +37,50 @@ acpi_ev_create_gpe_info_blocks(काष्ठा acpi_gpe_block_info *gpe_block
  *
  ******************************************************************************/
 
-अटल acpi_status
-acpi_ev_install_gpe_block(काष्ठा acpi_gpe_block_info *gpe_block,
-			  u32 पूर्णांकerrupt_number)
-अणु
-	काष्ठा acpi_gpe_block_info *next_gpe_block;
-	काष्ठा acpi_gpe_xrupt_info *gpe_xrupt_block;
+static acpi_status
+acpi_ev_install_gpe_block(struct acpi_gpe_block_info *gpe_block,
+			  u32 interrupt_number)
+{
+	struct acpi_gpe_block_info *next_gpe_block;
+	struct acpi_gpe_xrupt_info *gpe_xrupt_block;
 	acpi_status status;
 	acpi_cpu_flags flags;
 
 	ACPI_FUNCTION_TRACE(ev_install_gpe_block);
 
 	status = acpi_ut_acquire_mutex(ACPI_MTX_EVENTS);
-	अगर (ACPI_FAILURE(status)) अणु
-		वापस_ACPI_STATUS(status);
-	पूर्ण
+	if (ACPI_FAILURE(status)) {
+		return_ACPI_STATUS(status);
+	}
 
 	status =
-	    acpi_ev_get_gpe_xrupt_block(पूर्णांकerrupt_number, &gpe_xrupt_block);
-	अगर (ACPI_FAILURE(status)) अणु
-		जाओ unlock_and_निकास;
-	पूर्ण
+	    acpi_ev_get_gpe_xrupt_block(interrupt_number, &gpe_xrupt_block);
+	if (ACPI_FAILURE(status)) {
+		goto unlock_and_exit;
+	}
 
 	/* Install the new block at the end of the list with lock */
 
 	flags = acpi_os_acquire_lock(acpi_gbl_gpe_lock);
-	अगर (gpe_xrupt_block->gpe_block_list_head) अणु
+	if (gpe_xrupt_block->gpe_block_list_head) {
 		next_gpe_block = gpe_xrupt_block->gpe_block_list_head;
-		जबतक (next_gpe_block->next) अणु
+		while (next_gpe_block->next) {
 			next_gpe_block = next_gpe_block->next;
-		पूर्ण
+		}
 
 		next_gpe_block->next = gpe_block;
 		gpe_block->previous = next_gpe_block;
-	पूर्ण अन्यथा अणु
+	} else {
 		gpe_xrupt_block->gpe_block_list_head = gpe_block;
-	पूर्ण
+	}
 
 	gpe_block->xrupt_block = gpe_xrupt_block;
 	acpi_os_release_lock(acpi_gbl_gpe_lock, flags);
 
-unlock_and_निकास:
-	(व्योम)acpi_ut_release_mutex(ACPI_MTX_EVENTS);
-	वापस_ACPI_STATUS(status);
-पूर्ण
+unlock_and_exit:
+	(void)acpi_ut_release_mutex(ACPI_MTX_EVENTS);
+	return_ACPI_STATUS(status);
+}
 
 /*******************************************************************************
  *
@@ -95,64 +94,64 @@ unlock_and_निकास:
  *
  ******************************************************************************/
 
-acpi_status acpi_ev_delete_gpe_block(काष्ठा acpi_gpe_block_info *gpe_block)
-अणु
+acpi_status acpi_ev_delete_gpe_block(struct acpi_gpe_block_info *gpe_block)
+{
 	acpi_status status;
 	acpi_cpu_flags flags;
 
 	ACPI_FUNCTION_TRACE(ev_install_gpe_block);
 
 	status = acpi_ut_acquire_mutex(ACPI_MTX_EVENTS);
-	अगर (ACPI_FAILURE(status)) अणु
-		वापस_ACPI_STATUS(status);
-	पूर्ण
+	if (ACPI_FAILURE(status)) {
+		return_ACPI_STATUS(status);
+	}
 
 	/* Disable all GPEs in this block */
 
 	status =
-	    acpi_hw_disable_gpe_block(gpe_block->xrupt_block, gpe_block, शून्य);
-	अगर (ACPI_FAILURE(status)) अणु
-		वापस_ACPI_STATUS(status);
-	पूर्ण
+	    acpi_hw_disable_gpe_block(gpe_block->xrupt_block, gpe_block, NULL);
+	if (ACPI_FAILURE(status)) {
+		return_ACPI_STATUS(status);
+	}
 
-	अगर (!gpe_block->previous && !gpe_block->next) अणु
+	if (!gpe_block->previous && !gpe_block->next) {
 
-		/* This is the last gpe_block on this पूर्णांकerrupt */
+		/* This is the last gpe_block on this interrupt */
 
 		status = acpi_ev_delete_gpe_xrupt(gpe_block->xrupt_block);
-		अगर (ACPI_FAILURE(status)) अणु
-			जाओ unlock_and_निकास;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		/* Remove the block on this पूर्णांकerrupt with lock */
+		if (ACPI_FAILURE(status)) {
+			goto unlock_and_exit;
+		}
+	} else {
+		/* Remove the block on this interrupt with lock */
 
 		flags = acpi_os_acquire_lock(acpi_gbl_gpe_lock);
-		अगर (gpe_block->previous) अणु
+		if (gpe_block->previous) {
 			gpe_block->previous->next = gpe_block->next;
-		पूर्ण अन्यथा अणु
+		} else {
 			gpe_block->xrupt_block->gpe_block_list_head =
 			    gpe_block->next;
-		पूर्ण
+		}
 
-		अगर (gpe_block->next) अणु
+		if (gpe_block->next) {
 			gpe_block->next->previous = gpe_block->previous;
-		पूर्ण
+		}
 
 		acpi_os_release_lock(acpi_gbl_gpe_lock, flags);
-	पूर्ण
+	}
 
 	acpi_current_gpe_count -= gpe_block->gpe_count;
 
 	/* Free the gpe_block */
 
-	ACPI_FREE(gpe_block->रेजिस्टर_info);
+	ACPI_FREE(gpe_block->register_info);
 	ACPI_FREE(gpe_block->event_info);
 	ACPI_FREE(gpe_block);
 
-unlock_and_निकास:
+unlock_and_exit:
 	status = acpi_ut_release_mutex(ACPI_MTX_EVENTS);
-	वापस_ACPI_STATUS(status);
-पूर्ण
+	return_ACPI_STATUS(status);
+}
 
 /*******************************************************************************
  *
@@ -162,117 +161,117 @@ unlock_and_निकास:
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Create the रेजिस्टर_info and event_info blocks क्रम this GPE block
+ * DESCRIPTION: Create the register_info and event_info blocks for this GPE block
  *
  ******************************************************************************/
 
-अटल acpi_status
-acpi_ev_create_gpe_info_blocks(काष्ठा acpi_gpe_block_info *gpe_block)
-अणु
-	काष्ठा acpi_gpe_रेजिस्टर_info *gpe_रेजिस्टर_info = शून्य;
-	काष्ठा acpi_gpe_event_info *gpe_event_info = शून्य;
-	काष्ठा acpi_gpe_event_info *this_event;
-	काष्ठा acpi_gpe_रेजिस्टर_info *this_रेजिस्टर;
+static acpi_status
+acpi_ev_create_gpe_info_blocks(struct acpi_gpe_block_info *gpe_block)
+{
+	struct acpi_gpe_register_info *gpe_register_info = NULL;
+	struct acpi_gpe_event_info *gpe_event_info = NULL;
+	struct acpi_gpe_event_info *this_event;
+	struct acpi_gpe_register_info *this_register;
 	u32 i;
 	u32 j;
 	acpi_status status;
 
 	ACPI_FUNCTION_TRACE(ev_create_gpe_info_blocks);
 
-	/* Allocate the GPE रेजिस्टर inक्रमmation block */
+	/* Allocate the GPE register information block */
 
-	gpe_रेजिस्टर_info = ACPI_ALLOCATE_ZEROED((acpi_size)gpe_block->
-						 रेजिस्टर_count *
-						 माप(काष्ठा
-							acpi_gpe_रेजिस्टर_info));
-	अगर (!gpe_रेजिस्टर_info) अणु
+	gpe_register_info = ACPI_ALLOCATE_ZEROED((acpi_size)gpe_block->
+						 register_count *
+						 sizeof(struct
+							acpi_gpe_register_info));
+	if (!gpe_register_info) {
 		ACPI_ERROR((AE_INFO,
 			    "Could not allocate the GpeRegisterInfo table"));
-		वापस_ACPI_STATUS(AE_NO_MEMORY);
-	पूर्ण
+		return_ACPI_STATUS(AE_NO_MEMORY);
+	}
 
 	/*
 	 * Allocate the GPE event_info block. There are eight distinct GPEs
-	 * per रेजिस्टर. Initialization to zeros is sufficient.
+	 * per register. Initialization to zeros is sufficient.
 	 */
 	gpe_event_info = ACPI_ALLOCATE_ZEROED((acpi_size)gpe_block->gpe_count *
-					      माप(काष्ठा
+					      sizeof(struct
 						     acpi_gpe_event_info));
-	अगर (!gpe_event_info) अणु
+	if (!gpe_event_info) {
 		ACPI_ERROR((AE_INFO,
 			    "Could not allocate the GpeEventInfo table"));
 		status = AE_NO_MEMORY;
-		जाओ error_निकास;
-	पूर्ण
+		goto error_exit;
+	}
 
 	/* Save the new Info arrays in the GPE block */
 
-	gpe_block->रेजिस्टर_info = gpe_रेजिस्टर_info;
+	gpe_block->register_info = gpe_register_info;
 	gpe_block->event_info = gpe_event_info;
 
 	/*
-	 * Initialize the GPE Register and Event काष्ठाures. A goal of these
-	 * tables is to hide the fact that there are two separate GPE रेजिस्टर
-	 * sets in a given GPE hardware block, the status रेजिस्टरs occupy the
-	 * first half, and the enable रेजिस्टरs occupy the second half.
+	 * Initialize the GPE Register and Event structures. A goal of these
+	 * tables is to hide the fact that there are two separate GPE register
+	 * sets in a given GPE hardware block, the status registers occupy the
+	 * first half, and the enable registers occupy the second half.
 	 */
-	this_रेजिस्टर = gpe_रेजिस्टर_info;
+	this_register = gpe_register_info;
 	this_event = gpe_event_info;
 
-	क्रम (i = 0; i < gpe_block->रेजिस्टर_count; i++) अणु
+	for (i = 0; i < gpe_block->register_count; i++) {
 
-		/* Init the रेजिस्टर_info क्रम this GPE रेजिस्टर (8 GPEs) */
+		/* Init the register_info for this GPE register (8 GPEs) */
 
-		this_रेजिस्टर->base_gpe_number = (u16)
+		this_register->base_gpe_number = (u16)
 		    (gpe_block->block_base_number +
 		     (i * ACPI_GPE_REGISTER_WIDTH));
 
-		this_रेजिस्टर->status_address.address = gpe_block->address + i;
+		this_register->status_address.address = gpe_block->address + i;
 
-		this_रेजिस्टर->enable_address.address =
-		    gpe_block->address + i + gpe_block->रेजिस्टर_count;
+		this_register->enable_address.address =
+		    gpe_block->address + i + gpe_block->register_count;
 
-		this_रेजिस्टर->status_address.space_id = gpe_block->space_id;
-		this_रेजिस्टर->enable_address.space_id = gpe_block->space_id;
+		this_register->status_address.space_id = gpe_block->space_id;
+		this_register->enable_address.space_id = gpe_block->space_id;
 
-		/* Init the event_info क्रम each GPE within this रेजिस्टर */
+		/* Init the event_info for each GPE within this register */
 
-		क्रम (j = 0; j < ACPI_GPE_REGISTER_WIDTH; j++) अणु
+		for (j = 0; j < ACPI_GPE_REGISTER_WIDTH; j++) {
 			this_event->gpe_number =
-			    (u8) (this_रेजिस्टर->base_gpe_number + j);
-			this_event->रेजिस्टर_info = this_रेजिस्टर;
+			    (u8) (this_register->base_gpe_number + j);
+			this_event->register_info = this_register;
 			this_event++;
-		पूर्ण
+		}
 
-		/* Disable all GPEs within this रेजिस्टर */
+		/* Disable all GPEs within this register */
 
-		status = acpi_hw_gpe_ग_लिखो(0x00, &this_रेजिस्टर->enable_address);
-		अगर (ACPI_FAILURE(status)) अणु
-			जाओ error_निकास;
-		पूर्ण
+		status = acpi_hw_gpe_write(0x00, &this_register->enable_address);
+		if (ACPI_FAILURE(status)) {
+			goto error_exit;
+		}
 
-		/* Clear any pending GPE events within this रेजिस्टर */
+		/* Clear any pending GPE events within this register */
 
-		status = acpi_hw_gpe_ग_लिखो(0xFF, &this_रेजिस्टर->status_address);
-		अगर (ACPI_FAILURE(status)) अणु
-			जाओ error_निकास;
-		पूर्ण
+		status = acpi_hw_gpe_write(0xFF, &this_register->status_address);
+		if (ACPI_FAILURE(status)) {
+			goto error_exit;
+		}
 
-		this_रेजिस्टर++;
-	पूर्ण
+		this_register++;
+	}
 
-	वापस_ACPI_STATUS(AE_OK);
+	return_ACPI_STATUS(AE_OK);
 
-error_निकास:
-	अगर (gpe_रेजिस्टर_info) अणु
-		ACPI_FREE(gpe_रेजिस्टर_info);
-	पूर्ण
-	अगर (gpe_event_info) अणु
+error_exit:
+	if (gpe_register_info) {
+		ACPI_FREE(gpe_register_info);
+	}
+	if (gpe_event_info) {
 		ACPI_FREE(gpe_event_info);
-	पूर्ण
+	}
 
-	वापस_ACPI_STATUS(status);
-पूर्ण
+	return_ACPI_STATUS(status);
+}
 
 /*******************************************************************************
  *
@@ -280,126 +279,126 @@ error_निकास:
  *
  * PARAMETERS:  gpe_device          - Handle to the parent GPE block
  *              gpe_block_address   - Address and space_ID
- *              रेजिस्टर_count      - Number of GPE रेजिस्टर pairs in the block
- *              gpe_block_base_number - Starting GPE number क्रम the block
- *              पूर्णांकerrupt_number    - H/W पूर्णांकerrupt क्रम the block
- *              वापस_gpe_block    - Where the new block descriptor is वापसed
+ *              register_count      - Number of GPE register pairs in the block
+ *              gpe_block_base_number - Starting GPE number for the block
+ *              interrupt_number    - H/W interrupt for the block
+ *              return_gpe_block    - Where the new block descriptor is returned
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Create and Install a block of GPE रेजिस्टरs. All GPEs within
- *              the block are disabled at निकास.
+ * DESCRIPTION: Create and Install a block of GPE registers. All GPEs within
+ *              the block are disabled at exit.
  *              Note: Assumes namespace is locked.
  *
  ******************************************************************************/
 
 acpi_status
-acpi_ev_create_gpe_block(काष्ठा acpi_namespace_node *gpe_device,
+acpi_ev_create_gpe_block(struct acpi_namespace_node *gpe_device,
 			 u64 address,
 			 u8 space_id,
-			 u32 रेजिस्टर_count,
+			 u32 register_count,
 			 u16 gpe_block_base_number,
-			 u32 पूर्णांकerrupt_number,
-			 काष्ठा acpi_gpe_block_info **वापस_gpe_block)
-अणु
+			 u32 interrupt_number,
+			 struct acpi_gpe_block_info **return_gpe_block)
+{
 	acpi_status status;
-	काष्ठा acpi_gpe_block_info *gpe_block;
-	काष्ठा acpi_gpe_walk_info walk_info;
+	struct acpi_gpe_block_info *gpe_block;
+	struct acpi_gpe_walk_info walk_info;
 
 	ACPI_FUNCTION_TRACE(ev_create_gpe_block);
 
-	अगर (!रेजिस्टर_count) अणु
-		वापस_ACPI_STATUS(AE_OK);
-	पूर्ण
+	if (!register_count) {
+		return_ACPI_STATUS(AE_OK);
+	}
 
 	/* Validate the space_ID */
 
-	अगर ((space_id != ACPI_ADR_SPACE_SYSTEM_MEMORY) &&
-	    (space_id != ACPI_ADR_SPACE_SYSTEM_IO)) अणु
+	if ((space_id != ACPI_ADR_SPACE_SYSTEM_MEMORY) &&
+	    (space_id != ACPI_ADR_SPACE_SYSTEM_IO)) {
 		ACPI_ERROR((AE_INFO,
 			    "Unsupported address space: 0x%X", space_id));
-		वापस_ACPI_STATUS(AE_SUPPORT);
-	पूर्ण
+		return_ACPI_STATUS(AE_SUPPORT);
+	}
 
-	अगर (space_id == ACPI_ADR_SPACE_SYSTEM_IO) अणु
+	if (space_id == ACPI_ADR_SPACE_SYSTEM_IO) {
 		status = acpi_hw_validate_io_block(address,
 						   ACPI_GPE_REGISTER_WIDTH,
-						   रेजिस्टर_count);
-		अगर (ACPI_FAILURE(status))
-			वापस_ACPI_STATUS(status);
-	पूर्ण
+						   register_count);
+		if (ACPI_FAILURE(status))
+			return_ACPI_STATUS(status);
+	}
 
 	/* Allocate a new GPE block */
 
-	gpe_block = ACPI_ALLOCATE_ZEROED(माप(काष्ठा acpi_gpe_block_info));
-	अगर (!gpe_block) अणु
-		वापस_ACPI_STATUS(AE_NO_MEMORY);
-	पूर्ण
+	gpe_block = ACPI_ALLOCATE_ZEROED(sizeof(struct acpi_gpe_block_info));
+	if (!gpe_block) {
+		return_ACPI_STATUS(AE_NO_MEMORY);
+	}
 
 	/* Initialize the new GPE block */
 
 	gpe_block->address = address;
 	gpe_block->space_id = space_id;
 	gpe_block->node = gpe_device;
-	gpe_block->gpe_count = (u16)(रेजिस्टर_count * ACPI_GPE_REGISTER_WIDTH);
+	gpe_block->gpe_count = (u16)(register_count * ACPI_GPE_REGISTER_WIDTH);
 	gpe_block->initialized = FALSE;
-	gpe_block->रेजिस्टर_count = रेजिस्टर_count;
+	gpe_block->register_count = register_count;
 	gpe_block->block_base_number = gpe_block_base_number;
 
 	/*
-	 * Create the रेजिस्टर_info and event_info sub-काष्ठाures
+	 * Create the register_info and event_info sub-structures
 	 * Note: disables and clears all GPEs in the block
 	 */
 	status = acpi_ev_create_gpe_info_blocks(gpe_block);
-	अगर (ACPI_FAILURE(status)) अणु
+	if (ACPI_FAILURE(status)) {
 		ACPI_FREE(gpe_block);
-		वापस_ACPI_STATUS(status);
-	पूर्ण
+		return_ACPI_STATUS(status);
+	}
 
 	/* Install the new block in the global lists */
 
-	status = acpi_ev_install_gpe_block(gpe_block, पूर्णांकerrupt_number);
-	अगर (ACPI_FAILURE(status)) अणु
-		ACPI_FREE(gpe_block->रेजिस्टर_info);
+	status = acpi_ev_install_gpe_block(gpe_block, interrupt_number);
+	if (ACPI_FAILURE(status)) {
+		ACPI_FREE(gpe_block->register_info);
 		ACPI_FREE(gpe_block->event_info);
 		ACPI_FREE(gpe_block);
-		वापस_ACPI_STATUS(status);
-	पूर्ण
+		return_ACPI_STATUS(status);
+	}
 
 	acpi_gbl_all_gpes_initialized = FALSE;
 
-	/* Find all GPE methods (_Lxx or_Exx) क्रम this block */
+	/* Find all GPE methods (_Lxx or_Exx) for this block */
 
 	walk_info.gpe_block = gpe_block;
 	walk_info.gpe_device = gpe_device;
 	walk_info.execute_by_owner_id = FALSE;
 
-	(व्योम)acpi_ns_walk_namespace(ACPI_TYPE_METHOD, gpe_device,
+	(void)acpi_ns_walk_namespace(ACPI_TYPE_METHOD, gpe_device,
 				     ACPI_UINT32_MAX, ACPI_NS_WALK_NO_UNLOCK,
-				     acpi_ev_match_gpe_method, शून्य, &walk_info,
-				     शून्य);
+				     acpi_ev_match_gpe_method, NULL, &walk_info,
+				     NULL);
 
 	/* Return the new block */
 
-	अगर (वापस_gpe_block) अणु
-		(*वापस_gpe_block) = gpe_block;
-	पूर्ण
+	if (return_gpe_block) {
+		(*return_gpe_block) = gpe_block;
+	}
 
 	ACPI_DEBUG_PRINT_RAW((ACPI_DB_INIT,
 			      "    Initialized GPE %02X to %02X [%4.4s] %u regs on interrupt 0x%X%s\n",
 			      (u32)gpe_block->block_base_number,
 			      (u32)(gpe_block->block_base_number +
 				    (gpe_block->gpe_count - 1)),
-			      gpe_device->name.ascii, gpe_block->रेजिस्टर_count,
-			      पूर्णांकerrupt_number,
-			      पूर्णांकerrupt_number ==
-			      acpi_gbl_FADT.sci_पूर्णांकerrupt ? " (SCI)" : ""));
+			      gpe_device->name.ascii, gpe_block->register_count,
+			      interrupt_number,
+			      interrupt_number ==
+			      acpi_gbl_FADT.sci_interrupt ? " (SCI)" : ""));
 
 	/* Update global count of currently available GPEs */
 
 	acpi_current_gpe_count += gpe_block->gpe_count;
-	वापस_ACPI_STATUS(AE_OK);
-पूर्ण
+	return_ACPI_STATUS(AE_OK);
+}
 
 /*******************************************************************************
  *
@@ -416,12 +415,12 @@ acpi_ev_create_gpe_block(काष्ठा acpi_namespace_node *gpe_device,
  ******************************************************************************/
 
 acpi_status
-acpi_ev_initialize_gpe_block(काष्ठा acpi_gpe_xrupt_info *gpe_xrupt_info,
-			     काष्ठा acpi_gpe_block_info *gpe_block,
-			     व्योम *context)
-अणु
+acpi_ev_initialize_gpe_block(struct acpi_gpe_xrupt_info *gpe_xrupt_info,
+			     struct acpi_gpe_block_info *gpe_block,
+			     void *context)
+{
 	acpi_status status;
-	काष्ठा acpi_gpe_event_info *gpe_event_info;
+	struct acpi_gpe_event_info *gpe_event_info;
 	u32 gpe_enabled_count;
 	u32 gpe_index;
 	u32 i;
@@ -432,24 +431,24 @@ acpi_ev_initialize_gpe_block(काष्ठा acpi_gpe_xrupt_info *gpe_xrupt_i
 	ACPI_FUNCTION_TRACE(ev_initialize_gpe_block);
 
 	/*
-	 * Ignore a null GPE block (e.g., अगर no GPE block 1 exists), and
-	 * any GPE blocks that have been initialized alपढ़ोy.
+	 * Ignore a null GPE block (e.g., if no GPE block 1 exists), and
+	 * any GPE blocks that have been initialized already.
 	 */
-	अगर (!gpe_block || gpe_block->initialized) अणु
-		वापस_ACPI_STATUS(AE_OK);
-	पूर्ण
+	if (!gpe_block || gpe_block->initialized) {
+		return_ACPI_STATUS(AE_OK);
+	}
 
 	/*
 	 * Enable all GPEs that have a corresponding method and have the
 	 * ACPI_GPE_CAN_WAKE flag unset. Any other GPEs within this block
-	 * must be enabled via the acpi_enable_gpe() पूर्णांकerface.
+	 * must be enabled via the acpi_enable_gpe() interface.
 	 */
 	gpe_enabled_count = 0;
 
-	क्रम (i = 0; i < gpe_block->रेजिस्टर_count; i++) अणु
-		क्रम (j = 0; j < ACPI_GPE_REGISTER_WIDTH; j++) अणु
+	for (i = 0; i < gpe_block->register_count; i++) {
+		for (j = 0; j < ACPI_GPE_REGISTER_WIDTH; j++) {
 
-			/* Get the info block क्रम this particular GPE */
+			/* Get the info block for this particular GPE */
 
 			gpe_index = (i * ACPI_GPE_REGISTER_WIDTH) + j;
 			gpe_event_info = &gpe_block->event_info[gpe_index];
@@ -460,43 +459,43 @@ acpi_ev_initialize_gpe_block(काष्ठा acpi_gpe_xrupt_info *gpe_xrupt_i
 
 			/*
 			 * Ignore GPEs that have no corresponding _Lxx/_Exx method
-			 * and GPEs that are used क्रम wakeup
+			 * and GPEs that are used for wakeup
 			 */
-			अगर ((ACPI_GPE_DISPATCH_TYPE(gpe_event_info->flags) !=
+			if ((ACPI_GPE_DISPATCH_TYPE(gpe_event_info->flags) !=
 			     ACPI_GPE_DISPATCH_METHOD)
-			    || (gpe_event_info->flags & ACPI_GPE_CAN_WAKE)) अणु
-				जारी;
-			पूर्ण
+			    || (gpe_event_info->flags & ACPI_GPE_CAN_WAKE)) {
+				continue;
+			}
 
 			status = acpi_ev_add_gpe_reference(gpe_event_info, FALSE);
-			अगर (ACPI_FAILURE(status)) अणु
+			if (ACPI_FAILURE(status)) {
 				ACPI_EXCEPTION((AE_INFO, status,
 					"Could not enable GPE 0x%02X",
 					gpe_number));
-				जारी;
-			पूर्ण
+				continue;
+			}
 
 			gpe_event_info->flags |= ACPI_GPE_AUTO_ENABLED;
 
-			अगर (is_polling_needed &&
-			    ACPI_GPE_IS_POLLING_NEEDED(gpe_event_info)) अणु
+			if (is_polling_needed &&
+			    ACPI_GPE_IS_POLLING_NEEDED(gpe_event_info)) {
 				*is_polling_needed = TRUE;
-			पूर्ण
+			}
 
 			gpe_enabled_count++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (gpe_enabled_count) अणु
+	if (gpe_enabled_count) {
 		ACPI_INFO(("Enabled %u GPEs in block %02X to %02X",
 			   gpe_enabled_count, (u32)gpe_block->block_base_number,
 			   (u32)(gpe_block->block_base_number +
 				 (gpe_block->gpe_count - 1))));
-	पूर्ण
+	}
 
 	gpe_block->initialized = TRUE;
 
-	वापस_ACPI_STATUS(AE_OK);
-पूर्ण
+	return_ACPI_STATUS(AE_OK);
+}
 
-#पूर्ण_अगर				/* !ACPI_REDUCED_HARDWARE */
+#endif				/* !ACPI_REDUCED_HARDWARE */

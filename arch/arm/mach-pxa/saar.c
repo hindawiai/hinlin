@@ -1,44 +1,43 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  *  linux/arch/arm/mach-pxa/saar.c
  *
- *  Support क्रम the Marvell PXA930 Handheld Platक्रमm (aka SAAR)
+ *  Support for the Marvell PXA930 Handheld Platform (aka SAAR)
  *
  *  Copyright (C) 2007-2008 Marvell International Ltd.
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/init.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/gpपन.स>
-#समावेश <linux/delay.h>
-#समावेश <linux/fb.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/platक्रमm_data/i2c-pxa.h>
-#समावेश <linux/smc91x.h>
-#समावेश <linux/mfd/da903x.h>
-#समावेश <linux/mtd/mtd.h>
-#समावेश <linux/mtd/partitions.h>
-#समावेश <linux/mtd/onenand.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/interrupt.h>
+#include <linux/init.h>
+#include <linux/platform_device.h>
+#include <linux/clk.h>
+#include <linux/gpio.h>
+#include <linux/delay.h>
+#include <linux/fb.h>
+#include <linux/i2c.h>
+#include <linux/platform_data/i2c-pxa.h>
+#include <linux/smc91x.h>
+#include <linux/mfd/da903x.h>
+#include <linux/mtd/mtd.h>
+#include <linux/mtd/partitions.h>
+#include <linux/mtd/onenand.h>
 
-#समावेश <यंत्र/mach-types.h>
-#समावेश <यंत्र/mach/arch.h>
-#समावेश <यंत्र/mach/flash.h>
+#include <asm/mach-types.h>
+#include <asm/mach/arch.h>
+#include <asm/mach/flash.h>
 
-#समावेश "pxa930.h"
-#समावेश <linux/platक्रमm_data/video-pxafb.h>
+#include "pxa930.h"
+#include <linux/platform_data/video-pxafb.h>
 
-#समावेश "devices.h"
-#समावेश "generic.h"
+#include "devices.h"
+#include "generic.h"
 
-#घोषणा GPIO_LCD_RESET		(16)
+#define GPIO_LCD_RESET		(16)
 
 /* SAAR MFP configurations */
-अटल mfp_cfg_t saar_mfp_cfg[] __initdata = अणु
+static mfp_cfg_t saar_mfp_cfg[] __initdata = {
 	/* LCD */
 	GPIO23_LCD_DD0,
 	GPIO24_LCD_DD1,
@@ -83,39 +82,39 @@
 	DF_IO13_ND_IO13,
 	DF_IO14_ND_IO14,
 	DF_IO15_ND_IO15,
-पूर्ण;
+};
 
-#घोषणा SAAR_ETH_PHYS	(0x14000000)
+#define SAAR_ETH_PHYS	(0x14000000)
 
-अटल काष्ठा resource smc91x_resources[] = अणु
-	[0] = अणु
+static struct resource smc91x_resources[] = {
+	[0] = {
 		.start	= (SAAR_ETH_PHYS + 0x300),
 		.end	= (SAAR_ETH_PHYS + 0xfffff),
 		.flags	= IORESOURCE_MEM,
-	पूर्ण,
-	[1] = अणु
+	},
+	[1] = {
 		.start	= PXA_GPIO_TO_IRQ(mfp_to_gpio(MFP_PIN_GPIO97)),
 		.end	= PXA_GPIO_TO_IRQ(mfp_to_gpio(MFP_PIN_GPIO97)),
 		.flags	= IORESOURCE_IRQ | IORESOURCE_IRQ_HIGHEDGE,
-	पूर्ण
-पूर्ण;
+	}
+};
 
-अटल काष्ठा smc91x_platdata saar_smc91x_info = अणु
+static struct smc91x_platdata saar_smc91x_info = {
 	.flags	= SMC91X_USE_16BIT | SMC91X_NOWAIT | SMC91X_USE_DMA,
-पूर्ण;
+};
 
-अटल काष्ठा platक्रमm_device smc91x_device = अणु
+static struct platform_device smc91x_device = {
 	.name		= "smc91x",
 	.id		= 0,
 	.num_resources	= ARRAY_SIZE(smc91x_resources),
 	.resource	= smc91x_resources,
-	.dev		= अणु
-		.platक्रमm_data = &saar_smc91x_info,
-	पूर्ण,
-पूर्ण;
+	.dev		= {
+		.platform_data = &saar_smc91x_info,
+	},
+};
 
-#अगर defined(CONFIG_FB_PXA) || defined(CONFIG_FB_PXA_MODULE)
-अटल uपूर्णांक16_t lcd_घातer_on[] = अणु
+#if defined(CONFIG_FB_PXA) || defined(CONFIG_FB_PXA_MODULE)
+static uint16_t lcd_power_on[] = {
 	/* single frame */
 	SMART_CMD_NOOP,
 	SMART_CMD(0x00),
@@ -272,38 +271,38 @@
 	SMART_CMD(0x21),
 	SMART_DAT(0x00),
 	SMART_DAT(0x00),
-	SMART_CMD(0x00),	/* Start of Winकरोw RAM address set(H) 8*/
+	SMART_CMD(0x00),	/* Start of Window RAM address set(H) 8*/
 	SMART_CMD(0x50),
 	SMART_DAT(0x00),
 	SMART_DAT(0x00),
-	SMART_CMD(0x00), 	/* End of Winकरोw RAM address set(H) 12*/
+	SMART_CMD(0x00), 	/* End of Window RAM address set(H) 12*/
 	SMART_CMD(0x51),
 	SMART_DAT(0x00),
 	SMART_DAT(0xEF),
-	SMART_CMD(0x00),	/* Start of Winकरोw RAM address set(V) 16*/
+	SMART_CMD(0x00),	/* Start of Window RAM address set(V) 16*/
 	SMART_CMD(0x52),
 	SMART_DAT(0x00),
 	SMART_DAT(0x00),
-	SMART_CMD(0x00),	/* End of Winकरोw RAM address set(V) 20*/
+	SMART_CMD(0x00),	/* End of Window RAM address set(V) 20*/
 	SMART_CMD(0x53),
 	SMART_DAT(0x01),
 	SMART_DAT(0x3F),
-	SMART_CMD(0x00), 	/* Panel पूर्णांकerface control 1 */
+	SMART_CMD(0x00), 	/* Panel interface control 1 */
 	SMART_CMD(0x90),
 	SMART_DAT(0x00),
 	SMART_DAT(0x1A),
-	SMART_CMD(0x00), 	/* Panel पूर्णांकerface control 2 */
+	SMART_CMD(0x00), 	/* Panel interface control 2 */
 	SMART_CMD(0x92),
 	SMART_DAT(0x04),
 	SMART_DAT(0x00),
-	SMART_CMD(0x00), 	/* Panel पूर्णांकerface control 3 */
+	SMART_CMD(0x00), 	/* Panel interface control 3 */
 	SMART_CMD(0x93),
 	SMART_DAT(0x00),
 	SMART_DAT(0x05),
 	SMART_DELAY(20),
-पूर्ण;
+};
 
-अटल uपूर्णांक16_t lcd_panel_on[] = अणु
+static uint16_t lcd_panel_on[] = {
 	SMART_CMD(0x00),
 	SMART_CMD(0x07),
 	SMART_DAT(0x00),
@@ -321,9 +320,9 @@
 	SMART_DAT(0x01),
 	SMART_DAT(0x73),
 	SMART_DELAY(1),
-पूर्ण;
+};
 
-अटल uपूर्णांक16_t lcd_panel_off[] = अणु
+static uint16_t lcd_panel_off[] = {
 	SMART_CMD(0x00),
 	SMART_CMD(0x07),
 	SMART_DAT(0x00),
@@ -341,9 +340,9 @@
 	SMART_DAT(0x00),
 	SMART_DAT(0x00),
 	SMART_DELAY(1),
-पूर्ण;
+};
 
-अटल uपूर्णांक16_t lcd_घातer_off[] = अणु
+static uint16_t lcd_power_off[] = {
 	SMART_CMD(0x00),
 	SMART_CMD(0x10),
 	SMART_DAT(0x00),
@@ -364,9 +363,9 @@
 	SMART_CMD(0x10),
 	SMART_DAT(0x00),
 	SMART_DAT(0x00),
-पूर्ण;
+};
 
-अटल uपूर्णांक16_t update_framedata[] = अणु
+static uint16_t update_framedata[] = {
 	/* set display ram: 240*320 */
 	SMART_CMD(0x00), /* RAM address set(H) 0*/
 	SMART_CMD(0x20),
@@ -376,75 +375,75 @@
 	SMART_CMD(0x21),
 	SMART_DAT(0x00),
 	SMART_DAT(0x00),
-	SMART_CMD(0x00), /* Start of Winकरोw RAM address set(H) 8 */
+	SMART_CMD(0x00), /* Start of Window RAM address set(H) 8 */
 	SMART_CMD(0x50),
 	SMART_DAT(0x00),
 	SMART_DAT(0x00),
-	SMART_CMD(0x00), /* End of Winकरोw RAM address set(H) 12 */
+	SMART_CMD(0x00), /* End of Window RAM address set(H) 12 */
 	SMART_CMD(0x51),
 	SMART_DAT(0x00),
 	SMART_DAT(0xEF),
-	SMART_CMD(0x00), /* Start of Winकरोw RAM address set(V) 16 */
+	SMART_CMD(0x00), /* Start of Window RAM address set(V) 16 */
 	SMART_CMD(0x52),
 	SMART_DAT(0x00),
 	SMART_DAT(0x00),
-	SMART_CMD(0x00), /* End of Winकरोw RAM address set(V) 20 */
+	SMART_CMD(0x00), /* End of Window RAM address set(V) 20 */
 	SMART_CMD(0x53),
 	SMART_DAT(0x01),
 	SMART_DAT(0x3F),
 
-	/* रुको क्रम vsync cmd beक्रमe transferring frame data */
+	/* wait for vsync cmd before transferring frame data */
 	SMART_CMD_WAIT_FOR_VSYNC,
 
-	/* ग_लिखो ram */
+	/* write ram */
 	SMART_CMD(0x00),
 	SMART_CMD(0x22),
 
-	/* ग_लिखो frame data */
+	/* write frame data */
 	SMART_CMD_WRITE_FRAME,
-पूर्ण;
+};
 
-अटल व्योम lपंचांग022a97a_lcd_घातer(पूर्णांक on, काष्ठा fb_var_screeninfo *var)
-अणु
-	अटल पूर्णांक pin_requested = 0;
-	काष्ठा fb_info *info = container_of(var, काष्ठा fb_info, var);
-	पूर्णांक err;
+static void ltm022a97a_lcd_power(int on, struct fb_var_screeninfo *var)
+{
+	static int pin_requested = 0;
+	struct fb_info *info = container_of(var, struct fb_info, var);
+	int err;
 
-	अगर (!pin_requested) अणु
+	if (!pin_requested) {
 		err = gpio_request(GPIO_LCD_RESET, "lcd reset");
-		अगर (err) अणु
+		if (err) {
 			pr_err("failed to request gpio for LCD reset\n");
-			वापस;
-		पूर्ण
+			return;
+		}
 
 		gpio_direction_output(GPIO_LCD_RESET, 0);
 		pin_requested = 1;
-	पूर्ण
+	}
 
-	अगर (on) अणु
+	if (on) {
 		gpio_set_value(GPIO_LCD_RESET, 0); msleep(100);
 		gpio_set_value(GPIO_LCD_RESET, 1); msleep(10);
 
-		pxafb_smart_queue(info, ARRAY_AND_SIZE(lcd_घातer_on));
+		pxafb_smart_queue(info, ARRAY_AND_SIZE(lcd_power_on));
 		pxafb_smart_queue(info, ARRAY_AND_SIZE(lcd_panel_on));
-	पूर्ण अन्यथा अणु
+	} else {
 		pxafb_smart_queue(info, ARRAY_AND_SIZE(lcd_panel_off));
-		pxafb_smart_queue(info, ARRAY_AND_SIZE(lcd_घातer_off));
-	पूर्ण
+		pxafb_smart_queue(info, ARRAY_AND_SIZE(lcd_power_off));
+	}
 
 	err = pxafb_smart_flush(info);
-	अगर (err)
+	if (err)
 		pr_err("%s: timed out\n", __func__);
-पूर्ण
+}
 
-अटल व्योम lपंचांग022a97a_update(काष्ठा fb_info *info)
-अणु
+static void ltm022a97a_update(struct fb_info *info)
+{
 	pxafb_smart_queue(info, ARRAY_AND_SIZE(update_framedata));
 	pxafb_smart_flush(info);
-पूर्ण
+}
 
-अटल काष्ठा pxafb_mode_info toshiba_lपंचांग022a97a_modes[] = अणु
-	[0] = अणु
+static struct pxafb_mode_info toshiba_ltm022a97a_modes[] = {
+	[0] = {
 		.xres			= 240,
 		.yres			= 320,
 		.bpp			= 16,
@@ -452,154 +451,154 @@
 		.a0cswr_set_hld		= 30,
 		.wr_pulse_width		= 30,
 		.rd_pulse_width 	= 30,
-		.op_hold_समय 		= 30,
-		.cmd_inh_समय		= 60,
+		.op_hold_time 		= 30,
+		.cmd_inh_time		= 60,
 
 		/* L_LCLK_A0 and L_LCLK_RD active low */
 		.sync			= FB_SYNC_HOR_HIGH_ACT |
 					  FB_SYNC_VERT_HIGH_ACT,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल काष्ठा pxafb_mach_info saar_lcd_info = अणु
-	.modes			= toshiba_lपंचांग022a97a_modes,
+static struct pxafb_mach_info saar_lcd_info = {
+	.modes			= toshiba_ltm022a97a_modes,
 	.num_modes		= 1,
 	.lcd_conn		= LCD_SMART_PANEL_8BPP | LCD_PCLK_EDGE_FALL,
-	.pxafb_lcd_घातer	= lपंचांग022a97a_lcd_घातer,
-	.smart_update		= lपंचांग022a97a_update,
-पूर्ण;
+	.pxafb_lcd_power	= ltm022a97a_lcd_power,
+	.smart_update		= ltm022a97a_update,
+};
 
-अटल व्योम __init saar_init_lcd(व्योम)
-अणु
-	pxa_set_fb_info(शून्य, &saar_lcd_info);
-पूर्ण
-#अन्यथा
-अटल अंतरभूत व्योम saar_init_lcd(व्योम) अणुपूर्ण
-#पूर्ण_अगर
+static void __init saar_init_lcd(void)
+{
+	pxa_set_fb_info(NULL, &saar_lcd_info);
+}
+#else
+static inline void saar_init_lcd(void) {}
+#endif
 
-#अगर defined(CONFIG_I2C_PXA) || defined(CONFIG_I2C_PXA_MODULE)
-अटल काष्ठा da9034_backlight_pdata saar_da9034_backlight = अणु
+#if defined(CONFIG_I2C_PXA) || defined(CONFIG_I2C_PXA_MODULE)
+static struct da9034_backlight_pdata saar_da9034_backlight = {
 	.output_current	= 4,	/* 4mA */
-पूर्ण;
+};
 
-अटल काष्ठा da903x_subdev_info saar_da9034_subdevs[] = अणु
-	[0] = अणु
+static struct da903x_subdev_info saar_da9034_subdevs[] = {
+	[0] = {
 		.name		= "da903x-backlight",
 		.id		= DA9034_ID_WLED,
-		.platक्रमm_data	= &saar_da9034_backlight,
-	पूर्ण,
-पूर्ण;
+		.platform_data	= &saar_da9034_backlight,
+	},
+};
 
-अटल काष्ठा da903x_platक्रमm_data saar_da9034_info = अणु
+static struct da903x_platform_data saar_da9034_info = {
 	.num_subdevs	= ARRAY_SIZE(saar_da9034_subdevs),
 	.subdevs	= saar_da9034_subdevs,
-पूर्ण;
+};
 
-अटल काष्ठा i2c_board_info saar_i2c_info[] = अणु
-	[0] = अणु
+static struct i2c_board_info saar_i2c_info[] = {
+	[0] = {
 		.type		= "da9034",
 		.addr		= 0x34,
-		.platक्रमm_data	= &saar_da9034_info,
+		.platform_data	= &saar_da9034_info,
 		.irq		= PXA_GPIO_TO_IRQ(mfp_to_gpio(MFP_PIN_GPIO83)),
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल व्योम __init saar_init_i2c(व्योम)
-अणु
-	pxa_set_i2c_info(शून्य);
-	i2c_रेजिस्टर_board_info(0, ARRAY_AND_SIZE(saar_i2c_info));
-पूर्ण
-#अन्यथा
-अटल अंतरभूत व्योम saar_init_i2c(व्योम) अणुपूर्ण
-#पूर्ण_अगर
+static void __init saar_init_i2c(void)
+{
+	pxa_set_i2c_info(NULL);
+	i2c_register_board_info(0, ARRAY_AND_SIZE(saar_i2c_info));
+}
+#else
+static inline void saar_init_i2c(void) {}
+#endif
 
-#अगर defined(CONFIG_MTD_ONEन_अंकD) || defined(CONFIG_MTD_ONEन_अंकD_MODULE)
-अटल काष्ठा mtd_partition saar_onenand_partitions[] = अणु
-	अणु
+#if defined(CONFIG_MTD_ONENAND) || defined(CONFIG_MTD_ONENAND_MODULE)
+static struct mtd_partition saar_onenand_partitions[] = {
+	{
 		.name		= "bootloader",
 		.offset		= 0,
 		.size		= SZ_1M,
 		.mask_flags	= MTD_WRITEABLE,
-	पूर्ण, अणु
+	}, {
 		.name		= "reserved",
 		.offset		= MTDPART_OFS_APPEND,
 		.size		= SZ_128K,
 		.mask_flags	= MTD_WRITEABLE,
-	पूर्ण, अणु
+	}, {
 		.name		= "reserved",
 		.offset		= MTDPART_OFS_APPEND,
 		.size		= SZ_8M,
 		.mask_flags	= MTD_WRITEABLE,
-	पूर्ण, अणु
+	}, {
 		.name		= "kernel",
 		.offset		= MTDPART_OFS_APPEND,
 		.size		= (SZ_2M + SZ_1M),
 		.mask_flags	= 0,
-	पूर्ण, अणु
+	}, {
 		.name		= "filesystem",
 		.offset		= MTDPART_OFS_APPEND,
 		.size		= SZ_32M + SZ_16M,
 		.mask_flags	= 0,
-	पूर्ण
-पूर्ण;
+	}
+};
 
-अटल काष्ठा onenand_platक्रमm_data saar_onenand_info = अणु
+static struct onenand_platform_data saar_onenand_info = {
 	.parts		= saar_onenand_partitions,
 	.nr_parts	= ARRAY_SIZE(saar_onenand_partitions),
-पूर्ण;
+};
 
-#घोषणा SMC_CS0_PHYS_BASE	(0x10000000)
+#define SMC_CS0_PHYS_BASE	(0x10000000)
 
-अटल काष्ठा resource saar_resource_onenand[] = अणु
-	[0] = अणु
+static struct resource saar_resource_onenand[] = {
+	[0] = {
 		.start	= SMC_CS0_PHYS_BASE,
 		.end	= SMC_CS0_PHYS_BASE + SZ_1M,
 		.flags	= IORESOURCE_MEM,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल काष्ठा platक्रमm_device saar_device_onenand = अणु
+static struct platform_device saar_device_onenand = {
 	.name		= "onenand-flash",
 	.id		= -1,
-	.dev		= अणु
-		.platक्रमm_data	= &saar_onenand_info,
-	पूर्ण,
+	.dev		= {
+		.platform_data	= &saar_onenand_info,
+	},
 	.resource	= saar_resource_onenand,
 	.num_resources	= ARRAY_SIZE(saar_resource_onenand),
-पूर्ण;
+};
 
-अटल व्योम __init saar_init_onenand(व्योम)
-अणु
-	platक्रमm_device_रेजिस्टर(&saar_device_onenand);
-पूर्ण
-#अन्यथा
-अटल व्योम __init saar_init_onenand(व्योम) अणुपूर्ण
-#पूर्ण_अगर
+static void __init saar_init_onenand(void)
+{
+	platform_device_register(&saar_device_onenand);
+}
+#else
+static void __init saar_init_onenand(void) {}
+#endif
 
-अटल व्योम __init saar_init(व्योम)
-अणु
+static void __init saar_init(void)
+{
 	/* initialize MFP configurations */
 	pxa3xx_mfp_config(ARRAY_AND_SIZE(saar_mfp_cfg));
 
-	pxa_set_ffuart_info(शून्य);
-	pxa_set_btuart_info(शून्य);
-	pxa_set_stuart_info(शून्य);
+	pxa_set_ffuart_info(NULL);
+	pxa_set_btuart_info(NULL);
+	pxa_set_stuart_info(NULL);
 
-	platक्रमm_device_रेजिस्टर(&smc91x_device);
+	platform_device_register(&smc91x_device);
 	saar_init_onenand();
 
 	saar_init_i2c();
 	saar_init_lcd();
-पूर्ण
+}
 
 MACHINE_START(SAAR, "PXA930 Handheld Platform (aka SAAR)")
-	/* Maपूर्णांकainer: Eric Miao <eric.miao@marvell.com> */
+	/* Maintainer: Eric Miao <eric.miao@marvell.com> */
 	.atag_offset    = 0x100,
 	.map_io         = pxa3xx_map_io,
 	.nr_irqs	= PXA_NR_IRQS,
 	.init_irq       = pxa3xx_init_irq,
 	.handle_irq       = pxa3xx_handle_irq,
-	.init_समय	= pxa_समयr_init,
+	.init_time	= pxa_timer_init,
 	.init_machine   = saar_init,
 	.restart	= pxa_restart,
 MACHINE_END

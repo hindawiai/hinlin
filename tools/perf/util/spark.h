@@ -1,9 +1,8 @@
-<शैली गुरु>
-#अगर_अघोषित SPARK_H
-#घोषणा SPARK_H 1
+#ifndef SPARK_H
+#define SPARK_H 1
 
-#घोषणा NUM_SPARKS 8
+#define NUM_SPARKS 8
 
-पूर्णांक prपूर्णांक_spark(अक्षर *bf, पूर्णांक size, अचिन्हित दीर्घ *val, पूर्णांक numval);
+int print_spark(char *bf, int size, unsigned long *val, int numval);
 
-#पूर्ण_अगर
+#endif

@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  *  arch/arm/mach-rpc/include/mach/memory.h
  *
@@ -8,26 +7,26 @@
  *  Changelog:
  *   20-Oct-1996 RMK	Created
  *   31-Dec-1997 RMK	Fixed definitions to reduce warnings
- *   11-Jan-1998 RMK	Unअंतरभूतd to reduce hits on cache
+ *   11-Jan-1998 RMK	Uninlined to reduce hits on cache
  *   08-Feb-1998 RMK	Added __virt_to_bus and __bus_to_virt
  *   21-Mar-1999 RMK	Renamed to memory.h
  *		 RMK	Added TASK_SIZE and PAGE_OFFSET
  */
-#अगर_अघोषित __ASM_ARCH_MEMORY_H
-#घोषणा __ASM_ARCH_MEMORY_H
+#ifndef __ASM_ARCH_MEMORY_H
+#define __ASM_ARCH_MEMORY_H
 
 /*
  * Cache flushing area - ROM
  */
-#घोषणा FLUSH_BASE_PHYS		0x00000000
-#घोषणा FLUSH_BASE		0xdf000000
+#define FLUSH_BASE_PHYS		0x00000000
+#define FLUSH_BASE		0xdf000000
 
 /*
  * Sparsemem support.  Each section is a maximum of 64MB.  The sections
  * are offset by 128MB and can cover 128MB, so that gives us a maximum
  * of 29 physmem bits.
  */
-#घोषणा MAX_PHYSMEM_BITS	29
-#घोषणा SECTION_SIZE_BITS	26
+#define MAX_PHYSMEM_BITS	29
+#define SECTION_SIZE_BITS	26
 
-#पूर्ण_अगर
+#endif

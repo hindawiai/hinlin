@@ -1,167 +1,166 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- *  HID support क्रम Linux
+ *  HID support for Linux
  *
  *  Copyright (c) 1999 Andreas Gal
  *  Copyright (c) 2000-2005 Vojtech Pavlik <vojtech@suse.cz>
- *  Copyright (c) 2005 Michael Haboustak <mike-@cinci.rr.com> क्रम Concept2, Inc
+ *  Copyright (c) 2005 Michael Haboustak <mike-@cinci.rr.com> for Concept2, Inc
  *  Copyright (c) 2006-2012 Jiri Kosina
  */
 
 /*
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/init.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/list.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/spinlock.h>
-#समावेश <यंत्र/unaligned.h>
-#समावेश <यंत्र/byteorder.h>
-#समावेश <linux/input.h>
-#समावेश <linux/रुको.h>
-#समावेश <linux/vदो_स्मृति.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/semaphore.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/init.h>
+#include <linux/kernel.h>
+#include <linux/list.h>
+#include <linux/mm.h>
+#include <linux/spinlock.h>
+#include <asm/unaligned.h>
+#include <asm/byteorder.h>
+#include <linux/input.h>
+#include <linux/wait.h>
+#include <linux/vmalloc.h>
+#include <linux/sched.h>
+#include <linux/semaphore.h>
 
-#समावेश <linux/hid.h>
-#समावेश <linux/hiddev.h>
-#समावेश <linux/hid-debug.h>
-#समावेश <linux/hidraw.h>
+#include <linux/hid.h>
+#include <linux/hiddev.h>
+#include <linux/hid-debug.h>
+#include <linux/hidraw.h>
 
-#समावेश "hid-ids.h"
+#include "hid-ids.h"
 
 /*
- * Version Inक्रमmation
+ * Version Information
  */
 
-#घोषणा DRIVER_DESC "HID core driver"
+#define DRIVER_DESC "HID core driver"
 
-पूर्णांक hid_debug = 0;
-module_param_named(debug, hid_debug, पूर्णांक, 0600);
+int hid_debug = 0;
+module_param_named(debug, hid_debug, int, 0600);
 MODULE_PARM_DESC(debug, "toggle HID debugging messages");
 EXPORT_SYMBOL_GPL(hid_debug);
 
-अटल पूर्णांक hid_ignore_special_drivers = 0;
-module_param_named(ignore_special_drivers, hid_ignore_special_drivers, पूर्णांक, 0600);
+static int hid_ignore_special_drivers = 0;
+module_param_named(ignore_special_drivers, hid_ignore_special_drivers, int, 0600);
 MODULE_PARM_DESC(ignore_special_drivers, "Ignore any special drivers and handle all devices by generic driver");
 
 /*
- * Register a new report क्रम a device.
+ * Register a new report for a device.
  */
 
-काष्ठा hid_report *hid_रेजिस्टर_report(काष्ठा hid_device *device,
-				       अचिन्हित पूर्णांक type, अचिन्हित पूर्णांक id,
-				       अचिन्हित पूर्णांक application)
-अणु
-	काष्ठा hid_report_क्रमागत *report_क्रमागत = device->report_क्रमागत + type;
-	काष्ठा hid_report *report;
+struct hid_report *hid_register_report(struct hid_device *device,
+				       unsigned int type, unsigned int id,
+				       unsigned int application)
+{
+	struct hid_report_enum *report_enum = device->report_enum + type;
+	struct hid_report *report;
 
-	अगर (id >= HID_MAX_IDS)
-		वापस शून्य;
-	अगर (report_क्रमागत->report_id_hash[id])
-		वापस report_क्रमागत->report_id_hash[id];
+	if (id >= HID_MAX_IDS)
+		return NULL;
+	if (report_enum->report_id_hash[id])
+		return report_enum->report_id_hash[id];
 
-	report = kzalloc(माप(काष्ठा hid_report), GFP_KERNEL);
-	अगर (!report)
-		वापस शून्य;
+	report = kzalloc(sizeof(struct hid_report), GFP_KERNEL);
+	if (!report)
+		return NULL;
 
-	अगर (id != 0)
-		report_क्रमागत->numbered = 1;
+	if (id != 0)
+		report_enum->numbered = 1;
 
 	report->id = id;
 	report->type = type;
 	report->size = 0;
 	report->device = device;
 	report->application = application;
-	report_क्रमागत->report_id_hash[id] = report;
+	report_enum->report_id_hash[id] = report;
 
-	list_add_tail(&report->list, &report_क्रमागत->report_list);
+	list_add_tail(&report->list, &report_enum->report_list);
 
-	वापस report;
-पूर्ण
-EXPORT_SYMBOL_GPL(hid_रेजिस्टर_report);
+	return report;
+}
+EXPORT_SYMBOL_GPL(hid_register_report);
 
 /*
- * Register a new field क्रम this report.
+ * Register a new field for this report.
  */
 
-अटल काष्ठा hid_field *hid_रेजिस्टर_field(काष्ठा hid_report *report, अचिन्हित usages)
-अणु
-	काष्ठा hid_field *field;
+static struct hid_field *hid_register_field(struct hid_report *report, unsigned usages)
+{
+	struct hid_field *field;
 
-	अगर (report->maxfield == HID_MAX_FIELDS) अणु
+	if (report->maxfield == HID_MAX_FIELDS) {
 		hid_err(report->device, "too many fields in report\n");
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	field = kzalloc((माप(काष्ठा hid_field) +
-			 usages * माप(काष्ठा hid_usage) +
-			 usages * माप(अचिन्हित)), GFP_KERNEL);
-	अगर (!field)
-		वापस शून्य;
+	field = kzalloc((sizeof(struct hid_field) +
+			 usages * sizeof(struct hid_usage) +
+			 usages * sizeof(unsigned)), GFP_KERNEL);
+	if (!field)
+		return NULL;
 
 	field->index = report->maxfield++;
 	report->field[field->index] = field;
-	field->usage = (काष्ठा hid_usage *)(field + 1);
+	field->usage = (struct hid_usage *)(field + 1);
 	field->value = (s32 *)(field->usage + usages);
 	field->report = report;
 
-	वापस field;
-पूर्ण
+	return field;
+}
 
 /*
  * Open a collection. The type/usage is pushed on the stack.
  */
 
-अटल पूर्णांक खोलो_collection(काष्ठा hid_parser *parser, अचिन्हित type)
-अणु
-	काष्ठा hid_collection *collection;
-	अचिन्हित usage;
-	पूर्णांक collection_index;
+static int open_collection(struct hid_parser *parser, unsigned type)
+{
+	struct hid_collection *collection;
+	unsigned usage;
+	int collection_index;
 
 	usage = parser->local.usage[0];
 
-	अगर (parser->collection_stack_ptr == parser->collection_stack_size) अणु
-		अचिन्हित पूर्णांक *collection_stack;
-		अचिन्हित पूर्णांक new_size = parser->collection_stack_size +
+	if (parser->collection_stack_ptr == parser->collection_stack_size) {
+		unsigned int *collection_stack;
+		unsigned int new_size = parser->collection_stack_size +
 					HID_COLLECTION_STACK_SIZE;
 
-		collection_stack = kपुनः_स्मृति(parser->collection_stack,
-					    new_size * माप(अचिन्हित पूर्णांक),
+		collection_stack = krealloc(parser->collection_stack,
+					    new_size * sizeof(unsigned int),
 					    GFP_KERNEL);
-		अगर (!collection_stack)
-			वापस -ENOMEM;
+		if (!collection_stack)
+			return -ENOMEM;
 
 		parser->collection_stack = collection_stack;
 		parser->collection_stack_size = new_size;
-	पूर्ण
+	}
 
-	अगर (parser->device->maxcollection == parser->device->collection_size) अणु
-		collection = kदो_स्मृति(
-				array3_size(माप(काष्ठा hid_collection),
+	if (parser->device->maxcollection == parser->device->collection_size) {
+		collection = kmalloc(
+				array3_size(sizeof(struct hid_collection),
 					    parser->device->collection_size,
 					    2),
 				GFP_KERNEL);
-		अगर (collection == शून्य) अणु
+		if (collection == NULL) {
 			hid_err(parser->device, "failed to reallocate collection array\n");
-			वापस -ENOMEM;
-		पूर्ण
-		स_नकल(collection, parser->device->collection,
-			माप(काष्ठा hid_collection) *
+			return -ENOMEM;
+		}
+		memcpy(collection, parser->device->collection,
+			sizeof(struct hid_collection) *
 			parser->device->collection_size);
-		स_रखो(collection + parser->device->collection_size, 0,
-			माप(काष्ठा hid_collection) *
+		memset(collection + parser->device->collection_size, 0,
+			sizeof(struct hid_collection) *
 			parser->device->collection_size);
-		kमुक्त(parser->device->collection);
+		kfree(parser->device->collection);
 		parser->device->collection = collection;
 		parser->device->collection_size *= 2;
-	पूर्ण
+	}
 
 	parser->collection_stack[parser->collection_stack_ptr++] =
 		parser->device->maxcollection;
@@ -174,73 +173,73 @@ EXPORT_SYMBOL_GPL(hid_रेजिस्टर_report);
 	collection->parent_idx = (collection->level == 0) ? -1 :
 		parser->collection_stack[collection->level - 1];
 
-	अगर (type == HID_COLLECTION_APPLICATION)
+	if (type == HID_COLLECTION_APPLICATION)
 		parser->device->maxapplication++;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Close a collection.
  */
 
-अटल पूर्णांक बंद_collection(काष्ठा hid_parser *parser)
-अणु
-	अगर (!parser->collection_stack_ptr) अणु
+static int close_collection(struct hid_parser *parser)
+{
+	if (!parser->collection_stack_ptr) {
 		hid_err(parser->device, "collection stack underflow\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	parser->collection_stack_ptr--;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Climb up the stack, search क्रम the specअगरied collection type
- * and वापस the usage.
+ * Climb up the stack, search for the specified collection type
+ * and return the usage.
  */
 
-अटल अचिन्हित hid_lookup_collection(काष्ठा hid_parser *parser, अचिन्हित type)
-अणु
-	काष्ठा hid_collection *collection = parser->device->collection;
-	पूर्णांक n;
+static unsigned hid_lookup_collection(struct hid_parser *parser, unsigned type)
+{
+	struct hid_collection *collection = parser->device->collection;
+	int n;
 
-	क्रम (n = parser->collection_stack_ptr - 1; n >= 0; n--) अणु
-		अचिन्हित index = parser->collection_stack[n];
-		अगर (collection[index].type == type)
-			वापस collection[index].usage;
-	पूर्ण
-	वापस 0; /* we know nothing about this usage type */
-पूर्ण
+	for (n = parser->collection_stack_ptr - 1; n >= 0; n--) {
+		unsigned index = parser->collection_stack[n];
+		if (collection[index].type == type)
+			return collection[index].usage;
+	}
+	return 0; /* we know nothing about this usage type */
+}
 
 /*
  * Concatenate usage which defines 16 bits or less with the
- * currently defined usage page to क्रमm a 32 bit usage
+ * currently defined usage page to form a 32 bit usage
  */
 
-अटल व्योम complete_usage(काष्ठा hid_parser *parser, अचिन्हित पूर्णांक index)
-अणु
+static void complete_usage(struct hid_parser *parser, unsigned int index)
+{
 	parser->local.usage[index] &= 0xFFFF;
 	parser->local.usage[index] |=
 		(parser->global.usage_page & 0xFFFF) << 16;
-पूर्ण
+}
 
 /*
  * Add a usage to the temporary parser table.
  */
 
-अटल पूर्णांक hid_add_usage(काष्ठा hid_parser *parser, अचिन्हित usage, u8 size)
-अणु
-	अगर (parser->local.usage_index >= HID_MAX_USAGES) अणु
+static int hid_add_usage(struct hid_parser *parser, unsigned usage, u8 size)
+{
+	if (parser->local.usage_index >= HID_MAX_USAGES) {
 		hid_err(parser->device, "usage index exceeded\n");
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 	parser->local.usage[parser->local.usage_index] = usage;
 
 	/*
 	 * If Usage item only includes usage id, concatenate it with
 	 * currently defined usage page
 	 */
-	अगर (size <= 2)
+	if (size <= 2)
 		complete_usage(parser, parser->local.usage_index);
 
 	parser->local.usage_size[parser->local.usage_index] = size;
@@ -248,78 +247,78 @@ EXPORT_SYMBOL_GPL(hid_रेजिस्टर_report);
 		parser->collection_stack_ptr ?
 		parser->collection_stack[parser->collection_stack_ptr - 1] : 0;
 	parser->local.usage_index++;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Register a new field क्रम this report.
+ * Register a new field for this report.
  */
 
-अटल पूर्णांक hid_add_field(काष्ठा hid_parser *parser, अचिन्हित report_type, अचिन्हित flags)
-अणु
-	काष्ठा hid_report *report;
-	काष्ठा hid_field *field;
-	अचिन्हित पूर्णांक usages;
-	अचिन्हित पूर्णांक offset;
-	अचिन्हित पूर्णांक i;
-	अचिन्हित पूर्णांक application;
+static int hid_add_field(struct hid_parser *parser, unsigned report_type, unsigned flags)
+{
+	struct hid_report *report;
+	struct hid_field *field;
+	unsigned int usages;
+	unsigned int offset;
+	unsigned int i;
+	unsigned int application;
 
 	application = hid_lookup_collection(parser, HID_COLLECTION_APPLICATION);
 
-	report = hid_रेजिस्टर_report(parser->device, report_type,
+	report = hid_register_report(parser->device, report_type,
 				     parser->global.report_id, application);
-	अगर (!report) अणु
+	if (!report) {
 		hid_err(parser->device, "hid_register_report failed\n");
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	/* Handle both चिन्हित and अचिन्हित हालs properly */
-	अगर ((parser->global.logical_minimum < 0 &&
+	/* Handle both signed and unsigned cases properly */
+	if ((parser->global.logical_minimum < 0 &&
 		parser->global.logical_maximum <
 		parser->global.logical_minimum) ||
 		(parser->global.logical_minimum >= 0 &&
 		(__u32)parser->global.logical_maximum <
-		(__u32)parser->global.logical_minimum)) अणु
+		(__u32)parser->global.logical_minimum)) {
 		dbg_hid("logical range invalid 0x%x 0x%x\n",
 			parser->global.logical_minimum,
 			parser->global.logical_maximum);
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
 	offset = report->size;
 	report->size += parser->global.report_size * parser->global.report_count;
 
-	/* Total size check: Allow क्रम possible report index byte */
-	अगर (report->size > (HID_MAX_BUFFER_SIZE - 1) << 3) अणु
+	/* Total size check: Allow for possible report index byte */
+	if (report->size > (HID_MAX_BUFFER_SIZE - 1) << 3) {
 		hid_err(parser->device, "report is too long\n");
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	अगर (!parser->local.usage_index) /* Ignore padding fields */
-		वापस 0;
+	if (!parser->local.usage_index) /* Ignore padding fields */
+		return 0;
 
-	usages = max_t(अचिन्हित, parser->local.usage_index,
+	usages = max_t(unsigned, parser->local.usage_index,
 				 parser->global.report_count);
 
-	field = hid_रेजिस्टर_field(report, usages);
-	अगर (!field)
-		वापस 0;
+	field = hid_register_field(report, usages);
+	if (!field)
+		return 0;
 
 	field->physical = hid_lookup_collection(parser, HID_COLLECTION_PHYSICAL);
 	field->logical = hid_lookup_collection(parser, HID_COLLECTION_LOGICAL);
 	field->application = application;
 
-	क्रम (i = 0; i < usages; i++) अणु
-		अचिन्हित j = i;
-		/* Duplicate the last usage we parsed अगर we have excess values */
-		अगर (i >= parser->local.usage_index)
+	for (i = 0; i < usages; i++) {
+		unsigned j = i;
+		/* Duplicate the last usage we parsed if we have excess values */
+		if (i >= parser->local.usage_index)
 			j = parser->local.usage_index - 1;
 		field->usage[i].hid = parser->local.usage[j];
 		field->usage[i].collection_index =
 			parser->local.collection_index[j];
 		field->usage[i].usage_index = i;
 		field->usage[i].resolution_multiplier = 1;
-	पूर्ण
+	}
 
 	field->maxusage = usages;
 	field->flags = flags;
@@ -334,596 +333,596 @@ EXPORT_SYMBOL_GPL(hid_रेजिस्टर_report);
 	field->unit_exponent = parser->global.unit_exponent;
 	field->unit = parser->global.unit;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Read data value from item.
  */
 
-अटल u32 item_udata(काष्ठा hid_item *item)
-अणु
-	चयन (item->size) अणु
-	हाल 1: वापस item->data.u8;
-	हाल 2: वापस item->data.u16;
-	हाल 4: वापस item->data.u32;
-	पूर्ण
-	वापस 0;
-पूर्ण
+static u32 item_udata(struct hid_item *item)
+{
+	switch (item->size) {
+	case 1: return item->data.u8;
+	case 2: return item->data.u16;
+	case 4: return item->data.u32;
+	}
+	return 0;
+}
 
-अटल s32 item_sdata(काष्ठा hid_item *item)
-अणु
-	चयन (item->size) अणु
-	हाल 1: वापस item->data.s8;
-	हाल 2: वापस item->data.s16;
-	हाल 4: वापस item->data.s32;
-	पूर्ण
-	वापस 0;
-पूर्ण
+static s32 item_sdata(struct hid_item *item)
+{
+	switch (item->size) {
+	case 1: return item->data.s8;
+	case 2: return item->data.s16;
+	case 4: return item->data.s32;
+	}
+	return 0;
+}
 
 /*
  * Process a global item.
  */
 
-अटल पूर्णांक hid_parser_global(काष्ठा hid_parser *parser, काष्ठा hid_item *item)
-अणु
+static int hid_parser_global(struct hid_parser *parser, struct hid_item *item)
+{
 	__s32 raw_value;
-	चयन (item->tag) अणु
-	हाल HID_GLOBAL_ITEM_TAG_PUSH:
+	switch (item->tag) {
+	case HID_GLOBAL_ITEM_TAG_PUSH:
 
-		अगर (parser->global_stack_ptr == HID_GLOBAL_STACK_SIZE) अणु
+		if (parser->global_stack_ptr == HID_GLOBAL_STACK_SIZE) {
 			hid_err(parser->device, "global environment stack overflow\n");
-			वापस -1;
-		पूर्ण
+			return -1;
+		}
 
-		स_नकल(parser->global_stack + parser->global_stack_ptr++,
-			&parser->global, माप(काष्ठा hid_global));
-		वापस 0;
+		memcpy(parser->global_stack + parser->global_stack_ptr++,
+			&parser->global, sizeof(struct hid_global));
+		return 0;
 
-	हाल HID_GLOBAL_ITEM_TAG_POP:
+	case HID_GLOBAL_ITEM_TAG_POP:
 
-		अगर (!parser->global_stack_ptr) अणु
+		if (!parser->global_stack_ptr) {
 			hid_err(parser->device, "global environment stack underflow\n");
-			वापस -1;
-		पूर्ण
+			return -1;
+		}
 
-		स_नकल(&parser->global, parser->global_stack +
-			--parser->global_stack_ptr, माप(काष्ठा hid_global));
-		वापस 0;
+		memcpy(&parser->global, parser->global_stack +
+			--parser->global_stack_ptr, sizeof(struct hid_global));
+		return 0;
 
-	हाल HID_GLOBAL_ITEM_TAG_USAGE_PAGE:
+	case HID_GLOBAL_ITEM_TAG_USAGE_PAGE:
 		parser->global.usage_page = item_udata(item);
-		वापस 0;
+		return 0;
 
-	हाल HID_GLOBAL_ITEM_TAG_LOGICAL_MINIMUM:
+	case HID_GLOBAL_ITEM_TAG_LOGICAL_MINIMUM:
 		parser->global.logical_minimum = item_sdata(item);
-		वापस 0;
+		return 0;
 
-	हाल HID_GLOBAL_ITEM_TAG_LOGICAL_MAXIMUM:
-		अगर (parser->global.logical_minimum < 0)
+	case HID_GLOBAL_ITEM_TAG_LOGICAL_MAXIMUM:
+		if (parser->global.logical_minimum < 0)
 			parser->global.logical_maximum = item_sdata(item);
-		अन्यथा
+		else
 			parser->global.logical_maximum = item_udata(item);
-		वापस 0;
+		return 0;
 
-	हाल HID_GLOBAL_ITEM_TAG_PHYSICAL_MINIMUM:
+	case HID_GLOBAL_ITEM_TAG_PHYSICAL_MINIMUM:
 		parser->global.physical_minimum = item_sdata(item);
-		वापस 0;
+		return 0;
 
-	हाल HID_GLOBAL_ITEM_TAG_PHYSICAL_MAXIMUM:
-		अगर (parser->global.physical_minimum < 0)
+	case HID_GLOBAL_ITEM_TAG_PHYSICAL_MAXIMUM:
+		if (parser->global.physical_minimum < 0)
 			parser->global.physical_maximum = item_sdata(item);
-		अन्यथा
+		else
 			parser->global.physical_maximum = item_udata(item);
-		वापस 0;
+		return 0;
 
-	हाल HID_GLOBAL_ITEM_TAG_UNIT_EXPONENT:
+	case HID_GLOBAL_ITEM_TAG_UNIT_EXPONENT:
 		/* Many devices provide unit exponent as a two's complement
 		 * nibble due to the common misunderstanding of HID
-		 * specअगरication 1.11, 6.2.2.7 Global Items. Attempt to handle
+		 * specification 1.11, 6.2.2.7 Global Items. Attempt to handle
 		 * both this and the standard encoding. */
 		raw_value = item_sdata(item);
-		अगर (!(raw_value & 0xfffffff0))
+		if (!(raw_value & 0xfffffff0))
 			parser->global.unit_exponent = hid_snto32(raw_value, 4);
-		अन्यथा
+		else
 			parser->global.unit_exponent = raw_value;
-		वापस 0;
+		return 0;
 
-	हाल HID_GLOBAL_ITEM_TAG_UNIT:
+	case HID_GLOBAL_ITEM_TAG_UNIT:
 		parser->global.unit = item_udata(item);
-		वापस 0;
+		return 0;
 
-	हाल HID_GLOBAL_ITEM_TAG_REPORT_SIZE:
+	case HID_GLOBAL_ITEM_TAG_REPORT_SIZE:
 		parser->global.report_size = item_udata(item);
-		अगर (parser->global.report_size > 256) अणु
+		if (parser->global.report_size > 256) {
 			hid_err(parser->device, "invalid report_size %d\n",
 					parser->global.report_size);
-			वापस -1;
-		पूर्ण
-		वापस 0;
+			return -1;
+		}
+		return 0;
 
-	हाल HID_GLOBAL_ITEM_TAG_REPORT_COUNT:
+	case HID_GLOBAL_ITEM_TAG_REPORT_COUNT:
 		parser->global.report_count = item_udata(item);
-		अगर (parser->global.report_count > HID_MAX_USAGES) अणु
+		if (parser->global.report_count > HID_MAX_USAGES) {
 			hid_err(parser->device, "invalid report_count %d\n",
 					parser->global.report_count);
-			वापस -1;
-		पूर्ण
-		वापस 0;
+			return -1;
+		}
+		return 0;
 
-	हाल HID_GLOBAL_ITEM_TAG_REPORT_ID:
+	case HID_GLOBAL_ITEM_TAG_REPORT_ID:
 		parser->global.report_id = item_udata(item);
-		अगर (parser->global.report_id == 0 ||
-		    parser->global.report_id >= HID_MAX_IDS) अणु
+		if (parser->global.report_id == 0 ||
+		    parser->global.report_id >= HID_MAX_IDS) {
 			hid_err(parser->device, "report_id %u is invalid\n",
 				parser->global.report_id);
-			वापस -1;
-		पूर्ण
-		वापस 0;
+			return -1;
+		}
+		return 0;
 
-	शेष:
+	default:
 		hid_err(parser->device, "unknown global tag 0x%x\n", item->tag);
-		वापस -1;
-	पूर्ण
-पूर्ण
+		return -1;
+	}
+}
 
 /*
  * Process a local item.
  */
 
-अटल पूर्णांक hid_parser_local(काष्ठा hid_parser *parser, काष्ठा hid_item *item)
-अणु
+static int hid_parser_local(struct hid_parser *parser, struct hid_item *item)
+{
 	__u32 data;
-	अचिन्हित n;
+	unsigned n;
 	__u32 count;
 
 	data = item_udata(item);
 
-	चयन (item->tag) अणु
-	हाल HID_LOCAL_ITEM_TAG_DELIMITER:
+	switch (item->tag) {
+	case HID_LOCAL_ITEM_TAG_DELIMITER:
 
-		अगर (data) अणु
+		if (data) {
 			/*
-			 * We treat items beक्रमe the first delimiter
+			 * We treat items before the first delimiter
 			 * as global to all usage sets (branch 0).
 			 * In the moment we process only these global
 			 * items and the first delimiter set.
 			 */
-			अगर (parser->local.delimiter_depth != 0) अणु
+			if (parser->local.delimiter_depth != 0) {
 				hid_err(parser->device, "nested delimiters\n");
-				वापस -1;
-			पूर्ण
+				return -1;
+			}
 			parser->local.delimiter_depth++;
 			parser->local.delimiter_branch++;
-		पूर्ण अन्यथा अणु
-			अगर (parser->local.delimiter_depth < 1) अणु
+		} else {
+			if (parser->local.delimiter_depth < 1) {
 				hid_err(parser->device, "bogus close delimiter\n");
-				वापस -1;
-			पूर्ण
+				return -1;
+			}
 			parser->local.delimiter_depth--;
-		पूर्ण
-		वापस 0;
+		}
+		return 0;
 
-	हाल HID_LOCAL_ITEM_TAG_USAGE:
+	case HID_LOCAL_ITEM_TAG_USAGE:
 
-		अगर (parser->local.delimiter_branch > 1) अणु
+		if (parser->local.delimiter_branch > 1) {
 			dbg_hid("alternative usage ignored\n");
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 
-		वापस hid_add_usage(parser, data, item->size);
+		return hid_add_usage(parser, data, item->size);
 
-	हाल HID_LOCAL_ITEM_TAG_USAGE_MINIMUM:
+	case HID_LOCAL_ITEM_TAG_USAGE_MINIMUM:
 
-		अगर (parser->local.delimiter_branch > 1) अणु
+		if (parser->local.delimiter_branch > 1) {
 			dbg_hid("alternative usage ignored\n");
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 
 		parser->local.usage_minimum = data;
-		वापस 0;
+		return 0;
 
-	हाल HID_LOCAL_ITEM_TAG_USAGE_MAXIMUM:
+	case HID_LOCAL_ITEM_TAG_USAGE_MAXIMUM:
 
-		अगर (parser->local.delimiter_branch > 1) अणु
+		if (parser->local.delimiter_branch > 1) {
 			dbg_hid("alternative usage ignored\n");
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 
 		count = data - parser->local.usage_minimum;
-		अगर (count + parser->local.usage_index >= HID_MAX_USAGES) अणु
+		if (count + parser->local.usage_index >= HID_MAX_USAGES) {
 			/*
-			 * We करो not warn अगर the name is not set, we are
+			 * We do not warn if the name is not set, we are
 			 * actually pre-scanning the device.
 			 */
-			अगर (dev_name(&parser->device->dev))
+			if (dev_name(&parser->device->dev))
 				hid_warn(parser->device,
 					 "ignoring exceeding usage max\n");
 			data = HID_MAX_USAGES - parser->local.usage_index +
 				parser->local.usage_minimum - 1;
-			अगर (data <= 0) अणु
+			if (data <= 0) {
 				hid_err(parser->device,
 					"no more usage index available\n");
-				वापस -1;
-			पूर्ण
-		पूर्ण
+				return -1;
+			}
+		}
 
-		क्रम (n = parser->local.usage_minimum; n <= data; n++)
-			अगर (hid_add_usage(parser, n, item->size)) अणु
+		for (n = parser->local.usage_minimum; n <= data; n++)
+			if (hid_add_usage(parser, n, item->size)) {
 				dbg_hid("hid_add_usage failed\n");
-				वापस -1;
-			पूर्ण
-		वापस 0;
+				return -1;
+			}
+		return 0;
 
-	शेष:
+	default:
 
 		dbg_hid("unknown local item tag 0x%x\n", item->tag);
-		वापस 0;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return 0;
+	}
+	return 0;
+}
 
 /*
- * Concatenate Usage Pages पूर्णांकo Usages where relevant:
- * As per specअगरication, 6.2.2.8: "When the parser encounters a मुख्य item it
- * concatenates the last declared Usage Page with a Usage to क्रमm a complete
+ * Concatenate Usage Pages into Usages where relevant:
+ * As per specification, 6.2.2.8: "When the parser encounters a main item it
+ * concatenates the last declared Usage Page with a Usage to form a complete
  * usage value."
  */
 
-अटल व्योम hid_concatenate_last_usage_page(काष्ठा hid_parser *parser)
-अणु
-	पूर्णांक i;
-	अचिन्हित पूर्णांक usage_page;
-	अचिन्हित पूर्णांक current_page;
+static void hid_concatenate_last_usage_page(struct hid_parser *parser)
+{
+	int i;
+	unsigned int usage_page;
+	unsigned int current_page;
 
-	अगर (!parser->local.usage_index)
-		वापस;
+	if (!parser->local.usage_index)
+		return;
 
 	usage_page = parser->global.usage_page;
 
 	/*
-	 * Concatenate usage page again only अगर last declared Usage Page
-	 * has not been alपढ़ोy used in previous usages concatenation
+	 * Concatenate usage page again only if last declared Usage Page
+	 * has not been already used in previous usages concatenation
 	 */
-	क्रम (i = parser->local.usage_index - 1; i >= 0; i--) अणु
-		अगर (parser->local.usage_size[i] > 2)
+	for (i = parser->local.usage_index - 1; i >= 0; i--) {
+		if (parser->local.usage_size[i] > 2)
 			/* Ignore extended usages */
-			जारी;
+			continue;
 
 		current_page = parser->local.usage[i] >> 16;
-		अगर (current_page == usage_page)
-			अवरोध;
+		if (current_page == usage_page)
+			break;
 
 		complete_usage(parser, i);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
- * Process a मुख्य item.
+ * Process a main item.
  */
 
-अटल पूर्णांक hid_parser_मुख्य(काष्ठा hid_parser *parser, काष्ठा hid_item *item)
-अणु
+static int hid_parser_main(struct hid_parser *parser, struct hid_item *item)
+{
 	__u32 data;
-	पूर्णांक ret;
+	int ret;
 
 	hid_concatenate_last_usage_page(parser);
 
 	data = item_udata(item);
 
-	चयन (item->tag) अणु
-	हाल HID_MAIN_ITEM_TAG_BEGIN_COLLECTION:
-		ret = खोलो_collection(parser, data & 0xff);
-		अवरोध;
-	हाल HID_MAIN_ITEM_TAG_END_COLLECTION:
-		ret = बंद_collection(parser);
-		अवरोध;
-	हाल HID_MAIN_ITEM_TAG_INPUT:
+	switch (item->tag) {
+	case HID_MAIN_ITEM_TAG_BEGIN_COLLECTION:
+		ret = open_collection(parser, data & 0xff);
+		break;
+	case HID_MAIN_ITEM_TAG_END_COLLECTION:
+		ret = close_collection(parser);
+		break;
+	case HID_MAIN_ITEM_TAG_INPUT:
 		ret = hid_add_field(parser, HID_INPUT_REPORT, data);
-		अवरोध;
-	हाल HID_MAIN_ITEM_TAG_OUTPUT:
+		break;
+	case HID_MAIN_ITEM_TAG_OUTPUT:
 		ret = hid_add_field(parser, HID_OUTPUT_REPORT, data);
-		अवरोध;
-	हाल HID_MAIN_ITEM_TAG_FEATURE:
+		break;
+	case HID_MAIN_ITEM_TAG_FEATURE:
 		ret = hid_add_field(parser, HID_FEATURE_REPORT, data);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		hid_warn(parser->device, "unknown main item tag 0x%x\n", item->tag);
 		ret = 0;
-	पूर्ण
+	}
 
-	स_रखो(&parser->local, 0, माप(parser->local));	/* Reset the local parser environment */
+	memset(&parser->local, 0, sizeof(parser->local));	/* Reset the local parser environment */
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
  * Process a reserved item.
  */
 
-अटल पूर्णांक hid_parser_reserved(काष्ठा hid_parser *parser, काष्ठा hid_item *item)
-अणु
+static int hid_parser_reserved(struct hid_parser *parser, struct hid_item *item)
+{
 	dbg_hid("reserved item type, tag 0x%x\n", item->tag);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Free a report and all रेजिस्टरed fields. The field->usage and
+ * Free a report and all registered fields. The field->usage and
  * field->value table's are allocated behind the field, so we need
- * only to मुक्त(field) itself.
+ * only to free(field) itself.
  */
 
-अटल व्योम hid_मुक्त_report(काष्ठा hid_report *report)
-अणु
-	अचिन्हित n;
+static void hid_free_report(struct hid_report *report)
+{
+	unsigned n;
 
-	क्रम (n = 0; n < report->maxfield; n++)
-		kमुक्त(report->field[n]);
-	kमुक्त(report);
-पूर्ण
+	for (n = 0; n < report->maxfield; n++)
+		kfree(report->field[n]);
+	kfree(report);
+}
 
 /*
- * Close report. This function वापसs the device
- * state to the poपूर्णांक prior to hid_खोलो_report().
+ * Close report. This function returns the device
+ * state to the point prior to hid_open_report().
  */
-अटल व्योम hid_बंद_report(काष्ठा hid_device *device)
-अणु
-	अचिन्हित i, j;
+static void hid_close_report(struct hid_device *device)
+{
+	unsigned i, j;
 
-	क्रम (i = 0; i < HID_REPORT_TYPES; i++) अणु
-		काष्ठा hid_report_क्रमागत *report_क्रमागत = device->report_क्रमागत + i;
+	for (i = 0; i < HID_REPORT_TYPES; i++) {
+		struct hid_report_enum *report_enum = device->report_enum + i;
 
-		क्रम (j = 0; j < HID_MAX_IDS; j++) अणु
-			काष्ठा hid_report *report = report_क्रमागत->report_id_hash[j];
-			अगर (report)
-				hid_मुक्त_report(report);
-		पूर्ण
-		स_रखो(report_क्रमागत, 0, माप(*report_क्रमागत));
-		INIT_LIST_HEAD(&report_क्रमागत->report_list);
-	पूर्ण
+		for (j = 0; j < HID_MAX_IDS; j++) {
+			struct hid_report *report = report_enum->report_id_hash[j];
+			if (report)
+				hid_free_report(report);
+		}
+		memset(report_enum, 0, sizeof(*report_enum));
+		INIT_LIST_HEAD(&report_enum->report_list);
+	}
 
-	kमुक्त(device->rdesc);
-	device->rdesc = शून्य;
+	kfree(device->rdesc);
+	device->rdesc = NULL;
 	device->rsize = 0;
 
-	kमुक्त(device->collection);
-	device->collection = शून्य;
+	kfree(device->collection);
+	device->collection = NULL;
 	device->collection_size = 0;
 	device->maxcollection = 0;
 	device->maxapplication = 0;
 
 	device->status &= ~HID_STAT_PARSED;
-पूर्ण
+}
 
 /*
- * Free a device काष्ठाure, all reports, and all fields.
+ * Free a device structure, all reports, and all fields.
  */
 
-अटल व्योम hid_device_release(काष्ठा device *dev)
-अणु
-	काष्ठा hid_device *hid = to_hid_device(dev);
+static void hid_device_release(struct device *dev)
+{
+	struct hid_device *hid = to_hid_device(dev);
 
-	hid_बंद_report(hid);
-	kमुक्त(hid->dev_rdesc);
-	kमुक्त(hid);
-पूर्ण
+	hid_close_report(hid);
+	kfree(hid->dev_rdesc);
+	kfree(hid);
+}
 
 /*
- * Fetch a report description item from the data stream. We support दीर्घ
+ * Fetch a report description item from the data stream. We support long
  * items, though they are not used yet.
  */
 
-अटल u8 *fetch_item(__u8 *start, __u8 *end, काष्ठा hid_item *item)
-अणु
+static u8 *fetch_item(__u8 *start, __u8 *end, struct hid_item *item)
+{
 	u8 b;
 
-	अगर ((end - start) <= 0)
-		वापस शून्य;
+	if ((end - start) <= 0)
+		return NULL;
 
 	b = *start++;
 
 	item->type = (b >> 2) & 3;
 	item->tag  = (b >> 4) & 15;
 
-	अगर (item->tag == HID_ITEM_TAG_LONG) अणु
+	if (item->tag == HID_ITEM_TAG_LONG) {
 
-		item->क्रमmat = HID_ITEM_FORMAT_LONG;
+		item->format = HID_ITEM_FORMAT_LONG;
 
-		अगर ((end - start) < 2)
-			वापस शून्य;
+		if ((end - start) < 2)
+			return NULL;
 
 		item->size = *start++;
 		item->tag  = *start++;
 
-		अगर ((end - start) < item->size)
-			वापस शून्य;
+		if ((end - start) < item->size)
+			return NULL;
 
-		item->data.दीर्घdata = start;
+		item->data.longdata = start;
 		start += item->size;
-		वापस start;
-	पूर्ण
+		return start;
+	}
 
-	item->क्रमmat = HID_ITEM_FORMAT_SHORT;
+	item->format = HID_ITEM_FORMAT_SHORT;
 	item->size = b & 3;
 
-	चयन (item->size) अणु
-	हाल 0:
-		वापस start;
+	switch (item->size) {
+	case 0:
+		return start;
 
-	हाल 1:
-		अगर ((end - start) < 1)
-			वापस शून्य;
+	case 1:
+		if ((end - start) < 1)
+			return NULL;
 		item->data.u8 = *start++;
-		वापस start;
+		return start;
 
-	हाल 2:
-		अगर ((end - start) < 2)
-			वापस शून्य;
+	case 2:
+		if ((end - start) < 2)
+			return NULL;
 		item->data.u16 = get_unaligned_le16(start);
 		start = (__u8 *)((__le16 *)start + 1);
-		वापस start;
+		return start;
 
-	हाल 3:
+	case 3:
 		item->size++;
-		अगर ((end - start) < 4)
-			वापस शून्य;
+		if ((end - start) < 4)
+			return NULL;
 		item->data.u32 = get_unaligned_le32(start);
 		start = (__u8 *)((__le32 *)start + 1);
-		वापस start;
-	पूर्ण
+		return start;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल व्योम hid_scan_input_usage(काष्ठा hid_parser *parser, u32 usage)
-अणु
-	काष्ठा hid_device *hid = parser->device;
+static void hid_scan_input_usage(struct hid_parser *parser, u32 usage)
+{
+	struct hid_device *hid = parser->device;
 
-	अगर (usage == HID_DG_CONTACTID)
+	if (usage == HID_DG_CONTACTID)
 		hid->group = HID_GROUP_MULTITOUCH;
-पूर्ण
+}
 
-अटल व्योम hid_scan_feature_usage(काष्ठा hid_parser *parser, u32 usage)
-अणु
-	अगर (usage == 0xff0000c5 && parser->global.report_count == 256 &&
+static void hid_scan_feature_usage(struct hid_parser *parser, u32 usage)
+{
+	if (usage == 0xff0000c5 && parser->global.report_count == 256 &&
 	    parser->global.report_size == 8)
 		parser->scan_flags |= HID_SCAN_FLAG_MT_WIN_8;
 
-	अगर (usage == 0xff0000c6 && parser->global.report_count == 1 &&
+	if (usage == 0xff0000c6 && parser->global.report_count == 1 &&
 	    parser->global.report_size == 8)
 		parser->scan_flags |= HID_SCAN_FLAG_MT_WIN_8;
-पूर्ण
+}
 
-अटल व्योम hid_scan_collection(काष्ठा hid_parser *parser, अचिन्हित type)
-अणु
-	काष्ठा hid_device *hid = parser->device;
-	पूर्णांक i;
+static void hid_scan_collection(struct hid_parser *parser, unsigned type)
+{
+	struct hid_device *hid = parser->device;
+	int i;
 
-	अगर (((parser->global.usage_page << 16) == HID_UP_SENSOR) &&
+	if (((parser->global.usage_page << 16) == HID_UP_SENSOR) &&
 	    type == HID_COLLECTION_PHYSICAL)
 		hid->group = HID_GROUP_SENSOR_HUB;
 
-	अगर (hid->venकरोr == USB_VENDOR_ID_MICROSOFT &&
+	if (hid->vendor == USB_VENDOR_ID_MICROSOFT &&
 	    hid->product == USB_DEVICE_ID_MS_POWER_COVER &&
 	    hid->group == HID_GROUP_MULTITOUCH)
 		hid->group = HID_GROUP_GENERIC;
 
-	अगर ((parser->global.usage_page << 16) == HID_UP_GENDESK)
-		क्रम (i = 0; i < parser->local.usage_index; i++)
-			अगर (parser->local.usage[i] == HID_GD_POINTER)
+	if ((parser->global.usage_page << 16) == HID_UP_GENDESK)
+		for (i = 0; i < parser->local.usage_index; i++)
+			if (parser->local.usage[i] == HID_GD_POINTER)
 				parser->scan_flags |= HID_SCAN_FLAG_GD_POINTER;
 
-	अगर ((parser->global.usage_page << 16) >= HID_UP_MSVENDOR)
+	if ((parser->global.usage_page << 16) >= HID_UP_MSVENDOR)
 		parser->scan_flags |= HID_SCAN_FLAG_VENDOR_SPECIFIC;
 
-	अगर ((parser->global.usage_page << 16) == HID_UP_GOOGLEVENDOR)
-		क्रम (i = 0; i < parser->local.usage_index; i++)
-			अगर (parser->local.usage[i] ==
+	if ((parser->global.usage_page << 16) == HID_UP_GOOGLEVENDOR)
+		for (i = 0; i < parser->local.usage_index; i++)
+			if (parser->local.usage[i] ==
 					(HID_UP_GOOGLEVENDOR | 0x0001))
 				parser->device->group =
 					HID_GROUP_VIVALDI;
-पूर्ण
+}
 
-अटल पूर्णांक hid_scan_मुख्य(काष्ठा hid_parser *parser, काष्ठा hid_item *item)
-अणु
+static int hid_scan_main(struct hid_parser *parser, struct hid_item *item)
+{
 	__u32 data;
-	पूर्णांक i;
+	int i;
 
 	hid_concatenate_last_usage_page(parser);
 
 	data = item_udata(item);
 
-	चयन (item->tag) अणु
-	हाल HID_MAIN_ITEM_TAG_BEGIN_COLLECTION:
+	switch (item->tag) {
+	case HID_MAIN_ITEM_TAG_BEGIN_COLLECTION:
 		hid_scan_collection(parser, data & 0xff);
-		अवरोध;
-	हाल HID_MAIN_ITEM_TAG_END_COLLECTION:
-		अवरोध;
-	हाल HID_MAIN_ITEM_TAG_INPUT:
-		/* ignore स्थिरant inमाला_दो, they will be ignored by hid-input */
-		अगर (data & HID_MAIN_ITEM_CONSTANT)
-			अवरोध;
-		क्रम (i = 0; i < parser->local.usage_index; i++)
+		break;
+	case HID_MAIN_ITEM_TAG_END_COLLECTION:
+		break;
+	case HID_MAIN_ITEM_TAG_INPUT:
+		/* ignore constant inputs, they will be ignored by hid-input */
+		if (data & HID_MAIN_ITEM_CONSTANT)
+			break;
+		for (i = 0; i < parser->local.usage_index; i++)
 			hid_scan_input_usage(parser, parser->local.usage[i]);
-		अवरोध;
-	हाल HID_MAIN_ITEM_TAG_OUTPUT:
-		अवरोध;
-	हाल HID_MAIN_ITEM_TAG_FEATURE:
-		क्रम (i = 0; i < parser->local.usage_index; i++)
+		break;
+	case HID_MAIN_ITEM_TAG_OUTPUT:
+		break;
+	case HID_MAIN_ITEM_TAG_FEATURE:
+		for (i = 0; i < parser->local.usage_index; i++)
 			hid_scan_feature_usage(parser, parser->local.usage[i]);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	/* Reset the local parser environment */
-	स_रखो(&parser->local, 0, माप(parser->local));
+	memset(&parser->local, 0, sizeof(parser->local));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Scan a report descriptor beक्रमe the device is added to the bus.
+ * Scan a report descriptor before the device is added to the bus.
  * Sets device groups and other properties that determine what driver
  * to load.
  */
-अटल पूर्णांक hid_scan_report(काष्ठा hid_device *hid)
-अणु
-	काष्ठा hid_parser *parser;
-	काष्ठा hid_item item;
+static int hid_scan_report(struct hid_device *hid)
+{
+	struct hid_parser *parser;
+	struct hid_item item;
 	__u8 *start = hid->dev_rdesc;
 	__u8 *end = start + hid->dev_rsize;
-	अटल पूर्णांक (*dispatch_type[])(काष्ठा hid_parser *parser,
-				      काष्ठा hid_item *item) = अणु
-		hid_scan_मुख्य,
+	static int (*dispatch_type[])(struct hid_parser *parser,
+				      struct hid_item *item) = {
+		hid_scan_main,
 		hid_parser_global,
 		hid_parser_local,
 		hid_parser_reserved
-	पूर्ण;
+	};
 
-	parser = vzalloc(माप(काष्ठा hid_parser));
-	अगर (!parser)
-		वापस -ENOMEM;
+	parser = vzalloc(sizeof(struct hid_parser));
+	if (!parser)
+		return -ENOMEM;
 
 	parser->device = hid;
 	hid->group = HID_GROUP_GENERIC;
 
 	/*
-	 * The parsing is simpler than the one in hid_खोलो_report() as we should
-	 * be robust against hid errors. Those errors will be उठाओd by
-	 * hid_खोलो_report() anyway.
+	 * The parsing is simpler than the one in hid_open_report() as we should
+	 * be robust against hid errors. Those errors will be raised by
+	 * hid_open_report() anyway.
 	 */
-	जबतक ((start = fetch_item(start, end, &item)) != शून्य)
+	while ((start = fetch_item(start, end, &item)) != NULL)
 		dispatch_type[item.type](parser, &item);
 
 	/*
 	 * Handle special flags set during scanning.
 	 */
-	अगर ((parser->scan_flags & HID_SCAN_FLAG_MT_WIN_8) &&
+	if ((parser->scan_flags & HID_SCAN_FLAG_MT_WIN_8) &&
 	    (hid->group == HID_GROUP_MULTITOUCH))
 		hid->group = HID_GROUP_MULTITOUCH_WIN_8;
 
 	/*
-	 * Venकरोr specअगरic handlings
+	 * Vendor specific handlings
 	 */
-	चयन (hid->venकरोr) अणु
-	हाल USB_VENDOR_ID_WACOM:
+	switch (hid->vendor) {
+	case USB_VENDOR_ID_WACOM:
 		hid->group = HID_GROUP_WACOM;
-		अवरोध;
-	हाल USB_VENDOR_ID_SYNAPTICS:
-		अगर (hid->group == HID_GROUP_GENERIC)
-			अगर ((parser->scan_flags & HID_SCAN_FLAG_VENDOR_SPECIFIC)
+		break;
+	case USB_VENDOR_ID_SYNAPTICS:
+		if (hid->group == HID_GROUP_GENERIC)
+			if ((parser->scan_flags & HID_SCAN_FLAG_VENDOR_SPECIFIC)
 			    && (parser->scan_flags & HID_SCAN_FLAG_GD_POINTER))
 				/*
 				 * hid-rmi should take care of them,
 				 * not hid-generic
 				 */
 				hid->group = HID_GROUP_RMI;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	kमुक्त(parser->collection_stack);
-	vमुक्त(parser);
-	वापस 0;
-पूर्ण
+	kfree(parser->collection_stack);
+	vfree(parser);
+	return 0;
+}
 
 /**
  * hid_parse_report - parse device report
@@ -932,91 +931,91 @@ EXPORT_SYMBOL_GPL(hid_रेजिस्टर_report);
  * @start: report start
  * @size: report size
  *
- * Allocate the device report as पढ़ो by the bus driver. This function should
+ * Allocate the device report as read by the bus driver. This function should
  * only be called from parse() in ll drivers.
  */
-पूर्णांक hid_parse_report(काष्ठा hid_device *hid, __u8 *start, अचिन्हित size)
-अणु
+int hid_parse_report(struct hid_device *hid, __u8 *start, unsigned size)
+{
 	hid->dev_rdesc = kmemdup(start, size, GFP_KERNEL);
-	अगर (!hid->dev_rdesc)
-		वापस -ENOMEM;
+	if (!hid->dev_rdesc)
+		return -ENOMEM;
 	hid->dev_rsize = size;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(hid_parse_report);
 
-अटल स्थिर अक्षर * स्थिर hid_report_names[] = अणु
+static const char * const hid_report_names[] = {
 	"HID_INPUT_REPORT",
 	"HID_OUTPUT_REPORT",
 	"HID_FEATURE_REPORT",
-पूर्ण;
+};
 /**
  * hid_validate_values - validate existing device report's value indexes
  *
  * @hid: hid device
  * @type: which report type to examine
- * @id: which report ID to examine (0 क्रम first)
+ * @id: which report ID to examine (0 for first)
  * @field_index: which report field to examine
  * @report_counts: expected number of values
  *
  * Validate the number of values in a given field of a given report, after
  * parsing.
  */
-काष्ठा hid_report *hid_validate_values(काष्ठा hid_device *hid,
-				       अचिन्हित पूर्णांक type, अचिन्हित पूर्णांक id,
-				       अचिन्हित पूर्णांक field_index,
-				       अचिन्हित पूर्णांक report_counts)
-अणु
-	काष्ठा hid_report *report;
+struct hid_report *hid_validate_values(struct hid_device *hid,
+				       unsigned int type, unsigned int id,
+				       unsigned int field_index,
+				       unsigned int report_counts)
+{
+	struct hid_report *report;
 
-	अगर (type > HID_FEATURE_REPORT) अणु
+	if (type > HID_FEATURE_REPORT) {
 		hid_err(hid, "invalid HID report type %u\n", type);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	अगर (id >= HID_MAX_IDS) अणु
+	if (id >= HID_MAX_IDS) {
 		hid_err(hid, "invalid HID report id %u\n", id);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
 	/*
 	 * Explicitly not using hid_get_report() here since it depends on
-	 * ->numbered being checked, which may not always be the हाल when
+	 * ->numbered being checked, which may not always be the case when
 	 * drivers go to access report values.
 	 */
-	अगर (id == 0) अणु
+	if (id == 0) {
 		/*
 		 * Validating on id 0 means we should examine the first
 		 * report in the list.
 		 */
 		report = list_entry(
-				hid->report_क्रमागत[type].report_list.next,
-				काष्ठा hid_report, list);
-	पूर्ण अन्यथा अणु
-		report = hid->report_क्रमागत[type].report_id_hash[id];
-	पूर्ण
-	अगर (!report) अणु
+				hid->report_enum[type].report_list.next,
+				struct hid_report, list);
+	} else {
+		report = hid->report_enum[type].report_id_hash[id];
+	}
+	if (!report) {
 		hid_err(hid, "missing %s %u\n", hid_report_names[type], id);
-		वापस शून्य;
-	पूर्ण
-	अगर (report->maxfield <= field_index) अणु
+		return NULL;
+	}
+	if (report->maxfield <= field_index) {
 		hid_err(hid, "not enough fields in %s %u\n",
 			hid_report_names[type], id);
-		वापस शून्य;
-	पूर्ण
-	अगर (report->field[field_index]->report_count < report_counts) अणु
+		return NULL;
+	}
+	if (report->field[field_index]->report_count < report_counts) {
 		hid_err(hid, "not enough values in %s %u field %u\n",
 			hid_report_names[type], id, field_index);
-		वापस शून्य;
-	पूर्ण
-	वापस report;
-पूर्ण
+		return NULL;
+	}
+	return report;
+}
 EXPORT_SYMBOL_GPL(hid_validate_values);
 
-अटल पूर्णांक hid_calculate_multiplier(काष्ठा hid_device *hid,
-				     काष्ठा hid_field *multiplier)
-अणु
-	पूर्णांक m;
+static int hid_calculate_multiplier(struct hid_device *hid,
+				     struct hid_field *multiplier)
+{
+	int m;
 	__s32 v = *multiplier->value;
 	__s32 lmin = multiplier->logical_minimum;
 	__s32 lmax = multiplier->logical_maximum;
@@ -1024,79 +1023,79 @@ EXPORT_SYMBOL_GPL(hid_validate_values);
 	__s32 pmax = multiplier->physical_maximum;
 
 	/*
-	 * "Because OS implementations will generally भागide the control's
+	 * "Because OS implementations will generally divide the control's
 	 * reported count by the Effective Resolution Multiplier, designers
 	 * should take care not to establish a potential Effective
 	 * Resolution Multiplier of zero."
 	 * HID Usage Table, v1.12, Section 4.3.1, p31
 	 */
-	अगर (lmax - lmin == 0)
-		वापस 1;
+	if (lmax - lmin == 0)
+		return 1;
 	/*
 	 * Handling the unit exponent is left as an exercise to whoever
 	 * finds a device where that exponent is not 0.
 	 */
 	m = ((v - lmin)/(lmax - lmin) * (pmax - pmin) + pmin);
-	अगर (unlikely(multiplier->unit_exponent != 0)) अणु
+	if (unlikely(multiplier->unit_exponent != 0)) {
 		hid_warn(hid,
 			 "unsupported Resolution Multiplier unit exponent %d\n",
 			 multiplier->unit_exponent);
-	पूर्ण
+	}
 
 	/* There are no devices with an effective multiplier > 255 */
-	अगर (unlikely(m == 0 || m > 255 || m < -255)) अणु
+	if (unlikely(m == 0 || m > 255 || m < -255)) {
 		hid_warn(hid, "unsupported Resolution Multiplier %d\n", m);
 		m = 1;
-	पूर्ण
+	}
 
-	वापस m;
-पूर्ण
+	return m;
+}
 
-अटल व्योम hid_apply_multiplier_to_field(काष्ठा hid_device *hid,
-					  काष्ठा hid_field *field,
-					  काष्ठा hid_collection *multiplier_collection,
-					  पूर्णांक effective_multiplier)
-अणु
-	काष्ठा hid_collection *collection;
-	काष्ठा hid_usage *usage;
-	पूर्णांक i;
+static void hid_apply_multiplier_to_field(struct hid_device *hid,
+					  struct hid_field *field,
+					  struct hid_collection *multiplier_collection,
+					  int effective_multiplier)
+{
+	struct hid_collection *collection;
+	struct hid_usage *usage;
+	int i;
 
 	/*
-	 * If multiplier_collection is शून्य, the multiplier applies
+	 * If multiplier_collection is NULL, the multiplier applies
 	 * to all fields in the report.
 	 * Otherwise, it is the Logical Collection the multiplier applies to
 	 * but our field may be in a subcollection of that collection.
 	 */
-	क्रम (i = 0; i < field->maxusage; i++) अणु
+	for (i = 0; i < field->maxusage; i++) {
 		usage = &field->usage[i];
 
 		collection = &hid->collection[usage->collection_index];
-		जबतक (collection->parent_idx != -1 &&
+		while (collection->parent_idx != -1 &&
 		       collection != multiplier_collection)
 			collection = &hid->collection[collection->parent_idx];
 
-		अगर (collection->parent_idx != -1 ||
-		    multiplier_collection == शून्य)
+		if (collection->parent_idx != -1 ||
+		    multiplier_collection == NULL)
 			usage->resolution_multiplier = effective_multiplier;
 
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम hid_apply_multiplier(काष्ठा hid_device *hid,
-				 काष्ठा hid_field *multiplier)
-अणु
-	काष्ठा hid_report_क्रमागत *rep_क्रमागत;
-	काष्ठा hid_report *rep;
-	काष्ठा hid_field *field;
-	काष्ठा hid_collection *multiplier_collection;
-	पूर्णांक effective_multiplier;
-	पूर्णांक i;
+static void hid_apply_multiplier(struct hid_device *hid,
+				 struct hid_field *multiplier)
+{
+	struct hid_report_enum *rep_enum;
+	struct hid_report *rep;
+	struct hid_field *field;
+	struct hid_collection *multiplier_collection;
+	int effective_multiplier;
+	int i;
 
 	/*
 	 * "The Resolution Multiplier control must be contained in the same
 	 * Logical Collection as the control(s) to which it is to be applied.
 	 * If no Resolution Multiplier is defined, then the Resolution
-	 * Multiplier शेषs to 1.  If more than one control exists in a
+	 * Multiplier defaults to 1.  If more than one control exists in a
 	 * Logical Collection, the Resolution Multiplier is associated with
 	 * all controls in the collection. If no Logical Collection is
 	 * defined, the Resolution Multiplier is associated with all
@@ -1104,238 +1103,238 @@ EXPORT_SYMBOL_GPL(hid_validate_values);
 	 * HID Usage Table, v1.12, Section 4.3.1, p30
 	 *
 	 * Thus, search from the current collection upwards until we find a
-	 * logical collection. Then search all fields क्रम that same parent
+	 * logical collection. Then search all fields for that same parent
 	 * collection. Those are the fields the multiplier applies to.
 	 *
-	 * If we have more than one multiplier, it will overग_लिखो the
+	 * If we have more than one multiplier, it will overwrite the
 	 * applicable fields later.
 	 */
 	multiplier_collection = &hid->collection[multiplier->usage->collection_index];
-	जबतक (multiplier_collection->parent_idx != -1 &&
+	while (multiplier_collection->parent_idx != -1 &&
 	       multiplier_collection->type != HID_COLLECTION_LOGICAL)
 		multiplier_collection = &hid->collection[multiplier_collection->parent_idx];
 
 	effective_multiplier = hid_calculate_multiplier(hid, multiplier);
 
-	rep_क्रमागत = &hid->report_क्रमागत[HID_INPUT_REPORT];
-	list_क्रम_each_entry(rep, &rep_क्रमागत->report_list, list) अणु
-		क्रम (i = 0; i < rep->maxfield; i++) अणु
+	rep_enum = &hid->report_enum[HID_INPUT_REPORT];
+	list_for_each_entry(rep, &rep_enum->report_list, list) {
+		for (i = 0; i < rep->maxfield; i++) {
 			field = rep->field[i];
 			hid_apply_multiplier_to_field(hid, field,
 						      multiplier_collection,
 						      effective_multiplier);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
 /*
  * hid_setup_resolution_multiplier - set up all resolution multipliers
  *
  * @device: hid device
  *
- * Search क्रम all Resolution Multiplier Feature Reports and apply their
- * value to all matching Input items. This only updates the पूर्णांकernal काष्ठा
+ * Search for all Resolution Multiplier Feature Reports and apply their
+ * value to all matching Input items. This only updates the internal struct
  * fields.
  *
  * The Resolution Multiplier is applied by the hardware. If the multiplier
  * is anything other than 1, the hardware will send pre-multiplied events
- * so that the same physical पूर्णांकeraction generates an accumulated
+ * so that the same physical interaction generates an accumulated
  *	accumulated_value = value * * multiplier
  * This may be achieved by sending
- * - "value * multiplier" क्रम each event, or
- * - "value" but "multiplier" बार as frequently, or
+ * - "value * multiplier" for each event, or
+ * - "value" but "multiplier" times as frequently, or
  * - a combination of the above
- * The only guarantee is that the same physical पूर्णांकeraction always generates
+ * The only guarantee is that the same physical interaction always generates
  * an accumulated 'value * multiplier'.
  *
- * This function must be called beक्रमe any event processing and after
+ * This function must be called before any event processing and after
  * any SetRequest to the Resolution Multiplier.
  */
-व्योम hid_setup_resolution_multiplier(काष्ठा hid_device *hid)
-अणु
-	काष्ठा hid_report_क्रमागत *rep_क्रमागत;
-	काष्ठा hid_report *rep;
-	काष्ठा hid_usage *usage;
-	पूर्णांक i, j;
+void hid_setup_resolution_multiplier(struct hid_device *hid)
+{
+	struct hid_report_enum *rep_enum;
+	struct hid_report *rep;
+	struct hid_usage *usage;
+	int i, j;
 
-	rep_क्रमागत = &hid->report_क्रमागत[HID_FEATURE_REPORT];
-	list_क्रम_each_entry(rep, &rep_क्रमागत->report_list, list) अणु
-		क्रम (i = 0; i < rep->maxfield; i++) अणु
-			/* Ignore अगर report count is out of bounds. */
-			अगर (rep->field[i]->report_count < 1)
-				जारी;
+	rep_enum = &hid->report_enum[HID_FEATURE_REPORT];
+	list_for_each_entry(rep, &rep_enum->report_list, list) {
+		for (i = 0; i < rep->maxfield; i++) {
+			/* Ignore if report count is out of bounds. */
+			if (rep->field[i]->report_count < 1)
+				continue;
 
-			क्रम (j = 0; j < rep->field[i]->maxusage; j++) अणु
+			for (j = 0; j < rep->field[i]->maxusage; j++) {
 				usage = &rep->field[i]->usage[j];
-				अगर (usage->hid == HID_GD_RESOLUTION_MULTIPLIER)
+				if (usage->hid == HID_GD_RESOLUTION_MULTIPLIER)
 					hid_apply_multiplier(hid,
 							     rep->field[i]);
-			पूर्ण
-		पूर्ण
-	पूर्ण
-पूर्ण
+			}
+		}
+	}
+}
 EXPORT_SYMBOL_GPL(hid_setup_resolution_multiplier);
 
 /**
- * hid_खोलो_report - खोलो a driver-specअगरic device report
+ * hid_open_report - open a driver-specific device report
  *
  * @device: hid device
  *
- * Parse a report description पूर्णांकo a hid_device काष्ठाure. Reports are
- * क्रमागतerated, fields are attached to these reports.
- * 0 वापसed on success, otherwise nonzero error value.
+ * Parse a report description into a hid_device structure. Reports are
+ * enumerated, fields are attached to these reports.
+ * 0 returned on success, otherwise nonzero error value.
  *
  * This function (or the equivalent hid_parse() macro) should only be
- * called from probe() in drivers, beक्रमe starting the device.
+ * called from probe() in drivers, before starting the device.
  */
-पूर्णांक hid_खोलो_report(काष्ठा hid_device *device)
-अणु
-	काष्ठा hid_parser *parser;
-	काष्ठा hid_item item;
-	अचिन्हित पूर्णांक size;
+int hid_open_report(struct hid_device *device)
+{
+	struct hid_parser *parser;
+	struct hid_item item;
+	unsigned int size;
 	__u8 *start;
 	__u8 *buf;
 	__u8 *end;
 	__u8 *next;
-	पूर्णांक ret;
-	अटल पूर्णांक (*dispatch_type[])(काष्ठा hid_parser *parser,
-				      काष्ठा hid_item *item) = अणु
-		hid_parser_मुख्य,
+	int ret;
+	static int (*dispatch_type[])(struct hid_parser *parser,
+				      struct hid_item *item) = {
+		hid_parser_main,
 		hid_parser_global,
 		hid_parser_local,
 		hid_parser_reserved
-	पूर्ण;
+	};
 
-	अगर (WARN_ON(device->status & HID_STAT_PARSED))
-		वापस -EBUSY;
+	if (WARN_ON(device->status & HID_STAT_PARSED))
+		return -EBUSY;
 
 	start = device->dev_rdesc;
-	अगर (WARN_ON(!start))
-		वापस -ENODEV;
+	if (WARN_ON(!start))
+		return -ENODEV;
 	size = device->dev_rsize;
 
 	buf = kmemdup(start, size, GFP_KERNEL);
-	अगर (buf == शून्य)
-		वापस -ENOMEM;
+	if (buf == NULL)
+		return -ENOMEM;
 
-	अगर (device->driver->report_fixup)
+	if (device->driver->report_fixup)
 		start = device->driver->report_fixup(device, buf, &size);
-	अन्यथा
+	else
 		start = buf;
 
 	start = kmemdup(start, size, GFP_KERNEL);
-	kमुक्त(buf);
-	अगर (start == शून्य)
-		वापस -ENOMEM;
+	kfree(buf);
+	if (start == NULL)
+		return -ENOMEM;
 
 	device->rdesc = start;
 	device->rsize = size;
 
-	parser = vzalloc(माप(काष्ठा hid_parser));
-	अगर (!parser) अणु
+	parser = vzalloc(sizeof(struct hid_parser));
+	if (!parser) {
 		ret = -ENOMEM;
-		जाओ alloc_err;
-	पूर्ण
+		goto alloc_err;
+	}
 
 	parser->device = device;
 
 	end = start + size;
 
-	device->collection = kसुस्मृति(HID_DEFAULT_NUM_COLLECTIONS,
-				     माप(काष्ठा hid_collection), GFP_KERNEL);
-	अगर (!device->collection) अणु
+	device->collection = kcalloc(HID_DEFAULT_NUM_COLLECTIONS,
+				     sizeof(struct hid_collection), GFP_KERNEL);
+	if (!device->collection) {
 		ret = -ENOMEM;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 	device->collection_size = HID_DEFAULT_NUM_COLLECTIONS;
 
 	ret = -EINVAL;
-	जबतक ((next = fetch_item(start, end, &item)) != शून्य) अणु
+	while ((next = fetch_item(start, end, &item)) != NULL) {
 		start = next;
 
-		अगर (item.क्रमmat != HID_ITEM_FORMAT_SHORT) अणु
+		if (item.format != HID_ITEM_FORMAT_SHORT) {
 			hid_err(device, "unexpected long global item\n");
-			जाओ err;
-		पूर्ण
+			goto err;
+		}
 
-		अगर (dispatch_type[item.type](parser, &item)) अणु
+		if (dispatch_type[item.type](parser, &item)) {
 			hid_err(device, "item %u %u %u %u parsing failed\n",
-				item.क्रमmat, (अचिन्हित)item.size,
-				(अचिन्हित)item.type, (अचिन्हित)item.tag);
-			जाओ err;
-		पूर्ण
+				item.format, (unsigned)item.size,
+				(unsigned)item.type, (unsigned)item.tag);
+			goto err;
+		}
 
-		अगर (start == end) अणु
-			अगर (parser->collection_stack_ptr) अणु
+		if (start == end) {
+			if (parser->collection_stack_ptr) {
 				hid_err(device, "unbalanced collection at end of report description\n");
-				जाओ err;
-			पूर्ण
-			अगर (parser->local.delimiter_depth) अणु
+				goto err;
+			}
+			if (parser->local.delimiter_depth) {
 				hid_err(device, "unbalanced delimiter at end of report description\n");
-				जाओ err;
-			पूर्ण
+				goto err;
+			}
 
 			/*
-			 * fetch initial values in हाल the device's
-			 * शेष multiplier isn't the recommended 1
+			 * fetch initial values in case the device's
+			 * default multiplier isn't the recommended 1
 			 */
 			hid_setup_resolution_multiplier(device);
 
-			kमुक्त(parser->collection_stack);
-			vमुक्त(parser);
+			kfree(parser->collection_stack);
+			vfree(parser);
 			device->status |= HID_STAT_PARSED;
 
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			return 0;
+		}
+	}
 
 	hid_err(device, "item fetching failed at offset %u/%u\n",
-		size - (अचिन्हित पूर्णांक)(end - start), size);
+		size - (unsigned int)(end - start), size);
 err:
-	kमुक्त(parser->collection_stack);
+	kfree(parser->collection_stack);
 alloc_err:
-	vमुक्त(parser);
-	hid_बंद_report(device);
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(hid_खोलो_report);
+	vfree(parser);
+	hid_close_report(device);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(hid_open_report);
 
 /*
- * Convert a चिन्हित n-bit पूर्णांकeger to चिन्हित 32-bit पूर्णांकeger. Common
- * हालs are करोne through the compiler, the screwed things has to be
- * करोne by hand.
+ * Convert a signed n-bit integer to signed 32-bit integer. Common
+ * cases are done through the compiler, the screwed things has to be
+ * done by hand.
  */
 
-अटल s32 snto32(__u32 value, अचिन्हित n)
-अणु
-	अगर (!value || !n)
-		वापस 0;
+static s32 snto32(__u32 value, unsigned n)
+{
+	if (!value || !n)
+		return 0;
 
-	चयन (n) अणु
-	हाल 8:  वापस ((__s8)value);
-	हाल 16: वापस ((__s16)value);
-	हाल 32: वापस ((__s32)value);
-	पूर्ण
-	वापस value & (1 << (n - 1)) ? value | (~0U << n) : value;
-पूर्ण
+	switch (n) {
+	case 8:  return ((__s8)value);
+	case 16: return ((__s16)value);
+	case 32: return ((__s32)value);
+	}
+	return value & (1 << (n - 1)) ? value | (~0U << n) : value;
+}
 
-s32 hid_snto32(__u32 value, अचिन्हित n)
-अणु
-	वापस snto32(value, n);
-पूर्ण
+s32 hid_snto32(__u32 value, unsigned n)
+{
+	return snto32(value, n);
+}
 EXPORT_SYMBOL_GPL(hid_snto32);
 
 /*
- * Convert a चिन्हित 32-bit पूर्णांकeger to a चिन्हित n-bit पूर्णांकeger.
+ * Convert a signed 32-bit integer to a signed n-bit integer.
  */
 
-अटल u32 s32ton(__s32 value, अचिन्हित n)
-अणु
+static u32 s32ton(__s32 value, unsigned n)
+{
 	s32 a = value >> (n - 1);
-	अगर (a && a != -1)
-		वापस value < 0 ? 1 << (n - 1) : (1 << (n - 1)) - 1;
-	वापस value & ((1 << n) - 1);
-पूर्ण
+	if (a && a != -1)
+		return value < 0 ? 1 << (n - 1) : (1 << (n - 1)) - 1;
+	return value & ((1 << n) - 1);
+}
 
 /*
  * Extract/implement a data field from/to a little endian report (bit array).
@@ -1346,302 +1345,302 @@ EXPORT_SYMBOL_GPL(hid_snto32);
  * While the USB HID spec allows unlimited length bit fields in "report
  * descriptors", most devices never use more than 16 bits.
  * One model of UPS is claimed to report "LINEV" as a 32-bit field.
- * Search linux-kernel and linux-usb-devel archives क्रम "hid-core extract".
+ * Search linux-kernel and linux-usb-devel archives for "hid-core extract".
  */
 
-अटल u32 __extract(u8 *report, अचिन्हित offset, पूर्णांक n)
-अणु
-	अचिन्हित पूर्णांक idx = offset / 8;
-	अचिन्हित पूर्णांक bit_nr = 0;
-	अचिन्हित पूर्णांक bit_shअगरt = offset % 8;
-	पूर्णांक bits_to_copy = 8 - bit_shअगरt;
+static u32 __extract(u8 *report, unsigned offset, int n)
+{
+	unsigned int idx = offset / 8;
+	unsigned int bit_nr = 0;
+	unsigned int bit_shift = offset % 8;
+	int bits_to_copy = 8 - bit_shift;
 	u32 value = 0;
 	u32 mask = n < 32 ? (1U << n) - 1 : ~0U;
 
-	जबतक (n > 0) अणु
-		value |= ((u32)report[idx] >> bit_shअगरt) << bit_nr;
+	while (n > 0) {
+		value |= ((u32)report[idx] >> bit_shift) << bit_nr;
 		n -= bits_to_copy;
 		bit_nr += bits_to_copy;
 		bits_to_copy = 8;
-		bit_shअगरt = 0;
+		bit_shift = 0;
 		idx++;
-	पूर्ण
+	}
 
-	वापस value & mask;
-पूर्ण
+	return value & mask;
+}
 
-u32 hid_field_extract(स्थिर काष्ठा hid_device *hid, u8 *report,
-			अचिन्हित offset, अचिन्हित n)
-अणु
-	अगर (n > 32) अणु
+u32 hid_field_extract(const struct hid_device *hid, u8 *report,
+			unsigned offset, unsigned n)
+{
+	if (n > 32) {
 		hid_warn_once(hid, "%s() called with n (%d) > 32! (%s)\n",
 			      __func__, n, current->comm);
 		n = 32;
-	पूर्ण
+	}
 
-	वापस __extract(report, offset, n);
-पूर्ण
+	return __extract(report, offset, n);
+}
 EXPORT_SYMBOL_GPL(hid_field_extract);
 
 /*
  * "implement" : set bits in a little endian bit stream.
  * Same concepts as "extract" (see comments above).
- * The data mangled in the bit stream reमुख्यs in little endian
- * order the whole समय. It make more sense to talk about
- * endianness of रेजिस्टर values by considering a रेजिस्टर
+ * The data mangled in the bit stream remains in little endian
+ * order the whole time. It make more sense to talk about
+ * endianness of register values by considering a register
  * a "cached" copy of the little endian bit stream.
  */
 
-अटल व्योम __implement(u8 *report, अचिन्हित offset, पूर्णांक n, u32 value)
-अणु
-	अचिन्हित पूर्णांक idx = offset / 8;
-	अचिन्हित पूर्णांक bit_shअगरt = offset % 8;
-	पूर्णांक bits_to_set = 8 - bit_shअगरt;
+static void __implement(u8 *report, unsigned offset, int n, u32 value)
+{
+	unsigned int idx = offset / 8;
+	unsigned int bit_shift = offset % 8;
+	int bits_to_set = 8 - bit_shift;
 
-	जबतक (n - bits_to_set >= 0) अणु
-		report[idx] &= ~(0xff << bit_shअगरt);
-		report[idx] |= value << bit_shअगरt;
+	while (n - bits_to_set >= 0) {
+		report[idx] &= ~(0xff << bit_shift);
+		report[idx] |= value << bit_shift;
 		value >>= bits_to_set;
 		n -= bits_to_set;
 		bits_to_set = 8;
-		bit_shअगरt = 0;
+		bit_shift = 0;
 		idx++;
-	पूर्ण
+	}
 
 	/* last nibble */
-	अगर (n) अणु
+	if (n) {
 		u8 bit_mask = ((1U << n) - 1);
-		report[idx] &= ~(bit_mask << bit_shअगरt);
-		report[idx] |= value << bit_shअगरt;
-	पूर्ण
-पूर्ण
+		report[idx] &= ~(bit_mask << bit_shift);
+		report[idx] |= value << bit_shift;
+	}
+}
 
-अटल व्योम implement(स्थिर काष्ठा hid_device *hid, u8 *report,
-		      अचिन्हित offset, अचिन्हित n, u32 value)
-अणु
-	अगर (unlikely(n > 32)) अणु
+static void implement(const struct hid_device *hid, u8 *report,
+		      unsigned offset, unsigned n, u32 value)
+{
+	if (unlikely(n > 32)) {
 		hid_warn(hid, "%s() called with n (%d) > 32! (%s)\n",
 			 __func__, n, current->comm);
 		n = 32;
-	पूर्ण अन्यथा अगर (n < 32) अणु
+	} else if (n < 32) {
 		u32 m = (1U << n) - 1;
 
-		अगर (unlikely(value > m)) अणु
+		if (unlikely(value > m)) {
 			hid_warn(hid,
 				 "%s() called with too large value %d (n: %d)! (%s)\n",
 				 __func__, value, n, current->comm);
 			WARN_ON(1);
 			value &= m;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	__implement(report, offset, n, value);
-पूर्ण
+}
 
 /*
- * Search an array क्रम a value.
+ * Search an array for a value.
  */
 
-अटल पूर्णांक search(__s32 *array, __s32 value, अचिन्हित n)
-अणु
-	जबतक (n--) अणु
-		अगर (*array++ == value)
-			वापस 0;
-	पूर्ण
-	वापस -1;
-पूर्ण
+static int search(__s32 *array, __s32 value, unsigned n)
+{
+	while (n--) {
+		if (*array++ == value)
+			return 0;
+	}
+	return -1;
+}
 
 /**
- * hid_match_report - check अगर driver's raw_event should be called
+ * hid_match_report - check if driver's raw_event should be called
  *
  * @hid: hid device
  * @report: hid report to match against
  *
  * compare hid->driver->report_table->report_type to report->type
  */
-अटल पूर्णांक hid_match_report(काष्ठा hid_device *hid, काष्ठा hid_report *report)
-अणु
-	स्थिर काष्ठा hid_report_id *id = hid->driver->report_table;
+static int hid_match_report(struct hid_device *hid, struct hid_report *report)
+{
+	const struct hid_report_id *id = hid->driver->report_table;
 
-	अगर (!id) /* शून्य means all */
-		वापस 1;
+	if (!id) /* NULL means all */
+		return 1;
 
-	क्रम (; id->report_type != HID_TERMINATOR; id++)
-		अगर (id->report_type == HID_ANY_ID ||
+	for (; id->report_type != HID_TERMINATOR; id++)
+		if (id->report_type == HID_ANY_ID ||
 				id->report_type == report->type)
-			वापस 1;
-	वापस 0;
-पूर्ण
+			return 1;
+	return 0;
+}
 
 /**
- * hid_match_usage - check अगर driver's event should be called
+ * hid_match_usage - check if driver's event should be called
  *
  * @hid: hid device
  * @usage: usage to match against
  *
- * compare hid->driver->usage_table->usage_अणुtype,codeपूर्ण to
- * usage->usage_अणुtype,codeपूर्ण
+ * compare hid->driver->usage_table->usage_{type,code} to
+ * usage->usage_{type,code}
  */
-अटल पूर्णांक hid_match_usage(काष्ठा hid_device *hid, काष्ठा hid_usage *usage)
-अणु
-	स्थिर काष्ठा hid_usage_id *id = hid->driver->usage_table;
+static int hid_match_usage(struct hid_device *hid, struct hid_usage *usage)
+{
+	const struct hid_usage_id *id = hid->driver->usage_table;
 
-	अगर (!id) /* शून्य means all */
-		वापस 1;
+	if (!id) /* NULL means all */
+		return 1;
 
-	क्रम (; id->usage_type != HID_ANY_ID - 1; id++)
-		अगर ((id->usage_hid == HID_ANY_ID ||
+	for (; id->usage_type != HID_ANY_ID - 1; id++)
+		if ((id->usage_hid == HID_ANY_ID ||
 				id->usage_hid == usage->hid) &&
 				(id->usage_type == HID_ANY_ID ||
 				id->usage_type == usage->type) &&
 				(id->usage_code == HID_ANY_ID ||
 				 id->usage_code == usage->code))
-			वापस 1;
-	वापस 0;
-पूर्ण
+			return 1;
+	return 0;
+}
 
-अटल व्योम hid_process_event(काष्ठा hid_device *hid, काष्ठा hid_field *field,
-		काष्ठा hid_usage *usage, __s32 value, पूर्णांक पूर्णांकerrupt)
-अणु
-	काष्ठा hid_driver *hdrv = hid->driver;
-	पूर्णांक ret;
+static void hid_process_event(struct hid_device *hid, struct hid_field *field,
+		struct hid_usage *usage, __s32 value, int interrupt)
+{
+	struct hid_driver *hdrv = hid->driver;
+	int ret;
 
-	अगर (!list_empty(&hid->debug_list))
+	if (!list_empty(&hid->debug_list))
 		hid_dump_input(hid, usage, value);
 
-	अगर (hdrv && hdrv->event && hid_match_usage(hid, usage)) अणु
+	if (hdrv && hdrv->event && hid_match_usage(hid, usage)) {
 		ret = hdrv->event(hid, field, usage, value);
-		अगर (ret != 0) अणु
-			अगर (ret < 0)
+		if (ret != 0) {
+			if (ret < 0)
 				hid_err(hid, "%s's event failed with %d\n",
 						hdrv->name, ret);
-			वापस;
-		पूर्ण
-	पूर्ण
+			return;
+		}
+	}
 
-	अगर (hid->claimed & HID_CLAIMED_INPUT)
+	if (hid->claimed & HID_CLAIMED_INPUT)
 		hidinput_hid_event(hid, field, usage, value);
-	अगर (hid->claimed & HID_CLAIMED_HIDDEV && पूर्णांकerrupt && hid->hiddev_hid_event)
+	if (hid->claimed & HID_CLAIMED_HIDDEV && interrupt && hid->hiddev_hid_event)
 		hid->hiddev_hid_event(hid, field, usage, value);
-पूर्ण
+}
 
 /*
  * Analyse a received field, and fetch the data from it. The field
- * content is stored क्रम next report processing (we करो dअगरferential
+ * content is stored for next report processing (we do differential
  * reporting to the layer).
  */
 
-अटल व्योम hid_input_field(काष्ठा hid_device *hid, काष्ठा hid_field *field,
-			    __u8 *data, पूर्णांक पूर्णांकerrupt)
-अणु
-	अचिन्हित n;
-	अचिन्हित count = field->report_count;
-	अचिन्हित offset = field->report_offset;
-	अचिन्हित size = field->report_size;
+static void hid_input_field(struct hid_device *hid, struct hid_field *field,
+			    __u8 *data, int interrupt)
+{
+	unsigned n;
+	unsigned count = field->report_count;
+	unsigned offset = field->report_offset;
+	unsigned size = field->report_size;
 	__s32 min = field->logical_minimum;
 	__s32 max = field->logical_maximum;
 	__s32 *value;
 
-	value = kदो_स्मृति_array(count, माप(__s32), GFP_ATOMIC);
-	अगर (!value)
-		वापस;
+	value = kmalloc_array(count, sizeof(__s32), GFP_ATOMIC);
+	if (!value)
+		return;
 
-	क्रम (n = 0; n < count; n++) अणु
+	for (n = 0; n < count; n++) {
 
 		value[n] = min < 0 ?
 			snto32(hid_field_extract(hid, data, offset + n * size,
 			       size), size) :
 			hid_field_extract(hid, data, offset + n * size, size);
 
-		/* Ignore report अगर ErrorRollOver */
-		अगर (!(field->flags & HID_MAIN_ITEM_VARIABLE) &&
+		/* Ignore report if ErrorRollOver */
+		if (!(field->flags & HID_MAIN_ITEM_VARIABLE) &&
 		    value[n] >= min && value[n] <= max &&
 		    value[n] - min < field->maxusage &&
 		    field->usage[value[n] - min].hid == HID_UP_KEYBOARD + 1)
-			जाओ निकास;
-	पूर्ण
+			goto exit;
+	}
 
-	क्रम (n = 0; n < count; n++) अणु
+	for (n = 0; n < count; n++) {
 
-		अगर (HID_MAIN_ITEM_VARIABLE & field->flags) अणु
-			hid_process_event(hid, field, &field->usage[n], value[n], पूर्णांकerrupt);
-			जारी;
-		पूर्ण
+		if (HID_MAIN_ITEM_VARIABLE & field->flags) {
+			hid_process_event(hid, field, &field->usage[n], value[n], interrupt);
+			continue;
+		}
 
-		अगर (field->value[n] >= min && field->value[n] <= max
+		if (field->value[n] >= min && field->value[n] <= max
 			&& field->value[n] - min < field->maxusage
 			&& field->usage[field->value[n] - min].hid
 			&& search(value, field->value[n], count))
-				hid_process_event(hid, field, &field->usage[field->value[n] - min], 0, पूर्णांकerrupt);
+				hid_process_event(hid, field, &field->usage[field->value[n] - min], 0, interrupt);
 
-		अगर (value[n] >= min && value[n] <= max
+		if (value[n] >= min && value[n] <= max
 			&& value[n] - min < field->maxusage
 			&& field->usage[value[n] - min].hid
 			&& search(field->value, value[n], count))
-				hid_process_event(hid, field, &field->usage[value[n] - min], 1, पूर्णांकerrupt);
-	पूर्ण
+				hid_process_event(hid, field, &field->usage[value[n] - min], 1, interrupt);
+	}
 
-	स_नकल(field->value, value, count * माप(__s32));
-निकास:
-	kमुक्त(value);
-पूर्ण
+	memcpy(field->value, value, count * sizeof(__s32));
+exit:
+	kfree(value);
+}
 
 /*
- * Output the field पूर्णांकo the report.
+ * Output the field into the report.
  */
 
-अटल व्योम hid_output_field(स्थिर काष्ठा hid_device *hid,
-			     काष्ठा hid_field *field, __u8 *data)
-अणु
-	अचिन्हित count = field->report_count;
-	अचिन्हित offset = field->report_offset;
-	अचिन्हित size = field->report_size;
-	अचिन्हित n;
+static void hid_output_field(const struct hid_device *hid,
+			     struct hid_field *field, __u8 *data)
+{
+	unsigned count = field->report_count;
+	unsigned offset = field->report_offset;
+	unsigned size = field->report_size;
+	unsigned n;
 
-	क्रम (n = 0; n < count; n++) अणु
-		अगर (field->logical_minimum < 0)	/* चिन्हित values */
+	for (n = 0; n < count; n++) {
+		if (field->logical_minimum < 0)	/* signed values */
 			implement(hid, data, offset + n * size, size,
 				  s32ton(field->value[n], size));
-		अन्यथा				/* अचिन्हित values */
+		else				/* unsigned values */
 			implement(hid, data, offset + n * size, size,
 				  field->value[n]);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
  * Compute the size of a report.
  */
-अटल माप_प्रकार hid_compute_report_size(काष्ठा hid_report *report)
-अणु
-	अगर (report->size)
-		वापस ((report->size - 1) >> 3) + 1;
+static size_t hid_compute_report_size(struct hid_report *report)
+{
+	if (report->size)
+		return ((report->size - 1) >> 3) + 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Create a report. 'data' has to be allocated using
  * hid_alloc_report_buf() so that it has proper size.
  */
 
-व्योम hid_output_report(काष्ठा hid_report *report, __u8 *data)
-अणु
-	अचिन्हित n;
+void hid_output_report(struct hid_report *report, __u8 *data)
+{
+	unsigned n;
 
-	अगर (report->id > 0)
+	if (report->id > 0)
 		*data++ = report->id;
 
-	स_रखो(data, 0, hid_compute_report_size(report));
-	क्रम (n = 0; n < report->maxfield; n++)
+	memset(data, 0, hid_compute_report_size(report));
+	for (n = 0; n < report->maxfield; n++)
 		hid_output_field(report->device, report->field[n], data);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(hid_output_report);
 
 /*
- * Allocator क्रम buffer that is going to be passed to hid_output_report()
+ * Allocator for buffer that is going to be passed to hid_output_report()
  */
-u8 *hid_alloc_report_buf(काष्ठा hid_report *report, gfp_t flags)
-अणु
+u8 *hid_alloc_report_buf(struct hid_report *report, gfp_t flags)
+{
 	/*
 	 * 7 extra bytes are necessary to achieve proper functionality
 	 * of implement() working on 8 byte chunks
@@ -1649,152 +1648,152 @@ u8 *hid_alloc_report_buf(काष्ठा hid_report *report, gfp_t flags)
 
 	u32 len = hid_report_len(report) + 7;
 
-	वापस kदो_स्मृति(len, flags);
-पूर्ण
+	return kmalloc(len, flags);
+}
 EXPORT_SYMBOL_GPL(hid_alloc_report_buf);
 
 /*
- * Set a field value. The report this field beदीर्घs to has to be
+ * Set a field value. The report this field belongs to has to be
  * created and transferred to the device, to set this value in the
  * device.
  */
 
-पूर्णांक hid_set_field(काष्ठा hid_field *field, अचिन्हित offset, __s32 value)
-अणु
-	अचिन्हित size;
+int hid_set_field(struct hid_field *field, unsigned offset, __s32 value)
+{
+	unsigned size;
 
-	अगर (!field)
-		वापस -1;
+	if (!field)
+		return -1;
 
 	size = field->report_size;
 
 	hid_dump_input(field->report->device, field->usage + offset, value);
 
-	अगर (offset >= field->report_count) अणु
+	if (offset >= field->report_count) {
 		hid_err(field->report->device, "offset (%d) exceeds report_count (%d)\n",
 				offset, field->report_count);
-		वापस -1;
-	पूर्ण
-	अगर (field->logical_minimum < 0) अणु
-		अगर (value != snto32(s32ton(value, size), size)) अणु
+		return -1;
+	}
+	if (field->logical_minimum < 0) {
+		if (value != snto32(s32ton(value, size), size)) {
 			hid_err(field->report->device, "value %d is out of range\n", value);
-			वापस -1;
-		पूर्ण
-	पूर्ण
+			return -1;
+		}
+	}
 	field->value[offset] = value;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(hid_set_field);
 
-अटल काष्ठा hid_report *hid_get_report(काष्ठा hid_report_क्रमागत *report_क्रमागत,
-		स्थिर u8 *data)
-अणु
-	काष्ठा hid_report *report;
-	अचिन्हित पूर्णांक n = 0;	/* Normally report number is 0 */
+static struct hid_report *hid_get_report(struct hid_report_enum *report_enum,
+		const u8 *data)
+{
+	struct hid_report *report;
+	unsigned int n = 0;	/* Normally report number is 0 */
 
 	/* Device uses numbered reports, data[0] is report number */
-	अगर (report_क्रमागत->numbered)
+	if (report_enum->numbered)
 		n = *data;
 
-	report = report_क्रमागत->report_id_hash[n];
-	अगर (report == शून्य)
+	report = report_enum->report_id_hash[n];
+	if (report == NULL)
 		dbg_hid("undefined report_id %u received\n", n);
 
-	वापस report;
-पूर्ण
+	return report;
+}
 
 /*
  * Implement a generic .request() callback, using .raw_request()
  * DO NOT USE in hid drivers directly, but through hid_hw_request instead.
  */
-पूर्णांक __hid_request(काष्ठा hid_device *hid, काष्ठा hid_report *report,
-		पूर्णांक reqtype)
-अणु
-	अक्षर *buf;
-	पूर्णांक ret;
+int __hid_request(struct hid_device *hid, struct hid_report *report,
+		int reqtype)
+{
+	char *buf;
+	int ret;
 	u32 len;
 
 	buf = hid_alloc_report_buf(report, GFP_KERNEL);
-	अगर (!buf)
-		वापस -ENOMEM;
+	if (!buf)
+		return -ENOMEM;
 
 	len = hid_report_len(report);
 
-	अगर (reqtype == HID_REQ_SET_REPORT)
+	if (reqtype == HID_REQ_SET_REPORT)
 		hid_output_report(report, buf);
 
 	ret = hid->ll_driver->raw_request(hid, report->id, buf, len,
 					  report->type, reqtype);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dbg_hid("unable to complete request: %d\n", ret);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (reqtype == HID_REQ_GET_REPORT)
+	if (reqtype == HID_REQ_GET_REPORT)
 		hid_input_report(hid, report->type, buf, ret, 0);
 
 	ret = 0;
 
 out:
-	kमुक्त(buf);
-	वापस ret;
-पूर्ण
+	kfree(buf);
+	return ret;
+}
 EXPORT_SYMBOL_GPL(__hid_request);
 
-पूर्णांक hid_report_raw_event(काष्ठा hid_device *hid, पूर्णांक type, u8 *data, u32 size,
-		पूर्णांक पूर्णांकerrupt)
-अणु
-	काष्ठा hid_report_क्रमागत *report_क्रमागत = hid->report_क्रमागत + type;
-	काष्ठा hid_report *report;
-	काष्ठा hid_driver *hdrv;
-	अचिन्हित पूर्णांक a;
+int hid_report_raw_event(struct hid_device *hid, int type, u8 *data, u32 size,
+		int interrupt)
+{
+	struct hid_report_enum *report_enum = hid->report_enum + type;
+	struct hid_report *report;
+	struct hid_driver *hdrv;
+	unsigned int a;
 	u32 rsize, csize = size;
 	u8 *cdata = data;
-	पूर्णांक ret = 0;
+	int ret = 0;
 
-	report = hid_get_report(report_क्रमागत, data);
-	अगर (!report)
-		जाओ out;
+	report = hid_get_report(report_enum, data);
+	if (!report)
+		goto out;
 
-	अगर (report_क्रमागत->numbered) अणु
+	if (report_enum->numbered) {
 		cdata++;
 		csize--;
-	पूर्ण
+	}
 
 	rsize = hid_compute_report_size(report);
 
-	अगर (report_क्रमागत->numbered && rsize >= HID_MAX_BUFFER_SIZE)
+	if (report_enum->numbered && rsize >= HID_MAX_BUFFER_SIZE)
 		rsize = HID_MAX_BUFFER_SIZE - 1;
-	अन्यथा अगर (rsize > HID_MAX_BUFFER_SIZE)
+	else if (rsize > HID_MAX_BUFFER_SIZE)
 		rsize = HID_MAX_BUFFER_SIZE;
 
-	अगर (csize < rsize) अणु
+	if (csize < rsize) {
 		dbg_hid("report %d is too short, (%d < %d)\n", report->id,
 				csize, rsize);
-		स_रखो(cdata + csize, 0, rsize - csize);
-	पूर्ण
+		memset(cdata + csize, 0, rsize - csize);
+	}
 
-	अगर ((hid->claimed & HID_CLAIMED_HIDDEV) && hid->hiddev_report_event)
+	if ((hid->claimed & HID_CLAIMED_HIDDEV) && hid->hiddev_report_event)
 		hid->hiddev_report_event(hid, report);
-	अगर (hid->claimed & HID_CLAIMED_HIDRAW) अणु
+	if (hid->claimed & HID_CLAIMED_HIDRAW) {
 		ret = hidraw_report_event(hid, data, size);
-		अगर (ret)
-			जाओ out;
-	पूर्ण
+		if (ret)
+			goto out;
+	}
 
-	अगर (hid->claimed != HID_CLAIMED_HIDRAW && report->maxfield) अणु
-		क्रम (a = 0; a < report->maxfield; a++)
-			hid_input_field(hid, report->field[a], cdata, पूर्णांकerrupt);
+	if (hid->claimed != HID_CLAIMED_HIDRAW && report->maxfield) {
+		for (a = 0; a < report->maxfield; a++)
+			hid_input_field(hid, report->field[a], cdata, interrupt);
 		hdrv = hid->driver;
-		अगर (hdrv && hdrv->report)
+		if (hdrv && hdrv->report)
 			hdrv->report(hid, report);
-	पूर्ण
+	}
 
-	अगर (hid->claimed & HID_CLAIMED_INPUT)
+	if (hid->claimed & HID_CLAIMED_INPUT)
 		hidinput_report_event(hid, report);
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(hid_report_raw_event);
 
 /**
@@ -1804,217 +1803,217 @@ EXPORT_SYMBOL_GPL(hid_report_raw_event);
  * @type: HID report type (HID_*_REPORT)
  * @data: report contents
  * @size: size of data parameter
- * @पूर्णांकerrupt: distinguish between पूर्णांकerrupt and control transfers
+ * @interrupt: distinguish between interrupt and control transfers
  *
- * This is data entry क्रम lower layers.
+ * This is data entry for lower layers.
  */
-पूर्णांक hid_input_report(काष्ठा hid_device *hid, पूर्णांक type, u8 *data, u32 size, पूर्णांक पूर्णांकerrupt)
-अणु
-	काष्ठा hid_report_क्रमागत *report_क्रमागत;
-	काष्ठा hid_driver *hdrv;
-	काष्ठा hid_report *report;
-	पूर्णांक ret = 0;
+int hid_input_report(struct hid_device *hid, int type, u8 *data, u32 size, int interrupt)
+{
+	struct hid_report_enum *report_enum;
+	struct hid_driver *hdrv;
+	struct hid_report *report;
+	int ret = 0;
 
-	अगर (!hid)
-		वापस -ENODEV;
+	if (!hid)
+		return -ENODEV;
 
-	अगर (करोwn_trylock(&hid->driver_input_lock))
-		वापस -EBUSY;
+	if (down_trylock(&hid->driver_input_lock))
+		return -EBUSY;
 
-	अगर (!hid->driver) अणु
+	if (!hid->driver) {
 		ret = -ENODEV;
-		जाओ unlock;
-	पूर्ण
-	report_क्रमागत = hid->report_क्रमागत + type;
+		goto unlock;
+	}
+	report_enum = hid->report_enum + type;
 	hdrv = hid->driver;
 
-	अगर (!size) अणु
+	if (!size) {
 		dbg_hid("empty report\n");
 		ret = -1;
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
-	/* Aव्योम unnecessary overhead अगर debugfs is disabled */
-	अगर (!list_empty(&hid->debug_list))
+	/* Avoid unnecessary overhead if debugfs is disabled */
+	if (!list_empty(&hid->debug_list))
 		hid_dump_report(hid, type, data, size);
 
-	report = hid_get_report(report_क्रमागत, data);
+	report = hid_get_report(report_enum, data);
 
-	अगर (!report) अणु
+	if (!report) {
 		ret = -1;
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
-	अगर (hdrv && hdrv->raw_event && hid_match_report(hid, report)) अणु
+	if (hdrv && hdrv->raw_event && hid_match_report(hid, report)) {
 		ret = hdrv->raw_event(hid, report, data, size);
-		अगर (ret < 0)
-			जाओ unlock;
-	पूर्ण
+		if (ret < 0)
+			goto unlock;
+	}
 
-	ret = hid_report_raw_event(hid, type, data, size, पूर्णांकerrupt);
+	ret = hid_report_raw_event(hid, type, data, size, interrupt);
 
 unlock:
 	up(&hid->driver_input_lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(hid_input_report);
 
-bool hid_match_one_id(स्थिर काष्ठा hid_device *hdev,
-		      स्थिर काष्ठा hid_device_id *id)
-अणु
-	वापस (id->bus == HID_BUS_ANY || id->bus == hdev->bus) &&
+bool hid_match_one_id(const struct hid_device *hdev,
+		      const struct hid_device_id *id)
+{
+	return (id->bus == HID_BUS_ANY || id->bus == hdev->bus) &&
 		(id->group == HID_GROUP_ANY || id->group == hdev->group) &&
-		(id->venकरोr == HID_ANY_ID || id->venकरोr == hdev->venकरोr) &&
+		(id->vendor == HID_ANY_ID || id->vendor == hdev->vendor) &&
 		(id->product == HID_ANY_ID || id->product == hdev->product);
-पूर्ण
+}
 
-स्थिर काष्ठा hid_device_id *hid_match_id(स्थिर काष्ठा hid_device *hdev,
-		स्थिर काष्ठा hid_device_id *id)
-अणु
-	क्रम (; id->bus; id++)
-		अगर (hid_match_one_id(hdev, id))
-			वापस id;
+const struct hid_device_id *hid_match_id(const struct hid_device *hdev,
+		const struct hid_device_id *id)
+{
+	for (; id->bus; id++)
+		if (hid_match_one_id(hdev, id))
+			return id;
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल स्थिर काष्ठा hid_device_id hid_hiddev_list[] = अणु
-	अणु HID_USB_DEVICE(USB_VENDOR_ID_MGE, USB_DEVICE_ID_MGE_UPS) पूर्ण,
-	अणु HID_USB_DEVICE(USB_VENDOR_ID_MGE, USB_DEVICE_ID_MGE_UPS1) पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct hid_device_id hid_hiddev_list[] = {
+	{ HID_USB_DEVICE(USB_VENDOR_ID_MGE, USB_DEVICE_ID_MGE_UPS) },
+	{ HID_USB_DEVICE(USB_VENDOR_ID_MGE, USB_DEVICE_ID_MGE_UPS1) },
+	{ }
+};
 
-अटल bool hid_hiddev(काष्ठा hid_device *hdev)
-अणु
-	वापस !!hid_match_id(hdev, hid_hiddev_list);
-पूर्ण
+static bool hid_hiddev(struct hid_device *hdev)
+{
+	return !!hid_match_id(hdev, hid_hiddev_list);
+}
 
 
-अटल sमाप_प्रकार
-पढ़ो_report_descriptor(काष्ठा file *filp, काष्ठा kobject *kobj,
-		काष्ठा bin_attribute *attr,
-		अक्षर *buf, loff_t off, माप_प्रकार count)
-अणु
-	काष्ठा device *dev = kobj_to_dev(kobj);
-	काष्ठा hid_device *hdev = to_hid_device(dev);
+static ssize_t
+read_report_descriptor(struct file *filp, struct kobject *kobj,
+		struct bin_attribute *attr,
+		char *buf, loff_t off, size_t count)
+{
+	struct device *dev = kobj_to_dev(kobj);
+	struct hid_device *hdev = to_hid_device(dev);
 
-	अगर (off >= hdev->rsize)
-		वापस 0;
+	if (off >= hdev->rsize)
+		return 0;
 
-	अगर (off + count > hdev->rsize)
+	if (off + count > hdev->rsize)
 		count = hdev->rsize - off;
 
-	स_नकल(buf, hdev->rdesc + off, count);
+	memcpy(buf, hdev->rdesc + off, count);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल sमाप_प्रकार
-show_country(काष्ठा device *dev, काष्ठा device_attribute *attr,
-		अक्षर *buf)
-अणु
-	काष्ठा hid_device *hdev = to_hid_device(dev);
+static ssize_t
+show_country(struct device *dev, struct device_attribute *attr,
+		char *buf)
+{
+	struct hid_device *hdev = to_hid_device(dev);
 
-	वापस प्र_लिखो(buf, "%02x\n", hdev->country & 0xff);
-पूर्ण
+	return sprintf(buf, "%02x\n", hdev->country & 0xff);
+}
 
-अटल काष्ठा bin_attribute dev_bin_attr_report_desc = अणु
-	.attr = अणु .name = "report_descriptor", .mode = 0444 पूर्ण,
-	.पढ़ो = पढ़ो_report_descriptor,
+static struct bin_attribute dev_bin_attr_report_desc = {
+	.attr = { .name = "report_descriptor", .mode = 0444 },
+	.read = read_report_descriptor,
 	.size = HID_MAX_DESCRIPTOR_SIZE,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा device_attribute dev_attr_country = अणु
-	.attr = अणु .name = "country", .mode = 0444 पूर्ण,
+static const struct device_attribute dev_attr_country = {
+	.attr = { .name = "country", .mode = 0444 },
 	.show = show_country,
-पूर्ण;
+};
 
-पूर्णांक hid_connect(काष्ठा hid_device *hdev, अचिन्हित पूर्णांक connect_mask)
-अणु
-	अटल स्थिर अक्षर *types[] = अणु "Device", "Pointer", "Mouse", "Device",
+int hid_connect(struct hid_device *hdev, unsigned int connect_mask)
+{
+	static const char *types[] = { "Device", "Pointer", "Mouse", "Device",
 		"Joystick", "Gamepad", "Keyboard", "Keypad",
 		"Multi-Axis Controller"
-	पूर्ण;
-	स्थिर अक्षर *type, *bus;
-	अक्षर buf[64] = "";
-	अचिन्हित पूर्णांक i;
-	पूर्णांक len;
-	पूर्णांक ret;
+	};
+	const char *type, *bus;
+	char buf[64] = "";
+	unsigned int i;
+	int len;
+	int ret;
 
-	अगर (hdev->quirks & HID_QUIRK_HIDDEV_FORCE)
+	if (hdev->quirks & HID_QUIRK_HIDDEV_FORCE)
 		connect_mask |= (HID_CONNECT_HIDDEV_FORCE | HID_CONNECT_HIDDEV);
-	अगर (hdev->quirks & HID_QUIRK_HIDINPUT_FORCE)
+	if (hdev->quirks & HID_QUIRK_HIDINPUT_FORCE)
 		connect_mask |= HID_CONNECT_HIDINPUT_FORCE;
-	अगर (hdev->bus != BUS_USB)
+	if (hdev->bus != BUS_USB)
 		connect_mask &= ~HID_CONNECT_HIDDEV;
-	अगर (hid_hiddev(hdev))
+	if (hid_hiddev(hdev))
 		connect_mask |= HID_CONNECT_HIDDEV_FORCE;
 
-	अगर ((connect_mask & HID_CONNECT_HIDINPUT) && !hidinput_connect(hdev,
+	if ((connect_mask & HID_CONNECT_HIDINPUT) && !hidinput_connect(hdev,
 				connect_mask & HID_CONNECT_HIDINPUT_FORCE))
 		hdev->claimed |= HID_CLAIMED_INPUT;
 
-	अगर ((connect_mask & HID_CONNECT_HIDDEV) && hdev->hiddev_connect &&
+	if ((connect_mask & HID_CONNECT_HIDDEV) && hdev->hiddev_connect &&
 			!hdev->hiddev_connect(hdev,
 				connect_mask & HID_CONNECT_HIDDEV_FORCE))
 		hdev->claimed |= HID_CLAIMED_HIDDEV;
-	अगर ((connect_mask & HID_CONNECT_HIDRAW) && !hidraw_connect(hdev))
+	if ((connect_mask & HID_CONNECT_HIDRAW) && !hidraw_connect(hdev))
 		hdev->claimed |= HID_CLAIMED_HIDRAW;
 
-	अगर (connect_mask & HID_CONNECT_DRIVER)
+	if (connect_mask & HID_CONNECT_DRIVER)
 		hdev->claimed |= HID_CLAIMED_DRIVER;
 
 	/* Drivers with the ->raw_event callback set are not required to connect
 	 * to any other listener. */
-	अगर (!hdev->claimed && !hdev->driver->raw_event) अणु
+	if (!hdev->claimed && !hdev->driver->raw_event) {
 		hid_err(hdev, "device has no listeners, quitting\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	अगर ((hdev->claimed & HID_CLAIMED_INPUT) &&
+	if ((hdev->claimed & HID_CLAIMED_INPUT) &&
 			(connect_mask & HID_CONNECT_FF) && hdev->ff_init)
 		hdev->ff_init(hdev);
 
 	len = 0;
-	अगर (hdev->claimed & HID_CLAIMED_INPUT)
-		len += प्र_लिखो(buf + len, "input");
-	अगर (hdev->claimed & HID_CLAIMED_HIDDEV)
-		len += प्र_लिखो(buf + len, "%shiddev%d", len ? "," : "",
-				((काष्ठा hiddev *)hdev->hiddev)->minor);
-	अगर (hdev->claimed & HID_CLAIMED_HIDRAW)
-		len += प्र_लिखो(buf + len, "%shidraw%d", len ? "," : "",
-				((काष्ठा hidraw *)hdev->hidraw)->minor);
+	if (hdev->claimed & HID_CLAIMED_INPUT)
+		len += sprintf(buf + len, "input");
+	if (hdev->claimed & HID_CLAIMED_HIDDEV)
+		len += sprintf(buf + len, "%shiddev%d", len ? "," : "",
+				((struct hiddev *)hdev->hiddev)->minor);
+	if (hdev->claimed & HID_CLAIMED_HIDRAW)
+		len += sprintf(buf + len, "%shidraw%d", len ? "," : "",
+				((struct hidraw *)hdev->hidraw)->minor);
 
 	type = "Device";
-	क्रम (i = 0; i < hdev->maxcollection; i++) अणु
-		काष्ठा hid_collection *col = &hdev->collection[i];
-		अगर (col->type == HID_COLLECTION_APPLICATION &&
+	for (i = 0; i < hdev->maxcollection; i++) {
+		struct hid_collection *col = &hdev->collection[i];
+		if (col->type == HID_COLLECTION_APPLICATION &&
 		   (col->usage & HID_USAGE_PAGE) == HID_UP_GENDESK &&
-		   (col->usage & 0xffff) < ARRAY_SIZE(types)) अणु
+		   (col->usage & 0xffff) < ARRAY_SIZE(types)) {
 			type = types[col->usage & 0xffff];
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	चयन (hdev->bus) अणु
-	हाल BUS_USB:
+	switch (hdev->bus) {
+	case BUS_USB:
 		bus = "USB";
-		अवरोध;
-	हाल BUS_BLUETOOTH:
+		break;
+	case BUS_BLUETOOTH:
 		bus = "BLUETOOTH";
-		अवरोध;
-	हाल BUS_I2C:
+		break;
+	case BUS_I2C:
 		bus = "I2C";
-		अवरोध;
-	हाल BUS_VIRTUAL:
+		break;
+	case BUS_VIRTUAL:
 		bus = "VIRTUAL";
-		अवरोध;
-	शेष:
+		break;
+	default:
 		bus = "<UNKNOWN>";
-	पूर्ण
+	}
 
 	ret = device_create_file(&hdev->dev, &dev_attr_country);
-	अगर (ret)
+	if (ret)
 		hid_warn(hdev,
 			 "can't create sysfs country code attribute err: %d\n", ret);
 
@@ -2022,146 +2021,146 @@ show_country(काष्ठा device *dev, काष्ठा device_attribute
 		 buf, bus, hdev->version >> 8, hdev->version & 0xff,
 		 type, hdev->name, hdev->phys);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(hid_connect);
 
-व्योम hid_disconnect(काष्ठा hid_device *hdev)
-अणु
-	device_हटाओ_file(&hdev->dev, &dev_attr_country);
-	अगर (hdev->claimed & HID_CLAIMED_INPUT)
+void hid_disconnect(struct hid_device *hdev)
+{
+	device_remove_file(&hdev->dev, &dev_attr_country);
+	if (hdev->claimed & HID_CLAIMED_INPUT)
 		hidinput_disconnect(hdev);
-	अगर (hdev->claimed & HID_CLAIMED_HIDDEV)
+	if (hdev->claimed & HID_CLAIMED_HIDDEV)
 		hdev->hiddev_disconnect(hdev);
-	अगर (hdev->claimed & HID_CLAIMED_HIDRAW)
+	if (hdev->claimed & HID_CLAIMED_HIDRAW)
 		hidraw_disconnect(hdev);
 	hdev->claimed = 0;
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(hid_disconnect);
 
 /**
  * hid_hw_start - start underlying HW
  * @hdev: hid device
- * @connect_mask: which outमाला_दो to connect, see HID_CONNECT_*
+ * @connect_mask: which outputs to connect, see HID_CONNECT_*
  *
  * Call this in probe function *after* hid_parse. This will setup HW
- * buffers and start the device (अगर not defeirred to device खोलो).
- * hid_hw_stop must be called अगर this was successful.
+ * buffers and start the device (if not defeirred to device open).
+ * hid_hw_stop must be called if this was successful.
  */
-पूर्णांक hid_hw_start(काष्ठा hid_device *hdev, अचिन्हित पूर्णांक connect_mask)
-अणु
-	पूर्णांक error;
+int hid_hw_start(struct hid_device *hdev, unsigned int connect_mask)
+{
+	int error;
 
 	error = hdev->ll_driver->start(hdev);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
-	अगर (connect_mask) अणु
+	if (connect_mask) {
 		error = hid_connect(hdev, connect_mask);
-		अगर (error) अणु
+		if (error) {
 			hdev->ll_driver->stop(hdev);
-			वापस error;
-		पूर्ण
-	पूर्ण
+			return error;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(hid_hw_start);
 
 /**
  * hid_hw_stop - stop underlying HW
  * @hdev: hid device
  *
- * This is usually called from हटाओ function or from probe when something
- * failed and hid_hw_start was called alपढ़ोy.
+ * This is usually called from remove function or from probe when something
+ * failed and hid_hw_start was called already.
  */
-व्योम hid_hw_stop(काष्ठा hid_device *hdev)
-अणु
+void hid_hw_stop(struct hid_device *hdev)
+{
 	hid_disconnect(hdev);
 	hdev->ll_driver->stop(hdev);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(hid_hw_stop);
 
 /**
- * hid_hw_खोलो - संकेत underlying HW to start delivering events
+ * hid_hw_open - signal underlying HW to start delivering events
  * @hdev: hid device
  *
  * Tell underlying HW to start delivering events from the device.
- * This function should be called someसमय after successful call
+ * This function should be called sometime after successful call
  * to hid_hw_start().
  */
-पूर्णांक hid_hw_खोलो(काष्ठा hid_device *hdev)
-अणु
-	पूर्णांक ret;
+int hid_hw_open(struct hid_device *hdev)
+{
+	int ret;
 
-	ret = mutex_lock_समाप्तable(&hdev->ll_खोलो_lock);
-	अगर (ret)
-		वापस ret;
+	ret = mutex_lock_killable(&hdev->ll_open_lock);
+	if (ret)
+		return ret;
 
-	अगर (!hdev->ll_खोलो_count++) अणु
-		ret = hdev->ll_driver->खोलो(hdev);
-		अगर (ret)
-			hdev->ll_खोलो_count--;
-	पूर्ण
+	if (!hdev->ll_open_count++) {
+		ret = hdev->ll_driver->open(hdev);
+		if (ret)
+			hdev->ll_open_count--;
+	}
 
-	mutex_unlock(&hdev->ll_खोलो_lock);
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(hid_hw_खोलो);
+	mutex_unlock(&hdev->ll_open_lock);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(hid_hw_open);
 
 /**
- * hid_hw_बंद - संकेत underlaying HW to stop delivering events
+ * hid_hw_close - signal underlaying HW to stop delivering events
  *
  * @hdev: hid device
  *
- * This function indicates that we are not पूर्णांकerested in the events
+ * This function indicates that we are not interested in the events
  * from this device anymore. Delivery of events may or may not stop,
  * depending on the number of users still outstanding.
  */
-व्योम hid_hw_बंद(काष्ठा hid_device *hdev)
-अणु
-	mutex_lock(&hdev->ll_खोलो_lock);
-	अगर (!--hdev->ll_खोलो_count)
-		hdev->ll_driver->बंद(hdev);
-	mutex_unlock(&hdev->ll_खोलो_lock);
-पूर्ण
-EXPORT_SYMBOL_GPL(hid_hw_बंद);
+void hid_hw_close(struct hid_device *hdev)
+{
+	mutex_lock(&hdev->ll_open_lock);
+	if (!--hdev->ll_open_count)
+		hdev->ll_driver->close(hdev);
+	mutex_unlock(&hdev->ll_open_lock);
+}
+EXPORT_SYMBOL_GPL(hid_hw_close);
 
-काष्ठा hid_dynid अणु
-	काष्ठा list_head list;
-	काष्ठा hid_device_id id;
-पूर्ण;
+struct hid_dynid {
+	struct list_head list;
+	struct hid_device_id id;
+};
 
 /**
  * new_id_store - add a new HID device ID to this driver and re-probe devices
  * @drv: target device driver
- * @buf: buffer क्रम scanning device ID data
+ * @buf: buffer for scanning device ID data
  * @count: input size
  *
  * Adds a new dynamic hid device ID to this driver,
- * and causes the driver to probe क्रम all devices again.
+ * and causes the driver to probe for all devices again.
  */
-अटल sमाप_प्रकार new_id_store(काष्ठा device_driver *drv, स्थिर अक्षर *buf,
-		माप_प्रकार count)
-अणु
-	काष्ठा hid_driver *hdrv = to_hid_driver(drv);
-	काष्ठा hid_dynid *dynid;
-	__u32 bus, venकरोr, product;
-	अचिन्हित दीर्घ driver_data = 0;
-	पूर्णांक ret;
+static ssize_t new_id_store(struct device_driver *drv, const char *buf,
+		size_t count)
+{
+	struct hid_driver *hdrv = to_hid_driver(drv);
+	struct hid_dynid *dynid;
+	__u32 bus, vendor, product;
+	unsigned long driver_data = 0;
+	int ret;
 
-	ret = माला_पूछो(buf, "%x %x %x %lx",
-			&bus, &venकरोr, &product, &driver_data);
-	अगर (ret < 3)
-		वापस -EINVAL;
+	ret = sscanf(buf, "%x %x %x %lx",
+			&bus, &vendor, &product, &driver_data);
+	if (ret < 3)
+		return -EINVAL;
 
-	dynid = kzalloc(माप(*dynid), GFP_KERNEL);
-	अगर (!dynid)
-		वापस -ENOMEM;
+	dynid = kzalloc(sizeof(*dynid), GFP_KERNEL);
+	if (!dynid)
+		return -ENOMEM;
 
 	dynid->id.bus = bus;
 	dynid->id.group = HID_GROUP_ANY;
-	dynid->id.venकरोr = venकरोr;
+	dynid->id.vendor = vendor;
 	dynid->id.product = product;
 	dynid->id.driver_data = driver_data;
 
@@ -2171,383 +2170,383 @@ EXPORT_SYMBOL_GPL(hid_hw_बंद);
 
 	ret = driver_attach(&hdrv->driver);
 
-	वापस ret ? : count;
-पूर्ण
-अटल DRIVER_ATTR_WO(new_id);
+	return ret ? : count;
+}
+static DRIVER_ATTR_WO(new_id);
 
-अटल काष्ठा attribute *hid_drv_attrs[] = अणु
+static struct attribute *hid_drv_attrs[] = {
 	&driver_attr_new_id.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 ATTRIBUTE_GROUPS(hid_drv);
 
-अटल व्योम hid_मुक्त_dynids(काष्ठा hid_driver *hdrv)
-अणु
-	काष्ठा hid_dynid *dynid, *n;
+static void hid_free_dynids(struct hid_driver *hdrv)
+{
+	struct hid_dynid *dynid, *n;
 
 	spin_lock(&hdrv->dyn_lock);
-	list_क्रम_each_entry_safe(dynid, n, &hdrv->dyn_list, list) अणु
+	list_for_each_entry_safe(dynid, n, &hdrv->dyn_list, list) {
 		list_del(&dynid->list);
-		kमुक्त(dynid);
-	पूर्ण
+		kfree(dynid);
+	}
 	spin_unlock(&hdrv->dyn_lock);
-पूर्ण
+}
 
-स्थिर काष्ठा hid_device_id *hid_match_device(काष्ठा hid_device *hdev,
-					     काष्ठा hid_driver *hdrv)
-अणु
-	काष्ठा hid_dynid *dynid;
+const struct hid_device_id *hid_match_device(struct hid_device *hdev,
+					     struct hid_driver *hdrv)
+{
+	struct hid_dynid *dynid;
 
 	spin_lock(&hdrv->dyn_lock);
-	list_क्रम_each_entry(dynid, &hdrv->dyn_list, list) अणु
-		अगर (hid_match_one_id(hdev, &dynid->id)) अणु
+	list_for_each_entry(dynid, &hdrv->dyn_list, list) {
+		if (hid_match_one_id(hdev, &dynid->id)) {
 			spin_unlock(&hdrv->dyn_lock);
-			वापस &dynid->id;
-		पूर्ण
-	पूर्ण
+			return &dynid->id;
+		}
+	}
 	spin_unlock(&hdrv->dyn_lock);
 
-	वापस hid_match_id(hdev, hdrv->id_table);
-पूर्ण
+	return hid_match_id(hdev, hdrv->id_table);
+}
 EXPORT_SYMBOL_GPL(hid_match_device);
 
-अटल पूर्णांक hid_bus_match(काष्ठा device *dev, काष्ठा device_driver *drv)
-अणु
-	काष्ठा hid_driver *hdrv = to_hid_driver(drv);
-	काष्ठा hid_device *hdev = to_hid_device(dev);
+static int hid_bus_match(struct device *dev, struct device_driver *drv)
+{
+	struct hid_driver *hdrv = to_hid_driver(drv);
+	struct hid_device *hdev = to_hid_device(dev);
 
-	वापस hid_match_device(hdev, hdrv) != शून्य;
-पूर्ण
+	return hid_match_device(hdev, hdrv) != NULL;
+}
 
 /**
- * hid_compare_device_paths - check अगर both devices share the same path
+ * hid_compare_device_paths - check if both devices share the same path
  * @hdev_a: hid device
  * @hdev_b: hid device
- * @separator: अक्षर to use as separator
+ * @separator: char to use as separator
  *
- * Check अगर two devices share the same path up to the last occurrence of
- * the separator अक्षर. Both paths must exist (i.e., zero-length paths
- * करोn't match).
+ * Check if two devices share the same path up to the last occurrence of
+ * the separator char. Both paths must exist (i.e., zero-length paths
+ * don't match).
  */
-bool hid_compare_device_paths(काष्ठा hid_device *hdev_a,
-			      काष्ठा hid_device *hdev_b, अक्षर separator)
-अणु
-	पूर्णांक n1 = म_खोजप(hdev_a->phys, separator) - hdev_a->phys;
-	पूर्णांक n2 = म_खोजप(hdev_b->phys, separator) - hdev_b->phys;
+bool hid_compare_device_paths(struct hid_device *hdev_a,
+			      struct hid_device *hdev_b, char separator)
+{
+	int n1 = strrchr(hdev_a->phys, separator) - hdev_a->phys;
+	int n2 = strrchr(hdev_b->phys, separator) - hdev_b->phys;
 
-	अगर (n1 != n2 || n1 <= 0 || n2 <= 0)
-		वापस false;
+	if (n1 != n2 || n1 <= 0 || n2 <= 0)
+		return false;
 
-	वापस !म_भेदन(hdev_a->phys, hdev_b->phys, n1);
-पूर्ण
+	return !strncmp(hdev_a->phys, hdev_b->phys, n1);
+}
 EXPORT_SYMBOL_GPL(hid_compare_device_paths);
 
-अटल पूर्णांक hid_device_probe(काष्ठा device *dev)
-अणु
-	काष्ठा hid_driver *hdrv = to_hid_driver(dev->driver);
-	काष्ठा hid_device *hdev = to_hid_device(dev);
-	स्थिर काष्ठा hid_device_id *id;
-	पूर्णांक ret = 0;
+static int hid_device_probe(struct device *dev)
+{
+	struct hid_driver *hdrv = to_hid_driver(dev->driver);
+	struct hid_device *hdev = to_hid_device(dev);
+	const struct hid_device_id *id;
+	int ret = 0;
 
-	अगर (करोwn_पूर्णांकerruptible(&hdev->driver_input_lock)) अणु
+	if (down_interruptible(&hdev->driver_input_lock)) {
 		ret = -EINTR;
-		जाओ end;
-	पूर्ण
+		goto end;
+	}
 	hdev->io_started = false;
 
 	clear_bit(ffs(HID_STAT_REPROBED), &hdev->status);
 
-	अगर (!hdev->driver) अणु
+	if (!hdev->driver) {
 		id = hid_match_device(hdev, hdrv);
-		अगर (id == शून्य) अणु
+		if (id == NULL) {
 			ret = -ENODEV;
-			जाओ unlock;
-		पूर्ण
+			goto unlock;
+		}
 
-		अगर (hdrv->match) अणु
-			अगर (!hdrv->match(hdev, hid_ignore_special_drivers)) अणु
+		if (hdrv->match) {
+			if (!hdrv->match(hdev, hid_ignore_special_drivers)) {
 				ret = -ENODEV;
-				जाओ unlock;
-			पूर्ण
-		पूर्ण अन्यथा अणु
+				goto unlock;
+			}
+		} else {
 			/*
-			 * hid-generic implements .match(), so अगर
+			 * hid-generic implements .match(), so if
 			 * hid_ignore_special_drivers is set, we can safely
-			 * वापस.
+			 * return.
 			 */
-			अगर (hid_ignore_special_drivers) अणु
+			if (hid_ignore_special_drivers) {
 				ret = -ENODEV;
-				जाओ unlock;
-			पूर्ण
-		पूर्ण
+				goto unlock;
+			}
+		}
 
 		/* reset the quirks that has been previously set */
 		hdev->quirks = hid_lookup_quirk(hdev);
 		hdev->driver = hdrv;
-		अगर (hdrv->probe) अणु
+		if (hdrv->probe) {
 			ret = hdrv->probe(hdev, id);
-		पूर्ण अन्यथा अणु /* शेष probe */
-			ret = hid_खोलो_report(hdev);
-			अगर (!ret)
+		} else { /* default probe */
+			ret = hid_open_report(hdev);
+			if (!ret)
 				ret = hid_hw_start(hdev, HID_CONNECT_DEFAULT);
-		पूर्ण
-		अगर (ret) अणु
-			hid_बंद_report(hdev);
-			hdev->driver = शून्य;
-		पूर्ण
-	पूर्ण
+		}
+		if (ret) {
+			hid_close_report(hdev);
+			hdev->driver = NULL;
+		}
+	}
 unlock:
-	अगर (!hdev->io_started)
+	if (!hdev->io_started)
 		up(&hdev->driver_input_lock);
 end:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक hid_device_हटाओ(काष्ठा device *dev)
-अणु
-	काष्ठा hid_device *hdev = to_hid_device(dev);
-	काष्ठा hid_driver *hdrv;
-	पूर्णांक ret = 0;
+static int hid_device_remove(struct device *dev)
+{
+	struct hid_device *hdev = to_hid_device(dev);
+	struct hid_driver *hdrv;
+	int ret = 0;
 
-	अगर (करोwn_पूर्णांकerruptible(&hdev->driver_input_lock)) अणु
+	if (down_interruptible(&hdev->driver_input_lock)) {
 		ret = -EINTR;
-		जाओ end;
-	पूर्ण
+		goto end;
+	}
 	hdev->io_started = false;
 
 	hdrv = hdev->driver;
-	अगर (hdrv) अणु
-		अगर (hdrv->हटाओ)
-			hdrv->हटाओ(hdev);
-		अन्यथा /* शेष हटाओ */
+	if (hdrv) {
+		if (hdrv->remove)
+			hdrv->remove(hdev);
+		else /* default remove */
 			hid_hw_stop(hdev);
-		hid_बंद_report(hdev);
-		hdev->driver = शून्य;
-	पूर्ण
+		hid_close_report(hdev);
+		hdev->driver = NULL;
+	}
 
-	अगर (!hdev->io_started)
+	if (!hdev->io_started)
 		up(&hdev->driver_input_lock);
 end:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल sमाप_प्रकार modalias_show(काष्ठा device *dev, काष्ठा device_attribute *a,
-			     अक्षर *buf)
-अणु
-	काष्ठा hid_device *hdev = container_of(dev, काष्ठा hid_device, dev);
+static ssize_t modalias_show(struct device *dev, struct device_attribute *a,
+			     char *buf)
+{
+	struct hid_device *hdev = container_of(dev, struct hid_device, dev);
 
-	वापस scnम_लिखो(buf, PAGE_SIZE, "hid:b%04Xg%04Xv%08Xp%08X\n",
-			 hdev->bus, hdev->group, hdev->venकरोr, hdev->product);
-पूर्ण
-अटल DEVICE_ATTR_RO(modalias);
+	return scnprintf(buf, PAGE_SIZE, "hid:b%04Xg%04Xv%08Xp%08X\n",
+			 hdev->bus, hdev->group, hdev->vendor, hdev->product);
+}
+static DEVICE_ATTR_RO(modalias);
 
-अटल काष्ठा attribute *hid_dev_attrs[] = अणु
+static struct attribute *hid_dev_attrs[] = {
 	&dev_attr_modalias.attr,
-	शून्य,
-पूर्ण;
-अटल काष्ठा bin_attribute *hid_dev_bin_attrs[] = अणु
+	NULL,
+};
+static struct bin_attribute *hid_dev_bin_attrs[] = {
 	&dev_bin_attr_report_desc,
-	शून्य
-पूर्ण;
-अटल स्थिर काष्ठा attribute_group hid_dev_group = अणु
+	NULL
+};
+static const struct attribute_group hid_dev_group = {
 	.attrs = hid_dev_attrs,
 	.bin_attrs = hid_dev_bin_attrs,
-पूर्ण;
+};
 __ATTRIBUTE_GROUPS(hid_dev);
 
-अटल पूर्णांक hid_uevent(काष्ठा device *dev, काष्ठा kobj_uevent_env *env)
-अणु
-	काष्ठा hid_device *hdev = to_hid_device(dev);
+static int hid_uevent(struct device *dev, struct kobj_uevent_env *env)
+{
+	struct hid_device *hdev = to_hid_device(dev);
 
-	अगर (add_uevent_var(env, "HID_ID=%04X:%08X:%08X",
-			hdev->bus, hdev->venकरोr, hdev->product))
-		वापस -ENOMEM;
+	if (add_uevent_var(env, "HID_ID=%04X:%08X:%08X",
+			hdev->bus, hdev->vendor, hdev->product))
+		return -ENOMEM;
 
-	अगर (add_uevent_var(env, "HID_NAME=%s", hdev->name))
-		वापस -ENOMEM;
+	if (add_uevent_var(env, "HID_NAME=%s", hdev->name))
+		return -ENOMEM;
 
-	अगर (add_uevent_var(env, "HID_PHYS=%s", hdev->phys))
-		वापस -ENOMEM;
+	if (add_uevent_var(env, "HID_PHYS=%s", hdev->phys))
+		return -ENOMEM;
 
-	अगर (add_uevent_var(env, "HID_UNIQ=%s", hdev->uniq))
-		वापस -ENOMEM;
+	if (add_uevent_var(env, "HID_UNIQ=%s", hdev->uniq))
+		return -ENOMEM;
 
-	अगर (add_uevent_var(env, "MODALIAS=hid:b%04Xg%04Xv%08Xp%08X",
-			   hdev->bus, hdev->group, hdev->venकरोr, hdev->product))
-		वापस -ENOMEM;
+	if (add_uevent_var(env, "MODALIAS=hid:b%04Xg%04Xv%08Xp%08X",
+			   hdev->bus, hdev->group, hdev->vendor, hdev->product))
+		return -ENOMEM;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-काष्ठा bus_type hid_bus_type = अणु
+struct bus_type hid_bus_type = {
 	.name		= "hid",
 	.dev_groups	= hid_dev_groups,
 	.drv_groups	= hid_drv_groups,
 	.match		= hid_bus_match,
 	.probe		= hid_device_probe,
-	.हटाओ		= hid_device_हटाओ,
+	.remove		= hid_device_remove,
 	.uevent		= hid_uevent,
-पूर्ण;
+};
 EXPORT_SYMBOL(hid_bus_type);
 
-पूर्णांक hid_add_device(काष्ठा hid_device *hdev)
-अणु
-	अटल atomic_t id = ATOMIC_INIT(0);
-	पूर्णांक ret;
+int hid_add_device(struct hid_device *hdev)
+{
+	static atomic_t id = ATOMIC_INIT(0);
+	int ret;
 
-	अगर (WARN_ON(hdev->status & HID_STAT_ADDED))
-		वापस -EBUSY;
+	if (WARN_ON(hdev->status & HID_STAT_ADDED))
+		return -EBUSY;
 
 	hdev->quirks = hid_lookup_quirk(hdev);
 
-	/* we need to समाप्त them here, otherwise they will stay allocated to
-	 * रुको क्रम coming driver */
-	अगर (hid_ignore(hdev))
-		वापस -ENODEV;
+	/* we need to kill them here, otherwise they will stay allocated to
+	 * wait for coming driver */
+	if (hid_ignore(hdev))
+		return -ENODEV;
 
 	/*
-	 * Check क्रम the mandatory transport channel.
+	 * Check for the mandatory transport channel.
 	 */
-	 अगर (!hdev->ll_driver->raw_request) अणु
+	 if (!hdev->ll_driver->raw_request) {
 		hid_err(hdev, "transport driver missing .raw_request()\n");
-		वापस -EINVAL;
-	 पूर्ण
+		return -EINVAL;
+	 }
 
 	/*
-	 * Read the device report descriptor once and use as ढाँचा
-	 * क्रम the driver-specअगरic modअगरications.
+	 * Read the device report descriptor once and use as template
+	 * for the driver-specific modifications.
 	 */
 	ret = hdev->ll_driver->parse(hdev);
-	अगर (ret)
-		वापस ret;
-	अगर (!hdev->dev_rdesc)
-		वापस -ENODEV;
+	if (ret)
+		return ret;
+	if (!hdev->dev_rdesc)
+		return -ENODEV;
 
 	/*
-	 * Scan generic devices क्रम group inक्रमmation
+	 * Scan generic devices for group information
 	 */
-	अगर (hid_ignore_special_drivers) अणु
+	if (hid_ignore_special_drivers) {
 		hdev->group = HID_GROUP_GENERIC;
-	पूर्ण अन्यथा अगर (!hdev->group &&
-		   !(hdev->quirks & HID_QUIRK_HAVE_SPECIAL_DRIVER)) अणु
+	} else if (!hdev->group &&
+		   !(hdev->quirks & HID_QUIRK_HAVE_SPECIAL_DRIVER)) {
 		ret = hid_scan_report(hdev);
-		अगर (ret)
+		if (ret)
 			hid_warn(hdev, "bad device descriptor (%d)\n", ret);
-	पूर्ण
+	}
 
 	/* XXX hack, any other cleaner solution after the driver core
 	 * is converted to allow more than 20 bytes as the device name? */
 	dev_set_name(&hdev->dev, "%04X:%04X:%04X.%04X", hdev->bus,
-		     hdev->venकरोr, hdev->product, atomic_inc_वापस(&id));
+		     hdev->vendor, hdev->product, atomic_inc_return(&id));
 
-	hid_debug_रेजिस्टर(hdev, dev_name(&hdev->dev));
+	hid_debug_register(hdev, dev_name(&hdev->dev));
 	ret = device_add(&hdev->dev);
-	अगर (!ret)
+	if (!ret)
 		hdev->status |= HID_STAT_ADDED;
-	अन्यथा
-		hid_debug_unरेजिस्टर(hdev);
+	else
+		hid_debug_unregister(hdev);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(hid_add_device);
 
 /**
  * hid_allocate_device - allocate new hid device descriptor
  *
  * Allocate and initialize hid device, so that hid_destroy_device might be
- * used to मुक्त it.
+ * used to free it.
  *
- * New hid_device poपूर्णांकer is वापसed on success, otherwise ERR_PTR encoded
+ * New hid_device pointer is returned on success, otherwise ERR_PTR encoded
  * error value.
  */
-काष्ठा hid_device *hid_allocate_device(व्योम)
-अणु
-	काष्ठा hid_device *hdev;
-	पूर्णांक ret = -ENOMEM;
+struct hid_device *hid_allocate_device(void)
+{
+	struct hid_device *hdev;
+	int ret = -ENOMEM;
 
-	hdev = kzalloc(माप(*hdev), GFP_KERNEL);
-	अगर (hdev == शून्य)
-		वापस ERR_PTR(ret);
+	hdev = kzalloc(sizeof(*hdev), GFP_KERNEL);
+	if (hdev == NULL)
+		return ERR_PTR(ret);
 
 	device_initialize(&hdev->dev);
 	hdev->dev.release = hid_device_release;
 	hdev->dev.bus = &hid_bus_type;
 	device_enable_async_suspend(&hdev->dev);
 
-	hid_बंद_report(hdev);
+	hid_close_report(hdev);
 
-	init_रुकोqueue_head(&hdev->debug_रुको);
+	init_waitqueue_head(&hdev->debug_wait);
 	INIT_LIST_HEAD(&hdev->debug_list);
 	spin_lock_init(&hdev->debug_list_lock);
 	sema_init(&hdev->driver_input_lock, 1);
-	mutex_init(&hdev->ll_खोलो_lock);
+	mutex_init(&hdev->ll_open_lock);
 
-	वापस hdev;
-पूर्ण
+	return hdev;
+}
 EXPORT_SYMBOL_GPL(hid_allocate_device);
 
-अटल व्योम hid_हटाओ_device(काष्ठा hid_device *hdev)
-अणु
-	अगर (hdev->status & HID_STAT_ADDED) अणु
+static void hid_remove_device(struct hid_device *hdev)
+{
+	if (hdev->status & HID_STAT_ADDED) {
 		device_del(&hdev->dev);
-		hid_debug_unरेजिस्टर(hdev);
+		hid_debug_unregister(hdev);
 		hdev->status &= ~HID_STAT_ADDED;
-	पूर्ण
-	kमुक्त(hdev->dev_rdesc);
-	hdev->dev_rdesc = शून्य;
+	}
+	kfree(hdev->dev_rdesc);
+	hdev->dev_rdesc = NULL;
 	hdev->dev_rsize = 0;
-पूर्ण
+}
 
 /**
- * hid_destroy_device - मुक्त previously allocated device
+ * hid_destroy_device - free previously allocated device
  *
  * @hdev: hid device
  *
  * If you allocate hid_device through hid_allocate_device, you should ever
- * मुक्त by this function.
+ * free by this function.
  */
-व्योम hid_destroy_device(काष्ठा hid_device *hdev)
-अणु
-	hid_हटाओ_device(hdev);
+void hid_destroy_device(struct hid_device *hdev)
+{
+	hid_remove_device(hdev);
 	put_device(&hdev->dev);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(hid_destroy_device);
 
 
-अटल पूर्णांक __hid_bus_reprobe_drivers(काष्ठा device *dev, व्योम *data)
-अणु
-	काष्ठा hid_driver *hdrv = data;
-	काष्ठा hid_device *hdev = to_hid_device(dev);
+static int __hid_bus_reprobe_drivers(struct device *dev, void *data)
+{
+	struct hid_driver *hdrv = data;
+	struct hid_device *hdev = to_hid_device(dev);
 
-	अगर (hdev->driver == hdrv &&
+	if (hdev->driver == hdrv &&
 	    !hdrv->match(hdev, hid_ignore_special_drivers) &&
 	    !test_and_set_bit(ffs(HID_STAT_REPROBED), &hdev->status))
-		वापस device_reprobe(dev);
+		return device_reprobe(dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __hid_bus_driver_added(काष्ठा device_driver *drv, व्योम *data)
-अणु
-	काष्ठा hid_driver *hdrv = to_hid_driver(drv);
+static int __hid_bus_driver_added(struct device_driver *drv, void *data)
+{
+	struct hid_driver *hdrv = to_hid_driver(drv);
 
-	अगर (hdrv->match) अणु
-		bus_क्रम_each_dev(&hid_bus_type, शून्य, hdrv,
+	if (hdrv->match) {
+		bus_for_each_dev(&hid_bus_type, NULL, hdrv,
 				 __hid_bus_reprobe_drivers);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __bus_हटाओd_driver(काष्ठा device_driver *drv, व्योम *data)
-अणु
-	वापस bus_rescan_devices(&hid_bus_type);
-पूर्ण
+static int __bus_removed_driver(struct device_driver *drv, void *data)
+{
+	return bus_rescan_devices(&hid_bus_type);
+}
 
-पूर्णांक __hid_रेजिस्टर_driver(काष्ठा hid_driver *hdrv, काष्ठा module *owner,
-		स्थिर अक्षर *mod_name)
-अणु
-	पूर्णांक ret;
+int __hid_register_driver(struct hid_driver *hdrv, struct module *owner,
+		const char *mod_name)
+{
+	int ret;
 
 	hdrv->driver.name = hdrv->name;
 	hdrv->driver.bus = &hid_bus_type;
@@ -2557,80 +2556,80 @@ EXPORT_SYMBOL_GPL(hid_destroy_device);
 	INIT_LIST_HEAD(&hdrv->dyn_list);
 	spin_lock_init(&hdrv->dyn_lock);
 
-	ret = driver_रेजिस्टर(&hdrv->driver);
+	ret = driver_register(&hdrv->driver);
 
-	अगर (ret == 0)
-		bus_क्रम_each_drv(&hid_bus_type, शून्य, शून्य,
+	if (ret == 0)
+		bus_for_each_drv(&hid_bus_type, NULL, NULL,
 				 __hid_bus_driver_added);
 
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(__hid_रेजिस्टर_driver);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(__hid_register_driver);
 
-व्योम hid_unरेजिस्टर_driver(काष्ठा hid_driver *hdrv)
-अणु
-	driver_unरेजिस्टर(&hdrv->driver);
-	hid_मुक्त_dynids(hdrv);
+void hid_unregister_driver(struct hid_driver *hdrv)
+{
+	driver_unregister(&hdrv->driver);
+	hid_free_dynids(hdrv);
 
-	bus_क्रम_each_drv(&hid_bus_type, शून्य, hdrv, __bus_हटाओd_driver);
-पूर्ण
-EXPORT_SYMBOL_GPL(hid_unरेजिस्टर_driver);
+	bus_for_each_drv(&hid_bus_type, NULL, hdrv, __bus_removed_driver);
+}
+EXPORT_SYMBOL_GPL(hid_unregister_driver);
 
-पूर्णांक hid_check_keys_pressed(काष्ठा hid_device *hid)
-अणु
-	काष्ठा hid_input *hidinput;
-	पूर्णांक i;
+int hid_check_keys_pressed(struct hid_device *hid)
+{
+	struct hid_input *hidinput;
+	int i;
 
-	अगर (!(hid->claimed & HID_CLAIMED_INPUT))
-		वापस 0;
+	if (!(hid->claimed & HID_CLAIMED_INPUT))
+		return 0;
 
-	list_क्रम_each_entry(hidinput, &hid->inमाला_दो, list) अणु
-		क्रम (i = 0; i < BITS_TO_LONGS(KEY_MAX); i++)
-			अगर (hidinput->input->key[i])
-				वापस 1;
-	पूर्ण
+	list_for_each_entry(hidinput, &hid->inputs, list) {
+		for (i = 0; i < BITS_TO_LONGS(KEY_MAX); i++)
+			if (hidinput->input->key[i])
+				return 1;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(hid_check_keys_pressed);
 
-अटल पूर्णांक __init hid_init(व्योम)
-अणु
-	पूर्णांक ret;
+static int __init hid_init(void)
+{
+	int ret;
 
-	अगर (hid_debug)
+	if (hid_debug)
 		pr_warn("hid_debug is now used solely for parser and driver debugging.\n"
 			"debugfs is now used for inspecting the device (report descriptor, reports)\n");
 
-	ret = bus_रेजिस्टर(&hid_bus_type);
-	अगर (ret) अणु
+	ret = bus_register(&hid_bus_type);
+	if (ret) {
 		pr_err("can't register hid bus\n");
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	ret = hidraw_init();
-	अगर (ret)
-		जाओ err_bus;
+	if (ret)
+		goto err_bus;
 
 	hid_debug_init();
 
-	वापस 0;
+	return 0;
 err_bus:
-	bus_unरेजिस्टर(&hid_bus_type);
+	bus_unregister(&hid_bus_type);
 err:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम __निकास hid_निकास(व्योम)
-अणु
-	hid_debug_निकास();
-	hidraw_निकास();
-	bus_unरेजिस्टर(&hid_bus_type);
-	hid_quirks_निकास(HID_BUS_ANY);
-पूर्ण
+static void __exit hid_exit(void)
+{
+	hid_debug_exit();
+	hidraw_exit();
+	bus_unregister(&hid_bus_type);
+	hid_quirks_exit(HID_BUS_ANY);
+}
 
 module_init(hid_init);
-module_निकास(hid_निकास);
+module_exit(hid_exit);
 
 MODULE_AUTHOR("Andreas Gal");
 MODULE_AUTHOR("Vojtech Pavlik");

@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
  /* Algorithms supported by virtio crypto device
   *
   * Authors: Gonglei <arei.gonglei@huawei.com>
@@ -7,139 +6,139 @@
   * Copyright 2016 HUAWEI TECHNOLOGIES CO., LTD.
   */
 
-#समावेश <linux/scatterlist.h>
-#समावेश <crypto/algapi.h>
-#समावेश <crypto/पूर्णांकernal/skcipher.h>
-#समावेश <linux/err.h>
-#समावेश <crypto/scatterwalk.h>
-#समावेश <linux/atomic.h>
+#include <linux/scatterlist.h>
+#include <crypto/algapi.h>
+#include <crypto/internal/skcipher.h>
+#include <linux/err.h>
+#include <crypto/scatterwalk.h>
+#include <linux/atomic.h>
 
-#समावेश <uapi/linux/virtio_crypto.h>
-#समावेश "virtio_crypto_common.h"
+#include <uapi/linux/virtio_crypto.h>
+#include "virtio_crypto_common.h"
 
 
-काष्ठा virtio_crypto_skcipher_ctx अणु
-	काष्ठा crypto_engine_ctx enginectx;
-	काष्ठा virtio_crypto *vcrypto;
-	काष्ठा crypto_skcipher *tfm;
+struct virtio_crypto_skcipher_ctx {
+	struct crypto_engine_ctx enginectx;
+	struct virtio_crypto *vcrypto;
+	struct crypto_skcipher *tfm;
 
-	काष्ठा virtio_crypto_sym_session_info enc_sess_info;
-	काष्ठा virtio_crypto_sym_session_info dec_sess_info;
-पूर्ण;
+	struct virtio_crypto_sym_session_info enc_sess_info;
+	struct virtio_crypto_sym_session_info dec_sess_info;
+};
 
-काष्ठा virtio_crypto_sym_request अणु
-	काष्ठा virtio_crypto_request base;
+struct virtio_crypto_sym_request {
+	struct virtio_crypto_request base;
 
 	/* Cipher or aead */
-	uपूर्णांक32_t type;
-	काष्ठा virtio_crypto_skcipher_ctx *skcipher_ctx;
-	काष्ठा skcipher_request *skcipher_req;
-	uपूर्णांक8_t *iv;
+	uint32_t type;
+	struct virtio_crypto_skcipher_ctx *skcipher_ctx;
+	struct skcipher_request *skcipher_req;
+	uint8_t *iv;
 	/* Encryption? */
 	bool encrypt;
-पूर्ण;
+};
 
-काष्ठा virtio_crypto_algo अणु
-	uपूर्णांक32_t algonum;
-	uपूर्णांक32_t service;
-	अचिन्हित पूर्णांक active_devs;
-	काष्ठा skcipher_alg algo;
-पूर्ण;
+struct virtio_crypto_algo {
+	uint32_t algonum;
+	uint32_t service;
+	unsigned int active_devs;
+	struct skcipher_alg algo;
+};
 
 /*
  * The algs_lock protects the below global virtio_crypto_active_devs
  * and crypto algorithms registion.
  */
-अटल DEFINE_MUTEX(algs_lock);
-अटल व्योम virtio_crypto_skcipher_finalize_req(
-	काष्ठा virtio_crypto_sym_request *vc_sym_req,
-	काष्ठा skcipher_request *req,
-	पूर्णांक err);
+static DEFINE_MUTEX(algs_lock);
+static void virtio_crypto_skcipher_finalize_req(
+	struct virtio_crypto_sym_request *vc_sym_req,
+	struct skcipher_request *req,
+	int err);
 
-अटल व्योम virtio_crypto_dataq_sym_callback
-		(काष्ठा virtio_crypto_request *vc_req, पूर्णांक len)
-अणु
-	काष्ठा virtio_crypto_sym_request *vc_sym_req =
-		container_of(vc_req, काष्ठा virtio_crypto_sym_request, base);
-	काष्ठा skcipher_request *ablk_req;
-	पूर्णांक error;
+static void virtio_crypto_dataq_sym_callback
+		(struct virtio_crypto_request *vc_req, int len)
+{
+	struct virtio_crypto_sym_request *vc_sym_req =
+		container_of(vc_req, struct virtio_crypto_sym_request, base);
+	struct skcipher_request *ablk_req;
+	int error;
 
 	/* Finish the encrypt or decrypt process */
-	अगर (vc_sym_req->type == VIRTIO_CRYPTO_SYM_OP_CIPHER) अणु
-		चयन (vc_req->status) अणु
-		हाल VIRTIO_CRYPTO_OK:
+	if (vc_sym_req->type == VIRTIO_CRYPTO_SYM_OP_CIPHER) {
+		switch (vc_req->status) {
+		case VIRTIO_CRYPTO_OK:
 			error = 0;
-			अवरोध;
-		हाल VIRTIO_CRYPTO_INVSESS:
-		हाल VIRTIO_CRYPTO_ERR:
+			break;
+		case VIRTIO_CRYPTO_INVSESS:
+		case VIRTIO_CRYPTO_ERR:
 			error = -EINVAL;
-			अवरोध;
-		हाल VIRTIO_CRYPTO_BADMSG:
+			break;
+		case VIRTIO_CRYPTO_BADMSG:
 			error = -EBADMSG;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			error = -EIO;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		ablk_req = vc_sym_req->skcipher_req;
 		virtio_crypto_skcipher_finalize_req(vc_sym_req,
 							ablk_req, error);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल u64 virtio_crypto_alg_sg_nents_length(काष्ठा scatterlist *sg)
-अणु
+static u64 virtio_crypto_alg_sg_nents_length(struct scatterlist *sg)
+{
 	u64 total = 0;
 
-	क्रम (total = 0; sg; sg = sg_next(sg))
+	for (total = 0; sg; sg = sg_next(sg))
 		total += sg->length;
 
-	वापस total;
-पूर्ण
+	return total;
+}
 
-अटल पूर्णांक
-virtio_crypto_alg_validate_key(पूर्णांक key_len, uपूर्णांक32_t *alg)
-अणु
-	चयन (key_len) अणु
-	हाल AES_KEYSIZE_128:
-	हाल AES_KEYSIZE_192:
-	हाल AES_KEYSIZE_256:
+static int
+virtio_crypto_alg_validate_key(int key_len, uint32_t *alg)
+{
+	switch (key_len) {
+	case AES_KEYSIZE_128:
+	case AES_KEYSIZE_192:
+	case AES_KEYSIZE_256:
 		*alg = VIRTIO_CRYPTO_CIPHER_AES_CBC;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
+	return 0;
+}
 
-अटल पूर्णांक virtio_crypto_alg_skcipher_init_session(
-		काष्ठा virtio_crypto_skcipher_ctx *ctx,
-		uपूर्णांक32_t alg, स्थिर uपूर्णांक8_t *key,
-		अचिन्हित पूर्णांक keylen,
-		पूर्णांक encrypt)
-अणु
-	काष्ठा scatterlist outhdr, key_sg, inhdr, *sgs[3];
-	अचिन्हित पूर्णांक पंचांगp;
-	काष्ठा virtio_crypto *vcrypto = ctx->vcrypto;
-	पूर्णांक op = encrypt ? VIRTIO_CRYPTO_OP_ENCRYPT : VIRTIO_CRYPTO_OP_DECRYPT;
-	पूर्णांक err;
-	अचिन्हित पूर्णांक num_out = 0, num_in = 0;
+static int virtio_crypto_alg_skcipher_init_session(
+		struct virtio_crypto_skcipher_ctx *ctx,
+		uint32_t alg, const uint8_t *key,
+		unsigned int keylen,
+		int encrypt)
+{
+	struct scatterlist outhdr, key_sg, inhdr, *sgs[3];
+	unsigned int tmp;
+	struct virtio_crypto *vcrypto = ctx->vcrypto;
+	int op = encrypt ? VIRTIO_CRYPTO_OP_ENCRYPT : VIRTIO_CRYPTO_OP_DECRYPT;
+	int err;
+	unsigned int num_out = 0, num_in = 0;
 
 	/*
-	 * Aव्योम to करो DMA from the stack, चयन to using
-	 * dynamically-allocated क्रम the key
+	 * Avoid to do DMA from the stack, switch to using
+	 * dynamically-allocated for the key
 	 */
-	uपूर्णांक8_t *cipher_key = kmemdup(key, keylen, GFP_ATOMIC);
+	uint8_t *cipher_key = kmemdup(key, keylen, GFP_ATOMIC);
 
-	अगर (!cipher_key)
-		वापस -ENOMEM;
+	if (!cipher_key)
+		return -ENOMEM;
 
 	spin_lock(&vcrypto->ctrl_lock);
 	/* Pad ctrl header */
 	vcrypto->ctrl.header.opcode =
 		cpu_to_le32(VIRTIO_CRYPTO_CIPHER_CREATE_SESSION);
 	vcrypto->ctrl.header.algo = cpu_to_le32(alg);
-	/* Set the शेष dataqueue id to 0 */
+	/* Set the default dataqueue id to 0 */
 	vcrypto->ctrl.header.queue_id = 0;
 
 	vcrypto->input.status = cpu_to_le32(VIRTIO_CRYPTO_ERR);
@@ -153,7 +152,7 @@ virtio_crypto_alg_validate_key(पूर्णांक key_len, uपूर्�
 	vcrypto->ctrl.u.sym_create_session.u.cipher.para.op =
 		cpu_to_le32(op);
 
-	sg_init_one(&outhdr, &vcrypto->ctrl, माप(vcrypto->ctrl));
+	sg_init_one(&outhdr, &vcrypto->ctrl, sizeof(vcrypto->ctrl));
 	sgs[num_out++] = &outhdr;
 
 	/* Set key */
@@ -161,207 +160,207 @@ virtio_crypto_alg_validate_key(पूर्णांक key_len, uपूर्�
 	sgs[num_out++] = &key_sg;
 
 	/* Return status and session id back */
-	sg_init_one(&inhdr, &vcrypto->input, माप(vcrypto->input));
+	sg_init_one(&inhdr, &vcrypto->input, sizeof(vcrypto->input));
 	sgs[num_out + num_in++] = &inhdr;
 
 	err = virtqueue_add_sgs(vcrypto->ctrl_vq, sgs, num_out,
 				num_in, vcrypto, GFP_ATOMIC);
-	अगर (err < 0) अणु
+	if (err < 0) {
 		spin_unlock(&vcrypto->ctrl_lock);
-		kमुक्त_sensitive(cipher_key);
-		वापस err;
-	पूर्ण
+		kfree_sensitive(cipher_key);
+		return err;
+	}
 	virtqueue_kick(vcrypto->ctrl_vq);
 
 	/*
-	 * Trapping पूर्णांकo the hypervisor, so the request should be
+	 * Trapping into the hypervisor, so the request should be
 	 * handled immediately.
 	 */
-	जबतक (!virtqueue_get_buf(vcrypto->ctrl_vq, &पंचांगp) &&
+	while (!virtqueue_get_buf(vcrypto->ctrl_vq, &tmp) &&
 	       !virtqueue_is_broken(vcrypto->ctrl_vq))
 		cpu_relax();
 
-	अगर (le32_to_cpu(vcrypto->input.status) != VIRTIO_CRYPTO_OK) अणु
+	if (le32_to_cpu(vcrypto->input.status) != VIRTIO_CRYPTO_OK) {
 		spin_unlock(&vcrypto->ctrl_lock);
 		pr_err("virtio_crypto: Create session failed status: %u\n",
 			le32_to_cpu(vcrypto->input.status));
-		kमुक्त_sensitive(cipher_key);
-		वापस -EINVAL;
-	पूर्ण
+		kfree_sensitive(cipher_key);
+		return -EINVAL;
+	}
 
-	अगर (encrypt)
+	if (encrypt)
 		ctx->enc_sess_info.session_id =
 			le64_to_cpu(vcrypto->input.session_id);
-	अन्यथा
+	else
 		ctx->dec_sess_info.session_id =
 			le64_to_cpu(vcrypto->input.session_id);
 
 	spin_unlock(&vcrypto->ctrl_lock);
 
-	kमुक्त_sensitive(cipher_key);
-	वापस 0;
-पूर्ण
+	kfree_sensitive(cipher_key);
+	return 0;
+}
 
-अटल पूर्णांक virtio_crypto_alg_skcipher_बंद_session(
-		काष्ठा virtio_crypto_skcipher_ctx *ctx,
-		पूर्णांक encrypt)
-अणु
-	काष्ठा scatterlist outhdr, status_sg, *sgs[2];
-	अचिन्हित पूर्णांक पंचांगp;
-	काष्ठा virtio_crypto_destroy_session_req *destroy_session;
-	काष्ठा virtio_crypto *vcrypto = ctx->vcrypto;
-	पूर्णांक err;
-	अचिन्हित पूर्णांक num_out = 0, num_in = 0;
+static int virtio_crypto_alg_skcipher_close_session(
+		struct virtio_crypto_skcipher_ctx *ctx,
+		int encrypt)
+{
+	struct scatterlist outhdr, status_sg, *sgs[2];
+	unsigned int tmp;
+	struct virtio_crypto_destroy_session_req *destroy_session;
+	struct virtio_crypto *vcrypto = ctx->vcrypto;
+	int err;
+	unsigned int num_out = 0, num_in = 0;
 
 	spin_lock(&vcrypto->ctrl_lock);
 	vcrypto->ctrl_status.status = VIRTIO_CRYPTO_ERR;
 	/* Pad ctrl header */
 	vcrypto->ctrl.header.opcode =
 		cpu_to_le32(VIRTIO_CRYPTO_CIPHER_DESTROY_SESSION);
-	/* Set the शेष virtqueue id to 0 */
+	/* Set the default virtqueue id to 0 */
 	vcrypto->ctrl.header.queue_id = 0;
 
 	destroy_session = &vcrypto->ctrl.u.destroy_session;
 
-	अगर (encrypt)
+	if (encrypt)
 		destroy_session->session_id =
 			cpu_to_le64(ctx->enc_sess_info.session_id);
-	अन्यथा
+	else
 		destroy_session->session_id =
 			cpu_to_le64(ctx->dec_sess_info.session_id);
 
-	sg_init_one(&outhdr, &vcrypto->ctrl, माप(vcrypto->ctrl));
+	sg_init_one(&outhdr, &vcrypto->ctrl, sizeof(vcrypto->ctrl));
 	sgs[num_out++] = &outhdr;
 
 	/* Return status and session id back */
 	sg_init_one(&status_sg, &vcrypto->ctrl_status.status,
-		माप(vcrypto->ctrl_status.status));
+		sizeof(vcrypto->ctrl_status.status));
 	sgs[num_out + num_in++] = &status_sg;
 
 	err = virtqueue_add_sgs(vcrypto->ctrl_vq, sgs, num_out,
 			num_in, vcrypto, GFP_ATOMIC);
-	अगर (err < 0) अणु
+	if (err < 0) {
 		spin_unlock(&vcrypto->ctrl_lock);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 	virtqueue_kick(vcrypto->ctrl_vq);
 
-	जबतक (!virtqueue_get_buf(vcrypto->ctrl_vq, &पंचांगp) &&
+	while (!virtqueue_get_buf(vcrypto->ctrl_vq, &tmp) &&
 	       !virtqueue_is_broken(vcrypto->ctrl_vq))
 		cpu_relax();
 
-	अगर (vcrypto->ctrl_status.status != VIRTIO_CRYPTO_OK) अणु
+	if (vcrypto->ctrl_status.status != VIRTIO_CRYPTO_OK) {
 		spin_unlock(&vcrypto->ctrl_lock);
 		pr_err("virtio_crypto: Close session failed status: %u, session_id: 0x%llx\n",
 			vcrypto->ctrl_status.status,
 			destroy_session->session_id);
 
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	spin_unlock(&vcrypto->ctrl_lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक virtio_crypto_alg_skcipher_init_sessions(
-		काष्ठा virtio_crypto_skcipher_ctx *ctx,
-		स्थिर uपूर्णांक8_t *key, अचिन्हित पूर्णांक keylen)
-अणु
-	uपूर्णांक32_t alg;
-	पूर्णांक ret;
-	काष्ठा virtio_crypto *vcrypto = ctx->vcrypto;
+static int virtio_crypto_alg_skcipher_init_sessions(
+		struct virtio_crypto_skcipher_ctx *ctx,
+		const uint8_t *key, unsigned int keylen)
+{
+	uint32_t alg;
+	int ret;
+	struct virtio_crypto *vcrypto = ctx->vcrypto;
 
-	अगर (keylen > vcrypto->max_cipher_key_len) अणु
+	if (keylen > vcrypto->max_cipher_key_len) {
 		pr_err("virtio_crypto: the key is too long\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (virtio_crypto_alg_validate_key(keylen, &alg))
-		वापस -EINVAL;
+	if (virtio_crypto_alg_validate_key(keylen, &alg))
+		return -EINVAL;
 
 	/* Create encryption session */
 	ret = virtio_crypto_alg_skcipher_init_session(ctx,
 			alg, key, keylen, 1);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 	/* Create decryption session */
 	ret = virtio_crypto_alg_skcipher_init_session(ctx,
 			alg, key, keylen, 0);
-	अगर (ret) अणु
-		virtio_crypto_alg_skcipher_बंद_session(ctx, 1);
-		वापस ret;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	if (ret) {
+		virtio_crypto_alg_skcipher_close_session(ctx, 1);
+		return ret;
+	}
+	return 0;
+}
 
 /* Note: kernel crypto API realization */
-अटल पूर्णांक virtio_crypto_skcipher_setkey(काष्ठा crypto_skcipher *tfm,
-					 स्थिर uपूर्णांक8_t *key,
-					 अचिन्हित पूर्णांक keylen)
-अणु
-	काष्ठा virtio_crypto_skcipher_ctx *ctx = crypto_skcipher_ctx(tfm);
-	uपूर्णांक32_t alg;
-	पूर्णांक ret;
+static int virtio_crypto_skcipher_setkey(struct crypto_skcipher *tfm,
+					 const uint8_t *key,
+					 unsigned int keylen)
+{
+	struct virtio_crypto_skcipher_ctx *ctx = crypto_skcipher_ctx(tfm);
+	uint32_t alg;
+	int ret;
 
 	ret = virtio_crypto_alg_validate_key(keylen, &alg);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (!ctx->vcrypto) अणु
+	if (!ctx->vcrypto) {
 		/* New key */
-		पूर्णांक node = virtio_crypto_get_current_node();
-		काष्ठा virtio_crypto *vcrypto =
+		int node = virtio_crypto_get_current_node();
+		struct virtio_crypto *vcrypto =
 				      virtcrypto_get_dev_node(node,
 				      VIRTIO_CRYPTO_SERVICE_CIPHER, alg);
-		अगर (!vcrypto) अणु
+		if (!vcrypto) {
 			pr_err("virtio_crypto: Could not find a virtio device in the system or unsupported algo\n");
-			वापस -ENODEV;
-		पूर्ण
+			return -ENODEV;
+		}
 
 		ctx->vcrypto = vcrypto;
-	पूर्ण अन्यथा अणु
-		/* Rekeying, we should बंद the created sessions previously */
-		virtio_crypto_alg_skcipher_बंद_session(ctx, 1);
-		virtio_crypto_alg_skcipher_बंद_session(ctx, 0);
-	पूर्ण
+	} else {
+		/* Rekeying, we should close the created sessions previously */
+		virtio_crypto_alg_skcipher_close_session(ctx, 1);
+		virtio_crypto_alg_skcipher_close_session(ctx, 0);
+	}
 
 	ret = virtio_crypto_alg_skcipher_init_sessions(ctx, key, keylen);
-	अगर (ret) अणु
+	if (ret) {
 		virtcrypto_dev_put(ctx->vcrypto);
-		ctx->vcrypto = शून्य;
+		ctx->vcrypto = NULL;
 
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-__virtio_crypto_skcipher_करो_req(काष्ठा virtio_crypto_sym_request *vc_sym_req,
-		काष्ठा skcipher_request *req,
-		काष्ठा data_queue *data_vq)
-अणु
-	काष्ठा crypto_skcipher *tfm = crypto_skcipher_reqtfm(req);
-	काष्ठा virtio_crypto_skcipher_ctx *ctx = vc_sym_req->skcipher_ctx;
-	काष्ठा virtio_crypto_request *vc_req = &vc_sym_req->base;
-	अचिन्हित पूर्णांक ivsize = crypto_skcipher_ivsize(tfm);
-	काष्ठा virtio_crypto *vcrypto = ctx->vcrypto;
-	काष्ठा virtio_crypto_op_data_req *req_data;
-	पूर्णांक src_nents, dst_nents;
-	पूर्णांक err;
-	अचिन्हित दीर्घ flags;
-	काष्ठा scatterlist outhdr, iv_sg, status_sg, **sgs;
+static int
+__virtio_crypto_skcipher_do_req(struct virtio_crypto_sym_request *vc_sym_req,
+		struct skcipher_request *req,
+		struct data_queue *data_vq)
+{
+	struct crypto_skcipher *tfm = crypto_skcipher_reqtfm(req);
+	struct virtio_crypto_skcipher_ctx *ctx = vc_sym_req->skcipher_ctx;
+	struct virtio_crypto_request *vc_req = &vc_sym_req->base;
+	unsigned int ivsize = crypto_skcipher_ivsize(tfm);
+	struct virtio_crypto *vcrypto = ctx->vcrypto;
+	struct virtio_crypto_op_data_req *req_data;
+	int src_nents, dst_nents;
+	int err;
+	unsigned long flags;
+	struct scatterlist outhdr, iv_sg, status_sg, **sgs;
 	u64 dst_len;
-	अचिन्हित पूर्णांक num_out = 0, num_in = 0;
-	पूर्णांक sg_total;
-	uपूर्णांक8_t *iv;
-	काष्ठा scatterlist *sg;
+	unsigned int num_out = 0, num_in = 0;
+	int sg_total;
+	uint8_t *iv;
+	struct scatterlist *sg;
 
-	src_nents = sg_nents_क्रम_len(req->src, req->cryptlen);
-	अगर (src_nents < 0) अणु
+	src_nents = sg_nents_for_len(req->src, req->cryptlen);
+	if (src_nents < 0) {
 		pr_err("Invalid number of src SG.\n");
-		वापस src_nents;
-	पूर्ण
+		return src_nents;
+	}
 
 	dst_nents = sg_nents(req->dst);
 
@@ -370,76 +369,76 @@ __virtio_crypto_skcipher_करो_req(काष्ठा virtio_crypto_sym_requ
 
 	/* Why 3?  outhdr + iv + inhdr */
 	sg_total = src_nents + dst_nents + 3;
-	sgs = kसुस्मृति_node(sg_total, माप(*sgs), GFP_KERNEL,
+	sgs = kcalloc_node(sg_total, sizeof(*sgs), GFP_KERNEL,
 				dev_to_node(&vcrypto->vdev->dev));
-	अगर (!sgs)
-		वापस -ENOMEM;
+	if (!sgs)
+		return -ENOMEM;
 
-	req_data = kzalloc_node(माप(*req_data), GFP_KERNEL,
+	req_data = kzalloc_node(sizeof(*req_data), GFP_KERNEL,
 				dev_to_node(&vcrypto->vdev->dev));
-	अगर (!req_data) अणु
-		kमुक्त(sgs);
-		वापस -ENOMEM;
-	पूर्ण
+	if (!req_data) {
+		kfree(sgs);
+		return -ENOMEM;
+	}
 
 	vc_req->req_data = req_data;
 	vc_sym_req->type = VIRTIO_CRYPTO_SYM_OP_CIPHER;
 	/* Head of operation */
-	अगर (vc_sym_req->encrypt) अणु
+	if (vc_sym_req->encrypt) {
 		req_data->header.session_id =
 			cpu_to_le64(ctx->enc_sess_info.session_id);
 		req_data->header.opcode =
 			cpu_to_le32(VIRTIO_CRYPTO_CIPHER_ENCRYPT);
-	पूर्ण अन्यथा अणु
+	} else {
 		req_data->header.session_id =
 			cpu_to_le64(ctx->dec_sess_info.session_id);
 		req_data->header.opcode =
 			cpu_to_le32(VIRTIO_CRYPTO_CIPHER_DECRYPT);
-	पूर्ण
+	}
 	req_data->u.sym_req.op_type = cpu_to_le32(VIRTIO_CRYPTO_SYM_OP_CIPHER);
 	req_data->u.sym_req.u.cipher.para.iv_len = cpu_to_le32(ivsize);
 	req_data->u.sym_req.u.cipher.para.src_data_len =
 			cpu_to_le32(req->cryptlen);
 
 	dst_len = virtio_crypto_alg_sg_nents_length(req->dst);
-	अगर (unlikely(dst_len > U32_MAX)) अणु
+	if (unlikely(dst_len > U32_MAX)) {
 		pr_err("virtio_crypto: The dst_len is beyond U32_MAX\n");
 		err = -EINVAL;
-		जाओ मुक्त;
-	पूर्ण
+		goto free;
+	}
 
-	dst_len = min_t(अचिन्हित पूर्णांक, req->cryptlen, dst_len);
+	dst_len = min_t(unsigned int, req->cryptlen, dst_len);
 	pr_debug("virtio_crypto: src_len: %u, dst_len: %llu\n",
 			req->cryptlen, dst_len);
 
-	अगर (unlikely(req->cryptlen + dst_len + ivsize +
-		माप(vc_req->status) > vcrypto->max_size)) अणु
+	if (unlikely(req->cryptlen + dst_len + ivsize +
+		sizeof(vc_req->status) > vcrypto->max_size)) {
 		pr_err("virtio_crypto: The length is too big\n");
 		err = -EINVAL;
-		जाओ मुक्त;
-	पूर्ण
+		goto free;
+	}
 
 	req_data->u.sym_req.u.cipher.para.dst_data_len =
-			cpu_to_le32((uपूर्णांक32_t)dst_len);
+			cpu_to_le32((uint32_t)dst_len);
 
 	/* Outhdr */
-	sg_init_one(&outhdr, req_data, माप(*req_data));
+	sg_init_one(&outhdr, req_data, sizeof(*req_data));
 	sgs[num_out++] = &outhdr;
 
 	/* IV */
 
 	/*
-	 * Aव्योम to करो DMA from the stack, चयन to using
-	 * dynamically-allocated क्रम the IV
+	 * Avoid to do DMA from the stack, switch to using
+	 * dynamically-allocated for the IV
 	 */
 	iv = kzalloc_node(ivsize, GFP_ATOMIC,
 				dev_to_node(&vcrypto->vdev->dev));
-	अगर (!iv) अणु
+	if (!iv) {
 		err = -ENOMEM;
-		जाओ मुक्त;
-	पूर्ण
-	स_नकल(iv, req->iv, ivsize);
-	अगर (!vc_sym_req->encrypt)
+		goto free;
+	}
+	memcpy(iv, req->iv, ivsize);
+	if (!vc_sym_req->encrypt)
 		scatterwalk_map_and_copy(req->iv, req->src,
 					 req->cryptlen - AES_BLOCK_SIZE,
 					 AES_BLOCK_SIZE, 0);
@@ -449,15 +448,15 @@ __virtio_crypto_skcipher_करो_req(काष्ठा virtio_crypto_sym_requ
 	vc_sym_req->iv = iv;
 
 	/* Source data */
-	क्रम (sg = req->src; src_nents; sg = sg_next(sg), src_nents--)
+	for (sg = req->src; src_nents; sg = sg_next(sg), src_nents--)
 		sgs[num_out++] = sg;
 
 	/* Destination data */
-	क्रम (sg = req->dst; sg; sg = sg_next(sg))
+	for (sg = req->dst; sg; sg = sg_next(sg))
 		sgs[num_out + num_in++] = sg;
 
 	/* Status */
-	sg_init_one(&status_sg, &vc_req->status, माप(vc_req->status));
+	sg_init_one(&status_sg, &vc_req->status, sizeof(vc_req->status));
 	sgs[num_out + num_in++] = &status_sg;
 
 	vc_req->sgs = sgs;
@@ -467,34 +466,34 @@ __virtio_crypto_skcipher_करो_req(काष्ठा virtio_crypto_sym_requ
 				num_in, vc_req, GFP_ATOMIC);
 	virtqueue_kick(data_vq->vq);
 	spin_unlock_irqrestore(&data_vq->lock, flags);
-	अगर (unlikely(err < 0))
-		जाओ मुक्त_iv;
+	if (unlikely(err < 0))
+		goto free_iv;
 
-	वापस 0;
+	return 0;
 
-मुक्त_iv:
-	kमुक्त_sensitive(iv);
-मुक्त:
-	kमुक्त_sensitive(req_data);
-	kमुक्त(sgs);
-	वापस err;
-पूर्ण
+free_iv:
+	kfree_sensitive(iv);
+free:
+	kfree_sensitive(req_data);
+	kfree(sgs);
+	return err;
+}
 
-अटल पूर्णांक virtio_crypto_skcipher_encrypt(काष्ठा skcipher_request *req)
-अणु
-	काष्ठा crypto_skcipher *atfm = crypto_skcipher_reqtfm(req);
-	काष्ठा virtio_crypto_skcipher_ctx *ctx = crypto_skcipher_ctx(atfm);
-	काष्ठा virtio_crypto_sym_request *vc_sym_req =
+static int virtio_crypto_skcipher_encrypt(struct skcipher_request *req)
+{
+	struct crypto_skcipher *atfm = crypto_skcipher_reqtfm(req);
+	struct virtio_crypto_skcipher_ctx *ctx = crypto_skcipher_ctx(atfm);
+	struct virtio_crypto_sym_request *vc_sym_req =
 				skcipher_request_ctx(req);
-	काष्ठा virtio_crypto_request *vc_req = &vc_sym_req->base;
-	काष्ठा virtio_crypto *vcrypto = ctx->vcrypto;
-	/* Use the first data virtqueue as शेष */
-	काष्ठा data_queue *data_vq = &vcrypto->data_vq[0];
+	struct virtio_crypto_request *vc_req = &vc_sym_req->base;
+	struct virtio_crypto *vcrypto = ctx->vcrypto;
+	/* Use the first data virtqueue as default */
+	struct data_queue *data_vq = &vcrypto->data_vq[0];
 
-	अगर (!req->cryptlen)
-		वापस 0;
-	अगर (req->cryptlen % AES_BLOCK_SIZE)
-		वापस -EINVAL;
+	if (!req->cryptlen)
+		return 0;
+	if (req->cryptlen % AES_BLOCK_SIZE)
+		return -EINVAL;
 
 	vc_req->dataq = data_vq;
 	vc_req->alg_cb = virtio_crypto_dataq_sym_callback;
@@ -502,24 +501,24 @@ __virtio_crypto_skcipher_करो_req(काष्ठा virtio_crypto_sym_requ
 	vc_sym_req->skcipher_req = req;
 	vc_sym_req->encrypt = true;
 
-	वापस crypto_transfer_skcipher_request_to_engine(data_vq->engine, req);
-पूर्ण
+	return crypto_transfer_skcipher_request_to_engine(data_vq->engine, req);
+}
 
-अटल पूर्णांक virtio_crypto_skcipher_decrypt(काष्ठा skcipher_request *req)
-अणु
-	काष्ठा crypto_skcipher *atfm = crypto_skcipher_reqtfm(req);
-	काष्ठा virtio_crypto_skcipher_ctx *ctx = crypto_skcipher_ctx(atfm);
-	काष्ठा virtio_crypto_sym_request *vc_sym_req =
+static int virtio_crypto_skcipher_decrypt(struct skcipher_request *req)
+{
+	struct crypto_skcipher *atfm = crypto_skcipher_reqtfm(req);
+	struct virtio_crypto_skcipher_ctx *ctx = crypto_skcipher_ctx(atfm);
+	struct virtio_crypto_sym_request *vc_sym_req =
 				skcipher_request_ctx(req);
-	काष्ठा virtio_crypto_request *vc_req = &vc_sym_req->base;
-	काष्ठा virtio_crypto *vcrypto = ctx->vcrypto;
-	/* Use the first data virtqueue as शेष */
-	काष्ठा data_queue *data_vq = &vcrypto->data_vq[0];
+	struct virtio_crypto_request *vc_req = &vc_sym_req->base;
+	struct virtio_crypto *vcrypto = ctx->vcrypto;
+	/* Use the first data virtqueue as default */
+	struct data_queue *data_vq = &vcrypto->data_vq[0];
 
-	अगर (!req->cryptlen)
-		वापस 0;
-	अगर (req->cryptlen % AES_BLOCK_SIZE)
-		वापस -EINVAL;
+	if (!req->cryptlen)
+		return 0;
+	if (req->cryptlen % AES_BLOCK_SIZE)
+		return -EINVAL;
 
 	vc_req->dataq = data_vq;
 	vc_req->alg_cb = virtio_crypto_dataq_sym_callback;
@@ -527,144 +526,144 @@ __virtio_crypto_skcipher_करो_req(काष्ठा virtio_crypto_sym_requ
 	vc_sym_req->skcipher_req = req;
 	vc_sym_req->encrypt = false;
 
-	वापस crypto_transfer_skcipher_request_to_engine(data_vq->engine, req);
-पूर्ण
+	return crypto_transfer_skcipher_request_to_engine(data_vq->engine, req);
+}
 
-अटल पूर्णांक virtio_crypto_skcipher_init(काष्ठा crypto_skcipher *tfm)
-अणु
-	काष्ठा virtio_crypto_skcipher_ctx *ctx = crypto_skcipher_ctx(tfm);
+static int virtio_crypto_skcipher_init(struct crypto_skcipher *tfm)
+{
+	struct virtio_crypto_skcipher_ctx *ctx = crypto_skcipher_ctx(tfm);
 
-	crypto_skcipher_set_reqsize(tfm, माप(काष्ठा virtio_crypto_sym_request));
+	crypto_skcipher_set_reqsize(tfm, sizeof(struct virtio_crypto_sym_request));
 	ctx->tfm = tfm;
 
-	ctx->enginectx.op.करो_one_request = virtio_crypto_skcipher_crypt_req;
-	ctx->enginectx.op.prepare_request = शून्य;
-	ctx->enginectx.op.unprepare_request = शून्य;
-	वापस 0;
-पूर्ण
+	ctx->enginectx.op.do_one_request = virtio_crypto_skcipher_crypt_req;
+	ctx->enginectx.op.prepare_request = NULL;
+	ctx->enginectx.op.unprepare_request = NULL;
+	return 0;
+}
 
-अटल व्योम virtio_crypto_skcipher_निकास(काष्ठा crypto_skcipher *tfm)
-अणु
-	काष्ठा virtio_crypto_skcipher_ctx *ctx = crypto_skcipher_ctx(tfm);
+static void virtio_crypto_skcipher_exit(struct crypto_skcipher *tfm)
+{
+	struct virtio_crypto_skcipher_ctx *ctx = crypto_skcipher_ctx(tfm);
 
-	अगर (!ctx->vcrypto)
-		वापस;
+	if (!ctx->vcrypto)
+		return;
 
-	virtio_crypto_alg_skcipher_बंद_session(ctx, 1);
-	virtio_crypto_alg_skcipher_बंद_session(ctx, 0);
+	virtio_crypto_alg_skcipher_close_session(ctx, 1);
+	virtio_crypto_alg_skcipher_close_session(ctx, 0);
 	virtcrypto_dev_put(ctx->vcrypto);
-	ctx->vcrypto = शून्य;
-पूर्ण
+	ctx->vcrypto = NULL;
+}
 
-पूर्णांक virtio_crypto_skcipher_crypt_req(
-	काष्ठा crypto_engine *engine, व्योम *vreq)
-अणु
-	काष्ठा skcipher_request *req = container_of(vreq, काष्ठा skcipher_request, base);
-	काष्ठा virtio_crypto_sym_request *vc_sym_req =
+int virtio_crypto_skcipher_crypt_req(
+	struct crypto_engine *engine, void *vreq)
+{
+	struct skcipher_request *req = container_of(vreq, struct skcipher_request, base);
+	struct virtio_crypto_sym_request *vc_sym_req =
 				skcipher_request_ctx(req);
-	काष्ठा virtio_crypto_request *vc_req = &vc_sym_req->base;
-	काष्ठा data_queue *data_vq = vc_req->dataq;
-	पूर्णांक ret;
+	struct virtio_crypto_request *vc_req = &vc_sym_req->base;
+	struct data_queue *data_vq = vc_req->dataq;
+	int ret;
 
-	ret = __virtio_crypto_skcipher_करो_req(vc_sym_req, req, data_vq);
-	अगर (ret < 0)
-		वापस ret;
+	ret = __virtio_crypto_skcipher_do_req(vc_sym_req, req, data_vq);
+	if (ret < 0)
+		return ret;
 
 	virtqueue_kick(data_vq->vq);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम virtio_crypto_skcipher_finalize_req(
-	काष्ठा virtio_crypto_sym_request *vc_sym_req,
-	काष्ठा skcipher_request *req,
-	पूर्णांक err)
-अणु
-	अगर (vc_sym_req->encrypt)
+static void virtio_crypto_skcipher_finalize_req(
+	struct virtio_crypto_sym_request *vc_sym_req,
+	struct skcipher_request *req,
+	int err)
+{
+	if (vc_sym_req->encrypt)
 		scatterwalk_map_and_copy(req->iv, req->dst,
 					 req->cryptlen - AES_BLOCK_SIZE,
 					 AES_BLOCK_SIZE, 0);
-	kमुक्त_sensitive(vc_sym_req->iv);
+	kfree_sensitive(vc_sym_req->iv);
 	virtcrypto_clear_request(&vc_sym_req->base);
 
 	crypto_finalize_skcipher_request(vc_sym_req->base.dataq->engine,
 					   req, err);
-पूर्ण
+}
 
-अटल काष्ठा virtio_crypto_algo virtio_crypto_algs[] = अणु अणु
+static struct virtio_crypto_algo virtio_crypto_algs[] = { {
 	.algonum = VIRTIO_CRYPTO_CIPHER_AES_CBC,
 	.service = VIRTIO_CRYPTO_SERVICE_CIPHER,
-	.algo = अणु
+	.algo = {
 		.base.cra_name		= "cbc(aes)",
 		.base.cra_driver_name	= "virtio_crypto_aes_cbc",
 		.base.cra_priority	= 150,
 		.base.cra_flags		= CRYPTO_ALG_ASYNC |
 					  CRYPTO_ALG_ALLOCATES_MEMORY,
 		.base.cra_blocksize	= AES_BLOCK_SIZE,
-		.base.cra_ctxsize	= माप(काष्ठा virtio_crypto_skcipher_ctx),
+		.base.cra_ctxsize	= sizeof(struct virtio_crypto_skcipher_ctx),
 		.base.cra_module	= THIS_MODULE,
 		.init			= virtio_crypto_skcipher_init,
-		.निकास			= virtio_crypto_skcipher_निकास,
+		.exit			= virtio_crypto_skcipher_exit,
 		.setkey			= virtio_crypto_skcipher_setkey,
 		.decrypt		= virtio_crypto_skcipher_decrypt,
 		.encrypt		= virtio_crypto_skcipher_encrypt,
 		.min_keysize		= AES_MIN_KEY_SIZE,
 		.max_keysize		= AES_MAX_KEY_SIZE,
 		.ivsize			= AES_BLOCK_SIZE,
-	पूर्ण,
-पूर्ण पूर्ण;
+	},
+} };
 
-पूर्णांक virtio_crypto_algs_रेजिस्टर(काष्ठा virtio_crypto *vcrypto)
-अणु
-	पूर्णांक ret = 0;
-	पूर्णांक i = 0;
+int virtio_crypto_algs_register(struct virtio_crypto *vcrypto)
+{
+	int ret = 0;
+	int i = 0;
 
 	mutex_lock(&algs_lock);
 
-	क्रम (i = 0; i < ARRAY_SIZE(virtio_crypto_algs); i++) अणु
+	for (i = 0; i < ARRAY_SIZE(virtio_crypto_algs); i++) {
 
-		uपूर्णांक32_t service = virtio_crypto_algs[i].service;
-		uपूर्णांक32_t algonum = virtio_crypto_algs[i].algonum;
+		uint32_t service = virtio_crypto_algs[i].service;
+		uint32_t algonum = virtio_crypto_algs[i].algonum;
 
-		अगर (!virtcrypto_algo_is_supported(vcrypto, service, algonum))
-			जारी;
+		if (!virtcrypto_algo_is_supported(vcrypto, service, algonum))
+			continue;
 
-		अगर (virtio_crypto_algs[i].active_devs == 0) अणु
-			ret = crypto_रेजिस्टर_skcipher(&virtio_crypto_algs[i].algo);
-			अगर (ret)
-				जाओ unlock;
-		पूर्ण
+		if (virtio_crypto_algs[i].active_devs == 0) {
+			ret = crypto_register_skcipher(&virtio_crypto_algs[i].algo);
+			if (ret)
+				goto unlock;
+		}
 
 		virtio_crypto_algs[i].active_devs++;
 		dev_info(&vcrypto->vdev->dev, "Registered algo %s\n",
 			 virtio_crypto_algs[i].algo.base.cra_name);
-	पूर्ण
+	}
 
 unlock:
 	mutex_unlock(&algs_lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम virtio_crypto_algs_unरेजिस्टर(काष्ठा virtio_crypto *vcrypto)
-अणु
-	पूर्णांक i = 0;
+void virtio_crypto_algs_unregister(struct virtio_crypto *vcrypto)
+{
+	int i = 0;
 
 	mutex_lock(&algs_lock);
 
-	क्रम (i = 0; i < ARRAY_SIZE(virtio_crypto_algs); i++) अणु
+	for (i = 0; i < ARRAY_SIZE(virtio_crypto_algs); i++) {
 
-		uपूर्णांक32_t service = virtio_crypto_algs[i].service;
-		uपूर्णांक32_t algonum = virtio_crypto_algs[i].algonum;
+		uint32_t service = virtio_crypto_algs[i].service;
+		uint32_t algonum = virtio_crypto_algs[i].algonum;
 
-		अगर (virtio_crypto_algs[i].active_devs == 0 ||
+		if (virtio_crypto_algs[i].active_devs == 0 ||
 		    !virtcrypto_algo_is_supported(vcrypto, service, algonum))
-			जारी;
+			continue;
 
-		अगर (virtio_crypto_algs[i].active_devs == 1)
-			crypto_unरेजिस्टर_skcipher(&virtio_crypto_algs[i].algo);
+		if (virtio_crypto_algs[i].active_devs == 1)
+			crypto_unregister_skcipher(&virtio_crypto_algs[i].algo);
 
 		virtio_crypto_algs[i].active_devs--;
-	पूर्ण
+	}
 
 	mutex_unlock(&algs_lock);
-पूर्ण
+}

@@ -1,203 +1,202 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright 2012-2013 Freescale Semiconductor, Inc.
  */
 
-#समावेश <linux/of_address.h>
-#समावेश <linux/bits.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/syscore_ops.h>
-#समावेश <dt-bindings/घड़ी/vf610-घड़ी.h>
+#include <linux/of_address.h>
+#include <linux/bits.h>
+#include <linux/clk.h>
+#include <linux/syscore_ops.h>
+#include <dt-bindings/clock/vf610-clock.h>
 
-#समावेश "clk.h"
+#include "clk.h"
 
-#घोषणा CCM_CCR			(ccm_base + 0x00)
-#घोषणा CCM_CSR			(ccm_base + 0x04)
-#घोषणा CCM_CCSR		(ccm_base + 0x08)
-#घोषणा CCM_CACRR		(ccm_base + 0x0c)
-#घोषणा CCM_CSCMR1		(ccm_base + 0x10)
-#घोषणा CCM_CSCDR1		(ccm_base + 0x14)
-#घोषणा CCM_CSCDR2		(ccm_base + 0x18)
-#घोषणा CCM_CSCDR3		(ccm_base + 0x1c)
-#घोषणा CCM_CSCMR2		(ccm_base + 0x20)
-#घोषणा CCM_CSCDR4		(ccm_base + 0x24)
-#घोषणा CCM_CLPCR		(ccm_base + 0x2c)
-#घोषणा CCM_CISR		(ccm_base + 0x30)
-#घोषणा CCM_CIMR		(ccm_base + 0x34)
-#घोषणा CCM_CGPR		(ccm_base + 0x3c)
-#घोषणा CCM_CCGR0		(ccm_base + 0x40)
-#घोषणा CCM_CCGR1		(ccm_base + 0x44)
-#घोषणा CCM_CCGR2		(ccm_base + 0x48)
-#घोषणा CCM_CCGR3		(ccm_base + 0x4c)
-#घोषणा CCM_CCGR4		(ccm_base + 0x50)
-#घोषणा CCM_CCGR5		(ccm_base + 0x54)
-#घोषणा CCM_CCGR6		(ccm_base + 0x58)
-#घोषणा CCM_CCGR7		(ccm_base + 0x5c)
-#घोषणा CCM_CCGR8		(ccm_base + 0x60)
-#घोषणा CCM_CCGR9		(ccm_base + 0x64)
-#घोषणा CCM_CCGR10		(ccm_base + 0x68)
-#घोषणा CCM_CCGR11		(ccm_base + 0x6c)
-#घोषणा CCM_CCGRx(x)		(CCM_CCGR0 + (x) * 4)
-#घोषणा CCM_CMEOR0		(ccm_base + 0x70)
-#घोषणा CCM_CMEOR1		(ccm_base + 0x74)
-#घोषणा CCM_CMEOR2		(ccm_base + 0x78)
-#घोषणा CCM_CMEOR3		(ccm_base + 0x7c)
-#घोषणा CCM_CMEOR4		(ccm_base + 0x80)
-#घोषणा CCM_CMEOR5		(ccm_base + 0x84)
-#घोषणा CCM_CPPDSR		(ccm_base + 0x88)
-#घोषणा CCM_CCOWR		(ccm_base + 0x8c)
-#घोषणा CCM_CCPGR0		(ccm_base + 0x90)
-#घोषणा CCM_CCPGR1		(ccm_base + 0x94)
-#घोषणा CCM_CCPGR2		(ccm_base + 0x98)
-#घोषणा CCM_CCPGR3		(ccm_base + 0x9c)
+#define CCM_CCR			(ccm_base + 0x00)
+#define CCM_CSR			(ccm_base + 0x04)
+#define CCM_CCSR		(ccm_base + 0x08)
+#define CCM_CACRR		(ccm_base + 0x0c)
+#define CCM_CSCMR1		(ccm_base + 0x10)
+#define CCM_CSCDR1		(ccm_base + 0x14)
+#define CCM_CSCDR2		(ccm_base + 0x18)
+#define CCM_CSCDR3		(ccm_base + 0x1c)
+#define CCM_CSCMR2		(ccm_base + 0x20)
+#define CCM_CSCDR4		(ccm_base + 0x24)
+#define CCM_CLPCR		(ccm_base + 0x2c)
+#define CCM_CISR		(ccm_base + 0x30)
+#define CCM_CIMR		(ccm_base + 0x34)
+#define CCM_CGPR		(ccm_base + 0x3c)
+#define CCM_CCGR0		(ccm_base + 0x40)
+#define CCM_CCGR1		(ccm_base + 0x44)
+#define CCM_CCGR2		(ccm_base + 0x48)
+#define CCM_CCGR3		(ccm_base + 0x4c)
+#define CCM_CCGR4		(ccm_base + 0x50)
+#define CCM_CCGR5		(ccm_base + 0x54)
+#define CCM_CCGR6		(ccm_base + 0x58)
+#define CCM_CCGR7		(ccm_base + 0x5c)
+#define CCM_CCGR8		(ccm_base + 0x60)
+#define CCM_CCGR9		(ccm_base + 0x64)
+#define CCM_CCGR10		(ccm_base + 0x68)
+#define CCM_CCGR11		(ccm_base + 0x6c)
+#define CCM_CCGRx(x)		(CCM_CCGR0 + (x) * 4)
+#define CCM_CMEOR0		(ccm_base + 0x70)
+#define CCM_CMEOR1		(ccm_base + 0x74)
+#define CCM_CMEOR2		(ccm_base + 0x78)
+#define CCM_CMEOR3		(ccm_base + 0x7c)
+#define CCM_CMEOR4		(ccm_base + 0x80)
+#define CCM_CMEOR5		(ccm_base + 0x84)
+#define CCM_CPPDSR		(ccm_base + 0x88)
+#define CCM_CCOWR		(ccm_base + 0x8c)
+#define CCM_CCPGR0		(ccm_base + 0x90)
+#define CCM_CCPGR1		(ccm_base + 0x94)
+#define CCM_CCPGR2		(ccm_base + 0x98)
+#define CCM_CCPGR3		(ccm_base + 0x9c)
 
-#घोषणा CCM_CCGRx_CGn(n)	((n) * 2)
+#define CCM_CCGRx_CGn(n)	((n) * 2)
 
-#घोषणा PFD_PLL1_BASE		(anatop_base + 0x2b0)
-#घोषणा PFD_PLL2_BASE		(anatop_base + 0x100)
-#घोषणा PFD_PLL3_BASE		(anatop_base + 0xf0)
-#घोषणा PLL1_CTRL		(anatop_base + 0x270)
-#घोषणा PLL2_CTRL		(anatop_base + 0x30)
-#घोषणा PLL3_CTRL		(anatop_base + 0x10)
-#घोषणा PLL4_CTRL		(anatop_base + 0x70)
-#घोषणा PLL5_CTRL		(anatop_base + 0xe0)
-#घोषणा PLL6_CTRL		(anatop_base + 0xa0)
-#घोषणा PLL7_CTRL		(anatop_base + 0x20)
-#घोषणा ANA_MISC1		(anatop_base + 0x160)
+#define PFD_PLL1_BASE		(anatop_base + 0x2b0)
+#define PFD_PLL2_BASE		(anatop_base + 0x100)
+#define PFD_PLL3_BASE		(anatop_base + 0xf0)
+#define PLL1_CTRL		(anatop_base + 0x270)
+#define PLL2_CTRL		(anatop_base + 0x30)
+#define PLL3_CTRL		(anatop_base + 0x10)
+#define PLL4_CTRL		(anatop_base + 0x70)
+#define PLL5_CTRL		(anatop_base + 0xe0)
+#define PLL6_CTRL		(anatop_base + 0xa0)
+#define PLL7_CTRL		(anatop_base + 0x20)
+#define ANA_MISC1		(anatop_base + 0x160)
 
-अटल व्योम __iomem *anatop_base;
-अटल व्योम __iomem *ccm_base;
+static void __iomem *anatop_base;
+static void __iomem *ccm_base;
 
-/* sources क्रम multiplexer घड़ीs, this is used multiple बार */
-अटल स्थिर अक्षर *fast_sels[]	= अणु "firc", "fxosc", पूर्ण;
-अटल स्थिर अक्षर *slow_sels[]	= अणु "sirc_32k", "sxosc", पूर्ण;
-अटल स्थिर अक्षर *pll1_sels[]	= अणु "pll1_sys", "pll1_pfd1", "pll1_pfd2", "pll1_pfd3", "pll1_pfd4", पूर्ण;
-अटल स्थिर अक्षर *pll2_sels[]	= अणु "pll2_bus", "pll2_pfd1", "pll2_pfd2", "pll2_pfd3", "pll2_pfd4", पूर्ण;
-अटल स्थिर अक्षर *pll_bypass_src_sels[] = अणु "fast_clk_sel", "lvds1_in", पूर्ण;
-अटल स्थिर अक्षर *pll1_bypass_sels[] = अणु "pll1", "pll1_bypass_src", पूर्ण;
-अटल स्थिर अक्षर *pll2_bypass_sels[] = अणु "pll2", "pll2_bypass_src", पूर्ण;
-अटल स्थिर अक्षर *pll3_bypass_sels[] = अणु "pll3", "pll3_bypass_src", पूर्ण;
-अटल स्थिर अक्षर *pll4_bypass_sels[] = अणु "pll4", "pll4_bypass_src", पूर्ण;
-अटल स्थिर अक्षर *pll5_bypass_sels[] = अणु "pll5", "pll5_bypass_src", पूर्ण;
-अटल स्थिर अक्षर *pll6_bypass_sels[] = अणु "pll6", "pll6_bypass_src", पूर्ण;
-अटल स्थिर अक्षर *pll7_bypass_sels[] = अणु "pll7", "pll7_bypass_src", पूर्ण;
-अटल स्थिर अक्षर *sys_sels[]	= अणु "fast_clk_sel", "slow_clk_sel", "pll2_pfd_sel", "pll2_bus", "pll1_pfd_sel", "pll3_usb_otg", पूर्ण;
-अटल स्थिर अक्षर *ddr_sels[]	= अणु "pll2_pfd2", "sys_sel", पूर्ण;
-अटल स्थिर अक्षर *rmii_sels[]	= अणु "enet_ext", "audio_ext", "enet_50m", "enet_25m", पूर्ण;
-अटल स्थिर अक्षर *enet_ts_sels[]	= अणु "enet_ext", "fxosc", "audio_ext", "usb", "enet_ts", "enet_25m", "enet_50m", पूर्ण;
-अटल स्थिर अक्षर *esai_sels[]	= अणु "audio_ext", "mlb", "spdif_rx", "pll4_audio_div", पूर्ण;
-अटल स्थिर अक्षर *sai_sels[]	= अणु "audio_ext", "mlb", "spdif_rx", "pll4_audio_div", पूर्ण;
-अटल स्थिर अक्षर *nfc_sels[]	= अणु "platform_bus", "pll1_pfd1", "pll3_pfd1", "pll3_pfd3", पूर्ण;
-अटल स्थिर अक्षर *qspi_sels[]	= अणु "pll3_usb_otg", "pll3_pfd4", "pll2_pfd4", "pll1_pfd4", पूर्ण;
-अटल स्थिर अक्षर *esdhc_sels[]	= अणु "pll3_usb_otg", "pll3_pfd3", "pll1_pfd3", "platform_bus", पूर्ण;
-अटल स्थिर अक्षर *dcu_sels[]	= अणु "pll1_pfd2", "pll3_usb_otg", पूर्ण;
-अटल स्थिर अक्षर *gpu_sels[]	= अणु "pll2_pfd2", "pll3_pfd2", पूर्ण;
-अटल स्थिर अक्षर *vadc_sels[]	= अणु "pll6_video_div", "pll3_usb_otg_div", "pll3_usb_otg", पूर्ण;
-/* FTM counter घड़ी source, not module घड़ी */
-अटल स्थिर अक्षर *fपंचांग_ext_sels[]	= अणु"sirc_128k", "sxosc", "fxosc_half", "audio_ext", पूर्ण;
-अटल स्थिर अक्षर *fपंचांग_fix_sels[]	= अणु "sxosc", "ipg_bus", पूर्ण;
+/* sources for multiplexer clocks, this is used multiple times */
+static const char *fast_sels[]	= { "firc", "fxosc", };
+static const char *slow_sels[]	= { "sirc_32k", "sxosc", };
+static const char *pll1_sels[]	= { "pll1_sys", "pll1_pfd1", "pll1_pfd2", "pll1_pfd3", "pll1_pfd4", };
+static const char *pll2_sels[]	= { "pll2_bus", "pll2_pfd1", "pll2_pfd2", "pll2_pfd3", "pll2_pfd4", };
+static const char *pll_bypass_src_sels[] = { "fast_clk_sel", "lvds1_in", };
+static const char *pll1_bypass_sels[] = { "pll1", "pll1_bypass_src", };
+static const char *pll2_bypass_sels[] = { "pll2", "pll2_bypass_src", };
+static const char *pll3_bypass_sels[] = { "pll3", "pll3_bypass_src", };
+static const char *pll4_bypass_sels[] = { "pll4", "pll4_bypass_src", };
+static const char *pll5_bypass_sels[] = { "pll5", "pll5_bypass_src", };
+static const char *pll6_bypass_sels[] = { "pll6", "pll6_bypass_src", };
+static const char *pll7_bypass_sels[] = { "pll7", "pll7_bypass_src", };
+static const char *sys_sels[]	= { "fast_clk_sel", "slow_clk_sel", "pll2_pfd_sel", "pll2_bus", "pll1_pfd_sel", "pll3_usb_otg", };
+static const char *ddr_sels[]	= { "pll2_pfd2", "sys_sel", };
+static const char *rmii_sels[]	= { "enet_ext", "audio_ext", "enet_50m", "enet_25m", };
+static const char *enet_ts_sels[]	= { "enet_ext", "fxosc", "audio_ext", "usb", "enet_ts", "enet_25m", "enet_50m", };
+static const char *esai_sels[]	= { "audio_ext", "mlb", "spdif_rx", "pll4_audio_div", };
+static const char *sai_sels[]	= { "audio_ext", "mlb", "spdif_rx", "pll4_audio_div", };
+static const char *nfc_sels[]	= { "platform_bus", "pll1_pfd1", "pll3_pfd1", "pll3_pfd3", };
+static const char *qspi_sels[]	= { "pll3_usb_otg", "pll3_pfd4", "pll2_pfd4", "pll1_pfd4", };
+static const char *esdhc_sels[]	= { "pll3_usb_otg", "pll3_pfd3", "pll1_pfd3", "platform_bus", };
+static const char *dcu_sels[]	= { "pll1_pfd2", "pll3_usb_otg", };
+static const char *gpu_sels[]	= { "pll2_pfd2", "pll3_pfd2", };
+static const char *vadc_sels[]	= { "pll6_video_div", "pll3_usb_otg_div", "pll3_usb_otg", };
+/* FTM counter clock source, not module clock */
+static const char *ftm_ext_sels[]	= {"sirc_128k", "sxosc", "fxosc_half", "audio_ext", };
+static const char *ftm_fix_sels[]	= { "sxosc", "ipg_bus", };
 
 
-अटल स्थिर काष्ठा clk_भाग_प्रकारable pll4_audio_भाग_प्रकारable[] = अणु
-	अणु .val = 0, .भाग = 1 पूर्ण,
-	अणु .val = 1, .भाग = 2 पूर्ण,
-	अणु .val = 2, .भाग = 6 पूर्ण,
-	अणु .val = 3, .भाग = 8 पूर्ण,
-	अणु .val = 4, .भाग = 10 पूर्ण,
-	अणु .val = 5, .भाग = 12 पूर्ण,
-	अणु .val = 6, .भाग = 14 पूर्ण,
-	अणु .val = 7, .भाग = 16 पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct clk_div_table pll4_audio_div_table[] = {
+	{ .val = 0, .div = 1 },
+	{ .val = 1, .div = 2 },
+	{ .val = 2, .div = 6 },
+	{ .val = 3, .div = 8 },
+	{ .val = 4, .div = 10 },
+	{ .val = 5, .div = 12 },
+	{ .val = 6, .div = 14 },
+	{ .val = 7, .div = 16 },
+	{ }
+};
 
-अटल काष्ठा clk *clk[VF610_CLK_END];
-अटल काष्ठा clk_onecell_data clk_data;
+static struct clk *clk[VF610_CLK_END];
+static struct clk_onecell_data clk_data;
 
-अटल u32 cscmr1;
-अटल u32 cscmr2;
-अटल u32 cscdr1;
-अटल u32 cscdr2;
-अटल u32 cscdr3;
-अटल u32 ccgr[12];
+static u32 cscmr1;
+static u32 cscmr2;
+static u32 cscdr1;
+static u32 cscdr2;
+static u32 cscdr3;
+static u32 ccgr[12];
 
-अटल अचिन्हित पूर्णांक स्थिर clks_init_on[] __initस्थिर = अणु
+static unsigned int const clks_init_on[] __initconst = {
 	VF610_CLK_SYS_BUS,
 	VF610_CLK_DDR_SEL,
 	VF610_CLK_DAP,
 	VF610_CLK_DDRMC,
 	VF610_CLK_WKPU,
-पूर्ण;
+};
 
-अटल काष्ठा clk * __init vf610_get_fixed_घड़ी(
-				काष्ठा device_node *ccm_node, स्थिर अक्षर *name)
-अणु
-	काष्ठा clk *clk = of_clk_get_by_name(ccm_node, name);
+static struct clk * __init vf610_get_fixed_clock(
+				struct device_node *ccm_node, const char *name)
+{
+	struct clk *clk = of_clk_get_by_name(ccm_node, name);
 
-	/* Backward compatibility अगर device tree is missing clks assignments */
-	अगर (IS_ERR(clk))
-		clk = imx_obtain_fixed_घड़ी(name, 0);
-	वापस clk;
-पूर्ण;
+	/* Backward compatibility if device tree is missing clks assignments */
+	if (IS_ERR(clk))
+		clk = imx_obtain_fixed_clock(name, 0);
+	return clk;
+};
 
-अटल पूर्णांक vf610_clk_suspend(व्योम)
-अणु
-	पूर्णांक i;
+static int vf610_clk_suspend(void)
+{
+	int i;
 
-	cscmr1 = पढ़ोl_relaxed(CCM_CSCMR1);
-	cscmr2 = पढ़ोl_relaxed(CCM_CSCMR2);
+	cscmr1 = readl_relaxed(CCM_CSCMR1);
+	cscmr2 = readl_relaxed(CCM_CSCMR2);
 
-	cscdr1 = पढ़ोl_relaxed(CCM_CSCDR1);
-	cscdr2 = पढ़ोl_relaxed(CCM_CSCDR2);
-	cscdr3 = पढ़ोl_relaxed(CCM_CSCDR3);
+	cscdr1 = readl_relaxed(CCM_CSCDR1);
+	cscdr2 = readl_relaxed(CCM_CSCDR2);
+	cscdr3 = readl_relaxed(CCM_CSCDR3);
 
-	क्रम (i = 0; i < 12; i++)
-		ccgr[i] = पढ़ोl_relaxed(CCM_CCGRx(i));
+	for (i = 0; i < 12; i++)
+		ccgr[i] = readl_relaxed(CCM_CCGRx(i));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम vf610_clk_resume(व्योम)
-अणु
-	पूर्णांक i;
+static void vf610_clk_resume(void)
+{
+	int i;
 
-	ग_लिखोl_relaxed(cscmr1, CCM_CSCMR1);
-	ग_लिखोl_relaxed(cscmr2, CCM_CSCMR2);
+	writel_relaxed(cscmr1, CCM_CSCMR1);
+	writel_relaxed(cscmr2, CCM_CSCMR2);
 
-	ग_लिखोl_relaxed(cscdr1, CCM_CSCDR1);
-	ग_लिखोl_relaxed(cscdr2, CCM_CSCDR2);
-	ग_लिखोl_relaxed(cscdr3, CCM_CSCDR3);
+	writel_relaxed(cscdr1, CCM_CSCDR1);
+	writel_relaxed(cscdr2, CCM_CSCDR2);
+	writel_relaxed(cscdr3, CCM_CSCDR3);
 
-	क्रम (i = 0; i < 12; i++)
-		ग_लिखोl_relaxed(ccgr[i], CCM_CCGRx(i));
-पूर्ण
+	for (i = 0; i < 12; i++)
+		writel_relaxed(ccgr[i], CCM_CCGRx(i));
+}
 
-अटल काष्ठा syscore_ops vf610_clk_syscore_ops = अणु
+static struct syscore_ops vf610_clk_syscore_ops = {
 	.suspend = vf610_clk_suspend,
 	.resume = vf610_clk_resume,
-पूर्ण;
+};
 
-अटल व्योम __init vf610_घड़ीs_init(काष्ठा device_node *ccm_node)
-अणु
-	काष्ठा device_node *np;
-	पूर्णांक i;
+static void __init vf610_clocks_init(struct device_node *ccm_node)
+{
+	struct device_node *np;
+	int i;
 
 	clk[VF610_CLK_DUMMY] = imx_clk_fixed("dummy", 0);
 	clk[VF610_CLK_SIRC_128K] = imx_clk_fixed("sirc_128k", 128000);
 	clk[VF610_CLK_SIRC_32K] = imx_clk_fixed("sirc_32k", 32000);
 	clk[VF610_CLK_FIRC] = imx_clk_fixed("firc", 24000000);
 
-	clk[VF610_CLK_SXOSC] = vf610_get_fixed_घड़ी(ccm_node, "sxosc");
-	clk[VF610_CLK_FXOSC] = vf610_get_fixed_घड़ी(ccm_node, "fxosc");
-	clk[VF610_CLK_AUDIO_EXT] = vf610_get_fixed_घड़ी(ccm_node, "audio_ext");
-	clk[VF610_CLK_ENET_EXT] = vf610_get_fixed_घड़ी(ccm_node, "enet_ext");
+	clk[VF610_CLK_SXOSC] = vf610_get_fixed_clock(ccm_node, "sxosc");
+	clk[VF610_CLK_FXOSC] = vf610_get_fixed_clock(ccm_node, "fxosc");
+	clk[VF610_CLK_AUDIO_EXT] = vf610_get_fixed_clock(ccm_node, "audio_ext");
+	clk[VF610_CLK_ENET_EXT] = vf610_get_fixed_clock(ccm_node, "enet_ext");
 
-	/* Clock source from बाह्यal घड़ी via LVDs PAD */
-	clk[VF610_CLK_ANACLK1] = vf610_get_fixed_घड़ी(ccm_node, "anaclk1");
+	/* Clock source from external clock via LVDs PAD */
+	clk[VF610_CLK_ANACLK1] = vf610_get_fixed_clock(ccm_node, "anaclk1");
 
 	clk[VF610_CLK_FXOSC_HALF] = imx_clk_fixed_factor("fxosc_half", "fxosc", 1, 2);
 
-	np = of_find_compatible_node(शून्य, शून्य, "fsl,vf610-anatop");
+	np = of_find_compatible_node(NULL, NULL, "fsl,vf610-anatop");
 	anatop_base = of_iomap(np, 0);
 	BUG_ON(!anatop_base);
 	of_node_put(np);
@@ -271,13 +270,13 @@
 	clk[VF610_CLK_PLL2_PFD_SEL] = imx_clk_mux("pll2_pfd_sel", CCM_CCSR, 19, 3, pll2_sels, 5);
 	clk[VF610_CLK_SYS_SEL] = imx_clk_mux("sys_sel", CCM_CCSR, 0, 3, sys_sels, ARRAY_SIZE(sys_sels));
 	clk[VF610_CLK_DDR_SEL] = imx_clk_mux("ddr_sel", CCM_CCSR, 6, 1, ddr_sels, ARRAY_SIZE(ddr_sels));
-	clk[VF610_CLK_SYS_BUS] = imx_clk_भागider("sys_bus", "sys_sel", CCM_CACRR, 0, 3);
-	clk[VF610_CLK_PLATFORM_BUS] = imx_clk_भागider("platform_bus", "sys_bus", CCM_CACRR, 3, 3);
-	clk[VF610_CLK_IPG_BUS] = imx_clk_भागider("ipg_bus", "platform_bus", CCM_CACRR, 11, 2);
+	clk[VF610_CLK_SYS_BUS] = imx_clk_divider("sys_bus", "sys_sel", CCM_CACRR, 0, 3);
+	clk[VF610_CLK_PLATFORM_BUS] = imx_clk_divider("platform_bus", "sys_bus", CCM_CACRR, 3, 3);
+	clk[VF610_CLK_IPG_BUS] = imx_clk_divider("ipg_bus", "platform_bus", CCM_CACRR, 11, 2);
 
-	clk[VF610_CLK_PLL3_MAIN_DIV] = imx_clk_भागider("pll3_usb_otg_div", "pll3_usb_otg", CCM_CACRR, 20, 1);
-	clk[VF610_CLK_PLL4_MAIN_DIV] = clk_रेजिस्टर_भागider_table(शून्य, "pll4_audio_div", "pll4_audio", 0, CCM_CACRR, 6, 3, 0, pll4_audio_भाग_प्रकारable, &imx_ccm_lock);
-	clk[VF610_CLK_PLL6_MAIN_DIV] = imx_clk_भागider("pll6_video_div", "pll6_video", CCM_CACRR, 21, 1);
+	clk[VF610_CLK_PLL3_MAIN_DIV] = imx_clk_divider("pll3_usb_otg_div", "pll3_usb_otg", CCM_CACRR, 20, 1);
+	clk[VF610_CLK_PLL4_MAIN_DIV] = clk_register_divider_table(NULL, "pll4_audio_div", "pll4_audio", 0, CCM_CACRR, 6, 3, 0, pll4_audio_div_table, &imx_ccm_lock);
+	clk[VF610_CLK_PLL6_MAIN_DIV] = imx_clk_divider("pll6_video_div", "pll6_video", CCM_CACRR, 21, 1);
 
 	clk[VF610_CLK_DDRMC] = imx_clk_gate2_cgr("ddrmc", "ddr_sel", CCM_CCGR6, CCM_CCGRx_CGn(14), 0x2);
 	clk[VF610_CLK_WKPU] = imx_clk_gate2_cgr("wkpu", "ipg_bus", CCM_CCGR4, CCM_CCGRx_CGn(10), 0x2);
@@ -290,16 +289,16 @@
 
 	clk[VF610_CLK_QSPI0_SEL] = imx_clk_mux("qspi0_sel", CCM_CSCMR1, 22, 2, qspi_sels, 4);
 	clk[VF610_CLK_QSPI0_EN] = imx_clk_gate("qspi0_en", "qspi0_sel", CCM_CSCDR3, 4);
-	clk[VF610_CLK_QSPI0_X4_DIV] = imx_clk_भागider("qspi0_x4", "qspi0_en", CCM_CSCDR3, 0, 2);
-	clk[VF610_CLK_QSPI0_X2_DIV] = imx_clk_भागider("qspi0_x2", "qspi0_x4", CCM_CSCDR3, 2, 1);
-	clk[VF610_CLK_QSPI0_X1_DIV] = imx_clk_भागider("qspi0_x1", "qspi0_x2", CCM_CSCDR3, 3, 1);
+	clk[VF610_CLK_QSPI0_X4_DIV] = imx_clk_divider("qspi0_x4", "qspi0_en", CCM_CSCDR3, 0, 2);
+	clk[VF610_CLK_QSPI0_X2_DIV] = imx_clk_divider("qspi0_x2", "qspi0_x4", CCM_CSCDR3, 2, 1);
+	clk[VF610_CLK_QSPI0_X1_DIV] = imx_clk_divider("qspi0_x1", "qspi0_x2", CCM_CSCDR3, 3, 1);
 	clk[VF610_CLK_QSPI0] = imx_clk_gate2("qspi0", "qspi0_x1", CCM_CCGR2, CCM_CCGRx_CGn(4));
 
 	clk[VF610_CLK_QSPI1_SEL] = imx_clk_mux("qspi1_sel", CCM_CSCMR1, 24, 2, qspi_sels, 4);
 	clk[VF610_CLK_QSPI1_EN] = imx_clk_gate("qspi1_en", "qspi1_sel", CCM_CSCDR3, 12);
-	clk[VF610_CLK_QSPI1_X4_DIV] = imx_clk_भागider("qspi1_x4", "qspi1_en", CCM_CSCDR3, 8, 2);
-	clk[VF610_CLK_QSPI1_X2_DIV] = imx_clk_भागider("qspi1_x2", "qspi1_x4", CCM_CSCDR3, 10, 1);
-	clk[VF610_CLK_QSPI1_X1_DIV] = imx_clk_भागider("qspi1_x1", "qspi1_x2", CCM_CSCDR3, 11, 1);
+	clk[VF610_CLK_QSPI1_X4_DIV] = imx_clk_divider("qspi1_x4", "qspi1_en", CCM_CSCDR3, 8, 2);
+	clk[VF610_CLK_QSPI1_X2_DIV] = imx_clk_divider("qspi1_x2", "qspi1_x4", CCM_CSCDR3, 10, 1);
+	clk[VF610_CLK_QSPI1_X1_DIV] = imx_clk_divider("qspi1_x1", "qspi1_x2", CCM_CSCDR3, 11, 1);
 	clk[VF610_CLK_QSPI1] = imx_clk_gate2("qspi1", "qspi1_x1", CCM_CCGR8, CCM_CCGRx_CGn(4));
 
 	clk[VF610_CLK_ENET_50M] = imx_clk_fixed_factor("enet_50m", "pll5_enet", 1, 10);
@@ -335,34 +334,34 @@
 
 	clk[VF610_CLK_ESDHC0_SEL] = imx_clk_mux("esdhc0_sel", CCM_CSCMR1, 16, 2, esdhc_sels, 4);
 	clk[VF610_CLK_ESDHC0_EN] = imx_clk_gate("esdhc0_en", "esdhc0_sel", CCM_CSCDR2, 28);
-	clk[VF610_CLK_ESDHC0_DIV] = imx_clk_भागider("esdhc0_div", "esdhc0_en", CCM_CSCDR2, 16, 4);
+	clk[VF610_CLK_ESDHC0_DIV] = imx_clk_divider("esdhc0_div", "esdhc0_en", CCM_CSCDR2, 16, 4);
 	clk[VF610_CLK_ESDHC0] = imx_clk_gate2("eshc0", "esdhc0_div", CCM_CCGR7, CCM_CCGRx_CGn(1));
 
 	clk[VF610_CLK_ESDHC1_SEL] = imx_clk_mux("esdhc1_sel", CCM_CSCMR1, 18, 2, esdhc_sels, 4);
 	clk[VF610_CLK_ESDHC1_EN] = imx_clk_gate("esdhc1_en", "esdhc1_sel", CCM_CSCDR2, 29);
-	clk[VF610_CLK_ESDHC1_DIV] = imx_clk_भागider("esdhc1_div", "esdhc1_en", CCM_CSCDR2, 20, 4);
+	clk[VF610_CLK_ESDHC1_DIV] = imx_clk_divider("esdhc1_div", "esdhc1_en", CCM_CSCDR2, 20, 4);
 	clk[VF610_CLK_ESDHC1] = imx_clk_gate2("eshc1", "esdhc1_div", CCM_CCGR7, CCM_CCGRx_CGn(2));
 
 	/*
-	 * fपंचांग_ext_clk and fपंचांग_fix_clk are FTM समयr counter's
-	 * selectable घड़ी sources, both use a common enable bit
-	 * in CCM_CSCDR1, selecting "dummy" घड़ी as parent of
-	 * "ftm0_ext_fix" make it serve only क्रम enable/disable.
+	 * ftm_ext_clk and ftm_fix_clk are FTM timer counter's
+	 * selectable clock sources, both use a common enable bit
+	 * in CCM_CSCDR1, selecting "dummy" clock as parent of
+	 * "ftm0_ext_fix" make it serve only for enable/disable.
 	 */
-	clk[VF610_CLK_FTM0_EXT_SEL] = imx_clk_mux("ftm0_ext_sel", CCM_CSCMR2, 6, 2, fपंचांग_ext_sels, 4);
-	clk[VF610_CLK_FTM0_FIX_SEL] = imx_clk_mux("ftm0_fix_sel", CCM_CSCMR2, 14, 1, fपंचांग_fix_sels, 2);
+	clk[VF610_CLK_FTM0_EXT_SEL] = imx_clk_mux("ftm0_ext_sel", CCM_CSCMR2, 6, 2, ftm_ext_sels, 4);
+	clk[VF610_CLK_FTM0_FIX_SEL] = imx_clk_mux("ftm0_fix_sel", CCM_CSCMR2, 14, 1, ftm_fix_sels, 2);
 	clk[VF610_CLK_FTM0_EXT_FIX_EN] = imx_clk_gate("ftm0_ext_fix_en", "dummy", CCM_CSCDR1, 25);
-	clk[VF610_CLK_FTM1_EXT_SEL] = imx_clk_mux("ftm1_ext_sel", CCM_CSCMR2, 8, 2, fपंचांग_ext_sels, 4);
-	clk[VF610_CLK_FTM1_FIX_SEL] = imx_clk_mux("ftm1_fix_sel", CCM_CSCMR2, 15, 1, fपंचांग_fix_sels, 2);
+	clk[VF610_CLK_FTM1_EXT_SEL] = imx_clk_mux("ftm1_ext_sel", CCM_CSCMR2, 8, 2, ftm_ext_sels, 4);
+	clk[VF610_CLK_FTM1_FIX_SEL] = imx_clk_mux("ftm1_fix_sel", CCM_CSCMR2, 15, 1, ftm_fix_sels, 2);
 	clk[VF610_CLK_FTM1_EXT_FIX_EN] = imx_clk_gate("ftm1_ext_fix_en", "dummy", CCM_CSCDR1, 26);
-	clk[VF610_CLK_FTM2_EXT_SEL] = imx_clk_mux("ftm2_ext_sel", CCM_CSCMR2, 10, 2, fपंचांग_ext_sels, 4);
-	clk[VF610_CLK_FTM2_FIX_SEL] = imx_clk_mux("ftm2_fix_sel", CCM_CSCMR2, 16, 1, fपंचांग_fix_sels, 2);
+	clk[VF610_CLK_FTM2_EXT_SEL] = imx_clk_mux("ftm2_ext_sel", CCM_CSCMR2, 10, 2, ftm_ext_sels, 4);
+	clk[VF610_CLK_FTM2_FIX_SEL] = imx_clk_mux("ftm2_fix_sel", CCM_CSCMR2, 16, 1, ftm_fix_sels, 2);
 	clk[VF610_CLK_FTM2_EXT_FIX_EN] = imx_clk_gate("ftm2_ext_fix_en", "dummy", CCM_CSCDR1, 27);
-	clk[VF610_CLK_FTM3_EXT_SEL] = imx_clk_mux("ftm3_ext_sel", CCM_CSCMR2, 12, 2, fपंचांग_ext_sels, 4);
-	clk[VF610_CLK_FTM3_FIX_SEL] = imx_clk_mux("ftm3_fix_sel", CCM_CSCMR2, 17, 1, fपंचांग_fix_sels, 2);
+	clk[VF610_CLK_FTM3_EXT_SEL] = imx_clk_mux("ftm3_ext_sel", CCM_CSCMR2, 12, 2, ftm_ext_sels, 4);
+	clk[VF610_CLK_FTM3_FIX_SEL] = imx_clk_mux("ftm3_fix_sel", CCM_CSCMR2, 17, 1, ftm_fix_sels, 2);
 	clk[VF610_CLK_FTM3_EXT_FIX_EN] = imx_clk_gate("ftm3_ext_fix_en", "dummy", CCM_CSCDR1, 28);
 
-	/* fपंचांग(n)_clk are FTM module operation घड़ी */
+	/* ftm(n)_clk are FTM module operation clock */
 	clk[VF610_CLK_FTM0] = imx_clk_gate2("ftm0", "ipg_bus", CCM_CCGR1, CCM_CCGRx_CGn(8));
 	clk[VF610_CLK_FTM1] = imx_clk_gate2("ftm1", "ipg_bus", CCM_CCGR1, CCM_CCGRx_CGn(9));
 	clk[VF610_CLK_FTM2] = imx_clk_gate2("ftm2", "ipg_bus", CCM_CCGR7, CCM_CCGRx_CGn(8));
@@ -370,11 +369,11 @@
 
 	clk[VF610_CLK_DCU0_SEL] = imx_clk_mux("dcu0_sel", CCM_CSCMR1, 28, 1, dcu_sels, 2);
 	clk[VF610_CLK_DCU0_EN] = imx_clk_gate("dcu0_en", "dcu0_sel", CCM_CSCDR3, 19);
-	clk[VF610_CLK_DCU0_DIV] = imx_clk_भागider("dcu0_div", "dcu0_en", CCM_CSCDR3, 16, 3);
+	clk[VF610_CLK_DCU0_DIV] = imx_clk_divider("dcu0_div", "dcu0_en", CCM_CSCDR3, 16, 3);
 	clk[VF610_CLK_DCU0] = imx_clk_gate2("dcu0", "ipg_bus", CCM_CCGR3, CCM_CCGRx_CGn(8));
 	clk[VF610_CLK_DCU1_SEL] = imx_clk_mux("dcu1_sel", CCM_CSCMR1, 29, 1, dcu_sels, 2);
 	clk[VF610_CLK_DCU1_EN] = imx_clk_gate("dcu1_en", "dcu1_sel", CCM_CSCDR3, 23);
-	clk[VF610_CLK_DCU1_DIV] = imx_clk_भागider("dcu1_div", "dcu1_en", CCM_CSCDR3, 20, 3);
+	clk[VF610_CLK_DCU1_DIV] = imx_clk_divider("dcu1_div", "dcu1_en", CCM_CSCDR3, 20, 3);
 	clk[VF610_CLK_DCU1] = imx_clk_gate2("dcu1", "ipg_bus", CCM_CCGR9, CCM_CCGRx_CGn(8));
 
 	clk[VF610_CLK_TCON0] = imx_clk_gate2("tcon0", "platform_bus", CCM_CCGR1, CCM_CCGRx_CGn(13));
@@ -382,33 +381,33 @@
 
 	clk[VF610_CLK_ESAI_SEL] = imx_clk_mux("esai_sel", CCM_CSCMR1, 20, 2, esai_sels, 4);
 	clk[VF610_CLK_ESAI_EN] = imx_clk_gate("esai_en", "esai_sel", CCM_CSCDR2, 30);
-	clk[VF610_CLK_ESAI_DIV] = imx_clk_भागider("esai_div", "esai_en", CCM_CSCDR2, 24, 4);
+	clk[VF610_CLK_ESAI_DIV] = imx_clk_divider("esai_div", "esai_en", CCM_CSCDR2, 24, 4);
 	clk[VF610_CLK_ESAI] = imx_clk_gate2("esai", "esai_div", CCM_CCGR4, CCM_CCGRx_CGn(2));
 
 	clk[VF610_CLK_SAI0_SEL] = imx_clk_mux("sai0_sel", CCM_CSCMR1, 0, 2, sai_sels, 4);
 	clk[VF610_CLK_SAI0_EN] = imx_clk_gate("sai0_en", "sai0_sel", CCM_CSCDR1, 16);
-	clk[VF610_CLK_SAI0_DIV] = imx_clk_भागider("sai0_div", "sai0_en", CCM_CSCDR1, 0, 4);
+	clk[VF610_CLK_SAI0_DIV] = imx_clk_divider("sai0_div", "sai0_en", CCM_CSCDR1, 0, 4);
 	clk[VF610_CLK_SAI0] = imx_clk_gate2("sai0", "ipg_bus", CCM_CCGR0, CCM_CCGRx_CGn(15));
 
 	clk[VF610_CLK_SAI1_SEL] = imx_clk_mux("sai1_sel", CCM_CSCMR1, 2, 2, sai_sels, 4);
 	clk[VF610_CLK_SAI1_EN] = imx_clk_gate("sai1_en", "sai1_sel", CCM_CSCDR1, 17);
-	clk[VF610_CLK_SAI1_DIV] = imx_clk_भागider("sai1_div", "sai1_en", CCM_CSCDR1, 4, 4);
+	clk[VF610_CLK_SAI1_DIV] = imx_clk_divider("sai1_div", "sai1_en", CCM_CSCDR1, 4, 4);
 	clk[VF610_CLK_SAI1] = imx_clk_gate2("sai1", "ipg_bus", CCM_CCGR1, CCM_CCGRx_CGn(0));
 
 	clk[VF610_CLK_SAI2_SEL] = imx_clk_mux("sai2_sel", CCM_CSCMR1, 4, 2, sai_sels, 4);
 	clk[VF610_CLK_SAI2_EN] = imx_clk_gate("sai2_en", "sai2_sel", CCM_CSCDR1, 18);
-	clk[VF610_CLK_SAI2_DIV] = imx_clk_भागider("sai2_div", "sai2_en", CCM_CSCDR1, 8, 4);
+	clk[VF610_CLK_SAI2_DIV] = imx_clk_divider("sai2_div", "sai2_en", CCM_CSCDR1, 8, 4);
 	clk[VF610_CLK_SAI2] = imx_clk_gate2("sai2", "ipg_bus", CCM_CCGR1, CCM_CCGRx_CGn(1));
 
 	clk[VF610_CLK_SAI3_SEL] = imx_clk_mux("sai3_sel", CCM_CSCMR1, 6, 2, sai_sels, 4);
 	clk[VF610_CLK_SAI3_EN] = imx_clk_gate("sai3_en", "sai3_sel", CCM_CSCDR1, 19);
-	clk[VF610_CLK_SAI3_DIV] = imx_clk_भागider("sai3_div", "sai3_en", CCM_CSCDR1, 12, 4);
+	clk[VF610_CLK_SAI3_DIV] = imx_clk_divider("sai3_div", "sai3_en", CCM_CSCDR1, 12, 4);
 	clk[VF610_CLK_SAI3] = imx_clk_gate2("sai3", "ipg_bus", CCM_CCGR1, CCM_CCGRx_CGn(2));
 
 	clk[VF610_CLK_NFC_SEL] = imx_clk_mux("nfc_sel", CCM_CSCMR1, 12, 2, nfc_sels, 4);
 	clk[VF610_CLK_NFC_EN] = imx_clk_gate("nfc_en", "nfc_sel", CCM_CSCDR2, 9);
-	clk[VF610_CLK_NFC_PRE_DIV] = imx_clk_भागider("nfc_pre_div", "nfc_en", CCM_CSCDR3, 13, 3);
-	clk[VF610_CLK_NFC_FRAC_DIV] = imx_clk_भागider("nfc_frac_div", "nfc_pre_div", CCM_CSCDR2, 4, 4);
+	clk[VF610_CLK_NFC_PRE_DIV] = imx_clk_divider("nfc_pre_div", "nfc_en", CCM_CSCDR3, 13, 3);
+	clk[VF610_CLK_NFC_FRAC_DIV] = imx_clk_divider("nfc_frac_div", "nfc_pre_div", CCM_CSCDR2, 4, 4);
 	clk[VF610_CLK_NFC] = imx_clk_gate2("nfc", "nfc_frac_div", CCM_CCGR10, CCM_CCGRx_CGn(0));
 
 	clk[VF610_CLK_GPU_SEL] = imx_clk_mux("gpu_sel", CCM_CSCMR1, 14, 1, gpu_sels, 2);
@@ -417,7 +416,7 @@
 
 	clk[VF610_CLK_VADC_SEL] = imx_clk_mux("vadc_sel", CCM_CSCMR1, 8, 2, vadc_sels, 3);
 	clk[VF610_CLK_VADC_EN] = imx_clk_gate("vadc_en", "vadc_sel", CCM_CSCDR1, 22);
-	clk[VF610_CLK_VADC_DIV] = imx_clk_भागider("vadc_div", "vadc_en", CCM_CSCDR1, 20, 2);
+	clk[VF610_CLK_VADC_DIV] = imx_clk_divider("vadc_div", "vadc_en", CCM_CSCDR1, 20, 2);
 	clk[VF610_CLK_VADC_DIV_HALF] = imx_clk_fixed_factor("vadc_div_half", "vadc_div", 1, 2);
 	clk[VF610_CLK_VADC] = imx_clk_gate2("vadc", "vadc_div", CCM_CCGR8, CCM_CCGRx_CGn(7));
 
@@ -443,7 +442,7 @@
 	clk[VF610_CLK_OCOTP] = imx_clk_gate("ocotp", "ipg_bus", CCM_CCGR6, CCM_CCGRx_CGn(5));
 	clk[VF610_CLK_CAAM] = imx_clk_gate2("caam", "ipg_bus", CCM_CCGR11, CCM_CCGRx_CGn(0));
 
-	imx_check_घड़ीs(clk, ARRAY_SIZE(clk));
+	imx_check_clocks(clk, ARRAY_SIZE(clk));
 
 	clk_set_parent(clk[VF610_CLK_QSPI0_SEL], clk[VF610_CLK_PLL1_PFD4]);
 	clk_set_rate(clk[VF610_CLK_QSPI0_X4_DIV], clk_get_rate(clk[VF610_CLK_QSPI0_SEL]) / 2);
@@ -460,14 +459,14 @@
 	clk_set_parent(clk[VF610_CLK_SAI2_SEL], clk[VF610_CLK_AUDIO_EXT]);
 	clk_set_parent(clk[VF610_CLK_SAI3_SEL], clk[VF610_CLK_AUDIO_EXT]);
 
-	क्रम (i = 0; i < ARRAY_SIZE(clks_init_on); i++)
+	for (i = 0; i < ARRAY_SIZE(clks_init_on); i++)
 		clk_prepare_enable(clk[clks_init_on[i]]);
 
-	रेजिस्टर_syscore_ops(&vf610_clk_syscore_ops);
+	register_syscore_ops(&vf610_clk_syscore_ops);
 
-	/* Add the घड़ीs to provider list */
+	/* Add the clocks to provider list */
 	clk_data.clks = clk;
 	clk_data.clk_num = ARRAY_SIZE(clk);
 	of_clk_add_provider(np, of_clk_src_onecell_get, &clk_data);
-पूर्ण
-CLK_OF_DECLARE(vf610, "fsl,vf610-ccm", vf610_घड़ीs_init);
+}
+CLK_OF_DECLARE(vf610, "fsl,vf610-ccm", vf610_clocks_init);

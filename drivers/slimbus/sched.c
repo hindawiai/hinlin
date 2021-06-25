@@ -1,122 +1,121 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (c) 2011-2017, The Linux Foundation
  */
 
-#समावेश <linux/त्रुटिसं.स>
-#समावेश "slimbus.h"
+#include <linux/errno.h>
+#include "slimbus.h"
 
 /**
- * slim_ctrl_clk_छोड़ो() - Called by slimbus controller to enter/निकास
+ * slim_ctrl_clk_pause() - Called by slimbus controller to enter/exit
  *			   'clock pause'
- * @ctrl: controller requesting bus to be छोड़ोd or woken up
- * @wakeup: Wakeup this controller from घड़ी छोड़ो.
- * @restart: Restart समय value per spec used क्रम घड़ी छोड़ो. This value
+ * @ctrl: controller requesting bus to be paused or woken up
+ * @wakeup: Wakeup this controller from clock pause.
+ * @restart: Restart time value per spec used for clock pause. This value
  *	isn't used when controller is to be woken up.
  *
- * Slimbus specअगरication needs this sequence to turn-off घड़ीs क्रम the bus.
+ * Slimbus specification needs this sequence to turn-off clocks for the bus.
  * The sequence involves sending 3 broadcast messages (reconfiguration
- * sequence) to inक्रमm all devices on the bus.
- * To निकास घड़ी-छोड़ो, controller typically wakes up active framer device.
- * This API executes घड़ी छोड़ो reconfiguration sequence अगर wakeup is false.
+ * sequence) to inform all devices on the bus.
+ * To exit clock-pause, controller typically wakes up active framer device.
+ * This API executes clock pause reconfiguration sequence if wakeup is false.
  * If wakeup is true, controller's wakeup is called.
- * For entering घड़ी-छोड़ो, -EBUSY is वापसed अगर a message txn in pending.
+ * For entering clock-pause, -EBUSY is returned if a message txn in pending.
  */
-पूर्णांक slim_ctrl_clk_छोड़ो(काष्ठा slim_controller *ctrl, bool wakeup, u8 restart)
-अणु
-	पूर्णांक i, ret = 0;
-	अचिन्हित दीर्घ flags;
-	काष्ठा slim_sched *sched = &ctrl->sched;
-	काष्ठा slim_val_inf msg = अणु0, 0, शून्य, शून्यपूर्ण;
+int slim_ctrl_clk_pause(struct slim_controller *ctrl, bool wakeup, u8 restart)
+{
+	int i, ret = 0;
+	unsigned long flags;
+	struct slim_sched *sched = &ctrl->sched;
+	struct slim_val_inf msg = {0, 0, NULL, NULL};
 
 	DEFINE_SLIM_BCAST_TXN(txn, SLIM_MSG_MC_BEGIN_RECONFIGURATION,
 				3, SLIM_LA_MANAGER, &msg);
 
-	अगर (wakeup == false && restart > SLIM_CLK_UNSPECIFIED)
-		वापस -EINVAL;
+	if (wakeup == false && restart > SLIM_CLK_UNSPECIFIED)
+		return -EINVAL;
 
 	mutex_lock(&sched->m_reconf);
-	अगर (wakeup) अणु
-		अगर (sched->clk_state == SLIM_CLK_ACTIVE) अणु
+	if (wakeup) {
+		if (sched->clk_state == SLIM_CLK_ACTIVE) {
 			mutex_unlock(&sched->m_reconf);
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 
 		/*
-		 * Fine-tune calculation based on घड़ी gear,
+		 * Fine-tune calculation based on clock gear,
 		 * message-bandwidth after bandwidth management
 		 */
-		ret = रुको_क्रम_completion_समयout(&sched->छोड़ो_comp,
-				msecs_to_jअगरfies(100));
-		अगर (!ret) अणु
+		ret = wait_for_completion_timeout(&sched->pause_comp,
+				msecs_to_jiffies(100));
+		if (!ret) {
 			mutex_unlock(&sched->m_reconf);
 			pr_err("Previous clock pause did not finish");
-			वापस -ETIMEDOUT;
-		पूर्ण
+			return -ETIMEDOUT;
+		}
 		ret = 0;
 
 		/*
 		 * Slimbus framework will call controller wakeup
 		 * Controller should make sure that it sets active framer
-		 * out of घड़ी छोड़ो
+		 * out of clock pause
 		 */
-		अगर (sched->clk_state == SLIM_CLK_PAUSED && ctrl->wakeup)
+		if (sched->clk_state == SLIM_CLK_PAUSED && ctrl->wakeup)
 			ret = ctrl->wakeup(ctrl);
-		अगर (!ret)
+		if (!ret)
 			sched->clk_state = SLIM_CLK_ACTIVE;
 		mutex_unlock(&sched->m_reconf);
 
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	/* alपढ़ोy छोड़ोd */
-	अगर (ctrl->sched.clk_state == SLIM_CLK_PAUSED) अणु
+	/* already paused */
+	if (ctrl->sched.clk_state == SLIM_CLK_PAUSED) {
 		mutex_unlock(&sched->m_reconf);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	spin_lock_irqsave(&ctrl->txn_lock, flags);
-	क्रम (i = 0; i < SLIM_MAX_TIDS; i++) अणु
-		/* Pending response क्रम a message */
-		अगर (idr_find(&ctrl->tid_idr, i)) अणु
+	for (i = 0; i < SLIM_MAX_TIDS; i++) {
+		/* Pending response for a message */
+		if (idr_find(&ctrl->tid_idr, i)) {
 			spin_unlock_irqrestore(&ctrl->txn_lock, flags);
 			mutex_unlock(&sched->m_reconf);
-			वापस -EBUSY;
-		पूर्ण
-	पूर्ण
+			return -EBUSY;
+		}
+	}
 	spin_unlock_irqrestore(&ctrl->txn_lock, flags);
 
 	sched->clk_state = SLIM_CLK_ENTERING_PAUSE;
 
-	/* घड़ी छोड़ो sequence */
-	ret = slim_करो_transfer(ctrl, &txn);
-	अगर (ret)
-		जाओ clk_छोड़ो_ret;
+	/* clock pause sequence */
+	ret = slim_do_transfer(ctrl, &txn);
+	if (ret)
+		goto clk_pause_ret;
 
 	txn.mc = SLIM_MSG_MC_NEXT_PAUSE_CLOCK;
 	txn.rl = 4;
 	msg.num_bytes = 1;
 	msg.wbuf = &restart;
-	ret = slim_करो_transfer(ctrl, &txn);
-	अगर (ret)
-		जाओ clk_छोड़ो_ret;
+	ret = slim_do_transfer(ctrl, &txn);
+	if (ret)
+		goto clk_pause_ret;
 
 	txn.mc = SLIM_MSG_MC_RECONFIGURE_NOW;
 	txn.rl = 3;
 	msg.num_bytes = 1;
-	msg.wbuf = शून्य;
-	ret = slim_करो_transfer(ctrl, &txn);
+	msg.wbuf = NULL;
+	ret = slim_do_transfer(ctrl, &txn);
 
-clk_छोड़ो_ret:
-	अगर (ret) अणु
+clk_pause_ret:
+	if (ret) {
 		sched->clk_state = SLIM_CLK_ACTIVE;
-	पूर्ण अन्यथा अणु
+	} else {
 		sched->clk_state = SLIM_CLK_PAUSED;
-		complete(&sched->छोड़ो_comp);
-	पूर्ण
+		complete(&sched->pause_comp);
+	}
 	mutex_unlock(&sched->m_reconf);
 
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(slim_ctrl_clk_छोड़ो);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(slim_ctrl_clk_pause);

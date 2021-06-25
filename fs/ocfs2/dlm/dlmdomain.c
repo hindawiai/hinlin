@@ -1,737 +1,736 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * dlmकरोमुख्य.c
+ * dlmdomain.c
  *
- * defines करोमुख्य join / leave apis
+ * defines domain join / leave apis
  *
  * Copyright (C) 2004 Oracle.  All rights reserved.
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/types.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/highस्मृति.स>
-#समावेश <linux/init.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/err.h>
-#समावेश <linux/debugfs.h>
-#समावेश <linux/sched/संकेत.स>
+#include <linux/module.h>
+#include <linux/types.h>
+#include <linux/slab.h>
+#include <linux/highmem.h>
+#include <linux/init.h>
+#include <linux/spinlock.h>
+#include <linux/delay.h>
+#include <linux/err.h>
+#include <linux/debugfs.h>
+#include <linux/sched/signal.h>
 
-#समावेश "../cluster/heartbeat.h"
-#समावेश "../cluster/nodemanager.h"
-#समावेश "../cluster/tcp.h"
+#include "../cluster/heartbeat.h"
+#include "../cluster/nodemanager.h"
+#include "../cluster/tcp.h"
 
-#समावेश "dlmapi.h"
-#समावेश "dlmcommon.h"
-#समावेश "dlmdomain.h"
-#समावेश "dlmdebug.h"
+#include "dlmapi.h"
+#include "dlmcommon.h"
+#include "dlmdomain.h"
+#include "dlmdebug.h"
 
-#घोषणा MLOG_MASK_PREFIX (ML_DLM|ML_DLM_DOMAIN)
-#समावेश "../cluster/masklog.h"
+#define MLOG_MASK_PREFIX (ML_DLM|ML_DLM_DOMAIN)
+#include "../cluster/masklog.h"
 
 /*
- * ocfs2 node maps are array of दीर्घ पूर्णांक, which limits to send them मुक्तly
+ * ocfs2 node maps are array of long int, which limits to send them freely
  * across the wire due to endianness issues. To workaround this, we convert
- * दीर्घ पूर्णांकs to byte arrays. Following 3 routines are helper functions to
+ * long ints to byte arrays. Following 3 routines are helper functions to
  * set/test/copy bits within those array of bytes
  */
-अटल अंतरभूत व्योम byte_set_bit(u8 nr, u8 map[])
-अणु
+static inline void byte_set_bit(u8 nr, u8 map[])
+{
 	map[nr >> 3] |= (1UL << (nr & 7));
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक byte_test_bit(u8 nr, u8 map[])
-अणु
-	वापस ((1UL << (nr & 7)) & (map[nr >> 3])) != 0;
-पूर्ण
+static inline int byte_test_bit(u8 nr, u8 map[])
+{
+	return ((1UL << (nr & 7)) & (map[nr >> 3])) != 0;
+}
 
-अटल अंतरभूत व्योम byte_copymap(u8 dmap[], अचिन्हित दीर्घ smap[],
-			अचिन्हित पूर्णांक sz)
-अणु
-	अचिन्हित पूर्णांक nn;
+static inline void byte_copymap(u8 dmap[], unsigned long smap[],
+			unsigned int sz)
+{
+	unsigned int nn;
 
-	अगर (!sz)
-		वापस;
+	if (!sz)
+		return;
 
-	स_रखो(dmap, 0, ((sz + 7) >> 3));
-	क्रम (nn = 0 ; nn < sz; nn++)
-		अगर (test_bit(nn, smap))
+	memset(dmap, 0, ((sz + 7) >> 3));
+	for (nn = 0 ; nn < sz; nn++)
+		if (test_bit(nn, smap))
 			byte_set_bit(nn, dmap);
-पूर्ण
+}
 
-अटल व्योम dlm_मुक्त_pagevec(व्योम **vec, पूर्णांक pages)
-अणु
-	जबतक (pages--)
-		मुक्त_page((अचिन्हित दीर्घ)vec[pages]);
-	kमुक्त(vec);
-पूर्ण
+static void dlm_free_pagevec(void **vec, int pages)
+{
+	while (pages--)
+		free_page((unsigned long)vec[pages]);
+	kfree(vec);
+}
 
-अटल व्योम **dlm_alloc_pagevec(पूर्णांक pages)
-अणु
-	व्योम **vec = kदो_स्मृति_array(pages, माप(व्योम *), GFP_KERNEL);
-	पूर्णांक i;
+static void **dlm_alloc_pagevec(int pages)
+{
+	void **vec = kmalloc_array(pages, sizeof(void *), GFP_KERNEL);
+	int i;
 
-	अगर (!vec)
-		वापस शून्य;
+	if (!vec)
+		return NULL;
 
-	क्रम (i = 0; i < pages; i++)
-		अगर (!(vec[i] = (व्योम *)__get_मुक्त_page(GFP_KERNEL)))
-			जाओ out_मुक्त;
+	for (i = 0; i < pages; i++)
+		if (!(vec[i] = (void *)__get_free_page(GFP_KERNEL)))
+			goto out_free;
 
 	mlog(0, "Allocated DLM hash pagevec; %d pages (%lu expected), %lu buckets per page\n",
-	     pages, (अचिन्हित दीर्घ)DLM_HASH_PAGES,
-	     (अचिन्हित दीर्घ)DLM_BUCKETS_PER_PAGE);
-	वापस vec;
-out_मुक्त:
-	dlm_मुक्त_pagevec(vec, i);
-	वापस शून्य;
-पूर्ण
+	     pages, (unsigned long)DLM_HASH_PAGES,
+	     (unsigned long)DLM_BUCKETS_PER_PAGE);
+	return vec;
+out_free:
+	dlm_free_pagevec(vec, i);
+	return NULL;
+}
 
 /*
  *
- * spinlock lock ordering: अगर multiple locks are needed, obey this ordering:
- *    dlm_करोमुख्य_lock
- *    काष्ठा dlm_ctxt->spinlock
- *    काष्ठा dlm_lock_resource->spinlock
- *    काष्ठा dlm_ctxt->master_lock
- *    काष्ठा dlm_ctxt->ast_lock
+ * spinlock lock ordering: if multiple locks are needed, obey this ordering:
+ *    dlm_domain_lock
+ *    struct dlm_ctxt->spinlock
+ *    struct dlm_lock_resource->spinlock
+ *    struct dlm_ctxt->master_lock
+ *    struct dlm_ctxt->ast_lock
  *    dlm_master_list_entry->spinlock
  *    dlm_lock->spinlock
  *
  */
 
-DEFINE_SPINLOCK(dlm_करोमुख्य_lock);
-LIST_HEAD(dlm_करोमुख्यs);
-अटल DECLARE_WAIT_QUEUE_HEAD(dlm_करोमुख्य_events);
+DEFINE_SPINLOCK(dlm_domain_lock);
+LIST_HEAD(dlm_domains);
+static DECLARE_WAIT_QUEUE_HEAD(dlm_domain_events);
 
 /*
- * The supported protocol version क्रम DLM communication.  Running करोमुख्यs
+ * The supported protocol version for DLM communication.  Running domains
  * will have a negotiated version with the same major number and a minor
  * number equal or smaller.  The dlm_ctxt->dlm_locking_proto field should
- * be used to determine what a running करोमुख्य is actually using.
+ * be used to determine what a running domain is actually using.
  *
  * New in version 1.1:
  *	- Message DLM_QUERY_REGION added to support global heartbeat
- *	- Message DLM_QUERY_NODEINFO added to allow online node हटाओs
+ *	- Message DLM_QUERY_NODEINFO added to allow online node removes
  * New in version 1.2:
- * 	- Message DLM_BEGIN_EXIT_DOMAIN_MSG added to mark start of निकास करोमुख्य
+ * 	- Message DLM_BEGIN_EXIT_DOMAIN_MSG added to mark start of exit domain
  * New in version 1.3:
- *	- Message DLM_DEREF_LOCKRES_DONE added to inक्रमm non-master that the
+ *	- Message DLM_DEREF_LOCKRES_DONE added to inform non-master that the
  *	  refmap is cleared
  */
-अटल स्थिर काष्ठा dlm_protocol_version dlm_protocol = अणु
+static const struct dlm_protocol_version dlm_protocol = {
 	.pv_major = 1,
 	.pv_minor = 3,
-पूर्ण;
+};
 
-#घोषणा DLM_DOMAIN_BACKOFF_MS 200
+#define DLM_DOMAIN_BACKOFF_MS 200
 
-अटल पूर्णांक dlm_query_join_handler(काष्ठा o2net_msg *msg, u32 len, व्योम *data,
-				  व्योम **ret_data);
-अटल पूर्णांक dlm_निश्चित_joined_handler(काष्ठा o2net_msg *msg, u32 len, व्योम *data,
-				     व्योम **ret_data);
-अटल पूर्णांक dlm_cancel_join_handler(काष्ठा o2net_msg *msg, u32 len, व्योम *data,
-				   व्योम **ret_data);
-अटल पूर्णांक dlm_query_region_handler(काष्ठा o2net_msg *msg, u32 len,
-				    व्योम *data, व्योम **ret_data);
-अटल पूर्णांक dlm_निकास_करोमुख्य_handler(काष्ठा o2net_msg *msg, u32 len, व्योम *data,
-				   व्योम **ret_data);
-अटल पूर्णांक dlm_protocol_compare(काष्ठा dlm_protocol_version *existing,
-				काष्ठा dlm_protocol_version *request);
+static int dlm_query_join_handler(struct o2net_msg *msg, u32 len, void *data,
+				  void **ret_data);
+static int dlm_assert_joined_handler(struct o2net_msg *msg, u32 len, void *data,
+				     void **ret_data);
+static int dlm_cancel_join_handler(struct o2net_msg *msg, u32 len, void *data,
+				   void **ret_data);
+static int dlm_query_region_handler(struct o2net_msg *msg, u32 len,
+				    void *data, void **ret_data);
+static int dlm_exit_domain_handler(struct o2net_msg *msg, u32 len, void *data,
+				   void **ret_data);
+static int dlm_protocol_compare(struct dlm_protocol_version *existing,
+				struct dlm_protocol_version *request);
 
-अटल व्योम dlm_unरेजिस्टर_करोमुख्य_handlers(काष्ठा dlm_ctxt *dlm);
+static void dlm_unregister_domain_handlers(struct dlm_ctxt *dlm);
 
-व्योम __dlm_unhash_lockres(काष्ठा dlm_ctxt *dlm, काष्ठा dlm_lock_resource *res)
-अणु
-	अगर (hlist_unhashed(&res->hash_node))
-		वापस;
+void __dlm_unhash_lockres(struct dlm_ctxt *dlm, struct dlm_lock_resource *res)
+{
+	if (hlist_unhashed(&res->hash_node))
+		return;
 
 	mlog(0, "%s: Unhash res %.*s\n", dlm->name, res->lockname.len,
 	     res->lockname.name);
 	hlist_del_init(&res->hash_node);
 	dlm_lockres_put(res);
-पूर्ण
+}
 
-व्योम __dlm_insert_lockres(काष्ठा dlm_ctxt *dlm, काष्ठा dlm_lock_resource *res)
-अणु
-	काष्ठा hlist_head *bucket;
+void __dlm_insert_lockres(struct dlm_ctxt *dlm, struct dlm_lock_resource *res)
+{
+	struct hlist_head *bucket;
 
-	निश्चित_spin_locked(&dlm->spinlock);
+	assert_spin_locked(&dlm->spinlock);
 
 	bucket = dlm_lockres_hash(dlm, res->lockname.hash);
 
-	/* get a reference क्रम our hashtable */
+	/* get a reference for our hashtable */
 	dlm_lockres_get(res);
 
 	hlist_add_head(&res->hash_node, bucket);
 
 	mlog(0, "%s: Hash res %.*s\n", dlm->name, res->lockname.len,
 	     res->lockname.name);
-पूर्ण
+}
 
-काष्ठा dlm_lock_resource * __dlm_lookup_lockres_full(काष्ठा dlm_ctxt *dlm,
-						     स्थिर अक्षर *name,
-						     अचिन्हित पूर्णांक len,
-						     अचिन्हित पूर्णांक hash)
-अणु
-	काष्ठा hlist_head *bucket;
-	काष्ठा dlm_lock_resource *res;
+struct dlm_lock_resource * __dlm_lookup_lockres_full(struct dlm_ctxt *dlm,
+						     const char *name,
+						     unsigned int len,
+						     unsigned int hash)
+{
+	struct hlist_head *bucket;
+	struct dlm_lock_resource *res;
 
 	mlog(0, "%.*s\n", len, name);
 
-	निश्चित_spin_locked(&dlm->spinlock);
+	assert_spin_locked(&dlm->spinlock);
 
 	bucket = dlm_lockres_hash(dlm, hash);
 
-	hlist_क्रम_each_entry(res, bucket, hash_node) अणु
-		अगर (res->lockname.name[0] != name[0])
-			जारी;
-		अगर (unlikely(res->lockname.len != len))
-			जारी;
-		अगर (स_भेद(res->lockname.name + 1, name + 1, len - 1))
-			जारी;
+	hlist_for_each_entry(res, bucket, hash_node) {
+		if (res->lockname.name[0] != name[0])
+			continue;
+		if (unlikely(res->lockname.len != len))
+			continue;
+		if (memcmp(res->lockname.name + 1, name + 1, len - 1))
+			continue;
 		dlm_lockres_get(res);
-		वापस res;
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+		return res;
+	}
+	return NULL;
+}
 
-/* पूर्णांकended to be called by functions which करो not care about lock
+/* intended to be called by functions which do not care about lock
  * resources which are being purged (most net _handler functions).
- * this will वापस शून्य क्रम any lock resource which is found but
+ * this will return NULL for any lock resource which is found but
  * currently in the process of dropping its mastery reference.
  * use __dlm_lookup_lockres_full when you need the lock resource
  * regardless (e.g. dlm_get_lock_resource) */
-काष्ठा dlm_lock_resource * __dlm_lookup_lockres(काष्ठा dlm_ctxt *dlm,
-						स्थिर अक्षर *name,
-						अचिन्हित पूर्णांक len,
-						अचिन्हित पूर्णांक hash)
-अणु
-	काष्ठा dlm_lock_resource *res = शून्य;
+struct dlm_lock_resource * __dlm_lookup_lockres(struct dlm_ctxt *dlm,
+						const char *name,
+						unsigned int len,
+						unsigned int hash)
+{
+	struct dlm_lock_resource *res = NULL;
 
 	mlog(0, "%.*s\n", len, name);
 
-	निश्चित_spin_locked(&dlm->spinlock);
+	assert_spin_locked(&dlm->spinlock);
 
 	res = __dlm_lookup_lockres_full(dlm, name, len, hash);
-	अगर (res) अणु
+	if (res) {
 		spin_lock(&res->spinlock);
-		अगर (res->state & DLM_LOCK_RES_DROPPING_REF) अणु
+		if (res->state & DLM_LOCK_RES_DROPPING_REF) {
 			spin_unlock(&res->spinlock);
 			dlm_lockres_put(res);
-			वापस शून्य;
-		पूर्ण
+			return NULL;
+		}
 		spin_unlock(&res->spinlock);
-	पूर्ण
+	}
 
-	वापस res;
-पूर्ण
+	return res;
+}
 
-काष्ठा dlm_lock_resource * dlm_lookup_lockres(काष्ठा dlm_ctxt *dlm,
-				    स्थिर अक्षर *name,
-				    अचिन्हित पूर्णांक len)
-अणु
-	काष्ठा dlm_lock_resource *res;
-	अचिन्हित पूर्णांक hash = dlm_lockid_hash(name, len);
+struct dlm_lock_resource * dlm_lookup_lockres(struct dlm_ctxt *dlm,
+				    const char *name,
+				    unsigned int len)
+{
+	struct dlm_lock_resource *res;
+	unsigned int hash = dlm_lockid_hash(name, len);
 
 	spin_lock(&dlm->spinlock);
 	res = __dlm_lookup_lockres(dlm, name, len, hash);
 	spin_unlock(&dlm->spinlock);
-	वापस res;
-पूर्ण
+	return res;
+}
 
-अटल काष्ठा dlm_ctxt * __dlm_lookup_करोमुख्य_full(स्थिर अक्षर *करोमुख्य, पूर्णांक len)
-अणु
-	काष्ठा dlm_ctxt *पंचांगp;
+static struct dlm_ctxt * __dlm_lookup_domain_full(const char *domain, int len)
+{
+	struct dlm_ctxt *tmp;
 
-	निश्चित_spin_locked(&dlm_करोमुख्य_lock);
+	assert_spin_locked(&dlm_domain_lock);
 
-	/* पंचांगp->name here is always शून्य terminated,
-	 * but करोमुख्य may not be! */
-	list_क्रम_each_entry(पंचांगp, &dlm_करोमुख्यs, list) अणु
-		अगर (म_माप(पंचांगp->name) == len &&
-		    स_भेद(पंचांगp->name, करोमुख्य, len)==0)
-			वापस पंचांगp;
-	पूर्ण
+	/* tmp->name here is always NULL terminated,
+	 * but domain may not be! */
+	list_for_each_entry(tmp, &dlm_domains, list) {
+		if (strlen(tmp->name) == len &&
+		    memcmp(tmp->name, domain, len)==0)
+			return tmp;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-/* For null terminated करोमुख्य strings ONLY */
-अटल काष्ठा dlm_ctxt * __dlm_lookup_करोमुख्य(स्थिर अक्षर *करोमुख्य)
-अणु
-	निश्चित_spin_locked(&dlm_करोमुख्य_lock);
+/* For null terminated domain strings ONLY */
+static struct dlm_ctxt * __dlm_lookup_domain(const char *domain)
+{
+	assert_spin_locked(&dlm_domain_lock);
 
-	वापस __dlm_lookup_करोमुख्य_full(करोमुख्य, म_माप(करोमुख्य));
-पूर्ण
+	return __dlm_lookup_domain_full(domain, strlen(domain));
+}
 
 
-/* वापसs true on one of two conditions:
- * 1) the करोमुख्य करोes not exist
- * 2) the करोमुख्य exists and it's state is "joined" */
-अटल पूर्णांक dlm_रुको_on_करोमुख्य_helper(स्थिर अक्षर *करोमुख्य)
-अणु
-	पूर्णांक ret = 0;
-	काष्ठा dlm_ctxt *पंचांगp = शून्य;
+/* returns true on one of two conditions:
+ * 1) the domain does not exist
+ * 2) the domain exists and it's state is "joined" */
+static int dlm_wait_on_domain_helper(const char *domain)
+{
+	int ret = 0;
+	struct dlm_ctxt *tmp = NULL;
 
-	spin_lock(&dlm_करोमुख्य_lock);
+	spin_lock(&dlm_domain_lock);
 
-	पंचांगp = __dlm_lookup_करोमुख्य(करोमुख्य);
-	अगर (!पंचांगp)
+	tmp = __dlm_lookup_domain(domain);
+	if (!tmp)
 		ret = 1;
-	अन्यथा अगर (पंचांगp->dlm_state == DLM_CTXT_JOINED)
+	else if (tmp->dlm_state == DLM_CTXT_JOINED)
 		ret = 1;
 
-	spin_unlock(&dlm_करोमुख्य_lock);
-	वापस ret;
-पूर्ण
+	spin_unlock(&dlm_domain_lock);
+	return ret;
+}
 
-अटल व्योम dlm_मुक्त_ctxt_mem(काष्ठा dlm_ctxt *dlm)
-अणु
+static void dlm_free_ctxt_mem(struct dlm_ctxt *dlm)
+{
 	dlm_destroy_debugfs_subroot(dlm);
 
-	अगर (dlm->lockres_hash)
-		dlm_मुक्त_pagevec((व्योम **)dlm->lockres_hash, DLM_HASH_PAGES);
+	if (dlm->lockres_hash)
+		dlm_free_pagevec((void **)dlm->lockres_hash, DLM_HASH_PAGES);
 
-	अगर (dlm->master_hash)
-		dlm_मुक्त_pagevec((व्योम **)dlm->master_hash, DLM_HASH_PAGES);
+	if (dlm->master_hash)
+		dlm_free_pagevec((void **)dlm->master_hash, DLM_HASH_PAGES);
 
-	kमुक्त(dlm->name);
-	kमुक्त(dlm);
-पूर्ण
+	kfree(dlm->name);
+	kfree(dlm);
+}
 
-/* A little strange - this function will be called जबतक holding
- * dlm_करोमुख्य_lock and is expected to be holding it on the way out. We
- * will however drop and reacquire it multiple बार */
-अटल व्योम dlm_ctxt_release(काष्ठा kref *kref)
-अणु
-	काष्ठा dlm_ctxt *dlm;
+/* A little strange - this function will be called while holding
+ * dlm_domain_lock and is expected to be holding it on the way out. We
+ * will however drop and reacquire it multiple times */
+static void dlm_ctxt_release(struct kref *kref)
+{
+	struct dlm_ctxt *dlm;
 
-	dlm = container_of(kref, काष्ठा dlm_ctxt, dlm_refs);
+	dlm = container_of(kref, struct dlm_ctxt, dlm_refs);
 
 	BUG_ON(dlm->num_joins);
 	BUG_ON(dlm->dlm_state == DLM_CTXT_JOINED);
 
-	/* we may still be in the list अगर we hit an error during join. */
+	/* we may still be in the list if we hit an error during join. */
 	list_del_init(&dlm->list);
 
-	spin_unlock(&dlm_करोमुख्य_lock);
+	spin_unlock(&dlm_domain_lock);
 
 	mlog(0, "freeing memory from domain %s\n", dlm->name);
 
-	wake_up(&dlm_करोमुख्य_events);
+	wake_up(&dlm_domain_events);
 
-	dlm_मुक्त_ctxt_mem(dlm);
+	dlm_free_ctxt_mem(dlm);
 
-	spin_lock(&dlm_करोमुख्य_lock);
-पूर्ण
+	spin_lock(&dlm_domain_lock);
+}
 
-व्योम dlm_put(काष्ठा dlm_ctxt *dlm)
-अणु
-	spin_lock(&dlm_करोमुख्य_lock);
+void dlm_put(struct dlm_ctxt *dlm)
+{
+	spin_lock(&dlm_domain_lock);
 	kref_put(&dlm->dlm_refs, dlm_ctxt_release);
-	spin_unlock(&dlm_करोमुख्य_lock);
-पूर्ण
+	spin_unlock(&dlm_domain_lock);
+}
 
-अटल व्योम __dlm_get(काष्ठा dlm_ctxt *dlm)
-अणु
+static void __dlm_get(struct dlm_ctxt *dlm)
+{
 	kref_get(&dlm->dlm_refs);
-पूर्ण
+}
 
-/* given a questionable reference to a dlm object, माला_लो a reference अगर
- * it can find it in the list, otherwise वापसs शून्य in which हाल
- * you shouldn't trust your poपूर्णांकer. */
-काष्ठा dlm_ctxt *dlm_grab(काष्ठा dlm_ctxt *dlm)
-अणु
-	काष्ठा dlm_ctxt *target;
-	काष्ठा dlm_ctxt *ret = शून्य;
+/* given a questionable reference to a dlm object, gets a reference if
+ * it can find it in the list, otherwise returns NULL in which case
+ * you shouldn't trust your pointer. */
+struct dlm_ctxt *dlm_grab(struct dlm_ctxt *dlm)
+{
+	struct dlm_ctxt *target;
+	struct dlm_ctxt *ret = NULL;
 
-	spin_lock(&dlm_करोमुख्य_lock);
+	spin_lock(&dlm_domain_lock);
 
-	list_क्रम_each_entry(target, &dlm_करोमुख्यs, list) अणु
-		अगर (target == dlm) अणु
+	list_for_each_entry(target, &dlm_domains, list) {
+		if (target == dlm) {
 			__dlm_get(target);
 			ret = target;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	spin_unlock(&dlm_करोमुख्य_lock);
+	spin_unlock(&dlm_domain_lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक dlm_करोमुख्य_fully_joined(काष्ठा dlm_ctxt *dlm)
-अणु
-	पूर्णांक ret;
+int dlm_domain_fully_joined(struct dlm_ctxt *dlm)
+{
+	int ret;
 
-	spin_lock(&dlm_करोमुख्य_lock);
+	spin_lock(&dlm_domain_lock);
 	ret = (dlm->dlm_state == DLM_CTXT_JOINED) ||
 		(dlm->dlm_state == DLM_CTXT_IN_SHUTDOWN);
-	spin_unlock(&dlm_करोमुख्य_lock);
+	spin_unlock(&dlm_domain_lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम dlm_destroy_dlm_worker(काष्ठा dlm_ctxt *dlm)
-अणु
-	अगर (dlm->dlm_worker) अणु
+static void dlm_destroy_dlm_worker(struct dlm_ctxt *dlm)
+{
+	if (dlm->dlm_worker) {
 		destroy_workqueue(dlm->dlm_worker);
-		dlm->dlm_worker = शून्य;
-	पूर्ण
-पूर्ण
+		dlm->dlm_worker = NULL;
+	}
+}
 
-अटल व्योम dlm_complete_dlm_shutकरोwn(काष्ठा dlm_ctxt *dlm)
-अणु
-	dlm_unरेजिस्टर_करोमुख्य_handlers(dlm);
-	dlm_complete_thपढ़ो(dlm);
-	dlm_complete_recovery_thपढ़ो(dlm);
+static void dlm_complete_dlm_shutdown(struct dlm_ctxt *dlm)
+{
+	dlm_unregister_domain_handlers(dlm);
+	dlm_complete_thread(dlm);
+	dlm_complete_recovery_thread(dlm);
 	dlm_destroy_dlm_worker(dlm);
 
-	/* We've left the करोमुख्य. Now we can take ourselves out of the
-	 * list and allow the kref stuff to help us मुक्त the
+	/* We've left the domain. Now we can take ourselves out of the
+	 * list and allow the kref stuff to help us free the
 	 * memory. */
-	spin_lock(&dlm_करोमुख्य_lock);
+	spin_lock(&dlm_domain_lock);
 	list_del_init(&dlm->list);
-	spin_unlock(&dlm_करोमुख्य_lock);
+	spin_unlock(&dlm_domain_lock);
 
-	/* Wake up anyone रुकोing क्रम us to हटाओ this करोमुख्य */
-	wake_up(&dlm_करोमुख्य_events);
-पूर्ण
+	/* Wake up anyone waiting for us to remove this domain */
+	wake_up(&dlm_domain_events);
+}
 
-अटल पूर्णांक dlm_migrate_all_locks(काष्ठा dlm_ctxt *dlm)
-अणु
-	पूर्णांक i, num, n, ret = 0;
-	काष्ठा dlm_lock_resource *res;
-	काष्ठा hlist_node *iter;
-	काष्ठा hlist_head *bucket;
-	पूर्णांक dropped;
+static int dlm_migrate_all_locks(struct dlm_ctxt *dlm)
+{
+	int i, num, n, ret = 0;
+	struct dlm_lock_resource *res;
+	struct hlist_node *iter;
+	struct hlist_head *bucket;
+	int dropped;
 
 	mlog(0, "Migrating locks from domain %s\n", dlm->name);
 
 	num = 0;
 	spin_lock(&dlm->spinlock);
-	क्रम (i = 0; i < DLM_HASH_BUCKETS; i++) अणु
-reकरो_bucket:
+	for (i = 0; i < DLM_HASH_BUCKETS; i++) {
+redo_bucket:
 		n = 0;
 		bucket = dlm_lockres_hash(dlm, i);
 		iter = bucket->first;
-		जबतक (iter) अणु
+		while (iter) {
 			n++;
-			res = hlist_entry(iter, काष्ठा dlm_lock_resource,
+			res = hlist_entry(iter, struct dlm_lock_resource,
 					  hash_node);
 			dlm_lockres_get(res);
-			/* migrate, अगर necessary.  this will drop the dlm
-			 * spinlock and retake it अगर it करोes migration. */
+			/* migrate, if necessary.  this will drop the dlm
+			 * spinlock and retake it if it does migration. */
 			dropped = dlm_empty_lockres(dlm, res);
 
 			spin_lock(&res->spinlock);
-			अगर (dropped)
+			if (dropped)
 				__dlm_lockres_calc_usage(dlm, res);
-			अन्यथा
+			else
 				iter = res->hash_node.next;
 			spin_unlock(&res->spinlock);
 
 			dlm_lockres_put(res);
 
-			अगर (dropped) अणु
+			if (dropped) {
 				cond_resched_lock(&dlm->spinlock);
-				जाओ reकरो_bucket;
-			पूर्ण
-		पूर्ण
+				goto redo_bucket;
+			}
+		}
 		cond_resched_lock(&dlm->spinlock);
 		num += n;
-	पूर्ण
+	}
 
-	अगर (!num) अणु
-		अगर (dlm->reco.state & DLM_RECO_STATE_ACTIVE) अणु
+	if (!num) {
+		if (dlm->reco.state & DLM_RECO_STATE_ACTIVE) {
 			mlog(0, "%s: perhaps there are more lock resources "
 			     "need to be migrated after dlm recovery\n", dlm->name);
 			ret = -EAGAIN;
-		पूर्ण अन्यथा अणु
+		} else {
 			mlog(0, "%s: we won't do dlm recovery after migrating "
 			     "all lock resources\n", dlm->name);
-			dlm->migrate_करोne = 1;
-		पूर्ण
-	पूर्ण
+			dlm->migrate_done = 1;
+		}
+	}
 
 	spin_unlock(&dlm->spinlock);
-	wake_up(&dlm->dlm_thपढ़ो_wq);
+	wake_up(&dlm->dlm_thread_wq);
 
-	/* let the dlm thपढ़ो take care of purging, keep scanning until
-	 * nothing reमुख्यs in the hash */
-	अगर (num) अणु
+	/* let the dlm thread take care of purging, keep scanning until
+	 * nothing remains in the hash */
+	if (num) {
 		mlog(0, "%s: %d lock resources in hash last pass\n",
 		     dlm->name, num);
 		ret = -EAGAIN;
-	पूर्ण
+	}
 	mlog(0, "DONE Migrating locks from domain %s\n", dlm->name);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक dlm_no_joining_node(काष्ठा dlm_ctxt *dlm)
-अणु
-	पूर्णांक ret;
+static int dlm_no_joining_node(struct dlm_ctxt *dlm)
+{
+	int ret;
 
 	spin_lock(&dlm->spinlock);
 	ret = dlm->joining_node == DLM_LOCK_RES_OWNER_UNKNOWN;
 	spin_unlock(&dlm->spinlock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक dlm_begin_निकास_करोमुख्य_handler(काष्ठा o2net_msg *msg, u32 len,
-					 व्योम *data, व्योम **ret_data)
-अणु
-	काष्ठा dlm_ctxt *dlm = data;
-	अचिन्हित पूर्णांक node;
-	काष्ठा dlm_निकास_करोमुख्य *निकास_msg = (काष्ठा dlm_निकास_करोमुख्य *) msg->buf;
+static int dlm_begin_exit_domain_handler(struct o2net_msg *msg, u32 len,
+					 void *data, void **ret_data)
+{
+	struct dlm_ctxt *dlm = data;
+	unsigned int node;
+	struct dlm_exit_domain *exit_msg = (struct dlm_exit_domain *) msg->buf;
 
-	अगर (!dlm_grab(dlm))
-		वापस 0;
+	if (!dlm_grab(dlm))
+		return 0;
 
-	node = निकास_msg->node_idx;
+	node = exit_msg->node_idx;
 	mlog(0, "%s: Node %u sent a begin exit domain message\n", dlm->name, node);
 
 	spin_lock(&dlm->spinlock);
-	set_bit(node, dlm->निकास_करोमुख्य_map);
+	set_bit(node, dlm->exit_domain_map);
 	spin_unlock(&dlm->spinlock);
 
 	dlm_put(dlm);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम dlm_mark_करोमुख्य_leaving(काष्ठा dlm_ctxt *dlm)
-अणु
-	/* Yikes, a द्विगुन spinlock! I need करोमुख्य_lock क्रम the dlm
-	 * state and the dlm spinlock क्रम join state... Sorry! */
+static void dlm_mark_domain_leaving(struct dlm_ctxt *dlm)
+{
+	/* Yikes, a double spinlock! I need domain_lock for the dlm
+	 * state and the dlm spinlock for join state... Sorry! */
 again:
-	spin_lock(&dlm_करोमुख्य_lock);
+	spin_lock(&dlm_domain_lock);
 	spin_lock(&dlm->spinlock);
 
-	अगर (dlm->joining_node != DLM_LOCK_RES_OWNER_UNKNOWN) अणु
+	if (dlm->joining_node != DLM_LOCK_RES_OWNER_UNKNOWN) {
 		mlog(0, "Node %d is joining, we wait on it.\n",
 			  dlm->joining_node);
 		spin_unlock(&dlm->spinlock);
-		spin_unlock(&dlm_करोमुख्य_lock);
+		spin_unlock(&dlm_domain_lock);
 
-		रुको_event(dlm->dlm_join_events, dlm_no_joining_node(dlm));
-		जाओ again;
-	पूर्ण
+		wait_event(dlm->dlm_join_events, dlm_no_joining_node(dlm));
+		goto again;
+	}
 
 	dlm->dlm_state = DLM_CTXT_LEAVING;
 	spin_unlock(&dlm->spinlock);
-	spin_unlock(&dlm_करोमुख्य_lock);
-पूर्ण
+	spin_unlock(&dlm_domain_lock);
+}
 
-अटल व्योम __dlm_prपूर्णांक_nodes(काष्ठा dlm_ctxt *dlm)
-अणु
-	पूर्णांक node = -1, num = 0;
+static void __dlm_print_nodes(struct dlm_ctxt *dlm)
+{
+	int node = -1, num = 0;
 
-	निश्चित_spin_locked(&dlm->spinlock);
+	assert_spin_locked(&dlm->spinlock);
 
-	prपूर्णांकk("( ");
-	जबतक ((node = find_next_bit(dlm->करोमुख्य_map, O2NM_MAX_NODES,
-				     node + 1)) < O2NM_MAX_NODES) अणु
-		prपूर्णांकk("%d ", node);
+	printk("( ");
+	while ((node = find_next_bit(dlm->domain_map, O2NM_MAX_NODES,
+				     node + 1)) < O2NM_MAX_NODES) {
+		printk("%d ", node);
 		++num;
-	पूर्ण
-	prपूर्णांकk(") %u nodes\n", num);
-पूर्ण
+	}
+	printk(") %u nodes\n", num);
+}
 
-अटल पूर्णांक dlm_निकास_करोमुख्य_handler(काष्ठा o2net_msg *msg, u32 len, व्योम *data,
-				   व्योम **ret_data)
-अणु
-	काष्ठा dlm_ctxt *dlm = data;
-	अचिन्हित पूर्णांक node;
-	काष्ठा dlm_निकास_करोमुख्य *निकास_msg = (काष्ठा dlm_निकास_करोमुख्य *) msg->buf;
+static int dlm_exit_domain_handler(struct o2net_msg *msg, u32 len, void *data,
+				   void **ret_data)
+{
+	struct dlm_ctxt *dlm = data;
+	unsigned int node;
+	struct dlm_exit_domain *exit_msg = (struct dlm_exit_domain *) msg->buf;
 
 	mlog(0, "%p %u %p", msg, len, data);
 
-	अगर (!dlm_grab(dlm))
-		वापस 0;
+	if (!dlm_grab(dlm))
+		return 0;
 
-	node = निकास_msg->node_idx;
+	node = exit_msg->node_idx;
 
 	spin_lock(&dlm->spinlock);
-	clear_bit(node, dlm->करोमुख्य_map);
-	clear_bit(node, dlm->निकास_करोमुख्य_map);
-	prपूर्णांकk(KERN_NOTICE "o2dlm: Node %u leaves domain %s ", node, dlm->name);
-	__dlm_prपूर्णांक_nodes(dlm);
+	clear_bit(node, dlm->domain_map);
+	clear_bit(node, dlm->exit_domain_map);
+	printk(KERN_NOTICE "o2dlm: Node %u leaves domain %s ", node, dlm->name);
+	__dlm_print_nodes(dlm);
 
-	/* notअगरy anything attached to the heartbeat events */
-	dlm_hb_event_notअगरy_attached(dlm, node, 0);
+	/* notify anything attached to the heartbeat events */
+	dlm_hb_event_notify_attached(dlm, node, 0);
 
 	spin_unlock(&dlm->spinlock);
 
 	dlm_put(dlm);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dlm_send_one_करोमुख्य_निकास(काष्ठा dlm_ctxt *dlm, u32 msg_type,
-				    अचिन्हित पूर्णांक node)
-अणु
-	पूर्णांक status;
-	काष्ठा dlm_निकास_करोमुख्य leave_msg;
+static int dlm_send_one_domain_exit(struct dlm_ctxt *dlm, u32 msg_type,
+				    unsigned int node)
+{
+	int status;
+	struct dlm_exit_domain leave_msg;
 
 	mlog(0, "%s: Sending domain exit message %u to node %u\n", dlm->name,
 	     msg_type, node);
 
-	स_रखो(&leave_msg, 0, माप(leave_msg));
+	memset(&leave_msg, 0, sizeof(leave_msg));
 	leave_msg.node_idx = dlm->node_num;
 
 	status = o2net_send_message(msg_type, dlm->key, &leave_msg,
-				    माप(leave_msg), node, शून्य);
-	अगर (status < 0)
+				    sizeof(leave_msg), node, NULL);
+	if (status < 0)
 		mlog(ML_ERROR, "Error %d sending domain exit message %u "
 		     "to node %u on domain %s\n", status, msg_type, node,
 		     dlm->name);
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल व्योम dlm_begin_निकास_करोमुख्य(काष्ठा dlm_ctxt *dlm)
-अणु
-	पूर्णांक node = -1;
+static void dlm_begin_exit_domain(struct dlm_ctxt *dlm)
+{
+	int node = -1;
 
-	/* Support क्रम begin निकास करोमुख्य was added in 1.2 */
-	अगर (dlm->dlm_locking_proto.pv_major == 1 &&
+	/* Support for begin exit domain was added in 1.2 */
+	if (dlm->dlm_locking_proto.pv_major == 1 &&
 	    dlm->dlm_locking_proto.pv_minor < 2)
-		वापस;
+		return;
 
 	/*
 	 * Unlike DLM_EXIT_DOMAIN_MSG, DLM_BEGIN_EXIT_DOMAIN_MSG is purely
-	 * inक्रमmational. Meaning अगर a node करोes not receive the message,
+	 * informational. Meaning if a node does not receive the message,
 	 * so be it.
 	 */
 	spin_lock(&dlm->spinlock);
-	जबतक (1) अणु
-		node = find_next_bit(dlm->करोमुख्य_map, O2NM_MAX_NODES, node + 1);
-		अगर (node >= O2NM_MAX_NODES)
-			अवरोध;
-		अगर (node == dlm->node_num)
-			जारी;
+	while (1) {
+		node = find_next_bit(dlm->domain_map, O2NM_MAX_NODES, node + 1);
+		if (node >= O2NM_MAX_NODES)
+			break;
+		if (node == dlm->node_num)
+			continue;
 
 		spin_unlock(&dlm->spinlock);
-		dlm_send_one_करोमुख्य_निकास(dlm, DLM_BEGIN_EXIT_DOMAIN_MSG, node);
+		dlm_send_one_domain_exit(dlm, DLM_BEGIN_EXIT_DOMAIN_MSG, node);
 		spin_lock(&dlm->spinlock);
-	पूर्ण
+	}
 	spin_unlock(&dlm->spinlock);
-पूर्ण
+}
 
-अटल व्योम dlm_leave_करोमुख्य(काष्ठा dlm_ctxt *dlm)
-अणु
-	पूर्णांक node, clear_node, status;
+static void dlm_leave_domain(struct dlm_ctxt *dlm)
+{
+	int node, clear_node, status;
 
-	/* At this poपूर्णांक we've migrated away all our locks and won't
-	 * accept mastership of new ones. The dlm is responsible क्रम
+	/* At this point we've migrated away all our locks and won't
+	 * accept mastership of new ones. The dlm is responsible for
 	 * almost nothing now. We make sure not to confuse any joining
-	 * nodes and then commence shutकरोwn procedure. */
+	 * nodes and then commence shutdown procedure. */
 
 	spin_lock(&dlm->spinlock);
-	/* Clear ourselves from the करोमुख्य map */
-	clear_bit(dlm->node_num, dlm->करोमुख्य_map);
-	जबतक ((node = find_next_bit(dlm->करोमुख्य_map, O2NM_MAX_NODES,
-				     0)) < O2NM_MAX_NODES) अणु
-		/* Drop the dlm spinlock. This is safe wrt the करोमुख्य_map.
+	/* Clear ourselves from the domain map */
+	clear_bit(dlm->node_num, dlm->domain_map);
+	while ((node = find_next_bit(dlm->domain_map, O2NM_MAX_NODES,
+				     0)) < O2NM_MAX_NODES) {
+		/* Drop the dlm spinlock. This is safe wrt the domain_map.
 		 * -nodes cannot be added now as the
 		 *   query_join_handlers knows to respond with OK_NO_MAP
-		 * -we catch the right network errors अगर a node is
-		 *   हटाओd from the map जबतक we're sending him the
-		 *   निकास message. */
+		 * -we catch the right network errors if a node is
+		 *   removed from the map while we're sending him the
+		 *   exit message. */
 		spin_unlock(&dlm->spinlock);
 
 		clear_node = 1;
 
-		status = dlm_send_one_करोमुख्य_निकास(dlm, DLM_EXIT_DOMAIN_MSG,
+		status = dlm_send_one_domain_exit(dlm, DLM_EXIT_DOMAIN_MSG,
 						  node);
-		अगर (status < 0 &&
+		if (status < 0 &&
 		    status != -ENOPROTOOPT &&
-		    status != -ENOTCONN) अणु
+		    status != -ENOTCONN) {
 			mlog(ML_NOTICE, "Error %d sending domain exit message "
 			     "to node %d\n", status, node);
 
-			/* Not sure what to करो here but lets sleep क्रम
-			 * a bit in हाल this was a transient
+			/* Not sure what to do here but lets sleep for
+			 * a bit in case this was a transient
 			 * error... */
 			msleep(DLM_DOMAIN_BACKOFF_MS);
 			clear_node = 0;
-		पूर्ण
+		}
 
 		spin_lock(&dlm->spinlock);
-		/* If we're not clearing the node bit then we पूर्णांकend
+		/* If we're not clearing the node bit then we intend
 		 * to loop back around to try again. */
-		अगर (clear_node)
-			clear_bit(node, dlm->करोमुख्य_map);
-	पूर्ण
+		if (clear_node)
+			clear_bit(node, dlm->domain_map);
+	}
 	spin_unlock(&dlm->spinlock);
-पूर्ण
+}
 
-व्योम dlm_unरेजिस्टर_करोमुख्य(काष्ठा dlm_ctxt *dlm)
-अणु
-	पूर्णांक leave = 0;
-	काष्ठा dlm_lock_resource *res;
+void dlm_unregister_domain(struct dlm_ctxt *dlm)
+{
+	int leave = 0;
+	struct dlm_lock_resource *res;
 
-	spin_lock(&dlm_करोमुख्य_lock);
+	spin_lock(&dlm_domain_lock);
 	BUG_ON(dlm->dlm_state != DLM_CTXT_JOINED);
 	BUG_ON(!dlm->num_joins);
 
 	dlm->num_joins--;
-	अगर (!dlm->num_joins) अणु
-		/* We mark it "in shutdown" now so new रेजिस्टर
-		 * requests रुको until we've completely left the
-		 * करोमुख्य. Don't use DLM_CTXT_LEAVING yet as we still
-		 * want new करोमुख्य joins to communicate with us at
+	if (!dlm->num_joins) {
+		/* We mark it "in shutdown" now so new register
+		 * requests wait until we've completely left the
+		 * domain. Don't use DLM_CTXT_LEAVING yet as we still
+		 * want new domain joins to communicate with us at
 		 * least until we've completed migration of our
 		 * resources. */
 		dlm->dlm_state = DLM_CTXT_IN_SHUTDOWN;
 		leave = 1;
-	पूर्ण
-	spin_unlock(&dlm_करोमुख्य_lock);
+	}
+	spin_unlock(&dlm_domain_lock);
 
-	अगर (leave) अणु
+	if (leave) {
 		mlog(0, "shutting down domain %s\n", dlm->name);
-		dlm_begin_निकास_करोमुख्य(dlm);
+		dlm_begin_exit_domain(dlm);
 
-		/* We changed dlm state, notअगरy the thपढ़ो */
-		dlm_kick_thपढ़ो(dlm, शून्य);
+		/* We changed dlm state, notify the thread */
+		dlm_kick_thread(dlm, NULL);
 
-		जबतक (dlm_migrate_all_locks(dlm)) अणु
-			/* Give dlm_thपढ़ो समय to purge the lockres' */
+		while (dlm_migrate_all_locks(dlm)) {
+			/* Give dlm_thread time to purge the lockres' */
 			msleep(500);
 			mlog(0, "%s: more migration to do\n", dlm->name);
-		पूर्ण
+		}
 
-		/* This list should be empty. If not, prपूर्णांक reमुख्यing lockres */
-		अगर (!list_empty(&dlm->tracking_list)) अणु
+		/* This list should be empty. If not, print remaining lockres */
+		if (!list_empty(&dlm->tracking_list)) {
 			mlog(ML_ERROR, "Following lockres' are still on the "
 			     "tracking list:\n");
-			list_क्रम_each_entry(res, &dlm->tracking_list, tracking)
-				dlm_prपूर्णांक_one_lock_resource(res);
-		पूर्ण
+			list_for_each_entry(res, &dlm->tracking_list, tracking)
+				dlm_print_one_lock_resource(res);
+		}
 
-		dlm_mark_करोमुख्य_leaving(dlm);
-		dlm_leave_करोमुख्य(dlm);
-		prपूर्णांकk(KERN_NOTICE "o2dlm: Leaving domain %s\n", dlm->name);
-		dlm_क्रमce_मुक्त_mles(dlm);
-		dlm_complete_dlm_shutकरोwn(dlm);
-	पूर्ण
+		dlm_mark_domain_leaving(dlm);
+		dlm_leave_domain(dlm);
+		printk(KERN_NOTICE "o2dlm: Leaving domain %s\n", dlm->name);
+		dlm_force_free_mles(dlm);
+		dlm_complete_dlm_shutdown(dlm);
+	}
 	dlm_put(dlm);
-पूर्ण
-EXPORT_SYMBOL_GPL(dlm_unरेजिस्टर_करोमुख्य);
+}
+EXPORT_SYMBOL_GPL(dlm_unregister_domain);
 
-अटल पूर्णांक dlm_query_join_proto_check(अक्षर *proto_type, पूर्णांक node,
-				      काष्ठा dlm_protocol_version *ours,
-				      काष्ठा dlm_protocol_version *request)
-अणु
-	पूर्णांक rc;
-	काष्ठा dlm_protocol_version proto = *request;
+static int dlm_query_join_proto_check(char *proto_type, int node,
+				      struct dlm_protocol_version *ours,
+				      struct dlm_protocol_version *request)
+{
+	int rc;
+	struct dlm_protocol_version proto = *request;
 
-	अगर (!dlm_protocol_compare(ours, &proto)) अणु
+	if (!dlm_protocol_compare(ours, &proto)) {
 		mlog(0,
 		     "node %u wanted to join with %s locking protocol "
 		     "%u.%u, we respond with %u.%u\n",
@@ -741,7 +740,7 @@ EXPORT_SYMBOL_GPL(dlm_unरेजिस्टर_करोमुख्य);
 		     proto.pv_major, proto.pv_minor);
 		request->pv_minor = proto.pv_minor;
 		rc = 0;
-	पूर्ण अन्यथा अणु
+	} else {
 		mlog(ML_NOTICE,
 		     "Node %u wanted to join with %s locking "
 		     "protocol %u.%u, but we have %u.%u, disallowing\n",
@@ -751,589 +750,589 @@ EXPORT_SYMBOL_GPL(dlm_unरेजिस्टर_करोमुख्य);
 		     ours->pv_major,
 		     ours->pv_minor);
 		rc = 1;
-	पूर्ण
+	}
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*
- * काष्ठा dlm_query_join_packet is made up of four one-byte fields.  They
- * are effectively in big-endian order alपढ़ोy.  However, little-endian
- * machines swap them beक्रमe putting the packet on the wire (because
+ * struct dlm_query_join_packet is made up of four one-byte fields.  They
+ * are effectively in big-endian order already.  However, little-endian
+ * machines swap them before putting the packet on the wire (because
  * query_join's response is a status, and that status is treated as a u32
  * on the wire).  Thus, a big-endian and little-endian machines will treat
- * this काष्ठाure dअगरferently.
+ * this structure differently.
  *
- * The solution is to have little-endian machines swap the काष्ठाure when
- * converting from the काष्ठाure to the u32 representation.  This will
- * result in the काष्ठाure having the correct क्रमmat on the wire no matter
- * the host endian क्रमmat.
+ * The solution is to have little-endian machines swap the structure when
+ * converting from the structure to the u32 representation.  This will
+ * result in the structure having the correct format on the wire no matter
+ * the host endian format.
  */
-अटल व्योम dlm_query_join_packet_to_wire(काष्ठा dlm_query_join_packet *packet,
+static void dlm_query_join_packet_to_wire(struct dlm_query_join_packet *packet,
 					  u32 *wire)
-अणु
-	जोड़ dlm_query_join_response response;
+{
+	union dlm_query_join_response response;
 
 	response.packet = *packet;
-	*wire = be32_to_cpu(response.पूर्णांकval);
-पूर्ण
+	*wire = be32_to_cpu(response.intval);
+}
 
-अटल व्योम dlm_query_join_wire_to_packet(u32 wire,
-					  काष्ठा dlm_query_join_packet *packet)
-अणु
-	जोड़ dlm_query_join_response response;
+static void dlm_query_join_wire_to_packet(u32 wire,
+					  struct dlm_query_join_packet *packet)
+{
+	union dlm_query_join_response response;
 
-	response.पूर्णांकval = cpu_to_be32(wire);
+	response.intval = cpu_to_be32(wire);
 	*packet = response.packet;
-पूर्ण
+}
 
-अटल पूर्णांक dlm_query_join_handler(काष्ठा o2net_msg *msg, u32 len, व्योम *data,
-				  व्योम **ret_data)
-अणु
-	काष्ठा dlm_query_join_request *query;
-	काष्ठा dlm_query_join_packet packet = अणु
+static int dlm_query_join_handler(struct o2net_msg *msg, u32 len, void *data,
+				  void **ret_data)
+{
+	struct dlm_query_join_request *query;
+	struct dlm_query_join_packet packet = {
 		.code = JOIN_DISALLOW,
-	पूर्ण;
-	काष्ठा dlm_ctxt *dlm = शून्य;
+	};
+	struct dlm_ctxt *dlm = NULL;
 	u32 response;
-	u8 nodक्रमागत;
+	u8 nodenum;
 
-	query = (काष्ठा dlm_query_join_request *) msg->buf;
+	query = (struct dlm_query_join_request *) msg->buf;
 
 	mlog(0, "node %u wants to join domain %s\n", query->node_idx,
-		  query->करोमुख्य);
+		  query->domain);
 
 	/*
-	 * If heartbeat करोesn't consider the node live, tell it
+	 * If heartbeat doesn't consider the node live, tell it
 	 * to back off and try again.  This gives heartbeat a chance
 	 * to catch up.
 	 */
-	अगर (!o2hb_check_node_heartbeating_no_sem(query->node_idx)) अणु
+	if (!o2hb_check_node_heartbeating_no_sem(query->node_idx)) {
 		mlog(0, "node %u is not in our live map yet\n",
 		     query->node_idx);
 
 		packet.code = JOIN_DISALLOW;
-		जाओ respond;
-	पूर्ण
+		goto respond;
+	}
 
 	packet.code = JOIN_OK_NO_MAP;
 
-	spin_lock(&dlm_करोमुख्य_lock);
-	dlm = __dlm_lookup_करोमुख्य_full(query->करोमुख्य, query->name_len);
-	अगर (!dlm)
-		जाओ unlock_respond;
+	spin_lock(&dlm_domain_lock);
+	dlm = __dlm_lookup_domain_full(query->domain, query->name_len);
+	if (!dlm)
+		goto unlock_respond;
 
 	/*
-	 * There is a small winकरोw where the joining node may not see the
+	 * There is a small window where the joining node may not see the
 	 * node(s) that just left but still part of the cluster. DISALLOW
-	 * join request अगर joining node has dअगरferent node map.
+	 * join request if joining node has different node map.
 	 */
-	nodक्रमागत=0;
-	जबतक (nodक्रमागत < O2NM_MAX_NODES) अणु
-		अगर (test_bit(nodक्रमागत, dlm->करोमुख्य_map)) अणु
-			अगर (!byte_test_bit(nodक्रमागत, query->node_map)) अणु
+	nodenum=0;
+	while (nodenum < O2NM_MAX_NODES) {
+		if (test_bit(nodenum, dlm->domain_map)) {
+			if (!byte_test_bit(nodenum, query->node_map)) {
 				mlog(0, "disallow join as node %u does not "
 				     "have node %u in its nodemap\n",
-				     query->node_idx, nodक्रमागत);
+				     query->node_idx, nodenum);
 				packet.code = JOIN_DISALLOW;
-				जाओ unlock_respond;
-			पूर्ण
-		पूर्ण
-		nodक्रमागत++;
-	पूर्ण
+				goto unlock_respond;
+			}
+		}
+		nodenum++;
+	}
 
-	/* Once the dlm ctxt is marked as leaving then we करोn't want
-	 * to be put in someone's करोमुख्य map.
+	/* Once the dlm ctxt is marked as leaving then we don't want
+	 * to be put in someone's domain map.
 	 * Also, explicitly disallow joining at certain troublesome
-	 * बार (ie. during recovery). */
-	अगर (dlm->dlm_state != DLM_CTXT_LEAVING) अणु
-		पूर्णांक bit = query->node_idx;
+	 * times (ie. during recovery). */
+	if (dlm->dlm_state != DLM_CTXT_LEAVING) {
+		int bit = query->node_idx;
 		spin_lock(&dlm->spinlock);
 
-		अगर (dlm->dlm_state == DLM_CTXT_NEW &&
-		    dlm->joining_node == DLM_LOCK_RES_OWNER_UNKNOWN) अणु
-			/*If this is a bअक्रम new context and we
+		if (dlm->dlm_state == DLM_CTXT_NEW &&
+		    dlm->joining_node == DLM_LOCK_RES_OWNER_UNKNOWN) {
+			/*If this is a brand new context and we
 			 * haven't started our join process yet, then
 			 * the other node won the race. */
 			packet.code = JOIN_OK_NO_MAP;
-		पूर्ण अन्यथा अगर (dlm->joining_node != DLM_LOCK_RES_OWNER_UNKNOWN) अणु
+		} else if (dlm->joining_node != DLM_LOCK_RES_OWNER_UNKNOWN) {
 			/* Disallow parallel joins. */
 			packet.code = JOIN_DISALLOW;
-		पूर्ण अन्यथा अगर (dlm->reco.state & DLM_RECO_STATE_ACTIVE) अणु
+		} else if (dlm->reco.state & DLM_RECO_STATE_ACTIVE) {
 			mlog(0, "node %u trying to join, but recovery "
 			     "is ongoing.\n", bit);
 			packet.code = JOIN_DISALLOW;
-		पूर्ण अन्यथा अगर (test_bit(bit, dlm->recovery_map)) अणु
+		} else if (test_bit(bit, dlm->recovery_map)) {
 			mlog(0, "node %u trying to join, but it "
 			     "still needs recovery.\n", bit);
 			packet.code = JOIN_DISALLOW;
-		पूर्ण अन्यथा अगर (test_bit(bit, dlm->करोमुख्य_map)) अणु
+		} else if (test_bit(bit, dlm->domain_map)) {
 			mlog(0, "node %u trying to join, but it "
 			     "is still in the domain! needs recovery?\n",
 			     bit);
 			packet.code = JOIN_DISALLOW;
-		पूर्ण अन्यथा अणु
-			/* Alright we're fully a part of this करोमुख्य
+		} else {
+			/* Alright we're fully a part of this domain
 			 * so we keep some state as to who's joining
 			 * and indicate to him that needs to be fixed
 			 * up. */
 
 			/* Make sure we speak compatible locking protocols.  */
-			अगर (dlm_query_join_proto_check("DLM", bit,
+			if (dlm_query_join_proto_check("DLM", bit,
 						       &dlm->dlm_locking_proto,
-						       &query->dlm_proto)) अणु
+						       &query->dlm_proto)) {
 				packet.code = JOIN_PROTOCOL_MISMATCH;
-			पूर्ण अन्यथा अगर (dlm_query_join_proto_check("fs", bit,
+			} else if (dlm_query_join_proto_check("fs", bit,
 							      &dlm->fs_locking_proto,
-							      &query->fs_proto)) अणु
+							      &query->fs_proto)) {
 				packet.code = JOIN_PROTOCOL_MISMATCH;
-			पूर्ण अन्यथा अणु
+			} else {
 				packet.dlm_minor = query->dlm_proto.pv_minor;
 				packet.fs_minor = query->fs_proto.pv_minor;
 				packet.code = JOIN_OK;
 				__dlm_set_joining_node(dlm, query->node_idx);
-			पूर्ण
-		पूर्ण
+			}
+		}
 
 		spin_unlock(&dlm->spinlock);
-	पूर्ण
+	}
 unlock_respond:
-	spin_unlock(&dlm_करोमुख्य_lock);
+	spin_unlock(&dlm_domain_lock);
 
 respond:
 	mlog(0, "We respond with %u\n", packet.code);
 
 	dlm_query_join_packet_to_wire(&packet, &response);
-	वापस response;
-पूर्ण
+	return response;
+}
 
-अटल पूर्णांक dlm_निश्चित_joined_handler(काष्ठा o2net_msg *msg, u32 len, व्योम *data,
-				     व्योम **ret_data)
-अणु
-	काष्ठा dlm_निश्चित_joined *निश्चित;
-	काष्ठा dlm_ctxt *dlm = शून्य;
+static int dlm_assert_joined_handler(struct o2net_msg *msg, u32 len, void *data,
+				     void **ret_data)
+{
+	struct dlm_assert_joined *assert;
+	struct dlm_ctxt *dlm = NULL;
 
-	निश्चित = (काष्ठा dlm_निश्चित_joined *) msg->buf;
+	assert = (struct dlm_assert_joined *) msg->buf;
 
-	mlog(0, "node %u asserts join on domain %s\n", निश्चित->node_idx,
-		  निश्चित->करोमुख्य);
+	mlog(0, "node %u asserts join on domain %s\n", assert->node_idx,
+		  assert->domain);
 
-	spin_lock(&dlm_करोमुख्य_lock);
-	dlm = __dlm_lookup_करोमुख्य_full(निश्चित->करोमुख्य, निश्चित->name_len);
+	spin_lock(&dlm_domain_lock);
+	dlm = __dlm_lookup_domain_full(assert->domain, assert->name_len);
 	/* XXX should we consider no dlm ctxt an error? */
-	अगर (dlm) अणु
+	if (dlm) {
 		spin_lock(&dlm->spinlock);
 
 		/* Alright, this node has officially joined our
-		 * करोमुख्य. Set him in the map and clean up our
+		 * domain. Set him in the map and clean up our
 		 * leftover join state. */
-		BUG_ON(dlm->joining_node != निश्चित->node_idx);
+		BUG_ON(dlm->joining_node != assert->node_idx);
 
-		अगर (dlm->reco.state & DLM_RECO_STATE_ACTIVE) अणु
+		if (dlm->reco.state & DLM_RECO_STATE_ACTIVE) {
 			mlog(0, "dlm recovery is ongoing, disallow join\n");
 			spin_unlock(&dlm->spinlock);
-			spin_unlock(&dlm_करोमुख्य_lock);
-			वापस -EAGAIN;
-		पूर्ण
+			spin_unlock(&dlm_domain_lock);
+			return -EAGAIN;
+		}
 
-		set_bit(निश्चित->node_idx, dlm->करोमुख्य_map);
-		clear_bit(निश्चित->node_idx, dlm->निकास_करोमुख्य_map);
+		set_bit(assert->node_idx, dlm->domain_map);
+		clear_bit(assert->node_idx, dlm->exit_domain_map);
 		__dlm_set_joining_node(dlm, DLM_LOCK_RES_OWNER_UNKNOWN);
 
-		prपूर्णांकk(KERN_NOTICE "o2dlm: Node %u joins domain %s ",
-		       निश्चित->node_idx, dlm->name);
-		__dlm_prपूर्णांक_nodes(dlm);
+		printk(KERN_NOTICE "o2dlm: Node %u joins domain %s ",
+		       assert->node_idx, dlm->name);
+		__dlm_print_nodes(dlm);
 
-		/* notअगरy anything attached to the heartbeat events */
-		dlm_hb_event_notअगरy_attached(dlm, निश्चित->node_idx, 1);
+		/* notify anything attached to the heartbeat events */
+		dlm_hb_event_notify_attached(dlm, assert->node_idx, 1);
 
 		spin_unlock(&dlm->spinlock);
-	पूर्ण
-	spin_unlock(&dlm_करोमुख्य_lock);
+	}
+	spin_unlock(&dlm_domain_lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dlm_match_regions(काष्ठा dlm_ctxt *dlm,
-			     काष्ठा dlm_query_region *qr,
-			     अक्षर *local, पूर्णांक locallen)
-अणु
-	अक्षर *remote = qr->qr_regions;
-	अक्षर *l, *r;
-	पूर्णांक localnr, i, j, foundit;
-	पूर्णांक status = 0;
+static int dlm_match_regions(struct dlm_ctxt *dlm,
+			     struct dlm_query_region *qr,
+			     char *local, int locallen)
+{
+	char *remote = qr->qr_regions;
+	char *l, *r;
+	int localnr, i, j, foundit;
+	int status = 0;
 
-	अगर (!o2hb_global_heartbeat_active()) अणु
-		अगर (qr->qr_numregions) अणु
+	if (!o2hb_global_heartbeat_active()) {
+		if (qr->qr_numregions) {
 			mlog(ML_ERROR, "Domain %s: Joining node %d has global "
 			     "heartbeat enabled but local node %d does not\n",
-			     qr->qr_करोमुख्य, qr->qr_node, dlm->node_num);
+			     qr->qr_domain, qr->qr_node, dlm->node_num);
 			status = -EINVAL;
-		पूर्ण
-		जाओ bail;
-	पूर्ण
+		}
+		goto bail;
+	}
 
-	अगर (o2hb_global_heartbeat_active() && !qr->qr_numregions) अणु
+	if (o2hb_global_heartbeat_active() && !qr->qr_numregions) {
 		mlog(ML_ERROR, "Domain %s: Local node %d has global "
 		     "heartbeat enabled but joining node %d does not\n",
-		     qr->qr_करोमुख्य, dlm->node_num, qr->qr_node);
+		     qr->qr_domain, dlm->node_num, qr->qr_node);
 		status = -EINVAL;
-		जाओ bail;
-	पूर्ण
+		goto bail;
+	}
 
 	r = remote;
-	क्रम (i = 0; i < qr->qr_numregions; ++i) अणु
+	for (i = 0; i < qr->qr_numregions; ++i) {
 		mlog(0, "Region %.*s\n", O2HB_MAX_REGION_NAME_LEN, r);
 		r += O2HB_MAX_REGION_NAME_LEN;
-	पूर्ण
+	}
 
 	localnr = min(O2NM_MAX_REGIONS, locallen/O2HB_MAX_REGION_NAME_LEN);
 	localnr = o2hb_get_all_regions(local, (u8)localnr);
 
 	/* compare local regions with remote */
 	l = local;
-	क्रम (i = 0; i < localnr; ++i) अणु
+	for (i = 0; i < localnr; ++i) {
 		foundit = 0;
 		r = remote;
-		क्रम (j = 0; j <= qr->qr_numregions; ++j) अणु
-			अगर (!स_भेद(l, r, O2HB_MAX_REGION_NAME_LEN)) अणु
+		for (j = 0; j <= qr->qr_numregions; ++j) {
+			if (!memcmp(l, r, O2HB_MAX_REGION_NAME_LEN)) {
 				foundit = 1;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 			r += O2HB_MAX_REGION_NAME_LEN;
-		पूर्ण
-		अगर (!foundit) अणु
+		}
+		if (!foundit) {
 			status = -EINVAL;
 			mlog(ML_ERROR, "Domain %s: Region '%.*s' registered "
 			     "in local node %d but not in joining node %d\n",
-			     qr->qr_करोमुख्य, O2HB_MAX_REGION_NAME_LEN, l,
+			     qr->qr_domain, O2HB_MAX_REGION_NAME_LEN, l,
 			     dlm->node_num, qr->qr_node);
-			जाओ bail;
-		पूर्ण
+			goto bail;
+		}
 		l += O2HB_MAX_REGION_NAME_LEN;
-	पूर्ण
+	}
 
 	/* compare remote with local regions */
 	r = remote;
-	क्रम (i = 0; i < qr->qr_numregions; ++i) अणु
+	for (i = 0; i < qr->qr_numregions; ++i) {
 		foundit = 0;
 		l = local;
-		क्रम (j = 0; j < localnr; ++j) अणु
-			अगर (!स_भेद(r, l, O2HB_MAX_REGION_NAME_LEN)) अणु
+		for (j = 0; j < localnr; ++j) {
+			if (!memcmp(r, l, O2HB_MAX_REGION_NAME_LEN)) {
 				foundit = 1;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 			l += O2HB_MAX_REGION_NAME_LEN;
-		पूर्ण
-		अगर (!foundit) अणु
+		}
+		if (!foundit) {
 			status = -EINVAL;
 			mlog(ML_ERROR, "Domain %s: Region '%.*s' registered "
 			     "in joining node %d but not in local node %d\n",
-			     qr->qr_करोमुख्य, O2HB_MAX_REGION_NAME_LEN, r,
+			     qr->qr_domain, O2HB_MAX_REGION_NAME_LEN, r,
 			     qr->qr_node, dlm->node_num);
-			जाओ bail;
-		पूर्ण
+			goto bail;
+		}
 		r += O2HB_MAX_REGION_NAME_LEN;
-	पूर्ण
+	}
 
 bail:
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल पूर्णांक dlm_send_regions(काष्ठा dlm_ctxt *dlm, अचिन्हित दीर्घ *node_map)
-अणु
-	काष्ठा dlm_query_region *qr = शून्य;
-	पूर्णांक status, ret = 0, i;
-	अक्षर *p;
+static int dlm_send_regions(struct dlm_ctxt *dlm, unsigned long *node_map)
+{
+	struct dlm_query_region *qr = NULL;
+	int status, ret = 0, i;
+	char *p;
 
-	अगर (find_next_bit(node_map, O2NM_MAX_NODES, 0) >= O2NM_MAX_NODES)
-		जाओ bail;
+	if (find_next_bit(node_map, O2NM_MAX_NODES, 0) >= O2NM_MAX_NODES)
+		goto bail;
 
-	qr = kzalloc(माप(काष्ठा dlm_query_region), GFP_KERNEL);
-	अगर (!qr) अणु
+	qr = kzalloc(sizeof(struct dlm_query_region), GFP_KERNEL);
+	if (!qr) {
 		ret = -ENOMEM;
-		mlog_त्रुटि_सं(ret);
-		जाओ bail;
-	पूर्ण
+		mlog_errno(ret);
+		goto bail;
+	}
 
 	qr->qr_node = dlm->node_num;
-	qr->qr_namelen = म_माप(dlm->name);
-	स_नकल(qr->qr_करोमुख्य, dlm->name, qr->qr_namelen);
-	/* अगर local hb, the numregions will be zero */
-	अगर (o2hb_global_heartbeat_active())
+	qr->qr_namelen = strlen(dlm->name);
+	memcpy(qr->qr_domain, dlm->name, qr->qr_namelen);
+	/* if local hb, the numregions will be zero */
+	if (o2hb_global_heartbeat_active())
 		qr->qr_numregions = o2hb_get_all_regions(qr->qr_regions,
 							 O2NM_MAX_REGIONS);
 
 	p = qr->qr_regions;
-	क्रम (i = 0; i < qr->qr_numregions; ++i, p += O2HB_MAX_REGION_NAME_LEN)
+	for (i = 0; i < qr->qr_numregions; ++i, p += O2HB_MAX_REGION_NAME_LEN)
 		mlog(0, "Region %.*s\n", O2HB_MAX_REGION_NAME_LEN, p);
 
 	i = -1;
-	जबतक ((i = find_next_bit(node_map, O2NM_MAX_NODES,
-				  i + 1)) < O2NM_MAX_NODES) अणु
-		अगर (i == dlm->node_num)
-			जारी;
+	while ((i = find_next_bit(node_map, O2NM_MAX_NODES,
+				  i + 1)) < O2NM_MAX_NODES) {
+		if (i == dlm->node_num)
+			continue;
 
 		mlog(0, "Sending regions to node %d\n", i);
 
 		ret = o2net_send_message(DLM_QUERY_REGION, DLM_MOD_KEY, qr,
-					 माप(काष्ठा dlm_query_region),
+					 sizeof(struct dlm_query_region),
 					 i, &status);
-		अगर (ret >= 0)
+		if (ret >= 0)
 			ret = status;
-		अगर (ret) अणु
+		if (ret) {
 			mlog(ML_ERROR, "Region mismatch %d, node %d\n",
 			     ret, i);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
 bail:
-	kमुक्त(qr);
-	वापस ret;
-पूर्ण
+	kfree(qr);
+	return ret;
+}
 
-अटल पूर्णांक dlm_query_region_handler(काष्ठा o2net_msg *msg, u32 len,
-				    व्योम *data, व्योम **ret_data)
-अणु
-	काष्ठा dlm_query_region *qr;
-	काष्ठा dlm_ctxt *dlm = शून्य;
-	अक्षर *local = शून्य;
-	पूर्णांक status = 0;
+static int dlm_query_region_handler(struct o2net_msg *msg, u32 len,
+				    void *data, void **ret_data)
+{
+	struct dlm_query_region *qr;
+	struct dlm_ctxt *dlm = NULL;
+	char *local = NULL;
+	int status = 0;
 
-	qr = (काष्ठा dlm_query_region *) msg->buf;
+	qr = (struct dlm_query_region *) msg->buf;
 
 	mlog(0, "Node %u queries hb regions on domain %s\n", qr->qr_node,
-	     qr->qr_करोमुख्य);
+	     qr->qr_domain);
 
 	/* buffer used in dlm_mast_regions() */
-	local = kदो_स्मृति(माप(qr->qr_regions), GFP_KERNEL);
-	अगर (!local)
-		वापस -ENOMEM;
+	local = kmalloc(sizeof(qr->qr_regions), GFP_KERNEL);
+	if (!local)
+		return -ENOMEM;
 
 	status = -EINVAL;
 
-	spin_lock(&dlm_करोमुख्य_lock);
-	dlm = __dlm_lookup_करोमुख्य_full(qr->qr_करोमुख्य, qr->qr_namelen);
-	अगर (!dlm) अणु
+	spin_lock(&dlm_domain_lock);
+	dlm = __dlm_lookup_domain_full(qr->qr_domain, qr->qr_namelen);
+	if (!dlm) {
 		mlog(ML_ERROR, "Node %d queried hb regions on domain %s "
-		     "before join domain\n", qr->qr_node, qr->qr_करोमुख्य);
-		जाओ out_करोमुख्य_lock;
-	पूर्ण
+		     "before join domain\n", qr->qr_node, qr->qr_domain);
+		goto out_domain_lock;
+	}
 
 	spin_lock(&dlm->spinlock);
-	अगर (dlm->joining_node != qr->qr_node) अणु
+	if (dlm->joining_node != qr->qr_node) {
 		mlog(ML_ERROR, "Node %d queried hb regions on domain %s "
-		     "but joining node is %d\n", qr->qr_node, qr->qr_करोमुख्य,
+		     "but joining node is %d\n", qr->qr_node, qr->qr_domain,
 		     dlm->joining_node);
-		जाओ out_dlm_lock;
-	पूर्ण
+		goto out_dlm_lock;
+	}
 
-	/* Support क्रम global heartbeat was added in 1.1 */
-	अगर (dlm->dlm_locking_proto.pv_major == 1 &&
-	    dlm->dlm_locking_proto.pv_minor == 0) अणु
+	/* Support for global heartbeat was added in 1.1 */
+	if (dlm->dlm_locking_proto.pv_major == 1 &&
+	    dlm->dlm_locking_proto.pv_minor == 0) {
 		mlog(ML_ERROR, "Node %d queried hb regions on domain %s "
 		     "but active dlm protocol is %d.%d\n", qr->qr_node,
-		     qr->qr_करोमुख्य, dlm->dlm_locking_proto.pv_major,
+		     qr->qr_domain, dlm->dlm_locking_proto.pv_major,
 		     dlm->dlm_locking_proto.pv_minor);
-		जाओ out_dlm_lock;
-	पूर्ण
+		goto out_dlm_lock;
+	}
 
-	status = dlm_match_regions(dlm, qr, local, माप(qr->qr_regions));
+	status = dlm_match_regions(dlm, qr, local, sizeof(qr->qr_regions));
 
 out_dlm_lock:
 	spin_unlock(&dlm->spinlock);
 
-out_करोमुख्य_lock:
-	spin_unlock(&dlm_करोमुख्य_lock);
+out_domain_lock:
+	spin_unlock(&dlm_domain_lock);
 
-	kमुक्त(local);
+	kfree(local);
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल पूर्णांक dlm_match_nodes(काष्ठा dlm_ctxt *dlm, काष्ठा dlm_query_nodeinfo *qn)
-अणु
-	काष्ठा o2nm_node *local;
-	काष्ठा dlm_node_info *remote;
-	पूर्णांक i, j;
-	पूर्णांक status = 0;
+static int dlm_match_nodes(struct dlm_ctxt *dlm, struct dlm_query_nodeinfo *qn)
+{
+	struct o2nm_node *local;
+	struct dlm_node_info *remote;
+	int i, j;
+	int status = 0;
 
-	क्रम (j = 0; j < qn->qn_numnodes; ++j)
-		mlog(0, "Node %3d, %pI4:%u\n", qn->qn_nodes[j].ni_nodक्रमागत,
+	for (j = 0; j < qn->qn_numnodes; ++j)
+		mlog(0, "Node %3d, %pI4:%u\n", qn->qn_nodes[j].ni_nodenum,
 		     &(qn->qn_nodes[j].ni_ipv4_address),
 		     ntohs(qn->qn_nodes[j].ni_ipv4_port));
 
-	क्रम (i = 0; i < O2NM_MAX_NODES && !status; ++i) अणु
+	for (i = 0; i < O2NM_MAX_NODES && !status; ++i) {
 		local = o2nm_get_node_by_num(i);
-		remote = शून्य;
-		क्रम (j = 0; j < qn->qn_numnodes; ++j) अणु
-			अगर (qn->qn_nodes[j].ni_nodक्रमागत == i) अणु
+		remote = NULL;
+		for (j = 0; j < qn->qn_numnodes; ++j) {
+			if (qn->qn_nodes[j].ni_nodenum == i) {
 				remote = &(qn->qn_nodes[j]);
-				अवरोध;
-			पूर्ण
-		पूर्ण
+				break;
+			}
+		}
 
-		अगर (!local && !remote)
-			जारी;
+		if (!local && !remote)
+			continue;
 
-		अगर ((local && !remote) || (!local && remote))
+		if ((local && !remote) || (!local && remote))
 			status = -EINVAL;
 
-		अगर (!status &&
-		    ((remote->ni_nodक्रमागत != local->nd_num) ||
+		if (!status &&
+		    ((remote->ni_nodenum != local->nd_num) ||
 		     (remote->ni_ipv4_port != local->nd_ipv4_port) ||
 		     (remote->ni_ipv4_address != local->nd_ipv4_address)))
 			status = -EINVAL;
 
-		अगर (status) अणु
-			अगर (remote && !local)
+		if (status) {
+			if (remote && !local)
 				mlog(ML_ERROR, "Domain %s: Node %d (%pI4:%u) "
 				     "registered in joining node %d but not in "
-				     "local node %d\n", qn->qn_करोमुख्य,
-				     remote->ni_nodक्रमागत,
+				     "local node %d\n", qn->qn_domain,
+				     remote->ni_nodenum,
 				     &(remote->ni_ipv4_address),
 				     ntohs(remote->ni_ipv4_port),
-				     qn->qn_nodक्रमागत, dlm->node_num);
-			अगर (local && !remote)
+				     qn->qn_nodenum, dlm->node_num);
+			if (local && !remote)
 				mlog(ML_ERROR, "Domain %s: Node %d (%pI4:%u) "
 				     "registered in local node %d but not in "
-				     "joining node %d\n", qn->qn_करोमुख्य,
+				     "joining node %d\n", qn->qn_domain,
 				     local->nd_num, &(local->nd_ipv4_address),
 				     ntohs(local->nd_ipv4_port),
-				     dlm->node_num, qn->qn_nodक्रमागत);
+				     dlm->node_num, qn->qn_nodenum);
 			BUG_ON((!local && !remote));
-		पूर्ण
+		}
 
-		अगर (local)
+		if (local)
 			o2nm_node_put(local);
-	पूर्ण
+	}
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल पूर्णांक dlm_send_nodeinfo(काष्ठा dlm_ctxt *dlm, अचिन्हित दीर्घ *node_map)
-अणु
-	काष्ठा dlm_query_nodeinfo *qn = शून्य;
-	काष्ठा o2nm_node *node;
-	पूर्णांक ret = 0, status, count, i;
+static int dlm_send_nodeinfo(struct dlm_ctxt *dlm, unsigned long *node_map)
+{
+	struct dlm_query_nodeinfo *qn = NULL;
+	struct o2nm_node *node;
+	int ret = 0, status, count, i;
 
-	अगर (find_next_bit(node_map, O2NM_MAX_NODES, 0) >= O2NM_MAX_NODES)
-		जाओ bail;
+	if (find_next_bit(node_map, O2NM_MAX_NODES, 0) >= O2NM_MAX_NODES)
+		goto bail;
 
-	qn = kzalloc(माप(काष्ठा dlm_query_nodeinfo), GFP_KERNEL);
-	अगर (!qn) अणु
+	qn = kzalloc(sizeof(struct dlm_query_nodeinfo), GFP_KERNEL);
+	if (!qn) {
 		ret = -ENOMEM;
-		mlog_त्रुटि_सं(ret);
-		जाओ bail;
-	पूर्ण
+		mlog_errno(ret);
+		goto bail;
+	}
 
-	क्रम (i = 0, count = 0; i < O2NM_MAX_NODES; ++i) अणु
+	for (i = 0, count = 0; i < O2NM_MAX_NODES; ++i) {
 		node = o2nm_get_node_by_num(i);
-		अगर (!node)
-			जारी;
-		qn->qn_nodes[count].ni_nodक्रमागत = node->nd_num;
+		if (!node)
+			continue;
+		qn->qn_nodes[count].ni_nodenum = node->nd_num;
 		qn->qn_nodes[count].ni_ipv4_port = node->nd_ipv4_port;
 		qn->qn_nodes[count].ni_ipv4_address = node->nd_ipv4_address;
 		mlog(0, "Node %3d, %pI4:%u\n", node->nd_num,
 		     &(node->nd_ipv4_address), ntohs(node->nd_ipv4_port));
 		++count;
 		o2nm_node_put(node);
-	पूर्ण
+	}
 
-	qn->qn_nodक्रमागत = dlm->node_num;
+	qn->qn_nodenum = dlm->node_num;
 	qn->qn_numnodes = count;
-	qn->qn_namelen = म_माप(dlm->name);
-	स_नकल(qn->qn_करोमुख्य, dlm->name, qn->qn_namelen);
+	qn->qn_namelen = strlen(dlm->name);
+	memcpy(qn->qn_domain, dlm->name, qn->qn_namelen);
 
 	i = -1;
-	जबतक ((i = find_next_bit(node_map, O2NM_MAX_NODES,
-				  i + 1)) < O2NM_MAX_NODES) अणु
-		अगर (i == dlm->node_num)
-			जारी;
+	while ((i = find_next_bit(node_map, O2NM_MAX_NODES,
+				  i + 1)) < O2NM_MAX_NODES) {
+		if (i == dlm->node_num)
+			continue;
 
 		mlog(0, "Sending nodeinfo to node %d\n", i);
 
 		ret = o2net_send_message(DLM_QUERY_NODEINFO, DLM_MOD_KEY,
-					 qn, माप(काष्ठा dlm_query_nodeinfo),
+					 qn, sizeof(struct dlm_query_nodeinfo),
 					 i, &status);
-		अगर (ret >= 0)
+		if (ret >= 0)
 			ret = status;
-		अगर (ret) अणु
+		if (ret) {
 			mlog(ML_ERROR, "node mismatch %d, node %d\n", ret, i);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
 bail:
-	kमुक्त(qn);
-	वापस ret;
-पूर्ण
+	kfree(qn);
+	return ret;
+}
 
-अटल पूर्णांक dlm_query_nodeinfo_handler(काष्ठा o2net_msg *msg, u32 len,
-				      व्योम *data, व्योम **ret_data)
-अणु
-	काष्ठा dlm_query_nodeinfo *qn;
-	काष्ठा dlm_ctxt *dlm = शून्य;
-	पूर्णांक locked = 0, status = -EINVAL;
+static int dlm_query_nodeinfo_handler(struct o2net_msg *msg, u32 len,
+				      void *data, void **ret_data)
+{
+	struct dlm_query_nodeinfo *qn;
+	struct dlm_ctxt *dlm = NULL;
+	int locked = 0, status = -EINVAL;
 
-	qn = (काष्ठा dlm_query_nodeinfo *) msg->buf;
+	qn = (struct dlm_query_nodeinfo *) msg->buf;
 
-	mlog(0, "Node %u queries nodes on domain %s\n", qn->qn_nodक्रमागत,
-	     qn->qn_करोमुख्य);
+	mlog(0, "Node %u queries nodes on domain %s\n", qn->qn_nodenum,
+	     qn->qn_domain);
 
-	spin_lock(&dlm_करोमुख्य_lock);
-	dlm = __dlm_lookup_करोमुख्य_full(qn->qn_करोमुख्य, qn->qn_namelen);
-	अगर (!dlm) अणु
+	spin_lock(&dlm_domain_lock);
+	dlm = __dlm_lookup_domain_full(qn->qn_domain, qn->qn_namelen);
+	if (!dlm) {
 		mlog(ML_ERROR, "Node %d queried nodes on domain %s before "
-		     "join domain\n", qn->qn_nodक्रमागत, qn->qn_करोमुख्य);
-		जाओ bail;
-	पूर्ण
+		     "join domain\n", qn->qn_nodenum, qn->qn_domain);
+		goto bail;
+	}
 
 	spin_lock(&dlm->spinlock);
 	locked = 1;
-	अगर (dlm->joining_node != qn->qn_nodक्रमागत) अणु
+	if (dlm->joining_node != qn->qn_nodenum) {
 		mlog(ML_ERROR, "Node %d queried nodes on domain %s but "
-		     "joining node is %d\n", qn->qn_nodक्रमागत, qn->qn_करोमुख्य,
+		     "joining node is %d\n", qn->qn_nodenum, qn->qn_domain,
 		     dlm->joining_node);
-		जाओ bail;
-	पूर्ण
+		goto bail;
+	}
 
-	/* Support क्रम node query was added in 1.1 */
-	अगर (dlm->dlm_locking_proto.pv_major == 1 &&
-	    dlm->dlm_locking_proto.pv_minor == 0) अणु
+	/* Support for node query was added in 1.1 */
+	if (dlm->dlm_locking_proto.pv_major == 1 &&
+	    dlm->dlm_locking_proto.pv_minor == 0) {
 		mlog(ML_ERROR, "Node %d queried nodes on domain %s "
-		     "but active dlm protocol is %d.%d\n", qn->qn_nodक्रमागत,
-		     qn->qn_करोमुख्य, dlm->dlm_locking_proto.pv_major,
+		     "but active dlm protocol is %d.%d\n", qn->qn_nodenum,
+		     qn->qn_domain, dlm->dlm_locking_proto.pv_major,
 		     dlm->dlm_locking_proto.pv_minor);
-		जाओ bail;
-	पूर्ण
+		goto bail;
+	}
 
 	status = dlm_match_nodes(dlm, qn);
 
 bail:
-	अगर (locked)
+	if (locked)
 		spin_unlock(&dlm->spinlock);
-	spin_unlock(&dlm_करोमुख्य_lock);
+	spin_unlock(&dlm_domain_lock);
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल पूर्णांक dlm_cancel_join_handler(काष्ठा o2net_msg *msg, u32 len, व्योम *data,
-				   व्योम **ret_data)
-अणु
-	काष्ठा dlm_cancel_join *cancel;
-	काष्ठा dlm_ctxt *dlm = शून्य;
+static int dlm_cancel_join_handler(struct o2net_msg *msg, u32 len, void *data,
+				   void **ret_data)
+{
+	struct dlm_cancel_join *cancel;
+	struct dlm_ctxt *dlm = NULL;
 
-	cancel = (काष्ठा dlm_cancel_join *) msg->buf;
+	cancel = (struct dlm_cancel_join *) msg->buf;
 
 	mlog(0, "node %u cancels join on domain %s\n", cancel->node_idx,
-		  cancel->करोमुख्य);
+		  cancel->domain);
 
-	spin_lock(&dlm_करोमुख्य_lock);
-	dlm = __dlm_lookup_करोमुख्य_full(cancel->करोमुख्य, cancel->name_len);
+	spin_lock(&dlm_domain_lock);
+	dlm = __dlm_lookup_domain_full(cancel->domain, cancel->name_len);
 
-	अगर (dlm) अणु
+	if (dlm) {
 		spin_lock(&dlm->spinlock);
 
 		/* Yikes, this guy wants to cancel his join. No
@@ -1342,89 +1341,89 @@ bail:
 		__dlm_set_joining_node(dlm, DLM_LOCK_RES_OWNER_UNKNOWN);
 
 		spin_unlock(&dlm->spinlock);
-	पूर्ण
-	spin_unlock(&dlm_करोमुख्य_lock);
+	}
+	spin_unlock(&dlm_domain_lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dlm_send_one_join_cancel(काष्ठा dlm_ctxt *dlm,
-				    अचिन्हित पूर्णांक node)
-अणु
-	पूर्णांक status;
-	काष्ठा dlm_cancel_join cancel_msg;
+static int dlm_send_one_join_cancel(struct dlm_ctxt *dlm,
+				    unsigned int node)
+{
+	int status;
+	struct dlm_cancel_join cancel_msg;
 
-	स_रखो(&cancel_msg, 0, माप(cancel_msg));
+	memset(&cancel_msg, 0, sizeof(cancel_msg));
 	cancel_msg.node_idx = dlm->node_num;
-	cancel_msg.name_len = म_माप(dlm->name);
-	स_नकल(cancel_msg.करोमुख्य, dlm->name, cancel_msg.name_len);
+	cancel_msg.name_len = strlen(dlm->name);
+	memcpy(cancel_msg.domain, dlm->name, cancel_msg.name_len);
 
 	status = o2net_send_message(DLM_CANCEL_JOIN_MSG, DLM_MOD_KEY,
-				    &cancel_msg, माप(cancel_msg), node,
-				    शून्य);
-	अगर (status < 0) अणु
+				    &cancel_msg, sizeof(cancel_msg), node,
+				    NULL);
+	if (status < 0) {
 		mlog(ML_ERROR, "Error %d when sending message %u (key 0x%x) to "
 		     "node %u\n", status, DLM_CANCEL_JOIN_MSG, DLM_MOD_KEY,
 		     node);
-		जाओ bail;
-	पूर्ण
+		goto bail;
+	}
 
 bail:
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /* map_size should be in bytes. */
-अटल पूर्णांक dlm_send_join_cancels(काष्ठा dlm_ctxt *dlm,
-				 अचिन्हित दीर्घ *node_map,
-				 अचिन्हित पूर्णांक map_size)
-अणु
-	पूर्णांक status, पंचांगpstat;
-	पूर्णांक node;
+static int dlm_send_join_cancels(struct dlm_ctxt *dlm,
+				 unsigned long *node_map,
+				 unsigned int map_size)
+{
+	int status, tmpstat;
+	int node;
 
-	अगर (map_size != (BITS_TO_LONGS(O2NM_MAX_NODES) *
-			 माप(अचिन्हित दीर्घ))) अणु
+	if (map_size != (BITS_TO_LONGS(O2NM_MAX_NODES) *
+			 sizeof(unsigned long))) {
 		mlog(ML_ERROR,
 		     "map_size %u != BITS_TO_LONGS(O2NM_MAX_NODES) %u\n",
-		     map_size, (अचिन्हित)BITS_TO_LONGS(O2NM_MAX_NODES));
-		वापस -EINVAL;
-	पूर्ण
+		     map_size, (unsigned)BITS_TO_LONGS(O2NM_MAX_NODES));
+		return -EINVAL;
+	}
 
 	status = 0;
 	node = -1;
-	जबतक ((node = find_next_bit(node_map, O2NM_MAX_NODES,
-				     node + 1)) < O2NM_MAX_NODES) अणु
-		अगर (node == dlm->node_num)
-			जारी;
+	while ((node = find_next_bit(node_map, O2NM_MAX_NODES,
+				     node + 1)) < O2NM_MAX_NODES) {
+		if (node == dlm->node_num)
+			continue;
 
-		पंचांगpstat = dlm_send_one_join_cancel(dlm, node);
-		अगर (पंचांगpstat) अणु
+		tmpstat = dlm_send_one_join_cancel(dlm, node);
+		if (tmpstat) {
 			mlog(ML_ERROR, "Error return %d cancelling join on "
-			     "node %d\n", पंचांगpstat, node);
-			अगर (!status)
-				status = पंचांगpstat;
-		पूर्ण
-	पूर्ण
+			     "node %d\n", tmpstat, node);
+			if (!status)
+				status = tmpstat;
+		}
+	}
 
-	अगर (status)
-		mlog_त्रुटि_सं(status);
-	वापस status;
-पूर्ण
+	if (status)
+		mlog_errno(status);
+	return status;
+}
 
-अटल पूर्णांक dlm_request_join(काष्ठा dlm_ctxt *dlm,
-			    पूर्णांक node,
-			    क्रमागत dlm_query_join_response_code *response)
-अणु
-	पूर्णांक status;
-	काष्ठा dlm_query_join_request join_msg;
-	काष्ठा dlm_query_join_packet packet;
+static int dlm_request_join(struct dlm_ctxt *dlm,
+			    int node,
+			    enum dlm_query_join_response_code *response)
+{
+	int status;
+	struct dlm_query_join_request join_msg;
+	struct dlm_query_join_packet packet;
 	u32 join_resp;
 
 	mlog(0, "querying node %d\n", node);
 
-	स_रखो(&join_msg, 0, माप(join_msg));
+	memset(&join_msg, 0, sizeof(join_msg));
 	join_msg.node_idx = dlm->node_num;
-	join_msg.name_len = म_माप(dlm->name);
-	स_नकल(join_msg.करोमुख्य, dlm->name, join_msg.name_len);
+	join_msg.name_len = strlen(dlm->name);
+	memcpy(join_msg.domain, dlm->name, join_msg.name_len);
 	join_msg.dlm_proto = dlm->dlm_locking_proto;
 	join_msg.fs_proto = dlm->fs_locking_proto;
 
@@ -1432,29 +1431,29 @@ bail:
 	byte_copymap(join_msg.node_map, dlm->live_nodes_map, O2NM_MAX_NODES);
 
 	status = o2net_send_message(DLM_QUERY_JOIN_MSG, DLM_MOD_KEY, &join_msg,
-				    माप(join_msg), node, &join_resp);
-	अगर (status < 0 && status != -ENOPROTOOPT) अणु
+				    sizeof(join_msg), node, &join_resp);
+	if (status < 0 && status != -ENOPROTOOPT) {
 		mlog(ML_ERROR, "Error %d when sending message %u (key 0x%x) to "
 		     "node %u\n", status, DLM_QUERY_JOIN_MSG, DLM_MOD_KEY,
 		     node);
-		जाओ bail;
-	पूर्ण
+		goto bail;
+	}
 	dlm_query_join_wire_to_packet(join_resp, &packet);
 
 	/* -ENOPROTOOPT from the net code means the other side isn't
-	    listening क्रम our message type -- that's fine, it means
+	    listening for our message type -- that's fine, it means
 	    his dlm isn't up, so we can consider him a 'yes' but not
-	    joined पूर्णांकo the करोमुख्य.  */
-	अगर (status == -ENOPROTOOPT) अणु
+	    joined into the domain.  */
+	if (status == -ENOPROTOOPT) {
 		status = 0;
 		*response = JOIN_OK_NO_MAP;
-	पूर्ण अन्यथा अणु
+	} else {
 		*response = packet.code;
-		चयन (packet.code) अणु
-		हाल JOIN_DISALLOW:
-		हाल JOIN_OK_NO_MAP:
-			अवरोध;
-		हाल JOIN_PROTOCOL_MISMATCH:
+		switch (packet.code) {
+		case JOIN_DISALLOW:
+		case JOIN_OK_NO_MAP:
+			break;
+		case JOIN_PROTOCOL_MISMATCH:
 			mlog(ML_NOTICE,
 			     "This node requested DLM locking protocol %u.%u and "
 			     "filesystem locking protocol %u.%u.  At least one of "
@@ -1466,8 +1465,8 @@ bail:
 			     dlm->fs_locking_proto.pv_minor,
 			     node);
 			status = -EPROTO;
-			अवरोध;
-		हाल JOIN_OK:
+			break;
+		case JOIN_OK:
 			/* Use the same locking protocol as the remote node */
 			dlm->dlm_locking_proto.pv_minor = packet.dlm_minor;
 			dlm->fs_locking_proto.pv_minor = packet.fs_minor;
@@ -1479,436 +1478,436 @@ bail:
 			     dlm->dlm_locking_proto.pv_minor,
 			     dlm->fs_locking_proto.pv_major,
 			     dlm->fs_locking_proto.pv_minor);
-			अवरोध;
-		शेष:
+			break;
+		default:
 			status = -EINVAL;
 			mlog(ML_ERROR, "invalid response %d from node %u\n",
 			     packet.code, node);
 			/* Reset response to JOIN_DISALLOW */
 			*response = JOIN_DISALLOW;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
 	mlog(0, "status %d, node %d response is %d\n", status, node,
 	     *response);
 
 bail:
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल पूर्णांक dlm_send_one_join_निश्चित(काष्ठा dlm_ctxt *dlm,
-				    अचिन्हित पूर्णांक node)
-अणु
-	पूर्णांक status;
-	पूर्णांक ret;
-	काष्ठा dlm_निश्चित_joined निश्चित_msg;
+static int dlm_send_one_join_assert(struct dlm_ctxt *dlm,
+				    unsigned int node)
+{
+	int status;
+	int ret;
+	struct dlm_assert_joined assert_msg;
 
 	mlog(0, "Sending join assert to node %u\n", node);
 
-	स_रखो(&निश्चित_msg, 0, माप(निश्चित_msg));
-	निश्चित_msg.node_idx = dlm->node_num;
-	निश्चित_msg.name_len = म_माप(dlm->name);
-	स_नकल(निश्चित_msg.करोमुख्य, dlm->name, निश्चित_msg.name_len);
+	memset(&assert_msg, 0, sizeof(assert_msg));
+	assert_msg.node_idx = dlm->node_num;
+	assert_msg.name_len = strlen(dlm->name);
+	memcpy(assert_msg.domain, dlm->name, assert_msg.name_len);
 
 	status = o2net_send_message(DLM_ASSERT_JOINED_MSG, DLM_MOD_KEY,
-				    &निश्चित_msg, माप(निश्चित_msg), node,
+				    &assert_msg, sizeof(assert_msg), node,
 				    &ret);
-	अगर (status < 0)
+	if (status < 0)
 		mlog(ML_ERROR, "Error %d when sending message %u (key 0x%x) to "
 		     "node %u\n", status, DLM_ASSERT_JOINED_MSG, DLM_MOD_KEY,
 		     node);
-	अन्यथा
+	else
 		status = ret;
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल व्योम dlm_send_join_निश्चितs(काष्ठा dlm_ctxt *dlm,
-				  अचिन्हित दीर्घ *node_map)
-अणु
-	पूर्णांक status, node, live;
+static void dlm_send_join_asserts(struct dlm_ctxt *dlm,
+				  unsigned long *node_map)
+{
+	int status, node, live;
 
 	status = 0;
 	node = -1;
-	जबतक ((node = find_next_bit(node_map, O2NM_MAX_NODES,
-				     node + 1)) < O2NM_MAX_NODES) अणु
-		अगर (node == dlm->node_num)
-			जारी;
+	while ((node = find_next_bit(node_map, O2NM_MAX_NODES,
+				     node + 1)) < O2NM_MAX_NODES) {
+		if (node == dlm->node_num)
+			continue;
 
-		करो अणु
+		do {
 			/* It is very important that this message be
 			 * received so we spin until either the node
-			 * has died or it माला_लो the message. */
-			status = dlm_send_one_join_निश्चित(dlm, node);
+			 * has died or it gets the message. */
+			status = dlm_send_one_join_assert(dlm, node);
 
 			spin_lock(&dlm->spinlock);
 			live = test_bit(node, dlm->live_nodes_map);
 			spin_unlock(&dlm->spinlock);
 
-			अगर (status) अणु
+			if (status) {
 				mlog(ML_ERROR, "Error return %d asserting "
 				     "join on node %d\n", status, node);
 
-				/* give us some समय between errors... */
-				अगर (live)
+				/* give us some time between errors... */
+				if (live)
 					msleep(DLM_DOMAIN_BACKOFF_MS);
-			पूर्ण
-		पूर्ण जबतक (status && live);
-	पूर्ण
-पूर्ण
+			}
+		} while (status && live);
+	}
+}
 
-काष्ठा करोमुख्य_join_ctxt अणु
-	अचिन्हित दीर्घ live_map[BITS_TO_LONGS(O2NM_MAX_NODES)];
-	अचिन्हित दीर्घ yes_resp_map[BITS_TO_LONGS(O2NM_MAX_NODES)];
-पूर्ण;
+struct domain_join_ctxt {
+	unsigned long live_map[BITS_TO_LONGS(O2NM_MAX_NODES)];
+	unsigned long yes_resp_map[BITS_TO_LONGS(O2NM_MAX_NODES)];
+};
 
-अटल पूर्णांक dlm_should_restart_join(काष्ठा dlm_ctxt *dlm,
-				   काष्ठा करोमुख्य_join_ctxt *ctxt,
-				   क्रमागत dlm_query_join_response_code response)
-अणु
-	पूर्णांक ret;
+static int dlm_should_restart_join(struct dlm_ctxt *dlm,
+				   struct domain_join_ctxt *ctxt,
+				   enum dlm_query_join_response_code response)
+{
+	int ret;
 
-	अगर (response == JOIN_DISALLOW) अणु
+	if (response == JOIN_DISALLOW) {
 		mlog(0, "Latest response of disallow -- should restart\n");
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 
 	spin_lock(&dlm->spinlock);
-	/* For now, we restart the process अगर the node maps have
+	/* For now, we restart the process if the node maps have
 	 * changed at all */
-	ret = स_भेद(ctxt->live_map, dlm->live_nodes_map,
-		     माप(dlm->live_nodes_map));
+	ret = memcmp(ctxt->live_map, dlm->live_nodes_map,
+		     sizeof(dlm->live_nodes_map));
 	spin_unlock(&dlm->spinlock);
 
-	अगर (ret)
+	if (ret)
 		mlog(0, "Node maps changed -- should restart\n");
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक dlm_try_to_join_करोमुख्य(काष्ठा dlm_ctxt *dlm)
-अणु
-	पूर्णांक status = 0, पंचांगpstat, node;
-	काष्ठा करोमुख्य_join_ctxt *ctxt;
-	क्रमागत dlm_query_join_response_code response = JOIN_DISALLOW;
+static int dlm_try_to_join_domain(struct dlm_ctxt *dlm)
+{
+	int status = 0, tmpstat, node;
+	struct domain_join_ctxt *ctxt;
+	enum dlm_query_join_response_code response = JOIN_DISALLOW;
 
 	mlog(0, "%p", dlm);
 
-	ctxt = kzalloc(माप(*ctxt), GFP_KERNEL);
-	अगर (!ctxt) अणु
+	ctxt = kzalloc(sizeof(*ctxt), GFP_KERNEL);
+	if (!ctxt) {
 		status = -ENOMEM;
-		mlog_त्रुटि_सं(status);
-		जाओ bail;
-	पूर्ण
+		mlog_errno(status);
+		goto bail;
+	}
 
-	/* group sem locking should work क्रम us here -- we're alपढ़ोy
-	 * रेजिस्टरed क्रम heartbeat events so filling this should be
+	/* group sem locking should work for us here -- we're already
+	 * registered for heartbeat events so filling this should be
 	 * atomic wrt getting those handlers called. */
-	o2hb_fill_node_map(dlm->live_nodes_map, माप(dlm->live_nodes_map));
+	o2hb_fill_node_map(dlm->live_nodes_map, sizeof(dlm->live_nodes_map));
 
 	spin_lock(&dlm->spinlock);
-	स_नकल(ctxt->live_map, dlm->live_nodes_map, माप(ctxt->live_map));
+	memcpy(ctxt->live_map, dlm->live_nodes_map, sizeof(ctxt->live_map));
 
 	__dlm_set_joining_node(dlm, dlm->node_num);
 
 	spin_unlock(&dlm->spinlock);
 
 	node = -1;
-	जबतक ((node = find_next_bit(ctxt->live_map, O2NM_MAX_NODES,
-				     node + 1)) < O2NM_MAX_NODES) अणु
-		अगर (node == dlm->node_num)
-			जारी;
+	while ((node = find_next_bit(ctxt->live_map, O2NM_MAX_NODES,
+				     node + 1)) < O2NM_MAX_NODES) {
+		if (node == dlm->node_num)
+			continue;
 
 		status = dlm_request_join(dlm, node, &response);
-		अगर (status < 0) अणु
-			mlog_त्रुटि_सं(status);
-			जाओ bail;
-		पूर्ण
+		if (status < 0) {
+			mlog_errno(status);
+			goto bail;
+		}
 
-		/* Ok, either we got a response or the node करोesn't have a
+		/* Ok, either we got a response or the node doesn't have a
 		 * dlm up. */
-		अगर (response == JOIN_OK)
+		if (response == JOIN_OK)
 			set_bit(node, ctxt->yes_resp_map);
 
-		अगर (dlm_should_restart_join(dlm, ctxt, response)) अणु
+		if (dlm_should_restart_join(dlm, ctxt, response)) {
 			status = -EAGAIN;
-			जाओ bail;
-		पूर्ण
-	पूर्ण
+			goto bail;
+		}
+	}
 
 	mlog(0, "Yay, done querying nodes!\n");
 
-	/* Yay, everyone agree's we can join the करोमुख्य. My करोमुख्य is
+	/* Yay, everyone agree's we can join the domain. My domain is
 	 * comprised of all nodes who were put in the
-	 * yes_resp_map. Copy that पूर्णांकo our करोमुख्य map and send a join
-	 * निश्चित message to clean up everyone अन्यथाs state. */
+	 * yes_resp_map. Copy that into our domain map and send a join
+	 * assert message to clean up everyone elses state. */
 	spin_lock(&dlm->spinlock);
-	स_नकल(dlm->करोमुख्य_map, ctxt->yes_resp_map,
-	       माप(ctxt->yes_resp_map));
-	set_bit(dlm->node_num, dlm->करोमुख्य_map);
+	memcpy(dlm->domain_map, ctxt->yes_resp_map,
+	       sizeof(ctxt->yes_resp_map));
+	set_bit(dlm->node_num, dlm->domain_map);
 	spin_unlock(&dlm->spinlock);
 
-	/* Support क्रम global heartbeat and node info was added in 1.1 */
-	अगर (dlm->dlm_locking_proto.pv_major > 1 ||
-	    dlm->dlm_locking_proto.pv_minor > 0) अणु
+	/* Support for global heartbeat and node info was added in 1.1 */
+	if (dlm->dlm_locking_proto.pv_major > 1 ||
+	    dlm->dlm_locking_proto.pv_minor > 0) {
 		status = dlm_send_nodeinfo(dlm, ctxt->yes_resp_map);
-		अगर (status) अणु
-			mlog_त्रुटि_सं(status);
-			जाओ bail;
-		पूर्ण
+		if (status) {
+			mlog_errno(status);
+			goto bail;
+		}
 		status = dlm_send_regions(dlm, ctxt->yes_resp_map);
-		अगर (status) अणु
-			mlog_त्रुटि_सं(status);
-			जाओ bail;
-		पूर्ण
-	पूर्ण
+		if (status) {
+			mlog_errno(status);
+			goto bail;
+		}
+	}
 
-	dlm_send_join_निश्चितs(dlm, ctxt->yes_resp_map);
+	dlm_send_join_asserts(dlm, ctxt->yes_resp_map);
 
-	/* Joined state *must* be set beक्रमe the joining node
-	 * inक्रमmation, otherwise the query_join handler may पढ़ो no
+	/* Joined state *must* be set before the joining node
+	 * information, otherwise the query_join handler may read no
 	 * current joiner but a state of NEW and tell joining nodes
-	 * we're not in the करोमुख्य. */
-	spin_lock(&dlm_करोमुख्य_lock);
+	 * we're not in the domain. */
+	spin_lock(&dlm_domain_lock);
 	dlm->dlm_state = DLM_CTXT_JOINED;
 	dlm->num_joins++;
-	spin_unlock(&dlm_करोमुख्य_lock);
+	spin_unlock(&dlm_domain_lock);
 
 bail:
 	spin_lock(&dlm->spinlock);
 	__dlm_set_joining_node(dlm, DLM_LOCK_RES_OWNER_UNKNOWN);
-	अगर (!status) अणु
-		prपूर्णांकk(KERN_NOTICE "o2dlm: Joining domain %s ", dlm->name);
-		__dlm_prपूर्णांक_nodes(dlm);
-	पूर्ण
+	if (!status) {
+		printk(KERN_NOTICE "o2dlm: Joining domain %s ", dlm->name);
+		__dlm_print_nodes(dlm);
+	}
 	spin_unlock(&dlm->spinlock);
 
-	अगर (ctxt) अणु
+	if (ctxt) {
 		/* Do we need to send a cancel message to any nodes? */
-		अगर (status < 0) अणु
-			पंचांगpstat = dlm_send_join_cancels(dlm,
+		if (status < 0) {
+			tmpstat = dlm_send_join_cancels(dlm,
 							ctxt->yes_resp_map,
-							माप(ctxt->yes_resp_map));
-			अगर (पंचांगpstat < 0)
-				mlog_त्रुटि_सं(पंचांगpstat);
-		पूर्ण
-		kमुक्त(ctxt);
-	पूर्ण
+							sizeof(ctxt->yes_resp_map));
+			if (tmpstat < 0)
+				mlog_errno(tmpstat);
+		}
+		kfree(ctxt);
+	}
 
 	mlog(0, "returning %d\n", status);
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल व्योम dlm_unरेजिस्टर_करोमुख्य_handlers(काष्ठा dlm_ctxt *dlm)
-अणु
-	o2hb_unरेजिस्टर_callback(dlm->name, &dlm->dlm_hb_up);
-	o2hb_unरेजिस्टर_callback(dlm->name, &dlm->dlm_hb_करोwn);
-	o2net_unरेजिस्टर_handler_list(&dlm->dlm_करोमुख्य_handlers);
-पूर्ण
+static void dlm_unregister_domain_handlers(struct dlm_ctxt *dlm)
+{
+	o2hb_unregister_callback(dlm->name, &dlm->dlm_hb_up);
+	o2hb_unregister_callback(dlm->name, &dlm->dlm_hb_down);
+	o2net_unregister_handler_list(&dlm->dlm_domain_handlers);
+}
 
-अटल पूर्णांक dlm_रेजिस्टर_करोमुख्य_handlers(काष्ठा dlm_ctxt *dlm)
-अणु
-	पूर्णांक status;
+static int dlm_register_domain_handlers(struct dlm_ctxt *dlm)
+{
+	int status;
 
 	mlog(0, "registering handlers.\n");
 
-	o2hb_setup_callback(&dlm->dlm_hb_करोwn, O2HB_NODE_DOWN_CB,
-			    dlm_hb_node_करोwn_cb, dlm, DLM_HB_NODE_DOWN_PRI);
+	o2hb_setup_callback(&dlm->dlm_hb_down, O2HB_NODE_DOWN_CB,
+			    dlm_hb_node_down_cb, dlm, DLM_HB_NODE_DOWN_PRI);
 	o2hb_setup_callback(&dlm->dlm_hb_up, O2HB_NODE_UP_CB,
 			    dlm_hb_node_up_cb, dlm, DLM_HB_NODE_UP_PRI);
 
-	status = o2hb_रेजिस्टर_callback(dlm->name, &dlm->dlm_hb_करोwn);
-	अगर (status)
-		जाओ bail;
+	status = o2hb_register_callback(dlm->name, &dlm->dlm_hb_down);
+	if (status)
+		goto bail;
 
-	status = o2hb_रेजिस्टर_callback(dlm->name, &dlm->dlm_hb_up);
-	अगर (status)
-		जाओ bail;
+	status = o2hb_register_callback(dlm->name, &dlm->dlm_hb_up);
+	if (status)
+		goto bail;
 
-	status = o2net_रेजिस्टर_handler(DLM_MASTER_REQUEST_MSG, dlm->key,
-					माप(काष्ठा dlm_master_request),
+	status = o2net_register_handler(DLM_MASTER_REQUEST_MSG, dlm->key,
+					sizeof(struct dlm_master_request),
 					dlm_master_request_handler,
-					dlm, शून्य, &dlm->dlm_करोमुख्य_handlers);
-	अगर (status)
-		जाओ bail;
+					dlm, NULL, &dlm->dlm_domain_handlers);
+	if (status)
+		goto bail;
 
-	status = o2net_रेजिस्टर_handler(DLM_ASSERT_MASTER_MSG, dlm->key,
-					माप(काष्ठा dlm_निश्चित_master),
-					dlm_निश्चित_master_handler,
-					dlm, dlm_निश्चित_master_post_handler,
-					&dlm->dlm_करोमुख्य_handlers);
-	अगर (status)
-		जाओ bail;
+	status = o2net_register_handler(DLM_ASSERT_MASTER_MSG, dlm->key,
+					sizeof(struct dlm_assert_master),
+					dlm_assert_master_handler,
+					dlm, dlm_assert_master_post_handler,
+					&dlm->dlm_domain_handlers);
+	if (status)
+		goto bail;
 
-	status = o2net_रेजिस्टर_handler(DLM_CREATE_LOCK_MSG, dlm->key,
-					माप(काष्ठा dlm_create_lock),
+	status = o2net_register_handler(DLM_CREATE_LOCK_MSG, dlm->key,
+					sizeof(struct dlm_create_lock),
 					dlm_create_lock_handler,
-					dlm, शून्य, &dlm->dlm_करोमुख्य_handlers);
-	अगर (status)
-		जाओ bail;
+					dlm, NULL, &dlm->dlm_domain_handlers);
+	if (status)
+		goto bail;
 
-	status = o2net_रेजिस्टर_handler(DLM_CONVERT_LOCK_MSG, dlm->key,
+	status = o2net_register_handler(DLM_CONVERT_LOCK_MSG, dlm->key,
 					DLM_CONVERT_LOCK_MAX_LEN,
 					dlm_convert_lock_handler,
-					dlm, शून्य, &dlm->dlm_करोमुख्य_handlers);
-	अगर (status)
-		जाओ bail;
+					dlm, NULL, &dlm->dlm_domain_handlers);
+	if (status)
+		goto bail;
 
-	status = o2net_रेजिस्टर_handler(DLM_UNLOCK_LOCK_MSG, dlm->key,
+	status = o2net_register_handler(DLM_UNLOCK_LOCK_MSG, dlm->key,
 					DLM_UNLOCK_LOCK_MAX_LEN,
 					dlm_unlock_lock_handler,
-					dlm, शून्य, &dlm->dlm_करोमुख्य_handlers);
-	अगर (status)
-		जाओ bail;
+					dlm, NULL, &dlm->dlm_domain_handlers);
+	if (status)
+		goto bail;
 
-	status = o2net_रेजिस्टर_handler(DLM_PROXY_AST_MSG, dlm->key,
+	status = o2net_register_handler(DLM_PROXY_AST_MSG, dlm->key,
 					DLM_PROXY_AST_MAX_LEN,
 					dlm_proxy_ast_handler,
-					dlm, शून्य, &dlm->dlm_करोमुख्य_handlers);
-	अगर (status)
-		जाओ bail;
+					dlm, NULL, &dlm->dlm_domain_handlers);
+	if (status)
+		goto bail;
 
-	status = o2net_रेजिस्टर_handler(DLM_EXIT_DOMAIN_MSG, dlm->key,
-					माप(काष्ठा dlm_निकास_करोमुख्य),
-					dlm_निकास_करोमुख्य_handler,
-					dlm, शून्य, &dlm->dlm_करोमुख्य_handlers);
-	अगर (status)
-		जाओ bail;
+	status = o2net_register_handler(DLM_EXIT_DOMAIN_MSG, dlm->key,
+					sizeof(struct dlm_exit_domain),
+					dlm_exit_domain_handler,
+					dlm, NULL, &dlm->dlm_domain_handlers);
+	if (status)
+		goto bail;
 
-	status = o2net_रेजिस्टर_handler(DLM_DEREF_LOCKRES_MSG, dlm->key,
-					माप(काष्ठा dlm_deref_lockres),
+	status = o2net_register_handler(DLM_DEREF_LOCKRES_MSG, dlm->key,
+					sizeof(struct dlm_deref_lockres),
 					dlm_deref_lockres_handler,
-					dlm, शून्य, &dlm->dlm_करोमुख्य_handlers);
-	अगर (status)
-		जाओ bail;
+					dlm, NULL, &dlm->dlm_domain_handlers);
+	if (status)
+		goto bail;
 
-	status = o2net_रेजिस्टर_handler(DLM_MIGRATE_REQUEST_MSG, dlm->key,
-					माप(काष्ठा dlm_migrate_request),
+	status = o2net_register_handler(DLM_MIGRATE_REQUEST_MSG, dlm->key,
+					sizeof(struct dlm_migrate_request),
 					dlm_migrate_request_handler,
-					dlm, शून्य, &dlm->dlm_करोमुख्य_handlers);
-	अगर (status)
-		जाओ bail;
+					dlm, NULL, &dlm->dlm_domain_handlers);
+	if (status)
+		goto bail;
 
-	status = o2net_रेजिस्टर_handler(DLM_MIG_LOCKRES_MSG, dlm->key,
+	status = o2net_register_handler(DLM_MIG_LOCKRES_MSG, dlm->key,
 					DLM_MIG_LOCKRES_MAX_LEN,
 					dlm_mig_lockres_handler,
-					dlm, शून्य, &dlm->dlm_करोमुख्य_handlers);
-	अगर (status)
-		जाओ bail;
+					dlm, NULL, &dlm->dlm_domain_handlers);
+	if (status)
+		goto bail;
 
-	status = o2net_रेजिस्टर_handler(DLM_MASTER_REQUERY_MSG, dlm->key,
-					माप(काष्ठा dlm_master_requery),
+	status = o2net_register_handler(DLM_MASTER_REQUERY_MSG, dlm->key,
+					sizeof(struct dlm_master_requery),
 					dlm_master_requery_handler,
-					dlm, शून्य, &dlm->dlm_करोमुख्य_handlers);
-	अगर (status)
-		जाओ bail;
+					dlm, NULL, &dlm->dlm_domain_handlers);
+	if (status)
+		goto bail;
 
-	status = o2net_रेजिस्टर_handler(DLM_LOCK_REQUEST_MSG, dlm->key,
-					माप(काष्ठा dlm_lock_request),
+	status = o2net_register_handler(DLM_LOCK_REQUEST_MSG, dlm->key,
+					sizeof(struct dlm_lock_request),
 					dlm_request_all_locks_handler,
-					dlm, शून्य, &dlm->dlm_करोमुख्य_handlers);
-	अगर (status)
-		जाओ bail;
+					dlm, NULL, &dlm->dlm_domain_handlers);
+	if (status)
+		goto bail;
 
-	status = o2net_रेजिस्टर_handler(DLM_RECO_DATA_DONE_MSG, dlm->key,
-					माप(काष्ठा dlm_reco_data_करोne),
-					dlm_reco_data_करोne_handler,
-					dlm, शून्य, &dlm->dlm_करोमुख्य_handlers);
-	अगर (status)
-		जाओ bail;
+	status = o2net_register_handler(DLM_RECO_DATA_DONE_MSG, dlm->key,
+					sizeof(struct dlm_reco_data_done),
+					dlm_reco_data_done_handler,
+					dlm, NULL, &dlm->dlm_domain_handlers);
+	if (status)
+		goto bail;
 
-	status = o2net_रेजिस्टर_handler(DLM_BEGIN_RECO_MSG, dlm->key,
-					माप(काष्ठा dlm_begin_reco),
+	status = o2net_register_handler(DLM_BEGIN_RECO_MSG, dlm->key,
+					sizeof(struct dlm_begin_reco),
 					dlm_begin_reco_handler,
-					dlm, शून्य, &dlm->dlm_करोमुख्य_handlers);
-	अगर (status)
-		जाओ bail;
+					dlm, NULL, &dlm->dlm_domain_handlers);
+	if (status)
+		goto bail;
 
-	status = o2net_रेजिस्टर_handler(DLM_FINALIZE_RECO_MSG, dlm->key,
-					माप(काष्ठा dlm_finalize_reco),
+	status = o2net_register_handler(DLM_FINALIZE_RECO_MSG, dlm->key,
+					sizeof(struct dlm_finalize_reco),
 					dlm_finalize_reco_handler,
-					dlm, शून्य, &dlm->dlm_करोमुख्य_handlers);
-	अगर (status)
-		जाओ bail;
+					dlm, NULL, &dlm->dlm_domain_handlers);
+	if (status)
+		goto bail;
 
-	status = o2net_रेजिस्टर_handler(DLM_BEGIN_EXIT_DOMAIN_MSG, dlm->key,
-					माप(काष्ठा dlm_निकास_करोमुख्य),
-					dlm_begin_निकास_करोमुख्य_handler,
-					dlm, शून्य, &dlm->dlm_करोमुख्य_handlers);
-	अगर (status)
-		जाओ bail;
+	status = o2net_register_handler(DLM_BEGIN_EXIT_DOMAIN_MSG, dlm->key,
+					sizeof(struct dlm_exit_domain),
+					dlm_begin_exit_domain_handler,
+					dlm, NULL, &dlm->dlm_domain_handlers);
+	if (status)
+		goto bail;
 
-	status = o2net_रेजिस्टर_handler(DLM_DEREF_LOCKRES_DONE, dlm->key,
-					माप(काष्ठा dlm_deref_lockres_करोne),
-					dlm_deref_lockres_करोne_handler,
-					dlm, शून्य, &dlm->dlm_करोमुख्य_handlers);
+	status = o2net_register_handler(DLM_DEREF_LOCKRES_DONE, dlm->key,
+					sizeof(struct dlm_deref_lockres_done),
+					dlm_deref_lockres_done_handler,
+					dlm, NULL, &dlm->dlm_domain_handlers);
 bail:
-	अगर (status)
-		dlm_unरेजिस्टर_करोमुख्य_handlers(dlm);
+	if (status)
+		dlm_unregister_domain_handlers(dlm);
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल पूर्णांक dlm_join_करोमुख्य(काष्ठा dlm_ctxt *dlm)
-अणु
-	पूर्णांक status;
-	अचिन्हित पूर्णांक backoff;
-	अचिन्हित पूर्णांक total_backoff = 0;
-	अक्षर wq_name[O2NM_MAX_NAME_LEN];
+static int dlm_join_domain(struct dlm_ctxt *dlm)
+{
+	int status;
+	unsigned int backoff;
+	unsigned int total_backoff = 0;
+	char wq_name[O2NM_MAX_NAME_LEN];
 
 	BUG_ON(!dlm);
 
 	mlog(0, "Join domain %s\n", dlm->name);
 
-	status = dlm_रेजिस्टर_करोमुख्य_handlers(dlm);
-	अगर (status) अणु
-		mlog_त्रुटि_सं(status);
-		जाओ bail;
-	पूर्ण
+	status = dlm_register_domain_handlers(dlm);
+	if (status) {
+		mlog_errno(status);
+		goto bail;
+	}
 
-	status = dlm_launch_thपढ़ो(dlm);
-	अगर (status < 0) अणु
-		mlog_त्रुटि_सं(status);
-		जाओ bail;
-	पूर्ण
+	status = dlm_launch_thread(dlm);
+	if (status < 0) {
+		mlog_errno(status);
+		goto bail;
+	}
 
-	status = dlm_launch_recovery_thपढ़ो(dlm);
-	अगर (status < 0) अणु
-		mlog_त्रुटि_सं(status);
-		जाओ bail;
-	पूर्ण
+	status = dlm_launch_recovery_thread(dlm);
+	if (status < 0) {
+		mlog_errno(status);
+		goto bail;
+	}
 
 	dlm_debug_init(dlm);
 
-	snम_लिखो(wq_name, O2NM_MAX_NAME_LEN, "dlm_wq-%s", dlm->name);
+	snprintf(wq_name, O2NM_MAX_NAME_LEN, "dlm_wq-%s", dlm->name);
 	dlm->dlm_worker = alloc_workqueue(wq_name, WQ_MEM_RECLAIM, 0);
-	अगर (!dlm->dlm_worker) अणु
+	if (!dlm->dlm_worker) {
 		status = -ENOMEM;
-		mlog_त्रुटि_सं(status);
-		जाओ bail;
-	पूर्ण
+		mlog_errno(status);
+		goto bail;
+	}
 
-	करो अणु
-		status = dlm_try_to_join_करोमुख्य(dlm);
+	do {
+		status = dlm_try_to_join_domain(dlm);
 
 		/* If we're racing another node to the join, then we
 		 * need to back off temporarily and let them
 		 * complete. */
-#घोषणा	DLM_JOIN_TIMEOUT_MSECS	90000
-		अगर (status == -EAGAIN) अणु
-			अगर (संकेत_pending(current)) अणु
+#define	DLM_JOIN_TIMEOUT_MSECS	90000
+		if (status == -EAGAIN) {
+			if (signal_pending(current)) {
 				status = -ERESTARTSYS;
-				जाओ bail;
-			पूर्ण
+				goto bail;
+			}
 
-			अगर (total_backoff > DLM_JOIN_TIMEOUT_MSECS) अणु
+			if (total_backoff > DLM_JOIN_TIMEOUT_MSECS) {
 				status = -ERESTARTSYS;
 				mlog(ML_NOTICE, "Timed out joining dlm domain "
 				     "%s after %u msecs\n", dlm->name,
 				     total_backoff);
-				जाओ bail;
-			पूर्ण
+				goto bail;
+			}
 
 			/*
 			 * <chip> After you!
@@ -1917,73 +1916,73 @@ bail:
 			 * <dale> But you first!
 			 * ...
 			 */
-			backoff = (अचिन्हित पूर्णांक)(jअगरfies & 0x3);
+			backoff = (unsigned int)(jiffies & 0x3);
 			backoff *= DLM_DOMAIN_BACKOFF_MS;
 			total_backoff += backoff;
 			mlog(0, "backoff %d\n", backoff);
 			msleep(backoff);
-		पूर्ण
-	पूर्ण जबतक (status == -EAGAIN);
+		}
+	} while (status == -EAGAIN);
 
-	अगर (status < 0) अणु
-		mlog_त्रुटि_सं(status);
-		जाओ bail;
-	पूर्ण
+	if (status < 0) {
+		mlog_errno(status);
+		goto bail;
+	}
 
 	status = 0;
 bail:
-	wake_up(&dlm_करोमुख्य_events);
+	wake_up(&dlm_domain_events);
 
-	अगर (status) अणु
-		dlm_unरेजिस्टर_करोमुख्य_handlers(dlm);
-		dlm_complete_thपढ़ो(dlm);
-		dlm_complete_recovery_thपढ़ो(dlm);
+	if (status) {
+		dlm_unregister_domain_handlers(dlm);
+		dlm_complete_thread(dlm);
+		dlm_complete_recovery_thread(dlm);
 		dlm_destroy_dlm_worker(dlm);
-	पूर्ण
+	}
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल काष्ठा dlm_ctxt *dlm_alloc_ctxt(स्थिर अक्षर *करोमुख्य,
+static struct dlm_ctxt *dlm_alloc_ctxt(const char *domain,
 				u32 key)
-अणु
-	पूर्णांक i;
-	पूर्णांक ret;
-	काष्ठा dlm_ctxt *dlm = शून्य;
+{
+	int i;
+	int ret;
+	struct dlm_ctxt *dlm = NULL;
 
-	dlm = kzalloc(माप(*dlm), GFP_KERNEL);
-	अगर (!dlm) अणु
+	dlm = kzalloc(sizeof(*dlm), GFP_KERNEL);
+	if (!dlm) {
 		ret = -ENOMEM;
-		mlog_त्रुटि_सं(ret);
-		जाओ leave;
-	पूर्ण
+		mlog_errno(ret);
+		goto leave;
+	}
 
-	dlm->name = kstrdup(करोमुख्य, GFP_KERNEL);
-	अगर (dlm->name == शून्य) अणु
+	dlm->name = kstrdup(domain, GFP_KERNEL);
+	if (dlm->name == NULL) {
 		ret = -ENOMEM;
-		mlog_त्रुटि_सं(ret);
-		जाओ leave;
-	पूर्ण
+		mlog_errno(ret);
+		goto leave;
+	}
 
-	dlm->lockres_hash = (काष्ठा hlist_head **)dlm_alloc_pagevec(DLM_HASH_PAGES);
-	अगर (!dlm->lockres_hash) अणु
+	dlm->lockres_hash = (struct hlist_head **)dlm_alloc_pagevec(DLM_HASH_PAGES);
+	if (!dlm->lockres_hash) {
 		ret = -ENOMEM;
-		mlog_त्रुटि_सं(ret);
-		जाओ leave;
-	पूर्ण
+		mlog_errno(ret);
+		goto leave;
+	}
 
-	क्रम (i = 0; i < DLM_HASH_BUCKETS; i++)
+	for (i = 0; i < DLM_HASH_BUCKETS; i++)
 		INIT_HLIST_HEAD(dlm_lockres_hash(dlm, i));
 
-	dlm->master_hash = (काष्ठा hlist_head **)
+	dlm->master_hash = (struct hlist_head **)
 				dlm_alloc_pagevec(DLM_HASH_PAGES);
-	अगर (!dlm->master_hash) अणु
+	if (!dlm->master_hash) {
 		ret = -ENOMEM;
-		mlog_त्रुटि_सं(ret);
-		जाओ leave;
-	पूर्ण
+		mlog_errno(ret);
+		goto leave;
+	}
 
-	क्रम (i = 0; i < DLM_HASH_BUCKETS; i++)
+	for (i = 0; i < DLM_HASH_BUCKETS; i++)
 		INIT_HLIST_HEAD(dlm_master_hash(dlm, i));
 
 	dlm->key = key;
@@ -2000,7 +1999,7 @@ bail:
 	INIT_LIST_HEAD(&dlm->reco.resources);
 	INIT_LIST_HEAD(&dlm->reco.node_data);
 	INIT_LIST_HEAD(&dlm->purge_list);
-	INIT_LIST_HEAD(&dlm->dlm_करोमुख्य_handlers);
+	INIT_LIST_HEAD(&dlm->dlm_domain_handlers);
 	INIT_LIST_HEAD(&dlm->tracking_list);
 	dlm->reco.state = 0;
 
@@ -2010,34 +2009,34 @@ bail:
 	mlog(0, "dlm->recovery_map=%p, &(dlm->recovery_map[0])=%p\n",
 		  dlm->recovery_map, &(dlm->recovery_map[0]));
 
-	स_रखो(dlm->recovery_map, 0, माप(dlm->recovery_map));
-	स_रखो(dlm->live_nodes_map, 0, माप(dlm->live_nodes_map));
-	स_रखो(dlm->करोमुख्य_map, 0, माप(dlm->करोमुख्य_map));
+	memset(dlm->recovery_map, 0, sizeof(dlm->recovery_map));
+	memset(dlm->live_nodes_map, 0, sizeof(dlm->live_nodes_map));
+	memset(dlm->domain_map, 0, sizeof(dlm->domain_map));
 
-	dlm->dlm_thपढ़ो_task = शून्य;
-	dlm->dlm_reco_thपढ़ो_task = शून्य;
-	dlm->dlm_worker = शून्य;
-	init_रुकोqueue_head(&dlm->dlm_thपढ़ो_wq);
-	init_रुकोqueue_head(&dlm->dlm_reco_thपढ़ो_wq);
-	init_रुकोqueue_head(&dlm->reco.event);
-	init_रुकोqueue_head(&dlm->ast_wq);
-	init_रुकोqueue_head(&dlm->migration_wq);
+	dlm->dlm_thread_task = NULL;
+	dlm->dlm_reco_thread_task = NULL;
+	dlm->dlm_worker = NULL;
+	init_waitqueue_head(&dlm->dlm_thread_wq);
+	init_waitqueue_head(&dlm->dlm_reco_thread_wq);
+	init_waitqueue_head(&dlm->reco.event);
+	init_waitqueue_head(&dlm->ast_wq);
+	init_waitqueue_head(&dlm->migration_wq);
 	INIT_LIST_HEAD(&dlm->mle_hb_events);
 
 	dlm->joining_node = DLM_LOCK_RES_OWNER_UNKNOWN;
-	init_रुकोqueue_head(&dlm->dlm_join_events);
+	init_waitqueue_head(&dlm->dlm_join_events);
 
-	dlm->migrate_करोne = 0;
+	dlm->migrate_done = 0;
 
 	dlm->reco.new_master = O2NM_INVALID_NODE_NUM;
 	dlm->reco.dead_node = O2NM_INVALID_NODE_NUM;
 
 	atomic_set(&dlm->res_tot_count, 0);
 	atomic_set(&dlm->res_cur_count, 0);
-	क्रम (i = 0; i < DLM_MLE_NUM_TYPES; ++i) अणु
+	for (i = 0; i < DLM_MLE_NUM_TYPES; ++i) {
 		atomic_set(&dlm->mle_tot_count[i], 0);
 		atomic_set(&dlm->mle_cur_count[i], 0);
-	पूर्ण
+	}
 
 	spin_lock_init(&dlm->work_lock);
 	INIT_LIST_HEAD(&dlm->work_list);
@@ -2049,318 +2048,318 @@ bail:
 	INIT_LIST_HEAD(&dlm->dlm_eviction_callbacks);
 
 	mlog(0, "context init: refcount %u\n",
-		  kref_पढ़ो(&dlm->dlm_refs));
+		  kref_read(&dlm->dlm_refs));
 
 	ret = 0;
 leave:
-	अगर (ret < 0 && dlm) अणु
-		अगर (dlm->master_hash)
-			dlm_मुक्त_pagevec((व्योम **)dlm->master_hash,
+	if (ret < 0 && dlm) {
+		if (dlm->master_hash)
+			dlm_free_pagevec((void **)dlm->master_hash,
 					DLM_HASH_PAGES);
 
-		अगर (dlm->lockres_hash)
-			dlm_मुक्त_pagevec((व्योम **)dlm->lockres_hash,
+		if (dlm->lockres_hash)
+			dlm_free_pagevec((void **)dlm->lockres_hash,
 					DLM_HASH_PAGES);
 
-		kमुक्त(dlm->name);
-		kमुक्त(dlm);
-		dlm = शून्य;
-	पूर्ण
-	वापस dlm;
-पूर्ण
+		kfree(dlm->name);
+		kfree(dlm);
+		dlm = NULL;
+	}
+	return dlm;
+}
 
 /*
  * Compare a requested locking protocol version against the current one.
  *
- * If the major numbers are dअगरferent, they are incompatible.
+ * If the major numbers are different, they are incompatible.
  * If the current minor is greater than the request, they are incompatible.
  * If the current minor is less than or equal to the request, they are
  * compatible, and the requester should run at the current minor version.
  */
-अटल पूर्णांक dlm_protocol_compare(काष्ठा dlm_protocol_version *existing,
-				काष्ठा dlm_protocol_version *request)
-अणु
-	अगर (existing->pv_major != request->pv_major)
-		वापस 1;
+static int dlm_protocol_compare(struct dlm_protocol_version *existing,
+				struct dlm_protocol_version *request)
+{
+	if (existing->pv_major != request->pv_major)
+		return 1;
 
-	अगर (existing->pv_minor > request->pv_minor)
-		वापस 1;
+	if (existing->pv_minor > request->pv_minor)
+		return 1;
 
-	अगर (existing->pv_minor < request->pv_minor)
+	if (existing->pv_minor < request->pv_minor)
 		request->pv_minor = existing->pv_minor;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * dlm_रेजिस्टर_करोमुख्य: one-समय setup per "domain".
+ * dlm_register_domain: one-time setup per "domain".
  *
- * The fileप्रणाली passes in the requested locking version via proto.
+ * The filesystem passes in the requested locking version via proto.
  * If registration was successful, proto will contain the negotiated
  * locking protocol.
  */
-काष्ठा dlm_ctxt * dlm_रेजिस्टर_करोमुख्य(स्थिर अक्षर *करोमुख्य,
+struct dlm_ctxt * dlm_register_domain(const char *domain,
 			       u32 key,
-			       काष्ठा dlm_protocol_version *fs_proto)
-अणु
-	पूर्णांक ret;
-	काष्ठा dlm_ctxt *dlm = शून्य;
-	काष्ठा dlm_ctxt *new_ctxt = शून्य;
+			       struct dlm_protocol_version *fs_proto)
+{
+	int ret;
+	struct dlm_ctxt *dlm = NULL;
+	struct dlm_ctxt *new_ctxt = NULL;
 
-	अगर (म_माप(करोमुख्य) >= O2NM_MAX_NAME_LEN) अणु
+	if (strlen(domain) >= O2NM_MAX_NAME_LEN) {
 		ret = -ENAMETOOLONG;
 		mlog(ML_ERROR, "domain name length too long\n");
-		जाओ leave;
-	पूर्ण
+		goto leave;
+	}
 
-	mlog(0, "register called for domain \"%s\"\n", करोमुख्य);
+	mlog(0, "register called for domain \"%s\"\n", domain);
 
 retry:
-	dlm = शून्य;
-	अगर (संकेत_pending(current)) अणु
+	dlm = NULL;
+	if (signal_pending(current)) {
 		ret = -ERESTARTSYS;
-		mlog_त्रुटि_सं(ret);
-		जाओ leave;
-	पूर्ण
+		mlog_errno(ret);
+		goto leave;
+	}
 
-	spin_lock(&dlm_करोमुख्य_lock);
+	spin_lock(&dlm_domain_lock);
 
-	dlm = __dlm_lookup_करोमुख्य(करोमुख्य);
-	अगर (dlm) अणु
-		अगर (dlm->dlm_state != DLM_CTXT_JOINED) अणु
-			spin_unlock(&dlm_करोमुख्य_lock);
+	dlm = __dlm_lookup_domain(domain);
+	if (dlm) {
+		if (dlm->dlm_state != DLM_CTXT_JOINED) {
+			spin_unlock(&dlm_domain_lock);
 
 			mlog(0, "This ctxt is not joined yet!\n");
-			रुको_event_पूर्णांकerruptible(dlm_करोमुख्य_events,
-						 dlm_रुको_on_करोमुख्य_helper(
-							 करोमुख्य));
-			जाओ retry;
-		पूर्ण
+			wait_event_interruptible(dlm_domain_events,
+						 dlm_wait_on_domain_helper(
+							 domain));
+			goto retry;
+		}
 
-		अगर (dlm_protocol_compare(&dlm->fs_locking_proto, fs_proto)) अणु
-			spin_unlock(&dlm_करोमुख्य_lock);
+		if (dlm_protocol_compare(&dlm->fs_locking_proto, fs_proto)) {
+			spin_unlock(&dlm_domain_lock);
 			mlog(ML_ERROR,
 			     "Requested locking protocol version is not "
 			     "compatible with already registered domain "
-			     "\"%s\"\n", करोमुख्य);
+			     "\"%s\"\n", domain);
 			ret = -EPROTO;
-			जाओ leave;
-		पूर्ण
+			goto leave;
+		}
 
 		__dlm_get(dlm);
 		dlm->num_joins++;
 
-		spin_unlock(&dlm_करोमुख्य_lock);
+		spin_unlock(&dlm_domain_lock);
 
 		ret = 0;
-		जाओ leave;
-	पूर्ण
+		goto leave;
+	}
 
-	/* करोesn't exist */
-	अगर (!new_ctxt) अणु
-		spin_unlock(&dlm_करोमुख्य_lock);
+	/* doesn't exist */
+	if (!new_ctxt) {
+		spin_unlock(&dlm_domain_lock);
 
-		new_ctxt = dlm_alloc_ctxt(करोमुख्य, key);
-		अगर (new_ctxt)
-			जाओ retry;
+		new_ctxt = dlm_alloc_ctxt(domain, key);
+		if (new_ctxt)
+			goto retry;
 
 		ret = -ENOMEM;
-		mlog_त्रुटि_सं(ret);
-		जाओ leave;
-	पूर्ण
+		mlog_errno(ret);
+		goto leave;
+	}
 
-	/* a little variable चयन-a-roo here... */
+	/* a little variable switch-a-roo here... */
 	dlm = new_ctxt;
-	new_ctxt = शून्य;
+	new_ctxt = NULL;
 
-	/* add the new करोमुख्य */
-	list_add_tail(&dlm->list, &dlm_करोमुख्यs);
-	spin_unlock(&dlm_करोमुख्य_lock);
+	/* add the new domain */
+	list_add_tail(&dlm->list, &dlm_domains);
+	spin_unlock(&dlm_domain_lock);
 
 	/*
-	 * Pass the locking protocol version पूर्णांकo the join.  If the join
+	 * Pass the locking protocol version into the join.  If the join
 	 * succeeds, it will have the negotiated protocol set.
 	 */
 	dlm->dlm_locking_proto = dlm_protocol;
 	dlm->fs_locking_proto = *fs_proto;
 
-	ret = dlm_join_करोमुख्य(dlm);
-	अगर (ret) अणु
-		mlog_त्रुटि_सं(ret);
+	ret = dlm_join_domain(dlm);
+	if (ret) {
+		mlog_errno(ret);
 		dlm_put(dlm);
-		जाओ leave;
-	पूर्ण
+		goto leave;
+	}
 
 	/* Tell the caller what locking protocol we negotiated */
 	*fs_proto = dlm->fs_locking_proto;
 
 	ret = 0;
 leave:
-	अगर (new_ctxt)
-		dlm_मुक्त_ctxt_mem(new_ctxt);
+	if (new_ctxt)
+		dlm_free_ctxt_mem(new_ctxt);
 
-	अगर (ret < 0)
+	if (ret < 0)
 		dlm = ERR_PTR(ret);
 
-	वापस dlm;
-पूर्ण
-EXPORT_SYMBOL_GPL(dlm_रेजिस्टर_करोमुख्य);
+	return dlm;
+}
+EXPORT_SYMBOL_GPL(dlm_register_domain);
 
-अटल LIST_HEAD(dlm_join_handlers);
+static LIST_HEAD(dlm_join_handlers);
 
-अटल व्योम dlm_unरेजिस्टर_net_handlers(व्योम)
-अणु
-	o2net_unरेजिस्टर_handler_list(&dlm_join_handlers);
-पूर्ण
+static void dlm_unregister_net_handlers(void)
+{
+	o2net_unregister_handler_list(&dlm_join_handlers);
+}
 
-अटल पूर्णांक dlm_रेजिस्टर_net_handlers(व्योम)
-अणु
-	पूर्णांक status = 0;
+static int dlm_register_net_handlers(void)
+{
+	int status = 0;
 
-	status = o2net_रेजिस्टर_handler(DLM_QUERY_JOIN_MSG, DLM_MOD_KEY,
-					माप(काष्ठा dlm_query_join_request),
+	status = o2net_register_handler(DLM_QUERY_JOIN_MSG, DLM_MOD_KEY,
+					sizeof(struct dlm_query_join_request),
 					dlm_query_join_handler,
-					शून्य, शून्य, &dlm_join_handlers);
-	अगर (status)
-		जाओ bail;
+					NULL, NULL, &dlm_join_handlers);
+	if (status)
+		goto bail;
 
-	status = o2net_रेजिस्टर_handler(DLM_ASSERT_JOINED_MSG, DLM_MOD_KEY,
-					माप(काष्ठा dlm_निश्चित_joined),
-					dlm_निश्चित_joined_handler,
-					शून्य, शून्य, &dlm_join_handlers);
-	अगर (status)
-		जाओ bail;
+	status = o2net_register_handler(DLM_ASSERT_JOINED_MSG, DLM_MOD_KEY,
+					sizeof(struct dlm_assert_joined),
+					dlm_assert_joined_handler,
+					NULL, NULL, &dlm_join_handlers);
+	if (status)
+		goto bail;
 
-	status = o2net_रेजिस्टर_handler(DLM_CANCEL_JOIN_MSG, DLM_MOD_KEY,
-					माप(काष्ठा dlm_cancel_join),
+	status = o2net_register_handler(DLM_CANCEL_JOIN_MSG, DLM_MOD_KEY,
+					sizeof(struct dlm_cancel_join),
 					dlm_cancel_join_handler,
-					शून्य, शून्य, &dlm_join_handlers);
-	अगर (status)
-		जाओ bail;
+					NULL, NULL, &dlm_join_handlers);
+	if (status)
+		goto bail;
 
-	status = o2net_रेजिस्टर_handler(DLM_QUERY_REGION, DLM_MOD_KEY,
-					माप(काष्ठा dlm_query_region),
+	status = o2net_register_handler(DLM_QUERY_REGION, DLM_MOD_KEY,
+					sizeof(struct dlm_query_region),
 					dlm_query_region_handler,
-					शून्य, शून्य, &dlm_join_handlers);
+					NULL, NULL, &dlm_join_handlers);
 
-	अगर (status)
-		जाओ bail;
+	if (status)
+		goto bail;
 
-	status = o2net_रेजिस्टर_handler(DLM_QUERY_NODEINFO, DLM_MOD_KEY,
-					माप(काष्ठा dlm_query_nodeinfo),
+	status = o2net_register_handler(DLM_QUERY_NODEINFO, DLM_MOD_KEY,
+					sizeof(struct dlm_query_nodeinfo),
 					dlm_query_nodeinfo_handler,
-					शून्य, शून्य, &dlm_join_handlers);
+					NULL, NULL, &dlm_join_handlers);
 bail:
-	अगर (status < 0)
-		dlm_unरेजिस्टर_net_handlers();
+	if (status < 0)
+		dlm_unregister_net_handlers();
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
-/* Doमुख्य eviction callback handling.
+/* Domain eviction callback handling.
  *
- * The file प्रणाली requires notअगरication of node death *beक्रमe* the
+ * The file system requires notification of node death *before* the
  * dlm completes it's recovery work, otherwise it may be able to
  * acquire locks on resources requiring recovery. Since the dlm can
- * evict a node from it's करोमुख्य *beक्रमe* heartbeat fires, a similar
+ * evict a node from it's domain *before* heartbeat fires, a similar
  * mechanism is required. */
 
-/* Eviction is not expected to happen often, so a per-करोमुख्य lock is
- * not necessary. Eviction callbacks are allowed to sleep क्रम लघु
- * periods of समय. */
-अटल DECLARE_RWSEM(dlm_callback_sem);
+/* Eviction is not expected to happen often, so a per-domain lock is
+ * not necessary. Eviction callbacks are allowed to sleep for short
+ * periods of time. */
+static DECLARE_RWSEM(dlm_callback_sem);
 
-व्योम dlm_fire_करोमुख्य_eviction_callbacks(काष्ठा dlm_ctxt *dlm,
-					पूर्णांक node_num)
-अणु
-	काष्ठा dlm_eviction_cb *cb;
+void dlm_fire_domain_eviction_callbacks(struct dlm_ctxt *dlm,
+					int node_num)
+{
+	struct dlm_eviction_cb *cb;
 
-	करोwn_पढ़ो(&dlm_callback_sem);
-	list_क्रम_each_entry(cb, &dlm->dlm_eviction_callbacks, ec_item) अणु
+	down_read(&dlm_callback_sem);
+	list_for_each_entry(cb, &dlm->dlm_eviction_callbacks, ec_item) {
 		cb->ec_func(node_num, cb->ec_data);
-	पूर्ण
-	up_पढ़ो(&dlm_callback_sem);
-पूर्ण
+	}
+	up_read(&dlm_callback_sem);
+}
 
-व्योम dlm_setup_eviction_cb(काष्ठा dlm_eviction_cb *cb,
+void dlm_setup_eviction_cb(struct dlm_eviction_cb *cb,
 			   dlm_eviction_func *f,
-			   व्योम *data)
-अणु
+			   void *data)
+{
 	INIT_LIST_HEAD(&cb->ec_item);
 	cb->ec_func = f;
 	cb->ec_data = data;
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(dlm_setup_eviction_cb);
 
-व्योम dlm_रेजिस्टर_eviction_cb(काष्ठा dlm_ctxt *dlm,
-			      काष्ठा dlm_eviction_cb *cb)
-अणु
-	करोwn_ग_लिखो(&dlm_callback_sem);
+void dlm_register_eviction_cb(struct dlm_ctxt *dlm,
+			      struct dlm_eviction_cb *cb)
+{
+	down_write(&dlm_callback_sem);
 	list_add_tail(&cb->ec_item, &dlm->dlm_eviction_callbacks);
-	up_ग_लिखो(&dlm_callback_sem);
-पूर्ण
-EXPORT_SYMBOL_GPL(dlm_रेजिस्टर_eviction_cb);
+	up_write(&dlm_callback_sem);
+}
+EXPORT_SYMBOL_GPL(dlm_register_eviction_cb);
 
-व्योम dlm_unरेजिस्टर_eviction_cb(काष्ठा dlm_eviction_cb *cb)
-अणु
-	करोwn_ग_लिखो(&dlm_callback_sem);
+void dlm_unregister_eviction_cb(struct dlm_eviction_cb *cb)
+{
+	down_write(&dlm_callback_sem);
 	list_del_init(&cb->ec_item);
-	up_ग_लिखो(&dlm_callback_sem);
-पूर्ण
-EXPORT_SYMBOL_GPL(dlm_unरेजिस्टर_eviction_cb);
+	up_write(&dlm_callback_sem);
+}
+EXPORT_SYMBOL_GPL(dlm_unregister_eviction_cb);
 
-अटल पूर्णांक __init dlm_init(व्योम)
-अणु
-	पूर्णांक status;
+static int __init dlm_init(void)
+{
+	int status;
 
 	status = dlm_init_mle_cache();
-	अगर (status) अणु
+	if (status) {
 		mlog(ML_ERROR, "Could not create o2dlm_mle slabcache\n");
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
 	status = dlm_init_master_caches();
-	अगर (status) अणु
+	if (status) {
 		mlog(ML_ERROR, "Could not create o2dlm_lockres and "
 		     "o2dlm_lockname slabcaches\n");
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
 	status = dlm_init_lock_cache();
-	अगर (status) अणु
+	if (status) {
 		mlog(ML_ERROR, "Count not create o2dlm_lock slabcache\n");
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
-	status = dlm_रेजिस्टर_net_handlers();
-	अगर (status) अणु
+	status = dlm_register_net_handlers();
+	if (status) {
 		mlog(ML_ERROR, "Unable to register network handlers\n");
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
 	dlm_create_debugfs_root();
 
-	वापस 0;
+	return 0;
 error:
-	dlm_unरेजिस्टर_net_handlers();
+	dlm_unregister_net_handlers();
 	dlm_destroy_lock_cache();
 	dlm_destroy_master_caches();
 	dlm_destroy_mle_cache();
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
-अटल व्योम __निकास dlm_निकास (व्योम)
-अणु
+static void __exit dlm_exit (void)
+{
 	dlm_destroy_debugfs_root();
-	dlm_unरेजिस्टर_net_handlers();
+	dlm_unregister_net_handlers();
 	dlm_destroy_lock_cache();
 	dlm_destroy_master_caches();
 	dlm_destroy_mle_cache();
-पूर्ण
+}
 
 MODULE_AUTHOR("Oracle");
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("OCFS2 Distributed Lock Management");
 
 module_init(dlm_init);
-module_निकास(dlm_निकास);
+module_exit(dlm_exit);

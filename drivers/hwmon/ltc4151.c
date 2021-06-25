@@ -1,214 +1,213 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * Driver क्रम Linear Technology LTC4151 High Voltage I2C Current
+ * Driver for Linear Technology LTC4151 High Voltage I2C Current
  * and Voltage Monitor
  *
  * Copyright (C) 2011 AppearTV AS
  *
  * Derived from:
  *
- *  Driver क्रम Linear Technology LTC4261 I2C Negative Voltage Hot
+ *  Driver for Linear Technology LTC4261 I2C Negative Voltage Hot
  *  Swap Controller
  *  Copyright (C) 2010 Ericsson AB.
  *
- * Datasheet: http://www.linear.com/करोcs/Datasheet/4151fc.pdf
+ * Datasheet: http://www.linear.com/docs/Datasheet/4151fc.pdf
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/init.h>
-#समावेश <linux/err.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/hwmon.h>
-#समावेश <linux/hwmon-sysfs.h>
-#समावेश <linux/jअगरfies.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/init.h>
+#include <linux/err.h>
+#include <linux/slab.h>
+#include <linux/i2c.h>
+#include <linux/hwmon.h>
+#include <linux/hwmon-sysfs.h>
+#include <linux/jiffies.h>
 
-/* chip रेजिस्टरs */
-#घोषणा LTC4151_SENSE_H	0x00
-#घोषणा LTC4151_SENSE_L	0x01
-#घोषणा LTC4151_VIN_H	0x02
-#घोषणा LTC4151_VIN_L	0x03
-#घोषणा LTC4151_ADIN_H	0x04
-#घोषणा LTC4151_ADIN_L	0x05
+/* chip registers */
+#define LTC4151_SENSE_H	0x00
+#define LTC4151_SENSE_L	0x01
+#define LTC4151_VIN_H	0x02
+#define LTC4151_VIN_L	0x03
+#define LTC4151_ADIN_H	0x04
+#define LTC4151_ADIN_L	0x05
 
-काष्ठा ltc4151_data अणु
-	काष्ठा i2c_client *client;
+struct ltc4151_data {
+	struct i2c_client *client;
 
-	काष्ठा mutex update_lock;
+	struct mutex update_lock;
 	bool valid;
-	अचिन्हित दीर्घ last_updated; /* in jअगरfies */
-	अचिन्हित पूर्णांक shunt; /* in micro ohms */
+	unsigned long last_updated; /* in jiffies */
+	unsigned int shunt; /* in micro ohms */
 
 	/* Registers */
 	u8 regs[6];
-पूर्ण;
+};
 
-अटल काष्ठा ltc4151_data *ltc4151_update_device(काष्ठा device *dev)
-अणु
-	काष्ठा ltc4151_data *data = dev_get_drvdata(dev);
-	काष्ठा i2c_client *client = data->client;
-	काष्ठा ltc4151_data *ret = data;
+static struct ltc4151_data *ltc4151_update_device(struct device *dev)
+{
+	struct ltc4151_data *data = dev_get_drvdata(dev);
+	struct i2c_client *client = data->client;
+	struct ltc4151_data *ret = data;
 
 	mutex_lock(&data->update_lock);
 
 	/*
-	 * The chip's A/D updates 6 बार per second
+	 * The chip's A/D updates 6 times per second
 	 * (Conversion Rate 6 - 9 Hz)
 	 */
-	अगर (समय_after(jअगरfies, data->last_updated + HZ / 6) || !data->valid) अणु
-		पूर्णांक i;
+	if (time_after(jiffies, data->last_updated + HZ / 6) || !data->valid) {
+		int i;
 
 		dev_dbg(&client->dev, "Starting ltc4151 update\n");
 
-		/* Read all रेजिस्टरs */
-		क्रम (i = 0; i < ARRAY_SIZE(data->regs); i++) अणु
-			पूर्णांक val;
+		/* Read all registers */
+		for (i = 0; i < ARRAY_SIZE(data->regs); i++) {
+			int val;
 
-			val = i2c_smbus_पढ़ो_byte_data(client, i);
-			अगर (unlikely(val < 0)) अणु
+			val = i2c_smbus_read_byte_data(client, i);
+			if (unlikely(val < 0)) {
 				dev_dbg(dev,
 					"Failed to read ADC value: error %d\n",
 					val);
 				ret = ERR_PTR(val);
-				जाओ पात;
-			पूर्ण
+				goto abort;
+			}
 			data->regs[i] = val;
-		पूर्ण
-		data->last_updated = jअगरfies;
+		}
+		data->last_updated = jiffies;
 		data->valid = 1;
-	पूर्ण
-पात:
+	}
+abort:
 	mutex_unlock(&data->update_lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-/* Return the voltage from the given रेजिस्टर in mV */
-अटल पूर्णांक ltc4151_get_value(काष्ठा ltc4151_data *data, u8 reg)
-अणु
+/* Return the voltage from the given register in mV */
+static int ltc4151_get_value(struct ltc4151_data *data, u8 reg)
+{
 	u32 val;
 
 	val = (data->regs[reg] << 4) + (data->regs[reg + 1] >> 4);
 
-	चयन (reg) अणु
-	हाल LTC4151_ADIN_H:
+	switch (reg) {
+	case LTC4151_ADIN_H:
 		/* 500uV resolution. Convert to mV. */
 		val = val * 500 / 1000;
-		अवरोध;
-	हाल LTC4151_SENSE_H:
+		break;
+	case LTC4151_SENSE_H:
 		/*
 		 * 20uV resolution. Convert to current as measured with
 		 * a given sense resistor, in mA.
 		 */
 		val = val * 20 * 1000 / data->shunt;
-		अवरोध;
-	हाल LTC4151_VIN_H:
+		break;
+	case LTC4151_VIN_H:
 		/* 25 mV per increment */
 		val = val * 25;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		/* If we get here, the developer messed up */
 		WARN_ON_ONCE(1);
 		val = 0;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस val;
-पूर्ण
+	return val;
+}
 
-अटल sमाप_प्रकार ltc4151_value_show(काष्ठा device *dev,
-				  काष्ठा device_attribute *da, अक्षर *buf)
-अणु
-	काष्ठा sensor_device_attribute *attr = to_sensor_dev_attr(da);
-	काष्ठा ltc4151_data *data = ltc4151_update_device(dev);
-	पूर्णांक value;
+static ssize_t ltc4151_value_show(struct device *dev,
+				  struct device_attribute *da, char *buf)
+{
+	struct sensor_device_attribute *attr = to_sensor_dev_attr(da);
+	struct ltc4151_data *data = ltc4151_update_device(dev);
+	int value;
 
-	अगर (IS_ERR(data))
-		वापस PTR_ERR(data);
+	if (IS_ERR(data))
+		return PTR_ERR(data);
 
 	value = ltc4151_get_value(data, attr->index);
-	वापस sysfs_emit(buf, "%d\n", value);
-पूर्ण
+	return sysfs_emit(buf, "%d\n", value);
+}
 
 /*
  * Input voltages.
  */
-अटल SENSOR_DEVICE_ATTR_RO(in1_input, ltc4151_value, LTC4151_VIN_H);
-अटल SENSOR_DEVICE_ATTR_RO(in2_input, ltc4151_value, LTC4151_ADIN_H);
+static SENSOR_DEVICE_ATTR_RO(in1_input, ltc4151_value, LTC4151_VIN_H);
+static SENSOR_DEVICE_ATTR_RO(in2_input, ltc4151_value, LTC4151_ADIN_H);
 
 /* Currents (via sense resistor) */
-अटल SENSOR_DEVICE_ATTR_RO(curr1_input, ltc4151_value, LTC4151_SENSE_H);
+static SENSOR_DEVICE_ATTR_RO(curr1_input, ltc4151_value, LTC4151_SENSE_H);
 
 /*
- * Finally, स्थिरruct an array of poपूर्णांकers to members of the above objects,
- * as required क्रम sysfs_create_group()
+ * Finally, construct an array of pointers to members of the above objects,
+ * as required for sysfs_create_group()
  */
-अटल काष्ठा attribute *ltc4151_attrs[] = अणु
+static struct attribute *ltc4151_attrs[] = {
 	&sensor_dev_attr_in1_input.dev_attr.attr,
 	&sensor_dev_attr_in2_input.dev_attr.attr,
 
 	&sensor_dev_attr_curr1_input.dev_attr.attr,
 
-	शून्य,
-पूर्ण;
+	NULL,
+};
 ATTRIBUTE_GROUPS(ltc4151);
 
-अटल पूर्णांक ltc4151_probe(काष्ठा i2c_client *client)
-अणु
-	काष्ठा i2c_adapter *adapter = client->adapter;
-	काष्ठा device *dev = &client->dev;
-	काष्ठा ltc4151_data *data;
-	काष्ठा device *hwmon_dev;
+static int ltc4151_probe(struct i2c_client *client)
+{
+	struct i2c_adapter *adapter = client->adapter;
+	struct device *dev = &client->dev;
+	struct ltc4151_data *data;
+	struct device *hwmon_dev;
 	u32 shunt;
 
-	अगर (!i2c_check_functionality(adapter, I2C_FUNC_SMBUS_BYTE_DATA))
-		वापस -ENODEV;
+	if (!i2c_check_functionality(adapter, I2C_FUNC_SMBUS_BYTE_DATA))
+		return -ENODEV;
 
-	data = devm_kzalloc(dev, माप(*data), GFP_KERNEL);
-	अगर (!data)
-		वापस -ENOMEM;
+	data = devm_kzalloc(dev, sizeof(*data), GFP_KERNEL);
+	if (!data)
+		return -ENOMEM;
 
-	अगर (of_property_पढ़ो_u32(client->dev.of_node,
+	if (of_property_read_u32(client->dev.of_node,
 				 "shunt-resistor-micro-ohms", &shunt))
-		shunt = 1000; /* 1 mOhm अगर not set via DT */
+		shunt = 1000; /* 1 mOhm if not set via DT */
 
-	अगर (shunt == 0)
-		वापस -EINVAL;
+	if (shunt == 0)
+		return -EINVAL;
 
 	data->shunt = shunt;
 
 	data->client = client;
 	mutex_init(&data->update_lock);
 
-	hwmon_dev = devm_hwmon_device_रेजिस्टर_with_groups(dev, client->name,
+	hwmon_dev = devm_hwmon_device_register_with_groups(dev, client->name,
 							   data,
 							   ltc4151_groups);
-	वापस PTR_ERR_OR_ZERO(hwmon_dev);
-पूर्ण
+	return PTR_ERR_OR_ZERO(hwmon_dev);
+}
 
-अटल स्थिर काष्ठा i2c_device_id ltc4151_id[] = अणु
-	अणु "ltc4151", 0 पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct i2c_device_id ltc4151_id[] = {
+	{ "ltc4151", 0 },
+	{ }
+};
 MODULE_DEVICE_TABLE(i2c, ltc4151_id);
 
-अटल स्थिर काष्ठा of_device_id __maybe_unused ltc4151_match[] = अणु
-	अणु .compatible = "lltc,ltc4151" पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct of_device_id __maybe_unused ltc4151_match[] = {
+	{ .compatible = "lltc,ltc4151" },
+	{},
+};
 MODULE_DEVICE_TABLE(of, ltc4151_match);
 
 /* This is the driver that will be inserted */
-अटल काष्ठा i2c_driver ltc4151_driver = अणु
-	.driver = अणु
+static struct i2c_driver ltc4151_driver = {
+	.driver = {
 		.name	= "ltc4151",
 		.of_match_table = of_match_ptr(ltc4151_match),
-	पूर्ण,
+	},
 	.probe_new	= ltc4151_probe,
 	.id_table	= ltc4151_id,
-पूर्ण;
+};
 
 module_i2c_driver(ltc4151_driver);
 

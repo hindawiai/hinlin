@@ -1,11 +1,10 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*****************************************************************************/
 
 /*
  *	baycom_ser_fdx.c  -- baycom ser12 fullduplex radio modem driver.
  *
- *	Copyright (C) 1996-2000  Thomas Sailer (sailer@अगरe.ee.ethz.ch)
+ *	Copyright (C) 1996-2000  Thomas Sailer (sailer@ife.ee.ethz.ch)
  *
  *  Please note that the GPL allows you to use the driver, NOT the radio.
  *  In order to use the radio, you need a license from the communications
@@ -15,336 +14,336 @@
  *
  *  ser12:  This is a very simple 1200 baud AFSK modem. The modem consists only
  *          of a modulator/demodulator chip, usually a TI TCM3105. The computer
- *          is responsible क्रम regenerating the receiver bit घड़ी, as well as
- *          क्रम handling the HDLC protocol. The modem connects to a serial port,
+ *          is responsible for regenerating the receiver bit clock, as well as
+ *          for handling the HDLC protocol. The modem connects to a serial port,
  *          hence the name. Since the serial port is not used as an async serial
- *          port, the kernel driver क्रम serial ports cannot be used, and this
+ *          port, the kernel driver for serial ports cannot be used, and this
  *          driver only supports standard serial hardware (8250, 16450, 16550A)
  *
  *          This modem usually draws its supply current out of the otherwise unused
  *          TXD pin of the serial port. Thus a contiguous stream of 0x00-bytes
  *          is transmitted to achieve a positive supply voltage.
  *
- *  hsk:    This is a 4800 baud FSK modem, deचिन्हित क्रम TNC use. It works fine
- *          in 'baycom-mode' :-)  In contrast to the TCM3105 modem, घातer is
- *          बाह्यally supplied. So there's no need to provide the 0x00-byte-stream
- *          when receiving or idle, which drastically reduces पूर्णांकerrupt load.
+ *  hsk:    This is a 4800 baud FSK modem, designed for TNC use. It works fine
+ *          in 'baycom-mode' :-)  In contrast to the TCM3105 modem, power is
+ *          externally supplied. So there's no need to provide the 0x00-byte-stream
+ *          when receiving or idle, which drastically reduces interrupt load.
  *
  *  Command line options (insmod command line)
  *
  *  mode     ser#    hardware DCD
  *           ser#*   software DCD
- *           ser#+   hardware DCD, inverted संकेत at DCD pin
+ *           ser#+   hardware DCD, inverted signal at DCD pin
  *           '#' denotes the baud rate / 100, eg. ser12* is '1200 baud, soft DCD'
  *  iobase   base address of the port; common values are 0x3f8, 0x2f8, 0x3e8, 0x2e8
  *  baud     baud rate (between 300 and 4800)
- *  irq      पूर्णांकerrupt line of the port; common values are 4,3
+ *  irq      interrupt line of the port; common values are 4,3
  *
  *  History:
- *   0.1  26.06.1996  Adapted from baycom.c and made network driver पूर्णांकerface
- *        18.10.1996  Changed to new user space access routines (copy_अणुto,fromपूर्ण_user)
+ *   0.1  26.06.1996  Adapted from baycom.c and made network driver interface
+ *        18.10.1996  Changed to new user space access routines (copy_{to,from}_user)
  *   0.3  26.04.1997  init code/data tagged
- *   0.4  08.07.1997  alternative ser12 decoding algorithm (uses delta CTS पूर्णांकs)
- *   0.5  11.11.1997  ser12/par96 split पूर्णांकo separate files
+ *   0.4  08.07.1997  alternative ser12 decoding algorithm (uses delta CTS ints)
+ *   0.5  11.11.1997  ser12/par96 split into separate files
  *   0.6  24.01.1998  Thorsten Kranzkowski, dl8bcu and Thomas Sailer:
- *                    reduced पूर्णांकerrupt load in transmit हाल
+ *                    reduced interrupt load in transmit case
  *                    reworked receiver
  *   0.7  03.08.1999  adapt to Linus' new __setup/__initcall
- *   0.8  10.08.1999  use module_init/module_निकास
- *   0.9  12.02.2000  adapted to softnet driver पूर्णांकerface
- *   0.10 03.07.2000  fix पूर्णांकerface name handling
+ *   0.8  10.08.1999  use module_init/module_exit
+ *   0.9  12.02.2000  adapted to softnet driver interface
+ *   0.10 03.07.2000  fix interface name handling
  */
 
 /*****************************************************************************/
 
-#समावेश <linux/capability.h>
-#समावेश <linux/module.h>
-#समावेश <linux/ioport.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/init.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/hdlcdrv.h>
-#समावेश <linux/baycom.h>
-#समावेश <linux/jअगरfies.h>
-#समावेश <linux/समय64.h>
+#include <linux/capability.h>
+#include <linux/module.h>
+#include <linux/ioport.h>
+#include <linux/string.h>
+#include <linux/init.h>
+#include <linux/interrupt.h>
+#include <linux/hdlcdrv.h>
+#include <linux/baycom.h>
+#include <linux/jiffies.h>
+#include <linux/time64.h>
 
-#समावेश <linux/uaccess.h>
-#समावेश <यंत्र/पन.स>
-#समावेश <यंत्र/irq.h>
-
-/* --------------------------------------------------------------------- */
-
-#घोषणा BAYCOM_DEBUG
+#include <linux/uaccess.h>
+#include <asm/io.h>
+#include <asm/irq.h>
 
 /* --------------------------------------------------------------------- */
 
-अटल स्थिर अक्षर bc_drvname[] = "baycom_ser_fdx";
-अटल स्थिर अक्षर bc_drvinfo[] = KERN_INFO "baycom_ser_fdx: (C) 1996-2000 Thomas Sailer, HB9JNX/AE4WA\n"
+#define BAYCOM_DEBUG
+
+/* --------------------------------------------------------------------- */
+
+static const char bc_drvname[] = "baycom_ser_fdx";
+static const char bc_drvinfo[] = KERN_INFO "baycom_ser_fdx: (C) 1996-2000 Thomas Sailer, HB9JNX/AE4WA\n"
 "baycom_ser_fdx: version 0.10\n";
 
 /* --------------------------------------------------------------------- */
 
-#घोषणा NR_PORTS 4
+#define NR_PORTS 4
 
-अटल काष्ठा net_device *baycom_device[NR_PORTS];
+static struct net_device *baycom_device[NR_PORTS];
 
 /* --------------------------------------------------------------------- */
 
-#घोषणा RBR(iobase) (iobase+0)
-#घोषणा THR(iobase) (iobase+0)
-#घोषणा IER(iobase) (iobase+1)
-#घोषणा IIR(iobase) (iobase+2)
-#घोषणा FCR(iobase) (iobase+2)
-#घोषणा LCR(iobase) (iobase+3)
-#घोषणा MCR(iobase) (iobase+4)
-#घोषणा LSR(iobase) (iobase+5)
-#घोषणा MSR(iobase) (iobase+6)
-#घोषणा SCR(iobase) (iobase+7)
-#घोषणा DLL(iobase) (iobase+0)
-#घोषणा DLM(iobase) (iobase+1)
+#define RBR(iobase) (iobase+0)
+#define THR(iobase) (iobase+0)
+#define IER(iobase) (iobase+1)
+#define IIR(iobase) (iobase+2)
+#define FCR(iobase) (iobase+2)
+#define LCR(iobase) (iobase+3)
+#define MCR(iobase) (iobase+4)
+#define LSR(iobase) (iobase+5)
+#define MSR(iobase) (iobase+6)
+#define SCR(iobase) (iobase+7)
+#define DLL(iobase) (iobase+0)
+#define DLM(iobase) (iobase+1)
 
-#घोषणा SER12_EXTENT 8
+#define SER12_EXTENT 8
 
 /* ---------------------------------------------------------------------- */
 /*
- * Inक्रमmation that need to be kept क्रम each board.
+ * Information that need to be kept for each board.
  */
 
-काष्ठा baycom_state अणु
-	काष्ठा hdlcdrv_state hdrv;
+struct baycom_state {
+	struct hdlcdrv_state hdrv;
 
-	अचिन्हित पूर्णांक baud, baud_us, baud_arbभाग, baud_uartभाग, baud_dcdसमयout;
-	पूर्णांक opt_dcd;
+	unsigned int baud, baud_us, baud_arbdiv, baud_uartdiv, baud_dcdtimeout;
+	int opt_dcd;
 
-	काष्ठा modem_state अणु
-		अचिन्हित अक्षर flags;
-		अचिन्हित अक्षर ptt;
-		अचिन्हित पूर्णांक shreg;
-		काष्ठा modem_state_ser12 अणु
-			अचिन्हित अक्षर tx_bit;
-			अचिन्हित अक्षर last_rxbit;
-			पूर्णांक dcd_sum0, dcd_sum1, dcd_sum2;
-			पूर्णांक dcd_समय;
-			अचिन्हित पूर्णांक pll_समय;
-			अचिन्हित पूर्णांक txshreg;
-		पूर्ण ser12;
-	पूर्ण modem;
+	struct modem_state {
+		unsigned char flags;
+		unsigned char ptt;
+		unsigned int shreg;
+		struct modem_state_ser12 {
+			unsigned char tx_bit;
+			unsigned char last_rxbit;
+			int dcd_sum0, dcd_sum1, dcd_sum2;
+			int dcd_time;
+			unsigned int pll_time;
+			unsigned int txshreg;
+		} ser12;
+	} modem;
 
-#अगर_घोषित BAYCOM_DEBUG
-	काष्ठा debug_vals अणु
-		अचिन्हित दीर्घ last_jअगरfies;
-		अचिन्हित cur_पूर्णांकcnt;
-		अचिन्हित last_पूर्णांकcnt;
-		पूर्णांक cur_pllcorr;
-		पूर्णांक last_pllcorr;
-	पूर्ण debug_vals;
-#पूर्ण_अगर /* BAYCOM_DEBUG */
-पूर्ण;
+#ifdef BAYCOM_DEBUG
+	struct debug_vals {
+		unsigned long last_jiffies;
+		unsigned cur_intcnt;
+		unsigned last_intcnt;
+		int cur_pllcorr;
+		int last_pllcorr;
+	} debug_vals;
+#endif /* BAYCOM_DEBUG */
+};
 
 /* --------------------------------------------------------------------- */
 
-अटल अंतरभूत व्योम baycom_पूर्णांक_freq(काष्ठा baycom_state *bc)
-अणु
-#अगर_घोषित BAYCOM_DEBUG
-	अचिन्हित दीर्घ cur_jअगरfies = jअगरfies;
+static inline void baycom_int_freq(struct baycom_state *bc)
+{
+#ifdef BAYCOM_DEBUG
+	unsigned long cur_jiffies = jiffies;
 	/*
-	 * measure the पूर्णांकerrupt frequency
+	 * measure the interrupt frequency
 	 */
-	bc->debug_vals.cur_पूर्णांकcnt++;
-	अगर (समय_after_eq(cur_jअगरfies, bc->debug_vals.last_jअगरfies + HZ)) अणु
-		bc->debug_vals.last_jअगरfies = cur_jअगरfies;
-		bc->debug_vals.last_पूर्णांकcnt = bc->debug_vals.cur_पूर्णांकcnt;
-		bc->debug_vals.cur_पूर्णांकcnt = 0;
+	bc->debug_vals.cur_intcnt++;
+	if (time_after_eq(cur_jiffies, bc->debug_vals.last_jiffies + HZ)) {
+		bc->debug_vals.last_jiffies = cur_jiffies;
+		bc->debug_vals.last_intcnt = bc->debug_vals.cur_intcnt;
+		bc->debug_vals.cur_intcnt = 0;
 		bc->debug_vals.last_pllcorr = bc->debug_vals.cur_pllcorr;
 		bc->debug_vals.cur_pllcorr = 0;
-	पूर्ण
-#पूर्ण_अगर /* BAYCOM_DEBUG */
-पूर्ण
+	}
+#endif /* BAYCOM_DEBUG */
+}
 
 /* --------------------------------------------------------------------- */
 /*
- * ===================== SER12 specअगरic routines =========================
+ * ===================== SER12 specific routines =========================
  */
 
 /* --------------------------------------------------------------------- */
 
-अटल अंतरभूत व्योम ser12_set_भागisor(काष्ठा net_device *dev,
-                                     अचिन्हित पूर्णांक भागisor)
-अणु
+static inline void ser12_set_divisor(struct net_device *dev,
+                                     unsigned int divisor)
+{
         outb(0x81, LCR(dev->base_addr));        /* DLAB = 1 */
-        outb(भागisor, DLL(dev->base_addr));
-        outb(भागisor >> 8, DLM(dev->base_addr));
+        outb(divisor, DLL(dev->base_addr));
+        outb(divisor >> 8, DLM(dev->base_addr));
         outb(0x01, LCR(dev->base_addr));        /* word length = 6 */
         /*
-         * make sure the next पूर्णांकerrupt is generated;
-         * 0 must be used to घातer the modem; the modem draws its
-         * घातer from the TxD line
+         * make sure the next interrupt is generated;
+         * 0 must be used to power the modem; the modem draws its
+         * power from the TxD line
          */
         outb(0x00, THR(dev->base_addr));
         /*
-         * it is important not to set the भागider जबतक transmitting;
-         * this reportedly makes some UARTs generating पूर्णांकerrupts
+         * it is important not to set the divider while transmitting;
+         * this reportedly makes some UARTs generating interrupts
          * in the hundredthousands per second region
          * Reported by: Ignacio.Arenaza@studi.epfl.ch (Ignacio Arenaza Nuno)
          */
-पूर्ण
+}
 
-अटल __अंतरभूत__ व्योम ser12_rx(काष्ठा net_device *dev, काष्ठा baycom_state *bc, काष्ठा बारpec64 *ts, अचिन्हित अक्षर curs)
-अणु
-	पूर्णांक समयdअगरf;
-	पूर्णांक bdus8 = bc->baud_us >> 3;
-	पूर्णांक bdus4 = bc->baud_us >> 2;
-	पूर्णांक bdus2 = bc->baud_us >> 1;
+static __inline__ void ser12_rx(struct net_device *dev, struct baycom_state *bc, struct timespec64 *ts, unsigned char curs)
+{
+	int timediff;
+	int bdus8 = bc->baud_us >> 3;
+	int bdus4 = bc->baud_us >> 2;
+	int bdus2 = bc->baud_us >> 1;
 
-	समयdअगरf = 1000000 + ts->tv_nsec / NSEC_PER_USEC -
-					bc->modem.ser12.pll_समय;
-	जबतक (समयdअगरf >= 500000)
-		समयdअगरf -= 1000000;
-	जबतक (समयdअगरf >= bdus2) अणु
-		समयdअगरf -= bc->baud_us;
-		bc->modem.ser12.pll_समय += bc->baud_us;
-		bc->modem.ser12.dcd_समय--;
-		/* first check अगर there is room to add a bit */
-		अगर (bc->modem.shreg & 1) अणु
+	timediff = 1000000 + ts->tv_nsec / NSEC_PER_USEC -
+					bc->modem.ser12.pll_time;
+	while (timediff >= 500000)
+		timediff -= 1000000;
+	while (timediff >= bdus2) {
+		timediff -= bc->baud_us;
+		bc->modem.ser12.pll_time += bc->baud_us;
+		bc->modem.ser12.dcd_time--;
+		/* first check if there is room to add a bit */
+		if (bc->modem.shreg & 1) {
 			hdlcdrv_putbits(&bc->hdrv, (bc->modem.shreg >> 1) ^ 0xffff);
 			bc->modem.shreg = 0x10000;
-		पूर्ण
+		}
 		/* add a one bit */
 		bc->modem.shreg >>= 1;
-	पूर्ण
-	अगर (bc->modem.ser12.dcd_समय <= 0) अणु
-		अगर (!bc->opt_dcd)
+	}
+	if (bc->modem.ser12.dcd_time <= 0) {
+		if (!bc->opt_dcd)
 			hdlcdrv_setdcd(&bc->hdrv, (bc->modem.ser12.dcd_sum0 + 
 						   bc->modem.ser12.dcd_sum1 + 
 						   bc->modem.ser12.dcd_sum2) < 0);
 		bc->modem.ser12.dcd_sum2 = bc->modem.ser12.dcd_sum1;
 		bc->modem.ser12.dcd_sum1 = bc->modem.ser12.dcd_sum0;
 		bc->modem.ser12.dcd_sum0 = 2; /* slight bias */
-		bc->modem.ser12.dcd_समय += 120;
-	पूर्ण
-	अगर (bc->modem.ser12.last_rxbit != curs) अणु
+		bc->modem.ser12.dcd_time += 120;
+	}
+	if (bc->modem.ser12.last_rxbit != curs) {
 		bc->modem.ser12.last_rxbit = curs;
 		bc->modem.shreg |= 0x10000;
 		/* adjust the PLL */
-		अगर (समयdअगरf > 0)
-			bc->modem.ser12.pll_समय += bdus8;
-		अन्यथा
-			bc->modem.ser12.pll_समय += 1000000 - bdus8;
+		if (timediff > 0)
+			bc->modem.ser12.pll_time += bdus8;
+		else
+			bc->modem.ser12.pll_time += 1000000 - bdus8;
 		/* update DCD */
-		अगर (असल(समयdअगरf) > bdus4)
+		if (abs(timediff) > bdus4)
 			bc->modem.ser12.dcd_sum0 += 4;
-		अन्यथा
+		else
 			bc->modem.ser12.dcd_sum0--;
-#अगर_घोषित BAYCOM_DEBUG
-		bc->debug_vals.cur_pllcorr = समयdअगरf;
-#पूर्ण_अगर /* BAYCOM_DEBUG */
-	पूर्ण
-	जबतक (bc->modem.ser12.pll_समय >= 1000000)
-		bc->modem.ser12.pll_समय -= 1000000;
-पूर्ण
+#ifdef BAYCOM_DEBUG
+		bc->debug_vals.cur_pllcorr = timediff;
+#endif /* BAYCOM_DEBUG */
+	}
+	while (bc->modem.ser12.pll_time >= 1000000)
+		bc->modem.ser12.pll_time -= 1000000;
+}
 
 /* --------------------------------------------------------------------- */
 
-अटल irqवापस_t ser12_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा net_device *dev = (काष्ठा net_device *)dev_id;
-	काष्ठा baycom_state *bc = netdev_priv(dev);
-	काष्ठा बारpec64 ts;
-	अचिन्हित अक्षर iir, msr;
-	अचिन्हित पूर्णांक txcount = 0;
+static irqreturn_t ser12_interrupt(int irq, void *dev_id)
+{
+	struct net_device *dev = (struct net_device *)dev_id;
+	struct baycom_state *bc = netdev_priv(dev);
+	struct timespec64 ts;
+	unsigned char iir, msr;
+	unsigned int txcount = 0;
 
-	अगर (!bc || bc->hdrv.magic != HDLCDRV_MAGIC)
-		वापस IRQ_NONE;
-	/* fast way out क्रम shared irq */
-	अगर ((iir = inb(IIR(dev->base_addr))) & 1) 	
-		वापस IRQ_NONE;
-	/* get current समय */
-	kसमय_get_ts64(&ts);
+	if (!bc || bc->hdrv.magic != HDLCDRV_MAGIC)
+		return IRQ_NONE;
+	/* fast way out for shared irq */
+	if ((iir = inb(IIR(dev->base_addr))) & 1) 	
+		return IRQ_NONE;
+	/* get current time */
+	ktime_get_ts64(&ts);
 	msr = inb(MSR(dev->base_addr));
 	/* delta DCD */
-	अगर ((msr & 8) && bc->opt_dcd)
+	if ((msr & 8) && bc->opt_dcd)
 		hdlcdrv_setdcd(&bc->hdrv, !((msr ^ bc->opt_dcd) & 0x80));
-	करो अणु
-		चयन (iir & 6) अणु
-		हाल 6:
+	do {
+		switch (iir & 6) {
+		case 6:
 			inb(LSR(dev->base_addr));
-			अवरोध;
+			break;
 			
-		हाल 4:
+		case 4:
 			inb(RBR(dev->base_addr));
-			अवरोध;
+			break;
 			
-		हाल 2:
+		case 2:
 			/*
-			 * make sure the next पूर्णांकerrupt is generated;
-			 * 0 must be used to घातer the modem; the modem draws its
-			 * घातer from the TxD line
+			 * make sure the next interrupt is generated;
+			 * 0 must be used to power the modem; the modem draws its
+			 * power from the TxD line
 			 */
 			outb(0x00, THR(dev->base_addr));
-			baycom_पूर्णांक_freq(bc);
+			baycom_int_freq(bc);
 			txcount++;
 			/*
 			 * first output the last bit (!) then call HDLC transmitter,
-			 * since this may take quite दीर्घ
+			 * since this may take quite long
 			 */
-			अगर (bc->modem.ptt)
+			if (bc->modem.ptt)
 				outb(0x0e | (!!bc->modem.ser12.tx_bit), MCR(dev->base_addr));
-			अन्यथा
+			else
 				outb(0x0d, MCR(dev->base_addr));       /* transmitter off */
-			अवरोध;
+			break;
 			
-		शेष:
+		default:
 			msr = inb(MSR(dev->base_addr));
 			/* delta DCD */
-			अगर ((msr & 8) && bc->opt_dcd) 
+			if ((msr & 8) && bc->opt_dcd) 
 				hdlcdrv_setdcd(&bc->hdrv, !((msr ^ bc->opt_dcd) & 0x80));
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		iir = inb(IIR(dev->base_addr));
-	पूर्ण जबतक (!(iir & 1));
+	} while (!(iir & 1));
 	ser12_rx(dev, bc, &ts, msr & 0x10); /* CTS */
-	अगर (bc->modem.ptt && txcount) अणु
-		अगर (bc->modem.ser12.txshreg <= 1) अणु
+	if (bc->modem.ptt && txcount) {
+		if (bc->modem.ser12.txshreg <= 1) {
 			bc->modem.ser12.txshreg = 0x10000 | hdlcdrv_getbits(&bc->hdrv);
-			अगर (!hdlcdrv_ptt(&bc->hdrv)) अणु
-				ser12_set_भागisor(dev, 115200/100/8);
+			if (!hdlcdrv_ptt(&bc->hdrv)) {
+				ser12_set_divisor(dev, 115200/100/8);
 				bc->modem.ptt = 0;
-				जाओ end_transmit;
-			पूर्ण
-		पूर्ण
+				goto end_transmit;
+			}
+		}
 		bc->modem.ser12.tx_bit = !(bc->modem.ser12.tx_bit ^ (bc->modem.ser12.txshreg & 1));
 		bc->modem.ser12.txshreg >>= 1;
-	पूर्ण
+	}
  end_transmit:
 	local_irq_enable();
-	अगर (!bc->modem.ptt && txcount) अणु
+	if (!bc->modem.ptt && txcount) {
 		hdlcdrv_arbitrate(dev, &bc->hdrv);
-		अगर (hdlcdrv_ptt(&bc->hdrv)) अणु
-			ser12_set_भागisor(dev, bc->baud_uartभाग);
+		if (hdlcdrv_ptt(&bc->hdrv)) {
+			ser12_set_divisor(dev, bc->baud_uartdiv);
 			bc->modem.ser12.txshreg = 1;
 			bc->modem.ptt = 1;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	hdlcdrv_transmitter(dev, &bc->hdrv);
 	hdlcdrv_receiver(dev, &bc->hdrv);
 	local_irq_disable();
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
 /* --------------------------------------------------------------------- */
 
-क्रमागत uart अणु c_uart_unknown, c_uart_8250,
-	    c_uart_16450, c_uart_16550, c_uart_16550Aपूर्ण;
-अटल स्थिर अक्षर *uart_str[] = अणु 
+enum uart { c_uart_unknown, c_uart_8250,
+	    c_uart_16450, c_uart_16550, c_uart_16550A};
+static const char *uart_str[] = { 
 	"unknown", "8250", "16450", "16550", "16550A" 
-पूर्ण;
+};
 
-अटल क्रमागत uart ser12_check_uart(अचिन्हित पूर्णांक iobase)
-अणु
-	अचिन्हित अक्षर b1,b2,b3;
-	क्रमागत uart u;
-	क्रमागत uart uart_tab[] =
-		अणु c_uart_16450, c_uart_unknown, c_uart_16550, c_uart_16550A पूर्ण;
+static enum uart ser12_check_uart(unsigned int iobase)
+{
+	unsigned char b1,b2,b3;
+	enum uart u;
+	enum uart uart_tab[] =
+		{ c_uart_16450, c_uart_unknown, c_uart_16550, c_uart_16550A };
 
 	b1 = inb(MCR(iobase));
 	outb(b1 | 0x10, MCR(iobase));	/* loopback mode */
@@ -353,232 +352,232 @@
 	b3 = inb(MSR(iobase)) & 0xf0;
 	outb(b1, MCR(iobase));			/* restore old values */
 	outb(b2, MSR(iobase));
-	अगर (b3 != 0x90)
-		वापस c_uart_unknown;
+	if (b3 != 0x90)
+		return c_uart_unknown;
 	inb(RBR(iobase));
 	inb(RBR(iobase));
 	outb(0x01, FCR(iobase));		/* enable FIFOs */
 	u = uart_tab[(inb(IIR(iobase)) >> 6) & 3];
-	अगर (u == c_uart_16450) अणु
+	if (u == c_uart_16450) {
 		outb(0x5a, SCR(iobase));
 		b1 = inb(SCR(iobase));
 		outb(0xa5, SCR(iobase));
 		b2 = inb(SCR(iobase));
-		अगर ((b1 != 0x5a) || (b2 != 0xa5))
+		if ((b1 != 0x5a) || (b2 != 0xa5))
 			u = c_uart_8250;
-	पूर्ण
-	वापस u;
-पूर्ण
+	}
+	return u;
+}
 
 /* --------------------------------------------------------------------- */
 
-अटल पूर्णांक ser12_खोलो(काष्ठा net_device *dev)
-अणु
-	काष्ठा baycom_state *bc = netdev_priv(dev);
-	क्रमागत uart u;
+static int ser12_open(struct net_device *dev)
+{
+	struct baycom_state *bc = netdev_priv(dev);
+	enum uart u;
 
-	अगर (!dev || !bc)
-		वापस -ENXIO;
-	अगर (!dev->base_addr || dev->base_addr > 0xffff-SER12_EXTENT ||
-	    dev->irq < 2 || dev->irq > nr_irqs) अणु
-		prपूर्णांकk(KERN_INFO "baycom_ser_fdx: invalid portnumber (max %u) "
+	if (!dev || !bc)
+		return -ENXIO;
+	if (!dev->base_addr || dev->base_addr > 0xffff-SER12_EXTENT ||
+	    dev->irq < 2 || dev->irq > nr_irqs) {
+		printk(KERN_INFO "baycom_ser_fdx: invalid portnumber (max %u) "
 				"or irq (2 <= irq <= %d)\n",
 				0xffff-SER12_EXTENT, nr_irqs);
-		वापस -ENXIO;
-	पूर्ण
-	अगर (bc->baud < 300 || bc->baud > 4800) अणु
-		prपूर्णांकk(KERN_INFO "baycom_ser_fdx: invalid baudrate "
+		return -ENXIO;
+	}
+	if (bc->baud < 300 || bc->baud > 4800) {
+		printk(KERN_INFO "baycom_ser_fdx: invalid baudrate "
 				"(300...4800)\n");
-		वापस -EINVAL;
-	पूर्ण
-	अगर (!request_region(dev->base_addr, SER12_EXTENT, "baycom_ser_fdx")) अणु
-		prपूर्णांकk(KERN_WARNING "BAYCOM_SER_FSX: I/O port 0x%04lx busy\n",
+		return -EINVAL;
+	}
+	if (!request_region(dev->base_addr, SER12_EXTENT, "baycom_ser_fdx")) {
+		printk(KERN_WARNING "BAYCOM_SER_FSX: I/O port 0x%04lx busy\n",
 		       dev->base_addr);
-		वापस -EACCES;
-	पूर्ण
-	स_रखो(&bc->modem, 0, माप(bc->modem));
+		return -EACCES;
+	}
+	memset(&bc->modem, 0, sizeof(bc->modem));
 	bc->hdrv.par.bitrate = bc->baud;
 	bc->baud_us = 1000000/bc->baud;
-	bc->baud_uartभाग = (115200/8)/bc->baud;
-	अगर ((u = ser12_check_uart(dev->base_addr)) == c_uart_unknown)अणु
+	bc->baud_uartdiv = (115200/8)/bc->baud;
+	if ((u = ser12_check_uart(dev->base_addr)) == c_uart_unknown){
 		release_region(dev->base_addr, SER12_EXTENT);
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 	outb(0, FCR(dev->base_addr));  /* disable FIFOs */
 	outb(0x0d, MCR(dev->base_addr));
 	outb(0, IER(dev->base_addr));
-	अगर (request_irq(dev->irq, ser12_पूर्णांकerrupt, IRQF_SHARED,
-			"baycom_ser_fdx", dev)) अणु
+	if (request_irq(dev->irq, ser12_interrupt, IRQF_SHARED,
+			"baycom_ser_fdx", dev)) {
 		release_region(dev->base_addr, SER12_EXTENT);
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 	/*
-	 * set the SIO to 6 Bits/अक्षरacter; during receive,
-	 * the baud rate is set to produce 100 पूर्णांकs/sec
+	 * set the SIO to 6 Bits/character; during receive,
+	 * the baud rate is set to produce 100 ints/sec
 	 * to feed the channel arbitration process,
-	 * during transmit to baud पूर्णांकs/sec to run
+	 * during transmit to baud ints/sec to run
 	 * the transmitter
 	 */
-	ser12_set_भागisor(dev, 115200/100/8);
+	ser12_set_divisor(dev, 115200/100/8);
 	/*
-	 * enable transmitter empty पूर्णांकerrupt and modem status पूर्णांकerrupt
+	 * enable transmitter empty interrupt and modem status interrupt
 	 */
 	outb(0x0a, IER(dev->base_addr));
 	/*
-	 * make sure the next पूर्णांकerrupt is generated;
-	 * 0 must be used to घातer the modem; the modem draws its
-	 * घातer from the TxD line
+	 * make sure the next interrupt is generated;
+	 * 0 must be used to power the modem; the modem draws its
+	 * power from the TxD line
 	 */
 	outb(0x00, THR(dev->base_addr));
 	hdlcdrv_setdcd(&bc->hdrv, 0);
-	prपूर्णांकk(KERN_INFO "%s: ser_fdx at iobase 0x%lx irq %u baud %u uart %s\n",
+	printk(KERN_INFO "%s: ser_fdx at iobase 0x%lx irq %u baud %u uart %s\n",
 	       bc_drvname, dev->base_addr, dev->irq, bc->baud, uart_str[u]);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* --------------------------------------------------------------------- */
 
-अटल पूर्णांक ser12_बंद(काष्ठा net_device *dev)
-अणु
-	काष्ठा baycom_state *bc = netdev_priv(dev);
+static int ser12_close(struct net_device *dev)
+{
+	struct baycom_state *bc = netdev_priv(dev);
 
-	अगर (!dev || !bc)
-		वापस -EINVAL;
+	if (!dev || !bc)
+		return -EINVAL;
 	/*
-	 * disable पूर्णांकerrupts
+	 * disable interrupts
 	 */
 	outb(0, IER(dev->base_addr));
 	outb(1, MCR(dev->base_addr));
-	मुक्त_irq(dev->irq, dev);
+	free_irq(dev->irq, dev);
 	release_region(dev->base_addr, SER12_EXTENT);
-	prपूर्णांकk(KERN_INFO "%s: close ser_fdx at iobase 0x%lx irq %u\n",
+	printk(KERN_INFO "%s: close ser_fdx at iobase 0x%lx irq %u\n",
 	       bc_drvname, dev->base_addr, dev->irq);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* --------------------------------------------------------------------- */
 /*
- * ===================== hdlcdrv driver पूर्णांकerface =========================
+ * ===================== hdlcdrv driver interface =========================
  */
 
 /* --------------------------------------------------------------------- */
 
-अटल पूर्णांक baycom_ioctl(काष्ठा net_device *dev, काष्ठा अगरreq *अगरr,
-			काष्ठा hdlcdrv_ioctl *hi, पूर्णांक cmd);
+static int baycom_ioctl(struct net_device *dev, struct ifreq *ifr,
+			struct hdlcdrv_ioctl *hi, int cmd);
 
 /* --------------------------------------------------------------------- */
 
-अटल स्थिर काष्ठा hdlcdrv_ops ser12_ops = अणु
+static const struct hdlcdrv_ops ser12_ops = {
 	.drvname = bc_drvname,
 	.drvinfo = bc_drvinfo,
-	.खोलो    = ser12_खोलो,
-	.बंद   = ser12_बंद,
+	.open    = ser12_open,
+	.close   = ser12_close,
 	.ioctl   = baycom_ioctl,
-पूर्ण;
+};
 
 /* --------------------------------------------------------------------- */
 
-अटल पूर्णांक baycom_seपंचांगode(काष्ठा baycom_state *bc, स्थिर अक्षर *modestr)
-अणु
-	अचिन्हित पूर्णांक baud;
+static int baycom_setmode(struct baycom_state *bc, const char *modestr)
+{
+	unsigned int baud;
 
-	अगर (!म_भेदन(modestr, "ser", 3)) अणु
-		baud = simple_म_से_अदीर्घ(modestr+3, शून्य, 10);
-		अगर (baud >= 3 && baud <= 48)
+	if (!strncmp(modestr, "ser", 3)) {
+		baud = simple_strtoul(modestr+3, NULL, 10);
+		if (baud >= 3 && baud <= 48)
 			bc->baud = baud*100;
-	पूर्ण
-	अगर (म_अक्षर(modestr, '*'))
+	}
+	if (strchr(modestr, '*'))
 		bc->opt_dcd = 0;
-	अन्यथा अगर (म_अक्षर(modestr, '+'))
+	else if (strchr(modestr, '+'))
 		bc->opt_dcd = -1;
-	अन्यथा
+	else
 		bc->opt_dcd = 1;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* --------------------------------------------------------------------- */
 
-अटल पूर्णांक baycom_ioctl(काष्ठा net_device *dev, काष्ठा अगरreq *अगरr,
-			काष्ठा hdlcdrv_ioctl *hi, पूर्णांक cmd)
-अणु
-	काष्ठा baycom_state *bc;
-	काष्ठा baycom_ioctl bi;
+static int baycom_ioctl(struct net_device *dev, struct ifreq *ifr,
+			struct hdlcdrv_ioctl *hi, int cmd)
+{
+	struct baycom_state *bc;
+	struct baycom_ioctl bi;
 
-	अगर (!dev)
-		वापस -EINVAL;
+	if (!dev)
+		return -EINVAL;
 
 	bc = netdev_priv(dev);
 	BUG_ON(bc->hdrv.magic != HDLCDRV_MAGIC);
 
-	अगर (cmd != SIOCDEVPRIVATE)
-		वापस -ENOIOCTLCMD;
-	चयन (hi->cmd) अणु
-	शेष:
-		अवरोध;
+	if (cmd != SIOCDEVPRIVATE)
+		return -ENOIOCTLCMD;
+	switch (hi->cmd) {
+	default:
+		break;
 
-	हाल HDLCDRVCTL_GETMODE:
-		प्र_लिखो(hi->data.modename, "ser%u", bc->baud / 100);
-		अगर (bc->opt_dcd <= 0)
-			म_जोड़ो(hi->data.modename, (!bc->opt_dcd) ? "*" : "+");
-		अगर (copy_to_user(अगरr->अगरr_data, hi, माप(काष्ठा hdlcdrv_ioctl)))
-			वापस -EFAULT;
-		वापस 0;
+	case HDLCDRVCTL_GETMODE:
+		sprintf(hi->data.modename, "ser%u", bc->baud / 100);
+		if (bc->opt_dcd <= 0)
+			strcat(hi->data.modename, (!bc->opt_dcd) ? "*" : "+");
+		if (copy_to_user(ifr->ifr_data, hi, sizeof(struct hdlcdrv_ioctl)))
+			return -EFAULT;
+		return 0;
 
-	हाल HDLCDRVCTL_SETMODE:
-		अगर (netअगर_running(dev) || !capable(CAP_NET_ADMIN))
-			वापस -EACCES;
-		hi->data.modename[माप(hi->data.modename)-1] = '\0';
-		वापस baycom_seपंचांगode(bc, hi->data.modename);
+	case HDLCDRVCTL_SETMODE:
+		if (netif_running(dev) || !capable(CAP_NET_ADMIN))
+			return -EACCES;
+		hi->data.modename[sizeof(hi->data.modename)-1] = '\0';
+		return baycom_setmode(bc, hi->data.modename);
 
-	हाल HDLCDRVCTL_MODELIST:
-		म_नकल(hi->data.modename, "ser12,ser3,ser24");
-		अगर (copy_to_user(अगरr->अगरr_data, hi, माप(काष्ठा hdlcdrv_ioctl)))
-			वापस -EFAULT;
-		वापस 0;
+	case HDLCDRVCTL_MODELIST:
+		strcpy(hi->data.modename, "ser12,ser3,ser24");
+		if (copy_to_user(ifr->ifr_data, hi, sizeof(struct hdlcdrv_ioctl)))
+			return -EFAULT;
+		return 0;
 
-	हाल HDLCDRVCTL_MODEMPARMASK:
-		वापस HDLCDRV_PARMASK_IOBASE | HDLCDRV_PARMASK_IRQ;
+	case HDLCDRVCTL_MODEMPARMASK:
+		return HDLCDRV_PARMASK_IOBASE | HDLCDRV_PARMASK_IRQ;
 
-	पूर्ण
+	}
 
-	अगर (copy_from_user(&bi, अगरr->अगरr_data, माप(bi)))
-		वापस -EFAULT;
-	चयन (bi.cmd) अणु
-	शेष:
-		वापस -ENOIOCTLCMD;
+	if (copy_from_user(&bi, ifr->ifr_data, sizeof(bi)))
+		return -EFAULT;
+	switch (bi.cmd) {
+	default:
+		return -ENOIOCTLCMD;
 
-#अगर_घोषित BAYCOM_DEBUG
-	हाल BAYCOMCTL_GETDEBUG:
+#ifdef BAYCOM_DEBUG
+	case BAYCOMCTL_GETDEBUG:
 		bi.data.dbg.debug1 = bc->hdrv.ptt_keyed;
-		bi.data.dbg.debug2 = bc->debug_vals.last_पूर्णांकcnt;
+		bi.data.dbg.debug2 = bc->debug_vals.last_intcnt;
 		bi.data.dbg.debug3 = bc->debug_vals.last_pllcorr;
-		अवरोध;
-#पूर्ण_अगर /* BAYCOM_DEBUG */
+		break;
+#endif /* BAYCOM_DEBUG */
 
-	पूर्ण
-	अगर (copy_to_user(अगरr->अगरr_data, &bi, माप(bi)))
-		वापस -EFAULT;
-	वापस 0;
+	}
+	if (copy_to_user(ifr->ifr_data, &bi, sizeof(bi)))
+		return -EFAULT;
+	return 0;
 
-पूर्ण
+}
 
 /* --------------------------------------------------------------------- */
 
 /*
  * command line settable parameters
  */
-अटल अक्षर *mode[NR_PORTS] = अणु "ser12*", पूर्ण;
-अटल पूर्णांक iobase[NR_PORTS] = अणु 0x3f8, पूर्ण;
-अटल पूर्णांक irq[NR_PORTS] = अणु 4, पूर्ण;
-अटल पूर्णांक baud[NR_PORTS] = अणु [0 ... NR_PORTS-1] = 1200 पूर्ण;
+static char *mode[NR_PORTS] = { "ser12*", };
+static int iobase[NR_PORTS] = { 0x3f8, };
+static int irq[NR_PORTS] = { 4, };
+static int baud[NR_PORTS] = { [0 ... NR_PORTS-1] = 1200 };
 
-module_param_array(mode, अक्षरp, शून्य, 0);
+module_param_array(mode, charp, NULL, 0);
 MODULE_PARM_DESC(mode, "baycom operating mode; * for software DCD");
-module_param_hw_array(iobase, पूर्णांक, ioport, शून्य, 0);
+module_param_hw_array(iobase, int, ioport, NULL, 0);
 MODULE_PARM_DESC(iobase, "baycom io base address");
-module_param_hw_array(irq, पूर्णांक, irq, शून्य, 0);
+module_param_hw_array(irq, int, irq, NULL, 0);
 MODULE_PARM_DESC(irq, "baycom irq number");
-module_param_array(baud, पूर्णांक, शून्य, 0);
+module_param_array(baud, int, NULL, 0);
 MODULE_PARM_DESC(baud, "baycom baud rate (300 to 4800)");
 
 MODULE_AUTHOR("Thomas M. Sailer, sailer@ife.ee.ethz.ch, hb9jnx@hb9w.che.eu");
@@ -587,92 +586,92 @@ MODULE_LICENSE("GPL");
 
 /* --------------------------------------------------------------------- */
 
-अटल पूर्णांक __init init_baycomserfdx(व्योम)
-अणु
-	पूर्णांक i, found = 0;
-	अक्षर set_hw = 1;
+static int __init init_baycomserfdx(void)
+{
+	int i, found = 0;
+	char set_hw = 1;
 
-	prपूर्णांकk(bc_drvinfo);
+	printk(bc_drvinfo);
 	/*
-	 * रेजिस्टर net devices
+	 * register net devices
 	 */
-	क्रम (i = 0; i < NR_PORTS; i++) अणु
-		काष्ठा net_device *dev;
-		काष्ठा baycom_state *bc;
-		अक्षर अगरname[IFNAMSIZ];
+	for (i = 0; i < NR_PORTS; i++) {
+		struct net_device *dev;
+		struct baycom_state *bc;
+		char ifname[IFNAMSIZ];
 
-		प्र_लिखो(अगरname, "bcsf%d", i);
+		sprintf(ifname, "bcsf%d", i);
 
-		अगर (!mode[i])
+		if (!mode[i])
 			set_hw = 0;
-		अगर (!set_hw)
+		if (!set_hw)
 			iobase[i] = irq[i] = 0;
 
-		dev = hdlcdrv_रेजिस्टर(&ser12_ops, 
-				       माप(काष्ठा baycom_state),
-				       अगरname, iobase[i], irq[i], 0);
-		अगर (IS_ERR(dev)) 
-			अवरोध;
+		dev = hdlcdrv_register(&ser12_ops, 
+				       sizeof(struct baycom_state),
+				       ifname, iobase[i], irq[i], 0);
+		if (IS_ERR(dev)) 
+			break;
 
 		bc = netdev_priv(dev);
-		अगर (set_hw && baycom_seपंचांगode(bc, mode[i]))
+		if (set_hw && baycom_setmode(bc, mode[i]))
 			set_hw = 0;
 		bc->baud = baud[i];
 		found++;
 		baycom_device[i] = dev;
-	पूर्ण
+	}
 
-	अगर (!found)
-		वापस -ENXIO;
-	वापस 0;
-पूर्ण
+	if (!found)
+		return -ENXIO;
+	return 0;
+}
 
-अटल व्योम __निकास cleanup_baycomserfdx(व्योम)
-अणु
-	पूर्णांक i;
+static void __exit cleanup_baycomserfdx(void)
+{
+	int i;
 
-	क्रम(i = 0; i < NR_PORTS; i++) अणु
-		काष्ठा net_device *dev = baycom_device[i];
-		अगर (dev) 
-			hdlcdrv_unरेजिस्टर(dev);
-	पूर्ण
-पूर्ण
+	for(i = 0; i < NR_PORTS; i++) {
+		struct net_device *dev = baycom_device[i];
+		if (dev) 
+			hdlcdrv_unregister(dev);
+	}
+}
 
 module_init(init_baycomserfdx);
-module_निकास(cleanup_baycomserfdx);
+module_exit(cleanup_baycomserfdx);
 
 /* --------------------------------------------------------------------- */
 
-#अगर_अघोषित MODULE
+#ifndef MODULE
 
 /*
- * क्रमmat: baycom_ser_fdx=io,irq,mode
+ * format: baycom_ser_fdx=io,irq,mode
  * mode: ser#    hardware DCD
  *       ser#*   software DCD
- *       ser#+   hardware DCD, inverted संकेत at DCD pin
+ *       ser#+   hardware DCD, inverted signal at DCD pin
  * '#' denotes the baud rate / 100, eg. ser12* is '1200 baud, soft DCD'
  */
 
-अटल पूर्णांक __init baycom_ser_fdx_setup(अक्षर *str)
-अणु
-        अटल अचिन्हित nr_dev;
-        पूर्णांक पूर्णांकs[4];
+static int __init baycom_ser_fdx_setup(char *str)
+{
+        static unsigned nr_dev;
+        int ints[4];
 
-        अगर (nr_dev >= NR_PORTS)
-                वापस 0;
-        str = get_options(str, 4, पूर्णांकs);
-        अगर (पूर्णांकs[0] < 2)
-                वापस 0;
+        if (nr_dev >= NR_PORTS)
+                return 0;
+        str = get_options(str, 4, ints);
+        if (ints[0] < 2)
+                return 0;
         mode[nr_dev] = str;
-        iobase[nr_dev] = पूर्णांकs[1];
-        irq[nr_dev] = पूर्णांकs[2];
-	अगर (पूर्णांकs[0] >= 3)
-		baud[nr_dev] = पूर्णांकs[3];
+        iobase[nr_dev] = ints[1];
+        irq[nr_dev] = ints[2];
+	if (ints[0] >= 3)
+		baud[nr_dev] = ints[3];
 	nr_dev++;
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
 __setup("baycom_ser_fdx=", baycom_ser_fdx_setup);
 
-#पूर्ण_अगर /* MODULE */
+#endif /* MODULE */
 /* --------------------------------------------------------------------- */

@@ -1,107 +1,106 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#घोषणा _GNU_SOURCE
+// SPDX-License-Identifier: GPL-2.0
+#define _GNU_SOURCE
 
-#समावेश <मानकपन.स>
-#समावेश <मानककोष.स>
-#समावेश <संकेत.स>
-#समावेश <सीमा.स>
-#समावेश <unistd.h>
-#समावेश <त्रुटिसं.स>
-#समावेश <माला.स>
-#समावेश <fcntl.h>
-#समावेश <linux/unistd.h>
-#समावेश <linux/kcmp.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <signal.h>
+#include <limits.h>
+#include <unistd.h>
+#include <errno.h>
+#include <string.h>
+#include <fcntl.h>
+#include <linux/unistd.h>
+#include <linux/kcmp.h>
 
-#समावेश <sys/syscall.h>
-#समावेश <sys/types.h>
-#समावेश <sys/स्थिति.स>
-#समावेश <sys/रुको.h>
-#समावेश <sys/epoll.h>
+#include <sys/syscall.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/wait.h>
+#include <sys/epoll.h>
 
-#समावेश "../kselftest.h"
+#include "../kselftest.h"
 
-अटल दीर्घ sys_kcmp(पूर्णांक pid1, पूर्णांक pid2, पूर्णांक type, अचिन्हित दीर्घ fd1, अचिन्हित दीर्घ fd2)
-अणु
-	वापस syscall(__NR_kcmp, pid1, pid2, type, fd1, fd2);
-पूर्ण
+static long sys_kcmp(int pid1, int pid2, int type, unsigned long fd1, unsigned long fd2)
+{
+	return syscall(__NR_kcmp, pid1, pid2, type, fd1, fd2);
+}
 
-अटल स्थिर अचिन्हित पूर्णांक duped_num = 64;
+static const unsigned int duped_num = 64;
 
-पूर्णांक मुख्य(पूर्णांक argc, अक्षर **argv)
-अणु
-	स्थिर अक्षर kpath[] = "kcmp-test-file";
-	काष्ठा kcmp_epoll_slot epoll_slot;
-	काष्ठा epoll_event ev;
-	पूर्णांक pid1, pid2;
-	पूर्णांक pipefd[2];
-	पूर्णांक fd1, fd2;
-	पूर्णांक epollfd;
-	पूर्णांक status;
-	पूर्णांक fddup;
+int main(int argc, char **argv)
+{
+	const char kpath[] = "kcmp-test-file";
+	struct kcmp_epoll_slot epoll_slot;
+	struct epoll_event ev;
+	int pid1, pid2;
+	int pipefd[2];
+	int fd1, fd2;
+	int epollfd;
+	int status;
+	int fddup;
 
-	fd1 = खोलो(kpath, O_RDWR | O_CREAT | O_TRUNC, 0644);
+	fd1 = open(kpath, O_RDWR | O_CREAT | O_TRUNC, 0644);
 	pid1 = getpid();
 
-	अगर (fd1 < 0) अणु
-		लिखो_त्रुटि("Can't create file");
-		ksft_निकास_fail();
-	पूर्ण
+	if (fd1 < 0) {
+		perror("Can't create file");
+		ksft_exit_fail();
+	}
 
-	अगर (pipe(pipefd)) अणु
-		लिखो_त्रुटि("Can't create pipe");
-		ksft_निकास_fail();
-	पूर्ण
+	if (pipe(pipefd)) {
+		perror("Can't create pipe");
+		ksft_exit_fail();
+	}
 
 	epollfd = epoll_create1(0);
-	अगर (epollfd < 0) अणु
-		लिखो_त्रुटि("epoll_create1 failed");
-		ksft_निकास_fail();
-	पूर्ण
+	if (epollfd < 0) {
+		perror("epoll_create1 failed");
+		ksft_exit_fail();
+	}
 
-	स_रखो(&ev, 0xff, माप(ev));
+	memset(&ev, 0xff, sizeof(ev));
 	ev.events = EPOLLIN | EPOLLOUT;
 
-	अगर (epoll_ctl(epollfd, EPOLL_CTL_ADD, pipefd[0], &ev)) अणु
-		लिखो_त्रुटि("epoll_ctl failed");
-		ksft_निकास_fail();
-	पूर्ण
+	if (epoll_ctl(epollfd, EPOLL_CTL_ADD, pipefd[0], &ev)) {
+		perror("epoll_ctl failed");
+		ksft_exit_fail();
+	}
 
 	fddup = dup2(pipefd[1], duped_num);
-	अगर (fddup < 0) अणु
-		लिखो_त्रुटि("dup2 failed");
-		ksft_निकास_fail();
-	पूर्ण
+	if (fddup < 0) {
+		perror("dup2 failed");
+		ksft_exit_fail();
+	}
 
-	अगर (epoll_ctl(epollfd, EPOLL_CTL_ADD, fddup, &ev)) अणु
-		लिखो_त्रुटि("epoll_ctl failed");
-		ksft_निकास_fail();
-	पूर्ण
-	बंद(fddup);
+	if (epoll_ctl(epollfd, EPOLL_CTL_ADD, fddup, &ev)) {
+		perror("epoll_ctl failed");
+		ksft_exit_fail();
+	}
+	close(fddup);
 
-	pid2 = विभाजन();
-	अगर (pid2 < 0) अणु
-		लिखो_त्रुटि("fork failed");
-		ksft_निकास_fail();
-	पूर्ण
+	pid2 = fork();
+	if (pid2 < 0) {
+		perror("fork failed");
+		ksft_exit_fail();
+	}
 
-	अगर (!pid2) अणु
-		पूर्णांक pid2 = getpid();
-		पूर्णांक ret;
+	if (!pid2) {
+		int pid2 = getpid();
+		int ret;
 
-		fd2 = खोलो(kpath, O_RDWR, 0644);
-		अगर (fd2 < 0) अणु
-			लिखो_त्रुटि("Can't open file");
-			ksft_निकास_fail();
-		पूर्ण
+		fd2 = open(kpath, O_RDWR, 0644);
+		if (fd2 < 0) {
+			perror("Can't open file");
+			ksft_exit_fail();
+		}
 
 		/* An example of output and arguments */
-		म_लिखो("pid1: %6d pid2: %6d FD: %2ld FILES: %2ld VM: %2ld "
+		printf("pid1: %6d pid2: %6d FD: %2ld FILES: %2ld VM: %2ld "
 		       "FS: %2ld SIGHAND: %2ld IO: %2ld SYSVSEM: %2ld "
 		       "INV: %2ld\n",
 		       pid1, pid2,
-		       sys_kcmp(pid1, pid2, KCMP_खाता,		fd1, fd2),
-		       sys_kcmp(pid1, pid2, KCMP_खाताS,		0, 0),
+		       sys_kcmp(pid1, pid2, KCMP_FILE,		fd1, fd2),
+		       sys_kcmp(pid1, pid2, KCMP_FILES,		0, 0),
 		       sys_kcmp(pid1, pid2, KCMP_VM,		0, 0),
 		       sys_kcmp(pid1, pid2, KCMP_FS,		0, 0),
 		       sys_kcmp(pid1, pid2, KCMP_SIGHAND,	0, 0),
@@ -111,57 +110,57 @@
 			/* This one should fail */
 		       sys_kcmp(pid1, pid2, KCMP_TYPES + 1,	0, 0));
 
-		/* This one should वापस same fd */
-		ret = sys_kcmp(pid1, pid2, KCMP_खाता, fd1, fd1);
-		अगर (ret) अणु
-			म_लिखो("FAIL: 0 expected but %d returned (%s)\n",
-				ret, म_त्रुटि(त्रुटि_सं));
+		/* This one should return same fd */
+		ret = sys_kcmp(pid1, pid2, KCMP_FILE, fd1, fd1);
+		if (ret) {
+			printf("FAIL: 0 expected but %d returned (%s)\n",
+				ret, strerror(errno));
 			ksft_inc_fail_cnt();
 			ret = -1;
-		पूर्ण अन्यथा अणु
-			म_लिखो("PASS: 0 returned as expected\n");
+		} else {
+			printf("PASS: 0 returned as expected\n");
 			ksft_inc_pass_cnt();
-		पूर्ण
+		}
 
 		/* Compare with self */
 		ret = sys_kcmp(pid1, pid1, KCMP_VM, 0, 0);
-		अगर (ret) अणु
-			म_लिखो("FAIL: 0 expected but %d returned (%s)\n",
-				ret, म_त्रुटि(त्रुटि_सं));
+		if (ret) {
+			printf("FAIL: 0 expected but %d returned (%s)\n",
+				ret, strerror(errno));
 			ksft_inc_fail_cnt();
 			ret = -1;
-		पूर्ण अन्यथा अणु
-			म_लिखो("PASS: 0 returned as expected\n");
+		} else {
+			printf("PASS: 0 returned as expected\n");
 			ksft_inc_pass_cnt();
-		पूर्ण
+		}
 
 		/* Compare epoll target */
-		epoll_slot = (काष्ठा kcmp_epoll_slot) अणु
+		epoll_slot = (struct kcmp_epoll_slot) {
 			.efd	= epollfd,
 			.tfd	= duped_num,
 			.toff	= 0,
-		पूर्ण;
+		};
 		ret = sys_kcmp(pid1, pid1, KCMP_EPOLL_TFD, pipefd[1],
-			       (अचिन्हित दीर्घ)(व्योम *)&epoll_slot);
-		अगर (ret) अणु
-			म_लिखो("FAIL: 0 expected but %d returned (%s)\n",
-				ret, म_त्रुटि(त्रुटि_सं));
+			       (unsigned long)(void *)&epoll_slot);
+		if (ret) {
+			printf("FAIL: 0 expected but %d returned (%s)\n",
+				ret, strerror(errno));
 			ksft_inc_fail_cnt();
 			ret = -1;
-		पूर्ण अन्यथा अणु
-			म_लिखो("PASS: 0 returned as expected\n");
+		} else {
+			printf("PASS: 0 returned as expected\n");
 			ksft_inc_pass_cnt();
-		पूर्ण
+		}
 
-		ksft_prपूर्णांक_cnts();
+		ksft_print_cnts();
 
-		अगर (ret)
-			ksft_निकास_fail();
-		अन्यथा
-			ksft_निकास_pass();
-	पूर्ण
+		if (ret)
+			ksft_exit_fail();
+		else
+			ksft_exit_pass();
+	}
 
-	रुकोpid(pid2, &status, P_ALL);
+	waitpid(pid2, &status, P_ALL);
 
-	वापस ksft_निकास_pass();
-पूर्ण
+	return ksft_exit_pass();
+}

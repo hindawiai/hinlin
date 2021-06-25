@@ -1,46 +1,45 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * linux/arch/arm/mach-omap1/board-nokia770.c
  *
- * Modअगरied from board-generic.c
+ * Modified from board-generic.c
  */
-#समावेश <linux/clkdev.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/gpपन.स>
-#समावेश <linux/gpio/machine.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/init.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/input.h>
-#समावेश <linux/omapfb.h>
+#include <linux/clkdev.h>
+#include <linux/irq.h>
+#include <linux/gpio.h>
+#include <linux/gpio/machine.h>
+#include <linux/kernel.h>
+#include <linux/init.h>
+#include <linux/mutex.h>
+#include <linux/platform_device.h>
+#include <linux/input.h>
+#include <linux/omapfb.h>
 
-#समावेश <linux/spi/spi.h>
-#समावेश <linux/spi/ads7846.h>
-#समावेश <linux/workqueue.h>
-#समावेश <linux/delay.h>
+#include <linux/spi/spi.h>
+#include <linux/spi/ads7846.h>
+#include <linux/workqueue.h>
+#include <linux/delay.h>
 
-#समावेश <linux/platक्रमm_data/keypad-omap.h>
-#समावेश <linux/platक्रमm_data/lcd-mipid.h>
-#समावेश <linux/platक्रमm_data/gpio-omap.h>
+#include <linux/platform_data/keypad-omap.h>
+#include <linux/platform_data/lcd-mipid.h>
+#include <linux/platform_data/gpio-omap.h>
 
-#समावेश <यंत्र/mach-types.h>
-#समावेश <यंत्र/mach/arch.h>
-#समावेश <यंत्र/mach/map.h>
+#include <asm/mach-types.h>
+#include <asm/mach/arch.h>
+#include <asm/mach/map.h>
 
-#समावेश <mach/mux.h>
+#include <mach/mux.h>
 
-#समावेश <mach/hardware.h>
-#समावेश <mach/usb.h>
+#include <mach/hardware.h>
+#include <mach/usb.h>
 
-#समावेश "common.h"
-#समावेश "clock.h"
-#समावेश "mmc.h"
+#include "common.h"
+#include "clock.h"
+#include "mmc.h"
 
-#घोषणा ADS7846_PENDOWN_GPIO	15
+#define ADS7846_PENDOWN_GPIO	15
 
-अटल स्थिर अचिन्हित पूर्णांक nokia770_keymap[] = अणु
+static const unsigned int nokia770_keymap[] = {
 	KEY(1, 0, GROUP_0 | KEY_UP),
 	KEY(2, 0, GROUP_1 | KEY_F5),
 	KEY(0, 1, GROUP_0 | KEY_LEFT),
@@ -52,68 +51,68 @@
 	KEY(0, 3, GROUP_2 | KEY_F7),
 	KEY(1, 3, GROUP_2 | KEY_F8),
 	KEY(2, 3, GROUP_2 | KEY_F6),
-पूर्ण;
+};
 
-अटल काष्ठा resource nokia770_kp_resources[] = अणु
-	[0] = अणु
+static struct resource nokia770_kp_resources[] = {
+	[0] = {
 		.start	= INT_KEYBOARD,
 		.end	= INT_KEYBOARD,
 		.flags	= IORESOURCE_IRQ,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा matrix_keymap_data nokia770_keymap_data = अणु
+static const struct matrix_keymap_data nokia770_keymap_data = {
 	.keymap		= nokia770_keymap,
 	.keymap_size	= ARRAY_SIZE(nokia770_keymap),
-पूर्ण;
+};
 
-अटल काष्ठा omap_kp_platक्रमm_data nokia770_kp_data = अणु
+static struct omap_kp_platform_data nokia770_kp_data = {
 	.rows		= 8,
 	.cols		= 8,
 	.keymap_data	= &nokia770_keymap_data,
 	.delay		= 4,
-पूर्ण;
+};
 
-अटल काष्ठा platक्रमm_device nokia770_kp_device = अणु
+static struct platform_device nokia770_kp_device = {
 	.name		= "omap-keypad",
 	.id		= -1,
-	.dev		= अणु
-		.platक्रमm_data = &nokia770_kp_data,
-	पूर्ण,
+	.dev		= {
+		.platform_data = &nokia770_kp_data,
+	},
 	.num_resources	= ARRAY_SIZE(nokia770_kp_resources),
 	.resource	= nokia770_kp_resources,
-पूर्ण;
+};
 
-अटल काष्ठा platक्रमm_device *nokia770_devices[] __initdata = अणु
+static struct platform_device *nokia770_devices[] __initdata = {
 	&nokia770_kp_device,
-पूर्ण;
+};
 
-अटल व्योम mipid_shutकरोwn(काष्ठा mipid_platक्रमm_data *pdata)
-अणु
-	अगर (pdata->nreset_gpio != -1) अणु
-		prपूर्णांकk(KERN_INFO "shutdown LCD\n");
+static void mipid_shutdown(struct mipid_platform_data *pdata)
+{
+	if (pdata->nreset_gpio != -1) {
+		printk(KERN_INFO "shutdown LCD\n");
 		gpio_set_value(pdata->nreset_gpio, 0);
 		msleep(120);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल काष्ठा mipid_platक्रमm_data nokia770_mipid_platक्रमm_data = अणु
-	.shutकरोwn = mipid_shutकरोwn,
-पूर्ण;
+static struct mipid_platform_data nokia770_mipid_platform_data = {
+	.shutdown = mipid_shutdown,
+};
 
-अटल स्थिर काष्ठा omap_lcd_config nokia770_lcd_config __initस्थिर = अणु
+static const struct omap_lcd_config nokia770_lcd_config __initconst = {
 	.ctrl_name	= "hwa742",
-पूर्ण;
+};
 
-अटल व्योम __init mipid_dev_init(व्योम)
-अणु
-	nokia770_mipid_platक्रमm_data.nreset_gpio = 13;
-	nokia770_mipid_platक्रमm_data.data_lines = 16;
+static void __init mipid_dev_init(void)
+{
+	nokia770_mipid_platform_data.nreset_gpio = 13;
+	nokia770_mipid_platform_data.data_lines = 16;
 
 	omapfb_set_lcd_config(&nokia770_lcd_config);
-पूर्ण
+}
 
-अटल काष्ठा ads7846_platक्रमm_data nokia770_ads7846_platक्रमm_data __initdata = अणु
+static struct ads7846_platform_data nokia770_ads7846_platform_data __initdata = {
 	.x_max		= 0x0fff,
 	.y_max		= 0x0fff,
 	.x_plate_ohms	= 180,
@@ -121,173 +120,173 @@
 	.debounce_max	= 10,
 	.debounce_tol	= 3,
 	.debounce_rep	= 1,
-	.gpio_penकरोwn	= ADS7846_PENDOWN_GPIO,
-पूर्ण;
+	.gpio_pendown	= ADS7846_PENDOWN_GPIO,
+};
 
-अटल काष्ठा spi_board_info nokia770_spi_board_info[] __initdata = अणु
-	[0] = अणु
+static struct spi_board_info nokia770_spi_board_info[] __initdata = {
+	[0] = {
 		.modalias       = "lcd_mipid",
 		.bus_num        = 2,
 		.chip_select    = 3,
 		.max_speed_hz   = 12000000,
-		.platक्रमm_data	= &nokia770_mipid_platक्रमm_data,
-	पूर्ण,
-	[1] = अणु
+		.platform_data	= &nokia770_mipid_platform_data,
+	},
+	[1] = {
 		.modalias       = "ads7846",
 		.bus_num        = 2,
 		.chip_select    = 0,
 		.max_speed_hz   = 2500000,
-		.platक्रमm_data	= &nokia770_ads7846_platक्रमm_data,
-	पूर्ण,
-पूर्ण;
+		.platform_data	= &nokia770_ads7846_platform_data,
+	},
+};
 
-अटल व्योम __init hwa742_dev_init(व्योम)
-अणु
-	clk_add_alias("hwa_sys_ck", शून्य, "bclk", शून्य);
-पूर्ण
+static void __init hwa742_dev_init(void)
+{
+	clk_add_alias("hwa_sys_ck", NULL, "bclk", NULL);
+}
 
 /* assume no Mini-AB port */
 
-अटल काष्ठा omap_usb_config nokia770_usb_config __initdata = अणु
+static struct omap_usb_config nokia770_usb_config __initdata = {
 	.otg		= 1,
-	.रेजिस्टर_host	= 1,
-	.रेजिस्टर_dev	= 1,
+	.register_host	= 1,
+	.register_dev	= 1,
 	.hmc_mode	= 16,
 	.pins[0]	= 6,
 	.extcon		= "tahvo-usb",
-पूर्ण;
+};
 
-#अगर IS_ENABLED(CONFIG_MMC_OMAP)
+#if IS_ENABLED(CONFIG_MMC_OMAP)
 
-#घोषणा NOKIA770_GPIO_MMC_POWER		41
-#घोषणा NOKIA770_GPIO_MMC_SWITCH	23
+#define NOKIA770_GPIO_MMC_POWER		41
+#define NOKIA770_GPIO_MMC_SWITCH	23
 
-अटल पूर्णांक nokia770_mmc_set_घातer(काष्ठा device *dev, पूर्णांक slot, पूर्णांक घातer_on,
-				पूर्णांक vdd)
-अणु
-	gpio_set_value(NOKIA770_GPIO_MMC_POWER, घातer_on);
-	वापस 0;
-पूर्ण
+static int nokia770_mmc_set_power(struct device *dev, int slot, int power_on,
+				int vdd)
+{
+	gpio_set_value(NOKIA770_GPIO_MMC_POWER, power_on);
+	return 0;
+}
 
-अटल पूर्णांक nokia770_mmc_get_cover_state(काष्ठा device *dev, पूर्णांक slot)
-अणु
-	वापस gpio_get_value(NOKIA770_GPIO_MMC_SWITCH);
-पूर्ण
+static int nokia770_mmc_get_cover_state(struct device *dev, int slot)
+{
+	return gpio_get_value(NOKIA770_GPIO_MMC_SWITCH);
+}
 
-अटल काष्ठा omap_mmc_platक्रमm_data nokia770_mmc2_data = अणु
+static struct omap_mmc_platform_data nokia770_mmc2_data = {
 	.nr_slots                       = 1,
 	.max_freq                       = 12000000,
-	.slots[0]       = अणु
-		.set_घातer		= nokia770_mmc_set_घातer,
+	.slots[0]       = {
+		.set_power		= nokia770_mmc_set_power,
 		.get_cover_state	= nokia770_mmc_get_cover_state,
 		.ocr_mask               = MMC_VDD_32_33|MMC_VDD_33_34,
 		.name                   = "mmcblk",
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल काष्ठा omap_mmc_platक्रमm_data *nokia770_mmc_data[OMAP16XX_NR_MMC];
+static struct omap_mmc_platform_data *nokia770_mmc_data[OMAP16XX_NR_MMC];
 
-अटल व्योम __init nokia770_mmc_init(व्योम)
-अणु
-	पूर्णांक ret;
+static void __init nokia770_mmc_init(void)
+{
+	int ret;
 
 	ret = gpio_request(NOKIA770_GPIO_MMC_POWER, "MMC power");
-	अगर (ret < 0)
-		वापस;
+	if (ret < 0)
+		return;
 	gpio_direction_output(NOKIA770_GPIO_MMC_POWER, 0);
 
 	ret = gpio_request(NOKIA770_GPIO_MMC_SWITCH, "MMC cover");
-	अगर (ret < 0) अणु
-		gpio_मुक्त(NOKIA770_GPIO_MMC_POWER);
-		वापस;
-	पूर्ण
+	if (ret < 0) {
+		gpio_free(NOKIA770_GPIO_MMC_POWER);
+		return;
+	}
 	gpio_direction_input(NOKIA770_GPIO_MMC_SWITCH);
 
 	/* Only the second MMC controller is used */
 	nokia770_mmc_data[1] = &nokia770_mmc2_data;
 	omap1_init_mmc(nokia770_mmc_data, OMAP16XX_NR_MMC);
-पूर्ण
+}
 
-#अन्यथा
-अटल अंतरभूत व्योम nokia770_mmc_init(व्योम)
-अणु
-पूर्ण
-#पूर्ण_अगर
+#else
+static inline void nokia770_mmc_init(void)
+{
+}
+#endif
 
-#अगर IS_ENABLED(CONFIG_I2C_CBUS_GPIO)
-अटल काष्ठा gpiod_lookup_table nokia770_cbus_gpio_table = अणु
+#if IS_ENABLED(CONFIG_I2C_CBUS_GPIO)
+static struct gpiod_lookup_table nokia770_cbus_gpio_table = {
 	.dev_id = "i2c-cbus-gpio.2",
-	.table = अणु
-		GPIO_LOOKUP_IDX("mpuio", 9, शून्य, 0, 0), /* clk */
-		GPIO_LOOKUP_IDX("mpuio", 10, शून्य, 1, 0), /* dat */
-		GPIO_LOOKUP_IDX("mpuio", 11, शून्य, 2, 0), /* sel */
-		अणु पूर्ण,
-	पूर्ण,
-पूर्ण;
+	.table = {
+		GPIO_LOOKUP_IDX("mpuio", 9, NULL, 0, 0), /* clk */
+		GPIO_LOOKUP_IDX("mpuio", 10, NULL, 1, 0), /* dat */
+		GPIO_LOOKUP_IDX("mpuio", 11, NULL, 2, 0), /* sel */
+		{ },
+	},
+};
 
-अटल काष्ठा platक्रमm_device nokia770_cbus_device = अणु
+static struct platform_device nokia770_cbus_device = {
 	.name   = "i2c-cbus-gpio",
 	.id     = 2,
-पूर्ण;
+};
 
-अटल काष्ठा i2c_board_info nokia770_i2c_board_info_2[] __initdata = अणु
-	अणु
+static struct i2c_board_info nokia770_i2c_board_info_2[] __initdata = {
+	{
 		I2C_BOARD_INFO("retu", 0x01),
-	पूर्ण,
-	अणु
+	},
+	{
 		I2C_BOARD_INFO("tahvo", 0x02),
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल व्योम __init nokia770_cbus_init(व्योम)
-अणु
-	स्थिर पूर्णांक retu_irq_gpio = 62;
-	स्थिर पूर्णांक tahvo_irq_gpio = 40;
+static void __init nokia770_cbus_init(void)
+{
+	const int retu_irq_gpio = 62;
+	const int tahvo_irq_gpio = 40;
 
-	अगर (gpio_request_one(retu_irq_gpio, GPIOF_IN, "Retu IRQ"))
-		वापस;
-	अगर (gpio_request_one(tahvo_irq_gpio, GPIOF_IN, "Tahvo IRQ")) अणु
-		gpio_मुक्त(retu_irq_gpio);
-		वापस;
-	पूर्ण
+	if (gpio_request_one(retu_irq_gpio, GPIOF_IN, "Retu IRQ"))
+		return;
+	if (gpio_request_one(tahvo_irq_gpio, GPIOF_IN, "Tahvo IRQ")) {
+		gpio_free(retu_irq_gpio);
+		return;
+	}
 	irq_set_irq_type(gpio_to_irq(retu_irq_gpio), IRQ_TYPE_EDGE_RISING);
 	irq_set_irq_type(gpio_to_irq(tahvo_irq_gpio), IRQ_TYPE_EDGE_RISING);
 	nokia770_i2c_board_info_2[0].irq = gpio_to_irq(retu_irq_gpio);
 	nokia770_i2c_board_info_2[1].irq = gpio_to_irq(tahvo_irq_gpio);
-	i2c_रेजिस्टर_board_info(2, nokia770_i2c_board_info_2,
+	i2c_register_board_info(2, nokia770_i2c_board_info_2,
 				ARRAY_SIZE(nokia770_i2c_board_info_2));
 	gpiod_add_lookup_table(&nokia770_cbus_gpio_table);
-	platक्रमm_device_रेजिस्टर(&nokia770_cbus_device);
-पूर्ण
-#अन्यथा /* CONFIG_I2C_CBUS_GPIO */
-अटल व्योम __init nokia770_cbus_init(व्योम)
-अणु
-पूर्ण
-#पूर्ण_अगर /* CONFIG_I2C_CBUS_GPIO */
+	platform_device_register(&nokia770_cbus_device);
+}
+#else /* CONFIG_I2C_CBUS_GPIO */
+static void __init nokia770_cbus_init(void)
+{
+}
+#endif /* CONFIG_I2C_CBUS_GPIO */
 
-अटल व्योम __init omap_nokia770_init(व्योम)
-अणु
-	/* On Nokia 770, the SleepX संकेत is masked with an
-	 * MPUIO line by शेष.  It has to be unmasked क्रम it
+static void __init omap_nokia770_init(void)
+{
+	/* On Nokia 770, the SleepX signal is masked with an
+	 * MPUIO line by default.  It has to be unmasked for it
 	 * to become functional */
 
 	/* SleepX mask direction */
-	omap_ग_लिखोw((omap_पढ़ोw(0xfffb5008) & ~2), 0xfffb5008);
-	/* Unmask SleepX संकेत */
-	omap_ग_लिखोw((omap_पढ़ोw(0xfffb5004) & ~2), 0xfffb5004);
+	omap_writew((omap_readw(0xfffb5008) & ~2), 0xfffb5008);
+	/* Unmask SleepX signal */
+	omap_writew((omap_readw(0xfffb5004) & ~2), 0xfffb5004);
 
-	platक्रमm_add_devices(nokia770_devices, ARRAY_SIZE(nokia770_devices));
+	platform_add_devices(nokia770_devices, ARRAY_SIZE(nokia770_devices));
 	nokia770_spi_board_info[1].irq = gpio_to_irq(15);
-	spi_रेजिस्टर_board_info(nokia770_spi_board_info,
+	spi_register_board_info(nokia770_spi_board_info,
 				ARRAY_SIZE(nokia770_spi_board_info));
 	omap_serial_init();
-	omap_रेजिस्टर_i2c_bus(1, 100, शून्य, 0);
+	omap_register_i2c_bus(1, 100, NULL, 0);
 	hwa742_dev_init();
 	mipid_dev_init();
 	omap1_usb_init(&nokia770_usb_config);
 	nokia770_mmc_init();
 	nokia770_cbus_init();
-पूर्ण
+}
 
 MACHINE_START(NOKIA770, "Nokia 770")
 	.atag_offset	= 0x100,
@@ -297,6 +296,6 @@ MACHINE_START(NOKIA770, "Nokia 770")
 	.handle_irq	= omap1_handle_irq,
 	.init_machine	= omap_nokia770_init,
 	.init_late	= omap1_init_late,
-	.init_समय	= omap1_समयr_init,
+	.init_time	= omap1_timer_init,
 	.restart	= omap1_restart,
 MACHINE_END

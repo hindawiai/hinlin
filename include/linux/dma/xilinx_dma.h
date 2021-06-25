@@ -1,19 +1,18 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * Xilinx DMA Engine drivers support header file
  *
  * Copyright (C) 2010-2014 Xilinx, Inc. All rights reserved.
  */
 
-#अगर_अघोषित __DMA_XILINX_DMA_H
-#घोषणा __DMA_XILINX_DMA_H
+#ifndef __DMA_XILINX_DMA_H
+#define __DMA_XILINX_DMA_H
 
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/dmaengine.h>
+#include <linux/dma-mapping.h>
+#include <linux/dmaengine.h>
 
 /**
- * काष्ठा xilinx_vdma_config - VDMA Configuration काष्ठाure
+ * struct xilinx_vdma_config - VDMA Configuration structure
  * @frm_dly: Frame delay
  * @gen_lock: Whether in gen-lock mode
  * @master: Master that it syncs to
@@ -26,21 +25,21 @@
  * @ext_fsync: External Frame Sync source
  * @vflip_en:  Vertical Flip enable
  */
-काष्ठा xilinx_vdma_config अणु
-	पूर्णांक frm_dly;
-	पूर्णांक gen_lock;
-	पूर्णांक master;
-	पूर्णांक frm_cnt_en;
-	पूर्णांक park;
-	पूर्णांक park_frm;
-	पूर्णांक coalesc;
-	पूर्णांक delay;
-	पूर्णांक reset;
-	पूर्णांक ext_fsync;
+struct xilinx_vdma_config {
+	int frm_dly;
+	int gen_lock;
+	int master;
+	int frm_cnt_en;
+	int park;
+	int park_frm;
+	int coalesc;
+	int delay;
+	int reset;
+	int ext_fsync;
 	bool vflip_en;
-पूर्ण;
+};
 
-पूर्णांक xilinx_vdma_channel_set_config(काष्ठा dma_chan *dchan,
-					काष्ठा xilinx_vdma_config *cfg);
+int xilinx_vdma_channel_set_config(struct dma_chan *dchan,
+					struct xilinx_vdma_config *cfg);
 
-#पूर्ण_अगर
+#endif

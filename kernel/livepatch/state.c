@@ -1,120 +1,119 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * प्रणाली_state.c - State of the प्रणाली modअगरied by livepatches
+ * system_state.c - State of the system modified by livepatches
  *
  * Copyright (C) 2019 SUSE
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/livepatch.h>
-#समावेश "core.h"
-#समावेश "state.h"
-#समावेश "transition.h"
+#include <linux/livepatch.h>
+#include "core.h"
+#include "state.h"
+#include "transition.h"
 
-#घोषणा klp_क्रम_each_state(patch, state)		\
-	क्रम (state = patch->states; state && state->id; state++)
+#define klp_for_each_state(patch, state)		\
+	for (state = patch->states; state && state->id; state++)
 
 /**
- * klp_get_state() - get inक्रमmation about प्रणाली state modअगरied by
+ * klp_get_state() - get information about system state modified by
  *	the given patch
- * @patch:	livepatch that modअगरies the given प्रणाली state
- * @id:		custom identअगरier of the modअगरied प्रणाली state
+ * @patch:	livepatch that modifies the given system state
+ * @id:		custom identifier of the modified system state
  *
- * Checks whether the given patch modअगरies the given प्रणाली state.
+ * Checks whether the given patch modifies the given system state.
  *
  * The function can be called either from pre/post (un)patch
  * callbacks or from the kernel code added by the livepatch.
  *
- * Return: poपूर्णांकer to काष्ठा klp_state when found, otherwise शून्य.
+ * Return: pointer to struct klp_state when found, otherwise NULL.
  */
-काष्ठा klp_state *klp_get_state(काष्ठा klp_patch *patch, अचिन्हित दीर्घ id)
-अणु
-	काष्ठा klp_state *state;
+struct klp_state *klp_get_state(struct klp_patch *patch, unsigned long id)
+{
+	struct klp_state *state;
 
-	klp_क्रम_each_state(patch, state) अणु
-		अगर (state->id == id)
-			वापस state;
-	पूर्ण
+	klp_for_each_state(patch, state) {
+		if (state->id == id)
+			return state;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 EXPORT_SYMBOL_GPL(klp_get_state);
 
 /**
- * klp_get_prev_state() - get inक्रमmation about प्रणाली state modअगरied by
- *	the alपढ़ोy installed livepatches
- * @id:		custom identअगरier of the modअगरied प्रणाली state
+ * klp_get_prev_state() - get information about system state modified by
+ *	the already installed livepatches
+ * @id:		custom identifier of the modified system state
  *
- * Checks whether alपढ़ोy installed livepatches modअगरy the given
- * प्रणाली state.
+ * Checks whether already installed livepatches modify the given
+ * system state.
  *
- * The same प्रणाली state can be modअगरied by more non-cumulative
+ * The same system state can be modified by more non-cumulative
  * livepatches. It is expected that the latest livepatch has
- * the most up-to-date inक्रमmation.
+ * the most up-to-date information.
  *
  * The function can be called only during transition when a new
  * livepatch is being enabled or when such a transition is reverted.
  * It is typically called only from pre/post (un)patch
  * callbacks.
  *
- * Return: poपूर्णांकer to the latest काष्ठा klp_state from alपढ़ोy
- *	installed livepatches, शून्य when not found.
+ * Return: pointer to the latest struct klp_state from already
+ *	installed livepatches, NULL when not found.
  */
-काष्ठा klp_state *klp_get_prev_state(अचिन्हित दीर्घ id)
-अणु
-	काष्ठा klp_patch *patch;
-	काष्ठा klp_state *state, *last_state = शून्य;
+struct klp_state *klp_get_prev_state(unsigned long id)
+{
+	struct klp_patch *patch;
+	struct klp_state *state, *last_state = NULL;
 
-	अगर (WARN_ON_ONCE(!klp_transition_patch))
-		वापस शून्य;
+	if (WARN_ON_ONCE(!klp_transition_patch))
+		return NULL;
 
-	klp_क्रम_each_patch(patch) अणु
-		अगर (patch == klp_transition_patch)
-			जाओ out;
+	klp_for_each_patch(patch) {
+		if (patch == klp_transition_patch)
+			goto out;
 
 		state = klp_get_state(patch, id);
-		अगर (state)
+		if (state)
 			last_state = state;
-	पूर्ण
+	}
 
 out:
-	वापस last_state;
-पूर्ण
+	return last_state;
+}
 EXPORT_SYMBOL_GPL(klp_get_prev_state);
 
-/* Check अगर the patch is able to deal with the existing प्रणाली state. */
-अटल bool klp_is_state_compatible(काष्ठा klp_patch *patch,
-				    काष्ठा klp_state *old_state)
-अणु
-	काष्ठा klp_state *state;
+/* Check if the patch is able to deal with the existing system state. */
+static bool klp_is_state_compatible(struct klp_patch *patch,
+				    struct klp_state *old_state)
+{
+	struct klp_state *state;
 
 	state = klp_get_state(patch, old_state->id);
 
-	/* A cumulative livepatch must handle all alपढ़ोy modअगरied states. */
-	अगर (!state)
-		वापस !patch->replace;
+	/* A cumulative livepatch must handle all already modified states. */
+	if (!state)
+		return !patch->replace;
 
-	वापस state->version >= old_state->version;
-पूर्ण
+	return state->version >= old_state->version;
+}
 
 /*
- * Check that the new livepatch will not अवरोध the existing प्रणाली states.
- * Cumulative patches must handle all alपढ़ोy modअगरied states.
- * Non-cumulative patches can touch alपढ़ोy modअगरied states.
+ * Check that the new livepatch will not break the existing system states.
+ * Cumulative patches must handle all already modified states.
+ * Non-cumulative patches can touch already modified states.
  */
-bool klp_is_patch_compatible(काष्ठा klp_patch *patch)
-अणु
-	काष्ठा klp_patch *old_patch;
-	काष्ठा klp_state *old_state;
+bool klp_is_patch_compatible(struct klp_patch *patch)
+{
+	struct klp_patch *old_patch;
+	struct klp_state *old_state;
 
-	klp_क्रम_each_patch(old_patch) अणु
-		klp_क्रम_each_state(old_patch, old_state) अणु
-			अगर (!klp_is_state_compatible(patch, old_state))
-				वापस false;
-		पूर्ण
-	पूर्ण
+	klp_for_each_patch(old_patch) {
+		klp_for_each_state(old_patch, old_state) {
+			if (!klp_is_state_compatible(patch, old_state))
+				return false;
+		}
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}

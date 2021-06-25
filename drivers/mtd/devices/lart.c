@@ -1,8 +1,7 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 
 /*
- * MTD driver क्रम the 28F160F3 Flash Memory (non-CFI) on LART.
+ * MTD driver for the 28F160F3 Flash Memory (non-CFI) on LART.
  *
  * Author: Abraham vd Merwe <abraham@2d3d.co.za>
  *
@@ -14,100 +13,100 @@
  *           - Order Number: 290644-005
  *           - January 2000
  *
- *    [2] MTD पूर्णांकernal API करोcumentation
+ *    [2] MTD internal API documentation
  *           - http://www.linux-mtd.infradead.org/ 
  *
  * Limitations:
  *
- *    Even though this driver is written क्रम 3 Volt Fast Boot
- *    Block Flash Memory, it is rather specअगरic to LART. With
- *    Minor modअगरications, notably the without data/address line
- *    mangling and dअगरferent bus settings, etc. it should be
- *    trivial to adapt to other platक्रमms.
+ *    Even though this driver is written for 3 Volt Fast Boot
+ *    Block Flash Memory, it is rather specific to LART. With
+ *    Minor modifications, notably the without data/address line
+ *    mangling and different bus settings, etc. it should be
+ *    trivial to adapt to other platforms.
  *
- *    If somebody would sponsor me a dअगरferent board, I'll
+ *    If somebody would sponsor me a different board, I'll
  *    adapt the driver (:
  */
 
 /* debugging */
-//#घोषणा LART_DEBUG
+//#define LART_DEBUG
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/types.h>
-#समावेश <linux/init.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/माला.स>
-#समावेश <linux/mtd/mtd.h>
-#समावेश <linux/mtd/partitions.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/types.h>
+#include <linux/init.h>
+#include <linux/errno.h>
+#include <linux/string.h>
+#include <linux/mtd/mtd.h>
+#include <linux/mtd/partitions.h>
 
-#अगर_अघोषित CONFIG_SA1100_LART
-#त्रुटि This is क्रम LART architecture only
-#पूर्ण_अगर
+#ifndef CONFIG_SA1100_LART
+#error This is for LART architecture only
+#endif
 
-अटल अक्षर module_name[] = "lart";
+static char module_name[] = "lart";
 
 /*
- * These values is specअगरic to 28Fxxxx3 flash memory.
+ * These values is specific to 28Fxxxx3 flash memory.
  * See section 2.3.1 in "3 Volt Fast Boot Block Flash Memory" Intel Datasheet
  */
-#घोषणा FLASH_BLOCKSIZE_PARAM		(4096 * BUSWIDTH)
-#घोषणा FLASH_NUMBLOCKS_16m_PARAM	8
-#घोषणा FLASH_NUMBLOCKS_8m_PARAM	8
+#define FLASH_BLOCKSIZE_PARAM		(4096 * BUSWIDTH)
+#define FLASH_NUMBLOCKS_16m_PARAM	8
+#define FLASH_NUMBLOCKS_8m_PARAM	8
 
 /*
- * These values is specअगरic to 28Fxxxx3 flash memory.
+ * These values is specific to 28Fxxxx3 flash memory.
  * See section 2.3.2 in "3 Volt Fast Boot Block Flash Memory" Intel Datasheet
  */
-#घोषणा FLASH_BLOCKSIZE_MAIN		(32768 * BUSWIDTH)
-#घोषणा FLASH_NUMBLOCKS_16m_MAIN	31
-#घोषणा FLASH_NUMBLOCKS_8m_MAIN		15
+#define FLASH_BLOCKSIZE_MAIN		(32768 * BUSWIDTH)
+#define FLASH_NUMBLOCKS_16m_MAIN	31
+#define FLASH_NUMBLOCKS_8m_MAIN		15
 
 /*
- * These values are specअगरic to LART
+ * These values are specific to LART
  */
 
 /* general */
-#घोषणा BUSWIDTH			4				/* करोn't change this - a lot of the code _will_ अवरोध अगर you change this */
-#घोषणा FLASH_OFFSET		0xe8000000		/* see linux/arch/arm/mach-sa1100/lart.c */
+#define BUSWIDTH			4				/* don't change this - a lot of the code _will_ break if you change this */
+#define FLASH_OFFSET		0xe8000000		/* see linux/arch/arm/mach-sa1100/lart.c */
 
 /* blob */
-#घोषणा NUM_BLOB_BLOCKS		FLASH_NUMBLOCKS_16m_PARAM
-#घोषणा PART_BLOB_START		0x00000000
-#घोषणा PART_BLOB_LEN		(NUM_BLOB_BLOCKS * FLASH_BLOCKSIZE_PARAM)
+#define NUM_BLOB_BLOCKS		FLASH_NUMBLOCKS_16m_PARAM
+#define PART_BLOB_START		0x00000000
+#define PART_BLOB_LEN		(NUM_BLOB_BLOCKS * FLASH_BLOCKSIZE_PARAM)
 
 /* kernel */
-#घोषणा NUM_KERNEL_BLOCKS	7
-#घोषणा PART_KERNEL_START	(PART_BLOB_START + PART_BLOB_LEN)
-#घोषणा PART_KERNEL_LEN		(NUM_KERNEL_BLOCKS * FLASH_BLOCKSIZE_MAIN)
+#define NUM_KERNEL_BLOCKS	7
+#define PART_KERNEL_START	(PART_BLOB_START + PART_BLOB_LEN)
+#define PART_KERNEL_LEN		(NUM_KERNEL_BLOCKS * FLASH_BLOCKSIZE_MAIN)
 
 /* initial ramdisk */
-#घोषणा NUM_INITRD_BLOCKS	24
-#घोषणा PART_INITRD_START	(PART_KERNEL_START + PART_KERNEL_LEN)
-#घोषणा PART_INITRD_LEN		(NUM_INITRD_BLOCKS * FLASH_BLOCKSIZE_MAIN)
+#define NUM_INITRD_BLOCKS	24
+#define PART_INITRD_START	(PART_KERNEL_START + PART_KERNEL_LEN)
+#define PART_INITRD_LEN		(NUM_INITRD_BLOCKS * FLASH_BLOCKSIZE_MAIN)
 
 /*
  * See section 4.0 in "3 Volt Fast Boot Block Flash Memory" Intel Datasheet
  */
-#घोषणा READ_ARRAY			0x00FF00FF		/* Read Array/Reset */
-#घोषणा READ_ID_CODES		0x00900090		/* Read Identअगरier Codes */
-#घोषणा ERASE_SETUP			0x00200020		/* Block Erase */
-#घोषणा ERASE_CONFIRM		0x00D000D0		/* Block Erase and Program Resume */
-#घोषणा PGM_SETUP			0x00400040		/* Program */
-#घोषणा STATUS_READ			0x00700070		/* Read Status Register */
-#घोषणा STATUS_CLEAR		0x00500050		/* Clear Status Register */
-#घोषणा STATUS_BUSY			0x00800080		/* Write State Machine Status (WSMS) */
-#घोषणा STATUS_ERASE_ERR	0x00200020		/* Erase Status (ES) */
-#घोषणा STATUS_PGM_ERR		0x00100010		/* Program Status (PS) */
+#define READ_ARRAY			0x00FF00FF		/* Read Array/Reset */
+#define READ_ID_CODES		0x00900090		/* Read Identifier Codes */
+#define ERASE_SETUP			0x00200020		/* Block Erase */
+#define ERASE_CONFIRM		0x00D000D0		/* Block Erase and Program Resume */
+#define PGM_SETUP			0x00400040		/* Program */
+#define STATUS_READ			0x00700070		/* Read Status Register */
+#define STATUS_CLEAR		0x00500050		/* Clear Status Register */
+#define STATUS_BUSY			0x00800080		/* Write State Machine Status (WSMS) */
+#define STATUS_ERASE_ERR	0x00200020		/* Erase Status (ES) */
+#define STATUS_PGM_ERR		0x00100010		/* Program Status (PS) */
 
 /*
  * See section 4.2 in "3 Volt Fast Boot Block Flash Memory" Intel Datasheet
  */
-#घोषणा FLASH_MANUFACTURER			0x00890089
-#घोषणा FLASH_DEVICE_8mbit_TOP		0x88f188f1
-#घोषणा FLASH_DEVICE_8mbit_BOTTOM	0x88f288f2
-#घोषणा FLASH_DEVICE_16mbit_TOP		0x88f388f3
-#घोषणा FLASH_DEVICE_16mbit_BOTTOM	0x88f488f4
+#define FLASH_MANUFACTURER			0x00890089
+#define FLASH_DEVICE_8mbit_TOP		0x88f188f1
+#define FLASH_DEVICE_8mbit_BOTTOM	0x88f288f2
+#define FLASH_DEVICE_16mbit_TOP		0x88f388f3
+#define FLASH_DEVICE_16mbit_BOTTOM	0x88f488f4
 
 /***************************************************************************************************/
 
@@ -135,7 +134,7 @@
  */
 
 /* Mangle data (x) */
-#घोषणा DATA_TO_FLASH(x)				\
+#define DATA_TO_FLASH(x)				\
 	(									\
 		(((x) & 0x08009000) >> 11)	+	\
 		(((x) & 0x00002000) >> 10)	+	\
@@ -154,7 +153,7 @@
 	)
 
 /* Unmangle data (x) */
-#घोषणा FLASH_TO_DATA(x)				\
+#define FLASH_TO_DATA(x)				\
 	(									\
 		(((x) & 0x00010012) << 11)	+	\
 		(((x) & 0x00000008) << 10)	+	\
@@ -205,13 +204,13 @@
  *   	 19  21  |   19  21
  *
  * As we can see from above, the addresses aren't mangled across
- * block boundaries, so we करोn't need to worry about address
- * translations except क्रम sending/पढ़ोing commands during
+ * block boundaries, so we don't need to worry about address
+ * translations except for sending/reading commands during
  * initialization
  */
 
 /* Mangle address (x) on chip U2 */
-#घोषणा ADDR_TO_FLASH_U2(x)				\
+#define ADDR_TO_FLASH_U2(x)				\
 	(									\
 		(((x) & 0x00000f00) >> 4)	+	\
 		(((x) & 0x00042000) << 1)	+	\
@@ -224,7 +223,7 @@
 	)
 
 /* Unmangle address (x) on chip U2 */
-#घोषणा FLASH_U2_TO_ADDR(x)				\
+#define FLASH_U2_TO_ADDR(x)				\
 	(									\
 		(((x) << 4) & 0x00000f00)	+	\
 		(((x) >> 1) & 0x00042000)	+	\
@@ -237,7 +236,7 @@
 	)
 
 /* Mangle address (x) on chip U3 */
-#घोषणा ADDR_TO_FLASH_U3(x)				\
+#define ADDR_TO_FLASH_U3(x)				\
 	(									\
 		(((x) & 0x00000080) >> 3)	+	\
 		(((x) & 0x00000040) >> 1)	+	\
@@ -249,7 +248,7 @@
 	)
 
 /* Unmangle address (x) on chip U3 */
-#घोषणा FLASH_U3_TO_ADDR(x)				\
+#define FLASH_U3_TO_ADDR(x)				\
 	(									\
 		(((x) << 3) & 0x00000080)	+	\
 		(((x) << 1) & 0x00000040)	+	\
@@ -262,129 +261,129 @@
 
 /***************************************************************************************************/
 
-अटल __u8 पढ़ो8 (__u32 offset)
-अणु
-   अस्थिर __u8 *data = (__u8 *) (FLASH_OFFSET + offset);
-#अगर_घोषित LART_DEBUG
-   prपूर्णांकk (KERN_DEBUG "%s(): 0x%.8x -> 0x%.2x\n", __func__, offset, *data);
-#पूर्ण_अगर
-   वापस (*data);
-पूर्ण
+static __u8 read8 (__u32 offset)
+{
+   volatile __u8 *data = (__u8 *) (FLASH_OFFSET + offset);
+#ifdef LART_DEBUG
+   printk (KERN_DEBUG "%s(): 0x%.8x -> 0x%.2x\n", __func__, offset, *data);
+#endif
+   return (*data);
+}
 
-अटल __u32 पढ़ो32 (__u32 offset)
-अणु
-   अस्थिर __u32 *data = (__u32 *) (FLASH_OFFSET + offset);
-#अगर_घोषित LART_DEBUG
-   prपूर्णांकk (KERN_DEBUG "%s(): 0x%.8x -> 0x%.8x\n", __func__, offset, *data);
-#पूर्ण_अगर
-   वापस (*data);
-पूर्ण
+static __u32 read32 (__u32 offset)
+{
+   volatile __u32 *data = (__u32 *) (FLASH_OFFSET + offset);
+#ifdef LART_DEBUG
+   printk (KERN_DEBUG "%s(): 0x%.8x -> 0x%.8x\n", __func__, offset, *data);
+#endif
+   return (*data);
+}
 
-अटल व्योम ग_लिखो32 (__u32 x,__u32 offset)
-अणु
-   अस्थिर __u32 *data = (__u32 *) (FLASH_OFFSET + offset);
+static void write32 (__u32 x,__u32 offset)
+{
+   volatile __u32 *data = (__u32 *) (FLASH_OFFSET + offset);
    *data = x;
-#अगर_घोषित LART_DEBUG
-   prपूर्णांकk (KERN_DEBUG "%s(): 0x%.8x <- 0x%.8x\n", __func__, offset, *data);
-#पूर्ण_अगर
-पूर्ण
+#ifdef LART_DEBUG
+   printk (KERN_DEBUG "%s(): 0x%.8x <- 0x%.8x\n", __func__, offset, *data);
+#endif
+}
 
 /***************************************************************************************************/
 
 /*
- * Probe क्रम 16mbit flash memory on a LART board without करोing
- * too much damage. Since we need to ग_लिखो 1 dword to memory,
+ * Probe for 16mbit flash memory on a LART board without doing
+ * too much damage. Since we need to write 1 dword to memory,
  * we're f**cked if this happens to be DRAM since we can't
- * restore the memory (otherwise we might निकास Read Array mode).
+ * restore the memory (otherwise we might exit Read Array mode).
  *
- * Returns 1 अगर we found 16mbit flash memory on LART, 0 otherwise.
+ * Returns 1 if we found 16mbit flash memory on LART, 0 otherwise.
  */
-अटल पूर्णांक flash_probe (व्योम)
-अणु
+static int flash_probe (void)
+{
    __u32 manufacturer,devtype;
 
    /* setup "Read Identifier Codes" mode */
-   ग_लिखो32 (DATA_TO_FLASH (READ_ID_CODES),0x00000000);
+   write32 (DATA_TO_FLASH (READ_ID_CODES),0x00000000);
 
-   /* probe U2. U2/U3 वापसs the same data since the first 3
+   /* probe U2. U2/U3 returns the same data since the first 3
 	* address lines is mangled in the same way */
-   manufacturer = FLASH_TO_DATA (पढ़ो32 (ADDR_TO_FLASH_U2 (0x00000000)));
-   devtype = FLASH_TO_DATA (पढ़ो32 (ADDR_TO_FLASH_U2 (0x00000001)));
+   manufacturer = FLASH_TO_DATA (read32 (ADDR_TO_FLASH_U2 (0x00000000)));
+   devtype = FLASH_TO_DATA (read32 (ADDR_TO_FLASH_U2 (0x00000001)));
 
-   /* put the flash back पूर्णांकo command mode */
-   ग_लिखो32 (DATA_TO_FLASH (READ_ARRAY),0x00000000);
+   /* put the flash back into command mode */
+   write32 (DATA_TO_FLASH (READ_ARRAY),0x00000000);
 
-   वापस (manufacturer == FLASH_MANUFACTURER && (devtype == FLASH_DEVICE_16mbit_TOP || devtype == FLASH_DEVICE_16mbit_BOTTOM));
-पूर्ण
+   return (manufacturer == FLASH_MANUFACTURER && (devtype == FLASH_DEVICE_16mbit_TOP || devtype == FLASH_DEVICE_16mbit_BOTTOM));
+}
 
 /*
  * Erase one block of flash memory at offset ``offset'' which is any
  * address within the block which should be erased.
  *
- * Returns 1 अगर successful, 0 otherwise.
+ * Returns 1 if successful, 0 otherwise.
  */
-अटल अंतरभूत पूर्णांक erase_block (__u32 offset)
-अणु
+static inline int erase_block (__u32 offset)
+{
    __u32 status;
 
-#अगर_घोषित LART_DEBUG
-   prपूर्णांकk (KERN_DEBUG "%s(): 0x%.8x\n", __func__, offset);
-#पूर्ण_अगर
+#ifdef LART_DEBUG
+   printk (KERN_DEBUG "%s(): 0x%.8x\n", __func__, offset);
+#endif
 
    /* erase and confirm */
-   ग_लिखो32 (DATA_TO_FLASH (ERASE_SETUP),offset);
-   ग_लिखो32 (DATA_TO_FLASH (ERASE_CONFIRM),offset);
+   write32 (DATA_TO_FLASH (ERASE_SETUP),offset);
+   write32 (DATA_TO_FLASH (ERASE_CONFIRM),offset);
 
-   /* रुको क्रम block erase to finish */
-   करो
-	 अणु
-		ग_लिखो32 (DATA_TO_FLASH (STATUS_READ),offset);
-		status = FLASH_TO_DATA (पढ़ो32 (offset));
-	 पूर्ण
-   जबतक ((~status & STATUS_BUSY) != 0);
+   /* wait for block erase to finish */
+   do
+	 {
+		write32 (DATA_TO_FLASH (STATUS_READ),offset);
+		status = FLASH_TO_DATA (read32 (offset));
+	 }
+   while ((~status & STATUS_BUSY) != 0);
 
-   /* put the flash back पूर्णांकo command mode */
-   ग_लिखो32 (DATA_TO_FLASH (READ_ARRAY),offset);
+   /* put the flash back into command mode */
+   write32 (DATA_TO_FLASH (READ_ARRAY),offset);
 
    /* was the erase successful? */
-   अगर ((status & STATUS_ERASE_ERR))
-	 अणु
-		prपूर्णांकk (KERN_WARNING "%s: erase error at address 0x%.8x.\n",module_name,offset);
-		वापस (0);
-	 पूर्ण
+   if ((status & STATUS_ERASE_ERR))
+	 {
+		printk (KERN_WARNING "%s: erase error at address 0x%.8x.\n",module_name,offset);
+		return (0);
+	 }
 
-   वापस (1);
-पूर्ण
+   return (1);
+}
 
-अटल पूर्णांक flash_erase (काष्ठा mtd_info *mtd,काष्ठा erase_info *instr)
-अणु
+static int flash_erase (struct mtd_info *mtd,struct erase_info *instr)
+{
    __u32 addr,len;
-   पूर्णांक i,first;
+   int i,first;
 
-#अगर_घोषित LART_DEBUG
-   prपूर्णांकk (KERN_DEBUG "%s(addr = 0x%.8x, len = %d)\n", __func__, instr->addr, instr->len);
-#पूर्ण_अगर
+#ifdef LART_DEBUG
+   printk (KERN_DEBUG "%s(addr = 0x%.8x, len = %d)\n", __func__, instr->addr, instr->len);
+#endif
 
    /*
 	* check that both start and end of the requested erase are
 	* aligned with the erasesize at the appropriate addresses.
 	*
-	* skip all erase regions which are ended beक्रमe the start of
+	* skip all erase regions which are ended before the start of
 	* the requested erase. Actually, to save on the calculations,
 	* we skip to the first erase region which starts after the
 	* start of the requested erase, and then go back one.
 	*/
-   क्रम (i = 0; i < mtd->numeraseregions && instr->addr >= mtd->eraseregions[i].offset; i++) ;
+   for (i = 0; i < mtd->numeraseregions && instr->addr >= mtd->eraseregions[i].offset; i++) ;
    i--;
 
    /*
-	* ok, now i is poपूर्णांकing at the erase region in which this
+	* ok, now i is pointing at the erase region in which this
 	* erase request starts. Check the start of the requested
 	* erase range is aligned with the erase size which is in
 	* effect here.
 	*/
-   अगर (i < 0 || (instr->addr & (mtd->eraseregions[i].erasesize - 1)))
-      वापस -EINVAL;
+   if (i < 0 || (instr->addr & (mtd->eraseregions[i].erasesize - 1)))
+      return -EINVAL;
 
    /* Remember the erase region we start on */
    first = i;
@@ -393,15 +392,15 @@
 	* next, check that the end of the requested erase is aligned
 	* with the erase region at that address.
 	*
-	* as beक्रमe, drop back one to poपूर्णांक at the region in which
+	* as before, drop back one to point at the region in which
 	* the address actually falls
 	*/
-   क्रम (; i < mtd->numeraseregions && instr->addr + instr->len >= mtd->eraseregions[i].offset; i++) ;
+   for (; i < mtd->numeraseregions && instr->addr + instr->len >= mtd->eraseregions[i].offset; i++) ;
    i--;
 
    /* is the end aligned on a block boundary? */
-   अगर (i < 0 || ((instr->addr + instr->len) & (mtd->eraseregions[i].erasesize - 1)))
-      वापस -EINVAL;
+   if (i < 0 || ((instr->addr + instr->len) & (mtd->eraseregions[i].erasesize - 1)))
+      return -EINVAL;
 
    addr = instr->addr;
    len = instr->len;
@@ -409,228 +408,228 @@
    i = first;
 
    /* now erase those blocks */
-   जबतक (len)
-	 अणु
-		अगर (!erase_block (addr))
-			 वापस (-EIO);
+   while (len)
+	 {
+		if (!erase_block (addr))
+			 return (-EIO);
 
 		addr += mtd->eraseregions[i].erasesize;
 		len -= mtd->eraseregions[i].erasesize;
 
-		अगर (addr == mtd->eraseregions[i].offset + (mtd->eraseregions[i].erasesize * mtd->eraseregions[i].numblocks)) i++;
-	 पूर्ण
+		if (addr == mtd->eraseregions[i].offset + (mtd->eraseregions[i].erasesize * mtd->eraseregions[i].numblocks)) i++;
+	 }
 
-   वापस (0);
-पूर्ण
+   return (0);
+}
 
-अटल पूर्णांक flash_पढ़ो (काष्ठा mtd_info *mtd,loff_t from,माप_प्रकार len,माप_प्रकार *retlen,u_अक्षर *buf)
-अणु
-#अगर_घोषित LART_DEBUG
-   prपूर्णांकk (KERN_DEBUG "%s(from = 0x%.8x, len = %d)\n", __func__, (__u32)from, len);
-#पूर्ण_अगर
+static int flash_read (struct mtd_info *mtd,loff_t from,size_t len,size_t *retlen,u_char *buf)
+{
+#ifdef LART_DEBUG
+   printk (KERN_DEBUG "%s(from = 0x%.8x, len = %d)\n", __func__, (__u32)from, len);
+#endif
 
-   /* we always पढ़ो len bytes */
+   /* we always read len bytes */
    *retlen = len;
 
-   /* first, we पढ़ो bytes until we reach a dword boundary */
-   अगर (from & (BUSWIDTH - 1))
-	 अणु
-		पूर्णांक gap = BUSWIDTH - (from & (BUSWIDTH - 1));
+   /* first, we read bytes until we reach a dword boundary */
+   if (from & (BUSWIDTH - 1))
+	 {
+		int gap = BUSWIDTH - (from & (BUSWIDTH - 1));
 
-		जबतक (len && gap--) अणु
-			*buf++ = पढ़ो8 (from++);
+		while (len && gap--) {
+			*buf++ = read8 (from++);
 			len--;
-		पूर्ण
-	 पूर्ण
+		}
+	 }
 
-   /* now we पढ़ो dwords until we reach a non-dword boundary */
-   जबतक (len >= BUSWIDTH)
-	 अणु
-		*((__u32 *) buf) = पढ़ो32 (from);
+   /* now we read dwords until we reach a non-dword boundary */
+   while (len >= BUSWIDTH)
+	 {
+		*((__u32 *) buf) = read32 (from);
 
 		buf += BUSWIDTH;
 		from += BUSWIDTH;
 		len -= BUSWIDTH;
-	 पूर्ण
+	 }
 
    /* top up the last unaligned bytes */
-   अगर (len & (BUSWIDTH - 1))
-	 जबतक (len--) *buf++ = पढ़ो8 (from++);
+   if (len & (BUSWIDTH - 1))
+	 while (len--) *buf++ = read8 (from++);
 
-   वापस (0);
-पूर्ण
+   return (0);
+}
 
 /*
  * Write one dword ``x'' to flash memory at offset ``offset''. ``offset''
  * must be 32 bits, i.e. it must be on a dword boundary.
  *
- * Returns 1 अगर successful, 0 otherwise.
+ * Returns 1 if successful, 0 otherwise.
  */
-अटल अंतरभूत पूर्णांक ग_लिखो_dword (__u32 offset,__u32 x)
-अणु
+static inline int write_dword (__u32 offset,__u32 x)
+{
    __u32 status;
 
-#अगर_घोषित LART_DEBUG
-   prपूर्णांकk (KERN_DEBUG "%s(): 0x%.8x <- 0x%.8x\n", __func__, offset, x);
-#पूर्ण_अगर
+#ifdef LART_DEBUG
+   printk (KERN_DEBUG "%s(): 0x%.8x <- 0x%.8x\n", __func__, offset, x);
+#endif
 
    /* setup writing */
-   ग_लिखो32 (DATA_TO_FLASH (PGM_SETUP),offset);
+   write32 (DATA_TO_FLASH (PGM_SETUP),offset);
 
-   /* ग_लिखो the data */
-   ग_लिखो32 (x,offset);
+   /* write the data */
+   write32 (x,offset);
 
-   /* रुको क्रम the ग_लिखो to finish */
-   करो
-	 अणु
-		ग_लिखो32 (DATA_TO_FLASH (STATUS_READ),offset);
-		status = FLASH_TO_DATA (पढ़ो32 (offset));
-	 पूर्ण
-   जबतक ((~status & STATUS_BUSY) != 0);
+   /* wait for the write to finish */
+   do
+	 {
+		write32 (DATA_TO_FLASH (STATUS_READ),offset);
+		status = FLASH_TO_DATA (read32 (offset));
+	 }
+   while ((~status & STATUS_BUSY) != 0);
 
-   /* put the flash back पूर्णांकo command mode */
-   ग_लिखो32 (DATA_TO_FLASH (READ_ARRAY),offset);
+   /* put the flash back into command mode */
+   write32 (DATA_TO_FLASH (READ_ARRAY),offset);
 
-   /* was the ग_लिखो successful? */
-   अगर ((status & STATUS_PGM_ERR) || पढ़ो32 (offset) != x)
-	 अणु
-		prपूर्णांकk (KERN_WARNING "%s: write error at address 0x%.8x.\n",module_name,offset);
-		वापस (0);
-	 पूर्ण
+   /* was the write successful? */
+   if ((status & STATUS_PGM_ERR) || read32 (offset) != x)
+	 {
+		printk (KERN_WARNING "%s: write error at address 0x%.8x.\n",module_name,offset);
+		return (0);
+	 }
 
-   वापस (1);
-पूर्ण
+   return (1);
+}
 
-अटल पूर्णांक flash_ग_लिखो (काष्ठा mtd_info *mtd,loff_t to,माप_प्रकार len,माप_प्रकार *retlen,स्थिर u_अक्षर *buf)
-अणु
-   __u8 पंचांगp[4];
-   पूर्णांक i,n;
+static int flash_write (struct mtd_info *mtd,loff_t to,size_t len,size_t *retlen,const u_char *buf)
+{
+   __u8 tmp[4];
+   int i,n;
 
-#अगर_घोषित LART_DEBUG
-   prपूर्णांकk (KERN_DEBUG "%s(to = 0x%.8x, len = %d)\n", __func__, (__u32)to, len);
-#पूर्ण_अगर
+#ifdef LART_DEBUG
+   printk (KERN_DEBUG "%s(to = 0x%.8x, len = %d)\n", __func__, (__u32)to, len);
+#endif
 
    /* sanity checks */
-   अगर (!len) वापस (0);
+   if (!len) return (0);
 
-   /* first, we ग_लिखो a 0xFF.... padded byte until we reach a dword boundary */
-   अगर (to & (BUSWIDTH - 1))
-	 अणु
+   /* first, we write a 0xFF.... padded byte until we reach a dword boundary */
+   if (to & (BUSWIDTH - 1))
+	 {
 		__u32 aligned = to & ~(BUSWIDTH - 1);
-		पूर्णांक gap = to - aligned;
+		int gap = to - aligned;
 
 		i = n = 0;
 
-		जबतक (gap--) पंचांगp[i++] = 0xFF;
-		जबतक (len && i < BUSWIDTH) अणु
-			पंचांगp[i++] = buf[n++];
+		while (gap--) tmp[i++] = 0xFF;
+		while (len && i < BUSWIDTH) {
+			tmp[i++] = buf[n++];
 			len--;
-		पूर्ण
-		जबतक (i < BUSWIDTH) पंचांगp[i++] = 0xFF;
+		}
+		while (i < BUSWIDTH) tmp[i++] = 0xFF;
 
-		अगर (!ग_लिखो_dword (aligned,*((__u32 *) पंचांगp))) वापस (-EIO);
+		if (!write_dword (aligned,*((__u32 *) tmp))) return (-EIO);
 
 		to += n;
 		buf += n;
 		*retlen += n;
-	 पूर्ण
+	 }
 
-   /* now we ग_लिखो dwords until we reach a non-dword boundary */
-   जबतक (len >= BUSWIDTH)
-	 अणु
-		अगर (!ग_लिखो_dword (to,*((__u32 *) buf))) वापस (-EIO);
+   /* now we write dwords until we reach a non-dword boundary */
+   while (len >= BUSWIDTH)
+	 {
+		if (!write_dword (to,*((__u32 *) buf))) return (-EIO);
 
 		to += BUSWIDTH;
 		buf += BUSWIDTH;
 		*retlen += BUSWIDTH;
 		len -= BUSWIDTH;
-	 पूर्ण
+	 }
 
    /* top up the last unaligned bytes, padded with 0xFF.... */
-   अगर (len & (BUSWIDTH - 1))
-	 अणु
+   if (len & (BUSWIDTH - 1))
+	 {
 		i = n = 0;
 
-		जबतक (len--) पंचांगp[i++] = buf[n++];
-		जबतक (i < BUSWIDTH) पंचांगp[i++] = 0xFF;
+		while (len--) tmp[i++] = buf[n++];
+		while (i < BUSWIDTH) tmp[i++] = 0xFF;
 
-		अगर (!ग_लिखो_dword (to,*((__u32 *) पंचांगp))) वापस (-EIO);
+		if (!write_dword (to,*((__u32 *) tmp))) return (-EIO);
 
 		*retlen += n;
-	 पूर्ण
+	 }
 
-   वापस (0);
-पूर्ण
+   return (0);
+}
 
 /***************************************************************************************************/
 
-अटल काष्ठा mtd_info mtd;
+static struct mtd_info mtd;
 
-अटल काष्ठा mtd_erase_region_info erase_regions[] = अणु
+static struct mtd_erase_region_info erase_regions[] = {
 	/* parameter blocks */
-	अणु
+	{
 		.offset		= 0x00000000,
 		.erasesize	= FLASH_BLOCKSIZE_PARAM,
 		.numblocks	= FLASH_NUMBLOCKS_16m_PARAM,
-	पूर्ण,
-	/* मुख्य blocks */
-	अणु
+	},
+	/* main blocks */
+	{
 		.offset	 = FLASH_BLOCKSIZE_PARAM * FLASH_NUMBLOCKS_16m_PARAM,
 		.erasesize	= FLASH_BLOCKSIZE_MAIN,
 		.numblocks	= FLASH_NUMBLOCKS_16m_MAIN,
-	पूर्ण
-पूर्ण;
+	}
+};
 
-अटल स्थिर काष्ठा mtd_partition lart_partitions[] = अणु
+static const struct mtd_partition lart_partitions[] = {
 	/* blob */
-	अणु
+	{
 		.name	= "blob",
 		.offset	= PART_BLOB_START,
 		.size	= PART_BLOB_LEN,
-	पूर्ण,
+	},
 	/* kernel */
-	अणु
+	{
 		.name	= "kernel",
 		.offset	= PART_KERNEL_START,	/* MTDPART_OFS_APPEND */
 		.size	= PART_KERNEL_LEN,
-	पूर्ण,
-	/* initial ramdisk / file प्रणाली */
-	अणु
+	},
+	/* initial ramdisk / file system */
+	{
 		.name	= "file system",
 		.offset	= PART_INITRD_START,	/* MTDPART_OFS_APPEND */
 		.size	= PART_INITRD_LEN,	/* MTDPART_SIZ_FULL */
-	पूर्ण
-पूर्ण;
-#घोषणा NUM_PARTITIONS ARRAY_SIZE(lart_partitions)
+	}
+};
+#define NUM_PARTITIONS ARRAY_SIZE(lart_partitions)
 
-अटल पूर्णांक __init lart_flash_init (व्योम)
-अणु
-   पूर्णांक result;
-   स_रखो (&mtd,0,माप (mtd));
-   prपूर्णांकk ("MTD driver for LART. Written by Abraham vd Merwe <abraham@2d3d.co.za>\n");
-   prपूर्णांकk ("%s: Probing for 28F160x3 flash on LART...\n",module_name);
-   अगर (!flash_probe ())
-	 अणु
-		prपूर्णांकk (KERN_WARNING "%s: Found no LART compatible flash device\n",module_name);
-		वापस (-ENXIO);
-	 पूर्ण
-   prपूर्णांकk ("%s: This looks like a LART board to me.\n",module_name);
+static int __init lart_flash_init (void)
+{
+   int result;
+   memset (&mtd,0,sizeof (mtd));
+   printk ("MTD driver for LART. Written by Abraham vd Merwe <abraham@2d3d.co.za>\n");
+   printk ("%s: Probing for 28F160x3 flash on LART...\n",module_name);
+   if (!flash_probe ())
+	 {
+		printk (KERN_WARNING "%s: Found no LART compatible flash device\n",module_name);
+		return (-ENXIO);
+	 }
+   printk ("%s: This looks like a LART board to me.\n",module_name);
    mtd.name = module_name;
    mtd.type = MTD_NORFLASH;
-   mtd.ग_लिखोsize = 1;
-   mtd.ग_लिखोbufsize = 4;
+   mtd.writesize = 1;
+   mtd.writebufsize = 4;
    mtd.flags = MTD_CAP_NORFLASH;
    mtd.size = FLASH_BLOCKSIZE_PARAM * FLASH_NUMBLOCKS_16m_PARAM + FLASH_BLOCKSIZE_MAIN * FLASH_NUMBLOCKS_16m_MAIN;
    mtd.erasesize = FLASH_BLOCKSIZE_MAIN;
    mtd.numeraseregions = ARRAY_SIZE(erase_regions);
    mtd.eraseregions = erase_regions;
    mtd._erase = flash_erase;
-   mtd._पढ़ो = flash_पढ़ो;
-   mtd._ग_लिखो = flash_ग_लिखो;
+   mtd._read = flash_read;
+   mtd._write = flash_write;
    mtd.owner = THIS_MODULE;
 
-#अगर_घोषित LART_DEBUG
-   prपूर्णांकk (KERN_DEBUG
+#ifdef LART_DEBUG
+   printk (KERN_DEBUG
 		   "mtd.name = %s\n"
 		   "mtd.size = 0x%.8x (%uM)\n"
 		   "mtd.erasesize = 0x%.8x (%uK)\n"
@@ -640,9 +639,9 @@
 		   mtd.erasesize,mtd.erasesize / 1024,
 		   mtd.numeraseregions);
 
-   अगर (mtd.numeraseregions)
-	 क्रम (result = 0; result < mtd.numeraseregions; result++)
-	   prपूर्णांकk (KERN_DEBUG
+   if (mtd.numeraseregions)
+	 for (result = 0; result < mtd.numeraseregions; result++)
+	   printk (KERN_DEBUG
 			   "\n\n"
 			   "mtd.eraseregions[%d].offset = 0x%.8x\n"
 			   "mtd.eraseregions[%d].erasesize = 0x%.8x (%uK)\n"
@@ -651,10 +650,10 @@
 			   result,mtd.eraseregions[result].erasesize,mtd.eraseregions[result].erasesize / 1024,
 			   result,mtd.eraseregions[result].numblocks);
 
-   prपूर्णांकk ("\npartitions = %d\n", ARRAY_SIZE(lart_partitions));
+   printk ("\npartitions = %d\n", ARRAY_SIZE(lart_partitions));
 
-   क्रम (result = 0; result < ARRAY_SIZE(lart_partitions); result++)
-	 prपूर्णांकk (KERN_DEBUG
+   for (result = 0; result < ARRAY_SIZE(lart_partitions); result++)
+	 printk (KERN_DEBUG
 			 "\n\n"
 			 "lart_partitions[%d].name = %s\n"
 			 "lart_partitions[%d].offset = 0x%.8x\n"
@@ -662,21 +661,21 @@
 			 result,lart_partitions[result].name,
 			 result,lart_partitions[result].offset,
 			 result,lart_partitions[result].size,lart_partitions[result].size / 1024);
-#पूर्ण_अगर
+#endif
 
-   result = mtd_device_रेजिस्टर(&mtd, lart_partitions,
+   result = mtd_device_register(&mtd, lart_partitions,
                                 ARRAY_SIZE(lart_partitions));
 
-   वापस (result);
-पूर्ण
+   return (result);
+}
 
-अटल व्योम __निकास lart_flash_निकास (व्योम)
-अणु
-   mtd_device_unरेजिस्टर(&mtd);
-पूर्ण
+static void __exit lart_flash_exit (void)
+{
+   mtd_device_unregister(&mtd);
+}
 
 module_init (lart_flash_init);
-module_निकास (lart_flash_निकास);
+module_exit (lart_flash_exit);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Abraham vd Merwe <abraham@2d3d.co.za>");

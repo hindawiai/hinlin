@@ -1,10 +1,9 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#अगर_घोषित INCLUDE
-#समावेश "krava.h"
-#पूर्ण_अगर
+// SPDX-License-Identifier: GPL-2.0
+#ifdef INCLUDE
+#include "krava.h"
+#endif
 
-पूर्णांक inc(व्योम)
-अणु
-	वापस 0;
-पूर्ण
+int inc(void)
+{
+	return 0;
+}

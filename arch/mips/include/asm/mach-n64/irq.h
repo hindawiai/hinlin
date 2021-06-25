@@ -1,10 +1,9 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __ASM_MACH_N64_IRQ_H
-#घोषणा __ASM_MACH_N64_IRQ_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __ASM_MACH_N64_IRQ_H
+#define __ASM_MACH_N64_IRQ_H
 
-#घोषणा NR_IRQS 8
+#define NR_IRQS 8
 
-#समावेश <यंत्र/mach-generic/irq.h>
+#include <asm/mach-generic/irq.h>
 
-#पूर्ण_अगर /* __ASM_MACH_N64_IRQ_H */
+#endif /* __ASM_MACH_N64_IRQ_H */

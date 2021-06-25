@@ -1,11 +1,10 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  *  linux/fs/ext2/super.c
  *
  * Copyright (C) 1992, 1993, 1994, 1995
  * Remy Card (card@masi.ibp.fr)
- * Laborम_से_पre MASI - Institut Blaise Pascal
+ * Laboratoire MASI - Institut Blaise Pascal
  * Universite Pierre et Marie Curie (Paris VI)
  *
  *  from
@@ -14,99 +13,99 @@
  *
  *  Copyright (C) 1991, 1992  Linus Torvalds
  *
- *  Big-endian to little-endian byte-swapping/biपंचांगaps by
+ *  Big-endian to little-endian byte-swapping/bitmaps by
  *        David S. Miller (davem@caip.rutgers.edu), 1995
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/fs.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/init.h>
-#समावेश <linux/blkdev.h>
-#समावेश <linux/parser.h>
-#समावेश <linux/अक्रमom.h>
-#समावेश <linux/buffer_head.h>
-#समावेश <linux/exportfs.h>
-#समावेश <linux/vfs.h>
-#समावेश <linux/seq_file.h>
-#समावेश <linux/mount.h>
-#समावेश <linux/log2.h>
-#समावेश <linux/quotaops.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/dax.h>
-#समावेश <linux/iversion.h>
-#समावेश "ext2.h"
-#समावेश "xattr.h"
-#समावेश "acl.h"
+#include <linux/module.h>
+#include <linux/string.h>
+#include <linux/fs.h>
+#include <linux/slab.h>
+#include <linux/init.h>
+#include <linux/blkdev.h>
+#include <linux/parser.h>
+#include <linux/random.h>
+#include <linux/buffer_head.h>
+#include <linux/exportfs.h>
+#include <linux/vfs.h>
+#include <linux/seq_file.h>
+#include <linux/mount.h>
+#include <linux/log2.h>
+#include <linux/quotaops.h>
+#include <linux/uaccess.h>
+#include <linux/dax.h>
+#include <linux/iversion.h>
+#include "ext2.h"
+#include "xattr.h"
+#include "acl.h"
 
-अटल व्योम ext2_ग_लिखो_super(काष्ठा super_block *sb);
-अटल पूर्णांक ext2_remount (काष्ठा super_block * sb, पूर्णांक * flags, अक्षर * data);
-अटल पूर्णांक ext2_statfs (काष्ठा dentry * dentry, काष्ठा kstatfs * buf);
-अटल पूर्णांक ext2_sync_fs(काष्ठा super_block *sb, पूर्णांक रुको);
-अटल पूर्णांक ext2_मुक्तze(काष्ठा super_block *sb);
-अटल पूर्णांक ext2_unमुक्तze(काष्ठा super_block *sb);
+static void ext2_write_super(struct super_block *sb);
+static int ext2_remount (struct super_block * sb, int * flags, char * data);
+static int ext2_statfs (struct dentry * dentry, struct kstatfs * buf);
+static int ext2_sync_fs(struct super_block *sb, int wait);
+static int ext2_freeze(struct super_block *sb);
+static int ext2_unfreeze(struct super_block *sb);
 
-व्योम ext2_error(काष्ठा super_block *sb, स्थिर अक्षर *function,
-		स्थिर अक्षर *fmt, ...)
-अणु
-	काष्ठा va_क्रमmat vaf;
-	बहु_सूची args;
-	काष्ठा ext2_sb_info *sbi = EXT2_SB(sb);
-	काष्ठा ext2_super_block *es = sbi->s_es;
+void ext2_error(struct super_block *sb, const char *function,
+		const char *fmt, ...)
+{
+	struct va_format vaf;
+	va_list args;
+	struct ext2_sb_info *sbi = EXT2_SB(sb);
+	struct ext2_super_block *es = sbi->s_es;
 
-	अगर (!sb_rकरोnly(sb)) अणु
+	if (!sb_rdonly(sb)) {
 		spin_lock(&sbi->s_lock);
 		sbi->s_mount_state |= EXT2_ERROR_FS;
 		es->s_state |= cpu_to_le16(EXT2_ERROR_FS);
 		spin_unlock(&sbi->s_lock);
 		ext2_sync_super(sb, es, 1);
-	पूर्ण
+	}
 
-	बहु_शुरू(args, fmt);
+	va_start(args, fmt);
 
 	vaf.fmt = fmt;
 	vaf.va = &args;
 
-	prपूर्णांकk(KERN_CRIT "EXT2-fs (%s): error: %s: %pV\n",
+	printk(KERN_CRIT "EXT2-fs (%s): error: %s: %pV\n",
 	       sb->s_id, function, &vaf);
 
-	बहु_पूर्ण(args);
+	va_end(args);
 
-	अगर (test_opt(sb, ERRORS_PANIC))
+	if (test_opt(sb, ERRORS_PANIC))
 		panic("EXT2-fs: panic from previous error\n");
-	अगर (!sb_rकरोnly(sb) && test_opt(sb, ERRORS_RO)) अणु
+	if (!sb_rdonly(sb) && test_opt(sb, ERRORS_RO)) {
 		ext2_msg(sb, KERN_CRIT,
 			     "error: remounting filesystem read-only");
 		sb->s_flags |= SB_RDONLY;
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम ext2_msg(काष्ठा super_block *sb, स्थिर अक्षर *prefix,
-		स्थिर अक्षर *fmt, ...)
-अणु
-	काष्ठा va_क्रमmat vaf;
-	बहु_सूची args;
+void ext2_msg(struct super_block *sb, const char *prefix,
+		const char *fmt, ...)
+{
+	struct va_format vaf;
+	va_list args;
 
-	बहु_शुरू(args, fmt);
+	va_start(args, fmt);
 
 	vaf.fmt = fmt;
 	vaf.va = &args;
 
-	prपूर्णांकk("%sEXT2-fs (%s): %pV\n", prefix, sb->s_id, &vaf);
+	printk("%sEXT2-fs (%s): %pV\n", prefix, sb->s_id, &vaf);
 
-	बहु_पूर्ण(args);
-पूर्ण
+	va_end(args);
+}
 
 /*
  * This must be called with sbi->s_lock held.
  */
-व्योम ext2_update_dynamic_rev(काष्ठा super_block *sb)
-अणु
-	काष्ठा ext2_super_block *es = EXT2_SB(sb)->s_es;
+void ext2_update_dynamic_rev(struct super_block *sb)
+{
+	struct ext2_super_block *es = EXT2_SB(sb)->s_es;
 
-	अगर (le32_to_cpu(es->s_rev_level) > EXT2_GOOD_OLD_REV)
-		वापस;
+	if (le32_to_cpu(es->s_rev_level) > EXT2_GOOD_OLD_REV)
+		return;
 
 	ext2_msg(sb, KERN_WARNING,
 		     "warning: updating to rev %d because of "
@@ -117,222 +116,222 @@
 	es->s_inode_size = cpu_to_le16(EXT2_GOOD_OLD_INODE_SIZE);
 	es->s_rev_level = cpu_to_le32(EXT2_DYNAMIC_REV);
 	/* leave es->s_feature_*compat flags alone */
-	/* es->s_uuid will be set by e2fsck अगर empty */
+	/* es->s_uuid will be set by e2fsck if empty */
 
 	/*
-	 * The rest of the superblock fields should be zero, and अगर not it
-	 * means they are likely alपढ़ोy in use, so leave them alone.  We
+	 * The rest of the superblock fields should be zero, and if not it
+	 * means they are likely already in use, so leave them alone.  We
 	 * can leave it up to e2fsck to clean up any inconsistencies there.
 	 */
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_QUOTA
-अटल पूर्णांक ext2_quota_off(काष्ठा super_block *sb, पूर्णांक type);
+#ifdef CONFIG_QUOTA
+static int ext2_quota_off(struct super_block *sb, int type);
 
-अटल व्योम ext2_quota_off_umount(काष्ठा super_block *sb)
-अणु
-	पूर्णांक type;
+static void ext2_quota_off_umount(struct super_block *sb)
+{
+	int type;
 
-	क्रम (type = 0; type < MAXQUOTAS; type++)
+	for (type = 0; type < MAXQUOTAS; type++)
 		ext2_quota_off(sb, type);
-पूर्ण
-#अन्यथा
-अटल अंतरभूत व्योम ext2_quota_off_umount(काष्ठा super_block *sb)
-अणु
-पूर्ण
-#पूर्ण_अगर
+}
+#else
+static inline void ext2_quota_off_umount(struct super_block *sb)
+{
+}
+#endif
 
-अटल व्योम ext2_put_super (काष्ठा super_block * sb)
-अणु
-	पूर्णांक db_count;
-	पूर्णांक i;
-	काष्ठा ext2_sb_info *sbi = EXT2_SB(sb);
+static void ext2_put_super (struct super_block * sb)
+{
+	int db_count;
+	int i;
+	struct ext2_sb_info *sbi = EXT2_SB(sb);
 
 	ext2_quota_off_umount(sb);
 
 	ext2_xattr_destroy_cache(sbi->s_ea_block_cache);
-	sbi->s_ea_block_cache = शून्य;
+	sbi->s_ea_block_cache = NULL;
 
-	अगर (!sb_rकरोnly(sb)) अणु
-		काष्ठा ext2_super_block *es = sbi->s_es;
+	if (!sb_rdonly(sb)) {
+		struct ext2_super_block *es = sbi->s_es;
 
 		spin_lock(&sbi->s_lock);
 		es->s_state = cpu_to_le16(sbi->s_mount_state);
 		spin_unlock(&sbi->s_lock);
 		ext2_sync_super(sb, es, 1);
-	पूर्ण
+	}
 	db_count = sbi->s_gdb_count;
-	क्रम (i = 0; i < db_count; i++)
-		brअन्यथा(sbi->s_group_desc[i]);
-	kमुक्त(sbi->s_group_desc);
-	kमुक्त(sbi->s_debts);
-	percpu_counter_destroy(&sbi->s_मुक्तblocks_counter);
-	percpu_counter_destroy(&sbi->s_मुक्तinodes_counter);
+	for (i = 0; i < db_count; i++)
+		brelse(sbi->s_group_desc[i]);
+	kfree(sbi->s_group_desc);
+	kfree(sbi->s_debts);
+	percpu_counter_destroy(&sbi->s_freeblocks_counter);
+	percpu_counter_destroy(&sbi->s_freeinodes_counter);
 	percpu_counter_destroy(&sbi->s_dirs_counter);
-	brअन्यथा (sbi->s_sbh);
-	sb->s_fs_info = शून्य;
-	kमुक्त(sbi->s_blockgroup_lock);
+	brelse (sbi->s_sbh);
+	sb->s_fs_info = NULL;
+	kfree(sbi->s_blockgroup_lock);
 	fs_put_dax(sbi->s_daxdev);
-	kमुक्त(sbi);
-पूर्ण
+	kfree(sbi);
+}
 
-अटल काष्ठा kmem_cache * ext2_inode_cachep;
+static struct kmem_cache * ext2_inode_cachep;
 
-अटल काष्ठा inode *ext2_alloc_inode(काष्ठा super_block *sb)
-अणु
-	काष्ठा ext2_inode_info *ei;
+static struct inode *ext2_alloc_inode(struct super_block *sb)
+{
+	struct ext2_inode_info *ei;
 	ei = kmem_cache_alloc(ext2_inode_cachep, GFP_KERNEL);
-	अगर (!ei)
-		वापस शून्य;
-	ei->i_block_alloc_info = शून्य;
+	if (!ei)
+		return NULL;
+	ei->i_block_alloc_info = NULL;
 	inode_set_iversion(&ei->vfs_inode, 1);
-#अगर_घोषित CONFIG_QUOTA
-	स_रखो(&ei->i_dquot, 0, माप(ei->i_dquot));
-#पूर्ण_अगर
+#ifdef CONFIG_QUOTA
+	memset(&ei->i_dquot, 0, sizeof(ei->i_dquot));
+#endif
 
-	वापस &ei->vfs_inode;
-पूर्ण
+	return &ei->vfs_inode;
+}
 
-अटल व्योम ext2_मुक्त_in_core_inode(काष्ठा inode *inode)
-अणु
-	kmem_cache_मुक्त(ext2_inode_cachep, EXT2_I(inode));
-पूर्ण
+static void ext2_free_in_core_inode(struct inode *inode)
+{
+	kmem_cache_free(ext2_inode_cachep, EXT2_I(inode));
+}
 
-अटल व्योम init_once(व्योम *foo)
-अणु
-	काष्ठा ext2_inode_info *ei = (काष्ठा ext2_inode_info *) foo;
+static void init_once(void *foo)
+{
+	struct ext2_inode_info *ei = (struct ext2_inode_info *) foo;
 
 	rwlock_init(&ei->i_meta_lock);
-#अगर_घोषित CONFIG_EXT2_FS_XATTR
+#ifdef CONFIG_EXT2_FS_XATTR
 	init_rwsem(&ei->xattr_sem);
-#पूर्ण_अगर
+#endif
 	mutex_init(&ei->truncate_mutex);
-#अगर_घोषित CONFIG_FS_DAX
+#ifdef CONFIG_FS_DAX
 	init_rwsem(&ei->dax_sem);
-#पूर्ण_अगर
+#endif
 	inode_init_once(&ei->vfs_inode);
-पूर्ण
+}
 
-अटल पूर्णांक __init init_inodecache(व्योम)
-अणु
+static int __init init_inodecache(void)
+{
 	ext2_inode_cachep = kmem_cache_create_usercopy("ext2_inode_cache",
-				माप(काष्ठा ext2_inode_info), 0,
+				sizeof(struct ext2_inode_info), 0,
 				(SLAB_RECLAIM_ACCOUNT|SLAB_MEM_SPREAD|
 					SLAB_ACCOUNT),
-				दुरत्व(काष्ठा ext2_inode_info, i_data),
-				माप_field(काष्ठा ext2_inode_info, i_data),
+				offsetof(struct ext2_inode_info, i_data),
+				sizeof_field(struct ext2_inode_info, i_data),
 				init_once);
-	अगर (ext2_inode_cachep == शून्य)
-		वापस -ENOMEM;
-	वापस 0;
-पूर्ण
+	if (ext2_inode_cachep == NULL)
+		return -ENOMEM;
+	return 0;
+}
 
-अटल व्योम destroy_inodecache(व्योम)
-अणु
+static void destroy_inodecache(void)
+{
 	/*
-	 * Make sure all delayed rcu मुक्त inodes are flushed beक्रमe we
+	 * Make sure all delayed rcu free inodes are flushed before we
 	 * destroy cache.
 	 */
 	rcu_barrier();
 	kmem_cache_destroy(ext2_inode_cachep);
-पूर्ण
+}
 
-अटल पूर्णांक ext2_show_options(काष्ठा seq_file *seq, काष्ठा dentry *root)
-अणु
-	काष्ठा super_block *sb = root->d_sb;
-	काष्ठा ext2_sb_info *sbi = EXT2_SB(sb);
-	काष्ठा ext2_super_block *es = sbi->s_es;
-	अचिन्हित दीर्घ def_mount_opts;
+static int ext2_show_options(struct seq_file *seq, struct dentry *root)
+{
+	struct super_block *sb = root->d_sb;
+	struct ext2_sb_info *sbi = EXT2_SB(sb);
+	struct ext2_super_block *es = sbi->s_es;
+	unsigned long def_mount_opts;
 
 	spin_lock(&sbi->s_lock);
-	def_mount_opts = le32_to_cpu(es->s_शेष_mount_opts);
+	def_mount_opts = le32_to_cpu(es->s_default_mount_opts);
 
-	अगर (sbi->s_sb_block != 1)
-		seq_म_लिखो(seq, ",sb=%lu", sbi->s_sb_block);
-	अगर (test_opt(sb, MINIX_DF))
-		seq_माला_दो(seq, ",minixdf");
-	अगर (test_opt(sb, GRPID))
-		seq_माला_दो(seq, ",grpid");
-	अगर (!test_opt(sb, GRPID) && (def_mount_opts & EXT2_DEFM_BSDGROUPS))
-		seq_माला_दो(seq, ",nogrpid");
-	अगर (!uid_eq(sbi->s_resuid, make_kuid(&init_user_ns, EXT2_DEF_RESUID)) ||
-	    le16_to_cpu(es->s_def_resuid) != EXT2_DEF_RESUID) अणु
-		seq_म_लिखो(seq, ",resuid=%u",
+	if (sbi->s_sb_block != 1)
+		seq_printf(seq, ",sb=%lu", sbi->s_sb_block);
+	if (test_opt(sb, MINIX_DF))
+		seq_puts(seq, ",minixdf");
+	if (test_opt(sb, GRPID))
+		seq_puts(seq, ",grpid");
+	if (!test_opt(sb, GRPID) && (def_mount_opts & EXT2_DEFM_BSDGROUPS))
+		seq_puts(seq, ",nogrpid");
+	if (!uid_eq(sbi->s_resuid, make_kuid(&init_user_ns, EXT2_DEF_RESUID)) ||
+	    le16_to_cpu(es->s_def_resuid) != EXT2_DEF_RESUID) {
+		seq_printf(seq, ",resuid=%u",
 				from_kuid_munged(&init_user_ns, sbi->s_resuid));
-	पूर्ण
-	अगर (!gid_eq(sbi->s_resgid, make_kgid(&init_user_ns, EXT2_DEF_RESGID)) ||
-	    le16_to_cpu(es->s_def_resgid) != EXT2_DEF_RESGID) अणु
-		seq_म_लिखो(seq, ",resgid=%u",
+	}
+	if (!gid_eq(sbi->s_resgid, make_kgid(&init_user_ns, EXT2_DEF_RESGID)) ||
+	    le16_to_cpu(es->s_def_resgid) != EXT2_DEF_RESGID) {
+		seq_printf(seq, ",resgid=%u",
 				from_kgid_munged(&init_user_ns, sbi->s_resgid));
-	पूर्ण
-	अगर (test_opt(sb, ERRORS_RO)) अणु
-		पूर्णांक def_errors = le16_to_cpu(es->s_errors);
+	}
+	if (test_opt(sb, ERRORS_RO)) {
+		int def_errors = le16_to_cpu(es->s_errors);
 
-		अगर (def_errors == EXT2_ERRORS_PANIC ||
-		    def_errors == EXT2_ERRORS_CONTINUE) अणु
-			seq_माला_दो(seq, ",errors=remount-ro");
-		पूर्ण
-	पूर्ण
-	अगर (test_opt(sb, ERRORS_CONT))
-		seq_माला_दो(seq, ",errors=continue");
-	अगर (test_opt(sb, ERRORS_PANIC))
-		seq_माला_दो(seq, ",errors=panic");
-	अगर (test_opt(sb, NO_UID32))
-		seq_माला_दो(seq, ",nouid32");
-	अगर (test_opt(sb, DEBUG))
-		seq_माला_दो(seq, ",debug");
-	अगर (test_opt(sb, OLDALLOC))
-		seq_माला_दो(seq, ",oldalloc");
+		if (def_errors == EXT2_ERRORS_PANIC ||
+		    def_errors == EXT2_ERRORS_CONTINUE) {
+			seq_puts(seq, ",errors=remount-ro");
+		}
+	}
+	if (test_opt(sb, ERRORS_CONT))
+		seq_puts(seq, ",errors=continue");
+	if (test_opt(sb, ERRORS_PANIC))
+		seq_puts(seq, ",errors=panic");
+	if (test_opt(sb, NO_UID32))
+		seq_puts(seq, ",nouid32");
+	if (test_opt(sb, DEBUG))
+		seq_puts(seq, ",debug");
+	if (test_opt(sb, OLDALLOC))
+		seq_puts(seq, ",oldalloc");
 
-#अगर_घोषित CONFIG_EXT2_FS_XATTR
-	अगर (test_opt(sb, XATTR_USER))
-		seq_माला_दो(seq, ",user_xattr");
-	अगर (!test_opt(sb, XATTR_USER) &&
-	    (def_mount_opts & EXT2_DEFM_XATTR_USER)) अणु
-		seq_माला_दो(seq, ",nouser_xattr");
-	पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_EXT2_FS_XATTR
+	if (test_opt(sb, XATTR_USER))
+		seq_puts(seq, ",user_xattr");
+	if (!test_opt(sb, XATTR_USER) &&
+	    (def_mount_opts & EXT2_DEFM_XATTR_USER)) {
+		seq_puts(seq, ",nouser_xattr");
+	}
+#endif
 
-#अगर_घोषित CONFIG_EXT2_FS_POSIX_ACL
-	अगर (test_opt(sb, POSIX_ACL))
-		seq_माला_दो(seq, ",acl");
-	अगर (!test_opt(sb, POSIX_ACL) && (def_mount_opts & EXT2_DEFM_ACL))
-		seq_माला_दो(seq, ",noacl");
-#पूर्ण_अगर
+#ifdef CONFIG_EXT2_FS_POSIX_ACL
+	if (test_opt(sb, POSIX_ACL))
+		seq_puts(seq, ",acl");
+	if (!test_opt(sb, POSIX_ACL) && (def_mount_opts & EXT2_DEFM_ACL))
+		seq_puts(seq, ",noacl");
+#endif
 
-	अगर (test_opt(sb, NOBH))
-		seq_माला_दो(seq, ",nobh");
+	if (test_opt(sb, NOBH))
+		seq_puts(seq, ",nobh");
 
-	अगर (test_opt(sb, USRQUOTA))
-		seq_माला_दो(seq, ",usrquota");
+	if (test_opt(sb, USRQUOTA))
+		seq_puts(seq, ",usrquota");
 
-	अगर (test_opt(sb, GRPQUOTA))
-		seq_माला_दो(seq, ",grpquota");
+	if (test_opt(sb, GRPQUOTA))
+		seq_puts(seq, ",grpquota");
 
-	अगर (test_opt(sb, XIP))
-		seq_माला_दो(seq, ",xip");
+	if (test_opt(sb, XIP))
+		seq_puts(seq, ",xip");
 
-	अगर (test_opt(sb, DAX))
-		seq_माला_दो(seq, ",dax");
+	if (test_opt(sb, DAX))
+		seq_puts(seq, ",dax");
 
-	अगर (!test_opt(sb, RESERVATION))
-		seq_माला_दो(seq, ",noreservation");
+	if (!test_opt(sb, RESERVATION))
+		seq_puts(seq, ",noreservation");
 
 	spin_unlock(&sbi->s_lock);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_QUOTA
-अटल sमाप_प्रकार ext2_quota_पढ़ो(काष्ठा super_block *sb, पूर्णांक type, अक्षर *data, माप_प्रकार len, loff_t off);
-अटल sमाप_प्रकार ext2_quota_ग_लिखो(काष्ठा super_block *sb, पूर्णांक type, स्थिर अक्षर *data, माप_प्रकार len, loff_t off);
-अटल पूर्णांक ext2_quota_on(काष्ठा super_block *sb, पूर्णांक type, पूर्णांक क्रमmat_id,
-			 स्थिर काष्ठा path *path);
-अटल काष्ठा dquot **ext2_get_dquots(काष्ठा inode *inode)
-अणु
-	वापस EXT2_I(inode)->i_dquot;
-पूर्ण
+#ifdef CONFIG_QUOTA
+static ssize_t ext2_quota_read(struct super_block *sb, int type, char *data, size_t len, loff_t off);
+static ssize_t ext2_quota_write(struct super_block *sb, int type, const char *data, size_t len, loff_t off);
+static int ext2_quota_on(struct super_block *sb, int type, int format_id,
+			 const struct path *path);
+static struct dquot **ext2_get_dquots(struct inode *inode)
+{
+	return EXT2_I(inode)->i_dquot;
+}
 
-अटल स्थिर काष्ठा quotactl_ops ext2_quotactl_ops = अणु
+static const struct quotactl_ops ext2_quotactl_ops = {
 	.quota_on	= ext2_quota_on,
 	.quota_off	= ext2_quota_off,
 	.quota_sync	= dquot_quota_sync,
@@ -341,339 +340,339 @@
 	.get_dqblk	= dquot_get_dqblk,
 	.set_dqblk	= dquot_set_dqblk,
 	.get_nextdqblk	= dquot_get_next_dqblk,
-पूर्ण;
-#पूर्ण_अगर
+};
+#endif
 
-अटल स्थिर काष्ठा super_operations ext2_sops = अणु
+static const struct super_operations ext2_sops = {
 	.alloc_inode	= ext2_alloc_inode,
-	.मुक्त_inode	= ext2_मुक्त_in_core_inode,
-	.ग_लिखो_inode	= ext2_ग_लिखो_inode,
+	.free_inode	= ext2_free_in_core_inode,
+	.write_inode	= ext2_write_inode,
 	.evict_inode	= ext2_evict_inode,
 	.put_super	= ext2_put_super,
 	.sync_fs	= ext2_sync_fs,
-	.मुक्तze_fs	= ext2_मुक्तze,
-	.unमुक्तze_fs	= ext2_unमुक्तze,
+	.freeze_fs	= ext2_freeze,
+	.unfreeze_fs	= ext2_unfreeze,
 	.statfs		= ext2_statfs,
 	.remount_fs	= ext2_remount,
 	.show_options	= ext2_show_options,
-#अगर_घोषित CONFIG_QUOTA
-	.quota_पढ़ो	= ext2_quota_पढ़ो,
-	.quota_ग_लिखो	= ext2_quota_ग_लिखो,
+#ifdef CONFIG_QUOTA
+	.quota_read	= ext2_quota_read,
+	.quota_write	= ext2_quota_write,
 	.get_dquots	= ext2_get_dquots,
-#पूर्ण_अगर
-पूर्ण;
+#endif
+};
 
-अटल काष्ठा inode *ext2_nfs_get_inode(काष्ठा super_block *sb,
+static struct inode *ext2_nfs_get_inode(struct super_block *sb,
 		u64 ino, u32 generation)
-अणु
-	काष्ठा inode *inode;
+{
+	struct inode *inode;
 
-	अगर (ino < EXT2_FIRST_INO(sb) && ino != EXT2_ROOT_INO)
-		वापस ERR_PTR(-ESTALE);
-	अगर (ino > le32_to_cpu(EXT2_SB(sb)->s_es->s_inodes_count))
-		वापस ERR_PTR(-ESTALE);
+	if (ino < EXT2_FIRST_INO(sb) && ino != EXT2_ROOT_INO)
+		return ERR_PTR(-ESTALE);
+	if (ino > le32_to_cpu(EXT2_SB(sb)->s_es->s_inodes_count))
+		return ERR_PTR(-ESTALE);
 
 	/*
-	 * ext2_iget isn't quite right अगर the inode is currently unallocated!
-	 * However ext2_iget currently करोes appropriate checks to handle stale
+	 * ext2_iget isn't quite right if the inode is currently unallocated!
+	 * However ext2_iget currently does appropriate checks to handle stale
 	 * inodes so everything is OK.
 	 */
 	inode = ext2_iget(sb, ino);
-	अगर (IS_ERR(inode))
-		वापस ERR_CAST(inode);
-	अगर (generation && inode->i_generation != generation) अणु
+	if (IS_ERR(inode))
+		return ERR_CAST(inode);
+	if (generation && inode->i_generation != generation) {
 		/* we didn't find the right inode.. */
 		iput(inode);
-		वापस ERR_PTR(-ESTALE);
-	पूर्ण
-	वापस inode;
-पूर्ण
+		return ERR_PTR(-ESTALE);
+	}
+	return inode;
+}
 
-अटल काष्ठा dentry *ext2_fh_to_dentry(काष्ठा super_block *sb, काष्ठा fid *fid,
-		पूर्णांक fh_len, पूर्णांक fh_type)
-अणु
-	वापस generic_fh_to_dentry(sb, fid, fh_len, fh_type,
+static struct dentry *ext2_fh_to_dentry(struct super_block *sb, struct fid *fid,
+		int fh_len, int fh_type)
+{
+	return generic_fh_to_dentry(sb, fid, fh_len, fh_type,
 				    ext2_nfs_get_inode);
-पूर्ण
+}
 
-अटल काष्ठा dentry *ext2_fh_to_parent(काष्ठा super_block *sb, काष्ठा fid *fid,
-		पूर्णांक fh_len, पूर्णांक fh_type)
-अणु
-	वापस generic_fh_to_parent(sb, fid, fh_len, fh_type,
+static struct dentry *ext2_fh_to_parent(struct super_block *sb, struct fid *fid,
+		int fh_len, int fh_type)
+{
+	return generic_fh_to_parent(sb, fid, fh_len, fh_type,
 				    ext2_nfs_get_inode);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा export_operations ext2_export_ops = अणु
+static const struct export_operations ext2_export_ops = {
 	.fh_to_dentry = ext2_fh_to_dentry,
 	.fh_to_parent = ext2_fh_to_parent,
 	.get_parent = ext2_get_parent,
-पूर्ण;
+};
 
-अटल अचिन्हित दीर्घ get_sb_block(व्योम **data)
-अणु
-	अचिन्हित दीर्घ 	sb_block;
-	अक्षर 		*options = (अक्षर *) *data;
+static unsigned long get_sb_block(void **data)
+{
+	unsigned long 	sb_block;
+	char 		*options = (char *) *data;
 
-	अगर (!options || म_भेदन(options, "sb=", 3) != 0)
-		वापस 1;	/* Default location */
+	if (!options || strncmp(options, "sb=", 3) != 0)
+		return 1;	/* Default location */
 	options += 3;
-	sb_block = simple_म_से_अदीर्घ(options, &options, 0);
-	अगर (*options && *options != ',') अणु
-		prपूर्णांकk("EXT2-fs: Invalid sb specification: %s\n",
-		       (अक्षर *) *data);
-		वापस 1;
-	पूर्ण
-	अगर (*options == ',')
+	sb_block = simple_strtoul(options, &options, 0);
+	if (*options && *options != ',') {
+		printk("EXT2-fs: Invalid sb specification: %s\n",
+		       (char *) *data);
+		return 1;
+	}
+	if (*options == ',')
 		options++;
-	*data = (व्योम *) options;
-	वापस sb_block;
-पूर्ण
+	*data = (void *) options;
+	return sb_block;
+}
 
-क्रमागत अणु
+enum {
 	Opt_bsd_df, Opt_minix_df, Opt_grpid, Opt_nogrpid,
 	Opt_resgid, Opt_resuid, Opt_sb, Opt_err_cont, Opt_err_panic,
 	Opt_err_ro, Opt_nouid32, Opt_debug,
 	Opt_oldalloc, Opt_orlov, Opt_nobh, Opt_user_xattr, Opt_nouser_xattr,
 	Opt_acl, Opt_noacl, Opt_xip, Opt_dax, Opt_ignore, Opt_err, Opt_quota,
 	Opt_usrquota, Opt_grpquota, Opt_reservation, Opt_noreservation
-पूर्ण;
+};
 
-अटल स्थिर match_table_t tokens = अणु
-	अणुOpt_bsd_df, "bsddf"पूर्ण,
-	अणुOpt_minix_df, "minixdf"पूर्ण,
-	अणुOpt_grpid, "grpid"पूर्ण,
-	अणुOpt_grpid, "bsdgroups"पूर्ण,
-	अणुOpt_nogrpid, "nogrpid"पूर्ण,
-	अणुOpt_nogrpid, "sysvgroups"पूर्ण,
-	अणुOpt_resgid, "resgid=%u"पूर्ण,
-	अणुOpt_resuid, "resuid=%u"पूर्ण,
-	अणुOpt_sb, "sb=%u"पूर्ण,
-	अणुOpt_err_cont, "errors=continue"पूर्ण,
-	अणुOpt_err_panic, "errors=panic"पूर्ण,
-	अणुOpt_err_ro, "errors=remount-ro"पूर्ण,
-	अणुOpt_nouid32, "nouid32"पूर्ण,
-	अणुOpt_debug, "debug"पूर्ण,
-	अणुOpt_oldalloc, "oldalloc"पूर्ण,
-	अणुOpt_orlov, "orlov"पूर्ण,
-	अणुOpt_nobh, "nobh"पूर्ण,
-	अणुOpt_user_xattr, "user_xattr"पूर्ण,
-	अणुOpt_nouser_xattr, "nouser_xattr"पूर्ण,
-	अणुOpt_acl, "acl"पूर्ण,
-	अणुOpt_noacl, "noacl"पूर्ण,
-	अणुOpt_xip, "xip"पूर्ण,
-	अणुOpt_dax, "dax"पूर्ण,
-	अणुOpt_grpquota, "grpquota"पूर्ण,
-	अणुOpt_ignore, "noquota"पूर्ण,
-	अणुOpt_quota, "quota"पूर्ण,
-	अणुOpt_usrquota, "usrquota"पूर्ण,
-	अणुOpt_reservation, "reservation"पूर्ण,
-	अणुOpt_noreservation, "noreservation"पूर्ण,
-	अणुOpt_err, शून्यपूर्ण
-पूर्ण;
+static const match_table_t tokens = {
+	{Opt_bsd_df, "bsddf"},
+	{Opt_minix_df, "minixdf"},
+	{Opt_grpid, "grpid"},
+	{Opt_grpid, "bsdgroups"},
+	{Opt_nogrpid, "nogrpid"},
+	{Opt_nogrpid, "sysvgroups"},
+	{Opt_resgid, "resgid=%u"},
+	{Opt_resuid, "resuid=%u"},
+	{Opt_sb, "sb=%u"},
+	{Opt_err_cont, "errors=continue"},
+	{Opt_err_panic, "errors=panic"},
+	{Opt_err_ro, "errors=remount-ro"},
+	{Opt_nouid32, "nouid32"},
+	{Opt_debug, "debug"},
+	{Opt_oldalloc, "oldalloc"},
+	{Opt_orlov, "orlov"},
+	{Opt_nobh, "nobh"},
+	{Opt_user_xattr, "user_xattr"},
+	{Opt_nouser_xattr, "nouser_xattr"},
+	{Opt_acl, "acl"},
+	{Opt_noacl, "noacl"},
+	{Opt_xip, "xip"},
+	{Opt_dax, "dax"},
+	{Opt_grpquota, "grpquota"},
+	{Opt_ignore, "noquota"},
+	{Opt_quota, "quota"},
+	{Opt_usrquota, "usrquota"},
+	{Opt_reservation, "reservation"},
+	{Opt_noreservation, "noreservation"},
+	{Opt_err, NULL}
+};
 
-अटल पूर्णांक parse_options(अक्षर *options, काष्ठा super_block *sb,
-			 काष्ठा ext2_mount_options *opts)
-अणु
-	अक्षर *p;
+static int parse_options(char *options, struct super_block *sb,
+			 struct ext2_mount_options *opts)
+{
+	char *p;
 	substring_t args[MAX_OPT_ARGS];
-	पूर्णांक option;
+	int option;
 	kuid_t uid;
 	kgid_t gid;
 
-	अगर (!options)
-		वापस 1;
+	if (!options)
+		return 1;
 
-	जबतक ((p = strsep (&options, ",")) != शून्य) अणु
-		पूर्णांक token;
-		अगर (!*p)
-			जारी;
+	while ((p = strsep (&options, ",")) != NULL) {
+		int token;
+		if (!*p)
+			continue;
 
 		token = match_token(p, tokens, args);
-		चयन (token) अणु
-		हाल Opt_bsd_df:
+		switch (token) {
+		case Opt_bsd_df:
 			clear_opt (opts->s_mount_opt, MINIX_DF);
-			अवरोध;
-		हाल Opt_minix_df:
+			break;
+		case Opt_minix_df:
 			set_opt (opts->s_mount_opt, MINIX_DF);
-			अवरोध;
-		हाल Opt_grpid:
+			break;
+		case Opt_grpid:
 			set_opt (opts->s_mount_opt, GRPID);
-			अवरोध;
-		हाल Opt_nogrpid:
+			break;
+		case Opt_nogrpid:
 			clear_opt (opts->s_mount_opt, GRPID);
-			अवरोध;
-		हाल Opt_resuid:
-			अगर (match_पूर्णांक(&args[0], &option))
-				वापस 0;
+			break;
+		case Opt_resuid:
+			if (match_int(&args[0], &option))
+				return 0;
 			uid = make_kuid(current_user_ns(), option);
-			अगर (!uid_valid(uid)) अणु
+			if (!uid_valid(uid)) {
 				ext2_msg(sb, KERN_ERR, "Invalid uid value %d", option);
-				वापस 0;
+				return 0;
 
-			पूर्ण
+			}
 			opts->s_resuid = uid;
-			अवरोध;
-		हाल Opt_resgid:
-			अगर (match_पूर्णांक(&args[0], &option))
-				वापस 0;
+			break;
+		case Opt_resgid:
+			if (match_int(&args[0], &option))
+				return 0;
 			gid = make_kgid(current_user_ns(), option);
-			अगर (!gid_valid(gid)) अणु
+			if (!gid_valid(gid)) {
 				ext2_msg(sb, KERN_ERR, "Invalid gid value %d", option);
-				वापस 0;
-			पूर्ण
+				return 0;
+			}
 			opts->s_resgid = gid;
-			अवरोध;
-		हाल Opt_sb:
+			break;
+		case Opt_sb:
 			/* handled by get_sb_block() instead of here */
-			/* *sb_block = match_पूर्णांक(&args[0]); */
-			अवरोध;
-		हाल Opt_err_panic:
+			/* *sb_block = match_int(&args[0]); */
+			break;
+		case Opt_err_panic:
 			clear_opt (opts->s_mount_opt, ERRORS_CONT);
 			clear_opt (opts->s_mount_opt, ERRORS_RO);
 			set_opt (opts->s_mount_opt, ERRORS_PANIC);
-			अवरोध;
-		हाल Opt_err_ro:
+			break;
+		case Opt_err_ro:
 			clear_opt (opts->s_mount_opt, ERRORS_CONT);
 			clear_opt (opts->s_mount_opt, ERRORS_PANIC);
 			set_opt (opts->s_mount_opt, ERRORS_RO);
-			अवरोध;
-		हाल Opt_err_cont:
+			break;
+		case Opt_err_cont:
 			clear_opt (opts->s_mount_opt, ERRORS_RO);
 			clear_opt (opts->s_mount_opt, ERRORS_PANIC);
 			set_opt (opts->s_mount_opt, ERRORS_CONT);
-			अवरोध;
-		हाल Opt_nouid32:
+			break;
+		case Opt_nouid32:
 			set_opt (opts->s_mount_opt, NO_UID32);
-			अवरोध;
-		हाल Opt_debug:
+			break;
+		case Opt_debug:
 			set_opt (opts->s_mount_opt, DEBUG);
-			अवरोध;
-		हाल Opt_oldalloc:
+			break;
+		case Opt_oldalloc:
 			set_opt (opts->s_mount_opt, OLDALLOC);
-			अवरोध;
-		हाल Opt_orlov:
+			break;
+		case Opt_orlov:
 			clear_opt (opts->s_mount_opt, OLDALLOC);
-			अवरोध;
-		हाल Opt_nobh:
+			break;
+		case Opt_nobh:
 			set_opt (opts->s_mount_opt, NOBH);
-			अवरोध;
-#अगर_घोषित CONFIG_EXT2_FS_XATTR
-		हाल Opt_user_xattr:
+			break;
+#ifdef CONFIG_EXT2_FS_XATTR
+		case Opt_user_xattr:
 			set_opt (opts->s_mount_opt, XATTR_USER);
-			अवरोध;
-		हाल Opt_nouser_xattr:
+			break;
+		case Opt_nouser_xattr:
 			clear_opt (opts->s_mount_opt, XATTR_USER);
-			अवरोध;
-#अन्यथा
-		हाल Opt_user_xattr:
-		हाल Opt_nouser_xattr:
+			break;
+#else
+		case Opt_user_xattr:
+		case Opt_nouser_xattr:
 			ext2_msg(sb, KERN_INFO, "(no)user_xattr options"
 				"not supported");
-			अवरोध;
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_EXT2_FS_POSIX_ACL
-		हाल Opt_acl:
+			break;
+#endif
+#ifdef CONFIG_EXT2_FS_POSIX_ACL
+		case Opt_acl:
 			set_opt(opts->s_mount_opt, POSIX_ACL);
-			अवरोध;
-		हाल Opt_noacl:
+			break;
+		case Opt_noacl:
 			clear_opt(opts->s_mount_opt, POSIX_ACL);
-			अवरोध;
-#अन्यथा
-		हाल Opt_acl:
-		हाल Opt_noacl:
+			break;
+#else
+		case Opt_acl:
+		case Opt_noacl:
 			ext2_msg(sb, KERN_INFO,
 				"(no)acl options not supported");
-			अवरोध;
-#पूर्ण_अगर
-		हाल Opt_xip:
+			break;
+#endif
+		case Opt_xip:
 			ext2_msg(sb, KERN_INFO, "use dax instead of xip");
 			set_opt(opts->s_mount_opt, XIP);
 			fallthrough;
-		हाल Opt_dax:
-#अगर_घोषित CONFIG_FS_DAX
+		case Opt_dax:
+#ifdef CONFIG_FS_DAX
 			ext2_msg(sb, KERN_WARNING,
 		"DAX enabled. Warning: EXPERIMENTAL, use at your own risk");
 			set_opt(opts->s_mount_opt, DAX);
-#अन्यथा
+#else
 			ext2_msg(sb, KERN_INFO, "dax option not supported");
-#पूर्ण_अगर
-			अवरोध;
+#endif
+			break;
 
-#अगर defined(CONFIG_QUOTA)
-		हाल Opt_quota:
-		हाल Opt_usrquota:
+#if defined(CONFIG_QUOTA)
+		case Opt_quota:
+		case Opt_usrquota:
 			set_opt(opts->s_mount_opt, USRQUOTA);
-			अवरोध;
+			break;
 
-		हाल Opt_grpquota:
+		case Opt_grpquota:
 			set_opt(opts->s_mount_opt, GRPQUOTA);
-			अवरोध;
-#अन्यथा
-		हाल Opt_quota:
-		हाल Opt_usrquota:
-		हाल Opt_grpquota:
+			break;
+#else
+		case Opt_quota:
+		case Opt_usrquota:
+		case Opt_grpquota:
 			ext2_msg(sb, KERN_INFO,
 				"quota operations not supported");
-			अवरोध;
-#पूर्ण_अगर
+			break;
+#endif
 
-		हाल Opt_reservation:
+		case Opt_reservation:
 			set_opt(opts->s_mount_opt, RESERVATION);
 			ext2_msg(sb, KERN_INFO, "reservations ON");
-			अवरोध;
-		हाल Opt_noreservation:
+			break;
+		case Opt_noreservation:
 			clear_opt(opts->s_mount_opt, RESERVATION);
 			ext2_msg(sb, KERN_INFO, "reservations OFF");
-			अवरोध;
-		हाल Opt_ignore:
-			अवरोध;
-		शेष:
-			वापस 0;
-		पूर्ण
-	पूर्ण
-	वापस 1;
-पूर्ण
+			break;
+		case Opt_ignore:
+			break;
+		default:
+			return 0;
+		}
+	}
+	return 1;
+}
 
-अटल पूर्णांक ext2_setup_super (काष्ठा super_block * sb,
-			      काष्ठा ext2_super_block * es,
-			      पूर्णांक पढ़ो_only)
-अणु
-	पूर्णांक res = 0;
-	काष्ठा ext2_sb_info *sbi = EXT2_SB(sb);
+static int ext2_setup_super (struct super_block * sb,
+			      struct ext2_super_block * es,
+			      int read_only)
+{
+	int res = 0;
+	struct ext2_sb_info *sbi = EXT2_SB(sb);
 
-	अगर (le32_to_cpu(es->s_rev_level) > EXT2_MAX_SUPP_REV) अणु
+	if (le32_to_cpu(es->s_rev_level) > EXT2_MAX_SUPP_REV) {
 		ext2_msg(sb, KERN_ERR,
 			"error: revision level too high, "
 			"forcing read-only mode");
 		res = SB_RDONLY;
-	पूर्ण
-	अगर (पढ़ो_only)
-		वापस res;
-	अगर (!(sbi->s_mount_state & EXT2_VALID_FS))
+	}
+	if (read_only)
+		return res;
+	if (!(sbi->s_mount_state & EXT2_VALID_FS))
 		ext2_msg(sb, KERN_WARNING,
 			"warning: mounting unchecked fs, "
 			"running e2fsck is recommended");
-	अन्यथा अगर ((sbi->s_mount_state & EXT2_ERROR_FS))
+	else if ((sbi->s_mount_state & EXT2_ERROR_FS))
 		ext2_msg(sb, KERN_WARNING,
 			"warning: mounting fs with errors, "
 			"running e2fsck is recommended");
-	अन्यथा अगर ((__s16) le16_to_cpu(es->s_max_mnt_count) >= 0 &&
+	else if ((__s16) le16_to_cpu(es->s_max_mnt_count) >= 0 &&
 		 le16_to_cpu(es->s_mnt_count) >=
-		 (अचिन्हित लघु) (__s16) le16_to_cpu(es->s_max_mnt_count))
+		 (unsigned short) (__s16) le16_to_cpu(es->s_max_mnt_count))
 		ext2_msg(sb, KERN_WARNING,
 			"warning: maximal mount count reached, "
 			"running e2fsck is recommended");
-	अन्यथा अगर (le32_to_cpu(es->s_checkपूर्णांकerval) &&
+	else if (le32_to_cpu(es->s_checkinterval) &&
 		(le32_to_cpu(es->s_lastcheck) +
-			le32_to_cpu(es->s_checkपूर्णांकerval) <=
-			kसमय_get_real_seconds()))
+			le32_to_cpu(es->s_checkinterval) <=
+			ktime_get_real_seconds()))
 		ext2_msg(sb, KERN_WARNING,
 			"warning: checktime reached, "
 			"running e2fsck is recommended");
-	अगर (!le16_to_cpu(es->s_max_mnt_count))
+	if (!le16_to_cpu(es->s_max_mnt_count))
 		es->s_max_mnt_count = cpu_to_le16(EXT2_DFL_MAX_MNT_COUNT);
 	le16_add_cpu(&es->s_mnt_count, 1);
-	अगर (test_opt (sb, DEBUG))
+	if (test_opt (sb, DEBUG))
 		ext2_msg(sb, KERN_INFO, "%s, %s, bs=%lu, fs=%lu, gc=%lu, "
 			"bpg=%lu, ipg=%lu, mo=%04lx]",
 			EXT2FS_VERSION, EXT2FS_DATE, sb->s_blocksize,
@@ -682,75 +681,75 @@
 			EXT2_BLOCKS_PER_GROUP(sb),
 			EXT2_INODES_PER_GROUP(sb),
 			sbi->s_mount_opt);
-	वापस res;
-पूर्ण
+	return res;
+}
 
-अटल पूर्णांक ext2_check_descriptors(काष्ठा super_block *sb)
-अणु
-	पूर्णांक i;
-	काष्ठा ext2_sb_info *sbi = EXT2_SB(sb);
+static int ext2_check_descriptors(struct super_block *sb)
+{
+	int i;
+	struct ext2_sb_info *sbi = EXT2_SB(sb);
 
 	ext2_debug ("Checking group descriptors");
 
-	क्रम (i = 0; i < sbi->s_groups_count; i++) अणु
-		काष्ठा ext2_group_desc *gdp = ext2_get_group_desc(sb, i, शून्य);
+	for (i = 0; i < sbi->s_groups_count; i++) {
+		struct ext2_group_desc *gdp = ext2_get_group_desc(sb, i, NULL);
 		ext2_fsblk_t first_block = ext2_group_first_block_no(sb, i);
 		ext2_fsblk_t last_block = ext2_group_last_block_no(sb, i);
 
-		अगर (le32_to_cpu(gdp->bg_block_biपंचांगap) < first_block ||
-		    le32_to_cpu(gdp->bg_block_biपंचांगap) > last_block)
-		अणु
+		if (le32_to_cpu(gdp->bg_block_bitmap) < first_block ||
+		    le32_to_cpu(gdp->bg_block_bitmap) > last_block)
+		{
 			ext2_error (sb, "ext2_check_descriptors",
 				    "Block bitmap for group %d"
 				    " not in group (block %lu)!",
-				    i, (अचिन्हित दीर्घ) le32_to_cpu(gdp->bg_block_biपंचांगap));
-			वापस 0;
-		पूर्ण
-		अगर (le32_to_cpu(gdp->bg_inode_biपंचांगap) < first_block ||
-		    le32_to_cpu(gdp->bg_inode_biपंचांगap) > last_block)
-		अणु
+				    i, (unsigned long) le32_to_cpu(gdp->bg_block_bitmap));
+			return 0;
+		}
+		if (le32_to_cpu(gdp->bg_inode_bitmap) < first_block ||
+		    le32_to_cpu(gdp->bg_inode_bitmap) > last_block)
+		{
 			ext2_error (sb, "ext2_check_descriptors",
 				    "Inode bitmap for group %d"
 				    " not in group (block %lu)!",
-				    i, (अचिन्हित दीर्घ) le32_to_cpu(gdp->bg_inode_biपंचांगap));
-			वापस 0;
-		पूर्ण
-		अगर (le32_to_cpu(gdp->bg_inode_table) < first_block ||
+				    i, (unsigned long) le32_to_cpu(gdp->bg_inode_bitmap));
+			return 0;
+		}
+		if (le32_to_cpu(gdp->bg_inode_table) < first_block ||
 		    le32_to_cpu(gdp->bg_inode_table) + sbi->s_itb_per_group - 1 >
 		    last_block)
-		अणु
+		{
 			ext2_error (sb, "ext2_check_descriptors",
 				    "Inode table for group %d"
 				    " not in group (block %lu)!",
-				    i, (अचिन्हित दीर्घ) le32_to_cpu(gdp->bg_inode_table));
-			वापस 0;
-		पूर्ण
-	पूर्ण
-	वापस 1;
-पूर्ण
+				    i, (unsigned long) le32_to_cpu(gdp->bg_inode_table));
+			return 0;
+		}
+	}
+	return 1;
+}
 
 /*
- * Maximal file size.  There is a direct, and अणु,द्विगुन-,triple-पूर्णindirect
+ * Maximal file size.  There is a direct, and {,double-,triple-}indirect
  * block limit, and also a limit of (2^32 - 1) 512-byte sectors in i_blocks.
- * We need to be 1 fileप्रणाली block less than the 2^32 sector limit.
+ * We need to be 1 filesystem block less than the 2^32 sector limit.
  */
-अटल loff_t ext2_max_size(पूर्णांक bits)
-अणु
-	loff_t res = EXT2_Nसूची_BLOCKS;
-	पूर्णांक meta_blocks;
-	अचिन्हित पूर्णांक upper_limit;
-	अचिन्हित पूर्णांक ppb = 1 << (bits-2);
+static loff_t ext2_max_size(int bits)
+{
+	loff_t res = EXT2_NDIR_BLOCKS;
+	int meta_blocks;
+	unsigned int upper_limit;
+	unsigned int ppb = 1 << (bits-2);
 
-	/* This is calculated to be the largest file size क्रम a
+	/* This is calculated to be the largest file size for a
 	 * dense, file such that the total number of
 	 * sectors in the file, including data and all indirect blocks,
-	 * करोes not exceed 2^32 -1
+	 * does not exceed 2^32 -1
 	 * __u32 i_blocks representing the total number of
 	 * 512 bytes blocks of the file
 	 */
 	upper_limit = (1LL << 32) - 1;
 
-	/* total blocks in file प्रणाली block size */
+	/* total blocks in file system block size */
 	upper_limit >>= (bits - 9);
 
 	/* Compute how many blocks we can address by block tree */
@@ -758,82 +757,82 @@
 	res += 1LL << (2*(bits-2));
 	res += 1LL << (3*(bits-2));
 	/* Does block tree limit file size? */
-	अगर (res < upper_limit)
-		जाओ check_lfs;
+	if (res < upper_limit)
+		goto check_lfs;
 
 	res = upper_limit;
-	/* How many metadata blocks are needed क्रम addressing upper_limit? */
-	upper_limit -= EXT2_Nसूची_BLOCKS;
+	/* How many metadata blocks are needed for addressing upper_limit? */
+	upper_limit -= EXT2_NDIR_BLOCKS;
 	/* indirect blocks */
 	meta_blocks = 1;
 	upper_limit -= ppb;
-	/* द्विगुन indirect blocks */
-	अगर (upper_limit < ppb * ppb) अणु
+	/* double indirect blocks */
+	if (upper_limit < ppb * ppb) {
 		meta_blocks += 1 + DIV_ROUND_UP(upper_limit, ppb);
 		res -= meta_blocks;
-		जाओ check_lfs;
-	पूर्ण
+		goto check_lfs;
+	}
 	meta_blocks += 1 + ppb;
 	upper_limit -= ppb * ppb;
-	/* tripple indirect blocks क्रम the rest */
+	/* tripple indirect blocks for the rest */
 	meta_blocks += 1 + DIV_ROUND_UP(upper_limit, ppb) +
 		DIV_ROUND_UP(upper_limit, ppb*ppb);
 	res -= meta_blocks;
 check_lfs:
 	res <<= bits;
-	अगर (res > MAX_LFS_खाताSIZE)
-		res = MAX_LFS_खाताSIZE;
+	if (res > MAX_LFS_FILESIZE)
+		res = MAX_LFS_FILESIZE;
 
-	वापस res;
-पूर्ण
+	return res;
+}
 
-अटल अचिन्हित दीर्घ descriptor_loc(काष्ठा super_block *sb,
-				    अचिन्हित दीर्घ logic_sb_block,
-				    पूर्णांक nr)
-अणु
-	काष्ठा ext2_sb_info *sbi = EXT2_SB(sb);
-	अचिन्हित दीर्घ bg, first_meta_bg;
+static unsigned long descriptor_loc(struct super_block *sb,
+				    unsigned long logic_sb_block,
+				    int nr)
+{
+	struct ext2_sb_info *sbi = EXT2_SB(sb);
+	unsigned long bg, first_meta_bg;
 	
 	first_meta_bg = le32_to_cpu(sbi->s_es->s_first_meta_bg);
 
-	अगर (!EXT2_HAS_INCOMPAT_FEATURE(sb, EXT2_FEATURE_INCOMPAT_META_BG) ||
+	if (!EXT2_HAS_INCOMPAT_FEATURE(sb, EXT2_FEATURE_INCOMPAT_META_BG) ||
 	    nr < first_meta_bg)
-		वापस (logic_sb_block + nr + 1);
+		return (logic_sb_block + nr + 1);
 	bg = sbi->s_desc_per_block * nr;
 
-	वापस ext2_group_first_block_no(sb, bg) + ext2_bg_has_super(sb, bg);
-पूर्ण
+	return ext2_group_first_block_no(sb, bg) + ext2_bg_has_super(sb, bg);
+}
 
-अटल पूर्णांक ext2_fill_super(काष्ठा super_block *sb, व्योम *data, पूर्णांक silent)
-अणु
-	काष्ठा dax_device *dax_dev = fs_dax_get_by_bdev(sb->s_bdev);
-	काष्ठा buffer_head * bh;
-	काष्ठा ext2_sb_info * sbi;
-	काष्ठा ext2_super_block * es;
-	काष्ठा inode *root;
-	अचिन्हित दीर्घ block;
-	अचिन्हित दीर्घ sb_block = get_sb_block(&data);
-	अचिन्हित दीर्घ logic_sb_block;
-	अचिन्हित दीर्घ offset = 0;
-	अचिन्हित दीर्घ def_mount_opts;
-	दीर्घ ret = -ENOMEM;
-	पूर्णांक blocksize = BLOCK_SIZE;
-	पूर्णांक db_count;
-	पूर्णांक i, j;
+static int ext2_fill_super(struct super_block *sb, void *data, int silent)
+{
+	struct dax_device *dax_dev = fs_dax_get_by_bdev(sb->s_bdev);
+	struct buffer_head * bh;
+	struct ext2_sb_info * sbi;
+	struct ext2_super_block * es;
+	struct inode *root;
+	unsigned long block;
+	unsigned long sb_block = get_sb_block(&data);
+	unsigned long logic_sb_block;
+	unsigned long offset = 0;
+	unsigned long def_mount_opts;
+	long ret = -ENOMEM;
+	int blocksize = BLOCK_SIZE;
+	int db_count;
+	int i, j;
 	__le32 features;
-	पूर्णांक err;
-	काष्ठा ext2_mount_options opts;
+	int err;
+	struct ext2_mount_options opts;
 
-	sbi = kzalloc(माप(*sbi), GFP_KERNEL);
-	अगर (!sbi)
-		जाओ failed;
+	sbi = kzalloc(sizeof(*sbi), GFP_KERNEL);
+	if (!sbi)
+		goto failed;
 
 	sbi->s_blockgroup_lock =
-		kzalloc(माप(काष्ठा blockgroup_lock), GFP_KERNEL);
-	अगर (!sbi->s_blockgroup_lock) अणु
-		kमुक्त(sbi);
-		जाओ failed;
-	पूर्ण
+		kzalloc(sizeof(struct blockgroup_lock), GFP_KERNEL);
+	if (!sbi->s_blockgroup_lock) {
+		kfree(sbi);
+		goto failed;
+	}
 	sb->s_fs_info = sbi;
 	sbi->s_sb_block = sb_block;
 	sbi->s_daxdev = dax_dev;
@@ -842,67 +841,67 @@ check_lfs:
 	ret = -EINVAL;
 
 	/*
-	 * See what the current blocksize क्रम the device is, and
-	 * use that as the blocksize.  Otherwise (or अगर the blocksize
-	 * is smaller than the शेष) use the शेष.
-	 * This is important क्रम devices that have a hardware
-	 * sectorsize that is larger than the शेष.
+	 * See what the current blocksize for the device is, and
+	 * use that as the blocksize.  Otherwise (or if the blocksize
+	 * is smaller than the default) use the default.
+	 * This is important for devices that have a hardware
+	 * sectorsize that is larger than the default.
 	 */
 	blocksize = sb_min_blocksize(sb, BLOCK_SIZE);
-	अगर (!blocksize) अणु
+	if (!blocksize) {
 		ext2_msg(sb, KERN_ERR, "error: unable to set blocksize");
-		जाओ failed_sbi;
-	पूर्ण
+		goto failed_sbi;
+	}
 
 	/*
-	 * If the superblock करोesn't start on a hardware sector boundary,
+	 * If the superblock doesn't start on a hardware sector boundary,
 	 * calculate the offset.  
 	 */
-	अगर (blocksize != BLOCK_SIZE) अणु
+	if (blocksize != BLOCK_SIZE) {
 		logic_sb_block = (sb_block*BLOCK_SIZE) / blocksize;
 		offset = (sb_block*BLOCK_SIZE) % blocksize;
-	पूर्ण अन्यथा अणु
+	} else {
 		logic_sb_block = sb_block;
-	पूर्ण
+	}
 
-	अगर (!(bh = sb_bपढ़ो(sb, logic_sb_block))) अणु
+	if (!(bh = sb_bread(sb, logic_sb_block))) {
 		ext2_msg(sb, KERN_ERR, "error: unable to read superblock");
-		जाओ failed_sbi;
-	पूर्ण
+		goto failed_sbi;
+	}
 	/*
 	 * Note: s_es must be initialized as soon as possible because
-	 *       some ext2 macro-inकाष्ठाions depend on its value
+	 *       some ext2 macro-instructions depend on its value
 	 */
-	es = (काष्ठा ext2_super_block *) (((अक्षर *)bh->b_data) + offset);
+	es = (struct ext2_super_block *) (((char *)bh->b_data) + offset);
 	sbi->s_es = es;
 	sb->s_magic = le16_to_cpu(es->s_magic);
 
-	अगर (sb->s_magic != EXT2_SUPER_MAGIC)
-		जाओ cantfind_ext2;
+	if (sb->s_magic != EXT2_SUPER_MAGIC)
+		goto cantfind_ext2;
 
 	opts.s_mount_opt = 0;
-	/* Set शेषs beक्रमe we parse the mount options */
-	def_mount_opts = le32_to_cpu(es->s_शेष_mount_opts);
-	अगर (def_mount_opts & EXT2_DEFM_DEBUG)
+	/* Set defaults before we parse the mount options */
+	def_mount_opts = le32_to_cpu(es->s_default_mount_opts);
+	if (def_mount_opts & EXT2_DEFM_DEBUG)
 		set_opt(opts.s_mount_opt, DEBUG);
-	अगर (def_mount_opts & EXT2_DEFM_BSDGROUPS)
+	if (def_mount_opts & EXT2_DEFM_BSDGROUPS)
 		set_opt(opts.s_mount_opt, GRPID);
-	अगर (def_mount_opts & EXT2_DEFM_UID16)
+	if (def_mount_opts & EXT2_DEFM_UID16)
 		set_opt(opts.s_mount_opt, NO_UID32);
-#अगर_घोषित CONFIG_EXT2_FS_XATTR
-	अगर (def_mount_opts & EXT2_DEFM_XATTR_USER)
+#ifdef CONFIG_EXT2_FS_XATTR
+	if (def_mount_opts & EXT2_DEFM_XATTR_USER)
 		set_opt(opts.s_mount_opt, XATTR_USER);
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_EXT2_FS_POSIX_ACL
-	अगर (def_mount_opts & EXT2_DEFM_ACL)
+#endif
+#ifdef CONFIG_EXT2_FS_POSIX_ACL
+	if (def_mount_opts & EXT2_DEFM_ACL)
 		set_opt(opts.s_mount_opt, POSIX_ACL);
-#पूर्ण_अगर
+#endif
 	
-	अगर (le16_to_cpu(sbi->s_es->s_errors) == EXT2_ERRORS_PANIC)
+	if (le16_to_cpu(sbi->s_es->s_errors) == EXT2_ERRORS_PANIC)
 		set_opt(opts.s_mount_opt, ERRORS_PANIC);
-	अन्यथा अगर (le16_to_cpu(sbi->s_es->s_errors) == EXT2_ERRORS_CONTINUE)
+	else if (le16_to_cpu(sbi->s_es->s_errors) == EXT2_ERRORS_CONTINUE)
 		set_opt(opts.s_mount_opt, ERRORS_CONT);
-	अन्यथा
+	else
 		set_opt(opts.s_mount_opt, ERRORS_RO);
 
 	opts.s_resuid = make_kuid(&init_user_ns, le16_to_cpu(es->s_def_resuid));
@@ -910,8 +909,8 @@ check_lfs:
 	
 	set_opt(opts.s_mount_opt, RESERVATION);
 
-	अगर (!parse_options((अक्षर *) data, sb, &opts))
-		जाओ failed_mount;
+	if (!parse_options((char *) data, sb, &opts))
+		goto failed_mount;
 
 	sbi->s_mount_opt = opts.s_mount_opt;
 	sbi->s_resuid = opts.s_resuid;
@@ -919,9 +918,9 @@ check_lfs:
 
 	sb->s_flags = (sb->s_flags & ~SB_POSIXACL) |
 		(test_opt(sb, POSIX_ACL) ? SB_POSIXACL : 0);
-	sb->s_अगरlags |= SB_I_CGROUPWB;
+	sb->s_iflags |= SB_I_CGROUPWB;
 
-	अगर (le32_to_cpu(es->s_rev_level) == EXT2_GOOD_OLD_REV &&
+	if (le32_to_cpu(es->s_rev_level) == EXT2_GOOD_OLD_REV &&
 	    (EXT2_HAS_COMPAT_FEATURE(sb, ~0U) ||
 	     EXT2_HAS_RO_COMPAT_FEATURE(sb, ~0U) ||
 	     EXT2_HAS_INCOMPAT_FEATURE(sb, ~0U)))
@@ -931,83 +930,83 @@ check_lfs:
 	/*
 	 * Check feature flags regardless of the revision level, since we
 	 * previously didn't change the revision level when setting the flags,
-	 * so there is a chance incompat flags are set on a rev 0 fileप्रणाली.
+	 * so there is a chance incompat flags are set on a rev 0 filesystem.
 	 */
 	features = EXT2_HAS_INCOMPAT_FEATURE(sb, ~EXT2_FEATURE_INCOMPAT_SUPP);
-	अगर (features) अणु
+	if (features) {
 		ext2_msg(sb, KERN_ERR,	"error: couldn't mount because of "
 		       "unsupported optional features (%x)",
 			le32_to_cpu(features));
-		जाओ failed_mount;
-	पूर्ण
-	अगर (!sb_rकरोnly(sb) && (features = EXT2_HAS_RO_COMPAT_FEATURE(sb, ~EXT2_FEATURE_RO_COMPAT_SUPP)))अणु
+		goto failed_mount;
+	}
+	if (!sb_rdonly(sb) && (features = EXT2_HAS_RO_COMPAT_FEATURE(sb, ~EXT2_FEATURE_RO_COMPAT_SUPP))){
 		ext2_msg(sb, KERN_ERR, "error: couldn't mount RDWR because of "
 		       "unsupported optional features (%x)",
 		       le32_to_cpu(features));
-		जाओ failed_mount;
-	पूर्ण
+		goto failed_mount;
+	}
 
 	blocksize = BLOCK_SIZE << le32_to_cpu(sbi->s_es->s_log_block_size);
 
-	अगर (test_opt(sb, DAX)) अणु
-		अगर (!bdev_dax_supported(sb->s_bdev, blocksize)) अणु
+	if (test_opt(sb, DAX)) {
+		if (!bdev_dax_supported(sb->s_bdev, blocksize)) {
 			ext2_msg(sb, KERN_ERR,
 				"DAX unsupported by block device. Turning off DAX.");
 			clear_opt(sbi->s_mount_opt, DAX);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	/* If the blocksize करोesn't match, re-पढ़ो the thing.. */
-	अगर (sb->s_blocksize != blocksize) अणु
-		brअन्यथा(bh);
+	/* If the blocksize doesn't match, re-read the thing.. */
+	if (sb->s_blocksize != blocksize) {
+		brelse(bh);
 
-		अगर (!sb_set_blocksize(sb, blocksize)) अणु
+		if (!sb_set_blocksize(sb, blocksize)) {
 			ext2_msg(sb, KERN_ERR,
 				"error: bad blocksize %d", blocksize);
-			जाओ failed_sbi;
-		पूर्ण
+			goto failed_sbi;
+		}
 
 		logic_sb_block = (sb_block*BLOCK_SIZE) / blocksize;
 		offset = (sb_block*BLOCK_SIZE) % blocksize;
-		bh = sb_bपढ़ो(sb, logic_sb_block);
-		अगर(!bh) अणु
+		bh = sb_bread(sb, logic_sb_block);
+		if(!bh) {
 			ext2_msg(sb, KERN_ERR, "error: couldn't read"
 				"superblock on 2nd try");
-			जाओ failed_sbi;
-		पूर्ण
-		es = (काष्ठा ext2_super_block *) (((अक्षर *)bh->b_data) + offset);
+			goto failed_sbi;
+		}
+		es = (struct ext2_super_block *) (((char *)bh->b_data) + offset);
 		sbi->s_es = es;
-		अगर (es->s_magic != cpu_to_le16(EXT2_SUPER_MAGIC)) अणु
+		if (es->s_magic != cpu_to_le16(EXT2_SUPER_MAGIC)) {
 			ext2_msg(sb, KERN_ERR, "error: magic mismatch");
-			जाओ failed_mount;
-		पूर्ण
-	पूर्ण
+			goto failed_mount;
+		}
+	}
 
 	sb->s_maxbytes = ext2_max_size(sb->s_blocksize_bits);
 	sb->s_max_links = EXT2_LINK_MAX;
-	sb->s_समय_min = S32_MIN;
-	sb->s_समय_max = S32_MAX;
+	sb->s_time_min = S32_MIN;
+	sb->s_time_max = S32_MAX;
 
-	अगर (le32_to_cpu(es->s_rev_level) == EXT2_GOOD_OLD_REV) अणु
+	if (le32_to_cpu(es->s_rev_level) == EXT2_GOOD_OLD_REV) {
 		sbi->s_inode_size = EXT2_GOOD_OLD_INODE_SIZE;
 		sbi->s_first_ino = EXT2_GOOD_OLD_FIRST_INO;
-	पूर्ण अन्यथा अणु
+	} else {
 		sbi->s_inode_size = le16_to_cpu(es->s_inode_size);
 		sbi->s_first_ino = le32_to_cpu(es->s_first_ino);
-		अगर ((sbi->s_inode_size < EXT2_GOOD_OLD_INODE_SIZE) ||
-		    !is_घातer_of_2(sbi->s_inode_size) ||
-		    (sbi->s_inode_size > blocksize)) अणु
+		if ((sbi->s_inode_size < EXT2_GOOD_OLD_INODE_SIZE) ||
+		    !is_power_of_2(sbi->s_inode_size) ||
+		    (sbi->s_inode_size > blocksize)) {
 			ext2_msg(sb, KERN_ERR,
 				"error: unsupported inode size: %d",
 				sbi->s_inode_size);
-			जाओ failed_mount;
-		पूर्ण
-	पूर्ण
+			goto failed_mount;
+		}
+	}
 
 	sbi->s_frag_size = EXT2_MIN_FRAG_SIZE <<
 				   le32_to_cpu(es->s_log_frag_size);
-	अगर (sbi->s_frag_size == 0)
-		जाओ cantfind_ext2;
+	if (sbi->s_frag_size == 0)
+		goto cantfind_ext2;
 	sbi->s_frags_per_block = sb->s_blocksize / sbi->s_frag_size;
 
 	sbi->s_blocks_per_group = le32_to_cpu(es->s_blocks_per_group);
@@ -1015,12 +1014,12 @@ check_lfs:
 	sbi->s_inodes_per_group = le32_to_cpu(es->s_inodes_per_group);
 
 	sbi->s_inodes_per_block = sb->s_blocksize / EXT2_INODE_SIZE(sb);
-	अगर (sbi->s_inodes_per_block == 0 || sbi->s_inodes_per_group == 0)
-		जाओ cantfind_ext2;
+	if (sbi->s_inodes_per_block == 0 || sbi->s_inodes_per_group == 0)
+		goto cantfind_ext2;
 	sbi->s_itb_per_group = sbi->s_inodes_per_group /
 					sbi->s_inodes_per_block;
 	sbi->s_desc_per_block = sb->s_blocksize /
-					माप (काष्ठा ext2_group_desc);
+					sizeof (struct ext2_group_desc);
 	sbi->s_sbh = bh;
 	sbi->s_mount_state = le16_to_cpu(es->s_state);
 	sbi->s_addr_per_block_bits =
@@ -1028,298 +1027,298 @@ check_lfs:
 	sbi->s_desc_per_block_bits =
 		ilog2 (EXT2_DESC_PER_BLOCK(sb));
 
-	अगर (sb->s_magic != EXT2_SUPER_MAGIC)
-		जाओ cantfind_ext2;
+	if (sb->s_magic != EXT2_SUPER_MAGIC)
+		goto cantfind_ext2;
 
-	अगर (sb->s_blocksize != bh->b_size) अणु
-		अगर (!silent)
+	if (sb->s_blocksize != bh->b_size) {
+		if (!silent)
 			ext2_msg(sb, KERN_ERR, "error: unsupported blocksize");
-		जाओ failed_mount;
-	पूर्ण
+		goto failed_mount;
+	}
 
-	अगर (sb->s_blocksize != sbi->s_frag_size) अणु
+	if (sb->s_blocksize != sbi->s_frag_size) {
 		ext2_msg(sb, KERN_ERR,
 			"error: fragsize %lu != blocksize %lu"
 			"(not supported yet)",
 			sbi->s_frag_size, sb->s_blocksize);
-		जाओ failed_mount;
-	पूर्ण
+		goto failed_mount;
+	}
 
-	अगर (sbi->s_blocks_per_group > sb->s_blocksize * 8) अणु
+	if (sbi->s_blocks_per_group > sb->s_blocksize * 8) {
 		ext2_msg(sb, KERN_ERR,
 			"error: #blocks per group too big: %lu",
 			sbi->s_blocks_per_group);
-		जाओ failed_mount;
-	पूर्ण
-	अगर (sbi->s_frags_per_group > sb->s_blocksize * 8) अणु
+		goto failed_mount;
+	}
+	if (sbi->s_frags_per_group > sb->s_blocksize * 8) {
 		ext2_msg(sb, KERN_ERR,
 			"error: #fragments per group too big: %lu",
 			sbi->s_frags_per_group);
-		जाओ failed_mount;
-	पूर्ण
-	अगर (sbi->s_inodes_per_group > sb->s_blocksize * 8) अणु
+		goto failed_mount;
+	}
+	if (sbi->s_inodes_per_group > sb->s_blocksize * 8) {
 		ext2_msg(sb, KERN_ERR,
 			"error: #inodes per group too big: %lu",
 			sbi->s_inodes_per_group);
-		जाओ failed_mount;
-	पूर्ण
+		goto failed_mount;
+	}
 
-	अगर (EXT2_BLOCKS_PER_GROUP(sb) == 0)
-		जाओ cantfind_ext2;
+	if (EXT2_BLOCKS_PER_GROUP(sb) == 0)
+		goto cantfind_ext2;
 	sbi->s_groups_count = ((le32_to_cpu(es->s_blocks_count) -
 				le32_to_cpu(es->s_first_data_block) - 1)
 					/ EXT2_BLOCKS_PER_GROUP(sb)) + 1;
 	db_count = (sbi->s_groups_count + EXT2_DESC_PER_BLOCK(sb) - 1) /
 		   EXT2_DESC_PER_BLOCK(sb);
-	sbi->s_group_desc = kदो_स्मृति_array(db_count,
-					   माप(काष्ठा buffer_head *),
+	sbi->s_group_desc = kmalloc_array(db_count,
+					   sizeof(struct buffer_head *),
 					   GFP_KERNEL);
-	अगर (sbi->s_group_desc == शून्य) अणु
+	if (sbi->s_group_desc == NULL) {
 		ret = -ENOMEM;
 		ext2_msg(sb, KERN_ERR, "error: not enough memory");
-		जाओ failed_mount;
-	पूर्ण
+		goto failed_mount;
+	}
 	bgl_lock_init(sbi->s_blockgroup_lock);
-	sbi->s_debts = kसुस्मृति(sbi->s_groups_count, माप(*sbi->s_debts), GFP_KERNEL);
-	अगर (!sbi->s_debts) अणु
+	sbi->s_debts = kcalloc(sbi->s_groups_count, sizeof(*sbi->s_debts), GFP_KERNEL);
+	if (!sbi->s_debts) {
 		ret = -ENOMEM;
 		ext2_msg(sb, KERN_ERR, "error: not enough memory");
-		जाओ failed_mount_group_desc;
-	पूर्ण
-	क्रम (i = 0; i < db_count; i++) अणु
+		goto failed_mount_group_desc;
+	}
+	for (i = 0; i < db_count; i++) {
 		block = descriptor_loc(sb, logic_sb_block, i);
-		sbi->s_group_desc[i] = sb_bपढ़ो(sb, block);
-		अगर (!sbi->s_group_desc[i]) अणु
-			क्रम (j = 0; j < i; j++)
-				brअन्यथा (sbi->s_group_desc[j]);
+		sbi->s_group_desc[i] = sb_bread(sb, block);
+		if (!sbi->s_group_desc[i]) {
+			for (j = 0; j < i; j++)
+				brelse (sbi->s_group_desc[j]);
 			ext2_msg(sb, KERN_ERR,
 				"error: unable to read group descriptors");
-			जाओ failed_mount_group_desc;
-		पूर्ण
-	पूर्ण
-	अगर (!ext2_check_descriptors (sb)) अणु
+			goto failed_mount_group_desc;
+		}
+	}
+	if (!ext2_check_descriptors (sb)) {
 		ext2_msg(sb, KERN_ERR, "group descriptors corrupted");
-		जाओ failed_mount2;
-	पूर्ण
+		goto failed_mount2;
+	}
 	sbi->s_gdb_count = db_count;
-	get_अक्रमom_bytes(&sbi->s_next_generation, माप(u32));
+	get_random_bytes(&sbi->s_next_generation, sizeof(u32));
 	spin_lock_init(&sbi->s_next_gen_lock);
 
-	/* per fileप्रणाली reservation list head & lock */
-	spin_lock_init(&sbi->s_rsv_winकरोw_lock);
-	sbi->s_rsv_winकरोw_root = RB_ROOT;
+	/* per filesystem reservation list head & lock */
+	spin_lock_init(&sbi->s_rsv_window_lock);
+	sbi->s_rsv_window_root = RB_ROOT;
 	/*
-	 * Add a single, अटल dummy reservation to the start of the
-	 * reservation winकरोw list --- it gives us a placeholder क्रम
+	 * Add a single, static dummy reservation to the start of the
+	 * reservation window list --- it gives us a placeholder for
 	 * append-at-start-of-list which makes the allocation logic
 	 * _much_ simpler.
 	 */
-	sbi->s_rsv_winकरोw_head.rsv_start = EXT2_RESERVE_WINDOW_NOT_ALLOCATED;
-	sbi->s_rsv_winकरोw_head.rsv_end = EXT2_RESERVE_WINDOW_NOT_ALLOCATED;
-	sbi->s_rsv_winकरोw_head.rsv_alloc_hit = 0;
-	sbi->s_rsv_winकरोw_head.rsv_goal_size = 0;
-	ext2_rsv_winकरोw_add(sb, &sbi->s_rsv_winकरोw_head);
+	sbi->s_rsv_window_head.rsv_start = EXT2_RESERVE_WINDOW_NOT_ALLOCATED;
+	sbi->s_rsv_window_head.rsv_end = EXT2_RESERVE_WINDOW_NOT_ALLOCATED;
+	sbi->s_rsv_window_head.rsv_alloc_hit = 0;
+	sbi->s_rsv_window_head.rsv_goal_size = 0;
+	ext2_rsv_window_add(sb, &sbi->s_rsv_window_head);
 
-	err = percpu_counter_init(&sbi->s_मुक्तblocks_counter,
-				ext2_count_मुक्त_blocks(sb), GFP_KERNEL);
-	अगर (!err) अणु
-		err = percpu_counter_init(&sbi->s_मुक्तinodes_counter,
-				ext2_count_मुक्त_inodes(sb), GFP_KERNEL);
-	पूर्ण
-	अगर (!err) अणु
+	err = percpu_counter_init(&sbi->s_freeblocks_counter,
+				ext2_count_free_blocks(sb), GFP_KERNEL);
+	if (!err) {
+		err = percpu_counter_init(&sbi->s_freeinodes_counter,
+				ext2_count_free_inodes(sb), GFP_KERNEL);
+	}
+	if (!err) {
 		err = percpu_counter_init(&sbi->s_dirs_counter,
 				ext2_count_dirs(sb), GFP_KERNEL);
-	पूर्ण
-	अगर (err) अणु
+	}
+	if (err) {
 		ret = err;
 		ext2_msg(sb, KERN_ERR, "error: insufficient memory");
-		जाओ failed_mount3;
-	पूर्ण
+		goto failed_mount3;
+	}
 
-#अगर_घोषित CONFIG_EXT2_FS_XATTR
+#ifdef CONFIG_EXT2_FS_XATTR
 	sbi->s_ea_block_cache = ext2_xattr_create_cache();
-	अगर (!sbi->s_ea_block_cache) अणु
+	if (!sbi->s_ea_block_cache) {
 		ret = -ENOMEM;
 		ext2_msg(sb, KERN_ERR, "Failed to create ea_block_cache");
-		जाओ failed_mount3;
-	पूर्ण
-#पूर्ण_अगर
+		goto failed_mount3;
+	}
+#endif
 	/*
-	 * set up enough so that it can पढ़ो an inode
+	 * set up enough so that it can read an inode
 	 */
 	sb->s_op = &ext2_sops;
 	sb->s_export_op = &ext2_export_ops;
 	sb->s_xattr = ext2_xattr_handlers;
 
-#अगर_घोषित CONFIG_QUOTA
+#ifdef CONFIG_QUOTA
 	sb->dq_op = &dquot_operations;
 	sb->s_qcop = &ext2_quotactl_ops;
 	sb->s_quota_types = QTYPE_MASK_USR | QTYPE_MASK_GRP;
-#पूर्ण_अगर
+#endif
 
 	root = ext2_iget(sb, EXT2_ROOT_INO);
-	अगर (IS_ERR(root)) अणु
+	if (IS_ERR(root)) {
 		ret = PTR_ERR(root);
-		जाओ failed_mount3;
-	पूर्ण
-	अगर (!S_ISसूची(root->i_mode) || !root->i_blocks || !root->i_size) अणु
+		goto failed_mount3;
+	}
+	if (!S_ISDIR(root->i_mode) || !root->i_blocks || !root->i_size) {
 		iput(root);
 		ext2_msg(sb, KERN_ERR, "error: corrupt root inode, run e2fsck");
-		जाओ failed_mount3;
-	पूर्ण
+		goto failed_mount3;
+	}
 
 	sb->s_root = d_make_root(root);
-	अगर (!sb->s_root) अणु
+	if (!sb->s_root) {
 		ext2_msg(sb, KERN_ERR, "error: get root inode failed");
 		ret = -ENOMEM;
-		जाओ failed_mount3;
-	पूर्ण
-	अगर (EXT2_HAS_COMPAT_FEATURE(sb, EXT3_FEATURE_COMPAT_HAS_JOURNAL))
+		goto failed_mount3;
+	}
+	if (EXT2_HAS_COMPAT_FEATURE(sb, EXT3_FEATURE_COMPAT_HAS_JOURNAL))
 		ext2_msg(sb, KERN_WARNING,
 			"warning: mounting ext3 filesystem as ext2");
-	अगर (ext2_setup_super (sb, es, sb_rकरोnly(sb)))
+	if (ext2_setup_super (sb, es, sb_rdonly(sb)))
 		sb->s_flags |= SB_RDONLY;
-	ext2_ग_लिखो_super(sb);
-	वापस 0;
+	ext2_write_super(sb);
+	return 0;
 
 cantfind_ext2:
-	अगर (!silent)
+	if (!silent)
 		ext2_msg(sb, KERN_ERR,
 			"error: can't find an ext2 filesystem on dev %s.",
 			sb->s_id);
-	जाओ failed_mount;
+	goto failed_mount;
 failed_mount3:
 	ext2_xattr_destroy_cache(sbi->s_ea_block_cache);
-	percpu_counter_destroy(&sbi->s_मुक्तblocks_counter);
-	percpu_counter_destroy(&sbi->s_मुक्तinodes_counter);
+	percpu_counter_destroy(&sbi->s_freeblocks_counter);
+	percpu_counter_destroy(&sbi->s_freeinodes_counter);
 	percpu_counter_destroy(&sbi->s_dirs_counter);
 failed_mount2:
-	क्रम (i = 0; i < db_count; i++)
-		brअन्यथा(sbi->s_group_desc[i]);
+	for (i = 0; i < db_count; i++)
+		brelse(sbi->s_group_desc[i]);
 failed_mount_group_desc:
-	kमुक्त(sbi->s_group_desc);
-	kमुक्त(sbi->s_debts);
+	kfree(sbi->s_group_desc);
+	kfree(sbi->s_debts);
 failed_mount:
-	brअन्यथा(bh);
+	brelse(bh);
 failed_sbi:
-	sb->s_fs_info = शून्य;
-	kमुक्त(sbi->s_blockgroup_lock);
-	kमुक्त(sbi);
+	sb->s_fs_info = NULL;
+	kfree(sbi->s_blockgroup_lock);
+	kfree(sbi);
 failed:
 	fs_put_dax(dax_dev);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम ext2_clear_super_error(काष्ठा super_block *sb)
-अणु
-	काष्ठा buffer_head *sbh = EXT2_SB(sb)->s_sbh;
+static void ext2_clear_super_error(struct super_block *sb)
+{
+	struct buffer_head *sbh = EXT2_SB(sb)->s_sbh;
 
-	अगर (buffer_ग_लिखो_io_error(sbh)) अणु
+	if (buffer_write_io_error(sbh)) {
 		/*
-		 * Oh, dear.  A previous attempt to ग_लिखो the
+		 * Oh, dear.  A previous attempt to write the
 		 * superblock failed.  This could happen because the
 		 * USB device was yanked out.  Or it could happen to
-		 * be a transient ग_लिखो error and maybe the block will
-		 * be remapped.  Nothing we can करो but to retry the
-		 * ग_लिखो and hope क्रम the best.
+		 * be a transient write error and maybe the block will
+		 * be remapped.  Nothing we can do but to retry the
+		 * write and hope for the best.
 		 */
 		ext2_msg(sb, KERN_ERR,
 		       "previous I/O error to superblock detected");
-		clear_buffer_ग_लिखो_io_error(sbh);
+		clear_buffer_write_io_error(sbh);
 		set_buffer_uptodate(sbh);
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम ext2_sync_super(काष्ठा super_block *sb, काष्ठा ext2_super_block *es,
-		     पूर्णांक रुको)
-अणु
+void ext2_sync_super(struct super_block *sb, struct ext2_super_block *es,
+		     int wait)
+{
 	ext2_clear_super_error(sb);
 	spin_lock(&EXT2_SB(sb)->s_lock);
-	es->s_मुक्त_blocks_count = cpu_to_le32(ext2_count_मुक्त_blocks(sb));
-	es->s_मुक्त_inodes_count = cpu_to_le32(ext2_count_मुक्त_inodes(sb));
-	es->s_wसमय = cpu_to_le32(kसमय_get_real_seconds());
-	/* unlock beक्रमe we करो IO */
+	es->s_free_blocks_count = cpu_to_le32(ext2_count_free_blocks(sb));
+	es->s_free_inodes_count = cpu_to_le32(ext2_count_free_inodes(sb));
+	es->s_wtime = cpu_to_le32(ktime_get_real_seconds());
+	/* unlock before we do IO */
 	spin_unlock(&EXT2_SB(sb)->s_lock);
 	mark_buffer_dirty(EXT2_SB(sb)->s_sbh);
-	अगर (रुको)
+	if (wait)
 		sync_dirty_buffer(EXT2_SB(sb)->s_sbh);
-पूर्ण
+}
 
 /*
- * In the second extended file प्रणाली, it is not necessary to
- * ग_लिखो the super block since we use a mapping of the
+ * In the second extended file system, it is not necessary to
+ * write the super block since we use a mapping of the
  * disk super block in a buffer.
  *
  * However, this function is still used to set the fs valid
  * flags to 0.  We need to set this flag to 0 since the fs
- * may have been checked जबतक mounted and e2fsck may have
+ * may have been checked while mounted and e2fsck may have
  * set s_state to EXT2_VALID_FS after some corrections.
  */
-अटल पूर्णांक ext2_sync_fs(काष्ठा super_block *sb, पूर्णांक रुको)
-अणु
-	काष्ठा ext2_sb_info *sbi = EXT2_SB(sb);
-	काष्ठा ext2_super_block *es = EXT2_SB(sb)->s_es;
+static int ext2_sync_fs(struct super_block *sb, int wait)
+{
+	struct ext2_sb_info *sbi = EXT2_SB(sb);
+	struct ext2_super_block *es = EXT2_SB(sb)->s_es;
 
 	/*
-	 * Write quota काष्ठाures to quota file, sync_blockdev() will ग_लिखो
+	 * Write quota structures to quota file, sync_blockdev() will write
 	 * them to disk later
 	 */
-	dquot_ग_लिखोback_dquots(sb, -1);
+	dquot_writeback_dquots(sb, -1);
 
 	spin_lock(&sbi->s_lock);
-	अगर (es->s_state & cpu_to_le16(EXT2_VALID_FS)) अणु
+	if (es->s_state & cpu_to_le16(EXT2_VALID_FS)) {
 		ext2_debug("setting valid to 0\n");
 		es->s_state &= cpu_to_le16(~EXT2_VALID_FS);
-	पूर्ण
+	}
 	spin_unlock(&sbi->s_lock);
-	ext2_sync_super(sb, es, रुको);
-	वापस 0;
-पूर्ण
+	ext2_sync_super(sb, es, wait);
+	return 0;
+}
 
-अटल पूर्णांक ext2_मुक्तze(काष्ठा super_block *sb)
-अणु
-	काष्ठा ext2_sb_info *sbi = EXT2_SB(sb);
+static int ext2_freeze(struct super_block *sb)
+{
+	struct ext2_sb_info *sbi = EXT2_SB(sb);
 
 	/*
 	 * Open but unlinked files present? Keep EXT2_VALID_FS flag cleared
-	 * because we have unattached inodes and thus fileप्रणाली is not fully
+	 * because we have unattached inodes and thus filesystem is not fully
 	 * consistent.
 	 */
-	अगर (atomic_दीर्घ_पढ़ो(&sb->s_हटाओ_count)) अणु
+	if (atomic_long_read(&sb->s_remove_count)) {
 		ext2_sync_fs(sb, 1);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 	/* Set EXT2_FS_VALID flag */
 	spin_lock(&sbi->s_lock);
 	sbi->s_es->s_state = cpu_to_le16(sbi->s_mount_state);
 	spin_unlock(&sbi->s_lock);
 	ext2_sync_super(sb, sbi->s_es, 1);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ext2_unमुक्तze(काष्ठा super_block *sb)
-अणु
-	/* Just ग_लिखो sb to clear EXT2_VALID_FS flag */
-	ext2_ग_लिखो_super(sb);
+static int ext2_unfreeze(struct super_block *sb)
+{
+	/* Just write sb to clear EXT2_VALID_FS flag */
+	ext2_write_super(sb);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ext2_ग_लिखो_super(काष्ठा super_block *sb)
-अणु
-	अगर (!sb_rकरोnly(sb))
+static void ext2_write_super(struct super_block *sb)
+{
+	if (!sb_rdonly(sb))
 		ext2_sync_fs(sb, 1);
-पूर्ण
+}
 
-अटल पूर्णांक ext2_remount (काष्ठा super_block * sb, पूर्णांक * flags, अक्षर * data)
-अणु
-	काष्ठा ext2_sb_info * sbi = EXT2_SB(sb);
-	काष्ठा ext2_super_block * es;
-	काष्ठा ext2_mount_options new_opts;
-	पूर्णांक err;
+static int ext2_remount (struct super_block * sb, int * flags, char * data)
+{
+	struct ext2_sb_info * sbi = EXT2_SB(sb);
+	struct ext2_super_block * es;
+	struct ext2_mount_options new_opts;
+	int err;
 
-	sync_fileप्रणाली(sb);
+	sync_filesystem(sb);
 
 	spin_lock(&sbi->s_lock);
 	new_opts.s_mount_opt = sbi->s_mount_opt;
@@ -1327,61 +1326,61 @@ failed:
 	new_opts.s_resgid = sbi->s_resgid;
 	spin_unlock(&sbi->s_lock);
 
-	अगर (!parse_options(data, sb, &new_opts))
-		वापस -EINVAL;
+	if (!parse_options(data, sb, &new_opts))
+		return -EINVAL;
 
 	spin_lock(&sbi->s_lock);
 	es = sbi->s_es;
-	अगर ((sbi->s_mount_opt ^ new_opts.s_mount_opt) & EXT2_MOUNT_DAX) अणु
+	if ((sbi->s_mount_opt ^ new_opts.s_mount_opt) & EXT2_MOUNT_DAX) {
 		ext2_msg(sb, KERN_WARNING, "warning: refusing change of "
 			 "dax flag with busy inodes while remounting");
 		new_opts.s_mount_opt ^= EXT2_MOUNT_DAX;
-	पूर्ण
-	अगर ((bool)(*flags & SB_RDONLY) == sb_rकरोnly(sb))
-		जाओ out_set;
-	अगर (*flags & SB_RDONLY) अणु
-		अगर (le16_to_cpu(es->s_state) & EXT2_VALID_FS ||
+	}
+	if ((bool)(*flags & SB_RDONLY) == sb_rdonly(sb))
+		goto out_set;
+	if (*flags & SB_RDONLY) {
+		if (le16_to_cpu(es->s_state) & EXT2_VALID_FS ||
 		    !(sbi->s_mount_state & EXT2_VALID_FS))
-			जाओ out_set;
+			goto out_set;
 
 		/*
-		 * OK, we are remounting a valid rw partition rकरोnly, so set
-		 * the rकरोnly flag and then mark the partition as valid again.
+		 * OK, we are remounting a valid rw partition rdonly, so set
+		 * the rdonly flag and then mark the partition as valid again.
 		 */
 		es->s_state = cpu_to_le16(sbi->s_mount_state);
-		es->s_mसमय = cpu_to_le32(kसमय_get_real_seconds());
+		es->s_mtime = cpu_to_le32(ktime_get_real_seconds());
 		spin_unlock(&sbi->s_lock);
 
 		err = dquot_suspend(sb, -1);
-		अगर (err < 0)
-			वापस err;
+		if (err < 0)
+			return err;
 
 		ext2_sync_super(sb, es, 1);
-	पूर्ण अन्यथा अणु
+	} else {
 		__le32 ret = EXT2_HAS_RO_COMPAT_FEATURE(sb,
 					       ~EXT2_FEATURE_RO_COMPAT_SUPP);
-		अगर (ret) अणु
+		if (ret) {
 			spin_unlock(&sbi->s_lock);
 			ext2_msg(sb, KERN_WARNING,
 				"warning: couldn't remount RDWR because of "
 				"unsupported optional features (%x).",
 				le32_to_cpu(ret));
-			वापस -EROFS;
-		पूर्ण
+			return -EROFS;
+		}
 		/*
-		 * Mounting a RDONLY partition पढ़ो-ग_लिखो, so reपढ़ो and
+		 * Mounting a RDONLY partition read-write, so reread and
 		 * store the current valid flag.  (It may have been changed
 		 * by e2fsck since we originally mounted the partition.)
 		 */
 		sbi->s_mount_state = le16_to_cpu(es->s_state);
-		अगर (!ext2_setup_super (sb, es, 0))
+		if (!ext2_setup_super (sb, es, 0))
 			sb->s_flags &= ~SB_RDONLY;
 		spin_unlock(&sbi->s_lock);
 
-		ext2_ग_लिखो_super(sb);
+		ext2_write_super(sb);
 
 		dquot_resume(sb, -1);
-	पूर्ण
+	}
 
 	spin_lock(&sbi->s_lock);
 out_set:
@@ -1392,31 +1391,31 @@ out_set:
 		(test_opt(sb, POSIX_ACL) ? SB_POSIXACL : 0);
 	spin_unlock(&sbi->s_lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ext2_statfs (काष्ठा dentry * dentry, काष्ठा kstatfs * buf)
-अणु
-	काष्ठा super_block *sb = dentry->d_sb;
-	काष्ठा ext2_sb_info *sbi = EXT2_SB(sb);
-	काष्ठा ext2_super_block *es = sbi->s_es;
+static int ext2_statfs (struct dentry * dentry, struct kstatfs * buf)
+{
+	struct super_block *sb = dentry->d_sb;
+	struct ext2_sb_info *sbi = EXT2_SB(sb);
+	struct ext2_super_block *es = sbi->s_es;
 
 	spin_lock(&sbi->s_lock);
 
-	अगर (test_opt (sb, MINIX_DF))
+	if (test_opt (sb, MINIX_DF))
 		sbi->s_overhead_last = 0;
-	अन्यथा अगर (sbi->s_blocks_last != le32_to_cpu(es->s_blocks_count)) अणु
-		अचिन्हित दीर्घ i, overhead = 0;
+	else if (sbi->s_blocks_last != le32_to_cpu(es->s_blocks_count)) {
+		unsigned long i, overhead = 0;
 		smp_rmb();
 
 		/*
-		 * Compute the overhead (FS काष्ठाures). This is स्थिरant
-		 * क्रम a given fileप्रणाली unless the number of block groups
-		 * changes so we cache the previous value until it करोes.
+		 * Compute the overhead (FS structures). This is constant
+		 * for a given filesystem unless the number of block groups
+		 * changes so we cache the previous value until it does.
 		 */
 
 		/*
-		 * All of the blocks beक्रमe first_data_block are
+		 * All of the blocks before first_data_block are
 		 * overhead
 		 */
 		overhead = le32_to_cpu(es->s_first_data_block);
@@ -1426,156 +1425,156 @@ out_set:
 		 * block group descriptors.  If the sparse superblocks
 		 * feature is turned on, then not all groups have this.
 		 */
-		क्रम (i = 0; i < sbi->s_groups_count; i++)
+		for (i = 0; i < sbi->s_groups_count; i++)
 			overhead += ext2_bg_has_super(sb, i) +
 				ext2_bg_num_gdb(sb, i);
 
 		/*
-		 * Every block group has an inode biपंचांगap, a block
-		 * biपंचांगap, and an inode table.
+		 * Every block group has an inode bitmap, a block
+		 * bitmap, and an inode table.
 		 */
 		overhead += (sbi->s_groups_count *
 			     (2 + sbi->s_itb_per_group));
 		sbi->s_overhead_last = overhead;
 		smp_wmb();
 		sbi->s_blocks_last = le32_to_cpu(es->s_blocks_count);
-	पूर्ण
+	}
 
 	buf->f_type = EXT2_SUPER_MAGIC;
 	buf->f_bsize = sb->s_blocksize;
 	buf->f_blocks = le32_to_cpu(es->s_blocks_count) - sbi->s_overhead_last;
-	buf->f_bमुक्त = ext2_count_मुक्त_blocks(sb);
-	es->s_मुक्त_blocks_count = cpu_to_le32(buf->f_bमुक्त);
-	buf->f_bavail = buf->f_bमुक्त - le32_to_cpu(es->s_r_blocks_count);
-	अगर (buf->f_bमुक्त < le32_to_cpu(es->s_r_blocks_count))
+	buf->f_bfree = ext2_count_free_blocks(sb);
+	es->s_free_blocks_count = cpu_to_le32(buf->f_bfree);
+	buf->f_bavail = buf->f_bfree - le32_to_cpu(es->s_r_blocks_count);
+	if (buf->f_bfree < le32_to_cpu(es->s_r_blocks_count))
 		buf->f_bavail = 0;
 	buf->f_files = le32_to_cpu(es->s_inodes_count);
-	buf->f_fमुक्त = ext2_count_मुक्त_inodes(sb);
-	es->s_मुक्त_inodes_count = cpu_to_le32(buf->f_fमुक्त);
+	buf->f_ffree = ext2_count_free_inodes(sb);
+	es->s_free_inodes_count = cpu_to_le32(buf->f_ffree);
 	buf->f_namelen = EXT2_NAME_LEN;
 	buf->f_fsid = uuid_to_fsid(es->s_uuid);
 	spin_unlock(&sbi->s_lock);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा dentry *ext2_mount(काष्ठा file_प्रणाली_type *fs_type,
-	पूर्णांक flags, स्थिर अक्षर *dev_name, व्योम *data)
-अणु
-	वापस mount_bdev(fs_type, flags, dev_name, data, ext2_fill_super);
-पूर्ण
+static struct dentry *ext2_mount(struct file_system_type *fs_type,
+	int flags, const char *dev_name, void *data)
+{
+	return mount_bdev(fs_type, flags, dev_name, data, ext2_fill_super);
+}
 
-#अगर_घोषित CONFIG_QUOTA
+#ifdef CONFIG_QUOTA
 
-/* Read data from quotafile - aव्योम pagecache and such because we cannot afक्रमd
+/* Read data from quotafile - avoid pagecache and such because we cannot afford
  * acquiring the locks... As quota files are never truncated and quota code
- * itself serializes the operations (and no one अन्यथा should touch the files)
- * we करोn't have to be afraid of races */
-अटल sमाप_प्रकार ext2_quota_पढ़ो(काष्ठा super_block *sb, पूर्णांक type, अक्षर *data,
-			       माप_प्रकार len, loff_t off)
-अणु
-	काष्ठा inode *inode = sb_dqopt(sb)->files[type];
+ * itself serializes the operations (and no one else should touch the files)
+ * we don't have to be afraid of races */
+static ssize_t ext2_quota_read(struct super_block *sb, int type, char *data,
+			       size_t len, loff_t off)
+{
+	struct inode *inode = sb_dqopt(sb)->files[type];
 	sector_t blk = off >> EXT2_BLOCK_SIZE_BITS(sb);
-	पूर्णांक err = 0;
-	पूर्णांक offset = off & (sb->s_blocksize - 1);
-	पूर्णांक tocopy;
-	माप_प्रकार toपढ़ो;
-	काष्ठा buffer_head पंचांगp_bh;
-	काष्ठा buffer_head *bh;
-	loff_t i_size = i_size_पढ़ो(inode);
+	int err = 0;
+	int offset = off & (sb->s_blocksize - 1);
+	int tocopy;
+	size_t toread;
+	struct buffer_head tmp_bh;
+	struct buffer_head *bh;
+	loff_t i_size = i_size_read(inode);
 
-	अगर (off > i_size)
-		वापस 0;
-	अगर (off+len > i_size)
+	if (off > i_size)
+		return 0;
+	if (off+len > i_size)
 		len = i_size-off;
-	toपढ़ो = len;
-	जबतक (toपढ़ो > 0) अणु
-		tocopy = sb->s_blocksize - offset < toपढ़ो ?
-				sb->s_blocksize - offset : toपढ़ो;
+	toread = len;
+	while (toread > 0) {
+		tocopy = sb->s_blocksize - offset < toread ?
+				sb->s_blocksize - offset : toread;
 
-		पंचांगp_bh.b_state = 0;
-		पंचांगp_bh.b_size = sb->s_blocksize;
-		err = ext2_get_block(inode, blk, &पंचांगp_bh, 0);
-		अगर (err < 0)
-			वापस err;
-		अगर (!buffer_mapped(&पंचांगp_bh))	/* A hole? */
-			स_रखो(data, 0, tocopy);
-		अन्यथा अणु
-			bh = sb_bपढ़ो(sb, पंचांगp_bh.b_blocknr);
-			अगर (!bh)
-				वापस -EIO;
-			स_नकल(data, bh->b_data+offset, tocopy);
-			brअन्यथा(bh);
-		पूर्ण
+		tmp_bh.b_state = 0;
+		tmp_bh.b_size = sb->s_blocksize;
+		err = ext2_get_block(inode, blk, &tmp_bh, 0);
+		if (err < 0)
+			return err;
+		if (!buffer_mapped(&tmp_bh))	/* A hole? */
+			memset(data, 0, tocopy);
+		else {
+			bh = sb_bread(sb, tmp_bh.b_blocknr);
+			if (!bh)
+				return -EIO;
+			memcpy(data, bh->b_data+offset, tocopy);
+			brelse(bh);
+		}
 		offset = 0;
-		toपढ़ो -= tocopy;
+		toread -= tocopy;
 		data += tocopy;
 		blk++;
-	पूर्ण
-	वापस len;
-पूर्ण
+	}
+	return len;
+}
 
 /* Write to quotafile */
-अटल sमाप_प्रकार ext2_quota_ग_लिखो(काष्ठा super_block *sb, पूर्णांक type,
-				स्थिर अक्षर *data, माप_प्रकार len, loff_t off)
-अणु
-	काष्ठा inode *inode = sb_dqopt(sb)->files[type];
+static ssize_t ext2_quota_write(struct super_block *sb, int type,
+				const char *data, size_t len, loff_t off)
+{
+	struct inode *inode = sb_dqopt(sb)->files[type];
 	sector_t blk = off >> EXT2_BLOCK_SIZE_BITS(sb);
-	पूर्णांक err = 0;
-	पूर्णांक offset = off & (sb->s_blocksize - 1);
-	पूर्णांक tocopy;
-	माप_प्रकार toग_लिखो = len;
-	काष्ठा buffer_head पंचांगp_bh;
-	काष्ठा buffer_head *bh;
+	int err = 0;
+	int offset = off & (sb->s_blocksize - 1);
+	int tocopy;
+	size_t towrite = len;
+	struct buffer_head tmp_bh;
+	struct buffer_head *bh;
 
-	जबतक (toग_लिखो > 0) अणु
-		tocopy = sb->s_blocksize - offset < toग_लिखो ?
-				sb->s_blocksize - offset : toग_लिखो;
+	while (towrite > 0) {
+		tocopy = sb->s_blocksize - offset < towrite ?
+				sb->s_blocksize - offset : towrite;
 
-		पंचांगp_bh.b_state = 0;
-		पंचांगp_bh.b_size = sb->s_blocksize;
-		err = ext2_get_block(inode, blk, &पंचांगp_bh, 1);
-		अगर (err < 0)
-			जाओ out;
-		अगर (offset || tocopy != EXT2_BLOCK_SIZE(sb))
-			bh = sb_bपढ़ो(sb, पंचांगp_bh.b_blocknr);
-		अन्यथा
-			bh = sb_getblk(sb, पंचांगp_bh.b_blocknr);
-		अगर (unlikely(!bh)) अणु
+		tmp_bh.b_state = 0;
+		tmp_bh.b_size = sb->s_blocksize;
+		err = ext2_get_block(inode, blk, &tmp_bh, 1);
+		if (err < 0)
+			goto out;
+		if (offset || tocopy != EXT2_BLOCK_SIZE(sb))
+			bh = sb_bread(sb, tmp_bh.b_blocknr);
+		else
+			bh = sb_getblk(sb, tmp_bh.b_blocknr);
+		if (unlikely(!bh)) {
 			err = -EIO;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		lock_buffer(bh);
-		स_नकल(bh->b_data+offset, data, tocopy);
+		memcpy(bh->b_data+offset, data, tocopy);
 		flush_dcache_page(bh->b_page);
 		set_buffer_uptodate(bh);
 		mark_buffer_dirty(bh);
 		unlock_buffer(bh);
-		brअन्यथा(bh);
+		brelse(bh);
 		offset = 0;
-		toग_लिखो -= tocopy;
+		towrite -= tocopy;
 		data += tocopy;
 		blk++;
-	पूर्ण
+	}
 out:
-	अगर (len == toग_लिखो)
-		वापस err;
-	अगर (inode->i_size < off+len-toग_लिखो)
-		i_size_ग_लिखो(inode, off+len-toग_लिखो);
+	if (len == towrite)
+		return err;
+	if (inode->i_size < off+len-towrite)
+		i_size_write(inode, off+len-towrite);
 	inode_inc_iversion(inode);
-	inode->i_mसमय = inode->i_स_समय = current_समय(inode);
+	inode->i_mtime = inode->i_ctime = current_time(inode);
 	mark_inode_dirty(inode);
-	वापस len - toग_लिखो;
-पूर्ण
+	return len - towrite;
+}
 
-अटल पूर्णांक ext2_quota_on(काष्ठा super_block *sb, पूर्णांक type, पूर्णांक क्रमmat_id,
-			 स्थिर काष्ठा path *path)
-अणु
-	पूर्णांक err;
-	काष्ठा inode *inode;
+static int ext2_quota_on(struct super_block *sb, int type, int format_id,
+			 const struct path *path)
+{
+	int err;
+	struct inode *inode;
 
-	err = dquot_quota_on(sb, type, क्रमmat_id, path);
-	अगर (err)
-		वापस err;
+	err = dquot_quota_on(sb, type, format_id, path);
+	if (err)
+		return err;
 
 	inode = d_inode(path->dentry);
 	inode_lock(inode);
@@ -1585,20 +1584,20 @@ out:
 	inode_unlock(inode);
 	mark_inode_dirty(inode);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ext2_quota_off(काष्ठा super_block *sb, पूर्णांक type)
-अणु
-	काष्ठा inode *inode = sb_dqopt(sb)->files[type];
-	पूर्णांक err;
+static int ext2_quota_off(struct super_block *sb, int type)
+{
+	struct inode *inode = sb_dqopt(sb)->files[type];
+	int err;
 
-	अगर (!inode || !igrab(inode))
-		जाओ out;
+	if (!inode || !igrab(inode))
+		goto out;
 
 	err = dquot_quota_off(sb, type);
-	अगर (err)
-		जाओ out_put;
+	if (err)
+		goto out_put;
 
 	inode_lock(inode);
 	EXT2_I(inode)->i_flags &= ~(EXT2_NOATIME_FL | EXT2_IMMUTABLE_FL);
@@ -1607,46 +1606,46 @@ out:
 	mark_inode_dirty(inode);
 out_put:
 	iput(inode);
-	वापस err;
+	return err;
 out:
-	वापस dquot_quota_off(sb, type);
-पूर्ण
+	return dquot_quota_off(sb, type);
+}
 
-#पूर्ण_अगर
+#endif
 
-अटल काष्ठा file_प्रणाली_type ext2_fs_type = अणु
+static struct file_system_type ext2_fs_type = {
 	.owner		= THIS_MODULE,
 	.name		= "ext2",
 	.mount		= ext2_mount,
-	.समाप्त_sb	= समाप्त_block_super,
+	.kill_sb	= kill_block_super,
 	.fs_flags	= FS_REQUIRES_DEV,
-पूर्ण;
+};
 MODULE_ALIAS_FS("ext2");
 
-अटल पूर्णांक __init init_ext2_fs(व्योम)
-अणु
-	पूर्णांक err;
+static int __init init_ext2_fs(void)
+{
+	int err;
 
 	err = init_inodecache();
-	अगर (err)
-		वापस err;
-        err = रेजिस्टर_fileप्रणाली(&ext2_fs_type);
-	अगर (err)
-		जाओ out;
-	वापस 0;
+	if (err)
+		return err;
+        err = register_filesystem(&ext2_fs_type);
+	if (err)
+		goto out;
+	return 0;
 out:
 	destroy_inodecache();
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम __निकास निकास_ext2_fs(व्योम)
-अणु
-	unरेजिस्टर_fileप्रणाली(&ext2_fs_type);
+static void __exit exit_ext2_fs(void)
+{
+	unregister_filesystem(&ext2_fs_type);
 	destroy_inodecache();
-पूर्ण
+}
 
 MODULE_AUTHOR("Remy Card and others");
 MODULE_DESCRIPTION("Second Extended Filesystem");
 MODULE_LICENSE("GPL");
 module_init(init_ext2_fs)
-module_निकास(निकास_ext2_fs)
+module_exit(exit_ext2_fs)

@@ -1,169 +1,168 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * transition.c - Kernel Live Patching transition functions
  *
  * Copyright (C) 2015-2016 Josh Poimboeuf <jpoimboe@redhat.com>
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/cpu.h>
-#समावेश <linux/stacktrace.h>
-#समावेश <linux/tracehook.h>
-#समावेश "core.h"
-#समावेश "patch.h"
-#समावेश "transition.h"
-#समावेश "../sched/sched.h"
+#include <linux/cpu.h>
+#include <linux/stacktrace.h>
+#include <linux/tracehook.h>
+#include "core.h"
+#include "patch.h"
+#include "transition.h"
+#include "../sched/sched.h"
 
-#घोषणा MAX_STACK_ENTRIES  100
-#घोषणा STACK_ERR_BUF_SIZE 128
+#define MAX_STACK_ENTRIES  100
+#define STACK_ERR_BUF_SIZE 128
 
-#घोषणा SIGNALS_TIMEOUT 15
+#define SIGNALS_TIMEOUT 15
 
-काष्ठा klp_patch *klp_transition_patch;
+struct klp_patch *klp_transition_patch;
 
-अटल पूर्णांक klp_target_state = KLP_UNDEFINED;
+static int klp_target_state = KLP_UNDEFINED;
 
-अटल अचिन्हित पूर्णांक klp_संकेतs_cnt;
+static unsigned int klp_signals_cnt;
 
 /*
- * This work can be perक्रमmed periodically to finish patching or unpatching any
+ * This work can be performed periodically to finish patching or unpatching any
  * "straggler" tasks which failed to transition in the first attempt.
  */
-अटल व्योम klp_transition_work_fn(काष्ठा work_काष्ठा *work)
-अणु
+static void klp_transition_work_fn(struct work_struct *work)
+{
 	mutex_lock(&klp_mutex);
 
-	अगर (klp_transition_patch)
+	if (klp_transition_patch)
 		klp_try_complete_transition();
 
 	mutex_unlock(&klp_mutex);
-पूर्ण
-अटल DECLARE_DELAYED_WORK(klp_transition_work, klp_transition_work_fn);
+}
+static DECLARE_DELAYED_WORK(klp_transition_work, klp_transition_work_fn);
 
 /*
- * This function is just a stub to implement a hard क्रमce
+ * This function is just a stub to implement a hard force
  * of synchronize_rcu(). This requires synchronizing
  * tasks even in userspace and idle.
  */
-अटल व्योम klp_sync(काष्ठा work_काष्ठा *work)
-अणु
-पूर्ण
+static void klp_sync(struct work_struct *work)
+{
+}
 
 /*
  * We allow to patch also functions where RCU is not watching,
- * e.g. beक्रमe user_निकास(). We can not rely on the RCU infraकाष्ठाure
- * to करो the synchronization. Instead hard क्रमce the sched synchronization.
+ * e.g. before user_exit(). We can not rely on the RCU infrastructure
+ * to do the synchronization. Instead hard force the sched synchronization.
  *
- * This approach allows to use RCU functions क्रम manipulating func_stack
+ * This approach allows to use RCU functions for manipulating func_stack
  * safely.
  */
-अटल व्योम klp_synchronize_transition(व्योम)
-अणु
+static void klp_synchronize_transition(void)
+{
 	schedule_on_each_cpu(klp_sync);
-पूर्ण
+}
 
 /*
  * The transition to the target patch state is complete.  Clean up the data
- * काष्ठाures.
+ * structures.
  */
-अटल व्योम klp_complete_transition(व्योम)
-अणु
-	काष्ठा klp_object *obj;
-	काष्ठा klp_func *func;
-	काष्ठा task_काष्ठा *g, *task;
-	अचिन्हित पूर्णांक cpu;
+static void klp_complete_transition(void)
+{
+	struct klp_object *obj;
+	struct klp_func *func;
+	struct task_struct *g, *task;
+	unsigned int cpu;
 
 	pr_debug("'%s': completing %s transition\n",
 		 klp_transition_patch->mod->name,
 		 klp_target_state == KLP_PATCHED ? "patching" : "unpatching");
 
-	अगर (klp_transition_patch->replace && klp_target_state == KLP_PATCHED) अणु
+	if (klp_transition_patch->replace && klp_target_state == KLP_PATCHED) {
 		klp_unpatch_replaced_patches(klp_transition_patch);
 		klp_discard_nops(klp_transition_patch);
-	पूर्ण
+	}
 
-	अगर (klp_target_state == KLP_UNPATCHED) अणु
+	if (klp_target_state == KLP_UNPATCHED) {
 		/*
 		 * All tasks have transitioned to KLP_UNPATCHED so we can now
-		 * हटाओ the new functions from the func_stack.
+		 * remove the new functions from the func_stack.
 		 */
 		klp_unpatch_objects(klp_transition_patch);
 
 		/*
-		 * Make sure klp_ftrace_handler() can no दीर्घer see functions
+		 * Make sure klp_ftrace_handler() can no longer see functions
 		 * from this patch on the ops->func_stack.  Otherwise, after
-		 * func->transition माला_लो cleared, the handler may choose a
-		 * हटाओd function.
+		 * func->transition gets cleared, the handler may choose a
+		 * removed function.
 		 */
 		klp_synchronize_transition();
-	पूर्ण
+	}
 
-	klp_क्रम_each_object(klp_transition_patch, obj)
-		klp_क्रम_each_func(obj, func)
+	klp_for_each_object(klp_transition_patch, obj)
+		klp_for_each_func(obj, func)
 			func->transition = false;
 
 	/* Prevent klp_ftrace_handler() from seeing KLP_UNDEFINED state */
-	अगर (klp_target_state == KLP_PATCHED)
+	if (klp_target_state == KLP_PATCHED)
 		klp_synchronize_transition();
 
-	पढ़ो_lock(&tasklist_lock);
-	क्रम_each_process_thपढ़ो(g, task) अणु
-		WARN_ON_ONCE(test_tsk_thपढ़ो_flag(task, TIF_PATCH_PENDING));
+	read_lock(&tasklist_lock);
+	for_each_process_thread(g, task) {
+		WARN_ON_ONCE(test_tsk_thread_flag(task, TIF_PATCH_PENDING));
 		task->patch_state = KLP_UNDEFINED;
-	पूर्ण
-	पढ़ो_unlock(&tasklist_lock);
+	}
+	read_unlock(&tasklist_lock);
 
-	क्रम_each_possible_cpu(cpu) अणु
+	for_each_possible_cpu(cpu) {
 		task = idle_task(cpu);
-		WARN_ON_ONCE(test_tsk_thपढ़ो_flag(task, TIF_PATCH_PENDING));
+		WARN_ON_ONCE(test_tsk_thread_flag(task, TIF_PATCH_PENDING));
 		task->patch_state = KLP_UNDEFINED;
-	पूर्ण
+	}
 
-	klp_क्रम_each_object(klp_transition_patch, obj) अणु
-		अगर (!klp_is_object_loaded(obj))
-			जारी;
-		अगर (klp_target_state == KLP_PATCHED)
+	klp_for_each_object(klp_transition_patch, obj) {
+		if (!klp_is_object_loaded(obj))
+			continue;
+		if (klp_target_state == KLP_PATCHED)
 			klp_post_patch_callback(obj);
-		अन्यथा अगर (klp_target_state == KLP_UNPATCHED)
+		else if (klp_target_state == KLP_UNPATCHED)
 			klp_post_unpatch_callback(obj);
-	पूर्ण
+	}
 
 	pr_notice("'%s': %s complete\n", klp_transition_patch->mod->name,
 		  klp_target_state == KLP_PATCHED ? "patching" : "unpatching");
 
 	klp_target_state = KLP_UNDEFINED;
-	klp_transition_patch = शून्य;
-पूर्ण
+	klp_transition_patch = NULL;
+}
 
 /*
- * This is called in the error path, to cancel a transition beक्रमe it has
+ * This is called in the error path, to cancel a transition before it has
  * started, i.e. klp_init_transition() has been called but
  * klp_start_transition() hasn't.  If the transition *has* been started,
  * klp_reverse_transition() should be used instead.
  */
-व्योम klp_cancel_transition(व्योम)
-अणु
-	अगर (WARN_ON_ONCE(klp_target_state != KLP_PATCHED))
-		वापस;
+void klp_cancel_transition(void)
+{
+	if (WARN_ON_ONCE(klp_target_state != KLP_PATCHED))
+		return;
 
 	pr_debug("'%s': canceling patching transition, going to unpatch\n",
 		 klp_transition_patch->mod->name);
 
 	klp_target_state = KLP_UNPATCHED;
 	klp_complete_transition();
-पूर्ण
+}
 
 /*
  * Switch the patched state of the task to the set of functions in the target
  * patch state.
  *
  * NOTE: If task is not 'current', the caller must ensure the task is inactive.
- * Otherwise klp_ftrace_handler() might पढ़ो the wrong 'patch_state' value.
+ * Otherwise klp_ftrace_handler() might read the wrong 'patch_state' value.
  */
-व्योम klp_update_patch_state(काष्ठा task_काष्ठा *task)
-अणु
+void klp_update_patch_state(struct task_struct *task)
+{
 	/*
 	 * A variant of synchronize_rcu() is used to allow patching functions
 	 * where RCU is not watching, see klp_synchronize_transition().
@@ -171,299 +170,299 @@
 	preempt_disable_notrace();
 
 	/*
-	 * This test_and_clear_tsk_thपढ़ो_flag() call also serves as a पढ़ो
-	 * barrier (smp_rmb) क्रम two हालs:
+	 * This test_and_clear_tsk_thread_flag() call also serves as a read
+	 * barrier (smp_rmb) for two cases:
 	 *
-	 * 1) Enक्रमce the order of the TIF_PATCH_PENDING पढ़ो and the
-	 *    klp_target_state पढ़ो.  The corresponding ग_लिखो barrier is in
+	 * 1) Enforce the order of the TIF_PATCH_PENDING read and the
+	 *    klp_target_state read.  The corresponding write barrier is in
 	 *    klp_init_transition().
 	 *
-	 * 2) Enक्रमce the order of the TIF_PATCH_PENDING पढ़ो and a future पढ़ो
-	 *    of func->transition, अगर klp_ftrace_handler() is called later on
+	 * 2) Enforce the order of the TIF_PATCH_PENDING read and a future read
+	 *    of func->transition, if klp_ftrace_handler() is called later on
 	 *    the same CPU.  See __klp_disable_patch().
 	 */
-	अगर (test_and_clear_tsk_thपढ़ो_flag(task, TIF_PATCH_PENDING))
+	if (test_and_clear_tsk_thread_flag(task, TIF_PATCH_PENDING))
 		task->patch_state = READ_ONCE(klp_target_state);
 
 	preempt_enable_notrace();
-पूर्ण
+}
 
 /*
  * Determine whether the given stack trace includes any references to a
  * to-be-patched or to-be-unpatched function.
  */
-अटल पूर्णांक klp_check_stack_func(काष्ठा klp_func *func, अचिन्हित दीर्घ *entries,
-				अचिन्हित पूर्णांक nr_entries)
-अणु
-	अचिन्हित दीर्घ func_addr, func_size, address;
-	काष्ठा klp_ops *ops;
-	पूर्णांक i;
+static int klp_check_stack_func(struct klp_func *func, unsigned long *entries,
+				unsigned int nr_entries)
+{
+	unsigned long func_addr, func_size, address;
+	struct klp_ops *ops;
+	int i;
 
-	क्रम (i = 0; i < nr_entries; i++) अणु
+	for (i = 0; i < nr_entries; i++) {
 		address = entries[i];
 
-		अगर (klp_target_state == KLP_UNPATCHED) अणु
+		if (klp_target_state == KLP_UNPATCHED) {
 			 /*
-			  * Check क्रम the to-be-unpatched function
+			  * Check for the to-be-unpatched function
 			  * (the func itself).
 			  */
-			func_addr = (अचिन्हित दीर्घ)func->new_func;
+			func_addr = (unsigned long)func->new_func;
 			func_size = func->new_size;
-		पूर्ण अन्यथा अणु
+		} else {
 			/*
-			 * Check क्रम the to-be-patched function
+			 * Check for the to-be-patched function
 			 * (the previous func).
 			 */
 			ops = klp_find_ops(func->old_func);
 
-			अगर (list_is_singular(&ops->func_stack)) अणु
+			if (list_is_singular(&ops->func_stack)) {
 				/* original function */
-				func_addr = (अचिन्हित दीर्घ)func->old_func;
+				func_addr = (unsigned long)func->old_func;
 				func_size = func->old_size;
-			पूर्ण अन्यथा अणु
+			} else {
 				/* previously patched function */
-				काष्ठा klp_func *prev;
+				struct klp_func *prev;
 
 				prev = list_next_entry(func, stack_node);
-				func_addr = (अचिन्हित दीर्घ)prev->new_func;
+				func_addr = (unsigned long)prev->new_func;
 				func_size = prev->new_size;
-			पूर्ण
-		पूर्ण
+			}
+		}
 
-		अगर (address >= func_addr && address < func_addr + func_size)
-			वापस -EAGAIN;
-	पूर्ण
+		if (address >= func_addr && address < func_addr + func_size)
+			return -EAGAIN;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Determine whether it's safe to transition the task to the target patch state
- * by looking क्रम any to-be-patched or to-be-unpatched functions on its stack.
+ * by looking for any to-be-patched or to-be-unpatched functions on its stack.
  */
-अटल पूर्णांक klp_check_stack(काष्ठा task_काष्ठा *task, अक्षर *err_buf)
-अणु
-	अटल अचिन्हित दीर्घ entries[MAX_STACK_ENTRIES];
-	काष्ठा klp_object *obj;
-	काष्ठा klp_func *func;
-	पूर्णांक ret, nr_entries;
+static int klp_check_stack(struct task_struct *task, char *err_buf)
+{
+	static unsigned long entries[MAX_STACK_ENTRIES];
+	struct klp_object *obj;
+	struct klp_func *func;
+	int ret, nr_entries;
 
 	ret = stack_trace_save_tsk_reliable(task, entries, ARRAY_SIZE(entries));
-	अगर (ret < 0) अणु
-		snम_लिखो(err_buf, STACK_ERR_BUF_SIZE,
+	if (ret < 0) {
+		snprintf(err_buf, STACK_ERR_BUF_SIZE,
 			 "%s: %s:%d has an unreliable stack\n",
 			 __func__, task->comm, task->pid);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 	nr_entries = ret;
 
-	klp_क्रम_each_object(klp_transition_patch, obj) अणु
-		अगर (!obj->patched)
-			जारी;
-		klp_क्रम_each_func(obj, func) अणु
+	klp_for_each_object(klp_transition_patch, obj) {
+		if (!obj->patched)
+			continue;
+		klp_for_each_func(obj, func) {
 			ret = klp_check_stack_func(func, entries, nr_entries);
-			अगर (ret) अणु
-				snम_लिखो(err_buf, STACK_ERR_BUF_SIZE,
+			if (ret) {
+				snprintf(err_buf, STACK_ERR_BUF_SIZE,
 					 "%s: %s:%d is sleeping on function %s\n",
 					 __func__, task->comm, task->pid,
 					 func->old_name);
-				वापस ret;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				return ret;
+			}
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Try to safely चयन a task to the target patch state.  If it's currently
+ * Try to safely switch a task to the target patch state.  If it's currently
  * running, or it's sleeping on a to-be-patched or to-be-unpatched function, or
- * अगर the stack is unreliable, वापस false.
+ * if the stack is unreliable, return false.
  */
-अटल bool klp_try_चयन_task(काष्ठा task_काष्ठा *task)
-अणु
-	अटल अक्षर err_buf[STACK_ERR_BUF_SIZE];
-	काष्ठा rq *rq;
-	काष्ठा rq_flags flags;
-	पूर्णांक ret;
+static bool klp_try_switch_task(struct task_struct *task)
+{
+	static char err_buf[STACK_ERR_BUF_SIZE];
+	struct rq *rq;
+	struct rq_flags flags;
+	int ret;
 	bool success = false;
 
 	err_buf[0] = '\0';
 
-	/* check अगर this task has alपढ़ोy चयनed over */
-	अगर (task->patch_state == klp_target_state)
-		वापस true;
+	/* check if this task has already switched over */
+	if (task->patch_state == klp_target_state)
+		return true;
 
 	/*
-	 * For arches which करोn't have reliable stack traces, we have to rely
-	 * on other methods (e.g., चयनing tasks at kernel निकास).
+	 * For arches which don't have reliable stack traces, we have to rely
+	 * on other methods (e.g., switching tasks at kernel exit).
 	 */
-	अगर (!klp_have_reliable_stack())
-		वापस false;
+	if (!klp_have_reliable_stack())
+		return false;
 
 	/*
-	 * Now try to check the stack क्रम any to-be-patched or to-be-unpatched
-	 * functions.  If all goes well, चयन the task to the target patch
+	 * Now try to check the stack for any to-be-patched or to-be-unpatched
+	 * functions.  If all goes well, switch the task to the target patch
 	 * state.
 	 */
 	rq = task_rq_lock(task, &flags);
 
-	अगर (task_running(rq, task) && task != current) अणु
-		snम_लिखो(err_buf, STACK_ERR_BUF_SIZE,
+	if (task_running(rq, task) && task != current) {
+		snprintf(err_buf, STACK_ERR_BUF_SIZE,
 			 "%s: %s:%d is running\n", __func__, task->comm,
 			 task->pid);
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
 	ret = klp_check_stack(task, err_buf);
-	अगर (ret)
-		जाओ करोne;
+	if (ret)
+		goto done;
 
 	success = true;
 
-	clear_tsk_thपढ़ो_flag(task, TIF_PATCH_PENDING);
+	clear_tsk_thread_flag(task, TIF_PATCH_PENDING);
 	task->patch_state = klp_target_state;
 
-करोne:
+done:
 	task_rq_unlock(rq, task, &flags);
 
 	/*
-	 * Due to console deadlock issues, pr_debug() can't be used जबतक
+	 * Due to console deadlock issues, pr_debug() can't be used while
 	 * holding the task rq lock.  Instead we have to use a temporary buffer
-	 * and prपूर्णांक the debug message after releasing the lock.
+	 * and print the debug message after releasing the lock.
 	 */
-	अगर (err_buf[0] != '\0')
+	if (err_buf[0] != '\0')
 		pr_debug("%s", err_buf);
 
-	वापस success;
-पूर्ण
+	return success;
+}
 
 /*
- * Sends a fake संकेत to all non-kthपढ़ो tasks with TIF_PATCH_PENDING set.
- * Kthपढ़ोs with TIF_PATCH_PENDING set are woken up.
+ * Sends a fake signal to all non-kthread tasks with TIF_PATCH_PENDING set.
+ * Kthreads with TIF_PATCH_PENDING set are woken up.
  */
-अटल व्योम klp_send_संकेतs(व्योम)
-अणु
-	काष्ठा task_काष्ठा *g, *task;
+static void klp_send_signals(void)
+{
+	struct task_struct *g, *task;
 
-	अगर (klp_संकेतs_cnt == SIGNALS_TIMEOUT)
+	if (klp_signals_cnt == SIGNALS_TIMEOUT)
 		pr_notice("signaling remaining tasks\n");
 
-	पढ़ो_lock(&tasklist_lock);
-	क्रम_each_process_thपढ़ो(g, task) अणु
-		अगर (!klp_patch_pending(task))
-			जारी;
+	read_lock(&tasklist_lock);
+	for_each_process_thread(g, task) {
+		if (!klp_patch_pending(task))
+			continue;
 
 		/*
 		 * There is a small race here. We could see TIF_PATCH_PENDING
-		 * set and decide to wake up a kthपढ़ो or send a fake संकेत.
-		 * Meanजबतक the task could migrate itself and the action
+		 * set and decide to wake up a kthread or send a fake signal.
+		 * Meanwhile the task could migrate itself and the action
 		 * would be meaningless. It is not serious though.
 		 */
-		अगर (task->flags & PF_KTHREAD) अणु
+		if (task->flags & PF_KTHREAD) {
 			/*
-			 * Wake up a kthपढ़ो which sleeps पूर्णांकerruptedly and
+			 * Wake up a kthread which sleeps interruptedly and
 			 * still has not been migrated.
 			 */
 			wake_up_state(task, TASK_INTERRUPTIBLE);
-		पूर्ण अन्यथा अणु
+		} else {
 			/*
-			 * Send fake संकेत to all non-kthपढ़ो tasks which are
+			 * Send fake signal to all non-kthread tasks which are
 			 * still not migrated.
 			 */
-			set_notअगरy_संकेत(task);
-		पूर्ण
-	पूर्ण
-	पढ़ो_unlock(&tasklist_lock);
-पूर्ण
+			set_notify_signal(task);
+		}
+	}
+	read_unlock(&tasklist_lock);
+}
 
 /*
- * Try to चयन all reमुख्यing tasks to the target patch state by walking the
- * stacks of sleeping tasks and looking क्रम any to-be-patched or
+ * Try to switch all remaining tasks to the target patch state by walking the
+ * stacks of sleeping tasks and looking for any to-be-patched or
  * to-be-unpatched functions.  If such functions are found, the task can't be
- * चयनed yet.
+ * switched yet.
  *
  * If any tasks are still stuck in the initial patch state, schedule a retry.
  */
-व्योम klp_try_complete_transition(व्योम)
-अणु
-	अचिन्हित पूर्णांक cpu;
-	काष्ठा task_काष्ठा *g, *task;
-	काष्ठा klp_patch *patch;
+void klp_try_complete_transition(void)
+{
+	unsigned int cpu;
+	struct task_struct *g, *task;
+	struct klp_patch *patch;
 	bool complete = true;
 
 	WARN_ON_ONCE(klp_target_state == KLP_UNDEFINED);
 
 	/*
-	 * Try to चयन the tasks to the target patch state by walking their
-	 * stacks and looking क्रम any to-be-patched or to-be-unpatched
-	 * functions.  If such functions are found on a stack, or अगर the stack
-	 * is deemed unreliable, the task can't be चयनed yet.
+	 * Try to switch the tasks to the target patch state by walking their
+	 * stacks and looking for any to-be-patched or to-be-unpatched
+	 * functions.  If such functions are found on a stack, or if the stack
+	 * is deemed unreliable, the task can't be switched yet.
 	 *
-	 * Usually this will transition most (or all) of the tasks on a प्रणाली
+	 * Usually this will transition most (or all) of the tasks on a system
 	 * unless the patch includes changes to a very common function.
 	 */
-	पढ़ो_lock(&tasklist_lock);
-	क्रम_each_process_thपढ़ो(g, task)
-		अगर (!klp_try_चयन_task(task))
+	read_lock(&tasklist_lock);
+	for_each_process_thread(g, task)
+		if (!klp_try_switch_task(task))
 			complete = false;
-	पढ़ो_unlock(&tasklist_lock);
+	read_unlock(&tasklist_lock);
 
 	/*
-	 * Ditto क्रम the idle "swapper" tasks.
+	 * Ditto for the idle "swapper" tasks.
 	 */
 	get_online_cpus();
-	क्रम_each_possible_cpu(cpu) अणु
+	for_each_possible_cpu(cpu) {
 		task = idle_task(cpu);
-		अगर (cpu_online(cpu)) अणु
-			अगर (!klp_try_चयन_task(task))
+		if (cpu_online(cpu)) {
+			if (!klp_try_switch_task(task))
 				complete = false;
-		पूर्ण अन्यथा अगर (task->patch_state != klp_target_state) अणु
-			/* offline idle tasks can be चयनed immediately */
-			clear_tsk_thपढ़ो_flag(task, TIF_PATCH_PENDING);
+		} else if (task->patch_state != klp_target_state) {
+			/* offline idle tasks can be switched immediately */
+			clear_tsk_thread_flag(task, TIF_PATCH_PENDING);
 			task->patch_state = klp_target_state;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	put_online_cpus();
 
-	अगर (!complete) अणु
-		अगर (klp_संकेतs_cnt && !(klp_संकेतs_cnt % SIGNALS_TIMEOUT))
-			klp_send_संकेतs();
-		klp_संकेतs_cnt++;
+	if (!complete) {
+		if (klp_signals_cnt && !(klp_signals_cnt % SIGNALS_TIMEOUT))
+			klp_send_signals();
+		klp_signals_cnt++;
 
 		/*
-		 * Some tasks weren't able to be चयनed over.  Try again
-		 * later and/or रुको क्रम other methods like kernel निकास
-		 * चयनing.
+		 * Some tasks weren't able to be switched over.  Try again
+		 * later and/or wait for other methods like kernel exit
+		 * switching.
 		 */
 		schedule_delayed_work(&klp_transition_work,
-				      round_jअगरfies_relative(HZ));
-		वापस;
-	पूर्ण
+				      round_jiffies_relative(HZ));
+		return;
+	}
 
-	/* we're करोne, now cleanup the data काष्ठाures */
+	/* we're done, now cleanup the data structures */
 	patch = klp_transition_patch;
 	klp_complete_transition();
 
 	/*
-	 * It would make more sense to मुक्त the unused patches in
+	 * It would make more sense to free the unused patches in
 	 * klp_complete_transition() but it is called also
 	 * from klp_cancel_transition().
 	 */
-	अगर (!patch->enabled)
-		klp_मुक्त_patch_async(patch);
-	अन्यथा अगर (patch->replace)
-		klp_मुक्त_replaced_patches_async(patch);
-पूर्ण
+	if (!patch->enabled)
+		klp_free_patch_async(patch);
+	else if (patch->replace)
+		klp_free_replaced_patches_async(patch);
+}
 
 /*
- * Start the transition to the specअगरied target patch state so tasks can begin
- * चयनing to it.
+ * Start the transition to the specified target patch state so tasks can begin
+ * switching to it.
  */
-व्योम klp_start_transition(व्योम)
-अणु
-	काष्ठा task_काष्ठा *g, *task;
-	अचिन्हित पूर्णांक cpu;
+void klp_start_transition(void)
+{
+	struct task_struct *g, *task;
+	unsigned int cpu;
 
 	WARN_ON_ONCE(klp_target_state == KLP_UNDEFINED);
 
@@ -473,48 +472,48 @@
 
 	/*
 	 * Mark all normal tasks as needing a patch state update.  They'll
-	 * चयन either in klp_try_complete_transition() or as they निकास the
+	 * switch either in klp_try_complete_transition() or as they exit the
 	 * kernel.
 	 */
-	पढ़ो_lock(&tasklist_lock);
-	क्रम_each_process_thपढ़ो(g, task)
-		अगर (task->patch_state != klp_target_state)
-			set_tsk_thपढ़ो_flag(task, TIF_PATCH_PENDING);
-	पढ़ो_unlock(&tasklist_lock);
+	read_lock(&tasklist_lock);
+	for_each_process_thread(g, task)
+		if (task->patch_state != klp_target_state)
+			set_tsk_thread_flag(task, TIF_PATCH_PENDING);
+	read_unlock(&tasklist_lock);
 
 	/*
-	 * Mark all idle tasks as needing a patch state update.  They'll चयन
-	 * either in klp_try_complete_transition() or at the idle loop चयन
-	 * poपूर्णांक.
+	 * Mark all idle tasks as needing a patch state update.  They'll switch
+	 * either in klp_try_complete_transition() or at the idle loop switch
+	 * point.
 	 */
-	क्रम_each_possible_cpu(cpu) अणु
+	for_each_possible_cpu(cpu) {
 		task = idle_task(cpu);
-		अगर (task->patch_state != klp_target_state)
-			set_tsk_thपढ़ो_flag(task, TIF_PATCH_PENDING);
-	पूर्ण
+		if (task->patch_state != klp_target_state)
+			set_tsk_thread_flag(task, TIF_PATCH_PENDING);
+	}
 
-	klp_संकेतs_cnt = 0;
-पूर्ण
+	klp_signals_cnt = 0;
+}
 
 /*
  * Initialize the global target patch state and all tasks to the initial patch
  * state, and initialize all function transition states to true in preparation
- * क्रम patching or unpatching.
+ * for patching or unpatching.
  */
-व्योम klp_init_transition(काष्ठा klp_patch *patch, पूर्णांक state)
-अणु
-	काष्ठा task_काष्ठा *g, *task;
-	अचिन्हित पूर्णांक cpu;
-	काष्ठा klp_object *obj;
-	काष्ठा klp_func *func;
-	पूर्णांक initial_state = !state;
+void klp_init_transition(struct klp_patch *patch, int state)
+{
+	struct task_struct *g, *task;
+	unsigned int cpu;
+	struct klp_object *obj;
+	struct klp_func *func;
+	int initial_state = !state;
 
 	WARN_ON_ONCE(klp_target_state != KLP_UNDEFINED);
 
 	klp_transition_patch = patch;
 
 	/*
-	 * Set the global target patch state which tasks will चयन to.  This
+	 * Set the global target patch state which tasks will switch to.  This
 	 * has no effect until the TIF_PATCH_PENDING flags get set later.
 	 */
 	klp_target_state = state;
@@ -523,62 +522,62 @@
 		 klp_target_state == KLP_PATCHED ? "patching" : "unpatching");
 
 	/*
-	 * Initialize all tasks to the initial patch state to prepare them क्रम
-	 * चयनing to the target state.
+	 * Initialize all tasks to the initial patch state to prepare them for
+	 * switching to the target state.
 	 */
-	पढ़ो_lock(&tasklist_lock);
-	क्रम_each_process_thपढ़ो(g, task) अणु
+	read_lock(&tasklist_lock);
+	for_each_process_thread(g, task) {
 		WARN_ON_ONCE(task->patch_state != KLP_UNDEFINED);
 		task->patch_state = initial_state;
-	पूर्ण
-	पढ़ो_unlock(&tasklist_lock);
+	}
+	read_unlock(&tasklist_lock);
 
 	/*
-	 * Ditto क्रम the idle "swapper" tasks.
+	 * Ditto for the idle "swapper" tasks.
 	 */
-	क्रम_each_possible_cpu(cpu) अणु
+	for_each_possible_cpu(cpu) {
 		task = idle_task(cpu);
 		WARN_ON_ONCE(task->patch_state != KLP_UNDEFINED);
 		task->patch_state = initial_state;
-	पूर्ण
+	}
 
 	/*
-	 * Enक्रमce the order of the task->patch_state initializations and the
-	 * func->transition updates to ensure that klp_ftrace_handler() करोesn't
+	 * Enforce the order of the task->patch_state initializations and the
+	 * func->transition updates to ensure that klp_ftrace_handler() doesn't
 	 * see a func in transition with a task->patch_state of KLP_UNDEFINED.
 	 *
-	 * Also enक्रमce the order of the klp_target_state ग_लिखो and future
-	 * TIF_PATCH_PENDING ग_लिखोs to ensure klp_update_patch_state() करोesn't
+	 * Also enforce the order of the klp_target_state write and future
+	 * TIF_PATCH_PENDING writes to ensure klp_update_patch_state() doesn't
 	 * set a task->patch_state to KLP_UNDEFINED.
 	 */
 	smp_wmb();
 
 	/*
 	 * Set the func transition states so klp_ftrace_handler() will know to
-	 * चयन to the transition logic.
+	 * switch to the transition logic.
 	 *
 	 * When patching, the funcs aren't yet in the func_stack and will be
-	 * made visible to the ftrace handler लघुly by the calls to
+	 * made visible to the ftrace handler shortly by the calls to
 	 * klp_patch_object().
 	 *
-	 * When unpatching, the funcs are alपढ़ोy in the func_stack and so are
-	 * alपढ़ोy visible to the ftrace handler.
+	 * When unpatching, the funcs are already in the func_stack and so are
+	 * already visible to the ftrace handler.
 	 */
-	klp_क्रम_each_object(patch, obj)
-		klp_क्रम_each_func(obj, func)
+	klp_for_each_object(patch, obj)
+		klp_for_each_func(obj, func)
 			func->transition = true;
-पूर्ण
+}
 
 /*
  * This function can be called in the middle of an existing transition to
- * reverse the direction of the target patch state.  This can be करोne to
- * effectively cancel an existing enable or disable operation अगर there are any
+ * reverse the direction of the target patch state.  This can be done to
+ * effectively cancel an existing enable or disable operation if there are any
  * tasks which are stuck in the initial patch state.
  */
-व्योम klp_reverse_transition(व्योम)
-अणु
-	अचिन्हित पूर्णांक cpu;
-	काष्ठा task_काष्ठा *g, *task;
+void klp_reverse_transition(void)
+{
+	unsigned int cpu;
+	struct task_struct *g, *task;
 
 	pr_debug("'%s': reversing transition from %s\n",
 		 klp_transition_patch->mod->name,
@@ -594,53 +593,53 @@
 	 * klp_update_patch_state() running in parallel with
 	 * klp_start_transition().
 	 */
-	पढ़ो_lock(&tasklist_lock);
-	क्रम_each_process_thपढ़ो(g, task)
-		clear_tsk_thपढ़ो_flag(task, TIF_PATCH_PENDING);
-	पढ़ो_unlock(&tasklist_lock);
+	read_lock(&tasklist_lock);
+	for_each_process_thread(g, task)
+		clear_tsk_thread_flag(task, TIF_PATCH_PENDING);
+	read_unlock(&tasklist_lock);
 
-	क्रम_each_possible_cpu(cpu)
-		clear_tsk_thपढ़ो_flag(idle_task(cpu), TIF_PATCH_PENDING);
+	for_each_possible_cpu(cpu)
+		clear_tsk_thread_flag(idle_task(cpu), TIF_PATCH_PENDING);
 
-	/* Let any reमुख्यing calls to klp_update_patch_state() complete */
+	/* Let any remaining calls to klp_update_patch_state() complete */
 	klp_synchronize_transition();
 
 	klp_start_transition();
-पूर्ण
+}
 
-/* Called from copy_process() during विभाजन */
-व्योम klp_copy_process(काष्ठा task_काष्ठा *child)
-अणु
+/* Called from copy_process() during fork */
+void klp_copy_process(struct task_struct *child)
+{
 	child->patch_state = current->patch_state;
 
-	/* TIF_PATCH_PENDING माला_लो copied in setup_thपढ़ो_stack() */
-पूर्ण
+	/* TIF_PATCH_PENDING gets copied in setup_thread_stack() */
+}
 
 /*
- * Drop TIF_PATCH_PENDING of all tasks on admin's request. This क्रमces an
+ * Drop TIF_PATCH_PENDING of all tasks on admin's request. This forces an
  * existing transition to finish.
  *
  * NOTE: klp_update_patch_state(task) requires the task to be inactive or
- * 'current'. This is not the हाल here and the consistency model could be
+ * 'current'. This is not the case here and the consistency model could be
  * broken. Administrator, who is the only one to execute the
- * klp_क्रमce_transitions(), has to be aware of this.
+ * klp_force_transitions(), has to be aware of this.
  */
-व्योम klp_क्रमce_transition(व्योम)
-अणु
-	काष्ठा klp_patch *patch;
-	काष्ठा task_काष्ठा *g, *task;
-	अचिन्हित पूर्णांक cpu;
+void klp_force_transition(void)
+{
+	struct klp_patch *patch;
+	struct task_struct *g, *task;
+	unsigned int cpu;
 
 	pr_warn("forcing remaining tasks to the patched state\n");
 
-	पढ़ो_lock(&tasklist_lock);
-	क्रम_each_process_thपढ़ो(g, task)
+	read_lock(&tasklist_lock);
+	for_each_process_thread(g, task)
 		klp_update_patch_state(task);
-	पढ़ो_unlock(&tasklist_lock);
+	read_unlock(&tasklist_lock);
 
-	क्रम_each_possible_cpu(cpu)
+	for_each_possible_cpu(cpu)
 		klp_update_patch_state(idle_task(cpu));
 
-	klp_क्रम_each_patch(patch)
-		patch->क्रमced = true;
-पूर्ण
+	klp_for_each_patch(patch)
+		patch->forced = true;
+}

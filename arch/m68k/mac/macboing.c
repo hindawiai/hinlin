@@ -1,204 +1,203 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  *	Mac bong noise generator. Note - we ought to put a boingy noise
  *	here 8)
  *
  *	----------------------------------------------------------------------
  *	16.11.98:
- *	rewrote some functions, added support क्रम Enhanced ASC (Quadras)
+ *	rewrote some functions, added support for Enhanced ASC (Quadras)
  *	after the NetBSD asc.c console bell patch by Colin Wood/Frederick Bruck
  *	Juergen Mellinger (juergen.mellinger@t-online.de)
  */
 
-#समावेश <linux/sched.h>
-#समावेश <linux/समयr.h>
+#include <linux/sched.h>
+#include <linux/timer.h>
 
-#समावेश <यंत्र/macपूर्णांकosh.h>
-#समावेश <यंत्र/mac_asc.h>
+#include <asm/macintosh.h>
+#include <asm/mac_asc.h>
 
-अटल पूर्णांक mac_asc_inited;
+static int mac_asc_inited;
 /*
  * dumb triangular wave table
  */
-अटल __u8 mac_asc_wave_tab[ 0x800 ];
+static __u8 mac_asc_wave_tab[ 0x800 ];
 
 /*
- * Alan's original sine table; needs पूर्णांकerpolating to 0x800
- * (hपूर्णांक: पूर्णांकerpolate or hardwire [0 -> Pi/2[, it's symmetric)
+ * Alan's original sine table; needs interpolating to 0x800
+ * (hint: interpolate or hardwire [0 -> Pi/2[, it's symmetric)
  */
-अटल स्थिर चिन्हित अक्षर sine_data[] = अणु
+static const signed char sine_data[] = {
 	0,  39,  75,  103,  121,  127,  121,  103,  75,  39,
 	0, -39, -75, -103, -121, -127, -121, -103, -75, -39
-पूर्ण;
+};
 
 /*
  * where the ASC hides ...
  */
-अटल अस्थिर __u8* mac_asc_regs = ( व्योम* )0x50F14000;
+static volatile __u8* mac_asc_regs = ( void* )0x50F14000;
 
 /*
- * sample rate; is this a good शेष value?
+ * sample rate; is this a good default value?
  */
-अटल अचिन्हित दीर्घ mac_asc_samplespersec = 11050;
-अटल पूर्णांक mac_bell_duration;
-अटल अचिन्हित दीर्घ mac_bell_phase; /* 0..2*Pi -> 0..0x800 (wavetable size) */
-अटल अचिन्हित दीर्घ mac_bell_phasepersample;
+static unsigned long mac_asc_samplespersec = 11050;
+static int mac_bell_duration;
+static unsigned long mac_bell_phase; /* 0..2*Pi -> 0..0x800 (wavetable size) */
+static unsigned long mac_bell_phasepersample;
 
 /*
  * some function protos
  */
-अटल व्योम mac_init_asc( व्योम );
-अटल व्योम mac_nosound(काष्ठा समयr_list *);
-अटल व्योम mac_quadra_start_bell( अचिन्हित पूर्णांक, अचिन्हित पूर्णांक, अचिन्हित पूर्णांक );
-अटल व्योम mac_quadra_ring_bell(काष्ठा समयr_list *);
-अटल व्योम mac_av_start_bell( अचिन्हित पूर्णांक, अचिन्हित पूर्णांक, अचिन्हित पूर्णांक );
-अटल व्योम ( *mac_special_bell )( अचिन्हित पूर्णांक, अचिन्हित पूर्णांक, अचिन्हित पूर्णांक );
+static void mac_init_asc( void );
+static void mac_nosound(struct timer_list *);
+static void mac_quadra_start_bell( unsigned int, unsigned int, unsigned int );
+static void mac_quadra_ring_bell(struct timer_list *);
+static void mac_av_start_bell( unsigned int, unsigned int, unsigned int );
+static void ( *mac_special_bell )( unsigned int, unsigned int, unsigned int );
 
 /*
- * our समयr to start/जारी/stop the bell
+ * our timer to start/continue/stop the bell
  */
-अटल DEFINE_TIMER(mac_sound_समयr, mac_nosound);
+static DEFINE_TIMER(mac_sound_timer, mac_nosound);
 
 /*
  * Sort of initialize the sound chip (called from mac_mksound on the first
  * beep).
  */
-अटल व्योम mac_init_asc( व्योम )
-अणु
-	पूर्णांक i;
+static void mac_init_asc( void )
+{
+	int i;
 
 	/*
-	 * करो some machine specअगरic initialization
+	 * do some machine specific initialization
 	 * BTW:
-	 * the NetBSD Quadra patch identअगरies the Enhanced Apple Sound Chip via
+	 * the NetBSD Quadra patch identifies the Enhanced Apple Sound Chip via
 	 *	mac_asc_regs[ 0x800 ] & 0xF0 != 0
-	 * this makes no sense here, because we have to set the शेष sample
-	 * rate anyway अगर we want correct frequencies
+	 * this makes no sense here, because we have to set the default sample
+	 * rate anyway if we want correct frequencies
 	 */
-	चयन ( macपूर्णांकosh_config->ident )
-	अणु
-		हाल MAC_MODEL_IIFX:
+	switch ( macintosh_config->ident )
+	{
+		case MAC_MODEL_IIFX:
 			/*
 			 * The IIfx is always special ...
 			 */
-			mac_asc_regs = ( व्योम* )0x50010000;
-			अवरोध;
+			mac_asc_regs = ( void* )0x50010000;
+			break;
 			/*
 			 * not sure about how correct this list is
 			 * machines with the EASC enhanced apple sound chip
 			 */
-		हाल MAC_MODEL_Q630:
-		हाल MAC_MODEL_P475:
+		case MAC_MODEL_Q630:
+		case MAC_MODEL_P475:
 			mac_special_bell = mac_quadra_start_bell;
 			mac_asc_samplespersec = 22150;
-			अवरोध;
-		हाल MAC_MODEL_C660:
-		हाल MAC_MODEL_Q840:
+			break;
+		case MAC_MODEL_C660:
+		case MAC_MODEL_Q840:
 			/*
-			 * The Quadra 660AV and 840AV use the "Singer" custom ASIC क्रम sound I/O.
+			 * The Quadra 660AV and 840AV use the "Singer" custom ASIC for sound I/O.
 			 * It appears to be similar to the "AWACS" custom ASIC in the Power Mac
 			 * [678]100.  Because Singer and AWACS may have a similar hardware
-			 * पूर्णांकerface, this would imply that the code in drivers/sound/dmasound.c
-			 * क्रम AWACS could be used as a basis क्रम Singer support.  All we have to
-			 * करो is figure out how to करो DMA on the 660AV/840AV through the PSC and
+			 * interface, this would imply that the code in drivers/sound/dmasound.c
+			 * for AWACS could be used as a basis for Singer support.  All we have to
+			 * do is figure out how to do DMA on the 660AV/840AV through the PSC and
 			 * figure out where the Singer hardware sits in memory. (I'd look in the
 			 * vicinity of the AWACS location in a Power Mac [678]100 first, or the
 			 * current location of the Apple Sound Chip--ASC--in other Macs.)  The
 			 * Power Mac [678]100 info can be found in MkLinux Mach kernel sources.
 			 *
 			 * Quoted from Apple's Tech Info Library, article number 16405:
-			 *   "Among desktop Macपूर्णांकosh computers, only the 660AV, 840AV, and Power
-			 *   Macपूर्णांकosh models have 16-bit audio input and output capability
+			 *   "Among desktop Macintosh computers, only the 660AV, 840AV, and Power
+			 *   Macintosh models have 16-bit audio input and output capability
 			 *   because of the AT&T DSP3210 hardware circuitry and the 16-bit Singer
-			 *   codec circuitry in the AVs.  The Audio Waveक्रमm Amplअगरier and
-			 *   Converter (AWAC) chip in the Power Macपूर्णांकosh perक्रमms the same
+			 *   codec circuitry in the AVs.  The Audio Waveform Amplifier and
+			 *   Converter (AWAC) chip in the Power Macintosh performs the same
 			 *   16-bit I/O functionality.  The PowerBook 500 series computers
 			 *   support 16-bit stereo output, but only mono input."
 			 *
-			 *   Technical Inक्रमmation Library (TIL) article number 16405. 
+			 *   Technical Information Library (TIL) article number 16405. 
 			 *   https://support.apple.com/kb/TA32601
 			 *
 			 * --David Kilzer
 			 */
 			mac_special_bell = mac_av_start_bell;
-			अवरोध;
-		हाल MAC_MODEL_Q650:
-		हाल MAC_MODEL_Q700:
-		हाल MAC_MODEL_Q800:
-		हाल MAC_MODEL_Q900:
-		हाल MAC_MODEL_Q950:
+			break;
+		case MAC_MODEL_Q650:
+		case MAC_MODEL_Q700:
+		case MAC_MODEL_Q800:
+		case MAC_MODEL_Q900:
+		case MAC_MODEL_Q950:
 			/*
 			 * Currently not implemented!
 			 */
-			mac_special_bell = शून्य;
-			अवरोध;
-		शेष:
+			mac_special_bell = NULL;
+			break;
+		default:
 			/*
-			 * Every चयन needs a शेष
+			 * Every switch needs a default
 			 */
-			mac_special_bell = शून्य;
-			अवरोध;
-	पूर्ण
+			mac_special_bell = NULL;
+			break;
+	}
 
 	/*
 	 * init the wave table with a simple triangular wave
 	 * A sine wave would sure be nicer here ...
 	 */
-	क्रम ( i = 0; i < 0x400; i++ )
-	अणु
+	for ( i = 0; i < 0x400; i++ )
+	{
 		mac_asc_wave_tab[ i ] = i / 4;
 		mac_asc_wave_tab[ i + 0x400 ] = 0xFF - i / 4;
-	पूर्ण
+	}
 	mac_asc_inited = 1;
-पूर्ण
+}
 
 /*
  * Called to make noise; current single entry to the boing driver.
- * Does the job क्रम simple ASC, calls other routines अन्यथा.
+ * Does the job for simple ASC, calls other routines else.
  * XXX Fixme:
- * Should be split पूर्णांकo asc_mksound, easc_mksound, av_mksound and
- * function poपूर्णांकer set in mac_init_asc which would be called at
- * init समय.
+ * Should be split into asc_mksound, easc_mksound, av_mksound and
+ * function pointer set in mac_init_asc which would be called at
+ * init time.
  * _This_ is rather ugly ...
  */
-व्योम mac_mksound( अचिन्हित पूर्णांक freq, अचिन्हित पूर्णांक length )
-अणु
+void mac_mksound( unsigned int freq, unsigned int length )
+{
 	__u32 cfreq = ( freq << 5 ) / 468;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक i;
+	unsigned long flags;
+	int i;
 
-	अगर ( mac_special_bell == शून्य )
-	अणु
+	if ( mac_special_bell == NULL )
+	{
 		/* Do nothing */
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर ( !mac_asc_inited )
+	if ( !mac_asc_inited )
 		mac_init_asc();
 
-	अगर ( mac_special_bell )
-	अणु
+	if ( mac_special_bell )
+	{
 		mac_special_bell( freq, length, 128 );
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर ( freq < 20 || freq > 20000 || length == 0 )
-	अणु
+	if ( freq < 20 || freq > 20000 || length == 0 )
+	{
 		mac_nosound( 0 );
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	local_irq_save(flags);
 
-	del_समयr( &mac_sound_समयr );
+	del_timer( &mac_sound_timer );
 
-	क्रम ( i = 0; i < 0x800; i++ )
+	for ( i = 0; i < 0x800; i++ )
 		mac_asc_regs[ i ] = 0;
-	क्रम ( i = 0; i < 0x800; i++ )
+	for ( i = 0; i < 0x800; i++ )
 		mac_asc_regs[ i ] = mac_asc_wave_tab[ i ];
 
-	क्रम ( i = 0; i < 8; i++ )
+	for ( i = 0; i < 8; i++ )
 		*( __u32* )( ( __u32 )mac_asc_regs + ASC_CONTROL + 0x814 + 8 * i ) = cfreq;
 
 	mac_asc_regs[ 0x807 ] = 0;
@@ -208,47 +207,47 @@
 	mac_asc_regs[ ASC_MODE ] = ASC_MODE_SAMPLE;
 	mac_asc_regs[ ASC_ENABLE ] = ASC_ENABLE_SAMPLE;
 
-	mac_sound_समयr.expires = jअगरfies + length;
-	add_समयr( &mac_sound_समयr );
+	mac_sound_timer.expires = jiffies + length;
+	add_timer( &mac_sound_timer );
 
 	local_irq_restore(flags);
-पूर्ण
+}
 
 /*
  * regular ASC: stop whining ..
  */
-अटल व्योम mac_nosound(काष्ठा समयr_list *unused)
-अणु
+static void mac_nosound(struct timer_list *unused)
+{
 	mac_asc_regs[ ASC_ENABLE ] = 0;
-पूर्ण
+}
 
 /*
- * EASC entry; init EASC, करोn't load wavetable, schedule 'start whining'.
+ * EASC entry; init EASC, don't load wavetable, schedule 'start whining'.
  */
-अटल व्योम mac_quadra_start_bell( अचिन्हित पूर्णांक freq, अचिन्हित पूर्णांक length, अचिन्हित पूर्णांक volume )
-अणु
-	अचिन्हित दीर्घ flags;
+static void mac_quadra_start_bell( unsigned int freq, unsigned int length, unsigned int volume )
+{
+	unsigned long flags;
 
-	/* अगर the bell is alपढ़ोy ringing, ring दीर्घer */
-	अगर ( mac_bell_duration > 0 )
-	अणु
+	/* if the bell is already ringing, ring longer */
+	if ( mac_bell_duration > 0 )
+	{
 		mac_bell_duration += length;
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	mac_bell_duration = length;
 	mac_bell_phase = 0;
-	mac_bell_phasepersample = ( freq * माप( mac_asc_wave_tab ) ) / mac_asc_samplespersec;
-	/* this is reasonably big क्रम small frequencies */
+	mac_bell_phasepersample = ( freq * sizeof( mac_asc_wave_tab ) ) / mac_asc_samplespersec;
+	/* this is reasonably big for small frequencies */
 
 	local_irq_save(flags);
 
 	/* set the volume */
 	mac_asc_regs[ 0x806 ] = volume;
 
-	/* set up the ASC रेजिस्टरs */
-	अगर ( mac_asc_regs[ 0x801 ] != 1 )
-	अणु
+	/* set up the ASC registers */
+	if ( mac_asc_regs[ 0x801 ] != 1 )
+	{
 		/* select mono mode */
 		mac_asc_regs[ 0x807 ] = 0;
 		/* select sampled sound mode */
@@ -257,55 +256,55 @@
 		mac_asc_regs[ 0x801 ] = 1;
 		mac_asc_regs[ 0x803 ] |= 0x80;
 		mac_asc_regs[ 0x803 ] &= 0x7F;
-	पूर्ण
+	}
 
-	mac_sound_समयr.function = mac_quadra_ring_bell;
-	mac_sound_समयr.expires = jअगरfies + 1;
-	add_समयr( &mac_sound_समयr );
+	mac_sound_timer.function = mac_quadra_ring_bell;
+	mac_sound_timer.expires = jiffies + 1;
+	add_timer( &mac_sound_timer );
 
 	local_irq_restore(flags);
-पूर्ण
+}
 
 /*
  * EASC 'start/continue whining'; I'm not sure why the above function didn't
- * alपढ़ोy load the wave table, or at least call this one...
- * This piece keeps reloading the wave table until करोne.
+ * already load the wave table, or at least call this one...
+ * This piece keeps reloading the wave table until done.
  */
-अटल व्योम mac_quadra_ring_bell(काष्ठा समयr_list *unused)
-अणु
-	पूर्णांक	i, count = mac_asc_samplespersec / HZ;
-	अचिन्हित दीर्घ flags;
+static void mac_quadra_ring_bell(struct timer_list *unused)
+{
+	int	i, count = mac_asc_samplespersec / HZ;
+	unsigned long flags;
 
 	/*
 	 * we neither want a sound buffer overflow nor underflow, so we need to match
-	 * the number of samples per समयr पूर्णांकerrupt as exactly as possible.
-	 * using the asc पूर्णांकerrupt will give better results in the future
+	 * the number of samples per timer interrupt as exactly as possible.
+	 * using the asc interrupt will give better results in the future
 	 * ...and the possibility to use a real sample (a boingy noise, maybe...)
 	 */
 
 	local_irq_save(flags);
 
-	del_समयr( &mac_sound_समयr );
+	del_timer( &mac_sound_timer );
 
-	अगर ( mac_bell_duration-- > 0 )
-	अणु
-		क्रम ( i = 0; i < count; i++ )
-		अणु
+	if ( mac_bell_duration-- > 0 )
+	{
+		for ( i = 0; i < count; i++ )
+		{
 			mac_bell_phase += mac_bell_phasepersample;
-			mac_asc_regs[ 0 ] = mac_asc_wave_tab[ mac_bell_phase & ( माप( mac_asc_wave_tab ) - 1 ) ];
-		पूर्ण
-		mac_sound_समयr.expires = jअगरfies + 1;
-		add_समयr( &mac_sound_समयr );
-	पूर्ण
-	अन्यथा
+			mac_asc_regs[ 0 ] = mac_asc_wave_tab[ mac_bell_phase & ( sizeof( mac_asc_wave_tab ) - 1 ) ];
+		}
+		mac_sound_timer.expires = jiffies + 1;
+		add_timer( &mac_sound_timer );
+	}
+	else
 		mac_asc_regs[ 0x801 ] = 0;
 
 	local_irq_restore(flags);
-पूर्ण
+}
 
 /*
  * AV code - please fill in.
  */
-अटल व्योम mac_av_start_bell( अचिन्हित पूर्णांक freq, अचिन्हित पूर्णांक length, अचिन्हित पूर्णांक volume )
-अणु
-पूर्ण
+static void mac_av_start_bell( unsigned int freq, unsigned int length, unsigned int volume )
+{
+}

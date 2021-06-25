@@ -1,134 +1,133 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-/* bootstd.h:  Bootloader प्रणाली call पूर्णांकerface
+/* SPDX-License-Identifier: GPL-2.0 */
+/* bootstd.h:  Bootloader system call interface
  *
  * (c) 1999, Rt-Control, Inc.
  */
 
-#अगर_अघोषित __BOOTSTD_H__
-#घोषणा __BOOTSTD_H__
+#ifndef __BOOTSTD_H__
+#define __BOOTSTD_H__
 
-#घोषणा NR_BSC 21            /* last used bootloader प्रणाली call */
+#define NR_BSC 21            /* last used bootloader system call */
 
-#घोषणा __BN_reset        0  /* reset and start the bootloader */
-#घोषणा __BN_test         1  /* tests the प्रणाली call पूर्णांकerface */
-#घोषणा __BN_exec         2  /* executes a bootloader image */
-#घोषणा __BN_निकास         3  /* terminates a bootloader image */
-#घोषणा __BN_program      4  /* program FLASH from a chain */
-#घोषणा __BN_erase        5  /* erase sector(s) of FLASH */
-#घोषणा __BN_खोलो         6
-#घोषणा __BN_ग_लिखो        7
-#घोषणा __BN_पढ़ो         8
-#घोषणा __BN_बंद        9
-#घोषणा __BN_mmap         10 /* map a file descriptor पूर्णांकo memory */
-#घोषणा __BN_munmap       11 /* हटाओ a file to memory mapping */
-#घोषणा __BN_gethwaddr    12 /* get the hardware address of my पूर्णांकerfaces */
-#घोषणा __BN_माला_लोerialnum 13 /* get the serial number of this board */
-#घोषणा __BN_getbenv      14 /* get a bootloader envvar */
-#घोषणा __BN_setbenv      15 /* get a bootloader envvar */
-#घोषणा __BN_setpmask     16 /* set the protection mask */
-#घोषणा __BN_पढ़ोenv      17 /* पढ़ो environment variables */
-#घोषणा __BN_flash_chattr_range		18
-#घोषणा __BN_flash_erase_range		19
-#घोषणा __BN_flash_ग_लिखो_range		20
+#define __BN_reset        0  /* reset and start the bootloader */
+#define __BN_test         1  /* tests the system call interface */
+#define __BN_exec         2  /* executes a bootloader image */
+#define __BN_exit         3  /* terminates a bootloader image */
+#define __BN_program      4  /* program FLASH from a chain */
+#define __BN_erase        5  /* erase sector(s) of FLASH */
+#define __BN_open         6
+#define __BN_write        7
+#define __BN_read         8
+#define __BN_close        9
+#define __BN_mmap         10 /* map a file descriptor into memory */
+#define __BN_munmap       11 /* remove a file to memory mapping */
+#define __BN_gethwaddr    12 /* get the hardware address of my interfaces */
+#define __BN_getserialnum 13 /* get the serial number of this board */
+#define __BN_getbenv      14 /* get a bootloader envvar */
+#define __BN_setbenv      15 /* get a bootloader envvar */
+#define __BN_setpmask     16 /* set the protection mask */
+#define __BN_readenv      17 /* read environment variables */
+#define __BN_flash_chattr_range		18
+#define __BN_flash_erase_range		19
+#define __BN_flash_write_range		20
 
 /* Calling conventions compatible to (uC)linux/68k
- * We use similar macros to call पूर्णांकo the bootloader as क्रम uClinux
+ * We use similar macros to call into the bootloader as for uClinux
  */
 
-#घोषणा __bsc_वापस(type, res) \
-करो अणु \
-   अगर ((अचिन्हित दीर्घ)(res) >= (अचिन्हित दीर्घ)(-64)) अणु \
-      /* let त्रुटि_सं be a function, preserve res in %d0 */ \
-      पूर्णांक __err = -(res); \
-      त्रुटि_सं = __err; \
+#define __bsc_return(type, res) \
+do { \
+   if ((unsigned long)(res) >= (unsigned long)(-64)) { \
+      /* let errno be a function, preserve res in %d0 */ \
+      int __err = -(res); \
+      errno = __err; \
       res = -1; \
-   पूर्ण \
-   वापस (type)(res); \
-पूर्ण जबतक (0)
+   } \
+   return (type)(res); \
+} while (0)
 
-#घोषणा _bsc0(type,name) \
-type name(व्योम) \
-अणु \
-   रेजिस्टर दीर्घ __res __यंत्र__ ("%d0") = __BN_##name; \
-   __यंत्र__ __अस्थिर__ ("trap #2" \
+#define _bsc0(type,name) \
+type name(void) \
+{ \
+   register long __res __asm__ ("%d0") = __BN_##name; \
+   __asm__ __volatile__ ("trap #2" \
                          : "=g" (__res) \
                          : "0" (__res) \
                          ); \
-   __bsc_वापस(type,__res); \
-पूर्ण
+   __bsc_return(type,__res); \
+}
 
-#घोषणा _bsc1(type,name,atype,a) \
+#define _bsc1(type,name,atype,a) \
 type name(atype a) \
-अणु \
-   रेजिस्टर दीर्घ __res __यंत्र__ ("%d0") = __BN_##name; \
-   रेजिस्टर दीर्घ __a __यंत्र__ ("%d1") = (दीर्घ)a; \
-   __यंत्र__ __अस्थिर__ ("trap #2" \
+{ \
+   register long __res __asm__ ("%d0") = __BN_##name; \
+   register long __a __asm__ ("%d1") = (long)a; \
+   __asm__ __volatile__ ("trap #2" \
                          : "=g" (__res) \
                          : "0" (__res), "d" (__a) \
                          ); \
-   __bsc_वापस(type,__res); \
-पूर्ण
+   __bsc_return(type,__res); \
+}
 
-#घोषणा _bsc2(type,name,atype,a,btype,b) \
+#define _bsc2(type,name,atype,a,btype,b) \
 type name(atype a, btype b) \
-अणु \
-   रेजिस्टर दीर्घ __res __यंत्र__ ("%d0") = __BN_##name; \
-   रेजिस्टर दीर्घ __a __यंत्र__ ("%d1") = (दीर्घ)a; \
-   रेजिस्टर दीर्घ __b __यंत्र__ ("%d2") = (दीर्घ)b; \
-   __यंत्र__ __अस्थिर__ ("trap #2" \
+{ \
+   register long __res __asm__ ("%d0") = __BN_##name; \
+   register long __a __asm__ ("%d1") = (long)a; \
+   register long __b __asm__ ("%d2") = (long)b; \
+   __asm__ __volatile__ ("trap #2" \
                          : "=g" (__res) \
                          : "0" (__res), "d" (__a), "d" (__b) \
                          ); \
-   __bsc_वापस(type,__res); \
-पूर्ण
+   __bsc_return(type,__res); \
+}
 
-#घोषणा _bsc3(type,name,atype,a,btype,b,ctype,c) \
+#define _bsc3(type,name,atype,a,btype,b,ctype,c) \
 type name(atype a, btype b, ctype c) \
-अणु \
-   रेजिस्टर दीर्घ __res __यंत्र__ ("%d0") = __BN_##name; \
-   रेजिस्टर दीर्घ __a __यंत्र__ ("%d1") = (दीर्घ)a; \
-   रेजिस्टर दीर्घ __b __यंत्र__ ("%d2") = (दीर्घ)b; \
-   रेजिस्टर दीर्घ __c __यंत्र__ ("%d3") = (दीर्घ)c; \
-   __यंत्र__ __अस्थिर__ ("trap #2" \
+{ \
+   register long __res __asm__ ("%d0") = __BN_##name; \
+   register long __a __asm__ ("%d1") = (long)a; \
+   register long __b __asm__ ("%d2") = (long)b; \
+   register long __c __asm__ ("%d3") = (long)c; \
+   __asm__ __volatile__ ("trap #2" \
                          : "=g" (__res) \
                          : "0" (__res), "d" (__a), "d" (__b), \
                            "d" (__c) \
                          ); \
-   __bsc_वापस(type,__res); \
-पूर्ण
+   __bsc_return(type,__res); \
+}
 
-#घोषणा _bsc4(type,name,atype,a,btype,b,ctype,c,dtype,d) \
+#define _bsc4(type,name,atype,a,btype,b,ctype,c,dtype,d) \
 type name(atype a, btype b, ctype c, dtype d) \
-अणु \
-   रेजिस्टर दीर्घ __res __यंत्र__ ("%d0") = __BN_##name; \
-   रेजिस्टर दीर्घ __a __यंत्र__ ("%d1") = (दीर्घ)a; \
-   रेजिस्टर दीर्घ __b __यंत्र__ ("%d2") = (दीर्घ)b; \
-   रेजिस्टर दीर्घ __c __यंत्र__ ("%d3") = (दीर्घ)c; \
-   रेजिस्टर दीर्घ __d __यंत्र__ ("%d4") = (दीर्घ)d; \
-   __यंत्र__ __अस्थिर__ ("trap #2" \
+{ \
+   register long __res __asm__ ("%d0") = __BN_##name; \
+   register long __a __asm__ ("%d1") = (long)a; \
+   register long __b __asm__ ("%d2") = (long)b; \
+   register long __c __asm__ ("%d3") = (long)c; \
+   register long __d __asm__ ("%d4") = (long)d; \
+   __asm__ __volatile__ ("trap #2" \
                          : "=g" (__res) \
                          : "0" (__res), "d" (__a), "d" (__b), \
                            "d" (__c), "d" (__d) \
                          ); \
-   __bsc_वापस(type,__res); \
-पूर्ण
+   __bsc_return(type,__res); \
+}
 
-#घोषणा _bsc5(type,name,atype,a,btype,b,ctype,c,dtype,d,etype,e) \
+#define _bsc5(type,name,atype,a,btype,b,ctype,c,dtype,d,etype,e) \
 type name(atype a, btype b, ctype c, dtype d, etype e) \
-अणु \
-   रेजिस्टर दीर्घ __res __यंत्र__ ("%d0") = __BN_##name; \
-   रेजिस्टर दीर्घ __a __यंत्र__ ("%d1") = (दीर्घ)a; \
-   रेजिस्टर दीर्घ __b __यंत्र__ ("%d2") = (दीर्घ)b; \
-   रेजिस्टर दीर्घ __c __यंत्र__ ("%d3") = (दीर्घ)c; \
-   रेजिस्टर दीर्घ __d __यंत्र__ ("%d4") = (दीर्घ)d; \
-   रेजिस्टर दीर्घ __e __यंत्र__ ("%d5") = (दीर्घ)e; \
-   __यंत्र__ __अस्थिर__ ("trap #2" \
+{ \
+   register long __res __asm__ ("%d0") = __BN_##name; \
+   register long __a __asm__ ("%d1") = (long)a; \
+   register long __b __asm__ ("%d2") = (long)b; \
+   register long __c __asm__ ("%d3") = (long)c; \
+   register long __d __asm__ ("%d4") = (long)d; \
+   register long __e __asm__ ("%d5") = (long)e; \
+   __asm__ __volatile__ ("trap #2" \
                          : "=g" (__res) \
                          : "0" (__res), "d" (__a), "d" (__b), \
                            "d" (__c), "d" (__d), "d" (__e) \
                          ); \
-   __bsc_वापस(type,__res); \
-पूर्ण
+   __bsc_return(type,__res); \
+}
 
-#पूर्ण_अगर /* __BOOTSTD_H__ */
+#endif /* __BOOTSTD_H__ */

@@ -1,158 +1,157 @@
-<शैली गुरु>
-#समावेश <त्रुटिसं.स>
-#समावेश <संकेत.स>
-#समावेश <stdbool.h>
-#समावेश <मानककोष.स>
-#समावेश <unistd.h>
-#समावेश <linux/kernel.h>
-#अगर_घोषित HAVE_BACKTRACE_SUPPORT
-#समावेश <execinfo.h>
-#पूर्ण_अगर
+#include <errno.h>
+#include <signal.h>
+#include <stdbool.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <linux/kernel.h>
+#ifdef HAVE_BACKTRACE_SUPPORT
+#include <execinfo.h>
+#endif
 
-#समावेश "../../util/debug.h"
-#समावेश "../../perf.h"
-#समावेश "../browser.h"
-#समावेश "../helpline.h"
-#समावेश "../ui.h"
-#समावेश "../util.h"
-#समावेश "../libslang.h"
-#समावेश "../keysyms.h"
-#समावेश "tui.h"
+#include "../../util/debug.h"
+#include "../../perf.h"
+#include "../browser.h"
+#include "../helpline.h"
+#include "../ui.h"
+#include "../util.h"
+#include "../libslang.h"
+#include "../keysyms.h"
+#include "tui.h"
 
-अटल अस्थिर पूर्णांक ui__need_resize;
+static volatile int ui__need_resize;
 
-बाह्य काष्ठा perf_error_ops perf_tui_eops;
-बाह्य bool tui_helpline__set;
+extern struct perf_error_ops perf_tui_eops;
+extern bool tui_helpline__set;
 
-बाह्य व्योम hist_browser__init_hpp(व्योम);
+extern void hist_browser__init_hpp(void);
 
-व्योम ui__refresh_dimensions(bool क्रमce)
-अणु
-	अगर (क्रमce || ui__need_resize) अणु
+void ui__refresh_dimensions(bool force)
+{
+	if (force || ui__need_resize) {
 		ui__need_resize = 0;
-		pthपढ़ो_mutex_lock(&ui__lock);
+		pthread_mutex_lock(&ui__lock);
 		SLtt_get_screen_size();
 		SLsmg_reinit_smg();
-		pthपढ़ो_mutex_unlock(&ui__lock);
-	पूर्ण
-पूर्ण
+		pthread_mutex_unlock(&ui__lock);
+	}
+}
 
-अटल व्योम ui__sigwinch(पूर्णांक sig __maybe_unused)
-अणु
+static void ui__sigwinch(int sig __maybe_unused)
+{
 	ui__need_resize = 1;
-पूर्ण
+}
 
-अटल व्योम ui__setup_sigwinch(व्योम)
-अणु
-	अटल bool करोne;
+static void ui__setup_sigwinch(void)
+{
+	static bool done;
 
-	अगर (करोne)
-		वापस;
+	if (done)
+		return;
 
-	करोne = true;
-	pthपढ़ो__unblock_sigwinch();
-	संकेत(SIGWINCH, ui__sigwinch);
-पूर्ण
+	done = true;
+	pthread__unblock_sigwinch();
+	signal(SIGWINCH, ui__sigwinch);
+}
 
-पूर्णांक ui__अ_लोh(पूर्णांक delay_secs)
-अणु
-	काष्ठा समयval समयout, *pसमयout = delay_secs ? &समयout : शून्य;
-	fd_set पढ़ो_set;
-	पूर्णांक err, key;
+int ui__getch(int delay_secs)
+{
+	struct timeval timeout, *ptimeout = delay_secs ? &timeout : NULL;
+	fd_set read_set;
+	int err, key;
 
 	ui__setup_sigwinch();
 
-	FD_ZERO(&पढ़ो_set);
-	FD_SET(0, &पढ़ो_set);
+	FD_ZERO(&read_set);
+	FD_SET(0, &read_set);
 
-	अगर (delay_secs) अणु
-		समयout.tv_sec = delay_secs;
-		समयout.tv_usec = 0;
-	पूर्ण
+	if (delay_secs) {
+		timeout.tv_sec = delay_secs;
+		timeout.tv_usec = 0;
+	}
 
-        err = select(1, &पढ़ो_set, शून्य, शून्य, pसमयout);
+        err = select(1, &read_set, NULL, NULL, ptimeout);
 
-	अगर (err == 0)
-		वापस K_TIMER;
+	if (err == 0)
+		return K_TIMER;
 
-	अगर (err == -1) अणु
-		अगर (त्रुटि_सं == EINTR)
-			वापस K_RESIZE;
-		वापस K_ERROR;
-	पूर्ण
+	if (err == -1) {
+		if (errno == EINTR)
+			return K_RESIZE;
+		return K_ERROR;
+	}
 
 	key = SLang_getkey();
-	अगर (key != K_ESC)
-		वापस key;
+	if (key != K_ESC)
+		return key;
 
-	FD_ZERO(&पढ़ो_set);
-	FD_SET(0, &पढ़ो_set);
-	समयout.tv_sec = 0;
-	समयout.tv_usec = 20;
-        err = select(1, &पढ़ो_set, शून्य, शून्य, &समयout);
-	अगर (err == 0)
-		वापस K_ESC;
+	FD_ZERO(&read_set);
+	FD_SET(0, &read_set);
+	timeout.tv_sec = 0;
+	timeout.tv_usec = 20;
+        err = select(1, &read_set, NULL, NULL, &timeout);
+	if (err == 0)
+		return K_ESC;
 
 	SLang_ungetkey(key);
-	वापस SLkp_getkey();
-पूर्ण
+	return SLkp_getkey();
+}
 
-#अगर_घोषित HAVE_BACKTRACE_SUPPORT
-अटल व्योम ui__संकेत_backtrace(पूर्णांक sig)
-अणु
-	व्योम *stackdump[32];
-	माप_प्रकार size;
+#ifdef HAVE_BACKTRACE_SUPPORT
+static void ui__signal_backtrace(int sig)
+{
+	void *stackdump[32];
+	size_t size;
 
-	ui__निकास(false);
-	pसंकेत(sig, "perf");
+	ui__exit(false);
+	psignal(sig, "perf");
 
-	म_लिखो("-------- backtrace --------\n");
+	printf("-------- backtrace --------\n");
 	size = backtrace(stackdump, ARRAY_SIZE(stackdump));
-	backtrace_symbols_fd(stackdump, size, STDOUT_खाताNO);
+	backtrace_symbols_fd(stackdump, size, STDOUT_FILENO);
 
-	निकास(0);
-पूर्ण
-#अन्यथा
-# define ui__संकेत_backtrace  ui__संकेत
-#पूर्ण_अगर
+	exit(0);
+}
+#else
+# define ui__signal_backtrace  ui__signal
+#endif
 
-अटल व्योम ui__संकेत(पूर्णांक sig)
-अणु
-	ui__निकास(false);
-	pसंकेत(sig, "perf");
-	निकास(0);
-पूर्ण
+static void ui__signal(int sig)
+{
+	ui__exit(false);
+	psignal(sig, "perf");
+	exit(0);
+}
 
-पूर्णांक ui__init(व्योम)
-अणु
-	पूर्णांक err;
+int ui__init(void)
+{
+	int err;
 
 	SLutf8_enable(-1);
 	SLtt_get_terminfo();
 	SLtt_get_screen_size();
 
 	err = SLsmg_init_smg();
-	अगर (err < 0)
-		जाओ out;
+	if (err < 0)
+		goto out;
 	err = SLang_init_tty(-1, 0, 0);
-	अगर (err < 0)
-		जाओ out;
+	if (err < 0)
+		goto out;
 
 	err = SLkp_init();
-	अगर (err < 0) अणु
+	if (err < 0) {
 		pr_err("TUI initialization failed.\n");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	SLkp_define_keysym((अक्षर *)"^(kB)", SL_KEY_UNTAB);
+	SLkp_define_keysym((char *)"^(kB)", SL_KEY_UNTAB);
 
-	संकेत(संक_अंश, ui__संकेत_backtrace);
-	संकेत(संक_भ_त्रुटि, ui__संकेत_backtrace);
-	संकेत(संक_विघ्न, ui__संकेत);
-	संकेत(SIGQUIT, ui__संकेत);
-	संकेत(संक_इति, ui__संकेत);
+	signal(SIGSEGV, ui__signal_backtrace);
+	signal(SIGFPE, ui__signal_backtrace);
+	signal(SIGINT, ui__signal);
+	signal(SIGQUIT, ui__signal);
+	signal(SIGTERM, ui__signal);
 
-	perf_error__रेजिस्टर(&perf_tui_eops);
+	perf_error__register(&perf_tui_eops);
 
 	ui_helpline__init();
 	ui_browser__init();
@@ -160,13 +159,13 @@
 
 	hist_browser__init_hpp();
 out:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-व्योम ui__निकास(bool रुको_क्रम_ok)
-अणु
-	अगर (रुको_क्रम_ok && tui_helpline__set)
-		ui__question_winकरोw("Fatal Error",
+void ui__exit(bool wait_for_ok)
+{
+	if (wait_for_ok && tui_helpline__set)
+		ui__question_window("Fatal Error",
 				    ui_helpline__last_msg,
 				    "Press any key...", 0);
 
@@ -175,5 +174,5 @@ out:
 	SLsmg_reset_smg();
 	SLang_reset_tty();
 
-	perf_error__unरेजिस्टर(&perf_tui_eops);
-पूर्ण
+	perf_error__unregister(&perf_tui_eops);
+}

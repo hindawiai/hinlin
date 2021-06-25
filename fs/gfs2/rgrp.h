@@ -1,96 +1,95 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (C) Sistina Software, Inc.  1997-2003 All rights reserved.
  * Copyright (C) 2004-2008 Red Hat, Inc.  All rights reserved.
  */
 
-#अगर_अघोषित __RGRP_DOT_H__
-#घोषणा __RGRP_DOT_H__
+#ifndef __RGRP_DOT_H__
+#define __RGRP_DOT_H__
 
-#समावेश <linux/slab.h>
-#समावेश <linux/uaccess.h>
+#include <linux/slab.h>
+#include <linux/uaccess.h>
 
-/* Since each block in the file प्रणाली is represented by two bits in the
- * biपंचांगap, one 64-bit word in the biपंचांगap will represent 32 blocks.
- * By reserving 32 blocks at a समय, we can optimize / लघुcut how we search
- * through the biपंचांगaps by looking a word at a समय.
+/* Since each block in the file system is represented by two bits in the
+ * bitmap, one 64-bit word in the bitmap will represent 32 blocks.
+ * By reserving 32 blocks at a time, we can optimize / shortcut how we search
+ * through the bitmaps by looking a word at a time.
  */
-#घोषणा RGRP_RSRV_MINBLKS 32
-#घोषणा RGRP_RSRV_ADDBLKS 64
+#define RGRP_RSRV_MINBLKS 32
+#define RGRP_RSRV_ADDBLKS 64
 
-काष्ठा gfs2_rgrpd;
-काष्ठा gfs2_sbd;
-काष्ठा gfs2_holder;
+struct gfs2_rgrpd;
+struct gfs2_sbd;
+struct gfs2_holder;
 
-बाह्य व्योम gfs2_rgrp_verअगरy(काष्ठा gfs2_rgrpd *rgd);
+extern void gfs2_rgrp_verify(struct gfs2_rgrpd *rgd);
 
-बाह्य काष्ठा gfs2_rgrpd *gfs2_blk2rgrpd(काष्ठा gfs2_sbd *sdp, u64 blk, bool exact);
-बाह्य काष्ठा gfs2_rgrpd *gfs2_rgrpd_get_first(काष्ठा gfs2_sbd *sdp);
-बाह्य काष्ठा gfs2_rgrpd *gfs2_rgrpd_get_next(काष्ठा gfs2_rgrpd *rgd);
+extern struct gfs2_rgrpd *gfs2_blk2rgrpd(struct gfs2_sbd *sdp, u64 blk, bool exact);
+extern struct gfs2_rgrpd *gfs2_rgrpd_get_first(struct gfs2_sbd *sdp);
+extern struct gfs2_rgrpd *gfs2_rgrpd_get_next(struct gfs2_rgrpd *rgd);
 
-बाह्य व्योम gfs2_clear_rgrpd(काष्ठा gfs2_sbd *sdp);
-बाह्य पूर्णांक gfs2_rindex_update(काष्ठा gfs2_sbd *sdp);
-बाह्य व्योम gfs2_मुक्त_clones(काष्ठा gfs2_rgrpd *rgd);
-बाह्य पूर्णांक gfs2_rgrp_go_lock(काष्ठा gfs2_holder *gh);
-बाह्य व्योम gfs2_rgrp_brअन्यथा(काष्ठा gfs2_rgrpd *rgd);
+extern void gfs2_clear_rgrpd(struct gfs2_sbd *sdp);
+extern int gfs2_rindex_update(struct gfs2_sbd *sdp);
+extern void gfs2_free_clones(struct gfs2_rgrpd *rgd);
+extern int gfs2_rgrp_go_lock(struct gfs2_holder *gh);
+extern void gfs2_rgrp_brelse(struct gfs2_rgrpd *rgd);
 
-बाह्य काष्ठा gfs2_alloc *gfs2_alloc_get(काष्ठा gfs2_inode *ip);
+extern struct gfs2_alloc *gfs2_alloc_get(struct gfs2_inode *ip);
 
-#घोषणा GFS2_AF_ORLOV 1
-बाह्य पूर्णांक gfs2_inplace_reserve(काष्ठा gfs2_inode *ip,
-				काष्ठा gfs2_alloc_parms *ap);
-बाह्य व्योम gfs2_inplace_release(काष्ठा gfs2_inode *ip);
+#define GFS2_AF_ORLOV 1
+extern int gfs2_inplace_reserve(struct gfs2_inode *ip,
+				struct gfs2_alloc_parms *ap);
+extern void gfs2_inplace_release(struct gfs2_inode *ip);
 
-बाह्य पूर्णांक gfs2_alloc_blocks(काष्ठा gfs2_inode *ip, u64 *bn, अचिन्हित पूर्णांक *n,
+extern int gfs2_alloc_blocks(struct gfs2_inode *ip, u64 *bn, unsigned int *n,
 			     bool dinode, u64 *generation);
 
-बाह्य व्योम gfs2_rs_deltree(काष्ठा gfs2_blkreserv *rs);
-बाह्य व्योम gfs2_rs_delete(काष्ठा gfs2_inode *ip, atomic_t *wcount);
-बाह्य व्योम __gfs2_मुक्त_blocks(काष्ठा gfs2_inode *ip, काष्ठा gfs2_rgrpd *rgd,
-			       u64 bstart, u32 blen, पूर्णांक meta);
-बाह्य व्योम gfs2_मुक्त_meta(काष्ठा gfs2_inode *ip, काष्ठा gfs2_rgrpd *rgd,
+extern void gfs2_rs_deltree(struct gfs2_blkreserv *rs);
+extern void gfs2_rs_delete(struct gfs2_inode *ip, atomic_t *wcount);
+extern void __gfs2_free_blocks(struct gfs2_inode *ip, struct gfs2_rgrpd *rgd,
+			       u64 bstart, u32 blen, int meta);
+extern void gfs2_free_meta(struct gfs2_inode *ip, struct gfs2_rgrpd *rgd,
 			   u64 bstart, u32 blen);
-बाह्य व्योम gfs2_मुक्त_di(काष्ठा gfs2_rgrpd *rgd, काष्ठा gfs2_inode *ip);
-बाह्य व्योम gfs2_unlink_di(काष्ठा inode *inode);
-बाह्य पूर्णांक gfs2_check_blk_type(काष्ठा gfs2_sbd *sdp, u64 no_addr,
-			       अचिन्हित पूर्णांक type);
+extern void gfs2_free_di(struct gfs2_rgrpd *rgd, struct gfs2_inode *ip);
+extern void gfs2_unlink_di(struct inode *inode);
+extern int gfs2_check_blk_type(struct gfs2_sbd *sdp, u64 no_addr,
+			       unsigned int type);
 
-काष्ठा gfs2_rgrp_list अणु
-	अचिन्हित पूर्णांक rl_rgrps;
-	अचिन्हित पूर्णांक rl_space;
-	काष्ठा gfs2_rgrpd **rl_rgd;
-	काष्ठा gfs2_holder *rl_ghs;
-पूर्ण;
+struct gfs2_rgrp_list {
+	unsigned int rl_rgrps;
+	unsigned int rl_space;
+	struct gfs2_rgrpd **rl_rgd;
+	struct gfs2_holder *rl_ghs;
+};
 
-बाह्य व्योम gfs2_rlist_add(काष्ठा gfs2_inode *ip, काष्ठा gfs2_rgrp_list *rlist,
+extern void gfs2_rlist_add(struct gfs2_inode *ip, struct gfs2_rgrp_list *rlist,
 			   u64 block);
-बाह्य व्योम gfs2_rlist_alloc(काष्ठा gfs2_rgrp_list *rlist);
-बाह्य व्योम gfs2_rlist_मुक्त(काष्ठा gfs2_rgrp_list *rlist);
-बाह्य u64 gfs2_ri_total(काष्ठा gfs2_sbd *sdp);
-बाह्य व्योम gfs2_rgrp_dump(काष्ठा seq_file *seq, काष्ठा gfs2_rgrpd *rgd,
-			   स्थिर अक्षर *fs_id_buf);
-बाह्य पूर्णांक gfs2_rgrp_send_discards(काष्ठा gfs2_sbd *sdp, u64 offset,
-				   काष्ठा buffer_head *bh,
-				   स्थिर काष्ठा gfs2_biपंचांगap *bi, अचिन्हित minlen, u64 *ptrimmed);
-बाह्य पूर्णांक gfs2_fitrim(काष्ठा file *filp, व्योम __user *argp);
+extern void gfs2_rlist_alloc(struct gfs2_rgrp_list *rlist);
+extern void gfs2_rlist_free(struct gfs2_rgrp_list *rlist);
+extern u64 gfs2_ri_total(struct gfs2_sbd *sdp);
+extern void gfs2_rgrp_dump(struct seq_file *seq, struct gfs2_rgrpd *rgd,
+			   const char *fs_id_buf);
+extern int gfs2_rgrp_send_discards(struct gfs2_sbd *sdp, u64 offset,
+				   struct buffer_head *bh,
+				   const struct gfs2_bitmap *bi, unsigned minlen, u64 *ptrimmed);
+extern int gfs2_fitrim(struct file *filp, void __user *argp);
 
-/* This is how to tell अगर a reservation is in the rgrp tree: */
-अटल अंतरभूत bool gfs2_rs_active(स्थिर काष्ठा gfs2_blkreserv *rs)
-अणु
-	वापस !RB_EMPTY_NODE(&rs->rs_node);
-पूर्ण
+/* This is how to tell if a reservation is in the rgrp tree: */
+static inline bool gfs2_rs_active(const struct gfs2_blkreserv *rs)
+{
+	return !RB_EMPTY_NODE(&rs->rs_node);
+}
 
-अटल अंतरभूत पूर्णांक rgrp_contains_block(काष्ठा gfs2_rgrpd *rgd, u64 block)
-अणु
+static inline int rgrp_contains_block(struct gfs2_rgrpd *rgd, u64 block)
+{
 	u64 first = rgd->rd_data0;
 	u64 last = first + rgd->rd_data;
-	वापस first <= block && block < last;
-पूर्ण
+	return first <= block && block < last;
+}
 
-बाह्य व्योम check_and_update_goal(काष्ठा gfs2_inode *ip);
+extern void check_and_update_goal(struct gfs2_inode *ip);
 
-बाह्य व्योम rgrp_lock_local(काष्ठा gfs2_rgrpd *rgd);
-बाह्य व्योम rgrp_unlock_local(काष्ठा gfs2_rgrpd *rgd);
+extern void rgrp_lock_local(struct gfs2_rgrpd *rgd);
+extern void rgrp_unlock_local(struct gfs2_rgrpd *rgd);
 
-#पूर्ण_अगर /* __RGRP_DOT_H__ */
+#endif /* __RGRP_DOT_H__ */

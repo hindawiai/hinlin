@@ -1,12 +1,11 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * LZO decompressor क्रम the Linux kernel. Code borrowed from the lzo
+ * LZO decompressor for the Linux kernel. Code borrowed from the lzo
  * implementation by Markus Franz Xaver Johannes Oberhumer.
  *
  * Linux kernel adaptation:
  * Copyright (C) 2009
- * Albin Tonnerre, Free Electrons <albin.tonnerre@मुक्त-electrons.com>
+ * Albin Tonnerre, Free Electrons <albin.tonnerre@free-electrons.com>
  *
  * Original code:
  * Copyright (C) 1996-2005 Markus Franz Xaver Johannes Oberhumer
@@ -14,34 +13,34 @@
  *
  * Markus F.X.J. Oberhumer
  * <markus@oberhumer.com>
- * http://www.oberhumer.com/खोलोsource/lzop/
+ * http://www.oberhumer.com/opensource/lzop/
  */
 
-#अगर_घोषित STATIC
-#घोषणा PREBOOT
-#समावेश "lzo/lzo1x_decompress_safe.c"
-#अन्यथा
-#समावेश <linux/decompress/unlzo.h>
-#पूर्ण_अगर
+#ifdef STATIC
+#define PREBOOT
+#include "lzo/lzo1x_decompress_safe.c"
+#else
+#include <linux/decompress/unlzo.h>
+#endif
 
-#समावेश <linux/types.h>
-#समावेश <linux/lzo.h>
-#समावेश <linux/decompress/mm.h>
+#include <linux/types.h>
+#include <linux/lzo.h>
+#include <linux/decompress/mm.h>
 
-#समावेश <linux/compiler.h>
-#समावेश <यंत्र/unaligned.h>
+#include <linux/compiler.h>
+#include <asm/unaligned.h>
 
-अटल स्थिर अचिन्हित अक्षर lzop_magic[] = अणु
-	0x89, 0x4c, 0x5a, 0x4f, 0x00, 0x0d, 0x0a, 0x1a, 0x0a पूर्ण;
+static const unsigned char lzop_magic[] = {
+	0x89, 0x4c, 0x5a, 0x4f, 0x00, 0x0d, 0x0a, 0x1a, 0x0a };
 
-#घोषणा LZO_BLOCK_SIZE        (256*1024l)
-#घोषणा HEADER_HAS_FILTER      0x00000800L
-#घोषणा HEADER_SIZE_MIN       (9 + 7     + 4 + 8     + 1       + 4)
-#घोषणा HEADER_SIZE_MAX       (9 + 7 + 1 + 8 + 8 + 4 + 1 + 255 + 4)
+#define LZO_BLOCK_SIZE        (256*1024l)
+#define HEADER_HAS_FILTER      0x00000800L
+#define HEADER_SIZE_MIN       (9 + 7     + 4 + 8     + 1       + 4)
+#define HEADER_SIZE_MAX       (9 + 7 + 1 + 8 + 8 + 4 + 1 + 255 + 4)
 
-STATIC अंतरभूत दीर्घ INIT parse_header(u8 *input, दीर्घ *skip, दीर्घ in_len)
-अणु
-	पूर्णांक l;
+STATIC inline long INIT parse_header(u8 *input, long *skip, long in_len)
+{
+	int l;
 	u8 *parse = input;
 	u8 *end = input + in_len;
 	u8 level = 0;
@@ -52,237 +51,237 @@ STATIC अंतरभूत दीर्घ INIT parse_header(u8 *input, दी
 	 * Then it is possible to parse several fields until the minimum
 	 * size may have been used.
 	 */
-	अगर (in_len < HEADER_SIZE_MIN)
-		वापस 0;
+	if (in_len < HEADER_SIZE_MIN)
+		return 0;
 
-	/* पढ़ो magic: 9 first bits */
-	क्रम (l = 0; l < 9; l++) अणु
-		अगर (*parse++ != lzop_magic[l])
-			वापस 0;
-	पूर्ण
+	/* read magic: 9 first bits */
+	for (l = 0; l < 9; l++) {
+		if (*parse++ != lzop_magic[l])
+			return 0;
+	}
 	/* get version (2bytes), skip library version (2),
 	 * 'need to be extracted' version (2) and
 	 * method (1) */
 	version = get_unaligned_be16(parse);
 	parse += 7;
-	अगर (version >= 0x0940)
+	if (version >= 0x0940)
 		level = *parse++;
-	अगर (get_unaligned_be32(parse) & HEADER_HAS_FILTER)
+	if (get_unaligned_be32(parse) & HEADER_HAS_FILTER)
 		parse += 8; /* flags + filter info */
-	अन्यथा
+	else
 		parse += 4; /* flags */
 
 	/*
-	 * At least mode, mसमय_low, filename length, and checksum must
-	 * be left to be parsed. If also mसमय_high is present, it's OK
-	 * because the next input buffer check is after पढ़ोing the
+	 * At least mode, mtime_low, filename length, and checksum must
+	 * be left to be parsed. If also mtime_high is present, it's OK
+	 * because the next input buffer check is after reading the
 	 * filename length.
 	 */
-	अगर (end - parse < 8 + 1 + 4)
-		वापस 0;
+	if (end - parse < 8 + 1 + 4)
+		return 0;
 
-	/* skip mode and mसमय_low */
+	/* skip mode and mtime_low */
 	parse += 8;
-	अगर (version >= 0x0940)
-		parse += 4;	/* skip mसमय_high */
+	if (version >= 0x0940)
+		parse += 4;	/* skip mtime_high */
 
 	l = *parse++;
-	/* करोn't care about the file name, and skip checksum */
-	अगर (end - parse < l + 4)
-		वापस 0;
+	/* don't care about the file name, and skip checksum */
+	if (end - parse < l + 4)
+		return 0;
 	parse += l + 4;
 
 	*skip = parse - input;
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-STATIC पूर्णांक INIT unlzo(u8 *input, दीर्घ in_len,
-				दीर्घ (*fill)(व्योम *, अचिन्हित दीर्घ),
-				दीर्घ (*flush)(व्योम *, अचिन्हित दीर्घ),
-				u8 *output, दीर्घ *posp,
-				व्योम (*error) (अक्षर *x))
-अणु
+STATIC int INIT unlzo(u8 *input, long in_len,
+				long (*fill)(void *, unsigned long),
+				long (*flush)(void *, unsigned long),
+				u8 *output, long *posp,
+				void (*error) (char *x))
+{
 	u8 r = 0;
-	दीर्घ skip = 0;
+	long skip = 0;
 	u32 src_len, dst_len;
-	माप_प्रकार पंचांगp;
+	size_t tmp;
 	u8 *in_buf, *in_buf_save, *out_buf;
-	पूर्णांक ret = -1;
+	int ret = -1;
 
-	अगर (output) अणु
+	if (output) {
 		out_buf = output;
-	पूर्ण अन्यथा अगर (!flush) अणु
+	} else if (!flush) {
 		error("NULL output pointer and no flush function provided");
-		जाओ निकास;
-	पूर्ण अन्यथा अणु
-		out_buf = दो_स्मृति(LZO_BLOCK_SIZE);
-		अगर (!out_buf) अणु
+		goto exit;
+	} else {
+		out_buf = malloc(LZO_BLOCK_SIZE);
+		if (!out_buf) {
 			error("Could not allocate output buffer");
-			जाओ निकास;
-		पूर्ण
-	पूर्ण
+			goto exit;
+		}
+	}
 
-	अगर (input && fill) अणु
+	if (input && fill) {
 		error("Both input pointer and fill function provided, don't know what to do");
-		जाओ निकास_1;
-	पूर्ण अन्यथा अगर (input) अणु
+		goto exit_1;
+	} else if (input) {
 		in_buf = input;
-	पूर्ण अन्यथा अगर (!fill) अणु
+	} else if (!fill) {
 		error("NULL input pointer and missing fill function");
-		जाओ निकास_1;
-	पूर्ण अन्यथा अणु
-		in_buf = दो_स्मृति(lzo1x_worst_compress(LZO_BLOCK_SIZE));
-		अगर (!in_buf) अणु
+		goto exit_1;
+	} else {
+		in_buf = malloc(lzo1x_worst_compress(LZO_BLOCK_SIZE));
+		if (!in_buf) {
 			error("Could not allocate input buffer");
-			जाओ निकास_1;
-		पूर्ण
-	पूर्ण
+			goto exit_1;
+		}
+	}
 	in_buf_save = in_buf;
 
-	अगर (posp)
+	if (posp)
 		*posp = 0;
 
-	अगर (fill) अणु
+	if (fill) {
 		/*
 		 * Start from in_buf + HEADER_SIZE_MAX to make it possible
-		 * to use स_नकल() to copy the unused data to the beginning
-		 * of the buffer. This way स_हटाओ() isn't needed which
+		 * to use memcpy() to copy the unused data to the beginning
+		 * of the buffer. This way memmove() isn't needed which
 		 * is missing from pre-boot environments of most archs.
 		 */
 		in_buf += HEADER_SIZE_MAX;
 		in_len = fill(in_buf, HEADER_SIZE_MAX);
-	पूर्ण
+	}
 
-	अगर (!parse_header(in_buf, &skip, in_len)) अणु
+	if (!parse_header(in_buf, &skip, in_len)) {
 		error("invalid header");
-		जाओ निकास_2;
-	पूर्ण
+		goto exit_2;
+	}
 	in_buf += skip;
 	in_len -= skip;
 
-	अगर (fill) अणु
+	if (fill) {
 		/* Move the unused data to the beginning of the buffer. */
-		स_नकल(in_buf_save, in_buf, in_len);
+		memcpy(in_buf_save, in_buf, in_len);
 		in_buf = in_buf_save;
-	पूर्ण
+	}
 
-	अगर (posp)
+	if (posp)
 		*posp = skip;
 
-	क्रम (;;) अणु
-		/* पढ़ो uncompressed block size */
-		अगर (fill && in_len < 4) अणु
+	for (;;) {
+		/* read uncompressed block size */
+		if (fill && in_len < 4) {
 			skip = fill(in_buf + in_len, 4 - in_len);
-			अगर (skip > 0)
+			if (skip > 0)
 				in_len += skip;
-		पूर्ण
-		अगर (in_len < 4) अणु
+		}
+		if (in_len < 4) {
 			error("file corrupted");
-			जाओ निकास_2;
-		पूर्ण
+			goto exit_2;
+		}
 		dst_len = get_unaligned_be32(in_buf);
 		in_buf += 4;
 		in_len -= 4;
 
-		/* निकास अगर last block */
-		अगर (dst_len == 0) अणु
-			अगर (posp)
+		/* exit if last block */
+		if (dst_len == 0) {
+			if (posp)
 				*posp += 4;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (dst_len > LZO_BLOCK_SIZE) अणु
+		if (dst_len > LZO_BLOCK_SIZE) {
 			error("dest len longer than block size");
-			जाओ निकास_2;
-		पूर्ण
+			goto exit_2;
+		}
 
-		/* पढ़ो compressed block size, and skip block checksum info */
-		अगर (fill && in_len < 8) अणु
+		/* read compressed block size, and skip block checksum info */
+		if (fill && in_len < 8) {
 			skip = fill(in_buf + in_len, 8 - in_len);
-			अगर (skip > 0)
+			if (skip > 0)
 				in_len += skip;
-		पूर्ण
-		अगर (in_len < 8) अणु
+		}
+		if (in_len < 8) {
 			error("file corrupted");
-			जाओ निकास_2;
-		पूर्ण
+			goto exit_2;
+		}
 		src_len = get_unaligned_be32(in_buf);
 		in_buf += 8;
 		in_len -= 8;
 
-		अगर (src_len <= 0 || src_len > dst_len) अणु
+		if (src_len <= 0 || src_len > dst_len) {
 			error("file corrupted");
-			जाओ निकास_2;
-		पूर्ण
+			goto exit_2;
+		}
 
 		/* decompress */
-		अगर (fill && in_len < src_len) अणु
+		if (fill && in_len < src_len) {
 			skip = fill(in_buf + in_len, src_len - in_len);
-			अगर (skip > 0)
+			if (skip > 0)
 				in_len += skip;
-		पूर्ण
-		अगर (in_len < src_len) अणु
+		}
+		if (in_len < src_len) {
 			error("file corrupted");
-			जाओ निकास_2;
-		पूर्ण
-		पंचांगp = dst_len;
+			goto exit_2;
+		}
+		tmp = dst_len;
 
 		/* When the input data is not compressed at all,
-		 * lzo1x_decompress_safe will fail, so call स_नकल()
+		 * lzo1x_decompress_safe will fail, so call memcpy()
 		 * instead */
-		अगर (unlikely(dst_len == src_len))
-			स_नकल(out_buf, in_buf, src_len);
-		अन्यथा अणु
+		if (unlikely(dst_len == src_len))
+			memcpy(out_buf, in_buf, src_len);
+		else {
 			r = lzo1x_decompress_safe((u8 *) in_buf, src_len,
-						out_buf, &पंचांगp);
+						out_buf, &tmp);
 
-			अगर (r != LZO_E_OK || dst_len != पंचांगp) अणु
+			if (r != LZO_E_OK || dst_len != tmp) {
 				error("Compressed data violation");
-				जाओ निकास_2;
-			पूर्ण
-		पूर्ण
+				goto exit_2;
+			}
+		}
 
-		अगर (flush && flush(out_buf, dst_len) != dst_len)
-			जाओ निकास_2;
-		अगर (output)
+		if (flush && flush(out_buf, dst_len) != dst_len)
+			goto exit_2;
+		if (output)
 			out_buf += dst_len;
-		अगर (posp)
+		if (posp)
 			*posp += src_len + 12;
 
 		in_buf += src_len;
 		in_len -= src_len;
-		अगर (fill) अणु
+		if (fill) {
 			/*
 			 * If there happens to still be unused data left in
 			 * in_buf, move it to the beginning of the buffer.
-			 * Use a loop to aव्योम स_हटाओ() dependency.
+			 * Use a loop to avoid memmove() dependency.
 			 */
-			अगर (in_len > 0)
-				क्रम (skip = 0; skip < in_len; ++skip)
+			if (in_len > 0)
+				for (skip = 0; skip < in_len; ++skip)
 					in_buf_save[skip] = in_buf[skip];
 			in_buf = in_buf_save;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	ret = 0;
-निकास_2:
-	अगर (!input)
-		मुक्त(in_buf_save);
-निकास_1:
-	अगर (!output)
-		मुक्त(out_buf);
-निकास:
-	वापस ret;
-पूर्ण
+exit_2:
+	if (!input)
+		free(in_buf_save);
+exit_1:
+	if (!output)
+		free(out_buf);
+exit:
+	return ret;
+}
 
-#अगर_घोषित PREBOOT
-STATIC पूर्णांक INIT __decompress(अचिन्हित अक्षर *buf, दीर्घ len,
-			   दीर्घ (*fill)(व्योम*, अचिन्हित दीर्घ),
-			   दीर्घ (*flush)(व्योम*, अचिन्हित दीर्घ),
-			   अचिन्हित अक्षर *out_buf, दीर्घ olen,
-			   दीर्घ *pos,
-			   व्योम (*error)(अक्षर *x))
-अणु
-	वापस unlzo(buf, len, fill, flush, out_buf, pos, error);
-पूर्ण
-#पूर्ण_अगर
+#ifdef PREBOOT
+STATIC int INIT __decompress(unsigned char *buf, long len,
+			   long (*fill)(void*, unsigned long),
+			   long (*flush)(void*, unsigned long),
+			   unsigned char *out_buf, long olen,
+			   long *pos,
+			   void (*error)(char *x))
+{
+	return unlzo(buf, len, fill, flush, out_buf, pos, error);
+}
+#endif

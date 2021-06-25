@@ -1,121 +1,120 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (C) 2013 - Virtual Open Systems
- * Author: Antonios Motakis <a.motakis@भवखोलोप्रणालीs.com>
+ * Author: Antonios Motakis <a.motakis@virtualopensystems.com>
  */
 
-#अगर_अघोषित VFIO_PLATFORM_PRIVATE_H
-#घोषणा VFIO_PLATFORM_PRIVATE_H
+#ifndef VFIO_PLATFORM_PRIVATE_H
+#define VFIO_PLATFORM_PRIVATE_H
 
-#समावेश <linux/types.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/vfपन.स>
+#include <linux/types.h>
+#include <linux/interrupt.h>
+#include <linux/vfio.h>
 
-#घोषणा VFIO_PLATFORM_OFFSET_SHIFT   40
-#घोषणा VFIO_PLATFORM_OFFSET_MASK (((u64)(1) << VFIO_PLATFORM_OFFSET_SHIFT) - 1)
+#define VFIO_PLATFORM_OFFSET_SHIFT   40
+#define VFIO_PLATFORM_OFFSET_MASK (((u64)(1) << VFIO_PLATFORM_OFFSET_SHIFT) - 1)
 
-#घोषणा VFIO_PLATFORM_OFFSET_TO_INDEX(off)	\
+#define VFIO_PLATFORM_OFFSET_TO_INDEX(off)	\
 	(off >> VFIO_PLATFORM_OFFSET_SHIFT)
 
-#घोषणा VFIO_PLATFORM_INDEX_TO_OFFSET(index)	\
+#define VFIO_PLATFORM_INDEX_TO_OFFSET(index)	\
 	((u64)(index) << VFIO_PLATFORM_OFFSET_SHIFT)
 
-काष्ठा vfio_platक्रमm_irq अणु
+struct vfio_platform_irq {
 	u32			flags;
 	u32			count;
-	पूर्णांक			hwirq;
-	अक्षर			*name;
-	काष्ठा eventfd_ctx	*trigger;
+	int			hwirq;
+	char			*name;
+	struct eventfd_ctx	*trigger;
 	bool			masked;
 	spinlock_t		lock;
-	काष्ठा virqfd		*unmask;
-	काष्ठा virqfd		*mask;
-पूर्ण;
+	struct virqfd		*unmask;
+	struct virqfd		*mask;
+};
 
-काष्ठा vfio_platक्रमm_region अणु
+struct vfio_platform_region {
 	u64			addr;
-	resource_माप_प्रकार		size;
+	resource_size_t		size;
 	u32			flags;
 	u32			type;
-#घोषणा VFIO_PLATFORM_REGION_TYPE_MMIO	1
-#घोषणा VFIO_PLATFORM_REGION_TYPE_PIO	2
-	व्योम __iomem		*ioaddr;
-पूर्ण;
+#define VFIO_PLATFORM_REGION_TYPE_MMIO	1
+#define VFIO_PLATFORM_REGION_TYPE_PIO	2
+	void __iomem		*ioaddr;
+};
 
-काष्ठा vfio_platक्रमm_device अणु
-	काष्ठा vfio_device		vdev;
-	काष्ठा vfio_platक्रमm_region	*regions;
+struct vfio_platform_device {
+	struct vfio_device		vdev;
+	struct vfio_platform_region	*regions;
 	u32				num_regions;
-	काष्ठा vfio_platक्रमm_irq	*irqs;
+	struct vfio_platform_irq	*irqs;
 	u32				num_irqs;
-	पूर्णांक				refcnt;
-	काष्ठा mutex			igate;
-	काष्ठा module			*parent_module;
-	स्थिर अक्षर			*compat;
-	स्थिर अक्षर			*acpihid;
-	काष्ठा module			*reset_module;
-	काष्ठा device			*device;
+	int				refcnt;
+	struct mutex			igate;
+	struct module			*parent_module;
+	const char			*compat;
+	const char			*acpihid;
+	struct module			*reset_module;
+	struct device			*device;
 
 	/*
-	 * These fields should be filled by the bus specअगरic binder
+	 * These fields should be filled by the bus specific binder
 	 */
-	व्योम		*opaque;
-	स्थिर अक्षर	*name;
-	uपूर्णांक32_t	flags;
+	void		*opaque;
+	const char	*name;
+	uint32_t	flags;
 	/* callbacks to discover device resources */
-	काष्ठा resource*
-		(*get_resource)(काष्ठा vfio_platक्रमm_device *vdev, पूर्णांक i);
-	पूर्णांक	(*get_irq)(काष्ठा vfio_platक्रमm_device *vdev, पूर्णांक i);
-	पूर्णांक	(*of_reset)(काष्ठा vfio_platक्रमm_device *vdev);
+	struct resource*
+		(*get_resource)(struct vfio_platform_device *vdev, int i);
+	int	(*get_irq)(struct vfio_platform_device *vdev, int i);
+	int	(*of_reset)(struct vfio_platform_device *vdev);
 
 	bool				reset_required;
-पूर्ण;
+};
 
-प्रकार पूर्णांक (*vfio_platक्रमm_reset_fn_t)(काष्ठा vfio_platक्रमm_device *vdev);
+typedef int (*vfio_platform_reset_fn_t)(struct vfio_platform_device *vdev);
 
-काष्ठा vfio_platक्रमm_reset_node अणु
-	काष्ठा list_head link;
-	अक्षर *compat;
-	काष्ठा module *owner;
-	vfio_platक्रमm_reset_fn_t of_reset;
-पूर्ण;
+struct vfio_platform_reset_node {
+	struct list_head link;
+	char *compat;
+	struct module *owner;
+	vfio_platform_reset_fn_t of_reset;
+};
 
-बाह्य पूर्णांक vfio_platक्रमm_probe_common(काष्ठा vfio_platक्रमm_device *vdev,
-				      काष्ठा device *dev);
-व्योम vfio_platक्रमm_हटाओ_common(काष्ठा vfio_platक्रमm_device *vdev);
+extern int vfio_platform_probe_common(struct vfio_platform_device *vdev,
+				      struct device *dev);
+void vfio_platform_remove_common(struct vfio_platform_device *vdev);
 
-बाह्य पूर्णांक vfio_platक्रमm_irq_init(काष्ठा vfio_platक्रमm_device *vdev);
-बाह्य व्योम vfio_platक्रमm_irq_cleanup(काष्ठा vfio_platक्रमm_device *vdev);
+extern int vfio_platform_irq_init(struct vfio_platform_device *vdev);
+extern void vfio_platform_irq_cleanup(struct vfio_platform_device *vdev);
 
-बाह्य पूर्णांक vfio_platक्रमm_set_irqs_ioctl(काष्ठा vfio_platक्रमm_device *vdev,
-					uपूर्णांक32_t flags, अचिन्हित index,
-					अचिन्हित start, अचिन्हित count,
-					व्योम *data);
+extern int vfio_platform_set_irqs_ioctl(struct vfio_platform_device *vdev,
+					uint32_t flags, unsigned index,
+					unsigned start, unsigned count,
+					void *data);
 
-बाह्य व्योम __vfio_platक्रमm_रेजिस्टर_reset(काष्ठा vfio_platक्रमm_reset_node *n);
-बाह्य व्योम vfio_platक्रमm_unरेजिस्टर_reset(स्थिर अक्षर *compat,
-					   vfio_platक्रमm_reset_fn_t fn);
-#घोषणा vfio_platक्रमm_रेजिस्टर_reset(__compat, __reset)		\
-अटल काष्ठा vfio_platक्रमm_reset_node __reset ## _node = अणु	\
+extern void __vfio_platform_register_reset(struct vfio_platform_reset_node *n);
+extern void vfio_platform_unregister_reset(const char *compat,
+					   vfio_platform_reset_fn_t fn);
+#define vfio_platform_register_reset(__compat, __reset)		\
+static struct vfio_platform_reset_node __reset ## _node = {	\
 	.owner = THIS_MODULE,					\
 	.compat = __compat,					\
 	.of_reset = __reset,					\
-पूर्ण;								\
-__vfio_platक्रमm_रेजिस्टर_reset(&__reset ## _node)
+};								\
+__vfio_platform_register_reset(&__reset ## _node)
 
-#घोषणा module_vfio_reset_handler(compat, reset)		\
+#define module_vfio_reset_handler(compat, reset)		\
 MODULE_ALIAS("vfio-reset:" compat);				\
-अटल पूर्णांक __init reset ## _module_init(व्योम)			\
-अणु								\
-	vfio_platक्रमm_रेजिस्टर_reset(compat, reset);		\
-	वापस 0;						\
-पूर्ण;								\
-अटल व्योम __निकास reset ## _module_निकास(व्योम)			\
-अणु								\
-	vfio_platक्रमm_unरेजिस्टर_reset(compat, reset);		\
-पूर्ण;								\
+static int __init reset ## _module_init(void)			\
+{								\
+	vfio_platform_register_reset(compat, reset);		\
+	return 0;						\
+};								\
+static void __exit reset ## _module_exit(void)			\
+{								\
+	vfio_platform_unregister_reset(compat, reset);		\
+};								\
 module_init(reset ## _module_init);				\
-module_निकास(reset ## _module_निकास)
+module_exit(reset ## _module_exit)
 
-#पूर्ण_अगर /* VFIO_PLATFORM_PRIVATE_H */
+#endif /* VFIO_PLATFORM_PRIVATE_H */

@@ -1,475 +1,474 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: (GPL-2.0-or-later OR BSD-2-Clause)
+// SPDX-License-Identifier: (GPL-2.0-or-later OR BSD-2-Clause)
 /*
  * libfdt - Flat Device Tree manipulation
  * Copyright (C) 2006 David Gibson, IBM Corporation.
  */
-#समावेश "libfdt_env.h"
+#include "libfdt_env.h"
 
-#समावेश <fdt.h>
-#समावेश <libfdt.h>
+#include <fdt.h>
+#include <libfdt.h>
 
-#समावेश "libfdt_internal.h"
+#include "libfdt_internal.h"
 
-अटल पूर्णांक fdt_blocks_misordered_(स्थिर व्योम *fdt,
-				  पूर्णांक mem_rsv_size, पूर्णांक काष्ठा_size)
-अणु
-	वापस (fdt_off_mem_rsvmap(fdt) < FDT_ALIGN(माप(काष्ठा fdt_header), 8))
-		|| (fdt_off_dt_काष्ठा(fdt) <
+static int fdt_blocks_misordered_(const void *fdt,
+				  int mem_rsv_size, int struct_size)
+{
+	return (fdt_off_mem_rsvmap(fdt) < FDT_ALIGN(sizeof(struct fdt_header), 8))
+		|| (fdt_off_dt_struct(fdt) <
 		    (fdt_off_mem_rsvmap(fdt) + mem_rsv_size))
 		|| (fdt_off_dt_strings(fdt) <
-		    (fdt_off_dt_काष्ठा(fdt) + काष्ठा_size))
+		    (fdt_off_dt_struct(fdt) + struct_size))
 		|| (fdt_totalsize(fdt) <
 		    (fdt_off_dt_strings(fdt) + fdt_size_dt_strings(fdt)));
-पूर्ण
+}
 
-अटल पूर्णांक fdt_rw_probe_(व्योम *fdt)
-अणु
-	अगर (can_assume(VALID_DTB))
-		वापस 0;
+static int fdt_rw_probe_(void *fdt)
+{
+	if (can_assume(VALID_DTB))
+		return 0;
 	FDT_RO_PROBE(fdt);
 
-	अगर (!can_assume(LATEST) && fdt_version(fdt) < 17)
-		वापस -FDT_ERR_BADVERSION;
-	अगर (fdt_blocks_misordered_(fdt, माप(काष्ठा fdt_reserve_entry),
-				   fdt_size_dt_काष्ठा(fdt)))
-		वापस -FDT_ERR_BADLAYOUT;
-	अगर (!can_assume(LATEST) && fdt_version(fdt) > 17)
+	if (!can_assume(LATEST) && fdt_version(fdt) < 17)
+		return -FDT_ERR_BADVERSION;
+	if (fdt_blocks_misordered_(fdt, sizeof(struct fdt_reserve_entry),
+				   fdt_size_dt_struct(fdt)))
+		return -FDT_ERR_BADLAYOUT;
+	if (!can_assume(LATEST) && fdt_version(fdt) > 17)
 		fdt_set_version(fdt, 17);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#घोषणा FDT_RW_PROBE(fdt) \
-	अणु \
-		पूर्णांक err_; \
-		अगर ((err_ = fdt_rw_probe_(fdt)) != 0) \
-			वापस err_; \
-	पूर्ण
+#define FDT_RW_PROBE(fdt) \
+	{ \
+		int err_; \
+		if ((err_ = fdt_rw_probe_(fdt)) != 0) \
+			return err_; \
+	}
 
-अटल अंतरभूत अचिन्हित पूर्णांक fdt_data_size_(व्योम *fdt)
-अणु
-	वापस fdt_off_dt_strings(fdt) + fdt_size_dt_strings(fdt);
-पूर्ण
+static inline unsigned int fdt_data_size_(void *fdt)
+{
+	return fdt_off_dt_strings(fdt) + fdt_size_dt_strings(fdt);
+}
 
-अटल पूर्णांक fdt_splice_(व्योम *fdt, व्योम *splicepoपूर्णांक, पूर्णांक oldlen, पूर्णांक newlen)
-अणु
-	अक्षर *p = splicepoपूर्णांक;
-	अचिन्हित पूर्णांक dsize = fdt_data_size_(fdt);
-	माप_प्रकार soff = p - (अक्षर *)fdt;
+static int fdt_splice_(void *fdt, void *splicepoint, int oldlen, int newlen)
+{
+	char *p = splicepoint;
+	unsigned int dsize = fdt_data_size_(fdt);
+	size_t soff = p - (char *)fdt;
 
-	अगर ((oldlen < 0) || (soff + oldlen < soff) || (soff + oldlen > dsize))
-		वापस -FDT_ERR_BADOFFSET;
-	अगर ((p < (अक्षर *)fdt) || (dsize + newlen < (अचिन्हित)oldlen))
-		वापस -FDT_ERR_BADOFFSET;
-	अगर (dsize - oldlen + newlen > fdt_totalsize(fdt))
-		वापस -FDT_ERR_NOSPACE;
-	स_हटाओ(p + newlen, p + oldlen, ((अक्षर *)fdt + dsize) - (p + oldlen));
-	वापस 0;
-पूर्ण
+	if ((oldlen < 0) || (soff + oldlen < soff) || (soff + oldlen > dsize))
+		return -FDT_ERR_BADOFFSET;
+	if ((p < (char *)fdt) || (dsize + newlen < (unsigned)oldlen))
+		return -FDT_ERR_BADOFFSET;
+	if (dsize - oldlen + newlen > fdt_totalsize(fdt))
+		return -FDT_ERR_NOSPACE;
+	memmove(p + newlen, p + oldlen, ((char *)fdt + dsize) - (p + oldlen));
+	return 0;
+}
 
-अटल पूर्णांक fdt_splice_mem_rsv_(व्योम *fdt, काष्ठा fdt_reserve_entry *p,
-			       पूर्णांक oldn, पूर्णांक newn)
-अणु
-	पूर्णांक delta = (newn - oldn) * माप(*p);
-	पूर्णांक err;
-	err = fdt_splice_(fdt, p, oldn * माप(*p), newn * माप(*p));
-	अगर (err)
-		वापस err;
-	fdt_set_off_dt_काष्ठा(fdt, fdt_off_dt_काष्ठा(fdt) + delta);
+static int fdt_splice_mem_rsv_(void *fdt, struct fdt_reserve_entry *p,
+			       int oldn, int newn)
+{
+	int delta = (newn - oldn) * sizeof(*p);
+	int err;
+	err = fdt_splice_(fdt, p, oldn * sizeof(*p), newn * sizeof(*p));
+	if (err)
+		return err;
+	fdt_set_off_dt_struct(fdt, fdt_off_dt_struct(fdt) + delta);
 	fdt_set_off_dt_strings(fdt, fdt_off_dt_strings(fdt) + delta);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक fdt_splice_काष्ठा_(व्योम *fdt, व्योम *p,
-			      पूर्णांक oldlen, पूर्णांक newlen)
-अणु
-	पूर्णांक delta = newlen - oldlen;
-	पूर्णांक err;
+static int fdt_splice_struct_(void *fdt, void *p,
+			      int oldlen, int newlen)
+{
+	int delta = newlen - oldlen;
+	int err;
 
-	अगर ((err = fdt_splice_(fdt, p, oldlen, newlen)))
-		वापस err;
+	if ((err = fdt_splice_(fdt, p, oldlen, newlen)))
+		return err;
 
-	fdt_set_size_dt_काष्ठा(fdt, fdt_size_dt_काष्ठा(fdt) + delta);
+	fdt_set_size_dt_struct(fdt, fdt_size_dt_struct(fdt) + delta);
 	fdt_set_off_dt_strings(fdt, fdt_off_dt_strings(fdt) + delta);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Must only be used to roll back in हाल of error */
-अटल व्योम fdt_del_last_string_(व्योम *fdt, स्थिर अक्षर *s)
-अणु
-	पूर्णांक newlen = म_माप(s) + 1;
+/* Must only be used to roll back in case of error */
+static void fdt_del_last_string_(void *fdt, const char *s)
+{
+	int newlen = strlen(s) + 1;
 
 	fdt_set_size_dt_strings(fdt, fdt_size_dt_strings(fdt) - newlen);
-पूर्ण
+}
 
-अटल पूर्णांक fdt_splice_string_(व्योम *fdt, पूर्णांक newlen)
-अणु
-	व्योम *p = (अक्षर *)fdt
+static int fdt_splice_string_(void *fdt, int newlen)
+{
+	void *p = (char *)fdt
 		+ fdt_off_dt_strings(fdt) + fdt_size_dt_strings(fdt);
-	पूर्णांक err;
+	int err;
 
-	अगर ((err = fdt_splice_(fdt, p, 0, newlen)))
-		वापस err;
+	if ((err = fdt_splice_(fdt, p, 0, newlen)))
+		return err;
 
 	fdt_set_size_dt_strings(fdt, fdt_size_dt_strings(fdt) + newlen);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * fdt_find_add_string_() - Find or allocate a string
  *
- * @fdt: poपूर्णांकer to the device tree to check/adjust
+ * @fdt: pointer to the device tree to check/adjust
  * @s: string to find/add
- * @allocated: Set to 0 अगर the string was found, 1 अगर not found and so
- *	allocated. Ignored अगर can_assume(NO_ROLLBACK)
- * @वापस offset of string in the string table (whether found or added)
+ * @allocated: Set to 0 if the string was found, 1 if not found and so
+ *	allocated. Ignored if can_assume(NO_ROLLBACK)
+ * @return offset of string in the string table (whether found or added)
  */
-अटल पूर्णांक fdt_find_add_string_(व्योम *fdt, स्थिर अक्षर *s, पूर्णांक *allocated)
-अणु
-	अक्षर *strtab = (अक्षर *)fdt + fdt_off_dt_strings(fdt);
-	स्थिर अक्षर *p;
-	अक्षर *new;
-	पूर्णांक len = म_माप(s) + 1;
-	पूर्णांक err;
+static int fdt_find_add_string_(void *fdt, const char *s, int *allocated)
+{
+	char *strtab = (char *)fdt + fdt_off_dt_strings(fdt);
+	const char *p;
+	char *new;
+	int len = strlen(s) + 1;
+	int err;
 
-	अगर (!can_assume(NO_ROLLBACK))
+	if (!can_assume(NO_ROLLBACK))
 		*allocated = 0;
 
 	p = fdt_find_string_(strtab, fdt_size_dt_strings(fdt), s);
-	अगर (p)
+	if (p)
 		/* found it */
-		वापस (p - strtab);
+		return (p - strtab);
 
 	new = strtab + fdt_size_dt_strings(fdt);
 	err = fdt_splice_string_(fdt, len);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	अगर (!can_assume(NO_ROLLBACK))
+	if (!can_assume(NO_ROLLBACK))
 		*allocated = 1;
 
-	स_नकल(new, s, len);
-	वापस (new - strtab);
-पूर्ण
+	memcpy(new, s, len);
+	return (new - strtab);
+}
 
-पूर्णांक fdt_add_mem_rsv(व्योम *fdt, uपूर्णांक64_t address, uपूर्णांक64_t size)
-अणु
-	काष्ठा fdt_reserve_entry *re;
-	पूर्णांक err;
+int fdt_add_mem_rsv(void *fdt, uint64_t address, uint64_t size)
+{
+	struct fdt_reserve_entry *re;
+	int err;
 
 	FDT_RW_PROBE(fdt);
 
 	re = fdt_mem_rsv_w_(fdt, fdt_num_mem_rsv(fdt));
 	err = fdt_splice_mem_rsv_(fdt, re, 0, 1);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	re->address = cpu_to_fdt64(address);
 	re->size = cpu_to_fdt64(size);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक fdt_del_mem_rsv(व्योम *fdt, पूर्णांक n)
-अणु
-	काष्ठा fdt_reserve_entry *re = fdt_mem_rsv_w_(fdt, n);
+int fdt_del_mem_rsv(void *fdt, int n)
+{
+	struct fdt_reserve_entry *re = fdt_mem_rsv_w_(fdt, n);
 
 	FDT_RW_PROBE(fdt);
 
-	अगर (n >= fdt_num_mem_rsv(fdt))
-		वापस -FDT_ERR_NOTFOUND;
+	if (n >= fdt_num_mem_rsv(fdt))
+		return -FDT_ERR_NOTFOUND;
 
-	वापस fdt_splice_mem_rsv_(fdt, re, 1, 0);
-पूर्ण
+	return fdt_splice_mem_rsv_(fdt, re, 1, 0);
+}
 
-अटल पूर्णांक fdt_resize_property_(व्योम *fdt, पूर्णांक nodeoffset, स्थिर अक्षर *name,
-				पूर्णांक len, काष्ठा fdt_property **prop)
-अणु
-	पूर्णांक oldlen;
-	पूर्णांक err;
+static int fdt_resize_property_(void *fdt, int nodeoffset, const char *name,
+				int len, struct fdt_property **prop)
+{
+	int oldlen;
+	int err;
 
 	*prop = fdt_get_property_w(fdt, nodeoffset, name, &oldlen);
-	अगर (!*prop)
-		वापस oldlen;
+	if (!*prop)
+		return oldlen;
 
-	अगर ((err = fdt_splice_काष्ठा_(fdt, (*prop)->data, FDT_TAGALIGN(oldlen),
+	if ((err = fdt_splice_struct_(fdt, (*prop)->data, FDT_TAGALIGN(oldlen),
 				      FDT_TAGALIGN(len))))
-		वापस err;
+		return err;
 
 	(*prop)->len = cpu_to_fdt32(len);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक fdt_add_property_(व्योम *fdt, पूर्णांक nodeoffset, स्थिर अक्षर *name,
-			     पूर्णांक len, काष्ठा fdt_property **prop)
-अणु
-	पूर्णांक proplen;
-	पूर्णांक nextoffset;
-	पूर्णांक namestroff;
-	पूर्णांक err;
-	पूर्णांक allocated;
+static int fdt_add_property_(void *fdt, int nodeoffset, const char *name,
+			     int len, struct fdt_property **prop)
+{
+	int proplen;
+	int nextoffset;
+	int namestroff;
+	int err;
+	int allocated;
 
-	अगर ((nextoffset = fdt_check_node_offset_(fdt, nodeoffset)) < 0)
-		वापस nextoffset;
+	if ((nextoffset = fdt_check_node_offset_(fdt, nodeoffset)) < 0)
+		return nextoffset;
 
 	namestroff = fdt_find_add_string_(fdt, name, &allocated);
-	अगर (namestroff < 0)
-		वापस namestroff;
+	if (namestroff < 0)
+		return namestroff;
 
 	*prop = fdt_offset_ptr_w_(fdt, nextoffset);
-	proplen = माप(**prop) + FDT_TAGALIGN(len);
+	proplen = sizeof(**prop) + FDT_TAGALIGN(len);
 
-	err = fdt_splice_काष्ठा_(fdt, *prop, 0, proplen);
-	अगर (err) अणु
-		/* Delete the string अगर we failed to add it */
-		अगर (!can_assume(NO_ROLLBACK) && allocated)
+	err = fdt_splice_struct_(fdt, *prop, 0, proplen);
+	if (err) {
+		/* Delete the string if we failed to add it */
+		if (!can_assume(NO_ROLLBACK) && allocated)
 			fdt_del_last_string_(fdt, name);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	(*prop)->tag = cpu_to_fdt32(FDT_PROP);
 	(*prop)->nameoff = cpu_to_fdt32(namestroff);
 	(*prop)->len = cpu_to_fdt32(len);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक fdt_set_name(व्योम *fdt, पूर्णांक nodeoffset, स्थिर अक्षर *name)
-अणु
-	अक्षर *namep;
-	पूर्णांक oldlen, newlen;
-	पूर्णांक err;
+int fdt_set_name(void *fdt, int nodeoffset, const char *name)
+{
+	char *namep;
+	int oldlen, newlen;
+	int err;
 
 	FDT_RW_PROBE(fdt);
 
-	namep = (अक्षर *)(uपूर्णांकptr_t)fdt_get_name(fdt, nodeoffset, &oldlen);
-	अगर (!namep)
-		वापस oldlen;
+	namep = (char *)(uintptr_t)fdt_get_name(fdt, nodeoffset, &oldlen);
+	if (!namep)
+		return oldlen;
 
-	newlen = म_माप(name);
+	newlen = strlen(name);
 
-	err = fdt_splice_काष्ठा_(fdt, namep, FDT_TAGALIGN(oldlen+1),
+	err = fdt_splice_struct_(fdt, namep, FDT_TAGALIGN(oldlen+1),
 				 FDT_TAGALIGN(newlen+1));
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	स_नकल(namep, name, newlen+1);
-	वापस 0;
-पूर्ण
+	memcpy(namep, name, newlen+1);
+	return 0;
+}
 
-पूर्णांक fdt_setprop_placeholder(व्योम *fdt, पूर्णांक nodeoffset, स्थिर अक्षर *name,
-			    पूर्णांक len, व्योम **prop_data)
-अणु
-	काष्ठा fdt_property *prop;
-	पूर्णांक err;
+int fdt_setprop_placeholder(void *fdt, int nodeoffset, const char *name,
+			    int len, void **prop_data)
+{
+	struct fdt_property *prop;
+	int err;
 
 	FDT_RW_PROBE(fdt);
 
 	err = fdt_resize_property_(fdt, nodeoffset, name, len, &prop);
-	अगर (err == -FDT_ERR_NOTFOUND)
+	if (err == -FDT_ERR_NOTFOUND)
 		err = fdt_add_property_(fdt, nodeoffset, name, len, &prop);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	*prop_data = prop->data;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक fdt_setprop(व्योम *fdt, पूर्णांक nodeoffset, स्थिर अक्षर *name,
-		स्थिर व्योम *val, पूर्णांक len)
-अणु
-	व्योम *prop_data;
-	पूर्णांक err;
+int fdt_setprop(void *fdt, int nodeoffset, const char *name,
+		const void *val, int len)
+{
+	void *prop_data;
+	int err;
 
 	err = fdt_setprop_placeholder(fdt, nodeoffset, name, len, &prop_data);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	अगर (len)
-		स_नकल(prop_data, val, len);
-	वापस 0;
-पूर्ण
+	if (len)
+		memcpy(prop_data, val, len);
+	return 0;
+}
 
-पूर्णांक fdt_appendprop(व्योम *fdt, पूर्णांक nodeoffset, स्थिर अक्षर *name,
-		   स्थिर व्योम *val, पूर्णांक len)
-अणु
-	काष्ठा fdt_property *prop;
-	पूर्णांक err, oldlen, newlen;
+int fdt_appendprop(void *fdt, int nodeoffset, const char *name,
+		   const void *val, int len)
+{
+	struct fdt_property *prop;
+	int err, oldlen, newlen;
 
 	FDT_RW_PROBE(fdt);
 
 	prop = fdt_get_property_w(fdt, nodeoffset, name, &oldlen);
-	अगर (prop) अणु
+	if (prop) {
 		newlen = len + oldlen;
-		err = fdt_splice_काष्ठा_(fdt, prop->data,
+		err = fdt_splice_struct_(fdt, prop->data,
 					 FDT_TAGALIGN(oldlen),
 					 FDT_TAGALIGN(newlen));
-		अगर (err)
-			वापस err;
+		if (err)
+			return err;
 		prop->len = cpu_to_fdt32(newlen);
-		स_नकल(prop->data + oldlen, val, len);
-	पूर्ण अन्यथा अणु
+		memcpy(prop->data + oldlen, val, len);
+	} else {
 		err = fdt_add_property_(fdt, nodeoffset, name, len, &prop);
-		अगर (err)
-			वापस err;
-		स_नकल(prop->data, val, len);
-	पूर्ण
-	वापस 0;
-पूर्ण
+		if (err)
+			return err;
+		memcpy(prop->data, val, len);
+	}
+	return 0;
+}
 
-पूर्णांक fdt_delprop(व्योम *fdt, पूर्णांक nodeoffset, स्थिर अक्षर *name)
-अणु
-	काष्ठा fdt_property *prop;
-	पूर्णांक len, proplen;
+int fdt_delprop(void *fdt, int nodeoffset, const char *name)
+{
+	struct fdt_property *prop;
+	int len, proplen;
 
 	FDT_RW_PROBE(fdt);
 
 	prop = fdt_get_property_w(fdt, nodeoffset, name, &len);
-	अगर (!prop)
-		वापस len;
+	if (!prop)
+		return len;
 
-	proplen = माप(*prop) + FDT_TAGALIGN(len);
-	वापस fdt_splice_काष्ठा_(fdt, prop, proplen, 0);
-पूर्ण
+	proplen = sizeof(*prop) + FDT_TAGALIGN(len);
+	return fdt_splice_struct_(fdt, prop, proplen, 0);
+}
 
-पूर्णांक fdt_add_subnode_namelen(व्योम *fdt, पूर्णांक parentoffset,
-			    स्थिर अक्षर *name, पूर्णांक namelen)
-अणु
-	काष्ठा fdt_node_header *nh;
-	पूर्णांक offset, nextoffset;
-	पूर्णांक nodelen;
-	पूर्णांक err;
-	uपूर्णांक32_t tag;
+int fdt_add_subnode_namelen(void *fdt, int parentoffset,
+			    const char *name, int namelen)
+{
+	struct fdt_node_header *nh;
+	int offset, nextoffset;
+	int nodelen;
+	int err;
+	uint32_t tag;
 	fdt32_t *endtag;
 
 	FDT_RW_PROBE(fdt);
 
 	offset = fdt_subnode_offset_namelen(fdt, parentoffset, name, namelen);
-	अगर (offset >= 0)
-		वापस -FDT_ERR_EXISTS;
-	अन्यथा अगर (offset != -FDT_ERR_NOTFOUND)
-		वापस offset;
+	if (offset >= 0)
+		return -FDT_ERR_EXISTS;
+	else if (offset != -FDT_ERR_NOTFOUND)
+		return offset;
 
 	/* Try to place the new node after the parent's properties */
 	fdt_next_tag(fdt, parentoffset, &nextoffset); /* skip the BEGIN_NODE */
-	करो अणु
+	do {
 		offset = nextoffset;
 		tag = fdt_next_tag(fdt, offset, &nextoffset);
-	पूर्ण जबतक ((tag == FDT_PROP) || (tag == FDT_NOP));
+	} while ((tag == FDT_PROP) || (tag == FDT_NOP));
 
 	nh = fdt_offset_ptr_w_(fdt, offset);
-	nodelen = माप(*nh) + FDT_TAGALIGN(namelen+1) + FDT_TAGSIZE;
+	nodelen = sizeof(*nh) + FDT_TAGALIGN(namelen+1) + FDT_TAGSIZE;
 
-	err = fdt_splice_काष्ठा_(fdt, nh, 0, nodelen);
-	अगर (err)
-		वापस err;
+	err = fdt_splice_struct_(fdt, nh, 0, nodelen);
+	if (err)
+		return err;
 
 	nh->tag = cpu_to_fdt32(FDT_BEGIN_NODE);
-	स_रखो(nh->name, 0, FDT_TAGALIGN(namelen+1));
-	स_नकल(nh->name, name, namelen);
-	endtag = (fdt32_t *)((अक्षर *)nh + nodelen - FDT_TAGSIZE);
+	memset(nh->name, 0, FDT_TAGALIGN(namelen+1));
+	memcpy(nh->name, name, namelen);
+	endtag = (fdt32_t *)((char *)nh + nodelen - FDT_TAGSIZE);
 	*endtag = cpu_to_fdt32(FDT_END_NODE);
 
-	वापस offset;
-पूर्ण
+	return offset;
+}
 
-पूर्णांक fdt_add_subnode(व्योम *fdt, पूर्णांक parentoffset, स्थिर अक्षर *name)
-अणु
-	वापस fdt_add_subnode_namelen(fdt, parentoffset, name, म_माप(name));
-पूर्ण
+int fdt_add_subnode(void *fdt, int parentoffset, const char *name)
+{
+	return fdt_add_subnode_namelen(fdt, parentoffset, name, strlen(name));
+}
 
-पूर्णांक fdt_del_node(व्योम *fdt, पूर्णांक nodeoffset)
-अणु
-	पूर्णांक enकरोffset;
+int fdt_del_node(void *fdt, int nodeoffset)
+{
+	int endoffset;
 
 	FDT_RW_PROBE(fdt);
 
-	enकरोffset = fdt_node_end_offset_(fdt, nodeoffset);
-	अगर (enकरोffset < 0)
-		वापस enकरोffset;
+	endoffset = fdt_node_end_offset_(fdt, nodeoffset);
+	if (endoffset < 0)
+		return endoffset;
 
-	वापस fdt_splice_काष्ठा_(fdt, fdt_offset_ptr_w_(fdt, nodeoffset),
-				  enकरोffset - nodeoffset, 0);
-पूर्ण
+	return fdt_splice_struct_(fdt, fdt_offset_ptr_w_(fdt, nodeoffset),
+				  endoffset - nodeoffset, 0);
+}
 
-अटल व्योम fdt_packblocks_(स्थिर अक्षर *old, अक्षर *new,
-			    पूर्णांक mem_rsv_size, पूर्णांक काष्ठा_size)
-अणु
-	पूर्णांक mem_rsv_off, काष्ठा_off, strings_off;
+static void fdt_packblocks_(const char *old, char *new,
+			    int mem_rsv_size, int struct_size)
+{
+	int mem_rsv_off, struct_off, strings_off;
 
-	mem_rsv_off = FDT_ALIGN(माप(काष्ठा fdt_header), 8);
-	काष्ठा_off = mem_rsv_off + mem_rsv_size;
-	strings_off = काष्ठा_off + काष्ठा_size;
+	mem_rsv_off = FDT_ALIGN(sizeof(struct fdt_header), 8);
+	struct_off = mem_rsv_off + mem_rsv_size;
+	strings_off = struct_off + struct_size;
 
-	स_हटाओ(new + mem_rsv_off, old + fdt_off_mem_rsvmap(old), mem_rsv_size);
+	memmove(new + mem_rsv_off, old + fdt_off_mem_rsvmap(old), mem_rsv_size);
 	fdt_set_off_mem_rsvmap(new, mem_rsv_off);
 
-	स_हटाओ(new + काष्ठा_off, old + fdt_off_dt_काष्ठा(old), काष्ठा_size);
-	fdt_set_off_dt_काष्ठा(new, काष्ठा_off);
-	fdt_set_size_dt_काष्ठा(new, काष्ठा_size);
+	memmove(new + struct_off, old + fdt_off_dt_struct(old), struct_size);
+	fdt_set_off_dt_struct(new, struct_off);
+	fdt_set_size_dt_struct(new, struct_size);
 
-	स_हटाओ(new + strings_off, old + fdt_off_dt_strings(old),
+	memmove(new + strings_off, old + fdt_off_dt_strings(old),
 		fdt_size_dt_strings(old));
 	fdt_set_off_dt_strings(new, strings_off);
 	fdt_set_size_dt_strings(new, fdt_size_dt_strings(old));
-पूर्ण
+}
 
-पूर्णांक fdt_खोलो_पूर्णांकo(स्थिर व्योम *fdt, व्योम *buf, पूर्णांक bufsize)
-अणु
-	पूर्णांक err;
-	पूर्णांक mem_rsv_size, काष्ठा_size;
-	पूर्णांक newsize;
-	स्थिर अक्षर *fdtstart = fdt;
-	स्थिर अक्षर *fdtend = fdtstart + fdt_totalsize(fdt);
-	अक्षर *पंचांगp;
+int fdt_open_into(const void *fdt, void *buf, int bufsize)
+{
+	int err;
+	int mem_rsv_size, struct_size;
+	int newsize;
+	const char *fdtstart = fdt;
+	const char *fdtend = fdtstart + fdt_totalsize(fdt);
+	char *tmp;
 
 	FDT_RO_PROBE(fdt);
 
 	mem_rsv_size = (fdt_num_mem_rsv(fdt)+1)
-		* माप(काष्ठा fdt_reserve_entry);
+		* sizeof(struct fdt_reserve_entry);
 
-	अगर (can_assume(LATEST) || fdt_version(fdt) >= 17) अणु
-		काष्ठा_size = fdt_size_dt_काष्ठा(fdt);
-	पूर्ण अन्यथा अगर (fdt_version(fdt) == 16) अणु
-		काष्ठा_size = 0;
-		जबतक (fdt_next_tag(fdt, काष्ठा_size, &काष्ठा_size) != FDT_END)
+	if (can_assume(LATEST) || fdt_version(fdt) >= 17) {
+		struct_size = fdt_size_dt_struct(fdt);
+	} else if (fdt_version(fdt) == 16) {
+		struct_size = 0;
+		while (fdt_next_tag(fdt, struct_size, &struct_size) != FDT_END)
 			;
-		अगर (काष्ठा_size < 0)
-			वापस काष्ठा_size;
-	पूर्ण अन्यथा अणु
-		वापस -FDT_ERR_BADVERSION;
-	पूर्ण
+		if (struct_size < 0)
+			return struct_size;
+	} else {
+		return -FDT_ERR_BADVERSION;
+	}
 
-	अगर (can_assume(LIBFDT_ORDER) ||
-	    !fdt_blocks_misordered_(fdt, mem_rsv_size, काष्ठा_size)) अणु
+	if (can_assume(LIBFDT_ORDER) ||
+	    !fdt_blocks_misordered_(fdt, mem_rsv_size, struct_size)) {
 		/* no further work necessary */
 		err = fdt_move(fdt, buf, bufsize);
-		अगर (err)
-			वापस err;
+		if (err)
+			return err;
 		fdt_set_version(buf, 17);
-		fdt_set_size_dt_काष्ठा(buf, काष्ठा_size);
+		fdt_set_size_dt_struct(buf, struct_size);
 		fdt_set_totalsize(buf, bufsize);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	/* Need to reorder */
-	newsize = FDT_ALIGN(माप(काष्ठा fdt_header), 8) + mem_rsv_size
-		+ काष्ठा_size + fdt_size_dt_strings(fdt);
+	newsize = FDT_ALIGN(sizeof(struct fdt_header), 8) + mem_rsv_size
+		+ struct_size + fdt_size_dt_strings(fdt);
 
-	अगर (bufsize < newsize)
-		वापस -FDT_ERR_NOSPACE;
+	if (bufsize < newsize)
+		return -FDT_ERR_NOSPACE;
 
 	/* First attempt to build converted tree at beginning of buffer */
-	पंचांगp = buf;
-	/* But अगर that overlaps with the old tree... */
-	अगर (((पंचांगp + newsize) > fdtstart) && (पंचांगp < fdtend)) अणु
+	tmp = buf;
+	/* But if that overlaps with the old tree... */
+	if (((tmp + newsize) > fdtstart) && (tmp < fdtend)) {
 		/* Try right after the old tree instead */
-		पंचांगp = (अक्षर *)(uपूर्णांकptr_t)fdtend;
-		अगर ((पंचांगp + newsize) > ((अक्षर *)buf + bufsize))
-			वापस -FDT_ERR_NOSPACE;
-	पूर्ण
+		tmp = (char *)(uintptr_t)fdtend;
+		if ((tmp + newsize) > ((char *)buf + bufsize))
+			return -FDT_ERR_NOSPACE;
+	}
 
-	fdt_packblocks_(fdt, पंचांगp, mem_rsv_size, काष्ठा_size);
-	स_हटाओ(buf, पंचांगp, newsize);
+	fdt_packblocks_(fdt, tmp, mem_rsv_size, struct_size);
+	memmove(buf, tmp, newsize);
 
 	fdt_set_magic(buf, FDT_MAGIC);
 	fdt_set_totalsize(buf, bufsize);
@@ -477,19 +476,19 @@
 	fdt_set_last_comp_version(buf, 16);
 	fdt_set_boot_cpuid_phys(buf, fdt_boot_cpuid_phys(fdt));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक fdt_pack(व्योम *fdt)
-अणु
-	पूर्णांक mem_rsv_size;
+int fdt_pack(void *fdt)
+{
+	int mem_rsv_size;
 
 	FDT_RW_PROBE(fdt);
 
 	mem_rsv_size = (fdt_num_mem_rsv(fdt)+1)
-		* माप(काष्ठा fdt_reserve_entry);
-	fdt_packblocks_(fdt, fdt, mem_rsv_size, fdt_size_dt_काष्ठा(fdt));
+		* sizeof(struct fdt_reserve_entry);
+	fdt_packblocks_(fdt, fdt, mem_rsv_size, fdt_size_dt_struct(fdt));
 	fdt_set_totalsize(fdt, fdt_data_size_(fdt));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

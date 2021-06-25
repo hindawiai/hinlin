@@ -1,28 +1,27 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <linux/tboot.h>
+// SPDX-License-Identifier: GPL-2.0
+#include <linux/tboot.h>
 
-#समावेश <यंत्र/cpufeature.h>
-#समावेश <यंत्र/msr-index.h>
-#समावेश <यंत्र/processor.h>
-#समावेश <यंत्र/vmx.h>
-#समावेश "cpu.h"
+#include <asm/cpufeature.h>
+#include <asm/msr-index.h>
+#include <asm/processor.h>
+#include <asm/vmx.h>
+#include "cpu.h"
 
-#अघोषित pr_fmt
-#घोषणा pr_fmt(fmt)	"x86/cpu: " fmt
+#undef pr_fmt
+#define pr_fmt(fmt)	"x86/cpu: " fmt
 
-#अगर_घोषित CONFIG_X86_VMX_FEATURE_NAMES
-क्रमागत vmx_feature_leafs अणु
+#ifdef CONFIG_X86_VMX_FEATURE_NAMES
+enum vmx_feature_leafs {
 	MISC_FEATURES = 0,
 	PRIMARY_CTLS,
 	SECONDARY_CTLS,
 	NR_VMX_FEATURE_WORDS,
-पूर्ण;
+};
 
-#घोषणा VMX_F(x) BIT(VMX_FEATURE_##x & 0x1f)
+#define VMX_F(x) BIT(VMX_FEATURE_##x & 0x1f)
 
-अटल व्योम init_vmx_capabilities(काष्ठा cpuinfo_x86 *c)
-अणु
+static void init_vmx_capabilities(struct cpuinfo_x86 *c)
+{
 	u32 supported, funcs, ept, vpid, ign;
 
 	BUILD_BUG_ON(NVMXINTS != NR_VMX_FEATURE_WORDS);
@@ -31,10 +30,10 @@
 	 * The high bits contain the allowed-1 settings, i.e. features that can
 	 * be turned on.  The low bits contain the allowed-0 settings, i.e.
 	 * features that can be turned off.  Ignore the allowed-0 settings,
-	 * अगर a feature can be turned on then it's supported.
+	 * if a feature can be turned on then it's supported.
 	 *
-	 * Use raw rdmsr() क्रम primary processor controls and pin controls MSRs
-	 * as they exist on any CPU that supports VMX, i.e. we want the WARN अगर
+	 * Use raw rdmsr() for primary processor controls and pin controls MSRs
+	 * as they exist on any CPU that supports VMX, i.e. we want the WARN if
 	 * the RDMSR faults.
 	 */
 	rdmsr(MSR_IA32_VMX_PROCBASED_CTLS, ign, supported);
@@ -47,12 +46,12 @@
 	rdmsr_safe(MSR_IA32_VMX_VMFUNC, &ign, &funcs);
 
 	/*
-	 * Except क्रम EPT+VPID, which क्रमागतerates support क्रम both in a single
-	 * MSR, low क्रम EPT, high क्रम VPID.
+	 * Except for EPT+VPID, which enumerates support for both in a single
+	 * MSR, low for EPT, high for VPID.
 	 */
 	rdmsr_safe(MSR_IA32_VMX_EPT_VPID_CAP, &ept, &vpid);
 
-	/* Pin, EPT, VPID and VM-Func are merged पूर्णांकo a single word. */
+	/* Pin, EPT, VPID and VM-Func are merged into a single word. */
 	WARN_ON_ONCE(supported >> 16);
 	WARN_ON_ONCE(funcs >> 4);
 	c->vmx_capability[MISC_FEATURES] = (supported & 0xffff) |
@@ -60,147 +59,147 @@
 					   ((funcs & 0xf) << 28);
 
 	/* EPT bits are full on scattered and must be manually handled. */
-	अगर (ept & VMX_EPT_EXECUTE_ONLY_BIT)
+	if (ept & VMX_EPT_EXECUTE_ONLY_BIT)
 		c->vmx_capability[MISC_FEATURES] |= VMX_F(EPT_EXECUTE_ONLY);
-	अगर (ept & VMX_EPT_AD_BIT)
+	if (ept & VMX_EPT_AD_BIT)
 		c->vmx_capability[MISC_FEATURES] |= VMX_F(EPT_AD);
-	अगर (ept & VMX_EPT_1GB_PAGE_BIT)
+	if (ept & VMX_EPT_1GB_PAGE_BIT)
 		c->vmx_capability[MISC_FEATURES] |= VMX_F(EPT_1GB);
 
 	/* Synthetic APIC features that are aggregates of multiple features. */
-	अगर ((c->vmx_capability[PRIMARY_CTLS] & VMX_F(VIRTUAL_TPR)) &&
+	if ((c->vmx_capability[PRIMARY_CTLS] & VMX_F(VIRTUAL_TPR)) &&
 	    (c->vmx_capability[SECONDARY_CTLS] & VMX_F(VIRT_APIC_ACCESSES)))
 		c->vmx_capability[MISC_FEATURES] |= VMX_F(FLEXPRIORITY);
 
-	अगर ((c->vmx_capability[PRIMARY_CTLS] & VMX_F(VIRTUAL_TPR)) &&
+	if ((c->vmx_capability[PRIMARY_CTLS] & VMX_F(VIRTUAL_TPR)) &&
 	    (c->vmx_capability[SECONDARY_CTLS] & VMX_F(APIC_REGISTER_VIRT)) &&
 	    (c->vmx_capability[SECONDARY_CTLS] & VMX_F(VIRT_INTR_DELIVERY)) &&
 	    (c->vmx_capability[MISC_FEATURES] & VMX_F(POSTED_INTR)))
 		c->vmx_capability[MISC_FEATURES] |= VMX_F(APICV);
 
 	/* Set the synthetic cpufeatures to preserve /proc/cpuinfo's ABI. */
-	अगर (c->vmx_capability[PRIMARY_CTLS] & VMX_F(VIRTUAL_TPR))
+	if (c->vmx_capability[PRIMARY_CTLS] & VMX_F(VIRTUAL_TPR))
 		set_cpu_cap(c, X86_FEATURE_TPR_SHADOW);
-	अगर (c->vmx_capability[MISC_FEATURES] & VMX_F(FLEXPRIORITY))
+	if (c->vmx_capability[MISC_FEATURES] & VMX_F(FLEXPRIORITY))
 		set_cpu_cap(c, X86_FEATURE_FLEXPRIORITY);
-	अगर (c->vmx_capability[MISC_FEATURES] & VMX_F(VIRTUAL_NMIS))
+	if (c->vmx_capability[MISC_FEATURES] & VMX_F(VIRTUAL_NMIS))
 		set_cpu_cap(c, X86_FEATURE_VNMI);
-	अगर (c->vmx_capability[SECONDARY_CTLS] & VMX_F(EPT))
+	if (c->vmx_capability[SECONDARY_CTLS] & VMX_F(EPT))
 		set_cpu_cap(c, X86_FEATURE_EPT);
-	अगर (c->vmx_capability[MISC_FEATURES] & VMX_F(EPT_AD))
+	if (c->vmx_capability[MISC_FEATURES] & VMX_F(EPT_AD))
 		set_cpu_cap(c, X86_FEATURE_EPT_AD);
-	अगर (c->vmx_capability[MISC_FEATURES] & VMX_F(VPID))
+	if (c->vmx_capability[MISC_FEATURES] & VMX_F(VPID))
 		set_cpu_cap(c, X86_FEATURE_VPID);
-पूर्ण
-#पूर्ण_अगर /* CONFIG_X86_VMX_FEATURE_NAMES */
+}
+#endif /* CONFIG_X86_VMX_FEATURE_NAMES */
 
-अटल पूर्णांक __init nosgx(अक्षर *str)
-अणु
+static int __init nosgx(char *str)
+{
 	setup_clear_cpu_cap(X86_FEATURE_SGX);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 early_param("nosgx", nosgx);
 
-व्योम init_ia32_feat_ctl(काष्ठा cpuinfo_x86 *c)
-अणु
+void init_ia32_feat_ctl(struct cpuinfo_x86 *c)
+{
 	bool enable_sgx_kvm = false, enable_sgx_driver = false;
 	bool tboot = tboot_enabled();
 	bool enable_vmx;
 	u64 msr;
 
-	अगर (rdmsrl_safe(MSR_IA32_FEAT_CTL, &msr)) अणु
+	if (rdmsrl_safe(MSR_IA32_FEAT_CTL, &msr)) {
 		clear_cpu_cap(c, X86_FEATURE_VMX);
 		clear_cpu_cap(c, X86_FEATURE_SGX);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	enable_vmx = cpu_has(c, X86_FEATURE_VMX) &&
 		     IS_ENABLED(CONFIG_KVM_INTEL);
 
-	अगर (cpu_has(c, X86_FEATURE_SGX) && IS_ENABLED(CONFIG_X86_SGX)) अणु
+	if (cpu_has(c, X86_FEATURE_SGX) && IS_ENABLED(CONFIG_X86_SGX)) {
 		/*
 		 * Separate out SGX driver enabling from KVM.  This allows KVM
-		 * guests to use SGX even अगर the kernel SGX driver refuses to
-		 * use it.  This happens अगर flexible Launch Control is not
+		 * guests to use SGX even if the kernel SGX driver refuses to
+		 * use it.  This happens if flexible Launch Control is not
 		 * available.
 		 */
 		enable_sgx_driver = cpu_has(c, X86_FEATURE_SGX_LC);
 		enable_sgx_kvm = enable_vmx && IS_ENABLED(CONFIG_X86_SGX_KVM);
-	पूर्ण
+	}
 
-	अगर (msr & FEAT_CTL_LOCKED)
-		जाओ update_caps;
+	if (msr & FEAT_CTL_LOCKED)
+		goto update_caps;
 
 	/*
-	 * Ignore whatever value BIOS left in the MSR to aव्योम enabling अक्रमom
+	 * Ignore whatever value BIOS left in the MSR to avoid enabling random
 	 * features or faulting on the WRMSR.
 	 */
 	msr = FEAT_CTL_LOCKED;
 
 	/*
-	 * Enable VMX अगर and only अगर the kernel may करो VMXON at some poपूर्णांक,
-	 * i.e. KVM is enabled, to aव्योम unnecessarily adding an attack vector
-	 * क्रम the kernel, e.g. using VMX to hide malicious code.
+	 * Enable VMX if and only if the kernel may do VMXON at some point,
+	 * i.e. KVM is enabled, to avoid unnecessarily adding an attack vector
+	 * for the kernel, e.g. using VMX to hide malicious code.
 	 */
-	अगर (enable_vmx) अणु
+	if (enable_vmx) {
 		msr |= FEAT_CTL_VMX_ENABLED_OUTSIDE_SMX;
 
-		अगर (tboot)
+		if (tboot)
 			msr |= FEAT_CTL_VMX_ENABLED_INSIDE_SMX;
-	पूर्ण
+	}
 
-	अगर (enable_sgx_kvm || enable_sgx_driver) अणु
+	if (enable_sgx_kvm || enable_sgx_driver) {
 		msr |= FEAT_CTL_SGX_ENABLED;
-		अगर (enable_sgx_driver)
+		if (enable_sgx_driver)
 			msr |= FEAT_CTL_SGX_LC_ENABLED;
-	पूर्ण
+	}
 
 	wrmsrl(MSR_IA32_FEAT_CTL, msr);
 
 update_caps:
 	set_cpu_cap(c, X86_FEATURE_MSR_IA32_FEAT_CTL);
 
-	अगर (!cpu_has(c, X86_FEATURE_VMX))
-		जाओ update_sgx;
+	if (!cpu_has(c, X86_FEATURE_VMX))
+		goto update_sgx;
 
-	अगर ( (tboot && !(msr & FEAT_CTL_VMX_ENABLED_INSIDE_SMX)) ||
-	    (!tboot && !(msr & FEAT_CTL_VMX_ENABLED_OUTSIDE_SMX))) अणु
-		अगर (IS_ENABLED(CONFIG_KVM_INTEL))
+	if ( (tboot && !(msr & FEAT_CTL_VMX_ENABLED_INSIDE_SMX)) ||
+	    (!tboot && !(msr & FEAT_CTL_VMX_ENABLED_OUTSIDE_SMX))) {
+		if (IS_ENABLED(CONFIG_KVM_INTEL))
 			pr_err_once("VMX (%s TXT) disabled by BIOS\n",
 				    tboot ? "inside" : "outside");
 		clear_cpu_cap(c, X86_FEATURE_VMX);
-	पूर्ण अन्यथा अणु
-#अगर_घोषित CONFIG_X86_VMX_FEATURE_NAMES
+	} else {
+#ifdef CONFIG_X86_VMX_FEATURE_NAMES
 		init_vmx_capabilities(c);
-#पूर्ण_अगर
-	पूर्ण
+#endif
+	}
 
 update_sgx:
-	अगर (!(msr & FEAT_CTL_SGX_ENABLED)) अणु
-		अगर (enable_sgx_kvm || enable_sgx_driver)
+	if (!(msr & FEAT_CTL_SGX_ENABLED)) {
+		if (enable_sgx_kvm || enable_sgx_driver)
 			pr_err_once("SGX disabled by BIOS.\n");
 		clear_cpu_cap(c, X86_FEATURE_SGX);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/*
 	 * VMX feature bit may be cleared due to being disabled in BIOS,
-	 * in which हाल SGX भवization cannot be supported either.
+	 * in which case SGX virtualization cannot be supported either.
 	 */
-	अगर (!cpu_has(c, X86_FEATURE_VMX) && enable_sgx_kvm) अणु
+	if (!cpu_has(c, X86_FEATURE_VMX) && enable_sgx_kvm) {
 		pr_err_once("SGX virtualization disabled due to lack of VMX.\n");
 		enable_sgx_kvm = 0;
-	पूर्ण
+	}
 
-	अगर (!(msr & FEAT_CTL_SGX_LC_ENABLED) && enable_sgx_driver) अणु
-		अगर (!enable_sgx_kvm) अणु
+	if (!(msr & FEAT_CTL_SGX_LC_ENABLED) && enable_sgx_driver) {
+		if (!enable_sgx_kvm) {
 			pr_err_once("SGX Launch Control is locked. Disable SGX.\n");
 			clear_cpu_cap(c, X86_FEATURE_SGX);
-		पूर्ण अन्यथा अणु
+		} else {
 			pr_err_once("SGX Launch Control is locked. Support SGX virtualization only.\n");
 			clear_cpu_cap(c, X86_FEATURE_SGX_LC);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}

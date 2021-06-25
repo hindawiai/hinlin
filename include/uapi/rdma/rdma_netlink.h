@@ -1,43 +1,42 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
-#अगर_अघोषित _UAPI_RDMA_NETLINK_H
-#घोषणा _UAPI_RDMA_NETLINK_H
+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+#ifndef _UAPI_RDMA_NETLINK_H
+#define _UAPI_RDMA_NETLINK_H
 
-#समावेश <linux/types.h>
+#include <linux/types.h>
 
-क्रमागत अणु
+enum {
 	RDMA_NL_IWCM = 2,
 	RDMA_NL_RSVD,
 	RDMA_NL_LS,	/* RDMA Local Services */
-	RDMA_NL_NLDEV,	/* RDMA device पूर्णांकerface */
+	RDMA_NL_NLDEV,	/* RDMA device interface */
 	RDMA_NL_NUM_CLIENTS
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	RDMA_NL_GROUP_IWPM = 2,
 	RDMA_NL_GROUP_LS,
 	RDMA_NL_NUM_GROUPS
-पूर्ण;
+};
 
-#घोषणा RDMA_NL_GET_CLIENT(type) ((type & (((1 << 6) - 1) << 10)) >> 10)
-#घोषणा RDMA_NL_GET_OP(type) (type & ((1 << 10) - 1))
-#घोषणा RDMA_NL_GET_TYPE(client, op) ((client << 10) + op)
+#define RDMA_NL_GET_CLIENT(type) ((type & (((1 << 6) - 1) << 10)) >> 10)
+#define RDMA_NL_GET_OP(type) (type & ((1 << 10) - 1))
+#define RDMA_NL_GET_TYPE(client, op) ((client << 10) + op)
 
 /* The minimum version that the iwpm kernel supports */
-#घोषणा IWPM_UABI_VERSION_MIN	3
+#define IWPM_UABI_VERSION_MIN	3
 
 /* The latest version that the iwpm kernel supports */
-#घोषणा IWPM_UABI_VERSION	4
+#define IWPM_UABI_VERSION	4
 
 /* iwarp port mapper message flags */
-क्रमागत अणु
+enum {
 
-	/* Do not map the port क्रम this IWPM request */
+	/* Do not map the port for this IWPM request */
 	IWPM_FLAGS_NO_PORT_MAP = (1 << 0),
-पूर्ण;
+};
 
 /* iwarp port mapper op-codes */
-क्रमागत अणु
+enum {
 	RDMA_NL_IWPM_REG_PID = 0,
 	RDMA_NL_IWPM_ADD_MAPPING,
 	RDMA_NL_IWPM_QUERY_MAPPING,
@@ -48,18 +47,18 @@
 	RDMA_NL_IWPM_MAPINFO_NUM,
 	RDMA_NL_IWPM_HELLO,
 	RDMA_NL_IWPM_NUM_OPS
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	IWPM_NLA_REG_PID_UNSPEC = 0,
 	IWPM_NLA_REG_PID_SEQ,
 	IWPM_NLA_REG_IF_NAME,
 	IWPM_NLA_REG_IBDEV_NAME,
 	IWPM_NLA_REG_ULIB_NAME,
 	IWPM_NLA_REG_PID_MAX
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	IWPM_NLA_RREG_PID_UNSPEC = 0,
 	IWPM_NLA_RREG_PID_SEQ,
 	IWPM_NLA_RREG_IBDEV_NAME,
@@ -68,40 +67,40 @@
 	IWPM_NLA_RREG_PID_ERR,
 	IWPM_NLA_RREG_PID_MAX
 
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	IWPM_NLA_MANAGE_MAPPING_UNSPEC = 0,
 	IWPM_NLA_MANAGE_MAPPING_SEQ,
 	IWPM_NLA_MANAGE_ADDR,
 	IWPM_NLA_MANAGE_FLAGS,
 	IWPM_NLA_MANAGE_MAPPING_MAX
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	IWPM_NLA_RMANAGE_MAPPING_UNSPEC = 0,
 	IWPM_NLA_RMANAGE_MAPPING_SEQ,
 	IWPM_NLA_RMANAGE_ADDR,
 	IWPM_NLA_RMANAGE_MAPPED_LOC_ADDR,
-	/* The following मुख्यtains bisectability of rdma-core */
+	/* The following maintains bisectability of rdma-core */
 	IWPM_NLA_MANAGE_MAPPED_LOC_ADDR = IWPM_NLA_RMANAGE_MAPPED_LOC_ADDR,
 	IWPM_NLA_RMANAGE_MAPPING_ERR,
 	IWPM_NLA_RMANAGE_MAPPING_MAX
-पूर्ण;
+};
 
-#घोषणा IWPM_NLA_MAPINFO_SEND_MAX   3
-#घोषणा IWPM_NLA_REMOVE_MAPPING_MAX 3
+#define IWPM_NLA_MAPINFO_SEND_MAX   3
+#define IWPM_NLA_REMOVE_MAPPING_MAX 3
 
-क्रमागत अणु
+enum {
 	IWPM_NLA_QUERY_MAPPING_UNSPEC = 0,
 	IWPM_NLA_QUERY_MAPPING_SEQ,
 	IWPM_NLA_QUERY_LOCAL_ADDR,
 	IWPM_NLA_QUERY_REMOTE_ADDR,
 	IWPM_NLA_QUERY_FLAGS,
 	IWPM_NLA_QUERY_MAPPING_MAX,
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	IWPM_NLA_RQUERY_MAPPING_UNSPEC = 0,
 	IWPM_NLA_RQUERY_MAPPING_SEQ,
 	IWPM_NLA_RQUERY_LOCAL_ADDR,
@@ -110,46 +109,46 @@
 	IWPM_NLA_RQUERY_MAPPED_REM_ADDR,
 	IWPM_NLA_RQUERY_MAPPING_ERR,
 	IWPM_NLA_RQUERY_MAPPING_MAX
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	IWPM_NLA_MAPINFO_REQ_UNSPEC = 0,
 	IWPM_NLA_MAPINFO_ULIB_NAME,
 	IWPM_NLA_MAPINFO_ULIB_VER,
 	IWPM_NLA_MAPINFO_REQ_MAX
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	IWPM_NLA_MAPINFO_UNSPEC = 0,
 	IWPM_NLA_MAPINFO_LOCAL_ADDR,
 	IWPM_NLA_MAPINFO_MAPPED_ADDR,
 	IWPM_NLA_MAPINFO_FLAGS,
 	IWPM_NLA_MAPINFO_MAX
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	IWPM_NLA_MAPINFO_NUM_UNSPEC = 0,
 	IWPM_NLA_MAPINFO_SEQ,
 	IWPM_NLA_MAPINFO_SEND_NUM,
 	IWPM_NLA_MAPINFO_ACK_NUM,
 	IWPM_NLA_MAPINFO_NUM_MAX
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	IWPM_NLA_ERR_UNSPEC = 0,
 	IWPM_NLA_ERR_SEQ,
 	IWPM_NLA_ERR_CODE,
 	IWPM_NLA_ERR_MAX
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	IWPM_NLA_HELLO_UNSPEC = 0,
 	IWPM_NLA_HELLO_ABI_VERSION,
 	IWPM_NLA_HELLO_MAX
-पूर्ण;
+};
 
 /* For RDMA_NLDEV_ATTR_DEV_NODE_TYPE */
-क्रमागत अणु
+enum {
 	/* IB values map to NodeInfo:NodeType. */
 	RDMA_NODE_IB_CA = 1,
 	RDMA_NODE_IB_SWITCH,
@@ -158,27 +157,27 @@
 	RDMA_NODE_USNIC,
 	RDMA_NODE_USNIC_UDP,
 	RDMA_NODE_UNSPECIFIED,
-पूर्ण;
+};
 
 /*
  * Local service operations:
  *   RESOLVE - The client requests the local service to resolve a path.
- *   SET_TIMEOUT - The local service requests the client to set the समयout.
+ *   SET_TIMEOUT - The local service requests the client to set the timeout.
  *   IP_RESOLVE - The client requests the local service to resolve an IP to GID.
  */
-क्रमागत अणु
+enum {
 	RDMA_NL_LS_OP_RESOLVE = 0,
 	RDMA_NL_LS_OP_SET_TIMEOUT,
 	RDMA_NL_LS_OP_IP_RESOLVE,
 	RDMA_NL_LS_NUM_OPS
-पूर्ण;
+};
 
 /* Local service netlink message flags */
-#घोषणा RDMA_NL_LS_F_ERR	0x0100	/* Failed response */
+#define RDMA_NL_LS_F_ERR	0x0100	/* Failed response */
 
 /*
  * Local service resolve operation family header.
- * The layout क्रम the resolve operation:
+ * The layout for the resolve operation:
  *    nlmsg header
  *    family header
  *    attributes
@@ -186,41 +185,41 @@
 
 /*
  * Local service path use:
- * Specअगरy how the path(s) will be used.
+ * Specify how the path(s) will be used.
  *   ALL - For connected CM operation (6 pathrecords)
- *   UNIसूचीECTIONAL - For unidirectional UD (1 pathrecord)
+ *   UNIDIRECTIONAL - For unidirectional UD (1 pathrecord)
  *   GMP - For miscellaneous GMP like operation (at least 1 reversible
  *         pathrecord)
  */
-क्रमागत अणु
+enum {
 	LS_RESOLVE_PATH_USE_ALL = 0,
-	LS_RESOLVE_PATH_USE_UNIसूचीECTIONAL,
+	LS_RESOLVE_PATH_USE_UNIDIRECTIONAL,
 	LS_RESOLVE_PATH_USE_GMP,
 	LS_RESOLVE_PATH_USE_MAX
-पूर्ण;
+};
 
-#घोषणा LS_DEVICE_NAME_MAX 64
+#define LS_DEVICE_NAME_MAX 64
 
-काष्ठा rdma_ls_resolve_header अणु
+struct rdma_ls_resolve_header {
 	__u8 device_name[LS_DEVICE_NAME_MAX];
 	__u8 port_num;
 	__u8 path_use;
-पूर्ण;
+};
 
-काष्ठा rdma_ls_ip_resolve_header अणु
-	__u32 अगरindex;
-पूर्ण;
+struct rdma_ls_ip_resolve_header {
+	__u32 ifindex;
+};
 
 /* Local service attribute type */
-#घोषणा RDMA_NLA_F_MANDATORY	(1 << 13)
-#घोषणा RDMA_NLA_TYPE_MASK	(~(NLA_F_NESTED | NLA_F_NET_BYTEORDER | \
+#define RDMA_NLA_F_MANDATORY	(1 << 13)
+#define RDMA_NLA_TYPE_MASK	(~(NLA_F_NESTED | NLA_F_NET_BYTEORDER | \
 				  RDMA_NLA_F_MANDATORY))
 
 /*
  * Local service attributes:
  *   Attr Name       Size                       Byte order
  *   -----------------------------------------------------
- *   PATH_RECORD     काष्ठा ib_path_rec_data
+ *   PATH_RECORD     struct ib_path_rec_data
  *   TIMEOUT         u32                        cpu
  *   SERVICE_ID      u64                        cpu
  *   DGID            u8[16]                     BE
@@ -231,7 +230,7 @@
  *   IPV4            u32                        BE
  *   IPV6            u8[16]                     BE
  */
-क्रमागत अणु
+enum {
 	LS_NLA_TYPE_UNSPEC = 0,
 	LS_NLA_TYPE_PATH_RECORD,
 	LS_NLA_TYPE_TIMEOUT,
@@ -244,14 +243,14 @@
 	LS_NLA_TYPE_IPV4,
 	LS_NLA_TYPE_IPV6,
 	LS_NLA_TYPE_MAX
-पूर्ण;
+};
 
 /* Local service DGID/SGID attribute: big endian */
-काष्ठा rdma_nla_ls_gid अणु
+struct rdma_nla_ls_gid {
 	__u8		gid[16];
-पूर्ण;
+};
 
-क्रमागत rdma_nldev_command अणु
+enum rdma_nldev_command {
 	RDMA_NLDEV_CMD_UNSPEC,
 
 	RDMA_NLDEV_CMD_GET, /* can dump */
@@ -266,7 +265,7 @@
 	RDMA_NLDEV_CMD_SYS_GET,
 	RDMA_NLDEV_CMD_SYS_SET,
 
-	/* 8 is मुक्त to use */
+	/* 8 is free to use */
 
 	RDMA_NLDEV_CMD_RES_GET = 9, /* can dump */
 
@@ -299,39 +298,39 @@
 	RDMA_NLDEV_CMD_RES_SRQ_GET, /* can dump */
 
 	RDMA_NLDEV_NUM_OPS
-पूर्ण;
+};
 
-क्रमागत rdma_nldev_prपूर्णांक_type अणु
+enum rdma_nldev_print_type {
 	RDMA_NLDEV_PRINT_TYPE_UNSPEC,
 	RDMA_NLDEV_PRINT_TYPE_HEX,
-पूर्ण;
+};
 
-क्रमागत rdma_nldev_attr अणु
-	/* करोn't change the order or add anything between, this is ABI! */
+enum rdma_nldev_attr {
+	/* don't change the order or add anything between, this is ABI! */
 	RDMA_NLDEV_ATTR_UNSPEC,
 
-	/* Pad attribute क्रम 64b alignment */
+	/* Pad attribute for 64b alignment */
 	RDMA_NLDEV_ATTR_PAD = RDMA_NLDEV_ATTR_UNSPEC,
 
-	/* Identअगरier क्रम ib_device */
+	/* Identifier for ib_device */
 	RDMA_NLDEV_ATTR_DEV_INDEX,		/* u32 */
 
 	RDMA_NLDEV_ATTR_DEV_NAME,		/* string */
 	/*
-	 * Device index together with port index are identअगरiers
-	 * क्रम port/link properties.
+	 * Device index together with port index are identifiers
+	 * for port/link properties.
 	 *
-	 * For RDMA_NLDEV_CMD_GET commamnd, port index will वापस number
-	 * of available ports in ib_device, जबतक क्रम port specअगरic operations,
+	 * For RDMA_NLDEV_CMD_GET commamnd, port index will return number
+	 * of available ports in ib_device, while for port specific operations,
 	 * it will be real port index as it appears in sysfs. Port index follows
-	 * sysfs notation and starts from 1 क्रम the first port.
+	 * sysfs notation and starts from 1 for the first port.
 	 */
 	RDMA_NLDEV_ATTR_PORT_INDEX,		/* u32 */
 
 	/*
 	 * Device and port capabilities
 	 *
-	 * When used क्रम port info, first 32-bits are CapabilityMask followed by
+	 * When used for port info, first 32-bits are CapabilityMask followed by
 	 * 16-bit CapabilityMask2.
 	 */
 	RDMA_NLDEV_ATTR_CAP_FLAGS,		/* u64 */
@@ -349,7 +348,7 @@
 	/*
 	 * System image GUID (in host byte order) associated with
 	 * this RDMA device and other devices which are part of a
-	 * single प्रणाली.
+	 * single system.
 	 */
 	RDMA_NLDEV_ATTR_SYS_IMAGE_GUID,		/* u64 */
 
@@ -359,9 +358,9 @@
 	RDMA_NLDEV_ATTR_SUBNET_PREFIX,		/* u64 */
 
 	/*
-	 * Local Identअगरier (LID),
-	 * According to IB specअगरication, It is 16-bit address asचिन्हित
-	 * by the Subnet Manager. Extended to be 32-bit क्रम OmniPath users.
+	 * Local Identifier (LID),
+	 * According to IB specification, It is 16-bit address assigned
+	 * by the Subnet Manager. Extended to be 32-bit for OmniPath users.
 	 */
 	RDMA_NLDEV_ATTR_LID,			/* u32 */
 	RDMA_NLDEV_ATTR_SM_LID,			/* u32 */
@@ -389,12 +388,12 @@
 	RDMA_NLDEV_ATTR_RES_LQPN,		/* u32 */
 	/*
 	 * Remote QPN,
-	 * Applicable क्रम RC and UC only IBTA 11.2.5.3 QUERY QUEUE PAIR
+	 * Applicable for RC and UC only IBTA 11.2.5.3 QUERY QUEUE PAIR
 	 */
 	RDMA_NLDEV_ATTR_RES_RQPN,		/* u32 */
 	/*
 	 * Receive Queue PSN,
-	 * Applicable क्रम RC and UC only 11.2.5.3 QUERY QUEUE PAIR
+	 * Applicable for RC and UC only 11.2.5.3 QUERY QUEUE PAIR
 	 */
 	RDMA_NLDEV_ATTR_RES_RQ_PSN,		/* u32 */
 	/*
@@ -404,20 +403,20 @@
 	RDMA_NLDEV_ATTR_RES_PATH_MIG_STATE,	/* u8 */
 	/*
 	 * QP types as visible to RDMA/core, the reserved QPT
-	 * are not exported through this पूर्णांकerface.
+	 * are not exported through this interface.
 	 */
 	RDMA_NLDEV_ATTR_RES_TYPE,		/* u8 */
 	RDMA_NLDEV_ATTR_RES_STATE,		/* u8 */
 	/*
 	 * Process ID which created object,
-	 * in हाल of kernel origin, PID won't exist.
+	 * in case of kernel origin, PID won't exist.
 	 */
 	RDMA_NLDEV_ATTR_RES_PID,		/* u32 */
 	/*
 	 * The name of process created following resource.
-	 * It will exist only क्रम kernel objects.
+	 * It will exist only for kernel objects.
 	 * For user created objects, the user is supposed
-	 * to पढ़ो /proc/PID/comm file.
+	 * to read /proc/PID/comm file.
 	 */
 	RDMA_NLDEV_ATTR_RES_KERN_NAME,		/* string */
 
@@ -452,8 +451,8 @@
 	RDMA_NLDEV_ATTR_RES_UNSAFE_GLOBAL_RKEY,	/* u32 */
 	/*
 	 * Provides logical name and index of netdevice which is
-	 * connected to physical port. This inक्रमmation is relevant
-	 * क्रम RoCE and iWARP.
+	 * connected to physical port. This information is relevant
+	 * for RoCE and iWARP.
 	 *
 	 * The netdevices which are associated with containers are
 	 * supposed to be exported together with GID table once it
@@ -463,13 +462,13 @@
 	RDMA_NLDEV_ATTR_NDEV_INDEX,		/* u32 */
 	RDMA_NLDEV_ATTR_NDEV_NAME,		/* string */
 	/*
-	 * driver-specअगरic attributes.
+	 * driver-specific attributes.
 	 */
 	RDMA_NLDEV_ATTR_DRIVER,			/* nested table */
 	RDMA_NLDEV_ATTR_DRIVER_ENTRY,		/* nested table */
 	RDMA_NLDEV_ATTR_DRIVER_STRING,		/* string */
 	/*
-	 * u8 values from क्रमागत rdma_nldev_prपूर्णांक_type
+	 * u8 values from enum rdma_nldev_print_type
 	 */
 	RDMA_NLDEV_ATTR_DRIVER_PRINT_TYPE,	/* u8 */
 	RDMA_NLDEV_ATTR_DRIVER_S32,		/* s32 */
@@ -478,8 +477,8 @@
 	RDMA_NLDEV_ATTR_DRIVER_U64,		/* u64 */
 
 	/*
-	 * Indexes to get/set secअगरic entry,
-	 * क्रम QP use RDMA_NLDEV_ATTR_RES_LQPN
+	 * Indexes to get/set secific entry,
+	 * for QP use RDMA_NLDEV_ATTR_RES_LQPN
 	 */
 	RDMA_NLDEV_ATTR_RES_PDN,               /* u32 */
 	RDMA_NLDEV_ATTR_RES_CQN,               /* u32 */
@@ -487,12 +486,12 @@
 	RDMA_NLDEV_ATTR_RES_CM_IDN,            /* u32 */
 	RDMA_NLDEV_ATTR_RES_CTXN,	       /* u32 */
 	/*
-	 * Identअगरies the rdma driver. eg: "rxe" or "siw"
+	 * Identifies the rdma driver. eg: "rxe" or "siw"
 	 */
 	RDMA_NLDEV_ATTR_LINK_TYPE,		/* string */
 
 	/*
-	 * net namespace mode क्रम rdma subप्रणाली:
+	 * net namespace mode for rdma subsystem:
 	 * either shared or exclusive among multiple net namespaces.
 	 */
 	RDMA_NLDEV_SYS_ATTR_NETNS_MODE,		/* u8 */
@@ -506,11 +505,11 @@
 	 */
 	RDMA_NLDEV_NET_NS_FD,			/* u32 */
 	/*
-	 * Inक्रमmation about a अक्षरdev.
-	 * CHARDEV_TYPE is the name of the अक्षरdev ABI (ie uverbs, umad, etc)
-	 * CHARDEV_ABI संकेतs the ABI revision (historical)
-	 * CHARDEV_NAME is the kernel name क्रम the /dev/ file (no directory)
-	 * CHARDEV is the 64 bit dev_t क्रम the inode
+	 * Information about a chardev.
+	 * CHARDEV_TYPE is the name of the chardev ABI (ie uverbs, umad, etc)
+	 * CHARDEV_ABI signals the ABI revision (historical)
+	 * CHARDEV_NAME is the kernel name for the /dev/ file (no directory)
+	 * CHARDEV is the 64 bit dev_t for the inode
 	 */
 	RDMA_NLDEV_ATTR_CHARDEV_TYPE,		/* string */
 	RDMA_NLDEV_ATTR_CHARDEV_NAME,		/* string */
@@ -518,7 +517,7 @@
 	RDMA_NLDEV_ATTR_CHARDEV,		/* u64 */
 	RDMA_NLDEV_ATTR_UVERBS_DRIVER_ID,       /* u64 */
 	/*
-	 * Counter-specअगरic attributes.
+	 * Counter-specific attributes.
 	 */
 	RDMA_NLDEV_ATTR_STAT_MODE,		/* u32 */
 	RDMA_NLDEV_ATTR_STAT_RES,		/* u32 */
@@ -554,22 +553,22 @@
 	 * Always the end
 	 */
 	RDMA_NLDEV_ATTR_MAX
-पूर्ण;
+};
 
 /*
  * Supported counter bind modes. All modes are mutual-exclusive.
  */
-क्रमागत rdma_nl_counter_mode अणु
+enum rdma_nl_counter_mode {
 	RDMA_COUNTER_MODE_NONE,
 
 	/*
-	 * A qp is bound with a counter स्वतःmatically during initialization
-	 * based on the स्वतः mode (e.g., qp type, ...)
+	 * A qp is bound with a counter automatically during initialization
+	 * based on the auto mode (e.g., qp type, ...)
 	 */
 	RDMA_COUNTER_MODE_AUTO,
 
 	/*
-	 * Which qp are bound with which counter is explicitly specअगरied
+	 * Which qp are bound with which counter is explicitly specified
 	 * by the user
 	 */
 	RDMA_COUNTER_MODE_MANUAL,
@@ -578,14 +577,14 @@
 	 * Always the end
 	 */
 	RDMA_COUNTER_MODE_MAX,
-पूर्ण;
+};
 
 /*
- * Supported criteria in counter स्वतः mode.
+ * Supported criteria in counter auto mode.
  * Currently only "qp type" is supported
  */
-क्रमागत rdma_nl_counter_mask अणु
+enum rdma_nl_counter_mask {
 	RDMA_COUNTER_MASK_QP_TYPE = 1,
 	RDMA_COUNTER_MASK_PID = 1 << 1,
-पूर्ण;
-#पूर्ण_अगर /* _UAPI_RDMA_NETLINK_H */
+};
+#endif /* _UAPI_RDMA_NETLINK_H */

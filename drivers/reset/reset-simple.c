@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Simple Reset Controller Driver
  *
@@ -9,171 +8,171 @@
  *
  * Copyright 2013 Maxime Ripard
  *
- * Maxime Ripard <maxime.ripard@मुक्त-electrons.com>
+ * Maxime Ripard <maxime.ripard@free-electrons.com>
  */
 
-#समावेश <linux/delay.h>
-#समावेश <linux/device.h>
-#समावेश <linux/err.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/of.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/reset-controller.h>
-#समावेश <linux/reset/reset-simple.h>
-#समावेश <linux/spinlock.h>
+#include <linux/delay.h>
+#include <linux/device.h>
+#include <linux/err.h>
+#include <linux/io.h>
+#include <linux/of.h>
+#include <linux/of_device.h>
+#include <linux/platform_device.h>
+#include <linux/reset-controller.h>
+#include <linux/reset/reset-simple.h>
+#include <linux/spinlock.h>
 
-अटल अंतरभूत काष्ठा reset_simple_data *
-to_reset_simple_data(काष्ठा reset_controller_dev *rcdev)
-अणु
-	वापस container_of(rcdev, काष्ठा reset_simple_data, rcdev);
-पूर्ण
+static inline struct reset_simple_data *
+to_reset_simple_data(struct reset_controller_dev *rcdev)
+{
+	return container_of(rcdev, struct reset_simple_data, rcdev);
+}
 
-अटल पूर्णांक reset_simple_update(काष्ठा reset_controller_dev *rcdev,
-			       अचिन्हित दीर्घ id, bool निश्चित)
-अणु
-	काष्ठा reset_simple_data *data = to_reset_simple_data(rcdev);
-	पूर्णांक reg_width = माप(u32);
-	पूर्णांक bank = id / (reg_width * BITS_PER_BYTE);
-	पूर्णांक offset = id % (reg_width * BITS_PER_BYTE);
-	अचिन्हित दीर्घ flags;
+static int reset_simple_update(struct reset_controller_dev *rcdev,
+			       unsigned long id, bool assert)
+{
+	struct reset_simple_data *data = to_reset_simple_data(rcdev);
+	int reg_width = sizeof(u32);
+	int bank = id / (reg_width * BITS_PER_BYTE);
+	int offset = id % (reg_width * BITS_PER_BYTE);
+	unsigned long flags;
 	u32 reg;
 
 	spin_lock_irqsave(&data->lock, flags);
 
-	reg = पढ़ोl(data->membase + (bank * reg_width));
-	अगर (निश्चित ^ data->active_low)
+	reg = readl(data->membase + (bank * reg_width));
+	if (assert ^ data->active_low)
 		reg |= BIT(offset);
-	अन्यथा
+	else
 		reg &= ~BIT(offset);
-	ग_लिखोl(reg, data->membase + (bank * reg_width));
+	writel(reg, data->membase + (bank * reg_width));
 
 	spin_unlock_irqrestore(&data->lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक reset_simple_निश्चित(काष्ठा reset_controller_dev *rcdev,
-			       अचिन्हित दीर्घ id)
-अणु
-	वापस reset_simple_update(rcdev, id, true);
-पूर्ण
+static int reset_simple_assert(struct reset_controller_dev *rcdev,
+			       unsigned long id)
+{
+	return reset_simple_update(rcdev, id, true);
+}
 
-अटल पूर्णांक reset_simple_deनिश्चित(काष्ठा reset_controller_dev *rcdev,
-				 अचिन्हित दीर्घ id)
-अणु
-	वापस reset_simple_update(rcdev, id, false);
-पूर्ण
+static int reset_simple_deassert(struct reset_controller_dev *rcdev,
+				 unsigned long id)
+{
+	return reset_simple_update(rcdev, id, false);
+}
 
-अटल पूर्णांक reset_simple_reset(काष्ठा reset_controller_dev *rcdev,
-			      अचिन्हित दीर्घ id)
-अणु
-	काष्ठा reset_simple_data *data = to_reset_simple_data(rcdev);
-	पूर्णांक ret;
+static int reset_simple_reset(struct reset_controller_dev *rcdev,
+			      unsigned long id)
+{
+	struct reset_simple_data *data = to_reset_simple_data(rcdev);
+	int ret;
 
-	अगर (!data->reset_us)
-		वापस -ENOTSUPP;
+	if (!data->reset_us)
+		return -ENOTSUPP;
 
-	ret = reset_simple_निश्चित(rcdev, id);
-	अगर (ret)
-		वापस ret;
+	ret = reset_simple_assert(rcdev, id);
+	if (ret)
+		return ret;
 
 	usleep_range(data->reset_us, data->reset_us * 2);
 
-	वापस reset_simple_deनिश्चित(rcdev, id);
-पूर्ण
+	return reset_simple_deassert(rcdev, id);
+}
 
-अटल पूर्णांक reset_simple_status(काष्ठा reset_controller_dev *rcdev,
-			       अचिन्हित दीर्घ id)
-अणु
-	काष्ठा reset_simple_data *data = to_reset_simple_data(rcdev);
-	पूर्णांक reg_width = माप(u32);
-	पूर्णांक bank = id / (reg_width * BITS_PER_BYTE);
-	पूर्णांक offset = id % (reg_width * BITS_PER_BYTE);
+static int reset_simple_status(struct reset_controller_dev *rcdev,
+			       unsigned long id)
+{
+	struct reset_simple_data *data = to_reset_simple_data(rcdev);
+	int reg_width = sizeof(u32);
+	int bank = id / (reg_width * BITS_PER_BYTE);
+	int offset = id % (reg_width * BITS_PER_BYTE);
 	u32 reg;
 
-	reg = पढ़ोl(data->membase + (bank * reg_width));
+	reg = readl(data->membase + (bank * reg_width));
 
-	वापस !(reg & BIT(offset)) ^ !data->status_active_low;
-पूर्ण
+	return !(reg & BIT(offset)) ^ !data->status_active_low;
+}
 
-स्थिर काष्ठा reset_control_ops reset_simple_ops = अणु
-	.निश्चित		= reset_simple_निश्चित,
-	.deनिश्चित	= reset_simple_deनिश्चित,
+const struct reset_control_ops reset_simple_ops = {
+	.assert		= reset_simple_assert,
+	.deassert	= reset_simple_deassert,
 	.reset		= reset_simple_reset,
 	.status		= reset_simple_status,
-पूर्ण;
+};
 EXPORT_SYMBOL_GPL(reset_simple_ops);
 
 /**
- * काष्ठा reset_simple_devdata - simple reset controller properties
- * @reg_offset: offset between base address and first reset रेजिस्टर.
- * @nr_resets: number of resets. If not set, शेष to resource size in bits.
- * @active_low: अगर true, bits are cleared to निश्चित the reset. Otherwise, bits
- *              are set to निश्चित the reset.
- * @status_active_low: अगर true, bits पढ़ो back as cleared जबतक the reset is
- *                     निश्चितed. Otherwise, bits पढ़ो back as set जबतक the
- *                     reset is निश्चितed.
+ * struct reset_simple_devdata - simple reset controller properties
+ * @reg_offset: offset between base address and first reset register.
+ * @nr_resets: number of resets. If not set, default to resource size in bits.
+ * @active_low: if true, bits are cleared to assert the reset. Otherwise, bits
+ *              are set to assert the reset.
+ * @status_active_low: if true, bits read back as cleared while the reset is
+ *                     asserted. Otherwise, bits read back as set while the
+ *                     reset is asserted.
  */
-काष्ठा reset_simple_devdata अणु
+struct reset_simple_devdata {
 	u32 reg_offset;
 	u32 nr_resets;
 	bool active_low;
 	bool status_active_low;
-पूर्ण;
+};
 
-#घोषणा SOCFPGA_NR_BANKS	8
+#define SOCFPGA_NR_BANKS	8
 
-अटल स्थिर काष्ठा reset_simple_devdata reset_simple_socfpga = अणु
+static const struct reset_simple_devdata reset_simple_socfpga = {
 	.reg_offset = 0x20,
 	.nr_resets = SOCFPGA_NR_BANKS * 32,
 	.status_active_low = true,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा reset_simple_devdata reset_simple_active_low = अणु
+static const struct reset_simple_devdata reset_simple_active_low = {
 	.active_low = true,
 	.status_active_low = true,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा of_device_id reset_simple_dt_ids[] = अणु
-	अणु .compatible = "altr,stratix10-rst-mgr",
-		.data = &reset_simple_socfpga पूर्ण,
-	अणु .compatible = "st,stm32-rcc", पूर्ण,
-	अणु .compatible = "allwinner,sun6i-a31-clock-reset",
-		.data = &reset_simple_active_low पूर्ण,
-	अणु .compatible = "zte,zx296718-reset",
-		.data = &reset_simple_active_low पूर्ण,
-	अणु .compatible = "aspeed,ast2400-lpc-reset" पूर्ण,
-	अणु .compatible = "aspeed,ast2500-lpc-reset" पूर्ण,
-	अणु .compatible = "bitmain,bm1880-reset",
-		.data = &reset_simple_active_low पूर्ण,
-	अणु .compatible = "brcm,bcm4908-misc-pcie-reset",
-		.data = &reset_simple_active_low पूर्ण,
-	अणु .compatible = "snps,dw-high-reset" पूर्ण,
-	अणु .compatible = "snps,dw-low-reset",
-		.data = &reset_simple_active_low पूर्ण,
-	अणु /* sentinel */ पूर्ण,
-पूर्ण;
+static const struct of_device_id reset_simple_dt_ids[] = {
+	{ .compatible = "altr,stratix10-rst-mgr",
+		.data = &reset_simple_socfpga },
+	{ .compatible = "st,stm32-rcc", },
+	{ .compatible = "allwinner,sun6i-a31-clock-reset",
+		.data = &reset_simple_active_low },
+	{ .compatible = "zte,zx296718-reset",
+		.data = &reset_simple_active_low },
+	{ .compatible = "aspeed,ast2400-lpc-reset" },
+	{ .compatible = "aspeed,ast2500-lpc-reset" },
+	{ .compatible = "bitmain,bm1880-reset",
+		.data = &reset_simple_active_low },
+	{ .compatible = "brcm,bcm4908-misc-pcie-reset",
+		.data = &reset_simple_active_low },
+	{ .compatible = "snps,dw-high-reset" },
+	{ .compatible = "snps,dw-low-reset",
+		.data = &reset_simple_active_low },
+	{ /* sentinel */ },
+};
 
-अटल पूर्णांक reset_simple_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	स्थिर काष्ठा reset_simple_devdata *devdata;
-	काष्ठा reset_simple_data *data;
-	व्योम __iomem *membase;
-	काष्ठा resource *res;
+static int reset_simple_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	const struct reset_simple_devdata *devdata;
+	struct reset_simple_data *data;
+	void __iomem *membase;
+	struct resource *res;
 	u32 reg_offset = 0;
 
 	devdata = of_device_get_match_data(dev);
 
-	data = devm_kzalloc(dev, माप(*data), GFP_KERNEL);
-	अगर (!data)
-		वापस -ENOMEM;
+	data = devm_kzalloc(dev, sizeof(*data), GFP_KERNEL);
+	if (!data)
+		return -ENOMEM;
 
-	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	membase = devm_ioremap_resource(dev, res);
-	अगर (IS_ERR(membase))
-		वापस PTR_ERR(membase);
+	if (IS_ERR(membase))
+		return PTR_ERR(membase);
 
 	spin_lock_init(&data->lock);
 	data->membase = membase;
@@ -182,24 +181,24 @@ EXPORT_SYMBOL_GPL(reset_simple_ops);
 	data->rcdev.ops = &reset_simple_ops;
 	data->rcdev.of_node = dev->of_node;
 
-	अगर (devdata) अणु
+	if (devdata) {
 		reg_offset = devdata->reg_offset;
-		अगर (devdata->nr_resets)
+		if (devdata->nr_resets)
 			data->rcdev.nr_resets = devdata->nr_resets;
 		data->active_low = devdata->active_low;
 		data->status_active_low = devdata->status_active_low;
-	पूर्ण
+	}
 
 	data->membase += reg_offset;
 
-	वापस devm_reset_controller_रेजिस्टर(dev, &data->rcdev);
-पूर्ण
+	return devm_reset_controller_register(dev, &data->rcdev);
+}
 
-अटल काष्ठा platक्रमm_driver reset_simple_driver = अणु
+static struct platform_driver reset_simple_driver = {
 	.probe	= reset_simple_probe,
-	.driver = अणु
+	.driver = {
 		.name		= "simple-reset",
 		.of_match_table	= reset_simple_dt_ids,
-	पूर्ण,
-पूर्ण;
-builtin_platक्रमm_driver(reset_simple_driver);
+	},
+};
+builtin_platform_driver(reset_simple_driver);

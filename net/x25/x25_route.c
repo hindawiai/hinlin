@@ -1,10 +1,9 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  *	X.25 Packet Layer release 002
  *
- *	This is ALPHA test software. This code may अवरोध your machine,
- *	अक्रमomly fail to work with new releases, misbehave and/or generally
+ *	This is ALPHA test software. This code may break your machine,
+ *	randomly fail to work with new releases, misbehave and/or generally
  *	screw up. It might even work.
  *
  *	This code REQUIRES 2.1.15 or higher
@@ -13,10 +12,10 @@
  *	X.25 001	Jonathan Naylor	Started coding.
  */
 
-#समावेश <linux/अगर_arp.h>
-#समावेश <linux/init.h>
-#समावेश <linux/slab.h>
-#समावेश <net/x25.h>
+#include <linux/if_arp.h>
+#include <linux/init.h>
+#include <linux/slab.h>
+#include <net/x25.h>
 
 LIST_HEAD(x25_route_list);
 DEFINE_RWLOCK(x25_route_list_lock);
@@ -24,30 +23,30 @@ DEFINE_RWLOCK(x25_route_list_lock);
 /*
  *	Add a new route.
  */
-अटल पूर्णांक x25_add_route(काष्ठा x25_address *address, अचिन्हित पूर्णांक sigdigits,
-			 काष्ठा net_device *dev)
-अणु
-	काष्ठा x25_route *rt;
-	काष्ठा list_head *entry;
-	पूर्णांक rc = -EINVAL;
+static int x25_add_route(struct x25_address *address, unsigned int sigdigits,
+			 struct net_device *dev)
+{
+	struct x25_route *rt;
+	struct list_head *entry;
+	int rc = -EINVAL;
 
-	ग_लिखो_lock_bh(&x25_route_list_lock);
+	write_lock_bh(&x25_route_list_lock);
 
-	list_क्रम_each(entry, &x25_route_list) अणु
-		rt = list_entry(entry, काष्ठा x25_route, node);
+	list_for_each(entry, &x25_route_list) {
+		rt = list_entry(entry, struct x25_route, node);
 
-		अगर (!स_भेद(&rt->address, address, sigdigits) &&
+		if (!memcmp(&rt->address, address, sigdigits) &&
 		    rt->sigdigits == sigdigits)
-			जाओ out;
-	पूर्ण
+			goto out;
+	}
 
-	rt = kदो_स्मृति(माप(*rt), GFP_ATOMIC);
+	rt = kmalloc(sizeof(*rt), GFP_ATOMIC);
 	rc = -ENOMEM;
-	अगर (!rt)
-		जाओ out;
+	if (!rt)
+		goto out;
 
-	म_नकल(rt->address.x25_addr, "000000000000000");
-	स_नकल(rt->address.x25_addr, address->x25_addr, sigdigits);
+	strcpy(rt->address.x25_addr, "000000000000000");
+	memcpy(rt->address.x25_addr, address->x25_addr, sigdigits);
 
 	rt->sigdigits = sigdigits;
 	rt->dev       = dev;
@@ -56,159 +55,159 @@ DEFINE_RWLOCK(x25_route_list_lock);
 	list_add(&rt->node, &x25_route_list);
 	rc = 0;
 out:
-	ग_लिखो_unlock_bh(&x25_route_list_lock);
-	वापस rc;
-पूर्ण
+	write_unlock_bh(&x25_route_list_lock);
+	return rc;
+}
 
 /**
- * __x25_हटाओ_route - हटाओ route from x25_route_list
- * @rt: route to हटाओ
+ * __x25_remove_route - remove route from x25_route_list
+ * @rt: route to remove
  *
  * Remove route from x25_route_list. If it was there.
  * Caller must hold x25_route_list_lock.
  */
-अटल व्योम __x25_हटाओ_route(काष्ठा x25_route *rt)
-अणु
-	अगर (rt->node.next) अणु
+static void __x25_remove_route(struct x25_route *rt)
+{
+	if (rt->node.next) {
 		list_del(&rt->node);
 		x25_route_put(rt);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक x25_del_route(काष्ठा x25_address *address, अचिन्हित पूर्णांक sigdigits,
-			 काष्ठा net_device *dev)
-अणु
-	काष्ठा x25_route *rt;
-	काष्ठा list_head *entry;
-	पूर्णांक rc = -EINVAL;
+static int x25_del_route(struct x25_address *address, unsigned int sigdigits,
+			 struct net_device *dev)
+{
+	struct x25_route *rt;
+	struct list_head *entry;
+	int rc = -EINVAL;
 
-	ग_लिखो_lock_bh(&x25_route_list_lock);
+	write_lock_bh(&x25_route_list_lock);
 
-	list_क्रम_each(entry, &x25_route_list) अणु
-		rt = list_entry(entry, काष्ठा x25_route, node);
+	list_for_each(entry, &x25_route_list) {
+		rt = list_entry(entry, struct x25_route, node);
 
-		अगर (!स_भेद(&rt->address, address, sigdigits) &&
-		    rt->sigdigits == sigdigits && rt->dev == dev) अणु
-			__x25_हटाओ_route(rt);
+		if (!memcmp(&rt->address, address, sigdigits) &&
+		    rt->sigdigits == sigdigits && rt->dev == dev) {
+			__x25_remove_route(rt);
 			rc = 0;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	ग_लिखो_unlock_bh(&x25_route_list_lock);
-	वापस rc;
-पूर्ण
-
-/*
- *	A device has been हटाओd, हटाओ its routes.
- */
-व्योम x25_route_device_करोwn(काष्ठा net_device *dev)
-अणु
-	काष्ठा x25_route *rt;
-	काष्ठा list_head *entry, *पंचांगp;
-
-	ग_लिखो_lock_bh(&x25_route_list_lock);
-
-	list_क्रम_each_safe(entry, पंचांगp, &x25_route_list) अणु
-		rt = list_entry(entry, काष्ठा x25_route, node);
-
-		अगर (rt->dev == dev)
-			__x25_हटाओ_route(rt);
-	पूर्ण
-	ग_लिखो_unlock_bh(&x25_route_list_lock);
-पूर्ण
+	write_unlock_bh(&x25_route_list_lock);
+	return rc;
+}
 
 /*
- *	Check that the device given is a valid X.25 पूर्णांकerface that is "up".
+ *	A device has been removed, remove its routes.
  */
-काष्ठा net_device *x25_dev_get(अक्षर *devname)
-अणु
-	काष्ठा net_device *dev = dev_get_by_name(&init_net, devname);
+void x25_route_device_down(struct net_device *dev)
+{
+	struct x25_route *rt;
+	struct list_head *entry, *tmp;
 
-	अगर (dev && (!(dev->flags & IFF_UP) || dev->type != ARPHRD_X25)) अणु
+	write_lock_bh(&x25_route_list_lock);
+
+	list_for_each_safe(entry, tmp, &x25_route_list) {
+		rt = list_entry(entry, struct x25_route, node);
+
+		if (rt->dev == dev)
+			__x25_remove_route(rt);
+	}
+	write_unlock_bh(&x25_route_list_lock);
+}
+
+/*
+ *	Check that the device given is a valid X.25 interface that is "up".
+ */
+struct net_device *x25_dev_get(char *devname)
+{
+	struct net_device *dev = dev_get_by_name(&init_net, devname);
+
+	if (dev && (!(dev->flags & IFF_UP) || dev->type != ARPHRD_X25)) {
 		dev_put(dev);
-		dev = शून्य;
-	पूर्ण
+		dev = NULL;
+	}
 
-	वापस dev;
-पूर्ण
+	return dev;
+}
 
 /**
  * 	x25_get_route -	Find a route given an X.25 address.
- *	@addr: - address to find a route क्रम
+ *	@addr: - address to find a route for
  *
  * 	Find a route given an X.25 address.
  */
-काष्ठा x25_route *x25_get_route(काष्ठा x25_address *addr)
-अणु
-	काष्ठा x25_route *rt, *use = शून्य;
-	काष्ठा list_head *entry;
+struct x25_route *x25_get_route(struct x25_address *addr)
+{
+	struct x25_route *rt, *use = NULL;
+	struct list_head *entry;
 
-	पढ़ो_lock_bh(&x25_route_list_lock);
+	read_lock_bh(&x25_route_list_lock);
 
-	list_क्रम_each(entry, &x25_route_list) अणु
-		rt = list_entry(entry, काष्ठा x25_route, node);
+	list_for_each(entry, &x25_route_list) {
+		rt = list_entry(entry, struct x25_route, node);
 
-		अगर (!स_भेद(&rt->address, addr, rt->sigdigits)) अणु
-			अगर (!use)
+		if (!memcmp(&rt->address, addr, rt->sigdigits)) {
+			if (!use)
 				use = rt;
-			अन्यथा अगर (rt->sigdigits > use->sigdigits)
+			else if (rt->sigdigits > use->sigdigits)
 				use = rt;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (use)
+	if (use)
 		x25_route_hold(use);
 
-	पढ़ो_unlock_bh(&x25_route_list_lock);
-	वापस use;
-पूर्ण
+	read_unlock_bh(&x25_route_list_lock);
+	return use;
+}
 
 /*
  *	Handle the ioctls that control the routing functions.
  */
-पूर्णांक x25_route_ioctl(अचिन्हित पूर्णांक cmd, व्योम __user *arg)
-अणु
-	काष्ठा x25_route_काष्ठा rt;
-	काष्ठा net_device *dev;
-	पूर्णांक rc = -EINVAL;
+int x25_route_ioctl(unsigned int cmd, void __user *arg)
+{
+	struct x25_route_struct rt;
+	struct net_device *dev;
+	int rc = -EINVAL;
 
-	अगर (cmd != SIOCADDRT && cmd != SIOCDELRT)
-		जाओ out;
+	if (cmd != SIOCADDRT && cmd != SIOCDELRT)
+		goto out;
 
 	rc = -EFAULT;
-	अगर (copy_from_user(&rt, arg, माप(rt)))
-		जाओ out;
+	if (copy_from_user(&rt, arg, sizeof(rt)))
+		goto out;
 
 	rc = -EINVAL;
-	अगर (rt.sigdigits > 15)
-		जाओ out;
+	if (rt.sigdigits > 15)
+		goto out;
 
 	dev = x25_dev_get(rt.device);
-	अगर (!dev)
-		जाओ out;
+	if (!dev)
+		goto out;
 
-	अगर (cmd == SIOCADDRT)
+	if (cmd == SIOCADDRT)
 		rc = x25_add_route(&rt.address, rt.sigdigits, dev);
-	अन्यथा
+	else
 		rc = x25_del_route(&rt.address, rt.sigdigits, dev);
 	dev_put(dev);
 out:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*
- *	Release all memory associated with X.25 routing काष्ठाures.
+ *	Release all memory associated with X.25 routing structures.
  */
-व्योम __निकास x25_route_मुक्त(व्योम)
-अणु
-	काष्ठा x25_route *rt;
-	काष्ठा list_head *entry, *पंचांगp;
+void __exit x25_route_free(void)
+{
+	struct x25_route *rt;
+	struct list_head *entry, *tmp;
 
-	ग_लिखो_lock_bh(&x25_route_list_lock);
-	list_क्रम_each_safe(entry, पंचांगp, &x25_route_list) अणु
-		rt = list_entry(entry, काष्ठा x25_route, node);
-		__x25_हटाओ_route(rt);
-	पूर्ण
-	ग_लिखो_unlock_bh(&x25_route_list_lock);
-पूर्ण
+	write_lock_bh(&x25_route_list_lock);
+	list_for_each_safe(entry, tmp, &x25_route_list) {
+		rt = list_entry(entry, struct x25_route, node);
+		__x25_remove_route(rt);
+	}
+	write_unlock_bh(&x25_route_list_lock);
+}

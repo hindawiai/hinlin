@@ -1,24 +1,23 @@
-<शैली गुरु>
 /*
  * Copyright (c) 2004 Topspin Communications.  All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the मुख्य directory of this source tree, or the
+ * COPYING in the main directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary क्रमms, with or
- *     without modअगरication, are permitted provided that the following
+ *     Redistribution and use in source and binary forms, with or
+ *     without modification, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary क्रमm must reproduce the above
+ *      - Redistributions in binary form must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the करोcumentation and/or other materials
+ *        disclaimer in the documentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -31,307 +30,307 @@
  * SOFTWARE.
  */
 
-#अगर_अघोषित _CORE_PRIV_H
-#घोषणा _CORE_PRIV_H
+#ifndef _CORE_PRIV_H
+#define _CORE_PRIV_H
 
-#समावेश <linux/list.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/cgroup_rdma.h>
-#समावेश <net/net_namespace.h>
-#समावेश <net/netns/generic.h>
+#include <linux/list.h>
+#include <linux/spinlock.h>
+#include <linux/cgroup_rdma.h>
+#include <net/net_namespace.h>
+#include <net/netns/generic.h>
 
-#समावेश <rdma/ib_verbs.h>
-#समावेश <rdma/opa_addr.h>
-#समावेश <rdma/ib_mad.h>
-#समावेश <rdma/restrack.h>
-#समावेश "mad_priv.h"
-#समावेश "restrack.h"
+#include <rdma/ib_verbs.h>
+#include <rdma/opa_addr.h>
+#include <rdma/ib_mad.h>
+#include <rdma/restrack.h>
+#include "mad_priv.h"
+#include "restrack.h"
 
-/* Total number of ports combined across all काष्ठा ib_devices's */
-#घोषणा RDMA_MAX_PORTS 8192
+/* Total number of ports combined across all struct ib_devices's */
+#define RDMA_MAX_PORTS 8192
 
-काष्ठा pkey_index_qp_list अणु
-	काष्ठा list_head    pkey_index_list;
+struct pkey_index_qp_list {
+	struct list_head    pkey_index_list;
 	u16                 pkey_index;
-	/* Lock to hold जबतक iterating the qp_list. */
+	/* Lock to hold while iterating the qp_list. */
 	spinlock_t          qp_list_lock;
-	काष्ठा list_head    qp_list;
-पूर्ण;
+	struct list_head    qp_list;
+};
 
 /**
- * काष्ठा rdma_dev_net - rdma net namespace metadata क्रम a net
- * @nl_sock:	Poपूर्णांकer to netlink socket
- * @net:	Poपूर्णांकer to owner net namespace
- * @id:		xarray id to identअगरy the net namespace.
+ * struct rdma_dev_net - rdma net namespace metadata for a net
+ * @nl_sock:	Pointer to netlink socket
+ * @net:	Pointer to owner net namespace
+ * @id:		xarray id to identify the net namespace.
  */
-काष्ठा rdma_dev_net अणु
-	काष्ठा sock *nl_sock;
+struct rdma_dev_net {
+	struct sock *nl_sock;
 	possible_net_t net;
 	u32 id;
-पूर्ण;
+};
 
-बाह्य स्थिर काष्ठा attribute_group ib_dev_attr_group;
-बाह्य bool ib_devices_shared_netns;
-बाह्य अचिन्हित पूर्णांक rdma_dev_net_id;
+extern const struct attribute_group ib_dev_attr_group;
+extern bool ib_devices_shared_netns;
+extern unsigned int rdma_dev_net_id;
 
-अटल अंतरभूत काष्ठा rdma_dev_net *rdma_net_to_dev_net(काष्ठा net *net)
-अणु
-	वापस net_generic(net, rdma_dev_net_id);
-पूर्ण
+static inline struct rdma_dev_net *rdma_net_to_dev_net(struct net *net)
+{
+	return net_generic(net, rdma_dev_net_id);
+}
 
-पूर्णांक ib_device_रेजिस्टर_sysfs(काष्ठा ib_device *device);
-व्योम ib_device_unरेजिस्टर_sysfs(काष्ठा ib_device *device);
-पूर्णांक ib_device_नाम(काष्ठा ib_device *ibdev, स्थिर अक्षर *name);
-पूर्णांक ib_device_set_dim(काष्ठा ib_device *ibdev, u8 use_dim);
+int ib_device_register_sysfs(struct ib_device *device);
+void ib_device_unregister_sysfs(struct ib_device *device);
+int ib_device_rename(struct ib_device *ibdev, const char *name);
+int ib_device_set_dim(struct ib_device *ibdev, u8 use_dim);
 
-प्रकार व्योम (*roce_netdev_callback)(काष्ठा ib_device *device, u32 port,
-	      काष्ठा net_device *idev, व्योम *cookie);
+typedef void (*roce_netdev_callback)(struct ib_device *device, u32 port,
+	      struct net_device *idev, void *cookie);
 
-प्रकार bool (*roce_netdev_filter)(काष्ठा ib_device *device, u32 port,
-				   काष्ठा net_device *idev, व्योम *cookie);
+typedef bool (*roce_netdev_filter)(struct ib_device *device, u32 port,
+				   struct net_device *idev, void *cookie);
 
-काष्ठा net_device *ib_device_get_netdev(काष्ठा ib_device *ib_dev,
+struct net_device *ib_device_get_netdev(struct ib_device *ib_dev,
 					u32 port);
 
-व्योम ib_क्रमागत_roce_netdev(काष्ठा ib_device *ib_dev,
+void ib_enum_roce_netdev(struct ib_device *ib_dev,
 			 roce_netdev_filter filter,
-			 व्योम *filter_cookie,
+			 void *filter_cookie,
 			 roce_netdev_callback cb,
-			 व्योम *cookie);
-व्योम ib_क्रमागत_all_roce_netdevs(roce_netdev_filter filter,
-			      व्योम *filter_cookie,
+			 void *cookie);
+void ib_enum_all_roce_netdevs(roce_netdev_filter filter,
+			      void *filter_cookie,
 			      roce_netdev_callback cb,
-			      व्योम *cookie);
+			      void *cookie);
 
-प्रकार पूर्णांक (*nldev_callback)(काष्ठा ib_device *device,
-			      काष्ठा sk_buff *skb,
-			      काष्ठा netlink_callback *cb,
-			      अचिन्हित पूर्णांक idx);
+typedef int (*nldev_callback)(struct ib_device *device,
+			      struct sk_buff *skb,
+			      struct netlink_callback *cb,
+			      unsigned int idx);
 
-पूर्णांक ib_क्रमागत_all_devs(nldev_callback nldev_cb, काष्ठा sk_buff *skb,
-		     काष्ठा netlink_callback *cb);
+int ib_enum_all_devs(nldev_callback nldev_cb, struct sk_buff *skb,
+		     struct netlink_callback *cb);
 
-काष्ठा ib_client_nl_info अणु
-	काष्ठा sk_buff *nl_msg;
-	काष्ठा device *cdev;
+struct ib_client_nl_info {
+	struct sk_buff *nl_msg;
+	struct device *cdev;
 	u32 port;
 	u64 abi;
-पूर्ण;
-पूर्णांक ib_get_client_nl_info(काष्ठा ib_device *ibdev, स्थिर अक्षर *client_name,
-			  काष्ठा ib_client_nl_info *res);
+};
+int ib_get_client_nl_info(struct ib_device *ibdev, const char *client_name,
+			  struct ib_client_nl_info *res);
 
-क्रमागत ib_cache_gid_शेष_mode अणु
+enum ib_cache_gid_default_mode {
 	IB_CACHE_GID_DEFAULT_MODE_SET,
 	IB_CACHE_GID_DEFAULT_MODE_DELETE
-पूर्ण;
+};
 
-पूर्णांक ib_cache_gid_parse_type_str(स्थिर अक्षर *buf);
+int ib_cache_gid_parse_type_str(const char *buf);
 
-स्थिर अक्षर *ib_cache_gid_type_str(क्रमागत ib_gid_type gid_type);
+const char *ib_cache_gid_type_str(enum ib_gid_type gid_type);
 
-व्योम ib_cache_gid_set_शेष_gid(काष्ठा ib_device *ib_dev, u32 port,
-				  काष्ठा net_device *ndev,
-				  अचिन्हित दीर्घ gid_type_mask,
-				  क्रमागत ib_cache_gid_शेष_mode mode);
+void ib_cache_gid_set_default_gid(struct ib_device *ib_dev, u32 port,
+				  struct net_device *ndev,
+				  unsigned long gid_type_mask,
+				  enum ib_cache_gid_default_mode mode);
 
-पूर्णांक ib_cache_gid_add(काष्ठा ib_device *ib_dev, u32 port,
-		     जोड़ ib_gid *gid, काष्ठा ib_gid_attr *attr);
+int ib_cache_gid_add(struct ib_device *ib_dev, u32 port,
+		     union ib_gid *gid, struct ib_gid_attr *attr);
 
-पूर्णांक ib_cache_gid_del(काष्ठा ib_device *ib_dev, u32 port,
-		     जोड़ ib_gid *gid, काष्ठा ib_gid_attr *attr);
+int ib_cache_gid_del(struct ib_device *ib_dev, u32 port,
+		     union ib_gid *gid, struct ib_gid_attr *attr);
 
-पूर्णांक ib_cache_gid_del_all_netdev_gids(काष्ठा ib_device *ib_dev, u32 port,
-				     काष्ठा net_device *ndev);
+int ib_cache_gid_del_all_netdev_gids(struct ib_device *ib_dev, u32 port,
+				     struct net_device *ndev);
 
-पूर्णांक roce_gid_mgmt_init(व्योम);
-व्योम roce_gid_mgmt_cleanup(व्योम);
+int roce_gid_mgmt_init(void);
+void roce_gid_mgmt_cleanup(void);
 
-अचिन्हित दीर्घ roce_gid_type_mask_support(काष्ठा ib_device *ib_dev, u32 port);
+unsigned long roce_gid_type_mask_support(struct ib_device *ib_dev, u32 port);
 
-पूर्णांक ib_cache_setup_one(काष्ठा ib_device *device);
-व्योम ib_cache_cleanup_one(काष्ठा ib_device *device);
-व्योम ib_cache_release_one(काष्ठा ib_device *device);
-व्योम ib_dispatch_event_clients(काष्ठा ib_event *event);
+int ib_cache_setup_one(struct ib_device *device);
+void ib_cache_cleanup_one(struct ib_device *device);
+void ib_cache_release_one(struct ib_device *device);
+void ib_dispatch_event_clients(struct ib_event *event);
 
-#अगर_घोषित CONFIG_CGROUP_RDMA
-व्योम ib_device_रेजिस्टर_rdmacg(काष्ठा ib_device *device);
-व्योम ib_device_unरेजिस्टर_rdmacg(काष्ठा ib_device *device);
+#ifdef CONFIG_CGROUP_RDMA
+void ib_device_register_rdmacg(struct ib_device *device);
+void ib_device_unregister_rdmacg(struct ib_device *device);
 
-पूर्णांक ib_rdmacg_try_अक्षरge(काष्ठा ib_rdmacg_object *cg_obj,
-			 काष्ठा ib_device *device,
-			 क्रमागत rdmacg_resource_type resource_index);
+int ib_rdmacg_try_charge(struct ib_rdmacg_object *cg_obj,
+			 struct ib_device *device,
+			 enum rdmacg_resource_type resource_index);
 
-व्योम ib_rdmacg_unअक्षरge(काष्ठा ib_rdmacg_object *cg_obj,
-			काष्ठा ib_device *device,
-			क्रमागत rdmacg_resource_type resource_index);
-#अन्यथा
-अटल अंतरभूत व्योम ib_device_रेजिस्टर_rdmacg(काष्ठा ib_device *device)
-अणु
-पूर्ण
+void ib_rdmacg_uncharge(struct ib_rdmacg_object *cg_obj,
+			struct ib_device *device,
+			enum rdmacg_resource_type resource_index);
+#else
+static inline void ib_device_register_rdmacg(struct ib_device *device)
+{
+}
 
-अटल अंतरभूत व्योम ib_device_unरेजिस्टर_rdmacg(काष्ठा ib_device *device)
-अणु
-पूर्ण
+static inline void ib_device_unregister_rdmacg(struct ib_device *device)
+{
+}
 
-अटल अंतरभूत पूर्णांक ib_rdmacg_try_अक्षरge(काष्ठा ib_rdmacg_object *cg_obj,
-				       काष्ठा ib_device *device,
-				       क्रमागत rdmacg_resource_type resource_index)
-अणु
-	वापस 0;
-पूर्ण
+static inline int ib_rdmacg_try_charge(struct ib_rdmacg_object *cg_obj,
+				       struct ib_device *device,
+				       enum rdmacg_resource_type resource_index)
+{
+	return 0;
+}
 
-अटल अंतरभूत व्योम ib_rdmacg_unअक्षरge(काष्ठा ib_rdmacg_object *cg_obj,
-				      काष्ठा ib_device *device,
-				      क्रमागत rdmacg_resource_type resource_index)
-अणु
-पूर्ण
-#पूर्ण_अगर
+static inline void ib_rdmacg_uncharge(struct ib_rdmacg_object *cg_obj,
+				      struct ib_device *device,
+				      enum rdmacg_resource_type resource_index)
+{
+}
+#endif
 
-अटल अंतरभूत bool rdma_is_upper_dev_rcu(काष्ठा net_device *dev,
-					 काष्ठा net_device *upper)
-अणु
-	वापस netdev_has_upper_dev_all_rcu(dev, upper);
-पूर्ण
+static inline bool rdma_is_upper_dev_rcu(struct net_device *dev,
+					 struct net_device *upper)
+{
+	return netdev_has_upper_dev_all_rcu(dev, upper);
+}
 
-पूर्णांक addr_init(व्योम);
-व्योम addr_cleanup(व्योम);
+int addr_init(void);
+void addr_cleanup(void);
 
-पूर्णांक ib_mad_init(व्योम);
-व्योम ib_mad_cleanup(व्योम);
+int ib_mad_init(void);
+void ib_mad_cleanup(void);
 
-पूर्णांक ib_sa_init(व्योम);
-व्योम ib_sa_cleanup(व्योम);
+int ib_sa_init(void);
+void ib_sa_cleanup(void);
 
-व्योम rdma_nl_init(व्योम);
-व्योम rdma_nl_निकास(व्योम);
+void rdma_nl_init(void);
+void rdma_nl_exit(void);
 
-पूर्णांक ib_nl_handle_resolve_resp(काष्ठा sk_buff *skb,
-			      काष्ठा nlmsghdr *nlh,
-			      काष्ठा netlink_ext_ack *extack);
-पूर्णांक ib_nl_handle_set_समयout(काष्ठा sk_buff *skb,
-			     काष्ठा nlmsghdr *nlh,
-			     काष्ठा netlink_ext_ack *extack);
-पूर्णांक ib_nl_handle_ip_res_resp(काष्ठा sk_buff *skb,
-			     काष्ठा nlmsghdr *nlh,
-			     काष्ठा netlink_ext_ack *extack);
+int ib_nl_handle_resolve_resp(struct sk_buff *skb,
+			      struct nlmsghdr *nlh,
+			      struct netlink_ext_ack *extack);
+int ib_nl_handle_set_timeout(struct sk_buff *skb,
+			     struct nlmsghdr *nlh,
+			     struct netlink_ext_ack *extack);
+int ib_nl_handle_ip_res_resp(struct sk_buff *skb,
+			     struct nlmsghdr *nlh,
+			     struct netlink_ext_ack *extack);
 
-पूर्णांक ib_get_cached_subnet_prefix(काष्ठा ib_device *device,
+int ib_get_cached_subnet_prefix(struct ib_device *device,
 				u32 port_num,
 				u64 *sn_pfx);
 
-#अगर_घोषित CONFIG_SECURITY_INFINIBAND
-व्योम ib_security_release_port_pkey_list(काष्ठा ib_device *device);
+#ifdef CONFIG_SECURITY_INFINIBAND
+void ib_security_release_port_pkey_list(struct ib_device *device);
 
-व्योम ib_security_cache_change(काष्ठा ib_device *device,
+void ib_security_cache_change(struct ib_device *device,
 			      u32 port_num,
 			      u64 subnet_prefix);
 
-पूर्णांक ib_security_modअगरy_qp(काष्ठा ib_qp *qp,
-			  काष्ठा ib_qp_attr *qp_attr,
-			  पूर्णांक qp_attr_mask,
-			  काष्ठा ib_udata *udata);
+int ib_security_modify_qp(struct ib_qp *qp,
+			  struct ib_qp_attr *qp_attr,
+			  int qp_attr_mask,
+			  struct ib_udata *udata);
 
-पूर्णांक ib_create_qp_security(काष्ठा ib_qp *qp, काष्ठा ib_device *dev);
-व्योम ib_destroy_qp_security_begin(काष्ठा ib_qp_security *sec);
-व्योम ib_destroy_qp_security_पात(काष्ठा ib_qp_security *sec);
-व्योम ib_destroy_qp_security_end(काष्ठा ib_qp_security *sec);
-पूर्णांक ib_खोलो_shared_qp_security(काष्ठा ib_qp *qp, काष्ठा ib_device *dev);
-व्योम ib_बंद_shared_qp_security(काष्ठा ib_qp_security *sec);
-पूर्णांक ib_mad_agent_security_setup(काष्ठा ib_mad_agent *agent,
-				क्रमागत ib_qp_type qp_type);
-व्योम ib_mad_agent_security_cleanup(काष्ठा ib_mad_agent *agent);
-पूर्णांक ib_mad_enक्रमce_security(काष्ठा ib_mad_agent_निजी *map, u16 pkey_index);
-व्योम ib_mad_agent_security_change(व्योम);
-#अन्यथा
-अटल अंतरभूत व्योम ib_security_release_port_pkey_list(काष्ठा ib_device *device)
-अणु
-पूर्ण
+int ib_create_qp_security(struct ib_qp *qp, struct ib_device *dev);
+void ib_destroy_qp_security_begin(struct ib_qp_security *sec);
+void ib_destroy_qp_security_abort(struct ib_qp_security *sec);
+void ib_destroy_qp_security_end(struct ib_qp_security *sec);
+int ib_open_shared_qp_security(struct ib_qp *qp, struct ib_device *dev);
+void ib_close_shared_qp_security(struct ib_qp_security *sec);
+int ib_mad_agent_security_setup(struct ib_mad_agent *agent,
+				enum ib_qp_type qp_type);
+void ib_mad_agent_security_cleanup(struct ib_mad_agent *agent);
+int ib_mad_enforce_security(struct ib_mad_agent_private *map, u16 pkey_index);
+void ib_mad_agent_security_change(void);
+#else
+static inline void ib_security_release_port_pkey_list(struct ib_device *device)
+{
+}
 
-अटल अंतरभूत व्योम ib_security_cache_change(काष्ठा ib_device *device,
+static inline void ib_security_cache_change(struct ib_device *device,
 					    u32 port_num,
 					    u64 subnet_prefix)
-अणु
-पूर्ण
+{
+}
 
-अटल अंतरभूत पूर्णांक ib_security_modअगरy_qp(काष्ठा ib_qp *qp,
-					काष्ठा ib_qp_attr *qp_attr,
-					पूर्णांक qp_attr_mask,
-					काष्ठा ib_udata *udata)
-अणु
-	वापस qp->device->ops.modअगरy_qp(qp->real_qp,
+static inline int ib_security_modify_qp(struct ib_qp *qp,
+					struct ib_qp_attr *qp_attr,
+					int qp_attr_mask,
+					struct ib_udata *udata)
+{
+	return qp->device->ops.modify_qp(qp->real_qp,
 					 qp_attr,
 					 qp_attr_mask,
 					 udata);
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक ib_create_qp_security(काष्ठा ib_qp *qp,
-					काष्ठा ib_device *dev)
-अणु
-	वापस 0;
-पूर्ण
+static inline int ib_create_qp_security(struct ib_qp *qp,
+					struct ib_device *dev)
+{
+	return 0;
+}
 
-अटल अंतरभूत व्योम ib_destroy_qp_security_begin(काष्ठा ib_qp_security *sec)
-अणु
-पूर्ण
+static inline void ib_destroy_qp_security_begin(struct ib_qp_security *sec)
+{
+}
 
-अटल अंतरभूत व्योम ib_destroy_qp_security_पात(काष्ठा ib_qp_security *sec)
-अणु
-पूर्ण
+static inline void ib_destroy_qp_security_abort(struct ib_qp_security *sec)
+{
+}
 
-अटल अंतरभूत व्योम ib_destroy_qp_security_end(काष्ठा ib_qp_security *sec)
-अणु
-पूर्ण
+static inline void ib_destroy_qp_security_end(struct ib_qp_security *sec)
+{
+}
 
-अटल अंतरभूत पूर्णांक ib_खोलो_shared_qp_security(काष्ठा ib_qp *qp,
-					     काष्ठा ib_device *dev)
-अणु
-	वापस 0;
-पूर्ण
+static inline int ib_open_shared_qp_security(struct ib_qp *qp,
+					     struct ib_device *dev)
+{
+	return 0;
+}
 
-अटल अंतरभूत व्योम ib_बंद_shared_qp_security(काष्ठा ib_qp_security *sec)
-अणु
-पूर्ण
+static inline void ib_close_shared_qp_security(struct ib_qp_security *sec)
+{
+}
 
-अटल अंतरभूत पूर्णांक ib_mad_agent_security_setup(काष्ठा ib_mad_agent *agent,
-					      क्रमागत ib_qp_type qp_type)
-अणु
-	वापस 0;
-पूर्ण
+static inline int ib_mad_agent_security_setup(struct ib_mad_agent *agent,
+					      enum ib_qp_type qp_type)
+{
+	return 0;
+}
 
-अटल अंतरभूत व्योम ib_mad_agent_security_cleanup(काष्ठा ib_mad_agent *agent)
-अणु
-पूर्ण
+static inline void ib_mad_agent_security_cleanup(struct ib_mad_agent *agent)
+{
+}
 
-अटल अंतरभूत पूर्णांक ib_mad_enक्रमce_security(काष्ठा ib_mad_agent_निजी *map,
+static inline int ib_mad_enforce_security(struct ib_mad_agent_private *map,
 					  u16 pkey_index)
-अणु
-	वापस 0;
-पूर्ण
+{
+	return 0;
+}
 
-अटल अंतरभूत व्योम ib_mad_agent_security_change(व्योम)
-अणु
-पूर्ण
-#पूर्ण_अगर
+static inline void ib_mad_agent_security_change(void)
+{
+}
+#endif
 
-काष्ठा ib_device *ib_device_get_by_index(स्थिर काष्ठा net *net, u32 index);
+struct ib_device *ib_device_get_by_index(const struct net *net, u32 index);
 
 /* RDMA device netlink */
-व्योम nldev_init(व्योम);
-व्योम nldev_निकास(व्योम);
+void nldev_init(void);
+void nldev_exit(void);
 
-अटल अंतरभूत काष्ठा ib_qp *
-_ib_create_qp(काष्ठा ib_device *dev, काष्ठा ib_pd *pd,
-	      काष्ठा ib_qp_init_attr *attr, काष्ठा ib_udata *udata,
-	      काष्ठा ib_uqp_object *uobj, स्थिर अक्षर *caller)
-अणु
-	काष्ठा ib_qp *qp;
+static inline struct ib_qp *
+_ib_create_qp(struct ib_device *dev, struct ib_pd *pd,
+	      struct ib_qp_init_attr *attr, struct ib_udata *udata,
+	      struct ib_uqp_object *uobj, const char *caller)
+{
+	struct ib_qp *qp;
 
-	अगर (!dev->ops.create_qp)
-		वापस ERR_PTR(-EOPNOTSUPP);
+	if (!dev->ops.create_qp)
+		return ERR_PTR(-EOPNOTSUPP);
 
 	qp = dev->ops.create_qp(pd, attr, udata);
-	अगर (IS_ERR(qp))
-		वापस qp;
+	if (IS_ERR(qp))
+		return qp;
 
 	qp->device = dev;
 	qp->pd = pd;
@@ -354,55 +353,55 @@ _ib_create_qp(काष्ठा ib_device *dev, काष्ठा ib_pd *pd,
 
 	rdma_restrack_new(&qp->res, RDMA_RESTRACK_QP);
 	WARN_ONCE(!udata && !caller, "Missing kernel QP owner");
-	rdma_restrack_set_name(&qp->res, udata ? शून्य : caller);
+	rdma_restrack_set_name(&qp->res, udata ? NULL : caller);
 	rdma_restrack_add(&qp->res);
-	वापस qp;
-पूर्ण
+	return qp;
+}
 
-काष्ठा rdma_dev_addr;
-पूर्णांक rdma_resolve_ip_route(काष्ठा sockaddr *src_addr,
-			  स्थिर काष्ठा sockaddr *dst_addr,
-			  काष्ठा rdma_dev_addr *addr);
+struct rdma_dev_addr;
+int rdma_resolve_ip_route(struct sockaddr *src_addr,
+			  const struct sockaddr *dst_addr,
+			  struct rdma_dev_addr *addr);
 
-पूर्णांक rdma_addr_find_l2_eth_by_grh(स्थिर जोड़ ib_gid *sgid,
-				 स्थिर जोड़ ib_gid *dgid,
-				 u8 *dmac, स्थिर काष्ठा ib_gid_attr *sgid_attr,
-				 पूर्णांक *hoplimit);
-व्योम rdma_copy_src_l2_addr(काष्ठा rdma_dev_addr *dev_addr,
-			   स्थिर काष्ठा net_device *dev);
+int rdma_addr_find_l2_eth_by_grh(const union ib_gid *sgid,
+				 const union ib_gid *dgid,
+				 u8 *dmac, const struct ib_gid_attr *sgid_attr,
+				 int *hoplimit);
+void rdma_copy_src_l2_addr(struct rdma_dev_addr *dev_addr,
+			   const struct net_device *dev);
 
-काष्ठा sa_path_rec;
-पूर्णांक roce_resolve_route_from_path(काष्ठा sa_path_rec *rec,
-				 स्थिर काष्ठा ib_gid_attr *attr);
+struct sa_path_rec;
+int roce_resolve_route_from_path(struct sa_path_rec *rec,
+				 const struct ib_gid_attr *attr);
 
-काष्ठा net_device *rdma_पढ़ो_gid_attr_ndev_rcu(स्थिर काष्ठा ib_gid_attr *attr);
+struct net_device *rdma_read_gid_attr_ndev_rcu(const struct ib_gid_attr *attr);
 
-व्योम ib_मुक्त_port_attrs(काष्ठा ib_core_device *coredev);
-पूर्णांक ib_setup_port_attrs(काष्ठा ib_core_device *coredev);
+void ib_free_port_attrs(struct ib_core_device *coredev);
+int ib_setup_port_attrs(struct ib_core_device *coredev);
 
-पूर्णांक rdma_compatdev_set(u8 enable);
+int rdma_compatdev_set(u8 enable);
 
-पूर्णांक ib_port_रेजिस्टर_module_stat(काष्ठा ib_device *device, u32 port_num,
-				 काष्ठा kobject *kobj, काष्ठा kobj_type *ktype,
-				 स्थिर अक्षर *name);
-व्योम ib_port_unरेजिस्टर_module_stat(काष्ठा kobject *kobj);
+int ib_port_register_module_stat(struct ib_device *device, u32 port_num,
+				 struct kobject *kobj, struct kobj_type *ktype,
+				 const char *name);
+void ib_port_unregister_module_stat(struct kobject *kobj);
 
-पूर्णांक ib_device_set_netns_put(काष्ठा sk_buff *skb,
-			    काष्ठा ib_device *dev, u32 ns_fd);
+int ib_device_set_netns_put(struct sk_buff *skb,
+			    struct ib_device *dev, u32 ns_fd);
 
-पूर्णांक rdma_nl_net_init(काष्ठा rdma_dev_net *rnet);
-व्योम rdma_nl_net_निकास(काष्ठा rdma_dev_net *rnet);
+int rdma_nl_net_init(struct rdma_dev_net *rnet);
+void rdma_nl_net_exit(struct rdma_dev_net *rnet);
 
-काष्ठा rdma_umap_priv अणु
-	काष्ठा vm_area_काष्ठा *vma;
-	काष्ठा list_head list;
-	काष्ठा rdma_user_mmap_entry *entry;
-पूर्ण;
+struct rdma_umap_priv {
+	struct vm_area_struct *vma;
+	struct list_head list;
+	struct rdma_user_mmap_entry *entry;
+};
 
-व्योम rdma_umap_priv_init(काष्ठा rdma_umap_priv *priv,
-			 काष्ठा vm_area_काष्ठा *vma,
-			 काष्ठा rdma_user_mmap_entry *entry);
+void rdma_umap_priv_init(struct rdma_umap_priv *priv,
+			 struct vm_area_struct *vma,
+			 struct rdma_user_mmap_entry *entry);
 
-व्योम ib_cq_pool_cleanup(काष्ठा ib_device *dev);
+void ib_cq_pool_cleanup(struct ib_device *dev);
 
-#पूर्ण_अगर /* _CORE_PRIV_H */
+#endif /* _CORE_PRIV_H */

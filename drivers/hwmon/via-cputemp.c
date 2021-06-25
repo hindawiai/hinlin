@@ -1,240 +1,239 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * via-cputemp.c - Driver क्रम VIA CPU core temperature monitoring
+ * via-cputemp.c - Driver for VIA CPU core temperature monitoring
  * Copyright (C) 2009 VIA Technologies, Inc.
  *
  * based on existing coretemp.c, which is
  *
- * Copyright (C) 2007 Ruकरोlf Marek <r.marek@assembler.cz>
+ * Copyright (C) 2007 Rudolf Marek <r.marek@assembler.cz>
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/module.h>
-#समावेश <linux/init.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/hwmon.h>
-#समावेश <linux/hwmon-vid.h>
-#समावेश <linux/sysfs.h>
-#समावेश <linux/hwmon-sysfs.h>
-#समावेश <linux/err.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/list.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/cpu.h>
-#समावेश <यंत्र/msr.h>
-#समावेश <यंत्र/processor.h>
-#समावेश <यंत्र/cpu_device_id.h>
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/slab.h>
+#include <linux/hwmon.h>
+#include <linux/hwmon-vid.h>
+#include <linux/sysfs.h>
+#include <linux/hwmon-sysfs.h>
+#include <linux/err.h>
+#include <linux/mutex.h>
+#include <linux/list.h>
+#include <linux/platform_device.h>
+#include <linux/cpu.h>
+#include <asm/msr.h>
+#include <asm/processor.h>
+#include <asm/cpu_device_id.h>
 
-#घोषणा DRVNAME	"via_cputemp"
+#define DRVNAME	"via_cputemp"
 
-क्रमागत अणु SHOW_TEMP, SHOW_LABEL, SHOW_NAME पूर्ण;
+enum { SHOW_TEMP, SHOW_LABEL, SHOW_NAME };
 
 /*
  * Functions declaration
  */
 
-काष्ठा via_cputemp_data अणु
-	काष्ठा device *hwmon_dev;
-	स्थिर अक्षर *name;
+struct via_cputemp_data {
+	struct device *hwmon_dev;
+	const char *name;
 	u8 vrm;
 	u32 id;
 	u32 msr_temp;
 	u32 msr_vid;
-पूर्ण;
+};
 
 /*
  * Sysfs stuff
  */
 
-अटल sमाप_प्रकार name_show(काष्ठा device *dev, काष्ठा device_attribute *devattr,
-			 अक्षर *buf)
-अणु
-	पूर्णांक ret;
-	काष्ठा sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
-	काष्ठा via_cputemp_data *data = dev_get_drvdata(dev);
+static ssize_t name_show(struct device *dev, struct device_attribute *devattr,
+			 char *buf)
+{
+	int ret;
+	struct sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
+	struct via_cputemp_data *data = dev_get_drvdata(dev);
 
-	अगर (attr->index == SHOW_NAME)
-		ret = प्र_लिखो(buf, "%s\n", data->name);
-	अन्यथा	/* show label */
-		ret = प्र_लिखो(buf, "Core %d\n", data->id);
-	वापस ret;
-पूर्ण
+	if (attr->index == SHOW_NAME)
+		ret = sprintf(buf, "%s\n", data->name);
+	else	/* show label */
+		ret = sprintf(buf, "Core %d\n", data->id);
+	return ret;
+}
 
-अटल sमाप_प्रकार temp_show(काष्ठा device *dev, काष्ठा device_attribute *devattr,
-			 अक्षर *buf)
-अणु
-	काष्ठा via_cputemp_data *data = dev_get_drvdata(dev);
+static ssize_t temp_show(struct device *dev, struct device_attribute *devattr,
+			 char *buf)
+{
+	struct via_cputemp_data *data = dev_get_drvdata(dev);
 	u32 eax, edx;
-	पूर्णांक err;
+	int err;
 
 	err = rdmsr_safe_on_cpu(data->id, data->msr_temp, &eax, &edx);
-	अगर (err)
-		वापस -EAGAIN;
+	if (err)
+		return -EAGAIN;
 
-	वापस प्र_लिखो(buf, "%lu\n", ((अचिन्हित दीर्घ)eax & 0xffffff) * 1000);
-पूर्ण
+	return sprintf(buf, "%lu\n", ((unsigned long)eax & 0xffffff) * 1000);
+}
 
-अटल sमाप_प्रकार cpu0_vid_show(काष्ठा device *dev,
-			     काष्ठा device_attribute *devattr, अक्षर *buf)
-अणु
-	काष्ठा via_cputemp_data *data = dev_get_drvdata(dev);
+static ssize_t cpu0_vid_show(struct device *dev,
+			     struct device_attribute *devattr, char *buf)
+{
+	struct via_cputemp_data *data = dev_get_drvdata(dev);
 	u32 eax, edx;
-	पूर्णांक err;
+	int err;
 
 	err = rdmsr_safe_on_cpu(data->id, data->msr_vid, &eax, &edx);
-	अगर (err)
-		वापस -EAGAIN;
+	if (err)
+		return -EAGAIN;
 
-	वापस प्र_लिखो(buf, "%d\n", vid_from_reg(~edx & 0x7f, data->vrm));
-पूर्ण
+	return sprintf(buf, "%d\n", vid_from_reg(~edx & 0x7f, data->vrm));
+}
 
-अटल SENSOR_DEVICE_ATTR_RO(temp1_input, temp, SHOW_TEMP);
-अटल SENSOR_DEVICE_ATTR_RO(temp1_label, name, SHOW_LABEL);
-अटल SENSOR_DEVICE_ATTR_RO(name, name, SHOW_NAME);
+static SENSOR_DEVICE_ATTR_RO(temp1_input, temp, SHOW_TEMP);
+static SENSOR_DEVICE_ATTR_RO(temp1_label, name, SHOW_LABEL);
+static SENSOR_DEVICE_ATTR_RO(name, name, SHOW_NAME);
 
-अटल काष्ठा attribute *via_cputemp_attributes[] = अणु
+static struct attribute *via_cputemp_attributes[] = {
 	&sensor_dev_attr_name.dev_attr.attr,
 	&sensor_dev_attr_temp1_label.dev_attr.attr,
 	&sensor_dev_attr_temp1_input.dev_attr.attr,
-	शून्य
-पूर्ण;
+	NULL
+};
 
-अटल स्थिर काष्ठा attribute_group via_cputemp_group = अणु
+static const struct attribute_group via_cputemp_group = {
 	.attrs = via_cputemp_attributes,
-पूर्ण;
+};
 
 /* Optional attributes */
-अटल DEVICE_ATTR_RO(cpu0_vid);
+static DEVICE_ATTR_RO(cpu0_vid);
 
-अटल पूर्णांक via_cputemp_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा via_cputemp_data *data;
-	काष्ठा cpuinfo_x86 *c = &cpu_data(pdev->id);
-	पूर्णांक err;
+static int via_cputemp_probe(struct platform_device *pdev)
+{
+	struct via_cputemp_data *data;
+	struct cpuinfo_x86 *c = &cpu_data(pdev->id);
+	int err;
 	u32 eax, edx;
 
-	data = devm_kzalloc(&pdev->dev, माप(काष्ठा via_cputemp_data),
+	data = devm_kzalloc(&pdev->dev, sizeof(struct via_cputemp_data),
 			    GFP_KERNEL);
-	अगर (!data)
-		वापस -ENOMEM;
+	if (!data)
+		return -ENOMEM;
 
 	data->id = pdev->id;
 	data->name = "via_cputemp";
 
-	अगर (c->x86 == 7) अणु
+	if (c->x86 == 7) {
 		data->msr_temp = 0x1423;
-	पूर्ण अन्यथा अणु
-		चयन (c->x86_model) अणु
-		हाल 0xA:
+	} else {
+		switch (c->x86_model) {
+		case 0xA:
 			/* C7 A */
-		हाल 0xD:
+		case 0xD:
 			/* C7 D */
 			data->msr_temp = 0x1169;
 			data->msr_vid = 0x198;
-			अवरोध;
-		हाल 0xF:
+			break;
+		case 0xF:
 			/* Nano */
 			data->msr_temp = 0x1423;
-			अवरोध;
-		शेष:
-			वापस -ENODEV;
-		पूर्ण
-	पूर्ण
+			break;
+		default:
+			return -ENODEV;
+		}
+	}
 
-	/* test अगर we can access the TEMPERATURE MSR */
+	/* test if we can access the TEMPERATURE MSR */
 	err = rdmsr_safe_on_cpu(data->id, data->msr_temp, &eax, &edx);
-	अगर (err) अणु
+	if (err) {
 		dev_err(&pdev->dev,
 			"Unable to access TEMPERATURE MSR, giving up\n");
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	platक्रमm_set_drvdata(pdev, data);
+	platform_set_drvdata(pdev, data);
 
 	err = sysfs_create_group(&pdev->dev.kobj, &via_cputemp_group);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	अगर (data->msr_vid)
+	if (data->msr_vid)
 		data->vrm = vid_which_vrm();
 
-	अगर (data->vrm) अणु
+	if (data->vrm) {
 		err = device_create_file(&pdev->dev, &dev_attr_cpu0_vid);
-		अगर (err)
-			जाओ निकास_हटाओ;
-	पूर्ण
+		if (err)
+			goto exit_remove;
+	}
 
-	data->hwmon_dev = hwmon_device_रेजिस्टर(&pdev->dev);
-	अगर (IS_ERR(data->hwmon_dev)) अणु
+	data->hwmon_dev = hwmon_device_register(&pdev->dev);
+	if (IS_ERR(data->hwmon_dev)) {
 		err = PTR_ERR(data->hwmon_dev);
 		dev_err(&pdev->dev, "Class registration failed (%d)\n",
 			err);
-		जाओ निकास_हटाओ;
-	पूर्ण
+		goto exit_remove;
+	}
 
-	वापस 0;
+	return 0;
 
-निकास_हटाओ:
-	अगर (data->vrm)
-		device_हटाओ_file(&pdev->dev, &dev_attr_cpu0_vid);
-	sysfs_हटाओ_group(&pdev->dev.kobj, &via_cputemp_group);
-	वापस err;
-पूर्ण
+exit_remove:
+	if (data->vrm)
+		device_remove_file(&pdev->dev, &dev_attr_cpu0_vid);
+	sysfs_remove_group(&pdev->dev.kobj, &via_cputemp_group);
+	return err;
+}
 
-अटल पूर्णांक via_cputemp_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा via_cputemp_data *data = platक्रमm_get_drvdata(pdev);
+static int via_cputemp_remove(struct platform_device *pdev)
+{
+	struct via_cputemp_data *data = platform_get_drvdata(pdev);
 
-	hwmon_device_unरेजिस्टर(data->hwmon_dev);
-	अगर (data->vrm)
-		device_हटाओ_file(&pdev->dev, &dev_attr_cpu0_vid);
-	sysfs_हटाओ_group(&pdev->dev.kobj, &via_cputemp_group);
-	वापस 0;
-पूर्ण
+	hwmon_device_unregister(data->hwmon_dev);
+	if (data->vrm)
+		device_remove_file(&pdev->dev, &dev_attr_cpu0_vid);
+	sysfs_remove_group(&pdev->dev.kobj, &via_cputemp_group);
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver via_cputemp_driver = अणु
-	.driver = अणु
+static struct platform_driver via_cputemp_driver = {
+	.driver = {
 		.name = DRVNAME,
-	पूर्ण,
+	},
 	.probe = via_cputemp_probe,
-	.हटाओ = via_cputemp_हटाओ,
-पूर्ण;
+	.remove = via_cputemp_remove,
+};
 
-काष्ठा pdev_entry अणु
-	काष्ठा list_head list;
-	काष्ठा platक्रमm_device *pdev;
-	अचिन्हित पूर्णांक cpu;
-पूर्ण;
+struct pdev_entry {
+	struct list_head list;
+	struct platform_device *pdev;
+	unsigned int cpu;
+};
 
-अटल LIST_HEAD(pdev_list);
-अटल DEFINE_MUTEX(pdev_list_mutex);
+static LIST_HEAD(pdev_list);
+static DEFINE_MUTEX(pdev_list_mutex);
 
-अटल पूर्णांक via_cputemp_online(अचिन्हित पूर्णांक cpu)
-अणु
-	पूर्णांक err;
-	काष्ठा platक्रमm_device *pdev;
-	काष्ठा pdev_entry *pdev_entry;
+static int via_cputemp_online(unsigned int cpu)
+{
+	int err;
+	struct platform_device *pdev;
+	struct pdev_entry *pdev_entry;
 
-	pdev = platक्रमm_device_alloc(DRVNAME, cpu);
-	अगर (!pdev) अणु
+	pdev = platform_device_alloc(DRVNAME, cpu);
+	if (!pdev) {
 		err = -ENOMEM;
 		pr_err("Device allocation failed\n");
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
-	pdev_entry = kzalloc(माप(काष्ठा pdev_entry), GFP_KERNEL);
-	अगर (!pdev_entry) अणु
+	pdev_entry = kzalloc(sizeof(struct pdev_entry), GFP_KERNEL);
+	if (!pdev_entry) {
 		err = -ENOMEM;
-		जाओ निकास_device_put;
-	पूर्ण
+		goto exit_device_put;
+	}
 
-	err = platक्रमm_device_add(pdev);
-	अगर (err) अणु
+	err = platform_device_add(pdev);
+	if (err) {
 		pr_err("Device addition failed (%d)\n", err);
-		जाओ निकास_device_मुक्त;
-	पूर्ण
+		goto exit_device_free;
+	}
 
 	pdev_entry->pdev = pdev;
 	pdev_entry->cpu = cpu;
@@ -242,89 +241,89 @@
 	list_add_tail(&pdev_entry->list, &pdev_list);
 	mutex_unlock(&pdev_list_mutex);
 
-	वापस 0;
+	return 0;
 
-निकास_device_मुक्त:
-	kमुक्त(pdev_entry);
-निकास_device_put:
-	platक्रमm_device_put(pdev);
-निकास:
-	वापस err;
-पूर्ण
+exit_device_free:
+	kfree(pdev_entry);
+exit_device_put:
+	platform_device_put(pdev);
+exit:
+	return err;
+}
 
-अटल पूर्णांक via_cputemp_करोwn_prep(अचिन्हित पूर्णांक cpu)
-अणु
-	काष्ठा pdev_entry *p;
+static int via_cputemp_down_prep(unsigned int cpu)
+{
+	struct pdev_entry *p;
 
 	mutex_lock(&pdev_list_mutex);
-	list_क्रम_each_entry(p, &pdev_list, list) अणु
-		अगर (p->cpu == cpu) अणु
-			platक्रमm_device_unरेजिस्टर(p->pdev);
+	list_for_each_entry(p, &pdev_list, list) {
+		if (p->cpu == cpu) {
+			platform_device_unregister(p->pdev);
 			list_del(&p->list);
 			mutex_unlock(&pdev_list_mutex);
-			kमुक्त(p);
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			kfree(p);
+			return 0;
+		}
+	}
 	mutex_unlock(&pdev_list_mutex);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा x86_cpu_id __initस्थिर cputemp_ids[] = अणु
-	X86_MATCH_VENDOR_FAM_MODEL(CENTAUR, 6, X86_CENTAUR_FAM6_C7_A,	शून्य),
-	X86_MATCH_VENDOR_FAM_MODEL(CENTAUR, 6, X86_CENTAUR_FAM6_C7_D,	शून्य),
-	X86_MATCH_VENDOR_FAM_MODEL(CENTAUR, 6, X86_CENTAUR_FAM6_न_अंकO,	शून्य),
-	X86_MATCH_VENDOR_FAM_MODEL(CENTAUR, 7, X86_MODEL_ANY,		शून्य),
-	अणुपूर्ण
-पूर्ण;
+static const struct x86_cpu_id __initconst cputemp_ids[] = {
+	X86_MATCH_VENDOR_FAM_MODEL(CENTAUR, 6, X86_CENTAUR_FAM6_C7_A,	NULL),
+	X86_MATCH_VENDOR_FAM_MODEL(CENTAUR, 6, X86_CENTAUR_FAM6_C7_D,	NULL),
+	X86_MATCH_VENDOR_FAM_MODEL(CENTAUR, 6, X86_CENTAUR_FAM6_NANO,	NULL),
+	X86_MATCH_VENDOR_FAM_MODEL(CENTAUR, 7, X86_MODEL_ANY,		NULL),
+	{}
+};
 MODULE_DEVICE_TABLE(x86cpu, cputemp_ids);
 
-अटल क्रमागत cpuhp_state via_temp_online;
+static enum cpuhp_state via_temp_online;
 
-अटल पूर्णांक __init via_cputemp_init(व्योम)
-अणु
-	पूर्णांक err;
+static int __init via_cputemp_init(void)
+{
+	int err;
 
-	अगर (!x86_match_cpu(cputemp_ids))
-		वापस -ENODEV;
+	if (!x86_match_cpu(cputemp_ids))
+		return -ENODEV;
 
-	err = platक्रमm_driver_रेजिस्टर(&via_cputemp_driver);
-	अगर (err)
-		जाओ निकास;
+	err = platform_driver_register(&via_cputemp_driver);
+	if (err)
+		goto exit;
 
 	err = cpuhp_setup_state(CPUHP_AP_ONLINE_DYN, "hwmon/via:online",
-				via_cputemp_online, via_cputemp_करोwn_prep);
-	अगर (err < 0)
-		जाओ निकास_driver_unreg;
+				via_cputemp_online, via_cputemp_down_prep);
+	if (err < 0)
+		goto exit_driver_unreg;
 	via_temp_online = err;
 
-#अगर_अघोषित CONFIG_HOTPLUG_CPU
-	अगर (list_empty(&pdev_list)) अणु
+#ifndef CONFIG_HOTPLUG_CPU
+	if (list_empty(&pdev_list)) {
 		err = -ENODEV;
-		जाओ निकास_hp_unreg;
-	पूर्ण
-#पूर्ण_अगर
-	वापस 0;
+		goto exit_hp_unreg;
+	}
+#endif
+	return 0;
 
-#अगर_अघोषित CONFIG_HOTPLUG_CPU
-निकास_hp_unreg:
-	cpuhp_हटाओ_state_nocalls(via_temp_online);
-#पूर्ण_अगर
-निकास_driver_unreg:
-	platक्रमm_driver_unरेजिस्टर(&via_cputemp_driver);
-निकास:
-	वापस err;
-पूर्ण
+#ifndef CONFIG_HOTPLUG_CPU
+exit_hp_unreg:
+	cpuhp_remove_state_nocalls(via_temp_online);
+#endif
+exit_driver_unreg:
+	platform_driver_unregister(&via_cputemp_driver);
+exit:
+	return err;
+}
 
-अटल व्योम __निकास via_cputemp_निकास(व्योम)
-अणु
-	cpuhp_हटाओ_state(via_temp_online);
-	platक्रमm_driver_unरेजिस्टर(&via_cputemp_driver);
-पूर्ण
+static void __exit via_cputemp_exit(void)
+{
+	cpuhp_remove_state(via_temp_online);
+	platform_driver_unregister(&via_cputemp_driver);
+}
 
 MODULE_AUTHOR("Harald Welte <HaraldWelte@viatech.com>");
 MODULE_DESCRIPTION("VIA CPU temperature monitor");
 MODULE_LICENSE("GPL");
 
 module_init(via_cputemp_init)
-module_निकास(via_cputemp_निकास)
+module_exit(via_cputemp_exit)

@@ -1,71 +1,70 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * dlmdebug.c
  *
- * debug functionality क्रम the dlm
+ * debug functionality for the dlm
  *
  * Copyright (C) 2004, 2008 Oracle.  All rights reserved.
  */
 
-#समावेश <linux/types.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/highस्मृति.स>
-#समावेश <linux/sysctl.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/debugfs.h>
-#समावेश <linux/export.h>
+#include <linux/types.h>
+#include <linux/slab.h>
+#include <linux/highmem.h>
+#include <linux/sysctl.h>
+#include <linux/spinlock.h>
+#include <linux/debugfs.h>
+#include <linux/export.h>
 
-#समावेश "../cluster/heartbeat.h"
-#समावेश "../cluster/nodemanager.h"
-#समावेश "../cluster/tcp.h"
+#include "../cluster/heartbeat.h"
+#include "../cluster/nodemanager.h"
+#include "../cluster/tcp.h"
 
-#समावेश "dlmapi.h"
-#समावेश "dlmcommon.h"
-#समावेश "dlmdomain.h"
-#समावेश "dlmdebug.h"
+#include "dlmapi.h"
+#include "dlmcommon.h"
+#include "dlmdomain.h"
+#include "dlmdebug.h"
 
-#घोषणा MLOG_MASK_PREFIX ML_DLM
-#समावेश "../cluster/masklog.h"
+#define MLOG_MASK_PREFIX ML_DLM
+#include "../cluster/masklog.h"
 
-अटल पूर्णांक stringअगरy_lockname(स्थिर अक्षर *lockname, पूर्णांक locklen, अक्षर *buf,
-			      पूर्णांक len);
+static int stringify_lockname(const char *lockname, int locklen, char *buf,
+			      int len);
 
-व्योम dlm_prपूर्णांक_one_lock_resource(काष्ठा dlm_lock_resource *res)
-अणु
+void dlm_print_one_lock_resource(struct dlm_lock_resource *res)
+{
 	spin_lock(&res->spinlock);
-	__dlm_prपूर्णांक_one_lock_resource(res);
+	__dlm_print_one_lock_resource(res);
 	spin_unlock(&res->spinlock);
-पूर्ण
+}
 
-अटल व्योम dlm_prपूर्णांक_lockres_refmap(काष्ठा dlm_lock_resource *res)
-अणु
-	पूर्णांक bit;
-	निश्चित_spin_locked(&res->spinlock);
+static void dlm_print_lockres_refmap(struct dlm_lock_resource *res)
+{
+	int bit;
+	assert_spin_locked(&res->spinlock);
 
-	prपूर्णांकk("  refmap nodes: [ ");
+	printk("  refmap nodes: [ ");
 	bit = 0;
-	जबतक (1) अणु
+	while (1) {
 		bit = find_next_bit(res->refmap, O2NM_MAX_NODES, bit);
-		अगर (bit >= O2NM_MAX_NODES)
-			अवरोध;
-		prपूर्णांकk("%u ", bit);
+		if (bit >= O2NM_MAX_NODES)
+			break;
+		printk("%u ", bit);
 		bit++;
-	पूर्ण
-	prपूर्णांकk("], inflight=%u\n", res->inflight_locks);
-पूर्ण
+	}
+	printk("], inflight=%u\n", res->inflight_locks);
+}
 
-अटल व्योम __dlm_prपूर्णांक_lock(काष्ठा dlm_lock *lock)
-अणु
+static void __dlm_print_lock(struct dlm_lock *lock)
+{
 	spin_lock(&lock->spinlock);
 
-	prपूर्णांकk("    type=%d, conv=%d, node=%u, cookie=%u:%llu, "
+	printk("    type=%d, conv=%d, node=%u, cookie=%u:%llu, "
 	       "ref=%u, ast=(empty=%c,pend=%c), bast=(empty=%c,pend=%c), "
 	       "pending=(conv=%c,lock=%c,cancel=%c,unlock=%c)\n",
 	       lock->ml.type, lock->ml.convert_type, lock->ml.node,
 	       dlm_get_lock_cookie_node(be64_to_cpu(lock->ml.cookie)),
 	       dlm_get_lock_cookie_seq(be64_to_cpu(lock->ml.cookie)),
-	       kref_पढ़ो(&lock->lock_refs),
+	       kref_read(&lock->lock_refs),
 	       (list_empty(&lock->ast_list) ? 'y' : 'n'),
 	       (lock->ast_pending ? 'y' : 'n'),
 	       (list_empty(&lock->bast_list) ? 'y' : 'n'),
@@ -76,51 +75,51 @@
 	       (lock->unlock_pending ? 'y' : 'n'));
 
 	spin_unlock(&lock->spinlock);
-पूर्ण
+}
 
-व्योम __dlm_prपूर्णांक_one_lock_resource(काष्ठा dlm_lock_resource *res)
-अणु
-	काष्ठा dlm_lock *lock;
-	अक्षर buf[DLM_LOCKID_NAME_MAX];
+void __dlm_print_one_lock_resource(struct dlm_lock_resource *res)
+{
+	struct dlm_lock *lock;
+	char buf[DLM_LOCKID_NAME_MAX];
 
-	निश्चित_spin_locked(&res->spinlock);
+	assert_spin_locked(&res->spinlock);
 
-	stringअगरy_lockname(res->lockname.name, res->lockname.len,
-			   buf, माप(buf));
-	prपूर्णांकk("lockres: %s, owner=%u, state=%u\n",
+	stringify_lockname(res->lockname.name, res->lockname.len,
+			   buf, sizeof(buf));
+	printk("lockres: %s, owner=%u, state=%u\n",
 	       buf, res->owner, res->state);
-	prपूर्णांकk("  last used: %lu, refcnt: %u, on purge list: %s\n",
-	       res->last_used, kref_पढ़ो(&res->refs),
+	printk("  last used: %lu, refcnt: %u, on purge list: %s\n",
+	       res->last_used, kref_read(&res->refs),
 	       list_empty(&res->purge) ? "no" : "yes");
-	prपूर्णांकk("  on dirty list: %s, on reco list: %s, "
+	printk("  on dirty list: %s, on reco list: %s, "
 	       "migrating pending: %s\n",
 	       list_empty(&res->dirty) ? "no" : "yes",
 	       list_empty(&res->recovering) ? "no" : "yes",
 	       res->migration_pending ? "yes" : "no");
-	prपूर्णांकk("  inflight locks: %d, asts reserved: %d\n",
-	       res->inflight_locks, atomic_पढ़ो(&res->asts_reserved));
-	dlm_prपूर्णांक_lockres_refmap(res);
-	prपूर्णांकk("  granted queue:\n");
-	list_क्रम_each_entry(lock, &res->granted, list) अणु
-		__dlm_prपूर्णांक_lock(lock);
-	पूर्ण
-	prपूर्णांकk("  converting queue:\n");
-	list_क्रम_each_entry(lock, &res->converting, list) अणु
-		__dlm_prपूर्णांक_lock(lock);
-	पूर्ण
-	prपूर्णांकk("  blocked queue:\n");
-	list_क्रम_each_entry(lock, &res->blocked, list) अणु
-		__dlm_prपूर्णांक_lock(lock);
-	पूर्ण
-पूर्ण
+	printk("  inflight locks: %d, asts reserved: %d\n",
+	       res->inflight_locks, atomic_read(&res->asts_reserved));
+	dlm_print_lockres_refmap(res);
+	printk("  granted queue:\n");
+	list_for_each_entry(lock, &res->granted, list) {
+		__dlm_print_lock(lock);
+	}
+	printk("  converting queue:\n");
+	list_for_each_entry(lock, &res->converting, list) {
+		__dlm_print_lock(lock);
+	}
+	printk("  blocked queue:\n");
+	list_for_each_entry(lock, &res->blocked, list) {
+		__dlm_print_lock(lock);
+	}
+}
 
-व्योम dlm_prपूर्णांक_one_lock(काष्ठा dlm_lock *lockid)
-अणु
-	dlm_prपूर्णांक_one_lock_resource(lockid->lockres);
-पूर्ण
-EXPORT_SYMBOL_GPL(dlm_prपूर्णांक_one_lock);
+void dlm_print_one_lock(struct dlm_lock *lockid)
+{
+	dlm_print_one_lock_resource(lockid->lockres);
+}
+EXPORT_SYMBOL_GPL(dlm_print_one_lock);
 
-अटल स्थिर अक्षर *dlm_errnames[] = अणु
+static const char *dlm_errnames[] = {
 	[DLM_NORMAL] =			"DLM_NORMAL",
 	[DLM_GRANTED] =			"DLM_GRANTED",
 	[DLM_DENIED] =			"DLM_DENIED",
@@ -163,9 +162,9 @@ EXPORT_SYMBOL_GPL(dlm_prपूर्णांक_one_lock);
 	[DLM_RECOVERING] =		"DLM_RECOVERING",
 	[DLM_MIGRATING] =		"DLM_MIGRATING",
 	[DLM_MAXSTATS] =		"DLM_MAXSTATS",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर *dlm_errmsgs[] = अणु
+static const char *dlm_errmsgs[] = {
 	[DLM_NORMAL] = 			"request in progress",
 	[DLM_GRANTED] = 		"request granted",
 	[DLM_DENIED] = 			"request denied",
@@ -208,265 +207,265 @@ EXPORT_SYMBOL_GPL(dlm_prपूर्णांक_one_lock);
 	[DLM_RECOVERING] = 		"lock resource being recovered",
 	[DLM_MIGRATING] = 		"lock resource being migrated",
 	[DLM_MAXSTATS] = 		"invalid error number",
-पूर्ण;
+};
 
-स्थिर अक्षर *dlm_errmsg(क्रमागत dlm_status err)
-अणु
-	अगर (err >= DLM_MAXSTATS || err < 0)
-		वापस dlm_errmsgs[DLM_MAXSTATS];
-	वापस dlm_errmsgs[err];
-पूर्ण
+const char *dlm_errmsg(enum dlm_status err)
+{
+	if (err >= DLM_MAXSTATS || err < 0)
+		return dlm_errmsgs[DLM_MAXSTATS];
+	return dlm_errmsgs[err];
+}
 EXPORT_SYMBOL_GPL(dlm_errmsg);
 
-स्थिर अक्षर *dlm_errname(क्रमागत dlm_status err)
-अणु
-	अगर (err >= DLM_MAXSTATS || err < 0)
-		वापस dlm_errnames[DLM_MAXSTATS];
-	वापस dlm_errnames[err];
-पूर्ण
+const char *dlm_errname(enum dlm_status err)
+{
+	if (err >= DLM_MAXSTATS || err < 0)
+		return dlm_errnames[DLM_MAXSTATS];
+	return dlm_errnames[err];
+}
 EXPORT_SYMBOL_GPL(dlm_errname);
 
-/* NOTE: This function converts a lockname पूर्णांकo a string. It uses knowledge
- * of the क्रमmat of the lockname that should be outside the purview of the dlm.
+/* NOTE: This function converts a lockname into a string. It uses knowledge
+ * of the format of the lockname that should be outside the purview of the dlm.
  * We are adding only to make dlm debugging slightly easier.
  *
- * For more on lockname क्रमmats, please refer to dlmglue.c and ocfs2_lockid.h.
+ * For more on lockname formats, please refer to dlmglue.c and ocfs2_lockid.h.
  */
-अटल पूर्णांक stringअगरy_lockname(स्थिर अक्षर *lockname, पूर्णांक locklen, अक्षर *buf,
-			      पूर्णांक len)
-अणु
-	पूर्णांक out = 0;
+static int stringify_lockname(const char *lockname, int locklen, char *buf,
+			      int len)
+{
+	int out = 0;
 	__be64 inode_blkno_be;
 
-#घोषणा OCFS2_DENTRY_LOCK_INO_START	18
-	अगर (*lockname == 'N') अणु
-		स_नकल((__be64 *)&inode_blkno_be,
-		       (अक्षर *)&lockname[OCFS2_DENTRY_LOCK_INO_START],
-		       माप(__be64));
-		out += scnम_लिखो(buf + out, len - out, "%.*s%08x",
+#define OCFS2_DENTRY_LOCK_INO_START	18
+	if (*lockname == 'N') {
+		memcpy((__be64 *)&inode_blkno_be,
+		       (char *)&lockname[OCFS2_DENTRY_LOCK_INO_START],
+		       sizeof(__be64));
+		out += scnprintf(buf + out, len - out, "%.*s%08x",
 				OCFS2_DENTRY_LOCK_INO_START - 1, lockname,
-				(अचिन्हित पूर्णांक)be64_to_cpu(inode_blkno_be));
-	पूर्ण अन्यथा
-		out += scnम_लिखो(buf + out, len - out, "%.*s",
+				(unsigned int)be64_to_cpu(inode_blkno_be));
+	} else
+		out += scnprintf(buf + out, len - out, "%.*s",
 				locklen, lockname);
-	वापस out;
-पूर्ण
+	return out;
+}
 
-अटल पूर्णांक stringअगरy_nodemap(अचिन्हित दीर्घ *nodemap, पूर्णांक maxnodes,
-			     अक्षर *buf, पूर्णांक len)
-अणु
-	पूर्णांक out = 0;
-	पूर्णांक i = -1;
+static int stringify_nodemap(unsigned long *nodemap, int maxnodes,
+			     char *buf, int len)
+{
+	int out = 0;
+	int i = -1;
 
-	जबतक ((i = find_next_bit(nodemap, maxnodes, i + 1)) < maxnodes)
-		out += scnम_लिखो(buf + out, len - out, "%d ", i);
+	while ((i = find_next_bit(nodemap, maxnodes, i + 1)) < maxnodes)
+		out += scnprintf(buf + out, len - out, "%d ", i);
 
-	वापस out;
-पूर्ण
+	return out;
+}
 
-अटल पूर्णांक dump_mle(काष्ठा dlm_master_list_entry *mle, अक्षर *buf, पूर्णांक len)
-अणु
-	पूर्णांक out = 0;
-	अक्षर *mle_type;
+static int dump_mle(struct dlm_master_list_entry *mle, char *buf, int len)
+{
+	int out = 0;
+	char *mle_type;
 
-	अगर (mle->type == DLM_MLE_BLOCK)
+	if (mle->type == DLM_MLE_BLOCK)
 		mle_type = "BLK";
-	अन्यथा अगर (mle->type == DLM_MLE_MASTER)
+	else if (mle->type == DLM_MLE_MASTER)
 		mle_type = "MAS";
-	अन्यथा
+	else
 		mle_type = "MIG";
 
-	out += stringअगरy_lockname(mle->mname, mle->mnamelen, buf + out, len - out);
-	out += scnम_लिखो(buf + out, len - out,
+	out += stringify_lockname(mle->mname, mle->mnamelen, buf + out, len - out);
+	out += scnprintf(buf + out, len - out,
 			"\t%3s\tmas=%3u\tnew=%3u\tevt=%1d\tuse=%1d\tref=%3d\n",
 			mle_type, mle->master, mle->new_master,
 			!list_empty(&mle->hb_events),
 			!!mle->inuse,
-			kref_पढ़ो(&mle->mle_refs));
+			kref_read(&mle->mle_refs));
 
-	out += scnम_लिखो(buf + out, len - out, "Maybe=");
-	out += stringअगरy_nodemap(mle->maybe_map, O2NM_MAX_NODES,
+	out += scnprintf(buf + out, len - out, "Maybe=");
+	out += stringify_nodemap(mle->maybe_map, O2NM_MAX_NODES,
 				 buf + out, len - out);
-	out += scnम_लिखो(buf + out, len - out, "\n");
+	out += scnprintf(buf + out, len - out, "\n");
 
-	out += scnम_लिखो(buf + out, len - out, "Vote=");
-	out += stringअगरy_nodemap(mle->vote_map, O2NM_MAX_NODES,
+	out += scnprintf(buf + out, len - out, "Vote=");
+	out += stringify_nodemap(mle->vote_map, O2NM_MAX_NODES,
 				 buf + out, len - out);
-	out += scnम_लिखो(buf + out, len - out, "\n");
+	out += scnprintf(buf + out, len - out, "\n");
 
-	out += scnम_लिखो(buf + out, len - out, "Response=");
-	out += stringअगरy_nodemap(mle->response_map, O2NM_MAX_NODES,
+	out += scnprintf(buf + out, len - out, "Response=");
+	out += stringify_nodemap(mle->response_map, O2NM_MAX_NODES,
 				 buf + out, len - out);
-	out += scnम_लिखो(buf + out, len - out, "\n");
+	out += scnprintf(buf + out, len - out, "\n");
 
-	out += scnम_लिखो(buf + out, len - out, "Node=");
-	out += stringअगरy_nodemap(mle->node_map, O2NM_MAX_NODES,
+	out += scnprintf(buf + out, len - out, "Node=");
+	out += stringify_nodemap(mle->node_map, O2NM_MAX_NODES,
 				 buf + out, len - out);
-	out += scnम_लिखो(buf + out, len - out, "\n");
+	out += scnprintf(buf + out, len - out, "\n");
 
-	out += scnम_लिखो(buf + out, len - out, "\n");
+	out += scnprintf(buf + out, len - out, "\n");
 
-	वापस out;
-पूर्ण
+	return out;
+}
 
-व्योम dlm_prपूर्णांक_one_mle(काष्ठा dlm_master_list_entry *mle)
-अणु
-	अक्षर *buf;
+void dlm_print_one_mle(struct dlm_master_list_entry *mle)
+{
+	char *buf;
 
-	buf = (अक्षर *) get_zeroed_page(GFP_ATOMIC);
-	अगर (buf) अणु
+	buf = (char *) get_zeroed_page(GFP_ATOMIC);
+	if (buf) {
 		dump_mle(mle, buf, PAGE_SIZE - 1);
-		मुक्त_page((अचिन्हित दीर्घ)buf);
-	पूर्ण
-पूर्ण
+		free_page((unsigned long)buf);
+	}
+}
 
-#अगर_घोषित CONFIG_DEBUG_FS
+#ifdef CONFIG_DEBUG_FS
 
-अटल काष्ठा dentry *dlm_debugfs_root;
+static struct dentry *dlm_debugfs_root;
 
-#घोषणा DLM_DEBUGFS_सूची				"o2dlm"
-#घोषणा DLM_DEBUGFS_DLM_STATE			"dlm_state"
-#घोषणा DLM_DEBUGFS_LOCKING_STATE		"locking_state"
-#घोषणा DLM_DEBUGFS_MLE_STATE			"mle_state"
-#घोषणा DLM_DEBUGFS_PURGE_LIST			"purge_list"
+#define DLM_DEBUGFS_DIR				"o2dlm"
+#define DLM_DEBUGFS_DLM_STATE			"dlm_state"
+#define DLM_DEBUGFS_LOCKING_STATE		"locking_state"
+#define DLM_DEBUGFS_MLE_STATE			"mle_state"
+#define DLM_DEBUGFS_PURGE_LIST			"purge_list"
 
 /* begin - utils funcs */
-अटल पूर्णांक debug_release(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	मुक्त_page((अचिन्हित दीर्घ)file->निजी_data);
-	वापस 0;
-पूर्ण
+static int debug_release(struct inode *inode, struct file *file)
+{
+	free_page((unsigned long)file->private_data);
+	return 0;
+}
 
-अटल sमाप_प्रकार debug_पढ़ो(काष्ठा file *file, अक्षर __user *buf,
-			  माप_प्रकार nbytes, loff_t *ppos)
-अणु
-	वापस simple_पढ़ो_from_buffer(buf, nbytes, ppos, file->निजी_data,
-				       i_size_पढ़ो(file->f_mapping->host));
-पूर्ण
+static ssize_t debug_read(struct file *file, char __user *buf,
+			  size_t nbytes, loff_t *ppos)
+{
+	return simple_read_from_buffer(buf, nbytes, ppos, file->private_data,
+				       i_size_read(file->f_mapping->host));
+}
 /* end - util funcs */
 
 /* begin - purge list funcs */
-अटल पूर्णांक debug_purgelist_prपूर्णांक(काष्ठा dlm_ctxt *dlm, अक्षर *buf, पूर्णांक len)
-अणु
-	काष्ठा dlm_lock_resource *res;
-	पूर्णांक out = 0;
-	अचिन्हित दीर्घ total = 0;
+static int debug_purgelist_print(struct dlm_ctxt *dlm, char *buf, int len)
+{
+	struct dlm_lock_resource *res;
+	int out = 0;
+	unsigned long total = 0;
 
-	out += scnम_लिखो(buf + out, len - out,
+	out += scnprintf(buf + out, len - out,
 			"Dumping Purgelist for Domain: %s\n", dlm->name);
 
 	spin_lock(&dlm->spinlock);
-	list_क्रम_each_entry(res, &dlm->purge_list, purge) अणु
+	list_for_each_entry(res, &dlm->purge_list, purge) {
 		++total;
-		अगर (len - out < 100)
-			जारी;
+		if (len - out < 100)
+			continue;
 		spin_lock(&res->spinlock);
-		out += stringअगरy_lockname(res->lockname.name,
+		out += stringify_lockname(res->lockname.name,
 					  res->lockname.len,
 					  buf + out, len - out);
-		out += scnम_लिखो(buf + out, len - out, "\t%ld\n",
-				(jअगरfies - res->last_used)/HZ);
+		out += scnprintf(buf + out, len - out, "\t%ld\n",
+				(jiffies - res->last_used)/HZ);
 		spin_unlock(&res->spinlock);
-	पूर्ण
+	}
 	spin_unlock(&dlm->spinlock);
 
-	out += scnम_लिखो(buf + out, len - out, "Total on list: %lu\n", total);
+	out += scnprintf(buf + out, len - out, "Total on list: %lu\n", total);
 
-	वापस out;
-पूर्ण
+	return out;
+}
 
-अटल पूर्णांक debug_purgelist_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा dlm_ctxt *dlm = inode->i_निजी;
-	अक्षर *buf = शून्य;
+static int debug_purgelist_open(struct inode *inode, struct file *file)
+{
+	struct dlm_ctxt *dlm = inode->i_private;
+	char *buf = NULL;
 
-	buf = (अक्षर *) get_zeroed_page(GFP_NOFS);
-	अगर (!buf)
-		जाओ bail;
+	buf = (char *) get_zeroed_page(GFP_NOFS);
+	if (!buf)
+		goto bail;
 
-	i_size_ग_लिखो(inode, debug_purgelist_prपूर्णांक(dlm, buf, PAGE_SIZE - 1));
+	i_size_write(inode, debug_purgelist_print(dlm, buf, PAGE_SIZE - 1));
 
-	file->निजी_data = buf;
+	file->private_data = buf;
 
-	वापस 0;
+	return 0;
 bail:
-	वापस -ENOMEM;
-पूर्ण
+	return -ENOMEM;
+}
 
-अटल स्थिर काष्ठा file_operations debug_purgelist_fops = अणु
-	.खोलो =		debug_purgelist_खोलो,
+static const struct file_operations debug_purgelist_fops = {
+	.open =		debug_purgelist_open,
 	.release =	debug_release,
-	.पढ़ो =		debug_पढ़ो,
+	.read =		debug_read,
 	.llseek =	generic_file_llseek,
-पूर्ण;
+};
 /* end - purge list funcs */
 
 /* begin - debug mle funcs */
-अटल पूर्णांक debug_mle_prपूर्णांक(काष्ठा dlm_ctxt *dlm, अक्षर *buf, पूर्णांक len)
-अणु
-	काष्ठा dlm_master_list_entry *mle;
-	काष्ठा hlist_head *bucket;
-	पूर्णांक i, out = 0;
-	अचिन्हित दीर्घ total = 0, दीर्घest = 0, bucket_count = 0;
+static int debug_mle_print(struct dlm_ctxt *dlm, char *buf, int len)
+{
+	struct dlm_master_list_entry *mle;
+	struct hlist_head *bucket;
+	int i, out = 0;
+	unsigned long total = 0, longest = 0, bucket_count = 0;
 
-	out += scnम_लिखो(buf + out, len - out,
+	out += scnprintf(buf + out, len - out,
 			"Dumping MLEs for Domain: %s\n", dlm->name);
 
 	spin_lock(&dlm->master_lock);
-	क्रम (i = 0; i < DLM_HASH_BUCKETS; i++) अणु
+	for (i = 0; i < DLM_HASH_BUCKETS; i++) {
 		bucket = dlm_master_hash(dlm, i);
-		hlist_क्रम_each_entry(mle, bucket, master_hash_node) अणु
+		hlist_for_each_entry(mle, bucket, master_hash_node) {
 			++total;
 			++bucket_count;
-			अगर (len - out < 200)
-				जारी;
+			if (len - out < 200)
+				continue;
 			out += dump_mle(mle, buf + out, len - out);
-		पूर्ण
-		दीर्घest = max(दीर्घest, bucket_count);
+		}
+		longest = max(longest, bucket_count);
 		bucket_count = 0;
-	पूर्ण
+	}
 	spin_unlock(&dlm->master_lock);
 
-	out += scnम_लिखो(buf + out, len - out,
-			"Total: %lu, Longest: %lu\n", total, दीर्घest);
-	वापस out;
-पूर्ण
+	out += scnprintf(buf + out, len - out,
+			"Total: %lu, Longest: %lu\n", total, longest);
+	return out;
+}
 
-अटल पूर्णांक debug_mle_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा dlm_ctxt *dlm = inode->i_निजी;
-	अक्षर *buf = शून्य;
+static int debug_mle_open(struct inode *inode, struct file *file)
+{
+	struct dlm_ctxt *dlm = inode->i_private;
+	char *buf = NULL;
 
-	buf = (अक्षर *) get_zeroed_page(GFP_NOFS);
-	अगर (!buf)
-		जाओ bail;
+	buf = (char *) get_zeroed_page(GFP_NOFS);
+	if (!buf)
+		goto bail;
 
-	i_size_ग_लिखो(inode, debug_mle_prपूर्णांक(dlm, buf, PAGE_SIZE - 1));
+	i_size_write(inode, debug_mle_print(dlm, buf, PAGE_SIZE - 1));
 
-	file->निजी_data = buf;
+	file->private_data = buf;
 
-	वापस 0;
+	return 0;
 bail:
-	वापस -ENOMEM;
-पूर्ण
+	return -ENOMEM;
+}
 
-अटल स्थिर काष्ठा file_operations debug_mle_fops = अणु
-	.खोलो =		debug_mle_खोलो,
+static const struct file_operations debug_mle_fops = {
+	.open =		debug_mle_open,
 	.release =	debug_release,
-	.पढ़ो =		debug_पढ़ो,
+	.read =		debug_read,
 	.llseek =	generic_file_llseek,
-पूर्ण;
+};
 
 /* end - debug mle funcs */
 
 /* begin - debug lockres funcs */
-अटल पूर्णांक dump_lock(काष्ठा dlm_lock *lock, पूर्णांक list_type, अक्षर *buf, पूर्णांक len)
-अणु
-	पूर्णांक out;
+static int dump_lock(struct dlm_lock *lock, int list_type, char *buf, int len)
+{
+	int out;
 
-#घोषणा DEBUG_LOCK_VERSION	1
+#define DEBUG_LOCK_VERSION	1
 	spin_lock(&lock->spinlock);
-	out = scnम_लिखो(buf, len, "LOCK:%d,%d,%d,%d,%d,%d:%lld,%d,%d,%d,%d,%d,"
+	out = scnprintf(buf, len, "LOCK:%d,%d,%d,%d,%d,%d:%lld,%d,%d,%d,%d,%d,"
 		       "%d,%d,%d,%d\n",
 		       DEBUG_LOCK_VERSION,
 		       list_type, lock->ml.type, lock->ml.convert_type,
@@ -478,25 +477,25 @@ bail:
 		       lock->ast_pending, lock->bast_pending,
 		       lock->convert_pending, lock->lock_pending,
 		       lock->cancel_pending, lock->unlock_pending,
-		       kref_पढ़ो(&lock->lock_refs));
+		       kref_read(&lock->lock_refs));
 	spin_unlock(&lock->spinlock);
 
-	वापस out;
-पूर्ण
+	return out;
+}
 
-अटल पूर्णांक dump_lockres(काष्ठा dlm_lock_resource *res, अक्षर *buf, पूर्णांक len)
-अणु
-	काष्ठा dlm_lock *lock;
-	पूर्णांक i;
-	पूर्णांक out = 0;
+static int dump_lockres(struct dlm_lock_resource *res, char *buf, int len)
+{
+	struct dlm_lock *lock;
+	int i;
+	int out = 0;
 
-	out += scnम_लिखो(buf + out, len - out, "NAME:");
-	out += stringअगरy_lockname(res->lockname.name, res->lockname.len,
+	out += scnprintf(buf + out, len - out, "NAME:");
+	out += stringify_lockname(res->lockname.name, res->lockname.len,
 				  buf + out, len - out);
-	out += scnम_लिखो(buf + out, len - out, "\n");
+	out += scnprintf(buf + out, len - out, "\n");
 
-#घोषणा DEBUG_LRES_VERSION	1
-	out += scnम_लिखो(buf + out, len - out,
+#define DEBUG_LRES_VERSION	1
+	out += scnprintf(buf + out, len - out,
 			"LRES:%d,%d,%d,%ld,%d,%d,%d,%d,%d,%d,%d\n",
 			DEBUG_LRES_VERSION,
 			res->owner, res->state, res->last_used,
@@ -504,123 +503,123 @@ bail:
 			!list_empty(&res->dirty),
 			!list_empty(&res->recovering),
 			res->inflight_locks, res->migration_pending,
-			atomic_पढ़ो(&res->asts_reserved),
-			kref_पढ़ो(&res->refs));
+			atomic_read(&res->asts_reserved),
+			kref_read(&res->refs));
 
 	/* refmap */
-	out += scnम_लिखो(buf + out, len - out, "RMAP:");
-	out += stringअगरy_nodemap(res->refmap, O2NM_MAX_NODES,
+	out += scnprintf(buf + out, len - out, "RMAP:");
+	out += stringify_nodemap(res->refmap, O2NM_MAX_NODES,
 				 buf + out, len - out);
-	out += scnम_लिखो(buf + out, len - out, "\n");
+	out += scnprintf(buf + out, len - out, "\n");
 
 	/* lvb */
-	out += scnम_लिखो(buf + out, len - out, "LVBX:");
-	क्रम (i = 0; i < DLM_LVB_LEN; i++)
-		out += scnम_लिखो(buf + out, len - out,
-					"%02x", (अचिन्हित अक्षर)res->lvb[i]);
-	out += scnम_लिखो(buf + out, len - out, "\n");
+	out += scnprintf(buf + out, len - out, "LVBX:");
+	for (i = 0; i < DLM_LVB_LEN; i++)
+		out += scnprintf(buf + out, len - out,
+					"%02x", (unsigned char)res->lvb[i]);
+	out += scnprintf(buf + out, len - out, "\n");
 
 	/* granted */
-	list_क्रम_each_entry(lock, &res->granted, list)
+	list_for_each_entry(lock, &res->granted, list)
 		out += dump_lock(lock, 0, buf + out, len - out);
 
 	/* converting */
-	list_क्रम_each_entry(lock, &res->converting, list)
+	list_for_each_entry(lock, &res->converting, list)
 		out += dump_lock(lock, 1, buf + out, len - out);
 
 	/* blocked */
-	list_क्रम_each_entry(lock, &res->blocked, list)
+	list_for_each_entry(lock, &res->blocked, list)
 		out += dump_lock(lock, 2, buf + out, len - out);
 
-	out += scnम_लिखो(buf + out, len - out, "\n");
+	out += scnprintf(buf + out, len - out, "\n");
 
-	वापस out;
-पूर्ण
+	return out;
+}
 
-अटल व्योम *lockres_seq_start(काष्ठा seq_file *m, loff_t *pos)
-अणु
-	काष्ठा debug_lockres *dl = m->निजी;
-	काष्ठा dlm_ctxt *dlm = dl->dl_ctxt;
-	काष्ठा dlm_lock_resource *oldres = dl->dl_res;
-	काष्ठा dlm_lock_resource *res = शून्य;
-	काष्ठा list_head *track_list;
+static void *lockres_seq_start(struct seq_file *m, loff_t *pos)
+{
+	struct debug_lockres *dl = m->private;
+	struct dlm_ctxt *dlm = dl->dl_ctxt;
+	struct dlm_lock_resource *oldres = dl->dl_res;
+	struct dlm_lock_resource *res = NULL;
+	struct list_head *track_list;
 
 	spin_lock(&dlm->track_lock);
-	अगर (oldres)
+	if (oldres)
 		track_list = &oldres->tracking;
-	अन्यथा अणु
+	else {
 		track_list = &dlm->tracking_list;
-		अगर (list_empty(track_list)) अणु
-			dl = शून्य;
+		if (list_empty(track_list)) {
+			dl = NULL;
 			spin_unlock(&dlm->track_lock);
-			जाओ bail;
-		पूर्ण
-	पूर्ण
+			goto bail;
+		}
+	}
 
-	list_क्रम_each_entry(res, track_list, tracking) अणु
-		अगर (&res->tracking == &dlm->tracking_list)
-			res = शून्य;
-		अन्यथा
+	list_for_each_entry(res, track_list, tracking) {
+		if (&res->tracking == &dlm->tracking_list)
+			res = NULL;
+		else
 			dlm_lockres_get(res);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 	spin_unlock(&dlm->track_lock);
 
-	अगर (oldres)
+	if (oldres)
 		dlm_lockres_put(oldres);
 
 	dl->dl_res = res;
 
-	अगर (res) अणु
+	if (res) {
 		spin_lock(&res->spinlock);
 		dump_lockres(res, dl->dl_buf, dl->dl_len - 1);
 		spin_unlock(&res->spinlock);
-	पूर्ण अन्यथा
-		dl = शून्य;
+	} else
+		dl = NULL;
 
 bail:
 	/* passed to seq_show */
-	वापस dl;
-पूर्ण
+	return dl;
+}
 
-अटल व्योम lockres_seq_stop(काष्ठा seq_file *m, व्योम *v)
-अणु
-पूर्ण
+static void lockres_seq_stop(struct seq_file *m, void *v)
+{
+}
 
-अटल व्योम *lockres_seq_next(काष्ठा seq_file *m, व्योम *v, loff_t *pos)
-अणु
-	वापस शून्य;
-पूर्ण
+static void *lockres_seq_next(struct seq_file *m, void *v, loff_t *pos)
+{
+	return NULL;
+}
 
-अटल पूर्णांक lockres_seq_show(काष्ठा seq_file *s, व्योम *v)
-अणु
-	काष्ठा debug_lockres *dl = (काष्ठा debug_lockres *)v;
+static int lockres_seq_show(struct seq_file *s, void *v)
+{
+	struct debug_lockres *dl = (struct debug_lockres *)v;
 
-	seq_म_लिखो(s, "%s", dl->dl_buf);
+	seq_printf(s, "%s", dl->dl_buf);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा seq_operations debug_lockres_ops = अणु
+static const struct seq_operations debug_lockres_ops = {
 	.start =	lockres_seq_start,
 	.stop =		lockres_seq_stop,
 	.next =		lockres_seq_next,
 	.show =		lockres_seq_show,
-पूर्ण;
+};
 
-अटल पूर्णांक debug_lockres_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा dlm_ctxt *dlm = inode->i_निजी;
-	काष्ठा debug_lockres *dl;
-	व्योम *buf;
+static int debug_lockres_open(struct inode *inode, struct file *file)
+{
+	struct dlm_ctxt *dlm = inode->i_private;
+	struct debug_lockres *dl;
+	void *buf;
 
-	buf = kदो_स्मृति(PAGE_SIZE, GFP_KERNEL);
-	अगर (!buf)
-		जाओ bail;
+	buf = kmalloc(PAGE_SIZE, GFP_KERNEL);
+	if (!buf)
+		goto bail;
 
-	dl = __seq_खोलो_निजी(file, &debug_lockres_ops, माप(*dl));
-	अगर (!dl)
-		जाओ bailमुक्त;
+	dl = __seq_open_private(file, &debug_lockres_ops, sizeof(*dl));
+	if (!dl)
+		goto bailfree;
 
 	dl->dl_len = PAGE_SIZE;
 	dl->dl_buf = buf;
@@ -628,129 +627,129 @@ bail:
 	dlm_grab(dlm);
 	dl->dl_ctxt = dlm;
 
-	वापस 0;
+	return 0;
 
-bailमुक्त:
-	kमुक्त(buf);
+bailfree:
+	kfree(buf);
 bail:
-	mlog_त्रुटि_सं(-ENOMEM);
-	वापस -ENOMEM;
-पूर्ण
+	mlog_errno(-ENOMEM);
+	return -ENOMEM;
+}
 
-अटल पूर्णांक debug_lockres_release(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा seq_file *seq = file->निजी_data;
-	काष्ठा debug_lockres *dl = (काष्ठा debug_lockres *)seq->निजी;
+static int debug_lockres_release(struct inode *inode, struct file *file)
+{
+	struct seq_file *seq = file->private_data;
+	struct debug_lockres *dl = (struct debug_lockres *)seq->private;
 
-	अगर (dl->dl_res)
+	if (dl->dl_res)
 		dlm_lockres_put(dl->dl_res);
 	dlm_put(dl->dl_ctxt);
-	kमुक्त(dl->dl_buf);
-	वापस seq_release_निजी(inode, file);
-पूर्ण
+	kfree(dl->dl_buf);
+	return seq_release_private(inode, file);
+}
 
-अटल स्थिर काष्ठा file_operations debug_lockres_fops = अणु
-	.खोलो =		debug_lockres_खोलो,
+static const struct file_operations debug_lockres_fops = {
+	.open =		debug_lockres_open,
 	.release =	debug_lockres_release,
-	.पढ़ो =		seq_पढ़ो,
+	.read =		seq_read,
 	.llseek =	seq_lseek,
-पूर्ण;
+};
 /* end - debug lockres funcs */
 
 /* begin - debug state funcs */
-अटल पूर्णांक debug_state_prपूर्णांक(काष्ठा dlm_ctxt *dlm, अक्षर *buf, पूर्णांक len)
-अणु
-	पूर्णांक out = 0;
-	काष्ठा dlm_reco_node_data *node;
-	अक्षर *state;
-	पूर्णांक cur_mles = 0, tot_mles = 0;
-	पूर्णांक i;
+static int debug_state_print(struct dlm_ctxt *dlm, char *buf, int len)
+{
+	int out = 0;
+	struct dlm_reco_node_data *node;
+	char *state;
+	int cur_mles = 0, tot_mles = 0;
+	int i;
 
 	spin_lock(&dlm->spinlock);
 
-	चयन (dlm->dlm_state) अणु
-	हाल DLM_CTXT_NEW:
-		state = "NEW"; अवरोध;
-	हाल DLM_CTXT_JOINED:
-		state = "JOINED"; अवरोध;
-	हाल DLM_CTXT_IN_SHUTDOWN:
-		state = "SHUTDOWN"; अवरोध;
-	हाल DLM_CTXT_LEAVING:
-		state = "LEAVING"; अवरोध;
-	शेष:
-		state = "UNKNOWN"; अवरोध;
-	पूर्ण
+	switch (dlm->dlm_state) {
+	case DLM_CTXT_NEW:
+		state = "NEW"; break;
+	case DLM_CTXT_JOINED:
+		state = "JOINED"; break;
+	case DLM_CTXT_IN_SHUTDOWN:
+		state = "SHUTDOWN"; break;
+	case DLM_CTXT_LEAVING:
+		state = "LEAVING"; break;
+	default:
+		state = "UNKNOWN"; break;
+	}
 
-	/* Doमुख्य: xxxxxxxxxx  Key: 0xdfbac769 */
-	out += scnम_लिखो(buf + out, len - out,
+	/* Domain: xxxxxxxxxx  Key: 0xdfbac769 */
+	out += scnprintf(buf + out, len - out,
 			"Domain: %s  Key: 0x%08x  Protocol: %d.%d\n",
 			dlm->name, dlm->key, dlm->dlm_locking_proto.pv_major,
 			dlm->dlm_locking_proto.pv_minor);
 
-	/* Thपढ़ो Pid: xxx  Node: xxx  State: xxxxx */
-	out += scnम_लिखो(buf + out, len - out,
+	/* Thread Pid: xxx  Node: xxx  State: xxxxx */
+	out += scnprintf(buf + out, len - out,
 			"Thread Pid: %d  Node: %d  State: %s\n",
-			task_pid_nr(dlm->dlm_thपढ़ो_task), dlm->node_num, state);
+			task_pid_nr(dlm->dlm_thread_task), dlm->node_num, state);
 
 	/* Number of Joins: xxx  Joining Node: xxx */
-	out += scnम_लिखो(buf + out, len - out,
+	out += scnprintf(buf + out, len - out,
 			"Number of Joins: %d  Joining Node: %d\n",
 			dlm->num_joins, dlm->joining_node);
 
-	/* Doमुख्य Map: xx xx xx */
-	out += scnम_लिखो(buf + out, len - out, "Domain Map: ");
-	out += stringअगरy_nodemap(dlm->करोमुख्य_map, O2NM_MAX_NODES,
+	/* Domain Map: xx xx xx */
+	out += scnprintf(buf + out, len - out, "Domain Map: ");
+	out += stringify_nodemap(dlm->domain_map, O2NM_MAX_NODES,
 				 buf + out, len - out);
-	out += scnम_लिखो(buf + out, len - out, "\n");
+	out += scnprintf(buf + out, len - out, "\n");
 
-	/* Exit Doमुख्य Map: xx xx xx */
-	out += scnम_लिखो(buf + out, len - out, "Exit Domain Map: ");
-	out += stringअगरy_nodemap(dlm->निकास_करोमुख्य_map, O2NM_MAX_NODES,
+	/* Exit Domain Map: xx xx xx */
+	out += scnprintf(buf + out, len - out, "Exit Domain Map: ");
+	out += stringify_nodemap(dlm->exit_domain_map, O2NM_MAX_NODES,
 				 buf + out, len - out);
-	out += scnम_लिखो(buf + out, len - out, "\n");
+	out += scnprintf(buf + out, len - out, "\n");
 
 	/* Live Map: xx xx xx */
-	out += scnम_लिखो(buf + out, len - out, "Live Map: ");
-	out += stringअगरy_nodemap(dlm->live_nodes_map, O2NM_MAX_NODES,
+	out += scnprintf(buf + out, len - out, "Live Map: ");
+	out += stringify_nodemap(dlm->live_nodes_map, O2NM_MAX_NODES,
 				 buf + out, len - out);
-	out += scnम_लिखो(buf + out, len - out, "\n");
+	out += scnprintf(buf + out, len - out, "\n");
 
 	/* Lock Resources: xxx (xxx) */
-	out += scnम_लिखो(buf + out, len - out,
+	out += scnprintf(buf + out, len - out,
 			"Lock Resources: %d (%d)\n",
-			atomic_पढ़ो(&dlm->res_cur_count),
-			atomic_पढ़ो(&dlm->res_tot_count));
+			atomic_read(&dlm->res_cur_count),
+			atomic_read(&dlm->res_tot_count));
 
-	क्रम (i = 0; i < DLM_MLE_NUM_TYPES; ++i)
-		tot_mles += atomic_पढ़ो(&dlm->mle_tot_count[i]);
+	for (i = 0; i < DLM_MLE_NUM_TYPES; ++i)
+		tot_mles += atomic_read(&dlm->mle_tot_count[i]);
 
-	क्रम (i = 0; i < DLM_MLE_NUM_TYPES; ++i)
-		cur_mles += atomic_पढ़ो(&dlm->mle_cur_count[i]);
+	for (i = 0; i < DLM_MLE_NUM_TYPES; ++i)
+		cur_mles += atomic_read(&dlm->mle_cur_count[i]);
 
 	/* MLEs: xxx (xxx) */
-	out += scnम_लिखो(buf + out, len - out,
+	out += scnprintf(buf + out, len - out,
 			"MLEs: %d (%d)\n", cur_mles, tot_mles);
 
 	/*  Blocking: xxx (xxx) */
-	out += scnम_लिखो(buf + out, len - out,
+	out += scnprintf(buf + out, len - out,
 			"  Blocking: %d (%d)\n",
-			atomic_पढ़ो(&dlm->mle_cur_count[DLM_MLE_BLOCK]),
-			atomic_पढ़ो(&dlm->mle_tot_count[DLM_MLE_BLOCK]));
+			atomic_read(&dlm->mle_cur_count[DLM_MLE_BLOCK]),
+			atomic_read(&dlm->mle_tot_count[DLM_MLE_BLOCK]));
 
 	/*  Mastery: xxx (xxx) */
-	out += scnम_लिखो(buf + out, len - out,
+	out += scnprintf(buf + out, len - out,
 			"  Mastery: %d (%d)\n",
-			atomic_पढ़ो(&dlm->mle_cur_count[DLM_MLE_MASTER]),
-			atomic_पढ़ो(&dlm->mle_tot_count[DLM_MLE_MASTER]));
+			atomic_read(&dlm->mle_cur_count[DLM_MLE_MASTER]),
+			atomic_read(&dlm->mle_tot_count[DLM_MLE_MASTER]));
 
 	/*  Migration: xxx (xxx) */
-	out += scnम_लिखो(buf + out, len - out,
+	out += scnprintf(buf + out, len - out,
 			"  Migration: %d (%d)\n",
-			atomic_पढ़ो(&dlm->mle_cur_count[DLM_MLE_MIGRATION]),
-			atomic_पढ़ो(&dlm->mle_tot_count[DLM_MLE_MIGRATION]));
+			atomic_read(&dlm->mle_cur_count[DLM_MLE_MIGRATION]),
+			atomic_read(&dlm->mle_tot_count[DLM_MLE_MIGRATION]));
 
 	/* Lists: Dirty=Empty  Purge=InUse  PendingASTs=Empty  ... */
-	out += scnम_लिखो(buf + out, len - out,
+	out += scnprintf(buf + out, len - out,
 			"Lists: Dirty=%s  Purge=%s  PendingASTs=%s  "
 			"PendingBASTs=%s\n",
 			(list_empty(&dlm->dirty_list) ? "Empty" : "InUse"),
@@ -759,137 +758,137 @@ bail:
 			(list_empty(&dlm->pending_basts) ? "Empty" : "InUse"));
 
 	/* Purge Count: xxx  Refs: xxx */
-	out += scnम_लिखो(buf + out, len - out,
+	out += scnprintf(buf + out, len - out,
 			"Purge Count: %d  Refs: %d\n", dlm->purge_count,
-			kref_पढ़ो(&dlm->dlm_refs));
+			kref_read(&dlm->dlm_refs));
 
 	/* Dead Node: xxx */
-	out += scnम_लिखो(buf + out, len - out,
+	out += scnprintf(buf + out, len - out,
 			"Dead Node: %d\n", dlm->reco.dead_node);
 
 	/* What about DLM_RECO_STATE_FINALIZE? */
-	अगर (dlm->reco.state == DLM_RECO_STATE_ACTIVE)
+	if (dlm->reco.state == DLM_RECO_STATE_ACTIVE)
 		state = "ACTIVE";
-	अन्यथा
+	else
 		state = "INACTIVE";
 
 	/* Recovery Pid: xxxx  Master: xxx  State: xxxx */
-	out += scnम_लिखो(buf + out, len - out,
+	out += scnprintf(buf + out, len - out,
 			"Recovery Pid: %d  Master: %d  State: %s\n",
-			task_pid_nr(dlm->dlm_reco_thपढ़ो_task),
+			task_pid_nr(dlm->dlm_reco_thread_task),
 			dlm->reco.new_master, state);
 
 	/* Recovery Map: xx xx */
-	out += scnम_लिखो(buf + out, len - out, "Recovery Map: ");
-	out += stringअगरy_nodemap(dlm->recovery_map, O2NM_MAX_NODES,
+	out += scnprintf(buf + out, len - out, "Recovery Map: ");
+	out += stringify_nodemap(dlm->recovery_map, O2NM_MAX_NODES,
 				 buf + out, len - out);
-	out += scnम_लिखो(buf + out, len - out, "\n");
+	out += scnprintf(buf + out, len - out, "\n");
 
 	/* Recovery Node State: */
-	out += scnम_लिखो(buf + out, len - out, "Recovery Node State:\n");
-	list_क्रम_each_entry(node, &dlm->reco.node_data, list) अणु
-		चयन (node->state) अणु
-		हाल DLM_RECO_NODE_DATA_INIT:
+	out += scnprintf(buf + out, len - out, "Recovery Node State:\n");
+	list_for_each_entry(node, &dlm->reco.node_data, list) {
+		switch (node->state) {
+		case DLM_RECO_NODE_DATA_INIT:
 			state = "INIT";
-			अवरोध;
-		हाल DLM_RECO_NODE_DATA_REQUESTING:
+			break;
+		case DLM_RECO_NODE_DATA_REQUESTING:
 			state = "REQUESTING";
-			अवरोध;
-		हाल DLM_RECO_NODE_DATA_DEAD:
+			break;
+		case DLM_RECO_NODE_DATA_DEAD:
 			state = "DEAD";
-			अवरोध;
-		हाल DLM_RECO_NODE_DATA_RECEIVING:
+			break;
+		case DLM_RECO_NODE_DATA_RECEIVING:
 			state = "RECEIVING";
-			अवरोध;
-		हाल DLM_RECO_NODE_DATA_REQUESTED:
+			break;
+		case DLM_RECO_NODE_DATA_REQUESTED:
 			state = "REQUESTED";
-			अवरोध;
-		हाल DLM_RECO_NODE_DATA_DONE:
+			break;
+		case DLM_RECO_NODE_DATA_DONE:
 			state = "DONE";
-			अवरोध;
-		हाल DLM_RECO_NODE_DATA_FINALIZE_SENT:
+			break;
+		case DLM_RECO_NODE_DATA_FINALIZE_SENT:
 			state = "FINALIZE-SENT";
-			अवरोध;
-		शेष:
+			break;
+		default:
 			state = "BAD";
-			अवरोध;
-		पूर्ण
-		out += scnम_लिखो(buf + out, len - out, "\t%u - %s\n",
+			break;
+		}
+		out += scnprintf(buf + out, len - out, "\t%u - %s\n",
 				node->node_num, state);
-	पूर्ण
+	}
 
 	spin_unlock(&dlm->spinlock);
 
-	वापस out;
-पूर्ण
+	return out;
+}
 
-अटल पूर्णांक debug_state_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा dlm_ctxt *dlm = inode->i_निजी;
-	अक्षर *buf = शून्य;
+static int debug_state_open(struct inode *inode, struct file *file)
+{
+	struct dlm_ctxt *dlm = inode->i_private;
+	char *buf = NULL;
 
-	buf = (अक्षर *) get_zeroed_page(GFP_NOFS);
-	अगर (!buf)
-		जाओ bail;
+	buf = (char *) get_zeroed_page(GFP_NOFS);
+	if (!buf)
+		goto bail;
 
-	i_size_ग_लिखो(inode, debug_state_prपूर्णांक(dlm, buf, PAGE_SIZE - 1));
+	i_size_write(inode, debug_state_print(dlm, buf, PAGE_SIZE - 1));
 
-	file->निजी_data = buf;
+	file->private_data = buf;
 
-	वापस 0;
+	return 0;
 bail:
-	वापस -ENOMEM;
-पूर्ण
+	return -ENOMEM;
+}
 
-अटल स्थिर काष्ठा file_operations debug_state_fops = अणु
-	.खोलो =		debug_state_खोलो,
+static const struct file_operations debug_state_fops = {
+	.open =		debug_state_open,
 	.release =	debug_release,
-	.पढ़ो =		debug_पढ़ो,
+	.read =		debug_read,
 	.llseek =	generic_file_llseek,
-पूर्ण;
+};
 /* end  - debug state funcs */
 
 /* files in subroot */
-व्योम dlm_debug_init(काष्ठा dlm_ctxt *dlm)
-अणु
-	/* क्रम dumping dlm_ctxt */
+void dlm_debug_init(struct dlm_ctxt *dlm)
+{
+	/* for dumping dlm_ctxt */
 	debugfs_create_file(DLM_DEBUGFS_DLM_STATE, S_IFREG|S_IRUSR,
 			    dlm->dlm_debugfs_subroot, dlm, &debug_state_fops);
 
-	/* क्रम dumping lockres */
+	/* for dumping lockres */
 	debugfs_create_file(DLM_DEBUGFS_LOCKING_STATE, S_IFREG|S_IRUSR,
 			    dlm->dlm_debugfs_subroot, dlm, &debug_lockres_fops);
 
-	/* क्रम dumping mles */
+	/* for dumping mles */
 	debugfs_create_file(DLM_DEBUGFS_MLE_STATE, S_IFREG|S_IRUSR,
 			    dlm->dlm_debugfs_subroot, dlm, &debug_mle_fops);
 
-	/* क्रम dumping lockres on the purge list */
+	/* for dumping lockres on the purge list */
 	debugfs_create_file(DLM_DEBUGFS_PURGE_LIST, S_IFREG|S_IRUSR,
 			    dlm->dlm_debugfs_subroot, dlm,
 			    &debug_purgelist_fops);
-पूर्ण
+}
 
-/* subroot - करोमुख्य dir */
-व्योम dlm_create_debugfs_subroot(काष्ठा dlm_ctxt *dlm)
-अणु
+/* subroot - domain dir */
+void dlm_create_debugfs_subroot(struct dlm_ctxt *dlm)
+{
 	dlm->dlm_debugfs_subroot = debugfs_create_dir(dlm->name,
 						      dlm_debugfs_root);
-पूर्ण
+}
 
-व्योम dlm_destroy_debugfs_subroot(काष्ठा dlm_ctxt *dlm)
-अणु
-	debugfs_हटाओ_recursive(dlm->dlm_debugfs_subroot);
-पूर्ण
+void dlm_destroy_debugfs_subroot(struct dlm_ctxt *dlm)
+{
+	debugfs_remove_recursive(dlm->dlm_debugfs_subroot);
+}
 
 /* debugfs root */
-व्योम dlm_create_debugfs_root(व्योम)
-अणु
-	dlm_debugfs_root = debugfs_create_dir(DLM_DEBUGFS_सूची, शून्य);
-पूर्ण
+void dlm_create_debugfs_root(void)
+{
+	dlm_debugfs_root = debugfs_create_dir(DLM_DEBUGFS_DIR, NULL);
+}
 
-व्योम dlm_destroy_debugfs_root(व्योम)
-अणु
-	debugfs_हटाओ(dlm_debugfs_root);
-पूर्ण
-#पूर्ण_अगर	/* CONFIG_DEBUG_FS */
+void dlm_destroy_debugfs_root(void)
+{
+	debugfs_remove(dlm_debugfs_root);
+}
+#endif	/* CONFIG_DEBUG_FS */

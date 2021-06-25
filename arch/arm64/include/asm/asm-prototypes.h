@@ -1,27 +1,26 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __ASM_PROTOTYPES_H
-#घोषणा __ASM_PROTOTYPES_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __ASM_PROTOTYPES_H
+#define __ASM_PROTOTYPES_H
 /*
  * CONFIG_MODVERSIONS requires a C declaration to generate the appropriate CRC
- * क्रम each symbol. Since commit:
+ * for each symbol. Since commit:
  *
  *   4efca4ed05cbdfd1 ("kbuild: modversions for EXPORT_SYMBOL() for asm")
  *
- * ... kbuild will स्वतःmatically pick these up from <यंत्र/यंत्र-prototypes.h> and
+ * ... kbuild will automatically pick these up from <asm/asm-prototypes.h> and
  * feed this to genksyms when building assembly files.
  */
-#समावेश <linux/arm-smccc.h>
+#include <linux/arm-smccc.h>
 
-#समावेश <यंत्र/ftrace.h>
-#समावेश <यंत्र/page.h>
-#समावेश <यंत्र/माला.स>
-#समावेश <यंत्र/uaccess.h>
+#include <asm/ftrace.h>
+#include <asm/page.h>
+#include <asm/string.h>
+#include <asm/uaccess.h>
 
-#समावेश <यंत्र-generic/यंत्र-prototypes.h>
+#include <asm-generic/asm-prototypes.h>
 
-दीर्घ दीर्घ __ashlti3(दीर्घ दीर्घ a, पूर्णांक b);
-दीर्घ दीर्घ __ashrti3(दीर्घ दीर्घ a, पूर्णांक b);
-दीर्घ दीर्घ __lshrti3(दीर्घ दीर्घ a, पूर्णांक b);
+long long __ashlti3(long long a, int b);
+long long __ashrti3(long long a, int b);
+long long __lshrti3(long long a, int b);
 
-#पूर्ण_अगर /* __ASM_PROTOTYPES_H */
+#endif /* __ASM_PROTOTYPES_H */

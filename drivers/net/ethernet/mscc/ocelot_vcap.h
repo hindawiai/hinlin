@@ -1,26 +1,25 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: (GPL-2.0 OR MIT) */
+/* SPDX-License-Identifier: (GPL-2.0 OR MIT) */
 /* Microsemi Ocelot Switch driver
  * Copyright (c) 2019 Microsemi Corporation
  */
 
-#अगर_अघोषित _MSCC_OCELOT_VCAP_H_
-#घोषणा _MSCC_OCELOT_VCAP_H_
+#ifndef _MSCC_OCELOT_VCAP_H_
+#define _MSCC_OCELOT_VCAP_H_
 
-#समावेश "ocelot.h"
-#समावेश <soc/mscc/ocelot_vcap.h>
-#समावेश <net/flow_offload.h>
+#include "ocelot.h"
+#include <soc/mscc/ocelot_vcap.h>
+#include <net/flow_offload.h>
 
-#घोषणा OCELOT_POLICER_DISCARD 0x17f
+#define OCELOT_POLICER_DISCARD 0x17f
 
-पूर्णांक ocelot_vcap_filter_stats_update(काष्ठा ocelot *ocelot,
-				    काष्ठा ocelot_vcap_filter *rule);
+int ocelot_vcap_filter_stats_update(struct ocelot *ocelot,
+				    struct ocelot_vcap_filter *rule);
 
-व्योम ocelot_detect_vcap_स्थिरants(काष्ठा ocelot *ocelot);
-पूर्णांक ocelot_vcap_init(काष्ठा ocelot *ocelot);
+void ocelot_detect_vcap_constants(struct ocelot *ocelot);
+int ocelot_vcap_init(struct ocelot *ocelot);
 
-पूर्णांक ocelot_setup_tc_cls_flower(काष्ठा ocelot_port_निजी *priv,
-			       काष्ठा flow_cls_offload *f,
+int ocelot_setup_tc_cls_flower(struct ocelot_port_private *priv,
+			       struct flow_cls_offload *f,
 			       bool ingress);
 
-#पूर्ण_अगर /* _MSCC_OCELOT_VCAP_H_ */
+#endif /* _MSCC_OCELOT_VCAP_H_ */

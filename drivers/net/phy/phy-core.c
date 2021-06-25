@@ -1,61 +1,60 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * Core PHY library, taken from phy.c
  */
-#समावेश <linux/export.h>
-#समावेश <linux/phy.h>
-#समावेश <linux/of.h>
+#include <linux/export.h>
+#include <linux/phy.h>
+#include <linux/of.h>
 
 /**
  * phy_speed_to_str - Return a string representing the PHY link speed
  *
  * @speed: Speed of the link
  */
-स्थिर अक्षर *phy_speed_to_str(पूर्णांक speed)
-अणु
+const char *phy_speed_to_str(int speed)
+{
 	BUILD_BUG_ON_MSG(__ETHTOOL_LINK_MODE_MASK_NBITS != 92,
 		"Enum ethtool_link_mode_bit_indices and phylib are out of sync. "
 		"If a speed or mode has been added please update phy_speed_to_str "
 		"and the PHY settings array.\n");
 
-	चयन (speed) अणु
-	हाल SPEED_10:
-		वापस "10Mbps";
-	हाल SPEED_100:
-		वापस "100Mbps";
-	हाल SPEED_1000:
-		वापस "1Gbps";
-	हाल SPEED_2500:
-		वापस "2.5Gbps";
-	हाल SPEED_5000:
-		वापस "5Gbps";
-	हाल SPEED_10000:
-		वापस "10Gbps";
-	हाल SPEED_14000:
-		वापस "14Gbps";
-	हाल SPEED_20000:
-		वापस "20Gbps";
-	हाल SPEED_25000:
-		वापस "25Gbps";
-	हाल SPEED_40000:
-		वापस "40Gbps";
-	हाल SPEED_50000:
-		वापस "50Gbps";
-	हाल SPEED_56000:
-		वापस "56Gbps";
-	हाल SPEED_100000:
-		वापस "100Gbps";
-	हाल SPEED_200000:
-		वापस "200Gbps";
-	हाल SPEED_400000:
-		वापस "400Gbps";
-	हाल SPEED_UNKNOWN:
-		वापस "Unknown";
-	शेष:
-		वापस "Unsupported (update phy-core.c)";
-	पूर्ण
-पूर्ण
+	switch (speed) {
+	case SPEED_10:
+		return "10Mbps";
+	case SPEED_100:
+		return "100Mbps";
+	case SPEED_1000:
+		return "1Gbps";
+	case SPEED_2500:
+		return "2.5Gbps";
+	case SPEED_5000:
+		return "5Gbps";
+	case SPEED_10000:
+		return "10Gbps";
+	case SPEED_14000:
+		return "14Gbps";
+	case SPEED_20000:
+		return "20Gbps";
+	case SPEED_25000:
+		return "25Gbps";
+	case SPEED_40000:
+		return "40Gbps";
+	case SPEED_50000:
+		return "50Gbps";
+	case SPEED_56000:
+		return "56Gbps";
+	case SPEED_100000:
+		return "100Gbps";
+	case SPEED_200000:
+		return "200Gbps";
+	case SPEED_400000:
+		return "400Gbps";
+	case SPEED_UNKNOWN:
+		return "Unknown";
+	default:
+		return "Unsupported (update phy-core.c)";
+	}
+}
 EXPORT_SYMBOL_GPL(phy_speed_to_str);
 
 /**
@@ -63,26 +62,26 @@ EXPORT_SYMBOL_GPL(phy_speed_to_str);
  *
  * @duplex: Duplex setting to describe
  */
-स्थिर अक्षर *phy_duplex_to_str(अचिन्हित पूर्णांक duplex)
-अणु
-	अगर (duplex == DUPLEX_HALF)
-		वापस "Half";
-	अगर (duplex == DUPLEX_FULL)
-		वापस "Full";
-	अगर (duplex == DUPLEX_UNKNOWN)
-		वापस "Unknown";
-	वापस "Unsupported (update phy-core.c)";
-पूर्ण
+const char *phy_duplex_to_str(unsigned int duplex)
+{
+	if (duplex == DUPLEX_HALF)
+		return "Half";
+	if (duplex == DUPLEX_FULL)
+		return "Full";
+	if (duplex == DUPLEX_UNKNOWN)
+		return "Unknown";
+	return "Unsupported (update phy-core.c)";
+}
 EXPORT_SYMBOL_GPL(phy_duplex_to_str);
 
 /* A mapping of all SUPPORTED settings to speed/duplex.  This table
  * must be grouped by speed and sorted in descending match priority
  * - iow, descending speed. */
 
-#घोषणा PHY_SETTING(s, d, b) अणु .speed = SPEED_ ## s, .duplex = DUPLEX_ ## d, \
-			       .bit = ETHTOOL_LINK_MODE_ ## b ## _BITपूर्ण
+#define PHY_SETTING(s, d, b) { .speed = SPEED_ ## s, .duplex = DUPLEX_ ## d, \
+			       .bit = ETHTOOL_LINK_MODE_ ## b ## _BIT}
 
-अटल स्थिर काष्ठा phy_setting settings[] = अणु
+static const struct phy_setting settings[] = {
 	/* 400G */
 	PHY_SETTING( 400000, FULL, 400000baseCR8_Full		),
 	PHY_SETTING( 400000, FULL, 400000baseKR8_Full		),
@@ -176,8 +175,8 @@ EXPORT_SYMBOL_GPL(phy_duplex_to_str);
 	/* 10M */
 	PHY_SETTING(     10, FULL,     10baseT_Full		),
 	PHY_SETTING(     10, HALF,     10baseT_Half		),
-पूर्ण;
-#अघोषित PHY_SETTING
+};
+#undef PHY_SETTING
 
 /**
  * phy_lookup_setting - lookup a PHY setting
@@ -186,745 +185,745 @@ EXPORT_SYMBOL_GPL(phy_duplex_to_str);
  * @mask: allowed link modes
  * @exact: an exact match is required
  *
- * Search the settings array क्रम a setting that matches the speed and
+ * Search the settings array for a setting that matches the speed and
  * duplex, and which is supported.
  *
- * If @exact is unset, either an exact match or %शून्य क्रम no match will
- * be वापसed.
+ * If @exact is unset, either an exact match or %NULL for no match will
+ * be returned.
  *
  * If @exact is set, an exact match, the fastest supported setting at
- * or below the specअगरied speed, the slowest supported setting, or अगर
- * they all fail, %शून्य will be वापसed.
+ * or below the specified speed, the slowest supported setting, or if
+ * they all fail, %NULL will be returned.
  */
-स्थिर काष्ठा phy_setting *
-phy_lookup_setting(पूर्णांक speed, पूर्णांक duplex, स्थिर अचिन्हित दीर्घ *mask, bool exact)
-अणु
-	स्थिर काष्ठा phy_setting *p, *match = शून्य, *last = शून्य;
-	पूर्णांक i;
+const struct phy_setting *
+phy_lookup_setting(int speed, int duplex, const unsigned long *mask, bool exact)
+{
+	const struct phy_setting *p, *match = NULL, *last = NULL;
+	int i;
 
-	क्रम (i = 0, p = settings; i < ARRAY_SIZE(settings); i++, p++) अणु
-		अगर (p->bit < __ETHTOOL_LINK_MODE_MASK_NBITS &&
-		    test_bit(p->bit, mask)) अणु
+	for (i = 0, p = settings; i < ARRAY_SIZE(settings); i++, p++) {
+		if (p->bit < __ETHTOOL_LINK_MODE_MASK_NBITS &&
+		    test_bit(p->bit, mask)) {
 			last = p;
-			अगर (p->speed == speed && p->duplex == duplex) अणु
-				/* Exact match क्रम speed and duplex */
+			if (p->speed == speed && p->duplex == duplex) {
+				/* Exact match for speed and duplex */
 				match = p;
-				अवरोध;
-			पूर्ण अन्यथा अगर (!exact) अणु
-				अगर (!match && p->speed <= speed)
+				break;
+			} else if (!exact) {
+				if (!match && p->speed <= speed)
 					/* Candidate */
 					match = p;
 
-				अगर (p->speed < speed)
-					अवरोध;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				if (p->speed < speed)
+					break;
+			}
+		}
+	}
 
-	अगर (!match && !exact)
+	if (!match && !exact)
 		match = last;
 
-	वापस match;
-पूर्ण
+	return match;
+}
 EXPORT_SYMBOL_GPL(phy_lookup_setting);
 
-माप_प्रकार phy_speeds(अचिन्हित पूर्णांक *speeds, माप_प्रकार size,
-		  अचिन्हित दीर्घ *mask)
-अणु
-	माप_प्रकार count;
-	पूर्णांक i;
+size_t phy_speeds(unsigned int *speeds, size_t size,
+		  unsigned long *mask)
+{
+	size_t count;
+	int i;
 
-	क्रम (i = 0, count = 0; i < ARRAY_SIZE(settings) && count < size; i++)
-		अगर (settings[i].bit < __ETHTOOL_LINK_MODE_MASK_NBITS &&
+	for (i = 0, count = 0; i < ARRAY_SIZE(settings) && count < size; i++)
+		if (settings[i].bit < __ETHTOOL_LINK_MODE_MASK_NBITS &&
 		    test_bit(settings[i].bit, mask) &&
 		    (count == 0 || speeds[count - 1] != settings[i].speed))
 			speeds[count++] = settings[i].speed;
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल पूर्णांक __set_linkmode_max_speed(u32 max_speed, अचिन्हित दीर्घ *addr)
-अणु
-	स्थिर काष्ठा phy_setting *p;
-	पूर्णांक i;
+static int __set_linkmode_max_speed(u32 max_speed, unsigned long *addr)
+{
+	const struct phy_setting *p;
+	int i;
 
-	क्रम (i = 0, p = settings; i < ARRAY_SIZE(settings); i++, p++) अणु
-		अगर (p->speed > max_speed)
+	for (i = 0, p = settings; i < ARRAY_SIZE(settings); i++, p++) {
+		if (p->speed > max_speed)
 			linkmode_clear_bit(p->bit, addr);
-		अन्यथा
-			अवरोध;
-	पूर्ण
+		else
+			break;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __set_phy_supported(काष्ठा phy_device *phydev, u32 max_speed)
-अणु
-	वापस __set_linkmode_max_speed(max_speed, phydev->supported);
-पूर्ण
+static int __set_phy_supported(struct phy_device *phydev, u32 max_speed)
+{
+	return __set_linkmode_max_speed(max_speed, phydev->supported);
+}
 
 /**
  * phy_set_max_speed - Set the maximum speed the PHY should support
  *
- * @phydev: The phy_device काष्ठा
+ * @phydev: The phy_device struct
  * @max_speed: Maximum speed
  *
  * The PHY might be more capable than the MAC. For example a Fast Ethernet
  * is connected to a 1G PHY. This function allows the MAC to indicate its
  * maximum speed, and so limit what the PHY will advertise.
  */
-पूर्णांक phy_set_max_speed(काष्ठा phy_device *phydev, u32 max_speed)
-अणु
-	पूर्णांक err;
+int phy_set_max_speed(struct phy_device *phydev, u32 max_speed)
+{
+	int err;
 
 	err = __set_phy_supported(phydev, max_speed);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	phy_advertise_supported(phydev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL(phy_set_max_speed);
 
-व्योम of_set_phy_supported(काष्ठा phy_device *phydev)
-अणु
-	काष्ठा device_node *node = phydev->mdio.dev.of_node;
+void of_set_phy_supported(struct phy_device *phydev)
+{
+	struct device_node *node = phydev->mdio.dev.of_node;
 	u32 max_speed;
 
-	अगर (!IS_ENABLED(CONFIG_OF_MDIO))
-		वापस;
+	if (!IS_ENABLED(CONFIG_OF_MDIO))
+		return;
 
-	अगर (!node)
-		वापस;
+	if (!node)
+		return;
 
-	अगर (!of_property_पढ़ो_u32(node, "max-speed", &max_speed))
+	if (!of_property_read_u32(node, "max-speed", &max_speed))
 		__set_phy_supported(phydev, max_speed);
-पूर्ण
+}
 
-व्योम of_set_phy_eee_broken(काष्ठा phy_device *phydev)
-अणु
-	काष्ठा device_node *node = phydev->mdio.dev.of_node;
+void of_set_phy_eee_broken(struct phy_device *phydev)
+{
+	struct device_node *node = phydev->mdio.dev.of_node;
 	u32 broken = 0;
 
-	अगर (!IS_ENABLED(CONFIG_OF_MDIO))
-		वापस;
+	if (!IS_ENABLED(CONFIG_OF_MDIO))
+		return;
 
-	अगर (!node)
-		वापस;
+	if (!node)
+		return;
 
-	अगर (of_property_पढ़ो_bool(node, "eee-broken-100tx"))
+	if (of_property_read_bool(node, "eee-broken-100tx"))
 		broken |= MDIO_EEE_100TX;
-	अगर (of_property_पढ़ो_bool(node, "eee-broken-1000t"))
+	if (of_property_read_bool(node, "eee-broken-1000t"))
 		broken |= MDIO_EEE_1000T;
-	अगर (of_property_पढ़ो_bool(node, "eee-broken-10gt"))
+	if (of_property_read_bool(node, "eee-broken-10gt"))
 		broken |= MDIO_EEE_10GT;
-	अगर (of_property_पढ़ो_bool(node, "eee-broken-1000kx"))
+	if (of_property_read_bool(node, "eee-broken-1000kx"))
 		broken |= MDIO_EEE_1000KX;
-	अगर (of_property_पढ़ो_bool(node, "eee-broken-10gkx4"))
+	if (of_property_read_bool(node, "eee-broken-10gkx4"))
 		broken |= MDIO_EEE_10GKX4;
-	अगर (of_property_पढ़ो_bool(node, "eee-broken-10gkr"))
+	if (of_property_read_bool(node, "eee-broken-10gkr"))
 		broken |= MDIO_EEE_10GKR;
 
 	phydev->eee_broken_modes = broken;
-पूर्ण
+}
 
 /**
- * phy_resolve_aneg_छोड़ो - Determine छोड़ो स्वतःneg results
+ * phy_resolve_aneg_pause - Determine pause autoneg results
  *
- * @phydev: The phy_device काष्ठा
+ * @phydev: The phy_device struct
  *
- * Once स्वतःneg has completed the local छोड़ो settings can be
- * resolved.  Determine अगर छोड़ो and asymmetric छोड़ो should be used
+ * Once autoneg has completed the local pause settings can be
+ * resolved.  Determine if pause and asymmetric pause should be used
  * by the MAC.
  */
 
-व्योम phy_resolve_aneg_छोड़ो(काष्ठा phy_device *phydev)
-अणु
-	अगर (phydev->duplex == DUPLEX_FULL) अणु
-		phydev->छोड़ो = linkmode_test_bit(ETHTOOL_LINK_MODE_Pause_BIT,
+void phy_resolve_aneg_pause(struct phy_device *phydev)
+{
+	if (phydev->duplex == DUPLEX_FULL) {
+		phydev->pause = linkmode_test_bit(ETHTOOL_LINK_MODE_Pause_BIT,
 						  phydev->lp_advertising);
-		phydev->asym_छोड़ो = linkmode_test_bit(
+		phydev->asym_pause = linkmode_test_bit(
 			ETHTOOL_LINK_MODE_Asym_Pause_BIT,
 			phydev->lp_advertising);
-	पूर्ण
-पूर्ण
-EXPORT_SYMBOL_GPL(phy_resolve_aneg_छोड़ो);
+	}
+}
+EXPORT_SYMBOL_GPL(phy_resolve_aneg_pause);
 
 /**
- * phy_resolve_aneg_linkmode - resolve the advertisements पूर्णांकo PHY settings
- * @phydev: The phy_device काष्ठा
+ * phy_resolve_aneg_linkmode - resolve the advertisements into PHY settings
+ * @phydev: The phy_device struct
  *
- * Resolve our and the link partner advertisements पूर्णांकo their corresponding
- * speed and duplex. If full duplex was negotiated, extract the छोड़ो mode
+ * Resolve our and the link partner advertisements into their corresponding
+ * speed and duplex. If full duplex was negotiated, extract the pause mode
  * from the link partner mask.
  */
-व्योम phy_resolve_aneg_linkmode(काष्ठा phy_device *phydev)
-अणु
+void phy_resolve_aneg_linkmode(struct phy_device *phydev)
+{
 	__ETHTOOL_DECLARE_LINK_MODE_MASK(common);
-	पूर्णांक i;
+	int i;
 
 	linkmode_and(common, phydev->lp_advertising, phydev->advertising);
 
-	क्रम (i = 0; i < ARRAY_SIZE(settings); i++)
-		अगर (test_bit(settings[i].bit, common)) अणु
+	for (i = 0; i < ARRAY_SIZE(settings); i++)
+		if (test_bit(settings[i].bit, common)) {
 			phydev->speed = settings[i].speed;
 			phydev->duplex = settings[i].duplex;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-	phy_resolve_aneg_छोड़ो(phydev);
-पूर्ण
+	phy_resolve_aneg_pause(phydev);
+}
 EXPORT_SYMBOL_GPL(phy_resolve_aneg_linkmode);
 
 /**
- * phy_check_करोwnshअगरt - check whether करोwnshअगरt occurred
- * @phydev: The phy_device काष्ठा
+ * phy_check_downshift - check whether downshift occurred
+ * @phydev: The phy_device struct
  *
- * Check whether a करोwnshअगरt to a lower speed occurred. If this should be the
- * हाल warn the user.
- * Prerequisite क्रम detecting करोwnshअगरt is that PHY driver implements the
- * पढ़ो_status callback and sets phydev->speed to the actual link speed.
+ * Check whether a downshift to a lower speed occurred. If this should be the
+ * case warn the user.
+ * Prerequisite for detecting downshift is that PHY driver implements the
+ * read_status callback and sets phydev->speed to the actual link speed.
  */
-व्योम phy_check_करोwnshअगरt(काष्ठा phy_device *phydev)
-अणु
+void phy_check_downshift(struct phy_device *phydev)
+{
 	__ETHTOOL_DECLARE_LINK_MODE_MASK(common);
-	पूर्णांक i, speed = SPEED_UNKNOWN;
+	int i, speed = SPEED_UNKNOWN;
 
-	phydev->करोwnshअगरted_rate = 0;
+	phydev->downshifted_rate = 0;
 
-	अगर (phydev->स्वतःneg == AUTONEG_DISABLE ||
+	if (phydev->autoneg == AUTONEG_DISABLE ||
 	    phydev->speed == SPEED_UNKNOWN)
-		वापस;
+		return;
 
 	linkmode_and(common, phydev->lp_advertising, phydev->advertising);
 
-	क्रम (i = 0; i < ARRAY_SIZE(settings); i++)
-		अगर (test_bit(settings[i].bit, common)) अणु
+	for (i = 0; i < ARRAY_SIZE(settings); i++)
+		if (test_bit(settings[i].bit, common)) {
 			speed = settings[i].speed;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-	अगर (speed == SPEED_UNKNOWN || phydev->speed >= speed)
-		वापस;
+	if (speed == SPEED_UNKNOWN || phydev->speed >= speed)
+		return;
 
 	phydev_warn(phydev, "Downshift occurred from negotiated speed %s to actual speed %s, check cabling!\n",
 		    phy_speed_to_str(speed), phy_speed_to_str(phydev->speed));
 
-	phydev->करोwnshअगरted_rate = 1;
-पूर्ण
-EXPORT_SYMBOL_GPL(phy_check_करोwnshअगरt);
+	phydev->downshifted_rate = 1;
+}
+EXPORT_SYMBOL_GPL(phy_check_downshift);
 
-अटल पूर्णांक phy_resolve_min_speed(काष्ठा phy_device *phydev, bool fdx_only)
-अणु
+static int phy_resolve_min_speed(struct phy_device *phydev, bool fdx_only)
+{
 	__ETHTOOL_DECLARE_LINK_MODE_MASK(common);
-	पूर्णांक i = ARRAY_SIZE(settings);
+	int i = ARRAY_SIZE(settings);
 
 	linkmode_and(common, phydev->lp_advertising, phydev->advertising);
 
-	जबतक (--i >= 0) अणु
-		अगर (test_bit(settings[i].bit, common)) अणु
-			अगर (fdx_only && settings[i].duplex != DUPLEX_FULL)
-				जारी;
-			वापस settings[i].speed;
-		पूर्ण
-	पूर्ण
+	while (--i >= 0) {
+		if (test_bit(settings[i].bit, common)) {
+			if (fdx_only && settings[i].duplex != DUPLEX_FULL)
+				continue;
+			return settings[i].speed;
+		}
+	}
 
-	वापस SPEED_UNKNOWN;
-पूर्ण
+	return SPEED_UNKNOWN;
+}
 
-पूर्णांक phy_speed_करोwn_core(काष्ठा phy_device *phydev)
-अणु
-	पूर्णांक min_common_speed = phy_resolve_min_speed(phydev, true);
+int phy_speed_down_core(struct phy_device *phydev)
+{
+	int min_common_speed = phy_resolve_min_speed(phydev, true);
 
-	अगर (min_common_speed == SPEED_UNKNOWN)
-		वापस -EINVAL;
+	if (min_common_speed == SPEED_UNKNOWN)
+		return -EINVAL;
 
-	वापस __set_linkmode_max_speed(min_common_speed, phydev->advertising);
-पूर्ण
+	return __set_linkmode_max_speed(min_common_speed, phydev->advertising);
+}
 
-अटल व्योम mmd_phy_indirect(काष्ठा mii_bus *bus, पूर्णांक phy_addr, पूर्णांक devad,
+static void mmd_phy_indirect(struct mii_bus *bus, int phy_addr, int devad,
 			     u16 regnum)
-अणु
+{
 	/* Write the desired MMD Devad */
-	__mdiobus_ग_लिखो(bus, phy_addr, MII_MMD_CTRL, devad);
+	__mdiobus_write(bus, phy_addr, MII_MMD_CTRL, devad);
 
-	/* Write the desired MMD रेजिस्टर address */
-	__mdiobus_ग_लिखो(bus, phy_addr, MII_MMD_DATA, regnum);
+	/* Write the desired MMD register address */
+	__mdiobus_write(bus, phy_addr, MII_MMD_DATA, regnum);
 
 	/* Select the Function : DATA with no post increment */
-	__mdiobus_ग_लिखो(bus, phy_addr, MII_MMD_CTRL,
+	__mdiobus_write(bus, phy_addr, MII_MMD_CTRL,
 			devad | MII_MMD_CTRL_NOINCR);
-पूर्ण
+}
 
 /**
- * __phy_पढ़ो_mmd - Convenience function क्रम पढ़ोing a रेजिस्टर
+ * __phy_read_mmd - Convenience function for reading a register
  * from an MMD on a given PHY.
- * @phydev: The phy_device काष्ठा
- * @devad: The MMD to पढ़ो from (0..31)
- * @regnum: The रेजिस्टर on the MMD to पढ़ो (0..65535)
+ * @phydev: The phy_device struct
+ * @devad: The MMD to read from (0..31)
+ * @regnum: The register on the MMD to read (0..65535)
  *
- * Same rules as क्रम __phy_पढ़ो();
+ * Same rules as for __phy_read();
  */
-पूर्णांक __phy_पढ़ो_mmd(काष्ठा phy_device *phydev, पूर्णांक devad, u32 regnum)
-अणु
-	पूर्णांक val;
+int __phy_read_mmd(struct phy_device *phydev, int devad, u32 regnum)
+{
+	int val;
 
-	अगर (regnum > (u16)~0 || devad > 32)
-		वापस -EINVAL;
+	if (regnum > (u16)~0 || devad > 32)
+		return -EINVAL;
 
-	अगर (phydev->drv && phydev->drv->पढ़ो_mmd) अणु
-		val = phydev->drv->पढ़ो_mmd(phydev, devad, regnum);
-	पूर्ण अन्यथा अगर (phydev->is_c45) अणु
-		val = __mdiobus_c45_पढ़ो(phydev->mdio.bus, phydev->mdio.addr,
+	if (phydev->drv && phydev->drv->read_mmd) {
+		val = phydev->drv->read_mmd(phydev, devad, regnum);
+	} else if (phydev->is_c45) {
+		val = __mdiobus_c45_read(phydev->mdio.bus, phydev->mdio.addr,
 					 devad, regnum);
-	पूर्ण अन्यथा अणु
-		काष्ठा mii_bus *bus = phydev->mdio.bus;
-		पूर्णांक phy_addr = phydev->mdio.addr;
+	} else {
+		struct mii_bus *bus = phydev->mdio.bus;
+		int phy_addr = phydev->mdio.addr;
 
 		mmd_phy_indirect(bus, phy_addr, devad, regnum);
 
-		/* Read the content of the MMD's selected रेजिस्टर */
-		val = __mdiobus_पढ़ो(bus, phy_addr, MII_MMD_DATA);
-	पूर्ण
-	वापस val;
-पूर्ण
-EXPORT_SYMBOL(__phy_पढ़ो_mmd);
+		/* Read the content of the MMD's selected register */
+		val = __mdiobus_read(bus, phy_addr, MII_MMD_DATA);
+	}
+	return val;
+}
+EXPORT_SYMBOL(__phy_read_mmd);
 
 /**
- * phy_पढ़ो_mmd - Convenience function क्रम पढ़ोing a रेजिस्टर
+ * phy_read_mmd - Convenience function for reading a register
  * from an MMD on a given PHY.
- * @phydev: The phy_device काष्ठा
- * @devad: The MMD to पढ़ो from
- * @regnum: The रेजिस्टर on the MMD to पढ़ो
+ * @phydev: The phy_device struct
+ * @devad: The MMD to read from
+ * @regnum: The register on the MMD to read
  *
- * Same rules as क्रम phy_पढ़ो();
+ * Same rules as for phy_read();
  */
-पूर्णांक phy_पढ़ो_mmd(काष्ठा phy_device *phydev, पूर्णांक devad, u32 regnum)
-अणु
-	पूर्णांक ret;
+int phy_read_mmd(struct phy_device *phydev, int devad, u32 regnum)
+{
+	int ret;
 
 	phy_lock_mdio_bus(phydev);
-	ret = __phy_पढ़ो_mmd(phydev, devad, regnum);
+	ret = __phy_read_mmd(phydev, devad, regnum);
 	phy_unlock_mdio_bus(phydev);
 
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL(phy_पढ़ो_mmd);
+	return ret;
+}
+EXPORT_SYMBOL(phy_read_mmd);
 
 /**
- * __phy_ग_लिखो_mmd - Convenience function क्रम writing a रेजिस्टर
+ * __phy_write_mmd - Convenience function for writing a register
  * on an MMD on a given PHY.
- * @phydev: The phy_device काष्ठा
- * @devad: The MMD to पढ़ो from
- * @regnum: The रेजिस्टर on the MMD to पढ़ो
- * @val: value to ग_लिखो to @regnum
+ * @phydev: The phy_device struct
+ * @devad: The MMD to read from
+ * @regnum: The register on the MMD to read
+ * @val: value to write to @regnum
  *
- * Same rules as क्रम __phy_ग_लिखो();
+ * Same rules as for __phy_write();
  */
-पूर्णांक __phy_ग_लिखो_mmd(काष्ठा phy_device *phydev, पूर्णांक devad, u32 regnum, u16 val)
-अणु
-	पूर्णांक ret;
+int __phy_write_mmd(struct phy_device *phydev, int devad, u32 regnum, u16 val)
+{
+	int ret;
 
-	अगर (regnum > (u16)~0 || devad > 32)
-		वापस -EINVAL;
+	if (regnum > (u16)~0 || devad > 32)
+		return -EINVAL;
 
-	अगर (phydev->drv && phydev->drv->ग_लिखो_mmd) अणु
-		ret = phydev->drv->ग_लिखो_mmd(phydev, devad, regnum, val);
-	पूर्ण अन्यथा अगर (phydev->is_c45) अणु
-		ret = __mdiobus_c45_ग_लिखो(phydev->mdio.bus, phydev->mdio.addr,
+	if (phydev->drv && phydev->drv->write_mmd) {
+		ret = phydev->drv->write_mmd(phydev, devad, regnum, val);
+	} else if (phydev->is_c45) {
+		ret = __mdiobus_c45_write(phydev->mdio.bus, phydev->mdio.addr,
 					  devad, regnum, val);
-	पूर्ण अन्यथा अणु
-		काष्ठा mii_bus *bus = phydev->mdio.bus;
-		पूर्णांक phy_addr = phydev->mdio.addr;
+	} else {
+		struct mii_bus *bus = phydev->mdio.bus;
+		int phy_addr = phydev->mdio.addr;
 
 		mmd_phy_indirect(bus, phy_addr, devad, regnum);
 
-		/* Write the data पूर्णांकo MMD's selected रेजिस्टर */
-		__mdiobus_ग_लिखो(bus, phy_addr, MII_MMD_DATA, val);
+		/* Write the data into MMD's selected register */
+		__mdiobus_write(bus, phy_addr, MII_MMD_DATA, val);
 
 		ret = 0;
-	पूर्ण
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL(__phy_ग_लिखो_mmd);
+	}
+	return ret;
+}
+EXPORT_SYMBOL(__phy_write_mmd);
 
 /**
- * phy_ग_लिखो_mmd - Convenience function क्रम writing a रेजिस्टर
+ * phy_write_mmd - Convenience function for writing a register
  * on an MMD on a given PHY.
- * @phydev: The phy_device काष्ठा
- * @devad: The MMD to पढ़ो from
- * @regnum: The रेजिस्टर on the MMD to पढ़ो
- * @val: value to ग_लिखो to @regnum
+ * @phydev: The phy_device struct
+ * @devad: The MMD to read from
+ * @regnum: The register on the MMD to read
+ * @val: value to write to @regnum
  *
- * Same rules as क्रम phy_ग_लिखो();
+ * Same rules as for phy_write();
  */
-पूर्णांक phy_ग_लिखो_mmd(काष्ठा phy_device *phydev, पूर्णांक devad, u32 regnum, u16 val)
-अणु
-	पूर्णांक ret;
+int phy_write_mmd(struct phy_device *phydev, int devad, u32 regnum, u16 val)
+{
+	int ret;
 
 	phy_lock_mdio_bus(phydev);
-	ret = __phy_ग_लिखो_mmd(phydev, devad, regnum, val);
+	ret = __phy_write_mmd(phydev, devad, regnum, val);
 	phy_unlock_mdio_bus(phydev);
 
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL(phy_ग_लिखो_mmd);
+	return ret;
+}
+EXPORT_SYMBOL(phy_write_mmd);
 
 /**
- * phy_modअगरy_changed - Function क्रम modअगरying a PHY रेजिस्टर
- * @phydev: the phy_device काष्ठा
- * @regnum: रेजिस्टर number to modअगरy
+ * phy_modify_changed - Function for modifying a PHY register
+ * @phydev: the phy_device struct
+ * @regnum: register number to modify
  * @mask: bit mask of bits to clear
- * @set: new value of bits set in mask to ग_लिखो to @regnum
+ * @set: new value of bits set in mask to write to @regnum
  *
- * NOTE: MUST NOT be called from पूर्णांकerrupt context,
- * because the bus पढ़ो/ग_लिखो functions may रुको क्रम an पूर्णांकerrupt
+ * NOTE: MUST NOT be called from interrupt context,
+ * because the bus read/write functions may wait for an interrupt
  * to conclude the operation.
  *
- * Returns negative त्रुटि_सं, 0 अगर there was no change, and 1 in हाल of change
+ * Returns negative errno, 0 if there was no change, and 1 in case of change
  */
-पूर्णांक phy_modअगरy_changed(काष्ठा phy_device *phydev, u32 regnum, u16 mask, u16 set)
-अणु
-	पूर्णांक ret;
+int phy_modify_changed(struct phy_device *phydev, u32 regnum, u16 mask, u16 set)
+{
+	int ret;
 
 	phy_lock_mdio_bus(phydev);
-	ret = __phy_modअगरy_changed(phydev, regnum, mask, set);
+	ret = __phy_modify_changed(phydev, regnum, mask, set);
 	phy_unlock_mdio_bus(phydev);
 
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(phy_modअगरy_changed);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(phy_modify_changed);
 
 /**
- * __phy_modअगरy - Convenience function क्रम modअगरying a PHY रेजिस्टर
- * @phydev: the phy_device काष्ठा
- * @regnum: रेजिस्टर number to modअगरy
+ * __phy_modify - Convenience function for modifying a PHY register
+ * @phydev: the phy_device struct
+ * @regnum: register number to modify
  * @mask: bit mask of bits to clear
- * @set: new value of bits set in mask to ग_लिखो to @regnum
+ * @set: new value of bits set in mask to write to @regnum
  *
- * NOTE: MUST NOT be called from पूर्णांकerrupt context,
- * because the bus पढ़ो/ग_लिखो functions may रुको क्रम an पूर्णांकerrupt
+ * NOTE: MUST NOT be called from interrupt context,
+ * because the bus read/write functions may wait for an interrupt
  * to conclude the operation.
  */
-पूर्णांक __phy_modअगरy(काष्ठा phy_device *phydev, u32 regnum, u16 mask, u16 set)
-अणु
-	पूर्णांक ret;
+int __phy_modify(struct phy_device *phydev, u32 regnum, u16 mask, u16 set)
+{
+	int ret;
 
-	ret = __phy_modअगरy_changed(phydev, regnum, mask, set);
+	ret = __phy_modify_changed(phydev, regnum, mask, set);
 
-	वापस ret < 0 ? ret : 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(__phy_modअगरy);
+	return ret < 0 ? ret : 0;
+}
+EXPORT_SYMBOL_GPL(__phy_modify);
 
 /**
- * phy_modअगरy - Convenience function क्रम modअगरying a given PHY रेजिस्टर
- * @phydev: the phy_device काष्ठा
- * @regnum: रेजिस्टर number to ग_लिखो
+ * phy_modify - Convenience function for modifying a given PHY register
+ * @phydev: the phy_device struct
+ * @regnum: register number to write
  * @mask: bit mask of bits to clear
- * @set: new value of bits set in mask to ग_लिखो to @regnum
+ * @set: new value of bits set in mask to write to @regnum
  *
- * NOTE: MUST NOT be called from पूर्णांकerrupt context,
- * because the bus पढ़ो/ग_लिखो functions may रुको क्रम an पूर्णांकerrupt
+ * NOTE: MUST NOT be called from interrupt context,
+ * because the bus read/write functions may wait for an interrupt
  * to conclude the operation.
  */
-पूर्णांक phy_modअगरy(काष्ठा phy_device *phydev, u32 regnum, u16 mask, u16 set)
-अणु
-	पूर्णांक ret;
+int phy_modify(struct phy_device *phydev, u32 regnum, u16 mask, u16 set)
+{
+	int ret;
 
 	phy_lock_mdio_bus(phydev);
-	ret = __phy_modअगरy(phydev, regnum, mask, set);
+	ret = __phy_modify(phydev, regnum, mask, set);
 	phy_unlock_mdio_bus(phydev);
 
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(phy_modअगरy);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(phy_modify);
 
 /**
- * __phy_modअगरy_mmd_changed - Function क्रम modअगरying a रेजिस्टर on MMD
- * @phydev: the phy_device काष्ठा
- * @devad: the MMD containing रेजिस्टर to modअगरy
- * @regnum: रेजिस्टर number to modअगरy
+ * __phy_modify_mmd_changed - Function for modifying a register on MMD
+ * @phydev: the phy_device struct
+ * @devad: the MMD containing register to modify
+ * @regnum: register number to modify
  * @mask: bit mask of bits to clear
- * @set: new value of bits set in mask to ग_लिखो to @regnum
+ * @set: new value of bits set in mask to write to @regnum
  *
- * Unlocked helper function which allows a MMD रेजिस्टर to be modअगरied as
- * new रेजिस्टर value = (old रेजिस्टर value & ~mask) | set
+ * Unlocked helper function which allows a MMD register to be modified as
+ * new register value = (old register value & ~mask) | set
  *
- * Returns negative त्रुटि_सं, 0 अगर there was no change, and 1 in हाल of change
+ * Returns negative errno, 0 if there was no change, and 1 in case of change
  */
-पूर्णांक __phy_modअगरy_mmd_changed(काष्ठा phy_device *phydev, पूर्णांक devad, u32 regnum,
+int __phy_modify_mmd_changed(struct phy_device *phydev, int devad, u32 regnum,
 			     u16 mask, u16 set)
-अणु
-	पूर्णांक new, ret;
+{
+	int new, ret;
 
-	ret = __phy_पढ़ो_mmd(phydev, devad, regnum);
-	अगर (ret < 0)
-		वापस ret;
+	ret = __phy_read_mmd(phydev, devad, regnum);
+	if (ret < 0)
+		return ret;
 
 	new = (ret & ~mask) | set;
-	अगर (new == ret)
-		वापस 0;
+	if (new == ret)
+		return 0;
 
-	ret = __phy_ग_लिखो_mmd(phydev, devad, regnum, new);
+	ret = __phy_write_mmd(phydev, devad, regnum, new);
 
-	वापस ret < 0 ? ret : 1;
-पूर्ण
-EXPORT_SYMBOL_GPL(__phy_modअगरy_mmd_changed);
+	return ret < 0 ? ret : 1;
+}
+EXPORT_SYMBOL_GPL(__phy_modify_mmd_changed);
 
 /**
- * phy_modअगरy_mmd_changed - Function क्रम modअगरying a रेजिस्टर on MMD
- * @phydev: the phy_device काष्ठा
- * @devad: the MMD containing रेजिस्टर to modअगरy
- * @regnum: रेजिस्टर number to modअगरy
+ * phy_modify_mmd_changed - Function for modifying a register on MMD
+ * @phydev: the phy_device struct
+ * @devad: the MMD containing register to modify
+ * @regnum: register number to modify
  * @mask: bit mask of bits to clear
- * @set: new value of bits set in mask to ग_लिखो to @regnum
+ * @set: new value of bits set in mask to write to @regnum
  *
- * NOTE: MUST NOT be called from पूर्णांकerrupt context,
- * because the bus पढ़ो/ग_लिखो functions may रुको क्रम an पूर्णांकerrupt
+ * NOTE: MUST NOT be called from interrupt context,
+ * because the bus read/write functions may wait for an interrupt
  * to conclude the operation.
  *
- * Returns negative त्रुटि_सं, 0 अगर there was no change, and 1 in हाल of change
+ * Returns negative errno, 0 if there was no change, and 1 in case of change
  */
-पूर्णांक phy_modअगरy_mmd_changed(काष्ठा phy_device *phydev, पूर्णांक devad, u32 regnum,
+int phy_modify_mmd_changed(struct phy_device *phydev, int devad, u32 regnum,
 			   u16 mask, u16 set)
-अणु
-	पूर्णांक ret;
+{
+	int ret;
 
 	phy_lock_mdio_bus(phydev);
-	ret = __phy_modअगरy_mmd_changed(phydev, devad, regnum, mask, set);
+	ret = __phy_modify_mmd_changed(phydev, devad, regnum, mask, set);
 	phy_unlock_mdio_bus(phydev);
 
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(phy_modअगरy_mmd_changed);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(phy_modify_mmd_changed);
 
 /**
- * __phy_modअगरy_mmd - Convenience function क्रम modअगरying a रेजिस्टर on MMD
- * @phydev: the phy_device काष्ठा
- * @devad: the MMD containing रेजिस्टर to modअगरy
- * @regnum: रेजिस्टर number to modअगरy
+ * __phy_modify_mmd - Convenience function for modifying a register on MMD
+ * @phydev: the phy_device struct
+ * @devad: the MMD containing register to modify
+ * @regnum: register number to modify
  * @mask: bit mask of bits to clear
- * @set: new value of bits set in mask to ग_लिखो to @regnum
+ * @set: new value of bits set in mask to write to @regnum
  *
- * NOTE: MUST NOT be called from पूर्णांकerrupt context,
- * because the bus पढ़ो/ग_लिखो functions may रुको क्रम an पूर्णांकerrupt
+ * NOTE: MUST NOT be called from interrupt context,
+ * because the bus read/write functions may wait for an interrupt
  * to conclude the operation.
  */
-पूर्णांक __phy_modअगरy_mmd(काष्ठा phy_device *phydev, पूर्णांक devad, u32 regnum,
+int __phy_modify_mmd(struct phy_device *phydev, int devad, u32 regnum,
 		     u16 mask, u16 set)
-अणु
-	पूर्णांक ret;
+{
+	int ret;
 
-	ret = __phy_modअगरy_mmd_changed(phydev, devad, regnum, mask, set);
+	ret = __phy_modify_mmd_changed(phydev, devad, regnum, mask, set);
 
-	वापस ret < 0 ? ret : 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(__phy_modअगरy_mmd);
+	return ret < 0 ? ret : 0;
+}
+EXPORT_SYMBOL_GPL(__phy_modify_mmd);
 
 /**
- * phy_modअगरy_mmd - Convenience function क्रम modअगरying a रेजिस्टर on MMD
- * @phydev: the phy_device काष्ठा
- * @devad: the MMD containing रेजिस्टर to modअगरy
- * @regnum: रेजिस्टर number to modअगरy
+ * phy_modify_mmd - Convenience function for modifying a register on MMD
+ * @phydev: the phy_device struct
+ * @devad: the MMD containing register to modify
+ * @regnum: register number to modify
  * @mask: bit mask of bits to clear
- * @set: new value of bits set in mask to ग_लिखो to @regnum
+ * @set: new value of bits set in mask to write to @regnum
  *
- * NOTE: MUST NOT be called from पूर्णांकerrupt context,
- * because the bus पढ़ो/ग_लिखो functions may रुको क्रम an पूर्णांकerrupt
+ * NOTE: MUST NOT be called from interrupt context,
+ * because the bus read/write functions may wait for an interrupt
  * to conclude the operation.
  */
-पूर्णांक phy_modअगरy_mmd(काष्ठा phy_device *phydev, पूर्णांक devad, u32 regnum,
+int phy_modify_mmd(struct phy_device *phydev, int devad, u32 regnum,
 		   u16 mask, u16 set)
-अणु
-	पूर्णांक ret;
+{
+	int ret;
 
 	phy_lock_mdio_bus(phydev);
-	ret = __phy_modअगरy_mmd(phydev, devad, regnum, mask, set);
+	ret = __phy_modify_mmd(phydev, devad, regnum, mask, set);
 	phy_unlock_mdio_bus(phydev);
 
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(phy_modअगरy_mmd);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(phy_modify_mmd);
 
-अटल पूर्णांक __phy_पढ़ो_page(काष्ठा phy_device *phydev)
-अणु
-	अगर (WARN_ONCE(!phydev->drv->पढ़ो_page, "read_page callback not available, PHY driver not loaded?\n"))
-		वापस -EOPNOTSUPP;
+static int __phy_read_page(struct phy_device *phydev)
+{
+	if (WARN_ONCE(!phydev->drv->read_page, "read_page callback not available, PHY driver not loaded?\n"))
+		return -EOPNOTSUPP;
 
-	वापस phydev->drv->पढ़ो_page(phydev);
-पूर्ण
+	return phydev->drv->read_page(phydev);
+}
 
-अटल पूर्णांक __phy_ग_लिखो_page(काष्ठा phy_device *phydev, पूर्णांक page)
-अणु
-	अगर (WARN_ONCE(!phydev->drv->ग_लिखो_page, "write_page callback not available, PHY driver not loaded?\n"))
-		वापस -EOPNOTSUPP;
+static int __phy_write_page(struct phy_device *phydev, int page)
+{
+	if (WARN_ONCE(!phydev->drv->write_page, "write_page callback not available, PHY driver not loaded?\n"))
+		return -EOPNOTSUPP;
 
-	वापस phydev->drv->ग_लिखो_page(phydev, page);
-पूर्ण
+	return phydev->drv->write_page(phydev, page);
+}
 
 /**
  * phy_save_page() - take the bus lock and save the current page
- * @phydev: a poपूर्णांकer to a &काष्ठा phy_device
+ * @phydev: a pointer to a &struct phy_device
  *
- * Take the MDIO bus lock, and वापस the current page number. On error,
- * वापसs a negative त्रुटि_सं. phy_restore_page() must always be called
+ * Take the MDIO bus lock, and return the current page number. On error,
+ * returns a negative errno. phy_restore_page() must always be called
  * after this, irrespective of success or failure of this call.
  */
-पूर्णांक phy_save_page(काष्ठा phy_device *phydev)
-अणु
+int phy_save_page(struct phy_device *phydev)
+{
 	phy_lock_mdio_bus(phydev);
-	वापस __phy_पढ़ो_page(phydev);
-पूर्ण
+	return __phy_read_page(phydev);
+}
 EXPORT_SYMBOL_GPL(phy_save_page);
 
 /**
  * phy_select_page() - take the bus lock, save the current page, and set a page
- * @phydev: a poपूर्णांकer to a &काष्ठा phy_device
+ * @phydev: a pointer to a &struct phy_device
  * @page: desired page
  *
  * Take the MDIO bus lock to protect against concurrent access, save the
- * current PHY page, and set the current page.  On error, वापसs a
- * negative त्रुटि_सं, otherwise वापसs the previous page number.
+ * current PHY page, and set the current page.  On error, returns a
+ * negative errno, otherwise returns the previous page number.
  * phy_restore_page() must always be called after this, irrespective
  * of success or failure of this call.
  */
-पूर्णांक phy_select_page(काष्ठा phy_device *phydev, पूर्णांक page)
-अणु
-	पूर्णांक ret, oldpage;
+int phy_select_page(struct phy_device *phydev, int page)
+{
+	int ret, oldpage;
 
 	oldpage = ret = phy_save_page(phydev);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	अगर (oldpage != page) अणु
-		ret = __phy_ग_लिखो_page(phydev, page);
-		अगर (ret < 0)
-			वापस ret;
-	पूर्ण
+	if (oldpage != page) {
+		ret = __phy_write_page(phydev, page);
+		if (ret < 0)
+			return ret;
+	}
 
-	वापस oldpage;
-पूर्ण
+	return oldpage;
+}
 EXPORT_SYMBOL_GPL(phy_select_page);
 
 /**
- * phy_restore_page() - restore the page रेजिस्टर and release the bus lock
- * @phydev: a poपूर्णांकer to a &काष्ठा phy_device
- * @oldpage: the old page, वापस value from phy_save_page() or phy_select_page()
- * @ret: operation's वापस code
+ * phy_restore_page() - restore the page register and release the bus lock
+ * @phydev: a pointer to a &struct phy_device
+ * @oldpage: the old page, return value from phy_save_page() or phy_select_page()
+ * @ret: operation's return code
  *
- * Release the MDIO bus lock, restoring @oldpage अगर it is a valid page.
+ * Release the MDIO bus lock, restoring @oldpage if it is a valid page.
  * This function propagates the earliest error code from the group of
  * operations.
  *
  * Returns:
- *   @oldpage अगर it was a negative value, otherwise
- *   @ret अगर it was a negative त्रुटि_सं value, otherwise
- *   phy_ग_लिखो_page()'s negative value अगर it were in error, otherwise
+ *   @oldpage if it was a negative value, otherwise
+ *   @ret if it was a negative errno value, otherwise
+ *   phy_write_page()'s negative value if it were in error, otherwise
  *   @ret.
  */
-पूर्णांक phy_restore_page(काष्ठा phy_device *phydev, पूर्णांक oldpage, पूर्णांक ret)
-अणु
-	पूर्णांक r;
+int phy_restore_page(struct phy_device *phydev, int oldpage, int ret)
+{
+	int r;
 
-	अगर (oldpage >= 0) अणु
-		r = __phy_ग_लिखो_page(phydev, oldpage);
+	if (oldpage >= 0) {
+		r = __phy_write_page(phydev, oldpage);
 
-		/* Propagate the operation वापस code अगर the page ग_लिखो
+		/* Propagate the operation return code if the page write
 		 * was successful.
 		 */
-		अगर (ret >= 0 && r < 0)
+		if (ret >= 0 && r < 0)
 			ret = r;
-	पूर्ण अन्यथा अणु
+	} else {
 		/* Propagate the phy page selection error code */
 		ret = oldpage;
-	पूर्ण
+	}
 
 	phy_unlock_mdio_bus(phydev);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(phy_restore_page);
 
 /**
- * phy_पढ़ो_paged() - Convenience function क्रम पढ़ोing a paged रेजिस्टर
- * @phydev: a poपूर्णांकer to a &काष्ठा phy_device
- * @page: the page क्रम the phy
- * @regnum: रेजिस्टर number
+ * phy_read_paged() - Convenience function for reading a paged register
+ * @phydev: a pointer to a &struct phy_device
+ * @page: the page for the phy
+ * @regnum: register number
  *
- * Same rules as क्रम phy_पढ़ो().
+ * Same rules as for phy_read().
  */
-पूर्णांक phy_पढ़ो_paged(काष्ठा phy_device *phydev, पूर्णांक page, u32 regnum)
-अणु
-	पूर्णांक ret = 0, oldpage;
+int phy_read_paged(struct phy_device *phydev, int page, u32 regnum)
+{
+	int ret = 0, oldpage;
 
 	oldpage = phy_select_page(phydev, page);
-	अगर (oldpage >= 0)
-		ret = __phy_पढ़ो(phydev, regnum);
+	if (oldpage >= 0)
+		ret = __phy_read(phydev, regnum);
 
-	वापस phy_restore_page(phydev, oldpage, ret);
-पूर्ण
-EXPORT_SYMBOL(phy_पढ़ो_paged);
+	return phy_restore_page(phydev, oldpage, ret);
+}
+EXPORT_SYMBOL(phy_read_paged);
 
 /**
- * phy_ग_लिखो_paged() - Convenience function क्रम writing a paged रेजिस्टर
- * @phydev: a poपूर्णांकer to a &काष्ठा phy_device
- * @page: the page क्रम the phy
- * @regnum: रेजिस्टर number
- * @val: value to ग_लिखो
+ * phy_write_paged() - Convenience function for writing a paged register
+ * @phydev: a pointer to a &struct phy_device
+ * @page: the page for the phy
+ * @regnum: register number
+ * @val: value to write
  *
- * Same rules as क्रम phy_ग_लिखो().
+ * Same rules as for phy_write().
  */
-पूर्णांक phy_ग_लिखो_paged(काष्ठा phy_device *phydev, पूर्णांक page, u32 regnum, u16 val)
-अणु
-	पूर्णांक ret = 0, oldpage;
+int phy_write_paged(struct phy_device *phydev, int page, u32 regnum, u16 val)
+{
+	int ret = 0, oldpage;
 
 	oldpage = phy_select_page(phydev, page);
-	अगर (oldpage >= 0)
-		ret = __phy_ग_लिखो(phydev, regnum, val);
+	if (oldpage >= 0)
+		ret = __phy_write(phydev, regnum, val);
 
-	वापस phy_restore_page(phydev, oldpage, ret);
-पूर्ण
-EXPORT_SYMBOL(phy_ग_लिखो_paged);
+	return phy_restore_page(phydev, oldpage, ret);
+}
+EXPORT_SYMBOL(phy_write_paged);
 
 /**
- * phy_modअगरy_paged_changed() - Function क्रम modअगरying a paged रेजिस्टर
- * @phydev: a poपूर्णांकer to a &काष्ठा phy_device
- * @page: the page क्रम the phy
- * @regnum: रेजिस्टर number
+ * phy_modify_paged_changed() - Function for modifying a paged register
+ * @phydev: a pointer to a &struct phy_device
+ * @page: the page for the phy
+ * @regnum: register number
  * @mask: bit mask of bits to clear
  * @set: bit mask of bits to set
  *
- * Returns negative त्रुटि_सं, 0 अगर there was no change, and 1 in हाल of change
+ * Returns negative errno, 0 if there was no change, and 1 in case of change
  */
-पूर्णांक phy_modअगरy_paged_changed(काष्ठा phy_device *phydev, पूर्णांक page, u32 regnum,
+int phy_modify_paged_changed(struct phy_device *phydev, int page, u32 regnum,
 			     u16 mask, u16 set)
-अणु
-	पूर्णांक ret = 0, oldpage;
+{
+	int ret = 0, oldpage;
 
 	oldpage = phy_select_page(phydev, page);
-	अगर (oldpage >= 0)
-		ret = __phy_modअगरy_changed(phydev, regnum, mask, set);
+	if (oldpage >= 0)
+		ret = __phy_modify_changed(phydev, regnum, mask, set);
 
-	वापस phy_restore_page(phydev, oldpage, ret);
-पूर्ण
-EXPORT_SYMBOL(phy_modअगरy_paged_changed);
+	return phy_restore_page(phydev, oldpage, ret);
+}
+EXPORT_SYMBOL(phy_modify_paged_changed);
 
 /**
- * phy_modअगरy_paged() - Convenience function क्रम modअगरying a paged रेजिस्टर
- * @phydev: a poपूर्णांकer to a &काष्ठा phy_device
- * @page: the page क्रम the phy
- * @regnum: रेजिस्टर number
+ * phy_modify_paged() - Convenience function for modifying a paged register
+ * @phydev: a pointer to a &struct phy_device
+ * @page: the page for the phy
+ * @regnum: register number
  * @mask: bit mask of bits to clear
  * @set: bit mask of bits to set
  *
- * Same rules as क्रम phy_पढ़ो() and phy_ग_लिखो().
+ * Same rules as for phy_read() and phy_write().
  */
-पूर्णांक phy_modअगरy_paged(काष्ठा phy_device *phydev, पूर्णांक page, u32 regnum,
+int phy_modify_paged(struct phy_device *phydev, int page, u32 regnum,
 		     u16 mask, u16 set)
-अणु
-	पूर्णांक ret = phy_modअगरy_paged_changed(phydev, page, regnum, mask, set);
+{
+	int ret = phy_modify_paged_changed(phydev, page, regnum, mask, set);
 
-	वापस ret < 0 ? ret : 0;
-पूर्ण
-EXPORT_SYMBOL(phy_modअगरy_paged);
+	return ret < 0 ? ret : 0;
+}
+EXPORT_SYMBOL(phy_modify_paged);

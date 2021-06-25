@@ -1,24 +1,23 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Copyright (c) 2014 Marvell Technology Group Ltd.
  *
- * Alexandre Belloni <alexandre.belloni@मुक्त-electrons.com>
+ * Alexandre Belloni <alexandre.belloni@free-electrons.com>
  * Sebastian Hesselbarth <sebastian.hesselbarth@gmail.com>
  */
-#अगर_अघोषित __BERLIN2_PLL_H
-#घोषणा __BERLIN2_PLL_H
+#ifndef __BERLIN2_PLL_H
+#define __BERLIN2_PLL_H
 
-काष्ठा berlin2_pll_map अणु
-	स्थिर u8 vcoभाग[16];
+struct berlin2_pll_map {
+	const u8 vcodiv[16];
 	u8 mult;
-	u8 fbभाग_shअगरt;
-	u8 rfभाग_shअगरt;
-	u8 भागsel_shअगरt;
-पूर्ण;
+	u8 fbdiv_shift;
+	u8 rfdiv_shift;
+	u8 divsel_shift;
+};
 
-पूर्णांक berlin2_pll_रेजिस्टर(स्थिर काष्ठा berlin2_pll_map *map,
-			 व्योम __iomem *base, स्थिर अक्षर *name,
-			 स्थिर अक्षर *parent_name, अचिन्हित दीर्घ flags);
+int berlin2_pll_register(const struct berlin2_pll_map *map,
+			 void __iomem *base, const char *name,
+			 const char *parent_name, unsigned long flags);
 
-#पूर्ण_अगर /* __BERLIN2_PLL_H */
+#endif /* __BERLIN2_PLL_H */

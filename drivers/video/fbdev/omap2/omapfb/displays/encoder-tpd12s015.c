@@ -1,187 +1,186 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * TPD12S015 HDMI ESD protection & level shअगरter chip driver
+ * TPD12S015 HDMI ESD protection & level shifter chip driver
  *
  * Copyright (C) 2013 Texas Instruments
  * Author: Tomi Valkeinen <tomi.valkeinen@ti.com>
  */
 
-#समावेश <linux/completion.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/module.h>
-#समावेश <linux/mod_devicetable.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/gpio/consumer.h>
+#include <linux/completion.h>
+#include <linux/delay.h>
+#include <linux/module.h>
+#include <linux/mod_devicetable.h>
+#include <linux/slab.h>
+#include <linux/platform_device.h>
+#include <linux/gpio/consumer.h>
 
-#समावेश <video/omapfb_dss.h>
+#include <video/omapfb_dss.h>
 
-काष्ठा panel_drv_data अणु
-	काष्ठा omap_dss_device dssdev;
-	काष्ठा omap_dss_device *in;
+struct panel_drv_data {
+	struct omap_dss_device dssdev;
+	struct omap_dss_device *in;
 
-	काष्ठा gpio_desc *ct_cp_hpd_gpio;
-	काष्ठा gpio_desc *ls_oe_gpio;
-	काष्ठा gpio_desc *hpd_gpio;
+	struct gpio_desc *ct_cp_hpd_gpio;
+	struct gpio_desc *ls_oe_gpio;
+	struct gpio_desc *hpd_gpio;
 
-	काष्ठा omap_video_timings timings;
-पूर्ण;
+	struct omap_video_timings timings;
+};
 
-#घोषणा to_panel_data(x) container_of(x, काष्ठा panel_drv_data, dssdev)
+#define to_panel_data(x) container_of(x, struct panel_drv_data, dssdev)
 
-अटल पूर्णांक tpd_connect(काष्ठा omap_dss_device *dssdev,
-		काष्ठा omap_dss_device *dst)
-अणु
-	काष्ठा panel_drv_data *ddata = to_panel_data(dssdev);
-	काष्ठा omap_dss_device *in = ddata->in;
-	पूर्णांक r;
+static int tpd_connect(struct omap_dss_device *dssdev,
+		struct omap_dss_device *dst)
+{
+	struct panel_drv_data *ddata = to_panel_data(dssdev);
+	struct omap_dss_device *in = ddata->in;
+	int r;
 
 	r = in->ops.hdmi->connect(in, dssdev);
-	अगर (r)
-		वापस r;
+	if (r)
+		return r;
 
 	dst->src = dssdev;
 	dssdev->dst = dst;
 
-	अगर (ddata->ct_cp_hpd_gpio) अणु
+	if (ddata->ct_cp_hpd_gpio) {
 		gpiod_set_value_cansleep(ddata->ct_cp_hpd_gpio, 1);
 		/* DC-DC converter needs at max 300us to get to 90% of 5V */
 		udelay(300);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम tpd_disconnect(काष्ठा omap_dss_device *dssdev,
-		काष्ठा omap_dss_device *dst)
-अणु
-	काष्ठा panel_drv_data *ddata = to_panel_data(dssdev);
-	काष्ठा omap_dss_device *in = ddata->in;
+static void tpd_disconnect(struct omap_dss_device *dssdev,
+		struct omap_dss_device *dst)
+{
+	struct panel_drv_data *ddata = to_panel_data(dssdev);
+	struct omap_dss_device *in = ddata->in;
 
 	WARN_ON(dst != dssdev->dst);
 
-	अगर (dst != dssdev->dst)
-		वापस;
+	if (dst != dssdev->dst)
+		return;
 
 	gpiod_set_value_cansleep(ddata->ct_cp_hpd_gpio, 0);
 
-	dst->src = शून्य;
-	dssdev->dst = शून्य;
+	dst->src = NULL;
+	dssdev->dst = NULL;
 
 	in->ops.hdmi->disconnect(in, &ddata->dssdev);
-पूर्ण
+}
 
-अटल पूर्णांक tpd_enable(काष्ठा omap_dss_device *dssdev)
-अणु
-	काष्ठा panel_drv_data *ddata = to_panel_data(dssdev);
-	काष्ठा omap_dss_device *in = ddata->in;
-	पूर्णांक r;
+static int tpd_enable(struct omap_dss_device *dssdev)
+{
+	struct panel_drv_data *ddata = to_panel_data(dssdev);
+	struct omap_dss_device *in = ddata->in;
+	int r;
 
-	अगर (dssdev->state == OMAP_DSS_DISPLAY_ACTIVE)
-		वापस 0;
+	if (dssdev->state == OMAP_DSS_DISPLAY_ACTIVE)
+		return 0;
 
 	in->ops.hdmi->set_timings(in, &ddata->timings);
 
 	r = in->ops.hdmi->enable(in);
-	अगर (r)
-		वापस r;
+	if (r)
+		return r;
 
 	dssdev->state = OMAP_DSS_DISPLAY_ACTIVE;
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल व्योम tpd_disable(काष्ठा omap_dss_device *dssdev)
-अणु
-	काष्ठा panel_drv_data *ddata = to_panel_data(dssdev);
-	काष्ठा omap_dss_device *in = ddata->in;
+static void tpd_disable(struct omap_dss_device *dssdev)
+{
+	struct panel_drv_data *ddata = to_panel_data(dssdev);
+	struct omap_dss_device *in = ddata->in;
 
-	अगर (dssdev->state != OMAP_DSS_DISPLAY_ACTIVE)
-		वापस;
+	if (dssdev->state != OMAP_DSS_DISPLAY_ACTIVE)
+		return;
 
 	in->ops.hdmi->disable(in);
 
 	dssdev->state = OMAP_DSS_DISPLAY_DISABLED;
-पूर्ण
+}
 
-अटल व्योम tpd_set_timings(काष्ठा omap_dss_device *dssdev,
-		काष्ठा omap_video_timings *timings)
-अणु
-	काष्ठा panel_drv_data *ddata = to_panel_data(dssdev);
-	काष्ठा omap_dss_device *in = ddata->in;
+static void tpd_set_timings(struct omap_dss_device *dssdev,
+		struct omap_video_timings *timings)
+{
+	struct panel_drv_data *ddata = to_panel_data(dssdev);
+	struct omap_dss_device *in = ddata->in;
 
 	ddata->timings = *timings;
 	dssdev->panel.timings = *timings;
 
 	in->ops.hdmi->set_timings(in, timings);
-पूर्ण
+}
 
-अटल व्योम tpd_get_timings(काष्ठा omap_dss_device *dssdev,
-		काष्ठा omap_video_timings *timings)
-अणु
-	काष्ठा panel_drv_data *ddata = to_panel_data(dssdev);
+static void tpd_get_timings(struct omap_dss_device *dssdev,
+		struct omap_video_timings *timings)
+{
+	struct panel_drv_data *ddata = to_panel_data(dssdev);
 
 	*timings = ddata->timings;
-पूर्ण
+}
 
-अटल पूर्णांक tpd_check_timings(काष्ठा omap_dss_device *dssdev,
-		काष्ठा omap_video_timings *timings)
-अणु
-	काष्ठा panel_drv_data *ddata = to_panel_data(dssdev);
-	काष्ठा omap_dss_device *in = ddata->in;
-	पूर्णांक r;
+static int tpd_check_timings(struct omap_dss_device *dssdev,
+		struct omap_video_timings *timings)
+{
+	struct panel_drv_data *ddata = to_panel_data(dssdev);
+	struct omap_dss_device *in = ddata->in;
+	int r;
 
 	r = in->ops.hdmi->check_timings(in, timings);
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल पूर्णांक tpd_पढ़ो_edid(काष्ठा omap_dss_device *dssdev,
-		u8 *edid, पूर्णांक len)
-अणु
-	काष्ठा panel_drv_data *ddata = to_panel_data(dssdev);
-	काष्ठा omap_dss_device *in = ddata->in;
-	पूर्णांक r;
+static int tpd_read_edid(struct omap_dss_device *dssdev,
+		u8 *edid, int len)
+{
+	struct panel_drv_data *ddata = to_panel_data(dssdev);
+	struct omap_dss_device *in = ddata->in;
+	int r;
 
-	अगर (!gpiod_get_value_cansleep(ddata->hpd_gpio))
-		वापस -ENODEV;
+	if (!gpiod_get_value_cansleep(ddata->hpd_gpio))
+		return -ENODEV;
 
 	gpiod_set_value_cansleep(ddata->ls_oe_gpio, 1);
 
-	r = in->ops.hdmi->पढ़ो_edid(in, edid, len);
+	r = in->ops.hdmi->read_edid(in, edid, len);
 
 	gpiod_set_value_cansleep(ddata->ls_oe_gpio, 0);
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल bool tpd_detect(काष्ठा omap_dss_device *dssdev)
-अणु
-	काष्ठा panel_drv_data *ddata = to_panel_data(dssdev);
+static bool tpd_detect(struct omap_dss_device *dssdev)
+{
+	struct panel_drv_data *ddata = to_panel_data(dssdev);
 
-	वापस gpiod_get_value_cansleep(ddata->hpd_gpio);
-पूर्ण
+	return gpiod_get_value_cansleep(ddata->hpd_gpio);
+}
 
-अटल पूर्णांक tpd_set_infoframe(काष्ठा omap_dss_device *dssdev,
-		स्थिर काष्ठा hdmi_avi_infoframe *avi)
-अणु
-	काष्ठा panel_drv_data *ddata = to_panel_data(dssdev);
-	काष्ठा omap_dss_device *in = ddata->in;
+static int tpd_set_infoframe(struct omap_dss_device *dssdev,
+		const struct hdmi_avi_infoframe *avi)
+{
+	struct panel_drv_data *ddata = to_panel_data(dssdev);
+	struct omap_dss_device *in = ddata->in;
 
-	वापस in->ops.hdmi->set_infoframe(in, avi);
-पूर्ण
+	return in->ops.hdmi->set_infoframe(in, avi);
+}
 
-अटल पूर्णांक tpd_set_hdmi_mode(काष्ठा omap_dss_device *dssdev,
+static int tpd_set_hdmi_mode(struct omap_dss_device *dssdev,
 		bool hdmi_mode)
-अणु
-	काष्ठा panel_drv_data *ddata = to_panel_data(dssdev);
-	काष्ठा omap_dss_device *in = ddata->in;
+{
+	struct panel_drv_data *ddata = to_panel_data(dssdev);
+	struct omap_dss_device *in = ddata->in;
 
-	वापस in->ops.hdmi->set_hdmi_mode(in, hdmi_mode);
-पूर्ण
+	return in->ops.hdmi->set_hdmi_mode(in, hdmi_mode);
+}
 
-अटल स्थिर काष्ठा omapdss_hdmi_ops tpd_hdmi_ops = अणु
+static const struct omapdss_hdmi_ops tpd_hdmi_ops = {
 	.connect		= tpd_connect,
 	.disconnect		= tpd_disconnect,
 
@@ -192,74 +191,74 @@
 	.set_timings		= tpd_set_timings,
 	.get_timings		= tpd_get_timings,
 
-	.पढ़ो_edid		= tpd_पढ़ो_edid,
+	.read_edid		= tpd_read_edid,
 	.detect			= tpd_detect,
 	.set_infoframe		= tpd_set_infoframe,
 	.set_hdmi_mode		= tpd_set_hdmi_mode,
-पूर्ण;
+};
 
-अटल पूर्णांक tpd_probe_of(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा panel_drv_data *ddata = platक्रमm_get_drvdata(pdev);
-	काष्ठा device_node *node = pdev->dev.of_node;
-	काष्ठा omap_dss_device *in;
+static int tpd_probe_of(struct platform_device *pdev)
+{
+	struct panel_drv_data *ddata = platform_get_drvdata(pdev);
+	struct device_node *node = pdev->dev.of_node;
+	struct omap_dss_device *in;
 
-	in = omapdss_of_find_source_क्रम_first_ep(node);
-	अगर (IS_ERR(in)) अणु
+	in = omapdss_of_find_source_for_first_ep(node);
+	if (IS_ERR(in)) {
 		dev_err(&pdev->dev, "failed to find video source\n");
-		वापस PTR_ERR(in);
-	पूर्ण
+		return PTR_ERR(in);
+	}
 
 	ddata->in = in;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tpd_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा omap_dss_device *dssdev;
-	काष्ठा panel_drv_data *ddata;
-	पूर्णांक r;
-	काष्ठा gpio_desc *gpio;
+static int tpd_probe(struct platform_device *pdev)
+{
+	struct omap_dss_device *dssdev;
+	struct panel_drv_data *ddata;
+	int r;
+	struct gpio_desc *gpio;
 
-	ddata = devm_kzalloc(&pdev->dev, माप(*ddata), GFP_KERNEL);
-	अगर (!ddata)
-		वापस -ENOMEM;
+	ddata = devm_kzalloc(&pdev->dev, sizeof(*ddata), GFP_KERNEL);
+	if (!ddata)
+		return -ENOMEM;
 
-	platक्रमm_set_drvdata(pdev, ddata);
+	platform_set_drvdata(pdev, ddata);
 
-	अगर (pdev->dev.of_node) अणु
+	if (pdev->dev.of_node) {
 		r = tpd_probe_of(pdev);
-		अगर (r)
-			वापस r;
-	पूर्ण अन्यथा अणु
-		वापस -ENODEV;
-	पूर्ण
+		if (r)
+			return r;
+	} else {
+		return -ENODEV;
+	}
 
-	gpio = devm_gpiod_get_index_optional(&pdev->dev, शून्य, 0,
+	gpio = devm_gpiod_get_index_optional(&pdev->dev, NULL, 0,
 		GPIOD_OUT_LOW);
-	अगर (IS_ERR(gpio)) अणु
+	if (IS_ERR(gpio)) {
 		r = PTR_ERR(gpio);
-		जाओ err_gpio;
-	पूर्ण
+		goto err_gpio;
+	}
 
 	ddata->ct_cp_hpd_gpio = gpio;
 
-	gpio = devm_gpiod_get_index_optional(&pdev->dev, शून्य, 1,
+	gpio = devm_gpiod_get_index_optional(&pdev->dev, NULL, 1,
 		GPIOD_OUT_LOW);
-	अगर (IS_ERR(gpio)) अणु
+	if (IS_ERR(gpio)) {
 		r = PTR_ERR(gpio);
-		जाओ err_gpio;
-	पूर्ण
+		goto err_gpio;
+	}
 
 	ddata->ls_oe_gpio = gpio;
 
-	gpio = devm_gpiod_get_index(&pdev->dev, शून्य, 2,
+	gpio = devm_gpiod_get_index(&pdev->dev, NULL, 2,
 		GPIOD_IN);
-	अगर (IS_ERR(gpio)) अणु
+	if (IS_ERR(gpio)) {
 		r = PTR_ERR(gpio);
-		जाओ err_gpio;
-	पूर्ण
+		goto err_gpio;
+	}
 
 	ddata->hpd_gpio = gpio;
 
@@ -271,58 +270,58 @@
 	dssdev->owner = THIS_MODULE;
 	dssdev->port_num = 1;
 
-	r = omapdss_रेजिस्टर_output(dssdev);
-	अगर (r) अणु
+	r = omapdss_register_output(dssdev);
+	if (r) {
 		dev_err(&pdev->dev, "Failed to register output\n");
-		जाओ err_reg;
-	पूर्ण
+		goto err_reg;
+	}
 
-	वापस 0;
+	return 0;
 err_reg:
 err_gpio:
 	omap_dss_put_device(ddata->in);
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल पूर्णांक __निकास tpd_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा panel_drv_data *ddata = platक्रमm_get_drvdata(pdev);
-	काष्ठा omap_dss_device *dssdev = &ddata->dssdev;
-	काष्ठा omap_dss_device *in = ddata->in;
+static int __exit tpd_remove(struct platform_device *pdev)
+{
+	struct panel_drv_data *ddata = platform_get_drvdata(pdev);
+	struct omap_dss_device *dssdev = &ddata->dssdev;
+	struct omap_dss_device *in = ddata->in;
 
-	omapdss_unरेजिस्टर_output(&ddata->dssdev);
+	omapdss_unregister_output(&ddata->dssdev);
 
 	WARN_ON(omapdss_device_is_enabled(dssdev));
-	अगर (omapdss_device_is_enabled(dssdev))
+	if (omapdss_device_is_enabled(dssdev))
 		tpd_disable(dssdev);
 
 	WARN_ON(omapdss_device_is_connected(dssdev));
-	अगर (omapdss_device_is_connected(dssdev))
+	if (omapdss_device_is_connected(dssdev))
 		tpd_disconnect(dssdev, dssdev->dst);
 
 	omap_dss_put_device(in);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id tpd_of_match[] = अणु
-	अणु .compatible = "omapdss,ti,tpd12s015", पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct of_device_id tpd_of_match[] = {
+	{ .compatible = "omapdss,ti,tpd12s015", },
+	{},
+};
 
 MODULE_DEVICE_TABLE(of, tpd_of_match);
 
-अटल काष्ठा platक्रमm_driver tpd_driver = अणु
+static struct platform_driver tpd_driver = {
 	.probe	= tpd_probe,
-	.हटाओ	= __निकास_p(tpd_हटाओ),
-	.driver	= अणु
+	.remove	= __exit_p(tpd_remove),
+	.driver	= {
 		.name	= "tpd12s015",
 		.of_match_table = tpd_of_match,
 		.suppress_bind_attrs = true,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver(tpd_driver);
+module_platform_driver(tpd_driver);
 
 MODULE_AUTHOR("Tomi Valkeinen <tomi.valkeinen@ti.com>");
 MODULE_DESCRIPTION("TPD12S015 driver");

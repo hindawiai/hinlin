@@ -1,37 +1,36 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /* Copyright (c) 2018, The Linux Foundation. All rights reserved. */
 
-#अगर_अघोषित __QCOM_RPMH_REGULATOR_H
-#घोषणा __QCOM_RPMH_REGULATOR_H
+#ifndef __QCOM_RPMH_REGULATOR_H
+#define __QCOM_RPMH_REGULATOR_H
 
 /*
- * These mode स्थिरants may be used to specअगरy modes क्रम various RPMh regulator
+ * These mode constants may be used to specify modes for various RPMh regulator
  * device tree properties (e.g. regulator-initial-mode).  Each type of regulator
  * supports a subset of the possible modes.
  *
  * %RPMH_REGULATOR_MODE_RET:	Retention mode in which only an extremely small
  *				load current is allowed.  This mode is supported
  *				by LDO and SMPS type regulators.
- * %RPMH_REGULATOR_MODE_LPM:	Low घातer mode in which a small load current is
- *				allowed.  This mode corresponds to PFM क्रम SMPS
+ * %RPMH_REGULATOR_MODE_LPM:	Low power mode in which a small load current is
+ *				allowed.  This mode corresponds to PFM for SMPS
  *				and BOB type regulators.  This mode is supported
  *				by LDO, HFSMPS, BOB, and PMIC4 FTSMPS type
  *				regulators.
  * %RPMH_REGULATOR_MODE_AUTO:	Auto mode in which the regulator hardware
- *				स्वतःmatically चयनes between LPM and HPM based
- *				upon the real-समय load current.  This mode is
+ *				automatically switches between LPM and HPM based
+ *				upon the real-time load current.  This mode is
  *				supported by HFSMPS, BOB, and PMIC4 FTSMPS type
  *				regulators.
- * %RPMH_REGULATOR_MODE_HPM:	High घातer mode in which the full rated current
+ * %RPMH_REGULATOR_MODE_HPM:	High power mode in which the full rated current
  *				of the regulator is allowed.  This mode
- *				corresponds to PWM क्रम SMPS and BOB type
+ *				corresponds to PWM for SMPS and BOB type
  *				regulators.  This mode is supported by all types
  *				of regulators.
  */
-#घोषणा RPMH_REGULATOR_MODE_RET		0
-#घोषणा RPMH_REGULATOR_MODE_LPM		1
-#घोषणा RPMH_REGULATOR_MODE_AUTO	2
-#घोषणा RPMH_REGULATOR_MODE_HPM		3
+#define RPMH_REGULATOR_MODE_RET		0
+#define RPMH_REGULATOR_MODE_LPM		1
+#define RPMH_REGULATOR_MODE_AUTO	2
+#define RPMH_REGULATOR_MODE_HPM		3
 
-#पूर्ण_अगर
+#endif

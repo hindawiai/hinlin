@@ -1,56 +1,55 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /******************************************************************************
  *
  * Copyright(c) 2007 - 2011 Realtek Corporation. All rights reserved.
  *
  ******************************************************************************/
-#अगर_अघोषित	__RTW_RF_H_
-#घोषणा __RTW_RF_H_
+#ifndef	__RTW_RF_H_
+#define __RTW_RF_H_
 
 
-#घोषणा OFDM_PHY		1
-#घोषणा MIXED_PHY		2
-#घोषणा CCK_PHY			3
+#define OFDM_PHY		1
+#define MIXED_PHY		2
+#define CCK_PHY			3
 
-#घोषणा NumRates		13
+#define NumRates		13
 
-/*  slot समय क्रम 11g */
-#घोषणा SHORT_SLOT_TIME		9
-#घोषणा NON_SHORT_SLOT_TIME	20
+/*  slot time for 11g */
+#define SHORT_SLOT_TIME		9
+#define NON_SHORT_SLOT_TIME	20
 
-#घोषणा RTL8711_RF_MAX_SENS	 6
-#घोषणा RTL8711_RF_DEF_SENS	 4
+#define RTL8711_RF_MAX_SENS	 6
+#define RTL8711_RF_DEF_SENS	 4
 
 /*  */
 /*  We now define the following channels as the max channels in each channel plan. */
 /*  2G, total 14 chnls */
-/*  अणु1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14पूर्ण */
+/*  {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14} */
 /*  5G, total 24 chnls */
-/*  अणु36, 40, 44, 48, 52, 56, 60, 64, 100, 104, 108, 112, 116, 120,
- *   124, 128, 132, 136, 140, 149, 153, 157, 161, 165पूर्ण */
-#घोषणा	MAX_CHANNEL_NUM_2G	14
-#घोषणा	MAX_CHANNEL_NUM_5G	24
-#घोषणा	MAX_CHANNEL_NUM		38/* 14+24 */
+/*  {36, 40, 44, 48, 52, 56, 60, 64, 100, 104, 108, 112, 116, 120,
+ *   124, 128, 132, 136, 140, 149, 153, 157, 161, 165} */
+#define	MAX_CHANNEL_NUM_2G	14
+#define	MAX_CHANNEL_NUM_5G	24
+#define	MAX_CHANNEL_NUM		38/* 14+24 */
 
-#घोषणा NUM_REGULATORYS	1
+#define NUM_REGULATORYS	1
 
 /* Country codes */
-#घोषणा USA			0x555320
-#घोषणा EUROPE			0x1 /* temp, should be provided later */
-#घोषणा JAPAN			0x2 /* temp, should be provided later */
+#define USA			0x555320
+#define EUROPE			0x1 /* temp, should be provided later */
+#define JAPAN			0x2 /* temp, should be provided later */
 
-काष्ठा	regulatory_class अणु
+struct	regulatory_class {
 	u32 starting_freq;			/* MHz, */
 	u8 channel_set[MAX_CHANNEL_NUM];
-	u8 channel_cck_घातer[MAX_CHANNEL_NUM];/* dbm */
-	u8 channel_ofdm_घातer[MAX_CHANNEL_NUM];/* dbm */
-	u8 txघातer_limit;			/* dbm */
+	u8 channel_cck_power[MAX_CHANNEL_NUM];/* dbm */
+	u8 channel_ofdm_power[MAX_CHANNEL_NUM];/* dbm */
+	u8 txpower_limit;			/* dbm */
 	u8 channel_spacing;			/* MHz */
 	u8 modem;
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	cESS			= 0x0001,
 	cIBSS			= 0x0002,
 	cPollable		= 0x0004,
@@ -67,39 +66,39 @@
 	cDSSS_OFDM		= 0x2000,
 	cDelayedBA		= 0x4000,
 	cImmediateBA		= 0x8000,
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	PREAMBLE_LONG	= 1,
 	PREAMBLE_AUTO	= 2,
 	PREAMBLE_SHORT	= 3,
-पूर्ण;
+};
 
 /*  Bandwidth Offset */
-#घोषणा HAL_PRIME_CHNL_OFFSET_DONT_CARE	0
-#घोषणा HAL_PRIME_CHNL_OFFSET_LOWER	1
-#घोषणा HAL_PRIME_CHNL_OFFSET_UPPER	2
+#define HAL_PRIME_CHNL_OFFSET_DONT_CARE	0
+#define HAL_PRIME_CHNL_OFFSET_LOWER	1
+#define HAL_PRIME_CHNL_OFFSET_UPPER	2
 
 /*  Represent Channel Width in HT Capabilities */
-क्रमागत channel_width अणु
+enum channel_width {
 	CHANNEL_WIDTH_20 = 0,
 	CHANNEL_WIDTH_40 = 1,
 	CHANNEL_WIDTH_80 = 2,
 	CHANNEL_WIDTH_160 = 3,
 	CHANNEL_WIDTH_80_80 = 4,
 	CHANNEL_WIDTH_MAX = 5,
-पूर्ण;
+};
 
 /*  Represent Extension Channel Offset in HT Capabilities */
 /*  This is available only in 40Mhz mode. */
-क्रमागत extchnl_offset अणु
+enum extchnl_offset {
 	EXTCHNL_OFFSET_NO_EXT = 0,
 	EXTCHNL_OFFSET_UPPER = 1,
 	EXTCHNL_OFFSET_NO_DEF = 2,
 	EXTCHNL_OFFSET_LOWER = 3,
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	VHT_DATA_SC_DONOT_CARE = 0,
 	VHT_DATA_SC_20_UPPER_OF_80MHZ = 1,
 	VHT_DATA_SC_20_LOWER_OF_80MHZ = 2,
@@ -111,18 +110,18 @@
 	VHT_DATA_SC_20_RECV4 = 8,
 	VHT_DATA_SC_40_UPPER_OF_80MHZ = 9,
 	VHT_DATA_SC_40_LOWER_OF_80MHZ = 10,
-पूर्ण;
+};
 
-/* 2007/11/15 MH Define dअगरferent RF type. */
-क्रमागत अणु
+/* 2007/11/15 MH Define different RF type. */
+enum {
 	RF_1T2R = 0,
 	RF_2T4R = 1,
 	RF_2T2R = 2,
 	RF_1T1R = 3,
 	RF_2T2R_GREEN = 4,
 	RF_MAX_TYPE = 5,
-पूर्ण;
+};
 
 u32 rtw_ch2freq(u32 ch);
 
-#पूर्ण_अगर /* _RTL8711_RF_H_ */
+#endif /* _RTL8711_RF_H_ */

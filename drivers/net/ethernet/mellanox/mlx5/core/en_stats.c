@@ -1,24 +1,23 @@
-<शैली गुरु>
 /*
  * Copyright (c) 2017, Mellanox Technologies, Ltd.  All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the मुख्य directory of this source tree, or the
+ * COPYING in the main directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary क्रमms, with or
- *     without modअगरication, are permitted provided that the following
+ *     Redistribution and use in source and binary forms, with or
+ *     without modification, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary क्रमm must reproduce the above
+ *      - Redistributions in binary form must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the करोcumentation and/or other materials
+ *        disclaimer in the documentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -31,225 +30,225 @@
  * SOFTWARE.
  */
 
-#समावेश "lib/mlx5.h"
-#समावेश "en.h"
-#समावेश "en_accel/tls.h"
-#समावेश "en_accel/en_accel.h"
+#include "lib/mlx5.h"
+#include "en.h"
+#include "en_accel/tls.h"
+#include "en_accel/en_accel.h"
 
-अटल अचिन्हित पूर्णांक stats_grps_num(काष्ठा mlx5e_priv *priv)
-अणु
-	वापस !priv->profile->stats_grps_num ? 0 :
+static unsigned int stats_grps_num(struct mlx5e_priv *priv)
+{
+	return !priv->profile->stats_grps_num ? 0 :
 		priv->profile->stats_grps_num(priv);
-पूर्ण
+}
 
-अचिन्हित पूर्णांक mlx5e_stats_total_num(काष्ठा mlx5e_priv *priv)
-अणु
+unsigned int mlx5e_stats_total_num(struct mlx5e_priv *priv)
+{
 	mlx5e_stats_grp_t *stats_grps = priv->profile->stats_grps;
-	स्थिर अचिन्हित पूर्णांक num_stats_grps = stats_grps_num(priv);
-	अचिन्हित पूर्णांक total = 0;
-	पूर्णांक i;
+	const unsigned int num_stats_grps = stats_grps_num(priv);
+	unsigned int total = 0;
+	int i;
 
-	क्रम (i = 0; i < num_stats_grps; i++)
+	for (i = 0; i < num_stats_grps; i++)
 		total += stats_grps[i]->get_num_stats(priv);
 
-	वापस total;
-पूर्ण
+	return total;
+}
 
-व्योम mlx5e_stats_update_nकरो_stats(काष्ठा mlx5e_priv *priv)
-अणु
+void mlx5e_stats_update_ndo_stats(struct mlx5e_priv *priv)
+{
 	mlx5e_stats_grp_t *stats_grps = priv->profile->stats_grps;
-	स्थिर अचिन्हित पूर्णांक num_stats_grps = stats_grps_num(priv);
-	पूर्णांक i;
+	const unsigned int num_stats_grps = stats_grps_num(priv);
+	int i;
 
-	क्रम (i = num_stats_grps - 1; i >= 0; i--)
-		अगर (stats_grps[i]->update_stats &&
+	for (i = num_stats_grps - 1; i >= 0; i--)
+		if (stats_grps[i]->update_stats &&
 		    stats_grps[i]->update_stats_mask & MLX5E_NDO_UPDATE_STATS)
 			stats_grps[i]->update_stats(priv);
-पूर्ण
+}
 
-व्योम mlx5e_stats_update(काष्ठा mlx5e_priv *priv)
-अणु
+void mlx5e_stats_update(struct mlx5e_priv *priv)
+{
 	mlx5e_stats_grp_t *stats_grps = priv->profile->stats_grps;
-	स्थिर अचिन्हित पूर्णांक num_stats_grps = stats_grps_num(priv);
-	पूर्णांक i;
+	const unsigned int num_stats_grps = stats_grps_num(priv);
+	int i;
 
-	क्रम (i = num_stats_grps - 1; i >= 0; i--)
-		अगर (stats_grps[i]->update_stats)
+	for (i = num_stats_grps - 1; i >= 0; i--)
+		if (stats_grps[i]->update_stats)
 			stats_grps[i]->update_stats(priv);
-पूर्ण
+}
 
-व्योम mlx5e_stats_fill(काष्ठा mlx5e_priv *priv, u64 *data, पूर्णांक idx)
-अणु
+void mlx5e_stats_fill(struct mlx5e_priv *priv, u64 *data, int idx)
+{
 	mlx5e_stats_grp_t *stats_grps = priv->profile->stats_grps;
-	स्थिर अचिन्हित पूर्णांक num_stats_grps = stats_grps_num(priv);
-	पूर्णांक i;
+	const unsigned int num_stats_grps = stats_grps_num(priv);
+	int i;
 
-	क्रम (i = 0; i < num_stats_grps; i++)
+	for (i = 0; i < num_stats_grps; i++)
 		idx = stats_grps[i]->fill_stats(priv, data, idx);
-पूर्ण
+}
 
-व्योम mlx5e_stats_fill_strings(काष्ठा mlx5e_priv *priv, u8 *data)
-अणु
+void mlx5e_stats_fill_strings(struct mlx5e_priv *priv, u8 *data)
+{
 	mlx5e_stats_grp_t *stats_grps = priv->profile->stats_grps;
-	स्थिर अचिन्हित पूर्णांक num_stats_grps = stats_grps_num(priv);
-	पूर्णांक i, idx = 0;
+	const unsigned int num_stats_grps = stats_grps_num(priv);
+	int i, idx = 0;
 
-	क्रम (i = 0; i < num_stats_grps; i++)
+	for (i = 0; i < num_stats_grps; i++)
 		idx = stats_grps[i]->fill_strings(priv, data, idx);
-पूर्ण
+}
 
 /* Concrete NIC Stats */
 
-अटल स्थिर काष्ठा counter_desc sw_stats_desc[] = अणु
-	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_sw_stats, rx_packets) पूर्ण,
-	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_sw_stats, rx_bytes) पूर्ण,
-	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_sw_stats, tx_packets) पूर्ण,
-	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_sw_stats, tx_bytes) पूर्ण,
-	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_sw_stats, tx_tso_packets) पूर्ण,
-	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_sw_stats, tx_tso_bytes) पूर्ण,
-	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_sw_stats, tx_tso_inner_packets) पूर्ण,
-	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_sw_stats, tx_tso_inner_bytes) पूर्ण,
-	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_sw_stats, tx_added_vlan_packets) पूर्ण,
-	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_sw_stats, tx_nop) पूर्ण,
-	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_sw_stats, tx_mpwqe_blks) पूर्ण,
-	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_sw_stats, tx_mpwqe_pkts) पूर्ण,
+static const struct counter_desc sw_stats_desc[] = {
+	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, rx_packets) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, rx_bytes) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, tx_packets) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, tx_bytes) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, tx_tso_packets) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, tx_tso_bytes) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, tx_tso_inner_packets) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, tx_tso_inner_bytes) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, tx_added_vlan_packets) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, tx_nop) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, tx_mpwqe_blks) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, tx_mpwqe_pkts) },
 
-#अगर_घोषित CONFIG_MLX5_EN_TLS
-	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_sw_stats, tx_tls_encrypted_packets) पूर्ण,
-	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_sw_stats, tx_tls_encrypted_bytes) पूर्ण,
-	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_sw_stats, tx_tls_ooo) पूर्ण,
-	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_sw_stats, tx_tls_dump_packets) पूर्ण,
-	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_sw_stats, tx_tls_dump_bytes) पूर्ण,
-	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_sw_stats, tx_tls_resync_bytes) पूर्ण,
-	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_sw_stats, tx_tls_skip_no_sync_data) पूर्ण,
-	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_sw_stats, tx_tls_drop_no_sync_data) पूर्ण,
-	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_sw_stats, tx_tls_drop_bypass_req) पूर्ण,
-#पूर्ण_अगर
+#ifdef CONFIG_MLX5_EN_TLS
+	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, tx_tls_encrypted_packets) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, tx_tls_encrypted_bytes) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, tx_tls_ooo) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, tx_tls_dump_packets) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, tx_tls_dump_bytes) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, tx_tls_resync_bytes) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, tx_tls_skip_no_sync_data) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, tx_tls_drop_no_sync_data) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, tx_tls_drop_bypass_req) },
+#endif
 
-	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_sw_stats, rx_lro_packets) पूर्ण,
-	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_sw_stats, rx_lro_bytes) पूर्ण,
-	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_sw_stats, rx_ecn_mark) पूर्ण,
-	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_sw_stats, rx_हटाओd_vlan_packets) पूर्ण,
-	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_sw_stats, rx_csum_unnecessary) पूर्ण,
-	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_sw_stats, rx_csum_none) पूर्ण,
-	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_sw_stats, rx_csum_complete) पूर्ण,
-	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_sw_stats, rx_csum_complete_tail) पूर्ण,
-	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_sw_stats, rx_csum_complete_tail_slow) पूर्ण,
-	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_sw_stats, rx_csum_unnecessary_inner) पूर्ण,
-	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_sw_stats, rx_xdp_drop) पूर्ण,
-	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_sw_stats, rx_xdp_redirect) पूर्ण,
-	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_sw_stats, rx_xdp_tx_xmit) पूर्ण,
-	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_sw_stats, rx_xdp_tx_mpwqe) पूर्ण,
-	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_sw_stats, rx_xdp_tx_inlnw) पूर्ण,
-	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_sw_stats, rx_xdp_tx_nops) पूर्ण,
-	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_sw_stats, rx_xdp_tx_full) पूर्ण,
-	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_sw_stats, rx_xdp_tx_err) पूर्ण,
-	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_sw_stats, rx_xdp_tx_cqe) पूर्ण,
-	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_sw_stats, tx_csum_none) पूर्ण,
-	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_sw_stats, tx_csum_partial) पूर्ण,
-	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_sw_stats, tx_csum_partial_inner) पूर्ण,
-	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_sw_stats, tx_queue_stopped) पूर्ण,
-	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_sw_stats, tx_queue_dropped) पूर्ण,
-	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_sw_stats, tx_xmit_more) पूर्ण,
-	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_sw_stats, tx_recover) पूर्ण,
-	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_sw_stats, tx_cqes) पूर्ण,
-	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_sw_stats, tx_queue_wake) पूर्ण,
-	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_sw_stats, tx_cqe_err) पूर्ण,
-	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_sw_stats, tx_xdp_xmit) पूर्ण,
-	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_sw_stats, tx_xdp_mpwqe) पूर्ण,
-	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_sw_stats, tx_xdp_inlnw) पूर्ण,
-	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_sw_stats, tx_xdp_nops) पूर्ण,
-	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_sw_stats, tx_xdp_full) पूर्ण,
-	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_sw_stats, tx_xdp_err) पूर्ण,
-	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_sw_stats, tx_xdp_cqes) पूर्ण,
-	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_sw_stats, rx_wqe_err) पूर्ण,
-	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_sw_stats, rx_mpwqe_filler_cqes) पूर्ण,
-	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_sw_stats, rx_mpwqe_filler_strides) पूर्ण,
-	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_sw_stats, rx_oversize_pkts_sw_drop) पूर्ण,
-	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_sw_stats, rx_buff_alloc_err) पूर्ण,
-	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_sw_stats, rx_cqe_compress_blks) पूर्ण,
-	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_sw_stats, rx_cqe_compress_pkts) पूर्ण,
-	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_sw_stats, rx_cache_reuse) पूर्ण,
-	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_sw_stats, rx_cache_full) पूर्ण,
-	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_sw_stats, rx_cache_empty) पूर्ण,
-	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_sw_stats, rx_cache_busy) पूर्ण,
-	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_sw_stats, rx_cache_waive) पूर्ण,
-	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_sw_stats, rx_congst_umr) पूर्ण,
-	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_sw_stats, rx_arfs_err) पूर्ण,
-	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_sw_stats, rx_recover) पूर्ण,
-#अगर_घोषित CONFIG_MLX5_EN_TLS
-	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_sw_stats, rx_tls_decrypted_packets) पूर्ण,
-	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_sw_stats, rx_tls_decrypted_bytes) पूर्ण,
-	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_sw_stats, rx_tls_resync_req_pkt) पूर्ण,
-	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_sw_stats, rx_tls_resync_req_start) पूर्ण,
-	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_sw_stats, rx_tls_resync_req_end) पूर्ण,
-	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_sw_stats, rx_tls_resync_req_skip) पूर्ण,
-	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_sw_stats, rx_tls_resync_res_ok) पूर्ण,
-	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_sw_stats, rx_tls_resync_res_retry) पूर्ण,
-	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_sw_stats, rx_tls_resync_res_skip) पूर्ण,
-	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_sw_stats, rx_tls_err) पूर्ण,
-#पूर्ण_अगर
-	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_sw_stats, ch_events) पूर्ण,
-	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_sw_stats, ch_poll) पूर्ण,
-	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_sw_stats, ch_arm) पूर्ण,
-	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_sw_stats, ch_aff_change) पूर्ण,
-	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_sw_stats, ch_क्रमce_irq) पूर्ण,
-	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_sw_stats, ch_eq_rearm) पूर्ण,
-	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_sw_stats, rx_xsk_packets) पूर्ण,
-	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_sw_stats, rx_xsk_bytes) पूर्ण,
-	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_sw_stats, rx_xsk_csum_complete) पूर्ण,
-	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_sw_stats, rx_xsk_csum_unnecessary) पूर्ण,
-	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_sw_stats, rx_xsk_csum_unnecessary_inner) पूर्ण,
-	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_sw_stats, rx_xsk_csum_none) पूर्ण,
-	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_sw_stats, rx_xsk_ecn_mark) पूर्ण,
-	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_sw_stats, rx_xsk_हटाओd_vlan_packets) पूर्ण,
-	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_sw_stats, rx_xsk_xdp_drop) पूर्ण,
-	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_sw_stats, rx_xsk_xdp_redirect) पूर्ण,
-	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_sw_stats, rx_xsk_wqe_err) पूर्ण,
-	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_sw_stats, rx_xsk_mpwqe_filler_cqes) पूर्ण,
-	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_sw_stats, rx_xsk_mpwqe_filler_strides) पूर्ण,
-	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_sw_stats, rx_xsk_oversize_pkts_sw_drop) पूर्ण,
-	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_sw_stats, rx_xsk_buff_alloc_err) पूर्ण,
-	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_sw_stats, rx_xsk_cqe_compress_blks) पूर्ण,
-	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_sw_stats, rx_xsk_cqe_compress_pkts) पूर्ण,
-	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_sw_stats, rx_xsk_congst_umr) पूर्ण,
-	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_sw_stats, rx_xsk_arfs_err) पूर्ण,
-	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_sw_stats, tx_xsk_xmit) पूर्ण,
-	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_sw_stats, tx_xsk_mpwqe) पूर्ण,
-	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_sw_stats, tx_xsk_inlnw) पूर्ण,
-	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_sw_stats, tx_xsk_full) पूर्ण,
-	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_sw_stats, tx_xsk_err) पूर्ण,
-	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_sw_stats, tx_xsk_cqes) पूर्ण,
-पूर्ण;
+	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, rx_lro_packets) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, rx_lro_bytes) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, rx_ecn_mark) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, rx_removed_vlan_packets) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, rx_csum_unnecessary) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, rx_csum_none) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, rx_csum_complete) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, rx_csum_complete_tail) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, rx_csum_complete_tail_slow) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, rx_csum_unnecessary_inner) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, rx_xdp_drop) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, rx_xdp_redirect) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, rx_xdp_tx_xmit) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, rx_xdp_tx_mpwqe) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, rx_xdp_tx_inlnw) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, rx_xdp_tx_nops) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, rx_xdp_tx_full) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, rx_xdp_tx_err) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, rx_xdp_tx_cqe) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, tx_csum_none) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, tx_csum_partial) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, tx_csum_partial_inner) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, tx_queue_stopped) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, tx_queue_dropped) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, tx_xmit_more) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, tx_recover) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, tx_cqes) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, tx_queue_wake) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, tx_cqe_err) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, tx_xdp_xmit) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, tx_xdp_mpwqe) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, tx_xdp_inlnw) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, tx_xdp_nops) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, tx_xdp_full) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, tx_xdp_err) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, tx_xdp_cqes) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, rx_wqe_err) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, rx_mpwqe_filler_cqes) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, rx_mpwqe_filler_strides) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, rx_oversize_pkts_sw_drop) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, rx_buff_alloc_err) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, rx_cqe_compress_blks) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, rx_cqe_compress_pkts) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, rx_cache_reuse) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, rx_cache_full) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, rx_cache_empty) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, rx_cache_busy) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, rx_cache_waive) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, rx_congst_umr) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, rx_arfs_err) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, rx_recover) },
+#ifdef CONFIG_MLX5_EN_TLS
+	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, rx_tls_decrypted_packets) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, rx_tls_decrypted_bytes) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, rx_tls_resync_req_pkt) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, rx_tls_resync_req_start) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, rx_tls_resync_req_end) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, rx_tls_resync_req_skip) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, rx_tls_resync_res_ok) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, rx_tls_resync_res_retry) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, rx_tls_resync_res_skip) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, rx_tls_err) },
+#endif
+	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, ch_events) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, ch_poll) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, ch_arm) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, ch_aff_change) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, ch_force_irq) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, ch_eq_rearm) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, rx_xsk_packets) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, rx_xsk_bytes) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, rx_xsk_csum_complete) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, rx_xsk_csum_unnecessary) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, rx_xsk_csum_unnecessary_inner) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, rx_xsk_csum_none) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, rx_xsk_ecn_mark) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, rx_xsk_removed_vlan_packets) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, rx_xsk_xdp_drop) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, rx_xsk_xdp_redirect) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, rx_xsk_wqe_err) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, rx_xsk_mpwqe_filler_cqes) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, rx_xsk_mpwqe_filler_strides) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, rx_xsk_oversize_pkts_sw_drop) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, rx_xsk_buff_alloc_err) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, rx_xsk_cqe_compress_blks) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, rx_xsk_cqe_compress_pkts) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, rx_xsk_congst_umr) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, rx_xsk_arfs_err) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, tx_xsk_xmit) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, tx_xsk_mpwqe) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, tx_xsk_inlnw) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, tx_xsk_full) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, tx_xsk_err) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, tx_xsk_cqes) },
+};
 
-#घोषणा NUM_SW_COUNTERS			ARRAY_SIZE(sw_stats_desc)
+#define NUM_SW_COUNTERS			ARRAY_SIZE(sw_stats_desc)
 
-अटल MLX5E_DECLARE_STATS_GRP_OP_NUM_STATS(sw)
-अणु
-	वापस NUM_SW_COUNTERS;
-पूर्ण
+static MLX5E_DECLARE_STATS_GRP_OP_NUM_STATS(sw)
+{
+	return NUM_SW_COUNTERS;
+}
 
-अटल MLX5E_DECLARE_STATS_GRP_OP_FILL_STRS(sw)
-अणु
-	पूर्णांक i;
+static MLX5E_DECLARE_STATS_GRP_OP_FILL_STRS(sw)
+{
+	int i;
 
-	क्रम (i = 0; i < NUM_SW_COUNTERS; i++)
-		म_नकल(data + (idx++) * ETH_GSTRING_LEN, sw_stats_desc[i].क्रमmat);
-	वापस idx;
-पूर्ण
+	for (i = 0; i < NUM_SW_COUNTERS; i++)
+		strcpy(data + (idx++) * ETH_GSTRING_LEN, sw_stats_desc[i].format);
+	return idx;
+}
 
-अटल MLX5E_DECLARE_STATS_GRP_OP_FILL_STATS(sw)
-अणु
-	पूर्णांक i;
+static MLX5E_DECLARE_STATS_GRP_OP_FILL_STATS(sw)
+{
+	int i;
 
-	क्रम (i = 0; i < NUM_SW_COUNTERS; i++)
+	for (i = 0; i < NUM_SW_COUNTERS; i++)
 		data[idx++] = MLX5E_READ_CTR64_CPU(&priv->stats.sw, sw_stats_desc, i);
-	वापस idx;
-पूर्ण
+	return idx;
+}
 
-अटल व्योम mlx5e_stats_grp_sw_update_stats_xdp_red(काष्ठा mlx5e_sw_stats *s,
-						    काष्ठा mlx5e_xdpsq_stats *xdpsq_red_stats)
-अणु
+static void mlx5e_stats_grp_sw_update_stats_xdp_red(struct mlx5e_sw_stats *s,
+						    struct mlx5e_xdpsq_stats *xdpsq_red_stats)
+{
 	s->tx_xdp_xmit  += xdpsq_red_stats->xmit;
 	s->tx_xdp_mpwqe += xdpsq_red_stats->mpwqe;
 	s->tx_xdp_inlnw += xdpsq_red_stats->inlnw;
@@ -257,11 +256,11 @@
 	s->tx_xdp_full  += xdpsq_red_stats->full;
 	s->tx_xdp_err   += xdpsq_red_stats->err;
 	s->tx_xdp_cqes  += xdpsq_red_stats->cqes;
-पूर्ण
+}
 
-अटल व्योम mlx5e_stats_grp_sw_update_stats_xdpsq(काष्ठा mlx5e_sw_stats *s,
-						  काष्ठा mlx5e_xdpsq_stats *xdpsq_stats)
-अणु
+static void mlx5e_stats_grp_sw_update_stats_xdpsq(struct mlx5e_sw_stats *s,
+						  struct mlx5e_xdpsq_stats *xdpsq_stats)
+{
 	s->rx_xdp_tx_xmit  += xdpsq_stats->xmit;
 	s->rx_xdp_tx_mpwqe += xdpsq_stats->mpwqe;
 	s->rx_xdp_tx_inlnw += xdpsq_stats->inlnw;
@@ -269,22 +268,22 @@
 	s->rx_xdp_tx_full  += xdpsq_stats->full;
 	s->rx_xdp_tx_err   += xdpsq_stats->err;
 	s->rx_xdp_tx_cqe   += xdpsq_stats->cqes;
-पूर्ण
+}
 
-अटल व्योम mlx5e_stats_grp_sw_update_stats_xsksq(काष्ठा mlx5e_sw_stats *s,
-						  काष्ठा mlx5e_xdpsq_stats *xsksq_stats)
-अणु
+static void mlx5e_stats_grp_sw_update_stats_xsksq(struct mlx5e_sw_stats *s,
+						  struct mlx5e_xdpsq_stats *xsksq_stats)
+{
 	s->tx_xsk_xmit  += xsksq_stats->xmit;
 	s->tx_xsk_mpwqe += xsksq_stats->mpwqe;
 	s->tx_xsk_inlnw += xsksq_stats->inlnw;
 	s->tx_xsk_full  += xsksq_stats->full;
 	s->tx_xsk_err   += xsksq_stats->err;
 	s->tx_xsk_cqes  += xsksq_stats->cqes;
-पूर्ण
+}
 
-अटल व्योम mlx5e_stats_grp_sw_update_stats_xskrq(काष्ठा mlx5e_sw_stats *s,
-						  काष्ठा mlx5e_rq_stats *xskrq_stats)
-अणु
+static void mlx5e_stats_grp_sw_update_stats_xskrq(struct mlx5e_sw_stats *s,
+						  struct mlx5e_rq_stats *xskrq_stats)
+{
 	s->rx_xsk_packets                += xskrq_stats->packets;
 	s->rx_xsk_bytes                  += xskrq_stats->bytes;
 	s->rx_xsk_csum_complete          += xskrq_stats->csum_complete;
@@ -292,7 +291,7 @@
 	s->rx_xsk_csum_unnecessary_inner += xskrq_stats->csum_unnecessary_inner;
 	s->rx_xsk_csum_none              += xskrq_stats->csum_none;
 	s->rx_xsk_ecn_mark               += xskrq_stats->ecn_mark;
-	s->rx_xsk_हटाओd_vlan_packets   += xskrq_stats->हटाओd_vlan_packets;
+	s->rx_xsk_removed_vlan_packets   += xskrq_stats->removed_vlan_packets;
 	s->rx_xsk_xdp_drop               += xskrq_stats->xdp_drop;
 	s->rx_xsk_xdp_redirect           += xskrq_stats->xdp_redirect;
 	s->rx_xsk_wqe_err                += xskrq_stats->wqe_err;
@@ -304,17 +303,17 @@
 	s->rx_xsk_cqe_compress_pkts      += xskrq_stats->cqe_compress_pkts;
 	s->rx_xsk_congst_umr             += xskrq_stats->congst_umr;
 	s->rx_xsk_arfs_err               += xskrq_stats->arfs_err;
-पूर्ण
+}
 
-अटल व्योम mlx5e_stats_grp_sw_update_stats_rq_stats(काष्ठा mlx5e_sw_stats *s,
-						     काष्ठा mlx5e_rq_stats *rq_stats)
-अणु
+static void mlx5e_stats_grp_sw_update_stats_rq_stats(struct mlx5e_sw_stats *s,
+						     struct mlx5e_rq_stats *rq_stats)
+{
 	s->rx_packets                 += rq_stats->packets;
 	s->rx_bytes                   += rq_stats->bytes;
 	s->rx_lro_packets             += rq_stats->lro_packets;
 	s->rx_lro_bytes               += rq_stats->lro_bytes;
 	s->rx_ecn_mark                += rq_stats->ecn_mark;
-	s->rx_हटाओd_vlan_packets    += rq_stats->हटाओd_vlan_packets;
+	s->rx_removed_vlan_packets    += rq_stats->removed_vlan_packets;
 	s->rx_csum_none               += rq_stats->csum_none;
 	s->rx_csum_complete           += rq_stats->csum_complete;
 	s->rx_csum_complete_tail      += rq_stats->csum_complete_tail;
@@ -338,7 +337,7 @@
 	s->rx_congst_umr              += rq_stats->congst_umr;
 	s->rx_arfs_err                += rq_stats->arfs_err;
 	s->rx_recover                 += rq_stats->recover;
-#अगर_घोषित CONFIG_MLX5_EN_TLS
+#ifdef CONFIG_MLX5_EN_TLS
 	s->rx_tls_decrypted_packets   += rq_stats->tls_decrypted_packets;
 	s->rx_tls_decrypted_bytes     += rq_stats->tls_decrypted_bytes;
 	s->rx_tls_resync_req_pkt      += rq_stats->tls_resync_req_pkt;
@@ -349,23 +348,23 @@
 	s->rx_tls_resync_res_retry    += rq_stats->tls_resync_res_retry;
 	s->rx_tls_resync_res_skip     += rq_stats->tls_resync_res_skip;
 	s->rx_tls_err                 += rq_stats->tls_err;
-#पूर्ण_अगर
-पूर्ण
+#endif
+}
 
-अटल व्योम mlx5e_stats_grp_sw_update_stats_ch_stats(काष्ठा mlx5e_sw_stats *s,
-						     काष्ठा mlx5e_ch_stats *ch_stats)
-अणु
+static void mlx5e_stats_grp_sw_update_stats_ch_stats(struct mlx5e_sw_stats *s,
+						     struct mlx5e_ch_stats *ch_stats)
+{
 	s->ch_events      += ch_stats->events;
 	s->ch_poll        += ch_stats->poll;
 	s->ch_arm         += ch_stats->arm;
 	s->ch_aff_change  += ch_stats->aff_change;
-	s->ch_क्रमce_irq   += ch_stats->क्रमce_irq;
+	s->ch_force_irq   += ch_stats->force_irq;
 	s->ch_eq_rearm    += ch_stats->eq_rearm;
-पूर्ण
+}
 
-अटल व्योम mlx5e_stats_grp_sw_update_stats_sq(काष्ठा mlx5e_sw_stats *s,
-					       काष्ठा mlx5e_sq_stats *sq_stats)
-अणु
+static void mlx5e_stats_grp_sw_update_stats_sq(struct mlx5e_sw_stats *s,
+					       struct mlx5e_sq_stats *sq_stats)
+{
 	s->tx_packets               += sq_stats->packets;
 	s->tx_bytes                 += sq_stats->bytes;
 	s->tx_tso_packets           += sq_stats->tso_packets;
@@ -385,7 +384,7 @@
 	s->tx_csum_partial_inner    += sq_stats->csum_partial_inner;
 	s->tx_csum_none             += sq_stats->csum_none;
 	s->tx_csum_partial          += sq_stats->csum_partial;
-#अगर_घोषित CONFIG_MLX5_EN_TLS
+#ifdef CONFIG_MLX5_EN_TLS
 	s->tx_tls_encrypted_packets += sq_stats->tls_encrypted_packets;
 	s->tx_tls_encrypted_bytes   += sq_stats->tls_encrypted_bytes;
 	s->tx_tls_ooo               += sq_stats->tls_ooo;
@@ -395,66 +394,66 @@
 	s->tx_tls_skip_no_sync_data += sq_stats->tls_skip_no_sync_data;
 	s->tx_tls_drop_no_sync_data += sq_stats->tls_drop_no_sync_data;
 	s->tx_tls_drop_bypass_req   += sq_stats->tls_drop_bypass_req;
-#पूर्ण_अगर
+#endif
 	s->tx_cqes                  += sq_stats->cqes;
-पूर्ण
+}
 
-अटल व्योम mlx5e_stats_grp_sw_update_stats_ptp(काष्ठा mlx5e_priv *priv,
-						काष्ठा mlx5e_sw_stats *s)
-अणु
-	पूर्णांक i;
+static void mlx5e_stats_grp_sw_update_stats_ptp(struct mlx5e_priv *priv,
+						struct mlx5e_sw_stats *s)
+{
+	int i;
 
-	अगर (!priv->tx_ptp_खोलोed && !priv->rx_ptp_खोलोed)
-		वापस;
+	if (!priv->tx_ptp_opened && !priv->rx_ptp_opened)
+		return;
 
 	mlx5e_stats_grp_sw_update_stats_ch_stats(s, &priv->ptp_stats.ch);
 
-	अगर (priv->tx_ptp_खोलोed) अणु
-		क्रम (i = 0; i < priv->max_खोलोed_tc; i++) अणु
+	if (priv->tx_ptp_opened) {
+		for (i = 0; i < priv->max_opened_tc; i++) {
 			mlx5e_stats_grp_sw_update_stats_sq(s, &priv->ptp_stats.sq[i]);
 
 			/* https://gcc.gnu.org/bugzilla/show_bug.cgi?id=92657 */
 			barrier();
-		पूर्ण
-	पूर्ण
-	अगर (priv->rx_ptp_खोलोed) अणु
+		}
+	}
+	if (priv->rx_ptp_opened) {
 		mlx5e_stats_grp_sw_update_stats_rq_stats(s, &priv->ptp_stats.rq);
 
 		/* https://gcc.gnu.org/bugzilla/show_bug.cgi?id=92657 */
 		barrier();
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम mlx5e_stats_grp_sw_update_stats_qos(काष्ठा mlx5e_priv *priv,
-						काष्ठा mlx5e_sw_stats *s)
-अणु
-	काष्ठा mlx5e_sq_stats **stats;
+static void mlx5e_stats_grp_sw_update_stats_qos(struct mlx5e_priv *priv,
+						struct mlx5e_sw_stats *s)
+{
+	struct mlx5e_sq_stats **stats;
 	u16 max_qos_sqs;
-	पूर्णांक i;
+	int i;
 
-	/* Pairs with smp_store_release in mlx5e_खोलो_qos_sq. */
+	/* Pairs with smp_store_release in mlx5e_open_qos_sq. */
 	max_qos_sqs = smp_load_acquire(&priv->htb.max_qos_sqs);
 	stats = READ_ONCE(priv->htb.qos_sq_stats);
 
-	क्रम (i = 0; i < max_qos_sqs; i++) अणु
+	for (i = 0; i < max_qos_sqs; i++) {
 		mlx5e_stats_grp_sw_update_stats_sq(s, READ_ONCE(stats[i]));
 
 		/* https://gcc.gnu.org/bugzilla/show_bug.cgi?id=92657 */
 		barrier();
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल MLX5E_DECLARE_STATS_GRP_OP_UPDATE_STATS(sw)
-अणु
-	काष्ठा mlx5e_sw_stats *s = &priv->stats.sw;
-	पूर्णांक i;
+static MLX5E_DECLARE_STATS_GRP_OP_UPDATE_STATS(sw)
+{
+	struct mlx5e_sw_stats *s = &priv->stats.sw;
+	int i;
 
-	स_रखो(s, 0, माप(*s));
+	memset(s, 0, sizeof(*s));
 
-	क्रम (i = 0; i < priv->max_nch; i++) अणु
-		काष्ठा mlx5e_channel_stats *channel_stats =
+	for (i = 0; i < priv->max_nch; i++) {
+		struct mlx5e_channel_stats *channel_stats =
 			&priv->channel_stats[i];
-		पूर्णांक j;
+		int j;
 
 		mlx5e_stats_grp_sw_update_stats_rq_stats(s, &channel_stats->rq);
 		mlx5e_stats_grp_sw_update_stats_xdpsq(s, &channel_stats->rq_xdpsq);
@@ -465,376 +464,376 @@
 		mlx5e_stats_grp_sw_update_stats_xskrq(s, &channel_stats->xskrq);
 		mlx5e_stats_grp_sw_update_stats_xsksq(s, &channel_stats->xsksq);
 
-		क्रम (j = 0; j < priv->max_खोलोed_tc; j++) अणु
+		for (j = 0; j < priv->max_opened_tc; j++) {
 			mlx5e_stats_grp_sw_update_stats_sq(s, &channel_stats->sq[j]);
 
 			/* https://gcc.gnu.org/bugzilla/show_bug.cgi?id=92657 */
 			barrier();
-		पूर्ण
-	पूर्ण
+		}
+	}
 	mlx5e_stats_grp_sw_update_stats_ptp(priv, s);
 	mlx5e_stats_grp_sw_update_stats_qos(priv, s);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा counter_desc q_stats_desc[] = अणु
-	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_qcounter_stats, rx_out_of_buffer) पूर्ण,
-पूर्ण;
+static const struct counter_desc q_stats_desc[] = {
+	{ MLX5E_DECLARE_STAT(struct mlx5e_qcounter_stats, rx_out_of_buffer) },
+};
 
-अटल स्थिर काष्ठा counter_desc drop_rq_stats_desc[] = अणु
-	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_qcounter_stats, rx_अगर_करोwn_packets) पूर्ण,
-पूर्ण;
+static const struct counter_desc drop_rq_stats_desc[] = {
+	{ MLX5E_DECLARE_STAT(struct mlx5e_qcounter_stats, rx_if_down_packets) },
+};
 
-#घोषणा NUM_Q_COUNTERS			ARRAY_SIZE(q_stats_desc)
-#घोषणा NUM_DROP_RQ_COUNTERS		ARRAY_SIZE(drop_rq_stats_desc)
+#define NUM_Q_COUNTERS			ARRAY_SIZE(q_stats_desc)
+#define NUM_DROP_RQ_COUNTERS		ARRAY_SIZE(drop_rq_stats_desc)
 
-अटल MLX5E_DECLARE_STATS_GRP_OP_NUM_STATS(qcnt)
-अणु
-	पूर्णांक num_stats = 0;
+static MLX5E_DECLARE_STATS_GRP_OP_NUM_STATS(qcnt)
+{
+	int num_stats = 0;
 
-	अगर (priv->q_counter)
+	if (priv->q_counter)
 		num_stats += NUM_Q_COUNTERS;
 
-	अगर (priv->drop_rq_q_counter)
+	if (priv->drop_rq_q_counter)
 		num_stats += NUM_DROP_RQ_COUNTERS;
 
-	वापस num_stats;
-पूर्ण
+	return num_stats;
+}
 
-अटल MLX5E_DECLARE_STATS_GRP_OP_FILL_STRS(qcnt)
-अणु
-	पूर्णांक i;
+static MLX5E_DECLARE_STATS_GRP_OP_FILL_STRS(qcnt)
+{
+	int i;
 
-	क्रम (i = 0; i < NUM_Q_COUNTERS && priv->q_counter; i++)
-		म_नकल(data + (idx++) * ETH_GSTRING_LEN,
-		       q_stats_desc[i].क्रमmat);
+	for (i = 0; i < NUM_Q_COUNTERS && priv->q_counter; i++)
+		strcpy(data + (idx++) * ETH_GSTRING_LEN,
+		       q_stats_desc[i].format);
 
-	क्रम (i = 0; i < NUM_DROP_RQ_COUNTERS && priv->drop_rq_q_counter; i++)
-		म_नकल(data + (idx++) * ETH_GSTRING_LEN,
-		       drop_rq_stats_desc[i].क्रमmat);
+	for (i = 0; i < NUM_DROP_RQ_COUNTERS && priv->drop_rq_q_counter; i++)
+		strcpy(data + (idx++) * ETH_GSTRING_LEN,
+		       drop_rq_stats_desc[i].format);
 
-	वापस idx;
-पूर्ण
+	return idx;
+}
 
-अटल MLX5E_DECLARE_STATS_GRP_OP_FILL_STATS(qcnt)
-अणु
-	पूर्णांक i;
+static MLX5E_DECLARE_STATS_GRP_OP_FILL_STATS(qcnt)
+{
+	int i;
 
-	क्रम (i = 0; i < NUM_Q_COUNTERS && priv->q_counter; i++)
+	for (i = 0; i < NUM_Q_COUNTERS && priv->q_counter; i++)
 		data[idx++] = MLX5E_READ_CTR32_CPU(&priv->stats.qcnt,
 						   q_stats_desc, i);
-	क्रम (i = 0; i < NUM_DROP_RQ_COUNTERS && priv->drop_rq_q_counter; i++)
+	for (i = 0; i < NUM_DROP_RQ_COUNTERS && priv->drop_rq_q_counter; i++)
 		data[idx++] = MLX5E_READ_CTR32_CPU(&priv->stats.qcnt,
 						   drop_rq_stats_desc, i);
-	वापस idx;
-पूर्ण
+	return idx;
+}
 
-अटल MLX5E_DECLARE_STATS_GRP_OP_UPDATE_STATS(qcnt)
-अणु
-	काष्ठा mlx5e_qcounter_stats *qcnt = &priv->stats.qcnt;
-	u32 out[MLX5_ST_SZ_DW(query_q_counter_out)] = अणुपूर्ण;
-	u32 in[MLX5_ST_SZ_DW(query_q_counter_in)] = अणुपूर्ण;
-	पूर्णांक ret;
+static MLX5E_DECLARE_STATS_GRP_OP_UPDATE_STATS(qcnt)
+{
+	struct mlx5e_qcounter_stats *qcnt = &priv->stats.qcnt;
+	u32 out[MLX5_ST_SZ_DW(query_q_counter_out)] = {};
+	u32 in[MLX5_ST_SZ_DW(query_q_counter_in)] = {};
+	int ret;
 
 	MLX5_SET(query_q_counter_in, in, opcode, MLX5_CMD_OP_QUERY_Q_COUNTER);
 
-	अगर (priv->q_counter) अणु
+	if (priv->q_counter) {
 		MLX5_SET(query_q_counter_in, in, counter_set_id,
 			 priv->q_counter);
 		ret = mlx5_cmd_exec_inout(priv->mdev, query_q_counter, in, out);
-		अगर (!ret)
+		if (!ret)
 			qcnt->rx_out_of_buffer = MLX5_GET(query_q_counter_out,
 							  out, out_of_buffer);
-	पूर्ण
+	}
 
-	अगर (priv->drop_rq_q_counter) अणु
+	if (priv->drop_rq_q_counter) {
 		MLX5_SET(query_q_counter_in, in, counter_set_id,
 			 priv->drop_rq_q_counter);
 		ret = mlx5_cmd_exec_inout(priv->mdev, query_q_counter, in, out);
-		अगर (!ret)
-			qcnt->rx_अगर_करोwn_packets = MLX5_GET(query_q_counter_out,
+		if (!ret)
+			qcnt->rx_if_down_packets = MLX5_GET(query_q_counter_out,
 							    out, out_of_buffer);
-	पूर्ण
-पूर्ण
+	}
+}
 
-#घोषणा VNIC_ENV_OFF(c) MLX5_BYTE_OFF(query_vnic_env_out, c)
-अटल स्थिर काष्ठा counter_desc vnic_env_stats_steer_desc[] = अणु
-	अणु "rx_steer_missed_packets",
-		VNIC_ENV_OFF(vport_env.nic_receive_steering_discard) पूर्ण,
-पूर्ण;
+#define VNIC_ENV_OFF(c) MLX5_BYTE_OFF(query_vnic_env_out, c)
+static const struct counter_desc vnic_env_stats_steer_desc[] = {
+	{ "rx_steer_missed_packets",
+		VNIC_ENV_OFF(vport_env.nic_receive_steering_discard) },
+};
 
-अटल स्थिर काष्ठा counter_desc vnic_env_stats_dev_oob_desc[] = अणु
-	अणु "dev_internal_queue_oob",
-		VNIC_ENV_OFF(vport_env.पूर्णांकernal_rq_out_of_buffer) पूर्ण,
-पूर्ण;
+static const struct counter_desc vnic_env_stats_dev_oob_desc[] = {
+	{ "dev_internal_queue_oob",
+		VNIC_ENV_OFF(vport_env.internal_rq_out_of_buffer) },
+};
 
-#घोषणा NUM_VNIC_ENV_STEER_COUNTERS(dev) \
+#define NUM_VNIC_ENV_STEER_COUNTERS(dev) \
 	(MLX5_CAP_GEN(dev, nic_receive_steering_discard) ? \
 	 ARRAY_SIZE(vnic_env_stats_steer_desc) : 0)
-#घोषणा NUM_VNIC_ENV_DEV_OOB_COUNTERS(dev) \
-	(MLX5_CAP_GEN(dev, vnic_env_पूर्णांक_rq_oob) ? \
+#define NUM_VNIC_ENV_DEV_OOB_COUNTERS(dev) \
+	(MLX5_CAP_GEN(dev, vnic_env_int_rq_oob) ? \
 	 ARRAY_SIZE(vnic_env_stats_dev_oob_desc) : 0)
 
-अटल MLX5E_DECLARE_STATS_GRP_OP_NUM_STATS(vnic_env)
-अणु
-	वापस NUM_VNIC_ENV_STEER_COUNTERS(priv->mdev) +
+static MLX5E_DECLARE_STATS_GRP_OP_NUM_STATS(vnic_env)
+{
+	return NUM_VNIC_ENV_STEER_COUNTERS(priv->mdev) +
 		NUM_VNIC_ENV_DEV_OOB_COUNTERS(priv->mdev);
-पूर्ण
+}
 
-अटल MLX5E_DECLARE_STATS_GRP_OP_FILL_STRS(vnic_env)
-अणु
-	पूर्णांक i;
+static MLX5E_DECLARE_STATS_GRP_OP_FILL_STRS(vnic_env)
+{
+	int i;
 
-	क्रम (i = 0; i < NUM_VNIC_ENV_STEER_COUNTERS(priv->mdev); i++)
-		म_नकल(data + (idx++) * ETH_GSTRING_LEN,
-		       vnic_env_stats_steer_desc[i].क्रमmat);
+	for (i = 0; i < NUM_VNIC_ENV_STEER_COUNTERS(priv->mdev); i++)
+		strcpy(data + (idx++) * ETH_GSTRING_LEN,
+		       vnic_env_stats_steer_desc[i].format);
 
-	क्रम (i = 0; i < NUM_VNIC_ENV_DEV_OOB_COUNTERS(priv->mdev); i++)
-		म_नकल(data + (idx++) * ETH_GSTRING_LEN,
-		       vnic_env_stats_dev_oob_desc[i].क्रमmat);
-	वापस idx;
-पूर्ण
+	for (i = 0; i < NUM_VNIC_ENV_DEV_OOB_COUNTERS(priv->mdev); i++)
+		strcpy(data + (idx++) * ETH_GSTRING_LEN,
+		       vnic_env_stats_dev_oob_desc[i].format);
+	return idx;
+}
 
-अटल MLX5E_DECLARE_STATS_GRP_OP_FILL_STATS(vnic_env)
-अणु
-	पूर्णांक i;
+static MLX5E_DECLARE_STATS_GRP_OP_FILL_STATS(vnic_env)
+{
+	int i;
 
-	क्रम (i = 0; i < NUM_VNIC_ENV_STEER_COUNTERS(priv->mdev); i++)
+	for (i = 0; i < NUM_VNIC_ENV_STEER_COUNTERS(priv->mdev); i++)
 		data[idx++] = MLX5E_READ_CTR64_BE(priv->stats.vnic.query_vnic_env_out,
 						  vnic_env_stats_steer_desc, i);
 
-	क्रम (i = 0; i < NUM_VNIC_ENV_DEV_OOB_COUNTERS(priv->mdev); i++)
+	for (i = 0; i < NUM_VNIC_ENV_DEV_OOB_COUNTERS(priv->mdev); i++)
 		data[idx++] = MLX5E_READ_CTR32_BE(priv->stats.vnic.query_vnic_env_out,
 						  vnic_env_stats_dev_oob_desc, i);
-	वापस idx;
-पूर्ण
+	return idx;
+}
 
-अटल MLX5E_DECLARE_STATS_GRP_OP_UPDATE_STATS(vnic_env)
-अणु
+static MLX5E_DECLARE_STATS_GRP_OP_UPDATE_STATS(vnic_env)
+{
 	u32 *out = (u32 *)priv->stats.vnic.query_vnic_env_out;
-	u32 in[MLX5_ST_SZ_DW(query_vnic_env_in)] = अणुपूर्ण;
-	काष्ठा mlx5_core_dev *mdev = priv->mdev;
+	u32 in[MLX5_ST_SZ_DW(query_vnic_env_in)] = {};
+	struct mlx5_core_dev *mdev = priv->mdev;
 
-	अगर (!MLX5_CAP_GEN(priv->mdev, nic_receive_steering_discard))
-		वापस;
+	if (!MLX5_CAP_GEN(priv->mdev, nic_receive_steering_discard))
+		return;
 
 	MLX5_SET(query_vnic_env_in, in, opcode, MLX5_CMD_OP_QUERY_VNIC_ENV);
 	mlx5_cmd_exec_inout(mdev, query_vnic_env, in, out);
-पूर्ण
+}
 
-#घोषणा VPORT_COUNTER_OFF(c) MLX5_BYTE_OFF(query_vport_counter_out, c)
-अटल स्थिर काष्ठा counter_desc vport_stats_desc[] = अणु
-	अणु "rx_vport_unicast_packets",
-		VPORT_COUNTER_OFF(received_eth_unicast.packets) पूर्ण,
-	अणु "rx_vport_unicast_bytes",
-		VPORT_COUNTER_OFF(received_eth_unicast.octets) पूर्ण,
-	अणु "tx_vport_unicast_packets",
-		VPORT_COUNTER_OFF(transmitted_eth_unicast.packets) पूर्ण,
-	अणु "tx_vport_unicast_bytes",
-		VPORT_COUNTER_OFF(transmitted_eth_unicast.octets) पूर्ण,
-	अणु "rx_vport_multicast_packets",
-		VPORT_COUNTER_OFF(received_eth_multicast.packets) पूर्ण,
-	अणु "rx_vport_multicast_bytes",
-		VPORT_COUNTER_OFF(received_eth_multicast.octets) पूर्ण,
-	अणु "tx_vport_multicast_packets",
-		VPORT_COUNTER_OFF(transmitted_eth_multicast.packets) पूर्ण,
-	अणु "tx_vport_multicast_bytes",
-		VPORT_COUNTER_OFF(transmitted_eth_multicast.octets) पूर्ण,
-	अणु "rx_vport_broadcast_packets",
-		VPORT_COUNTER_OFF(received_eth_broadcast.packets) पूर्ण,
-	अणु "rx_vport_broadcast_bytes",
-		VPORT_COUNTER_OFF(received_eth_broadcast.octets) पूर्ण,
-	अणु "tx_vport_broadcast_packets",
-		VPORT_COUNTER_OFF(transmitted_eth_broadcast.packets) पूर्ण,
-	अणु "tx_vport_broadcast_bytes",
-		VPORT_COUNTER_OFF(transmitted_eth_broadcast.octets) पूर्ण,
-	अणु "rx_vport_rdma_unicast_packets",
-		VPORT_COUNTER_OFF(received_ib_unicast.packets) पूर्ण,
-	अणु "rx_vport_rdma_unicast_bytes",
-		VPORT_COUNTER_OFF(received_ib_unicast.octets) पूर्ण,
-	अणु "tx_vport_rdma_unicast_packets",
-		VPORT_COUNTER_OFF(transmitted_ib_unicast.packets) पूर्ण,
-	अणु "tx_vport_rdma_unicast_bytes",
-		VPORT_COUNTER_OFF(transmitted_ib_unicast.octets) पूर्ण,
-	अणु "rx_vport_rdma_multicast_packets",
-		VPORT_COUNTER_OFF(received_ib_multicast.packets) पूर्ण,
-	अणु "rx_vport_rdma_multicast_bytes",
-		VPORT_COUNTER_OFF(received_ib_multicast.octets) पूर्ण,
-	अणु "tx_vport_rdma_multicast_packets",
-		VPORT_COUNTER_OFF(transmitted_ib_multicast.packets) पूर्ण,
-	अणु "tx_vport_rdma_multicast_bytes",
-		VPORT_COUNTER_OFF(transmitted_ib_multicast.octets) पूर्ण,
-पूर्ण;
+#define VPORT_COUNTER_OFF(c) MLX5_BYTE_OFF(query_vport_counter_out, c)
+static const struct counter_desc vport_stats_desc[] = {
+	{ "rx_vport_unicast_packets",
+		VPORT_COUNTER_OFF(received_eth_unicast.packets) },
+	{ "rx_vport_unicast_bytes",
+		VPORT_COUNTER_OFF(received_eth_unicast.octets) },
+	{ "tx_vport_unicast_packets",
+		VPORT_COUNTER_OFF(transmitted_eth_unicast.packets) },
+	{ "tx_vport_unicast_bytes",
+		VPORT_COUNTER_OFF(transmitted_eth_unicast.octets) },
+	{ "rx_vport_multicast_packets",
+		VPORT_COUNTER_OFF(received_eth_multicast.packets) },
+	{ "rx_vport_multicast_bytes",
+		VPORT_COUNTER_OFF(received_eth_multicast.octets) },
+	{ "tx_vport_multicast_packets",
+		VPORT_COUNTER_OFF(transmitted_eth_multicast.packets) },
+	{ "tx_vport_multicast_bytes",
+		VPORT_COUNTER_OFF(transmitted_eth_multicast.octets) },
+	{ "rx_vport_broadcast_packets",
+		VPORT_COUNTER_OFF(received_eth_broadcast.packets) },
+	{ "rx_vport_broadcast_bytes",
+		VPORT_COUNTER_OFF(received_eth_broadcast.octets) },
+	{ "tx_vport_broadcast_packets",
+		VPORT_COUNTER_OFF(transmitted_eth_broadcast.packets) },
+	{ "tx_vport_broadcast_bytes",
+		VPORT_COUNTER_OFF(transmitted_eth_broadcast.octets) },
+	{ "rx_vport_rdma_unicast_packets",
+		VPORT_COUNTER_OFF(received_ib_unicast.packets) },
+	{ "rx_vport_rdma_unicast_bytes",
+		VPORT_COUNTER_OFF(received_ib_unicast.octets) },
+	{ "tx_vport_rdma_unicast_packets",
+		VPORT_COUNTER_OFF(transmitted_ib_unicast.packets) },
+	{ "tx_vport_rdma_unicast_bytes",
+		VPORT_COUNTER_OFF(transmitted_ib_unicast.octets) },
+	{ "rx_vport_rdma_multicast_packets",
+		VPORT_COUNTER_OFF(received_ib_multicast.packets) },
+	{ "rx_vport_rdma_multicast_bytes",
+		VPORT_COUNTER_OFF(received_ib_multicast.octets) },
+	{ "tx_vport_rdma_multicast_packets",
+		VPORT_COUNTER_OFF(transmitted_ib_multicast.packets) },
+	{ "tx_vport_rdma_multicast_bytes",
+		VPORT_COUNTER_OFF(transmitted_ib_multicast.octets) },
+};
 
-#घोषणा NUM_VPORT_COUNTERS		ARRAY_SIZE(vport_stats_desc)
+#define NUM_VPORT_COUNTERS		ARRAY_SIZE(vport_stats_desc)
 
-अटल MLX5E_DECLARE_STATS_GRP_OP_NUM_STATS(vport)
-अणु
-	वापस NUM_VPORT_COUNTERS;
-पूर्ण
+static MLX5E_DECLARE_STATS_GRP_OP_NUM_STATS(vport)
+{
+	return NUM_VPORT_COUNTERS;
+}
 
-अटल MLX5E_DECLARE_STATS_GRP_OP_FILL_STRS(vport)
-अणु
-	पूर्णांक i;
+static MLX5E_DECLARE_STATS_GRP_OP_FILL_STRS(vport)
+{
+	int i;
 
-	क्रम (i = 0; i < NUM_VPORT_COUNTERS; i++)
-		म_नकल(data + (idx++) * ETH_GSTRING_LEN, vport_stats_desc[i].क्रमmat);
-	वापस idx;
-पूर्ण
+	for (i = 0; i < NUM_VPORT_COUNTERS; i++)
+		strcpy(data + (idx++) * ETH_GSTRING_LEN, vport_stats_desc[i].format);
+	return idx;
+}
 
-अटल MLX5E_DECLARE_STATS_GRP_OP_FILL_STATS(vport)
-अणु
-	पूर्णांक i;
+static MLX5E_DECLARE_STATS_GRP_OP_FILL_STATS(vport)
+{
+	int i;
 
-	क्रम (i = 0; i < NUM_VPORT_COUNTERS; i++)
+	for (i = 0; i < NUM_VPORT_COUNTERS; i++)
 		data[idx++] = MLX5E_READ_CTR64_BE(priv->stats.vport.query_vport_out,
 						  vport_stats_desc, i);
-	वापस idx;
-पूर्ण
+	return idx;
+}
 
-अटल MLX5E_DECLARE_STATS_GRP_OP_UPDATE_STATS(vport)
-अणु
+static MLX5E_DECLARE_STATS_GRP_OP_UPDATE_STATS(vport)
+{
 	u32 *out = (u32 *)priv->stats.vport.query_vport_out;
-	u32 in[MLX5_ST_SZ_DW(query_vport_counter_in)] = अणुपूर्ण;
-	काष्ठा mlx5_core_dev *mdev = priv->mdev;
+	u32 in[MLX5_ST_SZ_DW(query_vport_counter_in)] = {};
+	struct mlx5_core_dev *mdev = priv->mdev;
 
 	MLX5_SET(query_vport_counter_in, in, opcode, MLX5_CMD_OP_QUERY_VPORT_COUNTER);
 	mlx5_cmd_exec_inout(mdev, query_vport_counter, in, out);
-पूर्ण
+}
 
-#घोषणा PPORT_802_3_OFF(c) \
+#define PPORT_802_3_OFF(c) \
 	MLX5_BYTE_OFF(ppcnt_reg, \
 		      counter_set.eth_802_3_cntrs_grp_data_layout.c##_high)
-अटल स्थिर काष्ठा counter_desc pport_802_3_stats_desc[] = अणु
-	अणु "tx_packets_phy", PPORT_802_3_OFF(a_frames_transmitted_ok) पूर्ण,
-	अणु "rx_packets_phy", PPORT_802_3_OFF(a_frames_received_ok) पूर्ण,
-	अणु "rx_crc_errors_phy", PPORT_802_3_OFF(a_frame_check_sequence_errors) पूर्ण,
-	अणु "tx_bytes_phy", PPORT_802_3_OFF(a_octets_transmitted_ok) पूर्ण,
-	अणु "rx_bytes_phy", PPORT_802_3_OFF(a_octets_received_ok) पूर्ण,
-	अणु "tx_multicast_phy", PPORT_802_3_OFF(a_multicast_frames_xmitted_ok) पूर्ण,
-	अणु "tx_broadcast_phy", PPORT_802_3_OFF(a_broadcast_frames_xmitted_ok) पूर्ण,
-	अणु "rx_multicast_phy", PPORT_802_3_OFF(a_multicast_frames_received_ok) पूर्ण,
-	अणु "rx_broadcast_phy", PPORT_802_3_OFF(a_broadcast_frames_received_ok) पूर्ण,
-	अणु "rx_in_range_len_errors_phy", PPORT_802_3_OFF(a_in_range_length_errors) पूर्ण,
-	अणु "rx_out_of_range_len_phy", PPORT_802_3_OFF(a_out_of_range_length_field) पूर्ण,
-	अणु "rx_oversize_pkts_phy", PPORT_802_3_OFF(a_frame_too_दीर्घ_errors) पूर्ण,
-	अणु "rx_symbol_err_phy", PPORT_802_3_OFF(a_symbol_error_during_carrier) पूर्ण,
-	अणु "tx_mac_control_phy", PPORT_802_3_OFF(a_mac_control_frames_transmitted) पूर्ण,
-	अणु "rx_mac_control_phy", PPORT_802_3_OFF(a_mac_control_frames_received) पूर्ण,
-	अणु "rx_unsupported_op_phy", PPORT_802_3_OFF(a_unsupported_opcodes_received) पूर्ण,
-	अणु "rx_pause_ctrl_phy", PPORT_802_3_OFF(a_छोड़ो_mac_ctrl_frames_received) पूर्ण,
-	अणु "tx_pause_ctrl_phy", PPORT_802_3_OFF(a_छोड़ो_mac_ctrl_frames_transmitted) पूर्ण,
-पूर्ण;
+static const struct counter_desc pport_802_3_stats_desc[] = {
+	{ "tx_packets_phy", PPORT_802_3_OFF(a_frames_transmitted_ok) },
+	{ "rx_packets_phy", PPORT_802_3_OFF(a_frames_received_ok) },
+	{ "rx_crc_errors_phy", PPORT_802_3_OFF(a_frame_check_sequence_errors) },
+	{ "tx_bytes_phy", PPORT_802_3_OFF(a_octets_transmitted_ok) },
+	{ "rx_bytes_phy", PPORT_802_3_OFF(a_octets_received_ok) },
+	{ "tx_multicast_phy", PPORT_802_3_OFF(a_multicast_frames_xmitted_ok) },
+	{ "tx_broadcast_phy", PPORT_802_3_OFF(a_broadcast_frames_xmitted_ok) },
+	{ "rx_multicast_phy", PPORT_802_3_OFF(a_multicast_frames_received_ok) },
+	{ "rx_broadcast_phy", PPORT_802_3_OFF(a_broadcast_frames_received_ok) },
+	{ "rx_in_range_len_errors_phy", PPORT_802_3_OFF(a_in_range_length_errors) },
+	{ "rx_out_of_range_len_phy", PPORT_802_3_OFF(a_out_of_range_length_field) },
+	{ "rx_oversize_pkts_phy", PPORT_802_3_OFF(a_frame_too_long_errors) },
+	{ "rx_symbol_err_phy", PPORT_802_3_OFF(a_symbol_error_during_carrier) },
+	{ "tx_mac_control_phy", PPORT_802_3_OFF(a_mac_control_frames_transmitted) },
+	{ "rx_mac_control_phy", PPORT_802_3_OFF(a_mac_control_frames_received) },
+	{ "rx_unsupported_op_phy", PPORT_802_3_OFF(a_unsupported_opcodes_received) },
+	{ "rx_pause_ctrl_phy", PPORT_802_3_OFF(a_pause_mac_ctrl_frames_received) },
+	{ "tx_pause_ctrl_phy", PPORT_802_3_OFF(a_pause_mac_ctrl_frames_transmitted) },
+};
 
-#घोषणा NUM_PPORT_802_3_COUNTERS	ARRAY_SIZE(pport_802_3_stats_desc)
+#define NUM_PPORT_802_3_COUNTERS	ARRAY_SIZE(pport_802_3_stats_desc)
 
-अटल MLX5E_DECLARE_STATS_GRP_OP_NUM_STATS(802_3)
-अणु
-	वापस NUM_PPORT_802_3_COUNTERS;
-पूर्ण
+static MLX5E_DECLARE_STATS_GRP_OP_NUM_STATS(802_3)
+{
+	return NUM_PPORT_802_3_COUNTERS;
+}
 
-अटल MLX5E_DECLARE_STATS_GRP_OP_FILL_STRS(802_3)
-अणु
-	पूर्णांक i;
+static MLX5E_DECLARE_STATS_GRP_OP_FILL_STRS(802_3)
+{
+	int i;
 
-	क्रम (i = 0; i < NUM_PPORT_802_3_COUNTERS; i++)
-		म_नकल(data + (idx++) * ETH_GSTRING_LEN, pport_802_3_stats_desc[i].क्रमmat);
-	वापस idx;
-पूर्ण
+	for (i = 0; i < NUM_PPORT_802_3_COUNTERS; i++)
+		strcpy(data + (idx++) * ETH_GSTRING_LEN, pport_802_3_stats_desc[i].format);
+	return idx;
+}
 
-अटल MLX5E_DECLARE_STATS_GRP_OP_FILL_STATS(802_3)
-अणु
-	पूर्णांक i;
+static MLX5E_DECLARE_STATS_GRP_OP_FILL_STATS(802_3)
+{
+	int i;
 
-	क्रम (i = 0; i < NUM_PPORT_802_3_COUNTERS; i++)
+	for (i = 0; i < NUM_PPORT_802_3_COUNTERS; i++)
 		data[idx++] = MLX5E_READ_CTR64_BE(&priv->stats.pport.IEEE_802_3_counters,
 						  pport_802_3_stats_desc, i);
-	वापस idx;
-पूर्ण
+	return idx;
+}
 
-#घोषणा MLX5_BASIC_PPCNT_SUPPORTED(mdev) \
+#define MLX5_BASIC_PPCNT_SUPPORTED(mdev) \
 	(MLX5_CAP_GEN(mdev, pcam_reg) ? MLX5_CAP_PCAM_REG(mdev, ppcnt) : 1)
 
-अटल MLX5E_DECLARE_STATS_GRP_OP_UPDATE_STATS(802_3)
-अणु
-	काष्ठा mlx5e_pport_stats *pstats = &priv->stats.pport;
-	काष्ठा mlx5_core_dev *mdev = priv->mdev;
-	u32 in[MLX5_ST_SZ_DW(ppcnt_reg)] = अणु0पूर्ण;
-	पूर्णांक sz = MLX5_ST_SZ_BYTES(ppcnt_reg);
-	व्योम *out;
+static MLX5E_DECLARE_STATS_GRP_OP_UPDATE_STATS(802_3)
+{
+	struct mlx5e_pport_stats *pstats = &priv->stats.pport;
+	struct mlx5_core_dev *mdev = priv->mdev;
+	u32 in[MLX5_ST_SZ_DW(ppcnt_reg)] = {0};
+	int sz = MLX5_ST_SZ_BYTES(ppcnt_reg);
+	void *out;
 
-	अगर (!MLX5_BASIC_PPCNT_SUPPORTED(mdev))
-		वापस;
+	if (!MLX5_BASIC_PPCNT_SUPPORTED(mdev))
+		return;
 
 	MLX5_SET(ppcnt_reg, in, local_port, 1);
 	out = pstats->IEEE_802_3_counters;
 	MLX5_SET(ppcnt_reg, in, grp, MLX5_IEEE_802_3_COUNTERS_GROUP);
 	mlx5_core_access_reg(mdev, in, sz, out, sz, MLX5_REG_PPCNT, 0, 0);
-पूर्ण
+}
 
-#घोषणा MLX5E_READ_CTR64_BE_F(ptr, set, c)		\
-	be64_to_cpu(*(__be64 *)((अक्षर *)ptr +		\
+#define MLX5E_READ_CTR64_BE_F(ptr, set, c)		\
+	be64_to_cpu(*(__be64 *)((char *)ptr +		\
 		MLX5_BYTE_OFF(ppcnt_reg,		\
 			      counter_set.set.c##_high)))
 
-अटल पूर्णांक mlx5e_stats_get_ieee(काष्ठा mlx5_core_dev *mdev,
+static int mlx5e_stats_get_ieee(struct mlx5_core_dev *mdev,
 				u32 *ppcnt_ieee_802_3)
-अणु
-	u32 in[MLX5_ST_SZ_DW(ppcnt_reg)] = अणुपूर्ण;
-	पूर्णांक sz = MLX5_ST_SZ_BYTES(ppcnt_reg);
+{
+	u32 in[MLX5_ST_SZ_DW(ppcnt_reg)] = {};
+	int sz = MLX5_ST_SZ_BYTES(ppcnt_reg);
 
-	अगर (!MLX5_BASIC_PPCNT_SUPPORTED(mdev))
-		वापस -EOPNOTSUPP;
+	if (!MLX5_BASIC_PPCNT_SUPPORTED(mdev))
+		return -EOPNOTSUPP;
 
 	MLX5_SET(ppcnt_reg, in, local_port, 1);
 	MLX5_SET(ppcnt_reg, in, grp, MLX5_IEEE_802_3_COUNTERS_GROUP);
-	वापस mlx5_core_access_reg(mdev, in, sz, ppcnt_ieee_802_3,
+	return mlx5_core_access_reg(mdev, in, sz, ppcnt_ieee_802_3,
 				    sz, MLX5_REG_PPCNT, 0, 0);
-पूर्ण
+}
 
-व्योम mlx5e_stats_छोड़ो_get(काष्ठा mlx5e_priv *priv,
-			   काष्ठा ethtool_छोड़ो_stats *छोड़ो_stats)
-अणु
+void mlx5e_stats_pause_get(struct mlx5e_priv *priv,
+			   struct ethtool_pause_stats *pause_stats)
+{
 	u32 ppcnt_ieee_802_3[MLX5_ST_SZ_DW(ppcnt_reg)];
-	काष्ठा mlx5_core_dev *mdev = priv->mdev;
+	struct mlx5_core_dev *mdev = priv->mdev;
 
-	अगर (mlx5e_stats_get_ieee(mdev, ppcnt_ieee_802_3))
-		वापस;
+	if (mlx5e_stats_get_ieee(mdev, ppcnt_ieee_802_3))
+		return;
 
-	छोड़ो_stats->tx_छोड़ो_frames =
+	pause_stats->tx_pause_frames =
 		MLX5E_READ_CTR64_BE_F(ppcnt_ieee_802_3,
 				      eth_802_3_cntrs_grp_data_layout,
-				      a_छोड़ो_mac_ctrl_frames_transmitted);
-	छोड़ो_stats->rx_छोड़ो_frames =
+				      a_pause_mac_ctrl_frames_transmitted);
+	pause_stats->rx_pause_frames =
 		MLX5E_READ_CTR64_BE_F(ppcnt_ieee_802_3,
 				      eth_802_3_cntrs_grp_data_layout,
-				      a_छोड़ो_mac_ctrl_frames_received);
-पूर्ण
+				      a_pause_mac_ctrl_frames_received);
+}
 
-व्योम mlx5e_stats_eth_phy_get(काष्ठा mlx5e_priv *priv,
-			     काष्ठा ethtool_eth_phy_stats *phy_stats)
-अणु
+void mlx5e_stats_eth_phy_get(struct mlx5e_priv *priv,
+			     struct ethtool_eth_phy_stats *phy_stats)
+{
 	u32 ppcnt_ieee_802_3[MLX5_ST_SZ_DW(ppcnt_reg)];
-	काष्ठा mlx5_core_dev *mdev = priv->mdev;
+	struct mlx5_core_dev *mdev = priv->mdev;
 
-	अगर (mlx5e_stats_get_ieee(mdev, ppcnt_ieee_802_3))
-		वापस;
+	if (mlx5e_stats_get_ieee(mdev, ppcnt_ieee_802_3))
+		return;
 
 	phy_stats->SymbolErrorDuringCarrier =
 		MLX5E_READ_CTR64_BE_F(ppcnt_ieee_802_3,
 				      eth_802_3_cntrs_grp_data_layout,
 				      a_symbol_error_during_carrier);
-पूर्ण
+}
 
-व्योम mlx5e_stats_eth_mac_get(काष्ठा mlx5e_priv *priv,
-			     काष्ठा ethtool_eth_mac_stats *mac_stats)
-अणु
+void mlx5e_stats_eth_mac_get(struct mlx5e_priv *priv,
+			     struct ethtool_eth_mac_stats *mac_stats)
+{
 	u32 ppcnt_ieee_802_3[MLX5_ST_SZ_DW(ppcnt_reg)];
-	काष्ठा mlx5_core_dev *mdev = priv->mdev;
+	struct mlx5_core_dev *mdev = priv->mdev;
 
-	अगर (mlx5e_stats_get_ieee(mdev, ppcnt_ieee_802_3))
-		वापस;
+	if (mlx5e_stats_get_ieee(mdev, ppcnt_ieee_802_3))
+		return;
 
-#घोषणा RD(name)							\
+#define RD(name)							\
 	MLX5E_READ_CTR64_BE_F(ppcnt_ieee_802_3,				\
 			      eth_802_3_cntrs_grp_data_layout,		\
 			      name)
@@ -850,18 +849,18 @@
 	mac_stats->BroadcastFramesReceivedOK = RD(a_broadcast_frames_received_ok);
 	mac_stats->InRangeLengthErrors	= RD(a_in_range_length_errors);
 	mac_stats->OutOfRangeLengthField = RD(a_out_of_range_length_field);
-	mac_stats->FrameTooLongErrors	= RD(a_frame_too_दीर्घ_errors);
-#अघोषित RD
-पूर्ण
+	mac_stats->FrameTooLongErrors	= RD(a_frame_too_long_errors);
+#undef RD
+}
 
-व्योम mlx5e_stats_eth_ctrl_get(काष्ठा mlx5e_priv *priv,
-			      काष्ठा ethtool_eth_ctrl_stats *ctrl_stats)
-अणु
+void mlx5e_stats_eth_ctrl_get(struct mlx5e_priv *priv,
+			      struct ethtool_eth_ctrl_stats *ctrl_stats)
+{
 	u32 ppcnt_ieee_802_3[MLX5_ST_SZ_DW(ppcnt_reg)];
-	काष्ठा mlx5_core_dev *mdev = priv->mdev;
+	struct mlx5_core_dev *mdev = priv->mdev;
 
-	अगर (mlx5e_stats_get_ieee(mdev, ppcnt_ieee_802_3))
-		वापस;
+	if (mlx5e_stats_get_ieee(mdev, ppcnt_ieee_802_3))
+		return;
 
 	ctrl_stats->MACControlFramesTransmitted =
 		MLX5E_READ_CTR64_BE_F(ppcnt_ieee_802_3,
@@ -875,149 +874,149 @@
 		MLX5E_READ_CTR64_BE_F(ppcnt_ieee_802_3,
 				      eth_802_3_cntrs_grp_data_layout,
 				      a_unsupported_opcodes_received);
-पूर्ण
+}
 
-#घोषणा PPORT_2863_OFF(c) \
+#define PPORT_2863_OFF(c) \
 	MLX5_BYTE_OFF(ppcnt_reg, \
 		      counter_set.eth_2863_cntrs_grp_data_layout.c##_high)
-अटल स्थिर काष्ठा counter_desc pport_2863_stats_desc[] = अणु
-	अणु "rx_discards_phy", PPORT_2863_OFF(अगर_in_discards) पूर्ण,
-	अणु "tx_discards_phy", PPORT_2863_OFF(अगर_out_discards) पूर्ण,
-	अणु "tx_errors_phy", PPORT_2863_OFF(अगर_out_errors) पूर्ण,
-पूर्ण;
+static const struct counter_desc pport_2863_stats_desc[] = {
+	{ "rx_discards_phy", PPORT_2863_OFF(if_in_discards) },
+	{ "tx_discards_phy", PPORT_2863_OFF(if_out_discards) },
+	{ "tx_errors_phy", PPORT_2863_OFF(if_out_errors) },
+};
 
-#घोषणा NUM_PPORT_2863_COUNTERS		ARRAY_SIZE(pport_2863_stats_desc)
+#define NUM_PPORT_2863_COUNTERS		ARRAY_SIZE(pport_2863_stats_desc)
 
-अटल MLX5E_DECLARE_STATS_GRP_OP_NUM_STATS(2863)
-अणु
-	वापस NUM_PPORT_2863_COUNTERS;
-पूर्ण
+static MLX5E_DECLARE_STATS_GRP_OP_NUM_STATS(2863)
+{
+	return NUM_PPORT_2863_COUNTERS;
+}
 
-अटल MLX5E_DECLARE_STATS_GRP_OP_FILL_STRS(2863)
-अणु
-	पूर्णांक i;
+static MLX5E_DECLARE_STATS_GRP_OP_FILL_STRS(2863)
+{
+	int i;
 
-	क्रम (i = 0; i < NUM_PPORT_2863_COUNTERS; i++)
-		म_नकल(data + (idx++) * ETH_GSTRING_LEN, pport_2863_stats_desc[i].क्रमmat);
-	वापस idx;
-पूर्ण
+	for (i = 0; i < NUM_PPORT_2863_COUNTERS; i++)
+		strcpy(data + (idx++) * ETH_GSTRING_LEN, pport_2863_stats_desc[i].format);
+	return idx;
+}
 
-अटल MLX5E_DECLARE_STATS_GRP_OP_FILL_STATS(2863)
-अणु
-	पूर्णांक i;
+static MLX5E_DECLARE_STATS_GRP_OP_FILL_STATS(2863)
+{
+	int i;
 
-	क्रम (i = 0; i < NUM_PPORT_2863_COUNTERS; i++)
+	for (i = 0; i < NUM_PPORT_2863_COUNTERS; i++)
 		data[idx++] = MLX5E_READ_CTR64_BE(&priv->stats.pport.RFC_2863_counters,
 						  pport_2863_stats_desc, i);
-	वापस idx;
-पूर्ण
+	return idx;
+}
 
-अटल MLX5E_DECLARE_STATS_GRP_OP_UPDATE_STATS(2863)
-अणु
-	काष्ठा mlx5e_pport_stats *pstats = &priv->stats.pport;
-	काष्ठा mlx5_core_dev *mdev = priv->mdev;
-	u32 in[MLX5_ST_SZ_DW(ppcnt_reg)] = अणु0पूर्ण;
-	पूर्णांक sz = MLX5_ST_SZ_BYTES(ppcnt_reg);
-	व्योम *out;
+static MLX5E_DECLARE_STATS_GRP_OP_UPDATE_STATS(2863)
+{
+	struct mlx5e_pport_stats *pstats = &priv->stats.pport;
+	struct mlx5_core_dev *mdev = priv->mdev;
+	u32 in[MLX5_ST_SZ_DW(ppcnt_reg)] = {0};
+	int sz = MLX5_ST_SZ_BYTES(ppcnt_reg);
+	void *out;
 
 	MLX5_SET(ppcnt_reg, in, local_port, 1);
 	out = pstats->RFC_2863_counters;
 	MLX5_SET(ppcnt_reg, in, grp, MLX5_RFC_2863_COUNTERS_GROUP);
 	mlx5_core_access_reg(mdev, in, sz, out, sz, MLX5_REG_PPCNT, 0, 0);
-पूर्ण
+}
 
-#घोषणा PPORT_2819_OFF(c) \
+#define PPORT_2819_OFF(c) \
 	MLX5_BYTE_OFF(ppcnt_reg, \
 		      counter_set.eth_2819_cntrs_grp_data_layout.c##_high)
-अटल स्थिर काष्ठा counter_desc pport_2819_stats_desc[] = अणु
-	अणु "rx_undersize_pkts_phy", PPORT_2819_OFF(ether_stats_undersize_pkts) पूर्ण,
-	अणु "rx_fragments_phy", PPORT_2819_OFF(ether_stats_fragments) पूर्ण,
-	अणु "rx_jabbers_phy", PPORT_2819_OFF(ether_stats_jabbers) पूर्ण,
-	अणु "rx_64_bytes_phy", PPORT_2819_OFF(ether_stats_pkts64octets) पूर्ण,
-	अणु "rx_65_to_127_bytes_phy", PPORT_2819_OFF(ether_stats_pkts65to127octets) पूर्ण,
-	अणु "rx_128_to_255_bytes_phy", PPORT_2819_OFF(ether_stats_pkts128to255octets) पूर्ण,
-	अणु "rx_256_to_511_bytes_phy", PPORT_2819_OFF(ether_stats_pkts256to511octets) पूर्ण,
-	अणु "rx_512_to_1023_bytes_phy", PPORT_2819_OFF(ether_stats_pkts512to1023octets) पूर्ण,
-	अणु "rx_1024_to_1518_bytes_phy", PPORT_2819_OFF(ether_stats_pkts1024to1518octets) पूर्ण,
-	अणु "rx_1519_to_2047_bytes_phy", PPORT_2819_OFF(ether_stats_pkts1519to2047octets) पूर्ण,
-	अणु "rx_2048_to_4095_bytes_phy", PPORT_2819_OFF(ether_stats_pkts2048to4095octets) पूर्ण,
-	अणु "rx_4096_to_8191_bytes_phy", PPORT_2819_OFF(ether_stats_pkts4096to8191octets) पूर्ण,
-	अणु "rx_8192_to_10239_bytes_phy", PPORT_2819_OFF(ether_stats_pkts8192to10239octets) पूर्ण,
-पूर्ण;
+static const struct counter_desc pport_2819_stats_desc[] = {
+	{ "rx_undersize_pkts_phy", PPORT_2819_OFF(ether_stats_undersize_pkts) },
+	{ "rx_fragments_phy", PPORT_2819_OFF(ether_stats_fragments) },
+	{ "rx_jabbers_phy", PPORT_2819_OFF(ether_stats_jabbers) },
+	{ "rx_64_bytes_phy", PPORT_2819_OFF(ether_stats_pkts64octets) },
+	{ "rx_65_to_127_bytes_phy", PPORT_2819_OFF(ether_stats_pkts65to127octets) },
+	{ "rx_128_to_255_bytes_phy", PPORT_2819_OFF(ether_stats_pkts128to255octets) },
+	{ "rx_256_to_511_bytes_phy", PPORT_2819_OFF(ether_stats_pkts256to511octets) },
+	{ "rx_512_to_1023_bytes_phy", PPORT_2819_OFF(ether_stats_pkts512to1023octets) },
+	{ "rx_1024_to_1518_bytes_phy", PPORT_2819_OFF(ether_stats_pkts1024to1518octets) },
+	{ "rx_1519_to_2047_bytes_phy", PPORT_2819_OFF(ether_stats_pkts1519to2047octets) },
+	{ "rx_2048_to_4095_bytes_phy", PPORT_2819_OFF(ether_stats_pkts2048to4095octets) },
+	{ "rx_4096_to_8191_bytes_phy", PPORT_2819_OFF(ether_stats_pkts4096to8191octets) },
+	{ "rx_8192_to_10239_bytes_phy", PPORT_2819_OFF(ether_stats_pkts8192to10239octets) },
+};
 
-#घोषणा NUM_PPORT_2819_COUNTERS		ARRAY_SIZE(pport_2819_stats_desc)
+#define NUM_PPORT_2819_COUNTERS		ARRAY_SIZE(pport_2819_stats_desc)
 
-अटल MLX5E_DECLARE_STATS_GRP_OP_NUM_STATS(2819)
-अणु
-	वापस NUM_PPORT_2819_COUNTERS;
-पूर्ण
+static MLX5E_DECLARE_STATS_GRP_OP_NUM_STATS(2819)
+{
+	return NUM_PPORT_2819_COUNTERS;
+}
 
-अटल MLX5E_DECLARE_STATS_GRP_OP_FILL_STRS(2819)
-अणु
-	पूर्णांक i;
+static MLX5E_DECLARE_STATS_GRP_OP_FILL_STRS(2819)
+{
+	int i;
 
-	क्रम (i = 0; i < NUM_PPORT_2819_COUNTERS; i++)
-		म_नकल(data + (idx++) * ETH_GSTRING_LEN, pport_2819_stats_desc[i].क्रमmat);
-	वापस idx;
-पूर्ण
+	for (i = 0; i < NUM_PPORT_2819_COUNTERS; i++)
+		strcpy(data + (idx++) * ETH_GSTRING_LEN, pport_2819_stats_desc[i].format);
+	return idx;
+}
 
-अटल MLX5E_DECLARE_STATS_GRP_OP_FILL_STATS(2819)
-अणु
-	पूर्णांक i;
+static MLX5E_DECLARE_STATS_GRP_OP_FILL_STATS(2819)
+{
+	int i;
 
-	क्रम (i = 0; i < NUM_PPORT_2819_COUNTERS; i++)
+	for (i = 0; i < NUM_PPORT_2819_COUNTERS; i++)
 		data[idx++] = MLX5E_READ_CTR64_BE(&priv->stats.pport.RFC_2819_counters,
 						  pport_2819_stats_desc, i);
-	वापस idx;
-पूर्ण
+	return idx;
+}
 
-अटल MLX5E_DECLARE_STATS_GRP_OP_UPDATE_STATS(2819)
-अणु
-	काष्ठा mlx5e_pport_stats *pstats = &priv->stats.pport;
-	काष्ठा mlx5_core_dev *mdev = priv->mdev;
-	u32 in[MLX5_ST_SZ_DW(ppcnt_reg)] = अणु0पूर्ण;
-	पूर्णांक sz = MLX5_ST_SZ_BYTES(ppcnt_reg);
-	व्योम *out;
+static MLX5E_DECLARE_STATS_GRP_OP_UPDATE_STATS(2819)
+{
+	struct mlx5e_pport_stats *pstats = &priv->stats.pport;
+	struct mlx5_core_dev *mdev = priv->mdev;
+	u32 in[MLX5_ST_SZ_DW(ppcnt_reg)] = {0};
+	int sz = MLX5_ST_SZ_BYTES(ppcnt_reg);
+	void *out;
 
-	अगर (!MLX5_BASIC_PPCNT_SUPPORTED(mdev))
-		वापस;
+	if (!MLX5_BASIC_PPCNT_SUPPORTED(mdev))
+		return;
 
 	MLX5_SET(ppcnt_reg, in, local_port, 1);
 	out = pstats->RFC_2819_counters;
 	MLX5_SET(ppcnt_reg, in, grp, MLX5_RFC_2819_COUNTERS_GROUP);
 	mlx5_core_access_reg(mdev, in, sz, out, sz, MLX5_REG_PPCNT, 0, 0);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा ethtool_rmon_hist_range mlx5e_rmon_ranges[] = अणु
-	अणु    0,    64 पूर्ण,
-	अणु   65,   127 पूर्ण,
-	अणु  128,   255 पूर्ण,
-	अणु  256,   511 पूर्ण,
-	अणु  512,  1023 पूर्ण,
-	अणु 1024,  1518 पूर्ण,
-	अणु 1519,  2047 पूर्ण,
-	अणु 2048,  4095 पूर्ण,
-	अणु 4096,  8191 पूर्ण,
-	अणु 8192, 10239 पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct ethtool_rmon_hist_range mlx5e_rmon_ranges[] = {
+	{    0,    64 },
+	{   65,   127 },
+	{  128,   255 },
+	{  256,   511 },
+	{  512,  1023 },
+	{ 1024,  1518 },
+	{ 1519,  2047 },
+	{ 2048,  4095 },
+	{ 4096,  8191 },
+	{ 8192, 10239 },
+	{}
+};
 
-व्योम mlx5e_stats_rmon_get(काष्ठा mlx5e_priv *priv,
-			  काष्ठा ethtool_rmon_stats *rmon,
-			  स्थिर काष्ठा ethtool_rmon_hist_range **ranges)
-अणु
+void mlx5e_stats_rmon_get(struct mlx5e_priv *priv,
+			  struct ethtool_rmon_stats *rmon,
+			  const struct ethtool_rmon_hist_range **ranges)
+{
 	u32 ppcnt_RFC_2819_counters[MLX5_ST_SZ_DW(ppcnt_reg)];
-	काष्ठा mlx5_core_dev *mdev = priv->mdev;
-	u32 in[MLX5_ST_SZ_DW(ppcnt_reg)] = अणु0पूर्ण;
-	पूर्णांक sz = MLX5_ST_SZ_BYTES(ppcnt_reg);
+	struct mlx5_core_dev *mdev = priv->mdev;
+	u32 in[MLX5_ST_SZ_DW(ppcnt_reg)] = {0};
+	int sz = MLX5_ST_SZ_BYTES(ppcnt_reg);
 
 	MLX5_SET(ppcnt_reg, in, local_port, 1);
 	MLX5_SET(ppcnt_reg, in, grp, MLX5_RFC_2819_COUNTERS_GROUP);
-	अगर (mlx5_core_access_reg(mdev, in, sz, ppcnt_RFC_2819_counters,
+	if (mlx5_core_access_reg(mdev, in, sz, ppcnt_RFC_2819_counters,
 				 sz, MLX5_REG_PPCNT, 0, 0))
-		वापस;
+		return;
 
-#घोषणा RD(name)						\
+#define RD(name)						\
 	MLX5E_READ_CTR64_BE_F(ppcnt_RFC_2819_counters,		\
 			      eth_2819_cntrs_grp_data_layout,	\
 			      name)
@@ -1036,38 +1035,38 @@
 	rmon->hist[7]		= RD(ether_stats_pkts2048to4095octets);
 	rmon->hist[8]		= RD(ether_stats_pkts4096to8191octets);
 	rmon->hist[9]		= RD(ether_stats_pkts8192to10239octets);
-#अघोषित RD
+#undef RD
 
 	*ranges = mlx5e_rmon_ranges;
-पूर्ण
+}
 
-#घोषणा PPORT_PHY_STATISTICAL_OFF(c) \
+#define PPORT_PHY_STATISTICAL_OFF(c) \
 	MLX5_BYTE_OFF(ppcnt_reg, \
 		      counter_set.phys_layer_statistical_cntrs.c##_high)
-अटल स्थिर काष्ठा counter_desc pport_phy_statistical_stats_desc[] = अणु
-	अणु "rx_pcs_symbol_err_phy", PPORT_PHY_STATISTICAL_OFF(phy_symbol_errors) पूर्ण,
-	अणु "rx_corrected_bits_phy", PPORT_PHY_STATISTICAL_OFF(phy_corrected_bits) पूर्ण,
-पूर्ण;
+static const struct counter_desc pport_phy_statistical_stats_desc[] = {
+	{ "rx_pcs_symbol_err_phy", PPORT_PHY_STATISTICAL_OFF(phy_symbol_errors) },
+	{ "rx_corrected_bits_phy", PPORT_PHY_STATISTICAL_OFF(phy_corrected_bits) },
+};
 
-अटल स्थिर काष्ठा counter_desc
-pport_phy_statistical_err_lanes_stats_desc[] = अणु
-	अणु "rx_err_lane_0_phy", PPORT_PHY_STATISTICAL_OFF(phy_corrected_bits_lane0) पूर्ण,
-	अणु "rx_err_lane_1_phy", PPORT_PHY_STATISTICAL_OFF(phy_corrected_bits_lane1) पूर्ण,
-	अणु "rx_err_lane_2_phy", PPORT_PHY_STATISTICAL_OFF(phy_corrected_bits_lane2) पूर्ण,
-	अणु "rx_err_lane_3_phy", PPORT_PHY_STATISTICAL_OFF(phy_corrected_bits_lane3) पूर्ण,
-पूर्ण;
+static const struct counter_desc
+pport_phy_statistical_err_lanes_stats_desc[] = {
+	{ "rx_err_lane_0_phy", PPORT_PHY_STATISTICAL_OFF(phy_corrected_bits_lane0) },
+	{ "rx_err_lane_1_phy", PPORT_PHY_STATISTICAL_OFF(phy_corrected_bits_lane1) },
+	{ "rx_err_lane_2_phy", PPORT_PHY_STATISTICAL_OFF(phy_corrected_bits_lane2) },
+	{ "rx_err_lane_3_phy", PPORT_PHY_STATISTICAL_OFF(phy_corrected_bits_lane3) },
+};
 
-#घोषणा NUM_PPORT_PHY_STATISTICAL_COUNTERS \
+#define NUM_PPORT_PHY_STATISTICAL_COUNTERS \
 	ARRAY_SIZE(pport_phy_statistical_stats_desc)
-#घोषणा NUM_PPORT_PHY_STATISTICAL_PER_LANE_COUNTERS \
+#define NUM_PPORT_PHY_STATISTICAL_PER_LANE_COUNTERS \
 	ARRAY_SIZE(pport_phy_statistical_err_lanes_stats_desc)
 
-अटल MLX5E_DECLARE_STATS_GRP_OP_NUM_STATS(phy)
-अणु
-	काष्ठा mlx5_core_dev *mdev = priv->mdev;
-	पूर्णांक num_stats;
+static MLX5E_DECLARE_STATS_GRP_OP_NUM_STATS(phy)
+{
+	struct mlx5_core_dev *mdev = priv->mdev;
+	int num_stats;
 
-	/* "1" क्रम link_करोwn_events special counter */
+	/* "1" for link_down_events special counter */
 	num_stats = 1;
 
 	num_stats += MLX5_CAP_PCAM_FEATURE(mdev, ppcnt_statistical_group) ?
@@ -1076,1152 +1075,1152 @@ pport_phy_statistical_err_lanes_stats_desc[] = अणु
 	num_stats += MLX5_CAP_PCAM_FEATURE(mdev, per_lane_error_counters) ?
 		     NUM_PPORT_PHY_STATISTICAL_PER_LANE_COUNTERS : 0;
 
-	वापस num_stats;
-पूर्ण
+	return num_stats;
+}
 
-अटल MLX5E_DECLARE_STATS_GRP_OP_FILL_STRS(phy)
-अणु
-	काष्ठा mlx5_core_dev *mdev = priv->mdev;
-	पूर्णांक i;
+static MLX5E_DECLARE_STATS_GRP_OP_FILL_STRS(phy)
+{
+	struct mlx5_core_dev *mdev = priv->mdev;
+	int i;
 
-	म_नकल(data + (idx++) * ETH_GSTRING_LEN, "link_down_events_phy");
+	strcpy(data + (idx++) * ETH_GSTRING_LEN, "link_down_events_phy");
 
-	अगर (!MLX5_CAP_PCAM_FEATURE(mdev, ppcnt_statistical_group))
-		वापस idx;
+	if (!MLX5_CAP_PCAM_FEATURE(mdev, ppcnt_statistical_group))
+		return idx;
 
-	क्रम (i = 0; i < NUM_PPORT_PHY_STATISTICAL_COUNTERS; i++)
-		म_नकल(data + (idx++) * ETH_GSTRING_LEN,
-		       pport_phy_statistical_stats_desc[i].क्रमmat);
+	for (i = 0; i < NUM_PPORT_PHY_STATISTICAL_COUNTERS; i++)
+		strcpy(data + (idx++) * ETH_GSTRING_LEN,
+		       pport_phy_statistical_stats_desc[i].format);
 
-	अगर (MLX5_CAP_PCAM_FEATURE(mdev, per_lane_error_counters))
-		क्रम (i = 0; i < NUM_PPORT_PHY_STATISTICAL_PER_LANE_COUNTERS; i++)
-			म_नकल(data + (idx++) * ETH_GSTRING_LEN,
-			       pport_phy_statistical_err_lanes_stats_desc[i].क्रमmat);
+	if (MLX5_CAP_PCAM_FEATURE(mdev, per_lane_error_counters))
+		for (i = 0; i < NUM_PPORT_PHY_STATISTICAL_PER_LANE_COUNTERS; i++)
+			strcpy(data + (idx++) * ETH_GSTRING_LEN,
+			       pport_phy_statistical_err_lanes_stats_desc[i].format);
 
-	वापस idx;
-पूर्ण
+	return idx;
+}
 
-अटल MLX5E_DECLARE_STATS_GRP_OP_FILL_STATS(phy)
-अणु
-	काष्ठा mlx5_core_dev *mdev = priv->mdev;
-	पूर्णांक i;
+static MLX5E_DECLARE_STATS_GRP_OP_FILL_STATS(phy)
+{
+	struct mlx5_core_dev *mdev = priv->mdev;
+	int i;
 
-	/* link_करोwn_events_phy has special handling since it is not stored in __be64 क्रमmat */
+	/* link_down_events_phy has special handling since it is not stored in __be64 format */
 	data[idx++] = MLX5_GET(ppcnt_reg, priv->stats.pport.phy_counters,
-			       counter_set.phys_layer_cntrs.link_करोwn_events);
+			       counter_set.phys_layer_cntrs.link_down_events);
 
-	अगर (!MLX5_CAP_PCAM_FEATURE(mdev, ppcnt_statistical_group))
-		वापस idx;
+	if (!MLX5_CAP_PCAM_FEATURE(mdev, ppcnt_statistical_group))
+		return idx;
 
-	क्रम (i = 0; i < NUM_PPORT_PHY_STATISTICAL_COUNTERS; i++)
+	for (i = 0; i < NUM_PPORT_PHY_STATISTICAL_COUNTERS; i++)
 		data[idx++] =
 			MLX5E_READ_CTR64_BE(&priv->stats.pport.phy_statistical_counters,
 					    pport_phy_statistical_stats_desc, i);
 
-	अगर (MLX5_CAP_PCAM_FEATURE(mdev, per_lane_error_counters))
-		क्रम (i = 0; i < NUM_PPORT_PHY_STATISTICAL_PER_LANE_COUNTERS; i++)
+	if (MLX5_CAP_PCAM_FEATURE(mdev, per_lane_error_counters))
+		for (i = 0; i < NUM_PPORT_PHY_STATISTICAL_PER_LANE_COUNTERS; i++)
 			data[idx++] =
 				MLX5E_READ_CTR64_BE(&priv->stats.pport.phy_statistical_counters,
 						    pport_phy_statistical_err_lanes_stats_desc,
 						    i);
-	वापस idx;
-पूर्ण
+	return idx;
+}
 
-अटल MLX5E_DECLARE_STATS_GRP_OP_UPDATE_STATS(phy)
-अणु
-	काष्ठा mlx5e_pport_stats *pstats = &priv->stats.pport;
-	काष्ठा mlx5_core_dev *mdev = priv->mdev;
-	u32 in[MLX5_ST_SZ_DW(ppcnt_reg)] = अणु0पूर्ण;
-	पूर्णांक sz = MLX5_ST_SZ_BYTES(ppcnt_reg);
-	व्योम *out;
+static MLX5E_DECLARE_STATS_GRP_OP_UPDATE_STATS(phy)
+{
+	struct mlx5e_pport_stats *pstats = &priv->stats.pport;
+	struct mlx5_core_dev *mdev = priv->mdev;
+	u32 in[MLX5_ST_SZ_DW(ppcnt_reg)] = {0};
+	int sz = MLX5_ST_SZ_BYTES(ppcnt_reg);
+	void *out;
 
 	MLX5_SET(ppcnt_reg, in, local_port, 1);
 	out = pstats->phy_counters;
 	MLX5_SET(ppcnt_reg, in, grp, MLX5_PHYSICAL_LAYER_COUNTERS_GROUP);
 	mlx5_core_access_reg(mdev, in, sz, out, sz, MLX5_REG_PPCNT, 0, 0);
 
-	अगर (!MLX5_CAP_PCAM_FEATURE(mdev, ppcnt_statistical_group))
-		वापस;
+	if (!MLX5_CAP_PCAM_FEATURE(mdev, ppcnt_statistical_group))
+		return;
 
 	out = pstats->phy_statistical_counters;
 	MLX5_SET(ppcnt_reg, in, grp, MLX5_PHYSICAL_LAYER_STATISTICAL_GROUP);
 	mlx5_core_access_reg(mdev, in, sz, out, sz, MLX5_REG_PPCNT, 0, 0);
-पूर्ण
+}
 
-व्योम mlx5e_stats_fec_get(काष्ठा mlx5e_priv *priv,
-			 काष्ठा ethtool_fec_stats *fec_stats)
-अणु
+void mlx5e_stats_fec_get(struct mlx5e_priv *priv,
+			 struct ethtool_fec_stats *fec_stats)
+{
 	u32 ppcnt_phy_statistical[MLX5_ST_SZ_DW(ppcnt_reg)];
-	काष्ठा mlx5_core_dev *mdev = priv->mdev;
-	u32 in[MLX5_ST_SZ_DW(ppcnt_reg)] = अणु0पूर्ण;
-	पूर्णांक sz = MLX5_ST_SZ_BYTES(ppcnt_reg);
+	struct mlx5_core_dev *mdev = priv->mdev;
+	u32 in[MLX5_ST_SZ_DW(ppcnt_reg)] = {0};
+	int sz = MLX5_ST_SZ_BYTES(ppcnt_reg);
 
-	अगर (!MLX5_CAP_PCAM_FEATURE(mdev, ppcnt_statistical_group))
-		वापस;
+	if (!MLX5_CAP_PCAM_FEATURE(mdev, ppcnt_statistical_group))
+		return;
 
 	MLX5_SET(ppcnt_reg, in, local_port, 1);
 	MLX5_SET(ppcnt_reg, in, grp, MLX5_PHYSICAL_LAYER_STATISTICAL_GROUP);
-	अगर (mlx5_core_access_reg(mdev, in, sz, ppcnt_phy_statistical,
+	if (mlx5_core_access_reg(mdev, in, sz, ppcnt_phy_statistical,
 				 sz, MLX5_REG_PPCNT, 0, 0))
-		वापस;
+		return;
 
 	fec_stats->corrected_bits.total =
 		MLX5E_READ_CTR64_BE_F(ppcnt_phy_statistical,
 				      phys_layer_statistical_cntrs,
 				      phy_corrected_bits);
-पूर्ण
+}
 
-#घोषणा PPORT_ETH_EXT_OFF(c) \
+#define PPORT_ETH_EXT_OFF(c) \
 	MLX5_BYTE_OFF(ppcnt_reg, \
 		      counter_set.eth_extended_cntrs_grp_data_layout.c##_high)
-अटल स्थिर काष्ठा counter_desc pport_eth_ext_stats_desc[] = अणु
-	अणु "rx_buffer_passed_thres_phy", PPORT_ETH_EXT_OFF(rx_buffer_almost_full) पूर्ण,
-पूर्ण;
+static const struct counter_desc pport_eth_ext_stats_desc[] = {
+	{ "rx_buffer_passed_thres_phy", PPORT_ETH_EXT_OFF(rx_buffer_almost_full) },
+};
 
-#घोषणा NUM_PPORT_ETH_EXT_COUNTERS	ARRAY_SIZE(pport_eth_ext_stats_desc)
+#define NUM_PPORT_ETH_EXT_COUNTERS	ARRAY_SIZE(pport_eth_ext_stats_desc)
 
-अटल MLX5E_DECLARE_STATS_GRP_OP_NUM_STATS(eth_ext)
-अणु
-	अगर (MLX5_CAP_PCAM_FEATURE((priv)->mdev, rx_buffer_fullness_counters))
-		वापस NUM_PPORT_ETH_EXT_COUNTERS;
+static MLX5E_DECLARE_STATS_GRP_OP_NUM_STATS(eth_ext)
+{
+	if (MLX5_CAP_PCAM_FEATURE((priv)->mdev, rx_buffer_fullness_counters))
+		return NUM_PPORT_ETH_EXT_COUNTERS;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल MLX5E_DECLARE_STATS_GRP_OP_FILL_STRS(eth_ext)
-अणु
-	पूर्णांक i;
+static MLX5E_DECLARE_STATS_GRP_OP_FILL_STRS(eth_ext)
+{
+	int i;
 
-	अगर (MLX5_CAP_PCAM_FEATURE((priv)->mdev, rx_buffer_fullness_counters))
-		क्रम (i = 0; i < NUM_PPORT_ETH_EXT_COUNTERS; i++)
-			म_नकल(data + (idx++) * ETH_GSTRING_LEN,
-			       pport_eth_ext_stats_desc[i].क्रमmat);
-	वापस idx;
-पूर्ण
+	if (MLX5_CAP_PCAM_FEATURE((priv)->mdev, rx_buffer_fullness_counters))
+		for (i = 0; i < NUM_PPORT_ETH_EXT_COUNTERS; i++)
+			strcpy(data + (idx++) * ETH_GSTRING_LEN,
+			       pport_eth_ext_stats_desc[i].format);
+	return idx;
+}
 
-अटल MLX5E_DECLARE_STATS_GRP_OP_FILL_STATS(eth_ext)
-अणु
-	पूर्णांक i;
+static MLX5E_DECLARE_STATS_GRP_OP_FILL_STATS(eth_ext)
+{
+	int i;
 
-	अगर (MLX5_CAP_PCAM_FEATURE((priv)->mdev, rx_buffer_fullness_counters))
-		क्रम (i = 0; i < NUM_PPORT_ETH_EXT_COUNTERS; i++)
+	if (MLX5_CAP_PCAM_FEATURE((priv)->mdev, rx_buffer_fullness_counters))
+		for (i = 0; i < NUM_PPORT_ETH_EXT_COUNTERS; i++)
 			data[idx++] =
 				MLX5E_READ_CTR64_BE(&priv->stats.pport.eth_ext_counters,
 						    pport_eth_ext_stats_desc, i);
-	वापस idx;
-पूर्ण
+	return idx;
+}
 
-अटल MLX5E_DECLARE_STATS_GRP_OP_UPDATE_STATS(eth_ext)
-अणु
-	काष्ठा mlx5e_pport_stats *pstats = &priv->stats.pport;
-	काष्ठा mlx5_core_dev *mdev = priv->mdev;
-	u32 in[MLX5_ST_SZ_DW(ppcnt_reg)] = अणु0पूर्ण;
-	पूर्णांक sz = MLX5_ST_SZ_BYTES(ppcnt_reg);
-	व्योम *out;
+static MLX5E_DECLARE_STATS_GRP_OP_UPDATE_STATS(eth_ext)
+{
+	struct mlx5e_pport_stats *pstats = &priv->stats.pport;
+	struct mlx5_core_dev *mdev = priv->mdev;
+	u32 in[MLX5_ST_SZ_DW(ppcnt_reg)] = {0};
+	int sz = MLX5_ST_SZ_BYTES(ppcnt_reg);
+	void *out;
 
-	अगर (!MLX5_CAP_PCAM_FEATURE(mdev, rx_buffer_fullness_counters))
-		वापस;
+	if (!MLX5_CAP_PCAM_FEATURE(mdev, rx_buffer_fullness_counters))
+		return;
 
 	MLX5_SET(ppcnt_reg, in, local_port, 1);
 	out = pstats->eth_ext_counters;
 	MLX5_SET(ppcnt_reg, in, grp, MLX5_ETHERNET_EXTENDED_COUNTERS_GROUP);
 	mlx5_core_access_reg(mdev, in, sz, out, sz, MLX5_REG_PPCNT, 0, 0);
-पूर्ण
+}
 
-#घोषणा PCIE_PERF_OFF(c) \
+#define PCIE_PERF_OFF(c) \
 	MLX5_BYTE_OFF(mpcnt_reg, counter_set.pcie_perf_cntrs_grp_data_layout.c)
-अटल स्थिर काष्ठा counter_desc pcie_perf_stats_desc[] = अणु
-	अणु "rx_pci_signal_integrity", PCIE_PERF_OFF(rx_errors) पूर्ण,
-	अणु "tx_pci_signal_integrity", PCIE_PERF_OFF(tx_errors) पूर्ण,
-पूर्ण;
+static const struct counter_desc pcie_perf_stats_desc[] = {
+	{ "rx_pci_signal_integrity", PCIE_PERF_OFF(rx_errors) },
+	{ "tx_pci_signal_integrity", PCIE_PERF_OFF(tx_errors) },
+};
 
-#घोषणा PCIE_PERF_OFF64(c) \
+#define PCIE_PERF_OFF64(c) \
 	MLX5_BYTE_OFF(mpcnt_reg, counter_set.pcie_perf_cntrs_grp_data_layout.c##_high)
-अटल स्थिर काष्ठा counter_desc pcie_perf_stats_desc64[] = अणु
-	अणु "outbound_pci_buffer_overflow", PCIE_PERF_OFF64(tx_overflow_buffer_pkt) पूर्ण,
-पूर्ण;
+static const struct counter_desc pcie_perf_stats_desc64[] = {
+	{ "outbound_pci_buffer_overflow", PCIE_PERF_OFF64(tx_overflow_buffer_pkt) },
+};
 
-अटल स्थिर काष्ठा counter_desc pcie_perf_stall_stats_desc[] = अणु
-	अणु "outbound_pci_stalled_rd", PCIE_PERF_OFF(outbound_stalled_पढ़ोs) पूर्ण,
-	अणु "outbound_pci_stalled_wr", PCIE_PERF_OFF(outbound_stalled_ग_लिखोs) पूर्ण,
-	अणु "outbound_pci_stalled_rd_events", PCIE_PERF_OFF(outbound_stalled_पढ़ोs_events) पूर्ण,
-	अणु "outbound_pci_stalled_wr_events", PCIE_PERF_OFF(outbound_stalled_ग_लिखोs_events) पूर्ण,
-पूर्ण;
+static const struct counter_desc pcie_perf_stall_stats_desc[] = {
+	{ "outbound_pci_stalled_rd", PCIE_PERF_OFF(outbound_stalled_reads) },
+	{ "outbound_pci_stalled_wr", PCIE_PERF_OFF(outbound_stalled_writes) },
+	{ "outbound_pci_stalled_rd_events", PCIE_PERF_OFF(outbound_stalled_reads_events) },
+	{ "outbound_pci_stalled_wr_events", PCIE_PERF_OFF(outbound_stalled_writes_events) },
+};
 
-#घोषणा NUM_PCIE_PERF_COUNTERS		ARRAY_SIZE(pcie_perf_stats_desc)
-#घोषणा NUM_PCIE_PERF_COUNTERS64	ARRAY_SIZE(pcie_perf_stats_desc64)
-#घोषणा NUM_PCIE_PERF_STALL_COUNTERS	ARRAY_SIZE(pcie_perf_stall_stats_desc)
+#define NUM_PCIE_PERF_COUNTERS		ARRAY_SIZE(pcie_perf_stats_desc)
+#define NUM_PCIE_PERF_COUNTERS64	ARRAY_SIZE(pcie_perf_stats_desc64)
+#define NUM_PCIE_PERF_STALL_COUNTERS	ARRAY_SIZE(pcie_perf_stall_stats_desc)
 
-अटल MLX5E_DECLARE_STATS_GRP_OP_NUM_STATS(pcie)
-अणु
-	पूर्णांक num_stats = 0;
+static MLX5E_DECLARE_STATS_GRP_OP_NUM_STATS(pcie)
+{
+	int num_stats = 0;
 
-	अगर (MLX5_CAP_MCAM_FEATURE((priv)->mdev, pcie_perक्रमmance_group))
+	if (MLX5_CAP_MCAM_FEATURE((priv)->mdev, pcie_performance_group))
 		num_stats += NUM_PCIE_PERF_COUNTERS;
 
-	अगर (MLX5_CAP_MCAM_FEATURE((priv)->mdev, tx_overflow_buffer_pkt))
+	if (MLX5_CAP_MCAM_FEATURE((priv)->mdev, tx_overflow_buffer_pkt))
 		num_stats += NUM_PCIE_PERF_COUNTERS64;
 
-	अगर (MLX5_CAP_MCAM_FEATURE((priv)->mdev, pcie_outbound_stalled))
+	if (MLX5_CAP_MCAM_FEATURE((priv)->mdev, pcie_outbound_stalled))
 		num_stats += NUM_PCIE_PERF_STALL_COUNTERS;
 
-	वापस num_stats;
-पूर्ण
+	return num_stats;
+}
 
-अटल MLX5E_DECLARE_STATS_GRP_OP_FILL_STRS(pcie)
-अणु
-	पूर्णांक i;
+static MLX5E_DECLARE_STATS_GRP_OP_FILL_STRS(pcie)
+{
+	int i;
 
-	अगर (MLX5_CAP_MCAM_FEATURE((priv)->mdev, pcie_perक्रमmance_group))
-		क्रम (i = 0; i < NUM_PCIE_PERF_COUNTERS; i++)
-			म_नकल(data + (idx++) * ETH_GSTRING_LEN,
-			       pcie_perf_stats_desc[i].क्रमmat);
+	if (MLX5_CAP_MCAM_FEATURE((priv)->mdev, pcie_performance_group))
+		for (i = 0; i < NUM_PCIE_PERF_COUNTERS; i++)
+			strcpy(data + (idx++) * ETH_GSTRING_LEN,
+			       pcie_perf_stats_desc[i].format);
 
-	अगर (MLX5_CAP_MCAM_FEATURE((priv)->mdev, tx_overflow_buffer_pkt))
-		क्रम (i = 0; i < NUM_PCIE_PERF_COUNTERS64; i++)
-			म_नकल(data + (idx++) * ETH_GSTRING_LEN,
-			       pcie_perf_stats_desc64[i].क्रमmat);
+	if (MLX5_CAP_MCAM_FEATURE((priv)->mdev, tx_overflow_buffer_pkt))
+		for (i = 0; i < NUM_PCIE_PERF_COUNTERS64; i++)
+			strcpy(data + (idx++) * ETH_GSTRING_LEN,
+			       pcie_perf_stats_desc64[i].format);
 
-	अगर (MLX5_CAP_MCAM_FEATURE((priv)->mdev, pcie_outbound_stalled))
-		क्रम (i = 0; i < NUM_PCIE_PERF_STALL_COUNTERS; i++)
-			म_नकल(data + (idx++) * ETH_GSTRING_LEN,
-			       pcie_perf_stall_stats_desc[i].क्रमmat);
-	वापस idx;
-पूर्ण
+	if (MLX5_CAP_MCAM_FEATURE((priv)->mdev, pcie_outbound_stalled))
+		for (i = 0; i < NUM_PCIE_PERF_STALL_COUNTERS; i++)
+			strcpy(data + (idx++) * ETH_GSTRING_LEN,
+			       pcie_perf_stall_stats_desc[i].format);
+	return idx;
+}
 
-अटल MLX5E_DECLARE_STATS_GRP_OP_FILL_STATS(pcie)
-अणु
-	पूर्णांक i;
+static MLX5E_DECLARE_STATS_GRP_OP_FILL_STATS(pcie)
+{
+	int i;
 
-	अगर (MLX5_CAP_MCAM_FEATURE((priv)->mdev, pcie_perक्रमmance_group))
-		क्रम (i = 0; i < NUM_PCIE_PERF_COUNTERS; i++)
+	if (MLX5_CAP_MCAM_FEATURE((priv)->mdev, pcie_performance_group))
+		for (i = 0; i < NUM_PCIE_PERF_COUNTERS; i++)
 			data[idx++] =
 				MLX5E_READ_CTR32_BE(&priv->stats.pcie.pcie_perf_counters,
 						    pcie_perf_stats_desc, i);
 
-	अगर (MLX5_CAP_MCAM_FEATURE((priv)->mdev, tx_overflow_buffer_pkt))
-		क्रम (i = 0; i < NUM_PCIE_PERF_COUNTERS64; i++)
+	if (MLX5_CAP_MCAM_FEATURE((priv)->mdev, tx_overflow_buffer_pkt))
+		for (i = 0; i < NUM_PCIE_PERF_COUNTERS64; i++)
 			data[idx++] =
 				MLX5E_READ_CTR64_BE(&priv->stats.pcie.pcie_perf_counters,
 						    pcie_perf_stats_desc64, i);
 
-	अगर (MLX5_CAP_MCAM_FEATURE((priv)->mdev, pcie_outbound_stalled))
-		क्रम (i = 0; i < NUM_PCIE_PERF_STALL_COUNTERS; i++)
+	if (MLX5_CAP_MCAM_FEATURE((priv)->mdev, pcie_outbound_stalled))
+		for (i = 0; i < NUM_PCIE_PERF_STALL_COUNTERS; i++)
 			data[idx++] =
 				MLX5E_READ_CTR32_BE(&priv->stats.pcie.pcie_perf_counters,
 						    pcie_perf_stall_stats_desc, i);
-	वापस idx;
-पूर्ण
+	return idx;
+}
 
-अटल MLX5E_DECLARE_STATS_GRP_OP_UPDATE_STATS(pcie)
-अणु
-	काष्ठा mlx5e_pcie_stats *pcie_stats = &priv->stats.pcie;
-	काष्ठा mlx5_core_dev *mdev = priv->mdev;
-	u32 in[MLX5_ST_SZ_DW(mpcnt_reg)] = अणु0पूर्ण;
-	पूर्णांक sz = MLX5_ST_SZ_BYTES(mpcnt_reg);
-	व्योम *out;
+static MLX5E_DECLARE_STATS_GRP_OP_UPDATE_STATS(pcie)
+{
+	struct mlx5e_pcie_stats *pcie_stats = &priv->stats.pcie;
+	struct mlx5_core_dev *mdev = priv->mdev;
+	u32 in[MLX5_ST_SZ_DW(mpcnt_reg)] = {0};
+	int sz = MLX5_ST_SZ_BYTES(mpcnt_reg);
+	void *out;
 
-	अगर (!MLX5_CAP_MCAM_FEATURE(mdev, pcie_perक्रमmance_group))
-		वापस;
+	if (!MLX5_CAP_MCAM_FEATURE(mdev, pcie_performance_group))
+		return;
 
 	out = pcie_stats->pcie_perf_counters;
 	MLX5_SET(mpcnt_reg, in, grp, MLX5_PCIE_PERFORMANCE_COUNTERS_GROUP);
 	mlx5_core_access_reg(mdev, in, sz, out, sz, MLX5_REG_MPCNT, 0, 0);
-पूर्ण
+}
 
-#घोषणा PPORT_PER_TC_PRIO_OFF(c) \
+#define PPORT_PER_TC_PRIO_OFF(c) \
 	MLX5_BYTE_OFF(ppcnt_reg, \
 		      counter_set.eth_per_tc_prio_grp_data_layout.c##_high)
 
-अटल स्थिर काष्ठा counter_desc pport_per_tc_prio_stats_desc[] = अणु
-	अणु "rx_prio%d_buf_discard", PPORT_PER_TC_PRIO_OFF(no_buffer_discard_uc) पूर्ण,
-पूर्ण;
+static const struct counter_desc pport_per_tc_prio_stats_desc[] = {
+	{ "rx_prio%d_buf_discard", PPORT_PER_TC_PRIO_OFF(no_buffer_discard_uc) },
+};
 
-#घोषणा NUM_PPORT_PER_TC_PRIO_COUNTERS	ARRAY_SIZE(pport_per_tc_prio_stats_desc)
+#define NUM_PPORT_PER_TC_PRIO_COUNTERS	ARRAY_SIZE(pport_per_tc_prio_stats_desc)
 
-#घोषणा PPORT_PER_TC_CONGEST_PRIO_OFF(c) \
+#define PPORT_PER_TC_CONGEST_PRIO_OFF(c) \
 	MLX5_BYTE_OFF(ppcnt_reg, \
 		      counter_set.eth_per_tc_congest_prio_grp_data_layout.c##_high)
 
-अटल स्थिर काष्ठा counter_desc pport_per_tc_congest_prio_stats_desc[] = अणु
-	अणु "rx_prio%d_cong_discard", PPORT_PER_TC_CONGEST_PRIO_OFF(wred_discard) पूर्ण,
-	अणु "rx_prio%d_marked", PPORT_PER_TC_CONGEST_PRIO_OFF(ecn_marked_tc) पूर्ण,
-पूर्ण;
+static const struct counter_desc pport_per_tc_congest_prio_stats_desc[] = {
+	{ "rx_prio%d_cong_discard", PPORT_PER_TC_CONGEST_PRIO_OFF(wred_discard) },
+	{ "rx_prio%d_marked", PPORT_PER_TC_CONGEST_PRIO_OFF(ecn_marked_tc) },
+};
 
-#घोषणा NUM_PPORT_PER_TC_CONGEST_PRIO_COUNTERS \
+#define NUM_PPORT_PER_TC_CONGEST_PRIO_COUNTERS \
 	ARRAY_SIZE(pport_per_tc_congest_prio_stats_desc)
 
-अटल पूर्णांक mlx5e_grp_per_tc_prio_get_num_stats(काष्ठा mlx5e_priv *priv)
-अणु
-	काष्ठा mlx5_core_dev *mdev = priv->mdev;
+static int mlx5e_grp_per_tc_prio_get_num_stats(struct mlx5e_priv *priv)
+{
+	struct mlx5_core_dev *mdev = priv->mdev;
 
-	अगर (!MLX5_CAP_GEN(mdev, sbcam_reg))
-		वापस 0;
+	if (!MLX5_CAP_GEN(mdev, sbcam_reg))
+		return 0;
 
-	वापस NUM_PPORT_PER_TC_PRIO_COUNTERS * NUM_PPORT_PRIO;
-पूर्ण
+	return NUM_PPORT_PER_TC_PRIO_COUNTERS * NUM_PPORT_PRIO;
+}
 
-अटल MLX5E_DECLARE_STATS_GRP_OP_FILL_STRS(per_port_buff_congest)
-अणु
-	काष्ठा mlx5_core_dev *mdev = priv->mdev;
-	पूर्णांक i, prio;
+static MLX5E_DECLARE_STATS_GRP_OP_FILL_STRS(per_port_buff_congest)
+{
+	struct mlx5_core_dev *mdev = priv->mdev;
+	int i, prio;
 
-	अगर (!MLX5_CAP_GEN(mdev, sbcam_reg))
-		वापस idx;
+	if (!MLX5_CAP_GEN(mdev, sbcam_reg))
+		return idx;
 
-	क्रम (prio = 0; prio < NUM_PPORT_PRIO; prio++) अणु
-		क्रम (i = 0; i < NUM_PPORT_PER_TC_PRIO_COUNTERS; i++)
-			प्र_लिखो(data + (idx++) * ETH_GSTRING_LEN,
-				pport_per_tc_prio_stats_desc[i].क्रमmat, prio);
-		क्रम (i = 0; i < NUM_PPORT_PER_TC_CONGEST_PRIO_COUNTERS; i++)
-			प्र_लिखो(data + (idx++) * ETH_GSTRING_LEN,
-				pport_per_tc_congest_prio_stats_desc[i].क्रमmat, prio);
-	पूर्ण
+	for (prio = 0; prio < NUM_PPORT_PRIO; prio++) {
+		for (i = 0; i < NUM_PPORT_PER_TC_PRIO_COUNTERS; i++)
+			sprintf(data + (idx++) * ETH_GSTRING_LEN,
+				pport_per_tc_prio_stats_desc[i].format, prio);
+		for (i = 0; i < NUM_PPORT_PER_TC_CONGEST_PRIO_COUNTERS; i++)
+			sprintf(data + (idx++) * ETH_GSTRING_LEN,
+				pport_per_tc_congest_prio_stats_desc[i].format, prio);
+	}
 
-	वापस idx;
-पूर्ण
+	return idx;
+}
 
-अटल MLX5E_DECLARE_STATS_GRP_OP_FILL_STATS(per_port_buff_congest)
-अणु
-	काष्ठा mlx5e_pport_stats *pport = &priv->stats.pport;
-	काष्ठा mlx5_core_dev *mdev = priv->mdev;
-	पूर्णांक i, prio;
+static MLX5E_DECLARE_STATS_GRP_OP_FILL_STATS(per_port_buff_congest)
+{
+	struct mlx5e_pport_stats *pport = &priv->stats.pport;
+	struct mlx5_core_dev *mdev = priv->mdev;
+	int i, prio;
 
-	अगर (!MLX5_CAP_GEN(mdev, sbcam_reg))
-		वापस idx;
+	if (!MLX5_CAP_GEN(mdev, sbcam_reg))
+		return idx;
 
-	क्रम (prio = 0; prio < NUM_PPORT_PRIO; prio++) अणु
-		क्रम (i = 0; i < NUM_PPORT_PER_TC_PRIO_COUNTERS; i++)
+	for (prio = 0; prio < NUM_PPORT_PRIO; prio++) {
+		for (i = 0; i < NUM_PPORT_PER_TC_PRIO_COUNTERS; i++)
 			data[idx++] =
 				MLX5E_READ_CTR64_BE(&pport->per_tc_prio_counters[prio],
 						    pport_per_tc_prio_stats_desc, i);
-		क्रम (i = 0; i < NUM_PPORT_PER_TC_CONGEST_PRIO_COUNTERS ; i++)
+		for (i = 0; i < NUM_PPORT_PER_TC_CONGEST_PRIO_COUNTERS ; i++)
 			data[idx++] =
 				MLX5E_READ_CTR64_BE(&pport->per_tc_congest_prio_counters[prio],
 						    pport_per_tc_congest_prio_stats_desc, i);
-	पूर्ण
+	}
 
-	वापस idx;
-पूर्ण
+	return idx;
+}
 
-अटल व्योम mlx5e_grp_per_tc_prio_update_stats(काष्ठा mlx5e_priv *priv)
-अणु
-	काष्ठा mlx5e_pport_stats *pstats = &priv->stats.pport;
-	काष्ठा mlx5_core_dev *mdev = priv->mdev;
-	u32 in[MLX5_ST_SZ_DW(ppcnt_reg)] = अणुपूर्ण;
-	पूर्णांक sz = MLX5_ST_SZ_BYTES(ppcnt_reg);
-	व्योम *out;
-	पूर्णांक prio;
+static void mlx5e_grp_per_tc_prio_update_stats(struct mlx5e_priv *priv)
+{
+	struct mlx5e_pport_stats *pstats = &priv->stats.pport;
+	struct mlx5_core_dev *mdev = priv->mdev;
+	u32 in[MLX5_ST_SZ_DW(ppcnt_reg)] = {};
+	int sz = MLX5_ST_SZ_BYTES(ppcnt_reg);
+	void *out;
+	int prio;
 
-	अगर (!MLX5_CAP_GEN(mdev, sbcam_reg))
-		वापस;
+	if (!MLX5_CAP_GEN(mdev, sbcam_reg))
+		return;
 
 	MLX5_SET(ppcnt_reg, in, pnat, 2);
 	MLX5_SET(ppcnt_reg, in, grp, MLX5_PER_TRAFFIC_CLASS_COUNTERS_GROUP);
-	क्रम (prio = 0; prio < NUM_PPORT_PRIO; prio++) अणु
+	for (prio = 0; prio < NUM_PPORT_PRIO; prio++) {
 		out = pstats->per_tc_prio_counters[prio];
 		MLX5_SET(ppcnt_reg, in, prio_tc, prio);
 		mlx5_core_access_reg(mdev, in, sz, out, sz, MLX5_REG_PPCNT, 0, 0);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक mlx5e_grp_per_tc_congest_prio_get_num_stats(काष्ठा mlx5e_priv *priv)
-अणु
-	काष्ठा mlx5_core_dev *mdev = priv->mdev;
+static int mlx5e_grp_per_tc_congest_prio_get_num_stats(struct mlx5e_priv *priv)
+{
+	struct mlx5_core_dev *mdev = priv->mdev;
 
-	अगर (!MLX5_CAP_GEN(mdev, sbcam_reg))
-		वापस 0;
+	if (!MLX5_CAP_GEN(mdev, sbcam_reg))
+		return 0;
 
-	वापस NUM_PPORT_PER_TC_CONGEST_PRIO_COUNTERS * NUM_PPORT_PRIO;
-पूर्ण
+	return NUM_PPORT_PER_TC_CONGEST_PRIO_COUNTERS * NUM_PPORT_PRIO;
+}
 
-अटल व्योम mlx5e_grp_per_tc_congest_prio_update_stats(काष्ठा mlx5e_priv *priv)
-अणु
-	काष्ठा mlx5e_pport_stats *pstats = &priv->stats.pport;
-	काष्ठा mlx5_core_dev *mdev = priv->mdev;
-	u32 in[MLX5_ST_SZ_DW(ppcnt_reg)] = अणुपूर्ण;
-	पूर्णांक sz = MLX5_ST_SZ_BYTES(ppcnt_reg);
-	व्योम *out;
-	पूर्णांक prio;
+static void mlx5e_grp_per_tc_congest_prio_update_stats(struct mlx5e_priv *priv)
+{
+	struct mlx5e_pport_stats *pstats = &priv->stats.pport;
+	struct mlx5_core_dev *mdev = priv->mdev;
+	u32 in[MLX5_ST_SZ_DW(ppcnt_reg)] = {};
+	int sz = MLX5_ST_SZ_BYTES(ppcnt_reg);
+	void *out;
+	int prio;
 
-	अगर (!MLX5_CAP_GEN(mdev, sbcam_reg))
-		वापस;
+	if (!MLX5_CAP_GEN(mdev, sbcam_reg))
+		return;
 
 	MLX5_SET(ppcnt_reg, in, pnat, 2);
 	MLX5_SET(ppcnt_reg, in, grp, MLX5_PER_TRAFFIC_CLASS_CONGESTION_GROUP);
-	क्रम (prio = 0; prio < NUM_PPORT_PRIO; prio++) अणु
+	for (prio = 0; prio < NUM_PPORT_PRIO; prio++) {
 		out = pstats->per_tc_congest_prio_counters[prio];
 		MLX5_SET(ppcnt_reg, in, prio_tc, prio);
 		mlx5_core_access_reg(mdev, in, sz, out, sz, MLX5_REG_PPCNT, 0, 0);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल MLX5E_DECLARE_STATS_GRP_OP_NUM_STATS(per_port_buff_congest)
-अणु
-	वापस mlx5e_grp_per_tc_prio_get_num_stats(priv) +
+static MLX5E_DECLARE_STATS_GRP_OP_NUM_STATS(per_port_buff_congest)
+{
+	return mlx5e_grp_per_tc_prio_get_num_stats(priv) +
 		mlx5e_grp_per_tc_congest_prio_get_num_stats(priv);
-पूर्ण
+}
 
-अटल MLX5E_DECLARE_STATS_GRP_OP_UPDATE_STATS(per_port_buff_congest)
-अणु
+static MLX5E_DECLARE_STATS_GRP_OP_UPDATE_STATS(per_port_buff_congest)
+{
 	mlx5e_grp_per_tc_prio_update_stats(priv);
 	mlx5e_grp_per_tc_congest_prio_update_stats(priv);
-पूर्ण
+}
 
-#घोषणा PPORT_PER_PRIO_OFF(c) \
+#define PPORT_PER_PRIO_OFF(c) \
 	MLX5_BYTE_OFF(ppcnt_reg, \
 		      counter_set.eth_per_prio_grp_data_layout.c##_high)
-अटल स्थिर काष्ठा counter_desc pport_per_prio_traffic_stats_desc[] = अणु
-	अणु "rx_prio%d_bytes", PPORT_PER_PRIO_OFF(rx_octets) पूर्ण,
-	अणु "rx_prio%d_packets", PPORT_PER_PRIO_OFF(rx_frames) पूर्ण,
-	अणु "rx_prio%d_discards", PPORT_PER_PRIO_OFF(rx_discards) पूर्ण,
-	अणु "tx_prio%d_bytes", PPORT_PER_PRIO_OFF(tx_octets) पूर्ण,
-	अणु "tx_prio%d_packets", PPORT_PER_PRIO_OFF(tx_frames) पूर्ण,
-पूर्ण;
+static const struct counter_desc pport_per_prio_traffic_stats_desc[] = {
+	{ "rx_prio%d_bytes", PPORT_PER_PRIO_OFF(rx_octets) },
+	{ "rx_prio%d_packets", PPORT_PER_PRIO_OFF(rx_frames) },
+	{ "rx_prio%d_discards", PPORT_PER_PRIO_OFF(rx_discards) },
+	{ "tx_prio%d_bytes", PPORT_PER_PRIO_OFF(tx_octets) },
+	{ "tx_prio%d_packets", PPORT_PER_PRIO_OFF(tx_frames) },
+};
 
-#घोषणा NUM_PPORT_PER_PRIO_TRAFFIC_COUNTERS	ARRAY_SIZE(pport_per_prio_traffic_stats_desc)
+#define NUM_PPORT_PER_PRIO_TRAFFIC_COUNTERS	ARRAY_SIZE(pport_per_prio_traffic_stats_desc)
 
-अटल पूर्णांक mlx5e_grp_per_prio_traffic_get_num_stats(व्योम)
-अणु
-	वापस NUM_PPORT_PER_PRIO_TRAFFIC_COUNTERS * NUM_PPORT_PRIO;
-पूर्ण
+static int mlx5e_grp_per_prio_traffic_get_num_stats(void)
+{
+	return NUM_PPORT_PER_PRIO_TRAFFIC_COUNTERS * NUM_PPORT_PRIO;
+}
 
-अटल पूर्णांक mlx5e_grp_per_prio_traffic_fill_strings(काष्ठा mlx5e_priv *priv,
+static int mlx5e_grp_per_prio_traffic_fill_strings(struct mlx5e_priv *priv,
 						   u8 *data,
-						   पूर्णांक idx)
-अणु
-	पूर्णांक i, prio;
+						   int idx)
+{
+	int i, prio;
 
-	क्रम (prio = 0; prio < NUM_PPORT_PRIO; prio++) अणु
-		क्रम (i = 0; i < NUM_PPORT_PER_PRIO_TRAFFIC_COUNTERS; i++)
-			प्र_लिखो(data + (idx++) * ETH_GSTRING_LEN,
-				pport_per_prio_traffic_stats_desc[i].क्रमmat, prio);
-	पूर्ण
+	for (prio = 0; prio < NUM_PPORT_PRIO; prio++) {
+		for (i = 0; i < NUM_PPORT_PER_PRIO_TRAFFIC_COUNTERS; i++)
+			sprintf(data + (idx++) * ETH_GSTRING_LEN,
+				pport_per_prio_traffic_stats_desc[i].format, prio);
+	}
 
-	वापस idx;
-पूर्ण
+	return idx;
+}
 
-अटल पूर्णांक mlx5e_grp_per_prio_traffic_fill_stats(काष्ठा mlx5e_priv *priv,
+static int mlx5e_grp_per_prio_traffic_fill_stats(struct mlx5e_priv *priv,
 						 u64 *data,
-						 पूर्णांक idx)
-अणु
-	पूर्णांक i, prio;
+						 int idx)
+{
+	int i, prio;
 
-	क्रम (prio = 0; prio < NUM_PPORT_PRIO; prio++) अणु
-		क्रम (i = 0; i < NUM_PPORT_PER_PRIO_TRAFFIC_COUNTERS; i++)
+	for (prio = 0; prio < NUM_PPORT_PRIO; prio++) {
+		for (i = 0; i < NUM_PPORT_PER_PRIO_TRAFFIC_COUNTERS; i++)
 			data[idx++] =
 				MLX5E_READ_CTR64_BE(&priv->stats.pport.per_prio_counters[prio],
 						    pport_per_prio_traffic_stats_desc, i);
-	पूर्ण
+	}
 
-	वापस idx;
-पूर्ण
+	return idx;
+}
 
-अटल स्थिर काष्ठा counter_desc pport_per_prio_pfc_stats_desc[] = अणु
+static const struct counter_desc pport_per_prio_pfc_stats_desc[] = {
 	/* %s is "global" or "prio{i}" */
-	अणु "rx_%s_pause", PPORT_PER_PRIO_OFF(rx_छोड़ो) पूर्ण,
-	अणु "rx_%s_pause_duration", PPORT_PER_PRIO_OFF(rx_छोड़ो_duration) पूर्ण,
-	अणु "tx_%s_pause", PPORT_PER_PRIO_OFF(tx_छोड़ो) पूर्ण,
-	अणु "tx_%s_pause_duration", PPORT_PER_PRIO_OFF(tx_छोड़ो_duration) पूर्ण,
-	अणु "rx_%s_pause_transition", PPORT_PER_PRIO_OFF(rx_छोड़ो_transition) पूर्ण,
-पूर्ण;
+	{ "rx_%s_pause", PPORT_PER_PRIO_OFF(rx_pause) },
+	{ "rx_%s_pause_duration", PPORT_PER_PRIO_OFF(rx_pause_duration) },
+	{ "tx_%s_pause", PPORT_PER_PRIO_OFF(tx_pause) },
+	{ "tx_%s_pause_duration", PPORT_PER_PRIO_OFF(tx_pause_duration) },
+	{ "rx_%s_pause_transition", PPORT_PER_PRIO_OFF(rx_pause_transition) },
+};
 
-अटल स्थिर काष्ठा counter_desc pport_pfc_stall_stats_desc[] = अणु
-	अणु "tx_pause_storm_warning_events", PPORT_PER_PRIO_OFF(device_stall_minor_watermark_cnt) पूर्ण,
-	अणु "tx_pause_storm_error_events", PPORT_PER_PRIO_OFF(device_stall_critical_watermark_cnt) पूर्ण,
-पूर्ण;
+static const struct counter_desc pport_pfc_stall_stats_desc[] = {
+	{ "tx_pause_storm_warning_events", PPORT_PER_PRIO_OFF(device_stall_minor_watermark_cnt) },
+	{ "tx_pause_storm_error_events", PPORT_PER_PRIO_OFF(device_stall_critical_watermark_cnt) },
+};
 
-#घोषणा NUM_PPORT_PER_PRIO_PFC_COUNTERS		ARRAY_SIZE(pport_per_prio_pfc_stats_desc)
-#घोषणा NUM_PPORT_PFC_STALL_COUNTERS(priv)	(ARRAY_SIZE(pport_pfc_stall_stats_desc) * \
+#define NUM_PPORT_PER_PRIO_PFC_COUNTERS		ARRAY_SIZE(pport_per_prio_pfc_stats_desc)
+#define NUM_PPORT_PFC_STALL_COUNTERS(priv)	(ARRAY_SIZE(pport_pfc_stall_stats_desc) * \
 						 MLX5_CAP_PCAM_FEATURE((priv)->mdev, pfcc_mask) * \
 						 MLX5_CAP_DEBUG((priv)->mdev, stall_detect))
 
-अटल अचिन्हित दीर्घ mlx5e_query_pfc_combined(काष्ठा mlx5e_priv *priv)
-अणु
-	काष्ठा mlx5_core_dev *mdev = priv->mdev;
+static unsigned long mlx5e_query_pfc_combined(struct mlx5e_priv *priv)
+{
+	struct mlx5_core_dev *mdev = priv->mdev;
 	u8 pfc_en_tx;
 	u8 pfc_en_rx;
-	पूर्णांक err;
+	int err;
 
-	अगर (MLX5_CAP_GEN(mdev, port_type) != MLX5_CAP_PORT_TYPE_ETH)
-		वापस 0;
+	if (MLX5_CAP_GEN(mdev, port_type) != MLX5_CAP_PORT_TYPE_ETH)
+		return 0;
 
 	err = mlx5_query_port_pfc(mdev, &pfc_en_tx, &pfc_en_rx);
 
-	वापस err ? 0 : pfc_en_tx | pfc_en_rx;
-पूर्ण
+	return err ? 0 : pfc_en_tx | pfc_en_rx;
+}
 
-अटल bool mlx5e_query_global_छोड़ो_combined(काष्ठा mlx5e_priv *priv)
-अणु
-	काष्ठा mlx5_core_dev *mdev = priv->mdev;
-	u32 rx_छोड़ो;
-	u32 tx_छोड़ो;
-	पूर्णांक err;
+static bool mlx5e_query_global_pause_combined(struct mlx5e_priv *priv)
+{
+	struct mlx5_core_dev *mdev = priv->mdev;
+	u32 rx_pause;
+	u32 tx_pause;
+	int err;
 
-	अगर (MLX5_CAP_GEN(mdev, port_type) != MLX5_CAP_PORT_TYPE_ETH)
-		वापस false;
+	if (MLX5_CAP_GEN(mdev, port_type) != MLX5_CAP_PORT_TYPE_ETH)
+		return false;
 
-	err = mlx5_query_port_छोड़ो(mdev, &rx_छोड़ो, &tx_छोड़ो);
+	err = mlx5_query_port_pause(mdev, &rx_pause, &tx_pause);
 
-	वापस err ? false : rx_छोड़ो | tx_छोड़ो;
-पूर्ण
+	return err ? false : rx_pause | tx_pause;
+}
 
-अटल पूर्णांक mlx5e_grp_per_prio_pfc_get_num_stats(काष्ठा mlx5e_priv *priv)
-अणु
-	वापस (mlx5e_query_global_छोड़ो_combined(priv) +
+static int mlx5e_grp_per_prio_pfc_get_num_stats(struct mlx5e_priv *priv)
+{
+	return (mlx5e_query_global_pause_combined(priv) +
 		hweight8(mlx5e_query_pfc_combined(priv))) *
 		NUM_PPORT_PER_PRIO_PFC_COUNTERS +
 		NUM_PPORT_PFC_STALL_COUNTERS(priv);
-पूर्ण
+}
 
-अटल पूर्णांक mlx5e_grp_per_prio_pfc_fill_strings(काष्ठा mlx5e_priv *priv,
+static int mlx5e_grp_per_prio_pfc_fill_strings(struct mlx5e_priv *priv,
 					       u8 *data,
-					       पूर्णांक idx)
-अणु
-	अचिन्हित दीर्घ pfc_combined;
-	पूर्णांक i, prio;
+					       int idx)
+{
+	unsigned long pfc_combined;
+	int i, prio;
 
 	pfc_combined = mlx5e_query_pfc_combined(priv);
-	क्रम_each_set_bit(prio, &pfc_combined, NUM_PPORT_PRIO) अणु
-		क्रम (i = 0; i < NUM_PPORT_PER_PRIO_PFC_COUNTERS; i++) अणु
-			अक्षर pfc_string[ETH_GSTRING_LEN];
+	for_each_set_bit(prio, &pfc_combined, NUM_PPORT_PRIO) {
+		for (i = 0; i < NUM_PPORT_PER_PRIO_PFC_COUNTERS; i++) {
+			char pfc_string[ETH_GSTRING_LEN];
 
-			snम_लिखो(pfc_string, माप(pfc_string), "prio%d", prio);
-			प्र_लिखो(data + (idx++) * ETH_GSTRING_LEN,
-				pport_per_prio_pfc_stats_desc[i].क्रमmat, pfc_string);
-		पूर्ण
-	पूर्ण
+			snprintf(pfc_string, sizeof(pfc_string), "prio%d", prio);
+			sprintf(data + (idx++) * ETH_GSTRING_LEN,
+				pport_per_prio_pfc_stats_desc[i].format, pfc_string);
+		}
+	}
 
-	अगर (mlx5e_query_global_छोड़ो_combined(priv)) अणु
-		क्रम (i = 0; i < NUM_PPORT_PER_PRIO_PFC_COUNTERS; i++) अणु
-			प्र_लिखो(data + (idx++) * ETH_GSTRING_LEN,
-				pport_per_prio_pfc_stats_desc[i].क्रमmat, "global");
-		पूर्ण
-	पूर्ण
+	if (mlx5e_query_global_pause_combined(priv)) {
+		for (i = 0; i < NUM_PPORT_PER_PRIO_PFC_COUNTERS; i++) {
+			sprintf(data + (idx++) * ETH_GSTRING_LEN,
+				pport_per_prio_pfc_stats_desc[i].format, "global");
+		}
+	}
 
-	क्रम (i = 0; i < NUM_PPORT_PFC_STALL_COUNTERS(priv); i++)
-		म_नकल(data + (idx++) * ETH_GSTRING_LEN,
-		       pport_pfc_stall_stats_desc[i].क्रमmat);
+	for (i = 0; i < NUM_PPORT_PFC_STALL_COUNTERS(priv); i++)
+		strcpy(data + (idx++) * ETH_GSTRING_LEN,
+		       pport_pfc_stall_stats_desc[i].format);
 
-	वापस idx;
-पूर्ण
+	return idx;
+}
 
-अटल पूर्णांक mlx5e_grp_per_prio_pfc_fill_stats(काष्ठा mlx5e_priv *priv,
+static int mlx5e_grp_per_prio_pfc_fill_stats(struct mlx5e_priv *priv,
 					     u64 *data,
-					     पूर्णांक idx)
-अणु
-	अचिन्हित दीर्घ pfc_combined;
-	पूर्णांक i, prio;
+					     int idx)
+{
+	unsigned long pfc_combined;
+	int i, prio;
 
 	pfc_combined = mlx5e_query_pfc_combined(priv);
-	क्रम_each_set_bit(prio, &pfc_combined, NUM_PPORT_PRIO) अणु
-		क्रम (i = 0; i < NUM_PPORT_PER_PRIO_PFC_COUNTERS; i++) अणु
+	for_each_set_bit(prio, &pfc_combined, NUM_PPORT_PRIO) {
+		for (i = 0; i < NUM_PPORT_PER_PRIO_PFC_COUNTERS; i++) {
 			data[idx++] =
 				MLX5E_READ_CTR64_BE(&priv->stats.pport.per_prio_counters[prio],
 						    pport_per_prio_pfc_stats_desc, i);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (mlx5e_query_global_छोड़ो_combined(priv)) अणु
-		क्रम (i = 0; i < NUM_PPORT_PER_PRIO_PFC_COUNTERS; i++) अणु
+	if (mlx5e_query_global_pause_combined(priv)) {
+		for (i = 0; i < NUM_PPORT_PER_PRIO_PFC_COUNTERS; i++) {
 			data[idx++] =
 				MLX5E_READ_CTR64_BE(&priv->stats.pport.per_prio_counters[0],
 						    pport_per_prio_pfc_stats_desc, i);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	क्रम (i = 0; i < NUM_PPORT_PFC_STALL_COUNTERS(priv); i++)
+	for (i = 0; i < NUM_PPORT_PFC_STALL_COUNTERS(priv); i++)
 		data[idx++] = MLX5E_READ_CTR64_BE(&priv->stats.pport.per_prio_counters[0],
 						  pport_pfc_stall_stats_desc, i);
 
-	वापस idx;
-पूर्ण
+	return idx;
+}
 
-अटल MLX5E_DECLARE_STATS_GRP_OP_NUM_STATS(per_prio)
-अणु
-	वापस mlx5e_grp_per_prio_traffic_get_num_stats() +
+static MLX5E_DECLARE_STATS_GRP_OP_NUM_STATS(per_prio)
+{
+	return mlx5e_grp_per_prio_traffic_get_num_stats() +
 		mlx5e_grp_per_prio_pfc_get_num_stats(priv);
-पूर्ण
+}
 
-अटल MLX5E_DECLARE_STATS_GRP_OP_FILL_STRS(per_prio)
-अणु
+static MLX5E_DECLARE_STATS_GRP_OP_FILL_STRS(per_prio)
+{
 	idx = mlx5e_grp_per_prio_traffic_fill_strings(priv, data, idx);
 	idx = mlx5e_grp_per_prio_pfc_fill_strings(priv, data, idx);
-	वापस idx;
-पूर्ण
+	return idx;
+}
 
-अटल MLX5E_DECLARE_STATS_GRP_OP_FILL_STATS(per_prio)
-अणु
+static MLX5E_DECLARE_STATS_GRP_OP_FILL_STATS(per_prio)
+{
 	idx = mlx5e_grp_per_prio_traffic_fill_stats(priv, data, idx);
 	idx = mlx5e_grp_per_prio_pfc_fill_stats(priv, data, idx);
-	वापस idx;
-पूर्ण
+	return idx;
+}
 
-अटल MLX5E_DECLARE_STATS_GRP_OP_UPDATE_STATS(per_prio)
-अणु
-	काष्ठा mlx5e_pport_stats *pstats = &priv->stats.pport;
-	काष्ठा mlx5_core_dev *mdev = priv->mdev;
-	u32 in[MLX5_ST_SZ_DW(ppcnt_reg)] = अणु0पूर्ण;
-	पूर्णांक sz = MLX5_ST_SZ_BYTES(ppcnt_reg);
-	पूर्णांक prio;
-	व्योम *out;
+static MLX5E_DECLARE_STATS_GRP_OP_UPDATE_STATS(per_prio)
+{
+	struct mlx5e_pport_stats *pstats = &priv->stats.pport;
+	struct mlx5_core_dev *mdev = priv->mdev;
+	u32 in[MLX5_ST_SZ_DW(ppcnt_reg)] = {0};
+	int sz = MLX5_ST_SZ_BYTES(ppcnt_reg);
+	int prio;
+	void *out;
 
-	अगर (!MLX5_BASIC_PPCNT_SUPPORTED(mdev))
-		वापस;
+	if (!MLX5_BASIC_PPCNT_SUPPORTED(mdev))
+		return;
 
 	MLX5_SET(ppcnt_reg, in, local_port, 1);
 	MLX5_SET(ppcnt_reg, in, grp, MLX5_PER_PRIORITY_COUNTERS_GROUP);
-	क्रम (prio = 0; prio < NUM_PPORT_PRIO; prio++) अणु
+	for (prio = 0; prio < NUM_PPORT_PRIO; prio++) {
 		out = pstats->per_prio_counters[prio];
 		MLX5_SET(ppcnt_reg, in, prio_tc, prio);
 		mlx5_core_access_reg(mdev, in, sz, out, sz,
 				     MLX5_REG_PPCNT, 0, 0);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल स्थिर काष्ठा counter_desc mlx5e_pme_status_desc[] = अणु
-	अणु "module_unplug",       माप(u64) * MLX5_MODULE_STATUS_UNPLUGGED पूर्ण,
-पूर्ण;
+static const struct counter_desc mlx5e_pme_status_desc[] = {
+	{ "module_unplug",       sizeof(u64) * MLX5_MODULE_STATUS_UNPLUGGED },
+};
 
-अटल स्थिर काष्ठा counter_desc mlx5e_pme_error_desc[] = अणु
-	अणु "module_bus_stuck",    माप(u64) * MLX5_MODULE_EVENT_ERROR_BUS_STUCK पूर्ण,
-	अणु "module_high_temp",    माप(u64) * MLX5_MODULE_EVENT_ERROR_HIGH_TEMPERATURE पूर्ण,
-	अणु "module_bad_shorted",  माप(u64) * MLX5_MODULE_EVENT_ERROR_BAD_CABLE पूर्ण,
-पूर्ण;
+static const struct counter_desc mlx5e_pme_error_desc[] = {
+	{ "module_bus_stuck",    sizeof(u64) * MLX5_MODULE_EVENT_ERROR_BUS_STUCK },
+	{ "module_high_temp",    sizeof(u64) * MLX5_MODULE_EVENT_ERROR_HIGH_TEMPERATURE },
+	{ "module_bad_shorted",  sizeof(u64) * MLX5_MODULE_EVENT_ERROR_BAD_CABLE },
+};
 
-#घोषणा NUM_PME_STATUS_STATS		ARRAY_SIZE(mlx5e_pme_status_desc)
-#घोषणा NUM_PME_ERR_STATS		ARRAY_SIZE(mlx5e_pme_error_desc)
+#define NUM_PME_STATUS_STATS		ARRAY_SIZE(mlx5e_pme_status_desc)
+#define NUM_PME_ERR_STATS		ARRAY_SIZE(mlx5e_pme_error_desc)
 
-अटल MLX5E_DECLARE_STATS_GRP_OP_NUM_STATS(pme)
-अणु
-	वापस NUM_PME_STATUS_STATS + NUM_PME_ERR_STATS;
-पूर्ण
+static MLX5E_DECLARE_STATS_GRP_OP_NUM_STATS(pme)
+{
+	return NUM_PME_STATUS_STATS + NUM_PME_ERR_STATS;
+}
 
-अटल MLX5E_DECLARE_STATS_GRP_OP_FILL_STRS(pme)
-अणु
-	पूर्णांक i;
+static MLX5E_DECLARE_STATS_GRP_OP_FILL_STRS(pme)
+{
+	int i;
 
-	क्रम (i = 0; i < NUM_PME_STATUS_STATS; i++)
-		म_नकल(data + (idx++) * ETH_GSTRING_LEN, mlx5e_pme_status_desc[i].क्रमmat);
+	for (i = 0; i < NUM_PME_STATUS_STATS; i++)
+		strcpy(data + (idx++) * ETH_GSTRING_LEN, mlx5e_pme_status_desc[i].format);
 
-	क्रम (i = 0; i < NUM_PME_ERR_STATS; i++)
-		म_नकल(data + (idx++) * ETH_GSTRING_LEN, mlx5e_pme_error_desc[i].क्रमmat);
+	for (i = 0; i < NUM_PME_ERR_STATS; i++)
+		strcpy(data + (idx++) * ETH_GSTRING_LEN, mlx5e_pme_error_desc[i].format);
 
-	वापस idx;
-पूर्ण
+	return idx;
+}
 
-अटल MLX5E_DECLARE_STATS_GRP_OP_FILL_STATS(pme)
-अणु
-	काष्ठा mlx5_pme_stats pme_stats;
-	पूर्णांक i;
+static MLX5E_DECLARE_STATS_GRP_OP_FILL_STATS(pme)
+{
+	struct mlx5_pme_stats pme_stats;
+	int i;
 
 	mlx5_get_pme_stats(priv->mdev, &pme_stats);
 
-	क्रम (i = 0; i < NUM_PME_STATUS_STATS; i++)
+	for (i = 0; i < NUM_PME_STATUS_STATS; i++)
 		data[idx++] = MLX5E_READ_CTR64_CPU(pme_stats.status_counters,
 						   mlx5e_pme_status_desc, i);
 
-	क्रम (i = 0; i < NUM_PME_ERR_STATS; i++)
+	for (i = 0; i < NUM_PME_ERR_STATS; i++)
 		data[idx++] = MLX5E_READ_CTR64_CPU(pme_stats.error_counters,
 						   mlx5e_pme_error_desc, i);
 
-	वापस idx;
-पूर्ण
+	return idx;
+}
 
-अटल MLX5E_DECLARE_STATS_GRP_OP_UPDATE_STATS(pme) अणु वापस; पूर्ण
+static MLX5E_DECLARE_STATS_GRP_OP_UPDATE_STATS(pme) { return; }
 
-अटल MLX5E_DECLARE_STATS_GRP_OP_NUM_STATS(tls)
-अणु
-	वापस mlx5e_tls_get_count(priv);
-पूर्ण
+static MLX5E_DECLARE_STATS_GRP_OP_NUM_STATS(tls)
+{
+	return mlx5e_tls_get_count(priv);
+}
 
-अटल MLX5E_DECLARE_STATS_GRP_OP_FILL_STRS(tls)
-अणु
-	वापस idx + mlx5e_tls_get_strings(priv, data + idx * ETH_GSTRING_LEN);
-पूर्ण
+static MLX5E_DECLARE_STATS_GRP_OP_FILL_STRS(tls)
+{
+	return idx + mlx5e_tls_get_strings(priv, data + idx * ETH_GSTRING_LEN);
+}
 
-अटल MLX5E_DECLARE_STATS_GRP_OP_FILL_STATS(tls)
-अणु
-	वापस idx + mlx5e_tls_get_stats(priv, data + idx);
-पूर्ण
+static MLX5E_DECLARE_STATS_GRP_OP_FILL_STATS(tls)
+{
+	return idx + mlx5e_tls_get_stats(priv, data + idx);
+}
 
-अटल MLX5E_DECLARE_STATS_GRP_OP_UPDATE_STATS(tls) अणु वापस; पूर्ण
+static MLX5E_DECLARE_STATS_GRP_OP_UPDATE_STATS(tls) { return; }
 
-अटल स्थिर काष्ठा counter_desc rq_stats_desc[] = अणु
-	अणु MLX5E_DECLARE_RX_STAT(काष्ठा mlx5e_rq_stats, packets) पूर्ण,
-	अणु MLX5E_DECLARE_RX_STAT(काष्ठा mlx5e_rq_stats, bytes) पूर्ण,
-	अणु MLX5E_DECLARE_RX_STAT(काष्ठा mlx5e_rq_stats, csum_complete) पूर्ण,
-	अणु MLX5E_DECLARE_RX_STAT(काष्ठा mlx5e_rq_stats, csum_complete_tail) पूर्ण,
-	अणु MLX5E_DECLARE_RX_STAT(काष्ठा mlx5e_rq_stats, csum_complete_tail_slow) पूर्ण,
-	अणु MLX5E_DECLARE_RX_STAT(काष्ठा mlx5e_rq_stats, csum_unnecessary) पूर्ण,
-	अणु MLX5E_DECLARE_RX_STAT(काष्ठा mlx5e_rq_stats, csum_unnecessary_inner) पूर्ण,
-	अणु MLX5E_DECLARE_RX_STAT(काष्ठा mlx5e_rq_stats, csum_none) पूर्ण,
-	अणु MLX5E_DECLARE_RX_STAT(काष्ठा mlx5e_rq_stats, xdp_drop) पूर्ण,
-	अणु MLX5E_DECLARE_RX_STAT(काष्ठा mlx5e_rq_stats, xdp_redirect) पूर्ण,
-	अणु MLX5E_DECLARE_RX_STAT(काष्ठा mlx5e_rq_stats, lro_packets) पूर्ण,
-	अणु MLX5E_DECLARE_RX_STAT(काष्ठा mlx5e_rq_stats, lro_bytes) पूर्ण,
-	अणु MLX5E_DECLARE_RX_STAT(काष्ठा mlx5e_rq_stats, ecn_mark) पूर्ण,
-	अणु MLX5E_DECLARE_RX_STAT(काष्ठा mlx5e_rq_stats, हटाओd_vlan_packets) पूर्ण,
-	अणु MLX5E_DECLARE_RX_STAT(काष्ठा mlx5e_rq_stats, wqe_err) पूर्ण,
-	अणु MLX5E_DECLARE_RX_STAT(काष्ठा mlx5e_rq_stats, mpwqe_filler_cqes) पूर्ण,
-	अणु MLX5E_DECLARE_RX_STAT(काष्ठा mlx5e_rq_stats, mpwqe_filler_strides) पूर्ण,
-	अणु MLX5E_DECLARE_RX_STAT(काष्ठा mlx5e_rq_stats, oversize_pkts_sw_drop) पूर्ण,
-	अणु MLX5E_DECLARE_RX_STAT(काष्ठा mlx5e_rq_stats, buff_alloc_err) पूर्ण,
-	अणु MLX5E_DECLARE_RX_STAT(काष्ठा mlx5e_rq_stats, cqe_compress_blks) पूर्ण,
-	अणु MLX5E_DECLARE_RX_STAT(काष्ठा mlx5e_rq_stats, cqe_compress_pkts) पूर्ण,
-	अणु MLX5E_DECLARE_RX_STAT(काष्ठा mlx5e_rq_stats, cache_reuse) पूर्ण,
-	अणु MLX5E_DECLARE_RX_STAT(काष्ठा mlx5e_rq_stats, cache_full) पूर्ण,
-	अणु MLX5E_DECLARE_RX_STAT(काष्ठा mlx5e_rq_stats, cache_empty) पूर्ण,
-	अणु MLX5E_DECLARE_RX_STAT(काष्ठा mlx5e_rq_stats, cache_busy) पूर्ण,
-	अणु MLX5E_DECLARE_RX_STAT(काष्ठा mlx5e_rq_stats, cache_waive) पूर्ण,
-	अणु MLX5E_DECLARE_RX_STAT(काष्ठा mlx5e_rq_stats, congst_umr) पूर्ण,
-	अणु MLX5E_DECLARE_RX_STAT(काष्ठा mlx5e_rq_stats, arfs_err) पूर्ण,
-	अणु MLX5E_DECLARE_RX_STAT(काष्ठा mlx5e_rq_stats, recover) पूर्ण,
-#अगर_घोषित CONFIG_MLX5_EN_TLS
-	अणु MLX5E_DECLARE_RX_STAT(काष्ठा mlx5e_rq_stats, tls_decrypted_packets) पूर्ण,
-	अणु MLX5E_DECLARE_RX_STAT(काष्ठा mlx5e_rq_stats, tls_decrypted_bytes) पूर्ण,
-	अणु MLX5E_DECLARE_RX_STAT(काष्ठा mlx5e_rq_stats, tls_resync_req_pkt) पूर्ण,
-	अणु MLX5E_DECLARE_RX_STAT(काष्ठा mlx5e_rq_stats, tls_resync_req_start) पूर्ण,
-	अणु MLX5E_DECLARE_RX_STAT(काष्ठा mlx5e_rq_stats, tls_resync_req_end) पूर्ण,
-	अणु MLX5E_DECLARE_RX_STAT(काष्ठा mlx5e_rq_stats, tls_resync_req_skip) पूर्ण,
-	अणु MLX5E_DECLARE_RX_STAT(काष्ठा mlx5e_rq_stats, tls_resync_res_ok) पूर्ण,
-	अणु MLX5E_DECLARE_RX_STAT(काष्ठा mlx5e_rq_stats, tls_resync_res_retry) पूर्ण,
-	अणु MLX5E_DECLARE_RX_STAT(काष्ठा mlx5e_rq_stats, tls_resync_res_skip) पूर्ण,
-	अणु MLX5E_DECLARE_RX_STAT(काष्ठा mlx5e_rq_stats, tls_err) पूर्ण,
-#पूर्ण_अगर
-पूर्ण;
+static const struct counter_desc rq_stats_desc[] = {
+	{ MLX5E_DECLARE_RX_STAT(struct mlx5e_rq_stats, packets) },
+	{ MLX5E_DECLARE_RX_STAT(struct mlx5e_rq_stats, bytes) },
+	{ MLX5E_DECLARE_RX_STAT(struct mlx5e_rq_stats, csum_complete) },
+	{ MLX5E_DECLARE_RX_STAT(struct mlx5e_rq_stats, csum_complete_tail) },
+	{ MLX5E_DECLARE_RX_STAT(struct mlx5e_rq_stats, csum_complete_tail_slow) },
+	{ MLX5E_DECLARE_RX_STAT(struct mlx5e_rq_stats, csum_unnecessary) },
+	{ MLX5E_DECLARE_RX_STAT(struct mlx5e_rq_stats, csum_unnecessary_inner) },
+	{ MLX5E_DECLARE_RX_STAT(struct mlx5e_rq_stats, csum_none) },
+	{ MLX5E_DECLARE_RX_STAT(struct mlx5e_rq_stats, xdp_drop) },
+	{ MLX5E_DECLARE_RX_STAT(struct mlx5e_rq_stats, xdp_redirect) },
+	{ MLX5E_DECLARE_RX_STAT(struct mlx5e_rq_stats, lro_packets) },
+	{ MLX5E_DECLARE_RX_STAT(struct mlx5e_rq_stats, lro_bytes) },
+	{ MLX5E_DECLARE_RX_STAT(struct mlx5e_rq_stats, ecn_mark) },
+	{ MLX5E_DECLARE_RX_STAT(struct mlx5e_rq_stats, removed_vlan_packets) },
+	{ MLX5E_DECLARE_RX_STAT(struct mlx5e_rq_stats, wqe_err) },
+	{ MLX5E_DECLARE_RX_STAT(struct mlx5e_rq_stats, mpwqe_filler_cqes) },
+	{ MLX5E_DECLARE_RX_STAT(struct mlx5e_rq_stats, mpwqe_filler_strides) },
+	{ MLX5E_DECLARE_RX_STAT(struct mlx5e_rq_stats, oversize_pkts_sw_drop) },
+	{ MLX5E_DECLARE_RX_STAT(struct mlx5e_rq_stats, buff_alloc_err) },
+	{ MLX5E_DECLARE_RX_STAT(struct mlx5e_rq_stats, cqe_compress_blks) },
+	{ MLX5E_DECLARE_RX_STAT(struct mlx5e_rq_stats, cqe_compress_pkts) },
+	{ MLX5E_DECLARE_RX_STAT(struct mlx5e_rq_stats, cache_reuse) },
+	{ MLX5E_DECLARE_RX_STAT(struct mlx5e_rq_stats, cache_full) },
+	{ MLX5E_DECLARE_RX_STAT(struct mlx5e_rq_stats, cache_empty) },
+	{ MLX5E_DECLARE_RX_STAT(struct mlx5e_rq_stats, cache_busy) },
+	{ MLX5E_DECLARE_RX_STAT(struct mlx5e_rq_stats, cache_waive) },
+	{ MLX5E_DECLARE_RX_STAT(struct mlx5e_rq_stats, congst_umr) },
+	{ MLX5E_DECLARE_RX_STAT(struct mlx5e_rq_stats, arfs_err) },
+	{ MLX5E_DECLARE_RX_STAT(struct mlx5e_rq_stats, recover) },
+#ifdef CONFIG_MLX5_EN_TLS
+	{ MLX5E_DECLARE_RX_STAT(struct mlx5e_rq_stats, tls_decrypted_packets) },
+	{ MLX5E_DECLARE_RX_STAT(struct mlx5e_rq_stats, tls_decrypted_bytes) },
+	{ MLX5E_DECLARE_RX_STAT(struct mlx5e_rq_stats, tls_resync_req_pkt) },
+	{ MLX5E_DECLARE_RX_STAT(struct mlx5e_rq_stats, tls_resync_req_start) },
+	{ MLX5E_DECLARE_RX_STAT(struct mlx5e_rq_stats, tls_resync_req_end) },
+	{ MLX5E_DECLARE_RX_STAT(struct mlx5e_rq_stats, tls_resync_req_skip) },
+	{ MLX5E_DECLARE_RX_STAT(struct mlx5e_rq_stats, tls_resync_res_ok) },
+	{ MLX5E_DECLARE_RX_STAT(struct mlx5e_rq_stats, tls_resync_res_retry) },
+	{ MLX5E_DECLARE_RX_STAT(struct mlx5e_rq_stats, tls_resync_res_skip) },
+	{ MLX5E_DECLARE_RX_STAT(struct mlx5e_rq_stats, tls_err) },
+#endif
+};
 
-अटल स्थिर काष्ठा counter_desc sq_stats_desc[] = अणु
-	अणु MLX5E_DECLARE_TX_STAT(काष्ठा mlx5e_sq_stats, packets) पूर्ण,
-	अणु MLX5E_DECLARE_TX_STAT(काष्ठा mlx5e_sq_stats, bytes) पूर्ण,
-	अणु MLX5E_DECLARE_TX_STAT(काष्ठा mlx5e_sq_stats, tso_packets) पूर्ण,
-	अणु MLX5E_DECLARE_TX_STAT(काष्ठा mlx5e_sq_stats, tso_bytes) पूर्ण,
-	अणु MLX5E_DECLARE_TX_STAT(काष्ठा mlx5e_sq_stats, tso_inner_packets) पूर्ण,
-	अणु MLX5E_DECLARE_TX_STAT(काष्ठा mlx5e_sq_stats, tso_inner_bytes) पूर्ण,
-	अणु MLX5E_DECLARE_TX_STAT(काष्ठा mlx5e_sq_stats, csum_partial) पूर्ण,
-	अणु MLX5E_DECLARE_TX_STAT(काष्ठा mlx5e_sq_stats, csum_partial_inner) पूर्ण,
-	अणु MLX5E_DECLARE_TX_STAT(काष्ठा mlx5e_sq_stats, added_vlan_packets) पूर्ण,
-	अणु MLX5E_DECLARE_TX_STAT(काष्ठा mlx5e_sq_stats, nop) पूर्ण,
-	अणु MLX5E_DECLARE_TX_STAT(काष्ठा mlx5e_sq_stats, mpwqe_blks) पूर्ण,
-	अणु MLX5E_DECLARE_TX_STAT(काष्ठा mlx5e_sq_stats, mpwqe_pkts) पूर्ण,
-#अगर_घोषित CONFIG_MLX5_EN_TLS
-	अणु MLX5E_DECLARE_TX_STAT(काष्ठा mlx5e_sq_stats, tls_encrypted_packets) पूर्ण,
-	अणु MLX5E_DECLARE_TX_STAT(काष्ठा mlx5e_sq_stats, tls_encrypted_bytes) पूर्ण,
-	अणु MLX5E_DECLARE_TX_STAT(काष्ठा mlx5e_sq_stats, tls_ooo) पूर्ण,
-	अणु MLX5E_DECLARE_TX_STAT(काष्ठा mlx5e_sq_stats, tls_dump_packets) पूर्ण,
-	अणु MLX5E_DECLARE_TX_STAT(काष्ठा mlx5e_sq_stats, tls_dump_bytes) पूर्ण,
-	अणु MLX5E_DECLARE_TX_STAT(काष्ठा mlx5e_sq_stats, tls_resync_bytes) पूर्ण,
-	अणु MLX5E_DECLARE_TX_STAT(काष्ठा mlx5e_sq_stats, tls_skip_no_sync_data) पूर्ण,
-	अणु MLX5E_DECLARE_TX_STAT(काष्ठा mlx5e_sq_stats, tls_drop_no_sync_data) पूर्ण,
-	अणु MLX5E_DECLARE_TX_STAT(काष्ठा mlx5e_sq_stats, tls_drop_bypass_req) पूर्ण,
-#पूर्ण_अगर
-	अणु MLX5E_DECLARE_TX_STAT(काष्ठा mlx5e_sq_stats, csum_none) पूर्ण,
-	अणु MLX5E_DECLARE_TX_STAT(काष्ठा mlx5e_sq_stats, stopped) पूर्ण,
-	अणु MLX5E_DECLARE_TX_STAT(काष्ठा mlx5e_sq_stats, dropped) पूर्ण,
-	अणु MLX5E_DECLARE_TX_STAT(काष्ठा mlx5e_sq_stats, xmit_more) पूर्ण,
-	अणु MLX5E_DECLARE_TX_STAT(काष्ठा mlx5e_sq_stats, recover) पूर्ण,
-	अणु MLX5E_DECLARE_TX_STAT(काष्ठा mlx5e_sq_stats, cqes) पूर्ण,
-	अणु MLX5E_DECLARE_TX_STAT(काष्ठा mlx5e_sq_stats, wake) पूर्ण,
-	अणु MLX5E_DECLARE_TX_STAT(काष्ठा mlx5e_sq_stats, cqe_err) पूर्ण,
-पूर्ण;
+static const struct counter_desc sq_stats_desc[] = {
+	{ MLX5E_DECLARE_TX_STAT(struct mlx5e_sq_stats, packets) },
+	{ MLX5E_DECLARE_TX_STAT(struct mlx5e_sq_stats, bytes) },
+	{ MLX5E_DECLARE_TX_STAT(struct mlx5e_sq_stats, tso_packets) },
+	{ MLX5E_DECLARE_TX_STAT(struct mlx5e_sq_stats, tso_bytes) },
+	{ MLX5E_DECLARE_TX_STAT(struct mlx5e_sq_stats, tso_inner_packets) },
+	{ MLX5E_DECLARE_TX_STAT(struct mlx5e_sq_stats, tso_inner_bytes) },
+	{ MLX5E_DECLARE_TX_STAT(struct mlx5e_sq_stats, csum_partial) },
+	{ MLX5E_DECLARE_TX_STAT(struct mlx5e_sq_stats, csum_partial_inner) },
+	{ MLX5E_DECLARE_TX_STAT(struct mlx5e_sq_stats, added_vlan_packets) },
+	{ MLX5E_DECLARE_TX_STAT(struct mlx5e_sq_stats, nop) },
+	{ MLX5E_DECLARE_TX_STAT(struct mlx5e_sq_stats, mpwqe_blks) },
+	{ MLX5E_DECLARE_TX_STAT(struct mlx5e_sq_stats, mpwqe_pkts) },
+#ifdef CONFIG_MLX5_EN_TLS
+	{ MLX5E_DECLARE_TX_STAT(struct mlx5e_sq_stats, tls_encrypted_packets) },
+	{ MLX5E_DECLARE_TX_STAT(struct mlx5e_sq_stats, tls_encrypted_bytes) },
+	{ MLX5E_DECLARE_TX_STAT(struct mlx5e_sq_stats, tls_ooo) },
+	{ MLX5E_DECLARE_TX_STAT(struct mlx5e_sq_stats, tls_dump_packets) },
+	{ MLX5E_DECLARE_TX_STAT(struct mlx5e_sq_stats, tls_dump_bytes) },
+	{ MLX5E_DECLARE_TX_STAT(struct mlx5e_sq_stats, tls_resync_bytes) },
+	{ MLX5E_DECLARE_TX_STAT(struct mlx5e_sq_stats, tls_skip_no_sync_data) },
+	{ MLX5E_DECLARE_TX_STAT(struct mlx5e_sq_stats, tls_drop_no_sync_data) },
+	{ MLX5E_DECLARE_TX_STAT(struct mlx5e_sq_stats, tls_drop_bypass_req) },
+#endif
+	{ MLX5E_DECLARE_TX_STAT(struct mlx5e_sq_stats, csum_none) },
+	{ MLX5E_DECLARE_TX_STAT(struct mlx5e_sq_stats, stopped) },
+	{ MLX5E_DECLARE_TX_STAT(struct mlx5e_sq_stats, dropped) },
+	{ MLX5E_DECLARE_TX_STAT(struct mlx5e_sq_stats, xmit_more) },
+	{ MLX5E_DECLARE_TX_STAT(struct mlx5e_sq_stats, recover) },
+	{ MLX5E_DECLARE_TX_STAT(struct mlx5e_sq_stats, cqes) },
+	{ MLX5E_DECLARE_TX_STAT(struct mlx5e_sq_stats, wake) },
+	{ MLX5E_DECLARE_TX_STAT(struct mlx5e_sq_stats, cqe_err) },
+};
 
-अटल स्थिर काष्ठा counter_desc rq_xdpsq_stats_desc[] = अणु
-	अणु MLX5E_DECLARE_RQ_XDPSQ_STAT(काष्ठा mlx5e_xdpsq_stats, xmit) पूर्ण,
-	अणु MLX5E_DECLARE_RQ_XDPSQ_STAT(काष्ठा mlx5e_xdpsq_stats, mpwqe) पूर्ण,
-	अणु MLX5E_DECLARE_RQ_XDPSQ_STAT(काष्ठा mlx5e_xdpsq_stats, inlnw) पूर्ण,
-	अणु MLX5E_DECLARE_RQ_XDPSQ_STAT(काष्ठा mlx5e_xdpsq_stats, nops) पूर्ण,
-	अणु MLX5E_DECLARE_RQ_XDPSQ_STAT(काष्ठा mlx5e_xdpsq_stats, full) पूर्ण,
-	अणु MLX5E_DECLARE_RQ_XDPSQ_STAT(काष्ठा mlx5e_xdpsq_stats, err) पूर्ण,
-	अणु MLX5E_DECLARE_RQ_XDPSQ_STAT(काष्ठा mlx5e_xdpsq_stats, cqes) पूर्ण,
-पूर्ण;
+static const struct counter_desc rq_xdpsq_stats_desc[] = {
+	{ MLX5E_DECLARE_RQ_XDPSQ_STAT(struct mlx5e_xdpsq_stats, xmit) },
+	{ MLX5E_DECLARE_RQ_XDPSQ_STAT(struct mlx5e_xdpsq_stats, mpwqe) },
+	{ MLX5E_DECLARE_RQ_XDPSQ_STAT(struct mlx5e_xdpsq_stats, inlnw) },
+	{ MLX5E_DECLARE_RQ_XDPSQ_STAT(struct mlx5e_xdpsq_stats, nops) },
+	{ MLX5E_DECLARE_RQ_XDPSQ_STAT(struct mlx5e_xdpsq_stats, full) },
+	{ MLX5E_DECLARE_RQ_XDPSQ_STAT(struct mlx5e_xdpsq_stats, err) },
+	{ MLX5E_DECLARE_RQ_XDPSQ_STAT(struct mlx5e_xdpsq_stats, cqes) },
+};
 
-अटल स्थिर काष्ठा counter_desc xdpsq_stats_desc[] = अणु
-	अणु MLX5E_DECLARE_XDPSQ_STAT(काष्ठा mlx5e_xdpsq_stats, xmit) पूर्ण,
-	अणु MLX5E_DECLARE_XDPSQ_STAT(काष्ठा mlx5e_xdpsq_stats, mpwqe) पूर्ण,
-	अणु MLX5E_DECLARE_XDPSQ_STAT(काष्ठा mlx5e_xdpsq_stats, inlnw) पूर्ण,
-	अणु MLX5E_DECLARE_XDPSQ_STAT(काष्ठा mlx5e_xdpsq_stats, nops) पूर्ण,
-	अणु MLX5E_DECLARE_XDPSQ_STAT(काष्ठा mlx5e_xdpsq_stats, full) पूर्ण,
-	अणु MLX5E_DECLARE_XDPSQ_STAT(काष्ठा mlx5e_xdpsq_stats, err) पूर्ण,
-	अणु MLX5E_DECLARE_XDPSQ_STAT(काष्ठा mlx5e_xdpsq_stats, cqes) पूर्ण,
-पूर्ण;
+static const struct counter_desc xdpsq_stats_desc[] = {
+	{ MLX5E_DECLARE_XDPSQ_STAT(struct mlx5e_xdpsq_stats, xmit) },
+	{ MLX5E_DECLARE_XDPSQ_STAT(struct mlx5e_xdpsq_stats, mpwqe) },
+	{ MLX5E_DECLARE_XDPSQ_STAT(struct mlx5e_xdpsq_stats, inlnw) },
+	{ MLX5E_DECLARE_XDPSQ_STAT(struct mlx5e_xdpsq_stats, nops) },
+	{ MLX5E_DECLARE_XDPSQ_STAT(struct mlx5e_xdpsq_stats, full) },
+	{ MLX5E_DECLARE_XDPSQ_STAT(struct mlx5e_xdpsq_stats, err) },
+	{ MLX5E_DECLARE_XDPSQ_STAT(struct mlx5e_xdpsq_stats, cqes) },
+};
 
-अटल स्थिर काष्ठा counter_desc xskrq_stats_desc[] = अणु
-	अणु MLX5E_DECLARE_XSKRQ_STAT(काष्ठा mlx5e_rq_stats, packets) पूर्ण,
-	अणु MLX5E_DECLARE_XSKRQ_STAT(काष्ठा mlx5e_rq_stats, bytes) पूर्ण,
-	अणु MLX5E_DECLARE_XSKRQ_STAT(काष्ठा mlx5e_rq_stats, csum_complete) पूर्ण,
-	अणु MLX5E_DECLARE_XSKRQ_STAT(काष्ठा mlx5e_rq_stats, csum_unnecessary) पूर्ण,
-	अणु MLX5E_DECLARE_XSKRQ_STAT(काष्ठा mlx5e_rq_stats, csum_unnecessary_inner) पूर्ण,
-	अणु MLX5E_DECLARE_XSKRQ_STAT(काष्ठा mlx5e_rq_stats, csum_none) पूर्ण,
-	अणु MLX5E_DECLARE_XSKRQ_STAT(काष्ठा mlx5e_rq_stats, ecn_mark) पूर्ण,
-	अणु MLX5E_DECLARE_XSKRQ_STAT(काष्ठा mlx5e_rq_stats, हटाओd_vlan_packets) पूर्ण,
-	अणु MLX5E_DECLARE_XSKRQ_STAT(काष्ठा mlx5e_rq_stats, xdp_drop) पूर्ण,
-	अणु MLX5E_DECLARE_XSKRQ_STAT(काष्ठा mlx5e_rq_stats, xdp_redirect) पूर्ण,
-	अणु MLX5E_DECLARE_XSKRQ_STAT(काष्ठा mlx5e_rq_stats, wqe_err) पूर्ण,
-	अणु MLX5E_DECLARE_XSKRQ_STAT(काष्ठा mlx5e_rq_stats, mpwqe_filler_cqes) पूर्ण,
-	अणु MLX5E_DECLARE_XSKRQ_STAT(काष्ठा mlx5e_rq_stats, mpwqe_filler_strides) पूर्ण,
-	अणु MLX5E_DECLARE_XSKRQ_STAT(काष्ठा mlx5e_rq_stats, oversize_pkts_sw_drop) पूर्ण,
-	अणु MLX5E_DECLARE_XSKRQ_STAT(काष्ठा mlx5e_rq_stats, buff_alloc_err) पूर्ण,
-	अणु MLX5E_DECLARE_XSKRQ_STAT(काष्ठा mlx5e_rq_stats, cqe_compress_blks) पूर्ण,
-	अणु MLX5E_DECLARE_XSKRQ_STAT(काष्ठा mlx5e_rq_stats, cqe_compress_pkts) पूर्ण,
-	अणु MLX5E_DECLARE_XSKRQ_STAT(काष्ठा mlx5e_rq_stats, congst_umr) पूर्ण,
-	अणु MLX5E_DECLARE_XSKRQ_STAT(काष्ठा mlx5e_rq_stats, arfs_err) पूर्ण,
-पूर्ण;
+static const struct counter_desc xskrq_stats_desc[] = {
+	{ MLX5E_DECLARE_XSKRQ_STAT(struct mlx5e_rq_stats, packets) },
+	{ MLX5E_DECLARE_XSKRQ_STAT(struct mlx5e_rq_stats, bytes) },
+	{ MLX5E_DECLARE_XSKRQ_STAT(struct mlx5e_rq_stats, csum_complete) },
+	{ MLX5E_DECLARE_XSKRQ_STAT(struct mlx5e_rq_stats, csum_unnecessary) },
+	{ MLX5E_DECLARE_XSKRQ_STAT(struct mlx5e_rq_stats, csum_unnecessary_inner) },
+	{ MLX5E_DECLARE_XSKRQ_STAT(struct mlx5e_rq_stats, csum_none) },
+	{ MLX5E_DECLARE_XSKRQ_STAT(struct mlx5e_rq_stats, ecn_mark) },
+	{ MLX5E_DECLARE_XSKRQ_STAT(struct mlx5e_rq_stats, removed_vlan_packets) },
+	{ MLX5E_DECLARE_XSKRQ_STAT(struct mlx5e_rq_stats, xdp_drop) },
+	{ MLX5E_DECLARE_XSKRQ_STAT(struct mlx5e_rq_stats, xdp_redirect) },
+	{ MLX5E_DECLARE_XSKRQ_STAT(struct mlx5e_rq_stats, wqe_err) },
+	{ MLX5E_DECLARE_XSKRQ_STAT(struct mlx5e_rq_stats, mpwqe_filler_cqes) },
+	{ MLX5E_DECLARE_XSKRQ_STAT(struct mlx5e_rq_stats, mpwqe_filler_strides) },
+	{ MLX5E_DECLARE_XSKRQ_STAT(struct mlx5e_rq_stats, oversize_pkts_sw_drop) },
+	{ MLX5E_DECLARE_XSKRQ_STAT(struct mlx5e_rq_stats, buff_alloc_err) },
+	{ MLX5E_DECLARE_XSKRQ_STAT(struct mlx5e_rq_stats, cqe_compress_blks) },
+	{ MLX5E_DECLARE_XSKRQ_STAT(struct mlx5e_rq_stats, cqe_compress_pkts) },
+	{ MLX5E_DECLARE_XSKRQ_STAT(struct mlx5e_rq_stats, congst_umr) },
+	{ MLX5E_DECLARE_XSKRQ_STAT(struct mlx5e_rq_stats, arfs_err) },
+};
 
-अटल स्थिर काष्ठा counter_desc xsksq_stats_desc[] = अणु
-	अणु MLX5E_DECLARE_XSKSQ_STAT(काष्ठा mlx5e_xdpsq_stats, xmit) पूर्ण,
-	अणु MLX5E_DECLARE_XSKSQ_STAT(काष्ठा mlx5e_xdpsq_stats, mpwqe) पूर्ण,
-	अणु MLX5E_DECLARE_XSKSQ_STAT(काष्ठा mlx5e_xdpsq_stats, inlnw) पूर्ण,
-	अणु MLX5E_DECLARE_XSKSQ_STAT(काष्ठा mlx5e_xdpsq_stats, full) पूर्ण,
-	अणु MLX5E_DECLARE_XSKSQ_STAT(काष्ठा mlx5e_xdpsq_stats, err) पूर्ण,
-	अणु MLX5E_DECLARE_XSKSQ_STAT(काष्ठा mlx5e_xdpsq_stats, cqes) पूर्ण,
-पूर्ण;
+static const struct counter_desc xsksq_stats_desc[] = {
+	{ MLX5E_DECLARE_XSKSQ_STAT(struct mlx5e_xdpsq_stats, xmit) },
+	{ MLX5E_DECLARE_XSKSQ_STAT(struct mlx5e_xdpsq_stats, mpwqe) },
+	{ MLX5E_DECLARE_XSKSQ_STAT(struct mlx5e_xdpsq_stats, inlnw) },
+	{ MLX5E_DECLARE_XSKSQ_STAT(struct mlx5e_xdpsq_stats, full) },
+	{ MLX5E_DECLARE_XSKSQ_STAT(struct mlx5e_xdpsq_stats, err) },
+	{ MLX5E_DECLARE_XSKSQ_STAT(struct mlx5e_xdpsq_stats, cqes) },
+};
 
-अटल स्थिर काष्ठा counter_desc ch_stats_desc[] = अणु
-	अणु MLX5E_DECLARE_CH_STAT(काष्ठा mlx5e_ch_stats, events) पूर्ण,
-	अणु MLX5E_DECLARE_CH_STAT(काष्ठा mlx5e_ch_stats, poll) पूर्ण,
-	अणु MLX5E_DECLARE_CH_STAT(काष्ठा mlx5e_ch_stats, arm) पूर्ण,
-	अणु MLX5E_DECLARE_CH_STAT(काष्ठा mlx5e_ch_stats, aff_change) पूर्ण,
-	अणु MLX5E_DECLARE_CH_STAT(काष्ठा mlx5e_ch_stats, क्रमce_irq) पूर्ण,
-	अणु MLX5E_DECLARE_CH_STAT(काष्ठा mlx5e_ch_stats, eq_rearm) पूर्ण,
-पूर्ण;
+static const struct counter_desc ch_stats_desc[] = {
+	{ MLX5E_DECLARE_CH_STAT(struct mlx5e_ch_stats, events) },
+	{ MLX5E_DECLARE_CH_STAT(struct mlx5e_ch_stats, poll) },
+	{ MLX5E_DECLARE_CH_STAT(struct mlx5e_ch_stats, arm) },
+	{ MLX5E_DECLARE_CH_STAT(struct mlx5e_ch_stats, aff_change) },
+	{ MLX5E_DECLARE_CH_STAT(struct mlx5e_ch_stats, force_irq) },
+	{ MLX5E_DECLARE_CH_STAT(struct mlx5e_ch_stats, eq_rearm) },
+};
 
-अटल स्थिर काष्ठा counter_desc ptp_sq_stats_desc[] = अणु
-	अणु MLX5E_DECLARE_PTP_TX_STAT(काष्ठा mlx5e_sq_stats, packets) पूर्ण,
-	अणु MLX5E_DECLARE_PTP_TX_STAT(काष्ठा mlx5e_sq_stats, bytes) पूर्ण,
-	अणु MLX5E_DECLARE_PTP_TX_STAT(काष्ठा mlx5e_sq_stats, csum_partial) पूर्ण,
-	अणु MLX5E_DECLARE_PTP_TX_STAT(काष्ठा mlx5e_sq_stats, csum_partial_inner) पूर्ण,
-	अणु MLX5E_DECLARE_PTP_TX_STAT(काष्ठा mlx5e_sq_stats, added_vlan_packets) पूर्ण,
-	अणु MLX5E_DECLARE_PTP_TX_STAT(काष्ठा mlx5e_sq_stats, nop) पूर्ण,
-	अणु MLX5E_DECLARE_PTP_TX_STAT(काष्ठा mlx5e_sq_stats, csum_none) पूर्ण,
-	अणु MLX5E_DECLARE_PTP_TX_STAT(काष्ठा mlx5e_sq_stats, stopped) पूर्ण,
-	अणु MLX5E_DECLARE_PTP_TX_STAT(काष्ठा mlx5e_sq_stats, dropped) पूर्ण,
-	अणु MLX5E_DECLARE_PTP_TX_STAT(काष्ठा mlx5e_sq_stats, xmit_more) पूर्ण,
-	अणु MLX5E_DECLARE_PTP_TX_STAT(काष्ठा mlx5e_sq_stats, recover) पूर्ण,
-	अणु MLX5E_DECLARE_PTP_TX_STAT(काष्ठा mlx5e_sq_stats, cqes) पूर्ण,
-	अणु MLX5E_DECLARE_PTP_TX_STAT(काष्ठा mlx5e_sq_stats, wake) पूर्ण,
-	अणु MLX5E_DECLARE_PTP_TX_STAT(काष्ठा mlx5e_sq_stats, cqe_err) पूर्ण,
-पूर्ण;
+static const struct counter_desc ptp_sq_stats_desc[] = {
+	{ MLX5E_DECLARE_PTP_TX_STAT(struct mlx5e_sq_stats, packets) },
+	{ MLX5E_DECLARE_PTP_TX_STAT(struct mlx5e_sq_stats, bytes) },
+	{ MLX5E_DECLARE_PTP_TX_STAT(struct mlx5e_sq_stats, csum_partial) },
+	{ MLX5E_DECLARE_PTP_TX_STAT(struct mlx5e_sq_stats, csum_partial_inner) },
+	{ MLX5E_DECLARE_PTP_TX_STAT(struct mlx5e_sq_stats, added_vlan_packets) },
+	{ MLX5E_DECLARE_PTP_TX_STAT(struct mlx5e_sq_stats, nop) },
+	{ MLX5E_DECLARE_PTP_TX_STAT(struct mlx5e_sq_stats, csum_none) },
+	{ MLX5E_DECLARE_PTP_TX_STAT(struct mlx5e_sq_stats, stopped) },
+	{ MLX5E_DECLARE_PTP_TX_STAT(struct mlx5e_sq_stats, dropped) },
+	{ MLX5E_DECLARE_PTP_TX_STAT(struct mlx5e_sq_stats, xmit_more) },
+	{ MLX5E_DECLARE_PTP_TX_STAT(struct mlx5e_sq_stats, recover) },
+	{ MLX5E_DECLARE_PTP_TX_STAT(struct mlx5e_sq_stats, cqes) },
+	{ MLX5E_DECLARE_PTP_TX_STAT(struct mlx5e_sq_stats, wake) },
+	{ MLX5E_DECLARE_PTP_TX_STAT(struct mlx5e_sq_stats, cqe_err) },
+};
 
-अटल स्थिर काष्ठा counter_desc ptp_ch_stats_desc[] = अणु
-	अणु MLX5E_DECLARE_PTP_CH_STAT(काष्ठा mlx5e_ch_stats, events) पूर्ण,
-	अणु MLX5E_DECLARE_PTP_CH_STAT(काष्ठा mlx5e_ch_stats, poll) पूर्ण,
-	अणु MLX5E_DECLARE_PTP_CH_STAT(काष्ठा mlx5e_ch_stats, arm) पूर्ण,
-	अणु MLX5E_DECLARE_PTP_CH_STAT(काष्ठा mlx5e_ch_stats, eq_rearm) पूर्ण,
-पूर्ण;
+static const struct counter_desc ptp_ch_stats_desc[] = {
+	{ MLX5E_DECLARE_PTP_CH_STAT(struct mlx5e_ch_stats, events) },
+	{ MLX5E_DECLARE_PTP_CH_STAT(struct mlx5e_ch_stats, poll) },
+	{ MLX5E_DECLARE_PTP_CH_STAT(struct mlx5e_ch_stats, arm) },
+	{ MLX5E_DECLARE_PTP_CH_STAT(struct mlx5e_ch_stats, eq_rearm) },
+};
 
-अटल स्थिर काष्ठा counter_desc ptp_cq_stats_desc[] = अणु
-	अणु MLX5E_DECLARE_PTP_CQ_STAT(काष्ठा mlx5e_ptp_cq_stats, cqe) पूर्ण,
-	अणु MLX5E_DECLARE_PTP_CQ_STAT(काष्ठा mlx5e_ptp_cq_stats, err_cqe) पूर्ण,
-	अणु MLX5E_DECLARE_PTP_CQ_STAT(काष्ठा mlx5e_ptp_cq_stats, पात) पूर्ण,
-	अणु MLX5E_DECLARE_PTP_CQ_STAT(काष्ठा mlx5e_ptp_cq_stats, पात_असल_dअगरf_ns) पूर्ण,
-पूर्ण;
+static const struct counter_desc ptp_cq_stats_desc[] = {
+	{ MLX5E_DECLARE_PTP_CQ_STAT(struct mlx5e_ptp_cq_stats, cqe) },
+	{ MLX5E_DECLARE_PTP_CQ_STAT(struct mlx5e_ptp_cq_stats, err_cqe) },
+	{ MLX5E_DECLARE_PTP_CQ_STAT(struct mlx5e_ptp_cq_stats, abort) },
+	{ MLX5E_DECLARE_PTP_CQ_STAT(struct mlx5e_ptp_cq_stats, abort_abs_diff_ns) },
+};
 
-अटल स्थिर काष्ठा counter_desc ptp_rq_stats_desc[] = अणु
-	अणु MLX5E_DECLARE_PTP_RQ_STAT(काष्ठा mlx5e_rq_stats, packets) पूर्ण,
-	अणु MLX5E_DECLARE_PTP_RQ_STAT(काष्ठा mlx5e_rq_stats, bytes) पूर्ण,
-	अणु MLX5E_DECLARE_PTP_RQ_STAT(काष्ठा mlx5e_rq_stats, csum_complete) पूर्ण,
-	अणु MLX5E_DECLARE_PTP_RQ_STAT(काष्ठा mlx5e_rq_stats, csum_complete_tail) पूर्ण,
-	अणु MLX5E_DECLARE_PTP_RQ_STAT(काष्ठा mlx5e_rq_stats, csum_complete_tail_slow) पूर्ण,
-	अणु MLX5E_DECLARE_PTP_RQ_STAT(काष्ठा mlx5e_rq_stats, csum_unnecessary) पूर्ण,
-	अणु MLX5E_DECLARE_PTP_RQ_STAT(काष्ठा mlx5e_rq_stats, csum_unnecessary_inner) पूर्ण,
-	अणु MLX5E_DECLARE_PTP_RQ_STAT(काष्ठा mlx5e_rq_stats, csum_none) पूर्ण,
-	अणु MLX5E_DECLARE_PTP_RQ_STAT(काष्ठा mlx5e_rq_stats, xdp_drop) पूर्ण,
-	अणु MLX5E_DECLARE_PTP_RQ_STAT(काष्ठा mlx5e_rq_stats, xdp_redirect) पूर्ण,
-	अणु MLX5E_DECLARE_PTP_RQ_STAT(काष्ठा mlx5e_rq_stats, lro_packets) पूर्ण,
-	अणु MLX5E_DECLARE_PTP_RQ_STAT(काष्ठा mlx5e_rq_stats, lro_bytes) पूर्ण,
-	अणु MLX5E_DECLARE_PTP_RQ_STAT(काष्ठा mlx5e_rq_stats, ecn_mark) पूर्ण,
-	अणु MLX5E_DECLARE_PTP_RQ_STAT(काष्ठा mlx5e_rq_stats, हटाओd_vlan_packets) पूर्ण,
-	अणु MLX5E_DECLARE_PTP_RQ_STAT(काष्ठा mlx5e_rq_stats, wqe_err) पूर्ण,
-	अणु MLX5E_DECLARE_PTP_RQ_STAT(काष्ठा mlx5e_rq_stats, mpwqe_filler_cqes) पूर्ण,
-	अणु MLX5E_DECLARE_PTP_RQ_STAT(काष्ठा mlx5e_rq_stats, mpwqe_filler_strides) पूर्ण,
-	अणु MLX5E_DECLARE_PTP_RQ_STAT(काष्ठा mlx5e_rq_stats, oversize_pkts_sw_drop) पूर्ण,
-	अणु MLX5E_DECLARE_PTP_RQ_STAT(काष्ठा mlx5e_rq_stats, buff_alloc_err) पूर्ण,
-	अणु MLX5E_DECLARE_PTP_RQ_STAT(काष्ठा mlx5e_rq_stats, cqe_compress_blks) पूर्ण,
-	अणु MLX5E_DECLARE_PTP_RQ_STAT(काष्ठा mlx5e_rq_stats, cqe_compress_pkts) पूर्ण,
-	अणु MLX5E_DECLARE_PTP_RQ_STAT(काष्ठा mlx5e_rq_stats, cache_reuse) पूर्ण,
-	अणु MLX5E_DECLARE_PTP_RQ_STAT(काष्ठा mlx5e_rq_stats, cache_full) पूर्ण,
-	अणु MLX5E_DECLARE_PTP_RQ_STAT(काष्ठा mlx5e_rq_stats, cache_empty) पूर्ण,
-	अणु MLX5E_DECLARE_PTP_RQ_STAT(काष्ठा mlx5e_rq_stats, cache_busy) पूर्ण,
-	अणु MLX5E_DECLARE_PTP_RQ_STAT(काष्ठा mlx5e_rq_stats, cache_waive) पूर्ण,
-	अणु MLX5E_DECLARE_PTP_RQ_STAT(काष्ठा mlx5e_rq_stats, congst_umr) पूर्ण,
-	अणु MLX5E_DECLARE_PTP_RQ_STAT(काष्ठा mlx5e_rq_stats, arfs_err) पूर्ण,
-	अणु MLX5E_DECLARE_PTP_RQ_STAT(काष्ठा mlx5e_rq_stats, recover) पूर्ण,
-पूर्ण;
+static const struct counter_desc ptp_rq_stats_desc[] = {
+	{ MLX5E_DECLARE_PTP_RQ_STAT(struct mlx5e_rq_stats, packets) },
+	{ MLX5E_DECLARE_PTP_RQ_STAT(struct mlx5e_rq_stats, bytes) },
+	{ MLX5E_DECLARE_PTP_RQ_STAT(struct mlx5e_rq_stats, csum_complete) },
+	{ MLX5E_DECLARE_PTP_RQ_STAT(struct mlx5e_rq_stats, csum_complete_tail) },
+	{ MLX5E_DECLARE_PTP_RQ_STAT(struct mlx5e_rq_stats, csum_complete_tail_slow) },
+	{ MLX5E_DECLARE_PTP_RQ_STAT(struct mlx5e_rq_stats, csum_unnecessary) },
+	{ MLX5E_DECLARE_PTP_RQ_STAT(struct mlx5e_rq_stats, csum_unnecessary_inner) },
+	{ MLX5E_DECLARE_PTP_RQ_STAT(struct mlx5e_rq_stats, csum_none) },
+	{ MLX5E_DECLARE_PTP_RQ_STAT(struct mlx5e_rq_stats, xdp_drop) },
+	{ MLX5E_DECLARE_PTP_RQ_STAT(struct mlx5e_rq_stats, xdp_redirect) },
+	{ MLX5E_DECLARE_PTP_RQ_STAT(struct mlx5e_rq_stats, lro_packets) },
+	{ MLX5E_DECLARE_PTP_RQ_STAT(struct mlx5e_rq_stats, lro_bytes) },
+	{ MLX5E_DECLARE_PTP_RQ_STAT(struct mlx5e_rq_stats, ecn_mark) },
+	{ MLX5E_DECLARE_PTP_RQ_STAT(struct mlx5e_rq_stats, removed_vlan_packets) },
+	{ MLX5E_DECLARE_PTP_RQ_STAT(struct mlx5e_rq_stats, wqe_err) },
+	{ MLX5E_DECLARE_PTP_RQ_STAT(struct mlx5e_rq_stats, mpwqe_filler_cqes) },
+	{ MLX5E_DECLARE_PTP_RQ_STAT(struct mlx5e_rq_stats, mpwqe_filler_strides) },
+	{ MLX5E_DECLARE_PTP_RQ_STAT(struct mlx5e_rq_stats, oversize_pkts_sw_drop) },
+	{ MLX5E_DECLARE_PTP_RQ_STAT(struct mlx5e_rq_stats, buff_alloc_err) },
+	{ MLX5E_DECLARE_PTP_RQ_STAT(struct mlx5e_rq_stats, cqe_compress_blks) },
+	{ MLX5E_DECLARE_PTP_RQ_STAT(struct mlx5e_rq_stats, cqe_compress_pkts) },
+	{ MLX5E_DECLARE_PTP_RQ_STAT(struct mlx5e_rq_stats, cache_reuse) },
+	{ MLX5E_DECLARE_PTP_RQ_STAT(struct mlx5e_rq_stats, cache_full) },
+	{ MLX5E_DECLARE_PTP_RQ_STAT(struct mlx5e_rq_stats, cache_empty) },
+	{ MLX5E_DECLARE_PTP_RQ_STAT(struct mlx5e_rq_stats, cache_busy) },
+	{ MLX5E_DECLARE_PTP_RQ_STAT(struct mlx5e_rq_stats, cache_waive) },
+	{ MLX5E_DECLARE_PTP_RQ_STAT(struct mlx5e_rq_stats, congst_umr) },
+	{ MLX5E_DECLARE_PTP_RQ_STAT(struct mlx5e_rq_stats, arfs_err) },
+	{ MLX5E_DECLARE_PTP_RQ_STAT(struct mlx5e_rq_stats, recover) },
+};
 
-अटल स्थिर काष्ठा counter_desc qos_sq_stats_desc[] = अणु
-	अणु MLX5E_DECLARE_QOS_TX_STAT(काष्ठा mlx5e_sq_stats, packets) पूर्ण,
-	अणु MLX5E_DECLARE_QOS_TX_STAT(काष्ठा mlx5e_sq_stats, bytes) पूर्ण,
-	अणु MLX5E_DECLARE_QOS_TX_STAT(काष्ठा mlx5e_sq_stats, tso_packets) पूर्ण,
-	अणु MLX5E_DECLARE_QOS_TX_STAT(काष्ठा mlx5e_sq_stats, tso_bytes) पूर्ण,
-	अणु MLX5E_DECLARE_QOS_TX_STAT(काष्ठा mlx5e_sq_stats, tso_inner_packets) पूर्ण,
-	अणु MLX5E_DECLARE_QOS_TX_STAT(काष्ठा mlx5e_sq_stats, tso_inner_bytes) पूर्ण,
-	अणु MLX5E_DECLARE_QOS_TX_STAT(काष्ठा mlx5e_sq_stats, csum_partial) पूर्ण,
-	अणु MLX5E_DECLARE_QOS_TX_STAT(काष्ठा mlx5e_sq_stats, csum_partial_inner) पूर्ण,
-	अणु MLX5E_DECLARE_QOS_TX_STAT(काष्ठा mlx5e_sq_stats, added_vlan_packets) पूर्ण,
-	अणु MLX5E_DECLARE_QOS_TX_STAT(काष्ठा mlx5e_sq_stats, nop) पूर्ण,
-	अणु MLX5E_DECLARE_QOS_TX_STAT(काष्ठा mlx5e_sq_stats, mpwqe_blks) पूर्ण,
-	अणु MLX5E_DECLARE_QOS_TX_STAT(काष्ठा mlx5e_sq_stats, mpwqe_pkts) पूर्ण,
-#अगर_घोषित CONFIG_MLX5_EN_TLS
-	अणु MLX5E_DECLARE_QOS_TX_STAT(काष्ठा mlx5e_sq_stats, tls_encrypted_packets) पूर्ण,
-	अणु MLX5E_DECLARE_QOS_TX_STAT(काष्ठा mlx5e_sq_stats, tls_encrypted_bytes) पूर्ण,
-	अणु MLX5E_DECLARE_QOS_TX_STAT(काष्ठा mlx5e_sq_stats, tls_ooo) पूर्ण,
-	अणु MLX5E_DECLARE_QOS_TX_STAT(काष्ठा mlx5e_sq_stats, tls_dump_packets) पूर्ण,
-	अणु MLX5E_DECLARE_QOS_TX_STAT(काष्ठा mlx5e_sq_stats, tls_dump_bytes) पूर्ण,
-	अणु MLX5E_DECLARE_QOS_TX_STAT(काष्ठा mlx5e_sq_stats, tls_resync_bytes) पूर्ण,
-	अणु MLX5E_DECLARE_QOS_TX_STAT(काष्ठा mlx5e_sq_stats, tls_skip_no_sync_data) पूर्ण,
-	अणु MLX5E_DECLARE_QOS_TX_STAT(काष्ठा mlx5e_sq_stats, tls_drop_no_sync_data) पूर्ण,
-	अणु MLX5E_DECLARE_QOS_TX_STAT(काष्ठा mlx5e_sq_stats, tls_drop_bypass_req) पूर्ण,
-#पूर्ण_अगर
-	अणु MLX5E_DECLARE_QOS_TX_STAT(काष्ठा mlx5e_sq_stats, csum_none) पूर्ण,
-	अणु MLX5E_DECLARE_QOS_TX_STAT(काष्ठा mlx5e_sq_stats, stopped) पूर्ण,
-	अणु MLX5E_DECLARE_QOS_TX_STAT(काष्ठा mlx5e_sq_stats, dropped) पूर्ण,
-	अणु MLX5E_DECLARE_QOS_TX_STAT(काष्ठा mlx5e_sq_stats, xmit_more) पूर्ण,
-	अणु MLX5E_DECLARE_QOS_TX_STAT(काष्ठा mlx5e_sq_stats, recover) पूर्ण,
-	अणु MLX5E_DECLARE_QOS_TX_STAT(काष्ठा mlx5e_sq_stats, cqes) पूर्ण,
-	अणु MLX5E_DECLARE_QOS_TX_STAT(काष्ठा mlx5e_sq_stats, wake) पूर्ण,
-	अणु MLX5E_DECLARE_QOS_TX_STAT(काष्ठा mlx5e_sq_stats, cqe_err) पूर्ण,
-पूर्ण;
+static const struct counter_desc qos_sq_stats_desc[] = {
+	{ MLX5E_DECLARE_QOS_TX_STAT(struct mlx5e_sq_stats, packets) },
+	{ MLX5E_DECLARE_QOS_TX_STAT(struct mlx5e_sq_stats, bytes) },
+	{ MLX5E_DECLARE_QOS_TX_STAT(struct mlx5e_sq_stats, tso_packets) },
+	{ MLX5E_DECLARE_QOS_TX_STAT(struct mlx5e_sq_stats, tso_bytes) },
+	{ MLX5E_DECLARE_QOS_TX_STAT(struct mlx5e_sq_stats, tso_inner_packets) },
+	{ MLX5E_DECLARE_QOS_TX_STAT(struct mlx5e_sq_stats, tso_inner_bytes) },
+	{ MLX5E_DECLARE_QOS_TX_STAT(struct mlx5e_sq_stats, csum_partial) },
+	{ MLX5E_DECLARE_QOS_TX_STAT(struct mlx5e_sq_stats, csum_partial_inner) },
+	{ MLX5E_DECLARE_QOS_TX_STAT(struct mlx5e_sq_stats, added_vlan_packets) },
+	{ MLX5E_DECLARE_QOS_TX_STAT(struct mlx5e_sq_stats, nop) },
+	{ MLX5E_DECLARE_QOS_TX_STAT(struct mlx5e_sq_stats, mpwqe_blks) },
+	{ MLX5E_DECLARE_QOS_TX_STAT(struct mlx5e_sq_stats, mpwqe_pkts) },
+#ifdef CONFIG_MLX5_EN_TLS
+	{ MLX5E_DECLARE_QOS_TX_STAT(struct mlx5e_sq_stats, tls_encrypted_packets) },
+	{ MLX5E_DECLARE_QOS_TX_STAT(struct mlx5e_sq_stats, tls_encrypted_bytes) },
+	{ MLX5E_DECLARE_QOS_TX_STAT(struct mlx5e_sq_stats, tls_ooo) },
+	{ MLX5E_DECLARE_QOS_TX_STAT(struct mlx5e_sq_stats, tls_dump_packets) },
+	{ MLX5E_DECLARE_QOS_TX_STAT(struct mlx5e_sq_stats, tls_dump_bytes) },
+	{ MLX5E_DECLARE_QOS_TX_STAT(struct mlx5e_sq_stats, tls_resync_bytes) },
+	{ MLX5E_DECLARE_QOS_TX_STAT(struct mlx5e_sq_stats, tls_skip_no_sync_data) },
+	{ MLX5E_DECLARE_QOS_TX_STAT(struct mlx5e_sq_stats, tls_drop_no_sync_data) },
+	{ MLX5E_DECLARE_QOS_TX_STAT(struct mlx5e_sq_stats, tls_drop_bypass_req) },
+#endif
+	{ MLX5E_DECLARE_QOS_TX_STAT(struct mlx5e_sq_stats, csum_none) },
+	{ MLX5E_DECLARE_QOS_TX_STAT(struct mlx5e_sq_stats, stopped) },
+	{ MLX5E_DECLARE_QOS_TX_STAT(struct mlx5e_sq_stats, dropped) },
+	{ MLX5E_DECLARE_QOS_TX_STAT(struct mlx5e_sq_stats, xmit_more) },
+	{ MLX5E_DECLARE_QOS_TX_STAT(struct mlx5e_sq_stats, recover) },
+	{ MLX5E_DECLARE_QOS_TX_STAT(struct mlx5e_sq_stats, cqes) },
+	{ MLX5E_DECLARE_QOS_TX_STAT(struct mlx5e_sq_stats, wake) },
+	{ MLX5E_DECLARE_QOS_TX_STAT(struct mlx5e_sq_stats, cqe_err) },
+};
 
-#घोषणा NUM_RQ_STATS			ARRAY_SIZE(rq_stats_desc)
-#घोषणा NUM_SQ_STATS			ARRAY_SIZE(sq_stats_desc)
-#घोषणा NUM_XDPSQ_STATS			ARRAY_SIZE(xdpsq_stats_desc)
-#घोषणा NUM_RQ_XDPSQ_STATS		ARRAY_SIZE(rq_xdpsq_stats_desc)
-#घोषणा NUM_XSKRQ_STATS			ARRAY_SIZE(xskrq_stats_desc)
-#घोषणा NUM_XSKSQ_STATS			ARRAY_SIZE(xsksq_stats_desc)
-#घोषणा NUM_CH_STATS			ARRAY_SIZE(ch_stats_desc)
-#घोषणा NUM_PTP_SQ_STATS		ARRAY_SIZE(ptp_sq_stats_desc)
-#घोषणा NUM_PTP_CH_STATS		ARRAY_SIZE(ptp_ch_stats_desc)
-#घोषणा NUM_PTP_CQ_STATS		ARRAY_SIZE(ptp_cq_stats_desc)
-#घोषणा NUM_PTP_RQ_STATS                ARRAY_SIZE(ptp_rq_stats_desc)
-#घोषणा NUM_QOS_SQ_STATS		ARRAY_SIZE(qos_sq_stats_desc)
+#define NUM_RQ_STATS			ARRAY_SIZE(rq_stats_desc)
+#define NUM_SQ_STATS			ARRAY_SIZE(sq_stats_desc)
+#define NUM_XDPSQ_STATS			ARRAY_SIZE(xdpsq_stats_desc)
+#define NUM_RQ_XDPSQ_STATS		ARRAY_SIZE(rq_xdpsq_stats_desc)
+#define NUM_XSKRQ_STATS			ARRAY_SIZE(xskrq_stats_desc)
+#define NUM_XSKSQ_STATS			ARRAY_SIZE(xsksq_stats_desc)
+#define NUM_CH_STATS			ARRAY_SIZE(ch_stats_desc)
+#define NUM_PTP_SQ_STATS		ARRAY_SIZE(ptp_sq_stats_desc)
+#define NUM_PTP_CH_STATS		ARRAY_SIZE(ptp_ch_stats_desc)
+#define NUM_PTP_CQ_STATS		ARRAY_SIZE(ptp_cq_stats_desc)
+#define NUM_PTP_RQ_STATS                ARRAY_SIZE(ptp_rq_stats_desc)
+#define NUM_QOS_SQ_STATS		ARRAY_SIZE(qos_sq_stats_desc)
 
-अटल MLX5E_DECLARE_STATS_GRP_OP_NUM_STATS(qos)
-अणु
-	/* Pairs with smp_store_release in mlx5e_खोलो_qos_sq. */
-	वापस NUM_QOS_SQ_STATS * smp_load_acquire(&priv->htb.max_qos_sqs);
-पूर्ण
+static MLX5E_DECLARE_STATS_GRP_OP_NUM_STATS(qos)
+{
+	/* Pairs with smp_store_release in mlx5e_open_qos_sq. */
+	return NUM_QOS_SQ_STATS * smp_load_acquire(&priv->htb.max_qos_sqs);
+}
 
-अटल MLX5E_DECLARE_STATS_GRP_OP_FILL_STRS(qos)
-अणु
-	/* Pairs with smp_store_release in mlx5e_खोलो_qos_sq. */
+static MLX5E_DECLARE_STATS_GRP_OP_FILL_STRS(qos)
+{
+	/* Pairs with smp_store_release in mlx5e_open_qos_sq. */
 	u16 max_qos_sqs = smp_load_acquire(&priv->htb.max_qos_sqs);
-	पूर्णांक i, qid;
+	int i, qid;
 
-	क्रम (qid = 0; qid < max_qos_sqs; qid++)
-		क्रम (i = 0; i < NUM_QOS_SQ_STATS; i++)
-			प्र_लिखो(data + (idx++) * ETH_GSTRING_LEN,
-				qos_sq_stats_desc[i].क्रमmat, qid);
+	for (qid = 0; qid < max_qos_sqs; qid++)
+		for (i = 0; i < NUM_QOS_SQ_STATS; i++)
+			sprintf(data + (idx++) * ETH_GSTRING_LEN,
+				qos_sq_stats_desc[i].format, qid);
 
-	वापस idx;
-पूर्ण
+	return idx;
+}
 
-अटल MLX5E_DECLARE_STATS_GRP_OP_FILL_STATS(qos)
-अणु
-	काष्ठा mlx5e_sq_stats **stats;
+static MLX5E_DECLARE_STATS_GRP_OP_FILL_STATS(qos)
+{
+	struct mlx5e_sq_stats **stats;
 	u16 max_qos_sqs;
-	पूर्णांक i, qid;
+	int i, qid;
 
-	/* Pairs with smp_store_release in mlx5e_खोलो_qos_sq. */
+	/* Pairs with smp_store_release in mlx5e_open_qos_sq. */
 	max_qos_sqs = smp_load_acquire(&priv->htb.max_qos_sqs);
 	stats = READ_ONCE(priv->htb.qos_sq_stats);
 
-	क्रम (qid = 0; qid < max_qos_sqs; qid++) अणु
-		काष्ठा mlx5e_sq_stats *s = READ_ONCE(stats[qid]);
+	for (qid = 0; qid < max_qos_sqs; qid++) {
+		struct mlx5e_sq_stats *s = READ_ONCE(stats[qid]);
 
-		क्रम (i = 0; i < NUM_QOS_SQ_STATS; i++)
+		for (i = 0; i < NUM_QOS_SQ_STATS; i++)
 			data[idx++] = MLX5E_READ_CTR64_CPU(s, qos_sq_stats_desc, i);
-	पूर्ण
+	}
 
-	वापस idx;
-पूर्ण
+	return idx;
+}
 
-अटल MLX5E_DECLARE_STATS_GRP_OP_UPDATE_STATS(qos) अणु वापस; पूर्ण
+static MLX5E_DECLARE_STATS_GRP_OP_UPDATE_STATS(qos) { return; }
 
-अटल MLX5E_DECLARE_STATS_GRP_OP_NUM_STATS(ptp)
-अणु
-	पूर्णांक num = NUM_PTP_CH_STATS;
+static MLX5E_DECLARE_STATS_GRP_OP_NUM_STATS(ptp)
+{
+	int num = NUM_PTP_CH_STATS;
 
-	अगर (!priv->tx_ptp_खोलोed && !priv->rx_ptp_खोलोed)
-		वापस 0;
+	if (!priv->tx_ptp_opened && !priv->rx_ptp_opened)
+		return 0;
 
-	अगर (priv->tx_ptp_खोलोed)
-		num += (NUM_PTP_SQ_STATS + NUM_PTP_CQ_STATS) * priv->max_खोलोed_tc;
-	अगर (priv->rx_ptp_खोलोed)
+	if (priv->tx_ptp_opened)
+		num += (NUM_PTP_SQ_STATS + NUM_PTP_CQ_STATS) * priv->max_opened_tc;
+	if (priv->rx_ptp_opened)
 		num += NUM_PTP_RQ_STATS;
 
-	वापस num;
-पूर्ण
+	return num;
+}
 
-अटल MLX5E_DECLARE_STATS_GRP_OP_FILL_STRS(ptp)
-अणु
-	पूर्णांक i, tc;
+static MLX5E_DECLARE_STATS_GRP_OP_FILL_STRS(ptp)
+{
+	int i, tc;
 
-	अगर (!priv->tx_ptp_खोलोed && !priv->rx_ptp_खोलोed)
-		वापस idx;
+	if (!priv->tx_ptp_opened && !priv->rx_ptp_opened)
+		return idx;
 
-	क्रम (i = 0; i < NUM_PTP_CH_STATS; i++)
-		प्र_लिखो(data + (idx++) * ETH_GSTRING_LEN,
-			ptp_ch_stats_desc[i].क्रमmat);
+	for (i = 0; i < NUM_PTP_CH_STATS; i++)
+		sprintf(data + (idx++) * ETH_GSTRING_LEN,
+			ptp_ch_stats_desc[i].format);
 
-	अगर (priv->tx_ptp_खोलोed) अणु
-		क्रम (tc = 0; tc < priv->max_खोलोed_tc; tc++)
-			क्रम (i = 0; i < NUM_PTP_SQ_STATS; i++)
-				प्र_लिखो(data + (idx++) * ETH_GSTRING_LEN,
-					ptp_sq_stats_desc[i].क्रमmat, tc);
+	if (priv->tx_ptp_opened) {
+		for (tc = 0; tc < priv->max_opened_tc; tc++)
+			for (i = 0; i < NUM_PTP_SQ_STATS; i++)
+				sprintf(data + (idx++) * ETH_GSTRING_LEN,
+					ptp_sq_stats_desc[i].format, tc);
 
-		क्रम (tc = 0; tc < priv->max_खोलोed_tc; tc++)
-			क्रम (i = 0; i < NUM_PTP_CQ_STATS; i++)
-				प्र_लिखो(data + (idx++) * ETH_GSTRING_LEN,
-					ptp_cq_stats_desc[i].क्रमmat, tc);
-	पूर्ण
-	अगर (priv->rx_ptp_खोलोed) अणु
-		क्रम (i = 0; i < NUM_PTP_RQ_STATS; i++)
-			प्र_लिखो(data + (idx++) * ETH_GSTRING_LEN,
-				ptp_rq_stats_desc[i].क्रमmat);
-	पूर्ण
-	वापस idx;
-पूर्ण
+		for (tc = 0; tc < priv->max_opened_tc; tc++)
+			for (i = 0; i < NUM_PTP_CQ_STATS; i++)
+				sprintf(data + (idx++) * ETH_GSTRING_LEN,
+					ptp_cq_stats_desc[i].format, tc);
+	}
+	if (priv->rx_ptp_opened) {
+		for (i = 0; i < NUM_PTP_RQ_STATS; i++)
+			sprintf(data + (idx++) * ETH_GSTRING_LEN,
+				ptp_rq_stats_desc[i].format);
+	}
+	return idx;
+}
 
-अटल MLX5E_DECLARE_STATS_GRP_OP_FILL_STATS(ptp)
-अणु
-	पूर्णांक i, tc;
+static MLX5E_DECLARE_STATS_GRP_OP_FILL_STATS(ptp)
+{
+	int i, tc;
 
-	अगर (!priv->tx_ptp_खोलोed && !priv->rx_ptp_खोलोed)
-		वापस idx;
+	if (!priv->tx_ptp_opened && !priv->rx_ptp_opened)
+		return idx;
 
-	क्रम (i = 0; i < NUM_PTP_CH_STATS; i++)
+	for (i = 0; i < NUM_PTP_CH_STATS; i++)
 		data[idx++] =
 			MLX5E_READ_CTR64_CPU(&priv->ptp_stats.ch,
 					     ptp_ch_stats_desc, i);
 
-	अगर (priv->tx_ptp_खोलोed) अणु
-		क्रम (tc = 0; tc < priv->max_खोलोed_tc; tc++)
-			क्रम (i = 0; i < NUM_PTP_SQ_STATS; i++)
+	if (priv->tx_ptp_opened) {
+		for (tc = 0; tc < priv->max_opened_tc; tc++)
+			for (i = 0; i < NUM_PTP_SQ_STATS; i++)
 				data[idx++] =
 					MLX5E_READ_CTR64_CPU(&priv->ptp_stats.sq[tc],
 							     ptp_sq_stats_desc, i);
 
-		क्रम (tc = 0; tc < priv->max_खोलोed_tc; tc++)
-			क्रम (i = 0; i < NUM_PTP_CQ_STATS; i++)
+		for (tc = 0; tc < priv->max_opened_tc; tc++)
+			for (i = 0; i < NUM_PTP_CQ_STATS; i++)
 				data[idx++] =
 					MLX5E_READ_CTR64_CPU(&priv->ptp_stats.cq[tc],
 							     ptp_cq_stats_desc, i);
-	पूर्ण
-	अगर (priv->rx_ptp_खोलोed) अणु
-		क्रम (i = 0; i < NUM_PTP_RQ_STATS; i++)
+	}
+	if (priv->rx_ptp_opened) {
+		for (i = 0; i < NUM_PTP_RQ_STATS; i++)
 			data[idx++] =
 				MLX5E_READ_CTR64_CPU(&priv->ptp_stats.rq,
 						     ptp_rq_stats_desc, i);
-	पूर्ण
-	वापस idx;
-पूर्ण
+	}
+	return idx;
+}
 
-अटल MLX5E_DECLARE_STATS_GRP_OP_UPDATE_STATS(ptp) अणु वापस; पूर्ण
+static MLX5E_DECLARE_STATS_GRP_OP_UPDATE_STATS(ptp) { return; }
 
-अटल MLX5E_DECLARE_STATS_GRP_OP_NUM_STATS(channels)
-अणु
-	पूर्णांक max_nch = priv->max_nch;
+static MLX5E_DECLARE_STATS_GRP_OP_NUM_STATS(channels)
+{
+	int max_nch = priv->max_nch;
 
-	वापस (NUM_RQ_STATS * max_nch) +
+	return (NUM_RQ_STATS * max_nch) +
 	       (NUM_CH_STATS * max_nch) +
-	       (NUM_SQ_STATS * max_nch * priv->max_खोलोed_tc) +
+	       (NUM_SQ_STATS * max_nch * priv->max_opened_tc) +
 	       (NUM_RQ_XDPSQ_STATS * max_nch) +
 	       (NUM_XDPSQ_STATS * max_nch) +
 	       (NUM_XSKRQ_STATS * max_nch * priv->xsk.ever_used) +
 	       (NUM_XSKSQ_STATS * max_nch * priv->xsk.ever_used);
-पूर्ण
+}
 
-अटल MLX5E_DECLARE_STATS_GRP_OP_FILL_STRS(channels)
-अणु
+static MLX5E_DECLARE_STATS_GRP_OP_FILL_STRS(channels)
+{
 	bool is_xsk = priv->xsk.ever_used;
-	पूर्णांक max_nch = priv->max_nch;
-	पूर्णांक i, j, tc;
+	int max_nch = priv->max_nch;
+	int i, j, tc;
 
-	क्रम (i = 0; i < max_nch; i++)
-		क्रम (j = 0; j < NUM_CH_STATS; j++)
-			प्र_लिखो(data + (idx++) * ETH_GSTRING_LEN,
-				ch_stats_desc[j].क्रमmat, i);
+	for (i = 0; i < max_nch; i++)
+		for (j = 0; j < NUM_CH_STATS; j++)
+			sprintf(data + (idx++) * ETH_GSTRING_LEN,
+				ch_stats_desc[j].format, i);
 
-	क्रम (i = 0; i < max_nch; i++) अणु
-		क्रम (j = 0; j < NUM_RQ_STATS; j++)
-			प्र_लिखो(data + (idx++) * ETH_GSTRING_LEN,
-				rq_stats_desc[j].क्रमmat, i);
-		क्रम (j = 0; j < NUM_XSKRQ_STATS * is_xsk; j++)
-			प्र_लिखो(data + (idx++) * ETH_GSTRING_LEN,
-				xskrq_stats_desc[j].क्रमmat, i);
-		क्रम (j = 0; j < NUM_RQ_XDPSQ_STATS; j++)
-			प्र_लिखो(data + (idx++) * ETH_GSTRING_LEN,
-				rq_xdpsq_stats_desc[j].क्रमmat, i);
-	पूर्ण
+	for (i = 0; i < max_nch; i++) {
+		for (j = 0; j < NUM_RQ_STATS; j++)
+			sprintf(data + (idx++) * ETH_GSTRING_LEN,
+				rq_stats_desc[j].format, i);
+		for (j = 0; j < NUM_XSKRQ_STATS * is_xsk; j++)
+			sprintf(data + (idx++) * ETH_GSTRING_LEN,
+				xskrq_stats_desc[j].format, i);
+		for (j = 0; j < NUM_RQ_XDPSQ_STATS; j++)
+			sprintf(data + (idx++) * ETH_GSTRING_LEN,
+				rq_xdpsq_stats_desc[j].format, i);
+	}
 
-	क्रम (tc = 0; tc < priv->max_खोलोed_tc; tc++)
-		क्रम (i = 0; i < max_nch; i++)
-			क्रम (j = 0; j < NUM_SQ_STATS; j++)
-				प्र_लिखो(data + (idx++) * ETH_GSTRING_LEN,
-					sq_stats_desc[j].क्रमmat,
+	for (tc = 0; tc < priv->max_opened_tc; tc++)
+		for (i = 0; i < max_nch; i++)
+			for (j = 0; j < NUM_SQ_STATS; j++)
+				sprintf(data + (idx++) * ETH_GSTRING_LEN,
+					sq_stats_desc[j].format,
 					i + tc * max_nch);
 
-	क्रम (i = 0; i < max_nch; i++) अणु
-		क्रम (j = 0; j < NUM_XSKSQ_STATS * is_xsk; j++)
-			प्र_लिखो(data + (idx++) * ETH_GSTRING_LEN,
-				xsksq_stats_desc[j].क्रमmat, i);
-		क्रम (j = 0; j < NUM_XDPSQ_STATS; j++)
-			प्र_लिखो(data + (idx++) * ETH_GSTRING_LEN,
-				xdpsq_stats_desc[j].क्रमmat, i);
-	पूर्ण
+	for (i = 0; i < max_nch; i++) {
+		for (j = 0; j < NUM_XSKSQ_STATS * is_xsk; j++)
+			sprintf(data + (idx++) * ETH_GSTRING_LEN,
+				xsksq_stats_desc[j].format, i);
+		for (j = 0; j < NUM_XDPSQ_STATS; j++)
+			sprintf(data + (idx++) * ETH_GSTRING_LEN,
+				xdpsq_stats_desc[j].format, i);
+	}
 
-	वापस idx;
-पूर्ण
+	return idx;
+}
 
-अटल MLX5E_DECLARE_STATS_GRP_OP_FILL_STATS(channels)
-अणु
+static MLX5E_DECLARE_STATS_GRP_OP_FILL_STATS(channels)
+{
 	bool is_xsk = priv->xsk.ever_used;
-	पूर्णांक max_nch = priv->max_nch;
-	पूर्णांक i, j, tc;
+	int max_nch = priv->max_nch;
+	int i, j, tc;
 
-	क्रम (i = 0; i < max_nch; i++)
-		क्रम (j = 0; j < NUM_CH_STATS; j++)
+	for (i = 0; i < max_nch; i++)
+		for (j = 0; j < NUM_CH_STATS; j++)
 			data[idx++] =
 				MLX5E_READ_CTR64_CPU(&priv->channel_stats[i].ch,
 						     ch_stats_desc, j);
 
-	क्रम (i = 0; i < max_nch; i++) अणु
-		क्रम (j = 0; j < NUM_RQ_STATS; j++)
+	for (i = 0; i < max_nch; i++) {
+		for (j = 0; j < NUM_RQ_STATS; j++)
 			data[idx++] =
 				MLX5E_READ_CTR64_CPU(&priv->channel_stats[i].rq,
 						     rq_stats_desc, j);
-		क्रम (j = 0; j < NUM_XSKRQ_STATS * is_xsk; j++)
+		for (j = 0; j < NUM_XSKRQ_STATS * is_xsk; j++)
 			data[idx++] =
 				MLX5E_READ_CTR64_CPU(&priv->channel_stats[i].xskrq,
 						     xskrq_stats_desc, j);
-		क्रम (j = 0; j < NUM_RQ_XDPSQ_STATS; j++)
+		for (j = 0; j < NUM_RQ_XDPSQ_STATS; j++)
 			data[idx++] =
 				MLX5E_READ_CTR64_CPU(&priv->channel_stats[i].rq_xdpsq,
 						     rq_xdpsq_stats_desc, j);
-	पूर्ण
+	}
 
-	क्रम (tc = 0; tc < priv->max_खोलोed_tc; tc++)
-		क्रम (i = 0; i < max_nch; i++)
-			क्रम (j = 0; j < NUM_SQ_STATS; j++)
+	for (tc = 0; tc < priv->max_opened_tc; tc++)
+		for (i = 0; i < max_nch; i++)
+			for (j = 0; j < NUM_SQ_STATS; j++)
 				data[idx++] =
 					MLX5E_READ_CTR64_CPU(&priv->channel_stats[i].sq[tc],
 							     sq_stats_desc, j);
 
-	क्रम (i = 0; i < max_nch; i++) अणु
-		क्रम (j = 0; j < NUM_XSKSQ_STATS * is_xsk; j++)
+	for (i = 0; i < max_nch; i++) {
+		for (j = 0; j < NUM_XSKSQ_STATS * is_xsk; j++)
 			data[idx++] =
 				MLX5E_READ_CTR64_CPU(&priv->channel_stats[i].xsksq,
 						     xsksq_stats_desc, j);
-		क्रम (j = 0; j < NUM_XDPSQ_STATS; j++)
+		for (j = 0; j < NUM_XDPSQ_STATS; j++)
 			data[idx++] =
 				MLX5E_READ_CTR64_CPU(&priv->channel_stats[i].xdpsq,
 						     xdpsq_stats_desc, j);
-	पूर्ण
+	}
 
-	वापस idx;
-पूर्ण
+	return idx;
+}
 
-अटल MLX5E_DECLARE_STATS_GRP_OP_UPDATE_STATS(channels) अणु वापस; पूर्ण
+static MLX5E_DECLARE_STATS_GRP_OP_UPDATE_STATS(channels) { return; }
 
 MLX5E_DEFINE_STATS_GRP(sw, 0);
 MLX5E_DEFINE_STATS_GRP(qcnt, MLX5E_NDO_UPDATE_STATS);
@@ -2237,12 +2236,12 @@ MLX5E_DEFINE_STATS_GRP(pme, 0);
 MLX5E_DEFINE_STATS_GRP(channels, 0);
 MLX5E_DEFINE_STATS_GRP(per_port_buff_congest, 0);
 MLX5E_DEFINE_STATS_GRP(eth_ext, 0);
-अटल MLX5E_DEFINE_STATS_GRP(tls, 0);
-अटल MLX5E_DEFINE_STATS_GRP(ptp, 0);
-अटल MLX5E_DEFINE_STATS_GRP(qos, 0);
+static MLX5E_DEFINE_STATS_GRP(tls, 0);
+static MLX5E_DEFINE_STATS_GRP(ptp, 0);
+static MLX5E_DEFINE_STATS_GRP(qos, 0);
 
 /* The stats groups order is opposite to the update_stats() order calls */
-mlx5e_stats_grp_t mlx5e_nic_stats_grps[] = अणु
+mlx5e_stats_grp_t mlx5e_nic_stats_grps[] = {
 	&MLX5E_STATS_GRP(sw),
 	&MLX5E_STATS_GRP(qcnt),
 	&MLX5E_STATS_GRP(vnic_env),
@@ -2255,18 +2254,18 @@ mlx5e_stats_grp_t mlx5e_nic_stats_grps[] = अणु
 	&MLX5E_STATS_GRP(pcie),
 	&MLX5E_STATS_GRP(per_prio),
 	&MLX5E_STATS_GRP(pme),
-#अगर_घोषित CONFIG_MLX5_EN_IPSEC
+#ifdef CONFIG_MLX5_EN_IPSEC
 	&MLX5E_STATS_GRP(ipsec_sw),
 	&MLX5E_STATS_GRP(ipsec_hw),
-#पूर्ण_अगर
+#endif
 	&MLX5E_STATS_GRP(tls),
 	&MLX5E_STATS_GRP(channels),
 	&MLX5E_STATS_GRP(per_port_buff_congest),
 	&MLX5E_STATS_GRP(ptp),
 	&MLX5E_STATS_GRP(qos),
-पूर्ण;
+};
 
-अचिन्हित पूर्णांक mlx5e_nic_stats_grps_num(काष्ठा mlx5e_priv *priv)
-अणु
-	वापस ARRAY_SIZE(mlx5e_nic_stats_grps);
-पूर्ण
+unsigned int mlx5e_nic_stats_grps_num(struct mlx5e_priv *priv)
+{
+	return ARRAY_SIZE(mlx5e_nic_stats_grps);
+}

@@ -1,14 +1,13 @@
-<शैली गुरु>
 /*
  * Copyright 2009 Jerome Glisse.
  * All Rights Reserved.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modअगरy, merge, publish,
+ * without limitation the rights to use, copy, modify, merge, publish,
  * distribute, sub license, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to करो so, subject to
+ * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
@@ -26,996 +25,996 @@
  */
 /*
  * Authors:
- *    Jerome Glisse <glisse@मुक्तdesktop.org>
- *    Thomas Hellstrom <thomas-at-tungstengraphics-करोt-com>
+ *    Jerome Glisse <glisse@freedesktop.org>
+ *    Thomas Hellstrom <thomas-at-tungstengraphics-dot-com>
  *    Dave Airlie
  */
 
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/pagemap.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/seq_file.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/swap.h>
-#समावेश <linux/swiotlb.h>
+#include <linux/dma-mapping.h>
+#include <linux/pagemap.h>
+#include <linux/pci.h>
+#include <linux/seq_file.h>
+#include <linux/slab.h>
+#include <linux/swap.h>
+#include <linux/swiotlb.h>
 
-#समावेश <drm/drm_agpsupport.h>
-#समावेश <drm/drm_device.h>
-#समावेश <drm/drm_file.h>
-#समावेश <drm/drm_prime.h>
-#समावेश <drm/radeon_drm.h>
-#समावेश <drm/tपंचांग/tपंचांग_bo_api.h>
-#समावेश <drm/tपंचांग/tपंचांग_bo_driver.h>
-#समावेश <drm/tपंचांग/tपंचांग_placement.h>
+#include <drm/drm_agpsupport.h>
+#include <drm/drm_device.h>
+#include <drm/drm_file.h>
+#include <drm/drm_prime.h>
+#include <drm/radeon_drm.h>
+#include <drm/ttm/ttm_bo_api.h>
+#include <drm/ttm/ttm_bo_driver.h>
+#include <drm/ttm/ttm_placement.h>
 
-#समावेश "radeon_reg.h"
-#समावेश "radeon.h"
-#समावेश "radeon_ttm.h"
+#include "radeon_reg.h"
+#include "radeon.h"
+#include "radeon_ttm.h"
 
-अटल व्योम radeon_tपंचांग_debugfs_init(काष्ठा radeon_device *rdev);
+static void radeon_ttm_debugfs_init(struct radeon_device *rdev);
 
-अटल पूर्णांक radeon_tपंचांग_tt_bind(काष्ठा tपंचांग_device *bdev, काष्ठा tपंचांग_tt *tपंचांग,
-			      काष्ठा tपंचांग_resource *bo_mem);
-अटल व्योम radeon_tपंचांग_tt_unbind(काष्ठा tपंचांग_device *bdev, काष्ठा tपंचांग_tt *tपंचांग);
+static int radeon_ttm_tt_bind(struct ttm_device *bdev, struct ttm_tt *ttm,
+			      struct ttm_resource *bo_mem);
+static void radeon_ttm_tt_unbind(struct ttm_device *bdev, struct ttm_tt *ttm);
 
-काष्ठा radeon_device *radeon_get_rdev(काष्ठा tपंचांग_device *bdev)
-अणु
-	काष्ठा radeon_mman *mman;
-	काष्ठा radeon_device *rdev;
+struct radeon_device *radeon_get_rdev(struct ttm_device *bdev)
+{
+	struct radeon_mman *mman;
+	struct radeon_device *rdev;
 
-	mman = container_of(bdev, काष्ठा radeon_mman, bdev);
-	rdev = container_of(mman, काष्ठा radeon_device, mman);
-	वापस rdev;
-पूर्ण
+	mman = container_of(bdev, struct radeon_mman, bdev);
+	rdev = container_of(mman, struct radeon_device, mman);
+	return rdev;
+}
 
-अटल पूर्णांक radeon_tपंचांग_init_vram(काष्ठा radeon_device *rdev)
-अणु
-	वापस tपंचांग_range_man_init(&rdev->mman.bdev, TTM_PL_VRAM,
+static int radeon_ttm_init_vram(struct radeon_device *rdev)
+{
+	return ttm_range_man_init(&rdev->mman.bdev, TTM_PL_VRAM,
 				  false, rdev->mc.real_vram_size >> PAGE_SHIFT);
-पूर्ण
+}
 
-अटल पूर्णांक radeon_tपंचांग_init_gtt(काष्ठा radeon_device *rdev)
-अणु
-	वापस tपंचांग_range_man_init(&rdev->mman.bdev, TTM_PL_TT,
+static int radeon_ttm_init_gtt(struct radeon_device *rdev)
+{
+	return ttm_range_man_init(&rdev->mman.bdev, TTM_PL_TT,
 				  true, rdev->mc.gtt_size >> PAGE_SHIFT);
-पूर्ण
+}
 
-अटल व्योम radeon_evict_flags(काष्ठा tपंचांग_buffer_object *bo,
-				काष्ठा tपंचांग_placement *placement)
-अणु
-	अटल स्थिर काष्ठा tपंचांग_place placements = अणु
+static void radeon_evict_flags(struct ttm_buffer_object *bo,
+				struct ttm_placement *placement)
+{
+	static const struct ttm_place placements = {
 		.fpfn = 0,
 		.lpfn = 0,
 		.mem_type = TTM_PL_SYSTEM,
 		.flags = 0
-	पूर्ण;
+	};
 
-	काष्ठा radeon_bo *rbo;
+	struct radeon_bo *rbo;
 
-	अगर (!radeon_tपंचांग_bo_is_radeon_bo(bo)) अणु
+	if (!radeon_ttm_bo_is_radeon_bo(bo)) {
 		placement->placement = &placements;
 		placement->busy_placement = &placements;
 		placement->num_placement = 1;
 		placement->num_busy_placement = 1;
-		वापस;
-	पूर्ण
-	rbo = container_of(bo, काष्ठा radeon_bo, tbo);
-	चयन (bo->mem.mem_type) अणु
-	हाल TTM_PL_VRAM:
-		अगर (rbo->rdev->ring[radeon_copy_ring_index(rbo->rdev)].पढ़ोy == false)
-			radeon_tपंचांग_placement_from_करोमुख्य(rbo, RADEON_GEM_DOMAIN_CPU);
-		अन्यथा अगर (rbo->rdev->mc.visible_vram_size < rbo->rdev->mc.real_vram_size &&
-			 bo->mem.start < (rbo->rdev->mc.visible_vram_size >> PAGE_SHIFT)) अणु
-			अचिन्हित fpfn = rbo->rdev->mc.visible_vram_size >> PAGE_SHIFT;
-			पूर्णांक i;
+		return;
+	}
+	rbo = container_of(bo, struct radeon_bo, tbo);
+	switch (bo->mem.mem_type) {
+	case TTM_PL_VRAM:
+		if (rbo->rdev->ring[radeon_copy_ring_index(rbo->rdev)].ready == false)
+			radeon_ttm_placement_from_domain(rbo, RADEON_GEM_DOMAIN_CPU);
+		else if (rbo->rdev->mc.visible_vram_size < rbo->rdev->mc.real_vram_size &&
+			 bo->mem.start < (rbo->rdev->mc.visible_vram_size >> PAGE_SHIFT)) {
+			unsigned fpfn = rbo->rdev->mc.visible_vram_size >> PAGE_SHIFT;
+			int i;
 
 			/* Try evicting to the CPU inaccessible part of VRAM
 			 * first, but only set GTT as busy placement, so this
 			 * BO will be evicted to GTT rather than causing other
 			 * BOs to be evicted from VRAM
 			 */
-			radeon_tपंचांग_placement_from_करोमुख्य(rbo, RADEON_GEM_DOMAIN_VRAM |
+			radeon_ttm_placement_from_domain(rbo, RADEON_GEM_DOMAIN_VRAM |
 							 RADEON_GEM_DOMAIN_GTT);
 			rbo->placement.num_busy_placement = 0;
-			क्रम (i = 0; i < rbo->placement.num_placement; i++) अणु
-				अगर (rbo->placements[i].mem_type == TTM_PL_VRAM) अणु
-					अगर (rbo->placements[i].fpfn < fpfn)
+			for (i = 0; i < rbo->placement.num_placement; i++) {
+				if (rbo->placements[i].mem_type == TTM_PL_VRAM) {
+					if (rbo->placements[i].fpfn < fpfn)
 						rbo->placements[i].fpfn = fpfn;
-				पूर्ण अन्यथा अणु
+				} else {
 					rbo->placement.busy_placement =
 						&rbo->placements[i];
 					rbo->placement.num_busy_placement = 1;
-				पूर्ण
-			पूर्ण
-		पूर्ण अन्यथा
-			radeon_tपंचांग_placement_from_करोमुख्य(rbo, RADEON_GEM_DOMAIN_GTT);
-		अवरोध;
-	हाल TTM_PL_TT:
-	शेष:
-		radeon_tपंचांग_placement_from_करोमुख्य(rbo, RADEON_GEM_DOMAIN_CPU);
-	पूर्ण
+				}
+			}
+		} else
+			radeon_ttm_placement_from_domain(rbo, RADEON_GEM_DOMAIN_GTT);
+		break;
+	case TTM_PL_TT:
+	default:
+		radeon_ttm_placement_from_domain(rbo, RADEON_GEM_DOMAIN_CPU);
+	}
 	*placement = rbo->placement;
-पूर्ण
+}
 
-अटल पूर्णांक radeon_verअगरy_access(काष्ठा tपंचांग_buffer_object *bo, काष्ठा file *filp)
-अणु
-	काष्ठा radeon_bo *rbo = container_of(bo, काष्ठा radeon_bo, tbo);
-	काष्ठा radeon_device *rdev = radeon_get_rdev(bo->bdev);
+static int radeon_verify_access(struct ttm_buffer_object *bo, struct file *filp)
+{
+	struct radeon_bo *rbo = container_of(bo, struct radeon_bo, tbo);
+	struct radeon_device *rdev = radeon_get_rdev(bo->bdev);
 
-	अगर (radeon_tपंचांग_tt_has_userptr(rdev, bo->tपंचांग))
-		वापस -EPERM;
-	वापस drm_vma_node_verअगरy_access(&rbo->tbo.base.vma_node,
-					  filp->निजी_data);
-पूर्ण
+	if (radeon_ttm_tt_has_userptr(rdev, bo->ttm))
+		return -EPERM;
+	return drm_vma_node_verify_access(&rbo->tbo.base.vma_node,
+					  filp->private_data);
+}
 
-अटल पूर्णांक radeon_move_blit(काष्ठा tपंचांग_buffer_object *bo,
+static int radeon_move_blit(struct ttm_buffer_object *bo,
 			bool evict,
-			काष्ठा tपंचांग_resource *new_mem,
-			काष्ठा tपंचांग_resource *old_mem)
-अणु
-	काष्ठा radeon_device *rdev;
-	uपूर्णांक64_t old_start, new_start;
-	काष्ठा radeon_fence *fence;
-	अचिन्हित num_pages;
-	पूर्णांक r, ridx;
+			struct ttm_resource *new_mem,
+			struct ttm_resource *old_mem)
+{
+	struct radeon_device *rdev;
+	uint64_t old_start, new_start;
+	struct radeon_fence *fence;
+	unsigned num_pages;
+	int r, ridx;
 
 	rdev = radeon_get_rdev(bo->bdev);
 	ridx = radeon_copy_ring_index(rdev);
 	old_start = (u64)old_mem->start << PAGE_SHIFT;
 	new_start = (u64)new_mem->start << PAGE_SHIFT;
 
-	चयन (old_mem->mem_type) अणु
-	हाल TTM_PL_VRAM:
+	switch (old_mem->mem_type) {
+	case TTM_PL_VRAM:
 		old_start += rdev->mc.vram_start;
-		अवरोध;
-	हाल TTM_PL_TT:
+		break;
+	case TTM_PL_TT:
 		old_start += rdev->mc.gtt_start;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		DRM_ERROR("Unknown placement %d\n", old_mem->mem_type);
-		वापस -EINVAL;
-	पूर्ण
-	चयन (new_mem->mem_type) अणु
-	हाल TTM_PL_VRAM:
+		return -EINVAL;
+	}
+	switch (new_mem->mem_type) {
+	case TTM_PL_VRAM:
 		new_start += rdev->mc.vram_start;
-		अवरोध;
-	हाल TTM_PL_TT:
+		break;
+	case TTM_PL_TT:
 		new_start += rdev->mc.gtt_start;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		DRM_ERROR("Unknown placement %d\n", old_mem->mem_type);
-		वापस -EINVAL;
-	पूर्ण
-	अगर (!rdev->ring[ridx].पढ़ोy) अणु
+		return -EINVAL;
+	}
+	if (!rdev->ring[ridx].ready) {
 		DRM_ERROR("Trying to move memory with ring turned off.\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	BUILD_BUG_ON((PAGE_SIZE % RADEON_GPU_PAGE_SIZE) != 0);
 
 	num_pages = new_mem->num_pages * (PAGE_SIZE / RADEON_GPU_PAGE_SIZE);
 	fence = radeon_copy(rdev, old_start, new_start, num_pages, bo->base.resv);
-	अगर (IS_ERR(fence))
-		वापस PTR_ERR(fence);
+	if (IS_ERR(fence))
+		return PTR_ERR(fence);
 
-	r = tपंचांग_bo_move_accel_cleanup(bo, &fence->base, evict, false, new_mem);
+	r = ttm_bo_move_accel_cleanup(bo, &fence->base, evict, false, new_mem);
 	radeon_fence_unref(&fence);
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल पूर्णांक radeon_bo_move(काष्ठा tपंचांग_buffer_object *bo, bool evict,
-			  काष्ठा tपंचांग_operation_ctx *ctx,
-			  काष्ठा tपंचांग_resource *new_mem,
-			  काष्ठा tपंचांग_place *hop)
-अणु
-	काष्ठा radeon_device *rdev;
-	काष्ठा radeon_bo *rbo;
-	काष्ठा tपंचांग_resource *old_mem = &bo->mem;
-	पूर्णांक r;
+static int radeon_bo_move(struct ttm_buffer_object *bo, bool evict,
+			  struct ttm_operation_ctx *ctx,
+			  struct ttm_resource *new_mem,
+			  struct ttm_place *hop)
+{
+	struct radeon_device *rdev;
+	struct radeon_bo *rbo;
+	struct ttm_resource *old_mem = &bo->mem;
+	int r;
 
-	अगर (new_mem->mem_type == TTM_PL_TT) अणु
-		r = radeon_tपंचांग_tt_bind(bo->bdev, bo->tपंचांग, new_mem);
-		अगर (r)
-			वापस r;
-	पूर्ण
+	if (new_mem->mem_type == TTM_PL_TT) {
+		r = radeon_ttm_tt_bind(bo->bdev, bo->ttm, new_mem);
+		if (r)
+			return r;
+	}
 
-	r = tपंचांग_bo_रुको_ctx(bo, ctx);
-	अगर (r)
-		वापस r;
+	r = ttm_bo_wait_ctx(bo, ctx);
+	if (r)
+		return r;
 
 	/* Can't move a pinned BO */
-	rbo = container_of(bo, काष्ठा radeon_bo, tbo);
-	अगर (WARN_ON_ONCE(rbo->tbo.pin_count > 0))
-		वापस -EINVAL;
+	rbo = container_of(bo, struct radeon_bo, tbo);
+	if (WARN_ON_ONCE(rbo->tbo.pin_count > 0))
+		return -EINVAL;
 
 	rdev = radeon_get_rdev(bo->bdev);
-	अगर (old_mem->mem_type == TTM_PL_SYSTEM && bo->tपंचांग == शून्य) अणु
-		tपंचांग_bo_move_null(bo, new_mem);
-		जाओ out;
-	पूर्ण
-	अगर (old_mem->mem_type == TTM_PL_SYSTEM &&
-	    new_mem->mem_type == TTM_PL_TT) अणु
-		tपंचांग_bo_move_null(bo, new_mem);
-		जाओ out;
-	पूर्ण
+	if (old_mem->mem_type == TTM_PL_SYSTEM && bo->ttm == NULL) {
+		ttm_bo_move_null(bo, new_mem);
+		goto out;
+	}
+	if (old_mem->mem_type == TTM_PL_SYSTEM &&
+	    new_mem->mem_type == TTM_PL_TT) {
+		ttm_bo_move_null(bo, new_mem);
+		goto out;
+	}
 
-	अगर (old_mem->mem_type == TTM_PL_TT &&
-	    new_mem->mem_type == TTM_PL_SYSTEM) अणु
-		radeon_tपंचांग_tt_unbind(bo->bdev, bo->tपंचांग);
-		tपंचांग_resource_मुक्त(bo, &bo->mem);
-		tपंचांग_bo_assign_mem(bo, new_mem);
-		जाओ out;
-	पूर्ण
-	अगर (rdev->ring[radeon_copy_ring_index(rdev)].पढ़ोy &&
-	    rdev->asic->copy.copy != शून्य) अणु
-		अगर ((old_mem->mem_type == TTM_PL_SYSTEM &&
+	if (old_mem->mem_type == TTM_PL_TT &&
+	    new_mem->mem_type == TTM_PL_SYSTEM) {
+		radeon_ttm_tt_unbind(bo->bdev, bo->ttm);
+		ttm_resource_free(bo, &bo->mem);
+		ttm_bo_assign_mem(bo, new_mem);
+		goto out;
+	}
+	if (rdev->ring[radeon_copy_ring_index(rdev)].ready &&
+	    rdev->asic->copy.copy != NULL) {
+		if ((old_mem->mem_type == TTM_PL_SYSTEM &&
 		     new_mem->mem_type == TTM_PL_VRAM) ||
 		    (old_mem->mem_type == TTM_PL_VRAM &&
-		     new_mem->mem_type == TTM_PL_SYSTEM)) अणु
+		     new_mem->mem_type == TTM_PL_SYSTEM)) {
 			hop->fpfn = 0;
 			hop->lpfn = 0;
 			hop->mem_type = TTM_PL_TT;
 			hop->flags = 0;
-			वापस -EMULTIHOP;
-		पूर्ण
+			return -EMULTIHOP;
+		}
 
 		r = radeon_move_blit(bo, evict, new_mem, old_mem);
-	पूर्ण अन्यथा अणु
+	} else {
 		r = -ENODEV;
-	पूर्ण
+	}
 
-	अगर (r) अणु
-		r = tपंचांग_bo_move_स_नकल(bo, ctx, new_mem);
-		अगर (r)
-			वापस r;
-	पूर्ण
+	if (r) {
+		r = ttm_bo_move_memcpy(bo, ctx, new_mem);
+		if (r)
+			return r;
+	}
 
 out:
 	/* update statistics */
 	atomic64_add(bo->base.size, &rdev->num_bytes_moved);
-	radeon_bo_move_notअगरy(bo, evict, new_mem);
-	वापस 0;
-पूर्ण
+	radeon_bo_move_notify(bo, evict, new_mem);
+	return 0;
+}
 
-अटल पूर्णांक radeon_tपंचांग_io_mem_reserve(काष्ठा tपंचांग_device *bdev, काष्ठा tपंचांग_resource *mem)
-अणु
-	काष्ठा radeon_device *rdev = radeon_get_rdev(bdev);
-	माप_प्रकार bus_size = (माप_प्रकार)mem->num_pages << PAGE_SHIFT;
+static int radeon_ttm_io_mem_reserve(struct ttm_device *bdev, struct ttm_resource *mem)
+{
+	struct radeon_device *rdev = radeon_get_rdev(bdev);
+	size_t bus_size = (size_t)mem->num_pages << PAGE_SHIFT;
 
-	चयन (mem->mem_type) अणु
-	हाल TTM_PL_SYSTEM:
-		/* प्रणाली memory */
-		वापस 0;
-	हाल TTM_PL_TT:
-#अगर IS_ENABLED(CONFIG_AGP)
-		अगर (rdev->flags & RADEON_IS_AGP) अणु
-			/* RADEON_IS_AGP is set only अगर AGP is active */
+	switch (mem->mem_type) {
+	case TTM_PL_SYSTEM:
+		/* system memory */
+		return 0;
+	case TTM_PL_TT:
+#if IS_ENABLED(CONFIG_AGP)
+		if (rdev->flags & RADEON_IS_AGP) {
+			/* RADEON_IS_AGP is set only if AGP is active */
 			mem->bus.offset = (mem->start << PAGE_SHIFT) +
 				rdev->mc.agp_base;
 			mem->bus.is_iomem = !rdev->ddev->agp->cant_use_aperture;
-			mem->bus.caching = tपंचांग_ग_लिखो_combined;
-		पूर्ण
-#पूर्ण_अगर
-		अवरोध;
-	हाल TTM_PL_VRAM:
+			mem->bus.caching = ttm_write_combined;
+		}
+#endif
+		break;
+	case TTM_PL_VRAM:
 		mem->bus.offset = mem->start << PAGE_SHIFT;
-		/* check अगर it's visible */
-		अगर ((mem->bus.offset + bus_size) > rdev->mc.visible_vram_size)
-			वापस -EINVAL;
+		/* check if it's visible */
+		if ((mem->bus.offset + bus_size) > rdev->mc.visible_vram_size)
+			return -EINVAL;
 		mem->bus.offset += rdev->mc.aper_base;
 		mem->bus.is_iomem = true;
-		mem->bus.caching = tपंचांग_ग_लिखो_combined;
-#अगर_घोषित __alpha__
+		mem->bus.caching = ttm_write_combined;
+#ifdef __alpha__
 		/*
-		 * Alpha: use bus.addr to hold the ioremap() वापस,
-		 * so we can modअगरy bus.base below.
+		 * Alpha: use bus.addr to hold the ioremap() return,
+		 * so we can modify bus.base below.
 		 */
 		mem->bus.addr = ioremap_wc(mem->bus.offset, bus_size);
-		अगर (!mem->bus.addr)
-			वापस -ENOMEM;
+		if (!mem->bus.addr)
+			return -ENOMEM;
 
 		/*
 		 * Alpha: Use just the bus offset plus
-		 * the hose/करोमुख्य memory base क्रम bus.base.
-		 * It then can be used to build PTEs क्रम VRAM
-		 * access, as करोne in tपंचांग_bo_vm_fault().
+		 * the hose/domain memory base for bus.base.
+		 * It then can be used to build PTEs for VRAM
+		 * access, as done in ttm_bo_vm_fault().
 		 */
 		mem->bus.offset = (mem->bus.offset & 0x0ffffffffUL) +
 			rdev->hose->dense_mem_base;
-#पूर्ण_अगर
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-	वापस 0;
-पूर्ण
+#endif
+		break;
+	default:
+		return -EINVAL;
+	}
+	return 0;
+}
 
 /*
  * TTM backend functions.
  */
-काष्ठा radeon_tपंचांग_tt अणु
-	काष्ठा tपंचांग_tt		tपंचांग;
+struct radeon_ttm_tt {
+	struct ttm_tt		ttm;
 	u64				offset;
 
-	uपूर्णांक64_t			userptr;
-	काष्ठा mm_काष्ठा		*usermm;
-	uपूर्णांक32_t			userflags;
+	uint64_t			userptr;
+	struct mm_struct		*usermm;
+	uint32_t			userflags;
 	bool bound;
-पूर्ण;
+};
 
 /* prepare the sg table with the user pages */
-अटल पूर्णांक radeon_tपंचांग_tt_pin_userptr(काष्ठा tपंचांग_device *bdev, काष्ठा tपंचांग_tt *tपंचांग)
-अणु
-	काष्ठा radeon_device *rdev = radeon_get_rdev(bdev);
-	काष्ठा radeon_tपंचांग_tt *gtt = (व्योम *)tपंचांग;
-	अचिन्हित pinned = 0;
-	पूर्णांक r;
+static int radeon_ttm_tt_pin_userptr(struct ttm_device *bdev, struct ttm_tt *ttm)
+{
+	struct radeon_device *rdev = radeon_get_rdev(bdev);
+	struct radeon_ttm_tt *gtt = (void *)ttm;
+	unsigned pinned = 0;
+	int r;
 
-	पूर्णांक ग_लिखो = !(gtt->userflags & RADEON_GEM_USERPTR_READONLY);
-	क्रमागत dma_data_direction direction = ग_लिखो ?
-		DMA_BIसूचीECTIONAL : DMA_TO_DEVICE;
+	int write = !(gtt->userflags & RADEON_GEM_USERPTR_READONLY);
+	enum dma_data_direction direction = write ?
+		DMA_BIDIRECTIONAL : DMA_TO_DEVICE;
 
-	अगर (current->mm != gtt->usermm)
-		वापस -EPERM;
+	if (current->mm != gtt->usermm)
+		return -EPERM;
 
-	अगर (gtt->userflags & RADEON_GEM_USERPTR_ANONONLY) अणु
-		/* check that we only pin करोwn anonymous memory
-		   to prevent problems with ग_लिखोback */
-		अचिन्हित दीर्घ end = gtt->userptr + (u64)tपंचांग->num_pages * PAGE_SIZE;
-		काष्ठा vm_area_काष्ठा *vma;
+	if (gtt->userflags & RADEON_GEM_USERPTR_ANONONLY) {
+		/* check that we only pin down anonymous memory
+		   to prevent problems with writeback */
+		unsigned long end = gtt->userptr + (u64)ttm->num_pages * PAGE_SIZE;
+		struct vm_area_struct *vma;
 		vma = find_vma(gtt->usermm, gtt->userptr);
-		अगर (!vma || vma->vm_file || vma->vm_end < end)
-			वापस -EPERM;
-	पूर्ण
+		if (!vma || vma->vm_file || vma->vm_end < end)
+			return -EPERM;
+	}
 
-	करो अणु
-		अचिन्हित num_pages = tपंचांग->num_pages - pinned;
-		uपूर्णांक64_t userptr = gtt->userptr + pinned * PAGE_SIZE;
-		काष्ठा page **pages = tपंचांग->pages + pinned;
+	do {
+		unsigned num_pages = ttm->num_pages - pinned;
+		uint64_t userptr = gtt->userptr + pinned * PAGE_SIZE;
+		struct page **pages = ttm->pages + pinned;
 
-		r = get_user_pages(userptr, num_pages, ग_लिखो ? FOLL_WRITE : 0,
-				   pages, शून्य);
-		अगर (r < 0)
-			जाओ release_pages;
+		r = get_user_pages(userptr, num_pages, write ? FOLL_WRITE : 0,
+				   pages, NULL);
+		if (r < 0)
+			goto release_pages;
 
 		pinned += r;
 
-	पूर्ण जबतक (pinned < tपंचांग->num_pages);
+	} while (pinned < ttm->num_pages);
 
-	r = sg_alloc_table_from_pages(tपंचांग->sg, tपंचांग->pages, tपंचांग->num_pages, 0,
-				      (u64)tपंचांग->num_pages << PAGE_SHIFT,
+	r = sg_alloc_table_from_pages(ttm->sg, ttm->pages, ttm->num_pages, 0,
+				      (u64)ttm->num_pages << PAGE_SHIFT,
 				      GFP_KERNEL);
-	अगर (r)
-		जाओ release_sg;
+	if (r)
+		goto release_sg;
 
-	r = dma_map_sgtable(rdev->dev, tपंचांग->sg, direction, 0);
-	अगर (r)
-		जाओ release_sg;
+	r = dma_map_sgtable(rdev->dev, ttm->sg, direction, 0);
+	if (r)
+		goto release_sg;
 
-	drm_prime_sg_to_dma_addr_array(tपंचांग->sg, gtt->tपंचांग.dma_address,
-				       tपंचांग->num_pages);
+	drm_prime_sg_to_dma_addr_array(ttm->sg, gtt->ttm.dma_address,
+				       ttm->num_pages);
 
-	वापस 0;
+	return 0;
 
 release_sg:
-	kमुक्त(tपंचांग->sg);
+	kfree(ttm->sg);
 
 release_pages:
-	release_pages(tपंचांग->pages, pinned);
-	वापस r;
-पूर्ण
+	release_pages(ttm->pages, pinned);
+	return r;
+}
 
-अटल व्योम radeon_tपंचांग_tt_unpin_userptr(काष्ठा tपंचांग_device *bdev, काष्ठा tपंचांग_tt *tपंचांग)
-अणु
-	काष्ठा radeon_device *rdev = radeon_get_rdev(bdev);
-	काष्ठा radeon_tपंचांग_tt *gtt = (व्योम *)tपंचांग;
-	काष्ठा sg_page_iter sg_iter;
+static void radeon_ttm_tt_unpin_userptr(struct ttm_device *bdev, struct ttm_tt *ttm)
+{
+	struct radeon_device *rdev = radeon_get_rdev(bdev);
+	struct radeon_ttm_tt *gtt = (void *)ttm;
+	struct sg_page_iter sg_iter;
 
-	पूर्णांक ग_लिखो = !(gtt->userflags & RADEON_GEM_USERPTR_READONLY);
-	क्रमागत dma_data_direction direction = ग_लिखो ?
-		DMA_BIसूचीECTIONAL : DMA_TO_DEVICE;
+	int write = !(gtt->userflags & RADEON_GEM_USERPTR_READONLY);
+	enum dma_data_direction direction = write ?
+		DMA_BIDIRECTIONAL : DMA_TO_DEVICE;
 
-	/* द्विगुन check that we करोn't मुक्त the table twice */
-	अगर (!tपंचांग->sg || !tपंचांग->sg->sgl)
-		वापस;
+	/* double check that we don't free the table twice */
+	if (!ttm->sg || !ttm->sg->sgl)
+		return;
 
-	/* मुक्त the sg table and pages again */
-	dma_unmap_sgtable(rdev->dev, tपंचांग->sg, direction, 0);
+	/* free the sg table and pages again */
+	dma_unmap_sgtable(rdev->dev, ttm->sg, direction, 0);
 
-	क्रम_each_sgtable_page(tपंचांग->sg, &sg_iter, 0) अणु
-		काष्ठा page *page = sg_page_iter_page(&sg_iter);
-		अगर (!(gtt->userflags & RADEON_GEM_USERPTR_READONLY))
+	for_each_sgtable_page(ttm->sg, &sg_iter, 0) {
+		struct page *page = sg_page_iter_page(&sg_iter);
+		if (!(gtt->userflags & RADEON_GEM_USERPTR_READONLY))
 			set_page_dirty(page);
 
 		mark_page_accessed(page);
 		put_page(page);
-	पूर्ण
+	}
 
-	sg_मुक्त_table(tपंचांग->sg);
-पूर्ण
+	sg_free_table(ttm->sg);
+}
 
-अटल bool radeon_tपंचांग_backend_is_bound(काष्ठा tपंचांग_tt *tपंचांग)
-अणु
-	काष्ठा radeon_tपंचांग_tt *gtt = (व्योम*)tपंचांग;
+static bool radeon_ttm_backend_is_bound(struct ttm_tt *ttm)
+{
+	struct radeon_ttm_tt *gtt = (void*)ttm;
 
-	वापस (gtt->bound);
-पूर्ण
+	return (gtt->bound);
+}
 
-अटल पूर्णांक radeon_tपंचांग_backend_bind(काष्ठा tपंचांग_device *bdev,
-				   काष्ठा tपंचांग_tt *tपंचांग,
-				   काष्ठा tपंचांग_resource *bo_mem)
-अणु
-	काष्ठा radeon_tपंचांग_tt *gtt = (व्योम*)tपंचांग;
-	काष्ठा radeon_device *rdev = radeon_get_rdev(bdev);
-	uपूर्णांक32_t flags = RADEON_GART_PAGE_VALID | RADEON_GART_PAGE_READ |
+static int radeon_ttm_backend_bind(struct ttm_device *bdev,
+				   struct ttm_tt *ttm,
+				   struct ttm_resource *bo_mem)
+{
+	struct radeon_ttm_tt *gtt = (void*)ttm;
+	struct radeon_device *rdev = radeon_get_rdev(bdev);
+	uint32_t flags = RADEON_GART_PAGE_VALID | RADEON_GART_PAGE_READ |
 		RADEON_GART_PAGE_WRITE;
-	पूर्णांक r;
+	int r;
 
-	अगर (gtt->bound)
-		वापस 0;
+	if (gtt->bound)
+		return 0;
 
-	अगर (gtt->userptr) अणु
-		radeon_tपंचांग_tt_pin_userptr(bdev, tपंचांग);
+	if (gtt->userptr) {
+		radeon_ttm_tt_pin_userptr(bdev, ttm);
 		flags &= ~RADEON_GART_PAGE_WRITE;
-	पूर्ण
+	}
 
-	gtt->offset = (अचिन्हित दीर्घ)(bo_mem->start << PAGE_SHIFT);
-	अगर (!tपंचांग->num_pages) अणु
+	gtt->offset = (unsigned long)(bo_mem->start << PAGE_SHIFT);
+	if (!ttm->num_pages) {
 		WARN(1, "nothing to bind %u pages for mreg %p back %p!\n",
-		     tपंचांग->num_pages, bo_mem, tपंचांग);
-	पूर्ण
-	अगर (tपंचांग->caching == tपंचांग_cached)
+		     ttm->num_pages, bo_mem, ttm);
+	}
+	if (ttm->caching == ttm_cached)
 		flags |= RADEON_GART_PAGE_SNOOP;
-	r = radeon_gart_bind(rdev, gtt->offset, tपंचांग->num_pages,
-			     tपंचांग->pages, gtt->tपंचांग.dma_address, flags);
-	अगर (r) अणु
+	r = radeon_gart_bind(rdev, gtt->offset, ttm->num_pages,
+			     ttm->pages, gtt->ttm.dma_address, flags);
+	if (r) {
 		DRM_ERROR("failed to bind %u pages at 0x%08X\n",
-			  tपंचांग->num_pages, (अचिन्हित)gtt->offset);
-		वापस r;
-	पूर्ण
+			  ttm->num_pages, (unsigned)gtt->offset);
+		return r;
+	}
 	gtt->bound = true;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम radeon_tपंचांग_backend_unbind(काष्ठा tपंचांग_device *bdev, काष्ठा tपंचांग_tt *tपंचांग)
-अणु
-	काष्ठा radeon_tपंचांग_tt *gtt = (व्योम *)tपंचांग;
-	काष्ठा radeon_device *rdev = radeon_get_rdev(bdev);
+static void radeon_ttm_backend_unbind(struct ttm_device *bdev, struct ttm_tt *ttm)
+{
+	struct radeon_ttm_tt *gtt = (void *)ttm;
+	struct radeon_device *rdev = radeon_get_rdev(bdev);
 
-	अगर (gtt->userptr)
-		radeon_tपंचांग_tt_unpin_userptr(bdev, tपंचांग);
+	if (gtt->userptr)
+		radeon_ttm_tt_unpin_userptr(bdev, ttm);
 
-	अगर (!gtt->bound)
-		वापस;
+	if (!gtt->bound)
+		return;
 
-	radeon_gart_unbind(rdev, gtt->offset, tपंचांग->num_pages);
+	radeon_gart_unbind(rdev, gtt->offset, ttm->num_pages);
 
 	gtt->bound = false;
-पूर्ण
+}
 
-अटल व्योम radeon_tपंचांग_backend_destroy(काष्ठा tपंचांग_device *bdev, काष्ठा tपंचांग_tt *tपंचांग)
-अणु
-	काष्ठा radeon_tपंचांग_tt *gtt = (व्योम *)tपंचांग;
+static void radeon_ttm_backend_destroy(struct ttm_device *bdev, struct ttm_tt *ttm)
+{
+	struct radeon_ttm_tt *gtt = (void *)ttm;
 
-	radeon_tपंचांग_backend_unbind(bdev, tपंचांग);
-	tपंचांग_tt_destroy_common(bdev, tपंचांग);
+	radeon_ttm_backend_unbind(bdev, ttm);
+	ttm_tt_destroy_common(bdev, ttm);
 
-	tपंचांग_tt_fini(&gtt->tपंचांग);
-	kमुक्त(gtt);
-पूर्ण
+	ttm_tt_fini(&gtt->ttm);
+	kfree(gtt);
+}
 
-अटल काष्ठा tपंचांग_tt *radeon_tपंचांग_tt_create(काष्ठा tपंचांग_buffer_object *bo,
-					   uपूर्णांक32_t page_flags)
-अणु
-	काष्ठा radeon_tपंचांग_tt *gtt;
-	क्रमागत tपंचांग_caching caching;
-	काष्ठा radeon_bo *rbo;
-#अगर IS_ENABLED(CONFIG_AGP)
-	काष्ठा radeon_device *rdev = radeon_get_rdev(bo->bdev);
+static struct ttm_tt *radeon_ttm_tt_create(struct ttm_buffer_object *bo,
+					   uint32_t page_flags)
+{
+	struct radeon_ttm_tt *gtt;
+	enum ttm_caching caching;
+	struct radeon_bo *rbo;
+#if IS_ENABLED(CONFIG_AGP)
+	struct radeon_device *rdev = radeon_get_rdev(bo->bdev);
 
-	अगर (rdev->flags & RADEON_IS_AGP) अणु
-		वापस tपंचांग_agp_tt_create(bo, rdev->ddev->agp->bridge,
+	if (rdev->flags & RADEON_IS_AGP) {
+		return ttm_agp_tt_create(bo, rdev->ddev->agp->bridge,
 					 page_flags);
-	पूर्ण
-#पूर्ण_अगर
-	rbo = container_of(bo, काष्ठा radeon_bo, tbo);
+	}
+#endif
+	rbo = container_of(bo, struct radeon_bo, tbo);
 
-	gtt = kzalloc(माप(काष्ठा radeon_tपंचांग_tt), GFP_KERNEL);
-	अगर (gtt == शून्य) अणु
-		वापस शून्य;
-	पूर्ण
+	gtt = kzalloc(sizeof(struct radeon_ttm_tt), GFP_KERNEL);
+	if (gtt == NULL) {
+		return NULL;
+	}
 
-	अगर (rbo->flags & RADEON_GEM_GTT_UC)
-		caching = tपंचांग_uncached;
-	अन्यथा अगर (rbo->flags & RADEON_GEM_GTT_WC)
-		caching = tपंचांग_ग_लिखो_combined;
-	अन्यथा
-		caching = tपंचांग_cached;
+	if (rbo->flags & RADEON_GEM_GTT_UC)
+		caching = ttm_uncached;
+	else if (rbo->flags & RADEON_GEM_GTT_WC)
+		caching = ttm_write_combined;
+	else
+		caching = ttm_cached;
 
-	अगर (tपंचांग_sg_tt_init(&gtt->tपंचांग, bo, page_flags, caching)) अणु
-		kमुक्त(gtt);
-		वापस शून्य;
-	पूर्ण
-	वापस &gtt->tपंचांग;
-पूर्ण
+	if (ttm_sg_tt_init(&gtt->ttm, bo, page_flags, caching)) {
+		kfree(gtt);
+		return NULL;
+	}
+	return &gtt->ttm;
+}
 
-अटल काष्ठा radeon_tपंचांग_tt *radeon_tपंचांग_tt_to_gtt(काष्ठा radeon_device *rdev,
-						  काष्ठा tपंचांग_tt *tपंचांग)
-अणु
-#अगर IS_ENABLED(CONFIG_AGP)
-	अगर (rdev->flags & RADEON_IS_AGP)
-		वापस शून्य;
-#पूर्ण_अगर
+static struct radeon_ttm_tt *radeon_ttm_tt_to_gtt(struct radeon_device *rdev,
+						  struct ttm_tt *ttm)
+{
+#if IS_ENABLED(CONFIG_AGP)
+	if (rdev->flags & RADEON_IS_AGP)
+		return NULL;
+#endif
 
-	अगर (!tपंचांग)
-		वापस शून्य;
-	वापस container_of(tपंचांग, काष्ठा radeon_tपंचांग_tt, tपंचांग);
-पूर्ण
+	if (!ttm)
+		return NULL;
+	return container_of(ttm, struct radeon_ttm_tt, ttm);
+}
 
-अटल पूर्णांक radeon_tपंचांग_tt_populate(काष्ठा tपंचांग_device *bdev,
-				  काष्ठा tपंचांग_tt *tपंचांग,
-				  काष्ठा tपंचांग_operation_ctx *ctx)
-अणु
-	काष्ठा radeon_device *rdev = radeon_get_rdev(bdev);
-	काष्ठा radeon_tपंचांग_tt *gtt = radeon_tपंचांग_tt_to_gtt(rdev, tपंचांग);
-	bool slave = !!(tपंचांग->page_flags & TTM_PAGE_FLAG_SG);
+static int radeon_ttm_tt_populate(struct ttm_device *bdev,
+				  struct ttm_tt *ttm,
+				  struct ttm_operation_ctx *ctx)
+{
+	struct radeon_device *rdev = radeon_get_rdev(bdev);
+	struct radeon_ttm_tt *gtt = radeon_ttm_tt_to_gtt(rdev, ttm);
+	bool slave = !!(ttm->page_flags & TTM_PAGE_FLAG_SG);
 
-	अगर (gtt && gtt->userptr) अणु
-		tपंचांग->sg = kzalloc(माप(काष्ठा sg_table), GFP_KERNEL);
-		अगर (!tपंचांग->sg)
-			वापस -ENOMEM;
+	if (gtt && gtt->userptr) {
+		ttm->sg = kzalloc(sizeof(struct sg_table), GFP_KERNEL);
+		if (!ttm->sg)
+			return -ENOMEM;
 
-		tपंचांग->page_flags |= TTM_PAGE_FLAG_SG;
-		वापस 0;
-	पूर्ण
+		ttm->page_flags |= TTM_PAGE_FLAG_SG;
+		return 0;
+	}
 
-	अगर (slave && tपंचांग->sg) अणु
-		drm_prime_sg_to_dma_addr_array(tपंचांग->sg, gtt->tपंचांग.dma_address,
-					       tपंचांग->num_pages);
-		वापस 0;
-	पूर्ण
+	if (slave && ttm->sg) {
+		drm_prime_sg_to_dma_addr_array(ttm->sg, gtt->ttm.dma_address,
+					       ttm->num_pages);
+		return 0;
+	}
 
-	वापस tपंचांग_pool_alloc(&rdev->mman.bdev.pool, tपंचांग, ctx);
-पूर्ण
+	return ttm_pool_alloc(&rdev->mman.bdev.pool, ttm, ctx);
+}
 
-अटल व्योम radeon_tपंचांग_tt_unpopulate(काष्ठा tपंचांग_device *bdev, काष्ठा tपंचांग_tt *tपंचांग)
-अणु
-	काष्ठा radeon_device *rdev = radeon_get_rdev(bdev);
-	काष्ठा radeon_tपंचांग_tt *gtt = radeon_tपंचांग_tt_to_gtt(rdev, tपंचांग);
-	bool slave = !!(tपंचांग->page_flags & TTM_PAGE_FLAG_SG);
+static void radeon_ttm_tt_unpopulate(struct ttm_device *bdev, struct ttm_tt *ttm)
+{
+	struct radeon_device *rdev = radeon_get_rdev(bdev);
+	struct radeon_ttm_tt *gtt = radeon_ttm_tt_to_gtt(rdev, ttm);
+	bool slave = !!(ttm->page_flags & TTM_PAGE_FLAG_SG);
 
-	अगर (gtt && gtt->userptr) अणु
-		kमुक्त(tपंचांग->sg);
-		tपंचांग->page_flags &= ~TTM_PAGE_FLAG_SG;
-		वापस;
-	पूर्ण
+	if (gtt && gtt->userptr) {
+		kfree(ttm->sg);
+		ttm->page_flags &= ~TTM_PAGE_FLAG_SG;
+		return;
+	}
 
-	अगर (slave)
-		वापस;
+	if (slave)
+		return;
 
-	वापस tपंचांग_pool_मुक्त(&rdev->mman.bdev.pool, tपंचांग);
-पूर्ण
+	return ttm_pool_free(&rdev->mman.bdev.pool, ttm);
+}
 
-पूर्णांक radeon_tपंचांग_tt_set_userptr(काष्ठा radeon_device *rdev,
-			      काष्ठा tपंचांग_tt *tपंचांग, uपूर्णांक64_t addr,
-			      uपूर्णांक32_t flags)
-अणु
-	काष्ठा radeon_tपंचांग_tt *gtt = radeon_tपंचांग_tt_to_gtt(rdev, tपंचांग);
+int radeon_ttm_tt_set_userptr(struct radeon_device *rdev,
+			      struct ttm_tt *ttm, uint64_t addr,
+			      uint32_t flags)
+{
+	struct radeon_ttm_tt *gtt = radeon_ttm_tt_to_gtt(rdev, ttm);
 
-	अगर (gtt == शून्य)
-		वापस -EINVAL;
+	if (gtt == NULL)
+		return -EINVAL;
 
 	gtt->userptr = addr;
 	gtt->usermm = current->mm;
 	gtt->userflags = flags;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-bool radeon_tपंचांग_tt_is_bound(काष्ठा tपंचांग_device *bdev,
-			    काष्ठा tपंचांग_tt *tपंचांग)
-अणु
-#अगर IS_ENABLED(CONFIG_AGP)
-	काष्ठा radeon_device *rdev = radeon_get_rdev(bdev);
-	अगर (rdev->flags & RADEON_IS_AGP)
-		वापस tपंचांग_agp_is_bound(tपंचांग);
-#पूर्ण_अगर
-	वापस radeon_tपंचांग_backend_is_bound(tपंचांग);
-पूर्ण
+bool radeon_ttm_tt_is_bound(struct ttm_device *bdev,
+			    struct ttm_tt *ttm)
+{
+#if IS_ENABLED(CONFIG_AGP)
+	struct radeon_device *rdev = radeon_get_rdev(bdev);
+	if (rdev->flags & RADEON_IS_AGP)
+		return ttm_agp_is_bound(ttm);
+#endif
+	return radeon_ttm_backend_is_bound(ttm);
+}
 
-अटल पूर्णांक radeon_tपंचांग_tt_bind(काष्ठा tपंचांग_device *bdev,
-			      काष्ठा tपंचांग_tt *tपंचांग,
-			      काष्ठा tपंचांग_resource *bo_mem)
-अणु
-#अगर IS_ENABLED(CONFIG_AGP)
-	काष्ठा radeon_device *rdev = radeon_get_rdev(bdev);
-#पूर्ण_अगर
+static int radeon_ttm_tt_bind(struct ttm_device *bdev,
+			      struct ttm_tt *ttm,
+			      struct ttm_resource *bo_mem)
+{
+#if IS_ENABLED(CONFIG_AGP)
+	struct radeon_device *rdev = radeon_get_rdev(bdev);
+#endif
 
-	अगर (!bo_mem)
-		वापस -EINVAL;
-#अगर IS_ENABLED(CONFIG_AGP)
-	अगर (rdev->flags & RADEON_IS_AGP)
-		वापस tपंचांग_agp_bind(tपंचांग, bo_mem);
-#पूर्ण_अगर
+	if (!bo_mem)
+		return -EINVAL;
+#if IS_ENABLED(CONFIG_AGP)
+	if (rdev->flags & RADEON_IS_AGP)
+		return ttm_agp_bind(ttm, bo_mem);
+#endif
 
-	वापस radeon_tपंचांग_backend_bind(bdev, tपंचांग, bo_mem);
-पूर्ण
+	return radeon_ttm_backend_bind(bdev, ttm, bo_mem);
+}
 
-अटल व्योम radeon_tपंचांग_tt_unbind(काष्ठा tपंचांग_device *bdev,
-				 काष्ठा tपंचांग_tt *tपंचांग)
-अणु
-#अगर IS_ENABLED(CONFIG_AGP)
-	काष्ठा radeon_device *rdev = radeon_get_rdev(bdev);
+static void radeon_ttm_tt_unbind(struct ttm_device *bdev,
+				 struct ttm_tt *ttm)
+{
+#if IS_ENABLED(CONFIG_AGP)
+	struct radeon_device *rdev = radeon_get_rdev(bdev);
 
-	अगर (rdev->flags & RADEON_IS_AGP) अणु
-		tपंचांग_agp_unbind(tपंचांग);
-		वापस;
-	पूर्ण
-#पूर्ण_अगर
-	radeon_tपंचांग_backend_unbind(bdev, tपंचांग);
-पूर्ण
+	if (rdev->flags & RADEON_IS_AGP) {
+		ttm_agp_unbind(ttm);
+		return;
+	}
+#endif
+	radeon_ttm_backend_unbind(bdev, ttm);
+}
 
-अटल व्योम radeon_tपंचांग_tt_destroy(काष्ठा tपंचांग_device *bdev,
-				  काष्ठा tपंचांग_tt *tपंचांग)
-अणु
-#अगर IS_ENABLED(CONFIG_AGP)
-	काष्ठा radeon_device *rdev = radeon_get_rdev(bdev);
+static void radeon_ttm_tt_destroy(struct ttm_device *bdev,
+				  struct ttm_tt *ttm)
+{
+#if IS_ENABLED(CONFIG_AGP)
+	struct radeon_device *rdev = radeon_get_rdev(bdev);
 
-	अगर (rdev->flags & RADEON_IS_AGP) अणु
-		tपंचांग_agp_unbind(tपंचांग);
-		tपंचांग_tt_destroy_common(bdev, tपंचांग);
-		tपंचांग_agp_destroy(tपंचांग);
-		वापस;
-	पूर्ण
-#पूर्ण_अगर
-	radeon_tपंचांग_backend_destroy(bdev, tपंचांग);
-पूर्ण
+	if (rdev->flags & RADEON_IS_AGP) {
+		ttm_agp_unbind(ttm);
+		ttm_tt_destroy_common(bdev, ttm);
+		ttm_agp_destroy(ttm);
+		return;
+	}
+#endif
+	radeon_ttm_backend_destroy(bdev, ttm);
+}
 
-bool radeon_tपंचांग_tt_has_userptr(काष्ठा radeon_device *rdev,
-			       काष्ठा tपंचांग_tt *tपंचांग)
-अणु
-	काष्ठा radeon_tपंचांग_tt *gtt = radeon_tपंचांग_tt_to_gtt(rdev, tपंचांग);
+bool radeon_ttm_tt_has_userptr(struct radeon_device *rdev,
+			       struct ttm_tt *ttm)
+{
+	struct radeon_ttm_tt *gtt = radeon_ttm_tt_to_gtt(rdev, ttm);
 
-	अगर (gtt == शून्य)
-		वापस false;
+	if (gtt == NULL)
+		return false;
 
-	वापस !!gtt->userptr;
-पूर्ण
+	return !!gtt->userptr;
+}
 
-bool radeon_tपंचांग_tt_is_पढ़ोonly(काष्ठा radeon_device *rdev,
-			       काष्ठा tपंचांग_tt *tपंचांग)
-अणु
-	काष्ठा radeon_tपंचांग_tt *gtt = radeon_tपंचांग_tt_to_gtt(rdev, tपंचांग);
+bool radeon_ttm_tt_is_readonly(struct radeon_device *rdev,
+			       struct ttm_tt *ttm)
+{
+	struct radeon_ttm_tt *gtt = radeon_ttm_tt_to_gtt(rdev, ttm);
 
-	अगर (gtt == शून्य)
-		वापस false;
+	if (gtt == NULL)
+		return false;
 
-	वापस !!(gtt->userflags & RADEON_GEM_USERPTR_READONLY);
-पूर्ण
+	return !!(gtt->userflags & RADEON_GEM_USERPTR_READONLY);
+}
 
-अटल व्योम
-radeon_bo_delete_mem_notअगरy(काष्ठा tपंचांग_buffer_object *bo)
-अणु
-	radeon_bo_move_notअगरy(bo, false, शून्य);
-पूर्ण
+static void
+radeon_bo_delete_mem_notify(struct ttm_buffer_object *bo)
+{
+	radeon_bo_move_notify(bo, false, NULL);
+}
 
-अटल काष्ठा tपंचांग_device_funcs radeon_bo_driver = अणु
-	.tपंचांग_tt_create = &radeon_tपंचांग_tt_create,
-	.tपंचांग_tt_populate = &radeon_tपंचांग_tt_populate,
-	.tपंचांग_tt_unpopulate = &radeon_tपंचांग_tt_unpopulate,
-	.tपंचांग_tt_destroy = &radeon_tपंचांग_tt_destroy,
-	.eviction_valuable = tपंचांग_bo_eviction_valuable,
+static struct ttm_device_funcs radeon_bo_driver = {
+	.ttm_tt_create = &radeon_ttm_tt_create,
+	.ttm_tt_populate = &radeon_ttm_tt_populate,
+	.ttm_tt_unpopulate = &radeon_ttm_tt_unpopulate,
+	.ttm_tt_destroy = &radeon_ttm_tt_destroy,
+	.eviction_valuable = ttm_bo_eviction_valuable,
 	.evict_flags = &radeon_evict_flags,
 	.move = &radeon_bo_move,
-	.verअगरy_access = &radeon_verअगरy_access,
-	.delete_mem_notअगरy = &radeon_bo_delete_mem_notअगरy,
-	.io_mem_reserve = &radeon_tपंचांग_io_mem_reserve,
-पूर्ण;
+	.verify_access = &radeon_verify_access,
+	.delete_mem_notify = &radeon_bo_delete_mem_notify,
+	.io_mem_reserve = &radeon_ttm_io_mem_reserve,
+};
 
-पूर्णांक radeon_tपंचांग_init(काष्ठा radeon_device *rdev)
-अणु
-	पूर्णांक r;
+int radeon_ttm_init(struct radeon_device *rdev)
+{
+	int r;
 
 	/* No others user of address space so set it to 0 */
-	r = tपंचांग_device_init(&rdev->mman.bdev, &radeon_bo_driver, rdev->dev,
+	r = ttm_device_init(&rdev->mman.bdev, &radeon_bo_driver, rdev->dev,
 			       rdev->ddev->anon_inode->i_mapping,
 			       rdev->ddev->vma_offset_manager,
 			       rdev->need_swiotlb,
 			       dma_addressing_limited(&rdev->pdev->dev));
-	अगर (r) अणु
+	if (r) {
 		DRM_ERROR("failed initializing buffer object driver(%d).\n", r);
-		वापस r;
-	पूर्ण
+		return r;
+	}
 	rdev->mman.initialized = true;
 
-	r = radeon_tपंचांग_init_vram(rdev);
-	अगर (r) अणु
+	r = radeon_ttm_init_vram(rdev);
+	if (r) {
 		DRM_ERROR("Failed initializing VRAM heap.\n");
-		वापस r;
-	पूर्ण
+		return r;
+	}
 	/* Change the size here instead of the init above so only lpfn is affected */
-	radeon_tपंचांग_set_active_vram_size(rdev, rdev->mc.visible_vram_size);
+	radeon_ttm_set_active_vram_size(rdev, rdev->mc.visible_vram_size);
 
 	r = radeon_bo_create(rdev, 256 * 1024, PAGE_SIZE, true,
-			     RADEON_GEM_DOMAIN_VRAM, 0, शून्य,
-			     शून्य, &rdev->stolen_vga_memory);
-	अगर (r) अणु
-		वापस r;
-	पूर्ण
+			     RADEON_GEM_DOMAIN_VRAM, 0, NULL,
+			     NULL, &rdev->stolen_vga_memory);
+	if (r) {
+		return r;
+	}
 	r = radeon_bo_reserve(rdev->stolen_vga_memory, false);
-	अगर (r)
-		वापस r;
-	r = radeon_bo_pin(rdev->stolen_vga_memory, RADEON_GEM_DOMAIN_VRAM, शून्य);
+	if (r)
+		return r;
+	r = radeon_bo_pin(rdev->stolen_vga_memory, RADEON_GEM_DOMAIN_VRAM, NULL);
 	radeon_bo_unreserve(rdev->stolen_vga_memory);
-	अगर (r) अणु
+	if (r) {
 		radeon_bo_unref(&rdev->stolen_vga_memory);
-		वापस r;
-	पूर्ण
+		return r;
+	}
 	DRM_INFO("radeon: %uM of VRAM memory ready\n",
-		 (अचिन्हित) (rdev->mc.real_vram_size / (1024 * 1024)));
+		 (unsigned) (rdev->mc.real_vram_size / (1024 * 1024)));
 
-	r = radeon_tपंचांग_init_gtt(rdev);
-	अगर (r) अणु
+	r = radeon_ttm_init_gtt(rdev);
+	if (r) {
 		DRM_ERROR("Failed initializing GTT heap.\n");
-		वापस r;
-	पूर्ण
+		return r;
+	}
 	DRM_INFO("radeon: %uM of GTT memory ready.\n",
-		 (अचिन्हित)(rdev->mc.gtt_size / (1024 * 1024)));
+		 (unsigned)(rdev->mc.gtt_size / (1024 * 1024)));
 
-	radeon_tपंचांग_debugfs_init(rdev);
+	radeon_ttm_debugfs_init(rdev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम radeon_tपंचांग_fini(काष्ठा radeon_device *rdev)
-अणु
-	पूर्णांक r;
+void radeon_ttm_fini(struct radeon_device *rdev)
+{
+	int r;
 
-	अगर (!rdev->mman.initialized)
-		वापस;
+	if (!rdev->mman.initialized)
+		return;
 
-	अगर (rdev->stolen_vga_memory) अणु
+	if (rdev->stolen_vga_memory) {
 		r = radeon_bo_reserve(rdev->stolen_vga_memory, false);
-		अगर (r == 0) अणु
+		if (r == 0) {
 			radeon_bo_unpin(rdev->stolen_vga_memory);
 			radeon_bo_unreserve(rdev->stolen_vga_memory);
-		पूर्ण
+		}
 		radeon_bo_unref(&rdev->stolen_vga_memory);
-	पूर्ण
-	tपंचांग_range_man_fini(&rdev->mman.bdev, TTM_PL_VRAM);
-	tपंचांग_range_man_fini(&rdev->mman.bdev, TTM_PL_TT);
-	tपंचांग_device_fini(&rdev->mman.bdev);
+	}
+	ttm_range_man_fini(&rdev->mman.bdev, TTM_PL_VRAM);
+	ttm_range_man_fini(&rdev->mman.bdev, TTM_PL_TT);
+	ttm_device_fini(&rdev->mman.bdev);
 	radeon_gart_fini(rdev);
 	rdev->mman.initialized = false;
 	DRM_INFO("radeon: ttm finalized\n");
-पूर्ण
+}
 
 /* this should only be called at bootup or when userspace
  * isn't running */
-व्योम radeon_tपंचांग_set_active_vram_size(काष्ठा radeon_device *rdev, u64 size)
-अणु
-	काष्ठा tपंचांग_resource_manager *man;
+void radeon_ttm_set_active_vram_size(struct radeon_device *rdev, u64 size)
+{
+	struct ttm_resource_manager *man;
 
-	अगर (!rdev->mman.initialized)
-		वापस;
+	if (!rdev->mman.initialized)
+		return;
 
-	man = tपंचांग_manager_type(&rdev->mman.bdev, TTM_PL_VRAM);
+	man = ttm_manager_type(&rdev->mman.bdev, TTM_PL_VRAM);
 	/* this just adjusts TTM size idea, which sets lpfn to the correct value */
 	man->size = size >> PAGE_SHIFT;
-पूर्ण
+}
 
-अटल vm_fault_t radeon_tपंचांग_fault(काष्ठा vm_fault *vmf)
-अणु
-	काष्ठा tपंचांग_buffer_object *bo = vmf->vma->vm_निजी_data;
-	काष्ठा radeon_device *rdev = radeon_get_rdev(bo->bdev);
+static vm_fault_t radeon_ttm_fault(struct vm_fault *vmf)
+{
+	struct ttm_buffer_object *bo = vmf->vma->vm_private_data;
+	struct radeon_device *rdev = radeon_get_rdev(bo->bdev);
 	vm_fault_t ret;
 
-	करोwn_पढ़ो(&rdev->pm.mclk_lock);
+	down_read(&rdev->pm.mclk_lock);
 
-	ret = tपंचांग_bo_vm_reserve(bo, vmf);
-	अगर (ret)
-		जाओ unlock_mclk;
+	ret = ttm_bo_vm_reserve(bo, vmf);
+	if (ret)
+		goto unlock_mclk;
 
-	ret = radeon_bo_fault_reserve_notअगरy(bo);
-	अगर (ret)
-		जाओ unlock_resv;
+	ret = radeon_bo_fault_reserve_notify(bo);
+	if (ret)
+		goto unlock_resv;
 
-	ret = tपंचांग_bo_vm_fault_reserved(vmf, vmf->vma->vm_page_prot,
+	ret = ttm_bo_vm_fault_reserved(vmf, vmf->vma->vm_page_prot,
 				       TTM_BO_VM_NUM_PREFAULT, 1);
-	अगर (ret == VM_FAULT_RETRY && !(vmf->flags & FAULT_FLAG_RETRY_NOWAIT))
-		जाओ unlock_mclk;
+	if (ret == VM_FAULT_RETRY && !(vmf->flags & FAULT_FLAG_RETRY_NOWAIT))
+		goto unlock_mclk;
 
 unlock_resv:
 	dma_resv_unlock(bo->base.resv);
 
 unlock_mclk:
-	up_पढ़ो(&rdev->pm.mclk_lock);
-	वापस ret;
-पूर्ण
+	up_read(&rdev->pm.mclk_lock);
+	return ret;
+}
 
-अटल स्थिर काष्ठा vm_operations_काष्ठा radeon_tपंचांग_vm_ops = अणु
-	.fault = radeon_tपंचांग_fault,
-	.खोलो = tपंचांग_bo_vm_खोलो,
-	.बंद = tपंचांग_bo_vm_बंद,
-	.access = tपंचांग_bo_vm_access
-पूर्ण;
+static const struct vm_operations_struct radeon_ttm_vm_ops = {
+	.fault = radeon_ttm_fault,
+	.open = ttm_bo_vm_open,
+	.close = ttm_bo_vm_close,
+	.access = ttm_bo_vm_access
+};
 
-पूर्णांक radeon_mmap(काष्ठा file *filp, काष्ठा vm_area_काष्ठा *vma)
-अणु
-	पूर्णांक r;
-	काष्ठा drm_file *file_priv = filp->निजी_data;
-	काष्ठा radeon_device *rdev = file_priv->minor->dev->dev_निजी;
+int radeon_mmap(struct file *filp, struct vm_area_struct *vma)
+{
+	int r;
+	struct drm_file *file_priv = filp->private_data;
+	struct radeon_device *rdev = file_priv->minor->dev->dev_private;
 
-	अगर (rdev == शून्य)
-		वापस -EINVAL;
+	if (rdev == NULL)
+		return -EINVAL;
 
-	r = tपंचांग_bo_mmap(filp, vma, &rdev->mman.bdev);
-	अगर (unlikely(r != 0))
-		वापस r;
+	r = ttm_bo_mmap(filp, vma, &rdev->mman.bdev);
+	if (unlikely(r != 0))
+		return r;
 
-	vma->vm_ops = &radeon_tपंचांग_vm_ops;
-	वापस 0;
-पूर्ण
+	vma->vm_ops = &radeon_ttm_vm_ops;
+	return 0;
+}
 
-#अगर defined(CONFIG_DEBUG_FS)
+#if defined(CONFIG_DEBUG_FS)
 
-अटल पूर्णांक radeon_mm_vram_dump_table_show(काष्ठा seq_file *m, व्योम *unused)
-अणु
-	काष्ठा radeon_device *rdev = (काष्ठा radeon_device *)m->निजी;
-	काष्ठा tपंचांग_resource_manager *man = tपंचांग_manager_type(&rdev->mman.bdev,
+static int radeon_mm_vram_dump_table_show(struct seq_file *m, void *unused)
+{
+	struct radeon_device *rdev = (struct radeon_device *)m->private;
+	struct ttm_resource_manager *man = ttm_manager_type(&rdev->mman.bdev,
 							    TTM_PL_VRAM);
-	काष्ठा drm_prपूर्णांकer p = drm_seq_file_prपूर्णांकer(m);
+	struct drm_printer p = drm_seq_file_printer(m);
 
 	man->func->debug(man, &p);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक radeon_tपंचांग_page_pool_show(काष्ठा seq_file *m, व्योम *data)
-अणु
-	काष्ठा radeon_device *rdev = (काष्ठा radeon_device *)m->निजी;
+static int radeon_ttm_page_pool_show(struct seq_file *m, void *data)
+{
+	struct radeon_device *rdev = (struct radeon_device *)m->private;
 
-	वापस tपंचांग_pool_debugfs(&rdev->mman.bdev.pool, m);
-पूर्ण
+	return ttm_pool_debugfs(&rdev->mman.bdev.pool, m);
+}
 
-अटल पूर्णांक radeon_mm_gtt_dump_table_show(काष्ठा seq_file *m, व्योम *unused)
-अणु
-	काष्ठा radeon_device *rdev = (काष्ठा radeon_device *)m->निजी;
-	काष्ठा tपंचांग_resource_manager *man = tपंचांग_manager_type(&rdev->mman.bdev,
+static int radeon_mm_gtt_dump_table_show(struct seq_file *m, void *unused)
+{
+	struct radeon_device *rdev = (struct radeon_device *)m->private;
+	struct ttm_resource_manager *man = ttm_manager_type(&rdev->mman.bdev,
 							    TTM_PL_TT);
-	काष्ठा drm_prपूर्णांकer p = drm_seq_file_prपूर्णांकer(m);
+	struct drm_printer p = drm_seq_file_printer(m);
 
 	man->func->debug(man, &p);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 DEFINE_SHOW_ATTRIBUTE(radeon_mm_vram_dump_table);
 DEFINE_SHOW_ATTRIBUTE(radeon_mm_gtt_dump_table);
-DEFINE_SHOW_ATTRIBUTE(radeon_tपंचांग_page_pool);
+DEFINE_SHOW_ATTRIBUTE(radeon_ttm_page_pool);
 
-अटल पूर्णांक radeon_tपंचांग_vram_खोलो(काष्ठा inode *inode, काष्ठा file *filep)
-अणु
-	काष्ठा radeon_device *rdev = inode->i_निजी;
-	i_size_ग_लिखो(inode, rdev->mc.mc_vram_size);
-	filep->निजी_data = inode->i_निजी;
-	वापस 0;
-पूर्ण
+static int radeon_ttm_vram_open(struct inode *inode, struct file *filep)
+{
+	struct radeon_device *rdev = inode->i_private;
+	i_size_write(inode, rdev->mc.mc_vram_size);
+	filep->private_data = inode->i_private;
+	return 0;
+}
 
-अटल sमाप_प्रकार radeon_tपंचांग_vram_पढ़ो(काष्ठा file *f, अक्षर __user *buf,
-				    माप_प्रकार size, loff_t *pos)
-अणु
-	काष्ठा radeon_device *rdev = f->निजी_data;
-	sमाप_प्रकार result = 0;
-	पूर्णांक r;
+static ssize_t radeon_ttm_vram_read(struct file *f, char __user *buf,
+				    size_t size, loff_t *pos)
+{
+	struct radeon_device *rdev = f->private_data;
+	ssize_t result = 0;
+	int r;
 
-	अगर (size & 0x3 || *pos & 0x3)
-		वापस -EINVAL;
+	if (size & 0x3 || *pos & 0x3)
+		return -EINVAL;
 
-	जबतक (size) अणु
-		अचिन्हित दीर्घ flags;
-		uपूर्णांक32_t value;
+	while (size) {
+		unsigned long flags;
+		uint32_t value;
 
-		अगर (*pos >= rdev->mc.mc_vram_size)
-			वापस result;
+		if (*pos >= rdev->mc.mc_vram_size)
+			return result;
 
 		spin_lock_irqsave(&rdev->mmio_idx_lock, flags);
-		WREG32(RADEON_MM_INDEX, ((uपूर्णांक32_t)*pos) | 0x80000000);
-		अगर (rdev->family >= CHIP_CEDAR)
+		WREG32(RADEON_MM_INDEX, ((uint32_t)*pos) | 0x80000000);
+		if (rdev->family >= CHIP_CEDAR)
 			WREG32(EVERGREEN_MM_INDEX_HI, *pos >> 31);
 		value = RREG32(RADEON_MM_DATA);
 		spin_unlock_irqrestore(&rdev->mmio_idx_lock, flags);
 
-		r = put_user(value, (uपूर्णांक32_t __user *)buf);
-		अगर (r)
-			वापस r;
+		r = put_user(value, (uint32_t __user *)buf);
+		if (r)
+			return r;
 
 		result += 4;
 		buf += 4;
 		*pos += 4;
 		size -= 4;
-	पूर्ण
+	}
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
-अटल स्थिर काष्ठा file_operations radeon_tपंचांग_vram_fops = अणु
+static const struct file_operations radeon_ttm_vram_fops = {
 	.owner = THIS_MODULE,
-	.खोलो = radeon_tपंचांग_vram_खोलो,
-	.पढ़ो = radeon_tपंचांग_vram_पढ़ो,
-	.llseek = शेष_llseek
-पूर्ण;
+	.open = radeon_ttm_vram_open,
+	.read = radeon_ttm_vram_read,
+	.llseek = default_llseek
+};
 
-अटल पूर्णांक radeon_tपंचांग_gtt_खोलो(काष्ठा inode *inode, काष्ठा file *filep)
-अणु
-	काष्ठा radeon_device *rdev = inode->i_निजी;
-	i_size_ग_लिखो(inode, rdev->mc.gtt_size);
-	filep->निजी_data = inode->i_निजी;
-	वापस 0;
-पूर्ण
+static int radeon_ttm_gtt_open(struct inode *inode, struct file *filep)
+{
+	struct radeon_device *rdev = inode->i_private;
+	i_size_write(inode, rdev->mc.gtt_size);
+	filep->private_data = inode->i_private;
+	return 0;
+}
 
-अटल sमाप_प्रकार radeon_tपंचांग_gtt_पढ़ो(काष्ठा file *f, अक्षर __user *buf,
-				   माप_प्रकार size, loff_t *pos)
-अणु
-	काष्ठा radeon_device *rdev = f->निजी_data;
-	sमाप_प्रकार result = 0;
-	पूर्णांक r;
+static ssize_t radeon_ttm_gtt_read(struct file *f, char __user *buf,
+				   size_t size, loff_t *pos)
+{
+	struct radeon_device *rdev = f->private_data;
+	ssize_t result = 0;
+	int r;
 
-	जबतक (size) अणु
+	while (size) {
 		loff_t p = *pos / PAGE_SIZE;
-		अचिन्हित off = *pos & ~PAGE_MASK;
-		माप_प्रकार cur_size = min_t(माप_प्रकार, size, PAGE_SIZE - off);
-		काष्ठा page *page;
-		व्योम *ptr;
+		unsigned off = *pos & ~PAGE_MASK;
+		size_t cur_size = min_t(size_t, size, PAGE_SIZE - off);
+		struct page *page;
+		void *ptr;
 
-		अगर (p >= rdev->gart.num_cpu_pages)
-			वापस result;
+		if (p >= rdev->gart.num_cpu_pages)
+			return result;
 
 		page = rdev->gart.pages[p];
-		अगर (page) अणु
+		if (page) {
 			ptr = kmap(page);
 			ptr += off;
 
 			r = copy_to_user(buf, ptr, cur_size);
 			kunmap(rdev->gart.pages[p]);
-		पूर्ण अन्यथा
+		} else
 			r = clear_user(buf, cur_size);
 
-		अगर (r)
-			वापस -EFAULT;
+		if (r)
+			return -EFAULT;
 
 		result += cur_size;
 		buf += cur_size;
 		*pos += cur_size;
 		size -= cur_size;
-	पूर्ण
+	}
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
-अटल स्थिर काष्ठा file_operations radeon_tपंचांग_gtt_fops = अणु
+static const struct file_operations radeon_ttm_gtt_fops = {
 	.owner = THIS_MODULE,
-	.खोलो = radeon_tपंचांग_gtt_खोलो,
-	.पढ़ो = radeon_tपंचांग_gtt_पढ़ो,
-	.llseek = शेष_llseek
-पूर्ण;
+	.open = radeon_ttm_gtt_open,
+	.read = radeon_ttm_gtt_read,
+	.llseek = default_llseek
+};
 
-#पूर्ण_अगर
+#endif
 
-अटल व्योम radeon_tपंचांग_debugfs_init(काष्ठा radeon_device *rdev)
-अणु
-#अगर defined(CONFIG_DEBUG_FS)
-	काष्ठा drm_minor *minor = rdev->ddev->primary;
-	काष्ठा dentry *root = minor->debugfs_root;
+static void radeon_ttm_debugfs_init(struct radeon_device *rdev)
+{
+#if defined(CONFIG_DEBUG_FS)
+	struct drm_minor *minor = rdev->ddev->primary;
+	struct dentry *root = minor->debugfs_root;
 
 	debugfs_create_file("radeon_vram", 0444, root, rdev,
-			    &radeon_tपंचांग_vram_fops);
+			    &radeon_ttm_vram_fops);
 
 	debugfs_create_file("radeon_gtt", 0444, root, rdev,
-			    &radeon_tपंचांग_gtt_fops);
+			    &radeon_ttm_gtt_fops);
 
 	debugfs_create_file("radeon_vram_mm", 0444, root, rdev,
 			    &radeon_mm_vram_dump_table_fops);
 	debugfs_create_file("radeon_gtt_mm", 0444, root, rdev,
 			    &radeon_mm_gtt_dump_table_fops);
 	debugfs_create_file("ttm_page_pool", 0444, root, rdev,
-			    &radeon_tपंचांग_page_pool_fops);
-#पूर्ण_अगर
-पूर्ण
+			    &radeon_ttm_page_pool_fops);
+#endif
+}

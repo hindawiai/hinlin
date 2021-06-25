@@ -1,42 +1,41 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <linux/types.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/uaccess.h>
+// SPDX-License-Identifier: GPL-2.0
+#include <linux/types.h>
+#include <linux/errno.h>
+#include <linux/uaccess.h>
 
-#समावेश <यंत्र/sfp-machine.h>
-#समावेश <math-emu/soft-fp.h>
-#समावेश <math-emu/द्विगुन.h>
+#include <asm/sfp-machine.h>
+#include <math-emu/soft-fp.h>
+#include <math-emu/double.h>
 
-पूर्णांक
-fवर्ग_मूल(व्योम *frD, व्योम *frB)
-अणु
+int
+fsqrt(void *frD, void *frB)
+{
 	FP_DECL_D(B);
 	FP_DECL_D(R);
 	FP_DECL_EX;
 
-#अगर_घोषित DEBUG
-	prपूर्णांकk("%s: %p %p %p %p\n", __func__, frD, frB);
-#पूर्ण_अगर
+#ifdef DEBUG
+	printk("%s: %p %p %p %p\n", __func__, frD, frB);
+#endif
 
 	FP_UNPACK_DP(B, frB);
 
-#अगर_घोषित DEBUG
-	prपूर्णांकk("B: %ld %lu %lu %ld (%ld)\n", B_s, B_f1, B_f0, B_e, B_c);
-#पूर्ण_अगर
+#ifdef DEBUG
+	printk("B: %ld %lu %lu %ld (%ld)\n", B_s, B_f1, B_f0, B_e, B_c);
+#endif
 
-	अगर (B_s && B_c != FP_CLS_ZERO)
+	if (B_s && B_c != FP_CLS_ZERO)
 		FP_SET_EXCEPTION(EFLAG_VXSQRT);
-	अगर (B_c == FP_CLS_न_अंक)
-		FP_SET_EXCEPTION(EFLAG_VXSन_अंक);
+	if (B_c == FP_CLS_NAN)
+		FP_SET_EXCEPTION(EFLAG_VXSNAN);
 
 	FP_SQRT_D(R, B);
 
-#अगर_घोषित DEBUG
-	prपूर्णांकk("R: %ld %lu %lu %ld (%ld)\n", R_s, R_f1, R_f0, R_e, R_c);
-#पूर्ण_अगर
+#ifdef DEBUG
+	printk("R: %ld %lu %lu %ld (%ld)\n", R_s, R_f1, R_f0, R_e, R_c);
+#endif
 
 	__FP_PACK_D(frD, R);
 
-	वापस FP_CUR_EXCEPTIONS;
-पूर्ण
+	return FP_CUR_EXCEPTIONS;
+}

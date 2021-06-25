@@ -1,671 +1,670 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright 2014 Google Inc.
  * Author: willemb@google.com (Willem de Bruijn)
  *
- * Test software tx बारtamping, including
+ * Test software tx timestamping, including
  *
- * - SCHED, SND and ACK बारtamps
+ * - SCHED, SND and ACK timestamps
  * - RAW, UDP and TCP
  * - IPv4 and IPv6
  * - various packet sizes (to test GSO and TSO)
  *
- * Consult the command line arguments क्रम help on running
- * the various testहालs.
+ * Consult the command line arguments for help on running
+ * the various testcases.
  *
  * This test requires a dummy TCP server.
- * A simple `nc6 [-u] -l -p $DESTPORT` will करो
+ * A simple `nc6 [-u] -l -p $DESTPORT` will do
  */
 
-#घोषणा _GNU_SOURCE
+#define _GNU_SOURCE
 
-#समावेश <arpa/inet.h>
-#समावेश <यंत्र/types.h>
-#समावेश <error.h>
-#समावेश <त्रुटिसं.स>
-#समावेश <पूर्णांकtypes.h>
-#समावेश <linux/errqueue.h>
-#समावेश <linux/अगर_ether.h>
-#समावेश <linux/अगर_packet.h>
-#समावेश <linux/ipv6.h>
-#समावेश <linux/net_tstamp.h>
-#समावेश <netdb.h>
-#समावेश <net/अगर.h>
-#समावेश <netinet/in.h>
-#समावेश <netinet/ip.h>
-#समावेश <netinet/udp.h>
-#समावेश <netinet/tcp.h>
-#समावेश <poll.h>
-#समावेश <मानकतर्क.स>
-#समावेश <stdbool.h>
-#समावेश <मानकपन.स>
-#समावेश <मानककोष.स>
-#समावेश <माला.स>
-#समावेश <sys/epoll.h>
-#समावेश <sys/ioctl.h>
-#समावेश <sys/select.h>
-#समावेश <sys/socket.h>
-#समावेश <sys/समय.स>
-#समावेश <sys/types.h>
-#समावेश <समय.स>
-#समावेश <unistd.h>
+#include <arpa/inet.h>
+#include <asm/types.h>
+#include <error.h>
+#include <errno.h>
+#include <inttypes.h>
+#include <linux/errqueue.h>
+#include <linux/if_ether.h>
+#include <linux/if_packet.h>
+#include <linux/ipv6.h>
+#include <linux/net_tstamp.h>
+#include <netdb.h>
+#include <net/if.h>
+#include <netinet/in.h>
+#include <netinet/ip.h>
+#include <netinet/udp.h>
+#include <netinet/tcp.h>
+#include <poll.h>
+#include <stdarg.h>
+#include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/epoll.h>
+#include <sys/ioctl.h>
+#include <sys/select.h>
+#include <sys/socket.h>
+#include <sys/time.h>
+#include <sys/types.h>
+#include <time.h>
+#include <unistd.h>
 
-#घोषणा NSEC_PER_USEC	1000L
-#घोषणा USEC_PER_SEC	1000000L
-#घोषणा NSEC_PER_SEC	1000000000LL
+#define NSEC_PER_USEC	1000L
+#define USEC_PER_SEC	1000000L
+#define NSEC_PER_SEC	1000000000LL
 
 /* command line parameters */
-अटल पूर्णांक cfg_proto = SOCK_STREAM;
-अटल पूर्णांक cfg_ipproto = IPPROTO_TCP;
-अटल पूर्णांक cfg_num_pkts = 4;
-अटल पूर्णांक करो_ipv4 = 1;
-अटल पूर्णांक करो_ipv6 = 1;
-अटल पूर्णांक cfg_payload_len = 10;
-अटल पूर्णांक cfg_poll_समयout = 100;
-अटल पूर्णांक cfg_delay_snd;
-अटल पूर्णांक cfg_delay_ack;
-अटल पूर्णांक cfg_delay_tolerance_usec = 500;
-अटल bool cfg_show_payload;
-अटल bool cfg_करो_pktinfo;
-अटल bool cfg_busy_poll;
-अटल पूर्णांक cfg_sleep_usec = 50 * 1000;
-अटल bool cfg_loop_nodata;
-अटल bool cfg_use_cmsg;
-अटल bool cfg_use_pf_packet;
-अटल bool cfg_use_epoll;
-अटल bool cfg_epollet;
-अटल bool cfg_करो_listen;
-अटल uपूर्णांक16_t dest_port = 9000;
-अटल bool cfg_prपूर्णांक_nsec;
+static int cfg_proto = SOCK_STREAM;
+static int cfg_ipproto = IPPROTO_TCP;
+static int cfg_num_pkts = 4;
+static int do_ipv4 = 1;
+static int do_ipv6 = 1;
+static int cfg_payload_len = 10;
+static int cfg_poll_timeout = 100;
+static int cfg_delay_snd;
+static int cfg_delay_ack;
+static int cfg_delay_tolerance_usec = 500;
+static bool cfg_show_payload;
+static bool cfg_do_pktinfo;
+static bool cfg_busy_poll;
+static int cfg_sleep_usec = 50 * 1000;
+static bool cfg_loop_nodata;
+static bool cfg_use_cmsg;
+static bool cfg_use_pf_packet;
+static bool cfg_use_epoll;
+static bool cfg_epollet;
+static bool cfg_do_listen;
+static uint16_t dest_port = 9000;
+static bool cfg_print_nsec;
 
-अटल काष्ठा sockaddr_in daddr;
-अटल काष्ठा sockaddr_in6 daddr6;
-अटल काष्ठा बारpec ts_usr;
+static struct sockaddr_in daddr;
+static struct sockaddr_in6 daddr6;
+static struct timespec ts_usr;
 
-अटल पूर्णांक saved_tskey = -1;
-अटल पूर्णांक saved_tskey_type = -1;
+static int saved_tskey = -1;
+static int saved_tskey_type = -1;
 
-काष्ठा timing_event अणु
-	पूर्णांक64_t min;
-	पूर्णांक64_t max;
-	पूर्णांक64_t total;
-	पूर्णांक count;
-पूर्ण;
+struct timing_event {
+	int64_t min;
+	int64_t max;
+	int64_t total;
+	int count;
+};
 
-अटल काष्ठा timing_event usr_enq;
-अटल काष्ठा timing_event usr_snd;
-अटल काष्ठा timing_event usr_ack;
+static struct timing_event usr_enq;
+static struct timing_event usr_snd;
+static struct timing_event usr_ack;
 
-अटल bool test_failed;
+static bool test_failed;
 
-अटल पूर्णांक64_t बारpec_to_ns64(काष्ठा बारpec *ts)
-अणु
-	वापस ts->tv_sec * NSEC_PER_SEC + ts->tv_nsec;
-पूर्ण
+static int64_t timespec_to_ns64(struct timespec *ts)
+{
+	return ts->tv_sec * NSEC_PER_SEC + ts->tv_nsec;
+}
 
-अटल पूर्णांक64_t बारpec_to_us64(काष्ठा बारpec *ts)
-अणु
-	वापस ts->tv_sec * USEC_PER_SEC + ts->tv_nsec / NSEC_PER_USEC;
-पूर्ण
+static int64_t timespec_to_us64(struct timespec *ts)
+{
+	return ts->tv_sec * USEC_PER_SEC + ts->tv_nsec / NSEC_PER_USEC;
+}
 
-अटल व्योम init_timing_event(काष्ठा timing_event *te)
-अणु
+static void init_timing_event(struct timing_event *te)
+{
 	te->min = INT64_MAX;
 	te->max = 0;
 	te->total = 0;
 	te->count = 0;
-पूर्ण
+}
 
-अटल व्योम add_timing_event(काष्ठा timing_event *te,
-		काष्ठा बारpec *t_start, काष्ठा बारpec *t_end)
-अणु
-	पूर्णांक64_t ts_delta = बारpec_to_ns64(t_end) - बारpec_to_ns64(t_start);
+static void add_timing_event(struct timing_event *te,
+		struct timespec *t_start, struct timespec *t_end)
+{
+	int64_t ts_delta = timespec_to_ns64(t_end) - timespec_to_ns64(t_start);
 
 	te->count++;
-	अगर (ts_delta < te->min)
+	if (ts_delta < te->min)
 		te->min = ts_delta;
-	अगर (ts_delta > te->max)
+	if (ts_delta > te->max)
 		te->max = ts_delta;
 	te->total += ts_delta;
-पूर्ण
+}
 
-अटल व्योम validate_key(पूर्णांक tskey, पूर्णांक tstype)
-अणु
-	पूर्णांक stepsize;
+static void validate_key(int tskey, int tstype)
+{
+	int stepsize;
 
-	/* compare key क्रम each subsequent request
-	 * must only test क्रम one type, the first one requested
+	/* compare key for each subsequent request
+	 * must only test for one type, the first one requested
 	 */
-	अगर (saved_tskey == -1)
+	if (saved_tskey == -1)
 		saved_tskey_type = tstype;
-	अन्यथा अगर (saved_tskey_type != tstype)
-		वापस;
+	else if (saved_tskey_type != tstype)
+		return;
 
 	stepsize = cfg_proto == SOCK_STREAM ? cfg_payload_len : 1;
-	अगर (tskey != saved_tskey + stepsize) अणु
-		ख_लिखो(मानक_त्रुटि, "ERROR: key %d, expected %d\n",
+	if (tskey != saved_tskey + stepsize) {
+		fprintf(stderr, "ERROR: key %d, expected %d\n",
 				tskey, saved_tskey + stepsize);
 		test_failed = true;
-	पूर्ण
+	}
 
 	saved_tskey = tskey;
-पूर्ण
+}
 
-अटल व्योम validate_बारtamp(काष्ठा बारpec *cur, पूर्णांक min_delay)
-अणु
-	पूर्णांक64_t cur64, start64;
-	पूर्णांक max_delay;
+static void validate_timestamp(struct timespec *cur, int min_delay)
+{
+	int64_t cur64, start64;
+	int max_delay;
 
-	cur64 = बारpec_to_us64(cur);
-	start64 = बारpec_to_us64(&ts_usr);
+	cur64 = timespec_to_us64(cur);
+	start64 = timespec_to_us64(&ts_usr);
 	max_delay = min_delay + cfg_delay_tolerance_usec;
 
-	अगर (cur64 < start64 + min_delay || cur64 > start64 + max_delay) अणु
-		ख_लिखो(मानक_त्रुटि, "ERROR: %lu us expected between %d and %d\n",
+	if (cur64 < start64 + min_delay || cur64 > start64 + max_delay) {
+		fprintf(stderr, "ERROR: %lu us expected between %d and %d\n",
 				cur64 - start64, min_delay, max_delay);
 		test_failed = true;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम __prपूर्णांक_ts_delta_क्रमmatted(पूर्णांक64_t ts_delta)
-अणु
-	अगर (cfg_prपूर्णांक_nsec)
-		ख_लिखो(मानक_त्रुटि, "%lu ns", ts_delta);
-	अन्यथा
-		ख_लिखो(मानक_त्रुटि, "%lu us", ts_delta / NSEC_PER_USEC);
-पूर्ण
+static void __print_ts_delta_formatted(int64_t ts_delta)
+{
+	if (cfg_print_nsec)
+		fprintf(stderr, "%lu ns", ts_delta);
+	else
+		fprintf(stderr, "%lu us", ts_delta / NSEC_PER_USEC);
+}
 
-अटल व्योम __prपूर्णांक_बारtamp(स्थिर अक्षर *name, काष्ठा बारpec *cur,
-			      uपूर्णांक32_t key, पूर्णांक payload_len)
-अणु
-	पूर्णांक64_t ts_delta;
+static void __print_timestamp(const char *name, struct timespec *cur,
+			      uint32_t key, int payload_len)
+{
+	int64_t ts_delta;
 
-	अगर (!(cur->tv_sec | cur->tv_nsec))
-		वापस;
+	if (!(cur->tv_sec | cur->tv_nsec))
+		return;
 
-	अगर (cfg_prपूर्णांक_nsec)
-		ख_लिखो(मानक_त्रुटि, "  %s: %lu s %lu ns (seq=%u, len=%u)",
+	if (cfg_print_nsec)
+		fprintf(stderr, "  %s: %lu s %lu ns (seq=%u, len=%u)",
 				name, cur->tv_sec, cur->tv_nsec,
 				key, payload_len);
-	अन्यथा
-		ख_लिखो(मानक_त्रुटि, "  %s: %lu s %lu us (seq=%u, len=%u)",
+	else
+		fprintf(stderr, "  %s: %lu s %lu us (seq=%u, len=%u)",
 				name, cur->tv_sec, cur->tv_nsec / NSEC_PER_USEC,
 				key, payload_len);
 
-	अगर (cur != &ts_usr) अणु
-		ts_delta = बारpec_to_ns64(cur) - बारpec_to_ns64(&ts_usr);
-		ख_लिखो(मानक_त्रुटि, "  (USR +");
-		__prपूर्णांक_ts_delta_क्रमmatted(ts_delta);
-		ख_लिखो(मानक_त्रुटि, ")");
-	पूर्ण
+	if (cur != &ts_usr) {
+		ts_delta = timespec_to_ns64(cur) - timespec_to_ns64(&ts_usr);
+		fprintf(stderr, "  (USR +");
+		__print_ts_delta_formatted(ts_delta);
+		fprintf(stderr, ")");
+	}
 
-	ख_लिखो(मानक_त्रुटि, "\n");
-पूर्ण
+	fprintf(stderr, "\n");
+}
 
-अटल व्योम prपूर्णांक_बारtamp_usr(व्योम)
-अणु
-	अगर (घड़ी_समय_लो(CLOCK_REALTIME, &ts_usr))
-		error(1, त्रुटि_सं, "clock_gettime");
+static void print_timestamp_usr(void)
+{
+	if (clock_gettime(CLOCK_REALTIME, &ts_usr))
+		error(1, errno, "clock_gettime");
 
-	__prपूर्णांक_बारtamp("  USR", &ts_usr, 0, 0);
-पूर्ण
+	__print_timestamp("  USR", &ts_usr, 0, 0);
+}
 
-अटल व्योम prपूर्णांक_बारtamp(काष्ठा scm_बारtamping *tss, पूर्णांक tstype,
-			    पूर्णांक tskey, पूर्णांक payload_len)
-अणु
-	स्थिर अक्षर *tsname;
+static void print_timestamp(struct scm_timestamping *tss, int tstype,
+			    int tskey, int payload_len)
+{
+	const char *tsname;
 
 	validate_key(tskey, tstype);
 
-	चयन (tstype) अणु
-	हाल SCM_TSTAMP_SCHED:
+	switch (tstype) {
+	case SCM_TSTAMP_SCHED:
 		tsname = "  ENQ";
-		validate_बारtamp(&tss->ts[0], 0);
+		validate_timestamp(&tss->ts[0], 0);
 		add_timing_event(&usr_enq, &ts_usr, &tss->ts[0]);
-		अवरोध;
-	हाल SCM_TSTAMP_SND:
+		break;
+	case SCM_TSTAMP_SND:
 		tsname = "  SND";
-		validate_बारtamp(&tss->ts[0], cfg_delay_snd);
+		validate_timestamp(&tss->ts[0], cfg_delay_snd);
 		add_timing_event(&usr_snd, &ts_usr, &tss->ts[0]);
-		अवरोध;
-	हाल SCM_TSTAMP_ACK:
+		break;
+	case SCM_TSTAMP_ACK:
 		tsname = "  ACK";
-		validate_बारtamp(&tss->ts[0], cfg_delay_ack);
+		validate_timestamp(&tss->ts[0], cfg_delay_ack);
 		add_timing_event(&usr_ack, &ts_usr, &tss->ts[0]);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		error(1, 0, "unknown timestamp type: %u",
 		tstype);
-	पूर्ण
-	__prपूर्णांक_बारtamp(tsname, &tss->ts[0], tskey, payload_len);
-पूर्ण
+	}
+	__print_timestamp(tsname, &tss->ts[0], tskey, payload_len);
+}
 
-अटल व्योम prपूर्णांक_timing_event(अक्षर *name, काष्ठा timing_event *te)
-अणु
-	अगर (!te->count)
-		वापस;
+static void print_timing_event(char *name, struct timing_event *te)
+{
+	if (!te->count)
+		return;
 
-	ख_लिखो(मानक_त्रुटि, "    %s: count=%d", name, te->count);
-	ख_लिखो(मानक_त्रुटि, ", avg=");
-	__prपूर्णांक_ts_delta_क्रमmatted((पूर्णांक64_t)(te->total / te->count));
-	ख_लिखो(मानक_त्रुटि, ", min=");
-	__prपूर्णांक_ts_delta_क्रमmatted(te->min);
-	ख_लिखो(मानक_त्रुटि, ", max=");
-	__prपूर्णांक_ts_delta_क्रमmatted(te->max);
-	ख_लिखो(मानक_त्रुटि, "\n");
-पूर्ण
+	fprintf(stderr, "    %s: count=%d", name, te->count);
+	fprintf(stderr, ", avg=");
+	__print_ts_delta_formatted((int64_t)(te->total / te->count));
+	fprintf(stderr, ", min=");
+	__print_ts_delta_formatted(te->min);
+	fprintf(stderr, ", max=");
+	__print_ts_delta_formatted(te->max);
+	fprintf(stderr, "\n");
+}
 
-/* TODO: convert to check_and_prपूर्णांक payload once API is stable */
-अटल व्योम prपूर्णांक_payload(अक्षर *data, पूर्णांक len)
-अणु
-	पूर्णांक i;
+/* TODO: convert to check_and_print payload once API is stable */
+static void print_payload(char *data, int len)
+{
+	int i;
 
-	अगर (!len)
-		वापस;
+	if (!len)
+		return;
 
-	अगर (len > 70)
+	if (len > 70)
 		len = 70;
 
-	ख_लिखो(मानक_त्रुटि, "payload: ");
-	क्रम (i = 0; i < len; i++)
-		ख_लिखो(मानक_त्रुटि, "%02hhx ", data[i]);
-	ख_लिखो(मानक_त्रुटि, "\n");
-पूर्ण
+	fprintf(stderr, "payload: ");
+	for (i = 0; i < len; i++)
+		fprintf(stderr, "%02hhx ", data[i]);
+	fprintf(stderr, "\n");
+}
 
-अटल व्योम prपूर्णांक_pktinfo(पूर्णांक family, पूर्णांक अगरindex, व्योम *saddr, व्योम *daddr)
-अणु
-	अक्षर sa[INET6_ADDRSTRLEN], da[INET6_ADDRSTRLEN];
+static void print_pktinfo(int family, int ifindex, void *saddr, void *daddr)
+{
+	char sa[INET6_ADDRSTRLEN], da[INET6_ADDRSTRLEN];
 
-	ख_लिखो(मानक_त्रुटि, "         pktinfo: ifindex=%u src=%s dst=%s\n",
-		अगरindex,
-		saddr ? inet_ntop(family, saddr, sa, माप(sa)) : "unknown",
-		daddr ? inet_ntop(family, daddr, da, माप(da)) : "unknown");
-पूर्ण
+	fprintf(stderr, "         pktinfo: ifindex=%u src=%s dst=%s\n",
+		ifindex,
+		saddr ? inet_ntop(family, saddr, sa, sizeof(sa)) : "unknown",
+		daddr ? inet_ntop(family, daddr, da, sizeof(da)) : "unknown");
+}
 
-अटल व्योम __epoll(पूर्णांक epfd)
-अणु
-	काष्ठा epoll_event events;
-	पूर्णांक ret;
+static void __epoll(int epfd)
+{
+	struct epoll_event events;
+	int ret;
 
-	स_रखो(&events, 0, माप(events));
-	ret = epoll_रुको(epfd, &events, 1, cfg_poll_समयout);
-	अगर (ret != 1)
-		error(1, त्रुटि_सं, "epoll_wait");
-पूर्ण
+	memset(&events, 0, sizeof(events));
+	ret = epoll_wait(epfd, &events, 1, cfg_poll_timeout);
+	if (ret != 1)
+		error(1, errno, "epoll_wait");
+}
 
-अटल व्योम __poll(पूर्णांक fd)
-अणु
-	काष्ठा pollfd pollfd;
-	पूर्णांक ret;
+static void __poll(int fd)
+{
+	struct pollfd pollfd;
+	int ret;
 
-	स_रखो(&pollfd, 0, माप(pollfd));
+	memset(&pollfd, 0, sizeof(pollfd));
 	pollfd.fd = fd;
-	ret = poll(&pollfd, 1, cfg_poll_समयout);
-	अगर (ret != 1)
-		error(1, त्रुटि_सं, "poll");
-पूर्ण
+	ret = poll(&pollfd, 1, cfg_poll_timeout);
+	if (ret != 1)
+		error(1, errno, "poll");
+}
 
-अटल व्योम __recv_errmsg_cmsg(काष्ठा msghdr *msg, पूर्णांक payload_len)
-अणु
-	काष्ठा sock_extended_err *serr = शून्य;
-	काष्ठा scm_बारtamping *tss = शून्य;
-	काष्ठा cmsghdr *cm;
-	पूर्णांक batch = 0;
+static void __recv_errmsg_cmsg(struct msghdr *msg, int payload_len)
+{
+	struct sock_extended_err *serr = NULL;
+	struct scm_timestamping *tss = NULL;
+	struct cmsghdr *cm;
+	int batch = 0;
 
-	क्रम (cm = CMSG_FIRSTHDR(msg);
+	for (cm = CMSG_FIRSTHDR(msg);
 	     cm && cm->cmsg_len;
-	     cm = CMSG_NXTHDR(msg, cm)) अणु
-		अगर (cm->cmsg_level == SOL_SOCKET &&
-		    cm->cmsg_type == SCM_TIMESTAMPING) अणु
-			tss = (व्योम *) CMSG_DATA(cm);
-		पूर्ण अन्यथा अगर ((cm->cmsg_level == SOL_IP &&
+	     cm = CMSG_NXTHDR(msg, cm)) {
+		if (cm->cmsg_level == SOL_SOCKET &&
+		    cm->cmsg_type == SCM_TIMESTAMPING) {
+			tss = (void *) CMSG_DATA(cm);
+		} else if ((cm->cmsg_level == SOL_IP &&
 			    cm->cmsg_type == IP_RECVERR) ||
 			   (cm->cmsg_level == SOL_IPV6 &&
 			    cm->cmsg_type == IPV6_RECVERR) ||
 			   (cm->cmsg_level == SOL_PACKET &&
-			    cm->cmsg_type == PACKET_TX_TIMESTAMP)) अणु
-			serr = (व्योम *) CMSG_DATA(cm);
-			अगर (serr->ee_त्रुटि_सं != ENOMSG ||
-			    serr->ee_origin != SO_EE_ORIGIN_TIMESTAMPING) अणु
-				ख_लिखो(मानक_त्रुटि, "unknown ip error %d %d\n",
-						serr->ee_त्रुटि_सं,
+			    cm->cmsg_type == PACKET_TX_TIMESTAMP)) {
+			serr = (void *) CMSG_DATA(cm);
+			if (serr->ee_errno != ENOMSG ||
+			    serr->ee_origin != SO_EE_ORIGIN_TIMESTAMPING) {
+				fprintf(stderr, "unknown ip error %d %d\n",
+						serr->ee_errno,
 						serr->ee_origin);
-				serr = शून्य;
-			पूर्ण
-		पूर्ण अन्यथा अगर (cm->cmsg_level == SOL_IP &&
-			   cm->cmsg_type == IP_PKTINFO) अणु
-			काष्ठा in_pktinfo *info = (व्योम *) CMSG_DATA(cm);
-			prपूर्णांक_pktinfo(AF_INET, info->ipi_अगरindex,
+				serr = NULL;
+			}
+		} else if (cm->cmsg_level == SOL_IP &&
+			   cm->cmsg_type == IP_PKTINFO) {
+			struct in_pktinfo *info = (void *) CMSG_DATA(cm);
+			print_pktinfo(AF_INET, info->ipi_ifindex,
 				      &info->ipi_spec_dst, &info->ipi_addr);
-		पूर्ण अन्यथा अगर (cm->cmsg_level == SOL_IPV6 &&
-			   cm->cmsg_type == IPV6_PKTINFO) अणु
-			काष्ठा in6_pktinfo *info6 = (व्योम *) CMSG_DATA(cm);
-			prपूर्णांक_pktinfo(AF_INET6, info6->ipi6_अगरindex,
-				      शून्य, &info6->ipi6_addr);
-		पूर्ण अन्यथा
-			ख_लिखो(मानक_त्रुटि, "unknown cmsg %d,%d\n",
+		} else if (cm->cmsg_level == SOL_IPV6 &&
+			   cm->cmsg_type == IPV6_PKTINFO) {
+			struct in6_pktinfo *info6 = (void *) CMSG_DATA(cm);
+			print_pktinfo(AF_INET6, info6->ipi6_ifindex,
+				      NULL, &info6->ipi6_addr);
+		} else
+			fprintf(stderr, "unknown cmsg %d,%d\n",
 					cm->cmsg_level, cm->cmsg_type);
 
-		अगर (serr && tss) अणु
-			prपूर्णांक_बारtamp(tss, serr->ee_info, serr->ee_data,
+		if (serr && tss) {
+			print_timestamp(tss, serr->ee_info, serr->ee_data,
 					payload_len);
-			serr = शून्य;
-			tss = शून्य;
+			serr = NULL;
+			tss = NULL;
 			batch++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (batch > 1)
-		ख_लिखो(मानक_त्रुटि, "batched %d timestamps\n", batch);
-पूर्ण
+	if (batch > 1)
+		fprintf(stderr, "batched %d timestamps\n", batch);
+}
 
-अटल पूर्णांक recv_errmsg(पूर्णांक fd)
-अणु
-	अटल अक्षर ctrl[1024 /* overprovision*/];
-	अटल काष्ठा msghdr msg;
-	काष्ठा iovec entry;
-	अटल अक्षर *data;
-	पूर्णांक ret = 0;
+static int recv_errmsg(int fd)
+{
+	static char ctrl[1024 /* overprovision*/];
+	static struct msghdr msg;
+	struct iovec entry;
+	static char *data;
+	int ret = 0;
 
-	data = दो_स्मृति(cfg_payload_len);
-	अगर (!data)
+	data = malloc(cfg_payload_len);
+	if (!data)
 		error(1, 0, "malloc");
 
-	स_रखो(&msg, 0, माप(msg));
-	स_रखो(&entry, 0, माप(entry));
-	स_रखो(ctrl, 0, माप(ctrl));
+	memset(&msg, 0, sizeof(msg));
+	memset(&entry, 0, sizeof(entry));
+	memset(ctrl, 0, sizeof(ctrl));
 
 	entry.iov_base = data;
 	entry.iov_len = cfg_payload_len;
 	msg.msg_iov = &entry;
 	msg.msg_iovlen = 1;
-	msg.msg_name = शून्य;
+	msg.msg_name = NULL;
 	msg.msg_namelen = 0;
 	msg.msg_control = ctrl;
-	msg.msg_controllen = माप(ctrl);
+	msg.msg_controllen = sizeof(ctrl);
 
 	ret = recvmsg(fd, &msg, MSG_ERRQUEUE);
-	अगर (ret == -1 && त्रुटि_सं != EAGAIN)
-		error(1, त्रुटि_सं, "recvmsg");
+	if (ret == -1 && errno != EAGAIN)
+		error(1, errno, "recvmsg");
 
-	अगर (ret >= 0) अणु
+	if (ret >= 0) {
 		__recv_errmsg_cmsg(&msg, ret);
-		अगर (cfg_show_payload)
-			prपूर्णांक_payload(data, cfg_payload_len);
-	पूर्ण
+		if (cfg_show_payload)
+			print_payload(data, cfg_payload_len);
+	}
 
-	मुक्त(data);
-	वापस ret == -1;
-पूर्ण
+	free(data);
+	return ret == -1;
+}
 
-अटल uपूर्णांक16_t get_ip_csum(स्थिर uपूर्णांक16_t *start, पूर्णांक num_words,
-			    अचिन्हित दीर्घ sum)
-अणु
-	पूर्णांक i;
+static uint16_t get_ip_csum(const uint16_t *start, int num_words,
+			    unsigned long sum)
+{
+	int i;
 
-	क्रम (i = 0; i < num_words; i++)
+	for (i = 0; i < num_words; i++)
 		sum += start[i];
 
-	जबतक (sum >> 16)
+	while (sum >> 16)
 		sum = (sum & 0xFFFF) + (sum >> 16);
 
-	वापस ~sum;
-पूर्ण
+	return ~sum;
+}
 
-अटल uपूर्णांक16_t get_udp_csum(स्थिर काष्ठा udphdr *udph, पूर्णांक alen)
-अणु
-	अचिन्हित दीर्घ pseuकरो_sum, csum_len;
-	स्थिर व्योम *csum_start = udph;
+static uint16_t get_udp_csum(const struct udphdr *udph, int alen)
+{
+	unsigned long pseudo_sum, csum_len;
+	const void *csum_start = udph;
 
-	pseuकरो_sum = htons(IPPROTO_UDP);
-	pseuकरो_sum += udph->len;
+	pseudo_sum = htons(IPPROTO_UDP);
+	pseudo_sum += udph->len;
 
 	/* checksum ip(v6) addresses + udp header + payload */
 	csum_start -= alen * 2;
 	csum_len = ntohs(udph->len) + alen * 2;
 
-	वापस get_ip_csum(csum_start, csum_len >> 1, pseuकरो_sum);
-पूर्ण
+	return get_ip_csum(csum_start, csum_len >> 1, pseudo_sum);
+}
 
-अटल पूर्णांक fill_header_ipv4(व्योम *p)
-अणु
-	काष्ठा iphdr *iph = p;
+static int fill_header_ipv4(void *p)
+{
+	struct iphdr *iph = p;
 
-	स_रखो(iph, 0, माप(*iph));
+	memset(iph, 0, sizeof(*iph));
 
 	iph->ihl	= 5;
 	iph->version	= 4;
 	iph->ttl	= 2;
-	iph->saddr	= daddr.sin_addr.s_addr;	/* set क्रम udp csum calc */
+	iph->saddr	= daddr.sin_addr.s_addr;	/* set for udp csum calc */
 	iph->daddr	= daddr.sin_addr.s_addr;
 	iph->protocol	= IPPROTO_UDP;
 
-	/* kernel ग_लिखोs saddr, csum, len */
+	/* kernel writes saddr, csum, len */
 
-	वापस माप(*iph);
-पूर्ण
+	return sizeof(*iph);
+}
 
-अटल पूर्णांक fill_header_ipv6(व्योम *p)
-अणु
-	काष्ठा ipv6hdr *ip6h = p;
+static int fill_header_ipv6(void *p)
+{
+	struct ipv6hdr *ip6h = p;
 
-	स_रखो(ip6h, 0, माप(*ip6h));
+	memset(ip6h, 0, sizeof(*ip6h));
 
 	ip6h->version		= 6;
-	ip6h->payload_len	= htons(माप(काष्ठा udphdr) + cfg_payload_len);
+	ip6h->payload_len	= htons(sizeof(struct udphdr) + cfg_payload_len);
 	ip6h->nexthdr		= IPPROTO_UDP;
 	ip6h->hop_limit		= 64;
 
 	ip6h->saddr             = daddr6.sin6_addr;
 	ip6h->daddr		= daddr6.sin6_addr;
 
-	/* kernel करोes not ग_लिखो saddr in हाल of ipv6 */
+	/* kernel does not write saddr in case of ipv6 */
 
-	वापस माप(*ip6h);
-पूर्ण
+	return sizeof(*ip6h);
+}
 
-अटल व्योम fill_header_udp(व्योम *p, bool is_ipv4)
-अणु
-	काष्ठा udphdr *udph = p;
+static void fill_header_udp(void *p, bool is_ipv4)
+{
+	struct udphdr *udph = p;
 
 	udph->source = ntohs(dest_port + 1);	/* spoof */
 	udph->dest   = ntohs(dest_port);
-	udph->len    = ntohs(माप(*udph) + cfg_payload_len);
+	udph->len    = ntohs(sizeof(*udph) + cfg_payload_len);
 	udph->check  = 0;
 
-	udph->check  = get_udp_csum(udph, is_ipv4 ? माप(काष्ठा in_addr) :
-						    माप(काष्ठा in6_addr));
-पूर्ण
+	udph->check  = get_udp_csum(udph, is_ipv4 ? sizeof(struct in_addr) :
+						    sizeof(struct in6_addr));
+}
 
-अटल व्योम करो_test(पूर्णांक family, अचिन्हित पूर्णांक report_opt)
-अणु
-	अक्षर control[CMSG_SPACE(माप(uपूर्णांक32_t))];
-	काष्ठा sockaddr_ll laddr;
-	अचिन्हित पूर्णांक sock_opt;
-	काष्ठा cmsghdr *cmsg;
-	काष्ठा msghdr msg;
-	काष्ठा iovec iov;
-	अक्षर *buf;
-	पूर्णांक fd, i, val = 1, total_len, epfd = 0;
+static void do_test(int family, unsigned int report_opt)
+{
+	char control[CMSG_SPACE(sizeof(uint32_t))];
+	struct sockaddr_ll laddr;
+	unsigned int sock_opt;
+	struct cmsghdr *cmsg;
+	struct msghdr msg;
+	struct iovec iov;
+	char *buf;
+	int fd, i, val = 1, total_len, epfd = 0;
 
 	init_timing_event(&usr_enq);
 	init_timing_event(&usr_snd);
 	init_timing_event(&usr_ack);
 
 	total_len = cfg_payload_len;
-	अगर (cfg_use_pf_packet || cfg_proto == SOCK_RAW) अणु
-		total_len += माप(काष्ठा udphdr);
-		अगर (cfg_use_pf_packet || cfg_ipproto == IPPROTO_RAW) अणु
-			अगर (family == PF_INET)
-				total_len += माप(काष्ठा iphdr);
-			अन्यथा
-				total_len += माप(काष्ठा ipv6hdr);
-		पूर्ण
-		/* special हाल, only rawv6_sendmsg:
-		 * pass proto in sin6_port अगर not connected
+	if (cfg_use_pf_packet || cfg_proto == SOCK_RAW) {
+		total_len += sizeof(struct udphdr);
+		if (cfg_use_pf_packet || cfg_ipproto == IPPROTO_RAW) {
+			if (family == PF_INET)
+				total_len += sizeof(struct iphdr);
+			else
+				total_len += sizeof(struct ipv6hdr);
+		}
+		/* special case, only rawv6_sendmsg:
+		 * pass proto in sin6_port if not connected
 		 * also see ANK comment in net/ipv4/raw.c
 		 */
 		daddr6.sin6_port = htons(cfg_ipproto);
-	पूर्ण
+	}
 
-	buf = दो_स्मृति(total_len);
-	अगर (!buf)
+	buf = malloc(total_len);
+	if (!buf)
 		error(1, 0, "malloc");
 
 	fd = socket(cfg_use_pf_packet ? PF_PACKET : family,
 		    cfg_proto, cfg_ipproto);
-	अगर (fd < 0)
-		error(1, त्रुटि_सं, "socket");
+	if (fd < 0)
+		error(1, errno, "socket");
 
-	अगर (cfg_use_epoll) अणु
-		काष्ठा epoll_event ev;
+	if (cfg_use_epoll) {
+		struct epoll_event ev;
 
-		स_रखो(&ev, 0, माप(ev));
+		memset(&ev, 0, sizeof(ev));
 		ev.data.fd = fd;
-		अगर (cfg_epollet)
+		if (cfg_epollet)
 			ev.events |= EPOLLET;
 		epfd = epoll_create(1);
-		अगर (epfd <= 0)
-			error(1, त्रुटि_सं, "epoll_create");
-		अगर (epoll_ctl(epfd, EPOLL_CTL_ADD, fd, &ev))
-			error(1, त्रुटि_सं, "epoll_ctl");
-	पूर्ण
+		if (epfd <= 0)
+			error(1, errno, "epoll_create");
+		if (epoll_ctl(epfd, EPOLL_CTL_ADD, fd, &ev))
+			error(1, errno, "epoll_ctl");
+	}
 
 	/* reset expected key on each new socket */
 	saved_tskey = -1;
 
-	अगर (cfg_proto == SOCK_STREAM) अणु
-		अगर (setsockopt(fd, IPPROTO_TCP, TCP_NODELAY,
-			       (अक्षर*) &val, माप(val)))
+	if (cfg_proto == SOCK_STREAM) {
+		if (setsockopt(fd, IPPROTO_TCP, TCP_NODELAY,
+			       (char*) &val, sizeof(val)))
 			error(1, 0, "setsockopt no nagle");
 
-		अगर (family == PF_INET) अणु
-			अगर (connect(fd, (व्योम *) &daddr, माप(daddr)))
-				error(1, त्रुटि_सं, "connect ipv4");
-		पूर्ण अन्यथा अणु
-			अगर (connect(fd, (व्योम *) &daddr6, माप(daddr6)))
-				error(1, त्रुटि_सं, "connect ipv6");
-		पूर्ण
-	पूर्ण
+		if (family == PF_INET) {
+			if (connect(fd, (void *) &daddr, sizeof(daddr)))
+				error(1, errno, "connect ipv4");
+		} else {
+			if (connect(fd, (void *) &daddr6, sizeof(daddr6)))
+				error(1, errno, "connect ipv6");
+		}
+	}
 
-	अगर (cfg_करो_pktinfo) अणु
-		अगर (family == AF_INET6) अणु
-			अगर (setsockopt(fd, SOL_IPV6, IPV6_RECVPKTINFO,
-				       &val, माप(val)))
-				error(1, त्रुटि_सं, "setsockopt pktinfo ipv6");
-		पूर्ण अन्यथा अणु
-			अगर (setsockopt(fd, SOL_IP, IP_PKTINFO,
-				       &val, माप(val)))
-				error(1, त्रुटि_सं, "setsockopt pktinfo ipv4");
-		पूर्ण
-	पूर्ण
+	if (cfg_do_pktinfo) {
+		if (family == AF_INET6) {
+			if (setsockopt(fd, SOL_IPV6, IPV6_RECVPKTINFO,
+				       &val, sizeof(val)))
+				error(1, errno, "setsockopt pktinfo ipv6");
+		} else {
+			if (setsockopt(fd, SOL_IP, IP_PKTINFO,
+				       &val, sizeof(val)))
+				error(1, errno, "setsockopt pktinfo ipv4");
+		}
+	}
 
 	sock_opt = SOF_TIMESTAMPING_SOFTWARE |
 		   SOF_TIMESTAMPING_OPT_CMSG |
 		   SOF_TIMESTAMPING_OPT_ID;
 
-	अगर (!cfg_use_cmsg)
+	if (!cfg_use_cmsg)
 		sock_opt |= report_opt;
 
-	अगर (cfg_loop_nodata)
+	if (cfg_loop_nodata)
 		sock_opt |= SOF_TIMESTAMPING_OPT_TSONLY;
 
-	अगर (setsockopt(fd, SOL_SOCKET, SO_TIMESTAMPING,
-		       (अक्षर *) &sock_opt, माप(sock_opt)))
+	if (setsockopt(fd, SOL_SOCKET, SO_TIMESTAMPING,
+		       (char *) &sock_opt, sizeof(sock_opt)))
 		error(1, 0, "setsockopt timestamping");
 
-	क्रम (i = 0; i < cfg_num_pkts; i++) अणु
-		स_रखो(&msg, 0, माप(msg));
-		स_रखो(buf, 'a' + i, total_len);
+	for (i = 0; i < cfg_num_pkts; i++) {
+		memset(&msg, 0, sizeof(msg));
+		memset(buf, 'a' + i, total_len);
 
-		अगर (cfg_use_pf_packet || cfg_proto == SOCK_RAW) अणु
-			पूर्णांक off = 0;
+		if (cfg_use_pf_packet || cfg_proto == SOCK_RAW) {
+			int off = 0;
 
-			अगर (cfg_use_pf_packet || cfg_ipproto == IPPROTO_RAW) अणु
-				अगर (family == PF_INET)
+			if (cfg_use_pf_packet || cfg_ipproto == IPPROTO_RAW) {
+				if (family == PF_INET)
 					off = fill_header_ipv4(buf);
-				अन्यथा
+				else
 					off = fill_header_ipv6(buf);
-			पूर्ण
+			}
 
 			fill_header_udp(buf + off, family == PF_INET);
-		पूर्ण
+		}
 
-		prपूर्णांक_बारtamp_usr();
+		print_timestamp_usr();
 
 		iov.iov_base = buf;
 		iov.iov_len = total_len;
 
-		अगर (cfg_proto != SOCK_STREAM) अणु
-			अगर (cfg_use_pf_packet) अणु
-				स_रखो(&laddr, 0, माप(laddr));
+		if (cfg_proto != SOCK_STREAM) {
+			if (cfg_use_pf_packet) {
+				memset(&laddr, 0, sizeof(laddr));
 
 				laddr.sll_family	= AF_PACKET;
-				laddr.sll_अगरindex	= 1;
+				laddr.sll_ifindex	= 1;
 				laddr.sll_protocol	= htons(family == AF_INET ? ETH_P_IP : ETH_P_IPV6);
 				laddr.sll_halen		= ETH_ALEN;
 
-				msg.msg_name = (व्योम *)&laddr;
-				msg.msg_namelen = माप(laddr);
-			पूर्ण अन्यथा अगर (family == PF_INET) अणु
-				msg.msg_name = (व्योम *)&daddr;
-				msg.msg_namelen = माप(daddr);
-			पूर्ण अन्यथा अणु
-				msg.msg_name = (व्योम *)&daddr6;
-				msg.msg_namelen = माप(daddr6);
-			पूर्ण
-		पूर्ण
+				msg.msg_name = (void *)&laddr;
+				msg.msg_namelen = sizeof(laddr);
+			} else if (family == PF_INET) {
+				msg.msg_name = (void *)&daddr;
+				msg.msg_namelen = sizeof(daddr);
+			} else {
+				msg.msg_name = (void *)&daddr6;
+				msg.msg_namelen = sizeof(daddr6);
+			}
+		}
 
 		msg.msg_iov = &iov;
 		msg.msg_iovlen = 1;
 
-		अगर (cfg_use_cmsg) अणु
-			स_रखो(control, 0, माप(control));
+		if (cfg_use_cmsg) {
+			memset(control, 0, sizeof(control));
 
 			msg.msg_control = control;
-			msg.msg_controllen = माप(control);
+			msg.msg_controllen = sizeof(control);
 
 			cmsg = CMSG_FIRSTHDR(&msg);
 			cmsg->cmsg_level = SOL_SOCKET;
 			cmsg->cmsg_type = SO_TIMESTAMPING;
-			cmsg->cmsg_len = CMSG_LEN(माप(uपूर्णांक32_t));
+			cmsg->cmsg_len = CMSG_LEN(sizeof(uint32_t));
 
-			*((uपूर्णांक32_t *) CMSG_DATA(cmsg)) = report_opt;
-		पूर्ण
+			*((uint32_t *) CMSG_DATA(cmsg)) = report_opt;
+		}
 
 		val = sendmsg(fd, &msg, 0);
-		अगर (val != total_len)
-			error(1, त्रुटि_सं, "send");
+		if (val != total_len)
+			error(1, errno, "send");
 
-		/* रुको क्रम all errors to be queued, अन्यथा ACKs arrive OOO */
-		अगर (cfg_sleep_usec)
+		/* wait for all errors to be queued, else ACKs arrive OOO */
+		if (cfg_sleep_usec)
 			usleep(cfg_sleep_usec);
 
-		अगर (!cfg_busy_poll) अणु
-			अगर (cfg_use_epoll)
+		if (!cfg_busy_poll) {
+			if (cfg_use_epoll)
 				__epoll(epfd);
-			अन्यथा
+			else
 				__poll(fd);
-		पूर्ण
+		}
 
-		जबतक (!recv_errmsg(fd)) अणुपूर्ण
-	पूर्ण
+		while (!recv_errmsg(fd)) {}
+	}
 
-	prपूर्णांक_timing_event("USR-ENQ", &usr_enq);
-	prपूर्णांक_timing_event("USR-SND", &usr_snd);
-	prपूर्णांक_timing_event("USR-ACK", &usr_ack);
+	print_timing_event("USR-ENQ", &usr_enq);
+	print_timing_event("USR-SND", &usr_snd);
+	print_timing_event("USR-ACK", &usr_ack);
 
-	अगर (बंद(fd))
-		error(1, त्रुटि_सं, "close");
+	if (close(fd))
+		error(1, errno, "close");
 
-	मुक्त(buf);
+	free(buf);
 	usleep(100 * NSEC_PER_USEC);
-पूर्ण
+}
 
-अटल व्योम __attribute__((noवापस)) usage(स्थिर अक्षर *filepath)
-अणु
-	ख_लिखो(मानक_त्रुटि, "\nUsage: %s [options] hostname\n"
+static void __attribute__((noreturn)) usage(const char *filepath)
+{
+	fprintf(stderr, "\nUsage: %s [options] hostname\n"
 			"\nwhere options are:\n"
 			"  -4:   only IPv4\n"
 			"  -6:   only IPv6\n"
@@ -692,232 +691,232 @@
 			"  -V:   validate ACK delay (usec)\n"
 			"  -x:   show payload (up to 70 bytes)\n",
 			filepath);
-	निकास(1);
-पूर्ण
+	exit(1);
+}
 
-अटल व्योम parse_opt(पूर्णांक argc, अक्षर **argv)
-अणु
-	पूर्णांक proto_count = 0;
-	पूर्णांक c;
+static void parse_opt(int argc, char **argv)
+{
+	int proto_count = 0;
+	int c;
 
-	जबतक ((c = getopt(argc, argv,
-				"46bc:CeEFhIl:LnNp:PrRS:t:uv:V:x")) != -1) अणु
-		चयन (c) अणु
-		हाल '4':
-			करो_ipv6 = 0;
-			अवरोध;
-		हाल '6':
-			करो_ipv4 = 0;
-			अवरोध;
-		हाल 'b':
+	while ((c = getopt(argc, argv,
+				"46bc:CeEFhIl:LnNp:PrRS:t:uv:V:x")) != -1) {
+		switch (c) {
+		case '4':
+			do_ipv6 = 0;
+			break;
+		case '6':
+			do_ipv4 = 0;
+			break;
+		case 'b':
 			cfg_busy_poll = true;
-			अवरोध;
-		हाल 'c':
-			cfg_num_pkts = म_से_अदीर्घ(optarg, शून्य, 10);
-			अवरोध;
-		हाल 'C':
+			break;
+		case 'c':
+			cfg_num_pkts = strtoul(optarg, NULL, 10);
+			break;
+		case 'C':
 			cfg_use_cmsg = true;
-			अवरोध;
-		हाल 'e':
+			break;
+		case 'e':
 			cfg_use_epoll = true;
-			अवरोध;
-		हाल 'E':
+			break;
+		case 'E':
 			cfg_use_epoll = true;
 			cfg_epollet = true;
-		हाल 'F':
-			cfg_poll_समयout = -1;
-			अवरोध;
-		हाल 'I':
-			cfg_करो_pktinfo = true;
-			अवरोध;
-		हाल 'l':
-			cfg_payload_len = म_से_अदीर्घ(optarg, शून्य, 10);
-			अवरोध;
-		हाल 'L':
-			cfg_करो_listen = true;
-			अवरोध;
-		हाल 'n':
+		case 'F':
+			cfg_poll_timeout = -1;
+			break;
+		case 'I':
+			cfg_do_pktinfo = true;
+			break;
+		case 'l':
+			cfg_payload_len = strtoul(optarg, NULL, 10);
+			break;
+		case 'L':
+			cfg_do_listen = true;
+			break;
+		case 'n':
 			cfg_loop_nodata = true;
-			अवरोध;
-		हाल 'N':
-			cfg_prपूर्णांक_nsec = true;
-			अवरोध;
-		हाल 'p':
-			dest_port = म_से_अदीर्घ(optarg, शून्य, 10);
-			अवरोध;
-		हाल 'P':
+			break;
+		case 'N':
+			cfg_print_nsec = true;
+			break;
+		case 'p':
+			dest_port = strtoul(optarg, NULL, 10);
+			break;
+		case 'P':
 			proto_count++;
 			cfg_use_pf_packet = true;
 			cfg_proto = SOCK_DGRAM;
 			cfg_ipproto = 0;
-			अवरोध;
-		हाल 'r':
+			break;
+		case 'r':
 			proto_count++;
 			cfg_proto = SOCK_RAW;
 			cfg_ipproto = IPPROTO_UDP;
-			अवरोध;
-		हाल 'R':
+			break;
+		case 'R':
 			proto_count++;
 			cfg_proto = SOCK_RAW;
 			cfg_ipproto = IPPROTO_RAW;
-			अवरोध;
-		हाल 'S':
-			cfg_sleep_usec = म_से_अदीर्घ(optarg, शून्य, 10);
-			अवरोध;
-		हाल 't':
-			cfg_delay_tolerance_usec = म_से_अदीर्घ(optarg, शून्य, 10);
-			अवरोध;
-		हाल 'u':
+			break;
+		case 'S':
+			cfg_sleep_usec = strtoul(optarg, NULL, 10);
+			break;
+		case 't':
+			cfg_delay_tolerance_usec = strtoul(optarg, NULL, 10);
+			break;
+		case 'u':
 			proto_count++;
 			cfg_proto = SOCK_DGRAM;
 			cfg_ipproto = IPPROTO_UDP;
-			अवरोध;
-		हाल 'v':
-			cfg_delay_snd = म_से_अदीर्घ(optarg, शून्य, 10);
-			अवरोध;
-		हाल 'V':
-			cfg_delay_ack = म_से_अदीर्घ(optarg, शून्य, 10);
-			अवरोध;
-		हाल 'x':
+			break;
+		case 'v':
+			cfg_delay_snd = strtoul(optarg, NULL, 10);
+			break;
+		case 'V':
+			cfg_delay_ack = strtoul(optarg, NULL, 10);
+			break;
+		case 'x':
 			cfg_show_payload = true;
-			अवरोध;
-		हाल 'h':
-		शेष:
+			break;
+		case 'h':
+		default:
 			usage(argv[0]);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (!cfg_payload_len)
+	if (!cfg_payload_len)
 		error(1, 0, "payload may not be nonzero");
-	अगर (cfg_proto != SOCK_STREAM && cfg_payload_len > 1472)
+	if (cfg_proto != SOCK_STREAM && cfg_payload_len > 1472)
 		error(1, 0, "udp packet might exceed expected MTU");
-	अगर (!करो_ipv4 && !करो_ipv6)
+	if (!do_ipv4 && !do_ipv6)
 		error(1, 0, "pass -4 or -6, not both");
-	अगर (proto_count > 1)
+	if (proto_count > 1)
 		error(1, 0, "pass -P, -r, -R or -u, not multiple");
-	अगर (cfg_करो_pktinfo && cfg_use_pf_packet)
+	if (cfg_do_pktinfo && cfg_use_pf_packet)
 		error(1, 0, "cannot ask for pktinfo over pf_packet");
-	अगर (cfg_busy_poll && cfg_use_epoll)
+	if (cfg_busy_poll && cfg_use_epoll)
 		error(1, 0, "pass epoll or busy_poll, not both");
 
-	अगर (optind != argc - 1)
+	if (optind != argc - 1)
 		error(1, 0, "missing required hostname argument");
-पूर्ण
+}
 
-अटल व्योम resolve_hostname(स्थिर अक्षर *hostname)
-अणु
-	काष्ठा addrinfo hपूर्णांकs = अणु .ai_family = करो_ipv4 ? AF_INET : AF_INET6 पूर्ण;
-	काष्ठा addrinfo *addrs, *cur;
-	पूर्णांक have_ipv4 = 0, have_ipv6 = 0;
+static void resolve_hostname(const char *hostname)
+{
+	struct addrinfo hints = { .ai_family = do_ipv4 ? AF_INET : AF_INET6 };
+	struct addrinfo *addrs, *cur;
+	int have_ipv4 = 0, have_ipv6 = 0;
 
 retry:
-	अगर (getaddrinfo(hostname, शून्य, &hपूर्णांकs, &addrs))
-		error(1, त्रुटि_सं, "getaddrinfo");
+	if (getaddrinfo(hostname, NULL, &hints, &addrs))
+		error(1, errno, "getaddrinfo");
 
 	cur = addrs;
-	जबतक (cur && !have_ipv4 && !have_ipv6) अणु
-		अगर (!have_ipv4 && cur->ai_family == AF_INET) अणु
-			स_नकल(&daddr, cur->ai_addr, माप(daddr));
+	while (cur && !have_ipv4 && !have_ipv6) {
+		if (!have_ipv4 && cur->ai_family == AF_INET) {
+			memcpy(&daddr, cur->ai_addr, sizeof(daddr));
 			daddr.sin_port = htons(dest_port);
 			have_ipv4 = 1;
-		पूर्ण
-		अन्यथा अगर (!have_ipv6 && cur->ai_family == AF_INET6) अणु
-			स_नकल(&daddr6, cur->ai_addr, माप(daddr6));
+		}
+		else if (!have_ipv6 && cur->ai_family == AF_INET6) {
+			memcpy(&daddr6, cur->ai_addr, sizeof(daddr6));
 			daddr6.sin6_port = htons(dest_port);
 			have_ipv6 = 1;
-		पूर्ण
+		}
 		cur = cur->ai_next;
-	पूर्ण
-	अगर (addrs)
-		मुक्तaddrinfo(addrs);
+	}
+	if (addrs)
+		freeaddrinfo(addrs);
 
-	अगर (करो_ipv6 && hपूर्णांकs.ai_family != AF_INET6) अणु
-		hपूर्णांकs.ai_family = AF_INET6;
-		जाओ retry;
-	पूर्ण
+	if (do_ipv6 && hints.ai_family != AF_INET6) {
+		hints.ai_family = AF_INET6;
+		goto retry;
+	}
 
-	करो_ipv4 &= have_ipv4;
-	करो_ipv6 &= have_ipv6;
-पूर्ण
+	do_ipv4 &= have_ipv4;
+	do_ipv6 &= have_ipv6;
+}
 
-अटल व्योम करो_listen(पूर्णांक family, व्योम *addr, पूर्णांक alen)
-अणु
-	पूर्णांक fd, type;
+static void do_listen(int family, void *addr, int alen)
+{
+	int fd, type;
 
 	type = cfg_proto == SOCK_RAW ? SOCK_DGRAM : cfg_proto;
 
 	fd = socket(family, type, 0);
-	अगर (fd == -1)
-		error(1, त्रुटि_सं, "socket rx");
+	if (fd == -1)
+		error(1, errno, "socket rx");
 
-	अगर (bind(fd, addr, alen))
-		error(1, त्रुटि_सं, "bind rx");
+	if (bind(fd, addr, alen))
+		error(1, errno, "bind rx");
 
-	अगर (type == SOCK_STREAM && listen(fd, 10))
-		error(1, त्रुटि_सं, "listen rx");
+	if (type == SOCK_STREAM && listen(fd, 10))
+		error(1, errno, "listen rx");
 
-	/* leave fd खोलो, will be बंदd on process निकास.
-	 * this enables connect() to succeed and aव्योमs icmp replies
+	/* leave fd open, will be closed on process exit.
+	 * this enables connect() to succeed and avoids icmp replies
 	 */
-पूर्ण
+}
 
-अटल व्योम करो_मुख्य(पूर्णांक family)
-अणु
-	ख_लिखो(मानक_त्रुटि, "family:       %s %s\n",
+static void do_main(int family)
+{
+	fprintf(stderr, "family:       %s %s\n",
 			family == PF_INET ? "INET" : "INET6",
 			cfg_use_pf_packet ? "(PF_PACKET)" : "");
 
-	ख_लिखो(मानक_त्रुटि, "test SND\n");
-	करो_test(family, SOF_TIMESTAMPING_TX_SOFTWARE);
+	fprintf(stderr, "test SND\n");
+	do_test(family, SOF_TIMESTAMPING_TX_SOFTWARE);
 
-	ख_लिखो(मानक_त्रुटि, "test ENQ\n");
-	करो_test(family, SOF_TIMESTAMPING_TX_SCHED);
+	fprintf(stderr, "test ENQ\n");
+	do_test(family, SOF_TIMESTAMPING_TX_SCHED);
 
-	ख_लिखो(मानक_त्रुटि, "test ENQ + SND\n");
-	करो_test(family, SOF_TIMESTAMPING_TX_SCHED |
+	fprintf(stderr, "test ENQ + SND\n");
+	do_test(family, SOF_TIMESTAMPING_TX_SCHED |
 			SOF_TIMESTAMPING_TX_SOFTWARE);
 
-	अगर (cfg_proto == SOCK_STREAM) अणु
-		ख_लिखो(मानक_त्रुटि, "\ntest ACK\n");
-		करो_test(family, SOF_TIMESTAMPING_TX_ACK);
+	if (cfg_proto == SOCK_STREAM) {
+		fprintf(stderr, "\ntest ACK\n");
+		do_test(family, SOF_TIMESTAMPING_TX_ACK);
 
-		ख_लिखो(मानक_त्रुटि, "\ntest SND + ACK\n");
-		करो_test(family, SOF_TIMESTAMPING_TX_SOFTWARE |
+		fprintf(stderr, "\ntest SND + ACK\n");
+		do_test(family, SOF_TIMESTAMPING_TX_SOFTWARE |
 				SOF_TIMESTAMPING_TX_ACK);
 
-		ख_लिखो(मानक_त्रुटि, "\ntest ENQ + SND + ACK\n");
-		करो_test(family, SOF_TIMESTAMPING_TX_SCHED |
+		fprintf(stderr, "\ntest ENQ + SND + ACK\n");
+		do_test(family, SOF_TIMESTAMPING_TX_SCHED |
 				SOF_TIMESTAMPING_TX_SOFTWARE |
 				SOF_TIMESTAMPING_TX_ACK);
-	पूर्ण
-पूर्ण
+	}
+}
 
-स्थिर अक्षर *sock_names[] = अणु शून्य, "TCP", "UDP", "RAW" पूर्ण;
+const char *sock_names[] = { NULL, "TCP", "UDP", "RAW" };
 
-पूर्णांक मुख्य(पूर्णांक argc, अक्षर **argv)
-अणु
-	अगर (argc == 1)
+int main(int argc, char **argv)
+{
+	if (argc == 1)
 		usage(argv[0]);
 
 	parse_opt(argc, argv);
 	resolve_hostname(argv[argc - 1]);
 
-	ख_लिखो(मानक_त्रुटि, "protocol:     %s\n", sock_names[cfg_proto]);
-	ख_लिखो(मानक_त्रुटि, "payload:      %u\n", cfg_payload_len);
-	ख_लिखो(मानक_त्रुटि, "server port:  %u\n", dest_port);
-	ख_लिखो(मानक_त्रुटि, "\n");
+	fprintf(stderr, "protocol:     %s\n", sock_names[cfg_proto]);
+	fprintf(stderr, "payload:      %u\n", cfg_payload_len);
+	fprintf(stderr, "server port:  %u\n", dest_port);
+	fprintf(stderr, "\n");
 
-	अगर (करो_ipv4) अणु
-		अगर (cfg_करो_listen)
-			करो_listen(PF_INET, &daddr, माप(daddr));
-		करो_मुख्य(PF_INET);
-	पूर्ण
+	if (do_ipv4) {
+		if (cfg_do_listen)
+			do_listen(PF_INET, &daddr, sizeof(daddr));
+		do_main(PF_INET);
+	}
 
-	अगर (करो_ipv6) अणु
-		अगर (cfg_करो_listen)
-			करो_listen(PF_INET6, &daddr6, माप(daddr6));
-		करो_मुख्य(PF_INET6);
-	पूर्ण
+	if (do_ipv6) {
+		if (cfg_do_listen)
+			do_listen(PF_INET6, &daddr6, sizeof(daddr6));
+		do_main(PF_INET6);
+	}
 
-	वापस test_failed;
-पूर्ण
+	return test_failed;
+}

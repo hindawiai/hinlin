@@ -1,205 +1,204 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /* Copyright (C) 2020 Marvell. */
 
-#समावेश "otx2_cpt_common.h"
-#समावेश "otx2_cptlf.h"
+#include "otx2_cpt_common.h"
+#include "otx2_cptlf.h"
 
-पूर्णांक otx2_cpt_send_mbox_msg(काष्ठा otx2_mbox *mbox, काष्ठा pci_dev *pdev)
-अणु
-	पूर्णांक ret;
+int otx2_cpt_send_mbox_msg(struct otx2_mbox *mbox, struct pci_dev *pdev)
+{
+	int ret;
 
 	otx2_mbox_msg_send(mbox, 0);
-	ret = otx2_mbox_रुको_क्रम_rsp(mbox, 0);
-	अगर (ret == -EIO) अणु
+	ret = otx2_mbox_wait_for_rsp(mbox, 0);
+	if (ret == -EIO) {
 		dev_err(&pdev->dev, "RVU MBOX timeout.\n");
-		वापस ret;
-	पूर्ण अन्यथा अगर (ret) अणु
+		return ret;
+	} else if (ret) {
 		dev_err(&pdev->dev, "RVU MBOX error: %d.\n", ret);
-		वापस -EFAULT;
-	पूर्ण
-	वापस ret;
-पूर्ण
+		return -EFAULT;
+	}
+	return ret;
+}
 
-पूर्णांक otx2_cpt_send_पढ़ोy_msg(काष्ठा otx2_mbox *mbox, काष्ठा pci_dev *pdev)
-अणु
-	काष्ठा mbox_msghdr *req;
+int otx2_cpt_send_ready_msg(struct otx2_mbox *mbox, struct pci_dev *pdev)
+{
+	struct mbox_msghdr *req;
 
-	req = otx2_mbox_alloc_msg_rsp(mbox, 0, माप(*req),
-				      माप(काष्ठा पढ़ोy_msg_rsp));
-	अगर (req == शून्य) अणु
+	req = otx2_mbox_alloc_msg_rsp(mbox, 0, sizeof(*req),
+				      sizeof(struct ready_msg_rsp));
+	if (req == NULL) {
 		dev_err(&pdev->dev, "RVU MBOX failed to get message.\n");
-		वापस -EFAULT;
-	पूर्ण
+		return -EFAULT;
+	}
 	req->id = MBOX_MSG_READY;
 	req->sig = OTX2_MBOX_REQ_SIG;
-	req->pcअगरunc = 0;
+	req->pcifunc = 0;
 
-	वापस otx2_cpt_send_mbox_msg(mbox, pdev);
-पूर्ण
+	return otx2_cpt_send_mbox_msg(mbox, pdev);
+}
 
-पूर्णांक otx2_cpt_send_af_reg_requests(काष्ठा otx2_mbox *mbox, काष्ठा pci_dev *pdev)
-अणु
-	वापस otx2_cpt_send_mbox_msg(mbox, pdev);
-पूर्ण
+int otx2_cpt_send_af_reg_requests(struct otx2_mbox *mbox, struct pci_dev *pdev)
+{
+	return otx2_cpt_send_mbox_msg(mbox, pdev);
+}
 
-पूर्णांक otx2_cpt_add_पढ़ो_af_reg(काष्ठा otx2_mbox *mbox, काष्ठा pci_dev *pdev,
-			     u64 reg, u64 *val, पूर्णांक blkaddr)
-अणु
-	काष्ठा cpt_rd_wr_reg_msg *reg_msg;
+int otx2_cpt_add_read_af_reg(struct otx2_mbox *mbox, struct pci_dev *pdev,
+			     u64 reg, u64 *val, int blkaddr)
+{
+	struct cpt_rd_wr_reg_msg *reg_msg;
 
-	reg_msg = (काष्ठा cpt_rd_wr_reg_msg *)
-			otx2_mbox_alloc_msg_rsp(mbox, 0, माप(*reg_msg),
-						माप(*reg_msg));
-	अगर (reg_msg == शून्य) अणु
+	reg_msg = (struct cpt_rd_wr_reg_msg *)
+			otx2_mbox_alloc_msg_rsp(mbox, 0, sizeof(*reg_msg),
+						sizeof(*reg_msg));
+	if (reg_msg == NULL) {
 		dev_err(&pdev->dev, "RVU MBOX failed to get message.\n");
-		वापस -EFAULT;
-	पूर्ण
+		return -EFAULT;
+	}
 
 	reg_msg->hdr.id = MBOX_MSG_CPT_RD_WR_REGISTER;
 	reg_msg->hdr.sig = OTX2_MBOX_REQ_SIG;
-	reg_msg->hdr.pcअगरunc = 0;
+	reg_msg->hdr.pcifunc = 0;
 
-	reg_msg->is_ग_लिखो = 0;
+	reg_msg->is_write = 0;
 	reg_msg->reg_offset = reg;
 	reg_msg->ret_val = val;
 	reg_msg->blkaddr = blkaddr;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक otx2_cpt_add_ग_लिखो_af_reg(काष्ठा otx2_mbox *mbox, काष्ठा pci_dev *pdev,
-			      u64 reg, u64 val, पूर्णांक blkaddr)
-अणु
-	काष्ठा cpt_rd_wr_reg_msg *reg_msg;
+int otx2_cpt_add_write_af_reg(struct otx2_mbox *mbox, struct pci_dev *pdev,
+			      u64 reg, u64 val, int blkaddr)
+{
+	struct cpt_rd_wr_reg_msg *reg_msg;
 
-	reg_msg = (काष्ठा cpt_rd_wr_reg_msg *)
-			otx2_mbox_alloc_msg_rsp(mbox, 0, माप(*reg_msg),
-						माप(*reg_msg));
-	अगर (reg_msg == शून्य) अणु
+	reg_msg = (struct cpt_rd_wr_reg_msg *)
+			otx2_mbox_alloc_msg_rsp(mbox, 0, sizeof(*reg_msg),
+						sizeof(*reg_msg));
+	if (reg_msg == NULL) {
 		dev_err(&pdev->dev, "RVU MBOX failed to get message.\n");
-		वापस -EFAULT;
-	पूर्ण
+		return -EFAULT;
+	}
 
 	reg_msg->hdr.id = MBOX_MSG_CPT_RD_WR_REGISTER;
 	reg_msg->hdr.sig = OTX2_MBOX_REQ_SIG;
-	reg_msg->hdr.pcअगरunc = 0;
+	reg_msg->hdr.pcifunc = 0;
 
-	reg_msg->is_ग_लिखो = 1;
+	reg_msg->is_write = 1;
 	reg_msg->reg_offset = reg;
 	reg_msg->val = val;
 	reg_msg->blkaddr = blkaddr;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक otx2_cpt_पढ़ो_af_reg(काष्ठा otx2_mbox *mbox, काष्ठा pci_dev *pdev,
-			 u64 reg, u64 *val, पूर्णांक blkaddr)
-अणु
-	पूर्णांक ret;
+int otx2_cpt_read_af_reg(struct otx2_mbox *mbox, struct pci_dev *pdev,
+			 u64 reg, u64 *val, int blkaddr)
+{
+	int ret;
 
-	ret = otx2_cpt_add_पढ़ो_af_reg(mbox, pdev, reg, val, blkaddr);
-	अगर (ret)
-		वापस ret;
+	ret = otx2_cpt_add_read_af_reg(mbox, pdev, reg, val, blkaddr);
+	if (ret)
+		return ret;
 
-	वापस otx2_cpt_send_mbox_msg(mbox, pdev);
-पूर्ण
+	return otx2_cpt_send_mbox_msg(mbox, pdev);
+}
 
-पूर्णांक otx2_cpt_ग_लिखो_af_reg(काष्ठा otx2_mbox *mbox, काष्ठा pci_dev *pdev,
-			  u64 reg, u64 val, पूर्णांक blkaddr)
-अणु
-	पूर्णांक ret;
+int otx2_cpt_write_af_reg(struct otx2_mbox *mbox, struct pci_dev *pdev,
+			  u64 reg, u64 val, int blkaddr)
+{
+	int ret;
 
-	ret = otx2_cpt_add_ग_लिखो_af_reg(mbox, pdev, reg, val, blkaddr);
-	अगर (ret)
-		वापस ret;
+	ret = otx2_cpt_add_write_af_reg(mbox, pdev, reg, val, blkaddr);
+	if (ret)
+		return ret;
 
-	वापस otx2_cpt_send_mbox_msg(mbox, pdev);
-पूर्ण
+	return otx2_cpt_send_mbox_msg(mbox, pdev);
+}
 
-पूर्णांक otx2_cpt_attach_rscrs_msg(काष्ठा otx2_cptlfs_info *lfs)
-अणु
-	काष्ठा otx2_mbox *mbox = lfs->mbox;
-	काष्ठा rsrc_attach *req;
-	पूर्णांक ret;
+int otx2_cpt_attach_rscrs_msg(struct otx2_cptlfs_info *lfs)
+{
+	struct otx2_mbox *mbox = lfs->mbox;
+	struct rsrc_attach *req;
+	int ret;
 
-	req = (काष्ठा rsrc_attach *)
-			otx2_mbox_alloc_msg_rsp(mbox, 0, माप(*req),
-						माप(काष्ठा msg_rsp));
-	अगर (req == शून्य) अणु
+	req = (struct rsrc_attach *)
+			otx2_mbox_alloc_msg_rsp(mbox, 0, sizeof(*req),
+						sizeof(struct msg_rsp));
+	if (req == NULL) {
 		dev_err(&lfs->pdev->dev, "RVU MBOX failed to get message.\n");
-		वापस -EFAULT;
-	पूर्ण
+		return -EFAULT;
+	}
 
 	req->hdr.id = MBOX_MSG_ATTACH_RESOURCES;
 	req->hdr.sig = OTX2_MBOX_REQ_SIG;
-	req->hdr.pcअगरunc = 0;
+	req->hdr.pcifunc = 0;
 	req->cptlfs = lfs->lfs_num;
 	ret = otx2_cpt_send_mbox_msg(mbox, lfs->pdev);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (!lfs->are_lfs_attached)
+	if (!lfs->are_lfs_attached)
 		ret = -EINVAL;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक otx2_cpt_detach_rsrcs_msg(काष्ठा otx2_cptlfs_info *lfs)
-अणु
-	काष्ठा otx2_mbox *mbox = lfs->mbox;
-	काष्ठा rsrc_detach *req;
-	पूर्णांक ret;
+int otx2_cpt_detach_rsrcs_msg(struct otx2_cptlfs_info *lfs)
+{
+	struct otx2_mbox *mbox = lfs->mbox;
+	struct rsrc_detach *req;
+	int ret;
 
-	req = (काष्ठा rsrc_detach *)
-				otx2_mbox_alloc_msg_rsp(mbox, 0, माप(*req),
-							माप(काष्ठा msg_rsp));
-	अगर (req == शून्य) अणु
+	req = (struct rsrc_detach *)
+				otx2_mbox_alloc_msg_rsp(mbox, 0, sizeof(*req),
+							sizeof(struct msg_rsp));
+	if (req == NULL) {
 		dev_err(&lfs->pdev->dev, "RVU MBOX failed to get message.\n");
-		वापस -EFAULT;
-	पूर्ण
+		return -EFAULT;
+	}
 
 	req->hdr.id = MBOX_MSG_DETACH_RESOURCES;
 	req->hdr.sig = OTX2_MBOX_REQ_SIG;
-	req->hdr.pcअगरunc = 0;
+	req->hdr.pcifunc = 0;
 	ret = otx2_cpt_send_mbox_msg(mbox, lfs->pdev);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (lfs->are_lfs_attached)
+	if (lfs->are_lfs_attached)
 		ret = -EINVAL;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक otx2_cpt_msix_offset_msg(काष्ठा otx2_cptlfs_info *lfs)
-अणु
-	काष्ठा otx2_mbox *mbox = lfs->mbox;
-	काष्ठा pci_dev *pdev = lfs->pdev;
-	काष्ठा mbox_msghdr *req;
-	पूर्णांक ret, i;
+int otx2_cpt_msix_offset_msg(struct otx2_cptlfs_info *lfs)
+{
+	struct otx2_mbox *mbox = lfs->mbox;
+	struct pci_dev *pdev = lfs->pdev;
+	struct mbox_msghdr *req;
+	int ret, i;
 
-	req = otx2_mbox_alloc_msg_rsp(mbox, 0, माप(*req),
-				      माप(काष्ठा msix_offset_rsp));
-	अगर (req == शून्य) अणु
+	req = otx2_mbox_alloc_msg_rsp(mbox, 0, sizeof(*req),
+				      sizeof(struct msix_offset_rsp));
+	if (req == NULL) {
 		dev_err(&pdev->dev, "RVU MBOX failed to get message.\n");
-		वापस -EFAULT;
-	पूर्ण
+		return -EFAULT;
+	}
 
 	req->id = MBOX_MSG_MSIX_OFFSET;
 	req->sig = OTX2_MBOX_REQ_SIG;
-	req->pcअगरunc = 0;
+	req->pcifunc = 0;
 	ret = otx2_cpt_send_mbox_msg(mbox, pdev);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	क्रम (i = 0; i < lfs->lfs_num; i++) अणु
-		अगर (lfs->lf[i].msix_offset == MSIX_VECTOR_INVALID) अणु
+	for (i = 0; i < lfs->lfs_num; i++) {
+		if (lfs->lf[i].msix_offset == MSIX_VECTOR_INVALID) {
 			dev_err(&pdev->dev,
 				"Invalid msix offset %d for LF %d\n",
 				lfs->lf[i].msix_offset, i);
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
-	वापस ret;
-पूर्ण
+			return -EINVAL;
+		}
+	}
+	return ret;
+}

@@ -1,263 +1,262 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <linux/highस्मृति.स>
-#समावेश <linux/kdebug.h>
-#समावेश <linux/types.h>
-#समावेश <linux/notअगरier.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/uprobes.h>
+// SPDX-License-Identifier: GPL-2.0
+#include <linux/highmem.h>
+#include <linux/kdebug.h>
+#include <linux/types.h>
+#include <linux/notifier.h>
+#include <linux/sched.h>
+#include <linux/uprobes.h>
 
-#समावेश <यंत्र/branch.h>
-#समावेश <यंत्र/cpu-features.h>
-#समावेश <यंत्र/ptrace.h>
+#include <asm/branch.h>
+#include <asm/cpu-features.h>
+#include <asm/ptrace.h>
 
-#समावेश "probes-common.h"
+#include "probes-common.h"
 
-अटल अंतरभूत पूर्णांक insn_has_delay_slot(स्थिर जोड़ mips_inकाष्ठाion insn)
-अणु
-	वापस __insn_has_delay_slot(insn);
-पूर्ण
+static inline int insn_has_delay_slot(const union mips_instruction insn)
+{
+	return __insn_has_delay_slot(insn);
+}
 
 /**
- * arch_uprobe_analyze_insn - inकाष्ठाion analysis including validity and fixups.
+ * arch_uprobe_analyze_insn - instruction analysis including validity and fixups.
  * @mm: the probed address space.
- * @arch_uprobe: the probepoपूर्णांक inक्रमmation.
- * @addr: भव address at which to install the probepoपूर्णांक
+ * @arch_uprobe: the probepoint information.
+ * @addr: virtual address at which to install the probepoint
  * Return 0 on success or a -ve number on error.
  */
-पूर्णांक arch_uprobe_analyze_insn(काष्ठा arch_uprobe *aup,
-	काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ addr)
-अणु
-	जोड़ mips_inकाष्ठाion inst;
+int arch_uprobe_analyze_insn(struct arch_uprobe *aup,
+	struct mm_struct *mm, unsigned long addr)
+{
+	union mips_instruction inst;
 
 	/*
-	 * For the समय being this also blocks attempts to use uprobes with
+	 * For the time being this also blocks attempts to use uprobes with
 	 * MIPS16 and microMIPS.
 	 */
-	अगर (addr & 0x03)
-		वापस -EINVAL;
+	if (addr & 0x03)
+		return -EINVAL;
 
 	inst.word = aup->insn[0];
 
-	अगर (__insn_is_compact_branch(inst)) अणु
+	if (__insn_is_compact_branch(inst)) {
 		pr_notice("Uprobes for compact branches are not supported\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	aup->ixol[0] = aup->insn[insn_has_delay_slot(inst)];
 	aup->ixol[1] = UPROBE_BRK_UPROBE_XOL;		/* NOP  */
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * is_trap_insn - check अगर the inकाष्ठाion is a trap variant
- * @insn: inकाष्ठाion to be checked.
- * Returns true अगर @insn is a trap variant.
+ * is_trap_insn - check if the instruction is a trap variant
+ * @insn: instruction to be checked.
+ * Returns true if @insn is a trap variant.
  *
  * This definition overrides the weak definition in kernel/events/uprobes.c.
- * and is needed क्रम the हाल where an architecture has multiple trap
- * inकाष्ठाions (like PowerPC or MIPS).  We treat BREAK just like the more
- * modern conditional trap inकाष्ठाions.
+ * and is needed for the case where an architecture has multiple trap
+ * instructions (like PowerPC or MIPS).  We treat BREAK just like the more
+ * modern conditional trap instructions.
  */
 bool is_trap_insn(uprobe_opcode_t *insn)
-अणु
-	जोड़ mips_inकाष्ठाion inst;
+{
+	union mips_instruction inst;
 
 	inst.word = *insn;
 
-	चयन (inst.i_क्रमmat.opcode) अणु
-	हाल spec_op:
-		चयन (inst.r_क्रमmat.func) अणु
-		हाल अवरोध_op:
-		हाल teq_op:
-		हाल tge_op:
-		हाल tgeu_op:
-		हाल tlt_op:
-		हाल tltu_op:
-		हाल tne_op:
-			वापस 1;
-		पूर्ण
-		अवरोध;
+	switch (inst.i_format.opcode) {
+	case spec_op:
+		switch (inst.r_format.func) {
+		case break_op:
+		case teq_op:
+		case tge_op:
+		case tgeu_op:
+		case tlt_op:
+		case tltu_op:
+		case tne_op:
+			return 1;
+		}
+		break;
 
-	हाल bcond_op:	/* Yes, really ...  */
-		चयन (inst.u_क्रमmat.rt) अणु
-		हाल teqi_op:
-		हाल tgei_op:
-		हाल tgeiu_op:
-		हाल tlti_op:
-		हाल tltiu_op:
-		हाल tnei_op:
-			वापस 1;
-		पूर्ण
-		अवरोध;
-	पूर्ण
+	case bcond_op:	/* Yes, really ...  */
+		switch (inst.u_format.rt) {
+		case teqi_op:
+		case tgei_op:
+		case tgeiu_op:
+		case tlti_op:
+		case tltiu_op:
+		case tnei_op:
+			return 1;
+		}
+		break;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#घोषणा UPROBE_TRAP_NR	अच_दीर्घ_उच्च
+#define UPROBE_TRAP_NR	ULONG_MAX
 
 /*
  * arch_uprobe_pre_xol - prepare to execute out of line.
- * @auprobe: the probepoपूर्णांक inक्रमmation.
+ * @auprobe: the probepoint information.
  * @regs: reflects the saved user state of current task.
  */
-पूर्णांक arch_uprobe_pre_xol(काष्ठा arch_uprobe *aup, काष्ठा pt_regs *regs)
-अणु
-	काष्ठा uprobe_task *utask = current->utask;
+int arch_uprobe_pre_xol(struct arch_uprobe *aup, struct pt_regs *regs)
+{
+	struct uprobe_task *utask = current->utask;
 
 	/*
-	 * Now find the EPC where to resume after the अवरोधpoपूर्णांक has been
+	 * Now find the EPC where to resume after the breakpoint has been
 	 * dealt with.  This may require emulation of a branch.
 	 */
 	aup->resume_epc = regs->cp0_epc + 4;
-	अगर (insn_has_delay_slot((जोड़ mips_inकाष्ठाion) aup->insn[0])) अणु
-		__compute_वापस_epc_क्रम_insn(regs,
-			(जोड़ mips_inकाष्ठाion) aup->insn[0]);
+	if (insn_has_delay_slot((union mips_instruction) aup->insn[0])) {
+		__compute_return_epc_for_insn(regs,
+			(union mips_instruction) aup->insn[0]);
 		aup->resume_epc = regs->cp0_epc;
-	पूर्ण
-	utask->autask.saved_trap_nr = current->thपढ़ो.trap_nr;
-	current->thपढ़ो.trap_nr = UPROBE_TRAP_NR;
+	}
+	utask->autask.saved_trap_nr = current->thread.trap_nr;
+	current->thread.trap_nr = UPROBE_TRAP_NR;
 	regs->cp0_epc = current->utask->xol_vaddr;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक arch_uprobe_post_xol(काष्ठा arch_uprobe *aup, काष्ठा pt_regs *regs)
-अणु
-	काष्ठा uprobe_task *utask = current->utask;
+int arch_uprobe_post_xol(struct arch_uprobe *aup, struct pt_regs *regs)
+{
+	struct uprobe_task *utask = current->utask;
 
-	current->thपढ़ो.trap_nr = utask->autask.saved_trap_nr;
+	current->thread.trap_nr = utask->autask.saved_trap_nr;
 	regs->cp0_epc = aup->resume_epc;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * If xol insn itself traps and generates a संकेत(Say,
- * संक_अवैध/संक_अंश/etc), then detect the हाल where a singlestepped
- * inकाष्ठाion jumps back to its own address. It is assumed that anything
- * like करो_page_fault/करो_trap/etc sets thपढ़ो.trap_nr != -1.
+ * If xol insn itself traps and generates a signal(Say,
+ * SIGILL/SIGSEGV/etc), then detect the case where a singlestepped
+ * instruction jumps back to its own address. It is assumed that anything
+ * like do_page_fault/do_trap/etc sets thread.trap_nr != -1.
  *
- * arch_uprobe_pre_xol/arch_uprobe_post_xol save/restore thपढ़ो.trap_nr,
+ * arch_uprobe_pre_xol/arch_uprobe_post_xol save/restore thread.trap_nr,
  * arch_uprobe_xol_was_trapped() simply checks that ->trap_nr is not equal to
  * UPROBE_TRAP_NR == -1 set by arch_uprobe_pre_xol().
  */
-bool arch_uprobe_xol_was_trapped(काष्ठा task_काष्ठा *tsk)
-अणु
-	अगर (tsk->thपढ़ो.trap_nr != UPROBE_TRAP_NR)
-		वापस true;
+bool arch_uprobe_xol_was_trapped(struct task_struct *tsk)
+{
+	if (tsk->thread.trap_nr != UPROBE_TRAP_NR)
+		return true;
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-पूर्णांक arch_uprobe_exception_notअगरy(काष्ठा notअगरier_block *self,
-	अचिन्हित दीर्घ val, व्योम *data)
-अणु
-	काष्ठा die_args *args = data;
-	काष्ठा pt_regs *regs = args->regs;
+int arch_uprobe_exception_notify(struct notifier_block *self,
+	unsigned long val, void *data)
+{
+	struct die_args *args = data;
+	struct pt_regs *regs = args->regs;
 
-	/* regs == शून्य is a kernel bug */
-	अगर (WARN_ON(!regs))
-		वापस NOTIFY_DONE;
+	/* regs == NULL is a kernel bug */
+	if (WARN_ON(!regs))
+		return NOTIFY_DONE;
 
-	/* We are only पूर्णांकerested in userspace traps */
-	अगर (!user_mode(regs))
-		वापस NOTIFY_DONE;
+	/* We are only interested in userspace traps */
+	if (!user_mode(regs))
+		return NOTIFY_DONE;
 
-	चयन (val) अणु
-	हाल DIE_UPROBE:
-		अगर (uprobe_pre_sstep_notअगरier(regs))
-			वापस NOTIFY_STOP;
-		अवरोध;
-	हाल DIE_UPROBE_XOL:
-		अगर (uprobe_post_sstep_notअगरier(regs))
-			वापस NOTIFY_STOP;
-	शेष:
-		अवरोध;
-	पूर्ण
+	switch (val) {
+	case DIE_UPROBE:
+		if (uprobe_pre_sstep_notifier(regs))
+			return NOTIFY_STOP;
+		break;
+	case DIE_UPROBE_XOL:
+		if (uprobe_post_sstep_notifier(regs))
+			return NOTIFY_STOP;
+	default:
+		break;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * This function माला_लो called when XOL inकाष्ठाion either माला_लो trapped or
- * the thपढ़ो has a fatal संकेत. Reset the inकाष्ठाion poपूर्णांकer to its
- * probed address क्रम the potential restart or क्रम post mortem analysis.
+ * This function gets called when XOL instruction either gets trapped or
+ * the thread has a fatal signal. Reset the instruction pointer to its
+ * probed address for the potential restart or for post mortem analysis.
  */
-व्योम arch_uprobe_पात_xol(काष्ठा arch_uprobe *aup,
-	काष्ठा pt_regs *regs)
-अणु
-	काष्ठा uprobe_task *utask = current->utask;
+void arch_uprobe_abort_xol(struct arch_uprobe *aup,
+	struct pt_regs *regs)
+{
+	struct uprobe_task *utask = current->utask;
 
-	inकाष्ठाion_poपूर्णांकer_set(regs, utask->vaddr);
-पूर्ण
+	instruction_pointer_set(regs, utask->vaddr);
+}
 
-अचिन्हित दीर्घ arch_uretprobe_hijack_वापस_addr(
-	अचिन्हित दीर्घ trampoline_vaddr, काष्ठा pt_regs *regs)
-अणु
-	अचिन्हित दीर्घ ra;
+unsigned long arch_uretprobe_hijack_return_addr(
+	unsigned long trampoline_vaddr, struct pt_regs *regs)
+{
+	unsigned long ra;
 
 	ra = regs->regs[31];
 
-	/* Replace the वापस address with the trampoline address */
+	/* Replace the return address with the trampoline address */
 	regs->regs[31] = trampoline_vaddr;
 
-	वापस ra;
-पूर्ण
+	return ra;
+}
 
 /**
- * set_swbp - store अवरोधpoपूर्णांक at a given address.
- * @auprobe: arch specअगरic probepoपूर्णांक inक्रमmation.
+ * set_swbp - store breakpoint at a given address.
+ * @auprobe: arch specific probepoint information.
  * @mm: the probed process address space.
- * @vaddr: the भव address to insert the opcode.
+ * @vaddr: the virtual address to insert the opcode.
  *
- * For mm @mm, store the अवरोधpoपूर्णांक inकाष्ठाion at @vaddr.
- * Return 0 (success) or a negative त्रुटि_सं.
+ * For mm @mm, store the breakpoint instruction at @vaddr.
+ * Return 0 (success) or a negative errno.
  *
  * This version overrides the weak version in kernel/events/uprobes.c.
  * It is required to handle MIPS16 and microMIPS.
  */
-पूर्णांक __weak set_swbp(काष्ठा arch_uprobe *auprobe, काष्ठा mm_काष्ठा *mm,
-	अचिन्हित दीर्घ vaddr)
-अणु
-	वापस uprobe_ग_लिखो_opcode(auprobe, mm, vaddr, UPROBE_SWBP_INSN);
-पूर्ण
+int __weak set_swbp(struct arch_uprobe *auprobe, struct mm_struct *mm,
+	unsigned long vaddr)
+{
+	return uprobe_write_opcode(auprobe, mm, vaddr, UPROBE_SWBP_INSN);
+}
 
-व्योम arch_uprobe_copy_ixol(काष्ठा page *page, अचिन्हित दीर्घ vaddr,
-				  व्योम *src, अचिन्हित दीर्घ len)
-अणु
-	अचिन्हित दीर्घ kaddr, kstart;
+void arch_uprobe_copy_ixol(struct page *page, unsigned long vaddr,
+				  void *src, unsigned long len)
+{
+	unsigned long kaddr, kstart;
 
 	/* Initialize the slot */
-	kaddr = (अचिन्हित दीर्घ)kmap_atomic(page);
+	kaddr = (unsigned long)kmap_atomic(page);
 	kstart = kaddr + (vaddr & ~PAGE_MASK);
-	स_नकल((व्योम *)kstart, src, len);
+	memcpy((void *)kstart, src, len);
 	flush_icache_range(kstart, kstart + len);
-	kunmap_atomic((व्योम *)kaddr);
-पूर्ण
+	kunmap_atomic((void *)kaddr);
+}
 
 /**
  * uprobe_get_swbp_addr - compute address of swbp given post-swbp regs
- * @regs: Reflects the saved state of the task after it has hit a अवरोधpoपूर्णांक
- * inकाष्ठाion.
- * Return the address of the अवरोधpoपूर्णांक inकाष्ठाion.
+ * @regs: Reflects the saved state of the task after it has hit a breakpoint
+ * instruction.
+ * Return the address of the breakpoint instruction.
  *
  * This overrides the weak version in kernel/events/uprobes.c.
  */
-अचिन्हित दीर्घ uprobe_get_swbp_addr(काष्ठा pt_regs *regs)
-अणु
-	वापस inकाष्ठाion_poपूर्णांकer(regs);
-पूर्ण
+unsigned long uprobe_get_swbp_addr(struct pt_regs *regs)
+{
+	return instruction_pointer(regs);
+}
 
 /*
- * See अगर the inकाष्ठाion can be emulated.
- * Returns true अगर inकाष्ठाion was emulated, false otherwise.
+ * See if the instruction can be emulated.
+ * Returns true if instruction was emulated, false otherwise.
  *
- * For now we always emulate so this function just वापसs 0.
+ * For now we always emulate so this function just returns 0.
  */
-bool arch_uprobe_skip_sstep(काष्ठा arch_uprobe *auprobe, काष्ठा pt_regs *regs)
-अणु
-	वापस 0;
-पूर्ण
+bool arch_uprobe_skip_sstep(struct arch_uprobe *auprobe, struct pt_regs *regs)
+{
+	return 0;
+}

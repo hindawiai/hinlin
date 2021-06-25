@@ -1,28 +1,27 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * Support क्रम Intel Camera Imaging ISP subप्रणाली.
+ * Support for Intel Camera Imaging ISP subsystem.
  * Copyright (c) 2015, Intel Corporation.
  *
- * This program is मुक्त software; you can redistribute it and/or modअगरy it
+ * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
  * version 2, as published by the Free Software Foundation.
  *
  * This program is distributed in the hope it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License क्रम
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
  * more details.
  */
 
-#अगर_अघोषित __MISC_SUPPORT_H_INCLUDED__
-#घोषणा __MISC_SUPPORT_H_INCLUDED__
+#ifndef __MISC_SUPPORT_H_INCLUDED__
+#define __MISC_SUPPORT_H_INCLUDED__
 
 /* suppress compiler warnings on unused variables */
-#अगर_अघोषित NOT_USED
-#घोषणा NOT_USED(a) ((व्योम)(a))
-#पूर्ण_अगर
+#ifndef NOT_USED
+#define NOT_USED(a) ((void)(a))
+#endif
 
-/* Calculate the  total bytes क्रम घात(2) byte alignment */
-#घोषणा tot_bytes_क्रम_घात2_align(घात2, cur_bytes)	((cur_bytes + (घात2 - 1)) & ~(घात2 - 1))
+/* Calculate the  total bytes for pow(2) byte alignment */
+#define tot_bytes_for_pow2_align(pow2, cur_bytes)	((cur_bytes + (pow2 - 1)) & ~(pow2 - 1))
 
-#पूर्ण_अगर /* __MISC_SUPPORT_H_INCLUDED__ */
+#endif /* __MISC_SUPPORT_H_INCLUDED__ */

@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (c) 2018, The Linux Foundation. All rights reserved.
  */
@@ -10,96 +9,96 @@
  * based on the silicon variant in use. Qualcomm Process Voltage Scaling Tables
  * defines the voltage and frequency value based on the msm-id in SMEM
  * and speedbin blown in the efuse combination.
- * The qcom-cpufreq-nvmem driver पढ़ोs the msm-id and efuse value from the SoC
- * to provide the OPP framework with required inक्रमmation.
- * This is used to determine the voltage and frequency value क्रम each OPP of
- * operating-poपूर्णांकs-v2 table when it is parsed by the OPP framework.
+ * The qcom-cpufreq-nvmem driver reads the msm-id and efuse value from the SoC
+ * to provide the OPP framework with required information.
+ * This is used to determine the voltage and frequency value for each OPP of
+ * operating-points-v2 table when it is parsed by the OPP framework.
  */
 
-#समावेश <linux/cpu.h>
-#समावेश <linux/err.h>
-#समावेश <linux/init.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/nvmem-consumer.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/pm_करोमुख्य.h>
-#समावेश <linux/pm_opp.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/soc/qcom/sस्मृति.स>
+#include <linux/cpu.h>
+#include <linux/err.h>
+#include <linux/init.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/nvmem-consumer.h>
+#include <linux/of.h>
+#include <linux/of_device.h>
+#include <linux/platform_device.h>
+#include <linux/pm_domain.h>
+#include <linux/pm_opp.h>
+#include <linux/slab.h>
+#include <linux/soc/qcom/smem.h>
 
-#घोषणा MSM_ID_SMEM	137
+#define MSM_ID_SMEM	137
 
-क्रमागत _msm_id अणु
+enum _msm_id {
 	MSM8996V3 = 0xF6ul,
 	APQ8096V3 = 0x123ul,
 	MSM8996SG = 0x131ul,
 	APQ8096SG = 0x138ul,
-पूर्ण;
+};
 
-क्रमागत _msm8996_version अणु
+enum _msm8996_version {
 	MSM8996_V3,
 	MSM8996_SG,
 	NUM_OF_MSM8996_VERSIONS,
-पूर्ण;
+};
 
-काष्ठा qcom_cpufreq_drv;
+struct qcom_cpufreq_drv;
 
-काष्ठा qcom_cpufreq_match_data अणु
-	पूर्णांक (*get_version)(काष्ठा device *cpu_dev,
-			   काष्ठा nvmem_cell *speedbin_nvmem,
-			   अक्षर **pvs_name,
-			   काष्ठा qcom_cpufreq_drv *drv);
-	स्थिर अक्षर **genpd_names;
-पूर्ण;
+struct qcom_cpufreq_match_data {
+	int (*get_version)(struct device *cpu_dev,
+			   struct nvmem_cell *speedbin_nvmem,
+			   char **pvs_name,
+			   struct qcom_cpufreq_drv *drv);
+	const char **genpd_names;
+};
 
-काष्ठा qcom_cpufreq_drv अणु
-	काष्ठा opp_table **names_opp_tables;
-	काष्ठा opp_table **hw_opp_tables;
-	काष्ठा opp_table **genpd_opp_tables;
+struct qcom_cpufreq_drv {
+	struct opp_table **names_opp_tables;
+	struct opp_table **hw_opp_tables;
+	struct opp_table **genpd_opp_tables;
 	u32 versions;
-	स्थिर काष्ठा qcom_cpufreq_match_data *data;
-पूर्ण;
+	const struct qcom_cpufreq_match_data *data;
+};
 
-अटल काष्ठा platक्रमm_device *cpufreq_dt_pdev, *cpufreq_pdev;
+static struct platform_device *cpufreq_dt_pdev, *cpufreq_pdev;
 
-अटल व्योम get_krait_bin_क्रमmat_a(काष्ठा device *cpu_dev,
-					  पूर्णांक *speed, पूर्णांक *pvs, पूर्णांक *pvs_ver,
-					  काष्ठा nvmem_cell *pvs_nvmem, u8 *buf)
-अणु
+static void get_krait_bin_format_a(struct device *cpu_dev,
+					  int *speed, int *pvs, int *pvs_ver,
+					  struct nvmem_cell *pvs_nvmem, u8 *buf)
+{
 	u32 pte_efuse;
 
 	pte_efuse = *((u32 *)buf);
 
 	*speed = pte_efuse & 0xf;
-	अगर (*speed == 0xf)
+	if (*speed == 0xf)
 		*speed = (pte_efuse >> 4) & 0xf;
 
-	अगर (*speed == 0xf) अणु
+	if (*speed == 0xf) {
 		*speed = 0;
 		dev_warn(cpu_dev, "Speed bin: Defaulting to %d\n", *speed);
-	पूर्ण अन्यथा अणु
+	} else {
 		dev_dbg(cpu_dev, "Speed bin: %d\n", *speed);
-	पूर्ण
+	}
 
 	*pvs = (pte_efuse >> 10) & 0x7;
-	अगर (*pvs == 0x7)
+	if (*pvs == 0x7)
 		*pvs = (pte_efuse >> 13) & 0x7;
 
-	अगर (*pvs == 0x7) अणु
+	if (*pvs == 0x7) {
 		*pvs = 0;
 		dev_warn(cpu_dev, "PVS bin: Defaulting to %d\n", *pvs);
-	पूर्ण अन्यथा अणु
+	} else {
 		dev_dbg(cpu_dev, "PVS bin: %d\n", *pvs);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम get_krait_bin_क्रमmat_b(काष्ठा device *cpu_dev,
-					  पूर्णांक *speed, पूर्णांक *pvs, पूर्णांक *pvs_ver,
-					  काष्ठा nvmem_cell *pvs_nvmem, u8 *buf)
-अणु
+static void get_krait_bin_format_b(struct device *cpu_dev,
+					  int *speed, int *pvs, int *pvs_ver,
+					  struct nvmem_cell *pvs_nvmem, u8 *buf)
+{
 	u32 pte_efuse, redundant_sel;
 
 	pte_efuse = *((u32 *)buf);
@@ -107,404 +106,404 @@
 
 	*pvs_ver = (pte_efuse >> 4) & 0x3;
 
-	चयन (redundant_sel) अणु
-	हाल 1:
+	switch (redundant_sel) {
+	case 1:
 		*pvs = ((pte_efuse >> 28) & 0x8) | ((pte_efuse >> 6) & 0x7);
 		*speed = (pte_efuse >> 27) & 0xf;
-		अवरोध;
-	हाल 2:
+		break;
+	case 2:
 		*pvs = (pte_efuse >> 27) & 0xf;
 		*speed = pte_efuse & 0x7;
-		अवरोध;
-	शेष:
-		/* 4 bits of PVS are in efuse रेजिस्टर bits 31, 8-6. */
+		break;
+	default:
+		/* 4 bits of PVS are in efuse register bits 31, 8-6. */
 		*pvs = ((pte_efuse >> 28) & 0x8) | ((pte_efuse >> 6) & 0x7);
 		*speed = pte_efuse & 0x7;
-	पूर्ण
+	}
 
 	/* Check SPEED_BIN_BLOW_STATUS */
-	अगर (pte_efuse & BIT(3)) अणु
+	if (pte_efuse & BIT(3)) {
 		dev_dbg(cpu_dev, "Speed bin: %d\n", *speed);
-	पूर्ण अन्यथा अणु
+	} else {
 		dev_warn(cpu_dev, "Speed bin not set. Defaulting to 0!\n");
 		*speed = 0;
-	पूर्ण
+	}
 
 	/* Check PVS_BLOW_STATUS */
 	pte_efuse = *(((u32 *)buf) + 4);
 	pte_efuse &= BIT(21);
-	अगर (pte_efuse) अणु
+	if (pte_efuse) {
 		dev_dbg(cpu_dev, "PVS bin: %d\n", *pvs);
-	पूर्ण अन्यथा अणु
+	} else {
 		dev_warn(cpu_dev, "PVS bin not set. Defaulting to 0!\n");
 		*pvs = 0;
-	पूर्ण
+	}
 
 	dev_dbg(cpu_dev, "PVS version: %d\n", *pvs_ver);
-पूर्ण
+}
 
-अटल क्रमागत _msm8996_version qcom_cpufreq_get_msm_id(व्योम)
-अणु
-	माप_प्रकार len;
+static enum _msm8996_version qcom_cpufreq_get_msm_id(void)
+{
+	size_t len;
 	u32 *msm_id;
-	क्रमागत _msm8996_version version;
+	enum _msm8996_version version;
 
 	msm_id = qcom_smem_get(QCOM_SMEM_HOST_ANY, MSM_ID_SMEM, &len);
-	अगर (IS_ERR(msm_id))
-		वापस NUM_OF_MSM8996_VERSIONS;
+	if (IS_ERR(msm_id))
+		return NUM_OF_MSM8996_VERSIONS;
 
-	/* The first 4 bytes are क्रमmat, next to them is the actual msm-id */
+	/* The first 4 bytes are format, next to them is the actual msm-id */
 	msm_id++;
 
-	चयन ((क्रमागत _msm_id)*msm_id) अणु
-	हाल MSM8996V3:
-	हाल APQ8096V3:
+	switch ((enum _msm_id)*msm_id) {
+	case MSM8996V3:
+	case APQ8096V3:
 		version = MSM8996_V3;
-		अवरोध;
-	हाल MSM8996SG:
-	हाल APQ8096SG:
+		break;
+	case MSM8996SG:
+	case APQ8096SG:
 		version = MSM8996_SG;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		version = NUM_OF_MSM8996_VERSIONS;
-	पूर्ण
+	}
 
-	वापस version;
-पूर्ण
+	return version;
+}
 
-अटल पूर्णांक qcom_cpufreq_kryo_name_version(काष्ठा device *cpu_dev,
-					  काष्ठा nvmem_cell *speedbin_nvmem,
-					  अक्षर **pvs_name,
-					  काष्ठा qcom_cpufreq_drv *drv)
-अणु
-	माप_प्रकार len;
+static int qcom_cpufreq_kryo_name_version(struct device *cpu_dev,
+					  struct nvmem_cell *speedbin_nvmem,
+					  char **pvs_name,
+					  struct qcom_cpufreq_drv *drv)
+{
+	size_t len;
 	u8 *speedbin;
-	क्रमागत _msm8996_version msm8996_version;
-	*pvs_name = शून्य;
+	enum _msm8996_version msm8996_version;
+	*pvs_name = NULL;
 
 	msm8996_version = qcom_cpufreq_get_msm_id();
-	अगर (NUM_OF_MSM8996_VERSIONS == msm8996_version) अणु
+	if (NUM_OF_MSM8996_VERSIONS == msm8996_version) {
 		dev_err(cpu_dev, "Not Snapdragon 820/821!");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	speedbin = nvmem_cell_पढ़ो(speedbin_nvmem, &len);
-	अगर (IS_ERR(speedbin))
-		वापस PTR_ERR(speedbin);
+	speedbin = nvmem_cell_read(speedbin_nvmem, &len);
+	if (IS_ERR(speedbin))
+		return PTR_ERR(speedbin);
 
-	चयन (msm8996_version) अणु
-	हाल MSM8996_V3:
-		drv->versions = 1 << (अचिन्हित पूर्णांक)(*speedbin);
-		अवरोध;
-	हाल MSM8996_SG:
-		drv->versions = 1 << ((अचिन्हित पूर्णांक)(*speedbin) + 4);
-		अवरोध;
-	शेष:
+	switch (msm8996_version) {
+	case MSM8996_V3:
+		drv->versions = 1 << (unsigned int)(*speedbin);
+		break;
+	case MSM8996_SG:
+		drv->versions = 1 << ((unsigned int)(*speedbin) + 4);
+		break;
+	default:
 		BUG();
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	kमुक्त(speedbin);
-	वापस 0;
-पूर्ण
+	kfree(speedbin);
+	return 0;
+}
 
-अटल पूर्णांक qcom_cpufreq_krait_name_version(काष्ठा device *cpu_dev,
-					   काष्ठा nvmem_cell *speedbin_nvmem,
-					   अक्षर **pvs_name,
-					   काष्ठा qcom_cpufreq_drv *drv)
-अणु
-	पूर्णांक speed = 0, pvs = 0, pvs_ver = 0;
+static int qcom_cpufreq_krait_name_version(struct device *cpu_dev,
+					   struct nvmem_cell *speedbin_nvmem,
+					   char **pvs_name,
+					   struct qcom_cpufreq_drv *drv)
+{
+	int speed = 0, pvs = 0, pvs_ver = 0;
 	u8 *speedbin;
-	माप_प्रकार len;
+	size_t len;
 
-	speedbin = nvmem_cell_पढ़ो(speedbin_nvmem, &len);
+	speedbin = nvmem_cell_read(speedbin_nvmem, &len);
 
-	अगर (IS_ERR(speedbin))
-		वापस PTR_ERR(speedbin);
+	if (IS_ERR(speedbin))
+		return PTR_ERR(speedbin);
 
-	चयन (len) अणु
-	हाल 4:
-		get_krait_bin_क्रमmat_a(cpu_dev, &speed, &pvs, &pvs_ver,
+	switch (len) {
+	case 4:
+		get_krait_bin_format_a(cpu_dev, &speed, &pvs, &pvs_ver,
 				       speedbin_nvmem, speedbin);
-		अवरोध;
-	हाल 8:
-		get_krait_bin_क्रमmat_b(cpu_dev, &speed, &pvs, &pvs_ver,
+		break;
+	case 8:
+		get_krait_bin_format_b(cpu_dev, &speed, &pvs, &pvs_ver,
 				       speedbin_nvmem, speedbin);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		dev_err(cpu_dev, "Unable to read nvmem data. Defaulting to 0!\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	snम_लिखो(*pvs_name, माप("speedXX-pvsXX-vXX"), "speed%d-pvs%d-v%d",
+	snprintf(*pvs_name, sizeof("speedXX-pvsXX-vXX"), "speed%d-pvs%d-v%d",
 		 speed, pvs, pvs_ver);
 
 	drv->versions = (1 << speed);
 
-	kमुक्त(speedbin);
-	वापस 0;
-पूर्ण
+	kfree(speedbin);
+	return 0;
+}
 
-अटल स्थिर काष्ठा qcom_cpufreq_match_data match_data_kryo = अणु
+static const struct qcom_cpufreq_match_data match_data_kryo = {
 	.get_version = qcom_cpufreq_kryo_name_version,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qcom_cpufreq_match_data match_data_krait = अणु
+static const struct qcom_cpufreq_match_data match_data_krait = {
 	.get_version = qcom_cpufreq_krait_name_version,
-पूर्ण;
+};
 
-अटल स्थिर अक्षर *qcs404_genpd_names[] = अणु "cpr", शून्य पूर्ण;
+static const char *qcs404_genpd_names[] = { "cpr", NULL };
 
-अटल स्थिर काष्ठा qcom_cpufreq_match_data match_data_qcs404 = अणु
+static const struct qcom_cpufreq_match_data match_data_qcs404 = {
 	.genpd_names = qcs404_genpd_names,
-पूर्ण;
+};
 
-अटल पूर्णांक qcom_cpufreq_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा qcom_cpufreq_drv *drv;
-	काष्ठा nvmem_cell *speedbin_nvmem;
-	काष्ठा device_node *np;
-	काष्ठा device *cpu_dev;
-	अक्षर *pvs_name = "speedXX-pvsXX-vXX";
-	अचिन्हित cpu;
-	स्थिर काष्ठा of_device_id *match;
-	पूर्णांक ret;
+static int qcom_cpufreq_probe(struct platform_device *pdev)
+{
+	struct qcom_cpufreq_drv *drv;
+	struct nvmem_cell *speedbin_nvmem;
+	struct device_node *np;
+	struct device *cpu_dev;
+	char *pvs_name = "speedXX-pvsXX-vXX";
+	unsigned cpu;
+	const struct of_device_id *match;
+	int ret;
 
 	cpu_dev = get_cpu_device(0);
-	अगर (!cpu_dev)
-		वापस -ENODEV;
+	if (!cpu_dev)
+		return -ENODEV;
 
 	np = dev_pm_opp_of_get_opp_desc_node(cpu_dev);
-	अगर (!np)
-		वापस -ENOENT;
+	if (!np)
+		return -ENOENT;
 
 	ret = of_device_is_compatible(np, "operating-points-v2-kryo-cpu");
-	अगर (!ret) अणु
+	if (!ret) {
 		of_node_put(np);
-		वापस -ENOENT;
-	पूर्ण
+		return -ENOENT;
+	}
 
-	drv = kzalloc(माप(*drv), GFP_KERNEL);
-	अगर (!drv)
-		वापस -ENOMEM;
+	drv = kzalloc(sizeof(*drv), GFP_KERNEL);
+	if (!drv)
+		return -ENOMEM;
 
-	match = pdev->dev.platक्रमm_data;
+	match = pdev->dev.platform_data;
 	drv->data = match->data;
-	अगर (!drv->data) अणु
+	if (!drv->data) {
 		ret = -ENODEV;
-		जाओ मुक्त_drv;
-	पूर्ण
+		goto free_drv;
+	}
 
-	अगर (drv->data->get_version) अणु
-		speedbin_nvmem = of_nvmem_cell_get(np, शून्य);
-		अगर (IS_ERR(speedbin_nvmem)) अणु
-			अगर (PTR_ERR(speedbin_nvmem) != -EPROBE_DEFER)
+	if (drv->data->get_version) {
+		speedbin_nvmem = of_nvmem_cell_get(np, NULL);
+		if (IS_ERR(speedbin_nvmem)) {
+			if (PTR_ERR(speedbin_nvmem) != -EPROBE_DEFER)
 				dev_err(cpu_dev,
 					"Could not get nvmem cell: %ld\n",
 					PTR_ERR(speedbin_nvmem));
 			ret = PTR_ERR(speedbin_nvmem);
-			जाओ मुक्त_drv;
-		पूर्ण
+			goto free_drv;
+		}
 
 		ret = drv->data->get_version(cpu_dev,
 							speedbin_nvmem, &pvs_name, drv);
-		अगर (ret) अणु
+		if (ret) {
 			nvmem_cell_put(speedbin_nvmem);
-			जाओ मुक्त_drv;
-		पूर्ण
+			goto free_drv;
+		}
 		nvmem_cell_put(speedbin_nvmem);
-	पूर्ण
+	}
 	of_node_put(np);
 
-	drv->names_opp_tables = kसुस्मृति(num_possible_cpus(),
-				  माप(*drv->names_opp_tables),
+	drv->names_opp_tables = kcalloc(num_possible_cpus(),
+				  sizeof(*drv->names_opp_tables),
 				  GFP_KERNEL);
-	अगर (!drv->names_opp_tables) अणु
+	if (!drv->names_opp_tables) {
 		ret = -ENOMEM;
-		जाओ मुक्त_drv;
-	पूर्ण
-	drv->hw_opp_tables = kसुस्मृति(num_possible_cpus(),
-				  माप(*drv->hw_opp_tables),
+		goto free_drv;
+	}
+	drv->hw_opp_tables = kcalloc(num_possible_cpus(),
+				  sizeof(*drv->hw_opp_tables),
 				  GFP_KERNEL);
-	अगर (!drv->hw_opp_tables) अणु
+	if (!drv->hw_opp_tables) {
 		ret = -ENOMEM;
-		जाओ मुक्त_opp_names;
-	पूर्ण
+		goto free_opp_names;
+	}
 
-	drv->genpd_opp_tables = kसुस्मृति(num_possible_cpus(),
-					माप(*drv->genpd_opp_tables),
+	drv->genpd_opp_tables = kcalloc(num_possible_cpus(),
+					sizeof(*drv->genpd_opp_tables),
 					GFP_KERNEL);
-	अगर (!drv->genpd_opp_tables) अणु
+	if (!drv->genpd_opp_tables) {
 		ret = -ENOMEM;
-		जाओ मुक्त_opp;
-	पूर्ण
+		goto free_opp;
+	}
 
-	क्रम_each_possible_cpu(cpu) अणु
+	for_each_possible_cpu(cpu) {
 		cpu_dev = get_cpu_device(cpu);
-		अगर (शून्य == cpu_dev) अणु
+		if (NULL == cpu_dev) {
 			ret = -ENODEV;
-			जाओ मुक्त_genpd_opp;
-		पूर्ण
+			goto free_genpd_opp;
+		}
 
-		अगर (drv->data->get_version) अणु
+		if (drv->data->get_version) {
 
-			अगर (pvs_name) अणु
+			if (pvs_name) {
 				drv->names_opp_tables[cpu] = dev_pm_opp_set_prop_name(
 								     cpu_dev,
 								     pvs_name);
-				अगर (IS_ERR(drv->names_opp_tables[cpu])) अणु
+				if (IS_ERR(drv->names_opp_tables[cpu])) {
 					ret = PTR_ERR(drv->names_opp_tables[cpu]);
 					dev_err(cpu_dev, "Failed to add OPP name %s\n",
 						pvs_name);
-					जाओ मुक्त_opp;
-				पूर्ण
-			पूर्ण
+					goto free_opp;
+				}
+			}
 
 			drv->hw_opp_tables[cpu] = dev_pm_opp_set_supported_hw(
 									 cpu_dev, &drv->versions, 1);
-			अगर (IS_ERR(drv->hw_opp_tables[cpu])) अणु
+			if (IS_ERR(drv->hw_opp_tables[cpu])) {
 				ret = PTR_ERR(drv->hw_opp_tables[cpu]);
 				dev_err(cpu_dev,
 					"Failed to set supported hardware\n");
-				जाओ मुक्त_genpd_opp;
-			पूर्ण
-		पूर्ण
+				goto free_genpd_opp;
+			}
+		}
 
-		अगर (drv->data->genpd_names) अणु
+		if (drv->data->genpd_names) {
 			drv->genpd_opp_tables[cpu] =
 				dev_pm_opp_attach_genpd(cpu_dev,
 							drv->data->genpd_names,
-							शून्य);
-			अगर (IS_ERR(drv->genpd_opp_tables[cpu])) अणु
+							NULL);
+			if (IS_ERR(drv->genpd_opp_tables[cpu])) {
 				ret = PTR_ERR(drv->genpd_opp_tables[cpu]);
-				अगर (ret != -EPROBE_DEFER)
+				if (ret != -EPROBE_DEFER)
 					dev_err(cpu_dev,
 						"Could not attach to pm_domain: %d\n",
 						ret);
-				जाओ मुक्त_genpd_opp;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				goto free_genpd_opp;
+			}
+		}
+	}
 
-	cpufreq_dt_pdev = platक्रमm_device_रेजिस्टर_simple("cpufreq-dt", -1,
-							  शून्य, 0);
-	अगर (!IS_ERR(cpufreq_dt_pdev)) अणु
-		platक्रमm_set_drvdata(pdev, drv);
-		वापस 0;
-	पूर्ण
+	cpufreq_dt_pdev = platform_device_register_simple("cpufreq-dt", -1,
+							  NULL, 0);
+	if (!IS_ERR(cpufreq_dt_pdev)) {
+		platform_set_drvdata(pdev, drv);
+		return 0;
+	}
 
 	ret = PTR_ERR(cpufreq_dt_pdev);
 	dev_err(cpu_dev, "Failed to register platform device\n");
 
-मुक्त_genpd_opp:
-	क्रम_each_possible_cpu(cpu) अणु
-		अगर (IS_ERR(drv->genpd_opp_tables[cpu]))
-			अवरोध;
+free_genpd_opp:
+	for_each_possible_cpu(cpu) {
+		if (IS_ERR(drv->genpd_opp_tables[cpu]))
+			break;
 		dev_pm_opp_detach_genpd(drv->genpd_opp_tables[cpu]);
-	पूर्ण
-	kमुक्त(drv->genpd_opp_tables);
-मुक्त_opp:
-	क्रम_each_possible_cpu(cpu) अणु
-		अगर (IS_ERR(drv->names_opp_tables[cpu]))
-			अवरोध;
+	}
+	kfree(drv->genpd_opp_tables);
+free_opp:
+	for_each_possible_cpu(cpu) {
+		if (IS_ERR(drv->names_opp_tables[cpu]))
+			break;
 		dev_pm_opp_put_prop_name(drv->names_opp_tables[cpu]);
-	पूर्ण
-	क्रम_each_possible_cpu(cpu) अणु
-		अगर (IS_ERR(drv->hw_opp_tables[cpu]))
-			अवरोध;
+	}
+	for_each_possible_cpu(cpu) {
+		if (IS_ERR(drv->hw_opp_tables[cpu]))
+			break;
 		dev_pm_opp_put_supported_hw(drv->hw_opp_tables[cpu]);
-	पूर्ण
-	kमुक्त(drv->hw_opp_tables);
-मुक्त_opp_names:
-	kमुक्त(drv->names_opp_tables);
-मुक्त_drv:
-	kमुक्त(drv);
+	}
+	kfree(drv->hw_opp_tables);
+free_opp_names:
+	kfree(drv->names_opp_tables);
+free_drv:
+	kfree(drv);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक qcom_cpufreq_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा qcom_cpufreq_drv *drv = platक्रमm_get_drvdata(pdev);
-	अचिन्हित पूर्णांक cpu;
+static int qcom_cpufreq_remove(struct platform_device *pdev)
+{
+	struct qcom_cpufreq_drv *drv = platform_get_drvdata(pdev);
+	unsigned int cpu;
 
-	platक्रमm_device_unरेजिस्टर(cpufreq_dt_pdev);
+	platform_device_unregister(cpufreq_dt_pdev);
 
-	क्रम_each_possible_cpu(cpu) अणु
+	for_each_possible_cpu(cpu) {
 		dev_pm_opp_put_supported_hw(drv->names_opp_tables[cpu]);
 		dev_pm_opp_put_supported_hw(drv->hw_opp_tables[cpu]);
 		dev_pm_opp_detach_genpd(drv->genpd_opp_tables[cpu]);
-	पूर्ण
+	}
 
-	kमुक्त(drv->names_opp_tables);
-	kमुक्त(drv->hw_opp_tables);
-	kमुक्त(drv->genpd_opp_tables);
-	kमुक्त(drv);
+	kfree(drv->names_opp_tables);
+	kfree(drv->hw_opp_tables);
+	kfree(drv->genpd_opp_tables);
+	kfree(drv);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver qcom_cpufreq_driver = अणु
+static struct platform_driver qcom_cpufreq_driver = {
 	.probe = qcom_cpufreq_probe,
-	.हटाओ = qcom_cpufreq_हटाओ,
-	.driver = अणु
+	.remove = qcom_cpufreq_remove,
+	.driver = {
 		.name = "qcom-cpufreq-nvmem",
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा of_device_id qcom_cpufreq_match_list[] __initस्थिर = अणु
-	अणु .compatible = "qcom,apq8096", .data = &match_data_kryo पूर्ण,
-	अणु .compatible = "qcom,msm8996", .data = &match_data_kryo पूर्ण,
-	अणु .compatible = "qcom,qcs404", .data = &match_data_qcs404 पूर्ण,
-	अणु .compatible = "qcom,ipq8064", .data = &match_data_krait पूर्ण,
-	अणु .compatible = "qcom,apq8064", .data = &match_data_krait पूर्ण,
-	अणु .compatible = "qcom,msm8974", .data = &match_data_krait पूर्ण,
-	अणु .compatible = "qcom,msm8960", .data = &match_data_krait पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct of_device_id qcom_cpufreq_match_list[] __initconst = {
+	{ .compatible = "qcom,apq8096", .data = &match_data_kryo },
+	{ .compatible = "qcom,msm8996", .data = &match_data_kryo },
+	{ .compatible = "qcom,qcs404", .data = &match_data_qcs404 },
+	{ .compatible = "qcom,ipq8064", .data = &match_data_krait },
+	{ .compatible = "qcom,apq8064", .data = &match_data_krait },
+	{ .compatible = "qcom,msm8974", .data = &match_data_krait },
+	{ .compatible = "qcom,msm8960", .data = &match_data_krait },
+	{},
+};
 MODULE_DEVICE_TABLE(of, qcom_cpufreq_match_list);
 
 /*
  * Since the driver depends on smem and nvmem drivers, which may
- * वापस EPROBE_DEFER, all the real activity is करोne in the probe,
- * which may be defered as well. The init here is only रेजिस्टरing
- * the driver and the platक्रमm device.
+ * return EPROBE_DEFER, all the real activity is done in the probe,
+ * which may be defered as well. The init here is only registering
+ * the driver and the platform device.
  */
-अटल पूर्णांक __init qcom_cpufreq_init(व्योम)
-अणु
-	काष्ठा device_node *np = of_find_node_by_path("/");
-	स्थिर काष्ठा of_device_id *match;
-	पूर्णांक ret;
+static int __init qcom_cpufreq_init(void)
+{
+	struct device_node *np = of_find_node_by_path("/");
+	const struct of_device_id *match;
+	int ret;
 
-	अगर (!np)
-		वापस -ENODEV;
+	if (!np)
+		return -ENODEV;
 
 	match = of_match_node(qcom_cpufreq_match_list, np);
 	of_node_put(np);
-	अगर (!match)
-		वापस -ENODEV;
+	if (!match)
+		return -ENODEV;
 
-	ret = platक्रमm_driver_रेजिस्टर(&qcom_cpufreq_driver);
-	अगर (unlikely(ret < 0))
-		वापस ret;
+	ret = platform_driver_register(&qcom_cpufreq_driver);
+	if (unlikely(ret < 0))
+		return ret;
 
-	cpufreq_pdev = platक्रमm_device_रेजिस्टर_data(शून्य, "qcom-cpufreq-nvmem",
-						     -1, match, माप(*match));
+	cpufreq_pdev = platform_device_register_data(NULL, "qcom-cpufreq-nvmem",
+						     -1, match, sizeof(*match));
 	ret = PTR_ERR_OR_ZERO(cpufreq_pdev);
-	अगर (0 == ret)
-		वापस 0;
+	if (0 == ret)
+		return 0;
 
-	platक्रमm_driver_unरेजिस्टर(&qcom_cpufreq_driver);
-	वापस ret;
-पूर्ण
+	platform_driver_unregister(&qcom_cpufreq_driver);
+	return ret;
+}
 module_init(qcom_cpufreq_init);
 
-अटल व्योम __निकास qcom_cpufreq_निकास(व्योम)
-अणु
-	platक्रमm_device_unरेजिस्टर(cpufreq_pdev);
-	platक्रमm_driver_unरेजिस्टर(&qcom_cpufreq_driver);
-पूर्ण
-module_निकास(qcom_cpufreq_निकास);
+static void __exit qcom_cpufreq_exit(void)
+{
+	platform_device_unregister(cpufreq_pdev);
+	platform_driver_unregister(&qcom_cpufreq_driver);
+}
+module_exit(qcom_cpufreq_exit);
 
 MODULE_DESCRIPTION("Qualcomm Technologies, Inc. CPUfreq driver");
 MODULE_LICENSE("GPL v2");

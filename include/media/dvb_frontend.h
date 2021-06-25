@@ -1,82 +1,81 @@
-<शैली गुरु>
 /*
  * dvb_frontend.h
  *
- * The Digital TV Frontend kABI defines a driver-पूर्णांकernal पूर्णांकerface क्रम
- * रेजिस्टरing low-level, hardware specअगरic driver to a hardware independent
+ * The Digital TV Frontend kABI defines a driver-internal interface for
+ * registering low-level, hardware specific driver to a hardware independent
  * frontend layer.
  *
- * Copyright (C) 2001 convergence पूर्णांकegrated media GmbH
+ * Copyright (C) 2001 convergence integrated media GmbH
  * Copyright (C) 2004 convergence GmbH
  *
  * Written by Ralph Metzler
  * Overhauled by Holger Waechtler
  * Kernel I2C stuff by Michael Hunold <hunold@convergence.de>
  *
- * This program is मुक्त software; you can redistribute it and/or
- * modअगरy it under the terms of the GNU Lesser General Public License
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
  * as published by the Free Software Foundation; either version 2.1
  * of the License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License क्रम more details.
+ * GNU General Public License for more details.
  *
 
  * You should have received a copy of the GNU Lesser General Public License
- * aदीर्घ with this program; अगर not, ग_लिखो to the Free Software
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  */
 
-#अगर_अघोषित _DVB_FRONTEND_H_
-#घोषणा _DVB_FRONTEND_H_
+#ifndef _DVB_FRONTEND_H_
+#define _DVB_FRONTEND_H_
 
-#समावेश <linux/types.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/ioctl.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/module.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/delay.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/bitops.h>
+#include <linux/types.h>
+#include <linux/sched.h>
+#include <linux/ioctl.h>
+#include <linux/i2c.h>
+#include <linux/module.h>
+#include <linux/errno.h>
+#include <linux/delay.h>
+#include <linux/mutex.h>
+#include <linux/slab.h>
+#include <linux/bitops.h>
 
-#समावेश <linux/dvb/frontend.h>
+#include <linux/dvb/frontend.h>
 
-#समावेश <media/dvbdev.h>
+#include <media/dvbdev.h>
 
 /*
- * Maximum number of Delivery प्रणालीs per frontend. It
+ * Maximum number of Delivery systems per frontend. It
  * should be smaller or equal to 32
  */
-#घोषणा MAX_DELSYS	8
+#define MAX_DELSYS	8
 
 /* Helper definitions to be used at frontend drivers */
-#घोषणा kHz 1000UL
-#घोषणा MHz 1000000UL
+#define kHz 1000UL
+#define MHz 1000000UL
 
 /**
- * काष्ठा dvb_frontend_tune_settings - parameters to adjust frontend tuning
+ * struct dvb_frontend_tune_settings - parameters to adjust frontend tuning
  *
- * @min_delay_ms:	minimum delay क्रम tuning, in ms
+ * @min_delay_ms:	minimum delay for tuning, in ms
  * @step_size:		step size between two consecutive frequencies
- * @max_drअगरt:		maximum drअगरt
+ * @max_drift:		maximum drift
  *
- * NOTE: step_size is in Hz, क्रम terrestrial/cable or kHz क्रम satellite
+ * NOTE: step_size is in Hz, for terrestrial/cable or kHz for satellite
  */
-काष्ठा dvb_frontend_tune_settings अणु
-	पूर्णांक min_delay_ms;
-	पूर्णांक step_size;
-	पूर्णांक max_drअगरt;
-पूर्ण;
+struct dvb_frontend_tune_settings {
+	int min_delay_ms;
+	int step_size;
+	int max_drift;
+};
 
-काष्ठा dvb_frontend;
+struct dvb_frontend;
 
 /**
- * काष्ठा dvb_tuner_info - Frontend name and min/max ranges/bandwidths
+ * struct dvb_tuner_info - Frontend name and min/max ranges/bandwidths
  *
  * @name:		name of the Frontend
  * @frequency_min_hz:	minimal frequency supported in Hz
@@ -86,8 +85,8 @@
  * @bandwidth_max:	maximum frontend bandwidth supported
  * @bandwidth_step:	frontend bandwidth step
  */
-काष्ठा dvb_tuner_info अणु
-	अक्षर name[128];
+struct dvb_tuner_info {
+	char name[128];
 
 	u32 frequency_min_hz;
 	u32 frequency_max_hz;
@@ -96,70 +95,70 @@
 	u32 bandwidth_min;
 	u32 bandwidth_max;
 	u32 bandwidth_step;
-पूर्ण;
+};
 
 /**
- * काष्ठा analog_parameters - Parameters to tune पूर्णांकo an analog/radio channel
+ * struct analog_parameters - Parameters to tune into an analog/radio channel
  *
  * @frequency:	Frequency used by analog TV tuner (either in 62.5 kHz step,
- *		क्रम TV, or 62.5 Hz क्रम radio)
- * @mode:	Tuner mode, as defined on क्रमागत v4l2_tuner_type
- * @audmode:	Audio mode as defined क्रम the rxsubchans field at videodev2.h,
+ *		for TV, or 62.5 Hz for radio)
+ * @mode:	Tuner mode, as defined on enum v4l2_tuner_type
+ * @audmode:	Audio mode as defined for the rxsubchans field at videodev2.h,
  *		e. g. V4L2_TUNER_MODE_*
- * @std:	TV standard biपंचांगap as defined at videodev2.h, e. g. V4L2_STD_*
+ * @std:	TV standard bitmap as defined at videodev2.h, e. g. V4L2_STD_*
  *
  * Hybrid tuners should be supported by both V4L2 and DVB APIs. This
- * काष्ठा contains the data that are used by the V4L2 side. To aव्योम
- * dependencies from V4L2 headers, all क्रमागतs here are declared as पूर्णांकegers.
+ * struct contains the data that are used by the V4L2 side. To avoid
+ * dependencies from V4L2 headers, all enums here are declared as integers.
  */
-काष्ठा analog_parameters अणु
-	अचिन्हित पूर्णांक frequency;
-	अचिन्हित पूर्णांक mode;
-	अचिन्हित पूर्णांक audmode;
+struct analog_parameters {
+	unsigned int frequency;
+	unsigned int mode;
+	unsigned int audmode;
 	u64 std;
-पूर्ण;
+};
 
 /**
- * क्रमागत dvbfe_algo - defines the algorithm used to tune पूर्णांकo a channel
+ * enum dvbfe_algo - defines the algorithm used to tune into a channel
  *
  * @DVBFE_ALGO_HW: Hardware Algorithm -
- *	Devices that support this algorithm करो everything in hardware
+ *	Devices that support this algorithm do everything in hardware
  *	and no software support is needed to handle them.
  *	Requesting these devices to LOCK is the only thing required,
- *	device is supposed to करो everything in the hardware.
+ *	device is supposed to do everything in the hardware.
  *
  * @DVBFE_ALGO_SW: Software Algorithm -
- * These are dumb devices, that require software to करो everything
+ * These are dumb devices, that require software to do everything
  *
  * @DVBFE_ALGO_CUSTOM: Customizable Agorithm -
- *	Devices having this algorithm can be customized to have specअगरic
- *	algorithms in the frontend driver, rather than simply करोing a
- *	software zig-zag. In this हाल the zigzag maybe hardware assisted
- *	or it maybe completely करोne in hardware. In all हालs, usage of
+ *	Devices having this algorithm can be customized to have specific
+ *	algorithms in the frontend driver, rather than simply doing a
+ *	software zig-zag. In this case the zigzag maybe hardware assisted
+ *	or it maybe completely done in hardware. In all cases, usage of
  *	this algorithm, in conjunction with the search and track
- *	callbacks, utilizes the driver specअगरic algorithm.
+ *	callbacks, utilizes the driver specific algorithm.
  *
  * @DVBFE_ALGO_RECOVERY: Recovery Algorithm -
  *	These devices have AUTO recovery capabilities from LOCK failure
  */
-क्रमागत dvbfe_algo अणु
+enum dvbfe_algo {
 	DVBFE_ALGO_HW			= BIT(0),
 	DVBFE_ALGO_SW			= BIT(1),
 	DVBFE_ALGO_CUSTOM		= BIT(2),
 	DVBFE_ALGO_RECOVERY		= BIT(31),
-पूर्ण;
+};
 
 /**
- * क्रमागत dvbfe_search - search callback possible वापस status
+ * enum dvbfe_search - search callback possible return status
  *
  * @DVBFE_ALGO_SEARCH_SUCCESS:
- *	The frontend search algorithm completed and वापसed successfully
+ *	The frontend search algorithm completed and returned successfully
  *
  * @DVBFE_ALGO_SEARCH_ASLEEP:
  *	The frontend search algorithm is sleeping
  *
  * @DVBFE_ALGO_SEARCH_FAILED:
- *	The frontend search क्रम a संकेत failed
+ *	The frontend search for a signal failed
  *
  * @DVBFE_ALGO_SEARCH_INVALID:
  *	The frontend search algorithm was probably supplied with invalid
@@ -171,92 +170,92 @@
  * @DVBFE_ALGO_SEARCH_AGAIN:
  *	The frontend search algorithm was requested to search again
  */
-क्रमागत dvbfe_search अणु
+enum dvbfe_search {
 	DVBFE_ALGO_SEARCH_SUCCESS	= BIT(0),
 	DVBFE_ALGO_SEARCH_ASLEEP	= BIT(1),
 	DVBFE_ALGO_SEARCH_FAILED	= BIT(2),
 	DVBFE_ALGO_SEARCH_INVALID	= BIT(3),
 	DVBFE_ALGO_SEARCH_AGAIN		= BIT(4),
 	DVBFE_ALGO_SEARCH_ERROR		= BIT(31),
-पूर्ण;
+};
 
 /**
- * काष्ठा dvb_tuner_ops - Tuner inक्रमmation and callbacks
+ * struct dvb_tuner_ops - Tuner information and callbacks
  *
- * @info:		embedded &काष्ठा dvb_tuner_info with tuner properties
+ * @info:		embedded &struct dvb_tuner_info with tuner properties
  * @release:		callback function called when frontend is detached.
- *			drivers should मुक्त any allocated memory.
+ *			drivers should free any allocated memory.
  * @init:		callback function used to initialize the tuner device.
  * @sleep:		callback function used to put the tuner to sleep.
- * @suspend:		callback function used to inक्रमm that the Kernel will
+ * @suspend:		callback function used to inform that the Kernel will
  *			suspend.
- * @resume:		callback function used to inक्रमm that the Kernel is
+ * @resume:		callback function used to inform that the Kernel is
  *			resuming from suspend.
- * @set_params:		callback function used to inक्रमm the tuner to tune
- *			पूर्णांकo a digital TV channel. The properties to be used
- *			are stored at &काष्ठा dvb_frontend.dtv_property_cache.
+ * @set_params:		callback function used to inform the tuner to tune
+ *			into a digital TV channel. The properties to be used
+ *			are stored at &struct dvb_frontend.dtv_property_cache.
  *			The tuner demod can change the parameters to reflect
- *			the changes needed क्रम the channel to be tuned, and
+ *			the changes needed for the channel to be tuned, and
  *			update statistics. This is the recommended way to set
  *			the tuner parameters and should be used on newer
  *			drivers.
- * @set_analog_params:	callback function used to tune पूर्णांकo an analog TV
+ * @set_analog_params:	callback function used to tune into an analog TV
  *			channel on hybrid tuners. It passes @analog_parameters
  *			to the driver.
- * @set_config:		callback function used to send some tuner-specअगरic
+ * @set_config:		callback function used to send some tuner-specific
  *			parameters.
  * @get_frequency:	get the actual tuned frequency
  * @get_bandwidth:	get the bandwidth used by the low pass filters
- * @get_अगर_frequency:	get the Intermediate Frequency, in Hz. For baseband,
- *			should वापस 0.
- * @get_status:		वापसs the frontend lock status
- * @get_rf_strength:	वापसs the RF संकेत strength. Used mostly to support
+ * @get_if_frequency:	get the Intermediate Frequency, in Hz. For baseband,
+ *			should return 0.
+ * @get_status:		returns the frontend lock status
+ * @get_rf_strength:	returns the RF signal strength. Used mostly to support
  *			analog TV and radio. Digital TV should report, instead,
- *			via DVBv5 API (&काष्ठा dvb_frontend.dtv_property_cache).
+ *			via DVBv5 API (&struct dvb_frontend.dtv_property_cache).
  * @get_afc:		Used only by analog TV core. Reports the frequency
- *			drअगरt due to AFC.
- * @calc_regs:		callback function used to pass रेजिस्टर data settings
- *			क्रम simple tuners.  Shouldn't be used on newer drivers.
+ *			drift due to AFC.
+ * @calc_regs:		callback function used to pass register data settings
+ *			for simple tuners.  Shouldn't be used on newer drivers.
  * @set_frequency:	Set a new frequency. Shouldn't be used on newer drivers.
  * @set_bandwidth:	Set a new frequency. Shouldn't be used on newer drivers.
  *
- * NOTE: frequencies used on @get_frequency and @set_frequency are in Hz क्रम
- * terrestrial/cable or kHz क्रम satellite.
+ * NOTE: frequencies used on @get_frequency and @set_frequency are in Hz for
+ * terrestrial/cable or kHz for satellite.
  *
  */
-काष्ठा dvb_tuner_ops अणु
+struct dvb_tuner_ops {
 
-	काष्ठा dvb_tuner_info info;
+	struct dvb_tuner_info info;
 
-	व्योम (*release)(काष्ठा dvb_frontend *fe);
-	पूर्णांक (*init)(काष्ठा dvb_frontend *fe);
-	पूर्णांक (*sleep)(काष्ठा dvb_frontend *fe);
-	पूर्णांक (*suspend)(काष्ठा dvb_frontend *fe);
-	पूर्णांक (*resume)(काष्ठा dvb_frontend *fe);
+	void (*release)(struct dvb_frontend *fe);
+	int (*init)(struct dvb_frontend *fe);
+	int (*sleep)(struct dvb_frontend *fe);
+	int (*suspend)(struct dvb_frontend *fe);
+	int (*resume)(struct dvb_frontend *fe);
 
 	/* This is the recommended way to set the tuner */
-	पूर्णांक (*set_params)(काष्ठा dvb_frontend *fe);
-	पूर्णांक (*set_analog_params)(काष्ठा dvb_frontend *fe, काष्ठा analog_parameters *p);
+	int (*set_params)(struct dvb_frontend *fe);
+	int (*set_analog_params)(struct dvb_frontend *fe, struct analog_parameters *p);
 
-	पूर्णांक (*set_config)(काष्ठा dvb_frontend *fe, व्योम *priv_cfg);
+	int (*set_config)(struct dvb_frontend *fe, void *priv_cfg);
 
-	पूर्णांक (*get_frequency)(काष्ठा dvb_frontend *fe, u32 *frequency);
-	पूर्णांक (*get_bandwidth)(काष्ठा dvb_frontend *fe, u32 *bandwidth);
-	पूर्णांक (*get_अगर_frequency)(काष्ठा dvb_frontend *fe, u32 *frequency);
+	int (*get_frequency)(struct dvb_frontend *fe, u32 *frequency);
+	int (*get_bandwidth)(struct dvb_frontend *fe, u32 *bandwidth);
+	int (*get_if_frequency)(struct dvb_frontend *fe, u32 *frequency);
 
-#घोषणा TUNER_STATUS_LOCKED 1
-#घोषणा TUNER_STATUS_STEREO 2
-	पूर्णांक (*get_status)(काष्ठा dvb_frontend *fe, u32 *status);
-	पूर्णांक (*get_rf_strength)(काष्ठा dvb_frontend *fe, u16 *strength);
-	पूर्णांक (*get_afc)(काष्ठा dvb_frontend *fe, s32 *afc);
+#define TUNER_STATUS_LOCKED 1
+#define TUNER_STATUS_STEREO 2
+	int (*get_status)(struct dvb_frontend *fe, u32 *status);
+	int (*get_rf_strength)(struct dvb_frontend *fe, u16 *strength);
+	int (*get_afc)(struct dvb_frontend *fe, s32 *afc);
 
 	/*
-	 * This is support क्रम demods like the mt352 - fills out the supplied
-	 * buffer with what to ग_लिखो.
+	 * This is support for demods like the mt352 - fills out the supplied
+	 * buffer with what to write.
 	 *
 	 * Don't use on newer drivers.
 	 */
-	पूर्णांक (*calc_regs)(काष्ठा dvb_frontend *fe, u8 *buf, पूर्णांक buf_len);
+	int (*calc_regs)(struct dvb_frontend *fe, u8 *buf, int buf_len);
 
 	/*
 	 * These are provided separately from set_params in order to
@@ -265,62 +264,62 @@
 	 *
 	 * Don't use on newer drivers.
 	 */
-	पूर्णांक (*set_frequency)(काष्ठा dvb_frontend *fe, u32 frequency);
-	पूर्णांक (*set_bandwidth)(काष्ठा dvb_frontend *fe, u32 bandwidth);
-पूर्ण;
+	int (*set_frequency)(struct dvb_frontend *fe, u32 frequency);
+	int (*set_bandwidth)(struct dvb_frontend *fe, u32 bandwidth);
+};
 
 /**
- * काष्ठा analog_demod_info - Inक्रमmation काष्ठा क्रम analog TV part of the demod
+ * struct analog_demod_info - Information struct for analog TV part of the demod
  *
  * @name:	Name of the analog TV demodulator
  */
-काष्ठा analog_demod_info अणु
-	अक्षर *name;
-पूर्ण;
+struct analog_demod_info {
+	char *name;
+};
 
 /**
- * काष्ठा analog_demod_ops  - Demodulation inक्रमmation and callbacks क्रम
+ * struct analog_demod_ops  - Demodulation information and callbacks for
  *			      analog TV and radio
  *
- * @info:		poपूर्णांकer to काष्ठा analog_demod_info
- * @set_params:		callback function used to inक्रमm the demod to set the
+ * @info:		pointer to struct analog_demod_info
+ * @set_params:		callback function used to inform the demod to set the
  *			demodulator parameters needed to decode an analog or
  *			radio channel. The properties are passed via
- *			&काष्ठा analog_params.
- * @has_संकेत:		वापसs 0xffff अगर has संकेत, or 0 अगर it करोesn't.
+ *			&struct analog_params.
+ * @has_signal:		returns 0xffff if has signal, or 0 if it doesn't.
  * @get_afc:		Used only by analog TV core. Reports the frequency
- *			drअगरt due to AFC.
- * @tuner_status:	callback function that वापसs tuner status bits, e. g.
+ *			drift due to AFC.
+ * @tuner_status:	callback function that returns tuner status bits, e. g.
  *			%TUNER_STATUS_LOCKED and %TUNER_STATUS_STEREO.
  * @standby:		set the tuner to standby mode.
  * @release:		callback function called when frontend is detached.
- *			drivers should मुक्त any allocated memory.
+ *			drivers should free any allocated memory.
  * @i2c_gate_ctrl:	controls the I2C gate. Newer drivers should use I2C
  *			mux support instead.
- * @set_config:		callback function used to send some tuner-specअगरic
+ * @set_config:		callback function used to send some tuner-specific
  *			parameters.
  */
-काष्ठा analog_demod_ops अणु
+struct analog_demod_ops {
 
-	काष्ठा analog_demod_info info;
+	struct analog_demod_info info;
 
-	व्योम (*set_params)(काष्ठा dvb_frontend *fe,
-			   काष्ठा analog_parameters *params);
-	पूर्णांक  (*has_संकेत)(काष्ठा dvb_frontend *fe, u16 *संकेत);
-	पूर्णांक  (*get_afc)(काष्ठा dvb_frontend *fe, s32 *afc);
-	व्योम (*tuner_status)(काष्ठा dvb_frontend *fe);
-	व्योम (*standby)(काष्ठा dvb_frontend *fe);
-	व्योम (*release)(काष्ठा dvb_frontend *fe);
-	पूर्णांक  (*i2c_gate_ctrl)(काष्ठा dvb_frontend *fe, पूर्णांक enable);
+	void (*set_params)(struct dvb_frontend *fe,
+			   struct analog_parameters *params);
+	int  (*has_signal)(struct dvb_frontend *fe, u16 *signal);
+	int  (*get_afc)(struct dvb_frontend *fe, s32 *afc);
+	void (*tuner_status)(struct dvb_frontend *fe);
+	void (*standby)(struct dvb_frontend *fe);
+	void (*release)(struct dvb_frontend *fe);
+	int  (*i2c_gate_ctrl)(struct dvb_frontend *fe, int enable);
 
-	/** This is to allow setting tuner-specअगरic configuration */
-	पूर्णांक (*set_config)(काष्ठा dvb_frontend *fe, व्योम *priv_cfg);
-पूर्ण;
+	/** This is to allow setting tuner-specific configuration */
+	int (*set_config)(struct dvb_frontend *fe, void *priv_cfg);
+};
 
-काष्ठा dtv_frontend_properties;
+struct dtv_frontend_properties;
 
 /**
- * काष्ठा dvb_frontend_पूर्णांकernal_info - Frontend properties and capabilities
+ * struct dvb_frontend_internal_info - Frontend properties and capabilities
  *
  * @name:			Name of the frontend
  * @frequency_min_hz:		Minimal frequency supported by the frontend.
@@ -328,16 +327,16 @@
  * @frequency_stepsize_hz:	All frequencies are multiple of this value.
  * @frequency_tolerance_hz:	Frequency tolerance.
  * @symbol_rate_min:		Minimal symbol rate, in bauds
- *				(क्रम Cable/Satellite प्रणालीs).
+ *				(for Cable/Satellite systems).
  * @symbol_rate_max:		Maximal symbol rate, in bauds
- *				(क्रम Cable/Satellite प्रणालीs).
+ *				(for Cable/Satellite systems).
  * @symbol_rate_tolerance:	Maximal symbol rate tolerance, in ppm
- *				(क्रम Cable/Satellite प्रणालीs).
+ *				(for Cable/Satellite systems).
  * @caps:			Capabilities supported by the frontend,
- *				as specअगरied in &क्रमागत fe_caps.
+ *				as specified in &enum fe_caps.
  */
-काष्ठा dvb_frontend_पूर्णांकernal_info अणु
-	अक्षर	name[128];
+struct dvb_frontend_internal_info {
+	char	name[128];
 	u32	frequency_min_hz;
 	u32	frequency_max_hz;
 	u32	frequency_stepsize_hz;
@@ -345,64 +344,64 @@
 	u32	symbol_rate_min;
 	u32	symbol_rate_max;
 	u32	symbol_rate_tolerance;
-	क्रमागत fe_caps caps;
-पूर्ण;
+	enum fe_caps caps;
+};
 
 /**
- * काष्ठा dvb_frontend_ops - Demodulation inक्रमmation and callbacks क्रम
+ * struct dvb_frontend_ops - Demodulation information and callbacks for
  *			      ditialt TV
  *
- * @info:		embedded &काष्ठा dvb_tuner_info with tuner properties
- * @delsys:		Delivery प्रणालीs supported by the frontend
+ * @info:		embedded &struct dvb_tuner_info with tuner properties
+ * @delsys:		Delivery systems supported by the frontend
  * @detach:		callback function called when frontend is detached.
- *			drivers should clean up, but not yet मुक्त the &काष्ठा
+ *			drivers should clean up, but not yet free the &struct
  *			dvb_frontend allocation.
- * @release:		callback function called when frontend is पढ़ोy to be
- *			मुक्तd.
- *			drivers should मुक्त any allocated memory.
+ * @release:		callback function called when frontend is ready to be
+ *			freed.
+ *			drivers should free any allocated memory.
  * @release_sec:	callback function requesting that the Satellite Equipment
- *			Control (SEC) driver to release and मुक्त any memory
+ *			Control (SEC) driver to release and free any memory
  *			allocated by the driver.
  * @init:		callback function used to initialize the tuner device.
  * @sleep:		callback function used to put the tuner to sleep.
- * @ग_लिखो:		callback function used by some demod legacy drivers to
- *			allow other drivers to ग_लिखो data पूर्णांकo their रेजिस्टरs.
+ * @write:		callback function used by some demod legacy drivers to
+ *			allow other drivers to write data into their registers.
  *			Should not be used on new drivers.
  * @tune:		callback function used by demod drivers that use
- *			@DVBFE_ALGO_HW to tune पूर्णांकo a frequency.
- * @get_frontend_algo:	वापसs the desired hardware algorithm.
- * @set_frontend:	callback function used to inक्रमm the demod to set the
- *			parameters क्रम demodulating a digital TV channel.
- *			The properties to be used are stored at &काष्ठा
+ *			@DVBFE_ALGO_HW to tune into a frequency.
+ * @get_frontend_algo:	returns the desired hardware algorithm.
+ * @set_frontend:	callback function used to inform the demod to set the
+ *			parameters for demodulating a digital TV channel.
+ *			The properties to be used are stored at &struct
  *			dvb_frontend.dtv_property_cache. The demod can change
- *			the parameters to reflect the changes needed क्रम the
+ *			the parameters to reflect the changes needed for the
  *			channel to be decoded, and update statistics.
  * @get_tune_settings:	callback function
- * @get_frontend:	callback function used to inक्रमm the parameters
+ * @get_frontend:	callback function used to inform the parameters
  *			actuall in use. The properties to be used are stored at
- *			&काष्ठा dvb_frontend.dtv_property_cache and update
- *			statistics. Please notice that it should not वापस
- *			an error code अगर the statistics are not available
+ *			&struct dvb_frontend.dtv_property_cache and update
+ *			statistics. Please notice that it should not return
+ *			an error code if the statistics are not available
  *			because the demog is not locked.
- * @पढ़ो_status:	वापसs the locking status of the frontend.
- * @पढ़ो_ber:		legacy callback function to वापस the bit error rate.
+ * @read_status:	returns the locking status of the frontend.
+ * @read_ber:		legacy callback function to return the bit error rate.
  *			Newer drivers should provide such info via DVBv5 API,
  *			e. g. @set_frontend;/@get_frontend, implementing this
- *			callback only अगर DVBv3 API compatibility is wanted.
- * @पढ़ो_संकेत_strength: legacy callback function to वापस the संकेत
+ *			callback only if DVBv3 API compatibility is wanted.
+ * @read_signal_strength: legacy callback function to return the signal
  *			strength. Newer drivers should provide such info via
  *			DVBv5 API, e. g. @set_frontend/@get_frontend,
- *			implementing this callback only अगर DVBv3 API
+ *			implementing this callback only if DVBv3 API
  *			compatibility is wanted.
- * @पढ़ो_snr:		legacy callback function to वापस the Signal/Noise
+ * @read_snr:		legacy callback function to return the Signal/Noise
  *			rate. Newer drivers should provide such info via
  *			DVBv5 API, e. g. @set_frontend/@get_frontend,
- *			implementing this callback only अगर DVBv3 API
+ *			implementing this callback only if DVBv3 API
  *			compatibility is wanted.
- * @पढ़ो_ucblocks:	legacy callback function to वापस the Uncorrected Error
+ * @read_ucblocks:	legacy callback function to return the Uncorrected Error
  *			Blocks. Newer drivers should provide such info via
  *			DVBv5 API, e. g. @set_frontend/@get_frontend,
- *			implementing this callback only अगर DVBv3 API
+ *			implementing this callback only if DVBv3 API
  *			compatibility is wanted.
  * @diseqc_reset_overload: callback function to implement the
  *			FE_DISEQC_RESET_OVERLOAD() ioctl (only Satellite)
@@ -422,97 +421,97 @@
  *			FE_DISHNETWORK_SEND_LEGACY_CMD() ioctl (only Satellite).
  *			Drivers should not use this, except when the DVB
  *			core emulation fails to provide proper support (e.g.
- *			अगर @set_voltage takes more than 8ms to work), and
+ *			if @set_voltage takes more than 8ms to work), and
  *			when backward compatibility with this legacy API is
  *			required.
  * @i2c_gate_ctrl:	controls the I2C gate. Newer drivers should use I2C
  *			mux support instead.
  * @ts_bus_ctrl:	callback function used to take control of the TS bus.
- * @set_lna:		callback function to घातer on/off/स्वतः the LNA.
+ * @set_lna:		callback function to power on/off/auto the LNA.
  * @search:		callback function used on some custom algo search algos.
- * @tuner_ops:		poपूर्णांकer to &काष्ठा dvb_tuner_ops
- * @analog_ops:		poपूर्णांकer to &काष्ठा analog_demod_ops
+ * @tuner_ops:		pointer to &struct dvb_tuner_ops
+ * @analog_ops:		pointer to &struct analog_demod_ops
  */
-काष्ठा dvb_frontend_ops अणु
-	काष्ठा dvb_frontend_पूर्णांकernal_info info;
+struct dvb_frontend_ops {
+	struct dvb_frontend_internal_info info;
 
 	u8 delsys[MAX_DELSYS];
 
-	व्योम (*detach)(काष्ठा dvb_frontend *fe);
-	व्योम (*release)(काष्ठा dvb_frontend* fe);
-	व्योम (*release_sec)(काष्ठा dvb_frontend* fe);
+	void (*detach)(struct dvb_frontend *fe);
+	void (*release)(struct dvb_frontend* fe);
+	void (*release_sec)(struct dvb_frontend* fe);
 
-	पूर्णांक (*init)(काष्ठा dvb_frontend* fe);
-	पूर्णांक (*sleep)(काष्ठा dvb_frontend* fe);
+	int (*init)(struct dvb_frontend* fe);
+	int (*sleep)(struct dvb_frontend* fe);
 
-	पूर्णांक (*ग_लिखो)(काष्ठा dvb_frontend* fe, स्थिर u8 buf[], पूर्णांक len);
+	int (*write)(struct dvb_frontend* fe, const u8 buf[], int len);
 
-	/* अगर this is set, it overrides the शेष swzigzag */
-	पूर्णांक (*tune)(काष्ठा dvb_frontend* fe,
+	/* if this is set, it overrides the default swzigzag */
+	int (*tune)(struct dvb_frontend* fe,
 		    bool re_tune,
-		    अचिन्हित पूर्णांक mode_flags,
-		    अचिन्हित पूर्णांक *delay,
-		    क्रमागत fe_status *status);
+		    unsigned int mode_flags,
+		    unsigned int *delay,
+		    enum fe_status *status);
 
 	/* get frontend tuning algorithm from the module */
-	क्रमागत dvbfe_algo (*get_frontend_algo)(काष्ठा dvb_frontend *fe);
+	enum dvbfe_algo (*get_frontend_algo)(struct dvb_frontend *fe);
 
-	/* these two are only used क्रम the swzigzag code */
-	पूर्णांक (*set_frontend)(काष्ठा dvb_frontend *fe);
-	पूर्णांक (*get_tune_settings)(काष्ठा dvb_frontend* fe, काष्ठा dvb_frontend_tune_settings* settings);
+	/* these two are only used for the swzigzag code */
+	int (*set_frontend)(struct dvb_frontend *fe);
+	int (*get_tune_settings)(struct dvb_frontend* fe, struct dvb_frontend_tune_settings* settings);
 
-	पूर्णांक (*get_frontend)(काष्ठा dvb_frontend *fe,
-			    काष्ठा dtv_frontend_properties *props);
+	int (*get_frontend)(struct dvb_frontend *fe,
+			    struct dtv_frontend_properties *props);
 
-	पूर्णांक (*पढ़ो_status)(काष्ठा dvb_frontend *fe, क्रमागत fe_status *status);
-	पूर्णांक (*पढ़ो_ber)(काष्ठा dvb_frontend* fe, u32* ber);
-	पूर्णांक (*पढ़ो_संकेत_strength)(काष्ठा dvb_frontend* fe, u16* strength);
-	पूर्णांक (*पढ़ो_snr)(काष्ठा dvb_frontend* fe, u16* snr);
-	पूर्णांक (*पढ़ो_ucblocks)(काष्ठा dvb_frontend* fe, u32* ucblocks);
+	int (*read_status)(struct dvb_frontend *fe, enum fe_status *status);
+	int (*read_ber)(struct dvb_frontend* fe, u32* ber);
+	int (*read_signal_strength)(struct dvb_frontend* fe, u16* strength);
+	int (*read_snr)(struct dvb_frontend* fe, u16* snr);
+	int (*read_ucblocks)(struct dvb_frontend* fe, u32* ucblocks);
 
-	पूर्णांक (*diseqc_reset_overload)(काष्ठा dvb_frontend* fe);
-	पूर्णांक (*diseqc_send_master_cmd)(काष्ठा dvb_frontend* fe, काष्ठा dvb_diseqc_master_cmd* cmd);
-	पूर्णांक (*diseqc_recv_slave_reply)(काष्ठा dvb_frontend* fe, काष्ठा dvb_diseqc_slave_reply* reply);
-	पूर्णांक (*diseqc_send_burst)(काष्ठा dvb_frontend *fe,
-				 क्रमागत fe_sec_mini_cmd minicmd);
-	पूर्णांक (*set_tone)(काष्ठा dvb_frontend *fe, क्रमागत fe_sec_tone_mode tone);
-	पूर्णांक (*set_voltage)(काष्ठा dvb_frontend *fe,
-			   क्रमागत fe_sec_voltage voltage);
-	पूर्णांक (*enable_high_lnb_voltage)(काष्ठा dvb_frontend* fe, दीर्घ arg);
-	पूर्णांक (*dishnetwork_send_legacy_command)(काष्ठा dvb_frontend* fe, अचिन्हित दीर्घ cmd);
-	पूर्णांक (*i2c_gate_ctrl)(काष्ठा dvb_frontend* fe, पूर्णांक enable);
-	पूर्णांक (*ts_bus_ctrl)(काष्ठा dvb_frontend* fe, पूर्णांक acquire);
-	पूर्णांक (*set_lna)(काष्ठा dvb_frontend *);
+	int (*diseqc_reset_overload)(struct dvb_frontend* fe);
+	int (*diseqc_send_master_cmd)(struct dvb_frontend* fe, struct dvb_diseqc_master_cmd* cmd);
+	int (*diseqc_recv_slave_reply)(struct dvb_frontend* fe, struct dvb_diseqc_slave_reply* reply);
+	int (*diseqc_send_burst)(struct dvb_frontend *fe,
+				 enum fe_sec_mini_cmd minicmd);
+	int (*set_tone)(struct dvb_frontend *fe, enum fe_sec_tone_mode tone);
+	int (*set_voltage)(struct dvb_frontend *fe,
+			   enum fe_sec_voltage voltage);
+	int (*enable_high_lnb_voltage)(struct dvb_frontend* fe, long arg);
+	int (*dishnetwork_send_legacy_command)(struct dvb_frontend* fe, unsigned long cmd);
+	int (*i2c_gate_ctrl)(struct dvb_frontend* fe, int enable);
+	int (*ts_bus_ctrl)(struct dvb_frontend* fe, int acquire);
+	int (*set_lna)(struct dvb_frontend *);
 
 	/*
-	 * These callbacks are क्रम devices that implement their own
+	 * These callbacks are for devices that implement their own
 	 * tuning algorithms, rather than a simple swzigzag
 	 */
-	क्रमागत dvbfe_search (*search)(काष्ठा dvb_frontend *fe);
+	enum dvbfe_search (*search)(struct dvb_frontend *fe);
 
-	काष्ठा dvb_tuner_ops tuner_ops;
-	काष्ठा analog_demod_ops analog_ops;
-पूर्ण;
+	struct dvb_tuner_ops tuner_ops;
+	struct analog_demod_ops analog_ops;
+};
 
-#अगर_घोषित __DVB_CORE__
-#घोषणा MAX_EVENT 8
+#ifdef __DVB_CORE__
+#define MAX_EVENT 8
 
-/* Used only पूर्णांकernally at dvb_frontend.c */
-काष्ठा dvb_fe_events अणु
-	काष्ठा dvb_frontend_event events[MAX_EVENT];
-	पूर्णांक			  eventw;
-	पूर्णांक			  eventr;
-	पूर्णांक			  overflow;
-	रुको_queue_head_t	  रुको_queue;
-	काष्ठा mutex		  mtx;
-पूर्ण;
-#पूर्ण_अगर
+/* Used only internally at dvb_frontend.c */
+struct dvb_fe_events {
+	struct dvb_frontend_event events[MAX_EVENT];
+	int			  eventw;
+	int			  eventr;
+	int			  overflow;
+	wait_queue_head_t	  wait_queue;
+	struct mutex		  mtx;
+};
+#endif
 
 /**
- * काष्ठा dtv_frontend_properties - contains a list of properties that are
- *				    specअगरic to a digital TV standard.
+ * struct dtv_frontend_properties - contains a list of properties that are
+ *				    specific to a digital TV standard.
  *
- * @frequency:		frequency in Hz क्रम terrestrial/cable or in kHz क्रम
+ * @frequency:		frequency in Hz for terrestrial/cable or in kHz for
  *			Satellite
  * @modulation:		Frontend modulation type
  * @voltage:		SEC voltage (only Satellite)
@@ -521,16 +520,16 @@
  * @fec_inner:		Forward error correction inner Code Rate
  * @transmission_mode:	Transmission Mode
  * @bandwidth_hz:	Bandwidth, in Hz. A zero value means that userspace
- *			wants to स्वतःdetect.
- * @guard_पूर्णांकerval:	Guard Interval
+ *			wants to autodetect.
+ * @guard_interval:	Guard Interval
  * @hierarchy:		Hierarchy
  * @symbol_rate:	Symbol Rate
  * @code_rate_HP:	high priority stream code rate
  * @code_rate_LP:	low priority stream code rate
- * @pilot:		Enable/disable/स्वतःdetect pilot tones
+ * @pilot:		Enable/disable/autodetect pilot tones
  * @rolloff:		Rolloff factor (alpha)
- * @delivery_प्रणाली:	FE delivery प्रणाली (e. g. digital TV standard)
- * @पूर्णांकerleaving:	पूर्णांकerleaving
+ * @delivery_system:	FE delivery system (e. g. digital TV standard)
+ * @interleaving:	interleaving
  * @isdbt_partial_reception: ISDB-T partial reception (only ISDB standard)
  * @isdbt_sb_mode:	ISDB-T Sound Broadcast (SB) mode (only ISDB standard)
  * @isdbt_sb_subchannel:	ISDB-T SB subchannel (only ISDB standard)
@@ -541,18 +540,18 @@
  * @layer.segment_count: Segment Count;
  * @layer.fec:		per layer code rate;
  * @layer.modulation:	per layer modulation;
- * @layer.पूर्णांकerleaving:	 per layer पूर्णांकerleaving.
- * @stream_id:		If dअगरferent than zero, enable substream filtering, अगर
+ * @layer.interleaving:	 per layer interleaving.
+ * @stream_id:		If different than zero, enable substream filtering, if
  *			hardware supports (DVB-S2 and DVB-T2).
  * @scrambling_sequence_index:	Carries the index of the DVB-S2 physical layer
  *				scrambling sequence.
- * @atscmh_fic_ver:	Version number of the FIC (Fast Inक्रमmation Channel)
- *			संकेतing data (only ATSC-M/H)
- * @atscmh_parade_id:	Parade identअगरication number (only ATSC-M/H)
- * @atscmh_nog:		Number of MH groups per MH subframe क्रम a designated
+ * @atscmh_fic_ver:	Version number of the FIC (Fast Information Channel)
+ *			signaling data (only ATSC-M/H)
+ * @atscmh_parade_id:	Parade identification number (only ATSC-M/H)
+ * @atscmh_nog:		Number of MH groups per MH subframe for a designated
  *			parade (only ATSC-M/H)
  * @atscmh_tnog:	Total number of MH groups including all MH groups
- *			beदीर्घing to all MH parades in one MH subframe
+ *			belonging to all MH parades in one MH subframe
  *			(only ATSC-M/H)
  * @atscmh_sgn:		Start group number (only ATSC-M/H)
  * @atscmh_prc:		Parade repetition cycle (only ATSC-M/H)
@@ -566,10 +565,10 @@
  * @atscmh_sccc_code_mode_b:	SCCC code mode B (only ATSC-M/H)
  * @atscmh_sccc_code_mode_c:	SCCC code mode C (only ATSC-M/H)
  * @atscmh_sccc_code_mode_d:	SCCC code mode D (only ATSC-M/H)
- * @lna:		Power ON/OFF/AUTO the Linear Now-noise Amplअगरier (LNA)
+ * @lna:		Power ON/OFF/AUTO the Linear Now-noise Amplifier (LNA)
  * @strength:		DVBv5 API statistics: Signal Strength
  * @cnr:		DVBv5 API statistics: Signal to Noise ratio of the
- *			(मुख्य) carrier
+ *			(main) carrier
  * @pre_bit_error:	DVBv5 API statistics: pre-Viterbi bit error count
  * @pre_bit_count:	DVBv5 API statistics: pre-Viterbi bit count
  * @post_bit_error:	DVBv5 API statistics: post-Viterbi bit error count
@@ -580,54 +579,54 @@
  * NOTE: derivated statistics like Uncorrected Error blocks (UCE) are
  * calculated on userspace.
  *
- * Only a subset of the properties are needed क्रम a given delivery प्रणाली.
- * For more info, consult the media_api.hपंचांगl with the करोcumentation of the
+ * Only a subset of the properties are needed for a given delivery system.
+ * For more info, consult the media_api.html with the documentation of the
  * Userspace API.
  */
-काष्ठा dtv_frontend_properties अणु
+struct dtv_frontend_properties {
 	u32			frequency;
-	क्रमागत fe_modulation	modulation;
+	enum fe_modulation	modulation;
 
-	क्रमागत fe_sec_voltage	voltage;
-	क्रमागत fe_sec_tone_mode	sectone;
-	क्रमागत fe_spectral_inversion inversion;
-	क्रमागत fe_code_rate	fec_inner;
-	क्रमागत fe_transmit_mode	transmission_mode;
+	enum fe_sec_voltage	voltage;
+	enum fe_sec_tone_mode	sectone;
+	enum fe_spectral_inversion inversion;
+	enum fe_code_rate	fec_inner;
+	enum fe_transmit_mode	transmission_mode;
 	u32			bandwidth_hz;	/* 0 = AUTO */
-	क्रमागत fe_guard_पूर्णांकerval	guard_पूर्णांकerval;
-	क्रमागत fe_hierarchy	hierarchy;
+	enum fe_guard_interval	guard_interval;
+	enum fe_hierarchy	hierarchy;
 	u32			symbol_rate;
-	क्रमागत fe_code_rate	code_rate_HP;
-	क्रमागत fe_code_rate	code_rate_LP;
+	enum fe_code_rate	code_rate_HP;
+	enum fe_code_rate	code_rate_LP;
 
-	क्रमागत fe_pilot		pilot;
-	क्रमागत fe_rolloff		rolloff;
+	enum fe_pilot		pilot;
+	enum fe_rolloff		rolloff;
 
-	क्रमागत fe_delivery_प्रणाली	delivery_प्रणाली;
+	enum fe_delivery_system	delivery_system;
 
-	क्रमागत fe_पूर्णांकerleaving	पूर्णांकerleaving;
+	enum fe_interleaving	interleaving;
 
-	/* ISDB-T specअगरics */
+	/* ISDB-T specifics */
 	u8			isdbt_partial_reception;
 	u8			isdbt_sb_mode;
 	u8			isdbt_sb_subchannel;
 	u32			isdbt_sb_segment_idx;
 	u32			isdbt_sb_segment_count;
 	u8			isdbt_layer_enabled;
-	काष्ठा अणु
+	struct {
 	    u8			segment_count;
-	    क्रमागत fe_code_rate	fec;
-	    क्रमागत fe_modulation	modulation;
-	    u8			पूर्णांकerleaving;
-	पूर्ण layer[3];
+	    enum fe_code_rate	fec;
+	    enum fe_modulation	modulation;
+	    u8			interleaving;
+	} layer[3];
 
-	/* Multistream specअगरics */
+	/* Multistream specifics */
 	u32			stream_id;
 
-	/* Physical Layer Scrambling specअगरics */
+	/* Physical Layer Scrambling specifics */
 	u32			scrambling_sequence_index;
 
-	/* ATSC-MH specअगरics */
+	/* ATSC-MH specifics */
 	u8			atscmh_fic_ver;
 	u8			atscmh_parade_id;
 	u8			atscmh_nog;
@@ -648,179 +647,179 @@
 	u32			lna;
 
 	/* statistics data */
-	काष्ठा dtv_fe_stats	strength;
-	काष्ठा dtv_fe_stats	cnr;
-	काष्ठा dtv_fe_stats	pre_bit_error;
-	काष्ठा dtv_fe_stats	pre_bit_count;
-	काष्ठा dtv_fe_stats	post_bit_error;
-	काष्ठा dtv_fe_stats	post_bit_count;
-	काष्ठा dtv_fe_stats	block_error;
-	काष्ठा dtv_fe_stats	block_count;
-पूर्ण;
+	struct dtv_fe_stats	strength;
+	struct dtv_fe_stats	cnr;
+	struct dtv_fe_stats	pre_bit_error;
+	struct dtv_fe_stats	pre_bit_count;
+	struct dtv_fe_stats	post_bit_error;
+	struct dtv_fe_stats	post_bit_count;
+	struct dtv_fe_stats	block_error;
+	struct dtv_fe_stats	block_count;
+};
 
-#घोषणा DVB_FE_NO_EXIT  0
-#घोषणा DVB_FE_NORMAL_EXIT      1
-#घोषणा DVB_FE_DEVICE_REMOVED   2
-#घोषणा DVB_FE_DEVICE_RESUME    3
+#define DVB_FE_NO_EXIT  0
+#define DVB_FE_NORMAL_EXIT      1
+#define DVB_FE_DEVICE_REMOVED   2
+#define DVB_FE_DEVICE_RESUME    3
 
 /**
- * काष्ठा dvb_frontend - Frontend काष्ठाure to be used on drivers.
+ * struct dvb_frontend - Frontend structure to be used on drivers.
  *
- * @refcount:		refcount to keep track of &काष्ठा dvb_frontend
+ * @refcount:		refcount to keep track of &struct dvb_frontend
  *			references
- * @ops:		embedded &काष्ठा dvb_frontend_ops
- * @dvb:		poपूर्णांकer to &काष्ठा dvb_adapter
- * @demodulator_priv:	demod निजी data
- * @tuner_priv:		tuner निजी data
- * @frontend_priv:	frontend निजी data
- * @sec_priv:		SEC निजी data
- * @analog_demod_priv:	Analog demod निजी data
- * @dtv_property_cache:	embedded &काष्ठा dtv_frontend_properties
+ * @ops:		embedded &struct dvb_frontend_ops
+ * @dvb:		pointer to &struct dvb_adapter
+ * @demodulator_priv:	demod private data
+ * @tuner_priv:		tuner private data
+ * @frontend_priv:	frontend private data
+ * @sec_priv:		SEC private data
+ * @analog_demod_priv:	Analog demod private data
+ * @dtv_property_cache:	embedded &struct dtv_frontend_properties
  * @callback:		callback function used on some drivers to call
  *			either the tuner or the demodulator.
  * @id:			Frontend ID
- * @निकास:		Used to inक्रमm the DVB core that the frontend
- *			thपढ़ो should निकास (usually, means that the hardware
+ * @exit:		Used to inform the DVB core that the frontend
+ *			thread should exit (usually, means that the hardware
  *			got disconnected.
  */
 
-काष्ठा dvb_frontend अणु
-	काष्ठा kref refcount;
-	काष्ठा dvb_frontend_ops ops;
-	काष्ठा dvb_adapter *dvb;
-	व्योम *demodulator_priv;
-	व्योम *tuner_priv;
-	व्योम *frontend_priv;
-	व्योम *sec_priv;
-	व्योम *analog_demod_priv;
-	काष्ठा dtv_frontend_properties dtv_property_cache;
-#घोषणा DVB_FRONTEND_COMPONENT_TUNER 0
-#घोषणा DVB_FRONTEND_COMPONENT_DEMOD 1
-	पूर्णांक (*callback)(व्योम *adapter_priv, पूर्णांक component, पूर्णांक cmd, पूर्णांक arg);
-	पूर्णांक id;
-	अचिन्हित पूर्णांक निकास;
-पूर्ण;
+struct dvb_frontend {
+	struct kref refcount;
+	struct dvb_frontend_ops ops;
+	struct dvb_adapter *dvb;
+	void *demodulator_priv;
+	void *tuner_priv;
+	void *frontend_priv;
+	void *sec_priv;
+	void *analog_demod_priv;
+	struct dtv_frontend_properties dtv_property_cache;
+#define DVB_FRONTEND_COMPONENT_TUNER 0
+#define DVB_FRONTEND_COMPONENT_DEMOD 1
+	int (*callback)(void *adapter_priv, int component, int cmd, int arg);
+	int id;
+	unsigned int exit;
+};
 
 /**
- * dvb_रेजिस्टर_frontend() - Registers a DVB frontend at the adapter
+ * dvb_register_frontend() - Registers a DVB frontend at the adapter
  *
- * @dvb: poपूर्णांकer to &काष्ठा dvb_adapter
- * @fe: poपूर्णांकer to &काष्ठा dvb_frontend
+ * @dvb: pointer to &struct dvb_adapter
+ * @fe: pointer to &struct dvb_frontend
  *
- * Allocate and initialize the निजी data needed by the frontend core to
- * manage the frontend and calls dvb_रेजिस्टर_device() to रेजिस्टर a new
+ * Allocate and initialize the private data needed by the frontend core to
+ * manage the frontend and calls dvb_register_device() to register a new
  * frontend. It also cleans the property cache that stores the frontend
- * parameters and selects the first available delivery प्रणाली.
+ * parameters and selects the first available delivery system.
  */
-पूर्णांक dvb_रेजिस्टर_frontend(काष्ठा dvb_adapter *dvb,
-				 काष्ठा dvb_frontend *fe);
+int dvb_register_frontend(struct dvb_adapter *dvb,
+				 struct dvb_frontend *fe);
 
 /**
- * dvb_unरेजिस्टर_frontend() - Unरेजिस्टरs a DVB frontend
+ * dvb_unregister_frontend() - Unregisters a DVB frontend
  *
- * @fe: poपूर्णांकer to &काष्ठा dvb_frontend
+ * @fe: pointer to &struct dvb_frontend
  *
- * Stops the frontend kthपढ़ो, calls dvb_unरेजिस्टर_device() and मुक्तs the
- * निजी frontend data allocated by dvb_रेजिस्टर_frontend().
+ * Stops the frontend kthread, calls dvb_unregister_device() and frees the
+ * private frontend data allocated by dvb_register_frontend().
  *
- * NOTE: This function करोesn't मुक्तs the memory allocated by the demod,
- * by the SEC driver and by the tuner. In order to मुक्त it, an explicit call to
+ * NOTE: This function doesn't frees the memory allocated by the demod,
+ * by the SEC driver and by the tuner. In order to free it, an explicit call to
  * dvb_frontend_detach() is needed, after calling this function.
  */
-पूर्णांक dvb_unरेजिस्टर_frontend(काष्ठा dvb_frontend *fe);
+int dvb_unregister_frontend(struct dvb_frontend *fe);
 
 /**
- * dvb_frontend_detach() - Detaches and मुक्तs frontend specअगरic data
+ * dvb_frontend_detach() - Detaches and frees frontend specific data
  *
- * @fe: poपूर्णांकer to &काष्ठा dvb_frontend
+ * @fe: pointer to &struct dvb_frontend
  *
- * This function should be called after dvb_unरेजिस्टर_frontend(). It
+ * This function should be called after dvb_unregister_frontend(). It
  * calls the SEC, tuner and demod release functions:
  * &dvb_frontend_ops.release_sec, &dvb_frontend_ops.tuner_ops.release,
  * &dvb_frontend_ops.analog_ops.release and &dvb_frontend_ops.release.
  *
  * If the driver is compiled with %CONFIG_MEDIA_ATTACH, it also decreases
- * the module reference count, needed to allow userspace to हटाओ the
+ * the module reference count, needed to allow userspace to remove the
  * previously used DVB frontend modules.
  */
-व्योम dvb_frontend_detach(काष्ठा dvb_frontend *fe);
+void dvb_frontend_detach(struct dvb_frontend *fe);
 
 /**
  * dvb_frontend_suspend() - Suspends a Digital TV frontend
  *
- * @fe: poपूर्णांकer to &काष्ठा dvb_frontend
+ * @fe: pointer to &struct dvb_frontend
  *
  * This function prepares a Digital TV frontend to suspend.
  *
- * In order to prepare the tuner to suspend, अगर
+ * In order to prepare the tuner to suspend, if
  * &dvb_frontend_ops.tuner_ops.suspend\(\) is available, it calls it. Otherwise,
- * it will call &dvb_frontend_ops.tuner_ops.sleep\(\), अगर available.
+ * it will call &dvb_frontend_ops.tuner_ops.sleep\(\), if available.
  *
  * It will also call &dvb_frontend_ops.sleep\(\) to put the demod to suspend.
  *
  * The drivers should also call dvb_frontend_suspend\(\) as part of their
- * handler क्रम the &device_driver.suspend\(\).
+ * handler for the &device_driver.suspend\(\).
  */
-पूर्णांक dvb_frontend_suspend(काष्ठा dvb_frontend *fe);
+int dvb_frontend_suspend(struct dvb_frontend *fe);
 
 /**
  * dvb_frontend_resume() - Resumes a Digital TV frontend
  *
- * @fe: poपूर्णांकer to &काष्ठा dvb_frontend
+ * @fe: pointer to &struct dvb_frontend
  *
  * This function resumes the usual operation of the tuner after resume.
  *
  * In order to resume the frontend, it calls the demod &dvb_frontend_ops.init\(\).
  *
  * If &dvb_frontend_ops.tuner_ops.resume\(\) is available, It, it calls it.
- * Otherwise,t will call &dvb_frontend_ops.tuner_ops.init\(\), अगर available.
+ * Otherwise,t will call &dvb_frontend_ops.tuner_ops.init\(\), if available.
  *
- * Once tuner and demods are resumed, it will enक्रमce that the SEC voltage and
+ * Once tuner and demods are resumed, it will enforce that the SEC voltage and
  * tone are restored to their previous values and wake up the frontend's
- * kthपढ़ो in order to retune the frontend.
+ * kthread in order to retune the frontend.
  *
  * The drivers should also call dvb_frontend_resume() as part of their
- * handler क्रम the &device_driver.resume\(\).
+ * handler for the &device_driver.resume\(\).
  */
-पूर्णांक dvb_frontend_resume(काष्ठा dvb_frontend *fe);
+int dvb_frontend_resume(struct dvb_frontend *fe);
 
 /**
- * dvb_frontend_reinitialise() - क्रमces a reinitialisation at the frontend
+ * dvb_frontend_reinitialise() - forces a reinitialisation at the frontend
  *
- * @fe: poपूर्णांकer to &काष्ठा dvb_frontend
+ * @fe: pointer to &struct dvb_frontend
  *
  * Calls &dvb_frontend_ops.init\(\) and &dvb_frontend_ops.tuner_ops.init\(\),
- * and resets SEC tone and voltage (क्रम Satellite प्रणालीs).
+ * and resets SEC tone and voltage (for Satellite systems).
  *
  * NOTE: Currently, this function is used only by one driver (budget-av).
- * It seems to be due to address some special issue with that specअगरic
+ * It seems to be due to address some special issue with that specific
  * frontend.
  */
-व्योम dvb_frontend_reinitialise(काष्ठा dvb_frontend *fe);
+void dvb_frontend_reinitialise(struct dvb_frontend *fe);
 
 /**
- * dvb_frontend_sleep_until() - Sleep क्रम the amount of समय given by
+ * dvb_frontend_sleep_until() - Sleep for the amount of time given by
  *                      add_usec parameter
  *
- * @wakeसमय: poपूर्णांकer to &काष्ठा kसमय_प्रकार
- * @add_usec: समय to sleep, in microseconds
+ * @waketime: pointer to &struct ktime_t
+ * @add_usec: time to sleep, in microseconds
  *
- * This function is used to measure the समय required क्रम the
+ * This function is used to measure the time required for the
  * FE_DISHNETWORK_SEND_LEGACY_CMD() ioctl to work. It needs to be as precise
  * as possible, as it affects the detection of the dish tone command at the
- * satellite subप्रणाली.
+ * satellite subsystem.
  *
- * Its used पूर्णांकernally by the DVB frontend core, in order to emulate
+ * Its used internally by the DVB frontend core, in order to emulate
  * FE_DISHNETWORK_SEND_LEGACY_CMD() using the &dvb_frontend_ops.set_voltage\(\)
  * callback.
  *
- * NOTE: it should not be used at the drivers, as the emulation क्रम the
+ * NOTE: it should not be used at the drivers, as the emulation for the
  * legacy callback is provided by the Kernel. The only situation where this
  * should be at the drivers is when there are some bugs at the hardware that
- * would prevent the core emulation to work. On such हालs, the driver would
+ * would prevent the core emulation to work. On such cases, the driver would
  * be writing a &dvb_frontend_ops.dishnetwork_send_legacy_command\(\) and
  * calling this function directly.
  */
-व्योम dvb_frontend_sleep_until(kसमय_प्रकार *wakeसमय, u32 add_usec);
+void dvb_frontend_sleep_until(ktime_t *waketime, u32 add_usec);
 
-#पूर्ण_अगर
+#endif

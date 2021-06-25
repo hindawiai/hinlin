@@ -1,28 +1,27 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * trace_events_filter - generic event filtering
  *
  * Copyright (C) 2009 Tom Zanussi <tzanussi@gmail.com>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/प्रकार.स>
-#समावेश <linux/mutex.h>
-#समावेश <linux/perf_event.h>
-#समावेश <linux/slab.h>
+#include <linux/module.h>
+#include <linux/ctype.h>
+#include <linux/mutex.h>
+#include <linux/perf_event.h>
+#include <linux/slab.h>
 
-#समावेश "trace.h"
-#समावेश "trace_output.h"
+#include "trace.h"
+#include "trace_output.h"
 
-#घोषणा DEFAULT_SYS_FILTER_MESSAGE					\
+#define DEFAULT_SYS_FILTER_MESSAGE					\
 	"### global filter ###\n"					\
 	"# Use this to set filters for multiple events.\n"		\
 	"# Only events with the given fields will be affected.\n"	\
 	"# If no events are modified, an error message will be displayed here"
 
 /* Due to token parsing '<=' must be before '<' and '>=' must be before '>' */
-#घोषणा OPS					\
+#define OPS					\
 	C( OP_GLOB,	"~"  ),			\
 	C( OP_NE,	"!=" ),			\
 	C( OP_EQ,	"==" ),			\
@@ -31,26 +30,26 @@
 	C( OP_GE,	">=" ),			\
 	C( OP_GT,	">"  ),			\
 	C( OP_BAND,	"&"  ),			\
-	C( OP_MAX,	शून्य )
+	C( OP_MAX,	NULL )
 
-#अघोषित C
-#घोषणा C(a, b)	a
+#undef C
+#define C(a, b)	a
 
-क्रमागत filter_op_ids अणु OPS पूर्ण;
+enum filter_op_ids { OPS };
 
-#अघोषित C
-#घोषणा C(a, b)	b
+#undef C
+#define C(a, b)	b
 
-अटल स्थिर अक्षर * ops[] = अणु OPS पूर्ण;
+static const char * ops[] = { OPS };
 
 /*
  * pred functions are OP_LE, OP_LT, OP_GE, OP_GT, and OP_BAND
  * pred_funcs_##type below must match the order of them above.
  */
-#घोषणा PRED_FUNC_START			OP_LE
-#घोषणा PRED_FUNC_MAX			(OP_BAND - PRED_FUNC_START)
+#define PRED_FUNC_START			OP_LE
+#define PRED_FUNC_MAX			(OP_BAND - PRED_FUNC_START)
 
-#घोषणा ERRORS								\
+#define ERRORS								\
 	C(NONE,			"No error"),				\
 	C(INVALID_OP,		"Invalid operator"),			\
 	C(TOO_MANY_OPEN,	"Too many '('"),			\
@@ -70,143 +69,143 @@
 	C(ERRNO,		"Error"),				\
 	C(NO_FILTER,		"No filter found")
 
-#अघोषित C
-#घोषणा C(a, b)		FILT_ERR_##a
+#undef C
+#define C(a, b)		FILT_ERR_##a
 
-क्रमागत अणु ERRORS पूर्ण;
+enum { ERRORS };
 
-#अघोषित C
-#घोषणा C(a, b)		b
+#undef C
+#define C(a, b)		b
 
-अटल स्थिर अक्षर *err_text[] = अणु ERRORS पूर्ण;
+static const char *err_text[] = { ERRORS };
 
-/* Called after a '!' अक्षरacter but "!=" and "!~" are not "not"s */
-अटल bool is_not(स्थिर अक्षर *str)
-अणु
-	चयन (str[1]) अणु
-	हाल '=':
-	हाल '~':
-		वापस false;
-	पूर्ण
-	वापस true;
-पूर्ण
+/* Called after a '!' character but "!=" and "!~" are not "not"s */
+static bool is_not(const char *str)
+{
+	switch (str[1]) {
+	case '=':
+	case '~':
+		return false;
+	}
+	return true;
+}
 
 /**
  * prog_entry - a singe entry in the filter program
  * @target:	     Index to jump to on a branch (actually one minus the index)
- * @when_to_branch:  The value of the result of the predicate to करो a branch
+ * @when_to_branch:  The value of the result of the predicate to do a branch
  * @pred:	     The predicate to execute.
  */
-काष्ठा prog_entry अणु
-	पूर्णांक			target;
-	पूर्णांक			when_to_branch;
-	काष्ठा filter_pred	*pred;
-पूर्ण;
+struct prog_entry {
+	int			target;
+	int			when_to_branch;
+	struct filter_pred	*pred;
+};
 
 /**
  * update_preds- assign a program entry a label target
  * @prog: The program array
  * @N: The index of the current entry in @prog
- * @when_to_branch: What to assign a program entry क्रम its branch condition
+ * @when_to_branch: What to assign a program entry for its branch condition
  *
- * The program entry at @N has a target that poपूर्णांकs to the index of a program
+ * The program entry at @N has a target that points to the index of a program
  * entry that can have its target and when_to_branch fields updated.
  * Update the current program entry denoted by index @N target field to be
- * that of the updated entry. This will denote the entry to update अगर
+ * that of the updated entry. This will denote the entry to update if
  * we are processing an "||" after an "&&"
  */
-अटल व्योम update_preds(काष्ठा prog_entry *prog, पूर्णांक N, पूर्णांक invert)
-अणु
-	पूर्णांक t, s;
+static void update_preds(struct prog_entry *prog, int N, int invert)
+{
+	int t, s;
 
 	t = prog[N].target;
 	s = prog[t].target;
 	prog[t].when_to_branch = invert;
 	prog[t].target = N;
 	prog[N].target = s;
-पूर्ण
+}
 
-काष्ठा filter_parse_error अणु
-	पूर्णांक lasterr;
-	पूर्णांक lasterr_pos;
-पूर्ण;
+struct filter_parse_error {
+	int lasterr;
+	int lasterr_pos;
+};
 
-अटल व्योम parse_error(काष्ठा filter_parse_error *pe, पूर्णांक err, पूर्णांक pos)
-अणु
+static void parse_error(struct filter_parse_error *pe, int err, int pos)
+{
 	pe->lasterr = err;
 	pe->lasterr_pos = pos;
-पूर्ण
+}
 
-प्रकार पूर्णांक (*parse_pred_fn)(स्थिर अक्षर *str, व्योम *data, पूर्णांक pos,
-			     काष्ठा filter_parse_error *pe,
-			     काष्ठा filter_pred **pred);
+typedef int (*parse_pred_fn)(const char *str, void *data, int pos,
+			     struct filter_parse_error *pe,
+			     struct filter_pred **pred);
 
-क्रमागत अणु
+enum {
 	INVERT		= 1,
 	PROCESS_AND	= 2,
 	PROCESS_OR	= 4,
-पूर्ण;
+};
 
 /*
- * Without going पूर्णांकo a क्रमmal proof, this explains the method that is used in
+ * Without going into a formal proof, this explains the method that is used in
  * parsing the logical expressions.
  *
- * For example, अगर we have: "a && !(!b || (c && g)) || d || e && !f"
- * The first pass will convert it पूर्णांकo the following program:
+ * For example, if we have: "a && !(!b || (c && g)) || d || e && !f"
+ * The first pass will convert it into the following program:
  *
- * n1: r=a;       l1: अगर (!r) जाओ l4;
- * n2: r=b;       l2: अगर (!r) जाओ l4;
- * n3: r=c; r=!r; l3: अगर (r) जाओ l4;
- * n4: r=g; r=!r; l4: अगर (r) जाओ l5;
- * n5: r=d;       l5: अगर (r) जाओ T
- * n6: r=e;       l6: अगर (!r) जाओ l7;
- * n7: r=f; r=!r; l7: अगर (!r) जाओ F
- * T: वापस TRUE
- * F: वापस FALSE
+ * n1: r=a;       l1: if (!r) goto l4;
+ * n2: r=b;       l2: if (!r) goto l4;
+ * n3: r=c; r=!r; l3: if (r) goto l4;
+ * n4: r=g; r=!r; l4: if (r) goto l5;
+ * n5: r=d;       l5: if (r) goto T
+ * n6: r=e;       l6: if (!r) goto l7;
+ * n7: r=f; r=!r; l7: if (!r) goto F
+ * T: return TRUE
+ * F: return FALSE
  *
- * To करो this, we use a data काष्ठाure to represent each of the above
+ * To do this, we use a data structure to represent each of the above
  * predicate and conditions that has:
  *
  *  predicate, when_to_branch, invert, target
  *
  * The "predicate" will hold the function to determine the result "r".
- * The "when_to_branch" denotes what "r" should be अगर a branch is to be taken
+ * The "when_to_branch" denotes what "r" should be if a branch is to be taken
  * "&&" would contain "!r" or (0) and "||" would contain "r" or (1).
- * The "invert" holds whether the value should be reversed beक्रमe testing.
+ * The "invert" holds whether the value should be reversed before testing.
  * The "target" contains the label "l#" to jump to.
  *
  * A stack is created to hold values when parentheses are used.
  *
- * To simplअगरy the logic, the labels will start at 0 and not 1.
+ * To simplify the logic, the labels will start at 0 and not 1.
  *
  * The possible invert values are 1 and 0. The number of "!"s that are in scope
- * beक्रमe the predicate determines the invert value, अगर the number is odd then
+ * before the predicate determines the invert value, if the number is odd then
  * the invert value is 1 and 0 otherwise. This means the invert value only
- * needs to be toggled when a new "!" is पूर्णांकroduced compared to what is stored
+ * needs to be toggled when a new "!" is introduced compared to what is stored
  * on the stack, where parentheses were used.
  *
  * The top of the stack and "invert" are initialized to zero.
  *
  * ** FIRST PASS **
  *
- * #1 A loop through all the tokens is करोne:
+ * #1 A loop through all the tokens is done:
  *
  * #2 If the token is an "(", the stack is push, and the current stack value
- *    माला_लो the current invert value, and the loop जारीs to the next token.
+ *    gets the current invert value, and the loop continues to the next token.
  *    The top of the stack saves the "invert" value to keep track of what
  *    the current inversion is. As "!(a && !b || c)" would require all
- *    predicates being affected separately by the "!" beक्रमe the parentheses.
+ *    predicates being affected separately by the "!" before the parentheses.
  *    And that would end up being equivalent to "(!a || b) && !c"
  *
- * #3 If the token is an "!", the current "invert" value माला_लो inverted, and
- *    the loop जारीs. Note, अगर the next token is a predicate, then
- *    this "invert" value is only valid क्रम the current program entry,
- *    and करोes not affect other predicates later on.
+ * #3 If the token is an "!", the current "invert" value gets inverted, and
+ *    the loop continues. Note, if the next token is a predicate, then
+ *    this "invert" value is only valid for the current program entry,
+ *    and does not affect other predicates later on.
  *
  * The only other acceptable token is the predicate string.
  *
- * #4 A new entry पूर्णांकo the program is added saving: the predicate and the
- *    current value of "invert". The target is currently asचिन्हित to the
+ * #4 A new entry into the program is added saving: the predicate and the
+ *    current value of "invert". The target is currently assigned to the
  *    previous program index (this will not be its final value).
  *
  * #5 We now enter another loop and look at the next token. The only valid
@@ -216,50 +215,50 @@
  *    the stack.
  *
  * #7 The top of the stack holds not only the current invert value, but also
- *    अगर a "&&" or "||" needs to be processed. Note, the "&&" takes higher
+ *    if a "&&" or "||" needs to be processed. Note, the "&&" takes higher
  *    precedence than "||". That is "a && b || c && d" is equivalent to
- *    "(a && b) || (c && d)". Thus the first thing to करो is to see अगर "&&" needs
- *    to be processed. This is the हाल अगर an "&&" was the last token. If it was
+ *    "(a && b) || (c && d)". Thus the first thing to do is to see if "&&" needs
+ *    to be processed. This is the case if an "&&" was the last token. If it was
  *    then we call update_preds(). This takes the program, the current index in
  *    the program, and the current value of "invert".  More will be described
  *    below about this function.
  *
  * #8 If the next token is "&&" then we set a flag in the top of the stack
- *    that denotes that "&&" needs to be processed, अवरोध out of this loop
- *    and जारी with the outer loop.
+ *    that denotes that "&&" needs to be processed, break out of this loop
+ *    and continue with the outer loop.
  *
- * #9 Otherwise, अगर a "||" needs to be processed then update_preds() is called.
+ * #9 Otherwise, if a "||" needs to be processed then update_preds() is called.
  *    This is called with the program, the current index in the program, but
- *    this समय with an inverted value of "invert" (that is !invert). This is
+ *    this time with an inverted value of "invert" (that is !invert). This is
  *    because the value taken will become the "when_to_branch" value of the
  *    program.
- *    Note, this is called when the next token is not an "&&". As stated beक्रमe,
- *    "&&" takes higher precedence, and "||" should not be processed yet अगर the
+ *    Note, this is called when the next token is not an "&&". As stated before,
+ *    "&&" takes higher precedence, and "||" should not be processed yet if the
  *    next logical operation is "&&".
  *
  * #10 If the next token is "||" then we set a flag in the top of the stack
- *     that denotes that "||" needs to be processed, अवरोध out of this loop
- *     and जारी with the outer loop.
+ *     that denotes that "||" needs to be processed, break out of this loop
+ *     and continue with the outer loop.
  *
- * #11 If this is the end of the input string "\0" then we अवरोध out of both
+ * #11 If this is the end of the input string "\0" then we break out of both
  *     loops.
  *
- * #12 Otherwise, the next token is ")", where we pop the stack and जारी
+ * #12 Otherwise, the next token is ")", where we pop the stack and continue
  *     this inner loop.
  *
  * Now to discuss the update_pred() function, as that is key to the setting up
  * of the program. Remember the "target" of the program is initialized to the
- * previous index and not the "l" label. The target holds the index पूर्णांकo the
- * program that माला_लो affected by the opeअक्रम. Thus अगर we have something like
+ * previous index and not the "l" label. The target holds the index into the
+ * program that gets affected by the operand. Thus if we have something like
  *  "a || b && c", when we process "a" the target will be "-1" (undefined).
  * When we process "b", its target is "0", which is the index of "a", as that's
  * the predicate that is affected by "||". But because the next token after "b"
- * is "&&" we करोn't call update_preds(). Instead जारी to "c". As the
+ * is "&&" we don't call update_preds(). Instead continue to "c". As the
  * next token after "c" is not "&&" but the end of input, we first process the
- * "&&" by calling update_preds() क्रम the "&&" then we process the "||" by
- * calling updates_preds() with the values क्रम processing "||".
+ * "&&" by calling update_preds() for the "&&" then we process the "||" by
+ * calling updates_preds() with the values for processing "||".
  *
- * What करोes that mean? What update_preds() करोes is to first save the "target"
+ * What does that mean? What update_preds() does is to first save the "target"
  * of the program entry indexed by the current program entry's "target"
  * (remember the "target" is initialized to previous program entry), and then
  * sets that "target" to the current index which represents the label "l#".
@@ -269,12 +268,12 @@
  * to the label).
  *
  * Looking back at "a || b && c", we have the following steps:
- *  "a"  - prog[0] = अणु "a", X, -1 पूर्ण // pred, when_to_branch, target
- *  "||" - flag that we need to process "||"; जारी outer loop
- *  "b"  - prog[1] = अणु "b", X, 0 पूर्ण
- *  "&&" - flag that we need to process "&&"; जारी outer loop
+ *  "a"  - prog[0] = { "a", X, -1 } // pred, when_to_branch, target
+ *  "||" - flag that we need to process "||"; continue outer loop
+ *  "b"  - prog[1] = { "b", X, 0 }
+ *  "&&" - flag that we need to process "&&"; continue outer loop
  * (Notice we did not process "||")
- *  "c"  - prog[2] = अणु "c", X, 1 पूर्ण
+ *  "c"  - prog[2] = { "c", X, 1 }
  *  update_preds(prog, 2, 0); // invert = 0 as we are processing "&&"
  *    t = prog[2].target; // t = 1
  *    s = prog[t].target; // s = 0
@@ -294,29 +293,29 @@
  *     the last program entry processed above).
  *
  * If we denote "TRUE" to be the entry after the last program entry processed,
- * and "FALSE" the program entry after that, we are now करोne with the first
+ * and "FALSE" the program entry after that, we are now done with the first
  * pass.
  *
  * Making the above "a || b && c" have a program of:
- *  prog[0] = अणु "a", 1, 2 पूर्ण
- *  prog[1] = अणु "b", 0, 2 पूर्ण
- *  prog[2] = अणु "c", 0, 3 पूर्ण
+ *  prog[0] = { "a", 1, 2 }
+ *  prog[1] = { "b", 0, 2 }
+ *  prog[2] = { "c", 0, 3 }
  *
- * Which translates पूर्णांकo:
- * n0: r = a; l0: अगर (r) जाओ l2;
- * n1: r = b; l1: अगर (!r) जाओ l2;
- * n2: r = c; l2: अगर (!r) जाओ l3;  // Which is the same as "goto F;"
- * T: वापस TRUE; l3:
- * F: वापस FALSE
+ * Which translates into:
+ * n0: r = a; l0: if (r) goto l2;
+ * n1: r = b; l1: if (!r) goto l2;
+ * n2: r = c; l2: if (!r) goto l3;  // Which is the same as "goto F;"
+ * T: return TRUE; l3:
+ * F: return FALSE
  *
  * Although, after the first pass, the program is correct, it is
  * inefficient. The simple sample of "a || b && c" could be easily been
- * converted पूर्णांकo:
- * n0: r = a; अगर (r) जाओ T
- * n1: r = b; अगर (!r) जाओ F
- * n2: r = c; अगर (!r) जाओ F
- * T: वापस TRUE;
- * F: वापस FALSE;
+ * converted into:
+ * n0: r = a; if (r) goto T
+ * n1: r = b; if (!r) goto F
+ * n2: r = c; if (!r) goto F
+ * T: return TRUE;
+ * F: return FALSE;
  *
  * The First Pass is over the input string. The next too passes are over
  * the program itself.
@@ -328,15 +327,15 @@
  * The original example of "a && !(!b || (c && g)) || d || e && !f"
  * where the first pass gives us:
  *
- * n1: r=a;       l1: अगर (!r) जाओ l4;
- * n2: r=b;       l2: अगर (!r) जाओ l4;
- * n3: r=c; r=!r; l3: अगर (r) जाओ l4;
- * n4: r=g; r=!r; l4: अगर (r) जाओ l5;
- * n5: r=d;       l5: अगर (r) जाओ T
- * n6: r=e;       l6: अगर (!r) जाओ l7;
- * n7: r=f; r=!r; l7: अगर (!r) जाओ F:
- * T: वापस TRUE;
- * F: वापस FALSE
+ * n1: r=a;       l1: if (!r) goto l4;
+ * n2: r=b;       l2: if (!r) goto l4;
+ * n3: r=c; r=!r; l3: if (r) goto l4;
+ * n4: r=g; r=!r; l4: if (r) goto l5;
+ * n5: r=d;       l5: if (r) goto T
+ * n6: r=e;       l6: if (!r) goto l7;
+ * n7: r=f; r=!r; l7: if (!r) goto F:
+ * T: return TRUE;
+ * F: return FALSE
  *
  * We can see that "l3: if (r) goto l4;" and at l4, we have "if (r) goto l5;".
  * And "l5: if (r) goto T", we could optimize this by converting l3 and l4
@@ -345,301 +344,301 @@
  * has the same "when_to_branch" then we could use that entry's target.
  * Doing this, the above would end up as:
  *
- * n1: r=a;       l1: अगर (!r) जाओ l4;
- * n2: r=b;       l2: अगर (!r) जाओ l4;
- * n3: r=c; r=!r; l3: अगर (r) जाओ T;
- * n4: r=g; r=!r; l4: अगर (r) जाओ T;
- * n5: r=d;       l5: अगर (r) जाओ T;
- * n6: r=e;       l6: अगर (!r) जाओ F;
- * n7: r=f; r=!r; l7: अगर (!r) जाओ F;
- * T: वापस TRUE
- * F: वापस FALSE
+ * n1: r=a;       l1: if (!r) goto l4;
+ * n2: r=b;       l2: if (!r) goto l4;
+ * n3: r=c; r=!r; l3: if (r) goto T;
+ * n4: r=g; r=!r; l4: if (r) goto T;
+ * n5: r=d;       l5: if (r) goto T;
+ * n6: r=e;       l6: if (!r) goto F;
+ * n7: r=f; r=!r; l7: if (!r) goto F;
+ * T: return TRUE
+ * F: return FALSE
  *
- * In that same pass, अगर the "when_to_branch" करोesn't match, we can simply
+ * In that same pass, if the "when_to_branch" doesn't match, we can simply
  * go to the program entry after the label. That is, "l2: if (!r) goto l4;"
  * where "l4: if (r) goto T;", then we can convert l2 to be:
  * "l2: if (!r) goto n5;".
  *
  * This will have the second pass give us:
- * n1: r=a;       l1: अगर (!r) जाओ n5;
- * n2: r=b;       l2: अगर (!r) जाओ n5;
- * n3: r=c; r=!r; l3: अगर (r) जाओ T;
- * n4: r=g; r=!r; l4: अगर (r) जाओ T;
- * n5: r=d;       l5: अगर (r) जाओ T
- * n6: r=e;       l6: अगर (!r) जाओ F;
- * n7: r=f; r=!r; l7: अगर (!r) जाओ F
- * T: वापस TRUE
- * F: वापस FALSE
+ * n1: r=a;       l1: if (!r) goto n5;
+ * n2: r=b;       l2: if (!r) goto n5;
+ * n3: r=c; r=!r; l3: if (r) goto T;
+ * n4: r=g; r=!r; l4: if (r) goto T;
+ * n5: r=d;       l5: if (r) goto T
+ * n6: r=e;       l6: if (!r) goto F;
+ * n7: r=f; r=!r; l7: if (!r) goto F
+ * T: return TRUE
+ * F: return FALSE
  *
- * Notice, all the "l#" labels are no दीर्घer used, and they can now
+ * Notice, all the "l#" labels are no longer used, and they can now
  * be discarded.
  *
  * ** THIRD PASS **
  *
  * For the third pass we deal with the inverts. As they simply just
  * make the "when_to_branch" get inverted, a simple loop over the
- * program to that करोes: "when_to_branch ^= invert;" will करो the
+ * program to that does: "when_to_branch ^= invert;" will do the
  * job, leaving us with:
- * n1: r=a; अगर (!r) जाओ n5;
- * n2: r=b; अगर (!r) जाओ n5;
- * n3: r=c: अगर (!r) जाओ T;
- * n4: r=g; अगर (!r) जाओ T;
- * n5: r=d; अगर (r) जाओ T
- * n6: r=e; अगर (!r) जाओ F;
- * n7: r=f; अगर (r) जाओ F
- * T: वापस TRUE
- * F: वापस FALSE
+ * n1: r=a; if (!r) goto n5;
+ * n2: r=b; if (!r) goto n5;
+ * n3: r=c: if (!r) goto T;
+ * n4: r=g; if (!r) goto T;
+ * n5: r=d; if (r) goto T
+ * n6: r=e; if (!r) goto F;
+ * n7: r=f; if (r) goto F
+ * T: return TRUE
+ * F: return FALSE
  *
  * As "r = a; if (!r) goto n5;" is obviously the same as
- * "if (!a) goto n5;" without करोing anything we can पूर्णांकerpret the
+ * "if (!a) goto n5;" without doing anything we can interpret the
  * program as:
- * n1: अगर (!a) जाओ n5;
- * n2: अगर (!b) जाओ n5;
- * n3: अगर (!c) जाओ T;
- * n4: अगर (!g) जाओ T;
- * n5: अगर (d) जाओ T
- * n6: अगर (!e) जाओ F;
- * n7: अगर (f) जाओ F
- * T: वापस TRUE
- * F: वापस FALSE
+ * n1: if (!a) goto n5;
+ * n2: if (!b) goto n5;
+ * n3: if (!c) goto T;
+ * n4: if (!g) goto T;
+ * n5: if (d) goto T
+ * n6: if (!e) goto F;
+ * n7: if (f) goto F
+ * T: return TRUE
+ * F: return FALSE
  *
  * Since the inverts are discarded at the end, there's no reason to store
  * them in the program array (and waste memory). A separate array to hold
- * the inverts is used and मुक्तd at the end.
+ * the inverts is used and freed at the end.
  */
-अटल काष्ठा prog_entry *
-predicate_parse(स्थिर अक्षर *str, पूर्णांक nr_parens, पूर्णांक nr_preds,
-		parse_pred_fn parse_pred, व्योम *data,
-		काष्ठा filter_parse_error *pe)
-अणु
-	काष्ठा prog_entry *prog_stack;
-	काष्ठा prog_entry *prog;
-	स्थिर अक्षर *ptr = str;
-	अक्षर *inverts = शून्य;
-	पूर्णांक *op_stack;
-	पूर्णांक *top;
-	पूर्णांक invert = 0;
-	पूर्णांक ret = -ENOMEM;
-	पूर्णांक len;
-	पूर्णांक N = 0;
-	पूर्णांक i;
+static struct prog_entry *
+predicate_parse(const char *str, int nr_parens, int nr_preds,
+		parse_pred_fn parse_pred, void *data,
+		struct filter_parse_error *pe)
+{
+	struct prog_entry *prog_stack;
+	struct prog_entry *prog;
+	const char *ptr = str;
+	char *inverts = NULL;
+	int *op_stack;
+	int *top;
+	int invert = 0;
+	int ret = -ENOMEM;
+	int len;
+	int N = 0;
+	int i;
 
 	nr_preds += 2; /* For TRUE and FALSE */
 
-	op_stack = kदो_स्मृति_array(nr_parens, माप(*op_stack), GFP_KERNEL);
-	अगर (!op_stack)
-		वापस ERR_PTR(-ENOMEM);
-	prog_stack = kसुस्मृति(nr_preds, माप(*prog_stack), GFP_KERNEL);
-	अगर (!prog_stack) अणु
+	op_stack = kmalloc_array(nr_parens, sizeof(*op_stack), GFP_KERNEL);
+	if (!op_stack)
+		return ERR_PTR(-ENOMEM);
+	prog_stack = kcalloc(nr_preds, sizeof(*prog_stack), GFP_KERNEL);
+	if (!prog_stack) {
 		parse_error(pe, -ENOMEM, 0);
-		जाओ out_मुक्त;
-	पूर्ण
-	inverts = kदो_स्मृति_array(nr_preds, माप(*inverts), GFP_KERNEL);
-	अगर (!inverts) अणु
+		goto out_free;
+	}
+	inverts = kmalloc_array(nr_preds, sizeof(*inverts), GFP_KERNEL);
+	if (!inverts) {
 		parse_error(pe, -ENOMEM, 0);
-		जाओ out_मुक्त;
-	पूर्ण
+		goto out_free;
+	}
 
 	top = op_stack;
 	prog = prog_stack;
 	*top = 0;
 
 	/* First pass */
-	जबतक (*ptr) अणु						/* #1 */
-		स्थिर अक्षर *next = ptr++;
+	while (*ptr) {						/* #1 */
+		const char *next = ptr++;
 
-		अगर (है_खाली(*next))
-			जारी;
+		if (isspace(*next))
+			continue;
 
-		चयन (*next) अणु
-		हाल '(':					/* #2 */
-			अगर (top - op_stack > nr_parens) अणु
+		switch (*next) {
+		case '(':					/* #2 */
+			if (top - op_stack > nr_parens) {
 				ret = -EINVAL;
-				जाओ out_मुक्त;
-			पूर्ण
+				goto out_free;
+			}
 			*(++top) = invert;
-			जारी;
-		हाल '!':					/* #3 */
-			अगर (!is_not(next))
-				अवरोध;
+			continue;
+		case '!':					/* #3 */
+			if (!is_not(next))
+				break;
 			invert = !invert;
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		अगर (N >= nr_preds) अणु
+		if (N >= nr_preds) {
 			parse_error(pe, FILT_ERR_TOO_MANY_PREDS, next - str);
-			जाओ out_मुक्त;
-		पूर्ण
+			goto out_free;
+		}
 
 		inverts[N] = invert;				/* #4 */
 		prog[N].target = N-1;
 
 		len = parse_pred(next, data, ptr - str, pe, &prog[N].pred);
-		अगर (len < 0) अणु
+		if (len < 0) {
 			ret = len;
-			जाओ out_मुक्त;
-		पूर्ण
+			goto out_free;
+		}
 		ptr = next + len;
 
 		N++;
 
 		ret = -1;
-		जबतक (1) अणु					/* #5 */
+		while (1) {					/* #5 */
 			next = ptr++;
-			अगर (है_खाली(*next))
-				जारी;
+			if (isspace(*next))
+				continue;
 
-			चयन (*next) अणु
-			हाल ')':
-			हाल '\0':
-				अवरोध;
-			हाल '&':
-			हाल '|':
+			switch (*next) {
+			case ')':
+			case '\0':
+				break;
+			case '&':
+			case '|':
 				/* accepting only "&&" or "||" */
-				अगर (next[1] == next[0]) अणु
+				if (next[1] == next[0]) {
 					ptr++;
-					अवरोध;
-				पूर्ण
+					break;
+				}
 				fallthrough;
-			शेष:
+			default:
 				parse_error(pe, FILT_ERR_TOO_MANY_PREDS,
 					    next - str);
-				जाओ out_मुक्त;
-			पूर्ण
+				goto out_free;
+			}
 
 			invert = *top & INVERT;
 
-			अगर (*top & PROCESS_AND) अणु		/* #7 */
+			if (*top & PROCESS_AND) {		/* #7 */
 				update_preds(prog, N - 1, invert);
 				*top &= ~PROCESS_AND;
-			पूर्ण
-			अगर (*next == '&') अणु			/* #8 */
+			}
+			if (*next == '&') {			/* #8 */
 				*top |= PROCESS_AND;
-				अवरोध;
-			पूर्ण
-			अगर (*top & PROCESS_OR) अणु		/* #9 */
+				break;
+			}
+			if (*top & PROCESS_OR) {		/* #9 */
 				update_preds(prog, N - 1, !invert);
 				*top &= ~PROCESS_OR;
-			पूर्ण
-			अगर (*next == '|') अणु			/* #10 */
+			}
+			if (*next == '|') {			/* #10 */
 				*top |= PROCESS_OR;
-				अवरोध;
-			पूर्ण
-			अगर (!*next)				/* #11 */
-				जाओ out;
+				break;
+			}
+			if (!*next)				/* #11 */
+				goto out;
 
-			अगर (top == op_stack) अणु
+			if (top == op_stack) {
 				ret = -1;
 				/* Too few '(' */
 				parse_error(pe, FILT_ERR_TOO_MANY_CLOSE, ptr - str);
-				जाओ out_मुक्त;
-			पूर्ण
+				goto out_free;
+			}
 			top--;					/* #12 */
-		पूर्ण
-	पूर्ण
+		}
+	}
  out:
-	अगर (top != op_stack) अणु
+	if (top != op_stack) {
 		/* Too many '(' */
 		parse_error(pe, FILT_ERR_TOO_MANY_OPEN, ptr - str);
-		जाओ out_मुक्त;
-	पूर्ण
+		goto out_free;
+	}
 
-	अगर (!N) अणु
+	if (!N) {
 		/* No program? */
 		ret = -EINVAL;
 		parse_error(pe, FILT_ERR_NO_FILTER, ptr - str);
-		जाओ out_मुक्त;
-	पूर्ण
+		goto out_free;
+	}
 
-	prog[N].pred = शून्य;					/* #13 */
+	prog[N].pred = NULL;					/* #13 */
 	prog[N].target = 1;		/* TRUE */
-	prog[N+1].pred = शून्य;
+	prog[N+1].pred = NULL;
 	prog[N+1].target = 0;		/* FALSE */
 	prog[N-1].target = N;
 	prog[N-1].when_to_branch = false;
 
 	/* Second Pass */
-	क्रम (i = N-1 ; i--; ) अणु
-		पूर्णांक target = prog[i].target;
-		अगर (prog[i].when_to_branch == prog[target].when_to_branch)
+	for (i = N-1 ; i--; ) {
+		int target = prog[i].target;
+		if (prog[i].when_to_branch == prog[target].when_to_branch)
 			prog[i].target = prog[target].target;
-	पूर्ण
+	}
 
 	/* Third Pass */
-	क्रम (i = 0; i < N; i++) अणु
+	for (i = 0; i < N; i++) {
 		invert = inverts[i] ^ prog[i].when_to_branch;
 		prog[i].when_to_branch = invert;
-		/* Make sure the program always moves क्रमward */
-		अगर (WARN_ON(prog[i].target <= i)) अणु
+		/* Make sure the program always moves forward */
+		if (WARN_ON(prog[i].target <= i)) {
 			ret = -EINVAL;
-			जाओ out_मुक्त;
-		पूर्ण
-	पूर्ण
+			goto out_free;
+		}
+	}
 
-	kमुक्त(op_stack);
-	kमुक्त(inverts);
-	वापस prog;
-out_मुक्त:
-	kमुक्त(op_stack);
-	kमुक्त(inverts);
-	अगर (prog_stack) अणु
-		क्रम (i = 0; prog_stack[i].pred; i++)
-			kमुक्त(prog_stack[i].pred);
-		kमुक्त(prog_stack);
-	पूर्ण
-	वापस ERR_PTR(ret);
-पूर्ण
+	kfree(op_stack);
+	kfree(inverts);
+	return prog;
+out_free:
+	kfree(op_stack);
+	kfree(inverts);
+	if (prog_stack) {
+		for (i = 0; prog_stack[i].pred; i++)
+			kfree(prog_stack[i].pred);
+		kfree(prog_stack);
+	}
+	return ERR_PTR(ret);
+}
 
-#घोषणा DEFINE_COMPARISON_PRED(type)					\
-अटल पूर्णांक filter_pred_LT_##type(काष्ठा filter_pred *pred, व्योम *event)	\
-अणु									\
+#define DEFINE_COMPARISON_PRED(type)					\
+static int filter_pred_LT_##type(struct filter_pred *pred, void *event)	\
+{									\
 	type *addr = (type *)(event + pred->offset);			\
 	type val = (type)pred->val;					\
-	वापस *addr < val;						\
-पूर्ण									\
-अटल पूर्णांक filter_pred_LE_##type(काष्ठा filter_pred *pred, व्योम *event)	\
-अणु									\
+	return *addr < val;						\
+}									\
+static int filter_pred_LE_##type(struct filter_pred *pred, void *event)	\
+{									\
 	type *addr = (type *)(event + pred->offset);			\
 	type val = (type)pred->val;					\
-	वापस *addr <= val;						\
-पूर्ण									\
-अटल पूर्णांक filter_pred_GT_##type(काष्ठा filter_pred *pred, व्योम *event)	\
-अणु									\
+	return *addr <= val;						\
+}									\
+static int filter_pred_GT_##type(struct filter_pred *pred, void *event)	\
+{									\
 	type *addr = (type *)(event + pred->offset);			\
 	type val = (type)pred->val;					\
-	वापस *addr > val;					\
-पूर्ण									\
-अटल पूर्णांक filter_pred_GE_##type(काष्ठा filter_pred *pred, व्योम *event)	\
-अणु									\
+	return *addr > val;					\
+}									\
+static int filter_pred_GE_##type(struct filter_pred *pred, void *event)	\
+{									\
 	type *addr = (type *)(event + pred->offset);			\
 	type val = (type)pred->val;					\
-	वापस *addr >= val;						\
-पूर्ण									\
-अटल पूर्णांक filter_pred_BAND_##type(काष्ठा filter_pred *pred, व्योम *event) \
-अणु									\
+	return *addr >= val;						\
+}									\
+static int filter_pred_BAND_##type(struct filter_pred *pred, void *event) \
+{									\
 	type *addr = (type *)(event + pred->offset);			\
 	type val = (type)pred->val;					\
-	वापस !!(*addr & val);						\
-पूर्ण									\
-अटल स्थिर filter_pred_fn_t pred_funcs_##type[] = अणु			\
+	return !!(*addr & val);						\
+}									\
+static const filter_pred_fn_t pred_funcs_##type[] = {			\
 	filter_pred_LE_##type,						\
 	filter_pred_LT_##type,						\
 	filter_pred_GE_##type,						\
 	filter_pred_GT_##type,						\
 	filter_pred_BAND_##type,					\
-पूर्ण;
+};
 
-#घोषणा DEFINE_EQUALITY_PRED(size)					\
-अटल पूर्णांक filter_pred_##size(काष्ठा filter_pred *pred, व्योम *event)	\
-अणु									\
+#define DEFINE_EQUALITY_PRED(size)					\
+static int filter_pred_##size(struct filter_pred *pred, void *event)	\
+{									\
 	u##size *addr = (u##size *)(event + pred->offset);		\
 	u##size val = (u##size)pred->val;				\
-	पूर्णांक match;							\
+	int match;							\
 									\
 	match = (val == *addr) ^ pred->not;				\
 									\
-	वापस match;							\
-पूर्ण
+	return match;							\
+}
 
 DEFINE_COMPARISON_PRED(s64);
 DEFINE_COMPARISON_PRED(u64);
@@ -655,35 +654,35 @@ DEFINE_EQUALITY_PRED(32);
 DEFINE_EQUALITY_PRED(16);
 DEFINE_EQUALITY_PRED(8);
 
-/* Filter predicate क्रम fixed sized arrays of अक्षरacters */
-अटल पूर्णांक filter_pred_string(काष्ठा filter_pred *pred, व्योम *event)
-अणु
-	अक्षर *addr = (अक्षर *)(event + pred->offset);
-	पूर्णांक cmp, match;
+/* Filter predicate for fixed sized arrays of characters */
+static int filter_pred_string(struct filter_pred *pred, void *event)
+{
+	char *addr = (char *)(event + pred->offset);
+	int cmp, match;
 
 	cmp = pred->regex.match(addr, &pred->regex, pred->regex.field_len);
 
 	match = cmp ^ pred->not;
 
-	वापस match;
-पूर्ण
+	return match;
+}
 
-/* Filter predicate क्रम अक्षर * poपूर्णांकers */
-अटल पूर्णांक filter_pred_pअक्षर(काष्ठा filter_pred *pred, व्योम *event)
-अणु
-	अक्षर **addr = (अक्षर **)(event + pred->offset);
-	पूर्णांक cmp, match;
-	पूर्णांक len = म_माप(*addr) + 1;	/* including tailing '\0' */
+/* Filter predicate for char * pointers */
+static int filter_pred_pchar(struct filter_pred *pred, void *event)
+{
+	char **addr = (char **)(event + pred->offset);
+	int cmp, match;
+	int len = strlen(*addr) + 1;	/* including tailing '\0' */
 
 	cmp = pred->regex.match(*addr, &pred->regex, len);
 
 	match = cmp ^ pred->not;
 
-	वापस match;
-पूर्ण
+	return match;
+}
 
 /*
- * Filter predicate क्रम dynamic sized arrays of अक्षरacters.
+ * Filter predicate for dynamic sized arrays of characters.
  * These are implemented through a list of strings at the end
  * of the entry.
  * Also each of these strings have a field in the entry which
@@ -692,709 +691,709 @@ DEFINE_EQUALITY_PRED(8);
  * and add it to the address of the entry, and at last we have
  * the address of the string.
  */
-अटल पूर्णांक filter_pred_strloc(काष्ठा filter_pred *pred, व्योम *event)
-अणु
+static int filter_pred_strloc(struct filter_pred *pred, void *event)
+{
 	u32 str_item = *(u32 *)(event + pred->offset);
-	पूर्णांक str_loc = str_item & 0xffff;
-	पूर्णांक str_len = str_item >> 16;
-	अक्षर *addr = (अक्षर *)(event + str_loc);
-	पूर्णांक cmp, match;
+	int str_loc = str_item & 0xffff;
+	int str_len = str_item >> 16;
+	char *addr = (char *)(event + str_loc);
+	int cmp, match;
 
 	cmp = pred->regex.match(addr, &pred->regex, str_len);
 
 	match = cmp ^ pred->not;
 
-	वापस match;
-पूर्ण
+	return match;
+}
 
-/* Filter predicate क्रम CPUs. */
-अटल पूर्णांक filter_pred_cpu(काष्ठा filter_pred *pred, व्योम *event)
-अणु
-	पूर्णांक cpu, cmp;
+/* Filter predicate for CPUs. */
+static int filter_pred_cpu(struct filter_pred *pred, void *event)
+{
+	int cpu, cmp;
 
 	cpu = raw_smp_processor_id();
 	cmp = pred->val;
 
-	चयन (pred->op) अणु
-	हाल OP_EQ:
-		वापस cpu == cmp;
-	हाल OP_NE:
-		वापस cpu != cmp;
-	हाल OP_LT:
-		वापस cpu < cmp;
-	हाल OP_LE:
-		वापस cpu <= cmp;
-	हाल OP_GT:
-		वापस cpu > cmp;
-	हाल OP_GE:
-		वापस cpu >= cmp;
-	शेष:
-		वापस 0;
-	पूर्ण
-पूर्ण
+	switch (pred->op) {
+	case OP_EQ:
+		return cpu == cmp;
+	case OP_NE:
+		return cpu != cmp;
+	case OP_LT:
+		return cpu < cmp;
+	case OP_LE:
+		return cpu <= cmp;
+	case OP_GT:
+		return cpu > cmp;
+	case OP_GE:
+		return cpu >= cmp;
+	default:
+		return 0;
+	}
+}
 
-/* Filter predicate क्रम COMM. */
-अटल पूर्णांक filter_pred_comm(काष्ठा filter_pred *pred, व्योम *event)
-अणु
-	पूर्णांक cmp;
+/* Filter predicate for COMM. */
+static int filter_pred_comm(struct filter_pred *pred, void *event)
+{
+	int cmp;
 
 	cmp = pred->regex.match(current->comm, &pred->regex,
 				TASK_COMM_LEN);
-	वापस cmp ^ pred->not;
-पूर्ण
+	return cmp ^ pred->not;
+}
 
-अटल पूर्णांक filter_pred_none(काष्ठा filter_pred *pred, व्योम *event)
-अणु
-	वापस 0;
-पूर्ण
+static int filter_pred_none(struct filter_pred *pred, void *event)
+{
+	return 0;
+}
 
 /*
  * regex_match_foo - Basic regex callbacks
  *
  * @str: the string to be searched
- * @r:   the regex काष्ठाure containing the pattern string
+ * @r:   the regex structure containing the pattern string
  * @len: the length of the string to be searched (including '\0')
  *
  * Note:
- * - @str might not be शून्य-terminated अगर it's of type DYN_STRING
+ * - @str might not be NULL-terminated if it's of type DYN_STRING
  *   or STATIC_STRING, unless @len is zero.
  */
 
-अटल पूर्णांक regex_match_full(अक्षर *str, काष्ठा regex *r, पूर्णांक len)
-अणु
+static int regex_match_full(char *str, struct regex *r, int len)
+{
 	/* len of zero means str is dynamic and ends with '\0' */
-	अगर (!len)
-		वापस म_भेद(str, r->pattern) == 0;
+	if (!len)
+		return strcmp(str, r->pattern) == 0;
 
-	वापस म_भेदन(str, r->pattern, len) == 0;
-पूर्ण
+	return strncmp(str, r->pattern, len) == 0;
+}
 
-अटल पूर्णांक regex_match_front(अक्षर *str, काष्ठा regex *r, पूर्णांक len)
-अणु
-	अगर (len && len < r->len)
-		वापस 0;
+static int regex_match_front(char *str, struct regex *r, int len)
+{
+	if (len && len < r->len)
+		return 0;
 
-	वापस म_भेदन(str, r->pattern, r->len) == 0;
-पूर्ण
+	return strncmp(str, r->pattern, r->len) == 0;
+}
 
-अटल पूर्णांक regex_match_middle(अक्षर *str, काष्ठा regex *r, पूर्णांक len)
-अणु
-	अगर (!len)
-		वापस म_माला(str, r->pattern) != शून्य;
+static int regex_match_middle(char *str, struct regex *r, int len)
+{
+	if (!len)
+		return strstr(str, r->pattern) != NULL;
 
-	वापस strnstr(str, r->pattern, len) != शून्य;
-पूर्ण
+	return strnstr(str, r->pattern, len) != NULL;
+}
 
-अटल पूर्णांक regex_match_end(अक्षर *str, काष्ठा regex *r, पूर्णांक len)
-अणु
-	पूर्णांक म_माप = len - 1;
+static int regex_match_end(char *str, struct regex *r, int len)
+{
+	int strlen = len - 1;
 
-	अगर (म_माप >= r->len &&
-	    स_भेद(str + म_माप - r->len, r->pattern, r->len) == 0)
-		वापस 1;
-	वापस 0;
-पूर्ण
+	if (strlen >= r->len &&
+	    memcmp(str + strlen - r->len, r->pattern, r->len) == 0)
+		return 1;
+	return 0;
+}
 
-अटल पूर्णांक regex_match_glob(अक्षर *str, काष्ठा regex *r, पूर्णांक len __maybe_unused)
-अणु
-	अगर (glob_match(r->pattern, str))
-		वापस 1;
-	वापस 0;
-पूर्ण
+static int regex_match_glob(char *str, struct regex *r, int len __maybe_unused)
+{
+	if (glob_match(r->pattern, str))
+		return 1;
+	return 0;
+}
 
 /**
  * filter_parse_regex - parse a basic regex
  * @buff:   the raw regex
  * @len:    length of the regex
- * @search: will poपूर्णांक to the beginning of the string to compare
+ * @search: will point to the beginning of the string to compare
  * @not:    tell whether the match will have to be inverted
  *
  * This passes in a buffer containing a regex and this function will
- * set search to poपूर्णांक to the search part of the buffer and
- * वापस the type of search it is (see क्रमागत above).
- * This करोes modअगरy buff.
+ * set search to point to the search part of the buffer and
+ * return the type of search it is (see enum above).
+ * This does modify buff.
  *
- * Returns क्रमागत type.
- *  search वापसs the poपूर्णांकer to use क्रम comparison.
- *  not वापसs 1 अगर buff started with a '!'
+ * Returns enum type.
+ *  search returns the pointer to use for comparison.
+ *  not returns 1 if buff started with a '!'
  *     0 otherwise.
  */
-क्रमागत regex_type filter_parse_regex(अक्षर *buff, पूर्णांक len, अक्षर **search, पूर्णांक *not)
-अणु
-	पूर्णांक type = MATCH_FULL;
-	पूर्णांक i;
+enum regex_type filter_parse_regex(char *buff, int len, char **search, int *not)
+{
+	int type = MATCH_FULL;
+	int i;
 
-	अगर (buff[0] == '!') अणु
+	if (buff[0] == '!') {
 		*not = 1;
 		buff++;
 		len--;
-	पूर्ण अन्यथा
+	} else
 		*not = 0;
 
 	*search = buff;
 
-	अगर (है_अंक(buff[0]))
-		वापस MATCH_INDEX;
+	if (isdigit(buff[0]))
+		return MATCH_INDEX;
 
-	क्रम (i = 0; i < len; i++) अणु
-		अगर (buff[i] == '*') अणु
-			अगर (!i) अणु
+	for (i = 0; i < len; i++) {
+		if (buff[i] == '*') {
+			if (!i) {
 				type = MATCH_END_ONLY;
-			पूर्ण अन्यथा अगर (i == len - 1) अणु
-				अगर (type == MATCH_END_ONLY)
+			} else if (i == len - 1) {
+				if (type == MATCH_END_ONLY)
 					type = MATCH_MIDDLE_ONLY;
-				अन्यथा
+				else
 					type = MATCH_FRONT_ONLY;
 				buff[i] = 0;
-				अवरोध;
-			पूर्ण अन्यथा अणु	/* pattern जारीs, use full glob */
-				वापस MATCH_GLOB;
-			पूर्ण
-		पूर्ण अन्यथा अगर (म_अक्षर("[?\\", buff[i])) अणु
-			वापस MATCH_GLOB;
-		पूर्ण
-	पूर्ण
-	अगर (buff[0] == '*')
+				break;
+			} else {	/* pattern continues, use full glob */
+				return MATCH_GLOB;
+			}
+		} else if (strchr("[?\\", buff[i])) {
+			return MATCH_GLOB;
+		}
+	}
+	if (buff[0] == '*')
 		*search = buff + 1;
 
-	वापस type;
-पूर्ण
+	return type;
+}
 
-अटल व्योम filter_build_regex(काष्ठा filter_pred *pred)
-अणु
-	काष्ठा regex *r = &pred->regex;
-	अक्षर *search;
-	क्रमागत regex_type type = MATCH_FULL;
+static void filter_build_regex(struct filter_pred *pred)
+{
+	struct regex *r = &pred->regex;
+	char *search;
+	enum regex_type type = MATCH_FULL;
 
-	अगर (pred->op == OP_GLOB) अणु
+	if (pred->op == OP_GLOB) {
 		type = filter_parse_regex(r->pattern, r->len, &search, &pred->not);
-		r->len = म_माप(search);
-		स_हटाओ(r->pattern, search, r->len+1);
-	पूर्ण
+		r->len = strlen(search);
+		memmove(r->pattern, search, r->len+1);
+	}
 
-	चयन (type) अणु
-	/* MATCH_INDEX should not happen, but अगर it करोes, match full */
-	हाल MATCH_INDEX:
-	हाल MATCH_FULL:
+	switch (type) {
+	/* MATCH_INDEX should not happen, but if it does, match full */
+	case MATCH_INDEX:
+	case MATCH_FULL:
 		r->match = regex_match_full;
-		अवरोध;
-	हाल MATCH_FRONT_ONLY:
+		break;
+	case MATCH_FRONT_ONLY:
 		r->match = regex_match_front;
-		अवरोध;
-	हाल MATCH_MIDDLE_ONLY:
+		break;
+	case MATCH_MIDDLE_ONLY:
 		r->match = regex_match_middle;
-		अवरोध;
-	हाल MATCH_END_ONLY:
+		break;
+	case MATCH_END_ONLY:
 		r->match = regex_match_end;
-		अवरोध;
-	हाल MATCH_GLOB:
+		break;
+	case MATCH_GLOB:
 		r->match = regex_match_glob;
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-/* वापस 1 अगर event matches, 0 otherwise (discard) */
-पूर्णांक filter_match_preds(काष्ठा event_filter *filter, व्योम *rec)
-अणु
-	काष्ठा prog_entry *prog;
-	पूर्णांक i;
+/* return 1 if event matches, 0 otherwise (discard) */
+int filter_match_preds(struct event_filter *filter, void *rec)
+{
+	struct prog_entry *prog;
+	int i;
 
 	/* no filter is considered a match */
-	अगर (!filter)
-		वापस 1;
+	if (!filter)
+		return 1;
 
-	/* Protected by either SRCU(tracepoपूर्णांक_srcu) or preempt_disable */
+	/* Protected by either SRCU(tracepoint_srcu) or preempt_disable */
 	prog = rcu_dereference_raw(filter->prog);
-	अगर (!prog)
-		वापस 1;
+	if (!prog)
+		return 1;
 
-	क्रम (i = 0; prog[i].pred; i++) अणु
-		काष्ठा filter_pred *pred = prog[i].pred;
-		पूर्णांक match = pred->fn(pred, rec);
-		अगर (match == prog[i].when_to_branch)
+	for (i = 0; prog[i].pred; i++) {
+		struct filter_pred *pred = prog[i].pred;
+		int match = pred->fn(pred, rec);
+		if (match == prog[i].when_to_branch)
 			i = prog[i].target;
-	पूर्ण
-	वापस prog[i].target;
-पूर्ण
+	}
+	return prog[i].target;
+}
 EXPORT_SYMBOL_GPL(filter_match_preds);
 
-अटल व्योम हटाओ_filter_string(काष्ठा event_filter *filter)
-अणु
-	अगर (!filter)
-		वापस;
+static void remove_filter_string(struct event_filter *filter)
+{
+	if (!filter)
+		return;
 
-	kमुक्त(filter->filter_string);
-	filter->filter_string = शून्य;
-पूर्ण
+	kfree(filter->filter_string);
+	filter->filter_string = NULL;
+}
 
-अटल व्योम append_filter_err(काष्ठा trace_array *tr,
-			      काष्ठा filter_parse_error *pe,
-			      काष्ठा event_filter *filter)
-अणु
-	काष्ठा trace_seq *s;
-	पूर्णांक pos = pe->lasterr_pos;
-	अक्षर *buf;
-	पूर्णांक len;
+static void append_filter_err(struct trace_array *tr,
+			      struct filter_parse_error *pe,
+			      struct event_filter *filter)
+{
+	struct trace_seq *s;
+	int pos = pe->lasterr_pos;
+	char *buf;
+	int len;
 
-	अगर (WARN_ON(!filter->filter_string))
-		वापस;
+	if (WARN_ON(!filter->filter_string))
+		return;
 
-	s = kदो_स्मृति(माप(*s), GFP_KERNEL);
-	अगर (!s)
-		वापस;
+	s = kmalloc(sizeof(*s), GFP_KERNEL);
+	if (!s)
+		return;
 	trace_seq_init(s);
 
-	len = म_माप(filter->filter_string);
-	अगर (pos > len)
+	len = strlen(filter->filter_string);
+	if (pos > len)
 		pos = len;
 
 	/* indexing is off by one */
-	अगर (pos)
+	if (pos)
 		pos++;
 
-	trace_seq_माला_दो(s, filter->filter_string);
-	अगर (pe->lasterr > 0) अणु
-		trace_seq_म_लिखो(s, "\n%*s", pos, "^");
-		trace_seq_म_लिखो(s, "\nparse_error: %s\n", err_text[pe->lasterr]);
+	trace_seq_puts(s, filter->filter_string);
+	if (pe->lasterr > 0) {
+		trace_seq_printf(s, "\n%*s", pos, "^");
+		trace_seq_printf(s, "\nparse_error: %s\n", err_text[pe->lasterr]);
 		tracing_log_err(tr, "event filter parse error",
 				filter->filter_string, err_text,
 				pe->lasterr, pe->lasterr_pos);
-	पूर्ण अन्यथा अणु
-		trace_seq_म_लिखो(s, "\nError: (%d)\n", pe->lasterr);
+	} else {
+		trace_seq_printf(s, "\nError: (%d)\n", pe->lasterr);
 		tracing_log_err(tr, "event filter parse error",
 				filter->filter_string, err_text,
 				FILT_ERR_ERRNO, 0);
-	पूर्ण
-	trace_seq_अ_दो(s, 0);
+	}
+	trace_seq_putc(s, 0);
 	buf = kmemdup_nul(s->buffer, s->seq.len, GFP_KERNEL);
-	अगर (buf) अणु
-		kमुक्त(filter->filter_string);
+	if (buf) {
+		kfree(filter->filter_string);
 		filter->filter_string = buf;
-	पूर्ण
-	kमुक्त(s);
-पूर्ण
+	}
+	kfree(s);
+}
 
-अटल अंतरभूत काष्ठा event_filter *event_filter(काष्ठा trace_event_file *file)
-अणु
-	वापस file->filter;
-पूर्ण
+static inline struct event_filter *event_filter(struct trace_event_file *file)
+{
+	return file->filter;
+}
 
 /* caller must hold event_mutex */
-व्योम prपूर्णांक_event_filter(काष्ठा trace_event_file *file, काष्ठा trace_seq *s)
-अणु
-	काष्ठा event_filter *filter = event_filter(file);
+void print_event_filter(struct trace_event_file *file, struct trace_seq *s)
+{
+	struct event_filter *filter = event_filter(file);
 
-	अगर (filter && filter->filter_string)
-		trace_seq_म_लिखो(s, "%s\n", filter->filter_string);
-	अन्यथा
-		trace_seq_माला_दो(s, "none\n");
-पूर्ण
+	if (filter && filter->filter_string)
+		trace_seq_printf(s, "%s\n", filter->filter_string);
+	else
+		trace_seq_puts(s, "none\n");
+}
 
-व्योम prपूर्णांक_subप्रणाली_event_filter(काष्ठा event_subप्रणाली *प्रणाली,
-				  काष्ठा trace_seq *s)
-अणु
-	काष्ठा event_filter *filter;
+void print_subsystem_event_filter(struct event_subsystem *system,
+				  struct trace_seq *s)
+{
+	struct event_filter *filter;
 
 	mutex_lock(&event_mutex);
-	filter = प्रणाली->filter;
-	अगर (filter && filter->filter_string)
-		trace_seq_म_लिखो(s, "%s\n", filter->filter_string);
-	अन्यथा
-		trace_seq_माला_दो(s, DEFAULT_SYS_FILTER_MESSAGE "\n");
+	filter = system->filter;
+	if (filter && filter->filter_string)
+		trace_seq_printf(s, "%s\n", filter->filter_string);
+	else
+		trace_seq_puts(s, DEFAULT_SYS_FILTER_MESSAGE "\n");
 	mutex_unlock(&event_mutex);
-पूर्ण
+}
 
-अटल व्योम मुक्त_prog(काष्ठा event_filter *filter)
-अणु
-	काष्ठा prog_entry *prog;
-	पूर्णांक i;
+static void free_prog(struct event_filter *filter)
+{
+	struct prog_entry *prog;
+	int i;
 
-	prog = rcu_access_poपूर्णांकer(filter->prog);
-	अगर (!prog)
-		वापस;
+	prog = rcu_access_pointer(filter->prog);
+	if (!prog)
+		return;
 
-	क्रम (i = 0; prog[i].pred; i++)
-		kमुक्त(prog[i].pred);
-	kमुक्त(prog);
-पूर्ण
+	for (i = 0; prog[i].pred; i++)
+		kfree(prog[i].pred);
+	kfree(prog);
+}
 
-अटल व्योम filter_disable(काष्ठा trace_event_file *file)
-अणु
-	अचिन्हित दीर्घ old_flags = file->flags;
+static void filter_disable(struct trace_event_file *file)
+{
+	unsigned long old_flags = file->flags;
 
-	file->flags &= ~EVENT_खाता_FL_FILTERED;
+	file->flags &= ~EVENT_FILE_FL_FILTERED;
 
-	अगर (old_flags != file->flags)
+	if (old_flags != file->flags)
 		trace_buffered_event_disable();
-पूर्ण
+}
 
-अटल व्योम __मुक्त_filter(काष्ठा event_filter *filter)
-अणु
-	अगर (!filter)
-		वापस;
+static void __free_filter(struct event_filter *filter)
+{
+	if (!filter)
+		return;
 
-	मुक्त_prog(filter);
-	kमुक्त(filter->filter_string);
-	kमुक्त(filter);
-पूर्ण
+	free_prog(filter);
+	kfree(filter->filter_string);
+	kfree(filter);
+}
 
-व्योम मुक्त_event_filter(काष्ठा event_filter *filter)
-अणु
-	__मुक्त_filter(filter);
-पूर्ण
+void free_event_filter(struct event_filter *filter)
+{
+	__free_filter(filter);
+}
 
-अटल अंतरभूत व्योम __हटाओ_filter(काष्ठा trace_event_file *file)
-अणु
+static inline void __remove_filter(struct trace_event_file *file)
+{
 	filter_disable(file);
-	हटाओ_filter_string(file->filter);
-पूर्ण
+	remove_filter_string(file->filter);
+}
 
-अटल व्योम filter_मुक्त_subप्रणाली_preds(काष्ठा trace_subप्रणाली_dir *dir,
-					काष्ठा trace_array *tr)
-अणु
-	काष्ठा trace_event_file *file;
+static void filter_free_subsystem_preds(struct trace_subsystem_dir *dir,
+					struct trace_array *tr)
+{
+	struct trace_event_file *file;
 
-	list_क्रम_each_entry(file, &tr->events, list) अणु
-		अगर (file->प्रणाली != dir)
-			जारी;
-		__हटाओ_filter(file);
-	पूर्ण
-पूर्ण
+	list_for_each_entry(file, &tr->events, list) {
+		if (file->system != dir)
+			continue;
+		__remove_filter(file);
+	}
+}
 
-अटल अंतरभूत व्योम __मुक्त_subप्रणाली_filter(काष्ठा trace_event_file *file)
-अणु
-	__मुक्त_filter(file->filter);
-	file->filter = शून्य;
-पूर्ण
+static inline void __free_subsystem_filter(struct trace_event_file *file)
+{
+	__free_filter(file->filter);
+	file->filter = NULL;
+}
 
-अटल व्योम filter_मुक्त_subप्रणाली_filters(काष्ठा trace_subप्रणाली_dir *dir,
-					  काष्ठा trace_array *tr)
-अणु
-	काष्ठा trace_event_file *file;
+static void filter_free_subsystem_filters(struct trace_subsystem_dir *dir,
+					  struct trace_array *tr)
+{
+	struct trace_event_file *file;
 
-	list_क्रम_each_entry(file, &tr->events, list) अणु
-		अगर (file->प्रणाली != dir)
-			जारी;
-		__मुक्त_subप्रणाली_filter(file);
-	पूर्ण
-पूर्ण
+	list_for_each_entry(file, &tr->events, list) {
+		if (file->system != dir)
+			continue;
+		__free_subsystem_filter(file);
+	}
+}
 
-पूर्णांक filter_assign_type(स्थिर अक्षर *type)
-अणु
-	अगर (म_माला(type, "__data_loc") && म_माला(type, "char"))
-		वापस FILTER_DYN_STRING;
+int filter_assign_type(const char *type)
+{
+	if (strstr(type, "__data_loc") && strstr(type, "char"))
+		return FILTER_DYN_STRING;
 
-	अगर (म_अक्षर(type, '[') && म_माला(type, "char"))
-		वापस FILTER_STATIC_STRING;
+	if (strchr(type, '[') && strstr(type, "char"))
+		return FILTER_STATIC_STRING;
 
-	अगर (म_भेद(type, "char *") == 0 || म_भेद(type, "const char *") == 0)
-		वापस FILTER_PTR_STRING;
+	if (strcmp(type, "char *") == 0 || strcmp(type, "const char *") == 0)
+		return FILTER_PTR_STRING;
 
-	वापस FILTER_OTHER;
-पूर्ण
+	return FILTER_OTHER;
+}
 
-अटल filter_pred_fn_t select_comparison_fn(क्रमागत filter_op_ids op,
-					    पूर्णांक field_size, पूर्णांक field_is_चिन्हित)
-अणु
-	filter_pred_fn_t fn = शून्य;
-	पूर्णांक pred_func_index = -1;
+static filter_pred_fn_t select_comparison_fn(enum filter_op_ids op,
+					    int field_size, int field_is_signed)
+{
+	filter_pred_fn_t fn = NULL;
+	int pred_func_index = -1;
 
-	चयन (op) अणु
-	हाल OP_EQ:
-	हाल OP_NE:
-		अवरोध;
-	शेष:
-		अगर (WARN_ON_ONCE(op < PRED_FUNC_START))
-			वापस शून्य;
+	switch (op) {
+	case OP_EQ:
+	case OP_NE:
+		break;
+	default:
+		if (WARN_ON_ONCE(op < PRED_FUNC_START))
+			return NULL;
 		pred_func_index = op - PRED_FUNC_START;
-		अगर (WARN_ON_ONCE(pred_func_index > PRED_FUNC_MAX))
-			वापस शून्य;
-	पूर्ण
+		if (WARN_ON_ONCE(pred_func_index > PRED_FUNC_MAX))
+			return NULL;
+	}
 
-	चयन (field_size) अणु
-	हाल 8:
-		अगर (pred_func_index < 0)
+	switch (field_size) {
+	case 8:
+		if (pred_func_index < 0)
 			fn = filter_pred_64;
-		अन्यथा अगर (field_is_चिन्हित)
+		else if (field_is_signed)
 			fn = pred_funcs_s64[pred_func_index];
-		अन्यथा
+		else
 			fn = pred_funcs_u64[pred_func_index];
-		अवरोध;
-	हाल 4:
-		अगर (pred_func_index < 0)
+		break;
+	case 4:
+		if (pred_func_index < 0)
 			fn = filter_pred_32;
-		अन्यथा अगर (field_is_चिन्हित)
+		else if (field_is_signed)
 			fn = pred_funcs_s32[pred_func_index];
-		अन्यथा
+		else
 			fn = pred_funcs_u32[pred_func_index];
-		अवरोध;
-	हाल 2:
-		अगर (pred_func_index < 0)
+		break;
+	case 2:
+		if (pred_func_index < 0)
 			fn = filter_pred_16;
-		अन्यथा अगर (field_is_चिन्हित)
+		else if (field_is_signed)
 			fn = pred_funcs_s16[pred_func_index];
-		अन्यथा
+		else
 			fn = pred_funcs_u16[pred_func_index];
-		अवरोध;
-	हाल 1:
-		अगर (pred_func_index < 0)
+		break;
+	case 1:
+		if (pred_func_index < 0)
 			fn = filter_pred_8;
-		अन्यथा अगर (field_is_चिन्हित)
+		else if (field_is_signed)
 			fn = pred_funcs_s8[pred_func_index];
-		अन्यथा
+		else
 			fn = pred_funcs_u8[pred_func_index];
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस fn;
-पूर्ण
+	return fn;
+}
 
 /* Called when a predicate is encountered by predicate_parse() */
-अटल पूर्णांक parse_pred(स्थिर अक्षर *str, व्योम *data,
-		      पूर्णांक pos, काष्ठा filter_parse_error *pe,
-		      काष्ठा filter_pred **pred_ptr)
-अणु
-	काष्ठा trace_event_call *call = data;
-	काष्ठा ftrace_event_field *field;
-	काष्ठा filter_pred *pred = शून्य;
-	अक्षर num_buf[24];	/* Big enough to hold an address */
-	अक्षर *field_name;
-	अक्षर q;
+static int parse_pred(const char *str, void *data,
+		      int pos, struct filter_parse_error *pe,
+		      struct filter_pred **pred_ptr)
+{
+	struct trace_event_call *call = data;
+	struct ftrace_event_field *field;
+	struct filter_pred *pred = NULL;
+	char num_buf[24];	/* Big enough to hold an address */
+	char *field_name;
+	char q;
 	u64 val;
-	पूर्णांक len;
-	पूर्णांक ret;
-	पूर्णांक op;
-	पूर्णांक s;
-	पूर्णांक i = 0;
+	int len;
+	int ret;
+	int op;
+	int s;
+	int i = 0;
 
 	/* First find the field to associate to */
-	जबतक (है_खाली(str[i]))
+	while (isspace(str[i]))
 		i++;
 	s = i;
 
-	जबतक (है_अक्षर_अंक(str[i]) || str[i] == '_')
+	while (isalnum(str[i]) || str[i] == '_')
 		i++;
 
 	len = i - s;
 
-	अगर (!len)
-		वापस -1;
+	if (!len)
+		return -1;
 
 	field_name = kmemdup_nul(str + s, len, GFP_KERNEL);
-	अगर (!field_name)
-		वापस -ENOMEM;
+	if (!field_name)
+		return -ENOMEM;
 
 	/* Make sure that the field exists */
 
 	field = trace_find_event_field(call, field_name);
-	kमुक्त(field_name);
-	अगर (!field) अणु
+	kfree(field_name);
+	if (!field) {
 		parse_error(pe, FILT_ERR_FIELD_NOT_FOUND, pos + i);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	जबतक (है_खाली(str[i]))
+	while (isspace(str[i]))
 		i++;
 
 	/* Make sure this op is supported */
-	क्रम (op = 0; ops[op]; op++) अणु
+	for (op = 0; ops[op]; op++) {
 		/* This is why '<=' must come before '<' in ops[] */
-		अगर (म_भेदन(str + i, ops[op], म_माप(ops[op])) == 0)
-			अवरोध;
-	पूर्ण
+		if (strncmp(str + i, ops[op], strlen(ops[op])) == 0)
+			break;
+	}
 
-	अगर (!ops[op]) अणु
+	if (!ops[op]) {
 		parse_error(pe, FILT_ERR_INVALID_OP, pos + i);
-		जाओ err_मुक्त;
-	पूर्ण
+		goto err_free;
+	}
 
-	i += म_माप(ops[op]);
+	i += strlen(ops[op]);
 
-	जबतक (है_खाली(str[i]))
+	while (isspace(str[i]))
 		i++;
 
 	s = i;
 
-	pred = kzalloc(माप(*pred), GFP_KERNEL);
-	अगर (!pred)
-		वापस -ENOMEM;
+	pred = kzalloc(sizeof(*pred), GFP_KERNEL);
+	if (!pred)
+		return -ENOMEM;
 
 	pred->field = field;
 	pred->offset = field->offset;
 	pred->op = op;
 
-	अगर (ftrace_event_is_function(call)) अणु
+	if (ftrace_event_is_function(call)) {
 		/*
-		 * Perf करोes things dअगरferent with function events.
+		 * Perf does things different with function events.
 		 * It only allows an "ip" field, and expects a string.
-		 * But the string करोes not need to be surrounded by quotes.
-		 * If it is a string, the asचिन्हित function as a nop,
-		 * (perf करोesn't use it) and grab everything.
+		 * But the string does not need to be surrounded by quotes.
+		 * If it is a string, the assigned function as a nop,
+		 * (perf doesn't use it) and grab everything.
 		 */
-		अगर (म_भेद(field->name, "ip") != 0) अणु
+		if (strcmp(field->name, "ip") != 0) {
 			parse_error(pe, FILT_ERR_IP_FIELD_ONLY, pos + i);
-			जाओ err_मुक्त;
-		पूर्ण
+			goto err_free;
+		}
 		pred->fn = filter_pred_none;
 
 		/*
-		 * Quotes are not required, but अगर they exist then we need
-		 * to पढ़ो them till we hit a matching one.
+		 * Quotes are not required, but if they exist then we need
+		 * to read them till we hit a matching one.
 		 */
-		अगर (str[i] == '\'' || str[i] == '"')
+		if (str[i] == '\'' || str[i] == '"')
 			q = str[i];
-		अन्यथा
+		else
 			q = 0;
 
-		क्रम (i++; str[i]; i++) अणु
-			अगर (q && str[i] == q)
-				अवरोध;
-			अगर (!q && (str[i] == ')' || str[i] == '&' ||
+		for (i++; str[i]; i++) {
+			if (q && str[i] == q)
+				break;
+			if (!q && (str[i] == ')' || str[i] == '&' ||
 				   str[i] == '|'))
-				अवरोध;
-		पूर्ण
+				break;
+		}
 		/* Skip quotes */
-		अगर (q)
+		if (q)
 			s++;
 		len = i - s;
-		अगर (len >= MAX_FILTER_STR_VAL) अणु
+		if (len >= MAX_FILTER_STR_VAL) {
 			parse_error(pe, FILT_ERR_OPERAND_TOO_LONG, pos + i);
-			जाओ err_मुक्त;
-		पूर्ण
+			goto err_free;
+		}
 
 		pred->regex.len = len;
-		म_नकलन(pred->regex.pattern, str + s, len);
+		strncpy(pred->regex.pattern, str + s, len);
 		pred->regex.pattern[len] = 0;
 
-	/* This is either a string, or an पूर्णांकeger */
-	पूर्ण अन्यथा अगर (str[i] == '\'' || str[i] == '"') अणु
-		अक्षर q = str[i];
+	/* This is either a string, or an integer */
+	} else if (str[i] == '\'' || str[i] == '"') {
+		char q = str[i];
 
-		/* Make sure the op is OK क्रम strings */
-		चयन (op) अणु
-		हाल OP_NE:
+		/* Make sure the op is OK for strings */
+		switch (op) {
+		case OP_NE:
 			pred->not = 1;
 			fallthrough;
-		हाल OP_GLOB:
-		हाल OP_EQ:
-			अवरोध;
-		शेष:
+		case OP_GLOB:
+		case OP_EQ:
+			break;
+		default:
 			parse_error(pe, FILT_ERR_ILLEGAL_FIELD_OP, pos + i);
-			जाओ err_मुक्त;
-		पूर्ण
+			goto err_free;
+		}
 
-		/* Make sure the field is OK क्रम strings */
-		अगर (!is_string_field(field)) अणु
+		/* Make sure the field is OK for strings */
+		if (!is_string_field(field)) {
 			parse_error(pe, FILT_ERR_EXPECT_DIGIT, pos + i);
-			जाओ err_मुक्त;
-		पूर्ण
+			goto err_free;
+		}
 
-		क्रम (i++; str[i]; i++) अणु
-			अगर (str[i] == q)
-				अवरोध;
-		पूर्ण
-		अगर (!str[i]) अणु
+		for (i++; str[i]; i++) {
+			if (str[i] == q)
+				break;
+		}
+		if (!str[i]) {
 			parse_error(pe, FILT_ERR_MISSING_QUOTE, pos + i);
-			जाओ err_मुक्त;
-		पूर्ण
+			goto err_free;
+		}
 
 		/* Skip quotes */
 		s++;
 		len = i - s;
-		अगर (len >= MAX_FILTER_STR_VAL) अणु
+		if (len >= MAX_FILTER_STR_VAL) {
 			parse_error(pe, FILT_ERR_OPERAND_TOO_LONG, pos + i);
-			जाओ err_मुक्त;
-		पूर्ण
+			goto err_free;
+		}
 
 		pred->regex.len = len;
-		म_नकलन(pred->regex.pattern, str + s, len);
+		strncpy(pred->regex.pattern, str + s, len);
 		pred->regex.pattern[len] = 0;
 
 		filter_build_regex(pred);
 
-		अगर (field->filter_type == FILTER_COMM) अणु
+		if (field->filter_type == FILTER_COMM) {
 			pred->fn = filter_pred_comm;
 
-		पूर्ण अन्यथा अगर (field->filter_type == FILTER_STATIC_STRING) अणु
+		} else if (field->filter_type == FILTER_STATIC_STRING) {
 			pred->fn = filter_pred_string;
 			pred->regex.field_len = field->size;
 
-		पूर्ण अन्यथा अगर (field->filter_type == FILTER_DYN_STRING)
+		} else if (field->filter_type == FILTER_DYN_STRING)
 			pred->fn = filter_pred_strloc;
-		अन्यथा
-			pred->fn = filter_pred_pअक्षर;
+		else
+			pred->fn = filter_pred_pchar;
 		/* go past the last quote */
 		i++;
 
-	पूर्ण अन्यथा अगर (है_अंक(str[i]) || str[i] == '-') अणु
+	} else if (isdigit(str[i]) || str[i] == '-') {
 
 		/* Make sure the field is not a string */
-		अगर (is_string_field(field)) अणु
+		if (is_string_field(field)) {
 			parse_error(pe, FILT_ERR_EXPECT_STRING, pos + i);
-			जाओ err_मुक्त;
-		पूर्ण
+			goto err_free;
+		}
 
-		अगर (op == OP_GLOB) अणु
+		if (op == OP_GLOB) {
 			parse_error(pe, FILT_ERR_ILLEGAL_FIELD_OP, pos + i);
-			जाओ err_मुक्त;
-		पूर्ण
+			goto err_free;
+		}
 
-		अगर (str[i] == '-')
+		if (str[i] == '-')
 			i++;
 
 		/* We allow 0xDEADBEEF */
-		जबतक (है_अक्षर_अंक(str[i]))
+		while (isalnum(str[i]))
 			i++;
 
 		len = i - s;
-		/* 0xfeedfacedeadbeef is 18 अक्षरs max */
-		अगर (len >= माप(num_buf)) अणु
+		/* 0xfeedfacedeadbeef is 18 chars max */
+		if (len >= sizeof(num_buf)) {
 			parse_error(pe, FILT_ERR_OPERAND_TOO_LONG, pos + i);
-			जाओ err_मुक्त;
-		पूर्ण
+			goto err_free;
+		}
 
-		म_नकलन(num_buf, str + s, len);
+		strncpy(num_buf, str + s, len);
 		num_buf[len] = 0;
 
 		/* Make sure it is a value */
-		अगर (field->is_चिन्हित)
-			ret = kम_से_दीर्घl(num_buf, 0, &val);
-		अन्यथा
-			ret = kम_से_अदीर्घl(num_buf, 0, &val);
-		अगर (ret) अणु
+		if (field->is_signed)
+			ret = kstrtoll(num_buf, 0, &val);
+		else
+			ret = kstrtoull(num_buf, 0, &val);
+		if (ret) {
 			parse_error(pe, FILT_ERR_ILLEGAL_INTVAL, pos + s);
-			जाओ err_मुक्त;
-		पूर्ण
+			goto err_free;
+		}
 
 		pred->val = val;
 
-		अगर (field->filter_type == FILTER_CPU)
+		if (field->filter_type == FILTER_CPU)
 			pred->fn = filter_pred_cpu;
-		अन्यथा अणु
+		else {
 			pred->fn = select_comparison_fn(pred->op, field->size,
-							field->is_चिन्हित);
-			अगर (pred->op == OP_NE)
+							field->is_signed);
+			if (pred->op == OP_NE)
 				pred->not = 1;
-		पूर्ण
+		}
 
-	पूर्ण अन्यथा अणु
+	} else {
 		parse_error(pe, FILT_ERR_INVALID_VALUE, pos + i);
-		जाओ err_मुक्त;
-	पूर्ण
+		goto err_free;
+	}
 
 	*pred_ptr = pred;
-	वापस i;
+	return i;
 
-err_मुक्त:
-	kमुक्त(pred);
-	वापस -EINVAL;
-पूर्ण
+err_free:
+	kfree(pred);
+	return -EINVAL;
+}
 
-क्रमागत अणु
+enum {
 	TOO_MANY_CLOSE		= -1,
 	TOO_MANY_OPEN		= -2,
 	MISSING_QUOTE		= -3,
-पूर्ण;
+};
 
 /*
  * Read the filter string once to calculate the number of predicates
@@ -1406,524 +1405,524 @@ err_मुक्त:
  *  -2 - too many '('
  *  -3 - No matching quote
  */
-अटल पूर्णांक calc_stack(स्थिर अक्षर *str, पूर्णांक *parens, पूर्णांक *preds, पूर्णांक *err)
-अणु
+static int calc_stack(const char *str, int *parens, int *preds, int *err)
+{
 	bool is_pred = false;
-	पूर्णांक nr_preds = 0;
-	पूर्णांक खोलो = 1; /* Count the expression as "(E)" */
-	पूर्णांक last_quote = 0;
-	पूर्णांक max_खोलो = 1;
-	पूर्णांक quote = 0;
-	पूर्णांक i;
+	int nr_preds = 0;
+	int open = 1; /* Count the expression as "(E)" */
+	int last_quote = 0;
+	int max_open = 1;
+	int quote = 0;
+	int i;
 
 	*err = 0;
 
-	क्रम (i = 0; str[i]; i++) अणु
-		अगर (है_खाली(str[i]))
-			जारी;
-		अगर (quote) अणु
-			अगर (str[i] == quote)
+	for (i = 0; str[i]; i++) {
+		if (isspace(str[i]))
+			continue;
+		if (quote) {
+			if (str[i] == quote)
 			       quote = 0;
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		चयन (str[i]) अणु
-		हाल '\'':
-		हाल '"':
+		switch (str[i]) {
+		case '\'':
+		case '"':
 			quote = str[i];
 			last_quote = i;
-			अवरोध;
-		हाल '|':
-		हाल '&':
-			अगर (str[i+1] != str[i])
-				अवरोध;
+			break;
+		case '|':
+		case '&':
+			if (str[i+1] != str[i])
+				break;
 			is_pred = false;
-			जारी;
-		हाल '(':
+			continue;
+		case '(':
 			is_pred = false;
-			खोलो++;
-			अगर (खोलो > max_खोलो)
-				max_खोलो = खोलो;
-			जारी;
-		हाल ')':
+			open++;
+			if (open > max_open)
+				max_open = open;
+			continue;
+		case ')':
 			is_pred = false;
-			अगर (खोलो == 1) अणु
+			if (open == 1) {
 				*err = i;
-				वापस TOO_MANY_CLOSE;
-			पूर्ण
-			खोलो--;
-			जारी;
-		पूर्ण
-		अगर (!is_pred) अणु
+				return TOO_MANY_CLOSE;
+			}
+			open--;
+			continue;
+		}
+		if (!is_pred) {
 			nr_preds++;
 			is_pred = true;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (quote) अणु
+	if (quote) {
 		*err = last_quote;
-		वापस MISSING_QUOTE;
-	पूर्ण
+		return MISSING_QUOTE;
+	}
 
-	अगर (खोलो != 1) अणु
-		पूर्णांक level = खोलो;
+	if (open != 1) {
+		int level = open;
 
-		/* find the bad खोलो */
-		क्रम (i--; i; i--) अणु
-			अगर (quote) अणु
-				अगर (str[i] == quote)
+		/* find the bad open */
+		for (i--; i; i--) {
+			if (quote) {
+				if (str[i] == quote)
 					quote = 0;
-				जारी;
-			पूर्ण
-			चयन (str[i]) अणु
-			हाल '(':
-				अगर (level == खोलो) अणु
+				continue;
+			}
+			switch (str[i]) {
+			case '(':
+				if (level == open) {
 					*err = i;
-					वापस TOO_MANY_OPEN;
-				पूर्ण
+					return TOO_MANY_OPEN;
+				}
 				level--;
-				अवरोध;
-			हाल ')':
+				break;
+			case ')':
 				level++;
-				अवरोध;
-			हाल '\'':
-			हाल '"':
+				break;
+			case '\'':
+			case '"':
 				quote = str[i];
-				अवरोध;
-			पूर्ण
-		पूर्ण
-		/* First अक्षरacter is the '(' with missing ')' */
+				break;
+			}
+		}
+		/* First character is the '(' with missing ')' */
 		*err = 0;
-		वापस TOO_MANY_OPEN;
-	पूर्ण
+		return TOO_MANY_OPEN;
+	}
 
 	/* Set the size of the required stacks */
-	*parens = max_खोलो;
+	*parens = max_open;
 	*preds = nr_preds;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक process_preds(काष्ठा trace_event_call *call,
-			 स्थिर अक्षर *filter_string,
-			 काष्ठा event_filter *filter,
-			 काष्ठा filter_parse_error *pe)
-अणु
-	काष्ठा prog_entry *prog;
-	पूर्णांक nr_parens;
-	पूर्णांक nr_preds;
-	पूर्णांक index;
-	पूर्णांक ret;
+static int process_preds(struct trace_event_call *call,
+			 const char *filter_string,
+			 struct event_filter *filter,
+			 struct filter_parse_error *pe)
+{
+	struct prog_entry *prog;
+	int nr_parens;
+	int nr_preds;
+	int index;
+	int ret;
 
 	ret = calc_stack(filter_string, &nr_parens, &nr_preds, &index);
-	अगर (ret < 0) अणु
-		चयन (ret) अणु
-		हाल MISSING_QUOTE:
+	if (ret < 0) {
+		switch (ret) {
+		case MISSING_QUOTE:
 			parse_error(pe, FILT_ERR_MISSING_QUOTE, index);
-			अवरोध;
-		हाल TOO_MANY_OPEN:
+			break;
+		case TOO_MANY_OPEN:
 			parse_error(pe, FILT_ERR_TOO_MANY_OPEN, index);
-			अवरोध;
-		शेष:
+			break;
+		default:
 			parse_error(pe, FILT_ERR_TOO_MANY_CLOSE, index);
-		पूर्ण
-		वापस ret;
-	पूर्ण
+		}
+		return ret;
+	}
 
-	अगर (!nr_preds)
-		वापस -EINVAL;
+	if (!nr_preds)
+		return -EINVAL;
 
 	prog = predicate_parse(filter_string, nr_parens, nr_preds,
 			       parse_pred, call, pe);
-	अगर (IS_ERR(prog))
-		वापस PTR_ERR(prog);
+	if (IS_ERR(prog))
+		return PTR_ERR(prog);
 
-	rcu_assign_poपूर्णांकer(filter->prog, prog);
-	वापस 0;
-पूर्ण
+	rcu_assign_pointer(filter->prog, prog);
+	return 0;
+}
 
-अटल अंतरभूत व्योम event_set_filtered_flag(काष्ठा trace_event_file *file)
-अणु
-	अचिन्हित दीर्घ old_flags = file->flags;
+static inline void event_set_filtered_flag(struct trace_event_file *file)
+{
+	unsigned long old_flags = file->flags;
 
-	file->flags |= EVENT_खाता_FL_FILTERED;
+	file->flags |= EVENT_FILE_FL_FILTERED;
 
-	अगर (old_flags != file->flags)
+	if (old_flags != file->flags)
 		trace_buffered_event_enable();
-पूर्ण
+}
 
-अटल अंतरभूत व्योम event_set_filter(काष्ठा trace_event_file *file,
-				    काष्ठा event_filter *filter)
-अणु
-	rcu_assign_poपूर्णांकer(file->filter, filter);
-पूर्ण
+static inline void event_set_filter(struct trace_event_file *file,
+				    struct event_filter *filter)
+{
+	rcu_assign_pointer(file->filter, filter);
+}
 
-अटल अंतरभूत व्योम event_clear_filter(काष्ठा trace_event_file *file)
-अणु
-	RCU_INIT_POINTER(file->filter, शून्य);
-पूर्ण
+static inline void event_clear_filter(struct trace_event_file *file)
+{
+	RCU_INIT_POINTER(file->filter, NULL);
+}
 
-काष्ठा filter_list अणु
-	काष्ठा list_head	list;
-	काष्ठा event_filter	*filter;
-पूर्ण;
+struct filter_list {
+	struct list_head	list;
+	struct event_filter	*filter;
+};
 
-अटल पूर्णांक process_प्रणाली_preds(काष्ठा trace_subप्रणाली_dir *dir,
-				काष्ठा trace_array *tr,
-				काष्ठा filter_parse_error *pe,
-				अक्षर *filter_string)
-अणु
-	काष्ठा trace_event_file *file;
-	काष्ठा filter_list *filter_item;
-	काष्ठा event_filter *filter = शून्य;
-	काष्ठा filter_list *पंचांगp;
+static int process_system_preds(struct trace_subsystem_dir *dir,
+				struct trace_array *tr,
+				struct filter_parse_error *pe,
+				char *filter_string)
+{
+	struct trace_event_file *file;
+	struct filter_list *filter_item;
+	struct event_filter *filter = NULL;
+	struct filter_list *tmp;
 	LIST_HEAD(filter_list);
 	bool fail = true;
-	पूर्णांक err;
+	int err;
 
-	list_क्रम_each_entry(file, &tr->events, list) अणु
+	list_for_each_entry(file, &tr->events, list) {
 
-		अगर (file->प्रणाली != dir)
-			जारी;
+		if (file->system != dir)
+			continue;
 
-		filter = kzalloc(माप(*filter), GFP_KERNEL);
-		अगर (!filter)
-			जाओ fail_mem;
+		filter = kzalloc(sizeof(*filter), GFP_KERNEL);
+		if (!filter)
+			goto fail_mem;
 
 		filter->filter_string = kstrdup(filter_string, GFP_KERNEL);
-		अगर (!filter->filter_string)
-			जाओ fail_mem;
+		if (!filter->filter_string)
+			goto fail_mem;
 
 		err = process_preds(file->event_call, filter_string, filter, pe);
-		अगर (err) अणु
+		if (err) {
 			filter_disable(file);
 			parse_error(pe, FILT_ERR_BAD_SUBSYS_FILTER, 0);
 			append_filter_err(tr, pe, filter);
-		पूर्ण अन्यथा
+		} else
 			event_set_filtered_flag(file);
 
 
-		filter_item = kzalloc(माप(*filter_item), GFP_KERNEL);
-		अगर (!filter_item)
-			जाओ fail_mem;
+		filter_item = kzalloc(sizeof(*filter_item), GFP_KERNEL);
+		if (!filter_item)
+			goto fail_mem;
 
 		list_add_tail(&filter_item->list, &filter_list);
 		/*
-		 * Regardless of अगर this वापसed an error, we still
-		 * replace the filter क्रम the call.
+		 * Regardless of if this returned an error, we still
+		 * replace the filter for the call.
 		 */
 		filter_item->filter = event_filter(file);
 		event_set_filter(file, filter);
-		filter = शून्य;
+		filter = NULL;
 
 		fail = false;
-	पूर्ण
+	}
 
-	अगर (fail)
-		जाओ fail;
+	if (fail)
+		goto fail;
 
 	/*
 	 * The calls can still be using the old filters.
 	 * Do a synchronize_rcu() and to ensure all calls are
-	 * करोne with them beक्रमe we मुक्त them.
+	 * done with them before we free them.
 	 */
-	tracepoपूर्णांक_synchronize_unरेजिस्टर();
-	list_क्रम_each_entry_safe(filter_item, पंचांगp, &filter_list, list) अणु
-		__मुक्त_filter(filter_item->filter);
+	tracepoint_synchronize_unregister();
+	list_for_each_entry_safe(filter_item, tmp, &filter_list, list) {
+		__free_filter(filter_item->filter);
 		list_del(&filter_item->list);
-		kमुक्त(filter_item);
-	पूर्ण
-	वापस 0;
+		kfree(filter_item);
+	}
+	return 0;
  fail:
 	/* No call succeeded */
-	list_क्रम_each_entry_safe(filter_item, पंचांगp, &filter_list, list) अणु
+	list_for_each_entry_safe(filter_item, tmp, &filter_list, list) {
 		list_del(&filter_item->list);
-		kमुक्त(filter_item);
-	पूर्ण
+		kfree(filter_item);
+	}
 	parse_error(pe, FILT_ERR_BAD_SUBSYS_FILTER, 0);
-	वापस -EINVAL;
+	return -EINVAL;
  fail_mem:
-	__मुक्त_filter(filter);
+	__free_filter(filter);
 	/* If any call succeeded, we still need to sync */
-	अगर (!fail)
-		tracepoपूर्णांक_synchronize_unरेजिस्टर();
-	list_क्रम_each_entry_safe(filter_item, पंचांगp, &filter_list, list) अणु
-		__मुक्त_filter(filter_item->filter);
+	if (!fail)
+		tracepoint_synchronize_unregister();
+	list_for_each_entry_safe(filter_item, tmp, &filter_list, list) {
+		__free_filter(filter_item->filter);
 		list_del(&filter_item->list);
-		kमुक्त(filter_item);
-	पूर्ण
-	वापस -ENOMEM;
-पूर्ण
+		kfree(filter_item);
+	}
+	return -ENOMEM;
+}
 
-अटल पूर्णांक create_filter_start(अक्षर *filter_string, bool set_str,
-			       काष्ठा filter_parse_error **pse,
-			       काष्ठा event_filter **filterp)
-अणु
-	काष्ठा event_filter *filter;
-	काष्ठा filter_parse_error *pe = शून्य;
-	पूर्णांक err = 0;
+static int create_filter_start(char *filter_string, bool set_str,
+			       struct filter_parse_error **pse,
+			       struct event_filter **filterp)
+{
+	struct event_filter *filter;
+	struct filter_parse_error *pe = NULL;
+	int err = 0;
 
-	अगर (WARN_ON_ONCE(*pse || *filterp))
-		वापस -EINVAL;
+	if (WARN_ON_ONCE(*pse || *filterp))
+		return -EINVAL;
 
-	filter = kzalloc(माप(*filter), GFP_KERNEL);
-	अगर (filter && set_str) अणु
+	filter = kzalloc(sizeof(*filter), GFP_KERNEL);
+	if (filter && set_str) {
 		filter->filter_string = kstrdup(filter_string, GFP_KERNEL);
-		अगर (!filter->filter_string)
+		if (!filter->filter_string)
 			err = -ENOMEM;
-	पूर्ण
+	}
 
-	pe = kzalloc(माप(*pe), GFP_KERNEL);
+	pe = kzalloc(sizeof(*pe), GFP_KERNEL);
 
-	अगर (!filter || !pe || err) अणु
-		kमुक्त(pe);
-		__मुक्त_filter(filter);
-		वापस -ENOMEM;
-	पूर्ण
+	if (!filter || !pe || err) {
+		kfree(pe);
+		__free_filter(filter);
+		return -ENOMEM;
+	}
 
 	/* we're committed to creating a new filter */
 	*filterp = filter;
 	*pse = pe;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम create_filter_finish(काष्ठा filter_parse_error *pe)
-अणु
-	kमुक्त(pe);
-पूर्ण
+static void create_filter_finish(struct filter_parse_error *pe)
+{
+	kfree(pe);
+}
 
 /**
- * create_filter - create a filter क्रम a trace_event_call
+ * create_filter - create a filter for a trace_event_call
  * @tr: the trace array associated with these events
- * @call: trace_event_call to create a filter क्रम
+ * @call: trace_event_call to create a filter for
  * @filter_str: filter string
  * @set_str: remember @filter_str and enable detailed error in filter
- * @filterp: out param क्रम created filter (always updated on वापस)
- *           Must be a poपूर्णांकer that references a शून्य poपूर्णांकer.
+ * @filterp: out param for created filter (always updated on return)
+ *           Must be a pointer that references a NULL pointer.
  *
- * Creates a filter क्रम @call with @filter_str.  If @set_str is %true,
+ * Creates a filter for @call with @filter_str.  If @set_str is %true,
  * @filter_str is copied and recorded in the new filter.
  *
- * On success, वापसs 0 and *@filterp poपूर्णांकs to the new filter.  On
- * failure, वापसs -त्रुटि_सं and *@filterp may poपूर्णांक to %शून्य or to a new
- * filter.  In the latter हाल, the वापसed filter contains error
- * inक्रमmation अगर @set_str is %true and the caller is responsible क्रम
- * मुक्तing it.
+ * On success, returns 0 and *@filterp points to the new filter.  On
+ * failure, returns -errno and *@filterp may point to %NULL or to a new
+ * filter.  In the latter case, the returned filter contains error
+ * information if @set_str is %true and the caller is responsible for
+ * freeing it.
  */
-अटल पूर्णांक create_filter(काष्ठा trace_array *tr,
-			 काष्ठा trace_event_call *call,
-			 अक्षर *filter_string, bool set_str,
-			 काष्ठा event_filter **filterp)
-अणु
-	काष्ठा filter_parse_error *pe = शून्य;
-	पूर्णांक err;
+static int create_filter(struct trace_array *tr,
+			 struct trace_event_call *call,
+			 char *filter_string, bool set_str,
+			 struct event_filter **filterp)
+{
+	struct filter_parse_error *pe = NULL;
+	int err;
 
-	/* filterp must poपूर्णांक to शून्य */
-	अगर (WARN_ON(*filterp))
-		*filterp = शून्य;
+	/* filterp must point to NULL */
+	if (WARN_ON(*filterp))
+		*filterp = NULL;
 
 	err = create_filter_start(filter_string, set_str, &pe, filterp);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	err = process_preds(call, filter_string, *filterp, pe);
-	अगर (err && set_str)
+	if (err && set_str)
 		append_filter_err(tr, pe, *filterp);
 	create_filter_finish(pe);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक create_event_filter(काष्ठा trace_array *tr,
-			काष्ठा trace_event_call *call,
-			अक्षर *filter_str, bool set_str,
-			काष्ठा event_filter **filterp)
-अणु
-	वापस create_filter(tr, call, filter_str, set_str, filterp);
-पूर्ण
+int create_event_filter(struct trace_array *tr,
+			struct trace_event_call *call,
+			char *filter_str, bool set_str,
+			struct event_filter **filterp)
+{
+	return create_filter(tr, call, filter_str, set_str, filterp);
+}
 
 /**
- * create_प्रणाली_filter - create a filter क्रम an event subप्रणाली
- * @dir: the descriptor क्रम the subप्रणाली directory
+ * create_system_filter - create a filter for an event subsystem
+ * @dir: the descriptor for the subsystem directory
  * @filter_str: filter string
- * @filterp: out param क्रम created filter (always updated on वापस)
+ * @filterp: out param for created filter (always updated on return)
  *
- * Identical to create_filter() except that it creates a subप्रणाली filter
+ * Identical to create_filter() except that it creates a subsystem filter
  * and always remembers @filter_str.
  */
-अटल पूर्णांक create_प्रणाली_filter(काष्ठा trace_subप्रणाली_dir *dir,
-				अक्षर *filter_str, काष्ठा event_filter **filterp)
-अणु
-	काष्ठा filter_parse_error *pe = शून्य;
-	पूर्णांक err;
+static int create_system_filter(struct trace_subsystem_dir *dir,
+				char *filter_str, struct event_filter **filterp)
+{
+	struct filter_parse_error *pe = NULL;
+	int err;
 
 	err = create_filter_start(filter_str, true, &pe, filterp);
-	अगर (!err) अणु
-		err = process_प्रणाली_preds(dir, dir->tr, pe, filter_str);
-		अगर (!err) अणु
-			/* System filters just show a शेष message */
-			kमुक्त((*filterp)->filter_string);
-			(*filterp)->filter_string = शून्य;
-		पूर्ण अन्यथा अणु
+	if (!err) {
+		err = process_system_preds(dir, dir->tr, pe, filter_str);
+		if (!err) {
+			/* System filters just show a default message */
+			kfree((*filterp)->filter_string);
+			(*filterp)->filter_string = NULL;
+		} else {
 			append_filter_err(dir->tr, pe, *filterp);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	create_filter_finish(pe);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /* caller must hold event_mutex */
-पूर्णांक apply_event_filter(काष्ठा trace_event_file *file, अक्षर *filter_string)
-अणु
-	काष्ठा trace_event_call *call = file->event_call;
-	काष्ठा event_filter *filter = शून्य;
-	पूर्णांक err;
+int apply_event_filter(struct trace_event_file *file, char *filter_string)
+{
+	struct trace_event_call *call = file->event_call;
+	struct event_filter *filter = NULL;
+	int err;
 
-	अगर (!म_भेद(म_मालाip(filter_string), "0")) अणु
+	if (!strcmp(strstrip(filter_string), "0")) {
 		filter_disable(file);
 		filter = event_filter(file);
 
-		अगर (!filter)
-			वापस 0;
+		if (!filter)
+			return 0;
 
 		event_clear_filter(file);
 
 		/* Make sure the filter is not being used */
-		tracepoपूर्णांक_synchronize_unरेजिस्टर();
-		__मुक्त_filter(filter);
+		tracepoint_synchronize_unregister();
+		__free_filter(filter);
 
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	err = create_filter(file->tr, call, filter_string, true, &filter);
 
 	/*
 	 * Always swap the call filter with the new filter
-	 * even अगर there was an error. If there was an error
+	 * even if there was an error. If there was an error
 	 * in the filter, we disable the filter and show the error
 	 * string
 	 */
-	अगर (filter) अणु
-		काष्ठा event_filter *पंचांगp;
+	if (filter) {
+		struct event_filter *tmp;
 
-		पंचांगp = event_filter(file);
-		अगर (!err)
+		tmp = event_filter(file);
+		if (!err)
 			event_set_filtered_flag(file);
-		अन्यथा
+		else
 			filter_disable(file);
 
 		event_set_filter(file, filter);
 
-		अगर (पंचांगp) अणु
-			/* Make sure the call is करोne with the filter */
-			tracepoपूर्णांक_synchronize_unरेजिस्टर();
-			__मुक्त_filter(पंचांगp);
-		पूर्ण
-	पूर्ण
+		if (tmp) {
+			/* Make sure the call is done with the filter */
+			tracepoint_synchronize_unregister();
+			__free_filter(tmp);
+		}
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक apply_subप्रणाली_event_filter(काष्ठा trace_subप्रणाली_dir *dir,
-				 अक्षर *filter_string)
-अणु
-	काष्ठा event_subप्रणाली *प्रणाली = dir->subप्रणाली;
-	काष्ठा trace_array *tr = dir->tr;
-	काष्ठा event_filter *filter = शून्य;
-	पूर्णांक err = 0;
+int apply_subsystem_event_filter(struct trace_subsystem_dir *dir,
+				 char *filter_string)
+{
+	struct event_subsystem *system = dir->subsystem;
+	struct trace_array *tr = dir->tr;
+	struct event_filter *filter = NULL;
+	int err = 0;
 
 	mutex_lock(&event_mutex);
 
-	/* Make sure the प्रणाली still has events */
-	अगर (!dir->nr_events) अणु
+	/* Make sure the system still has events */
+	if (!dir->nr_events) {
 		err = -ENODEV;
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 
-	अगर (!म_भेद(म_मालाip(filter_string), "0")) अणु
-		filter_मुक्त_subप्रणाली_preds(dir, tr);
-		हटाओ_filter_string(प्रणाली->filter);
-		filter = प्रणाली->filter;
-		प्रणाली->filter = शून्य;
-		/* Ensure all filters are no दीर्घer used */
-		tracepoपूर्णांक_synchronize_unरेजिस्टर();
-		filter_मुक्त_subप्रणाली_filters(dir, tr);
-		__मुक्त_filter(filter);
-		जाओ out_unlock;
-	पूर्ण
+	if (!strcmp(strstrip(filter_string), "0")) {
+		filter_free_subsystem_preds(dir, tr);
+		remove_filter_string(system->filter);
+		filter = system->filter;
+		system->filter = NULL;
+		/* Ensure all filters are no longer used */
+		tracepoint_synchronize_unregister();
+		filter_free_subsystem_filters(dir, tr);
+		__free_filter(filter);
+		goto out_unlock;
+	}
 
-	err = create_प्रणाली_filter(dir, filter_string, &filter);
-	अगर (filter) अणु
+	err = create_system_filter(dir, filter_string, &filter);
+	if (filter) {
 		/*
-		 * No event actually uses the प्रणाली filter
-		 * we can मुक्त it without synchronize_rcu().
+		 * No event actually uses the system filter
+		 * we can free it without synchronize_rcu().
 		 */
-		__मुक्त_filter(प्रणाली->filter);
-		प्रणाली->filter = filter;
-	पूर्ण
+		__free_filter(system->filter);
+		system->filter = filter;
+	}
 out_unlock:
 	mutex_unlock(&event_mutex);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-#अगर_घोषित CONFIG_PERF_EVENTS
+#ifdef CONFIG_PERF_EVENTS
 
-व्योम ftrace_profile_मुक्त_filter(काष्ठा perf_event *event)
-अणु
-	काष्ठा event_filter *filter = event->filter;
+void ftrace_profile_free_filter(struct perf_event *event)
+{
+	struct event_filter *filter = event->filter;
 
-	event->filter = शून्य;
-	__मुक्त_filter(filter);
-पूर्ण
+	event->filter = NULL;
+	__free_filter(filter);
+}
 
-काष्ठा function_filter_data अणु
-	काष्ठा ftrace_ops *ops;
-	पूर्णांक first_filter;
-	पूर्णांक first_notrace;
-पूर्ण;
+struct function_filter_data {
+	struct ftrace_ops *ops;
+	int first_filter;
+	int first_notrace;
+};
 
-#अगर_घोषित CONFIG_FUNCTION_TRACER
-अटल अक्षर **
-ftrace_function_filter_re(अक्षर *buf, पूर्णांक len, पूर्णांक *count)
-अणु
-	अक्षर *str, **re;
+#ifdef CONFIG_FUNCTION_TRACER
+static char **
+ftrace_function_filter_re(char *buf, int len, int *count)
+{
+	char *str, **re;
 
 	str = kstrndup(buf, len, GFP_KERNEL);
-	अगर (!str)
-		वापस शून्य;
+	if (!str)
+		return NULL;
 
 	/*
 	 * The argv_split function takes white space
-	 * as a separator, so convert ',' पूर्णांकo spaces.
+	 * as a separator, so convert ',' into spaces.
 	 */
 	strreplace(str, ',', ' ');
 
 	re = argv_split(GFP_KERNEL, str, count);
-	kमुक्त(str);
-	वापस re;
-पूर्ण
+	kfree(str);
+	return re;
+}
 
-अटल पूर्णांक ftrace_function_set_regexp(काष्ठा ftrace_ops *ops, पूर्णांक filter,
-				      पूर्णांक reset, अक्षर *re, पूर्णांक len)
-अणु
-	पूर्णांक ret;
+static int ftrace_function_set_regexp(struct ftrace_ops *ops, int filter,
+				      int reset, char *re, int len)
+{
+	int ret;
 
-	अगर (filter)
+	if (filter)
 		ret = ftrace_set_filter(ops, re, len, reset);
-	अन्यथा
+	else
 		ret = ftrace_set_notrace(ops, re, len, reset);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक __ftrace_function_set_filter(पूर्णांक filter, अक्षर *buf, पूर्णांक len,
-					काष्ठा function_filter_data *data)
-अणु
-	पूर्णांक i, re_cnt, ret = -EINVAL;
-	पूर्णांक *reset;
-	अक्षर **re;
+static int __ftrace_function_set_filter(int filter, char *buf, int len,
+					struct function_filter_data *data)
+{
+	int i, re_cnt, ret = -EINVAL;
+	int *reset;
+	char **re;
 
 	reset = filter ? &data->first_filter : &data->first_notrace;
 
@@ -1933,292 +1932,292 @@ ftrace_function_filter_re(अक्षर *buf, पूर्णांक len, �
 	 * all pieces separately.
 	 */
 	re = ftrace_function_filter_re(buf, len, &re_cnt);
-	अगर (!re)
-		वापस -EINVAL;
+	if (!re)
+		return -EINVAL;
 
-	क्रम (i = 0; i < re_cnt; i++) अणु
+	for (i = 0; i < re_cnt; i++) {
 		ret = ftrace_function_set_regexp(data->ops, filter, *reset,
-						 re[i], म_माप(re[i]));
-		अगर (ret)
-			अवरोध;
+						 re[i], strlen(re[i]));
+		if (ret)
+			break;
 
-		अगर (*reset)
+		if (*reset)
 			*reset = 0;
-	पूर्ण
+	}
 
-	argv_मुक्त(re);
-	वापस ret;
-पूर्ण
+	argv_free(re);
+	return ret;
+}
 
-अटल पूर्णांक ftrace_function_check_pred(काष्ठा filter_pred *pred)
-अणु
-	काष्ठा ftrace_event_field *field = pred->field;
+static int ftrace_function_check_pred(struct filter_pred *pred)
+{
+	struct ftrace_event_field *field = pred->field;
 
 	/*
-	 * Check the predicate क्रम function trace, verअगरy:
+	 * Check the predicate for function trace, verify:
 	 *  - only '==' and '!=' is used
 	 *  - the 'ip' field is used
 	 */
-	अगर ((pred->op != OP_EQ) && (pred->op != OP_NE))
-		वापस -EINVAL;
+	if ((pred->op != OP_EQ) && (pred->op != OP_NE))
+		return -EINVAL;
 
-	अगर (म_भेद(field->name, "ip"))
-		वापस -EINVAL;
+	if (strcmp(field->name, "ip"))
+		return -EINVAL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ftrace_function_set_filter_pred(काष्ठा filter_pred *pred,
-					   काष्ठा function_filter_data *data)
-अणु
-	पूर्णांक ret;
+static int ftrace_function_set_filter_pred(struct filter_pred *pred,
+					   struct function_filter_data *data)
+{
+	int ret;
 
-	/* Checking the node is valid क्रम function trace. */
+	/* Checking the node is valid for function trace. */
 	ret = ftrace_function_check_pred(pred);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस __ftrace_function_set_filter(pred->op == OP_EQ,
+	return __ftrace_function_set_filter(pred->op == OP_EQ,
 					    pred->regex.pattern,
 					    pred->regex.len,
 					    data);
-पूर्ण
+}
 
-अटल bool is_or(काष्ठा prog_entry *prog, पूर्णांक i)
-अणु
-	पूर्णांक target;
+static bool is_or(struct prog_entry *prog, int i)
+{
+	int target;
 
 	/*
-	 * Only "||" is allowed क्रम function events, thus,
+	 * Only "||" is allowed for function events, thus,
 	 * all true branches should jump to true, and any
 	 * false branch should jump to false.
 	 */
 	target = prog[i].target + 1;
-	/* True and false have शून्य preds (all prog entries should jump to one */
-	अगर (prog[target].pred)
-		वापस false;
+	/* True and false have NULL preds (all prog entries should jump to one */
+	if (prog[target].pred)
+		return false;
 
-	/* prog[target].target is 1 क्रम TRUE, 0 क्रम FALSE */
-	वापस prog[i].when_to_branch == prog[target].target;
-पूर्ण
+	/* prog[target].target is 1 for TRUE, 0 for FALSE */
+	return prog[i].when_to_branch == prog[target].target;
+}
 
-अटल पूर्णांक ftrace_function_set_filter(काष्ठा perf_event *event,
-				      काष्ठा event_filter *filter)
-अणु
-	काष्ठा prog_entry *prog = rcu_dereference_रक्षित(filter->prog,
+static int ftrace_function_set_filter(struct perf_event *event,
+				      struct event_filter *filter)
+{
+	struct prog_entry *prog = rcu_dereference_protected(filter->prog,
 						lockdep_is_held(&event_mutex));
-	काष्ठा function_filter_data data = अणु
+	struct function_filter_data data = {
 		.first_filter  = 1,
 		.first_notrace = 1,
 		.ops           = &event->ftrace_ops,
-	पूर्ण;
-	पूर्णांक i;
+	};
+	int i;
 
-	क्रम (i = 0; prog[i].pred; i++) अणु
-		काष्ठा filter_pred *pred = prog[i].pred;
+	for (i = 0; prog[i].pred; i++) {
+		struct filter_pred *pred = prog[i].pred;
 
-		अगर (!is_or(prog, i))
-			वापस -EINVAL;
+		if (!is_or(prog, i))
+			return -EINVAL;
 
-		अगर (ftrace_function_set_filter_pred(pred, &data) < 0)
-			वापस -EINVAL;
-	पूर्ण
-	वापस 0;
-पूर्ण
-#अन्यथा
-अटल पूर्णांक ftrace_function_set_filter(काष्ठा perf_event *event,
-				      काष्ठा event_filter *filter)
-अणु
-	वापस -ENODEV;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_FUNCTION_TRACER */
+		if (ftrace_function_set_filter_pred(pred, &data) < 0)
+			return -EINVAL;
+	}
+	return 0;
+}
+#else
+static int ftrace_function_set_filter(struct perf_event *event,
+				      struct event_filter *filter)
+{
+	return -ENODEV;
+}
+#endif /* CONFIG_FUNCTION_TRACER */
 
-पूर्णांक ftrace_profile_set_filter(काष्ठा perf_event *event, पूर्णांक event_id,
-			      अक्षर *filter_str)
-अणु
-	पूर्णांक err;
-	काष्ठा event_filter *filter = शून्य;
-	काष्ठा trace_event_call *call;
+int ftrace_profile_set_filter(struct perf_event *event, int event_id,
+			      char *filter_str)
+{
+	int err;
+	struct event_filter *filter = NULL;
+	struct trace_event_call *call;
 
 	mutex_lock(&event_mutex);
 
 	call = event->tp_event;
 
 	err = -EINVAL;
-	अगर (!call)
-		जाओ out_unlock;
+	if (!call)
+		goto out_unlock;
 
 	err = -EEXIST;
-	अगर (event->filter)
-		जाओ out_unlock;
+	if (event->filter)
+		goto out_unlock;
 
-	err = create_filter(शून्य, call, filter_str, false, &filter);
-	अगर (err)
-		जाओ मुक्त_filter;
+	err = create_filter(NULL, call, filter_str, false, &filter);
+	if (err)
+		goto free_filter;
 
-	अगर (ftrace_event_is_function(call))
+	if (ftrace_event_is_function(call))
 		err = ftrace_function_set_filter(event, filter);
-	अन्यथा
+	else
 		event->filter = filter;
 
-मुक्त_filter:
-	अगर (err || ftrace_event_is_function(call))
-		__मुक्त_filter(filter);
+free_filter:
+	if (err || ftrace_event_is_function(call))
+		__free_filter(filter);
 
 out_unlock:
 	mutex_unlock(&event_mutex);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-#पूर्ण_अगर /* CONFIG_PERF_EVENTS */
+#endif /* CONFIG_PERF_EVENTS */
 
-#अगर_घोषित CONFIG_FTRACE_STARTUP_TEST
+#ifdef CONFIG_FTRACE_STARTUP_TEST
 
-#समावेश <linux/types.h>
-#समावेश <linux/tracepoपूर्णांक.h>
+#include <linux/types.h>
+#include <linux/tracepoint.h>
 
-#घोषणा CREATE_TRACE_POINTS
-#समावेश "trace_events_filter_test.h"
+#define CREATE_TRACE_POINTS
+#include "trace_events_filter_test.h"
 
-#घोषणा DATA_REC(m, va, vb, vc, vd, ve, vf, vg, vh, nvisit) \
-अणु \
+#define DATA_REC(m, va, vb, vc, vd, ve, vf, vg, vh, nvisit) \
+{ \
 	.filter = FILTER, \
-	.rec    = अणु .a = va, .b = vb, .c = vc, .d = vd, \
-		    .e = ve, .f = vf, .g = vg, .h = vh पूर्ण, \
+	.rec    = { .a = va, .b = vb, .c = vc, .d = vd, \
+		    .e = ve, .f = vf, .g = vg, .h = vh }, \
 	.match  = m, \
 	.not_visited = nvisit, \
-पूर्ण
-#घोषणा YES 1
-#घोषणा NO  0
+}
+#define YES 1
+#define NO  0
 
-अटल काष्ठा test_filter_data_t अणु
-	अक्षर *filter;
-	काष्ठा trace_event_raw_ftrace_test_filter rec;
-	पूर्णांक match;
-	अक्षर *not_visited;
-पूर्ण test_filter_data[] = अणु
-#घोषणा FILTER "a == 1 && b == 1 && c == 1 && d == 1 && " \
+static struct test_filter_data_t {
+	char *filter;
+	struct trace_event_raw_ftrace_test_filter rec;
+	int match;
+	char *not_visited;
+} test_filter_data[] = {
+#define FILTER "a == 1 && b == 1 && c == 1 && d == 1 && " \
 	       "e == 1 && f == 1 && g == 1 && h == 1"
 	DATA_REC(YES, 1, 1, 1, 1, 1, 1, 1, 1, ""),
 	DATA_REC(NO,  0, 1, 1, 1, 1, 1, 1, 1, "bcdefgh"),
 	DATA_REC(NO,  1, 1, 1, 1, 1, 1, 1, 0, ""),
-#अघोषित FILTER
-#घोषणा FILTER "a == 1 || b == 1 || c == 1 || d == 1 || " \
+#undef FILTER
+#define FILTER "a == 1 || b == 1 || c == 1 || d == 1 || " \
 	       "e == 1 || f == 1 || g == 1 || h == 1"
 	DATA_REC(NO,  0, 0, 0, 0, 0, 0, 0, 0, ""),
 	DATA_REC(YES, 0, 0, 0, 0, 0, 0, 0, 1, ""),
 	DATA_REC(YES, 1, 0, 0, 0, 0, 0, 0, 0, "bcdefgh"),
-#अघोषित FILTER
-#घोषणा FILTER "(a == 1 || b == 1) && (c == 1 || d == 1) && " \
+#undef FILTER
+#define FILTER "(a == 1 || b == 1) && (c == 1 || d == 1) && " \
 	       "(e == 1 || f == 1) && (g == 1 || h == 1)"
 	DATA_REC(NO,  0, 0, 1, 1, 1, 1, 1, 1, "dfh"),
 	DATA_REC(YES, 0, 1, 0, 1, 0, 1, 0, 1, ""),
 	DATA_REC(YES, 1, 0, 1, 0, 0, 1, 0, 1, "bd"),
 	DATA_REC(NO,  1, 0, 1, 0, 0, 1, 0, 0, "bd"),
-#अघोषित FILTER
-#घोषणा FILTER "(a == 1 && b == 1) || (c == 1 && d == 1) || " \
+#undef FILTER
+#define FILTER "(a == 1 && b == 1) || (c == 1 && d == 1) || " \
 	       "(e == 1 && f == 1) || (g == 1 && h == 1)"
 	DATA_REC(YES, 1, 0, 1, 1, 1, 1, 1, 1, "efgh"),
 	DATA_REC(YES, 0, 0, 0, 0, 0, 0, 1, 1, ""),
 	DATA_REC(NO,  0, 0, 0, 0, 0, 0, 0, 1, ""),
-#अघोषित FILTER
-#घोषणा FILTER "(a == 1 && b == 1) && (c == 1 && d == 1) && " \
+#undef FILTER
+#define FILTER "(a == 1 && b == 1) && (c == 1 && d == 1) && " \
 	       "(e == 1 && f == 1) || (g == 1 && h == 1)"
 	DATA_REC(YES, 1, 1, 1, 1, 1, 1, 0, 0, "gh"),
 	DATA_REC(NO,  0, 0, 0, 0, 0, 0, 0, 1, ""),
 	DATA_REC(YES, 1, 1, 1, 1, 1, 0, 1, 1, ""),
-#अघोषित FILTER
-#घोषणा FILTER "((a == 1 || b == 1) || (c == 1 || d == 1) || " \
+#undef FILTER
+#define FILTER "((a == 1 || b == 1) || (c == 1 || d == 1) || " \
 	       "(e == 1 || f == 1)) && (g == 1 || h == 1)"
 	DATA_REC(YES, 1, 1, 1, 1, 1, 1, 0, 1, "bcdef"),
 	DATA_REC(NO,  0, 0, 0, 0, 0, 0, 0, 0, ""),
 	DATA_REC(YES, 1, 1, 1, 1, 1, 0, 1, 1, "h"),
-#अघोषित FILTER
-#घोषणा FILTER "((((((((a == 1) && (b == 1)) || (c == 1)) && (d == 1)) || " \
+#undef FILTER
+#define FILTER "((((((((a == 1) && (b == 1)) || (c == 1)) && (d == 1)) || " \
 	       "(e == 1)) && (f == 1)) || (g == 1)) && (h == 1))"
 	DATA_REC(YES, 1, 1, 1, 1, 1, 1, 1, 1, "ceg"),
 	DATA_REC(NO,  0, 1, 0, 1, 0, 1, 0, 1, ""),
 	DATA_REC(NO,  1, 0, 1, 0, 1, 0, 1, 0, ""),
-#अघोषित FILTER
-#घोषणा FILTER "((((((((a == 1) || (b == 1)) && (c == 1)) || (d == 1)) && " \
+#undef FILTER
+#define FILTER "((((((((a == 1) || (b == 1)) && (c == 1)) || (d == 1)) && " \
 	       "(e == 1)) || (f == 1)) && (g == 1)) || (h == 1))"
 	DATA_REC(YES, 1, 1, 1, 1, 1, 1, 1, 1, "bdfh"),
 	DATA_REC(YES, 0, 1, 0, 1, 0, 1, 0, 1, ""),
 	DATA_REC(YES, 1, 0, 1, 0, 1, 0, 1, 0, "bdfh"),
-पूर्ण;
+};
 
-#अघोषित DATA_REC
-#अघोषित FILTER
-#अघोषित YES
-#अघोषित NO
+#undef DATA_REC
+#undef FILTER
+#undef YES
+#undef NO
 
-#घोषणा DATA_CNT ARRAY_SIZE(test_filter_data)
+#define DATA_CNT ARRAY_SIZE(test_filter_data)
 
-अटल पूर्णांक test_pred_visited;
+static int test_pred_visited;
 
-अटल पूर्णांक test_pred_visited_fn(काष्ठा filter_pred *pred, व्योम *event)
-अणु
-	काष्ठा ftrace_event_field *field = pred->field;
+static int test_pred_visited_fn(struct filter_pred *pred, void *event)
+{
+	struct ftrace_event_field *field = pred->field;
 
 	test_pred_visited = 1;
-	prपूर्णांकk(KERN_INFO "\npred visited %s\n", field->name);
-	वापस 1;
-पूर्ण
+	printk(KERN_INFO "\npred visited %s\n", field->name);
+	return 1;
+}
 
-अटल व्योम update_pred_fn(काष्ठा event_filter *filter, अक्षर *fields)
-अणु
-	काष्ठा prog_entry *prog = rcu_dereference_रक्षित(filter->prog,
+static void update_pred_fn(struct event_filter *filter, char *fields)
+{
+	struct prog_entry *prog = rcu_dereference_protected(filter->prog,
 						lockdep_is_held(&event_mutex));
-	पूर्णांक i;
+	int i;
 
-	क्रम (i = 0; prog[i].pred; i++) अणु
-		काष्ठा filter_pred *pred = prog[i].pred;
-		काष्ठा ftrace_event_field *field = pred->field;
+	for (i = 0; prog[i].pred; i++) {
+		struct filter_pred *pred = prog[i].pred;
+		struct ftrace_event_field *field = pred->field;
 
 		WARN_ON_ONCE(!pred->fn);
 
-		अगर (!field) अणु
+		if (!field) {
 			WARN_ONCE(1, "all leafs should have field defined %d", i);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		अगर (!म_अक्षर(fields, *field->name))
-			जारी;
+		if (!strchr(fields, *field->name))
+			continue;
 
 		pred->fn = test_pred_visited_fn;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल __init पूर्णांक ftrace_test_event_filter(व्योम)
-अणु
-	पूर्णांक i;
+static __init int ftrace_test_event_filter(void)
+{
+	int i;
 
-	prपूर्णांकk(KERN_INFO "Testing ftrace filter: ");
+	printk(KERN_INFO "Testing ftrace filter: ");
 
-	क्रम (i = 0; i < DATA_CNT; i++) अणु
-		काष्ठा event_filter *filter = शून्य;
-		काष्ठा test_filter_data_t *d = &test_filter_data[i];
-		पूर्णांक err;
+	for (i = 0; i < DATA_CNT; i++) {
+		struct event_filter *filter = NULL;
+		struct test_filter_data_t *d = &test_filter_data[i];
+		int err;
 
-		err = create_filter(शून्य, &event_ftrace_test_filter,
+		err = create_filter(NULL, &event_ftrace_test_filter,
 				    d->filter, false, &filter);
-		अगर (err) अणु
-			prपूर्णांकk(KERN_INFO
+		if (err) {
+			printk(KERN_INFO
 			       "Failed to get filter for '%s', err %d\n",
 			       d->filter, err);
-			__मुक्त_filter(filter);
-			अवरोध;
-		पूर्ण
+			__free_filter(filter);
+			break;
+		}
 
 		/* Needed to dereference filter->prog */
 		mutex_lock(&event_mutex);
 		/*
-		 * The preemption disabling is not really needed क्रम self
+		 * The preemption disabling is not really needed for self
 		 * tests, but the rcu dereference will complain without it.
 		 */
 		preempt_disable();
-		अगर (*d->not_visited)
+		if (*d->not_visited)
 			update_pred_fn(filter, d->not_visited);
 
 		test_pred_visited = 0;
@@ -2227,29 +2226,29 @@ out_unlock:
 
 		mutex_unlock(&event_mutex);
 
-		__मुक्त_filter(filter);
+		__free_filter(filter);
 
-		अगर (test_pred_visited) अणु
-			prपूर्णांकk(KERN_INFO
+		if (test_pred_visited) {
+			printk(KERN_INFO
 			       "Failed, unwanted pred visited for filter %s\n",
 			       d->filter);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (err != d->match) अणु
-			prपूर्णांकk(KERN_INFO
+		if (err != d->match) {
+			printk(KERN_INFO
 			       "Failed to match filter '%s', expected %d\n",
 			       d->filter, d->match);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	अगर (i == DATA_CNT)
-		prपूर्णांकk(KERN_CONT "OK\n");
+	if (i == DATA_CNT)
+		printk(KERN_CONT "OK\n");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 late_initcall(ftrace_test_event_filter);
 
-#पूर्ण_अगर /* CONFIG_FTRACE_STARTUP_TEST */
+#endif /* CONFIG_FTRACE_STARTUP_TEST */

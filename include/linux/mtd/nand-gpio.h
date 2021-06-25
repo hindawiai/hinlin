@@ -1,16 +1,15 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __LINUX_MTD_न_अंकD_GPIO_H
-#घोषणा __LINUX_MTD_न_अंकD_GPIO_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __LINUX_MTD_NAND_GPIO_H
+#define __LINUX_MTD_NAND_GPIO_H
 
-#समावेश <linux/mtd/rawnand.h>
+#include <linux/mtd/rawnand.h>
 
-काष्ठा gpio_nand_platdata अणु
-	व्योम	(*adjust_parts)(काष्ठा gpio_nand_platdata *, माप_प्रकार);
-	काष्ठा mtd_partition *parts;
-	अचिन्हित पूर्णांक num_parts;
-	अचिन्हित पूर्णांक options;
-	पूर्णांक	chip_delay;
-पूर्ण;
+struct gpio_nand_platdata {
+	void	(*adjust_parts)(struct gpio_nand_platdata *, size_t);
+	struct mtd_partition *parts;
+	unsigned int num_parts;
+	unsigned int options;
+	int	chip_delay;
+};
 
-#पूर्ण_अगर
+#endif

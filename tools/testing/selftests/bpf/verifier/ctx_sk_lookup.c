@@ -1,501 +1,500 @@
-<शैली गुरु>
-अणु
+{
 	"valid 1,2,4,8-byte reads from bpf_sk_lookup",
-	.insns = अणु
-		/* 1-byte पढ़ो from family field */
+	.insns = {
+		/* 1-byte read from family field */
 		BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_1,
-			    दुरत्व(काष्ठा bpf_sk_lookup, family)),
+			    offsetof(struct bpf_sk_lookup, family)),
 		BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_1,
-			    दुरत्व(काष्ठा bpf_sk_lookup, family) + 1),
+			    offsetof(struct bpf_sk_lookup, family) + 1),
 		BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_1,
-			    दुरत्व(काष्ठा bpf_sk_lookup, family) + 2),
+			    offsetof(struct bpf_sk_lookup, family) + 2),
 		BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_1,
-			    दुरत्व(काष्ठा bpf_sk_lookup, family) + 3),
-		/* 2-byte पढ़ो from family field */
+			    offsetof(struct bpf_sk_lookup, family) + 3),
+		/* 2-byte read from family field */
 		BPF_LDX_MEM(BPF_H, BPF_REG_0, BPF_REG_1,
-			    दुरत्व(काष्ठा bpf_sk_lookup, family)),
+			    offsetof(struct bpf_sk_lookup, family)),
 		BPF_LDX_MEM(BPF_H, BPF_REG_0, BPF_REG_1,
-			    दुरत्व(काष्ठा bpf_sk_lookup, family) + 2),
-		/* 4-byte पढ़ो from family field */
+			    offsetof(struct bpf_sk_lookup, family) + 2),
+		/* 4-byte read from family field */
 		BPF_LDX_MEM(BPF_W, BPF_REG_0, BPF_REG_1,
-			    दुरत्व(काष्ठा bpf_sk_lookup, family)),
+			    offsetof(struct bpf_sk_lookup, family)),
 
-		/* 1-byte पढ़ो from protocol field */
+		/* 1-byte read from protocol field */
 		BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_1,
-			    दुरत्व(काष्ठा bpf_sk_lookup, protocol)),
+			    offsetof(struct bpf_sk_lookup, protocol)),
 		BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_1,
-			    दुरत्व(काष्ठा bpf_sk_lookup, protocol) + 1),
+			    offsetof(struct bpf_sk_lookup, protocol) + 1),
 		BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_1,
-			    दुरत्व(काष्ठा bpf_sk_lookup, protocol) + 2),
+			    offsetof(struct bpf_sk_lookup, protocol) + 2),
 		BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_1,
-			    दुरत्व(काष्ठा bpf_sk_lookup, protocol) + 3),
-		/* 2-byte पढ़ो from protocol field */
+			    offsetof(struct bpf_sk_lookup, protocol) + 3),
+		/* 2-byte read from protocol field */
 		BPF_LDX_MEM(BPF_H, BPF_REG_0, BPF_REG_1,
-			    दुरत्व(काष्ठा bpf_sk_lookup, protocol)),
+			    offsetof(struct bpf_sk_lookup, protocol)),
 		BPF_LDX_MEM(BPF_H, BPF_REG_0, BPF_REG_1,
-			    दुरत्व(काष्ठा bpf_sk_lookup, protocol) + 2),
-		/* 4-byte पढ़ो from protocol field */
+			    offsetof(struct bpf_sk_lookup, protocol) + 2),
+		/* 4-byte read from protocol field */
 		BPF_LDX_MEM(BPF_W, BPF_REG_0, BPF_REG_1,
-			    दुरत्व(काष्ठा bpf_sk_lookup, protocol)),
+			    offsetof(struct bpf_sk_lookup, protocol)),
 
-		/* 1-byte पढ़ो from remote_ip4 field */
+		/* 1-byte read from remote_ip4 field */
 		BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_1,
-			    दुरत्व(काष्ठा bpf_sk_lookup, remote_ip4)),
+			    offsetof(struct bpf_sk_lookup, remote_ip4)),
 		BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_1,
-			    दुरत्व(काष्ठा bpf_sk_lookup, remote_ip4) + 1),
+			    offsetof(struct bpf_sk_lookup, remote_ip4) + 1),
 		BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_1,
-			    दुरत्व(काष्ठा bpf_sk_lookup, remote_ip4) + 2),
+			    offsetof(struct bpf_sk_lookup, remote_ip4) + 2),
 		BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_1,
-			    दुरत्व(काष्ठा bpf_sk_lookup, remote_ip4) + 3),
-		/* 2-byte पढ़ो from remote_ip4 field */
+			    offsetof(struct bpf_sk_lookup, remote_ip4) + 3),
+		/* 2-byte read from remote_ip4 field */
 		BPF_LDX_MEM(BPF_H, BPF_REG_0, BPF_REG_1,
-			    दुरत्व(काष्ठा bpf_sk_lookup, remote_ip4)),
+			    offsetof(struct bpf_sk_lookup, remote_ip4)),
 		BPF_LDX_MEM(BPF_H, BPF_REG_0, BPF_REG_1,
-			    दुरत्व(काष्ठा bpf_sk_lookup, remote_ip4) + 2),
-		/* 4-byte पढ़ो from remote_ip4 field */
+			    offsetof(struct bpf_sk_lookup, remote_ip4) + 2),
+		/* 4-byte read from remote_ip4 field */
 		BPF_LDX_MEM(BPF_W, BPF_REG_0, BPF_REG_1,
-			    दुरत्व(काष्ठा bpf_sk_lookup, remote_ip4)),
+			    offsetof(struct bpf_sk_lookup, remote_ip4)),
 
-		/* 1-byte पढ़ो from remote_ip6 field */
+		/* 1-byte read from remote_ip6 field */
 		BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_1,
-			    दुरत्व(काष्ठा bpf_sk_lookup, remote_ip6)),
+			    offsetof(struct bpf_sk_lookup, remote_ip6)),
 		BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_1,
-			    दुरत्व(काष्ठा bpf_sk_lookup, remote_ip6) + 1),
+			    offsetof(struct bpf_sk_lookup, remote_ip6) + 1),
 		BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_1,
-			    दुरत्व(काष्ठा bpf_sk_lookup, remote_ip6) + 2),
+			    offsetof(struct bpf_sk_lookup, remote_ip6) + 2),
 		BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_1,
-			    दुरत्व(काष्ठा bpf_sk_lookup, remote_ip6) + 3),
+			    offsetof(struct bpf_sk_lookup, remote_ip6) + 3),
 		BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_1,
-			    दुरत्व(काष्ठा bpf_sk_lookup, remote_ip6) + 4),
+			    offsetof(struct bpf_sk_lookup, remote_ip6) + 4),
 		BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_1,
-			    दुरत्व(काष्ठा bpf_sk_lookup, remote_ip6) + 5),
+			    offsetof(struct bpf_sk_lookup, remote_ip6) + 5),
 		BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_1,
-			    दुरत्व(काष्ठा bpf_sk_lookup, remote_ip6) + 6),
+			    offsetof(struct bpf_sk_lookup, remote_ip6) + 6),
 		BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_1,
-			    दुरत्व(काष्ठा bpf_sk_lookup, remote_ip6) + 7),
+			    offsetof(struct bpf_sk_lookup, remote_ip6) + 7),
 		BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_1,
-			    दुरत्व(काष्ठा bpf_sk_lookup, remote_ip6) + 8),
+			    offsetof(struct bpf_sk_lookup, remote_ip6) + 8),
 		BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_1,
-			    दुरत्व(काष्ठा bpf_sk_lookup, remote_ip6) + 9),
+			    offsetof(struct bpf_sk_lookup, remote_ip6) + 9),
 		BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_1,
-			    दुरत्व(काष्ठा bpf_sk_lookup, remote_ip6) + 10),
+			    offsetof(struct bpf_sk_lookup, remote_ip6) + 10),
 		BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_1,
-			    दुरत्व(काष्ठा bpf_sk_lookup, remote_ip6) + 11),
+			    offsetof(struct bpf_sk_lookup, remote_ip6) + 11),
 		BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_1,
-			    दुरत्व(काष्ठा bpf_sk_lookup, remote_ip6) + 12),
+			    offsetof(struct bpf_sk_lookup, remote_ip6) + 12),
 		BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_1,
-			    दुरत्व(काष्ठा bpf_sk_lookup, remote_ip6) + 13),
+			    offsetof(struct bpf_sk_lookup, remote_ip6) + 13),
 		BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_1,
-			    दुरत्व(काष्ठा bpf_sk_lookup, remote_ip6) + 14),
+			    offsetof(struct bpf_sk_lookup, remote_ip6) + 14),
 		BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_1,
-			    दुरत्व(काष्ठा bpf_sk_lookup, remote_ip6) + 15),
-		/* 2-byte पढ़ो from remote_ip6 field */
+			    offsetof(struct bpf_sk_lookup, remote_ip6) + 15),
+		/* 2-byte read from remote_ip6 field */
 		BPF_LDX_MEM(BPF_H, BPF_REG_0, BPF_REG_1,
-			    दुरत्व(काष्ठा bpf_sk_lookup, remote_ip6)),
+			    offsetof(struct bpf_sk_lookup, remote_ip6)),
 		BPF_LDX_MEM(BPF_H, BPF_REG_0, BPF_REG_1,
-			    दुरत्व(काष्ठा bpf_sk_lookup, remote_ip6) + 2),
+			    offsetof(struct bpf_sk_lookup, remote_ip6) + 2),
 		BPF_LDX_MEM(BPF_H, BPF_REG_0, BPF_REG_1,
-			    दुरत्व(काष्ठा bpf_sk_lookup, remote_ip6) + 4),
+			    offsetof(struct bpf_sk_lookup, remote_ip6) + 4),
 		BPF_LDX_MEM(BPF_H, BPF_REG_0, BPF_REG_1,
-			    दुरत्व(काष्ठा bpf_sk_lookup, remote_ip6) + 6),
+			    offsetof(struct bpf_sk_lookup, remote_ip6) + 6),
 		BPF_LDX_MEM(BPF_H, BPF_REG_0, BPF_REG_1,
-			    दुरत्व(काष्ठा bpf_sk_lookup, remote_ip6) + 8),
+			    offsetof(struct bpf_sk_lookup, remote_ip6) + 8),
 		BPF_LDX_MEM(BPF_H, BPF_REG_0, BPF_REG_1,
-			    दुरत्व(काष्ठा bpf_sk_lookup, remote_ip6) + 10),
+			    offsetof(struct bpf_sk_lookup, remote_ip6) + 10),
 		BPF_LDX_MEM(BPF_H, BPF_REG_0, BPF_REG_1,
-			    दुरत्व(काष्ठा bpf_sk_lookup, remote_ip6) + 12),
+			    offsetof(struct bpf_sk_lookup, remote_ip6) + 12),
 		BPF_LDX_MEM(BPF_H, BPF_REG_0, BPF_REG_1,
-			    दुरत्व(काष्ठा bpf_sk_lookup, remote_ip6) + 14),
-		/* 4-byte पढ़ो from remote_ip6 field */
+			    offsetof(struct bpf_sk_lookup, remote_ip6) + 14),
+		/* 4-byte read from remote_ip6 field */
 		BPF_LDX_MEM(BPF_W, BPF_REG_0, BPF_REG_1,
-			    दुरत्व(काष्ठा bpf_sk_lookup, remote_ip6)),
+			    offsetof(struct bpf_sk_lookup, remote_ip6)),
 		BPF_LDX_MEM(BPF_W, BPF_REG_0, BPF_REG_1,
-			    दुरत्व(काष्ठा bpf_sk_lookup, remote_ip6) + 4),
+			    offsetof(struct bpf_sk_lookup, remote_ip6) + 4),
 		BPF_LDX_MEM(BPF_W, BPF_REG_0, BPF_REG_1,
-			    दुरत्व(काष्ठा bpf_sk_lookup, remote_ip6) + 8),
+			    offsetof(struct bpf_sk_lookup, remote_ip6) + 8),
 		BPF_LDX_MEM(BPF_W, BPF_REG_0, BPF_REG_1,
-			    दुरत्व(काष्ठा bpf_sk_lookup, remote_ip6) + 12),
+			    offsetof(struct bpf_sk_lookup, remote_ip6) + 12),
 
-		/* 1-byte पढ़ो from remote_port field */
+		/* 1-byte read from remote_port field */
 		BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_1,
-			    दुरत्व(काष्ठा bpf_sk_lookup, remote_port)),
+			    offsetof(struct bpf_sk_lookup, remote_port)),
 		BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_1,
-			    दुरत्व(काष्ठा bpf_sk_lookup, remote_port) + 1),
+			    offsetof(struct bpf_sk_lookup, remote_port) + 1),
 		BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_1,
-			    दुरत्व(काष्ठा bpf_sk_lookup, remote_port) + 2),
+			    offsetof(struct bpf_sk_lookup, remote_port) + 2),
 		BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_1,
-			    दुरत्व(काष्ठा bpf_sk_lookup, remote_port) + 3),
-		/* 2-byte पढ़ो from remote_port field */
+			    offsetof(struct bpf_sk_lookup, remote_port) + 3),
+		/* 2-byte read from remote_port field */
 		BPF_LDX_MEM(BPF_H, BPF_REG_0, BPF_REG_1,
-			    दुरत्व(काष्ठा bpf_sk_lookup, remote_port)),
+			    offsetof(struct bpf_sk_lookup, remote_port)),
 		BPF_LDX_MEM(BPF_H, BPF_REG_0, BPF_REG_1,
-			    दुरत्व(काष्ठा bpf_sk_lookup, remote_port) + 2),
-		/* 4-byte पढ़ो from remote_port field */
+			    offsetof(struct bpf_sk_lookup, remote_port) + 2),
+		/* 4-byte read from remote_port field */
 		BPF_LDX_MEM(BPF_W, BPF_REG_0, BPF_REG_1,
-			    दुरत्व(काष्ठा bpf_sk_lookup, remote_port)),
+			    offsetof(struct bpf_sk_lookup, remote_port)),
 
-		/* 1-byte पढ़ो from local_ip4 field */
+		/* 1-byte read from local_ip4 field */
 		BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_1,
-			    दुरत्व(काष्ठा bpf_sk_lookup, local_ip4)),
+			    offsetof(struct bpf_sk_lookup, local_ip4)),
 		BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_1,
-			    दुरत्व(काष्ठा bpf_sk_lookup, local_ip4) + 1),
+			    offsetof(struct bpf_sk_lookup, local_ip4) + 1),
 		BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_1,
-			    दुरत्व(काष्ठा bpf_sk_lookup, local_ip4) + 2),
+			    offsetof(struct bpf_sk_lookup, local_ip4) + 2),
 		BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_1,
-			    दुरत्व(काष्ठा bpf_sk_lookup, local_ip4) + 3),
-		/* 2-byte पढ़ो from local_ip4 field */
+			    offsetof(struct bpf_sk_lookup, local_ip4) + 3),
+		/* 2-byte read from local_ip4 field */
 		BPF_LDX_MEM(BPF_H, BPF_REG_0, BPF_REG_1,
-			    दुरत्व(काष्ठा bpf_sk_lookup, local_ip4)),
+			    offsetof(struct bpf_sk_lookup, local_ip4)),
 		BPF_LDX_MEM(BPF_H, BPF_REG_0, BPF_REG_1,
-			    दुरत्व(काष्ठा bpf_sk_lookup, local_ip4) + 2),
-		/* 4-byte पढ़ो from local_ip4 field */
+			    offsetof(struct bpf_sk_lookup, local_ip4) + 2),
+		/* 4-byte read from local_ip4 field */
 		BPF_LDX_MEM(BPF_W, BPF_REG_0, BPF_REG_1,
-			    दुरत्व(काष्ठा bpf_sk_lookup, local_ip4)),
+			    offsetof(struct bpf_sk_lookup, local_ip4)),
 
-		/* 1-byte पढ़ो from local_ip6 field */
+		/* 1-byte read from local_ip6 field */
 		BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_1,
-			    दुरत्व(काष्ठा bpf_sk_lookup, local_ip6)),
+			    offsetof(struct bpf_sk_lookup, local_ip6)),
 		BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_1,
-			    दुरत्व(काष्ठा bpf_sk_lookup, local_ip6) + 1),
+			    offsetof(struct bpf_sk_lookup, local_ip6) + 1),
 		BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_1,
-			    दुरत्व(काष्ठा bpf_sk_lookup, local_ip6) + 2),
+			    offsetof(struct bpf_sk_lookup, local_ip6) + 2),
 		BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_1,
-			    दुरत्व(काष्ठा bpf_sk_lookup, local_ip6) + 3),
+			    offsetof(struct bpf_sk_lookup, local_ip6) + 3),
 		BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_1,
-			    दुरत्व(काष्ठा bpf_sk_lookup, local_ip6) + 4),
+			    offsetof(struct bpf_sk_lookup, local_ip6) + 4),
 		BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_1,
-			    दुरत्व(काष्ठा bpf_sk_lookup, local_ip6) + 5),
+			    offsetof(struct bpf_sk_lookup, local_ip6) + 5),
 		BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_1,
-			    दुरत्व(काष्ठा bpf_sk_lookup, local_ip6) + 6),
+			    offsetof(struct bpf_sk_lookup, local_ip6) + 6),
 		BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_1,
-			    दुरत्व(काष्ठा bpf_sk_lookup, local_ip6) + 7),
+			    offsetof(struct bpf_sk_lookup, local_ip6) + 7),
 		BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_1,
-			    दुरत्व(काष्ठा bpf_sk_lookup, local_ip6) + 8),
+			    offsetof(struct bpf_sk_lookup, local_ip6) + 8),
 		BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_1,
-			    दुरत्व(काष्ठा bpf_sk_lookup, local_ip6) + 9),
+			    offsetof(struct bpf_sk_lookup, local_ip6) + 9),
 		BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_1,
-			    दुरत्व(काष्ठा bpf_sk_lookup, local_ip6) + 10),
+			    offsetof(struct bpf_sk_lookup, local_ip6) + 10),
 		BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_1,
-			    दुरत्व(काष्ठा bpf_sk_lookup, local_ip6) + 11),
+			    offsetof(struct bpf_sk_lookup, local_ip6) + 11),
 		BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_1,
-			    दुरत्व(काष्ठा bpf_sk_lookup, local_ip6) + 12),
+			    offsetof(struct bpf_sk_lookup, local_ip6) + 12),
 		BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_1,
-			    दुरत्व(काष्ठा bpf_sk_lookup, local_ip6) + 13),
+			    offsetof(struct bpf_sk_lookup, local_ip6) + 13),
 		BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_1,
-			    दुरत्व(काष्ठा bpf_sk_lookup, local_ip6) + 14),
+			    offsetof(struct bpf_sk_lookup, local_ip6) + 14),
 		BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_1,
-			    दुरत्व(काष्ठा bpf_sk_lookup, local_ip6) + 15),
-		/* 2-byte पढ़ो from local_ip6 field */
+			    offsetof(struct bpf_sk_lookup, local_ip6) + 15),
+		/* 2-byte read from local_ip6 field */
 		BPF_LDX_MEM(BPF_H, BPF_REG_0, BPF_REG_1,
-			    दुरत्व(काष्ठा bpf_sk_lookup, local_ip6)),
+			    offsetof(struct bpf_sk_lookup, local_ip6)),
 		BPF_LDX_MEM(BPF_H, BPF_REG_0, BPF_REG_1,
-			    दुरत्व(काष्ठा bpf_sk_lookup, local_ip6) + 2),
+			    offsetof(struct bpf_sk_lookup, local_ip6) + 2),
 		BPF_LDX_MEM(BPF_H, BPF_REG_0, BPF_REG_1,
-			    दुरत्व(काष्ठा bpf_sk_lookup, local_ip6) + 4),
+			    offsetof(struct bpf_sk_lookup, local_ip6) + 4),
 		BPF_LDX_MEM(BPF_H, BPF_REG_0, BPF_REG_1,
-			    दुरत्व(काष्ठा bpf_sk_lookup, local_ip6) + 6),
+			    offsetof(struct bpf_sk_lookup, local_ip6) + 6),
 		BPF_LDX_MEM(BPF_H, BPF_REG_0, BPF_REG_1,
-			    दुरत्व(काष्ठा bpf_sk_lookup, local_ip6) + 8),
+			    offsetof(struct bpf_sk_lookup, local_ip6) + 8),
 		BPF_LDX_MEM(BPF_H, BPF_REG_0, BPF_REG_1,
-			    दुरत्व(काष्ठा bpf_sk_lookup, local_ip6) + 10),
+			    offsetof(struct bpf_sk_lookup, local_ip6) + 10),
 		BPF_LDX_MEM(BPF_H, BPF_REG_0, BPF_REG_1,
-			    दुरत्व(काष्ठा bpf_sk_lookup, local_ip6) + 12),
+			    offsetof(struct bpf_sk_lookup, local_ip6) + 12),
 		BPF_LDX_MEM(BPF_H, BPF_REG_0, BPF_REG_1,
-			    दुरत्व(काष्ठा bpf_sk_lookup, local_ip6) + 14),
-		/* 4-byte पढ़ो from local_ip6 field */
+			    offsetof(struct bpf_sk_lookup, local_ip6) + 14),
+		/* 4-byte read from local_ip6 field */
 		BPF_LDX_MEM(BPF_W, BPF_REG_0, BPF_REG_1,
-			    दुरत्व(काष्ठा bpf_sk_lookup, local_ip6)),
+			    offsetof(struct bpf_sk_lookup, local_ip6)),
 		BPF_LDX_MEM(BPF_W, BPF_REG_0, BPF_REG_1,
-			    दुरत्व(काष्ठा bpf_sk_lookup, local_ip6) + 4),
+			    offsetof(struct bpf_sk_lookup, local_ip6) + 4),
 		BPF_LDX_MEM(BPF_W, BPF_REG_0, BPF_REG_1,
-			    दुरत्व(काष्ठा bpf_sk_lookup, local_ip6) + 8),
+			    offsetof(struct bpf_sk_lookup, local_ip6) + 8),
 		BPF_LDX_MEM(BPF_W, BPF_REG_0, BPF_REG_1,
-			    दुरत्व(काष्ठा bpf_sk_lookup, local_ip6) + 12),
+			    offsetof(struct bpf_sk_lookup, local_ip6) + 12),
 
-		/* 1-byte पढ़ो from local_port field */
+		/* 1-byte read from local_port field */
 		BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_1,
-			    दुरत्व(काष्ठा bpf_sk_lookup, local_port)),
+			    offsetof(struct bpf_sk_lookup, local_port)),
 		BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_1,
-			    दुरत्व(काष्ठा bpf_sk_lookup, local_port) + 1),
+			    offsetof(struct bpf_sk_lookup, local_port) + 1),
 		BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_1,
-			    दुरत्व(काष्ठा bpf_sk_lookup, local_port) + 2),
+			    offsetof(struct bpf_sk_lookup, local_port) + 2),
 		BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_1,
-			    दुरत्व(काष्ठा bpf_sk_lookup, local_port) + 3),
-		/* 2-byte पढ़ो from local_port field */
+			    offsetof(struct bpf_sk_lookup, local_port) + 3),
+		/* 2-byte read from local_port field */
 		BPF_LDX_MEM(BPF_H, BPF_REG_0, BPF_REG_1,
-			    दुरत्व(काष्ठा bpf_sk_lookup, local_port)),
+			    offsetof(struct bpf_sk_lookup, local_port)),
 		BPF_LDX_MEM(BPF_H, BPF_REG_0, BPF_REG_1,
-			    दुरत्व(काष्ठा bpf_sk_lookup, local_port) + 2),
-		/* 4-byte पढ़ो from local_port field */
+			    offsetof(struct bpf_sk_lookup, local_port) + 2),
+		/* 4-byte read from local_port field */
 		BPF_LDX_MEM(BPF_W, BPF_REG_0, BPF_REG_1,
-			    दुरत्व(काष्ठा bpf_sk_lookup, local_port)),
+			    offsetof(struct bpf_sk_lookup, local_port)),
 
-		/* 8-byte पढ़ो from sk field */
+		/* 8-byte read from sk field */
 		BPF_LDX_MEM(BPF_DW, BPF_REG_0, BPF_REG_1,
-			    दुरत्व(काष्ठा bpf_sk_lookup, sk)),
+			    offsetof(struct bpf_sk_lookup, sk)),
 
 		BPF_MOV32_IMM(BPF_REG_0, 0),
 		BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.result = ACCEPT,
 	.prog_type = BPF_PROG_TYPE_SK_LOOKUP,
 	.expected_attach_type = BPF_SK_LOOKUP,
 	.runs = -1,
-पूर्ण,
-/* invalid 8-byte पढ़ोs from a 4-byte fields in bpf_sk_lookup */
-अणु
+},
+/* invalid 8-byte reads from a 4-byte fields in bpf_sk_lookup */
+{
 	"invalid 8-byte read from bpf_sk_lookup family field",
-	.insns = अणु
+	.insns = {
 		BPF_LDX_MEM(BPF_DW, BPF_REG_0, BPF_REG_1,
-			    दुरत्व(काष्ठा bpf_sk_lookup, family)),
+			    offsetof(struct bpf_sk_lookup, family)),
 		BPF_MOV32_IMM(BPF_REG_0, 0),
 		BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.errstr = "invalid bpf_context access",
 	.result = REJECT,
 	.prog_type = BPF_PROG_TYPE_SK_LOOKUP,
 	.expected_attach_type = BPF_SK_LOOKUP,
-पूर्ण,
-अणु
+},
+{
 	"invalid 8-byte read from bpf_sk_lookup protocol field",
-	.insns = अणु
+	.insns = {
 		BPF_LDX_MEM(BPF_DW, BPF_REG_0, BPF_REG_1,
-			    दुरत्व(काष्ठा bpf_sk_lookup, protocol)),
+			    offsetof(struct bpf_sk_lookup, protocol)),
 		BPF_MOV32_IMM(BPF_REG_0, 0),
 		BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.errstr = "invalid bpf_context access",
 	.result = REJECT,
 	.prog_type = BPF_PROG_TYPE_SK_LOOKUP,
 	.expected_attach_type = BPF_SK_LOOKUP,
 	.flags = F_NEEDS_EFFICIENT_UNALIGNED_ACCESS,
-पूर्ण,
-अणु
+},
+{
 	"invalid 8-byte read from bpf_sk_lookup remote_ip4 field",
-	.insns = अणु
+	.insns = {
 		BPF_LDX_MEM(BPF_DW, BPF_REG_0, BPF_REG_1,
-			    दुरत्व(काष्ठा bpf_sk_lookup, remote_ip4)),
+			    offsetof(struct bpf_sk_lookup, remote_ip4)),
 		BPF_MOV32_IMM(BPF_REG_0, 0),
 		BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.errstr = "invalid bpf_context access",
 	.result = REJECT,
 	.prog_type = BPF_PROG_TYPE_SK_LOOKUP,
 	.expected_attach_type = BPF_SK_LOOKUP,
-पूर्ण,
-अणु
+},
+{
 	"invalid 8-byte read from bpf_sk_lookup remote_ip6 field",
-	.insns = अणु
+	.insns = {
 		BPF_LDX_MEM(BPF_DW, BPF_REG_0, BPF_REG_1,
-			    दुरत्व(काष्ठा bpf_sk_lookup, remote_ip6)),
+			    offsetof(struct bpf_sk_lookup, remote_ip6)),
 		BPF_MOV32_IMM(BPF_REG_0, 0),
 		BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.errstr = "invalid bpf_context access",
 	.result = REJECT,
 	.prog_type = BPF_PROG_TYPE_SK_LOOKUP,
 	.expected_attach_type = BPF_SK_LOOKUP,
 	.flags = F_NEEDS_EFFICIENT_UNALIGNED_ACCESS,
-पूर्ण,
-अणु
+},
+{
 	"invalid 8-byte read from bpf_sk_lookup remote_port field",
-	.insns = अणु
+	.insns = {
 		BPF_LDX_MEM(BPF_DW, BPF_REG_0, BPF_REG_1,
-			    दुरत्व(काष्ठा bpf_sk_lookup, remote_port)),
+			    offsetof(struct bpf_sk_lookup, remote_port)),
 		BPF_MOV32_IMM(BPF_REG_0, 0),
 		BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.errstr = "invalid bpf_context access",
 	.result = REJECT,
 	.prog_type = BPF_PROG_TYPE_SK_LOOKUP,
 	.expected_attach_type = BPF_SK_LOOKUP,
 	.flags = F_NEEDS_EFFICIENT_UNALIGNED_ACCESS,
-पूर्ण,
-अणु
+},
+{
 	"invalid 8-byte read from bpf_sk_lookup local_ip4 field",
-	.insns = अणु
+	.insns = {
 		BPF_LDX_MEM(BPF_DW, BPF_REG_0, BPF_REG_1,
-			    दुरत्व(काष्ठा bpf_sk_lookup, local_ip4)),
+			    offsetof(struct bpf_sk_lookup, local_ip4)),
 		BPF_MOV32_IMM(BPF_REG_0, 0),
 		BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.errstr = "invalid bpf_context access",
 	.result = REJECT,
 	.prog_type = BPF_PROG_TYPE_SK_LOOKUP,
 	.expected_attach_type = BPF_SK_LOOKUP,
-पूर्ण,
-अणु
+},
+{
 	"invalid 8-byte read from bpf_sk_lookup local_ip6 field",
-	.insns = अणु
+	.insns = {
 		BPF_LDX_MEM(BPF_DW, BPF_REG_0, BPF_REG_1,
-			    दुरत्व(काष्ठा bpf_sk_lookup, local_ip6)),
+			    offsetof(struct bpf_sk_lookup, local_ip6)),
 		BPF_MOV32_IMM(BPF_REG_0, 0),
 		BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.errstr = "invalid bpf_context access",
 	.result = REJECT,
 	.prog_type = BPF_PROG_TYPE_SK_LOOKUP,
 	.expected_attach_type = BPF_SK_LOOKUP,
 	.flags = F_NEEDS_EFFICIENT_UNALIGNED_ACCESS,
-पूर्ण,
-अणु
+},
+{
 	"invalid 8-byte read from bpf_sk_lookup local_port field",
-	.insns = अणु
+	.insns = {
 		BPF_LDX_MEM(BPF_DW, BPF_REG_0, BPF_REG_1,
-			    दुरत्व(काष्ठा bpf_sk_lookup, local_port)),
+			    offsetof(struct bpf_sk_lookup, local_port)),
 		BPF_MOV32_IMM(BPF_REG_0, 0),
 		BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.errstr = "invalid bpf_context access",
 	.result = REJECT,
 	.prog_type = BPF_PROG_TYPE_SK_LOOKUP,
 	.expected_attach_type = BPF_SK_LOOKUP,
 	.flags = F_NEEDS_EFFICIENT_UNALIGNED_ACCESS,
-पूर्ण,
-/* invalid 1,2,4-byte पढ़ोs from 8-byte fields in bpf_sk_lookup */
-अणु
+},
+/* invalid 1,2,4-byte reads from 8-byte fields in bpf_sk_lookup */
+{
 	"invalid 4-byte read from bpf_sk_lookup sk field",
-	.insns = अणु
+	.insns = {
 		BPF_LDX_MEM(BPF_W, BPF_REG_0, BPF_REG_1,
-			    दुरत्व(काष्ठा bpf_sk_lookup, sk)),
+			    offsetof(struct bpf_sk_lookup, sk)),
 		BPF_MOV32_IMM(BPF_REG_0, 0),
 		BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.errstr = "invalid bpf_context access",
 	.result = REJECT,
 	.prog_type = BPF_PROG_TYPE_SK_LOOKUP,
 	.expected_attach_type = BPF_SK_LOOKUP,
-पूर्ण,
-अणु
+},
+{
 	"invalid 2-byte read from bpf_sk_lookup sk field",
-	.insns = अणु
+	.insns = {
 		BPF_LDX_MEM(BPF_H, BPF_REG_0, BPF_REG_1,
-			    दुरत्व(काष्ठा bpf_sk_lookup, sk)),
+			    offsetof(struct bpf_sk_lookup, sk)),
 		BPF_MOV32_IMM(BPF_REG_0, 0),
 		BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.errstr = "invalid bpf_context access",
 	.result = REJECT,
 	.prog_type = BPF_PROG_TYPE_SK_LOOKUP,
 	.expected_attach_type = BPF_SK_LOOKUP,
-पूर्ण,
-अणु
+},
+{
 	"invalid 1-byte read from bpf_sk_lookup sk field",
-	.insns = अणु
+	.insns = {
 		BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_1,
-			    दुरत्व(काष्ठा bpf_sk_lookup, sk)),
+			    offsetof(struct bpf_sk_lookup, sk)),
 		BPF_MOV32_IMM(BPF_REG_0, 0),
 		BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.errstr = "invalid bpf_context access",
 	.result = REJECT,
 	.prog_type = BPF_PROG_TYPE_SK_LOOKUP,
 	.expected_attach_type = BPF_SK_LOOKUP,
-पूर्ण,
-/* out of bounds and unaligned पढ़ोs from bpf_sk_lookup */
-अणु
+},
+/* out of bounds and unaligned reads from bpf_sk_lookup */
+{
 	"invalid 4-byte read past end of bpf_sk_lookup",
-	.insns = अणु
+	.insns = {
 		BPF_LDX_MEM(BPF_W, BPF_REG_0, BPF_REG_1,
-			    माप(काष्ठा bpf_sk_lookup)),
+			    sizeof(struct bpf_sk_lookup)),
 		BPF_MOV32_IMM(BPF_REG_0, 0),
 		BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.errstr = "invalid bpf_context access",
 	.result = REJECT,
 	.prog_type = BPF_PROG_TYPE_SK_LOOKUP,
 	.expected_attach_type = BPF_SK_LOOKUP,
-पूर्ण,
-अणु
+},
+{
 	"invalid 4-byte unaligned read from bpf_sk_lookup at odd offset",
-	.insns = अणु
+	.insns = {
 		BPF_LDX_MEM(BPF_W, BPF_REG_0, BPF_REG_1, 1),
 		BPF_MOV32_IMM(BPF_REG_0, 0),
 		BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.errstr = "invalid bpf_context access",
 	.result = REJECT,
 	.prog_type = BPF_PROG_TYPE_SK_LOOKUP,
 	.expected_attach_type = BPF_SK_LOOKUP,
 	.flags = F_NEEDS_EFFICIENT_UNALIGNED_ACCESS,
-पूर्ण,
-अणु
+},
+{
 	"invalid 4-byte unaligned read from bpf_sk_lookup at even offset",
-	.insns = अणु
+	.insns = {
 		BPF_LDX_MEM(BPF_W, BPF_REG_0, BPF_REG_1, 2),
 		BPF_MOV32_IMM(BPF_REG_0, 0),
 		BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.errstr = "invalid bpf_context access",
 	.result = REJECT,
 	.prog_type = BPF_PROG_TYPE_SK_LOOKUP,
 	.expected_attach_type = BPF_SK_LOOKUP,
 	.flags = F_NEEDS_EFFICIENT_UNALIGNED_ACCESS,
-पूर्ण,
-/* in-bound and out-of-bound ग_लिखोs to bpf_sk_lookup */
-अणु
+},
+/* in-bound and out-of-bound writes to bpf_sk_lookup */
+{
 	"invalid 8-byte write to bpf_sk_lookup",
-	.insns = अणु
+	.insns = {
 		BPF_MOV64_IMM(BPF_REG_0, 0xcafe4a11U),
 		BPF_STX_MEM(BPF_DW, BPF_REG_1, BPF_REG_0, 0),
 		BPF_MOV32_IMM(BPF_REG_0, 0),
 		BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.errstr = "invalid bpf_context access",
 	.result = REJECT,
 	.prog_type = BPF_PROG_TYPE_SK_LOOKUP,
 	.expected_attach_type = BPF_SK_LOOKUP,
-पूर्ण,
-अणु
+},
+{
 	"invalid 4-byte write to bpf_sk_lookup",
-	.insns = अणु
+	.insns = {
 		BPF_MOV64_IMM(BPF_REG_0, 0xcafe4a11U),
 		BPF_STX_MEM(BPF_W, BPF_REG_1, BPF_REG_0, 0),
 		BPF_MOV32_IMM(BPF_REG_0, 0),
 		BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.errstr = "invalid bpf_context access",
 	.result = REJECT,
 	.prog_type = BPF_PROG_TYPE_SK_LOOKUP,
 	.expected_attach_type = BPF_SK_LOOKUP,
-पूर्ण,
-अणु
+},
+{
 	"invalid 2-byte write to bpf_sk_lookup",
-	.insns = अणु
+	.insns = {
 		BPF_MOV64_IMM(BPF_REG_0, 0xcafe4a11U),
 		BPF_STX_MEM(BPF_H, BPF_REG_1, BPF_REG_0, 0),
 		BPF_MOV32_IMM(BPF_REG_0, 0),
 		BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.errstr = "invalid bpf_context access",
 	.result = REJECT,
 	.prog_type = BPF_PROG_TYPE_SK_LOOKUP,
 	.expected_attach_type = BPF_SK_LOOKUP,
-पूर्ण,
-अणु
+},
+{
 	"invalid 1-byte write to bpf_sk_lookup",
-	.insns = अणु
+	.insns = {
 		BPF_MOV64_IMM(BPF_REG_0, 0xcafe4a11U),
 		BPF_STX_MEM(BPF_B, BPF_REG_1, BPF_REG_0, 0),
 		BPF_MOV32_IMM(BPF_REG_0, 0),
 		BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.errstr = "invalid bpf_context access",
 	.result = REJECT,
 	.prog_type = BPF_PROG_TYPE_SK_LOOKUP,
 	.expected_attach_type = BPF_SK_LOOKUP,
-पूर्ण,
-अणु
+},
+{
 	"invalid 4-byte write past end of bpf_sk_lookup",
-	.insns = अणु
+	.insns = {
 		BPF_MOV64_IMM(BPF_REG_0, 0xcafe4a11U),
 		BPF_STX_MEM(BPF_W, BPF_REG_1, BPF_REG_0,
-			    माप(काष्ठा bpf_sk_lookup)),
+			    sizeof(struct bpf_sk_lookup)),
 		BPF_MOV32_IMM(BPF_REG_0, 0),
 		BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.errstr = "invalid bpf_context access",
 	.result = REJECT,
 	.prog_type = BPF_PROG_TYPE_SK_LOOKUP,
 	.expected_attach_type = BPF_SK_LOOKUP,
-पूर्ण,
+},

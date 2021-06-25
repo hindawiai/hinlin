@@ -1,230 +1,229 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * SMP support क्रम घातer macपूर्णांकosh.
+ * SMP support for power macintosh.
  *
  * We support both the old "powersurge" SMP architecture
  * and the current Core99 (G4 PowerMac) machines.
  *
- * Note that we करोn't support the very first rev. of
+ * Note that we don't support the very first rev. of
  * Apple/DayStar 2 CPUs board, the one with the funky
- * watchकरोg. Hopefully, none of these should be there except
- * maybe पूर्णांकernally to Apple. I should probably still add some
+ * watchdog. Hopefully, none of these should be there except
+ * maybe internally to Apple. I should probably still add some
  * code to detect this card though and disable SMP. --BenH.
  *
- * Support Macपूर्णांकosh G4 SMP by Troy Benjegerdes (hozer@drgw.net)
+ * Support Macintosh G4 SMP by Troy Benjegerdes (hozer@drgw.net)
  * and Ben Herrenschmidt <benh@kernel.crashing.org>.
  *
- * Support क्रम DayStar quad CPU cards
+ * Support for DayStar quad CPU cards
  * Copyright (C) XLR8, Inc. 1994-2000
  */
-#समावेश <linux/kernel.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/sched/hotplug.h>
-#समावेश <linux/smp.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/kernel_स्थिति.स>
-#समावेश <linux/delay.h>
-#समावेश <linux/init.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/hardirq.h>
-#समावेश <linux/cpu.h>
-#समावेश <linux/compiler.h>
-#समावेश <linux/pgtable.h>
+#include <linux/kernel.h>
+#include <linux/sched.h>
+#include <linux/sched/hotplug.h>
+#include <linux/smp.h>
+#include <linux/interrupt.h>
+#include <linux/kernel_stat.h>
+#include <linux/delay.h>
+#include <linux/init.h>
+#include <linux/spinlock.h>
+#include <linux/errno.h>
+#include <linux/hardirq.h>
+#include <linux/cpu.h>
+#include <linux/compiler.h>
+#include <linux/pgtable.h>
 
-#समावेश <यंत्र/ptrace.h>
-#समावेश <linux/atomic.h>
-#समावेश <यंत्र/code-patching.h>
-#समावेश <यंत्र/irq.h>
-#समावेश <यंत्र/page.h>
-#समावेश <यंत्र/sections.h>
-#समावेश <यंत्र/पन.स>
-#समावेश <यंत्र/prom.h>
-#समावेश <यंत्र/smp.h>
-#समावेश <यंत्र/machdep.h>
-#समावेश <यंत्र/pmac_feature.h>
-#समावेश <यंत्र/समय.स>
-#समावेश <यंत्र/mpic.h>
-#समावेश <यंत्र/cacheflush.h>
-#समावेश <यंत्र/keylargo.h>
-#समावेश <यंत्र/pmac_low_i2c.h>
-#समावेश <यंत्र/pmac_pfunc.h>
-#समावेश <यंत्र/inst.h>
+#include <asm/ptrace.h>
+#include <linux/atomic.h>
+#include <asm/code-patching.h>
+#include <asm/irq.h>
+#include <asm/page.h>
+#include <asm/sections.h>
+#include <asm/io.h>
+#include <asm/prom.h>
+#include <asm/smp.h>
+#include <asm/machdep.h>
+#include <asm/pmac_feature.h>
+#include <asm/time.h>
+#include <asm/mpic.h>
+#include <asm/cacheflush.h>
+#include <asm/keylargo.h>
+#include <asm/pmac_low_i2c.h>
+#include <asm/pmac_pfunc.h>
+#include <asm/inst.h>
 
-#समावेश "pmac.h"
+#include "pmac.h"
 
-#अघोषित DEBUG
+#undef DEBUG
 
-#अगर_घोषित DEBUG
-#घोषणा DBG(fmt...) udbg_म_लिखो(fmt)
-#अन्यथा
-#घोषणा DBG(fmt...)
-#पूर्ण_अगर
+#ifdef DEBUG
+#define DBG(fmt...) udbg_printf(fmt)
+#else
+#define DBG(fmt...)
+#endif
 
-बाह्य व्योम __secondary_start_pmac_0(व्योम);
+extern void __secondary_start_pmac_0(void);
 
-अटल व्योम (*pmac_tb_मुक्तze)(पूर्णांक मुक्तze);
-अटल u64 समयbase;
-अटल पूर्णांक tb_req;
+static void (*pmac_tb_freeze)(int freeze);
+static u64 timebase;
+static int tb_req;
 
-#अगर_घोषित CONFIG_PPC_PMAC32_PSURGE
+#ifdef CONFIG_PPC_PMAC32_PSURGE
 
 /*
- * Powersurge (old घातermac SMP) support.
+ * Powersurge (old powermac SMP) support.
  */
 
-/* Addresses क्रम घातersurge रेजिस्टरs */
-#घोषणा HAMMERHEAD_BASE		0xf8000000
-#घोषणा HHEAD_CONFIG		0x90
-#घोषणा HHEAD_SEC_INTR		0xc0
+/* Addresses for powersurge registers */
+#define HAMMERHEAD_BASE		0xf8000000
+#define HHEAD_CONFIG		0x90
+#define HHEAD_SEC_INTR		0xc0
 
-/* रेजिस्टर क्रम पूर्णांकerrupting the primary processor on the घातersurge */
+/* register for interrupting the primary processor on the powersurge */
 /* N.B. this is actually the ethernet ROM! */
-#घोषणा PSURGE_PRI_INTR		0xf3019000
+#define PSURGE_PRI_INTR		0xf3019000
 
-/* रेजिस्टर क्रम storing the start address क्रम the secondary processor */
-/* N.B. this is the PCI config space address रेजिस्टर क्रम the 1st bridge */
-#घोषणा PSURGE_START		0xf2800000
+/* register for storing the start address for the secondary processor */
+/* N.B. this is the PCI config space address register for the 1st bridge */
+#define PSURGE_START		0xf2800000
 
 /* Daystar/XLR8 4-CPU card */
-#घोषणा PSURGE_QUAD_REG_ADDR	0xf8800000
+#define PSURGE_QUAD_REG_ADDR	0xf8800000
 
-#घोषणा PSURGE_QUAD_IRQ_SET	0
-#घोषणा PSURGE_QUAD_IRQ_CLR	1
-#घोषणा PSURGE_QUAD_IRQ_PRIMARY	2
-#घोषणा PSURGE_QUAD_CKSTOP_CTL	3
-#घोषणा PSURGE_QUAD_PRIMARY_ARB	4
-#घोषणा PSURGE_QUAD_BOARD_ID	6
-#घोषणा PSURGE_QUAD_WHICH_CPU	7
-#घोषणा PSURGE_QUAD_CKSTOP_RDBK	8
-#घोषणा PSURGE_QUAD_RESET_CTL	11
+#define PSURGE_QUAD_IRQ_SET	0
+#define PSURGE_QUAD_IRQ_CLR	1
+#define PSURGE_QUAD_IRQ_PRIMARY	2
+#define PSURGE_QUAD_CKSTOP_CTL	3
+#define PSURGE_QUAD_PRIMARY_ARB	4
+#define PSURGE_QUAD_BOARD_ID	6
+#define PSURGE_QUAD_WHICH_CPU	7
+#define PSURGE_QUAD_CKSTOP_RDBK	8
+#define PSURGE_QUAD_RESET_CTL	11
 
-#घोषणा PSURGE_QUAD_OUT(r, v)	(out_8(quad_base + ((r) << 4) + 4, (v)))
-#घोषणा PSURGE_QUAD_IN(r)	(in_8(quad_base + ((r) << 4) + 4) & 0x0f)
-#घोषणा PSURGE_QUAD_BIS(r, v)	(PSURGE_QUAD_OUT((r), PSURGE_QUAD_IN(r) | (v)))
-#घोषणा PSURGE_QUAD_BIC(r, v)	(PSURGE_QUAD_OUT((r), PSURGE_QUAD_IN(r) & ~(v)))
+#define PSURGE_QUAD_OUT(r, v)	(out_8(quad_base + ((r) << 4) + 4, (v)))
+#define PSURGE_QUAD_IN(r)	(in_8(quad_base + ((r) << 4) + 4) & 0x0f)
+#define PSURGE_QUAD_BIS(r, v)	(PSURGE_QUAD_OUT((r), PSURGE_QUAD_IN(r) | (v)))
+#define PSURGE_QUAD_BIC(r, v)	(PSURGE_QUAD_OUT((r), PSURGE_QUAD_IN(r) & ~(v)))
 
-/* भव addresses क्रम the above */
-अटल अस्थिर u8 __iomem *hhead_base;
-अटल अस्थिर u8 __iomem *quad_base;
-अटल अस्थिर u32 __iomem *psurge_pri_पूर्णांकr;
-अटल अस्थिर u8 __iomem *psurge_sec_पूर्णांकr;
-अटल अस्थिर u32 __iomem *psurge_start;
+/* virtual addresses for the above */
+static volatile u8 __iomem *hhead_base;
+static volatile u8 __iomem *quad_base;
+static volatile u32 __iomem *psurge_pri_intr;
+static volatile u8 __iomem *psurge_sec_intr;
+static volatile u32 __iomem *psurge_start;
 
-/* values क्रम psurge_type */
-#घोषणा PSURGE_NONE		-1
-#घोषणा PSURGE_DUAL		0
-#घोषणा PSURGE_QUAD_OKEE	1
-#घोषणा PSURGE_QUAD_COTTON	2
-#घोषणा PSURGE_QUAD_ICEGRASS	3
+/* values for psurge_type */
+#define PSURGE_NONE		-1
+#define PSURGE_DUAL		0
+#define PSURGE_QUAD_OKEE	1
+#define PSURGE_QUAD_COTTON	2
+#define PSURGE_QUAD_ICEGRASS	3
 
-/* what sort of घातersurge board we have */
-अटल पूर्णांक psurge_type = PSURGE_NONE;
+/* what sort of powersurge board we have */
+static int psurge_type = PSURGE_NONE;
 
-/* irq क्रम secondary cpus to report */
-अटल काष्ठा irq_करोमुख्य *psurge_host;
-पूर्णांक psurge_secondary_virq;
+/* irq for secondary cpus to report */
+static struct irq_domain *psurge_host;
+int psurge_secondary_virq;
 
 /*
- * Set and clear IPIs क्रम घातersurge.
+ * Set and clear IPIs for powersurge.
  */
-अटल अंतरभूत व्योम psurge_set_ipi(पूर्णांक cpu)
-अणु
-	अगर (psurge_type == PSURGE_NONE)
-		वापस;
-	अगर (cpu == 0)
-		in_be32(psurge_pri_पूर्णांकr);
-	अन्यथा अगर (psurge_type == PSURGE_DUAL)
-		out_8(psurge_sec_पूर्णांकr, 0);
-	अन्यथा
+static inline void psurge_set_ipi(int cpu)
+{
+	if (psurge_type == PSURGE_NONE)
+		return;
+	if (cpu == 0)
+		in_be32(psurge_pri_intr);
+	else if (psurge_type == PSURGE_DUAL)
+		out_8(psurge_sec_intr, 0);
+	else
 		PSURGE_QUAD_OUT(PSURGE_QUAD_IRQ_SET, 1 << cpu);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम psurge_clr_ipi(पूर्णांक cpu)
-अणु
-	अगर (cpu > 0) अणु
-		चयन(psurge_type) अणु
-		हाल PSURGE_DUAL:
-			out_8(psurge_sec_पूर्णांकr, ~0);
-		हाल PSURGE_NONE:
-			अवरोध;
-		शेष:
+static inline void psurge_clr_ipi(int cpu)
+{
+	if (cpu > 0) {
+		switch(psurge_type) {
+		case PSURGE_DUAL:
+			out_8(psurge_sec_intr, ~0);
+		case PSURGE_NONE:
+			break;
+		default:
 			PSURGE_QUAD_OUT(PSURGE_QUAD_IRQ_CLR, 1 << cpu);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
 /*
- * On घातersurge (old SMP घातermac architecture) we करोn't have
- * separate IPIs क्रम separate messages like खोलोpic करोes.  Instead
+ * On powersurge (old SMP powermac architecture) we don't have
+ * separate IPIs for separate messages like openpic does.  Instead
  * use the generic demux helpers
  *  -- paulus.
  */
-अटल irqवापस_t psurge_ipi_पूर्णांकr(पूर्णांक irq, व्योम *d)
-अणु
+static irqreturn_t psurge_ipi_intr(int irq, void *d)
+{
 	psurge_clr_ipi(smp_processor_id());
 	smp_ipi_demux();
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल व्योम smp_psurge_cause_ipi(पूर्णांक cpu)
-अणु
+static void smp_psurge_cause_ipi(int cpu)
+{
 	psurge_set_ipi(cpu);
-पूर्ण
+}
 
-अटल पूर्णांक psurge_host_map(काष्ठा irq_करोमुख्य *h, अचिन्हित पूर्णांक virq,
+static int psurge_host_map(struct irq_domain *h, unsigned int virq,
 			 irq_hw_number_t hw)
-अणु
+{
 	irq_set_chip_and_handler(virq, &dummy_irq_chip, handle_percpu_irq);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा irq_करोमुख्य_ops psurge_host_ops = अणु
+static const struct irq_domain_ops psurge_host_ops = {
 	.map	= psurge_host_map,
-पूर्ण;
+};
 
-अटल पूर्णांक psurge_secondary_ipi_init(व्योम)
-अणु
-	पूर्णांक rc = -ENOMEM;
+static int psurge_secondary_ipi_init(void)
+{
+	int rc = -ENOMEM;
 
-	psurge_host = irq_करोमुख्य_add_nomap(शून्य, ~0, &psurge_host_ops, शून्य);
+	psurge_host = irq_domain_add_nomap(NULL, ~0, &psurge_host_ops, NULL);
 
-	अगर (psurge_host)
+	if (psurge_host)
 		psurge_secondary_virq = irq_create_direct_mapping(psurge_host);
 
-	अगर (psurge_secondary_virq)
-		rc = request_irq(psurge_secondary_virq, psurge_ipi_पूर्णांकr,
-			IRQF_PERCPU | IRQF_NO_THREAD, "IPI", शून्य);
+	if (psurge_secondary_virq)
+		rc = request_irq(psurge_secondary_virq, psurge_ipi_intr,
+			IRQF_PERCPU | IRQF_NO_THREAD, "IPI", NULL);
 
-	अगर (rc)
+	if (rc)
 		pr_err("Failed to setup secondary cpu IPI\n");
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*
- * Determine a quad card presence. We पढ़ो the board ID रेजिस्टर, we
- * क्रमce the data bus to change to something अन्यथा, and we पढ़ो it again.
- * It it's stable, then the रेजिस्टर probably exist (ugh !)
+ * Determine a quad card presence. We read the board ID register, we
+ * force the data bus to change to something else, and we read it again.
+ * It it's stable, then the register probably exist (ugh !)
  */
-अटल पूर्णांक __init psurge_quad_probe(व्योम)
-अणु
-	पूर्णांक type;
-	अचिन्हित पूर्णांक i;
+static int __init psurge_quad_probe(void)
+{
+	int type;
+	unsigned int i;
 
 	type = PSURGE_QUAD_IN(PSURGE_QUAD_BOARD_ID);
-	अगर (type < PSURGE_QUAD_OKEE || type > PSURGE_QUAD_ICEGRASS
+	if (type < PSURGE_QUAD_OKEE || type > PSURGE_QUAD_ICEGRASS
 	    || type != PSURGE_QUAD_IN(PSURGE_QUAD_BOARD_ID))
-		वापस PSURGE_DUAL;
+		return PSURGE_DUAL;
 
 	/* looks OK, try a slightly more rigorous test */
 	/* bogus is not necessarily cacheline-aligned,
-	   though I करोn't suppose that really matters.  -- paulus */
-	क्रम (i = 0; i < 100; i++) अणु
-		अस्थिर u32 bogus[8];
+	   though I don't suppose that really matters.  -- paulus */
+	for (i = 0; i < 100; i++) {
+		volatile u32 bogus[8];
 		bogus[(0+i)%8] = 0x00000000;
 		bogus[(1+i)%8] = 0x55555555;
 		bogus[(2+i)%8] = 0xFFFFFFFF;
@@ -234,29 +233,29 @@
 		bogus[(6+i)%8] = 0xCCCCCCCC;
 		bogus[(7+i)%8] = 0x33333333;
 		wmb();
-		यंत्र अस्थिर("dcbf 0,%0" : : "r" (bogus) : "memory");
+		asm volatile("dcbf 0,%0" : : "r" (bogus) : "memory");
 		mb();
-		अगर (type != PSURGE_QUAD_IN(PSURGE_QUAD_BOARD_ID))
-			वापस PSURGE_DUAL;
-	पूर्ण
-	वापस type;
-पूर्ण
+		if (type != PSURGE_QUAD_IN(PSURGE_QUAD_BOARD_ID))
+			return PSURGE_DUAL;
+	}
+	return type;
+}
 
-अटल व्योम __init psurge_quad_init(व्योम)
-अणु
-	पूर्णांक procbits;
+static void __init psurge_quad_init(void)
+{
+	int procbits;
 
-	अगर (ppc_md.progress) ppc_md.progress("psurge_quad_init", 0x351);
+	if (ppc_md.progress) ppc_md.progress("psurge_quad_init", 0x351);
 	procbits = ~PSURGE_QUAD_IN(PSURGE_QUAD_WHICH_CPU);
-	अगर (psurge_type == PSURGE_QUAD_ICEGRASS)
+	if (psurge_type == PSURGE_QUAD_ICEGRASS)
 		PSURGE_QUAD_BIS(PSURGE_QUAD_RESET_CTL, procbits);
-	अन्यथा
+	else
 		PSURGE_QUAD_BIC(PSURGE_QUAD_CKSTOP_CTL, procbits);
 	mdelay(33);
-	out_8(psurge_sec_पूर्णांकr, ~0);
+	out_8(psurge_sec_intr, ~0);
 	PSURGE_QUAD_OUT(PSURGE_QUAD_IRQ_CLR, procbits);
 	PSURGE_QUAD_BIS(PSURGE_QUAD_RESET_CTL, procbits);
-	अगर (psurge_type != PSURGE_QUAD_ICEGRASS)
+	if (psurge_type != PSURGE_QUAD_ICEGRASS)
 		PSURGE_QUAD_BIS(PSURGE_QUAD_CKSTOP_CTL, procbits);
 	PSURGE_QUAD_BIC(PSURGE_QUAD_PRIMARY_ARB, procbits);
 	mdelay(33);
@@ -264,90 +263,90 @@
 	mdelay(33);
 	PSURGE_QUAD_BIS(PSURGE_QUAD_PRIMARY_ARB, procbits);
 	mdelay(33);
-पूर्ण
+}
 
-अटल व्योम __init smp_psurge_probe(व्योम)
-अणु
-	पूर्णांक i, ncpus;
-	काष्ठा device_node *dn;
+static void __init smp_psurge_probe(void)
+{
+	int i, ncpus;
+	struct device_node *dn;
 
 	/*
-	 * The घातersurge cpu board can be used in the generation
-	 * of घातermacs that have a socket क्रम an upgradeable cpu card,
+	 * The powersurge cpu board can be used in the generation
+	 * of powermacs that have a socket for an upgradeable cpu card,
 	 * including the 7500, 8500, 9500, 9600.
-	 * The device tree करोesn't tell you अगर you have 2 cpus because
-	 * OF करोesn't know anything about the 2nd processor.
-	 * Instead we look क्रम magic bits in magic रेजिस्टरs,
-	 * in the hammerhead memory controller in the हाल of the
-	 * dual-cpu घातersurge board.  -- paulus.
+	 * The device tree doesn't tell you if you have 2 cpus because
+	 * OF doesn't know anything about the 2nd processor.
+	 * Instead we look for magic bits in magic registers,
+	 * in the hammerhead memory controller in the case of the
+	 * dual-cpu powersurge board.  -- paulus.
 	 */
-	dn = of_find_node_by_name(शून्य, "hammerhead");
-	अगर (dn == शून्य)
-		वापस;
+	dn = of_find_node_by_name(NULL, "hammerhead");
+	if (dn == NULL)
+		return;
 	of_node_put(dn);
 
 	hhead_base = ioremap(HAMMERHEAD_BASE, 0x800);
 	quad_base = ioremap(PSURGE_QUAD_REG_ADDR, 1024);
-	psurge_sec_पूर्णांकr = hhead_base + HHEAD_SEC_INTR;
+	psurge_sec_intr = hhead_base + HHEAD_SEC_INTR;
 
 	psurge_type = psurge_quad_probe();
-	अगर (psurge_type != PSURGE_DUAL) अणु
+	if (psurge_type != PSURGE_DUAL) {
 		psurge_quad_init();
 		/* All released cards using this HW design have 4 CPUs */
 		ncpus = 4;
-		/* No sure how समयbase sync works on those, let's use SW */
-		smp_ops->give_समयbase = smp_generic_give_समयbase;
-		smp_ops->take_समयbase = smp_generic_take_समयbase;
-	पूर्ण अन्यथा अणु
+		/* No sure how timebase sync works on those, let's use SW */
+		smp_ops->give_timebase = smp_generic_give_timebase;
+		smp_ops->take_timebase = smp_generic_take_timebase;
+	} else {
 		iounmap(quad_base);
-		अगर ((in_8(hhead_base + HHEAD_CONFIG) & 0x02) == 0) अणु
+		if ((in_8(hhead_base + HHEAD_CONFIG) & 0x02) == 0) {
 			/* not a dual-cpu card */
 			iounmap(hhead_base);
 			psurge_type = PSURGE_NONE;
-			वापस;
-		पूर्ण
+			return;
+		}
 		ncpus = 2;
-	पूर्ण
+	}
 
-	अगर (psurge_secondary_ipi_init())
-		वापस;
+	if (psurge_secondary_ipi_init())
+		return;
 
 	psurge_start = ioremap(PSURGE_START, 4);
-	psurge_pri_पूर्णांकr = ioremap(PSURGE_PRI_INTR, 4);
+	psurge_pri_intr = ioremap(PSURGE_PRI_INTR, 4);
 
-	/* This is necessary because OF करोesn't know about the
+	/* This is necessary because OF doesn't know about the
 	 * secondary cpu(s), and thus there aren't nodes in the
-	 * device tree क्रम them, and smp_setup_cpu_maps hasn't
+	 * device tree for them, and smp_setup_cpu_maps hasn't
 	 * set their bits in cpu_present_mask.
 	 */
-	अगर (ncpus > NR_CPUS)
+	if (ncpus > NR_CPUS)
 		ncpus = NR_CPUS;
-	क्रम (i = 1; i < ncpus ; ++i)
+	for (i = 1; i < ncpus ; ++i)
 		set_cpu_present(i, true);
 
-	अगर (ppc_md.progress) ppc_md.progress("smp_psurge_probe - done", 0x352);
-पूर्ण
+	if (ppc_md.progress) ppc_md.progress("smp_psurge_probe - done", 0x352);
+}
 
-अटल पूर्णांक __init smp_psurge_kick_cpu(पूर्णांक nr)
-अणु
-	अचिन्हित दीर्घ start = __pa(__secondary_start_pmac_0) + nr * 8;
-	अचिन्हित दीर्घ a, flags;
-	पूर्णांक i, j;
+static int __init smp_psurge_kick_cpu(int nr)
+{
+	unsigned long start = __pa(__secondary_start_pmac_0) + nr * 8;
+	unsigned long a, flags;
+	int i, j;
 
 	/* Defining this here is evil ... but I prefer hiding that
-	 * crap to aव्योम giving people ideas that they can करो the
+	 * crap to avoid giving people ideas that they can do the
 	 * same.
 	 */
-	बाह्य अस्थिर अचिन्हित पूर्णांक cpu_callin_map[NR_CPUS];
+	extern volatile unsigned int cpu_callin_map[NR_CPUS];
 
-	/* may need to flush here अगर secondary bats aren't setup */
-	क्रम (a = KERNELBASE; a < KERNELBASE + 0x800000; a += 32)
-		यंत्र अस्थिर("dcbf 0,%0" : : "r" (a) : "memory");
-	यंत्र अस्थिर("sync");
+	/* may need to flush here if secondary bats aren't setup */
+	for (a = KERNELBASE; a < KERNELBASE + 0x800000; a += 32)
+		asm volatile("dcbf 0,%0" : : "r" (a) : "memory");
+	asm volatile("sync");
 
-	अगर (ppc_md.progress) ppc_md.progress("smp_psurge_kick_cpu", 0x353);
+	if (ppc_md.progress) ppc_md.progress("smp_psurge_kick_cpu", 0x353);
 
-	/* This is going to मुक्तze the समयebase, we disable पूर्णांकerrupts */
+	/* This is going to freeze the timeebase, we disable interrupts */
 	local_irq_save(flags);
 
 	out_be32(psurge_start, start);
@@ -356,431 +355,431 @@
 	psurge_set_ipi(nr);
 
 	/*
-	 * We can't use udelay here because the समयbase is now frozen.
+	 * We can't use udelay here because the timebase is now frozen.
 	 */
-	क्रम (i = 0; i < 2000; ++i)
-		यंत्र अस्थिर("nop" : : : "memory");
+	for (i = 0; i < 2000; ++i)
+		asm volatile("nop" : : : "memory");
 	psurge_clr_ipi(nr);
 
 	/*
-	 * Also, because the समयbase is frozen, we must not वापस to the
-	 * caller which will try to करो udelay's etc... Instead, we रुको -here-
-	 * क्रम the CPU to callin.
+	 * Also, because the timebase is frozen, we must not return to the
+	 * caller which will try to do udelay's etc... Instead, we wait -here-
+	 * for the CPU to callin.
 	 */
-	क्रम (i = 0; i < 100000 && !cpu_callin_map[nr]; ++i) अणु
-		क्रम (j = 1; j < 10000; j++)
-			यंत्र अस्थिर("nop" : : : "memory");
-		यंत्र अस्थिर("sync" : : : "memory");
-	पूर्ण
-	अगर (!cpu_callin_map[nr])
-		जाओ stuck;
+	for (i = 0; i < 100000 && !cpu_callin_map[nr]; ++i) {
+		for (j = 1; j < 10000; j++)
+			asm volatile("nop" : : : "memory");
+		asm volatile("sync" : : : "memory");
+	}
+	if (!cpu_callin_map[nr])
+		goto stuck;
 
-	/* And we करो the TB sync here too क्रम standard dual CPU cards */
-	अगर (psurge_type == PSURGE_DUAL) अणु
-		जबतक(!tb_req)
+	/* And we do the TB sync here too for standard dual CPU cards */
+	if (psurge_type == PSURGE_DUAL) {
+		while(!tb_req)
 			barrier();
 		tb_req = 0;
 		mb();
-		समयbase = get_tb();
+		timebase = get_tb();
 		mb();
-		जबतक (समयbase)
+		while (timebase)
 			barrier();
 		mb();
-	पूर्ण
+	}
  stuck:
-	/* now पूर्णांकerrupt the secondary, restarting both TBs */
-	अगर (psurge_type == PSURGE_DUAL)
+	/* now interrupt the secondary, restarting both TBs */
+	if (psurge_type == PSURGE_DUAL)
 		psurge_set_ipi(1);
 
-	अगर (ppc_md.progress) ppc_md.progress("smp_psurge_kick_cpu - done", 0x354);
+	if (ppc_md.progress) ppc_md.progress("smp_psurge_kick_cpu - done", 0x354);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम __init smp_psurge_setup_cpu(पूर्णांक cpu_nr)
-अणु
-	अचिन्हित दीर्घ flags = IRQF_PERCPU | IRQF_NO_THREAD;
-	पूर्णांक irq;
+static void __init smp_psurge_setup_cpu(int cpu_nr)
+{
+	unsigned long flags = IRQF_PERCPU | IRQF_NO_THREAD;
+	int irq;
 
-	अगर (cpu_nr != 0 || !psurge_start)
-		वापस;
+	if (cpu_nr != 0 || !psurge_start)
+		return;
 
-	/* reset the entry poपूर्णांक so अगर we get another पूर्णांकr we won't
+	/* reset the entry point so if we get another intr we won't
 	 * try to startup again */
 	out_be32(psurge_start, 0x100);
-	irq = irq_create_mapping(शून्य, 30);
-	अगर (request_irq(irq, psurge_ipi_पूर्णांकr, flags, "primary IPI", शून्य))
-		prपूर्णांकk(KERN_ERR "Couldn't get primary IPI interrupt");
-पूर्ण
+	irq = irq_create_mapping(NULL, 30);
+	if (request_irq(irq, psurge_ipi_intr, flags, "primary IPI", NULL))
+		printk(KERN_ERR "Couldn't get primary IPI interrupt");
+}
 
-व्योम __init smp_psurge_take_समयbase(व्योम)
-अणु
-	अगर (psurge_type != PSURGE_DUAL)
-		वापस;
+void __init smp_psurge_take_timebase(void)
+{
+	if (psurge_type != PSURGE_DUAL)
+		return;
 
 	tb_req = 1;
 	mb();
-	जबतक (!समयbase)
+	while (!timebase)
 		barrier();
 	mb();
-	set_tb(समयbase >> 32, समयbase & 0xffffffff);
-	समयbase = 0;
+	set_tb(timebase >> 32, timebase & 0xffffffff);
+	timebase = 0;
 	mb();
-	set_dec(tb_ticks_per_jअगरfy/2);
-पूर्ण
+	set_dec(tb_ticks_per_jiffy/2);
+}
 
-व्योम __init smp_psurge_give_समयbase(व्योम)
-अणु
-	/* Nothing to करो here */
-पूर्ण
+void __init smp_psurge_give_timebase(void)
+{
+	/* Nothing to do here */
+}
 
 /* PowerSurge-style Macs */
-काष्ठा smp_ops_t psurge_smp_ops = अणु
-	.message_pass	= शून्य,	/* Use smp_muxed_ipi_message_pass */
+struct smp_ops_t psurge_smp_ops = {
+	.message_pass	= NULL,	/* Use smp_muxed_ipi_message_pass */
 	.cause_ipi	= smp_psurge_cause_ipi,
-	.cause_nmi_ipi	= शून्य,
+	.cause_nmi_ipi	= NULL,
 	.probe		= smp_psurge_probe,
 	.kick_cpu	= smp_psurge_kick_cpu,
 	.setup_cpu	= smp_psurge_setup_cpu,
-	.give_समयbase	= smp_psurge_give_समयbase,
-	.take_समयbase	= smp_psurge_take_समयbase,
-पूर्ण;
-#पूर्ण_अगर /* CONFIG_PPC_PMAC32_PSURGE */
+	.give_timebase	= smp_psurge_give_timebase,
+	.take_timebase	= smp_psurge_take_timebase,
+};
+#endif /* CONFIG_PPC_PMAC32_PSURGE */
 
 /*
  * Core 99 and later support
  */
 
 
-अटल व्योम smp_core99_give_समयbase(व्योम)
-अणु
-	अचिन्हित दीर्घ flags;
+static void smp_core99_give_timebase(void)
+{
+	unsigned long flags;
 
 	local_irq_save(flags);
 
-	जबतक(!tb_req)
+	while(!tb_req)
 		barrier();
 	tb_req = 0;
-	(*pmac_tb_मुक्तze)(1);
+	(*pmac_tb_freeze)(1);
 	mb();
-	समयbase = get_tb();
+	timebase = get_tb();
 	mb();
-	जबतक (समयbase)
+	while (timebase)
 		barrier();
 	mb();
-	(*pmac_tb_मुक्तze)(0);
+	(*pmac_tb_freeze)(0);
 	mb();
 
 	local_irq_restore(flags);
-पूर्ण
+}
 
 
-अटल व्योम smp_core99_take_समयbase(व्योम)
-अणु
-	अचिन्हित दीर्घ flags;
+static void smp_core99_take_timebase(void)
+{
+	unsigned long flags;
 
 	local_irq_save(flags);
 
 	tb_req = 1;
 	mb();
-	जबतक (!समयbase)
+	while (!timebase)
 		barrier();
 	mb();
-	set_tb(समयbase >> 32, समयbase & 0xffffffff);
-	समयbase = 0;
+	set_tb(timebase >> 32, timebase & 0xffffffff);
+	timebase = 0;
 	mb();
 
 	local_irq_restore(flags);
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_PPC64
+#ifdef CONFIG_PPC64
 /*
- * G5s enable/disable the समयbase via an i2c-connected घड़ी chip.
+ * G5s enable/disable the timebase via an i2c-connected clock chip.
  */
-अटल काष्ठा pmac_i2c_bus *pmac_tb_घड़ी_chip_host;
-अटल u8 pmac_tb_pulsar_addr;
+static struct pmac_i2c_bus *pmac_tb_clock_chip_host;
+static u8 pmac_tb_pulsar_addr;
 
-अटल व्योम smp_core99_cypress_tb_मुक्तze(पूर्णांक मुक्तze)
-अणु
+static void smp_core99_cypress_tb_freeze(int freeze)
+{
 	u8 data;
-	पूर्णांक rc;
+	int rc;
 
 	/* Strangely, the device-tree says address is 0xd2, but darwin
 	 * accesses 0xd0 ...
 	 */
-	pmac_i2c_seपंचांगode(pmac_tb_घड़ी_chip_host,
+	pmac_i2c_setmode(pmac_tb_clock_chip_host,
 			 pmac_i2c_mode_combined);
-	rc = pmac_i2c_xfer(pmac_tb_घड़ी_chip_host,
-			   0xd0 | pmac_i2c_पढ़ो,
+	rc = pmac_i2c_xfer(pmac_tb_clock_chip_host,
+			   0xd0 | pmac_i2c_read,
 			   1, 0x81, &data, 1);
-	अगर (rc != 0)
-		जाओ bail;
+	if (rc != 0)
+		goto bail;
 
-	data = (data & 0xf3) | (मुक्तze ? 0x00 : 0x0c);
+	data = (data & 0xf3) | (freeze ? 0x00 : 0x0c);
 
-       	pmac_i2c_seपंचांगode(pmac_tb_घड़ी_chip_host, pmac_i2c_mode_stdsub);
-	rc = pmac_i2c_xfer(pmac_tb_घड़ी_chip_host,
-			   0xd0 | pmac_i2c_ग_लिखो,
+       	pmac_i2c_setmode(pmac_tb_clock_chip_host, pmac_i2c_mode_stdsub);
+	rc = pmac_i2c_xfer(pmac_tb_clock_chip_host,
+			   0xd0 | pmac_i2c_write,
 			   1, 0x81, &data, 1);
 
  bail:
-	अगर (rc != 0) अणु
-		prपूर्णांकk("Cypress Timebase %s rc: %d\n",
-		       मुक्तze ? "freeze" : "unfreeze", rc);
+	if (rc != 0) {
+		printk("Cypress Timebase %s rc: %d\n",
+		       freeze ? "freeze" : "unfreeze", rc);
 		panic("Timebase freeze failed !\n");
-	पूर्ण
-पूर्ण
+	}
+}
 
 
-अटल व्योम smp_core99_pulsar_tb_मुक्तze(पूर्णांक मुक्तze)
-अणु
+static void smp_core99_pulsar_tb_freeze(int freeze)
+{
 	u8 data;
-	पूर्णांक rc;
+	int rc;
 
-	pmac_i2c_seपंचांगode(pmac_tb_घड़ी_chip_host,
+	pmac_i2c_setmode(pmac_tb_clock_chip_host,
 			 pmac_i2c_mode_combined);
-	rc = pmac_i2c_xfer(pmac_tb_घड़ी_chip_host,
-			   pmac_tb_pulsar_addr | pmac_i2c_पढ़ो,
+	rc = pmac_i2c_xfer(pmac_tb_clock_chip_host,
+			   pmac_tb_pulsar_addr | pmac_i2c_read,
 			   1, 0x2e, &data, 1);
-	अगर (rc != 0)
-		जाओ bail;
+	if (rc != 0)
+		goto bail;
 
-	data = (data & 0x88) | (मुक्तze ? 0x11 : 0x22);
+	data = (data & 0x88) | (freeze ? 0x11 : 0x22);
 
-	pmac_i2c_seपंचांगode(pmac_tb_घड़ी_chip_host, pmac_i2c_mode_stdsub);
-	rc = pmac_i2c_xfer(pmac_tb_घड़ी_chip_host,
-			   pmac_tb_pulsar_addr | pmac_i2c_ग_लिखो,
+	pmac_i2c_setmode(pmac_tb_clock_chip_host, pmac_i2c_mode_stdsub);
+	rc = pmac_i2c_xfer(pmac_tb_clock_chip_host,
+			   pmac_tb_pulsar_addr | pmac_i2c_write,
 			   1, 0x2e, &data, 1);
  bail:
-	अगर (rc != 0) अणु
-		prपूर्णांकk(KERN_ERR "Pulsar Timebase %s rc: %d\n",
-		       मुक्तze ? "freeze" : "unfreeze", rc);
+	if (rc != 0) {
+		printk(KERN_ERR "Pulsar Timebase %s rc: %d\n",
+		       freeze ? "freeze" : "unfreeze", rc);
 		panic("Timebase freeze failed !\n");
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम __init smp_core99_setup_i2c_hwsync(पूर्णांक ncpus)
-अणु
-	काष्ठा device_node *cc = शून्य;	
-	काष्ठा device_node *p;
-	स्थिर अक्षर *name = शून्य;
-	स्थिर u32 *reg;
-	पूर्णांक ok;
+static void __init smp_core99_setup_i2c_hwsync(int ncpus)
+{
+	struct device_node *cc = NULL;	
+	struct device_node *p;
+	const char *name = NULL;
+	const u32 *reg;
+	int ok;
 
-	/* Look क्रम the घड़ी chip */
-	क्रम_each_node_by_name(cc, "i2c-hwclock") अणु
+	/* Look for the clock chip */
+	for_each_node_by_name(cc, "i2c-hwclock") {
 		p = of_get_parent(cc);
 		ok = p && of_device_is_compatible(p, "uni-n-i2c");
 		of_node_put(p);
-		अगर (!ok)
-			जारी;
+		if (!ok)
+			continue;
 
-		pmac_tb_घड़ी_chip_host = pmac_i2c_find_bus(cc);
-		अगर (pmac_tb_घड़ी_chip_host == शून्य)
-			जारी;
-		reg = of_get_property(cc, "reg", शून्य);
-		अगर (reg == शून्य)
-			जारी;
-		चयन (*reg) अणु
-		हाल 0xd2:
-			अगर (of_device_is_compatible(cc,"pulsar-legacy-slewing")) अणु
-				pmac_tb_मुक्तze = smp_core99_pulsar_tb_मुक्तze;
+		pmac_tb_clock_chip_host = pmac_i2c_find_bus(cc);
+		if (pmac_tb_clock_chip_host == NULL)
+			continue;
+		reg = of_get_property(cc, "reg", NULL);
+		if (reg == NULL)
+			continue;
+		switch (*reg) {
+		case 0xd2:
+			if (of_device_is_compatible(cc,"pulsar-legacy-slewing")) {
+				pmac_tb_freeze = smp_core99_pulsar_tb_freeze;
 				pmac_tb_pulsar_addr = 0xd2;
 				name = "Pulsar";
-			पूर्ण अन्यथा अगर (of_device_is_compatible(cc, "cy28508")) अणु
-				pmac_tb_मुक्तze = smp_core99_cypress_tb_मुक्तze;
+			} else if (of_device_is_compatible(cc, "cy28508")) {
+				pmac_tb_freeze = smp_core99_cypress_tb_freeze;
 				name = "Cypress";
-			पूर्ण
-			अवरोध;
-		हाल 0xd4:
-			pmac_tb_मुक्तze = smp_core99_pulsar_tb_मुक्तze;
+			}
+			break;
+		case 0xd4:
+			pmac_tb_freeze = smp_core99_pulsar_tb_freeze;
 			pmac_tb_pulsar_addr = 0xd4;
 			name = "Pulsar";
-			अवरोध;
-		पूर्ण
-		अगर (pmac_tb_मुक्तze != शून्य)
-			अवरोध;
-	पूर्ण
-	अगर (pmac_tb_मुक्तze != शून्य) अणु
-		/* Open i2c bus क्रम synchronous access */
-		अगर (pmac_i2c_खोलो(pmac_tb_घड़ी_chip_host, 1)) अणु
-			prपूर्णांकk(KERN_ERR "Failed top open i2c bus for clock"
+			break;
+		}
+		if (pmac_tb_freeze != NULL)
+			break;
+	}
+	if (pmac_tb_freeze != NULL) {
+		/* Open i2c bus for synchronous access */
+		if (pmac_i2c_open(pmac_tb_clock_chip_host, 1)) {
+			printk(KERN_ERR "Failed top open i2c bus for clock"
 			       " sync, fallback to software sync !\n");
-			जाओ no_i2c_sync;
-		पूर्ण
-		prपूर्णांकk(KERN_INFO "Processor timebase sync using %s i2c clock\n",
+			goto no_i2c_sync;
+		}
+		printk(KERN_INFO "Processor timebase sync using %s i2c clock\n",
 		       name);
-		वापस;
-	पूर्ण
+		return;
+	}
  no_i2c_sync:
-	pmac_tb_मुक्तze = शून्य;
-	pmac_tb_घड़ी_chip_host = शून्य;
-पूर्ण
+	pmac_tb_freeze = NULL;
+	pmac_tb_clock_chip_host = NULL;
+}
 
 
 
 /*
- * Newer G5s uses a platक्रमm function
+ * Newer G5s uses a platform function
  */
 
-अटल व्योम smp_core99_pfunc_tb_मुक्तze(पूर्णांक मुक्तze)
-अणु
-	काष्ठा device_node *cpus;
-	काष्ठा pmf_args args;
+static void smp_core99_pfunc_tb_freeze(int freeze)
+{
+	struct device_node *cpus;
+	struct pmf_args args;
 
 	cpus = of_find_node_by_path("/cpus");
-	BUG_ON(cpus == शून्य);
+	BUG_ON(cpus == NULL);
 	args.count = 1;
-	args.u[0].v = !मुक्तze;
+	args.u[0].v = !freeze;
 	pmf_call_function(cpus, "cpu-timebase", &args);
 	of_node_put(cpus);
-पूर्ण
+}
 
-#अन्यथा /* CONFIG_PPC64 */
+#else /* CONFIG_PPC64 */
 
 /*
- * SMP G4 use a GPIO to enable/disable the समयbase.
+ * SMP G4 use a GPIO to enable/disable the timebase.
  */
 
-अटल अचिन्हित पूर्णांक core99_tb_gpio;	/* Timebase मुक्तze GPIO */
+static unsigned int core99_tb_gpio;	/* Timebase freeze GPIO */
 
-अटल व्योम smp_core99_gpio_tb_मुक्तze(पूर्णांक मुक्तze)
-अणु
-	अगर (मुक्तze)
-		pmac_call_feature(PMAC_FTR_WRITE_GPIO, शून्य, core99_tb_gpio, 4);
-	अन्यथा
-		pmac_call_feature(PMAC_FTR_WRITE_GPIO, शून्य, core99_tb_gpio, 0);
-	pmac_call_feature(PMAC_FTR_READ_GPIO, शून्य, core99_tb_gpio, 0);
-पूर्ण
+static void smp_core99_gpio_tb_freeze(int freeze)
+{
+	if (freeze)
+		pmac_call_feature(PMAC_FTR_WRITE_GPIO, NULL, core99_tb_gpio, 4);
+	else
+		pmac_call_feature(PMAC_FTR_WRITE_GPIO, NULL, core99_tb_gpio, 0);
+	pmac_call_feature(PMAC_FTR_READ_GPIO, NULL, core99_tb_gpio, 0);
+}
 
 
-#पूर्ण_अगर /* !CONFIG_PPC64 */
+#endif /* !CONFIG_PPC64 */
 
-अटल व्योम core99_init_caches(पूर्णांक cpu)
-अणु
-#अगर_अघोषित CONFIG_PPC64
+static void core99_init_caches(int cpu)
+{
+#ifndef CONFIG_PPC64
 	/* L2 and L3 cache settings to pass from CPU0 to CPU1 on G4 cpus */
-	अटल दीर्घ पूर्णांक core99_l2_cache;
-	अटल दीर्घ पूर्णांक core99_l3_cache;
+	static long int core99_l2_cache;
+	static long int core99_l3_cache;
 
-	अगर (!cpu_has_feature(CPU_FTR_L2CR))
-		वापस;
+	if (!cpu_has_feature(CPU_FTR_L2CR))
+		return;
 
-	अगर (cpu == 0) अणु
+	if (cpu == 0) {
 		core99_l2_cache = _get_L2CR();
-		prपूर्णांकk("CPU0: L2CR is %lx\n", core99_l2_cache);
-	पूर्ण अन्यथा अणु
-		prपूर्णांकk("CPU%d: L2CR was %lx\n", cpu, _get_L2CR());
+		printk("CPU0: L2CR is %lx\n", core99_l2_cache);
+	} else {
+		printk("CPU%d: L2CR was %lx\n", cpu, _get_L2CR());
 		_set_L2CR(0);
 		_set_L2CR(core99_l2_cache);
-		prपूर्णांकk("CPU%d: L2CR set to %lx\n", cpu, core99_l2_cache);
-	पूर्ण
+		printk("CPU%d: L2CR set to %lx\n", cpu, core99_l2_cache);
+	}
 
-	अगर (!cpu_has_feature(CPU_FTR_L3CR))
-		वापस;
+	if (!cpu_has_feature(CPU_FTR_L3CR))
+		return;
 
-	अगर (cpu == 0)अणु
+	if (cpu == 0){
 		core99_l3_cache = _get_L3CR();
-		prपूर्णांकk("CPU0: L3CR is %lx\n", core99_l3_cache);
-	पूर्ण अन्यथा अणु
-		prपूर्णांकk("CPU%d: L3CR was %lx\n", cpu, _get_L3CR());
+		printk("CPU0: L3CR is %lx\n", core99_l3_cache);
+	} else {
+		printk("CPU%d: L3CR was %lx\n", cpu, _get_L3CR());
 		_set_L3CR(0);
 		_set_L3CR(core99_l3_cache);
-		prपूर्णांकk("CPU%d: L3CR set to %lx\n", cpu, core99_l3_cache);
-	पूर्ण
-#पूर्ण_अगर /* !CONFIG_PPC64 */
-पूर्ण
+		printk("CPU%d: L3CR set to %lx\n", cpu, core99_l3_cache);
+	}
+#endif /* !CONFIG_PPC64 */
+}
 
-अटल व्योम __init smp_core99_setup(पूर्णांक ncpus)
-अणु
-#अगर_घोषित CONFIG_PPC64
+static void __init smp_core99_setup(int ncpus)
+{
+#ifdef CONFIG_PPC64
 
 	/* i2c based HW sync on some G5s */
-	अगर (of_machine_is_compatible("PowerMac7,2") ||
+	if (of_machine_is_compatible("PowerMac7,2") ||
 	    of_machine_is_compatible("PowerMac7,3") ||
 	    of_machine_is_compatible("RackMac3,1"))
 		smp_core99_setup_i2c_hwsync(ncpus);
 
 	/* pfunc based HW sync on recent G5s */
-	अगर (pmac_tb_मुक्तze == शून्य) अणु
-		काष्ठा device_node *cpus =
+	if (pmac_tb_freeze == NULL) {
+		struct device_node *cpus =
 			of_find_node_by_path("/cpus");
-		अगर (cpus &&
-		    of_get_property(cpus, "platform-cpu-timebase", शून्य)) अणु
-			pmac_tb_मुक्तze = smp_core99_pfunc_tb_मुक्तze;
-			prपूर्णांकk(KERN_INFO "Processor timebase sync using"
+		if (cpus &&
+		    of_get_property(cpus, "platform-cpu-timebase", NULL)) {
+			pmac_tb_freeze = smp_core99_pfunc_tb_freeze;
+			printk(KERN_INFO "Processor timebase sync using"
 			       " platform function\n");
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-#अन्यथा /* CONFIG_PPC64 */
+#else /* CONFIG_PPC64 */
 
 	/* GPIO based HW sync on ppc32 Core99 */
-	अगर (pmac_tb_मुक्तze == शून्य && !of_machine_is_compatible("MacRISC4")) अणु
-		काष्ठा device_node *cpu;
-		स्थिर u32 *tbprop = शून्य;
+	if (pmac_tb_freeze == NULL && !of_machine_is_compatible("MacRISC4")) {
+		struct device_node *cpu;
+		const u32 *tbprop = NULL;
 
-		core99_tb_gpio = KL_GPIO_TB_ENABLE;	/* शेष value */
-		cpu = of_find_node_by_type(शून्य, "cpu");
-		अगर (cpu != शून्य) अणु
-			tbprop = of_get_property(cpu, "timebase-enable", शून्य);
-			अगर (tbprop)
+		core99_tb_gpio = KL_GPIO_TB_ENABLE;	/* default value */
+		cpu = of_find_node_by_type(NULL, "cpu");
+		if (cpu != NULL) {
+			tbprop = of_get_property(cpu, "timebase-enable", NULL);
+			if (tbprop)
 				core99_tb_gpio = *tbprop;
 			of_node_put(cpu);
-		पूर्ण
-		pmac_tb_मुक्तze = smp_core99_gpio_tb_मुक्तze;
-		prपूर्णांकk(KERN_INFO "Processor timebase sync using"
+		}
+		pmac_tb_freeze = smp_core99_gpio_tb_freeze;
+		printk(KERN_INFO "Processor timebase sync using"
 		       " GPIO 0x%02x\n", core99_tb_gpio);
-	पूर्ण
+	}
 
-#पूर्ण_अगर /* CONFIG_PPC64 */
+#endif /* CONFIG_PPC64 */
 
-	/* No समयbase sync, fallback to software */
-	अगर (pmac_tb_मुक्तze == शून्य) अणु
-		smp_ops->give_समयbase = smp_generic_give_समयbase;
-		smp_ops->take_समयbase = smp_generic_take_समयbase;
-		prपूर्णांकk(KERN_INFO "Processor timebase sync using software\n");
-	पूर्ण
+	/* No timebase sync, fallback to software */
+	if (pmac_tb_freeze == NULL) {
+		smp_ops->give_timebase = smp_generic_give_timebase;
+		smp_ops->take_timebase = smp_generic_take_timebase;
+		printk(KERN_INFO "Processor timebase sync using software\n");
+	}
 
-#अगर_अघोषित CONFIG_PPC64
-	अणु
-		पूर्णांक i;
+#ifndef CONFIG_PPC64
+	{
+		int i;
 
 		/* XXX should get this from reg properties */
-		क्रम (i = 1; i < ncpus; ++i)
+		for (i = 1; i < ncpus; ++i)
 			set_hard_smp_processor_id(i, i);
-	पूर्ण
-#पूर्ण_अगर
+	}
+#endif
 
 	/* 32 bits SMP can't NAP */
-	अगर (!of_machine_is_compatible("MacRISC4"))
-		घातersave_nap = 0;
-पूर्ण
+	if (!of_machine_is_compatible("MacRISC4"))
+		powersave_nap = 0;
+}
 
-अटल व्योम __init smp_core99_probe(व्योम)
-अणु
-	काष्ठा device_node *cpus;
-	पूर्णांक ncpus = 0;
+static void __init smp_core99_probe(void)
+{
+	struct device_node *cpus;
+	int ncpus = 0;
 
-	अगर (ppc_md.progress) ppc_md.progress("smp_core99_probe", 0x345);
+	if (ppc_md.progress) ppc_md.progress("smp_core99_probe", 0x345);
 
 	/* Count CPUs in the device-tree */
-	क्रम_each_node_by_type(cpus, "cpu")
+	for_each_node_by_type(cpus, "cpu")
 		++ncpus;
 
-	prपूर्णांकk(KERN_INFO "PowerMac SMP probe found %d cpus\n", ncpus);
+	printk(KERN_INFO "PowerMac SMP probe found %d cpus\n", ncpus);
 
-	/* Nothing more to करो अगर less than 2 of them */
-	अगर (ncpus <= 1)
-		वापस;
+	/* Nothing more to do if less than 2 of them */
+	if (ncpus <= 1)
+		return;
 
-	/* We need to perक्रमm some early initialisations beक्रमe we can start
-	 * setting up SMP as we are running beक्रमe initcalls
+	/* We need to perform some early initialisations before we can start
+	 * setting up SMP as we are running before initcalls
 	 */
 	pmac_pfunc_base_install();
 	pmac_i2c_init();
 
-	/* Setup various bits like समयbase sync method, ability to nap, ... */
+	/* Setup various bits like timebase sync method, ability to nap, ... */
 	smp_core99_setup(ncpus);
 
 	/* Install IPIs */
@@ -788,18 +787,18 @@
 
 	/* Collect l2cr and l3cr values from CPU 0 */
 	core99_init_caches(0);
-पूर्ण
+}
 
-अटल पूर्णांक smp_core99_kick_cpu(पूर्णांक nr)
-अणु
-	अचिन्हित पूर्णांक save_vector;
-	अचिन्हित दीर्घ target, flags;
-	अचिन्हित पूर्णांक *vector = (अचिन्हित पूर्णांक *)(PAGE_OFFSET+0x100);
+static int smp_core99_kick_cpu(int nr)
+{
+	unsigned int save_vector;
+	unsigned long target, flags;
+	unsigned int *vector = (unsigned int *)(PAGE_OFFSET+0x100);
 
-	अगर (nr < 0 || nr > 3)
-		वापस -ENOENT;
+	if (nr < 0 || nr > 3)
+		return -ENOENT;
 
-	अगर (ppc_md.progress)
+	if (ppc_md.progress)
 		ppc_md.progress("smp_core99_kick_cpu", 0x346);
 
 	local_irq_save(flags);
@@ -807,220 +806,220 @@
 	/* Save reset vector */
 	save_vector = *vector;
 
-	/* Setup fake reset vector that करोes
+	/* Setup fake reset vector that does
 	 *   b __secondary_start_pmac_0 + nr*8
 	 */
-	target = (अचिन्हित दीर्घ) __secondary_start_pmac_0 + nr * 8;
-	patch_branch((काष्ठा ppc_inst *)vector, target, BRANCH_SET_LINK);
+	target = (unsigned long) __secondary_start_pmac_0 + nr * 8;
+	patch_branch((struct ppc_inst *)vector, target, BRANCH_SET_LINK);
 
-	/* Put some lअगरe in our मित्र */
-	pmac_call_feature(PMAC_FTR_RESET_CPU, शून्य, nr, 0);
+	/* Put some life in our friend */
+	pmac_call_feature(PMAC_FTR_RESET_CPU, NULL, nr, 0);
 
-	/* FIXME: We रुको a bit क्रम the CPU to take the exception, I should
-	 * instead रुको क्रम the entry code to set something क्रम me. Well,
-	 * ideally, all that crap will be करोne in prom.c and the CPU left
-	 * in a RAM-based रुको loop like CHRP.
+	/* FIXME: We wait a bit for the CPU to take the exception, I should
+	 * instead wait for the entry code to set something for me. Well,
+	 * ideally, all that crap will be done in prom.c and the CPU left
+	 * in a RAM-based wait loop like CHRP.
 	 */
 	mdelay(1);
 
 	/* Restore our exception vector */
-	patch_inकाष्ठाion((काष्ठा ppc_inst *)vector, ppc_inst(save_vector));
+	patch_instruction((struct ppc_inst *)vector, ppc_inst(save_vector));
 
 	local_irq_restore(flags);
-	अगर (ppc_md.progress) ppc_md.progress("smp_core99_kick_cpu done", 0x347);
+	if (ppc_md.progress) ppc_md.progress("smp_core99_kick_cpu done", 0x347);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम smp_core99_setup_cpu(पूर्णांक cpu_nr)
-अणु
+static void smp_core99_setup_cpu(int cpu_nr)
+{
 	/* Setup L2/L3 */
-	अगर (cpu_nr != 0)
+	if (cpu_nr != 0)
 		core99_init_caches(cpu_nr);
 
-	/* Setup खोलोpic */
+	/* Setup openpic */
 	mpic_setup_this_cpu();
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_PPC64
-#अगर_घोषित CONFIG_HOTPLUG_CPU
-अटल अचिन्हित पूर्णांक smp_core99_host_खोलो;
+#ifdef CONFIG_PPC64
+#ifdef CONFIG_HOTPLUG_CPU
+static unsigned int smp_core99_host_open;
 
-अटल पूर्णांक smp_core99_cpu_prepare(अचिन्हित पूर्णांक cpu)
-अणु
-	पूर्णांक rc;
+static int smp_core99_cpu_prepare(unsigned int cpu)
+{
+	int rc;
 
-	/* Open i2c bus अगर it was used क्रम tb sync */
-	अगर (pmac_tb_घड़ी_chip_host && !smp_core99_host_खोलो) अणु
-		rc = pmac_i2c_खोलो(pmac_tb_घड़ी_chip_host, 1);
-		अगर (rc) अणु
+	/* Open i2c bus if it was used for tb sync */
+	if (pmac_tb_clock_chip_host && !smp_core99_host_open) {
+		rc = pmac_i2c_open(pmac_tb_clock_chip_host, 1);
+		if (rc) {
 			pr_err("Failed to open i2c bus for time sync\n");
-			वापस notअगरier_from_त्रुटि_सं(rc);
-		पूर्ण
-		smp_core99_host_खोलो = 1;
-	पूर्ण
-	वापस 0;
-पूर्ण
+			return notifier_from_errno(rc);
+		}
+		smp_core99_host_open = 1;
+	}
+	return 0;
+}
 
-अटल पूर्णांक smp_core99_cpu_online(अचिन्हित पूर्णांक cpu)
-अणु
-	/* Close i2c bus अगर it was used क्रम tb sync */
-	अगर (pmac_tb_घड़ी_chip_host && smp_core99_host_खोलो) अणु
-		pmac_i2c_बंद(pmac_tb_घड़ी_chip_host);
-		smp_core99_host_खोलो = 0;
-	पूर्ण
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_HOTPLUG_CPU */
+static int smp_core99_cpu_online(unsigned int cpu)
+{
+	/* Close i2c bus if it was used for tb sync */
+	if (pmac_tb_clock_chip_host && smp_core99_host_open) {
+		pmac_i2c_close(pmac_tb_clock_chip_host);
+		smp_core99_host_open = 0;
+	}
+	return 0;
+}
+#endif /* CONFIG_HOTPLUG_CPU */
 
-अटल व्योम __init smp_core99_bringup_करोne(व्योम)
-अणु
-	बाह्य व्योम g5_phy_disable_cpu1(व्योम);
+static void __init smp_core99_bringup_done(void)
+{
+	extern void g5_phy_disable_cpu1(void);
 
-	/* Close i2c bus अगर it was used क्रम tb sync */
-	अगर (pmac_tb_घड़ी_chip_host)
-		pmac_i2c_बंद(pmac_tb_घड़ी_chip_host);
+	/* Close i2c bus if it was used for tb sync */
+	if (pmac_tb_clock_chip_host)
+		pmac_i2c_close(pmac_tb_clock_chip_host);
 
 	/* If we didn't start the second CPU, we must take
 	 * it off the bus.
 	 */
-	अगर (of_machine_is_compatible("MacRISC4") &&
-	    num_online_cpus() < 2) अणु
+	if (of_machine_is_compatible("MacRISC4") &&
+	    num_online_cpus() < 2) {
 		set_cpu_present(1, false);
 		g5_phy_disable_cpu1();
-	पूर्ण
-#अगर_घोषित CONFIG_HOTPLUG_CPU
+	}
+#ifdef CONFIG_HOTPLUG_CPU
 	cpuhp_setup_state_nocalls(CPUHP_POWERPC_PMAC_PREPARE,
 				  "powerpc/pmac:prepare", smp_core99_cpu_prepare,
-				  शून्य);
+				  NULL);
 	cpuhp_setup_state_nocalls(CPUHP_AP_ONLINE_DYN, "powerpc/pmac:online",
-				  smp_core99_cpu_online, शून्य);
-#पूर्ण_अगर
+				  smp_core99_cpu_online, NULL);
+#endif
 
-	अगर (ppc_md.progress)
+	if (ppc_md.progress)
 		ppc_md.progress("smp_core99_bringup_done", 0x349);
-पूर्ण
-#पूर्ण_अगर /* CONFIG_PPC64 */
+}
+#endif /* CONFIG_PPC64 */
 
-#अगर_घोषित CONFIG_HOTPLUG_CPU
+#ifdef CONFIG_HOTPLUG_CPU
 
-अटल पूर्णांक smp_core99_cpu_disable(व्योम)
-अणु
-	पूर्णांक rc = generic_cpu_disable();
-	अगर (rc)
-		वापस rc;
+static int smp_core99_cpu_disable(void)
+{
+	int rc = generic_cpu_disable();
+	if (rc)
+		return rc;
 
 	mpic_cpu_set_priority(0xf);
 
 	cleanup_cpu_mmu_context();
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_PPC32
+#ifdef CONFIG_PPC32
 
-अटल व्योम pmac_cpu_offline_self(व्योम)
-अणु
-	पूर्णांक cpu = smp_processor_id();
+static void pmac_cpu_offline_self(void)
+{
+	int cpu = smp_processor_id();
 
 	local_irq_disable();
-	idle_task_निकास();
+	idle_task_exit();
 	pr_debug("CPU%d offline\n", cpu);
 	generic_set_cpu_dead(cpu);
 	smp_wmb();
 	mb();
 	low_cpu_offline_self();
-पूर्ण
+}
 
-#अन्यथा /* CONFIG_PPC32 */
+#else /* CONFIG_PPC32 */
 
-अटल व्योम pmac_cpu_offline_self(व्योम)
-अणु
-	पूर्णांक cpu = smp_processor_id();
+static void pmac_cpu_offline_self(void)
+{
+	int cpu = smp_processor_id();
 
 	local_irq_disable();
-	idle_task_निकास();
+	idle_task_exit();
 
 	/*
 	 * turn off as much as possible, we'll be
 	 * kicked out as this will only be invoked
-	 * on core99 platक्रमms क्रम now ...
+	 * on core99 platforms for now ...
 	 */
 
-	prपूर्णांकk(KERN_INFO "CPU#%d offline\n", cpu);
+	printk(KERN_INFO "CPU#%d offline\n", cpu);
 	generic_set_cpu_dead(cpu);
 	smp_wmb();
 
 	/*
-	 * Re-enable पूर्णांकerrupts. The NAP code needs to enable them
-	 * anyways, करो it now so we deal with the हाल where one alपढ़ोy
-	 * happened जबतक soft-disabled.
-	 * We shouldn't get any बाह्यal पूर्णांकerrupts, only decrementer, and the
-	 * decrementer handler is safe क्रम use on offline CPUs
+	 * Re-enable interrupts. The NAP code needs to enable them
+	 * anyways, do it now so we deal with the case where one already
+	 * happened while soft-disabled.
+	 * We shouldn't get any external interrupts, only decrementer, and the
+	 * decrementer handler is safe for use on offline CPUs
 	 */
 	local_irq_enable();
 
-	जबतक (1) अणु
-		/* let's not take समयr पूर्णांकerrupts too often ... */
+	while (1) {
+		/* let's not take timer interrupts too often ... */
 		set_dec(0x7fffffff);
 
 		/* Enter NAP mode */
-		घातer4_idle();
-	पूर्ण
-पूर्ण
+		power4_idle();
+	}
+}
 
-#पूर्ण_अगर /* अन्यथा CONFIG_PPC32 */
-#पूर्ण_अगर /* CONFIG_HOTPLUG_CPU */
+#endif /* else CONFIG_PPC32 */
+#endif /* CONFIG_HOTPLUG_CPU */
 
 /* Core99 Macs (dual G4s and G5s) */
-अटल काष्ठा smp_ops_t core99_smp_ops = अणु
+static struct smp_ops_t core99_smp_ops = {
 	.message_pass	= smp_mpic_message_pass,
 	.probe		= smp_core99_probe,
-#अगर_घोषित CONFIG_PPC64
-	.bringup_करोne	= smp_core99_bringup_करोne,
-#पूर्ण_अगर
+#ifdef CONFIG_PPC64
+	.bringup_done	= smp_core99_bringup_done,
+#endif
 	.kick_cpu	= smp_core99_kick_cpu,
 	.setup_cpu	= smp_core99_setup_cpu,
-	.give_समयbase	= smp_core99_give_समयbase,
-	.take_समयbase	= smp_core99_take_समयbase,
-#अगर defined(CONFIG_HOTPLUG_CPU)
+	.give_timebase	= smp_core99_give_timebase,
+	.take_timebase	= smp_core99_take_timebase,
+#if defined(CONFIG_HOTPLUG_CPU)
 	.cpu_disable	= smp_core99_cpu_disable,
 	.cpu_die	= generic_cpu_die,
-#पूर्ण_अगर
-पूर्ण;
+#endif
+};
 
-व्योम __init pmac_setup_smp(व्योम)
-अणु
-	काष्ठा device_node *np;
+void __init pmac_setup_smp(void)
+{
+	struct device_node *np;
 
-	/* Check क्रम Core99 */
-	np = of_find_node_by_name(शून्य, "uni-n");
-	अगर (!np)
-		np = of_find_node_by_name(शून्य, "u3");
-	अगर (!np)
-		np = of_find_node_by_name(शून्य, "u4");
-	अगर (np) अणु
+	/* Check for Core99 */
+	np = of_find_node_by_name(NULL, "uni-n");
+	if (!np)
+		np = of_find_node_by_name(NULL, "u3");
+	if (!np)
+		np = of_find_node_by_name(NULL, "u4");
+	if (np) {
 		of_node_put(np);
 		smp_ops = &core99_smp_ops;
-	पूर्ण
-#अगर_घोषित CONFIG_PPC_PMAC32_PSURGE
-	अन्यथा अणु
+	}
+#ifdef CONFIG_PPC_PMAC32_PSURGE
+	else {
 		/* We have to set bits in cpu_possible_mask here since the
 		 * secondary CPU(s) aren't in the device tree. Various
-		 * things won't be initialized क्रम CPUs not in the possible
+		 * things won't be initialized for CPUs not in the possible
 		 * map, so we really need to fix it up here.
 		 */
-		पूर्णांक cpu;
+		int cpu;
 
-		क्रम (cpu = 1; cpu < 4 && cpu < NR_CPUS; ++cpu)
+		for (cpu = 1; cpu < 4 && cpu < NR_CPUS; ++cpu)
 			set_cpu_possible(cpu, true);
 		smp_ops = &psurge_smp_ops;
-	पूर्ण
-#पूर्ण_अगर /* CONFIG_PPC_PMAC32_PSURGE */
+	}
+#endif /* CONFIG_PPC_PMAC32_PSURGE */
 
-#अगर_घोषित CONFIG_HOTPLUG_CPU
+#ifdef CONFIG_HOTPLUG_CPU
 	smp_ops->cpu_offline_self = pmac_cpu_offline_self;
-#पूर्ण_अगर
-पूर्ण
+#endif
+}
 
 

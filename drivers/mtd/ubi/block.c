@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2014 Ezequiel Garcia
  * Copyright (c) 2011 Free Electrons
@@ -14,153 +13,153 @@
  * Read-only block devices on top of UBI volumes
  *
  * A simple implementation to allow a block device to be layered on top of a
- * UBI volume. The implementation is provided by creating a अटल 1-to-1
+ * UBI volume. The implementation is provided by creating a static 1-to-1
  * mapping between the block device and the UBI volume.
  *
  * The addressed byte is obtained from the addressed block sector, which is
- * mapped linearly पूर्णांकo the corresponding LEB:
+ * mapped linearly into the corresponding LEB:
  *
  *   LEB number = addressed byte / LEB size
  *
  * This feature is compiled in the UBI core, and adds a 'block' parameter
- * to allow early creation of block devices on top of UBI volumes. Runसमय
- * block creation/removal क्रम UBI volumes is provided through two UBI ioctls:
+ * to allow early creation of block devices on top of UBI volumes. Runtime
+ * block creation/removal for UBI volumes is provided through two UBI ioctls:
  * UBI_IOCVOLCRBLK and UBI_IOCVOLRMBLK.
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/init.h>
-#समावेश <linux/err.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/list.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/mtd/ubi.h>
-#समावेश <linux/workqueue.h>
-#समावेश <linux/blkdev.h>
-#समावेश <linux/blk-mq.h>
-#समावेश <linux/hdreg.h>
-#समावेश <linux/scatterlist.h>
-#समावेश <linux/idr.h>
-#समावेश <यंत्र/भाग64.h>
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/err.h>
+#include <linux/kernel.h>
+#include <linux/list.h>
+#include <linux/mutex.h>
+#include <linux/slab.h>
+#include <linux/mtd/ubi.h>
+#include <linux/workqueue.h>
+#include <linux/blkdev.h>
+#include <linux/blk-mq.h>
+#include <linux/hdreg.h>
+#include <linux/scatterlist.h>
+#include <linux/idr.h>
+#include <asm/div64.h>
 
-#समावेश "ubi-media.h"
-#समावेश "ubi.h"
+#include "ubi-media.h"
+#include "ubi.h"
 
 /* Maximum number of supported devices */
-#घोषणा UBIBLOCK_MAX_DEVICES 32
+#define UBIBLOCK_MAX_DEVICES 32
 
 /* Maximum length of the 'block=' parameter */
-#घोषणा UBIBLOCK_PARAM_LEN 63
+#define UBIBLOCK_PARAM_LEN 63
 
 /* Maximum number of comma-separated items in the 'block=' parameter */
-#घोषणा UBIBLOCK_PARAM_COUNT 2
+#define UBIBLOCK_PARAM_COUNT 2
 
-काष्ठा ubiblock_param अणु
-	पूर्णांक ubi_num;
-	पूर्णांक vol_id;
-	अक्षर name[UBIBLOCK_PARAM_LEN+1];
-पूर्ण;
+struct ubiblock_param {
+	int ubi_num;
+	int vol_id;
+	char name[UBIBLOCK_PARAM_LEN+1];
+};
 
-काष्ठा ubiblock_pdu अणु
-	काष्ठा work_काष्ठा work;
-	काष्ठा ubi_sgl usgl;
-पूर्ण;
+struct ubiblock_pdu {
+	struct work_struct work;
+	struct ubi_sgl usgl;
+};
 
 /* Numbers of elements set in the @ubiblock_param array */
-अटल पूर्णांक ubiblock_devs __initdata;
+static int ubiblock_devs __initdata;
 
-/* MTD devices specअगरication parameters */
-अटल काष्ठा ubiblock_param ubiblock_param[UBIBLOCK_MAX_DEVICES] __initdata;
+/* MTD devices specification parameters */
+static struct ubiblock_param ubiblock_param[UBIBLOCK_MAX_DEVICES] __initdata;
 
-काष्ठा ubiblock अणु
-	काष्ठा ubi_volume_desc *desc;
-	पूर्णांक ubi_num;
-	पूर्णांक vol_id;
-	पूर्णांक refcnt;
-	पूर्णांक leb_size;
+struct ubiblock {
+	struct ubi_volume_desc *desc;
+	int ubi_num;
+	int vol_id;
+	int refcnt;
+	int leb_size;
 
-	काष्ठा gendisk *gd;
-	काष्ठा request_queue *rq;
+	struct gendisk *gd;
+	struct request_queue *rq;
 
-	काष्ठा workqueue_काष्ठा *wq;
+	struct workqueue_struct *wq;
 
-	काष्ठा mutex dev_mutex;
-	काष्ठा list_head list;
-	काष्ठा blk_mq_tag_set tag_set;
-पूर्ण;
+	struct mutex dev_mutex;
+	struct list_head list;
+	struct blk_mq_tag_set tag_set;
+};
 
 /* Linked list of all ubiblock instances */
-अटल LIST_HEAD(ubiblock_devices);
-अटल DEFINE_IDR(ubiblock_minor_idr);
+static LIST_HEAD(ubiblock_devices);
+static DEFINE_IDR(ubiblock_minor_idr);
 /* Protects ubiblock_devices and ubiblock_minor_idr */
-अटल DEFINE_MUTEX(devices_mutex);
-अटल पूर्णांक ubiblock_major;
+static DEFINE_MUTEX(devices_mutex);
+static int ubiblock_major;
 
-अटल पूर्णांक __init ubiblock_set_param(स्थिर अक्षर *val,
-				     स्थिर काष्ठा kernel_param *kp)
-अणु
-	पूर्णांक i, ret;
-	माप_प्रकार len;
-	काष्ठा ubiblock_param *param;
-	अक्षर buf[UBIBLOCK_PARAM_LEN];
-	अक्षर *pbuf = &buf[0];
-	अक्षर *tokens[UBIBLOCK_PARAM_COUNT];
+static int __init ubiblock_set_param(const char *val,
+				     const struct kernel_param *kp)
+{
+	int i, ret;
+	size_t len;
+	struct ubiblock_param *param;
+	char buf[UBIBLOCK_PARAM_LEN];
+	char *pbuf = &buf[0];
+	char *tokens[UBIBLOCK_PARAM_COUNT];
 
-	अगर (!val)
-		वापस -EINVAL;
+	if (!val)
+		return -EINVAL;
 
 	len = strnlen(val, UBIBLOCK_PARAM_LEN);
-	अगर (len == 0) अणु
+	if (len == 0) {
 		pr_warn("UBI: block: empty 'block=' parameter - ignored\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (len == UBIBLOCK_PARAM_LEN) अणु
+	if (len == UBIBLOCK_PARAM_LEN) {
 		pr_err("UBI: block: parameter \"%s\" is too long, max. is %d\n",
 		       val, UBIBLOCK_PARAM_LEN);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	म_नकल(buf, val);
+	strcpy(buf, val);
 
 	/* Get rid of the final newline */
-	अगर (buf[len - 1] == '\n')
+	if (buf[len - 1] == '\n')
 		buf[len - 1] = '\0';
 
-	क्रम (i = 0; i < UBIBLOCK_PARAM_COUNT; i++)
+	for (i = 0; i < UBIBLOCK_PARAM_COUNT; i++)
 		tokens[i] = strsep(&pbuf, ",");
 
 	param = &ubiblock_param[ubiblock_devs];
-	अगर (tokens[1]) अणु
+	if (tokens[1]) {
 		/* Two parameters: can be 'ubi, vol_id' or 'ubi, vol_name' */
-		ret = kstrtoपूर्णांक(tokens[0], 10, &param->ubi_num);
-		अगर (ret < 0)
-			वापस -EINVAL;
+		ret = kstrtoint(tokens[0], 10, &param->ubi_num);
+		if (ret < 0)
+			return -EINVAL;
 
 		/* Second param can be a number or a name */
-		ret = kstrtoपूर्णांक(tokens[1], 10, &param->vol_id);
-		अगर (ret < 0) अणु
+		ret = kstrtoint(tokens[1], 10, &param->vol_id);
+		if (ret < 0) {
 			param->vol_id = -1;
-			म_नकल(param->name, tokens[1]);
-		पूर्ण
+			strcpy(param->name, tokens[1]);
+		}
 
-	पूर्ण अन्यथा अणु
+	} else {
 		/* One parameter: must be device path */
-		म_नकल(param->name, tokens[0]);
+		strcpy(param->name, tokens[0]);
 		param->ubi_num = -1;
 		param->vol_id = -1;
-	पूर्ण
+	}
 
 	ubiblock_devs++;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा kernel_param_ops ubiblock_param_ops = अणु
+static const struct kernel_param_ops ubiblock_param_ops = {
 	.set    = ubiblock_set_param,
-पूर्ण;
-module_param_cb(block, &ubiblock_param_ops, शून्य, 0);
+};
+module_param_cb(block, &ubiblock_param_ops, NULL, 0);
 MODULE_PARM_DESC(block, "Attach block devices to UBI volumes. Parameter format: block=<path|dev,num|dev,name>.\n"
 			"Multiple \"block\" parameters may be specified.\n"
 			"UBI volumes may be specified by their number, name, or path to the device node.\n"
@@ -172,222 +171,222 @@ MODULE_PARM_DESC(block, "Attach block devices to UBI volumes. Parameter format: 
 			"Using both UBI device number and UBI volume number:\n"
 			"ubi.block=0,0\n");
 
-अटल काष्ठा ubiblock *find_dev_nolock(पूर्णांक ubi_num, पूर्णांक vol_id)
-अणु
-	काष्ठा ubiblock *dev;
+static struct ubiblock *find_dev_nolock(int ubi_num, int vol_id)
+{
+	struct ubiblock *dev;
 
-	list_क्रम_each_entry(dev, &ubiblock_devices, list)
-		अगर (dev->ubi_num == ubi_num && dev->vol_id == vol_id)
-			वापस dev;
-	वापस शून्य;
-पूर्ण
+	list_for_each_entry(dev, &ubiblock_devices, list)
+		if (dev->ubi_num == ubi_num && dev->vol_id == vol_id)
+			return dev;
+	return NULL;
+}
 
-अटल पूर्णांक ubiblock_पढ़ो(काष्ठा ubiblock_pdu *pdu)
-अणु
-	पूर्णांक ret, leb, offset, bytes_left, to_पढ़ो;
+static int ubiblock_read(struct ubiblock_pdu *pdu)
+{
+	int ret, leb, offset, bytes_left, to_read;
 	u64 pos;
-	काष्ठा request *req = blk_mq_rq_from_pdu(pdu);
-	काष्ठा ubiblock *dev = req->q->queuedata;
+	struct request *req = blk_mq_rq_from_pdu(pdu);
+	struct ubiblock *dev = req->q->queuedata;
 
-	to_पढ़ो = blk_rq_bytes(req);
+	to_read = blk_rq_bytes(req);
 	pos = blk_rq_pos(req) << 9;
 
-	/* Get LEB:offset address to पढ़ो from */
-	offset = करो_भाग(pos, dev->leb_size);
+	/* Get LEB:offset address to read from */
+	offset = do_div(pos, dev->leb_size);
 	leb = pos;
-	bytes_left = to_पढ़ो;
+	bytes_left = to_read;
 
-	जबतक (bytes_left) अणु
+	while (bytes_left) {
 		/*
-		 * We can only पढ़ो one LEB at a समय. Thereक्रमe अगर the पढ़ो
+		 * We can only read one LEB at a time. Therefore if the read
 		 * length is larger than one LEB size, we split the operation.
 		 */
-		अगर (offset + to_पढ़ो > dev->leb_size)
-			to_पढ़ो = dev->leb_size - offset;
+		if (offset + to_read > dev->leb_size)
+			to_read = dev->leb_size - offset;
 
-		ret = ubi_पढ़ो_sg(dev->desc, leb, &pdu->usgl, offset, to_पढ़ो);
-		अगर (ret < 0)
-			वापस ret;
+		ret = ubi_read_sg(dev->desc, leb, &pdu->usgl, offset, to_read);
+		if (ret < 0)
+			return ret;
 
-		bytes_left -= to_पढ़ो;
-		to_पढ़ो = bytes_left;
+		bytes_left -= to_read;
+		to_read = bytes_left;
 		leb += 1;
 		offset = 0;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल पूर्णांक ubiblock_खोलो(काष्ठा block_device *bdev, भ_शेषe_t mode)
-अणु
-	काष्ठा ubiblock *dev = bdev->bd_disk->निजी_data;
-	पूर्णांक ret;
+static int ubiblock_open(struct block_device *bdev, fmode_t mode)
+{
+	struct ubiblock *dev = bdev->bd_disk->private_data;
+	int ret;
 
 	mutex_lock(&dev->dev_mutex);
-	अगर (dev->refcnt > 0) अणु
+	if (dev->refcnt > 0) {
 		/*
-		 * The volume is alपढ़ोy खोलो, just increase the reference
+		 * The volume is already open, just increase the reference
 		 * counter.
 		 */
-		जाओ out_करोne;
-	पूर्ण
+		goto out_done;
+	}
 
 	/*
-	 * We want users to be aware they should only mount us as पढ़ो-only.
-	 * It's just a paranoid check, as ग_लिखो requests will get rejected
-	 * in any हाल.
+	 * We want users to be aware they should only mount us as read-only.
+	 * It's just a paranoid check, as write requests will get rejected
+	 * in any case.
 	 */
-	अगर (mode & FMODE_WRITE) अणु
+	if (mode & FMODE_WRITE) {
 		ret = -EROFS;
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 
-	dev->desc = ubi_खोलो_volume(dev->ubi_num, dev->vol_id, UBI_READONLY);
-	अगर (IS_ERR(dev->desc)) अणु
+	dev->desc = ubi_open_volume(dev->ubi_num, dev->vol_id, UBI_READONLY);
+	if (IS_ERR(dev->desc)) {
 		dev_err(disk_to_dev(dev->gd), "failed to open ubi volume %d_%d",
 			dev->ubi_num, dev->vol_id);
 		ret = PTR_ERR(dev->desc);
-		dev->desc = शून्य;
-		जाओ out_unlock;
-	पूर्ण
+		dev->desc = NULL;
+		goto out_unlock;
+	}
 
-out_करोne:
+out_done:
 	dev->refcnt++;
 	mutex_unlock(&dev->dev_mutex);
-	वापस 0;
+	return 0;
 
 out_unlock:
 	mutex_unlock(&dev->dev_mutex);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम ubiblock_release(काष्ठा gendisk *gd, भ_शेषe_t mode)
-अणु
-	काष्ठा ubiblock *dev = gd->निजी_data;
+static void ubiblock_release(struct gendisk *gd, fmode_t mode)
+{
+	struct ubiblock *dev = gd->private_data;
 
 	mutex_lock(&dev->dev_mutex);
 	dev->refcnt--;
-	अगर (dev->refcnt == 0) अणु
-		ubi_बंद_volume(dev->desc);
-		dev->desc = शून्य;
-	पूर्ण
+	if (dev->refcnt == 0) {
+		ubi_close_volume(dev->desc);
+		dev->desc = NULL;
+	}
 	mutex_unlock(&dev->dev_mutex);
-पूर्ण
+}
 
-अटल पूर्णांक ubiblock_getgeo(काष्ठा block_device *bdev, काष्ठा hd_geometry *geo)
-अणु
-	/* Some tools might require this inक्रमmation */
+static int ubiblock_getgeo(struct block_device *bdev, struct hd_geometry *geo)
+{
+	/* Some tools might require this information */
 	geo->heads = 1;
 	geo->cylinders = 1;
 	geo->sectors = get_capacity(bdev->bd_disk);
 	geo->start = 0;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा block_device_operations ubiblock_ops = अणु
+static const struct block_device_operations ubiblock_ops = {
 	.owner = THIS_MODULE,
-	.खोलो = ubiblock_खोलो,
+	.open = ubiblock_open,
 	.release = ubiblock_release,
 	.getgeo	= ubiblock_getgeo,
-पूर्ण;
+};
 
-अटल व्योम ubiblock_करो_work(काष्ठा work_काष्ठा *work)
-अणु
-	पूर्णांक ret;
-	काष्ठा ubiblock_pdu *pdu = container_of(work, काष्ठा ubiblock_pdu, work);
-	काष्ठा request *req = blk_mq_rq_from_pdu(pdu);
+static void ubiblock_do_work(struct work_struct *work)
+{
+	int ret;
+	struct ubiblock_pdu *pdu = container_of(work, struct ubiblock_pdu, work);
+	struct request *req = blk_mq_rq_from_pdu(pdu);
 
 	blk_mq_start_request(req);
 
 	/*
-	 * It is safe to ignore the वापस value of blk_rq_map_sg() because
+	 * It is safe to ignore the return value of blk_rq_map_sg() because
 	 * the number of sg entries is limited to UBI_MAX_SG_COUNT
-	 * and ubi_पढ़ो_sg() will check that limit.
+	 * and ubi_read_sg() will check that limit.
 	 */
 	blk_rq_map_sg(req->q, req, pdu->usgl.sg);
 
-	ret = ubiblock_पढ़ो(pdu);
+	ret = ubiblock_read(pdu);
 	rq_flush_dcache_pages(req);
 
-	blk_mq_end_request(req, त्रुटि_सं_to_blk_status(ret));
-पूर्ण
+	blk_mq_end_request(req, errno_to_blk_status(ret));
+}
 
-अटल blk_status_t ubiblock_queue_rq(काष्ठा blk_mq_hw_ctx *hctx,
-			     स्थिर काष्ठा blk_mq_queue_data *bd)
-अणु
-	काष्ठा request *req = bd->rq;
-	काष्ठा ubiblock *dev = hctx->queue->queuedata;
-	काष्ठा ubiblock_pdu *pdu = blk_mq_rq_to_pdu(req);
+static blk_status_t ubiblock_queue_rq(struct blk_mq_hw_ctx *hctx,
+			     const struct blk_mq_queue_data *bd)
+{
+	struct request *req = bd->rq;
+	struct ubiblock *dev = hctx->queue->queuedata;
+	struct ubiblock_pdu *pdu = blk_mq_rq_to_pdu(req);
 
-	चयन (req_op(req)) अणु
-	हाल REQ_OP_READ:
+	switch (req_op(req)) {
+	case REQ_OP_READ:
 		ubi_sgl_init(&pdu->usgl);
 		queue_work(dev->wq, &pdu->work);
-		वापस BLK_STS_OK;
-	शेष:
-		वापस BLK_STS_IOERR;
-	पूर्ण
+		return BLK_STS_OK;
+	default:
+		return BLK_STS_IOERR;
+	}
 
-पूर्ण
+}
 
-अटल पूर्णांक ubiblock_init_request(काष्ठा blk_mq_tag_set *set,
-		काष्ठा request *req, अचिन्हित पूर्णांक hctx_idx,
-		अचिन्हित पूर्णांक numa_node)
-अणु
-	काष्ठा ubiblock_pdu *pdu = blk_mq_rq_to_pdu(req);
+static int ubiblock_init_request(struct blk_mq_tag_set *set,
+		struct request *req, unsigned int hctx_idx,
+		unsigned int numa_node)
+{
+	struct ubiblock_pdu *pdu = blk_mq_rq_to_pdu(req);
 
 	sg_init_table(pdu->usgl.sg, UBI_MAX_SG_COUNT);
-	INIT_WORK(&pdu->work, ubiblock_करो_work);
+	INIT_WORK(&pdu->work, ubiblock_do_work);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा blk_mq_ops ubiblock_mq_ops = अणु
+static const struct blk_mq_ops ubiblock_mq_ops = {
 	.queue_rq       = ubiblock_queue_rq,
 	.init_request	= ubiblock_init_request,
-पूर्ण;
+};
 
-अटल पूर्णांक calc_disk_capacity(काष्ठा ubi_volume_info *vi, u64 *disk_capacity)
-अणु
+static int calc_disk_capacity(struct ubi_volume_info *vi, u64 *disk_capacity)
+{
 	u64 size = vi->used_bytes >> 9;
 
-	अगर (vi->used_bytes % 512) अणु
+	if (vi->used_bytes % 512) {
 		pr_warn("UBI: block: volume size is not a multiple of 512, "
 			"last %llu bytes are ignored!\n",
 			vi->used_bytes - (size << 9));
-	पूर्ण
+	}
 
-	अगर ((sector_t)size != size)
-		वापस -EFBIG;
+	if ((sector_t)size != size)
+		return -EFBIG;
 
 	*disk_capacity = size;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक ubiblock_create(काष्ठा ubi_volume_info *vi)
-अणु
-	काष्ठा ubiblock *dev;
-	काष्ठा gendisk *gd;
+int ubiblock_create(struct ubi_volume_info *vi)
+{
+	struct ubiblock *dev;
+	struct gendisk *gd;
 	u64 disk_capacity;
-	पूर्णांक ret;
+	int ret;
 
 	ret = calc_disk_capacity(vi, &disk_capacity);
-	अगर (ret) अणु
-		वापस ret;
-	पूर्ण
+	if (ret) {
+		return ret;
+	}
 
-	/* Check that the volume isn't alपढ़ोy handled */
+	/* Check that the volume isn't already handled */
 	mutex_lock(&devices_mutex);
-	अगर (find_dev_nolock(vi->ubi_num, vi->vol_id)) अणु
+	if (find_dev_nolock(vi->ubi_num, vi->vol_id)) {
 		ret = -EEXIST;
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 
-	dev = kzalloc(माप(काष्ठा ubiblock), GFP_KERNEL);
-	अगर (!dev) अणु
+	dev = kzalloc(sizeof(struct ubiblock), GFP_KERNEL);
+	if (!dev) {
 		ret = -ENOMEM;
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 
 	mutex_init(&dev->dev_mutex);
 
@@ -397,23 +396,23 @@ out_unlock:
 
 	/* Initialize the gendisk of this ubiblock device */
 	gd = alloc_disk(1);
-	अगर (!gd) अणु
+	if (!gd) {
 		pr_err("UBI: block: alloc_disk failed\n");
 		ret = -ENODEV;
-		जाओ out_मुक्त_dev;
-	पूर्ण
+		goto out_free_dev;
+	}
 
 	gd->fops = &ubiblock_ops;
 	gd->major = ubiblock_major;
 	gd->first_minor = idr_alloc(&ubiblock_minor_idr, dev, 0, 0, GFP_KERNEL);
-	अगर (gd->first_minor < 0) अणु
+	if (gd->first_minor < 0) {
 		dev_err(disk_to_dev(gd),
 			"block: dynamic minor allocation failed");
 		ret = -ENODEV;
-		जाओ out_put_disk;
-	पूर्ण
-	gd->निजी_data = dev;
-	प्र_लिखो(gd->disk_name, "ubiblock%d_%d", dev->ubi_num, dev->vol_id);
+		goto out_put_disk;
+	}
+	gd->private_data = dev;
+	sprintf(gd->disk_name, "ubiblock%d_%d", dev->ubi_num, dev->vol_id);
 	set_capacity(gd, disk_capacity);
 	dev->gd = gd;
 
@@ -421,36 +420,36 @@ out_unlock:
 	dev->tag_set.queue_depth = 64;
 	dev->tag_set.numa_node = NUMA_NO_NODE;
 	dev->tag_set.flags = BLK_MQ_F_SHOULD_MERGE;
-	dev->tag_set.cmd_size = माप(काष्ठा ubiblock_pdu);
+	dev->tag_set.cmd_size = sizeof(struct ubiblock_pdu);
 	dev->tag_set.driver_data = dev;
 	dev->tag_set.nr_hw_queues = 1;
 
 	ret = blk_mq_alloc_tag_set(&dev->tag_set);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(disk_to_dev(dev->gd), "blk_mq_alloc_tag_set failed");
-		जाओ out_हटाओ_minor;
-	पूर्ण
+		goto out_remove_minor;
+	}
 
 	dev->rq = blk_mq_init_queue(&dev->tag_set);
-	अगर (IS_ERR(dev->rq)) अणु
+	if (IS_ERR(dev->rq)) {
 		dev_err(disk_to_dev(gd), "blk_mq_init_queue failed");
 		ret = PTR_ERR(dev->rq);
-		जाओ out_मुक्त_tags;
-	पूर्ण
+		goto out_free_tags;
+	}
 	blk_queue_max_segments(dev->rq, UBI_MAX_SG_COUNT);
 
 	dev->rq->queuedata = dev;
 	dev->gd->queue = dev->rq;
 
 	/*
-	 * Create one workqueue per volume (per रेजिस्टरed block device).
-	 * Rembember workqueues are cheap, they're not thपढ़ोs.
+	 * Create one workqueue per volume (per registered block device).
+	 * Rembember workqueues are cheap, they're not threads.
 	 */
 	dev->wq = alloc_workqueue("%s", 0, 0, gd->disk_name);
-	अगर (!dev->wq) अणु
+	if (!dev->wq) {
 		ret = -ENOMEM;
-		जाओ out_मुक्त_queue;
-	पूर्ण
+		goto out_free_queue;
+	}
 
 	list_add_tail(&dev->list, &ubiblock_devices);
 
@@ -459,56 +458,56 @@ out_unlock:
 	dev_info(disk_to_dev(dev->gd), "created from ubi%d:%d(%s)",
 		 dev->ubi_num, dev->vol_id, vi->name);
 	mutex_unlock(&devices_mutex);
-	वापस 0;
+	return 0;
 
-out_मुक्त_queue:
+out_free_queue:
 	blk_cleanup_queue(dev->rq);
-out_मुक्त_tags:
-	blk_mq_मुक्त_tag_set(&dev->tag_set);
-out_हटाओ_minor:
-	idr_हटाओ(&ubiblock_minor_idr, gd->first_minor);
+out_free_tags:
+	blk_mq_free_tag_set(&dev->tag_set);
+out_remove_minor:
+	idr_remove(&ubiblock_minor_idr, gd->first_minor);
 out_put_disk:
 	put_disk(dev->gd);
-out_मुक्त_dev:
-	kमुक्त(dev);
+out_free_dev:
+	kfree(dev);
 out_unlock:
 	mutex_unlock(&devices_mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम ubiblock_cleanup(काष्ठा ubiblock *dev)
-अणु
+static void ubiblock_cleanup(struct ubiblock *dev)
+{
 	/* Stop new requests to arrive */
 	del_gendisk(dev->gd);
 	/* Flush pending work */
 	destroy_workqueue(dev->wq);
 	/* Finally destroy the blk queue */
 	blk_cleanup_queue(dev->rq);
-	blk_mq_मुक्त_tag_set(&dev->tag_set);
+	blk_mq_free_tag_set(&dev->tag_set);
 	dev_info(disk_to_dev(dev->gd), "released");
-	idr_हटाओ(&ubiblock_minor_idr, dev->gd->first_minor);
+	idr_remove(&ubiblock_minor_idr, dev->gd->first_minor);
 	put_disk(dev->gd);
-पूर्ण
+}
 
-पूर्णांक ubiblock_हटाओ(काष्ठा ubi_volume_info *vi)
-अणु
-	काष्ठा ubiblock *dev;
-	पूर्णांक ret;
+int ubiblock_remove(struct ubi_volume_info *vi)
+{
+	struct ubiblock *dev;
+	int ret;
 
 	mutex_lock(&devices_mutex);
 	dev = find_dev_nolock(vi->ubi_num, vi->vol_id);
-	अगर (!dev) अणु
+	if (!dev) {
 		ret = -ENODEV;
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 
 	/* Found a device, let's lock it so we can check if it's busy */
 	mutex_lock(&dev->dev_mutex);
-	अगर (dev->refcnt > 0) अणु
+	if (dev->refcnt > 0) {
 		ret = -EBUSY;
-		जाओ out_unlock_dev;
-	पूर्ण
+		goto out_unlock_dev;
+	}
 
 	/* Remove from device list */
 	list_del(&dev->list);
@@ -516,171 +515,171 @@ out_unlock:
 	mutex_unlock(&dev->dev_mutex);
 	mutex_unlock(&devices_mutex);
 
-	kमुक्त(dev);
-	वापस 0;
+	kfree(dev);
+	return 0;
 
 out_unlock_dev:
 	mutex_unlock(&dev->dev_mutex);
 out_unlock:
 	mutex_unlock(&devices_mutex);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक ubiblock_resize(काष्ठा ubi_volume_info *vi)
-अणु
-	काष्ठा ubiblock *dev;
+static int ubiblock_resize(struct ubi_volume_info *vi)
+{
+	struct ubiblock *dev;
 	u64 disk_capacity;
-	पूर्णांक ret;
+	int ret;
 
 	/*
 	 * Need to lock the device list until we stop using the device,
-	 * otherwise the device काष्ठा might get released in
+	 * otherwise the device struct might get released in
 	 * 'ubiblock_remove()'.
 	 */
 	mutex_lock(&devices_mutex);
 	dev = find_dev_nolock(vi->ubi_num, vi->vol_id);
-	अगर (!dev) अणु
+	if (!dev) {
 		mutex_unlock(&devices_mutex);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	ret = calc_disk_capacity(vi, &disk_capacity);
-	अगर (ret) अणु
+	if (ret) {
 		mutex_unlock(&devices_mutex);
-		अगर (ret == -EFBIG) अणु
+		if (ret == -EFBIG) {
 			dev_warn(disk_to_dev(dev->gd),
 				 "the volume is too big (%d LEBs), cannot resize",
 				 vi->size);
-		पूर्ण
-		वापस ret;
-	पूर्ण
+		}
+		return ret;
+	}
 
 	mutex_lock(&dev->dev_mutex);
 
-	अगर (get_capacity(dev->gd) != disk_capacity) अणु
+	if (get_capacity(dev->gd) != disk_capacity) {
 		set_capacity(dev->gd, disk_capacity);
 		dev_info(disk_to_dev(dev->gd), "resized to %lld bytes",
 			 vi->used_bytes);
-	पूर्ण
+	}
 	mutex_unlock(&dev->dev_mutex);
 	mutex_unlock(&devices_mutex);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ubiblock_notअगरy(काष्ठा notअगरier_block *nb,
-			 अचिन्हित दीर्घ notअगरication_type, व्योम *ns_ptr)
-अणु
-	काष्ठा ubi_notअगरication *nt = ns_ptr;
+static int ubiblock_notify(struct notifier_block *nb,
+			 unsigned long notification_type, void *ns_ptr)
+{
+	struct ubi_notification *nt = ns_ptr;
 
-	चयन (notअगरication_type) अणु
-	हाल UBI_VOLUME_ADDED:
+	switch (notification_type) {
+	case UBI_VOLUME_ADDED:
 		/*
-		 * We want to enक्रमce explicit block device creation क्रम
-		 * volumes, so when a volume is added we करो nothing.
+		 * We want to enforce explicit block device creation for
+		 * volumes, so when a volume is added we do nothing.
 		 */
-		अवरोध;
-	हाल UBI_VOLUME_REMOVED:
-		ubiblock_हटाओ(&nt->vi);
-		अवरोध;
-	हाल UBI_VOLUME_RESIZED:
+		break;
+	case UBI_VOLUME_REMOVED:
+		ubiblock_remove(&nt->vi);
+		break;
+	case UBI_VOLUME_RESIZED:
 		ubiblock_resize(&nt->vi);
-		अवरोध;
-	हाल UBI_VOLUME_UPDATED:
+		break;
+	case UBI_VOLUME_UPDATED:
 		/*
-		 * If the volume is अटल, a content update might mean the
+		 * If the volume is static, a content update might mean the
 		 * size (i.e. used_bytes) was also changed.
 		 */
-		अगर (nt->vi.vol_type == UBI_STATIC_VOLUME)
+		if (nt->vi.vol_type == UBI_STATIC_VOLUME)
 			ubiblock_resize(&nt->vi);
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-	वापस NOTIFY_OK;
-पूर्ण
+		break;
+	default:
+		break;
+	}
+	return NOTIFY_OK;
+}
 
-अटल काष्ठा notअगरier_block ubiblock_notअगरier = अणु
-	.notअगरier_call = ubiblock_notअगरy,
-पूर्ण;
+static struct notifier_block ubiblock_notifier = {
+	.notifier_call = ubiblock_notify,
+};
 
-अटल काष्ठा ubi_volume_desc * __init
-खोलो_volume_desc(स्थिर अक्षर *name, पूर्णांक ubi_num, पूर्णांक vol_id)
-अणु
-	अगर (ubi_num == -1)
+static struct ubi_volume_desc * __init
+open_volume_desc(const char *name, int ubi_num, int vol_id)
+{
+	if (ubi_num == -1)
 		/* No ubi num, name must be a vol device path */
-		वापस ubi_खोलो_volume_path(name, UBI_READONLY);
-	अन्यथा अगर (vol_id == -1)
+		return ubi_open_volume_path(name, UBI_READONLY);
+	else if (vol_id == -1)
 		/* No vol_id, must be vol_name */
-		वापस ubi_खोलो_volume_nm(ubi_num, name, UBI_READONLY);
-	अन्यथा
-		वापस ubi_खोलो_volume(ubi_num, vol_id, UBI_READONLY);
-पूर्ण
+		return ubi_open_volume_nm(ubi_num, name, UBI_READONLY);
+	else
+		return ubi_open_volume(ubi_num, vol_id, UBI_READONLY);
+}
 
-अटल व्योम __init ubiblock_create_from_param(व्योम)
-अणु
-	पूर्णांक i, ret = 0;
-	काष्ठा ubiblock_param *p;
-	काष्ठा ubi_volume_desc *desc;
-	काष्ठा ubi_volume_info vi;
+static void __init ubiblock_create_from_param(void)
+{
+	int i, ret = 0;
+	struct ubiblock_param *p;
+	struct ubi_volume_desc *desc;
+	struct ubi_volume_info vi;
 
 	/*
-	 * If there is an error creating one of the ubiblocks, जारी on to
+	 * If there is an error creating one of the ubiblocks, continue on to
 	 * create the following ubiblocks. This helps in a circumstance where
-	 * the kernel command-line specअगरies multiple block devices and some
+	 * the kernel command-line specifies multiple block devices and some
 	 * may be broken, but we still want the working ones to come up.
 	 */
-	क्रम (i = 0; i < ubiblock_devs; i++) अणु
+	for (i = 0; i < ubiblock_devs; i++) {
 		p = &ubiblock_param[i];
 
-		desc = खोलो_volume_desc(p->name, p->ubi_num, p->vol_id);
-		अगर (IS_ERR(desc)) अणु
+		desc = open_volume_desc(p->name, p->ubi_num, p->vol_id);
+		if (IS_ERR(desc)) {
 			pr_err(
 			       "UBI: block: can't open volume on ubi%d_%d, err=%ld\n",
 			       p->ubi_num, p->vol_id, PTR_ERR(desc));
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		ubi_get_volume_info(desc, &vi);
-		ubi_बंद_volume(desc);
+		ubi_close_volume(desc);
 
 		ret = ubiblock_create(&vi);
-		अगर (ret) अणु
+		if (ret) {
 			pr_err(
 			       "UBI: block: can't add '%s' volume on ubi%d_%d, err=%d\n",
 			       vi.name, p->ubi_num, p->vol_id, ret);
-			जारी;
-		पूर्ण
-	पूर्ण
-पूर्ण
+			continue;
+		}
+	}
+}
 
-अटल व्योम ubiblock_हटाओ_all(व्योम)
-अणु
-	काष्ठा ubiblock *next;
-	काष्ठा ubiblock *dev;
+static void ubiblock_remove_all(void)
+{
+	struct ubiblock *next;
+	struct ubiblock *dev;
 
 	mutex_lock(&devices_mutex);
-	list_क्रम_each_entry_safe(dev, next, &ubiblock_devices, list) अणु
-		/* The module is being क्रमcefully हटाओd */
+	list_for_each_entry_safe(dev, next, &ubiblock_devices, list) {
+		/* The module is being forcefully removed */
 		WARN_ON(dev->desc);
 		/* Remove from device list */
 		list_del(&dev->list);
 		ubiblock_cleanup(dev);
-		kमुक्त(dev);
-	पूर्ण
+		kfree(dev);
+	}
 	mutex_unlock(&devices_mutex);
-पूर्ण
+}
 
-पूर्णांक __init ubiblock_init(व्योम)
-अणु
-	पूर्णांक ret;
+int __init ubiblock_init(void)
+{
+	int ret;
 
-	ubiblock_major = रेजिस्टर_blkdev(0, "ubiblock");
-	अगर (ubiblock_major < 0)
-		वापस ubiblock_major;
+	ubiblock_major = register_blkdev(0, "ubiblock");
+	if (ubiblock_major < 0)
+		return ubiblock_major;
 
 	/*
 	 * Attach block devices from 'block=' module param.
-	 * Even अगर one block device in the param list fails to come up,
+	 * Even if one block device in the param list fails to come up,
 	 * still allow the module to load and leave any others up.
 	 */
 	ubiblock_create_from_param();
@@ -689,20 +688,20 @@ out_unlock:
 	 * Block devices are only created upon user requests, so we ignore
 	 * existing volumes.
 	 */
-	ret = ubi_रेजिस्टर_volume_notअगरier(&ubiblock_notअगरier, 1);
-	अगर (ret)
-		जाओ err_unreg;
-	वापस 0;
+	ret = ubi_register_volume_notifier(&ubiblock_notifier, 1);
+	if (ret)
+		goto err_unreg;
+	return 0;
 
 err_unreg:
-	unरेजिस्टर_blkdev(ubiblock_major, "ubiblock");
-	ubiblock_हटाओ_all();
-	वापस ret;
-पूर्ण
+	unregister_blkdev(ubiblock_major, "ubiblock");
+	ubiblock_remove_all();
+	return ret;
+}
 
-व्योम __निकास ubiblock_निकास(व्योम)
-अणु
-	ubi_unरेजिस्टर_volume_notअगरier(&ubiblock_notअगरier);
-	ubiblock_हटाओ_all();
-	unरेजिस्टर_blkdev(ubiblock_major, "ubiblock");
-पूर्ण
+void __exit ubiblock_exit(void)
+{
+	ubi_unregister_volume_notifier(&ubiblock_notifier);
+	ubiblock_remove_all();
+	unregister_blkdev(ubiblock_major, "ubiblock");
+}

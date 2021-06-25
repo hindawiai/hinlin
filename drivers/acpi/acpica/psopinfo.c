@@ -1,24 +1,23 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0
+// SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
 /******************************************************************************
  *
- * Module Name: psopinfo - AML opcode inक्रमmation functions and dispatch tables
+ * Module Name: psopinfo - AML opcode information functions and dispatch tables
  *
  * Copyright (C) 2000 - 2021, Intel Corp.
  *
  *****************************************************************************/
 
-#समावेश <acpi/acpi.h>
-#समावेश "accommon.h"
-#समावेश "acparser.h"
-#समावेश "acopcode.h"
-#समावेश "amlcode.h"
+#include <acpi/acpi.h>
+#include "accommon.h"
+#include "acparser.h"
+#include "acopcode.h"
+#include "amlcode.h"
 
-#घोषणा _COMPONENT          ACPI_PARSER
+#define _COMPONENT          ACPI_PARSER
 ACPI_MODULE_NAME("psopinfo")
 
-अटल स्थिर u8 acpi_gbl_argument_count[] =
-    अणु 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 6 पूर्ण;
+static const u8 acpi_gbl_argument_count[] =
+    { 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 6 };
 
 /*******************************************************************************
  *
@@ -26,91 +25,91 @@ ACPI_MODULE_NAME("psopinfo")
  *
  * PARAMETERS:  opcode              - The AML opcode
  *
- * RETURN:      A poपूर्णांकer to the info about the opcode.
+ * RETURN:      A pointer to the info about the opcode.
  *
  * DESCRIPTION: Find AML opcode description based on the opcode.
- *              NOTE: This procedure must ALWAYS वापस a valid poपूर्णांकer!
+ *              NOTE: This procedure must ALWAYS return a valid pointer!
  *
  ******************************************************************************/
 
-स्थिर काष्ठा acpi_opcode_info *acpi_ps_get_opcode_info(u16 opcode)
-अणु
-#अगर_घोषित ACPI_DEBUG_OUTPUT
-	स्थिर अक्षर *opcode_name = "Unknown AML opcode";
-#पूर्ण_अगर
+const struct acpi_opcode_info *acpi_ps_get_opcode_info(u16 opcode)
+{
+#ifdef ACPI_DEBUG_OUTPUT
+	const char *opcode_name = "Unknown AML opcode";
+#endif
 
 	ACPI_FUNCTION_NAME(ps_get_opcode_info);
 
 	/*
 	 * Detect normal 8-bit opcode or extended 16-bit opcode
 	 */
-	अगर (!(opcode & 0xFF00)) अणु
+	if (!(opcode & 0xFF00)) {
 
 		/* Simple (8-bit) opcode: 0-255, can't index beyond table  */
 
-		वापस (&acpi_gbl_aml_op_info
-			[acpi_gbl_लघु_op_index[(u8)opcode]]);
-	पूर्ण
+		return (&acpi_gbl_aml_op_info
+			[acpi_gbl_short_op_index[(u8)opcode]]);
+	}
 
-	अगर (((opcode & 0xFF00) == AML_EXTENDED_OPCODE) &&
-	    (((u8)opcode) <= MAX_EXTENDED_OPCODE)) अणु
+	if (((opcode & 0xFF00) == AML_EXTENDED_OPCODE) &&
+	    (((u8)opcode) <= MAX_EXTENDED_OPCODE)) {
 
 		/* Valid extended (16-bit) opcode */
 
-		वापस (&acpi_gbl_aml_op_info
-			[acpi_gbl_दीर्घ_op_index[(u8)opcode]]);
-	पूर्ण
-#अगर defined ACPI_ASL_COMPILER && defined ACPI_DEBUG_OUTPUT
-#समावेश "asldefine.h"
+		return (&acpi_gbl_aml_op_info
+			[acpi_gbl_long_op_index[(u8)opcode]]);
+	}
+#if defined ACPI_ASL_COMPILER && defined ACPI_DEBUG_OUTPUT
+#include "asldefine.h"
 
-	चयन (opcode) अणु
-	हाल AML_RAW_DATA_BYTE:
+	switch (opcode) {
+	case AML_RAW_DATA_BYTE:
 		opcode_name = "-Raw Data Byte-";
-		अवरोध;
+		break;
 
-	हाल AML_RAW_DATA_WORD:
+	case AML_RAW_DATA_WORD:
 		opcode_name = "-Raw Data Word-";
-		अवरोध;
+		break;
 
-	हाल AML_RAW_DATA_DWORD:
+	case AML_RAW_DATA_DWORD:
 		opcode_name = "-Raw Data Dword-";
-		अवरोध;
+		break;
 
-	हाल AML_RAW_DATA_QWORD:
+	case AML_RAW_DATA_QWORD:
 		opcode_name = "-Raw Data Qword-";
-		अवरोध;
+		break;
 
-	हाल AML_RAW_DATA_BUFFER:
+	case AML_RAW_DATA_BUFFER:
 		opcode_name = "-Raw Data Buffer-";
-		अवरोध;
+		break;
 
-	हाल AML_RAW_DATA_CHAIN:
+	case AML_RAW_DATA_CHAIN:
 		opcode_name = "-Raw Data Buffer Chain-";
-		अवरोध;
+		break;
 
-	हाल AML_PACKAGE_LENGTH:
+	case AML_PACKAGE_LENGTH:
 		opcode_name = "-Package Length-";
-		अवरोध;
+		break;
 
-	हाल AML_UNASSIGNED_OPCODE:
+	case AML_UNASSIGNED_OPCODE:
 		opcode_name = "-Unassigned Opcode-";
-		अवरोध;
+		break;
 
-	हाल AML_DEFAULT_ARG_OP:
+	case AML_DEFAULT_ARG_OP:
 		opcode_name = "-Default Arg-";
-		अवरोध;
+		break;
 
-	शेष:
-		अवरोध;
-	पूर्ण
-#पूर्ण_अगर
+	default:
+		break;
+	}
+#endif
 
 	/* Unknown AML opcode */
 
 	ACPI_DEBUG_PRINT((ACPI_DB_EXEC, "%s [%4.4X]\n", opcode_name, opcode));
 
-	वापस (&acpi_gbl_aml_op_info[_UNK]);
-पूर्ण
+	return (&acpi_gbl_aml_op_info[_UNK]);
+}
 
 /*******************************************************************************
  *
@@ -118,30 +117,30 @@ ACPI_MODULE_NAME("psopinfo")
  *
  * PARAMETERS:  opcode              - The AML opcode
  *
- * RETURN:      A poपूर्णांकer to the name of the opcode (ASCII String)
- *              Note: Never वापसs शून्य.
+ * RETURN:      A pointer to the name of the opcode (ASCII String)
+ *              Note: Never returns NULL.
  *
- * DESCRIPTION: Translate an opcode पूर्णांकo a human-पढ़ोable string
+ * DESCRIPTION: Translate an opcode into a human-readable string
  *
  ******************************************************************************/
 
-स्थिर अक्षर *acpi_ps_get_opcode_name(u16 opcode)
-अणु
-#अगर defined(ACPI_DISASSEMBLER) || defined (ACPI_DEBUG_OUTPUT)
+const char *acpi_ps_get_opcode_name(u16 opcode)
+{
+#if defined(ACPI_DISASSEMBLER) || defined (ACPI_DEBUG_OUTPUT)
 
-	स्थिर काष्ठा acpi_opcode_info *op;
+	const struct acpi_opcode_info *op;
 
 	op = acpi_ps_get_opcode_info(opcode);
 
-	/* Always guaranteed to वापस a valid poपूर्णांकer */
+	/* Always guaranteed to return a valid pointer */
 
-	वापस (op->name);
+	return (op->name);
 
-#अन्यथा
-	वापस ("OpcodeName unavailable");
+#else
+	return ("OpcodeName unavailable");
 
-#पूर्ण_अगर
-पूर्ण
+#endif
+}
 
 /*******************************************************************************
  *
@@ -151,25 +150,25 @@ ACPI_MODULE_NAME("psopinfo")
  *
  * RETURN:      Argument count
  *
- * DESCRIPTION: Obtain the number of expected arguments क्रम an AML opcode
+ * DESCRIPTION: Obtain the number of expected arguments for an AML opcode
  *
  ******************************************************************************/
 
 u8 acpi_ps_get_argument_count(u32 op_type)
-अणु
+{
 
-	अगर (op_type <= AML_TYPE_EXEC_6A_0T_1R) अणु
-		वापस (acpi_gbl_argument_count[op_type]);
-	पूर्ण
+	if (op_type <= AML_TYPE_EXEC_6A_0T_1R) {
+		return (acpi_gbl_argument_count[op_type]);
+	}
 
-	वापस (0);
-पूर्ण
+	return (0);
+}
 
 /*
- * This table is directly indexed by the opcodes It वापसs
- * an index पूर्णांकo the opcode table (acpi_gbl_aml_op_info)
+ * This table is directly indexed by the opcodes It returns
+ * an index into the opcode table (acpi_gbl_aml_op_info)
  */
-स्थिर u8 acpi_gbl_लघु_op_index[256] = अणु
+const u8 acpi_gbl_short_op_index[256] = {
 /*              0     1     2     3     4     5     6     7  */
 /*              8     9     A     B     C     D     E     F  */
 /* 0x00 */ 0x00, 0x01, _UNK, _UNK, _UNK, _UNK, 0x02, _UNK,
@@ -204,13 +203,13 @@ u8 acpi_ps_get_argument_count(u32 op_type)
 /* 0xE8 */ _UNK, _UNK, _UNK, _UNK, _UNK, _UNK, _UNK, _UNK,
 /* 0xF0 */ _UNK, _UNK, _UNK, _UNK, _UNK, _UNK, _UNK, _UNK,
 /* 0xF8 */ _UNK, _UNK, _UNK, _UNK, _UNK, _UNK, _UNK, 0x45,
-पूर्ण;
+};
 
 /*
  * This table is indexed by the second opcode of the extended opcode
- * pair. It वापसs an index पूर्णांकo the opcode table (acpi_gbl_aml_op_info)
+ * pair. It returns an index into the opcode table (acpi_gbl_aml_op_info)
  */
-स्थिर u8 acpi_gbl_दीर्घ_op_index[NUM_EXTENDED_OPCODE] = अणु
+const u8 acpi_gbl_long_op_index[NUM_EXTENDED_OPCODE] = {
 /*              0     1     2     3     4     5     6     7  */
 /*              8     9     A     B     C     D     E     F  */
 /* 0x00 */ _UNK, 0x46, 0x47, _UNK, _UNK, _UNK, _UNK, _UNK,
@@ -231,4 +230,4 @@ u8 acpi_ps_get_argument_count(u32 op_type)
 /* 0x78 */ _UNK, _UNK, _UNK, _UNK, _UNK, _UNK, _UNK, _UNK,
 /* 0x80 */ 0x58, 0x59, 0x5a, 0x5b, 0x5c, 0x5d, 0x5e, 0x5f,
 /* 0x88 */ 0x7C,
-पूर्ण;
+};

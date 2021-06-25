@@ -1,134 +1,133 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  *    Unaligned memory access handler
  *
- *    Copyright (C) 2001 Ranकरोlph Chung <tausq@debian.org>
- *    Signअगरicantly tweaked by LaMont Jones <lamont@debian.org>
+ *    Copyright (C) 2001 Randolph Chung <tausq@debian.org>
+ *    Significantly tweaked by LaMont Jones <lamont@debian.org>
  */
 
-#समावेश <linux/jअगरfies.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/sched/संकेत.स>
-#समावेश <linux/sched/debug.h>
-#समावेश <linux/संकेत.स>
-#समावेश <linux/ratelimit.h>
-#समावेश <linux/uaccess.h>
-#समावेश <यंत्र/hardirq.h>
-#समावेश <यंत्र/traps.h>
+#include <linux/jiffies.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/sched/signal.h>
+#include <linux/sched/debug.h>
+#include <linux/signal.h>
+#include <linux/ratelimit.h>
+#include <linux/uaccess.h>
+#include <asm/hardirq.h>
+#include <asm/traps.h>
 
-/* #घोषणा DEBUG_UNALIGNED 1 */
+/* #define DEBUG_UNALIGNED 1 */
 
-#अगर_घोषित DEBUG_UNALIGNED
-#घोषणा DPRINTF(fmt, args...) करो अणु prपूर्णांकk(KERN_DEBUG "%s:%d:%s ", __खाता__, __LINE__, __func__ ); prपूर्णांकk(KERN_DEBUG fmt, ##args ); पूर्ण जबतक (0)
-#अन्यथा
-#घोषणा DPRINTF(fmt, args...)
-#पूर्ण_अगर
+#ifdef DEBUG_UNALIGNED
+#define DPRINTF(fmt, args...) do { printk(KERN_DEBUG "%s:%d:%s ", __FILE__, __LINE__, __func__ ); printk(KERN_DEBUG fmt, ##args ); } while (0)
+#else
+#define DPRINTF(fmt, args...)
+#endif
 
-#अगर_घोषित CONFIG_64BIT
-#घोषणा RFMT "%016lx"
-#अन्यथा
-#घोषणा RFMT "%08lx"
-#पूर्ण_अगर
+#ifdef CONFIG_64BIT
+#define RFMT "%016lx"
+#else
+#define RFMT "%08lx"
+#endif
 
-#घोषणा FIXUP_BRANCH(lbl) \
+#define FIXUP_BRANCH(lbl) \
 	"\tldil L%%" #lbl ", %%r1\n"			\
 	"\tldo R%%" #lbl "(%%r1), %%r1\n"		\
 	"\tbv,n %%r0(%%r1)\n"
 /* If you use FIXUP_BRANCH, then you must list this clobber */
-#घोषणा FIXUP_BRANCH_CLOBBER "r1"
+#define FIXUP_BRANCH_CLOBBER "r1"
 
 /* 1111 1100 0000 0000 0001 0011 1100 0000 */
-#घोषणा OPCODE1(a,b,c)	((a)<<26|(b)<<12|(c)<<6) 
-#घोषणा OPCODE2(a,b)	((a)<<26|(b)<<1)
-#घोषणा OPCODE3(a,b)	((a)<<26|(b)<<2)
-#घोषणा OPCODE4(a)	((a)<<26)
-#घोषणा OPCODE1_MASK	OPCODE1(0x3f,1,0xf)
-#घोषणा OPCODE2_MASK 	OPCODE2(0x3f,1)
-#घोषणा OPCODE3_MASK	OPCODE3(0x3f,1)
-#घोषणा OPCODE4_MASK    OPCODE4(0x3f)
+#define OPCODE1(a,b,c)	((a)<<26|(b)<<12|(c)<<6) 
+#define OPCODE2(a,b)	((a)<<26|(b)<<1)
+#define OPCODE3(a,b)	((a)<<26|(b)<<2)
+#define OPCODE4(a)	((a)<<26)
+#define OPCODE1_MASK	OPCODE1(0x3f,1,0xf)
+#define OPCODE2_MASK 	OPCODE2(0x3f,1)
+#define OPCODE3_MASK	OPCODE3(0x3f,1)
+#define OPCODE4_MASK    OPCODE4(0x3f)
 
 /* skip LDB - never unaligned (index) */
-#घोषणा OPCODE_LDH_I	OPCODE1(0x03,0,0x1)
-#घोषणा OPCODE_LDW_I	OPCODE1(0x03,0,0x2)
-#घोषणा OPCODE_LDD_I	OPCODE1(0x03,0,0x3)
-#घोषणा OPCODE_LDDA_I	OPCODE1(0x03,0,0x4)
-#घोषणा OPCODE_LDCD_I	OPCODE1(0x03,0,0x5)
-#घोषणा OPCODE_LDWA_I	OPCODE1(0x03,0,0x6)
-#घोषणा OPCODE_LDCW_I	OPCODE1(0x03,0,0x7)
-/* skip LDB - never unaligned (लघु) */
-#घोषणा OPCODE_LDH_S	OPCODE1(0x03,1,0x1)
-#घोषणा OPCODE_LDW_S	OPCODE1(0x03,1,0x2)
-#घोषणा OPCODE_LDD_S	OPCODE1(0x03,1,0x3)
-#घोषणा OPCODE_LDDA_S	OPCODE1(0x03,1,0x4)
-#घोषणा OPCODE_LDCD_S	OPCODE1(0x03,1,0x5)
-#घोषणा OPCODE_LDWA_S	OPCODE1(0x03,1,0x6)
-#घोषणा OPCODE_LDCW_S	OPCODE1(0x03,1,0x7)
+#define OPCODE_LDH_I	OPCODE1(0x03,0,0x1)
+#define OPCODE_LDW_I	OPCODE1(0x03,0,0x2)
+#define OPCODE_LDD_I	OPCODE1(0x03,0,0x3)
+#define OPCODE_LDDA_I	OPCODE1(0x03,0,0x4)
+#define OPCODE_LDCD_I	OPCODE1(0x03,0,0x5)
+#define OPCODE_LDWA_I	OPCODE1(0x03,0,0x6)
+#define OPCODE_LDCW_I	OPCODE1(0x03,0,0x7)
+/* skip LDB - never unaligned (short) */
+#define OPCODE_LDH_S	OPCODE1(0x03,1,0x1)
+#define OPCODE_LDW_S	OPCODE1(0x03,1,0x2)
+#define OPCODE_LDD_S	OPCODE1(0x03,1,0x3)
+#define OPCODE_LDDA_S	OPCODE1(0x03,1,0x4)
+#define OPCODE_LDCD_S	OPCODE1(0x03,1,0x5)
+#define OPCODE_LDWA_S	OPCODE1(0x03,1,0x6)
+#define OPCODE_LDCW_S	OPCODE1(0x03,1,0x7)
 /* skip STB - never unaligned */
-#घोषणा OPCODE_STH	OPCODE1(0x03,1,0x9)
-#घोषणा OPCODE_STW	OPCODE1(0x03,1,0xa)
-#घोषणा OPCODE_STD	OPCODE1(0x03,1,0xb)
+#define OPCODE_STH	OPCODE1(0x03,1,0x9)
+#define OPCODE_STW	OPCODE1(0x03,1,0xa)
+#define OPCODE_STD	OPCODE1(0x03,1,0xb)
 /* skip STBY - never unaligned */
 /* skip STDBY - never unaligned */
-#घोषणा OPCODE_STWA	OPCODE1(0x03,1,0xe)
-#घोषणा OPCODE_STDA	OPCODE1(0x03,1,0xf)
+#define OPCODE_STWA	OPCODE1(0x03,1,0xe)
+#define OPCODE_STDA	OPCODE1(0x03,1,0xf)
 
-#घोषणा OPCODE_FLDWX	OPCODE1(0x09,0,0x0)
-#घोषणा OPCODE_FLDWXR	OPCODE1(0x09,0,0x1)
-#घोषणा OPCODE_FSTWX	OPCODE1(0x09,0,0x8)
-#घोषणा OPCODE_FSTWXR	OPCODE1(0x09,0,0x9)
-#घोषणा OPCODE_FLDWS	OPCODE1(0x09,1,0x0)
-#घोषणा OPCODE_FLDWSR	OPCODE1(0x09,1,0x1)
-#घोषणा OPCODE_FSTWS	OPCODE1(0x09,1,0x8)
-#घोषणा OPCODE_FSTWSR	OPCODE1(0x09,1,0x9)
-#घोषणा OPCODE_FLDDX	OPCODE1(0x0b,0,0x0)
-#घोषणा OPCODE_FSTDX	OPCODE1(0x0b,0,0x8)
-#घोषणा OPCODE_FLDDS	OPCODE1(0x0b,1,0x0)
-#घोषणा OPCODE_FSTDS	OPCODE1(0x0b,1,0x8)
+#define OPCODE_FLDWX	OPCODE1(0x09,0,0x0)
+#define OPCODE_FLDWXR	OPCODE1(0x09,0,0x1)
+#define OPCODE_FSTWX	OPCODE1(0x09,0,0x8)
+#define OPCODE_FSTWXR	OPCODE1(0x09,0,0x9)
+#define OPCODE_FLDWS	OPCODE1(0x09,1,0x0)
+#define OPCODE_FLDWSR	OPCODE1(0x09,1,0x1)
+#define OPCODE_FSTWS	OPCODE1(0x09,1,0x8)
+#define OPCODE_FSTWSR	OPCODE1(0x09,1,0x9)
+#define OPCODE_FLDDX	OPCODE1(0x0b,0,0x0)
+#define OPCODE_FSTDX	OPCODE1(0x0b,0,0x8)
+#define OPCODE_FLDDS	OPCODE1(0x0b,1,0x0)
+#define OPCODE_FSTDS	OPCODE1(0x0b,1,0x8)
 
-#घोषणा OPCODE_LDD_L	OPCODE2(0x14,0)
-#घोषणा OPCODE_FLDD_L	OPCODE2(0x14,1)
-#घोषणा OPCODE_STD_L	OPCODE2(0x1c,0)
-#घोषणा OPCODE_FSTD_L	OPCODE2(0x1c,1)
+#define OPCODE_LDD_L	OPCODE2(0x14,0)
+#define OPCODE_FLDD_L	OPCODE2(0x14,1)
+#define OPCODE_STD_L	OPCODE2(0x1c,0)
+#define OPCODE_FSTD_L	OPCODE2(0x1c,1)
 
-#घोषणा OPCODE_LDW_M	OPCODE3(0x17,1)
-#घोषणा OPCODE_FLDW_L	OPCODE3(0x17,0)
-#घोषणा OPCODE_FSTW_L	OPCODE3(0x1f,0)
-#घोषणा OPCODE_STW_M	OPCODE3(0x1f,1)
+#define OPCODE_LDW_M	OPCODE3(0x17,1)
+#define OPCODE_FLDW_L	OPCODE3(0x17,0)
+#define OPCODE_FSTW_L	OPCODE3(0x1f,0)
+#define OPCODE_STW_M	OPCODE3(0x1f,1)
 
-#घोषणा OPCODE_LDH_L    OPCODE4(0x11)
-#घोषणा OPCODE_LDW_L    OPCODE4(0x12)
-#घोषणा OPCODE_LDWM     OPCODE4(0x13)
-#घोषणा OPCODE_STH_L    OPCODE4(0x19)
-#घोषणा OPCODE_STW_L    OPCODE4(0x1A)
-#घोषणा OPCODE_STWM     OPCODE4(0x1B)
+#define OPCODE_LDH_L    OPCODE4(0x11)
+#define OPCODE_LDW_L    OPCODE4(0x12)
+#define OPCODE_LDWM     OPCODE4(0x13)
+#define OPCODE_STH_L    OPCODE4(0x19)
+#define OPCODE_STW_L    OPCODE4(0x1A)
+#define OPCODE_STWM     OPCODE4(0x1B)
 
-#घोषणा MAJOR_OP(i) (((i)>>26)&0x3f)
-#घोषणा R1(i) (((i)>>21)&0x1f)
-#घोषणा R2(i) (((i)>>16)&0x1f)
-#घोषणा R3(i) ((i)&0x1f)
-#घोषणा FR3(i) ((((i)<<1)&0x1f)|(((i)>>6)&1))
-#घोषणा IM(i,n) (((i)>>1&((1<<(n-1))-1))|((i)&1?((0-1L)<<(n-1)):0))
-#घोषणा IM5_2(i) IM((i)>>16,5)
-#घोषणा IM5_3(i) IM((i),5)
-#घोषणा IM14(i) IM((i),14)
+#define MAJOR_OP(i) (((i)>>26)&0x3f)
+#define R1(i) (((i)>>21)&0x1f)
+#define R2(i) (((i)>>16)&0x1f)
+#define R3(i) ((i)&0x1f)
+#define FR3(i) ((((i)<<1)&0x1f)|(((i)>>6)&1))
+#define IM(i,n) (((i)>>1&((1<<(n-1))-1))|((i)&1?((0-1L)<<(n-1)):0))
+#define IM5_2(i) IM((i)>>16,5)
+#define IM5_3(i) IM((i),5)
+#define IM14(i) IM((i),14)
 
-#घोषणा ERR_NOTHANDLED	-1
-#घोषणा ERR_PAGEFAULT	-2
+#define ERR_NOTHANDLED	-1
+#define ERR_PAGEFAULT	-2
 
-पूर्णांक unaligned_enabled __पढ़ो_mostly = 1;
+int unaligned_enabled __read_mostly = 1;
 
-अटल पूर्णांक emulate_ldh(काष्ठा pt_regs *regs, पूर्णांक toreg)
-अणु
-	अचिन्हित दीर्घ saddr = regs->ior;
-	अचिन्हित दीर्घ val = 0;
-	पूर्णांक ret;
+static int emulate_ldh(struct pt_regs *regs, int toreg)
+{
+	unsigned long saddr = regs->ior;
+	unsigned long val = 0;
+	int ret;
 
 	DPRINTF("load " RFMT ":" RFMT " to r%d for 2 bytes\n", 
 		regs->isr, regs->ior, toreg);
 
-	__यंत्र__ __अस्थिर__  (
+	__asm__ __volatile__  (
 "	mtsp	%4, %%sr1\n"
 "1:	ldbs	0(%%sr1,%3), %%r20\n"
 "2:	ldbs	1(%%sr1,%3), %0\n"
@@ -147,22 +146,22 @@
 
 	DPRINTF("val = 0x" RFMT "\n", val);
 
-	अगर (toreg)
+	if (toreg)
 		regs->gr[toreg] = val;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक emulate_ldw(काष्ठा pt_regs *regs, पूर्णांक toreg, पूर्णांक flop)
-अणु
-	अचिन्हित दीर्घ saddr = regs->ior;
-	अचिन्हित दीर्घ val = 0;
-	पूर्णांक ret;
+static int emulate_ldw(struct pt_regs *regs, int toreg, int flop)
+{
+	unsigned long saddr = regs->ior;
+	unsigned long val = 0;
+	int ret;
 
 	DPRINTF("load " RFMT ":" RFMT " to r%d for 4 bytes\n", 
 		regs->isr, regs->ior, toreg);
 
-	__यंत्र__ __अस्थिर__  (
+	__asm__ __volatile__  (
 "	zdep	%3,28,2,%%r19\n"		/* r19=(ofs&3)*8 */
 "	mtsp	%4, %%sr1\n"
 "	depw	%%r0,31,2,%3\n"
@@ -185,28 +184,28 @@
 
 	DPRINTF("val = 0x" RFMT "\n", val);
 
-	अगर (flop)
+	if (flop)
 		((__u32*)(regs->fr))[toreg] = val;
-	अन्यथा अगर (toreg)
+	else if (toreg)
 		regs->gr[toreg] = val;
 
-	वापस ret;
-पूर्ण
-अटल पूर्णांक emulate_ldd(काष्ठा pt_regs *regs, पूर्णांक toreg, पूर्णांक flop)
-अणु
-	अचिन्हित दीर्घ saddr = regs->ior;
+	return ret;
+}
+static int emulate_ldd(struct pt_regs *regs, int toreg, int flop)
+{
+	unsigned long saddr = regs->ior;
 	__u64 val = 0;
-	पूर्णांक ret;
+	int ret;
 
 	DPRINTF("load " RFMT ":" RFMT " to r%d for 8 bytes\n", 
 		regs->isr, regs->ior, toreg);
-#अगर_घोषित CONFIG_PA20
+#ifdef CONFIG_PA20
 
-#अगर_अघोषित CONFIG_64BIT
-	अगर (!flop)
-		वापस -1;
-#पूर्ण_अगर
-	__यंत्र__ __अस्थिर__  (
+#ifndef CONFIG_64BIT
+	if (!flop)
+		return -1;
+#endif
+	__asm__ __volatile__  (
 "	depd,z	%3,60,3,%%r19\n"		/* r19=(ofs&7)*8 */
 "	mtsp	%4, %%sr1\n"
 "	depd	%%r0,63,3,%3\n"
@@ -226,10 +225,10 @@
 	: "=r" (val), "=r" (ret)
 	: "0" (val), "r" (saddr), "r" (regs->isr)
 	: "r19", "r20", FIXUP_BRANCH_CLOBBER );
-#अन्यथा
-    अणु
-	अचिन्हित दीर्घ valh=0,vall=0;
-	__यंत्र__ __अस्थिर__  (
+#else
+    {
+	unsigned long valh=0,vall=0;
+	__asm__ __volatile__  (
 "	zdep	%5,29,2,%%r19\n"		/* r19=(ofs&3)*8 */
 "	mtsp	%6, %%sr1\n"
 "	dep	%%r0,31,2,%5\n"
@@ -253,31 +252,31 @@
 	: "0" (valh), "1" (vall), "r" (saddr), "r" (regs->isr)
 	: "r19", "r20", FIXUP_BRANCH_CLOBBER );
 	val=((__u64)valh<<32)|(__u64)vall;
-    पूर्ण
-#पूर्ण_अगर
+    }
+#endif
 
 	DPRINTF("val = 0x%llx\n", val);
 
-	अगर (flop)
+	if (flop)
 		regs->fr[toreg] = val;
-	अन्यथा अगर (toreg)
+	else if (toreg)
 		regs->gr[toreg] = val;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक emulate_sth(काष्ठा pt_regs *regs, पूर्णांक frreg)
-अणु
-	अचिन्हित दीर्घ val = regs->gr[frreg];
-	पूर्णांक ret;
+static int emulate_sth(struct pt_regs *regs, int frreg)
+{
+	unsigned long val = regs->gr[frreg];
+	int ret;
 
-	अगर (!frreg)
+	if (!frreg)
 		val = 0;
 
 	DPRINTF("store r%d (0x" RFMT ") to " RFMT ":" RFMT " for 2 bytes\n", frreg, 
 		val, regs->isr, regs->ior);
 
-	__यंत्र__ __अस्थिर__ (
+	__asm__ __volatile__ (
 "	mtsp %3, %%sr1\n"
 "	extrw,u %1, 23, 8, %%r19\n"
 "1:	stb %1, 1(%%sr1, %2)\n"
@@ -294,26 +293,26 @@
 	: "r" (val), "r" (regs->ior), "r" (regs->isr)
 	: "r19", FIXUP_BRANCH_CLOBBER );
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक emulate_stw(काष्ठा pt_regs *regs, पूर्णांक frreg, पूर्णांक flop)
-अणु
-	अचिन्हित दीर्घ val;
-	पूर्णांक ret;
+static int emulate_stw(struct pt_regs *regs, int frreg, int flop)
+{
+	unsigned long val;
+	int ret;
 
-	अगर (flop)
+	if (flop)
 		val = ((__u32*)(regs->fr))[frreg];
-	अन्यथा अगर (frreg)
+	else if (frreg)
 		val = regs->gr[frreg];
-	अन्यथा
+	else
 		val = 0;
 
 	DPRINTF("store r%d (0x" RFMT ") to " RFMT ":" RFMT " for 4 bytes\n", frreg, 
 		val, regs->isr, regs->ior);
 
 
-	__यंत्र__ __अस्थिर__ (
+	__asm__ __volatile__ (
 "	mtsp %3, %%sr1\n"
 "	zdep	%2, 28, 2, %%r19\n"
 "	dep	%%r0, 31, 2, %2\n"
@@ -341,29 +340,29 @@
 	: "r" (val), "r" (regs->ior), "r" (regs->isr)
 	: "r19", "r20", "r21", "r22", "r1", FIXUP_BRANCH_CLOBBER );
 
-	वापस 0;
-पूर्ण
-अटल पूर्णांक emulate_std(काष्ठा pt_regs *regs, पूर्णांक frreg, पूर्णांक flop)
-अणु
+	return 0;
+}
+static int emulate_std(struct pt_regs *regs, int frreg, int flop)
+{
 	__u64 val;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (flop)
+	if (flop)
 		val = regs->fr[frreg];
-	अन्यथा अगर (frreg)
+	else if (frreg)
 		val = regs->gr[frreg];
-	अन्यथा
+	else
 		val = 0;
 
 	DPRINTF("store r%d (0x%016llx) to " RFMT ":" RFMT " for 8 bytes\n", frreg, 
 		val,  regs->isr, regs->ior);
 
-#अगर_घोषित CONFIG_PA20
-#अगर_अघोषित CONFIG_64BIT
-	अगर (!flop)
-		वापस -1;
-#पूर्ण_अगर
-	__यंत्र__ __अस्थिर__ (
+#ifdef CONFIG_PA20
+#ifndef CONFIG_64BIT
+	if (!flop)
+		return -1;
+#endif
+	__asm__ __volatile__ (
 "	mtsp %3, %%sr1\n"
 "	depd,z	%2, 60, 3, %%r19\n"
 "	depd	%%r0, 63, 3, %2\n"
@@ -392,10 +391,10 @@
 	: "=r" (ret)
 	: "r" (val), "r" (regs->ior), "r" (regs->isr)
 	: "r19", "r20", "r21", "r22", "r1", FIXUP_BRANCH_CLOBBER );
-#अन्यथा
-    अणु
-	अचिन्हित दीर्घ valh=(val>>32),vall=(val&0xffffffffl);
-	__यंत्र__ __अस्थिर__ (
+#else
+    {
+	unsigned long valh=(val>>32),vall=(val&0xffffffffl);
+	__asm__ __volatile__ (
 "	mtsp	%4, %%sr1\n"
 "	zdep	%2, 29, 2, %%r19\n"
 "	dep	%%r0, 31, 2, %2\n"
@@ -427,319 +426,319 @@
 	: "=r" (ret)
 	: "r" (valh), "r" (vall), "r" (regs->ior), "r" (regs->isr)
 	: "r19", "r20", "r21", "r1", FIXUP_BRANCH_CLOBBER );
-    पूर्ण
-#पूर्ण_अगर
+    }
+#endif
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम handle_unaligned(काष्ठा pt_regs *regs)
-अणु
-	अटल DEFINE_RATELIMIT_STATE(ratelimit, 5 * HZ, 5);
-	अचिन्हित दीर्घ newbase = R1(regs->iir)?regs->gr[R1(regs->iir)]:0;
-	पूर्णांक modअगरy = 0;
-	पूर्णांक ret = ERR_NOTHANDLED;
-	रेजिस्टर पूर्णांक flop=0;	/* true अगर this is a flop */
+void handle_unaligned(struct pt_regs *regs)
+{
+	static DEFINE_RATELIMIT_STATE(ratelimit, 5 * HZ, 5);
+	unsigned long newbase = R1(regs->iir)?regs->gr[R1(regs->iir)]:0;
+	int modify = 0;
+	int ret = ERR_NOTHANDLED;
+	register int flop=0;	/* true if this is a flop */
 
 	__inc_irq_stat(irq_unaligned_count);
 
 	/* log a message with pacing */
-	अगर (user_mode(regs)) अणु
-		अगर (current->thपढ़ो.flags & PARISC_UAC_SIGBUS) अणु
-			जाओ क्रमce_sigbus;
-		पूर्ण
+	if (user_mode(regs)) {
+		if (current->thread.flags & PARISC_UAC_SIGBUS) {
+			goto force_sigbus;
+		}
 
-		अगर (!(current->thपढ़ो.flags & PARISC_UAC_NOPRINT) &&
-			__ratelimit(&ratelimit)) अणु
-			अक्षर buf[256];
-			प्र_लिखो(buf, "%s(%d): unaligned access to 0x" RFMT " at ip=0x" RFMT "\n",
+		if (!(current->thread.flags & PARISC_UAC_NOPRINT) &&
+			__ratelimit(&ratelimit)) {
+			char buf[256];
+			sprintf(buf, "%s(%d): unaligned access to 0x" RFMT " at ip=0x" RFMT "\n",
 				current->comm, task_pid_nr(current), regs->ior, regs->iaoq[0]);
-			prपूर्णांकk(KERN_WARNING "%s", buf);
-#अगर_घोषित DEBUG_UNALIGNED
+			printk(KERN_WARNING "%s", buf);
+#ifdef DEBUG_UNALIGNED
 			show_regs(regs);
-#पूर्ण_अगर		
-		पूर्ण
+#endif		
+		}
 
-		अगर (!unaligned_enabled)
-			जाओ क्रमce_sigbus;
-	पूर्ण
+		if (!unaligned_enabled)
+			goto force_sigbus;
+	}
 
-	/* handle modअगरication - OK, it's ugly, see the inकाष्ठाion manual */
-	चयन (MAJOR_OP(regs->iir))
-	अणु
-	हाल 0x03:
-	हाल 0x09:
-	हाल 0x0b:
-		अगर (regs->iir&0x20)
-		अणु
-			modअगरy = 1;
-			अगर (regs->iir&0x1000)		/* लघु loads */
-				अगर (regs->iir&0x200)
+	/* handle modification - OK, it's ugly, see the instruction manual */
+	switch (MAJOR_OP(regs->iir))
+	{
+	case 0x03:
+	case 0x09:
+	case 0x0b:
+		if (regs->iir&0x20)
+		{
+			modify = 1;
+			if (regs->iir&0x1000)		/* short loads */
+				if (regs->iir&0x200)
 					newbase += IM5_3(regs->iir);
-				अन्यथा
+				else
 					newbase += IM5_2(regs->iir);
-			अन्यथा अगर (regs->iir&0x2000)	/* scaled indexed */
-			अणु
-				पूर्णांक shअगरt=0;
-				चयन (regs->iir & OPCODE1_MASK)
-				अणु
-				हाल OPCODE_LDH_I:
-					shअगरt= 1; अवरोध;
-				हाल OPCODE_LDW_I:
-					shअगरt= 2; अवरोध;
-				हाल OPCODE_LDD_I:
-				हाल OPCODE_LDDA_I:
-					shअगरt= 3; अवरोध;
-				पूर्ण
-				newbase += (R2(regs->iir)?regs->gr[R2(regs->iir)]:0)<<shअगरt;
-			पूर्ण अन्यथा				/* simple indexed */
+			else if (regs->iir&0x2000)	/* scaled indexed */
+			{
+				int shift=0;
+				switch (regs->iir & OPCODE1_MASK)
+				{
+				case OPCODE_LDH_I:
+					shift= 1; break;
+				case OPCODE_LDW_I:
+					shift= 2; break;
+				case OPCODE_LDD_I:
+				case OPCODE_LDDA_I:
+					shift= 3; break;
+				}
+				newbase += (R2(regs->iir)?regs->gr[R2(regs->iir)]:0)<<shift;
+			} else				/* simple indexed */
 				newbase += (R2(regs->iir)?regs->gr[R2(regs->iir)]:0);
-		पूर्ण
-		अवरोध;
-	हाल 0x13:
-	हाल 0x1b:
-		modअगरy = 1;
+		}
+		break;
+	case 0x13:
+	case 0x1b:
+		modify = 1;
 		newbase += IM14(regs->iir);
-		अवरोध;
-	हाल 0x14:
-	हाल 0x1c:
-		अगर (regs->iir&8)
-		अणु
-			modअगरy = 1;
+		break;
+	case 0x14:
+	case 0x1c:
+		if (regs->iir&8)
+		{
+			modify = 1;
 			newbase += IM14(regs->iir&~0xe);
-		पूर्ण
-		अवरोध;
-	हाल 0x16:
-	हाल 0x1e:
-		modअगरy = 1;
+		}
+		break;
+	case 0x16:
+	case 0x1e:
+		modify = 1;
 		newbase += IM14(regs->iir&6);
-		अवरोध;
-	हाल 0x17:
-	हाल 0x1f:
-		अगर (regs->iir&4)
-		अणु
-			modअगरy = 1;
+		break;
+	case 0x17:
+	case 0x1f:
+		if (regs->iir&4)
+		{
+			modify = 1;
 			newbase += IM14(regs->iir&~4);
-		पूर्ण
-		अवरोध;
-	पूर्ण
+		}
+		break;
+	}
 
 	/* TODO: make this cleaner... */
-	चयन (regs->iir & OPCODE1_MASK)
-	अणु
-	हाल OPCODE_LDH_I:
-	हाल OPCODE_LDH_S:
+	switch (regs->iir & OPCODE1_MASK)
+	{
+	case OPCODE_LDH_I:
+	case OPCODE_LDH_S:
 		ret = emulate_ldh(regs, R3(regs->iir));
-		अवरोध;
+		break;
 
-	हाल OPCODE_LDW_I:
-	हाल OPCODE_LDWA_I:
-	हाल OPCODE_LDW_S:
-	हाल OPCODE_LDWA_S:
+	case OPCODE_LDW_I:
+	case OPCODE_LDWA_I:
+	case OPCODE_LDW_S:
+	case OPCODE_LDWA_S:
 		ret = emulate_ldw(regs, R3(regs->iir),0);
-		अवरोध;
+		break;
 
-	हाल OPCODE_STH:
+	case OPCODE_STH:
 		ret = emulate_sth(regs, R2(regs->iir));
-		अवरोध;
+		break;
 
-	हाल OPCODE_STW:
-	हाल OPCODE_STWA:
+	case OPCODE_STW:
+	case OPCODE_STWA:
 		ret = emulate_stw(regs, R2(regs->iir),0);
-		अवरोध;
+		break;
 
-#अगर_घोषित CONFIG_PA20
-	हाल OPCODE_LDD_I:
-	हाल OPCODE_LDDA_I:
-	हाल OPCODE_LDD_S:
-	हाल OPCODE_LDDA_S:
+#ifdef CONFIG_PA20
+	case OPCODE_LDD_I:
+	case OPCODE_LDDA_I:
+	case OPCODE_LDD_S:
+	case OPCODE_LDDA_S:
 		ret = emulate_ldd(regs, R3(regs->iir),0);
-		अवरोध;
+		break;
 
-	हाल OPCODE_STD:
-	हाल OPCODE_STDA:
+	case OPCODE_STD:
+	case OPCODE_STDA:
 		ret = emulate_std(regs, R2(regs->iir),0);
-		अवरोध;
-#पूर्ण_अगर
+		break;
+#endif
 
-	हाल OPCODE_FLDWX:
-	हाल OPCODE_FLDWS:
-	हाल OPCODE_FLDWXR:
-	हाल OPCODE_FLDWSR:
+	case OPCODE_FLDWX:
+	case OPCODE_FLDWS:
+	case OPCODE_FLDWXR:
+	case OPCODE_FLDWSR:
 		flop=1;
 		ret = emulate_ldw(regs,FR3(regs->iir),1);
-		अवरोध;
+		break;
 
-	हाल OPCODE_FLDDX:
-	हाल OPCODE_FLDDS:
+	case OPCODE_FLDDX:
+	case OPCODE_FLDDS:
 		flop=1;
 		ret = emulate_ldd(regs,R3(regs->iir),1);
-		अवरोध;
+		break;
 
-	हाल OPCODE_FSTWX:
-	हाल OPCODE_FSTWS:
-	हाल OPCODE_FSTWXR:
-	हाल OPCODE_FSTWSR:
+	case OPCODE_FSTWX:
+	case OPCODE_FSTWS:
+	case OPCODE_FSTWXR:
+	case OPCODE_FSTWSR:
 		flop=1;
 		ret = emulate_stw(regs,FR3(regs->iir),1);
-		अवरोध;
+		break;
 
-	हाल OPCODE_FSTDX:
-	हाल OPCODE_FSTDS:
+	case OPCODE_FSTDX:
+	case OPCODE_FSTDS:
 		flop=1;
 		ret = emulate_std(regs,R3(regs->iir),1);
-		अवरोध;
+		break;
 
-	हाल OPCODE_LDCD_I:
-	हाल OPCODE_LDCW_I:
-	हाल OPCODE_LDCD_S:
-	हाल OPCODE_LDCW_S:
-		ret = ERR_NOTHANDLED;	/* "undefined", but lets समाप्त them. */
-		अवरोध;
-	पूर्ण
-#अगर_घोषित CONFIG_PA20
-	चयन (regs->iir & OPCODE2_MASK)
-	अणु
-	हाल OPCODE_FLDD_L:
+	case OPCODE_LDCD_I:
+	case OPCODE_LDCW_I:
+	case OPCODE_LDCD_S:
+	case OPCODE_LDCW_S:
+		ret = ERR_NOTHANDLED;	/* "undefined", but lets kill them. */
+		break;
+	}
+#ifdef CONFIG_PA20
+	switch (regs->iir & OPCODE2_MASK)
+	{
+	case OPCODE_FLDD_L:
 		flop=1;
 		ret = emulate_ldd(regs,R2(regs->iir),1);
-		अवरोध;
-	हाल OPCODE_FSTD_L:
+		break;
+	case OPCODE_FSTD_L:
 		flop=1;
 		ret = emulate_std(regs, R2(regs->iir),1);
-		अवरोध;
-	हाल OPCODE_LDD_L:
+		break;
+	case OPCODE_LDD_L:
 		ret = emulate_ldd(regs, R2(regs->iir),0);
-		अवरोध;
-	हाल OPCODE_STD_L:
+		break;
+	case OPCODE_STD_L:
 		ret = emulate_std(regs, R2(regs->iir),0);
-		अवरोध;
-	पूर्ण
-#पूर्ण_अगर
-	चयन (regs->iir & OPCODE3_MASK)
-	अणु
-	हाल OPCODE_FLDW_L:
+		break;
+	}
+#endif
+	switch (regs->iir & OPCODE3_MASK)
+	{
+	case OPCODE_FLDW_L:
 		flop=1;
 		ret = emulate_ldw(regs, R2(regs->iir),0);
-		अवरोध;
-	हाल OPCODE_LDW_M:
+		break;
+	case OPCODE_LDW_M:
 		ret = emulate_ldw(regs, R2(regs->iir),1);
-		अवरोध;
+		break;
 
-	हाल OPCODE_FSTW_L:
+	case OPCODE_FSTW_L:
 		flop=1;
 		ret = emulate_stw(regs, R2(regs->iir),1);
-		अवरोध;
-	हाल OPCODE_STW_M:
+		break;
+	case OPCODE_STW_M:
 		ret = emulate_stw(regs, R2(regs->iir),0);
-		अवरोध;
-	पूर्ण
-	चयन (regs->iir & OPCODE4_MASK)
-	अणु
-	हाल OPCODE_LDH_L:
+		break;
+	}
+	switch (regs->iir & OPCODE4_MASK)
+	{
+	case OPCODE_LDH_L:
 		ret = emulate_ldh(regs, R2(regs->iir));
-		अवरोध;
-	हाल OPCODE_LDW_L:
-	हाल OPCODE_LDWM:
+		break;
+	case OPCODE_LDW_L:
+	case OPCODE_LDWM:
 		ret = emulate_ldw(regs, R2(regs->iir),0);
-		अवरोध;
-	हाल OPCODE_STH_L:
+		break;
+	case OPCODE_STH_L:
 		ret = emulate_sth(regs, R2(regs->iir));
-		अवरोध;
-	हाल OPCODE_STW_L:
-	हाल OPCODE_STWM:
+		break;
+	case OPCODE_STW_L:
+	case OPCODE_STWM:
 		ret = emulate_stw(regs, R2(regs->iir),0);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	अगर (ret == 0 && modअगरy && R1(regs->iir))
+	if (ret == 0 && modify && R1(regs->iir))
 		regs->gr[R1(regs->iir)] = newbase;
 
 
-	अगर (ret == ERR_NOTHANDLED)
-		prपूर्णांकk(KERN_CRIT "Not-handled unaligned insn 0x%08lx\n", regs->iir);
+	if (ret == ERR_NOTHANDLED)
+		printk(KERN_CRIT "Not-handled unaligned insn 0x%08lx\n", regs->iir);
 
 	DPRINTF("ret = %d\n", ret);
 
-	अगर (ret)
-	अणु
+	if (ret)
+	{
 		/*
 		 * The unaligned handler failed.
 		 * If we were called by __get_user() or __put_user() jump
 		 * to it's exception fixup handler instead of crashing.
 		 */
-		अगर (!user_mode(regs) && fixup_exception(regs))
-			वापस;
+		if (!user_mode(regs) && fixup_exception(regs))
+			return;
 
-		prपूर्णांकk(KERN_CRIT "Unaligned handler failed, ret = %d\n", ret);
-		die_अगर_kernel("Unaligned data reference", regs, 28);
+		printk(KERN_CRIT "Unaligned handler failed, ret = %d\n", ret);
+		die_if_kernel("Unaligned data reference", regs, 28);
 
-		अगर (ret == ERR_PAGEFAULT)
-		अणु
-			क्रमce_sig_fault(संक_अंश, SEGV_MAPERR,
-					(व्योम __user *)regs->ior);
-		पूर्ण
-		अन्यथा
-		अणु
-क्रमce_sigbus:
+		if (ret == ERR_PAGEFAULT)
+		{
+			force_sig_fault(SIGSEGV, SEGV_MAPERR,
+					(void __user *)regs->ior);
+		}
+		else
+		{
+force_sigbus:
 			/* couldn't handle it ... */
-			क्रमce_sig_fault(SIGBUS, BUS_ADRALN,
-					(व्योम __user *)regs->ior);
-		पूर्ण
+			force_sig_fault(SIGBUS, BUS_ADRALN,
+					(void __user *)regs->ior);
+		}
 		
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	/* अन्यथा we handled it, let lअगरe go on. */
+	/* else we handled it, let life go on. */
 	regs->gr[0]|=PSW_N;
-पूर्ण
+}
 
 /*
- * NB: check_unaligned() is only used क्रम PCXS processors right
- * now, so we only check क्रम PA1.1 encodings at this poपूर्णांक.
+ * NB: check_unaligned() is only used for PCXS processors right
+ * now, so we only check for PA1.1 encodings at this point.
  */
 
-पूर्णांक
-check_unaligned(काष्ठा pt_regs *regs)
-अणु
-	अचिन्हित दीर्घ align_mask;
+int
+check_unaligned(struct pt_regs *regs)
+{
+	unsigned long align_mask;
 
 	/* Get alignment mask */
 
 	align_mask = 0UL;
-	चयन (regs->iir & OPCODE1_MASK) अणु
+	switch (regs->iir & OPCODE1_MASK) {
 
-	हाल OPCODE_LDH_I:
-	हाल OPCODE_LDH_S:
-	हाल OPCODE_STH:
+	case OPCODE_LDH_I:
+	case OPCODE_LDH_S:
+	case OPCODE_STH:
 		align_mask = 1UL;
-		अवरोध;
+		break;
 
-	हाल OPCODE_LDW_I:
-	हाल OPCODE_LDWA_I:
-	हाल OPCODE_LDW_S:
-	हाल OPCODE_LDWA_S:
-	हाल OPCODE_STW:
-	हाल OPCODE_STWA:
+	case OPCODE_LDW_I:
+	case OPCODE_LDWA_I:
+	case OPCODE_LDW_S:
+	case OPCODE_LDWA_S:
+	case OPCODE_STW:
+	case OPCODE_STWA:
 		align_mask = 3UL;
-		अवरोध;
+		break;
 
-	शेष:
-		चयन (regs->iir & OPCODE4_MASK) अणु
-		हाल OPCODE_LDH_L:
-		हाल OPCODE_STH_L:
+	default:
+		switch (regs->iir & OPCODE4_MASK) {
+		case OPCODE_LDH_L:
+		case OPCODE_STH_L:
 			align_mask = 1UL;
-			अवरोध;
-		हाल OPCODE_LDW_L:
-		हाल OPCODE_LDWM:
-		हाल OPCODE_STW_L:
-		हाल OPCODE_STWM:
+			break;
+		case OPCODE_LDW_L:
+		case OPCODE_LDWM:
+		case OPCODE_STW_L:
+		case OPCODE_STWM:
 			align_mask = 3UL;
-			अवरोध;
-		पूर्ण
-		अवरोध;
-	पूर्ण
+			break;
+		}
+		break;
+	}
 
-	वापस (पूर्णांक)(regs->ior & align_mask);
-पूर्ण
+	return (int)(regs->ior & align_mask);
+}
 

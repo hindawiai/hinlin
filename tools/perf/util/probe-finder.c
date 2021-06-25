@@ -1,2093 +1,2092 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * probe-finder.c : C expression to kprobe event converter
  *
  * Written by Masami Hiramatsu <mhiramat@redhat.com>
  */
 
-#समावेश <पूर्णांकtypes.h>
-#समावेश <sys/utsname.h>
-#समावेश <sys/types.h>
-#समावेश <sys/स्थिति.स>
-#समावेश <fcntl.h>
-#समावेश <त्रुटिसं.स>
-#समावेश <मानकपन.स>
-#समावेश <unistd.h>
-#समावेश <मानककोष.स>
-#समावेश <माला.स>
-#समावेश <मानकतर्क.स>
-#समावेश <dwarf-regs.h>
+#include <inttypes.h>
+#include <sys/utsname.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <errno.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdarg.h>
+#include <dwarf-regs.h>
 
-#समावेश <linux/bitops.h>
-#समावेश <linux/zभाग.स>
-#समावेश "event.h"
-#समावेश "dso.h"
-#समावेश "debug.h"
-#समावेश "intlist.h"
-#समावेश "strbuf.h"
-#समावेश "strlist.h"
-#समावेश "symbol.h"
-#समावेश "probe-finder.h"
-#समावेश "probe-file.h"
-#समावेश "string2.h"
+#include <linux/bitops.h>
+#include <linux/zalloc.h>
+#include "event.h"
+#include "dso.h"
+#include "debug.h"
+#include "intlist.h"
+#include "strbuf.h"
+#include "strlist.h"
+#include "symbol.h"
+#include "probe-finder.h"
+#include "probe-file.h"
+#include "string2.h"
 
-#अगर_घोषित HAVE_DEBUGINFOD_SUPPORT
-#समावेश <elfutils/debuginfod.h>
-#पूर्ण_अगर
+#ifdef HAVE_DEBUGINFOD_SUPPORT
+#include <elfutils/debuginfod.h>
+#endif
 
 /* Kprobe tracer basic type is up to u64 */
-#घोषणा MAX_BASIC_TYPE_BITS	64
+#define MAX_BASIC_TYPE_BITS	64
 
 /* Dwarf FL wrappers */
-अटल अक्षर *debuginfo_path;	/* Currently dummy */
+static char *debuginfo_path;	/* Currently dummy */
 
-अटल स्थिर Dwfl_Callbacks offline_callbacks = अणु
+static const Dwfl_Callbacks offline_callbacks = {
 	.find_debuginfo = dwfl_standard_find_debuginfo,
 	.debuginfo_path = &debuginfo_path,
 
 	.section_address = dwfl_offline_section_address,
 
-	/* We use this table क्रम core files too.  */
+	/* We use this table for core files too.  */
 	.find_elf = dwfl_build_id_find_elf,
-पूर्ण;
+};
 
 /* Get a Dwarf from offline image */
-अटल पूर्णांक debuginfo__init_offline_dwarf(काष्ठा debuginfo *dbg,
-					 स्थिर अक्षर *path)
-अणु
+static int debuginfo__init_offline_dwarf(struct debuginfo *dbg,
+					 const char *path)
+{
 	GElf_Addr dummy;
-	पूर्णांक fd;
+	int fd;
 
-	fd = खोलो(path, O_RDONLY);
-	अगर (fd < 0)
-		वापस fd;
+	fd = open(path, O_RDONLY);
+	if (fd < 0)
+		return fd;
 
 	dbg->dwfl = dwfl_begin(&offline_callbacks);
-	अगर (!dbg->dwfl)
-		जाओ error;
+	if (!dbg->dwfl)
+		goto error;
 
 	dwfl_report_begin(dbg->dwfl);
 	dbg->mod = dwfl_report_offline(dbg->dwfl, "", "", fd);
-	अगर (!dbg->mod)
-		जाओ error;
+	if (!dbg->mod)
+		goto error;
 
 	dbg->dbg = dwfl_module_getdwarf(dbg->mod, &dbg->bias);
-	अगर (!dbg->dbg)
-		जाओ error;
+	if (!dbg->dbg)
+		goto error;
 
 	dwfl_module_build_id(dbg->mod, &dbg->build_id, &dummy);
 
-	dwfl_report_end(dbg->dwfl, शून्य, शून्य);
+	dwfl_report_end(dbg->dwfl, NULL, NULL);
 
-	वापस 0;
+	return 0;
 error:
-	अगर (dbg->dwfl)
+	if (dbg->dwfl)
 		dwfl_end(dbg->dwfl);
-	अन्यथा
-		बंद(fd);
-	स_रखो(dbg, 0, माप(*dbg));
+	else
+		close(fd);
+	memset(dbg, 0, sizeof(*dbg));
 
-	वापस -ENOENT;
-पूर्ण
+	return -ENOENT;
+}
 
-अटल काष्ठा debuginfo *__debuginfo__new(स्थिर अक्षर *path)
-अणु
-	काष्ठा debuginfo *dbg = zalloc(माप(*dbg));
-	अगर (!dbg)
-		वापस शून्य;
+static struct debuginfo *__debuginfo__new(const char *path)
+{
+	struct debuginfo *dbg = zalloc(sizeof(*dbg));
+	if (!dbg)
+		return NULL;
 
-	अगर (debuginfo__init_offline_dwarf(dbg, path) < 0)
-		zमुक्त(&dbg);
-	अगर (dbg)
+	if (debuginfo__init_offline_dwarf(dbg, path) < 0)
+		zfree(&dbg);
+	if (dbg)
 		pr_debug("Open Debuginfo file: %s\n", path);
-	वापस dbg;
-पूर्ण
+	return dbg;
+}
 
-क्रमागत dso_binary_type distro_dwarf_types[] = अणु
+enum dso_binary_type distro_dwarf_types[] = {
 	DSO_BINARY_TYPE__FEDORA_DEBUGINFO,
 	DSO_BINARY_TYPE__UBUNTU_DEBUGINFO,
 	DSO_BINARY_TYPE__OPENEMBEDDED_DEBUGINFO,
 	DSO_BINARY_TYPE__BUILDID_DEBUGINFO,
 	DSO_BINARY_TYPE__MIXEDUP_UBUNTU_DEBUGINFO,
 	DSO_BINARY_TYPE__NOT_FOUND,
-पूर्ण;
+};
 
-काष्ठा debuginfo *debuginfo__new(स्थिर अक्षर *path)
-अणु
-	क्रमागत dso_binary_type *type;
-	अक्षर buf[PATH_MAX], nil = '\0';
-	काष्ठा dso *dso;
-	काष्ठा debuginfo *dinfo = शून्य;
+struct debuginfo *debuginfo__new(const char *path)
+{
+	enum dso_binary_type *type;
+	char buf[PATH_MAX], nil = '\0';
+	struct dso *dso;
+	struct debuginfo *dinfo = NULL;
 
-	/* Try to खोलो distro debuginfo files */
+	/* Try to open distro debuginfo files */
 	dso = dso__new(path);
-	अगर (!dso)
-		जाओ out;
+	if (!dso)
+		goto out;
 
-	क्रम (type = distro_dwarf_types;
+	for (type = distro_dwarf_types;
 	     !dinfo && *type != DSO_BINARY_TYPE__NOT_FOUND;
-	     type++) अणु
-		अगर (dso__पढ़ो_binary_type_filename(dso, *type, &nil,
+	     type++) {
+		if (dso__read_binary_type_filename(dso, *type, &nil,
 						   buf, PATH_MAX) < 0)
-			जारी;
+			continue;
 		dinfo = __debuginfo__new(buf);
-	पूर्ण
+	}
 	dso__put(dso);
 
 out:
-	/* अगर failed to खोलो all distro debuginfo, खोलो given binary */
-	वापस dinfo ? : __debuginfo__new(path);
-पूर्ण
+	/* if failed to open all distro debuginfo, open given binary */
+	return dinfo ? : __debuginfo__new(path);
+}
 
-व्योम debuginfo__delete(काष्ठा debuginfo *dbg)
-अणु
-	अगर (dbg) अणु
-		अगर (dbg->dwfl)
+void debuginfo__delete(struct debuginfo *dbg)
+{
+	if (dbg) {
+		if (dbg->dwfl)
 			dwfl_end(dbg->dwfl);
-		मुक्त(dbg);
-	पूर्ण
-पूर्ण
+		free(dbg);
+	}
+}
 
 /*
  * Probe finder related functions
  */
 
-अटल काष्ठा probe_trace_arg_ref *alloc_trace_arg_ref(दीर्घ offs)
-अणु
-	काष्ठा probe_trace_arg_ref *ref;
-	ref = zalloc(माप(काष्ठा probe_trace_arg_ref));
-	अगर (ref != शून्य)
+static struct probe_trace_arg_ref *alloc_trace_arg_ref(long offs)
+{
+	struct probe_trace_arg_ref *ref;
+	ref = zalloc(sizeof(struct probe_trace_arg_ref));
+	if (ref != NULL)
 		ref->offset = offs;
-	वापस ref;
-पूर्ण
+	return ref;
+}
 
 /*
- * Convert a location पूर्णांकo trace_arg.
- * If tvar == शून्य, this just checks variable can be converted.
- * If fentry == true and vr_die is a parameter, करो heuristic search
- * क्रम the location fuzzed by function entry mcount.
+ * Convert a location into trace_arg.
+ * If tvar == NULL, this just checks variable can be converted.
+ * If fentry == true and vr_die is a parameter, do heuristic search
+ * for the location fuzzed by function entry mcount.
  */
-अटल पूर्णांक convert_variable_location(Dwarf_Die *vr_die, Dwarf_Addr addr,
+static int convert_variable_location(Dwarf_Die *vr_die, Dwarf_Addr addr,
 				     Dwarf_Op *fb_ops, Dwarf_Die *sp_die,
-				     अचिन्हित पूर्णांक machine,
-				     काष्ठा probe_trace_arg *tvar)
-अणु
+				     unsigned int machine,
+				     struct probe_trace_arg *tvar)
+{
 	Dwarf_Attribute attr;
-	Dwarf_Addr पंचांगp = 0;
+	Dwarf_Addr tmp = 0;
 	Dwarf_Op *op;
-	माप_प्रकार nops;
-	अचिन्हित पूर्णांक regn;
+	size_t nops;
+	unsigned int regn;
 	Dwarf_Word offs = 0;
 	bool ref = false;
-	स्थिर अक्षर *regs;
-	पूर्णांक ret, ret2 = 0;
+	const char *regs;
+	int ret, ret2 = 0;
 
-	अगर (dwarf_attr(vr_die, DW_AT_बाह्यal, &attr) != शून्य)
-		जाओ अटल_var;
+	if (dwarf_attr(vr_die, DW_AT_external, &attr) != NULL)
+		goto static_var;
 
 	/* Constant value */
-	अगर (dwarf_attr(vr_die, DW_AT_स्थिर_value, &attr) &&
-	    immediate_value_is_supported()) अणु
+	if (dwarf_attr(vr_die, DW_AT_const_value, &attr) &&
+	    immediate_value_is_supported()) {
 		Dwarf_Sword snum;
 
-		अगर (!tvar)
-			वापस 0;
+		if (!tvar)
+			return 0;
 
-		dwarf_क्रमmsdata(&attr, &snum);
-		ret = aप्र_लिखो(&tvar->value, "\\%ld", (दीर्घ)snum);
+		dwarf_formsdata(&attr, &snum);
+		ret = asprintf(&tvar->value, "\\%ld", (long)snum);
 
-		वापस ret < 0 ? -ENOMEM : 0;
-	पूर्ण
+		return ret < 0 ? -ENOMEM : 0;
+	}
 
 	/* TODO: handle more than 1 exprs */
-	अगर (dwarf_attr(vr_die, DW_AT_location, &attr) == शून्य)
-		वापस -EINVAL;	/* Broken DIE ? */
-	अगर (dwarf_getlocation_addr(&attr, addr, &op, &nops, 1) <= 0) अणु
-		ret = dwarf_entrypc(sp_die, &पंचांगp);
-		अगर (ret)
-			वापस -ENOENT;
+	if (dwarf_attr(vr_die, DW_AT_location, &attr) == NULL)
+		return -EINVAL;	/* Broken DIE ? */
+	if (dwarf_getlocation_addr(&attr, addr, &op, &nops, 1) <= 0) {
+		ret = dwarf_entrypc(sp_die, &tmp);
+		if (ret)
+			return -ENOENT;
 
-		अगर (probe_conf.show_location_range &&
-			(dwarf_tag(vr_die) == DW_TAG_variable)) अणु
-			ret2 = -दुस्फल;
-		पूर्ण अन्यथा अगर (addr != पंचांगp ||
-			dwarf_tag(vr_die) != DW_TAG_क्रमmal_parameter) अणु
-			वापस -ENOENT;
-		पूर्ण
+		if (probe_conf.show_location_range &&
+			(dwarf_tag(vr_die) == DW_TAG_variable)) {
+			ret2 = -ERANGE;
+		} else if (addr != tmp ||
+			dwarf_tag(vr_die) != DW_TAG_formal_parameter) {
+			return -ENOENT;
+		}
 
-		ret = dwarf_highpc(sp_die, &पंचांगp);
-		अगर (ret)
-			वापस -ENOENT;
+		ret = dwarf_highpc(sp_die, &tmp);
+		if (ret)
+			return -ENOENT;
 		/*
 		 * This is fuzzed by fentry mcount. We try to find the
 		 * parameter location at the earliest address.
 		 */
-		क्रम (addr += 1; addr <= पंचांगp; addr++) अणु
-			अगर (dwarf_getlocation_addr(&attr, addr, &op,
+		for (addr += 1; addr <= tmp; addr++) {
+			if (dwarf_getlocation_addr(&attr, addr, &op,
 						   &nops, 1) > 0)
-				जाओ found;
-		पूर्ण
-		वापस -ENOENT;
-	पूर्ण
+				goto found;
+		}
+		return -ENOENT;
+	}
 found:
-	अगर (nops == 0)
-		/* TODO: Support स्थिर_value */
-		वापस -ENOENT;
+	if (nops == 0)
+		/* TODO: Support const_value */
+		return -ENOENT;
 
-	अगर (op->atom == DW_OP_addr) अणु
-अटल_var:
-		अगर (!tvar)
-			वापस ret2;
+	if (op->atom == DW_OP_addr) {
+static_var:
+		if (!tvar)
+			return ret2;
 		/* Static variables on memory (not stack), make @varname */
-		ret = म_माप(dwarf_diename(vr_die));
+		ret = strlen(dwarf_diename(vr_die));
 		tvar->value = zalloc(ret + 2);
-		अगर (tvar->value == शून्य)
-			वापस -ENOMEM;
-		snम_लिखो(tvar->value, ret + 2, "@%s", dwarf_diename(vr_die));
-		tvar->ref = alloc_trace_arg_ref((दीर्घ)offs);
-		अगर (tvar->ref == शून्य)
-			वापस -ENOMEM;
-		वापस ret2;
-	पूर्ण
+		if (tvar->value == NULL)
+			return -ENOMEM;
+		snprintf(tvar->value, ret + 2, "@%s", dwarf_diename(vr_die));
+		tvar->ref = alloc_trace_arg_ref((long)offs);
+		if (tvar->ref == NULL)
+			return -ENOMEM;
+		return ret2;
+	}
 
 	/* If this is based on frame buffer, set the offset */
-	अगर (op->atom == DW_OP_fbreg) अणु
-		अगर (fb_ops == शून्य)
-			वापस -ENOTSUP;
+	if (op->atom == DW_OP_fbreg) {
+		if (fb_ops == NULL)
+			return -ENOTSUP;
 		ref = true;
 		offs = op->number;
 		op = &fb_ops[0];
-	पूर्ण
+	}
 
-	अगर (op->atom >= DW_OP_breg0 && op->atom <= DW_OP_breg31) अणु
+	if (op->atom >= DW_OP_breg0 && op->atom <= DW_OP_breg31) {
 		regn = op->atom - DW_OP_breg0;
 		offs += op->number;
 		ref = true;
-	पूर्ण अन्यथा अगर (op->atom >= DW_OP_reg0 && op->atom <= DW_OP_reg31) अणु
+	} else if (op->atom >= DW_OP_reg0 && op->atom <= DW_OP_reg31) {
 		regn = op->atom - DW_OP_reg0;
-	पूर्ण अन्यथा अगर (op->atom == DW_OP_bregx) अणु
+	} else if (op->atom == DW_OP_bregx) {
 		regn = op->number;
 		offs += op->number2;
 		ref = true;
-	पूर्ण अन्यथा अगर (op->atom == DW_OP_regx) अणु
+	} else if (op->atom == DW_OP_regx) {
 		regn = op->number;
-	पूर्ण अन्यथा अणु
+	} else {
 		pr_debug("DW_OP %x is not supported.\n", op->atom);
-		वापस -ENOTSUP;
-	पूर्ण
+		return -ENOTSUP;
+	}
 
-	अगर (!tvar)
-		वापस ret2;
+	if (!tvar)
+		return ret2;
 
 	regs = get_dwarf_regstr(regn, machine);
-	अगर (!regs) अणु
+	if (!regs) {
 		/* This should be a bug in DWARF or this tool */
 		pr_warning("Mapping for the register number %u "
 			   "missing on this architecture.\n", regn);
-		वापस -ENOTSUP;
-	पूर्ण
+		return -ENOTSUP;
+	}
 
 	tvar->value = strdup(regs);
-	अगर (tvar->value == शून्य)
-		वापस -ENOMEM;
+	if (tvar->value == NULL)
+		return -ENOMEM;
 
-	अगर (ref) अणु
-		tvar->ref = alloc_trace_arg_ref((दीर्घ)offs);
-		अगर (tvar->ref == शून्य)
-			वापस -ENOMEM;
-	पूर्ण
-	वापस ret2;
-पूर्ण
+	if (ref) {
+		tvar->ref = alloc_trace_arg_ref((long)offs);
+		if (tvar->ref == NULL)
+			return -ENOMEM;
+	}
+	return ret2;
+}
 
-#घोषणा BYTES_TO_BITS(nb)	((nb) * BITS_PER_LONG / माप(दीर्घ))
+#define BYTES_TO_BITS(nb)	((nb) * BITS_PER_LONG / sizeof(long))
 
-अटल पूर्णांक convert_variable_type(Dwarf_Die *vr_die,
-				 काष्ठा probe_trace_arg *tvar,
-				 स्थिर अक्षर *cast, bool user_access)
-अणु
-	काष्ठा probe_trace_arg_ref **ref_ptr = &tvar->ref;
+static int convert_variable_type(Dwarf_Die *vr_die,
+				 struct probe_trace_arg *tvar,
+				 const char *cast, bool user_access)
+{
+	struct probe_trace_arg_ref **ref_ptr = &tvar->ref;
 	Dwarf_Die type;
-	अक्षर buf[16];
-	अक्षर sbuf[STRERR_बफ_मानE];
-	पूर्णांक bsize, boffs, total;
-	पूर्णांक ret;
-	अक्षर prefix;
+	char buf[16];
+	char sbuf[STRERR_BUFSIZE];
+	int bsize, boffs, total;
+	int ret;
+	char prefix;
 
 	/* TODO: check all types */
-	अगर (cast && म_भेद(cast, "string") != 0 && म_भेद(cast, "ustring") &&
-	    म_भेद(cast, "x") != 0 &&
-	    म_भेद(cast, "s") != 0 && म_भेद(cast, "u") != 0) अणु
+	if (cast && strcmp(cast, "string") != 0 && strcmp(cast, "ustring") &&
+	    strcmp(cast, "x") != 0 &&
+	    strcmp(cast, "s") != 0 && strcmp(cast, "u") != 0) {
 		/* Non string type is OK */
-		/* and respect चिन्हितness/hexadecimal cast */
+		/* and respect signedness/hexadecimal cast */
 		tvar->type = strdup(cast);
-		वापस (tvar->type == शून्य) ? -ENOMEM : 0;
-	पूर्ण
+		return (tvar->type == NULL) ? -ENOMEM : 0;
+	}
 
 	bsize = dwarf_bitsize(vr_die);
-	अगर (bsize > 0) अणु
+	if (bsize > 0) {
 		/* This is a bitfield */
 		boffs = dwarf_bitoffset(vr_die);
 		total = dwarf_bytesize(vr_die);
-		अगर (boffs < 0 || total < 0)
-			वापस -ENOENT;
-		ret = snम_लिखो(buf, 16, "b%d@%d/%zd", bsize, boffs,
+		if (boffs < 0 || total < 0)
+			return -ENOENT;
+		ret = snprintf(buf, 16, "b%d@%d/%zd", bsize, boffs,
 				BYTES_TO_BITS(total));
-		जाओ क्रमmatted;
-	पूर्ण
+		goto formatted;
+	}
 
-	अगर (die_get_real_type(vr_die, &type) == शून्य) अणु
+	if (die_get_real_type(vr_die, &type) == NULL) {
 		pr_warning("Failed to get a type information of %s.\n",
 			   dwarf_diename(vr_die));
-		वापस -ENOENT;
-	पूर्ण
+		return -ENOENT;
+	}
 
 	pr_debug("%s type is %s.\n",
 		 dwarf_diename(vr_die), dwarf_diename(&type));
 
-	अगर (cast && (!म_भेद(cast, "string") || !म_भेद(cast, "ustring"))) अणु
+	if (cast && (!strcmp(cast, "string") || !strcmp(cast, "ustring"))) {
 		/* String type */
 		ret = dwarf_tag(&type);
-		अगर (ret != DW_TAG_poपूर्णांकer_type &&
-		    ret != DW_TAG_array_type) अणु
+		if (ret != DW_TAG_pointer_type &&
+		    ret != DW_TAG_array_type) {
 			pr_warning("Failed to cast into string: "
 				   "%s(%s) is not a pointer nor array.\n",
 				   dwarf_diename(vr_die), dwarf_diename(&type));
-			वापस -EINVAL;
-		पूर्ण
-		अगर (die_get_real_type(&type, &type) == शून्य) अणु
+			return -EINVAL;
+		}
+		if (die_get_real_type(&type, &type) == NULL) {
 			pr_warning("Failed to get a type"
 				   " information.\n");
-			वापस -ENOENT;
-		पूर्ण
-		अगर (ret == DW_TAG_poपूर्णांकer_type) अणु
-			जबतक (*ref_ptr)
+			return -ENOENT;
+		}
+		if (ret == DW_TAG_pointer_type) {
+			while (*ref_ptr)
 				ref_ptr = &(*ref_ptr)->next;
 			/* Add new reference with offset +0 */
-			*ref_ptr = zalloc(माप(काष्ठा probe_trace_arg_ref));
-			अगर (*ref_ptr == शून्य) अणु
+			*ref_ptr = zalloc(sizeof(struct probe_trace_arg_ref));
+			if (*ref_ptr == NULL) {
 				pr_warning("Out of memory error\n");
-				वापस -ENOMEM;
-			पूर्ण
+				return -ENOMEM;
+			}
 			(*ref_ptr)->user_access = user_access;
-		पूर्ण
-		अगर (!die_compare_name(&type, "char") &&
-		    !die_compare_name(&type, "unsigned char")) अणु
+		}
+		if (!die_compare_name(&type, "char") &&
+		    !die_compare_name(&type, "unsigned char")) {
 			pr_warning("Failed to cast into string: "
 				   "%s is not (unsigned) char *.\n",
 				   dwarf_diename(vr_die));
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 		tvar->type = strdup(cast);
-		वापस (tvar->type == शून्य) ? -ENOMEM : 0;
-	पूर्ण
+		return (tvar->type == NULL) ? -ENOMEM : 0;
+	}
 
-	अगर (cast && (म_भेद(cast, "u") == 0))
+	if (cast && (strcmp(cast, "u") == 0))
 		prefix = 'u';
-	अन्यथा अगर (cast && (म_भेद(cast, "s") == 0))
+	else if (cast && (strcmp(cast, "s") == 0))
 		prefix = 's';
-	अन्यथा अगर (cast && (म_भेद(cast, "x") == 0) &&
+	else if (cast && (strcmp(cast, "x") == 0) &&
 		 probe_type_is_available(PROBE_TYPE_X))
 		prefix = 'x';
-	अन्यथा
-		prefix = die_is_चिन्हित_type(&type) ? 's' :
+	else
+		prefix = die_is_signed_type(&type) ? 's' :
 			 probe_type_is_available(PROBE_TYPE_X) ? 'x' : 'u';
 
 	ret = dwarf_bytesize(&type);
-	अगर (ret <= 0)
-		/* No size ... try to use शेष type */
-		वापस 0;
+	if (ret <= 0)
+		/* No size ... try to use default type */
+		return 0;
 	ret = BYTES_TO_BITS(ret);
 
 	/* Check the bitwidth */
-	अगर (ret > MAX_BASIC_TYPE_BITS) अणु
+	if (ret > MAX_BASIC_TYPE_BITS) {
 		pr_info("%s exceeds max-bitwidth. Cut down to %d bits.\n",
 			dwarf_diename(&type), MAX_BASIC_TYPE_BITS);
 		ret = MAX_BASIC_TYPE_BITS;
-	पूर्ण
-	ret = snम_लिखो(buf, 16, "%c%d", prefix, ret);
+	}
+	ret = snprintf(buf, 16, "%c%d", prefix, ret);
 
-क्रमmatted:
-	अगर (ret < 0 || ret >= 16) अणु
-		अगर (ret >= 16)
+formatted:
+	if (ret < 0 || ret >= 16) {
+		if (ret >= 16)
 			ret = -E2BIG;
 		pr_warning("Failed to convert variable type: %s\n",
-			   str_error_r(-ret, sbuf, माप(sbuf)));
-		वापस ret;
-	पूर्ण
+			   str_error_r(-ret, sbuf, sizeof(sbuf)));
+		return ret;
+	}
 	tvar->type = strdup(buf);
-	अगर (tvar->type == शून्य)
-		वापस -ENOMEM;
-	वापस 0;
-पूर्ण
+	if (tvar->type == NULL)
+		return -ENOMEM;
+	return 0;
+}
 
-अटल पूर्णांक convert_variable_fields(Dwarf_Die *vr_die, स्थिर अक्षर *varname,
-				    काष्ठा perf_probe_arg_field *field,
-				    काष्ठा probe_trace_arg_ref **ref_ptr,
+static int convert_variable_fields(Dwarf_Die *vr_die, const char *varname,
+				    struct perf_probe_arg_field *field,
+				    struct probe_trace_arg_ref **ref_ptr,
 				    Dwarf_Die *die_mem, bool user_access)
-अणु
-	काष्ठा probe_trace_arg_ref *ref = *ref_ptr;
+{
+	struct probe_trace_arg_ref *ref = *ref_ptr;
 	Dwarf_Die type;
 	Dwarf_Word offs;
-	पूर्णांक ret, tag;
+	int ret, tag;
 
 	pr_debug("converting %s in %s\n", field->name, varname);
-	अगर (die_get_real_type(vr_die, &type) == शून्य) अणु
+	if (die_get_real_type(vr_die, &type) == NULL) {
 		pr_warning("Failed to get the type of %s.\n", varname);
-		वापस -ENOENT;
-	पूर्ण
+		return -ENOENT;
+	}
 	pr_debug2("Var real type: %s (%x)\n", dwarf_diename(&type),
-		  (अचिन्हित)dwarf_dieoffset(&type));
+		  (unsigned)dwarf_dieoffset(&type));
 	tag = dwarf_tag(&type);
 
-	अगर (field->name[0] == '[' &&
-	    (tag == DW_TAG_array_type || tag == DW_TAG_poपूर्णांकer_type)) अणु
-		/* Save original type क्रम next field or type */
-		स_नकल(die_mem, &type, माप(*die_mem));
+	if (field->name[0] == '[' &&
+	    (tag == DW_TAG_array_type || tag == DW_TAG_pointer_type)) {
+		/* Save original type for next field or type */
+		memcpy(die_mem, &type, sizeof(*die_mem));
 		/* Get the type of this array */
-		अगर (die_get_real_type(&type, &type) == शून्य) अणु
+		if (die_get_real_type(&type, &type) == NULL) {
 			pr_warning("Failed to get the type of %s.\n", varname);
-			वापस -ENOENT;
-		पूर्ण
+			return -ENOENT;
+		}
 		pr_debug2("Array real type: %s (%x)\n", dwarf_diename(&type),
-			 (अचिन्हित)dwarf_dieoffset(&type));
-		अगर (tag == DW_TAG_poपूर्णांकer_type) अणु
-			ref = zalloc(माप(काष्ठा probe_trace_arg_ref));
-			अगर (ref == शून्य)
-				वापस -ENOMEM;
-			अगर (*ref_ptr)
+			 (unsigned)dwarf_dieoffset(&type));
+		if (tag == DW_TAG_pointer_type) {
+			ref = zalloc(sizeof(struct probe_trace_arg_ref));
+			if (ref == NULL)
+				return -ENOMEM;
+			if (*ref_ptr)
 				(*ref_ptr)->next = ref;
-			अन्यथा
+			else
 				*ref_ptr = ref;
-		पूर्ण
+		}
 		ref->offset += dwarf_bytesize(&type) * field->index;
 		ref->user_access = user_access;
-		जाओ next;
-	पूर्ण अन्यथा अगर (tag == DW_TAG_poपूर्णांकer_type) अणु
-		/* Check the poपूर्णांकer and dereference */
-		अगर (!field->ref) अणु
+		goto next;
+	} else if (tag == DW_TAG_pointer_type) {
+		/* Check the pointer and dereference */
+		if (!field->ref) {
 			pr_err("Semantic error: %s must be referred by '->'\n",
 			       field->name);
-			वापस -EINVAL;
-		पूर्ण
-		/* Get the type poपूर्णांकed by this poपूर्णांकer */
-		अगर (die_get_real_type(&type, &type) == शून्य) अणु
+			return -EINVAL;
+		}
+		/* Get the type pointed by this pointer */
+		if (die_get_real_type(&type, &type) == NULL) {
 			pr_warning("Failed to get the type of %s.\n", varname);
-			वापस -ENOENT;
-		पूर्ण
-		/* Verअगरy it is a data काष्ठाure  */
+			return -ENOENT;
+		}
+		/* Verify it is a data structure  */
 		tag = dwarf_tag(&type);
-		अगर (tag != DW_TAG_काष्ठाure_type && tag != DW_TAG_जोड़_type) अणु
+		if (tag != DW_TAG_structure_type && tag != DW_TAG_union_type) {
 			pr_warning("%s is not a data structure nor a union.\n",
 				   varname);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
-		ref = zalloc(माप(काष्ठा probe_trace_arg_ref));
-		अगर (ref == शून्य)
-			वापस -ENOMEM;
-		अगर (*ref_ptr)
+		ref = zalloc(sizeof(struct probe_trace_arg_ref));
+		if (ref == NULL)
+			return -ENOMEM;
+		if (*ref_ptr)
 			(*ref_ptr)->next = ref;
-		अन्यथा
+		else
 			*ref_ptr = ref;
-	पूर्ण अन्यथा अणु
-		/* Verअगरy it is a data काष्ठाure  */
-		अगर (tag != DW_TAG_काष्ठाure_type && tag != DW_TAG_जोड़_type) अणु
+	} else {
+		/* Verify it is a data structure  */
+		if (tag != DW_TAG_structure_type && tag != DW_TAG_union_type) {
 			pr_warning("%s is not a data structure nor a union.\n",
 				   varname);
-			वापस -EINVAL;
-		पूर्ण
-		अगर (field->name[0] == '[') अणु
+			return -EINVAL;
+		}
+		if (field->name[0] == '[') {
 			pr_err("Semantic error: %s is not a pointer"
 			       " nor array.\n", varname);
-			वापस -EINVAL;
-		पूर्ण
-		/* While processing unnamed field, we करोn't care about this */
-		अगर (field->ref && dwarf_diename(vr_die)) अणु
+			return -EINVAL;
+		}
+		/* While processing unnamed field, we don't care about this */
+		if (field->ref && dwarf_diename(vr_die)) {
 			pr_err("Semantic error: %s must be referred by '.'\n",
 			       field->name);
-			वापस -EINVAL;
-		पूर्ण
-		अगर (!ref) अणु
+			return -EINVAL;
+		}
+		if (!ref) {
 			pr_warning("Structure on a register is not "
 				   "supported yet.\n");
-			वापस -ENOTSUP;
-		पूर्ण
-	पूर्ण
+			return -ENOTSUP;
+		}
+	}
 
-	अगर (die_find_member(&type, field->name, die_mem) == शून्य) अणु
+	if (die_find_member(&type, field->name, die_mem) == NULL) {
 		pr_warning("%s(type:%s) has no member %s.\n", varname,
 			   dwarf_diename(&type), field->name);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/* Get the offset of the field */
-	अगर (tag == DW_TAG_जोड़_type) अणु
+	if (tag == DW_TAG_union_type) {
 		offs = 0;
-	पूर्ण अन्यथा अणु
+	} else {
 		ret = die_get_data_member_location(die_mem, &offs);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			pr_warning("Failed to get the offset of %s.\n",
 				   field->name);
-			वापस ret;
-		पूर्ण
-	पूर्ण
-	ref->offset += (दीर्घ)offs;
+			return ret;
+		}
+	}
+	ref->offset += (long)offs;
 	ref->user_access = user_access;
 
 	/* If this member is unnamed, we need to reuse this field */
-	अगर (!dwarf_diename(die_mem))
-		वापस convert_variable_fields(die_mem, varname, field,
+	if (!dwarf_diename(die_mem))
+		return convert_variable_fields(die_mem, varname, field,
 						&ref, die_mem, user_access);
 
 next:
 	/* Converting next field */
-	अगर (field->next)
-		वापस convert_variable_fields(die_mem, field->name,
+	if (field->next)
+		return convert_variable_fields(die_mem, field->name,
 				field->next, &ref, die_mem, user_access);
-	अन्यथा
-		वापस 0;
-पूर्ण
+	else
+		return 0;
+}
 
-अटल व्योम prपूर्णांक_var_not_found(स्थिर अक्षर *varname)
-अणु
+static void print_var_not_found(const char *varname)
+{
 	pr_err("Failed to find the location of the '%s' variable at this address.\n"
 	       " Perhaps it has been optimized out.\n"
 	       " Use -V with the --range option to show '%s' location range.\n",
 		varname, varname);
-पूर्ण
+}
 
-/* Show a variables in kprobe event क्रमmat */
-अटल पूर्णांक convert_variable(Dwarf_Die *vr_die, काष्ठा probe_finder *pf)
-अणु
+/* Show a variables in kprobe event format */
+static int convert_variable(Dwarf_Die *vr_die, struct probe_finder *pf)
+{
 	Dwarf_Die die_mem;
-	पूर्णांक ret;
+	int ret;
 
 	pr_debug("Converting variable %s into trace event.\n",
 		 dwarf_diename(vr_die));
 
 	ret = convert_variable_location(vr_die, pf->addr, pf->fb_ops,
 					&pf->sp_die, pf->machine, pf->tvar);
-	अगर (ret == -ENOENT && pf->skip_empty_arg)
+	if (ret == -ENOENT && pf->skip_empty_arg)
 		/* This can be found in other place. skip it */
-		वापस 0;
-	अगर (ret == -ENOENT || ret == -EINVAL) अणु
-		prपूर्णांक_var_not_found(pf->pvar->var);
-	पूर्ण अन्यथा अगर (ret == -ENOTSUP)
+		return 0;
+	if (ret == -ENOENT || ret == -EINVAL) {
+		print_var_not_found(pf->pvar->var);
+	} else if (ret == -ENOTSUP)
 		pr_err("Sorry, we don't support this variable location yet.\n");
-	अन्यथा अगर (ret == 0 && pf->pvar->field) अणु
+	else if (ret == 0 && pf->pvar->field) {
 		ret = convert_variable_fields(vr_die, pf->pvar->var,
 					      pf->pvar->field, &pf->tvar->ref,
 					      &die_mem, pf->pvar->user_access);
 		vr_die = &die_mem;
-	पूर्ण
-	अगर (ret == 0)
+	}
+	if (ret == 0)
 		ret = convert_variable_type(vr_die, pf->tvar, pf->pvar->type,
 					    pf->pvar->user_access);
-	/* *expr will be cached in libdw. Don't मुक्त it. */
-	वापस ret;
-पूर्ण
+	/* *expr will be cached in libdw. Don't free it. */
+	return ret;
+}
 
 /* Find a variable in a scope DIE */
-अटल पूर्णांक find_variable(Dwarf_Die *sc_die, काष्ठा probe_finder *pf)
-अणु
+static int find_variable(Dwarf_Die *sc_die, struct probe_finder *pf)
+{
 	Dwarf_Die vr_die;
-	अक्षर *buf, *ptr;
-	पूर्णांक ret = 0;
+	char *buf, *ptr;
+	int ret = 0;
 
 	/* Copy raw parameters */
-	अगर (!is_c_varname(pf->pvar->var))
-		वापस copy_to_probe_trace_arg(pf->tvar, pf->pvar);
+	if (!is_c_varname(pf->pvar->var))
+		return copy_to_probe_trace_arg(pf->tvar, pf->pvar);
 
-	अगर (pf->pvar->name)
+	if (pf->pvar->name)
 		pf->tvar->name = strdup(pf->pvar->name);
-	अन्यथा अणु
+	else {
 		buf = synthesize_perf_probe_arg(pf->pvar);
-		अगर (!buf)
-			वापस -ENOMEM;
-		ptr = म_अक्षर(buf, ':');	/* Change type separator to _ */
-		अगर (ptr)
+		if (!buf)
+			return -ENOMEM;
+		ptr = strchr(buf, ':');	/* Change type separator to _ */
+		if (ptr)
 			*ptr = '_';
 		pf->tvar->name = buf;
-	पूर्ण
-	अगर (pf->tvar->name == शून्य)
-		वापस -ENOMEM;
+	}
+	if (pf->tvar->name == NULL)
+		return -ENOMEM;
 
 	pr_debug("Searching '%s' variable in context.\n", pf->pvar->var);
-	/* Search child die क्रम local variables and parameters. */
-	अगर (!die_find_variable_at(sc_die, pf->pvar->var, pf->addr, &vr_die)) अणु
+	/* Search child die for local variables and parameters. */
+	if (!die_find_variable_at(sc_die, pf->pvar->var, pf->addr, &vr_die)) {
 		/* Search again in global variables */
-		अगर (!die_find_variable_at(&pf->cu_die, pf->pvar->var,
-						0, &vr_die)) अणु
-			अगर (pf->skip_empty_arg)
-				वापस 0;
+		if (!die_find_variable_at(&pf->cu_die, pf->pvar->var,
+						0, &vr_die)) {
+			if (pf->skip_empty_arg)
+				return 0;
 			pr_warning("Failed to find '%s' in this function.\n",
 				   pf->pvar->var);
 			ret = -ENOENT;
-		पूर्ण
-	पूर्ण
-	अगर (ret >= 0)
+		}
+	}
+	if (ret >= 0)
 		ret = convert_variable(&vr_die, pf);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-/* Convert subprogram DIE to trace poपूर्णांक */
-अटल पूर्णांक convert_to_trace_poपूर्णांक(Dwarf_Die *sp_die, Dwfl_Module *mod,
+/* Convert subprogram DIE to trace point */
+static int convert_to_trace_point(Dwarf_Die *sp_die, Dwfl_Module *mod,
 				  Dwarf_Addr paddr, bool retprobe,
-				  स्थिर अक्षर *function,
-				  काष्ठा probe_trace_poपूर्णांक *tp)
-अणु
+				  const char *function,
+				  struct probe_trace_point *tp)
+{
 	Dwarf_Addr eaddr;
 	GElf_Sym sym;
-	स्थिर अक्षर *symbol;
+	const char *symbol;
 
-	/* Verअगरy the address is correct */
-	अगर (!dwarf_haspc(sp_die, paddr)) अणु
+	/* Verify the address is correct */
+	if (!dwarf_haspc(sp_die, paddr)) {
 		pr_warning("Specified offset is out of %s\n",
 			   dwarf_diename(sp_die));
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (dwarf_entrypc(sp_die, &eaddr) == 0) अणु
+	if (dwarf_entrypc(sp_die, &eaddr) == 0) {
 		/* If the DIE has entrypc, use it. */
 		symbol = dwarf_diename(sp_die);
-	पूर्ण अन्यथा अणु
+	} else {
 		/* Try to get actual symbol name and address from symtab */
-		symbol = dwfl_module_addrsym(mod, paddr, &sym, शून्य);
+		symbol = dwfl_module_addrsym(mod, paddr, &sym, NULL);
 		eaddr = sym.st_value;
-	पूर्ण
-	अगर (!symbol) अणु
+	}
+	if (!symbol) {
 		pr_warning("Failed to find symbol at 0x%lx\n",
-			   (अचिन्हित दीर्घ)paddr);
-		वापस -ENOENT;
-	पूर्ण
+			   (unsigned long)paddr);
+		return -ENOENT;
+	}
 
-	tp->offset = (अचिन्हित दीर्घ)(paddr - eaddr);
-	tp->address = (अचिन्हित दीर्घ)paddr;
+	tp->offset = (unsigned long)(paddr - eaddr);
+	tp->address = (unsigned long)paddr;
 	tp->symbol = strdup(symbol);
-	अगर (!tp->symbol)
-		वापस -ENOMEM;
+	if (!tp->symbol)
+		return -ENOMEM;
 
 	/* Return probe must be on the head of a subprogram */
-	अगर (retprobe) अणु
-		अगर (eaddr != paddr) अणु
+	if (retprobe) {
+		if (eaddr != paddr) {
 			pr_warning("Failed to find \"%s%%return\",\n"
 				   " because %s is an inlined function and"
 				   " has no return point.\n", function,
 				   function);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 		tp->retprobe = true;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* Call probe_finder callback with scope DIE */
-अटल पूर्णांक call_probe_finder(Dwarf_Die *sc_die, काष्ठा probe_finder *pf)
-अणु
+static int call_probe_finder(Dwarf_Die *sc_die, struct probe_finder *pf)
+{
 	Dwarf_Attribute fb_attr;
-	Dwarf_Frame *frame = शून्य;
-	माप_प्रकार nops;
-	पूर्णांक ret;
+	Dwarf_Frame *frame = NULL;
+	size_t nops;
+	int ret;
 
-	अगर (!sc_die) अणु
+	if (!sc_die) {
 		pr_err("Caller must pass a scope DIE. Program error.\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/* If not a real subprogram, find a real one */
-	अगर (!die_is_func_def(sc_die)) अणु
-		अगर (!die_find_realfunc(&pf->cu_die, pf->addr, &pf->sp_die)) अणु
-			अगर (die_find_tailfunc(&pf->cu_die, pf->addr, &pf->sp_die)) अणु
+	if (!die_is_func_def(sc_die)) {
+		if (!die_find_realfunc(&pf->cu_die, pf->addr, &pf->sp_die)) {
+			if (die_find_tailfunc(&pf->cu_die, pf->addr, &pf->sp_die)) {
 				pr_warning("Ignoring tail call from %s\n",
 						dwarf_diename(&pf->sp_die));
-				वापस 0;
-			पूर्ण अन्यथा अणु
+				return 0;
+			} else {
 				pr_warning("Failed to find probe point in any "
 					   "functions.\n");
-				वापस -ENOENT;
-			पूर्ण
-		पूर्ण
-	पूर्ण अन्यथा
-		स_नकल(&pf->sp_die, sc_die, माप(Dwarf_Die));
+				return -ENOENT;
+			}
+		}
+	} else
+		memcpy(&pf->sp_die, sc_die, sizeof(Dwarf_Die));
 
 	/* Get the frame base attribute/ops from subprogram */
 	dwarf_attr(&pf->sp_die, DW_AT_frame_base, &fb_attr);
 	ret = dwarf_getlocation_addr(&fb_attr, pf->addr, &pf->fb_ops, &nops, 1);
-	अगर (ret <= 0 || nops == 0) अणु
-		pf->fb_ops = शून्य;
-#अगर _ELFUTILS_PREREQ(0, 142)
-	पूर्ण अन्यथा अगर (nops == 1 && pf->fb_ops[0].atom == DW_OP_call_frame_cfa &&
-		   (pf->cfi_eh != शून्य || pf->cfi_dbg != शून्य)) अणु
-		अगर ((dwarf_cfi_addrframe(pf->cfi_eh, pf->addr, &frame) != 0 &&
+	if (ret <= 0 || nops == 0) {
+		pf->fb_ops = NULL;
+#if _ELFUTILS_PREREQ(0, 142)
+	} else if (nops == 1 && pf->fb_ops[0].atom == DW_OP_call_frame_cfa &&
+		   (pf->cfi_eh != NULL || pf->cfi_dbg != NULL)) {
+		if ((dwarf_cfi_addrframe(pf->cfi_eh, pf->addr, &frame) != 0 &&
 		     (dwarf_cfi_addrframe(pf->cfi_dbg, pf->addr, &frame) != 0)) ||
-		    dwarf_frame_cfa(frame, &pf->fb_ops, &nops) != 0) अणु
+		    dwarf_frame_cfa(frame, &pf->fb_ops, &nops) != 0) {
 			pr_warning("Failed to get call frame on 0x%jx\n",
-				   (uपूर्णांकmax_t)pf->addr);
-			मुक्त(frame);
-			वापस -ENOENT;
-		पूर्ण
-#पूर्ण_अगर
-	पूर्ण
+				   (uintmax_t)pf->addr);
+			free(frame);
+			return -ENOENT;
+		}
+#endif
+	}
 
 	/* Call finder's callback handler */
 	ret = pf->callback(sc_die, pf);
 
-	/* Since *pf->fb_ops can be a part of frame. we should मुक्त it here. */
-	मुक्त(frame);
-	pf->fb_ops = शून्य;
+	/* Since *pf->fb_ops can be a part of frame. we should free it here. */
+	free(frame);
+	pf->fb_ops = NULL;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-काष्ठा find_scope_param अणु
-	स्थिर अक्षर *function;
-	स्थिर अक्षर *file;
-	पूर्णांक line;
-	पूर्णांक dअगरf;
+struct find_scope_param {
+	const char *function;
+	const char *file;
+	int line;
+	int diff;
 	Dwarf_Die *die_mem;
 	bool found;
-पूर्ण;
+};
 
-अटल पूर्णांक find_best_scope_cb(Dwarf_Die *fn_die, व्योम *data)
-अणु
-	काष्ठा find_scope_param *fsp = data;
-	स्थिर अक्षर *file;
-	पूर्णांक lno;
+static int find_best_scope_cb(Dwarf_Die *fn_die, void *data)
+{
+	struct find_scope_param *fsp = data;
+	const char *file;
+	int lno;
 
-	/* Skip अगर declared file name करोes not match */
-	अगर (fsp->file) अणु
+	/* Skip if declared file name does not match */
+	if (fsp->file) {
 		file = dwarf_decl_file(fn_die);
-		अगर (!file || म_भेद(fsp->file, file) != 0)
-			वापस 0;
-	पूर्ण
+		if (!file || strcmp(fsp->file, file) != 0)
+			return 0;
+	}
 	/* If the function name is given, that's what user expects */
-	अगर (fsp->function) अणु
-		अगर (die_match_name(fn_die, fsp->function)) अणु
-			स_नकल(fsp->die_mem, fn_die, माप(Dwarf_Die));
+	if (fsp->function) {
+		if (die_match_name(fn_die, fsp->function)) {
+			memcpy(fsp->die_mem, fn_die, sizeof(Dwarf_Die));
 			fsp->found = true;
-			वापस 1;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			return 1;
+		}
+	} else {
 		/* With the line number, find the nearest declared DIE */
 		dwarf_decl_line(fn_die, &lno);
-		अगर (lno < fsp->line && fsp->dअगरf > fsp->line - lno) अणु
-			/* Keep a candidate and जारी */
-			fsp->dअगरf = fsp->line - lno;
-			स_नकल(fsp->die_mem, fn_die, माप(Dwarf_Die));
+		if (lno < fsp->line && fsp->diff > fsp->line - lno) {
+			/* Keep a candidate and continue */
+			fsp->diff = fsp->line - lno;
+			memcpy(fsp->die_mem, fn_die, sizeof(Dwarf_Die));
 			fsp->found = true;
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+		}
+	}
+	return 0;
+}
 
 /* Return innermost DIE */
-अटल पूर्णांक find_inner_scope_cb(Dwarf_Die *fn_die, व्योम *data)
-अणु
-	काष्ठा find_scope_param *fsp = data;
+static int find_inner_scope_cb(Dwarf_Die *fn_die, void *data)
+{
+	struct find_scope_param *fsp = data;
 
-	स_नकल(fsp->die_mem, fn_die, माप(Dwarf_Die));
+	memcpy(fsp->die_mem, fn_die, sizeof(Dwarf_Die));
 	fsp->found = true;
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
 /* Find an appropriate scope fits to given conditions */
-अटल Dwarf_Die *find_best_scope(काष्ठा probe_finder *pf, Dwarf_Die *die_mem)
-अणु
-	काष्ठा find_scope_param fsp = अणु
-		.function = pf->pev->poपूर्णांक.function,
+static Dwarf_Die *find_best_scope(struct probe_finder *pf, Dwarf_Die *die_mem)
+{
+	struct find_scope_param fsp = {
+		.function = pf->pev->point.function,
 		.file = pf->fname,
 		.line = pf->lno,
-		.dअगरf = पूर्णांक_उच्च,
+		.diff = INT_MAX,
 		.die_mem = die_mem,
 		.found = false,
-	पूर्ण;
-	पूर्णांक ret;
+	};
+	int ret;
 
 	ret = cu_walk_functions_at(&pf->cu_die, pf->addr, find_best_scope_cb,
 				   &fsp);
-	अगर (!ret && !fsp.found)
+	if (!ret && !fsp.found)
 		cu_walk_functions_at(&pf->cu_die, pf->addr,
 				     find_inner_scope_cb, &fsp);
 
-	वापस fsp.found ? die_mem : शून्य;
-पूर्ण
+	return fsp.found ? die_mem : NULL;
+}
 
-अटल पूर्णांक verअगरy_representive_line(काष्ठा probe_finder *pf, स्थिर अक्षर *fname,
-				पूर्णांक lineno, Dwarf_Addr addr)
-अणु
-	स्थिर अक्षर *__fname, *__func = शून्य;
+static int verify_representive_line(struct probe_finder *pf, const char *fname,
+				int lineno, Dwarf_Addr addr)
+{
+	const char *__fname, *__func = NULL;
 	Dwarf_Die die_mem;
-	पूर्णांक __lineno;
+	int __lineno;
 
-	/* Verअगरy line number and address by reverse search */
-	अगर (cu_find_lineinfo(&pf->cu_die, addr, &__fname, &__lineno) < 0)
-		वापस 0;
+	/* Verify line number and address by reverse search */
+	if (cu_find_lineinfo(&pf->cu_die, addr, &__fname, &__lineno) < 0)
+		return 0;
 
 	pr_debug2("Reversed line: %s:%d\n", __fname, __lineno);
-	अगर (म_भेद(fname, __fname) || lineno == __lineno)
-		वापस 0;
+	if (strcmp(fname, __fname) || lineno == __lineno)
+		return 0;
 
 	pr_warning("This line is sharing the address with other lines.\n");
 
-	अगर (pf->pev->poपूर्णांक.function) अणु
+	if (pf->pev->point.function) {
 		/* Find best match function name and lines */
 		pf->addr = addr;
-		अगर (find_best_scope(pf, &die_mem)
-		    && die_match_name(&die_mem, pf->pev->poपूर्णांक.function)
-		    && dwarf_decl_line(&die_mem, &lineno) == 0) अणु
+		if (find_best_scope(pf, &die_mem)
+		    && die_match_name(&die_mem, pf->pev->point.function)
+		    && dwarf_decl_line(&die_mem, &lineno) == 0) {
 			__func = dwarf_diename(&die_mem);
 			__lineno -= lineno;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	pr_warning("Please try to probe at %s:%d instead.\n",
 		   __func ? : __fname, __lineno);
 
-	वापस -ENOENT;
-पूर्ण
+	return -ENOENT;
+}
 
-अटल पूर्णांक probe_poपूर्णांक_line_walker(स्थिर अक्षर *fname, पूर्णांक lineno,
-				   Dwarf_Addr addr, व्योम *data)
-अणु
-	काष्ठा probe_finder *pf = data;
+static int probe_point_line_walker(const char *fname, int lineno,
+				   Dwarf_Addr addr, void *data)
+{
+	struct probe_finder *pf = data;
 	Dwarf_Die *sc_die, die_mem;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (lineno != pf->lno || strtailcmp(fname, pf->fname) != 0)
-		वापस 0;
+	if (lineno != pf->lno || strtailcmp(fname, pf->fname) != 0)
+		return 0;
 
-	अगर (verअगरy_representive_line(pf, fname, lineno, addr))
-		वापस -ENOENT;
+	if (verify_representive_line(pf, fname, lineno, addr))
+		return -ENOENT;
 
 	pf->addr = addr;
 	sc_die = find_best_scope(pf, &die_mem);
-	अगर (!sc_die) अणु
+	if (!sc_die) {
 		pr_warning("Failed to find scope of probe point.\n");
-		वापस -ENOENT;
-	पूर्ण
+		return -ENOENT;
+	}
 
 	ret = call_probe_finder(sc_die, pf);
 
-	/* Continue अगर no error, because the line will be in अंतरभूत function */
-	वापस ret < 0 ? ret : 0;
-पूर्ण
+	/* Continue if no error, because the line will be in inline function */
+	return ret < 0 ? ret : 0;
+}
 
-/* Find probe poपूर्णांक from its line number */
-अटल पूर्णांक find_probe_poपूर्णांक_by_line(काष्ठा probe_finder *pf)
-अणु
-	वापस die_walk_lines(&pf->cu_die, probe_poपूर्णांक_line_walker, pf);
-पूर्ण
+/* Find probe point from its line number */
+static int find_probe_point_by_line(struct probe_finder *pf)
+{
+	return die_walk_lines(&pf->cu_die, probe_point_line_walker, pf);
+}
 
 /* Find lines which match lazy pattern */
-अटल पूर्णांक find_lazy_match_lines(काष्ठा पूर्णांकlist *list,
-				 स्थिर अक्षर *fname, स्थिर अक्षर *pat)
-अणु
-	खाता *fp;
-	अक्षर *line = शून्य;
-	माप_प्रकार line_len;
-	sमाप_प्रकार len;
-	पूर्णांक count = 0, linक्रमागत = 1;
-	अक्षर sbuf[STRERR_बफ_मानE];
+static int find_lazy_match_lines(struct intlist *list,
+				 const char *fname, const char *pat)
+{
+	FILE *fp;
+	char *line = NULL;
+	size_t line_len;
+	ssize_t len;
+	int count = 0, linenum = 1;
+	char sbuf[STRERR_BUFSIZE];
 
-	fp = ख_खोलो(fname, "r");
-	अगर (!fp) अणु
+	fp = fopen(fname, "r");
+	if (!fp) {
 		pr_warning("Failed to open %s: %s\n", fname,
-			   str_error_r(त्रुटि_सं, sbuf, माप(sbuf)));
-		वापस -त्रुटि_सं;
-	पूर्ण
+			   str_error_r(errno, sbuf, sizeof(sbuf)));
+		return -errno;
+	}
 
-	जबतक ((len = getline(&line, &line_len, fp)) > 0) अणु
+	while ((len = getline(&line, &line_len, fp)) > 0) {
 
-		अगर (line[len - 1] == '\n')
+		if (line[len - 1] == '\n')
 			line[len - 1] = '\0';
 
-		अगर (strlazymatch(line, pat)) अणु
-			पूर्णांकlist__add(list, linक्रमागत);
+		if (strlazymatch(line, pat)) {
+			intlist__add(list, linenum);
 			count++;
-		पूर्ण
-		linक्रमागत++;
-	पूर्ण
+		}
+		linenum++;
+	}
 
-	अगर (ख_त्रुटि(fp))
-		count = -त्रुटि_सं;
-	मुक्त(line);
-	ख_बंद(fp);
+	if (ferror(fp))
+		count = -errno;
+	free(line);
+	fclose(fp);
 
-	अगर (count == 0)
+	if (count == 0)
 		pr_debug("No matched lines found in %s.\n", fname);
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल पूर्णांक probe_poपूर्णांक_lazy_walker(स्थिर अक्षर *fname, पूर्णांक lineno,
-				   Dwarf_Addr addr, व्योम *data)
-अणु
-	काष्ठा probe_finder *pf = data;
+static int probe_point_lazy_walker(const char *fname, int lineno,
+				   Dwarf_Addr addr, void *data)
+{
+	struct probe_finder *pf = data;
 	Dwarf_Die *sc_die, die_mem;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (!पूर्णांकlist__has_entry(pf->lcache, lineno) ||
+	if (!intlist__has_entry(pf->lcache, lineno) ||
 	    strtailcmp(fname, pf->fname) != 0)
-		वापस 0;
+		return 0;
 
 	pr_debug("Probe line found: line:%d addr:0x%llx\n",
-		 lineno, (अचिन्हित दीर्घ दीर्घ)addr);
+		 lineno, (unsigned long long)addr);
 	pf->addr = addr;
 	pf->lno = lineno;
 	sc_die = find_best_scope(pf, &die_mem);
-	अगर (!sc_die) अणु
+	if (!sc_die) {
 		pr_warning("Failed to find scope of probe point.\n");
-		वापस -ENOENT;
-	पूर्ण
+		return -ENOENT;
+	}
 
 	ret = call_probe_finder(sc_die, pf);
 
 	/*
-	 * Continue अगर no error, because the lazy pattern will match
+	 * Continue if no error, because the lazy pattern will match
 	 * to other lines
 	 */
-	वापस ret < 0 ? ret : 0;
-पूर्ण
+	return ret < 0 ? ret : 0;
+}
 
-/* Find probe poपूर्णांकs from lazy pattern  */
-अटल पूर्णांक find_probe_poपूर्णांक_lazy(Dwarf_Die *sp_die, काष्ठा probe_finder *pf)
-अणु
-	काष्ठा build_id bid;
-	अक्षर sbuild_id[SBUILD_ID_SIZE] = "";
-	पूर्णांक ret = 0;
-	अक्षर *fpath;
+/* Find probe points from lazy pattern  */
+static int find_probe_point_lazy(Dwarf_Die *sp_die, struct probe_finder *pf)
+{
+	struct build_id bid;
+	char sbuild_id[SBUILD_ID_SIZE] = "";
+	int ret = 0;
+	char *fpath;
 
-	अगर (पूर्णांकlist__empty(pf->lcache)) अणु
-		स्थिर अक्षर *comp_dir;
+	if (intlist__empty(pf->lcache)) {
+		const char *comp_dir;
 
 		comp_dir = cu_get_comp_dir(&pf->cu_die);
-		अगर (pf->dbg->build_id) अणु
+		if (pf->dbg->build_id) {
 			build_id__init(&bid, pf->dbg->build_id, BUILD_ID_SIZE);
-			build_id__प्र_लिखो(&bid, sbuild_id);
-		पूर्ण
+			build_id__sprintf(&bid, sbuild_id);
+		}
 		ret = find_source_path(pf->fname, sbuild_id, comp_dir, &fpath);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			pr_warning("Failed to find source file path.\n");
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 
 		/* Matching lazy line pattern */
 		ret = find_lazy_match_lines(pf->lcache, fpath,
-					    pf->pev->poपूर्णांक.lazy_line);
-		मुक्त(fpath);
-		अगर (ret <= 0)
-			वापस ret;
-	पूर्ण
+					    pf->pev->point.lazy_line);
+		free(fpath);
+		if (ret <= 0)
+			return ret;
+	}
 
-	वापस die_walk_lines(sp_die, probe_poपूर्णांक_lazy_walker, pf);
-पूर्ण
+	return die_walk_lines(sp_die, probe_point_lazy_walker, pf);
+}
 
-अटल व्योम skip_prologue(Dwarf_Die *sp_die, काष्ठा probe_finder *pf)
-अणु
-	काष्ठा perf_probe_poपूर्णांक *pp = &pf->pev->poपूर्णांक;
+static void skip_prologue(Dwarf_Die *sp_die, struct probe_finder *pf)
+{
+	struct perf_probe_point *pp = &pf->pev->point;
 
 	/* Not uprobe? */
-	अगर (!pf->pev->uprobes)
-		वापस;
+	if (!pf->pev->uprobes)
+		return;
 
 	/* Compiled with optimization? */
-	अगर (die_is_optimized_target(&pf->cu_die))
-		वापस;
+	if (die_is_optimized_target(&pf->cu_die))
+		return;
 
 	/* Don't know entrypc? */
-	अगर (!pf->addr)
-		वापस;
+	if (!pf->addr)
+		return;
 
 	/* Only FUNC and FUNC@SRC are eligible. */
-	अगर (!pp->function || pp->line || pp->retprobe || pp->lazy_line ||
-	    pp->offset || pp->असल_address)
-		वापस;
+	if (!pp->function || pp->line || pp->retprobe || pp->lazy_line ||
+	    pp->offset || pp->abs_address)
+		return;
 
-	/* Not पूर्णांकerested in func parameter? */
-	अगर (!perf_probe_with_var(pf->pev))
-		वापस;
+	/* Not interested in func parameter? */
+	if (!perf_probe_with_var(pf->pev))
+		return;
 
 	pr_info("Target program is compiled without optimization. Skipping prologue.\n"
 		"Probe on address 0x%" PRIx64 " to force probing at the function entry.\n\n",
 		pf->addr);
 
 	die_skip_prologue(sp_die, &pf->cu_die, &pf->addr);
-पूर्ण
+}
 
-अटल पूर्णांक probe_poपूर्णांक_अंतरभूत_cb(Dwarf_Die *in_die, व्योम *data)
-अणु
-	काष्ठा probe_finder *pf = data;
-	काष्ठा perf_probe_poपूर्णांक *pp = &pf->pev->poपूर्णांक;
+static int probe_point_inline_cb(Dwarf_Die *in_die, void *data)
+{
+	struct probe_finder *pf = data;
+	struct perf_probe_point *pp = &pf->pev->point;
 	Dwarf_Addr addr;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (pp->lazy_line)
-		ret = find_probe_poपूर्णांक_lazy(in_die, pf);
-	अन्यथा अणु
+	if (pp->lazy_line)
+		ret = find_probe_point_lazy(in_die, pf);
+	else {
 		/* Get probe address */
-		अगर (die_entrypc(in_die, &addr) != 0) अणु
+		if (die_entrypc(in_die, &addr) != 0) {
 			pr_warning("Failed to get entry address of %s.\n",
 				   dwarf_diename(in_die));
-			वापस -ENOENT;
-		पूर्ण
-		अगर (addr == 0) अणु
+			return -ENOENT;
+		}
+		if (addr == 0) {
 			pr_debug("%s has no valid entry address. skipped.\n",
 				 dwarf_diename(in_die));
-			वापस -ENOENT;
-		पूर्ण
+			return -ENOENT;
+		}
 		pf->addr = addr;
 		pf->addr += pp->offset;
 		pr_debug("found inline addr: 0x%jx\n",
-			 (uपूर्णांकmax_t)pf->addr);
+			 (uintmax_t)pf->addr);
 
 		ret = call_probe_finder(in_die, pf);
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-/* Callback parameter with वापस value क्रम libdw */
-काष्ठा dwarf_callback_param अणु
-	व्योम *data;
-	पूर्णांक retval;
-पूर्ण;
+/* Callback parameter with return value for libdw */
+struct dwarf_callback_param {
+	void *data;
+	int retval;
+};
 
 /* Search function from function name */
-अटल पूर्णांक probe_poपूर्णांक_search_cb(Dwarf_Die *sp_die, व्योम *data)
-अणु
-	काष्ठा dwarf_callback_param *param = data;
-	काष्ठा probe_finder *pf = param->data;
-	काष्ठा perf_probe_poपूर्णांक *pp = &pf->pev->poपूर्णांक;
+static int probe_point_search_cb(Dwarf_Die *sp_die, void *data)
+{
+	struct dwarf_callback_param *param = data;
+	struct probe_finder *pf = param->data;
+	struct perf_probe_point *pp = &pf->pev->point;
 
 	/* Check tag and diename */
-	अगर (!die_is_func_def(sp_die) ||
+	if (!die_is_func_def(sp_die) ||
 	    !die_match_name(sp_die, pp->function))
-		वापस DWARF_CB_OK;
+		return DWARF_CB_OK;
 
 	/* Check declared file */
-	अगर (pp->file && strtailcmp(pp->file, dwarf_decl_file(sp_die)))
-		वापस DWARF_CB_OK;
+	if (pp->file && strtailcmp(pp->file, dwarf_decl_file(sp_die)))
+		return DWARF_CB_OK;
 
 	pr_debug("Matched function: %s [%lx]\n", dwarf_diename(sp_die),
-		 (अचिन्हित दीर्घ)dwarf_dieoffset(sp_die));
+		 (unsigned long)dwarf_dieoffset(sp_die));
 	pf->fname = dwarf_decl_file(sp_die);
-	अगर (pp->line) अणु /* Function relative line */
+	if (pp->line) { /* Function relative line */
 		dwarf_decl_line(sp_die, &pf->lno);
 		pf->lno += pp->line;
-		param->retval = find_probe_poपूर्णांक_by_line(pf);
-	पूर्ण अन्यथा अगर (die_is_func_instance(sp_die)) अणु
+		param->retval = find_probe_point_by_line(pf);
+	} else if (die_is_func_instance(sp_die)) {
 		/* Instances always have the entry address */
 		die_entrypc(sp_die, &pf->addr);
-		/* But in some हाल the entry address is 0 */
-		अगर (pf->addr == 0) अणु
+		/* But in some case the entry address is 0 */
+		if (pf->addr == 0) {
 			pr_debug("%s has no entry PC. Skipped\n",
 				 dwarf_diename(sp_die));
 			param->retval = 0;
 		/* Real function */
-		पूर्ण अन्यथा अगर (pp->lazy_line)
-			param->retval = find_probe_poपूर्णांक_lazy(sp_die, pf);
-		अन्यथा अणु
+		} else if (pp->lazy_line)
+			param->retval = find_probe_point_lazy(sp_die, pf);
+		else {
 			skip_prologue(sp_die, pf);
 			pf->addr += pp->offset;
 			/* TODO: Check the address in this function */
 			param->retval = call_probe_finder(sp_die, pf);
-		पूर्ण
-	पूर्ण अन्यथा अगर (!probe_conf.no_अंतरभूतs) अणु
+		}
+	} else if (!probe_conf.no_inlines) {
 		/* Inlined function: search instances */
 		param->retval = die_walk_instances(sp_die,
-					probe_poपूर्णांक_अंतरभूत_cb, (व्योम *)pf);
-		/* This could be a non-existed अंतरभूत definition */
-		अगर (param->retval == -ENOENT)
+					probe_point_inline_cb, (void *)pf);
+		/* This could be a non-existed inline definition */
+		if (param->retval == -ENOENT)
 			param->retval = 0;
-	पूर्ण
+	}
 
 	/* We need to find other candidates */
-	अगर (strisglob(pp->function) && param->retval >= 0) अणु
+	if (strisglob(pp->function) && param->retval >= 0) {
 		param->retval = 0;	/* We have to clear the result */
-		वापस DWARF_CB_OK;
-	पूर्ण
+		return DWARF_CB_OK;
+	}
 
-	वापस DWARF_CB_ABORT; /* Exit; no same symbol in this CU. */
-पूर्ण
+	return DWARF_CB_ABORT; /* Exit; no same symbol in this CU. */
+}
 
-अटल पूर्णांक find_probe_poपूर्णांक_by_func(काष्ठा probe_finder *pf)
-अणु
-	काष्ठा dwarf_callback_param _param = अणु.data = (व्योम *)pf,
-					      .retval = 0पूर्ण;
-	dwarf_getfuncs(&pf->cu_die, probe_poपूर्णांक_search_cb, &_param, 0);
-	वापस _param.retval;
-पूर्ण
+static int find_probe_point_by_func(struct probe_finder *pf)
+{
+	struct dwarf_callback_param _param = {.data = (void *)pf,
+					      .retval = 0};
+	dwarf_getfuncs(&pf->cu_die, probe_point_search_cb, &_param, 0);
+	return _param.retval;
+}
 
-काष्ठा pubname_callback_param अणु
-	अक्षर *function;
-	अक्षर *file;
+struct pubname_callback_param {
+	char *function;
+	char *file;
 	Dwarf_Die *cu_die;
 	Dwarf_Die *sp_die;
-	पूर्णांक found;
-पूर्ण;
+	int found;
+};
 
-अटल पूर्णांक pubname_search_cb(Dwarf *dbg, Dwarf_Global *gl, व्योम *data)
-अणु
-	काष्ठा pubname_callback_param *param = data;
+static int pubname_search_cb(Dwarf *dbg, Dwarf_Global *gl, void *data)
+{
+	struct pubname_callback_param *param = data;
 
-	अगर (dwarf_offdie(dbg, gl->die_offset, param->sp_die)) अणु
-		अगर (dwarf_tag(param->sp_die) != DW_TAG_subprogram)
-			वापस DWARF_CB_OK;
+	if (dwarf_offdie(dbg, gl->die_offset, param->sp_die)) {
+		if (dwarf_tag(param->sp_die) != DW_TAG_subprogram)
+			return DWARF_CB_OK;
 
-		अगर (die_match_name(param->sp_die, param->function)) अणु
-			अगर (!dwarf_offdie(dbg, gl->cu_offset, param->cu_die))
-				वापस DWARF_CB_OK;
+		if (die_match_name(param->sp_die, param->function)) {
+			if (!dwarf_offdie(dbg, gl->cu_offset, param->cu_die))
+				return DWARF_CB_OK;
 
-			अगर (param->file &&
+			if (param->file &&
 			    strtailcmp(param->file, dwarf_decl_file(param->sp_die)))
-				वापस DWARF_CB_OK;
+				return DWARF_CB_OK;
 
 			param->found = 1;
-			वापस DWARF_CB_ABORT;
-		पूर्ण
-	पूर्ण
+			return DWARF_CB_ABORT;
+		}
+	}
 
-	वापस DWARF_CB_OK;
-पूर्ण
+	return DWARF_CB_OK;
+}
 
-अटल पूर्णांक debuginfo__find_probe_location(काष्ठा debuginfo *dbg,
-				  काष्ठा probe_finder *pf)
-अणु
-	काष्ठा perf_probe_poपूर्णांक *pp = &pf->pev->poपूर्णांक;
+static int debuginfo__find_probe_location(struct debuginfo *dbg,
+				  struct probe_finder *pf)
+{
+	struct perf_probe_point *pp = &pf->pev->point;
 	Dwarf_Off off, noff;
-	माप_प्रकार cuhl;
+	size_t cuhl;
 	Dwarf_Die *diep;
-	पूर्णांक ret = 0;
+	int ret = 0;
 
 	off = 0;
-	pf->lcache = पूर्णांकlist__new(शून्य);
-	अगर (!pf->lcache)
-		वापस -ENOMEM;
+	pf->lcache = intlist__new(NULL);
+	if (!pf->lcache)
+		return -ENOMEM;
 
 	/* Fastpath: lookup by function name from .debug_pubnames section */
-	अगर (pp->function && !strisglob(pp->function)) अणु
-		काष्ठा pubname_callback_param pubname_param = अणु
+	if (pp->function && !strisglob(pp->function)) {
+		struct pubname_callback_param pubname_param = {
 			.function = pp->function,
 			.file	  = pp->file,
 			.cu_die	  = &pf->cu_die,
 			.sp_die	  = &pf->sp_die,
 			.found	  = 0,
-		पूर्ण;
-		काष्ठा dwarf_callback_param probe_param = अणु
+		};
+		struct dwarf_callback_param probe_param = {
 			.data = pf,
-		पूर्ण;
+		};
 
 		dwarf_getpubnames(dbg->dbg, pubname_search_cb,
 				  &pubname_param, 0);
-		अगर (pubname_param.found) अणु
-			ret = probe_poपूर्णांक_search_cb(&pf->sp_die, &probe_param);
-			अगर (ret)
-				जाओ found;
-		पूर्ण
-	पूर्ण
+		if (pubname_param.found) {
+			ret = probe_point_search_cb(&pf->sp_die, &probe_param);
+			if (ret)
+				goto found;
+		}
+	}
 
 	/* Loop on CUs (Compilation Unit) */
-	जबतक (!dwarf_nextcu(dbg->dbg, off, &noff, &cuhl, शून्य, शून्य, शून्य)) अणु
-		/* Get the DIE(Debugging Inक्रमmation Entry) of this CU */
+	while (!dwarf_nextcu(dbg->dbg, off, &noff, &cuhl, NULL, NULL, NULL)) {
+		/* Get the DIE(Debugging Information Entry) of this CU */
 		diep = dwarf_offdie(dbg->dbg, off + cuhl, &pf->cu_die);
-		अगर (!diep) अणु
+		if (!diep) {
 			off = noff;
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		/* Check अगर target file is included. */
-		अगर (pp->file)
+		/* Check if target file is included. */
+		if (pp->file)
 			pf->fname = cu_find_realpath(&pf->cu_die, pp->file);
-		अन्यथा
-			pf->fname = शून्य;
+		else
+			pf->fname = NULL;
 
-		अगर (!pp->file || pf->fname) अणु
-			अगर (pp->function)
-				ret = find_probe_poपूर्णांक_by_func(pf);
-			अन्यथा अगर (pp->lazy_line)
-				ret = find_probe_poपूर्णांक_lazy(&pf->cu_die, pf);
-			अन्यथा अणु
+		if (!pp->file || pf->fname) {
+			if (pp->function)
+				ret = find_probe_point_by_func(pf);
+			else if (pp->lazy_line)
+				ret = find_probe_point_lazy(&pf->cu_die, pf);
+			else {
 				pf->lno = pp->line;
-				ret = find_probe_poपूर्णांक_by_line(pf);
-			पूर्ण
-			अगर (ret < 0)
-				अवरोध;
-		पूर्ण
+				ret = find_probe_point_by_line(pf);
+			}
+			if (ret < 0)
+				break;
+		}
 		off = noff;
-	पूर्ण
+	}
 
 found:
-	पूर्णांकlist__delete(pf->lcache);
-	pf->lcache = शून्य;
+	intlist__delete(pf->lcache);
+	pf->lcache = NULL;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-/* Find probe poपूर्णांकs from debuginfo */
-अटल पूर्णांक debuginfo__find_probes(काष्ठा debuginfo *dbg,
-				  काष्ठा probe_finder *pf)
-अणु
-	पूर्णांक ret = 0;
+/* Find probe points from debuginfo */
+static int debuginfo__find_probes(struct debuginfo *dbg,
+				  struct probe_finder *pf)
+{
+	int ret = 0;
 	Elf *elf;
 	GElf_Ehdr ehdr;
 
-	अगर (pf->cfi_eh || pf->cfi_dbg)
-		वापस debuginfo__find_probe_location(dbg, pf);
+	if (pf->cfi_eh || pf->cfi_dbg)
+		return debuginfo__find_probe_location(dbg, pf);
 
-	/* Get the call frame inक्रमmation from this dwarf */
+	/* Get the call frame information from this dwarf */
 	elf = dwarf_getelf(dbg->dbg);
-	अगर (elf == शून्य)
-		वापस -EINVAL;
+	if (elf == NULL)
+		return -EINVAL;
 
-	अगर (gelf_getehdr(elf, &ehdr) == शून्य)
-		वापस -EINVAL;
+	if (gelf_getehdr(elf, &ehdr) == NULL)
+		return -EINVAL;
 
 	pf->machine = ehdr.e_machine;
 
-#अगर _ELFUTILS_PREREQ(0, 142)
-	करो अणु
+#if _ELFUTILS_PREREQ(0, 142)
+	do {
 		GElf_Shdr shdr;
 
-		अगर (elf_section_by_name(elf, &ehdr, &shdr, ".eh_frame", शून्य) &&
+		if (elf_section_by_name(elf, &ehdr, &shdr, ".eh_frame", NULL) &&
 		    shdr.sh_type == SHT_PROGBITS)
-			pf->cfi_eh = dwarf_अ_लोfi_elf(elf);
+			pf->cfi_eh = dwarf_getcfi_elf(elf);
 
-		pf->cfi_dbg = dwarf_अ_लोfi(dbg->dbg);
-	पूर्ण जबतक (0);
-#पूर्ण_अगर
+		pf->cfi_dbg = dwarf_getcfi(dbg->dbg);
+	} while (0);
+#endif
 
 	ret = debuginfo__find_probe_location(dbg, pf);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-काष्ठा local_vars_finder अणु
-	काष्ठा probe_finder *pf;
-	काष्ठा perf_probe_arg *args;
+struct local_vars_finder {
+	struct probe_finder *pf;
+	struct perf_probe_arg *args;
 	bool vars;
-	पूर्णांक max_args;
-	पूर्णांक nargs;
-	पूर्णांक ret;
-पूर्ण;
+	int max_args;
+	int nargs;
+	int ret;
+};
 
 /* Collect available variables in this scope */
-अटल पूर्णांक copy_variables_cb(Dwarf_Die *die_mem, व्योम *data)
-अणु
-	काष्ठा local_vars_finder *vf = data;
-	काष्ठा probe_finder *pf = vf->pf;
-	पूर्णांक tag;
+static int copy_variables_cb(Dwarf_Die *die_mem, void *data)
+{
+	struct local_vars_finder *vf = data;
+	struct probe_finder *pf = vf->pf;
+	int tag;
 
 	tag = dwarf_tag(die_mem);
-	अगर (tag == DW_TAG_क्रमmal_parameter ||
-	    (tag == DW_TAG_variable && vf->vars)) अणु
-		अगर (convert_variable_location(die_mem, vf->pf->addr,
+	if (tag == DW_TAG_formal_parameter ||
+	    (tag == DW_TAG_variable && vf->vars)) {
+		if (convert_variable_location(die_mem, vf->pf->addr,
 					      vf->pf->fb_ops, &pf->sp_die,
-					      pf->machine, शून्य) == 0) अणु
-			vf->args[vf->nargs].var = (अक्षर *)dwarf_diename(die_mem);
-			अगर (vf->args[vf->nargs].var == शून्य) अणु
+					      pf->machine, NULL) == 0) {
+			vf->args[vf->nargs].var = (char *)dwarf_diename(die_mem);
+			if (vf->args[vf->nargs].var == NULL) {
 				vf->ret = -ENOMEM;
-				वापस DIE_FIND_CB_END;
-			पूर्ण
+				return DIE_FIND_CB_END;
+			}
 			pr_debug(" %s", vf->args[vf->nargs].var);
 			vf->nargs++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (dwarf_haspc(die_mem, vf->pf->addr))
-		वापस DIE_FIND_CB_CONTINUE;
-	अन्यथा
-		वापस DIE_FIND_CB_SIBLING;
-पूर्ण
+	if (dwarf_haspc(die_mem, vf->pf->addr))
+		return DIE_FIND_CB_CONTINUE;
+	else
+		return DIE_FIND_CB_SIBLING;
+}
 
-अटल पूर्णांक expand_probe_args(Dwarf_Die *sc_die, काष्ठा probe_finder *pf,
-			     काष्ठा perf_probe_arg *args)
-अणु
+static int expand_probe_args(Dwarf_Die *sc_die, struct probe_finder *pf,
+			     struct perf_probe_arg *args)
+{
 	Dwarf_Die die_mem;
-	पूर्णांक i;
-	पूर्णांक n = 0;
-	काष्ठा local_vars_finder vf = अणु.pf = pf, .args = args, .vars = false,
-				.max_args = MAX_PROBE_ARGS, .ret = 0पूर्ण;
+	int i;
+	int n = 0;
+	struct local_vars_finder vf = {.pf = pf, .args = args, .vars = false,
+				.max_args = MAX_PROBE_ARGS, .ret = 0};
 
-	क्रम (i = 0; i < pf->pev->nargs; i++) अणु
-		/* var never be शून्य */
-		अगर (म_भेद(pf->pev->args[i].var, PROBE_ARG_VARS) == 0)
+	for (i = 0; i < pf->pev->nargs; i++) {
+		/* var never be NULL */
+		if (strcmp(pf->pev->args[i].var, PROBE_ARG_VARS) == 0)
 			vf.vars = true;
-		अन्यथा अगर (म_भेद(pf->pev->args[i].var, PROBE_ARG_PARAMS) != 0) अणु
+		else if (strcmp(pf->pev->args[i].var, PROBE_ARG_PARAMS) != 0) {
 			/* Copy normal argument */
 			args[n] = pf->pev->args[i];
 			n++;
-			जारी;
-		पूर्ण
+			continue;
+		}
 		pr_debug("Expanding %s into:", pf->pev->args[i].var);
 		vf.nargs = n;
 		/* Special local variables */
-		die_find_child(sc_die, copy_variables_cb, (व्योम *)&vf,
+		die_find_child(sc_die, copy_variables_cb, (void *)&vf,
 			       &die_mem);
 		pr_debug(" (%d)\n", vf.nargs - n);
-		अगर (vf.ret < 0)
-			वापस vf.ret;
+		if (vf.ret < 0)
+			return vf.ret;
 		n = vf.nargs;
-	पूर्ण
-	वापस n;
-पूर्ण
+	}
+	return n;
+}
 
-अटल bool trace_event_finder_overlap(काष्ठा trace_event_finder *tf)
-अणु
-	पूर्णांक i;
+static bool trace_event_finder_overlap(struct trace_event_finder *tf)
+{
+	int i;
 
-	क्रम (i = 0; i < tf->ntevs; i++) अणु
-		अगर (tf->pf.addr == tf->tevs[i].poपूर्णांक.address)
-			वापस true;
-	पूर्ण
-	वापस false;
-पूर्ण
+	for (i = 0; i < tf->ntevs; i++) {
+		if (tf->pf.addr == tf->tevs[i].point.address)
+			return true;
+	}
+	return false;
+}
 
-/* Add a found probe poपूर्णांक पूर्णांकo trace event list */
-अटल पूर्णांक add_probe_trace_event(Dwarf_Die *sc_die, काष्ठा probe_finder *pf)
-अणु
-	काष्ठा trace_event_finder *tf =
-			container_of(pf, काष्ठा trace_event_finder, pf);
-	काष्ठा perf_probe_poपूर्णांक *pp = &pf->pev->poपूर्णांक;
-	काष्ठा probe_trace_event *tev;
-	काष्ठा perf_probe_arg *args = शून्य;
-	पूर्णांक ret, i;
+/* Add a found probe point into trace event list */
+static int add_probe_trace_event(Dwarf_Die *sc_die, struct probe_finder *pf)
+{
+	struct trace_event_finder *tf =
+			container_of(pf, struct trace_event_finder, pf);
+	struct perf_probe_point *pp = &pf->pev->point;
+	struct probe_trace_event *tev;
+	struct perf_probe_arg *args = NULL;
+	int ret, i;
 
 	/*
-	 * For some reason (e.g. dअगरferent column asचिन्हित to same address)
-	 * This callback can be called with the address which alपढ़ोy passed.
+	 * For some reason (e.g. different column assigned to same address)
+	 * This callback can be called with the address which already passed.
 	 * Ignore it first.
 	 */
-	अगर (trace_event_finder_overlap(tf))
-		वापस 0;
+	if (trace_event_finder_overlap(tf))
+		return 0;
 
 	/* Check number of tevs */
-	अगर (tf->ntevs == tf->max_tevs) अणु
+	if (tf->ntevs == tf->max_tevs) {
 		pr_warning("Too many( > %d) probe point found.\n",
 			   tf->max_tevs);
-		वापस -दुस्फल;
-	पूर्ण
+		return -ERANGE;
+	}
 	tev = &tf->tevs[tf->ntevs++];
 
-	/* Trace poपूर्णांक should be converted from subprogram DIE */
-	ret = convert_to_trace_poपूर्णांक(&pf->sp_die, tf->mod, pf->addr,
-				     pp->retprobe, pp->function, &tev->poपूर्णांक);
-	अगर (ret < 0)
-		जाओ end;
+	/* Trace point should be converted from subprogram DIE */
+	ret = convert_to_trace_point(&pf->sp_die, tf->mod, pf->addr,
+				     pp->retprobe, pp->function, &tev->point);
+	if (ret < 0)
+		goto end;
 
-	tev->poपूर्णांक.realname = strdup(dwarf_diename(sc_die));
-	अगर (!tev->poपूर्णांक.realname) अणु
+	tev->point.realname = strdup(dwarf_diename(sc_die));
+	if (!tev->point.realname) {
 		ret = -ENOMEM;
-		जाओ end;
-	पूर्ण
+		goto end;
+	}
 
-	pr_debug("Probe point found: %s+%lu\n", tev->poपूर्णांक.symbol,
-		 tev->poपूर्णांक.offset);
+	pr_debug("Probe point found: %s+%lu\n", tev->point.symbol,
+		 tev->point.offset);
 
-	/* Expand special probe argument अगर exist */
-	args = zalloc(माप(काष्ठा perf_probe_arg) * MAX_PROBE_ARGS);
-	अगर (args == शून्य) अणु
+	/* Expand special probe argument if exist */
+	args = zalloc(sizeof(struct perf_probe_arg) * MAX_PROBE_ARGS);
+	if (args == NULL) {
 		ret = -ENOMEM;
-		जाओ end;
-	पूर्ण
+		goto end;
+	}
 
 	ret = expand_probe_args(sc_die, pf, args);
-	अगर (ret < 0)
-		जाओ end;
+	if (ret < 0)
+		goto end;
 
 	tev->nargs = ret;
-	tev->args = zalloc(माप(काष्ठा probe_trace_arg) * tev->nargs);
-	अगर (tev->args == शून्य) अणु
+	tev->args = zalloc(sizeof(struct probe_trace_arg) * tev->nargs);
+	if (tev->args == NULL) {
 		ret = -ENOMEM;
-		जाओ end;
-	पूर्ण
+		goto end;
+	}
 
 	/* Find each argument */
-	क्रम (i = 0; i < tev->nargs; i++) अणु
+	for (i = 0; i < tev->nargs; i++) {
 		pf->pvar = &args[i];
 		pf->tvar = &tev->args[i];
 		/* Variable should be found from scope DIE */
 		ret = find_variable(sc_die, pf);
-		अगर (ret != 0)
-			अवरोध;
-	पूर्ण
+		if (ret != 0)
+			break;
+	}
 
 end:
-	अगर (ret) अणु
+	if (ret) {
 		clear_probe_trace_event(tev);
 		tf->ntevs--;
-	पूर्ण
-	मुक्त(args);
-	वापस ret;
-पूर्ण
+	}
+	free(args);
+	return ret;
+}
 
-अटल पूर्णांक fill_empty_trace_arg(काष्ठा perf_probe_event *pev,
-				काष्ठा probe_trace_event *tevs, पूर्णांक ntevs)
-अणु
-	अक्षर **valp;
-	अक्षर *type;
-	पूर्णांक i, j, ret;
+static int fill_empty_trace_arg(struct perf_probe_event *pev,
+				struct probe_trace_event *tevs, int ntevs)
+{
+	char **valp;
+	char *type;
+	int i, j, ret;
 
-	अगर (!ntevs)
-		वापस -ENOENT;
+	if (!ntevs)
+		return -ENOENT;
 
-	क्रम (i = 0; i < pev->nargs; i++) अणु
-		type = शून्य;
-		क्रम (j = 0; j < ntevs; j++) अणु
-			अगर (tevs[j].args[i].value) अणु
+	for (i = 0; i < pev->nargs; i++) {
+		type = NULL;
+		for (j = 0; j < ntevs; j++) {
+			if (tevs[j].args[i].value) {
 				type = tevs[j].args[i].type;
-				अवरोध;
-			पूर्ण
-		पूर्ण
-		अगर (j == ntevs) अणु
-			prपूर्णांक_var_not_found(pev->args[i].var);
-			वापस -ENOENT;
-		पूर्ण
-		क्रम (j = 0; j < ntevs; j++) अणु
+				break;
+			}
+		}
+		if (j == ntevs) {
+			print_var_not_found(pev->args[i].var);
+			return -ENOENT;
+		}
+		for (j = 0; j < ntevs; j++) {
 			valp = &tevs[j].args[i].value;
-			अगर (*valp)
-				जारी;
+			if (*valp)
+				continue;
 
-			ret = aप्र_लिखो(valp, "\\%lx", probe_conf.magic_num);
-			अगर (ret < 0)
-				वापस -ENOMEM;
-			/* Note that type can be शून्य */
-			अगर (type) अणु
+			ret = asprintf(valp, "\\%lx", probe_conf.magic_num);
+			if (ret < 0)
+				return -ENOMEM;
+			/* Note that type can be NULL */
+			if (type) {
 				tevs[j].args[i].type = strdup(type);
-				अगर (!tevs[j].args[i].type)
-					वापस -ENOMEM;
-			पूर्ण
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+				if (!tevs[j].args[i].type)
+					return -ENOMEM;
+			}
+		}
+	}
+	return 0;
+}
 
-/* Find probe_trace_events specअगरied by perf_probe_event from debuginfo */
-पूर्णांक debuginfo__find_trace_events(काष्ठा debuginfo *dbg,
-				 काष्ठा perf_probe_event *pev,
-				 काष्ठा probe_trace_event **tevs)
-अणु
-	काष्ठा trace_event_finder tf = अणु
-			.pf = अणु.pev = pev, .dbg = dbg, .callback = add_probe_trace_eventपूर्ण,
-			.max_tevs = probe_conf.max_probes, .mod = dbg->modपूर्ण;
-	पूर्णांक ret, i;
+/* Find probe_trace_events specified by perf_probe_event from debuginfo */
+int debuginfo__find_trace_events(struct debuginfo *dbg,
+				 struct perf_probe_event *pev,
+				 struct probe_trace_event **tevs)
+{
+	struct trace_event_finder tf = {
+			.pf = {.pev = pev, .dbg = dbg, .callback = add_probe_trace_event},
+			.max_tevs = probe_conf.max_probes, .mod = dbg->mod};
+	int ret, i;
 
 	/* Allocate result tevs array */
-	*tevs = zalloc(माप(काष्ठा probe_trace_event) * tf.max_tevs);
-	अगर (*tevs == शून्य)
-		वापस -ENOMEM;
+	*tevs = zalloc(sizeof(struct probe_trace_event) * tf.max_tevs);
+	if (*tevs == NULL)
+		return -ENOMEM;
 
 	tf.tevs = *tevs;
 	tf.ntevs = 0;
 
-	अगर (pev->nargs != 0 && immediate_value_is_supported())
+	if (pev->nargs != 0 && immediate_value_is_supported())
 		tf.pf.skip_empty_arg = true;
 
 	ret = debuginfo__find_probes(dbg, &tf.pf);
-	अगर (ret >= 0 && tf.pf.skip_empty_arg)
+	if (ret >= 0 && tf.pf.skip_empty_arg)
 		ret = fill_empty_trace_arg(pev, tf.tevs, tf.ntevs);
 
-	अगर (ret < 0 || tf.ntevs == 0) अणु
-		क्रम (i = 0; i < tf.ntevs; i++)
+	if (ret < 0 || tf.ntevs == 0) {
+		for (i = 0; i < tf.ntevs; i++)
 			clear_probe_trace_event(&tf.tevs[i]);
-		zमुक्त(tevs);
-		वापस ret;
-	पूर्ण
+		zfree(tevs);
+		return ret;
+	}
 
-	वापस (ret < 0) ? ret : tf.ntevs;
-पूर्ण
+	return (ret < 0) ? ret : tf.ntevs;
+}
 
 /* Collect available variables in this scope */
-अटल पूर्णांक collect_variables_cb(Dwarf_Die *die_mem, व्योम *data)
-अणु
-	काष्ठा available_var_finder *af = data;
-	काष्ठा variable_list *vl;
-	काष्ठा strbuf buf = STRBUF_INIT;
-	पूर्णांक tag, ret;
+static int collect_variables_cb(Dwarf_Die *die_mem, void *data)
+{
+	struct available_var_finder *af = data;
+	struct variable_list *vl;
+	struct strbuf buf = STRBUF_INIT;
+	int tag, ret;
 
 	vl = &af->vls[af->nvls - 1];
 
 	tag = dwarf_tag(die_mem);
-	अगर (tag == DW_TAG_क्रमmal_parameter ||
-	    tag == DW_TAG_variable) अणु
+	if (tag == DW_TAG_formal_parameter ||
+	    tag == DW_TAG_variable) {
 		ret = convert_variable_location(die_mem, af->pf.addr,
 						af->pf.fb_ops, &af->pf.sp_die,
-						af->pf.machine, शून्य);
-		अगर (ret == 0 || ret == -दुस्फल) अणु
-			पूर्णांक ret2;
-			bool बाह्यs = !af->child;
+						af->pf.machine, NULL);
+		if (ret == 0 || ret == -ERANGE) {
+			int ret2;
+			bool externs = !af->child;
 
-			अगर (strbuf_init(&buf, 64) < 0)
-				जाओ error;
+			if (strbuf_init(&buf, 64) < 0)
+				goto error;
 
-			अगर (probe_conf.show_location_range) अणु
-				अगर (!बाह्यs)
+			if (probe_conf.show_location_range) {
+				if (!externs)
 					ret2 = strbuf_add(&buf,
 						ret ? "[INV]\t" : "[VAL]\t", 6);
-				अन्यथा
+				else
 					ret2 = strbuf_add(&buf, "[EXT]\t", 6);
-				अगर (ret2)
-					जाओ error;
-			पूर्ण
+				if (ret2)
+					goto error;
+			}
 
 			ret2 = die_get_varname(die_mem, &buf);
 
-			अगर (!ret2 && probe_conf.show_location_range &&
-				!बाह्यs) अणु
-				अगर (strbuf_addch(&buf, '\t') < 0)
-					जाओ error;
+			if (!ret2 && probe_conf.show_location_range &&
+				!externs) {
+				if (strbuf_addch(&buf, '\t') < 0)
+					goto error;
 				ret2 = die_get_var_range(&af->pf.sp_die,
 							die_mem, &buf);
-			पूर्ण
+			}
 
 			pr_debug("Add new var: %s\n", buf.buf);
-			अगर (ret2 == 0) अणु
+			if (ret2 == 0) {
 				strlist__add(vl->vars,
-					strbuf_detach(&buf, शून्य));
-			पूर्ण
+					strbuf_detach(&buf, NULL));
+			}
 			strbuf_release(&buf);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (af->child && dwarf_haspc(die_mem, af->pf.addr))
-		वापस DIE_FIND_CB_CONTINUE;
-	अन्यथा
-		वापस DIE_FIND_CB_SIBLING;
+	if (af->child && dwarf_haspc(die_mem, af->pf.addr))
+		return DIE_FIND_CB_CONTINUE;
+	else
+		return DIE_FIND_CB_SIBLING;
 error:
 	strbuf_release(&buf);
 	pr_debug("Error in strbuf\n");
-	वापस DIE_FIND_CB_END;
-पूर्ण
+	return DIE_FIND_CB_END;
+}
 
-अटल bool available_var_finder_overlap(काष्ठा available_var_finder *af)
-अणु
-	पूर्णांक i;
+static bool available_var_finder_overlap(struct available_var_finder *af)
+{
+	int i;
 
-	क्रम (i = 0; i < af->nvls; i++) अणु
-		अगर (af->pf.addr == af->vls[i].poपूर्णांक.address)
-			वापस true;
-	पूर्ण
-	वापस false;
+	for (i = 0; i < af->nvls; i++) {
+		if (af->pf.addr == af->vls[i].point.address)
+			return true;
+	}
+	return false;
 
-पूर्ण
+}
 
-/* Add a found vars पूर्णांकo available variables list */
-अटल पूर्णांक add_available_vars(Dwarf_Die *sc_die, काष्ठा probe_finder *pf)
-अणु
-	काष्ठा available_var_finder *af =
-			container_of(pf, काष्ठा available_var_finder, pf);
-	काष्ठा perf_probe_poपूर्णांक *pp = &pf->pev->poपूर्णांक;
-	काष्ठा variable_list *vl;
+/* Add a found vars into available variables list */
+static int add_available_vars(Dwarf_Die *sc_die, struct probe_finder *pf)
+{
+	struct available_var_finder *af =
+			container_of(pf, struct available_var_finder, pf);
+	struct perf_probe_point *pp = &pf->pev->point;
+	struct variable_list *vl;
 	Dwarf_Die die_mem;
-	पूर्णांक ret;
+	int ret;
 
 	/*
-	 * For some reason (e.g. dअगरferent column asचिन्हित to same address),
-	 * this callback can be called with the address which alपढ़ोy passed.
+	 * For some reason (e.g. different column assigned to same address),
+	 * this callback can be called with the address which already passed.
 	 * Ignore it first.
 	 */
-	अगर (available_var_finder_overlap(af))
-		वापस 0;
+	if (available_var_finder_overlap(af))
+		return 0;
 
 	/* Check number of tevs */
-	अगर (af->nvls == af->max_vls) अणु
+	if (af->nvls == af->max_vls) {
 		pr_warning("Too many( > %d) probe point found.\n", af->max_vls);
-		वापस -दुस्फल;
-	पूर्ण
+		return -ERANGE;
+	}
 	vl = &af->vls[af->nvls++];
 
-	/* Trace poपूर्णांक should be converted from subprogram DIE */
-	ret = convert_to_trace_poपूर्णांक(&pf->sp_die, af->mod, pf->addr,
-				     pp->retprobe, pp->function, &vl->poपूर्णांक);
-	अगर (ret < 0)
-		वापस ret;
+	/* Trace point should be converted from subprogram DIE */
+	ret = convert_to_trace_point(&pf->sp_die, af->mod, pf->addr,
+				     pp->retprobe, pp->function, &vl->point);
+	if (ret < 0)
+		return ret;
 
-	pr_debug("Probe point found: %s+%lu\n", vl->poपूर्णांक.symbol,
-		 vl->poपूर्णांक.offset);
+	pr_debug("Probe point found: %s+%lu\n", vl->point.symbol,
+		 vl->point.offset);
 
 	/* Find local variables */
-	vl->vars = strlist__new(शून्य, शून्य);
-	अगर (vl->vars == शून्य)
-		वापस -ENOMEM;
+	vl->vars = strlist__new(NULL, NULL);
+	if (vl->vars == NULL)
+		return -ENOMEM;
 	af->child = true;
-	die_find_child(sc_die, collect_variables_cb, (व्योम *)af, &die_mem);
+	die_find_child(sc_die, collect_variables_cb, (void *)af, &die_mem);
 
-	/* Find बाह्यal variables */
-	अगर (!probe_conf.show_ext_vars)
-		जाओ out;
-	/* Don't need to search child DIE क्रम बाह्यal vars. */
+	/* Find external variables */
+	if (!probe_conf.show_ext_vars)
+		goto out;
+	/* Don't need to search child DIE for external vars. */
 	af->child = false;
-	die_find_child(&pf->cu_die, collect_variables_cb, (व्योम *)af, &die_mem);
+	die_find_child(&pf->cu_die, collect_variables_cb, (void *)af, &die_mem);
 
 out:
-	अगर (strlist__empty(vl->vars)) अणु
+	if (strlist__empty(vl->vars)) {
 		strlist__delete(vl->vars);
-		vl->vars = शून्य;
-	पूर्ण
+		vl->vars = NULL;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * Find available variables at given probe poपूर्णांक
- * Return the number of found probe poपूर्णांकs. Return 0 अगर there is no
- * matched probe poपूर्णांक. Return <0 अगर an error occurs.
+ * Find available variables at given probe point
+ * Return the number of found probe points. Return 0 if there is no
+ * matched probe point. Return <0 if an error occurs.
  */
-पूर्णांक debuginfo__find_available_vars_at(काष्ठा debuginfo *dbg,
-				      काष्ठा perf_probe_event *pev,
-				      काष्ठा variable_list **vls)
-अणु
-	काष्ठा available_var_finder af = अणु
-			.pf = अणु.pev = pev, .dbg = dbg, .callback = add_available_varsपूर्ण,
+int debuginfo__find_available_vars_at(struct debuginfo *dbg,
+				      struct perf_probe_event *pev,
+				      struct variable_list **vls)
+{
+	struct available_var_finder af = {
+			.pf = {.pev = pev, .dbg = dbg, .callback = add_available_vars},
 			.mod = dbg->mod,
-			.max_vls = probe_conf.max_probesपूर्ण;
-	पूर्णांक ret;
+			.max_vls = probe_conf.max_probes};
+	int ret;
 
 	/* Allocate result vls array */
-	*vls = zalloc(माप(काष्ठा variable_list) * af.max_vls);
-	अगर (*vls == शून्य)
-		वापस -ENOMEM;
+	*vls = zalloc(sizeof(struct variable_list) * af.max_vls);
+	if (*vls == NULL)
+		return -ENOMEM;
 
 	af.vls = *vls;
 	af.nvls = 0;
 
 	ret = debuginfo__find_probes(dbg, &af.pf);
-	अगर (ret < 0) अणु
-		/* Free vlist क्रम error */
-		जबतक (af.nvls--) अणु
-			zमुक्त(&af.vls[af.nvls].poपूर्णांक.symbol);
+	if (ret < 0) {
+		/* Free vlist for error */
+		while (af.nvls--) {
+			zfree(&af.vls[af.nvls].point.symbol);
 			strlist__delete(af.vls[af.nvls].vars);
-		पूर्ण
-		zमुक्त(vls);
-		वापस ret;
-	पूर्ण
+		}
+		zfree(vls);
+		return ret;
+	}
 
-	वापस (ret < 0) ? ret : af.nvls;
-पूर्ण
+	return (ret < 0) ? ret : af.nvls;
+}
 
 /* For the kernel module, we need a special code to get a DIE */
-पूर्णांक debuginfo__get_text_offset(काष्ठा debuginfo *dbg, Dwarf_Addr *offs,
+int debuginfo__get_text_offset(struct debuginfo *dbg, Dwarf_Addr *offs,
 				bool adjust_offset)
-अणु
-	पूर्णांक n, i;
+{
+	int n, i;
 	Elf32_Word shndx;
 	Elf_Scn *scn;
 	Elf *elf;
 	GElf_Shdr mem, *shdr;
-	स्थिर अक्षर *p;
+	const char *p;
 
 	elf = dwfl_module_getelf(dbg->mod, &dbg->bias);
-	अगर (!elf)
-		वापस -EINVAL;
+	if (!elf)
+		return -EINVAL;
 
 	/* Get the number of relocations */
 	n = dwfl_module_relocations(dbg->mod);
-	अगर (n < 0)
-		वापस -ENOENT;
+	if (n < 0)
+		return -ENOENT;
 	/* Search the relocation related .text section */
-	क्रम (i = 0; i < n; i++) अणु
+	for (i = 0; i < n; i++) {
 		p = dwfl_module_relocation_info(dbg->mod, i, &shndx);
-		अगर (म_भेद(p, ".text") == 0) अणु
+		if (strcmp(p, ".text") == 0) {
 			/* OK, get the section header */
-			scn = elf_माला_लोcn(elf, shndx);
-			अगर (!scn)
-				वापस -ENOENT;
-			shdr = gelf_माला_लोhdr(scn, &mem);
-			अगर (!shdr)
-				वापस -ENOENT;
+			scn = elf_getscn(elf, shndx);
+			if (!scn)
+				return -ENOENT;
+			shdr = gelf_getshdr(scn, &mem);
+			if (!shdr)
+				return -ENOENT;
 			*offs = shdr->sh_addr;
-			अगर (adjust_offset)
+			if (adjust_offset)
 				*offs -= shdr->sh_offset;
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+		}
+	}
+	return 0;
+}
 
 /* Reverse search */
-पूर्णांक debuginfo__find_probe_poपूर्णांक(काष्ठा debuginfo *dbg, अचिन्हित दीर्घ addr,
-				काष्ठा perf_probe_poपूर्णांक *ppt)
-अणु
+int debuginfo__find_probe_point(struct debuginfo *dbg, unsigned long addr,
+				struct perf_probe_point *ppt)
+{
 	Dwarf_Die cudie, spdie, indie;
 	Dwarf_Addr _addr = 0, baseaddr = 0;
-	स्थिर अक्षर *fname = शून्य, *func = शून्य, *basefunc = शून्य, *पंचांगp;
-	पूर्णांक baseline = 0, lineno = 0, ret = 0;
+	const char *fname = NULL, *func = NULL, *basefunc = NULL, *tmp;
+	int baseline = 0, lineno = 0, ret = 0;
 
-	/* We always need to relocate the address क्रम aranges */
-	अगर (debuginfo__get_text_offset(dbg, &baseaddr, false) == 0)
+	/* We always need to relocate the address for aranges */
+	if (debuginfo__get_text_offset(dbg, &baseaddr, false) == 0)
 		addr += baseaddr;
 	/* Find cu die */
-	अगर (!dwarf_addrdie(dbg->dbg, (Dwarf_Addr)addr, &cudie)) अणु
+	if (!dwarf_addrdie(dbg->dbg, (Dwarf_Addr)addr, &cudie)) {
 		pr_warning("Failed to find debug information for address %lx\n",
 			   addr);
 		ret = -EINVAL;
-		जाओ end;
-	पूर्ण
+		goto end;
+	}
 
 	/* Find a corresponding line (filename and lineno) */
 	cu_find_lineinfo(&cudie, addr, &fname, &lineno);
 	/* Don't care whether it failed or not */
 
 	/* Find a corresponding function (name, baseline and baseaddr) */
-	अगर (die_find_realfunc(&cudie, (Dwarf_Addr)addr, &spdie)) अणु
-		/* Get function entry inक्रमmation */
+	if (die_find_realfunc(&cudie, (Dwarf_Addr)addr, &spdie)) {
+		/* Get function entry information */
 		func = basefunc = dwarf_diename(&spdie);
-		अगर (!func ||
+		if (!func ||
 		    die_entrypc(&spdie, &baseaddr) != 0 ||
-		    dwarf_decl_line(&spdie, &baseline) != 0) अणु
+		    dwarf_decl_line(&spdie, &baseline) != 0) {
 			lineno = 0;
-			जाओ post;
-		पूर्ण
+			goto post;
+		}
 
 		fname = dwarf_decl_file(&spdie);
-		अगर (addr == (अचिन्हित दीर्घ)baseaddr) अणु
+		if (addr == (unsigned long)baseaddr) {
 			/* Function entry - Relative line number is 0 */
 			lineno = baseline;
-			जाओ post;
-		पूर्ण
+			goto post;
+		}
 
-		/* Track करोwn the अंतरभूत functions step by step */
-		जबतक (die_find_top_अंतरभूतfunc(&spdie, (Dwarf_Addr)addr,
-						&indie)) अणु
-			/* There is an अंतरभूत function */
-			अगर (die_entrypc(&indie, &_addr) == 0 &&
-			    _addr == addr) अणु
+		/* Track down the inline functions step by step */
+		while (die_find_top_inlinefunc(&spdie, (Dwarf_Addr)addr,
+						&indie)) {
+			/* There is an inline function */
+			if (die_entrypc(&indie, &_addr) == 0 &&
+			    _addr == addr) {
 				/*
-				 * addr is at an अंतरभूत function entry.
-				 * In this हाल, lineno should be the call-site
-				 * line number. (overग_लिखो lineinfo)
+				 * addr is at an inline function entry.
+				 * In this case, lineno should be the call-site
+				 * line number. (overwrite lineinfo)
 				 */
 				lineno = die_get_call_lineno(&indie);
 				fname = die_get_call_file(&indie);
-				अवरोध;
-			पूर्ण अन्यथा अणु
+				break;
+			} else {
 				/*
-				 * addr is in an अंतरभूत function body.
-				 * Since lineno poपूर्णांकs one of the lines
-				 * of the अंतरभूत function, baseline should
-				 * be the entry line of the अंतरभूत function.
+				 * addr is in an inline function body.
+				 * Since lineno points one of the lines
+				 * of the inline function, baseline should
+				 * be the entry line of the inline function.
 				 */
-				पंचांगp = dwarf_diename(&indie);
-				अगर (!पंचांगp ||
+				tmp = dwarf_diename(&indie);
+				if (!tmp ||
 				    dwarf_decl_line(&indie, &baseline) != 0)
-					अवरोध;
-				func = पंचांगp;
+					break;
+				func = tmp;
 				spdie = indie;
-			पूर्ण
-		पूर्ण
-		/* Verअगरy the lineno and baseline are in a same file */
-		पंचांगp = dwarf_decl_file(&spdie);
-		अगर (!पंचांगp || म_भेद(पंचांगp, fname) != 0)
+			}
+		}
+		/* Verify the lineno and baseline are in a same file */
+		tmp = dwarf_decl_file(&spdie);
+		if (!tmp || strcmp(tmp, fname) != 0)
 			lineno = 0;
-	पूर्ण
+	}
 
 post:
 	/* Make a relative line number or an offset */
-	अगर (lineno)
+	if (lineno)
 		ppt->line = lineno - baseline;
-	अन्यथा अगर (basefunc) अणु
-		ppt->offset = addr - (अचिन्हित दीर्घ)baseaddr;
+	else if (basefunc) {
+		ppt->offset = addr - (unsigned long)baseaddr;
 		func = basefunc;
-	पूर्ण
+	}
 
 	/* Duplicate strings */
-	अगर (func) अणु
+	if (func) {
 		ppt->function = strdup(func);
-		अगर (ppt->function == शून्य) अणु
+		if (ppt->function == NULL) {
 			ret = -ENOMEM;
-			जाओ end;
-		पूर्ण
-	पूर्ण
-	अगर (fname) अणु
+			goto end;
+		}
+	}
+	if (fname) {
 		ppt->file = strdup(fname);
-		अगर (ppt->file == शून्य) अणु
-			zमुक्त(&ppt->function);
+		if (ppt->file == NULL) {
+			zfree(&ppt->function);
 			ret = -ENOMEM;
-			जाओ end;
-		पूर्ण
-	पूर्ण
+			goto end;
+		}
+	}
 end:
-	अगर (ret == 0 && (fname || func))
-		ret = 1;	/* Found a poपूर्णांक */
-	वापस ret;
-पूर्ण
+	if (ret == 0 && (fname || func))
+		ret = 1;	/* Found a point */
+	return ret;
+}
 
 /* Add a line and store the src path */
-अटल पूर्णांक line_range_add_line(स्थिर अक्षर *src, अचिन्हित पूर्णांक lineno,
-			       काष्ठा line_range *lr)
-अणु
+static int line_range_add_line(const char *src, unsigned int lineno,
+			       struct line_range *lr)
+{
 	/* Copy source path */
-	अगर (!lr->path) अणु
+	if (!lr->path) {
 		lr->path = strdup(src);
-		अगर (lr->path == शून्य)
-			वापस -ENOMEM;
-	पूर्ण
-	वापस पूर्णांकlist__add(lr->line_list, lineno);
-पूर्ण
+		if (lr->path == NULL)
+			return -ENOMEM;
+	}
+	return intlist__add(lr->line_list, lineno);
+}
 
-अटल पूर्णांक line_range_walk_cb(स्थिर अक्षर *fname, पूर्णांक lineno,
+static int line_range_walk_cb(const char *fname, int lineno,
 			      Dwarf_Addr addr __maybe_unused,
-			      व्योम *data)
-अणु
-	काष्ठा line_finder *lf = data;
-	स्थिर अक्षर *__fname;
-	पूर्णांक __lineno;
-	पूर्णांक err;
+			      void *data)
+{
+	struct line_finder *lf = data;
+	const char *__fname;
+	int __lineno;
+	int err;
 
-	अगर ((strtailcmp(fname, lf->fname) != 0) ||
+	if ((strtailcmp(fname, lf->fname) != 0) ||
 	    (lf->lno_s > lineno || lf->lno_e < lineno))
-		वापस 0;
+		return 0;
 
 	/* Make sure this line can be reversible */
-	अगर (cu_find_lineinfo(&lf->cu_die, addr, &__fname, &__lineno) > 0
-	    && (lineno != __lineno || म_भेद(fname, __fname)))
-		वापस 0;
+	if (cu_find_lineinfo(&lf->cu_die, addr, &__fname, &__lineno) > 0
+	    && (lineno != __lineno || strcmp(fname, __fname)))
+		return 0;
 
 	err = line_range_add_line(fname, lineno, lf->lr);
-	अगर (err < 0 && err != -EEXIST)
-		वापस err;
+	if (err < 0 && err != -EEXIST)
+		return err;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* Find line range from its line number */
-अटल पूर्णांक find_line_range_by_line(Dwarf_Die *sp_die, काष्ठा line_finder *lf)
-अणु
-	पूर्णांक ret;
+static int find_line_range_by_line(Dwarf_Die *sp_die, struct line_finder *lf)
+{
+	int ret;
 
 	ret = die_walk_lines(sp_die ?: &lf->cu_die, line_range_walk_cb, lf);
 
 	/* Update status */
-	अगर (ret >= 0)
-		अगर (!पूर्णांकlist__empty(lf->lr->line_list))
+	if (ret >= 0)
+		if (!intlist__empty(lf->lr->line_list))
 			ret = lf->found = 1;
-		अन्यथा
+		else
 			ret = 0;	/* Lines are not found */
-	अन्यथा अणु
-		zमुक्त(&lf->lr->path);
-	पूर्ण
-	वापस ret;
-पूर्ण
+	else {
+		zfree(&lf->lr->path);
+	}
+	return ret;
+}
 
-अटल पूर्णांक line_range_अंतरभूत_cb(Dwarf_Die *in_die, व्योम *data)
-अणु
-	पूर्णांक ret = find_line_range_by_line(in_die, data);
+static int line_range_inline_cb(Dwarf_Die *in_die, void *data)
+{
+	int ret = find_line_range_by_line(in_die, data);
 
 	/*
-	 * We have to check all instances of अंतरभूतd function, because
+	 * We have to check all instances of inlined function, because
 	 * some execution paths can be optimized out depends on the
-	 * function argument of instances. However, अगर an error occurs,
+	 * function argument of instances. However, if an error occurs,
 	 * it should be handled by the caller.
 	 */
-	वापस ret < 0 ? ret : 0;
-पूर्ण
+	return ret < 0 ? ret : 0;
+}
 
 /* Search function definition from function name */
-अटल पूर्णांक line_range_search_cb(Dwarf_Die *sp_die, व्योम *data)
-अणु
-	काष्ठा dwarf_callback_param *param = data;
-	काष्ठा line_finder *lf = param->data;
-	काष्ठा line_range *lr = lf->lr;
+static int line_range_search_cb(Dwarf_Die *sp_die, void *data)
+{
+	struct dwarf_callback_param *param = data;
+	struct line_finder *lf = param->data;
+	struct line_range *lr = lf->lr;
 
 	/* Check declared file */
-	अगर (lr->file && strtailcmp(lr->file, dwarf_decl_file(sp_die)))
-		वापस DWARF_CB_OK;
+	if (lr->file && strtailcmp(lr->file, dwarf_decl_file(sp_die)))
+		return DWARF_CB_OK;
 
-	अगर (die_match_name(sp_die, lr->function) && die_is_func_def(sp_die)) अणु
+	if (die_match_name(sp_die, lr->function) && die_is_func_def(sp_die)) {
 		lf->fname = dwarf_decl_file(sp_die);
 		dwarf_decl_line(sp_die, &lr->offset);
 		pr_debug("fname: %s, lineno:%d\n", lf->fname, lr->offset);
 		lf->lno_s = lr->offset + lr->start;
-		अगर (lf->lno_s < 0)	/* Overflow */
-			lf->lno_s = पूर्णांक_उच्च;
+		if (lf->lno_s < 0)	/* Overflow */
+			lf->lno_s = INT_MAX;
 		lf->lno_e = lr->offset + lr->end;
-		अगर (lf->lno_e < 0)	/* Overflow */
-			lf->lno_e = पूर्णांक_उच्च;
+		if (lf->lno_e < 0)	/* Overflow */
+			lf->lno_e = INT_MAX;
 		pr_debug("New line range: %d to %d\n", lf->lno_s, lf->lno_e);
 		lr->start = lf->lno_s;
 		lr->end = lf->lno_e;
-		अगर (!die_is_func_instance(sp_die))
+		if (!die_is_func_instance(sp_die))
 			param->retval = die_walk_instances(sp_die,
-						line_range_अंतरभूत_cb, lf);
-		अन्यथा
+						line_range_inline_cb, lf);
+		else
 			param->retval = find_line_range_by_line(sp_die, lf);
-		वापस DWARF_CB_ABORT;
-	पूर्ण
-	वापस DWARF_CB_OK;
-पूर्ण
+		return DWARF_CB_ABORT;
+	}
+	return DWARF_CB_OK;
+}
 
-अटल पूर्णांक find_line_range_by_func(काष्ठा line_finder *lf)
-अणु
-	काष्ठा dwarf_callback_param param = अणु.data = (व्योम *)lf, .retval = 0पूर्ण;
+static int find_line_range_by_func(struct line_finder *lf)
+{
+	struct dwarf_callback_param param = {.data = (void *)lf, .retval = 0};
 	dwarf_getfuncs(&lf->cu_die, line_range_search_cb, &param, 0);
-	वापस param.retval;
-पूर्ण
+	return param.retval;
+}
 
-पूर्णांक debuginfo__find_line_range(काष्ठा debuginfo *dbg, काष्ठा line_range *lr)
-अणु
-	काष्ठा line_finder lf = अणु.lr = lr, .found = 0पूर्ण;
-	पूर्णांक ret = 0;
+int debuginfo__find_line_range(struct debuginfo *dbg, struct line_range *lr)
+{
+	struct line_finder lf = {.lr = lr, .found = 0};
+	int ret = 0;
 	Dwarf_Off off = 0, noff;
-	माप_प्रकार cuhl;
+	size_t cuhl;
 	Dwarf_Die *diep;
-	स्थिर अक्षर *comp_dir;
+	const char *comp_dir;
 
 	/* Fastpath: lookup by function name from .debug_pubnames section */
-	अगर (lr->function) अणु
-		काष्ठा pubname_callback_param pubname_param = अणु
+	if (lr->function) {
+		struct pubname_callback_param pubname_param = {
 			.function = lr->function, .file = lr->file,
-			.cu_die = &lf.cu_die, .sp_die = &lf.sp_die, .found = 0पूर्ण;
-		काष्ठा dwarf_callback_param line_range_param = अणु
-			.data = (व्योम *)&lf, .retval = 0पूर्ण;
+			.cu_die = &lf.cu_die, .sp_die = &lf.sp_die, .found = 0};
+		struct dwarf_callback_param line_range_param = {
+			.data = (void *)&lf, .retval = 0};
 
 		dwarf_getpubnames(dbg->dbg, pubname_search_cb,
 				  &pubname_param, 0);
-		अगर (pubname_param.found) अणु
+		if (pubname_param.found) {
 			line_range_search_cb(&lf.sp_die, &line_range_param);
-			अगर (lf.found)
-				जाओ found;
-		पूर्ण
-	पूर्ण
+			if (lf.found)
+				goto found;
+		}
+	}
 
 	/* Loop on CUs (Compilation Unit) */
-	जबतक (!lf.found && ret >= 0) अणु
-		अगर (dwarf_nextcu(dbg->dbg, off, &noff, &cuhl,
-				 शून्य, शून्य, शून्य) != 0)
-			अवरोध;
+	while (!lf.found && ret >= 0) {
+		if (dwarf_nextcu(dbg->dbg, off, &noff, &cuhl,
+				 NULL, NULL, NULL) != 0)
+			break;
 
-		/* Get the DIE(Debugging Inक्रमmation Entry) of this CU */
+		/* Get the DIE(Debugging Information Entry) of this CU */
 		diep = dwarf_offdie(dbg->dbg, off + cuhl, &lf.cu_die);
-		अगर (!diep) अणु
+		if (!diep) {
 			off = noff;
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		/* Check अगर target file is included. */
-		अगर (lr->file)
+		/* Check if target file is included. */
+		if (lr->file)
 			lf.fname = cu_find_realpath(&lf.cu_die, lr->file);
-		अन्यथा
+		else
 			lf.fname = 0;
 
-		अगर (!lr->file || lf.fname) अणु
-			अगर (lr->function)
+		if (!lr->file || lf.fname) {
+			if (lr->function)
 				ret = find_line_range_by_func(&lf);
-			अन्यथा अणु
+			else {
 				lf.lno_s = lr->start;
 				lf.lno_e = lr->end;
-				ret = find_line_range_by_line(शून्य, &lf);
-			पूर्ण
-		पूर्ण
+				ret = find_line_range_by_line(NULL, &lf);
+			}
+		}
 		off = noff;
-	पूर्ण
+	}
 
 found:
 	/* Store comp_dir */
-	अगर (lf.found) अणु
+	if (lf.found) {
 		comp_dir = cu_get_comp_dir(&lf.cu_die);
-		अगर (comp_dir) अणु
+		if (comp_dir) {
 			lr->comp_dir = strdup(comp_dir);
-			अगर (!lr->comp_dir)
+			if (!lr->comp_dir)
 				ret = -ENOMEM;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	pr_debug("path: %s\n", lr->path);
-	वापस (ret < 0) ? ret : lf.found;
-पूर्ण
+	return (ret < 0) ? ret : lf.found;
+}
 
-#अगर_घोषित HAVE_DEBUGINFOD_SUPPORT
-/* debuginfod करोesn't require the comp_dir but buildid is required */
-अटल पूर्णांक get_source_from_debuginfod(स्थिर अक्षर *raw_path,
-				स्थिर अक्षर *sbuild_id, अक्षर **new_path)
-अणु
+#ifdef HAVE_DEBUGINFOD_SUPPORT
+/* debuginfod doesn't require the comp_dir but buildid is required */
+static int get_source_from_debuginfod(const char *raw_path,
+				const char *sbuild_id, char **new_path)
+{
 	debuginfod_client *c = debuginfod_begin();
-	स्थिर अक्षर *p = raw_path;
-	पूर्णांक fd;
+	const char *p = raw_path;
+	int fd;
 
-	अगर (!c)
-		वापस -ENOMEM;
+	if (!c)
+		return -ENOMEM;
 
-	fd = debuginfod_find_source(c, (स्थिर अचिन्हित अक्षर *)sbuild_id,
+	fd = debuginfod_find_source(c, (const unsigned char *)sbuild_id,
 				0, p, new_path);
 	pr_debug("Search %s from debuginfod -> %d\n", p, fd);
-	अगर (fd >= 0)
-		बंद(fd);
+	if (fd >= 0)
+		close(fd);
 	debuginfod_end(c);
-	अगर (fd < 0) अणु
+	if (fd < 0) {
 		pr_debug("Failed to find %s in debuginfod (%s)\n",
 			raw_path, sbuild_id);
-		वापस -ENOENT;
-	पूर्ण
+		return -ENOENT;
+	}
 	pr_debug("Got a source %s\n", *new_path);
 
-	वापस 0;
-पूर्ण
-#अन्यथा
-अटल अंतरभूत पूर्णांक get_source_from_debuginfod(स्थिर अक्षर *raw_path __maybe_unused,
-				स्थिर अक्षर *sbuild_id __maybe_unused,
-				अक्षर **new_path __maybe_unused)
-अणु
-	वापस -ENOTSUP;
-पूर्ण
-#पूर्ण_अगर
+	return 0;
+}
+#else
+static inline int get_source_from_debuginfod(const char *raw_path __maybe_unused,
+				const char *sbuild_id __maybe_unused,
+				char **new_path __maybe_unused)
+{
+	return -ENOTSUP;
+}
+#endif
 /*
  * Find a src file from a DWARF tag path. Prepend optional source path prefix
- * and chop off leading directories that करो not exist. Result is passed back as
+ * and chop off leading directories that do not exist. Result is passed back as
  * a newly allocated path on success.
- * Return 0 अगर file was found and पढ़ोable, -त्रुटि_सं otherwise.
+ * Return 0 if file was found and readable, -errno otherwise.
  */
-पूर्णांक find_source_path(स्थिर अक्षर *raw_path, स्थिर अक्षर *sbuild_id,
-		स्थिर अक्षर *comp_dir, अक्षर **new_path)
-अणु
-	स्थिर अक्षर *prefix = symbol_conf.source_prefix;
+int find_source_path(const char *raw_path, const char *sbuild_id,
+		const char *comp_dir, char **new_path)
+{
+	const char *prefix = symbol_conf.source_prefix;
 
-	अगर (sbuild_id && !prefix) अणु
-		अगर (!get_source_from_debuginfod(raw_path, sbuild_id, new_path))
-			वापस 0;
-	पूर्ण
+	if (sbuild_id && !prefix) {
+		if (!get_source_from_debuginfod(raw_path, sbuild_id, new_path))
+			return 0;
+	}
 
-	अगर (!prefix) अणु
-		अगर (raw_path[0] != '/' && comp_dir)
-			/* If not an असलolute path, try to use comp_dir */
+	if (!prefix) {
+		if (raw_path[0] != '/' && comp_dir)
+			/* If not an absolute path, try to use comp_dir */
 			prefix = comp_dir;
-		अन्यथा अणु
-			अगर (access(raw_path, R_OK) == 0) अणु
+		else {
+			if (access(raw_path, R_OK) == 0) {
 				*new_path = strdup(raw_path);
-				वापस *new_path ? 0 : -ENOMEM;
-			पूर्ण अन्यथा
-				वापस -त्रुटि_सं;
-		पूर्ण
-	पूर्ण
+				return *new_path ? 0 : -ENOMEM;
+			} else
+				return -errno;
+		}
+	}
 
-	*new_path = दो_स्मृति((म_माप(prefix) + म_माप(raw_path) + 2));
-	अगर (!*new_path)
-		वापस -ENOMEM;
+	*new_path = malloc((strlen(prefix) + strlen(raw_path) + 2));
+	if (!*new_path)
+		return -ENOMEM;
 
-	क्रम (;;) अणु
-		प्र_लिखो(*new_path, "%s/%s", prefix, raw_path);
+	for (;;) {
+		sprintf(*new_path, "%s/%s", prefix, raw_path);
 
-		अगर (access(*new_path, R_OK) == 0)
-			वापस 0;
+		if (access(*new_path, R_OK) == 0)
+			return 0;
 
-		अगर (!symbol_conf.source_prefix) अणु
-			/* In हाल of searching comp_dir, करोn't retry */
-			zमुक्त(new_path);
-			वापस -त्रुटि_सं;
-		पूर्ण
+		if (!symbol_conf.source_prefix) {
+			/* In case of searching comp_dir, don't retry */
+			zfree(new_path);
+			return -errno;
+		}
 
-		चयन (त्रुटि_सं) अणु
-		हाल ENAMETOOLONG:
-		हाल ENOENT:
-		हाल EROFS:
-		हाल EFAULT:
-			raw_path = म_अक्षर(++raw_path, '/');
-			अगर (!raw_path) अणु
-				zमुक्त(new_path);
-				वापस -ENOENT;
-			पूर्ण
-			जारी;
+		switch (errno) {
+		case ENAMETOOLONG:
+		case ENOENT:
+		case EROFS:
+		case EFAULT:
+			raw_path = strchr(++raw_path, '/');
+			if (!raw_path) {
+				zfree(new_path);
+				return -ENOENT;
+			}
+			continue;
 
-		शेष:
-			zमुक्त(new_path);
-			वापस -त्रुटि_सं;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		default:
+			zfree(new_path);
+			return -errno;
+		}
+	}
+}

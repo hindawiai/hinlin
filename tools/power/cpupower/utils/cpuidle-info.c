@@ -1,214 +1,213 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- *  (C) 2004-2009  Dominik Broकरोwski <linux@करोminikbroकरोwski.de>
+ *  (C) 2004-2009  Dominik Brodowski <linux@dominikbrodowski.de>
  *  (C) 2010       Thomas Renninger <trenn@suse.de>
  */
 
 
-#समावेश <unistd.h>
-#समावेश <मानकपन.स>
-#समावेश <त्रुटिसं.स>
-#समावेश <मानककोष.स>
-#समावेश <माला.स>
-#समावेश <getopt.h>
+#include <unistd.h>
+#include <stdio.h>
+#include <errno.h>
+#include <stdlib.h>
+#include <string.h>
+#include <getopt.h>
 
-#समावेश <cpuidle.h>
+#include <cpuidle.h>
 
-#समावेश "helpers/sysfs.h"
-#समावेश "helpers/helpers.h"
-#समावेश "helpers/bitmask.h"
+#include "helpers/sysfs.h"
+#include "helpers/helpers.h"
+#include "helpers/bitmask.h"
 
-#घोषणा LINE_LEN 10
+#define LINE_LEN 10
 
-अटल व्योम cpuidle_cpu_output(अचिन्हित पूर्णांक cpu, पूर्णांक verbose)
-अणु
-	अचिन्हित पूर्णांक idlestates, idlestate;
-	अक्षर *पंचांगp;
+static void cpuidle_cpu_output(unsigned int cpu, int verbose)
+{
+	unsigned int idlestates, idlestate;
+	char *tmp;
 
 	idlestates = cpuidle_state_count(cpu);
-	अगर (idlestates == 0) अणु
-		म_लिखो(_("CPU %u: No idle states\n"), cpu);
-		वापस;
-	पूर्ण
+	if (idlestates == 0) {
+		printf(_("CPU %u: No idle states\n"), cpu);
+		return;
+	}
 
-	म_लिखो(_("Number of idle states: %d\n"), idlestates);
-	म_लिखो(_("Available idle states:"));
-	क्रम (idlestate = 0; idlestate < idlestates; idlestate++) अणु
-		पंचांगp = cpuidle_state_name(cpu, idlestate);
-		अगर (!पंचांगp)
-			जारी;
-		म_लिखो(" %s", पंचांगp);
-		मुक्त(पंचांगp);
-	पूर्ण
-	म_लिखो("\n");
+	printf(_("Number of idle states: %d\n"), idlestates);
+	printf(_("Available idle states:"));
+	for (idlestate = 0; idlestate < idlestates; idlestate++) {
+		tmp = cpuidle_state_name(cpu, idlestate);
+		if (!tmp)
+			continue;
+		printf(" %s", tmp);
+		free(tmp);
+	}
+	printf("\n");
 
-	अगर (!verbose)
-		वापस;
+	if (!verbose)
+		return;
 
-	क्रम (idlestate = 0; idlestate < idlestates; idlestate++) अणु
-		पूर्णांक disabled = cpuidle_is_state_disabled(cpu, idlestate);
-		/* Disabled पूर्णांकerface not supported on older kernels */
-		अगर (disabled < 0)
+	for (idlestate = 0; idlestate < idlestates; idlestate++) {
+		int disabled = cpuidle_is_state_disabled(cpu, idlestate);
+		/* Disabled interface not supported on older kernels */
+		if (disabled < 0)
 			disabled = 0;
-		पंचांगp = cpuidle_state_name(cpu, idlestate);
-		अगर (!पंचांगp)
-			जारी;
-		म_लिखो("%s%s:\n", पंचांगp, (disabled) ? " (DISABLED) " : "");
-		मुक्त(पंचांगp);
+		tmp = cpuidle_state_name(cpu, idlestate);
+		if (!tmp)
+			continue;
+		printf("%s%s:\n", tmp, (disabled) ? " (DISABLED) " : "");
+		free(tmp);
 
-		पंचांगp = cpuidle_state_desc(cpu, idlestate);
-		अगर (!पंचांगp)
-			जारी;
-		म_लिखो(_("Flags/Description: %s\n"), पंचांगp);
-		मुक्त(पंचांगp);
+		tmp = cpuidle_state_desc(cpu, idlestate);
+		if (!tmp)
+			continue;
+		printf(_("Flags/Description: %s\n"), tmp);
+		free(tmp);
 
-		म_लिखो(_("Latency: %lu\n"),
+		printf(_("Latency: %lu\n"),
 		       cpuidle_state_latency(cpu, idlestate));
-		म_लिखो(_("Usage: %lu\n"),
+		printf(_("Usage: %lu\n"),
 		       cpuidle_state_usage(cpu, idlestate));
-		म_लिखो(_("Duration: %llu\n"),
-		       cpuidle_state_समय(cpu, idlestate));
-	पूर्ण
-पूर्ण
+		printf(_("Duration: %llu\n"),
+		       cpuidle_state_time(cpu, idlestate));
+	}
+}
 
-अटल व्योम cpuidle_general_output(व्योम)
-अणु
-	अक्षर *पंचांगp;
+static void cpuidle_general_output(void)
+{
+	char *tmp;
 
-	पंचांगp = cpuidle_get_driver();
-	अगर (!पंचांगp) अणु
-		म_लिखो(_("Could not determine cpuidle driver\n"));
-		वापस;
-	पूर्ण
+	tmp = cpuidle_get_driver();
+	if (!tmp) {
+		printf(_("Could not determine cpuidle driver\n"));
+		return;
+	}
 
-	म_लिखो(_("CPUidle driver: %s\n"), पंचांगp);
-	मुक्त(पंचांगp);
+	printf(_("CPUidle driver: %s\n"), tmp);
+	free(tmp);
 
-	पंचांगp = cpuidle_get_governor();
-	अगर (!पंचांगp) अणु
-		म_लिखो(_("Could not determine cpuidle governor\n"));
-		वापस;
-	पूर्ण
+	tmp = cpuidle_get_governor();
+	if (!tmp) {
+		printf(_("Could not determine cpuidle governor\n"));
+		return;
+	}
 
-	म_लिखो(_("CPUidle governor: %s\n"), पंचांगp);
-	मुक्त(पंचांगp);
-पूर्ण
+	printf(_("CPUidle governor: %s\n"), tmp);
+	free(tmp);
+}
 
-अटल व्योम proc_cpuidle_cpu_output(अचिन्हित पूर्णांक cpu)
-अणु
-	दीर्घ max_allowed_cstate = 2000000000;
-	अचिन्हित पूर्णांक cstate, cstates;
+static void proc_cpuidle_cpu_output(unsigned int cpu)
+{
+	long max_allowed_cstate = 2000000000;
+	unsigned int cstate, cstates;
 
 	cstates = cpuidle_state_count(cpu);
-	अगर (cstates == 0) अणु
-		म_लिखो(_("CPU %u: No C-states info\n"), cpu);
-		वापस;
-	पूर्ण
+	if (cstates == 0) {
+		printf(_("CPU %u: No C-states info\n"), cpu);
+		return;
+	}
 
-	म_लिखो(_("active state:            C0\n"));
-	म_लिखो(_("max_cstate:              C%u\n"), cstates-1);
-	म_लिखो(_("maximum allowed latency: %lu usec\n"), max_allowed_cstate);
-	म_लिखो(_("states:\t\n"));
-	क्रम (cstate = 1; cstate < cstates; cstate++) अणु
-		म_लिखो(_("    C%d:                  "
+	printf(_("active state:            C0\n"));
+	printf(_("max_cstate:              C%u\n"), cstates-1);
+	printf(_("maximum allowed latency: %lu usec\n"), max_allowed_cstate);
+	printf(_("states:\t\n"));
+	for (cstate = 1; cstate < cstates; cstate++) {
+		printf(_("    C%d:                  "
 			 "type[C%d] "), cstate, cstate);
-		म_लिखो(_("promotion[--] demotion[--] "));
-		म_लिखो(_("latency[%03lu] "),
+		printf(_("promotion[--] demotion[--] "));
+		printf(_("latency[%03lu] "),
 		       cpuidle_state_latency(cpu, cstate));
-		म_लिखो(_("usage[%08lu] "),
+		printf(_("usage[%08lu] "),
 		       cpuidle_state_usage(cpu, cstate));
-		म_लिखो(_("duration[%020Lu] \n"),
-		       cpuidle_state_समय(cpu, cstate));
-	पूर्ण
-पूर्ण
+		printf(_("duration[%020Lu] \n"),
+		       cpuidle_state_time(cpu, cstate));
+	}
+}
 
-अटल काष्ठा option info_opts[] = अणु
-	अणु"silent", no_argument, शून्य, 's'पूर्ण,
-	अणु"proc", no_argument, शून्य, 'o'पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+static struct option info_opts[] = {
+	{"silent", no_argument, NULL, 's'},
+	{"proc", no_argument, NULL, 'o'},
+	{ },
+};
 
-अटल अंतरभूत व्योम cpuidle_निकास(पूर्णांक fail)
-अणु
-	निकास(निकास_त्रुटि);
-पूर्ण
+static inline void cpuidle_exit(int fail)
+{
+	exit(EXIT_FAILURE);
+}
 
-पूर्णांक cmd_idle_info(पूर्णांक argc, अक्षर **argv)
-अणु
-	बाह्य अक्षर *optarg;
-	बाह्य पूर्णांक optind, opterr, optopt;
-	पूर्णांक ret = 0, cont = 1, output_param = 0, verbose = 1;
-	अचिन्हित पूर्णांक cpu = 0;
+int cmd_idle_info(int argc, char **argv)
+{
+	extern char *optarg;
+	extern int optind, opterr, optopt;
+	int ret = 0, cont = 1, output_param = 0, verbose = 1;
+	unsigned int cpu = 0;
 
-	करो अणु
-		ret = getopt_दीर्घ(argc, argv, "os", info_opts, शून्य);
-		अगर (ret == -1)
-			अवरोध;
-		चयन (ret) अणु
-		हाल '?':
+	do {
+		ret = getopt_long(argc, argv, "os", info_opts, NULL);
+		if (ret == -1)
+			break;
+		switch (ret) {
+		case '?':
 			output_param = '?';
 			cont = 0;
-			अवरोध;
-		हाल 's':
+			break;
+		case 's':
 			verbose = 0;
-			अवरोध;
-		हाल -1:
+			break;
+		case -1:
 			cont = 0;
-			अवरोध;
-		हाल 'o':
-			अगर (output_param) अणु
+			break;
+		case 'o':
+			if (output_param) {
 				output_param = -1;
 				cont = 0;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 			output_param = ret;
-			अवरोध;
-		पूर्ण
-	पूर्ण जबतक (cont);
+			break;
+		}
+	} while (cont);
 
-	चयन (output_param) अणु
-	हाल -1:
-		म_लिखो(_("You can't specify more than one "
+	switch (output_param) {
+	case -1:
+		printf(_("You can't specify more than one "
 			 "output-specific argument\n"));
-		cpuidle_निकास(निकास_त्रुटि);
-	हाल '?':
-		म_लिखो(_("invalid or unknown argument\n"));
-		cpuidle_निकास(निकास_त्रुटि);
-	पूर्ण
+		cpuidle_exit(EXIT_FAILURE);
+	case '?':
+		printf(_("invalid or unknown argument\n"));
+		cpuidle_exit(EXIT_FAILURE);
+	}
 
 	/* Default is: show output of CPU 0 only */
-	अगर (biपंचांगask_isallclear(cpus_chosen))
-		biपंचांगask_setbit(cpus_chosen, 0);
+	if (bitmask_isallclear(cpus_chosen))
+		bitmask_setbit(cpus_chosen, 0);
 
-	अगर (output_param == 0)
+	if (output_param == 0)
 		cpuidle_general_output();
 
-	क्रम (cpu = biपंचांगask_first(cpus_chosen);
-	     cpu <= biपंचांगask_last(cpus_chosen); cpu++) अणु
+	for (cpu = bitmask_first(cpus_chosen);
+	     cpu <= bitmask_last(cpus_chosen); cpu++) {
 
-		अगर (!biपंचांगask_isbitset(cpus_chosen, cpu))
-			जारी;
+		if (!bitmask_isbitset(cpus_chosen, cpu))
+			continue;
 
-		म_लिखो(_("analyzing CPU %d:\n"), cpu);
+		printf(_("analyzing CPU %d:\n"), cpu);
 
-		अगर (sysfs_is_cpu_online(cpu) != 1) अणु
-			म_लिखो(_(" *is offline\n"));
-			म_लिखो("\n");
-			जारी;
-		पूर्ण
+		if (sysfs_is_cpu_online(cpu) != 1) {
+			printf(_(" *is offline\n"));
+			printf("\n");
+			continue;
+		}
 
-		चयन (output_param) अणु
+		switch (output_param) {
 
-		हाल 'o':
+		case 'o':
 			proc_cpuidle_cpu_output(cpu);
-			अवरोध;
-		हाल 0:
-			म_लिखो("\n");
+			break;
+		case 0:
+			printf("\n");
 			cpuidle_cpu_output(cpu, verbose);
-			अवरोध;
-		पूर्ण
-		म_लिखो("\n");
-	पूर्ण
-	वापस निकास_सफल;
-पूर्ण
+			break;
+		}
+		printf("\n");
+	}
+	return EXIT_SUCCESS;
+}

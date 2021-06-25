@@ -1,4 +1,3 @@
-<शैली गुरु>
 /*
  * Copyright (C) 2003 Sistina Software.
  * Copyright (C) 2004 Red Hat, Inc. All rights reserved.
@@ -10,84 +9,84 @@
  * Path-Selector registration.
  */
 
-#अगर_अघोषित	DM_PATH_SELECTOR_H
-#घोषणा	DM_PATH_SELECTOR_H
+#ifndef	DM_PATH_SELECTOR_H
+#define	DM_PATH_SELECTOR_H
 
-#समावेश <linux/device-mapper.h>
+#include <linux/device-mapper.h>
 
-#समावेश "dm-mpath.h"
+#include "dm-mpath.h"
 
 /*
- * We provide an असलtraction क्रम the code that chooses which path
- * to send some io करोwn.
+ * We provide an abstraction for the code that chooses which path
+ * to send some io down.
  */
-काष्ठा path_selector_type;
-काष्ठा path_selector अणु
-	काष्ठा path_selector_type *type;
-	व्योम *context;
-पूर्ण;
+struct path_selector_type;
+struct path_selector {
+	struct path_selector_type *type;
+	void *context;
+};
 
-/* Inक्रमmation about a path selector type */
-काष्ठा path_selector_type अणु
-	अक्षर *name;
-	काष्ठा module *module;
+/* Information about a path selector type */
+struct path_selector_type {
+	char *name;
+	struct module *module;
 
-	अचिन्हित पूर्णांक table_args;
-	अचिन्हित पूर्णांक info_args;
+	unsigned int table_args;
+	unsigned int info_args;
 
 	/*
-	 * Conकाष्ठाs a path selector object, takes custom arguments
+	 * Constructs a path selector object, takes custom arguments
 	 */
-	पूर्णांक (*create) (काष्ठा path_selector *ps, अचिन्हित argc, अक्षर **argv);
-	व्योम (*destroy) (काष्ठा path_selector *ps);
+	int (*create) (struct path_selector *ps, unsigned argc, char **argv);
+	void (*destroy) (struct path_selector *ps);
 
 	/*
-	 * Add an opaque path object, aदीर्घ with some selector specअगरic
+	 * Add an opaque path object, along with some selector specific
 	 * path args (eg, path priority).
 	 */
-	पूर्णांक (*add_path) (काष्ठा path_selector *ps, काष्ठा dm_path *path,
-			 पूर्णांक argc, अक्षर **argv, अक्षर **error);
+	int (*add_path) (struct path_selector *ps, struct dm_path *path,
+			 int argc, char **argv, char **error);
 
 	/*
-	 * Chooses a path क्रम this io, अगर no paths are available then
-	 * शून्य will be वापसed.
+	 * Chooses a path for this io, if no paths are available then
+	 * NULL will be returned.
 	 */
-	काष्ठा dm_path *(*select_path) (काष्ठा path_selector *ps,
-					माप_प्रकार nr_bytes);
+	struct dm_path *(*select_path) (struct path_selector *ps,
+					size_t nr_bytes);
 
 	/*
-	 * Notअगरy the selector that a path has failed.
+	 * Notify the selector that a path has failed.
 	 */
-	व्योम (*fail_path) (काष्ठा path_selector *ps, काष्ठा dm_path *p);
+	void (*fail_path) (struct path_selector *ps, struct dm_path *p);
 
 	/*
 	 * Ask selector to reinstate a path.
 	 */
-	पूर्णांक (*reinstate_path) (काष्ठा path_selector *ps, काष्ठा dm_path *p);
+	int (*reinstate_path) (struct path_selector *ps, struct dm_path *p);
 
 	/*
 	 * Table content based on parameters added in ps_add_path_fn
 	 * or path selector status
 	 */
-	पूर्णांक (*status) (काष्ठा path_selector *ps, काष्ठा dm_path *path,
-		       status_type_t type, अक्षर *result, अचिन्हित पूर्णांक maxlen);
+	int (*status) (struct path_selector *ps, struct dm_path *path,
+		       status_type_t type, char *result, unsigned int maxlen);
 
-	पूर्णांक (*start_io) (काष्ठा path_selector *ps, काष्ठा dm_path *path,
-			 माप_प्रकार nr_bytes);
-	पूर्णांक (*end_io) (काष्ठा path_selector *ps, काष्ठा dm_path *path,
-		       माप_प्रकार nr_bytes, u64 start_समय);
-पूर्ण;
+	int (*start_io) (struct path_selector *ps, struct dm_path *path,
+			 size_t nr_bytes);
+	int (*end_io) (struct path_selector *ps, struct dm_path *path,
+		       size_t nr_bytes, u64 start_time);
+};
 
 /* Register a path selector */
-पूर्णांक dm_रेजिस्टर_path_selector(काष्ठा path_selector_type *type);
+int dm_register_path_selector(struct path_selector_type *type);
 
-/* Unरेजिस्टर a path selector */
-पूर्णांक dm_unरेजिस्टर_path_selector(काष्ठा path_selector_type *type);
+/* Unregister a path selector */
+int dm_unregister_path_selector(struct path_selector_type *type);
 
-/* Returns a रेजिस्टरed path selector type */
-काष्ठा path_selector_type *dm_get_path_selector(स्थिर अक्षर *name);
+/* Returns a registered path selector type */
+struct path_selector_type *dm_get_path_selector(const char *name);
 
 /* Releases a path selector  */
-व्योम dm_put_path_selector(काष्ठा path_selector_type *pst);
+void dm_put_path_selector(struct path_selector_type *pst);
 
-#पूर्ण_अगर
+#endif

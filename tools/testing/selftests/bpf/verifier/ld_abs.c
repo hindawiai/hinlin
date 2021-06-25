@@ -1,78 +1,77 @@
-<शैली गुरु>
-अणु
+{
 	"ld_abs: check calling conv, r1",
-	.insns = अणु
+	.insns = {
 	BPF_MOV64_REG(BPF_REG_6, BPF_REG_1),
 	BPF_MOV64_IMM(BPF_REG_1, 0),
 	BPF_LD_ABS(BPF_W, -0x200000),
 	BPF_MOV64_REG(BPF_REG_0, BPF_REG_1),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.errstr = "R1 !read_ok",
 	.result = REJECT,
-पूर्ण,
-अणु
+},
+{
 	"ld_abs: check calling conv, r2",
-	.insns = अणु
+	.insns = {
 	BPF_MOV64_REG(BPF_REG_6, BPF_REG_1),
 	BPF_MOV64_IMM(BPF_REG_2, 0),
 	BPF_LD_ABS(BPF_W, -0x200000),
 	BPF_MOV64_REG(BPF_REG_0, BPF_REG_2),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.errstr = "R2 !read_ok",
 	.result = REJECT,
-पूर्ण,
-अणु
+},
+{
 	"ld_abs: check calling conv, r3",
-	.insns = अणु
+	.insns = {
 	BPF_MOV64_REG(BPF_REG_6, BPF_REG_1),
 	BPF_MOV64_IMM(BPF_REG_3, 0),
 	BPF_LD_ABS(BPF_W, -0x200000),
 	BPF_MOV64_REG(BPF_REG_0, BPF_REG_3),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.errstr = "R3 !read_ok",
 	.result = REJECT,
-पूर्ण,
-अणु
+},
+{
 	"ld_abs: check calling conv, r4",
-	.insns = अणु
+	.insns = {
 	BPF_MOV64_REG(BPF_REG_6, BPF_REG_1),
 	BPF_MOV64_IMM(BPF_REG_4, 0),
 	BPF_LD_ABS(BPF_W, -0x200000),
 	BPF_MOV64_REG(BPF_REG_0, BPF_REG_4),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.errstr = "R4 !read_ok",
 	.result = REJECT,
-पूर्ण,
-अणु
+},
+{
 	"ld_abs: check calling conv, r5",
-	.insns = अणु
+	.insns = {
 	BPF_MOV64_REG(BPF_REG_6, BPF_REG_1),
 	BPF_MOV64_IMM(BPF_REG_5, 0),
 	BPF_LD_ABS(BPF_W, -0x200000),
 	BPF_MOV64_REG(BPF_REG_0, BPF_REG_5),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.errstr = "R5 !read_ok",
 	.result = REJECT,
-पूर्ण,
-अणु
+},
+{
 	"ld_abs: check calling conv, r7",
-	.insns = अणु
+	.insns = {
 	BPF_MOV64_REG(BPF_REG_6, BPF_REG_1),
 	BPF_MOV64_IMM(BPF_REG_7, 0),
 	BPF_LD_ABS(BPF_W, -0x200000),
 	BPF_MOV64_REG(BPF_REG_0, BPF_REG_7),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.result = ACCEPT,
-पूर्ण,
-अणु
+},
+{
 	"ld_abs: tests on r6 and skb data reload helper",
-	.insns = अणु
+	.insns = {
 	BPF_MOV64_REG(BPF_REG_6, BPF_REG_1),
 	BPF_LD_ABS(BPF_B, 0),
 	BPF_LD_ABS(BPF_H, 0),
@@ -89,37 +88,37 @@
 	BPF_LD_ABS(BPF_W, 0),
 	BPF_MOV64_IMM(BPF_REG_0, 42),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.prog_type = BPF_PROG_TYPE_SCHED_CLS,
 	.result = ACCEPT,
-	.retval = 42 /* ultimate वापस value */,
-पूर्ण,
-अणु
+	.retval = 42 /* ultimate return value */,
+},
+{
 	"ld_abs: invalid op 1",
-	.insns = अणु
+	.insns = {
 		BPF_MOV64_REG(BPF_REG_6, BPF_REG_1),
 		BPF_LD_ABS(BPF_DW, 0),
 		BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.prog_type = BPF_PROG_TYPE_SCHED_CLS,
 	.result = REJECT,
 	.errstr = "unknown opcode",
-पूर्ण,
-अणु
+},
+{
 	"ld_abs: invalid op 2",
-	.insns = अणु
+	.insns = {
 		BPF_MOV32_IMM(BPF_REG_0, 256),
 		BPF_MOV64_REG(BPF_REG_6, BPF_REG_1),
 		BPF_LD_IND(BPF_DW, BPF_REG_0, 0),
 		BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.prog_type = BPF_PROG_TYPE_SCHED_CLS,
 	.result = REJECT,
 	.errstr = "unknown opcode",
-पूर्ण,
-अणु
+},
+{
 	"ld_abs: nmap reduced",
-	.insns = अणु
+	.insns = {
 		BPF_MOV64_REG(BPF_REG_6, BPF_REG_1),
 		BPF_LD_ABS(BPF_H, 12),
 		BPF_JMP_IMM(BPF_JNE, BPF_REG_0, 0x806, 28),
@@ -153,19 +152,19 @@
 		BPF_EXIT_INSN(),
 		BPF_MOV32_IMM(BPF_REG_0, 0),
 		BPF_EXIT_INSN(),
-	पूर्ण,
-	.data = अणु
+	},
+	.data = {
 		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0x08, 0x06, 0,
 		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 		0x10, 0xbf, 0x48, 0xd6, 0x43, 0xd6,
-	पूर्ण,
+	},
 	.prog_type = BPF_PROG_TYPE_SCHED_CLS,
 	.result = ACCEPT,
 	.retval = 256,
-पूर्ण,
-अणु
+},
+{
 	"ld_abs: div + abs, test 1",
-	.insns = अणु
+	.insns = {
 		BPF_ALU64_REG(BPF_MOV, BPF_REG_6, BPF_REG_1),
 		BPF_LD_ABS(BPF_B, 3),
 		BPF_ALU64_IMM(BPF_MOV, BPF_REG_2, 2),
@@ -175,17 +174,17 @@
 		BPF_ALU64_REG(BPF_ADD, BPF_REG_8, BPF_REG_0),
 		BPF_LD_IND(BPF_B, BPF_REG_8, -70),
 		BPF_EXIT_INSN(),
-	पूर्ण,
-	.data = अणु
+	},
+	.data = {
 		10, 20, 30, 40, 50,
-	पूर्ण,
+	},
 	.prog_type = BPF_PROG_TYPE_SCHED_CLS,
 	.result = ACCEPT,
 	.retval = 10,
-पूर्ण,
-अणु
+},
+{
 	"ld_abs: div + abs, test 2",
-	.insns = अणु
+	.insns = {
 		BPF_ALU64_REG(BPF_MOV, BPF_REG_6, BPF_REG_1),
 		BPF_LD_ABS(BPF_B, 3),
 		BPF_ALU64_IMM(BPF_MOV, BPF_REG_2, 2),
@@ -195,60 +194,60 @@
 		BPF_ALU64_REG(BPF_ADD, BPF_REG_8, BPF_REG_0),
 		BPF_LD_IND(BPF_B, BPF_REG_8, -70),
 		BPF_EXIT_INSN(),
-	पूर्ण,
-	.data = अणु
+	},
+	.data = {
 		10, 20, 30, 40, 50,
-	पूर्ण,
+	},
 	.prog_type = BPF_PROG_TYPE_SCHED_CLS,
 	.result = ACCEPT,
 	.retval = 0,
-पूर्ण,
-अणु
+},
+{
 	"ld_abs: div + abs, test 3",
-	.insns = अणु
+	.insns = {
 		BPF_ALU64_REG(BPF_MOV, BPF_REG_6, BPF_REG_1),
 		BPF_ALU64_IMM(BPF_MOV, BPF_REG_7, 0),
 		BPF_LD_ABS(BPF_B, 3),
 		BPF_ALU32_REG(BPF_DIV, BPF_REG_0, BPF_REG_7),
 		BPF_EXIT_INSN(),
-	पूर्ण,
-	.data = अणु
+	},
+	.data = {
 		10, 20, 30, 40, 50,
-	पूर्ण,
+	},
 	.prog_type = BPF_PROG_TYPE_SCHED_CLS,
 	.result = ACCEPT,
 	.retval = 0,
-पूर्ण,
-अणु
+},
+{
 	"ld_abs: div + abs, test 4",
-	.insns = अणु
+	.insns = {
 		BPF_ALU64_REG(BPF_MOV, BPF_REG_6, BPF_REG_1),
 		BPF_ALU64_IMM(BPF_MOV, BPF_REG_7, 0),
 		BPF_LD_ABS(BPF_B, 256),
 		BPF_ALU32_REG(BPF_DIV, BPF_REG_0, BPF_REG_7),
 		BPF_EXIT_INSN(),
-	पूर्ण,
-	.data = अणु
+	},
+	.data = {
 		10, 20, 30, 40, 50,
-	पूर्ण,
+	},
 	.prog_type = BPF_PROG_TYPE_SCHED_CLS,
 	.result = ACCEPT,
 	.retval = 0,
-पूर्ण,
-अणु
+},
+{
 	"ld_abs: vlan + abs, test 1",
-	.insns = अणु पूर्ण,
-	.data = अणु
+	.insns = { },
+	.data = {
 		0x34,
-	पूर्ण,
-	.fill_helper = bpf_fill_ld_असल_vlan_push_pop,
+	},
+	.fill_helper = bpf_fill_ld_abs_vlan_push_pop,
 	.prog_type = BPF_PROG_TYPE_SCHED_CLS,
 	.result = ACCEPT,
 	.retval = 0xbef,
-पूर्ण,
-अणु
+},
+{
 	"ld_abs: vlan + abs, test 2",
-	.insns = अणु
+	.insns = {
 		BPF_MOV64_REG(BPF_REG_6, BPF_REG_1),
 		BPF_LD_ABS(BPF_B, 0),
 		BPF_LD_ABS(BPF_H, 0),
@@ -266,22 +265,22 @@
 		BPF_LD_ABS(BPF_W, 0),
 		BPF_MOV64_IMM(BPF_REG_0, 42),
 		BPF_EXIT_INSN(),
-	पूर्ण,
-	.data = अणु
+	},
+	.data = {
 		0x34,
-	पूर्ण,
+	},
 	.prog_type = BPF_PROG_TYPE_SCHED_CLS,
 	.result = ACCEPT,
 	.retval = 42,
-पूर्ण,
-अणु
+},
+{
 	"ld_abs: jump around ld_abs",
-	.insns = अणु पूर्ण,
-	.data = अणु
+	.insns = { },
+	.data = {
 		10, 11,
-	पूर्ण,
-	.fill_helper = bpf_fill_jump_around_ld_असल,
+	},
+	.fill_helper = bpf_fill_jump_around_ld_abs,
 	.prog_type = BPF_PROG_TYPE_SCHED_CLS,
 	.result = ACCEPT,
 	.retval = 10,
-पूर्ण,
+},

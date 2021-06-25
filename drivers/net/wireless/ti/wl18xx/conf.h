@@ -1,33 +1,32 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * This file is part of wl18xx
  *
  * Copyright (C) 2011 Texas Instruments Inc.
  */
 
-#अगर_अघोषित __WL18XX_CONF_H__
-#घोषणा __WL18XX_CONF_H__
+#ifndef __WL18XX_CONF_H__
+#define __WL18XX_CONF_H__
 
-#घोषणा WL18XX_CONF_MAGIC	0x10e100ca
-#घोषणा WL18XX_CONF_VERSION	(WLCORE_CONF_VERSION | 0x0007)
-#घोषणा WL18XX_CONF_MASK	0x0000ffff
-#घोषणा WL18XX_CONF_SIZE	(WLCORE_CONF_SIZE + \
-				 माप(काष्ठा wl18xx_priv_conf))
+#define WL18XX_CONF_MAGIC	0x10e100ca
+#define WL18XX_CONF_VERSION	(WLCORE_CONF_VERSION | 0x0007)
+#define WL18XX_CONF_MASK	0x0000ffff
+#define WL18XX_CONF_SIZE	(WLCORE_CONF_SIZE + \
+				 sizeof(struct wl18xx_priv_conf))
 
-#घोषणा NUM_OF_CHANNELS_11_ABG 150
-#घोषणा NUM_OF_CHANNELS_11_P 7
-#घोषणा SRF_TABLE_LEN 16
-#घोषणा PIN_MUXING_SIZE 2
-#घोषणा WL18XX_TRACE_LOSS_GAPS_TX 10
-#घोषणा WL18XX_TRACE_LOSS_GAPS_RX 18
+#define NUM_OF_CHANNELS_11_ABG 150
+#define NUM_OF_CHANNELS_11_P 7
+#define SRF_TABLE_LEN 16
+#define PIN_MUXING_SIZE 2
+#define WL18XX_TRACE_LOSS_GAPS_TX 10
+#define WL18XX_TRACE_LOSS_GAPS_RX 18
 
-काष्ठा wl18xx_mac_and_phy_params अणु
+struct wl18xx_mac_and_phy_params {
 	u8 phy_standalone;
 	u8 spare0;
 	u8 enable_clpc;
 	u8 enable_tx_low_pwr_on_siso_rdl;
-	u8 स्वतः_detect;
+	u8 auto_detect;
 	u8 dedicated_fem;
 
 	u8 low_band_component;
@@ -41,9 +40,9 @@
 	u8 high_band_component_type;
 	u8 number_of_assembled_ant2_4;
 	u8 number_of_assembled_ant5;
-	u8 pin_muxing_platक्रमm_options[PIN_MUXING_SIZE];
-	u8 बाह्यal_pa_dc2dc;
-	u8 tcxo_lकरो_voltage;
+	u8 pin_muxing_platform_options[PIN_MUXING_SIZE];
+	u8 external_pa_dc2dc;
+	u8 tcxo_ldo_voltage;
 	u8 xtal_itrim_val;
 	u8 srf_state;
 	u8 srf1[SRF_TABLE_LEN];
@@ -60,28 +59,28 @@
 	u8 spare1;
 	u8 per_chan_bo_mode_11_abg[13];
 	u8 per_chan_bo_mode_11_p[4];
-	u8 primary_घड़ी_setting_समय;
-	u8 घड़ी_valid_on_wake_up;
-	u8 secondary_घड़ी_setting_समय;
+	u8 primary_clock_setting_time;
+	u8 clock_valid_on_wake_up;
+	u8 secondary_clock_setting_time;
 	u8 board_type;
-	/* enable poपूर्णांक saturation */
+	/* enable point saturation */
 	u8 psat;
-	/* low/medium/high Tx घातer in dBm क्रम STA-HP BG */
-	s8 low_घातer_val;
-	s8 med_घातer_val;
-	s8 high_घातer_val;
+	/* low/medium/high Tx power in dBm for STA-HP BG */
+	s8 low_power_val;
+	s8 med_power_val;
+	s8 high_power_val;
 	s8 per_sub_band_tx_trace_loss[WL18XX_TRACE_LOSS_GAPS_TX];
 	s8 per_sub_band_rx_trace_loss[WL18XX_TRACE_LOSS_GAPS_RX];
 	u8 tx_rf_margin;
-	/* low/medium/high Tx घातer in dBm क्रम other role */
-	s8 low_घातer_val_2nd;
-	s8 med_घातer_val_2nd;
-	s8 high_घातer_val_2nd;
+	/* low/medium/high Tx power in dBm for other role */
+	s8 low_power_val_2nd;
+	s8 med_power_val_2nd;
+	s8 high_power_val_2nd;
 
 	u8 padding[1];
-पूर्ण __packed;
+} __packed;
 
-क्रमागत wl18xx_ht_mode अणु
+enum wl18xx_ht_mode {
 	/* Default - use MIMO, fallback to SISO20 */
 	HT_MODE_DEFAULT = 0,
 
@@ -90,19 +89,19 @@
 
 	/* Use SISO20 */
 	HT_MODE_SISO20 = 2,
-पूर्ण;
+};
 
-काष्ठा wl18xx_ht_settings अणु
+struct wl18xx_ht_settings {
 	/* DEFAULT / WIDE / SISO20 */
 	u8 mode;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा conf_ap_sleep_settings अणु
-	/* Duty Cycle (20-80% of staying Awake) क्रम IDLE AP
+struct conf_ap_sleep_settings {
+	/* Duty Cycle (20-80% of staying Awake) for IDLE AP
 	 * (0: disable)
 	 */
 	u8 idle_duty_cycle;
-	/* Duty Cycle (20-80% of staying Awake) क्रम Connected AP
+	/* Duty Cycle (20-80% of staying Awake) for Connected AP
 	 * (0: disable)
 	 */
 	u8 connected_duty_cycle;
@@ -114,19 +113,19 @@
 	 * [unit: 100 msec]
 	 */
 	u8 idle_conn_thresh;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wl18xx_priv_conf अणु
-	/* Module params काष्ठाures */
-	काष्ठा wl18xx_ht_settings ht;
+struct wl18xx_priv_conf {
+	/* Module params structures */
+	struct wl18xx_ht_settings ht;
 
-	/* this काष्ठाure is copied wholesale to FW */
-	काष्ठा wl18xx_mac_and_phy_params phy;
+	/* this structure is copied wholesale to FW */
+	struct wl18xx_mac_and_phy_params phy;
 
-	काष्ठा conf_ap_sleep_settings ap_sleep;
-पूर्ण __packed;
+	struct conf_ap_sleep_settings ap_sleep;
+} __packed;
 
-क्रमागत wl18xx_sg_params अणु
+enum wl18xx_sg_params {
 	WL18XX_CONF_SG_PARAM_0 = 0,
 
 	/* Configuration Parameters */
@@ -214,6 +213,6 @@
 
 	WL18XX_CONF_SG_PARAMS_MAX,
 	WL18XX_CONF_SG_PARAMS_ALL = 0xff
-पूर्ण;
+};
 
-#पूर्ण_अगर /* __WL18XX_CONF_H__ */
+#endif /* __WL18XX_CONF_H__ */

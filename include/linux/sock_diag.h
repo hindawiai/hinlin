@@ -1,94 +1,93 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __SOCK_DIAG_H__
-#घोषणा __SOCK_DIAG_H__
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __SOCK_DIAG_H__
+#define __SOCK_DIAG_H__
 
-#समावेश <linux/netlink.h>
-#समावेश <linux/user_namespace.h>
-#समावेश <net/net_namespace.h>
-#समावेश <net/sock.h>
-#समावेश <uapi/linux/sock_diag.h>
+#include <linux/netlink.h>
+#include <linux/user_namespace.h>
+#include <net/net_namespace.h>
+#include <net/sock.h>
+#include <uapi/linux/sock_diag.h>
 
-काष्ठा sk_buff;
-काष्ठा nlmsghdr;
-काष्ठा sock;
+struct sk_buff;
+struct nlmsghdr;
+struct sock;
 
-काष्ठा sock_diag_handler अणु
+struct sock_diag_handler {
 	__u8 family;
-	पूर्णांक (*dump)(काष्ठा sk_buff *skb, काष्ठा nlmsghdr *nlh);
-	पूर्णांक (*get_info)(काष्ठा sk_buff *skb, काष्ठा sock *sk);
-	पूर्णांक (*destroy)(काष्ठा sk_buff *skb, काष्ठा nlmsghdr *nlh);
-पूर्ण;
+	int (*dump)(struct sk_buff *skb, struct nlmsghdr *nlh);
+	int (*get_info)(struct sk_buff *skb, struct sock *sk);
+	int (*destroy)(struct sk_buff *skb, struct nlmsghdr *nlh);
+};
 
-पूर्णांक sock_diag_रेजिस्टर(स्थिर काष्ठा sock_diag_handler *h);
-व्योम sock_diag_unरेजिस्टर(स्थिर काष्ठा sock_diag_handler *h);
+int sock_diag_register(const struct sock_diag_handler *h);
+void sock_diag_unregister(const struct sock_diag_handler *h);
 
-व्योम sock_diag_रेजिस्टर_inet_compat(पूर्णांक (*fn)(काष्ठा sk_buff *skb, काष्ठा nlmsghdr *nlh));
-व्योम sock_diag_unरेजिस्टर_inet_compat(पूर्णांक (*fn)(काष्ठा sk_buff *skb, काष्ठा nlmsghdr *nlh));
+void sock_diag_register_inet_compat(int (*fn)(struct sk_buff *skb, struct nlmsghdr *nlh));
+void sock_diag_unregister_inet_compat(int (*fn)(struct sk_buff *skb, struct nlmsghdr *nlh));
 
-u64 __sock_gen_cookie(काष्ठा sock *sk);
+u64 __sock_gen_cookie(struct sock *sk);
 
-अटल अंतरभूत u64 sock_gen_cookie(काष्ठा sock *sk)
-अणु
+static inline u64 sock_gen_cookie(struct sock *sk)
+{
 	u64 cookie;
 
 	preempt_disable();
 	cookie = __sock_gen_cookie(sk);
 	preempt_enable();
 
-	वापस cookie;
-पूर्ण
+	return cookie;
+}
 
-पूर्णांक sock_diag_check_cookie(काष्ठा sock *sk, स्थिर __u32 *cookie);
-व्योम sock_diag_save_cookie(काष्ठा sock *sk, __u32 *cookie);
+int sock_diag_check_cookie(struct sock *sk, const __u32 *cookie);
+void sock_diag_save_cookie(struct sock *sk, __u32 *cookie);
 
-पूर्णांक sock_diag_put_meminfo(काष्ठा sock *sk, काष्ठा sk_buff *skb, पूर्णांक attr);
-पूर्णांक sock_diag_put_filterinfo(bool may_report_filterinfo, काष्ठा sock *sk,
-			     काष्ठा sk_buff *skb, पूर्णांक attrtype);
+int sock_diag_put_meminfo(struct sock *sk, struct sk_buff *skb, int attr);
+int sock_diag_put_filterinfo(bool may_report_filterinfo, struct sock *sk,
+			     struct sk_buff *skb, int attrtype);
 
-अटल अंतरभूत
-क्रमागत sknetlink_groups sock_diag_destroy_group(स्थिर काष्ठा sock *sk)
-अणु
-	चयन (sk->sk_family) अणु
-	हाल AF_INET:
-		अगर (sk->sk_type == SOCK_RAW)
-			वापस SKNLGRP_NONE;
+static inline
+enum sknetlink_groups sock_diag_destroy_group(const struct sock *sk)
+{
+	switch (sk->sk_family) {
+	case AF_INET:
+		if (sk->sk_type == SOCK_RAW)
+			return SKNLGRP_NONE;
 
-		चयन (sk->sk_protocol) अणु
-		हाल IPPROTO_TCP:
-			वापस SKNLGRP_INET_TCP_DESTROY;
-		हाल IPPROTO_UDP:
-			वापस SKNLGRP_INET_UDP_DESTROY;
-		शेष:
-			वापस SKNLGRP_NONE;
-		पूर्ण
-	हाल AF_INET6:
-		अगर (sk->sk_type == SOCK_RAW)
-			वापस SKNLGRP_NONE;
+		switch (sk->sk_protocol) {
+		case IPPROTO_TCP:
+			return SKNLGRP_INET_TCP_DESTROY;
+		case IPPROTO_UDP:
+			return SKNLGRP_INET_UDP_DESTROY;
+		default:
+			return SKNLGRP_NONE;
+		}
+	case AF_INET6:
+		if (sk->sk_type == SOCK_RAW)
+			return SKNLGRP_NONE;
 
-		चयन (sk->sk_protocol) अणु
-		हाल IPPROTO_TCP:
-			वापस SKNLGRP_INET6_TCP_DESTROY;
-		हाल IPPROTO_UDP:
-			वापस SKNLGRP_INET6_UDP_DESTROY;
-		शेष:
-			वापस SKNLGRP_NONE;
-		पूर्ण
-	शेष:
-		वापस SKNLGRP_NONE;
-	पूर्ण
-पूर्ण
+		switch (sk->sk_protocol) {
+		case IPPROTO_TCP:
+			return SKNLGRP_INET6_TCP_DESTROY;
+		case IPPROTO_UDP:
+			return SKNLGRP_INET6_UDP_DESTROY;
+		default:
+			return SKNLGRP_NONE;
+		}
+	default:
+		return SKNLGRP_NONE;
+	}
+}
 
-अटल अंतरभूत
-bool sock_diag_has_destroy_listeners(स्थिर काष्ठा sock *sk)
-अणु
-	स्थिर काष्ठा net *n = sock_net(sk);
-	स्थिर क्रमागत sknetlink_groups group = sock_diag_destroy_group(sk);
+static inline
+bool sock_diag_has_destroy_listeners(const struct sock *sk)
+{
+	const struct net *n = sock_net(sk);
+	const enum sknetlink_groups group = sock_diag_destroy_group(sk);
 
-	वापस group != SKNLGRP_NONE && n->diag_nlsk &&
+	return group != SKNLGRP_NONE && n->diag_nlsk &&
 		netlink_has_listeners(n->diag_nlsk, group);
-पूर्ण
-व्योम sock_diag_broadcast_destroy(काष्ठा sock *sk);
+}
+void sock_diag_broadcast_destroy(struct sock *sk);
 
-पूर्णांक sock_diag_destroy(काष्ठा sock *sk, पूर्णांक err);
-#पूर्ण_अगर
+int sock_diag_destroy(struct sock *sk, int err);
+#endif

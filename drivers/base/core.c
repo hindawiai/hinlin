@@ -1,58 +1,57 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * drivers/base/core.c - core driver model code (device registration, etc)
  *
  * Copyright (c) 2002-3 Patrick Mochel
- * Copyright (c) 2002-3 Open Source Development Lअसल
- * Copyright (c) 2006 Greg Kroah-Harपंचांगan <gregkh@suse.de>
+ * Copyright (c) 2002-3 Open Source Development Labs
+ * Copyright (c) 2006 Greg Kroah-Hartman <gregkh@suse.de>
  * Copyright (c) 2006 Novell, Inc.
  */
 
-#समावेश <linux/acpi.h>
-#समावेश <linux/cpufreq.h>
-#समावेश <linux/device.h>
-#समावेश <linux/err.h>
-#समावेश <linux/fwnode.h>
-#समावेश <linux/init.h>
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/kdev_t.h>
-#समावेश <linux/notअगरier.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/genhd.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/sched/संकेत.स>
-#समावेश <linux/sched/mm.h>
-#समावेश <linux/sysfs.h>
-#समावेश <linux/dma-map-ops.h> /* क्रम dma_शेष_coherent */
+#include <linux/acpi.h>
+#include <linux/cpufreq.h>
+#include <linux/device.h>
+#include <linux/err.h>
+#include <linux/fwnode.h>
+#include <linux/init.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/string.h>
+#include <linux/kdev_t.h>
+#include <linux/notifier.h>
+#include <linux/of.h>
+#include <linux/of_device.h>
+#include <linux/genhd.h>
+#include <linux/mutex.h>
+#include <linux/pm_runtime.h>
+#include <linux/netdevice.h>
+#include <linux/sched/signal.h>
+#include <linux/sched/mm.h>
+#include <linux/sysfs.h>
+#include <linux/dma-map-ops.h> /* for dma_default_coherent */
 
-#समावेश "base.h"
-#समावेश "power/power.h"
+#include "base.h"
+#include "power/power.h"
 
-#अगर_घोषित CONFIG_SYSFS_DEPRECATED
-#अगर_घोषित CONFIG_SYSFS_DEPRECATED_V2
-दीर्घ sysfs_deprecated = 1;
-#अन्यथा
-दीर्घ sysfs_deprecated = 0;
-#पूर्ण_अगर
-अटल पूर्णांक __init sysfs_deprecated_setup(अक्षर *arg)
-अणु
-	वापस kम_से_दीर्घ(arg, 10, &sysfs_deprecated);
-पूर्ण
+#ifdef CONFIG_SYSFS_DEPRECATED
+#ifdef CONFIG_SYSFS_DEPRECATED_V2
+long sysfs_deprecated = 1;
+#else
+long sysfs_deprecated = 0;
+#endif
+static int __init sysfs_deprecated_setup(char *arg)
+{
+	return kstrtol(arg, 10, &sysfs_deprecated);
+}
 early_param("sysfs.deprecated", sysfs_deprecated_setup);
-#पूर्ण_अगर
+#endif
 
 /* Device links support. */
-अटल LIST_HEAD(deferred_sync);
-अटल अचिन्हित पूर्णांक defer_sync_state_count = 1;
-अटल DEFINE_MUTEX(fwnode_link_lock);
-अटल bool fw_devlink_is_permissive(व्योम);
-अटल bool fw_devlink_drv_reg_करोne;
+static LIST_HEAD(deferred_sync);
+static unsigned int defer_sync_state_count = 1;
+static DEFINE_MUTEX(fwnode_link_lock);
+static bool fw_devlink_is_permissive(void);
+static bool fw_devlink_drv_reg_done;
 
 /**
  * fwnode_link_add - Create a link between two fwnode_handles.
@@ -65,28 +64,28 @@ early_param("sysfs.deprecated", sysfs_deprecated_setup);
  *
  * The driver core will use the fwnode link to create a device link between the
  * two device objects corresponding to @con and @sup when they are created. The
- * driver core will स्वतःmatically delete the fwnode link between @con and @sup
- * after करोing that.
+ * driver core will automatically delete the fwnode link between @con and @sup
+ * after doing that.
  *
  * Attempts to create duplicate links between the same pair of fwnode handles
  * are ignored and there is no reference counting.
  */
-पूर्णांक fwnode_link_add(काष्ठा fwnode_handle *con, काष्ठा fwnode_handle *sup)
-अणु
-	काष्ठा fwnode_link *link;
-	पूर्णांक ret = 0;
+int fwnode_link_add(struct fwnode_handle *con, struct fwnode_handle *sup)
+{
+	struct fwnode_link *link;
+	int ret = 0;
 
 	mutex_lock(&fwnode_link_lock);
 
-	list_क्रम_each_entry(link, &sup->consumers, s_hook)
-		अगर (link->consumer == con)
-			जाओ out;
+	list_for_each_entry(link, &sup->consumers, s_hook)
+		if (link->consumer == con)
+			goto out;
 
-	link = kzalloc(माप(*link), GFP_KERNEL);
-	अगर (!link) अणु
+	link = kzalloc(sizeof(*link), GFP_KERNEL);
+	if (!link) {
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	link->supplier = sup;
 	INIT_LIST_HEAD(&link->s_hook);
@@ -98,8 +97,8 @@ early_param("sysfs.deprecated", sysfs_deprecated_setup);
 out:
 	mutex_unlock(&fwnode_link_lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
  * fwnode_links_purge_suppliers - Delete all supplier links of fwnode_handle.
@@ -107,18 +106,18 @@ out:
  *
  * Deletes all supplier links connecting directly to @fwnode.
  */
-अटल व्योम fwnode_links_purge_suppliers(काष्ठा fwnode_handle *fwnode)
-अणु
-	काष्ठा fwnode_link *link, *पंचांगp;
+static void fwnode_links_purge_suppliers(struct fwnode_handle *fwnode)
+{
+	struct fwnode_link *link, *tmp;
 
 	mutex_lock(&fwnode_link_lock);
-	list_क्रम_each_entry_safe(link, पंचांगp, &fwnode->suppliers, c_hook) अणु
+	list_for_each_entry_safe(link, tmp, &fwnode->suppliers, c_hook) {
 		list_del(&link->s_hook);
 		list_del(&link->c_hook);
-		kमुक्त(link);
-	पूर्ण
+		kfree(link);
+	}
 	mutex_unlock(&fwnode_link_lock);
-पूर्ण
+}
 
 /**
  * fwnode_links_purge_consumers - Delete all consumer links of fwnode_handle.
@@ -126,18 +125,18 @@ out:
  *
  * Deletes all consumer links connecting directly to @fwnode.
  */
-अटल व्योम fwnode_links_purge_consumers(काष्ठा fwnode_handle *fwnode)
-अणु
-	काष्ठा fwnode_link *link, *पंचांगp;
+static void fwnode_links_purge_consumers(struct fwnode_handle *fwnode)
+{
+	struct fwnode_link *link, *tmp;
 
 	mutex_lock(&fwnode_link_lock);
-	list_क्रम_each_entry_safe(link, पंचांगp, &fwnode->consumers, s_hook) अणु
+	list_for_each_entry_safe(link, tmp, &fwnode->consumers, s_hook) {
 		list_del(&link->s_hook);
 		list_del(&link->c_hook);
-		kमुक्त(link);
-	पूर्ण
+		kfree(link);
+	}
 	mutex_unlock(&fwnode_link_lock);
-पूर्ण
+}
 
 /**
  * fwnode_links_purge - Delete all links connected to a fwnode_handle.
@@ -145,227 +144,227 @@ out:
  *
  * Deletes all links connecting directly to a fwnode.
  */
-व्योम fwnode_links_purge(काष्ठा fwnode_handle *fwnode)
-अणु
+void fwnode_links_purge(struct fwnode_handle *fwnode)
+{
 	fwnode_links_purge_suppliers(fwnode);
 	fwnode_links_purge_consumers(fwnode);
-पूर्ण
+}
 
-व्योम fw_devlink_purge_असलent_suppliers(काष्ठा fwnode_handle *fwnode)
-अणु
-	काष्ठा fwnode_handle *child;
+void fw_devlink_purge_absent_suppliers(struct fwnode_handle *fwnode)
+{
+	struct fwnode_handle *child;
 
 	/* Don't purge consumer links of an added child */
-	अगर (fwnode->dev)
-		वापस;
+	if (fwnode->dev)
+		return;
 
 	fwnode->flags |= FWNODE_FLAG_NOT_DEVICE;
 	fwnode_links_purge_consumers(fwnode);
 
-	fwnode_क्रम_each_available_child_node(fwnode, child)
-		fw_devlink_purge_असलent_suppliers(child);
-पूर्ण
-EXPORT_SYMBOL_GPL(fw_devlink_purge_असलent_suppliers);
+	fwnode_for_each_available_child_node(fwnode, child)
+		fw_devlink_purge_absent_suppliers(child);
+}
+EXPORT_SYMBOL_GPL(fw_devlink_purge_absent_suppliers);
 
-#अगर_घोषित CONFIG_SRCU
-अटल DEFINE_MUTEX(device_links_lock);
+#ifdef CONFIG_SRCU
+static DEFINE_MUTEX(device_links_lock);
 DEFINE_STATIC_SRCU(device_links_srcu);
 
-अटल अंतरभूत व्योम device_links_ग_लिखो_lock(व्योम)
-अणु
+static inline void device_links_write_lock(void)
+{
 	mutex_lock(&device_links_lock);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम device_links_ग_लिखो_unlock(व्योम)
-अणु
+static inline void device_links_write_unlock(void)
+{
 	mutex_unlock(&device_links_lock);
-पूर्ण
+}
 
-पूर्णांक device_links_पढ़ो_lock(व्योम) __acquires(&device_links_srcu)
-अणु
-	वापस srcu_पढ़ो_lock(&device_links_srcu);
-पूर्ण
+int device_links_read_lock(void) __acquires(&device_links_srcu)
+{
+	return srcu_read_lock(&device_links_srcu);
+}
 
-व्योम device_links_पढ़ो_unlock(पूर्णांक idx) __releases(&device_links_srcu)
-अणु
-	srcu_पढ़ो_unlock(&device_links_srcu, idx);
-पूर्ण
+void device_links_read_unlock(int idx) __releases(&device_links_srcu)
+{
+	srcu_read_unlock(&device_links_srcu, idx);
+}
 
-पूर्णांक device_links_पढ़ो_lock_held(व्योम)
-अणु
-	वापस srcu_पढ़ो_lock_held(&device_links_srcu);
-पूर्ण
+int device_links_read_lock_held(void)
+{
+	return srcu_read_lock_held(&device_links_srcu);
+}
 
-अटल व्योम device_link_synchronize_removal(व्योम)
-अणु
+static void device_link_synchronize_removal(void)
+{
 	synchronize_srcu(&device_links_srcu);
-पूर्ण
+}
 
-अटल व्योम device_link_हटाओ_from_lists(काष्ठा device_link *link)
-अणु
+static void device_link_remove_from_lists(struct device_link *link)
+{
 	list_del_rcu(&link->s_node);
 	list_del_rcu(&link->c_node);
-पूर्ण
-#अन्यथा /* !CONFIG_SRCU */
-अटल DECLARE_RWSEM(device_links_lock);
+}
+#else /* !CONFIG_SRCU */
+static DECLARE_RWSEM(device_links_lock);
 
-अटल अंतरभूत व्योम device_links_ग_लिखो_lock(व्योम)
-अणु
-	करोwn_ग_लिखो(&device_links_lock);
-पूर्ण
+static inline void device_links_write_lock(void)
+{
+	down_write(&device_links_lock);
+}
 
-अटल अंतरभूत व्योम device_links_ग_लिखो_unlock(व्योम)
-अणु
-	up_ग_लिखो(&device_links_lock);
-पूर्ण
+static inline void device_links_write_unlock(void)
+{
+	up_write(&device_links_lock);
+}
 
-पूर्णांक device_links_पढ़ो_lock(व्योम)
-अणु
-	करोwn_पढ़ो(&device_links_lock);
-	वापस 0;
-पूर्ण
+int device_links_read_lock(void)
+{
+	down_read(&device_links_lock);
+	return 0;
+}
 
-व्योम device_links_पढ़ो_unlock(पूर्णांक not_used)
-अणु
-	up_पढ़ो(&device_links_lock);
-पूर्ण
+void device_links_read_unlock(int not_used)
+{
+	up_read(&device_links_lock);
+}
 
-#अगर_घोषित CONFIG_DEBUG_LOCK_ALLOC
-पूर्णांक device_links_पढ़ो_lock_held(व्योम)
-अणु
-	वापस lockdep_is_held(&device_links_lock);
-पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_DEBUG_LOCK_ALLOC
+int device_links_read_lock_held(void)
+{
+	return lockdep_is_held(&device_links_lock);
+}
+#endif
 
-अटल अंतरभूत व्योम device_link_synchronize_removal(व्योम)
-अणु
-पूर्ण
+static inline void device_link_synchronize_removal(void)
+{
+}
 
-अटल व्योम device_link_हटाओ_from_lists(काष्ठा device_link *link)
-अणु
+static void device_link_remove_from_lists(struct device_link *link)
+{
 	list_del(&link->s_node);
 	list_del(&link->c_node);
-पूर्ण
-#पूर्ण_अगर /* !CONFIG_SRCU */
+}
+#endif /* !CONFIG_SRCU */
 
-अटल bool device_is_ancestor(काष्ठा device *dev, काष्ठा device *target)
-अणु
-	जबतक (target->parent) अणु
+static bool device_is_ancestor(struct device *dev, struct device *target)
+{
+	while (target->parent) {
 		target = target->parent;
-		अगर (dev == target)
-			वापस true;
-	पूर्ण
-	वापस false;
-पूर्ण
+		if (dev == target)
+			return true;
+	}
+	return false;
+}
 
 /**
- * device_is_dependent - Check अगर one device depends on another one
- * @dev: Device to check dependencies क्रम.
+ * device_is_dependent - Check if one device depends on another one
+ * @dev: Device to check dependencies for.
  * @target: Device to check against.
  *
- * Check अगर @target depends on @dev or any device dependent on it (its child or
- * its consumer etc).  Return 1 अगर that is the हाल or 0 otherwise.
+ * Check if @target depends on @dev or any device dependent on it (its child or
+ * its consumer etc).  Return 1 if that is the case or 0 otherwise.
  */
-पूर्णांक device_is_dependent(काष्ठा device *dev, व्योम *target)
-अणु
-	काष्ठा device_link *link;
-	पूर्णांक ret;
+int device_is_dependent(struct device *dev, void *target)
+{
+	struct device_link *link;
+	int ret;
 
 	/*
-	 * The "ancestors" check is needed to catch the हाल when the target
+	 * The "ancestors" check is needed to catch the case when the target
 	 * device has not been completely initialized yet and it is still
 	 * missing from the list of children of its parent device.
 	 */
-	अगर (dev == target || device_is_ancestor(dev, target))
-		वापस 1;
+	if (dev == target || device_is_ancestor(dev, target))
+		return 1;
 
-	ret = device_क्रम_each_child(dev, target, device_is_dependent);
-	अगर (ret)
-		वापस ret;
+	ret = device_for_each_child(dev, target, device_is_dependent);
+	if (ret)
+		return ret;
 
-	list_क्रम_each_entry(link, &dev->links.consumers, s_node) अणु
-		अगर ((link->flags & ~DL_FLAG_INFERRED) ==
+	list_for_each_entry(link, &dev->links.consumers, s_node) {
+		if ((link->flags & ~DL_FLAG_INFERRED) ==
 		    (DL_FLAG_SYNC_STATE_ONLY | DL_FLAG_MANAGED))
-			जारी;
+			continue;
 
-		अगर (link->consumer == target)
-			वापस 1;
+		if (link->consumer == target)
+			return 1;
 
 		ret = device_is_dependent(link->consumer, target);
-		अगर (ret)
-			अवरोध;
-	पूर्ण
-	वापस ret;
-पूर्ण
+		if (ret)
+			break;
+	}
+	return ret;
+}
 
-अटल व्योम device_link_init_status(काष्ठा device_link *link,
-				    काष्ठा device *consumer,
-				    काष्ठा device *supplier)
-अणु
-	चयन (supplier->links.status) अणु
-	हाल DL_DEV_PROBING:
-		चयन (consumer->links.status) अणु
-		हाल DL_DEV_PROBING:
+static void device_link_init_status(struct device_link *link,
+				    struct device *consumer,
+				    struct device *supplier)
+{
+	switch (supplier->links.status) {
+	case DL_DEV_PROBING:
+		switch (consumer->links.status) {
+		case DL_DEV_PROBING:
 			/*
 			 * A consumer driver can create a link to a supplier
-			 * that has not completed its probing yet as दीर्घ as it
-			 * knows that the supplier is alपढ़ोy functional (क्रम
+			 * that has not completed its probing yet as long as it
+			 * knows that the supplier is already functional (for
 			 * example, it has just acquired some resources from the
 			 * supplier).
 			 */
 			link->status = DL_STATE_CONSUMER_PROBE;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			link->status = DL_STATE_DORMANT;
-			अवरोध;
-		पूर्ण
-		अवरोध;
-	हाल DL_DEV_DRIVER_BOUND:
-		चयन (consumer->links.status) अणु
-		हाल DL_DEV_PROBING:
+			break;
+		}
+		break;
+	case DL_DEV_DRIVER_BOUND:
+		switch (consumer->links.status) {
+		case DL_DEV_PROBING:
 			link->status = DL_STATE_CONSUMER_PROBE;
-			अवरोध;
-		हाल DL_DEV_DRIVER_BOUND:
+			break;
+		case DL_DEV_DRIVER_BOUND:
 			link->status = DL_STATE_ACTIVE;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			link->status = DL_STATE_AVAILABLE;
-			अवरोध;
-		पूर्ण
-		अवरोध;
-	हाल DL_DEV_UNBINDING:
+			break;
+		}
+		break;
+	case DL_DEV_UNBINDING:
 		link->status = DL_STATE_SUPPLIER_UNBIND;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		link->status = DL_STATE_DORMANT;
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-अटल पूर्णांक device_reorder_to_tail(काष्ठा device *dev, व्योम *not_used)
-अणु
-	काष्ठा device_link *link;
+static int device_reorder_to_tail(struct device *dev, void *not_used)
+{
+	struct device_link *link;
 
 	/*
-	 * Devices that have not been रेजिस्टरed yet will be put to the ends
+	 * Devices that have not been registered yet will be put to the ends
 	 * of the lists during the registration, so skip them here.
 	 */
-	अगर (device_is_रेजिस्टरed(dev))
+	if (device_is_registered(dev))
 		devices_kset_move_last(dev);
 
-	अगर (device_pm_initialized(dev))
+	if (device_pm_initialized(dev))
 		device_pm_move_last(dev);
 
-	device_क्रम_each_child(dev, शून्य, device_reorder_to_tail);
-	list_क्रम_each_entry(link, &dev->links.consumers, s_node) अणु
-		अगर ((link->flags & ~DL_FLAG_INFERRED) ==
+	device_for_each_child(dev, NULL, device_reorder_to_tail);
+	list_for_each_entry(link, &dev->links.consumers, s_node) {
+		if ((link->flags & ~DL_FLAG_INFERRED) ==
 		    (DL_FLAG_SYNC_STATE_ONLY | DL_FLAG_MANAGED))
-			जारी;
-		device_reorder_to_tail(link->consumer, शून्य);
-	पूर्ण
+			continue;
+		device_reorder_to_tail(link->consumer, NULL);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * device_pm_move_to_tail - Move set of devices to the end of device lists
@@ -373,244 +372,244 @@ DEFINE_STATIC_SRCU(device_links_srcu);
  *
  * This is a device_reorder_to_tail() wrapper taking the requisite locks.
  *
- * It moves the @dev aदीर्घ with all of its children and all of its consumers
+ * It moves the @dev along with all of its children and all of its consumers
  * to the ends of the device_kset and dpm_list, recursively.
  */
-व्योम device_pm_move_to_tail(काष्ठा device *dev)
-अणु
-	पूर्णांक idx;
+void device_pm_move_to_tail(struct device *dev)
+{
+	int idx;
 
-	idx = device_links_पढ़ो_lock();
+	idx = device_links_read_lock();
 	device_pm_lock();
-	device_reorder_to_tail(dev, शून्य);
+	device_reorder_to_tail(dev, NULL);
 	device_pm_unlock();
-	device_links_पढ़ो_unlock(idx);
-पूर्ण
+	device_links_read_unlock(idx);
+}
 
-#घोषणा to_devlink(dev)	container_of((dev), काष्ठा device_link, link_dev)
+#define to_devlink(dev)	container_of((dev), struct device_link, link_dev)
 
-अटल sमाप_प्रकार status_show(काष्ठा device *dev,
-			   काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	स्थिर अक्षर *output;
+static ssize_t status_show(struct device *dev,
+			   struct device_attribute *attr, char *buf)
+{
+	const char *output;
 
-	चयन (to_devlink(dev)->status) अणु
-	हाल DL_STATE_NONE:
+	switch (to_devlink(dev)->status) {
+	case DL_STATE_NONE:
 		output = "not tracked";
-		अवरोध;
-	हाल DL_STATE_DORMANT:
+		break;
+	case DL_STATE_DORMANT:
 		output = "dormant";
-		अवरोध;
-	हाल DL_STATE_AVAILABLE:
+		break;
+	case DL_STATE_AVAILABLE:
 		output = "available";
-		अवरोध;
-	हाल DL_STATE_CONSUMER_PROBE:
+		break;
+	case DL_STATE_CONSUMER_PROBE:
 		output = "consumer probing";
-		अवरोध;
-	हाल DL_STATE_ACTIVE:
+		break;
+	case DL_STATE_ACTIVE:
 		output = "active";
-		अवरोध;
-	हाल DL_STATE_SUPPLIER_UNBIND:
+		break;
+	case DL_STATE_SUPPLIER_UNBIND:
 		output = "supplier unbinding";
-		अवरोध;
-	शेष:
+		break;
+	default:
 		output = "unknown";
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस sysfs_emit(buf, "%s\n", output);
-पूर्ण
-अटल DEVICE_ATTR_RO(status);
+	return sysfs_emit(buf, "%s\n", output);
+}
+static DEVICE_ATTR_RO(status);
 
-अटल sमाप_प्रकार स्वतः_हटाओ_on_show(काष्ठा device *dev,
-				   काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा device_link *link = to_devlink(dev);
-	स्थिर अक्षर *output;
+static ssize_t auto_remove_on_show(struct device *dev,
+				   struct device_attribute *attr, char *buf)
+{
+	struct device_link *link = to_devlink(dev);
+	const char *output;
 
-	अगर (link->flags & DL_FLAG_AUTOREMOVE_SUPPLIER)
+	if (link->flags & DL_FLAG_AUTOREMOVE_SUPPLIER)
 		output = "supplier unbind";
-	अन्यथा अगर (link->flags & DL_FLAG_AUTOREMOVE_CONSUMER)
+	else if (link->flags & DL_FLAG_AUTOREMOVE_CONSUMER)
 		output = "consumer unbind";
-	अन्यथा
+	else
 		output = "never";
 
-	वापस sysfs_emit(buf, "%s\n", output);
-पूर्ण
-अटल DEVICE_ATTR_RO(स्वतः_हटाओ_on);
+	return sysfs_emit(buf, "%s\n", output);
+}
+static DEVICE_ATTR_RO(auto_remove_on);
 
-अटल sमाप_प्रकार runसमय_pm_show(काष्ठा device *dev,
-			       काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा device_link *link = to_devlink(dev);
+static ssize_t runtime_pm_show(struct device *dev,
+			       struct device_attribute *attr, char *buf)
+{
+	struct device_link *link = to_devlink(dev);
 
-	वापस sysfs_emit(buf, "%d\n", !!(link->flags & DL_FLAG_PM_RUNTIME));
-पूर्ण
-अटल DEVICE_ATTR_RO(runसमय_pm);
+	return sysfs_emit(buf, "%d\n", !!(link->flags & DL_FLAG_PM_RUNTIME));
+}
+static DEVICE_ATTR_RO(runtime_pm);
 
-अटल sमाप_प्रकार sync_state_only_show(काष्ठा device *dev,
-				    काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा device_link *link = to_devlink(dev);
+static ssize_t sync_state_only_show(struct device *dev,
+				    struct device_attribute *attr, char *buf)
+{
+	struct device_link *link = to_devlink(dev);
 
-	वापस sysfs_emit(buf, "%d\n",
+	return sysfs_emit(buf, "%d\n",
 			  !!(link->flags & DL_FLAG_SYNC_STATE_ONLY));
-पूर्ण
-अटल DEVICE_ATTR_RO(sync_state_only);
+}
+static DEVICE_ATTR_RO(sync_state_only);
 
-अटल काष्ठा attribute *devlink_attrs[] = अणु
+static struct attribute *devlink_attrs[] = {
 	&dev_attr_status.attr,
-	&dev_attr_स्वतः_हटाओ_on.attr,
-	&dev_attr_runसमय_pm.attr,
+	&dev_attr_auto_remove_on.attr,
+	&dev_attr_runtime_pm.attr,
 	&dev_attr_sync_state_only.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 ATTRIBUTE_GROUPS(devlink);
 
-अटल व्योम device_link_release_fn(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा device_link *link = container_of(work, काष्ठा device_link, rm_work);
+static void device_link_release_fn(struct work_struct *work)
+{
+	struct device_link *link = container_of(work, struct device_link, rm_work);
 
 	/* Ensure that all references to the link object have been dropped. */
 	device_link_synchronize_removal();
 
-	जबतक (refcount_dec_not_one(&link->rpm_active))
-		pm_runसमय_put(link->supplier);
+	while (refcount_dec_not_one(&link->rpm_active))
+		pm_runtime_put(link->supplier);
 
 	put_device(link->consumer);
 	put_device(link->supplier);
-	kमुक्त(link);
-पूर्ण
+	kfree(link);
+}
 
-अटल व्योम devlink_dev_release(काष्ठा device *dev)
-अणु
-	काष्ठा device_link *link = to_devlink(dev);
+static void devlink_dev_release(struct device *dev)
+{
+	struct device_link *link = to_devlink(dev);
 
 	INIT_WORK(&link->rm_work, device_link_release_fn);
 	/*
-	 * It may take a जबतक to complete this work because of the SRCU
-	 * synchronization in device_link_release_fn() and अगर the consumer or
-	 * supplier devices get deleted when it runs, so put it पूर्णांकo the "long"
+	 * It may take a while to complete this work because of the SRCU
+	 * synchronization in device_link_release_fn() and if the consumer or
+	 * supplier devices get deleted when it runs, so put it into the "long"
 	 * workqueue.
 	 */
-	queue_work(प्रणाली_दीर्घ_wq, &link->rm_work);
-पूर्ण
+	queue_work(system_long_wq, &link->rm_work);
+}
 
-अटल काष्ठा class devlink_class = अणु
+static struct class devlink_class = {
 	.name = "devlink",
 	.owner = THIS_MODULE,
 	.dev_groups = devlink_groups,
 	.dev_release = devlink_dev_release,
-पूर्ण;
+};
 
-अटल पूर्णांक devlink_add_symlinks(काष्ठा device *dev,
-				काष्ठा class_पूर्णांकerface *class_पूर्णांकf)
-अणु
-	पूर्णांक ret;
-	माप_प्रकार len;
-	काष्ठा device_link *link = to_devlink(dev);
-	काष्ठा device *sup = link->supplier;
-	काष्ठा device *con = link->consumer;
-	अक्षर *buf;
+static int devlink_add_symlinks(struct device *dev,
+				struct class_interface *class_intf)
+{
+	int ret;
+	size_t len;
+	struct device_link *link = to_devlink(dev);
+	struct device *sup = link->supplier;
+	struct device *con = link->consumer;
+	char *buf;
 
-	len = max(म_माप(dev_bus_name(sup)) + म_माप(dev_name(sup)),
-		  म_माप(dev_bus_name(con)) + म_माप(dev_name(con)));
-	len += म_माप(":");
-	len += म_माप("supplier:") + 1;
+	len = max(strlen(dev_bus_name(sup)) + strlen(dev_name(sup)),
+		  strlen(dev_bus_name(con)) + strlen(dev_name(con)));
+	len += strlen(":");
+	len += strlen("supplier:") + 1;
 	buf = kzalloc(len, GFP_KERNEL);
-	अगर (!buf)
-		वापस -ENOMEM;
+	if (!buf)
+		return -ENOMEM;
 
 	ret = sysfs_create_link(&link->link_dev.kobj, &sup->kobj, "supplier");
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
 	ret = sysfs_create_link(&link->link_dev.kobj, &con->kobj, "consumer");
-	अगर (ret)
-		जाओ err_con;
+	if (ret)
+		goto err_con;
 
-	snम_लिखो(buf, len, "consumer:%s:%s", dev_bus_name(con), dev_name(con));
+	snprintf(buf, len, "consumer:%s:%s", dev_bus_name(con), dev_name(con));
 	ret = sysfs_create_link(&sup->kobj, &link->link_dev.kobj, buf);
-	अगर (ret)
-		जाओ err_con_dev;
+	if (ret)
+		goto err_con_dev;
 
-	snम_लिखो(buf, len, "supplier:%s:%s", dev_bus_name(sup), dev_name(sup));
+	snprintf(buf, len, "supplier:%s:%s", dev_bus_name(sup), dev_name(sup));
 	ret = sysfs_create_link(&con->kobj, &link->link_dev.kobj, buf);
-	अगर (ret)
-		जाओ err_sup_dev;
+	if (ret)
+		goto err_sup_dev;
 
-	जाओ out;
+	goto out;
 
 err_sup_dev:
-	snम_लिखो(buf, len, "consumer:%s:%s", dev_bus_name(con), dev_name(con));
-	sysfs_हटाओ_link(&sup->kobj, buf);
+	snprintf(buf, len, "consumer:%s:%s", dev_bus_name(con), dev_name(con));
+	sysfs_remove_link(&sup->kobj, buf);
 err_con_dev:
-	sysfs_हटाओ_link(&link->link_dev.kobj, "consumer");
+	sysfs_remove_link(&link->link_dev.kobj, "consumer");
 err_con:
-	sysfs_हटाओ_link(&link->link_dev.kobj, "supplier");
+	sysfs_remove_link(&link->link_dev.kobj, "supplier");
 out:
-	kमुक्त(buf);
-	वापस ret;
-पूर्ण
+	kfree(buf);
+	return ret;
+}
 
-अटल व्योम devlink_हटाओ_symlinks(काष्ठा device *dev,
-				   काष्ठा class_पूर्णांकerface *class_पूर्णांकf)
-अणु
-	काष्ठा device_link *link = to_devlink(dev);
-	माप_प्रकार len;
-	काष्ठा device *sup = link->supplier;
-	काष्ठा device *con = link->consumer;
-	अक्षर *buf;
+static void devlink_remove_symlinks(struct device *dev,
+				   struct class_interface *class_intf)
+{
+	struct device_link *link = to_devlink(dev);
+	size_t len;
+	struct device *sup = link->supplier;
+	struct device *con = link->consumer;
+	char *buf;
 
-	sysfs_हटाओ_link(&link->link_dev.kobj, "consumer");
-	sysfs_हटाओ_link(&link->link_dev.kobj, "supplier");
+	sysfs_remove_link(&link->link_dev.kobj, "consumer");
+	sysfs_remove_link(&link->link_dev.kobj, "supplier");
 
-	len = max(म_माप(dev_bus_name(sup)) + म_माप(dev_name(sup)),
-		  म_माप(dev_bus_name(con)) + म_माप(dev_name(con)));
-	len += म_माप(":");
-	len += म_माप("supplier:") + 1;
+	len = max(strlen(dev_bus_name(sup)) + strlen(dev_name(sup)),
+		  strlen(dev_bus_name(con)) + strlen(dev_name(con)));
+	len += strlen(":");
+	len += strlen("supplier:") + 1;
 	buf = kzalloc(len, GFP_KERNEL);
-	अगर (!buf) अणु
+	if (!buf) {
 		WARN(1, "Unable to properly free device link symlinks!\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	snम_लिखो(buf, len, "supplier:%s:%s", dev_bus_name(sup), dev_name(sup));
-	sysfs_हटाओ_link(&con->kobj, buf);
-	snम_लिखो(buf, len, "consumer:%s:%s", dev_bus_name(con), dev_name(con));
-	sysfs_हटाओ_link(&sup->kobj, buf);
-	kमुक्त(buf);
-पूर्ण
+	snprintf(buf, len, "supplier:%s:%s", dev_bus_name(sup), dev_name(sup));
+	sysfs_remove_link(&con->kobj, buf);
+	snprintf(buf, len, "consumer:%s:%s", dev_bus_name(con), dev_name(con));
+	sysfs_remove_link(&sup->kobj, buf);
+	kfree(buf);
+}
 
-अटल काष्ठा class_पूर्णांकerface devlink_class_पूर्णांकf = अणु
+static struct class_interface devlink_class_intf = {
 	.class = &devlink_class,
 	.add_dev = devlink_add_symlinks,
-	.हटाओ_dev = devlink_हटाओ_symlinks,
-पूर्ण;
+	.remove_dev = devlink_remove_symlinks,
+};
 
-अटल पूर्णांक __init devlink_class_init(व्योम)
-अणु
-	पूर्णांक ret;
+static int __init devlink_class_init(void)
+{
+	int ret;
 
-	ret = class_रेजिस्टर(&devlink_class);
-	अगर (ret)
-		वापस ret;
+	ret = class_register(&devlink_class);
+	if (ret)
+		return ret;
 
-	ret = class_पूर्णांकerface_रेजिस्टर(&devlink_class_पूर्णांकf);
-	अगर (ret)
-		class_unरेजिस्टर(&devlink_class);
+	ret = class_interface_register(&devlink_class_intf);
+	if (ret)
+		class_unregister(&devlink_class);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 postcore_initcall(devlink_class_init);
 
-#घोषणा DL_MANAGED_LINK_FLAGS (DL_FLAG_AUTOREMOVE_CONSUMER | \
+#define DL_MANAGED_LINK_FLAGS (DL_FLAG_AUTOREMOVE_CONSUMER | \
 			       DL_FLAG_AUTOREMOVE_SUPPLIER | \
 			       DL_FLAG_AUTOPROBE_CONSUMER  | \
 			       DL_FLAG_SYNC_STATE_ONLY | \
 			       DL_FLAG_INFERRED)
 
-#घोषणा DL_ADD_VALID_FLAGS (DL_MANAGED_LINK_FLAGS | DL_FLAG_STATELESS | \
+#define DL_ADD_VALID_FLAGS (DL_MANAGED_LINK_FLAGS | DL_FLAG_STATELESS | \
 			    DL_FLAG_PM_RUNTIME | DL_FLAG_RPM_ACTIVE)
 
 /**
@@ -619,176 +618,176 @@ postcore_initcall(devlink_class_init);
  * @supplier: Supplier end of the link.
  * @flags: Link flags.
  *
- * The caller is responsible क्रम the proper synchronization of the link creation
- * with runसमय PM.  First, setting the DL_FLAG_PM_RUNTIME flag will cause the
- * runसमय PM framework to take the link पूर्णांकo account.  Second, अगर the
+ * The caller is responsible for the proper synchronization of the link creation
+ * with runtime PM.  First, setting the DL_FLAG_PM_RUNTIME flag will cause the
+ * runtime PM framework to take the link into account.  Second, if the
  * DL_FLAG_RPM_ACTIVE flag is set in addition to it, the supplier devices will
- * be क्रमced पूर्णांकo the active meta state and reference-counted upon the creation
+ * be forced into the active meta state and reference-counted upon the creation
  * of the link.  If DL_FLAG_PM_RUNTIME is not set, DL_FLAG_RPM_ACTIVE will be
  * ignored.
  *
  * If DL_FLAG_STATELESS is set in @flags, the caller of this function is
- * expected to release the link वापसed by it directly with the help of either
- * device_link_del() or device_link_हटाओ().
+ * expected to release the link returned by it directly with the help of either
+ * device_link_del() or device_link_remove().
  *
  * If that flag is not set, however, the caller of this function is handing the
- * management of the link over to the driver core entirely and its वापस value
- * can only be used to check whether or not the link is present.  In that हाल,
+ * management of the link over to the driver core entirely and its return value
+ * can only be used to check whether or not the link is present.  In that case,
  * the DL_FLAG_AUTOREMOVE_CONSUMER and DL_FLAG_AUTOREMOVE_SUPPLIER device link
  * flags can be used to indicate to the driver core when the link can be safely
  * deleted.  Namely, setting one of them in @flags indicates to the driver core
  * that the link is not going to be used (by the given caller of this function)
  * after unbinding the consumer or supplier driver, respectively, from its
- * device, so the link can be deleted at that poपूर्णांक.  If none of them is set,
- * the link will be मुख्यtained until one of the devices poपूर्णांकed to by it (either
- * the consumer or the supplier) is unरेजिस्टरed.
+ * device, so the link can be deleted at that point.  If none of them is set,
+ * the link will be maintained until one of the devices pointed to by it (either
+ * the consumer or the supplier) is unregistered.
  *
- * Also, अगर DL_FLAG_STATELESS, DL_FLAG_AUTOREMOVE_CONSUMER and
+ * Also, if DL_FLAG_STATELESS, DL_FLAG_AUTOREMOVE_CONSUMER and
  * DL_FLAG_AUTOREMOVE_SUPPLIER are not set in @flags (that is, a persistent
  * managed device link is being added), the DL_FLAG_AUTOPROBE_CONSUMER flag can
- * be used to request the driver core to स्वतःmatically probe क्रम a consumer
+ * be used to request the driver core to automatically probe for a consumer
  * driver after successfully binding a driver to the supplier device.
  *
  * The combination of DL_FLAG_STATELESS and one of DL_FLAG_AUTOREMOVE_CONSUMER,
  * DL_FLAG_AUTOREMOVE_SUPPLIER, or DL_FLAG_AUTOPROBE_CONSUMER set in @flags at
- * the same समय is invalid and will cause शून्य to be वापसed upfront.
- * However, अगर a device link between the given @consumer and @supplier pair
- * exists alपढ़ोy when this function is called क्रम them, the existing link will
- * be वापसed regardless of its current type and status (the link's flags may
- * be modअगरied then).  The caller of this function is then expected to treat
- * the link as though it has just been created, so (in particular) अगर
+ * the same time is invalid and will cause NULL to be returned upfront.
+ * However, if a device link between the given @consumer and @supplier pair
+ * exists already when this function is called for them, the existing link will
+ * be returned regardless of its current type and status (the link's flags may
+ * be modified then).  The caller of this function is then expected to treat
+ * the link as though it has just been created, so (in particular) if
  * DL_FLAG_STATELESS was passed in @flags, the link needs to be released
  * explicitly when not needed any more (as stated above).
  *
  * A side effect of the link creation is re-ordering of dpm_list and the
  * devices_kset list by moving the consumer device and all devices depending
- * on it to the ends of these lists (that करोes not happen to devices that have
- * not been रेजिस्टरed when this function is called).
+ * on it to the ends of these lists (that does not happen to devices that have
+ * not been registered when this function is called).
  *
- * The supplier device is required to be रेजिस्टरed when this function is called
- * and शून्य will be वापसed अगर that is not the हाल.  The consumer device need
- * not be रेजिस्टरed, however.
+ * The supplier device is required to be registered when this function is called
+ * and NULL will be returned if that is not the case.  The consumer device need
+ * not be registered, however.
  */
-काष्ठा device_link *device_link_add(काष्ठा device *consumer,
-				    काष्ठा device *supplier, u32 flags)
-अणु
-	काष्ठा device_link *link;
+struct device_link *device_link_add(struct device *consumer,
+				    struct device *supplier, u32 flags)
+{
+	struct device_link *link;
 
-	अगर (!consumer || !supplier || flags & ~DL_ADD_VALID_FLAGS ||
+	if (!consumer || !supplier || flags & ~DL_ADD_VALID_FLAGS ||
 	    (flags & DL_FLAG_STATELESS && flags & DL_MANAGED_LINK_FLAGS) ||
 	    (flags & DL_FLAG_SYNC_STATE_ONLY &&
 	     (flags & ~DL_FLAG_INFERRED) != DL_FLAG_SYNC_STATE_ONLY) ||
 	    (flags & DL_FLAG_AUTOPROBE_CONSUMER &&
 	     flags & (DL_FLAG_AUTOREMOVE_CONSUMER |
 		      DL_FLAG_AUTOREMOVE_SUPPLIER)))
-		वापस शून्य;
+		return NULL;
 
-	अगर (flags & DL_FLAG_PM_RUNTIME && flags & DL_FLAG_RPM_ACTIVE) अणु
-		अगर (pm_runसमय_get_sync(supplier) < 0) अणु
-			pm_runसमय_put_noidle(supplier);
-			वापस शून्य;
-		पूर्ण
-	पूर्ण
+	if (flags & DL_FLAG_PM_RUNTIME && flags & DL_FLAG_RPM_ACTIVE) {
+		if (pm_runtime_get_sync(supplier) < 0) {
+			pm_runtime_put_noidle(supplier);
+			return NULL;
+		}
+	}
 
-	अगर (!(flags & DL_FLAG_STATELESS))
+	if (!(flags & DL_FLAG_STATELESS))
 		flags |= DL_FLAG_MANAGED;
 
-	device_links_ग_लिखो_lock();
+	device_links_write_lock();
 	device_pm_lock();
 
 	/*
-	 * If the supplier has not been fully रेजिस्टरed yet or there is a
+	 * If the supplier has not been fully registered yet or there is a
 	 * reverse (non-SYNC_STATE_ONLY) dependency between the consumer and
-	 * the supplier alपढ़ोy in the graph, वापस शून्य. If the link is a
-	 * SYNC_STATE_ONLY link, we करोn't check क्रम reverse dependencies
+	 * the supplier already in the graph, return NULL. If the link is a
+	 * SYNC_STATE_ONLY link, we don't check for reverse dependencies
 	 * because it only affects sync_state() callbacks.
 	 */
-	अगर (!device_pm_initialized(supplier)
+	if (!device_pm_initialized(supplier)
 	    || (!(flags & DL_FLAG_SYNC_STATE_ONLY) &&
-		  device_is_dependent(consumer, supplier))) अणु
-		link = शून्य;
-		जाओ out;
-	पूर्ण
+		  device_is_dependent(consumer, supplier))) {
+		link = NULL;
+		goto out;
+	}
 
 	/*
 	 * SYNC_STATE_ONLY links are useless once a consumer device has probed.
-	 * So, only create it अगर the consumer hasn't probed yet.
+	 * So, only create it if the consumer hasn't probed yet.
 	 */
-	अगर (flags & DL_FLAG_SYNC_STATE_ONLY &&
+	if (flags & DL_FLAG_SYNC_STATE_ONLY &&
 	    consumer->links.status != DL_DEV_NO_DRIVER &&
-	    consumer->links.status != DL_DEV_PROBING) अणु
-		link = शून्य;
-		जाओ out;
-	पूर्ण
+	    consumer->links.status != DL_DEV_PROBING) {
+		link = NULL;
+		goto out;
+	}
 
 	/*
 	 * DL_FLAG_AUTOREMOVE_SUPPLIER indicates that the link will be needed
-	 * दीर्घer than क्रम DL_FLAG_AUTOREMOVE_CONSUMER and setting them both
-	 * together करोesn't make sense, so prefer DL_FLAG_AUTOREMOVE_SUPPLIER.
+	 * longer than for DL_FLAG_AUTOREMOVE_CONSUMER and setting them both
+	 * together doesn't make sense, so prefer DL_FLAG_AUTOREMOVE_SUPPLIER.
 	 */
-	अगर (flags & DL_FLAG_AUTOREMOVE_SUPPLIER)
+	if (flags & DL_FLAG_AUTOREMOVE_SUPPLIER)
 		flags &= ~DL_FLAG_AUTOREMOVE_CONSUMER;
 
-	list_क्रम_each_entry(link, &supplier->links.consumers, s_node) अणु
-		अगर (link->consumer != consumer)
-			जारी;
+	list_for_each_entry(link, &supplier->links.consumers, s_node) {
+		if (link->consumer != consumer)
+			continue;
 
-		अगर (link->flags & DL_FLAG_INFERRED &&
+		if (link->flags & DL_FLAG_INFERRED &&
 		    !(flags & DL_FLAG_INFERRED))
 			link->flags &= ~DL_FLAG_INFERRED;
 
-		अगर (flags & DL_FLAG_PM_RUNTIME) अणु
-			अगर (!(link->flags & DL_FLAG_PM_RUNTIME)) अणु
-				pm_runसमय_new_link(consumer);
+		if (flags & DL_FLAG_PM_RUNTIME) {
+			if (!(link->flags & DL_FLAG_PM_RUNTIME)) {
+				pm_runtime_new_link(consumer);
 				link->flags |= DL_FLAG_PM_RUNTIME;
-			पूर्ण
-			अगर (flags & DL_FLAG_RPM_ACTIVE)
+			}
+			if (flags & DL_FLAG_RPM_ACTIVE)
 				refcount_inc(&link->rpm_active);
-		पूर्ण
+		}
 
-		अगर (flags & DL_FLAG_STATELESS) अणु
+		if (flags & DL_FLAG_STATELESS) {
 			kref_get(&link->kref);
-			अगर (link->flags & DL_FLAG_SYNC_STATE_ONLY &&
-			    !(link->flags & DL_FLAG_STATELESS)) अणु
+			if (link->flags & DL_FLAG_SYNC_STATE_ONLY &&
+			    !(link->flags & DL_FLAG_STATELESS)) {
 				link->flags |= DL_FLAG_STATELESS;
-				जाओ reorder;
-			पूर्ण अन्यथा अणु
+				goto reorder;
+			} else {
 				link->flags |= DL_FLAG_STATELESS;
-				जाओ out;
-			पूर्ण
-		पूर्ण
+				goto out;
+			}
+		}
 
 		/*
-		 * If the lअगरe समय of the link following from the new flags is
-		 * दीर्घer than indicated by the flags of the existing link,
-		 * update the existing link to stay around दीर्घer.
+		 * If the life time of the link following from the new flags is
+		 * longer than indicated by the flags of the existing link,
+		 * update the existing link to stay around longer.
 		 */
-		अगर (flags & DL_FLAG_AUTOREMOVE_SUPPLIER) अणु
-			अगर (link->flags & DL_FLAG_AUTOREMOVE_CONSUMER) अणु
+		if (flags & DL_FLAG_AUTOREMOVE_SUPPLIER) {
+			if (link->flags & DL_FLAG_AUTOREMOVE_CONSUMER) {
 				link->flags &= ~DL_FLAG_AUTOREMOVE_CONSUMER;
 				link->flags |= DL_FLAG_AUTOREMOVE_SUPPLIER;
-			पूर्ण
-		पूर्ण अन्यथा अगर (!(flags & DL_FLAG_AUTOREMOVE_CONSUMER)) अणु
+			}
+		} else if (!(flags & DL_FLAG_AUTOREMOVE_CONSUMER)) {
 			link->flags &= ~(DL_FLAG_AUTOREMOVE_CONSUMER |
 					 DL_FLAG_AUTOREMOVE_SUPPLIER);
-		पूर्ण
-		अगर (!(link->flags & DL_FLAG_MANAGED)) अणु
+		}
+		if (!(link->flags & DL_FLAG_MANAGED)) {
 			kref_get(&link->kref);
 			link->flags |= DL_FLAG_MANAGED;
 			device_link_init_status(link, consumer, supplier);
-		पूर्ण
-		अगर (link->flags & DL_FLAG_SYNC_STATE_ONLY &&
-		    !(flags & DL_FLAG_SYNC_STATE_ONLY)) अणु
+		}
+		if (link->flags & DL_FLAG_SYNC_STATE_ONLY &&
+		    !(flags & DL_FLAG_SYNC_STATE_ONLY)) {
 			link->flags &= ~DL_FLAG_SYNC_STATE_ONLY;
-			जाओ reorder;
-		पूर्ण
+			goto reorder;
+		}
 
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	link = kzalloc(माप(*link), GFP_KERNEL);
-	अगर (!link)
-		जाओ out;
+	link = kzalloc(sizeof(*link), GFP_KERNEL);
+	if (!link)
+		goto out;
 
 	refcount_set(&link->rpm_active, 1);
 
@@ -806,398 +805,398 @@ postcore_initcall(devlink_class_init);
 	dev_set_name(&link->link_dev, "%s:%s--%s:%s",
 		     dev_bus_name(supplier), dev_name(supplier),
 		     dev_bus_name(consumer), dev_name(consumer));
-	अगर (device_रेजिस्टर(&link->link_dev)) अणु
+	if (device_register(&link->link_dev)) {
 		put_device(consumer);
 		put_device(supplier);
-		kमुक्त(link);
-		link = शून्य;
-		जाओ out;
-	पूर्ण
+		kfree(link);
+		link = NULL;
+		goto out;
+	}
 
-	अगर (flags & DL_FLAG_PM_RUNTIME) अणु
-		अगर (flags & DL_FLAG_RPM_ACTIVE)
+	if (flags & DL_FLAG_PM_RUNTIME) {
+		if (flags & DL_FLAG_RPM_ACTIVE)
 			refcount_inc(&link->rpm_active);
 
-		pm_runसमय_new_link(consumer);
-	पूर्ण
+		pm_runtime_new_link(consumer);
+	}
 
 	/* Determine the initial link state. */
-	अगर (flags & DL_FLAG_STATELESS)
+	if (flags & DL_FLAG_STATELESS)
 		link->status = DL_STATE_NONE;
-	अन्यथा
+	else
 		device_link_init_status(link, consumer, supplier);
 
 	/*
 	 * Some callers expect the link creation during consumer driver probe to
 	 * resume the supplier even without DL_FLAG_RPM_ACTIVE.
 	 */
-	अगर (link->status == DL_STATE_CONSUMER_PROBE &&
+	if (link->status == DL_STATE_CONSUMER_PROBE &&
 	    flags & DL_FLAG_PM_RUNTIME)
-		pm_runसमय_resume(supplier);
+		pm_runtime_resume(supplier);
 
 	list_add_tail_rcu(&link->s_node, &supplier->links.consumers);
 	list_add_tail_rcu(&link->c_node, &consumer->links.suppliers);
 
-	अगर (flags & DL_FLAG_SYNC_STATE_ONLY) अणु
+	if (flags & DL_FLAG_SYNC_STATE_ONLY) {
 		dev_dbg(consumer,
 			"Linked as a sync state only consumer to %s\n",
 			dev_name(supplier));
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 reorder:
 	/*
 	 * Move the consumer and all of the devices depending on it to the end
 	 * of dpm_list and the devices_kset list.
 	 *
-	 * It is necessary to hold dpm_list locked throughout all that or अन्यथा
+	 * It is necessary to hold dpm_list locked throughout all that or else
 	 * we may end up suspending with a wrong ordering of it.
 	 */
-	device_reorder_to_tail(consumer, शून्य);
+	device_reorder_to_tail(consumer, NULL);
 
 	dev_dbg(consumer, "Linked as a consumer to %s\n", dev_name(supplier));
 
 out:
 	device_pm_unlock();
-	device_links_ग_लिखो_unlock();
+	device_links_write_unlock();
 
-	अगर ((flags & DL_FLAG_PM_RUNTIME && flags & DL_FLAG_RPM_ACTIVE) && !link)
-		pm_runसमय_put(supplier);
+	if ((flags & DL_FLAG_PM_RUNTIME && flags & DL_FLAG_RPM_ACTIVE) && !link)
+		pm_runtime_put(supplier);
 
-	वापस link;
-पूर्ण
+	return link;
+}
 EXPORT_SYMBOL_GPL(device_link_add);
 
-अटल व्योम __device_link_del(काष्ठा kref *kref)
-अणु
-	काष्ठा device_link *link = container_of(kref, काष्ठा device_link, kref);
+static void __device_link_del(struct kref *kref)
+{
+	struct device_link *link = container_of(kref, struct device_link, kref);
 
 	dev_dbg(link->consumer, "Dropping the link to %s\n",
 		dev_name(link->supplier));
 
-	pm_runसमय_drop_link(link);
+	pm_runtime_drop_link(link);
 
-	device_link_हटाओ_from_lists(link);
-	device_unरेजिस्टर(&link->link_dev);
-पूर्ण
+	device_link_remove_from_lists(link);
+	device_unregister(&link->link_dev);
+}
 
-अटल व्योम device_link_put_kref(काष्ठा device_link *link)
-अणु
-	अगर (link->flags & DL_FLAG_STATELESS)
+static void device_link_put_kref(struct device_link *link)
+{
+	if (link->flags & DL_FLAG_STATELESS)
 		kref_put(&link->kref, __device_link_del);
-	अन्यथा
+	else
 		WARN(1, "Unable to drop a managed device link reference\n");
-पूर्ण
+}
 
 /**
  * device_link_del - Delete a stateless link between two devices.
  * @link: Device link to delete.
  *
- * The caller must ensure proper synchronization of this function with runसमय
- * PM.  If the link was added multiple बार, it needs to be deleted as often.
- * Care is required क्रम hotplugged devices:  Their links are purged on removal
- * and calling device_link_del() is then no दीर्घer allowed.
+ * The caller must ensure proper synchronization of this function with runtime
+ * PM.  If the link was added multiple times, it needs to be deleted as often.
+ * Care is required for hotplugged devices:  Their links are purged on removal
+ * and calling device_link_del() is then no longer allowed.
  */
-व्योम device_link_del(काष्ठा device_link *link)
-अणु
-	device_links_ग_लिखो_lock();
+void device_link_del(struct device_link *link)
+{
+	device_links_write_lock();
 	device_link_put_kref(link);
-	device_links_ग_लिखो_unlock();
-पूर्ण
+	device_links_write_unlock();
+}
 EXPORT_SYMBOL_GPL(device_link_del);
 
 /**
- * device_link_हटाओ - Delete a stateless link between two devices.
+ * device_link_remove - Delete a stateless link between two devices.
  * @consumer: Consumer end of the link.
  * @supplier: Supplier end of the link.
  *
- * The caller must ensure proper synchronization of this function with runसमय
+ * The caller must ensure proper synchronization of this function with runtime
  * PM.
  */
-व्योम device_link_हटाओ(व्योम *consumer, काष्ठा device *supplier)
-अणु
-	काष्ठा device_link *link;
+void device_link_remove(void *consumer, struct device *supplier)
+{
+	struct device_link *link;
 
-	अगर (WARN_ON(consumer == supplier))
-		वापस;
+	if (WARN_ON(consumer == supplier))
+		return;
 
-	device_links_ग_लिखो_lock();
+	device_links_write_lock();
 
-	list_क्रम_each_entry(link, &supplier->links.consumers, s_node) अणु
-		अगर (link->consumer == consumer) अणु
+	list_for_each_entry(link, &supplier->links.consumers, s_node) {
+		if (link->consumer == consumer) {
 			device_link_put_kref(link);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	device_links_ग_लिखो_unlock();
-पूर्ण
-EXPORT_SYMBOL_GPL(device_link_हटाओ);
+	device_links_write_unlock();
+}
+EXPORT_SYMBOL_GPL(device_link_remove);
 
-अटल व्योम device_links_missing_supplier(काष्ठा device *dev)
-अणु
-	काष्ठा device_link *link;
+static void device_links_missing_supplier(struct device *dev)
+{
+	struct device_link *link;
 
-	list_क्रम_each_entry(link, &dev->links.suppliers, c_node) अणु
-		अगर (link->status != DL_STATE_CONSUMER_PROBE)
-			जारी;
+	list_for_each_entry(link, &dev->links.suppliers, c_node) {
+		if (link->status != DL_STATE_CONSUMER_PROBE)
+			continue;
 
-		अगर (link->supplier->links.status == DL_DEV_DRIVER_BOUND) अणु
+		if (link->supplier->links.status == DL_DEV_DRIVER_BOUND) {
 			WRITE_ONCE(link->status, DL_STATE_AVAILABLE);
-		पूर्ण अन्यथा अणु
+		} else {
 			WARN_ON(!(link->flags & DL_FLAG_SYNC_STATE_ONLY));
 			WRITE_ONCE(link->status, DL_STATE_DORMANT);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
 /**
  * device_links_check_suppliers - Check presence of supplier drivers.
  * @dev: Consumer device.
  *
  * Check links from this device to any suppliers.  Walk the list of the device's
- * links to suppliers and see अगर all of them are available.  If not, simply
- * वापस -EPROBE_DEFER.
+ * links to suppliers and see if all of them are available.  If not, simply
+ * return -EPROBE_DEFER.
  *
  * We need to guarantee that the supplier will not go away after the check has
  * been positive here.  It only can go away in __device_release_driver() and
  * that function  checks the device's links to consumers.  This means we need to
  * mark the link as "consumer probe in progress" to make the supplier removal
- * रुको क्रम us to complete (or bad things may happen).
+ * wait for us to complete (or bad things may happen).
  *
  * Links without the DL_FLAG_MANAGED flag set are ignored.
  */
-पूर्णांक device_links_check_suppliers(काष्ठा device *dev)
-अणु
-	काष्ठा device_link *link;
-	पूर्णांक ret = 0;
+int device_links_check_suppliers(struct device *dev)
+{
+	struct device_link *link;
+	int ret = 0;
 
 	/*
-	 * Device रुकोing क्रम supplier to become available is not allowed to
+	 * Device waiting for supplier to become available is not allowed to
 	 * probe.
 	 */
 	mutex_lock(&fwnode_link_lock);
-	अगर (dev->fwnode && !list_empty(&dev->fwnode->suppliers) &&
-	    !fw_devlink_is_permissive()) अणु
+	if (dev->fwnode && !list_empty(&dev->fwnode->suppliers) &&
+	    !fw_devlink_is_permissive()) {
 		dev_dbg(dev, "probe deferral - wait for supplier %pfwP\n",
 			list_first_entry(&dev->fwnode->suppliers,
-			काष्ठा fwnode_link,
+			struct fwnode_link,
 			c_hook)->supplier);
 		mutex_unlock(&fwnode_link_lock);
-		वापस -EPROBE_DEFER;
-	पूर्ण
+		return -EPROBE_DEFER;
+	}
 	mutex_unlock(&fwnode_link_lock);
 
-	device_links_ग_लिखो_lock();
+	device_links_write_lock();
 
-	list_क्रम_each_entry(link, &dev->links.suppliers, c_node) अणु
-		अगर (!(link->flags & DL_FLAG_MANAGED))
-			जारी;
+	list_for_each_entry(link, &dev->links.suppliers, c_node) {
+		if (!(link->flags & DL_FLAG_MANAGED))
+			continue;
 
-		अगर (link->status != DL_STATE_AVAILABLE &&
-		    !(link->flags & DL_FLAG_SYNC_STATE_ONLY)) अणु
+		if (link->status != DL_STATE_AVAILABLE &&
+		    !(link->flags & DL_FLAG_SYNC_STATE_ONLY)) {
 			device_links_missing_supplier(dev);
 			dev_dbg(dev, "probe deferral - supplier %s not ready\n",
 				dev_name(link->supplier));
 			ret = -EPROBE_DEFER;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		WRITE_ONCE(link->status, DL_STATE_CONSUMER_PROBE);
-	पूर्ण
+	}
 	dev->links.status = DL_DEV_PROBING;
 
-	device_links_ग_लिखो_unlock();
-	वापस ret;
-पूर्ण
+	device_links_write_unlock();
+	return ret;
+}
 
 /**
- * __device_links_queue_sync_state - Queue a device क्रम sync_state() callback
+ * __device_links_queue_sync_state - Queue a device for sync_state() callback
  * @dev: Device to call sync_state() on
  * @list: List head to queue the @dev on
  *
- * Queues a device क्रम a sync_state() callback when the device links ग_लिखो lock
+ * Queues a device for a sync_state() callback when the device links write lock
  * isn't held. This allows the sync_state() execution flow to use device links
  * APIs.  The caller must ensure this function is called with
- * device_links_ग_लिखो_lock() held.
+ * device_links_write_lock() held.
  *
- * This function करोes a get_device() to make sure the device is not मुक्तd जबतक
+ * This function does a get_device() to make sure the device is not freed while
  * on this list.
  *
  * So the caller must also ensure that device_links_flush_sync_list() is called
- * as soon as the caller releases device_links_ग_लिखो_lock().  This is necessary
- * to make sure the sync_state() is called in a समयly fashion and the
+ * as soon as the caller releases device_links_write_lock().  This is necessary
+ * to make sure the sync_state() is called in a timely fashion and the
  * put_device() is called on this device.
  */
-अटल व्योम __device_links_queue_sync_state(काष्ठा device *dev,
-					    काष्ठा list_head *list)
-अणु
-	काष्ठा device_link *link;
+static void __device_links_queue_sync_state(struct device *dev,
+					    struct list_head *list)
+{
+	struct device_link *link;
 
-	अगर (!dev_has_sync_state(dev))
-		वापस;
-	अगर (dev->state_synced)
-		वापस;
+	if (!dev_has_sync_state(dev))
+		return;
+	if (dev->state_synced)
+		return;
 
-	list_क्रम_each_entry(link, &dev->links.consumers, s_node) अणु
-		अगर (!(link->flags & DL_FLAG_MANAGED))
-			जारी;
-		अगर (link->status != DL_STATE_ACTIVE)
-			वापस;
-	पूर्ण
+	list_for_each_entry(link, &dev->links.consumers, s_node) {
+		if (!(link->flags & DL_FLAG_MANAGED))
+			continue;
+		if (link->status != DL_STATE_ACTIVE)
+			return;
+	}
 
 	/*
-	 * Set the flag here to aव्योम adding the same device to a list more
-	 * than once. This can happen अगर new consumers get added to the device
-	 * and probed beक्रमe the list is flushed.
+	 * Set the flag here to avoid adding the same device to a list more
+	 * than once. This can happen if new consumers get added to the device
+	 * and probed before the list is flushed.
 	 */
 	dev->state_synced = true;
 
-	अगर (WARN_ON(!list_empty(&dev->links.defer_sync)))
-		वापस;
+	if (WARN_ON(!list_empty(&dev->links.defer_sync)))
+		return;
 
 	get_device(dev);
 	list_add_tail(&dev->links.defer_sync, list);
-पूर्ण
+}
 
 /**
  * device_links_flush_sync_list - Call sync_state() on a list of devices
  * @list: List of devices to call sync_state() on
- * @करोnt_lock_dev: Device क्रम which lock is alपढ़ोy held by the caller
+ * @dont_lock_dev: Device for which lock is already held by the caller
  *
- * Calls sync_state() on all the devices that have been queued क्रम it. This
+ * Calls sync_state() on all the devices that have been queued for it. This
  * function is used in conjunction with __device_links_queue_sync_state(). The
- * @करोnt_lock_dev parameter is useful when this function is called from a
- * context where a device lock is alपढ़ोy held.
+ * @dont_lock_dev parameter is useful when this function is called from a
+ * context where a device lock is already held.
  */
-अटल व्योम device_links_flush_sync_list(काष्ठा list_head *list,
-					 काष्ठा device *करोnt_lock_dev)
-अणु
-	काष्ठा device *dev, *पंचांगp;
+static void device_links_flush_sync_list(struct list_head *list,
+					 struct device *dont_lock_dev)
+{
+	struct device *dev, *tmp;
 
-	list_क्रम_each_entry_safe(dev, पंचांगp, list, links.defer_sync) अणु
+	list_for_each_entry_safe(dev, tmp, list, links.defer_sync) {
 		list_del_init(&dev->links.defer_sync);
 
-		अगर (dev != करोnt_lock_dev)
+		if (dev != dont_lock_dev)
 			device_lock(dev);
 
-		अगर (dev->bus->sync_state)
+		if (dev->bus->sync_state)
 			dev->bus->sync_state(dev);
-		अन्यथा अगर (dev->driver && dev->driver->sync_state)
+		else if (dev->driver && dev->driver->sync_state)
 			dev->driver->sync_state(dev);
 
-		अगर (dev != करोnt_lock_dev)
+		if (dev != dont_lock_dev)
 			device_unlock(dev);
 
 		put_device(dev);
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम device_links_supplier_sync_state_छोड़ो(व्योम)
-अणु
-	device_links_ग_लिखो_lock();
+void device_links_supplier_sync_state_pause(void)
+{
+	device_links_write_lock();
 	defer_sync_state_count++;
-	device_links_ग_लिखो_unlock();
-पूर्ण
+	device_links_write_unlock();
+}
 
-व्योम device_links_supplier_sync_state_resume(व्योम)
-अणु
-	काष्ठा device *dev, *पंचांगp;
+void device_links_supplier_sync_state_resume(void)
+{
+	struct device *dev, *tmp;
 	LIST_HEAD(sync_list);
 
-	device_links_ग_लिखो_lock();
-	अगर (!defer_sync_state_count) अणु
+	device_links_write_lock();
+	if (!defer_sync_state_count) {
 		WARN(true, "Unmatched sync_state pause/resume!");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	defer_sync_state_count--;
-	अगर (defer_sync_state_count)
-		जाओ out;
+	if (defer_sync_state_count)
+		goto out;
 
-	list_क्रम_each_entry_safe(dev, पंचांगp, &deferred_sync, links.defer_sync) अणु
+	list_for_each_entry_safe(dev, tmp, &deferred_sync, links.defer_sync) {
 		/*
-		 * Delete from deferred_sync list beक्रमe queuing it to
-		 * sync_list because defer_sync is used क्रम both lists.
+		 * Delete from deferred_sync list before queuing it to
+		 * sync_list because defer_sync is used for both lists.
 		 */
 		list_del_init(&dev->links.defer_sync);
 		__device_links_queue_sync_state(dev, &sync_list);
-	पूर्ण
+	}
 out:
-	device_links_ग_लिखो_unlock();
+	device_links_write_unlock();
 
-	device_links_flush_sync_list(&sync_list, शून्य);
-पूर्ण
+	device_links_flush_sync_list(&sync_list, NULL);
+}
 
-अटल पूर्णांक sync_state_resume_initcall(व्योम)
-अणु
+static int sync_state_resume_initcall(void)
+{
 	device_links_supplier_sync_state_resume();
-	वापस 0;
-पूर्ण
+	return 0;
+}
 late_initcall(sync_state_resume_initcall);
 
-अटल व्योम __device_links_supplier_defer_sync(काष्ठा device *sup)
-अणु
-	अगर (list_empty(&sup->links.defer_sync) && dev_has_sync_state(sup))
+static void __device_links_supplier_defer_sync(struct device *sup)
+{
+	if (list_empty(&sup->links.defer_sync) && dev_has_sync_state(sup))
 		list_add_tail(&sup->links.defer_sync, &deferred_sync);
-पूर्ण
+}
 
-अटल व्योम device_link_drop_managed(काष्ठा device_link *link)
-अणु
+static void device_link_drop_managed(struct device_link *link)
+{
 	link->flags &= ~DL_FLAG_MANAGED;
 	WRITE_ONCE(link->status, DL_STATE_NONE);
 	kref_put(&link->kref, __device_link_del);
-पूर्ण
+}
 
-अटल sमाप_प्रकार रुकोing_क्रम_supplier_show(काष्ठा device *dev,
-					 काष्ठा device_attribute *attr,
-					 अक्षर *buf)
-अणु
+static ssize_t waiting_for_supplier_show(struct device *dev,
+					 struct device_attribute *attr,
+					 char *buf)
+{
 	bool val;
 
 	device_lock(dev);
 	val = !list_empty(&dev->fwnode->suppliers);
 	device_unlock(dev);
-	वापस sysfs_emit(buf, "%u\n", val);
-पूर्ण
-अटल DEVICE_ATTR_RO(रुकोing_क्रम_supplier);
+	return sysfs_emit(buf, "%u\n", val);
+}
+static DEVICE_ATTR_RO(waiting_for_supplier);
 
 /**
- * device_links_क्रमce_bind - Prepares device to be क्रमce bound
+ * device_links_force_bind - Prepares device to be force bound
  * @dev: Consumer device.
  *
- * device_bind_driver() क्रमce binds a device to a driver without calling any
- * driver probe functions. So the consumer really isn't going to रुको क्रम any
- * supplier beक्रमe it's bound to the driver. We still want the device link
+ * device_bind_driver() force binds a device to a driver without calling any
+ * driver probe functions. So the consumer really isn't going to wait for any
+ * supplier before it's bound to the driver. We still want the device link
  * states to be sensible when this happens.
  *
- * In preparation क्रम device_bind_driver(), this function goes through each
- * supplier device links and checks अगर the supplier is bound. If it is, then
+ * In preparation for device_bind_driver(), this function goes through each
+ * supplier device links and checks if the supplier is bound. If it is, then
  * the device link status is set to CONSUMER_PROBE. Otherwise, the device link
  * is dropped. Links without the DL_FLAG_MANAGED flag set are ignored.
  */
-व्योम device_links_क्रमce_bind(काष्ठा device *dev)
-अणु
-	काष्ठा device_link *link, *ln;
+void device_links_force_bind(struct device *dev)
+{
+	struct device_link *link, *ln;
 
-	device_links_ग_लिखो_lock();
+	device_links_write_lock();
 
-	list_क्रम_each_entry_safe(link, ln, &dev->links.suppliers, c_node) अणु
-		अगर (!(link->flags & DL_FLAG_MANAGED))
-			जारी;
+	list_for_each_entry_safe(link, ln, &dev->links.suppliers, c_node) {
+		if (!(link->flags & DL_FLAG_MANAGED))
+			continue;
 
-		अगर (link->status != DL_STATE_AVAILABLE) अणु
+		if (link->status != DL_STATE_AVAILABLE) {
 			device_link_drop_managed(link);
-			जारी;
-		पूर्ण
+			continue;
+		}
 		WRITE_ONCE(link->status, DL_STATE_CONSUMER_PROBE);
-	पूर्ण
+	}
 	dev->links.status = DL_DEV_PROBING;
 
-	device_links_ग_लिखो_unlock();
-पूर्ण
+	device_links_write_unlock();
+}
 
 /**
  * device_links_driver_bound - Update device links after probing its driver.
- * @dev: Device to update the links क्रम.
+ * @dev: Device to update the links for.
  *
  * The probe has been successful, so update links from this device to any
  * consumers by changing their status to "available".
@@ -1206,95 +1205,95 @@ late_initcall(sync_state_resume_initcall);
  *
  * Links without the DL_FLAG_MANAGED flag set are ignored.
  */
-व्योम device_links_driver_bound(काष्ठा device *dev)
-अणु
-	काष्ठा device_link *link, *ln;
+void device_links_driver_bound(struct device *dev)
+{
+	struct device_link *link, *ln;
 	LIST_HEAD(sync_list);
 
 	/*
 	 * If a device binds successfully, it's expected to have created all
 	 * the device links it needs to or make new device links as it needs
-	 * them. So, fw_devlink no दीर्घer needs to create device links to any
+	 * them. So, fw_devlink no longer needs to create device links to any
 	 * of the device's suppliers.
 	 *
-	 * Also, अगर a child firmware node of this bound device is not added as
+	 * Also, if a child firmware node of this bound device is not added as
 	 * a device by now, assume it is never going to be added and make sure
-	 * other devices करोn't defer probe indefinitely by रुकोing क्रम such a
+	 * other devices don't defer probe indefinitely by waiting for such a
 	 * child device.
 	 */
-	अगर (dev->fwnode && dev->fwnode->dev == dev) अणु
-		काष्ठा fwnode_handle *child;
+	if (dev->fwnode && dev->fwnode->dev == dev) {
+		struct fwnode_handle *child;
 		fwnode_links_purge_suppliers(dev->fwnode);
-		fwnode_क्रम_each_available_child_node(dev->fwnode, child)
-			fw_devlink_purge_असलent_suppliers(child);
-	पूर्ण
-	device_हटाओ_file(dev, &dev_attr_रुकोing_क्रम_supplier);
+		fwnode_for_each_available_child_node(dev->fwnode, child)
+			fw_devlink_purge_absent_suppliers(child);
+	}
+	device_remove_file(dev, &dev_attr_waiting_for_supplier);
 
-	device_links_ग_लिखो_lock();
+	device_links_write_lock();
 
-	list_क्रम_each_entry(link, &dev->links.consumers, s_node) अणु
-		अगर (!(link->flags & DL_FLAG_MANAGED))
-			जारी;
+	list_for_each_entry(link, &dev->links.consumers, s_node) {
+		if (!(link->flags & DL_FLAG_MANAGED))
+			continue;
 
 		/*
 		 * Links created during consumer probe may be in the "consumer
-		 * probe" state to start with अगर the supplier is still probing
-		 * when they are created and they may become "active" अगर the
-		 * consumer probe वापसs first.  Skip them here.
+		 * probe" state to start with if the supplier is still probing
+		 * when they are created and they may become "active" if the
+		 * consumer probe returns first.  Skip them here.
 		 */
-		अगर (link->status == DL_STATE_CONSUMER_PROBE ||
+		if (link->status == DL_STATE_CONSUMER_PROBE ||
 		    link->status == DL_STATE_ACTIVE)
-			जारी;
+			continue;
 
 		WARN_ON(link->status != DL_STATE_DORMANT);
 		WRITE_ONCE(link->status, DL_STATE_AVAILABLE);
 
-		अगर (link->flags & DL_FLAG_AUTOPROBE_CONSUMER)
+		if (link->flags & DL_FLAG_AUTOPROBE_CONSUMER)
 			driver_deferred_probe_add(link->consumer);
-	पूर्ण
+	}
 
-	अगर (defer_sync_state_count)
+	if (defer_sync_state_count)
 		__device_links_supplier_defer_sync(dev);
-	अन्यथा
+	else
 		__device_links_queue_sync_state(dev, &sync_list);
 
-	list_क्रम_each_entry_safe(link, ln, &dev->links.suppliers, c_node) अणु
-		काष्ठा device *supplier;
+	list_for_each_entry_safe(link, ln, &dev->links.suppliers, c_node) {
+		struct device *supplier;
 
-		अगर (!(link->flags & DL_FLAG_MANAGED))
-			जारी;
+		if (!(link->flags & DL_FLAG_MANAGED))
+			continue;
 
 		supplier = link->supplier;
-		अगर (link->flags & DL_FLAG_SYNC_STATE_ONLY) अणु
+		if (link->flags & DL_FLAG_SYNC_STATE_ONLY) {
 			/*
 			 * When DL_FLAG_SYNC_STATE_ONLY is set, it means no
 			 * other DL_MANAGED_LINK_FLAGS have been set. So, it's
 			 * save to drop the managed link completely.
 			 */
 			device_link_drop_managed(link);
-		पूर्ण अन्यथा अणु
+		} else {
 			WARN_ON(link->status != DL_STATE_CONSUMER_PROBE);
 			WRITE_ONCE(link->status, DL_STATE_ACTIVE);
-		पूर्ण
+		}
 
 		/*
-		 * This needs to be करोne even क्रम the deleted
-		 * DL_FLAG_SYNC_STATE_ONLY device link in हाल it was the last
+		 * This needs to be done even for the deleted
+		 * DL_FLAG_SYNC_STATE_ONLY device link in case it was the last
 		 * device link that was preventing the supplier from getting a
 		 * sync_state() call.
 		 */
-		अगर (defer_sync_state_count)
+		if (defer_sync_state_count)
 			__device_links_supplier_defer_sync(supplier);
-		अन्यथा
+		else
 			__device_links_queue_sync_state(supplier, &sync_list);
-	पूर्ण
+	}
 
 	dev->links.status = DL_DEV_DRIVER_BOUND;
 
-	device_links_ग_लिखो_unlock();
+	device_links_write_unlock();
 
 	device_links_flush_sync_list(&sync_list, dev);
-पूर्ण
+}
 
 /**
  * __device_links_no_driver - Update links of a device without a driver.
@@ -1303,398 +1302,398 @@ late_initcall(sync_state_resume_initcall);
  * Delete all non-persistent links from this device to any suppliers.
  *
  * Persistent links stay around, but their status is changed to "available",
- * unless they alपढ़ोy are in the "supplier unbind in progress" state in which
- * हाल they need not be updated.
+ * unless they already are in the "supplier unbind in progress" state in which
+ * case they need not be updated.
  *
  * Links without the DL_FLAG_MANAGED flag set are ignored.
  */
-अटल व्योम __device_links_no_driver(काष्ठा device *dev)
-अणु
-	काष्ठा device_link *link, *ln;
+static void __device_links_no_driver(struct device *dev)
+{
+	struct device_link *link, *ln;
 
-	list_क्रम_each_entry_safe_reverse(link, ln, &dev->links.suppliers, c_node) अणु
-		अगर (!(link->flags & DL_FLAG_MANAGED))
-			जारी;
+	list_for_each_entry_safe_reverse(link, ln, &dev->links.suppliers, c_node) {
+		if (!(link->flags & DL_FLAG_MANAGED))
+			continue;
 
-		अगर (link->flags & DL_FLAG_AUTOREMOVE_CONSUMER) अणु
+		if (link->flags & DL_FLAG_AUTOREMOVE_CONSUMER) {
 			device_link_drop_managed(link);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		अगर (link->status != DL_STATE_CONSUMER_PROBE &&
+		if (link->status != DL_STATE_CONSUMER_PROBE &&
 		    link->status != DL_STATE_ACTIVE)
-			जारी;
+			continue;
 
-		अगर (link->supplier->links.status == DL_DEV_DRIVER_BOUND) अणु
+		if (link->supplier->links.status == DL_DEV_DRIVER_BOUND) {
 			WRITE_ONCE(link->status, DL_STATE_AVAILABLE);
-		पूर्ण अन्यथा अणु
+		} else {
 			WARN_ON(!(link->flags & DL_FLAG_SYNC_STATE_ONLY));
 			WRITE_ONCE(link->status, DL_STATE_DORMANT);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	dev->links.status = DL_DEV_NO_DRIVER;
-पूर्ण
+}
 
 /**
  * device_links_no_driver - Update links after failing driver probe.
  * @dev: Device whose driver has just failed to probe.
  *
- * Clean up leftover links to consumers क्रम @dev and invoke
- * %__device_links_no_driver() to update links to suppliers क्रम it as
+ * Clean up leftover links to consumers for @dev and invoke
+ * %__device_links_no_driver() to update links to suppliers for it as
  * appropriate.
  *
  * Links without the DL_FLAG_MANAGED flag set are ignored.
  */
-व्योम device_links_no_driver(काष्ठा device *dev)
-अणु
-	काष्ठा device_link *link;
+void device_links_no_driver(struct device *dev)
+{
+	struct device_link *link;
 
-	device_links_ग_लिखो_lock();
+	device_links_write_lock();
 
-	list_क्रम_each_entry(link, &dev->links.consumers, s_node) अणु
-		अगर (!(link->flags & DL_FLAG_MANAGED))
-			जारी;
+	list_for_each_entry(link, &dev->links.consumers, s_node) {
+		if (!(link->flags & DL_FLAG_MANAGED))
+			continue;
 
 		/*
-		 * The probe has failed, so अगर the status of the link is
+		 * The probe has failed, so if the status of the link is
 		 * "consumer probe" or "active", it must have been added by
-		 * a probing consumer जबतक this device was still probing.
+		 * a probing consumer while this device was still probing.
 		 * Change its state to "dormant", as it represents a valid
 		 * relationship, but it is not functionally meaningful.
 		 */
-		अगर (link->status == DL_STATE_CONSUMER_PROBE ||
+		if (link->status == DL_STATE_CONSUMER_PROBE ||
 		    link->status == DL_STATE_ACTIVE)
 			WRITE_ONCE(link->status, DL_STATE_DORMANT);
-	पूर्ण
+	}
 
 	__device_links_no_driver(dev);
 
-	device_links_ग_लिखो_unlock();
-पूर्ण
+	device_links_write_unlock();
+}
 
 /**
  * device_links_driver_cleanup - Update links after driver removal.
  * @dev: Device whose driver has just gone away.
  *
- * Update links to consumers क्रम @dev by changing their status to "dormant" and
- * invoke %__device_links_no_driver() to update links to suppliers क्रम it as
+ * Update links to consumers for @dev by changing their status to "dormant" and
+ * invoke %__device_links_no_driver() to update links to suppliers for it as
  * appropriate.
  *
  * Links without the DL_FLAG_MANAGED flag set are ignored.
  */
-व्योम device_links_driver_cleanup(काष्ठा device *dev)
-अणु
-	काष्ठा device_link *link, *ln;
+void device_links_driver_cleanup(struct device *dev)
+{
+	struct device_link *link, *ln;
 
-	device_links_ग_लिखो_lock();
+	device_links_write_lock();
 
-	list_क्रम_each_entry_safe(link, ln, &dev->links.consumers, s_node) अणु
-		अगर (!(link->flags & DL_FLAG_MANAGED))
-			जारी;
+	list_for_each_entry_safe(link, ln, &dev->links.consumers, s_node) {
+		if (!(link->flags & DL_FLAG_MANAGED))
+			continue;
 
 		WARN_ON(link->flags & DL_FLAG_AUTOREMOVE_CONSUMER);
 		WARN_ON(link->status != DL_STATE_SUPPLIER_UNBIND);
 
 		/*
-		 * स्वतःहटाओ the links between this @dev and its consumer
+		 * autoremove the links between this @dev and its consumer
 		 * devices that are not active, i.e. where the link state
 		 * has moved to DL_STATE_SUPPLIER_UNBIND.
 		 */
-		अगर (link->status == DL_STATE_SUPPLIER_UNBIND &&
+		if (link->status == DL_STATE_SUPPLIER_UNBIND &&
 		    link->flags & DL_FLAG_AUTOREMOVE_SUPPLIER)
 			device_link_drop_managed(link);
 
 		WRITE_ONCE(link->status, DL_STATE_DORMANT);
-	पूर्ण
+	}
 
 	list_del_init(&dev->links.defer_sync);
 	__device_links_no_driver(dev);
 
-	device_links_ग_लिखो_unlock();
-पूर्ण
+	device_links_write_unlock();
+}
 
 /**
- * device_links_busy - Check अगर there are any busy links to consumers.
+ * device_links_busy - Check if there are any busy links to consumers.
  * @dev: Device to check.
  *
- * Check each consumer of the device and वापस 'true' if its link's status
+ * Check each consumer of the device and return 'true' if its link's status
  * is one of "consumer probe" or "active" (meaning that the given consumer is
  * probing right now or its driver is present).  Otherwise, change the link
  * state to "supplier unbind" to prevent the consumer from being probed
- * successfully going क्रमward.
+ * successfully going forward.
  *
- * Return 'false' अगर there are no probing or active consumers.
+ * Return 'false' if there are no probing or active consumers.
  *
  * Links without the DL_FLAG_MANAGED flag set are ignored.
  */
-bool device_links_busy(काष्ठा device *dev)
-अणु
-	काष्ठा device_link *link;
+bool device_links_busy(struct device *dev)
+{
+	struct device_link *link;
 	bool ret = false;
 
-	device_links_ग_लिखो_lock();
+	device_links_write_lock();
 
-	list_क्रम_each_entry(link, &dev->links.consumers, s_node) अणु
-		अगर (!(link->flags & DL_FLAG_MANAGED))
-			जारी;
+	list_for_each_entry(link, &dev->links.consumers, s_node) {
+		if (!(link->flags & DL_FLAG_MANAGED))
+			continue;
 
-		अगर (link->status == DL_STATE_CONSUMER_PROBE
-		    || link->status == DL_STATE_ACTIVE) अणु
+		if (link->status == DL_STATE_CONSUMER_PROBE
+		    || link->status == DL_STATE_ACTIVE) {
 			ret = true;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		WRITE_ONCE(link->status, DL_STATE_SUPPLIER_UNBIND);
-	पूर्ण
+	}
 
 	dev->links.status = DL_DEV_UNBINDING;
 
-	device_links_ग_लिखो_unlock();
-	वापस ret;
-पूर्ण
+	device_links_write_unlock();
+	return ret;
+}
 
 /**
  * device_links_unbind_consumers - Force unbind consumers of the given device.
  * @dev: Device to unbind the consumers of.
  *
- * Walk the list of links to consumers क्रम @dev and अगर any of them is in the
- * "consumer probe" state, रुको क्रम all device probes in progress to complete
+ * Walk the list of links to consumers for @dev and if any of them is in the
+ * "consumer probe" state, wait for all device probes in progress to complete
  * and start over.
  *
- * If that's not the हाल, change the status of the link to "supplier unbind"
- * and check अगर the link was in the "active" state.  If so, क्रमce the consumer
+ * If that's not the case, change the status of the link to "supplier unbind"
+ * and check if the link was in the "active" state.  If so, force the consumer
  * driver to unbind and start over (the consumer will not re-probe as we have
- * changed the state of the link alपढ़ोy).
+ * changed the state of the link already).
  *
  * Links without the DL_FLAG_MANAGED flag set are ignored.
  */
-व्योम device_links_unbind_consumers(काष्ठा device *dev)
-अणु
-	काष्ठा device_link *link;
+void device_links_unbind_consumers(struct device *dev)
+{
+	struct device_link *link;
 
  start:
-	device_links_ग_लिखो_lock();
+	device_links_write_lock();
 
-	list_क्रम_each_entry(link, &dev->links.consumers, s_node) अणु
-		क्रमागत device_link_state status;
+	list_for_each_entry(link, &dev->links.consumers, s_node) {
+		enum device_link_state status;
 
-		अगर (!(link->flags & DL_FLAG_MANAGED) ||
+		if (!(link->flags & DL_FLAG_MANAGED) ||
 		    link->flags & DL_FLAG_SYNC_STATE_ONLY)
-			जारी;
+			continue;
 
 		status = link->status;
-		अगर (status == DL_STATE_CONSUMER_PROBE) अणु
-			device_links_ग_लिखो_unlock();
+		if (status == DL_STATE_CONSUMER_PROBE) {
+			device_links_write_unlock();
 
-			रुको_क्रम_device_probe();
-			जाओ start;
-		पूर्ण
+			wait_for_device_probe();
+			goto start;
+		}
 		WRITE_ONCE(link->status, DL_STATE_SUPPLIER_UNBIND);
-		अगर (status == DL_STATE_ACTIVE) अणु
-			काष्ठा device *consumer = link->consumer;
+		if (status == DL_STATE_ACTIVE) {
+			struct device *consumer = link->consumer;
 
 			get_device(consumer);
 
-			device_links_ग_लिखो_unlock();
+			device_links_write_unlock();
 
-			device_release_driver_पूर्णांकernal(consumer, शून्य,
+			device_release_driver_internal(consumer, NULL,
 						       consumer->parent);
 			put_device(consumer);
-			जाओ start;
-		पूर्ण
-	पूर्ण
+			goto start;
+		}
+	}
 
-	device_links_ग_लिखो_unlock();
-पूर्ण
+	device_links_write_unlock();
+}
 
 /**
  * device_links_purge - Delete existing links to other devices.
  * @dev: Target device.
  */
-अटल व्योम device_links_purge(काष्ठा device *dev)
-अणु
-	काष्ठा device_link *link, *ln;
+static void device_links_purge(struct device *dev)
+{
+	struct device_link *link, *ln;
 
-	अगर (dev->class == &devlink_class)
-		वापस;
+	if (dev->class == &devlink_class)
+		return;
 
 	/*
-	 * Delete all of the reमुख्यing links from this device to any other
+	 * Delete all of the remaining links from this device to any other
 	 * devices (either consumers or suppliers).
 	 */
-	device_links_ग_लिखो_lock();
+	device_links_write_lock();
 
-	list_क्रम_each_entry_safe_reverse(link, ln, &dev->links.suppliers, c_node) अणु
+	list_for_each_entry_safe_reverse(link, ln, &dev->links.suppliers, c_node) {
 		WARN_ON(link->status == DL_STATE_ACTIVE);
 		__device_link_del(&link->kref);
-	पूर्ण
+	}
 
-	list_क्रम_each_entry_safe_reverse(link, ln, &dev->links.consumers, s_node) अणु
+	list_for_each_entry_safe_reverse(link, ln, &dev->links.consumers, s_node) {
 		WARN_ON(link->status != DL_STATE_DORMANT &&
 			link->status != DL_STATE_NONE);
 		__device_link_del(&link->kref);
-	पूर्ण
+	}
 
-	device_links_ग_लिखो_unlock();
-पूर्ण
+	device_links_write_unlock();
+}
 
-#घोषणा FW_DEVLINK_FLAGS_PERMISSIVE	(DL_FLAG_INFERRED | \
+#define FW_DEVLINK_FLAGS_PERMISSIVE	(DL_FLAG_INFERRED | \
 					 DL_FLAG_SYNC_STATE_ONLY)
-#घोषणा FW_DEVLINK_FLAGS_ON		(DL_FLAG_INFERRED | \
+#define FW_DEVLINK_FLAGS_ON		(DL_FLAG_INFERRED | \
 					 DL_FLAG_AUTOPROBE_CONSUMER)
-#घोषणा FW_DEVLINK_FLAGS_RPM		(FW_DEVLINK_FLAGS_ON | \
+#define FW_DEVLINK_FLAGS_RPM		(FW_DEVLINK_FLAGS_ON | \
 					 DL_FLAG_PM_RUNTIME)
 
-अटल u32 fw_devlink_flags = FW_DEVLINK_FLAGS_ON;
-अटल पूर्णांक __init fw_devlink_setup(अक्षर *arg)
-अणु
-	अगर (!arg)
-		वापस -EINVAL;
+static u32 fw_devlink_flags = FW_DEVLINK_FLAGS_ON;
+static int __init fw_devlink_setup(char *arg)
+{
+	if (!arg)
+		return -EINVAL;
 
-	अगर (म_भेद(arg, "off") == 0) अणु
+	if (strcmp(arg, "off") == 0) {
 		fw_devlink_flags = 0;
-	पूर्ण अन्यथा अगर (म_भेद(arg, "permissive") == 0) अणु
+	} else if (strcmp(arg, "permissive") == 0) {
 		fw_devlink_flags = FW_DEVLINK_FLAGS_PERMISSIVE;
-	पूर्ण अन्यथा अगर (म_भेद(arg, "on") == 0) अणु
+	} else if (strcmp(arg, "on") == 0) {
 		fw_devlink_flags = FW_DEVLINK_FLAGS_ON;
-	पूर्ण अन्यथा अगर (म_भेद(arg, "rpm") == 0) अणु
+	} else if (strcmp(arg, "rpm") == 0) {
 		fw_devlink_flags = FW_DEVLINK_FLAGS_RPM;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 early_param("fw_devlink", fw_devlink_setup);
 
-अटल bool fw_devlink_strict;
-अटल पूर्णांक __init fw_devlink_strict_setup(अक्षर *arg)
-अणु
-	वापस strtobool(arg, &fw_devlink_strict);
-पूर्ण
+static bool fw_devlink_strict;
+static int __init fw_devlink_strict_setup(char *arg)
+{
+	return strtobool(arg, &fw_devlink_strict);
+}
 early_param("fw_devlink.strict", fw_devlink_strict_setup);
 
-u32 fw_devlink_get_flags(व्योम)
-अणु
-	वापस fw_devlink_flags;
-पूर्ण
+u32 fw_devlink_get_flags(void)
+{
+	return fw_devlink_flags;
+}
 
-अटल bool fw_devlink_is_permissive(व्योम)
-अणु
-	वापस fw_devlink_flags == FW_DEVLINK_FLAGS_PERMISSIVE;
-पूर्ण
+static bool fw_devlink_is_permissive(void)
+{
+	return fw_devlink_flags == FW_DEVLINK_FLAGS_PERMISSIVE;
+}
 
-bool fw_devlink_is_strict(व्योम)
-अणु
-	वापस fw_devlink_strict && !fw_devlink_is_permissive();
-पूर्ण
+bool fw_devlink_is_strict(void)
+{
+	return fw_devlink_strict && !fw_devlink_is_permissive();
+}
 
-अटल व्योम fw_devlink_parse_fwnode(काष्ठा fwnode_handle *fwnode)
-अणु
-	अगर (fwnode->flags & FWNODE_FLAG_LINKS_ADDED)
-		वापस;
+static void fw_devlink_parse_fwnode(struct fwnode_handle *fwnode)
+{
+	if (fwnode->flags & FWNODE_FLAG_LINKS_ADDED)
+		return;
 
-	fwnode_call_पूर्णांक_op(fwnode, add_links);
+	fwnode_call_int_op(fwnode, add_links);
 	fwnode->flags |= FWNODE_FLAG_LINKS_ADDED;
-पूर्ण
+}
 
-अटल व्योम fw_devlink_parse_fwtree(काष्ठा fwnode_handle *fwnode)
-अणु
-	काष्ठा fwnode_handle *child = शून्य;
+static void fw_devlink_parse_fwtree(struct fwnode_handle *fwnode)
+{
+	struct fwnode_handle *child = NULL;
 
 	fw_devlink_parse_fwnode(fwnode);
 
-	जबतक ((child = fwnode_get_next_available_child_node(fwnode, child)))
+	while ((child = fwnode_get_next_available_child_node(fwnode, child)))
 		fw_devlink_parse_fwtree(child);
-पूर्ण
+}
 
-अटल व्योम fw_devlink_relax_link(काष्ठा device_link *link)
-अणु
-	अगर (!(link->flags & DL_FLAG_INFERRED))
-		वापस;
+static void fw_devlink_relax_link(struct device_link *link)
+{
+	if (!(link->flags & DL_FLAG_INFERRED))
+		return;
 
-	अगर (link->flags == (DL_FLAG_MANAGED | FW_DEVLINK_FLAGS_PERMISSIVE))
-		वापस;
+	if (link->flags == (DL_FLAG_MANAGED | FW_DEVLINK_FLAGS_PERMISSIVE))
+		return;
 
-	pm_runसमय_drop_link(link);
+	pm_runtime_drop_link(link);
 	link->flags = DL_FLAG_MANAGED | FW_DEVLINK_FLAGS_PERMISSIVE;
 	dev_dbg(link->consumer, "Relaxing link with %s\n",
 		dev_name(link->supplier));
-पूर्ण
+}
 
-अटल पूर्णांक fw_devlink_no_driver(काष्ठा device *dev, व्योम *data)
-अणु
-	काष्ठा device_link *link = to_devlink(dev);
+static int fw_devlink_no_driver(struct device *dev, void *data)
+{
+	struct device_link *link = to_devlink(dev);
 
-	अगर (!link->supplier->can_match)
+	if (!link->supplier->can_match)
 		fw_devlink_relax_link(link);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम fw_devlink_drivers_करोne(व्योम)
-अणु
-	fw_devlink_drv_reg_करोne = true;
-	device_links_ग_लिखो_lock();
-	class_क्रम_each_device(&devlink_class, शून्य, शून्य,
+void fw_devlink_drivers_done(void)
+{
+	fw_devlink_drv_reg_done = true;
+	device_links_write_lock();
+	class_for_each_device(&devlink_class, NULL, NULL,
 			      fw_devlink_no_driver);
-	device_links_ग_लिखो_unlock();
-पूर्ण
+	device_links_write_unlock();
+}
 
-अटल व्योम fw_devlink_unblock_consumers(काष्ठा device *dev)
-अणु
-	काष्ठा device_link *link;
+static void fw_devlink_unblock_consumers(struct device *dev)
+{
+	struct device_link *link;
 
-	अगर (!fw_devlink_flags || fw_devlink_is_permissive())
-		वापस;
+	if (!fw_devlink_flags || fw_devlink_is_permissive())
+		return;
 
-	device_links_ग_लिखो_lock();
-	list_क्रम_each_entry(link, &dev->links.consumers, s_node)
+	device_links_write_lock();
+	list_for_each_entry(link, &dev->links.consumers, s_node)
 		fw_devlink_relax_link(link);
-	device_links_ग_लिखो_unlock();
-पूर्ण
+	device_links_write_unlock();
+}
 
 /**
  * fw_devlink_relax_cycle - Convert cyclic links to SYNC_STATE_ONLY links
- * @con: Device to check dependencies क्रम.
+ * @con: Device to check dependencies for.
  * @sup: Device to check against.
  *
- * Check अगर @sup depends on @con or any device dependent on it (its child or
+ * Check if @sup depends on @con or any device dependent on it (its child or
  * its consumer etc).  When such a cyclic dependency is found, convert all
- * device links created solely by fw_devlink पूर्णांकo SYNC_STATE_ONLY device links.
- * This is the equivalent of करोing fw_devlink=permissive just between the
- * devices in the cycle. We need to करो this because, at this poपूर्णांक, fw_devlink
+ * device links created solely by fw_devlink into SYNC_STATE_ONLY device links.
+ * This is the equivalent of doing fw_devlink=permissive just between the
+ * devices in the cycle. We need to do this because, at this point, fw_devlink
  * can't tell which of these dependencies is not a real dependency.
  *
- * Return 1 अगर a cycle is found. Otherwise, वापस 0.
+ * Return 1 if a cycle is found. Otherwise, return 0.
  */
-अटल पूर्णांक fw_devlink_relax_cycle(काष्ठा device *con, व्योम *sup)
-अणु
-	काष्ठा device_link *link;
-	पूर्णांक ret;
+static int fw_devlink_relax_cycle(struct device *con, void *sup)
+{
+	struct device_link *link;
+	int ret;
 
-	अगर (con == sup)
-		वापस 1;
+	if (con == sup)
+		return 1;
 
-	ret = device_क्रम_each_child(con, sup, fw_devlink_relax_cycle);
-	अगर (ret)
-		वापस ret;
+	ret = device_for_each_child(con, sup, fw_devlink_relax_cycle);
+	if (ret)
+		return ret;
 
-	list_क्रम_each_entry(link, &con->links.consumers, s_node) अणु
-		अगर ((link->flags & ~DL_FLAG_INFERRED) ==
+	list_for_each_entry(link, &con->links.consumers, s_node) {
+		if ((link->flags & ~DL_FLAG_INFERRED) ==
 		    (DL_FLAG_SYNC_STATE_ONLY | DL_FLAG_MANAGED))
-			जारी;
+			continue;
 
-		अगर (!fw_devlink_relax_cycle(link->consumer, sup))
-			जारी;
+		if (!fw_devlink_relax_cycle(link->consumer, sup))
+			continue;
 
 		ret = 1;
 
 		fw_devlink_relax_link(link);
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 
 /**
  * fw_devlink_create_devlink - Create a device link from a consumer to fwnode
- * @con: consumer device क्रम the device link
+ * @con: consumer device for the device link
  * @sup_handle: fwnode handle of supplier
  * @flags: devlink flags
  *
@@ -1702,93 +1701,93 @@ bool fw_devlink_is_strict(व्योम)
  * @con and the supplier device represented by @sup_handle.
  *
  * The supplier has to be provided as a fwnode because incorrect cycles in
- * fwnode links can someबार cause the supplier device to never be created.
- * This function detects such हालs and वापसs an error अगर it cannot create a
+ * fwnode links can sometimes cause the supplier device to never be created.
+ * This function detects such cases and returns an error if it cannot create a
  * device link from the consumer to a missing supplier.
  *
  * Returns,
  * 0 on successfully creating a device link
- * -EINVAL अगर the device link cannot be created as expected
- * -EAGAIN अगर the device link cannot be created right now, but it may be
- *  possible to करो that in the future
+ * -EINVAL if the device link cannot be created as expected
+ * -EAGAIN if the device link cannot be created right now, but it may be
+ *  possible to do that in the future
  */
-अटल पूर्णांक fw_devlink_create_devlink(काष्ठा device *con,
-				     काष्ठा fwnode_handle *sup_handle, u32 flags)
-अणु
-	काष्ठा device *sup_dev;
-	पूर्णांक ret = 0;
+static int fw_devlink_create_devlink(struct device *con,
+				     struct fwnode_handle *sup_handle, u32 flags)
+{
+	struct device *sup_dev;
+	int ret = 0;
 
 	sup_dev = get_dev_from_fwnode(sup_handle);
-	अगर (sup_dev) अणु
+	if (sup_dev) {
 		/*
 		 * If it's one of those drivers that don't actually bind to
-		 * their device using driver core, then करोn't रुको on this
+		 * their device using driver core, then don't wait on this
 		 * supplier device indefinitely.
 		 */
-		अगर (sup_dev->links.status == DL_DEV_NO_DRIVER &&
-		    sup_handle->flags & FWNODE_FLAG_INITIALIZED) अणु
+		if (sup_dev->links.status == DL_DEV_NO_DRIVER &&
+		    sup_handle->flags & FWNODE_FLAG_INITIALIZED) {
 			ret = -EINVAL;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		/*
 		 * If this fails, it is due to cycles in device links.  Just
 		 * give up on this link and treat it as invalid.
 		 */
-		अगर (!device_link_add(con, sup_dev, flags) &&
-		    !(flags & DL_FLAG_SYNC_STATE_ONLY)) अणु
+		if (!device_link_add(con, sup_dev, flags) &&
+		    !(flags & DL_FLAG_SYNC_STATE_ONLY)) {
 			dev_info(con, "Fixing up cyclic dependency with %s\n",
 				 dev_name(sup_dev));
-			device_links_ग_लिखो_lock();
+			device_links_write_lock();
 			fw_devlink_relax_cycle(con, sup_dev);
-			device_links_ग_लिखो_unlock();
+			device_links_write_unlock();
 			device_link_add(con, sup_dev,
 					FW_DEVLINK_FLAGS_PERMISSIVE);
 			ret = -EINVAL;
-		पूर्ण
+		}
 
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	/* Supplier that's alपढ़ोy initialized without a काष्ठा device. */
-	अगर (sup_handle->flags & FWNODE_FLAG_INITIALIZED)
-		वापस -EINVAL;
+	/* Supplier that's already initialized without a struct device. */
+	if (sup_handle->flags & FWNODE_FLAG_INITIALIZED)
+		return -EINVAL;
 
 	/*
-	 * DL_FLAG_SYNC_STATE_ONLY करोesn't block probing and supports
+	 * DL_FLAG_SYNC_STATE_ONLY doesn't block probing and supports
 	 * cycles. So cycle detection isn't necessary and shouldn't be
-	 * करोne.
+	 * done.
 	 */
-	अगर (flags & DL_FLAG_SYNC_STATE_ONLY)
-		वापस -EAGAIN;
+	if (flags & DL_FLAG_SYNC_STATE_ONLY)
+		return -EAGAIN;
 
 	/*
 	 * If we can't find the supplier device from its fwnode, it might be
 	 * due to a cyclic dependency between fwnodes. Some of these cycles can
-	 * be broken by applying logic. Check क्रम these types of cycles and
-	 * अवरोध them so that devices in the cycle probe properly.
+	 * be broken by applying logic. Check for these types of cycles and
+	 * break them so that devices in the cycle probe properly.
 	 *
 	 * If the supplier's parent is dependent on the consumer, then
 	 * the consumer-supplier dependency is a false dependency. So,
 	 * treat it as an invalid link.
 	 */
 	sup_dev = fwnode_get_next_parent_dev(sup_handle);
-	अगर (sup_dev && device_is_dependent(con, sup_dev)) अणु
+	if (sup_dev && device_is_dependent(con, sup_dev)) {
 		dev_dbg(con, "Not linking to %pfwP - False link\n",
 			sup_handle);
 		ret = -EINVAL;
-	पूर्ण अन्यथा अणु
+	} else {
 		/*
 		 * Can't check for cycles or no cycles. So let's try
 		 * again later.
 		 */
 		ret = -EAGAIN;
-	पूर्ण
+	}
 
 out:
 	put_device(sup_dev);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
  * __fw_devlink_link_to_consumers - Create device links to consumers of a device
@@ -1798,67 +1797,67 @@ out:
  * links between the consumer device and @dev (supplier).
  *
  * If the consumer device has not been added yet, then this function creates a
- * SYNC_STATE_ONLY link between @dev (supplier) and the बंदst ancestor device
- * of the consumer fwnode. This is necessary to make sure @dev करोesn't get a
- * sync_state() callback beक्रमe the real consumer device माला_लो to be added and
+ * SYNC_STATE_ONLY link between @dev (supplier) and the closest ancestor device
+ * of the consumer fwnode. This is necessary to make sure @dev doesn't get a
+ * sync_state() callback before the real consumer device gets to be added and
  * then probed.
  *
  * Once device links are created from the real consumer to @dev (supplier), the
  * fwnode links are deleted.
  */
-अटल व्योम __fw_devlink_link_to_consumers(काष्ठा device *dev)
-अणु
-	काष्ठा fwnode_handle *fwnode = dev->fwnode;
-	काष्ठा fwnode_link *link, *पंचांगp;
+static void __fw_devlink_link_to_consumers(struct device *dev)
+{
+	struct fwnode_handle *fwnode = dev->fwnode;
+	struct fwnode_link *link, *tmp;
 
-	list_क्रम_each_entry_safe(link, पंचांगp, &fwnode->consumers, s_hook) अणु
+	list_for_each_entry_safe(link, tmp, &fwnode->consumers, s_hook) {
 		u32 dl_flags = fw_devlink_get_flags();
-		काष्ठा device *con_dev;
+		struct device *con_dev;
 		bool own_link = true;
-		पूर्णांक ret;
+		int ret;
 
 		con_dev = get_dev_from_fwnode(link->consumer);
 		/*
 		 * If consumer device is not available yet, make a "proxy"
 		 * SYNC_STATE_ONLY link from the consumer's parent device to
 		 * the supplier device. This is necessary to make sure the
-		 * supplier करोesn't get a sync_state() callback beक्रमe the real
+		 * supplier doesn't get a sync_state() callback before the real
 		 * consumer can create a device link to the supplier.
 		 *
-		 * This proxy link step is needed to handle the हाल where the
-		 * consumer's parent device is added beक्रमe the supplier.
+		 * This proxy link step is needed to handle the case where the
+		 * consumer's parent device is added before the supplier.
 		 */
-		अगर (!con_dev) अणु
+		if (!con_dev) {
 			con_dev = fwnode_get_next_parent_dev(link->consumer);
 			/*
-			 * However, अगर the consumer's parent device is also the
-			 * parent of the supplier, करोn't create a
+			 * However, if the consumer's parent device is also the
+			 * parent of the supplier, don't create a
 			 * consumer-supplier link from the parent to its child
 			 * device. Such a dependency is impossible.
 			 */
-			अगर (con_dev &&
-			    fwnode_is_ancestor_of(con_dev->fwnode, fwnode)) अणु
+			if (con_dev &&
+			    fwnode_is_ancestor_of(con_dev->fwnode, fwnode)) {
 				put_device(con_dev);
-				con_dev = शून्य;
-			पूर्ण अन्यथा अणु
+				con_dev = NULL;
+			} else {
 				own_link = false;
 				dl_flags = FW_DEVLINK_FLAGS_PERMISSIVE;
-			पूर्ण
-		पूर्ण
+			}
+		}
 
-		अगर (!con_dev)
-			जारी;
+		if (!con_dev)
+			continue;
 
 		ret = fw_devlink_create_devlink(con_dev, fwnode, dl_flags);
 		put_device(con_dev);
-		अगर (!own_link || ret == -EAGAIN)
-			जारी;
+		if (!own_link || ret == -EAGAIN)
+			continue;
 
 		list_del(&link->s_hook);
 		list_del(&link->c_hook);
-		kमुक्त(link);
-	पूर्ण
-पूर्ण
+		kfree(link);
+	}
+}
 
 /**
  * __fw_devlink_link_to_suppliers - Create device links to suppliers of a device
@@ -1873,48 +1872,48 @@ out:
  * and the real suppliers of @dev. Once these device links are created, the
  * fwnode links are deleted. When such device links are successfully created,
  * this function is called recursively on those supplier devices. This is
- * needed to detect and अवरोध some invalid cycles in fwnode links.  See
- * fw_devlink_create_devlink() क्रम more details.
+ * needed to detect and break some invalid cycles in fwnode links.  See
+ * fw_devlink_create_devlink() for more details.
  *
  * In addition, it also looks at all the suppliers of the entire fwnode tree
  * because some of the child devices of @dev that have not been added yet
- * (because @dev hasn't probed) might alपढ़ोy have their suppliers added to
+ * (because @dev hasn't probed) might already have their suppliers added to
  * driver core. So, this function creates SYNC_STATE_ONLY device links between
- * @dev (consumer) and these suppliers to make sure they करोn't execute their
- * sync_state() callbacks beक्रमe these child devices have a chance to create
+ * @dev (consumer) and these suppliers to make sure they don't execute their
+ * sync_state() callbacks before these child devices have a chance to create
  * their device links. The fwnode links that correspond to the child devices
  * aren't delete because they are needed later to create the device links
  * between the real consumer and supplier devices.
  */
-अटल व्योम __fw_devlink_link_to_suppliers(काष्ठा device *dev,
-					   काष्ठा fwnode_handle *fwnode)
-अणु
+static void __fw_devlink_link_to_suppliers(struct device *dev,
+					   struct fwnode_handle *fwnode)
+{
 	bool own_link = (dev->fwnode == fwnode);
-	काष्ठा fwnode_link *link, *पंचांगp;
-	काष्ठा fwnode_handle *child = शून्य;
+	struct fwnode_link *link, *tmp;
+	struct fwnode_handle *child = NULL;
 	u32 dl_flags;
 
-	अगर (own_link)
+	if (own_link)
 		dl_flags = fw_devlink_get_flags();
-	अन्यथा
+	else
 		dl_flags = FW_DEVLINK_FLAGS_PERMISSIVE;
 
-	list_क्रम_each_entry_safe(link, पंचांगp, &fwnode->suppliers, c_hook) अणु
-		पूर्णांक ret;
-		काष्ठा device *sup_dev;
-		काष्ठा fwnode_handle *sup = link->supplier;
+	list_for_each_entry_safe(link, tmp, &fwnode->suppliers, c_hook) {
+		int ret;
+		struct device *sup_dev;
+		struct fwnode_handle *sup = link->supplier;
 
 		ret = fw_devlink_create_devlink(dev, sup, dl_flags);
-		अगर (!own_link || ret == -EAGAIN)
-			जारी;
+		if (!own_link || ret == -EAGAIN)
+			continue;
 
 		list_del(&link->s_hook);
 		list_del(&link->c_hook);
-		kमुक्त(link);
+		kfree(link);
 
-		/* If no device link was created, nothing more to करो. */
-		अगर (ret)
-			जारी;
+		/* If no device link was created, nothing more to do. */
+		if (ret)
+			continue;
 
 		/*
 		 * If a device link was successfully created to a supplier, we
@@ -1922,34 +1921,34 @@ out:
 		 *
 		 * This is needed to detect and delete false dependencies in
 		 * fwnode links that haven't been converted to a device link
-		 * yet. See comments in fw_devlink_create_devlink() क्रम more
+		 * yet. See comments in fw_devlink_create_devlink() for more
 		 * details on the false dependency.
 		 *
 		 * Without deleting these false dependencies, some devices will
-		 * never probe because they'll keep रुकोing क्रम their false
+		 * never probe because they'll keep waiting for their false
 		 * dependency fwnode links to be converted to device links.
 		 */
 		sup_dev = get_dev_from_fwnode(sup);
 		__fw_devlink_link_to_suppliers(sup_dev, sup_dev->fwnode);
 		put_device(sup_dev);
-	पूर्ण
+	}
 
 	/*
 	 * Make "proxy" SYNC_STATE_ONLY device links to represent the needs of
 	 * all the descendants. This proxy link step is needed to handle the
-	 * हाल where the supplier is added beक्रमe the consumer's parent device
+	 * case where the supplier is added before the consumer's parent device
 	 * (@dev).
 	 */
-	जबतक ((child = fwnode_get_next_available_child_node(fwnode, child)))
+	while ((child = fwnode_get_next_available_child_node(fwnode, child)))
 		__fw_devlink_link_to_suppliers(dev, child);
-पूर्ण
+}
 
-अटल व्योम fw_devlink_link_device(काष्ठा device *dev)
-अणु
-	काष्ठा fwnode_handle *fwnode = dev->fwnode;
+static void fw_devlink_link_device(struct device *dev)
+{
+	struct fwnode_handle *fwnode = dev->fwnode;
 
-	अगर (!fw_devlink_flags)
-		वापस;
+	if (!fw_devlink_flags)
+		return;
 
 	fw_devlink_parse_fwtree(fwnode);
 
@@ -1957,735 +1956,735 @@ out:
 	__fw_devlink_link_to_consumers(dev);
 	__fw_devlink_link_to_suppliers(dev, fwnode);
 	mutex_unlock(&fwnode_link_lock);
-पूर्ण
+}
 
 /* Device links support end. */
 
-पूर्णांक (*platक्रमm_notअगरy)(काष्ठा device *dev) = शून्य;
-पूर्णांक (*platक्रमm_notअगरy_हटाओ)(काष्ठा device *dev) = शून्य;
-अटल काष्ठा kobject *dev_kobj;
-काष्ठा kobject *sysfs_dev_अक्षर_kobj;
-काष्ठा kobject *sysfs_dev_block_kobj;
+int (*platform_notify)(struct device *dev) = NULL;
+int (*platform_notify_remove)(struct device *dev) = NULL;
+static struct kobject *dev_kobj;
+struct kobject *sysfs_dev_char_kobj;
+struct kobject *sysfs_dev_block_kobj;
 
-अटल DEFINE_MUTEX(device_hotplug_lock);
+static DEFINE_MUTEX(device_hotplug_lock);
 
-व्योम lock_device_hotplug(व्योम)
-अणु
+void lock_device_hotplug(void)
+{
 	mutex_lock(&device_hotplug_lock);
-पूर्ण
+}
 
-व्योम unlock_device_hotplug(व्योम)
-अणु
+void unlock_device_hotplug(void)
+{
 	mutex_unlock(&device_hotplug_lock);
-पूर्ण
+}
 
-पूर्णांक lock_device_hotplug_sysfs(व्योम)
-अणु
-	अगर (mutex_trylock(&device_hotplug_lock))
-		वापस 0;
+int lock_device_hotplug_sysfs(void)
+{
+	if (mutex_trylock(&device_hotplug_lock))
+		return 0;
 
-	/* Aव्योम busy looping (5 ms of sleep should करो). */
+	/* Avoid busy looping (5 ms of sleep should do). */
 	msleep(5);
-	वापस restart_syscall();
-पूर्ण
+	return restart_syscall();
+}
 
-#अगर_घोषित CONFIG_BLOCK
-अटल अंतरभूत पूर्णांक device_is_not_partition(काष्ठा device *dev)
-अणु
-	वापस !(dev->type == &part_type);
-पूर्ण
-#अन्यथा
-अटल अंतरभूत पूर्णांक device_is_not_partition(काष्ठा device *dev)
-अणु
-	वापस 1;
-पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_BLOCK
+static inline int device_is_not_partition(struct device *dev)
+{
+	return !(dev->type == &part_type);
+}
+#else
+static inline int device_is_not_partition(struct device *dev)
+{
+	return 1;
+}
+#endif
 
-अटल पूर्णांक
-device_platक्रमm_notअगरy(काष्ठा device *dev, क्रमागत kobject_action action)
-अणु
-	पूर्णांक ret;
+static int
+device_platform_notify(struct device *dev, enum kobject_action action)
+{
+	int ret;
 
-	ret = acpi_platक्रमm_notअगरy(dev, action);
-	अगर (ret)
-		वापस ret;
+	ret = acpi_platform_notify(dev, action);
+	if (ret)
+		return ret;
 
-	ret = software_node_notअगरy(dev, action);
-	अगर (ret)
-		वापस ret;
+	ret = software_node_notify(dev, action);
+	if (ret)
+		return ret;
 
-	अगर (platक्रमm_notअगरy && action == KOBJ_ADD)
-		platक्रमm_notअगरy(dev);
-	अन्यथा अगर (platक्रमm_notअगरy_हटाओ && action == KOBJ_REMOVE)
-		platक्रमm_notअगरy_हटाओ(dev);
-	वापस 0;
-पूर्ण
+	if (platform_notify && action == KOBJ_ADD)
+		platform_notify(dev);
+	else if (platform_notify_remove && action == KOBJ_REMOVE)
+		platform_notify_remove(dev);
+	return 0;
+}
 
 /**
- * dev_driver_string - Return a device's driver name, अगर at all possible
- * @dev: काष्ठा device to get the name of
+ * dev_driver_string - Return a device's driver name, if at all possible
+ * @dev: struct device to get the name of
  *
- * Will वापस the device's driver's name अगर it is bound to a device.  If
- * the device is not bound to a driver, it will वापस the name of the bus
+ * Will return the device's driver's name if it is bound to a device.  If
+ * the device is not bound to a driver, it will return the name of the bus
  * it is attached to.  If it is not attached to a bus either, an empty
- * string will be वापसed.
+ * string will be returned.
  */
-स्थिर अक्षर *dev_driver_string(स्थिर काष्ठा device *dev)
-अणु
-	काष्ठा device_driver *drv;
+const char *dev_driver_string(const struct device *dev)
+{
+	struct device_driver *drv;
 
-	/* dev->driver can change to शून्य underneath us because of unbinding,
+	/* dev->driver can change to NULL underneath us because of unbinding,
 	 * so be careful about accessing it.  dev->bus and dev->class should
-	 * never change once they are set, so they करोn't need special care.
+	 * never change once they are set, so they don't need special care.
 	 */
 	drv = READ_ONCE(dev->driver);
-	वापस drv ? drv->name : dev_bus_name(dev);
-पूर्ण
+	return drv ? drv->name : dev_bus_name(dev);
+}
 EXPORT_SYMBOL(dev_driver_string);
 
-#घोषणा to_dev_attr(_attr) container_of(_attr, काष्ठा device_attribute, attr)
+#define to_dev_attr(_attr) container_of(_attr, struct device_attribute, attr)
 
-अटल sमाप_प्रकार dev_attr_show(काष्ठा kobject *kobj, काष्ठा attribute *attr,
-			     अक्षर *buf)
-अणु
-	काष्ठा device_attribute *dev_attr = to_dev_attr(attr);
-	काष्ठा device *dev = kobj_to_dev(kobj);
-	sमाप_प्रकार ret = -EIO;
+static ssize_t dev_attr_show(struct kobject *kobj, struct attribute *attr,
+			     char *buf)
+{
+	struct device_attribute *dev_attr = to_dev_attr(attr);
+	struct device *dev = kobj_to_dev(kobj);
+	ssize_t ret = -EIO;
 
-	अगर (dev_attr->show)
+	if (dev_attr->show)
 		ret = dev_attr->show(dev, dev_attr, buf);
-	अगर (ret >= (sमाप_प्रकार)PAGE_SIZE) अणु
-		prपूर्णांकk("dev_attr_show: %pS returned bad count\n",
+	if (ret >= (ssize_t)PAGE_SIZE) {
+		printk("dev_attr_show: %pS returned bad count\n",
 				dev_attr->show);
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 
-अटल sमाप_प्रकार dev_attr_store(काष्ठा kobject *kobj, काष्ठा attribute *attr,
-			      स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा device_attribute *dev_attr = to_dev_attr(attr);
-	काष्ठा device *dev = kobj_to_dev(kobj);
-	sमाप_प्रकार ret = -EIO;
+static ssize_t dev_attr_store(struct kobject *kobj, struct attribute *attr,
+			      const char *buf, size_t count)
+{
+	struct device_attribute *dev_attr = to_dev_attr(attr);
+	struct device *dev = kobj_to_dev(kobj);
+	ssize_t ret = -EIO;
 
-	अगर (dev_attr->store)
+	if (dev_attr->store)
 		ret = dev_attr->store(dev, dev_attr, buf, count);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा sysfs_ops dev_sysfs_ops = अणु
+static const struct sysfs_ops dev_sysfs_ops = {
 	.show	= dev_attr_show,
 	.store	= dev_attr_store,
-पूर्ण;
+};
 
-#घोषणा to_ext_attr(x) container_of(x, काष्ठा dev_ext_attribute, attr)
+#define to_ext_attr(x) container_of(x, struct dev_ext_attribute, attr)
 
-sमाप_प्रकार device_store_uदीर्घ(काष्ठा device *dev,
-			   काष्ठा device_attribute *attr,
-			   स्थिर अक्षर *buf, माप_प्रकार size)
-अणु
-	काष्ठा dev_ext_attribute *ea = to_ext_attr(attr);
-	पूर्णांक ret;
-	अचिन्हित दीर्घ new;
+ssize_t device_store_ulong(struct device *dev,
+			   struct device_attribute *attr,
+			   const char *buf, size_t size)
+{
+	struct dev_ext_attribute *ea = to_ext_attr(attr);
+	int ret;
+	unsigned long new;
 
-	ret = kम_से_अदीर्घ(buf, 0, &new);
-	अगर (ret)
-		वापस ret;
-	*(अचिन्हित दीर्घ *)(ea->var) = new;
-	/* Always वापस full ग_लिखो size even अगर we didn't consume all */
-	वापस size;
-पूर्ण
-EXPORT_SYMBOL_GPL(device_store_uदीर्घ);
+	ret = kstrtoul(buf, 0, &new);
+	if (ret)
+		return ret;
+	*(unsigned long *)(ea->var) = new;
+	/* Always return full write size even if we didn't consume all */
+	return size;
+}
+EXPORT_SYMBOL_GPL(device_store_ulong);
 
-sमाप_प्रकार device_show_uदीर्घ(काष्ठा device *dev,
-			  काष्ठा device_attribute *attr,
-			  अक्षर *buf)
-अणु
-	काष्ठा dev_ext_attribute *ea = to_ext_attr(attr);
-	वापस sysfs_emit(buf, "%lx\n", *(अचिन्हित दीर्घ *)(ea->var));
-पूर्ण
-EXPORT_SYMBOL_GPL(device_show_uदीर्घ);
+ssize_t device_show_ulong(struct device *dev,
+			  struct device_attribute *attr,
+			  char *buf)
+{
+	struct dev_ext_attribute *ea = to_ext_attr(attr);
+	return sysfs_emit(buf, "%lx\n", *(unsigned long *)(ea->var));
+}
+EXPORT_SYMBOL_GPL(device_show_ulong);
 
-sमाप_प्रकार device_store_पूर्णांक(काष्ठा device *dev,
-			 काष्ठा device_attribute *attr,
-			 स्थिर अक्षर *buf, माप_प्रकार size)
-अणु
-	काष्ठा dev_ext_attribute *ea = to_ext_attr(attr);
-	पूर्णांक ret;
-	दीर्घ new;
+ssize_t device_store_int(struct device *dev,
+			 struct device_attribute *attr,
+			 const char *buf, size_t size)
+{
+	struct dev_ext_attribute *ea = to_ext_attr(attr);
+	int ret;
+	long new;
 
-	ret = kम_से_दीर्घ(buf, 0, &new);
-	अगर (ret)
-		वापस ret;
+	ret = kstrtol(buf, 0, &new);
+	if (ret)
+		return ret;
 
-	अगर (new > पूर्णांक_उच्च || new < पूर्णांक_न्यून)
-		वापस -EINVAL;
-	*(पूर्णांक *)(ea->var) = new;
-	/* Always वापस full ग_लिखो size even अगर we didn't consume all */
-	वापस size;
-पूर्ण
-EXPORT_SYMBOL_GPL(device_store_पूर्णांक);
+	if (new > INT_MAX || new < INT_MIN)
+		return -EINVAL;
+	*(int *)(ea->var) = new;
+	/* Always return full write size even if we didn't consume all */
+	return size;
+}
+EXPORT_SYMBOL_GPL(device_store_int);
 
-sमाप_प्रकार device_show_पूर्णांक(काष्ठा device *dev,
-			काष्ठा device_attribute *attr,
-			अक्षर *buf)
-अणु
-	काष्ठा dev_ext_attribute *ea = to_ext_attr(attr);
+ssize_t device_show_int(struct device *dev,
+			struct device_attribute *attr,
+			char *buf)
+{
+	struct dev_ext_attribute *ea = to_ext_attr(attr);
 
-	वापस sysfs_emit(buf, "%d\n", *(पूर्णांक *)(ea->var));
-पूर्ण
-EXPORT_SYMBOL_GPL(device_show_पूर्णांक);
+	return sysfs_emit(buf, "%d\n", *(int *)(ea->var));
+}
+EXPORT_SYMBOL_GPL(device_show_int);
 
-sमाप_प्रकार device_store_bool(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			  स्थिर अक्षर *buf, माप_प्रकार size)
-अणु
-	काष्ठा dev_ext_attribute *ea = to_ext_attr(attr);
+ssize_t device_store_bool(struct device *dev, struct device_attribute *attr,
+			  const char *buf, size_t size)
+{
+	struct dev_ext_attribute *ea = to_ext_attr(attr);
 
-	अगर (strtobool(buf, ea->var) < 0)
-		वापस -EINVAL;
+	if (strtobool(buf, ea->var) < 0)
+		return -EINVAL;
 
-	वापस size;
-पूर्ण
+	return size;
+}
 EXPORT_SYMBOL_GPL(device_store_bool);
 
-sमाप_प्रकार device_show_bool(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			 अक्षर *buf)
-अणु
-	काष्ठा dev_ext_attribute *ea = to_ext_attr(attr);
+ssize_t device_show_bool(struct device *dev, struct device_attribute *attr,
+			 char *buf)
+{
+	struct dev_ext_attribute *ea = to_ext_attr(attr);
 
-	वापस sysfs_emit(buf, "%d\n", *(bool *)(ea->var));
-पूर्ण
+	return sysfs_emit(buf, "%d\n", *(bool *)(ea->var));
+}
 EXPORT_SYMBOL_GPL(device_show_bool);
 
 /**
- * device_release - मुक्त device काष्ठाure.
+ * device_release - free device structure.
  * @kobj: device's kobject.
  *
- * This is called once the reference count क्रम the object
- * reaches 0. We क्रमward the call to the device's release
- * method, which should handle actually मुक्तing the काष्ठाure.
+ * This is called once the reference count for the object
+ * reaches 0. We forward the call to the device's release
+ * method, which should handle actually freeing the structure.
  */
-अटल व्योम device_release(काष्ठा kobject *kobj)
-अणु
-	काष्ठा device *dev = kobj_to_dev(kobj);
-	काष्ठा device_निजी *p = dev->p;
+static void device_release(struct kobject *kobj)
+{
+	struct device *dev = kobj_to_dev(kobj);
+	struct device_private *p = dev->p;
 
 	/*
-	 * Some platक्रमm devices are driven without driver attached
+	 * Some platform devices are driven without driver attached
 	 * and managed resources may have been acquired.  Make sure
 	 * all resources are released.
 	 *
-	 * Drivers still can add resources पूर्णांकo device after device
-	 * is deleted but alive, so release devres here to aव्योम
+	 * Drivers still can add resources into device after device
+	 * is deleted but alive, so release devres here to avoid
 	 * possible memory leak.
 	 */
 	devres_release_all(dev);
 
-	kमुक्त(dev->dma_range_map);
+	kfree(dev->dma_range_map);
 
-	अगर (dev->release)
+	if (dev->release)
 		dev->release(dev);
-	अन्यथा अगर (dev->type && dev->type->release)
+	else if (dev->type && dev->type->release)
 		dev->type->release(dev);
-	अन्यथा अगर (dev->class && dev->class->dev_release)
+	else if (dev->class && dev->class->dev_release)
 		dev->class->dev_release(dev);
-	अन्यथा
+	else
 		WARN(1, KERN_ERR "Device '%s' does not have a release() function, it is broken and must be fixed. See Documentation/core-api/kobject.rst.\n",
 			dev_name(dev));
-	kमुक्त(p);
-पूर्ण
+	kfree(p);
+}
 
-अटल स्थिर व्योम *device_namespace(काष्ठा kobject *kobj)
-अणु
-	काष्ठा device *dev = kobj_to_dev(kobj);
-	स्थिर व्योम *ns = शून्य;
+static const void *device_namespace(struct kobject *kobj)
+{
+	struct device *dev = kobj_to_dev(kobj);
+	const void *ns = NULL;
 
-	अगर (dev->class && dev->class->ns_type)
+	if (dev->class && dev->class->ns_type)
 		ns = dev->class->namespace(dev);
 
-	वापस ns;
-पूर्ण
+	return ns;
+}
 
-अटल व्योम device_get_ownership(काष्ठा kobject *kobj, kuid_t *uid, kgid_t *gid)
-अणु
-	काष्ठा device *dev = kobj_to_dev(kobj);
+static void device_get_ownership(struct kobject *kobj, kuid_t *uid, kgid_t *gid)
+{
+	struct device *dev = kobj_to_dev(kobj);
 
-	अगर (dev->class && dev->class->get_ownership)
+	if (dev->class && dev->class->get_ownership)
 		dev->class->get_ownership(dev, uid, gid);
-पूर्ण
+}
 
-अटल काष्ठा kobj_type device_ktype = अणु
+static struct kobj_type device_ktype = {
 	.release	= device_release,
 	.sysfs_ops	= &dev_sysfs_ops,
 	.namespace	= device_namespace,
 	.get_ownership	= device_get_ownership,
-पूर्ण;
+};
 
 
-अटल पूर्णांक dev_uevent_filter(काष्ठा kset *kset, काष्ठा kobject *kobj)
-अणु
-	काष्ठा kobj_type *ktype = get_ktype(kobj);
+static int dev_uevent_filter(struct kset *kset, struct kobject *kobj)
+{
+	struct kobj_type *ktype = get_ktype(kobj);
 
-	अगर (ktype == &device_ktype) अणु
-		काष्ठा device *dev = kobj_to_dev(kobj);
-		अगर (dev->bus)
-			वापस 1;
-		अगर (dev->class)
-			वापस 1;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	if (ktype == &device_ktype) {
+		struct device *dev = kobj_to_dev(kobj);
+		if (dev->bus)
+			return 1;
+		if (dev->class)
+			return 1;
+	}
+	return 0;
+}
 
-अटल स्थिर अक्षर *dev_uevent_name(काष्ठा kset *kset, काष्ठा kobject *kobj)
-अणु
-	काष्ठा device *dev = kobj_to_dev(kobj);
+static const char *dev_uevent_name(struct kset *kset, struct kobject *kobj)
+{
+	struct device *dev = kobj_to_dev(kobj);
 
-	अगर (dev->bus)
-		वापस dev->bus->name;
-	अगर (dev->class)
-		वापस dev->class->name;
-	वापस शून्य;
-पूर्ण
+	if (dev->bus)
+		return dev->bus->name;
+	if (dev->class)
+		return dev->class->name;
+	return NULL;
+}
 
-अटल पूर्णांक dev_uevent(काष्ठा kset *kset, काष्ठा kobject *kobj,
-		      काष्ठा kobj_uevent_env *env)
-अणु
-	काष्ठा device *dev = kobj_to_dev(kobj);
-	पूर्णांक retval = 0;
+static int dev_uevent(struct kset *kset, struct kobject *kobj,
+		      struct kobj_uevent_env *env)
+{
+	struct device *dev = kobj_to_dev(kobj);
+	int retval = 0;
 
-	/* add device node properties अगर present */
-	अगर (MAJOR(dev->devt)) अणु
-		स्थिर अक्षर *पंचांगp;
-		स्थिर अक्षर *name;
+	/* add device node properties if present */
+	if (MAJOR(dev->devt)) {
+		const char *tmp;
+		const char *name;
 		umode_t mode = 0;
 		kuid_t uid = GLOBAL_ROOT_UID;
 		kgid_t gid = GLOBAL_ROOT_GID;
 
 		add_uevent_var(env, "MAJOR=%u", MAJOR(dev->devt));
 		add_uevent_var(env, "MINOR=%u", MINOR(dev->devt));
-		name = device_get_devnode(dev, &mode, &uid, &gid, &पंचांगp);
-		अगर (name) अणु
+		name = device_get_devnode(dev, &mode, &uid, &gid, &tmp);
+		if (name) {
 			add_uevent_var(env, "DEVNAME=%s", name);
-			अगर (mode)
+			if (mode)
 				add_uevent_var(env, "DEVMODE=%#o", mode & 0777);
-			अगर (!uid_eq(uid, GLOBAL_ROOT_UID))
+			if (!uid_eq(uid, GLOBAL_ROOT_UID))
 				add_uevent_var(env, "DEVUID=%u", from_kuid(&init_user_ns, uid));
-			अगर (!gid_eq(gid, GLOBAL_ROOT_GID))
+			if (!gid_eq(gid, GLOBAL_ROOT_GID))
 				add_uevent_var(env, "DEVGID=%u", from_kgid(&init_user_ns, gid));
-			kमुक्त(पंचांगp);
-		पूर्ण
-	पूर्ण
+			kfree(tmp);
+		}
+	}
 
-	अगर (dev->type && dev->type->name)
+	if (dev->type && dev->type->name)
 		add_uevent_var(env, "DEVTYPE=%s", dev->type->name);
 
-	अगर (dev->driver)
+	if (dev->driver)
 		add_uevent_var(env, "DRIVER=%s", dev->driver->name);
 
-	/* Add common DT inक्रमmation about the device */
+	/* Add common DT information about the device */
 	of_device_uevent(dev, env);
 
-	/* have the bus specअगरic function add its stuff */
-	अगर (dev->bus && dev->bus->uevent) अणु
+	/* have the bus specific function add its stuff */
+	if (dev->bus && dev->bus->uevent) {
 		retval = dev->bus->uevent(dev, env);
-		अगर (retval)
+		if (retval)
 			pr_debug("device: '%s': %s: bus uevent() returned %d\n",
 				 dev_name(dev), __func__, retval);
-	पूर्ण
+	}
 
-	/* have the class specअगरic function add its stuff */
-	अगर (dev->class && dev->class->dev_uevent) अणु
+	/* have the class specific function add its stuff */
+	if (dev->class && dev->class->dev_uevent) {
 		retval = dev->class->dev_uevent(dev, env);
-		अगर (retval)
+		if (retval)
 			pr_debug("device: '%s': %s: class uevent() "
 				 "returned %d\n", dev_name(dev),
 				 __func__, retval);
-	पूर्ण
+	}
 
-	/* have the device type specअगरic function add its stuff */
-	अगर (dev->type && dev->type->uevent) अणु
+	/* have the device type specific function add its stuff */
+	if (dev->type && dev->type->uevent) {
 		retval = dev->type->uevent(dev, env);
-		अगर (retval)
+		if (retval)
 			pr_debug("device: '%s': %s: dev_type uevent() "
 				 "returned %d\n", dev_name(dev),
 				 __func__, retval);
-	पूर्ण
+	}
 
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-अटल स्थिर काष्ठा kset_uevent_ops device_uevent_ops = अणु
+static const struct kset_uevent_ops device_uevent_ops = {
 	.filter =	dev_uevent_filter,
 	.name =		dev_uevent_name,
 	.uevent =	dev_uevent,
-पूर्ण;
+};
 
-अटल sमाप_प्रकार uevent_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			   अक्षर *buf)
-अणु
-	काष्ठा kobject *top_kobj;
-	काष्ठा kset *kset;
-	काष्ठा kobj_uevent_env *env = शून्य;
-	पूर्णांक i;
-	पूर्णांक len = 0;
-	पूर्णांक retval;
+static ssize_t uevent_show(struct device *dev, struct device_attribute *attr,
+			   char *buf)
+{
+	struct kobject *top_kobj;
+	struct kset *kset;
+	struct kobj_uevent_env *env = NULL;
+	int i;
+	int len = 0;
+	int retval;
 
-	/* search the kset, the device beदीर्घs to */
+	/* search the kset, the device belongs to */
 	top_kobj = &dev->kobj;
-	जबतक (!top_kobj->kset && top_kobj->parent)
+	while (!top_kobj->kset && top_kobj->parent)
 		top_kobj = top_kobj->parent;
-	अगर (!top_kobj->kset)
-		जाओ out;
+	if (!top_kobj->kset)
+		goto out;
 
 	kset = top_kobj->kset;
-	अगर (!kset->uevent_ops || !kset->uevent_ops->uevent)
-		जाओ out;
+	if (!kset->uevent_ops || !kset->uevent_ops->uevent)
+		goto out;
 
 	/* respect filter */
-	अगर (kset->uevent_ops && kset->uevent_ops->filter)
-		अगर (!kset->uevent_ops->filter(kset, &dev->kobj))
-			जाओ out;
+	if (kset->uevent_ops && kset->uevent_ops->filter)
+		if (!kset->uevent_ops->filter(kset, &dev->kobj))
+			goto out;
 
-	env = kzalloc(माप(काष्ठा kobj_uevent_env), GFP_KERNEL);
-	अगर (!env)
-		वापस -ENOMEM;
+	env = kzalloc(sizeof(struct kobj_uevent_env), GFP_KERNEL);
+	if (!env)
+		return -ENOMEM;
 
-	/* let the kset specअगरic function add its keys */
+	/* let the kset specific function add its keys */
 	retval = kset->uevent_ops->uevent(kset, &dev->kobj, env);
-	अगर (retval)
-		जाओ out;
+	if (retval)
+		goto out;
 
 	/* copy keys to file */
-	क्रम (i = 0; i < env->envp_idx; i++)
+	for (i = 0; i < env->envp_idx; i++)
 		len += sysfs_emit_at(buf, len, "%s\n", env->envp[i]);
 out:
-	kमुक्त(env);
-	वापस len;
-पूर्ण
+	kfree(env);
+	return len;
+}
 
-अटल sमाप_प्रकार uevent_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			    स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	पूर्णांक rc;
+static ssize_t uevent_store(struct device *dev, struct device_attribute *attr,
+			    const char *buf, size_t count)
+{
+	int rc;
 
 	rc = kobject_synth_uevent(&dev->kobj, buf, count);
 
-	अगर (rc) अणु
+	if (rc) {
 		dev_err(dev, "uevent: failed to send synthetic uevent\n");
-		वापस rc;
-	पूर्ण
+		return rc;
+	}
 
-	वापस count;
-पूर्ण
-अटल DEVICE_ATTR_RW(uevent);
+	return count;
+}
+static DEVICE_ATTR_RW(uevent);
 
-अटल sमाप_प्रकार online_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			   अक्षर *buf)
-अणु
+static ssize_t online_show(struct device *dev, struct device_attribute *attr,
+			   char *buf)
+{
 	bool val;
 
 	device_lock(dev);
 	val = !dev->offline;
 	device_unlock(dev);
-	वापस sysfs_emit(buf, "%u\n", val);
-पूर्ण
+	return sysfs_emit(buf, "%u\n", val);
+}
 
-अटल sमाप_प्रकार online_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			    स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
+static ssize_t online_store(struct device *dev, struct device_attribute *attr,
+			    const char *buf, size_t count)
+{
 	bool val;
-	पूर्णांक ret;
+	int ret;
 
 	ret = strtobool(buf, &val);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	ret = lock_device_hotplug_sysfs();
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = val ? device_online(dev) : device_offline(dev);
 	unlock_device_hotplug();
-	वापस ret < 0 ? ret : count;
-पूर्ण
-अटल DEVICE_ATTR_RW(online);
+	return ret < 0 ? ret : count;
+}
+static DEVICE_ATTR_RW(online);
 
-पूर्णांक device_add_groups(काष्ठा device *dev, स्थिर काष्ठा attribute_group **groups)
-अणु
-	वापस sysfs_create_groups(&dev->kobj, groups);
-पूर्ण
+int device_add_groups(struct device *dev, const struct attribute_group **groups)
+{
+	return sysfs_create_groups(&dev->kobj, groups);
+}
 EXPORT_SYMBOL_GPL(device_add_groups);
 
-व्योम device_हटाओ_groups(काष्ठा device *dev,
-			  स्थिर काष्ठा attribute_group **groups)
-अणु
-	sysfs_हटाओ_groups(&dev->kobj, groups);
-पूर्ण
-EXPORT_SYMBOL_GPL(device_हटाओ_groups);
+void device_remove_groups(struct device *dev,
+			  const struct attribute_group **groups)
+{
+	sysfs_remove_groups(&dev->kobj, groups);
+}
+EXPORT_SYMBOL_GPL(device_remove_groups);
 
-जोड़ device_attr_group_devres अणु
-	स्थिर काष्ठा attribute_group *group;
-	स्थिर काष्ठा attribute_group **groups;
-पूर्ण;
+union device_attr_group_devres {
+	const struct attribute_group *group;
+	const struct attribute_group **groups;
+};
 
-अटल पूर्णांक devm_attr_group_match(काष्ठा device *dev, व्योम *res, व्योम *data)
-अणु
-	वापस ((जोड़ device_attr_group_devres *)res)->group == data;
-पूर्ण
+static int devm_attr_group_match(struct device *dev, void *res, void *data)
+{
+	return ((union device_attr_group_devres *)res)->group == data;
+}
 
-अटल व्योम devm_attr_group_हटाओ(काष्ठा device *dev, व्योम *res)
-अणु
-	जोड़ device_attr_group_devres *devres = res;
-	स्थिर काष्ठा attribute_group *group = devres->group;
+static void devm_attr_group_remove(struct device *dev, void *res)
+{
+	union device_attr_group_devres *devres = res;
+	const struct attribute_group *group = devres->group;
 
 	dev_dbg(dev, "%s: removing group %p\n", __func__, group);
-	sysfs_हटाओ_group(&dev->kobj, group);
-पूर्ण
+	sysfs_remove_group(&dev->kobj, group);
+}
 
-अटल व्योम devm_attr_groups_हटाओ(काष्ठा device *dev, व्योम *res)
-अणु
-	जोड़ device_attr_group_devres *devres = res;
-	स्थिर काष्ठा attribute_group **groups = devres->groups;
+static void devm_attr_groups_remove(struct device *dev, void *res)
+{
+	union device_attr_group_devres *devres = res;
+	const struct attribute_group **groups = devres->groups;
 
 	dev_dbg(dev, "%s: removing groups %p\n", __func__, groups);
-	sysfs_हटाओ_groups(&dev->kobj, groups);
-पूर्ण
+	sysfs_remove_groups(&dev->kobj, groups);
+}
 
 /**
  * devm_device_add_group - given a device, create a managed attribute group
- * @dev:	The device to create the group क्रम
+ * @dev:	The device to create the group for
  * @grp:	The attribute group to create
  *
- * This function creates a group क्रम the first समय.  It will explicitly
- * warn and error अगर any of the attribute files being created alपढ़ोy exist.
+ * This function creates a group for the first time.  It will explicitly
+ * warn and error if any of the attribute files being created already exist.
  *
  * Returns 0 on success or error code on failure.
  */
-पूर्णांक devm_device_add_group(काष्ठा device *dev, स्थिर काष्ठा attribute_group *grp)
-अणु
-	जोड़ device_attr_group_devres *devres;
-	पूर्णांक error;
+int devm_device_add_group(struct device *dev, const struct attribute_group *grp)
+{
+	union device_attr_group_devres *devres;
+	int error;
 
-	devres = devres_alloc(devm_attr_group_हटाओ,
-			      माप(*devres), GFP_KERNEL);
-	अगर (!devres)
-		वापस -ENOMEM;
+	devres = devres_alloc(devm_attr_group_remove,
+			      sizeof(*devres), GFP_KERNEL);
+	if (!devres)
+		return -ENOMEM;
 
 	error = sysfs_create_group(&dev->kobj, grp);
-	अगर (error) अणु
-		devres_मुक्त(devres);
-		वापस error;
-	पूर्ण
+	if (error) {
+		devres_free(devres);
+		return error;
+	}
 
 	devres->group = grp;
 	devres_add(dev, devres);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(devm_device_add_group);
 
 /**
- * devm_device_हटाओ_group: हटाओ a managed group from a device
- * @dev:	device to हटाओ the group from
- * @grp:	group to हटाओ
+ * devm_device_remove_group: remove a managed group from a device
+ * @dev:	device to remove the group from
+ * @grp:	group to remove
  *
- * This function हटाओs a group of attributes from a device. The attributes
- * previously have to have been created क्रम this group, otherwise it will fail.
+ * This function removes a group of attributes from a device. The attributes
+ * previously have to have been created for this group, otherwise it will fail.
  */
-व्योम devm_device_हटाओ_group(काष्ठा device *dev,
-			      स्थिर काष्ठा attribute_group *grp)
-अणु
-	WARN_ON(devres_release(dev, devm_attr_group_हटाओ,
+void devm_device_remove_group(struct device *dev,
+			      const struct attribute_group *grp)
+{
+	WARN_ON(devres_release(dev, devm_attr_group_remove,
 			       devm_attr_group_match,
-			       /* cast away स्थिर */ (व्योम *)grp));
-पूर्ण
-EXPORT_SYMBOL_GPL(devm_device_हटाओ_group);
+			       /* cast away const */ (void *)grp));
+}
+EXPORT_SYMBOL_GPL(devm_device_remove_group);
 
 /**
  * devm_device_add_groups - create a bunch of managed attribute groups
- * @dev:	The device to create the group क्रम
- * @groups:	The attribute groups to create, शून्य terminated
+ * @dev:	The device to create the group for
+ * @groups:	The attribute groups to create, NULL terminated
  *
  * This function creates a bunch of managed attribute groups.  If an error
  * occurs when creating a group, all previously created groups will be
- * हटाओd, unwinding everything back to the original state when this
- * function was called.  It will explicitly warn and error अगर any of the
- * attribute files being created alपढ़ोy exist.
+ * removed, unwinding everything back to the original state when this
+ * function was called.  It will explicitly warn and error if any of the
+ * attribute files being created already exist.
  *
  * Returns 0 on success or error code from sysfs_create_group on failure.
  */
-पूर्णांक devm_device_add_groups(काष्ठा device *dev,
-			   स्थिर काष्ठा attribute_group **groups)
-अणु
-	जोड़ device_attr_group_devres *devres;
-	पूर्णांक error;
+int devm_device_add_groups(struct device *dev,
+			   const struct attribute_group **groups)
+{
+	union device_attr_group_devres *devres;
+	int error;
 
-	devres = devres_alloc(devm_attr_groups_हटाओ,
-			      माप(*devres), GFP_KERNEL);
-	अगर (!devres)
-		वापस -ENOMEM;
+	devres = devres_alloc(devm_attr_groups_remove,
+			      sizeof(*devres), GFP_KERNEL);
+	if (!devres)
+		return -ENOMEM;
 
 	error = sysfs_create_groups(&dev->kobj, groups);
-	अगर (error) अणु
-		devres_मुक्त(devres);
-		वापस error;
-	पूर्ण
+	if (error) {
+		devres_free(devres);
+		return error;
+	}
 
 	devres->groups = groups;
 	devres_add(dev, devres);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(devm_device_add_groups);
 
 /**
- * devm_device_हटाओ_groups - हटाओ a list of managed groups
+ * devm_device_remove_groups - remove a list of managed groups
  *
- * @dev:	The device क्रम the groups to be हटाओd from
- * @groups:	शून्य terminated list of groups to be हटाओd
+ * @dev:	The device for the groups to be removed from
+ * @groups:	NULL terminated list of groups to be removed
  *
- * If groups is not शून्य, हटाओ the specअगरied groups from the device.
+ * If groups is not NULL, remove the specified groups from the device.
  */
-व्योम devm_device_हटाओ_groups(काष्ठा device *dev,
-			       स्थिर काष्ठा attribute_group **groups)
-अणु
-	WARN_ON(devres_release(dev, devm_attr_groups_हटाओ,
+void devm_device_remove_groups(struct device *dev,
+			       const struct attribute_group **groups)
+{
+	WARN_ON(devres_release(dev, devm_attr_groups_remove,
 			       devm_attr_group_match,
-			       /* cast away स्थिर */ (व्योम *)groups));
-पूर्ण
-EXPORT_SYMBOL_GPL(devm_device_हटाओ_groups);
+			       /* cast away const */ (void *)groups));
+}
+EXPORT_SYMBOL_GPL(devm_device_remove_groups);
 
-अटल पूर्णांक device_add_attrs(काष्ठा device *dev)
-अणु
-	काष्ठा class *class = dev->class;
-	स्थिर काष्ठा device_type *type = dev->type;
-	पूर्णांक error;
+static int device_add_attrs(struct device *dev)
+{
+	struct class *class = dev->class;
+	const struct device_type *type = dev->type;
+	int error;
 
-	अगर (class) अणु
+	if (class) {
 		error = device_add_groups(dev, class->dev_groups);
-		अगर (error)
-			वापस error;
-	पूर्ण
+		if (error)
+			return error;
+	}
 
-	अगर (type) अणु
+	if (type) {
 		error = device_add_groups(dev, type->groups);
-		अगर (error)
-			जाओ err_हटाओ_class_groups;
-	पूर्ण
+		if (error)
+			goto err_remove_class_groups;
+	}
 
 	error = device_add_groups(dev, dev->groups);
-	अगर (error)
-		जाओ err_हटाओ_type_groups;
+	if (error)
+		goto err_remove_type_groups;
 
-	अगर (device_supports_offline(dev) && !dev->offline_disabled) अणु
+	if (device_supports_offline(dev) && !dev->offline_disabled) {
 		error = device_create_file(dev, &dev_attr_online);
-		अगर (error)
-			जाओ err_हटाओ_dev_groups;
-	पूर्ण
+		if (error)
+			goto err_remove_dev_groups;
+	}
 
-	अगर (fw_devlink_flags && !fw_devlink_is_permissive() && dev->fwnode) अणु
-		error = device_create_file(dev, &dev_attr_रुकोing_क्रम_supplier);
-		अगर (error)
-			जाओ err_हटाओ_dev_online;
-	पूर्ण
+	if (fw_devlink_flags && !fw_devlink_is_permissive() && dev->fwnode) {
+		error = device_create_file(dev, &dev_attr_waiting_for_supplier);
+		if (error)
+			goto err_remove_dev_online;
+	}
 
-	वापस 0;
+	return 0;
 
- err_हटाओ_dev_online:
-	device_हटाओ_file(dev, &dev_attr_online);
- err_हटाओ_dev_groups:
-	device_हटाओ_groups(dev, dev->groups);
- err_हटाओ_type_groups:
-	अगर (type)
-		device_हटाओ_groups(dev, type->groups);
- err_हटाओ_class_groups:
-	अगर (class)
-		device_हटाओ_groups(dev, class->dev_groups);
+ err_remove_dev_online:
+	device_remove_file(dev, &dev_attr_online);
+ err_remove_dev_groups:
+	device_remove_groups(dev, dev->groups);
+ err_remove_type_groups:
+	if (type)
+		device_remove_groups(dev, type->groups);
+ err_remove_class_groups:
+	if (class)
+		device_remove_groups(dev, class->dev_groups);
 
-	वापस error;
-पूर्ण
+	return error;
+}
 
-अटल व्योम device_हटाओ_attrs(काष्ठा device *dev)
-अणु
-	काष्ठा class *class = dev->class;
-	स्थिर काष्ठा device_type *type = dev->type;
+static void device_remove_attrs(struct device *dev)
+{
+	struct class *class = dev->class;
+	const struct device_type *type = dev->type;
 
-	device_हटाओ_file(dev, &dev_attr_रुकोing_क्रम_supplier);
-	device_हटाओ_file(dev, &dev_attr_online);
-	device_हटाओ_groups(dev, dev->groups);
+	device_remove_file(dev, &dev_attr_waiting_for_supplier);
+	device_remove_file(dev, &dev_attr_online);
+	device_remove_groups(dev, dev->groups);
 
-	अगर (type)
-		device_हटाओ_groups(dev, type->groups);
+	if (type)
+		device_remove_groups(dev, type->groups);
 
-	अगर (class)
-		device_हटाओ_groups(dev, class->dev_groups);
-पूर्ण
+	if (class)
+		device_remove_groups(dev, class->dev_groups);
+}
 
-अटल sमाप_प्रकार dev_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			अक्षर *buf)
-अणु
-	वापस prपूर्णांक_dev_t(buf, dev->devt);
-पूर्ण
-अटल DEVICE_ATTR_RO(dev);
+static ssize_t dev_show(struct device *dev, struct device_attribute *attr,
+			char *buf)
+{
+	return print_dev_t(buf, dev->devt);
+}
+static DEVICE_ATTR_RO(dev);
 
 /* /sys/devices/ */
-काष्ठा kset *devices_kset;
+struct kset *devices_kset;
 
 /**
- * devices_kset_move_beक्रमe - Move device in the devices_kset's list.
+ * devices_kset_move_before - Move device in the devices_kset's list.
  * @deva: Device to move.
- * @devb: Device @deva should come beक्रमe.
+ * @devb: Device @deva should come before.
  */
-अटल व्योम devices_kset_move_beक्रमe(काष्ठा device *deva, काष्ठा device *devb)
-अणु
-	अगर (!devices_kset)
-		वापस;
+static void devices_kset_move_before(struct device *deva, struct device *devb)
+{
+	if (!devices_kset)
+		return;
 	pr_debug("devices_kset: Moving %s before %s\n",
 		 dev_name(deva), dev_name(devb));
 	spin_lock(&devices_kset->list_lock);
 	list_move_tail(&deva->kobj.entry, &devb->kobj.entry);
 	spin_unlock(&devices_kset->list_lock);
-पूर्ण
+}
 
 /**
  * devices_kset_move_after - Move device in the devices_kset's list.
  * @deva: Device to move
  * @devb: Device @deva should come after.
  */
-अटल व्योम devices_kset_move_after(काष्ठा device *deva, काष्ठा device *devb)
-अणु
-	अगर (!devices_kset)
-		वापस;
+static void devices_kset_move_after(struct device *deva, struct device *devb)
+{
+	if (!devices_kset)
+		return;
 	pr_debug("devices_kset: Moving %s after %s\n",
 		 dev_name(deva), dev_name(devb));
 	spin_lock(&devices_kset->list_lock);
 	list_move(&deva->kobj.entry, &devb->kobj.entry);
 	spin_unlock(&devices_kset->list_lock);
-पूर्ण
+}
 
 /**
  * devices_kset_move_last - move the device to the end of devices_kset's list.
  * @dev: device to move
  */
-व्योम devices_kset_move_last(काष्ठा device *dev)
-अणु
-	अगर (!devices_kset)
-		वापस;
+void devices_kset_move_last(struct device *dev)
+{
+	if (!devices_kset)
+		return;
 	pr_debug("devices_kset: Moving %s to end of list\n", dev_name(dev));
 	spin_lock(&devices_kset->list_lock);
 	list_move_tail(&dev->kobj.entry, &devices_kset->list);
 	spin_unlock(&devices_kset->list_lock);
-पूर्ण
+}
 
 /**
- * device_create_file - create sysfs attribute file क्रम device.
+ * device_create_file - create sysfs attribute file for device.
  * @dev: device.
  * @attr: device attribute descriptor.
  */
-पूर्णांक device_create_file(काष्ठा device *dev,
-		       स्थिर काष्ठा device_attribute *attr)
-अणु
-	पूर्णांक error = 0;
+int device_create_file(struct device *dev,
+		       const struct device_attribute *attr)
+{
+	int error = 0;
 
-	अगर (dev) अणु
+	if (dev) {
 		WARN(((attr->attr.mode & S_IWUGO) && !attr->store),
 			"Attribute %s: write permission without 'store'\n",
 			attr->attr.name);
@@ -2693,181 +2692,181 @@ EXPORT_SYMBOL_GPL(devm_device_हटाओ_groups);
 			"Attribute %s: read permission without 'show'\n",
 			attr->attr.name);
 		error = sysfs_create_file(&dev->kobj, &attr->attr);
-	पूर्ण
+	}
 
-	वापस error;
-पूर्ण
+	return error;
+}
 EXPORT_SYMBOL_GPL(device_create_file);
 
 /**
- * device_हटाओ_file - हटाओ sysfs attribute file.
+ * device_remove_file - remove sysfs attribute file.
  * @dev: device.
  * @attr: device attribute descriptor.
  */
-व्योम device_हटाओ_file(काष्ठा device *dev,
-			स्थिर काष्ठा device_attribute *attr)
-अणु
-	अगर (dev)
-		sysfs_हटाओ_file(&dev->kobj, &attr->attr);
-पूर्ण
-EXPORT_SYMBOL_GPL(device_हटाओ_file);
+void device_remove_file(struct device *dev,
+			const struct device_attribute *attr)
+{
+	if (dev)
+		sysfs_remove_file(&dev->kobj, &attr->attr);
+}
+EXPORT_SYMBOL_GPL(device_remove_file);
 
 /**
- * device_हटाओ_file_self - हटाओ sysfs attribute file from its own method.
+ * device_remove_file_self - remove sysfs attribute file from its own method.
  * @dev: device.
  * @attr: device attribute descriptor.
  *
- * See kernfs_हटाओ_self() क्रम details.
+ * See kernfs_remove_self() for details.
  */
-bool device_हटाओ_file_self(काष्ठा device *dev,
-			     स्थिर काष्ठा device_attribute *attr)
-अणु
-	अगर (dev)
-		वापस sysfs_हटाओ_file_self(&dev->kobj, &attr->attr);
-	अन्यथा
-		वापस false;
-पूर्ण
-EXPORT_SYMBOL_GPL(device_हटाओ_file_self);
+bool device_remove_file_self(struct device *dev,
+			     const struct device_attribute *attr)
+{
+	if (dev)
+		return sysfs_remove_file_self(&dev->kobj, &attr->attr);
+	else
+		return false;
+}
+EXPORT_SYMBOL_GPL(device_remove_file_self);
 
 /**
- * device_create_bin_file - create sysfs binary attribute file क्रम device.
+ * device_create_bin_file - create sysfs binary attribute file for device.
  * @dev: device.
  * @attr: device binary attribute descriptor.
  */
-पूर्णांक device_create_bin_file(काष्ठा device *dev,
-			   स्थिर काष्ठा bin_attribute *attr)
-अणु
-	पूर्णांक error = -EINVAL;
-	अगर (dev)
+int device_create_bin_file(struct device *dev,
+			   const struct bin_attribute *attr)
+{
+	int error = -EINVAL;
+	if (dev)
 		error = sysfs_create_bin_file(&dev->kobj, attr);
-	वापस error;
-पूर्ण
+	return error;
+}
 EXPORT_SYMBOL_GPL(device_create_bin_file);
 
 /**
- * device_हटाओ_bin_file - हटाओ sysfs binary attribute file
+ * device_remove_bin_file - remove sysfs binary attribute file
  * @dev: device.
  * @attr: device binary attribute descriptor.
  */
-व्योम device_हटाओ_bin_file(काष्ठा device *dev,
-			    स्थिर काष्ठा bin_attribute *attr)
-अणु
-	अगर (dev)
-		sysfs_हटाओ_bin_file(&dev->kobj, attr);
-पूर्ण
-EXPORT_SYMBOL_GPL(device_हटाओ_bin_file);
+void device_remove_bin_file(struct device *dev,
+			    const struct bin_attribute *attr)
+{
+	if (dev)
+		sysfs_remove_bin_file(&dev->kobj, attr);
+}
+EXPORT_SYMBOL_GPL(device_remove_bin_file);
 
-अटल व्योम klist_children_get(काष्ठा klist_node *n)
-अणु
-	काष्ठा device_निजी *p = to_device_निजी_parent(n);
-	काष्ठा device *dev = p->device;
+static void klist_children_get(struct klist_node *n)
+{
+	struct device_private *p = to_device_private_parent(n);
+	struct device *dev = p->device;
 
 	get_device(dev);
-पूर्ण
+}
 
-अटल व्योम klist_children_put(काष्ठा klist_node *n)
-अणु
-	काष्ठा device_निजी *p = to_device_निजी_parent(n);
-	काष्ठा device *dev = p->device;
+static void klist_children_put(struct klist_node *n)
+{
+	struct device_private *p = to_device_private_parent(n);
+	struct device *dev = p->device;
 
 	put_device(dev);
-पूर्ण
+}
 
 /**
- * device_initialize - init device काष्ठाure.
+ * device_initialize - init device structure.
  * @dev: device.
  *
- * This prepares the device क्रम use by other layers by initializing
+ * This prepares the device for use by other layers by initializing
  * its fields.
- * It is the first half of device_रेजिस्टर(), अगर called by
+ * It is the first half of device_register(), if called by
  * that function, though it can also be called separately, so one
  * may use @dev's fields. In particular, get_device()/put_device()
- * may be used क्रम reference counting of @dev after calling this
+ * may be used for reference counting of @dev after calling this
  * function.
  *
  * All fields in @dev must be initialized by the caller to 0, except
- * क्रम those explicitly set to some other value.  The simplest
- * approach is to use kzalloc() to allocate the काष्ठाure containing
+ * for those explicitly set to some other value.  The simplest
+ * approach is to use kzalloc() to allocate the structure containing
  * @dev.
  *
- * NOTE: Use put_device() to give up your reference instead of मुक्तing
+ * NOTE: Use put_device() to give up your reference instead of freeing
  * @dev directly once you have called this function.
  */
-व्योम device_initialize(काष्ठा device *dev)
-अणु
+void device_initialize(struct device *dev)
+{
 	dev->kobj.kset = devices_kset;
 	kobject_init(&dev->kobj, &device_ktype);
 	INIT_LIST_HEAD(&dev->dma_pools);
 	mutex_init(&dev->mutex);
-#अगर_घोषित CONFIG_PROVE_LOCKING
+#ifdef CONFIG_PROVE_LOCKING
 	mutex_init(&dev->lockdep_mutex);
-#पूर्ण_अगर
+#endif
 	lockdep_set_novalidate_class(&dev->mutex);
 	spin_lock_init(&dev->devres_lock);
 	INIT_LIST_HEAD(&dev->devres_head);
 	device_pm_init(dev);
 	set_dev_node(dev, -1);
-#अगर_घोषित CONFIG_GENERIC_MSI_IRQ
+#ifdef CONFIG_GENERIC_MSI_IRQ
 	INIT_LIST_HEAD(&dev->msi_list);
-#पूर्ण_अगर
+#endif
 	INIT_LIST_HEAD(&dev->links.consumers);
 	INIT_LIST_HEAD(&dev->links.suppliers);
 	INIT_LIST_HEAD(&dev->links.defer_sync);
 	dev->links.status = DL_DEV_NO_DRIVER;
-#अगर defined(CONFIG_ARCH_HAS_SYNC_DMA_FOR_DEVICE) || \
+#if defined(CONFIG_ARCH_HAS_SYNC_DMA_FOR_DEVICE) || \
     defined(CONFIG_ARCH_HAS_SYNC_DMA_FOR_CPU) || \
     defined(CONFIG_ARCH_HAS_SYNC_DMA_FOR_CPU_ALL)
-	dev->dma_coherent = dma_शेष_coherent;
-#पूर्ण_अगर
-पूर्ण
+	dev->dma_coherent = dma_default_coherent;
+#endif
+}
 EXPORT_SYMBOL_GPL(device_initialize);
 
-काष्ठा kobject *भव_device_parent(काष्ठा device *dev)
-अणु
-	अटल काष्ठा kobject *भव_dir = शून्य;
+struct kobject *virtual_device_parent(struct device *dev)
+{
+	static struct kobject *virtual_dir = NULL;
 
-	अगर (!भव_dir)
-		भव_dir = kobject_create_and_add("virtual",
+	if (!virtual_dir)
+		virtual_dir = kobject_create_and_add("virtual",
 						     &devices_kset->kobj);
 
-	वापस भव_dir;
-पूर्ण
+	return virtual_dir;
+}
 
-काष्ठा class_dir अणु
-	काष्ठा kobject kobj;
-	काष्ठा class *class;
-पूर्ण;
+struct class_dir {
+	struct kobject kobj;
+	struct class *class;
+};
 
-#घोषणा to_class_dir(obj) container_of(obj, काष्ठा class_dir, kobj)
+#define to_class_dir(obj) container_of(obj, struct class_dir, kobj)
 
-अटल व्योम class_dir_release(काष्ठा kobject *kobj)
-अणु
-	काष्ठा class_dir *dir = to_class_dir(kobj);
-	kमुक्त(dir);
-पूर्ण
+static void class_dir_release(struct kobject *kobj)
+{
+	struct class_dir *dir = to_class_dir(kobj);
+	kfree(dir);
+}
 
-अटल स्थिर
-काष्ठा kobj_ns_type_operations *class_dir_child_ns_type(काष्ठा kobject *kobj)
-अणु
-	काष्ठा class_dir *dir = to_class_dir(kobj);
-	वापस dir->class->ns_type;
-पूर्ण
+static const
+struct kobj_ns_type_operations *class_dir_child_ns_type(struct kobject *kobj)
+{
+	struct class_dir *dir = to_class_dir(kobj);
+	return dir->class->ns_type;
+}
 
-अटल काष्ठा kobj_type class_dir_ktype = अणु
+static struct kobj_type class_dir_ktype = {
 	.release	= class_dir_release,
 	.sysfs_ops	= &kobj_sysfs_ops,
 	.child_ns_type	= class_dir_child_ns_type
-पूर्ण;
+};
 
-अटल काष्ठा kobject *
-class_dir_create_and_add(काष्ठा class *class, काष्ठा kobject *parent_kobj)
-अणु
-	काष्ठा class_dir *dir;
-	पूर्णांक retval;
+static struct kobject *
+class_dir_create_and_add(struct class *class, struct kobject *parent_kobj)
+{
+	struct class_dir *dir;
+	int retval;
 
-	dir = kzalloc(माप(*dir), GFP_KERNEL);
-	अगर (!dir)
-		वापस ERR_PTR(-ENOMEM);
+	dir = kzalloc(sizeof(*dir), GFP_KERNEL);
+	if (!dir)
+		return ERR_PTR(-ENOMEM);
 
 	dir->class = class;
 	kobject_init(&dir->kobj, &class_dir_ktype);
@@ -2875,101 +2874,101 @@ class_dir_create_and_add(काष्ठा class *class, काष्ठा kob
 	dir->kobj.kset = &class->p->glue_dirs;
 
 	retval = kobject_add(&dir->kobj, parent_kobj, "%s", class->name);
-	अगर (retval < 0) अणु
+	if (retval < 0) {
 		kobject_put(&dir->kobj);
-		वापस ERR_PTR(retval);
-	पूर्ण
-	वापस &dir->kobj;
-पूर्ण
+		return ERR_PTR(retval);
+	}
+	return &dir->kobj;
+}
 
-अटल DEFINE_MUTEX(gdp_mutex);
+static DEFINE_MUTEX(gdp_mutex);
 
-अटल काष्ठा kobject *get_device_parent(काष्ठा device *dev,
-					 काष्ठा device *parent)
-अणु
-	अगर (dev->class) अणु
-		काष्ठा kobject *kobj = शून्य;
-		काष्ठा kobject *parent_kobj;
-		काष्ठा kobject *k;
+static struct kobject *get_device_parent(struct device *dev,
+					 struct device *parent)
+{
+	if (dev->class) {
+		struct kobject *kobj = NULL;
+		struct kobject *parent_kobj;
+		struct kobject *k;
 
-#अगर_घोषित CONFIG_BLOCK
+#ifdef CONFIG_BLOCK
 		/* block disks show up in /sys/block */
-		अगर (sysfs_deprecated && dev->class == &block_class) अणु
-			अगर (parent && parent->class == &block_class)
-				वापस &parent->kobj;
-			वापस &block_class.p->subsys.kobj;
-		पूर्ण
-#पूर्ण_अगर
+		if (sysfs_deprecated && dev->class == &block_class) {
+			if (parent && parent->class == &block_class)
+				return &parent->kobj;
+			return &block_class.p->subsys.kobj;
+		}
+#endif
 
 		/*
 		 * If we have no parent, we live in "virtual".
 		 * Class-devices with a non class-device as parent, live
 		 * in a "glue" directory to prevent namespace collisions.
 		 */
-		अगर (parent == शून्य)
-			parent_kobj = भव_device_parent(dev);
-		अन्यथा अगर (parent->class && !dev->class->ns_type)
-			वापस &parent->kobj;
-		अन्यथा
+		if (parent == NULL)
+			parent_kobj = virtual_device_parent(dev);
+		else if (parent->class && !dev->class->ns_type)
+			return &parent->kobj;
+		else
 			parent_kobj = &parent->kobj;
 
 		mutex_lock(&gdp_mutex);
 
 		/* find our class-directory at the parent and reference it */
 		spin_lock(&dev->class->p->glue_dirs.list_lock);
-		list_क्रम_each_entry(k, &dev->class->p->glue_dirs.list, entry)
-			अगर (k->parent == parent_kobj) अणु
+		list_for_each_entry(k, &dev->class->p->glue_dirs.list, entry)
+			if (k->parent == parent_kobj) {
 				kobj = kobject_get(k);
-				अवरोध;
-			पूर्ण
+				break;
+			}
 		spin_unlock(&dev->class->p->glue_dirs.list_lock);
-		अगर (kobj) अणु
+		if (kobj) {
 			mutex_unlock(&gdp_mutex);
-			वापस kobj;
-		पूर्ण
+			return kobj;
+		}
 
 		/* or create a new class-directory at the parent device */
 		k = class_dir_create_and_add(dev->class, parent_kobj);
-		/* करो not emit an uevent क्रम this simple "glue" directory */
+		/* do not emit an uevent for this simple "glue" directory */
 		mutex_unlock(&gdp_mutex);
-		वापस k;
-	पूर्ण
+		return k;
+	}
 
-	/* subप्रणालीs can specअगरy a शेष root directory क्रम their devices */
-	अगर (!parent && dev->bus && dev->bus->dev_root)
-		वापस &dev->bus->dev_root->kobj;
+	/* subsystems can specify a default root directory for their devices */
+	if (!parent && dev->bus && dev->bus->dev_root)
+		return &dev->bus->dev_root->kobj;
 
-	अगर (parent)
-		वापस &parent->kobj;
-	वापस शून्य;
-पूर्ण
+	if (parent)
+		return &parent->kobj;
+	return NULL;
+}
 
-अटल अंतरभूत bool live_in_glue_dir(काष्ठा kobject *kobj,
-				    काष्ठा device *dev)
-अणु
-	अगर (!kobj || !dev->class ||
+static inline bool live_in_glue_dir(struct kobject *kobj,
+				    struct device *dev)
+{
+	if (!kobj || !dev->class ||
 	    kobj->kset != &dev->class->p->glue_dirs)
-		वापस false;
-	वापस true;
-पूर्ण
+		return false;
+	return true;
+}
 
-अटल अंतरभूत काष्ठा kobject *get_glue_dir(काष्ठा device *dev)
-अणु
-	वापस dev->kobj.parent;
-पूर्ण
+static inline struct kobject *get_glue_dir(struct device *dev)
+{
+	return dev->kobj.parent;
+}
 
 /*
  * make sure cleaning up dir as the last step, we need to make
  * sure .release handler of kobject is run with holding the
  * global lock
  */
-अटल व्योम cleanup_glue_dir(काष्ठा device *dev, काष्ठा kobject *glue_dir)
-अणु
-	अचिन्हित पूर्णांक ref;
+static void cleanup_glue_dir(struct device *dev, struct kobject *glue_dir)
+{
+	unsigned int ref;
 
-	/* see अगर we live in a "glue" directory */
-	अगर (!live_in_glue_dir(glue_dir, dev))
-		वापस;
+	/* see if we live in a "glue" directory */
+	if (!live_in_glue_dir(glue_dir, dev))
+		return;
 
 	mutex_lock(&gdp_mutex);
 	/**
@@ -2981,7 +2980,7 @@ class_dir_create_and_add(काष्ठा class *class, काष्ठा kob
 	 * device_add()
 	 *   get_device_parent()
 	 *     class_dir_create_and_add()
-	 *       kobject_add_पूर्णांकernal()
+	 *       kobject_add_internal()
 	 *         create_dir()    // create glue_dir
 	 *
 	 *                                               device_add()
@@ -2993,382 +2992,382 @@ class_dir_create_and_add(काष्ठा class *class, काष्ठा kob
 	 *     kobject_del(glue_dir)
 	 *
 	 *                                               kobject_add()
-	 *                                                 kobject_add_पूर्णांकernal()
+	 *                                                 kobject_add_internal()
 	 *                                                   create_dir() // in glue_dir
 	 *                                                     sysfs_create_dir_ns()
 	 *                                                       kernfs_create_dir_ns(sd)
 	 *
-	 *       sysfs_हटाओ_dir() // glue_dir->sd=शून्य
-	 *       sysfs_put()        // मुक्त glue_dir->sd
+	 *       sysfs_remove_dir() // glue_dir->sd=NULL
+	 *       sysfs_put()        // free glue_dir->sd
 	 *
-	 *                                                         // sd is मुक्तd
+	 *                                                         // sd is freed
 	 *                                                         kernfs_new_node(sd)
 	 *                                                           kernfs_get(glue_dir)
 	 *                                                           kernfs_add_one()
 	 *                                                           kernfs_put()
 	 *
-	 * Beक्रमe CPU1 हटाओ last child device under glue dir, अगर CPU2 add
+	 * Before CPU1 remove last child device under glue dir, if CPU2 add
 	 * a new device under glue dir, the glue_dir kobject reference count
 	 * will be increase to 2 in kobject_get(k). And CPU2 has been called
-	 * kernfs_create_dir_ns(). Meanजबतक, CPU1 call sysfs_हटाओ_dir()
-	 * and sysfs_put(). This result in glue_dir->sd is मुक्तd.
+	 * kernfs_create_dir_ns(). Meanwhile, CPU1 call sysfs_remove_dir()
+	 * and sysfs_put(). This result in glue_dir->sd is freed.
 	 *
 	 * Then the CPU2 will see a stale "empty" but still potentially used
 	 * glue dir around in kernfs_new_node().
 	 *
-	 * In order to aव्योम this happening, we also should make sure that
-	 * kernfs_node क्रम glue_dir is released in CPU1 only when refcount
-	 * क्रम glue_dir kobj is 1.
+	 * In order to avoid this happening, we also should make sure that
+	 * kernfs_node for glue_dir is released in CPU1 only when refcount
+	 * for glue_dir kobj is 1.
 	 */
-	ref = kref_पढ़ो(&glue_dir->kref);
-	अगर (!kobject_has_children(glue_dir) && !--ref)
+	ref = kref_read(&glue_dir->kref);
+	if (!kobject_has_children(glue_dir) && !--ref)
 		kobject_del(glue_dir);
 	kobject_put(glue_dir);
 	mutex_unlock(&gdp_mutex);
-पूर्ण
+}
 
-अटल पूर्णांक device_add_class_symlinks(काष्ठा device *dev)
-अणु
-	काष्ठा device_node *of_node = dev_of_node(dev);
-	पूर्णांक error;
+static int device_add_class_symlinks(struct device *dev)
+{
+	struct device_node *of_node = dev_of_node(dev);
+	int error;
 
-	अगर (of_node) अणु
+	if (of_node) {
 		error = sysfs_create_link(&dev->kobj, of_node_kobj(of_node), "of_node");
-		अगर (error)
+		if (error)
 			dev_warn(dev, "Error %d creating of_node link\n",error);
-		/* An error here करोesn't warrant bringing करोwn the device */
-	पूर्ण
+		/* An error here doesn't warrant bringing down the device */
+	}
 
-	अगर (!dev->class)
-		वापस 0;
+	if (!dev->class)
+		return 0;
 
 	error = sysfs_create_link(&dev->kobj,
 				  &dev->class->p->subsys.kobj,
 				  "subsystem");
-	अगर (error)
-		जाओ out_devnode;
+	if (error)
+		goto out_devnode;
 
-	अगर (dev->parent && device_is_not_partition(dev)) अणु
+	if (dev->parent && device_is_not_partition(dev)) {
 		error = sysfs_create_link(&dev->kobj, &dev->parent->kobj,
 					  "device");
-		अगर (error)
-			जाओ out_subsys;
-	पूर्ण
+		if (error)
+			goto out_subsys;
+	}
 
-#अगर_घोषित CONFIG_BLOCK
-	/* /sys/block has directories and करोes not need symlinks */
-	अगर (sysfs_deprecated && dev->class == &block_class)
-		वापस 0;
-#पूर्ण_अगर
+#ifdef CONFIG_BLOCK
+	/* /sys/block has directories and does not need symlinks */
+	if (sysfs_deprecated && dev->class == &block_class)
+		return 0;
+#endif
 
-	/* link in the class directory poपूर्णांकing to the device */
+	/* link in the class directory pointing to the device */
 	error = sysfs_create_link(&dev->class->p->subsys.kobj,
 				  &dev->kobj, dev_name(dev));
-	अगर (error)
-		जाओ out_device;
+	if (error)
+		goto out_device;
 
-	वापस 0;
+	return 0;
 
 out_device:
-	sysfs_हटाओ_link(&dev->kobj, "device");
+	sysfs_remove_link(&dev->kobj, "device");
 
 out_subsys:
-	sysfs_हटाओ_link(&dev->kobj, "subsystem");
+	sysfs_remove_link(&dev->kobj, "subsystem");
 out_devnode:
-	sysfs_हटाओ_link(&dev->kobj, "of_node");
-	वापस error;
-पूर्ण
+	sysfs_remove_link(&dev->kobj, "of_node");
+	return error;
+}
 
-अटल व्योम device_हटाओ_class_symlinks(काष्ठा device *dev)
-अणु
-	अगर (dev_of_node(dev))
-		sysfs_हटाओ_link(&dev->kobj, "of_node");
+static void device_remove_class_symlinks(struct device *dev)
+{
+	if (dev_of_node(dev))
+		sysfs_remove_link(&dev->kobj, "of_node");
 
-	अगर (!dev->class)
-		वापस;
+	if (!dev->class)
+		return;
 
-	अगर (dev->parent && device_is_not_partition(dev))
-		sysfs_हटाओ_link(&dev->kobj, "device");
-	sysfs_हटाओ_link(&dev->kobj, "subsystem");
-#अगर_घोषित CONFIG_BLOCK
-	अगर (sysfs_deprecated && dev->class == &block_class)
-		वापस;
-#पूर्ण_अगर
+	if (dev->parent && device_is_not_partition(dev))
+		sysfs_remove_link(&dev->kobj, "device");
+	sysfs_remove_link(&dev->kobj, "subsystem");
+#ifdef CONFIG_BLOCK
+	if (sysfs_deprecated && dev->class == &block_class)
+		return;
+#endif
 	sysfs_delete_link(&dev->class->p->subsys.kobj, &dev->kobj, dev_name(dev));
-पूर्ण
+}
 
 /**
  * dev_set_name - set a device name
  * @dev: device
- * @fmt: क्रमmat string क्रम the device's name
+ * @fmt: format string for the device's name
  */
-पूर्णांक dev_set_name(काष्ठा device *dev, स्थिर अक्षर *fmt, ...)
-अणु
-	बहु_सूची vargs;
-	पूर्णांक err;
+int dev_set_name(struct device *dev, const char *fmt, ...)
+{
+	va_list vargs;
+	int err;
 
-	बहु_शुरू(vargs, fmt);
+	va_start(vargs, fmt);
 	err = kobject_set_name_vargs(&dev->kobj, fmt, vargs);
-	बहु_पूर्ण(vargs);
-	वापस err;
-पूर्ण
+	va_end(vargs);
+	return err;
+}
 EXPORT_SYMBOL_GPL(dev_set_name);
 
 /**
- * device_to_dev_kobj - select a /sys/dev/ directory क्रम the device
+ * device_to_dev_kobj - select a /sys/dev/ directory for the device
  * @dev: device
  *
- * By शेष we select अक्षर/ क्रम new entries.  Setting class->dev_obj
- * to शून्य prevents an entry from being created.  class->dev_kobj must
- * be set (or cleared) beक्रमe any devices are रेजिस्टरed to the class
+ * By default we select char/ for new entries.  Setting class->dev_obj
+ * to NULL prevents an entry from being created.  class->dev_kobj must
+ * be set (or cleared) before any devices are registered to the class
  * otherwise device_create_sys_dev_entry() and
- * device_हटाओ_sys_dev_entry() will disagree about the presence of
+ * device_remove_sys_dev_entry() will disagree about the presence of
  * the link.
  */
-अटल काष्ठा kobject *device_to_dev_kobj(काष्ठा device *dev)
-अणु
-	काष्ठा kobject *kobj;
+static struct kobject *device_to_dev_kobj(struct device *dev)
+{
+	struct kobject *kobj;
 
-	अगर (dev->class)
+	if (dev->class)
 		kobj = dev->class->dev_kobj;
-	अन्यथा
-		kobj = sysfs_dev_अक्षर_kobj;
+	else
+		kobj = sysfs_dev_char_kobj;
 
-	वापस kobj;
-पूर्ण
+	return kobj;
+}
 
-अटल पूर्णांक device_create_sys_dev_entry(काष्ठा device *dev)
-अणु
-	काष्ठा kobject *kobj = device_to_dev_kobj(dev);
-	पूर्णांक error = 0;
-	अक्षर devt_str[15];
+static int device_create_sys_dev_entry(struct device *dev)
+{
+	struct kobject *kobj = device_to_dev_kobj(dev);
+	int error = 0;
+	char devt_str[15];
 
-	अगर (kobj) अणु
-		क्रमmat_dev_t(devt_str, dev->devt);
+	if (kobj) {
+		format_dev_t(devt_str, dev->devt);
 		error = sysfs_create_link(kobj, &dev->kobj, devt_str);
-	पूर्ण
+	}
 
-	वापस error;
-पूर्ण
+	return error;
+}
 
-अटल व्योम device_हटाओ_sys_dev_entry(काष्ठा device *dev)
-अणु
-	काष्ठा kobject *kobj = device_to_dev_kobj(dev);
-	अक्षर devt_str[15];
+static void device_remove_sys_dev_entry(struct device *dev)
+{
+	struct kobject *kobj = device_to_dev_kobj(dev);
+	char devt_str[15];
 
-	अगर (kobj) अणु
-		क्रमmat_dev_t(devt_str, dev->devt);
-		sysfs_हटाओ_link(kobj, devt_str);
-	पूर्ण
-पूर्ण
+	if (kobj) {
+		format_dev_t(devt_str, dev->devt);
+		sysfs_remove_link(kobj, devt_str);
+	}
+}
 
-अटल पूर्णांक device_निजी_init(काष्ठा device *dev)
-अणु
-	dev->p = kzalloc(माप(*dev->p), GFP_KERNEL);
-	अगर (!dev->p)
-		वापस -ENOMEM;
+static int device_private_init(struct device *dev)
+{
+	dev->p = kzalloc(sizeof(*dev->p), GFP_KERNEL);
+	if (!dev->p)
+		return -ENOMEM;
 	dev->p->device = dev;
 	klist_init(&dev->p->klist_children, klist_children_get,
 		   klist_children_put);
 	INIT_LIST_HEAD(&dev->p->deferred_probe);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * device_add - add device to device hierarchy.
  * @dev: device.
  *
- * This is part 2 of device_रेजिस्टर(), though may be called
- * separately _अगरf_ device_initialize() has been called separately.
+ * This is part 2 of device_register(), though may be called
+ * separately _iff_ device_initialize() has been called separately.
  *
  * This adds @dev to the kobject hierarchy via kobject_add(), adds it
- * to the global and sibling lists क्रम the device, then
- * adds it to the other relevant subप्रणालीs of the driver model.
+ * to the global and sibling lists for the device, then
+ * adds it to the other relevant subsystems of the driver model.
  *
- * Do not call this routine or device_रेजिस्टर() more than once क्रम
- * any device काष्ठाure.  The driver model core is not deचिन्हित to work
- * with devices that get unरेजिस्टरed and then spring back to lअगरe.
+ * Do not call this routine or device_register() more than once for
+ * any device structure.  The driver model core is not designed to work
+ * with devices that get unregistered and then spring back to life.
  * (Among other things, it's very hard to guarantee that all references
  * to the previous incarnation of @dev have been dropped.)  Allocate
- * and रेजिस्टर a fresh new काष्ठा device instead.
+ * and register a fresh new struct device instead.
  *
- * NOTE: _Never_ directly मुक्त @dev after calling this function, even
- * अगर it वापसed an error! Always use put_device() to give up your
+ * NOTE: _Never_ directly free @dev after calling this function, even
+ * if it returned an error! Always use put_device() to give up your
  * reference instead.
  *
- * Rule of thumb is: अगर device_add() succeeds, you should call
+ * Rule of thumb is: if device_add() succeeds, you should call
  * device_del() when you want to get rid of it. If device_add() has
  * *not* succeeded, use *only* put_device() to drop the reference
  * count.
  */
-पूर्णांक device_add(काष्ठा device *dev)
-अणु
-	काष्ठा device *parent;
-	काष्ठा kobject *kobj;
-	काष्ठा class_पूर्णांकerface *class_पूर्णांकf;
-	पूर्णांक error = -EINVAL;
-	काष्ठा kobject *glue_dir = शून्य;
+int device_add(struct device *dev)
+{
+	struct device *parent;
+	struct kobject *kobj;
+	struct class_interface *class_intf;
+	int error = -EINVAL;
+	struct kobject *glue_dir = NULL;
 
 	dev = get_device(dev);
-	अगर (!dev)
-		जाओ करोne;
+	if (!dev)
+		goto done;
 
-	अगर (!dev->p) अणु
-		error = device_निजी_init(dev);
-		अगर (error)
-			जाओ करोne;
-	पूर्ण
+	if (!dev->p) {
+		error = device_private_init(dev);
+		if (error)
+			goto done;
+	}
 
 	/*
-	 * क्रम अटलally allocated devices, which should all be converted
-	 * some day, we need to initialize the name. We prevent पढ़ोing back
-	 * the name, and क्रमce the use of dev_name()
+	 * for statically allocated devices, which should all be converted
+	 * some day, we need to initialize the name. We prevent reading back
+	 * the name, and force the use of dev_name()
 	 */
-	अगर (dev->init_name) अणु
+	if (dev->init_name) {
 		dev_set_name(dev, "%s", dev->init_name);
-		dev->init_name = शून्य;
-	पूर्ण
+		dev->init_name = NULL;
+	}
 
-	/* subप्रणालीs can specअगरy simple device क्रमागतeration */
-	अगर (!dev_name(dev) && dev->bus && dev->bus->dev_name)
+	/* subsystems can specify simple device enumeration */
+	if (!dev_name(dev) && dev->bus && dev->bus->dev_name)
 		dev_set_name(dev, "%s%u", dev->bus->dev_name, dev->id);
 
-	अगर (!dev_name(dev)) अणु
+	if (!dev_name(dev)) {
 		error = -EINVAL;
-		जाओ name_error;
-	पूर्ण
+		goto name_error;
+	}
 
 	pr_debug("device: '%s': %s\n", dev_name(dev), __func__);
 
 	parent = get_device(dev->parent);
 	kobj = get_device_parent(dev, parent);
-	अगर (IS_ERR(kobj)) अणु
+	if (IS_ERR(kobj)) {
 		error = PTR_ERR(kobj);
-		जाओ parent_error;
-	पूर्ण
-	अगर (kobj)
+		goto parent_error;
+	}
+	if (kobj)
 		dev->kobj.parent = kobj;
 
 	/* use parent numa_node */
-	अगर (parent && (dev_to_node(dev) == NUMA_NO_NODE))
+	if (parent && (dev_to_node(dev) == NUMA_NO_NODE))
 		set_dev_node(dev, dev_to_node(parent));
 
-	/* first, रेजिस्टर with generic layer. */
-	/* we require the name to be set beक्रमe, and pass शून्य */
-	error = kobject_add(&dev->kobj, dev->kobj.parent, शून्य);
-	अगर (error) अणु
+	/* first, register with generic layer. */
+	/* we require the name to be set before, and pass NULL */
+	error = kobject_add(&dev->kobj, dev->kobj.parent, NULL);
+	if (error) {
 		glue_dir = get_glue_dir(dev);
-		जाओ Error;
-	पूर्ण
+		goto Error;
+	}
 
-	/* notअगरy platक्रमm of device entry */
-	error = device_platक्रमm_notअगरy(dev, KOBJ_ADD);
-	अगर (error)
-		जाओ platक्रमm_error;
+	/* notify platform of device entry */
+	error = device_platform_notify(dev, KOBJ_ADD);
+	if (error)
+		goto platform_error;
 
 	error = device_create_file(dev, &dev_attr_uevent);
-	अगर (error)
-		जाओ attrError;
+	if (error)
+		goto attrError;
 
 	error = device_add_class_symlinks(dev);
-	अगर (error)
-		जाओ SymlinkError;
+	if (error)
+		goto SymlinkError;
 	error = device_add_attrs(dev);
-	अगर (error)
-		जाओ AttrsError;
+	if (error)
+		goto AttrsError;
 	error = bus_add_device(dev);
-	अगर (error)
-		जाओ BusError;
+	if (error)
+		goto BusError;
 	error = dpm_sysfs_add(dev);
-	अगर (error)
-		जाओ DPMError;
+	if (error)
+		goto DPMError;
 	device_pm_add(dev);
 
-	अगर (MAJOR(dev->devt)) अणु
+	if (MAJOR(dev->devt)) {
 		error = device_create_file(dev, &dev_attr_dev);
-		अगर (error)
-			जाओ DevAttrError;
+		if (error)
+			goto DevAttrError;
 
 		error = device_create_sys_dev_entry(dev);
-		अगर (error)
-			जाओ SysEntryError;
+		if (error)
+			goto SysEntryError;
 
-		devपंचांगpfs_create_node(dev);
-	पूर्ण
+		devtmpfs_create_node(dev);
+	}
 
-	/* Notअगरy clients of device addition.  This call must come
-	 * after dpm_sysfs_add() and beक्रमe kobject_uevent().
+	/* Notify clients of device addition.  This call must come
+	 * after dpm_sysfs_add() and before kobject_uevent().
 	 */
-	अगर (dev->bus)
-		blocking_notअगरier_call_chain(&dev->bus->p->bus_notअगरier,
+	if (dev->bus)
+		blocking_notifier_call_chain(&dev->bus->p->bus_notifier,
 					     BUS_NOTIFY_ADD_DEVICE, dev);
 
 	kobject_uevent(&dev->kobj, KOBJ_ADD);
 
 	/*
-	 * Check अगर any of the other devices (consumers) have been रुकोing क्रम
+	 * Check if any of the other devices (consumers) have been waiting for
 	 * this device (supplier) to be added so that they can create a device
 	 * link to it.
 	 *
 	 * This needs to happen after device_pm_add() because device_link_add()
-	 * requires the supplier be रेजिस्टरed beक्रमe it's called.
+	 * requires the supplier be registered before it's called.
 	 *
-	 * But this also needs to happen beक्रमe bus_probe_device() to make sure
-	 * रुकोing consumers can link to it beक्रमe the driver is bound to the
-	 * device and the driver sync_state callback is called क्रम this device.
+	 * But this also needs to happen before bus_probe_device() to make sure
+	 * waiting consumers can link to it before the driver is bound to the
+	 * device and the driver sync_state callback is called for this device.
 	 */
-	अगर (dev->fwnode && !dev->fwnode->dev) अणु
+	if (dev->fwnode && !dev->fwnode->dev) {
 		dev->fwnode->dev = dev;
 		fw_devlink_link_device(dev);
-	पूर्ण
+	}
 
 	bus_probe_device(dev);
 
 	/*
-	 * If all driver registration is करोne and a newly added device करोesn't
-	 * match with any driver, करोn't block its consumers from probing in
-	 * हाल the consumer device is able to operate without this supplier.
+	 * If all driver registration is done and a newly added device doesn't
+	 * match with any driver, don't block its consumers from probing in
+	 * case the consumer device is able to operate without this supplier.
 	 */
-	अगर (dev->fwnode && fw_devlink_drv_reg_करोne && !dev->can_match)
+	if (dev->fwnode && fw_devlink_drv_reg_done && !dev->can_match)
 		fw_devlink_unblock_consumers(dev);
 
-	अगर (parent)
+	if (parent)
 		klist_add_tail(&dev->p->knode_parent,
 			       &parent->p->klist_children);
 
-	अगर (dev->class) अणु
+	if (dev->class) {
 		mutex_lock(&dev->class->p->mutex);
 		/* tie the class to the device */
 		klist_add_tail(&dev->p->knode_class,
 			       &dev->class->p->klist_devices);
 
-		/* notअगरy any पूर्णांकerfaces that the device is here */
-		list_क्रम_each_entry(class_पूर्णांकf,
-				    &dev->class->p->पूर्णांकerfaces, node)
-			अगर (class_पूर्णांकf->add_dev)
-				class_पूर्णांकf->add_dev(dev, class_पूर्णांकf);
+		/* notify any interfaces that the device is here */
+		list_for_each_entry(class_intf,
+				    &dev->class->p->interfaces, node)
+			if (class_intf->add_dev)
+				class_intf->add_dev(dev, class_intf);
 		mutex_unlock(&dev->class->p->mutex);
-	पूर्ण
-करोne:
+	}
+done:
 	put_device(dev);
-	वापस error;
+	return error;
  SysEntryError:
-	अगर (MAJOR(dev->devt))
-		device_हटाओ_file(dev, &dev_attr_dev);
+	if (MAJOR(dev->devt))
+		device_remove_file(dev, &dev_attr_dev);
  DevAttrError:
-	device_pm_हटाओ(dev);
-	dpm_sysfs_हटाओ(dev);
+	device_pm_remove(dev);
+	dpm_sysfs_remove(dev);
  DPMError:
-	bus_हटाओ_device(dev);
+	bus_remove_device(dev);
  BusError:
-	device_हटाओ_attrs(dev);
+	device_remove_attrs(dev);
  AttrsError:
-	device_हटाओ_class_symlinks(dev);
+	device_remove_class_symlinks(dev);
  SymlinkError:
-	device_हटाओ_file(dev, &dev_attr_uevent);
+	device_remove_file(dev, &dev_attr_uevent);
  attrError:
-	device_platक्रमm_notअगरy(dev, KOBJ_REMOVE);
-platक्रमm_error:
+	device_platform_notify(dev, KOBJ_REMOVE);
+platform_error:
 	kobject_uevent(&dev->kobj, KOBJ_REMOVE);
 	glue_dir = get_glue_dir(dev);
 	kobject_del(&dev->kobj);
@@ -3377,597 +3376,597 @@ platक्रमm_error:
 parent_error:
 	put_device(parent);
 name_error:
-	kमुक्त(dev->p);
-	dev->p = शून्य;
-	जाओ करोne;
-पूर्ण
+	kfree(dev->p);
+	dev->p = NULL;
+	goto done;
+}
 EXPORT_SYMBOL_GPL(device_add);
 
 /**
- * device_रेजिस्टर - रेजिस्टर a device with the प्रणाली.
- * @dev: poपूर्णांकer to the device काष्ठाure
+ * device_register - register a device with the system.
+ * @dev: pointer to the device structure
  *
  * This happens in two clean steps - initialize the device
- * and add it to the प्रणाली. The two steps can be called
+ * and add it to the system. The two steps can be called
  * separately, but this is the easiest and most common.
- * I.e. you should only call the two helpers separately अगर
+ * I.e. you should only call the two helpers separately if
  * have a clearly defined need to use and refcount the device
- * beक्रमe it is added to the hierarchy.
+ * before it is added to the hierarchy.
  *
- * For more inक्रमmation, see the kernelकरोc क्रम device_initialize()
+ * For more information, see the kerneldoc for device_initialize()
  * and device_add().
  *
- * NOTE: _Never_ directly मुक्त @dev after calling this function, even
- * अगर it वापसed an error! Always use put_device() to give up the
+ * NOTE: _Never_ directly free @dev after calling this function, even
+ * if it returned an error! Always use put_device() to give up the
  * reference initialized in this function instead.
  */
-पूर्णांक device_रेजिस्टर(काष्ठा device *dev)
-अणु
+int device_register(struct device *dev)
+{
 	device_initialize(dev);
-	वापस device_add(dev);
-पूर्ण
-EXPORT_SYMBOL_GPL(device_रेजिस्टर);
+	return device_add(dev);
+}
+EXPORT_SYMBOL_GPL(device_register);
 
 /**
- * get_device - increment reference count क्रम device.
+ * get_device - increment reference count for device.
  * @dev: device.
  *
- * This simply क्रमwards the call to kobject_get(), though
- * we करो take care to provide क्रम the हाल that we get a शून्य
- * poपूर्णांकer passed in.
+ * This simply forwards the call to kobject_get(), though
+ * we do take care to provide for the case that we get a NULL
+ * pointer passed in.
  */
-काष्ठा device *get_device(काष्ठा device *dev)
-अणु
-	वापस dev ? kobj_to_dev(kobject_get(&dev->kobj)) : शून्य;
-पूर्ण
+struct device *get_device(struct device *dev)
+{
+	return dev ? kobj_to_dev(kobject_get(&dev->kobj)) : NULL;
+}
 EXPORT_SYMBOL_GPL(get_device);
 
 /**
  * put_device - decrement reference count.
  * @dev: device in question.
  */
-व्योम put_device(काष्ठा device *dev)
-अणु
+void put_device(struct device *dev)
+{
 	/* might_sleep(); */
-	अगर (dev)
+	if (dev)
 		kobject_put(&dev->kobj);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(put_device);
 
-bool समाप्त_device(काष्ठा device *dev)
-अणु
+bool kill_device(struct device *dev)
+{
 	/*
 	 * Require the device lock and set the "dead" flag to guarantee that
 	 * the update behavior is consistent with the other bitfields near
 	 * it and that we cannot have an asynchronous probe routine trying
-	 * to run जबतक we are tearing out the bus/class/sysfs from
+	 * to run while we are tearing out the bus/class/sysfs from
 	 * underneath the device.
 	 */
-	lockdep_निश्चित_held(&dev->mutex);
+	lockdep_assert_held(&dev->mutex);
 
-	अगर (dev->p->dead)
-		वापस false;
+	if (dev->p->dead)
+		return false;
 	dev->p->dead = true;
-	वापस true;
-पूर्ण
-EXPORT_SYMBOL_GPL(समाप्त_device);
+	return true;
+}
+EXPORT_SYMBOL_GPL(kill_device);
 
 /**
- * device_del - delete device from प्रणाली.
+ * device_del - delete device from system.
  * @dev: device.
  *
  * This is the first part of the device unregistration
- * sequence. This हटाओs the device from the lists we control
- * from here, has it हटाओd from the other driver model
- * subप्रणालीs it was added to in device_add(), and हटाओs it
+ * sequence. This removes the device from the lists we control
+ * from here, has it removed from the other driver model
+ * subsystems it was added to in device_add(), and removes it
  * from the kobject hierarchy.
  *
- * NOTE: this should be called manually _अगरf_ device_add() was
+ * NOTE: this should be called manually _iff_ device_add() was
  * also called manually.
  */
-व्योम device_del(काष्ठा device *dev)
-अणु
-	काष्ठा device *parent = dev->parent;
-	काष्ठा kobject *glue_dir = शून्य;
-	काष्ठा class_पूर्णांकerface *class_पूर्णांकf;
-	अचिन्हित पूर्णांक noio_flag;
+void device_del(struct device *dev)
+{
+	struct device *parent = dev->parent;
+	struct kobject *glue_dir = NULL;
+	struct class_interface *class_intf;
+	unsigned int noio_flag;
 
 	device_lock(dev);
-	समाप्त_device(dev);
+	kill_device(dev);
 	device_unlock(dev);
 
-	अगर (dev->fwnode && dev->fwnode->dev == dev)
-		dev->fwnode->dev = शून्य;
+	if (dev->fwnode && dev->fwnode->dev == dev)
+		dev->fwnode->dev = NULL;
 
-	/* Notअगरy clients of device removal.  This call must come
-	 * beक्रमe dpm_sysfs_हटाओ().
+	/* Notify clients of device removal.  This call must come
+	 * before dpm_sysfs_remove().
 	 */
-	noio_flag = meदो_स्मृति_noio_save();
-	अगर (dev->bus)
-		blocking_notअगरier_call_chain(&dev->bus->p->bus_notअगरier,
+	noio_flag = memalloc_noio_save();
+	if (dev->bus)
+		blocking_notifier_call_chain(&dev->bus->p->bus_notifier,
 					     BUS_NOTIFY_DEL_DEVICE, dev);
 
-	dpm_sysfs_हटाओ(dev);
-	अगर (parent)
+	dpm_sysfs_remove(dev);
+	if (parent)
 		klist_del(&dev->p->knode_parent);
-	अगर (MAJOR(dev->devt)) अणु
-		devपंचांगpfs_delete_node(dev);
-		device_हटाओ_sys_dev_entry(dev);
-		device_हटाओ_file(dev, &dev_attr_dev);
-	पूर्ण
-	अगर (dev->class) अणु
-		device_हटाओ_class_symlinks(dev);
+	if (MAJOR(dev->devt)) {
+		devtmpfs_delete_node(dev);
+		device_remove_sys_dev_entry(dev);
+		device_remove_file(dev, &dev_attr_dev);
+	}
+	if (dev->class) {
+		device_remove_class_symlinks(dev);
 
 		mutex_lock(&dev->class->p->mutex);
-		/* notअगरy any पूर्णांकerfaces that the device is now gone */
-		list_क्रम_each_entry(class_पूर्णांकf,
-				    &dev->class->p->पूर्णांकerfaces, node)
-			अगर (class_पूर्णांकf->हटाओ_dev)
-				class_पूर्णांकf->हटाओ_dev(dev, class_पूर्णांकf);
-		/* हटाओ the device from the class list */
+		/* notify any interfaces that the device is now gone */
+		list_for_each_entry(class_intf,
+				    &dev->class->p->interfaces, node)
+			if (class_intf->remove_dev)
+				class_intf->remove_dev(dev, class_intf);
+		/* remove the device from the class list */
 		klist_del(&dev->p->knode_class);
 		mutex_unlock(&dev->class->p->mutex);
-	पूर्ण
-	device_हटाओ_file(dev, &dev_attr_uevent);
-	device_हटाओ_attrs(dev);
-	bus_हटाओ_device(dev);
-	device_pm_हटाओ(dev);
+	}
+	device_remove_file(dev, &dev_attr_uevent);
+	device_remove_attrs(dev);
+	bus_remove_device(dev);
+	device_pm_remove(dev);
 	driver_deferred_probe_del(dev);
-	device_platक्रमm_notअगरy(dev, KOBJ_REMOVE);
-	device_हटाओ_properties(dev);
+	device_platform_notify(dev, KOBJ_REMOVE);
+	device_remove_properties(dev);
 	device_links_purge(dev);
 
-	अगर (dev->bus)
-		blocking_notअगरier_call_chain(&dev->bus->p->bus_notअगरier,
+	if (dev->bus)
+		blocking_notifier_call_chain(&dev->bus->p->bus_notifier,
 					     BUS_NOTIFY_REMOVED_DEVICE, dev);
 	kobject_uevent(&dev->kobj, KOBJ_REMOVE);
 	glue_dir = get_glue_dir(dev);
 	kobject_del(&dev->kobj);
 	cleanup_glue_dir(dev, glue_dir);
-	meदो_स्मृति_noio_restore(noio_flag);
+	memalloc_noio_restore(noio_flag);
 	put_device(parent);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(device_del);
 
 /**
- * device_unरेजिस्टर - unरेजिस्टर device from प्रणाली.
+ * device_unregister - unregister device from system.
  * @dev: device going away.
  *
- * We करो this in two parts, like we करो device_रेजिस्टर(). First,
- * we हटाओ it from all the subप्रणालीs with device_del(), then
+ * We do this in two parts, like we do device_register(). First,
+ * we remove it from all the subsystems with device_del(), then
  * we decrement the reference count via put_device(). If that
  * is the final reference count, the device will be cleaned up
- * via device_release() above. Otherwise, the काष्ठाure will
+ * via device_release() above. Otherwise, the structure will
  * stick around until the final reference to the device is dropped.
  */
-व्योम device_unरेजिस्टर(काष्ठा device *dev)
-अणु
+void device_unregister(struct device *dev)
+{
 	pr_debug("device: '%s': %s\n", dev_name(dev), __func__);
 	device_del(dev);
 	put_device(dev);
-पूर्ण
-EXPORT_SYMBOL_GPL(device_unरेजिस्टर);
+}
+EXPORT_SYMBOL_GPL(device_unregister);
 
-अटल काष्ठा device *prev_device(काष्ठा klist_iter *i)
-अणु
-	काष्ठा klist_node *n = klist_prev(i);
-	काष्ठा device *dev = शून्य;
-	काष्ठा device_निजी *p;
+static struct device *prev_device(struct klist_iter *i)
+{
+	struct klist_node *n = klist_prev(i);
+	struct device *dev = NULL;
+	struct device_private *p;
 
-	अगर (n) अणु
-		p = to_device_निजी_parent(n);
+	if (n) {
+		p = to_device_private_parent(n);
 		dev = p->device;
-	पूर्ण
-	वापस dev;
-पूर्ण
+	}
+	return dev;
+}
 
-अटल काष्ठा device *next_device(काष्ठा klist_iter *i)
-अणु
-	काष्ठा klist_node *n = klist_next(i);
-	काष्ठा device *dev = शून्य;
-	काष्ठा device_निजी *p;
+static struct device *next_device(struct klist_iter *i)
+{
+	struct klist_node *n = klist_next(i);
+	struct device *dev = NULL;
+	struct device_private *p;
 
-	अगर (n) अणु
-		p = to_device_निजी_parent(n);
+	if (n) {
+		p = to_device_private_parent(n);
 		dev = p->device;
-	पूर्ण
-	वापस dev;
-पूर्ण
+	}
+	return dev;
+}
 
 /**
  * device_get_devnode - path of device node file
  * @dev: device
- * @mode: वापसed file access mode
- * @uid: वापसed file owner
- * @gid: वापसed file group
- * @पंचांगp: possibly allocated string
+ * @mode: returned file access mode
+ * @uid: returned file owner
+ * @gid: returned file group
+ * @tmp: possibly allocated string
  *
  * Return the relative path of a possible device node.
- * Non-शेष names may need to allocate a memory to compose
- * a name. This memory is वापसed in पंचांगp and needs to be
- * मुक्तd by the caller.
+ * Non-default names may need to allocate a memory to compose
+ * a name. This memory is returned in tmp and needs to be
+ * freed by the caller.
  */
-स्थिर अक्षर *device_get_devnode(काष्ठा device *dev,
+const char *device_get_devnode(struct device *dev,
 			       umode_t *mode, kuid_t *uid, kgid_t *gid,
-			       स्थिर अक्षर **पंचांगp)
-अणु
-	अक्षर *s;
+			       const char **tmp)
+{
+	char *s;
 
-	*पंचांगp = शून्य;
+	*tmp = NULL;
 
-	/* the device type may provide a specअगरic name */
-	अगर (dev->type && dev->type->devnode)
-		*पंचांगp = dev->type->devnode(dev, mode, uid, gid);
-	अगर (*पंचांगp)
-		वापस *पंचांगp;
+	/* the device type may provide a specific name */
+	if (dev->type && dev->type->devnode)
+		*tmp = dev->type->devnode(dev, mode, uid, gid);
+	if (*tmp)
+		return *tmp;
 
-	/* the class may provide a specअगरic name */
-	अगर (dev->class && dev->class->devnode)
-		*पंचांगp = dev->class->devnode(dev, mode);
-	अगर (*पंचांगp)
-		वापस *पंचांगp;
+	/* the class may provide a specific name */
+	if (dev->class && dev->class->devnode)
+		*tmp = dev->class->devnode(dev, mode);
+	if (*tmp)
+		return *tmp;
 
-	/* वापस name without allocation, पंचांगp == शून्य */
-	अगर (म_अक्षर(dev_name(dev), '!') == शून्य)
-		वापस dev_name(dev);
+	/* return name without allocation, tmp == NULL */
+	if (strchr(dev_name(dev), '!') == NULL)
+		return dev_name(dev);
 
 	/* replace '!' in the name with '/' */
 	s = kstrdup(dev_name(dev), GFP_KERNEL);
-	अगर (!s)
-		वापस शून्य;
+	if (!s)
+		return NULL;
 	strreplace(s, '!', '/');
-	वापस *पंचांगp = s;
-पूर्ण
+	return *tmp = s;
+}
 
 /**
- * device_क्रम_each_child - device child iterator.
- * @parent: parent काष्ठा device.
- * @fn: function to be called क्रम each device.
- * @data: data क्रम the callback.
+ * device_for_each_child - device child iterator.
+ * @parent: parent struct device.
+ * @fn: function to be called for each device.
+ * @data: data for the callback.
  *
- * Iterate over @parent's child devices, and call @fn क्रम each,
+ * Iterate over @parent's child devices, and call @fn for each,
  * passing it @data.
  *
- * We check the वापस of @fn each समय. If it वापसs anything
- * other than 0, we अवरोध out and वापस that value.
+ * We check the return of @fn each time. If it returns anything
+ * other than 0, we break out and return that value.
  */
-पूर्णांक device_क्रम_each_child(काष्ठा device *parent, व्योम *data,
-			  पूर्णांक (*fn)(काष्ठा device *dev, व्योम *data))
-अणु
-	काष्ठा klist_iter i;
-	काष्ठा device *child;
-	पूर्णांक error = 0;
+int device_for_each_child(struct device *parent, void *data,
+			  int (*fn)(struct device *dev, void *data))
+{
+	struct klist_iter i;
+	struct device *child;
+	int error = 0;
 
-	अगर (!parent->p)
-		वापस 0;
+	if (!parent->p)
+		return 0;
 
 	klist_iter_init(&parent->p->klist_children, &i);
-	जबतक (!error && (child = next_device(&i)))
+	while (!error && (child = next_device(&i)))
 		error = fn(child, data);
-	klist_iter_निकास(&i);
-	वापस error;
-पूर्ण
-EXPORT_SYMBOL_GPL(device_क्रम_each_child);
+	klist_iter_exit(&i);
+	return error;
+}
+EXPORT_SYMBOL_GPL(device_for_each_child);
 
 /**
- * device_क्रम_each_child_reverse - device child iterator in reversed order.
- * @parent: parent काष्ठा device.
- * @fn: function to be called क्रम each device.
- * @data: data क्रम the callback.
+ * device_for_each_child_reverse - device child iterator in reversed order.
+ * @parent: parent struct device.
+ * @fn: function to be called for each device.
+ * @data: data for the callback.
  *
- * Iterate over @parent's child devices, and call @fn क्रम each,
+ * Iterate over @parent's child devices, and call @fn for each,
  * passing it @data.
  *
- * We check the वापस of @fn each समय. If it वापसs anything
- * other than 0, we अवरोध out and वापस that value.
+ * We check the return of @fn each time. If it returns anything
+ * other than 0, we break out and return that value.
  */
-पूर्णांक device_क्रम_each_child_reverse(काष्ठा device *parent, व्योम *data,
-				  पूर्णांक (*fn)(काष्ठा device *dev, व्योम *data))
-अणु
-	काष्ठा klist_iter i;
-	काष्ठा device *child;
-	पूर्णांक error = 0;
+int device_for_each_child_reverse(struct device *parent, void *data,
+				  int (*fn)(struct device *dev, void *data))
+{
+	struct klist_iter i;
+	struct device *child;
+	int error = 0;
 
-	अगर (!parent->p)
-		वापस 0;
+	if (!parent->p)
+		return 0;
 
 	klist_iter_init(&parent->p->klist_children, &i);
-	जबतक ((child = prev_device(&i)) && !error)
+	while ((child = prev_device(&i)) && !error)
 		error = fn(child, data);
-	klist_iter_निकास(&i);
-	वापस error;
-पूर्ण
-EXPORT_SYMBOL_GPL(device_क्रम_each_child_reverse);
+	klist_iter_exit(&i);
+	return error;
+}
+EXPORT_SYMBOL_GPL(device_for_each_child_reverse);
 
 /**
- * device_find_child - device iterator क्रम locating a particular device.
- * @parent: parent काष्ठा device
+ * device_find_child - device iterator for locating a particular device.
+ * @parent: parent struct device
  * @match: Callback function to check device
  * @data: Data to pass to match function
  *
- * This is similar to the device_क्रम_each_child() function above, but it
- * वापसs a reference to a device that is 'found' क्रम later use, as
+ * This is similar to the device_for_each_child() function above, but it
+ * returns a reference to a device that is 'found' for later use, as
  * determined by the @match callback.
  *
- * The callback should वापस 0 अगर the device करोesn't match and non-zero
- * अगर it करोes.  If the callback वापसs non-zero and a reference to the
- * current device can be obtained, this function will वापस to the caller
+ * The callback should return 0 if the device doesn't match and non-zero
+ * if it does.  If the callback returns non-zero and a reference to the
+ * current device can be obtained, this function will return to the caller
  * and not iterate over any more devices.
  *
  * NOTE: you will need to drop the reference with put_device() after use.
  */
-काष्ठा device *device_find_child(काष्ठा device *parent, व्योम *data,
-				 पूर्णांक (*match)(काष्ठा device *dev, व्योम *data))
-अणु
-	काष्ठा klist_iter i;
-	काष्ठा device *child;
+struct device *device_find_child(struct device *parent, void *data,
+				 int (*match)(struct device *dev, void *data))
+{
+	struct klist_iter i;
+	struct device *child;
 
-	अगर (!parent)
-		वापस शून्य;
+	if (!parent)
+		return NULL;
 
 	klist_iter_init(&parent->p->klist_children, &i);
-	जबतक ((child = next_device(&i)))
-		अगर (match(child, data) && get_device(child))
-			अवरोध;
-	klist_iter_निकास(&i);
-	वापस child;
-पूर्ण
+	while ((child = next_device(&i)))
+		if (match(child, data) && get_device(child))
+			break;
+	klist_iter_exit(&i);
+	return child;
+}
 EXPORT_SYMBOL_GPL(device_find_child);
 
 /**
- * device_find_child_by_name - device iterator क्रम locating a child device.
- * @parent: parent काष्ठा device
+ * device_find_child_by_name - device iterator for locating a child device.
+ * @parent: parent struct device
  * @name: name of the child device
  *
  * This is similar to the device_find_child() function above, but it
- * वापसs a reference to a device that has the name @name.
+ * returns a reference to a device that has the name @name.
  *
  * NOTE: you will need to drop the reference with put_device() after use.
  */
-काष्ठा device *device_find_child_by_name(काष्ठा device *parent,
-					 स्थिर अक्षर *name)
-अणु
-	काष्ठा klist_iter i;
-	काष्ठा device *child;
+struct device *device_find_child_by_name(struct device *parent,
+					 const char *name)
+{
+	struct klist_iter i;
+	struct device *child;
 
-	अगर (!parent)
-		वापस शून्य;
+	if (!parent)
+		return NULL;
 
 	klist_iter_init(&parent->p->klist_children, &i);
-	जबतक ((child = next_device(&i)))
-		अगर (sysfs_streq(dev_name(child), name) && get_device(child))
-			अवरोध;
-	klist_iter_निकास(&i);
-	वापस child;
-पूर्ण
+	while ((child = next_device(&i)))
+		if (sysfs_streq(dev_name(child), name) && get_device(child))
+			break;
+	klist_iter_exit(&i);
+	return child;
+}
 EXPORT_SYMBOL_GPL(device_find_child_by_name);
 
-पूर्णांक __init devices_init(व्योम)
-अणु
-	devices_kset = kset_create_and_add("devices", &device_uevent_ops, शून्य);
-	अगर (!devices_kset)
-		वापस -ENOMEM;
-	dev_kobj = kobject_create_and_add("dev", शून्य);
-	अगर (!dev_kobj)
-		जाओ dev_kobj_err;
+int __init devices_init(void)
+{
+	devices_kset = kset_create_and_add("devices", &device_uevent_ops, NULL);
+	if (!devices_kset)
+		return -ENOMEM;
+	dev_kobj = kobject_create_and_add("dev", NULL);
+	if (!dev_kobj)
+		goto dev_kobj_err;
 	sysfs_dev_block_kobj = kobject_create_and_add("block", dev_kobj);
-	अगर (!sysfs_dev_block_kobj)
-		जाओ block_kobj_err;
-	sysfs_dev_अक्षर_kobj = kobject_create_and_add("char", dev_kobj);
-	अगर (!sysfs_dev_अक्षर_kobj)
-		जाओ अक्षर_kobj_err;
+	if (!sysfs_dev_block_kobj)
+		goto block_kobj_err;
+	sysfs_dev_char_kobj = kobject_create_and_add("char", dev_kobj);
+	if (!sysfs_dev_char_kobj)
+		goto char_kobj_err;
 
-	वापस 0;
+	return 0;
 
- अक्षर_kobj_err:
+ char_kobj_err:
 	kobject_put(sysfs_dev_block_kobj);
  block_kobj_err:
 	kobject_put(dev_kobj);
  dev_kobj_err:
-	kset_unरेजिस्टर(devices_kset);
-	वापस -ENOMEM;
-पूर्ण
+	kset_unregister(devices_kset);
+	return -ENOMEM;
+}
 
-अटल पूर्णांक device_check_offline(काष्ठा device *dev, व्योम *not_used)
-अणु
-	पूर्णांक ret;
+static int device_check_offline(struct device *dev, void *not_used)
+{
+	int ret;
 
-	ret = device_क्रम_each_child(dev, शून्य, device_check_offline);
-	अगर (ret)
-		वापस ret;
+	ret = device_for_each_child(dev, NULL, device_check_offline);
+	if (ret)
+		return ret;
 
-	वापस device_supports_offline(dev) && !dev->offline ? -EBUSY : 0;
-पूर्ण
+	return device_supports_offline(dev) && !dev->offline ? -EBUSY : 0;
+}
 
 /**
- * device_offline - Prepare the device क्रम hot-removal.
+ * device_offline - Prepare the device for hot-removal.
  * @dev: Device to be put offline.
  *
- * Execute the device bus type's .offline() callback, अगर present, to prepare
- * the device क्रम a subsequent hot-removal.  If that succeeds, the device must
- * not be used until either it is हटाओd or its bus type's .online() callback
+ * Execute the device bus type's .offline() callback, if present, to prepare
+ * the device for a subsequent hot-removal.  If that succeeds, the device must
+ * not be used until either it is removed or its bus type's .online() callback
  * is executed.
  *
  * Call under device_hotplug_lock.
  */
-पूर्णांक device_offline(काष्ठा device *dev)
-अणु
-	पूर्णांक ret;
+int device_offline(struct device *dev)
+{
+	int ret;
 
-	अगर (dev->offline_disabled)
-		वापस -EPERM;
+	if (dev->offline_disabled)
+		return -EPERM;
 
-	ret = device_क्रम_each_child(dev, शून्य, device_check_offline);
-	अगर (ret)
-		वापस ret;
+	ret = device_for_each_child(dev, NULL, device_check_offline);
+	if (ret)
+		return ret;
 
 	device_lock(dev);
-	अगर (device_supports_offline(dev)) अणु
-		अगर (dev->offline) अणु
+	if (device_supports_offline(dev)) {
+		if (dev->offline) {
 			ret = 1;
-		पूर्ण अन्यथा अणु
+		} else {
 			ret = dev->bus->offline(dev);
-			अगर (!ret) अणु
+			if (!ret) {
 				kobject_uevent(&dev->kobj, KOBJ_OFFLINE);
 				dev->offline = true;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 	device_unlock(dev);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
  * device_online - Put the device back online after successful device_offline().
  * @dev: Device to be put back online.
  *
- * If device_offline() has been successfully executed क्रम @dev, but the device
- * has not been हटाओd subsequently, execute its bus type's .online() callback
+ * If device_offline() has been successfully executed for @dev, but the device
+ * has not been removed subsequently, execute its bus type's .online() callback
  * to indicate that the device can be used again.
  *
  * Call under device_hotplug_lock.
  */
-पूर्णांक device_online(काष्ठा device *dev)
-अणु
-	पूर्णांक ret = 0;
+int device_online(struct device *dev)
+{
+	int ret = 0;
 
 	device_lock(dev);
-	अगर (device_supports_offline(dev)) अणु
-		अगर (dev->offline) अणु
+	if (device_supports_offline(dev)) {
+		if (dev->offline) {
 			ret = dev->bus->online(dev);
-			अगर (!ret) अणु
+			if (!ret) {
 				kobject_uevent(&dev->kobj, KOBJ_ONLINE);
 				dev->offline = false;
-			पूर्ण
-		पूर्ण अन्यथा अणु
+			}
+		} else {
 			ret = 1;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	device_unlock(dev);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-काष्ठा root_device अणु
-	काष्ठा device dev;
-	काष्ठा module *owner;
-पूर्ण;
+struct root_device {
+	struct device dev;
+	struct module *owner;
+};
 
-अटल अंतरभूत काष्ठा root_device *to_root_device(काष्ठा device *d)
-अणु
-	वापस container_of(d, काष्ठा root_device, dev);
-पूर्ण
+static inline struct root_device *to_root_device(struct device *d)
+{
+	return container_of(d, struct root_device, dev);
+}
 
-अटल व्योम root_device_release(काष्ठा device *dev)
-अणु
-	kमुक्त(to_root_device(dev));
-पूर्ण
+static void root_device_release(struct device *dev)
+{
+	kfree(to_root_device(dev));
+}
 
 /**
- * __root_device_रेजिस्टर - allocate and रेजिस्टर a root device
+ * __root_device_register - allocate and register a root device
  * @name: root device name
  * @owner: owner module of the root device, usually THIS_MODULE
  *
- * This function allocates a root device and रेजिस्टरs it
- * using device_रेजिस्टर(). In order to मुक्त the वापसed
- * device, use root_device_unरेजिस्टर().
+ * This function allocates a root device and registers it
+ * using device_register(). In order to free the returned
+ * device, use root_device_unregister().
  *
  * Root devices are dummy devices which allow other devices
  * to be grouped under /sys/devices. Use this function to
  * allocate a root device and then use it as the parent of
- * any device which should appear under /sys/devices/अणुnameपूर्ण
+ * any device which should appear under /sys/devices/{name}
  *
- * The /sys/devices/अणुnameपूर्ण directory will also contain a
- * 'module' symlink which poपूर्णांकs to the @owner directory
+ * The /sys/devices/{name} directory will also contain a
+ * 'module' symlink which points to the @owner directory
  * in sysfs.
  *
- * Returns &काष्ठा device poपूर्णांकer on success, or ERR_PTR() on error.
+ * Returns &struct device pointer on success, or ERR_PTR() on error.
  *
- * Note: You probably want to use root_device_रेजिस्टर().
+ * Note: You probably want to use root_device_register().
  */
-काष्ठा device *__root_device_रेजिस्टर(स्थिर अक्षर *name, काष्ठा module *owner)
-अणु
-	काष्ठा root_device *root;
-	पूर्णांक err = -ENOMEM;
+struct device *__root_device_register(const char *name, struct module *owner)
+{
+	struct root_device *root;
+	int err = -ENOMEM;
 
-	root = kzalloc(माप(काष्ठा root_device), GFP_KERNEL);
-	अगर (!root)
-		वापस ERR_PTR(err);
+	root = kzalloc(sizeof(struct root_device), GFP_KERNEL);
+	if (!root)
+		return ERR_PTR(err);
 
 	err = dev_set_name(&root->dev, "%s", name);
-	अगर (err) अणु
-		kमुक्त(root);
-		वापस ERR_PTR(err);
-	पूर्ण
+	if (err) {
+		kfree(root);
+		return ERR_PTR(err);
+	}
 
 	root->dev.release = root_device_release;
 
-	err = device_रेजिस्टर(&root->dev);
-	अगर (err) अणु
+	err = device_register(&root->dev);
+	if (err) {
 		put_device(&root->dev);
-		वापस ERR_PTR(err);
-	पूर्ण
+		return ERR_PTR(err);
+	}
 
-#अगर_घोषित CONFIG_MODULES	/* gotta find a "cleaner" way to करो this */
-	अगर (owner) अणु
-		काष्ठा module_kobject *mk = &owner->mkobj;
+#ifdef CONFIG_MODULES	/* gotta find a "cleaner" way to do this */
+	if (owner) {
+		struct module_kobject *mk = &owner->mkobj;
 
 		err = sysfs_create_link(&root->dev.kobj, &mk->kobj, "module");
-		अगर (err) अणु
-			device_unरेजिस्टर(&root->dev);
-			वापस ERR_PTR(err);
-		पूर्ण
+		if (err) {
+			device_unregister(&root->dev);
+			return ERR_PTR(err);
+		}
 		root->owner = owner;
-	पूर्ण
-#पूर्ण_अगर
+	}
+#endif
 
-	वापस &root->dev;
-पूर्ण
-EXPORT_SYMBOL_GPL(__root_device_रेजिस्टर);
+	return &root->dev;
+}
+EXPORT_SYMBOL_GPL(__root_device_register);
 
 /**
- * root_device_unरेजिस्टर - unरेजिस्टर and मुक्त a root device
+ * root_device_unregister - unregister and free a root device
  * @dev: device going away
  *
- * This function unरेजिस्टरs and cleans up a device that was created by
- * root_device_रेजिस्टर().
+ * This function unregisters and cleans up a device that was created by
+ * root_device_register().
  */
-व्योम root_device_unरेजिस्टर(काष्ठा device *dev)
-अणु
-	काष्ठा root_device *root = to_root_device(dev);
+void root_device_unregister(struct device *dev)
+{
+	struct root_device *root = to_root_device(dev);
 
-	अगर (root->owner)
-		sysfs_हटाओ_link(&root->dev.kobj, "module");
+	if (root->owner)
+		sysfs_remove_link(&root->dev.kobj, "module");
 
-	device_unरेजिस्टर(dev);
-पूर्ण
-EXPORT_SYMBOL_GPL(root_device_unरेजिस्टर);
+	device_unregister(dev);
+}
+EXPORT_SYMBOL_GPL(root_device_unregister);
 
 
-अटल व्योम device_create_release(काष्ठा device *dev)
-अणु
+static void device_create_release(struct device *dev)
+{
 	pr_debug("device: '%s': %s\n", dev_name(dev), __func__);
-	kमुक्त(dev);
-पूर्ण
+	kfree(dev);
+}
 
-अटल __म_लिखो(6, 0) काष्ठा device *
-device_create_groups_vargs(काष्ठा class *class, काष्ठा device *parent,
-			   dev_t devt, व्योम *drvdata,
-			   स्थिर काष्ठा attribute_group **groups,
-			   स्थिर अक्षर *fmt, बहु_सूची args)
-अणु
-	काष्ठा device *dev = शून्य;
-	पूर्णांक retval = -ENODEV;
+static __printf(6, 0) struct device *
+device_create_groups_vargs(struct class *class, struct device *parent,
+			   dev_t devt, void *drvdata,
+			   const struct attribute_group **groups,
+			   const char *fmt, va_list args)
+{
+	struct device *dev = NULL;
+	int retval = -ENODEV;
 
-	अगर (class == शून्य || IS_ERR(class))
-		जाओ error;
+	if (class == NULL || IS_ERR(class))
+		goto error;
 
-	dev = kzalloc(माप(*dev), GFP_KERNEL);
-	अगर (!dev) अणु
+	dev = kzalloc(sizeof(*dev), GFP_KERNEL);
+	if (!dev) {
 		retval = -ENOMEM;
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
 	device_initialize(dev);
 	dev->devt = devt;
@@ -3978,129 +3977,129 @@ device_create_groups_vargs(काष्ठा class *class, काष्ठा d
 	dev_set_drvdata(dev, drvdata);
 
 	retval = kobject_set_name_vargs(&dev->kobj, fmt, args);
-	अगर (retval)
-		जाओ error;
+	if (retval)
+		goto error;
 
 	retval = device_add(dev);
-	अगर (retval)
-		जाओ error;
+	if (retval)
+		goto error;
 
-	वापस dev;
+	return dev;
 
 error:
 	put_device(dev);
-	वापस ERR_PTR(retval);
-पूर्ण
+	return ERR_PTR(retval);
+}
 
 /**
- * device_create - creates a device and रेजिस्टरs it with sysfs
- * @class: poपूर्णांकer to the काष्ठा class that this device should be रेजिस्टरed to
- * @parent: poपूर्णांकer to the parent काष्ठा device of this new device, अगर any
- * @devt: the dev_t क्रम the अक्षर device to be added
- * @drvdata: the data to be added to the device क्रम callbacks
- * @fmt: string क्रम the device's name
+ * device_create - creates a device and registers it with sysfs
+ * @class: pointer to the struct class that this device should be registered to
+ * @parent: pointer to the parent struct device of this new device, if any
+ * @devt: the dev_t for the char device to be added
+ * @drvdata: the data to be added to the device for callbacks
+ * @fmt: string for the device's name
  *
- * This function can be used by अक्षर device classes.  A काष्ठा device
- * will be created in sysfs, रेजिस्टरed to the specअगरied class.
+ * This function can be used by char device classes.  A struct device
+ * will be created in sysfs, registered to the specified class.
  *
- * A "dev" file will be created, showing the dev_t क्रम the device, अगर
+ * A "dev" file will be created, showing the dev_t for the device, if
  * the dev_t is not 0,0.
- * If a poपूर्णांकer to a parent काष्ठा device is passed in, the newly created
- * काष्ठा device will be a child of that device in sysfs.
- * The poपूर्णांकer to the काष्ठा device will be वापसed from the call.
+ * If a pointer to a parent struct device is passed in, the newly created
+ * struct device will be a child of that device in sysfs.
+ * The pointer to the struct device will be returned from the call.
  * Any further sysfs files that might be required can be created using this
- * poपूर्णांकer.
+ * pointer.
  *
- * Returns &काष्ठा device poपूर्णांकer on success, or ERR_PTR() on error.
+ * Returns &struct device pointer on success, or ERR_PTR() on error.
  *
- * Note: the काष्ठा class passed to this function must have previously
+ * Note: the struct class passed to this function must have previously
  * been created with a call to class_create().
  */
-काष्ठा device *device_create(काष्ठा class *class, काष्ठा device *parent,
-			     dev_t devt, व्योम *drvdata, स्थिर अक्षर *fmt, ...)
-अणु
-	बहु_सूची vargs;
-	काष्ठा device *dev;
+struct device *device_create(struct class *class, struct device *parent,
+			     dev_t devt, void *drvdata, const char *fmt, ...)
+{
+	va_list vargs;
+	struct device *dev;
 
-	बहु_शुरू(vargs, fmt);
-	dev = device_create_groups_vargs(class, parent, devt, drvdata, शून्य,
+	va_start(vargs, fmt);
+	dev = device_create_groups_vargs(class, parent, devt, drvdata, NULL,
 					  fmt, vargs);
-	बहु_पूर्ण(vargs);
-	वापस dev;
-पूर्ण
+	va_end(vargs);
+	return dev;
+}
 EXPORT_SYMBOL_GPL(device_create);
 
 /**
- * device_create_with_groups - creates a device and रेजिस्टरs it with sysfs
- * @class: poपूर्णांकer to the काष्ठा class that this device should be रेजिस्टरed to
- * @parent: poपूर्णांकer to the parent काष्ठा device of this new device, अगर any
- * @devt: the dev_t क्रम the अक्षर device to be added
- * @drvdata: the data to be added to the device क्रम callbacks
- * @groups: शून्य-terminated list of attribute groups to be created
- * @fmt: string क्रम the device's name
+ * device_create_with_groups - creates a device and registers it with sysfs
+ * @class: pointer to the struct class that this device should be registered to
+ * @parent: pointer to the parent struct device of this new device, if any
+ * @devt: the dev_t for the char device to be added
+ * @drvdata: the data to be added to the device for callbacks
+ * @groups: NULL-terminated list of attribute groups to be created
+ * @fmt: string for the device's name
  *
- * This function can be used by अक्षर device classes.  A काष्ठा device
- * will be created in sysfs, रेजिस्टरed to the specअगरied class.
- * Additional attributes specअगरied in the groups parameter will also
- * be created स्वतःmatically.
+ * This function can be used by char device classes.  A struct device
+ * will be created in sysfs, registered to the specified class.
+ * Additional attributes specified in the groups parameter will also
+ * be created automatically.
  *
- * A "dev" file will be created, showing the dev_t क्रम the device, अगर
+ * A "dev" file will be created, showing the dev_t for the device, if
  * the dev_t is not 0,0.
- * If a poपूर्णांकer to a parent काष्ठा device is passed in, the newly created
- * काष्ठा device will be a child of that device in sysfs.
- * The poपूर्णांकer to the काष्ठा device will be वापसed from the call.
+ * If a pointer to a parent struct device is passed in, the newly created
+ * struct device will be a child of that device in sysfs.
+ * The pointer to the struct device will be returned from the call.
  * Any further sysfs files that might be required can be created using this
- * poपूर्णांकer.
+ * pointer.
  *
- * Returns &काष्ठा device poपूर्णांकer on success, or ERR_PTR() on error.
+ * Returns &struct device pointer on success, or ERR_PTR() on error.
  *
- * Note: the काष्ठा class passed to this function must have previously
+ * Note: the struct class passed to this function must have previously
  * been created with a call to class_create().
  */
-काष्ठा device *device_create_with_groups(काष्ठा class *class,
-					 काष्ठा device *parent, dev_t devt,
-					 व्योम *drvdata,
-					 स्थिर काष्ठा attribute_group **groups,
-					 स्थिर अक्षर *fmt, ...)
-अणु
-	बहु_सूची vargs;
-	काष्ठा device *dev;
+struct device *device_create_with_groups(struct class *class,
+					 struct device *parent, dev_t devt,
+					 void *drvdata,
+					 const struct attribute_group **groups,
+					 const char *fmt, ...)
+{
+	va_list vargs;
+	struct device *dev;
 
-	बहु_शुरू(vargs, fmt);
+	va_start(vargs, fmt);
 	dev = device_create_groups_vargs(class, parent, devt, drvdata, groups,
 					 fmt, vargs);
-	बहु_पूर्ण(vargs);
-	वापस dev;
-पूर्ण
+	va_end(vargs);
+	return dev;
+}
 EXPORT_SYMBOL_GPL(device_create_with_groups);
 
 /**
- * device_destroy - हटाओs a device that was created with device_create()
- * @class: poपूर्णांकer to the काष्ठा class that this device was रेजिस्टरed with
- * @devt: the dev_t of the device that was previously रेजिस्टरed
+ * device_destroy - removes a device that was created with device_create()
+ * @class: pointer to the struct class that this device was registered with
+ * @devt: the dev_t of the device that was previously registered
  *
- * This call unरेजिस्टरs and cleans up a device that was created with a
+ * This call unregisters and cleans up a device that was created with a
  * call to device_create().
  */
-व्योम device_destroy(काष्ठा class *class, dev_t devt)
-अणु
-	काष्ठा device *dev;
+void device_destroy(struct class *class, dev_t devt)
+{
+	struct device *dev;
 
 	dev = class_find_device_by_devt(class, devt);
-	अगर (dev) अणु
+	if (dev) {
 		put_device(dev);
-		device_unरेजिस्टर(dev);
-	पूर्ण
-पूर्ण
+		device_unregister(dev);
+	}
+}
 EXPORT_SYMBOL_GPL(device_destroy);
 
 /**
- * device_नाम - नामs a device
- * @dev: the poपूर्णांकer to the काष्ठा device to be नामd
+ * device_rename - renames a device
+ * @dev: the pointer to the struct device to be renamed
  * @new_name: the new name of the device
  *
  * It is the responsibility of the caller to provide mutual
- * exclusion between two dअगरferent calls of device_नाम
+ * exclusion between two different calls of device_rename
  * on the same device to ensure that new_name is valid and
  * won't conflict with other devices.
  *
@@ -4110,216 +4109,216 @@ EXPORT_SYMBOL_GPL(device_destroy);
  *
  * Renaming devices is racy at many levels, symlinks and other stuff are not
  * replaced atomically, and you get a "move" uevent, but it's not easy to
- * connect the event to the old and new device. Device nodes are not नामd at
- * all, there isn't even support क्रम that in the kernel now.
+ * connect the event to the old and new device. Device nodes are not renamed at
+ * all, there isn't even support for that in the kernel now.
  *
- * In the meanसमय, during renaming, your target name might be taken by another
+ * In the meantime, during renaming, your target name might be taken by another
  * driver, creating conflicts. Or the old name is taken directly after you
- * नामd it -- then you get events क्रम the same DEVPATH, beक्रमe you even see
+ * renamed it -- then you get events for the same DEVPATH, before you even see
  * the "move" event. It's just a mess, and nothing new should ever rely on
- * kernel device renaming. Besides that, it's not even implemented now क्रम
+ * kernel device renaming. Besides that, it's not even implemented now for
  * other things than (driver-core wise very simple) network devices.
  *
  * We are currently about to change network renaming in udev to completely
  * disallow renaming of devices in the same namespace as the kernel uses,
  * because we can't solve the problems properly, that arise with swapping names
- * of multiple पूर्णांकerfaces without races. Means, renaming of eth[0-9]* will only
- * be allowed to some other name than eth[0-9]*, क्रम the aक्रमementioned
+ * of multiple interfaces without races. Means, renaming of eth[0-9]* will only
+ * be allowed to some other name than eth[0-9]*, for the aforementioned
  * reasons.
  *
- * Make up a "real" name in the driver beक्रमe you रेजिस्टर anything, or add
- * some other attributes क्रम userspace to find the device, or use udev to add
- * symlinks -- but never नाम kernel devices later, it's a complete mess. We
- * करोn't even want to get पूर्णांकo that and try to implement the missing pieces in
+ * Make up a "real" name in the driver before you register anything, or add
+ * some other attributes for userspace to find the device, or use udev to add
+ * symlinks -- but never rename kernel devices later, it's a complete mess. We
+ * don't even want to get into that and try to implement the missing pieces in
  * the core. We really have other pieces to fix in the driver core mess. :)
  */
-पूर्णांक device_नाम(काष्ठा device *dev, स्थिर अक्षर *new_name)
-अणु
-	काष्ठा kobject *kobj = &dev->kobj;
-	अक्षर *old_device_name = शून्य;
-	पूर्णांक error;
+int device_rename(struct device *dev, const char *new_name)
+{
+	struct kobject *kobj = &dev->kobj;
+	char *old_device_name = NULL;
+	int error;
 
 	dev = get_device(dev);
-	अगर (!dev)
-		वापस -EINVAL;
+	if (!dev)
+		return -EINVAL;
 
 	dev_dbg(dev, "renaming to %s\n", new_name);
 
 	old_device_name = kstrdup(dev_name(dev), GFP_KERNEL);
-	अगर (!old_device_name) अणु
+	if (!old_device_name) {
 		error = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (dev->class) अणु
-		error = sysfs_नाम_link_ns(&dev->class->p->subsys.kobj,
+	if (dev->class) {
+		error = sysfs_rename_link_ns(&dev->class->p->subsys.kobj,
 					     kobj, old_device_name,
 					     new_name, kobject_namespace(kobj));
-		अगर (error)
-			जाओ out;
-	पूर्ण
+		if (error)
+			goto out;
+	}
 
-	error = kobject_नाम(kobj, new_name);
-	अगर (error)
-		जाओ out;
+	error = kobject_rename(kobj, new_name);
+	if (error)
+		goto out;
 
 out:
 	put_device(dev);
 
-	kमुक्त(old_device_name);
+	kfree(old_device_name);
 
-	वापस error;
-पूर्ण
-EXPORT_SYMBOL_GPL(device_नाम);
+	return error;
+}
+EXPORT_SYMBOL_GPL(device_rename);
 
-अटल पूर्णांक device_move_class_links(काष्ठा device *dev,
-				   काष्ठा device *old_parent,
-				   काष्ठा device *new_parent)
-अणु
-	पूर्णांक error = 0;
+static int device_move_class_links(struct device *dev,
+				   struct device *old_parent,
+				   struct device *new_parent)
+{
+	int error = 0;
 
-	अगर (old_parent)
-		sysfs_हटाओ_link(&dev->kobj, "device");
-	अगर (new_parent)
+	if (old_parent)
+		sysfs_remove_link(&dev->kobj, "device");
+	if (new_parent)
 		error = sysfs_create_link(&dev->kobj, &new_parent->kobj,
 					  "device");
-	वापस error;
-पूर्ण
+	return error;
+}
 
 /**
  * device_move - moves a device to a new parent
- * @dev: the poपूर्णांकer to the काष्ठा device to be moved
- * @new_parent: the new parent of the device (can be शून्य)
+ * @dev: the pointer to the struct device to be moved
+ * @new_parent: the new parent of the device (can be NULL)
  * @dpm_order: how to reorder the dpm_list
  */
-पूर्णांक device_move(काष्ठा device *dev, काष्ठा device *new_parent,
-		क्रमागत dpm_order dpm_order)
-अणु
-	पूर्णांक error;
-	काष्ठा device *old_parent;
-	काष्ठा kobject *new_parent_kobj;
+int device_move(struct device *dev, struct device *new_parent,
+		enum dpm_order dpm_order)
+{
+	int error;
+	struct device *old_parent;
+	struct kobject *new_parent_kobj;
 
 	dev = get_device(dev);
-	अगर (!dev)
-		वापस -EINVAL;
+	if (!dev)
+		return -EINVAL;
 
 	device_pm_lock();
 	new_parent = get_device(new_parent);
 	new_parent_kobj = get_device_parent(dev, new_parent);
-	अगर (IS_ERR(new_parent_kobj)) अणु
+	if (IS_ERR(new_parent_kobj)) {
 		error = PTR_ERR(new_parent_kobj);
 		put_device(new_parent);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	pr_debug("device: '%s': %s: moving to '%s'\n", dev_name(dev),
 		 __func__, new_parent ? dev_name(new_parent) : "<NULL>");
 	error = kobject_move(&dev->kobj, new_parent_kobj);
-	अगर (error) अणु
+	if (error) {
 		cleanup_glue_dir(dev, new_parent_kobj);
 		put_device(new_parent);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	old_parent = dev->parent;
 	dev->parent = new_parent;
-	अगर (old_parent)
-		klist_हटाओ(&dev->p->knode_parent);
-	अगर (new_parent) अणु
+	if (old_parent)
+		klist_remove(&dev->p->knode_parent);
+	if (new_parent) {
 		klist_add_tail(&dev->p->knode_parent,
 			       &new_parent->p->klist_children);
 		set_dev_node(dev, dev_to_node(new_parent));
-	पूर्ण
+	}
 
-	अगर (dev->class) अणु
+	if (dev->class) {
 		error = device_move_class_links(dev, old_parent, new_parent);
-		अगर (error) अणु
+		if (error) {
 			/* We ignore errors on cleanup since we're hosed anyway... */
 			device_move_class_links(dev, new_parent, old_parent);
-			अगर (!kobject_move(&dev->kobj, &old_parent->kobj)) अणु
-				अगर (new_parent)
-					klist_हटाओ(&dev->p->knode_parent);
+			if (!kobject_move(&dev->kobj, &old_parent->kobj)) {
+				if (new_parent)
+					klist_remove(&dev->p->knode_parent);
 				dev->parent = old_parent;
-				अगर (old_parent) अणु
+				if (old_parent) {
 					klist_add_tail(&dev->p->knode_parent,
 						       &old_parent->p->klist_children);
 					set_dev_node(dev, dev_to_node(old_parent));
-				पूर्ण
-			पूर्ण
+				}
+			}
 			cleanup_glue_dir(dev, new_parent_kobj);
 			put_device(new_parent);
-			जाओ out;
-		पूर्ण
-	पूर्ण
-	चयन (dpm_order) अणु
-	हाल DPM_ORDER_NONE:
-		अवरोध;
-	हाल DPM_ORDER_DEV_AFTER_PARENT:
+			goto out;
+		}
+	}
+	switch (dpm_order) {
+	case DPM_ORDER_NONE:
+		break;
+	case DPM_ORDER_DEV_AFTER_PARENT:
 		device_pm_move_after(dev, new_parent);
 		devices_kset_move_after(dev, new_parent);
-		अवरोध;
-	हाल DPM_ORDER_PARENT_BEFORE_DEV:
-		device_pm_move_beक्रमe(new_parent, dev);
-		devices_kset_move_beक्रमe(new_parent, dev);
-		अवरोध;
-	हाल DPM_ORDER_DEV_LAST:
+		break;
+	case DPM_ORDER_PARENT_BEFORE_DEV:
+		device_pm_move_before(new_parent, dev);
+		devices_kset_move_before(new_parent, dev);
+		break;
+	case DPM_ORDER_DEV_LAST:
 		device_pm_move_last(dev);
 		devices_kset_move_last(dev);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	put_device(old_parent);
 out:
 	device_pm_unlock();
 	put_device(dev);
-	वापस error;
-पूर्ण
+	return error;
+}
 EXPORT_SYMBOL_GPL(device_move);
 
-अटल पूर्णांक device_attrs_change_owner(काष्ठा device *dev, kuid_t kuid,
+static int device_attrs_change_owner(struct device *dev, kuid_t kuid,
 				     kgid_t kgid)
-अणु
-	काष्ठा kobject *kobj = &dev->kobj;
-	काष्ठा class *class = dev->class;
-	स्थिर काष्ठा device_type *type = dev->type;
-	पूर्णांक error;
+{
+	struct kobject *kobj = &dev->kobj;
+	struct class *class = dev->class;
+	const struct device_type *type = dev->type;
+	int error;
 
-	अगर (class) अणु
+	if (class) {
 		/*
-		 * Change the device groups of the device class क्रम @dev to
+		 * Change the device groups of the device class for @dev to
 		 * @kuid/@kgid.
 		 */
 		error = sysfs_groups_change_owner(kobj, class->dev_groups, kuid,
 						  kgid);
-		अगर (error)
-			वापस error;
-	पूर्ण
+		if (error)
+			return error;
+	}
 
-	अगर (type) अणु
+	if (type) {
 		/*
-		 * Change the device groups of the device type क्रम @dev to
+		 * Change the device groups of the device type for @dev to
 		 * @kuid/@kgid.
 		 */
 		error = sysfs_groups_change_owner(kobj, type->groups, kuid,
 						  kgid);
-		अगर (error)
-			वापस error;
-	पूर्ण
+		if (error)
+			return error;
+	}
 
 	/* Change the device groups of @dev to @kuid/@kgid. */
 	error = sysfs_groups_change_owner(kobj, dev->groups, kuid, kgid);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
-	अगर (device_supports_offline(dev) && !dev->offline_disabled) अणु
+	if (device_supports_offline(dev) && !dev->offline_disabled) {
 		/* Change online device attributes of @dev to @kuid/@kgid. */
 		error = sysfs_file_change_owner(kobj, dev_attr_online.attr.name,
 						kuid, kgid);
-		अगर (error)
-			वापस error;
-	पूर्ण
+		if (error)
+			return error;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * device_change_owner - change the owner of an existing device.
@@ -4328,37 +4327,37 @@ EXPORT_SYMBOL_GPL(device_move);
  * @kgid: new owner's kgid
  *
  * This changes the owner of @dev and its corresponding sysfs entries to
- * @kuid/@kgid. This function बंदly mirrors how @dev was added via driver
+ * @kuid/@kgid. This function closely mirrors how @dev was added via driver
  * core.
  *
  * Returns 0 on success or error code on failure.
  */
-पूर्णांक device_change_owner(काष्ठा device *dev, kuid_t kuid, kgid_t kgid)
-अणु
-	पूर्णांक error;
-	काष्ठा kobject *kobj = &dev->kobj;
+int device_change_owner(struct device *dev, kuid_t kuid, kgid_t kgid)
+{
+	int error;
+	struct kobject *kobj = &dev->kobj;
 
 	dev = get_device(dev);
-	अगर (!dev)
-		वापस -EINVAL;
+	if (!dev)
+		return -EINVAL;
 
 	/*
-	 * Change the kobject and the शेष attributes and groups of the
+	 * Change the kobject and the default attributes and groups of the
 	 * ktype associated with it to @kuid/@kgid.
 	 */
 	error = sysfs_change_owner(kobj, kuid, kgid);
-	अगर (error)
-		जाओ out;
+	if (error)
+		goto out;
 
 	/*
-	 * Change the uevent file क्रम @dev to the new owner. The uevent file
+	 * Change the uevent file for @dev to the new owner. The uevent file
 	 * was created in a separate step when @dev got added and we mirror
 	 * that step here.
 	 */
 	error = sysfs_file_change_owner(kobj, dev_attr_uevent.attr.name, kuid,
 					kgid);
-	अगर (error)
-		जाओ out;
+	if (error)
+		goto out;
 
 	/*
 	 * Change the device groups, the device groups associated with the
@@ -4366,329 +4365,329 @@ EXPORT_SYMBOL_GPL(device_move);
 	 * to @kuid/@kgid.
 	 */
 	error = device_attrs_change_owner(dev, kuid, kgid);
-	अगर (error)
-		जाओ out;
+	if (error)
+		goto out;
 
 	error = dpm_sysfs_change_owner(dev, kuid, kgid);
-	अगर (error)
-		जाओ out;
+	if (error)
+		goto out;
 
-#अगर_घोषित CONFIG_BLOCK
-	अगर (sysfs_deprecated && dev->class == &block_class)
-		जाओ out;
-#पूर्ण_अगर
+#ifdef CONFIG_BLOCK
+	if (sysfs_deprecated && dev->class == &block_class)
+		goto out;
+#endif
 
 	/*
 	 * Change the owner of the symlink located in the class directory of
-	 * the device class associated with @dev which poपूर्णांकs to the actual
-	 * directory entry क्रम @dev to @kuid/@kgid. This ensures that the
+	 * the device class associated with @dev which points to the actual
+	 * directory entry for @dev to @kuid/@kgid. This ensures that the
 	 * symlink shows the same permissions as its target.
 	 */
 	error = sysfs_link_change_owner(&dev->class->p->subsys.kobj, &dev->kobj,
 					dev_name(dev), kuid, kgid);
-	अगर (error)
-		जाओ out;
+	if (error)
+		goto out;
 
 out:
 	put_device(dev);
-	वापस error;
-पूर्ण
+	return error;
+}
 EXPORT_SYMBOL_GPL(device_change_owner);
 
 /**
- * device_shutकरोwn - call ->shutकरोwn() on each device to shutकरोwn.
+ * device_shutdown - call ->shutdown() on each device to shutdown.
  */
-व्योम device_shutकरोwn(व्योम)
-अणु
-	काष्ठा device *dev, *parent;
+void device_shutdown(void)
+{
+	struct device *dev, *parent;
 
-	रुको_क्रम_device_probe();
+	wait_for_device_probe();
 	device_block_probing();
 
 	cpufreq_suspend();
 
 	spin_lock(&devices_kset->list_lock);
 	/*
-	 * Walk the devices list backward, shutting करोwn each in turn.
+	 * Walk the devices list backward, shutting down each in turn.
 	 * Beware that device unplug events may also start pulling
-	 * devices offline, even as the प्रणाली is shutting करोwn.
+	 * devices offline, even as the system is shutting down.
 	 */
-	जबतक (!list_empty(&devices_kset->list)) अणु
-		dev = list_entry(devices_kset->list.prev, काष्ठा device,
+	while (!list_empty(&devices_kset->list)) {
+		dev = list_entry(devices_kset->list.prev, struct device,
 				kobj.entry);
 
 		/*
 		 * hold reference count of device's parent to
-		 * prevent it from being मुक्तd because parent's
+		 * prevent it from being freed because parent's
 		 * lock is to be held
 		 */
 		parent = get_device(dev->parent);
 		get_device(dev);
 		/*
 		 * Make sure the device is off the kset list, in the
-		 * event that dev->*->shutकरोwn() करोesn't हटाओ it.
+		 * event that dev->*->shutdown() doesn't remove it.
 		 */
 		list_del_init(&dev->kobj.entry);
 		spin_unlock(&devices_kset->list_lock);
 
-		/* hold lock to aव्योम race with probe/release */
-		अगर (parent)
+		/* hold lock to avoid race with probe/release */
+		if (parent)
 			device_lock(parent);
 		device_lock(dev);
 
-		/* Don't allow any more runसमय suspends */
-		pm_runसमय_get_noresume(dev);
-		pm_runसमय_barrier(dev);
+		/* Don't allow any more runtime suspends */
+		pm_runtime_get_noresume(dev);
+		pm_runtime_barrier(dev);
 
-		अगर (dev->class && dev->class->shutकरोwn_pre) अणु
-			अगर (initcall_debug)
+		if (dev->class && dev->class->shutdown_pre) {
+			if (initcall_debug)
 				dev_info(dev, "shutdown_pre\n");
-			dev->class->shutकरोwn_pre(dev);
-		पूर्ण
-		अगर (dev->bus && dev->bus->shutकरोwn) अणु
-			अगर (initcall_debug)
+			dev->class->shutdown_pre(dev);
+		}
+		if (dev->bus && dev->bus->shutdown) {
+			if (initcall_debug)
 				dev_info(dev, "shutdown\n");
-			dev->bus->shutकरोwn(dev);
-		पूर्ण अन्यथा अगर (dev->driver && dev->driver->shutकरोwn) अणु
-			अगर (initcall_debug)
+			dev->bus->shutdown(dev);
+		} else if (dev->driver && dev->driver->shutdown) {
+			if (initcall_debug)
 				dev_info(dev, "shutdown\n");
-			dev->driver->shutकरोwn(dev);
-		पूर्ण
+			dev->driver->shutdown(dev);
+		}
 
 		device_unlock(dev);
-		अगर (parent)
+		if (parent)
 			device_unlock(parent);
 
 		put_device(dev);
 		put_device(parent);
 
 		spin_lock(&devices_kset->list_lock);
-	पूर्ण
+	}
 	spin_unlock(&devices_kset->list_lock);
-पूर्ण
+}
 
 /*
  * Device logging functions
  */
 
-#अगर_घोषित CONFIG_PRINTK
-अटल व्योम
-set_dev_info(स्थिर काष्ठा device *dev, काष्ठा dev_prपूर्णांकk_info *dev_info)
-अणु
-	स्थिर अक्षर *subsys;
+#ifdef CONFIG_PRINTK
+static void
+set_dev_info(const struct device *dev, struct dev_printk_info *dev_info)
+{
+	const char *subsys;
 
-	स_रखो(dev_info, 0, माप(*dev_info));
+	memset(dev_info, 0, sizeof(*dev_info));
 
-	अगर (dev->class)
+	if (dev->class)
 		subsys = dev->class->name;
-	अन्यथा अगर (dev->bus)
+	else if (dev->bus)
 		subsys = dev->bus->name;
-	अन्यथा
-		वापस;
+	else
+		return;
 
-	strscpy(dev_info->subप्रणाली, subsys, माप(dev_info->subप्रणाली));
+	strscpy(dev_info->subsystem, subsys, sizeof(dev_info->subsystem));
 
 	/*
-	 * Add device identअगरier DEVICE=:
+	 * Add device identifier DEVICE=:
 	 *   b12:8         block dev_t
-	 *   c127:3        अक्षर dev_t
-	 *   n8            netdev अगरindex
-	 *   +sound:card0  subप्रणाली:devname
+	 *   c127:3        char dev_t
+	 *   n8            netdev ifindex
+	 *   +sound:card0  subsystem:devname
 	 */
-	अगर (MAJOR(dev->devt)) अणु
-		अक्षर c;
+	if (MAJOR(dev->devt)) {
+		char c;
 
-		अगर (म_भेद(subsys, "block") == 0)
+		if (strcmp(subsys, "block") == 0)
 			c = 'b';
-		अन्यथा
+		else
 			c = 'c';
 
-		snम_लिखो(dev_info->device, माप(dev_info->device),
+		snprintf(dev_info->device, sizeof(dev_info->device),
 			 "%c%u:%u", c, MAJOR(dev->devt), MINOR(dev->devt));
-	पूर्ण अन्यथा अगर (म_भेद(subsys, "net") == 0) अणु
-		काष्ठा net_device *net = to_net_dev(dev);
+	} else if (strcmp(subsys, "net") == 0) {
+		struct net_device *net = to_net_dev(dev);
 
-		snम_लिखो(dev_info->device, माप(dev_info->device),
-			 "n%u", net->अगरindex);
-	पूर्ण अन्यथा अणु
-		snम_लिखो(dev_info->device, माप(dev_info->device),
+		snprintf(dev_info->device, sizeof(dev_info->device),
+			 "n%u", net->ifindex);
+	} else {
+		snprintf(dev_info->device, sizeof(dev_info->device),
 			 "+%s:%s", subsys, dev_name(dev));
-	पूर्ण
-पूर्ण
+	}
+}
 
-पूर्णांक dev_vprपूर्णांकk_emit(पूर्णांक level, स्थिर काष्ठा device *dev,
-		     स्थिर अक्षर *fmt, बहु_सूची args)
-अणु
-	काष्ठा dev_prपूर्णांकk_info dev_info;
+int dev_vprintk_emit(int level, const struct device *dev,
+		     const char *fmt, va_list args)
+{
+	struct dev_printk_info dev_info;
 
 	set_dev_info(dev, &dev_info);
 
-	वापस vprपूर्णांकk_emit(0, level, &dev_info, fmt, args);
-पूर्ण
-EXPORT_SYMBOL(dev_vprपूर्णांकk_emit);
+	return vprintk_emit(0, level, &dev_info, fmt, args);
+}
+EXPORT_SYMBOL(dev_vprintk_emit);
 
-पूर्णांक dev_prपूर्णांकk_emit(पूर्णांक level, स्थिर काष्ठा device *dev, स्थिर अक्षर *fmt, ...)
-अणु
-	बहु_सूची args;
-	पूर्णांक r;
+int dev_printk_emit(int level, const struct device *dev, const char *fmt, ...)
+{
+	va_list args;
+	int r;
 
-	बहु_शुरू(args, fmt);
+	va_start(args, fmt);
 
-	r = dev_vprपूर्णांकk_emit(level, dev, fmt, args);
+	r = dev_vprintk_emit(level, dev, fmt, args);
 
-	बहु_पूर्ण(args);
+	va_end(args);
 
-	वापस r;
-पूर्ण
-EXPORT_SYMBOL(dev_prपूर्णांकk_emit);
+	return r;
+}
+EXPORT_SYMBOL(dev_printk_emit);
 
-अटल व्योम __dev_prपूर्णांकk(स्थिर अक्षर *level, स्थिर काष्ठा device *dev,
-			काष्ठा va_क्रमmat *vaf)
-अणु
-	अगर (dev)
-		dev_prपूर्णांकk_emit(level[1] - '0', dev, "%s %s: %pV",
+static void __dev_printk(const char *level, const struct device *dev,
+			struct va_format *vaf)
+{
+	if (dev)
+		dev_printk_emit(level[1] - '0', dev, "%s %s: %pV",
 				dev_driver_string(dev), dev_name(dev), vaf);
-	अन्यथा
-		prपूर्णांकk("%s(NULL device *): %pV", level, vaf);
-पूर्ण
+	else
+		printk("%s(NULL device *): %pV", level, vaf);
+}
 
-व्योम dev_prपूर्णांकk(स्थिर अक्षर *level, स्थिर काष्ठा device *dev,
-		स्थिर अक्षर *fmt, ...)
-अणु
-	काष्ठा va_क्रमmat vaf;
-	बहु_सूची args;
+void dev_printk(const char *level, const struct device *dev,
+		const char *fmt, ...)
+{
+	struct va_format vaf;
+	va_list args;
 
-	बहु_शुरू(args, fmt);
+	va_start(args, fmt);
 
 	vaf.fmt = fmt;
 	vaf.va = &args;
 
-	__dev_prपूर्णांकk(level, dev, &vaf);
+	__dev_printk(level, dev, &vaf);
 
-	बहु_पूर्ण(args);
-पूर्ण
-EXPORT_SYMBOL(dev_prपूर्णांकk);
+	va_end(args);
+}
+EXPORT_SYMBOL(dev_printk);
 
-#घोषणा define_dev_prपूर्णांकk_level(func, kern_level)		\
-व्योम func(स्थिर काष्ठा device *dev, स्थिर अक्षर *fmt, ...)	\
-अणु								\
-	काष्ठा va_क्रमmat vaf;					\
-	बहु_सूची args;						\
+#define define_dev_printk_level(func, kern_level)		\
+void func(const struct device *dev, const char *fmt, ...)	\
+{								\
+	struct va_format vaf;					\
+	va_list args;						\
 								\
-	बहु_शुरू(args, fmt);					\
+	va_start(args, fmt);					\
 								\
 	vaf.fmt = fmt;						\
 	vaf.va = &args;						\
 								\
-	__dev_prपूर्णांकk(kern_level, dev, &vaf);			\
+	__dev_printk(kern_level, dev, &vaf);			\
 								\
-	बहु_पूर्ण(args);						\
-पूर्ण								\
+	va_end(args);						\
+}								\
 EXPORT_SYMBOL(func);
 
-define_dev_prपूर्णांकk_level(_dev_emerg, KERN_EMERG);
-define_dev_prपूर्णांकk_level(_dev_alert, KERN_ALERT);
-define_dev_prपूर्णांकk_level(_dev_crit, KERN_CRIT);
-define_dev_prपूर्णांकk_level(_dev_err, KERN_ERR);
-define_dev_prपूर्णांकk_level(_dev_warn, KERN_WARNING);
-define_dev_prपूर्णांकk_level(_dev_notice, KERN_NOTICE);
-define_dev_prपूर्णांकk_level(_dev_info, KERN_INFO);
+define_dev_printk_level(_dev_emerg, KERN_EMERG);
+define_dev_printk_level(_dev_alert, KERN_ALERT);
+define_dev_printk_level(_dev_crit, KERN_CRIT);
+define_dev_printk_level(_dev_err, KERN_ERR);
+define_dev_printk_level(_dev_warn, KERN_WARNING);
+define_dev_printk_level(_dev_notice, KERN_NOTICE);
+define_dev_printk_level(_dev_info, KERN_INFO);
 
-#पूर्ण_अगर
+#endif
 
 /**
  * dev_err_probe - probe error check and log helper
- * @dev: the poपूर्णांकer to the काष्ठा device
+ * @dev: the pointer to the struct device
  * @err: error value to test
- * @fmt: म_लिखो-style क्रमmat string
- * @...: arguments as specअगरied in the क्रमmat string
+ * @fmt: printf-style format string
+ * @...: arguments as specified in the format string
  *
- * This helper implements common pattern present in probe functions क्रम error
- * checking: prपूर्णांक debug or error message depending अगर the error value is
+ * This helper implements common pattern present in probe functions for error
+ * checking: print debug or error message depending if the error value is
  * -EPROBE_DEFER and propagate error upwards.
- * In हाल of -EPROBE_DEFER it sets also defer probe reason, which can be
- * checked later by पढ़ोing devices_deferred debugfs attribute.
+ * In case of -EPROBE_DEFER it sets also defer probe reason, which can be
+ * checked later by reading devices_deferred debugfs attribute.
  * It replaces code sequence::
  *
- * 	अगर (err != -EPROBE_DEFER)
+ * 	if (err != -EPROBE_DEFER)
  * 		dev_err(dev, ...);
- * 	अन्यथा
+ * 	else
  * 		dev_dbg(dev, ...);
- * 	वापस err;
+ * 	return err;
  *
  * with::
  *
- * 	वापस dev_err_probe(dev, err, ...);
+ * 	return dev_err_probe(dev, err, ...);
  *
  * Returns @err.
  *
  */
-पूर्णांक dev_err_probe(स्थिर काष्ठा device *dev, पूर्णांक err, स्थिर अक्षर *fmt, ...)
-अणु
-	काष्ठा va_क्रमmat vaf;
-	बहु_सूची args;
+int dev_err_probe(const struct device *dev, int err, const char *fmt, ...)
+{
+	struct va_format vaf;
+	va_list args;
 
-	बहु_शुरू(args, fmt);
+	va_start(args, fmt);
 	vaf.fmt = fmt;
 	vaf.va = &args;
 
-	अगर (err != -EPROBE_DEFER) अणु
+	if (err != -EPROBE_DEFER) {
 		dev_err(dev, "error %pe: %pV", ERR_PTR(err), &vaf);
-	पूर्ण अन्यथा अणु
+	} else {
 		device_set_deferred_probe_reason(dev, &vaf);
 		dev_dbg(dev, "error %pe: %pV", ERR_PTR(err), &vaf);
-	पूर्ण
+	}
 
-	बहु_पूर्ण(args);
+	va_end(args);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 EXPORT_SYMBOL_GPL(dev_err_probe);
 
-अटल अंतरभूत bool fwnode_is_primary(काष्ठा fwnode_handle *fwnode)
-अणु
-	वापस fwnode && !IS_ERR(fwnode->secondary);
-पूर्ण
+static inline bool fwnode_is_primary(struct fwnode_handle *fwnode)
+{
+	return fwnode && !IS_ERR(fwnode->secondary);
+}
 
 /**
  * set_primary_fwnode - Change the primary firmware node of a given device.
  * @dev: Device to handle.
  * @fwnode: New primary firmware node of the device.
  *
- * Set the device's firmware node poपूर्णांकer to @fwnode, but अगर a secondary
+ * Set the device's firmware node pointer to @fwnode, but if a secondary
  * firmware node of the device is present, preserve it.
  *
- * Valid fwnode हालs are:
+ * Valid fwnode cases are:
  *  - primary --> secondary --> -ENODEV
- *  - primary --> शून्य
+ *  - primary --> NULL
  *  - secondary --> -ENODEV
- *  - शून्य
+ *  - NULL
  */
-व्योम set_primary_fwnode(काष्ठा device *dev, काष्ठा fwnode_handle *fwnode)
-अणु
-	काष्ठा device *parent = dev->parent;
-	काष्ठा fwnode_handle *fn = dev->fwnode;
+void set_primary_fwnode(struct device *dev, struct fwnode_handle *fwnode)
+{
+	struct device *parent = dev->parent;
+	struct fwnode_handle *fn = dev->fwnode;
 
-	अगर (fwnode) अणु
-		अगर (fwnode_is_primary(fn))
+	if (fwnode) {
+		if (fwnode_is_primary(fn))
 			fn = fn->secondary;
 
-		अगर (fn) अणु
+		if (fn) {
 			WARN_ON(fwnode->secondary);
 			fwnode->secondary = fn;
-		पूर्ण
+		}
 		dev->fwnode = fwnode;
-	पूर्ण अन्यथा अणु
-		अगर (fwnode_is_primary(fn)) अणु
+	} else {
+		if (fwnode_is_primary(fn)) {
 			dev->fwnode = fn->secondary;
-			/* Set fn->secondary = शून्य, so fn reमुख्यs the primary fwnode */
-			अगर (!(parent && fn == parent->fwnode))
-				fn->secondary = शून्य;
-		पूर्ण अन्यथा अणु
-			dev->fwnode = शून्य;
-		पूर्ण
-	पूर्ण
-पूर्ण
+			/* Set fn->secondary = NULL, so fn remains the primary fwnode */
+			if (!(parent && fn == parent->fwnode))
+				fn->secondary = NULL;
+		} else {
+			dev->fwnode = NULL;
+		}
+	}
+}
 EXPORT_SYMBOL_GPL(set_primary_fwnode);
 
 /**
@@ -4697,19 +4696,19 @@ EXPORT_SYMBOL_GPL(set_primary_fwnode);
  * @fwnode: New secondary firmware node of the device.
  *
  * If a primary firmware node of the device is present, set its secondary
- * poपूर्णांकer to @fwnode.  Otherwise, set the device's firmware node poपूर्णांकer to
+ * pointer to @fwnode.  Otherwise, set the device's firmware node pointer to
  * @fwnode.
  */
-व्योम set_secondary_fwnode(काष्ठा device *dev, काष्ठा fwnode_handle *fwnode)
-अणु
-	अगर (fwnode)
+void set_secondary_fwnode(struct device *dev, struct fwnode_handle *fwnode)
+{
+	if (fwnode)
 		fwnode->secondary = ERR_PTR(-ENODEV);
 
-	अगर (fwnode_is_primary(dev->fwnode))
+	if (fwnode_is_primary(dev->fwnode))
 		dev->fwnode->secondary = fwnode;
-	अन्यथा
+	else
 		dev->fwnode = fwnode;
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(set_secondary_fwnode);
 
 /**
@@ -4720,46 +4719,46 @@ EXPORT_SYMBOL_GPL(set_secondary_fwnode);
  * Takes another reference to the new device-tree node after first dropping
  * any reference held to the old node.
  */
-व्योम device_set_of_node_from_dev(काष्ठा device *dev, स्थिर काष्ठा device *dev2)
-अणु
+void device_set_of_node_from_dev(struct device *dev, const struct device *dev2)
+{
 	of_node_put(dev->of_node);
 	dev->of_node = of_node_get(dev2->of_node);
 	dev->of_node_reused = true;
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(device_set_of_node_from_dev);
 
-पूर्णांक device_match_name(काष्ठा device *dev, स्थिर व्योम *name)
-अणु
-	वापस sysfs_streq(dev_name(dev), name);
-पूर्ण
+int device_match_name(struct device *dev, const void *name)
+{
+	return sysfs_streq(dev_name(dev), name);
+}
 EXPORT_SYMBOL_GPL(device_match_name);
 
-पूर्णांक device_match_of_node(काष्ठा device *dev, स्थिर व्योम *np)
-अणु
-	वापस dev->of_node == np;
-पूर्ण
+int device_match_of_node(struct device *dev, const void *np)
+{
+	return dev->of_node == np;
+}
 EXPORT_SYMBOL_GPL(device_match_of_node);
 
-पूर्णांक device_match_fwnode(काष्ठा device *dev, स्थिर व्योम *fwnode)
-अणु
-	वापस dev_fwnode(dev) == fwnode;
-पूर्ण
+int device_match_fwnode(struct device *dev, const void *fwnode)
+{
+	return dev_fwnode(dev) == fwnode;
+}
 EXPORT_SYMBOL_GPL(device_match_fwnode);
 
-पूर्णांक device_match_devt(काष्ठा device *dev, स्थिर व्योम *pdevt)
-अणु
-	वापस dev->devt == *(dev_t *)pdevt;
-पूर्ण
+int device_match_devt(struct device *dev, const void *pdevt)
+{
+	return dev->devt == *(dev_t *)pdevt;
+}
 EXPORT_SYMBOL_GPL(device_match_devt);
 
-पूर्णांक device_match_acpi_dev(काष्ठा device *dev, स्थिर व्योम *adev)
-अणु
-	वापस ACPI_COMPANION(dev) == adev;
-पूर्ण
+int device_match_acpi_dev(struct device *dev, const void *adev)
+{
+	return ACPI_COMPANION(dev) == adev;
+}
 EXPORT_SYMBOL(device_match_acpi_dev);
 
-पूर्णांक device_match_any(काष्ठा device *dev, स्थिर व्योम *unused)
-अणु
-	वापस 1;
-पूर्ण
+int device_match_any(struct device *dev, const void *unused)
+{
+	return 1;
+}
 EXPORT_SYMBOL_GPL(device_match_any);

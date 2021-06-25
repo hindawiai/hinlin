@@ -1,30 +1,29 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * Copyright 1998-2008 VIA Technologies, Inc. All Rights Reserved.
  * Copyright 2001-2008 S3 Graphics, Inc. All Rights Reserved.
 
  */
-#अगर_अघोषित __DEBUG_H__
-#घोषणा __DEBUG_H__
+#ifndef __DEBUG_H__
+#define __DEBUG_H__
 
-#समावेश <linux/prपूर्णांकk.h>
+#include <linux/printk.h>
 
-#अगर_अघोषित VIAFB_DEBUG
-#घोषणा VIAFB_DEBUG 0
-#पूर्ण_अगर
+#ifndef VIAFB_DEBUG
+#define VIAFB_DEBUG 0
+#endif
 
-#अगर VIAFB_DEBUG
-#घोषणा DEBUG_MSG(f, a...)   prपूर्णांकk(f, ## a)
-#अन्यथा
-#घोषणा DEBUG_MSG(f, a...)   no_prपूर्णांकk(f, ## a)
-#पूर्ण_अगर
+#if VIAFB_DEBUG
+#define DEBUG_MSG(f, a...)   printk(f, ## a)
+#else
+#define DEBUG_MSG(f, a...)   no_printk(f, ## a)
+#endif
 
-#घोषणा VIAFB_WARN 0
-#अगर VIAFB_WARN
-#घोषणा WARN_MSG(f, a...)   prपूर्णांकk(f, ## a)
-#अन्यथा
-#घोषणा WARN_MSG(f, a...)   no_prपूर्णांकk(f, ## a)
-#पूर्ण_अगर
+#define VIAFB_WARN 0
+#if VIAFB_WARN
+#define WARN_MSG(f, a...)   printk(f, ## a)
+#else
+#define WARN_MSG(f, a...)   no_printk(f, ## a)
+#endif
 
-#पूर्ण_अगर /* __DEBUG_H__ */
+#endif /* __DEBUG_H__ */

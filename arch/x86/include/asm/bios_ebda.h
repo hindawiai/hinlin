@@ -1,41 +1,40 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _ASM_X86_BIOS_EBDA_H
-#घोषणा _ASM_X86_BIOS_EBDA_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _ASM_X86_BIOS_EBDA_H
+#define _ASM_X86_BIOS_EBDA_H
 
-#समावेश <यंत्र/पन.स>
+#include <asm/io.h>
 
 /*
- * Returns physical address of EBDA.  Returns 0 अगर there is no EBDA.
+ * Returns physical address of EBDA.  Returns 0 if there is no EBDA.
  */
-अटल अंतरभूत अचिन्हित पूर्णांक get_bios_ebda(व्योम)
-अणु
+static inline unsigned int get_bios_ebda(void)
+{
 	/*
-	 * There is a real-mode segmented poपूर्णांकer poपूर्णांकing to the
+	 * There is a real-mode segmented pointer pointing to the
 	 * 4K EBDA area at 0x40E.
 	 */
-	अचिन्हित पूर्णांक address = *(अचिन्हित लघु *)phys_to_virt(0x40E);
+	unsigned int address = *(unsigned short *)phys_to_virt(0x40E);
 	address <<= 4;
-	वापस address;	/* 0 means none */
-पूर्ण
+	return address;	/* 0 means none */
+}
 
-व्योम reserve_bios_regions(व्योम);
+void reserve_bios_regions(void);
 
-#अगर_घोषित CONFIG_X86_CHECK_BIOS_CORRUPTION
+#ifdef CONFIG_X86_CHECK_BIOS_CORRUPTION
 /*
- * This is obviously not a great place क्रम this, but we want to be
+ * This is obviously not a great place for this, but we want to be
  * able to scatter it around anywhere in the kernel.
  */
-व्योम check_क्रम_bios_corruption(व्योम);
-व्योम start_periodic_check_क्रम_corruption(व्योम);
-#अन्यथा
-अटल अंतरभूत व्योम check_क्रम_bios_corruption(व्योम)
-अणु
-पूर्ण
+void check_for_bios_corruption(void);
+void start_periodic_check_for_corruption(void);
+#else
+static inline void check_for_bios_corruption(void)
+{
+}
 
-अटल अंतरभूत व्योम start_periodic_check_क्रम_corruption(व्योम)
-अणु
-पूर्ण
-#पूर्ण_अगर
+static inline void start_periodic_check_for_corruption(void)
+{
+}
+#endif
 
-#पूर्ण_अगर /* _ASM_X86_BIOS_EBDA_H */
+#endif /* _ASM_X86_BIOS_EBDA_H */

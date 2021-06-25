@@ -1,82 +1,81 @@
-<शैली गुरु>
 /*
  * Intel e752x Memory Controller kernel module
  * (C) 2004 Linux Networx (http://lnxi.com)
  * This file may be distributed under the terms of the
  * GNU General Public License.
  *
- * Implement support क्रम the e7520, E7525, e7320 and i3100 memory controllers.
+ * Implement support for the e7520, E7525, e7320 and i3100 memory controllers.
  *
  * Datasheets:
- *	https://www.पूर्णांकel.in/content/www/in/en/chipsets/e7525-memory-controller-hub-datasheet.hपंचांगl
- *	ftp://करोwnload.पूर्णांकel.com/design/पूर्णांकarch/datashts/31345803.pdf
+ *	https://www.intel.in/content/www/in/en/chipsets/e7525-memory-controller-hub-datasheet.html
+ *	ftp://download.intel.com/design/intarch/datashts/31345803.pdf
  *
  * Written by Tom Zimmerman
  *
  * Contributors:
  * 	Thayne Harbaugh at realmsys.com (?)
- * 	Wang Zhenyu at पूर्णांकel.com
+ * 	Wang Zhenyu at intel.com
  * 	Dave Jiang at mvista.com
  *
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/init.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/pci_ids.h>
-#समावेश <linux/edac.h>
-#समावेश "edac_module.h"
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/pci.h>
+#include <linux/pci_ids.h>
+#include <linux/edac.h>
+#include "edac_module.h"
 
-#घोषणा EDAC_MOD_STR	"e752x_edac"
+#define EDAC_MOD_STR	"e752x_edac"
 
-अटल पूर्णांक report_non_memory_errors;
-अटल पूर्णांक क्रमce_function_unhide;
-अटल पूर्णांक sysbus_parity = -1;
+static int report_non_memory_errors;
+static int force_function_unhide;
+static int sysbus_parity = -1;
 
-अटल काष्ठा edac_pci_ctl_info *e752x_pci;
+static struct edac_pci_ctl_info *e752x_pci;
 
-#घोषणा e752x_prपूर्णांकk(level, fmt, arg...) \
-	edac_prपूर्णांकk(level, "e752x", fmt, ##arg)
+#define e752x_printk(level, fmt, arg...) \
+	edac_printk(level, "e752x", fmt, ##arg)
 
-#घोषणा e752x_mc_prपूर्णांकk(mci, level, fmt, arg...) \
-	edac_mc_chipset_prपूर्णांकk(mci, level, "e752x", fmt, ##arg)
+#define e752x_mc_printk(mci, level, fmt, arg...) \
+	edac_mc_chipset_printk(mci, level, "e752x", fmt, ##arg)
 
-#अगर_अघोषित PCI_DEVICE_ID_INTEL_7520_0
-#घोषणा PCI_DEVICE_ID_INTEL_7520_0      0x3590
-#पूर्ण_अगर				/* PCI_DEVICE_ID_INTEL_7520_0      */
+#ifndef PCI_DEVICE_ID_INTEL_7520_0
+#define PCI_DEVICE_ID_INTEL_7520_0      0x3590
+#endif				/* PCI_DEVICE_ID_INTEL_7520_0      */
 
-#अगर_अघोषित PCI_DEVICE_ID_INTEL_7520_1_ERR
-#घोषणा PCI_DEVICE_ID_INTEL_7520_1_ERR  0x3591
-#पूर्ण_अगर				/* PCI_DEVICE_ID_INTEL_7520_1_ERR  */
+#ifndef PCI_DEVICE_ID_INTEL_7520_1_ERR
+#define PCI_DEVICE_ID_INTEL_7520_1_ERR  0x3591
+#endif				/* PCI_DEVICE_ID_INTEL_7520_1_ERR  */
 
-#अगर_अघोषित PCI_DEVICE_ID_INTEL_7525_0
-#घोषणा PCI_DEVICE_ID_INTEL_7525_0      0x359E
-#पूर्ण_अगर				/* PCI_DEVICE_ID_INTEL_7525_0      */
+#ifndef PCI_DEVICE_ID_INTEL_7525_0
+#define PCI_DEVICE_ID_INTEL_7525_0      0x359E
+#endif				/* PCI_DEVICE_ID_INTEL_7525_0      */
 
-#अगर_अघोषित PCI_DEVICE_ID_INTEL_7525_1_ERR
-#घोषणा PCI_DEVICE_ID_INTEL_7525_1_ERR  0x3593
-#पूर्ण_अगर				/* PCI_DEVICE_ID_INTEL_7525_1_ERR  */
+#ifndef PCI_DEVICE_ID_INTEL_7525_1_ERR
+#define PCI_DEVICE_ID_INTEL_7525_1_ERR  0x3593
+#endif				/* PCI_DEVICE_ID_INTEL_7525_1_ERR  */
 
-#अगर_अघोषित PCI_DEVICE_ID_INTEL_7320_0
-#घोषणा PCI_DEVICE_ID_INTEL_7320_0	0x3592
-#पूर्ण_अगर				/* PCI_DEVICE_ID_INTEL_7320_0 */
+#ifndef PCI_DEVICE_ID_INTEL_7320_0
+#define PCI_DEVICE_ID_INTEL_7320_0	0x3592
+#endif				/* PCI_DEVICE_ID_INTEL_7320_0 */
 
-#अगर_अघोषित PCI_DEVICE_ID_INTEL_7320_1_ERR
-#घोषणा PCI_DEVICE_ID_INTEL_7320_1_ERR	0x3593
-#पूर्ण_अगर				/* PCI_DEVICE_ID_INTEL_7320_1_ERR */
+#ifndef PCI_DEVICE_ID_INTEL_7320_1_ERR
+#define PCI_DEVICE_ID_INTEL_7320_1_ERR	0x3593
+#endif				/* PCI_DEVICE_ID_INTEL_7320_1_ERR */
 
-#अगर_अघोषित PCI_DEVICE_ID_INTEL_3100_0
-#घोषणा PCI_DEVICE_ID_INTEL_3100_0	0x35B0
-#पूर्ण_अगर				/* PCI_DEVICE_ID_INTEL_3100_0 */
+#ifndef PCI_DEVICE_ID_INTEL_3100_0
+#define PCI_DEVICE_ID_INTEL_3100_0	0x35B0
+#endif				/* PCI_DEVICE_ID_INTEL_3100_0 */
 
-#अगर_अघोषित PCI_DEVICE_ID_INTEL_3100_1_ERR
-#घोषणा PCI_DEVICE_ID_INTEL_3100_1_ERR	0x35B1
-#पूर्ण_अगर				/* PCI_DEVICE_ID_INTEL_3100_1_ERR */
+#ifndef PCI_DEVICE_ID_INTEL_3100_1_ERR
+#define PCI_DEVICE_ID_INTEL_3100_1_ERR	0x35B1
+#endif				/* PCI_DEVICE_ID_INTEL_3100_1_ERR */
 
-#घोषणा E752X_NR_CSROWS		8	/* number of csrows */
+#define E752X_NR_CSROWS		8	/* number of csrows */
 
-/* E752X रेजिस्टर addresses - device 0 function 0 */
-#घोषणा E752X_MCHSCRB		0x52	/* Memory Scrub रेजिस्टर (16b) */
+/* E752X register addresses - device 0 function 0 */
+#define E752X_MCHSCRB		0x52	/* Memory Scrub register (16b) */
 					/*
 					 * 6:5     Scrub Completion Count
 					 * 3:2     Scrub Rate (i3100 only)
@@ -84,8 +83,8 @@
 					 * 1:0     Scrub Mode enable
 					 *      00=off 10=on
 					 */
-#घोषणा E752X_DRB		0x60	/* DRAM row boundary रेजिस्टर (8b) */
-#घोषणा E752X_DRA		0x70	/* DRAM row attribute रेजिस्टर (8b) */
+#define E752X_DRB		0x60	/* DRAM row boundary register (8b) */
+#define E752X_DRA		0x70	/* DRAM row attribute register (8b) */
 					/*
 					 * 31:30   Device width row 7
 					 *      01=x8 10=x4 11=x8 DDR2
@@ -97,97 +96,97 @@
 					 *  7:6    Device width row 1
 					 *  3:2    Device width row 0
 					 */
-#घोषणा E752X_DRC		0x7C	/* DRAM controller mode reg (32b) */
+#define E752X_DRC		0x7C	/* DRAM controller mode reg (32b) */
 					/* FIXME:IS THIS RIGHT? */
 					/*
 					 * 22    Number channels 0=1,1=2
 					 * 19:18 DRB Granularity 32/64MB
 					 */
-#घोषणा E752X_DRM		0x80	/* Dimm mapping रेजिस्टर */
-#घोषणा E752X_DDRCSR		0x9A	/* DDR control and status reg (16b) */
+#define E752X_DRM		0x80	/* Dimm mapping register */
+#define E752X_DDRCSR		0x9A	/* DDR control and status reg (16b) */
 					/*
 					 * 14:12 1 single A, 2 single B, 3 dual
 					 */
-#घोषणा E752X_TOLM		0xC4	/* DRAM top of low memory reg (16b) */
-#घोषणा E752X_REMAPBASE		0xC6	/* DRAM remap base address reg (16b) */
-#घोषणा E752X_REMAPLIMIT	0xC8	/* DRAM remap limit address reg (16b) */
-#घोषणा E752X_REMAPOFFSET	0xCA	/* DRAM remap limit offset reg (16b) */
+#define E752X_TOLM		0xC4	/* DRAM top of low memory reg (16b) */
+#define E752X_REMAPBASE		0xC6	/* DRAM remap base address reg (16b) */
+#define E752X_REMAPLIMIT	0xC8	/* DRAM remap limit address reg (16b) */
+#define E752X_REMAPOFFSET	0xCA	/* DRAM remap limit offset reg (16b) */
 
-/* E752X रेजिस्टर addresses - device 0 function 1 */
-#घोषणा E752X_FERR_GLOBAL	0x40	/* Global first error रेजिस्टर (32b) */
-#घोषणा E752X_NERR_GLOBAL	0x44	/* Global next error रेजिस्टर (32b) */
-#घोषणा E752X_HI_FERR		0x50	/* Hub पूर्णांकerface first error reg (8b) */
-#घोषणा E752X_HI_NERR		0x52	/* Hub पूर्णांकerface next error reg (8b) */
-#घोषणा E752X_HI_ERRMASK	0x54	/* Hub पूर्णांकerface error mask reg (8b) */
-#घोषणा E752X_HI_SMICMD		0x5A	/* Hub पूर्णांकerface SMI command reg (8b) */
-#घोषणा E752X_SYSBUS_FERR	0x60	/* System buss first error reg (16b) */
-#घोषणा E752X_SYSBUS_NERR	0x62	/* System buss next error reg (16b) */
-#घोषणा E752X_SYSBUS_ERRMASK	0x64	/* System buss error mask reg (16b) */
-#घोषणा E752X_SYSBUS_SMICMD	0x6A	/* System buss SMI command reg (16b) */
-#घोषणा E752X_BUF_FERR		0x70	/* Memory buffer first error reg (8b) */
-#घोषणा E752X_BUF_NERR		0x72	/* Memory buffer next error reg (8b) */
-#घोषणा E752X_BUF_ERRMASK	0x74	/* Memory buffer error mask reg (8b) */
-#घोषणा E752X_BUF_SMICMD	0x7A	/* Memory buffer SMI cmd reg (8b) */
-#घोषणा E752X_DRAM_FERR		0x80	/* DRAM first error रेजिस्टर (16b) */
-#घोषणा E752X_DRAM_NERR		0x82	/* DRAM next error रेजिस्टर (16b) */
-#घोषणा E752X_DRAM_ERRMASK	0x84	/* DRAM error mask रेजिस्टर (8b) */
-#घोषणा E752X_DRAM_SMICMD	0x8A	/* DRAM SMI command रेजिस्टर (8b) */
-#घोषणा E752X_DRAM_RETR_ADD	0xAC	/* DRAM Retry address रेजिस्टर (32b) */
-#घोषणा E752X_DRAM_SEC1_ADD	0xA0	/* DRAM first correctable memory */
-					/*     error address रेजिस्टर (32b) */
+/* E752X register addresses - device 0 function 1 */
+#define E752X_FERR_GLOBAL	0x40	/* Global first error register (32b) */
+#define E752X_NERR_GLOBAL	0x44	/* Global next error register (32b) */
+#define E752X_HI_FERR		0x50	/* Hub interface first error reg (8b) */
+#define E752X_HI_NERR		0x52	/* Hub interface next error reg (8b) */
+#define E752X_HI_ERRMASK	0x54	/* Hub interface error mask reg (8b) */
+#define E752X_HI_SMICMD		0x5A	/* Hub interface SMI command reg (8b) */
+#define E752X_SYSBUS_FERR	0x60	/* System buss first error reg (16b) */
+#define E752X_SYSBUS_NERR	0x62	/* System buss next error reg (16b) */
+#define E752X_SYSBUS_ERRMASK	0x64	/* System buss error mask reg (16b) */
+#define E752X_SYSBUS_SMICMD	0x6A	/* System buss SMI command reg (16b) */
+#define E752X_BUF_FERR		0x70	/* Memory buffer first error reg (8b) */
+#define E752X_BUF_NERR		0x72	/* Memory buffer next error reg (8b) */
+#define E752X_BUF_ERRMASK	0x74	/* Memory buffer error mask reg (8b) */
+#define E752X_BUF_SMICMD	0x7A	/* Memory buffer SMI cmd reg (8b) */
+#define E752X_DRAM_FERR		0x80	/* DRAM first error register (16b) */
+#define E752X_DRAM_NERR		0x82	/* DRAM next error register (16b) */
+#define E752X_DRAM_ERRMASK	0x84	/* DRAM error mask register (8b) */
+#define E752X_DRAM_SMICMD	0x8A	/* DRAM SMI command register (8b) */
+#define E752X_DRAM_RETR_ADD	0xAC	/* DRAM Retry address register (32b) */
+#define E752X_DRAM_SEC1_ADD	0xA0	/* DRAM first correctable memory */
+					/*     error address register (32b) */
 					/*
 					 * 31    Reserved
 					 * 30:2  CE address (64 byte block 34:6
 					 * 1     Reserved
 					 * 0     HiLoCS
 					 */
-#घोषणा E752X_DRAM_SEC2_ADD	0xC8	/* DRAM first correctable memory */
-					/*     error address रेजिस्टर (32b) */
+#define E752X_DRAM_SEC2_ADD	0xC8	/* DRAM first correctable memory */
+					/*     error address register (32b) */
 					/*
 					 * 31    Reserved
 					 * 30:2  CE address (64 byte block 34:6)
 					 * 1     Reserved
 					 * 0     HiLoCS
 					 */
-#घोषणा E752X_DRAM_DED_ADD	0xA4	/* DRAM first uncorrectable memory */
-					/*     error address रेजिस्टर (32b) */
+#define E752X_DRAM_DED_ADD	0xA4	/* DRAM first uncorrectable memory */
+					/*     error address register (32b) */
 					/*
 					 * 31    Reserved
 					 * 30:2  CE address (64 byte block 34:6)
 					 * 1     Reserved
 					 * 0     HiLoCS
 					 */
-#घोषणा E752X_DRAM_SCRB_ADD	0xA8	/* DRAM 1st uncorrectable scrub mem */
-					/*     error address रेजिस्टर (32b) */
+#define E752X_DRAM_SCRB_ADD	0xA8	/* DRAM 1st uncorrectable scrub mem */
+					/*     error address register (32b) */
 					/*
 					 * 31    Reserved
 					 * 30:2  CE address (64 byte block 34:6
 					 * 1     Reserved
 					 * 0     HiLoCS
 					 */
-#घोषणा E752X_DRAM_SEC1_SYNDROME 0xC4	/* DRAM first correctable memory */
-					/*     error syndrome रेजिस्टर (16b) */
-#घोषणा E752X_DRAM_SEC2_SYNDROME 0xC6	/* DRAM second correctable memory */
-					/*     error syndrome रेजिस्टर (16b) */
-#घोषणा E752X_DEVPRES1		0xF4	/* Device Present 1 रेजिस्टर (8b) */
+#define E752X_DRAM_SEC1_SYNDROME 0xC4	/* DRAM first correctable memory */
+					/*     error syndrome register (16b) */
+#define E752X_DRAM_SEC2_SYNDROME 0xC6	/* DRAM second correctable memory */
+					/*     error syndrome register (16b) */
+#define E752X_DEVPRES1		0xF4	/* Device Present 1 register (8b) */
 
-/* 3100 IMCH specअगरic रेजिस्टर addresses - device 0 function 1 */
-#घोषणा I3100_NSI_FERR		0x48	/* NSI first error reg (32b) */
-#घोषणा I3100_NSI_NERR		0x4C	/* NSI next error reg (32b) */
-#घोषणा I3100_NSI_SMICMD	0x54	/* NSI SMI command रेजिस्टर (32b) */
-#घोषणा I3100_NSI_EMASK		0x90	/* NSI error mask रेजिस्टर (32b) */
+/* 3100 IMCH specific register addresses - device 0 function 1 */
+#define I3100_NSI_FERR		0x48	/* NSI first error reg (32b) */
+#define I3100_NSI_NERR		0x4C	/* NSI next error reg (32b) */
+#define I3100_NSI_SMICMD	0x54	/* NSI SMI command register (32b) */
+#define I3100_NSI_EMASK		0x90	/* NSI error mask register (32b) */
 
-/* ICH5R रेजिस्टर addresses - device 30 function 0 */
-#घोषणा ICH5R_PCI_STAT		0x06	/* PCI status रेजिस्टर (16b) */
-#घोषणा ICH5R_PCI_2ND_STAT	0x1E	/* PCI status secondary reg (16b) */
-#घोषणा ICH5R_PCI_BRIDGE_CTL	0x3E	/* PCI bridge control रेजिस्टर (16b) */
+/* ICH5R register addresses - device 30 function 0 */
+#define ICH5R_PCI_STAT		0x06	/* PCI status register (16b) */
+#define ICH5R_PCI_2ND_STAT	0x1E	/* PCI status secondary reg (16b) */
+#define ICH5R_PCI_BRIDGE_CTL	0x3E	/* PCI bridge control register (16b) */
 
-क्रमागत e752x_chips अणु
+enum e752x_chips {
 	E7520 = 0,
 	E7525 = 1,
 	E7320 = 2,
 	I3100 = 3
-पूर्ण;
+};
 
 /*
  * Those chips Support single-rank and dual-rank memories only.
@@ -195,38 +194,38 @@
  * On e752x chips, the odd rows are present only on dual-rank memories.
  * Dividing the rank by two will provide the dimm#
  *
- * i3100 MC has a dअगरferent mapping: it supports only 4 ranks.
+ * i3100 MC has a different mapping: it supports only 4 ranks.
  *
  * The mapping is (from 1 to n):
- *	slot	   single-ranked	द्विगुन-ranked
+ *	slot	   single-ranked	double-ranked
  *	dimm #1 -> rank #4		NA
  *	dimm #2 -> rank #3		NA
  *	dimm #3 -> rank #2		Ranks 2 and 3
  *	dimm #4 -> rank $1		Ranks 1 and 4
  *
- * FIXME: The current mapping क्रम i3100 considers that it supports up to 8
+ * FIXME: The current mapping for i3100 considers that it supports up to 8
  *	  ranks/chanel, but datasheet says that the MC supports only 4 ranks.
  */
 
-काष्ठा e752x_pvt अणु
-	काष्ठा pci_dev *dev_d0f0;
-	काष्ठा pci_dev *dev_d0f1;
+struct e752x_pvt {
+	struct pci_dev *dev_d0f0;
+	struct pci_dev *dev_d0f1;
 	u32 tolm;
 	u32 remapbase;
 	u32 remaplimit;
-	पूर्णांक mc_symmetric;
+	int mc_symmetric;
 	u8 map[8];
-	पूर्णांक map_type;
-	स्थिर काष्ठा e752x_dev_info *dev_info;
-पूर्ण;
+	int map_type;
+	const struct e752x_dev_info *dev_info;
+};
 
-काष्ठा e752x_dev_info अणु
+struct e752x_dev_info {
 	u16 err_dev;
 	u16 ctl_dev;
-	स्थिर अक्षर *ctl_name;
-पूर्ण;
+	const char *ctl_name;
+};
 
-काष्ठा e752x_error_info अणु
+struct e752x_error_info {
 	u32 ferr_global;
 	u32 nerr_global;
 	u32 nsi_ferr;	/* 3100 only */
@@ -246,156 +245,156 @@
 	u32 dram_ded_add;
 	u32 dram_scrb_add;
 	u32 dram_retr_add;
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा e752x_dev_info e752x_devs[] = अणु
-	[E7520] = अणु
+static const struct e752x_dev_info e752x_devs[] = {
+	[E7520] = {
 		.err_dev = PCI_DEVICE_ID_INTEL_7520_1_ERR,
 		.ctl_dev = PCI_DEVICE_ID_INTEL_7520_0,
-		.ctl_name = "E7520"पूर्ण,
-	[E7525] = अणु
+		.ctl_name = "E7520"},
+	[E7525] = {
 		.err_dev = PCI_DEVICE_ID_INTEL_7525_1_ERR,
 		.ctl_dev = PCI_DEVICE_ID_INTEL_7525_0,
-		.ctl_name = "E7525"पूर्ण,
-	[E7320] = अणु
+		.ctl_name = "E7525"},
+	[E7320] = {
 		.err_dev = PCI_DEVICE_ID_INTEL_7320_1_ERR,
 		.ctl_dev = PCI_DEVICE_ID_INTEL_7320_0,
-		.ctl_name = "E7320"पूर्ण,
-	[I3100] = अणु
+		.ctl_name = "E7320"},
+	[I3100] = {
 		.err_dev = PCI_DEVICE_ID_INTEL_3100_1_ERR,
 		.ctl_dev = PCI_DEVICE_ID_INTEL_3100_0,
-		.ctl_name = "3100"पूर्ण,
-पूर्ण;
+		.ctl_name = "3100"},
+};
 
-/* Valid scrub rates क्रम the e752x/3100 hardware memory scrubber. We
- * map the scrubbing bandwidth to a hardware रेजिस्टर value. The 'set'
+/* Valid scrub rates for the e752x/3100 hardware memory scrubber. We
+ * map the scrubbing bandwidth to a hardware register value. The 'set'
  * operation finds the 'matching or higher value'.  Note that scrubbing
  * on the e752x can only be enabled/disabled.  The 3100 supports
  * a normal and fast mode.
  */
 
-#घोषणा SDRATE_EOT 0xFFFFFFFF
+#define SDRATE_EOT 0xFFFFFFFF
 
-काष्ठा scrubrate अणु
+struct scrubrate {
 	u32 bandwidth;	/* bandwidth consumed by scrubbing in bytes/sec */
-	u16 scrubval;	/* रेजिस्टर value क्रम scrub rate */
-पूर्ण;
+	u16 scrubval;	/* register value for scrub rate */
+};
 
-/* Rate below assumes same perक्रमmance as i3100 using PC3200 DDR2 in
- * normal mode.  e752x bridges करोn't support choosing normal or fast mode,
+/* Rate below assumes same performance as i3100 using PC3200 DDR2 in
+ * normal mode.  e752x bridges don't support choosing normal or fast mode,
  * so the scrubbing bandwidth value isn't all that important - scrubbing is
  * either on or off.
  */
-अटल स्थिर काष्ठा scrubrate scrubrates_e752x[] = अणु
-	अणु0,		0x00पूर्ण,	/* Scrubbing Off */
-	अणु500000,	0x02पूर्ण,	/* Scrubbing On */
-	अणुSDRATE_EOT,	0x00पूर्ण	/* End of Table */
-पूर्ण;
+static const struct scrubrate scrubrates_e752x[] = {
+	{0,		0x00},	/* Scrubbing Off */
+	{500000,	0x02},	/* Scrubbing On */
+	{SDRATE_EOT,	0x00}	/* End of Table */
+};
 
 /* Fast mode: 2 GByte PC3200 DDR2 scrubbed in 33s = 63161283 bytes/s
- * Normal mode: 125 (32000 / 256) बार slower than fast mode.
+ * Normal mode: 125 (32000 / 256) times slower than fast mode.
  */
-अटल स्थिर काष्ठा scrubrate scrubrates_i3100[] = अणु
-	अणु0,		0x00पूर्ण,	/* Scrubbing Off */
-	अणु500000,	0x0aपूर्ण,	/* Normal mode - 32k घड़ीs */
-	अणु62500000,	0x06पूर्ण,	/* Fast mode - 256 घड़ीs */
-	अणुSDRATE_EOT,	0x00पूर्ण	/* End of Table */
-पूर्ण;
+static const struct scrubrate scrubrates_i3100[] = {
+	{0,		0x00},	/* Scrubbing Off */
+	{500000,	0x0a},	/* Normal mode - 32k clocks */
+	{62500000,	0x06},	/* Fast mode - 256 clocks */
+	{SDRATE_EOT,	0x00}	/* End of Table */
+};
 
-अटल अचिन्हित दीर्घ ctl_page_to_phys(काष्ठा mem_ctl_info *mci,
-				अचिन्हित दीर्घ page)
-अणु
+static unsigned long ctl_page_to_phys(struct mem_ctl_info *mci,
+				unsigned long page)
+{
 	u32 remap;
-	काष्ठा e752x_pvt *pvt = (काष्ठा e752x_pvt *)mci->pvt_info;
+	struct e752x_pvt *pvt = (struct e752x_pvt *)mci->pvt_info;
 
 	edac_dbg(3, "\n");
 
-	अगर (page < pvt->tolm)
-		वापस page;
+	if (page < pvt->tolm)
+		return page;
 
-	अगर ((page >= 0x100000) && (page < pvt->remapbase))
-		वापस page;
+	if ((page >= 0x100000) && (page < pvt->remapbase))
+		return page;
 
 	remap = (page - pvt->tolm) + pvt->remapbase;
 
-	अगर (remap < pvt->remaplimit)
-		वापस remap;
+	if (remap < pvt->remaplimit)
+		return remap;
 
-	e752x_prपूर्णांकk(KERN_ERR, "Invalid page %lx - out of range\n", page);
-	वापस pvt->tolm - 1;
-पूर्ण
+	e752x_printk(KERN_ERR, "Invalid page %lx - out of range\n", page);
+	return pvt->tolm - 1;
+}
 
-अटल व्योम करो_process_ce(काष्ठा mem_ctl_info *mci, u16 error_one,
+static void do_process_ce(struct mem_ctl_info *mci, u16 error_one,
 			u32 sec1_add, u16 sec1_syndrome)
-अणु
+{
 	u32 page;
-	पूर्णांक row;
-	पूर्णांक channel;
-	पूर्णांक i;
-	काष्ठा e752x_pvt *pvt = (काष्ठा e752x_pvt *)mci->pvt_info;
+	int row;
+	int channel;
+	int i;
+	struct e752x_pvt *pvt = (struct e752x_pvt *)mci->pvt_info;
 
 	edac_dbg(3, "\n");
 
 	/* convert the addr to 4k page */
 	page = sec1_add >> (PAGE_SHIFT - 4);
 
-	/* FIXME - check क्रम -1 */
-	अगर (pvt->mc_symmetric) अणु
+	/* FIXME - check for -1 */
+	if (pvt->mc_symmetric) {
 		/* chip select are bits 14 & 13 */
 		row = ((page >> 1) & 3);
-		e752x_prपूर्णांकk(KERN_WARNING,
+		e752x_printk(KERN_WARNING,
 			"Test row %d Table %d %d %d %d %d %d %d %d\n", row,
 			pvt->map[0], pvt->map[1], pvt->map[2], pvt->map[3],
 			pvt->map[4], pvt->map[5], pvt->map[6],
 			pvt->map[7]);
 
-		/* test क्रम channel remapping */
-		क्रम (i = 0; i < 8; i++) अणु
-			अगर (pvt->map[i] == row)
-				अवरोध;
-		पूर्ण
+		/* test for channel remapping */
+		for (i = 0; i < 8; i++) {
+			if (pvt->map[i] == row)
+				break;
+		}
 
-		e752x_prपूर्णांकk(KERN_WARNING, "Test computed row %d\n", i);
+		e752x_printk(KERN_WARNING, "Test computed row %d\n", i);
 
-		अगर (i < 8)
+		if (i < 8)
 			row = i;
-		अन्यथा
-			e752x_mc_prपूर्णांकk(mci, KERN_WARNING,
+		else
+			e752x_mc_printk(mci, KERN_WARNING,
 					"row %d not found in remap table\n",
 					row);
-	पूर्ण अन्यथा
+	} else
 		row = edac_mc_find_csrow_by_page(mci, page);
 
 	/* 0 = channel A, 1 = channel B */
 	channel = !(error_one & 1);
 
-	/* e752x mc पढ़ोs 34:6 of the DRAM linear address */
+	/* e752x mc reads 34:6 of the DRAM linear address */
 	edac_mc_handle_error(HW_EVENT_ERR_CORRECTED, mci, 1,
 			     page, offset_in_page(sec1_add << 4), sec1_syndrome,
 			     row, channel, -1,
 			     "e752x CE", "");
-पूर्ण
+}
 
-अटल अंतरभूत व्योम process_ce(काष्ठा mem_ctl_info *mci, u16 error_one,
-			u32 sec1_add, u16 sec1_syndrome, पूर्णांक *error_found,
-			पूर्णांक handle_error)
-अणु
+static inline void process_ce(struct mem_ctl_info *mci, u16 error_one,
+			u32 sec1_add, u16 sec1_syndrome, int *error_found,
+			int handle_error)
+{
 	*error_found = 1;
 
-	अगर (handle_error)
-		करो_process_ce(mci, error_one, sec1_add, sec1_syndrome);
-पूर्ण
+	if (handle_error)
+		do_process_ce(mci, error_one, sec1_add, sec1_syndrome);
+}
 
-अटल व्योम करो_process_ue(काष्ठा mem_ctl_info *mci, u16 error_one,
+static void do_process_ue(struct mem_ctl_info *mci, u16 error_one,
 			u32 ded_add, u32 scrb_add)
-अणु
+{
 	u32 error_2b, block_page;
-	पूर्णांक row;
-	काष्ठा e752x_pvt *pvt = (काष्ठा e752x_pvt *)mci->pvt_info;
+	int row;
+	struct e752x_pvt *pvt = (struct e752x_pvt *)mci->pvt_info;
 
 	edac_dbg(3, "\n");
 
-	अगर (error_one & 0x0202) अणु
+	if (error_one & 0x0202) {
 		error_2b = ded_add;
 
 		/* convert to 4k address */
@@ -406,15 +405,15 @@
 			((block_page >> 1) & 3) :
 			edac_mc_find_csrow_by_page(mci, block_page);
 
-		/* e752x mc पढ़ोs 34:6 of the DRAM linear address */
+		/* e752x mc reads 34:6 of the DRAM linear address */
 		edac_mc_handle_error(HW_EVENT_ERR_UNCORRECTED, mci, 1,
 					block_page,
 					offset_in_page(error_2b << 4), 0,
 					 row, -1, -1,
 					"e752x UE from Read", "");
 
-	पूर्ण
-	अगर (error_one & 0x0404) अणु
+	}
+	if (error_one & 0x0404) {
 		error_2b = scrb_add;
 
 		/* convert to 4k address */
@@ -425,45 +424,45 @@
 			((block_page >> 1) & 3) :
 			edac_mc_find_csrow_by_page(mci, block_page);
 
-		/* e752x mc पढ़ोs 34:6 of the DRAM linear address */
+		/* e752x mc reads 34:6 of the DRAM linear address */
 		edac_mc_handle_error(HW_EVENT_ERR_UNCORRECTED, mci, 1,
 					block_page,
 					offset_in_page(error_2b << 4), 0,
 					row, -1, -1,
 					"e752x UE from Scruber", "");
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल अंतरभूत व्योम process_ue(काष्ठा mem_ctl_info *mci, u16 error_one,
-			u32 ded_add, u32 scrb_add, पूर्णांक *error_found,
-			पूर्णांक handle_error)
-अणु
+static inline void process_ue(struct mem_ctl_info *mci, u16 error_one,
+			u32 ded_add, u32 scrb_add, int *error_found,
+			int handle_error)
+{
 	*error_found = 1;
 
-	अगर (handle_error)
-		करो_process_ue(mci, error_one, ded_add, scrb_add);
-पूर्ण
+	if (handle_error)
+		do_process_ue(mci, error_one, ded_add, scrb_add);
+}
 
-अटल अंतरभूत व्योम process_ue_no_info_wr(काष्ठा mem_ctl_info *mci,
-					 पूर्णांक *error_found, पूर्णांक handle_error)
-अणु
+static inline void process_ue_no_info_wr(struct mem_ctl_info *mci,
+					 int *error_found, int handle_error)
+{
 	*error_found = 1;
 
-	अगर (!handle_error)
-		वापस;
+	if (!handle_error)
+		return;
 
 	edac_dbg(3, "\n");
 	edac_mc_handle_error(HW_EVENT_ERR_UNCORRECTED, mci, 1, 0, 0, 0,
 			     -1, -1, -1,
 			     "e752x UE log memory write", "");
-पूर्ण
+}
 
-अटल व्योम करो_process_ded_retry(काष्ठा mem_ctl_info *mci, u16 error,
+static void do_process_ded_retry(struct mem_ctl_info *mci, u16 error,
 				 u32 retry_add)
-अणु
+{
 	u32 error_1b, page;
-	पूर्णांक row;
-	काष्ठा e752x_pvt *pvt = (काष्ठा e752x_pvt *)mci->pvt_info;
+	int row;
+	struct e752x_pvt *pvt = (struct e752x_pvt *)mci->pvt_info;
 
 	error_1b = retry_add;
 	page = error_1b >> (PAGE_SHIFT - 4);  /* convert the addr to 4k page */
@@ -472,31 +471,31 @@
 	row = pvt->mc_symmetric ? ((page >> 1) & 3) :
 		edac_mc_find_csrow_by_page(mci, page);
 
-	e752x_mc_prपूर्णांकk(mci, KERN_WARNING,
+	e752x_mc_printk(mci, KERN_WARNING,
 			"CE page 0x%lx, row %d : Memory read retry\n",
-			(दीर्घ अचिन्हित पूर्णांक)page, row);
-पूर्ण
+			(long unsigned int)page, row);
+}
 
-अटल अंतरभूत व्योम process_ded_retry(काष्ठा mem_ctl_info *mci, u16 error,
-				u32 retry_add, पूर्णांक *error_found,
-				पूर्णांक handle_error)
-अणु
+static inline void process_ded_retry(struct mem_ctl_info *mci, u16 error,
+				u32 retry_add, int *error_found,
+				int handle_error)
+{
 	*error_found = 1;
 
-	अगर (handle_error)
-		करो_process_ded_retry(mci, error, retry_add);
-पूर्ण
+	if (handle_error)
+		do_process_ded_retry(mci, error, retry_add);
+}
 
-अटल अंतरभूत व्योम process_threshold_ce(काष्ठा mem_ctl_info *mci, u16 error,
-					पूर्णांक *error_found, पूर्णांक handle_error)
-अणु
+static inline void process_threshold_ce(struct mem_ctl_info *mci, u16 error,
+					int *error_found, int handle_error)
+{
 	*error_found = 1;
 
-	अगर (handle_error)
-		e752x_mc_prपूर्णांकk(mci, KERN_WARNING, "Memory threshold CE\n");
-पूर्ण
+	if (handle_error)
+		e752x_mc_printk(mci, KERN_WARNING, "Memory threshold CE\n");
+}
 
-अटल अक्षर *global_message[11] = अणु
+static char *global_message[11] = {
 	"PCI Express C1",
 	"PCI Express C",
 	"PCI Express B1",
@@ -508,71 +507,71 @@
 	"System Bus",
 	"DRAM Controller",  /* 9th entry */
 	"Internal Buffer"
-पूर्ण;
+};
 
-#घोषणा DRAM_ENTRY	9
+#define DRAM_ENTRY	9
 
-अटल अक्षर *fatal_message[2] = अणु "Non-Fatal ", "Fatal " पूर्ण;
+static char *fatal_message[2] = { "Non-Fatal ", "Fatal " };
 
-अटल व्योम करो_global_error(पूर्णांक fatal, u32 errors)
-अणु
-	पूर्णांक i;
+static void do_global_error(int fatal, u32 errors)
+{
+	int i;
 
-	क्रम (i = 0; i < 11; i++) अणु
-		अगर (errors & (1 << i)) अणु
+	for (i = 0; i < 11; i++) {
+		if (errors & (1 << i)) {
 			/* If the error is from DRAM Controller OR
 			 * we are to report ALL errors, then
 			 * report the error
 			 */
-			अगर ((i == DRAM_ENTRY) || report_non_memory_errors)
-				e752x_prपूर्णांकk(KERN_WARNING, "%sError %s\n",
+			if ((i == DRAM_ENTRY) || report_non_memory_errors)
+				e752x_printk(KERN_WARNING, "%sError %s\n",
 					fatal_message[fatal],
 					global_message[i]);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल अंतरभूत व्योम global_error(पूर्णांक fatal, u32 errors, पूर्णांक *error_found,
-				पूर्णांक handle_error)
-अणु
+static inline void global_error(int fatal, u32 errors, int *error_found,
+				int handle_error)
+{
 	*error_found = 1;
 
-	अगर (handle_error)
-		करो_global_error(fatal, errors);
-पूर्ण
+	if (handle_error)
+		do_global_error(fatal, errors);
+}
 
-अटल अक्षर *hub_message[7] = अणु
+static char *hub_message[7] = {
 	"HI Address or Command Parity", "HI Illegal Access",
 	"HI Internal Parity", "Out of Range Access",
 	"HI Data Parity", "Enhanced Config Access",
 	"Hub Interface Target Abort"
-पूर्ण;
+};
 
-अटल व्योम करो_hub_error(पूर्णांक fatal, u8 errors)
-अणु
-	पूर्णांक i;
+static void do_hub_error(int fatal, u8 errors)
+{
+	int i;
 
-	क्रम (i = 0; i < 7; i++) अणु
-		अगर (errors & (1 << i))
-			e752x_prपूर्णांकk(KERN_WARNING, "%sError %s\n",
+	for (i = 0; i < 7; i++) {
+		if (errors & (1 << i))
+			e752x_printk(KERN_WARNING, "%sError %s\n",
 				fatal_message[fatal], hub_message[i]);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल अंतरभूत व्योम hub_error(पूर्णांक fatal, u8 errors, पूर्णांक *error_found,
-			पूर्णांक handle_error)
-अणु
+static inline void hub_error(int fatal, u8 errors, int *error_found,
+			int handle_error)
+{
 	*error_found = 1;
 
-	अगर (handle_error)
-		करो_hub_error(fatal, errors);
-पूर्ण
+	if (handle_error)
+		do_hub_error(fatal, errors);
+}
 
-#घोषणा NSI_FATAL_MASK		0x0c080081
-#घोषणा NSI_NON_FATAL_MASK	0x23a0ba64
-#घोषणा NSI_ERR_MASK		(NSI_FATAL_MASK | NSI_NON_FATAL_MASK)
+#define NSI_FATAL_MASK		0x0c080081
+#define NSI_NON_FATAL_MASK	0x23a0ba64
+#define NSI_ERR_MASK		(NSI_FATAL_MASK | NSI_NON_FATAL_MASK)
 
-अटल अक्षर *nsi_message[30] = अणु
+static char *nsi_message[30] = {
 	"NSI Link Down",	/* NSI_FERR/NSI_NERR bit 0, fatal error */
 	"",						/* reserved */
 	"NSI Parity Error",				/* bit 2, non-fatal */
@@ -603,55 +602,55 @@
 	"Malformed TLP",				/* bit 27, fatal */
 	"",						/* reserved */
 	"Unsupported Request"				/* bit 29, non-fatal */
-पूर्ण;
+};
 
-अटल व्योम करो_nsi_error(पूर्णांक fatal, u32 errors)
-अणु
-	पूर्णांक i;
+static void do_nsi_error(int fatal, u32 errors)
+{
+	int i;
 
-	क्रम (i = 0; i < 30; i++) अणु
-		अगर (errors & (1 << i))
-			prपूर्णांकk(KERN_WARNING "%sError %s\n",
+	for (i = 0; i < 30; i++) {
+		if (errors & (1 << i))
+			printk(KERN_WARNING "%sError %s\n",
 			       fatal_message[fatal], nsi_message[i]);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल अंतरभूत व्योम nsi_error(पूर्णांक fatal, u32 errors, पूर्णांक *error_found,
-		पूर्णांक handle_error)
-अणु
+static inline void nsi_error(int fatal, u32 errors, int *error_found,
+		int handle_error)
+{
 	*error_found = 1;
 
-	अगर (handle_error)
-		करो_nsi_error(fatal, errors);
-पूर्ण
+	if (handle_error)
+		do_nsi_error(fatal, errors);
+}
 
-अटल अक्षर *membuf_message[4] = अणु
+static char *membuf_message[4] = {
 	"Internal PMWB to DRAM parity",
 	"Internal PMWB to System Bus Parity",
 	"Internal System Bus or IO to PMWB Parity",
 	"Internal DRAM to PMWB Parity"
-पूर्ण;
+};
 
-अटल व्योम करो_membuf_error(u8 errors)
-अणु
-	पूर्णांक i;
+static void do_membuf_error(u8 errors)
+{
+	int i;
 
-	क्रम (i = 0; i < 4; i++) अणु
-		अगर (errors & (1 << i))
-			e752x_prपूर्णांकk(KERN_WARNING, "Non-Fatal Error %s\n",
+	for (i = 0; i < 4; i++) {
+		if (errors & (1 << i))
+			e752x_printk(KERN_WARNING, "Non-Fatal Error %s\n",
 				membuf_message[i]);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल अंतरभूत व्योम membuf_error(u8 errors, पूर्णांक *error_found, पूर्णांक handle_error)
-अणु
+static inline void membuf_error(u8 errors, int *error_found, int handle_error)
+{
 	*error_found = 1;
 
-	अगर (handle_error)
-		करो_membuf_error(errors);
-पूर्ण
+	if (handle_error)
+		do_membuf_error(errors);
+}
 
-अटल अक्षर *sysbus_message[10] = अणु
+static char *sysbus_message[10] = {
 	"Addr or Request Parity",
 	"Data Strobe Glitch",
 	"Addr Strobe Glitch",
@@ -661,448 +660,448 @@
 	"MCERR", "BINIT",
 	"Memory Parity",
 	"IO Subsystem Parity"
-पूर्ण;
+};
 
-अटल व्योम करो_sysbus_error(पूर्णांक fatal, u32 errors)
-अणु
-	पूर्णांक i;
+static void do_sysbus_error(int fatal, u32 errors)
+{
+	int i;
 
-	क्रम (i = 0; i < 10; i++) अणु
-		अगर (errors & (1 << i))
-			e752x_prपूर्णांकk(KERN_WARNING, "%sError System Bus %s\n",
+	for (i = 0; i < 10; i++) {
+		if (errors & (1 << i))
+			e752x_printk(KERN_WARNING, "%sError System Bus %s\n",
 				fatal_message[fatal], sysbus_message[i]);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल अंतरभूत व्योम sysbus_error(पूर्णांक fatal, u32 errors, पूर्णांक *error_found,
-				पूर्णांक handle_error)
-अणु
+static inline void sysbus_error(int fatal, u32 errors, int *error_found,
+				int handle_error)
+{
 	*error_found = 1;
 
-	अगर (handle_error)
-		करो_sysbus_error(fatal, errors);
-पूर्ण
+	if (handle_error)
+		do_sysbus_error(fatal, errors);
+}
 
-अटल व्योम e752x_check_hub_पूर्णांकerface(काष्ठा e752x_error_info *info,
-				पूर्णांक *error_found, पूर्णांक handle_error)
-अणु
+static void e752x_check_hub_interface(struct e752x_error_info *info,
+				int *error_found, int handle_error)
+{
 	u8 stat8;
 
-	//pci_पढ़ो_config_byte(dev,E752X_HI_FERR,&stat8);
+	//pci_read_config_byte(dev,E752X_HI_FERR,&stat8);
 
 	stat8 = info->hi_ferr;
 
-	अगर (stat8 & 0x7f) अणु	/* Error, so process */
+	if (stat8 & 0x7f) {	/* Error, so process */
 		stat8 &= 0x7f;
 
-		अगर (stat8 & 0x2b)
+		if (stat8 & 0x2b)
 			hub_error(1, stat8 & 0x2b, error_found, handle_error);
 
-		अगर (stat8 & 0x54)
+		if (stat8 & 0x54)
 			hub_error(0, stat8 & 0x54, error_found, handle_error);
-	पूर्ण
-	//pci_पढ़ो_config_byte(dev,E752X_HI_NERR,&stat8);
+	}
+	//pci_read_config_byte(dev,E752X_HI_NERR,&stat8);
 
 	stat8 = info->hi_nerr;
 
-	अगर (stat8 & 0x7f) अणु	/* Error, so process */
+	if (stat8 & 0x7f) {	/* Error, so process */
 		stat8 &= 0x7f;
 
-		अगर (stat8 & 0x2b)
+		if (stat8 & 0x2b)
 			hub_error(1, stat8 & 0x2b, error_found, handle_error);
 
-		अगर (stat8 & 0x54)
+		if (stat8 & 0x54)
 			hub_error(0, stat8 & 0x54, error_found, handle_error);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम e752x_check_ns_पूर्णांकerface(काष्ठा e752x_error_info *info,
-				पूर्णांक *error_found, पूर्णांक handle_error)
-अणु
+static void e752x_check_ns_interface(struct e752x_error_info *info,
+				int *error_found, int handle_error)
+{
 	u32 stat32;
 
 	stat32 = info->nsi_ferr;
-	अगर (stat32 & NSI_ERR_MASK) अणु /* Error, so process */
-		अगर (stat32 & NSI_FATAL_MASK)	/* check क्रम fatal errors */
+	if (stat32 & NSI_ERR_MASK) { /* Error, so process */
+		if (stat32 & NSI_FATAL_MASK)	/* check for fatal errors */
 			nsi_error(1, stat32 & NSI_FATAL_MASK, error_found,
 				  handle_error);
-		अगर (stat32 & NSI_NON_FATAL_MASK) /* check क्रम non-fatal ones */
+		if (stat32 & NSI_NON_FATAL_MASK) /* check for non-fatal ones */
 			nsi_error(0, stat32 & NSI_NON_FATAL_MASK, error_found,
 				  handle_error);
-	पूर्ण
+	}
 	stat32 = info->nsi_nerr;
-	अगर (stat32 & NSI_ERR_MASK) अणु
-		अगर (stat32 & NSI_FATAL_MASK)
+	if (stat32 & NSI_ERR_MASK) {
+		if (stat32 & NSI_FATAL_MASK)
 			nsi_error(1, stat32 & NSI_FATAL_MASK, error_found,
 				  handle_error);
-		अगर (stat32 & NSI_NON_FATAL_MASK)
+		if (stat32 & NSI_NON_FATAL_MASK)
 			nsi_error(0, stat32 & NSI_NON_FATAL_MASK, error_found,
 				  handle_error);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम e752x_check_sysbus(काष्ठा e752x_error_info *info,
-			पूर्णांक *error_found, पूर्णांक handle_error)
-अणु
+static void e752x_check_sysbus(struct e752x_error_info *info,
+			int *error_found, int handle_error)
+{
 	u32 stat32, error32;
 
-	//pci_पढ़ो_config_dword(dev,E752X_SYSBUS_FERR,&stat32);
+	//pci_read_config_dword(dev,E752X_SYSBUS_FERR,&stat32);
 	stat32 = info->sysbus_ferr + (info->sysbus_nerr << 16);
 
-	अगर (stat32 == 0)
-		वापस;		/* no errors */
+	if (stat32 == 0)
+		return;		/* no errors */
 
 	error32 = (stat32 >> 16) & 0x3ff;
 	stat32 = stat32 & 0x3ff;
 
-	अगर (stat32 & 0x087)
+	if (stat32 & 0x087)
 		sysbus_error(1, stat32 & 0x087, error_found, handle_error);
 
-	अगर (stat32 & 0x378)
+	if (stat32 & 0x378)
 		sysbus_error(0, stat32 & 0x378, error_found, handle_error);
 
-	अगर (error32 & 0x087)
+	if (error32 & 0x087)
 		sysbus_error(1, error32 & 0x087, error_found, handle_error);
 
-	अगर (error32 & 0x378)
+	if (error32 & 0x378)
 		sysbus_error(0, error32 & 0x378, error_found, handle_error);
-पूर्ण
+}
 
-अटल व्योम e752x_check_membuf(काष्ठा e752x_error_info *info,
-			पूर्णांक *error_found, पूर्णांक handle_error)
-अणु
+static void e752x_check_membuf(struct e752x_error_info *info,
+			int *error_found, int handle_error)
+{
 	u8 stat8;
 
 	stat8 = info->buf_ferr;
 
-	अगर (stat8 & 0x0f) अणु	/* Error, so process */
+	if (stat8 & 0x0f) {	/* Error, so process */
 		stat8 &= 0x0f;
 		membuf_error(stat8, error_found, handle_error);
-	पूर्ण
+	}
 
 	stat8 = info->buf_nerr;
 
-	अगर (stat8 & 0x0f) अणु	/* Error, so process */
+	if (stat8 & 0x0f) {	/* Error, so process */
 		stat8 &= 0x0f;
 		membuf_error(stat8, error_found, handle_error);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम e752x_check_dram(काष्ठा mem_ctl_info *mci,
-			काष्ठा e752x_error_info *info, पूर्णांक *error_found,
-			पूर्णांक handle_error)
-अणु
+static void e752x_check_dram(struct mem_ctl_info *mci,
+			struct e752x_error_info *info, int *error_found,
+			int handle_error)
+{
 	u16 error_one, error_next;
 
 	error_one = info->dram_ferr;
 	error_next = info->dram_nerr;
 
 	/* decode and report errors */
-	अगर (error_one & 0x0101)	/* check first error correctable */
+	if (error_one & 0x0101)	/* check first error correctable */
 		process_ce(mci, error_one, info->dram_sec1_add,
 			info->dram_sec1_syndrome, error_found, handle_error);
 
-	अगर (error_next & 0x0101)	/* check next error correctable */
+	if (error_next & 0x0101)	/* check next error correctable */
 		process_ce(mci, error_next, info->dram_sec2_add,
 			info->dram_sec2_syndrome, error_found, handle_error);
 
-	अगर (error_one & 0x4040)
+	if (error_one & 0x4040)
 		process_ue_no_info_wr(mci, error_found, handle_error);
 
-	अगर (error_next & 0x4040)
+	if (error_next & 0x4040)
 		process_ue_no_info_wr(mci, error_found, handle_error);
 
-	अगर (error_one & 0x2020)
+	if (error_one & 0x2020)
 		process_ded_retry(mci, error_one, info->dram_retr_add,
 				error_found, handle_error);
 
-	अगर (error_next & 0x2020)
+	if (error_next & 0x2020)
 		process_ded_retry(mci, error_next, info->dram_retr_add,
 				error_found, handle_error);
 
-	अगर (error_one & 0x0808)
+	if (error_one & 0x0808)
 		process_threshold_ce(mci, error_one, error_found, handle_error);
 
-	अगर (error_next & 0x0808)
+	if (error_next & 0x0808)
 		process_threshold_ce(mci, error_next, error_found,
 				handle_error);
 
-	अगर (error_one & 0x0606)
+	if (error_one & 0x0606)
 		process_ue(mci, error_one, info->dram_ded_add,
 			info->dram_scrb_add, error_found, handle_error);
 
-	अगर (error_next & 0x0606)
+	if (error_next & 0x0606)
 		process_ue(mci, error_next, info->dram_ded_add,
 			info->dram_scrb_add, error_found, handle_error);
-पूर्ण
+}
 
-अटल व्योम e752x_get_error_info(काष्ठा mem_ctl_info *mci,
-				 काष्ठा e752x_error_info *info)
-अणु
-	काष्ठा pci_dev *dev;
-	काष्ठा e752x_pvt *pvt;
+static void e752x_get_error_info(struct mem_ctl_info *mci,
+				 struct e752x_error_info *info)
+{
+	struct pci_dev *dev;
+	struct e752x_pvt *pvt;
 
-	स_रखो(info, 0, माप(*info));
-	pvt = (काष्ठा e752x_pvt *)mci->pvt_info;
+	memset(info, 0, sizeof(*info));
+	pvt = (struct e752x_pvt *)mci->pvt_info;
 	dev = pvt->dev_d0f1;
-	pci_पढ़ो_config_dword(dev, E752X_FERR_GLOBAL, &info->ferr_global);
+	pci_read_config_dword(dev, E752X_FERR_GLOBAL, &info->ferr_global);
 
-	अगर (info->ferr_global) अणु
-		अगर (pvt->dev_info->err_dev == PCI_DEVICE_ID_INTEL_3100_1_ERR) अणु
-			pci_पढ़ो_config_dword(dev, I3100_NSI_FERR,
+	if (info->ferr_global) {
+		if (pvt->dev_info->err_dev == PCI_DEVICE_ID_INTEL_3100_1_ERR) {
+			pci_read_config_dword(dev, I3100_NSI_FERR,
 					     &info->nsi_ferr);
 			info->hi_ferr = 0;
-		पूर्ण अन्यथा अणु
-			pci_पढ़ो_config_byte(dev, E752X_HI_FERR,
+		} else {
+			pci_read_config_byte(dev, E752X_HI_FERR,
 					     &info->hi_ferr);
 			info->nsi_ferr = 0;
-		पूर्ण
-		pci_पढ़ो_config_word(dev, E752X_SYSBUS_FERR,
+		}
+		pci_read_config_word(dev, E752X_SYSBUS_FERR,
 				&info->sysbus_ferr);
-		pci_पढ़ो_config_byte(dev, E752X_BUF_FERR, &info->buf_ferr);
-		pci_पढ़ो_config_word(dev, E752X_DRAM_FERR, &info->dram_ferr);
-		pci_पढ़ो_config_dword(dev, E752X_DRAM_SEC1_ADD,
+		pci_read_config_byte(dev, E752X_BUF_FERR, &info->buf_ferr);
+		pci_read_config_word(dev, E752X_DRAM_FERR, &info->dram_ferr);
+		pci_read_config_dword(dev, E752X_DRAM_SEC1_ADD,
 				&info->dram_sec1_add);
-		pci_पढ़ो_config_word(dev, E752X_DRAM_SEC1_SYNDROME,
+		pci_read_config_word(dev, E752X_DRAM_SEC1_SYNDROME,
 				&info->dram_sec1_syndrome);
-		pci_पढ़ो_config_dword(dev, E752X_DRAM_DED_ADD,
+		pci_read_config_dword(dev, E752X_DRAM_DED_ADD,
 				&info->dram_ded_add);
-		pci_पढ़ो_config_dword(dev, E752X_DRAM_SCRB_ADD,
+		pci_read_config_dword(dev, E752X_DRAM_SCRB_ADD,
 				&info->dram_scrb_add);
-		pci_पढ़ो_config_dword(dev, E752X_DRAM_RETR_ADD,
+		pci_read_config_dword(dev, E752X_DRAM_RETR_ADD,
 				&info->dram_retr_add);
 
-		/* ignore the reserved bits just in हाल */
-		अगर (info->hi_ferr & 0x7f)
-			pci_ग_लिखो_config_byte(dev, E752X_HI_FERR,
+		/* ignore the reserved bits just in case */
+		if (info->hi_ferr & 0x7f)
+			pci_write_config_byte(dev, E752X_HI_FERR,
 					info->hi_ferr);
 
-		अगर (info->nsi_ferr & NSI_ERR_MASK)
-			pci_ग_लिखो_config_dword(dev, I3100_NSI_FERR,
+		if (info->nsi_ferr & NSI_ERR_MASK)
+			pci_write_config_dword(dev, I3100_NSI_FERR,
 					info->nsi_ferr);
 
-		अगर (info->sysbus_ferr)
-			pci_ग_लिखो_config_word(dev, E752X_SYSBUS_FERR,
+		if (info->sysbus_ferr)
+			pci_write_config_word(dev, E752X_SYSBUS_FERR,
 					info->sysbus_ferr);
 
-		अगर (info->buf_ferr & 0x0f)
-			pci_ग_लिखो_config_byte(dev, E752X_BUF_FERR,
+		if (info->buf_ferr & 0x0f)
+			pci_write_config_byte(dev, E752X_BUF_FERR,
 					info->buf_ferr);
 
-		अगर (info->dram_ferr)
-			pci_ग_लिखो_bits16(pvt->dev_d0f1, E752X_DRAM_FERR,
+		if (info->dram_ferr)
+			pci_write_bits16(pvt->dev_d0f1, E752X_DRAM_FERR,
 					 info->dram_ferr, info->dram_ferr);
 
-		pci_ग_लिखो_config_dword(dev, E752X_FERR_GLOBAL,
+		pci_write_config_dword(dev, E752X_FERR_GLOBAL,
 				info->ferr_global);
-	पूर्ण
+	}
 
-	pci_पढ़ो_config_dword(dev, E752X_NERR_GLOBAL, &info->nerr_global);
+	pci_read_config_dword(dev, E752X_NERR_GLOBAL, &info->nerr_global);
 
-	अगर (info->nerr_global) अणु
-		अगर (pvt->dev_info->err_dev == PCI_DEVICE_ID_INTEL_3100_1_ERR) अणु
-			pci_पढ़ो_config_dword(dev, I3100_NSI_NERR,
+	if (info->nerr_global) {
+		if (pvt->dev_info->err_dev == PCI_DEVICE_ID_INTEL_3100_1_ERR) {
+			pci_read_config_dword(dev, I3100_NSI_NERR,
 					     &info->nsi_nerr);
 			info->hi_nerr = 0;
-		पूर्ण अन्यथा अणु
-			pci_पढ़ो_config_byte(dev, E752X_HI_NERR,
+		} else {
+			pci_read_config_byte(dev, E752X_HI_NERR,
 					     &info->hi_nerr);
 			info->nsi_nerr = 0;
-		पूर्ण
-		pci_पढ़ो_config_word(dev, E752X_SYSBUS_NERR,
+		}
+		pci_read_config_word(dev, E752X_SYSBUS_NERR,
 				&info->sysbus_nerr);
-		pci_पढ़ो_config_byte(dev, E752X_BUF_NERR, &info->buf_nerr);
-		pci_पढ़ो_config_word(dev, E752X_DRAM_NERR, &info->dram_nerr);
-		pci_पढ़ो_config_dword(dev, E752X_DRAM_SEC2_ADD,
+		pci_read_config_byte(dev, E752X_BUF_NERR, &info->buf_nerr);
+		pci_read_config_word(dev, E752X_DRAM_NERR, &info->dram_nerr);
+		pci_read_config_dword(dev, E752X_DRAM_SEC2_ADD,
 				&info->dram_sec2_add);
-		pci_पढ़ो_config_word(dev, E752X_DRAM_SEC2_SYNDROME,
+		pci_read_config_word(dev, E752X_DRAM_SEC2_SYNDROME,
 				&info->dram_sec2_syndrome);
 
-		अगर (info->hi_nerr & 0x7f)
-			pci_ग_लिखो_config_byte(dev, E752X_HI_NERR,
+		if (info->hi_nerr & 0x7f)
+			pci_write_config_byte(dev, E752X_HI_NERR,
 					info->hi_nerr);
 
-		अगर (info->nsi_nerr & NSI_ERR_MASK)
-			pci_ग_लिखो_config_dword(dev, I3100_NSI_NERR,
+		if (info->nsi_nerr & NSI_ERR_MASK)
+			pci_write_config_dword(dev, I3100_NSI_NERR,
 					info->nsi_nerr);
 
-		अगर (info->sysbus_nerr)
-			pci_ग_लिखो_config_word(dev, E752X_SYSBUS_NERR,
+		if (info->sysbus_nerr)
+			pci_write_config_word(dev, E752X_SYSBUS_NERR,
 					info->sysbus_nerr);
 
-		अगर (info->buf_nerr & 0x0f)
-			pci_ग_लिखो_config_byte(dev, E752X_BUF_NERR,
+		if (info->buf_nerr & 0x0f)
+			pci_write_config_byte(dev, E752X_BUF_NERR,
 					info->buf_nerr);
 
-		अगर (info->dram_nerr)
-			pci_ग_लिखो_bits16(pvt->dev_d0f1, E752X_DRAM_NERR,
+		if (info->dram_nerr)
+			pci_write_bits16(pvt->dev_d0f1, E752X_DRAM_NERR,
 					 info->dram_nerr, info->dram_nerr);
 
-		pci_ग_लिखो_config_dword(dev, E752X_NERR_GLOBAL,
+		pci_write_config_dword(dev, E752X_NERR_GLOBAL,
 				info->nerr_global);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक e752x_process_error_info(काष्ठा mem_ctl_info *mci,
-				काष्ठा e752x_error_info *info,
-				पूर्णांक handle_errors)
-अणु
+static int e752x_process_error_info(struct mem_ctl_info *mci,
+				struct e752x_error_info *info,
+				int handle_errors)
+{
 	u32 error32, stat32;
-	पूर्णांक error_found;
+	int error_found;
 
 	error_found = 0;
 	error32 = (info->ferr_global >> 18) & 0x3ff;
 	stat32 = (info->ferr_global >> 4) & 0x7ff;
 
-	अगर (error32)
+	if (error32)
 		global_error(1, error32, &error_found, handle_errors);
 
-	अगर (stat32)
+	if (stat32)
 		global_error(0, stat32, &error_found, handle_errors);
 
 	error32 = (info->nerr_global >> 18) & 0x3ff;
 	stat32 = (info->nerr_global >> 4) & 0x7ff;
 
-	अगर (error32)
+	if (error32)
 		global_error(1, error32, &error_found, handle_errors);
 
-	अगर (stat32)
+	if (stat32)
 		global_error(0, stat32, &error_found, handle_errors);
 
-	e752x_check_hub_पूर्णांकerface(info, &error_found, handle_errors);
-	e752x_check_ns_पूर्णांकerface(info, &error_found, handle_errors);
+	e752x_check_hub_interface(info, &error_found, handle_errors);
+	e752x_check_ns_interface(info, &error_found, handle_errors);
 	e752x_check_sysbus(info, &error_found, handle_errors);
 	e752x_check_membuf(info, &error_found, handle_errors);
 	e752x_check_dram(mci, info, &error_found, handle_errors);
-	वापस error_found;
-पूर्ण
+	return error_found;
+}
 
-अटल व्योम e752x_check(काष्ठा mem_ctl_info *mci)
-अणु
-	काष्ठा e752x_error_info info;
+static void e752x_check(struct mem_ctl_info *mci)
+{
+	struct e752x_error_info info;
 
 	e752x_get_error_info(mci, &info);
 	e752x_process_error_info(mci, &info, 1);
-पूर्ण
+}
 
 /* Program byte/sec bandwidth scrub rate to hardware */
-अटल पूर्णांक set_sdram_scrub_rate(काष्ठा mem_ctl_info *mci, u32 new_bw)
-अणु
-	स्थिर काष्ठा scrubrate *scrubrates;
-	काष्ठा e752x_pvt *pvt = (काष्ठा e752x_pvt *) mci->pvt_info;
-	काष्ठा pci_dev *pdev = pvt->dev_d0f0;
-	पूर्णांक i;
+static int set_sdram_scrub_rate(struct mem_ctl_info *mci, u32 new_bw)
+{
+	const struct scrubrate *scrubrates;
+	struct e752x_pvt *pvt = (struct e752x_pvt *) mci->pvt_info;
+	struct pci_dev *pdev = pvt->dev_d0f0;
+	int i;
 
-	अगर (pvt->dev_info->ctl_dev == PCI_DEVICE_ID_INTEL_3100_0)
+	if (pvt->dev_info->ctl_dev == PCI_DEVICE_ID_INTEL_3100_0)
 		scrubrates = scrubrates_i3100;
-	अन्यथा
+	else
 		scrubrates = scrubrates_e752x;
 
-	/* Translate the desired scrub rate to a e752x/3100 रेजिस्टर value.
-	 * Search क्रम the bandwidth that is equal or greater than the
-	 * desired rate and program the cooresponding रेजिस्टर value.
+	/* Translate the desired scrub rate to a e752x/3100 register value.
+	 * Search for the bandwidth that is equal or greater than the
+	 * desired rate and program the cooresponding register value.
 	 */
-	क्रम (i = 0; scrubrates[i].bandwidth != SDRATE_EOT; i++)
-		अगर (scrubrates[i].bandwidth >= new_bw)
-			अवरोध;
+	for (i = 0; scrubrates[i].bandwidth != SDRATE_EOT; i++)
+		if (scrubrates[i].bandwidth >= new_bw)
+			break;
 
-	अगर (scrubrates[i].bandwidth == SDRATE_EOT)
-		वापस -1;
+	if (scrubrates[i].bandwidth == SDRATE_EOT)
+		return -1;
 
-	pci_ग_लिखो_config_word(pdev, E752X_MCHSCRB, scrubrates[i].scrubval);
+	pci_write_config_word(pdev, E752X_MCHSCRB, scrubrates[i].scrubval);
 
-	वापस scrubrates[i].bandwidth;
-पूर्ण
+	return scrubrates[i].bandwidth;
+}
 
-/* Convert current scrub rate value पूर्णांकo byte/sec bandwidth */
-अटल पूर्णांक get_sdram_scrub_rate(काष्ठा mem_ctl_info *mci)
-अणु
-	स्थिर काष्ठा scrubrate *scrubrates;
-	काष्ठा e752x_pvt *pvt = (काष्ठा e752x_pvt *) mci->pvt_info;
-	काष्ठा pci_dev *pdev = pvt->dev_d0f0;
+/* Convert current scrub rate value into byte/sec bandwidth */
+static int get_sdram_scrub_rate(struct mem_ctl_info *mci)
+{
+	const struct scrubrate *scrubrates;
+	struct e752x_pvt *pvt = (struct e752x_pvt *) mci->pvt_info;
+	struct pci_dev *pdev = pvt->dev_d0f0;
 	u16 scrubval;
-	पूर्णांक i;
+	int i;
 
-	अगर (pvt->dev_info->ctl_dev == PCI_DEVICE_ID_INTEL_3100_0)
+	if (pvt->dev_info->ctl_dev == PCI_DEVICE_ID_INTEL_3100_0)
 		scrubrates = scrubrates_i3100;
-	अन्यथा
+	else
 		scrubrates = scrubrates_e752x;
 
 	/* Find the bandwidth matching the memory scrubber configuration */
-	pci_पढ़ो_config_word(pdev, E752X_MCHSCRB, &scrubval);
+	pci_read_config_word(pdev, E752X_MCHSCRB, &scrubval);
 	scrubval = scrubval & 0x0f;
 
-	क्रम (i = 0; scrubrates[i].bandwidth != SDRATE_EOT; i++)
-		अगर (scrubrates[i].scrubval == scrubval)
-			अवरोध;
+	for (i = 0; scrubrates[i].bandwidth != SDRATE_EOT; i++)
+		if (scrubrates[i].scrubval == scrubval)
+			break;
 
-	अगर (scrubrates[i].bandwidth == SDRATE_EOT) अणु
-		e752x_prपूर्णांकk(KERN_WARNING,
+	if (scrubrates[i].bandwidth == SDRATE_EOT) {
+		e752x_printk(KERN_WARNING,
 			"Invalid sdram scrub control value: 0x%x\n", scrubval);
-		वापस -1;
-	पूर्ण
-	वापस scrubrates[i].bandwidth;
+		return -1;
+	}
+	return scrubrates[i].bandwidth;
 
-पूर्ण
+}
 
-/* Return 1 अगर dual channel mode is active.  Else वापस 0. */
-अटल अंतरभूत पूर्णांक dual_channel_active(u16 ddrcsr)
-अणु
-	वापस (((ddrcsr >> 12) & 3) == 3);
-पूर्ण
+/* Return 1 if dual channel mode is active.  Else return 0. */
+static inline int dual_channel_active(u16 ddrcsr)
+{
+	return (((ddrcsr >> 12) & 3) == 3);
+}
 
-/* Remap csrow index numbers अगर map_type is "reverse"
+/* Remap csrow index numbers if map_type is "reverse"
  */
-अटल अंतरभूत पूर्णांक remap_csrow_index(काष्ठा mem_ctl_info *mci, पूर्णांक index)
-अणु
-	काष्ठा e752x_pvt *pvt = mci->pvt_info;
+static inline int remap_csrow_index(struct mem_ctl_info *mci, int index)
+{
+	struct e752x_pvt *pvt = mci->pvt_info;
 
-	अगर (!pvt->map_type)
-		वापस (7 - index);
+	if (!pvt->map_type)
+		return (7 - index);
 
-	वापस (index);
-पूर्ण
+	return (index);
+}
 
-अटल व्योम e752x_init_csrows(काष्ठा mem_ctl_info *mci, काष्ठा pci_dev *pdev,
+static void e752x_init_csrows(struct mem_ctl_info *mci, struct pci_dev *pdev,
 			u16 ddrcsr)
-अणु
-	काष्ठा csrow_info *csrow;
-	क्रमागत edac_type edac_mode;
-	अचिन्हित दीर्घ last_cumul_size;
-	पूर्णांक index, mem_dev, drc_chan;
-	पूर्णांक drc_drbg;		/* DRB granularity 0=64mb, 1=128mb */
-	पूर्णांक drc_ddim;		/* DRAM Data Integrity Mode 0=none, 2=edac */
+{
+	struct csrow_info *csrow;
+	enum edac_type edac_mode;
+	unsigned long last_cumul_size;
+	int index, mem_dev, drc_chan;
+	int drc_drbg;		/* DRB granularity 0=64mb, 1=128mb */
+	int drc_ddim;		/* DRAM Data Integrity Mode 0=none, 2=edac */
 	u8 value;
 	u32 dra, drc, cumul_size, i, nr_pages;
 
 	dra = 0;
-	क्रम (index = 0; index < 4; index++) अणु
+	for (index = 0; index < 4; index++) {
 		u8 dra_reg;
-		pci_पढ़ो_config_byte(pdev, E752X_DRA + index, &dra_reg);
+		pci_read_config_byte(pdev, E752X_DRA + index, &dra_reg);
 		dra |= dra_reg << (index * 8);
-	पूर्ण
-	pci_पढ़ो_config_dword(pdev, E752X_DRC, &drc);
+	}
+	pci_read_config_dword(pdev, E752X_DRC, &drc);
 	drc_chan = dual_channel_active(ddrcsr) ? 1 : 0;
 	drc_drbg = drc_chan + 1;	/* 128 in dual mode, 64 in single */
 	drc_ddim = (drc >> 20) & 0x3;
 
-	/* The dram row boundary (DRB) reg values are boundary address क्रम
+	/* The dram row boundary (DRB) reg values are boundary address for
 	 * each DRAM row with a granularity of 64 or 128MB (single/dual
-	 * channel operation).  DRB regs are cumulative; thereक्रमe DRB7 will
+	 * channel operation).  DRB regs are cumulative; therefore DRB7 will
 	 * contain the total memory contained in all eight rows.
 	 */
-	क्रम (last_cumul_size = index = 0; index < mci->nr_csrows; index++) अणु
+	for (last_cumul_size = index = 0; index < mci->nr_csrows; index++) {
 		/* mem_dev 0=x8, 1=x4 */
 		mem_dev = (dra >> (index * 4 + 2)) & 0x3;
 		csrow = mci->csrows[remap_csrow_index(mci, index)];
 
 		mem_dev = (mem_dev == 2);
-		pci_पढ़ो_config_byte(pdev, E752X_DRB + index, &value);
+		pci_read_config_byte(pdev, E752X_DRB + index, &value);
 		/* convert a 128 or 64 MiB DRB to a page size. */
 		cumul_size = value << (25 + drc_drbg - PAGE_SHIFT);
 		edac_dbg(3, "(%d) cumul_size 0x%x\n", index, cumul_size);
-		अगर (cumul_size == last_cumul_size)
-			जारी;	/* not populated */
+		if (cumul_size == last_cumul_size)
+			continue;	/* not populated */
 
 		csrow->first_page = last_cumul_size;
 		csrow->last_page = cumul_size - 1;
@@ -1110,21 +1109,21 @@
 		last_cumul_size = cumul_size;
 
 		/*
-		* अगर single channel or x8 devices then SECDED
-		* अगर dual channel and x4 then S4ECD4ED
+		* if single channel or x8 devices then SECDED
+		* if dual channel and x4 then S4ECD4ED
 		*/
-		अगर (drc_ddim) अणु
-			अगर (drc_chan && mem_dev) अणु
+		if (drc_ddim) {
+			if (drc_chan && mem_dev) {
 				edac_mode = EDAC_S4ECD4ED;
 				mci->edac_cap |= EDAC_FLAG_S4ECD4ED;
-			पूर्ण अन्यथा अणु
+			} else {
 				edac_mode = EDAC_SECDED;
 				mci->edac_cap |= EDAC_FLAG_SECDED;
-			पूर्ण
-		पूर्ण अन्यथा
+			}
+		} else
 			edac_mode = EDAC_NONE;
-		क्रम (i = 0; i < csrow->nr_channels; i++) अणु
-			काष्ठा dimm_info *dimm = csrow->channels[i]->dimm;
+		for (i = 0; i < csrow->nr_channels; i++) {
+			struct dimm_info *dimm = csrow->channels[i]->dimm;
 
 			edac_dbg(3, "Initializing rank at (%i,%i)\n", index, i);
 			dimm->nr_pages = nr_pages / csrow->nr_channels;
@@ -1132,156 +1131,156 @@
 			dimm->mtype = MEM_RDDR;	/* only one type supported */
 			dimm->dtype = mem_dev ? DEV_X4 : DEV_X8;
 			dimm->edac_mode = edac_mode;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल व्योम e752x_init_mem_map_table(काष्ठा pci_dev *pdev,
-				काष्ठा e752x_pvt *pvt)
-अणु
-	पूर्णांक index;
+static void e752x_init_mem_map_table(struct pci_dev *pdev,
+				struct e752x_pvt *pvt)
+{
+	int index;
 	u8 value, last, row;
 
 	last = 0;
 	row = 0;
 
-	क्रम (index = 0; index < 8; index += 2) अणु
-		pci_पढ़ो_config_byte(pdev, E752X_DRB + index, &value);
-		/* test अगर there is a dimm in this slot */
-		अगर (value == last) अणु
+	for (index = 0; index < 8; index += 2) {
+		pci_read_config_byte(pdev, E752X_DRB + index, &value);
+		/* test if there is a dimm in this slot */
+		if (value == last) {
 			/* no dimm in the slot, so flag it as empty */
 			pvt->map[index] = 0xff;
 			pvt->map[index + 1] = 0xff;
-		पूर्ण अन्यथा अणु	/* there is a dimm in the slot */
+		} else {	/* there is a dimm in the slot */
 			pvt->map[index] = row;
 			row++;
 			last = value;
-			/* test the next value to see अगर the dimm is द्विगुन
+			/* test the next value to see if the dimm is double
 			 * sided
 			 */
-			pci_पढ़ो_config_byte(pdev, E752X_DRB + index + 1,
+			pci_read_config_byte(pdev, E752X_DRB + index + 1,
 					&value);
 
 			/* the dimm is single sided, so flag as empty */
-			/* this is a द्विगुन sided dimm to save the next row #*/
+			/* this is a double sided dimm to save the next row #*/
 			pvt->map[index + 1] = (value == last) ? 0xff :	row;
 			row++;
 			last = value;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
 /* Return 0 on success or 1 on failure. */
-अटल पूर्णांक e752x_get_devs(काष्ठा pci_dev *pdev, पूर्णांक dev_idx,
-			काष्ठा e752x_pvt *pvt)
-अणु
+static int e752x_get_devs(struct pci_dev *pdev, int dev_idx,
+			struct e752x_pvt *pvt)
+{
 	pvt->dev_d0f1 = pci_get_device(PCI_VENDOR_ID_INTEL,
-				pvt->dev_info->err_dev, शून्य);
+				pvt->dev_info->err_dev, NULL);
 
-	अगर (pvt->dev_d0f1 == शून्य) अणु
+	if (pvt->dev_d0f1 == NULL) {
 		pvt->dev_d0f1 = pci_scan_single_device(pdev->bus,
 							PCI_DEVFN(0, 1));
 		pci_dev_get(pvt->dev_d0f1);
-	पूर्ण
+	}
 
-	अगर (pvt->dev_d0f1 == शून्य) अणु
-		e752x_prपूर्णांकk(KERN_ERR, "error reporting device not found:"
+	if (pvt->dev_d0f1 == NULL) {
+		e752x_printk(KERN_ERR, "error reporting device not found:"
 			"vendor %x device 0x%x (broken BIOS?)\n",
 			PCI_VENDOR_ID_INTEL, e752x_devs[dev_idx].err_dev);
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 
 	pvt->dev_d0f0 = pci_get_device(PCI_VENDOR_ID_INTEL,
 				e752x_devs[dev_idx].ctl_dev,
-				शून्य);
+				NULL);
 
-	अगर (pvt->dev_d0f0 == शून्य)
-		जाओ fail;
+	if (pvt->dev_d0f0 == NULL)
+		goto fail;
 
-	वापस 0;
+	return 0;
 
 fail:
 	pci_dev_put(pvt->dev_d0f1);
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-/* Setup प्रणाली bus parity mask रेजिस्टर.
+/* Setup system bus parity mask register.
  * Sysbus parity supported on:
  * e7320/e7520/e7525 + Xeon
  */
-अटल व्योम e752x_init_sysbus_parity_mask(काष्ठा e752x_pvt *pvt)
-अणु
-	अक्षर *cpu_id = cpu_data(0).x86_model_id;
-	काष्ठा pci_dev *dev = pvt->dev_d0f1;
-	पूर्णांक enable = 1;
+static void e752x_init_sysbus_parity_mask(struct e752x_pvt *pvt)
+{
+	char *cpu_id = cpu_data(0).x86_model_id;
+	struct pci_dev *dev = pvt->dev_d0f1;
+	int enable = 1;
 
-	/* Allow module parameter override, अन्यथा see अगर CPU supports parity */
-	अगर (sysbus_parity != -1) अणु
+	/* Allow module parameter override, else see if CPU supports parity */
+	if (sysbus_parity != -1) {
 		enable = sysbus_parity;
-	पूर्ण अन्यथा अगर (cpu_id[0] && !म_माला(cpu_id, "Xeon")) अणु
-		e752x_prपूर्णांकk(KERN_INFO, "System Bus Parity not "
+	} else if (cpu_id[0] && !strstr(cpu_id, "Xeon")) {
+		e752x_printk(KERN_INFO, "System Bus Parity not "
 			     "supported by CPU, disabling\n");
 		enable = 0;
-	पूर्ण
+	}
 
-	अगर (enable)
-		pci_ग_लिखो_config_word(dev, E752X_SYSBUS_ERRMASK, 0x0000);
-	अन्यथा
-		pci_ग_लिखो_config_word(dev, E752X_SYSBUS_ERRMASK, 0x0309);
-पूर्ण
+	if (enable)
+		pci_write_config_word(dev, E752X_SYSBUS_ERRMASK, 0x0000);
+	else
+		pci_write_config_word(dev, E752X_SYSBUS_ERRMASK, 0x0309);
+}
 
-अटल व्योम e752x_init_error_reporting_regs(काष्ठा e752x_pvt *pvt)
-अणु
-	काष्ठा pci_dev *dev;
+static void e752x_init_error_reporting_regs(struct e752x_pvt *pvt)
+{
+	struct pci_dev *dev;
 
 	dev = pvt->dev_d0f1;
-	/* Turn off error disable & SMI in हाल the BIOS turned it on */
-	अगर (pvt->dev_info->err_dev == PCI_DEVICE_ID_INTEL_3100_1_ERR) अणु
-		pci_ग_लिखो_config_dword(dev, I3100_NSI_EMASK, 0);
-		pci_ग_लिखो_config_dword(dev, I3100_NSI_SMICMD, 0);
-	पूर्ण अन्यथा अणु
-		pci_ग_लिखो_config_byte(dev, E752X_HI_ERRMASK, 0x00);
-		pci_ग_लिखो_config_byte(dev, E752X_HI_SMICMD, 0x00);
-	पूर्ण
+	/* Turn off error disable & SMI in case the BIOS turned it on */
+	if (pvt->dev_info->err_dev == PCI_DEVICE_ID_INTEL_3100_1_ERR) {
+		pci_write_config_dword(dev, I3100_NSI_EMASK, 0);
+		pci_write_config_dword(dev, I3100_NSI_SMICMD, 0);
+	} else {
+		pci_write_config_byte(dev, E752X_HI_ERRMASK, 0x00);
+		pci_write_config_byte(dev, E752X_HI_SMICMD, 0x00);
+	}
 
 	e752x_init_sysbus_parity_mask(pvt);
 
-	pci_ग_लिखो_config_word(dev, E752X_SYSBUS_SMICMD, 0x00);
-	pci_ग_लिखो_config_byte(dev, E752X_BUF_ERRMASK, 0x00);
-	pci_ग_लिखो_config_byte(dev, E752X_BUF_SMICMD, 0x00);
-	pci_ग_लिखो_config_byte(dev, E752X_DRAM_ERRMASK, 0x00);
-	pci_ग_लिखो_config_byte(dev, E752X_DRAM_SMICMD, 0x00);
-पूर्ण
+	pci_write_config_word(dev, E752X_SYSBUS_SMICMD, 0x00);
+	pci_write_config_byte(dev, E752X_BUF_ERRMASK, 0x00);
+	pci_write_config_byte(dev, E752X_BUF_SMICMD, 0x00);
+	pci_write_config_byte(dev, E752X_DRAM_ERRMASK, 0x00);
+	pci_write_config_byte(dev, E752X_DRAM_SMICMD, 0x00);
+}
 
-अटल पूर्णांक e752x_probe1(काष्ठा pci_dev *pdev, पूर्णांक dev_idx)
-अणु
+static int e752x_probe1(struct pci_dev *pdev, int dev_idx)
+{
 	u16 pci_data;
 	u8 stat8;
-	काष्ठा mem_ctl_info *mci;
-	काष्ठा edac_mc_layer layers[2];
-	काष्ठा e752x_pvt *pvt;
+	struct mem_ctl_info *mci;
+	struct edac_mc_layer layers[2];
+	struct e752x_pvt *pvt;
 	u16 ddrcsr;
-	पूर्णांक drc_chan;		/* Number of channels 0=1chan,1=2chan */
-	काष्ठा e752x_error_info discard;
+	int drc_chan;		/* Number of channels 0=1chan,1=2chan */
+	struct e752x_error_info discard;
 
 	edac_dbg(0, "mci\n");
 	edac_dbg(0, "Starting Probe1\n");
 
-	/* check to see अगर device 0 function 1 is enabled; अगर it isn't, we
-	 * assume the BIOS has reserved it क्रम a reason and is expecting
+	/* check to see if device 0 function 1 is enabled; if it isn't, we
+	 * assume the BIOS has reserved it for a reason and is expecting
 	 * exclusive access, we take care not to violate that assumption and
 	 * fail the probe. */
-	pci_पढ़ो_config_byte(pdev, E752X_DEVPRES1, &stat8);
-	अगर (!क्रमce_function_unhide && !(stat8 & (1 << 5))) अणु
-		prपूर्णांकk(KERN_INFO "Contact your BIOS vendor to see if the "
+	pci_read_config_byte(pdev, E752X_DEVPRES1, &stat8);
+	if (!force_function_unhide && !(stat8 & (1 << 5))) {
+		printk(KERN_INFO "Contact your BIOS vendor to see if the "
 			"E752x error registers can be safely un-hidden\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 	stat8 |= (1 << 5);
-	pci_ग_लिखो_config_byte(pdev, E752X_DEVPRES1, stat8);
+	pci_write_config_byte(pdev, E752X_DEVPRES1, stat8);
 
-	pci_पढ़ो_config_word(pdev, E752X_DDRCSR, &ddrcsr);
-	/* FIXME: should check >>12 or 0xf, true क्रम all? */
+	pci_read_config_word(pdev, E752X_DDRCSR, &ddrcsr);
+	/* FIXME: should check >>12 or 0xf, true for all? */
 	/* Dual channel = 1, Single channel = 0 */
 	drc_chan = dual_channel_active(ddrcsr);
 
@@ -1291,28 +1290,28 @@ fail:
 	layers[1].type = EDAC_MC_LAYER_CHANNEL;
 	layers[1].size = drc_chan + 1;
 	layers[1].is_virt_csrow = false;
-	mci = edac_mc_alloc(0, ARRAY_SIZE(layers), layers, माप(*pvt));
-	अगर (mci == शून्य)
-		वापस -ENOMEM;
+	mci = edac_mc_alloc(0, ARRAY_SIZE(layers), layers, sizeof(*pvt));
+	if (mci == NULL)
+		return -ENOMEM;
 
 	edac_dbg(3, "init mci\n");
 	mci->mtype_cap = MEM_FLAG_RDDR;
 	/* 3100 IMCH supports SECDEC only */
 	mci->edac_ctl_cap = (dev_idx == I3100) ? EDAC_FLAG_SECDED :
 		(EDAC_FLAG_NONE | EDAC_FLAG_SECDED | EDAC_FLAG_S4ECD4ED);
-	/* FIXME - what अगर dअगरferent memory types are in dअगरferent csrows? */
+	/* FIXME - what if different memory types are in different csrows? */
 	mci->mod_name = EDAC_MOD_STR;
 	mci->pdev = &pdev->dev;
 
 	edac_dbg(3, "init pvt\n");
-	pvt = (काष्ठा e752x_pvt *)mci->pvt_info;
+	pvt = (struct e752x_pvt *)mci->pvt_info;
 	pvt->dev_info = &e752x_devs[dev_idx];
 	pvt->mc_symmetric = ((ddrcsr & 0x10) != 0);
 
-	अगर (e752x_get_devs(pdev, dev_idx, pvt)) अणु
-		edac_mc_मुक्त(mci);
-		वापस -ENODEV;
-	पूर्ण
+	if (e752x_get_devs(pdev, dev_idx, pvt)) {
+		edac_mc_free(mci);
+		return -ENODEV;
+	}
 
 	edac_dbg(3, "more mci init\n");
 	mci->ctl_name = pvt->dev_info->ctl_name;
@@ -1323,160 +1322,160 @@ fail:
 	mci->get_sdram_scrub_rate = get_sdram_scrub_rate;
 
 	/* set the map type.  1 = normal, 0 = reversed
-	 * Must be set beक्रमe e752x_init_csrows in हाल csrow mapping
+	 * Must be set before e752x_init_csrows in case csrow mapping
 	 * is reversed.
 	 */
-	pci_पढ़ो_config_byte(pdev, E752X_DRM, &stat8);
+	pci_read_config_byte(pdev, E752X_DRM, &stat8);
 	pvt->map_type = ((stat8 & 0x0f) > ((stat8 >> 4) & 0x0f));
 
 	e752x_init_csrows(mci, pdev, ddrcsr);
 	e752x_init_mem_map_table(pdev, pvt);
 
-	अगर (dev_idx == I3100)
+	if (dev_idx == I3100)
 		mci->edac_cap = EDAC_FLAG_SECDED; /* the only mode supported */
-	अन्यथा
+	else
 		mci->edac_cap |= EDAC_FLAG_NONE;
 	edac_dbg(3, "tolm, remapbase, remaplimit\n");
 
 	/* load the top of low memory, remap base, and remap limit vars */
-	pci_पढ़ो_config_word(pdev, E752X_TOLM, &pci_data);
+	pci_read_config_word(pdev, E752X_TOLM, &pci_data);
 	pvt->tolm = ((u32) pci_data) << 4;
-	pci_पढ़ो_config_word(pdev, E752X_REMAPBASE, &pci_data);
+	pci_read_config_word(pdev, E752X_REMAPBASE, &pci_data);
 	pvt->remapbase = ((u32) pci_data) << 14;
-	pci_पढ़ो_config_word(pdev, E752X_REMAPLIMIT, &pci_data);
+	pci_read_config_word(pdev, E752X_REMAPLIMIT, &pci_data);
 	pvt->remaplimit = ((u32) pci_data) << 14;
-	e752x_prपूर्णांकk(KERN_INFO,
+	e752x_printk(KERN_INFO,
 			"tolm = %x, remapbase = %x, remaplimit = %x\n",
 			pvt->tolm, pvt->remapbase, pvt->remaplimit);
 
 	/* Here we assume that we will never see multiple instances of this
-	 * type of memory controller.  The ID is thereक्रमe hardcoded to 0.
+	 * type of memory controller.  The ID is therefore hardcoded to 0.
 	 */
-	अगर (edac_mc_add_mc(mci)) अणु
+	if (edac_mc_add_mc(mci)) {
 		edac_dbg(3, "failed edac_mc_add_mc()\n");
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
 	e752x_init_error_reporting_regs(pvt);
 	e752x_get_error_info(mci, &discard);	/* clear other MCH errors */
 
 	/* allocating generic PCI control info */
 	e752x_pci = edac_pci_create_generic_ctl(&pdev->dev, EDAC_MOD_STR);
-	अगर (!e752x_pci) अणु
-		prपूर्णांकk(KERN_WARNING
+	if (!e752x_pci) {
+		printk(KERN_WARNING
 			"%s(): Unable to create PCI control\n", __func__);
-		prपूर्णांकk(KERN_WARNING
+		printk(KERN_WARNING
 			"%s(): PCI error report via EDAC not setup\n",
 			__func__);
-	पूर्ण
+	}
 
 	/* get this far and it's successful */
 	edac_dbg(3, "success\n");
-	वापस 0;
+	return 0;
 
 fail:
 	pci_dev_put(pvt->dev_d0f0);
 	pci_dev_put(pvt->dev_d0f1);
-	edac_mc_मुक्त(mci);
+	edac_mc_free(mci);
 
-	वापस -ENODEV;
-पूर्ण
+	return -ENODEV;
+}
 
-/* वापसs count (>= 0), or negative on error */
-अटल पूर्णांक e752x_init_one(काष्ठा pci_dev *pdev, स्थिर काष्ठा pci_device_id *ent)
-अणु
+/* returns count (>= 0), or negative on error */
+static int e752x_init_one(struct pci_dev *pdev, const struct pci_device_id *ent)
+{
 	edac_dbg(0, "\n");
 
 	/* wake up and enable device */
-	अगर (pci_enable_device(pdev) < 0)
-		वापस -EIO;
+	if (pci_enable_device(pdev) < 0)
+		return -EIO;
 
-	वापस e752x_probe1(pdev, ent->driver_data);
-पूर्ण
+	return e752x_probe1(pdev, ent->driver_data);
+}
 
-अटल व्योम e752x_हटाओ_one(काष्ठा pci_dev *pdev)
-अणु
-	काष्ठा mem_ctl_info *mci;
-	काष्ठा e752x_pvt *pvt;
+static void e752x_remove_one(struct pci_dev *pdev)
+{
+	struct mem_ctl_info *mci;
+	struct e752x_pvt *pvt;
 
 	edac_dbg(0, "\n");
 
-	अगर (e752x_pci)
+	if (e752x_pci)
 		edac_pci_release_generic_ctl(e752x_pci);
 
-	अगर ((mci = edac_mc_del_mc(&pdev->dev)) == शून्य)
-		वापस;
+	if ((mci = edac_mc_del_mc(&pdev->dev)) == NULL)
+		return;
 
-	pvt = (काष्ठा e752x_pvt *)mci->pvt_info;
+	pvt = (struct e752x_pvt *)mci->pvt_info;
 	pci_dev_put(pvt->dev_d0f0);
 	pci_dev_put(pvt->dev_d0f1);
-	edac_mc_मुक्त(mci);
-पूर्ण
+	edac_mc_free(mci);
+}
 
-अटल स्थिर काष्ठा pci_device_id e752x_pci_tbl[] = अणु
-	अणु
+static const struct pci_device_id e752x_pci_tbl[] = {
+	{
 	 PCI_VEND_DEV(INTEL, 7520_0), PCI_ANY_ID, PCI_ANY_ID, 0, 0,
-	 E7520पूर्ण,
-	अणु
+	 E7520},
+	{
 	 PCI_VEND_DEV(INTEL, 7525_0), PCI_ANY_ID, PCI_ANY_ID, 0, 0,
-	 E7525पूर्ण,
-	अणु
+	 E7525},
+	{
 	 PCI_VEND_DEV(INTEL, 7320_0), PCI_ANY_ID, PCI_ANY_ID, 0, 0,
-	 E7320पूर्ण,
-	अणु
+	 E7320},
+	{
 	 PCI_VEND_DEV(INTEL, 3100_0), PCI_ANY_ID, PCI_ANY_ID, 0, 0,
-	 I3100पूर्ण,
-	अणु
+	 I3100},
+	{
 	 0,
-	 पूर्ण			/* 0 terminated list. */
-पूर्ण;
+	 }			/* 0 terminated list. */
+};
 
 MODULE_DEVICE_TABLE(pci, e752x_pci_tbl);
 
-अटल काष्ठा pci_driver e752x_driver = अणु
+static struct pci_driver e752x_driver = {
 	.name = EDAC_MOD_STR,
 	.probe = e752x_init_one,
-	.हटाओ = e752x_हटाओ_one,
+	.remove = e752x_remove_one,
 	.id_table = e752x_pci_tbl,
-पूर्ण;
+};
 
-अटल पूर्णांक __init e752x_init(व्योम)
-अणु
-	पूर्णांक pci_rc;
+static int __init e752x_init(void)
+{
+	int pci_rc;
 
 	edac_dbg(3, "\n");
 
-	/* Ensure that the OPSTATE is set correctly क्रम POLL or NMI */
+	/* Ensure that the OPSTATE is set correctly for POLL or NMI */
 	opstate_init();
 
-	pci_rc = pci_रेजिस्टर_driver(&e752x_driver);
-	वापस (pci_rc < 0) ? pci_rc : 0;
-पूर्ण
+	pci_rc = pci_register_driver(&e752x_driver);
+	return (pci_rc < 0) ? pci_rc : 0;
+}
 
-अटल व्योम __निकास e752x_निकास(व्योम)
-अणु
+static void __exit e752x_exit(void)
+{
 	edac_dbg(3, "\n");
-	pci_unरेजिस्टर_driver(&e752x_driver);
-पूर्ण
+	pci_unregister_driver(&e752x_driver);
+}
 
 module_init(e752x_init);
-module_निकास(e752x_निकास);
+module_exit(e752x_exit);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Linux Networx (http://lnxi.com) Tom Zimmerman\n");
 MODULE_DESCRIPTION("MC support for Intel e752x/3100 memory controllers");
 
-module_param(क्रमce_function_unhide, पूर्णांक, 0444);
-MODULE_PARM_DESC(क्रमce_function_unhide, "if BIOS sets Dev0:Fun1 up as hidden:"
+module_param(force_function_unhide, int, 0444);
+MODULE_PARM_DESC(force_function_unhide, "if BIOS sets Dev0:Fun1 up as hidden:"
 		 " 1=force unhide and hope BIOS doesn't fight driver for "
 		"Dev0:Fun1 access");
 
-module_param(edac_op_state, पूर्णांक, 0444);
+module_param(edac_op_state, int, 0444);
 MODULE_PARM_DESC(edac_op_state, "EDAC Error Reporting state: 0=Poll,1=NMI");
 
-module_param(sysbus_parity, पूर्णांक, 0444);
+module_param(sysbus_parity, int, 0444);
 MODULE_PARM_DESC(sysbus_parity, "0=disable system bus parity checking,"
 		" 1=enable system bus parity checking, default=auto-detect");
-module_param(report_non_memory_errors, पूर्णांक, 0644);
+module_param(report_non_memory_errors, int, 0644);
 MODULE_PARM_DESC(report_non_memory_errors, "0=disable non-memory error "
 		"reporting, 1=enable non-memory error reporting");

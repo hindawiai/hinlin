@@ -1,27 +1,26 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0
+/* SPDX-License-Identifier: GPL-2.0
  *
- * include/यंत्र-sh/snapgear.h
+ * include/asm-sh/snapgear.h
  *
- * Modअगरied version of io_se.h क्रम the snapgear-specअगरic functions.
+ * Modified version of io_se.h for the snapgear-specific functions.
  *
- * IO functions क्रम a SnapGear
+ * IO functions for a SnapGear
  */
 
-#अगर_अघोषित _ASM_SH_IO_SNAPGEAR_H
-#घोषणा _ASM_SH_IO_SNAPGEAR_H
+#ifndef _ASM_SH_IO_SNAPGEAR_H
+#define _ASM_SH_IO_SNAPGEAR_H
 
-#घोषणा __IO_PREFIX	snapgear
-#समावेश <यंत्र/io_generic.h>
+#define __IO_PREFIX	snapgear
+#include <asm/io_generic.h>
 
 /*
  * We need to remember what was written to the ioport as some bits
- * are shared with other functions and you cannot पढ़ो back what was
+ * are shared with other functions and you cannot read back what was
  * written :-|
  *
  * Bit        Read                   Write
  * -----------------------------------------------
- * D0         DCD on ttySC1          घातer
+ * D0         DCD on ttySC1          power
  * D1         Reset Switch           heatbeat
  * D2         ttySC0 CTS (7100)      LAN
  * D3         -                      WAN
@@ -36,13 +35,13 @@
  * D12        -                      RTS RESET
  */
 
-#घोषणा SECUREEDGE_IOPORT_ADDR ((अस्थिर लघु *) 0xb0000000)
-बाह्य अचिन्हित लघु secureedge5410_ioport;
+#define SECUREEDGE_IOPORT_ADDR ((volatile short *) 0xb0000000)
+extern unsigned short secureedge5410_ioport;
 
-#घोषणा SECUREEDGE_WRITE_IOPORT(val, mask) (*SECUREEDGE_IOPORT_ADDR = \
+#define SECUREEDGE_WRITE_IOPORT(val, mask) (*SECUREEDGE_IOPORT_ADDR = \
 	 (secureedge5410_ioport = \
 			((secureedge5410_ioport & ~(mask)) | ((val) & (mask)))))
-#घोषणा SECUREEDGE_READ_IOPORT() \
+#define SECUREEDGE_READ_IOPORT() \
 	 ((*SECUREEDGE_IOPORT_ADDR&0x0817) | (secureedge5410_ioport&~0x0817))
 
-#पूर्ण_अगर /* _ASM_SH_IO_SNAPGEAR_H */
+#endif /* _ASM_SH_IO_SNAPGEAR_H */

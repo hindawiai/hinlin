@@ -1,116 +1,115 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
-#समावेश <त्रुटिसं.स>
-#समावेश <fcntl.h>
-#समावेश <मानकपन.स>
-#समावेश <माला.स>
-#समावेश <unistd.h>
-#समावेश <sys/socket.h>
-#समावेश <sys/स्थिति.स>
-#समावेश <sys/sysmacros.h>
-#समावेश <sys/types.h>
+// SPDX-License-Identifier: GPL-2.0+
+#include <errno.h>
+#include <fcntl.h>
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
+#include <sys/socket.h>
+#include <sys/stat.h>
+#include <sys/sysmacros.h>
+#include <sys/types.h>
 
-#समावेश "../kselftest_harness.h"
+#include "../kselftest_harness.h"
 
-/* Remove a file, ignoring the result अगर it didn't exist. */
-व्योम rm(काष्ठा __test_metadata *_metadata, स्थिर अक्षर *pathname,
-	पूर्णांक is_dir)
-अणु
-	पूर्णांक rc;
+/* Remove a file, ignoring the result if it didn't exist. */
+void rm(struct __test_metadata *_metadata, const char *pathname,
+	int is_dir)
+{
+	int rc;
 
-	अगर (is_dir)
-		rc = सूची_हटाओ(pathname);
-	अन्यथा
+	if (is_dir)
+		rc = rmdir(pathname);
+	else
 		rc = unlink(pathname);
 
-	अगर (rc < 0) अणु
-		ASSERT_EQ(त्रुटि_सं, ENOENT) अणु
+	if (rc < 0) {
+		ASSERT_EQ(errno, ENOENT) {
 			TH_LOG("Not ENOENT: %s", pathname);
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		ASSERT_EQ(rc, 0) अणु
+		}
+	} else {
+		ASSERT_EQ(rc, 0) {
 			TH_LOG("Failed to remove: %s", pathname);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-FIXTURE(file) अणु
-	अक्षर *pathname;
-	पूर्णांक is_dir;
-पूर्ण;
+FIXTURE(file) {
+	char *pathname;
+	int is_dir;
+};
 
 FIXTURE_VARIANT(file)
-अणु
-	स्थिर अक्षर *name;
-	पूर्णांक expected;
-	पूर्णांक is_dir;
-	व्योम (*setup)(काष्ठा __test_metadata *_metadata,
+{
+	const char *name;
+	int expected;
+	int is_dir;
+	void (*setup)(struct __test_metadata *_metadata,
 		      FIXTURE_DATA(file) *self,
-		      स्थिर FIXTURE_VARIANT(file) *variant);
-	पूर्णांक major, minor, mode; /* क्रम mknod() */
-पूर्ण;
+		      const FIXTURE_VARIANT(file) *variant);
+	int major, minor, mode; /* for mknod() */
+};
 
-व्योम setup_link(काष्ठा __test_metadata *_metadata,
+void setup_link(struct __test_metadata *_metadata,
 		FIXTURE_DATA(file) *self,
-		स्थिर FIXTURE_VARIANT(file) *variant)
-अणु
-	स्थिर अक्षर * स्थिर paths[] = अणु
+		const FIXTURE_VARIANT(file) *variant)
+{
+	const char * const paths[] = {
 		"/bin/true",
 		"/usr/bin/true",
-	पूर्ण;
-	पूर्णांक i;
+	};
+	int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(paths); i++) अणु
-		अगर (access(paths[i], X_OK) == 0) अणु
+	for (i = 0; i < ARRAY_SIZE(paths); i++) {
+		if (access(paths[i], X_OK) == 0) {
 			ASSERT_EQ(symlink(paths[i], self->pathname), 0);
-			वापस;
-		पूर्ण
-	पूर्ण
-	ASSERT_EQ(1, 0) अणु
+			return;
+		}
+	}
+	ASSERT_EQ(1, 0) {
 		TH_LOG("Could not find viable 'true' binary");
-	पूर्ण
-पूर्ण
+	}
+}
 
 FIXTURE_VARIANT_ADD(file, S_IFLNK)
-अणु
+{
 	.name = "S_IFLNK",
 	.expected = ELOOP,
 	.setup = setup_link,
-पूर्ण;
+};
 
-व्योम setup_dir(काष्ठा __test_metadata *_metadata,
+void setup_dir(struct __test_metadata *_metadata,
 	       FIXTURE_DATA(file) *self,
-	       स्थिर FIXTURE_VARIANT(file) *variant)
-अणु
-	ASSERT_EQ(सूची_गढ़ो(self->pathname, 0755), 0);
-पूर्ण
+	       const FIXTURE_VARIANT(file) *variant)
+{
+	ASSERT_EQ(mkdir(self->pathname, 0755), 0);
+}
 
-FIXTURE_VARIANT_ADD(file, S_IFसूची)
-अणु
+FIXTURE_VARIANT_ADD(file, S_IFDIR)
+{
 	.name = "S_IFDIR",
 	.is_dir = 1,
 	.expected = EACCES,
 	.setup = setup_dir,
-पूर्ण;
+};
 
-व्योम setup_node(काष्ठा __test_metadata *_metadata,
+void setup_node(struct __test_metadata *_metadata,
 		FIXTURE_DATA(file) *self,
-		स्थिर FIXTURE_VARIANT(file) *variant)
-अणु
+		const FIXTURE_VARIANT(file) *variant)
+{
 	dev_t dev;
-	पूर्णांक rc;
+	int rc;
 
 	dev = makedev(variant->major, variant->minor);
 	rc = mknod(self->pathname, 0755 | variant->mode, dev);
-	ASSERT_EQ(rc, 0) अणु
-		अगर (त्रुटि_सं == EPERM)
-			SKIP(वापस, "Please run as root; cannot mknod(%s)",
+	ASSERT_EQ(rc, 0) {
+		if (errno == EPERM)
+			SKIP(return, "Please run as root; cannot mknod(%s)",
 				variant->name);
-	पूर्ण
-पूर्ण
+	}
+}
 
 FIXTURE_VARIANT_ADD(file, S_IFBLK)
-अणु
+{
 	.name = "S_IFBLK",
 	.expected = EACCES,
 	.setup = setup_node,
@@ -118,10 +117,10 @@ FIXTURE_VARIANT_ADD(file, S_IFBLK)
 	.major = 7,
 	.minor = 0,
 	.mode = S_IFBLK,
-पूर्ण;
+};
 
 FIXTURE_VARIANT_ADD(file, S_IFCHR)
-अणु
+{
 	.name = "S_IFCHR",
 	.expected = EACCES,
 	.setup = setup_node,
@@ -129,69 +128,69 @@ FIXTURE_VARIANT_ADD(file, S_IFCHR)
 	.major = 1,
 	.minor = 5,
 	.mode = S_IFCHR,
-पूर्ण;
+};
 
-व्योम setup_fअगरo(काष्ठा __test_metadata *_metadata,
+void setup_fifo(struct __test_metadata *_metadata,
 		FIXTURE_DATA(file) *self,
-		स्थिर FIXTURE_VARIANT(file) *variant)
-अणु
-	ASSERT_EQ(mkfअगरo(self->pathname, 0755), 0);
-पूर्ण
+		const FIXTURE_VARIANT(file) *variant)
+{
+	ASSERT_EQ(mkfifo(self->pathname, 0755), 0);
+}
 
 FIXTURE_VARIANT_ADD(file, S_IFIFO)
-अणु
+{
 	.name = "S_IFIFO",
 	.expected = EACCES,
-	.setup = setup_fअगरo,
-पूर्ण;
+	.setup = setup_fifo,
+};
 
 FIXTURE_SETUP(file)
-अणु
-	ASSERT_GT(aप्र_लिखो(&self->pathname, "%s.test", variant->name), 6);
+{
+	ASSERT_GT(asprintf(&self->pathname, "%s.test", variant->name), 6);
 	self->is_dir = variant->is_dir;
 
 	rm(_metadata, self->pathname, variant->is_dir);
 	variant->setup(_metadata, self, variant);
-पूर्ण
+}
 
 FIXTURE_TEARDOWN(file)
-अणु
+{
 	rm(_metadata, self->pathname, self->is_dir);
-पूर्ण
+}
 
-TEST_F(file, exec_त्रुटि_सं)
-अणु
-	अक्षर * स्थिर argv[2] = अणु (अक्षर * स्थिर)self->pathname, शून्य पूर्ण;
+TEST_F(file, exec_errno)
+{
+	char * const argv[2] = { (char * const)self->pathname, NULL };
 
 	EXPECT_LT(execv(argv[0], argv), 0);
-	EXPECT_EQ(त्रुटि_सं, variant->expected);
-पूर्ण
+	EXPECT_EQ(errno, variant->expected);
+}
 
 /* S_IFSOCK */
 FIXTURE(sock)
-अणु
-	पूर्णांक fd;
-पूर्ण;
+{
+	int fd;
+};
 
 FIXTURE_SETUP(sock)
-अणु
+{
 	self->fd = socket(AF_INET, SOCK_STREAM, 0);
 	ASSERT_GE(self->fd, 0);
-पूर्ण
+}
 
 FIXTURE_TEARDOWN(sock)
-अणु
-	अगर (self->fd >= 0)
-		ASSERT_EQ(बंद(self->fd), 0);
-पूर्ण
+{
+	if (self->fd >= 0)
+		ASSERT_EQ(close(self->fd), 0);
+}
 
-TEST_F(sock, exec_त्रुटि_सं)
-अणु
-	अक्षर * स्थिर argv[2] = अणु " magic socket ", शून्य पूर्ण;
-	अक्षर * स्थिर envp[1] = अणु शून्य पूर्ण;
+TEST_F(sock, exec_errno)
+{
+	char * const argv[2] = { " magic socket ", NULL };
+	char * const envp[1] = { NULL };
 
 	EXPECT_LT(fexecve(self->fd, argv, envp), 0);
-	EXPECT_EQ(त्रुटि_सं, EACCES);
-पूर्ण
+	EXPECT_EQ(errno, EACCES);
+}
 
 TEST_HARNESS_MAIN

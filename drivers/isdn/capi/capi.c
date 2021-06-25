@@ -1,7 +1,6 @@
-<शैली गुरु>
 /* $Id: capi.c,v 1.1.2.7 2004/04/28 09:48:59 armin Exp $
  *
- * CAPI 2.0 Interface क्रम Linux
+ * CAPI 2.0 Interface for Linux
  *
  * Copyright 1996 by Carsten Paeth <calle@calle.de>
  *
@@ -10,215 +9,215 @@
  *
  */
 
-#समावेश <linux/compiler.h>
-#समावेश <linux/module.h>
-#समावेश <linux/ethtool.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/major.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/fcntl.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/संकेत.स>
-#समावेश <linux/mutex.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/समयr.h>
-#समावेश <linux/रुको.h>
-#समावेश <linux/tty.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/ppp_defs.h>
-#समावेश <linux/ppp-ioctl.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/proc_fs.h>
-#समावेश <linux/seq_file.h>
-#समावेश <linux/poll.h>
-#समावेश <linux/capi.h>
-#समावेश <linux/kernelcapi.h>
-#समावेश <linux/init.h>
-#समावेश <linux/device.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/isdn/capiutil.h>
-#समावेश <linux/isdn/capicmd.h>
+#include <linux/compiler.h>
+#include <linux/module.h>
+#include <linux/ethtool.h>
+#include <linux/errno.h>
+#include <linux/kernel.h>
+#include <linux/major.h>
+#include <linux/sched.h>
+#include <linux/slab.h>
+#include <linux/fcntl.h>
+#include <linux/fs.h>
+#include <linux/signal.h>
+#include <linux/mutex.h>
+#include <linux/mm.h>
+#include <linux/timer.h>
+#include <linux/wait.h>
+#include <linux/tty.h>
+#include <linux/netdevice.h>
+#include <linux/ppp_defs.h>
+#include <linux/ppp-ioctl.h>
+#include <linux/skbuff.h>
+#include <linux/proc_fs.h>
+#include <linux/seq_file.h>
+#include <linux/poll.h>
+#include <linux/capi.h>
+#include <linux/kernelcapi.h>
+#include <linux/init.h>
+#include <linux/device.h>
+#include <linux/moduleparam.h>
+#include <linux/isdn/capiutil.h>
+#include <linux/isdn/capicmd.h>
 
-#समावेश "kcapi.h"
+#include "kcapi.h"
 
 MODULE_DESCRIPTION("CAPI4Linux: kernel CAPI layer and /dev/capi20 interface");
 MODULE_AUTHOR("Carsten Paeth");
 MODULE_LICENSE("GPL");
 
-/* -------- driver inक्रमmation -------------------------------------- */
+/* -------- driver information -------------------------------------- */
 
-अटल DEFINE_MUTEX(capi_mutex);
-अटल काष्ठा class *capi_class;
-अटल पूर्णांक capi_major = 68;		/* allocated */
+static DEFINE_MUTEX(capi_mutex);
+static struct class *capi_class;
+static int capi_major = 68;		/* allocated */
 
-module_param_named(major, capi_major, uपूर्णांक, 0);
+module_param_named(major, capi_major, uint, 0);
 
-#अगर_घोषित CONFIG_ISDN_CAPI_MIDDLEWARE
-#घोषणा CAPINC_NR_PORTS		32
-#घोषणा CAPINC_MAX_PORTS	256
+#ifdef CONFIG_ISDN_CAPI_MIDDLEWARE
+#define CAPINC_NR_PORTS		32
+#define CAPINC_MAX_PORTS	256
 
-अटल पूर्णांक capi_ttyminors = CAPINC_NR_PORTS;
+static int capi_ttyminors = CAPINC_NR_PORTS;
 
-module_param_named(ttyminors, capi_ttyminors, uपूर्णांक, 0);
-#पूर्ण_अगर /* CONFIG_ISDN_CAPI_MIDDLEWARE */
+module_param_named(ttyminors, capi_ttyminors, uint, 0);
+#endif /* CONFIG_ISDN_CAPI_MIDDLEWARE */
 
 /* -------- defines ------------------------------------------------- */
 
-#घोषणा CAPINC_MAX_RECVQUEUE	10
-#घोषणा CAPINC_MAX_SENDQUEUE	10
-#घोषणा CAPI_MAX_BLKSIZE	2048
+#define CAPINC_MAX_RECVQUEUE	10
+#define CAPINC_MAX_SENDQUEUE	10
+#define CAPI_MAX_BLKSIZE	2048
 
-/* -------- data काष्ठाures ----------------------------------------- */
+/* -------- data structures ----------------------------------------- */
 
-काष्ठा capidev;
-काष्ठा capincci;
-काष्ठा capiminor;
+struct capidev;
+struct capincci;
+struct capiminor;
 
-काष्ठा ackqueue_entry अणु
-	काष्ठा list_head	list;
+struct ackqueue_entry {
+	struct list_head	list;
 	u16			datahandle;
-पूर्ण;
+};
 
-काष्ठा capiminor अणु
-	अचिन्हित पूर्णांक      minor;
+struct capiminor {
+	unsigned int      minor;
 
-	काष्ठा capi20_appl	*ap;
+	struct capi20_appl	*ap;
 	u32			ncci;
 	atomic_t		datahandle;
 	atomic_t		msgid;
 
-	काष्ठा tty_port port;
-	पूर्णांक                ttyinstop;
-	पूर्णांक                ttyoutstop;
+	struct tty_port port;
+	int                ttyinstop;
+	int                ttyoutstop;
 
-	काष्ठा sk_buff_head	inqueue;
+	struct sk_buff_head	inqueue;
 
-	काष्ठा sk_buff_head	outqueue;
-	पूर्णांक			outbytes;
-	काष्ठा sk_buff		*outskb;
+	struct sk_buff_head	outqueue;
+	int			outbytes;
+	struct sk_buff		*outskb;
 	spinlock_t		outlock;
 
 	/* transmit path */
-	काष्ठा list_head ackqueue;
-	पूर्णांक nack;
+	struct list_head ackqueue;
+	int nack;
 	spinlock_t ackqlock;
-पूर्ण;
+};
 
-काष्ठा capincci अणु
-	काष्ठा list_head list;
+struct capincci {
+	struct list_head list;
 	u32		 ncci;
-	काष्ठा capidev	*cdev;
-#अगर_घोषित CONFIG_ISDN_CAPI_MIDDLEWARE
-	काष्ठा capiminor *minorp;
-#पूर्ण_अगर /* CONFIG_ISDN_CAPI_MIDDLEWARE */
-पूर्ण;
+	struct capidev	*cdev;
+#ifdef CONFIG_ISDN_CAPI_MIDDLEWARE
+	struct capiminor *minorp;
+#endif /* CONFIG_ISDN_CAPI_MIDDLEWARE */
+};
 
-काष्ठा capidev अणु
-	काष्ठा list_head list;
-	काष्ठा capi20_appl ap;
+struct capidev {
+	struct list_head list;
+	struct capi20_appl ap;
 	u16		errcode;
-	अचिन्हित        userflags;
+	unsigned        userflags;
 
-	काष्ठा sk_buff_head recvqueue;
-	रुको_queue_head_t recvरुको;
+	struct sk_buff_head recvqueue;
+	wait_queue_head_t recvwait;
 
-	काष्ठा list_head nccis;
+	struct list_head nccis;
 
-	काष्ठा mutex lock;
-पूर्ण;
+	struct mutex lock;
+};
 
 /* -------- global variables ---------------------------------------- */
 
-अटल DEFINE_MUTEX(capidev_list_lock);
-अटल LIST_HEAD(capidev_list);
+static DEFINE_MUTEX(capidev_list_lock);
+static LIST_HEAD(capidev_list);
 
-#अगर_घोषित CONFIG_ISDN_CAPI_MIDDLEWARE
+#ifdef CONFIG_ISDN_CAPI_MIDDLEWARE
 
-अटल DEFINE_SPINLOCK(capiminors_lock);
-अटल काष्ठा capiminor **capiminors;
+static DEFINE_SPINLOCK(capiminors_lock);
+static struct capiminor **capiminors;
 
-अटल काष्ठा tty_driver *capinc_tty_driver;
+static struct tty_driver *capinc_tty_driver;
 
 /* -------- datahandles --------------------------------------------- */
 
-अटल पूर्णांक capiminor_add_ack(काष्ठा capiminor *mp, u16 datahandle)
-अणु
-	काष्ठा ackqueue_entry *n;
+static int capiminor_add_ack(struct capiminor *mp, u16 datahandle)
+{
+	struct ackqueue_entry *n;
 
-	n = kदो_स्मृति(माप(*n), GFP_ATOMIC);
-	अगर (unlikely(!n)) अणु
-		prपूर्णांकk(KERN_ERR "capi: alloc datahandle failed\n");
-		वापस -1;
-	पूर्ण
+	n = kmalloc(sizeof(*n), GFP_ATOMIC);
+	if (unlikely(!n)) {
+		printk(KERN_ERR "capi: alloc datahandle failed\n");
+		return -1;
+	}
 	n->datahandle = datahandle;
 	INIT_LIST_HEAD(&n->list);
 	spin_lock_bh(&mp->ackqlock);
 	list_add_tail(&n->list, &mp->ackqueue);
 	mp->nack++;
 	spin_unlock_bh(&mp->ackqlock);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक capiminor_del_ack(काष्ठा capiminor *mp, u16 datahandle)
-अणु
-	काष्ठा ackqueue_entry *p, *पंचांगp;
+static int capiminor_del_ack(struct capiminor *mp, u16 datahandle)
+{
+	struct ackqueue_entry *p, *tmp;
 
 	spin_lock_bh(&mp->ackqlock);
-	list_क्रम_each_entry_safe(p, पंचांगp, &mp->ackqueue, list) अणु
-		अगर (p->datahandle == datahandle) अणु
+	list_for_each_entry_safe(p, tmp, &mp->ackqueue, list) {
+		if (p->datahandle == datahandle) {
 			list_del(&p->list);
 			mp->nack--;
 			spin_unlock_bh(&mp->ackqlock);
-			kमुक्त(p);
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			kfree(p);
+			return 0;
+		}
+	}
 	spin_unlock_bh(&mp->ackqlock);
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
-अटल व्योम capiminor_del_all_ack(काष्ठा capiminor *mp)
-अणु
-	काष्ठा ackqueue_entry *p, *पंचांगp;
+static void capiminor_del_all_ack(struct capiminor *mp)
+{
+	struct ackqueue_entry *p, *tmp;
 
-	list_क्रम_each_entry_safe(p, पंचांगp, &mp->ackqueue, list) अणु
+	list_for_each_entry_safe(p, tmp, &mp->ackqueue, list) {
 		list_del(&p->list);
-		kमुक्त(p);
+		kfree(p);
 		mp->nack--;
-	पूर्ण
-पूर्ण
+	}
+}
 
 
-/* -------- काष्ठा capiminor ---------------------------------------- */
+/* -------- struct capiminor ---------------------------------------- */
 
-अटल व्योम capiminor_destroy(काष्ठा tty_port *port)
-अणु
-	काष्ठा capiminor *mp = container_of(port, काष्ठा capiminor, port);
+static void capiminor_destroy(struct tty_port *port)
+{
+	struct capiminor *mp = container_of(port, struct capiminor, port);
 
-	kमुक्त_skb(mp->outskb);
+	kfree_skb(mp->outskb);
 	skb_queue_purge(&mp->inqueue);
 	skb_queue_purge(&mp->outqueue);
 	capiminor_del_all_ack(mp);
-	kमुक्त(mp);
-पूर्ण
+	kfree(mp);
+}
 
-अटल स्थिर काष्ठा tty_port_operations capiminor_port_ops = अणु
-	.deकाष्ठा = capiminor_destroy,
-पूर्ण;
+static const struct tty_port_operations capiminor_port_ops = {
+	.destruct = capiminor_destroy,
+};
 
-अटल काष्ठा capiminor *capiminor_alloc(काष्ठा capi20_appl *ap, u32 ncci)
-अणु
-	काष्ठा capiminor *mp;
-	काष्ठा device *dev;
-	अचिन्हित पूर्णांक minor;
+static struct capiminor *capiminor_alloc(struct capi20_appl *ap, u32 ncci)
+{
+	struct capiminor *mp;
+	struct device *dev;
+	unsigned int minor;
 
-	mp = kzalloc(माप(*mp), GFP_KERNEL);
-	अगर (!mp) अणु
-		prपूर्णांकk(KERN_ERR "capi: can't alloc capiminor\n");
-		वापस शून्य;
-	पूर्ण
+	mp = kzalloc(sizeof(*mp), GFP_KERNEL);
+	if (!mp) {
+		printk(KERN_ERR "capi: can't alloc capiminor\n");
+		return NULL;
+	}
 
 	mp->ap = ap;
 	mp->ncci = ncci;
@@ -234,121 +233,121 @@ module_param_named(ttyminors, capi_ttyminors, uपूर्णांक, 0);
 
 	/* Allocate the least unused minor number. */
 	spin_lock(&capiminors_lock);
-	क्रम (minor = 0; minor < capi_ttyminors; minor++)
-		अगर (!capiminors[minor]) अणु
+	for (minor = 0; minor < capi_ttyminors; minor++)
+		if (!capiminors[minor]) {
 			capiminors[minor] = mp;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 	spin_unlock(&capiminors_lock);
 
-	अगर (minor == capi_ttyminors) अणु
-		prपूर्णांकk(KERN_NOTICE "capi: out of minors\n");
-		जाओ err_out1;
-	पूर्ण
+	if (minor == capi_ttyminors) {
+		printk(KERN_NOTICE "capi: out of minors\n");
+		goto err_out1;
+	}
 
 	mp->minor = minor;
 
-	dev = tty_port_रेजिस्टर_device(&mp->port, capinc_tty_driver, minor,
-			शून्य);
-	अगर (IS_ERR(dev))
-		जाओ err_out2;
+	dev = tty_port_register_device(&mp->port, capinc_tty_driver, minor,
+			NULL);
+	if (IS_ERR(dev))
+		goto err_out2;
 
-	वापस mp;
+	return mp;
 
 err_out2:
 	spin_lock(&capiminors_lock);
-	capiminors[minor] = शून्य;
+	capiminors[minor] = NULL;
 	spin_unlock(&capiminors_lock);
 
 err_out1:
 	tty_port_put(&mp->port);
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल काष्ठा capiminor *capiminor_get(अचिन्हित पूर्णांक minor)
-अणु
-	काष्ठा capiminor *mp;
+static struct capiminor *capiminor_get(unsigned int minor)
+{
+	struct capiminor *mp;
 
 	spin_lock(&capiminors_lock);
 	mp = capiminors[minor];
-	अगर (mp)
+	if (mp)
 		tty_port_get(&mp->port);
 	spin_unlock(&capiminors_lock);
 
-	वापस mp;
-पूर्ण
+	return mp;
+}
 
-अटल अंतरभूत व्योम capiminor_put(काष्ठा capiminor *mp)
-अणु
+static inline void capiminor_put(struct capiminor *mp)
+{
 	tty_port_put(&mp->port);
-पूर्ण
+}
 
-अटल व्योम capiminor_मुक्त(काष्ठा capiminor *mp)
-अणु
-	tty_unरेजिस्टर_device(capinc_tty_driver, mp->minor);
+static void capiminor_free(struct capiminor *mp)
+{
+	tty_unregister_device(capinc_tty_driver, mp->minor);
 
 	spin_lock(&capiminors_lock);
-	capiminors[mp->minor] = शून्य;
+	capiminors[mp->minor] = NULL;
 	spin_unlock(&capiminors_lock);
 
 	capiminor_put(mp);
-पूर्ण
+}
 
-/* -------- काष्ठा capincci ----------------------------------------- */
+/* -------- struct capincci ----------------------------------------- */
 
-अटल व्योम capincci_alloc_minor(काष्ठा capidev *cdev, काष्ठा capincci *np)
-अणु
-	अगर (cdev->userflags & CAPIFLAG_HIGHJACKING)
+static void capincci_alloc_minor(struct capidev *cdev, struct capincci *np)
+{
+	if (cdev->userflags & CAPIFLAG_HIGHJACKING)
 		np->minorp = capiminor_alloc(&cdev->ap, np->ncci);
-पूर्ण
+}
 
-अटल व्योम capincci_मुक्त_minor(काष्ठा capincci *np)
-अणु
-	काष्ठा capiminor *mp = np->minorp;
-	काष्ठा tty_काष्ठा *tty;
+static void capincci_free_minor(struct capincci *np)
+{
+	struct capiminor *mp = np->minorp;
+	struct tty_struct *tty;
 
-	अगर (mp) अणु
+	if (mp) {
 		tty = tty_port_tty_get(&mp->port);
-		अगर (tty) अणु
+		if (tty) {
 			tty_vhangup(tty);
 			tty_kref_put(tty);
-		पूर्ण
+		}
 
-		capiminor_मुक्त(mp);
-	पूर्ण
-पूर्ण
+		capiminor_free(mp);
+	}
+}
 
-अटल अंतरभूत अचिन्हित पूर्णांक capincci_minor_खोलोcount(काष्ठा capincci *np)
-अणु
-	काष्ठा capiminor *mp = np->minorp;
-	अचिन्हित पूर्णांक count = 0;
-	काष्ठा tty_काष्ठा *tty;
+static inline unsigned int capincci_minor_opencount(struct capincci *np)
+{
+	struct capiminor *mp = np->minorp;
+	unsigned int count = 0;
+	struct tty_struct *tty;
 
-	अगर (mp) अणु
+	if (mp) {
 		tty = tty_port_tty_get(&mp->port);
-		अगर (tty) अणु
+		if (tty) {
 			count = tty->count;
 			tty_kref_put(tty);
-		पूर्ण
-	पूर्ण
-	वापस count;
-पूर्ण
+		}
+	}
+	return count;
+}
 
-#अन्यथा /* !CONFIG_ISDN_CAPI_MIDDLEWARE */
+#else /* !CONFIG_ISDN_CAPI_MIDDLEWARE */
 
-अटल अंतरभूत व्योम
-capincci_alloc_minor(काष्ठा capidev *cdev, काष्ठा capincci *np) अणु पूर्ण
-अटल अंतरभूत व्योम capincci_मुक्त_minor(काष्ठा capincci *np) अणु पूर्ण
+static inline void
+capincci_alloc_minor(struct capidev *cdev, struct capincci *np) { }
+static inline void capincci_free_minor(struct capincci *np) { }
 
-#पूर्ण_अगर /* !CONFIG_ISDN_CAPI_MIDDLEWARE */
+#endif /* !CONFIG_ISDN_CAPI_MIDDLEWARE */
 
-अटल काष्ठा capincci *capincci_alloc(काष्ठा capidev *cdev, u32 ncci)
-अणु
-	काष्ठा capincci *np;
+static struct capincci *capincci_alloc(struct capidev *cdev, u32 ncci)
+{
+	struct capincci *np;
 
-	np = kzalloc(माप(*np), GFP_KERNEL);
-	अगर (!np)
-		वापस शून्य;
+	np = kzalloc(sizeof(*np), GFP_KERNEL);
+	if (!np)
+		return NULL;
 	np->ncci = ncci;
 	np->cdev = cdev;
 
@@ -356,182 +355,182 @@ capincci_alloc_minor(काष्ठा capidev *cdev, काष्ठा capinc
 
 	list_add_tail(&np->list, &cdev->nccis);
 
-	वापस np;
-पूर्ण
+	return np;
+}
 
-अटल व्योम capincci_मुक्त(काष्ठा capidev *cdev, u32 ncci)
-अणु
-	काष्ठा capincci *np, *पंचांगp;
+static void capincci_free(struct capidev *cdev, u32 ncci)
+{
+	struct capincci *np, *tmp;
 
-	list_क्रम_each_entry_safe(np, पंचांगp, &cdev->nccis, list)
-		अगर (ncci == 0xffffffff || np->ncci == ncci) अणु
-			capincci_मुक्त_minor(np);
+	list_for_each_entry_safe(np, tmp, &cdev->nccis, list)
+		if (ncci == 0xffffffff || np->ncci == ncci) {
+			capincci_free_minor(np);
 			list_del(&np->list);
-			kमुक्त(np);
-		पूर्ण
-पूर्ण
+			kfree(np);
+		}
+}
 
-#अगर_घोषित CONFIG_ISDN_CAPI_MIDDLEWARE
-अटल काष्ठा capincci *capincci_find(काष्ठा capidev *cdev, u32 ncci)
-अणु
-	काष्ठा capincci *np;
+#ifdef CONFIG_ISDN_CAPI_MIDDLEWARE
+static struct capincci *capincci_find(struct capidev *cdev, u32 ncci)
+{
+	struct capincci *np;
 
-	list_क्रम_each_entry(np, &cdev->nccis, list)
-		अगर (np->ncci == ncci)
-			वापस np;
-	वापस शून्य;
-पूर्ण
+	list_for_each_entry(np, &cdev->nccis, list)
+		if (np->ncci == ncci)
+			return np;
+	return NULL;
+}
 
 /* -------- handle data queue --------------------------------------- */
 
-अटल काष्ठा sk_buff *
-gen_data_b3_resp_क्रम(काष्ठा capiminor *mp, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा sk_buff *nskb;
+static struct sk_buff *
+gen_data_b3_resp_for(struct capiminor *mp, struct sk_buff *skb)
+{
+	struct sk_buff *nskb;
 	nskb = alloc_skb(CAPI_DATA_B3_RESP_LEN, GFP_KERNEL);
-	अगर (nskb) अणु
+	if (nskb) {
 		u16 datahandle = CAPIMSG_U16(skb->data, CAPIMSG_BASELEN + 4 + 4 + 2);
-		अचिन्हित अक्षर *s = skb_put(nskb, CAPI_DATA_B3_RESP_LEN);
+		unsigned char *s = skb_put(nskb, CAPI_DATA_B3_RESP_LEN);
 		capimsg_setu16(s, 0, CAPI_DATA_B3_RESP_LEN);
 		capimsg_setu16(s, 2, mp->ap->applid);
 		capimsg_setu8 (s, 4, CAPI_DATA_B3);
 		capimsg_setu8 (s, 5, CAPI_RESP);
-		capimsg_setu16(s, 6, atomic_inc_वापस(&mp->msgid));
+		capimsg_setu16(s, 6, atomic_inc_return(&mp->msgid));
 		capimsg_setu32(s, 8, mp->ncci);
 		capimsg_setu16(s, 12, datahandle);
-	पूर्ण
-	वापस nskb;
-पूर्ण
+	}
+	return nskb;
+}
 
-अटल पूर्णांक handle_recv_skb(काष्ठा capiminor *mp, काष्ठा sk_buff *skb)
-अणु
-	अचिन्हित पूर्णांक datalen = skb->len - CAPIMSG_LEN(skb->data);
-	काष्ठा tty_काष्ठा *tty;
-	काष्ठा sk_buff *nskb;
+static int handle_recv_skb(struct capiminor *mp, struct sk_buff *skb)
+{
+	unsigned int datalen = skb->len - CAPIMSG_LEN(skb->data);
+	struct tty_struct *tty;
+	struct sk_buff *nskb;
 	u16 errcode, datahandle;
-	काष्ठा tty_ldisc *ld;
-	पूर्णांक ret = -1;
+	struct tty_ldisc *ld;
+	int ret = -1;
 
 	tty = tty_port_tty_get(&mp->port);
-	अगर (!tty) अणु
+	if (!tty) {
 		pr_debug("capi: currently no receiver\n");
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
 	ld = tty_ldisc_ref(tty);
-	अगर (!ld) अणु
-		/* fatal error, करो not requeue */
+	if (!ld) {
+		/* fatal error, do not requeue */
 		ret = 0;
-		kमुक्त_skb(skb);
-		जाओ deref_tty;
-	पूर्ण
+		kfree_skb(skb);
+		goto deref_tty;
+	}
 
-	अगर (ld->ops->receive_buf == शून्य) अणु
+	if (ld->ops->receive_buf == NULL) {
 		pr_debug("capi: ldisc has no receive_buf function\n");
-		/* fatal error, करो not requeue */
-		जाओ मुक्त_skb;
-	पूर्ण
-	अगर (mp->ttyinstop) अणु
+		/* fatal error, do not requeue */
+		goto free_skb;
+	}
+	if (mp->ttyinstop) {
 		pr_debug("capi: recv tty throttled\n");
-		जाओ deref_ldisc;
-	पूर्ण
+		goto deref_ldisc;
+	}
 
-	अगर (tty->receive_room < datalen) अणु
+	if (tty->receive_room < datalen) {
 		pr_debug("capi: no room in tty\n");
-		जाओ deref_ldisc;
-	पूर्ण
+		goto deref_ldisc;
+	}
 
-	nskb = gen_data_b3_resp_क्रम(mp, skb);
-	अगर (!nskb) अणु
-		prपूर्णांकk(KERN_ERR "capi: gen_data_b3_resp failed\n");
-		जाओ deref_ldisc;
-	पूर्ण
+	nskb = gen_data_b3_resp_for(mp, skb);
+	if (!nskb) {
+		printk(KERN_ERR "capi: gen_data_b3_resp failed\n");
+		goto deref_ldisc;
+	}
 
 	datahandle = CAPIMSG_U16(skb->data, CAPIMSG_BASELEN + 4);
 
 	errcode = capi20_put_message(mp->ap, nskb);
 
-	अगर (errcode == CAPI_NOERROR) अणु
+	if (errcode == CAPI_NOERROR) {
 		skb_pull(skb, CAPIMSG_LEN(skb->data));
 		pr_debug("capi: DATA_B3_RESP %u len=%d => ldisc\n",
 			 datahandle, skb->len);
-		ld->ops->receive_buf(tty, skb->data, शून्य, skb->len);
-	पूर्ण अन्यथा अणु
-		prपूर्णांकk(KERN_ERR "capi: send DATA_B3_RESP failed=%x\n",
+		ld->ops->receive_buf(tty, skb->data, NULL, skb->len);
+	} else {
+		printk(KERN_ERR "capi: send DATA_B3_RESP failed=%x\n",
 		       errcode);
-		kमुक्त_skb(nskb);
+		kfree_skb(nskb);
 
-		अगर (errcode == CAPI_SENDQUEUEFULL)
-			जाओ deref_ldisc;
-	पूर्ण
+		if (errcode == CAPI_SENDQUEUEFULL)
+			goto deref_ldisc;
+	}
 
-मुक्त_skb:
+free_skb:
 	ret = 0;
-	kमुक्त_skb(skb);
+	kfree_skb(skb);
 
 deref_ldisc:
 	tty_ldisc_deref(ld);
 
 deref_tty:
 	tty_kref_put(tty);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम handle_minor_recv(काष्ठा capiminor *mp)
-अणु
-	काष्ठा sk_buff *skb;
+static void handle_minor_recv(struct capiminor *mp)
+{
+	struct sk_buff *skb;
 
-	जबतक ((skb = skb_dequeue(&mp->inqueue)) != शून्य)
-		अगर (handle_recv_skb(mp, skb) < 0) अणु
+	while ((skb = skb_dequeue(&mp->inqueue)) != NULL)
+		if (handle_recv_skb(mp, skb) < 0) {
 			skb_queue_head(&mp->inqueue, skb);
-			वापस;
-		पूर्ण
-पूर्ण
+			return;
+		}
+}
 
-अटल व्योम handle_minor_send(काष्ठा capiminor *mp)
-अणु
-	काष्ठा tty_काष्ठा *tty;
-	काष्ठा sk_buff *skb;
+static void handle_minor_send(struct capiminor *mp)
+{
+	struct tty_struct *tty;
+	struct sk_buff *skb;
 	u16 len;
 	u16 errcode;
 	u16 datahandle;
 
 	tty = tty_port_tty_get(&mp->port);
-	अगर (!tty)
-		वापस;
+	if (!tty)
+		return;
 
-	अगर (mp->ttyoutstop) अणु
+	if (mp->ttyoutstop) {
 		pr_debug("capi: send: tty stopped\n");
 		tty_kref_put(tty);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	जबतक (1) अणु
+	while (1) {
 		spin_lock_bh(&mp->outlock);
 		skb = __skb_dequeue(&mp->outqueue);
-		अगर (!skb) अणु
+		if (!skb) {
 			spin_unlock_bh(&mp->outlock);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		len = (u16)skb->len;
 		mp->outbytes -= len;
 		spin_unlock_bh(&mp->outlock);
 
-		datahandle = atomic_inc_वापस(&mp->datahandle);
+		datahandle = atomic_inc_return(&mp->datahandle);
 		skb_push(skb, CAPI_DATA_B3_REQ_LEN);
-		स_रखो(skb->data, 0, CAPI_DATA_B3_REQ_LEN);
+		memset(skb->data, 0, CAPI_DATA_B3_REQ_LEN);
 		capimsg_setu16(skb->data, 0, CAPI_DATA_B3_REQ_LEN);
 		capimsg_setu16(skb->data, 2, mp->ap->applid);
 		capimsg_setu8 (skb->data, 4, CAPI_DATA_B3);
 		capimsg_setu8 (skb->data, 5, CAPI_REQ);
-		capimsg_setu16(skb->data, 6, atomic_inc_वापस(&mp->msgid));
+		capimsg_setu16(skb->data, 6, atomic_inc_return(&mp->msgid));
 		capimsg_setu32(skb->data, 8, mp->ncci);	/* NCCI */
-		capimsg_setu32(skb->data, 12, (u32)(दीर्घ)skb->data);/* Data32 */
+		capimsg_setu32(skb->data, 12, (u32)(long)skb->data);/* Data32 */
 		capimsg_setu16(skb->data, 16, len);	/* Data length */
 		capimsg_setu16(skb->data, 18, datahandle);
 		capimsg_setu16(skb->data, 20, 0);	/* Flags */
 
-		अगर (capiminor_add_ack(mp, datahandle) < 0) अणु
+		if (capiminor_add_ack(mp, datahandle) < 0) {
 			skb_pull(skb, CAPI_DATA_B3_REQ_LEN);
 
 			spin_lock_bh(&mp->outlock);
@@ -539,17 +538,17 @@ deref_tty:
 			mp->outbytes += len;
 			spin_unlock_bh(&mp->outlock);
 
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		errcode = capi20_put_message(mp->ap, skb);
-		अगर (errcode == CAPI_NOERROR) अणु
+		if (errcode == CAPI_NOERROR) {
 			pr_debug("capi: DATA_B3_REQ %u len=%u\n",
 				 datahandle, len);
-			जारी;
-		पूर्ण
+			continue;
+		}
 		capiminor_del_ack(mp, datahandle);
 
-		अगर (errcode == CAPI_SENDQUEUEFULL) अणु
+		if (errcode == CAPI_SENDQUEUEFULL) {
 			skb_pull(skb, CAPI_DATA_B3_REQ_LEN);
 
 			spin_lock_bh(&mp->outlock);
@@ -557,65 +556,65 @@ deref_tty:
 			mp->outbytes += len;
 			spin_unlock_bh(&mp->outlock);
 
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		/* ups, drop packet */
-		prपूर्णांकk(KERN_ERR "capi: put_message = %x\n", errcode);
-		kमुक्त_skb(skb);
-	पूर्ण
+		printk(KERN_ERR "capi: put_message = %x\n", errcode);
+		kfree_skb(skb);
+	}
 	tty_kref_put(tty);
-पूर्ण
+}
 
-#पूर्ण_अगर /* CONFIG_ISDN_CAPI_MIDDLEWARE */
+#endif /* CONFIG_ISDN_CAPI_MIDDLEWARE */
 /* -------- function called by lower level -------------------------- */
 
-अटल व्योम capi_recv_message(काष्ठा capi20_appl *ap, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा capidev *cdev = ap->निजी;
-#अगर_घोषित CONFIG_ISDN_CAPI_MIDDLEWARE
-	काष्ठा capiminor *mp;
+static void capi_recv_message(struct capi20_appl *ap, struct sk_buff *skb)
+{
+	struct capidev *cdev = ap->private;
+#ifdef CONFIG_ISDN_CAPI_MIDDLEWARE
+	struct capiminor *mp;
 	u16 datahandle;
-	काष्ठा capincci *np;
-#पूर्ण_अगर /* CONFIG_ISDN_CAPI_MIDDLEWARE */
+	struct capincci *np;
+#endif /* CONFIG_ISDN_CAPI_MIDDLEWARE */
 
 	mutex_lock(&cdev->lock);
 
-	अगर (CAPIMSG_CMD(skb->data) == CAPI_CONNECT_B3_CONF) अणु
+	if (CAPIMSG_CMD(skb->data) == CAPI_CONNECT_B3_CONF) {
 		u16 info = CAPIMSG_U16(skb->data, 12); // Info field
-		अगर ((info & 0xff00) == 0)
+		if ((info & 0xff00) == 0)
 			capincci_alloc(cdev, CAPIMSG_NCCI(skb->data));
-	पूर्ण
-	अगर (CAPIMSG_CMD(skb->data) == CAPI_CONNECT_B3_IND)
+	}
+	if (CAPIMSG_CMD(skb->data) == CAPI_CONNECT_B3_IND)
 		capincci_alloc(cdev, CAPIMSG_NCCI(skb->data));
 
-	अगर (CAPIMSG_COMMAND(skb->data) != CAPI_DATA_B3) अणु
+	if (CAPIMSG_COMMAND(skb->data) != CAPI_DATA_B3) {
 		skb_queue_tail(&cdev->recvqueue, skb);
-		wake_up_पूर्णांकerruptible(&cdev->recvरुको);
-		जाओ unlock_out;
-	पूर्ण
+		wake_up_interruptible(&cdev->recvwait);
+		goto unlock_out;
+	}
 
-#अगर_अघोषित CONFIG_ISDN_CAPI_MIDDLEWARE
+#ifndef CONFIG_ISDN_CAPI_MIDDLEWARE
 	skb_queue_tail(&cdev->recvqueue, skb);
-	wake_up_पूर्णांकerruptible(&cdev->recvरुको);
+	wake_up_interruptible(&cdev->recvwait);
 
-#अन्यथा /* CONFIG_ISDN_CAPI_MIDDLEWARE */
+#else /* CONFIG_ISDN_CAPI_MIDDLEWARE */
 
 	np = capincci_find(cdev, CAPIMSG_CONTROL(skb->data));
-	अगर (!np) अणु
-		prपूर्णांकk(KERN_ERR "BUG: capi_signal: ncci not found\n");
+	if (!np) {
+		printk(KERN_ERR "BUG: capi_signal: ncci not found\n");
 		skb_queue_tail(&cdev->recvqueue, skb);
-		wake_up_पूर्णांकerruptible(&cdev->recvरुको);
-		जाओ unlock_out;
-	पूर्ण
+		wake_up_interruptible(&cdev->recvwait);
+		goto unlock_out;
+	}
 
 	mp = np->minorp;
-	अगर (!mp) अणु
+	if (!mp) {
 		skb_queue_tail(&cdev->recvqueue, skb);
-		wake_up_पूर्णांकerruptible(&cdev->recvरुको);
-		जाओ unlock_out;
-	पूर्ण
-	अगर (CAPIMSG_SUBCOMMAND(skb->data) == CAPI_IND) अणु
+		wake_up_interruptible(&cdev->recvwait);
+		goto unlock_out;
+	}
+	if (CAPIMSG_SUBCOMMAND(skb->data) == CAPI_IND) {
 		datahandle = CAPIMSG_U16(skb->data, CAPIMSG_BASELEN + 4 + 4 + 2);
 		pr_debug("capi_signal: DATA_B3_IND %u len=%d\n",
 			 datahandle, skb->len-CAPIMSG_LEN(skb->data));
@@ -623,483 +622,483 @@ deref_tty:
 
 		handle_minor_recv(mp);
 
-	पूर्ण अन्यथा अगर (CAPIMSG_SUBCOMMAND(skb->data) == CAPI_CONF) अणु
+	} else if (CAPIMSG_SUBCOMMAND(skb->data) == CAPI_CONF) {
 
 		datahandle = CAPIMSG_U16(skb->data, CAPIMSG_BASELEN + 4);
 		pr_debug("capi_signal: DATA_B3_CONF %u 0x%x\n",
 			 datahandle,
 			 CAPIMSG_U16(skb->data, CAPIMSG_BASELEN + 4 + 2));
-		kमुक्त_skb(skb);
+		kfree_skb(skb);
 		capiminor_del_ack(mp, datahandle);
 		tty_port_tty_wakeup(&mp->port);
 		handle_minor_send(mp);
 
-	पूर्ण अन्यथा अणु
+	} else {
 		/* ups, let capi application handle it :-) */
 		skb_queue_tail(&cdev->recvqueue, skb);
-		wake_up_पूर्णांकerruptible(&cdev->recvरुको);
-	पूर्ण
-#पूर्ण_अगर /* CONFIG_ISDN_CAPI_MIDDLEWARE */
+		wake_up_interruptible(&cdev->recvwait);
+	}
+#endif /* CONFIG_ISDN_CAPI_MIDDLEWARE */
 
 unlock_out:
 	mutex_unlock(&cdev->lock);
-पूर्ण
+}
 
-/* -------- file_operations क्रम capidev ----------------------------- */
+/* -------- file_operations for capidev ----------------------------- */
 
-अटल sमाप_प्रकार
-capi_पढ़ो(काष्ठा file *file, अक्षर __user *buf, माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा capidev *cdev = file->निजी_data;
-	काष्ठा sk_buff *skb;
-	माप_प्रकार copied;
-	पूर्णांक err;
+static ssize_t
+capi_read(struct file *file, char __user *buf, size_t count, loff_t *ppos)
+{
+	struct capidev *cdev = file->private_data;
+	struct sk_buff *skb;
+	size_t copied;
+	int err;
 
-	अगर (!cdev->ap.applid)
-		वापस -ENODEV;
+	if (!cdev->ap.applid)
+		return -ENODEV;
 
 	skb = skb_dequeue(&cdev->recvqueue);
-	अगर (!skb) अणु
-		अगर (file->f_flags & O_NONBLOCK)
-			वापस -EAGAIN;
-		err = रुको_event_पूर्णांकerruptible(cdev->recvरुको,
+	if (!skb) {
+		if (file->f_flags & O_NONBLOCK)
+			return -EAGAIN;
+		err = wait_event_interruptible(cdev->recvwait,
 					       (skb = skb_dequeue(&cdev->recvqueue)));
-		अगर (err)
-			वापस err;
-	पूर्ण
-	अगर (skb->len > count) अणु
+		if (err)
+			return err;
+	}
+	if (skb->len > count) {
 		skb_queue_head(&cdev->recvqueue, skb);
-		वापस -EMSGSIZE;
-	पूर्ण
-	अगर (copy_to_user(buf, skb->data, skb->len)) अणु
+		return -EMSGSIZE;
+	}
+	if (copy_to_user(buf, skb->data, skb->len)) {
 		skb_queue_head(&cdev->recvqueue, skb);
-		वापस -EFAULT;
-	पूर्ण
+		return -EFAULT;
+	}
 	copied = skb->len;
 
-	kमुक्त_skb(skb);
+	kfree_skb(skb);
 
-	वापस copied;
-पूर्ण
+	return copied;
+}
 
-अटल sमाप_प्रकार
-capi_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buf, माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा capidev *cdev = file->निजी_data;
-	काष्ठा sk_buff *skb;
+static ssize_t
+capi_write(struct file *file, const char __user *buf, size_t count, loff_t *ppos)
+{
+	struct capidev *cdev = file->private_data;
+	struct sk_buff *skb;
 	u16 mlen;
 
-	अगर (!cdev->ap.applid)
-		वापस -ENODEV;
+	if (!cdev->ap.applid)
+		return -ENODEV;
 
-	अगर (count < CAPIMSG_BASELEN)
-		वापस -EINVAL;
+	if (count < CAPIMSG_BASELEN)
+		return -EINVAL;
 
 	skb = alloc_skb(count, GFP_USER);
-	अगर (!skb)
-		वापस -ENOMEM;
+	if (!skb)
+		return -ENOMEM;
 
-	अगर (copy_from_user(skb_put(skb, count), buf, count)) अणु
-		kमुक्त_skb(skb);
-		वापस -EFAULT;
-	पूर्ण
+	if (copy_from_user(skb_put(skb, count), buf, count)) {
+		kfree_skb(skb);
+		return -EFAULT;
+	}
 	mlen = CAPIMSG_LEN(skb->data);
-	अगर (CAPIMSG_CMD(skb->data) == CAPI_DATA_B3_REQ) अणु
-		अगर (count < CAPI_DATA_B3_REQ_LEN ||
-		    (माप_प्रकार)(mlen + CAPIMSG_DATALEN(skb->data)) != count) अणु
-			kमुक्त_skb(skb);
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		अगर (mlen != count) अणु
-			kमुक्त_skb(skb);
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+	if (CAPIMSG_CMD(skb->data) == CAPI_DATA_B3_REQ) {
+		if (count < CAPI_DATA_B3_REQ_LEN ||
+		    (size_t)(mlen + CAPIMSG_DATALEN(skb->data)) != count) {
+			kfree_skb(skb);
+			return -EINVAL;
+		}
+	} else {
+		if (mlen != count) {
+			kfree_skb(skb);
+			return -EINVAL;
+		}
+	}
 	CAPIMSG_SETAPPID(skb->data, cdev->ap.applid);
 
-	अगर (CAPIMSG_CMD(skb->data) == CAPI_DISCONNECT_B3_RESP) अणु
-		अगर (count < CAPI_DISCONNECT_B3_RESP_LEN) अणु
-			kमुक्त_skb(skb);
-			वापस -EINVAL;
-		पूर्ण
+	if (CAPIMSG_CMD(skb->data) == CAPI_DISCONNECT_B3_RESP) {
+		if (count < CAPI_DISCONNECT_B3_RESP_LEN) {
+			kfree_skb(skb);
+			return -EINVAL;
+		}
 		mutex_lock(&cdev->lock);
-		capincci_मुक्त(cdev, CAPIMSG_NCCI(skb->data));
+		capincci_free(cdev, CAPIMSG_NCCI(skb->data));
 		mutex_unlock(&cdev->lock);
-	पूर्ण
+	}
 
 	cdev->errcode = capi20_put_message(&cdev->ap, skb);
 
-	अगर (cdev->errcode) अणु
-		kमुक्त_skb(skb);
-		वापस -EIO;
-	पूर्ण
-	वापस count;
-पूर्ण
+	if (cdev->errcode) {
+		kfree_skb(skb);
+		return -EIO;
+	}
+	return count;
+}
 
-अटल __poll_t
-capi_poll(काष्ठा file *file, poll_table *रुको)
-अणु
-	काष्ठा capidev *cdev = file->निजी_data;
+static __poll_t
+capi_poll(struct file *file, poll_table *wait)
+{
+	struct capidev *cdev = file->private_data;
 	__poll_t mask = 0;
 
-	अगर (!cdev->ap.applid)
-		वापस EPOLLERR;
+	if (!cdev->ap.applid)
+		return EPOLLERR;
 
-	poll_रुको(file, &(cdev->recvरुको), रुको);
+	poll_wait(file, &(cdev->recvwait), wait);
 	mask = EPOLLOUT | EPOLLWRNORM;
-	अगर (!skb_queue_empty_lockless(&cdev->recvqueue))
+	if (!skb_queue_empty_lockless(&cdev->recvqueue))
 		mask |= EPOLLIN | EPOLLRDNORM;
-	वापस mask;
-पूर्ण
+	return mask;
+}
 
-अटल पूर्णांक
-capi_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
-अणु
-	काष्ठा capidev *cdev = file->निजी_data;
-	capi_ioctl_काष्ठा data;
-	पूर्णांक retval = -EINVAL;
-	व्योम __user *argp = (व्योम __user *)arg;
+static int
+capi_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
+{
+	struct capidev *cdev = file->private_data;
+	capi_ioctl_struct data;
+	int retval = -EINVAL;
+	void __user *argp = (void __user *)arg;
 
-	चयन (cmd) अणु
-	हाल CAPI_REGISTER:
+	switch (cmd) {
+	case CAPI_REGISTER:
 		mutex_lock(&cdev->lock);
 
-		अगर (cdev->ap.applid) अणु
+		if (cdev->ap.applid) {
 			retval = -EEXIST;
-			जाओ रेजिस्टर_out;
-		पूर्ण
-		अगर (copy_from_user(&cdev->ap.rparam, argp,
-				   माप(काष्ठा capi_रेजिस्टर_params))) अणु
+			goto register_out;
+		}
+		if (copy_from_user(&cdev->ap.rparam, argp,
+				   sizeof(struct capi_register_params))) {
 			retval = -EFAULT;
-			जाओ रेजिस्टर_out;
-		पूर्ण
-		cdev->ap.निजी = cdev;
+			goto register_out;
+		}
+		cdev->ap.private = cdev;
 		cdev->ap.recv_message = capi_recv_message;
-		cdev->errcode = capi20_रेजिस्टर(&cdev->ap);
-		retval = (पूर्णांक)cdev->ap.applid;
-		अगर (cdev->errcode) अणु
+		cdev->errcode = capi20_register(&cdev->ap);
+		retval = (int)cdev->ap.applid;
+		if (cdev->errcode) {
 			cdev->ap.applid = 0;
 			retval = -EIO;
-		पूर्ण
+		}
 
-रेजिस्टर_out:
+register_out:
 		mutex_unlock(&cdev->lock);
-		वापस retval;
+		return retval;
 
-	हाल CAPI_GET_VERSION:
-		अगर (copy_from_user(&data.contr, argp,
-				   माप(data.contr)))
-			वापस -EFAULT;
+	case CAPI_GET_VERSION:
+		if (copy_from_user(&data.contr, argp,
+				   sizeof(data.contr)))
+			return -EFAULT;
 		cdev->errcode = capi20_get_version(data.contr, &data.version);
-		अगर (cdev->errcode)
-			वापस -EIO;
-		अगर (copy_to_user(argp, &data.version,
-				 माप(data.version)))
-			वापस -EFAULT;
-		वापस 0;
+		if (cdev->errcode)
+			return -EIO;
+		if (copy_to_user(argp, &data.version,
+				 sizeof(data.version)))
+			return -EFAULT;
+		return 0;
 
-	हाल CAPI_GET_SERIAL:
-		अगर (copy_from_user(&data.contr, argp,
-				   माप(data.contr)))
-			वापस -EFAULT;
+	case CAPI_GET_SERIAL:
+		if (copy_from_user(&data.contr, argp,
+				   sizeof(data.contr)))
+			return -EFAULT;
 		cdev->errcode = capi20_get_serial(data.contr, data.serial);
-		अगर (cdev->errcode)
-			वापस -EIO;
-		अगर (copy_to_user(argp, data.serial,
-				 माप(data.serial)))
-			वापस -EFAULT;
-		वापस 0;
+		if (cdev->errcode)
+			return -EIO;
+		if (copy_to_user(argp, data.serial,
+				 sizeof(data.serial)))
+			return -EFAULT;
+		return 0;
 
-	हाल CAPI_GET_PROखाता:
-		अगर (copy_from_user(&data.contr, argp,
-				   माप(data.contr)))
-			वापस -EFAULT;
+	case CAPI_GET_PROFILE:
+		if (copy_from_user(&data.contr, argp,
+				   sizeof(data.contr)))
+			return -EFAULT;
 
-		अगर (data.contr == 0) अणु
+		if (data.contr == 0) {
 			cdev->errcode = capi20_get_profile(data.contr, &data.profile);
-			अगर (cdev->errcode)
-				वापस -EIO;
+			if (cdev->errcode)
+				return -EIO;
 
 			retval = copy_to_user(argp,
 					      &data.profile.ncontroller,
-					      माप(data.profile.ncontroller));
+					      sizeof(data.profile.ncontroller));
 
-		पूर्ण अन्यथा अणु
+		} else {
 			cdev->errcode = capi20_get_profile(data.contr, &data.profile);
-			अगर (cdev->errcode)
-				वापस -EIO;
+			if (cdev->errcode)
+				return -EIO;
 
 			retval = copy_to_user(argp, &data.profile,
-					      माप(data.profile));
-		पूर्ण
-		अगर (retval)
-			वापस -EFAULT;
-		वापस 0;
+					      sizeof(data.profile));
+		}
+		if (retval)
+			return -EFAULT;
+		return 0;
 
-	हाल CAPI_GET_MANUFACTURER:
-		अगर (copy_from_user(&data.contr, argp,
-				   माप(data.contr)))
-			वापस -EFAULT;
+	case CAPI_GET_MANUFACTURER:
+		if (copy_from_user(&data.contr, argp,
+				   sizeof(data.contr)))
+			return -EFAULT;
 		cdev->errcode = capi20_get_manufacturer(data.contr, data.manufacturer);
-		अगर (cdev->errcode)
-			वापस -EIO;
+		if (cdev->errcode)
+			return -EIO;
 
-		अगर (copy_to_user(argp, data.manufacturer,
-				 माप(data.manufacturer)))
-			वापस -EFAULT;
+		if (copy_to_user(argp, data.manufacturer,
+				 sizeof(data.manufacturer)))
+			return -EFAULT;
 
-		वापस 0;
+		return 0;
 
-	हाल CAPI_GET_ERRCODE:
+	case CAPI_GET_ERRCODE:
 		data.errcode = cdev->errcode;
 		cdev->errcode = CAPI_NOERROR;
-		अगर (arg) अणु
-			अगर (copy_to_user(argp, &data.errcode,
-					 माप(data.errcode)))
-				वापस -EFAULT;
-		पूर्ण
-		वापस data.errcode;
+		if (arg) {
+			if (copy_to_user(argp, &data.errcode,
+					 sizeof(data.errcode)))
+				return -EFAULT;
+		}
+		return data.errcode;
 
-	हाल CAPI_INSTALLED:
-		अगर (capi20_isinstalled() == CAPI_NOERROR)
-			वापस 0;
-		वापस -ENXIO;
+	case CAPI_INSTALLED:
+		if (capi20_isinstalled() == CAPI_NOERROR)
+			return 0;
+		return -ENXIO;
 
-	हाल CAPI_MANUFACTURER_CMD: अणु
-		काष्ठा capi_manufacturer_cmd mcmd;
-		अगर (!capable(CAP_SYS_ADMIN))
-			वापस -EPERM;
-		अगर (copy_from_user(&mcmd, argp, माप(mcmd)))
-			वापस -EFAULT;
-		वापस capi20_manufacturer(mcmd.cmd, mcmd.data);
-	पूर्ण
-	हाल CAPI_SET_FLAGS:
-	हाल CAPI_CLR_FLAGS: अणु
-		अचिन्हित userflags;
+	case CAPI_MANUFACTURER_CMD: {
+		struct capi_manufacturer_cmd mcmd;
+		if (!capable(CAP_SYS_ADMIN))
+			return -EPERM;
+		if (copy_from_user(&mcmd, argp, sizeof(mcmd)))
+			return -EFAULT;
+		return capi20_manufacturer(mcmd.cmd, mcmd.data);
+	}
+	case CAPI_SET_FLAGS:
+	case CAPI_CLR_FLAGS: {
+		unsigned userflags;
 
-		अगर (copy_from_user(&userflags, argp, माप(userflags)))
-			वापस -EFAULT;
+		if (copy_from_user(&userflags, argp, sizeof(userflags)))
+			return -EFAULT;
 
 		mutex_lock(&cdev->lock);
-		अगर (cmd == CAPI_SET_FLAGS)
+		if (cmd == CAPI_SET_FLAGS)
 			cdev->userflags |= userflags;
-		अन्यथा
+		else
 			cdev->userflags &= ~userflags;
 		mutex_unlock(&cdev->lock);
-		वापस 0;
-	पूर्ण
-	हाल CAPI_GET_FLAGS:
-		अगर (copy_to_user(argp, &cdev->userflags,
-				 माप(cdev->userflags)))
-			वापस -EFAULT;
-		वापस 0;
+		return 0;
+	}
+	case CAPI_GET_FLAGS:
+		if (copy_to_user(argp, &cdev->userflags,
+				 sizeof(cdev->userflags)))
+			return -EFAULT;
+		return 0;
 
-#अगर_अघोषित CONFIG_ISDN_CAPI_MIDDLEWARE
-	हाल CAPI_NCCI_OPENCOUNT:
-		वापस 0;
+#ifndef CONFIG_ISDN_CAPI_MIDDLEWARE
+	case CAPI_NCCI_OPENCOUNT:
+		return 0;
 
-#अन्यथा /* CONFIG_ISDN_CAPI_MIDDLEWARE */
-	हाल CAPI_NCCI_OPENCOUNT: अणु
-		काष्ठा capincci *nccip;
-		अचिन्हित ncci;
-		पूर्णांक count = 0;
+#else /* CONFIG_ISDN_CAPI_MIDDLEWARE */
+	case CAPI_NCCI_OPENCOUNT: {
+		struct capincci *nccip;
+		unsigned ncci;
+		int count = 0;
 
-		अगर (copy_from_user(&ncci, argp, माप(ncci)))
-			वापस -EFAULT;
+		if (copy_from_user(&ncci, argp, sizeof(ncci)))
+			return -EFAULT;
 
 		mutex_lock(&cdev->lock);
 		nccip = capincci_find(cdev, (u32)ncci);
-		अगर (nccip)
-			count = capincci_minor_खोलोcount(nccip);
+		if (nccip)
+			count = capincci_minor_opencount(nccip);
 		mutex_unlock(&cdev->lock);
-		वापस count;
-	पूर्ण
+		return count;
+	}
 
-	हाल CAPI_NCCI_GETUNIT: अणु
-		काष्ठा capincci *nccip;
-		काष्ठा capiminor *mp;
-		अचिन्हित ncci;
-		पूर्णांक unit = -ESRCH;
+	case CAPI_NCCI_GETUNIT: {
+		struct capincci *nccip;
+		struct capiminor *mp;
+		unsigned ncci;
+		int unit = -ESRCH;
 
-		अगर (copy_from_user(&ncci, argp, माप(ncci)))
-			वापस -EFAULT;
+		if (copy_from_user(&ncci, argp, sizeof(ncci)))
+			return -EFAULT;
 
 		mutex_lock(&cdev->lock);
 		nccip = capincci_find(cdev, (u32)ncci);
-		अगर (nccip) अणु
+		if (nccip) {
 			mp = nccip->minorp;
-			अगर (mp)
+			if (mp)
 				unit = mp->minor;
-		पूर्ण
+		}
 		mutex_unlock(&cdev->lock);
-		वापस unit;
-	पूर्ण
-#पूर्ण_अगर /* CONFIG_ISDN_CAPI_MIDDLEWARE */
+		return unit;
+	}
+#endif /* CONFIG_ISDN_CAPI_MIDDLEWARE */
 
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-पूर्ण
+	default:
+		return -EINVAL;
+	}
+}
 
-अटल दीर्घ
-capi_unlocked_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
-अणु
-	पूर्णांक ret;
+static long
+capi_unlocked_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
+{
+	int ret;
 
 	mutex_lock(&capi_mutex);
 	ret = capi_ioctl(file, cmd, arg);
 	mutex_unlock(&capi_mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-#अगर_घोषित CONFIG_COMPAT
-अटल दीर्घ
-capi_compat_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
-अणु
-	पूर्णांक ret;
+#ifdef CONFIG_COMPAT
+static long
+capi_compat_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
+{
+	int ret;
 
-	अगर (cmd == CAPI_MANUFACTURER_CMD) अणु
-		काष्ठा अणु
-			compat_uदीर्घ_t cmd;
+	if (cmd == CAPI_MANUFACTURER_CMD) {
+		struct {
+			compat_ulong_t cmd;
 			compat_uptr_t data;
-		पूर्ण mcmd32;
+		} mcmd32;
 
-		अगर (!capable(CAP_SYS_ADMIN))
-			वापस -EPERM;
-		अगर (copy_from_user(&mcmd32, compat_ptr(arg), माप(mcmd32)))
-			वापस -EFAULT;
+		if (!capable(CAP_SYS_ADMIN))
+			return -EPERM;
+		if (copy_from_user(&mcmd32, compat_ptr(arg), sizeof(mcmd32)))
+			return -EFAULT;
 
 		mutex_lock(&capi_mutex);
 		ret = capi20_manufacturer(mcmd32.cmd, compat_ptr(mcmd32.data));
 		mutex_unlock(&capi_mutex);
 
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस capi_unlocked_ioctl(file, cmd, (अचिन्हित दीर्घ)compat_ptr(arg));
-पूर्ण
-#पूर्ण_अगर
+	return capi_unlocked_ioctl(file, cmd, (unsigned long)compat_ptr(arg));
+}
+#endif
 
-अटल पूर्णांक capi_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा capidev *cdev;
+static int capi_open(struct inode *inode, struct file *file)
+{
+	struct capidev *cdev;
 
-	cdev = kzalloc(माप(*cdev), GFP_KERNEL);
-	अगर (!cdev)
-		वापस -ENOMEM;
+	cdev = kzalloc(sizeof(*cdev), GFP_KERNEL);
+	if (!cdev)
+		return -ENOMEM;
 
 	mutex_init(&cdev->lock);
 	skb_queue_head_init(&cdev->recvqueue);
-	init_रुकोqueue_head(&cdev->recvरुको);
+	init_waitqueue_head(&cdev->recvwait);
 	INIT_LIST_HEAD(&cdev->nccis);
-	file->निजी_data = cdev;
+	file->private_data = cdev;
 
 	mutex_lock(&capidev_list_lock);
 	list_add_tail(&cdev->list, &capidev_list);
 	mutex_unlock(&capidev_list_lock);
 
-	वापस stream_खोलो(inode, file);
-पूर्ण
+	return stream_open(inode, file);
+}
 
-अटल पूर्णांक capi_release(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा capidev *cdev = file->निजी_data;
+static int capi_release(struct inode *inode, struct file *file)
+{
+	struct capidev *cdev = file->private_data;
 
 	mutex_lock(&capidev_list_lock);
 	list_del(&cdev->list);
 	mutex_unlock(&capidev_list_lock);
 
-	अगर (cdev->ap.applid)
+	if (cdev->ap.applid)
 		capi20_release(&cdev->ap);
 	skb_queue_purge(&cdev->recvqueue);
-	capincci_मुक्त(cdev, 0xffffffff);
+	capincci_free(cdev, 0xffffffff);
 
-	kमुक्त(cdev);
-	वापस 0;
-पूर्ण
+	kfree(cdev);
+	return 0;
+}
 
-अटल स्थिर काष्ठा file_operations capi_fops =
-अणु
+static const struct file_operations capi_fops =
+{
 	.owner		= THIS_MODULE,
 	.llseek		= no_llseek,
-	.पढ़ो		= capi_पढ़ो,
-	.ग_लिखो		= capi_ग_लिखो,
+	.read		= capi_read,
+	.write		= capi_write,
 	.poll		= capi_poll,
 	.unlocked_ioctl	= capi_unlocked_ioctl,
-#अगर_घोषित CONFIG_COMPAT
+#ifdef CONFIG_COMPAT
 	.compat_ioctl	= capi_compat_ioctl,
-#पूर्ण_अगर
-	.खोलो		= capi_खोलो,
+#endif
+	.open		= capi_open,
 	.release	= capi_release,
-पूर्ण;
+};
 
-#अगर_घोषित CONFIG_ISDN_CAPI_MIDDLEWARE
-/* -------- tty_operations क्रम capincci ----------------------------- */
+#ifdef CONFIG_ISDN_CAPI_MIDDLEWARE
+/* -------- tty_operations for capincci ----------------------------- */
 
-अटल पूर्णांक
-capinc_tty_install(काष्ठा tty_driver *driver, काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा capiminor *mp = capiminor_get(tty->index);
-	पूर्णांक ret = tty_standard_install(driver, tty);
+static int
+capinc_tty_install(struct tty_driver *driver, struct tty_struct *tty)
+{
+	struct capiminor *mp = capiminor_get(tty->index);
+	int ret = tty_standard_install(driver, tty);
 
-	अगर (ret == 0)
+	if (ret == 0)
 		tty->driver_data = mp;
-	अन्यथा
+	else
 		capiminor_put(mp);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम capinc_tty_cleanup(काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा capiminor *mp = tty->driver_data;
-	tty->driver_data = शून्य;
+static void capinc_tty_cleanup(struct tty_struct *tty)
+{
+	struct capiminor *mp = tty->driver_data;
+	tty->driver_data = NULL;
 	capiminor_put(mp);
-पूर्ण
+}
 
-अटल पूर्णांक capinc_tty_खोलो(काष्ठा tty_काष्ठा *tty, काष्ठा file *filp)
-अणु
-	काष्ठा capiminor *mp = tty->driver_data;
-	पूर्णांक err;
+static int capinc_tty_open(struct tty_struct *tty, struct file *filp)
+{
+	struct capiminor *mp = tty->driver_data;
+	int err;
 
-	err = tty_port_खोलो(&mp->port, tty, filp);
-	अगर (err)
-		वापस err;
+	err = tty_port_open(&mp->port, tty, filp);
+	if (err)
+		return err;
 
 	handle_minor_recv(mp);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम capinc_tty_बंद(काष्ठा tty_काष्ठा *tty, काष्ठा file *filp)
-अणु
-	काष्ठा capiminor *mp = tty->driver_data;
+static void capinc_tty_close(struct tty_struct *tty, struct file *filp)
+{
+	struct capiminor *mp = tty->driver_data;
 
-	tty_port_बंद(&mp->port, tty, filp);
-पूर्ण
+	tty_port_close(&mp->port, tty, filp);
+}
 
-अटल पूर्णांक capinc_tty_ग_लिखो(काष्ठा tty_काष्ठा *tty,
-			    स्थिर अचिन्हित अक्षर *buf, पूर्णांक count)
-अणु
-	काष्ठा capiminor *mp = tty->driver_data;
-	काष्ठा sk_buff *skb;
+static int capinc_tty_write(struct tty_struct *tty,
+			    const unsigned char *buf, int count)
+{
+	struct capiminor *mp = tty->driver_data;
+	struct sk_buff *skb;
 
 	pr_debug("capinc_tty_write(count=%d)\n", count);
 
 	spin_lock_bh(&mp->outlock);
 	skb = mp->outskb;
-	अगर (skb) अणु
-		mp->outskb = शून्य;
+	if (skb) {
+		mp->outskb = NULL;
 		__skb_queue_tail(&mp->outqueue, skb);
 		mp->outbytes += skb->len;
-	पूर्ण
+	}
 
 	skb = alloc_skb(CAPI_DATA_B3_REQ_LEN + count, GFP_ATOMIC);
-	अगर (!skb) अणु
-		prपूर्णांकk(KERN_ERR "capinc_tty_write: alloc_skb failed\n");
+	if (!skb) {
+		printk(KERN_ERR "capinc_tty_write: alloc_skb failed\n");
 		spin_unlock_bh(&mp->outlock);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	skb_reserve(skb, CAPI_DATA_B3_REQ_LEN);
 	skb_put_data(skb, buf, count);
@@ -1110,203 +1109,203 @@ capinc_tty_install(काष्ठा tty_driver *driver, काष्ठा tty
 
 	handle_minor_send(mp);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल पूर्णांक capinc_tty_put_अक्षर(काष्ठा tty_काष्ठा *tty, अचिन्हित अक्षर ch)
-अणु
-	काष्ठा capiminor *mp = tty->driver_data;
+static int capinc_tty_put_char(struct tty_struct *tty, unsigned char ch)
+{
+	struct capiminor *mp = tty->driver_data;
 	bool invoke_send = false;
-	काष्ठा sk_buff *skb;
-	पूर्णांक ret = 1;
+	struct sk_buff *skb;
+	int ret = 1;
 
 	pr_debug("capinc_put_char(%u)\n", ch);
 
 	spin_lock_bh(&mp->outlock);
 	skb = mp->outskb;
-	अगर (skb) अणु
-		अगर (skb_tailroom(skb) > 0) अणु
+	if (skb) {
+		if (skb_tailroom(skb) > 0) {
 			skb_put_u8(skb, ch);
-			जाओ unlock_out;
-		पूर्ण
-		mp->outskb = शून्य;
+			goto unlock_out;
+		}
+		mp->outskb = NULL;
 		__skb_queue_tail(&mp->outqueue, skb);
 		mp->outbytes += skb->len;
 		invoke_send = true;
-	पूर्ण
+	}
 
 	skb = alloc_skb(CAPI_DATA_B3_REQ_LEN + CAPI_MAX_BLKSIZE, GFP_ATOMIC);
-	अगर (skb) अणु
+	if (skb) {
 		skb_reserve(skb, CAPI_DATA_B3_REQ_LEN);
 		skb_put_u8(skb, ch);
 		mp->outskb = skb;
-	पूर्ण अन्यथा अणु
-		prपूर्णांकk(KERN_ERR "capinc_put_char: char %u lost\n", ch);
+	} else {
+		printk(KERN_ERR "capinc_put_char: char %u lost\n", ch);
 		ret = 0;
-	पूर्ण
+	}
 
 unlock_out:
 	spin_unlock_bh(&mp->outlock);
 
-	अगर (invoke_send)
+	if (invoke_send)
 		handle_minor_send(mp);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम capinc_tty_flush_अक्षरs(काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा capiminor *mp = tty->driver_data;
-	काष्ठा sk_buff *skb;
+static void capinc_tty_flush_chars(struct tty_struct *tty)
+{
+	struct capiminor *mp = tty->driver_data;
+	struct sk_buff *skb;
 
 	pr_debug("capinc_tty_flush_chars\n");
 
 	spin_lock_bh(&mp->outlock);
 	skb = mp->outskb;
-	अगर (skb) अणु
-		mp->outskb = शून्य;
+	if (skb) {
+		mp->outskb = NULL;
 		__skb_queue_tail(&mp->outqueue, skb);
 		mp->outbytes += skb->len;
 		spin_unlock_bh(&mp->outlock);
 
 		handle_minor_send(mp);
-	पूर्ण अन्यथा
+	} else
 		spin_unlock_bh(&mp->outlock);
 
 	handle_minor_recv(mp);
-पूर्ण
+}
 
-अटल पूर्णांक capinc_tty_ग_लिखो_room(काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा capiminor *mp = tty->driver_data;
-	पूर्णांक room;
+static int capinc_tty_write_room(struct tty_struct *tty)
+{
+	struct capiminor *mp = tty->driver_data;
+	int room;
 
 	room = CAPINC_MAX_SENDQUEUE-skb_queue_len(&mp->outqueue);
 	room *= CAPI_MAX_BLKSIZE;
 	pr_debug("capinc_tty_write_room = %d\n", room);
-	वापस room;
-पूर्ण
+	return room;
+}
 
-अटल पूर्णांक capinc_tty_अक्षरs_in_buffer(काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा capiminor *mp = tty->driver_data;
+static int capinc_tty_chars_in_buffer(struct tty_struct *tty)
+{
+	struct capiminor *mp = tty->driver_data;
 
 	pr_debug("capinc_tty_chars_in_buffer = %d nack=%d sq=%d rq=%d\n",
 		 mp->outbytes, mp->nack,
 		 skb_queue_len(&mp->outqueue),
 		 skb_queue_len(&mp->inqueue));
-	वापस mp->outbytes;
-पूर्ण
+	return mp->outbytes;
+}
 
-अटल व्योम capinc_tty_set_termios(काष्ठा tty_काष्ठा *tty, काष्ठा ktermios *old)
-अणु
+static void capinc_tty_set_termios(struct tty_struct *tty, struct ktermios *old)
+{
 	pr_debug("capinc_tty_set_termios\n");
-पूर्ण
+}
 
-अटल व्योम capinc_tty_throttle(काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा capiminor *mp = tty->driver_data;
+static void capinc_tty_throttle(struct tty_struct *tty)
+{
+	struct capiminor *mp = tty->driver_data;
 	pr_debug("capinc_tty_throttle\n");
 	mp->ttyinstop = 1;
-पूर्ण
+}
 
-अटल व्योम capinc_tty_unthrottle(काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा capiminor *mp = tty->driver_data;
+static void capinc_tty_unthrottle(struct tty_struct *tty)
+{
+	struct capiminor *mp = tty->driver_data;
 
 	pr_debug("capinc_tty_unthrottle\n");
 	mp->ttyinstop = 0;
 	handle_minor_recv(mp);
-पूर्ण
+}
 
-अटल व्योम capinc_tty_stop(काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा capiminor *mp = tty->driver_data;
+static void capinc_tty_stop(struct tty_struct *tty)
+{
+	struct capiminor *mp = tty->driver_data;
 
 	pr_debug("capinc_tty_stop\n");
 	mp->ttyoutstop = 1;
-पूर्ण
+}
 
-अटल व्योम capinc_tty_start(काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा capiminor *mp = tty->driver_data;
+static void capinc_tty_start(struct tty_struct *tty)
+{
+	struct capiminor *mp = tty->driver_data;
 
 	pr_debug("capinc_tty_start\n");
 	mp->ttyoutstop = 0;
 	handle_minor_send(mp);
-पूर्ण
+}
 
-अटल व्योम capinc_tty_hangup(काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा capiminor *mp = tty->driver_data;
+static void capinc_tty_hangup(struct tty_struct *tty)
+{
+	struct capiminor *mp = tty->driver_data;
 
 	pr_debug("capinc_tty_hangup\n");
 	tty_port_hangup(&mp->port);
-पूर्ण
+}
 
-अटल पूर्णांक capinc_tty_अवरोध_ctl(काष्ठा tty_काष्ठा *tty, पूर्णांक state)
-अणु
+static int capinc_tty_break_ctl(struct tty_struct *tty, int state)
+{
 	pr_debug("capinc_tty_break_ctl(%d)\n", state);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम capinc_tty_flush_buffer(काष्ठा tty_काष्ठा *tty)
-अणु
+static void capinc_tty_flush_buffer(struct tty_struct *tty)
+{
 	pr_debug("capinc_tty_flush_buffer\n");
-पूर्ण
+}
 
-अटल व्योम capinc_tty_set_ldisc(काष्ठा tty_काष्ठा *tty)
-अणु
+static void capinc_tty_set_ldisc(struct tty_struct *tty)
+{
 	pr_debug("capinc_tty_set_ldisc\n");
-पूर्ण
+}
 
-अटल व्योम capinc_tty_send_xअक्षर(काष्ठा tty_काष्ठा *tty, अक्षर ch)
-अणु
+static void capinc_tty_send_xchar(struct tty_struct *tty, char ch)
+{
 	pr_debug("capinc_tty_send_xchar(%d)\n", ch);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा tty_operations capinc_ops = अणु
-	.खोलो = capinc_tty_खोलो,
-	.बंद = capinc_tty_बंद,
-	.ग_लिखो = capinc_tty_ग_लिखो,
-	.put_अक्षर = capinc_tty_put_अक्षर,
-	.flush_अक्षरs = capinc_tty_flush_अक्षरs,
-	.ग_लिखो_room = capinc_tty_ग_लिखो_room,
-	.अक्षरs_in_buffer = capinc_tty_अक्षरs_in_buffer,
+static const struct tty_operations capinc_ops = {
+	.open = capinc_tty_open,
+	.close = capinc_tty_close,
+	.write = capinc_tty_write,
+	.put_char = capinc_tty_put_char,
+	.flush_chars = capinc_tty_flush_chars,
+	.write_room = capinc_tty_write_room,
+	.chars_in_buffer = capinc_tty_chars_in_buffer,
 	.set_termios = capinc_tty_set_termios,
 	.throttle = capinc_tty_throttle,
 	.unthrottle = capinc_tty_unthrottle,
 	.stop = capinc_tty_stop,
 	.start = capinc_tty_start,
 	.hangup = capinc_tty_hangup,
-	.अवरोध_ctl = capinc_tty_अवरोध_ctl,
+	.break_ctl = capinc_tty_break_ctl,
 	.flush_buffer = capinc_tty_flush_buffer,
 	.set_ldisc = capinc_tty_set_ldisc,
-	.send_xअक्षर = capinc_tty_send_xअक्षर,
+	.send_xchar = capinc_tty_send_xchar,
 	.install = capinc_tty_install,
 	.cleanup = capinc_tty_cleanup,
-पूर्ण;
+};
 
-अटल पूर्णांक __init capinc_tty_init(व्योम)
-अणु
-	काष्ठा tty_driver *drv;
-	पूर्णांक err;
+static int __init capinc_tty_init(void)
+{
+	struct tty_driver *drv;
+	int err;
 
-	अगर (capi_ttyminors > CAPINC_MAX_PORTS)
+	if (capi_ttyminors > CAPINC_MAX_PORTS)
 		capi_ttyminors = CAPINC_MAX_PORTS;
-	अगर (capi_ttyminors <= 0)
+	if (capi_ttyminors <= 0)
 		capi_ttyminors = CAPINC_NR_PORTS;
 
-	capiminors = kसुस्मृति(capi_ttyminors, माप(काष्ठा capiminor *),
+	capiminors = kcalloc(capi_ttyminors, sizeof(struct capiminor *),
 			     GFP_KERNEL);
-	अगर (!capiminors)
-		वापस -ENOMEM;
+	if (!capiminors)
+		return -ENOMEM;
 
 	drv = alloc_tty_driver(capi_ttyminors);
-	अगर (!drv) अणु
-		kमुक्त(capiminors);
-		वापस -ENOMEM;
-	पूर्ण
+	if (!drv) {
+		kfree(capiminors);
+		return -ENOMEM;
+	}
 	drv->driver_name = "capi_nc";
 	drv->name = "capi!";
 	drv->major = 0;
@@ -1314,7 +1313,7 @@ unlock_out:
 	drv->type = TTY_DRIVER_TYPE_SERIAL;
 	drv->subtype = SERIAL_TYPE_NORMAL;
 	drv->init_termios = tty_std_termios;
-	drv->init_termios.c_अगरlag = ICRNL;
+	drv->init_termios.c_iflag = ICRNL;
 	drv->init_termios.c_oflag = OPOST | ONLCR;
 	drv->init_termios.c_cflag = B9600 | CS8 | CREAD | HUPCL | CLOCAL;
 	drv->init_termios.c_lflag = 0;
@@ -1323,34 +1322,34 @@ unlock_out:
 		TTY_DRIVER_DYNAMIC_DEV;
 	tty_set_operations(drv, &capinc_ops);
 
-	err = tty_रेजिस्टर_driver(drv);
-	अगर (err) अणु
+	err = tty_register_driver(drv);
+	if (err) {
 		put_tty_driver(drv);
-		kमुक्त(capiminors);
-		prपूर्णांकk(KERN_ERR "Couldn't register capi_nc driver\n");
-		वापस err;
-	पूर्ण
+		kfree(capiminors);
+		printk(KERN_ERR "Couldn't register capi_nc driver\n");
+		return err;
+	}
 	capinc_tty_driver = drv;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम __निकास capinc_tty_निकास(व्योम)
-अणु
-	tty_unरेजिस्टर_driver(capinc_tty_driver);
+static void __exit capinc_tty_exit(void)
+{
+	tty_unregister_driver(capinc_tty_driver);
 	put_tty_driver(capinc_tty_driver);
-	kमुक्त(capiminors);
-पूर्ण
+	kfree(capiminors);
+}
 
-#अन्यथा /* !CONFIG_ISDN_CAPI_MIDDLEWARE */
+#else /* !CONFIG_ISDN_CAPI_MIDDLEWARE */
 
-अटल अंतरभूत पूर्णांक capinc_tty_init(व्योम)
-अणु
-	वापस 0;
-पूर्ण
+static inline int capinc_tty_init(void)
+{
+	return 0;
+}
 
-अटल अंतरभूत व्योम capinc_tty_निकास(व्योम) अणु पूर्ण
+static inline void capinc_tty_exit(void) { }
 
-#पूर्ण_अगर /* !CONFIG_ISDN_CAPI_MIDDLEWARE */
+#endif /* !CONFIG_ISDN_CAPI_MIDDLEWARE */
 
 /* -------- /proc functions ----------------------------------------- */
 
@@ -1358,118 +1357,118 @@ unlock_out:
  * /proc/capi/capi20:
  *  minor applid nrecvctlpkt nrecvdatapkt nsendctlpkt nsenddatapkt
  */
-अटल पूर्णांक __maybe_unused capi20_proc_show(काष्ठा seq_file *m, व्योम *v)
-अणु
-	काष्ठा capidev *cdev;
-	काष्ठा list_head *l;
+static int __maybe_unused capi20_proc_show(struct seq_file *m, void *v)
+{
+	struct capidev *cdev;
+	struct list_head *l;
 
 	mutex_lock(&capidev_list_lock);
-	list_क्रम_each(l, &capidev_list) अणु
-		cdev = list_entry(l, काष्ठा capidev, list);
-		seq_म_लिखो(m, "0 %d %lu %lu %lu %lu\n",
+	list_for_each(l, &capidev_list) {
+		cdev = list_entry(l, struct capidev, list);
+		seq_printf(m, "0 %d %lu %lu %lu %lu\n",
 			   cdev->ap.applid,
 			   cdev->ap.nrecvctlpkt,
 			   cdev->ap.nrecvdatapkt,
 			   cdev->ap.nsentctlpkt,
 			   cdev->ap.nsentdatapkt);
-	पूर्ण
+	}
 	mutex_unlock(&capidev_list_lock);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * /proc/capi/capi20ncci:
  *  applid ncci
  */
-अटल पूर्णांक __maybe_unused capi20ncci_proc_show(काष्ठा seq_file *m, व्योम *v)
-अणु
-	काष्ठा capidev *cdev;
-	काष्ठा capincci *np;
+static int __maybe_unused capi20ncci_proc_show(struct seq_file *m, void *v)
+{
+	struct capidev *cdev;
+	struct capincci *np;
 
 	mutex_lock(&capidev_list_lock);
-	list_क्रम_each_entry(cdev, &capidev_list, list) अणु
+	list_for_each_entry(cdev, &capidev_list, list) {
 		mutex_lock(&cdev->lock);
-		list_क्रम_each_entry(np, &cdev->nccis, list)
-			seq_म_लिखो(m, "%d 0x%x\n", cdev->ap.applid, np->ncci);
+		list_for_each_entry(np, &cdev->nccis, list)
+			seq_printf(m, "%d 0x%x\n", cdev->ap.applid, np->ncci);
 		mutex_unlock(&cdev->lock);
-	पूर्ण
+	}
 	mutex_unlock(&capidev_list_lock);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम __init proc_init(व्योम)
-अणु
-	proc_create_single("capi/capi20", 0, शून्य, capi20_proc_show);
-	proc_create_single("capi/capi20ncci", 0, शून्य, capi20ncci_proc_show);
-पूर्ण
+static void __init proc_init(void)
+{
+	proc_create_single("capi/capi20", 0, NULL, capi20_proc_show);
+	proc_create_single("capi/capi20ncci", 0, NULL, capi20ncci_proc_show);
+}
 
-अटल व्योम __निकास proc_निकास(व्योम)
-अणु
-	हटाओ_proc_entry("capi/capi20", शून्य);
-	हटाओ_proc_entry("capi/capi20ncci", शून्य);
-पूर्ण
+static void __exit proc_exit(void)
+{
+	remove_proc_entry("capi/capi20", NULL);
+	remove_proc_entry("capi/capi20ncci", NULL);
+}
 
-/* -------- init function and module पूर्णांकerface ---------------------- */
+/* -------- init function and module interface ---------------------- */
 
 
-अटल पूर्णांक __init capi_init(व्योम)
-अणु
-	स्थिर अक्षर *compileinfo;
-	पूर्णांक major_ret;
-	पूर्णांक ret;
+static int __init capi_init(void)
+{
+	const char *compileinfo;
+	int major_ret;
+	int ret;
 
 	ret = kcapi_init();
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	major_ret = रेजिस्टर_chrdev(capi_major, "capi20", &capi_fops);
-	अगर (major_ret < 0) अणु
-		prपूर्णांकk(KERN_ERR "capi20: unable to get major %d\n", capi_major);
-		kcapi_निकास();
-		वापस major_ret;
-	पूर्ण
+	major_ret = register_chrdev(capi_major, "capi20", &capi_fops);
+	if (major_ret < 0) {
+		printk(KERN_ERR "capi20: unable to get major %d\n", capi_major);
+		kcapi_exit();
+		return major_ret;
+	}
 	capi_class = class_create(THIS_MODULE, "capi");
-	अगर (IS_ERR(capi_class)) अणु
-		unरेजिस्टर_chrdev(capi_major, "capi20");
-		kcapi_निकास();
-		वापस PTR_ERR(capi_class);
-	पूर्ण
+	if (IS_ERR(capi_class)) {
+		unregister_chrdev(capi_major, "capi20");
+		kcapi_exit();
+		return PTR_ERR(capi_class);
+	}
 
-	device_create(capi_class, शून्य, MKDEV(capi_major, 0), शून्य, "capi20");
+	device_create(capi_class, NULL, MKDEV(capi_major, 0), NULL, "capi20");
 
-	अगर (capinc_tty_init() < 0) अणु
+	if (capinc_tty_init() < 0) {
 		device_destroy(capi_class, MKDEV(capi_major, 0));
 		class_destroy(capi_class);
-		unरेजिस्टर_chrdev(capi_major, "capi20");
-		kcapi_निकास();
-		वापस -ENOMEM;
-	पूर्ण
+		unregister_chrdev(capi_major, "capi20");
+		kcapi_exit();
+		return -ENOMEM;
+	}
 
 	proc_init();
 
-#अगर_घोषित CONFIG_ISDN_CAPI_MIDDLEWARE
+#ifdef CONFIG_ISDN_CAPI_MIDDLEWARE
 	compileinfo = " (middleware)";
-#अन्यथा
+#else
 	compileinfo = " (no middleware)";
-#पूर्ण_अगर
-	prपूर्णांकk(KERN_NOTICE "CAPI 2.0 started up with major %d%s\n",
+#endif
+	printk(KERN_NOTICE "CAPI 2.0 started up with major %d%s\n",
 	       capi_major, compileinfo);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम __निकास capi_निकास(व्योम)
-अणु
-	proc_निकास();
+static void __exit capi_exit(void)
+{
+	proc_exit();
 
 	device_destroy(capi_class, MKDEV(capi_major, 0));
 	class_destroy(capi_class);
-	unरेजिस्टर_chrdev(capi_major, "capi20");
+	unregister_chrdev(capi_major, "capi20");
 
-	capinc_tty_निकास();
+	capinc_tty_exit();
 
-	kcapi_निकास();
-पूर्ण
+	kcapi_exit();
+}
 
 module_init(capi_init);
-module_निकास(capi_निकास);
+module_exit(capi_exit);

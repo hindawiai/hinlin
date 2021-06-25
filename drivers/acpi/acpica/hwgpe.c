@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0
+// SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
 /******************************************************************************
  *
  * Module Name: hwgpe - Low level GPE enable/disable/clear functions
@@ -8,238 +7,238 @@
  *
  *****************************************************************************/
 
-#समावेश <acpi/acpi.h>
-#समावेश "accommon.h"
-#समावेश "acevents.h"
+#include <acpi/acpi.h>
+#include "accommon.h"
+#include "acevents.h"
 
-#घोषणा _COMPONENT          ACPI_HARDWARE
+#define _COMPONENT          ACPI_HARDWARE
 ACPI_MODULE_NAME("hwgpe")
-#अगर (!ACPI_REDUCED_HARDWARE)	/* Entire module */
+#if (!ACPI_REDUCED_HARDWARE)	/* Entire module */
 /* Local prototypes */
-अटल acpi_status
-acpi_hw_enable_wakeup_gpe_block(काष्ठा acpi_gpe_xrupt_info *gpe_xrupt_info,
-				काष्ठा acpi_gpe_block_info *gpe_block,
-				व्योम *context);
+static acpi_status
+acpi_hw_enable_wakeup_gpe_block(struct acpi_gpe_xrupt_info *gpe_xrupt_info,
+				struct acpi_gpe_block_info *gpe_block,
+				void *context);
 
-अटल acpi_status
-acpi_hw_gpe_enable_ग_लिखो(u8 enable_mask,
-			 काष्ठा acpi_gpe_रेजिस्टर_info *gpe_रेजिस्टर_info);
+static acpi_status
+acpi_hw_gpe_enable_write(u8 enable_mask,
+			 struct acpi_gpe_register_info *gpe_register_info);
 
 /******************************************************************************
  *
- * FUNCTION:    acpi_hw_gpe_पढ़ो
+ * FUNCTION:    acpi_hw_gpe_read
  *
- * PARAMETERS:  value               - Where the value is वापसed
- *              reg                 - GPE रेजिस्टर काष्ठाure
+ * PARAMETERS:  value               - Where the value is returned
+ *              reg                 - GPE register structure
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Read from a GPE रेजिस्टर in either memory or IO space.
+ * DESCRIPTION: Read from a GPE register in either memory or IO space.
  *
- * LIMITATIONS: <These limitations also apply to acpi_hw_gpe_ग_लिखो>
- *      space_ID must be प्रणाली_memory or प्रणाली_IO.
+ * LIMITATIONS: <These limitations also apply to acpi_hw_gpe_write>
+ *      space_ID must be system_memory or system_IO.
  *
  ******************************************************************************/
 
-acpi_status acpi_hw_gpe_पढ़ो(u64 *value, काष्ठा acpi_gpe_address *reg)
-अणु
+acpi_status acpi_hw_gpe_read(u64 *value, struct acpi_gpe_address *reg)
+{
 	acpi_status status;
 	u32 value32;
 
-	अगर (reg->space_id == ACPI_ADR_SPACE_SYSTEM_MEMORY) अणु
-#अगर_घोषित ACPI_GPE_USE_LOGICAL_ADDRESSES
-		*value = (u64)ACPI_GET8((अचिन्हित दीर्घ)reg->address);
-		वापस_ACPI_STATUS(AE_OK);
-#अन्यथा
-		वापस acpi_os_पढ़ो_memory((acpi_physical_address)reg->address,
+	if (reg->space_id == ACPI_ADR_SPACE_SYSTEM_MEMORY) {
+#ifdef ACPI_GPE_USE_LOGICAL_ADDRESSES
+		*value = (u64)ACPI_GET8((unsigned long)reg->address);
+		return_ACPI_STATUS(AE_OK);
+#else
+		return acpi_os_read_memory((acpi_physical_address)reg->address,
 					    value, ACPI_GPE_REGISTER_WIDTH);
-#पूर्ण_अगर
-	पूर्ण
+#endif
+	}
 
-	status = acpi_os_पढ़ो_port((acpi_io_address)reg->address,
+	status = acpi_os_read_port((acpi_io_address)reg->address,
 				   &value32, ACPI_GPE_REGISTER_WIDTH);
-	अगर (ACPI_FAILURE(status))
-		वापस_ACPI_STATUS(status);
+	if (ACPI_FAILURE(status))
+		return_ACPI_STATUS(status);
 
 	*value = (u64)value32;
 
-	वापस_ACPI_STATUS(AE_OK);
-पूर्ण
+	return_ACPI_STATUS(AE_OK);
+}
 
 /******************************************************************************
  *
- * FUNCTION:    acpi_hw_gpe_ग_लिखो
+ * FUNCTION:    acpi_hw_gpe_write
  *
  * PARAMETERS:  value               - Value to be written
- *              reg                 - GPE रेजिस्टर काष्ठाure
+ *              reg                 - GPE register structure
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Write to a GPE रेजिस्टर in either memory or IO space.
+ * DESCRIPTION: Write to a GPE register in either memory or IO space.
  *
  ******************************************************************************/
 
-acpi_status acpi_hw_gpe_ग_लिखो(u64 value, काष्ठा acpi_gpe_address *reg)
-अणु
-	अगर (reg->space_id == ACPI_ADR_SPACE_SYSTEM_MEMORY) अणु
-#अगर_घोषित ACPI_GPE_USE_LOGICAL_ADDRESSES
-		ACPI_SET8((अचिन्हित दीर्घ)reg->address, value);
-		वापस_ACPI_STATUS(AE_OK);
-#अन्यथा
-		वापस acpi_os_ग_लिखो_memory((acpi_physical_address)reg->address,
+acpi_status acpi_hw_gpe_write(u64 value, struct acpi_gpe_address *reg)
+{
+	if (reg->space_id == ACPI_ADR_SPACE_SYSTEM_MEMORY) {
+#ifdef ACPI_GPE_USE_LOGICAL_ADDRESSES
+		ACPI_SET8((unsigned long)reg->address, value);
+		return_ACPI_STATUS(AE_OK);
+#else
+		return acpi_os_write_memory((acpi_physical_address)reg->address,
 					    value, ACPI_GPE_REGISTER_WIDTH);
-#पूर्ण_अगर
-	पूर्ण
+#endif
+	}
 
-	वापस acpi_os_ग_लिखो_port((acpi_io_address)reg->address, (u32)value,
+	return acpi_os_write_port((acpi_io_address)reg->address, (u32)value,
 				  ACPI_GPE_REGISTER_WIDTH);
-पूर्ण
+}
 
 /******************************************************************************
  *
- * FUNCTION:	acpi_hw_get_gpe_रेजिस्टर_bit
+ * FUNCTION:	acpi_hw_get_gpe_register_bit
  *
- * PARAMETERS:	gpe_event_info	    - Info block क्रम the GPE
+ * PARAMETERS:	gpe_event_info	    - Info block for the GPE
  *
  * RETURN:	Register mask with a one in the GPE bit position
  *
- * DESCRIPTION: Compute the रेजिस्टर mask क्रम this GPE. One bit is set in the
- *              correct position क्रम the input GPE.
+ * DESCRIPTION: Compute the register mask for this GPE. One bit is set in the
+ *              correct position for the input GPE.
  *
  ******************************************************************************/
 
-u32 acpi_hw_get_gpe_रेजिस्टर_bit(काष्ठा acpi_gpe_event_info *gpe_event_info)
-अणु
+u32 acpi_hw_get_gpe_register_bit(struct acpi_gpe_event_info *gpe_event_info)
+{
 
-	वापस ((u32)1 <<
+	return ((u32)1 <<
 		(gpe_event_info->gpe_number -
-		 gpe_event_info->रेजिस्टर_info->base_gpe_number));
-पूर्ण
+		 gpe_event_info->register_info->base_gpe_number));
+}
 
 /******************************************************************************
  *
  * FUNCTION:	acpi_hw_low_set_gpe
  *
- * PARAMETERS:	gpe_event_info	    - Info block क्रम the GPE to be disabled
+ * PARAMETERS:	gpe_event_info	    - Info block for the GPE to be disabled
  *		action		    - Enable or disable
  *
  * RETURN:	Status
  *
- * DESCRIPTION: Enable or disable a single GPE in the parent enable रेजिस्टर.
- *              The enable_mask field of the involved GPE रेजिस्टर must be
- *              updated by the caller अगर necessary.
+ * DESCRIPTION: Enable or disable a single GPE in the parent enable register.
+ *              The enable_mask field of the involved GPE register must be
+ *              updated by the caller if necessary.
  *
  ******************************************************************************/
 
 acpi_status
-acpi_hw_low_set_gpe(काष्ठा acpi_gpe_event_info *gpe_event_info, u32 action)
-अणु
-	काष्ठा acpi_gpe_रेजिस्टर_info *gpe_रेजिस्टर_info;
+acpi_hw_low_set_gpe(struct acpi_gpe_event_info *gpe_event_info, u32 action)
+{
+	struct acpi_gpe_register_info *gpe_register_info;
 	acpi_status status = AE_OK;
 	u64 enable_mask;
-	u32 रेजिस्टर_bit;
+	u32 register_bit;
 
 	ACPI_FUNCTION_ENTRY();
 
-	/* Get the info block क्रम the entire GPE रेजिस्टर */
+	/* Get the info block for the entire GPE register */
 
-	gpe_रेजिस्टर_info = gpe_event_info->रेजिस्टर_info;
-	अगर (!gpe_रेजिस्टर_info) अणु
-		वापस (AE_NOT_EXIST);
-	पूर्ण
+	gpe_register_info = gpe_event_info->register_info;
+	if (!gpe_register_info) {
+		return (AE_NOT_EXIST);
+	}
 
-	/* Get current value of the enable रेजिस्टर that contains this GPE */
+	/* Get current value of the enable register that contains this GPE */
 
-	status = acpi_hw_gpe_पढ़ो(&enable_mask,
-				  &gpe_रेजिस्टर_info->enable_address);
-	अगर (ACPI_FAILURE(status)) अणु
-		वापस (status);
-	पूर्ण
+	status = acpi_hw_gpe_read(&enable_mask,
+				  &gpe_register_info->enable_address);
+	if (ACPI_FAILURE(status)) {
+		return (status);
+	}
 
 	/* Set or clear just the bit that corresponds to this GPE */
 
-	रेजिस्टर_bit = acpi_hw_get_gpe_रेजिस्टर_bit(gpe_event_info);
-	चयन (action) अणु
-	हाल ACPI_GPE_CONDITIONAL_ENABLE:
+	register_bit = acpi_hw_get_gpe_register_bit(gpe_event_info);
+	switch (action) {
+	case ACPI_GPE_CONDITIONAL_ENABLE:
 
-		/* Only enable अगर the corresponding enable_mask bit is set */
+		/* Only enable if the corresponding enable_mask bit is set */
 
-		अगर (!(रेजिस्टर_bit & gpe_रेजिस्टर_info->enable_mask)) अणु
-			वापस (AE_BAD_PARAMETER);
-		पूर्ण
+		if (!(register_bit & gpe_register_info->enable_mask)) {
+			return (AE_BAD_PARAMETER);
+		}
 
 		ACPI_FALLTHROUGH;
 
-	हाल ACPI_GPE_ENABLE:
+	case ACPI_GPE_ENABLE:
 
-		ACPI_SET_BIT(enable_mask, रेजिस्टर_bit);
-		अवरोध;
+		ACPI_SET_BIT(enable_mask, register_bit);
+		break;
 
-	हाल ACPI_GPE_DISABLE:
+	case ACPI_GPE_DISABLE:
 
-		ACPI_CLEAR_BIT(enable_mask, रेजिस्टर_bit);
-		अवरोध;
+		ACPI_CLEAR_BIT(enable_mask, register_bit);
+		break;
 
-	शेष:
+	default:
 
 		ACPI_ERROR((AE_INFO, "Invalid GPE Action, %u", action));
-		वापस (AE_BAD_PARAMETER);
-	पूर्ण
+		return (AE_BAD_PARAMETER);
+	}
 
-	अगर (!(रेजिस्टर_bit & gpe_रेजिस्टर_info->mask_क्रम_run)) अणु
+	if (!(register_bit & gpe_register_info->mask_for_run)) {
 
 		/* Write the updated enable mask */
 
-		status = acpi_hw_gpe_ग_लिखो(enable_mask,
-					   &gpe_रेजिस्टर_info->enable_address);
-	पूर्ण
-	वापस (status);
-पूर्ण
+		status = acpi_hw_gpe_write(enable_mask,
+					   &gpe_register_info->enable_address);
+	}
+	return (status);
+}
 
 /******************************************************************************
  *
  * FUNCTION:    acpi_hw_clear_gpe
  *
- * PARAMETERS:  gpe_event_info      - Info block क्रम the GPE to be cleared
+ * PARAMETERS:  gpe_event_info      - Info block for the GPE to be cleared
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Clear the status bit क्रम a single GPE.
+ * DESCRIPTION: Clear the status bit for a single GPE.
  *
  ******************************************************************************/
 
-acpi_status acpi_hw_clear_gpe(काष्ठा acpi_gpe_event_info *gpe_event_info)
-अणु
-	काष्ठा acpi_gpe_रेजिस्टर_info *gpe_रेजिस्टर_info;
+acpi_status acpi_hw_clear_gpe(struct acpi_gpe_event_info *gpe_event_info)
+{
+	struct acpi_gpe_register_info *gpe_register_info;
 	acpi_status status;
-	u32 रेजिस्टर_bit;
+	u32 register_bit;
 
 	ACPI_FUNCTION_ENTRY();
 
-	/* Get the info block क्रम the entire GPE रेजिस्टर */
+	/* Get the info block for the entire GPE register */
 
-	gpe_रेजिस्टर_info = gpe_event_info->रेजिस्टर_info;
-	अगर (!gpe_रेजिस्टर_info) अणु
-		वापस (AE_NOT_EXIST);
-	पूर्ण
+	gpe_register_info = gpe_event_info->register_info;
+	if (!gpe_register_info) {
+		return (AE_NOT_EXIST);
+	}
 
 	/*
-	 * Write a one to the appropriate bit in the status रेजिस्टर to
+	 * Write a one to the appropriate bit in the status register to
 	 * clear this GPE.
 	 */
-	रेजिस्टर_bit = acpi_hw_get_gpe_रेजिस्टर_bit(gpe_event_info);
+	register_bit = acpi_hw_get_gpe_register_bit(gpe_event_info);
 
-	status = acpi_hw_gpe_ग_लिखो(रेजिस्टर_bit,
-				   &gpe_रेजिस्टर_info->status_address);
-	वापस (status);
-पूर्ण
+	status = acpi_hw_gpe_write(register_bit,
+				   &gpe_register_info->status_address);
+	return (status);
+}
 
 /******************************************************************************
  *
  * FUNCTION:    acpi_hw_get_gpe_status
  *
- * PARAMETERS:  gpe_event_info      - Info block क्रम the GPE to queried
- *              event_status        - Where the GPE status is वापसed
+ * PARAMETERS:  gpe_event_info      - Info block for the GPE to queried
+ *              event_status        - Where the GPE status is returned
  *
  * RETURN:      Status
  *
@@ -248,107 +247,107 @@ acpi_status acpi_hw_clear_gpe(काष्ठा acpi_gpe_event_info *gpe_event_
  ******************************************************************************/
 
 acpi_status
-acpi_hw_get_gpe_status(काष्ठा acpi_gpe_event_info *gpe_event_info,
+acpi_hw_get_gpe_status(struct acpi_gpe_event_info *gpe_event_info,
 		       acpi_event_status *event_status)
-अणु
+{
 	u64 in_byte;
-	u32 रेजिस्टर_bit;
-	काष्ठा acpi_gpe_रेजिस्टर_info *gpe_रेजिस्टर_info;
+	u32 register_bit;
+	struct acpi_gpe_register_info *gpe_register_info;
 	acpi_event_status local_event_status = 0;
 	acpi_status status;
 
 	ACPI_FUNCTION_ENTRY();
 
-	अगर (!event_status) अणु
-		वापस (AE_BAD_PARAMETER);
-	पूर्ण
+	if (!event_status) {
+		return (AE_BAD_PARAMETER);
+	}
 
 	/* GPE currently handled? */
 
-	अगर (ACPI_GPE_DISPATCH_TYPE(gpe_event_info->flags) !=
-	    ACPI_GPE_DISPATCH_NONE) अणु
+	if (ACPI_GPE_DISPATCH_TYPE(gpe_event_info->flags) !=
+	    ACPI_GPE_DISPATCH_NONE) {
 		local_event_status |= ACPI_EVENT_FLAG_HAS_HANDLER;
-	पूर्ण
+	}
 
-	/* Get the info block क्रम the entire GPE रेजिस्टर */
+	/* Get the info block for the entire GPE register */
 
-	gpe_रेजिस्टर_info = gpe_event_info->रेजिस्टर_info;
+	gpe_register_info = gpe_event_info->register_info;
 
-	/* Get the रेजिस्टर biपंचांगask क्रम this GPE */
+	/* Get the register bitmask for this GPE */
 
-	रेजिस्टर_bit = acpi_hw_get_gpe_रेजिस्टर_bit(gpe_event_info);
+	register_bit = acpi_hw_get_gpe_register_bit(gpe_event_info);
 
-	/* GPE currently enabled? (enabled क्रम runसमय?) */
+	/* GPE currently enabled? (enabled for runtime?) */
 
-	अगर (रेजिस्टर_bit & gpe_रेजिस्टर_info->enable_क्रम_run) अणु
+	if (register_bit & gpe_register_info->enable_for_run) {
 		local_event_status |= ACPI_EVENT_FLAG_ENABLED;
-	पूर्ण
+	}
 
-	/* GPE currently masked? (masked क्रम runसमय?) */
+	/* GPE currently masked? (masked for runtime?) */
 
-	अगर (रेजिस्टर_bit & gpe_रेजिस्टर_info->mask_क्रम_run) अणु
+	if (register_bit & gpe_register_info->mask_for_run) {
 		local_event_status |= ACPI_EVENT_FLAG_MASKED;
-	पूर्ण
+	}
 
-	/* GPE enabled क्रम wake? */
+	/* GPE enabled for wake? */
 
-	अगर (रेजिस्टर_bit & gpe_रेजिस्टर_info->enable_क्रम_wake) अणु
+	if (register_bit & gpe_register_info->enable_for_wake) {
 		local_event_status |= ACPI_EVENT_FLAG_WAKE_ENABLED;
-	पूर्ण
+	}
 
 	/* GPE currently enabled (enable bit == 1)? */
 
-	status = acpi_hw_gpe_पढ़ो(&in_byte, &gpe_रेजिस्टर_info->enable_address);
-	अगर (ACPI_FAILURE(status)) अणु
-		वापस (status);
-	पूर्ण
+	status = acpi_hw_gpe_read(&in_byte, &gpe_register_info->enable_address);
+	if (ACPI_FAILURE(status)) {
+		return (status);
+	}
 
-	अगर (रेजिस्टर_bit & in_byte) अणु
+	if (register_bit & in_byte) {
 		local_event_status |= ACPI_EVENT_FLAG_ENABLE_SET;
-	पूर्ण
+	}
 
 	/* GPE currently active (status bit == 1)? */
 
-	status = acpi_hw_gpe_पढ़ो(&in_byte, &gpe_रेजिस्टर_info->status_address);
-	अगर (ACPI_FAILURE(status)) अणु
-		वापस (status);
-	पूर्ण
+	status = acpi_hw_gpe_read(&in_byte, &gpe_register_info->status_address);
+	if (ACPI_FAILURE(status)) {
+		return (status);
+	}
 
-	अगर (रेजिस्टर_bit & in_byte) अणु
+	if (register_bit & in_byte) {
 		local_event_status |= ACPI_EVENT_FLAG_STATUS_SET;
-	पूर्ण
+	}
 
-	/* Set वापस value */
+	/* Set return value */
 
 	(*event_status) = local_event_status;
-	वापस (AE_OK);
-पूर्ण
+	return (AE_OK);
+}
 
 /******************************************************************************
  *
- * FUNCTION:    acpi_hw_gpe_enable_ग_लिखो
+ * FUNCTION:    acpi_hw_gpe_enable_write
  *
- * PARAMETERS:  enable_mask         - Bit mask to ग_लिखो to the GPE रेजिस्टर
- *              gpe_रेजिस्टर_info   - Gpe Register info
+ * PARAMETERS:  enable_mask         - Bit mask to write to the GPE register
+ *              gpe_register_info   - Gpe Register info
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Write the enable mask byte to the given GPE रेजिस्टर.
+ * DESCRIPTION: Write the enable mask byte to the given GPE register.
  *
  ******************************************************************************/
 
-अटल acpi_status
-acpi_hw_gpe_enable_ग_लिखो(u8 enable_mask,
-			 काष्ठा acpi_gpe_रेजिस्टर_info *gpe_रेजिस्टर_info)
-अणु
+static acpi_status
+acpi_hw_gpe_enable_write(u8 enable_mask,
+			 struct acpi_gpe_register_info *gpe_register_info)
+{
 	acpi_status status;
 
-	gpe_रेजिस्टर_info->enable_mask = enable_mask;
+	gpe_register_info->enable_mask = enable_mask;
 
-	status = acpi_hw_gpe_ग_लिखो(enable_mask,
-				   &gpe_रेजिस्टर_info->enable_address);
-	वापस (status);
-पूर्ण
+	status = acpi_hw_gpe_write(enable_mask,
+				   &gpe_register_info->enable_address);
+	return (status);
+}
 
 /******************************************************************************
  *
@@ -364,28 +363,28 @@ acpi_hw_gpe_enable_ग_लिखो(u8 enable_mask,
  ******************************************************************************/
 
 acpi_status
-acpi_hw_disable_gpe_block(काष्ठा acpi_gpe_xrupt_info *gpe_xrupt_info,
-			  काष्ठा acpi_gpe_block_info *gpe_block, व्योम *context)
-अणु
+acpi_hw_disable_gpe_block(struct acpi_gpe_xrupt_info *gpe_xrupt_info,
+			  struct acpi_gpe_block_info *gpe_block, void *context)
+{
 	u32 i;
 	acpi_status status;
 
 	/* Examine each GPE Register within the block */
 
-	क्रम (i = 0; i < gpe_block->रेजिस्टर_count; i++) अणु
+	for (i = 0; i < gpe_block->register_count; i++) {
 
-		/* Disable all GPEs in this रेजिस्टर */
+		/* Disable all GPEs in this register */
 
 		status =
-		    acpi_hw_gpe_enable_ग_लिखो(0x00,
-					     &gpe_block->रेजिस्टर_info[i]);
-		अगर (ACPI_FAILURE(status)) अणु
-			वापस (status);
-		पूर्ण
-	पूर्ण
+		    acpi_hw_gpe_enable_write(0x00,
+					     &gpe_block->register_info[i]);
+		if (ACPI_FAILURE(status)) {
+			return (status);
+		}
+	}
 
-	वापस (AE_OK);
-पूर्ण
+	return (AE_OK);
+}
 
 /******************************************************************************
  *
@@ -396,36 +395,36 @@ acpi_hw_disable_gpe_block(काष्ठा acpi_gpe_xrupt_info *gpe_xrupt_info
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Clear status bits क्रम all GPEs within a single GPE block
+ * DESCRIPTION: Clear status bits for all GPEs within a single GPE block
  *
  ******************************************************************************/
 
 acpi_status
-acpi_hw_clear_gpe_block(काष्ठा acpi_gpe_xrupt_info *gpe_xrupt_info,
-			काष्ठा acpi_gpe_block_info *gpe_block, व्योम *context)
-अणु
+acpi_hw_clear_gpe_block(struct acpi_gpe_xrupt_info *gpe_xrupt_info,
+			struct acpi_gpe_block_info *gpe_block, void *context)
+{
 	u32 i;
 	acpi_status status;
 
 	/* Examine each GPE Register within the block */
 
-	क्रम (i = 0; i < gpe_block->रेजिस्टर_count; i++) अणु
+	for (i = 0; i < gpe_block->register_count; i++) {
 
-		/* Clear status on all GPEs in this रेजिस्टर */
+		/* Clear status on all GPEs in this register */
 
-		status = acpi_hw_gpe_ग_लिखो(0xFF,
-					   &gpe_block->रेजिस्टर_info[i].status_address);
-		अगर (ACPI_FAILURE(status)) अणु
-			वापस (status);
-		पूर्ण
-	पूर्ण
+		status = acpi_hw_gpe_write(0xFF,
+					   &gpe_block->register_info[i].status_address);
+		if (ACPI_FAILURE(status)) {
+			return (status);
+		}
+	}
 
-	वापस (AE_OK);
-पूर्ण
+	return (AE_OK);
+}
 
 /******************************************************************************
  *
- * FUNCTION:    acpi_hw_enable_runसमय_gpe_block
+ * FUNCTION:    acpi_hw_enable_runtime_gpe_block
  *
  * PARAMETERS:  gpe_xrupt_info      - GPE Interrupt info
  *              gpe_block           - Gpe Block info
@@ -438,38 +437,38 @@ acpi_hw_clear_gpe_block(काष्ठा acpi_gpe_xrupt_info *gpe_xrupt_info,
  ******************************************************************************/
 
 acpi_status
-acpi_hw_enable_runसमय_gpe_block(काष्ठा acpi_gpe_xrupt_info *gpe_xrupt_info,
-				 काष्ठा acpi_gpe_block_info *gpe_block,
-				 व्योम *context)
-अणु
+acpi_hw_enable_runtime_gpe_block(struct acpi_gpe_xrupt_info *gpe_xrupt_info,
+				 struct acpi_gpe_block_info *gpe_block,
+				 void *context)
+{
 	u32 i;
 	acpi_status status;
-	काष्ठा acpi_gpe_रेजिस्टर_info *gpe_रेजिस्टर_info;
+	struct acpi_gpe_register_info *gpe_register_info;
 	u8 enable_mask;
 
 	/* NOTE: assumes that all GPEs are currently disabled */
 
 	/* Examine each GPE Register within the block */
 
-	क्रम (i = 0; i < gpe_block->रेजिस्टर_count; i++) अणु
-		gpe_रेजिस्टर_info = &gpe_block->रेजिस्टर_info[i];
-		अगर (!gpe_रेजिस्टर_info->enable_क्रम_run) अणु
-			जारी;
-		पूर्ण
+	for (i = 0; i < gpe_block->register_count; i++) {
+		gpe_register_info = &gpe_block->register_info[i];
+		if (!gpe_register_info->enable_for_run) {
+			continue;
+		}
 
-		/* Enable all "runtime" GPEs in this रेजिस्टर */
+		/* Enable all "runtime" GPEs in this register */
 
-		enable_mask = gpe_रेजिस्टर_info->enable_क्रम_run &
-		    ~gpe_रेजिस्टर_info->mask_क्रम_run;
+		enable_mask = gpe_register_info->enable_for_run &
+		    ~gpe_register_info->mask_for_run;
 		status =
-		    acpi_hw_gpe_enable_ग_लिखो(enable_mask, gpe_रेजिस्टर_info);
-		अगर (ACPI_FAILURE(status)) अणु
-			वापस (status);
-		पूर्ण
-	पूर्ण
+		    acpi_hw_gpe_enable_write(enable_mask, gpe_register_info);
+		if (ACPI_FAILURE(status)) {
+			return (status);
+		}
+	}
 
-	वापस (AE_OK);
-पूर्ण
+	return (AE_OK);
+}
 
 /******************************************************************************
  *
@@ -485,41 +484,41 @@ acpi_hw_enable_runसमय_gpe_block(काष्ठा acpi_gpe_xrupt_info *gp
  *
  ******************************************************************************/
 
-अटल acpi_status
-acpi_hw_enable_wakeup_gpe_block(काष्ठा acpi_gpe_xrupt_info *gpe_xrupt_info,
-				काष्ठा acpi_gpe_block_info *gpe_block,
-				व्योम *context)
-अणु
+static acpi_status
+acpi_hw_enable_wakeup_gpe_block(struct acpi_gpe_xrupt_info *gpe_xrupt_info,
+				struct acpi_gpe_block_info *gpe_block,
+				void *context)
+{
 	u32 i;
 	acpi_status status;
-	काष्ठा acpi_gpe_रेजिस्टर_info *gpe_रेजिस्टर_info;
+	struct acpi_gpe_register_info *gpe_register_info;
 
 	/* Examine each GPE Register within the block */
 
-	क्रम (i = 0; i < gpe_block->रेजिस्टर_count; i++) अणु
-		gpe_रेजिस्टर_info = &gpe_block->रेजिस्टर_info[i];
+	for (i = 0; i < gpe_block->register_count; i++) {
+		gpe_register_info = &gpe_block->register_info[i];
 
 		/*
-		 * Enable all "wake" GPEs in this रेजिस्टर and disable the
-		 * reमुख्यing ones.
+		 * Enable all "wake" GPEs in this register and disable the
+		 * remaining ones.
 		 */
 
 		status =
-		    acpi_hw_gpe_enable_ग_लिखो(gpe_रेजिस्टर_info->enable_क्रम_wake,
-					     gpe_रेजिस्टर_info);
-		अगर (ACPI_FAILURE(status)) अणु
-			वापस (status);
-		पूर्ण
-	पूर्ण
+		    acpi_hw_gpe_enable_write(gpe_register_info->enable_for_wake,
+					     gpe_register_info);
+		if (ACPI_FAILURE(status)) {
+			return (status);
+		}
+	}
 
-	वापस (AE_OK);
-पूर्ण
+	return (AE_OK);
+}
 
-काष्ठा acpi_gpe_block_status_context अणु
-	काष्ठा acpi_gpe_रेजिस्टर_info *gpe_skip_रेजिस्टर_info;
+struct acpi_gpe_block_status_context {
+	struct acpi_gpe_register_info *gpe_skip_register_info;
 	u8 gpe_skip_mask;
 	u8 retval;
-पूर्ण;
+};
 
 /******************************************************************************
  *
@@ -531,17 +530,17 @@ acpi_hw_enable_wakeup_gpe_block(काष्ठा acpi_gpe_xrupt_info *gpe_xrup
  *
  * RETURN:      Success
  *
- * DESCRIPTION: Produce a combined GPE status bits mask क्रम the given block.
+ * DESCRIPTION: Produce a combined GPE status bits mask for the given block.
  *
  ******************************************************************************/
 
-अटल acpi_status
-acpi_hw_get_gpe_block_status(काष्ठा acpi_gpe_xrupt_info *gpe_xrupt_info,
-			     काष्ठा acpi_gpe_block_info *gpe_block,
-			     व्योम *context)
-अणु
-	काष्ठा acpi_gpe_block_status_context *c = context;
-	काष्ठा acpi_gpe_रेजिस्टर_info *gpe_रेजिस्टर_info;
+static acpi_status
+acpi_hw_get_gpe_block_status(struct acpi_gpe_xrupt_info *gpe_xrupt_info,
+			     struct acpi_gpe_block_info *gpe_block,
+			     void *context)
+{
+	struct acpi_gpe_block_status_context *c = context;
+	struct acpi_gpe_register_info *gpe_register_info;
 	u64 in_enable, in_status;
 	acpi_status status;
 	u8 ret_mask;
@@ -549,30 +548,30 @@ acpi_hw_get_gpe_block_status(काष्ठा acpi_gpe_xrupt_info *gpe_xrupt_i
 
 	/* Examine each GPE Register within the block */
 
-	क्रम (i = 0; i < gpe_block->रेजिस्टर_count; i++) अणु
-		gpe_रेजिस्टर_info = &gpe_block->रेजिस्टर_info[i];
+	for (i = 0; i < gpe_block->register_count; i++) {
+		gpe_register_info = &gpe_block->register_info[i];
 
-		status = acpi_hw_gpe_पढ़ो(&in_enable,
-					  &gpe_रेजिस्टर_info->enable_address);
-		अगर (ACPI_FAILURE(status)) अणु
-			जारी;
-		पूर्ण
+		status = acpi_hw_gpe_read(&in_enable,
+					  &gpe_register_info->enable_address);
+		if (ACPI_FAILURE(status)) {
+			continue;
+		}
 
-		status = acpi_hw_gpe_पढ़ो(&in_status,
-					  &gpe_रेजिस्टर_info->status_address);
-		अगर (ACPI_FAILURE(status)) अणु
-			जारी;
-		पूर्ण
+		status = acpi_hw_gpe_read(&in_status,
+					  &gpe_register_info->status_address);
+		if (ACPI_FAILURE(status)) {
+			continue;
+		}
 
 		ret_mask = in_enable & in_status;
-		अगर (ret_mask && c->gpe_skip_रेजिस्टर_info == gpe_रेजिस्टर_info) अणु
+		if (ret_mask && c->gpe_skip_register_info == gpe_register_info) {
 			ret_mask &= ~c->gpe_skip_mask;
-		पूर्ण
+		}
 		c->retval |= ret_mask;
-	पूर्ण
+	}
 
-	वापस (AE_OK);
-पूर्ण
+	return (AE_OK);
+}
 
 /******************************************************************************
  *
@@ -586,19 +585,19 @@ acpi_hw_get_gpe_block_status(काष्ठा acpi_gpe_xrupt_info *gpe_xrupt_i
  *
  ******************************************************************************/
 
-acpi_status acpi_hw_disable_all_gpes(व्योम)
-अणु
+acpi_status acpi_hw_disable_all_gpes(void)
+{
 	acpi_status status;
 
 	ACPI_FUNCTION_TRACE(hw_disable_all_gpes);
 
-	status = acpi_ev_walk_gpe_list(acpi_hw_disable_gpe_block, शून्य);
-	वापस_ACPI_STATUS(status);
-पूर्ण
+	status = acpi_ev_walk_gpe_list(acpi_hw_disable_gpe_block, NULL);
+	return_ACPI_STATUS(status);
+}
 
 /******************************************************************************
  *
- * FUNCTION:    acpi_hw_enable_all_runसमय_gpes
+ * FUNCTION:    acpi_hw_enable_all_runtime_gpes
  *
  * PARAMETERS:  None
  *
@@ -608,15 +607,15 @@ acpi_status acpi_hw_disable_all_gpes(व्योम)
  *
  ******************************************************************************/
 
-acpi_status acpi_hw_enable_all_runसमय_gpes(व्योम)
-अणु
+acpi_status acpi_hw_enable_all_runtime_gpes(void)
+{
 	acpi_status status;
 
-	ACPI_FUNCTION_TRACE(hw_enable_all_runसमय_gpes);
+	ACPI_FUNCTION_TRACE(hw_enable_all_runtime_gpes);
 
-	status = acpi_ev_walk_gpe_list(acpi_hw_enable_runसमय_gpe_block, शून्य);
-	वापस_ACPI_STATUS(status);
-पूर्ण
+	status = acpi_ev_walk_gpe_list(acpi_hw_enable_runtime_gpe_block, NULL);
+	return_ACPI_STATUS(status);
+}
 
 /******************************************************************************
  *
@@ -630,15 +629,15 @@ acpi_status acpi_hw_enable_all_runसमय_gpes(व्योम)
  *
  ******************************************************************************/
 
-acpi_status acpi_hw_enable_all_wakeup_gpes(व्योम)
-अणु
+acpi_status acpi_hw_enable_all_wakeup_gpes(void)
+{
 	acpi_status status;
 
 	ACPI_FUNCTION_TRACE(hw_enable_all_wakeup_gpes);
 
-	status = acpi_ev_walk_gpe_list(acpi_hw_enable_wakeup_gpe_block, शून्य);
-	वापस_ACPI_STATUS(status);
-पूर्ण
+	status = acpi_ev_walk_gpe_list(acpi_hw_enable_wakeup_gpe_block, NULL);
+	return_ACPI_STATUS(status);
+}
 
 /******************************************************************************
  *
@@ -649,19 +648,19 @@ acpi_status acpi_hw_enable_all_wakeup_gpes(व्योम)
  *
  * RETURN:      Combined status of all GPEs
  *
- * DESCRIPTION: Check all enabled GPEs in all GPE blocks, except क्रम the one
- *              represented by the "skip" arguments, and वापस TRUE अगर the
- *              status bit is set क्रम at least one of them of FALSE otherwise.
+ * DESCRIPTION: Check all enabled GPEs in all GPE blocks, except for the one
+ *              represented by the "skip" arguments, and return TRUE if the
+ *              status bit is set for at least one of them of FALSE otherwise.
  *
  ******************************************************************************/
 
 u8 acpi_hw_check_all_gpes(acpi_handle gpe_skip_device, u32 gpe_skip_number)
-अणु
-	काष्ठा acpi_gpe_block_status_context context = अणु
-		.gpe_skip_रेजिस्टर_info = शून्य,
+{
+	struct acpi_gpe_block_status_context context = {
+		.gpe_skip_register_info = NULL,
 		.retval = 0,
-	पूर्ण;
-	काष्ठा acpi_gpe_event_info *gpe_event_info;
+	};
+	struct acpi_gpe_event_info *gpe_event_info;
 	acpi_cpu_flags flags;
 
 	ACPI_FUNCTION_TRACE(acpi_hw_check_all_gpes);
@@ -670,15 +669,15 @@ u8 acpi_hw_check_all_gpes(acpi_handle gpe_skip_device, u32 gpe_skip_number)
 
 	gpe_event_info = acpi_ev_get_gpe_event_info(gpe_skip_device,
 						    gpe_skip_number);
-	अगर (gpe_event_info) अणु
-		context.gpe_skip_रेजिस्टर_info = gpe_event_info->रेजिस्टर_info;
-		context.gpe_skip_mask = acpi_hw_get_gpe_रेजिस्टर_bit(gpe_event_info);
-	पूर्ण
+	if (gpe_event_info) {
+		context.gpe_skip_register_info = gpe_event_info->register_info;
+		context.gpe_skip_mask = acpi_hw_get_gpe_register_bit(gpe_event_info);
+	}
 
 	acpi_os_release_lock(acpi_gbl_gpe_lock, flags);
 
-	(व्योम)acpi_ev_walk_gpe_list(acpi_hw_get_gpe_block_status, &context);
-	वापस (context.retval != 0);
-पूर्ण
+	(void)acpi_ev_walk_gpe_list(acpi_hw_get_gpe_block_status, &context);
+	return (context.retval != 0);
+}
 
-#पूर्ण_अगर				/* !ACPI_REDUCED_HARDWARE */
+#endif				/* !ACPI_REDUCED_HARDWARE */

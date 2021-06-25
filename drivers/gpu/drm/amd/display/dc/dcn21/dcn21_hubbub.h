@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
 * Copyright 2018 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,12 +22,12 @@
  * Authors: AMD
  *
  */
-#अगर_अघोषित DAL_DC_DCN21_DCN21_HUBBUB_H_
-#घोषणा DAL_DC_DCN21_DCN21_HUBBUB_H_
+#ifndef DAL_DC_DCN21_DCN21_HUBBUB_H_
+#define DAL_DC_DCN21_DCN21_HUBBUB_H_
 
-#समावेश "dcn20/dcn20_hubbub.h"
+#include "dcn20/dcn20_hubbub.h"
 
-#घोषणा HUBBUB_HVM_REG_LIST() \
+#define HUBBUB_HVM_REG_LIST() \
 	SR(DCHUBBUB_ARB_FRAC_URG_BW_NOM_A),\
 	SR(DCHUBBUB_ARB_FRAC_URG_BW_NOM_B),\
 	SR(DCHUBBUB_ARB_FRAC_URG_BW_NOM_C),\
@@ -48,12 +47,12 @@
 	SR(DCHVM_RIOMMU_CTRL0), \
 	SR(DCHVM_RIOMMU_STAT0)
 
-#घोषणा HUBBUB_REG_LIST_DCN21()\
+#define HUBBUB_REG_LIST_DCN21()\
 	HUBBUB_REG_LIST_DCN20_COMMON(), \
 	HUBBUB_SR_WATERMARK_REG_LIST(), \
 	HUBBUB_HVM_REG_LIST()
 
-#घोषणा HUBBUB_MASK_SH_LIST_HVM(mask_sh) \
+#define HUBBUB_MASK_SH_LIST_HVM(mask_sh) \
 	HUBBUB_SF(DCHUBBUB_ARB_DF_REQ_OUTSTAND, DCHUBBUB_ARB_MIN_REQ_OUTSTAND_COMMIT_THRESHOLD, mask_sh), \
 	HUBBUB_SF(DCHUBBUB_ARB_FRAC_URG_BW_FLIP_A, DCHUBBUB_ARB_FRAC_URG_BW_FLIP_A, mask_sh), \
 	HUBBUB_SF(DCHUBBUB_ARB_FRAC_URG_BW_FLIP_B, DCHUBBUB_ARB_FRAC_URG_BW_FLIP_B, mask_sh), \
@@ -99,7 +98,7 @@
 	HUBBUB_SF(DCHUBBUB_ARB_REFCYC_PER_TRIP_TO_MEMORY_C, DCHUBBUB_ARB_REFCYC_PER_TRIP_TO_MEMORY_C, mask_sh), \
 	HUBBUB_SF(DCHUBBUB_ARB_REFCYC_PER_TRIP_TO_MEMORY_D, DCHUBBUB_ARB_REFCYC_PER_TRIP_TO_MEMORY_D, mask_sh)
 
-#घोषणा HUBBUB_MASK_SH_LIST_DCN21(mask_sh)\
+#define HUBBUB_MASK_SH_LIST_DCN21(mask_sh)\
 	HUBBUB_MASK_SH_LIST_HVM(mask_sh), \
 	HUBBUB_MASK_SH_LIST_DCN_COMMON(mask_sh), \
 	HUBBUB_MASK_SH_LIST_STUTTER(mask_sh), \
@@ -111,37 +110,37 @@
 	HUBBUB_SF(DCN_VM_AGP_TOP, AGP_TOP, mask_sh), \
 	HUBBUB_SF(DCN_VM_AGP_BASE, AGP_BASE, mask_sh)
 
-व्योम dcn21_dchvm_init(काष्ठा hubbub *hubbub);
-पूर्णांक hubbub21_init_dchub(काष्ठा hubbub *hubbub,
-		काष्ठा dcn_hubbub_phys_addr_config *pa_config);
+void dcn21_dchvm_init(struct hubbub *hubbub);
+int hubbub21_init_dchub(struct hubbub *hubbub,
+		struct dcn_hubbub_phys_addr_config *pa_config);
 bool hubbub21_program_watermarks(
-		काष्ठा hubbub *hubbub,
-		काष्ठा dcn_watermark_set *watermarks,
-		अचिन्हित पूर्णांक refclk_mhz,
+		struct hubbub *hubbub,
+		struct dcn_watermark_set *watermarks,
+		unsigned int refclk_mhz,
 		bool safe_to_lower);
 bool hubbub21_program_urgent_watermarks(
-		काष्ठा hubbub *hubbub,
-		काष्ठा dcn_watermark_set *watermarks,
-		अचिन्हित पूर्णांक refclk_mhz,
+		struct hubbub *hubbub,
+		struct dcn_watermark_set *watermarks,
+		unsigned int refclk_mhz,
 		bool safe_to_lower);
 bool hubbub21_program_stutter_watermarks(
-		काष्ठा hubbub *hubbub,
-		काष्ठा dcn_watermark_set *watermarks,
-		अचिन्हित पूर्णांक refclk_mhz,
+		struct hubbub *hubbub,
+		struct dcn_watermark_set *watermarks,
+		unsigned int refclk_mhz,
 		bool safe_to_lower);
 bool hubbub21_program_pstate_watermarks(
-		काष्ठा hubbub *hubbub,
-		काष्ठा dcn_watermark_set *watermarks,
-		अचिन्हित पूर्णांक refclk_mhz,
+		struct hubbub *hubbub,
+		struct dcn_watermark_set *watermarks,
+		unsigned int refclk_mhz,
 		bool safe_to_lower);
 
-व्योम hubbub21_wm_पढ़ो_state(काष्ठा hubbub *hubbub,
-		काष्ठा dcn_hubbub_wm *wm);
+void hubbub21_wm_read_state(struct hubbub *hubbub,
+		struct dcn_hubbub_wm *wm);
 
-व्योम hubbub21_स्थिरruct(काष्ठा dcn20_hubbub *hubbub,
-	काष्ठा dc_context *ctx,
-	स्थिर काष्ठा dcn_hubbub_रेजिस्टरs *hubbub_regs,
-	स्थिर काष्ठा dcn_hubbub_shअगरt *hubbub_shअगरt,
-	स्थिर काष्ठा dcn_hubbub_mask *hubbub_mask);
+void hubbub21_construct(struct dcn20_hubbub *hubbub,
+	struct dc_context *ctx,
+	const struct dcn_hubbub_registers *hubbub_regs,
+	const struct dcn_hubbub_shift *hubbub_shift,
+	const struct dcn_hubbub_mask *hubbub_mask);
 
-#पूर्ण_अगर /* DAL_DC_DCN21_DCN21_HUBBUB_H_ */
+#endif /* DAL_DC_DCN21_DCN21_HUBBUB_H_ */

@@ -1,37 +1,36 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /* Copyright (C) 2012-2019 ARM Limited (or its affiliates). */
 
-#समावेश "cc_driver.h"
-#समावेश "cc_sram_mgr.h"
+#include "cc_driver.h"
+#include "cc_sram_mgr.h"
 
 /**
  * cc_sram_mgr_init() - Initializes SRAM pool.
  *      The pool starts right at the beginning of SRAM.
- *      Returns zero क्रम success, negative value otherwise.
+ *      Returns zero for success, negative value otherwise.
  *
  * @drvdata: Associated device driver context
  *
  * Return:
- * 0 क्रम success, negative error code क्रम failure.
+ * 0 for success, negative error code for failure.
  */
-पूर्णांक cc_sram_mgr_init(काष्ठा cc_drvdata *drvdata)
-अणु
+int cc_sram_mgr_init(struct cc_drvdata *drvdata)
+{
 	u32 start = 0;
-	काष्ठा device *dev = drvdata_to_dev(drvdata);
+	struct device *dev = drvdata_to_dev(drvdata);
 
-	अगर (drvdata->hw_rev < CC_HW_REV_712) अणु
+	if (drvdata->hw_rev < CC_HW_REV_712) {
 		/* Pool starts after ROM bytes */
-		start = cc_ioपढ़ो(drvdata, CC_REG(HOST_SEP_SRAM_THRESHOLD));
-		अगर ((start & 0x3) != 0) अणु
+		start = cc_ioread(drvdata, CC_REG(HOST_SEP_SRAM_THRESHOLD));
+		if ((start & 0x3) != 0) {
 			dev_err(dev, "Invalid SRAM offset 0x%x\n", start);
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 
-	drvdata->sram_मुक्त_offset = start;
-	वापस 0;
-पूर्ण
+	drvdata->sram_free_offset = start;
+	return 0;
+}
 
 /**
  * cc_sram_alloc() - Allocate buffer from SRAM pool.
@@ -40,53 +39,53 @@
  * @size: The requested numer of bytes to allocate
  *
  * Return:
- * Address offset in SRAM or शून्य_SRAM_ADDR क्रम failure.
+ * Address offset in SRAM or NULL_SRAM_ADDR for failure.
  */
-u32 cc_sram_alloc(काष्ठा cc_drvdata *drvdata, u32 size)
-अणु
-	काष्ठा device *dev = drvdata_to_dev(drvdata);
+u32 cc_sram_alloc(struct cc_drvdata *drvdata, u32 size)
+{
+	struct device *dev = drvdata_to_dev(drvdata);
 	u32 p;
 
-	अगर ((size & 0x3)) अणु
+	if ((size & 0x3)) {
 		dev_err(dev, "Requested buffer size (%u) is not multiple of 4",
 			size);
-		वापस शून्य_SRAM_ADDR;
-	पूर्ण
-	अगर (size > (CC_CC_SRAM_SIZE - drvdata->sram_मुक्त_offset)) अणु
+		return NULL_SRAM_ADDR;
+	}
+	if (size > (CC_CC_SRAM_SIZE - drvdata->sram_free_offset)) {
 		dev_err(dev, "Not enough space to allocate %u B (at offset %u)\n",
-			size, drvdata->sram_मुक्त_offset);
-		वापस शून्य_SRAM_ADDR;
-	पूर्ण
+			size, drvdata->sram_free_offset);
+		return NULL_SRAM_ADDR;
+	}
 
-	p = drvdata->sram_मुक्त_offset;
-	drvdata->sram_मुक्त_offset += size;
+	p = drvdata->sram_free_offset;
+	drvdata->sram_free_offset += size;
 	dev_dbg(dev, "Allocated %u B @ %u\n", size, p);
-	वापस p;
-पूर्ण
+	return p;
+}
 
 /**
- * cc_set_sram_desc() - Create स्थिर descriptors sequence to
- *	set values in given array पूर्णांकo SRAM.
- * Note: each स्थिर value can't exceed word size.
+ * cc_set_sram_desc() - Create const descriptors sequence to
+ *	set values in given array into SRAM.
+ * Note: each const value can't exceed word size.
  *
- * @src:	  A poपूर्णांकer to array of words to set as स्थिरs.
- * @dst:	  The target SRAM buffer to set पूर्णांकo
+ * @src:	  A pointer to array of words to set as consts.
+ * @dst:	  The target SRAM buffer to set into
  * @nelement:	  The number of words in "src" array
- * @seq:	  A poपूर्णांकer to the given IN/OUT descriptor sequence
- * @seq_len:	  A poपूर्णांकer to the given IN/OUT sequence length
+ * @seq:	  A pointer to the given IN/OUT descriptor sequence
+ * @seq_len:	  A pointer to the given IN/OUT sequence length
  */
-व्योम cc_set_sram_desc(स्थिर u32 *src, u32 dst, अचिन्हित पूर्णांक nelement,
-		      काष्ठा cc_hw_desc *seq, अचिन्हित पूर्णांक *seq_len)
-अणु
+void cc_set_sram_desc(const u32 *src, u32 dst, unsigned int nelement,
+		      struct cc_hw_desc *seq, unsigned int *seq_len)
+{
 	u32 i;
-	अचिन्हित पूर्णांक idx = *seq_len;
+	unsigned int idx = *seq_len;
 
-	क्रम (i = 0; i < nelement; i++, idx++) अणु
+	for (i = 0; i < nelement; i++, idx++) {
 		hw_desc_init(&seq[idx]);
-		set_din_स्थिर(&seq[idx], src[i], माप(u32));
-		set_करोut_sram(&seq[idx], dst + (i * माप(u32)), माप(u32));
+		set_din_const(&seq[idx], src[i], sizeof(u32));
+		set_dout_sram(&seq[idx], dst + (i * sizeof(u32)), sizeof(u32));
 		set_flow_mode(&seq[idx], BYPASS);
-	पूर्ण
+	}
 
 	*seq_len = idx;
-पूर्ण
+}

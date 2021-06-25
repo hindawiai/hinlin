@@ -1,89 +1,88 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * drivers/media/platक्रमm/samsung/mfc5/s5p_mfc_पूर्णांकr.c
+ * drivers/media/platform/samsung/mfc5/s5p_mfc_intr.c
  *
- * C file क्रम Samsung MFC (Multi Function Codec - FIMV) driver
- * This file contains functions used to रुको क्रम command completion.
+ * C file for Samsung MFC (Multi Function Codec - FIMV) driver
+ * This file contains functions used to wait for command completion.
  *
  * Kamil Debski, Copyright (C) 2011 Samsung Electronics Co., Ltd.
  * http://www.samsung.com/
  */
 
-#समावेश <linux/delay.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/पन.स>
-#समावेश <linux/sched.h>
-#समावेश <linux/रुको.h>
-#समावेश "s5p_mfc_common.h"
-#समावेश "s5p_mfc_debug.h"
-#समावेश "s5p_mfc_intr.h"
+#include <linux/delay.h>
+#include <linux/errno.h>
+#include <linux/io.h>
+#include <linux/sched.h>
+#include <linux/wait.h>
+#include "s5p_mfc_common.h"
+#include "s5p_mfc_debug.h"
+#include "s5p_mfc_intr.h"
 
-पूर्णांक s5p_mfc_रुको_क्रम_करोne_dev(काष्ठा s5p_mfc_dev *dev, पूर्णांक command)
-अणु
-	पूर्णांक ret;
+int s5p_mfc_wait_for_done_dev(struct s5p_mfc_dev *dev, int command)
+{
+	int ret;
 
-	ret = रुको_event_पूर्णांकerruptible_समयout(dev->queue,
-		(dev->पूर्णांक_cond && (dev->पूर्णांक_type == command
-		|| dev->पूर्णांक_type == S5P_MFC_R2H_CMD_ERR_RET)),
-		msecs_to_jअगरfies(MFC_INT_TIMEOUT));
-	अगर (ret == 0) अणु
+	ret = wait_event_interruptible_timeout(dev->queue,
+		(dev->int_cond && (dev->int_type == command
+		|| dev->int_type == S5P_MFC_R2H_CMD_ERR_RET)),
+		msecs_to_jiffies(MFC_INT_TIMEOUT));
+	if (ret == 0) {
 		mfc_err("Interrupt (dev->int_type:%d, command:%d) timed out\n",
-							dev->पूर्णांक_type, command);
-		वापस 1;
-	पूर्ण अन्यथा अगर (ret == -ERESTARTSYS) अणु
+							dev->int_type, command);
+		return 1;
+	} else if (ret == -ERESTARTSYS) {
 		mfc_err("Interrupted by a signal\n");
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 	mfc_debug(1, "Finished waiting (dev->int_type:%d, command: %d)\n",
-							dev->पूर्णांक_type, command);
-	अगर (dev->पूर्णांक_type == S5P_MFC_R2H_CMD_ERR_RET)
-		वापस 1;
-	वापस 0;
-पूर्ण
+							dev->int_type, command);
+	if (dev->int_type == S5P_MFC_R2H_CMD_ERR_RET)
+		return 1;
+	return 0;
+}
 
-व्योम s5p_mfc_clean_dev_पूर्णांक_flags(काष्ठा s5p_mfc_dev *dev)
-अणु
-	dev->पूर्णांक_cond = 0;
-	dev->पूर्णांक_type = 0;
-	dev->पूर्णांक_err = 0;
-पूर्ण
+void s5p_mfc_clean_dev_int_flags(struct s5p_mfc_dev *dev)
+{
+	dev->int_cond = 0;
+	dev->int_type = 0;
+	dev->int_err = 0;
+}
 
-पूर्णांक s5p_mfc_रुको_क्रम_करोne_ctx(काष्ठा s5p_mfc_ctx *ctx,
-				    पूर्णांक command, पूर्णांक पूर्णांकerrupt)
-अणु
-	पूर्णांक ret;
+int s5p_mfc_wait_for_done_ctx(struct s5p_mfc_ctx *ctx,
+				    int command, int interrupt)
+{
+	int ret;
 
-	अगर (पूर्णांकerrupt) अणु
-		ret = रुको_event_पूर्णांकerruptible_समयout(ctx->queue,
-				(ctx->पूर्णांक_cond && (ctx->पूर्णांक_type == command
-			|| ctx->पूर्णांक_type == S5P_MFC_R2H_CMD_ERR_RET)),
-					msecs_to_jअगरfies(MFC_INT_TIMEOUT));
-	पूर्ण अन्यथा अणु
-		ret = रुको_event_समयout(ctx->queue,
-				(ctx->पूर्णांक_cond && (ctx->पूर्णांक_type == command
-			|| ctx->पूर्णांक_type == S5P_MFC_R2H_CMD_ERR_RET)),
-					msecs_to_jअगरfies(MFC_INT_TIMEOUT));
-	पूर्ण
-	अगर (ret == 0) अणु
+	if (interrupt) {
+		ret = wait_event_interruptible_timeout(ctx->queue,
+				(ctx->int_cond && (ctx->int_type == command
+			|| ctx->int_type == S5P_MFC_R2H_CMD_ERR_RET)),
+					msecs_to_jiffies(MFC_INT_TIMEOUT));
+	} else {
+		ret = wait_event_timeout(ctx->queue,
+				(ctx->int_cond && (ctx->int_type == command
+			|| ctx->int_type == S5P_MFC_R2H_CMD_ERR_RET)),
+					msecs_to_jiffies(MFC_INT_TIMEOUT));
+	}
+	if (ret == 0) {
 		mfc_err("Interrupt (ctx->int_type:%d, command:%d) timed out\n",
-							ctx->पूर्णांक_type, command);
-		वापस 1;
-	पूर्ण अन्यथा अगर (ret == -ERESTARTSYS) अणु
+							ctx->int_type, command);
+		return 1;
+	} else if (ret == -ERESTARTSYS) {
 		mfc_err("Interrupted by a signal\n");
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 	mfc_debug(1, "Finished waiting (ctx->int_type:%d, command: %d)\n",
-							ctx->पूर्णांक_type, command);
-	अगर (ctx->पूर्णांक_type == S5P_MFC_R2H_CMD_ERR_RET)
-		वापस 1;
-	वापस 0;
-पूर्ण
+							ctx->int_type, command);
+	if (ctx->int_type == S5P_MFC_R2H_CMD_ERR_RET)
+		return 1;
+	return 0;
+}
 
-व्योम s5p_mfc_clean_ctx_पूर्णांक_flags(काष्ठा s5p_mfc_ctx *ctx)
-अणु
-	ctx->पूर्णांक_cond = 0;
-	ctx->पूर्णांक_type = 0;
-	ctx->पूर्णांक_err = 0;
-पूर्ण
+void s5p_mfc_clean_ctx_int_flags(struct s5p_mfc_ctx *ctx)
+{
+	ctx->int_cond = 0;
+	ctx->int_type = 0;
+	ctx->int_err = 0;
+}
 

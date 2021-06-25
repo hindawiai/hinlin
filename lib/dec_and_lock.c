@@ -1,52 +1,51 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <linux/export.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/atomic.h>
+// SPDX-License-Identifier: GPL-2.0
+#include <linux/export.h>
+#include <linux/spinlock.h>
+#include <linux/atomic.h>
 
 /*
  * This is an implementation of the notion of "decrement a
- * reference count, and वापस locked अगर it decremented to zero".
+ * reference count, and return locked if it decremented to zero".
  *
  * NOTE NOTE NOTE! This is _not_ equivalent to
  *
- *	अगर (atomic_dec_and_test(&atomic)) अणु
+ *	if (atomic_dec_and_test(&atomic)) {
  *		spin_lock(&lock);
- *		वापस 1;
- *	पूर्ण
- *	वापस 0;
+ *		return 1;
+ *	}
+ *	return 0;
  *
  * because the spin-lock and the decrement must be
  * "atomic".
  */
-पूर्णांक _atomic_dec_and_lock(atomic_t *atomic, spinlock_t *lock)
-अणु
+int _atomic_dec_and_lock(atomic_t *atomic, spinlock_t *lock)
+{
 	/* Subtract 1 from counter unless that drops it to 0 (ie. it was 1) */
-	अगर (atomic_add_unless(atomic, -1, 1))
-		वापस 0;
+	if (atomic_add_unless(atomic, -1, 1))
+		return 0;
 
-	/* Otherwise करो it the slow way */
+	/* Otherwise do it the slow way */
 	spin_lock(lock);
-	अगर (atomic_dec_and_test(atomic))
-		वापस 1;
+	if (atomic_dec_and_test(atomic))
+		return 1;
 	spin_unlock(lock);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 EXPORT_SYMBOL(_atomic_dec_and_lock);
 
-पूर्णांक _atomic_dec_and_lock_irqsave(atomic_t *atomic, spinlock_t *lock,
-				 अचिन्हित दीर्घ *flags)
-अणु
+int _atomic_dec_and_lock_irqsave(atomic_t *atomic, spinlock_t *lock,
+				 unsigned long *flags)
+{
 	/* Subtract 1 from counter unless that drops it to 0 (ie. it was 1) */
-	अगर (atomic_add_unless(atomic, -1, 1))
-		वापस 0;
+	if (atomic_add_unless(atomic, -1, 1))
+		return 0;
 
-	/* Otherwise करो it the slow way */
+	/* Otherwise do it the slow way */
 	spin_lock_irqsave(lock, *flags);
-	अगर (atomic_dec_and_test(atomic))
-		वापस 1;
+	if (atomic_dec_and_test(atomic))
+		return 1;
 	spin_unlock_irqrestore(lock, *flags);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL(_atomic_dec_and_lock_irqsave);

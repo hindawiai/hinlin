@@ -1,90 +1,89 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
-#समावेश <linux/sched.h>
-#समावेश <linux/sched/debug.h>
-#समावेश <linux/stacktrace.h>
-#समावेश <linux/thपढ़ो_info.h>
-#समावेश <linux/ftrace.h>
-#समावेश <linux/export.h>
-#समावेश <यंत्र/ptrace.h>
-#समावेश <यंत्र/stacktrace.h>
+// SPDX-License-Identifier: GPL-2.0-only
+#include <linux/sched.h>
+#include <linux/sched/debug.h>
+#include <linux/stacktrace.h>
+#include <linux/thread_info.h>
+#include <linux/ftrace.h>
+#include <linux/export.h>
+#include <asm/ptrace.h>
+#include <asm/stacktrace.h>
 
-#समावेश "kstack.h"
+#include "kstack.h"
 
-अटल व्योम __save_stack_trace(काष्ठा thपढ़ो_info *tp,
-			       काष्ठा stack_trace *trace,
+static void __save_stack_trace(struct thread_info *tp,
+			       struct stack_trace *trace,
 			       bool skip_sched)
-अणु
-	अचिन्हित दीर्घ ksp, fp;
-#अगर_घोषित CONFIG_FUNCTION_GRAPH_TRACER
-	काष्ठा task_काष्ठा *t;
-	पूर्णांक graph = 0;
-#पूर्ण_अगर
+{
+	unsigned long ksp, fp;
+#ifdef CONFIG_FUNCTION_GRAPH_TRACER
+	struct task_struct *t;
+	int graph = 0;
+#endif
 
-	अगर (tp == current_thपढ़ो_info()) अणु
+	if (tp == current_thread_info()) {
 		stack_trace_flush();
-		__यंत्र__ __अस्थिर__("mov %%fp, %0" : "=r" (ksp));
-	पूर्ण अन्यथा अणु
+		__asm__ __volatile__("mov %%fp, %0" : "=r" (ksp));
+	} else {
 		ksp = tp->ksp;
-	पूर्ण
+	}
 
 	fp = ksp + STACK_BIAS;
-#अगर_घोषित CONFIG_FUNCTION_GRAPH_TRACER
+#ifdef CONFIG_FUNCTION_GRAPH_TRACER
 	t = tp->task;
-#पूर्ण_अगर
-	करो अणु
-		काष्ठा sparc_stackf *sf;
-		काष्ठा pt_regs *regs;
-		अचिन्हित दीर्घ pc;
+#endif
+	do {
+		struct sparc_stackf *sf;
+		struct pt_regs *regs;
+		unsigned long pc;
 
-		अगर (!kstack_valid(tp, fp))
-			अवरोध;
+		if (!kstack_valid(tp, fp))
+			break;
 
-		sf = (काष्ठा sparc_stackf *) fp;
-		regs = (काष्ठा pt_regs *) (sf + 1);
+		sf = (struct sparc_stackf *) fp;
+		regs = (struct pt_regs *) (sf + 1);
 
-		अगर (kstack_is_trap_frame(tp, regs)) अणु
-			अगर (!(regs->tstate & TSTATE_PRIV))
-				अवरोध;
+		if (kstack_is_trap_frame(tp, regs)) {
+			if (!(regs->tstate & TSTATE_PRIV))
+				break;
 			pc = regs->tpc;
 			fp = regs->u_regs[UREG_I6] + STACK_BIAS;
-		पूर्ण अन्यथा अणु
+		} else {
 			pc = sf->callers_pc;
-			fp = (अचिन्हित दीर्घ)sf->fp + STACK_BIAS;
-		पूर्ण
+			fp = (unsigned long)sf->fp + STACK_BIAS;
+		}
 
-		अगर (trace->skip > 0)
+		if (trace->skip > 0)
 			trace->skip--;
-		अन्यथा अगर (!skip_sched || !in_sched_functions(pc)) अणु
+		else if (!skip_sched || !in_sched_functions(pc)) {
 			trace->entries[trace->nr_entries++] = pc;
-#अगर_घोषित CONFIG_FUNCTION_GRAPH_TRACER
-			अगर ((pc + 8UL) == (अचिन्हित दीर्घ) &वापस_to_handler) अणु
-				काष्ठा ftrace_ret_stack *ret_stack;
+#ifdef CONFIG_FUNCTION_GRAPH_TRACER
+			if ((pc + 8UL) == (unsigned long) &return_to_handler) {
+				struct ftrace_ret_stack *ret_stack;
 				ret_stack = ftrace_graph_get_ret_stack(t,
 								       graph);
-				अगर (ret_stack) अणु
+				if (ret_stack) {
 					pc = ret_stack->ret;
-					अगर (trace->nr_entries <
+					if (trace->nr_entries <
 					    trace->max_entries)
 						trace->entries[trace->nr_entries++] = pc;
 					graph++;
-				पूर्ण
-			पूर्ण
-#पूर्ण_अगर
-		पूर्ण
-	पूर्ण जबतक (trace->nr_entries < trace->max_entries);
-पूर्ण
+				}
+			}
+#endif
+		}
+	} while (trace->nr_entries < trace->max_entries);
+}
 
-व्योम save_stack_trace(काष्ठा stack_trace *trace)
-अणु
-	__save_stack_trace(current_thपढ़ो_info(), trace, false);
-पूर्ण
+void save_stack_trace(struct stack_trace *trace)
+{
+	__save_stack_trace(current_thread_info(), trace, false);
+}
 EXPORT_SYMBOL_GPL(save_stack_trace);
 
-व्योम save_stack_trace_tsk(काष्ठा task_काष्ठा *tsk, काष्ठा stack_trace *trace)
-अणु
-	काष्ठा thपढ़ो_info *tp = task_thपढ़ो_info(tsk);
+void save_stack_trace_tsk(struct task_struct *tsk, struct stack_trace *trace)
+{
+	struct thread_info *tp = task_thread_info(tsk);
 
 	__save_stack_trace(tp, trace, true);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(save_stack_trace_tsk);

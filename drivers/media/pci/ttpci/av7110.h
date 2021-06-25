@@ -1,218 +1,217 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _AV7110_H_
-#घोषणा _AV7110_H_
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _AV7110_H_
+#define _AV7110_H_
 
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/socket.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/input.h>
-#समावेश <linux/समय.स>
+#include <linux/interrupt.h>
+#include <linux/socket.h>
+#include <linux/netdevice.h>
+#include <linux/i2c.h>
+#include <linux/input.h>
+#include <linux/time.h>
 
-#समावेश <linux/dvb/video.h>
-#समावेश <linux/dvb/audपन.स>
-#समावेश <linux/dvb/dmx.h>
-#समावेश <linux/dvb/ca.h>
-#समावेश <linux/dvb/osd.h>
-#समावेश <linux/dvb/net.h>
-#समावेश <linux/mutex.h>
+#include <linux/dvb/video.h>
+#include <linux/dvb/audio.h>
+#include <linux/dvb/dmx.h>
+#include <linux/dvb/ca.h>
+#include <linux/dvb/osd.h>
+#include <linux/dvb/net.h>
+#include <linux/mutex.h>
 
-#समावेश <media/dvbdev.h>
-#समावेश <media/demux.h>
-#समावेश <media/dvb_demux.h>
-#समावेश <media/dmxdev.h>
-#समावेश "dvb_filter.h"
-#समावेश <media/dvb_net.h>
-#समावेश <media/dvb_ringbuffer.h>
-#समावेश <media/dvb_frontend.h>
-#समावेश "ves1820.h"
-#समावेश "ves1x93.h"
-#समावेश "stv0299.h"
-#समावेश "tda8083.h"
-#समावेश "sp8870.h"
-#समावेश "stv0297.h"
-#समावेश "l64781.h"
+#include <media/dvbdev.h>
+#include <media/demux.h>
+#include <media/dvb_demux.h>
+#include <media/dmxdev.h>
+#include "dvb_filter.h"
+#include <media/dvb_net.h>
+#include <media/dvb_ringbuffer.h>
+#include <media/dvb_frontend.h>
+#include "ves1820.h"
+#include "ves1x93.h"
+#include "stv0299.h"
+#include "tda8083.h"
+#include "sp8870.h"
+#include "stv0297.h"
+#include "l64781.h"
 
-#समावेश <media/drv-पूर्णांकf/saa7146_vv.h>
+#include <media/drv-intf/saa7146_vv.h>
 
 
-#घोषणा ANALOG_TUNER_VES1820 1
-#घोषणा ANALOG_TUNER_STV0297 2
+#define ANALOG_TUNER_VES1820 1
+#define ANALOG_TUNER_STV0297 2
 
-बाह्य पूर्णांक av7110_debug;
+extern int av7110_debug;
 
-#घोषणा dprपूर्णांकk(level, fmt, arg...) करो अणु				\
-	अगर (level & av7110_debug)					\
-		prपूर्णांकk(KERN_DEBUG KBUILD_MODNAME ": %s(): " fmt,	\
+#define dprintk(level, fmt, arg...) do {				\
+	if (level & av7110_debug)					\
+		printk(KERN_DEBUG KBUILD_MODNAME ": %s(): " fmt,	\
 		       __func__, ##arg);				\
-पूर्ण जबतक (0)
+} while (0)
 
-#घोषणा MAXFILT 32
+#define MAXFILT 32
 
-क्रमागत अणुAV_PES_STREAM, PS_STREAM, TS_STREAM, PES_STREAMपूर्ण;
+enum {AV_PES_STREAM, PS_STREAM, TS_STREAM, PES_STREAM};
 
-क्रमागत av7110_video_mode अणु
+enum av7110_video_mode {
 	AV7110_VIDEO_MODE_PAL	= 0,
 	AV7110_VIDEO_MODE_NTSC	= 1
-पूर्ण;
+};
 
-काष्ठा av7110_p2t अणु
+struct av7110_p2t {
 	u8		  pes[TS_SIZE];
 	u8		  counter;
-	दीर्घ पूर्णांक	  pos;
-	पूर्णांक		  frags;
-	काष्ठा dvb_demux_feed *feed;
-पूर्ण;
+	long int	  pos;
+	int		  frags;
+	struct dvb_demux_feed *feed;
+};
 
 /* video MPEG decoder events: */
 /* (code copied from dvb_frontend.c, should maybe be factored out...) */
-#घोषणा MAX_VIDEO_EVENT 8
-काष्ठा dvb_video_events अणु
-	काष्ठा video_event	  events[MAX_VIDEO_EVENT];
-	पूर्णांक			  eventw;
-	पूर्णांक			  eventr;
-	पूर्णांक			  overflow;
-	रुको_queue_head_t	  रुको_queue;
+#define MAX_VIDEO_EVENT 8
+struct dvb_video_events {
+	struct video_event	  events[MAX_VIDEO_EVENT];
+	int			  eventw;
+	int			  eventr;
+	int			  overflow;
+	wait_queue_head_t	  wait_queue;
 	spinlock_t		  lock;
-पूर्ण;
+};
 
 
-काष्ठा av7110;
+struct av7110;
 
 /* infrared remote control */
-काष्ठा infrared अणु
-	काष्ठा rc_dev		*rcdev;
-	अक्षर			input_phys[32];
+struct infrared {
+	struct rc_dev		*rcdev;
+	char			input_phys[32];
 	u32			ir_config;
-पूर्ण;
+};
 
-/* place to store all the necessary device inक्रमmation */
-काष्ठा av7110 अणु
+/* place to store all the necessary device information */
+struct av7110 {
 
 	/* devices */
 
-	काष्ठा dvb_device	dvb_dev;
-	काष्ठा dvb_net		dvb_net;
+	struct dvb_device	dvb_dev;
+	struct dvb_net		dvb_net;
 
-	काष्ठा video_device	v4l_dev;
-	काष्ठा video_device	vbi_dev;
+	struct video_device	v4l_dev;
+	struct video_device	vbi_dev;
 
-	काष्ठा saa7146_dev	*dev;
+	struct saa7146_dev	*dev;
 
-	काष्ठा i2c_adapter	i2c_adap;
+	struct i2c_adapter	i2c_adap;
 
-	अक्षर			*card_name;
+	char			*card_name;
 
-	/* support क्रम analog module of dvb-c */
-	पूर्णांक			analog_tuner_flags;
-	पूर्णांक			current_input;
+	/* support for analog module of dvb-c */
+	int			analog_tuner_flags;
+	int			current_input;
 	u32			current_freq;
 
-	काष्ठा tasklet_काष्ठा	debi_tasklet;
-	काष्ठा tasklet_काष्ठा	gpio_tasklet;
+	struct tasklet_struct	debi_tasklet;
+	struct tasklet_struct	gpio_tasklet;
 
-	पूर्णांक adac_type;	       /* audio DAC type */
-#घोषणा DVB_ADAC_TI	  0
-#घोषणा DVB_ADAC_CRYSTAL  1
-#घोषणा DVB_ADAC_MSP34x0  2
-#घोषणा DVB_ADAC_MSP34x5  3
-#घोषणा DVB_ADAC_NONE	 -1
+	int adac_type;	       /* audio DAC type */
+#define DVB_ADAC_TI	  0
+#define DVB_ADAC_CRYSTAL  1
+#define DVB_ADAC_MSP34x0  2
+#define DVB_ADAC_MSP34x5  3
+#define DVB_ADAC_NONE	 -1
 
 
 	/* buffers */
 
-	व्योम		       *iobuf;	 /* memory क्रम all buffers */
-	काष्ठा dvb_ringbuffer	avout;   /* buffer क्रम video or A/V mux */
-#घोषणा AVOUTLEN (128*1024)
-	काष्ठा dvb_ringbuffer	aout;    /* buffer क्रम audio */
-#घोषणा AOUTLEN (64*1024)
-	व्योम		       *bmpbuf;
-#घोषणा BMPLEN (8*32768+1024)
+	void		       *iobuf;	 /* memory for all buffers */
+	struct dvb_ringbuffer	avout;   /* buffer for video or A/V mux */
+#define AVOUTLEN (128*1024)
+	struct dvb_ringbuffer	aout;    /* buffer for audio */
+#define AOUTLEN (64*1024)
+	void		       *bmpbuf;
+#define BMPLEN (8*32768+1024)
 
-	/* biपंचांगap buffers and states */
+	/* bitmap buffers and states */
 
-	पूर्णांक			bmpp;
-	पूर्णांक			bmplen;
-	अस्थिर पूर्णांक		bmp_state;
-#घोषणा BMP_NONE     0
-#घोषणा BMP_LOADING  1
-#घोषणा BMP_LOADED   2
-	रुको_queue_head_t	bmpq;
+	int			bmpp;
+	int			bmplen;
+	volatile int		bmp_state;
+#define BMP_NONE     0
+#define BMP_LOADING  1
+#define BMP_LOADED   2
+	wait_queue_head_t	bmpq;
 
 
-	/* DEBI and polled command पूर्णांकerface */
+	/* DEBI and polled command interface */
 
 	spinlock_t		debilock;
-	काष्ठा mutex		dcomlock;
-	अस्थिर पूर्णांक		debitype;
-	अस्थिर पूर्णांक		debilen;
+	struct mutex		dcomlock;
+	volatile int		debitype;
+	volatile int		debilen;
 
 
 	/* Recording and playback flags */
 
-	पूर्णांक			rec_mode;
-	पूर्णांक			playing;
-#घोषणा RP_NONE  0
-#घोषणा RP_VIDEO 1
-#घोषणा RP_AUDIO 2
-#घोषणा RP_AV	 3
+	int			rec_mode;
+	int			playing;
+#define RP_NONE  0
+#define RP_VIDEO 1
+#define RP_AUDIO 2
+#define RP_AV	 3
 
 
 	/* OSD */
 
-	पूर्णांक			osdwin;      /* currently active winकरोw */
+	int			osdwin;      /* currently active window */
 	u16			osdbpp[8];
-	काष्ठा mutex		osd_mutex;
+	struct mutex		osd_mutex;
 
 	/* CA */
 
-	काष्ठा ca_slot_info	ci_slot[2];
+	struct ca_slot_info	ci_slot[2];
 
-	क्रमागत av7110_video_mode	vidmode;
-	काष्ठा dmxdev		dmxdev;
-	काष्ठा dvb_demux	demux;
+	enum av7110_video_mode	vidmode;
+	struct dmxdev		dmxdev;
+	struct dvb_demux	demux;
 
-	काष्ठा dmx_frontend	hw_frontend;
-	काष्ठा dmx_frontend	mem_frontend;
+	struct dmx_frontend	hw_frontend;
+	struct dmx_frontend	mem_frontend;
 
-	/* क्रम budget mode demux1 */
-	काष्ठा dmxdev		dmxdev1;
-	काष्ठा dvb_demux	demux1;
-	काष्ठा dvb_net		dvb_net1;
+	/* for budget mode demux1 */
+	struct dmxdev		dmxdev1;
+	struct dvb_demux	demux1;
+	struct dvb_net		dvb_net1;
 	spinlock_t		feedlock1;
-	पूर्णांक			feeding1;
+	int			feeding1;
 	u32			ttbp;
-	अचिन्हित अक्षर           *grabbing;
-	काष्ठा saa7146_pgtable  pt;
-	काष्ठा tasklet_काष्ठा   vpe_tasklet;
+	unsigned char           *grabbing;
+	struct saa7146_pgtable  pt;
+	struct tasklet_struct   vpe_tasklet;
 	bool			full_ts;
 
-	पूर्णांक			fe_synced;
-	काष्ठा mutex		pid_mutex;
+	int			fe_synced;
+	struct mutex		pid_mutex;
 
-	पूर्णांक			video_blank;
-	काष्ठा video_status	videostate;
+	int			video_blank;
+	struct video_status	videostate;
 	u16			display_panscan;
-	पूर्णांक			display_ar;
-	पूर्णांक			trickmode;
-#घोषणा TRICK_NONE   0
-#घोषणा TRICK_FAST   1
-#घोषणा TRICK_SLOW   2
-#घोषणा TRICK_FREEZE 3
-	काष्ठा audio_status	audiostate;
+	int			display_ar;
+	int			trickmode;
+#define TRICK_NONE   0
+#define TRICK_FAST   1
+#define TRICK_SLOW   2
+#define TRICK_FREEZE 3
+	struct audio_status	audiostate;
 
-	काष्ठा dvb_demux_filter *handle2filter[32];
-	काष्ठा av7110_p2t	 p2t_filter[MAXFILT];
-	काष्ठा dvb_filter_pes2ts p2t[2];
-	काष्ठा ipack		 ipack[2];
+	struct dvb_demux_filter *handle2filter[32];
+	struct av7110_p2t	 p2t_filter[MAXFILT];
+	struct dvb_filter_pes2ts p2t[2];
+	struct ipack		 ipack[2];
 	u8			*kbuf[2];
 
-	पूर्णांक sinfo;
-	पूर्णांक feeding;
+	int sinfo;
+	int feeding;
 
-	पूर्णांक arm_errors;
-	पूर्णांक रेजिस्टरed;
+	int arm_errors;
+	int registered;
 
 
 	/* AV711X */
@@ -222,95 +221,95 @@
 	u32		    arm_vid;
 	u32		    arm_app;
 	u32		    avtype;
-	पूर्णांक		    arm_पढ़ोy;
-	काष्ठा task_काष्ठा *arm_thपढ़ो;
-	रुको_queue_head_t   arm_रुको;
+	int		    arm_ready;
+	struct task_struct *arm_thread;
+	wait_queue_head_t   arm_wait;
 	u16		    arm_loops;
 
-	व्योम		   *debi_virt;
+	void		   *debi_virt;
 	dma_addr_t	    debi_bus;
 
 	u16		    pids[DMX_PES_OTHER];
 
-	काष्ठा dvb_ringbuffer	 ci_rbuffer;
-	काष्ठा dvb_ringbuffer	 ci_wbuffer;
+	struct dvb_ringbuffer	 ci_rbuffer;
+	struct dvb_ringbuffer	 ci_wbuffer;
 
-	काष्ठा audio_mixer	mixer;
+	struct audio_mixer	mixer;
 
-	काष्ठा dvb_adapter	 dvb_adapter;
-	काष्ठा dvb_device	 *video_dev;
-	काष्ठा dvb_device	 *audio_dev;
-	काष्ठा dvb_device	 *ca_dev;
-	काष्ठा dvb_device	 *osd_dev;
+	struct dvb_adapter	 dvb_adapter;
+	struct dvb_device	 *video_dev;
+	struct dvb_device	 *audio_dev;
+	struct dvb_device	 *ca_dev;
+	struct dvb_device	 *osd_dev;
 
-	काष्ठा dvb_video_events  video_events;
-	video_माप_प्रकार		 video_size;
+	struct dvb_video_events  video_events;
+	video_size_t		 video_size;
 
 	u16			wssMode;
 	u16			wssData;
 
-	काष्ठा infrared		ir;
+	struct infrared		ir;
 
 	/* firmware stuff */
-	अचिन्हित अक्षर *bin_fw;
-	अचिन्हित दीर्घ size_fw;
+	unsigned char *bin_fw;
+	unsigned long size_fw;
 
-	अचिन्हित अक्षर *bin_dpram;
-	अचिन्हित दीर्घ size_dpram;
+	unsigned char *bin_dpram;
+	unsigned long size_dpram;
 
-	अचिन्हित अक्षर *bin_root;
-	अचिन्हित दीर्घ size_root;
+	unsigned char *bin_root;
+	unsigned long size_root;
 
-	काष्ठा dvb_frontend* fe;
-	क्रमागत fe_status fe_status;
+	struct dvb_frontend* fe;
+	enum fe_status fe_status;
 
-	काष्ठा mutex ioctl_mutex;
+	struct mutex ioctl_mutex;
 
 	/* crash recovery */
-	व्योम				(*recover)(काष्ठा av7110* av7110);
-	क्रमागत fe_sec_voltage		saved_voltage;
-	क्रमागत fe_sec_tone_mode		saved_tone;
-	काष्ठा dvb_diseqc_master_cmd	saved_master_cmd;
-	क्रमागत fe_sec_mini_cmd		saved_minicmd;
+	void				(*recover)(struct av7110* av7110);
+	enum fe_sec_voltage		saved_voltage;
+	enum fe_sec_tone_mode		saved_tone;
+	struct dvb_diseqc_master_cmd	saved_master_cmd;
+	enum fe_sec_mini_cmd		saved_minicmd;
 
-	पूर्णांक (*fe_init)(काष्ठा dvb_frontend* fe);
-	पूर्णांक (*fe_पढ़ो_status)(काष्ठा dvb_frontend *fe, क्रमागत fe_status *status);
-	पूर्णांक (*fe_diseqc_reset_overload)(काष्ठा dvb_frontend *fe);
-	पूर्णांक (*fe_diseqc_send_master_cmd)(काष्ठा dvb_frontend *fe,
-					 काष्ठा dvb_diseqc_master_cmd *cmd);
-	पूर्णांक (*fe_diseqc_send_burst)(काष्ठा dvb_frontend *fe,
-				    क्रमागत fe_sec_mini_cmd minicmd);
-	पूर्णांक (*fe_set_tone)(काष्ठा dvb_frontend *fe,
-			   क्रमागत fe_sec_tone_mode tone);
-	पूर्णांक (*fe_set_voltage)(काष्ठा dvb_frontend *fe,
-			      क्रमागत fe_sec_voltage voltage);
-	पूर्णांक (*fe_dishnetwork_send_legacy_command)(काष्ठा dvb_frontend *fe,
-						  अचिन्हित दीर्घ cmd);
-	पूर्णांक (*fe_set_frontend)(काष्ठा dvb_frontend *fe);
-पूर्ण;
+	int (*fe_init)(struct dvb_frontend* fe);
+	int (*fe_read_status)(struct dvb_frontend *fe, enum fe_status *status);
+	int (*fe_diseqc_reset_overload)(struct dvb_frontend *fe);
+	int (*fe_diseqc_send_master_cmd)(struct dvb_frontend *fe,
+					 struct dvb_diseqc_master_cmd *cmd);
+	int (*fe_diseqc_send_burst)(struct dvb_frontend *fe,
+				    enum fe_sec_mini_cmd minicmd);
+	int (*fe_set_tone)(struct dvb_frontend *fe,
+			   enum fe_sec_tone_mode tone);
+	int (*fe_set_voltage)(struct dvb_frontend *fe,
+			      enum fe_sec_voltage voltage);
+	int (*fe_dishnetwork_send_legacy_command)(struct dvb_frontend *fe,
+						  unsigned long cmd);
+	int (*fe_set_frontend)(struct dvb_frontend *fe);
+};
 
 
-बाह्य पूर्णांक ChangePIDs(काष्ठा av7110 *av7110, u16 vpid, u16 apid, u16 ttpid,
+extern int ChangePIDs(struct av7110 *av7110, u16 vpid, u16 apid, u16 ttpid,
 		       u16 subpid, u16 pcrpid);
 
-व्योम av7110_ir_handler(काष्ठा av7110 *av7110, u32 ircom);
-पूर्णांक av7110_set_ir_config(काष्ठा av7110 *av7110);
-पूर्णांक av7110_ir_init(काष्ठा av7110 *av7110);
-व्योम av7110_ir_निकास(काष्ठा av7110 *av7110);
+void av7110_ir_handler(struct av7110 *av7110, u32 ircom);
+int av7110_set_ir_config(struct av7110 *av7110);
+int av7110_ir_init(struct av7110 *av7110);
+void av7110_ir_exit(struct av7110 *av7110);
 
 /* msp3400 i2c subaddresses */
-#घोषणा MSP_WR_DEM 0x10
-#घोषणा MSP_RD_DEM 0x11
-#घोषणा MSP_WR_DSP 0x12
-#घोषणा MSP_RD_DSP 0x13
+#define MSP_WR_DEM 0x10
+#define MSP_RD_DEM 0x11
+#define MSP_WR_DSP 0x12
+#define MSP_RD_DSP 0x13
 
-बाह्य पूर्णांक i2c_ग_लिखोreg(काष्ठा av7110 *av7110, u8 id, u8 reg, u8 val);
-बाह्य u8 i2c_पढ़ोreg(काष्ठा av7110 *av7110, u8 id, u8 reg);
-बाह्य पूर्णांक msp_ग_लिखोreg(काष्ठा av7110 *av7110, u8 dev, u16 reg, u16 val);
+extern int i2c_writereg(struct av7110 *av7110, u8 id, u8 reg, u8 val);
+extern u8 i2c_readreg(struct av7110 *av7110, u8 id, u8 reg);
+extern int msp_writereg(struct av7110 *av7110, u8 dev, u16 reg, u16 val);
 
 
-बाह्य पूर्णांक av7110_init_analog_module(काष्ठा av7110 *av7110);
-बाह्य पूर्णांक av7110_init_v4l(काष्ठा av7110 *av7110);
-बाह्य पूर्णांक av7110_निकास_v4l(काष्ठा av7110 *av7110);
+extern int av7110_init_analog_module(struct av7110 *av7110);
+extern int av7110_init_v4l(struct av7110 *av7110);
+extern int av7110_exit_v4l(struct av7110 *av7110);
 
-#पूर्ण_अगर /* _AV7110_H_ */
+#endif /* _AV7110_H_ */

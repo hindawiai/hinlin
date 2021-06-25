@@ -1,27 +1,26 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अघोषित TRACE_SYSTEM
-#घोषणा TRACE_SYSTEM cpuhp
+/* SPDX-License-Identifier: GPL-2.0 */
+#undef TRACE_SYSTEM
+#define TRACE_SYSTEM cpuhp
 
-#अगर !defined(_TRACE_CPUHP_H) || defined(TRACE_HEADER_MULTI_READ)
-#घोषणा _TRACE_CPUHP_H
+#if !defined(_TRACE_CPUHP_H) || defined(TRACE_HEADER_MULTI_READ)
+#define _TRACE_CPUHP_H
 
-#समावेश <linux/tracepoपूर्णांक.h>
+#include <linux/tracepoint.h>
 
 TRACE_EVENT(cpuhp_enter,
 
-	TP_PROTO(अचिन्हित पूर्णांक cpu,
-		 पूर्णांक target,
-		 पूर्णांक idx,
-		 पूर्णांक (*fun)(अचिन्हित पूर्णांक)),
+	TP_PROTO(unsigned int cpu,
+		 int target,
+		 int idx,
+		 int (*fun)(unsigned int)),
 
 	TP_ARGS(cpu, target, idx, fun),
 
 	TP_STRUCT__entry(
-		__field( अचिन्हित पूर्णांक,	cpu		)
-		__field( पूर्णांक,		target		)
-		__field( पूर्णांक,		idx		)
-		__field( व्योम *,	fun		)
+		__field( unsigned int,	cpu		)
+		__field( int,		target		)
+		__field( int,		idx		)
+		__field( void *,	fun		)
 	),
 
 	TP_fast_assign(
@@ -31,25 +30,25 @@ TRACE_EVENT(cpuhp_enter,
 		__entry->fun	= fun;
 	),
 
-	TP_prपूर्णांकk("cpu: %04u target: %3d step: %3d (%ps)",
+	TP_printk("cpu: %04u target: %3d step: %3d (%ps)",
 		  __entry->cpu, __entry->target, __entry->idx, __entry->fun)
 );
 
 TRACE_EVENT(cpuhp_multi_enter,
 
-	TP_PROTO(अचिन्हित पूर्णांक cpu,
-		 पूर्णांक target,
-		 पूर्णांक idx,
-		 पूर्णांक (*fun)(अचिन्हित पूर्णांक, काष्ठा hlist_node *),
-		 काष्ठा hlist_node *node),
+	TP_PROTO(unsigned int cpu,
+		 int target,
+		 int idx,
+		 int (*fun)(unsigned int, struct hlist_node *),
+		 struct hlist_node *node),
 
 	TP_ARGS(cpu, target, idx, fun, node),
 
 	TP_STRUCT__entry(
-		__field( अचिन्हित पूर्णांक,	cpu		)
-		__field( पूर्णांक,		target		)
-		__field( पूर्णांक,		idx		)
-		__field( व्योम *,	fun		)
+		__field( unsigned int,	cpu		)
+		__field( int,		target		)
+		__field( int,		idx		)
+		__field( void *,	fun		)
 	),
 
 	TP_fast_assign(
@@ -59,24 +58,24 @@ TRACE_EVENT(cpuhp_multi_enter,
 		__entry->fun	= fun;
 	),
 
-	TP_prपूर्णांकk("cpu: %04u target: %3d step: %3d (%ps)",
+	TP_printk("cpu: %04u target: %3d step: %3d (%ps)",
 		  __entry->cpu, __entry->target, __entry->idx, __entry->fun)
 );
 
-TRACE_EVENT(cpuhp_निकास,
+TRACE_EVENT(cpuhp_exit,
 
-	TP_PROTO(अचिन्हित पूर्णांक cpu,
-		 पूर्णांक state,
-		 पूर्णांक idx,
-		 पूर्णांक ret),
+	TP_PROTO(unsigned int cpu,
+		 int state,
+		 int idx,
+		 int ret),
 
 	TP_ARGS(cpu, state, idx, ret),
 
 	TP_STRUCT__entry(
-		__field( अचिन्हित पूर्णांक,	cpu		)
-		__field( पूर्णांक,		state		)
-		__field( पूर्णांक,		idx		)
-		__field( पूर्णांक,		ret		)
+		__field( unsigned int,	cpu		)
+		__field( int,		state		)
+		__field( int,		idx		)
+		__field( int,		ret		)
 	),
 
 	TP_fast_assign(
@@ -86,11 +85,11 @@ TRACE_EVENT(cpuhp_निकास,
 		__entry->ret	= ret;
 	),
 
-	TP_prपूर्णांकk(" cpu: %04u  state: %3d step: %3d ret: %d",
+	TP_printk(" cpu: %04u  state: %3d step: %3d ret: %d",
 		  __entry->cpu, __entry->state, __entry->idx,  __entry->ret)
 );
 
-#पूर्ण_अगर
+#endif
 
 /* This part must be outside protection */
-#समावेश <trace/define_trace.h>
+#include <trace/define_trace.h>

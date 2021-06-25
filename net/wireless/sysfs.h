@@ -1,11 +1,10 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __WIRELESS_SYSFS_H
-#घोषणा __WIRELESS_SYSFS_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __WIRELESS_SYSFS_H
+#define __WIRELESS_SYSFS_H
 
-पूर्णांक wiphy_sysfs_init(व्योम);
-व्योम wiphy_sysfs_निकास(व्योम);
+int wiphy_sysfs_init(void);
+void wiphy_sysfs_exit(void);
 
-बाह्य काष्ठा class ieee80211_class;
+extern struct class ieee80211_class;
 
-#पूर्ण_अगर /* __WIRELESS_SYSFS_H */
+#endif /* __WIRELESS_SYSFS_H */

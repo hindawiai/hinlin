@@ -1,514 +1,513 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Key setup facility क्रम FS encryption support.
+ * Key setup facility for FS encryption support.
  *
  * Copyright (C) 2015, Google, Inc.
  *
  * Originally written by Michael Halcrow, Ildar Muslukhov, and Uday Savagaonkar.
- * Heavily modअगरied since then.
+ * Heavily modified since then.
  */
 
-#समावेश <crypto/skcipher.h>
-#समावेश <linux/key.h>
-#समावेश <linux/अक्रमom.h>
+#include <crypto/skcipher.h>
+#include <linux/key.h>
+#include <linux/random.h>
 
-#समावेश "fscrypt_private.h"
+#include "fscrypt_private.h"
 
-काष्ठा fscrypt_mode fscrypt_modes[] = अणु
-	[FSCRYPT_MODE_AES_256_XTS] = अणु
-		.मित्रly_name = "AES-256-XTS",
+struct fscrypt_mode fscrypt_modes[] = {
+	[FSCRYPT_MODE_AES_256_XTS] = {
+		.friendly_name = "AES-256-XTS",
 		.cipher_str = "xts(aes)",
 		.keysize = 64,
 		.ivsize = 16,
 		.blk_crypto_mode = BLK_ENCRYPTION_MODE_AES_256_XTS,
-	पूर्ण,
-	[FSCRYPT_MODE_AES_256_CTS] = अणु
-		.मित्रly_name = "AES-256-CTS-CBC",
+	},
+	[FSCRYPT_MODE_AES_256_CTS] = {
+		.friendly_name = "AES-256-CTS-CBC",
 		.cipher_str = "cts(cbc(aes))",
 		.keysize = 32,
 		.ivsize = 16,
-	पूर्ण,
-	[FSCRYPT_MODE_AES_128_CBC] = अणु
-		.मित्रly_name = "AES-128-CBC-ESSIV",
+	},
+	[FSCRYPT_MODE_AES_128_CBC] = {
+		.friendly_name = "AES-128-CBC-ESSIV",
 		.cipher_str = "essiv(cbc(aes),sha256)",
 		.keysize = 16,
 		.ivsize = 16,
 		.blk_crypto_mode = BLK_ENCRYPTION_MODE_AES_128_CBC_ESSIV,
-	पूर्ण,
-	[FSCRYPT_MODE_AES_128_CTS] = अणु
-		.मित्रly_name = "AES-128-CTS-CBC",
+	},
+	[FSCRYPT_MODE_AES_128_CTS] = {
+		.friendly_name = "AES-128-CTS-CBC",
 		.cipher_str = "cts(cbc(aes))",
 		.keysize = 16,
 		.ivsize = 16,
-	पूर्ण,
-	[FSCRYPT_MODE_ADIANTUM] = अणु
-		.मित्रly_name = "Adiantum",
+	},
+	[FSCRYPT_MODE_ADIANTUM] = {
+		.friendly_name = "Adiantum",
 		.cipher_str = "adiantum(xchacha12,aes)",
 		.keysize = 32,
 		.ivsize = 32,
 		.blk_crypto_mode = BLK_ENCRYPTION_MODE_ADIANTUM,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल DEFINE_MUTEX(fscrypt_mode_key_setup_mutex);
+static DEFINE_MUTEX(fscrypt_mode_key_setup_mutex);
 
-अटल काष्ठा fscrypt_mode *
-select_encryption_mode(स्थिर जोड़ fscrypt_policy *policy,
-		       स्थिर काष्ठा inode *inode)
-अणु
+static struct fscrypt_mode *
+select_encryption_mode(const union fscrypt_policy *policy,
+		       const struct inode *inode)
+{
 	BUILD_BUG_ON(ARRAY_SIZE(fscrypt_modes) != FSCRYPT_MODE_MAX + 1);
 
-	अगर (S_ISREG(inode->i_mode))
-		वापस &fscrypt_modes[fscrypt_policy_contents_mode(policy)];
+	if (S_ISREG(inode->i_mode))
+		return &fscrypt_modes[fscrypt_policy_contents_mode(policy)];
 
-	अगर (S_ISसूची(inode->i_mode) || S_ISLNK(inode->i_mode))
-		वापस &fscrypt_modes[fscrypt_policy_fnames_mode(policy)];
+	if (S_ISDIR(inode->i_mode) || S_ISLNK(inode->i_mode))
+		return &fscrypt_modes[fscrypt_policy_fnames_mode(policy)];
 
 	WARN_ONCE(1, "fscrypt: filesystem tried to load encryption info for inode %lu, which is not encryptable (file type %d)\n",
 		  inode->i_ino, (inode->i_mode & S_IFMT));
-	वापस ERR_PTR(-EINVAL);
-पूर्ण
+	return ERR_PTR(-EINVAL);
+}
 
-/* Create a symmetric cipher object क्रम the given encryption mode and key */
-अटल काष्ठा crypto_skcipher *
-fscrypt_allocate_skcipher(काष्ठा fscrypt_mode *mode, स्थिर u8 *raw_key,
-			  स्थिर काष्ठा inode *inode)
-अणु
-	काष्ठा crypto_skcipher *tfm;
-	पूर्णांक err;
+/* Create a symmetric cipher object for the given encryption mode and key */
+static struct crypto_skcipher *
+fscrypt_allocate_skcipher(struct fscrypt_mode *mode, const u8 *raw_key,
+			  const struct inode *inode)
+{
+	struct crypto_skcipher *tfm;
+	int err;
 
 	tfm = crypto_alloc_skcipher(mode->cipher_str, 0, 0);
-	अगर (IS_ERR(tfm)) अणु
-		अगर (PTR_ERR(tfm) == -ENOENT) अणु
+	if (IS_ERR(tfm)) {
+		if (PTR_ERR(tfm) == -ENOENT) {
 			fscrypt_warn(inode,
 				     "Missing crypto API support for %s (API name: \"%s\")",
-				     mode->मित्रly_name, mode->cipher_str);
-			वापस ERR_PTR(-ENOPKG);
-		पूर्ण
+				     mode->friendly_name, mode->cipher_str);
+			return ERR_PTR(-ENOPKG);
+		}
 		fscrypt_err(inode, "Error allocating '%s' transform: %ld",
 			    mode->cipher_str, PTR_ERR(tfm));
-		वापस tfm;
-	पूर्ण
-	अगर (!xchg(&mode->logged_impl_name, 1)) अणु
+		return tfm;
+	}
+	if (!xchg(&mode->logged_impl_name, 1)) {
 		/*
-		 * fscrypt perक्रमmance can vary greatly depending on which
+		 * fscrypt performance can vary greatly depending on which
 		 * crypto algorithm implementation is used.  Help people debug
-		 * perक्रमmance problems by logging the ->cra_driver_name the
-		 * first समय a mode is used.
+		 * performance problems by logging the ->cra_driver_name the
+		 * first time a mode is used.
 		 */
 		pr_info("fscrypt: %s using implementation \"%s\"\n",
-			mode->मित्रly_name, crypto_skcipher_driver_name(tfm));
-	पूर्ण
-	अगर (WARN_ON(crypto_skcipher_ivsize(tfm) != mode->ivsize)) अणु
+			mode->friendly_name, crypto_skcipher_driver_name(tfm));
+	}
+	if (WARN_ON(crypto_skcipher_ivsize(tfm) != mode->ivsize)) {
 		err = -EINVAL;
-		जाओ err_मुक्त_tfm;
-	पूर्ण
+		goto err_free_tfm;
+	}
 	crypto_skcipher_set_flags(tfm, CRYPTO_TFM_REQ_FORBID_WEAK_KEYS);
 	err = crypto_skcipher_setkey(tfm, raw_key, mode->keysize);
-	अगर (err)
-		जाओ err_मुक्त_tfm;
+	if (err)
+		goto err_free_tfm;
 
-	वापस tfm;
+	return tfm;
 
-err_मुक्त_tfm:
-	crypto_मुक्त_skcipher(tfm);
-	वापस ERR_PTR(err);
-पूर्ण
+err_free_tfm:
+	crypto_free_skcipher(tfm);
+	return ERR_PTR(err);
+}
 
 /*
- * Prepare the crypto transक्रमm object or blk-crypto key in @prep_key, given the
+ * Prepare the crypto transform object or blk-crypto key in @prep_key, given the
  * raw key, encryption mode, and flag indicating which encryption implementation
  * (fs-layer or blk-crypto) will be used.
  */
-पूर्णांक fscrypt_prepare_key(काष्ठा fscrypt_prepared_key *prep_key,
-			स्थिर u8 *raw_key, स्थिर काष्ठा fscrypt_info *ci)
-अणु
-	काष्ठा crypto_skcipher *tfm;
+int fscrypt_prepare_key(struct fscrypt_prepared_key *prep_key,
+			const u8 *raw_key, const struct fscrypt_info *ci)
+{
+	struct crypto_skcipher *tfm;
 
-	अगर (fscrypt_using_अंतरभूत_encryption(ci))
-		वापस fscrypt_prepare_अंतरभूत_crypt_key(prep_key, raw_key, ci);
+	if (fscrypt_using_inline_encryption(ci))
+		return fscrypt_prepare_inline_crypt_key(prep_key, raw_key, ci);
 
 	tfm = fscrypt_allocate_skcipher(ci->ci_mode, raw_key, ci->ci_inode);
-	अगर (IS_ERR(tfm))
-		वापस PTR_ERR(tfm);
+	if (IS_ERR(tfm))
+		return PTR_ERR(tfm);
 	/*
 	 * Pairs with the smp_load_acquire() in fscrypt_is_key_prepared().
 	 * I.e., here we publish ->tfm with a RELEASE barrier so that
 	 * concurrent tasks can ACQUIRE it.  Note that this concurrency is only
-	 * possible क्रम per-mode keys, not क्रम per-file keys.
+	 * possible for per-mode keys, not for per-file keys.
 	 */
 	smp_store_release(&prep_key->tfm, tfm);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Destroy a crypto transक्रमm object and/or blk-crypto key. */
-व्योम fscrypt_destroy_prepared_key(काष्ठा fscrypt_prepared_key *prep_key)
-अणु
-	crypto_मुक्त_skcipher(prep_key->tfm);
-	fscrypt_destroy_अंतरभूत_crypt_key(prep_key);
-पूर्ण
+/* Destroy a crypto transform object and/or blk-crypto key. */
+void fscrypt_destroy_prepared_key(struct fscrypt_prepared_key *prep_key)
+{
+	crypto_free_skcipher(prep_key->tfm);
+	fscrypt_destroy_inline_crypt_key(prep_key);
+}
 
-/* Given a per-file encryption key, set up the file's crypto transक्रमm object */
-पूर्णांक fscrypt_set_per_file_enc_key(काष्ठा fscrypt_info *ci, स्थिर u8 *raw_key)
-अणु
+/* Given a per-file encryption key, set up the file's crypto transform object */
+int fscrypt_set_per_file_enc_key(struct fscrypt_info *ci, const u8 *raw_key)
+{
 	ci->ci_owns_key = true;
-	वापस fscrypt_prepare_key(&ci->ci_enc_key, raw_key, ci);
-पूर्ण
+	return fscrypt_prepare_key(&ci->ci_enc_key, raw_key, ci);
+}
 
-अटल पूर्णांक setup_per_mode_enc_key(काष्ठा fscrypt_info *ci,
-				  काष्ठा fscrypt_master_key *mk,
-				  काष्ठा fscrypt_prepared_key *keys,
+static int setup_per_mode_enc_key(struct fscrypt_info *ci,
+				  struct fscrypt_master_key *mk,
+				  struct fscrypt_prepared_key *keys,
 				  u8 hkdf_context, bool include_fs_uuid)
-अणु
-	स्थिर काष्ठा inode *inode = ci->ci_inode;
-	स्थिर काष्ठा super_block *sb = inode->i_sb;
-	काष्ठा fscrypt_mode *mode = ci->ci_mode;
-	स्थिर u8 mode_num = mode - fscrypt_modes;
-	काष्ठा fscrypt_prepared_key *prep_key;
+{
+	const struct inode *inode = ci->ci_inode;
+	const struct super_block *sb = inode->i_sb;
+	struct fscrypt_mode *mode = ci->ci_mode;
+	const u8 mode_num = mode - fscrypt_modes;
+	struct fscrypt_prepared_key *prep_key;
 	u8 mode_key[FSCRYPT_MAX_KEY_SIZE];
-	u8 hkdf_info[माप(mode_num) + माप(sb->s_uuid)];
-	अचिन्हित पूर्णांक hkdf_infolen = 0;
-	पूर्णांक err;
+	u8 hkdf_info[sizeof(mode_num) + sizeof(sb->s_uuid)];
+	unsigned int hkdf_infolen = 0;
+	int err;
 
-	अगर (WARN_ON(mode_num > FSCRYPT_MODE_MAX))
-		वापस -EINVAL;
+	if (WARN_ON(mode_num > FSCRYPT_MODE_MAX))
+		return -EINVAL;
 
 	prep_key = &keys[mode_num];
-	अगर (fscrypt_is_key_prepared(prep_key, ci)) अणु
+	if (fscrypt_is_key_prepared(prep_key, ci)) {
 		ci->ci_enc_key = *prep_key;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	mutex_lock(&fscrypt_mode_key_setup_mutex);
 
-	अगर (fscrypt_is_key_prepared(prep_key, ci))
-		जाओ करोne_unlock;
+	if (fscrypt_is_key_prepared(prep_key, ci))
+		goto done_unlock;
 
-	BUILD_BUG_ON(माप(mode_num) != 1);
-	BUILD_BUG_ON(माप(sb->s_uuid) != 16);
-	BUILD_BUG_ON(माप(hkdf_info) != 17);
+	BUILD_BUG_ON(sizeof(mode_num) != 1);
+	BUILD_BUG_ON(sizeof(sb->s_uuid) != 16);
+	BUILD_BUG_ON(sizeof(hkdf_info) != 17);
 	hkdf_info[hkdf_infolen++] = mode_num;
-	अगर (include_fs_uuid) अणु
-		स_नकल(&hkdf_info[hkdf_infolen], &sb->s_uuid,
-		       माप(sb->s_uuid));
-		hkdf_infolen += माप(sb->s_uuid);
-	पूर्ण
+	if (include_fs_uuid) {
+		memcpy(&hkdf_info[hkdf_infolen], &sb->s_uuid,
+		       sizeof(sb->s_uuid));
+		hkdf_infolen += sizeof(sb->s_uuid);
+	}
 	err = fscrypt_hkdf_expand(&mk->mk_secret.hkdf,
 				  hkdf_context, hkdf_info, hkdf_infolen,
 				  mode_key, mode->keysize);
-	अगर (err)
-		जाओ out_unlock;
+	if (err)
+		goto out_unlock;
 	err = fscrypt_prepare_key(prep_key, mode_key, ci);
 	memzero_explicit(mode_key, mode->keysize);
-	अगर (err)
-		जाओ out_unlock;
-करोne_unlock:
+	if (err)
+		goto out_unlock;
+done_unlock:
 	ci->ci_enc_key = *prep_key;
 	err = 0;
 out_unlock:
 	mutex_unlock(&fscrypt_mode_key_setup_mutex);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक fscrypt_derive_dirhash_key(काष्ठा fscrypt_info *ci,
-			       स्थिर काष्ठा fscrypt_master_key *mk)
-अणु
-	पूर्णांक err;
+int fscrypt_derive_dirhash_key(struct fscrypt_info *ci,
+			       const struct fscrypt_master_key *mk)
+{
+	int err;
 
-	err = fscrypt_hkdf_expand(&mk->mk_secret.hkdf, HKDF_CONTEXT_सूचीHASH_KEY,
-				  ci->ci_nonce, FSCRYPT_खाता_NONCE_SIZE,
+	err = fscrypt_hkdf_expand(&mk->mk_secret.hkdf, HKDF_CONTEXT_DIRHASH_KEY,
+				  ci->ci_nonce, FSCRYPT_FILE_NONCE_SIZE,
 				  (u8 *)&ci->ci_dirhash_key,
-				  माप(ci->ci_dirhash_key));
-	अगर (err)
-		वापस err;
+				  sizeof(ci->ci_dirhash_key));
+	if (err)
+		return err;
 	ci->ci_dirhash_key_initialized = true;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम fscrypt_hash_inode_number(काष्ठा fscrypt_info *ci,
-			       स्थिर काष्ठा fscrypt_master_key *mk)
-अणु
+void fscrypt_hash_inode_number(struct fscrypt_info *ci,
+			       const struct fscrypt_master_key *mk)
+{
 	WARN_ON(ci->ci_inode->i_ino == 0);
 	WARN_ON(!mk->mk_ino_hash_key_initialized);
 
 	ci->ci_hashed_ino = (u32)siphash_1u64(ci->ci_inode->i_ino,
 					      &mk->mk_ino_hash_key);
-पूर्ण
+}
 
-अटल पूर्णांक fscrypt_setup_iv_ino_lblk_32_key(काष्ठा fscrypt_info *ci,
-					    काष्ठा fscrypt_master_key *mk)
-अणु
-	पूर्णांक err;
+static int fscrypt_setup_iv_ino_lblk_32_key(struct fscrypt_info *ci,
+					    struct fscrypt_master_key *mk)
+{
+	int err;
 
 	err = setup_per_mode_enc_key(ci, mk, mk->mk_iv_ino_lblk_32_keys,
 				     HKDF_CONTEXT_IV_INO_LBLK_32_KEY, true);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	/* pairs with smp_store_release() below */
-	अगर (!smp_load_acquire(&mk->mk_ino_hash_key_initialized)) अणु
+	if (!smp_load_acquire(&mk->mk_ino_hash_key_initialized)) {
 
 		mutex_lock(&fscrypt_mode_key_setup_mutex);
 
-		अगर (mk->mk_ino_hash_key_initialized)
-			जाओ unlock;
+		if (mk->mk_ino_hash_key_initialized)
+			goto unlock;
 
 		err = fscrypt_hkdf_expand(&mk->mk_secret.hkdf,
-					  HKDF_CONTEXT_INODE_HASH_KEY, शून्य, 0,
+					  HKDF_CONTEXT_INODE_HASH_KEY, NULL, 0,
 					  (u8 *)&mk->mk_ino_hash_key,
-					  माप(mk->mk_ino_hash_key));
-		अगर (err)
-			जाओ unlock;
+					  sizeof(mk->mk_ino_hash_key));
+		if (err)
+			goto unlock;
 		/* pairs with smp_load_acquire() above */
 		smp_store_release(&mk->mk_ino_hash_key_initialized, true);
 unlock:
 		mutex_unlock(&fscrypt_mode_key_setup_mutex);
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 
 	/*
-	 * New inodes may not have an inode number asचिन्हित yet.
+	 * New inodes may not have an inode number assigned yet.
 	 * Hashing their inode number is delayed until later.
 	 */
-	अगर (ci->ci_inode->i_ino)
+	if (ci->ci_inode->i_ino)
 		fscrypt_hash_inode_number(ci, mk);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक fscrypt_setup_v2_file_key(काष्ठा fscrypt_info *ci,
-				     काष्ठा fscrypt_master_key *mk,
+static int fscrypt_setup_v2_file_key(struct fscrypt_info *ci,
+				     struct fscrypt_master_key *mk,
 				     bool need_dirhash_key)
-अणु
-	पूर्णांक err;
+{
+	int err;
 
-	अगर (ci->ci_policy.v2.flags & FSCRYPT_POLICY_FLAG_सूचीECT_KEY) अणु
+	if (ci->ci_policy.v2.flags & FSCRYPT_POLICY_FLAG_DIRECT_KEY) {
 		/*
-		 * सूचीECT_KEY: instead of deriving per-file encryption keys, the
+		 * DIRECT_KEY: instead of deriving per-file encryption keys, the
 		 * per-file nonce will be included in all the IVs.  But unlike
-		 * v1 policies, क्रम v2 policies in this हाल we करोn't encrypt
+		 * v1 policies, for v2 policies in this case we don't encrypt
 		 * with the master key directly but rather derive a per-mode
 		 * encryption key.  This ensures that the master key is
-		 * consistently used only क्रम HKDF, aव्योमing key reuse issues.
+		 * consistently used only for HKDF, avoiding key reuse issues.
 		 */
 		err = setup_per_mode_enc_key(ci, mk, mk->mk_direct_keys,
-					     HKDF_CONTEXT_सूचीECT_KEY, false);
-	पूर्ण अन्यथा अगर (ci->ci_policy.v2.flags &
-		   FSCRYPT_POLICY_FLAG_IV_INO_LBLK_64) अणु
+					     HKDF_CONTEXT_DIRECT_KEY, false);
+	} else if (ci->ci_policy.v2.flags &
+		   FSCRYPT_POLICY_FLAG_IV_INO_LBLK_64) {
 		/*
 		 * IV_INO_LBLK_64: encryption keys are derived from (master_key,
-		 * mode_num, fileप्रणाली_uuid), and inode number is included in
-		 * the IVs.  This क्रमmat is optimized क्रम use with अंतरभूत
+		 * mode_num, filesystem_uuid), and inode number is included in
+		 * the IVs.  This format is optimized for use with inline
 		 * encryption hardware compliant with the UFS standard.
 		 */
 		err = setup_per_mode_enc_key(ci, mk, mk->mk_iv_ino_lblk_64_keys,
 					     HKDF_CONTEXT_IV_INO_LBLK_64_KEY,
 					     true);
-	पूर्ण अन्यथा अगर (ci->ci_policy.v2.flags &
-		   FSCRYPT_POLICY_FLAG_IV_INO_LBLK_32) अणु
+	} else if (ci->ci_policy.v2.flags &
+		   FSCRYPT_POLICY_FLAG_IV_INO_LBLK_32) {
 		err = fscrypt_setup_iv_ino_lblk_32_key(ci, mk);
-	पूर्ण अन्यथा अणु
+	} else {
 		u8 derived_key[FSCRYPT_MAX_KEY_SIZE];
 
 		err = fscrypt_hkdf_expand(&mk->mk_secret.hkdf,
-					  HKDF_CONTEXT_PER_खाता_ENC_KEY,
-					  ci->ci_nonce, FSCRYPT_खाता_NONCE_SIZE,
+					  HKDF_CONTEXT_PER_FILE_ENC_KEY,
+					  ci->ci_nonce, FSCRYPT_FILE_NONCE_SIZE,
 					  derived_key, ci->ci_mode->keysize);
-		अगर (err)
-			वापस err;
+		if (err)
+			return err;
 
 		err = fscrypt_set_per_file_enc_key(ci, derived_key);
 		memzero_explicit(derived_key, ci->ci_mode->keysize);
-	पूर्ण
-	अगर (err)
-		वापस err;
+	}
+	if (err)
+		return err;
 
-	/* Derive a secret dirhash key क्रम directories that need it. */
-	अगर (need_dirhash_key) अणु
+	/* Derive a secret dirhash key for directories that need it. */
+	if (need_dirhash_key) {
 		err = fscrypt_derive_dirhash_key(ci, mk);
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Find the master key, then set up the inode's actual encryption key.
  *
- * If the master key is found in the fileप्रणाली-level keyring, then the
- * corresponding 'struct key' is वापसed in *master_key_ret with its semaphore
- * पढ़ो-locked.  This is needed to ensure that only one task links the
- * fscrypt_info पूर्णांकo ->mk_decrypted_inodes (as multiple tasks may race to create
- * an fscrypt_info क्रम the same inode), and to synchronize the master key being
- * हटाओd with a new inode starting to use it.
+ * If the master key is found in the filesystem-level keyring, then the
+ * corresponding 'struct key' is returned in *master_key_ret with its semaphore
+ * read-locked.  This is needed to ensure that only one task links the
+ * fscrypt_info into ->mk_decrypted_inodes (as multiple tasks may race to create
+ * an fscrypt_info for the same inode), and to synchronize the master key being
+ * removed with a new inode starting to use it.
  */
-अटल पूर्णांक setup_file_encryption_key(काष्ठा fscrypt_info *ci,
+static int setup_file_encryption_key(struct fscrypt_info *ci,
 				     bool need_dirhash_key,
-				     काष्ठा key **master_key_ret)
-अणु
-	काष्ठा key *key;
-	काष्ठा fscrypt_master_key *mk = शून्य;
-	काष्ठा fscrypt_key_specअगरier mk_spec;
-	पूर्णांक err;
+				     struct key **master_key_ret)
+{
+	struct key *key;
+	struct fscrypt_master_key *mk = NULL;
+	struct fscrypt_key_specifier mk_spec;
+	int err;
 
 	err = fscrypt_select_encryption_impl(ci);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	चयन (ci->ci_policy.version) अणु
-	हाल FSCRYPT_POLICY_V1:
+	switch (ci->ci_policy.version) {
+	case FSCRYPT_POLICY_V1:
 		mk_spec.type = FSCRYPT_KEY_SPEC_TYPE_DESCRIPTOR;
-		स_नकल(mk_spec.u.descriptor,
+		memcpy(mk_spec.u.descriptor,
 		       ci->ci_policy.v1.master_key_descriptor,
 		       FSCRYPT_KEY_DESCRIPTOR_SIZE);
-		अवरोध;
-	हाल FSCRYPT_POLICY_V2:
+		break;
+	case FSCRYPT_POLICY_V2:
 		mk_spec.type = FSCRYPT_KEY_SPEC_TYPE_IDENTIFIER;
-		स_नकल(mk_spec.u.identअगरier,
-		       ci->ci_policy.v2.master_key_identअगरier,
+		memcpy(mk_spec.u.identifier,
+		       ci->ci_policy.v2.master_key_identifier,
 		       FSCRYPT_KEY_IDENTIFIER_SIZE);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		WARN_ON(1);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	key = fscrypt_find_master_key(ci->ci_inode->i_sb, &mk_spec);
-	अगर (IS_ERR(key)) अणु
-		अगर (key != ERR_PTR(-ENOKEY) ||
+	if (IS_ERR(key)) {
+		if (key != ERR_PTR(-ENOKEY) ||
 		    ci->ci_policy.version != FSCRYPT_POLICY_V1)
-			वापस PTR_ERR(key);
+			return PTR_ERR(key);
 
 		/*
-		 * As a legacy fallback क्रम v1 policies, search क्रम the key in
+		 * As a legacy fallback for v1 policies, search for the key in
 		 * the current task's subscribed keyrings too.  Don't move this
-		 * to beक्रमe the search of ->s_master_keys, since users
-		 * shouldn't be able to override fileप्रणाली-level keys.
+		 * to before the search of ->s_master_keys, since users
+		 * shouldn't be able to override filesystem-level keys.
 		 */
-		वापस fscrypt_setup_v1_file_key_via_subscribed_keyrings(ci);
-	पूर्ण
+		return fscrypt_setup_v1_file_key_via_subscribed_keyrings(ci);
+	}
 
 	mk = key->payload.data[0];
-	करोwn_पढ़ो(&key->sem);
+	down_read(&key->sem);
 
-	/* Has the secret been हटाओd (via FS_IOC_REMOVE_ENCRYPTION_KEY)? */
-	अगर (!is_master_key_secret_present(&mk->mk_secret)) अणु
+	/* Has the secret been removed (via FS_IOC_REMOVE_ENCRYPTION_KEY)? */
+	if (!is_master_key_secret_present(&mk->mk_secret)) {
 		err = -ENOKEY;
-		जाओ out_release_key;
-	पूर्ण
+		goto out_release_key;
+	}
 
 	/*
-	 * Require that the master key be at least as दीर्घ as the derived key.
+	 * Require that the master key be at least as long as the derived key.
 	 * Otherwise, the derived key cannot possibly contain as much entropy as
-	 * that required by the encryption mode it will be used क्रम.  For v1
-	 * policies it's also required क्रम the KDF to work at all.
+	 * that required by the encryption mode it will be used for.  For v1
+	 * policies it's also required for the KDF to work at all.
 	 */
-	अगर (mk->mk_secret.size < ci->ci_mode->keysize) अणु
-		fscrypt_warn(शून्य,
+	if (mk->mk_secret.size < ci->ci_mode->keysize) {
+		fscrypt_warn(NULL,
 			     "key with %s %*phN is too short (got %u bytes, need %u+ bytes)",
 			     master_key_spec_type(&mk_spec),
 			     master_key_spec_len(&mk_spec), (u8 *)&mk_spec.u,
 			     mk->mk_secret.size, ci->ci_mode->keysize);
 		err = -ENOKEY;
-		जाओ out_release_key;
-	पूर्ण
+		goto out_release_key;
+	}
 
-	चयन (ci->ci_policy.version) अणु
-	हाल FSCRYPT_POLICY_V1:
+	switch (ci->ci_policy.version) {
+	case FSCRYPT_POLICY_V1:
 		err = fscrypt_setup_v1_file_key(ci, mk->mk_secret.raw);
-		अवरोध;
-	हाल FSCRYPT_POLICY_V2:
+		break;
+	case FSCRYPT_POLICY_V2:
 		err = fscrypt_setup_v2_file_key(ci, mk, need_dirhash_key);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		WARN_ON(1);
 		err = -EINVAL;
-		अवरोध;
-	पूर्ण
-	अगर (err)
-		जाओ out_release_key;
+		break;
+	}
+	if (err)
+		goto out_release_key;
 
 	*master_key_ret = key;
-	वापस 0;
+	return 0;
 
 out_release_key:
-	up_पढ़ो(&key->sem);
+	up_read(&key->sem);
 	key_put(key);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम put_crypt_info(काष्ठा fscrypt_info *ci)
-अणु
-	काष्ठा key *key;
+static void put_crypt_info(struct fscrypt_info *ci)
+{
+	struct key *key;
 
-	अगर (!ci)
-		वापस;
+	if (!ci)
+		return;
 
-	अगर (ci->ci_direct_key)
+	if (ci->ci_direct_key)
 		fscrypt_put_direct_key(ci->ci_direct_key);
-	अन्यथा अगर (ci->ci_owns_key)
+	else if (ci->ci_owns_key)
 		fscrypt_destroy_prepared_key(&ci->ci_enc_key);
 
 	key = ci->ci_master_key;
-	अगर (key) अणु
-		काष्ठा fscrypt_master_key *mk = key->payload.data[0];
+	if (key) {
+		struct fscrypt_master_key *mk = key->payload.data[0];
 
 		/*
 		 * Remove this inode from the list of inodes that were unlocked
 		 * with the master key.
 		 *
-		 * In addition, अगर we're removing the last inode from a key that
-		 * alपढ़ोy had its secret हटाओd, invalidate the key so that it
-		 * माला_लो हटाओd from ->s_master_keys.
+		 * In addition, if we're removing the last inode from a key that
+		 * already had its secret removed, invalidate the key so that it
+		 * gets removed from ->s_master_keys.
 		 */
 		spin_lock(&mk->mk_decrypted_inodes_lock);
 		list_del(&ci->ci_master_key_link);
 		spin_unlock(&mk->mk_decrypted_inodes_lock);
-		अगर (refcount_dec_and_test(&mk->mk_refcount))
+		if (refcount_dec_and_test(&mk->mk_refcount))
 			key_invalidate(key);
 		key_put(key);
-	पूर्ण
-	memzero_explicit(ci, माप(*ci));
-	kmem_cache_मुक्त(fscrypt_info_cachep, ci);
-पूर्ण
+	}
+	memzero_explicit(ci, sizeof(*ci));
+	kmem_cache_free(fscrypt_info_cachep, ci);
+}
 
-अटल पूर्णांक
-fscrypt_setup_encryption_info(काष्ठा inode *inode,
-			      स्थिर जोड़ fscrypt_policy *policy,
-			      स्थिर u8 nonce[FSCRYPT_खाता_NONCE_SIZE],
+static int
+fscrypt_setup_encryption_info(struct inode *inode,
+			      const union fscrypt_policy *policy,
+			      const u8 nonce[FSCRYPT_FILE_NONCE_SIZE],
 			      bool need_dirhash_key)
-अणु
-	काष्ठा fscrypt_info *crypt_info;
-	काष्ठा fscrypt_mode *mode;
-	काष्ठा key *master_key = शून्य;
-	पूर्णांक res;
+{
+	struct fscrypt_info *crypt_info;
+	struct fscrypt_mode *mode;
+	struct key *master_key = NULL;
+	int res;
 
 	res = fscrypt_initialize(inode->i_sb->s_cop->flags);
-	अगर (res)
-		वापस res;
+	if (res)
+		return res;
 
 	crypt_info = kmem_cache_zalloc(fscrypt_info_cachep, GFP_KERNEL);
-	अगर (!crypt_info)
-		वापस -ENOMEM;
+	if (!crypt_info)
+		return -ENOMEM;
 
 	crypt_info->ci_inode = inode;
 	crypt_info->ci_policy = *policy;
-	स_नकल(crypt_info->ci_nonce, nonce, FSCRYPT_खाता_NONCE_SIZE);
+	memcpy(crypt_info->ci_nonce, nonce, FSCRYPT_FILE_NONCE_SIZE);
 
 	mode = select_encryption_mode(&crypt_info->ci_policy, inode);
-	अगर (IS_ERR(mode)) अणु
+	if (IS_ERR(mode)) {
 		res = PTR_ERR(mode);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	WARN_ON(mode->ivsize > FSCRYPT_MAX_IV_SIZE);
 	crypt_info->ci_mode = mode;
 
 	res = setup_file_encryption_key(crypt_info, need_dirhash_key,
 					&master_key);
-	अगर (res)
-		जाओ out;
+	if (res)
+		goto out;
 
 	/*
 	 * For existing inodes, multiple tasks may race to set ->i_crypt_info.
@@ -516,13 +515,13 @@ fscrypt_setup_encryption_info(काष्ठा inode *inode,
 	 * fscrypt_get_info().  I.e., here we publish ->i_crypt_info with a
 	 * RELEASE barrier so that other tasks can ACQUIRE it.
 	 */
-	अगर (cmpxchg_release(&inode->i_crypt_info, शून्य, crypt_info) == शून्य) अणु
+	if (cmpxchg_release(&inode->i_crypt_info, NULL, crypt_info) == NULL) {
 		/*
 		 * We won the race and set ->i_crypt_info to our crypt_info.
-		 * Now link it पूर्णांकo the master key's inode list.
+		 * Now link it into the master key's inode list.
 		 */
-		अगर (master_key) अणु
-			काष्ठा fscrypt_master_key *mk =
+		if (master_key) {
+			struct fscrypt_master_key *mk =
 				master_key->payload.data[0];
 
 			refcount_inc(&mk->mk_refcount);
@@ -531,207 +530,207 @@ fscrypt_setup_encryption_info(काष्ठा inode *inode,
 			list_add(&crypt_info->ci_master_key_link,
 				 &mk->mk_decrypted_inodes);
 			spin_unlock(&mk->mk_decrypted_inodes_lock);
-		पूर्ण
-		crypt_info = शून्य;
-	पूर्ण
+		}
+		crypt_info = NULL;
+	}
 	res = 0;
 out:
-	अगर (master_key) अणु
-		up_पढ़ो(&master_key->sem);
+	if (master_key) {
+		up_read(&master_key->sem);
 		key_put(master_key);
-	पूर्ण
+	}
 	put_crypt_info(crypt_info);
-	वापस res;
-पूर्ण
+	return res;
+}
 
 /**
  * fscrypt_get_encryption_info() - set up an inode's encryption key
- * @inode: the inode to set up the key क्रम.  Must be encrypted.
- * @allow_unsupported: अगर %true, treat an unsupported encryption policy (or
+ * @inode: the inode to set up the key for.  Must be encrypted.
+ * @allow_unsupported: if %true, treat an unsupported encryption policy (or
  *		       unrecognized encryption context) the same way as the key
- *		       being unavailable, instead of वापसing an error.  Use
- *		       %false unless the operation being perक्रमmed is needed in
- *		       order क्रम files (or directories) to be deleted.
+ *		       being unavailable, instead of returning an error.  Use
+ *		       %false unless the operation being performed is needed in
+ *		       order for files (or directories) to be deleted.
  *
- * Set up ->i_crypt_info, अगर it hasn't alपढ़ोy been करोne.
+ * Set up ->i_crypt_info, if it hasn't already been done.
  *
- * Note: unless ->i_crypt_info is alपढ़ोy set, this isn't %GFP_NOFS-safe.  So
- * generally this shouldn't be called from within a fileप्रणाली transaction.
+ * Note: unless ->i_crypt_info is already set, this isn't %GFP_NOFS-safe.  So
+ * generally this shouldn't be called from within a filesystem transaction.
  *
- * Return: 0 अगर ->i_crypt_info was set or was alपढ़ोy set, *or* अगर the
+ * Return: 0 if ->i_crypt_info was set or was already set, *or* if the
  *	   encryption key is unavailable.  (Use fscrypt_has_encryption_key() to
- *	   distinguish these हालs.)  Also can वापस another -त्रुटि_सं code.
+ *	   distinguish these cases.)  Also can return another -errno code.
  */
-पूर्णांक fscrypt_get_encryption_info(काष्ठा inode *inode, bool allow_unsupported)
-अणु
-	पूर्णांक res;
-	जोड़ fscrypt_context ctx;
-	जोड़ fscrypt_policy policy;
+int fscrypt_get_encryption_info(struct inode *inode, bool allow_unsupported)
+{
+	int res;
+	union fscrypt_context ctx;
+	union fscrypt_policy policy;
 
-	अगर (fscrypt_has_encryption_key(inode))
-		वापस 0;
+	if (fscrypt_has_encryption_key(inode))
+		return 0;
 
-	res = inode->i_sb->s_cop->get_context(inode, &ctx, माप(ctx));
-	अगर (res < 0) अणु
-		अगर (res == -दुस्फल && allow_unsupported)
-			वापस 0;
+	res = inode->i_sb->s_cop->get_context(inode, &ctx, sizeof(ctx));
+	if (res < 0) {
+		if (res == -ERANGE && allow_unsupported)
+			return 0;
 		fscrypt_warn(inode, "Error %d getting encryption context", res);
-		वापस res;
-	पूर्ण
+		return res;
+	}
 
 	res = fscrypt_policy_from_context(&policy, &ctx, res);
-	अगर (res) अणु
-		अगर (allow_unsupported)
-			वापस 0;
+	if (res) {
+		if (allow_unsupported)
+			return 0;
 		fscrypt_warn(inode,
 			     "Unrecognized or corrupt encryption context");
-		वापस res;
-	पूर्ण
+		return res;
+	}
 
-	अगर (!fscrypt_supported_policy(&policy, inode)) अणु
-		अगर (allow_unsupported)
-			वापस 0;
-		वापस -EINVAL;
-	पूर्ण
+	if (!fscrypt_supported_policy(&policy, inode)) {
+		if (allow_unsupported)
+			return 0;
+		return -EINVAL;
+	}
 
 	res = fscrypt_setup_encryption_info(inode, &policy,
 					    fscrypt_context_nonce(&ctx),
 					    IS_CASEFOLDED(inode) &&
-					    S_ISसूची(inode->i_mode));
+					    S_ISDIR(inode->i_mode));
 
-	अगर (res == -ENOPKG && allow_unsupported) /* Algorithm unavailable? */
+	if (res == -ENOPKG && allow_unsupported) /* Algorithm unavailable? */
 		res = 0;
-	अगर (res == -ENOKEY)
+	if (res == -ENOKEY)
 		res = 0;
-	वापस res;
-पूर्ण
+	return res;
+}
 
 /**
  * fscrypt_prepare_new_inode() - prepare to create a new inode in a directory
  * @dir: a possibly-encrypted directory
- * @inode: the new inode.  ->i_mode must be set alपढ़ोy.
- *	   ->i_ino करोesn't need to be set yet.
- * @encrypt_ret: (output) set to %true अगर the new inode will be encrypted
+ * @inode: the new inode.  ->i_mode must be set already.
+ *	   ->i_ino doesn't need to be set yet.
+ * @encrypt_ret: (output) set to %true if the new inode will be encrypted
  *
- * If the directory is encrypted, set up its ->i_crypt_info in preparation क्रम
- * encrypting the name of the new file.  Also, अगर the new inode will be
+ * If the directory is encrypted, set up its ->i_crypt_info in preparation for
+ * encrypting the name of the new file.  Also, if the new inode will be
  * encrypted, set up its ->i_crypt_info and set *encrypt_ret=true.
  *
- * This isn't %GFP_NOFS-safe, and thereक्रमe it should be called beक्रमe starting
- * any fileप्रणाली transaction to create the inode.  For this reason, ->i_ino
- * isn't required to be set yet, as the fileप्रणाली may not have set it yet.
+ * This isn't %GFP_NOFS-safe, and therefore it should be called before starting
+ * any filesystem transaction to create the inode.  For this reason, ->i_ino
+ * isn't required to be set yet, as the filesystem may not have set it yet.
  *
- * This करोesn't persist the new inode's encryption context.  That still needs to
- * be करोne later by calling fscrypt_set_context().
+ * This doesn't persist the new inode's encryption context.  That still needs to
+ * be done later by calling fscrypt_set_context().
  *
- * Return: 0 on success, -ENOKEY अगर the encryption key is missing, or another
- *	   -त्रुटि_सं code
+ * Return: 0 on success, -ENOKEY if the encryption key is missing, or another
+ *	   -errno code
  */
-पूर्णांक fscrypt_prepare_new_inode(काष्ठा inode *dir, काष्ठा inode *inode,
+int fscrypt_prepare_new_inode(struct inode *dir, struct inode *inode,
 			      bool *encrypt_ret)
-अणु
-	स्थिर जोड़ fscrypt_policy *policy;
-	u8 nonce[FSCRYPT_खाता_NONCE_SIZE];
+{
+	const union fscrypt_policy *policy;
+	u8 nonce[FSCRYPT_FILE_NONCE_SIZE];
 
 	policy = fscrypt_policy_to_inherit(dir);
-	अगर (policy == शून्य)
-		वापस 0;
-	अगर (IS_ERR(policy))
-		वापस PTR_ERR(policy);
+	if (policy == NULL)
+		return 0;
+	if (IS_ERR(policy))
+		return PTR_ERR(policy);
 
-	अगर (WARN_ON_ONCE(inode->i_mode == 0))
-		वापस -EINVAL;
+	if (WARN_ON_ONCE(inode->i_mode == 0))
+		return -EINVAL;
 
 	/*
 	 * Only regular files, directories, and symlinks are encrypted.
 	 * Special files like device nodes and named pipes aren't.
 	 */
-	अगर (!S_ISREG(inode->i_mode) &&
-	    !S_ISसूची(inode->i_mode) &&
+	if (!S_ISREG(inode->i_mode) &&
+	    !S_ISDIR(inode->i_mode) &&
 	    !S_ISLNK(inode->i_mode))
-		वापस 0;
+		return 0;
 
 	*encrypt_ret = true;
 
-	get_अक्रमom_bytes(nonce, FSCRYPT_खाता_NONCE_SIZE);
-	वापस fscrypt_setup_encryption_info(inode, policy, nonce,
+	get_random_bytes(nonce, FSCRYPT_FILE_NONCE_SIZE);
+	return fscrypt_setup_encryption_info(inode, policy, nonce,
 					     IS_CASEFOLDED(dir) &&
-					     S_ISसूची(inode->i_mode));
-पूर्ण
+					     S_ISDIR(inode->i_mode));
+}
 EXPORT_SYMBOL_GPL(fscrypt_prepare_new_inode);
 
 /**
- * fscrypt_put_encryption_info() - मुक्त most of an inode's fscrypt data
+ * fscrypt_put_encryption_info() - free most of an inode's fscrypt data
  * @inode: an inode being evicted
  *
- * Free the inode's fscrypt_info.  Fileप्रणालीs must call this when the inode is
+ * Free the inode's fscrypt_info.  Filesystems must call this when the inode is
  * being evicted.  An RCU grace period need not have elapsed yet.
  */
-व्योम fscrypt_put_encryption_info(काष्ठा inode *inode)
-अणु
+void fscrypt_put_encryption_info(struct inode *inode)
+{
 	put_crypt_info(inode->i_crypt_info);
-	inode->i_crypt_info = शून्य;
-पूर्ण
+	inode->i_crypt_info = NULL;
+}
 EXPORT_SYMBOL(fscrypt_put_encryption_info);
 
 /**
- * fscrypt_मुक्त_inode() - मुक्त an inode's fscrypt data requiring RCU delay
- * @inode: an inode being मुक्तd
+ * fscrypt_free_inode() - free an inode's fscrypt data requiring RCU delay
+ * @inode: an inode being freed
  *
- * Free the inode's cached decrypted symlink target, अगर any.  Fileप्रणालीs must
- * call this after an RCU grace period, just beक्रमe they मुक्त the inode.
+ * Free the inode's cached decrypted symlink target, if any.  Filesystems must
+ * call this after an RCU grace period, just before they free the inode.
  */
-व्योम fscrypt_मुक्त_inode(काष्ठा inode *inode)
-अणु
-	अगर (IS_ENCRYPTED(inode) && S_ISLNK(inode->i_mode)) अणु
-		kमुक्त(inode->i_link);
-		inode->i_link = शून्य;
-	पूर्ण
-पूर्ण
-EXPORT_SYMBOL(fscrypt_मुक्त_inode);
+void fscrypt_free_inode(struct inode *inode)
+{
+	if (IS_ENCRYPTED(inode) && S_ISLNK(inode->i_mode)) {
+		kfree(inode->i_link);
+		inode->i_link = NULL;
+	}
+}
+EXPORT_SYMBOL(fscrypt_free_inode);
 
 /**
- * fscrypt_drop_inode() - check whether the inode's master key has been हटाओd
- * @inode: an inode being considered क्रम eviction
+ * fscrypt_drop_inode() - check whether the inode's master key has been removed
+ * @inode: an inode being considered for eviction
  *
- * Fileप्रणालीs supporting fscrypt must call this from their ->drop_inode()
- * method so that encrypted inodes are evicted as soon as they're no दीर्घer in
- * use and their master key has been हटाओd.
+ * Filesystems supporting fscrypt must call this from their ->drop_inode()
+ * method so that encrypted inodes are evicted as soon as they're no longer in
+ * use and their master key has been removed.
  *
- * Return: 1 अगर fscrypt wants the inode to be evicted now, otherwise 0
+ * Return: 1 if fscrypt wants the inode to be evicted now, otherwise 0
  */
-पूर्णांक fscrypt_drop_inode(काष्ठा inode *inode)
-अणु
-	स्थिर काष्ठा fscrypt_info *ci = fscrypt_get_info(inode);
-	स्थिर काष्ठा fscrypt_master_key *mk;
+int fscrypt_drop_inode(struct inode *inode)
+{
+	const struct fscrypt_info *ci = fscrypt_get_info(inode);
+	const struct fscrypt_master_key *mk;
 
 	/*
-	 * If ci is शून्य, then the inode करोesn't have an encryption key set up
-	 * so it's irrelevant.  If ci_master_key is शून्य, then the master key
+	 * If ci is NULL, then the inode doesn't have an encryption key set up
+	 * so it's irrelevant.  If ci_master_key is NULL, then the master key
 	 * was provided via the legacy mechanism of the process-subscribed
-	 * keyrings, so we करोn't know whether it's been हटाओd or not.
+	 * keyrings, so we don't know whether it's been removed or not.
 	 */
-	अगर (!ci || !ci->ci_master_key)
-		वापस 0;
+	if (!ci || !ci->ci_master_key)
+		return 0;
 	mk = ci->ci_master_key->payload.data[0];
 
 	/*
 	 * With proper, non-racy use of FS_IOC_REMOVE_ENCRYPTION_KEY, all inodes
-	 * रक्षित by the key were cleaned by sync_fileप्रणाली().  But अगर
+	 * protected by the key were cleaned by sync_filesystem().  But if
 	 * userspace is still using the files, inodes can be dirtied between
-	 * then and now.  We mustn't lose any ग_लिखोs, so skip dirty inodes here.
+	 * then and now.  We mustn't lose any writes, so skip dirty inodes here.
 	 */
-	अगर (inode->i_state & I_सूचीTY_ALL)
-		वापस 0;
+	if (inode->i_state & I_DIRTY_ALL)
+		return 0;
 
 	/*
 	 * Note: since we aren't holding the key semaphore, the result here can
 	 * immediately become outdated.  But there's no correctness problem with
 	 * unnecessarily evicting.  Nor is there a correctness problem with not
-	 * evicting जबतक iput() is racing with the key being हटाओd, since
-	 * then the thपढ़ो removing the key will either evict the inode itself
+	 * evicting while iput() is racing with the key being removed, since
+	 * then the thread removing the key will either evict the inode itself
 	 * or will correctly detect that it wasn't evicted due to the race.
 	 */
-	वापस !is_master_key_secret_present(&mk->mk_secret);
-पूर्ण
+	return !is_master_key_secret_present(&mk->mk_secret);
+}
 EXPORT_SYMBOL_GPL(fscrypt_drop_inode);

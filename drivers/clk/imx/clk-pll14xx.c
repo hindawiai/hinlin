@@ -1,49 +1,48 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright 2017-2018 NXP.
  */
 
-#समावेश <linux/bits.h>
-#समावेश <linux/clk-provider.h>
-#समावेश <linux/err.h>
-#समावेश <linux/export.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/iopoll.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/jअगरfies.h>
+#include <linux/bits.h>
+#include <linux/clk-provider.h>
+#include <linux/err.h>
+#include <linux/export.h>
+#include <linux/io.h>
+#include <linux/iopoll.h>
+#include <linux/slab.h>
+#include <linux/jiffies.h>
 
-#समावेश "clk.h"
+#include "clk.h"
 
-#घोषणा GNRL_CTL	0x0
-#घोषणा DIV_CTL		0x4
-#घोषणा LOCK_STATUS	BIT(31)
-#घोषणा LOCK_SEL_MASK	BIT(29)
-#घोषणा CLKE_MASK	BIT(11)
-#घोषणा RST_MASK	BIT(9)
-#घोषणा BYPASS_MASK	BIT(4)
-#घोषणा MDIV_SHIFT	12
-#घोषणा MDIV_MASK	GENMASK(21, 12)
-#घोषणा PDIV_SHIFT	4
-#घोषणा PDIV_MASK	GENMASK(9, 4)
-#घोषणा SDIV_SHIFT	0
-#घोषणा SDIV_MASK	GENMASK(2, 0)
-#घोषणा KDIV_SHIFT	0
-#घोषणा KDIV_MASK	GENMASK(15, 0)
+#define GNRL_CTL	0x0
+#define DIV_CTL		0x4
+#define LOCK_STATUS	BIT(31)
+#define LOCK_SEL_MASK	BIT(29)
+#define CLKE_MASK	BIT(11)
+#define RST_MASK	BIT(9)
+#define BYPASS_MASK	BIT(4)
+#define MDIV_SHIFT	12
+#define MDIV_MASK	GENMASK(21, 12)
+#define PDIV_SHIFT	4
+#define PDIV_MASK	GENMASK(9, 4)
+#define SDIV_SHIFT	0
+#define SDIV_MASK	GENMASK(2, 0)
+#define KDIV_SHIFT	0
+#define KDIV_MASK	GENMASK(15, 0)
 
-#घोषणा LOCK_TIMEOUT_US		10000
+#define LOCK_TIMEOUT_US		10000
 
-काष्ठा clk_pll14xx अणु
-	काष्ठा clk_hw			hw;
-	व्योम __iomem			*base;
-	क्रमागत imx_pll14xx_type		type;
-	स्थिर काष्ठा imx_pll14xx_rate_table *rate_table;
-	पूर्णांक rate_count;
-पूर्ण;
+struct clk_pll14xx {
+	struct clk_hw			hw;
+	void __iomem			*base;
+	enum imx_pll14xx_type		type;
+	const struct imx_pll14xx_rate_table *rate_table;
+	int rate_count;
+};
 
-#घोषणा to_clk_pll14xx(_hw) container_of(_hw, काष्ठा clk_pll14xx, hw)
+#define to_clk_pll14xx(_hw) container_of(_hw, struct clk_pll14xx, hw)
 
-अटल स्थिर काष्ठा imx_pll14xx_rate_table imx_pll1416x_tbl[] = अणु
+static const struct imx_pll14xx_rate_table imx_pll1416x_tbl[] = {
 	PLL_1416X_RATE(1800000000U, 225, 3, 0),
 	PLL_1416X_RATE(1600000000U, 200, 3, 0),
 	PLL_1416X_RATE(1500000000U, 375, 3, 1),
@@ -54,370 +53,370 @@
 	PLL_1416X_RATE(750000000U,  250, 2, 2),
 	PLL_1416X_RATE(700000000U,  350, 3, 2),
 	PLL_1416X_RATE(600000000U,  300, 3, 2),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा imx_pll14xx_rate_table imx_pll1443x_tbl[] = अणु
+static const struct imx_pll14xx_rate_table imx_pll1443x_tbl[] = {
 	PLL_1443X_RATE(1039500000U, 173, 2, 1, 16384),
 	PLL_1443X_RATE(650000000U, 325, 3, 2, 0),
 	PLL_1443X_RATE(594000000U, 198, 2, 2, 0),
 	PLL_1443X_RATE(519750000U, 173, 2, 2, 16384),
 	PLL_1443X_RATE(393216000U, 262, 2, 3, 9437),
 	PLL_1443X_RATE(361267200U, 361, 3, 3, 17511),
-पूर्ण;
+};
 
-काष्ठा imx_pll14xx_clk imx_1443x_pll = अणु
+struct imx_pll14xx_clk imx_1443x_pll = {
 	.type = PLL_1443X,
 	.rate_table = imx_pll1443x_tbl,
 	.rate_count = ARRAY_SIZE(imx_pll1443x_tbl),
-पूर्ण;
+};
 EXPORT_SYMBOL_GPL(imx_1443x_pll);
 
-काष्ठा imx_pll14xx_clk imx_1443x_dram_pll = अणु
+struct imx_pll14xx_clk imx_1443x_dram_pll = {
 	.type = PLL_1443X,
 	.rate_table = imx_pll1443x_tbl,
 	.rate_count = ARRAY_SIZE(imx_pll1443x_tbl),
 	.flags = CLK_GET_RATE_NOCACHE,
-पूर्ण;
+};
 EXPORT_SYMBOL_GPL(imx_1443x_dram_pll);
 
-काष्ठा imx_pll14xx_clk imx_1416x_pll = अणु
+struct imx_pll14xx_clk imx_1416x_pll = {
 	.type = PLL_1416X,
 	.rate_table = imx_pll1416x_tbl,
 	.rate_count = ARRAY_SIZE(imx_pll1416x_tbl),
-पूर्ण;
+};
 EXPORT_SYMBOL_GPL(imx_1416x_pll);
 
-अटल स्थिर काष्ठा imx_pll14xx_rate_table *imx_get_pll_settings(
-		काष्ठा clk_pll14xx *pll, अचिन्हित दीर्घ rate)
-अणु
-	स्थिर काष्ठा imx_pll14xx_rate_table *rate_table = pll->rate_table;
-	पूर्णांक i;
+static const struct imx_pll14xx_rate_table *imx_get_pll_settings(
+		struct clk_pll14xx *pll, unsigned long rate)
+{
+	const struct imx_pll14xx_rate_table *rate_table = pll->rate_table;
+	int i;
 
-	क्रम (i = 0; i < pll->rate_count; i++)
-		अगर (rate == rate_table[i].rate)
-			वापस &rate_table[i];
+	for (i = 0; i < pll->rate_count; i++)
+		if (rate == rate_table[i].rate)
+			return &rate_table[i];
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल दीर्घ clk_pll14xx_round_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
-			अचिन्हित दीर्घ *prate)
-अणु
-	काष्ठा clk_pll14xx *pll = to_clk_pll14xx(hw);
-	स्थिर काष्ठा imx_pll14xx_rate_table *rate_table = pll->rate_table;
-	पूर्णांक i;
+static long clk_pll14xx_round_rate(struct clk_hw *hw, unsigned long rate,
+			unsigned long *prate)
+{
+	struct clk_pll14xx *pll = to_clk_pll14xx(hw);
+	const struct imx_pll14xx_rate_table *rate_table = pll->rate_table;
+	int i;
 
 	/* Assumming rate_table is in descending order */
-	क्रम (i = 0; i < pll->rate_count; i++)
-		अगर (rate >= rate_table[i].rate)
-			वापस rate_table[i].rate;
+	for (i = 0; i < pll->rate_count; i++)
+		if (rate >= rate_table[i].rate)
+			return rate_table[i].rate;
 
-	/* वापस minimum supported value */
-	वापस rate_table[i - 1].rate;
-पूर्ण
+	/* return minimum supported value */
+	return rate_table[i - 1].rate;
+}
 
-अटल अचिन्हित दीर्घ clk_pll1416x_recalc_rate(काष्ठा clk_hw *hw,
-						  अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा clk_pll14xx *pll = to_clk_pll14xx(hw);
-	u32 mभाग, pभाग, sभाग, pll_भाग;
+static unsigned long clk_pll1416x_recalc_rate(struct clk_hw *hw,
+						  unsigned long parent_rate)
+{
+	struct clk_pll14xx *pll = to_clk_pll14xx(hw);
+	u32 mdiv, pdiv, sdiv, pll_div;
 	u64 fvco = parent_rate;
 
-	pll_भाग = पढ़ोl_relaxed(pll->base + 4);
-	mभाग = (pll_भाग & MDIV_MASK) >> MDIV_SHIFT;
-	pभाग = (pll_भाग & PDIV_MASK) >> PDIV_SHIFT;
-	sभाग = (pll_भाग & SDIV_MASK) >> SDIV_SHIFT;
+	pll_div = readl_relaxed(pll->base + 4);
+	mdiv = (pll_div & MDIV_MASK) >> MDIV_SHIFT;
+	pdiv = (pll_div & PDIV_MASK) >> PDIV_SHIFT;
+	sdiv = (pll_div & SDIV_MASK) >> SDIV_SHIFT;
 
-	fvco *= mभाग;
-	करो_भाग(fvco, pभाग << sभाग);
+	fvco *= mdiv;
+	do_div(fvco, pdiv << sdiv);
 
-	वापस fvco;
-पूर्ण
+	return fvco;
+}
 
-अटल अचिन्हित दीर्घ clk_pll1443x_recalc_rate(काष्ठा clk_hw *hw,
-						  अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा clk_pll14xx *pll = to_clk_pll14xx(hw);
-	u32 mभाग, pभाग, sभाग, pll_भाग_ctl0, pll_भाग_ctl1;
-	लघु पूर्णांक kभाग;
+static unsigned long clk_pll1443x_recalc_rate(struct clk_hw *hw,
+						  unsigned long parent_rate)
+{
+	struct clk_pll14xx *pll = to_clk_pll14xx(hw);
+	u32 mdiv, pdiv, sdiv, pll_div_ctl0, pll_div_ctl1;
+	short int kdiv;
 	u64 fvco = parent_rate;
 
-	pll_भाग_ctl0 = पढ़ोl_relaxed(pll->base + 4);
-	pll_भाग_ctl1 = पढ़ोl_relaxed(pll->base + 8);
-	mभाग = (pll_भाग_ctl0 & MDIV_MASK) >> MDIV_SHIFT;
-	pभाग = (pll_भाग_ctl0 & PDIV_MASK) >> PDIV_SHIFT;
-	sभाग = (pll_भाग_ctl0 & SDIV_MASK) >> SDIV_SHIFT;
-	kभाग = pll_भाग_ctl1 & KDIV_MASK;
+	pll_div_ctl0 = readl_relaxed(pll->base + 4);
+	pll_div_ctl1 = readl_relaxed(pll->base + 8);
+	mdiv = (pll_div_ctl0 & MDIV_MASK) >> MDIV_SHIFT;
+	pdiv = (pll_div_ctl0 & PDIV_MASK) >> PDIV_SHIFT;
+	sdiv = (pll_div_ctl0 & SDIV_MASK) >> SDIV_SHIFT;
+	kdiv = pll_div_ctl1 & KDIV_MASK;
 
 	/* fvco = (m * 65536 + k) * Fin / (p * 65536) */
-	fvco *= (mभाग * 65536 + kभाग);
-	pभाग *= 65536;
+	fvco *= (mdiv * 65536 + kdiv);
+	pdiv *= 65536;
 
-	करो_भाग(fvco, pभाग << sभाग);
+	do_div(fvco, pdiv << sdiv);
 
-	वापस fvco;
-पूर्ण
+	return fvco;
+}
 
-अटल अंतरभूत bool clk_pll14xx_mp_change(स्थिर काष्ठा imx_pll14xx_rate_table *rate,
-					  u32 pll_भाग)
-अणु
-	u32 old_mभाग, old_pभाग;
+static inline bool clk_pll14xx_mp_change(const struct imx_pll14xx_rate_table *rate,
+					  u32 pll_div)
+{
+	u32 old_mdiv, old_pdiv;
 
-	old_mभाग = (pll_भाग & MDIV_MASK) >> MDIV_SHIFT;
-	old_pभाग = (pll_भाग & PDIV_MASK) >> PDIV_SHIFT;
+	old_mdiv = (pll_div & MDIV_MASK) >> MDIV_SHIFT;
+	old_pdiv = (pll_div & PDIV_MASK) >> PDIV_SHIFT;
 
-	वापस rate->mभाग != old_mभाग || rate->pभाग != old_pभाग;
-पूर्ण
+	return rate->mdiv != old_mdiv || rate->pdiv != old_pdiv;
+}
 
-अटल पूर्णांक clk_pll14xx_रुको_lock(काष्ठा clk_pll14xx *pll)
-अणु
+static int clk_pll14xx_wait_lock(struct clk_pll14xx *pll)
+{
 	u32 val;
 
-	वापस पढ़ोl_poll_समयout(pll->base, val, val & LOCK_STATUS, 0,
+	return readl_poll_timeout(pll->base, val, val & LOCK_STATUS, 0,
 			LOCK_TIMEOUT_US);
-पूर्ण
+}
 
-अटल पूर्णांक clk_pll1416x_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ drate,
-				 अचिन्हित दीर्घ prate)
-अणु
-	काष्ठा clk_pll14xx *pll = to_clk_pll14xx(hw);
-	स्थिर काष्ठा imx_pll14xx_rate_table *rate;
-	u32 पंचांगp, भाग_val;
-	पूर्णांक ret;
+static int clk_pll1416x_set_rate(struct clk_hw *hw, unsigned long drate,
+				 unsigned long prate)
+{
+	struct clk_pll14xx *pll = to_clk_pll14xx(hw);
+	const struct imx_pll14xx_rate_table *rate;
+	u32 tmp, div_val;
+	int ret;
 
 	rate = imx_get_pll_settings(pll, drate);
-	अगर (!rate) अणु
+	if (!rate) {
 		pr_err("%s: Invalid rate : %lu for pll clk %s\n", __func__,
 		       drate, clk_hw_get_name(hw));
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	पंचांगp = पढ़ोl_relaxed(pll->base + 4);
+	tmp = readl_relaxed(pll->base + 4);
 
-	अगर (!clk_pll14xx_mp_change(rate, पंचांगp)) अणु
-		पंचांगp &= ~(SDIV_MASK) << SDIV_SHIFT;
-		पंचांगp |= rate->sभाग << SDIV_SHIFT;
-		ग_लिखोl_relaxed(पंचांगp, pll->base + 4);
+	if (!clk_pll14xx_mp_change(rate, tmp)) {
+		tmp &= ~(SDIV_MASK) << SDIV_SHIFT;
+		tmp |= rate->sdiv << SDIV_SHIFT;
+		writel_relaxed(tmp, pll->base + 4);
 
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	/* Bypass घड़ी and set lock to pll output lock */
-	पंचांगp = पढ़ोl_relaxed(pll->base);
-	पंचांगp |= LOCK_SEL_MASK;
-	ग_लिखोl_relaxed(पंचांगp, pll->base);
+	/* Bypass clock and set lock to pll output lock */
+	tmp = readl_relaxed(pll->base);
+	tmp |= LOCK_SEL_MASK;
+	writel_relaxed(tmp, pll->base);
 
 	/* Enable RST */
-	पंचांगp &= ~RST_MASK;
-	ग_लिखोl_relaxed(पंचांगp, pll->base);
+	tmp &= ~RST_MASK;
+	writel_relaxed(tmp, pll->base);
 
 	/* Enable BYPASS */
-	पंचांगp |= BYPASS_MASK;
-	ग_लिखोl(पंचांगp, pll->base);
+	tmp |= BYPASS_MASK;
+	writel(tmp, pll->base);
 
-	भाग_val = (rate->mभाग << MDIV_SHIFT) | (rate->pभाग << PDIV_SHIFT) |
-		(rate->sभाग << SDIV_SHIFT);
-	ग_लिखोl_relaxed(भाग_val, pll->base + 0x4);
+	div_val = (rate->mdiv << MDIV_SHIFT) | (rate->pdiv << PDIV_SHIFT) |
+		(rate->sdiv << SDIV_SHIFT);
+	writel_relaxed(div_val, pll->base + 0x4);
 
 	/*
 	 * According to SPEC, t3 - t2 need to be greater than
 	 * 1us and 1/FREF, respectively.
-	 * FREF is FIN / Preभाग, the preभाग is [1, 63], so choose
+	 * FREF is FIN / Prediv, the prediv is [1, 63], so choose
 	 * 3us.
 	 */
 	udelay(3);
 
 	/* Disable RST */
-	पंचांगp |= RST_MASK;
-	ग_लिखोl_relaxed(पंचांगp, pll->base);
+	tmp |= RST_MASK;
+	writel_relaxed(tmp, pll->base);
 
 	/* Wait Lock */
-	ret = clk_pll14xx_रुको_lock(pll);
-	अगर (ret)
-		वापस ret;
+	ret = clk_pll14xx_wait_lock(pll);
+	if (ret)
+		return ret;
 
 	/* Bypass */
-	पंचांगp &= ~BYPASS_MASK;
-	ग_लिखोl_relaxed(पंचांगp, pll->base);
+	tmp &= ~BYPASS_MASK;
+	writel_relaxed(tmp, pll->base);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक clk_pll1443x_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ drate,
-				 अचिन्हित दीर्घ prate)
-अणु
-	काष्ठा clk_pll14xx *pll = to_clk_pll14xx(hw);
-	स्थिर काष्ठा imx_pll14xx_rate_table *rate;
-	u32 पंचांगp, भाग_val;
-	पूर्णांक ret;
+static int clk_pll1443x_set_rate(struct clk_hw *hw, unsigned long drate,
+				 unsigned long prate)
+{
+	struct clk_pll14xx *pll = to_clk_pll14xx(hw);
+	const struct imx_pll14xx_rate_table *rate;
+	u32 tmp, div_val;
+	int ret;
 
 	rate = imx_get_pll_settings(pll, drate);
-	अगर (!rate) अणु
+	if (!rate) {
 		pr_err("%s: Invalid rate : %lu for pll clk %s\n", __func__,
 			drate, clk_hw_get_name(hw));
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	पंचांगp = पढ़ोl_relaxed(pll->base + 4);
+	tmp = readl_relaxed(pll->base + 4);
 
-	अगर (!clk_pll14xx_mp_change(rate, पंचांगp)) अणु
-		पंचांगp &= ~(SDIV_MASK) << SDIV_SHIFT;
-		पंचांगp |= rate->sभाग << SDIV_SHIFT;
-		ग_लिखोl_relaxed(पंचांगp, pll->base + 4);
+	if (!clk_pll14xx_mp_change(rate, tmp)) {
+		tmp &= ~(SDIV_MASK) << SDIV_SHIFT;
+		tmp |= rate->sdiv << SDIV_SHIFT;
+		writel_relaxed(tmp, pll->base + 4);
 
-		पंचांगp = rate->kभाग << KDIV_SHIFT;
-		ग_लिखोl_relaxed(पंचांगp, pll->base + 8);
+		tmp = rate->kdiv << KDIV_SHIFT;
+		writel_relaxed(tmp, pll->base + 8);
 
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	/* Enable RST */
-	पंचांगp = पढ़ोl_relaxed(pll->base);
-	पंचांगp &= ~RST_MASK;
-	ग_लिखोl_relaxed(पंचांगp, pll->base);
+	tmp = readl_relaxed(pll->base);
+	tmp &= ~RST_MASK;
+	writel_relaxed(tmp, pll->base);
 
 	/* Enable BYPASS */
-	पंचांगp |= BYPASS_MASK;
-	ग_लिखोl_relaxed(पंचांगp, pll->base);
+	tmp |= BYPASS_MASK;
+	writel_relaxed(tmp, pll->base);
 
-	भाग_val = (rate->mभाग << MDIV_SHIFT) | (rate->pभाग << PDIV_SHIFT) |
-		(rate->sभाग << SDIV_SHIFT);
-	ग_लिखोl_relaxed(भाग_val, pll->base + 0x4);
-	ग_लिखोl_relaxed(rate->kभाग << KDIV_SHIFT, pll->base + 0x8);
+	div_val = (rate->mdiv << MDIV_SHIFT) | (rate->pdiv << PDIV_SHIFT) |
+		(rate->sdiv << SDIV_SHIFT);
+	writel_relaxed(div_val, pll->base + 0x4);
+	writel_relaxed(rate->kdiv << KDIV_SHIFT, pll->base + 0x8);
 
 	/*
 	 * According to SPEC, t3 - t2 need to be greater than
 	 * 1us and 1/FREF, respectively.
-	 * FREF is FIN / Preभाग, the preभाग is [1, 63], so choose
+	 * FREF is FIN / Prediv, the prediv is [1, 63], so choose
 	 * 3us.
 	 */
 	udelay(3);
 
 	/* Disable RST */
-	पंचांगp |= RST_MASK;
-	ग_लिखोl_relaxed(पंचांगp, pll->base);
+	tmp |= RST_MASK;
+	writel_relaxed(tmp, pll->base);
 
 	/* Wait Lock*/
-	ret = clk_pll14xx_रुको_lock(pll);
-	अगर (ret)
-		वापस ret;
+	ret = clk_pll14xx_wait_lock(pll);
+	if (ret)
+		return ret;
 
 	/* Bypass */
-	पंचांगp &= ~BYPASS_MASK;
-	ग_लिखोl_relaxed(पंचांगp, pll->base);
+	tmp &= ~BYPASS_MASK;
+	writel_relaxed(tmp, pll->base);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक clk_pll14xx_prepare(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा clk_pll14xx *pll = to_clk_pll14xx(hw);
+static int clk_pll14xx_prepare(struct clk_hw *hw)
+{
+	struct clk_pll14xx *pll = to_clk_pll14xx(hw);
 	u32 val;
-	पूर्णांक ret;
+	int ret;
 
 	/*
 	 * RESETB = 1 from 0, PLL starts its normal
-	 * operation after lock समय
+	 * operation after lock time
 	 */
-	val = पढ़ोl_relaxed(pll->base + GNRL_CTL);
-	अगर (val & RST_MASK)
-		वापस 0;
+	val = readl_relaxed(pll->base + GNRL_CTL);
+	if (val & RST_MASK)
+		return 0;
 	val |= BYPASS_MASK;
-	ग_लिखोl_relaxed(val, pll->base + GNRL_CTL);
+	writel_relaxed(val, pll->base + GNRL_CTL);
 	val |= RST_MASK;
-	ग_लिखोl_relaxed(val, pll->base + GNRL_CTL);
+	writel_relaxed(val, pll->base + GNRL_CTL);
 
-	ret = clk_pll14xx_रुको_lock(pll);
-	अगर (ret)
-		वापस ret;
+	ret = clk_pll14xx_wait_lock(pll);
+	if (ret)
+		return ret;
 
 	val &= ~BYPASS_MASK;
-	ग_लिखोl_relaxed(val, pll->base + GNRL_CTL);
+	writel_relaxed(val, pll->base + GNRL_CTL);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक clk_pll14xx_is_prepared(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा clk_pll14xx *pll = to_clk_pll14xx(hw);
+static int clk_pll14xx_is_prepared(struct clk_hw *hw)
+{
+	struct clk_pll14xx *pll = to_clk_pll14xx(hw);
 	u32 val;
 
-	val = पढ़ोl_relaxed(pll->base + GNRL_CTL);
+	val = readl_relaxed(pll->base + GNRL_CTL);
 
-	वापस (val & RST_MASK) ? 1 : 0;
-पूर्ण
+	return (val & RST_MASK) ? 1 : 0;
+}
 
-अटल व्योम clk_pll14xx_unprepare(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा clk_pll14xx *pll = to_clk_pll14xx(hw);
+static void clk_pll14xx_unprepare(struct clk_hw *hw)
+{
+	struct clk_pll14xx *pll = to_clk_pll14xx(hw);
 	u32 val;
 
 	/*
-	 * Set RST to 0, घातer करोwn mode is enabled and
+	 * Set RST to 0, power down mode is enabled and
 	 * every digital block is reset
 	 */
-	val = पढ़ोl_relaxed(pll->base + GNRL_CTL);
+	val = readl_relaxed(pll->base + GNRL_CTL);
 	val &= ~RST_MASK;
-	ग_लिखोl_relaxed(val, pll->base + GNRL_CTL);
-पूर्ण
+	writel_relaxed(val, pll->base + GNRL_CTL);
+}
 
-अटल स्थिर काष्ठा clk_ops clk_pll1416x_ops = अणु
+static const struct clk_ops clk_pll1416x_ops = {
 	.prepare	= clk_pll14xx_prepare,
 	.unprepare	= clk_pll14xx_unprepare,
 	.is_prepared	= clk_pll14xx_is_prepared,
 	.recalc_rate	= clk_pll1416x_recalc_rate,
 	.round_rate	= clk_pll14xx_round_rate,
 	.set_rate	= clk_pll1416x_set_rate,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा clk_ops clk_pll1416x_min_ops = अणु
+static const struct clk_ops clk_pll1416x_min_ops = {
 	.recalc_rate	= clk_pll1416x_recalc_rate,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा clk_ops clk_pll1443x_ops = अणु
+static const struct clk_ops clk_pll1443x_ops = {
 	.prepare	= clk_pll14xx_prepare,
 	.unprepare	= clk_pll14xx_unprepare,
 	.is_prepared	= clk_pll14xx_is_prepared,
 	.recalc_rate	= clk_pll1443x_recalc_rate,
 	.round_rate	= clk_pll14xx_round_rate,
 	.set_rate	= clk_pll1443x_set_rate,
-पूर्ण;
+};
 
-काष्ठा clk_hw *imx_dev_clk_hw_pll14xx(काष्ठा device *dev, स्थिर अक्षर *name,
-				स्थिर अक्षर *parent_name, व्योम __iomem *base,
-				स्थिर काष्ठा imx_pll14xx_clk *pll_clk)
-अणु
-	काष्ठा clk_pll14xx *pll;
-	काष्ठा clk_hw *hw;
-	काष्ठा clk_init_data init;
-	पूर्णांक ret;
+struct clk_hw *imx_dev_clk_hw_pll14xx(struct device *dev, const char *name,
+				const char *parent_name, void __iomem *base,
+				const struct imx_pll14xx_clk *pll_clk)
+{
+	struct clk_pll14xx *pll;
+	struct clk_hw *hw;
+	struct clk_init_data init;
+	int ret;
 	u32 val;
 
-	pll = kzalloc(माप(*pll), GFP_KERNEL);
-	अगर (!pll)
-		वापस ERR_PTR(-ENOMEM);
+	pll = kzalloc(sizeof(*pll), GFP_KERNEL);
+	if (!pll)
+		return ERR_PTR(-ENOMEM);
 
 	init.name = name;
 	init.flags = pll_clk->flags;
 	init.parent_names = &parent_name;
 	init.num_parents = 1;
 
-	चयन (pll_clk->type) अणु
-	हाल PLL_1416X:
-		अगर (!pll_clk->rate_table)
+	switch (pll_clk->type) {
+	case PLL_1416X:
+		if (!pll_clk->rate_table)
 			init.ops = &clk_pll1416x_min_ops;
-		अन्यथा
+		else
 			init.ops = &clk_pll1416x_ops;
-		अवरोध;
-	हाल PLL_1443X:
+		break;
+	case PLL_1443X:
 		init.ops = &clk_pll1443x_ops;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		pr_err("%s: Unknown pll type for pll clk %s\n",
 		       __func__, name);
-		kमुक्त(pll);
-		वापस ERR_PTR(-EINVAL);
-	पूर्ण
+		kfree(pll);
+		return ERR_PTR(-EINVAL);
+	}
 
 	pll->base = base;
 	pll->hw.init = &init;
@@ -425,20 +424,20 @@ EXPORT_SYMBOL_GPL(imx_1416x_pll);
 	pll->rate_table = pll_clk->rate_table;
 	pll->rate_count = pll_clk->rate_count;
 
-	val = पढ़ोl_relaxed(pll->base + GNRL_CTL);
+	val = readl_relaxed(pll->base + GNRL_CTL);
 	val &= ~BYPASS_MASK;
-	ग_लिखोl_relaxed(val, pll->base + GNRL_CTL);
+	writel_relaxed(val, pll->base + GNRL_CTL);
 
 	hw = &pll->hw;
 
-	ret = clk_hw_रेजिस्टर(dev, hw);
-	अगर (ret) अणु
+	ret = clk_hw_register(dev, hw);
+	if (ret) {
 		pr_err("%s: failed to register pll %s %d\n",
 			__func__, name, ret);
-		kमुक्त(pll);
-		वापस ERR_PTR(ret);
-	पूर्ण
+		kfree(pll);
+		return ERR_PTR(ret);
+	}
 
-	वापस hw;
-पूर्ण
+	return hw;
+}
 EXPORT_SYMBOL_GPL(imx_dev_clk_hw_pll14xx);

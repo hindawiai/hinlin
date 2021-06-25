@@ -1,397 +1,396 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  *  Atheros AR724X PCI host controller driver
  *
- *  Copyright (C) 2011 Renथऊ Bollकरोrf <xsecute@googlemail.com>
- *  Copyright (C) 2009-2011 Gabor Juhos <juhosg@खोलोwrt.org>
+ *  Copyright (C) 2011 René Bolldorf <xsecute@googlemail.com>
+ *  Copyright (C) 2009-2011 Gabor Juhos <juhosg@openwrt.org>
  */
 
-#समावेश <linux/irq.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/init.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <यंत्र/mach-ath79/ath79.h>
-#समावेश <यंत्र/mach-ath79/ar71xx_regs.h>
+#include <linux/irq.h>
+#include <linux/pci.h>
+#include <linux/init.h>
+#include <linux/delay.h>
+#include <linux/platform_device.h>
+#include <asm/mach-ath79/ath79.h>
+#include <asm/mach-ath79/ar71xx_regs.h>
 
-#घोषणा AR724X_PCI_REG_APP		0x00
-#घोषणा AR724X_PCI_REG_RESET		0x18
-#घोषणा AR724X_PCI_REG_INT_STATUS	0x4c
-#घोषणा AR724X_PCI_REG_INT_MASK		0x50
+#define AR724X_PCI_REG_APP		0x00
+#define AR724X_PCI_REG_RESET		0x18
+#define AR724X_PCI_REG_INT_STATUS	0x4c
+#define AR724X_PCI_REG_INT_MASK		0x50
 
-#घोषणा AR724X_PCI_APP_LTSSM_ENABLE	BIT(0)
+#define AR724X_PCI_APP_LTSSM_ENABLE	BIT(0)
 
-#घोषणा AR724X_PCI_RESET_LINK_UP	BIT(0)
+#define AR724X_PCI_RESET_LINK_UP	BIT(0)
 
-#घोषणा AR724X_PCI_INT_DEV0		BIT(14)
+#define AR724X_PCI_INT_DEV0		BIT(14)
 
-#घोषणा AR724X_PCI_IRQ_COUNT		1
+#define AR724X_PCI_IRQ_COUNT		1
 
-#घोषणा AR7240_BAR0_WAR_VALUE	0xffff
+#define AR7240_BAR0_WAR_VALUE	0xffff
 
-#घोषणा AR724X_PCI_CMD_INIT	(PCI_COMMAND_MEMORY |		\
+#define AR724X_PCI_CMD_INIT	(PCI_COMMAND_MEMORY |		\
 				 PCI_COMMAND_MASTER |		\
 				 PCI_COMMAND_INVALIDATE |	\
 				 PCI_COMMAND_PARITY |		\
 				 PCI_COMMAND_SERR |		\
 				 PCI_COMMAND_FAST_BACK)
 
-काष्ठा ar724x_pci_controller अणु
-	व्योम __iomem *devcfg_base;
-	व्योम __iomem *ctrl_base;
-	व्योम __iomem *crp_base;
+struct ar724x_pci_controller {
+	void __iomem *devcfg_base;
+	void __iomem *ctrl_base;
+	void __iomem *crp_base;
 
-	पूर्णांक irq;
-	पूर्णांक irq_base;
+	int irq;
+	int irq_base;
 
 	bool link_up;
 	bool bar0_is_cached;
 	u32  bar0_value;
 
-	काष्ठा pci_controller pci_controller;
-	काष्ठा resource io_res;
-	काष्ठा resource mem_res;
-पूर्ण;
+	struct pci_controller pci_controller;
+	struct resource io_res;
+	struct resource mem_res;
+};
 
-अटल अंतरभूत bool ar724x_pci_check_link(काष्ठा ar724x_pci_controller *apc)
-अणु
+static inline bool ar724x_pci_check_link(struct ar724x_pci_controller *apc)
+{
 	u32 reset;
 
-	reset = __raw_पढ़ोl(apc->ctrl_base + AR724X_PCI_REG_RESET);
-	वापस reset & AR724X_PCI_RESET_LINK_UP;
-पूर्ण
+	reset = __raw_readl(apc->ctrl_base + AR724X_PCI_REG_RESET);
+	return reset & AR724X_PCI_RESET_LINK_UP;
+}
 
-अटल अंतरभूत काष्ठा ar724x_pci_controller *
-pci_bus_to_ar724x_controller(काष्ठा pci_bus *bus)
-अणु
-	काष्ठा pci_controller *hose;
+static inline struct ar724x_pci_controller *
+pci_bus_to_ar724x_controller(struct pci_bus *bus)
+{
+	struct pci_controller *hose;
 
-	hose = (काष्ठा pci_controller *) bus->sysdata;
-	वापस container_of(hose, काष्ठा ar724x_pci_controller, pci_controller);
-पूर्ण
+	hose = (struct pci_controller *) bus->sysdata;
+	return container_of(hose, struct ar724x_pci_controller, pci_controller);
+}
 
-अटल पूर्णांक ar724x_pci_local_ग_लिखो(काष्ठा ar724x_pci_controller *apc,
-				  पूर्णांक where, पूर्णांक size, u32 value)
-अणु
-	व्योम __iomem *base;
+static int ar724x_pci_local_write(struct ar724x_pci_controller *apc,
+				  int where, int size, u32 value)
+{
+	void __iomem *base;
 	u32 data;
-	पूर्णांक s;
+	int s;
 
 	WARN_ON(where & (size - 1));
 
-	अगर (!apc->link_up)
-		वापस PCIBIOS_DEVICE_NOT_FOUND;
+	if (!apc->link_up)
+		return PCIBIOS_DEVICE_NOT_FOUND;
 
 	base = apc->crp_base;
-	data = __raw_पढ़ोl(base + (where & ~3));
+	data = __raw_readl(base + (where & ~3));
 
-	चयन (size) अणु
-	हाल 1:
+	switch (size) {
+	case 1:
 		s = ((where & 3) * 8);
 		data &= ~(0xff << s);
 		data |= ((value & 0xff) << s);
-		अवरोध;
-	हाल 2:
+		break;
+	case 2:
 		s = ((where & 2) * 8);
 		data &= ~(0xffff << s);
 		data |= ((value & 0xffff) << s);
-		अवरोध;
-	हाल 4:
+		break;
+	case 4:
 		data = value;
-		अवरोध;
-	शेष:
-		वापस PCIBIOS_BAD_REGISTER_NUMBER;
-	पूर्ण
+		break;
+	default:
+		return PCIBIOS_BAD_REGISTER_NUMBER;
+	}
 
-	__raw_ग_लिखोl(data, base + (where & ~3));
-	/* flush ग_लिखो */
-	__raw_पढ़ोl(base + (where & ~3));
+	__raw_writel(data, base + (where & ~3));
+	/* flush write */
+	__raw_readl(base + (where & ~3));
 
-	वापस PCIBIOS_SUCCESSFUL;
-पूर्ण
+	return PCIBIOS_SUCCESSFUL;
+}
 
-अटल पूर्णांक ar724x_pci_पढ़ो(काष्ठा pci_bus *bus, अचिन्हित पूर्णांक devfn, पूर्णांक where,
-			    पूर्णांक size, uपूर्णांक32_t *value)
-अणु
-	काष्ठा ar724x_pci_controller *apc;
-	व्योम __iomem *base;
+static int ar724x_pci_read(struct pci_bus *bus, unsigned int devfn, int where,
+			    int size, uint32_t *value)
+{
+	struct ar724x_pci_controller *apc;
+	void __iomem *base;
 	u32 data;
 
 	apc = pci_bus_to_ar724x_controller(bus);
-	अगर (!apc->link_up)
-		वापस PCIBIOS_DEVICE_NOT_FOUND;
+	if (!apc->link_up)
+		return PCIBIOS_DEVICE_NOT_FOUND;
 
-	अगर (devfn)
-		वापस PCIBIOS_DEVICE_NOT_FOUND;
+	if (devfn)
+		return PCIBIOS_DEVICE_NOT_FOUND;
 
 	base = apc->devcfg_base;
-	data = __raw_पढ़ोl(base + (where & ~3));
+	data = __raw_readl(base + (where & ~3));
 
-	चयन (size) अणु
-	हाल 1:
-		अगर (where & 1)
+	switch (size) {
+	case 1:
+		if (where & 1)
 			data >>= 8;
-		अगर (where & 2)
+		if (where & 2)
 			data >>= 16;
 		data &= 0xff;
-		अवरोध;
-	हाल 2:
-		अगर (where & 2)
+		break;
+	case 2:
+		if (where & 2)
 			data >>= 16;
 		data &= 0xffff;
-		अवरोध;
-	हाल 4:
-		अवरोध;
-	शेष:
-		वापस PCIBIOS_BAD_REGISTER_NUMBER;
-	पूर्ण
+		break;
+	case 4:
+		break;
+	default:
+		return PCIBIOS_BAD_REGISTER_NUMBER;
+	}
 
-	अगर (where == PCI_BASE_ADDRESS_0 && size == 4 &&
-	    apc->bar0_is_cached) अणु
+	if (where == PCI_BASE_ADDRESS_0 && size == 4 &&
+	    apc->bar0_is_cached) {
 		/* use the cached value */
 		*value = apc->bar0_value;
-	पूर्ण अन्यथा अणु
+	} else {
 		*value = data;
-	पूर्ण
+	}
 
-	वापस PCIBIOS_SUCCESSFUL;
-पूर्ण
+	return PCIBIOS_SUCCESSFUL;
+}
 
-अटल पूर्णांक ar724x_pci_ग_लिखो(काष्ठा pci_bus *bus, अचिन्हित पूर्णांक devfn, पूर्णांक where,
-			     पूर्णांक size, uपूर्णांक32_t value)
-अणु
-	काष्ठा ar724x_pci_controller *apc;
-	व्योम __iomem *base;
+static int ar724x_pci_write(struct pci_bus *bus, unsigned int devfn, int where,
+			     int size, uint32_t value)
+{
+	struct ar724x_pci_controller *apc;
+	void __iomem *base;
 	u32 data;
-	पूर्णांक s;
+	int s;
 
 	apc = pci_bus_to_ar724x_controller(bus);
-	अगर (!apc->link_up)
-		वापस PCIBIOS_DEVICE_NOT_FOUND;
+	if (!apc->link_up)
+		return PCIBIOS_DEVICE_NOT_FOUND;
 
-	अगर (devfn)
-		वापस PCIBIOS_DEVICE_NOT_FOUND;
+	if (devfn)
+		return PCIBIOS_DEVICE_NOT_FOUND;
 
-	अगर (soc_is_ar7240() && where == PCI_BASE_ADDRESS_0 && size == 4) अणु
-		अगर (value != 0xffffffff) अणु
+	if (soc_is_ar7240() && where == PCI_BASE_ADDRESS_0 && size == 4) {
+		if (value != 0xffffffff) {
 			/*
-			 * WAR क्रम a hw issue. If the BAR0 रेजिस्टर of the
+			 * WAR for a hw issue. If the BAR0 register of the
 			 * device is set to the proper base address, the
 			 * memory space of the device is not accessible.
 			 *
-			 * Cache the पूर्णांकended value so it can be पढ़ो back,
-			 * and ग_लिखो a SoC specअगरic स्थिरant value to the
-			 * BAR0 रेजिस्टर in order to make the device memory
+			 * Cache the intended value so it can be read back,
+			 * and write a SoC specific constant value to the
+			 * BAR0 register in order to make the device memory
 			 * accessible.
 			 */
 			apc->bar0_is_cached = true;
 			apc->bar0_value = value;
 
 			value = AR7240_BAR0_WAR_VALUE;
-		पूर्ण अन्यथा अणु
+		} else {
 			apc->bar0_is_cached = false;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	base = apc->devcfg_base;
-	data = __raw_पढ़ोl(base + (where & ~3));
+	data = __raw_readl(base + (where & ~3));
 
-	चयन (size) अणु
-	हाल 1:
+	switch (size) {
+	case 1:
 		s = ((where & 3) * 8);
 		data &= ~(0xff << s);
 		data |= ((value & 0xff) << s);
-		अवरोध;
-	हाल 2:
+		break;
+	case 2:
 		s = ((where & 2) * 8);
 		data &= ~(0xffff << s);
 		data |= ((value & 0xffff) << s);
-		अवरोध;
-	हाल 4:
+		break;
+	case 4:
 		data = value;
-		अवरोध;
-	शेष:
-		वापस PCIBIOS_BAD_REGISTER_NUMBER;
-	पूर्ण
+		break;
+	default:
+		return PCIBIOS_BAD_REGISTER_NUMBER;
+	}
 
-	__raw_ग_लिखोl(data, base + (where & ~3));
-	/* flush ग_लिखो */
-	__raw_पढ़ोl(base + (where & ~3));
+	__raw_writel(data, base + (where & ~3));
+	/* flush write */
+	__raw_readl(base + (where & ~3));
 
-	वापस PCIBIOS_SUCCESSFUL;
-पूर्ण
+	return PCIBIOS_SUCCESSFUL;
+}
 
-अटल काष्ठा pci_ops ar724x_pci_ops = अणु
-	.पढ़ो	= ar724x_pci_पढ़ो,
-	.ग_लिखो	= ar724x_pci_ग_लिखो,
-पूर्ण;
+static struct pci_ops ar724x_pci_ops = {
+	.read	= ar724x_pci_read,
+	.write	= ar724x_pci_write,
+};
 
-अटल व्योम ar724x_pci_irq_handler(काष्ठा irq_desc *desc)
-अणु
-	काष्ठा ar724x_pci_controller *apc;
-	व्योम __iomem *base;
+static void ar724x_pci_irq_handler(struct irq_desc *desc)
+{
+	struct ar724x_pci_controller *apc;
+	void __iomem *base;
 	u32 pending;
 
 	apc = irq_desc_get_handler_data(desc);
 	base = apc->ctrl_base;
 
-	pending = __raw_पढ़ोl(base + AR724X_PCI_REG_INT_STATUS) &
-		  __raw_पढ़ोl(base + AR724X_PCI_REG_INT_MASK);
+	pending = __raw_readl(base + AR724X_PCI_REG_INT_STATUS) &
+		  __raw_readl(base + AR724X_PCI_REG_INT_MASK);
 
-	अगर (pending & AR724X_PCI_INT_DEV0)
+	if (pending & AR724X_PCI_INT_DEV0)
 		generic_handle_irq(apc->irq_base + 0);
 
-	अन्यथा
-		spurious_पूर्णांकerrupt();
-पूर्ण
+	else
+		spurious_interrupt();
+}
 
-अटल व्योम ar724x_pci_irq_unmask(काष्ठा irq_data *d)
-अणु
-	काष्ठा ar724x_pci_controller *apc;
-	व्योम __iomem *base;
-	पूर्णांक offset;
+static void ar724x_pci_irq_unmask(struct irq_data *d)
+{
+	struct ar724x_pci_controller *apc;
+	void __iomem *base;
+	int offset;
 	u32 t;
 
 	apc = irq_data_get_irq_chip_data(d);
 	base = apc->ctrl_base;
 	offset = apc->irq_base - d->irq;
 
-	चयन (offset) अणु
-	हाल 0:
-		t = __raw_पढ़ोl(base + AR724X_PCI_REG_INT_MASK);
-		__raw_ग_लिखोl(t | AR724X_PCI_INT_DEV0,
+	switch (offset) {
+	case 0:
+		t = __raw_readl(base + AR724X_PCI_REG_INT_MASK);
+		__raw_writel(t | AR724X_PCI_INT_DEV0,
 			     base + AR724X_PCI_REG_INT_MASK);
-		/* flush ग_लिखो */
-		__raw_पढ़ोl(base + AR724X_PCI_REG_INT_MASK);
-	पूर्ण
-पूर्ण
+		/* flush write */
+		__raw_readl(base + AR724X_PCI_REG_INT_MASK);
+	}
+}
 
-अटल व्योम ar724x_pci_irq_mask(काष्ठा irq_data *d)
-अणु
-	काष्ठा ar724x_pci_controller *apc;
-	व्योम __iomem *base;
-	पूर्णांक offset;
+static void ar724x_pci_irq_mask(struct irq_data *d)
+{
+	struct ar724x_pci_controller *apc;
+	void __iomem *base;
+	int offset;
 	u32 t;
 
 	apc = irq_data_get_irq_chip_data(d);
 	base = apc->ctrl_base;
 	offset = apc->irq_base - d->irq;
 
-	चयन (offset) अणु
-	हाल 0:
-		t = __raw_पढ़ोl(base + AR724X_PCI_REG_INT_MASK);
-		__raw_ग_लिखोl(t & ~AR724X_PCI_INT_DEV0,
+	switch (offset) {
+	case 0:
+		t = __raw_readl(base + AR724X_PCI_REG_INT_MASK);
+		__raw_writel(t & ~AR724X_PCI_INT_DEV0,
 			     base + AR724X_PCI_REG_INT_MASK);
 
-		/* flush ग_लिखो */
-		__raw_पढ़ोl(base + AR724X_PCI_REG_INT_MASK);
+		/* flush write */
+		__raw_readl(base + AR724X_PCI_REG_INT_MASK);
 
-		t = __raw_पढ़ोl(base + AR724X_PCI_REG_INT_STATUS);
-		__raw_ग_लिखोl(t | AR724X_PCI_INT_DEV0,
+		t = __raw_readl(base + AR724X_PCI_REG_INT_STATUS);
+		__raw_writel(t | AR724X_PCI_INT_DEV0,
 			     base + AR724X_PCI_REG_INT_STATUS);
 
-		/* flush ग_लिखो */
-		__raw_पढ़ोl(base + AR724X_PCI_REG_INT_STATUS);
-	पूर्ण
-पूर्ण
+		/* flush write */
+		__raw_readl(base + AR724X_PCI_REG_INT_STATUS);
+	}
+}
 
-अटल काष्ठा irq_chip ar724x_pci_irq_chip = अणु
+static struct irq_chip ar724x_pci_irq_chip = {
 	.name		= "AR724X PCI ",
 	.irq_mask	= ar724x_pci_irq_mask,
 	.irq_unmask	= ar724x_pci_irq_unmask,
 	.irq_mask_ack	= ar724x_pci_irq_mask,
-पूर्ण;
+};
 
-अटल व्योम ar724x_pci_irq_init(काष्ठा ar724x_pci_controller *apc,
-				पूर्णांक id)
-अणु
-	व्योम __iomem *base;
-	पूर्णांक i;
+static void ar724x_pci_irq_init(struct ar724x_pci_controller *apc,
+				int id)
+{
+	void __iomem *base;
+	int i;
 
 	base = apc->ctrl_base;
 
-	__raw_ग_लिखोl(0, base + AR724X_PCI_REG_INT_MASK);
-	__raw_ग_लिखोl(0, base + AR724X_PCI_REG_INT_STATUS);
+	__raw_writel(0, base + AR724X_PCI_REG_INT_MASK);
+	__raw_writel(0, base + AR724X_PCI_REG_INT_STATUS);
 
 	apc->irq_base = ATH79_PCI_IRQ_BASE + (id * AR724X_PCI_IRQ_COUNT);
 
-	क्रम (i = apc->irq_base;
-	     i < apc->irq_base + AR724X_PCI_IRQ_COUNT; i++) अणु
+	for (i = apc->irq_base;
+	     i < apc->irq_base + AR724X_PCI_IRQ_COUNT; i++) {
 		irq_set_chip_and_handler(i, &ar724x_pci_irq_chip,
 					 handle_level_irq);
 		irq_set_chip_data(i, apc);
-	पूर्ण
+	}
 
 	irq_set_chained_handler_and_data(apc->irq, ar724x_pci_irq_handler,
 					 apc);
-पूर्ण
+}
 
-अटल व्योम ar724x_pci_hw_init(काष्ठा ar724x_pci_controller *apc)
-अणु
+static void ar724x_pci_hw_init(struct ar724x_pci_controller *apc)
+{
 	u32 ppl, app;
-	पूर्णांक रुको = 0;
+	int wait = 0;
 
-	/* deनिश्चित PCIe host controller and PCIe PHY reset */
+	/* deassert PCIe host controller and PCIe PHY reset */
 	ath79_device_reset_clear(AR724X_RESET_PCIE);
 	ath79_device_reset_clear(AR724X_RESET_PCIE_PHY);
 
-	/* हटाओ the reset of the PCIE PLL */
+	/* remove the reset of the PCIE PLL */
 	ppl = ath79_pll_rr(AR724X_PLL_REG_PCIE_CONFIG);
 	ppl &= ~AR724X_PLL_REG_PCIE_CONFIG_PPL_RESET;
 	ath79_pll_wr(AR724X_PLL_REG_PCIE_CONFIG, ppl);
 
-	/* deनिश्चित bypass क्रम the PCIE PLL */
+	/* deassert bypass for the PCIE PLL */
 	ppl = ath79_pll_rr(AR724X_PLL_REG_PCIE_CONFIG);
 	ppl &= ~AR724X_PLL_REG_PCIE_CONFIG_PPL_BYPASS;
 	ath79_pll_wr(AR724X_PLL_REG_PCIE_CONFIG, ppl);
 
-	/* set PCIE Application Control to पढ़ोy */
-	app = __raw_पढ़ोl(apc->ctrl_base + AR724X_PCI_REG_APP);
+	/* set PCIE Application Control to ready */
+	app = __raw_readl(apc->ctrl_base + AR724X_PCI_REG_APP);
 	app |= AR724X_PCI_APP_LTSSM_ENABLE;
-	__raw_ग_लिखोl(app, apc->ctrl_base + AR724X_PCI_REG_APP);
+	__raw_writel(app, apc->ctrl_base + AR724X_PCI_REG_APP);
 
-	/* रुको up to 100ms क्रम PHY link up */
-	करो अणु
+	/* wait up to 100ms for PHY link up */
+	do {
 		mdelay(10);
-		रुको++;
-	पूर्ण जबतक (रुको < 10 && !ar724x_pci_check_link(apc));
-पूर्ण
+		wait++;
+	} while (wait < 10 && !ar724x_pci_check_link(apc));
+}
 
-अटल पूर्णांक ar724x_pci_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा ar724x_pci_controller *apc;
-	काष्ठा resource *res;
-	पूर्णांक id;
+static int ar724x_pci_probe(struct platform_device *pdev)
+{
+	struct ar724x_pci_controller *apc;
+	struct resource *res;
+	int id;
 
 	id = pdev->id;
-	अगर (id == -1)
+	if (id == -1)
 		id = 0;
 
-	apc = devm_kzalloc(&pdev->dev, माप(काष्ठा ar724x_pci_controller),
+	apc = devm_kzalloc(&pdev->dev, sizeof(struct ar724x_pci_controller),
 			    GFP_KERNEL);
-	अगर (!apc)
-		वापस -ENOMEM;
+	if (!apc)
+		return -ENOMEM;
 
-	apc->ctrl_base = devm_platक्रमm_ioremap_resource_byname(pdev, "ctrl_base");
-	अगर (IS_ERR(apc->ctrl_base))
-		वापस PTR_ERR(apc->ctrl_base);
+	apc->ctrl_base = devm_platform_ioremap_resource_byname(pdev, "ctrl_base");
+	if (IS_ERR(apc->ctrl_base))
+		return PTR_ERR(apc->ctrl_base);
 
-	apc->devcfg_base = devm_platक्रमm_ioremap_resource_byname(pdev, "cfg_base");
-	अगर (IS_ERR(apc->devcfg_base))
-		वापस PTR_ERR(apc->devcfg_base);
+	apc->devcfg_base = devm_platform_ioremap_resource_byname(pdev, "cfg_base");
+	if (IS_ERR(apc->devcfg_base))
+		return PTR_ERR(apc->devcfg_base);
 
-	apc->crp_base = devm_platक्रमm_ioremap_resource_byname(pdev, "crp_base");
-	अगर (IS_ERR(apc->crp_base))
-		वापस PTR_ERR(apc->crp_base);
+	apc->crp_base = devm_platform_ioremap_resource_byname(pdev, "crp_base");
+	if (IS_ERR(apc->crp_base))
+		return PTR_ERR(apc->crp_base);
 
-	apc->irq = platक्रमm_get_irq(pdev, 0);
-	अगर (apc->irq < 0)
-		वापस -EINVAL;
+	apc->irq = platform_get_irq(pdev, 0);
+	if (apc->irq < 0)
+		return -EINVAL;
 
-	res = platक्रमm_get_resource_byname(pdev, IORESOURCE_IO, "io_base");
-	अगर (!res)
-		वापस -EINVAL;
+	res = platform_get_resource_byname(pdev, IORESOURCE_IO, "io_base");
+	if (!res)
+		return -EINVAL;
 
 	apc->io_res.parent = res;
 	apc->io_res.name = "PCI IO space";
@@ -399,9 +398,9 @@ pci_bus_to_ar724x_controller(काष्ठा pci_bus *bus)
 	apc->io_res.end = res->end;
 	apc->io_res.flags = IORESOURCE_IO;
 
-	res = platक्रमm_get_resource_byname(pdev, IORESOURCE_MEM, "mem_base");
-	अगर (!res)
-		वापस -EINVAL;
+	res = platform_get_resource_byname(pdev, IORESOURCE_MEM, "mem_base");
+	if (!res)
+		return -EINVAL;
 
 	apc->mem_res.parent = res;
 	apc->mem_res.name = "PCI memory space";
@@ -414,35 +413,35 @@ pci_bus_to_ar724x_controller(काष्ठा pci_bus *bus)
 	apc->pci_controller.mem_resource = &apc->mem_res;
 
 	/*
-	 * Do the full PCIE Root Complex Initialization Sequence अगर the PCIe
+	 * Do the full PCIE Root Complex Initialization Sequence if the PCIe
 	 * host controller is in reset.
 	 */
-	अगर (ath79_reset_rr(AR724X_RESET_REG_RESET_MODULE) & AR724X_RESET_PCIE)
+	if (ath79_reset_rr(AR724X_RESET_REG_RESET_MODULE) & AR724X_RESET_PCIE)
 		ar724x_pci_hw_init(apc);
 
 	apc->link_up = ar724x_pci_check_link(apc);
-	अगर (!apc->link_up)
+	if (!apc->link_up)
 		dev_warn(&pdev->dev, "PCIe link is down\n");
 
 	ar724x_pci_irq_init(apc, id);
 
-	ar724x_pci_local_ग_लिखो(apc, PCI_COMMAND, 4, AR724X_PCI_CMD_INIT);
+	ar724x_pci_local_write(apc, PCI_COMMAND, 4, AR724X_PCI_CMD_INIT);
 
-	रेजिस्टर_pci_controller(&apc->pci_controller);
+	register_pci_controller(&apc->pci_controller);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver ar724x_pci_driver = अणु
+static struct platform_driver ar724x_pci_driver = {
 	.probe = ar724x_pci_probe,
-	.driver = अणु
+	.driver = {
 		.name = "ar724x-pci",
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक __init ar724x_pci_init(व्योम)
-अणु
-	वापस platक्रमm_driver_रेजिस्टर(&ar724x_pci_driver);
-पूर्ण
+static int __init ar724x_pci_init(void)
+{
+	return platform_driver_register(&ar724x_pci_driver);
+}
 
 postcore_initcall(ar724x_pci_init);

@@ -1,18 +1,17 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <linux/compiler.h>
-#समावेश <linux/init.h>
-#समावेश <linux/export.h>
-#समावेश <linux/highस्मृति.स>
-#समावेश <linux/sched.h>
-#समावेश <linux/smp.h>
-#समावेश <यंत्र/fixmap.h>
-#समावेश <यंत्र/tlbflush.h>
+// SPDX-License-Identifier: GPL-2.0
+#include <linux/compiler.h>
+#include <linux/init.h>
+#include <linux/export.h>
+#include <linux/highmem.h>
+#include <linux/sched.h>
+#include <linux/smp.h>
+#include <asm/fixmap.h>
+#include <asm/tlbflush.h>
 
-अचिन्हित दीर्घ highstart_pfn, highend_pfn;
+unsigned long highstart_pfn, highend_pfn;
 
-व्योम kmap_flush_tlb(अचिन्हित दीर्घ addr)
-अणु
+void kmap_flush_tlb(unsigned long addr)
+{
 	flush_tlb_one(addr);
-पूर्ण
+}
 EXPORT_SYMBOL(kmap_flush_tlb);

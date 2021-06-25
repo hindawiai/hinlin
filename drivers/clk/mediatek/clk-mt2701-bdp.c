@@ -1,49 +1,48 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2014 MediaTek Inc.
  * Author: Shunli Wang <shunli.wang@mediatek.com>
  */
 
-#समावेश <linux/clk-provider.h>
-#समावेश <linux/platक्रमm_device.h>
+#include <linux/clk-provider.h>
+#include <linux/platform_device.h>
 
-#समावेश "clk-mtk.h"
-#समावेश "clk-gate.h"
+#include "clk-mtk.h"
+#include "clk-gate.h"
 
-#समावेश <dt-bindings/घड़ी/mt2701-clk.h>
+#include <dt-bindings/clock/mt2701-clk.h>
 
-अटल स्थिर काष्ठा mtk_gate_regs bdp0_cg_regs = अणु
+static const struct mtk_gate_regs bdp0_cg_regs = {
 	.set_ofs = 0x0104,
 	.clr_ofs = 0x0108,
 	.sta_ofs = 0x0100,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा mtk_gate_regs bdp1_cg_regs = अणु
+static const struct mtk_gate_regs bdp1_cg_regs = {
 	.set_ofs = 0x0114,
 	.clr_ofs = 0x0118,
 	.sta_ofs = 0x0110,
-पूर्ण;
+};
 
-#घोषणा GATE_BDP0(_id, _name, _parent, _shअगरt) अणु	\
+#define GATE_BDP0(_id, _name, _parent, _shift) {	\
 		.id = _id,				\
 		.name = _name,				\
 		.parent_name = _parent,			\
 		.regs = &bdp0_cg_regs,			\
-		.shअगरt = _shअगरt,			\
+		.shift = _shift,			\
 		.ops = &mtk_clk_gate_ops_setclr_inv,	\
-	पूर्ण
+	}
 
-#घोषणा GATE_BDP1(_id, _name, _parent, _shअगरt) अणु	\
+#define GATE_BDP1(_id, _name, _parent, _shift) {	\
 		.id = _id,				\
 		.name = _name,				\
 		.parent_name = _parent,			\
 		.regs = &bdp1_cg_regs,			\
-		.shअगरt = _shअगरt,			\
+		.shift = _shift,			\
 		.ops = &mtk_clk_gate_ops_setclr_inv,	\
-	पूर्ण
+	}
 
-अटल स्थिर काष्ठा mtk_gate bdp_clks[] = अणु
+static const struct mtk_gate bdp_clks[] = {
 	GATE_BDP0(CLK_BDP_BRG_BA, "brg_baclk", "mm_sel", 0),
 	GATE_BDP0(CLK_BDP_BRG_DRAM, "brg_dram", "mm_sel", 1),
 	GATE_BDP0(CLK_BDP_LARB_DRAM, "larb_dram", "mm_sel", 2),
@@ -93,39 +92,39 @@
 	GATE_BDP1(CLK_BDP_LARBRT_DRAM, "larbrt_dram", "mm_sel", 14),
 	GATE_BDP1(CLK_BDP_TMDS_SYN, "tmds_syn", "hdmi_0_pll340m", 15),
 	GATE_BDP1(CLK_BDP_HDMI_MON, "hdmi_mon", "hdmi_0_pll340m", 16),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा of_device_id of_match_clk_mt2701_bdp[] = अणु
-	अणु .compatible = "mediatek,mt2701-bdpsys", पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct of_device_id of_match_clk_mt2701_bdp[] = {
+	{ .compatible = "mediatek,mt2701-bdpsys", },
+	{}
+};
 
-अटल पूर्णांक clk_mt2701_bdp_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा clk_onecell_data *clk_data;
-	पूर्णांक r;
-	काष्ठा device_node *node = pdev->dev.of_node;
+static int clk_mt2701_bdp_probe(struct platform_device *pdev)
+{
+	struct clk_onecell_data *clk_data;
+	int r;
+	struct device_node *node = pdev->dev.of_node;
 
 	clk_data = mtk_alloc_clk_data(CLK_BDP_NR);
 
-	mtk_clk_रेजिस्टर_gates(node, bdp_clks, ARRAY_SIZE(bdp_clks),
+	mtk_clk_register_gates(node, bdp_clks, ARRAY_SIZE(bdp_clks),
 						clk_data);
 
 	r = of_clk_add_provider(node, of_clk_src_onecell_get, clk_data);
-	अगर (r)
+	if (r)
 		dev_err(&pdev->dev,
 			"could not register clock provider: %s: %d\n",
 			pdev->name, r);
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल काष्ठा platक्रमm_driver clk_mt2701_bdp_drv = अणु
+static struct platform_driver clk_mt2701_bdp_drv = {
 	.probe = clk_mt2701_bdp_probe,
-	.driver = अणु
+	.driver = {
 		.name = "clk-mt2701-bdp",
 		.of_match_table = of_match_clk_mt2701_bdp,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-builtin_platक्रमm_driver(clk_mt2701_bdp_drv);
+builtin_platform_driver(clk_mt2701_bdp_drv);

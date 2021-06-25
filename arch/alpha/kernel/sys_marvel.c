@@ -1,53 +1,52 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * linux/arch/alpha/kernel/sys_marvel.c
  *
  * Marvel / IO7 support
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/types.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/init.h>
-#समावेश <linux/bitops.h>
+#include <linux/kernel.h>
+#include <linux/types.h>
+#include <linux/mm.h>
+#include <linux/sched.h>
+#include <linux/pci.h>
+#include <linux/init.h>
+#include <linux/bitops.h>
 
-#समावेश <यंत्र/ptrace.h>
-#समावेश <यंत्र/dma.h>
-#समावेश <यंत्र/irq.h>
-#समावेश <यंत्र/mmu_context.h>
-#समावेश <यंत्र/पन.स>
-#समावेश <यंत्र/core_marvel.h>
-#समावेश <यंत्र/hwrpb.h>
-#समावेश <यंत्र/tlbflush.h>
-#समावेश <यंत्र/vga.h>
+#include <asm/ptrace.h>
+#include <asm/dma.h>
+#include <asm/irq.h>
+#include <asm/mmu_context.h>
+#include <asm/io.h>
+#include <asm/core_marvel.h>
+#include <asm/hwrpb.h>
+#include <asm/tlbflush.h>
+#include <asm/vga.h>
 
-#समावेश "proto.h"
-#समावेश "err_impl.h"
-#समावेश "irq_impl.h"
-#समावेश "pci_impl.h"
-#समावेश "machvec_impl.h"
+#include "proto.h"
+#include "err_impl.h"
+#include "irq_impl.h"
+#include "pci_impl.h"
+#include "machvec_impl.h"
 
-#अगर NR_IRQS < MARVEL_NR_IRQS
+#if NR_IRQS < MARVEL_NR_IRQS
 # error NR_IRQS < MARVEL_NR_IRQS !!!
-#पूर्ण_अगर
+#endif
 
 
 /*
  * Interrupt handling.
  */
-अटल व्योम 
-io7_device_पूर्णांकerrupt(अचिन्हित दीर्घ vector)
-अणु
-	अचिन्हित पूर्णांक pid;
-	अचिन्हित पूर्णांक irq;
+static void 
+io7_device_interrupt(unsigned long vector)
+{
+	unsigned int pid;
+	unsigned int irq;
 
 	/*
-	 * Vector is 0x800 + (पूर्णांकerrupt)
+	 * Vector is 0x800 + (interrupt)
 	 *
-	 * where (पूर्णांकerrupt) is:
+	 * where (interrupt) is:
 	 *
 	 *	...16|15 14|13     4|3 0
 	 *	-----+-----+--------+---
@@ -61,208 +60,208 @@ io7_device_पूर्णांकerrupt(अचिन्हित दीर्�
 	pid = vector >> 16;
 	irq = ((vector & 0xffff) - 0x800) >> 4;
 
-	irq += 16;				/* offset क्रम legacy */
+	irq += 16;				/* offset for legacy */
 	irq &= MARVEL_IRQ_VEC_IRQ_MASK;		/* not too many bits */
 	irq |= pid << MARVEL_IRQ_VEC_PE_SHIFT;	/* merge the pid     */
 
 	handle_irq(irq);
-पूर्ण
+}
 
-अटल अस्थिर अचिन्हित दीर्घ *
-io7_get_irq_ctl(अचिन्हित पूर्णांक irq, काष्ठा io7 **pio7)
-अणु
-	अस्थिर अचिन्हित दीर्घ *ctl;
-	अचिन्हित पूर्णांक pid;
-	काष्ठा io7 *io7;
+static volatile unsigned long *
+io7_get_irq_ctl(unsigned int irq, struct io7 **pio7)
+{
+	volatile unsigned long *ctl;
+	unsigned int pid;
+	struct io7 *io7;
 
 	pid = irq >> MARVEL_IRQ_VEC_PE_SHIFT;
 
-	अगर (!(io7 = marvel_find_io7(pid))) अणु
-		prपूर्णांकk(KERN_ERR 
+	if (!(io7 = marvel_find_io7(pid))) {
+		printk(KERN_ERR 
 		       "%s for nonexistent io7 -- vec %x, pid %d\n",
 		       __func__, irq, pid);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
 	irq &= MARVEL_IRQ_VEC_IRQ_MASK;	/* isolate the vector    */
 	irq -= 16;			/* subtract legacy bias  */
 
-	अगर (irq >= 0x180) अणु
-		prपूर्णांकk(KERN_ERR 
+	if (irq >= 0x180) {
+		printk(KERN_ERR 
 		       "%s for invalid irq -- pid %d adjusted irq %x\n",
 		       __func__, pid, irq);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
 	ctl = &io7->csrs->PO7_LSI_CTL[irq & 0xff].csr; /* assume LSI */
-	अगर (irq >= 0x80)	     	/* MSI */
+	if (irq >= 0x80)	     	/* MSI */
 		ctl = &io7->csrs->PO7_MSI_CTL[((irq - 0x80) >> 5) & 0x0f].csr;
 
-	अगर (pio7) *pio7 = io7;
-	वापस ctl;
-पूर्ण
+	if (pio7) *pio7 = io7;
+	return ctl;
+}
 
-अटल व्योम
-io7_enable_irq(काष्ठा irq_data *d)
-अणु
-	अस्थिर अचिन्हित दीर्घ *ctl;
-	अचिन्हित पूर्णांक irq = d->irq;
-	काष्ठा io7 *io7;
+static void
+io7_enable_irq(struct irq_data *d)
+{
+	volatile unsigned long *ctl;
+	unsigned int irq = d->irq;
+	struct io7 *io7;
 
 	ctl = io7_get_irq_ctl(irq, &io7);
-	अगर (!ctl || !io7) अणु
-		prपूर्णांकk(KERN_ERR "%s: get_ctl failed for irq %x\n",
+	if (!ctl || !io7) {
+		printk(KERN_ERR "%s: get_ctl failed for irq %x\n",
 		       __func__, irq);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	raw_spin_lock(&io7->irq_lock);
 	*ctl |= 1UL << 24;
 	mb();
 	*ctl;
 	raw_spin_unlock(&io7->irq_lock);
-पूर्ण
+}
 
-अटल व्योम
-io7_disable_irq(काष्ठा irq_data *d)
-अणु
-	अस्थिर अचिन्हित दीर्घ *ctl;
-	अचिन्हित पूर्णांक irq = d->irq;
-	काष्ठा io7 *io7;
+static void
+io7_disable_irq(struct irq_data *d)
+{
+	volatile unsigned long *ctl;
+	unsigned int irq = d->irq;
+	struct io7 *io7;
 
 	ctl = io7_get_irq_ctl(irq, &io7);
-	अगर (!ctl || !io7) अणु
-		prपूर्णांकk(KERN_ERR "%s: get_ctl failed for irq %x\n",
+	if (!ctl || !io7) {
+		printk(KERN_ERR "%s: get_ctl failed for irq %x\n",
 		       __func__, irq);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	raw_spin_lock(&io7->irq_lock);
 	*ctl &= ~(1UL << 24);
 	mb();
 	*ctl;
 	raw_spin_unlock(&io7->irq_lock);
-पूर्ण
+}
 
-अटल व्योम
-marvel_irq_noop(काष्ठा irq_data *d)
-अणु
-	वापस;
-पूर्ण
+static void
+marvel_irq_noop(struct irq_data *d)
+{
+	return;
+}
 
-अटल काष्ठा irq_chip marvel_legacy_irq_type = अणु
+static struct irq_chip marvel_legacy_irq_type = {
 	.name		= "LEGACY",
 	.irq_mask	= marvel_irq_noop,
 	.irq_unmask	= marvel_irq_noop,
-पूर्ण;
+};
 
-अटल काष्ठा irq_chip io7_lsi_irq_type = अणु
+static struct irq_chip io7_lsi_irq_type = {
 	.name		= "LSI",
 	.irq_unmask	= io7_enable_irq,
 	.irq_mask	= io7_disable_irq,
 	.irq_mask_ack	= io7_disable_irq,
-पूर्ण;
+};
 
-अटल काष्ठा irq_chip io7_msi_irq_type = अणु
+static struct irq_chip io7_msi_irq_type = {
 	.name		= "MSI",
 	.irq_unmask	= io7_enable_irq,
 	.irq_mask	= io7_disable_irq,
 	.irq_ack	= marvel_irq_noop,
-पूर्ण;
+};
 
-अटल व्योम
-io7_redirect_irq(काष्ठा io7 *io7, 
-		 अस्थिर अचिन्हित दीर्घ *csr, 
-		 अचिन्हित पूर्णांक where)
-अणु
-	अचिन्हित दीर्घ val;
+static void
+io7_redirect_irq(struct io7 *io7, 
+		 volatile unsigned long *csr, 
+		 unsigned int where)
+{
+	unsigned long val;
 	
 	val = *csr;
 	val &= ~(0x1ffUL << 24);		/* clear the target pid   */
-	val |= ((अचिन्हित दीर्घ)where << 24);	/* set the new target pid */
+	val |= ((unsigned long)where << 24);	/* set the new target pid */
 	
 	*csr = val;
 	mb();
 	*csr;
-पूर्ण
+}
 
-अटल व्योम 
-io7_redirect_one_lsi(काष्ठा io7 *io7, अचिन्हित पूर्णांक which, अचिन्हित पूर्णांक where)
-अणु
-	अचिन्हित दीर्घ val;
+static void 
+io7_redirect_one_lsi(struct io7 *io7, unsigned int which, unsigned int where)
+{
+	unsigned long val;
 
 	/*
 	 * LSI_CTL has target PID @ 14
 	 */
 	val = io7->csrs->PO7_LSI_CTL[which].csr;
 	val &= ~(0x1ffUL << 14);		/* clear the target pid */
-	val |= ((अचिन्हित दीर्घ)where << 14);	/* set the new target pid */
+	val |= ((unsigned long)where << 14);	/* set the new target pid */
 
 	io7->csrs->PO7_LSI_CTL[which].csr = val;
 	mb();
 	io7->csrs->PO7_LSI_CTL[which].csr;
-पूर्ण
+}
 
-अटल व्योम 
-io7_redirect_one_msi(काष्ठा io7 *io7, अचिन्हित पूर्णांक which, अचिन्हित पूर्णांक where)
-अणु
-	अचिन्हित दीर्घ val;
+static void 
+io7_redirect_one_msi(struct io7 *io7, unsigned int which, unsigned int where)
+{
+	unsigned long val;
 
 	/*
 	 * MSI_CTL has target PID @ 14
 	 */
 	val = io7->csrs->PO7_MSI_CTL[which].csr;
 	val &= ~(0x1ffUL << 14);		/* clear the target pid */
-	val |= ((अचिन्हित दीर्घ)where << 14);	/* set the new target pid */
+	val |= ((unsigned long)where << 14);	/* set the new target pid */
 
 	io7->csrs->PO7_MSI_CTL[which].csr = val;
 	mb();
 	io7->csrs->PO7_MSI_CTL[which].csr;
-पूर्ण
+}
 
-अटल व्योम __init
-init_one_io7_lsi(काष्ठा io7 *io7, अचिन्हित पूर्णांक which, अचिन्हित पूर्णांक where)
-अणु
+static void __init
+init_one_io7_lsi(struct io7 *io7, unsigned int which, unsigned int where)
+{
 	/*
 	 * LSI_CTL has target PID @ 14
 	 */
-	io7->csrs->PO7_LSI_CTL[which].csr = ((अचिन्हित दीर्घ)where << 14);
+	io7->csrs->PO7_LSI_CTL[which].csr = ((unsigned long)where << 14);
 	mb();
 	io7->csrs->PO7_LSI_CTL[which].csr;
-पूर्ण
+}
 
-अटल व्योम __init
-init_one_io7_msi(काष्ठा io7 *io7, अचिन्हित पूर्णांक which, अचिन्हित पूर्णांक where)
-अणु
+static void __init
+init_one_io7_msi(struct io7 *io7, unsigned int which, unsigned int where)
+{
 	/*
 	 * MSI_CTL has target PID @ 14
 	 */
-	io7->csrs->PO7_MSI_CTL[which].csr = ((अचिन्हित दीर्घ)where << 14);
+	io7->csrs->PO7_MSI_CTL[which].csr = ((unsigned long)where << 14);
 	mb();
 	io7->csrs->PO7_MSI_CTL[which].csr;
-पूर्ण
+}
 
-अटल व्योम __init
-init_io7_irqs(काष्ठा io7 *io7, 
-	      काष्ठा irq_chip *lsi_ops,
-	      काष्ठा irq_chip *msi_ops)
-अणु
-	दीर्घ base = (io7->pe << MARVEL_IRQ_VEC_PE_SHIFT) + 16;
-	दीर्घ i;
+static void __init
+init_io7_irqs(struct io7 *io7, 
+	      struct irq_chip *lsi_ops,
+	      struct irq_chip *msi_ops)
+{
+	long base = (io7->pe << MARVEL_IRQ_VEC_PE_SHIFT) + 16;
+	long i;
 
-	prपूर्णांकk("Initializing interrupts for IO7 at PE %u - base %lx\n",
+	printk("Initializing interrupts for IO7 at PE %u - base %lx\n",
 		io7->pe, base);
 
 	/*
-	 * Where should पूर्णांकerrupts from this IO7 go?
+	 * Where should interrupts from this IO7 go?
 	 *
-	 * They really should be sent to the local CPU to aव्योम having to
-	 * traverse the mesh, but अगर it's not an SMP kernel, they have to
-	 * go to the boot CPU. Send them all to the boot CPU क्रम now,
+	 * They really should be sent to the local CPU to avoid having to
+	 * traverse the mesh, but if it's not an SMP kernel, they have to
+	 * go to the boot CPU. Send them all to the boot CPU for now,
 	 * as each secondary starts, it can redirect it's local device 
-	 * पूर्णांकerrupts.
+	 * interrupts.
 	 */
-	prपूर्णांकk("  Interrupts reported to CPU at PE %u\n", boot_cpuid);
+	printk("  Interrupts reported to CPU at PE %u\n", boot_cpuid);
 
 	raw_spin_lock(&io7->irq_lock);
 
@@ -274,13 +273,13 @@ init_io7_irqs(काष्ठा io7 *io7,
 	io7_redirect_irq(io7, &io7->csrs->HEI_CTL.csr, boot_cpuid);
 
 	/* Set up the lsi irqs.  */
-	क्रम (i = 0; i < 128; ++i) अणु
+	for (i = 0; i < 128; ++i) {
 		irq_set_chip_and_handler(base + i, lsi_ops, handle_level_irq);
 		irq_set_status_flags(i, IRQ_LEVEL);
-	पूर्ण
+	}
 
 	/* Disable the implemented irqs in hardware.  */
-	क्रम (i = 0; i < 0x60; ++i) 
+	for (i = 0; i < 0x60; ++i) 
 		init_one_io7_lsi(io7, i, boot_cpuid);
 
 	init_one_io7_lsi(io7, 0x74, boot_cpuid);
@@ -288,132 +287,132 @@ init_io7_irqs(काष्ठा io7 *io7,
 
 
 	/* Set up the msi irqs.  */
-	क्रम (i = 128; i < (128 + 512); ++i) अणु
+	for (i = 128; i < (128 + 512); ++i) {
 		irq_set_chip_and_handler(base + i, msi_ops, handle_level_irq);
 		irq_set_status_flags(i, IRQ_LEVEL);
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < 16; ++i)
+	for (i = 0; i < 16; ++i)
 		init_one_io7_msi(io7, i, boot_cpuid);
 
 	raw_spin_unlock(&io7->irq_lock);
-पूर्ण
+}
 
-अटल व्योम __init
-marvel_init_irq(व्योम)
-अणु
-	पूर्णांक i;
-	काष्ठा io7 *io7 = शून्य;
+static void __init
+marvel_init_irq(void)
+{
+	int i;
+	struct io7 *io7 = NULL;
 
 	/* Reserve the legacy irqs.  */
-	क्रम (i = 0; i < 16; ++i) अणु
+	for (i = 0; i < 16; ++i) {
 		irq_set_chip_and_handler(i, &marvel_legacy_irq_type,
 					 handle_level_irq);
-	पूर्ण
+	}
 
 	/* Init the io7 irqs.  */
-	क्रम (io7 = शून्य; (io7 = marvel_next_io7(io7)) != शून्य; )
+	for (io7 = NULL; (io7 = marvel_next_io7(io7)) != NULL; )
 		init_io7_irqs(io7, &io7_lsi_irq_type, &io7_msi_irq_type);
-पूर्ण
+}
 
-अटल पूर्णांक 
-marvel_map_irq(स्थिर काष्ठा pci_dev *cdev, u8 slot, u8 pin)
-अणु
-	काष्ठा pci_dev *dev = (काष्ठा pci_dev *)cdev;
-	काष्ठा pci_controller *hose = dev->sysdata;
-	काष्ठा io7_port *io7_port = hose->sysdata;
-	काष्ठा io7 *io7 = io7_port->io7;
-	पूर्णांक msi_loc, msi_data_off;
+static int 
+marvel_map_irq(const struct pci_dev *cdev, u8 slot, u8 pin)
+{
+	struct pci_dev *dev = (struct pci_dev *)cdev;
+	struct pci_controller *hose = dev->sysdata;
+	struct io7_port *io7_port = hose->sysdata;
+	struct io7 *io7 = io7_port->io7;
+	int msi_loc, msi_data_off;
 	u16 msg_ctl;
 	u16 msg_dat;
-	u8 पूर्णांकline; 
-	पूर्णांक irq;
+	u8 intline; 
+	int irq;
 
-	pci_पढ़ो_config_byte(dev, PCI_INTERRUPT_LINE, &पूर्णांकline);
-	irq = पूर्णांकline;
+	pci_read_config_byte(dev, PCI_INTERRUPT_LINE, &intline);
+	irq = intline;
 
 	msi_loc = dev->msi_cap;
 	msg_ctl = 0;
-	अगर (msi_loc) 
-		pci_पढ़ो_config_word(dev, msi_loc + PCI_MSI_FLAGS, &msg_ctl);
+	if (msi_loc) 
+		pci_read_config_word(dev, msi_loc + PCI_MSI_FLAGS, &msg_ctl);
 
-	अगर (msg_ctl & PCI_MSI_FLAGS_ENABLE) अणु
+	if (msg_ctl & PCI_MSI_FLAGS_ENABLE) {
  		msi_data_off = PCI_MSI_DATA_32;
-		अगर (msg_ctl & PCI_MSI_FLAGS_64BIT) 
+		if (msg_ctl & PCI_MSI_FLAGS_64BIT) 
 			msi_data_off = PCI_MSI_DATA_64;
-		pci_पढ़ो_config_word(dev, msi_loc + msi_data_off, &msg_dat);
+		pci_read_config_word(dev, msi_loc + msi_data_off, &msg_dat);
 
 		irq = msg_dat & 0x1ff;		/* we use msg_data<8:0> */
-		irq += 0x80;			/* offset क्रम lsi       */
+		irq += 0x80;			/* offset for lsi       */
 
-#अगर 1
-		prपूर्णांकk("PCI:%d:%d:%d (hose %d) is using MSI\n",
+#if 1
+		printk("PCI:%d:%d:%d (hose %d) is using MSI\n",
 		       dev->bus->number, 
 		       PCI_SLOT(dev->devfn), 
 		       PCI_FUNC(dev->devfn),
 		       hose->index);
-		prपूर्णांकk("  %d message(s) from 0x%04x\n", 
+		printk("  %d message(s) from 0x%04x\n", 
 		       1 << ((msg_ctl & PCI_MSI_FLAGS_QSIZE) >> 4),
 		       msg_dat);
-		prपूर्णांकk("  reporting on %d IRQ(s) from %d (0x%x)\n", 
+		printk("  reporting on %d IRQ(s) from %d (0x%x)\n", 
 		       1 << ((msg_ctl & PCI_MSI_FLAGS_QSIZE) >> 4),
 		       (irq + 16) | (io7->pe << MARVEL_IRQ_VEC_PE_SHIFT),
 		       (irq + 16) | (io7->pe << MARVEL_IRQ_VEC_PE_SHIFT));
-#पूर्ण_अगर
+#endif
 
-#अगर 0
-		pci_ग_लिखो_config_word(dev, msi_loc + PCI_MSI_FLAGS,
+#if 0
+		pci_write_config_word(dev, msi_loc + PCI_MSI_FLAGS,
 				      msg_ctl & ~PCI_MSI_FLAGS_ENABLE);
-		pci_पढ़ो_config_byte(dev, PCI_INTERRUPT_LINE, &पूर्णांकline);
-		irq = पूर्णांकline;
+		pci_read_config_byte(dev, PCI_INTERRUPT_LINE, &intline);
+		irq = intline;
 
-		prपूर्णांकk("  forcing LSI interrupt on irq %d [0x%x]\n", irq, irq);
-#पूर्ण_अगर
-	पूर्ण
+		printk("  forcing LSI interrupt on irq %d [0x%x]\n", irq, irq);
+#endif
+	}
 
-	irq += 16;					/* offset क्रम legacy */
+	irq += 16;					/* offset for legacy */
 	irq |= io7->pe << MARVEL_IRQ_VEC_PE_SHIFT;	/* merge the pid     */
 
-	वापस irq; 
-पूर्ण
+	return irq; 
+}
 
-अटल व्योम __init
-marvel_init_pci(व्योम)
-अणु
-	काष्ठा io7 *io7;
+static void __init
+marvel_init_pci(void)
+{
+	struct io7 *io7;
 
-	marvel_रेजिस्टर_error_handlers();
+	marvel_register_error_handlers();
 
 	/* Indicate that we trust the console to configure things properly */
 	pci_set_flags(PCI_PROBE_ONLY);
 	common_init_pci();
-	locate_and_init_vga(शून्य);
+	locate_and_init_vga(NULL);
 
 	/* Clear any io7 errors.  */
-	क्रम (io7 = शून्य; (io7 = marvel_next_io7(io7)) != शून्य; ) 
+	for (io7 = NULL; (io7 = marvel_next_io7(io7)) != NULL; ) 
 		io7_clear_errors(io7);
-पूर्ण
+}
 
-अटल व्योम __init
-marvel_init_rtc(व्योम)
-अणु
-	init_rtc_irq(शून्य);
-पूर्ण
+static void __init
+marvel_init_rtc(void)
+{
+	init_rtc_irq(NULL);
+}
 
-अटल व्योम
-marvel_smp_callin(व्योम)
-अणु
-	पूर्णांक cpuid = hard_smp_processor_id();
-	काष्ठा io7 *io7 = marvel_find_io7(cpuid);
-	अचिन्हित पूर्णांक i;
+static void
+marvel_smp_callin(void)
+{
+	int cpuid = hard_smp_processor_id();
+	struct io7 *io7 = marvel_find_io7(cpuid);
+	unsigned int i;
 
-	अगर (!io7)
-		वापस;
+	if (!io7)
+		return;
 
 	/* 
-	 * There is a local IO7 - redirect all of its पूर्णांकerrupts here.
+	 * There is a local IO7 - redirect all of its interrupts here.
 	 */
-	prपूर्णांकk("Redirecting IO7 interrupts to local CPU at PE %u\n", cpuid);
+	printk("Redirecting IO7 interrupts to local CPU at PE %u\n", cpuid);
 
 	/* Redirect the error IRQS here.  */
 	io7_redirect_irq(io7, &io7->csrs->HLT_CTL.csr, cpuid);
@@ -423,21 +422,21 @@ marvel_smp_callin(व्योम)
 	io7_redirect_irq(io7, &io7->csrs->HEI_CTL.csr, cpuid);
 
 	/* Redirect the implemented LSIs here.  */
-	क्रम (i = 0; i < 0x60; ++i) 
+	for (i = 0; i < 0x60; ++i) 
 		io7_redirect_one_lsi(io7, i, cpuid);
 
 	io7_redirect_one_lsi(io7, 0x74, cpuid);
 	io7_redirect_one_lsi(io7, 0x75, cpuid);
 
 	/* Redirect the MSIs here.  */
-	क्रम (i = 0; i < 16; ++i)
+	for (i = 0; i < 16; ++i)
 		io7_redirect_one_msi(io7, i, cpuid);
-पूर्ण
+}
 
 /*
  * System Vectors
  */
-काष्ठा alpha_machine_vector marvel_ev7_mv __iniपंचांगv = अणु
+struct alpha_machine_vector marvel_ev7_mv __initmv = {
 	.vector_name		= "MARVEL/EV7",
 	DO_EV7_MMU,
 	.rtc_port		= 0x70,
@@ -450,7 +449,7 @@ marvel_smp_callin(व्योम)
 	.pci_dac_offset		= IO7_DAC_OFFSET,
 
 	.nr_irqs		= MARVEL_NR_IRQS,
-	.device_पूर्णांकerrupt	= io7_device_पूर्णांकerrupt,
+	.device_interrupt	= io7_device_interrupt,
 
 	.agp_info		= marvel_agp_info,
 
@@ -459,7 +458,7 @@ marvel_smp_callin(व्योम)
 	.init_irq		= marvel_init_irq,
 	.init_rtc		= marvel_init_rtc,
 	.init_pci		= marvel_init_pci,
-	.समाप्त_arch		= marvel_समाप्त_arch,
+	.kill_arch		= marvel_kill_arch,
 	.pci_map_irq		= marvel_map_irq,
 	.pci_swizzle		= common_swizzle,
 
@@ -467,5 +466,5 @@ marvel_smp_callin(व्योम)
 	.cpuid_to_nid		= marvel_cpuid_to_nid,
 	.node_mem_start		= marvel_node_mem_start,
 	.node_mem_size		= marvel_node_mem_size,
-पूर्ण;
+};
 ALIAS_MV(marvel_ev7)

@@ -1,32 +1,31 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
-#अगर_अघोषित _POWERPC_SYSDEV_MSI_BITMAP_H
-#घोषणा _POWERPC_SYSDEV_MSI_BITMAP_H
+/* SPDX-License-Identifier: GPL-2.0-only */
+#ifndef _POWERPC_SYSDEV_MSI_BITMAP_H
+#define _POWERPC_SYSDEV_MSI_BITMAP_H
 
 /*
  * Copyright 2008, Michael Ellerman, IBM Corporation.
  */
 
-#समावेश <linux/of.h>
-#समावेश <यंत्र/irq.h>
+#include <linux/of.h>
+#include <asm/irq.h>
 
-काष्ठा msi_biपंचांगap अणु
-	काष्ठा device_node	*of_node;
-	अचिन्हित दीर्घ		*biपंचांगap;
+struct msi_bitmap {
+	struct device_node	*of_node;
+	unsigned long		*bitmap;
 	spinlock_t		lock;
-	अचिन्हित पूर्णांक		irq_count;
-	bool		 	biपंचांगap_from_slab;
-पूर्ण;
+	unsigned int		irq_count;
+	bool		 	bitmap_from_slab;
+};
 
-पूर्णांक msi_biपंचांगap_alloc_hwirqs(काष्ठा msi_biपंचांगap *bmp, पूर्णांक num);
-व्योम msi_biपंचांगap_मुक्त_hwirqs(काष्ठा msi_biपंचांगap *bmp, अचिन्हित पूर्णांक offset,
-			    अचिन्हित पूर्णांक num);
-व्योम msi_biपंचांगap_reserve_hwirq(काष्ठा msi_biपंचांगap *bmp, अचिन्हित पूर्णांक hwirq);
+int msi_bitmap_alloc_hwirqs(struct msi_bitmap *bmp, int num);
+void msi_bitmap_free_hwirqs(struct msi_bitmap *bmp, unsigned int offset,
+			    unsigned int num);
+void msi_bitmap_reserve_hwirq(struct msi_bitmap *bmp, unsigned int hwirq);
 
-पूर्णांक msi_biपंचांगap_reserve_dt_hwirqs(काष्ठा msi_biपंचांगap *bmp);
+int msi_bitmap_reserve_dt_hwirqs(struct msi_bitmap *bmp);
 
-पूर्णांक msi_biपंचांगap_alloc(काष्ठा msi_biपंचांगap *bmp, अचिन्हित पूर्णांक irq_count,
-		     काष्ठा device_node *of_node);
-व्योम msi_biपंचांगap_मुक्त(काष्ठा msi_biपंचांगap *bmp);
+int msi_bitmap_alloc(struct msi_bitmap *bmp, unsigned int irq_count,
+		     struct device_node *of_node);
+void msi_bitmap_free(struct msi_bitmap *bmp);
 
-#पूर्ण_अगर /* _POWERPC_SYSDEV_MSI_BITMAP_H */
+#endif /* _POWERPC_SYSDEV_MSI_BITMAP_H */

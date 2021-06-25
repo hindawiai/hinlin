@@ -1,36 +1,35 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * virtio-snd: Virtio sound device
  * Copyright (C) 2021 OpenSynergy GmbH
  */
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/virtio_config.h>
+#include <linux/moduleparam.h>
+#include <linux/virtio_config.h>
 
-#समावेश "virtio_card.h"
+#include "virtio_card.h"
 
-अटल u32 pcm_buffer_ms = 160;
-module_param(pcm_buffer_ms, uपूर्णांक, 0644);
+static u32 pcm_buffer_ms = 160;
+module_param(pcm_buffer_ms, uint, 0644);
 MODULE_PARM_DESC(pcm_buffer_ms, "PCM substream buffer time in milliseconds");
 
-अटल u32 pcm_periods_min = 2;
-module_param(pcm_periods_min, uपूर्णांक, 0644);
+static u32 pcm_periods_min = 2;
+module_param(pcm_periods_min, uint, 0644);
 MODULE_PARM_DESC(pcm_periods_min, "Minimum number of PCM periods");
 
-अटल u32 pcm_periods_max = 16;
-module_param(pcm_periods_max, uपूर्णांक, 0644);
+static u32 pcm_periods_max = 16;
+module_param(pcm_periods_max, uint, 0644);
 MODULE_PARM_DESC(pcm_periods_max, "Maximum number of PCM periods");
 
-अटल u32 pcm_period_ms_min = 10;
-module_param(pcm_period_ms_min, uपूर्णांक, 0644);
+static u32 pcm_period_ms_min = 10;
+module_param(pcm_period_ms_min, uint, 0644);
 MODULE_PARM_DESC(pcm_period_ms_min, "Minimum PCM period time in milliseconds");
 
-अटल u32 pcm_period_ms_max = 80;
-module_param(pcm_period_ms_max, uपूर्णांक, 0644);
+static u32 pcm_period_ms_max = 80;
+module_param(pcm_period_ms_max, uint, 0644);
 MODULE_PARM_DESC(pcm_period_ms_max, "Maximum PCM period time in milliseconds");
 
-/* Map क्रम converting VirtIO क्रमmat to ALSA क्रमmat. */
-अटल स्थिर snd_pcm_क्रमmat_t g_v2a_क्रमmat_map[] = अणु
+/* Map for converting VirtIO format to ALSA format. */
+static const snd_pcm_format_t g_v2a_format_map[] = {
 	[VIRTIO_SND_PCM_FMT_IMA_ADPCM] = SNDRV_PCM_FORMAT_IMA_ADPCM,
 	[VIRTIO_SND_PCM_FMT_MU_LAW] = SNDRV_PCM_FORMAT_MU_LAW,
 	[VIRTIO_SND_PCM_FMT_A_LAW] = SNDRV_PCM_FORMAT_A_LAW,
@@ -57,51 +56,51 @@ MODULE_PARM_DESC(pcm_period_ms_max, "Maximum PCM period time in milliseconds");
 	[VIRTIO_SND_PCM_FMT_DSD_U32] = SNDRV_PCM_FORMAT_DSD_U32_LE,
 	[VIRTIO_SND_PCM_FMT_IEC958_SUBFRAME] =
 		SNDRV_PCM_FORMAT_IEC958_SUBFRAME_LE
-पूर्ण;
+};
 
-/* Map क्रम converting VirtIO frame rate to ALSA frame rate. */
-काष्ठा virtsnd_v2a_rate अणु
-	अचिन्हित पूर्णांक alsa_bit;
-	अचिन्हित पूर्णांक rate;
-पूर्ण;
+/* Map for converting VirtIO frame rate to ALSA frame rate. */
+struct virtsnd_v2a_rate {
+	unsigned int alsa_bit;
+	unsigned int rate;
+};
 
-अटल स्थिर काष्ठा virtsnd_v2a_rate g_v2a_rate_map[] = अणु
-	[VIRTIO_SND_PCM_RATE_5512] = अणु SNDRV_PCM_RATE_5512, 5512 पूर्ण,
-	[VIRTIO_SND_PCM_RATE_8000] = अणु SNDRV_PCM_RATE_8000, 8000 पूर्ण,
-	[VIRTIO_SND_PCM_RATE_11025] = अणु SNDRV_PCM_RATE_11025, 11025 पूर्ण,
-	[VIRTIO_SND_PCM_RATE_16000] = अणु SNDRV_PCM_RATE_16000, 16000 पूर्ण,
-	[VIRTIO_SND_PCM_RATE_22050] = अणु SNDRV_PCM_RATE_22050, 22050 पूर्ण,
-	[VIRTIO_SND_PCM_RATE_32000] = अणु SNDRV_PCM_RATE_32000, 32000 पूर्ण,
-	[VIRTIO_SND_PCM_RATE_44100] = अणु SNDRV_PCM_RATE_44100, 44100 पूर्ण,
-	[VIRTIO_SND_PCM_RATE_48000] = अणु SNDRV_PCM_RATE_48000, 48000 पूर्ण,
-	[VIRTIO_SND_PCM_RATE_64000] = अणु SNDRV_PCM_RATE_64000, 64000 पूर्ण,
-	[VIRTIO_SND_PCM_RATE_88200] = अणु SNDRV_PCM_RATE_88200, 88200 पूर्ण,
-	[VIRTIO_SND_PCM_RATE_96000] = अणु SNDRV_PCM_RATE_96000, 96000 पूर्ण,
-	[VIRTIO_SND_PCM_RATE_176400] = अणु SNDRV_PCM_RATE_176400, 176400 पूर्ण,
-	[VIRTIO_SND_PCM_RATE_192000] = अणु SNDRV_PCM_RATE_192000, 192000 पूर्ण
-पूर्ण;
+static const struct virtsnd_v2a_rate g_v2a_rate_map[] = {
+	[VIRTIO_SND_PCM_RATE_5512] = { SNDRV_PCM_RATE_5512, 5512 },
+	[VIRTIO_SND_PCM_RATE_8000] = { SNDRV_PCM_RATE_8000, 8000 },
+	[VIRTIO_SND_PCM_RATE_11025] = { SNDRV_PCM_RATE_11025, 11025 },
+	[VIRTIO_SND_PCM_RATE_16000] = { SNDRV_PCM_RATE_16000, 16000 },
+	[VIRTIO_SND_PCM_RATE_22050] = { SNDRV_PCM_RATE_22050, 22050 },
+	[VIRTIO_SND_PCM_RATE_32000] = { SNDRV_PCM_RATE_32000, 32000 },
+	[VIRTIO_SND_PCM_RATE_44100] = { SNDRV_PCM_RATE_44100, 44100 },
+	[VIRTIO_SND_PCM_RATE_48000] = { SNDRV_PCM_RATE_48000, 48000 },
+	[VIRTIO_SND_PCM_RATE_64000] = { SNDRV_PCM_RATE_64000, 64000 },
+	[VIRTIO_SND_PCM_RATE_88200] = { SNDRV_PCM_RATE_88200, 88200 },
+	[VIRTIO_SND_PCM_RATE_96000] = { SNDRV_PCM_RATE_96000, 96000 },
+	[VIRTIO_SND_PCM_RATE_176400] = { SNDRV_PCM_RATE_176400, 176400 },
+	[VIRTIO_SND_PCM_RATE_192000] = { SNDRV_PCM_RATE_192000, 192000 }
+};
 
 /**
  * virtsnd_pcm_build_hw() - Parse substream config and build HW descriptor.
  * @vss: VirtIO substream.
- * @info: VirtIO substream inक्रमmation entry.
+ * @info: VirtIO substream information entry.
  *
  * Context: Any context.
- * Return: 0 on success, -EINVAL अगर configuration is invalid.
+ * Return: 0 on success, -EINVAL if configuration is invalid.
  */
-अटल पूर्णांक virtsnd_pcm_build_hw(काष्ठा virtio_pcm_substream *vss,
-				काष्ठा virtio_snd_pcm_info *info)
-अणु
-	काष्ठा virtio_device *vdev = vss->snd->vdev;
-	अचिन्हित पूर्णांक i;
+static int virtsnd_pcm_build_hw(struct virtio_pcm_substream *vss,
+				struct virtio_snd_pcm_info *info)
+{
+	struct virtio_device *vdev = vss->snd->vdev;
+	unsigned int i;
 	u64 values;
-	माप_प्रकार sample_max = 0;
-	माप_प्रकार sample_min = 0;
+	size_t sample_max = 0;
+	size_t sample_min = 0;
 
 	vss->features = le32_to_cpu(info->features);
 
 	/*
-	 * TODO: set SNDRV_PCM_INFO_अणुBATCH,BLOCK_TRANSFERपूर्ण अगर device supports
+	 * TODO: set SNDRV_PCM_INFO_{BATCH,BLOCK_TRANSFER} if device supports
 	 * only message-based transport.
 	 */
 	vss->hw.info =
@@ -112,70 +111,70 @@ MODULE_PARM_DESC(pcm_period_ms_max, "Maximum PCM period time in milliseconds");
 		SNDRV_PCM_INFO_INTERLEAVED |
 		SNDRV_PCM_INFO_PAUSE;
 
-	अगर (!info->channels_min || info->channels_min > info->channels_max) अणु
+	if (!info->channels_min || info->channels_min > info->channels_max) {
 		dev_err(&vdev->dev,
 			"SID %u: invalid channel range [%u %u]\n",
 			vss->sid, info->channels_min, info->channels_max);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	vss->hw.channels_min = info->channels_min;
 	vss->hw.channels_max = info->channels_max;
 
-	values = le64_to_cpu(info->क्रमmats);
+	values = le64_to_cpu(info->formats);
 
-	vss->hw.क्रमmats = 0;
+	vss->hw.formats = 0;
 
-	क्रम (i = 0; i < ARRAY_SIZE(g_v2a_क्रमmat_map); ++i)
-		अगर (values & (1ULL << i)) अणु
-			snd_pcm_क्रमmat_t alsa_fmt = g_v2a_क्रमmat_map[i];
-			पूर्णांक bytes = snd_pcm_क्रमmat_physical_width(alsa_fmt) / 8;
+	for (i = 0; i < ARRAY_SIZE(g_v2a_format_map); ++i)
+		if (values & (1ULL << i)) {
+			snd_pcm_format_t alsa_fmt = g_v2a_format_map[i];
+			int bytes = snd_pcm_format_physical_width(alsa_fmt) / 8;
 
-			अगर (!sample_min || sample_min > bytes)
+			if (!sample_min || sample_min > bytes)
 				sample_min = bytes;
 
-			अगर (sample_max < bytes)
+			if (sample_max < bytes)
 				sample_max = bytes;
 
-			vss->hw.क्रमmats |= pcm_क्रमmat_to_bits(alsa_fmt);
-		पूर्ण
+			vss->hw.formats |= pcm_format_to_bits(alsa_fmt);
+		}
 
-	अगर (!vss->hw.क्रमmats) अणु
+	if (!vss->hw.formats) {
 		dev_err(&vdev->dev,
 			"SID %u: no supported PCM sample formats found\n",
 			vss->sid);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	values = le64_to_cpu(info->rates);
 
 	vss->hw.rates = 0;
 
-	क्रम (i = 0; i < ARRAY_SIZE(g_v2a_rate_map); ++i)
-		अगर (values & (1ULL << i)) अणु
-			अगर (!vss->hw.rate_min ||
+	for (i = 0; i < ARRAY_SIZE(g_v2a_rate_map); ++i)
+		if (values & (1ULL << i)) {
+			if (!vss->hw.rate_min ||
 			    vss->hw.rate_min > g_v2a_rate_map[i].rate)
 				vss->hw.rate_min = g_v2a_rate_map[i].rate;
 
-			अगर (vss->hw.rate_max < g_v2a_rate_map[i].rate)
+			if (vss->hw.rate_max < g_v2a_rate_map[i].rate)
 				vss->hw.rate_max = g_v2a_rate_map[i].rate;
 
 			vss->hw.rates |= g_v2a_rate_map[i].alsa_bit;
-		पूर्ण
+		}
 
-	अगर (!vss->hw.rates) अणु
+	if (!vss->hw.rates) {
 		dev_err(&vdev->dev,
 			"SID %u: no supported PCM frame rates found\n",
 			vss->sid);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	vss->hw.periods_min = pcm_periods_min;
 	vss->hw.periods_max = pcm_periods_max;
 
 	/*
 	 * We must ensure that there is enough space in the buffer to store
-	 * pcm_buffer_ms ms क्रम the combination (Cmax, Smax, Rmax), where:
+	 * pcm_buffer_ms ms for the combination (Cmax, Smax, Rmax), where:
 	 *   Cmax = maximum supported number of channels,
 	 *   Smax = maximum supported sample size in bytes,
 	 *   Rmax = maximum supported frame rate.
@@ -186,7 +185,7 @@ MODULE_PARM_DESC(pcm_period_ms_max, "Maximum PCM period time in milliseconds");
 
 	/*
 	 * We must ensure that the minimum period size is enough to store
-	 * pcm_period_ms_min ms क्रम the combination (Cmin, Smin, Rmin), where:
+	 * pcm_period_ms_min ms for the combination (Cmin, Smin, Rmin), where:
 	 *   Cmin = minimum supported number of channels,
 	 *   Smin = minimum supported sample size in bytes,
 	 *   Rmin = minimum supported frame rate.
@@ -197,120 +196,120 @@ MODULE_PARM_DESC(pcm_period_ms_max, "Maximum PCM period time in milliseconds");
 
 	/*
 	 * We must ensure that the maximum period size is enough to store
-	 * pcm_period_ms_max ms क्रम the combination (Cmax, Smax, Rmax).
+	 * pcm_period_ms_max ms for the combination (Cmax, Smax, Rmax).
 	 */
 	vss->hw.period_bytes_max =
 		sample_max * vss->hw.channels_max * pcm_period_ms_max *
 		(vss->hw.rate_max / MSEC_PER_SEC);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * virtsnd_pcm_find() - Find the PCM device क्रम the specअगरied node ID.
+ * virtsnd_pcm_find() - Find the PCM device for the specified node ID.
  * @snd: VirtIO sound device.
  * @nid: Function node ID.
  *
  * Context: Any context.
- * Return: a poपूर्णांकer to the PCM device or ERR_PTR(-ENOENT).
+ * Return: a pointer to the PCM device or ERR_PTR(-ENOENT).
  */
-काष्ठा virtio_pcm *virtsnd_pcm_find(काष्ठा virtio_snd *snd, u32 nid)
-अणु
-	काष्ठा virtio_pcm *vpcm;
+struct virtio_pcm *virtsnd_pcm_find(struct virtio_snd *snd, u32 nid)
+{
+	struct virtio_pcm *vpcm;
 
-	list_क्रम_each_entry(vpcm, &snd->pcm_list, list)
-		अगर (vpcm->nid == nid)
-			वापस vpcm;
+	list_for_each_entry(vpcm, &snd->pcm_list, list)
+		if (vpcm->nid == nid)
+			return vpcm;
 
-	वापस ERR_PTR(-ENOENT);
-पूर्ण
+	return ERR_PTR(-ENOENT);
+}
 
 /**
- * virtsnd_pcm_find_or_create() - Find or create the PCM device क्रम the
- *                                specअगरied node ID.
+ * virtsnd_pcm_find_or_create() - Find or create the PCM device for the
+ *                                specified node ID.
  * @snd: VirtIO sound device.
  * @nid: Function node ID.
  *
  * Context: Any context that permits to sleep.
- * Return: a poपूर्णांकer to the PCM device or ERR_PTR(-त्रुटि_सं).
+ * Return: a pointer to the PCM device or ERR_PTR(-errno).
  */
-काष्ठा virtio_pcm *virtsnd_pcm_find_or_create(काष्ठा virtio_snd *snd, u32 nid)
-अणु
-	काष्ठा virtio_device *vdev = snd->vdev;
-	काष्ठा virtio_pcm *vpcm;
+struct virtio_pcm *virtsnd_pcm_find_or_create(struct virtio_snd *snd, u32 nid)
+{
+	struct virtio_device *vdev = snd->vdev;
+	struct virtio_pcm *vpcm;
 
 	vpcm = virtsnd_pcm_find(snd, nid);
-	अगर (!IS_ERR(vpcm))
-		वापस vpcm;
+	if (!IS_ERR(vpcm))
+		return vpcm;
 
-	vpcm = devm_kzalloc(&vdev->dev, माप(*vpcm), GFP_KERNEL);
-	अगर (!vpcm)
-		वापस ERR_PTR(-ENOMEM);
+	vpcm = devm_kzalloc(&vdev->dev, sizeof(*vpcm), GFP_KERNEL);
+	if (!vpcm)
+		return ERR_PTR(-ENOMEM);
 
 	vpcm->nid = nid;
 	list_add_tail(&vpcm->list, &snd->pcm_list);
 
-	वापस vpcm;
-पूर्ण
+	return vpcm;
+}
 
 /**
- * virtsnd_pcm_validate() - Validate अगर the device can be started.
+ * virtsnd_pcm_validate() - Validate if the device can be started.
  * @vdev: VirtIO parent device.
  *
  * Context: Any context.
  * Return: 0 on success, -EINVAL on failure.
  */
-पूर्णांक virtsnd_pcm_validate(काष्ठा virtio_device *vdev)
-अणु
-	अगर (pcm_periods_min < 2 || pcm_periods_min > pcm_periods_max) अणु
+int virtsnd_pcm_validate(struct virtio_device *vdev)
+{
+	if (pcm_periods_min < 2 || pcm_periods_min > pcm_periods_max) {
 		dev_err(&vdev->dev,
 			"invalid range [%u %u] of the number of PCM periods\n",
 			pcm_periods_min, pcm_periods_max);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (!pcm_period_ms_min || pcm_period_ms_min > pcm_period_ms_max) अणु
+	if (!pcm_period_ms_min || pcm_period_ms_min > pcm_period_ms_max) {
 		dev_err(&vdev->dev,
 			"invalid range [%u %u] of the size of the PCM period\n",
 			pcm_period_ms_min, pcm_period_ms_max);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (pcm_buffer_ms < pcm_periods_min * pcm_period_ms_min) अणु
+	if (pcm_buffer_ms < pcm_periods_min * pcm_period_ms_min) {
 		dev_err(&vdev->dev,
 			"pcm_buffer_ms(=%u) value cannot be < %u ms\n",
 			pcm_buffer_ms, pcm_periods_min * pcm_period_ms_min);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (pcm_period_ms_max > pcm_buffer_ms / 2) अणु
+	if (pcm_period_ms_max > pcm_buffer_ms / 2) {
 		dev_err(&vdev->dev,
 			"pcm_period_ms_max(=%u) value cannot be > %u ms\n",
 			pcm_period_ms_max, pcm_buffer_ms / 2);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * virtsnd_pcm_period_elapsed() - Kernel work function to handle the elapsed
  *                                period state.
  * @work: Elapsed period work.
  *
- * The मुख्य purpose of this function is to call snd_pcm_period_elapsed() in
- * a process context, not in an पूर्णांकerrupt context. This is necessary because PCM
+ * The main purpose of this function is to call snd_pcm_period_elapsed() in
+ * a process context, not in an interrupt context. This is necessary because PCM
  * devices operate in non-atomic mode.
  *
  * Context: Process context.
  */
-अटल व्योम virtsnd_pcm_period_elapsed(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा virtio_pcm_substream *vss =
-		container_of(work, काष्ठा virtio_pcm_substream, elapsed_period);
+static void virtsnd_pcm_period_elapsed(struct work_struct *work)
+{
+	struct virtio_pcm_substream *vss =
+		container_of(work, struct virtio_pcm_substream, elapsed_period);
 
 	snd_pcm_period_elapsed(vss->substream);
-पूर्ण
+}
 
 /**
  * virtsnd_pcm_parse_cfg() - Parse the stream configuration.
@@ -319,196 +318,196 @@ MODULE_PARM_DESC(pcm_period_ms_max, "Maximum PCM period time in milliseconds");
  * This function is called during initial device initialization.
  *
  * Context: Any context that permits to sleep.
- * Return: 0 on success, -त्रुटि_सं on failure.
+ * Return: 0 on success, -errno on failure.
  */
-पूर्णांक virtsnd_pcm_parse_cfg(काष्ठा virtio_snd *snd)
-अणु
-	काष्ठा virtio_device *vdev = snd->vdev;
-	काष्ठा virtio_snd_pcm_info *info;
+int virtsnd_pcm_parse_cfg(struct virtio_snd *snd)
+{
+	struct virtio_device *vdev = snd->vdev;
+	struct virtio_snd_pcm_info *info;
 	u32 i;
-	पूर्णांक rc;
+	int rc;
 
-	virtio_cपढ़ो_le(vdev, काष्ठा virtio_snd_config, streams,
+	virtio_cread_le(vdev, struct virtio_snd_config, streams,
 			&snd->nsubstreams);
-	अगर (!snd->nsubstreams)
-		वापस 0;
+	if (!snd->nsubstreams)
+		return 0;
 
-	snd->substreams = devm_kसुस्मृति(&vdev->dev, snd->nsubstreams,
-				       माप(*snd->substreams), GFP_KERNEL);
-	अगर (!snd->substreams)
-		वापस -ENOMEM;
+	snd->substreams = devm_kcalloc(&vdev->dev, snd->nsubstreams,
+				       sizeof(*snd->substreams), GFP_KERNEL);
+	if (!snd->substreams)
+		return -ENOMEM;
 
-	info = kसुस्मृति(snd->nsubstreams, माप(*info), GFP_KERNEL);
-	अगर (!info)
-		वापस -ENOMEM;
+	info = kcalloc(snd->nsubstreams, sizeof(*info), GFP_KERNEL);
+	if (!info)
+		return -ENOMEM;
 
 	rc = virtsnd_ctl_query_info(snd, VIRTIO_SND_R_PCM_INFO, 0,
-				    snd->nsubstreams, माप(*info), info);
-	अगर (rc)
-		जाओ on_निकास;
+				    snd->nsubstreams, sizeof(*info), info);
+	if (rc)
+		goto on_exit;
 
-	क्रम (i = 0; i < snd->nsubstreams; ++i) अणु
-		काष्ठा virtio_pcm_substream *vss = &snd->substreams[i];
-		काष्ठा virtio_pcm *vpcm;
+	for (i = 0; i < snd->nsubstreams; ++i) {
+		struct virtio_pcm_substream *vss = &snd->substreams[i];
+		struct virtio_pcm *vpcm;
 
 		vss->snd = snd;
 		vss->sid = i;
 		INIT_WORK(&vss->elapsed_period, virtsnd_pcm_period_elapsed);
-		init_रुकोqueue_head(&vss->msg_empty);
+		init_waitqueue_head(&vss->msg_empty);
 		spin_lock_init(&vss->lock);
 
 		rc = virtsnd_pcm_build_hw(vss, &info[i]);
-		अगर (rc)
-			जाओ on_निकास;
+		if (rc)
+			goto on_exit;
 
 		vss->nid = le32_to_cpu(info[i].hdr.hda_fn_nid);
 
 		vpcm = virtsnd_pcm_find_or_create(snd, vss->nid);
-		अगर (IS_ERR(vpcm)) अणु
+		if (IS_ERR(vpcm)) {
 			rc = PTR_ERR(vpcm);
-			जाओ on_निकास;
-		पूर्ण
+			goto on_exit;
+		}
 
-		चयन (info[i].direction) अणु
-		हाल VIRTIO_SND_D_OUTPUT:
+		switch (info[i].direction) {
+		case VIRTIO_SND_D_OUTPUT:
 			vss->direction = SNDRV_PCM_STREAM_PLAYBACK;
-			अवरोध;
-		हाल VIRTIO_SND_D_INPUT:
+			break;
+		case VIRTIO_SND_D_INPUT:
 			vss->direction = SNDRV_PCM_STREAM_CAPTURE;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			dev_err(&vdev->dev, "SID %u: unknown direction (%u)\n",
 				vss->sid, info[i].direction);
 			rc = -EINVAL;
-			जाओ on_निकास;
-		पूर्ण
+			goto on_exit;
+		}
 
 		vpcm->streams[vss->direction].nsubstreams++;
-	पूर्ण
+	}
 
-on_निकास:
-	kमुक्त(info);
+on_exit:
+	kfree(info);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /**
  * virtsnd_pcm_build_devs() - Build ALSA PCM devices.
  * @snd: VirtIO sound device.
  *
  * Context: Any context that permits to sleep.
- * Return: 0 on success, -त्रुटि_सं on failure.
+ * Return: 0 on success, -errno on failure.
  */
-पूर्णांक virtsnd_pcm_build_devs(काष्ठा virtio_snd *snd)
-अणु
-	काष्ठा virtio_device *vdev = snd->vdev;
-	काष्ठा virtio_pcm *vpcm;
+int virtsnd_pcm_build_devs(struct virtio_snd *snd)
+{
+	struct virtio_device *vdev = snd->vdev;
+	struct virtio_pcm *vpcm;
 	u32 i;
-	पूर्णांक rc;
+	int rc;
 
-	list_क्रम_each_entry(vpcm, &snd->pcm_list, list) अणु
-		अचिन्हित पूर्णांक npbs =
+	list_for_each_entry(vpcm, &snd->pcm_list, list) {
+		unsigned int npbs =
 			vpcm->streams[SNDRV_PCM_STREAM_PLAYBACK].nsubstreams;
-		अचिन्हित पूर्णांक ncps =
+		unsigned int ncps =
 			vpcm->streams[SNDRV_PCM_STREAM_CAPTURE].nsubstreams;
 
-		अगर (!npbs && !ncps)
-			जारी;
+		if (!npbs && !ncps)
+			continue;
 
 		rc = snd_pcm_new(snd->card, VIRTIO_SND_CARD_DRIVER, vpcm->nid,
 				 npbs, ncps, &vpcm->pcm);
-		अगर (rc) अणु
+		if (rc) {
 			dev_err(&vdev->dev, "snd_pcm_new[%u] failed: %d\n",
 				vpcm->nid, rc);
-			वापस rc;
-		पूर्ण
+			return rc;
+		}
 
 		vpcm->pcm->info_flags = 0;
 		vpcm->pcm->dev_class = SNDRV_PCM_CLASS_GENERIC;
 		vpcm->pcm->dev_subclass = SNDRV_PCM_SUBCLASS_GENERIC_MIX;
-		snम_लिखो(vpcm->pcm->name, माप(vpcm->pcm->name),
+		snprintf(vpcm->pcm->name, sizeof(vpcm->pcm->name),
 			 VIRTIO_SND_PCM_NAME " %u", vpcm->pcm->device);
-		vpcm->pcm->निजी_data = vpcm;
+		vpcm->pcm->private_data = vpcm;
 		vpcm->pcm->nonatomic = true;
 
-		क्रम (i = 0; i < ARRAY_SIZE(vpcm->streams); ++i) अणु
-			काष्ठा virtio_pcm_stream *stream = &vpcm->streams[i];
+		for (i = 0; i < ARRAY_SIZE(vpcm->streams); ++i) {
+			struct virtio_pcm_stream *stream = &vpcm->streams[i];
 
-			अगर (!stream->nsubstreams)
-				जारी;
+			if (!stream->nsubstreams)
+				continue;
 
 			stream->substreams =
-				devm_kसुस्मृति(&vdev->dev, stream->nsubstreams,
-					     माप(*stream->substreams),
+				devm_kcalloc(&vdev->dev, stream->nsubstreams,
+					     sizeof(*stream->substreams),
 					     GFP_KERNEL);
-			अगर (!stream->substreams)
-				वापस -ENOMEM;
+			if (!stream->substreams)
+				return -ENOMEM;
 
 			stream->nsubstreams = 0;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	क्रम (i = 0; i < snd->nsubstreams; ++i) अणु
-		काष्ठा virtio_pcm_stream *vs;
-		काष्ठा virtio_pcm_substream *vss = &snd->substreams[i];
+	for (i = 0; i < snd->nsubstreams; ++i) {
+		struct virtio_pcm_stream *vs;
+		struct virtio_pcm_substream *vss = &snd->substreams[i];
 
 		vpcm = virtsnd_pcm_find(snd, vss->nid);
-		अगर (IS_ERR(vpcm))
-			वापस PTR_ERR(vpcm);
+		if (IS_ERR(vpcm))
+			return PTR_ERR(vpcm);
 
 		vs = &vpcm->streams[vss->direction];
 		vs->substreams[vs->nsubstreams++] = vss;
-	पूर्ण
+	}
 
-	list_क्रम_each_entry(vpcm, &snd->pcm_list, list) अणु
-		क्रम (i = 0; i < ARRAY_SIZE(vpcm->streams); ++i) अणु
-			काष्ठा virtio_pcm_stream *vs = &vpcm->streams[i];
-			काष्ठा snd_pcm_str *ks = &vpcm->pcm->streams[i];
-			काष्ठा snd_pcm_substream *kss;
+	list_for_each_entry(vpcm, &snd->pcm_list, list) {
+		for (i = 0; i < ARRAY_SIZE(vpcm->streams); ++i) {
+			struct virtio_pcm_stream *vs = &vpcm->streams[i];
+			struct snd_pcm_str *ks = &vpcm->pcm->streams[i];
+			struct snd_pcm_substream *kss;
 
-			अगर (!vs->nsubstreams)
-				जारी;
+			if (!vs->nsubstreams)
+				continue;
 
-			क्रम (kss = ks->substream; kss; kss = kss->next)
+			for (kss = ks->substream; kss; kss = kss->next)
 				vs->substreams[kss->number]->substream = kss;
 
 			snd_pcm_set_ops(vpcm->pcm, i, &virtsnd_pcm_ops);
-		पूर्ण
+		}
 
 		snd_pcm_set_managed_buffer_all(vpcm->pcm,
-					       SNDRV_DMA_TYPE_VMALLOC, शून्य,
+					       SNDRV_DMA_TYPE_VMALLOC, NULL,
 					       0, 0);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * virtsnd_pcm_event() - Handle the PCM device event notअगरication.
+ * virtsnd_pcm_event() - Handle the PCM device event notification.
  * @snd: VirtIO sound device.
  * @event: VirtIO sound event.
  *
  * Context: Interrupt context.
  */
-व्योम virtsnd_pcm_event(काष्ठा virtio_snd *snd, काष्ठा virtio_snd_event *event)
-अणु
-	काष्ठा virtio_pcm_substream *vss;
+void virtsnd_pcm_event(struct virtio_snd *snd, struct virtio_snd_event *event)
+{
+	struct virtio_pcm_substream *vss;
 	u32 sid = le32_to_cpu(event->data);
 
-	अगर (sid >= snd->nsubstreams)
-		वापस;
+	if (sid >= snd->nsubstreams)
+		return;
 
 	vss = &snd->substreams[sid];
 
-	चयन (le32_to_cpu(event->hdr.code)) अणु
-	हाल VIRTIO_SND_EVT_PCM_PERIOD_ELAPSED:
+	switch (le32_to_cpu(event->hdr.code)) {
+	case VIRTIO_SND_EVT_PCM_PERIOD_ELAPSED:
 		/* TODO: deal with shmem elapsed period */
-		अवरोध;
-	हाल VIRTIO_SND_EVT_PCM_XRUN:
+		break;
+	case VIRTIO_SND_EVT_PCM_XRUN:
 		spin_lock(&vss->lock);
-		अगर (vss->xfer_enabled)
+		if (vss->xfer_enabled)
 			vss->xfer_xrun = true;
 		spin_unlock(&vss->lock);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}

@@ -1,7 +1,6 @@
-<शैली गुरु>
-अणु
+{
 	"raw_stack: no skb_load_bytes",
-	.insns = अणु
+	.insns = {
 	BPF_MOV64_IMM(BPF_REG_2, 4),
 	BPF_ALU64_REG(BPF_MOV, BPF_REG_6, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_6, -8),
@@ -10,14 +9,14 @@
 	/* Call to skb_load_bytes() omitted. */
 	BPF_LDX_MEM(BPF_DW, BPF_REG_0, BPF_REG_6, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.result = REJECT,
 	.errstr = "invalid read from stack R6 off=-8 size=8",
 	.prog_type = BPF_PROG_TYPE_SCHED_CLS,
-पूर्ण,
-अणु
+},
+{
 	"raw_stack: skb_load_bytes, negative len",
-	.insns = अणु
+	.insns = {
 	BPF_MOV64_IMM(BPF_REG_2, 4),
 	BPF_ALU64_REG(BPF_MOV, BPF_REG_6, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_6, -8),
@@ -26,14 +25,14 @@
 	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_skb_load_bytes),
 	BPF_LDX_MEM(BPF_DW, BPF_REG_0, BPF_REG_6, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.result = REJECT,
 	.errstr = "R4 min value is negative",
 	.prog_type = BPF_PROG_TYPE_SCHED_CLS,
-पूर्ण,
-अणु
+},
+{
 	"raw_stack: skb_load_bytes, negative len 2",
-	.insns = अणु
+	.insns = {
 	BPF_MOV64_IMM(BPF_REG_2, 4),
 	BPF_ALU64_REG(BPF_MOV, BPF_REG_6, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_6, -8),
@@ -42,14 +41,14 @@
 	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_skb_load_bytes),
 	BPF_LDX_MEM(BPF_DW, BPF_REG_0, BPF_REG_6, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.result = REJECT,
 	.errstr = "R4 min value is negative",
 	.prog_type = BPF_PROG_TYPE_SCHED_CLS,
-पूर्ण,
-अणु
+},
+{
 	"raw_stack: skb_load_bytes, zero len",
-	.insns = अणु
+	.insns = {
 	BPF_MOV64_IMM(BPF_REG_2, 4),
 	BPF_ALU64_REG(BPF_MOV, BPF_REG_6, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_6, -8),
@@ -58,14 +57,14 @@
 	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_skb_load_bytes),
 	BPF_LDX_MEM(BPF_DW, BPF_REG_0, BPF_REG_6, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.result = REJECT,
 	.errstr = "invalid zero-sized read",
 	.prog_type = BPF_PROG_TYPE_SCHED_CLS,
-पूर्ण,
-अणु
+},
+{
 	"raw_stack: skb_load_bytes, no init",
-	.insns = अणु
+	.insns = {
 	BPF_MOV64_IMM(BPF_REG_2, 4),
 	BPF_ALU64_REG(BPF_MOV, BPF_REG_6, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_6, -8),
@@ -74,13 +73,13 @@
 	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_skb_load_bytes),
 	BPF_LDX_MEM(BPF_DW, BPF_REG_0, BPF_REG_6, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.result = ACCEPT,
 	.prog_type = BPF_PROG_TYPE_SCHED_CLS,
-पूर्ण,
-अणु
+},
+{
 	"raw_stack: skb_load_bytes, init",
-	.insns = अणु
+	.insns = {
 	BPF_MOV64_IMM(BPF_REG_2, 4),
 	BPF_ALU64_REG(BPF_MOV, BPF_REG_6, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_6, -8),
@@ -90,13 +89,13 @@
 	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_skb_load_bytes),
 	BPF_LDX_MEM(BPF_DW, BPF_REG_0, BPF_REG_6, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.result = ACCEPT,
 	.prog_type = BPF_PROG_TYPE_SCHED_CLS,
-पूर्ण,
-अणु
+},
+{
 	"raw_stack: skb_load_bytes, spilled regs around bounds",
-	.insns = अणु
+	.insns = {
 	BPF_MOV64_IMM(BPF_REG_2, 4),
 	BPF_ALU64_REG(BPF_MOV, BPF_REG_6, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_6, -16),
@@ -108,18 +107,18 @@
 	BPF_LDX_MEM(BPF_DW, BPF_REG_0, BPF_REG_6, -8),
 	BPF_LDX_MEM(BPF_DW, BPF_REG_2, BPF_REG_6,  8),
 	BPF_LDX_MEM(BPF_W, BPF_REG_0, BPF_REG_0,
-		    दुरत्व(काष्ठा __sk_buff, mark)),
+		    offsetof(struct __sk_buff, mark)),
 	BPF_LDX_MEM(BPF_W, BPF_REG_2, BPF_REG_2,
-		    दुरत्व(काष्ठा __sk_buff, priority)),
+		    offsetof(struct __sk_buff, priority)),
 	BPF_ALU64_REG(BPF_ADD, BPF_REG_0, BPF_REG_2),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.result = ACCEPT,
 	.prog_type = BPF_PROG_TYPE_SCHED_CLS,
-पूर्ण,
-अणु
+},
+{
 	"raw_stack: skb_load_bytes, spilled regs corruption",
-	.insns = अणु
+	.insns = {
 	BPF_MOV64_IMM(BPF_REG_2, 4),
 	BPF_ALU64_REG(BPF_MOV, BPF_REG_6, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_6, -8),
@@ -129,17 +128,17 @@
 	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_skb_load_bytes),
 	BPF_LDX_MEM(BPF_DW, BPF_REG_0, BPF_REG_6, 0),
 	BPF_LDX_MEM(BPF_W, BPF_REG_0, BPF_REG_0,
-		    दुरत्व(काष्ठा __sk_buff, mark)),
+		    offsetof(struct __sk_buff, mark)),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.result = REJECT,
 	.errstr = "R0 invalid mem access 'inv'",
 	.prog_type = BPF_PROG_TYPE_SCHED_CLS,
 	.flags = F_NEEDS_EFFICIENT_UNALIGNED_ACCESS,
-पूर्ण,
-अणु
+},
+{
 	"raw_stack: skb_load_bytes, spilled regs corruption 2",
-	.insns = अणु
+	.insns = {
 	BPF_MOV64_IMM(BPF_REG_2, 4),
 	BPF_ALU64_REG(BPF_MOV, BPF_REG_6, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_6, -16),
@@ -153,23 +152,23 @@
 	BPF_LDX_MEM(BPF_DW, BPF_REG_2, BPF_REG_6,  8),
 	BPF_LDX_MEM(BPF_DW, BPF_REG_3, BPF_REG_6,  0),
 	BPF_LDX_MEM(BPF_W, BPF_REG_0, BPF_REG_0,
-		    दुरत्व(काष्ठा __sk_buff, mark)),
+		    offsetof(struct __sk_buff, mark)),
 	BPF_LDX_MEM(BPF_W, BPF_REG_2, BPF_REG_2,
-		    दुरत्व(काष्ठा __sk_buff, priority)),
+		    offsetof(struct __sk_buff, priority)),
 	BPF_ALU64_REG(BPF_ADD, BPF_REG_0, BPF_REG_2),
 	BPF_LDX_MEM(BPF_W, BPF_REG_3, BPF_REG_3,
-		    दुरत्व(काष्ठा __sk_buff, pkt_type)),
+		    offsetof(struct __sk_buff, pkt_type)),
 	BPF_ALU64_REG(BPF_ADD, BPF_REG_0, BPF_REG_3),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.result = REJECT,
 	.errstr = "R3 invalid mem access 'inv'",
 	.prog_type = BPF_PROG_TYPE_SCHED_CLS,
 	.flags = F_NEEDS_EFFICIENT_UNALIGNED_ACCESS,
-पूर्ण,
-अणु
+},
+{
 	"raw_stack: skb_load_bytes, spilled regs + data",
-	.insns = अणु
+	.insns = {
 	BPF_MOV64_IMM(BPF_REG_2, 4),
 	BPF_ALU64_REG(BPF_MOV, BPF_REG_6, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_6, -16),
@@ -183,19 +182,19 @@
 	BPF_LDX_MEM(BPF_DW, BPF_REG_2, BPF_REG_6,  8),
 	BPF_LDX_MEM(BPF_DW, BPF_REG_3, BPF_REG_6,  0),
 	BPF_LDX_MEM(BPF_W, BPF_REG_0, BPF_REG_0,
-		    दुरत्व(काष्ठा __sk_buff, mark)),
+		    offsetof(struct __sk_buff, mark)),
 	BPF_LDX_MEM(BPF_W, BPF_REG_2, BPF_REG_2,
-		    दुरत्व(काष्ठा __sk_buff, priority)),
+		    offsetof(struct __sk_buff, priority)),
 	BPF_ALU64_REG(BPF_ADD, BPF_REG_0, BPF_REG_2),
 	BPF_ALU64_REG(BPF_ADD, BPF_REG_0, BPF_REG_3),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.result = ACCEPT,
 	.prog_type = BPF_PROG_TYPE_SCHED_CLS,
-पूर्ण,
-अणु
+},
+{
 	"raw_stack: skb_load_bytes, invalid access 1",
-	.insns = अणु
+	.insns = {
 	BPF_MOV64_IMM(BPF_REG_2, 4),
 	BPF_ALU64_REG(BPF_MOV, BPF_REG_6, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_6, -513),
@@ -204,14 +203,14 @@
 	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_skb_load_bytes),
 	BPF_LDX_MEM(BPF_DW, BPF_REG_0, BPF_REG_6, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.result = REJECT,
 	.errstr = "invalid indirect access to stack R3 off=-513 size=8",
 	.prog_type = BPF_PROG_TYPE_SCHED_CLS,
-पूर्ण,
-अणु
+},
+{
 	"raw_stack: skb_load_bytes, invalid access 2",
-	.insns = अणु
+	.insns = {
 	BPF_MOV64_IMM(BPF_REG_2, 4),
 	BPF_ALU64_REG(BPF_MOV, BPF_REG_6, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_6, -1),
@@ -220,14 +219,14 @@
 	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_skb_load_bytes),
 	BPF_LDX_MEM(BPF_DW, BPF_REG_0, BPF_REG_6, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.result = REJECT,
 	.errstr = "invalid indirect access to stack R3 off=-1 size=8",
 	.prog_type = BPF_PROG_TYPE_SCHED_CLS,
-पूर्ण,
-अणु
+},
+{
 	"raw_stack: skb_load_bytes, invalid access 3",
-	.insns = अणु
+	.insns = {
 	BPF_MOV64_IMM(BPF_REG_2, 4),
 	BPF_ALU64_REG(BPF_MOV, BPF_REG_6, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_6, 0xffffffff),
@@ -236,14 +235,14 @@
 	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_skb_load_bytes),
 	BPF_LDX_MEM(BPF_DW, BPF_REG_0, BPF_REG_6, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.result = REJECT,
 	.errstr = "R4 min value is negative",
 	.prog_type = BPF_PROG_TYPE_SCHED_CLS,
-पूर्ण,
-अणु
+},
+{
 	"raw_stack: skb_load_bytes, invalid access 4",
-	.insns = अणु
+	.insns = {
 	BPF_MOV64_IMM(BPF_REG_2, 4),
 	BPF_ALU64_REG(BPF_MOV, BPF_REG_6, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_6, -1),
@@ -252,14 +251,14 @@
 	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_skb_load_bytes),
 	BPF_LDX_MEM(BPF_DW, BPF_REG_0, BPF_REG_6, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.result = REJECT,
 	.errstr = "R4 unbounded memory access, use 'var &= const' or 'if (var < const)'",
 	.prog_type = BPF_PROG_TYPE_SCHED_CLS,
-पूर्ण,
-अणु
+},
+{
 	"raw_stack: skb_load_bytes, invalid access 5",
-	.insns = अणु
+	.insns = {
 	BPF_MOV64_IMM(BPF_REG_2, 4),
 	BPF_ALU64_REG(BPF_MOV, BPF_REG_6, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_6, -512),
@@ -268,14 +267,14 @@
 	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_skb_load_bytes),
 	BPF_LDX_MEM(BPF_DW, BPF_REG_0, BPF_REG_6, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.result = REJECT,
 	.errstr = "R4 unbounded memory access, use 'var &= const' or 'if (var < const)'",
 	.prog_type = BPF_PROG_TYPE_SCHED_CLS,
-पूर्ण,
-अणु
+},
+{
 	"raw_stack: skb_load_bytes, invalid access 6",
-	.insns = अणु
+	.insns = {
 	BPF_MOV64_IMM(BPF_REG_2, 4),
 	BPF_ALU64_REG(BPF_MOV, BPF_REG_6, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_6, -512),
@@ -284,14 +283,14 @@
 	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_skb_load_bytes),
 	BPF_LDX_MEM(BPF_DW, BPF_REG_0, BPF_REG_6, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.result = REJECT,
 	.errstr = "invalid zero-sized read",
 	.prog_type = BPF_PROG_TYPE_SCHED_CLS,
-पूर्ण,
-अणु
+},
+{
 	"raw_stack: skb_load_bytes, large access",
-	.insns = अणु
+	.insns = {
 	BPF_MOV64_IMM(BPF_REG_2, 4),
 	BPF_ALU64_REG(BPF_MOV, BPF_REG_6, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_6, -512),
@@ -300,7 +299,7 @@
 	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_skb_load_bytes),
 	BPF_LDX_MEM(BPF_DW, BPF_REG_0, BPF_REG_6, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.result = ACCEPT,
 	.prog_type = BPF_PROG_TYPE_SCHED_CLS,
-पूर्ण,
+},

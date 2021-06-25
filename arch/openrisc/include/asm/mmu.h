@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * OpenRISC Linux
  *
@@ -13,11 +12,11 @@
  * et al.
  */
 
-#अगर_अघोषित __ASM_OPENRISC_MMU_H
-#घोषणा __ASM_OPENRISC_MMU_H
+#ifndef __ASM_OPENRISC_MMU_H
+#define __ASM_OPENRISC_MMU_H
 
-#अगर_अघोषित __ASSEMBLY__
-प्रकार अचिन्हित दीर्घ mm_context_t;
-#पूर्ण_अगर
+#ifndef __ASSEMBLY__
+typedef unsigned long mm_context_t;
+#endif
 
-#पूर्ण_अगर
+#endif

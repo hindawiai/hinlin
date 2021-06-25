@@ -1,307 +1,306 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (c) 2013-2020, Intel Corporation. All rights reserved.
  * Intel Management Engine Interface (Intel MEI) Linux driver
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/device.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/types.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/init.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/workqueue.h>
-#समावेश <linux/pm_करोमुख्य.h>
-#समावेश <linux/pm_runसमय.स>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/device.h>
+#include <linux/errno.h>
+#include <linux/types.h>
+#include <linux/pci.h>
+#include <linux/init.h>
+#include <linux/sched.h>
+#include <linux/interrupt.h>
+#include <linux/workqueue.h>
+#include <linux/pm_domain.h>
+#include <linux/pm_runtime.h>
 
-#समावेश <linux/mei.h>
+#include <linux/mei.h>
 
 
-#समावेश "mei_dev.h"
-#समावेश "hw-txe.h"
+#include "mei_dev.h"
+#include "hw-txe.h"
 
-अटल स्थिर काष्ठा pci_device_id mei_txe_pci_tbl[] = अणु
-	अणुPCI_VDEVICE(INTEL, 0x0F18)पूर्ण, /* Baytrail */
-	अणुPCI_VDEVICE(INTEL, 0x2298)पूर्ण, /* Cherrytrail */
+static const struct pci_device_id mei_txe_pci_tbl[] = {
+	{PCI_VDEVICE(INTEL, 0x0F18)}, /* Baytrail */
+	{PCI_VDEVICE(INTEL, 0x2298)}, /* Cherrytrail */
 
-	अणु0, पूर्ण
-पूर्ण;
+	{0, }
+};
 MODULE_DEVICE_TABLE(pci, mei_txe_pci_tbl);
 
-#अगर_घोषित CONFIG_PM
-अटल अंतरभूत व्योम mei_txe_set_pm_करोमुख्य(काष्ठा mei_device *dev);
-अटल अंतरभूत व्योम mei_txe_unset_pm_करोमुख्य(काष्ठा mei_device *dev);
-#अन्यथा
-अटल अंतरभूत व्योम mei_txe_set_pm_करोमुख्य(काष्ठा mei_device *dev) अणुपूर्ण
-अटल अंतरभूत व्योम mei_txe_unset_pm_करोमुख्य(काष्ठा mei_device *dev) अणुपूर्ण
-#पूर्ण_अगर /* CONFIG_PM */
+#ifdef CONFIG_PM
+static inline void mei_txe_set_pm_domain(struct mei_device *dev);
+static inline void mei_txe_unset_pm_domain(struct mei_device *dev);
+#else
+static inline void mei_txe_set_pm_domain(struct mei_device *dev) {}
+static inline void mei_txe_unset_pm_domain(struct mei_device *dev) {}
+#endif /* CONFIG_PM */
 
 /**
  * mei_txe_probe - Device Initialization Routine
  *
- * @pdev: PCI device काष्ठाure
+ * @pdev: PCI device structure
  * @ent: entry in mei_txe_pci_tbl
  *
  * Return: 0 on success, <0 on failure.
  */
-अटल पूर्णांक mei_txe_probe(काष्ठा pci_dev *pdev, स्थिर काष्ठा pci_device_id *ent)
-अणु
-	काष्ठा mei_device *dev;
-	काष्ठा mei_txe_hw *hw;
-	स्थिर पूर्णांक mask = BIT(SEC_BAR) | BIT(BRIDGE_BAR);
-	पूर्णांक err;
+static int mei_txe_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
+{
+	struct mei_device *dev;
+	struct mei_txe_hw *hw;
+	const int mask = BIT(SEC_BAR) | BIT(BRIDGE_BAR);
+	int err;
 
 	/* enable pci dev */
 	err = pcim_enable_device(pdev);
-	अगर (err) अणु
+	if (err) {
 		dev_err(&pdev->dev, "failed to enable pci device.\n");
-		जाओ end;
-	पूर्ण
+		goto end;
+	}
 	/* set PCI host mastering  */
 	pci_set_master(pdev);
-	/* pci request regions and mapping IO device memory क्रम mei driver */
+	/* pci request regions and mapping IO device memory for mei driver */
 	err = pcim_iomap_regions(pdev, mask, KBUILD_MODNAME);
-	अगर (err) अणु
+	if (err) {
 		dev_err(&pdev->dev, "failed to get pci regions.\n");
-		जाओ end;
-	पूर्ण
+		goto end;
+	}
 
 	err = pci_set_dma_mask(pdev, DMA_BIT_MASK(36));
-	अगर (err) अणु
+	if (err) {
 		err = pci_set_dma_mask(pdev, DMA_BIT_MASK(32));
-		अगर (err) अणु
+		if (err) {
 			dev_err(&pdev->dev, "No suitable DMA available.\n");
-			जाओ end;
-		पूर्ण
-	पूर्ण
+			goto end;
+		}
+	}
 
-	/* allocates and initializes the mei dev काष्ठाure */
+	/* allocates and initializes the mei dev structure */
 	dev = mei_txe_dev_init(pdev);
-	अगर (!dev) अणु
+	if (!dev) {
 		err = -ENOMEM;
-		जाओ end;
-	पूर्ण
+		goto end;
+	}
 	hw = to_txe_hw(dev);
 	hw->mem_addr = pcim_iomap_table(pdev);
 
 	pci_enable_msi(pdev);
 
-	/* clear spurious पूर्णांकerrupts */
-	mei_clear_पूर्णांकerrupts(dev);
+	/* clear spurious interrupts */
+	mei_clear_interrupts(dev);
 
-	/* request and enable पूर्णांकerrupt  */
-	अगर (pci_dev_msi_enabled(pdev))
-		err = request_thपढ़ोed_irq(pdev->irq,
-			शून्य,
-			mei_txe_irq_thपढ़ो_handler,
+	/* request and enable interrupt  */
+	if (pci_dev_msi_enabled(pdev))
+		err = request_threaded_irq(pdev->irq,
+			NULL,
+			mei_txe_irq_thread_handler,
 			IRQF_ONESHOT, KBUILD_MODNAME, dev);
-	अन्यथा
-		err = request_thपढ़ोed_irq(pdev->irq,
+	else
+		err = request_threaded_irq(pdev->irq,
 			mei_txe_irq_quick_handler,
-			mei_txe_irq_thपढ़ो_handler,
+			mei_txe_irq_thread_handler,
 			IRQF_SHARED, KBUILD_MODNAME, dev);
-	अगर (err) अणु
+	if (err) {
 		dev_err(&pdev->dev, "mei: request_threaded_irq failure. irq = %d\n",
 			pdev->irq);
-		जाओ end;
-	पूर्ण
+		goto end;
+	}
 
-	अगर (mei_start(dev)) अणु
+	if (mei_start(dev)) {
 		dev_err(&pdev->dev, "init hw failure.\n");
 		err = -ENODEV;
-		जाओ release_irq;
-	पूर्ण
+		goto release_irq;
+	}
 
-	pm_runसमय_set_स्वतःsuspend_delay(&pdev->dev, MEI_TXI_RPM_TIMEOUT);
-	pm_runसमय_use_स्वतःsuspend(&pdev->dev);
+	pm_runtime_set_autosuspend_delay(&pdev->dev, MEI_TXI_RPM_TIMEOUT);
+	pm_runtime_use_autosuspend(&pdev->dev);
 
-	err = mei_रेजिस्टर(dev, &pdev->dev);
-	अगर (err)
-		जाओ stop;
+	err = mei_register(dev, &pdev->dev);
+	if (err)
+		goto stop;
 
 	pci_set_drvdata(pdev, dev);
 
 	/*
-	 * MEI requires to resume from runसमय suspend mode
-	 * in order to perक्रमm link reset flow upon प्रणाली suspend.
+	 * MEI requires to resume from runtime suspend mode
+	 * in order to perform link reset flow upon system suspend.
 	 */
-	dev_pm_set_driver_flags(&pdev->dev, DPM_FLAG_NO_सूचीECT_COMPLETE);
+	dev_pm_set_driver_flags(&pdev->dev, DPM_FLAG_NO_DIRECT_COMPLETE);
 
 	/*
-	 * TXE maps runसमय suspend/resume to own घातer gating states,
-	 * hence we need to go around native PCI runसमय service which
-	 * eventually brings the device पूर्णांकo D3cold/hot state.
+	 * TXE maps runtime suspend/resume to own power gating states,
+	 * hence we need to go around native PCI runtime service which
+	 * eventually brings the device into D3cold/hot state.
 	 * But the TXE device cannot wake up from D3 unlike from own
-	 * घातer gating. To get around PCI device native runसमय pm,
-	 * TXE uses runसमय pm करोमुख्य handlers which take precedence.
+	 * power gating. To get around PCI device native runtime pm,
+	 * TXE uses runtime pm domain handlers which take precedence.
 	 */
-	mei_txe_set_pm_करोमुख्य(dev);
+	mei_txe_set_pm_domain(dev);
 
-	pm_runसमय_put_noidle(&pdev->dev);
+	pm_runtime_put_noidle(&pdev->dev);
 
-	वापस 0;
+	return 0;
 
 stop:
 	mei_stop(dev);
 release_irq:
 	mei_cancel_work(dev);
-	mei_disable_पूर्णांकerrupts(dev);
-	मुक्त_irq(pdev->irq, dev);
+	mei_disable_interrupts(dev);
+	free_irq(pdev->irq, dev);
 end:
 	dev_err(&pdev->dev, "initialization failed.\n");
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /**
- * mei_txe_हटाओ - Device Shutकरोwn Routine
+ * mei_txe_remove - Device Shutdown Routine
  *
- * @pdev: PCI device काष्ठाure
+ * @pdev: PCI device structure
  *
- *  mei_txe_shutकरोwn is called from the reboot notअगरier
- *  it's a simplअगरied version of हटाओ so we go करोwn
+ *  mei_txe_shutdown is called from the reboot notifier
+ *  it's a simplified version of remove so we go down
  *  faster.
  */
-अटल व्योम mei_txe_shutकरोwn(काष्ठा pci_dev *pdev)
-अणु
-	काष्ठा mei_device *dev;
+static void mei_txe_shutdown(struct pci_dev *pdev)
+{
+	struct mei_device *dev;
 
 	dev = pci_get_drvdata(pdev);
-	अगर (!dev)
-		वापस;
+	if (!dev)
+		return;
 
 	dev_dbg(&pdev->dev, "shutdown\n");
 	mei_stop(dev);
 
-	mei_txe_unset_pm_करोमुख्य(dev);
+	mei_txe_unset_pm_domain(dev);
 
-	mei_disable_पूर्णांकerrupts(dev);
-	मुक्त_irq(pdev->irq, dev);
-पूर्ण
+	mei_disable_interrupts(dev);
+	free_irq(pdev->irq, dev);
+}
 
 /**
- * mei_txe_हटाओ - Device Removal Routine
+ * mei_txe_remove - Device Removal Routine
  *
- * @pdev: PCI device काष्ठाure
+ * @pdev: PCI device structure
  *
- * mei_हटाओ is called by the PCI subप्रणाली to alert the driver
+ * mei_remove is called by the PCI subsystem to alert the driver
  * that it should release a PCI device.
  */
-अटल व्योम mei_txe_हटाओ(काष्ठा pci_dev *pdev)
-अणु
-	काष्ठा mei_device *dev;
+static void mei_txe_remove(struct pci_dev *pdev)
+{
+	struct mei_device *dev;
 
 	dev = pci_get_drvdata(pdev);
-	अगर (!dev) अणु
+	if (!dev) {
 		dev_err(&pdev->dev, "mei: dev == NULL\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	pm_runसमय_get_noresume(&pdev->dev);
+	pm_runtime_get_noresume(&pdev->dev);
 
 	mei_stop(dev);
 
-	mei_txe_unset_pm_करोमुख्य(dev);
+	mei_txe_unset_pm_domain(dev);
 
-	mei_disable_पूर्णांकerrupts(dev);
-	मुक्त_irq(pdev->irq, dev);
+	mei_disable_interrupts(dev);
+	free_irq(pdev->irq, dev);
 
-	mei_deरेजिस्टर(dev);
-पूर्ण
+	mei_deregister(dev);
+}
 
 
-#अगर_घोषित CONFIG_PM_SLEEP
-अटल पूर्णांक mei_txe_pci_suspend(काष्ठा device *device)
-अणु
-	काष्ठा pci_dev *pdev = to_pci_dev(device);
-	काष्ठा mei_device *dev = pci_get_drvdata(pdev);
+#ifdef CONFIG_PM_SLEEP
+static int mei_txe_pci_suspend(struct device *device)
+{
+	struct pci_dev *pdev = to_pci_dev(device);
+	struct mei_device *dev = pci_get_drvdata(pdev);
 
-	अगर (!dev)
-		वापस -ENODEV;
+	if (!dev)
+		return -ENODEV;
 
 	dev_dbg(&pdev->dev, "suspend\n");
 
 	mei_stop(dev);
 
-	mei_disable_पूर्णांकerrupts(dev);
+	mei_disable_interrupts(dev);
 
-	मुक्त_irq(pdev->irq, dev);
+	free_irq(pdev->irq, dev);
 	pci_disable_msi(pdev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mei_txe_pci_resume(काष्ठा device *device)
-अणु
-	काष्ठा pci_dev *pdev = to_pci_dev(device);
-	काष्ठा mei_device *dev;
-	पूर्णांक err;
+static int mei_txe_pci_resume(struct device *device)
+{
+	struct pci_dev *pdev = to_pci_dev(device);
+	struct mei_device *dev;
+	int err;
 
 	dev = pci_get_drvdata(pdev);
-	अगर (!dev)
-		वापस -ENODEV;
+	if (!dev)
+		return -ENODEV;
 
 	pci_enable_msi(pdev);
 
-	mei_clear_पूर्णांकerrupts(dev);
+	mei_clear_interrupts(dev);
 
-	/* request and enable पूर्णांकerrupt */
-	अगर (pci_dev_msi_enabled(pdev))
-		err = request_thपढ़ोed_irq(pdev->irq,
-			शून्य,
-			mei_txe_irq_thपढ़ो_handler,
+	/* request and enable interrupt */
+	if (pci_dev_msi_enabled(pdev))
+		err = request_threaded_irq(pdev->irq,
+			NULL,
+			mei_txe_irq_thread_handler,
 			IRQF_ONESHOT, KBUILD_MODNAME, dev);
-	अन्यथा
-		err = request_thपढ़ोed_irq(pdev->irq,
+	else
+		err = request_threaded_irq(pdev->irq,
 			mei_txe_irq_quick_handler,
-			mei_txe_irq_thपढ़ो_handler,
+			mei_txe_irq_thread_handler,
 			IRQF_SHARED, KBUILD_MODNAME, dev);
-	अगर (err) अणु
+	if (err) {
 		dev_err(&pdev->dev, "request_threaded_irq failed: irq = %d.\n",
 				pdev->irq);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	err = mei_restart(dev);
 
-	वापस err;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_PM_SLEEP */
+	return err;
+}
+#endif /* CONFIG_PM_SLEEP */
 
-#अगर_घोषित CONFIG_PM
-अटल पूर्णांक mei_txe_pm_runसमय_idle(काष्ठा device *device)
-अणु
-	काष्ठा mei_device *dev;
+#ifdef CONFIG_PM
+static int mei_txe_pm_runtime_idle(struct device *device)
+{
+	struct mei_device *dev;
 
 	dev_dbg(device, "rpm: txe: runtime_idle\n");
 
 	dev = dev_get_drvdata(device);
-	अगर (!dev)
-		वापस -ENODEV;
-	अगर (mei_ग_लिखो_is_idle(dev))
-		pm_runसमय_स्वतःsuspend(device);
+	if (!dev)
+		return -ENODEV;
+	if (mei_write_is_idle(dev))
+		pm_runtime_autosuspend(device);
 
-	वापस -EBUSY;
-पूर्ण
-अटल पूर्णांक mei_txe_pm_runसमय_suspend(काष्ठा device *device)
-अणु
-	काष्ठा mei_device *dev;
-	पूर्णांक ret;
+	return -EBUSY;
+}
+static int mei_txe_pm_runtime_suspend(struct device *device)
+{
+	struct mei_device *dev;
+	int ret;
 
 	dev_dbg(device, "rpm: txe: runtime suspend\n");
 
 	dev = dev_get_drvdata(device);
-	अगर (!dev)
-		वापस -ENODEV;
+	if (!dev)
+		return -ENODEV;
 
 	mutex_lock(&dev->device_lock);
 
-	अगर (mei_ग_लिखो_is_idle(dev))
+	if (mei_write_is_idle(dev))
 		ret = mei_txe_aliveness_set_sync(dev, 0);
-	अन्यथा
+	else
 		ret = -EAGAIN;
 
 	/* keep irq on we are staying in D0 */
@@ -310,26 +309,26 @@ end:
 
 	mutex_unlock(&dev->device_lock);
 
-	अगर (ret && ret != -EAGAIN)
+	if (ret && ret != -EAGAIN)
 		schedule_work(&dev->reset_work);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक mei_txe_pm_runसमय_resume(काष्ठा device *device)
-अणु
-	काष्ठा mei_device *dev;
-	पूर्णांक ret;
+static int mei_txe_pm_runtime_resume(struct device *device)
+{
+	struct mei_device *dev;
+	int ret;
 
 	dev_dbg(device, "rpm: txe: runtime resume\n");
 
 	dev = dev_get_drvdata(device);
-	अगर (!dev)
-		वापस -ENODEV;
+	if (!dev)
+		return -ENODEV;
 
 	mutex_lock(&dev->device_lock);
 
-	mei_enable_पूर्णांकerrupts(dev);
+	mei_enable_interrupts(dev);
 
 	ret = mei_txe_aliveness_set_sync(dev, 1);
 
@@ -337,68 +336,68 @@ end:
 
 	dev_dbg(device, "rpm: txe: runtime resume ret = %d\n", ret);
 
-	अगर (ret)
+	if (ret)
 		schedule_work(&dev->reset_work);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * mei_txe_set_pm_करोमुख्य - fill and set pm करोमुख्य काष्ठाure क्रम device
+ * mei_txe_set_pm_domain - fill and set pm domain structure for device
  *
  * @dev: mei_device
  */
-अटल अंतरभूत व्योम mei_txe_set_pm_करोमुख्य(काष्ठा mei_device *dev)
-अणु
-	काष्ठा pci_dev *pdev  = to_pci_dev(dev->dev);
+static inline void mei_txe_set_pm_domain(struct mei_device *dev)
+{
+	struct pci_dev *pdev  = to_pci_dev(dev->dev);
 
-	अगर (pdev->dev.bus && pdev->dev.bus->pm) अणु
-		dev->pg_करोमुख्य.ops = *pdev->dev.bus->pm;
+	if (pdev->dev.bus && pdev->dev.bus->pm) {
+		dev->pg_domain.ops = *pdev->dev.bus->pm;
 
-		dev->pg_करोमुख्य.ops.runसमय_suspend = mei_txe_pm_runसमय_suspend;
-		dev->pg_करोमुख्य.ops.runसमय_resume = mei_txe_pm_runसमय_resume;
-		dev->pg_करोमुख्य.ops.runसमय_idle = mei_txe_pm_runसमय_idle;
+		dev->pg_domain.ops.runtime_suspend = mei_txe_pm_runtime_suspend;
+		dev->pg_domain.ops.runtime_resume = mei_txe_pm_runtime_resume;
+		dev->pg_domain.ops.runtime_idle = mei_txe_pm_runtime_idle;
 
-		dev_pm_करोमुख्य_set(&pdev->dev, &dev->pg_करोमुख्य);
-	पूर्ण
-पूर्ण
+		dev_pm_domain_set(&pdev->dev, &dev->pg_domain);
+	}
+}
 
 /**
- * mei_txe_unset_pm_करोमुख्य - clean pm करोमुख्य काष्ठाure क्रम device
+ * mei_txe_unset_pm_domain - clean pm domain structure for device
  *
  * @dev: mei_device
  */
-अटल अंतरभूत व्योम mei_txe_unset_pm_करोमुख्य(काष्ठा mei_device *dev)
-अणु
-	/* stop using pm callbacks अगर any */
-	dev_pm_करोमुख्य_set(dev->dev, शून्य);
-पूर्ण
+static inline void mei_txe_unset_pm_domain(struct mei_device *dev)
+{
+	/* stop using pm callbacks if any */
+	dev_pm_domain_set(dev->dev, NULL);
+}
 
-अटल स्थिर काष्ठा dev_pm_ops mei_txe_pm_ops = अणु
+static const struct dev_pm_ops mei_txe_pm_ops = {
 	SET_SYSTEM_SLEEP_PM_OPS(mei_txe_pci_suspend,
 				mei_txe_pci_resume)
 	SET_RUNTIME_PM_OPS(
-		mei_txe_pm_runसमय_suspend,
-		mei_txe_pm_runसमय_resume,
-		mei_txe_pm_runसमय_idle)
-पूर्ण;
+		mei_txe_pm_runtime_suspend,
+		mei_txe_pm_runtime_resume,
+		mei_txe_pm_runtime_idle)
+};
 
-#घोषणा MEI_TXE_PM_OPS	(&mei_txe_pm_ops)
-#अन्यथा
-#घोषणा MEI_TXE_PM_OPS	शून्य
-#पूर्ण_अगर /* CONFIG_PM */
+#define MEI_TXE_PM_OPS	(&mei_txe_pm_ops)
+#else
+#define MEI_TXE_PM_OPS	NULL
+#endif /* CONFIG_PM */
 
 /*
- *  PCI driver काष्ठाure
+ *  PCI driver structure
  */
-अटल काष्ठा pci_driver mei_txe_driver = अणु
+static struct pci_driver mei_txe_driver = {
 	.name = KBUILD_MODNAME,
 	.id_table = mei_txe_pci_tbl,
 	.probe = mei_txe_probe,
-	.हटाओ = mei_txe_हटाओ,
-	.shutकरोwn = mei_txe_shutकरोwn,
+	.remove = mei_txe_remove,
+	.shutdown = mei_txe_shutdown,
 	.driver.pm = MEI_TXE_PM_OPS,
-पूर्ण;
+};
 
 module_pci_driver(mei_txe_driver);
 

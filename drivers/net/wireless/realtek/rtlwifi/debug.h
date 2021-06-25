@@ -1,9 +1,8 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /* Copyright(c) 2009-2012  Realtek Corporation.*/
 
-#अगर_अघोषित __RTL_DEBUG_H__
-#घोषणा __RTL_DEBUG_H__
+#ifndef __RTL_DEBUG_H__
+#define __RTL_DEBUG_H__
 
 /*--------------------------------------------------------------
 			Debug level
@@ -16,113 +15,113 @@
  *unexpected HW behavior, HW BUG
  *and so on.
  */
-/*#घोषणा DBG_EMERG			0 */
+/*#define DBG_EMERG			0 */
 
 /*
- *Abnormal, rare, or unexpeted हालs.
+ *Abnormal, rare, or unexpeted cases.
  *For example, Packet/IO Ctl canceled,
- *device suprisely unहटाओd and so on.
+ *device suprisely unremoved and so on.
  */
-#घोषणा	DBG_WARNING			2
+#define	DBG_WARNING			2
 
 /*
- *Normal हाल driver developer should
- *खोलो, we can see link status like
+ *Normal case driver developer should
+ *open, we can see link status like
  *assoc/AddBA/DHCP/adapter start and
  *so on basic and useful infromations.
  */
-#घोषणा DBG_DMESG			3
+#define DBG_DMESG			3
 
 /*
- *Normal हाल with useful inक्रमmation
+ *Normal case with useful information
  *about current SW or HW state.
  *For example, Tx/Rx descriptor to fill,
  *Tx/Rx descriptor completed status,
  *SW protocol state change, dynamic
  *mechanism state change and so on.
  */
-#घोषणा DBG_LOUD			4
+#define DBG_LOUD			4
 
 /*
- *Normal हाल with detail execution
- *flow or inक्रमmation.
+ *Normal case with detail execution
+ *flow or information.
  */
-#घोषणा	DBG_TRACE			5
+#define	DBG_TRACE			5
 
 /*--------------------------------------------------------------
 		Define the rt_trace components
 --------------------------------------------------------------*/
-#घोषणा COMP_ERR			BIT(0)
-#घोषणा COMP_FW				BIT(1)
-#घोषणा COMP_INIT			BIT(2)	/*For init/deinit */
-#घोषणा COMP_RECV			BIT(3)	/*For Rx. */
-#घोषणा COMP_SEND			BIT(4)	/*For Tx. */
-#घोषणा COMP_MLME			BIT(5)	/*For MLME. */
-#घोषणा COMP_SCAN			BIT(6)	/*For Scan. */
-#घोषणा COMP_INTR			BIT(7)	/*For पूर्णांकerrupt Related. */
-#घोषणा COMP_LED			BIT(8)	/*For LED. */
-#घोषणा COMP_SEC			BIT(9)	/*For sec. */
-#घोषणा COMP_BEACON			BIT(10)	/*For beacon. */
-#घोषणा COMP_RATE			BIT(11)	/*For rate. */
-#घोषणा COMP_RXDESC			BIT(12)	/*For rx desc. */
-#घोषणा COMP_DIG			BIT(13)	/*For DIG */
-#घोषणा COMP_TXAGC			BIT(14)	/*For Tx घातer */
-#घोषणा COMP_HIPWR			BIT(15)	/*For High Power Mechanism */
-#घोषणा COMP_POWER			BIT(16)	/*For lps/ips/aspm. */
-#घोषणा COMP_POWER_TRACKING	BIT(17)	/*For TX POWER TRACKING */
-#घोषणा COMP_BB_POWERSAVING	BIT(18)
-#घोषणा COMP_SWAS			BIT(19)	/*For SW Antenna Switch */
-#घोषणा COMP_RF				BIT(20)	/*For RF. */
-#घोषणा COMP_TURBO			BIT(21)	/*For EDCA TURBO. */
-#घोषणा COMP_RATR			BIT(22)
-#घोषणा COMP_CMD			BIT(23)
-#घोषणा COMP_EFUSE			BIT(24)
-#घोषणा COMP_QOS			BIT(25)
-#घोषणा COMP_MAC80211		BIT(26)
-#घोषणा COMP_REGD			BIT(27)
-#घोषणा COMP_CHAN			BIT(28)
-#घोषणा COMP_USB			BIT(29)
-#घोषणा COMP_EASY_CONCURRENT	COMP_USB /* reuse of this bit is OK */
-#घोषणा COMP_BT_COEXIST			BIT(30)
-#घोषणा COMP_IQK			BIT(31)
-#घोषणा COMP_TX_REPORT			BIT_ULL(32)
+#define COMP_ERR			BIT(0)
+#define COMP_FW				BIT(1)
+#define COMP_INIT			BIT(2)	/*For init/deinit */
+#define COMP_RECV			BIT(3)	/*For Rx. */
+#define COMP_SEND			BIT(4)	/*For Tx. */
+#define COMP_MLME			BIT(5)	/*For MLME. */
+#define COMP_SCAN			BIT(6)	/*For Scan. */
+#define COMP_INTR			BIT(7)	/*For interrupt Related. */
+#define COMP_LED			BIT(8)	/*For LED. */
+#define COMP_SEC			BIT(9)	/*For sec. */
+#define COMP_BEACON			BIT(10)	/*For beacon. */
+#define COMP_RATE			BIT(11)	/*For rate. */
+#define COMP_RXDESC			BIT(12)	/*For rx desc. */
+#define COMP_DIG			BIT(13)	/*For DIG */
+#define COMP_TXAGC			BIT(14)	/*For Tx power */
+#define COMP_HIPWR			BIT(15)	/*For High Power Mechanism */
+#define COMP_POWER			BIT(16)	/*For lps/ips/aspm. */
+#define COMP_POWER_TRACKING	BIT(17)	/*For TX POWER TRACKING */
+#define COMP_BB_POWERSAVING	BIT(18)
+#define COMP_SWAS			BIT(19)	/*For SW Antenna Switch */
+#define COMP_RF				BIT(20)	/*For RF. */
+#define COMP_TURBO			BIT(21)	/*For EDCA TURBO. */
+#define COMP_RATR			BIT(22)
+#define COMP_CMD			BIT(23)
+#define COMP_EFUSE			BIT(24)
+#define COMP_QOS			BIT(25)
+#define COMP_MAC80211		BIT(26)
+#define COMP_REGD			BIT(27)
+#define COMP_CHAN			BIT(28)
+#define COMP_USB			BIT(29)
+#define COMP_EASY_CONCURRENT	COMP_USB /* reuse of this bit is OK */
+#define COMP_BT_COEXIST			BIT(30)
+#define COMP_IQK			BIT(31)
+#define COMP_TX_REPORT			BIT_ULL(32)
 
 /*--------------------------------------------------------------
-		Define the rt_prपूर्णांक components
+		Define the rt_print components
 --------------------------------------------------------------*/
 /* Define EEPROM and EFUSE  check module bit*/
-#घोषणा EEPROM_W			BIT(0)
-#घोषणा EFUSE_PG			BIT(1)
-#घोषणा EFUSE_READ_ALL			BIT(2)
+#define EEPROM_W			BIT(0)
+#define EFUSE_PG			BIT(1)
+#define EFUSE_READ_ALL			BIT(2)
 
-/* Define init check क्रम module bit*/
-#घोषणा	INIT_EEPROM			BIT(0)
-#घोषणा	INIT_TXPOWER			BIT(1)
-#घोषणा	INIT_IQK			BIT(2)
-#घोषणा	INIT_RF				BIT(3)
+/* Define init check for module bit*/
+#define	INIT_EEPROM			BIT(0)
+#define	INIT_TXPOWER			BIT(1)
+#define	INIT_IQK			BIT(2)
+#define	INIT_RF				BIT(3)
 
 /* Define PHY-BB/RF/MAC check module bit */
-#घोषणा	PHY_BBR				BIT(0)
-#घोषणा	PHY_BBW				BIT(1)
-#घोषणा	PHY_RFR				BIT(2)
-#घोषणा	PHY_RFW				BIT(3)
-#घोषणा	PHY_MACR			BIT(4)
-#घोषणा	PHY_MACW			BIT(5)
-#घोषणा	PHY_ALLR			BIT(6)
-#घोषणा	PHY_ALLW			BIT(7)
-#घोषणा	PHY_TXPWR			BIT(8)
-#घोषणा	PHY_PWRDIFF			BIT(9)
+#define	PHY_BBR				BIT(0)
+#define	PHY_BBW				BIT(1)
+#define	PHY_RFR				BIT(2)
+#define	PHY_RFW				BIT(3)
+#define	PHY_MACR			BIT(4)
+#define	PHY_MACW			BIT(5)
+#define	PHY_ALLR			BIT(6)
+#define	PHY_ALLW			BIT(7)
+#define	PHY_TXPWR			BIT(8)
+#define	PHY_PWRDIFF			BIT(9)
 
 /* Define Dynamic Mechanism check module bit --> FDM */
-#घोषणा WA_IOT				BIT(0)
-#घोषणा DM_PWDB				BIT(1)
-#घोषणा DM_MONITOR			BIT(2)
-#घोषणा DM_DIG				BIT(3)
-#घोषणा DM_EDCA_TURBO			BIT(4)
+#define WA_IOT				BIT(0)
+#define DM_PWDB				BIT(1)
+#define DM_MONITOR			BIT(2)
+#define DM_DIG				BIT(3)
+#define DM_EDCA_TURBO			BIT(4)
 
-#घोषणा DM_PWDB				BIT(1)
+#define DM_PWDB				BIT(1)
 
-क्रमागत dbgp_flag_e अणु
+enum dbgp_flag_e {
 	FQOS = 0,
 	FTX = 1,
 	FRX = 2,
@@ -143,68 +142,68 @@
 	FINIT = 17,
 	FIOCTL = 18,
 	DBGP_TYPE_MAX
-पूर्ण;
+};
 
-#अगर_घोषित CONFIG_RTLWIFI_DEBUG
+#ifdef CONFIG_RTLWIFI_DEBUG
 
-काष्ठा rtl_priv;
+struct rtl_priv;
 
-__म_लिखो(4, 5)
-व्योम _rtl_dbg_prपूर्णांक(काष्ठा rtl_priv *rtlpriv, u64 comp, पूर्णांक level,
-		    स्थिर अक्षर *fmt, ...);
+__printf(4, 5)
+void _rtl_dbg_print(struct rtl_priv *rtlpriv, u64 comp, int level,
+		    const char *fmt, ...);
 
-व्योम _rtl_dbg_prपूर्णांक_data(काष्ठा rtl_priv *rtlpriv, u64 comp, पूर्णांक level,
-			 स्थिर अक्षर *titlestring,
-			 स्थिर व्योम *hexdata, पूर्णांक hexdatalen);
+void _rtl_dbg_print_data(struct rtl_priv *rtlpriv, u64 comp, int level,
+			 const char *titlestring,
+			 const void *hexdata, int hexdatalen);
 
-#घोषणा rtl_dbg(rtlpriv, comp, level, fmt, ...)				\
-	_rtl_dbg_prपूर्णांक(rtlpriv, comp, level,				\
+#define rtl_dbg(rtlpriv, comp, level, fmt, ...)				\
+	_rtl_dbg_print(rtlpriv, comp, level,				\
 		       fmt, ##__VA_ARGS__)
 
-#घोषणा RTPRINT(rtlpriv, dbgtype, dbgflag, fmt, ...)			\
-	_rtl_dbg_prपूर्णांक(rtlpriv, dbgtype, dbgflag, fmt, ##__VA_ARGS__)
+#define RTPRINT(rtlpriv, dbgtype, dbgflag, fmt, ...)			\
+	_rtl_dbg_print(rtlpriv, dbgtype, dbgflag, fmt, ##__VA_ARGS__)
 
-#घोषणा RT_PRINT_DATA(rtlpriv, _comp, _level, _titlestring, _hexdata,	\
+#define RT_PRINT_DATA(rtlpriv, _comp, _level, _titlestring, _hexdata,	\
 		      _hexdatalen)					\
-	_rtl_dbg_prपूर्णांक_data(rtlpriv, _comp, _level,			\
+	_rtl_dbg_print_data(rtlpriv, _comp, _level,			\
 			    _titlestring, _hexdata, _hexdatalen)
 
-#अन्यथा
+#else
 
-काष्ठा rtl_priv;
+struct rtl_priv;
 
-__म_लिखो(4, 5)
-अटल अंतरभूत व्योम rtl_dbg(काष्ठा rtl_priv *rtlpriv,
-			   u64 comp, पूर्णांक level,
-			   स्थिर अक्षर *fmt, ...)
-अणु
-पूर्ण
+__printf(4, 5)
+static inline void rtl_dbg(struct rtl_priv *rtlpriv,
+			   u64 comp, int level,
+			   const char *fmt, ...)
+{
+}
 
-__म_लिखो(4, 5)
-अटल अंतरभूत व्योम RTPRINT(काष्ठा rtl_priv *rtlpriv,
-			   पूर्णांक dbgtype, पूर्णांक dbgflag,
-			   स्थिर अक्षर *fmt, ...)
-अणु
-पूर्ण
+__printf(4, 5)
+static inline void RTPRINT(struct rtl_priv *rtlpriv,
+			   int dbgtype, int dbgflag,
+			   const char *fmt, ...)
+{
+}
 
-अटल अंतरभूत व्योम RT_PRINT_DATA(काष्ठा rtl_priv *rtlpriv,
-				 u64 comp, पूर्णांक level,
-				 स्थिर अक्षर *titlestring,
-				 स्थिर व्योम *hexdata, माप_प्रकार hexdatalen)
-अणु
-पूर्ण
+static inline void RT_PRINT_DATA(struct rtl_priv *rtlpriv,
+				 u64 comp, int level,
+				 const char *titlestring,
+				 const void *hexdata, size_t hexdatalen)
+{
+}
 
-#पूर्ण_अगर
+#endif
 
-#अगर_घोषित CONFIG_RTLWIFI_DEBUG
-व्योम rtl_debug_add_one(काष्ठा ieee80211_hw *hw);
-व्योम rtl_debug_हटाओ_one(काष्ठा ieee80211_hw *hw);
-व्योम rtl_debugfs_add_topdir(व्योम);
-व्योम rtl_debugfs_हटाओ_topdir(व्योम);
-#अन्यथा
-#घोषणा rtl_debug_add_one(hw)
-#घोषणा rtl_debug_हटाओ_one(hw)
-#घोषणा rtl_debugfs_add_topdir()
-#घोषणा rtl_debugfs_हटाओ_topdir()
-#पूर्ण_अगर
-#पूर्ण_अगर
+#ifdef CONFIG_RTLWIFI_DEBUG
+void rtl_debug_add_one(struct ieee80211_hw *hw);
+void rtl_debug_remove_one(struct ieee80211_hw *hw);
+void rtl_debugfs_add_topdir(void);
+void rtl_debugfs_remove_topdir(void);
+#else
+#define rtl_debug_add_one(hw)
+#define rtl_debug_remove_one(hw)
+#define rtl_debugfs_add_topdir()
+#define rtl_debugfs_remove_topdir()
+#endif
+#endif

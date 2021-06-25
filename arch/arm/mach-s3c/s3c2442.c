@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 //
 // Copyright (c) 2004-2005 Simtec Electronics
 //	http://armlinux.simtec.co.uk/
@@ -7,57 +6,57 @@
 //
 // S3C2442 core and lock support
 
-#समावेश <linux/init.h>
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/list.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/err.h>
-#समावेश <linux/device.h>
-#समावेश <linux/syscore_ops.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/ioport.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/gpपन.स>
-#समावेश <linux/clk.h>
-#समावेश <linux/पन.स>
+#include <linux/init.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/list.h>
+#include <linux/errno.h>
+#include <linux/err.h>
+#include <linux/device.h>
+#include <linux/syscore_ops.h>
+#include <linux/interrupt.h>
+#include <linux/ioport.h>
+#include <linux/mutex.h>
+#include <linux/gpio.h>
+#include <linux/clk.h>
+#include <linux/io.h>
 
-#समावेश <linux/atomic.h>
-#समावेश <यंत्र/irq.h>
+#include <linux/atomic.h>
+#include <asm/irq.h>
 
-#समावेश "regs-clock.h"
+#include "regs-clock.h"
 
-#समावेश "cpu.h"
-#समावेश "pm.h"
+#include "cpu.h"
+#include "pm.h"
 
-#समावेश "gpio-core.h"
-#समावेश "gpio-cfg.h"
-#समावेश "gpio-cfg-helpers.h"
-#समावेश "gpio-samsung.h"
+#include "gpio-core.h"
+#include "gpio-cfg.h"
+#include "gpio-cfg-helpers.h"
+#include "gpio-samsung.h"
 
-#समावेश "s3c24xx.h"
+#include "s3c24xx.h"
 
-अटल काष्ठा device s3c2442_dev = अणु
+static struct device s3c2442_dev = {
 	.bus		= &s3c2442_subsys,
-पूर्ण;
+};
 
-पूर्णांक __init s3c2442_init(व्योम)
-अणु
-	prपूर्णांकk("S3C2442: Initialising architecture\n");
+int __init s3c2442_init(void)
+{
+	printk("S3C2442: Initialising architecture\n");
 
-#अगर_घोषित CONFIG_PM_SLEEP
-	रेजिस्टर_syscore_ops(&s3c2410_pm_syscore_ops);
-	रेजिस्टर_syscore_ops(&s3c24xx_irq_syscore_ops);
-	रेजिस्टर_syscore_ops(&s3c244x_pm_syscore_ops);
-#पूर्ण_अगर
+#ifdef CONFIG_PM_SLEEP
+	register_syscore_ops(&s3c2410_pm_syscore_ops);
+	register_syscore_ops(&s3c24xx_irq_syscore_ops);
+	register_syscore_ops(&s3c244x_pm_syscore_ops);
+#endif
 
-	वापस device_रेजिस्टर(&s3c2442_dev);
-पूर्ण
+	return device_register(&s3c2442_dev);
+}
 
-व्योम __init s3c2442_map_io(व्योम)
-अणु
+void __init s3c2442_map_io(void)
+{
 	s3c244x_map_io();
 
-	s3c24xx_gpiocfg_शेष.set_pull = s3c24xx_gpio_setpull_1करोwn;
-	s3c24xx_gpiocfg_शेष.get_pull = s3c24xx_gpio_getpull_1करोwn;
-पूर्ण
+	s3c24xx_gpiocfg_default.set_pull = s3c24xx_gpio_setpull_1down;
+	s3c24xx_gpiocfg_default.get_pull = s3c24xx_gpio_getpull_1down;
+}

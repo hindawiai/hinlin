@@ -1,157 +1,156 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * Linux network device link state notअगरication
+ * Linux network device link state notification
  *
  * Author:
  *     Stefan Rompf <sux@loplof.de>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/अगर.h>
-#समावेश <net/sock.h>
-#समावेश <net/pkt_sched.h>
-#समावेश <linux/rtnetlink.h>
-#समावेश <linux/jअगरfies.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/workqueue.h>
-#समावेश <linux/bitops.h>
-#समावेश <linux/types.h>
+#include <linux/module.h>
+#include <linux/netdevice.h>
+#include <linux/if.h>
+#include <net/sock.h>
+#include <net/pkt_sched.h>
+#include <linux/rtnetlink.h>
+#include <linux/jiffies.h>
+#include <linux/spinlock.h>
+#include <linux/workqueue.h>
+#include <linux/bitops.h>
+#include <linux/types.h>
 
 
-क्रमागत lw_bits अणु
+enum lw_bits {
 	LW_URGENT = 0,
-पूर्ण;
+};
 
-अटल अचिन्हित दीर्घ linkwatch_flags;
-अटल अचिन्हित दीर्घ linkwatch_nextevent;
+static unsigned long linkwatch_flags;
+static unsigned long linkwatch_nextevent;
 
-अटल व्योम linkwatch_event(काष्ठा work_काष्ठा *dummy);
-अटल DECLARE_DELAYED_WORK(linkwatch_work, linkwatch_event);
+static void linkwatch_event(struct work_struct *dummy);
+static DECLARE_DELAYED_WORK(linkwatch_work, linkwatch_event);
 
-अटल LIST_HEAD(lweventlist);
-अटल DEFINE_SPINLOCK(lweventlist_lock);
+static LIST_HEAD(lweventlist);
+static DEFINE_SPINLOCK(lweventlist_lock);
 
-अटल अचिन्हित अक्षर शेष_operstate(स्थिर काष्ठा net_device *dev)
-अणु
-	अगर (netअगर_testing(dev))
-		वापस IF_OPER_TESTING;
+static unsigned char default_operstate(const struct net_device *dev)
+{
+	if (netif_testing(dev))
+		return IF_OPER_TESTING;
 
-	अगर (!netअगर_carrier_ok(dev))
-		वापस (dev->अगरindex != dev_get_अगरlink(dev) ?
+	if (!netif_carrier_ok(dev))
+		return (dev->ifindex != dev_get_iflink(dev) ?
 			IF_OPER_LOWERLAYERDOWN : IF_OPER_DOWN);
 
-	अगर (netअगर_करोrmant(dev))
-		वापस IF_OPER_DORMANT;
+	if (netif_dormant(dev))
+		return IF_OPER_DORMANT;
 
-	वापस IF_OPER_UP;
-पूर्ण
+	return IF_OPER_UP;
+}
 
 
-अटल व्योम rfc2863_policy(काष्ठा net_device *dev)
-अणु
-	अचिन्हित अक्षर operstate = शेष_operstate(dev);
+static void rfc2863_policy(struct net_device *dev)
+{
+	unsigned char operstate = default_operstate(dev);
 
-	अगर (operstate == dev->operstate)
-		वापस;
+	if (operstate == dev->operstate)
+		return;
 
-	ग_लिखो_lock_bh(&dev_base_lock);
+	write_lock_bh(&dev_base_lock);
 
-	चयन(dev->link_mode) अणु
-	हाल IF_LINK_MODE_TESTING:
-		अगर (operstate == IF_OPER_UP)
+	switch(dev->link_mode) {
+	case IF_LINK_MODE_TESTING:
+		if (operstate == IF_OPER_UP)
 			operstate = IF_OPER_TESTING;
-		अवरोध;
+		break;
 
-	हाल IF_LINK_MODE_DORMANT:
-		अगर (operstate == IF_OPER_UP)
+	case IF_LINK_MODE_DORMANT:
+		if (operstate == IF_OPER_UP)
 			operstate = IF_OPER_DORMANT;
-		अवरोध;
-	हाल IF_LINK_MODE_DEFAULT:
-	शेष:
-		अवरोध;
-	पूर्ण
+		break;
+	case IF_LINK_MODE_DEFAULT:
+	default:
+		break;
+	}
 
 	dev->operstate = operstate;
 
-	ग_लिखो_unlock_bh(&dev_base_lock);
-पूर्ण
+	write_unlock_bh(&dev_base_lock);
+}
 
 
-व्योम linkwatch_init_dev(काष्ठा net_device *dev)
-अणु
+void linkwatch_init_dev(struct net_device *dev)
+{
 	/* Handle pre-registration link state changes */
-	अगर (!netअगर_carrier_ok(dev) || netअगर_करोrmant(dev) ||
-	    netअगर_testing(dev))
+	if (!netif_carrier_ok(dev) || netif_dormant(dev) ||
+	    netif_testing(dev))
 		rfc2863_policy(dev);
-पूर्ण
+}
 
 
-अटल bool linkwatch_urgent_event(काष्ठा net_device *dev)
-अणु
-	अगर (!netअगर_running(dev))
-		वापस false;
+static bool linkwatch_urgent_event(struct net_device *dev)
+{
+	if (!netif_running(dev))
+		return false;
 
-	अगर (dev->अगरindex != dev_get_अगरlink(dev))
-		वापस true;
+	if (dev->ifindex != dev_get_iflink(dev))
+		return true;
 
-	अगर (netअगर_is_lag_port(dev) || netअगर_is_lag_master(dev))
-		वापस true;
+	if (netif_is_lag_port(dev) || netif_is_lag_master(dev))
+		return true;
 
-	वापस netअगर_carrier_ok(dev) &&	qdisc_tx_changing(dev);
-पूर्ण
+	return netif_carrier_ok(dev) &&	qdisc_tx_changing(dev);
+}
 
 
-अटल व्योम linkwatch_add_event(काष्ठा net_device *dev)
-अणु
-	अचिन्हित दीर्घ flags;
+static void linkwatch_add_event(struct net_device *dev)
+{
+	unsigned long flags;
 
 	spin_lock_irqsave(&lweventlist_lock, flags);
-	अगर (list_empty(&dev->link_watch_list)) अणु
+	if (list_empty(&dev->link_watch_list)) {
 		list_add_tail(&dev->link_watch_list, &lweventlist);
 		dev_hold(dev);
-	पूर्ण
+	}
 	spin_unlock_irqrestore(&lweventlist_lock, flags);
-पूर्ण
+}
 
 
-अटल व्योम linkwatch_schedule_work(पूर्णांक urgent)
-अणु
-	अचिन्हित दीर्घ delay = linkwatch_nextevent - jअगरfies;
+static void linkwatch_schedule_work(int urgent)
+{
+	unsigned long delay = linkwatch_nextevent - jiffies;
 
-	अगर (test_bit(LW_URGENT, &linkwatch_flags))
-		वापस;
+	if (test_bit(LW_URGENT, &linkwatch_flags))
+		return;
 
-	/* Minimise करोwn-समय: drop delay क्रम up event. */
-	अगर (urgent) अणु
-		अगर (test_and_set_bit(LW_URGENT, &linkwatch_flags))
-			वापस;
+	/* Minimise down-time: drop delay for up event. */
+	if (urgent) {
+		if (test_and_set_bit(LW_URGENT, &linkwatch_flags))
+			return;
 		delay = 0;
-	पूर्ण
+	}
 
 	/* If we wrap around we'll delay it by at most HZ. */
-	अगर (delay > HZ)
+	if (delay > HZ)
 		delay = 0;
 
 	/*
-	 * If urgent, schedule immediate execution; otherwise, करोn't
-	 * override the existing समयr.
+	 * If urgent, schedule immediate execution; otherwise, don't
+	 * override the existing timer.
 	 */
-	अगर (test_bit(LW_URGENT, &linkwatch_flags))
-		mod_delayed_work(प्रणाली_wq, &linkwatch_work, 0);
-	अन्यथा
+	if (test_bit(LW_URGENT, &linkwatch_flags))
+		mod_delayed_work(system_wq, &linkwatch_work, 0);
+	else
 		schedule_delayed_work(&linkwatch_work, delay);
-पूर्ण
+}
 
 
-अटल व्योम linkwatch_करो_dev(काष्ठा net_device *dev)
-अणु
+static void linkwatch_do_dev(struct net_device *dev)
+{
 	/*
-	 * Make sure the above पढ़ो is complete since it can be
+	 * Make sure the above read is complete since it can be
 	 * rewritten as soon as we clear the bit below.
 	 */
-	smp_mb__beक्रमe_atomic();
+	smp_mb__before_atomic();
 
 	/* We are about to handle this device,
 	 * so new events can be accepted
@@ -159,110 +158,110 @@
 	clear_bit(__LINK_STATE_LINKWATCH_PENDING, &dev->state);
 
 	rfc2863_policy(dev);
-	अगर (dev->flags & IFF_UP && netअगर_device_present(dev)) अणु
-		अगर (netअगर_carrier_ok(dev))
+	if (dev->flags & IFF_UP && netif_device_present(dev)) {
+		if (netif_carrier_ok(dev))
 			dev_activate(dev);
-		अन्यथा
+		else
 			dev_deactivate(dev);
 
 		netdev_state_change(dev);
-	पूर्ण
+	}
 	dev_put(dev);
-पूर्ण
+}
 
-अटल व्योम __linkwatch_run_queue(पूर्णांक urgent_only)
-अणु
-#घोषणा MAX_DO_DEV_PER_LOOP	100
+static void __linkwatch_run_queue(int urgent_only)
+{
+#define MAX_DO_DEV_PER_LOOP	100
 
-	पूर्णांक करो_dev = MAX_DO_DEV_PER_LOOP;
-	काष्ठा net_device *dev;
+	int do_dev = MAX_DO_DEV_PER_LOOP;
+	struct net_device *dev;
 	LIST_HEAD(wrk);
 
-	/* Give urgent हाल more budget */
-	अगर (urgent_only)
-		करो_dev += MAX_DO_DEV_PER_LOOP;
+	/* Give urgent case more budget */
+	if (urgent_only)
+		do_dev += MAX_DO_DEV_PER_LOOP;
 
 	/*
 	 * Limit the number of linkwatch events to one
-	 * per second so that a runaway driver करोes not
+	 * per second so that a runaway driver does not
 	 * cause a storm of messages on the netlink
-	 * socket.  This limit करोes not apply to up events
-	 * जबतक the device qdisc is करोwn.
+	 * socket.  This limit does not apply to up events
+	 * while the device qdisc is down.
 	 */
-	अगर (!urgent_only)
-		linkwatch_nextevent = jअगरfies + HZ;
+	if (!urgent_only)
+		linkwatch_nextevent = jiffies + HZ;
 	/* Limit wrap-around effect on delay. */
-	अन्यथा अगर (समय_after(linkwatch_nextevent, jअगरfies + HZ))
-		linkwatch_nextevent = jअगरfies;
+	else if (time_after(linkwatch_nextevent, jiffies + HZ))
+		linkwatch_nextevent = jiffies;
 
 	clear_bit(LW_URGENT, &linkwatch_flags);
 
 	spin_lock_irq(&lweventlist_lock);
 	list_splice_init(&lweventlist, &wrk);
 
-	जबतक (!list_empty(&wrk) && करो_dev > 0) अणु
+	while (!list_empty(&wrk) && do_dev > 0) {
 
-		dev = list_first_entry(&wrk, काष्ठा net_device, link_watch_list);
+		dev = list_first_entry(&wrk, struct net_device, link_watch_list);
 		list_del_init(&dev->link_watch_list);
 
-		अगर (urgent_only && !linkwatch_urgent_event(dev)) अणु
+		if (urgent_only && !linkwatch_urgent_event(dev)) {
 			list_add_tail(&dev->link_watch_list, &lweventlist);
-			जारी;
-		पूर्ण
+			continue;
+		}
 		spin_unlock_irq(&lweventlist_lock);
-		linkwatch_करो_dev(dev);
-		करो_dev--;
+		linkwatch_do_dev(dev);
+		do_dev--;
 		spin_lock_irq(&lweventlist_lock);
-	पूर्ण
+	}
 
-	/* Add the reमुख्यing work back to lweventlist */
+	/* Add the remaining work back to lweventlist */
 	list_splice_init(&wrk, &lweventlist);
 
-	अगर (!list_empty(&lweventlist))
+	if (!list_empty(&lweventlist))
 		linkwatch_schedule_work(0);
 	spin_unlock_irq(&lweventlist_lock);
-पूर्ण
+}
 
-व्योम linkwatch_क्रमget_dev(काष्ठा net_device *dev)
-अणु
-	अचिन्हित दीर्घ flags;
-	पूर्णांक clean = 0;
+void linkwatch_forget_dev(struct net_device *dev)
+{
+	unsigned long flags;
+	int clean = 0;
 
 	spin_lock_irqsave(&lweventlist_lock, flags);
-	अगर (!list_empty(&dev->link_watch_list)) अणु
+	if (!list_empty(&dev->link_watch_list)) {
 		list_del_init(&dev->link_watch_list);
 		clean = 1;
-	पूर्ण
+	}
 	spin_unlock_irqrestore(&lweventlist_lock, flags);
-	अगर (clean)
-		linkwatch_करो_dev(dev);
-पूर्ण
+	if (clean)
+		linkwatch_do_dev(dev);
+}
 
 
 /* Must be called with the rtnl semaphore held */
-व्योम linkwatch_run_queue(व्योम)
-अणु
+void linkwatch_run_queue(void)
+{
 	__linkwatch_run_queue(0);
-पूर्ण
+}
 
 
-अटल व्योम linkwatch_event(काष्ठा work_काष्ठा *dummy)
-अणु
+static void linkwatch_event(struct work_struct *dummy)
+{
 	rtnl_lock();
-	__linkwatch_run_queue(समय_after(linkwatch_nextevent, jअगरfies));
+	__linkwatch_run_queue(time_after(linkwatch_nextevent, jiffies));
 	rtnl_unlock();
-पूर्ण
+}
 
 
-व्योम linkwatch_fire_event(काष्ठा net_device *dev)
-अणु
+void linkwatch_fire_event(struct net_device *dev)
+{
 	bool urgent = linkwatch_urgent_event(dev);
 
-	अगर (!test_and_set_bit(__LINK_STATE_LINKWATCH_PENDING, &dev->state)) अणु
+	if (!test_and_set_bit(__LINK_STATE_LINKWATCH_PENDING, &dev->state)) {
 		linkwatch_add_event(dev);
-	पूर्ण अन्यथा अगर (!urgent)
-		वापस;
+	} else if (!urgent)
+		return;
 
 	linkwatch_schedule_work(urgent);
-पूर्ण
+}
 EXPORT_SYMBOL(linkwatch_fire_event);

@@ -1,55 +1,54 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Test that KVM_GET_MSR_INDEX_LIST and
- * KVM_GET_MSR_FEATURE_INDEX_LIST work as पूर्णांकended
+ * KVM_GET_MSR_FEATURE_INDEX_LIST work as intended
  *
  * Copyright (C) 2020, Red Hat, Inc.
  */
-#समावेश <fcntl.h>
-#समावेश <मानकपन.स>
-#समावेश <मानककोष.स>
-#समावेश <माला.स>
-#समावेश <sys/ioctl.h>
+#include <fcntl.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/ioctl.h>
 
-#समावेश "test_util.h"
-#समावेश "kvm_util.h"
-#समावेश "processor.h"
+#include "test_util.h"
+#include "kvm_util.h"
+#include "processor.h"
 
-अटल पूर्णांक kvm_num_index_msrs(पूर्णांक kvm_fd, पूर्णांक nmsrs)
-अणु
-	काष्ठा kvm_msr_list *list;
-	पूर्णांक r;
+static int kvm_num_index_msrs(int kvm_fd, int nmsrs)
+{
+	struct kvm_msr_list *list;
+	int r;
 
-	list = दो_स्मृति(माप(*list) + nmsrs * माप(list->indices[0]));
+	list = malloc(sizeof(*list) + nmsrs * sizeof(list->indices[0]));
 	list->nmsrs = nmsrs;
 	r = ioctl(kvm_fd, KVM_GET_MSR_INDEX_LIST, list);
-	TEST_ASSERT(r == -1 && त्रुटि_सं == E2BIG,
+	TEST_ASSERT(r == -1 && errno == E2BIG,
 				"Unexpected result from KVM_GET_MSR_INDEX_LIST probe, r: %i",
 				r);
 
 	r = list->nmsrs;
-	मुक्त(list);
-	वापस r;
-पूर्ण
+	free(list);
+	return r;
+}
 
-अटल व्योम test_get_msr_index(व्योम)
-अणु
-	पूर्णांक old_res, res, kvm_fd, r;
-	काष्ठा kvm_msr_list *list;
+static void test_get_msr_index(void)
+{
+	int old_res, res, kvm_fd, r;
+	struct kvm_msr_list *list;
 
-	kvm_fd = खोलो_kvm_dev_path_or_निकास();
+	kvm_fd = open_kvm_dev_path_or_exit();
 
 	old_res = kvm_num_index_msrs(kvm_fd, 0);
 	TEST_ASSERT(old_res != 0, "Expecting nmsrs to be > 0");
 
-	अगर (old_res != 1) अणु
+	if (old_res != 1) {
 		res = kvm_num_index_msrs(kvm_fd, 1);
 		TEST_ASSERT(res > 1, "Expecting nmsrs to be > 1");
 		TEST_ASSERT(res == old_res, "Expecting nmsrs to be identical");
-	पूर्ण
+	}
 
-	list = दो_स्मृति(माप(*list) + old_res * माप(list->indices[0]));
+	list = malloc(sizeof(*list) + old_res * sizeof(list->indices[0]));
 	list->nmsrs = old_res;
 	r = ioctl(kvm_fd, KVM_GET_MSR_INDEX_LIST, list);
 
@@ -57,34 +56,34 @@
 		    "Unexpected result from KVM_GET_MSR_FEATURE_INDEX_LIST, r: %i",
 		    r);
 	TEST_ASSERT(list->nmsrs == old_res, "Expecting nmsrs to be identical");
-	मुक्त(list);
+	free(list);
 
-	बंद(kvm_fd);
-पूर्ण
+	close(kvm_fd);
+}
 
-अटल पूर्णांक kvm_num_feature_msrs(पूर्णांक kvm_fd, पूर्णांक nmsrs)
-अणु
-	काष्ठा kvm_msr_list *list;
-	पूर्णांक r;
+static int kvm_num_feature_msrs(int kvm_fd, int nmsrs)
+{
+	struct kvm_msr_list *list;
+	int r;
 
-	list = दो_स्मृति(माप(*list) + nmsrs * माप(list->indices[0]));
+	list = malloc(sizeof(*list) + nmsrs * sizeof(list->indices[0]));
 	list->nmsrs = nmsrs;
 	r = ioctl(kvm_fd, KVM_GET_MSR_FEATURE_INDEX_LIST, list);
-	TEST_ASSERT(r == -1 && त्रुटि_सं == E2BIG,
+	TEST_ASSERT(r == -1 && errno == E2BIG,
 		"Unexpected result from KVM_GET_MSR_FEATURE_INDEX_LIST probe, r: %i",
 				r);
 
 	r = list->nmsrs;
-	मुक्त(list);
-	वापस r;
-पूर्ण
+	free(list);
+	return r;
+}
 
-काष्ठा kvm_msr_list *kvm_get_msr_feature_list(पूर्णांक kvm_fd, पूर्णांक nmsrs)
-अणु
-	काष्ठा kvm_msr_list *list;
-	पूर्णांक r;
+struct kvm_msr_list *kvm_get_msr_feature_list(int kvm_fd, int nmsrs)
+{
+	struct kvm_msr_list *list;
+	int r;
 
-	list = दो_स्मृति(माप(*list) + nmsrs * माप(list->indices[0]));
+	list = malloc(sizeof(*list) + nmsrs * sizeof(list->indices[0]));
 	list->nmsrs = nmsrs;
 	r = ioctl(kvm_fd, KVM_GET_MSR_FEATURE_INDEX_LIST, list);
 
@@ -92,40 +91,40 @@
 		"Unexpected result from KVM_GET_MSR_FEATURE_INDEX_LIST, r: %i",
 		r);
 
-	वापस list;
-पूर्ण
+	return list;
+}
 
-अटल व्योम test_get_msr_feature(व्योम)
-अणु
-	पूर्णांक res, old_res, i, kvm_fd;
-	काष्ठा kvm_msr_list *feature_list;
+static void test_get_msr_feature(void)
+{
+	int res, old_res, i, kvm_fd;
+	struct kvm_msr_list *feature_list;
 
-	kvm_fd = खोलो_kvm_dev_path_or_निकास();
+	kvm_fd = open_kvm_dev_path_or_exit();
 
 	old_res = kvm_num_feature_msrs(kvm_fd, 0);
 	TEST_ASSERT(old_res != 0, "Expecting nmsrs to be > 0");
 
-	अगर (old_res != 1) अणु
+	if (old_res != 1) {
 		res = kvm_num_feature_msrs(kvm_fd, 1);
 		TEST_ASSERT(res > 1, "Expecting nmsrs to be > 1");
 		TEST_ASSERT(res == old_res, "Expecting nmsrs to be identical");
-	पूर्ण
+	}
 
 	feature_list = kvm_get_msr_feature_list(kvm_fd, old_res);
 	TEST_ASSERT(old_res == feature_list->nmsrs,
 				"Unmatching number of msr indexes");
 
-	क्रम (i = 0; i < feature_list->nmsrs; i++)
+	for (i = 0; i < feature_list->nmsrs; i++)
 		kvm_get_feature_msr(feature_list->indices[i]);
 
-	मुक्त(feature_list);
-	बंद(kvm_fd);
-पूर्ण
+	free(feature_list);
+	close(kvm_fd);
+}
 
-पूर्णांक मुख्य(पूर्णांक argc, अक्षर *argv[])
-अणु
-	अगर (kvm_check_cap(KVM_CAP_GET_MSR_FEATURES))
+int main(int argc, char *argv[])
+{
+	if (kvm_check_cap(KVM_CAP_GET_MSR_FEATURES))
 		test_get_msr_feature();
 
 	test_get_msr_index();
-पूर्ण
+}

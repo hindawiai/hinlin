@@ -1,15 +1,14 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0+ */
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * Copyright (c) 2014 Samsung Electronics Co., Ltd
  *              http://www.samsung.com
  */
 
-#अगर_अघोषित __LINUX_MFD_S2MPS14_H
-#घोषणा __LINUX_MFD_S2MPS14_H
+#ifndef __LINUX_MFD_S2MPS14_H
+#define __LINUX_MFD_S2MPS14_H
 
-/* S2MPS14 रेजिस्टरs */
-क्रमागत s2mps14_reg अणु
+/* S2MPS14 registers */
+enum s2mps14_reg {
 	S2MPS14_REG_ID,
 	S2MPS14_REG_INT1,
 	S2MPS14_REG_INT2,
@@ -73,10 +72,10 @@
 	S2MPS14_REG_LDODSCH1,
 	S2MPS14_REG_LDODSCH2,
 	S2MPS14_REG_LDODSCH3,
-पूर्ण;
+};
 
 /* S2MPS14 regulator ids */
-क्रमागत s2mps14_regulators अणु
+enum s2mps14_regulators {
 	S2MPS14_LDO1,
 	S2MPS14_LDO2,
 	S2MPS14_LDO3,
@@ -109,27 +108,27 @@
 	S2MPS14_BUCK5,
 
 	S2MPS14_REGULATOR_MAX,
-पूर्ण;
+};
 
-/* Regulator स्थिरraपूर्णांकs क्रम BUCKx */
-#घोषणा S2MPS14_BUCK1235_START_SEL	0x20
-#घोषणा S2MPS14_BUCK4_START_SEL		0x40
+/* Regulator constraints for BUCKx */
+#define S2MPS14_BUCK1235_START_SEL	0x20
+#define S2MPS14_BUCK4_START_SEL		0x40
 /*
  * Default ramp delay in uv/us. Datasheet says that ramp delay can be
- * controlled however it करोes not specअगरy which रेजिस्टर is used क्रम that.
- * Let's assume that शेष value will be set.
+ * controlled however it does not specify which register is used for that.
+ * Let's assume that default value will be set.
  */
-#घोषणा S2MPS14_BUCK_RAMP_DELAY		12500
+#define S2MPS14_BUCK_RAMP_DELAY		12500
 
-#घोषणा S2MPS14_LDO_VSEL_MASK		0x3F
-#घोषणा S2MPS14_BUCK_VSEL_MASK		0xFF
-#घोषणा S2MPS14_ENABLE_MASK		(0x03 << S2MPS14_ENABLE_SHIFT)
-#घोषणा S2MPS14_ENABLE_SHIFT		6
+#define S2MPS14_LDO_VSEL_MASK		0x3F
+#define S2MPS14_BUCK_VSEL_MASK		0xFF
+#define S2MPS14_ENABLE_MASK		(0x03 << S2MPS14_ENABLE_SHIFT)
+#define S2MPS14_ENABLE_SHIFT		6
 /* On/Off controlled by PWREN */
-#घोषणा S2MPS14_ENABLE_SUSPEND		(0x01 << S2MPS14_ENABLE_SHIFT)
+#define S2MPS14_ENABLE_SUSPEND		(0x01 << S2MPS14_ENABLE_SHIFT)
 /* On/Off controlled by LDO10EN or EMMCEN */
-#घोषणा S2MPS14_ENABLE_EXT_CONTROL	(0x00 << S2MPS14_ENABLE_SHIFT)
-#घोषणा S2MPS14_LDO_N_VOLTAGES		(S2MPS14_LDO_VSEL_MASK + 1)
-#घोषणा S2MPS14_BUCK_N_VOLTAGES		(S2MPS14_BUCK_VSEL_MASK + 1)
+#define S2MPS14_ENABLE_EXT_CONTROL	(0x00 << S2MPS14_ENABLE_SHIFT)
+#define S2MPS14_LDO_N_VOLTAGES		(S2MPS14_LDO_VSEL_MASK + 1)
+#define S2MPS14_BUCK_N_VOLTAGES		(S2MPS14_BUCK_VSEL_MASK + 1)
 
-#पूर्ण_अगर /*  __LINUX_MFD_S2MPS14_H */
+#endif /*  __LINUX_MFD_S2MPS14_H */

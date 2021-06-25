@@ -1,122 +1,121 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * virtio-snd: Virtio sound device
  * Copyright (C) 2021 OpenSynergy GmbH
  */
-#समावेश <sound/pcm_params.h>
+#include <sound/pcm_params.h>
 
-#समावेश "virtio_card.h"
+#include "virtio_card.h"
 
 /**
- * काष्ठा virtio_pcm_msg - VirtIO I/O message.
+ * struct virtio_pcm_msg - VirtIO I/O message.
  * @substream: VirtIO PCM substream.
  * @xfer: Request header payload.
  * @status: Response header payload.
  * @length: Data length in bytes.
  * @sgs: Payload scatter-gather table.
  */
-काष्ठा virtio_pcm_msg अणु
-	काष्ठा virtio_pcm_substream *substream;
-	काष्ठा virtio_snd_pcm_xfer xfer;
-	काष्ठा virtio_snd_pcm_status status;
-	माप_प्रकार length;
-	काष्ठा scatterlist sgs[0];
-पूर्ण;
+struct virtio_pcm_msg {
+	struct virtio_pcm_substream *substream;
+	struct virtio_snd_pcm_xfer xfer;
+	struct virtio_snd_pcm_status status;
+	size_t length;
+	struct scatterlist sgs[0];
+};
 
 /**
- * क्रमागत pcm_msg_sg_index - Index values क्रम the virtio_pcm_msg->sgs field in
+ * enum pcm_msg_sg_index - Index values for the virtio_pcm_msg->sgs field in
  *                         an I/O message.
- * @PCM_MSG_SG_XFER: Element containing a virtio_snd_pcm_xfer काष्ठाure.
- * @PCM_MSG_SG_STATUS: Element containing a virtio_snd_pcm_status काष्ठाure.
+ * @PCM_MSG_SG_XFER: Element containing a virtio_snd_pcm_xfer structure.
+ * @PCM_MSG_SG_STATUS: Element containing a virtio_snd_pcm_status structure.
  * @PCM_MSG_SG_DATA: The first element containing a data buffer.
  */
-क्रमागत pcm_msg_sg_index अणु
+enum pcm_msg_sg_index {
 	PCM_MSG_SG_XFER = 0,
 	PCM_MSG_SG_STATUS,
 	PCM_MSG_SG_DATA
-पूर्ण;
+};
 
 /**
  * virtsnd_pcm_sg_num() - Count the number of sg-elements required to represent
- *                        vदो_स्मृति'ed buffer.
- * @data: Poपूर्णांकer to vदो_स्मृति'ed buffer.
+ *                        vmalloc'ed buffer.
+ * @data: Pointer to vmalloc'ed buffer.
  * @length: Buffer size.
  *
  * Context: Any context.
  * Return: Number of physically contiguous parts in the @data.
  */
-अटल पूर्णांक virtsnd_pcm_sg_num(u8 *data, अचिन्हित पूर्णांक length)
-अणु
+static int virtsnd_pcm_sg_num(u8 *data, unsigned int length)
+{
 	phys_addr_t sg_address;
-	अचिन्हित पूर्णांक sg_length;
-	पूर्णांक num = 0;
+	unsigned int sg_length;
+	int num = 0;
 
-	जबतक (length) अणु
-		काष्ठा page *pg = vदो_स्मृति_to_page(data);
+	while (length) {
+		struct page *pg = vmalloc_to_page(data);
 		phys_addr_t pg_address = page_to_phys(pg);
-		माप_प्रकार pg_length;
+		size_t pg_length;
 
 		pg_length = PAGE_SIZE - offset_in_page(data);
-		अगर (pg_length > length)
+		if (pg_length > length)
 			pg_length = length;
 
-		अगर (!num || sg_address + sg_length != pg_address) अणु
+		if (!num || sg_address + sg_length != pg_address) {
 			sg_address = pg_address;
 			sg_length = pg_length;
 			num++;
-		पूर्ण अन्यथा अणु
+		} else {
 			sg_length += pg_length;
-		पूर्ण
+		}
 
 		data += pg_length;
 		length -= pg_length;
-	पूर्ण
+	}
 
-	वापस num;
-पूर्ण
+	return num;
+}
 
 /**
- * virtsnd_pcm_sg_from() - Build sg-list from vदो_स्मृति'ed buffer.
- * @sgs: Pपुनः_स्मृतिated sg-list to populate.
+ * virtsnd_pcm_sg_from() - Build sg-list from vmalloc'ed buffer.
+ * @sgs: Preallocated sg-list to populate.
  * @nsgs: The maximum number of elements in the @sgs.
- * @data: Poपूर्णांकer to vदो_स्मृति'ed buffer.
+ * @data: Pointer to vmalloc'ed buffer.
  * @length: Buffer size.
  *
- * Splits the buffer पूर्णांकo physically contiguous parts and makes an sg-list of
+ * Splits the buffer into physically contiguous parts and makes an sg-list of
  * such parts.
  *
  * Context: Any context.
  */
-अटल व्योम virtsnd_pcm_sg_from(काष्ठा scatterlist *sgs, पूर्णांक nsgs, u8 *data,
-				अचिन्हित पूर्णांक length)
-अणु
-	पूर्णांक idx = -1;
+static void virtsnd_pcm_sg_from(struct scatterlist *sgs, int nsgs, u8 *data,
+				unsigned int length)
+{
+	int idx = -1;
 
-	जबतक (length) अणु
-		काष्ठा page *pg = vदो_स्मृति_to_page(data);
-		माप_प्रकार pg_length;
+	while (length) {
+		struct page *pg = vmalloc_to_page(data);
+		size_t pg_length;
 
 		pg_length = PAGE_SIZE - offset_in_page(data);
-		अगर (pg_length > length)
+		if (pg_length > length)
 			pg_length = length;
 
-		अगर (idx == -1 ||
-		    sg_phys(&sgs[idx]) + sgs[idx].length != page_to_phys(pg)) अणु
-			अगर (idx + 1 == nsgs)
-				अवरोध;
+		if (idx == -1 ||
+		    sg_phys(&sgs[idx]) + sgs[idx].length != page_to_phys(pg)) {
+			if (idx + 1 == nsgs)
+				break;
 			sg_set_page(&sgs[++idx], pg, pg_length,
 				    offset_in_page(data));
-		पूर्ण अन्यथा अणु
+		} else {
 			sgs[idx].length += pg_length;
-		पूर्ण
+		}
 
 		data += pg_length;
 		length -= pg_length;
-	पूर्ण
+	}
 
 	sg_mark_end(&sgs[idx]);
-पूर्ण
+}
 
 /**
  * virtsnd_pcm_msg_alloc() - Allocate I/O messages.
@@ -124,72 +123,72 @@
  * @periods: Current number of periods.
  * @period_bytes: Current period size in bytes.
  *
- * The function slices the buffer पूर्णांकo @periods parts (each with the size of
+ * The function slices the buffer into @periods parts (each with the size of
  * @period_bytes), and creates @periods corresponding I/O messages.
  *
  * Context: Any context that permits to sleep.
  * Return: 0 on success, -ENOMEM on failure.
  */
-पूर्णांक virtsnd_pcm_msg_alloc(काष्ठा virtio_pcm_substream *vss,
-			  अचिन्हित पूर्णांक periods, अचिन्हित पूर्णांक period_bytes)
-अणु
-	काष्ठा snd_pcm_runसमय *runसमय = vss->substream->runसमय;
-	अचिन्हित पूर्णांक i;
+int virtsnd_pcm_msg_alloc(struct virtio_pcm_substream *vss,
+			  unsigned int periods, unsigned int period_bytes)
+{
+	struct snd_pcm_runtime *runtime = vss->substream->runtime;
+	unsigned int i;
 
-	vss->msgs = kसुस्मृति(periods, माप(*vss->msgs), GFP_KERNEL);
-	अगर (!vss->msgs)
-		वापस -ENOMEM;
+	vss->msgs = kcalloc(periods, sizeof(*vss->msgs), GFP_KERNEL);
+	if (!vss->msgs)
+		return -ENOMEM;
 
 	vss->nmsgs = periods;
 
-	क्रम (i = 0; i < periods; ++i) अणु
-		u8 *data = runसमय->dma_area + period_bytes * i;
-		पूर्णांक sg_num = virtsnd_pcm_sg_num(data, period_bytes);
-		काष्ठा virtio_pcm_msg *msg;
+	for (i = 0; i < periods; ++i) {
+		u8 *data = runtime->dma_area + period_bytes * i;
+		int sg_num = virtsnd_pcm_sg_num(data, period_bytes);
+		struct virtio_pcm_msg *msg;
 
-		msg = kzalloc(माप(*msg) + माप(*msg->sgs) * (sg_num + 2),
+		msg = kzalloc(sizeof(*msg) + sizeof(*msg->sgs) * (sg_num + 2),
 			      GFP_KERNEL);
-		अगर (!msg)
-			वापस -ENOMEM;
+		if (!msg)
+			return -ENOMEM;
 
 		msg->substream = vss;
 		sg_init_one(&msg->sgs[PCM_MSG_SG_XFER], &msg->xfer,
-			    माप(msg->xfer));
+			    sizeof(msg->xfer));
 		sg_init_one(&msg->sgs[PCM_MSG_SG_STATUS], &msg->status,
-			    माप(msg->status));
+			    sizeof(msg->status));
 		msg->length = period_bytes;
 		virtsnd_pcm_sg_from(&msg->sgs[PCM_MSG_SG_DATA], sg_num, data,
 				    period_bytes);
 
 		vss->msgs[i] = msg;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * virtsnd_pcm_msg_मुक्त() - Free all allocated I/O messages.
+ * virtsnd_pcm_msg_free() - Free all allocated I/O messages.
  * @vss: VirtIO PCM substream.
  *
  * Context: Any context.
  */
-व्योम virtsnd_pcm_msg_मुक्त(काष्ठा virtio_pcm_substream *vss)
-अणु
-	अचिन्हित पूर्णांक i;
+void virtsnd_pcm_msg_free(struct virtio_pcm_substream *vss)
+{
+	unsigned int i;
 
-	क्रम (i = 0; vss->msgs && i < vss->nmsgs; ++i)
-		kमुक्त(vss->msgs[i]);
-	kमुक्त(vss->msgs);
+	for (i = 0; vss->msgs && i < vss->nmsgs; ++i)
+		kfree(vss->msgs[i]);
+	kfree(vss->msgs);
 
-	vss->msgs = शून्य;
+	vss->msgs = NULL;
 	vss->nmsgs = 0;
-पूर्ण
+}
 
 /**
  * virtsnd_pcm_msg_send() - Send asynchronous I/O messages.
  * @vss: VirtIO PCM substream.
  *
- * All messages are organized in an ordered circular list. Each समय the
+ * All messages are organized in an ordered circular list. Each time the
  * function is called, all currently non-enqueued messages are added to the
  * virtqueue. For this, the function keeps track of two values:
  *
@@ -198,59 +197,59 @@
  *
  * Context: Any context. Expects the tx/rx queue and the VirtIO substream
  *          spinlocks to be held by caller.
- * Return: 0 on success, -त्रुटि_सं on failure.
+ * Return: 0 on success, -errno on failure.
  */
-पूर्णांक virtsnd_pcm_msg_send(काष्ठा virtio_pcm_substream *vss)
-अणु
-	काष्ठा snd_pcm_runसमय *runसमय = vss->substream->runसमय;
-	काष्ठा virtio_snd *snd = vss->snd;
-	काष्ठा virtio_device *vdev = snd->vdev;
-	काष्ठा virtqueue *vqueue = virtsnd_pcm_queue(vss)->vqueue;
-	पूर्णांक i;
-	पूर्णांक n;
-	bool notअगरy = false;
+int virtsnd_pcm_msg_send(struct virtio_pcm_substream *vss)
+{
+	struct snd_pcm_runtime *runtime = vss->substream->runtime;
+	struct virtio_snd *snd = vss->snd;
+	struct virtio_device *vdev = snd->vdev;
+	struct virtqueue *vqueue = virtsnd_pcm_queue(vss)->vqueue;
+	int i;
+	int n;
+	bool notify = false;
 
-	i = (vss->msg_last_enqueued + 1) % runसमय->periods;
-	n = runसमय->periods - vss->msg_count;
+	i = (vss->msg_last_enqueued + 1) % runtime->periods;
+	n = runtime->periods - vss->msg_count;
 
-	क्रम (; n; --n, i = (i + 1) % runसमय->periods) अणु
-		काष्ठा virtio_pcm_msg *msg = vss->msgs[i];
-		काष्ठा scatterlist *psgs[] = अणु
+	for (; n; --n, i = (i + 1) % runtime->periods) {
+		struct virtio_pcm_msg *msg = vss->msgs[i];
+		struct scatterlist *psgs[] = {
 			&msg->sgs[PCM_MSG_SG_XFER],
 			&msg->sgs[PCM_MSG_SG_DATA],
 			&msg->sgs[PCM_MSG_SG_STATUS]
-		पूर्ण;
-		पूर्णांक rc;
+		};
+		int rc;
 
 		msg->xfer.stream_id = cpu_to_le32(vss->sid);
-		स_रखो(&msg->status, 0, माप(msg->status));
+		memset(&msg->status, 0, sizeof(msg->status));
 
-		अगर (vss->direction == SNDRV_PCM_STREAM_PLAYBACK)
+		if (vss->direction == SNDRV_PCM_STREAM_PLAYBACK)
 			rc = virtqueue_add_sgs(vqueue, psgs, 2, 1, msg,
 					       GFP_ATOMIC);
-		अन्यथा
+		else
 			rc = virtqueue_add_sgs(vqueue, psgs, 1, 2, msg,
 					       GFP_ATOMIC);
 
-		अगर (rc) अणु
+		if (rc) {
 			dev_err(&vdev->dev,
 				"SID %u: failed to send I/O message\n",
 				vss->sid);
-			वापस rc;
-		पूर्ण
+			return rc;
+		}
 
 		vss->msg_last_enqueued = i;
 		vss->msg_count++;
-	पूर्ण
+	}
 
-	अगर (!(vss->features & (1U << VIRTIO_SND_PCM_F_MSG_POLLING)))
-		notअगरy = virtqueue_kick_prepare(vqueue);
+	if (!(vss->features & (1U << VIRTIO_SND_PCM_F_MSG_POLLING)))
+		notify = virtqueue_kick_prepare(vqueue);
 
-	अगर (notअगरy)
-		virtqueue_notअगरy(vqueue);
+	if (notify)
+		virtqueue_notify(vqueue);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * virtsnd_pcm_msg_pending_num() - Returns the number of pending I/O messages.
@@ -259,17 +258,17 @@
  * Context: Any context.
  * Return: Number of messages.
  */
-अचिन्हित पूर्णांक virtsnd_pcm_msg_pending_num(काष्ठा virtio_pcm_substream *vss)
-अणु
-	अचिन्हित पूर्णांक num;
-	अचिन्हित दीर्घ flags;
+unsigned int virtsnd_pcm_msg_pending_num(struct virtio_pcm_substream *vss)
+{
+	unsigned int num;
+	unsigned long flags;
 
 	spin_lock_irqsave(&vss->lock, flags);
 	num = vss->msg_count;
 	spin_unlock_irqrestore(&vss->lock, flags);
 
-	वापस num;
-पूर्ण
+	return num;
+}
 
 /**
  * virtsnd_pcm_msg_complete() - Complete an I/O message.
@@ -280,136 +279,136 @@
  * allowed, then each completed message is immediately placed back at the end
  * of the queue.
  *
- * For the playback substream, @written_bytes is equal to माप(msg->status).
+ * For the playback substream, @written_bytes is equal to sizeof(msg->status).
  *
- * For the capture substream, @written_bytes is equal to माप(msg->status)
+ * For the capture substream, @written_bytes is equal to sizeof(msg->status)
  * plus the number of captured bytes.
  *
  * Context: Interrupt context. Takes and releases the VirtIO substream spinlock.
  */
-अटल व्योम virtsnd_pcm_msg_complete(काष्ठा virtio_pcm_msg *msg,
-				     माप_प्रकार written_bytes)
-अणु
-	काष्ठा virtio_pcm_substream *vss = msg->substream;
+static void virtsnd_pcm_msg_complete(struct virtio_pcm_msg *msg,
+				     size_t written_bytes)
+{
+	struct virtio_pcm_substream *vss = msg->substream;
 
 	/*
 	 * hw_ptr always indicates the buffer position of the first I/O message
-	 * in the virtqueue. Thereक्रमe, on each completion of an I/O message,
+	 * in the virtqueue. Therefore, on each completion of an I/O message,
 	 * the hw_ptr value is unconditionally advanced.
 	 */
 	spin_lock(&vss->lock);
 	/*
-	 * If the capture substream वापसed an incorrect status, then just
+	 * If the capture substream returned an incorrect status, then just
 	 * increase the hw_ptr by the message size.
 	 */
-	अगर (vss->direction == SNDRV_PCM_STREAM_PLAYBACK ||
-	    written_bytes <= माप(msg->status))
+	if (vss->direction == SNDRV_PCM_STREAM_PLAYBACK ||
+	    written_bytes <= sizeof(msg->status))
 		vss->hw_ptr += msg->length;
-	अन्यथा
-		vss->hw_ptr += written_bytes - माप(msg->status);
+	else
+		vss->hw_ptr += written_bytes - sizeof(msg->status);
 
-	अगर (vss->hw_ptr >= vss->buffer_bytes)
+	if (vss->hw_ptr >= vss->buffer_bytes)
 		vss->hw_ptr -= vss->buffer_bytes;
 
 	vss->xfer_xrun = false;
 	vss->msg_count--;
 
-	अगर (vss->xfer_enabled) अणु
-		काष्ठा snd_pcm_runसमय *runसमय = vss->substream->runसमय;
+	if (vss->xfer_enabled) {
+		struct snd_pcm_runtime *runtime = vss->substream->runtime;
 
-		runसमय->delay =
-			bytes_to_frames(runसमय,
+		runtime->delay =
+			bytes_to_frames(runtime,
 					le32_to_cpu(msg->status.latency_bytes));
 
 		schedule_work(&vss->elapsed_period);
 
 		virtsnd_pcm_msg_send(vss);
-	पूर्ण अन्यथा अगर (!vss->msg_count) अणु
+	} else if (!vss->msg_count) {
 		wake_up_all(&vss->msg_empty);
-	पूर्ण
+	}
 	spin_unlock(&vss->lock);
-पूर्ण
+}
 
 /**
- * virtsnd_pcm_notअगरy_cb() - Process all completed I/O messages.
+ * virtsnd_pcm_notify_cb() - Process all completed I/O messages.
  * @queue: Underlying tx/rx virtqueue.
  *
  * Context: Interrupt context. Takes and releases the tx/rx queue spinlock.
  */
-अटल अंतरभूत व्योम virtsnd_pcm_notअगरy_cb(काष्ठा virtio_snd_queue *queue)
-अणु
-	काष्ठा virtio_pcm_msg *msg;
+static inline void virtsnd_pcm_notify_cb(struct virtio_snd_queue *queue)
+{
+	struct virtio_pcm_msg *msg;
 	u32 written_bytes;
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 
 	spin_lock_irqsave(&queue->lock, flags);
-	करो अणु
+	do {
 		virtqueue_disable_cb(queue->vqueue);
-		जबतक ((msg = virtqueue_get_buf(queue->vqueue, &written_bytes)))
+		while ((msg = virtqueue_get_buf(queue->vqueue, &written_bytes)))
 			virtsnd_pcm_msg_complete(msg, written_bytes);
-		अगर (unlikely(virtqueue_is_broken(queue->vqueue)))
-			अवरोध;
-	पूर्ण जबतक (!virtqueue_enable_cb(queue->vqueue));
+		if (unlikely(virtqueue_is_broken(queue->vqueue)))
+			break;
+	} while (!virtqueue_enable_cb(queue->vqueue));
 	spin_unlock_irqrestore(&queue->lock, flags);
-पूर्ण
+}
 
 /**
- * virtsnd_pcm_tx_notअगरy_cb() - Process all completed TX messages.
+ * virtsnd_pcm_tx_notify_cb() - Process all completed TX messages.
  * @vqueue: Underlying tx virtqueue.
  *
  * Context: Interrupt context.
  */
-व्योम virtsnd_pcm_tx_notअगरy_cb(काष्ठा virtqueue *vqueue)
-अणु
-	काष्ठा virtio_snd *snd = vqueue->vdev->priv;
+void virtsnd_pcm_tx_notify_cb(struct virtqueue *vqueue)
+{
+	struct virtio_snd *snd = vqueue->vdev->priv;
 
-	virtsnd_pcm_notअगरy_cb(virtsnd_tx_queue(snd));
-पूर्ण
+	virtsnd_pcm_notify_cb(virtsnd_tx_queue(snd));
+}
 
 /**
- * virtsnd_pcm_rx_notअगरy_cb() - Process all completed RX messages.
+ * virtsnd_pcm_rx_notify_cb() - Process all completed RX messages.
  * @vqueue: Underlying rx virtqueue.
  *
  * Context: Interrupt context.
  */
-व्योम virtsnd_pcm_rx_notअगरy_cb(काष्ठा virtqueue *vqueue)
-अणु
-	काष्ठा virtio_snd *snd = vqueue->vdev->priv;
+void virtsnd_pcm_rx_notify_cb(struct virtqueue *vqueue)
+{
+	struct virtio_snd *snd = vqueue->vdev->priv;
 
-	virtsnd_pcm_notअगरy_cb(virtsnd_rx_queue(snd));
-पूर्ण
+	virtsnd_pcm_notify_cb(virtsnd_rx_queue(snd));
+}
 
 /**
  * virtsnd_pcm_ctl_msg_alloc() - Allocate and initialize the PCM device control
- *                               message क्रम the specअगरied substream.
+ *                               message for the specified substream.
  * @vss: VirtIO PCM substream.
  * @command: Control request code (VIRTIO_SND_R_PCM_XXX).
- * @gfp: Kernel flags क्रम memory allocation.
+ * @gfp: Kernel flags for memory allocation.
  *
- * Context: Any context. May sleep अगर @gfp flags permit.
- * Return: Allocated message on success, शून्य on failure.
+ * Context: Any context. May sleep if @gfp flags permit.
+ * Return: Allocated message on success, NULL on failure.
  */
-काष्ठा virtio_snd_msg *
-virtsnd_pcm_ctl_msg_alloc(काष्ठा virtio_pcm_substream *vss,
-			  अचिन्हित पूर्णांक command, gfp_t gfp)
-अणु
-	माप_प्रकार request_size = माप(काष्ठा virtio_snd_pcm_hdr);
-	माप_प्रकार response_size = माप(काष्ठा virtio_snd_hdr);
-	काष्ठा virtio_snd_msg *msg;
+struct virtio_snd_msg *
+virtsnd_pcm_ctl_msg_alloc(struct virtio_pcm_substream *vss,
+			  unsigned int command, gfp_t gfp)
+{
+	size_t request_size = sizeof(struct virtio_snd_pcm_hdr);
+	size_t response_size = sizeof(struct virtio_snd_hdr);
+	struct virtio_snd_msg *msg;
 
-	चयन (command) अणु
-	हाल VIRTIO_SND_R_PCM_SET_PARAMS:
-		request_size = माप(काष्ठा virtio_snd_pcm_set_params);
-		अवरोध;
-	पूर्ण
+	switch (command) {
+	case VIRTIO_SND_R_PCM_SET_PARAMS:
+		request_size = sizeof(struct virtio_snd_pcm_set_params);
+		break;
+	}
 
 	msg = virtsnd_ctl_msg_alloc(request_size, response_size, gfp);
-	अगर (msg) अणु
-		काष्ठा virtio_snd_pcm_hdr *hdr = virtsnd_ctl_msg_request(msg);
+	if (msg) {
+		struct virtio_snd_pcm_hdr *hdr = virtsnd_ctl_msg_request(msg);
 
 		hdr->hdr.code = cpu_to_le32(command);
 		hdr->stream_id = cpu_to_le32(vss->sid);
-	पूर्ण
+	}
 
-	वापस msg;
-पूर्ण
+	return msg;
+}

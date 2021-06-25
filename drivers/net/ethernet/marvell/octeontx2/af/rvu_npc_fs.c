@@ -1,23 +1,22 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /* Marvell OcteonTx2 RVU Admin Function driver
  *
  * Copyright (C) 2020 Marvell.
  */
 
-#समावेश <linux/bitfield.h>
+#include <linux/bitfield.h>
 
-#समावेश "rvu_struct.h"
-#समावेश "rvu_reg.h"
-#समावेश "rvu.h"
-#समावेश "npc.h"
+#include "rvu_struct.h"
+#include "rvu_reg.h"
+#include "rvu.h"
+#include "npc.h"
 
-#घोषणा NPC_BYTESM		GENMASK_ULL(19, 16)
-#घोषणा NPC_HDR_OFFSET		GENMASK_ULL(15, 8)
-#घोषणा NPC_KEY_OFFSET		GENMASK_ULL(5, 0)
-#घोषणा NPC_LDATA_EN		BIT_ULL(7)
+#define NPC_BYTESM		GENMASK_ULL(19, 16)
+#define NPC_HDR_OFFSET		GENMASK_ULL(15, 8)
+#define NPC_KEY_OFFSET		GENMASK_ULL(5, 0)
+#define NPC_LDATA_EN		BIT_ULL(7)
 
-अटल स्थिर अक्षर * स्थिर npc_flow_names[] = अणु
+static const char * const npc_flow_names[] = {
 	[NPC_DMAC]	= "dmac",
 	[NPC_SMAC]	= "smac",
 	[NPC_ETYPE]	= "ether type",
@@ -41,102 +40,102 @@
 	[NPC_SPORT_SCTP] = "sctp source port",
 	[NPC_DPORT_SCTP] = "sctp destination port",
 	[NPC_UNKNOWN]	= "unknown",
-पूर्ण;
+};
 
-स्थिर अक्षर *npc_get_field_name(u8 hdr)
-अणु
-	अगर (hdr >= ARRAY_SIZE(npc_flow_names))
-		वापस npc_flow_names[NPC_UNKNOWN];
+const char *npc_get_field_name(u8 hdr)
+{
+	if (hdr >= ARRAY_SIZE(npc_flow_names))
+		return npc_flow_names[NPC_UNKNOWN];
 
-	वापस npc_flow_names[hdr];
-पूर्ण
+	return npc_flow_names[hdr];
+}
 
 /* Compute keyword masks and figure out the number of keywords a field
  * spans in the key.
  */
-अटल व्योम npc_set_kw_masks(काष्ठा npc_mcam *mcam, u8 type,
-			     u8 nr_bits, पूर्णांक start_kwi, पूर्णांक offset, u8 पूर्णांकf)
-अणु
-	काष्ठा npc_key_field *field = &mcam->rx_key_fields[type];
+static void npc_set_kw_masks(struct npc_mcam *mcam, u8 type,
+			     u8 nr_bits, int start_kwi, int offset, u8 intf)
+{
+	struct npc_key_field *field = &mcam->rx_key_fields[type];
 	u8 bits_in_kw;
-	पूर्णांक max_kwi;
+	int max_kwi;
 
-	अगर (mcam->banks_per_entry == 1)
+	if (mcam->banks_per_entry == 1)
 		max_kwi = 1; /* NPC_MCAM_KEY_X1 */
-	अन्यथा अगर (mcam->banks_per_entry == 2)
+	else if (mcam->banks_per_entry == 2)
 		max_kwi = 3; /* NPC_MCAM_KEY_X2 */
-	अन्यथा
+	else
 		max_kwi = 6; /* NPC_MCAM_KEY_X4 */
 
-	अगर (is_npc_पूर्णांकf_tx(पूर्णांकf))
+	if (is_npc_intf_tx(intf))
 		field = &mcam->tx_key_fields[type];
 
-	अगर (offset + nr_bits <= 64) अणु
+	if (offset + nr_bits <= 64) {
 		/* one KW only */
-		अगर (start_kwi > max_kwi)
-			वापस;
+		if (start_kwi > max_kwi)
+			return;
 		field->kw_mask[start_kwi] |= GENMASK_ULL(nr_bits - 1, 0)
 					     << offset;
 		field->nr_kws = 1;
-	पूर्ण अन्यथा अगर (offset + nr_bits > 64 &&
-		   offset + nr_bits <= 128) अणु
+	} else if (offset + nr_bits > 64 &&
+		   offset + nr_bits <= 128) {
 		/* two KWs */
-		अगर (start_kwi + 1 > max_kwi)
-			वापस;
+		if (start_kwi + 1 > max_kwi)
+			return;
 		/* first KW mask */
 		bits_in_kw = 64 - offset;
 		field->kw_mask[start_kwi] |= GENMASK_ULL(bits_in_kw - 1, 0)
 					     << offset;
-		/* second KW mask i.e. mask क्रम rest of bits */
+		/* second KW mask i.e. mask for rest of bits */
 		bits_in_kw = nr_bits + offset - 64;
 		field->kw_mask[start_kwi + 1] |= GENMASK_ULL(bits_in_kw - 1, 0);
 		field->nr_kws = 2;
-	पूर्ण अन्यथा अणु
+	} else {
 		/* three KWs */
-		अगर (start_kwi + 2 > max_kwi)
-			वापस;
+		if (start_kwi + 2 > max_kwi)
+			return;
 		/* first KW mask */
 		bits_in_kw = 64 - offset;
 		field->kw_mask[start_kwi] |= GENMASK_ULL(bits_in_kw - 1, 0)
 					     << offset;
 		/* second KW mask */
 		field->kw_mask[start_kwi + 1] = ~0ULL;
-		/* third KW mask i.e. mask क्रम rest of bits */
+		/* third KW mask i.e. mask for rest of bits */
 		bits_in_kw = nr_bits + offset - 128;
 		field->kw_mask[start_kwi + 2] |= GENMASK_ULL(bits_in_kw - 1, 0);
 		field->nr_kws = 3;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /* Helper function to figure out whether field exists in the key */
-अटल bool npc_is_field_present(काष्ठा rvu *rvu, क्रमागत key_fields type, u8 पूर्णांकf)
-अणु
-	काष्ठा npc_mcam *mcam = &rvu->hw->mcam;
-	काष्ठा npc_key_field *input;
+static bool npc_is_field_present(struct rvu *rvu, enum key_fields type, u8 intf)
+{
+	struct npc_mcam *mcam = &rvu->hw->mcam;
+	struct npc_key_field *input;
 
 	input  = &mcam->rx_key_fields[type];
-	अगर (is_npc_पूर्णांकf_tx(पूर्णांकf))
+	if (is_npc_intf_tx(intf))
 		input  = &mcam->tx_key_fields[type];
 
-	वापस input->nr_kws > 0;
-पूर्ण
+	return input->nr_kws > 0;
+}
 
-अटल bool npc_is_same(काष्ठा npc_key_field *input,
-			काष्ठा npc_key_field *field)
-अणु
-	पूर्णांक ret;
+static bool npc_is_same(struct npc_key_field *input,
+			struct npc_key_field *field)
+{
+	int ret;
 
-	ret = स_भेद(&input->layer_mdata, &field->layer_mdata,
-		     माप(काष्ठा npc_layer_mdata));
-	वापस ret == 0;
-पूर्ण
+	ret = memcmp(&input->layer_mdata, &field->layer_mdata,
+		     sizeof(struct npc_layer_mdata));
+	return ret == 0;
+}
 
-अटल व्योम npc_set_layer_mdata(काष्ठा npc_mcam *mcam, क्रमागत key_fields type,
-				u64 cfg, u8 lid, u8 lt, u8 पूर्णांकf)
-अणु
-	काष्ठा npc_key_field *input = &mcam->rx_key_fields[type];
+static void npc_set_layer_mdata(struct npc_mcam *mcam, enum key_fields type,
+				u64 cfg, u8 lid, u8 lt, u8 intf)
+{
+	struct npc_key_field *input = &mcam->rx_key_fields[type];
 
-	अगर (is_npc_पूर्णांकf_tx(पूर्णांकf))
+	if (is_npc_intf_tx(intf))
 		input = &mcam->tx_key_fields[type];
 
 	input->layer_mdata.hdr = FIELD_GET(NPC_HDR_OFFSET, cfg);
@@ -144,169 +143,169 @@
 	input->layer_mdata.len = FIELD_GET(NPC_BYTESM, cfg) + 1;
 	input->layer_mdata.ltype = lt;
 	input->layer_mdata.lid = lid;
-पूर्ण
+}
 
-अटल bool npc_check_overlap_fields(काष्ठा npc_key_field *input1,
-				     काष्ठा npc_key_field *input2)
-अणु
-	पूर्णांक kwi;
+static bool npc_check_overlap_fields(struct npc_key_field *input1,
+				     struct npc_key_field *input2)
+{
+	int kwi;
 
-	/* Fields with same layer id and dअगरferent ltypes are mutually
+	/* Fields with same layer id and different ltypes are mutually
 	 * exclusive hence they can be overlapped
 	 */
-	अगर (input1->layer_mdata.lid == input2->layer_mdata.lid &&
+	if (input1->layer_mdata.lid == input2->layer_mdata.lid &&
 	    input1->layer_mdata.ltype != input2->layer_mdata.ltype)
-		वापस false;
+		return false;
 
-	क्रम (kwi = 0; kwi < NPC_MAX_KWS_IN_KEY; kwi++) अणु
-		अगर (input1->kw_mask[kwi] & input2->kw_mask[kwi])
-			वापस true;
-	पूर्ण
+	for (kwi = 0; kwi < NPC_MAX_KWS_IN_KEY; kwi++) {
+		if (input1->kw_mask[kwi] & input2->kw_mask[kwi])
+			return true;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
 /* Helper function to check whether given field overlaps with any other fields
  * in the key. Due to limitations on key size and the key extraction profile in
- * use higher layers can overग_लिखो lower layer's header fields. Hence overlap
+ * use higher layers can overwrite lower layer's header fields. Hence overlap
  * needs to be checked.
  */
-अटल bool npc_check_overlap(काष्ठा rvu *rvu, पूर्णांक blkaddr,
-			      क्रमागत key_fields type, u8 start_lid, u8 पूर्णांकf)
-अणु
-	काष्ठा npc_mcam *mcam = &rvu->hw->mcam;
-	काष्ठा npc_key_field *dummy, *input;
-	पूर्णांक start_kwi, offset;
+static bool npc_check_overlap(struct rvu *rvu, int blkaddr,
+			      enum key_fields type, u8 start_lid, u8 intf)
+{
+	struct npc_mcam *mcam = &rvu->hw->mcam;
+	struct npc_key_field *dummy, *input;
+	int start_kwi, offset;
 	u8 nr_bits, lid, lt, ld;
 	u64 cfg;
 
 	dummy = &mcam->rx_key_fields[NPC_UNKNOWN];
 	input = &mcam->rx_key_fields[type];
 
-	अगर (is_npc_पूर्णांकf_tx(पूर्णांकf)) अणु
+	if (is_npc_intf_tx(intf)) {
 		dummy = &mcam->tx_key_fields[NPC_UNKNOWN];
 		input = &mcam->tx_key_fields[type];
-	पूर्ण
+	}
 
-	क्रम (lid = start_lid; lid < NPC_MAX_LID; lid++) अणु
-		क्रम (lt = 0; lt < NPC_MAX_LT; lt++) अणु
-			क्रम (ld = 0; ld < NPC_MAX_LD; ld++) अणु
-				cfg = rvu_पढ़ो64(rvu, blkaddr,
+	for (lid = start_lid; lid < NPC_MAX_LID; lid++) {
+		for (lt = 0; lt < NPC_MAX_LT; lt++) {
+			for (ld = 0; ld < NPC_MAX_LD; ld++) {
+				cfg = rvu_read64(rvu, blkaddr,
 						 NPC_AF_INTFX_LIDX_LTX_LDX_CFG
-						 (पूर्णांकf, lid, lt, ld));
-				अगर (!FIELD_GET(NPC_LDATA_EN, cfg))
-					जारी;
-				स_रखो(dummy, 0, माप(काष्ठा npc_key_field));
+						 (intf, lid, lt, ld));
+				if (!FIELD_GET(NPC_LDATA_EN, cfg))
+					continue;
+				memset(dummy, 0, sizeof(struct npc_key_field));
 				npc_set_layer_mdata(mcam, NPC_UNKNOWN, cfg,
-						    lid, lt, पूर्णांकf);
+						    lid, lt, intf);
 				/* exclude input */
-				अगर (npc_is_same(input, dummy))
-					जारी;
+				if (npc_is_same(input, dummy))
+					continue;
 				start_kwi = dummy->layer_mdata.key / 8;
 				offset = (dummy->layer_mdata.key * 8) % 64;
 				nr_bits = dummy->layer_mdata.len * 8;
-				/* क्रमm KW masks */
+				/* form KW masks */
 				npc_set_kw_masks(mcam, NPC_UNKNOWN, nr_bits,
-						 start_kwi, offset, पूर्णांकf);
+						 start_kwi, offset, intf);
 				/* check any input field bits falls in any
 				 * other field bits.
 				 */
-				अगर (npc_check_overlap_fields(dummy, input))
-					वापस true;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				if (npc_check_overlap_fields(dummy, input))
+					return true;
+			}
+		}
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल bool npc_check_field(काष्ठा rvu *rvu, पूर्णांक blkaddr, क्रमागत key_fields type,
-			    u8 पूर्णांकf)
-अणु
-	अगर (!npc_is_field_present(rvu, type, पूर्णांकf) ||
-	    npc_check_overlap(rvu, blkaddr, type, 0, पूर्णांकf))
-		वापस false;
-	वापस true;
-पूर्ण
+static bool npc_check_field(struct rvu *rvu, int blkaddr, enum key_fields type,
+			    u8 intf)
+{
+	if (!npc_is_field_present(rvu, type, intf) ||
+	    npc_check_overlap(rvu, blkaddr, type, 0, intf))
+		return false;
+	return true;
+}
 
-अटल व्योम npc_scan_parse_result(काष्ठा npc_mcam *mcam, u8 bit_number,
-				  u8 key_nibble, u8 पूर्णांकf)
-अणु
+static void npc_scan_parse_result(struct npc_mcam *mcam, u8 bit_number,
+				  u8 key_nibble, u8 intf)
+{
 	u8 offset = (key_nibble * 4) % 64; /* offset within key word */
 	u8 kwi = (key_nibble * 4) / 64; /* which word in key */
 	u8 nr_bits = 4; /* bits in a nibble */
 	u8 type;
 
-	चयन (bit_number) अणु
-	हाल 0 ... 2:
+	switch (bit_number) {
+	case 0 ... 2:
 		type = NPC_CHAN;
-		अवरोध;
-	हाल 3:
+		break;
+	case 3:
 		type = NPC_ERRLEV;
-		अवरोध;
-	हाल 4 ... 5:
+		break;
+	case 4 ... 5:
 		type = NPC_ERRCODE;
-		अवरोध;
-	हाल 6:
+		break;
+	case 6:
 		type = NPC_LXMB;
-		अवरोध;
-	/* check क्रम LTYPE only as of now */
-	हाल 9:
+		break;
+	/* check for LTYPE only as of now */
+	case 9:
 		type = NPC_LA;
-		अवरोध;
-	हाल 12:
+		break;
+	case 12:
 		type = NPC_LB;
-		अवरोध;
-	हाल 15:
+		break;
+	case 15:
 		type = NPC_LC;
-		अवरोध;
-	हाल 18:
+		break;
+	case 18:
 		type = NPC_LD;
-		अवरोध;
-	हाल 21:
+		break;
+	case 21:
 		type = NPC_LE;
-		अवरोध;
-	हाल 24:
+		break;
+	case 24:
 		type = NPC_LF;
-		अवरोध;
-	हाल 27:
+		break;
+	case 27:
 		type = NPC_LG;
-		अवरोध;
-	हाल 30:
+		break;
+	case 30:
 		type = NPC_LH;
-		अवरोध;
-	शेष:
-		वापस;
-	पूर्ण
-	npc_set_kw_masks(mcam, type, nr_bits, kwi, offset, पूर्णांकf);
-पूर्ण
+		break;
+	default:
+		return;
+	}
+	npc_set_kw_masks(mcam, type, nr_bits, kwi, offset, intf);
+}
 
-अटल व्योम npc_handle_multi_layer_fields(काष्ठा rvu *rvu, पूर्णांक blkaddr, u8 पूर्णांकf)
-अणु
-	काष्ठा npc_mcam *mcam = &rvu->hw->mcam;
-	काष्ठा npc_key_field *key_fields;
+static void npc_handle_multi_layer_fields(struct rvu *rvu, int blkaddr, u8 intf)
+{
+	struct npc_mcam *mcam = &rvu->hw->mcam;
+	struct npc_key_field *key_fields;
 	/* Ether type can come from three layers
-	 * (ethernet, single tagged, द्विगुन tagged)
+	 * (ethernet, single tagged, double tagged)
 	 */
-	काष्ठा npc_key_field *etype_ether;
-	काष्ठा npc_key_field *etype_tag1;
-	काष्ठा npc_key_field *etype_tag2;
+	struct npc_key_field *etype_ether;
+	struct npc_key_field *etype_tag1;
+	struct npc_key_field *etype_tag2;
 	/* Outer VLAN TCI can come from two layers
-	 * (single tagged, द्विगुन tagged)
+	 * (single tagged, double tagged)
 	 */
-	काष्ठा npc_key_field *vlan_tag1;
-	काष्ठा npc_key_field *vlan_tag2;
+	struct npc_key_field *vlan_tag1;
+	struct npc_key_field *vlan_tag2;
 	u64 *features;
 	u8 start_lid;
-	पूर्णांक i;
+	int i;
 
 	key_fields = mcam->rx_key_fields;
 	features = &mcam->rx_features;
 
-	अगर (is_npc_पूर्णांकf_tx(पूर्णांकf)) अणु
+	if (is_npc_intf_tx(intf)) {
 		key_fields = mcam->tx_key_fields;
 		features = &mcam->tx_features;
-	पूर्ण
+	}
 
 	/* Handle header fields which can come from multiple layers like
 	 * etype, outer vlan tci. These fields should have same position in
@@ -319,82 +318,82 @@
 	vlan_tag1 = &key_fields[NPC_VLAN_TAG1];
 	vlan_tag2 = &key_fields[NPC_VLAN_TAG2];
 
-	/* अगर key profile programmed करोes not extract Ethertype at all */
-	अगर (!etype_ether->nr_kws && !etype_tag1->nr_kws && !etype_tag2->nr_kws)
-		जाओ vlan_tci;
+	/* if key profile programmed does not extract Ethertype at all */
+	if (!etype_ether->nr_kws && !etype_tag1->nr_kws && !etype_tag2->nr_kws)
+		goto vlan_tci;
 
-	/* अगर key profile programmed extracts Ethertype from one layer */
-	अगर (etype_ether->nr_kws && !etype_tag1->nr_kws && !etype_tag2->nr_kws)
+	/* if key profile programmed extracts Ethertype from one layer */
+	if (etype_ether->nr_kws && !etype_tag1->nr_kws && !etype_tag2->nr_kws)
 		key_fields[NPC_ETYPE] = *etype_ether;
-	अगर (!etype_ether->nr_kws && etype_tag1->nr_kws && !etype_tag2->nr_kws)
+	if (!etype_ether->nr_kws && etype_tag1->nr_kws && !etype_tag2->nr_kws)
 		key_fields[NPC_ETYPE] = *etype_tag1;
-	अगर (!etype_ether->nr_kws && !etype_tag1->nr_kws && etype_tag2->nr_kws)
+	if (!etype_ether->nr_kws && !etype_tag1->nr_kws && etype_tag2->nr_kws)
 		key_fields[NPC_ETYPE] = *etype_tag2;
 
-	/* अगर key profile programmed extracts Ethertype from multiple layers */
-	अगर (etype_ether->nr_kws && etype_tag1->nr_kws) अणु
-		क्रम (i = 0; i < NPC_MAX_KWS_IN_KEY; i++) अणु
-			अगर (etype_ether->kw_mask[i] != etype_tag1->kw_mask[i])
-				जाओ vlan_tci;
-		पूर्ण
+	/* if key profile programmed extracts Ethertype from multiple layers */
+	if (etype_ether->nr_kws && etype_tag1->nr_kws) {
+		for (i = 0; i < NPC_MAX_KWS_IN_KEY; i++) {
+			if (etype_ether->kw_mask[i] != etype_tag1->kw_mask[i])
+				goto vlan_tci;
+		}
 		key_fields[NPC_ETYPE] = *etype_tag1;
-	पूर्ण
-	अगर (etype_ether->nr_kws && etype_tag2->nr_kws) अणु
-		क्रम (i = 0; i < NPC_MAX_KWS_IN_KEY; i++) अणु
-			अगर (etype_ether->kw_mask[i] != etype_tag2->kw_mask[i])
-				जाओ vlan_tci;
-		पूर्ण
+	}
+	if (etype_ether->nr_kws && etype_tag2->nr_kws) {
+		for (i = 0; i < NPC_MAX_KWS_IN_KEY; i++) {
+			if (etype_ether->kw_mask[i] != etype_tag2->kw_mask[i])
+				goto vlan_tci;
+		}
 		key_fields[NPC_ETYPE] = *etype_tag2;
-	पूर्ण
-	अगर (etype_tag1->nr_kws && etype_tag2->nr_kws) अणु
-		क्रम (i = 0; i < NPC_MAX_KWS_IN_KEY; i++) अणु
-			अगर (etype_tag1->kw_mask[i] != etype_tag2->kw_mask[i])
-				जाओ vlan_tci;
-		पूर्ण
+	}
+	if (etype_tag1->nr_kws && etype_tag2->nr_kws) {
+		for (i = 0; i < NPC_MAX_KWS_IN_KEY; i++) {
+			if (etype_tag1->kw_mask[i] != etype_tag2->kw_mask[i])
+				goto vlan_tci;
+		}
 		key_fields[NPC_ETYPE] = *etype_tag2;
-	पूर्ण
+	}
 
-	/* check none of higher layers overग_लिखो Ethertype */
+	/* check none of higher layers overwrite Ethertype */
 	start_lid = key_fields[NPC_ETYPE].layer_mdata.lid + 1;
-	अगर (npc_check_overlap(rvu, blkaddr, NPC_ETYPE, start_lid, पूर्णांकf))
-		जाओ vlan_tci;
+	if (npc_check_overlap(rvu, blkaddr, NPC_ETYPE, start_lid, intf))
+		goto vlan_tci;
 	*features |= BIT_ULL(NPC_ETYPE);
 vlan_tci:
-	/* अगर key profile करोes not extract outer vlan tci at all */
-	अगर (!vlan_tag1->nr_kws && !vlan_tag2->nr_kws)
-		जाओ करोne;
+	/* if key profile does not extract outer vlan tci at all */
+	if (!vlan_tag1->nr_kws && !vlan_tag2->nr_kws)
+		goto done;
 
-	/* अगर key profile extracts outer vlan tci from one layer */
-	अगर (vlan_tag1->nr_kws && !vlan_tag2->nr_kws)
+	/* if key profile extracts outer vlan tci from one layer */
+	if (vlan_tag1->nr_kws && !vlan_tag2->nr_kws)
 		key_fields[NPC_OUTER_VID] = *vlan_tag1;
-	अगर (!vlan_tag1->nr_kws && vlan_tag2->nr_kws)
+	if (!vlan_tag1->nr_kws && vlan_tag2->nr_kws)
 		key_fields[NPC_OUTER_VID] = *vlan_tag2;
 
-	/* अगर key profile extracts outer vlan tci from multiple layers */
-	अगर (vlan_tag1->nr_kws && vlan_tag2->nr_kws) अणु
-		क्रम (i = 0; i < NPC_MAX_KWS_IN_KEY; i++) अणु
-			अगर (vlan_tag1->kw_mask[i] != vlan_tag2->kw_mask[i])
-				जाओ करोne;
-		पूर्ण
+	/* if key profile extracts outer vlan tci from multiple layers */
+	if (vlan_tag1->nr_kws && vlan_tag2->nr_kws) {
+		for (i = 0; i < NPC_MAX_KWS_IN_KEY; i++) {
+			if (vlan_tag1->kw_mask[i] != vlan_tag2->kw_mask[i])
+				goto done;
+		}
 		key_fields[NPC_OUTER_VID] = *vlan_tag2;
-	पूर्ण
-	/* check none of higher layers overग_लिखो outer vlan tci */
+	}
+	/* check none of higher layers overwrite outer vlan tci */
 	start_lid = key_fields[NPC_OUTER_VID].layer_mdata.lid + 1;
-	अगर (npc_check_overlap(rvu, blkaddr, NPC_OUTER_VID, start_lid, पूर्णांकf))
-		जाओ करोne;
+	if (npc_check_overlap(rvu, blkaddr, NPC_OUTER_VID, start_lid, intf))
+		goto done;
 	*features |= BIT_ULL(NPC_OUTER_VID);
-करोne:
-	वापस;
-पूर्ण
+done:
+	return;
+}
 
-अटल व्योम npc_scan_ldata(काष्ठा rvu *rvu, पूर्णांक blkaddr, u8 lid,
-			   u8 lt, u64 cfg, u8 पूर्णांकf)
-अणु
-	काष्ठा npc_mcam *mcam = &rvu->hw->mcam;
+static void npc_scan_ldata(struct rvu *rvu, int blkaddr, u8 lid,
+			   u8 lt, u64 cfg, u8 intf)
+{
+	struct npc_mcam *mcam = &rvu->hw->mcam;
 	u8 hdr, key, nr_bytes, bit_offset;
 	u8 la_ltype, la_start;
 	/* starting KW index and starting bit position */
-	पूर्णांक start_kwi, offset;
+	int start_kwi, offset;
 
 	nr_bytes = FIELD_GET(NPC_BYTESM, cfg) + 1;
 	hdr = FIELD_GET(NPC_HDR_OFFSET, cfg);
@@ -405,26 +404,26 @@ vlan_tci:
 	/* For Tx, Layer A has NIX_INST_HDR_S(64 bytes) preceding
 	 * ethernet header.
 	 */
-	अगर (is_npc_पूर्णांकf_tx(पूर्णांकf)) अणु
+	if (is_npc_intf_tx(intf)) {
 		la_ltype = NPC_LT_LA_IH_NIX_ETHER;
 		la_start = 8;
-	पूर्ण अन्यथा अणु
+	} else {
 		la_ltype = NPC_LT_LA_ETHER;
 		la_start = 0;
-	पूर्ण
+	}
 
-#घोषणा NPC_SCAN_HDR(name, hlid, hlt, hstart, hlen)			       \
-करो अणु									       \
-	अगर (lid == (hlid) && lt == (hlt)) अणु				       \
-		अगर ((hstart) >= hdr &&					       \
-		    ((hstart) + (hlen)) <= (hdr + nr_bytes)) अणु	               \
+#define NPC_SCAN_HDR(name, hlid, hlt, hstart, hlen)			       \
+do {									       \
+	if (lid == (hlid) && lt == (hlt)) {				       \
+		if ((hstart) >= hdr &&					       \
+		    ((hstart) + (hlen)) <= (hdr + nr_bytes)) {	               \
 			bit_offset = (hdr + nr_bytes - (hstart) - (hlen)) * 8; \
-			npc_set_layer_mdata(mcam, (name), cfg, lid, lt, पूर्णांकf); \
+			npc_set_layer_mdata(mcam, (name), cfg, lid, lt, intf); \
 			npc_set_kw_masks(mcam, (name), (hlen) * 8,	       \
-					 start_kwi, offset + bit_offset, पूर्णांकf);\
-		पूर्ण							       \
-	पूर्ण								       \
-पूर्ण जबतक (0)
+					 start_kwi, offset + bit_offset, intf);\
+		}							       \
+	}								       \
+} while (0)
 
 	/* List LID, LTYPE, start offset from layer and length(in bytes) of
 	 * packet header fields below.
@@ -450,61 +449,61 @@ vlan_tci:
 	NPC_SCAN_HDR(NPC_SMAC, NPC_LID_LA, la_ltype, la_start, 6);
 	/* PF_FUNC is 2 bytes at 0th byte of NPC_LT_LA_IH_NIX_ETHER */
 	NPC_SCAN_HDR(NPC_PF_FUNC, NPC_LID_LA, NPC_LT_LA_IH_NIX_ETHER, 0, 2);
-पूर्ण
+}
 
-अटल व्योम npc_set_features(काष्ठा rvu *rvu, पूर्णांक blkaddr, u8 पूर्णांकf)
-अणु
-	काष्ठा npc_mcam *mcam = &rvu->hw->mcam;
+static void npc_set_features(struct rvu *rvu, int blkaddr, u8 intf)
+{
+	struct npc_mcam *mcam = &rvu->hw->mcam;
 	u64 *features = &mcam->rx_features;
 	u64 tcp_udp_sctp;
-	पूर्णांक hdr;
+	int hdr;
 
-	अगर (is_npc_पूर्णांकf_tx(पूर्णांकf))
+	if (is_npc_intf_tx(intf))
 		features = &mcam->tx_features;
 
-	क्रम (hdr = NPC_DMAC; hdr < NPC_HEADER_FIELDS_MAX; hdr++) अणु
-		अगर (npc_check_field(rvu, blkaddr, hdr, पूर्णांकf))
+	for (hdr = NPC_DMAC; hdr < NPC_HEADER_FIELDS_MAX; hdr++) {
+		if (npc_check_field(rvu, blkaddr, hdr, intf))
 			*features |= BIT_ULL(hdr);
-	पूर्ण
+	}
 
 	tcp_udp_sctp = BIT_ULL(NPC_SPORT_TCP) | BIT_ULL(NPC_SPORT_UDP) |
 		       BIT_ULL(NPC_DPORT_TCP) | BIT_ULL(NPC_DPORT_UDP) |
 		       BIT_ULL(NPC_SPORT_SCTP) | BIT_ULL(NPC_DPORT_SCTP);
 
-	/* क्रम tcp/udp/sctp corresponding layer type should be in the key */
-	अगर (*features & tcp_udp_sctp) अणु
-		अगर (!npc_check_field(rvu, blkaddr, NPC_LD, पूर्णांकf))
+	/* for tcp/udp/sctp corresponding layer type should be in the key */
+	if (*features & tcp_udp_sctp) {
+		if (!npc_check_field(rvu, blkaddr, NPC_LD, intf))
 			*features &= ~tcp_udp_sctp;
-		अन्यथा
+		else
 			*features |= BIT_ULL(NPC_IPPROTO_TCP) |
 				     BIT_ULL(NPC_IPPROTO_UDP) |
 				     BIT_ULL(NPC_IPPROTO_SCTP);
-	पूर्ण
+	}
 
-	/* क्रम AH/ICMP/ICMPv6/, check अगर corresponding layer type is present in the key */
-	अगर (npc_check_field(rvu, blkaddr, NPC_LD, पूर्णांकf)) अणु
+	/* for AH/ICMP/ICMPv6/, check if corresponding layer type is present in the key */
+	if (npc_check_field(rvu, blkaddr, NPC_LD, intf)) {
 		*features |= BIT_ULL(NPC_IPPROTO_AH);
 		*features |= BIT_ULL(NPC_IPPROTO_ICMP);
 		*features |= BIT_ULL(NPC_IPPROTO_ICMP6);
-	पूर्ण
+	}
 
-	/* क्रम ESP, check अगर corresponding layer type is present in the key */
-	अगर (npc_check_field(rvu, blkaddr, NPC_LE, पूर्णांकf))
+	/* for ESP, check if corresponding layer type is present in the key */
+	if (npc_check_field(rvu, blkaddr, NPC_LE, intf))
 		*features |= BIT_ULL(NPC_IPPROTO_ESP);
 
-	/* क्रम vlan corresponding layer type should be in the key */
-	अगर (*features & BIT_ULL(NPC_OUTER_VID))
-		अगर (!npc_check_field(rvu, blkaddr, NPC_LB, पूर्णांकf))
+	/* for vlan corresponding layer type should be in the key */
+	if (*features & BIT_ULL(NPC_OUTER_VID))
+		if (!npc_check_field(rvu, blkaddr, NPC_LB, intf))
 			*features &= ~BIT_ULL(NPC_OUTER_VID);
-पूर्ण
+}
 
-/* Scan key extraction profile and record how fields of our पूर्णांकerest
- * fill the key काष्ठाure. Also verअगरy Channel and DMAC exists in
+/* Scan key extraction profile and record how fields of our interest
+ * fill the key structure. Also verify Channel and DMAC exists in
  * key and not overwritten by other header fields.
  */
-अटल पूर्णांक npc_scan_kex(काष्ठा rvu *rvu, पूर्णांक blkaddr, u8 पूर्णांकf)
-अणु
-	काष्ठा npc_mcam *mcam = &rvu->hw->mcam;
+static int npc_scan_kex(struct rvu *rvu, int blkaddr, u8 intf)
+{
+	struct npc_mcam *mcam = &rvu->hw->mcam;
 	u8 lid, lt, ld, bitnr;
 	u8 key_nibble = 0;
 	u64 cfg;
@@ -514,205 +513,205 @@ vlan_tci:
 	 * parse result in the key. The enabled nibbles from parse result
 	 * will be concatenated in key.
 	 */
-	cfg = rvu_पढ़ो64(rvu, blkaddr, NPC_AF_INTFX_KEX_CFG(पूर्णांकf));
+	cfg = rvu_read64(rvu, blkaddr, NPC_AF_INTFX_KEX_CFG(intf));
 	cfg &= NPC_PARSE_NIBBLE;
-	क्रम_each_set_bit(bitnr, (अचिन्हित दीर्घ *)&cfg, 31) अणु
-		npc_scan_parse_result(mcam, bitnr, key_nibble, पूर्णांकf);
+	for_each_set_bit(bitnr, (unsigned long *)&cfg, 31) {
+		npc_scan_parse_result(mcam, bitnr, key_nibble, intf);
 		key_nibble++;
-	पूर्ण
+	}
 
 	/* Scan and note how layer data is going to be in key */
-	क्रम (lid = 0; lid < NPC_MAX_LID; lid++) अणु
-		क्रम (lt = 0; lt < NPC_MAX_LT; lt++) अणु
-			क्रम (ld = 0; ld < NPC_MAX_LD; ld++) अणु
-				cfg = rvu_पढ़ो64(rvu, blkaddr,
+	for (lid = 0; lid < NPC_MAX_LID; lid++) {
+		for (lt = 0; lt < NPC_MAX_LT; lt++) {
+			for (ld = 0; ld < NPC_MAX_LD; ld++) {
+				cfg = rvu_read64(rvu, blkaddr,
 						 NPC_AF_INTFX_LIDX_LTX_LDX_CFG
-						 (पूर्णांकf, lid, lt, ld));
-				अगर (!FIELD_GET(NPC_LDATA_EN, cfg))
-					जारी;
+						 (intf, lid, lt, ld));
+				if (!FIELD_GET(NPC_LDATA_EN, cfg))
+					continue;
 				npc_scan_ldata(rvu, blkaddr, lid, lt, cfg,
-					       पूर्णांकf);
-			पूर्ण
-		पूर्ण
-	पूर्ण
+					       intf);
+			}
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक npc_scan_verअगरy_kex(काष्ठा rvu *rvu, पूर्णांक blkaddr)
-अणु
-	पूर्णांक err;
+static int npc_scan_verify_kex(struct rvu *rvu, int blkaddr)
+{
+	int err;
 
 	err = npc_scan_kex(rvu, blkaddr, NIX_INTF_RX);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	err = npc_scan_kex(rvu, blkaddr, NIX_INTF_TX);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	/* Channel is mandatory */
-	अगर (!npc_is_field_present(rvu, NPC_CHAN, NIX_INTF_RX)) अणु
+	if (!npc_is_field_present(rvu, NPC_CHAN, NIX_INTF_RX)) {
 		dev_err(rvu->dev, "Channel not present in Key\n");
-		वापस -EINVAL;
-	पूर्ण
-	/* check that none of the fields overग_लिखो channel */
-	अगर (npc_check_overlap(rvu, blkaddr, NPC_CHAN, 0, NIX_INTF_RX)) अणु
+		return -EINVAL;
+	}
+	/* check that none of the fields overwrite channel */
+	if (npc_check_overlap(rvu, blkaddr, NPC_CHAN, 0, NIX_INTF_RX)) {
 		dev_err(rvu->dev, "Channel cannot be overwritten\n");
-		वापस -EINVAL;
-	पूर्ण
-	/* DMAC should be present in key क्रम unicast filter to work */
-	अगर (!npc_is_field_present(rvu, NPC_DMAC, NIX_INTF_RX)) अणु
+		return -EINVAL;
+	}
+	/* DMAC should be present in key for unicast filter to work */
+	if (!npc_is_field_present(rvu, NPC_DMAC, NIX_INTF_RX)) {
 		dev_err(rvu->dev, "DMAC not present in Key\n");
-		वापस -EINVAL;
-	पूर्ण
-	/* check that none of the fields overग_लिखो DMAC */
-	अगर (npc_check_overlap(rvu, blkaddr, NPC_DMAC, 0, NIX_INTF_RX)) अणु
+		return -EINVAL;
+	}
+	/* check that none of the fields overwrite DMAC */
+	if (npc_check_overlap(rvu, blkaddr, NPC_DMAC, 0, NIX_INTF_RX)) {
 		dev_err(rvu->dev, "DMAC cannot be overwritten\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	npc_set_features(rvu, blkaddr, NIX_INTF_TX);
 	npc_set_features(rvu, blkaddr, NIX_INTF_RX);
 	npc_handle_multi_layer_fields(rvu, blkaddr, NIX_INTF_TX);
 	npc_handle_multi_layer_fields(rvu, blkaddr, NIX_INTF_RX);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक npc_flow_steering_init(काष्ठा rvu *rvu, पूर्णांक blkaddr)
-अणु
-	काष्ठा npc_mcam *mcam = &rvu->hw->mcam;
+int npc_flow_steering_init(struct rvu *rvu, int blkaddr)
+{
+	struct npc_mcam *mcam = &rvu->hw->mcam;
 
 	INIT_LIST_HEAD(&mcam->mcam_rules);
 
-	वापस npc_scan_verअगरy_kex(rvu, blkaddr);
-पूर्ण
+	return npc_scan_verify_kex(rvu, blkaddr);
+}
 
-अटल पूर्णांक npc_check_unsupported_flows(काष्ठा rvu *rvu, u64 features, u8 पूर्णांकf)
-अणु
-	काष्ठा npc_mcam *mcam = &rvu->hw->mcam;
+static int npc_check_unsupported_flows(struct rvu *rvu, u64 features, u8 intf)
+{
+	struct npc_mcam *mcam = &rvu->hw->mcam;
 	u64 *mcam_features = &mcam->rx_features;
 	u64 unsupported;
 	u8 bit;
 
-	अगर (is_npc_पूर्णांकf_tx(पूर्णांकf))
+	if (is_npc_intf_tx(intf))
 		mcam_features = &mcam->tx_features;
 
 	unsupported = (*mcam_features ^ features) & ~(*mcam_features);
-	अगर (unsupported) अणु
+	if (unsupported) {
 		dev_info(rvu->dev, "Unsupported flow(s):\n");
-		क्रम_each_set_bit(bit, (अचिन्हित दीर्घ *)&unsupported, 64)
+		for_each_set_bit(bit, (unsigned long *)&unsupported, 64)
 			dev_info(rvu->dev, "%s ", npc_get_field_name(bit));
-		वापस NIX_AF_ERR_NPC_KEY_NOT_SUPP;
-	पूर्ण
+		return NIX_AF_ERR_NPC_KEY_NOT_SUPP;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* npc_update_entry - Based on the masks generated during
  * the key scanning, updates the given entry with value and
- * masks क्रम the field of पूर्णांकerest. Maximum 16 bytes of a packet
+ * masks for the field of interest. Maximum 16 bytes of a packet
  * header can be extracted by HW hence lo and hi are sufficient.
  * When field bytes are less than or equal to 8 then hi should be
- * 0 क्रम value and mask.
+ * 0 for value and mask.
  *
  * If exact match of value is required then mask should be all 1's.
  * If any bits in mask are 0 then corresponding bits in value are
- * करोnt care.
+ * dont care.
  */
-अटल व्योम npc_update_entry(काष्ठा rvu *rvu, क्रमागत key_fields type,
-			     काष्ठा mcam_entry *entry, u64 val_lo,
-			     u64 val_hi, u64 mask_lo, u64 mask_hi, u8 पूर्णांकf)
-अणु
-	काष्ठा npc_mcam *mcam = &rvu->hw->mcam;
-	काष्ठा mcam_entry dummy = अणु अणु0पूर्ण पूर्ण;
-	काष्ठा npc_key_field *field;
+static void npc_update_entry(struct rvu *rvu, enum key_fields type,
+			     struct mcam_entry *entry, u64 val_lo,
+			     u64 val_hi, u64 mask_lo, u64 mask_hi, u8 intf)
+{
+	struct npc_mcam *mcam = &rvu->hw->mcam;
+	struct mcam_entry dummy = { {0} };
+	struct npc_key_field *field;
 	u64 kw1, kw2, kw3;
-	u8 shअगरt;
-	पूर्णांक i;
+	u8 shift;
+	int i;
 
 	field = &mcam->rx_key_fields[type];
-	अगर (is_npc_पूर्णांकf_tx(पूर्णांकf))
+	if (is_npc_intf_tx(intf))
 		field = &mcam->tx_key_fields[type];
 
-	अगर (!field->nr_kws)
-		वापस;
+	if (!field->nr_kws)
+		return;
 
-	क्रम (i = 0; i < NPC_MAX_KWS_IN_KEY; i++) अणु
-		अगर (!field->kw_mask[i])
-			जारी;
+	for (i = 0; i < NPC_MAX_KWS_IN_KEY; i++) {
+		if (!field->kw_mask[i])
+			continue;
 		/* place key value in kw[x] */
-		shअगरt = __ffs64(field->kw_mask[i]);
+		shift = __ffs64(field->kw_mask[i]);
 		/* update entry value */
-		kw1 = (val_lo << shअगरt) & field->kw_mask[i];
+		kw1 = (val_lo << shift) & field->kw_mask[i];
 		dummy.kw[i] = kw1;
 		/* update entry mask */
-		kw1 = (mask_lo << shअगरt) & field->kw_mask[i];
+		kw1 = (mask_lo << shift) & field->kw_mask[i];
 		dummy.kw_mask[i] = kw1;
 
-		अगर (field->nr_kws == 1)
-			अवरोध;
-		/* place reमुख्यing bits of key value in kw[x + 1] */
-		अगर (field->nr_kws == 2) अणु
+		if (field->nr_kws == 1)
+			break;
+		/* place remaining bits of key value in kw[x + 1] */
+		if (field->nr_kws == 2) {
 			/* update entry value */
-			kw2 = shअगरt ? val_lo >> (64 - shअगरt) : 0;
-			kw2 |= (val_hi << shअगरt);
+			kw2 = shift ? val_lo >> (64 - shift) : 0;
+			kw2 |= (val_hi << shift);
 			kw2 &= field->kw_mask[i + 1];
 			dummy.kw[i + 1] = kw2;
 			/* update entry mask */
-			kw2 = shअगरt ? mask_lo >> (64 - shअगरt) : 0;
-			kw2 |= (mask_hi << shअगरt);
+			kw2 = shift ? mask_lo >> (64 - shift) : 0;
+			kw2 |= (mask_hi << shift);
 			kw2 &= field->kw_mask[i + 1];
 			dummy.kw_mask[i + 1] = kw2;
-			अवरोध;
-		पूर्ण
-		/* place reमुख्यing bits of key value in kw[x + 1], kw[x + 2] */
-		अगर (field->nr_kws == 3) अणु
+			break;
+		}
+		/* place remaining bits of key value in kw[x + 1], kw[x + 2] */
+		if (field->nr_kws == 3) {
 			/* update entry value */
-			kw2 = shअगरt ? val_lo >> (64 - shअगरt) : 0;
-			kw2 |= (val_hi << shअगरt);
+			kw2 = shift ? val_lo >> (64 - shift) : 0;
+			kw2 |= (val_hi << shift);
 			kw2 &= field->kw_mask[i + 1];
-			kw3 = shअगरt ? val_hi >> (64 - shअगरt) : 0;
+			kw3 = shift ? val_hi >> (64 - shift) : 0;
 			kw3 &= field->kw_mask[i + 2];
 			dummy.kw[i + 1] = kw2;
 			dummy.kw[i + 2] = kw3;
 			/* update entry mask */
-			kw2 = shअगरt ? mask_lo >> (64 - shअगरt) : 0;
-			kw2 |= (mask_hi << shअगरt);
+			kw2 = shift ? mask_lo >> (64 - shift) : 0;
+			kw2 |= (mask_hi << shift);
 			kw2 &= field->kw_mask[i + 1];
-			kw3 = shअगरt ? mask_hi >> (64 - shअगरt) : 0;
+			kw3 = shift ? mask_hi >> (64 - shift) : 0;
 			kw3 &= field->kw_mask[i + 2];
 			dummy.kw_mask[i + 1] = kw2;
 			dummy.kw_mask[i + 2] = kw3;
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	/* dummy is पढ़ोy with values and masks क्रम given key
+			break;
+		}
+	}
+	/* dummy is ready with values and masks for given key
 	 * field now clear and update input entry with those
 	 */
-	क्रम (i = 0; i < NPC_MAX_KWS_IN_KEY; i++) अणु
-		अगर (!field->kw_mask[i])
-			जारी;
+	for (i = 0; i < NPC_MAX_KWS_IN_KEY; i++) {
+		if (!field->kw_mask[i])
+			continue;
 		entry->kw[i] &= ~field->kw_mask[i];
 		entry->kw_mask[i] &= ~field->kw_mask[i];
 
 		entry->kw[i] |= dummy.kw[i];
 		entry->kw_mask[i] |= dummy.kw_mask[i];
-	पूर्ण
-पूर्ण
+	}
+}
 
-#घोषणा IPV6_WORDS     4
+#define IPV6_WORDS     4
 
-अटल व्योम npc_update_ipv6_flow(काष्ठा rvu *rvu, काष्ठा mcam_entry *entry,
-				 u64 features, काष्ठा flow_msg *pkt,
-				 काष्ठा flow_msg *mask,
-				 काष्ठा rvu_npc_mcam_rule *output, u8 पूर्णांकf)
-अणु
+static void npc_update_ipv6_flow(struct rvu *rvu, struct mcam_entry *entry,
+				 u64 features, struct flow_msg *pkt,
+				 struct flow_msg *mask,
+				 struct rvu_npc_mcam_rule *output, u8 intf)
+{
 	u32 src_ip[IPV6_WORDS], src_ip_mask[IPV6_WORDS];
 	u32 dst_ip[IPV6_WORDS], dst_ip_mask[IPV6_WORDS];
-	काष्ठा flow_msg *opkt = &output->packet;
-	काष्ठा flow_msg *omask = &output->mask;
+	struct flow_msg *opkt = &output->packet;
+	struct flow_msg *omask = &output->mask;
 	u64 mask_lo, mask_hi;
 	u64 val_lo, val_hi;
 
@@ -721,7 +720,7 @@ vlan_tci:
 	 * val_high: 0xfe80000000000000
 	 * val_low: 0x2c6863fffe5e2d0a
 	 */
-	अगर (features & BIT_ULL(NPC_SIP_IPV6)) अणु
+	if (features & BIT_ULL(NPC_SIP_IPV6)) {
 		be32_to_cpu_array(src_ip_mask, mask->ip6src, IPV6_WORDS);
 		be32_to_cpu_array(src_ip, pkt->ip6src, IPV6_WORDS);
 
@@ -731,11 +730,11 @@ vlan_tci:
 		val_lo = (u64)src_ip[2] << 32 | src_ip[3];
 
 		npc_update_entry(rvu, NPC_SIP_IPV6, entry, val_lo, val_hi,
-				 mask_lo, mask_hi, पूर्णांकf);
-		स_नकल(opkt->ip6src, pkt->ip6src, माप(opkt->ip6src));
-		स_नकल(omask->ip6src, mask->ip6src, माप(omask->ip6src));
-	पूर्ण
-	अगर (features & BIT_ULL(NPC_DIP_IPV6)) अणु
+				 mask_lo, mask_hi, intf);
+		memcpy(opkt->ip6src, pkt->ip6src, sizeof(opkt->ip6src));
+		memcpy(omask->ip6src, mask->ip6src, sizeof(omask->ip6src));
+	}
+	if (features & BIT_ULL(NPC_DIP_IPV6)) {
 		be32_to_cpu_array(dst_ip_mask, mask->ip6dst, IPV6_WORDS);
 		be32_to_cpu_array(dst_ip, pkt->ip6dst, IPV6_WORDS);
 
@@ -745,67 +744,67 @@ vlan_tci:
 		val_lo = (u64)dst_ip[2] << 32 | dst_ip[3];
 
 		npc_update_entry(rvu, NPC_DIP_IPV6, entry, val_lo, val_hi,
-				 mask_lo, mask_hi, पूर्णांकf);
-		स_नकल(opkt->ip6dst, pkt->ip6dst, माप(opkt->ip6dst));
-		स_नकल(omask->ip6dst, mask->ip6dst, माप(omask->ip6dst));
-	पूर्ण
-पूर्ण
+				 mask_lo, mask_hi, intf);
+		memcpy(opkt->ip6dst, pkt->ip6dst, sizeof(opkt->ip6dst));
+		memcpy(omask->ip6dst, mask->ip6dst, sizeof(omask->ip6dst));
+	}
+}
 
-अटल व्योम npc_update_flow(काष्ठा rvu *rvu, काष्ठा mcam_entry *entry,
-			    u64 features, काष्ठा flow_msg *pkt,
-			    काष्ठा flow_msg *mask,
-			    काष्ठा rvu_npc_mcam_rule *output, u8 पूर्णांकf)
-अणु
+static void npc_update_flow(struct rvu *rvu, struct mcam_entry *entry,
+			    u64 features, struct flow_msg *pkt,
+			    struct flow_msg *mask,
+			    struct rvu_npc_mcam_rule *output, u8 intf)
+{
 	u64 dmac_mask = ether_addr_to_u64(mask->dmac);
 	u64 smac_mask = ether_addr_to_u64(mask->smac);
 	u64 dmac_val = ether_addr_to_u64(pkt->dmac);
 	u64 smac_val = ether_addr_to_u64(pkt->smac);
-	काष्ठा flow_msg *opkt = &output->packet;
-	काष्ठा flow_msg *omask = &output->mask;
+	struct flow_msg *opkt = &output->packet;
+	struct flow_msg *omask = &output->mask;
 
-	अगर (!features)
-		वापस;
+	if (!features)
+		return;
 
 	/* For tcp/udp/sctp LTYPE should be present in entry */
-	अगर (features & BIT_ULL(NPC_IPPROTO_TCP))
+	if (features & BIT_ULL(NPC_IPPROTO_TCP))
 		npc_update_entry(rvu, NPC_LD, entry, NPC_LT_LD_TCP,
-				 0, ~0ULL, 0, पूर्णांकf);
-	अगर (features & BIT_ULL(NPC_IPPROTO_UDP))
+				 0, ~0ULL, 0, intf);
+	if (features & BIT_ULL(NPC_IPPROTO_UDP))
 		npc_update_entry(rvu, NPC_LD, entry, NPC_LT_LD_UDP,
-				 0, ~0ULL, 0, पूर्णांकf);
-	अगर (features & BIT_ULL(NPC_IPPROTO_SCTP))
+				 0, ~0ULL, 0, intf);
+	if (features & BIT_ULL(NPC_IPPROTO_SCTP))
 		npc_update_entry(rvu, NPC_LD, entry, NPC_LT_LD_SCTP,
-				 0, ~0ULL, 0, पूर्णांकf);
-	अगर (features & BIT_ULL(NPC_IPPROTO_ICMP))
+				 0, ~0ULL, 0, intf);
+	if (features & BIT_ULL(NPC_IPPROTO_ICMP))
 		npc_update_entry(rvu, NPC_LD, entry, NPC_LT_LD_ICMP,
-				 0, ~0ULL, 0, पूर्णांकf);
-	अगर (features & BIT_ULL(NPC_IPPROTO_ICMP6))
+				 0, ~0ULL, 0, intf);
+	if (features & BIT_ULL(NPC_IPPROTO_ICMP6))
 		npc_update_entry(rvu, NPC_LD, entry, NPC_LT_LD_ICMP6,
-				 0, ~0ULL, 0, पूर्णांकf);
+				 0, ~0ULL, 0, intf);
 
-	अगर (features & BIT_ULL(NPC_OUTER_VID))
+	if (features & BIT_ULL(NPC_OUTER_VID))
 		npc_update_entry(rvu, NPC_LB, entry,
 				 NPC_LT_LB_STAG_QINQ | NPC_LT_LB_CTAG, 0,
-				 NPC_LT_LB_STAG_QINQ & NPC_LT_LB_CTAG, 0, पूर्णांकf);
+				 NPC_LT_LB_STAG_QINQ & NPC_LT_LB_CTAG, 0, intf);
 
 	/* For AH, LTYPE should be present in entry */
-	अगर (features & BIT_ULL(NPC_IPPROTO_AH))
+	if (features & BIT_ULL(NPC_IPPROTO_AH))
 		npc_update_entry(rvu, NPC_LD, entry, NPC_LT_LD_AH,
-				 0, ~0ULL, 0, पूर्णांकf);
+				 0, ~0ULL, 0, intf);
 	/* For ESP, LTYPE should be present in entry */
-	अगर (features & BIT_ULL(NPC_IPPROTO_ESP))
+	if (features & BIT_ULL(NPC_IPPROTO_ESP))
 		npc_update_entry(rvu, NPC_LE, entry, NPC_LT_LE_ESP,
-				 0, ~0ULL, 0, पूर्णांकf);
+				 0, ~0ULL, 0, intf);
 
-#घोषणा NPC_WRITE_FLOW(field, member, val_lo, val_hi, mask_lo, mask_hi)	      \
-करो अणु									      \
-	अगर (features & BIT_ULL((field))) अणु				      \
+#define NPC_WRITE_FLOW(field, member, val_lo, val_hi, mask_lo, mask_hi)	      \
+do {									      \
+	if (features & BIT_ULL((field))) {				      \
 		npc_update_entry(rvu, (field), entry, (val_lo), (val_hi),     \
-				 (mask_lo), (mask_hi), पूर्णांकf);		      \
-		स_नकल(&opkt->member, &pkt->member, माप(pkt->member));     \
-		स_नकल(&omask->member, &mask->member, माप(mask->member));  \
-	पूर्ण								      \
-पूर्ण जबतक (0)
+				 (mask_lo), (mask_hi), intf);		      \
+		memcpy(&opkt->member, &pkt->member, sizeof(pkt->member));     \
+		memcpy(&omask->member, &mask->member, sizeof(mask->member));  \
+	}								      \
+} while (0)
 
 	NPC_WRITE_FLOW(NPC_DMAC, dmac, dmac_val, 0, dmac_mask, 0);
 	NPC_WRITE_FLOW(NPC_SMAC, smac, smac_val, 0, smac_mask, 0);
@@ -832,68 +831,68 @@ vlan_tci:
 	NPC_WRITE_FLOW(NPC_OUTER_VID, vlan_tci, ntohs(pkt->vlan_tci), 0,
 		       ntohs(mask->vlan_tci), 0);
 
-	npc_update_ipv6_flow(rvu, entry, features, pkt, mask, output, पूर्णांकf);
-पूर्ण
+	npc_update_ipv6_flow(rvu, entry, features, pkt, mask, output, intf);
+}
 
-अटल काष्ठा rvu_npc_mcam_rule *rvu_mcam_find_rule(काष्ठा npc_mcam *mcam,
+static struct rvu_npc_mcam_rule *rvu_mcam_find_rule(struct npc_mcam *mcam,
 						    u16 entry)
-अणु
-	काष्ठा rvu_npc_mcam_rule *iter;
+{
+	struct rvu_npc_mcam_rule *iter;
 
 	mutex_lock(&mcam->lock);
-	list_क्रम_each_entry(iter, &mcam->mcam_rules, list) अणु
-		अगर (iter->entry == entry) अणु
+	list_for_each_entry(iter, &mcam->mcam_rules, list) {
+		if (iter->entry == entry) {
 			mutex_unlock(&mcam->lock);
-			वापस iter;
-		पूर्ण
-	पूर्ण
+			return iter;
+		}
+	}
 	mutex_unlock(&mcam->lock);
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल व्योम rvu_mcam_add_rule(काष्ठा npc_mcam *mcam,
-			      काष्ठा rvu_npc_mcam_rule *rule)
-अणु
-	काष्ठा list_head *head = &mcam->mcam_rules;
-	काष्ठा rvu_npc_mcam_rule *iter;
+static void rvu_mcam_add_rule(struct npc_mcam *mcam,
+			      struct rvu_npc_mcam_rule *rule)
+{
+	struct list_head *head = &mcam->mcam_rules;
+	struct rvu_npc_mcam_rule *iter;
 
 	mutex_lock(&mcam->lock);
-	list_क्रम_each_entry(iter, &mcam->mcam_rules, list) अणु
-		अगर (iter->entry > rule->entry)
-			अवरोध;
+	list_for_each_entry(iter, &mcam->mcam_rules, list) {
+		if (iter->entry > rule->entry)
+			break;
 		head = &iter->list;
-	पूर्ण
+	}
 
 	list_add(&rule->list, head);
 	mutex_unlock(&mcam->lock);
-पूर्ण
+}
 
-अटल व्योम rvu_mcam_हटाओ_counter_from_rule(काष्ठा rvu *rvu, u16 pcअगरunc,
-					      काष्ठा rvu_npc_mcam_rule *rule)
-अणु
-	काष्ठा npc_mcam_oper_counter_req मुक्त_req = अणु 0 पूर्ण;
-	काष्ठा msg_rsp मुक्त_rsp;
+static void rvu_mcam_remove_counter_from_rule(struct rvu *rvu, u16 pcifunc,
+					      struct rvu_npc_mcam_rule *rule)
+{
+	struct npc_mcam_oper_counter_req free_req = { 0 };
+	struct msg_rsp free_rsp;
 
-	अगर (!rule->has_cntr)
-		वापस;
+	if (!rule->has_cntr)
+		return;
 
-	मुक्त_req.hdr.pcअगरunc = pcअगरunc;
-	मुक्त_req.cntr = rule->cntr;
+	free_req.hdr.pcifunc = pcifunc;
+	free_req.cntr = rule->cntr;
 
-	rvu_mbox_handler_npc_mcam_मुक्त_counter(rvu, &मुक्त_req, &मुक्त_rsp);
+	rvu_mbox_handler_npc_mcam_free_counter(rvu, &free_req, &free_rsp);
 	rule->has_cntr = false;
-पूर्ण
+}
 
-अटल व्योम rvu_mcam_add_counter_to_rule(काष्ठा rvu *rvu, u16 pcअगरunc,
-					 काष्ठा rvu_npc_mcam_rule *rule,
-					 काष्ठा npc_install_flow_rsp *rsp)
-अणु
-	काष्ठा npc_mcam_alloc_counter_req cntr_req = अणु 0 पूर्ण;
-	काष्ठा npc_mcam_alloc_counter_rsp cntr_rsp = अणु 0 पूर्ण;
-	पूर्णांक err;
+static void rvu_mcam_add_counter_to_rule(struct rvu *rvu, u16 pcifunc,
+					 struct rvu_npc_mcam_rule *rule,
+					 struct npc_install_flow_rsp *rsp)
+{
+	struct npc_mcam_alloc_counter_req cntr_req = { 0 };
+	struct npc_mcam_alloc_counter_rsp cntr_rsp = { 0 };
+	int err;
 
-	cntr_req.hdr.pcअगरunc = pcअगरunc;
+	cntr_req.hdr.pcifunc = pcifunc;
 	cntr_req.contig = true;
 	cntr_req.count = 1;
 
@@ -903,20 +902,20 @@ vlan_tci:
 	 */
 	err = rvu_mbox_handler_npc_mcam_alloc_counter(rvu, &cntr_req,
 						      &cntr_rsp);
-	अगर (!err && cntr_rsp.count) अणु
+	if (!err && cntr_rsp.count) {
 		rule->cntr = cntr_rsp.cntr;
 		rule->has_cntr = true;
 		rsp->counter = rule->cntr;
-	पूर्ण अन्यथा अणु
+	} else {
 		rsp->counter = err;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम npc_update_rx_entry(काष्ठा rvu *rvu, काष्ठा rvu_pfvf *pfvf,
-				काष्ठा mcam_entry *entry,
-				काष्ठा npc_install_flow_req *req, u16 target)
-अणु
-	काष्ठा nix_rx_action action;
+static void npc_update_rx_entry(struct rvu *rvu, struct rvu_pfvf *pfvf,
+				struct mcam_entry *entry,
+				struct npc_install_flow_req *req, u16 target)
+{
+	struct nix_rx_action action;
 	u64 chan_mask;
 
 	chan_mask = req->chan_mask ? req->chan_mask : ~0ULL;
@@ -930,7 +929,7 @@ vlan_tci:
 	action.match_id = req->match_id;
 	action.flow_key_alg = req->flow_key_alg;
 
-	अगर (req->op == NIX_RX_ACTION_DEFAULT && pfvf->def_ucast_rule)
+	if (req->op == NIX_RX_ACTION_DEFAULT && pfvf->def_ucast_rule)
 		action = pfvf->def_ucast_rule->rx_action;
 
 	entry->action = *(u64 *)&action;
@@ -946,15 +945,15 @@ vlan_tci:
 			     FIELD_PREP(RX_VTAG1_TYPE_MASK, req->vtag1_type) |
 			     FIELD_PREP(RX_VTAG1_LID_MASK, NPC_LID_LB) |
 			     FIELD_PREP(RX_VTAG1_RELPTR_MASK, 4);
-पूर्ण
+}
 
-अटल व्योम npc_update_tx_entry(काष्ठा rvu *rvu, काष्ठा rvu_pfvf *pfvf,
-				काष्ठा mcam_entry *entry,
-				काष्ठा npc_install_flow_req *req, u16 target)
-अणु
-	काष्ठा nix_tx_action action;
+static void npc_update_tx_entry(struct rvu *rvu, struct rvu_pfvf *pfvf,
+				struct mcam_entry *entry,
+				struct npc_install_flow_req *req, u16 target)
+{
+	struct nix_tx_action action;
 
-	npc_update_entry(rvu, NPC_PF_FUNC, entry, (__क्रमce u16)htons(target),
+	npc_update_entry(rvu, NPC_PF_FUNC, entry, (__force u16)htons(target),
 			 0, ~0ULL, 0, NIX_INTF_TX);
 
 	*(u64 *)&action = 0x00;
@@ -975,402 +974,402 @@ vlan_tci:
 			     FIELD_PREP(TX_VTAG1_OP_MASK, req->vtag1_op) |
 			     FIELD_PREP(TX_VTAG1_LID_MASK, NPC_LID_LA) |
 			     FIELD_PREP(TX_VTAG1_RELPTR_MASK, 24);
-पूर्ण
+}
 
-अटल पूर्णांक npc_install_flow(काष्ठा rvu *rvu, पूर्णांक blkaddr, u16 target,
-			    पूर्णांक nixlf, काष्ठा rvu_pfvf *pfvf,
-			    काष्ठा npc_install_flow_req *req,
-			    काष्ठा npc_install_flow_rsp *rsp, bool enable,
+static int npc_install_flow(struct rvu *rvu, int blkaddr, u16 target,
+			    int nixlf, struct rvu_pfvf *pfvf,
+			    struct npc_install_flow_req *req,
+			    struct npc_install_flow_rsp *rsp, bool enable,
 			    bool pf_set_vfs_mac)
-अणु
-	काष्ठा rvu_npc_mcam_rule *def_ucast_rule = pfvf->def_ucast_rule;
+{
+	struct rvu_npc_mcam_rule *def_ucast_rule = pfvf->def_ucast_rule;
 	u64 features, installed_features, missing_features = 0;
-	काष्ठा npc_mcam_ग_लिखो_entry_req ग_लिखो_req = अणु 0 पूर्ण;
-	काष्ठा npc_mcam *mcam = &rvu->hw->mcam;
-	काष्ठा rvu_npc_mcam_rule dummy = अणु 0 पूर्ण;
-	काष्ठा rvu_npc_mcam_rule *rule;
+	struct npc_mcam_write_entry_req write_req = { 0 };
+	struct npc_mcam *mcam = &rvu->hw->mcam;
+	struct rvu_npc_mcam_rule dummy = { 0 };
+	struct rvu_npc_mcam_rule *rule;
 	bool new = false, msg_from_vf;
-	u16 owner = req->hdr.pcअगरunc;
-	काष्ठा msg_rsp ग_लिखो_rsp;
-	काष्ठा mcam_entry *entry;
-	पूर्णांक entry_index, err;
+	u16 owner = req->hdr.pcifunc;
+	struct msg_rsp write_rsp;
+	struct mcam_entry *entry;
+	int entry_index, err;
 
 	msg_from_vf = !!(owner & RVU_PFVF_FUNC_MASK);
 
 	installed_features = req->features;
 	features = req->features;
-	entry = &ग_लिखो_req.entry_data;
+	entry = &write_req.entry_data;
 	entry_index = req->entry;
 
 	npc_update_flow(rvu, entry, features, &req->packet, &req->mask, &dummy,
-			req->पूर्णांकf);
+			req->intf);
 
-	अगर (is_npc_पूर्णांकf_rx(req->पूर्णांकf))
+	if (is_npc_intf_rx(req->intf))
 		npc_update_rx_entry(rvu, pfvf, entry, req, target);
-	अन्यथा
+	else
 		npc_update_tx_entry(rvu, pfvf, entry, req, target);
 
-	/* Default unicast rules करो not exist क्रम TX */
-	अगर (is_npc_पूर्णांकf_tx(req->पूर्णांकf))
-		जाओ find_rule;
+	/* Default unicast rules do not exist for TX */
+	if (is_npc_intf_tx(req->intf))
+		goto find_rule;
 
-	अगर (req->शेष_rule) अणु
+	if (req->default_rule) {
 		entry_index = npc_get_nixlf_mcam_index(mcam, target, nixlf,
 						       NIXLF_UCAST_ENTRY);
 		enable = is_mcam_entry_enabled(rvu, mcam, blkaddr, entry_index);
-	पूर्ण
+	}
 
-	/* update mcam entry with शेष unicast rule attributes */
-	अगर (def_ucast_rule && (msg_from_vf || (req->शेष_rule && req->append))) अणु
+	/* update mcam entry with default unicast rule attributes */
+	if (def_ucast_rule && (msg_from_vf || (req->default_rule && req->append))) {
 		missing_features = (def_ucast_rule->features ^ features) &
 					def_ucast_rule->features;
-		अगर (missing_features)
+		if (missing_features)
 			npc_update_flow(rvu, entry, missing_features,
 					&def_ucast_rule->packet,
 					&def_ucast_rule->mask,
-					&dummy, req->पूर्णांकf);
+					&dummy, req->intf);
 		installed_features = req->features | missing_features;
-	पूर्ण
+	}
 
 find_rule:
 	rule = rvu_mcam_find_rule(mcam, entry_index);
-	अगर (!rule) अणु
-		rule = kzalloc(माप(*rule), GFP_KERNEL);
-		अगर (!rule)
-			वापस -ENOMEM;
+	if (!rule) {
+		rule = kzalloc(sizeof(*rule), GFP_KERNEL);
+		if (!rule)
+			return -ENOMEM;
 		new = true;
-	पूर्ण
+	}
 
-	/* allocate new counter अगर rule has no counter */
-	अगर (!req->शेष_rule && req->set_cntr && !rule->has_cntr)
+	/* allocate new counter if rule has no counter */
+	if (!req->default_rule && req->set_cntr && !rule->has_cntr)
 		rvu_mcam_add_counter_to_rule(rvu, owner, rule, rsp);
 
-	/* अगर user wants to delete an existing counter क्रम a rule then
-	 * मुक्त the counter
+	/* if user wants to delete an existing counter for a rule then
+	 * free the counter
 	 */
-	अगर (!req->set_cntr && rule->has_cntr)
-		rvu_mcam_हटाओ_counter_from_rule(rvu, owner, rule);
+	if (!req->set_cntr && rule->has_cntr)
+		rvu_mcam_remove_counter_from_rule(rvu, owner, rule);
 
-	ग_लिखो_req.hdr.pcअगरunc = owner;
+	write_req.hdr.pcifunc = owner;
 
-	/* AF owns the शेष rules so change the owner just to relax
-	 * the checks in rvu_mbox_handler_npc_mcam_ग_लिखो_entry
+	/* AF owns the default rules so change the owner just to relax
+	 * the checks in rvu_mbox_handler_npc_mcam_write_entry
 	 */
-	अगर (req->शेष_rule)
-		ग_लिखो_req.hdr.pcअगरunc = 0;
+	if (req->default_rule)
+		write_req.hdr.pcifunc = 0;
 
-	ग_लिखो_req.entry = entry_index;
-	ग_लिखो_req.पूर्णांकf = req->पूर्णांकf;
-	ग_लिखो_req.enable_entry = (u8)enable;
-	/* अगर counter is available then clear and use it */
-	अगर (req->set_cntr && rule->has_cntr) अणु
-		rvu_ग_लिखो64(rvu, blkaddr, NPC_AF_MATCH_STATX(rule->cntr), 0x00);
-		ग_लिखो_req.set_cntr = 1;
-		ग_लिखो_req.cntr = rule->cntr;
-	पूर्ण
+	write_req.entry = entry_index;
+	write_req.intf = req->intf;
+	write_req.enable_entry = (u8)enable;
+	/* if counter is available then clear and use it */
+	if (req->set_cntr && rule->has_cntr) {
+		rvu_write64(rvu, blkaddr, NPC_AF_MATCH_STATX(rule->cntr), 0x00);
+		write_req.set_cntr = 1;
+		write_req.cntr = rule->cntr;
+	}
 
-	err = rvu_mbox_handler_npc_mcam_ग_लिखो_entry(rvu, &ग_लिखो_req,
-						    &ग_लिखो_rsp);
-	अगर (err) अणु
-		rvu_mcam_हटाओ_counter_from_rule(rvu, owner, rule);
-		अगर (new)
-			kमुक्त(rule);
-		वापस err;
-	पूर्ण
+	err = rvu_mbox_handler_npc_mcam_write_entry(rvu, &write_req,
+						    &write_rsp);
+	if (err) {
+		rvu_mcam_remove_counter_from_rule(rvu, owner, rule);
+		if (new)
+			kfree(rule);
+		return err;
+	}
 	/* update rule */
-	स_नकल(&rule->packet, &dummy.packet, माप(rule->packet));
-	स_नकल(&rule->mask, &dummy.mask, माप(rule->mask));
+	memcpy(&rule->packet, &dummy.packet, sizeof(rule->packet));
+	memcpy(&rule->mask, &dummy.mask, sizeof(rule->mask));
 	rule->entry = entry_index;
-	स_नकल(&rule->rx_action, &entry->action, माप(काष्ठा nix_rx_action));
-	अगर (is_npc_पूर्णांकf_tx(req->पूर्णांकf))
-		स_नकल(&rule->tx_action, &entry->action,
-		       माप(काष्ठा nix_tx_action));
+	memcpy(&rule->rx_action, &entry->action, sizeof(struct nix_rx_action));
+	if (is_npc_intf_tx(req->intf))
+		memcpy(&rule->tx_action, &entry->action,
+		       sizeof(struct nix_tx_action));
 	rule->vtag_action = entry->vtag_action;
 	rule->features = installed_features;
-	rule->शेष_rule = req->शेष_rule;
+	rule->default_rule = req->default_rule;
 	rule->owner = owner;
 	rule->enable = enable;
-	अगर (is_npc_पूर्णांकf_tx(req->पूर्णांकf))
-		rule->पूर्णांकf = pfvf->nix_tx_पूर्णांकf;
-	अन्यथा
-		rule->पूर्णांकf = pfvf->nix_rx_पूर्णांकf;
+	if (is_npc_intf_tx(req->intf))
+		rule->intf = pfvf->nix_tx_intf;
+	else
+		rule->intf = pfvf->nix_rx_intf;
 
-	अगर (new)
+	if (new)
 		rvu_mcam_add_rule(mcam, rule);
-	अगर (req->शेष_rule)
+	if (req->default_rule)
 		pfvf->def_ucast_rule = rule;
 
 	/* VF's MAC address is being changed via PF  */
-	अगर (pf_set_vfs_mac) अणु
-		ether_addr_copy(pfvf->शेष_mac, req->packet.dmac);
+	if (pf_set_vfs_mac) {
+		ether_addr_copy(pfvf->default_mac, req->packet.dmac);
 		ether_addr_copy(pfvf->mac_addr, req->packet.dmac);
-	पूर्ण
+	}
 
-	अगर (pfvf->pf_set_vf_cfg && req->vtag0_type == NIX_AF_LFX_RX_VTAG_TYPE7)
+	if (pfvf->pf_set_vf_cfg && req->vtag0_type == NIX_AF_LFX_RX_VTAG_TYPE7)
 		rule->vfvlan_cfg = true;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक rvu_mbox_handler_npc_install_flow(काष्ठा rvu *rvu,
-				      काष्ठा npc_install_flow_req *req,
-				      काष्ठा npc_install_flow_rsp *rsp)
-अणु
-	bool from_vf = !!(req->hdr.pcअगरunc & RVU_PFVF_FUNC_MASK);
-	पूर्णांक blkaddr, nixlf, err;
-	काष्ठा rvu_pfvf *pfvf;
+int rvu_mbox_handler_npc_install_flow(struct rvu *rvu,
+				      struct npc_install_flow_req *req,
+				      struct npc_install_flow_rsp *rsp)
+{
+	bool from_vf = !!(req->hdr.pcifunc & RVU_PFVF_FUNC_MASK);
+	int blkaddr, nixlf, err;
+	struct rvu_pfvf *pfvf;
 	bool pf_set_vfs_mac = false;
 	bool enable = true;
 	u16 target;
 
 	blkaddr = rvu_get_blkaddr(rvu, BLKTYPE_NPC, 0);
-	अगर (blkaddr < 0) अणु
+	if (blkaddr < 0) {
 		dev_err(rvu->dev, "%s: NPC block not implemented\n", __func__);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	अगर (!is_npc_पूर्णांकerface_valid(rvu, req->पूर्णांकf))
-		वापस -EINVAL;
+	if (!is_npc_interface_valid(rvu, req->intf))
+		return -EINVAL;
 
-	अगर (from_vf && req->शेष_rule)
-		वापस NPC_MCAM_PERM_DENIED;
+	if (from_vf && req->default_rule)
+		return NPC_MCAM_PERM_DENIED;
 
-	/* Each PF/VF info is मुख्यtained in काष्ठा rvu_pfvf.
-	 * rvu_pfvf क्रम the target PF/VF needs to be retrieved
-	 * hence modअगरy pcअगरunc accordingly.
+	/* Each PF/VF info is maintained in struct rvu_pfvf.
+	 * rvu_pfvf for the target PF/VF needs to be retrieved
+	 * hence modify pcifunc accordingly.
 	 */
 
-	/* AF installing क्रम a PF/VF */
-	अगर (!req->hdr.pcअगरunc)
+	/* AF installing for a PF/VF */
+	if (!req->hdr.pcifunc)
 		target = req->vf;
-	/* PF installing क्रम its VF */
-	अन्यथा अगर (!from_vf && req->vf) अणु
-		target = (req->hdr.pcअगरunc & ~RVU_PFVF_FUNC_MASK) | req->vf;
-		pf_set_vfs_mac = req->शेष_rule &&
+	/* PF installing for its VF */
+	else if (!from_vf && req->vf) {
+		target = (req->hdr.pcifunc & ~RVU_PFVF_FUNC_MASK) | req->vf;
+		pf_set_vfs_mac = req->default_rule &&
 				(req->features & BIT_ULL(NPC_DMAC));
-	पूर्ण
+	}
 	/* msg received from PF/VF */
-	अन्यथा
-		target = req->hdr.pcअगरunc;
+	else
+		target = req->hdr.pcifunc;
 
-	/* ignore chan_mask in हाल pf func is not AF, revisit later */
-	अगर (!is_pffunc_af(req->hdr.pcअगरunc))
+	/* ignore chan_mask in case pf func is not AF, revisit later */
+	if (!is_pffunc_af(req->hdr.pcifunc))
 		req->chan_mask = 0xFFF;
 
-	err = npc_check_unsupported_flows(rvu, req->features, req->पूर्णांकf);
-	अगर (err)
-		वापस err;
+	err = npc_check_unsupported_flows(rvu, req->features, req->intf);
+	if (err)
+		return err;
 
-	अगर (npc_mcam_verअगरy_channel(rvu, target, req->पूर्णांकf, req->channel))
-		वापस -EINVAL;
+	if (npc_mcam_verify_channel(rvu, target, req->intf, req->channel))
+		return -EINVAL;
 
 	pfvf = rvu_get_pfvf(rvu, target);
 
-	/* PF installing क्रम its VF */
-	अगर (req->hdr.pcअगरunc && !from_vf && req->vf)
+	/* PF installing for its VF */
+	if (req->hdr.pcifunc && !from_vf && req->vf)
 		pfvf->pf_set_vf_cfg = 1;
 
 	/* update req destination mac addr */
-	अगर ((req->features & BIT_ULL(NPC_DMAC)) && is_npc_पूर्णांकf_rx(req->पूर्णांकf) &&
-	    is_zero_ether_addr(req->packet.dmac)) अणु
+	if ((req->features & BIT_ULL(NPC_DMAC)) && is_npc_intf_rx(req->intf) &&
+	    is_zero_ether_addr(req->packet.dmac)) {
 		ether_addr_copy(req->packet.dmac, pfvf->mac_addr);
 		eth_broadcast_addr((u8 *)&req->mask.dmac);
-	पूर्ण
+	}
 
-	err = nix_get_nixlf(rvu, target, &nixlf, शून्य);
+	err = nix_get_nixlf(rvu, target, &nixlf, NULL);
 
-	/* If पूर्णांकerface is uninitialized then करो not enable entry */
-	अगर (err || (!req->शेष_rule && !pfvf->def_ucast_rule))
+	/* If interface is uninitialized then do not enable entry */
+	if (err || (!req->default_rule && !pfvf->def_ucast_rule))
 		enable = false;
 
 	/* Packets reaching NPC in Tx path implies that a
 	 * NIXLF is properly setup and transmitting.
-	 * Hence rules can be enabled क्रम Tx.
+	 * Hence rules can be enabled for Tx.
 	 */
-	अगर (is_npc_पूर्णांकf_tx(req->पूर्णांकf))
+	if (is_npc_intf_tx(req->intf))
 		enable = true;
 
 	/* Do not allow requests from uninitialized VFs */
-	अगर (from_vf && !enable)
-		वापस -EINVAL;
+	if (from_vf && !enable)
+		return -EINVAL;
 
 	/* If message is from VF then its flow should not overlap with
 	 * reserved unicast flow.
 	 */
-	अगर (from_vf && pfvf->def_ucast_rule && is_npc_पूर्णांकf_rx(req->पूर्णांकf) &&
+	if (from_vf && pfvf->def_ucast_rule && is_npc_intf_rx(req->intf) &&
 	    pfvf->def_ucast_rule->features & req->features)
-		वापस -EINVAL;
+		return -EINVAL;
 
-	वापस npc_install_flow(rvu, blkaddr, target, nixlf, pfvf, req, rsp,
+	return npc_install_flow(rvu, blkaddr, target, nixlf, pfvf, req, rsp,
 				enable, pf_set_vfs_mac);
-पूर्ण
+}
 
-अटल पूर्णांक npc_delete_flow(काष्ठा rvu *rvu, काष्ठा rvu_npc_mcam_rule *rule,
-			   u16 pcअगरunc)
-अणु
-	काष्ठा npc_mcam_ena_dis_entry_req dis_req = अणु 0 पूर्ण;
-	काष्ठा msg_rsp dis_rsp;
+static int npc_delete_flow(struct rvu *rvu, struct rvu_npc_mcam_rule *rule,
+			   u16 pcifunc)
+{
+	struct npc_mcam_ena_dis_entry_req dis_req = { 0 };
+	struct msg_rsp dis_rsp;
 
-	अगर (rule->शेष_rule)
-		वापस 0;
+	if (rule->default_rule)
+		return 0;
 
-	अगर (rule->has_cntr)
-		rvu_mcam_हटाओ_counter_from_rule(rvu, pcअगरunc, rule);
+	if (rule->has_cntr)
+		rvu_mcam_remove_counter_from_rule(rvu, pcifunc, rule);
 
-	dis_req.hdr.pcअगरunc = pcअगरunc;
+	dis_req.hdr.pcifunc = pcifunc;
 	dis_req.entry = rule->entry;
 
 	list_del(&rule->list);
-	kमुक्त(rule);
+	kfree(rule);
 
-	वापस rvu_mbox_handler_npc_mcam_dis_entry(rvu, &dis_req, &dis_rsp);
-पूर्ण
+	return rvu_mbox_handler_npc_mcam_dis_entry(rvu, &dis_req, &dis_rsp);
+}
 
-पूर्णांक rvu_mbox_handler_npc_delete_flow(काष्ठा rvu *rvu,
-				     काष्ठा npc_delete_flow_req *req,
-				     काष्ठा msg_rsp *rsp)
-अणु
-	काष्ठा npc_mcam *mcam = &rvu->hw->mcam;
-	काष्ठा rvu_npc_mcam_rule *iter, *पंचांगp;
-	u16 pcअगरunc = req->hdr.pcअगरunc;
-	काष्ठा list_head del_list;
+int rvu_mbox_handler_npc_delete_flow(struct rvu *rvu,
+				     struct npc_delete_flow_req *req,
+				     struct msg_rsp *rsp)
+{
+	struct npc_mcam *mcam = &rvu->hw->mcam;
+	struct rvu_npc_mcam_rule *iter, *tmp;
+	u16 pcifunc = req->hdr.pcifunc;
+	struct list_head del_list;
 
 	INIT_LIST_HEAD(&del_list);
 
 	mutex_lock(&mcam->lock);
-	list_क्रम_each_entry_safe(iter, पंचांगp, &mcam->mcam_rules, list) अणु
-		अगर (iter->owner == pcअगरunc) अणु
+	list_for_each_entry_safe(iter, tmp, &mcam->mcam_rules, list) {
+		if (iter->owner == pcifunc) {
 			/* All rules */
-			अगर (req->all) अणु
+			if (req->all) {
 				list_move_tail(&iter->list, &del_list);
 			/* Range of rules */
-			पूर्ण अन्यथा अगर (req->end && iter->entry >= req->start &&
-				   iter->entry <= req->end) अणु
+			} else if (req->end && iter->entry >= req->start &&
+				   iter->entry <= req->end) {
 				list_move_tail(&iter->list, &del_list);
 			/* single rule */
-			पूर्ण अन्यथा अगर (req->entry == iter->entry) अणु
+			} else if (req->entry == iter->entry) {
 				list_move_tail(&iter->list, &del_list);
-				अवरोध;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				break;
+			}
+		}
+	}
 	mutex_unlock(&mcam->lock);
 
-	list_क्रम_each_entry_safe(iter, पंचांगp, &del_list, list) अणु
+	list_for_each_entry_safe(iter, tmp, &del_list, list) {
 		u16 entry = iter->entry;
 
-		/* clear the mcam entry target pcअगरunc */
+		/* clear the mcam entry target pcifunc */
 		mcam->entry2target_pffunc[entry] = 0x0;
-		अगर (npc_delete_flow(rvu, iter, pcअगरunc))
+		if (npc_delete_flow(rvu, iter, pcifunc))
 			dev_err(rvu->dev, "rule deletion failed for entry:%u",
 				entry);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक npc_update_dmac_value(काष्ठा rvu *rvu, पूर्णांक npcblkaddr,
-				 काष्ठा rvu_npc_mcam_rule *rule,
-				 काष्ठा rvu_pfvf *pfvf)
-अणु
-	काष्ठा npc_mcam_ग_लिखो_entry_req ग_लिखो_req = अणु 0 पूर्ण;
-	काष्ठा mcam_entry *entry = &ग_लिखो_req.entry_data;
-	काष्ठा npc_mcam *mcam = &rvu->hw->mcam;
-	काष्ठा msg_rsp rsp;
-	u8 पूर्णांकf, enable;
-	पूर्णांक err;
+static int npc_update_dmac_value(struct rvu *rvu, int npcblkaddr,
+				 struct rvu_npc_mcam_rule *rule,
+				 struct rvu_pfvf *pfvf)
+{
+	struct npc_mcam_write_entry_req write_req = { 0 };
+	struct mcam_entry *entry = &write_req.entry_data;
+	struct npc_mcam *mcam = &rvu->hw->mcam;
+	struct msg_rsp rsp;
+	u8 intf, enable;
+	int err;
 
 	ether_addr_copy(rule->packet.dmac, pfvf->mac_addr);
 
-	npc_पढ़ो_mcam_entry(rvu, mcam, npcblkaddr, rule->entry,
-			    entry, &पूर्णांकf,  &enable);
+	npc_read_mcam_entry(rvu, mcam, npcblkaddr, rule->entry,
+			    entry, &intf,  &enable);
 
 	npc_update_entry(rvu, NPC_DMAC, entry,
 			 ether_addr_to_u64(pfvf->mac_addr), 0,
-			 0xffffffffffffull, 0, पूर्णांकf);
+			 0xffffffffffffull, 0, intf);
 
-	ग_लिखो_req.hdr.pcअगरunc = rule->owner;
-	ग_लिखो_req.entry = rule->entry;
-	ग_लिखो_req.पूर्णांकf = pfvf->nix_rx_पूर्णांकf;
+	write_req.hdr.pcifunc = rule->owner;
+	write_req.entry = rule->entry;
+	write_req.intf = pfvf->nix_rx_intf;
 
 	mutex_unlock(&mcam->lock);
-	err = rvu_mbox_handler_npc_mcam_ग_लिखो_entry(rvu, &ग_लिखो_req, &rsp);
+	err = rvu_mbox_handler_npc_mcam_write_entry(rvu, &write_req, &rsp);
 	mutex_lock(&mcam->lock);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-व्योम npc_mcam_enable_flows(काष्ठा rvu *rvu, u16 target)
-अणु
-	काष्ठा rvu_pfvf *pfvf = rvu_get_pfvf(rvu, target);
-	काष्ठा rvu_npc_mcam_rule *def_ucast_rule;
-	काष्ठा npc_mcam *mcam = &rvu->hw->mcam;
-	काष्ठा rvu_npc_mcam_rule *rule;
-	पूर्णांक blkaddr, bank, index;
+void npc_mcam_enable_flows(struct rvu *rvu, u16 target)
+{
+	struct rvu_pfvf *pfvf = rvu_get_pfvf(rvu, target);
+	struct rvu_npc_mcam_rule *def_ucast_rule;
+	struct npc_mcam *mcam = &rvu->hw->mcam;
+	struct rvu_npc_mcam_rule *rule;
+	int blkaddr, bank, index;
 	u64 def_action;
 
 	blkaddr = rvu_get_blkaddr(rvu, BLKTYPE_NPC, 0);
-	अगर (blkaddr < 0)
-		वापस;
+	if (blkaddr < 0)
+		return;
 
 	def_ucast_rule = pfvf->def_ucast_rule;
 
 	mutex_lock(&mcam->lock);
-	list_क्रम_each_entry(rule, &mcam->mcam_rules, list) अणु
-		अगर (is_npc_पूर्णांकf_rx(rule->पूर्णांकf) &&
-		    rule->rx_action.pf_func == target && !rule->enable) अणु
-			अगर (rule->शेष_rule) अणु
+	list_for_each_entry(rule, &mcam->mcam_rules, list) {
+		if (is_npc_intf_rx(rule->intf) &&
+		    rule->rx_action.pf_func == target && !rule->enable) {
+			if (rule->default_rule) {
 				npc_enable_mcam_entry(rvu, mcam, blkaddr,
 						      rule->entry, true);
 				rule->enable = true;
-				जारी;
-			पूर्ण
+				continue;
+			}
 
-			अगर (rule->vfvlan_cfg)
+			if (rule->vfvlan_cfg)
 				npc_update_dmac_value(rvu, blkaddr, rule, pfvf);
 
-			अगर (rule->rx_action.op == NIX_RX_ACTION_DEFAULT) अणु
-				अगर (!def_ucast_rule)
-					जारी;
-				/* Use शेष unicast entry action */
+			if (rule->rx_action.op == NIX_RX_ACTION_DEFAULT) {
+				if (!def_ucast_rule)
+					continue;
+				/* Use default unicast entry action */
 				rule->rx_action = def_ucast_rule->rx_action;
 				def_action = *(u64 *)&def_ucast_rule->rx_action;
 				bank = npc_get_bank(mcam, rule->entry);
-				rvu_ग_लिखो64(rvu, blkaddr,
+				rvu_write64(rvu, blkaddr,
 					    NPC_AF_MCAMEX_BANKX_ACTION
 					    (rule->entry, bank), def_action);
-			पूर्ण
+			}
 
 			npc_enable_mcam_entry(rvu, mcam, blkaddr,
 					      rule->entry, true);
 			rule->enable = true;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	/* Enable MCAM entries installed by PF with target as VF pcअगरunc */
-	क्रम (index = 0; index < mcam->bmap_entries; index++) अणु
-		अगर (mcam->entry2target_pffunc[index] == target)
+	/* Enable MCAM entries installed by PF with target as VF pcifunc */
+	for (index = 0; index < mcam->bmap_entries; index++) {
+		if (mcam->entry2target_pffunc[index] == target)
 			npc_enable_mcam_entry(rvu, mcam, blkaddr,
 					      index, true);
-	पूर्ण
+	}
 	mutex_unlock(&mcam->lock);
-पूर्ण
+}
 
-व्योम npc_mcam_disable_flows(काष्ठा rvu *rvu, u16 target)
-अणु
-	काष्ठा npc_mcam *mcam = &rvu->hw->mcam;
-	पूर्णांक blkaddr, index;
+void npc_mcam_disable_flows(struct rvu *rvu, u16 target)
+{
+	struct npc_mcam *mcam = &rvu->hw->mcam;
+	int blkaddr, index;
 
 	blkaddr = rvu_get_blkaddr(rvu, BLKTYPE_NPC, 0);
-	अगर (blkaddr < 0)
-		वापस;
+	if (blkaddr < 0)
+		return;
 
 	mutex_lock(&mcam->lock);
-	/* Disable MCAM entries installed by PF with target as VF pcअगरunc */
-	क्रम (index = 0; index < mcam->bmap_entries; index++) अणु
-		अगर (mcam->entry2target_pffunc[index] == target)
+	/* Disable MCAM entries installed by PF with target as VF pcifunc */
+	for (index = 0; index < mcam->bmap_entries; index++) {
+		if (mcam->entry2target_pffunc[index] == target)
 			npc_enable_mcam_entry(rvu, mcam, blkaddr,
 					      index, false);
-	पूर्ण
+	}
 	mutex_unlock(&mcam->lock);
-पूर्ण
+}

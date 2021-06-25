@@ -1,83 +1,82 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: MIT
+// SPDX-License-Identifier: MIT
 /*
- * Copyright तऊ 2016 Intel Corporation
+ * Copyright © 2016 Intel Corporation
  */
 
-#समावेश <linux/kthपढ़ो.h>
+#include <linux/kthread.h>
 
-#समावेश "gem/i915_gem_context.h"
+#include "gem/i915_gem_context.h"
 
-#समावेश "intel_gt.h"
-#समावेश "intel_engine_heartbeat.h"
-#समावेश "intel_engine_pm.h"
-#समावेश "selftest_engine_heartbeat.h"
+#include "intel_gt.h"
+#include "intel_engine_heartbeat.h"
+#include "intel_engine_pm.h"
+#include "selftest_engine_heartbeat.h"
 
-#समावेश "i915_selftest.h"
-#समावेश "selftests/i915_random.h"
-#समावेश "selftests/igt_flush_test.h"
-#समावेश "selftests/igt_reset.h"
-#समावेश "selftests/igt_atomic.h"
+#include "i915_selftest.h"
+#include "selftests/i915_random.h"
+#include "selftests/igt_flush_test.h"
+#include "selftests/igt_reset.h"
+#include "selftests/igt_atomic.h"
 
-#समावेश "selftests/mock_drm.h"
+#include "selftests/mock_drm.h"
 
-#समावेश "gem/selftests/mock_context.h"
-#समावेश "gem/selftests/igt_gem_utils.h"
+#include "gem/selftests/mock_context.h"
+#include "gem/selftests/igt_gem_utils.h"
 
-#घोषणा IGT_IDLE_TIMEOUT 50 /* ms; समय to रुको after flushing between tests */
+#define IGT_IDLE_TIMEOUT 50 /* ms; time to wait after flushing between tests */
 
-काष्ठा hang अणु
-	काष्ठा पूर्णांकel_gt *gt;
-	काष्ठा drm_i915_gem_object *hws;
-	काष्ठा drm_i915_gem_object *obj;
-	काष्ठा i915_gem_context *ctx;
+struct hang {
+	struct intel_gt *gt;
+	struct drm_i915_gem_object *hws;
+	struct drm_i915_gem_object *obj;
+	struct i915_gem_context *ctx;
 	u32 *seqno;
 	u32 *batch;
-पूर्ण;
+};
 
-अटल पूर्णांक hang_init(काष्ठा hang *h, काष्ठा पूर्णांकel_gt *gt)
-अणु
-	व्योम *vaddr;
-	पूर्णांक err;
+static int hang_init(struct hang *h, struct intel_gt *gt)
+{
+	void *vaddr;
+	int err;
 
-	स_रखो(h, 0, माप(*h));
+	memset(h, 0, sizeof(*h));
 	h->gt = gt;
 
 	h->ctx = kernel_context(gt->i915);
-	अगर (IS_ERR(h->ctx))
-		वापस PTR_ERR(h->ctx);
+	if (IS_ERR(h->ctx))
+		return PTR_ERR(h->ctx);
 
 	GEM_BUG_ON(i915_gem_context_is_bannable(h->ctx));
 
-	h->hws = i915_gem_object_create_पूर्णांकernal(gt->i915, PAGE_SIZE);
-	अगर (IS_ERR(h->hws)) अणु
+	h->hws = i915_gem_object_create_internal(gt->i915, PAGE_SIZE);
+	if (IS_ERR(h->hws)) {
 		err = PTR_ERR(h->hws);
-		जाओ err_ctx;
-	पूर्ण
+		goto err_ctx;
+	}
 
-	h->obj = i915_gem_object_create_पूर्णांकernal(gt->i915, PAGE_SIZE);
-	अगर (IS_ERR(h->obj)) अणु
+	h->obj = i915_gem_object_create_internal(gt->i915, PAGE_SIZE);
+	if (IS_ERR(h->obj)) {
 		err = PTR_ERR(h->obj);
-		जाओ err_hws;
-	पूर्ण
+		goto err_hws;
+	}
 
 	i915_gem_object_set_cache_coherency(h->hws, I915_CACHE_LLC);
 	vaddr = i915_gem_object_pin_map_unlocked(h->hws, I915_MAP_WB);
-	अगर (IS_ERR(vaddr)) अणु
+	if (IS_ERR(vaddr)) {
 		err = PTR_ERR(vaddr);
-		जाओ err_obj;
-	पूर्ण
-	h->seqno = स_रखो(vaddr, 0xff, PAGE_SIZE);
+		goto err_obj;
+	}
+	h->seqno = memset(vaddr, 0xff, PAGE_SIZE);
 
 	vaddr = i915_gem_object_pin_map_unlocked(h->obj,
 						 i915_coherent_map_type(gt->i915));
-	अगर (IS_ERR(vaddr)) अणु
+	if (IS_ERR(vaddr)) {
 		err = PTR_ERR(vaddr);
-		जाओ err_unpin_hws;
-	पूर्ण
+		goto err_unpin_hws;
+	}
 	h->batch = vaddr;
 
-	वापस 0;
+	return 0;
 
 err_unpin_hws:
 	i915_gem_object_unpin_map(h->hws);
@@ -86,57 +85,57 @@ err_obj:
 err_hws:
 	i915_gem_object_put(h->hws);
 err_ctx:
-	kernel_context_बंद(h->ctx);
-	वापस err;
-पूर्ण
+	kernel_context_close(h->ctx);
+	return err;
+}
 
-अटल u64 hws_address(स्थिर काष्ठा i915_vma *hws,
-		       स्थिर काष्ठा i915_request *rq)
-अणु
-	वापस hws->node.start + offset_in_page(माप(u32)*rq->fence.context);
-पूर्ण
+static u64 hws_address(const struct i915_vma *hws,
+		       const struct i915_request *rq)
+{
+	return hws->node.start + offset_in_page(sizeof(u32)*rq->fence.context);
+}
 
-अटल पूर्णांक move_to_active(काष्ठा i915_vma *vma,
-			  काष्ठा i915_request *rq,
-			  अचिन्हित पूर्णांक flags)
-अणु
-	पूर्णांक err;
+static int move_to_active(struct i915_vma *vma,
+			  struct i915_request *rq,
+			  unsigned int flags)
+{
+	int err;
 
 	i915_vma_lock(vma);
-	err = i915_request_aरुको_object(rq, vma->obj,
+	err = i915_request_await_object(rq, vma->obj,
 					flags & EXEC_OBJECT_WRITE);
-	अगर (err == 0)
+	if (err == 0)
 		err = i915_vma_move_to_active(vma, rq, flags);
 	i915_vma_unlock(vma);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल काष्ठा i915_request *
-hang_create_request(काष्ठा hang *h, काष्ठा पूर्णांकel_engine_cs *engine)
-अणु
-	काष्ठा पूर्णांकel_gt *gt = h->gt;
-	काष्ठा i915_address_space *vm = i915_gem_context_get_vm_rcu(h->ctx);
-	काष्ठा drm_i915_gem_object *obj;
-	काष्ठा i915_request *rq = शून्य;
-	काष्ठा i915_vma *hws, *vma;
-	अचिन्हित पूर्णांक flags;
-	व्योम *vaddr;
+static struct i915_request *
+hang_create_request(struct hang *h, struct intel_engine_cs *engine)
+{
+	struct intel_gt *gt = h->gt;
+	struct i915_address_space *vm = i915_gem_context_get_vm_rcu(h->ctx);
+	struct drm_i915_gem_object *obj;
+	struct i915_request *rq = NULL;
+	struct i915_vma *hws, *vma;
+	unsigned int flags;
+	void *vaddr;
 	u32 *batch;
-	पूर्णांक err;
+	int err;
 
-	obj = i915_gem_object_create_पूर्णांकernal(gt->i915, PAGE_SIZE);
-	अगर (IS_ERR(obj)) अणु
+	obj = i915_gem_object_create_internal(gt->i915, PAGE_SIZE);
+	if (IS_ERR(obj)) {
 		i915_vm_put(vm);
-		वापस ERR_CAST(obj);
-	पूर्ण
+		return ERR_CAST(obj);
+	}
 
 	vaddr = i915_gem_object_pin_map_unlocked(obj, i915_coherent_map_type(gt->i915));
-	अगर (IS_ERR(vaddr)) अणु
+	if (IS_ERR(vaddr)) {
 		i915_gem_object_put(obj);
 		i915_vm_put(vm);
-		वापस ERR_CAST(vaddr);
-	पूर्ण
+		return ERR_CAST(vaddr);
+	}
 
 	i915_gem_object_unpin_map(h->obj);
 	i915_gem_object_put(h->obj);
@@ -144,133 +143,133 @@ hang_create_request(काष्ठा hang *h, काष्ठा पूर्�
 	h->obj = obj;
 	h->batch = vaddr;
 
-	vma = i915_vma_instance(h->obj, vm, शून्य);
-	अगर (IS_ERR(vma)) अणु
+	vma = i915_vma_instance(h->obj, vm, NULL);
+	if (IS_ERR(vma)) {
 		i915_vm_put(vm);
-		वापस ERR_CAST(vma);
-	पूर्ण
+		return ERR_CAST(vma);
+	}
 
-	hws = i915_vma_instance(h->hws, vm, शून्य);
-	अगर (IS_ERR(hws)) अणु
+	hws = i915_vma_instance(h->hws, vm, NULL);
+	if (IS_ERR(hws)) {
 		i915_vm_put(vm);
-		वापस ERR_CAST(hws);
-	पूर्ण
+		return ERR_CAST(hws);
+	}
 
 	err = i915_vma_pin(vma, 0, 0, PIN_USER);
-	अगर (err) अणु
+	if (err) {
 		i915_vm_put(vm);
-		वापस ERR_PTR(err);
-	पूर्ण
+		return ERR_PTR(err);
+	}
 
 	err = i915_vma_pin(hws, 0, 0, PIN_USER);
-	अगर (err)
-		जाओ unpin_vma;
+	if (err)
+		goto unpin_vma;
 
 	rq = igt_request_alloc(h->ctx, engine);
-	अगर (IS_ERR(rq)) अणु
+	if (IS_ERR(rq)) {
 		err = PTR_ERR(rq);
-		जाओ unpin_hws;
-	पूर्ण
+		goto unpin_hws;
+	}
 
 	err = move_to_active(vma, rq, 0);
-	अगर (err)
-		जाओ cancel_rq;
+	if (err)
+		goto cancel_rq;
 
 	err = move_to_active(hws, rq, 0);
-	अगर (err)
-		जाओ cancel_rq;
+	if (err)
+		goto cancel_rq;
 
 	batch = h->batch;
-	अगर (INTEL_GEN(gt->i915) >= 8) अणु
+	if (INTEL_GEN(gt->i915) >= 8) {
 		*batch++ = MI_STORE_DWORD_IMM_GEN4;
 		*batch++ = lower_32_bits(hws_address(hws, rq));
 		*batch++ = upper_32_bits(hws_address(hws, rq));
 		*batch++ = rq->fence.seqno;
 		*batch++ = MI_NOOP;
 
-		स_रखो(batch, 0, 1024);
-		batch += 1024 / माप(*batch);
+		memset(batch, 0, 1024);
+		batch += 1024 / sizeof(*batch);
 
 		*batch++ = MI_NOOP;
 		*batch++ = MI_BATCH_BUFFER_START | 1 << 8 | 1;
 		*batch++ = lower_32_bits(vma->node.start);
 		*batch++ = upper_32_bits(vma->node.start);
-	पूर्ण अन्यथा अगर (INTEL_GEN(gt->i915) >= 6) अणु
+	} else if (INTEL_GEN(gt->i915) >= 6) {
 		*batch++ = MI_STORE_DWORD_IMM_GEN4;
 		*batch++ = 0;
 		*batch++ = lower_32_bits(hws_address(hws, rq));
 		*batch++ = rq->fence.seqno;
 		*batch++ = MI_NOOP;
 
-		स_रखो(batch, 0, 1024);
-		batch += 1024 / माप(*batch);
+		memset(batch, 0, 1024);
+		batch += 1024 / sizeof(*batch);
 
 		*batch++ = MI_NOOP;
 		*batch++ = MI_BATCH_BUFFER_START | 1 << 8;
 		*batch++ = lower_32_bits(vma->node.start);
-	पूर्ण अन्यथा अगर (INTEL_GEN(gt->i915) >= 4) अणु
+	} else if (INTEL_GEN(gt->i915) >= 4) {
 		*batch++ = MI_STORE_DWORD_IMM_GEN4 | MI_USE_GGTT;
 		*batch++ = 0;
 		*batch++ = lower_32_bits(hws_address(hws, rq));
 		*batch++ = rq->fence.seqno;
 		*batch++ = MI_NOOP;
 
-		स_रखो(batch, 0, 1024);
-		batch += 1024 / माप(*batch);
+		memset(batch, 0, 1024);
+		batch += 1024 / sizeof(*batch);
 
 		*batch++ = MI_NOOP;
 		*batch++ = MI_BATCH_BUFFER_START | 2 << 6;
 		*batch++ = lower_32_bits(vma->node.start);
-	पूर्ण अन्यथा अणु
+	} else {
 		*batch++ = MI_STORE_DWORD_IMM | MI_MEM_VIRTUAL;
 		*batch++ = lower_32_bits(hws_address(hws, rq));
 		*batch++ = rq->fence.seqno;
 		*batch++ = MI_NOOP;
 
-		स_रखो(batch, 0, 1024);
-		batch += 1024 / माप(*batch);
+		memset(batch, 0, 1024);
+		batch += 1024 / sizeof(*batch);
 
 		*batch++ = MI_NOOP;
 		*batch++ = MI_BATCH_BUFFER_START | 2 << 6;
 		*batch++ = lower_32_bits(vma->node.start);
-	पूर्ण
+	}
 	*batch++ = MI_BATCH_BUFFER_END; /* not reached */
-	पूर्णांकel_gt_chipset_flush(engine->gt);
+	intel_gt_chipset_flush(engine->gt);
 
-	अगर (rq->engine->emit_init_bपढ़ोcrumb) अणु
-		err = rq->engine->emit_init_bपढ़ोcrumb(rq);
-		अगर (err)
-			जाओ cancel_rq;
-	पूर्ण
+	if (rq->engine->emit_init_breadcrumb) {
+		err = rq->engine->emit_init_breadcrumb(rq);
+		if (err)
+			goto cancel_rq;
+	}
 
 	flags = 0;
-	अगर (INTEL_GEN(gt->i915) <= 5)
+	if (INTEL_GEN(gt->i915) <= 5)
 		flags |= I915_DISPATCH_SECURE;
 
 	err = rq->engine->emit_bb_start(rq, vma->node.start, PAGE_SIZE, flags);
 
 cancel_rq:
-	अगर (err) अणु
+	if (err) {
 		i915_request_set_error_once(rq, err);
 		i915_request_add(rq);
-	पूर्ण
+	}
 unpin_hws:
 	i915_vma_unpin(hws);
 unpin_vma:
 	i915_vma_unpin(vma);
 	i915_vm_put(vm);
-	वापस err ? ERR_PTR(err) : rq;
-पूर्ण
+	return err ? ERR_PTR(err) : rq;
+}
 
-अटल u32 hws_seqno(स्थिर काष्ठा hang *h, स्थिर काष्ठा i915_request *rq)
-अणु
-	वापस READ_ONCE(h->seqno[rq->fence.context % (PAGE_SIZE/माप(u32))]);
-पूर्ण
+static u32 hws_seqno(const struct hang *h, const struct i915_request *rq)
+{
+	return READ_ONCE(h->seqno[rq->fence.context % (PAGE_SIZE/sizeof(u32))]);
+}
 
-अटल व्योम hang_fini(काष्ठा hang *h)
-अणु
+static void hang_fini(struct hang *h)
+{
 	*h->batch = MI_BATCH_BUFFER_END;
-	पूर्णांकel_gt_chipset_flush(h->gt);
+	intel_gt_chipset_flush(h->gt);
 
 	i915_gem_object_unpin_map(h->obj);
 	i915_gem_object_put(h->obj);
@@ -278,172 +277,172 @@ unpin_vma:
 	i915_gem_object_unpin_map(h->hws);
 	i915_gem_object_put(h->hws);
 
-	kernel_context_बंद(h->ctx);
+	kernel_context_close(h->ctx);
 
 	igt_flush_test(h->gt->i915);
-पूर्ण
+}
 
-अटल bool रुको_until_running(काष्ठा hang *h, काष्ठा i915_request *rq)
-अणु
-	वापस !(रुको_क्रम_us(i915_seqno_passed(hws_seqno(h, rq),
+static bool wait_until_running(struct hang *h, struct i915_request *rq)
+{
+	return !(wait_for_us(i915_seqno_passed(hws_seqno(h, rq),
 					       rq->fence.seqno),
 			     10) &&
-		 रुको_क्रम(i915_seqno_passed(hws_seqno(h, rq),
+		 wait_for(i915_seqno_passed(hws_seqno(h, rq),
 					    rq->fence.seqno),
 			  1000));
-पूर्ण
+}
 
-अटल पूर्णांक igt_hang_sanitycheck(व्योम *arg)
-अणु
-	काष्ठा पूर्णांकel_gt *gt = arg;
-	काष्ठा i915_request *rq;
-	काष्ठा पूर्णांकel_engine_cs *engine;
-	क्रमागत पूर्णांकel_engine_id id;
-	काष्ठा hang h;
-	पूर्णांक err;
+static int igt_hang_sanitycheck(void *arg)
+{
+	struct intel_gt *gt = arg;
+	struct i915_request *rq;
+	struct intel_engine_cs *engine;
+	enum intel_engine_id id;
+	struct hang h;
+	int err;
 
 	/* Basic check that we can execute our hanging batch */
 
 	err = hang_init(&h, gt);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	क्रम_each_engine(engine, gt, id) अणु
-		काष्ठा पूर्णांकel_wedge_me w;
-		दीर्घ समयout;
+	for_each_engine(engine, gt, id) {
+		struct intel_wedge_me w;
+		long timeout;
 
-		अगर (!पूर्णांकel_engine_can_store_dword(engine))
-			जारी;
+		if (!intel_engine_can_store_dword(engine))
+			continue;
 
 		rq = hang_create_request(&h, engine);
-		अगर (IS_ERR(rq)) अणु
+		if (IS_ERR(rq)) {
 			err = PTR_ERR(rq);
 			pr_err("Failed to create request for %s, err=%d\n",
 			       engine->name, err);
-			जाओ fini;
-		पूर्ण
+			goto fini;
+		}
 
 		i915_request_get(rq);
 
 		*h.batch = MI_BATCH_BUFFER_END;
-		पूर्णांकel_gt_chipset_flush(engine->gt);
+		intel_gt_chipset_flush(engine->gt);
 
 		i915_request_add(rq);
 
-		समयout = 0;
-		पूर्णांकel_wedge_on_समयout(&w, gt, HZ / 10 /* 100ms */)
-			समयout = i915_request_रुको(rq, 0,
+		timeout = 0;
+		intel_wedge_on_timeout(&w, gt, HZ / 10 /* 100ms */)
+			timeout = i915_request_wait(rq, 0,
 						    MAX_SCHEDULE_TIMEOUT);
-		अगर (पूर्णांकel_gt_is_wedged(gt))
-			समयout = -EIO;
+		if (intel_gt_is_wedged(gt))
+			timeout = -EIO;
 
 		i915_request_put(rq);
 
-		अगर (समयout < 0) अणु
-			err = समयout;
+		if (timeout < 0) {
+			err = timeout;
 			pr_err("Wait for request failed on %s, err=%d\n",
 			       engine->name, err);
-			जाओ fini;
-		पूर्ण
-	पूर्ण
+			goto fini;
+		}
+	}
 
 fini:
 	hang_fini(&h);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल bool रुको_क्रम_idle(काष्ठा पूर्णांकel_engine_cs *engine)
-अणु
-	वापस रुको_क्रम(पूर्णांकel_engine_is_idle(engine), IGT_IDLE_TIMEOUT) == 0;
-पूर्ण
+static bool wait_for_idle(struct intel_engine_cs *engine)
+{
+	return wait_for(intel_engine_is_idle(engine), IGT_IDLE_TIMEOUT) == 0;
+}
 
-अटल पूर्णांक igt_reset_nop(व्योम *arg)
-अणु
-	काष्ठा पूर्णांकel_gt *gt = arg;
-	काष्ठा i915_gpu_error *global = &gt->i915->gpu_error;
-	काष्ठा पूर्णांकel_engine_cs *engine;
-	अचिन्हित पूर्णांक reset_count, count;
-	क्रमागत पूर्णांकel_engine_id id;
-	IGT_TIMEOUT(end_समय);
-	पूर्णांक err = 0;
+static int igt_reset_nop(void *arg)
+{
+	struct intel_gt *gt = arg;
+	struct i915_gpu_error *global = &gt->i915->gpu_error;
+	struct intel_engine_cs *engine;
+	unsigned int reset_count, count;
+	enum intel_engine_id id;
+	IGT_TIMEOUT(end_time);
+	int err = 0;
 
 	/* Check that we can reset during non-user portions of requests */
 
 	reset_count = i915_reset_count(global);
 	count = 0;
-	करो अणु
-		क्रम_each_engine(engine, gt, id) अणु
-			काष्ठा पूर्णांकel_context *ce;
-			पूर्णांक i;
+	do {
+		for_each_engine(engine, gt, id) {
+			struct intel_context *ce;
+			int i;
 
-			ce = पूर्णांकel_context_create(engine);
-			अगर (IS_ERR(ce)) अणु
+			ce = intel_context_create(engine);
+			if (IS_ERR(ce)) {
 				err = PTR_ERR(ce);
-				अवरोध;
-			पूर्ण
+				break;
+			}
 
-			क्रम (i = 0; i < 16; i++) अणु
-				काष्ठा i915_request *rq;
+			for (i = 0; i < 16; i++) {
+				struct i915_request *rq;
 
-				rq = पूर्णांकel_context_create_request(ce);
-				अगर (IS_ERR(rq)) अणु
+				rq = intel_context_create_request(ce);
+				if (IS_ERR(rq)) {
 					err = PTR_ERR(rq);
-					अवरोध;
-				पूर्ण
+					break;
+				}
 
 				i915_request_add(rq);
-			पूर्ण
+			}
 
-			पूर्णांकel_context_put(ce);
-		पूर्ण
+			intel_context_put(ce);
+		}
 
 		igt_global_reset_lock(gt);
-		पूर्णांकel_gt_reset(gt, ALL_ENGINES, शून्य);
+		intel_gt_reset(gt, ALL_ENGINES, NULL);
 		igt_global_reset_unlock(gt);
 
-		अगर (पूर्णांकel_gt_is_wedged(gt)) अणु
+		if (intel_gt_is_wedged(gt)) {
 			err = -EIO;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (i915_reset_count(global) != reset_count + ++count) अणु
+		if (i915_reset_count(global) != reset_count + ++count) {
 			pr_err("Full GPU reset not recorded!\n");
 			err = -EINVAL;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		err = igt_flush_test(gt->i915);
-		अगर (err)
-			अवरोध;
-	पूर्ण जबतक (समय_beक्रमe(jअगरfies, end_समय));
+		if (err)
+			break;
+	} while (time_before(jiffies, end_time));
 	pr_info("%s: %d resets\n", __func__, count);
 
-	अगर (igt_flush_test(gt->i915))
+	if (igt_flush_test(gt->i915))
 		err = -EIO;
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक igt_reset_nop_engine(व्योम *arg)
-अणु
-	काष्ठा पूर्णांकel_gt *gt = arg;
-	काष्ठा i915_gpu_error *global = &gt->i915->gpu_error;
-	काष्ठा पूर्णांकel_engine_cs *engine;
-	क्रमागत पूर्णांकel_engine_id id;
+static int igt_reset_nop_engine(void *arg)
+{
+	struct intel_gt *gt = arg;
+	struct i915_gpu_error *global = &gt->i915->gpu_error;
+	struct intel_engine_cs *engine;
+	enum intel_engine_id id;
 
 	/* Check that we can engine-reset during non-user portions */
 
-	अगर (!पूर्णांकel_has_reset_engine(gt))
-		वापस 0;
+	if (!intel_has_reset_engine(gt))
+		return 0;
 
-	क्रम_each_engine(engine, gt, id) अणु
-		अचिन्हित पूर्णांक reset_count, reset_engine_count, count;
-		काष्ठा पूर्णांकel_context *ce;
-		IGT_TIMEOUT(end_समय);
-		पूर्णांक err;
+	for_each_engine(engine, gt, id) {
+		unsigned int reset_count, reset_engine_count, count;
+		struct intel_context *ce;
+		IGT_TIMEOUT(end_time);
+		int err;
 
-		ce = पूर्णांकel_context_create(engine);
-		अगर (IS_ERR(ce))
-			वापस PTR_ERR(ce);
+		ce = intel_context_create(engine);
+		if (IS_ERR(ce))
+			return PTR_ERR(ce);
 
 		reset_count = i915_reset_count(global);
 		reset_engine_count = i915_reset_engine_count(global, engine);
@@ -451,24 +450,24 @@ fini:
 
 		st_engine_heartbeat_disable(engine);
 		set_bit(I915_RESET_ENGINE + id, &gt->reset.flags);
-		करो अणु
-			पूर्णांक i;
+		do {
+			int i;
 
-			अगर (!रुको_क्रम_idle(engine)) अणु
+			if (!wait_for_idle(engine)) {
 				pr_err("%s failed to idle before reset\n",
 				       engine->name);
 				err = -EIO;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 
-			क्रम (i = 0; i < 16; i++) अणु
-				काष्ठा i915_request *rq;
+			for (i = 0; i < 16; i++) {
+				struct i915_request *rq;
 
-				rq = पूर्णांकel_context_create_request(ce);
-				अगर (IS_ERR(rq)) अणु
-					काष्ठा drm_prपूर्णांकer p =
-						drm_info_prपूर्णांकer(gt->i915->drm.dev);
-					पूर्णांकel_engine_dump(engine, &p,
+				rq = intel_context_create_request(ce);
+				if (IS_ERR(rq)) {
+					struct drm_printer p =
+						drm_info_printer(gt->i915->drm.dev);
+					intel_engine_dump(engine, &p,
 							  "%s(%s): failed to submit request\n",
 							  __func__,
 							  engine->name);
@@ -478,111 +477,111 @@ fini:
 						  engine->name);
 					GEM_TRACE_DUMP();
 
-					पूर्णांकel_gt_set_wedged(gt);
+					intel_gt_set_wedged(gt);
 
 					err = PTR_ERR(rq);
-					अवरोध;
-				पूर्ण
+					break;
+				}
 
 				i915_request_add(rq);
-			पूर्ण
-			err = पूर्णांकel_engine_reset(engine, शून्य);
-			अगर (err) अणु
+			}
+			err = intel_engine_reset(engine, NULL);
+			if (err) {
 				pr_err("intel_engine_reset(%s) failed, err:%d\n",
 				       engine->name, err);
-				अवरोध;
-			पूर्ण
+				break;
+			}
 
-			अगर (i915_reset_count(global) != reset_count) अणु
+			if (i915_reset_count(global) != reset_count) {
 				pr_err("Full GPU reset recorded! (engine reset expected)\n");
 				err = -EINVAL;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 
-			अगर (i915_reset_engine_count(global, engine) !=
-			    reset_engine_count + ++count) अणु
+			if (i915_reset_engine_count(global, engine) !=
+			    reset_engine_count + ++count) {
 				pr_err("%s engine reset not recorded!\n",
 				       engine->name);
 				err = -EINVAL;
-				अवरोध;
-			पूर्ण
-		पूर्ण जबतक (समय_beक्रमe(jअगरfies, end_समय));
+				break;
+			}
+		} while (time_before(jiffies, end_time));
 		clear_bit(I915_RESET_ENGINE + id, &gt->reset.flags);
 		st_engine_heartbeat_enable(engine);
 
 		pr_info("%s(%s): %d resets\n", __func__, engine->name, count);
 
-		पूर्णांकel_context_put(ce);
-		अगर (igt_flush_test(gt->i915))
+		intel_context_put(ce);
+		if (igt_flush_test(gt->i915))
 			err = -EIO;
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम क्रमce_reset_समयout(काष्ठा पूर्णांकel_engine_cs *engine)
-अणु
-	engine->reset_समयout.probability = 999;
-	atomic_set(&engine->reset_समयout.बार, -1);
-पूर्ण
+static void force_reset_timeout(struct intel_engine_cs *engine)
+{
+	engine->reset_timeout.probability = 999;
+	atomic_set(&engine->reset_timeout.times, -1);
+}
 
-अटल व्योम cancel_reset_समयout(काष्ठा पूर्णांकel_engine_cs *engine)
-अणु
-	स_रखो(&engine->reset_समयout, 0, माप(engine->reset_समयout));
-पूर्ण
+static void cancel_reset_timeout(struct intel_engine_cs *engine)
+{
+	memset(&engine->reset_timeout, 0, sizeof(engine->reset_timeout));
+}
 
-अटल पूर्णांक igt_reset_fail_engine(व्योम *arg)
-अणु
-	काष्ठा पूर्णांकel_gt *gt = arg;
-	काष्ठा पूर्णांकel_engine_cs *engine;
-	क्रमागत पूर्णांकel_engine_id id;
+static int igt_reset_fail_engine(void *arg)
+{
+	struct intel_gt *gt = arg;
+	struct intel_engine_cs *engine;
+	enum intel_engine_id id;
 
 	/* Check that we can recover from engine-reset failues */
 
-	अगर (!पूर्णांकel_has_reset_engine(gt))
-		वापस 0;
+	if (!intel_has_reset_engine(gt))
+		return 0;
 
-	क्रम_each_engine(engine, gt, id) अणु
-		अचिन्हित पूर्णांक count;
-		काष्ठा पूर्णांकel_context *ce;
-		IGT_TIMEOUT(end_समय);
-		पूर्णांक err;
+	for_each_engine(engine, gt, id) {
+		unsigned int count;
+		struct intel_context *ce;
+		IGT_TIMEOUT(end_time);
+		int err;
 
-		ce = पूर्णांकel_context_create(engine);
-		अगर (IS_ERR(ce))
-			वापस PTR_ERR(ce);
+		ce = intel_context_create(engine);
+		if (IS_ERR(ce))
+			return PTR_ERR(ce);
 
 		st_engine_heartbeat_disable(engine);
 		set_bit(I915_RESET_ENGINE + id, &gt->reset.flags);
 
-		क्रमce_reset_समयout(engine);
-		err = पूर्णांकel_engine_reset(engine, शून्य);
-		cancel_reset_समयout(engine);
-		अगर (err == 0) /* समयouts only generated on gen8+ */
-			जाओ skip;
+		force_reset_timeout(engine);
+		err = intel_engine_reset(engine, NULL);
+		cancel_reset_timeout(engine);
+		if (err == 0) /* timeouts only generated on gen8+ */
+			goto skip;
 
 		count = 0;
-		करो अणु
-			काष्ठा i915_request *last = शून्य;
-			पूर्णांक i;
+		do {
+			struct i915_request *last = NULL;
+			int i;
 
-			अगर (!रुको_क्रम_idle(engine)) अणु
+			if (!wait_for_idle(engine)) {
 				pr_err("%s failed to idle before reset\n",
 				       engine->name);
 				err = -EIO;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 
-			क्रम (i = 0; i < count % 15; i++) अणु
-				काष्ठा i915_request *rq;
+			for (i = 0; i < count % 15; i++) {
+				struct i915_request *rq;
 
-				rq = पूर्णांकel_context_create_request(ce);
-				अगर (IS_ERR(rq)) अणु
-					काष्ठा drm_prपूर्णांकer p =
-						drm_info_prपूर्णांकer(gt->i915->drm.dev);
-					पूर्णांकel_engine_dump(engine, &p,
+				rq = intel_context_create_request(ce);
+				if (IS_ERR(rq)) {
+					struct drm_printer p =
+						drm_info_printer(gt->i915->drm.dev);
+					intel_engine_dump(engine, &p,
 							  "%s(%s): failed to submit request\n",
 							  __func__,
 							  engine->name);
@@ -592,48 +591,48 @@ fini:
 						  engine->name);
 					GEM_TRACE_DUMP();
 
-					पूर्णांकel_gt_set_wedged(gt);
-					अगर (last)
+					intel_gt_set_wedged(gt);
+					if (last)
 						i915_request_put(last);
 
 					err = PTR_ERR(rq);
-					जाओ out;
-				पूर्ण
+					goto out;
+				}
 
-				अगर (last)
+				if (last)
 					i915_request_put(last);
 				last = i915_request_get(rq);
 				i915_request_add(rq);
-			पूर्ण
+			}
 
-			अगर (count & 1) अणु
-				err = पूर्णांकel_engine_reset(engine, शून्य);
-				अगर (err) अणु
+			if (count & 1) {
+				err = intel_engine_reset(engine, NULL);
+				if (err) {
 					GEM_TRACE_ERR("intel_engine_reset(%s) failed, err:%d\n",
 						      engine->name, err);
 					GEM_TRACE_DUMP();
 					i915_request_put(last);
-					अवरोध;
-				पूर्ण
-			पूर्ण अन्यथा अणु
-				क्रमce_reset_समयout(engine);
-				err = पूर्णांकel_engine_reset(engine, शून्य);
-				cancel_reset_समयout(engine);
-				अगर (err != -ETIMEDOUT) अणु
+					break;
+				}
+			} else {
+				force_reset_timeout(engine);
+				err = intel_engine_reset(engine, NULL);
+				cancel_reset_timeout(engine);
+				if (err != -ETIMEDOUT) {
 					pr_err("intel_engine_reset(%s) did not fail, err:%d\n",
 					       engine->name, err);
 					i915_request_put(last);
-					अवरोध;
-				पूर्ण
-			पूर्ण
+					break;
+				}
+			}
 
 			err = 0;
-			अगर (last) अणु
-				अगर (i915_request_रुको(last, 0, HZ / 2) < 0) अणु
-					काष्ठा drm_prपूर्णांकer p =
-						drm_info_prपूर्णांकer(gt->i915->drm.dev);
+			if (last) {
+				if (i915_request_wait(last, 0, HZ / 2) < 0) {
+					struct drm_printer p =
+						drm_info_printer(gt->i915->drm.dev);
 
-					पूर्णांकel_engine_dump(engine, &p,
+					intel_engine_dump(engine, &p,
 							  "%s(%s): failed to complete request\n",
 							  __func__,
 							  engine->name);
@@ -644,60 +643,60 @@ fini:
 					GEM_TRACE_DUMP();
 
 					err = -EIO;
-				पूर्ण
+				}
 				i915_request_put(last);
-			पूर्ण
+			}
 			count++;
-		पूर्ण जबतक (err == 0 && समय_beक्रमe(jअगरfies, end_समय));
+		} while (err == 0 && time_before(jiffies, end_time));
 out:
 		pr_info("%s(%s): %d resets\n", __func__, engine->name, count);
 skip:
 		clear_bit(I915_RESET_ENGINE + id, &gt->reset.flags);
 		st_engine_heartbeat_enable(engine);
-		पूर्णांकel_context_put(ce);
+		intel_context_put(ce);
 
-		अगर (igt_flush_test(gt->i915))
+		if (igt_flush_test(gt->i915))
 			err = -EIO;
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __igt_reset_engine(काष्ठा पूर्णांकel_gt *gt, bool active)
-अणु
-	काष्ठा i915_gpu_error *global = &gt->i915->gpu_error;
-	काष्ठा पूर्णांकel_engine_cs *engine;
-	क्रमागत पूर्णांकel_engine_id id;
-	काष्ठा hang h;
-	पूर्णांक err = 0;
+static int __igt_reset_engine(struct intel_gt *gt, bool active)
+{
+	struct i915_gpu_error *global = &gt->i915->gpu_error;
+	struct intel_engine_cs *engine;
+	enum intel_engine_id id;
+	struct hang h;
+	int err = 0;
 
 	/* Check that we can issue an engine reset on an idle engine (no-op) */
 
-	अगर (!पूर्णांकel_has_reset_engine(gt))
-		वापस 0;
+	if (!intel_has_reset_engine(gt))
+		return 0;
 
-	अगर (active) अणु
+	if (active) {
 		err = hang_init(&h, gt);
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 
-	क्रम_each_engine(engine, gt, id) अणु
-		अचिन्हित पूर्णांक reset_count, reset_engine_count;
-		अचिन्हित दीर्घ count;
-		IGT_TIMEOUT(end_समय);
+	for_each_engine(engine, gt, id) {
+		unsigned int reset_count, reset_engine_count;
+		unsigned long count;
+		IGT_TIMEOUT(end_time);
 
-		अगर (active && !पूर्णांकel_engine_can_store_dword(engine))
-			जारी;
+		if (active && !intel_engine_can_store_dword(engine))
+			continue;
 
-		अगर (!रुको_क्रम_idle(engine)) अणु
+		if (!wait_for_idle(engine)) {
 			pr_err("%s failed to idle before reset\n",
 			       engine->name);
 			err = -EIO;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		reset_count = i915_reset_count(global);
 		reset_engine_count = i915_reset_engine_count(global, engine);
@@ -705,300 +704,300 @@ skip:
 		st_engine_heartbeat_disable(engine);
 		set_bit(I915_RESET_ENGINE + id, &gt->reset.flags);
 		count = 0;
-		करो अणु
-			अगर (active) अणु
-				काष्ठा i915_request *rq;
+		do {
+			if (active) {
+				struct i915_request *rq;
 
 				rq = hang_create_request(&h, engine);
-				अगर (IS_ERR(rq)) अणु
+				if (IS_ERR(rq)) {
 					err = PTR_ERR(rq);
-					अवरोध;
-				पूर्ण
+					break;
+				}
 
 				i915_request_get(rq);
 				i915_request_add(rq);
 
-				अगर (!रुको_until_running(&h, rq)) अणु
-					काष्ठा drm_prपूर्णांकer p = drm_info_prपूर्णांकer(gt->i915->drm.dev);
+				if (!wait_until_running(&h, rq)) {
+					struct drm_printer p = drm_info_printer(gt->i915->drm.dev);
 
 					pr_err("%s: Failed to start request %llx, at %x\n",
 					       __func__, rq->fence.seqno, hws_seqno(&h, rq));
-					पूर्णांकel_engine_dump(engine, &p,
+					intel_engine_dump(engine, &p,
 							  "%s\n", engine->name);
 
 					i915_request_put(rq);
 					err = -EIO;
-					अवरोध;
-				पूर्ण
+					break;
+				}
 
 				i915_request_put(rq);
-			पूर्ण
+			}
 
-			err = पूर्णांकel_engine_reset(engine, शून्य);
-			अगर (err) अणु
+			err = intel_engine_reset(engine, NULL);
+			if (err) {
 				pr_err("intel_engine_reset(%s) failed, err:%d\n",
 				       engine->name, err);
-				अवरोध;
-			पूर्ण
+				break;
+			}
 
-			अगर (i915_reset_count(global) != reset_count) अणु
+			if (i915_reset_count(global) != reset_count) {
 				pr_err("Full GPU reset recorded! (engine reset expected)\n");
 				err = -EINVAL;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 
-			अगर (i915_reset_engine_count(global, engine) !=
-			    ++reset_engine_count) अणु
+			if (i915_reset_engine_count(global, engine) !=
+			    ++reset_engine_count) {
 				pr_err("%s engine reset not recorded!\n",
 				       engine->name);
 				err = -EINVAL;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 
 			count++;
-		पूर्ण जबतक (समय_beक्रमe(jअगरfies, end_समय));
+		} while (time_before(jiffies, end_time));
 		clear_bit(I915_RESET_ENGINE + id, &gt->reset.flags);
 		st_engine_heartbeat_enable(engine);
 		pr_info("%s: Completed %lu %s resets\n",
 			engine->name, count, active ? "active" : "idle");
 
-		अगर (err)
-			अवरोध;
+		if (err)
+			break;
 
 		err = igt_flush_test(gt->i915);
-		अगर (err)
-			अवरोध;
-	पूर्ण
+		if (err)
+			break;
+	}
 
-	अगर (पूर्णांकel_gt_is_wedged(gt))
+	if (intel_gt_is_wedged(gt))
 		err = -EIO;
 
-	अगर (active)
+	if (active)
 		hang_fini(&h);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक igt_reset_idle_engine(व्योम *arg)
-अणु
-	वापस __igt_reset_engine(arg, false);
-पूर्ण
+static int igt_reset_idle_engine(void *arg)
+{
+	return __igt_reset_engine(arg, false);
+}
 
-अटल पूर्णांक igt_reset_active_engine(व्योम *arg)
-अणु
-	वापस __igt_reset_engine(arg, true);
-पूर्ण
+static int igt_reset_active_engine(void *arg)
+{
+	return __igt_reset_engine(arg, true);
+}
 
-काष्ठा active_engine अणु
-	काष्ठा task_काष्ठा *task;
-	काष्ठा पूर्णांकel_engine_cs *engine;
-	अचिन्हित दीर्घ resets;
-	अचिन्हित पूर्णांक flags;
-पूर्ण;
+struct active_engine {
+	struct task_struct *task;
+	struct intel_engine_cs *engine;
+	unsigned long resets;
+	unsigned int flags;
+};
 
-#घोषणा TEST_ACTIVE	BIT(0)
-#घोषणा TEST_OTHERS	BIT(1)
-#घोषणा TEST_SELF	BIT(2)
-#घोषणा TEST_PRIORITY	BIT(3)
+#define TEST_ACTIVE	BIT(0)
+#define TEST_OTHERS	BIT(1)
+#define TEST_SELF	BIT(2)
+#define TEST_PRIORITY	BIT(3)
 
-अटल पूर्णांक active_request_put(काष्ठा i915_request *rq)
-अणु
-	पूर्णांक err = 0;
+static int active_request_put(struct i915_request *rq)
+{
+	int err = 0;
 
-	अगर (!rq)
-		वापस 0;
+	if (!rq)
+		return 0;
 
-	अगर (i915_request_रुको(rq, 0, 5 * HZ) < 0) अणु
+	if (i915_request_wait(rq, 0, 5 * HZ) < 0) {
 		GEM_TRACE("%s timed out waiting for completion of fence %llx:%lld\n",
 			  rq->engine->name,
 			  rq->fence.context,
 			  rq->fence.seqno);
 		GEM_TRACE_DUMP();
 
-		पूर्णांकel_gt_set_wedged(rq->engine->gt);
+		intel_gt_set_wedged(rq->engine->gt);
 		err = -EIO;
-	पूर्ण
+	}
 
 	i915_request_put(rq);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक active_engine(व्योम *data)
-अणु
+static int active_engine(void *data)
+{
 	I915_RND_STATE(prng);
-	काष्ठा active_engine *arg = data;
-	काष्ठा पूर्णांकel_engine_cs *engine = arg->engine;
-	काष्ठा i915_request *rq[8] = अणुपूर्ण;
-	काष्ठा पूर्णांकel_context *ce[ARRAY_SIZE(rq)];
-	अचिन्हित दीर्घ count;
-	पूर्णांक err = 0;
+	struct active_engine *arg = data;
+	struct intel_engine_cs *engine = arg->engine;
+	struct i915_request *rq[8] = {};
+	struct intel_context *ce[ARRAY_SIZE(rq)];
+	unsigned long count;
+	int err = 0;
 
-	क्रम (count = 0; count < ARRAY_SIZE(ce); count++) अणु
-		ce[count] = पूर्णांकel_context_create(engine);
-		अगर (IS_ERR(ce[count])) अणु
+	for (count = 0; count < ARRAY_SIZE(ce); count++) {
+		ce[count] = intel_context_create(engine);
+		if (IS_ERR(ce[count])) {
 			err = PTR_ERR(ce[count]);
-			जबतक (--count)
-				पूर्णांकel_context_put(ce[count]);
-			वापस err;
-		पूर्ण
-	पूर्ण
+			while (--count)
+				intel_context_put(ce[count]);
+			return err;
+		}
+	}
 
 	count = 0;
-	जबतक (!kthपढ़ो_should_stop()) अणु
-		अचिन्हित पूर्णांक idx = count++ & (ARRAY_SIZE(rq) - 1);
-		काष्ठा i915_request *old = rq[idx];
-		काष्ठा i915_request *new;
+	while (!kthread_should_stop()) {
+		unsigned int idx = count++ & (ARRAY_SIZE(rq) - 1);
+		struct i915_request *old = rq[idx];
+		struct i915_request *new;
 
-		new = पूर्णांकel_context_create_request(ce[idx]);
-		अगर (IS_ERR(new)) अणु
+		new = intel_context_create_request(ce[idx]);
+		if (IS_ERR(new)) {
 			err = PTR_ERR(new);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		rq[idx] = i915_request_get(new);
 		i915_request_add(new);
 
-		अगर (engine->schedule && arg->flags & TEST_PRIORITY) अणु
-			काष्ठा i915_sched_attr attr = अणु
+		if (engine->schedule && arg->flags & TEST_PRIORITY) {
+			struct i915_sched_attr attr = {
 				.priority =
-					i915_pअक्रमom_u32_max_state(512, &prng),
-			पूर्ण;
+					i915_prandom_u32_max_state(512, &prng),
+			};
 			engine->schedule(rq[idx], &attr);
-		पूर्ण
+		}
 
 		err = active_request_put(old);
-		अगर (err)
-			अवरोध;
+		if (err)
+			break;
 
 		cond_resched();
-	पूर्ण
+	}
 
-	क्रम (count = 0; count < ARRAY_SIZE(rq); count++) अणु
-		पूर्णांक err__ = active_request_put(rq[count]);
+	for (count = 0; count < ARRAY_SIZE(rq); count++) {
+		int err__ = active_request_put(rq[count]);
 
 		/* Keep the first error */
-		अगर (!err)
+		if (!err)
 			err = err__;
 
-		पूर्णांकel_context_put(ce[count]);
-	पूर्ण
+		intel_context_put(ce[count]);
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक __igt_reset_engines(काष्ठा पूर्णांकel_gt *gt,
-			       स्थिर अक्षर *test_name,
-			       अचिन्हित पूर्णांक flags)
-अणु
-	काष्ठा i915_gpu_error *global = &gt->i915->gpu_error;
-	काष्ठा पूर्णांकel_engine_cs *engine, *other;
-	क्रमागत पूर्णांकel_engine_id id, पंचांगp;
-	काष्ठा hang h;
-	पूर्णांक err = 0;
+static int __igt_reset_engines(struct intel_gt *gt,
+			       const char *test_name,
+			       unsigned int flags)
+{
+	struct i915_gpu_error *global = &gt->i915->gpu_error;
+	struct intel_engine_cs *engine, *other;
+	enum intel_engine_id id, tmp;
+	struct hang h;
+	int err = 0;
 
-	/* Check that issuing a reset on one engine करोes not पूर्णांकerfere
+	/* Check that issuing a reset on one engine does not interfere
 	 * with any other engine.
 	 */
 
-	अगर (!पूर्णांकel_has_reset_engine(gt))
-		वापस 0;
+	if (!intel_has_reset_engine(gt))
+		return 0;
 
-	अगर (flags & TEST_ACTIVE) अणु
+	if (flags & TEST_ACTIVE) {
 		err = hang_init(&h, gt);
-		अगर (err)
-			वापस err;
+		if (err)
+			return err;
 
-		अगर (flags & TEST_PRIORITY)
+		if (flags & TEST_PRIORITY)
 			h.ctx->sched.priority = 1024;
-	पूर्ण
+	}
 
-	क्रम_each_engine(engine, gt, id) अणु
-		काष्ठा active_engine thपढ़ोs[I915_NUM_ENGINES] = अणुपूर्ण;
-		अचिन्हित दीर्घ device = i915_reset_count(global);
-		अचिन्हित दीर्घ count = 0, reported;
-		IGT_TIMEOUT(end_समय);
+	for_each_engine(engine, gt, id) {
+		struct active_engine threads[I915_NUM_ENGINES] = {};
+		unsigned long device = i915_reset_count(global);
+		unsigned long count = 0, reported;
+		IGT_TIMEOUT(end_time);
 
-		अगर (flags & TEST_ACTIVE &&
-		    !पूर्णांकel_engine_can_store_dword(engine))
-			जारी;
+		if (flags & TEST_ACTIVE &&
+		    !intel_engine_can_store_dword(engine))
+			continue;
 
-		अगर (!रुको_क्रम_idle(engine)) अणु
+		if (!wait_for_idle(engine)) {
 			pr_err("i915_reset_engine(%s:%s): failed to idle before reset\n",
 			       engine->name, test_name);
 			err = -EIO;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		स_रखो(thपढ़ोs, 0, माप(thपढ़ोs));
-		क्रम_each_engine(other, gt, पंचांगp) अणु
-			काष्ठा task_काष्ठा *tsk;
+		memset(threads, 0, sizeof(threads));
+		for_each_engine(other, gt, tmp) {
+			struct task_struct *tsk;
 
-			thपढ़ोs[पंचांगp].resets =
+			threads[tmp].resets =
 				i915_reset_engine_count(global, other);
 
-			अगर (other == engine && !(flags & TEST_SELF))
-				जारी;
+			if (other == engine && !(flags & TEST_SELF))
+				continue;
 
-			अगर (other != engine && !(flags & TEST_OTHERS))
-				जारी;
+			if (other != engine && !(flags & TEST_OTHERS))
+				continue;
 
-			thपढ़ोs[पंचांगp].engine = other;
-			thपढ़ोs[पंचांगp].flags = flags;
+			threads[tmp].engine = other;
+			threads[tmp].flags = flags;
 
-			tsk = kthपढ़ो_run(active_engine, &thपढ़ोs[पंचांगp],
+			tsk = kthread_run(active_engine, &threads[tmp],
 					  "igt/%s", other->name);
-			अगर (IS_ERR(tsk)) अणु
+			if (IS_ERR(tsk)) {
 				err = PTR_ERR(tsk);
-				जाओ unwind;
-			पूर्ण
+				goto unwind;
+			}
 
-			thपढ़ोs[पंचांगp].task = tsk;
-			get_task_काष्ठा(tsk);
-		पूर्ण
+			threads[tmp].task = tsk;
+			get_task_struct(tsk);
+		}
 
-		yield(); /* start all thपढ़ोs beक्रमe we begin */
+		yield(); /* start all threads before we begin */
 
 		st_engine_heartbeat_disable(engine);
 		set_bit(I915_RESET_ENGINE + id, &gt->reset.flags);
-		करो अणु
-			काष्ठा i915_request *rq = शून्य;
+		do {
+			struct i915_request *rq = NULL;
 
-			अगर (flags & TEST_ACTIVE) अणु
+			if (flags & TEST_ACTIVE) {
 				rq = hang_create_request(&h, engine);
-				अगर (IS_ERR(rq)) अणु
+				if (IS_ERR(rq)) {
 					err = PTR_ERR(rq);
-					अवरोध;
-				पूर्ण
+					break;
+				}
 
 				i915_request_get(rq);
 				i915_request_add(rq);
 
-				अगर (!रुको_until_running(&h, rq)) अणु
-					काष्ठा drm_prपूर्णांकer p = drm_info_prपूर्णांकer(gt->i915->drm.dev);
+				if (!wait_until_running(&h, rq)) {
+					struct drm_printer p = drm_info_printer(gt->i915->drm.dev);
 
 					pr_err("%s: Failed to start request %llx, at %x\n",
 					       __func__, rq->fence.seqno, hws_seqno(&h, rq));
-					पूर्णांकel_engine_dump(engine, &p,
+					intel_engine_dump(engine, &p,
 							  "%s\n", engine->name);
 
 					i915_request_put(rq);
 					err = -EIO;
-					अवरोध;
-				पूर्ण
-			पूर्ण
+					break;
+				}
+			}
 
-			err = पूर्णांकel_engine_reset(engine, शून्य);
-			अगर (err) अणु
+			err = intel_engine_reset(engine, NULL);
+			if (err) {
 				pr_err("i915_reset_engine(%s:%s): failed, err=%d\n",
 				       engine->name, test_name, err);
-				अवरोध;
-			पूर्ण
+				break;
+			}
 
 			count++;
 
-			अगर (rq) अणु
-				अगर (rq->fence.error != -EIO) अणु
+			if (rq) {
+				if (rq->fence.error != -EIO) {
 					pr_err("i915_reset_engine(%s:%s):"
 					       " failed to reset request %llx:%lld\n",
 					       engine->name, test_name,
@@ -1007,47 +1006,47 @@ skip:
 					i915_request_put(rq);
 
 					GEM_TRACE_DUMP();
-					पूर्णांकel_gt_set_wedged(gt);
+					intel_gt_set_wedged(gt);
 					err = -EIO;
-					अवरोध;
-				पूर्ण
+					break;
+				}
 
-				अगर (i915_request_रुको(rq, 0, HZ / 5) < 0) अणु
-					काष्ठा drm_prपूर्णांकer p =
-						drm_info_prपूर्णांकer(gt->i915->drm.dev);
+				if (i915_request_wait(rq, 0, HZ / 5) < 0) {
+					struct drm_printer p =
+						drm_info_printer(gt->i915->drm.dev);
 
 					pr_err("i915_reset_engine(%s:%s):"
 					       " failed to complete request %llx:%lld after reset\n",
 					       engine->name, test_name,
 					       rq->fence.context,
 					       rq->fence.seqno);
-					पूर्णांकel_engine_dump(engine, &p,
+					intel_engine_dump(engine, &p,
 							  "%s\n", engine->name);
 					i915_request_put(rq);
 
 					GEM_TRACE_DUMP();
-					पूर्णांकel_gt_set_wedged(gt);
+					intel_gt_set_wedged(gt);
 					err = -EIO;
-					अवरोध;
-				पूर्ण
+					break;
+				}
 
 				i915_request_put(rq);
-			पूर्ण
+			}
 
-			अगर (!(flags & TEST_SELF) && !रुको_क्रम_idle(engine)) अणु
-				काष्ठा drm_prपूर्णांकer p =
-					drm_info_prपूर्णांकer(gt->i915->drm.dev);
+			if (!(flags & TEST_SELF) && !wait_for_idle(engine)) {
+				struct drm_printer p =
+					drm_info_printer(gt->i915->drm.dev);
 
 				pr_err("i915_reset_engine(%s:%s):"
 				       " failed to idle after reset\n",
 				       engine->name, test_name);
-				पूर्णांकel_engine_dump(engine, &p,
+				intel_engine_dump(engine, &p,
 						  "%s\n", engine->name);
 
 				err = -EIO;
-				अवरोध;
-			पूर्ण
-		पूर्ण जबतक (समय_beक्रमe(jअगरfies, end_समय));
+				break;
+			}
+		} while (time_before(jiffies, end_time));
 		clear_bit(I915_RESET_ENGINE + id, &gt->reset.flags);
 		st_engine_heartbeat_enable(engine);
 
@@ -1055,172 +1054,172 @@ skip:
 			engine->name, test_name, count);
 
 		reported = i915_reset_engine_count(global, engine);
-		reported -= thपढ़ोs[engine->id].resets;
-		अगर (reported != count) अणु
+		reported -= threads[engine->id].resets;
+		if (reported != count) {
 			pr_err("i915_reset_engine(%s:%s): reset %lu times, but reported %lu\n",
 			       engine->name, test_name, count, reported);
-			अगर (!err)
+			if (!err)
 				err = -EINVAL;
-		पूर्ण
+		}
 
 unwind:
-		क्रम_each_engine(other, gt, पंचांगp) अणु
-			पूर्णांक ret;
+		for_each_engine(other, gt, tmp) {
+			int ret;
 
-			अगर (!thपढ़ोs[पंचांगp].task)
-				जारी;
+			if (!threads[tmp].task)
+				continue;
 
-			ret = kthपढ़ो_stop(thपढ़ोs[पंचांगp].task);
-			अगर (ret) अणु
+			ret = kthread_stop(threads[tmp].task);
+			if (ret) {
 				pr_err("kthread for other engine %s failed, err=%d\n",
 				       other->name, ret);
-				अगर (!err)
+				if (!err)
 					err = ret;
-			पूर्ण
-			put_task_काष्ठा(thपढ़ोs[पंचांगp].task);
+			}
+			put_task_struct(threads[tmp].task);
 
-			अगर (other->uabi_class != engine->uabi_class &&
-			    thपढ़ोs[पंचांगp].resets !=
-			    i915_reset_engine_count(global, other)) अणु
+			if (other->uabi_class != engine->uabi_class &&
+			    threads[tmp].resets !=
+			    i915_reset_engine_count(global, other)) {
 				pr_err("Innocent engine %s was reset (count=%ld)\n",
 				       other->name,
 				       i915_reset_engine_count(global, other) -
-				       thपढ़ोs[पंचांगp].resets);
-				अगर (!err)
+				       threads[tmp].resets);
+				if (!err)
 					err = -EINVAL;
-			पूर्ण
-		पूर्ण
+			}
+		}
 
-		अगर (device != i915_reset_count(global)) अणु
+		if (device != i915_reset_count(global)) {
 			pr_err("Global reset (count=%ld)!\n",
 			       i915_reset_count(global) - device);
-			अगर (!err)
+			if (!err)
 				err = -EINVAL;
-		पूर्ण
+		}
 
-		अगर (err)
-			अवरोध;
+		if (err)
+			break;
 
 		err = igt_flush_test(gt->i915);
-		अगर (err)
-			अवरोध;
-	पूर्ण
+		if (err)
+			break;
+	}
 
-	अगर (पूर्णांकel_gt_is_wedged(gt))
+	if (intel_gt_is_wedged(gt))
 		err = -EIO;
 
-	अगर (flags & TEST_ACTIVE)
+	if (flags & TEST_ACTIVE)
 		hang_fini(&h);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक igt_reset_engines(व्योम *arg)
-अणु
-	अटल स्थिर काष्ठा अणु
-		स्थिर अक्षर *name;
-		अचिन्हित पूर्णांक flags;
-	पूर्ण phases[] = अणु
-		अणु "idle", 0 पूर्ण,
-		अणु "active", TEST_ACTIVE पूर्ण,
-		अणु "others-idle", TEST_OTHERS पूर्ण,
-		अणु "others-active", TEST_OTHERS | TEST_ACTIVE पूर्ण,
-		अणु
+static int igt_reset_engines(void *arg)
+{
+	static const struct {
+		const char *name;
+		unsigned int flags;
+	} phases[] = {
+		{ "idle", 0 },
+		{ "active", TEST_ACTIVE },
+		{ "others-idle", TEST_OTHERS },
+		{ "others-active", TEST_OTHERS | TEST_ACTIVE },
+		{
 			"others-priority",
 			TEST_OTHERS | TEST_ACTIVE | TEST_PRIORITY
-		पूर्ण,
-		अणु
+		},
+		{
 			"self-priority",
 			TEST_ACTIVE | TEST_PRIORITY | TEST_SELF,
-		पूर्ण,
-		अणु पूर्ण
-	पूर्ण;
-	काष्ठा पूर्णांकel_gt *gt = arg;
+		},
+		{ }
+	};
+	struct intel_gt *gt = arg;
 	typeof(*phases) *p;
-	पूर्णांक err;
+	int err;
 
-	क्रम (p = phases; p->name; p++) अणु
-		अगर (p->flags & TEST_PRIORITY) अणु
-			अगर (!(gt->i915->caps.scheduler & I915_SCHEDULER_CAP_PRIORITY))
-				जारी;
-		पूर्ण
+	for (p = phases; p->name; p++) {
+		if (p->flags & TEST_PRIORITY) {
+			if (!(gt->i915->caps.scheduler & I915_SCHEDULER_CAP_PRIORITY))
+				continue;
+		}
 
 		err = __igt_reset_engines(arg, p->name, p->flags);
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल u32 fake_hangcheck(काष्ठा पूर्णांकel_gt *gt, पूर्णांकel_engine_mask_t mask)
-अणु
+static u32 fake_hangcheck(struct intel_gt *gt, intel_engine_mask_t mask)
+{
 	u32 count = i915_reset_count(&gt->i915->gpu_error);
 
-	पूर्णांकel_gt_reset(gt, mask, शून्य);
+	intel_gt_reset(gt, mask, NULL);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल पूर्णांक igt_reset_रुको(व्योम *arg)
-अणु
-	काष्ठा पूर्णांकel_gt *gt = arg;
-	काष्ठा i915_gpu_error *global = &gt->i915->gpu_error;
-	काष्ठा पूर्णांकel_engine_cs *engine = gt->engine[RCS0];
-	काष्ठा i915_request *rq;
-	अचिन्हित पूर्णांक reset_count;
-	काष्ठा hang h;
-	दीर्घ समयout;
-	पूर्णांक err;
+static int igt_reset_wait(void *arg)
+{
+	struct intel_gt *gt = arg;
+	struct i915_gpu_error *global = &gt->i915->gpu_error;
+	struct intel_engine_cs *engine = gt->engine[RCS0];
+	struct i915_request *rq;
+	unsigned int reset_count;
+	struct hang h;
+	long timeout;
+	int err;
 
-	अगर (!engine || !पूर्णांकel_engine_can_store_dword(engine))
-		वापस 0;
+	if (!engine || !intel_engine_can_store_dword(engine))
+		return 0;
 
-	/* Check that we detect a stuck रुकोer and issue a reset */
+	/* Check that we detect a stuck waiter and issue a reset */
 
 	igt_global_reset_lock(gt);
 
 	err = hang_init(&h, gt);
-	अगर (err)
-		जाओ unlock;
+	if (err)
+		goto unlock;
 
 	rq = hang_create_request(&h, engine);
-	अगर (IS_ERR(rq)) अणु
+	if (IS_ERR(rq)) {
 		err = PTR_ERR(rq);
-		जाओ fini;
-	पूर्ण
+		goto fini;
+	}
 
 	i915_request_get(rq);
 	i915_request_add(rq);
 
-	अगर (!रुको_until_running(&h, rq)) अणु
-		काष्ठा drm_prपूर्णांकer p = drm_info_prपूर्णांकer(gt->i915->drm.dev);
+	if (!wait_until_running(&h, rq)) {
+		struct drm_printer p = drm_info_printer(gt->i915->drm.dev);
 
 		pr_err("%s: Failed to start request %llx, at %x\n",
 		       __func__, rq->fence.seqno, hws_seqno(&h, rq));
-		पूर्णांकel_engine_dump(rq->engine, &p, "%s\n", rq->engine->name);
+		intel_engine_dump(rq->engine, &p, "%s\n", rq->engine->name);
 
-		पूर्णांकel_gt_set_wedged(gt);
+		intel_gt_set_wedged(gt);
 
 		err = -EIO;
-		जाओ out_rq;
-	पूर्ण
+		goto out_rq;
+	}
 
 	reset_count = fake_hangcheck(gt, ALL_ENGINES);
 
-	समयout = i915_request_रुको(rq, 0, 10);
-	अगर (समयout < 0) अणु
+	timeout = i915_request_wait(rq, 0, 10);
+	if (timeout < 0) {
 		pr_err("i915_request_wait failed on a stuck request: err=%ld\n",
-		       समयout);
-		err = समयout;
-		जाओ out_rq;
-	पूर्ण
+		       timeout);
+		err = timeout;
+		goto out_rq;
+	}
 
-	अगर (i915_reset_count(global) == reset_count) अणु
+	if (i915_reset_count(global) == reset_count) {
 		pr_err("No GPU reset recorded!\n");
 		err = -EINVAL;
-		जाओ out_rq;
-	पूर्ण
+		goto out_rq;
+	}
 
 out_rq:
 	i915_request_put(rq);
@@ -1229,201 +1228,201 @@ fini:
 unlock:
 	igt_global_reset_unlock(gt);
 
-	अगर (पूर्णांकel_gt_is_wedged(gt))
-		वापस -EIO;
+	if (intel_gt_is_wedged(gt))
+		return -EIO;
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-काष्ठा evict_vma अणु
-	काष्ठा completion completion;
-	काष्ठा i915_vma *vma;
-पूर्ण;
+struct evict_vma {
+	struct completion completion;
+	struct i915_vma *vma;
+};
 
-अटल पूर्णांक evict_vma(व्योम *data)
-अणु
-	काष्ठा evict_vma *arg = data;
-	काष्ठा i915_address_space *vm = arg->vma->vm;
-	काष्ठा drm_mm_node evict = arg->vma->node;
-	पूर्णांक err;
+static int evict_vma(void *data)
+{
+	struct evict_vma *arg = data;
+	struct i915_address_space *vm = arg->vma->vm;
+	struct drm_mm_node evict = arg->vma->node;
+	int err;
 
 	complete(&arg->completion);
 
 	mutex_lock(&vm->mutex);
-	err = i915_gem_evict_क्रम_node(vm, &evict, 0);
+	err = i915_gem_evict_for_node(vm, &evict, 0);
 	mutex_unlock(&vm->mutex);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक evict_fence(व्योम *data)
-अणु
-	काष्ठा evict_vma *arg = data;
-	पूर्णांक err;
+static int evict_fence(void *data)
+{
+	struct evict_vma *arg = data;
+	int err;
 
 	complete(&arg->completion);
 
-	/* Mark the fence रेजिस्टर as dirty to क्रमce the mmio update. */
+	/* Mark the fence register as dirty to force the mmio update. */
 	err = i915_gem_object_set_tiling(arg->vma->obj, I915_TILING_Y, 512);
-	अगर (err) अणु
+	if (err) {
 		pr_err("Invalid Y-tiling settings; err:%d\n", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	err = i915_vma_pin(arg->vma, 0, 0, PIN_GLOBAL | PIN_MAPPABLE);
-	अगर (err) अणु
+	if (err) {
 		pr_err("Unable to pin vma for Y-tiled fence; err:%d\n", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	err = i915_vma_pin_fence(arg->vma);
 	i915_vma_unpin(arg->vma);
-	अगर (err) अणु
+	if (err) {
 		pr_err("Unable to pin Y-tiled fence; err:%d\n", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	i915_vma_unpin_fence(arg->vma);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __igt_reset_evict_vma(काष्ठा पूर्णांकel_gt *gt,
-				 काष्ठा i915_address_space *vm,
-				 पूर्णांक (*fn)(व्योम *),
-				 अचिन्हित पूर्णांक flags)
-अणु
-	काष्ठा पूर्णांकel_engine_cs *engine = gt->engine[RCS0];
-	काष्ठा drm_i915_gem_object *obj;
-	काष्ठा task_काष्ठा *tsk = शून्य;
-	काष्ठा i915_request *rq;
-	काष्ठा evict_vma arg;
-	काष्ठा hang h;
-	अचिन्हित पूर्णांक pin_flags;
-	पूर्णांक err;
+static int __igt_reset_evict_vma(struct intel_gt *gt,
+				 struct i915_address_space *vm,
+				 int (*fn)(void *),
+				 unsigned int flags)
+{
+	struct intel_engine_cs *engine = gt->engine[RCS0];
+	struct drm_i915_gem_object *obj;
+	struct task_struct *tsk = NULL;
+	struct i915_request *rq;
+	struct evict_vma arg;
+	struct hang h;
+	unsigned int pin_flags;
+	int err;
 
-	अगर (!gt->ggtt->num_fences && flags & EXEC_OBJECT_NEEDS_FENCE)
-		वापस 0;
+	if (!gt->ggtt->num_fences && flags & EXEC_OBJECT_NEEDS_FENCE)
+		return 0;
 
-	अगर (!engine || !पूर्णांकel_engine_can_store_dword(engine))
-		वापस 0;
+	if (!engine || !intel_engine_can_store_dword(engine))
+		return 0;
 
 	/* Check that we can recover an unbind stuck on a hanging request */
 
 	err = hang_init(&h, gt);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	obj = i915_gem_object_create_पूर्णांकernal(gt->i915, SZ_1M);
-	अगर (IS_ERR(obj)) अणु
+	obj = i915_gem_object_create_internal(gt->i915, SZ_1M);
+	if (IS_ERR(obj)) {
 		err = PTR_ERR(obj);
-		जाओ fini;
-	पूर्ण
+		goto fini;
+	}
 
-	अगर (flags & EXEC_OBJECT_NEEDS_FENCE) अणु
+	if (flags & EXEC_OBJECT_NEEDS_FENCE) {
 		err = i915_gem_object_set_tiling(obj, I915_TILING_X, 512);
-		अगर (err) अणु
+		if (err) {
 			pr_err("Invalid X-tiling settings; err:%d\n", err);
-			जाओ out_obj;
-		पूर्ण
-	पूर्ण
+			goto out_obj;
+		}
+	}
 
-	arg.vma = i915_vma_instance(obj, vm, शून्य);
-	अगर (IS_ERR(arg.vma)) अणु
+	arg.vma = i915_vma_instance(obj, vm, NULL);
+	if (IS_ERR(arg.vma)) {
 		err = PTR_ERR(arg.vma);
-		जाओ out_obj;
-	पूर्ण
+		goto out_obj;
+	}
 
 	rq = hang_create_request(&h, engine);
-	अगर (IS_ERR(rq)) अणु
+	if (IS_ERR(rq)) {
 		err = PTR_ERR(rq);
-		जाओ out_obj;
-	पूर्ण
+		goto out_obj;
+	}
 
 	pin_flags = i915_vma_is_ggtt(arg.vma) ? PIN_GLOBAL : PIN_USER;
 
-	अगर (flags & EXEC_OBJECT_NEEDS_FENCE)
+	if (flags & EXEC_OBJECT_NEEDS_FENCE)
 		pin_flags |= PIN_MAPPABLE;
 
 	err = i915_vma_pin(arg.vma, 0, 0, pin_flags);
-	अगर (err) अणु
+	if (err) {
 		i915_request_add(rq);
-		जाओ out_obj;
-	पूर्ण
+		goto out_obj;
+	}
 
-	अगर (flags & EXEC_OBJECT_NEEDS_FENCE) अणु
+	if (flags & EXEC_OBJECT_NEEDS_FENCE) {
 		err = i915_vma_pin_fence(arg.vma);
-		अगर (err) अणु
+		if (err) {
 			pr_err("Unable to pin X-tiled fence; err:%d\n", err);
 			i915_vma_unpin(arg.vma);
 			i915_request_add(rq);
-			जाओ out_obj;
-		पूर्ण
-	पूर्ण
+			goto out_obj;
+		}
+	}
 
 	i915_vma_lock(arg.vma);
-	err = i915_request_aरुको_object(rq, arg.vma->obj,
+	err = i915_request_await_object(rq, arg.vma->obj,
 					flags & EXEC_OBJECT_WRITE);
-	अगर (err == 0)
+	if (err == 0)
 		err = i915_vma_move_to_active(arg.vma, rq, flags);
 	i915_vma_unlock(arg.vma);
 
-	अगर (flags & EXEC_OBJECT_NEEDS_FENCE)
+	if (flags & EXEC_OBJECT_NEEDS_FENCE)
 		i915_vma_unpin_fence(arg.vma);
 	i915_vma_unpin(arg.vma);
 
 	i915_request_get(rq);
 	i915_request_add(rq);
-	अगर (err)
-		जाओ out_rq;
+	if (err)
+		goto out_rq;
 
-	अगर (!रुको_until_running(&h, rq)) अणु
-		काष्ठा drm_prपूर्णांकer p = drm_info_prपूर्णांकer(gt->i915->drm.dev);
+	if (!wait_until_running(&h, rq)) {
+		struct drm_printer p = drm_info_printer(gt->i915->drm.dev);
 
 		pr_err("%s: Failed to start request %llx, at %x\n",
 		       __func__, rq->fence.seqno, hws_seqno(&h, rq));
-		पूर्णांकel_engine_dump(rq->engine, &p, "%s\n", rq->engine->name);
+		intel_engine_dump(rq->engine, &p, "%s\n", rq->engine->name);
 
-		पूर्णांकel_gt_set_wedged(gt);
-		जाओ out_reset;
-	पूर्ण
+		intel_gt_set_wedged(gt);
+		goto out_reset;
+	}
 
 	init_completion(&arg.completion);
 
-	tsk = kthपढ़ो_run(fn, &arg, "igt/evict_vma");
-	अगर (IS_ERR(tsk)) अणु
+	tsk = kthread_run(fn, &arg, "igt/evict_vma");
+	if (IS_ERR(tsk)) {
 		err = PTR_ERR(tsk);
-		tsk = शून्य;
-		जाओ out_reset;
-	पूर्ण
-	get_task_काष्ठा(tsk);
+		tsk = NULL;
+		goto out_reset;
+	}
+	get_task_struct(tsk);
 
-	रुको_क्रम_completion(&arg.completion);
+	wait_for_completion(&arg.completion);
 
-	अगर (रुको_क्रम(!list_empty(&rq->fence.cb_list), 10)) अणु
-		काष्ठा drm_prपूर्णांकer p = drm_info_prपूर्णांकer(gt->i915->drm.dev);
+	if (wait_for(!list_empty(&rq->fence.cb_list), 10)) {
+		struct drm_printer p = drm_info_printer(gt->i915->drm.dev);
 
 		pr_err("igt/evict_vma kthread did not wait\n");
-		पूर्णांकel_engine_dump(rq->engine, &p, "%s\n", rq->engine->name);
+		intel_engine_dump(rq->engine, &p, "%s\n", rq->engine->name);
 
-		पूर्णांकel_gt_set_wedged(gt);
-		जाओ out_reset;
-	पूर्ण
+		intel_gt_set_wedged(gt);
+		goto out_reset;
+	}
 
 out_reset:
 	igt_global_reset_lock(gt);
 	fake_hangcheck(gt, rq->engine->mask);
 	igt_global_reset_unlock(gt);
 
-	अगर (tsk) अणु
-		काष्ठा पूर्णांकel_wedge_me w;
+	if (tsk) {
+		struct intel_wedge_me w;
 
 		/* The reset, even indirectly, should take less than 10ms. */
-		पूर्णांकel_wedge_on_समयout(&w, gt, HZ / 10 /* 100ms */)
-			err = kthपढ़ो_stop(tsk);
+		intel_wedge_on_timeout(&w, gt, HZ / 10 /* 100ms */)
+			err = kthread_stop(tsk);
 
-		put_task_काष्ठा(tsk);
-	पूर्ण
+		put_task_struct(tsk);
+	}
 
 out_rq:
 	i915_request_put(rq);
@@ -1431,399 +1430,399 @@ out_obj:
 	i915_gem_object_put(obj);
 fini:
 	hang_fini(&h);
-	अगर (पूर्णांकel_gt_is_wedged(gt))
-		वापस -EIO;
+	if (intel_gt_is_wedged(gt))
+		return -EIO;
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक igt_reset_evict_ggtt(व्योम *arg)
-अणु
-	काष्ठा पूर्णांकel_gt *gt = arg;
+static int igt_reset_evict_ggtt(void *arg)
+{
+	struct intel_gt *gt = arg;
 
-	वापस __igt_reset_evict_vma(gt, &gt->ggtt->vm,
+	return __igt_reset_evict_vma(gt, &gt->ggtt->vm,
 				     evict_vma, EXEC_OBJECT_WRITE);
-पूर्ण
+}
 
-अटल पूर्णांक igt_reset_evict_ppgtt(व्योम *arg)
-अणु
-	काष्ठा पूर्णांकel_gt *gt = arg;
-	काष्ठा i915_ppgtt *ppgtt;
-	पूर्णांक err;
+static int igt_reset_evict_ppgtt(void *arg)
+{
+	struct intel_gt *gt = arg;
+	struct i915_ppgtt *ppgtt;
+	int err;
 
 	/* aliasing == global gtt locking, covered above */
-	अगर (INTEL_PPGTT(gt->i915) < INTEL_PPGTT_FULL)
-		वापस 0;
+	if (INTEL_PPGTT(gt->i915) < INTEL_PPGTT_FULL)
+		return 0;
 
 	ppgtt = i915_ppgtt_create(gt);
-	अगर (IS_ERR(ppgtt))
-		वापस PTR_ERR(ppgtt);
+	if (IS_ERR(ppgtt))
+		return PTR_ERR(ppgtt);
 
 	err = __igt_reset_evict_vma(gt, &ppgtt->vm,
 				    evict_vma, EXEC_OBJECT_WRITE);
 	i915_vm_put(&ppgtt->vm);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक igt_reset_evict_fence(व्योम *arg)
-अणु
-	काष्ठा पूर्णांकel_gt *gt = arg;
+static int igt_reset_evict_fence(void *arg)
+{
+	struct intel_gt *gt = arg;
 
-	वापस __igt_reset_evict_vma(gt, &gt->ggtt->vm,
+	return __igt_reset_evict_vma(gt, &gt->ggtt->vm,
 				     evict_fence, EXEC_OBJECT_NEEDS_FENCE);
-पूर्ण
+}
 
-अटल पूर्णांक रुको_क्रम_others(काष्ठा पूर्णांकel_gt *gt,
-			   काष्ठा पूर्णांकel_engine_cs *exclude)
-अणु
-	काष्ठा पूर्णांकel_engine_cs *engine;
-	क्रमागत पूर्णांकel_engine_id id;
+static int wait_for_others(struct intel_gt *gt,
+			   struct intel_engine_cs *exclude)
+{
+	struct intel_engine_cs *engine;
+	enum intel_engine_id id;
 
-	क्रम_each_engine(engine, gt, id) अणु
-		अगर (engine == exclude)
-			जारी;
+	for_each_engine(engine, gt, id) {
+		if (engine == exclude)
+			continue;
 
-		अगर (!रुको_क्रम_idle(engine))
-			वापस -EIO;
-	पूर्ण
+		if (!wait_for_idle(engine))
+			return -EIO;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक igt_reset_queue(व्योम *arg)
-अणु
-	काष्ठा पूर्णांकel_gt *gt = arg;
-	काष्ठा i915_gpu_error *global = &gt->i915->gpu_error;
-	काष्ठा पूर्णांकel_engine_cs *engine;
-	क्रमागत पूर्णांकel_engine_id id;
-	काष्ठा hang h;
-	पूर्णांक err;
+static int igt_reset_queue(void *arg)
+{
+	struct intel_gt *gt = arg;
+	struct i915_gpu_error *global = &gt->i915->gpu_error;
+	struct intel_engine_cs *engine;
+	enum intel_engine_id id;
+	struct hang h;
+	int err;
 
 	/* Check that we replay pending requests following a hang */
 
 	igt_global_reset_lock(gt);
 
 	err = hang_init(&h, gt);
-	अगर (err)
-		जाओ unlock;
+	if (err)
+		goto unlock;
 
-	क्रम_each_engine(engine, gt, id) अणु
-		काष्ठा i915_request *prev;
-		IGT_TIMEOUT(end_समय);
-		अचिन्हित पूर्णांक count;
+	for_each_engine(engine, gt, id) {
+		struct i915_request *prev;
+		IGT_TIMEOUT(end_time);
+		unsigned int count;
 
-		अगर (!पूर्णांकel_engine_can_store_dword(engine))
-			जारी;
+		if (!intel_engine_can_store_dword(engine))
+			continue;
 
 		prev = hang_create_request(&h, engine);
-		अगर (IS_ERR(prev)) अणु
+		if (IS_ERR(prev)) {
 			err = PTR_ERR(prev);
-			जाओ fini;
-		पूर्ण
+			goto fini;
+		}
 
 		i915_request_get(prev);
 		i915_request_add(prev);
 
 		count = 0;
-		करो अणु
-			काष्ठा i915_request *rq;
-			अचिन्हित पूर्णांक reset_count;
+		do {
+			struct i915_request *rq;
+			unsigned int reset_count;
 
 			rq = hang_create_request(&h, engine);
-			अगर (IS_ERR(rq)) अणु
+			if (IS_ERR(rq)) {
 				err = PTR_ERR(rq);
-				जाओ fini;
-			पूर्ण
+				goto fini;
+			}
 
 			i915_request_get(rq);
 			i915_request_add(rq);
 
 			/*
-			 * XXX We करोn't handle resetting the kernel context
+			 * XXX We don't handle resetting the kernel context
 			 * very well. If we trigger a device reset twice in
-			 * quick succession जबतक the kernel context is
-			 * executing, we may end up skipping the bपढ़ोcrumb.
-			 * This is really only a problem क्रम the selftest as
-			 * normally there is a large पूर्णांकerlude between resets
+			 * quick succession while the kernel context is
+			 * executing, we may end up skipping the breadcrumb.
+			 * This is really only a problem for the selftest as
+			 * normally there is a large interlude between resets
 			 * (hangcheck), or we focus on resetting just one
-			 * engine and so aव्योम repeatedly resetting innocents.
+			 * engine and so avoid repeatedly resetting innocents.
 			 */
-			err = रुको_क्रम_others(gt, engine);
-			अगर (err) अणु
+			err = wait_for_others(gt, engine);
+			if (err) {
 				pr_err("%s(%s): Failed to idle other inactive engines after device reset\n",
 				       __func__, engine->name);
 				i915_request_put(rq);
 				i915_request_put(prev);
 
 				GEM_TRACE_DUMP();
-				पूर्णांकel_gt_set_wedged(gt);
-				जाओ fini;
-			पूर्ण
+				intel_gt_set_wedged(gt);
+				goto fini;
+			}
 
-			अगर (!रुको_until_running(&h, prev)) अणु
-				काष्ठा drm_prपूर्णांकer p = drm_info_prपूर्णांकer(gt->i915->drm.dev);
+			if (!wait_until_running(&h, prev)) {
+				struct drm_printer p = drm_info_printer(gt->i915->drm.dev);
 
 				pr_err("%s(%s): Failed to start request %llx, at %x\n",
 				       __func__, engine->name,
 				       prev->fence.seqno, hws_seqno(&h, prev));
-				पूर्णांकel_engine_dump(engine, &p,
+				intel_engine_dump(engine, &p,
 						  "%s\n", engine->name);
 
 				i915_request_put(rq);
 				i915_request_put(prev);
 
-				पूर्णांकel_gt_set_wedged(gt);
+				intel_gt_set_wedged(gt);
 
 				err = -EIO;
-				जाओ fini;
-			पूर्ण
+				goto fini;
+			}
 
 			reset_count = fake_hangcheck(gt, BIT(id));
 
-			अगर (prev->fence.error != -EIO) अणु
+			if (prev->fence.error != -EIO) {
 				pr_err("GPU reset not recorded on hanging request [fence.error=%d]!\n",
 				       prev->fence.error);
 				i915_request_put(rq);
 				i915_request_put(prev);
 				err = -EINVAL;
-				जाओ fini;
-			पूर्ण
+				goto fini;
+			}
 
-			अगर (rq->fence.error) अणु
+			if (rq->fence.error) {
 				pr_err("Fence error status not zero [%d] after unrelated reset\n",
 				       rq->fence.error);
 				i915_request_put(rq);
 				i915_request_put(prev);
 				err = -EINVAL;
-				जाओ fini;
-			पूर्ण
+				goto fini;
+			}
 
-			अगर (i915_reset_count(global) == reset_count) अणु
+			if (i915_reset_count(global) == reset_count) {
 				pr_err("No GPU reset recorded!\n");
 				i915_request_put(rq);
 				i915_request_put(prev);
 				err = -EINVAL;
-				जाओ fini;
-			पूर्ण
+				goto fini;
+			}
 
 			i915_request_put(prev);
 			prev = rq;
 			count++;
-		पूर्ण जबतक (समय_beक्रमe(jअगरfies, end_समय));
+		} while (time_before(jiffies, end_time));
 		pr_info("%s: Completed %d queued resets\n",
 			engine->name, count);
 
 		*h.batch = MI_BATCH_BUFFER_END;
-		पूर्णांकel_gt_chipset_flush(engine->gt);
+		intel_gt_chipset_flush(engine->gt);
 
 		i915_request_put(prev);
 
 		err = igt_flush_test(gt->i915);
-		अगर (err)
-			अवरोध;
-	पूर्ण
+		if (err)
+			break;
+	}
 
 fini:
 	hang_fini(&h);
 unlock:
 	igt_global_reset_unlock(gt);
 
-	अगर (पूर्णांकel_gt_is_wedged(gt))
-		वापस -EIO;
+	if (intel_gt_is_wedged(gt))
+		return -EIO;
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक igt_handle_error(व्योम *arg)
-अणु
-	काष्ठा पूर्णांकel_gt *gt = arg;
-	काष्ठा i915_gpu_error *global = &gt->i915->gpu_error;
-	काष्ठा पूर्णांकel_engine_cs *engine = gt->engine[RCS0];
-	काष्ठा hang h;
-	काष्ठा i915_request *rq;
-	काष्ठा i915_gpu_coredump *error;
-	पूर्णांक err;
+static int igt_handle_error(void *arg)
+{
+	struct intel_gt *gt = arg;
+	struct i915_gpu_error *global = &gt->i915->gpu_error;
+	struct intel_engine_cs *engine = gt->engine[RCS0];
+	struct hang h;
+	struct i915_request *rq;
+	struct i915_gpu_coredump *error;
+	int err;
 
 	/* Check that we can issue a global GPU and engine reset */
 
-	अगर (!पूर्णांकel_has_reset_engine(gt))
-		वापस 0;
+	if (!intel_has_reset_engine(gt))
+		return 0;
 
-	अगर (!engine || !पूर्णांकel_engine_can_store_dword(engine))
-		वापस 0;
+	if (!engine || !intel_engine_can_store_dword(engine))
+		return 0;
 
 	err = hang_init(&h, gt);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	rq = hang_create_request(&h, engine);
-	अगर (IS_ERR(rq)) अणु
+	if (IS_ERR(rq)) {
 		err = PTR_ERR(rq);
-		जाओ err_fini;
-	पूर्ण
+		goto err_fini;
+	}
 
 	i915_request_get(rq);
 	i915_request_add(rq);
 
-	अगर (!रुको_until_running(&h, rq)) अणु
-		काष्ठा drm_prपूर्णांकer p = drm_info_prपूर्णांकer(gt->i915->drm.dev);
+	if (!wait_until_running(&h, rq)) {
+		struct drm_printer p = drm_info_printer(gt->i915->drm.dev);
 
 		pr_err("%s: Failed to start request %llx, at %x\n",
 		       __func__, rq->fence.seqno, hws_seqno(&h, rq));
-		पूर्णांकel_engine_dump(rq->engine, &p, "%s\n", rq->engine->name);
+		intel_engine_dump(rq->engine, &p, "%s\n", rq->engine->name);
 
-		पूर्णांकel_gt_set_wedged(gt);
+		intel_gt_set_wedged(gt);
 
 		err = -EIO;
-		जाओ err_request;
-	पूर्ण
+		goto err_request;
+	}
 
 	/* Temporarily disable error capture */
-	error = xchg(&global->first_error, (व्योम *)-1);
+	error = xchg(&global->first_error, (void *)-1);
 
-	पूर्णांकel_gt_handle_error(gt, engine->mask, 0, शून्य);
+	intel_gt_handle_error(gt, engine->mask, 0, NULL);
 
 	xchg(&global->first_error, error);
 
-	अगर (rq->fence.error != -EIO) अणु
+	if (rq->fence.error != -EIO) {
 		pr_err("Guilty request not identified!\n");
 		err = -EINVAL;
-		जाओ err_request;
-	पूर्ण
+		goto err_request;
+	}
 
 err_request:
 	i915_request_put(rq);
 err_fini:
 	hang_fini(&h);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक __igt_atomic_reset_engine(काष्ठा पूर्णांकel_engine_cs *engine,
-				     स्थिर काष्ठा igt_atomic_section *p,
-				     स्थिर अक्षर *mode)
-अणु
-	काष्ठा tasklet_काष्ठा * स्थिर t = &engine->execlists.tasklet;
-	पूर्णांक err;
+static int __igt_atomic_reset_engine(struct intel_engine_cs *engine,
+				     const struct igt_atomic_section *p,
+				     const char *mode)
+{
+	struct tasklet_struct * const t = &engine->execlists.tasklet;
+	int err;
 
 	GEM_TRACE("i915_reset_engine(%s:%s) under %s\n",
 		  engine->name, mode, p->name);
 
-	अगर (t->func)
+	if (t->func)
 		tasklet_disable(t);
-	अगर (म_भेद(p->name, "softirq"))
+	if (strcmp(p->name, "softirq"))
 		local_bh_disable();
 	p->critical_section_begin();
 
-	err = __पूर्णांकel_engine_reset_bh(engine, शून्य);
+	err = __intel_engine_reset_bh(engine, NULL);
 
 	p->critical_section_end();
-	अगर (म_भेद(p->name, "softirq"))
+	if (strcmp(p->name, "softirq"))
 		local_bh_enable();
-	अगर (t->func) अणु
+	if (t->func) {
 		tasklet_enable(t);
 		tasklet_hi_schedule(t);
-	पूर्ण
+	}
 
-	अगर (err)
+	if (err)
 		pr_err("i915_reset_engine(%s:%s) failed under %s\n",
 		       engine->name, mode, p->name);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक igt_atomic_reset_engine(काष्ठा पूर्णांकel_engine_cs *engine,
-				   स्थिर काष्ठा igt_atomic_section *p)
-अणु
-	काष्ठा i915_request *rq;
-	काष्ठा hang h;
-	पूर्णांक err;
+static int igt_atomic_reset_engine(struct intel_engine_cs *engine,
+				   const struct igt_atomic_section *p)
+{
+	struct i915_request *rq;
+	struct hang h;
+	int err;
 
 	err = __igt_atomic_reset_engine(engine, p, "idle");
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	err = hang_init(&h, engine->gt);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	rq = hang_create_request(&h, engine);
-	अगर (IS_ERR(rq)) अणु
+	if (IS_ERR(rq)) {
 		err = PTR_ERR(rq);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	i915_request_get(rq);
 	i915_request_add(rq);
 
-	अगर (रुको_until_running(&h, rq)) अणु
+	if (wait_until_running(&h, rq)) {
 		err = __igt_atomic_reset_engine(engine, p, "active");
-	पूर्ण अन्यथा अणु
+	} else {
 		pr_err("%s(%s): Failed to start request %llx, at %x\n",
 		       __func__, engine->name,
 		       rq->fence.seqno, hws_seqno(&h, rq));
-		पूर्णांकel_gt_set_wedged(engine->gt);
+		intel_gt_set_wedged(engine->gt);
 		err = -EIO;
-	पूर्ण
+	}
 
-	अगर (err == 0) अणु
-		काष्ठा पूर्णांकel_wedge_me w;
+	if (err == 0) {
+		struct intel_wedge_me w;
 
-		पूर्णांकel_wedge_on_समयout(&w, engine->gt, HZ / 20 /* 50ms */)
-			i915_request_रुको(rq, 0, MAX_SCHEDULE_TIMEOUT);
-		अगर (पूर्णांकel_gt_is_wedged(engine->gt))
+		intel_wedge_on_timeout(&w, engine->gt, HZ / 20 /* 50ms */)
+			i915_request_wait(rq, 0, MAX_SCHEDULE_TIMEOUT);
+		if (intel_gt_is_wedged(engine->gt))
 			err = -EIO;
-	पूर्ण
+	}
 
 	i915_request_put(rq);
 out:
 	hang_fini(&h);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक igt_reset_engines_atomic(व्योम *arg)
-अणु
-	काष्ठा पूर्णांकel_gt *gt = arg;
-	स्थिर typeof(*igt_atomic_phases) *p;
-	पूर्णांक err = 0;
+static int igt_reset_engines_atomic(void *arg)
+{
+	struct intel_gt *gt = arg;
+	const typeof(*igt_atomic_phases) *p;
+	int err = 0;
 
 	/* Check that the engines resets are usable from atomic context */
 
-	अगर (!पूर्णांकel_has_reset_engine(gt))
-		वापस 0;
+	if (!intel_has_reset_engine(gt))
+		return 0;
 
-	अगर (पूर्णांकel_uc_uses_guc_submission(&gt->uc))
-		वापस 0;
+	if (intel_uc_uses_guc_submission(&gt->uc))
+		return 0;
 
 	igt_global_reset_lock(gt);
 
-	/* Flush any requests beक्रमe we get started and check basics */
-	अगर (!igt_क्रमce_reset(gt))
-		जाओ unlock;
+	/* Flush any requests before we get started and check basics */
+	if (!igt_force_reset(gt))
+		goto unlock;
 
-	क्रम (p = igt_atomic_phases; p->name; p++) अणु
-		काष्ठा पूर्णांकel_engine_cs *engine;
-		क्रमागत पूर्णांकel_engine_id id;
+	for (p = igt_atomic_phases; p->name; p++) {
+		struct intel_engine_cs *engine;
+		enum intel_engine_id id;
 
-		क्रम_each_engine(engine, gt, id) अणु
+		for_each_engine(engine, gt, id) {
 			err = igt_atomic_reset_engine(engine, p);
-			अगर (err)
-				जाओ out;
-		पूर्ण
-	पूर्ण
+			if (err)
+				goto out;
+		}
+	}
 
 out:
-	/* As we poke around the guts, करो a full reset beक्रमe continuing. */
-	igt_क्रमce_reset(gt);
+	/* As we poke around the guts, do a full reset before continuing. */
+	igt_force_reset(gt);
 unlock:
 	igt_global_reset_unlock(gt);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक पूर्णांकel_hangcheck_live_selftests(काष्ठा drm_i915_निजी *i915)
-अणु
-	अटल स्थिर काष्ठा i915_subtest tests[] = अणु
+int intel_hangcheck_live_selftests(struct drm_i915_private *i915)
+{
+	static const struct i915_subtest tests[] = {
 		SUBTEST(igt_hang_sanitycheck),
 		SUBTEST(igt_reset_nop),
 		SUBTEST(igt_reset_nop_engine),
@@ -1833,27 +1832,27 @@ unlock:
 		SUBTEST(igt_reset_engines),
 		SUBTEST(igt_reset_engines_atomic),
 		SUBTEST(igt_reset_queue),
-		SUBTEST(igt_reset_रुको),
+		SUBTEST(igt_reset_wait),
 		SUBTEST(igt_reset_evict_ggtt),
 		SUBTEST(igt_reset_evict_ppgtt),
 		SUBTEST(igt_reset_evict_fence),
 		SUBTEST(igt_handle_error),
-	पूर्ण;
-	काष्ठा पूर्णांकel_gt *gt = &i915->gt;
-	पूर्णांकel_wakeref_t wakeref;
-	पूर्णांक err;
+	};
+	struct intel_gt *gt = &i915->gt;
+	intel_wakeref_t wakeref;
+	int err;
 
-	अगर (!पूर्णांकel_has_gpu_reset(gt))
-		वापस 0;
+	if (!intel_has_gpu_reset(gt))
+		return 0;
 
-	अगर (पूर्णांकel_gt_is_wedged(gt))
-		वापस -EIO; /* we're दीर्घ past hope of a successful reset */
+	if (intel_gt_is_wedged(gt))
+		return -EIO; /* we're long past hope of a successful reset */
 
-	wakeref = पूर्णांकel_runसमय_pm_get(gt->uncore->rpm);
+	wakeref = intel_runtime_pm_get(gt->uncore->rpm);
 
-	err = पूर्णांकel_gt_live_subtests(tests, gt);
+	err = intel_gt_live_subtests(tests, gt);
 
-	पूर्णांकel_runसमय_pm_put(gt->uncore->rpm, wakeref);
+	intel_runtime_pm_put(gt->uncore->rpm, wakeref);
 
-	वापस err;
-पूर्ण
+	return err;
+}

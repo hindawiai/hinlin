@@ -1,69 +1,68 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (C) 2012 ARM Ltd.
  */
-#अगर_अघोषित __ASM_MODULE_H
-#घोषणा __ASM_MODULE_H
+#ifndef __ASM_MODULE_H
+#define __ASM_MODULE_H
 
-#समावेश <यंत्र-generic/module.h>
+#include <asm-generic/module.h>
 
-#अगर_घोषित CONFIG_ARM64_MODULE_PLTS
-काष्ठा mod_plt_sec अणु
-	पूर्णांक			plt_shndx;
-	पूर्णांक			plt_num_entries;
-	पूर्णांक			plt_max_entries;
-पूर्ण;
+#ifdef CONFIG_ARM64_MODULE_PLTS
+struct mod_plt_sec {
+	int			plt_shndx;
+	int			plt_num_entries;
+	int			plt_max_entries;
+};
 
-काष्ठा mod_arch_specअगरic अणु
-	काष्ठा mod_plt_sec	core;
-	काष्ठा mod_plt_sec	init;
+struct mod_arch_specific {
+	struct mod_plt_sec	core;
+	struct mod_plt_sec	init;
 
-	/* क्रम CONFIG_DYNAMIC_FTRACE */
-	काष्ठा plt_entry	*ftrace_trampolines;
-पूर्ण;
-#पूर्ण_अगर
+	/* for CONFIG_DYNAMIC_FTRACE */
+	struct plt_entry	*ftrace_trampolines;
+};
+#endif
 
-u64 module_emit_plt_entry(काष्ठा module *mod, Elf64_Shdr *sechdrs,
-			  व्योम *loc, स्थिर Elf64_Rela *rela,
+u64 module_emit_plt_entry(struct module *mod, Elf64_Shdr *sechdrs,
+			  void *loc, const Elf64_Rela *rela,
 			  Elf64_Sym *sym);
 
-u64 module_emit_veneer_क्रम_adrp(काष्ठा module *mod, Elf64_Shdr *sechdrs,
-				व्योम *loc, u64 val);
+u64 module_emit_veneer_for_adrp(struct module *mod, Elf64_Shdr *sechdrs,
+				void *loc, u64 val);
 
-#अगर_घोषित CONFIG_RANDOMIZE_BASE
-बाह्य u64 module_alloc_base;
-#अन्यथा
-#घोषणा module_alloc_base	((u64)_etext - MODULES_VSIZE)
-#पूर्ण_अगर
+#ifdef CONFIG_RANDOMIZE_BASE
+extern u64 module_alloc_base;
+#else
+#define module_alloc_base	((u64)_etext - MODULES_VSIZE)
+#endif
 
-काष्ठा plt_entry अणु
+struct plt_entry {
 	/*
-	 * A program that conक्रमms to the AArch64 Procedure Call Standard
+	 * A program that conforms to the AArch64 Procedure Call Standard
 	 * (AAPCS64) must assume that a veneer that alters IP0 (x16) and/or
-	 * IP1 (x17) may be inserted at any branch inकाष्ठाion that is
-	 * exposed to a relocation that supports दीर्घ branches. Since that
-	 * is exactly what we are dealing with here, we are मुक्त to use x16
-	 * as a scratch रेजिस्टर in the PLT veneers.
+	 * IP1 (x17) may be inserted at any branch instruction that is
+	 * exposed to a relocation that supports long branches. Since that
+	 * is exactly what we are dealing with here, we are free to use x16
+	 * as a scratch register in the PLT veneers.
 	 */
 	__le32	adrp;	/* adrp	x16, ....			*/
 	__le32	add;	/* add	x16, x16, #0x....		*/
 	__le32	br;	/* br	x16				*/
-पूर्ण;
+};
 
-अटल अंतरभूत bool is_क्रमbidden_offset_क्रम_adrp(व्योम *place)
-अणु
-	वापस IS_ENABLED(CONFIG_ARM64_ERRATUM_843419) &&
-	       cpus_have_स्थिर_cap(ARM64_WORKAROUND_843419) &&
+static inline bool is_forbidden_offset_for_adrp(void *place)
+{
+	return IS_ENABLED(CONFIG_ARM64_ERRATUM_843419) &&
+	       cpus_have_const_cap(ARM64_WORKAROUND_843419) &&
 	       ((u64)place & 0xfff) >= 0xff8;
-पूर्ण
+}
 
-काष्ठा plt_entry get_plt_entry(u64 dst, व्योम *pc);
-bool plt_entries_equal(स्थिर काष्ठा plt_entry *a, स्थिर काष्ठा plt_entry *b);
+struct plt_entry get_plt_entry(u64 dst, void *pc);
+bool plt_entries_equal(const struct plt_entry *a, const struct plt_entry *b);
 
-अटल अंतरभूत bool plt_entry_is_initialized(स्थिर काष्ठा plt_entry *e)
-अणु
-	वापस e->adrp || e->add || e->br;
-पूर्ण
+static inline bool plt_entry_is_initialized(const struct plt_entry *e)
+{
+	return e->adrp || e->add || e->br;
+}
 
-#पूर्ण_अगर /* __ASM_MODULE_H */
+#endif /* __ASM_MODULE_H */

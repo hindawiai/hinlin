@@ -1,54 +1,53 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * Force feedback support क्रम DragonRise Inc. game controllers
+ * Force feedback support for DragonRise Inc. game controllers
  *
  * From what I have gathered, these devices are mass produced in China and are
- * distributed under several venकरोrs. They often share the same design as
+ * distributed under several vendors. They often share the same design as
  * the original PlayStation DualShock controller.
  *
  * 0079:0006 "DragonRise Inc.   Generic   USB  Joystick  "
  *  - tested with a Tesun USB-703 game controller.
  *
- * Copyright (c) 2009 Riअक्षरd Walmsley <richwalm@gmail.com>
+ * Copyright (c) 2009 Richard Walmsley <richwalm@gmail.com>
  */
 
 /*
  */
 
-#समावेश <linux/input.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/hid.h>
-#समावेश <linux/module.h>
+#include <linux/input.h>
+#include <linux/slab.h>
+#include <linux/hid.h>
+#include <linux/module.h>
 
-#समावेश "hid-ids.h"
+#include "hid-ids.h"
 
-#अगर_घोषित CONFIG_DRAGONRISE_FF
+#ifdef CONFIG_DRAGONRISE_FF
 
-काष्ठा drff_device अणु
-	काष्ठा hid_report *report;
-पूर्ण;
+struct drff_device {
+	struct hid_report *report;
+};
 
-अटल पूर्णांक drff_play(काष्ठा input_dev *dev, व्योम *data,
-				 काष्ठा ff_effect *effect)
-अणु
-	काष्ठा hid_device *hid = input_get_drvdata(dev);
-	काष्ठा drff_device *drff = data;
-	पूर्णांक strong, weak;
+static int drff_play(struct input_dev *dev, void *data,
+				 struct ff_effect *effect)
+{
+	struct hid_device *hid = input_get_drvdata(dev);
+	struct drff_device *drff = data;
+	int strong, weak;
 
 	strong = effect->u.rumble.strong_magnitude;
 	weak = effect->u.rumble.weak_magnitude;
 
 	dbg_hid("called with 0x%04x 0x%04x", strong, weak);
 
-	अगर (strong || weak) अणु
+	if (strong || weak) {
 		strong = strong * 0xff / 0xffff;
 		weak = weak * 0xff / 0xffff;
 
 		/* While reverse engineering this device, I found that when
 		   this value is set, it causes the strong rumble to function
 		   at a near maximum speed, so we'll bypass it. */
-		अगर (weak == 0x0a)
+		if (weak == 0x0a)
 			weak = 0x0b;
 
 		drff->report->field[0]->value[0] = 0x51;
@@ -59,63 +58,63 @@
 
 		drff->report->field[0]->value[0] = 0xfa;
 		drff->report->field[0]->value[1] = 0xfe;
-	पूर्ण अन्यथा अणु
+	} else {
 		drff->report->field[0]->value[0] = 0xf3;
 		drff->report->field[0]->value[1] = 0x00;
-	पूर्ण
+	}
 
 	drff->report->field[0]->value[2] = 0x00;
 	drff->report->field[0]->value[4] = 0x00;
 	dbg_hid("running with 0x%02x 0x%02x", strong, weak);
 	hid_hw_request(hid, drff->report, HID_REQ_SET_REPORT);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक drff_init(काष्ठा hid_device *hid)
-अणु
-	काष्ठा drff_device *drff;
-	काष्ठा hid_report *report;
-	काष्ठा hid_input *hidinput;
-	काष्ठा list_head *report_list =
-			&hid->report_क्रमागत[HID_OUTPUT_REPORT].report_list;
-	काष्ठा input_dev *dev;
-	पूर्णांक error;
+static int drff_init(struct hid_device *hid)
+{
+	struct drff_device *drff;
+	struct hid_report *report;
+	struct hid_input *hidinput;
+	struct list_head *report_list =
+			&hid->report_enum[HID_OUTPUT_REPORT].report_list;
+	struct input_dev *dev;
+	int error;
 
-	अगर (list_empty(&hid->inमाला_दो)) अणु
+	if (list_empty(&hid->inputs)) {
 		hid_err(hid, "no inputs found\n");
-		वापस -ENODEV;
-	पूर्ण
-	hidinput = list_first_entry(&hid->inमाला_दो, काष्ठा hid_input, list);
+		return -ENODEV;
+	}
+	hidinput = list_first_entry(&hid->inputs, struct hid_input, list);
 	dev = hidinput->input;
 
-	अगर (list_empty(report_list)) अणु
+	if (list_empty(report_list)) {
 		hid_err(hid, "no output reports found\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	report = list_first_entry(report_list, काष्ठा hid_report, list);
-	अगर (report->maxfield < 1) अणु
+	report = list_first_entry(report_list, struct hid_report, list);
+	if (report->maxfield < 1) {
 		hid_err(hid, "no fields in the report\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	अगर (report->field[0]->report_count < 7) अणु
+	if (report->field[0]->report_count < 7) {
 		hid_err(hid, "not enough values in the field\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	drff = kzalloc(माप(काष्ठा drff_device), GFP_KERNEL);
-	अगर (!drff)
-		वापस -ENOMEM;
+	drff = kzalloc(sizeof(struct drff_device), GFP_KERNEL);
+	if (!drff)
+		return -ENOMEM;
 
 	set_bit(FF_RUMBLE, dev->ffbit);
 
 	error = input_ff_create_memless(dev, drff, drff_play);
-	अगर (error) अणु
-		kमुक्त(drff);
-		वापस error;
-	पूर्ण
+	if (error) {
+		kfree(drff);
+		return error;
+	}
 
 	drff->report = report;
 	drff->report->field[0]->value[0] = 0xf3;
@@ -130,20 +129,20 @@
 	hid_info(hid, "Force Feedback for DragonRise Inc. "
 		 "game controllers by Richard Walmsley <richwalm@gmail.com>\n");
 
-	वापस 0;
-पूर्ण
-#अन्यथा
-अटल अंतरभूत पूर्णांक drff_init(काष्ठा hid_device *hid)
-अणु
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+	return 0;
+}
+#else
+static inline int drff_init(struct hid_device *hid)
+{
+	return 0;
+}
+#endif
 
 /*
  * The original descriptor of joystick with PID 0x0011, represented by DVTech PC
  * JS19. It seems both copied from another device and a result of confusion
- * either about the specअगरication or about the program used to create the
- * descriptor. In any हाल, it's a wonder it works on Winकरोws.
+ * either about the specification or about the program used to create the
+ * descriptor. In any case, it's a wonder it works on Windows.
  *
  *  Usage Page (Desktop),             ; Generic desktop controls (01h)
  *  Usage (Joystick),                 ; Joystick (04h, application collection)
@@ -177,7 +176,7 @@
  *      Usage Minimum (01h),
  *      Usage Maximum (0Ah),
  *      Input (Variable),
- *      Usage Page (FF00h),           ; FF00h, venकरोr-defined
+ *      Usage Page (FF00h),           ; FF00h, vendor-defined
  *      Report Size (1),
  *      Report Count (10),
  *      Logical Maximum (1),
@@ -197,10 +196,10 @@
  */
 
 /* Size of the original descriptor of the PID 0x0011 joystick */
-#घोषणा PID0011_RDESC_ORIG_SIZE	101
+#define PID0011_RDESC_ORIG_SIZE	101
 
-/* Fixed report descriptor क्रम PID 0x011 joystick */
-अटल __u8 pid0011_rdesc_fixed[] = अणु
+/* Fixed report descriptor for PID 0x011 joystick */
+static __u8 pid0011_rdesc_fixed[] = {
 	0x05, 0x01,         /*  Usage Page (Desktop),           */
 	0x09, 0x04,         /*  Usage (Joystick),               */
 	0xA1, 0x01,         /*  Collection (Application),       */
@@ -227,94 +226,94 @@
 	0x81, 0x01,         /*          Input (Constant),       */
 	0xC0,               /*      End Collection,             */
 	0xC0                /*  End Collection                  */
-पूर्ण;
+};
 
-अटल __u8 *dr_report_fixup(काष्ठा hid_device *hdev, __u8 *rdesc,
-				अचिन्हित पूर्णांक *rsize)
-अणु
-	चयन (hdev->product) अणु
-	हाल 0x0011:
-		अगर (*rsize == PID0011_RDESC_ORIG_SIZE) अणु
+static __u8 *dr_report_fixup(struct hid_device *hdev, __u8 *rdesc,
+				unsigned int *rsize)
+{
+	switch (hdev->product) {
+	case 0x0011:
+		if (*rsize == PID0011_RDESC_ORIG_SIZE) {
 			rdesc = pid0011_rdesc_fixed;
-			*rsize = माप(pid0011_rdesc_fixed);
-		पूर्ण
-		अवरोध;
-	पूर्ण
-	वापस rdesc;
-पूर्ण
+			*rsize = sizeof(pid0011_rdesc_fixed);
+		}
+		break;
+	}
+	return rdesc;
+}
 
-#घोषणा map_असल(c)      hid_map_usage(hi, usage, bit, max, EV_ABS, (c))
-#घोषणा map_rel(c)      hid_map_usage(hi, usage, bit, max, EV_REL, (c))
+#define map_abs(c)      hid_map_usage(hi, usage, bit, max, EV_ABS, (c))
+#define map_rel(c)      hid_map_usage(hi, usage, bit, max, EV_REL, (c))
 
-अटल पूर्णांक dr_input_mapping(काष्ठा hid_device *hdev, काष्ठा hid_input *hi,
-			    काष्ठा hid_field *field, काष्ठा hid_usage *usage,
-			    अचिन्हित दीर्घ **bit, पूर्णांक *max)
-अणु
-	चयन (usage->hid) अणु
+static int dr_input_mapping(struct hid_device *hdev, struct hid_input *hi,
+			    struct hid_field *field, struct hid_usage *usage,
+			    unsigned long **bit, int *max)
+{
+	switch (usage->hid) {
 	/*
 	 * revert to the old hid-input behavior where axes
-	 * can be अक्रमomly asचिन्हित when hid->usage is reused.
+	 * can be randomly assigned when hid->usage is reused.
 	 */
-	हाल HID_GD_X: हाल HID_GD_Y: हाल HID_GD_Z:
-	हाल HID_GD_RX: हाल HID_GD_RY: हाल HID_GD_RZ:
-		अगर (field->flags & HID_MAIN_ITEM_RELATIVE)
+	case HID_GD_X: case HID_GD_Y: case HID_GD_Z:
+	case HID_GD_RX: case HID_GD_RY: case HID_GD_RZ:
+		if (field->flags & HID_MAIN_ITEM_RELATIVE)
 			map_rel(usage->hid & 0xf);
-		अन्यथा
-			map_असल(usage->hid & 0xf);
-		वापस 1;
-	पूर्ण
+		else
+			map_abs(usage->hid & 0xf);
+		return 1;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dr_probe(काष्ठा hid_device *hdev, स्थिर काष्ठा hid_device_id *id)
-अणु
-	पूर्णांक ret;
+static int dr_probe(struct hid_device *hdev, const struct hid_device_id *id)
+{
+	int ret;
 
 	dev_dbg(&hdev->dev, "DragonRise Inc. HID hardware probe...");
 
 	ret = hid_parse(hdev);
-	अगर (ret) अणु
+	if (ret) {
 		hid_err(hdev, "parse failed\n");
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	ret = hid_hw_start(hdev, HID_CONNECT_DEFAULT & ~HID_CONNECT_FF);
-	अगर (ret) अणु
+	if (ret) {
 		hid_err(hdev, "hw start failed\n");
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	चयन (hdev->product) अणु
-	हाल 0x0006:
+	switch (hdev->product) {
+	case 0x0006:
 		ret = drff_init(hdev);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(&hdev->dev, "force feedback init failed\n");
 			hid_hw_stop(hdev);
-			जाओ err;
-		पूर्ण
-		अवरोध;
-	पूर्ण
+			goto err;
+		}
+		break;
+	}
 
-	वापस 0;
+	return 0;
 err:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा hid_device_id dr_devices[] = अणु
-	अणु HID_USB_DEVICE(USB_VENDOR_ID_DRAGONRISE, 0x0006),  पूर्ण,
-	अणु HID_USB_DEVICE(USB_VENDOR_ID_DRAGONRISE, 0x0011),  पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct hid_device_id dr_devices[] = {
+	{ HID_USB_DEVICE(USB_VENDOR_ID_DRAGONRISE, 0x0006),  },
+	{ HID_USB_DEVICE(USB_VENDOR_ID_DRAGONRISE, 0x0011),  },
+	{ }
+};
 MODULE_DEVICE_TABLE(hid, dr_devices);
 
-अटल काष्ठा hid_driver dr_driver = अणु
+static struct hid_driver dr_driver = {
 	.name = "dragonrise",
 	.id_table = dr_devices,
 	.report_fixup = dr_report_fixup,
 	.probe = dr_probe,
 	.input_mapping = dr_input_mapping,
-पूर्ण;
+};
 module_hid_driver(dr_driver);
 
 MODULE_LICENSE("GPL");

@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * linux/fs/nfs/callback.c
  *
@@ -8,452 +7,452 @@
  * NFSv4 callback handling
  */
 
-#समावेश <linux/completion.h>
-#समावेश <linux/ip.h>
-#समावेश <linux/module.h>
-#समावेश <linux/sched/संकेत.स>
-#समावेश <linux/sunrpc/svc.h>
-#समावेश <linux/sunrpc/svcsock.h>
-#समावेश <linux/nfs_fs.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/mutex.h>
-#समावेश <linux/मुक्तzer.h>
-#समावेश <linux/kthपढ़ो.h>
-#समावेश <linux/sunrpc/svcauth_gss.h>
-#समावेश <linux/sunrpc/bc_xprt.h>
+#include <linux/completion.h>
+#include <linux/ip.h>
+#include <linux/module.h>
+#include <linux/sched/signal.h>
+#include <linux/sunrpc/svc.h>
+#include <linux/sunrpc/svcsock.h>
+#include <linux/nfs_fs.h>
+#include <linux/errno.h>
+#include <linux/mutex.h>
+#include <linux/freezer.h>
+#include <linux/kthread.h>
+#include <linux/sunrpc/svcauth_gss.h>
+#include <linux/sunrpc/bc_xprt.h>
 
-#समावेश <net/inet_sock.h>
+#include <net/inet_sock.h>
 
-#समावेश "nfs4_fs.h"
-#समावेश "callback.h"
-#समावेश "internal.h"
-#समावेश "netns.h"
+#include "nfs4_fs.h"
+#include "callback.h"
+#include "internal.h"
+#include "netns.h"
 
-#घोषणा NFSDBG_FACILITY NFSDBG_CALLBACK
+#define NFSDBG_FACILITY NFSDBG_CALLBACK
 
-काष्ठा nfs_callback_data अणु
-	अचिन्हित पूर्णांक users;
-	काष्ठा svc_serv *serv;
-पूर्ण;
+struct nfs_callback_data {
+	unsigned int users;
+	struct svc_serv *serv;
+};
 
-अटल काष्ठा nfs_callback_data nfs_callback_info[NFS4_MAX_MINOR_VERSION + 1];
-अटल DEFINE_MUTEX(nfs_callback_mutex);
-अटल काष्ठा svc_program nfs4_callback_program;
+static struct nfs_callback_data nfs_callback_info[NFS4_MAX_MINOR_VERSION + 1];
+static DEFINE_MUTEX(nfs_callback_mutex);
+static struct svc_program nfs4_callback_program;
 
-अटल पूर्णांक nfs4_callback_up_net(काष्ठा svc_serv *serv, काष्ठा net *net)
-अणु
-	स्थिर काष्ठा cred *cred = current_cred();
-	पूर्णांक ret;
-	काष्ठा nfs_net *nn = net_generic(net, nfs_net_id);
+static int nfs4_callback_up_net(struct svc_serv *serv, struct net *net)
+{
+	const struct cred *cred = current_cred();
+	int ret;
+	struct nfs_net *nn = net_generic(net, nfs_net_id);
 
 	ret = svc_create_xprt(serv, "tcp", net, PF_INET,
 				nfs_callback_set_tcpport, SVC_SOCK_ANONYMOUS,
 				cred);
-	अगर (ret <= 0)
-		जाओ out_err;
+	if (ret <= 0)
+		goto out_err;
 	nn->nfs_callback_tcpport = ret;
-	dprपूर्णांकk("NFS: Callback listener port = %u (af %u, net %x)\n",
+	dprintk("NFS: Callback listener port = %u (af %u, net %x)\n",
 		nn->nfs_callback_tcpport, PF_INET, net->ns.inum);
 
 	ret = svc_create_xprt(serv, "tcp", net, PF_INET6,
 				nfs_callback_set_tcpport, SVC_SOCK_ANONYMOUS,
 				cred);
-	अगर (ret > 0) अणु
+	if (ret > 0) {
 		nn->nfs_callback_tcpport6 = ret;
-		dprपूर्णांकk("NFS: Callback listener port = %u (af %u, net %x)\n",
+		dprintk("NFS: Callback listener port = %u (af %u, net %x)\n",
 			nn->nfs_callback_tcpport6, PF_INET6, net->ns.inum);
-	पूर्ण अन्यथा अगर (ret != -EAFNOSUPPORT)
-		जाओ out_err;
-	वापस 0;
+	} else if (ret != -EAFNOSUPPORT)
+		goto out_err;
+	return 0;
 
 out_err:
-	वापस (ret) ? ret : -ENOMEM;
-पूर्ण
+	return (ret) ? ret : -ENOMEM;
+}
 
 /*
- * This is the NFSv4 callback kernel thपढ़ो.
+ * This is the NFSv4 callback kernel thread.
  */
-अटल पूर्णांक
-nfs4_callback_svc(व्योम *vrqstp)
-अणु
-	पूर्णांक err;
-	काष्ठा svc_rqst *rqstp = vrqstp;
+static int
+nfs4_callback_svc(void *vrqstp)
+{
+	int err;
+	struct svc_rqst *rqstp = vrqstp;
 
-	set_मुक्तzable();
+	set_freezable();
 
-	जबतक (!kthपढ़ो_मुक्तzable_should_stop(शून्य)) अणु
+	while (!kthread_freezable_should_stop(NULL)) {
 
-		अगर (संकेत_pending(current))
-			flush_संकेतs(current);
+		if (signal_pending(current))
+			flush_signals(current);
 		/*
-		 * Listen क्रम a request on the socket
+		 * Listen for a request on the socket
 		 */
 		err = svc_recv(rqstp, MAX_SCHEDULE_TIMEOUT);
-		अगर (err == -EAGAIN || err == -EINTR)
-			जारी;
+		if (err == -EAGAIN || err == -EINTR)
+			continue;
 		svc_process(rqstp);
-	पूर्ण
-	svc_निकास_thपढ़ो(rqstp);
-	module_put_and_निकास(0);
-	वापस 0;
-पूर्ण
+	}
+	svc_exit_thread(rqstp);
+	module_put_and_exit(0);
+	return 0;
+}
 
-#अगर defined(CONFIG_NFS_V4_1)
+#if defined(CONFIG_NFS_V4_1)
 /*
- * The callback service क्रम NFSv4.1 callbacks
+ * The callback service for NFSv4.1 callbacks
  */
-अटल पूर्णांक
-nfs41_callback_svc(व्योम *vrqstp)
-अणु
-	काष्ठा svc_rqst *rqstp = vrqstp;
-	काष्ठा svc_serv *serv = rqstp->rq_server;
-	काष्ठा rpc_rqst *req;
-	पूर्णांक error;
+static int
+nfs41_callback_svc(void *vrqstp)
+{
+	struct svc_rqst *rqstp = vrqstp;
+	struct svc_serv *serv = rqstp->rq_server;
+	struct rpc_rqst *req;
+	int error;
 	DEFINE_WAIT(wq);
 
-	set_मुक्तzable();
+	set_freezable();
 
-	जबतक (!kthपढ़ो_मुक्तzable_should_stop(शून्य)) अणु
+	while (!kthread_freezable_should_stop(NULL)) {
 
-		अगर (संकेत_pending(current))
-			flush_संकेतs(current);
+		if (signal_pending(current))
+			flush_signals(current);
 
-		prepare_to_रुको(&serv->sv_cb_रुकोq, &wq, TASK_INTERRUPTIBLE);
+		prepare_to_wait(&serv->sv_cb_waitq, &wq, TASK_INTERRUPTIBLE);
 		spin_lock_bh(&serv->sv_cb_lock);
-		अगर (!list_empty(&serv->sv_cb_list)) अणु
+		if (!list_empty(&serv->sv_cb_list)) {
 			req = list_first_entry(&serv->sv_cb_list,
-					काष्ठा rpc_rqst, rq_bc_list);
+					struct rpc_rqst, rq_bc_list);
 			list_del(&req->rq_bc_list);
 			spin_unlock_bh(&serv->sv_cb_lock);
-			finish_रुको(&serv->sv_cb_रुकोq, &wq);
-			dprपूर्णांकk("Invoking bc_svc_process()\n");
+			finish_wait(&serv->sv_cb_waitq, &wq);
+			dprintk("Invoking bc_svc_process()\n");
 			error = bc_svc_process(serv, req, rqstp);
-			dprपूर्णांकk("bc_svc_process() returned w/ error code= %d\n",
+			dprintk("bc_svc_process() returned w/ error code= %d\n",
 				error);
-		पूर्ण अन्यथा अणु
+		} else {
 			spin_unlock_bh(&serv->sv_cb_lock);
-			अगर (!kthपढ़ो_should_stop())
+			if (!kthread_should_stop())
 				schedule();
-			finish_रुको(&serv->sv_cb_रुकोq, &wq);
-		पूर्ण
-	पूर्ण
-	svc_निकास_thपढ़ो(rqstp);
-	module_put_and_निकास(0);
-	वापस 0;
-पूर्ण
+			finish_wait(&serv->sv_cb_waitq, &wq);
+		}
+	}
+	svc_exit_thread(rqstp);
+	module_put_and_exit(0);
+	return 0;
+}
 
-अटल अंतरभूत व्योम nfs_callback_bc_serv(u32 minorversion, काष्ठा rpc_xprt *xprt,
-		काष्ठा svc_serv *serv)
-अणु
-	अगर (minorversion)
+static inline void nfs_callback_bc_serv(u32 minorversion, struct rpc_xprt *xprt,
+		struct svc_serv *serv)
+{
+	if (minorversion)
 		/*
 		 * Save the svc_serv in the transport so that it can
 		 * be referenced when the session backchannel is initialized
 		 */
 		xprt->bc_serv = serv;
-पूर्ण
-#अन्यथा
-अटल अंतरभूत व्योम nfs_callback_bc_serv(u32 minorversion, काष्ठा rpc_xprt *xprt,
-		काष्ठा svc_serv *serv)
-अणु
-पूर्ण
-#पूर्ण_अगर /* CONFIG_NFS_V4_1 */
+}
+#else
+static inline void nfs_callback_bc_serv(u32 minorversion, struct rpc_xprt *xprt,
+		struct svc_serv *serv)
+{
+}
+#endif /* CONFIG_NFS_V4_1 */
 
-अटल पूर्णांक nfs_callback_start_svc(पूर्णांक minorversion, काष्ठा rpc_xprt *xprt,
-				  काष्ठा svc_serv *serv)
-अणु
-	पूर्णांक nrservs = nfs_callback_nr_thपढ़ोs;
-	पूर्णांक ret;
+static int nfs_callback_start_svc(int minorversion, struct rpc_xprt *xprt,
+				  struct svc_serv *serv)
+{
+	int nrservs = nfs_callback_nr_threads;
+	int ret;
 
 	nfs_callback_bc_serv(minorversion, xprt, serv);
 
-	अगर (nrservs < NFS4_MIN_NR_CALLBACK_THREADS)
+	if (nrservs < NFS4_MIN_NR_CALLBACK_THREADS)
 		nrservs = NFS4_MIN_NR_CALLBACK_THREADS;
 
-	अगर (serv->sv_nrthपढ़ोs-1 == nrservs)
-		वापस 0;
+	if (serv->sv_nrthreads-1 == nrservs)
+		return 0;
 
-	ret = serv->sv_ops->svo_setup(serv, शून्य, nrservs);
-	अगर (ret) अणु
-		serv->sv_ops->svo_setup(serv, शून्य, 0);
-		वापस ret;
-	पूर्ण
-	dprपूर्णांकk("nfs_callback_up: service started\n");
-	वापस 0;
-पूर्ण
+	ret = serv->sv_ops->svo_setup(serv, NULL, nrservs);
+	if (ret) {
+		serv->sv_ops->svo_setup(serv, NULL, 0);
+		return ret;
+	}
+	dprintk("nfs_callback_up: service started\n");
+	return 0;
+}
 
-अटल व्योम nfs_callback_करोwn_net(u32 minorversion, काष्ठा svc_serv *serv, काष्ठा net *net)
-अणु
-	काष्ठा nfs_net *nn = net_generic(net, nfs_net_id);
+static void nfs_callback_down_net(u32 minorversion, struct svc_serv *serv, struct net *net)
+{
+	struct nfs_net *nn = net_generic(net, nfs_net_id);
 
-	अगर (--nn->cb_users[minorversion])
-		वापस;
+	if (--nn->cb_users[minorversion])
+		return;
 
-	dprपूर्णांकk("NFS: destroy per-net callback data; net=%x\n", net->ns.inum);
-	svc_shutकरोwn_net(serv, net);
-पूर्ण
+	dprintk("NFS: destroy per-net callback data; net=%x\n", net->ns.inum);
+	svc_shutdown_net(serv, net);
+}
 
-अटल पूर्णांक nfs_callback_up_net(पूर्णांक minorversion, काष्ठा svc_serv *serv,
-			       काष्ठा net *net, काष्ठा rpc_xprt *xprt)
-अणु
-	काष्ठा nfs_net *nn = net_generic(net, nfs_net_id);
-	पूर्णांक ret;
+static int nfs_callback_up_net(int minorversion, struct svc_serv *serv,
+			       struct net *net, struct rpc_xprt *xprt)
+{
+	struct nfs_net *nn = net_generic(net, nfs_net_id);
+	int ret;
 
-	अगर (nn->cb_users[minorversion]++)
-		वापस 0;
+	if (nn->cb_users[minorversion]++)
+		return 0;
 
-	dprपूर्णांकk("NFS: create per-net callback data; net=%x\n", net->ns.inum);
+	dprintk("NFS: create per-net callback data; net=%x\n", net->ns.inum);
 
 	ret = svc_bind(serv, net);
-	अगर (ret < 0) अणु
-		prपूर्णांकk(KERN_WARNING "NFS: bind callback service failed\n");
-		जाओ err_bind;
-	पूर्ण
+	if (ret < 0) {
+		printk(KERN_WARNING "NFS: bind callback service failed\n");
+		goto err_bind;
+	}
 
 	ret = 0;
-	अगर (!IS_ENABLED(CONFIG_NFS_V4_1) || minorversion == 0)
+	if (!IS_ENABLED(CONFIG_NFS_V4_1) || minorversion == 0)
 		ret = nfs4_callback_up_net(serv, net);
-	अन्यथा अगर (xprt->ops->bc_setup)
+	else if (xprt->ops->bc_setup)
 		set_bc_enabled(serv);
-	अन्यथा
+	else
 		ret = -EPROTONOSUPPORT;
 
-	अगर (ret < 0) अणु
-		prपूर्णांकk(KERN_ERR "NFS: callback service start failed\n");
-		जाओ err_socks;
-	पूर्ण
-	वापस 0;
+	if (ret < 0) {
+		printk(KERN_ERR "NFS: callback service start failed\n");
+		goto err_socks;
+	}
+	return 0;
 
 err_socks:
 	svc_rpcb_cleanup(serv, net);
 err_bind:
 	nn->cb_users[minorversion]--;
-	dprपूर्णांकk("NFS: Couldn't create callback socket: err = %d; "
+	dprintk("NFS: Couldn't create callback socket: err = %d; "
 			"net = %x\n", ret, net->ns.inum);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा svc_serv_ops nfs40_cb_sv_ops = अणु
+static const struct svc_serv_ops nfs40_cb_sv_ops = {
 	.svo_function		= nfs4_callback_svc,
-	.svo_enqueue_xprt	= svc_xprt_करो_enqueue,
-	.svo_setup		= svc_set_num_thपढ़ोs_sync,
+	.svo_enqueue_xprt	= svc_xprt_do_enqueue,
+	.svo_setup		= svc_set_num_threads_sync,
 	.svo_module		= THIS_MODULE,
-पूर्ण;
-#अगर defined(CONFIG_NFS_V4_1)
-अटल स्थिर काष्ठा svc_serv_ops nfs41_cb_sv_ops = अणु
+};
+#if defined(CONFIG_NFS_V4_1)
+static const struct svc_serv_ops nfs41_cb_sv_ops = {
 	.svo_function		= nfs41_callback_svc,
-	.svo_enqueue_xprt	= svc_xprt_करो_enqueue,
-	.svo_setup		= svc_set_num_thपढ़ोs_sync,
+	.svo_enqueue_xprt	= svc_xprt_do_enqueue,
+	.svo_setup		= svc_set_num_threads_sync,
 	.svo_module		= THIS_MODULE,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा svc_serv_ops *nfs4_cb_sv_ops[] = अणु
+static const struct svc_serv_ops *nfs4_cb_sv_ops[] = {
 	[0] = &nfs40_cb_sv_ops,
 	[1] = &nfs41_cb_sv_ops,
-पूर्ण;
-#अन्यथा
-अटल स्थिर काष्ठा svc_serv_ops *nfs4_cb_sv_ops[] = अणु
+};
+#else
+static const struct svc_serv_ops *nfs4_cb_sv_ops[] = {
 	[0] = &nfs40_cb_sv_ops,
-	[1] = शून्य,
-पूर्ण;
-#पूर्ण_अगर
+	[1] = NULL,
+};
+#endif
 
-अटल काष्ठा svc_serv *nfs_callback_create_svc(पूर्णांक minorversion)
-अणु
-	काष्ठा nfs_callback_data *cb_info = &nfs_callback_info[minorversion];
-	स्थिर काष्ठा svc_serv_ops *sv_ops;
-	काष्ठा svc_serv *serv;
+static struct svc_serv *nfs_callback_create_svc(int minorversion)
+{
+	struct nfs_callback_data *cb_info = &nfs_callback_info[minorversion];
+	const struct svc_serv_ops *sv_ops;
+	struct svc_serv *serv;
 
 	/*
-	 * Check whether we're alपढ़ोy up and running.
+	 * Check whether we're already up and running.
 	 */
-	अगर (cb_info->serv) अणु
+	if (cb_info->serv) {
 		/*
-		 * Note: increase service usage, because later in हाल of error
+		 * Note: increase service usage, because later in case of error
 		 * svc_destroy() will be called.
 		 */
 		svc_get(cb_info->serv);
-		वापस cb_info->serv;
-	पूर्ण
+		return cb_info->serv;
+	}
 
-	चयन (minorversion) अणु
-	हाल 0:
+	switch (minorversion) {
+	case 0:
 		sv_ops = nfs4_cb_sv_ops[0];
-		अवरोध;
-	शेष:
+		break;
+	default:
 		sv_ops = nfs4_cb_sv_ops[1];
-	पूर्ण
+	}
 
-	अगर (sv_ops == शून्य)
-		वापस ERR_PTR(-ENOTSUPP);
+	if (sv_ops == NULL)
+		return ERR_PTR(-ENOTSUPP);
 
 	/*
-	 * Sanity check: अगर there's no task,
+	 * Sanity check: if there's no task,
 	 * we should be the first user ...
 	 */
-	अगर (cb_info->users)
-		prपूर्णांकk(KERN_WARNING "nfs_callback_create_svc: no kthread, %d users??\n",
+	if (cb_info->users)
+		printk(KERN_WARNING "nfs_callback_create_svc: no kthread, %d users??\n",
 			cb_info->users);
 
-	serv = svc_create_pooled(&nfs4_callback_program, NFS4_CALLBACK_बफ_मानE, sv_ops);
-	अगर (!serv) अणु
-		prपूर्णांकk(KERN_ERR "nfs_callback_create_svc: create service failed\n");
-		वापस ERR_PTR(-ENOMEM);
-	पूर्ण
+	serv = svc_create_pooled(&nfs4_callback_program, NFS4_CALLBACK_BUFSIZE, sv_ops);
+	if (!serv) {
+		printk(KERN_ERR "nfs_callback_create_svc: create service failed\n");
+		return ERR_PTR(-ENOMEM);
+	}
 	cb_info->serv = serv;
-	/* As there is only one thपढ़ो we need to over-ride the
-	 * शेष maximum of 80 connections
+	/* As there is only one thread we need to over-ride the
+	 * default maximum of 80 connections
 	 */
 	serv->sv_maxconn = 1024;
-	dprपूर्णांकk("nfs_callback_create_svc: service created\n");
-	वापस serv;
-पूर्ण
+	dprintk("nfs_callback_create_svc: service created\n");
+	return serv;
+}
 
 /*
- * Bring up the callback thपढ़ो अगर it is not alपढ़ोy up.
+ * Bring up the callback thread if it is not already up.
  */
-पूर्णांक nfs_callback_up(u32 minorversion, काष्ठा rpc_xprt *xprt)
-अणु
-	काष्ठा svc_serv *serv;
-	काष्ठा nfs_callback_data *cb_info = &nfs_callback_info[minorversion];
-	पूर्णांक ret;
-	काष्ठा net *net = xprt->xprt_net;
+int nfs_callback_up(u32 minorversion, struct rpc_xprt *xprt)
+{
+	struct svc_serv *serv;
+	struct nfs_callback_data *cb_info = &nfs_callback_info[minorversion];
+	int ret;
+	struct net *net = xprt->xprt_net;
 
 	mutex_lock(&nfs_callback_mutex);
 
 	serv = nfs_callback_create_svc(minorversion);
-	अगर (IS_ERR(serv)) अणु
+	if (IS_ERR(serv)) {
 		ret = PTR_ERR(serv);
-		जाओ err_create;
-	पूर्ण
+		goto err_create;
+	}
 
 	ret = nfs_callback_up_net(minorversion, serv, net, xprt);
-	अगर (ret < 0)
-		जाओ err_net;
+	if (ret < 0)
+		goto err_net;
 
 	ret = nfs_callback_start_svc(minorversion, xprt, serv);
-	अगर (ret < 0)
-		जाओ err_start;
+	if (ret < 0)
+		goto err_start;
 
 	cb_info->users++;
 	/*
-	 * svc_create creates the svc_serv with sv_nrthपढ़ोs == 1, and then
-	 * svc_prepare_thपढ़ो increments that. So we need to call svc_destroy
+	 * svc_create creates the svc_serv with sv_nrthreads == 1, and then
+	 * svc_prepare_thread increments that. So we need to call svc_destroy
 	 * on both success and failure so that the refcount is 1 when the
-	 * thपढ़ो निकासs.
+	 * thread exits.
 	 */
 err_net:
-	अगर (!cb_info->users)
-		cb_info->serv = शून्य;
+	if (!cb_info->users)
+		cb_info->serv = NULL;
 	svc_destroy(serv);
 err_create:
 	mutex_unlock(&nfs_callback_mutex);
-	वापस ret;
+	return ret;
 
 err_start:
-	nfs_callback_करोwn_net(minorversion, serv, net);
-	dprपूर्णांकk("NFS: Couldn't create server thread; err = %d\n", ret);
-	जाओ err_net;
-पूर्ण
+	nfs_callback_down_net(minorversion, serv, net);
+	dprintk("NFS: Couldn't create server thread; err = %d\n", ret);
+	goto err_net;
+}
 
 /*
- * Kill the callback thपढ़ो अगर it's no दीर्घer being used.
+ * Kill the callback thread if it's no longer being used.
  */
-व्योम nfs_callback_करोwn(पूर्णांक minorversion, काष्ठा net *net)
-अणु
-	काष्ठा nfs_callback_data *cb_info = &nfs_callback_info[minorversion];
-	काष्ठा svc_serv *serv;
+void nfs_callback_down(int minorversion, struct net *net)
+{
+	struct nfs_callback_data *cb_info = &nfs_callback_info[minorversion];
+	struct svc_serv *serv;
 
 	mutex_lock(&nfs_callback_mutex);
 	serv = cb_info->serv;
-	nfs_callback_करोwn_net(minorversion, serv, net);
+	nfs_callback_down_net(minorversion, serv, net);
 	cb_info->users--;
-	अगर (cb_info->users == 0) अणु
+	if (cb_info->users == 0) {
 		svc_get(serv);
-		serv->sv_ops->svo_setup(serv, शून्य, 0);
+		serv->sv_ops->svo_setup(serv, NULL, 0);
 		svc_destroy(serv);
-		dprपूर्णांकk("nfs_callback_down: service destroyed\n");
-		cb_info->serv = शून्य;
-	पूर्ण
+		dprintk("nfs_callback_down: service destroyed\n");
+		cb_info->serv = NULL;
+	}
 	mutex_unlock(&nfs_callback_mutex);
-पूर्ण
+}
 
 /* Boolean check of RPC_AUTH_GSS principal */
-पूर्णांक
-check_gss_callback_principal(काष्ठा nfs_client *clp, काष्ठा svc_rqst *rqstp)
-अणु
-	अक्षर *p = rqstp->rq_cred.cr_principal;
+int
+check_gss_callback_principal(struct nfs_client *clp, struct svc_rqst *rqstp)
+{
+	char *p = rqstp->rq_cred.cr_principal;
 
-	अगर (rqstp->rq_authop->flavour != RPC_AUTH_GSS)
-		वापस 1;
+	if (rqstp->rq_authop->flavour != RPC_AUTH_GSS)
+		return 1;
 
 	/* No RPC_AUTH_GSS on NFSv4.1 back channel yet */
-	अगर (clp->cl_minorversion != 0)
-		वापस 0;
+	if (clp->cl_minorversion != 0)
+		return 0;
 	/*
-	 * It might just be a normal user principal, in which हाल
+	 * It might just be a normal user principal, in which case
 	 * userspace won't bother to tell us the name at all.
 	 */
-	अगर (p == शून्य)
-		वापस 0;
+	if (p == NULL)
+		return 0;
 
 	/*
 	 * Did we get the acceptor from userland during the SETCLIENID
 	 * negotiation?
 	 */
-	अगर (clp->cl_acceptor)
-		वापस !म_भेद(p, clp->cl_acceptor);
+	if (clp->cl_acceptor)
+		return !strcmp(p, clp->cl_acceptor);
 
 	/*
-	 * Otherwise try to verअगरy it using the cl_hostname. Note that this
-	 * करोesn't work अगर a non-canonical hostname was used in the devname.
+	 * Otherwise try to verify it using the cl_hostname. Note that this
+	 * doesn't work if a non-canonical hostname was used in the devname.
 	 */
 
 	/* Expect a GSS_C_NT_HOSTBASED_NAME like "nfs@serverhostname" */
 
-	अगर (स_भेद(p, "nfs@", 4) != 0)
-		वापस 0;
+	if (memcmp(p, "nfs@", 4) != 0)
+		return 0;
 	p += 4;
-	अगर (म_भेद(p, clp->cl_hostname) != 0)
-		वापस 0;
-	वापस 1;
-पूर्ण
+	if (strcmp(p, clp->cl_hostname) != 0)
+		return 0;
+	return 1;
+}
 
 /*
- * pg_authenticate method क्रम nfsv4 callback thपढ़ोs.
+ * pg_authenticate method for nfsv4 callback threads.
  *
  * The authflavor has been negotiated, so an incorrect flavor is a server
  * bug. Deny packets with incorrect authflavor.
  *
- * All other checking करोne after NFS decoding where the nfs_client can be
+ * All other checking done after NFS decoding where the nfs_client can be
  * found in nfs4_callback_compound
  */
-अटल पूर्णांक nfs_callback_authenticate(काष्ठा svc_rqst *rqstp)
-अणु
-	चयन (rqstp->rq_authop->flavour) अणु
-	हाल RPC_AUTH_शून्य:
-		अगर (rqstp->rq_proc != CB_शून्य)
-			वापस SVC_DENIED;
-		अवरोध;
-	हाल RPC_AUTH_GSS:
+static int nfs_callback_authenticate(struct svc_rqst *rqstp)
+{
+	switch (rqstp->rq_authop->flavour) {
+	case RPC_AUTH_NULL:
+		if (rqstp->rq_proc != CB_NULL)
+			return SVC_DENIED;
+		break;
+	case RPC_AUTH_GSS:
 		/* No RPC_AUTH_GSS support yet in NFSv4.1 */
-		 अगर (svc_is_backchannel(rqstp))
-			वापस SVC_DENIED;
-	पूर्ण
-	वापस SVC_OK;
-पूर्ण
+		 if (svc_is_backchannel(rqstp))
+			return SVC_DENIED;
+	}
+	return SVC_OK;
+}
 
 /*
  * Define NFS4 callback program
  */
-अटल स्थिर काष्ठा svc_version *nfs4_callback_version[] = अणु
+static const struct svc_version *nfs4_callback_version[] = {
 	[1] = &nfs4_callback_version1,
 	[4] = &nfs4_callback_version4,
-पूर्ण;
+};
 
-अटल काष्ठा svc_stat nfs4_callback_stats;
+static struct svc_stat nfs4_callback_stats;
 
-अटल काष्ठा svc_program nfs4_callback_program = अणु
+static struct svc_program nfs4_callback_program = {
 	.pg_prog = NFS4_CALLBACK,			/* RPC service number */
 	.pg_nvers = ARRAY_SIZE(nfs4_callback_version),	/* Number of entries */
 	.pg_vers = nfs4_callback_version,		/* version table */
@@ -463,4 +462,4 @@ check_gss_callback_principal(काष्ठा nfs_client *clp, काष्ठ
 	.pg_authenticate = nfs_callback_authenticate,
 	.pg_init_request = svc_generic_init_request,
 	.pg_rpcbind_set	= svc_generic_rpcbind_set,
-पूर्ण;
+};

@@ -1,513 +1,512 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Sensortek STK8312 3-Axis Accelerometer
  *
  * Copyright (c) 2015, Intel Corporation.
  *
- * IIO driver क्रम STK8312; 7-bit I2C address: 0x3D.
+ * IIO driver for STK8312; 7-bit I2C address: 0x3D.
  */
 
-#समावेश <linux/acpi.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/iio/buffer.h>
-#समावेश <linux/iio/iपन.स>
-#समावेश <linux/iio/sysfs.h>
-#समावेश <linux/iio/trigger.h>
-#समावेश <linux/iio/triggered_buffer.h>
-#समावेश <linux/iio/trigger_consumer.h>
+#include <linux/acpi.h>
+#include <linux/i2c.h>
+#include <linux/interrupt.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/delay.h>
+#include <linux/iio/buffer.h>
+#include <linux/iio/iio.h>
+#include <linux/iio/sysfs.h>
+#include <linux/iio/trigger.h>
+#include <linux/iio/triggered_buffer.h>
+#include <linux/iio/trigger_consumer.h>
 
-#घोषणा STK8312_REG_XOUT		0x00
-#घोषणा STK8312_REG_YOUT		0x01
-#घोषणा STK8312_REG_ZOUT		0x02
-#घोषणा STK8312_REG_INTSU		0x06
-#घोषणा STK8312_REG_MODE		0x07
-#घोषणा STK8312_REG_SR			0x08
-#घोषणा STK8312_REG_STH			0x13
-#घोषणा STK8312_REG_RESET		0x20
-#घोषणा STK8312_REG_AFECTRL		0x24
-#घोषणा STK8312_REG_OTPADDR		0x3D
-#घोषणा STK8312_REG_OTPDATA		0x3E
-#घोषणा STK8312_REG_OTPCTRL		0x3F
+#define STK8312_REG_XOUT		0x00
+#define STK8312_REG_YOUT		0x01
+#define STK8312_REG_ZOUT		0x02
+#define STK8312_REG_INTSU		0x06
+#define STK8312_REG_MODE		0x07
+#define STK8312_REG_SR			0x08
+#define STK8312_REG_STH			0x13
+#define STK8312_REG_RESET		0x20
+#define STK8312_REG_AFECTRL		0x24
+#define STK8312_REG_OTPADDR		0x3D
+#define STK8312_REG_OTPDATA		0x3E
+#define STK8312_REG_OTPCTRL		0x3F
 
-#घोषणा STK8312_MODE_ACTIVE		BIT(0)
-#घोषणा STK8312_MODE_STANDBY		0x00
-#घोषणा STK8312_MODE_INT_AH_PP		0xC0	/* active-high, push-pull */
-#घोषणा STK8312_DREADY_BIT		BIT(4)
-#घोषणा STK8312_RNG_6G			1
-#घोषणा STK8312_RNG_SHIFT		6
-#घोषणा STK8312_RNG_MASK		GENMASK(7, 6)
-#घोषणा STK8312_SR_MASK			GENMASK(2, 0)
-#घोषणा STK8312_SR_400HZ_IDX		0
-#घोषणा STK8312_ALL_CHANNEL_MASK	GENMASK(2, 0)
-#घोषणा STK8312_ALL_CHANNEL_SIZE	3
+#define STK8312_MODE_ACTIVE		BIT(0)
+#define STK8312_MODE_STANDBY		0x00
+#define STK8312_MODE_INT_AH_PP		0xC0	/* active-high, push-pull */
+#define STK8312_DREADY_BIT		BIT(4)
+#define STK8312_RNG_6G			1
+#define STK8312_RNG_SHIFT		6
+#define STK8312_RNG_MASK		GENMASK(7, 6)
+#define STK8312_SR_MASK			GENMASK(2, 0)
+#define STK8312_SR_400HZ_IDX		0
+#define STK8312_ALL_CHANNEL_MASK	GENMASK(2, 0)
+#define STK8312_ALL_CHANNEL_SIZE	3
 
-#घोषणा STK8312_DRIVER_NAME		"stk8312"
-#घोषणा STK8312_IRQ_NAME		"stk8312_event"
+#define STK8312_DRIVER_NAME		"stk8312"
+#define STK8312_IRQ_NAME		"stk8312_event"
 
 /*
  * The accelerometer has two measurement ranges:
  *
- * -6g - +6g (8-bit, चिन्हित)
- * -16g - +16g (8-bit, चिन्हित)
+ * -6g - +6g (8-bit, signed)
+ * -16g - +16g (8-bit, signed)
  *
  * scale1 = (6 + 6) * 9.81 / (2^8 - 1)     = 0.4616
  * scale2 = (16 + 16) * 9.81 / (2^8 - 1)   = 1.2311
  */
-#घोषणा STK8312_SCALE_AVAIL		"0.4616 1.2311"
+#define STK8312_SCALE_AVAIL		"0.4616 1.2311"
 
-अटल स्थिर पूर्णांक stk8312_scale_table[][2] = अणु
-	अणु0, 461600पूर्ण, अणु1, 231100पूर्ण
-पूर्ण;
+static const int stk8312_scale_table[][2] = {
+	{0, 461600}, {1, 231100}
+};
 
-अटल स्थिर काष्ठा अणु
-	पूर्णांक val;
-	पूर्णांक val2;
-पूर्ण stk8312_samp_freq_table[] = अणु
-	अणु400, 0पूर्ण, अणु200, 0पूर्ण, अणु100, 0पूर्ण, अणु50, 0पूर्ण, अणु25, 0पूर्ण,
-	अणु12, 500000पूर्ण, अणु6, 250000पूर्ण, अणु3, 125000पूर्ण
-पूर्ण;
+static const struct {
+	int val;
+	int val2;
+} stk8312_samp_freq_table[] = {
+	{400, 0}, {200, 0}, {100, 0}, {50, 0}, {25, 0},
+	{12, 500000}, {6, 250000}, {3, 125000}
+};
 
-#घोषणा STK8312_ACCEL_CHANNEL(index, reg, axis) अणु			\
+#define STK8312_ACCEL_CHANNEL(index, reg, axis) {			\
 	.type = IIO_ACCEL,						\
 	.address = reg,							\
-	.modअगरied = 1,							\
+	.modified = 1,							\
 	.channel2 = IIO_MOD_##axis,					\
 	.info_mask_separate = BIT(IIO_CHAN_INFO_RAW),			\
 	.info_mask_shared_by_type = BIT(IIO_CHAN_INFO_SCALE) |		\
 				    BIT(IIO_CHAN_INFO_SAMP_FREQ),	\
 	.scan_index = index,						\
-	.scan_type = अणु							\
+	.scan_type = {							\
 		.sign = 's',						\
 		.realbits = 8,						\
 		.storagebits = 8,					\
 		.endianness = IIO_CPU,					\
-	पूर्ण,								\
-पूर्ण
+	},								\
+}
 
-अटल स्थिर काष्ठा iio_chan_spec stk8312_channels[] = अणु
+static const struct iio_chan_spec stk8312_channels[] = {
 	STK8312_ACCEL_CHANNEL(0, STK8312_REG_XOUT, X),
 	STK8312_ACCEL_CHANNEL(1, STK8312_REG_YOUT, Y),
 	STK8312_ACCEL_CHANNEL(2, STK8312_REG_ZOUT, Z),
 	IIO_CHAN_SOFT_TIMESTAMP(3),
-पूर्ण;
+};
 
-काष्ठा stk8312_data अणु
-	काष्ठा i2c_client *client;
-	काष्ठा mutex lock;
+struct stk8312_data {
+	struct i2c_client *client;
+	struct mutex lock;
 	u8 range;
 	u8 sample_rate_idx;
 	u8 mode;
-	काष्ठा iio_trigger *dपढ़ोy_trig;
-	bool dपढ़ोy_trigger_on;
-	s8 buffer[16]; /* 3x8-bit channels + 5x8 padding + 64-bit बारtamp */
-पूर्ण;
+	struct iio_trigger *dready_trig;
+	bool dready_trigger_on;
+	s8 buffer[16]; /* 3x8-bit channels + 5x8 padding + 64-bit timestamp */
+};
 
-अटल IIO_CONST_ATTR(in_accel_scale_available, STK8312_SCALE_AVAIL);
+static IIO_CONST_ATTR(in_accel_scale_available, STK8312_SCALE_AVAIL);
 
-अटल IIO_CONST_ATTR_SAMP_FREQ_AVAIL("3.125 6.25 12.5 25 50 100 200 400");
+static IIO_CONST_ATTR_SAMP_FREQ_AVAIL("3.125 6.25 12.5 25 50 100 200 400");
 
-अटल काष्ठा attribute *stk8312_attributes[] = अणु
-	&iio_स्थिर_attr_in_accel_scale_available.dev_attr.attr,
-	&iio_स्थिर_attr_sampling_frequency_available.dev_attr.attr,
-	शून्य,
-पूर्ण;
+static struct attribute *stk8312_attributes[] = {
+	&iio_const_attr_in_accel_scale_available.dev_attr.attr,
+	&iio_const_attr_sampling_frequency_available.dev_attr.attr,
+	NULL,
+};
 
-अटल स्थिर काष्ठा attribute_group stk8312_attribute_group = अणु
+static const struct attribute_group stk8312_attribute_group = {
 	.attrs = stk8312_attributes
-पूर्ण;
+};
 
-अटल पूर्णांक stk8312_otp_init(काष्ठा stk8312_data *data)
-अणु
-	पूर्णांक ret;
-	पूर्णांक count = 10;
-	काष्ठा i2c_client *client = data->client;
+static int stk8312_otp_init(struct stk8312_data *data)
+{
+	int ret;
+	int count = 10;
+	struct i2c_client *client = data->client;
 
-	ret = i2c_smbus_ग_लिखो_byte_data(client, STK8312_REG_OTPADDR, 0x70);
-	अगर (ret < 0)
-		जाओ निकास_err;
-	ret = i2c_smbus_ग_लिखो_byte_data(client, STK8312_REG_OTPCTRL, 0x02);
-	अगर (ret < 0)
-		जाओ निकास_err;
+	ret = i2c_smbus_write_byte_data(client, STK8312_REG_OTPADDR, 0x70);
+	if (ret < 0)
+		goto exit_err;
+	ret = i2c_smbus_write_byte_data(client, STK8312_REG_OTPCTRL, 0x02);
+	if (ret < 0)
+		goto exit_err;
 
-	करो अणु
+	do {
 		usleep_range(1000, 5000);
-		ret = i2c_smbus_पढ़ो_byte_data(client, STK8312_REG_OTPCTRL);
-		अगर (ret < 0)
-			जाओ निकास_err;
+		ret = i2c_smbus_read_byte_data(client, STK8312_REG_OTPCTRL);
+		if (ret < 0)
+			goto exit_err;
 		count--;
-	पूर्ण जबतक (!(ret & BIT(7)) && count > 0);
+	} while (!(ret & BIT(7)) && count > 0);
 
-	अगर (count == 0) अणु
+	if (count == 0) {
 		ret = -ETIMEDOUT;
-		जाओ निकास_err;
-	पूर्ण
+		goto exit_err;
+	}
 
-	ret = i2c_smbus_पढ़ो_byte_data(client, STK8312_REG_OTPDATA);
-	अगर (ret == 0)
+	ret = i2c_smbus_read_byte_data(client, STK8312_REG_OTPDATA);
+	if (ret == 0)
 		ret = -EINVAL;
-	अगर (ret < 0)
-		जाओ निकास_err;
+	if (ret < 0)
+		goto exit_err;
 
-	ret = i2c_smbus_ग_लिखो_byte_data(data->client, STK8312_REG_AFECTRL, ret);
-	अगर (ret < 0)
-		जाओ निकास_err;
+	ret = i2c_smbus_write_byte_data(data->client, STK8312_REG_AFECTRL, ret);
+	if (ret < 0)
+		goto exit_err;
 	msleep(150);
 
-	वापस 0;
+	return 0;
 
-निकास_err:
+exit_err:
 	dev_err(&client->dev, "failed to initialize sensor\n");
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक stk8312_set_mode(काष्ठा stk8312_data *data, u8 mode)
-अणु
-	पूर्णांक ret;
-	काष्ठा i2c_client *client = data->client;
+static int stk8312_set_mode(struct stk8312_data *data, u8 mode)
+{
+	int ret;
+	struct i2c_client *client = data->client;
 
-	अगर (mode == data->mode)
-		वापस 0;
+	if (mode == data->mode)
+		return 0;
 
-	ret = i2c_smbus_ग_लिखो_byte_data(client, STK8312_REG_MODE, mode);
-	अगर (ret < 0) अणु
+	ret = i2c_smbus_write_byte_data(client, STK8312_REG_MODE, mode);
+	if (ret < 0) {
 		dev_err(&client->dev, "failed to change sensor mode\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	data->mode = mode;
-	अगर (mode & STK8312_MODE_ACTIVE) अणु
-		/* Need to run OTP sequence beक्रमe entering active mode */
+	if (mode & STK8312_MODE_ACTIVE) {
+		/* Need to run OTP sequence before entering active mode */
 		usleep_range(1000, 5000);
 		ret = stk8312_otp_init(data);
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक stk8312_set_पूर्णांकerrupts(काष्ठा stk8312_data *data, u8 पूर्णांक_mask)
-अणु
-	पूर्णांक ret;
+static int stk8312_set_interrupts(struct stk8312_data *data, u8 int_mask)
+{
+	int ret;
 	u8 mode;
-	काष्ठा i2c_client *client = data->client;
+	struct i2c_client *client = data->client;
 
 	mode = data->mode;
-	/* We need to go in standby mode to modअगरy रेजिस्टरs */
+	/* We need to go in standby mode to modify registers */
 	ret = stk8312_set_mode(data, STK8312_MODE_STANDBY);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	ret = i2c_smbus_ग_लिखो_byte_data(client, STK8312_REG_INTSU, पूर्णांक_mask);
-	अगर (ret < 0) अणु
+	ret = i2c_smbus_write_byte_data(client, STK8312_REG_INTSU, int_mask);
+	if (ret < 0) {
 		dev_err(&client->dev, "failed to set interrupts\n");
 		stk8312_set_mode(data, mode);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस stk8312_set_mode(data, mode);
-पूर्ण
+	return stk8312_set_mode(data, mode);
+}
 
-अटल पूर्णांक stk8312_data_rdy_trigger_set_state(काष्ठा iio_trigger *trig,
+static int stk8312_data_rdy_trigger_set_state(struct iio_trigger *trig,
 					      bool state)
-अणु
-	काष्ठा iio_dev *indio_dev = iio_trigger_get_drvdata(trig);
-	काष्ठा stk8312_data *data = iio_priv(indio_dev);
-	पूर्णांक ret;
+{
+	struct iio_dev *indio_dev = iio_trigger_get_drvdata(trig);
+	struct stk8312_data *data = iio_priv(indio_dev);
+	int ret;
 
-	अगर (state)
-		ret = stk8312_set_पूर्णांकerrupts(data, STK8312_DREADY_BIT);
-	अन्यथा
-		ret = stk8312_set_पूर्णांकerrupts(data, 0x00);
+	if (state)
+		ret = stk8312_set_interrupts(data, STK8312_DREADY_BIT);
+	else
+		ret = stk8312_set_interrupts(data, 0x00);
 
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(&data->client->dev, "failed to set trigger state\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	data->dपढ़ोy_trigger_on = state;
+	data->dready_trigger_on = state;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा iio_trigger_ops stk8312_trigger_ops = अणु
+static const struct iio_trigger_ops stk8312_trigger_ops = {
 	.set_trigger_state = stk8312_data_rdy_trigger_set_state,
-पूर्ण;
+};
 
-अटल पूर्णांक stk8312_set_sample_rate(काष्ठा stk8312_data *data, u8 rate)
-अणु
-	पूर्णांक ret;
+static int stk8312_set_sample_rate(struct stk8312_data *data, u8 rate)
+{
+	int ret;
 	u8 masked_reg;
 	u8 mode;
-	काष्ठा i2c_client *client = data->client;
+	struct i2c_client *client = data->client;
 
-	अगर (rate == data->sample_rate_idx)
-		वापस 0;
+	if (rate == data->sample_rate_idx)
+		return 0;
 
 	mode = data->mode;
-	/* We need to go in standby mode to modअगरy रेजिस्टरs */
+	/* We need to go in standby mode to modify registers */
 	ret = stk8312_set_mode(data, STK8312_MODE_STANDBY);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	ret = i2c_smbus_पढ़ो_byte_data(client, STK8312_REG_SR);
-	अगर (ret < 0)
-		जाओ err_activate;
+	ret = i2c_smbus_read_byte_data(client, STK8312_REG_SR);
+	if (ret < 0)
+		goto err_activate;
 
 	masked_reg = (ret & (~STK8312_SR_MASK)) | rate;
 
-	ret = i2c_smbus_ग_लिखो_byte_data(client, STK8312_REG_SR, masked_reg);
-	अगर (ret < 0)
-		जाओ err_activate;
+	ret = i2c_smbus_write_byte_data(client, STK8312_REG_SR, masked_reg);
+	if (ret < 0)
+		goto err_activate;
 
 	data->sample_rate_idx = rate;
 
-	वापस stk8312_set_mode(data, mode);
+	return stk8312_set_mode(data, mode);
 
 err_activate:
 	dev_err(&client->dev, "failed to set sampling rate\n");
 	stk8312_set_mode(data, mode);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक stk8312_set_range(काष्ठा stk8312_data *data, u8 range)
-अणु
-	पूर्णांक ret;
+static int stk8312_set_range(struct stk8312_data *data, u8 range)
+{
+	int ret;
 	u8 masked_reg;
 	u8 mode;
-	काष्ठा i2c_client *client = data->client;
+	struct i2c_client *client = data->client;
 
-	अगर (range != 1 && range != 2)
-		वापस -EINVAL;
-	अन्यथा अगर (range == data->range)
-		वापस 0;
+	if (range != 1 && range != 2)
+		return -EINVAL;
+	else if (range == data->range)
+		return 0;
 
 	mode = data->mode;
-	/* We need to go in standby mode to modअगरy रेजिस्टरs */
+	/* We need to go in standby mode to modify registers */
 	ret = stk8312_set_mode(data, STK8312_MODE_STANDBY);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	ret = i2c_smbus_पढ़ो_byte_data(client, STK8312_REG_STH);
-	अगर (ret < 0)
-		जाओ err_activate;
+	ret = i2c_smbus_read_byte_data(client, STK8312_REG_STH);
+	if (ret < 0)
+		goto err_activate;
 
 	masked_reg = ret & (~STK8312_RNG_MASK);
 	masked_reg |= range << STK8312_RNG_SHIFT;
 
-	ret = i2c_smbus_ग_लिखो_byte_data(client, STK8312_REG_STH, masked_reg);
-	अगर (ret < 0)
-		जाओ err_activate;
+	ret = i2c_smbus_write_byte_data(client, STK8312_REG_STH, masked_reg);
+	if (ret < 0)
+		goto err_activate;
 
 	data->range = range;
 
-	वापस stk8312_set_mode(data, mode);
+	return stk8312_set_mode(data, mode);
 
 err_activate:
 	dev_err(&client->dev, "failed to change sensor range\n");
 	stk8312_set_mode(data, mode);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक stk8312_पढ़ो_accel(काष्ठा stk8312_data *data, u8 address)
-अणु
-	पूर्णांक ret;
-	काष्ठा i2c_client *client = data->client;
+static int stk8312_read_accel(struct stk8312_data *data, u8 address)
+{
+	int ret;
+	struct i2c_client *client = data->client;
 
-	अगर (address > 2)
-		वापस -EINVAL;
+	if (address > 2)
+		return -EINVAL;
 
-	ret = i2c_smbus_पढ़ो_byte_data(client, address);
-	अगर (ret < 0)
+	ret = i2c_smbus_read_byte_data(client, address);
+	if (ret < 0)
 		dev_err(&client->dev, "register read failed\n");
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक stk8312_पढ़ो_raw(काष्ठा iio_dev *indio_dev,
-			    काष्ठा iio_chan_spec स्थिर *chan,
-			    पूर्णांक *val, पूर्णांक *val2, दीर्घ mask)
-अणु
-	काष्ठा stk8312_data *data = iio_priv(indio_dev);
-	पूर्णांक ret;
+static int stk8312_read_raw(struct iio_dev *indio_dev,
+			    struct iio_chan_spec const *chan,
+			    int *val, int *val2, long mask)
+{
+	struct stk8312_data *data = iio_priv(indio_dev);
+	int ret;
 
-	चयन (mask) अणु
-	हाल IIO_CHAN_INFO_RAW:
-		अगर (iio_buffer_enabled(indio_dev))
-			वापस -EBUSY;
+	switch (mask) {
+	case IIO_CHAN_INFO_RAW:
+		if (iio_buffer_enabled(indio_dev))
+			return -EBUSY;
 		mutex_lock(&data->lock);
 		ret = stk8312_set_mode(data, data->mode | STK8312_MODE_ACTIVE);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			mutex_unlock(&data->lock);
-			वापस ret;
-		पूर्ण
-		ret = stk8312_पढ़ो_accel(data, chan->address);
-		अगर (ret < 0) अणु
+			return ret;
+		}
+		ret = stk8312_read_accel(data, chan->address);
+		if (ret < 0) {
 			stk8312_set_mode(data,
 					 data->mode & (~STK8312_MODE_ACTIVE));
 			mutex_unlock(&data->lock);
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 		*val = sign_extend32(ret, 7);
 		ret = stk8312_set_mode(data,
 				       data->mode & (~STK8312_MODE_ACTIVE));
 		mutex_unlock(&data->lock);
-		अगर (ret < 0)
-			वापस ret;
-		वापस IIO_VAL_INT;
-	हाल IIO_CHAN_INFO_SCALE:
+		if (ret < 0)
+			return ret;
+		return IIO_VAL_INT;
+	case IIO_CHAN_INFO_SCALE:
 		*val = stk8312_scale_table[data->range - 1][0];
 		*val2 = stk8312_scale_table[data->range - 1][1];
-		वापस IIO_VAL_INT_PLUS_MICRO;
-	हाल IIO_CHAN_INFO_SAMP_FREQ:
+		return IIO_VAL_INT_PLUS_MICRO;
+	case IIO_CHAN_INFO_SAMP_FREQ:
 		*val = stk8312_samp_freq_table[data->sample_rate_idx].val;
 		*val2 = stk8312_samp_freq_table[data->sample_rate_idx].val2;
-		वापस IIO_VAL_INT_PLUS_MICRO;
-	पूर्ण
+		return IIO_VAL_INT_PLUS_MICRO;
+	}
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल पूर्णांक stk8312_ग_लिखो_raw(काष्ठा iio_dev *indio_dev,
-			     काष्ठा iio_chan_spec स्थिर *chan,
-			     पूर्णांक val, पूर्णांक val2, दीर्घ mask)
-अणु
-	पूर्णांक i;
-	पूर्णांक index = -1;
-	पूर्णांक ret;
-	काष्ठा stk8312_data *data = iio_priv(indio_dev);
+static int stk8312_write_raw(struct iio_dev *indio_dev,
+			     struct iio_chan_spec const *chan,
+			     int val, int val2, long mask)
+{
+	int i;
+	int index = -1;
+	int ret;
+	struct stk8312_data *data = iio_priv(indio_dev);
 
-	चयन (mask) अणु
-	हाल IIO_CHAN_INFO_SCALE:
-		क्रम (i = 0; i < ARRAY_SIZE(stk8312_scale_table); i++)
-			अगर (val == stk8312_scale_table[i][0] &&
-			    val2 == stk8312_scale_table[i][1]) अणु
+	switch (mask) {
+	case IIO_CHAN_INFO_SCALE:
+		for (i = 0; i < ARRAY_SIZE(stk8312_scale_table); i++)
+			if (val == stk8312_scale_table[i][0] &&
+			    val2 == stk8312_scale_table[i][1]) {
 				index = i + 1;
-				अवरोध;
-			पूर्ण
-		अगर (index < 0)
-			वापस -EINVAL;
+				break;
+			}
+		if (index < 0)
+			return -EINVAL;
 
 		mutex_lock(&data->lock);
 		ret = stk8312_set_range(data, index);
 		mutex_unlock(&data->lock);
 
-		वापस ret;
-	हाल IIO_CHAN_INFO_SAMP_FREQ:
-		क्रम (i = 0; i < ARRAY_SIZE(stk8312_samp_freq_table); i++)
-			अगर (val == stk8312_samp_freq_table[i].val &&
-			    val2 == stk8312_samp_freq_table[i].val2) अणु
+		return ret;
+	case IIO_CHAN_INFO_SAMP_FREQ:
+		for (i = 0; i < ARRAY_SIZE(stk8312_samp_freq_table); i++)
+			if (val == stk8312_samp_freq_table[i].val &&
+			    val2 == stk8312_samp_freq_table[i].val2) {
 				index = i;
-				अवरोध;
-			पूर्ण
-		अगर (index < 0)
-			वापस -EINVAL;
+				break;
+			}
+		if (index < 0)
+			return -EINVAL;
 		mutex_lock(&data->lock);
 		ret = stk8312_set_sample_rate(data, index);
 		mutex_unlock(&data->lock);
 
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल स्थिर काष्ठा iio_info stk8312_info = अणु
-	.पढ़ो_raw		= stk8312_पढ़ो_raw,
-	.ग_लिखो_raw		= stk8312_ग_लिखो_raw,
+static const struct iio_info stk8312_info = {
+	.read_raw		= stk8312_read_raw,
+	.write_raw		= stk8312_write_raw,
 	.attrs			= &stk8312_attribute_group,
-पूर्ण;
+};
 
-अटल irqवापस_t stk8312_trigger_handler(पूर्णांक irq, व्योम *p)
-अणु
-	काष्ठा iio_poll_func *pf = p;
-	काष्ठा iio_dev *indio_dev = pf->indio_dev;
-	काष्ठा stk8312_data *data = iio_priv(indio_dev);
-	पूर्णांक bit, ret, i = 0;
+static irqreturn_t stk8312_trigger_handler(int irq, void *p)
+{
+	struct iio_poll_func *pf = p;
+	struct iio_dev *indio_dev = pf->indio_dev;
+	struct stk8312_data *data = iio_priv(indio_dev);
+	int bit, ret, i = 0;
 
 	mutex_lock(&data->lock);
 	/*
-	 * Do a bulk पढ़ो अगर all channels are requested,
+	 * Do a bulk read if all channels are requested,
 	 * from 0x00 (XOUT) to 0x02 (ZOUT)
 	 */
-	अगर (*(indio_dev->active_scan_mask) == STK8312_ALL_CHANNEL_MASK) अणु
-		ret = i2c_smbus_पढ़ो_i2c_block_data(data->client,
+	if (*(indio_dev->active_scan_mask) == STK8312_ALL_CHANNEL_MASK) {
+		ret = i2c_smbus_read_i2c_block_data(data->client,
 						    STK8312_REG_XOUT,
 						    STK8312_ALL_CHANNEL_SIZE,
 						    data->buffer);
-		अगर (ret < STK8312_ALL_CHANNEL_SIZE) अणु
+		if (ret < STK8312_ALL_CHANNEL_SIZE) {
 			dev_err(&data->client->dev, "register read failed\n");
 			mutex_unlock(&data->lock);
-			जाओ err;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		क्रम_each_set_bit(bit, indio_dev->active_scan_mask,
-				 indio_dev->masklength) अणु
-			ret = stk8312_पढ़ो_accel(data, bit);
-			अगर (ret < 0) अणु
+			goto err;
+		}
+	} else {
+		for_each_set_bit(bit, indio_dev->active_scan_mask,
+				 indio_dev->masklength) {
+			ret = stk8312_read_accel(data, bit);
+			if (ret < 0) {
 				mutex_unlock(&data->lock);
-				जाओ err;
-			पूर्ण
+				goto err;
+			}
 			data->buffer[i++] = ret;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	mutex_unlock(&data->lock);
 
-	iio_push_to_buffers_with_बारtamp(indio_dev, data->buffer,
-					   pf->बारtamp);
+	iio_push_to_buffers_with_timestamp(indio_dev, data->buffer,
+					   pf->timestamp);
 err:
-	iio_trigger_notअगरy_करोne(indio_dev->trig);
+	iio_trigger_notify_done(indio_dev->trig);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल irqवापस_t stk8312_data_rdy_trig_poll(पूर्णांक irq, व्योम *निजी)
-अणु
-	काष्ठा iio_dev *indio_dev = निजी;
-	काष्ठा stk8312_data *data = iio_priv(indio_dev);
+static irqreturn_t stk8312_data_rdy_trig_poll(int irq, void *private)
+{
+	struct iio_dev *indio_dev = private;
+	struct stk8312_data *data = iio_priv(indio_dev);
 
-	अगर (data->dपढ़ोy_trigger_on)
-		iio_trigger_poll(data->dपढ़ोy_trig);
+	if (data->dready_trigger_on)
+		iio_trigger_poll(data->dready_trig);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक stk8312_buffer_preenable(काष्ठा iio_dev *indio_dev)
-अणु
-	काष्ठा stk8312_data *data = iio_priv(indio_dev);
+static int stk8312_buffer_preenable(struct iio_dev *indio_dev)
+{
+	struct stk8312_data *data = iio_priv(indio_dev);
 
-	वापस stk8312_set_mode(data, data->mode | STK8312_MODE_ACTIVE);
-पूर्ण
+	return stk8312_set_mode(data, data->mode | STK8312_MODE_ACTIVE);
+}
 
-अटल पूर्णांक stk8312_buffer_postdisable(काष्ठा iio_dev *indio_dev)
-अणु
-	काष्ठा stk8312_data *data = iio_priv(indio_dev);
+static int stk8312_buffer_postdisable(struct iio_dev *indio_dev)
+{
+	struct stk8312_data *data = iio_priv(indio_dev);
 
-	वापस stk8312_set_mode(data, data->mode & (~STK8312_MODE_ACTIVE));
-पूर्ण
+	return stk8312_set_mode(data, data->mode & (~STK8312_MODE_ACTIVE));
+}
 
-अटल स्थिर काष्ठा iio_buffer_setup_ops stk8312_buffer_setup_ops = अणु
+static const struct iio_buffer_setup_ops stk8312_buffer_setup_ops = {
 	.preenable   = stk8312_buffer_preenable,
 	.postdisable = stk8312_buffer_postdisable,
-पूर्ण;
+};
 
-अटल पूर्णांक stk8312_probe(काष्ठा i2c_client *client,
-			 स्थिर काष्ठा i2c_device_id *id)
-अणु
-	पूर्णांक ret;
-	काष्ठा iio_dev *indio_dev;
-	काष्ठा stk8312_data *data;
+static int stk8312_probe(struct i2c_client *client,
+			 const struct i2c_device_id *id)
+{
+	int ret;
+	struct iio_dev *indio_dev;
+	struct stk8312_data *data;
 
-	indio_dev = devm_iio_device_alloc(&client->dev, माप(*data));
-	अगर (!indio_dev) अणु
+	indio_dev = devm_iio_device_alloc(&client->dev, sizeof(*data));
+	if (!indio_dev) {
 		dev_err(&client->dev, "iio allocation failed!\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	data = iio_priv(indio_dev);
 	data->client = client;
@@ -516,148 +515,148 @@ err:
 
 	indio_dev->info = &stk8312_info;
 	indio_dev->name = STK8312_DRIVER_NAME;
-	indio_dev->modes = INDIO_सूचीECT_MODE;
+	indio_dev->modes = INDIO_DIRECT_MODE;
 	indio_dev->channels = stk8312_channels;
 	indio_dev->num_channels = ARRAY_SIZE(stk8312_channels);
 
-	/* A software reset is recommended at घातer-on */
-	ret = i2c_smbus_ग_लिखो_byte_data(data->client, STK8312_REG_RESET, 0x00);
-	अगर (ret < 0) अणु
+	/* A software reset is recommended at power-on */
+	ret = i2c_smbus_write_byte_data(data->client, STK8312_REG_RESET, 0x00);
+	if (ret < 0) {
 		dev_err(&client->dev, "failed to reset sensor\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 	data->sample_rate_idx = STK8312_SR_400HZ_IDX;
 	ret = stk8312_set_range(data, STK8312_RNG_6G);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	ret = stk8312_set_mode(data,
 			       STK8312_MODE_INT_AH_PP | STK8312_MODE_ACTIVE);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	अगर (client->irq > 0) अणु
-		ret = devm_request_thपढ़ोed_irq(&client->dev, client->irq,
+	if (client->irq > 0) {
+		ret = devm_request_threaded_irq(&client->dev, client->irq,
 						stk8312_data_rdy_trig_poll,
-						शून्य,
+						NULL,
 						IRQF_TRIGGER_RISING |
 						IRQF_ONESHOT,
 						STK8312_IRQ_NAME,
 						indio_dev);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			dev_err(&client->dev, "request irq %d failed\n",
 				client->irq);
-			जाओ err_घातer_off;
-		पूर्ण
+			goto err_power_off;
+		}
 
-		data->dपढ़ोy_trig = devm_iio_trigger_alloc(&client->dev,
+		data->dready_trig = devm_iio_trigger_alloc(&client->dev,
 							   "%s-dev%d",
 							   indio_dev->name,
 							   indio_dev->id);
-		अगर (!data->dपढ़ोy_trig) अणु
+		if (!data->dready_trig) {
 			ret = -ENOMEM;
-			जाओ err_घातer_off;
-		पूर्ण
+			goto err_power_off;
+		}
 
-		data->dपढ़ोy_trig->ops = &stk8312_trigger_ops;
-		iio_trigger_set_drvdata(data->dपढ़ोy_trig, indio_dev);
-		ret = iio_trigger_रेजिस्टर(data->dपढ़ोy_trig);
-		अगर (ret) अणु
+		data->dready_trig->ops = &stk8312_trigger_ops;
+		iio_trigger_set_drvdata(data->dready_trig, indio_dev);
+		ret = iio_trigger_register(data->dready_trig);
+		if (ret) {
 			dev_err(&client->dev, "iio trigger register failed\n");
-			जाओ err_घातer_off;
-		पूर्ण
-	पूर्ण
+			goto err_power_off;
+		}
+	}
 
 	ret = iio_triggered_buffer_setup(indio_dev,
-					 iio_pollfunc_store_समय,
+					 iio_pollfunc_store_time,
 					 stk8312_trigger_handler,
 					 &stk8312_buffer_setup_ops);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(&client->dev, "iio triggered buffer setup failed\n");
-		जाओ err_trigger_unरेजिस्टर;
-	पूर्ण
+		goto err_trigger_unregister;
+	}
 
-	ret = iio_device_रेजिस्टर(indio_dev);
-	अगर (ret < 0) अणु
+	ret = iio_device_register(indio_dev);
+	if (ret < 0) {
 		dev_err(&client->dev, "device_register failed\n");
-		जाओ err_buffer_cleanup;
-	पूर्ण
+		goto err_buffer_cleanup;
+	}
 
-	वापस 0;
+	return 0;
 
 err_buffer_cleanup:
 	iio_triggered_buffer_cleanup(indio_dev);
-err_trigger_unरेजिस्टर:
-	अगर (data->dपढ़ोy_trig)
-		iio_trigger_unरेजिस्टर(data->dपढ़ोy_trig);
-err_घातer_off:
+err_trigger_unregister:
+	if (data->dready_trig)
+		iio_trigger_unregister(data->dready_trig);
+err_power_off:
 	stk8312_set_mode(data, STK8312_MODE_STANDBY);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक stk8312_हटाओ(काष्ठा i2c_client *client)
-अणु
-	काष्ठा iio_dev *indio_dev = i2c_get_clientdata(client);
-	काष्ठा stk8312_data *data = iio_priv(indio_dev);
+static int stk8312_remove(struct i2c_client *client)
+{
+	struct iio_dev *indio_dev = i2c_get_clientdata(client);
+	struct stk8312_data *data = iio_priv(indio_dev);
 
-	iio_device_unरेजिस्टर(indio_dev);
+	iio_device_unregister(indio_dev);
 	iio_triggered_buffer_cleanup(indio_dev);
 
-	अगर (data->dपढ़ोy_trig)
-		iio_trigger_unरेजिस्टर(data->dपढ़ोy_trig);
+	if (data->dready_trig)
+		iio_trigger_unregister(data->dready_trig);
 
-	वापस stk8312_set_mode(data, STK8312_MODE_STANDBY);
-पूर्ण
+	return stk8312_set_mode(data, STK8312_MODE_STANDBY);
+}
 
-#अगर_घोषित CONFIG_PM_SLEEP
-अटल पूर्णांक stk8312_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा stk8312_data *data;
-
-	data = iio_priv(i2c_get_clientdata(to_i2c_client(dev)));
-
-	वापस stk8312_set_mode(data, data->mode & (~STK8312_MODE_ACTIVE));
-पूर्ण
-
-अटल पूर्णांक stk8312_resume(काष्ठा device *dev)
-अणु
-	काष्ठा stk8312_data *data;
+#ifdef CONFIG_PM_SLEEP
+static int stk8312_suspend(struct device *dev)
+{
+	struct stk8312_data *data;
 
 	data = iio_priv(i2c_get_clientdata(to_i2c_client(dev)));
 
-	वापस stk8312_set_mode(data, data->mode | STK8312_MODE_ACTIVE);
-पूर्ण
+	return stk8312_set_mode(data, data->mode & (~STK8312_MODE_ACTIVE));
+}
 
-अटल SIMPLE_DEV_PM_OPS(stk8312_pm_ops, stk8312_suspend, stk8312_resume);
+static int stk8312_resume(struct device *dev)
+{
+	struct stk8312_data *data;
 
-#घोषणा STK8312_PM_OPS (&stk8312_pm_ops)
-#अन्यथा
-#घोषणा STK8312_PM_OPS शून्य
-#पूर्ण_अगर
+	data = iio_priv(i2c_get_clientdata(to_i2c_client(dev)));
 
-अटल स्थिर काष्ठा i2c_device_id stk8312_i2c_id[] = अणु
-	अणु"STK8312", 0पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+	return stk8312_set_mode(data, data->mode | STK8312_MODE_ACTIVE);
+}
+
+static SIMPLE_DEV_PM_OPS(stk8312_pm_ops, stk8312_suspend, stk8312_resume);
+
+#define STK8312_PM_OPS (&stk8312_pm_ops)
+#else
+#define STK8312_PM_OPS NULL
+#endif
+
+static const struct i2c_device_id stk8312_i2c_id[] = {
+	{"STK8312", 0},
+	{}
+};
 MODULE_DEVICE_TABLE(i2c, stk8312_i2c_id);
 
-अटल स्थिर काष्ठा acpi_device_id stk8312_acpi_id[] = अणु
-	अणु"STK8312", 0पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct acpi_device_id stk8312_acpi_id[] = {
+	{"STK8312", 0},
+	{}
+};
 
 MODULE_DEVICE_TABLE(acpi, stk8312_acpi_id);
 
-अटल काष्ठा i2c_driver stk8312_driver = अणु
-	.driver = अणु
+static struct i2c_driver stk8312_driver = {
+	.driver = {
 		.name = STK8312_DRIVER_NAME,
 		.pm = STK8312_PM_OPS,
 		.acpi_match_table = ACPI_PTR(stk8312_acpi_id),
-	पूर्ण,
+	},
 	.probe =            stk8312_probe,
-	.हटाओ =           stk8312_हटाओ,
+	.remove =           stk8312_remove,
 	.id_table =         stk8312_i2c_id,
-पूर्ण;
+};
 
 module_i2c_driver(stk8312_driver);
 

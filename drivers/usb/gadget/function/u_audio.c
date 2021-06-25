@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
- * u_audio.c -- पूर्णांकerface to USB gadget "ALSA sound card" utilities
+ * u_audio.c -- interface to USB gadget "ALSA sound card" utilities
  *
  * Copyright (C) 2016
  * Author: Ruslan Bilovol <ruslan.bilovol@gmail.com>
@@ -13,54 +12,54 @@
  *    Jaswinder Singh (jaswinder.singh@linaro.org)
  */
 
-#समावेश <linux/module.h>
-#समावेश <sound/core.h>
-#समावेश <sound/pcm.h>
-#समावेश <sound/pcm_params.h>
+#include <linux/module.h>
+#include <sound/core.h>
+#include <sound/pcm.h>
+#include <sound/pcm_params.h>
 
-#समावेश "u_audio.h"
+#include "u_audio.h"
 
-#घोषणा BUFF_SIZE_MAX	(PAGE_SIZE * 16)
-#घोषणा PRD_SIZE_MAX	PAGE_SIZE
-#घोषणा MIN_PERIODS	4
+#define BUFF_SIZE_MAX	(PAGE_SIZE * 16)
+#define PRD_SIZE_MAX	PAGE_SIZE
+#define MIN_PERIODS	4
 
-/* Runसमय data params क्रम one stream */
-काष्ठा uac_rtd_params अणु
-	काष्ठा snd_uac_chip *uac; /* parent chip */
-	bool ep_enabled; /* अगर the ep is enabled */
+/* Runtime data params for one stream */
+struct uac_rtd_params {
+	struct snd_uac_chip *uac; /* parent chip */
+	bool ep_enabled; /* if the ep is enabled */
 
-	काष्ठा snd_pcm_substream *ss;
+	struct snd_pcm_substream *ss;
 
 	/* Ring buffer */
-	sमाप_प्रकार hw_ptr;
+	ssize_t hw_ptr;
 
-	व्योम *rbuf;
+	void *rbuf;
 
-	अचिन्हित पूर्णांक max_psize;	/* MaxPacketSize of endpoपूर्णांक */
+	unsigned int max_psize;	/* MaxPacketSize of endpoint */
 
-	काष्ठा usb_request **reqs;
-पूर्ण;
+	struct usb_request **reqs;
+};
 
-काष्ठा snd_uac_chip अणु
-	काष्ठा g_audio *audio_dev;
+struct snd_uac_chip {
+	struct g_audio *audio_dev;
 
-	काष्ठा uac_rtd_params p_prm;
-	काष्ठा uac_rtd_params c_prm;
+	struct uac_rtd_params p_prm;
+	struct uac_rtd_params c_prm;
 
-	काष्ठा snd_card *card;
-	काष्ठा snd_pcm *pcm;
+	struct snd_card *card;
+	struct snd_pcm *pcm;
 
-	/* समयkeeping क्रम the playback endpoपूर्णांक */
-	अचिन्हित पूर्णांक p_पूर्णांकerval;
-	अचिन्हित पूर्णांक p_residue;
+	/* timekeeping for the playback endpoint */
+	unsigned int p_interval;
+	unsigned int p_residue;
 
-	/* pre-calculated values क्रम playback iso completion */
-	अचिन्हित पूर्णांक p_pktsize;
-	अचिन्हित पूर्णांक p_pktsize_residue;
-	अचिन्हित पूर्णांक p_framesize;
-पूर्ण;
+	/* pre-calculated values for playback iso completion */
+	unsigned int p_pktsize;
+	unsigned int p_pktsize_residue;
+	unsigned int p_framesize;
+};
 
-अटल स्थिर काष्ठा snd_pcm_hardware uac_pcm_hardware = अणु
+static const struct snd_pcm_hardware uac_pcm_hardware = {
 	.info = SNDRV_PCM_INFO_INTERLEAVED | SNDRV_PCM_INFO_BLOCK_TRANSFER
 		 | SNDRV_PCM_INFO_MMAP | SNDRV_PCM_INFO_MMAP_VALID
 		 | SNDRV_PCM_INFO_PAUSE | SNDRV_PCM_INFO_RESUME,
@@ -69,54 +68,54 @@
 	.buffer_bytes_max = BUFF_SIZE_MAX,
 	.period_bytes_max = PRD_SIZE_MAX,
 	.periods_min = MIN_PERIODS,
-पूर्ण;
+};
 
-अटल व्योम u_audio_iso_complete(काष्ठा usb_ep *ep, काष्ठा usb_request *req)
-अणु
-	अचिन्हित पूर्णांक pending;
-	अचिन्हित पूर्णांक hw_ptr;
-	पूर्णांक status = req->status;
-	काष्ठा snd_pcm_substream *substream;
-	काष्ठा snd_pcm_runसमय *runसमय;
-	काष्ठा uac_rtd_params *prm = req->context;
-	काष्ठा snd_uac_chip *uac = prm->uac;
+static void u_audio_iso_complete(struct usb_ep *ep, struct usb_request *req)
+{
+	unsigned int pending;
+	unsigned int hw_ptr;
+	int status = req->status;
+	struct snd_pcm_substream *substream;
+	struct snd_pcm_runtime *runtime;
+	struct uac_rtd_params *prm = req->context;
+	struct snd_uac_chip *uac = prm->uac;
 
-	/* i/f shutting करोwn */
-	अगर (!prm->ep_enabled) अणु
-		usb_ep_मुक्त_request(ep, req);
-		वापस;
-	पूर्ण
+	/* i/f shutting down */
+	if (!prm->ep_enabled) {
+		usb_ep_free_request(ep, req);
+		return;
+	}
 
-	अगर (req->status == -ESHUTDOWN)
-		वापस;
+	if (req->status == -ESHUTDOWN)
+		return;
 
 	/*
-	 * We can't really करो much about bad xfers.
+	 * We can't really do much about bad xfers.
 	 * Afterall, the ISOCH xfers could fail legitimately.
 	 */
-	अगर (status)
+	if (status)
 		pr_debug("%s: iso_complete status(%d) %d/%d\n",
 			__func__, status, req->actual, req->length);
 
 	substream = prm->ss;
 
-	/* Do nothing अगर ALSA isn't active */
-	अगर (!substream)
-		जाओ निकास;
+	/* Do nothing if ALSA isn't active */
+	if (!substream)
+		goto exit;
 
 	snd_pcm_stream_lock(substream);
 
-	runसमय = substream->runसमय;
-	अगर (!runसमय || !snd_pcm_running(substream)) अणु
+	runtime = substream->runtime;
+	if (!runtime || !snd_pcm_running(substream)) {
 		snd_pcm_stream_unlock(substream);
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
-	अगर (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) अणु
+	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) {
 		/*
 		 * For each IN packet, take the quotient of the current data
-		 * rate and the endpoपूर्णांक's पूर्णांकerval as the base packet size.
-		 * If there is a residue from this भागision, add it to the
+		 * rate and the endpoint's interval as the base packet size.
+		 * If there is a residue from this division, add it to the
 		 * residue accumulator.
 		 */
 		req->length = uac->p_pktsize;
@@ -127,133 +126,133 @@
 		 * need to add one more sample frame, increase this packet's
 		 * size and decrease the accumulator.
 		 */
-		अगर (uac->p_residue / uac->p_पूर्णांकerval >= uac->p_framesize) अणु
+		if (uac->p_residue / uac->p_interval >= uac->p_framesize) {
 			req->length += uac->p_framesize;
 			uac->p_residue -= uac->p_framesize *
-					   uac->p_पूर्णांकerval;
-		पूर्ण
+					   uac->p_interval;
+		}
 
 		req->actual = req->length;
-	पूर्ण
+	}
 
 	hw_ptr = prm->hw_ptr;
 
 	/* Pack USB load in ALSA ring buffer */
-	pending = runसमय->dma_bytes - hw_ptr;
+	pending = runtime->dma_bytes - hw_ptr;
 
-	अगर (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) अणु
-		अगर (unlikely(pending < req->actual)) अणु
-			स_नकल(req->buf, runसमय->dma_area + hw_ptr, pending);
-			स_नकल(req->buf + pending, runसमय->dma_area,
+	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) {
+		if (unlikely(pending < req->actual)) {
+			memcpy(req->buf, runtime->dma_area + hw_ptr, pending);
+			memcpy(req->buf + pending, runtime->dma_area,
 			       req->actual - pending);
-		पूर्ण अन्यथा अणु
-			स_नकल(req->buf, runसमय->dma_area + hw_ptr,
+		} else {
+			memcpy(req->buf, runtime->dma_area + hw_ptr,
 			       req->actual);
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		अगर (unlikely(pending < req->actual)) अणु
-			स_नकल(runसमय->dma_area + hw_ptr, req->buf, pending);
-			स_नकल(runसमय->dma_area, req->buf + pending,
+		}
+	} else {
+		if (unlikely(pending < req->actual)) {
+			memcpy(runtime->dma_area + hw_ptr, req->buf, pending);
+			memcpy(runtime->dma_area, req->buf + pending,
 			       req->actual - pending);
-		पूर्ण अन्यथा अणु
-			स_नकल(runसमय->dma_area + hw_ptr, req->buf,
+		} else {
+			memcpy(runtime->dma_area + hw_ptr, req->buf,
 			       req->actual);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/* update hw_ptr after data is copied to memory */
-	prm->hw_ptr = (hw_ptr + req->actual) % runसमय->dma_bytes;
+	prm->hw_ptr = (hw_ptr + req->actual) % runtime->dma_bytes;
 	hw_ptr = prm->hw_ptr;
 	snd_pcm_stream_unlock(substream);
 
-	अगर ((hw_ptr % snd_pcm_lib_period_bytes(substream)) < req->actual)
+	if ((hw_ptr % snd_pcm_lib_period_bytes(substream)) < req->actual)
 		snd_pcm_period_elapsed(substream);
 
-निकास:
-	अगर (usb_ep_queue(ep, req, GFP_ATOMIC))
+exit:
+	if (usb_ep_queue(ep, req, GFP_ATOMIC))
 		dev_err(uac->card->dev, "%d Error!\n", __LINE__);
-पूर्ण
+}
 
-अटल पूर्णांक uac_pcm_trigger(काष्ठा snd_pcm_substream *substream, पूर्णांक cmd)
-अणु
-	काष्ठा snd_uac_chip *uac = snd_pcm_substream_chip(substream);
-	काष्ठा uac_rtd_params *prm;
-	काष्ठा g_audio *audio_dev;
-	काष्ठा uac_params *params;
-	पूर्णांक err = 0;
+static int uac_pcm_trigger(struct snd_pcm_substream *substream, int cmd)
+{
+	struct snd_uac_chip *uac = snd_pcm_substream_chip(substream);
+	struct uac_rtd_params *prm;
+	struct g_audio *audio_dev;
+	struct uac_params *params;
+	int err = 0;
 
 	audio_dev = uac->audio_dev;
 	params = &audio_dev->params;
 
-	अगर (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
+	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
 		prm = &uac->p_prm;
-	अन्यथा
+	else
 		prm = &uac->c_prm;
 
 	/* Reset */
 	prm->hw_ptr = 0;
 
-	चयन (cmd) अणु
-	हाल SNDRV_PCM_TRIGGER_START:
-	हाल SNDRV_PCM_TRIGGER_RESUME:
+	switch (cmd) {
+	case SNDRV_PCM_TRIGGER_START:
+	case SNDRV_PCM_TRIGGER_RESUME:
 		prm->ss = substream;
-		अवरोध;
-	हाल SNDRV_PCM_TRIGGER_STOP:
-	हाल SNDRV_PCM_TRIGGER_SUSPEND:
-		prm->ss = शून्य;
-		अवरोध;
-	शेष:
+		break;
+	case SNDRV_PCM_TRIGGER_STOP:
+	case SNDRV_PCM_TRIGGER_SUSPEND:
+		prm->ss = NULL;
+		break;
+	default:
 		err = -EINVAL;
-	पूर्ण
+	}
 
 	/* Clear buffer after Play stops */
-	अगर (substream->stream == SNDRV_PCM_STREAM_PLAYBACK && !prm->ss)
-		स_रखो(prm->rbuf, 0, prm->max_psize * params->req_number);
+	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK && !prm->ss)
+		memset(prm->rbuf, 0, prm->max_psize * params->req_number);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल snd_pcm_uframes_t uac_pcm_poपूर्णांकer(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा snd_uac_chip *uac = snd_pcm_substream_chip(substream);
-	काष्ठा uac_rtd_params *prm;
+static snd_pcm_uframes_t uac_pcm_pointer(struct snd_pcm_substream *substream)
+{
+	struct snd_uac_chip *uac = snd_pcm_substream_chip(substream);
+	struct uac_rtd_params *prm;
 
-	अगर (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
+	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
 		prm = &uac->p_prm;
-	अन्यथा
+	else
 		prm = &uac->c_prm;
 
-	वापस bytes_to_frames(substream->runसमय, prm->hw_ptr);
-पूर्ण
+	return bytes_to_frames(substream->runtime, prm->hw_ptr);
+}
 
-अटल u64 uac_sमाप_प्रकारo_fmt(पूर्णांक ssize)
-अणु
+static u64 uac_ssize_to_fmt(int ssize)
+{
 	u64 ret;
 
-	चयन (ssize) अणु
-	हाल 3:
+	switch (ssize) {
+	case 3:
 		ret = SNDRV_PCM_FMTBIT_S24_3LE;
-		अवरोध;
-	हाल 4:
+		break;
+	case 4:
 		ret = SNDRV_PCM_FMTBIT_S32_LE;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		ret = SNDRV_PCM_FMTBIT_S16_LE;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक uac_pcm_खोलो(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा snd_uac_chip *uac = snd_pcm_substream_chip(substream);
-	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
-	काष्ठा g_audio *audio_dev;
-	काष्ठा uac_params *params;
-	पूर्णांक p_ssize, c_ssize;
-	पूर्णांक p_srate, c_srate;
-	पूर्णांक p_chmask, c_chmask;
+static int uac_pcm_open(struct snd_pcm_substream *substream)
+{
+	struct snd_uac_chip *uac = snd_pcm_substream_chip(substream);
+	struct snd_pcm_runtime *runtime = substream->runtime;
+	struct g_audio *audio_dev;
+	struct uac_params *params;
+	int p_ssize, c_ssize;
+	int p_srate, c_srate;
+	int p_chmask, c_chmask;
 
 	audio_dev = uac->audio_dev;
 	params = &audio_dev->params;
@@ -265,88 +264,88 @@
 	c_chmask = params->c_chmask;
 	uac->p_residue = 0;
 
-	runसमय->hw = uac_pcm_hardware;
+	runtime->hw = uac_pcm_hardware;
 
-	अगर (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) अणु
-		runसमय->hw.rate_min = p_srate;
-		runसमय->hw.क्रमmats = uac_sमाप_प्रकारo_fmt(p_ssize);
-		runसमय->hw.channels_min = num_channels(p_chmask);
-		runसमय->hw.period_bytes_min = 2 * uac->p_prm.max_psize
-						/ runसमय->hw.periods_min;
-	पूर्ण अन्यथा अणु
-		runसमय->hw.rate_min = c_srate;
-		runसमय->hw.क्रमmats = uac_sमाप_प्रकारo_fmt(c_ssize);
-		runसमय->hw.channels_min = num_channels(c_chmask);
-		runसमय->hw.period_bytes_min = 2 * uac->c_prm.max_psize
-						/ runसमय->hw.periods_min;
-	पूर्ण
+	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) {
+		runtime->hw.rate_min = p_srate;
+		runtime->hw.formats = uac_ssize_to_fmt(p_ssize);
+		runtime->hw.channels_min = num_channels(p_chmask);
+		runtime->hw.period_bytes_min = 2 * uac->p_prm.max_psize
+						/ runtime->hw.periods_min;
+	} else {
+		runtime->hw.rate_min = c_srate;
+		runtime->hw.formats = uac_ssize_to_fmt(c_ssize);
+		runtime->hw.channels_min = num_channels(c_chmask);
+		runtime->hw.period_bytes_min = 2 * uac->c_prm.max_psize
+						/ runtime->hw.periods_min;
+	}
 
-	runसमय->hw.rate_max = runसमय->hw.rate_min;
-	runसमय->hw.channels_max = runसमय->hw.channels_min;
+	runtime->hw.rate_max = runtime->hw.rate_min;
+	runtime->hw.channels_max = runtime->hw.channels_min;
 
-	snd_pcm_hw_स्थिरraपूर्णांक_पूर्णांकeger(runसमय, SNDRV_PCM_HW_PARAM_PERIODS);
+	snd_pcm_hw_constraint_integer(runtime, SNDRV_PCM_HW_PARAM_PERIODS);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* ALSA cries without these function poपूर्णांकers */
-अटल पूर्णांक uac_pcm_null(काष्ठा snd_pcm_substream *substream)
-अणु
-	वापस 0;
-पूर्ण
+/* ALSA cries without these function pointers */
+static int uac_pcm_null(struct snd_pcm_substream *substream)
+{
+	return 0;
+}
 
-अटल स्थिर काष्ठा snd_pcm_ops uac_pcm_ops = अणु
-	.खोलो = uac_pcm_खोलो,
-	.बंद = uac_pcm_null,
+static const struct snd_pcm_ops uac_pcm_ops = {
+	.open = uac_pcm_open,
+	.close = uac_pcm_null,
 	.trigger = uac_pcm_trigger,
-	.poपूर्णांकer = uac_pcm_poपूर्णांकer,
+	.pointer = uac_pcm_pointer,
 	.prepare = uac_pcm_null,
-पूर्ण;
+};
 
-अटल अंतरभूत व्योम मुक्त_ep(काष्ठा uac_rtd_params *prm, काष्ठा usb_ep *ep)
-अणु
-	काष्ठा snd_uac_chip *uac = prm->uac;
-	काष्ठा g_audio *audio_dev;
-	काष्ठा uac_params *params;
-	पूर्णांक i;
+static inline void free_ep(struct uac_rtd_params *prm, struct usb_ep *ep)
+{
+	struct snd_uac_chip *uac = prm->uac;
+	struct g_audio *audio_dev;
+	struct uac_params *params;
+	int i;
 
-	अगर (!prm->ep_enabled)
-		वापस;
+	if (!prm->ep_enabled)
+		return;
 
 	prm->ep_enabled = false;
 
 	audio_dev = uac->audio_dev;
 	params = &audio_dev->params;
 
-	क्रम (i = 0; i < params->req_number; i++) अणु
-		अगर (prm->reqs[i]) अणु
-			अगर (usb_ep_dequeue(ep, prm->reqs[i]))
-				usb_ep_मुक्त_request(ep, prm->reqs[i]);
+	for (i = 0; i < params->req_number; i++) {
+		if (prm->reqs[i]) {
+			if (usb_ep_dequeue(ep, prm->reqs[i]))
+				usb_ep_free_request(ep, prm->reqs[i]);
 			/*
 			 * If usb_ep_dequeue() cannot successfully dequeue the
-			 * request, the request will be मुक्तd by the completion
+			 * request, the request will be freed by the completion
 			 * callback.
 			 */
 
-			prm->reqs[i] = शून्य;
-		पूर्ण
-	पूर्ण
+			prm->reqs[i] = NULL;
+		}
+	}
 
-	अगर (usb_ep_disable(ep))
+	if (usb_ep_disable(ep))
 		dev_err(uac->card->dev, "%s:%d Error!\n", __func__, __LINE__);
-पूर्ण
+}
 
 
-पूर्णांक u_audio_start_capture(काष्ठा g_audio *audio_dev)
-अणु
-	काष्ठा snd_uac_chip *uac = audio_dev->uac;
-	काष्ठा usb_gadget *gadget = audio_dev->gadget;
-	काष्ठा device *dev = &gadget->dev;
-	काष्ठा usb_request *req;
-	काष्ठा usb_ep *ep;
-	काष्ठा uac_rtd_params *prm;
-	काष्ठा uac_params *params = &audio_dev->params;
-	पूर्णांक req_len, i;
+int u_audio_start_capture(struct g_audio *audio_dev)
+{
+	struct snd_uac_chip *uac = audio_dev->uac;
+	struct usb_gadget *gadget = audio_dev->gadget;
+	struct device *dev = &gadget->dev;
+	struct usb_request *req;
+	struct usb_ep *ep;
+	struct uac_rtd_params *prm;
+	struct uac_params *params = &audio_dev->params;
+	int req_len, i;
 
 	ep = audio_dev->out_ep;
 	prm = &uac->c_prm;
@@ -356,11 +355,11 @@
 	prm->ep_enabled = true;
 	usb_ep_enable(ep);
 
-	क्रम (i = 0; i < params->req_number; i++) अणु
-		अगर (!prm->reqs[i]) अणु
+	for (i = 0; i < params->req_number; i++) {
+		if (!prm->reqs[i]) {
 			req = usb_ep_alloc_request(ep, GFP_ATOMIC);
-			अगर (req == शून्य)
-				वापस -ENOMEM;
+			if (req == NULL)
+				return -ENOMEM;
 
 			prm->reqs[i] = req;
 
@@ -369,36 +368,36 @@
 			req->length = req_len;
 			req->complete = u_audio_iso_complete;
 			req->buf = prm->rbuf + i * ep->maxpacket;
-		पूर्ण
+		}
 
-		अगर (usb_ep_queue(ep, prm->reqs[i], GFP_ATOMIC))
+		if (usb_ep_queue(ep, prm->reqs[i], GFP_ATOMIC))
 			dev_err(dev, "%s:%d Error!\n", __func__, __LINE__);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(u_audio_start_capture);
 
-व्योम u_audio_stop_capture(काष्ठा g_audio *audio_dev)
-अणु
-	काष्ठा snd_uac_chip *uac = audio_dev->uac;
+void u_audio_stop_capture(struct g_audio *audio_dev)
+{
+	struct snd_uac_chip *uac = audio_dev->uac;
 
-	मुक्त_ep(&uac->c_prm, audio_dev->out_ep);
-पूर्ण
+	free_ep(&uac->c_prm, audio_dev->out_ep);
+}
 EXPORT_SYMBOL_GPL(u_audio_stop_capture);
 
-पूर्णांक u_audio_start_playback(काष्ठा g_audio *audio_dev)
-अणु
-	काष्ठा snd_uac_chip *uac = audio_dev->uac;
-	काष्ठा usb_gadget *gadget = audio_dev->gadget;
-	काष्ठा device *dev = &gadget->dev;
-	काष्ठा usb_request *req;
-	काष्ठा usb_ep *ep;
-	काष्ठा uac_rtd_params *prm;
-	काष्ठा uac_params *params = &audio_dev->params;
-	अचिन्हित पूर्णांक factor;
-	स्थिर काष्ठा usb_endpoपूर्णांक_descriptor *ep_desc;
-	पूर्णांक req_len, i;
+int u_audio_start_playback(struct g_audio *audio_dev)
+{
+	struct snd_uac_chip *uac = audio_dev->uac;
+	struct usb_gadget *gadget = audio_dev->gadget;
+	struct device *dev = &gadget->dev;
+	struct usb_request *req;
+	struct usb_ep *ep;
+	struct uac_rtd_params *prm;
+	struct uac_params *params = &audio_dev->params;
+	unsigned int factor;
+	const struct usb_endpoint_descriptor *ep_desc;
+	int req_len, i;
 
 	ep = audio_dev->in_ep;
 	prm = &uac->p_prm;
@@ -406,25 +405,25 @@ EXPORT_SYMBOL_GPL(u_audio_stop_capture);
 
 	ep_desc = ep->desc;
 
-	/* pre-calculate the playback endpoपूर्णांक's पूर्णांकerval */
-	अगर (gadget->speed == USB_SPEED_FULL)
+	/* pre-calculate the playback endpoint's interval */
+	if (gadget->speed == USB_SPEED_FULL)
 		factor = 1000;
-	अन्यथा
+	else
 		factor = 8000;
 
-	/* pre-compute some values क्रम iso_complete() */
+	/* pre-compute some values for iso_complete() */
 	uac->p_framesize = params->p_ssize *
 			    num_channels(params->p_chmask);
-	uac->p_पूर्णांकerval = factor / (1 << (ep_desc->bInterval - 1));
-	uac->p_pktsize = min_t(अचिन्हित पूर्णांक,
+	uac->p_interval = factor / (1 << (ep_desc->bInterval - 1));
+	uac->p_pktsize = min_t(unsigned int,
 				uac->p_framesize *
-					(params->p_srate / uac->p_पूर्णांकerval),
+					(params->p_srate / uac->p_interval),
 				ep->maxpacket);
 
-	अगर (uac->p_pktsize < ep->maxpacket)
+	if (uac->p_pktsize < ep->maxpacket)
 		uac->p_pktsize_residue = uac->p_framesize *
-			(params->p_srate % uac->p_पूर्णांकerval);
-	अन्यथा
+			(params->p_srate % uac->p_interval);
+	else
 		uac->p_pktsize_residue = 0;
 
 	req_len = uac->p_pktsize;
@@ -433,11 +432,11 @@ EXPORT_SYMBOL_GPL(u_audio_stop_capture);
 	prm->ep_enabled = true;
 	usb_ep_enable(ep);
 
-	क्रम (i = 0; i < params->req_number; i++) अणु
-		अगर (!prm->reqs[i]) अणु
+	for (i = 0; i < params->req_number; i++) {
+		if (!prm->reqs[i]) {
 			req = usb_ep_alloc_request(ep, GFP_ATOMIC);
-			अगर (req == शून्य)
-				वापस -ENOMEM;
+			if (req == NULL)
+				return -ENOMEM;
 
 			prm->reqs[i] = req;
 
@@ -446,40 +445,40 @@ EXPORT_SYMBOL_GPL(u_audio_stop_capture);
 			req->length = req_len;
 			req->complete = u_audio_iso_complete;
 			req->buf = prm->rbuf + i * ep->maxpacket;
-		पूर्ण
+		}
 
-		अगर (usb_ep_queue(ep, prm->reqs[i], GFP_ATOMIC))
+		if (usb_ep_queue(ep, prm->reqs[i], GFP_ATOMIC))
 			dev_err(dev, "%s:%d Error!\n", __func__, __LINE__);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(u_audio_start_playback);
 
-व्योम u_audio_stop_playback(काष्ठा g_audio *audio_dev)
-अणु
-	काष्ठा snd_uac_chip *uac = audio_dev->uac;
+void u_audio_stop_playback(struct g_audio *audio_dev)
+{
+	struct snd_uac_chip *uac = audio_dev->uac;
 
-	मुक्त_ep(&uac->p_prm, audio_dev->in_ep);
-पूर्ण
+	free_ep(&uac->p_prm, audio_dev->in_ep);
+}
 EXPORT_SYMBOL_GPL(u_audio_stop_playback);
 
-पूर्णांक g_audio_setup(काष्ठा g_audio *g_audio, स्थिर अक्षर *pcm_name,
-					स्थिर अक्षर *card_name)
-अणु
-	काष्ठा snd_uac_chip *uac;
-	काष्ठा snd_card *card;
-	काष्ठा snd_pcm *pcm;
-	काष्ठा uac_params *params;
-	पूर्णांक p_chmask, c_chmask;
-	पूर्णांक err;
+int g_audio_setup(struct g_audio *g_audio, const char *pcm_name,
+					const char *card_name)
+{
+	struct snd_uac_chip *uac;
+	struct snd_card *card;
+	struct snd_pcm *pcm;
+	struct uac_params *params;
+	int p_chmask, c_chmask;
+	int err;
 
-	अगर (!g_audio)
-		वापस -EINVAL;
+	if (!g_audio)
+		return -EINVAL;
 
-	uac = kzalloc(माप(*uac), GFP_KERNEL);
-	अगर (!uac)
-		वापस -ENOMEM;
+	uac = kzalloc(sizeof(*uac), GFP_KERNEL);
+	if (!uac)
+		return -ENOMEM;
 	g_audio->uac = uac;
 	uac->audio_dev = g_audio;
 
@@ -487,120 +486,120 @@ EXPORT_SYMBOL_GPL(u_audio_stop_playback);
 	p_chmask = params->p_chmask;
 	c_chmask = params->c_chmask;
 
-	अगर (c_chmask) अणु
-		काष्ठा uac_rtd_params *prm = &uac->c_prm;
+	if (c_chmask) {
+		struct uac_rtd_params *prm = &uac->c_prm;
 
 		uac->c_prm.uac = uac;
 		prm->max_psize = g_audio->out_ep_maxpsize;
 
-		prm->reqs = kसुस्मृति(params->req_number,
-				    माप(काष्ठा usb_request *),
+		prm->reqs = kcalloc(params->req_number,
+				    sizeof(struct usb_request *),
 				    GFP_KERNEL);
-		अगर (!prm->reqs) अणु
+		if (!prm->reqs) {
 			err = -ENOMEM;
-			जाओ fail;
-		पूर्ण
+			goto fail;
+		}
 
-		prm->rbuf = kसुस्मृति(params->req_number, prm->max_psize,
+		prm->rbuf = kcalloc(params->req_number, prm->max_psize,
 				GFP_KERNEL);
-		अगर (!prm->rbuf) अणु
+		if (!prm->rbuf) {
 			prm->max_psize = 0;
 			err = -ENOMEM;
-			जाओ fail;
-		पूर्ण
-	पूर्ण
+			goto fail;
+		}
+	}
 
-	अगर (p_chmask) अणु
-		काष्ठा uac_rtd_params *prm = &uac->p_prm;
+	if (p_chmask) {
+		struct uac_rtd_params *prm = &uac->p_prm;
 
 		uac->p_prm.uac = uac;
 		prm->max_psize = g_audio->in_ep_maxpsize;
 
-		prm->reqs = kसुस्मृति(params->req_number,
-				    माप(काष्ठा usb_request *),
+		prm->reqs = kcalloc(params->req_number,
+				    sizeof(struct usb_request *),
 				    GFP_KERNEL);
-		अगर (!prm->reqs) अणु
+		if (!prm->reqs) {
 			err = -ENOMEM;
-			जाओ fail;
-		पूर्ण
+			goto fail;
+		}
 
-		prm->rbuf = kसुस्मृति(params->req_number, prm->max_psize,
+		prm->rbuf = kcalloc(params->req_number, prm->max_psize,
 				GFP_KERNEL);
-		अगर (!prm->rbuf) अणु
+		if (!prm->rbuf) {
 			prm->max_psize = 0;
 			err = -ENOMEM;
-			जाओ fail;
-		पूर्ण
-	पूर्ण
+			goto fail;
+		}
+	}
 
 	/* Choose any slot, with no id */
 	err = snd_card_new(&g_audio->gadget->dev,
-			-1, शून्य, THIS_MODULE, 0, &card);
-	अगर (err < 0)
-		जाओ fail;
+			-1, NULL, THIS_MODULE, 0, &card);
+	if (err < 0)
+		goto fail;
 
 	uac->card = card;
 
 	/*
 	 * Create first PCM device
-	 * Create a substream only क्रम non-zero channel streams
+	 * Create a substream only for non-zero channel streams
 	 */
 	err = snd_pcm_new(uac->card, pcm_name, 0,
 			       p_chmask ? 1 : 0, c_chmask ? 1 : 0, &pcm);
-	अगर (err < 0)
-		जाओ snd_fail;
+	if (err < 0)
+		goto snd_fail;
 
-	strscpy(pcm->name, pcm_name, माप(pcm->name));
-	pcm->निजी_data = uac;
+	strscpy(pcm->name, pcm_name, sizeof(pcm->name));
+	pcm->private_data = uac;
 	uac->pcm = pcm;
 
 	snd_pcm_set_ops(pcm, SNDRV_PCM_STREAM_PLAYBACK, &uac_pcm_ops);
 	snd_pcm_set_ops(pcm, SNDRV_PCM_STREAM_CAPTURE, &uac_pcm_ops);
 
-	strscpy(card->driver, card_name, माप(card->driver));
-	strscpy(card->लघुname, card_name, माप(card->लघुname));
-	प्र_लिखो(card->दीर्घname, "%s %i", card_name, card->dev->id);
+	strscpy(card->driver, card_name, sizeof(card->driver));
+	strscpy(card->shortname, card_name, sizeof(card->shortname));
+	sprintf(card->longname, "%s %i", card_name, card->dev->id);
 
 	snd_pcm_set_managed_buffer_all(pcm, SNDRV_DMA_TYPE_CONTINUOUS,
-				       शून्य, 0, BUFF_SIZE_MAX);
+				       NULL, 0, BUFF_SIZE_MAX);
 
-	err = snd_card_रेजिस्टर(card);
+	err = snd_card_register(card);
 
-	अगर (!err)
-		वापस 0;
+	if (!err)
+		return 0;
 
 snd_fail:
-	snd_card_मुक्त(card);
+	snd_card_free(card);
 fail:
-	kमुक्त(uac->p_prm.reqs);
-	kमुक्त(uac->c_prm.reqs);
-	kमुक्त(uac->p_prm.rbuf);
-	kमुक्त(uac->c_prm.rbuf);
-	kमुक्त(uac);
+	kfree(uac->p_prm.reqs);
+	kfree(uac->c_prm.reqs);
+	kfree(uac->p_prm.rbuf);
+	kfree(uac->c_prm.rbuf);
+	kfree(uac);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 EXPORT_SYMBOL_GPL(g_audio_setup);
 
-व्योम g_audio_cleanup(काष्ठा g_audio *g_audio)
-अणु
-	काष्ठा snd_uac_chip *uac;
-	काष्ठा snd_card *card;
+void g_audio_cleanup(struct g_audio *g_audio)
+{
+	struct snd_uac_chip *uac;
+	struct snd_card *card;
 
-	अगर (!g_audio || !g_audio->uac)
-		वापस;
+	if (!g_audio || !g_audio->uac)
+		return;
 
 	uac = g_audio->uac;
 	card = uac->card;
-	अगर (card)
-		snd_card_मुक्त(card);
+	if (card)
+		snd_card_free(card);
 
-	kमुक्त(uac->p_prm.reqs);
-	kमुक्त(uac->c_prm.reqs);
-	kमुक्त(uac->p_prm.rbuf);
-	kमुक्त(uac->c_prm.rbuf);
-	kमुक्त(uac);
-पूर्ण
+	kfree(uac->p_prm.reqs);
+	kfree(uac->c_prm.reqs);
+	kfree(uac->p_prm.rbuf);
+	kfree(uac->c_prm.rbuf);
+	kfree(uac);
+}
 EXPORT_SYMBOL_GPL(g_audio_cleanup);
 
 MODULE_LICENSE("GPL");

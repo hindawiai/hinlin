@@ -1,76 +1,75 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * arch/alpha/boot/bootp.c
  *
  * Copyright (C) 1997 Jay Estabrook
  *
- * This file is used क्रम creating a bootp file क्रम the Linux/AXP kernel
+ * This file is used for creating a bootp file for the Linux/AXP kernel
  *
- * based signअगरicantly on the arch/alpha/boot/मुख्य.c of Linus Torvalds
+ * based significantly on the arch/alpha/boot/main.c of Linus Torvalds
  */
-#समावेश <linux/kernel.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/माला.स>
-#समावेश <generated/utsrelease.h>
-#समावेश <linux/mm.h>
+#include <linux/kernel.h>
+#include <linux/slab.h>
+#include <linux/string.h>
+#include <generated/utsrelease.h>
+#include <linux/mm.h>
 
-#समावेश <यंत्र/console.h>
-#समावेश <यंत्र/hwrpb.h>
-#समावेश <यंत्र/पन.स>
+#include <asm/console.h>
+#include <asm/hwrpb.h>
+#include <asm/io.h>
 
-#समावेश <मानकतर्क.स>
+#include <stdarg.h>
 
-#समावेश "ksize.h"
+#include "ksize.h"
 
-बाह्य अचिन्हित दीर्घ चयन_to_osf_pal(अचिन्हित दीर्घ nr,
-	काष्ठा pcb_काष्ठा * pcb_va, काष्ठा pcb_काष्ठा * pcb_pa,
-	अचिन्हित दीर्घ *vptb);
+extern unsigned long switch_to_osf_pal(unsigned long nr,
+	struct pcb_struct * pcb_va, struct pcb_struct * pcb_pa,
+	unsigned long *vptb);
 
-बाह्य व्योम move_stack(अचिन्हित दीर्घ new_stack);
+extern void move_stack(unsigned long new_stack);
 
-काष्ठा hwrpb_काष्ठा *hwrpb = INIT_HWRPB;
-अटल काष्ठा pcb_काष्ठा pcb_va[1];
+struct hwrpb_struct *hwrpb = INIT_HWRPB;
+static struct pcb_struct pcb_va[1];
 
 /*
- * Find a physical address of a भव object..
+ * Find a physical address of a virtual object..
  *
- * This is easy using the भव page table address.
+ * This is easy using the virtual page table address.
  */
 
-अटल अंतरभूत व्योम *
-find_pa(अचिन्हित दीर्घ *vptb, व्योम *ptr)
-अणु
-	अचिन्हित दीर्घ address = (अचिन्हित दीर्घ) ptr;
-	अचिन्हित दीर्घ result;
+static inline void *
+find_pa(unsigned long *vptb, void *ptr)
+{
+	unsigned long address = (unsigned long) ptr;
+	unsigned long result;
 
 	result = vptb[address >> 13];
 	result >>= 32;
 	result <<= 13;
 	result |= address & 0x1fff;
-	वापस (व्योम *) result;
-पूर्ण	
+	return (void *) result;
+}	
 
 /*
- * This function moves पूर्णांकo OSF/1 pal-code, and has a temporary
- * PCB क्रम that. The kernel proper should replace this PCB with
+ * This function moves into OSF/1 pal-code, and has a temporary
+ * PCB for that. The kernel proper should replace this PCB with
  * the real one as soon as possible.
  *
  * The page table muckery in here depends on the fact that the boot
  * code has the L1 page table identity-map itself in the second PTE
- * in the L1 page table. Thus the L1-page is भवly addressable
- * itself (through three levels) at भव address 0x200802000.
+ * in the L1 page table. Thus the L1-page is virtually addressable
+ * itself (through three levels) at virtual address 0x200802000.
  */
 
-#घोषणा VPTB	((अचिन्हित दीर्घ *) 0x200000000)
-#घोषणा L1	((अचिन्हित दीर्घ *) 0x200802000)
+#define VPTB	((unsigned long *) 0x200000000)
+#define L1	((unsigned long *) 0x200802000)
 
-व्योम
-pal_init(व्योम)
-अणु
-	अचिन्हित दीर्घ i, rev;
-	काष्ठा percpu_काष्ठा * percpu;
-	काष्ठा pcb_काष्ठा * pcb_pa;
+void
+pal_init(void)
+{
+	unsigned long i, rev;
+	struct percpu_struct * percpu;
+	struct pcb_struct * pcb_pa;
 
 	/* Create the dummy PCB.  */
 	pcb_va->ksp = 0;
@@ -86,59 +85,59 @@ pal_init(व्योम)
 
 	/*
 	 * a0 = 2 (OSF)
-	 * a1 = वापस address, but we give the यंत्र the vaddr of the PCB
+	 * a1 = return address, but we give the asm the vaddr of the PCB
 	 * a2 = physical addr of PCB
-	 * a3 = new भव page table poपूर्णांकer
-	 * a4 = KSP (but the यंत्र sets it)
+	 * a3 = new virtual page table pointer
+	 * a4 = KSP (but the asm sets it)
 	 */
-	srm_prपूर्णांकk("Switching to OSF PAL-code .. ");
+	srm_printk("Switching to OSF PAL-code .. ");
 
-	i = चयन_to_osf_pal(2, pcb_va, pcb_pa, VPTB);
-	अगर (i) अणु
-		srm_prपूर्णांकk("failed, code %ld\n", i);
+	i = switch_to_osf_pal(2, pcb_va, pcb_pa, VPTB);
+	if (i) {
+		srm_printk("failed, code %ld\n", i);
 		__halt();
-	पूर्ण
+	}
 
-	percpu = (काष्ठा percpu_काष्ठा *)
-		(INIT_HWRPB->processor_offset + (अचिन्हित दीर्घ) INIT_HWRPB);
+	percpu = (struct percpu_struct *)
+		(INIT_HWRPB->processor_offset + (unsigned long) INIT_HWRPB);
 	rev = percpu->pal_revision = percpu->palcode_avail[2];
 
-	srm_prपूर्णांकk("Ok (rev %lx)\n", rev);
+	srm_printk("Ok (rev %lx)\n", rev);
 
-	tbia(); /* करो it directly in हाल we are SMP */
-पूर्ण
+	tbia(); /* do it directly in case we are SMP */
+}
 
-अटल अंतरभूत व्योम
-load(अचिन्हित दीर्घ dst, अचिन्हित दीर्घ src, अचिन्हित दीर्घ count)
-अणु
-	स_नकल((व्योम *)dst, (व्योम *)src, count);
-पूर्ण
+static inline void
+load(unsigned long dst, unsigned long src, unsigned long count)
+{
+	memcpy((void *)dst, (void *)src, count);
+}
 
 /*
  * Start the kernel.
  */
-अटल अंतरभूत व्योम
-runkernel(व्योम)
-अणु
-	__यंत्र__ __अस्थिर__(
+static inline void
+runkernel(void)
+{
+	__asm__ __volatile__(
 		"bis %0,%0,$27\n\t"
 		"jmp ($27)"
-		: /* no outमाला_दो: it करोesn't even वापस */
+		: /* no outputs: it doesn't even return */
 		: "r" (START_ADDR));
-पूर्ण
+}
 
-बाह्य अक्षर _end;
-#घोषणा KERNEL_ORIGIN \
-	((((अचिन्हित दीर्घ)&_end) + 511) & ~511)
+extern char _end;
+#define KERNEL_ORIGIN \
+	((((unsigned long)&_end) + 511) & ~511)
 
-व्योम
-start_kernel(व्योम)
-अणु
+void
+start_kernel(void)
+{
 	/*
-	 * Note that this crufty stuff with अटल and envval
+	 * Note that this crufty stuff with static and envval
 	 * and envbuf is because:
 	 *
-	 * 1. Frequently, the stack is लघु, and we करोn't want to overrun;
+	 * 1. Frequently, the stack is short, and we don't want to overrun;
 	 * 2. Frequently the stack is where we are going to copy the kernel to;
 	 * 3. A certain SRM console required the GET_ENV output to stack.
 	 *    ??? A comment in the aboot sources indicates that the GET_ENV
@@ -146,30 +145,30 @@ start_kernel(व्योम)
 	 *    behaviour, rather than requiring output to the stack, which
 	 *    seems rather far-fetched.
 	 */
-	अटल दीर्घ nbytes;
-	अटल अक्षर envval[256] __attribute__((aligned(8)));
-	अटल अचिन्हित दीर्घ initrd_start;
+	static long nbytes;
+	static char envval[256] __attribute__((aligned(8)));
+	static unsigned long initrd_start;
 
-	srm_prपूर्णांकk("Linux/AXP bootp loader for Linux " UTS_RELEASE "\n");
-	अगर (INIT_HWRPB->pagesize != 8192) अणु
-		srm_prपूर्णांकk("Expected 8kB pages, got %ldkB\n",
+	srm_printk("Linux/AXP bootp loader for Linux " UTS_RELEASE "\n");
+	if (INIT_HWRPB->pagesize != 8192) {
+		srm_printk("Expected 8kB pages, got %ldkB\n",
 		           INIT_HWRPB->pagesize >> 10);
-		वापस;
-	पूर्ण
-	अगर (INIT_HWRPB->vptb != (अचिन्हित दीर्घ) VPTB) अणु
-		srm_prपूर्णांकk("Expected vptb at %p, got %p\n",
-			   VPTB, (व्योम *)INIT_HWRPB->vptb);
-		वापस;
-	पूर्ण
+		return;
+	}
+	if (INIT_HWRPB->vptb != (unsigned long) VPTB) {
+		srm_printk("Expected vptb at %p, got %p\n",
+			   VPTB, (void *)INIT_HWRPB->vptb);
+		return;
+	}
 	pal_init();
 
-	/* The initrd must be page-aligned.  See below क्रम the 
+	/* The initrd must be page-aligned.  See below for the 
 	   cause of the magic number 5.  */
 	initrd_start = ((START_ADDR + 5*KERNEL_SIZE + PAGE_SIZE) |
 			(PAGE_SIZE-1)) + 1;
-#अगर_घोषित INITRD_IMAGE_SIZE
-	srm_prपूर्णांकk("Initrd positioned at %#lx\n", initrd_start);
-#पूर्ण_अगर
+#ifdef INITRD_IMAGE_SIZE
+	srm_printk("Initrd positioned at %#lx\n", initrd_start);
+#endif
 
 	/*
 	 * Move the stack to a safe place to ensure it won't be
@@ -177,39 +176,39 @@ start_kernel(व्योम)
 	 */
 	move_stack(initrd_start - PAGE_SIZE);
 
-	nbytes = callback_दो_पर्या(ENV_BOOTED_OSFLAGS, envval, माप(envval));
-	अगर (nbytes < 0 || nbytes >= माप(envval)) अणु
+	nbytes = callback_getenv(ENV_BOOTED_OSFLAGS, envval, sizeof(envval));
+	if (nbytes < 0 || nbytes >= sizeof(envval)) {
 		nbytes = 0;
-	पूर्ण
+	}
 	envval[nbytes] = '\0';
-	srm_prपूर्णांकk("Loading the kernel...'%s'\n", envval);
+	srm_printk("Loading the kernel...'%s'\n", envval);
 
-	/* NOTE: *no* callbacks or prपूर्णांकouts from here on out!!! */
+	/* NOTE: *no* callbacks or printouts from here on out!!! */
 
-	/* This is a hack, as some consoles seem to get भव 20000000 (ie
-	 * where the SRM console माला_दो the kernel bootp image) memory
+	/* This is a hack, as some consoles seem to get virtual 20000000 (ie
+	 * where the SRM console puts the kernel bootp image) memory
 	 * overlapping physical memory where the kernel wants to be put,
-	 * which causes real problems when attempting to copy the क्रमmer to
+	 * which causes real problems when attempting to copy the former to
 	 * the latter... :-(
 	 *
-	 * So, we first move the kernel भव-to-physical way above where
+	 * So, we first move the kernel virtual-to-physical way above where
 	 * we physically want the kernel to end up, then copy it from there
-	 * to its final resting place... ;-पूर्ण
+	 * to its final resting place... ;-}
 	 *
 	 * Sigh...  */
 
-#अगर_घोषित INITRD_IMAGE_SIZE
+#ifdef INITRD_IMAGE_SIZE
 	load(initrd_start, KERNEL_ORIGIN+KERNEL_SIZE, INITRD_IMAGE_SIZE);
-#पूर्ण_अगर
+#endif
         load(START_ADDR+(4*KERNEL_SIZE), KERNEL_ORIGIN, KERNEL_SIZE);
         load(START_ADDR, START_ADDR+(4*KERNEL_SIZE), KERNEL_SIZE);
 
-	स_रखो((अक्षर*)ZERO_PGE, 0, PAGE_SIZE);
-	म_नकल((अक्षर*)ZERO_PGE, envval);
-#अगर_घोषित INITRD_IMAGE_SIZE
-	((दीर्घ *)(ZERO_PGE+256))[0] = initrd_start;
-	((दीर्घ *)(ZERO_PGE+256))[1] = INITRD_IMAGE_SIZE;
-#पूर्ण_अगर
+	memset((char*)ZERO_PGE, 0, PAGE_SIZE);
+	strcpy((char*)ZERO_PGE, envval);
+#ifdef INITRD_IMAGE_SIZE
+	((long *)(ZERO_PGE+256))[0] = initrd_start;
+	((long *)(ZERO_PGE+256))[1] = INITRD_IMAGE_SIZE;
+#endif
 
 	runkernel();
-पूर्ण
+}

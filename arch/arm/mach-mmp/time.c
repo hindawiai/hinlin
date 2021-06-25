@@ -1,9 +1,8 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * linux/arch/arm/mach-mmp/समय.c
+ * linux/arch/arm/mach-mmp/time.c
  *
- *   Support क्रम घड़ीsource and घड़ीevents
+ *   Support for clocksource and clockevents
  *
  * Copyright (C) 2008 Marvell International Ltd.
  * All rights reserved.
@@ -11,214 +10,214 @@
  *   2008-04-11: Jason Chagas <Jason.chagas@marvell.com>
  *   2008-10-08: Bin Yang <bin.yang@marvell.com>
  *
- * The समयrs module actually includes three समयrs, each समयr with up to
- * three match comparators. Timer #0 is used here in मुक्त-running mode as
- * the घड़ी source, and match comparator #1 used as घड़ी event device.
+ * The timers module actually includes three timers, each timer with up to
+ * three match comparators. Timer #0 is used here in free-running mode as
+ * the clock source, and match comparator #1 used as clock event device.
  */
 
-#समावेश <linux/init.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/घड़ीchips.h>
-#समावेश <linux/clk.h>
+#include <linux/init.h>
+#include <linux/kernel.h>
+#include <linux/interrupt.h>
+#include <linux/clockchips.h>
+#include <linux/clk.h>
 
-#समावेश <linux/पन.स>
-#समावेश <linux/irq.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/of_irq.h>
-#समावेश <linux/sched_घड़ी.h>
-#समावेश <यंत्र/mach/समय.स>
+#include <linux/io.h>
+#include <linux/irq.h>
+#include <linux/of.h>
+#include <linux/of_address.h>
+#include <linux/of_irq.h>
+#include <linux/sched_clock.h>
+#include <asm/mach/time.h>
 
-#समावेश "addr-map.h"
-#समावेश "regs-timers.h"
-#समावेश "regs-apbc.h"
-#समावेश "irqs.h"
-#समावेश <linux/soc/mmp/cputype.h>
+#include "addr-map.h"
+#include "regs-timers.h"
+#include "regs-apbc.h"
+#include "irqs.h"
+#include <linux/soc/mmp/cputype.h>
 
-#घोषणा TIMERS_VIRT_BASE	TIMERS1_VIRT_BASE
+#define TIMERS_VIRT_BASE	TIMERS1_VIRT_BASE
 
-#घोषणा MAX_DELTA		(0xfffffffe)
-#घोषणा MIN_DELTA		(16)
+#define MAX_DELTA		(0xfffffffe)
+#define MIN_DELTA		(16)
 
-अटल व्योम __iomem *mmp_समयr_base = TIMERS_VIRT_BASE;
+static void __iomem *mmp_timer_base = TIMERS_VIRT_BASE;
 
 /*
- * FIXME: the समयr needs some delay to stablize the counter capture
+ * FIXME: the timer needs some delay to stablize the counter capture
  */
-अटल अंतरभूत uपूर्णांक32_t समयr_पढ़ो(व्योम)
-अणु
-	पूर्णांक delay = 100;
+static inline uint32_t timer_read(void)
+{
+	int delay = 100;
 
-	__raw_ग_लिखोl(1, mmp_समयr_base + TMR_CVWR(1));
+	__raw_writel(1, mmp_timer_base + TMR_CVWR(1));
 
-	जबतक (delay--)
+	while (delay--)
 		cpu_relax();
 
-	वापस __raw_पढ़ोl(mmp_समयr_base + TMR_CVWR(1));
-पूर्ण
+	return __raw_readl(mmp_timer_base + TMR_CVWR(1));
+}
 
-अटल u64 notrace mmp_पढ़ो_sched_घड़ी(व्योम)
-अणु
-	वापस समयr_पढ़ो();
-पूर्ण
+static u64 notrace mmp_read_sched_clock(void)
+{
+	return timer_read();
+}
 
-अटल irqवापस_t समयr_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा घड़ी_event_device *c = dev_id;
-
-	/*
-	 * Clear pending पूर्णांकerrupt status.
-	 */
-	__raw_ग_लिखोl(0x01, mmp_समयr_base + TMR_ICR(0));
+static irqreturn_t timer_interrupt(int irq, void *dev_id)
+{
+	struct clock_event_device *c = dev_id;
 
 	/*
-	 * Disable समयr 0.
+	 * Clear pending interrupt status.
 	 */
-	__raw_ग_लिखोl(0x02, mmp_समयr_base + TMR_CER);
+	__raw_writel(0x01, mmp_timer_base + TMR_ICR(0));
+
+	/*
+	 * Disable timer 0.
+	 */
+	__raw_writel(0x02, mmp_timer_base + TMR_CER);
 
 	c->event_handler(c);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक समयr_set_next_event(अचिन्हित दीर्घ delta,
-				काष्ठा घड़ी_event_device *dev)
-अणु
-	अचिन्हित दीर्घ flags;
+static int timer_set_next_event(unsigned long delta,
+				struct clock_event_device *dev)
+{
+	unsigned long flags;
 
 	local_irq_save(flags);
 
 	/*
-	 * Disable समयr 0.
+	 * Disable timer 0.
 	 */
-	__raw_ग_लिखोl(0x02, mmp_समयr_base + TMR_CER);
+	__raw_writel(0x02, mmp_timer_base + TMR_CER);
 
 	/*
-	 * Clear and enable समयr match 0 पूर्णांकerrupt.
+	 * Clear and enable timer match 0 interrupt.
 	 */
-	__raw_ग_लिखोl(0x01, mmp_समयr_base + TMR_ICR(0));
-	__raw_ग_लिखोl(0x01, mmp_समयr_base + TMR_IER(0));
+	__raw_writel(0x01, mmp_timer_base + TMR_ICR(0));
+	__raw_writel(0x01, mmp_timer_base + TMR_IER(0));
 
 	/*
-	 * Setup new घड़ीevent समयr value.
+	 * Setup new clockevent timer value.
 	 */
-	__raw_ग_लिखोl(delta - 1, mmp_समयr_base + TMR_TN_MM(0, 0));
+	__raw_writel(delta - 1, mmp_timer_base + TMR_TN_MM(0, 0));
 
 	/*
-	 * Enable समयr 0.
+	 * Enable timer 0.
 	 */
-	__raw_ग_लिखोl(0x03, mmp_समयr_base + TMR_CER);
+	__raw_writel(0x03, mmp_timer_base + TMR_CER);
 
 	local_irq_restore(flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक समयr_set_shutकरोwn(काष्ठा घड़ी_event_device *evt)
-अणु
-	अचिन्हित दीर्घ flags;
+static int timer_set_shutdown(struct clock_event_device *evt)
+{
+	unsigned long flags;
 
 	local_irq_save(flags);
-	/* disable the matching पूर्णांकerrupt */
-	__raw_ग_लिखोl(0x00, mmp_समयr_base + TMR_IER(0));
+	/* disable the matching interrupt */
+	__raw_writel(0x00, mmp_timer_base + TMR_IER(0));
 	local_irq_restore(flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा घड़ी_event_device ckevt = अणु
+static struct clock_event_device ckevt = {
 	.name			= "clockevent",
 	.features		= CLOCK_EVT_FEAT_ONESHOT,
 	.rating			= 200,
-	.set_next_event		= समयr_set_next_event,
-	.set_state_shutकरोwn	= समयr_set_shutकरोwn,
-	.set_state_oneshot	= समयr_set_shutकरोwn,
-पूर्ण;
+	.set_next_event		= timer_set_next_event,
+	.set_state_shutdown	= timer_set_shutdown,
+	.set_state_oneshot	= timer_set_shutdown,
+};
 
-अटल u64 clksrc_पढ़ो(काष्ठा घड़ीsource *cs)
-अणु
-	वापस समयr_पढ़ो();
-पूर्ण
+static u64 clksrc_read(struct clocksource *cs)
+{
+	return timer_read();
+}
 
-अटल काष्ठा घड़ीsource cksrc = अणु
+static struct clocksource cksrc = {
 	.name		= "clocksource",
 	.rating		= 200,
-	.पढ़ो		= clksrc_पढ़ो,
+	.read		= clksrc_read,
 	.mask		= CLOCKSOURCE_MASK(32),
 	.flags		= CLOCK_SOURCE_IS_CONTINUOUS,
-पूर्ण;
+};
 
-अटल व्योम __init समयr_config(व्योम)
-अणु
-	uपूर्णांक32_t ccr = __raw_पढ़ोl(mmp_समयr_base + TMR_CCR);
+static void __init timer_config(void)
+{
+	uint32_t ccr = __raw_readl(mmp_timer_base + TMR_CCR);
 
-	__raw_ग_लिखोl(0x0, mmp_समयr_base + TMR_CER); /* disable */
+	__raw_writel(0x0, mmp_timer_base + TMR_CER); /* disable */
 
 	ccr &= (cpu_is_mmp2() || cpu_is_mmp3()) ?
 		(TMR_CCR_CS_0(0) | TMR_CCR_CS_1(0)) :
 		(TMR_CCR_CS_0(3) | TMR_CCR_CS_1(3));
-	__raw_ग_लिखोl(ccr, mmp_समयr_base + TMR_CCR);
+	__raw_writel(ccr, mmp_timer_base + TMR_CCR);
 
-	/* set समयr 0 to periodic mode, and समयr 1 to मुक्त-running mode */
-	__raw_ग_लिखोl(0x2, mmp_समयr_base + TMR_CMR);
+	/* set timer 0 to periodic mode, and timer 1 to free-running mode */
+	__raw_writel(0x2, mmp_timer_base + TMR_CMR);
 
-	__raw_ग_लिखोl(0x1, mmp_समयr_base + TMR_PLCR(0)); /* periodic */
-	__raw_ग_लिखोl(0x7, mmp_समयr_base + TMR_ICR(0));  /* clear status */
-	__raw_ग_लिखोl(0x0, mmp_समयr_base + TMR_IER(0));
+	__raw_writel(0x1, mmp_timer_base + TMR_PLCR(0)); /* periodic */
+	__raw_writel(0x7, mmp_timer_base + TMR_ICR(0));  /* clear status */
+	__raw_writel(0x0, mmp_timer_base + TMR_IER(0));
 
-	__raw_ग_लिखोl(0x0, mmp_समयr_base + TMR_PLCR(1)); /* मुक्त-running */
-	__raw_ग_लिखोl(0x7, mmp_समयr_base + TMR_ICR(1));  /* clear status */
-	__raw_ग_लिखोl(0x0, mmp_समयr_base + TMR_IER(1));
+	__raw_writel(0x0, mmp_timer_base + TMR_PLCR(1)); /* free-running */
+	__raw_writel(0x7, mmp_timer_base + TMR_ICR(1));  /* clear status */
+	__raw_writel(0x0, mmp_timer_base + TMR_IER(1));
 
-	/* enable समयr 1 counter */
-	__raw_ग_लिखोl(0x2, mmp_समयr_base + TMR_CER);
-पूर्ण
+	/* enable timer 1 counter */
+	__raw_writel(0x2, mmp_timer_base + TMR_CER);
+}
 
-व्योम __init mmp_समयr_init(पूर्णांक irq, अचिन्हित दीर्घ rate)
-अणु
-	समयr_config();
+void __init mmp_timer_init(int irq, unsigned long rate)
+{
+	timer_config();
 
-	sched_घड़ी_रेजिस्टर(mmp_पढ़ो_sched_घड़ी, 32, rate);
+	sched_clock_register(mmp_read_sched_clock, 32, rate);
 
 	ckevt.cpumask = cpumask_of(0);
 
-	अगर (request_irq(irq, समयr_पूर्णांकerrupt, IRQF_TIMER | IRQF_IRQPOLL,
+	if (request_irq(irq, timer_interrupt, IRQF_TIMER | IRQF_IRQPOLL,
 			"timer", &ckevt))
 		pr_err("Failed to request irq %d (timer)\n", irq);
 
-	घड़ीsource_रेजिस्टर_hz(&cksrc, rate);
-	घड़ीevents_config_and_रेजिस्टर(&ckevt, rate, MIN_DELTA, MAX_DELTA);
-पूर्ण
+	clocksource_register_hz(&cksrc, rate);
+	clockevents_config_and_register(&ckevt, rate, MIN_DELTA, MAX_DELTA);
+}
 
-अटल पूर्णांक __init mmp_dt_init_समयr(काष्ठा device_node *np)
-अणु
-	काष्ठा clk *clk;
-	पूर्णांक irq, ret;
-	अचिन्हित दीर्घ rate;
+static int __init mmp_dt_init_timer(struct device_node *np)
+{
+	struct clk *clk;
+	int irq, ret;
+	unsigned long rate;
 
 	clk = of_clk_get(np, 0);
-	अगर (!IS_ERR(clk)) अणु
+	if (!IS_ERR(clk)) {
 		ret = clk_prepare_enable(clk);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 		rate = clk_get_rate(clk);
-	पूर्ण अन्यथा अगर (cpu_is_pj4()) अणु
+	} else if (cpu_is_pj4()) {
 		rate = 6500000;
-	पूर्ण अन्यथा अणु
+	} else {
 		rate = 3250000;
-	पूर्ण
+	}
 
 	irq = irq_of_parse_and_map(np, 0);
-	अगर (!irq)
-		वापस -EINVAL;
+	if (!irq)
+		return -EINVAL;
 
-	mmp_समयr_base = of_iomap(np, 0);
-	अगर (!mmp_समयr_base)
-		वापस -ENOMEM;
+	mmp_timer_base = of_iomap(np, 0);
+	if (!mmp_timer_base)
+		return -ENOMEM;
 
-	mmp_समयr_init(irq, rate);
-	वापस 0;
-पूर्ण
+	mmp_timer_init(irq, rate);
+	return 0;
+}
 
-TIMER_OF_DECLARE(mmp_समयr, "mrvl,mmp-timer", mmp_dt_init_समयr);
+TIMER_OF_DECLARE(mmp_timer, "mrvl,mmp-timer", mmp_dt_init_timer);

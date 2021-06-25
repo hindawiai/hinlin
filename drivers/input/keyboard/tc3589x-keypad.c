@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (C) ST-Ericsson SA 2010
  *
@@ -9,198 +8,198 @@
  * TC35893 MFD Keypad Controller driver
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/input.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/input/matrix_keypad.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/mfd/tc3589x.h>
-#समावेश <linux/device.h>
+#include <linux/module.h>
+#include <linux/interrupt.h>
+#include <linux/input.h>
+#include <linux/platform_device.h>
+#include <linux/input/matrix_keypad.h>
+#include <linux/i2c.h>
+#include <linux/slab.h>
+#include <linux/mfd/tc3589x.h>
+#include <linux/device.h>
 
 /* Maximum supported keypad matrix row/columns size */
-#घोषणा TC3589x_MAX_KPROW               8
-#घोषणा TC3589x_MAX_KPCOL               12
+#define TC3589x_MAX_KPROW               8
+#define TC3589x_MAX_KPCOL               12
 
 /* keypad related Constants */
-#घोषणा TC3589x_MAX_DEBOUNCE_SETTLE     0xFF
-#घोषणा DEDICATED_KEY_VAL		0xFF
+#define TC3589x_MAX_DEBOUNCE_SETTLE     0xFF
+#define DEDICATED_KEY_VAL		0xFF
 
-/* Pull up/करोwn masks */
-#घोषणा TC3589x_NO_PULL_MASK		0x0
-#घोषणा TC3589x_PULL_DOWN_MASK		0x1
-#घोषणा TC3589x_PULL_UP_MASK		0x2
-#घोषणा TC3589x_PULLUP_ALL_MASK		0xAA
-#घोषणा TC3589x_IO_PULL_VAL(index, mask)	((mask)<<((index)%4)*2)
+/* Pull up/down masks */
+#define TC3589x_NO_PULL_MASK		0x0
+#define TC3589x_PULL_DOWN_MASK		0x1
+#define TC3589x_PULL_UP_MASK		0x2
+#define TC3589x_PULLUP_ALL_MASK		0xAA
+#define TC3589x_IO_PULL_VAL(index, mask)	((mask)<<((index)%4)*2)
 
-/* Bit masks क्रम IOCFG रेजिस्टर */
-#घोषणा IOCFG_BALLCFG		0x01
-#घोषणा IOCFG_IG		0x08
+/* Bit masks for IOCFG register */
+#define IOCFG_BALLCFG		0x01
+#define IOCFG_IG		0x08
 
-#घोषणा KP_EVCODE_COL_MASK	0x0F
-#घोषणा KP_EVCODE_ROW_MASK	0x70
-#घोषणा KP_RELEASE_EVT_MASK	0x80
+#define KP_EVCODE_COL_MASK	0x0F
+#define KP_EVCODE_ROW_MASK	0x70
+#define KP_RELEASE_EVT_MASK	0x80
 
-#घोषणा KP_ROW_SHIFT		4
+#define KP_ROW_SHIFT		4
 
-#घोषणा KP_NO_VALID_KEY_MASK	0x7F
+#define KP_NO_VALID_KEY_MASK	0x7F
 
-/* bit masks क्रम RESTCTRL रेजिस्टर */
-#घोषणा TC3589x_KBDRST		0x2
-#घोषणा TC3589x_IRQRST		0x10
-#घोषणा TC3589x_RESET_ALL	0x1B
+/* bit masks for RESTCTRL register */
+#define TC3589x_KBDRST		0x2
+#define TC3589x_IRQRST		0x10
+#define TC3589x_RESET_ALL	0x1B
 
-/* KBDMFS रेजिस्टर bit mask */
-#घोषणा TC3589x_KBDMFS_EN	0x1
+/* KBDMFS register bit mask */
+#define TC3589x_KBDMFS_EN	0x1
 
-/* CLKEN रेजिस्टर biपंचांगask */
-#घोषणा KPD_CLK_EN		0x1
+/* CLKEN register bitmask */
+#define KPD_CLK_EN		0x1
 
-/* RSTINTCLR रेजिस्टर bit mask */
-#घोषणा IRQ_CLEAR		0x1
+/* RSTINTCLR register bit mask */
+#define IRQ_CLEAR		0x1
 
-/* bit masks क्रम keyboard पूर्णांकerrupts*/
-#घोषणा TC3589x_EVT_LOSS_INT	0x8
-#घोषणा TC3589x_EVT_INT		0x4
-#घोषणा TC3589x_KBD_LOSS_INT	0x2
-#घोषणा TC3589x_KBD_INT		0x1
+/* bit masks for keyboard interrupts*/
+#define TC3589x_EVT_LOSS_INT	0x8
+#define TC3589x_EVT_INT		0x4
+#define TC3589x_KBD_LOSS_INT	0x2
+#define TC3589x_KBD_INT		0x1
 
-/* bit masks क्रम keyboard पूर्णांकerrupt clear*/
-#घोषणा TC3589x_EVT_INT_CLR	0x2
-#घोषणा TC3589x_KBD_INT_CLR	0x1
+/* bit masks for keyboard interrupt clear*/
+#define TC3589x_EVT_INT_CLR	0x2
+#define TC3589x_KBD_INT_CLR	0x1
 
 /**
- * काष्ठा tc35893_keypad_platक्रमm_data - platक्रमm specअगरic keypad data
- * @keymap_data:        matrix scan code table क्रम keycodes
- * @krow:               mask क्रम available rows, value is 0xFF
- * @kcol:               mask क्रम available columns, value is 0xFF
- * @debounce_period:    platक्रमm specअगरic debounce समय
- * @settle_समय:        platक्रमm specअगरic settle करोwn समय
- * @irqtype:            type of पूर्णांकerrupt, falling or rising edge
- * @enable_wakeup:      specअगरies अगर keypad event can wake up प्रणाली from sleep
- * @no_स्वतःrepeat:      flag क्रम स्वतः repetition
+ * struct tc35893_keypad_platform_data - platform specific keypad data
+ * @keymap_data:        matrix scan code table for keycodes
+ * @krow:               mask for available rows, value is 0xFF
+ * @kcol:               mask for available columns, value is 0xFF
+ * @debounce_period:    platform specific debounce time
+ * @settle_time:        platform specific settle down time
+ * @irqtype:            type of interrupt, falling or rising edge
+ * @enable_wakeup:      specifies if keypad event can wake up system from sleep
+ * @no_autorepeat:      flag for auto repetition
  */
-काष्ठा tc3589x_keypad_platक्रमm_data अणु
-	स्थिर काष्ठा matrix_keymap_data *keymap_data;
+struct tc3589x_keypad_platform_data {
+	const struct matrix_keymap_data *keymap_data;
 	u8                      krow;
 	u8                      kcol;
 	u8                      debounce_period;
-	u8                      settle_समय;
-	अचिन्हित दीर्घ           irqtype;
+	u8                      settle_time;
+	unsigned long           irqtype;
 	bool                    enable_wakeup;
-	bool                    no_स्वतःrepeat;
-पूर्ण;
+	bool                    no_autorepeat;
+};
 
 /**
- * काष्ठा tc_keypad - data काष्ठाure used by keypad driver
- * @tc3589x:    poपूर्णांकer to tc35893
- * @input:      poपूर्णांकer to input device object
- * @board:      keypad platक्रमm device
+ * struct tc_keypad - data structure used by keypad driver
+ * @tc3589x:    pointer to tc35893
+ * @input:      pointer to input device object
+ * @board:      keypad platform device
  * @krow:	number of rows
  * @kcol:	number of columns
- * @keymap:     matrix scan code table क्रम keycodes
+ * @keymap:     matrix scan code table for keycodes
  * @keypad_stopped: holds keypad status
  */
-काष्ठा tc_keypad अणु
-	काष्ठा tc3589x *tc3589x;
-	काष्ठा input_dev *input;
-	स्थिर काष्ठा tc3589x_keypad_platक्रमm_data *board;
-	अचिन्हित पूर्णांक krow;
-	अचिन्हित पूर्णांक kcol;
-	अचिन्हित लघु *keymap;
+struct tc_keypad {
+	struct tc3589x *tc3589x;
+	struct input_dev *input;
+	const struct tc3589x_keypad_platform_data *board;
+	unsigned int krow;
+	unsigned int kcol;
+	unsigned short *keymap;
 	bool keypad_stopped;
-पूर्ण;
+};
 
-अटल पूर्णांक tc3589x_keypad_init_key_hardware(काष्ठा tc_keypad *keypad)
-अणु
-	पूर्णांक ret;
-	काष्ठा tc3589x *tc3589x = keypad->tc3589x;
-	स्थिर काष्ठा tc3589x_keypad_platक्रमm_data *board = keypad->board;
+static int tc3589x_keypad_init_key_hardware(struct tc_keypad *keypad)
+{
+	int ret;
+	struct tc3589x *tc3589x = keypad->tc3589x;
+	const struct tc3589x_keypad_platform_data *board = keypad->board;
 
-	/* validate platक्रमm configuration */
-	अगर (board->kcol > TC3589x_MAX_KPCOL || board->krow > TC3589x_MAX_KPROW)
-		वापस -EINVAL;
+	/* validate platform configuration */
+	if (board->kcol > TC3589x_MAX_KPCOL || board->krow > TC3589x_MAX_KPROW)
+		return -EINVAL;
 
-	/* configure KBDSIZE 4 LSbits क्रम cols and 4 MSbits क्रम rows */
-	ret = tc3589x_reg_ग_लिखो(tc3589x, TC3589x_KBDSIZE,
+	/* configure KBDSIZE 4 LSbits for cols and 4 MSbits for rows */
+	ret = tc3589x_reg_write(tc3589x, TC3589x_KBDSIZE,
 			(board->krow << KP_ROW_SHIFT) | board->kcol);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	/* configure dedicated key config, no dedicated key selected */
-	ret = tc3589x_reg_ग_लिखो(tc3589x, TC3589x_KBCFG_LSB, DEDICATED_KEY_VAL);
-	अगर (ret < 0)
-		वापस ret;
+	ret = tc3589x_reg_write(tc3589x, TC3589x_KBCFG_LSB, DEDICATED_KEY_VAL);
+	if (ret < 0)
+		return ret;
 
-	ret = tc3589x_reg_ग_लिखो(tc3589x, TC3589x_KBCFG_MSB, DEDICATED_KEY_VAL);
-	अगर (ret < 0)
-		वापस ret;
+	ret = tc3589x_reg_write(tc3589x, TC3589x_KBCFG_MSB, DEDICATED_KEY_VAL);
+	if (ret < 0)
+		return ret;
 
-	/* Configure settle समय */
-	ret = tc3589x_reg_ग_लिखो(tc3589x, TC3589x_KBDSETTLE_REG,
-				board->settle_समय);
-	अगर (ret < 0)
-		वापस ret;
+	/* Configure settle time */
+	ret = tc3589x_reg_write(tc3589x, TC3589x_KBDSETTLE_REG,
+				board->settle_time);
+	if (ret < 0)
+		return ret;
 
-	/* Configure debounce समय */
-	ret = tc3589x_reg_ग_लिखो(tc3589x, TC3589x_KBDBOUNCE,
+	/* Configure debounce time */
+	ret = tc3589x_reg_write(tc3589x, TC3589x_KBDBOUNCE,
 				board->debounce_period);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	/* Start of initialise keypad GPIOs */
 	ret = tc3589x_set_bits(tc3589x, TC3589x_IOCFG, 0x0, IOCFG_IG);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	/* Configure pull-up resistors क्रम all row GPIOs */
-	ret = tc3589x_reg_ग_लिखो(tc3589x, TC3589x_IOPULLCFG0_LSB,
+	/* Configure pull-up resistors for all row GPIOs */
+	ret = tc3589x_reg_write(tc3589x, TC3589x_IOPULLCFG0_LSB,
 					TC3589x_PULLUP_ALL_MASK);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	ret = tc3589x_reg_ग_लिखो(tc3589x, TC3589x_IOPULLCFG0_MSB,
+	ret = tc3589x_reg_write(tc3589x, TC3589x_IOPULLCFG0_MSB,
 					TC3589x_PULLUP_ALL_MASK);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	/* Configure pull-up resistors क्रम all column GPIOs */
-	ret = tc3589x_reg_ग_लिखो(tc3589x, TC3589x_IOPULLCFG1_LSB,
+	/* Configure pull-up resistors for all column GPIOs */
+	ret = tc3589x_reg_write(tc3589x, TC3589x_IOPULLCFG1_LSB,
 			TC3589x_PULLUP_ALL_MASK);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	ret = tc3589x_reg_ग_लिखो(tc3589x, TC3589x_IOPULLCFG1_MSB,
+	ret = tc3589x_reg_write(tc3589x, TC3589x_IOPULLCFG1_MSB,
 			TC3589x_PULLUP_ALL_MASK);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	ret = tc3589x_reg_ग_लिखो(tc3589x, TC3589x_IOPULLCFG2_LSB,
+	ret = tc3589x_reg_write(tc3589x, TC3589x_IOPULLCFG2_LSB,
 			TC3589x_PULLUP_ALL_MASK);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-#घोषणा TC35893_DATA_REGS		4
-#घोषणा TC35893_KEYCODE_FIFO_EMPTY	0x7f
-#घोषणा TC35893_KEYCODE_FIFO_CLEAR	0xff
-#घोषणा TC35893_KEYPAD_ROW_SHIFT	0x3
+#define TC35893_DATA_REGS		4
+#define TC35893_KEYCODE_FIFO_EMPTY	0x7f
+#define TC35893_KEYCODE_FIFO_CLEAR	0xff
+#define TC35893_KEYPAD_ROW_SHIFT	0x3
 
-अटल irqवापस_t tc3589x_keypad_irq(पूर्णांक irq, व्योम *dev)
-अणु
-	काष्ठा tc_keypad *keypad = dev;
-	काष्ठा tc3589x *tc3589x = keypad->tc3589x;
+static irqreturn_t tc3589x_keypad_irq(int irq, void *dev)
+{
+	struct tc_keypad *keypad = dev;
+	struct tc3589x *tc3589x = keypad->tc3589x;
 	u8 i, row_index, col_index, kbd_code, up;
 	u8 code;
 
-	क्रम (i = 0; i < TC35893_DATA_REGS * 2; i++) अणु
-		kbd_code = tc3589x_reg_पढ़ो(tc3589x, TC3589x_EVTCODE_FIFO);
+	for (i = 0; i < TC35893_DATA_REGS * 2; i++) {
+		kbd_code = tc3589x_reg_read(tc3589x, TC3589x_EVTCODE_FIFO);
 
-		/* loop till fअगरo is empty and no more keys are pressed */
-		अगर (kbd_code == TC35893_KEYCODE_FIFO_EMPTY ||
+		/* loop till fifo is empty and no more keys are pressed */
+		if (kbd_code == TC35893_KEYCODE_FIFO_EMPTY ||
 				kbd_code == TC35893_KEYCODE_FIFO_CLEAR)
-			जारी;
+			continue;
 
 		/* valid key is found */
 		col_index = kbd_code & KP_EVCODE_COL_MASK;
@@ -212,7 +211,7 @@
 		input_event(keypad->input, EV_MSC, MSC_SCAN, code);
 		input_report_key(keypad->input, keypad->keymap[code], !up);
 		input_sync(keypad->input);
-	पूर्ण
+	}
 
 	/* clear IRQ */
 	tc3589x_set_bits(tc3589x, TC3589x_KBDIC,
@@ -221,185 +220,185 @@
 	tc3589x_set_bits(tc3589x, TC3589x_KBDMSK,
 			0x0, TC3589x_EVT_LOSS_INT | TC3589x_EVT_INT);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक tc3589x_keypad_enable(काष्ठा tc_keypad *keypad)
-अणु
-	काष्ठा tc3589x *tc3589x = keypad->tc3589x;
-	पूर्णांक ret;
+static int tc3589x_keypad_enable(struct tc_keypad *keypad)
+{
+	struct tc3589x *tc3589x = keypad->tc3589x;
+	int ret;
 
 	/* pull the keypad module out of reset */
 	ret = tc3589x_set_bits(tc3589x, TC3589x_RSTCTRL, TC3589x_KBDRST, 0x0);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	/* configure KBDMFS */
 	ret = tc3589x_set_bits(tc3589x, TC3589x_KBDMFS, 0x0, TC3589x_KBDMFS_EN);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	/* enable the keypad घड़ी */
+	/* enable the keypad clock */
 	ret = tc3589x_set_bits(tc3589x, TC3589x_CLKEN, 0x0, KPD_CLK_EN);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	/* clear pending IRQs */
 	ret =  tc3589x_set_bits(tc3589x, TC3589x_RSTINTCLR, 0x0, 0x1);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	/* enable the IRQs */
 	ret = tc3589x_set_bits(tc3589x, TC3589x_KBDMSK, 0x0,
 					TC3589x_EVT_LOSS_INT | TC3589x_EVT_INT);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	keypad->keypad_stopped = false;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक tc3589x_keypad_disable(काष्ठा tc_keypad *keypad)
-अणु
-	काष्ठा tc3589x *tc3589x = keypad->tc3589x;
-	पूर्णांक ret;
+static int tc3589x_keypad_disable(struct tc_keypad *keypad)
+{
+	struct tc3589x *tc3589x = keypad->tc3589x;
+	int ret;
 
 	/* clear IRQ */
 	ret = tc3589x_set_bits(tc3589x, TC3589x_KBDIC,
 			0x0, TC3589x_EVT_INT_CLR | TC3589x_KBD_INT_CLR);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	/* disable all पूर्णांकerrupts */
+	/* disable all interrupts */
 	ret = tc3589x_set_bits(tc3589x, TC3589x_KBDMSK,
 			~(TC3589x_EVT_LOSS_INT | TC3589x_EVT_INT), 0x0);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	/* disable the keypad module */
 	ret = tc3589x_set_bits(tc3589x, TC3589x_CLKEN, 0x1, 0x0);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	/* put the keypad module पूर्णांकo reset */
+	/* put the keypad module into reset */
 	ret = tc3589x_set_bits(tc3589x, TC3589x_RSTCTRL, TC3589x_KBDRST, 0x1);
 
 	keypad->keypad_stopped = true;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक tc3589x_keypad_खोलो(काष्ठा input_dev *input)
-अणु
-	पूर्णांक error;
-	काष्ठा tc_keypad *keypad = input_get_drvdata(input);
+static int tc3589x_keypad_open(struct input_dev *input)
+{
+	int error;
+	struct tc_keypad *keypad = input_get_drvdata(input);
 
 	/* enable the keypad module */
 	error = tc3589x_keypad_enable(keypad);
-	अगर (error < 0) अणु
+	if (error < 0) {
 		dev_err(&input->dev, "failed to enable keypad module\n");
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
 	error = tc3589x_keypad_init_key_hardware(keypad);
-	अगर (error < 0) अणु
+	if (error < 0) {
 		dev_err(&input->dev, "failed to configure keypad module\n");
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम tc3589x_keypad_बंद(काष्ठा input_dev *input)
-अणु
-	काष्ठा tc_keypad *keypad = input_get_drvdata(input);
+static void tc3589x_keypad_close(struct input_dev *input)
+{
+	struct tc_keypad *keypad = input_get_drvdata(input);
 
 	/* disable the keypad module */
 	tc3589x_keypad_disable(keypad);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा tc3589x_keypad_platक्रमm_data *
-tc3589x_keypad_of_probe(काष्ठा device *dev)
-अणु
-	काष्ठा device_node *np = dev->of_node;
-	काष्ठा tc3589x_keypad_platक्रमm_data *plat;
+static const struct tc3589x_keypad_platform_data *
+tc3589x_keypad_of_probe(struct device *dev)
+{
+	struct device_node *np = dev->of_node;
+	struct tc3589x_keypad_platform_data *plat;
 	u32 cols, rows;
 	u32 debounce_ms;
-	पूर्णांक proplen;
+	int proplen;
 
-	अगर (!np)
-		वापस ERR_PTR(-ENODEV);
+	if (!np)
+		return ERR_PTR(-ENODEV);
 
-	plat = devm_kzalloc(dev, माप(*plat), GFP_KERNEL);
-	अगर (!plat)
-		वापस ERR_PTR(-ENOMEM);
+	plat = devm_kzalloc(dev, sizeof(*plat), GFP_KERNEL);
+	if (!plat)
+		return ERR_PTR(-ENOMEM);
 
-	of_property_पढ़ो_u32(np, "keypad,num-columns", &cols);
-	of_property_पढ़ो_u32(np, "keypad,num-rows", &rows);
+	of_property_read_u32(np, "keypad,num-columns", &cols);
+	of_property_read_u32(np, "keypad,num-rows", &rows);
 	plat->kcol = (u8) cols;
 	plat->krow = (u8) rows;
-	अगर (!plat->krow || !plat->kcol ||
-	     plat->krow > TC_KPD_ROWS || plat->kcol > TC_KPD_COLUMNS) अणु
+	if (!plat->krow || !plat->kcol ||
+	     plat->krow > TC_KPD_ROWS || plat->kcol > TC_KPD_COLUMNS) {
 		dev_err(dev,
 			"keypad columns/rows not properly specified (%ux%u)\n",
 			plat->kcol, plat->krow);
-		वापस ERR_PTR(-EINVAL);
-	पूर्ण
+		return ERR_PTR(-EINVAL);
+	}
 
-	अगर (!of_get_property(np, "linux,keymap", &proplen)) अणु
+	if (!of_get_property(np, "linux,keymap", &proplen)) {
 		dev_err(dev, "property linux,keymap not found\n");
-		वापस ERR_PTR(-ENOENT);
-	पूर्ण
+		return ERR_PTR(-ENOENT);
+	}
 
-	plat->no_स्वतःrepeat = of_property_पढ़ो_bool(np, "linux,no-autorepeat");
+	plat->no_autorepeat = of_property_read_bool(np, "linux,no-autorepeat");
 
-	plat->enable_wakeup = of_property_पढ़ो_bool(np, "wakeup-source") ||
+	plat->enable_wakeup = of_property_read_bool(np, "wakeup-source") ||
 			      /* legacy name */
-			      of_property_पढ़ो_bool(np, "linux,wakeup");
+			      of_property_read_bool(np, "linux,wakeup");
 
-	/* The custom delay क्रमmat is ms/16 */
-	of_property_पढ़ो_u32(np, "debounce-delay-ms", &debounce_ms);
-	अगर (debounce_ms)
+	/* The custom delay format is ms/16 */
+	of_property_read_u32(np, "debounce-delay-ms", &debounce_ms);
+	if (debounce_ms)
 		plat->debounce_period = debounce_ms * 16;
-	अन्यथा
+	else
 		plat->debounce_period = TC_KPD_DEBOUNCE_PERIOD;
 
-	plat->settle_समय = TC_KPD_SETTLE_TIME;
+	plat->settle_time = TC_KPD_SETTLE_TIME;
 	/* FIXME: should be property of the IRQ resource? */
 	plat->irqtype = IRQF_TRIGGER_FALLING;
 
-	वापस plat;
-पूर्ण
+	return plat;
+}
 
-अटल पूर्णांक tc3589x_keypad_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा tc3589x *tc3589x = dev_get_drvdata(pdev->dev.parent);
-	काष्ठा tc_keypad *keypad;
-	काष्ठा input_dev *input;
-	स्थिर काष्ठा tc3589x_keypad_platक्रमm_data *plat;
-	पूर्णांक error, irq;
+static int tc3589x_keypad_probe(struct platform_device *pdev)
+{
+	struct tc3589x *tc3589x = dev_get_drvdata(pdev->dev.parent);
+	struct tc_keypad *keypad;
+	struct input_dev *input;
+	const struct tc3589x_keypad_platform_data *plat;
+	int error, irq;
 
 	plat = tc3589x_keypad_of_probe(&pdev->dev);
-	अगर (IS_ERR(plat)) अणु
+	if (IS_ERR(plat)) {
 		dev_err(&pdev->dev, "invalid keypad platform data\n");
-		वापस PTR_ERR(plat);
-	पूर्ण
+		return PTR_ERR(plat);
+	}
 
-	irq = platक्रमm_get_irq(pdev, 0);
-	अगर (irq < 0)
-		वापस irq;
+	irq = platform_get_irq(pdev, 0);
+	if (irq < 0)
+		return irq;
 
-	keypad = devm_kzalloc(&pdev->dev, माप(काष्ठा tc_keypad),
+	keypad = devm_kzalloc(&pdev->dev, sizeof(struct tc_keypad),
 			      GFP_KERNEL);
-	अगर (!keypad)
-		वापस -ENOMEM;
+	if (!keypad)
+		return -ENOMEM;
 
 	input = devm_input_allocate_device(&pdev->dev);
-	अगर (!input) अणु
+	if (!input) {
 		dev_err(&pdev->dev, "failed to allocate input device\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	keypad->board = plat;
 	keypad->input = input;
@@ -409,103 +408,103 @@ tc3589x_keypad_of_probe(काष्ठा device *dev)
 	input->name = pdev->name;
 	input->dev.parent = &pdev->dev;
 
-	input->खोलो = tc3589x_keypad_खोलो;
-	input->बंद = tc3589x_keypad_बंद;
+	input->open = tc3589x_keypad_open;
+	input->close = tc3589x_keypad_close;
 
-	error = matrix_keypad_build_keymap(plat->keymap_data, शून्य,
+	error = matrix_keypad_build_keymap(plat->keymap_data, NULL,
 					   TC3589x_MAX_KPROW, TC3589x_MAX_KPCOL,
-					   शून्य, input);
-	अगर (error) अणु
+					   NULL, input);
+	if (error) {
 		dev_err(&pdev->dev, "Failed to build keymap\n");
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
 	keypad->keymap = input->keycode;
 
 	input_set_capability(input, EV_MSC, MSC_SCAN);
-	अगर (!plat->no_स्वतःrepeat)
+	if (!plat->no_autorepeat)
 		__set_bit(EV_REP, input->evbit);
 
 	input_set_drvdata(input, keypad);
 
 	tc3589x_keypad_disable(keypad);
 
-	error = devm_request_thपढ़ोed_irq(&pdev->dev, irq,
-					  शून्य, tc3589x_keypad_irq,
+	error = devm_request_threaded_irq(&pdev->dev, irq,
+					  NULL, tc3589x_keypad_irq,
 					  plat->irqtype | IRQF_ONESHOT,
 					  "tc3589x-keypad", keypad);
-	अगर (error) अणु
+	if (error) {
 		dev_err(&pdev->dev,
 				"Could not allocate irq %d,error %d\n",
 				irq, error);
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
-	error = input_रेजिस्टर_device(input);
-	अगर (error) अणु
+	error = input_register_device(input);
+	if (error) {
 		dev_err(&pdev->dev, "Could not register input device\n");
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
-	/* let platक्रमm decide अगर keypad is a wakeup source or not */
+	/* let platform decide if keypad is a wakeup source or not */
 	device_init_wakeup(&pdev->dev, plat->enable_wakeup);
 	device_set_wakeup_capable(&pdev->dev, plat->enable_wakeup);
 
-	platक्रमm_set_drvdata(pdev, keypad);
+	platform_set_drvdata(pdev, keypad);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_PM_SLEEP
-अटल पूर्णांक tc3589x_keypad_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(dev);
-	काष्ठा tc_keypad *keypad = platक्रमm_get_drvdata(pdev);
-	पूर्णांक irq = platक्रमm_get_irq(pdev, 0);
+#ifdef CONFIG_PM_SLEEP
+static int tc3589x_keypad_suspend(struct device *dev)
+{
+	struct platform_device *pdev = to_platform_device(dev);
+	struct tc_keypad *keypad = platform_get_drvdata(pdev);
+	int irq = platform_get_irq(pdev, 0);
 
-	/* keypad is alपढ़ोy off; we करो nothing */
-	अगर (keypad->keypad_stopped)
-		वापस 0;
+	/* keypad is already off; we do nothing */
+	if (keypad->keypad_stopped)
+		return 0;
 
-	/* अगर device is not a wakeup source, disable it क्रम घातersave */
-	अगर (!device_may_wakeup(&pdev->dev))
+	/* if device is not a wakeup source, disable it for powersave */
+	if (!device_may_wakeup(&pdev->dev))
 		tc3589x_keypad_disable(keypad);
-	अन्यथा
+	else
 		enable_irq_wake(irq);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tc3589x_keypad_resume(काष्ठा device *dev)
-अणु
-	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(dev);
-	काष्ठा tc_keypad *keypad = platक्रमm_get_drvdata(pdev);
-	पूर्णांक irq = platक्रमm_get_irq(pdev, 0);
+static int tc3589x_keypad_resume(struct device *dev)
+{
+	struct platform_device *pdev = to_platform_device(dev);
+	struct tc_keypad *keypad = platform_get_drvdata(pdev);
+	int irq = platform_get_irq(pdev, 0);
 
-	अगर (!keypad->keypad_stopped)
-		वापस 0;
+	if (!keypad->keypad_stopped)
+		return 0;
 
 	/* enable the device to resume normal operations */
-	अगर (!device_may_wakeup(&pdev->dev))
+	if (!device_may_wakeup(&pdev->dev))
 		tc3589x_keypad_enable(keypad);
-	अन्यथा
+	else
 		disable_irq_wake(irq);
 
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+	return 0;
+}
+#endif
 
-अटल SIMPLE_DEV_PM_OPS(tc3589x_keypad_dev_pm_ops,
+static SIMPLE_DEV_PM_OPS(tc3589x_keypad_dev_pm_ops,
 			 tc3589x_keypad_suspend, tc3589x_keypad_resume);
 
-अटल काष्ठा platक्रमm_driver tc3589x_keypad_driver = अणु
-	.driver	= अणु
+static struct platform_driver tc3589x_keypad_driver = {
+	.driver	= {
 		.name	= "tc3589x-keypad",
 		.pm	= &tc3589x_keypad_dev_pm_ops,
-	पूर्ण,
+	},
 	.probe	= tc3589x_keypad_probe,
-पूर्ण;
-module_platक्रमm_driver(tc3589x_keypad_driver);
+};
+module_platform_driver(tc3589x_keypad_driver);
 
 MODULE_LICENSE("GPL v2");
 MODULE_AUTHOR("Jayeeta Banerjee/Sundar Iyer");

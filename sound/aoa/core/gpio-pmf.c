@@ -1,241 +1,240 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Apple Onboard Audio pmf GPIOs
  *
  * Copyright 2006 Johannes Berg <johannes@sipsolutions.net>
  */
 
-#समावेश <linux/slab.h>
-#समावेश <यंत्र/pmac_feature.h>
-#समावेश <यंत्र/pmac_pfunc.h>
-#समावेश "../aoa.h"
+#include <linux/slab.h>
+#include <asm/pmac_feature.h>
+#include <asm/pmac_pfunc.h>
+#include "../aoa.h"
 
-#घोषणा PMF_GPIO(name, bit)					\
-अटल व्योम pmf_gpio_set_##name(काष्ठा gpio_runसमय *rt, पूर्णांक on)\
-अणु								\
-	काष्ठा pmf_args args = अणु .count = 1, .u[0].v = !on पूर्ण;	\
-	पूर्णांक rc;							\
+#define PMF_GPIO(name, bit)					\
+static void pmf_gpio_set_##name(struct gpio_runtime *rt, int on)\
+{								\
+	struct pmf_args args = { .count = 1, .u[0].v = !on };	\
+	int rc;							\
 							\
-	अगर (unlikely(!rt)) वापस;				\
+	if (unlikely(!rt)) return;				\
 	rc = pmf_call_function(rt->node, #name "-mute", &args);	\
-	अगर (rc && rc != -ENODEV)				\
-		prपूर्णांकk(KERN_WARNING "pmf_gpio_set_" #name	\
+	if (rc && rc != -ENODEV)				\
+		printk(KERN_WARNING "pmf_gpio_set_" #name	\
 		" failed, rc: %d\n", rc);			\
-	rt->implementation_निजी &= ~(1<<bit);		\
-	rt->implementation_निजी |= (!!on << bit);		\
-पूर्ण								\
-अटल पूर्णांक pmf_gpio_get_##name(काष्ठा gpio_runसमय *rt)		\
-अणु								\
-	अगर (unlikely(!rt)) वापस 0;				\
-	वापस (rt->implementation_निजी>>bit)&1;		\
-पूर्ण
+	rt->implementation_private &= ~(1<<bit);		\
+	rt->implementation_private |= (!!on << bit);		\
+}								\
+static int pmf_gpio_get_##name(struct gpio_runtime *rt)		\
+{								\
+	if (unlikely(!rt)) return 0;				\
+	return (rt->implementation_private>>bit)&1;		\
+}
 
 PMF_GPIO(headphone, 0);
 PMF_GPIO(amp, 1);
 PMF_GPIO(lineout, 2);
 
-अटल व्योम pmf_gpio_set_hw_reset(काष्ठा gpio_runसमय *rt, पूर्णांक on)
-अणु
-	काष्ठा pmf_args args = अणु .count = 1, .u[0].v = !!on पूर्ण;
-	पूर्णांक rc;
+static void pmf_gpio_set_hw_reset(struct gpio_runtime *rt, int on)
+{
+	struct pmf_args args = { .count = 1, .u[0].v = !!on };
+	int rc;
 
-	अगर (unlikely(!rt)) वापस;
+	if (unlikely(!rt)) return;
 	rc = pmf_call_function(rt->node, "hw-reset", &args);
-	अगर (rc)
-		prपूर्णांकk(KERN_WARNING "pmf_gpio_set_hw_reset"
+	if (rc)
+		printk(KERN_WARNING "pmf_gpio_set_hw_reset"
 		       " failed, rc: %d\n", rc);
-पूर्ण
+}
 
-अटल व्योम pmf_gpio_all_amps_off(काष्ठा gpio_runसमय *rt)
-अणु
-	पूर्णांक saved;
+static void pmf_gpio_all_amps_off(struct gpio_runtime *rt)
+{
+	int saved;
 
-	अगर (unlikely(!rt)) वापस;
-	saved = rt->implementation_निजी;
+	if (unlikely(!rt)) return;
+	saved = rt->implementation_private;
 	pmf_gpio_set_headphone(rt, 0);
 	pmf_gpio_set_amp(rt, 0);
 	pmf_gpio_set_lineout(rt, 0);
-	rt->implementation_निजी = saved;
-पूर्ण
+	rt->implementation_private = saved;
+}
 
-अटल व्योम pmf_gpio_all_amps_restore(काष्ठा gpio_runसमय *rt)
-अणु
-	पूर्णांक s;
+static void pmf_gpio_all_amps_restore(struct gpio_runtime *rt)
+{
+	int s;
 
-	अगर (unlikely(!rt)) वापस;
-	s = rt->implementation_निजी;
+	if (unlikely(!rt)) return;
+	s = rt->implementation_private;
 	pmf_gpio_set_headphone(rt, (s>>0)&1);
 	pmf_gpio_set_amp(rt, (s>>1)&1);
 	pmf_gpio_set_lineout(rt, (s>>2)&1);
-पूर्ण
+}
 
-अटल व्योम pmf_handle_notअगरy(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा gpio_notअगरication *notअगर =
-		container_of(work, काष्ठा gpio_notअगरication, work.work);
+static void pmf_handle_notify(struct work_struct *work)
+{
+	struct gpio_notification *notif =
+		container_of(work, struct gpio_notification, work.work);
 
-	mutex_lock(&notअगर->mutex);
-	अगर (notअगर->notअगरy)
-		notअगर->notअगरy(notअगर->data);
-	mutex_unlock(&notअगर->mutex);
-पूर्ण
+	mutex_lock(&notif->mutex);
+	if (notif->notify)
+		notif->notify(notif->data);
+	mutex_unlock(&notif->mutex);
+}
 
-अटल व्योम pmf_gpio_init(काष्ठा gpio_runसमय *rt)
-अणु
+static void pmf_gpio_init(struct gpio_runtime *rt)
+{
 	pmf_gpio_all_amps_off(rt);
-	rt->implementation_निजी = 0;
-	INIT_DELAYED_WORK(&rt->headphone_notअगरy.work, pmf_handle_notअगरy);
-	INIT_DELAYED_WORK(&rt->line_in_notअगरy.work, pmf_handle_notअगरy);
-	INIT_DELAYED_WORK(&rt->line_out_notअगरy.work, pmf_handle_notअगरy);
-	mutex_init(&rt->headphone_notअगरy.mutex);
-	mutex_init(&rt->line_in_notअगरy.mutex);
-	mutex_init(&rt->line_out_notअगरy.mutex);
-पूर्ण
+	rt->implementation_private = 0;
+	INIT_DELAYED_WORK(&rt->headphone_notify.work, pmf_handle_notify);
+	INIT_DELAYED_WORK(&rt->line_in_notify.work, pmf_handle_notify);
+	INIT_DELAYED_WORK(&rt->line_out_notify.work, pmf_handle_notify);
+	mutex_init(&rt->headphone_notify.mutex);
+	mutex_init(&rt->line_in_notify.mutex);
+	mutex_init(&rt->line_out_notify.mutex);
+}
 
-अटल व्योम pmf_gpio_निकास(काष्ठा gpio_runसमय *rt)
-अणु
+static void pmf_gpio_exit(struct gpio_runtime *rt)
+{
 	pmf_gpio_all_amps_off(rt);
-	rt->implementation_निजी = 0;
+	rt->implementation_private = 0;
 
-	अगर (rt->headphone_notअगरy.gpio_निजी)
-		pmf_unरेजिस्टर_irq_client(rt->headphone_notअगरy.gpio_निजी);
-	अगर (rt->line_in_notअगरy.gpio_निजी)
-		pmf_unरेजिस्टर_irq_client(rt->line_in_notअगरy.gpio_निजी);
-	अगर (rt->line_out_notअगरy.gpio_निजी)
-		pmf_unरेजिस्टर_irq_client(rt->line_out_notअगरy.gpio_निजी);
+	if (rt->headphone_notify.gpio_private)
+		pmf_unregister_irq_client(rt->headphone_notify.gpio_private);
+	if (rt->line_in_notify.gpio_private)
+		pmf_unregister_irq_client(rt->line_in_notify.gpio_private);
+	if (rt->line_out_notify.gpio_private)
+		pmf_unregister_irq_client(rt->line_out_notify.gpio_private);
 
-	/* make sure no work is pending beक्रमe मुक्तing
+	/* make sure no work is pending before freeing
 	 * all things */
-	cancel_delayed_work_sync(&rt->headphone_notअगरy.work);
-	cancel_delayed_work_sync(&rt->line_in_notअगरy.work);
-	cancel_delayed_work_sync(&rt->line_out_notअगरy.work);
+	cancel_delayed_work_sync(&rt->headphone_notify.work);
+	cancel_delayed_work_sync(&rt->line_in_notify.work);
+	cancel_delayed_work_sync(&rt->line_out_notify.work);
 
-	mutex_destroy(&rt->headphone_notअगरy.mutex);
-	mutex_destroy(&rt->line_in_notअगरy.mutex);
-	mutex_destroy(&rt->line_out_notअगरy.mutex);
+	mutex_destroy(&rt->headphone_notify.mutex);
+	mutex_destroy(&rt->line_in_notify.mutex);
+	mutex_destroy(&rt->line_out_notify.mutex);
 
-	kमुक्त(rt->headphone_notअगरy.gpio_निजी);
-	kमुक्त(rt->line_in_notअगरy.gpio_निजी);
-	kमुक्त(rt->line_out_notअगरy.gpio_निजी);
-पूर्ण
+	kfree(rt->headphone_notify.gpio_private);
+	kfree(rt->line_in_notify.gpio_private);
+	kfree(rt->line_out_notify.gpio_private);
+}
 
-अटल व्योम pmf_handle_notअगरy_irq(व्योम *data)
-अणु
-	काष्ठा gpio_notअगरication *notअगर = data;
+static void pmf_handle_notify_irq(void *data)
+{
+	struct gpio_notification *notif = data;
 
-	schedule_delayed_work(&notअगर->work, 0);
-पूर्ण
+	schedule_delayed_work(&notif->work, 0);
+}
 
-अटल पूर्णांक pmf_set_notअगरy(काष्ठा gpio_runसमय *rt,
-			  क्रमागत notअगरy_type type,
-			  notअगरy_func_t notअगरy,
-			  व्योम *data)
-अणु
-	काष्ठा gpio_notअगरication *notअगर;
-	notअगरy_func_t old;
-	काष्ठा pmf_irq_client *irq_client;
-	अक्षर *name;
-	पूर्णांक err = -EBUSY;
+static int pmf_set_notify(struct gpio_runtime *rt,
+			  enum notify_type type,
+			  notify_func_t notify,
+			  void *data)
+{
+	struct gpio_notification *notif;
+	notify_func_t old;
+	struct pmf_irq_client *irq_client;
+	char *name;
+	int err = -EBUSY;
 
-	चयन (type) अणु
-	हाल AOA_NOTIFY_HEADPHONE:
-		notअगर = &rt->headphone_notअगरy;
+	switch (type) {
+	case AOA_NOTIFY_HEADPHONE:
+		notif = &rt->headphone_notify;
 		name = "headphone-detect";
-		अवरोध;
-	हाल AOA_NOTIFY_LINE_IN:
-		notअगर = &rt->line_in_notअगरy;
+		break;
+	case AOA_NOTIFY_LINE_IN:
+		notif = &rt->line_in_notify;
 		name = "linein-detect";
-		अवरोध;
-	हाल AOA_NOTIFY_LINE_OUT:
-		notअगर = &rt->line_out_notअगरy;
+		break;
+	case AOA_NOTIFY_LINE_OUT:
+		notif = &rt->line_out_notify;
 		name = "lineout-detect";
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	mutex_lock(&notअगर->mutex);
+	mutex_lock(&notif->mutex);
 
-	old = notअगर->notअगरy;
+	old = notif->notify;
 
-	अगर (!old && !notअगरy) अणु
+	if (!old && !notify) {
 		err = 0;
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 
-	अगर (old && notअगरy) अणु
-		अगर (old == notअगरy && notअगर->data == data)
+	if (old && notify) {
+		if (old == notify && notif->data == data)
 			err = 0;
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 
-	अगर (old && !notअगरy) अणु
-		irq_client = notअगर->gpio_निजी;
-		pmf_unरेजिस्टर_irq_client(irq_client);
-		kमुक्त(irq_client);
-		notअगर->gpio_निजी = शून्य;
-	पूर्ण
-	अगर (!old && notअगरy) अणु
-		irq_client = kzalloc(माप(काष्ठा pmf_irq_client),
+	if (old && !notify) {
+		irq_client = notif->gpio_private;
+		pmf_unregister_irq_client(irq_client);
+		kfree(irq_client);
+		notif->gpio_private = NULL;
+	}
+	if (!old && notify) {
+		irq_client = kzalloc(sizeof(struct pmf_irq_client),
 				     GFP_KERNEL);
-		अगर (!irq_client) अणु
+		if (!irq_client) {
 			err = -ENOMEM;
-			जाओ out_unlock;
-		पूर्ण
-		irq_client->data = notअगर;
-		irq_client->handler = pmf_handle_notअगरy_irq;
+			goto out_unlock;
+		}
+		irq_client->data = notif;
+		irq_client->handler = pmf_handle_notify_irq;
 		irq_client->owner = THIS_MODULE;
-		err = pmf_रेजिस्टर_irq_client(rt->node,
+		err = pmf_register_irq_client(rt->node,
 					      name,
 					      irq_client);
-		अगर (err) अणु
-			prपूर्णांकk(KERN_ERR "snd-aoa: gpio layer failed to"
+		if (err) {
+			printk(KERN_ERR "snd-aoa: gpio layer failed to"
 					" register %s irq (%d)\n", name, err);
-			kमुक्त(irq_client);
-			जाओ out_unlock;
-		पूर्ण
-		notअगर->gpio_निजी = irq_client;
-	पूर्ण
-	notअगर->notअगरy = notअगरy;
-	notअगर->data = data;
+			kfree(irq_client);
+			goto out_unlock;
+		}
+		notif->gpio_private = irq_client;
+	}
+	notif->notify = notify;
+	notif->data = data;
 
 	err = 0;
  out_unlock:
-	mutex_unlock(&notअगर->mutex);
-	वापस err;
-पूर्ण
+	mutex_unlock(&notif->mutex);
+	return err;
+}
 
-अटल पूर्णांक pmf_get_detect(काष्ठा gpio_runसमय *rt,
-			  क्रमागत notअगरy_type type)
-अणु
-	अक्षर *name;
-	पूर्णांक err = -EBUSY, ret;
-	काष्ठा pmf_args args = अणु .count = 1, .u[0].p = &ret पूर्ण;
+static int pmf_get_detect(struct gpio_runtime *rt,
+			  enum notify_type type)
+{
+	char *name;
+	int err = -EBUSY, ret;
+	struct pmf_args args = { .count = 1, .u[0].p = &ret };
 
-	चयन (type) अणु
-	हाल AOA_NOTIFY_HEADPHONE:
+	switch (type) {
+	case AOA_NOTIFY_HEADPHONE:
 		name = "headphone-detect";
-		अवरोध;
-	हाल AOA_NOTIFY_LINE_IN:
+		break;
+	case AOA_NOTIFY_LINE_IN:
 		name = "linein-detect";
-		अवरोध;
-	हाल AOA_NOTIFY_LINE_OUT:
+		break;
+	case AOA_NOTIFY_LINE_OUT:
 		name = "lineout-detect";
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
 	err = pmf_call_function(rt->node, name, &args);
-	अगर (err)
-		वापस err;
-	वापस ret;
-पूर्ण
+	if (err)
+		return err;
+	return ret;
+}
 
-अटल काष्ठा gpio_methods methods = अणु
+static struct gpio_methods methods = {
 	.init			= pmf_gpio_init,
-	.निकास			= pmf_gpio_निकास,
+	.exit			= pmf_gpio_exit,
 	.all_amps_off		= pmf_gpio_all_amps_off,
 	.all_amps_restore	= pmf_gpio_all_amps_restore,
 	.set_headphone		= pmf_gpio_set_headphone,
@@ -245,9 +244,9 @@ PMF_GPIO(lineout, 2);
 	.get_headphone		= pmf_gpio_get_headphone,
 	.get_speakers		= pmf_gpio_get_amp,
 	.get_lineout		= pmf_gpio_get_lineout,
-	.set_notअगरy		= pmf_set_notअगरy,
+	.set_notify		= pmf_set_notify,
 	.get_detect		= pmf_get_detect,
-पूर्ण;
+};
 
-काष्ठा gpio_methods *pmf_gpio_methods = &methods;
+struct gpio_methods *pmf_gpio_methods = &methods;
 EXPORT_SYMBOL_GPL(pmf_gpio_methods);

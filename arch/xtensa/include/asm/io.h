@@ -1,74 +1,73 @@
-<शैली गुरु>
 /*
- * include/यंत्र-xtensa/पन.स
+ * include/asm-xtensa/io.h
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the मुख्य directory of this archive
- * क्रम more details.
+ * License.  See the file "COPYING" in the main directory of this archive
+ * for more details.
  *
  * Copyright (C) 2001 - 2005 Tensilica Inc.
  */
 
-#अगर_अघोषित _XTENSA_IO_H
-#घोषणा _XTENSA_IO_H
+#ifndef _XTENSA_IO_H
+#define _XTENSA_IO_H
 
-#समावेश <यंत्र/byteorder.h>
-#समावेश <यंत्र/page.h>
-#समावेश <यंत्र/vectors.h>
-#समावेश <linux/bug.h>
-#समावेश <linux/kernel.h>
+#include <asm/byteorder.h>
+#include <asm/page.h>
+#include <asm/vectors.h>
+#include <linux/bug.h>
+#include <linux/kernel.h>
 
-#समावेश <linux/types.h>
+#include <linux/types.h>
 
-#घोषणा IOADDR(x)		(XCHAL_KIO_BYPASS_VADDR + (x))
-#घोषणा IO_SPACE_LIMIT ~0
-#घोषणा PCI_IOBASE		((व्योम __iomem *)XCHAL_KIO_BYPASS_VADDR)
+#define IOADDR(x)		(XCHAL_KIO_BYPASS_VADDR + (x))
+#define IO_SPACE_LIMIT ~0
+#define PCI_IOBASE		((void __iomem *)XCHAL_KIO_BYPASS_VADDR)
 
-#अगर_घोषित CONFIG_MMU
+#ifdef CONFIG_MMU
 
-व्योम __iomem *xtensa_ioremap_nocache(अचिन्हित दीर्घ addr, अचिन्हित दीर्घ size);
-व्योम __iomem *xtensa_ioremap_cache(अचिन्हित दीर्घ addr, अचिन्हित दीर्घ size);
-व्योम xtensa_iounmap(अस्थिर व्योम __iomem *addr);
+void __iomem *xtensa_ioremap_nocache(unsigned long addr, unsigned long size);
+void __iomem *xtensa_ioremap_cache(unsigned long addr, unsigned long size);
+void xtensa_iounmap(volatile void __iomem *addr);
 
 /*
- * Return the भव address क्रम the specअगरied bus memory.
+ * Return the virtual address for the specified bus memory.
  */
-अटल अंतरभूत व्योम __iomem *ioremap(अचिन्हित दीर्घ offset, अचिन्हित दीर्घ size)
-अणु
-	अगर (offset >= XCHAL_KIO_PADDR
+static inline void __iomem *ioremap(unsigned long offset, unsigned long size)
+{
+	if (offset >= XCHAL_KIO_PADDR
 	    && offset - XCHAL_KIO_PADDR < XCHAL_KIO_SIZE)
-		वापस (व्योम*)(offset-XCHAL_KIO_PADDR+XCHAL_KIO_BYPASS_VADDR);
-	अन्यथा
-		वापस xtensa_ioremap_nocache(offset, size);
-पूर्ण
+		return (void*)(offset-XCHAL_KIO_PADDR+XCHAL_KIO_BYPASS_VADDR);
+	else
+		return xtensa_ioremap_nocache(offset, size);
+}
 
-अटल अंतरभूत व्योम __iomem *ioremap_cache(अचिन्हित दीर्घ offset,
-		अचिन्हित दीर्घ size)
-अणु
-	अगर (offset >= XCHAL_KIO_PADDR
+static inline void __iomem *ioremap_cache(unsigned long offset,
+		unsigned long size)
+{
+	if (offset >= XCHAL_KIO_PADDR
 	    && offset - XCHAL_KIO_PADDR < XCHAL_KIO_SIZE)
-		वापस (व्योम*)(offset-XCHAL_KIO_PADDR+XCHAL_KIO_CACHED_VADDR);
-	अन्यथा
-		वापस xtensa_ioremap_cache(offset, size);
-पूर्ण
-#घोषणा ioremap_cache ioremap_cache
+		return (void*)(offset-XCHAL_KIO_PADDR+XCHAL_KIO_CACHED_VADDR);
+	else
+		return xtensa_ioremap_cache(offset, size);
+}
+#define ioremap_cache ioremap_cache
 
-अटल अंतरभूत व्योम iounmap(अस्थिर व्योम __iomem *addr)
-अणु
-	अचिन्हित दीर्घ va = (अचिन्हित दीर्घ) addr;
+static inline void iounmap(volatile void __iomem *addr)
+{
+	unsigned long va = (unsigned long) addr;
 
-	अगर (!(va >= XCHAL_KIO_CACHED_VADDR &&
+	if (!(va >= XCHAL_KIO_CACHED_VADDR &&
 	      va - XCHAL_KIO_CACHED_VADDR < XCHAL_KIO_SIZE) &&
 	    !(va >= XCHAL_KIO_BYPASS_VADDR &&
 	      va - XCHAL_KIO_BYPASS_VADDR < XCHAL_KIO_SIZE))
 		xtensa_iounmap(addr);
-पूर्ण
+}
 
-#घोषणा virt_to_bus     virt_to_phys
-#घोषणा bus_to_virt     phys_to_virt
+#define virt_to_bus     virt_to_phys
+#define bus_to_virt     phys_to_virt
 
-#पूर्ण_अगर /* CONFIG_MMU */
+#endif /* CONFIG_MMU */
 
-#समावेश <यंत्र-generic/पन.स>
+#include <asm-generic/io.h>
 
-#पूर्ण_अगर	/* _XTENSA_IO_H */
+#endif	/* _XTENSA_IO_H */

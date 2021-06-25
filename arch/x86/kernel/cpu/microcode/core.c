@@ -1,50 +1,49 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * CPU Microcode Update Driver क्रम Linux
+ * CPU Microcode Update Driver for Linux
  *
  * Copyright (C) 2000-2006 Tigran Aivazian <aivazian.tigran@gmail.com>
- *	      2006	Shaohua Li <shaohua.li@पूर्णांकel.com>
+ *	      2006	Shaohua Li <shaohua.li@intel.com>
  *	      2013-2016	Borislav Petkov <bp@alien8.de>
  *
- * X86 CPU microcode early update क्रम Linux:
+ * X86 CPU microcode early update for Linux:
  *
- *	Copyright (C) 2012 Fenghua Yu <fenghua.yu@पूर्णांकel.com>
+ *	Copyright (C) 2012 Fenghua Yu <fenghua.yu@intel.com>
  *			   H Peter Anvin" <hpa@zytor.com>
  *		  (C) 2015 Borislav Petkov <bp@alien8.de>
  *
  * This driver allows to upgrade microcode on x86 processors.
  */
 
-#घोषणा pr_fmt(fmt) "microcode: " fmt
+#define pr_fmt(fmt) "microcode: " fmt
 
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/stop_machine.h>
-#समावेश <linux/syscore_ops.h>
-#समावेश <linux/miscdevice.h>
-#समावेश <linux/capability.h>
-#समावेश <linux/firmware.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/cpu.h>
-#समावेश <linux/nmi.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/mm.h>
+#include <linux/platform_device.h>
+#include <linux/stop_machine.h>
+#include <linux/syscore_ops.h>
+#include <linux/miscdevice.h>
+#include <linux/capability.h>
+#include <linux/firmware.h>
+#include <linux/kernel.h>
+#include <linux/delay.h>
+#include <linux/mutex.h>
+#include <linux/cpu.h>
+#include <linux/nmi.h>
+#include <linux/fs.h>
+#include <linux/mm.h>
 
-#समावेश <यंत्र/microcode_पूर्णांकel.h>
-#समावेश <यंत्र/cpu_device_id.h>
-#समावेश <यंत्र/microcode_amd.h>
-#समावेश <यंत्र/perf_event.h>
-#समावेश <यंत्र/microcode.h>
-#समावेश <यंत्र/processor.h>
-#समावेश <यंत्र/cmdline.h>
-#समावेश <यंत्र/setup.h>
+#include <asm/microcode_intel.h>
+#include <asm/cpu_device_id.h>
+#include <asm/microcode_amd.h>
+#include <asm/perf_event.h>
+#include <asm/microcode.h>
+#include <asm/processor.h>
+#include <asm/cmdline.h>
+#include <asm/setup.h>
 
-#घोषणा DRIVER_VERSION	"2.2"
+#define DRIVER_VERSION	"2.2"
 
-अटल काष्ठा microcode_ops	*microcode_ops;
-अटल bool dis_ucode_ldr = true;
+static struct microcode_ops	*microcode_ops;
+static bool dis_ucode_ldr = true;
 
 bool initrd_gone;
 
@@ -60,585 +59,585 @@ LIST_HEAD(microcode_cache);
  *   the cpu-hotplug-callback call sites.
  *
  * We guarantee that only a single cpu is being
- * updated at any particular moment of समय.
+ * updated at any particular moment of time.
  */
-अटल DEFINE_MUTEX(microcode_mutex);
+static DEFINE_MUTEX(microcode_mutex);
 
-काष्ठा ucode_cpu_info		ucode_cpu_info[NR_CPUS];
+struct ucode_cpu_info		ucode_cpu_info[NR_CPUS];
 
-काष्ठा cpu_info_ctx अणु
-	काष्ठा cpu_signature	*cpu_sig;
-	पूर्णांक			err;
-पूर्ण;
+struct cpu_info_ctx {
+	struct cpu_signature	*cpu_sig;
+	int			err;
+};
 
 /*
  * Those patch levels cannot be updated to newer ones and thus should be final.
  */
-अटल u32 final_levels[] = अणु
+static u32 final_levels[] = {
 	0x01000098,
 	0x0100009f,
 	0x010000af,
 	0, /* T-101 terminator */
-पूर्ण;
+};
 
 /*
  * Check the current patch level on this CPU.
  *
  * Returns:
- *  - true: अगर update should stop
+ *  - true: if update should stop
  *  - false: otherwise
  */
-अटल bool amd_check_current_patch_level(व्योम)
-अणु
+static bool amd_check_current_patch_level(void)
+{
 	u32 lvl, dummy, i;
 	u32 *levels;
 
 	native_rdmsr(MSR_AMD64_PATCH_LEVEL, lvl, dummy);
 
-	अगर (IS_ENABLED(CONFIG_X86_32))
+	if (IS_ENABLED(CONFIG_X86_32))
 		levels = (u32 *)__pa_nodebug(&final_levels);
-	अन्यथा
+	else
 		levels = final_levels;
 
-	क्रम (i = 0; levels[i]; i++) अणु
-		अगर (lvl == levels[i])
-			वापस true;
-	पूर्ण
-	वापस false;
-पूर्ण
+	for (i = 0; levels[i]; i++) {
+		if (lvl == levels[i])
+			return true;
+	}
+	return false;
+}
 
-अटल bool __init check_loader_disabled_bsp(व्योम)
-अणु
-	अटल स्थिर अक्षर *__dis_opt_str = "dis_ucode_ldr";
+static bool __init check_loader_disabled_bsp(void)
+{
+	static const char *__dis_opt_str = "dis_ucode_ldr";
 
-#अगर_घोषित CONFIG_X86_32
-	स्थिर अक्षर *cmdline = (स्थिर अक्षर *)__pa_nodebug(boot_command_line);
-	स्थिर अक्षर *option  = (स्थिर अक्षर *)__pa_nodebug(__dis_opt_str);
+#ifdef CONFIG_X86_32
+	const char *cmdline = (const char *)__pa_nodebug(boot_command_line);
+	const char *option  = (const char *)__pa_nodebug(__dis_opt_str);
 	bool *res = (bool *)__pa_nodebug(&dis_ucode_ldr);
 
-#अन्यथा /* CONFIG_X86_64 */
-	स्थिर अक्षर *cmdline = boot_command_line;
-	स्थिर अक्षर *option  = __dis_opt_str;
+#else /* CONFIG_X86_64 */
+	const char *cmdline = boot_command_line;
+	const char *option  = __dis_opt_str;
 	bool *res = &dis_ucode_ldr;
-#पूर्ण_अगर
+#endif
 
 	/*
-	 * CPUID(1).ECX[31]: reserved क्रम hypervisor use. This is still not
-	 * completely accurate as xen pv guests करोn't see that CPUID bit set but
+	 * CPUID(1).ECX[31]: reserved for hypervisor use. This is still not
+	 * completely accurate as xen pv guests don't see that CPUID bit set but
 	 * that's good enough as they don't land on the BSP path anyway.
 	 */
-	अगर (native_cpuid_ecx(1) & BIT(31))
-		वापस *res;
+	if (native_cpuid_ecx(1) & BIT(31))
+		return *res;
 
-	अगर (x86_cpuid_venकरोr() == X86_VENDOR_AMD) अणु
-		अगर (amd_check_current_patch_level())
-			वापस *res;
-	पूर्ण
+	if (x86_cpuid_vendor() == X86_VENDOR_AMD) {
+		if (amd_check_current_patch_level())
+			return *res;
+	}
 
-	अगर (cmdline_find_option_bool(cmdline, option) <= 0)
+	if (cmdline_find_option_bool(cmdline, option) <= 0)
 		*res = false;
 
-	वापस *res;
-पूर्ण
+	return *res;
+}
 
-बाह्य काष्ठा builtin_fw __start_builtin_fw[];
-बाह्य काष्ठा builtin_fw __end_builtin_fw[];
+extern struct builtin_fw __start_builtin_fw[];
+extern struct builtin_fw __end_builtin_fw[];
 
-bool get_builtin_firmware(काष्ठा cpio_data *cd, स्थिर अक्षर *name)
-अणु
-	काष्ठा builtin_fw *b_fw;
+bool get_builtin_firmware(struct cpio_data *cd, const char *name)
+{
+	struct builtin_fw *b_fw;
 
-	क्रम (b_fw = __start_builtin_fw; b_fw != __end_builtin_fw; b_fw++) अणु
-		अगर (!म_भेद(name, b_fw->name)) अणु
+	for (b_fw = __start_builtin_fw; b_fw != __end_builtin_fw; b_fw++) {
+		if (!strcmp(name, b_fw->name)) {
 			cd->size = b_fw->size;
 			cd->data = b_fw->data;
-			वापस true;
-		पूर्ण
-	पूर्ण
-	वापस false;
-पूर्ण
+			return true;
+		}
+	}
+	return false;
+}
 
-व्योम __init load_ucode_bsp(व्योम)
-अणु
-	अचिन्हित पूर्णांक cpuid_1_eax;
-	bool पूर्णांकel = true;
+void __init load_ucode_bsp(void)
+{
+	unsigned int cpuid_1_eax;
+	bool intel = true;
 
-	अगर (!have_cpuid_p())
-		वापस;
+	if (!have_cpuid_p())
+		return;
 
 	cpuid_1_eax = native_cpuid_eax(1);
 
-	चयन (x86_cpuid_venकरोr()) अणु
-	हाल X86_VENDOR_INTEL:
-		अगर (x86_family(cpuid_1_eax) < 6)
-			वापस;
-		अवरोध;
+	switch (x86_cpuid_vendor()) {
+	case X86_VENDOR_INTEL:
+		if (x86_family(cpuid_1_eax) < 6)
+			return;
+		break;
 
-	हाल X86_VENDOR_AMD:
-		अगर (x86_family(cpuid_1_eax) < 0x10)
-			वापस;
-		पूर्णांकel = false;
-		अवरोध;
+	case X86_VENDOR_AMD:
+		if (x86_family(cpuid_1_eax) < 0x10)
+			return;
+		intel = false;
+		break;
 
-	शेष:
-		वापस;
-	पूर्ण
+	default:
+		return;
+	}
 
-	अगर (check_loader_disabled_bsp())
-		वापस;
+	if (check_loader_disabled_bsp())
+		return;
 
-	अगर (पूर्णांकel)
-		load_ucode_पूर्णांकel_bsp();
-	अन्यथा
+	if (intel)
+		load_ucode_intel_bsp();
+	else
 		load_ucode_amd_bsp(cpuid_1_eax);
-पूर्ण
+}
 
-अटल bool check_loader_disabled_ap(व्योम)
-अणु
-#अगर_घोषित CONFIG_X86_32
-	वापस *((bool *)__pa_nodebug(&dis_ucode_ldr));
-#अन्यथा
-	वापस dis_ucode_ldr;
-#पूर्ण_अगर
-पूर्ण
+static bool check_loader_disabled_ap(void)
+{
+#ifdef CONFIG_X86_32
+	return *((bool *)__pa_nodebug(&dis_ucode_ldr));
+#else
+	return dis_ucode_ldr;
+#endif
+}
 
-व्योम load_ucode_ap(व्योम)
-अणु
-	अचिन्हित पूर्णांक cpuid_1_eax;
+void load_ucode_ap(void)
+{
+	unsigned int cpuid_1_eax;
 
-	अगर (check_loader_disabled_ap())
-		वापस;
+	if (check_loader_disabled_ap())
+		return;
 
 	cpuid_1_eax = native_cpuid_eax(1);
 
-	चयन (x86_cpuid_venकरोr()) अणु
-	हाल X86_VENDOR_INTEL:
-		अगर (x86_family(cpuid_1_eax) >= 6)
-			load_ucode_पूर्णांकel_ap();
-		अवरोध;
-	हाल X86_VENDOR_AMD:
-		अगर (x86_family(cpuid_1_eax) >= 0x10)
+	switch (x86_cpuid_vendor()) {
+	case X86_VENDOR_INTEL:
+		if (x86_family(cpuid_1_eax) >= 6)
+			load_ucode_intel_ap();
+		break;
+	case X86_VENDOR_AMD:
+		if (x86_family(cpuid_1_eax) >= 0x10)
 			load_ucode_amd_ap(cpuid_1_eax);
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	default:
+		break;
+	}
+}
 
-अटल पूर्णांक __init save_microcode_in_initrd(व्योम)
-अणु
-	काष्ठा cpuinfo_x86 *c = &boot_cpu_data;
-	पूर्णांक ret = -EINVAL;
+static int __init save_microcode_in_initrd(void)
+{
+	struct cpuinfo_x86 *c = &boot_cpu_data;
+	int ret = -EINVAL;
 
-	चयन (c->x86_venकरोr) अणु
-	हाल X86_VENDOR_INTEL:
-		अगर (c->x86 >= 6)
-			ret = save_microcode_in_initrd_पूर्णांकel();
-		अवरोध;
-	हाल X86_VENDOR_AMD:
-		अगर (c->x86 >= 0x10)
+	switch (c->x86_vendor) {
+	case X86_VENDOR_INTEL:
+		if (c->x86 >= 6)
+			ret = save_microcode_in_initrd_intel();
+		break;
+	case X86_VENDOR_AMD:
+		if (c->x86 >= 0x10)
 			ret = save_microcode_in_initrd_amd(cpuid_eax(1));
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+		break;
+	default:
+		break;
+	}
 
 	initrd_gone = true;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-काष्ठा cpio_data find_microcode_in_initrd(स्थिर अक्षर *path, bool use_pa)
-अणु
-#अगर_घोषित CONFIG_BLK_DEV_INITRD
-	अचिन्हित दीर्घ start = 0;
-	माप_प्रकार size;
+struct cpio_data find_microcode_in_initrd(const char *path, bool use_pa)
+{
+#ifdef CONFIG_BLK_DEV_INITRD
+	unsigned long start = 0;
+	size_t size;
 
-#अगर_घोषित CONFIG_X86_32
-	काष्ठा boot_params *params;
+#ifdef CONFIG_X86_32
+	struct boot_params *params;
 
-	अगर (use_pa)
-		params = (काष्ठा boot_params *)__pa_nodebug(&boot_params);
-	अन्यथा
+	if (use_pa)
+		params = (struct boot_params *)__pa_nodebug(&boot_params);
+	else
 		params = &boot_params;
 
 	size = params->hdr.ramdisk_size;
 
 	/*
-	 * Set start only अगर we have an initrd image. We cannot use initrd_start
+	 * Set start only if we have an initrd image. We cannot use initrd_start
 	 * because it is not set that early yet.
 	 */
-	अगर (size)
+	if (size)
 		start = params->hdr.ramdisk_image;
 
-# अन्यथा /* CONFIG_X86_64 */
-	size  = (अचिन्हित दीर्घ)boot_params.ext_ramdisk_size << 32;
+# else /* CONFIG_X86_64 */
+	size  = (unsigned long)boot_params.ext_ramdisk_size << 32;
 	size |= boot_params.hdr.ramdisk_size;
 
-	अगर (size) अणु
-		start  = (अचिन्हित दीर्घ)boot_params.ext_ramdisk_image << 32;
+	if (size) {
+		start  = (unsigned long)boot_params.ext_ramdisk_image << 32;
 		start |= boot_params.hdr.ramdisk_image;
 
 		start += PAGE_OFFSET;
-	पूर्ण
-# endअगर
+	}
+# endif
 
 	/*
 	 * Fixup the start address: after reserve_initrd() runs, initrd_start
-	 * has the भव address of the beginning of the initrd. It also
-	 * possibly relocates the ramdisk. In either हाल, initrd_start contains
+	 * has the virtual address of the beginning of the initrd. It also
+	 * possibly relocates the ramdisk. In either case, initrd_start contains
 	 * the updated address so use that instead.
 	 *
-	 * initrd_gone is क्रम the hotplug हाल where we've thrown out initrd
-	 * alपढ़ोy.
+	 * initrd_gone is for the hotplug case where we've thrown out initrd
+	 * already.
 	 */
-	अगर (!use_pa) अणु
-		अगर (initrd_gone)
-			वापस (काष्ठा cpio_data)अणु शून्य, 0, "" पूर्ण;
-		अगर (initrd_start)
+	if (!use_pa) {
+		if (initrd_gone)
+			return (struct cpio_data){ NULL, 0, "" };
+		if (initrd_start)
 			start = initrd_start;
-	पूर्ण अन्यथा अणु
+	} else {
 		/*
-		 * The picture with physical addresses is a bit dअगरferent: we
+		 * The picture with physical addresses is a bit different: we
 		 * need to get the *physical* address to which the ramdisk was
 		 * relocated, i.e., relocated_ramdisk (not initrd_start) and
 		 * since we're running from physical addresses, we need to access
 		 * relocated_ramdisk through its *physical* address too.
 		 */
 		u64 *rr = (u64 *)__pa_nodebug(&relocated_ramdisk);
-		अगर (*rr)
+		if (*rr)
 			start = *rr;
-	पूर्ण
+	}
 
-	वापस find_cpio_data(path, (व्योम *)start, size, शून्य);
-#अन्यथा /* !CONFIG_BLK_DEV_INITRD */
-	वापस (काष्ठा cpio_data)अणु शून्य, 0, "" पूर्ण;
-#पूर्ण_अगर
-पूर्ण
+	return find_cpio_data(path, (void *)start, size, NULL);
+#else /* !CONFIG_BLK_DEV_INITRD */
+	return (struct cpio_data){ NULL, 0, "" };
+#endif
+}
 
-व्योम reload_early_microcode(व्योम)
-अणु
-	पूर्णांक venकरोr, family;
+void reload_early_microcode(void)
+{
+	int vendor, family;
 
-	venकरोr = x86_cpuid_venकरोr();
+	vendor = x86_cpuid_vendor();
 	family = x86_cpuid_family();
 
-	चयन (venकरोr) अणु
-	हाल X86_VENDOR_INTEL:
-		अगर (family >= 6)
-			reload_ucode_पूर्णांकel();
-		अवरोध;
-	हाल X86_VENDOR_AMD:
-		अगर (family >= 0x10)
+	switch (vendor) {
+	case X86_VENDOR_INTEL:
+		if (family >= 6)
+			reload_ucode_intel();
+		break;
+	case X86_VENDOR_AMD:
+		if (family >= 0x10)
 			reload_ucode_amd();
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	default:
+		break;
+	}
+}
 
-अटल व्योम collect_cpu_info_local(व्योम *arg)
-अणु
-	काष्ठा cpu_info_ctx *ctx = arg;
+static void collect_cpu_info_local(void *arg)
+{
+	struct cpu_info_ctx *ctx = arg;
 
 	ctx->err = microcode_ops->collect_cpu_info(smp_processor_id(),
 						   ctx->cpu_sig);
-पूर्ण
+}
 
-अटल पूर्णांक collect_cpu_info_on_target(पूर्णांक cpu, काष्ठा cpu_signature *cpu_sig)
-अणु
-	काष्ठा cpu_info_ctx ctx = अणु .cpu_sig = cpu_sig, .err = 0 पूर्ण;
-	पूर्णांक ret;
+static int collect_cpu_info_on_target(int cpu, struct cpu_signature *cpu_sig)
+{
+	struct cpu_info_ctx ctx = { .cpu_sig = cpu_sig, .err = 0 };
+	int ret;
 
 	ret = smp_call_function_single(cpu, collect_cpu_info_local, &ctx, 1);
-	अगर (!ret)
+	if (!ret)
 		ret = ctx.err;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक collect_cpu_info(पूर्णांक cpu)
-अणु
-	काष्ठा ucode_cpu_info *uci = ucode_cpu_info + cpu;
-	पूर्णांक ret;
+static int collect_cpu_info(int cpu)
+{
+	struct ucode_cpu_info *uci = ucode_cpu_info + cpu;
+	int ret;
 
-	स_रखो(uci, 0, माप(*uci));
+	memset(uci, 0, sizeof(*uci));
 
 	ret = collect_cpu_info_on_target(cpu, &uci->cpu_sig);
-	अगर (!ret)
+	if (!ret)
 		uci->valid = 1;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम apply_microcode_local(व्योम *arg)
-अणु
-	क्रमागत ucode_state *err = arg;
+static void apply_microcode_local(void *arg)
+{
+	enum ucode_state *err = arg;
 
 	*err = microcode_ops->apply_microcode(smp_processor_id());
-पूर्ण
+}
 
-अटल पूर्णांक apply_microcode_on_target(पूर्णांक cpu)
-अणु
-	क्रमागत ucode_state err;
-	पूर्णांक ret;
+static int apply_microcode_on_target(int cpu)
+{
+	enum ucode_state err;
+	int ret;
 
 	ret = smp_call_function_single(cpu, apply_microcode_local, &err, 1);
-	अगर (!ret) अणु
-		अगर (err == UCODE_ERROR)
+	if (!ret) {
+		if (err == UCODE_ERROR)
 			ret = 1;
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 
-#अगर_घोषित CONFIG_MICROCODE_OLD_INTERFACE
-अटल पूर्णांक करो_microcode_update(स्थिर व्योम __user *buf, माप_प्रकार size)
-अणु
-	पूर्णांक error = 0;
-	पूर्णांक cpu;
+#ifdef CONFIG_MICROCODE_OLD_INTERFACE
+static int do_microcode_update(const void __user *buf, size_t size)
+{
+	int error = 0;
+	int cpu;
 
-	क्रम_each_online_cpu(cpu) अणु
-		काष्ठा ucode_cpu_info *uci = ucode_cpu_info + cpu;
-		क्रमागत ucode_state ustate;
+	for_each_online_cpu(cpu) {
+		struct ucode_cpu_info *uci = ucode_cpu_info + cpu;
+		enum ucode_state ustate;
 
-		अगर (!uci->valid)
-			जारी;
+		if (!uci->valid)
+			continue;
 
 		ustate = microcode_ops->request_microcode_user(cpu, buf, size);
-		अगर (ustate == UCODE_ERROR) अणु
+		if (ustate == UCODE_ERROR) {
 			error = -1;
-			अवरोध;
-		पूर्ण अन्यथा अगर (ustate == UCODE_NEW) अणु
+			break;
+		} else if (ustate == UCODE_NEW) {
 			apply_microcode_on_target(cpu);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस error;
-पूर्ण
+	return error;
+}
 
-अटल पूर्णांक microcode_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	वापस capable(CAP_SYS_RAWIO) ? stream_खोलो(inode, file) : -EPERM;
-पूर्ण
+static int microcode_open(struct inode *inode, struct file *file)
+{
+	return capable(CAP_SYS_RAWIO) ? stream_open(inode, file) : -EPERM;
+}
 
-अटल sमाप_प्रकार microcode_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buf,
-			       माप_प्रकार len, loff_t *ppos)
-अणु
-	sमाप_प्रकार ret = -EINVAL;
-	अचिन्हित दीर्घ nr_pages = totalram_pages();
+static ssize_t microcode_write(struct file *file, const char __user *buf,
+			       size_t len, loff_t *ppos)
+{
+	ssize_t ret = -EINVAL;
+	unsigned long nr_pages = totalram_pages();
 
-	अगर ((len >> PAGE_SHIFT) > nr_pages) अणु
+	if ((len >> PAGE_SHIFT) > nr_pages) {
 		pr_err("too much data (max %ld pages)\n", nr_pages);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	get_online_cpus();
 	mutex_lock(&microcode_mutex);
 
-	अगर (करो_microcode_update(buf, len) == 0)
-		ret = (sमाप_प्रकार)len;
+	if (do_microcode_update(buf, len) == 0)
+		ret = (ssize_t)len;
 
-	अगर (ret > 0)
+	if (ret > 0)
 		perf_check_microcode();
 
 	mutex_unlock(&microcode_mutex);
 	put_online_cpus();
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा file_operations microcode_fops = अणु
+static const struct file_operations microcode_fops = {
 	.owner			= THIS_MODULE,
-	.ग_लिखो			= microcode_ग_लिखो,
-	.खोलो			= microcode_खोलो,
+	.write			= microcode_write,
+	.open			= microcode_open,
 	.llseek		= no_llseek,
-पूर्ण;
+};
 
-अटल काष्ठा miscdevice microcode_dev = अणु
+static struct miscdevice microcode_dev = {
 	.minor			= MICROCODE_MINOR,
 	.name			= "microcode",
 	.nodename		= "cpu/microcode",
 	.fops			= &microcode_fops,
-पूर्ण;
+};
 
-अटल पूर्णांक __init microcode_dev_init(व्योम)
-अणु
-	पूर्णांक error;
+static int __init microcode_dev_init(void)
+{
+	int error;
 
-	error = misc_रेजिस्टर(&microcode_dev);
-	अगर (error) अणु
+	error = misc_register(&microcode_dev);
+	if (error) {
 		pr_err("can't misc_register on minor=%d\n", MICROCODE_MINOR);
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम __निकास microcode_dev_निकास(व्योम)
-अणु
-	misc_deरेजिस्टर(&microcode_dev);
-पूर्ण
-#अन्यथा
-#घोषणा microcode_dev_init()	0
-#घोषणा microcode_dev_निकास()	करो अणु पूर्ण जबतक (0)
-#पूर्ण_अगर
+static void __exit microcode_dev_exit(void)
+{
+	misc_deregister(&microcode_dev);
+}
+#else
+#define microcode_dev_init()	0
+#define microcode_dev_exit()	do { } while (0)
+#endif
 
-/* fake device क्रम request_firmware */
-अटल काष्ठा platक्रमm_device	*microcode_pdev;
+/* fake device for request_firmware */
+static struct platform_device	*microcode_pdev;
 
 /*
- * Late loading dance. Why the heavy-handed stomp_machine efक्रमt?
+ * Late loading dance. Why the heavy-handed stomp_machine effort?
  *
- * - HT siblings must be idle and not execute other code जबतक the other sibling
- *   is loading microcode in order to aव्योम any negative पूर्णांकeractions caused by
+ * - HT siblings must be idle and not execute other code while the other sibling
+ *   is loading microcode in order to avoid any negative interactions caused by
  *   the loading.
  *
  * - In addition, microcode update on the cores must be serialized until this
  *   requirement can be relaxed in the future. Right now, this is conservative
  *   and good.
  */
-#घोषणा SPINUNIT 100 /* 100 nsec */
+#define SPINUNIT 100 /* 100 nsec */
 
-अटल पूर्णांक check_online_cpus(व्योम)
-अणु
-	अचिन्हित पूर्णांक cpu;
+static int check_online_cpus(void)
+{
+	unsigned int cpu;
 
 	/*
-	 * Make sure all CPUs are online.  It's fine क्रम SMT to be disabled अगर
-	 * all the primary thपढ़ोs are still online.
+	 * Make sure all CPUs are online.  It's fine for SMT to be disabled if
+	 * all the primary threads are still online.
 	 */
-	क्रम_each_present_cpu(cpu) अणु
-		अगर (topology_is_primary_thपढ़ो(cpu) && !cpu_online(cpu)) अणु
+	for_each_present_cpu(cpu) {
+		if (topology_is_primary_thread(cpu) && !cpu_online(cpu)) {
 			pr_err("Not all CPUs online, aborting microcode update.\n");
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल atomic_t late_cpus_in;
-अटल atomic_t late_cpus_out;
+static atomic_t late_cpus_in;
+static atomic_t late_cpus_out;
 
-अटल पूर्णांक __रुको_क्रम_cpus(atomic_t *t, दीर्घ दीर्घ समयout)
-अणु
-	पूर्णांक all_cpus = num_online_cpus();
+static int __wait_for_cpus(atomic_t *t, long long timeout)
+{
+	int all_cpus = num_online_cpus();
 
 	atomic_inc(t);
 
-	जबतक (atomic_पढ़ो(t) < all_cpus) अणु
-		अगर (समयout < SPINUNIT) अणु
+	while (atomic_read(t) < all_cpus) {
+		if (timeout < SPINUNIT) {
 			pr_err("Timeout while waiting for CPUs rendezvous, remaining: %d\n",
-				all_cpus - atomic_पढ़ो(t));
-			वापस 1;
-		पूर्ण
+				all_cpus - atomic_read(t));
+			return 1;
+		}
 
 		ndelay(SPINUNIT);
-		समयout -= SPINUNIT;
+		timeout -= SPINUNIT;
 
-		touch_nmi_watchकरोg();
-	पूर्ण
-	वापस 0;
-पूर्ण
+		touch_nmi_watchdog();
+	}
+	return 0;
+}
 
 /*
  * Returns:
  * < 0 - on error
- *   0 - success (no update करोne or microcode was updated)
+ *   0 - success (no update done or microcode was updated)
  */
-अटल पूर्णांक __reload_late(व्योम *info)
-अणु
-	पूर्णांक cpu = smp_processor_id();
-	क्रमागत ucode_state err;
-	पूर्णांक ret = 0;
+static int __reload_late(void *info)
+{
+	int cpu = smp_processor_id();
+	enum ucode_state err;
+	int ret = 0;
 
 	/*
-	 * Wait क्रम all CPUs to arrive. A load will not be attempted unless all
+	 * Wait for all CPUs to arrive. A load will not be attempted unless all
 	 * CPUs show up.
 	 * */
-	अगर (__रुको_क्रम_cpus(&late_cpus_in, NSEC_PER_SEC))
-		वापस -1;
+	if (__wait_for_cpus(&late_cpus_in, NSEC_PER_SEC))
+		return -1;
 
 	/*
-	 * On an SMT प्रणाली, it suffices to load the microcode on one sibling of
-	 * the core because the microcode engine is shared between the thपढ़ोs.
+	 * On an SMT system, it suffices to load the microcode on one sibling of
+	 * the core because the microcode engine is shared between the threads.
 	 * Synchronization still needs to take place so that no concurrent
-	 * loading attempts happen on multiple thपढ़ोs of an SMT core. See
+	 * loading attempts happen on multiple threads of an SMT core. See
 	 * below.
 	 */
-	अगर (cpumask_first(topology_sibling_cpumask(cpu)) == cpu)
+	if (cpumask_first(topology_sibling_cpumask(cpu)) == cpu)
 		apply_microcode_local(&err);
-	अन्यथा
-		जाओ रुको_क्रम_siblings;
+	else
+		goto wait_for_siblings;
 
-	अगर (err >= UCODE_NFOUND) अणु
-		अगर (err == UCODE_ERROR)
+	if (err >= UCODE_NFOUND) {
+		if (err == UCODE_ERROR)
 			pr_warn("Error reloading microcode on CPU %d\n", cpu);
 
 		ret = -1;
-	पूर्ण
+	}
 
-रुको_क्रम_siblings:
-	अगर (__रुको_क्रम_cpus(&late_cpus_out, NSEC_PER_SEC))
+wait_for_siblings:
+	if (__wait_for_cpus(&late_cpus_out, NSEC_PER_SEC))
 		panic("Timeout during microcode update!\n");
 
 	/*
-	 * At least one thपढ़ो has completed update on each core.
+	 * At least one thread has completed update on each core.
 	 * For others, simply call the update to make sure the
 	 * per-cpu cpuinfo can be updated with right microcode
 	 * revision.
 	 */
-	अगर (cpumask_first(topology_sibling_cpumask(cpu)) != cpu)
+	if (cpumask_first(topology_sibling_cpumask(cpu)) != cpu)
 		apply_microcode_local(&err);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * Reload microcode late on all CPUs. Wait क्रम a sec until they
+ * Reload microcode late on all CPUs. Wait for a sec until they
  * all gather together.
  */
-अटल पूर्णांक microcode_reload_late(व्योम)
-अणु
-	पूर्णांक ret;
+static int microcode_reload_late(void)
+{
+	int ret;
 
 	atomic_set(&late_cpus_in,  0);
 	atomic_set(&late_cpus_out, 0);
 
-	ret = stop_machine_cpuslocked(__reload_late, शून्य, cpu_online_mask);
-	अगर (ret == 0)
+	ret = stop_machine_cpuslocked(__reload_late, NULL, cpu_online_mask);
+	if (ret == 0)
 		microcode_check();
 
 	pr_info("Reload completed, microcode revision: 0x%x\n", boot_cpu_data.microcode);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल sमाप_प्रकार reload_store(काष्ठा device *dev,
-			    काष्ठा device_attribute *attr,
-			    स्थिर अक्षर *buf, माप_प्रकार size)
-अणु
-	क्रमागत ucode_state पंचांगp_ret = UCODE_OK;
-	पूर्णांक bsp = boot_cpu_data.cpu_index;
-	अचिन्हित दीर्घ val;
-	sमाप_प्रकार ret = 0;
+static ssize_t reload_store(struct device *dev,
+			    struct device_attribute *attr,
+			    const char *buf, size_t size)
+{
+	enum ucode_state tmp_ret = UCODE_OK;
+	int bsp = boot_cpu_data.cpu_index;
+	unsigned long val;
+	ssize_t ret = 0;
 
-	ret = kम_से_अदीर्घ(buf, 0, &val);
-	अगर (ret)
-		वापस ret;
+	ret = kstrtoul(buf, 0, &val);
+	if (ret)
+		return ret;
 
-	अगर (val != 1)
-		वापस size;
+	if (val != 1)
+		return size;
 
 	get_online_cpus();
 
 	ret = check_online_cpus();
-	अगर (ret)
-		जाओ put;
+	if (ret)
+		goto put;
 
-	पंचांगp_ret = microcode_ops->request_microcode_fw(bsp, &microcode_pdev->dev, true);
-	अगर (पंचांगp_ret != UCODE_NEW)
-		जाओ put;
+	tmp_ret = microcode_ops->request_microcode_fw(bsp, &microcode_pdev->dev, true);
+	if (tmp_ret != UCODE_NEW)
+		goto put;
 
 	mutex_lock(&microcode_mutex);
 	ret = microcode_reload_late();
@@ -647,264 +646,264 @@ bool get_builtin_firmware(काष्ठा cpio_data *cd, स्थिर अ�
 put:
 	put_online_cpus();
 
-	अगर (ret == 0)
+	if (ret == 0)
 		ret = size;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल sमाप_प्रकार version_show(काष्ठा device *dev,
-			काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा ucode_cpu_info *uci = ucode_cpu_info + dev->id;
+static ssize_t version_show(struct device *dev,
+			struct device_attribute *attr, char *buf)
+{
+	struct ucode_cpu_info *uci = ucode_cpu_info + dev->id;
 
-	वापस प्र_लिखो(buf, "0x%x\n", uci->cpu_sig.rev);
-पूर्ण
+	return sprintf(buf, "0x%x\n", uci->cpu_sig.rev);
+}
 
-अटल sमाप_प्रकार pf_show(काष्ठा device *dev,
-			काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा ucode_cpu_info *uci = ucode_cpu_info + dev->id;
+static ssize_t pf_show(struct device *dev,
+			struct device_attribute *attr, char *buf)
+{
+	struct ucode_cpu_info *uci = ucode_cpu_info + dev->id;
 
-	वापस प्र_लिखो(buf, "0x%x\n", uci->cpu_sig.pf);
-पूर्ण
+	return sprintf(buf, "0x%x\n", uci->cpu_sig.pf);
+}
 
-अटल DEVICE_ATTR_WO(reload);
-अटल DEVICE_ATTR(version, 0444, version_show, शून्य);
-अटल DEVICE_ATTR(processor_flags, 0444, pf_show, शून्य);
+static DEVICE_ATTR_WO(reload);
+static DEVICE_ATTR(version, 0444, version_show, NULL);
+static DEVICE_ATTR(processor_flags, 0444, pf_show, NULL);
 
-अटल काष्ठा attribute *mc_शेष_attrs[] = अणु
+static struct attribute *mc_default_attrs[] = {
 	&dev_attr_version.attr,
 	&dev_attr_processor_flags.attr,
-	शून्य
-पूर्ण;
+	NULL
+};
 
-अटल स्थिर काष्ठा attribute_group mc_attr_group = अणु
-	.attrs			= mc_शेष_attrs,
+static const struct attribute_group mc_attr_group = {
+	.attrs			= mc_default_attrs,
 	.name			= "microcode",
-पूर्ण;
+};
 
-अटल व्योम microcode_fini_cpu(पूर्णांक cpu)
-अणु
-	अगर (microcode_ops->microcode_fini_cpu)
+static void microcode_fini_cpu(int cpu)
+{
+	if (microcode_ops->microcode_fini_cpu)
 		microcode_ops->microcode_fini_cpu(cpu);
-पूर्ण
+}
 
-अटल क्रमागत ucode_state microcode_resume_cpu(पूर्णांक cpu)
-अणु
-	अगर (apply_microcode_on_target(cpu))
-		वापस UCODE_ERROR;
+static enum ucode_state microcode_resume_cpu(int cpu)
+{
+	if (apply_microcode_on_target(cpu))
+		return UCODE_ERROR;
 
 	pr_debug("CPU%d updated upon resume\n", cpu);
 
-	वापस UCODE_OK;
-पूर्ण
+	return UCODE_OK;
+}
 
-अटल क्रमागत ucode_state microcode_init_cpu(पूर्णांक cpu, bool refresh_fw)
-अणु
-	क्रमागत ucode_state ustate;
-	काष्ठा ucode_cpu_info *uci = ucode_cpu_info + cpu;
+static enum ucode_state microcode_init_cpu(int cpu, bool refresh_fw)
+{
+	enum ucode_state ustate;
+	struct ucode_cpu_info *uci = ucode_cpu_info + cpu;
 
-	अगर (uci->valid)
-		वापस UCODE_OK;
+	if (uci->valid)
+		return UCODE_OK;
 
-	अगर (collect_cpu_info(cpu))
-		वापस UCODE_ERROR;
+	if (collect_cpu_info(cpu))
+		return UCODE_ERROR;
 
 	/* --dimm. Trigger a delayed update? */
-	अगर (प्रणाली_state != SYSTEM_RUNNING)
-		वापस UCODE_NFOUND;
+	if (system_state != SYSTEM_RUNNING)
+		return UCODE_NFOUND;
 
 	ustate = microcode_ops->request_microcode_fw(cpu, &microcode_pdev->dev, refresh_fw);
-	अगर (ustate == UCODE_NEW) अणु
+	if (ustate == UCODE_NEW) {
 		pr_debug("CPU%d updated upon init\n", cpu);
 		apply_microcode_on_target(cpu);
-	पूर्ण
+	}
 
-	वापस ustate;
-पूर्ण
+	return ustate;
+}
 
-अटल क्रमागत ucode_state microcode_update_cpu(पूर्णांक cpu)
-अणु
-	काष्ठा ucode_cpu_info *uci = ucode_cpu_info + cpu;
+static enum ucode_state microcode_update_cpu(int cpu)
+{
+	struct ucode_cpu_info *uci = ucode_cpu_info + cpu;
 
 	/* Refresh CPU microcode revision after resume. */
 	collect_cpu_info(cpu);
 
-	अगर (uci->valid)
-		वापस microcode_resume_cpu(cpu);
+	if (uci->valid)
+		return microcode_resume_cpu(cpu);
 
-	वापस microcode_init_cpu(cpu, false);
-पूर्ण
+	return microcode_init_cpu(cpu, false);
+}
 
-अटल पूर्णांक mc_device_add(काष्ठा device *dev, काष्ठा subsys_पूर्णांकerface *sअगर)
-अणु
-	पूर्णांक err, cpu = dev->id;
+static int mc_device_add(struct device *dev, struct subsys_interface *sif)
+{
+	int err, cpu = dev->id;
 
-	अगर (!cpu_online(cpu))
-		वापस 0;
+	if (!cpu_online(cpu))
+		return 0;
 
 	pr_debug("CPU%d added\n", cpu);
 
 	err = sysfs_create_group(&dev->kobj, &mc_attr_group);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	अगर (microcode_init_cpu(cpu, true) == UCODE_ERROR)
-		वापस -EINVAL;
+	if (microcode_init_cpu(cpu, true) == UCODE_ERROR)
+		return -EINVAL;
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम mc_device_हटाओ(काष्ठा device *dev, काष्ठा subsys_पूर्णांकerface *sअगर)
-अणु
-	पूर्णांक cpu = dev->id;
+static void mc_device_remove(struct device *dev, struct subsys_interface *sif)
+{
+	int cpu = dev->id;
 
-	अगर (!cpu_online(cpu))
-		वापस;
+	if (!cpu_online(cpu))
+		return;
 
 	pr_debug("CPU%d removed\n", cpu);
 	microcode_fini_cpu(cpu);
-	sysfs_हटाओ_group(&dev->kobj, &mc_attr_group);
-पूर्ण
+	sysfs_remove_group(&dev->kobj, &mc_attr_group);
+}
 
-अटल काष्ठा subsys_पूर्णांकerface mc_cpu_पूर्णांकerface = अणु
+static struct subsys_interface mc_cpu_interface = {
 	.name			= "microcode",
 	.subsys			= &cpu_subsys,
 	.add_dev		= mc_device_add,
-	.हटाओ_dev		= mc_device_हटाओ,
-पूर्ण;
+	.remove_dev		= mc_device_remove,
+};
 
 /**
  * mc_bp_resume - Update boot CPU microcode during resume.
  */
-अटल व्योम mc_bp_resume(व्योम)
-अणु
-	पूर्णांक cpu = smp_processor_id();
-	काष्ठा ucode_cpu_info *uci = ucode_cpu_info + cpu;
+static void mc_bp_resume(void)
+{
+	int cpu = smp_processor_id();
+	struct ucode_cpu_info *uci = ucode_cpu_info + cpu;
 
-	अगर (uci->valid && uci->mc)
+	if (uci->valid && uci->mc)
 		microcode_ops->apply_microcode(cpu);
-	अन्यथा अगर (!uci->mc)
+	else if (!uci->mc)
 		reload_early_microcode();
-पूर्ण
+}
 
-अटल काष्ठा syscore_ops mc_syscore_ops = अणु
+static struct syscore_ops mc_syscore_ops = {
 	.resume			= mc_bp_resume,
-पूर्ण;
+};
 
-अटल पूर्णांक mc_cpu_starting(अचिन्हित पूर्णांक cpu)
-अणु
+static int mc_cpu_starting(unsigned int cpu)
+{
 	microcode_update_cpu(cpu);
 	pr_debug("CPU%d added\n", cpu);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mc_cpu_online(अचिन्हित पूर्णांक cpu)
-अणु
-	काष्ठा device *dev = get_cpu_device(cpu);
+static int mc_cpu_online(unsigned int cpu)
+{
+	struct device *dev = get_cpu_device(cpu);
 
-	अगर (sysfs_create_group(&dev->kobj, &mc_attr_group))
+	if (sysfs_create_group(&dev->kobj, &mc_attr_group))
 		pr_err("Failed to create group for CPU%d\n", cpu);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mc_cpu_करोwn_prep(अचिन्हित पूर्णांक cpu)
-अणु
-	काष्ठा device *dev;
+static int mc_cpu_down_prep(unsigned int cpu)
+{
+	struct device *dev;
 
 	dev = get_cpu_device(cpu);
-	/* Suspend is in progress, only हटाओ the पूर्णांकerface */
-	sysfs_हटाओ_group(&dev->kobj, &mc_attr_group);
+	/* Suspend is in progress, only remove the interface */
+	sysfs_remove_group(&dev->kobj, &mc_attr_group);
 	pr_debug("CPU%d removed\n", cpu);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा attribute *cpu_root_microcode_attrs[] = अणु
+static struct attribute *cpu_root_microcode_attrs[] = {
 	&dev_attr_reload.attr,
-	शून्य
-पूर्ण;
+	NULL
+};
 
-अटल स्थिर काष्ठा attribute_group cpu_root_microcode_group = अणु
+static const struct attribute_group cpu_root_microcode_group = {
 	.name  = "microcode",
 	.attrs = cpu_root_microcode_attrs,
-पूर्ण;
+};
 
-अटल पूर्णांक __init microcode_init(व्योम)
-अणु
-	काष्ठा cpuinfo_x86 *c = &boot_cpu_data;
-	पूर्णांक error;
+static int __init microcode_init(void)
+{
+	struct cpuinfo_x86 *c = &boot_cpu_data;
+	int error;
 
-	अगर (dis_ucode_ldr)
-		वापस -EINVAL;
+	if (dis_ucode_ldr)
+		return -EINVAL;
 
-	अगर (c->x86_venकरोr == X86_VENDOR_INTEL)
-		microcode_ops = init_पूर्णांकel_microcode();
-	अन्यथा अगर (c->x86_venकरोr == X86_VENDOR_AMD)
+	if (c->x86_vendor == X86_VENDOR_INTEL)
+		microcode_ops = init_intel_microcode();
+	else if (c->x86_vendor == X86_VENDOR_AMD)
 		microcode_ops = init_amd_microcode();
-	अन्यथा
+	else
 		pr_err("no support for this CPU vendor\n");
 
-	अगर (!microcode_ops)
-		वापस -ENODEV;
+	if (!microcode_ops)
+		return -ENODEV;
 
-	microcode_pdev = platक्रमm_device_रेजिस्टर_simple("microcode", -1,
-							 शून्य, 0);
-	अगर (IS_ERR(microcode_pdev))
-		वापस PTR_ERR(microcode_pdev);
+	microcode_pdev = platform_device_register_simple("microcode", -1,
+							 NULL, 0);
+	if (IS_ERR(microcode_pdev))
+		return PTR_ERR(microcode_pdev);
 
 	get_online_cpus();
 	mutex_lock(&microcode_mutex);
 
-	error = subsys_पूर्णांकerface_रेजिस्टर(&mc_cpu_पूर्णांकerface);
-	अगर (!error)
+	error = subsys_interface_register(&mc_cpu_interface);
+	if (!error)
 		perf_check_microcode();
 	mutex_unlock(&microcode_mutex);
 	put_online_cpus();
 
-	अगर (error)
-		जाओ out_pdev;
+	if (error)
+		goto out_pdev;
 
 	error = sysfs_create_group(&cpu_subsys.dev_root->kobj,
 				   &cpu_root_microcode_group);
 
-	अगर (error) अणु
+	if (error) {
 		pr_err("Error creating microcode group!\n");
-		जाओ out_driver;
-	पूर्ण
+		goto out_driver;
+	}
 
 	error = microcode_dev_init();
-	अगर (error)
-		जाओ out_ucode_group;
+	if (error)
+		goto out_ucode_group;
 
-	रेजिस्टर_syscore_ops(&mc_syscore_ops);
+	register_syscore_ops(&mc_syscore_ops);
 	cpuhp_setup_state_nocalls(CPUHP_AP_MICROCODE_LOADER, "x86/microcode:starting",
-				  mc_cpu_starting, शून्य);
+				  mc_cpu_starting, NULL);
 	cpuhp_setup_state_nocalls(CPUHP_AP_ONLINE_DYN, "x86/microcode:online",
-				  mc_cpu_online, mc_cpu_करोwn_prep);
+				  mc_cpu_online, mc_cpu_down_prep);
 
 	pr_info("Microcode Update Driver: v%s.", DRIVER_VERSION);
 
-	वापस 0;
+	return 0;
 
  out_ucode_group:
-	sysfs_हटाओ_group(&cpu_subsys.dev_root->kobj,
+	sysfs_remove_group(&cpu_subsys.dev_root->kobj,
 			   &cpu_root_microcode_group);
 
  out_driver:
 	get_online_cpus();
 	mutex_lock(&microcode_mutex);
 
-	subsys_पूर्णांकerface_unरेजिस्टर(&mc_cpu_पूर्णांकerface);
+	subsys_interface_unregister(&mc_cpu_interface);
 
 	mutex_unlock(&microcode_mutex);
 	put_online_cpus();
 
  out_pdev:
-	platक्रमm_device_unरेजिस्टर(microcode_pdev);
-	वापस error;
+	platform_device_unregister(microcode_pdev);
+	return error;
 
-पूर्ण
+}
 fs_initcall(save_microcode_in_initrd);
 late_initcall(microcode_init);

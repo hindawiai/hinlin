@@ -1,51 +1,50 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 // Copyright (c) 2018 MediaTek Inc.
 
 /*
- * Bluetooth support क्रम MediaTek serial devices
+ * Bluetooth support for MediaTek serial devices
  *
  * Author: Sean Wang <sean.wang@mediatek.com>
  *
  */
 
-#समावेश <यंत्र/unaligned.h>
-#समावेश <linux/atomic.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/firmware.h>
-#समावेश <linux/gpio/consumer.h>
-#समावेश <linux/iopoll.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/pinctrl/consumer.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <linux/regulator/consumer.h>
-#समावेश <linux/serdev.h>
-#समावेश <linux/skbuff.h>
+#include <asm/unaligned.h>
+#include <linux/atomic.h>
+#include <linux/clk.h>
+#include <linux/firmware.h>
+#include <linux/gpio/consumer.h>
+#include <linux/iopoll.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/of_device.h>
+#include <linux/pinctrl/consumer.h>
+#include <linux/pm_runtime.h>
+#include <linux/regulator/consumer.h>
+#include <linux/serdev.h>
+#include <linux/skbuff.h>
 
-#समावेश <net/bluetooth/bluetooth.h>
-#समावेश <net/bluetooth/hci_core.h>
+#include <net/bluetooth/bluetooth.h>
+#include <net/bluetooth/hci_core.h>
 
-#समावेश "h4_recv.h"
+#include "h4_recv.h"
 
-#घोषणा VERSION "0.2"
+#define VERSION "0.2"
 
-#घोषणा FIRMWARE_MT7622		"mediatek/mt7622pr2h.bin"
-#घोषणा FIRMWARE_MT7663		"mediatek/mt7663pr2h.bin"
-#घोषणा FIRMWARE_MT7668		"mediatek/mt7668pr2h.bin"
+#define FIRMWARE_MT7622		"mediatek/mt7622pr2h.bin"
+#define FIRMWARE_MT7663		"mediatek/mt7663pr2h.bin"
+#define FIRMWARE_MT7668		"mediatek/mt7668pr2h.bin"
 
-#घोषणा MTK_STP_TLR_SIZE	2
+#define MTK_STP_TLR_SIZE	2
 
-#घोषणा BTMTKUART_TX_STATE_ACTIVE	1
-#घोषणा BTMTKUART_TX_STATE_WAKEUP	2
-#घोषणा BTMTKUART_TX_WAIT_VND_EVT	3
-#घोषणा BTMTKUART_REQUIRED_WAKEUP	4
+#define BTMTKUART_TX_STATE_ACTIVE	1
+#define BTMTKUART_TX_STATE_WAKEUP	2
+#define BTMTKUART_TX_WAIT_VND_EVT	3
+#define BTMTKUART_REQUIRED_WAKEUP	4
 
-#घोषणा BTMTKUART_FLAG_STANDALONE_HW	 BIT(0)
+#define BTMTKUART_FLAG_STANDALONE_HW	 BIT(0)
 
-क्रमागत अणु
+enum {
 	MTK_WMT_PATCH_DWNLD = 0x1,
 	MTK_WMT_TEST = 0x2,
 	MTK_WMT_WAKEUP = 0x3,
@@ -53,228 +52,228 @@
 	MTK_WMT_FUNC_CTRL = 0x6,
 	MTK_WMT_RST = 0x7,
 	MTK_WMT_SEMAPHORE = 0x17,
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	BTMTK_WMT_INVALID,
 	BTMTK_WMT_PATCH_UNDONE,
 	BTMTK_WMT_PATCH_DONE,
 	BTMTK_WMT_ON_UNDONE,
 	BTMTK_WMT_ON_DONE,
 	BTMTK_WMT_ON_PROGRESS,
-पूर्ण;
+};
 
-काष्ठा mtk_stp_hdr अणु
+struct mtk_stp_hdr {
 	u8	prefix;
 	__be16	dlen;
 	u8	cs;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा bपंचांगtkuart_data अणु
-	अचिन्हित पूर्णांक flags;
-	स्थिर अक्षर *fwname;
-पूर्ण;
+struct btmtkuart_data {
+	unsigned int flags;
+	const char *fwname;
+};
 
-काष्ठा mtk_wmt_hdr अणु
+struct mtk_wmt_hdr {
 	u8	dir;
 	u8	op;
 	__le16	dlen;
 	u8	flag;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा mtk_hci_wmt_cmd अणु
-	काष्ठा mtk_wmt_hdr hdr;
+struct mtk_hci_wmt_cmd {
+	struct mtk_wmt_hdr hdr;
 	u8 data[256];
-पूर्ण __packed;
+} __packed;
 
-काष्ठा bपंचांगtk_hci_wmt_evt अणु
-	काष्ठा hci_event_hdr hhdr;
-	काष्ठा mtk_wmt_hdr whdr;
-पूर्ण __packed;
+struct btmtk_hci_wmt_evt {
+	struct hci_event_hdr hhdr;
+	struct mtk_wmt_hdr whdr;
+} __packed;
 
-काष्ठा bपंचांगtk_hci_wmt_evt_funcc अणु
-	काष्ठा bपंचांगtk_hci_wmt_evt hwhdr;
+struct btmtk_hci_wmt_evt_funcc {
+	struct btmtk_hci_wmt_evt hwhdr;
 	__be16 status;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा bपंचांगtk_tci_sleep अणु
+struct btmtk_tci_sleep {
 	u8 mode;
 	__le16 duration;
 	__le16 host_duration;
 	u8 host_wakeup_pin;
-	u8 समय_compensation;
-पूर्ण __packed;
+	u8 time_compensation;
+} __packed;
 
-काष्ठा bपंचांगtk_hci_wmt_params अणु
+struct btmtk_hci_wmt_params {
 	u8 op;
 	u8 flag;
 	u16 dlen;
-	स्थिर व्योम *data;
+	const void *data;
 	u32 *status;
-पूर्ण;
+};
 
-काष्ठा bपंचांगtkuart_dev अणु
-	काष्ठा hci_dev *hdev;
-	काष्ठा serdev_device *serdev;
+struct btmtkuart_dev {
+	struct hci_dev *hdev;
+	struct serdev_device *serdev;
 
-	काष्ठा clk *clk;
-	काष्ठा clk *osc;
-	काष्ठा regulator *vcc;
-	काष्ठा gpio_desc *reset;
-	काष्ठा gpio_desc *boot;
-	काष्ठा pinctrl *pinctrl;
-	काष्ठा pinctrl_state *pins_runसमय;
-	काष्ठा pinctrl_state *pins_boot;
+	struct clk *clk;
+	struct clk *osc;
+	struct regulator *vcc;
+	struct gpio_desc *reset;
+	struct gpio_desc *boot;
+	struct pinctrl *pinctrl;
+	struct pinctrl_state *pins_runtime;
+	struct pinctrl_state *pins_boot;
 	speed_t	desired_speed;
 	speed_t	curr_speed;
 
-	काष्ठा work_काष्ठा tx_work;
-	अचिन्हित दीर्घ tx_state;
-	काष्ठा sk_buff_head txq;
+	struct work_struct tx_work;
+	unsigned long tx_state;
+	struct sk_buff_head txq;
 
-	काष्ठा sk_buff *rx_skb;
-	काष्ठा sk_buff *evt_skb;
+	struct sk_buff *rx_skb;
+	struct sk_buff *evt_skb;
 
 	u8	stp_pad[6];
 	u8	stp_cursor;
 	u16	stp_dlen;
 
-	स्थिर काष्ठा bपंचांगtkuart_data *data;
-पूर्ण;
+	const struct btmtkuart_data *data;
+};
 
-#घोषणा bपंचांगtkuart_is_standalone(bdev)	\
+#define btmtkuart_is_standalone(bdev)	\
 	((bdev)->data->flags & BTMTKUART_FLAG_STANDALONE_HW)
-#घोषणा bपंचांगtkuart_is_builtin_soc(bdev)	\
+#define btmtkuart_is_builtin_soc(bdev)	\
 	!((bdev)->data->flags & BTMTKUART_FLAG_STANDALONE_HW)
 
-अटल पूर्णांक mtk_hci_wmt_sync(काष्ठा hci_dev *hdev,
-			    काष्ठा bपंचांगtk_hci_wmt_params *wmt_params)
-अणु
-	काष्ठा bपंचांगtkuart_dev *bdev = hci_get_drvdata(hdev);
-	काष्ठा bपंचांगtk_hci_wmt_evt_funcc *wmt_evt_funcc;
+static int mtk_hci_wmt_sync(struct hci_dev *hdev,
+			    struct btmtk_hci_wmt_params *wmt_params)
+{
+	struct btmtkuart_dev *bdev = hci_get_drvdata(hdev);
+	struct btmtk_hci_wmt_evt_funcc *wmt_evt_funcc;
 	u32 hlen, status = BTMTK_WMT_INVALID;
-	काष्ठा bपंचांगtk_hci_wmt_evt *wmt_evt;
-	काष्ठा mtk_hci_wmt_cmd wc;
-	काष्ठा mtk_wmt_hdr *hdr;
-	पूर्णांक err;
+	struct btmtk_hci_wmt_evt *wmt_evt;
+	struct mtk_hci_wmt_cmd wc;
+	struct mtk_wmt_hdr *hdr;
+	int err;
 
-	hlen = माप(*hdr) + wmt_params->dlen;
-	अगर (hlen > 255)
-		वापस -EINVAL;
+	hlen = sizeof(*hdr) + wmt_params->dlen;
+	if (hlen > 255)
+		return -EINVAL;
 
-	hdr = (काष्ठा mtk_wmt_hdr *)&wc;
+	hdr = (struct mtk_wmt_hdr *)&wc;
 	hdr->dir = 1;
 	hdr->op = wmt_params->op;
 	hdr->dlen = cpu_to_le16(wmt_params->dlen + 1);
 	hdr->flag = wmt_params->flag;
-	स_नकल(wc.data, wmt_params->data, wmt_params->dlen);
+	memcpy(wc.data, wmt_params->data, wmt_params->dlen);
 
 	set_bit(BTMTKUART_TX_WAIT_VND_EVT, &bdev->tx_state);
 
 	err = __hci_cmd_send(hdev, 0xfc6f, hlen, &wc);
-	अगर (err < 0) अणु
+	if (err < 0) {
 		clear_bit(BTMTKUART_TX_WAIT_VND_EVT, &bdev->tx_state);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	/* The venकरोr specअगरic WMT commands are all answered by a venकरोr
-	 * specअगरic event and will not have the Command Status or Command
+	/* The vendor specific WMT commands are all answered by a vendor
+	 * specific event and will not have the Command Status or Command
 	 * Complete as with usual HCI command flow control.
 	 *
-	 * After sending the command, रुको क्रम BTMTKUART_TX_WAIT_VND_EVT
-	 * state to be cleared. The driver specअगरic event receive routine
+	 * After sending the command, wait for BTMTKUART_TX_WAIT_VND_EVT
+	 * state to be cleared. The driver specific event receive routine
 	 * will clear that state and with that indicate completion of the
 	 * WMT command.
 	 */
-	err = रुको_on_bit_समयout(&bdev->tx_state, BTMTKUART_TX_WAIT_VND_EVT,
+	err = wait_on_bit_timeout(&bdev->tx_state, BTMTKUART_TX_WAIT_VND_EVT,
 				  TASK_INTERRUPTIBLE, HCI_INIT_TIMEOUT);
-	अगर (err == -EINTR) अणु
+	if (err == -EINTR) {
 		bt_dev_err(hdev, "Execution of wmt command interrupted");
 		clear_bit(BTMTKUART_TX_WAIT_VND_EVT, &bdev->tx_state);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	अगर (err) अणु
+	if (err) {
 		bt_dev_err(hdev, "Execution of wmt command timed out");
 		clear_bit(BTMTKUART_TX_WAIT_VND_EVT, &bdev->tx_state);
-		वापस -ETIMEDOUT;
-	पूर्ण
+		return -ETIMEDOUT;
+	}
 
-	/* Parse and handle the वापस WMT event */
-	wmt_evt = (काष्ठा bपंचांगtk_hci_wmt_evt *)bdev->evt_skb->data;
-	अगर (wmt_evt->whdr.op != hdr->op) अणु
+	/* Parse and handle the return WMT event */
+	wmt_evt = (struct btmtk_hci_wmt_evt *)bdev->evt_skb->data;
+	if (wmt_evt->whdr.op != hdr->op) {
 		bt_dev_err(hdev, "Wrong op received %d expected %d",
 			   wmt_evt->whdr.op, hdr->op);
 		err = -EIO;
-		जाओ err_मुक्त_skb;
-	पूर्ण
+		goto err_free_skb;
+	}
 
-	चयन (wmt_evt->whdr.op) अणु
-	हाल MTK_WMT_SEMAPHORE:
-		अगर (wmt_evt->whdr.flag == 2)
+	switch (wmt_evt->whdr.op) {
+	case MTK_WMT_SEMAPHORE:
+		if (wmt_evt->whdr.flag == 2)
 			status = BTMTK_WMT_PATCH_UNDONE;
-		अन्यथा
+		else
 			status = BTMTK_WMT_PATCH_DONE;
-		अवरोध;
-	हाल MTK_WMT_FUNC_CTRL:
-		wmt_evt_funcc = (काष्ठा bपंचांगtk_hci_wmt_evt_funcc *)wmt_evt;
-		अगर (be16_to_cpu(wmt_evt_funcc->status) == 0x404)
+		break;
+	case MTK_WMT_FUNC_CTRL:
+		wmt_evt_funcc = (struct btmtk_hci_wmt_evt_funcc *)wmt_evt;
+		if (be16_to_cpu(wmt_evt_funcc->status) == 0x404)
 			status = BTMTK_WMT_ON_DONE;
-		अन्यथा अगर (be16_to_cpu(wmt_evt_funcc->status) == 0x420)
+		else if (be16_to_cpu(wmt_evt_funcc->status) == 0x420)
 			status = BTMTK_WMT_ON_PROGRESS;
-		अन्यथा
+		else
 			status = BTMTK_WMT_ON_UNDONE;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	अगर (wmt_params->status)
+	if (wmt_params->status)
 		*wmt_params->status = status;
 
-err_मुक्त_skb:
-	kमुक्त_skb(bdev->evt_skb);
-	bdev->evt_skb = शून्य;
+err_free_skb:
+	kfree_skb(bdev->evt_skb);
+	bdev->evt_skb = NULL;
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक mtk_setup_firmware(काष्ठा hci_dev *hdev, स्थिर अक्षर *fwname)
-अणु
-	काष्ठा bपंचांगtk_hci_wmt_params wmt_params;
-	स्थिर काष्ठा firmware *fw;
-	स्थिर u8 *fw_ptr;
-	माप_प्रकार fw_size;
-	पूर्णांक err, dlen;
+static int mtk_setup_firmware(struct hci_dev *hdev, const char *fwname)
+{
+	struct btmtk_hci_wmt_params wmt_params;
+	const struct firmware *fw;
+	const u8 *fw_ptr;
+	size_t fw_size;
+	int err, dlen;
 	u8 flag;
 
 	err = request_firmware(&fw, fwname, &hdev->dev);
-	अगर (err < 0) अणु
+	if (err < 0) {
 		bt_dev_err(hdev, "Failed to load firmware file (%d)", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	fw_ptr = fw->data;
 	fw_size = fw->size;
 
 	/* The size of patch header is 30 bytes, should be skip */
-	अगर (fw_size < 30) अणु
+	if (fw_size < 30) {
 		err = -EINVAL;
-		जाओ मुक्त_fw;
-	पूर्ण
+		goto free_fw;
+	}
 
 	fw_size -= 30;
 	fw_ptr += 30;
 	flag = 1;
 
 	wmt_params.op = MTK_WMT_PATCH_DWNLD;
-	wmt_params.status = शून्य;
+	wmt_params.status = NULL;
 
-	जबतक (fw_size > 0) अणु
-		dlen = min_t(पूर्णांक, 250, fw_size);
+	while (fw_size > 0) {
+		dlen = min_t(int, 250, fw_size);
 
 		/* Tell device the position in sequence */
-		अगर (fw_size - dlen <= 0)
+		if (fw_size - dlen <= 0)
 			flag = 3;
-		अन्यथा अगर (fw_size < fw->size - 30)
+		else if (fw_size < fw->size - 30)
 			flag = 2;
 
 		wmt_params.flag = flag;
@@ -282,219 +281,219 @@ err_मुक्त_skb:
 		wmt_params.data = fw_ptr;
 
 		err = mtk_hci_wmt_sync(hdev, &wmt_params);
-		अगर (err < 0) अणु
+		if (err < 0) {
 			bt_dev_err(hdev, "Failed to send wmt patch dwnld (%d)",
 				   err);
-			जाओ मुक्त_fw;
-		पूर्ण
+			goto free_fw;
+		}
 
 		fw_size -= dlen;
 		fw_ptr += dlen;
-	पूर्ण
+	}
 
 	wmt_params.op = MTK_WMT_RST;
 	wmt_params.flag = 4;
 	wmt_params.dlen = 0;
-	wmt_params.data = शून्य;
-	wmt_params.status = शून्य;
+	wmt_params.data = NULL;
+	wmt_params.status = NULL;
 
 	/* Activate funciton the firmware providing to */
 	err = mtk_hci_wmt_sync(hdev, &wmt_params);
-	अगर (err < 0) अणु
+	if (err < 0) {
 		bt_dev_err(hdev, "Failed to send wmt rst (%d)", err);
-		जाओ मुक्त_fw;
-	पूर्ण
+		goto free_fw;
+	}
 
-	/* Wait a few moments क्रम firmware activation करोne */
+	/* Wait a few moments for firmware activation done */
 	usleep_range(10000, 12000);
 
-मुक्त_fw:
+free_fw:
 	release_firmware(fw);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक bपंचांगtkuart_recv_event(काष्ठा hci_dev *hdev, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा bपंचांगtkuart_dev *bdev = hci_get_drvdata(hdev);
-	काष्ठा hci_event_hdr *hdr = (व्योम *)skb->data;
-	पूर्णांक err;
+static int btmtkuart_recv_event(struct hci_dev *hdev, struct sk_buff *skb)
+{
+	struct btmtkuart_dev *bdev = hci_get_drvdata(hdev);
+	struct hci_event_hdr *hdr = (void *)skb->data;
+	int err;
 
-	/* Fix up the venकरोr event id with 0xff क्रम venकरोr specअगरic instead
+	/* Fix up the vendor event id with 0xff for vendor specific instead
 	 * of 0xe4 so that event send via monitoring socket can be parsed
 	 * properly.
 	 */
-	अगर (hdr->evt == 0xe4)
+	if (hdr->evt == 0xe4)
 		hdr->evt = HCI_EV_VENDOR;
 
-	/* When someone रुकोs क्रम the WMT event, the skb is being cloned
+	/* When someone waits for the WMT event, the skb is being cloned
 	 * and being processed the events from there then.
 	 */
-	अगर (test_bit(BTMTKUART_TX_WAIT_VND_EVT, &bdev->tx_state)) अणु
+	if (test_bit(BTMTKUART_TX_WAIT_VND_EVT, &bdev->tx_state)) {
 		bdev->evt_skb = skb_clone(skb, GFP_KERNEL);
-		अगर (!bdev->evt_skb) अणु
+		if (!bdev->evt_skb) {
 			err = -ENOMEM;
-			जाओ err_out;
-		पूर्ण
-	पूर्ण
+			goto err_out;
+		}
+	}
 
 	err = hci_recv_frame(hdev, skb);
-	अगर (err < 0)
-		जाओ err_मुक्त_skb;
+	if (err < 0)
+		goto err_free_skb;
 
-	अगर (hdr->evt == HCI_EV_VENDOR) अणु
-		अगर (test_and_clear_bit(BTMTKUART_TX_WAIT_VND_EVT,
-				       &bdev->tx_state)) अणु
+	if (hdr->evt == HCI_EV_VENDOR) {
+		if (test_and_clear_bit(BTMTKUART_TX_WAIT_VND_EVT,
+				       &bdev->tx_state)) {
 			/* Barrier to sync with other CPUs */
 			smp_mb__after_atomic();
 			wake_up_bit(&bdev->tx_state, BTMTKUART_TX_WAIT_VND_EVT);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस 0;
+	return 0;
 
-err_मुक्त_skb:
-	kमुक्त_skb(bdev->evt_skb);
-	bdev->evt_skb = शून्य;
+err_free_skb:
+	kfree_skb(bdev->evt_skb);
+	bdev->evt_skb = NULL;
 
 err_out:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल स्थिर काष्ठा h4_recv_pkt mtk_recv_pkts[] = अणु
-	अणु H4_RECV_ACL,      .recv = hci_recv_frame पूर्ण,
-	अणु H4_RECV_SCO,      .recv = hci_recv_frame पूर्ण,
-	अणु H4_RECV_EVENT,    .recv = bपंचांगtkuart_recv_event पूर्ण,
-पूर्ण;
+static const struct h4_recv_pkt mtk_recv_pkts[] = {
+	{ H4_RECV_ACL,      .recv = hci_recv_frame },
+	{ H4_RECV_SCO,      .recv = hci_recv_frame },
+	{ H4_RECV_EVENT,    .recv = btmtkuart_recv_event },
+};
 
-अटल व्योम bपंचांगtkuart_tx_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा bपंचांगtkuart_dev *bdev = container_of(work, काष्ठा bपंचांगtkuart_dev,
+static void btmtkuart_tx_work(struct work_struct *work)
+{
+	struct btmtkuart_dev *bdev = container_of(work, struct btmtkuart_dev,
 						   tx_work);
-	काष्ठा serdev_device *serdev = bdev->serdev;
-	काष्ठा hci_dev *hdev = bdev->hdev;
+	struct serdev_device *serdev = bdev->serdev;
+	struct hci_dev *hdev = bdev->hdev;
 
-	जबतक (1) अणु
+	while (1) {
 		clear_bit(BTMTKUART_TX_STATE_WAKEUP, &bdev->tx_state);
 
-		जबतक (1) अणु
-			काष्ठा sk_buff *skb = skb_dequeue(&bdev->txq);
-			पूर्णांक len;
+		while (1) {
+			struct sk_buff *skb = skb_dequeue(&bdev->txq);
+			int len;
 
-			अगर (!skb)
-				अवरोध;
+			if (!skb)
+				break;
 
-			len = serdev_device_ग_लिखो_buf(serdev, skb->data,
+			len = serdev_device_write_buf(serdev, skb->data,
 						      skb->len);
 			hdev->stat.byte_tx += len;
 
 			skb_pull(skb, len);
-			अगर (skb->len > 0) अणु
+			if (skb->len > 0) {
 				skb_queue_head(&bdev->txq, skb);
-				अवरोध;
-			पूर्ण
+				break;
+			}
 
-			चयन (hci_skb_pkt_type(skb)) अणु
-			हाल HCI_COMMAND_PKT:
+			switch (hci_skb_pkt_type(skb)) {
+			case HCI_COMMAND_PKT:
 				hdev->stat.cmd_tx++;
-				अवरोध;
-			हाल HCI_ACLDATA_PKT:
+				break;
+			case HCI_ACLDATA_PKT:
 				hdev->stat.acl_tx++;
-				अवरोध;
-			हाल HCI_SCODATA_PKT:
+				break;
+			case HCI_SCODATA_PKT:
 				hdev->stat.sco_tx++;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 
-			kमुक्त_skb(skb);
-		पूर्ण
+			kfree_skb(skb);
+		}
 
-		अगर (!test_bit(BTMTKUART_TX_STATE_WAKEUP, &bdev->tx_state))
-			अवरोध;
-	पूर्ण
+		if (!test_bit(BTMTKUART_TX_STATE_WAKEUP, &bdev->tx_state))
+			break;
+	}
 
 	clear_bit(BTMTKUART_TX_STATE_ACTIVE, &bdev->tx_state);
-पूर्ण
+}
 
-अटल व्योम bपंचांगtkuart_tx_wakeup(काष्ठा bपंचांगtkuart_dev *bdev)
-अणु
-	अगर (test_and_set_bit(BTMTKUART_TX_STATE_ACTIVE, &bdev->tx_state))
+static void btmtkuart_tx_wakeup(struct btmtkuart_dev *bdev)
+{
+	if (test_and_set_bit(BTMTKUART_TX_STATE_ACTIVE, &bdev->tx_state))
 		set_bit(BTMTKUART_TX_STATE_WAKEUP, &bdev->tx_state);
 
 	schedule_work(&bdev->tx_work);
-पूर्ण
+}
 
-अटल स्थिर अचिन्हित अक्षर *
-mtk_stp_split(काष्ठा bपंचांगtkuart_dev *bdev, स्थिर अचिन्हित अक्षर *data, पूर्णांक count,
-	      पूर्णांक *sz_h4)
-अणु
-	काष्ठा mtk_stp_hdr *shdr;
+static const unsigned char *
+mtk_stp_split(struct btmtkuart_dev *bdev, const unsigned char *data, int count,
+	      int *sz_h4)
+{
+	struct mtk_stp_hdr *shdr;
 
 	/* The cursor is reset when all the data of STP is consumed out */
-	अगर (!bdev->stp_dlen && bdev->stp_cursor >= 6)
+	if (!bdev->stp_dlen && bdev->stp_cursor >= 6)
 		bdev->stp_cursor = 0;
 
 	/* Filling pad until all STP info is obtained */
-	जबतक (bdev->stp_cursor < 6 && count > 0) अणु
+	while (bdev->stp_cursor < 6 && count > 0) {
 		bdev->stp_pad[bdev->stp_cursor] = *data;
 		bdev->stp_cursor++;
 		data++;
 		count--;
-	पूर्ण
+	}
 
 	/* Retrieve STP info and have a sanity check */
-	अगर (!bdev->stp_dlen && bdev->stp_cursor >= 6) अणु
-		shdr = (काष्ठा mtk_stp_hdr *)&bdev->stp_pad[2];
+	if (!bdev->stp_dlen && bdev->stp_cursor >= 6) {
+		shdr = (struct mtk_stp_hdr *)&bdev->stp_pad[2];
 		bdev->stp_dlen = be16_to_cpu(shdr->dlen) & 0x0fff;
 
-		/* Resync STP when unexpected data is being पढ़ो */
-		अगर (shdr->prefix != 0x80 || bdev->stp_dlen > 2048) अणु
+		/* Resync STP when unexpected data is being read */
+		if (shdr->prefix != 0x80 || bdev->stp_dlen > 2048) {
 			bt_dev_err(bdev->hdev, "stp format unexpect (%d, %d)",
 				   shdr->prefix, bdev->stp_dlen);
 			bdev->stp_cursor = 2;
 			bdev->stp_dlen = 0;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	/* Directly quit when there's no data found क्रम H4 can process */
-	अगर (count <= 0)
-		वापस शून्य;
+	/* Directly quit when there's no data found for H4 can process */
+	if (count <= 0)
+		return NULL;
 
 	/* Tranlate to how much the size of data H4 can handle so far */
-	*sz_h4 = min_t(पूर्णांक, count, bdev->stp_dlen);
+	*sz_h4 = min_t(int, count, bdev->stp_dlen);
 
-	/* Update the reमुख्यing size of STP packet */
+	/* Update the remaining size of STP packet */
 	bdev->stp_dlen -= *sz_h4;
 
-	/* Data poपूर्णांकs to STP payload which can be handled by H4 */
-	वापस data;
-पूर्ण
+	/* Data points to STP payload which can be handled by H4 */
+	return data;
+}
 
-अटल पूर्णांक bपंचांगtkuart_recv(काष्ठा hci_dev *hdev, स्थिर u8 *data, माप_प्रकार count)
-अणु
-	काष्ठा bपंचांगtkuart_dev *bdev = hci_get_drvdata(hdev);
-	स्थिर अचिन्हित अक्षर *p_left = data, *p_h4;
-	पूर्णांक sz_left = count, sz_h4, adv;
-	पूर्णांक err;
+static int btmtkuart_recv(struct hci_dev *hdev, const u8 *data, size_t count)
+{
+	struct btmtkuart_dev *bdev = hci_get_drvdata(hdev);
+	const unsigned char *p_left = data, *p_h4;
+	int sz_left = count, sz_h4, adv;
+	int err;
 
-	जबतक (sz_left > 0) अणु
+	while (sz_left > 0) {
 		/*  The serial data received from MT7622 BT controller is
-		 *  at all समय padded around with the STP header and tailer.
+		 *  at all time padded around with the STP header and tailer.
 		 *
 		 *  A full STP packet is looking like
 		 *   -----------------------------------
 		 *  | STP header  |  H:4   | STP tailer |
 		 *   -----------------------------------
-		 *  but it करोesn't guarantee to contain a full H:4 packet which
-		 *  means that it's possible क्रम multiple STP packets क्रमms a
-		 *  full H:4 packet that means extra STP header + length करोesn't
+		 *  but it doesn't guarantee to contain a full H:4 packet which
+		 *  means that it's possible for multiple STP packets forms a
+		 *  full H:4 packet that means extra STP header + length doesn't
 		 *  indicate a full H:4 frame, things can fragment. Whose length
 		 *  recorded in STP header just shows up the most length the
 		 *  H:4 engine can handle currently.
 		 */
 
 		p_h4 = mtk_stp_split(bdev, p_left, sz_left, &sz_h4);
-		अगर (!p_h4)
-			अवरोध;
+		if (!p_h4)
+			break;
 
 		adv = p_h4 - p_left;
 		sz_left -= adv;
@@ -503,629 +502,629 @@ mtk_stp_split(काष्ठा bपंचांगtkuart_dev *bdev, स्थ�
 		bdev->rx_skb = h4_recv_buf(bdev->hdev, bdev->rx_skb, p_h4,
 					   sz_h4, mtk_recv_pkts,
 					   ARRAY_SIZE(mtk_recv_pkts));
-		अगर (IS_ERR(bdev->rx_skb)) अणु
+		if (IS_ERR(bdev->rx_skb)) {
 			err = PTR_ERR(bdev->rx_skb);
 			bt_dev_err(bdev->hdev,
 				   "Frame reassembly failed (%d)", err);
-			bdev->rx_skb = शून्य;
-			वापस err;
-		पूर्ण
+			bdev->rx_skb = NULL;
+			return err;
+		}
 
 		sz_left -= sz_h4;
 		p_left += sz_h4;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक bपंचांगtkuart_receive_buf(काष्ठा serdev_device *serdev, स्थिर u8 *data,
-				 माप_प्रकार count)
-अणु
-	काष्ठा bपंचांगtkuart_dev *bdev = serdev_device_get_drvdata(serdev);
-	पूर्णांक err;
+static int btmtkuart_receive_buf(struct serdev_device *serdev, const u8 *data,
+				 size_t count)
+{
+	struct btmtkuart_dev *bdev = serdev_device_get_drvdata(serdev);
+	int err;
 
-	err = bपंचांगtkuart_recv(bdev->hdev, data, count);
-	अगर (err < 0)
-		वापस err;
+	err = btmtkuart_recv(bdev->hdev, data, count);
+	if (err < 0)
+		return err;
 
 	bdev->hdev->stat.byte_rx += count;
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल व्योम bपंचांगtkuart_ग_लिखो_wakeup(काष्ठा serdev_device *serdev)
-अणु
-	काष्ठा bपंचांगtkuart_dev *bdev = serdev_device_get_drvdata(serdev);
+static void btmtkuart_write_wakeup(struct serdev_device *serdev)
+{
+	struct btmtkuart_dev *bdev = serdev_device_get_drvdata(serdev);
 
-	bपंचांगtkuart_tx_wakeup(bdev);
-पूर्ण
+	btmtkuart_tx_wakeup(bdev);
+}
 
-अटल स्थिर काष्ठा serdev_device_ops bपंचांगtkuart_client_ops = अणु
-	.receive_buf = bपंचांगtkuart_receive_buf,
-	.ग_लिखो_wakeup = bपंचांगtkuart_ग_लिखो_wakeup,
-पूर्ण;
+static const struct serdev_device_ops btmtkuart_client_ops = {
+	.receive_buf = btmtkuart_receive_buf,
+	.write_wakeup = btmtkuart_write_wakeup,
+};
 
-अटल पूर्णांक bपंचांगtkuart_खोलो(काष्ठा hci_dev *hdev)
-अणु
-	काष्ठा bपंचांगtkuart_dev *bdev = hci_get_drvdata(hdev);
-	काष्ठा device *dev;
-	पूर्णांक err;
+static int btmtkuart_open(struct hci_dev *hdev)
+{
+	struct btmtkuart_dev *bdev = hci_get_drvdata(hdev);
+	struct device *dev;
+	int err;
 
-	err = serdev_device_खोलो(bdev->serdev);
-	अगर (err) अणु
+	err = serdev_device_open(bdev->serdev);
+	if (err) {
 		bt_dev_err(hdev, "Unable to open UART device %s",
 			   dev_name(&bdev->serdev->dev));
-		जाओ err_खोलो;
-	पूर्ण
+		goto err_open;
+	}
 
-	अगर (bपंचांगtkuart_is_standalone(bdev)) अणु
-		अगर (bdev->curr_speed != bdev->desired_speed)
+	if (btmtkuart_is_standalone(bdev)) {
+		if (bdev->curr_speed != bdev->desired_speed)
 			err = serdev_device_set_baudrate(bdev->serdev,
 							 115200);
-		अन्यथा
+		else
 			err = serdev_device_set_baudrate(bdev->serdev,
 							 bdev->desired_speed);
 
-		अगर (err < 0) अणु
+		if (err < 0) {
 			bt_dev_err(hdev, "Unable to set baudrate UART device %s",
 				   dev_name(&bdev->serdev->dev));
-			जाओ  err_serdev_बंद;
-		पूर्ण
+			goto  err_serdev_close;
+		}
 
 		serdev_device_set_flow_control(bdev->serdev, false);
-	पूर्ण
+	}
 
 	bdev->stp_cursor = 2;
 	bdev->stp_dlen = 0;
 
 	dev = &bdev->serdev->dev;
 
-	/* Enable the घातer करोमुख्य and घड़ी the device requires */
-	pm_runसमय_enable(dev);
-	err = pm_runसमय_get_sync(dev);
-	अगर (err < 0) अणु
-		pm_runसमय_put_noidle(dev);
-		जाओ err_disable_rpm;
-	पूर्ण
+	/* Enable the power domain and clock the device requires */
+	pm_runtime_enable(dev);
+	err = pm_runtime_get_sync(dev);
+	if (err < 0) {
+		pm_runtime_put_noidle(dev);
+		goto err_disable_rpm;
+	}
 
 	err = clk_prepare_enable(bdev->clk);
-	अगर (err < 0)
-		जाओ err_put_rpm;
+	if (err < 0)
+		goto err_put_rpm;
 
-	वापस 0;
+	return 0;
 
 err_put_rpm:
-	pm_runसमय_put_sync(dev);
+	pm_runtime_put_sync(dev);
 err_disable_rpm:
-	pm_runसमय_disable(dev);
-err_serdev_बंद:
-	serdev_device_बंद(bdev->serdev);
-err_खोलो:
-	वापस err;
-पूर्ण
+	pm_runtime_disable(dev);
+err_serdev_close:
+	serdev_device_close(bdev->serdev);
+err_open:
+	return err;
+}
 
-अटल पूर्णांक bपंचांगtkuart_बंद(काष्ठा hci_dev *hdev)
-अणु
-	काष्ठा bपंचांगtkuart_dev *bdev = hci_get_drvdata(hdev);
-	काष्ठा device *dev = &bdev->serdev->dev;
+static int btmtkuart_close(struct hci_dev *hdev)
+{
+	struct btmtkuart_dev *bdev = hci_get_drvdata(hdev);
+	struct device *dev = &bdev->serdev->dev;
 
-	/* Shutकरोwn the घड़ी and घातer करोमुख्य the device requires */
+	/* Shutdown the clock and power domain the device requires */
 	clk_disable_unprepare(bdev->clk);
-	pm_runसमय_put_sync(dev);
-	pm_runसमय_disable(dev);
+	pm_runtime_put_sync(dev);
+	pm_runtime_disable(dev);
 
-	serdev_device_बंद(bdev->serdev);
+	serdev_device_close(bdev->serdev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक bपंचांगtkuart_flush(काष्ठा hci_dev *hdev)
-अणु
-	काष्ठा bपंचांगtkuart_dev *bdev = hci_get_drvdata(hdev);
+static int btmtkuart_flush(struct hci_dev *hdev)
+{
+	struct btmtkuart_dev *bdev = hci_get_drvdata(hdev);
 
-	/* Flush any pending अक्षरacters */
-	serdev_device_ग_लिखो_flush(bdev->serdev);
+	/* Flush any pending characters */
+	serdev_device_write_flush(bdev->serdev);
 	skb_queue_purge(&bdev->txq);
 
 	cancel_work_sync(&bdev->tx_work);
 
-	kमुक्त_skb(bdev->rx_skb);
-	bdev->rx_skb = शून्य;
+	kfree_skb(bdev->rx_skb);
+	bdev->rx_skb = NULL;
 
 	bdev->stp_cursor = 2;
 	bdev->stp_dlen = 0;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक bपंचांगtkuart_func_query(काष्ठा hci_dev *hdev)
-अणु
-	काष्ठा bपंचांगtk_hci_wmt_params wmt_params;
-	पूर्णांक status, err;
+static int btmtkuart_func_query(struct hci_dev *hdev)
+{
+	struct btmtk_hci_wmt_params wmt_params;
+	int status, err;
 	u8 param = 0;
 
 	/* Query whether the function is enabled */
 	wmt_params.op = MTK_WMT_FUNC_CTRL;
 	wmt_params.flag = 4;
-	wmt_params.dlen = माप(param);
+	wmt_params.dlen = sizeof(param);
 	wmt_params.data = &param;
 	wmt_params.status = &status;
 
 	err = mtk_hci_wmt_sync(hdev, &wmt_params);
-	अगर (err < 0) अणु
+	if (err < 0) {
 		bt_dev_err(hdev, "Failed to query function status (%d)", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल पूर्णांक bपंचांगtkuart_change_baudrate(काष्ठा hci_dev *hdev)
-अणु
-	काष्ठा bपंचांगtkuart_dev *bdev = hci_get_drvdata(hdev);
-	काष्ठा bपंचांगtk_hci_wmt_params wmt_params;
+static int btmtkuart_change_baudrate(struct hci_dev *hdev)
+{
+	struct btmtkuart_dev *bdev = hci_get_drvdata(hdev);
+	struct btmtk_hci_wmt_params wmt_params;
 	__le32 baudrate;
 	u8 param;
-	पूर्णांक err;
+	int err;
 
 	/* Indicate the device to enter the probe state the host is
-	 * पढ़ोy to change a new baudrate.
+	 * ready to change a new baudrate.
 	 */
 	baudrate = cpu_to_le32(bdev->desired_speed);
 	wmt_params.op = MTK_WMT_HIF;
 	wmt_params.flag = 1;
 	wmt_params.dlen = 4;
 	wmt_params.data = &baudrate;
-	wmt_params.status = शून्य;
+	wmt_params.status = NULL;
 
 	err = mtk_hci_wmt_sync(hdev, &wmt_params);
-	अगर (err < 0) अणु
+	if (err < 0) {
 		bt_dev_err(hdev, "Failed to device baudrate (%d)", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	err = serdev_device_set_baudrate(bdev->serdev,
 					 bdev->desired_speed);
-	अगर (err < 0) अणु
+	if (err < 0) {
 		bt_dev_err(hdev, "Failed to set up host baudrate (%d)",
 			   err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	serdev_device_set_flow_control(bdev->serdev, false);
 
 	/* Send a dummy byte 0xff to activate the new baudrate */
 	param = 0xff;
-	err = serdev_device_ग_लिखो_buf(bdev->serdev, &param, माप(param));
-	अगर (err < 0 || err < माप(param))
-		वापस err;
+	err = serdev_device_write_buf(bdev->serdev, &param, sizeof(param));
+	if (err < 0 || err < sizeof(param))
+		return err;
 
-	serdev_device_रुको_until_sent(bdev->serdev, 0);
+	serdev_device_wait_until_sent(bdev->serdev, 0);
 
-	/* Wait some समय क्रम the device changing baudrate करोne */
+	/* Wait some time for the device changing baudrate done */
 	usleep_range(20000, 22000);
 
 	/* Test the new baudrate */
 	wmt_params.op = MTK_WMT_TEST;
 	wmt_params.flag = 7;
 	wmt_params.dlen = 0;
-	wmt_params.data = शून्य;
-	wmt_params.status = शून्य;
+	wmt_params.data = NULL;
+	wmt_params.status = NULL;
 
 	err = mtk_hci_wmt_sync(hdev, &wmt_params);
-	अगर (err < 0) अणु
+	if (err < 0) {
 		bt_dev_err(hdev, "Failed to test new baudrate (%d)",
 			   err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	bdev->curr_speed = bdev->desired_speed;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक bपंचांगtkuart_setup(काष्ठा hci_dev *hdev)
-अणु
-	काष्ठा bपंचांगtkuart_dev *bdev = hci_get_drvdata(hdev);
-	काष्ठा bपंचांगtk_hci_wmt_params wmt_params;
-	kसमय_प्रकार callसमय, delta, retसमय;
-	काष्ठा bपंचांगtk_tci_sleep tci_sleep;
-	अचिन्हित दीर्घ दीर्घ duration;
-	काष्ठा sk_buff *skb;
-	पूर्णांक err, status;
+static int btmtkuart_setup(struct hci_dev *hdev)
+{
+	struct btmtkuart_dev *bdev = hci_get_drvdata(hdev);
+	struct btmtk_hci_wmt_params wmt_params;
+	ktime_t calltime, delta, rettime;
+	struct btmtk_tci_sleep tci_sleep;
+	unsigned long long duration;
+	struct sk_buff *skb;
+	int err, status;
 	u8 param = 0x1;
 
-	callसमय = kसमय_get();
+	calltime = ktime_get();
 
-	/* Wakeup MCUSYS is required क्रम certain devices beक्रमe we start to
-	 * करो any setups.
+	/* Wakeup MCUSYS is required for certain devices before we start to
+	 * do any setups.
 	 */
-	अगर (test_bit(BTMTKUART_REQUIRED_WAKEUP, &bdev->tx_state)) अणु
+	if (test_bit(BTMTKUART_REQUIRED_WAKEUP, &bdev->tx_state)) {
 		wmt_params.op = MTK_WMT_WAKEUP;
 		wmt_params.flag = 3;
 		wmt_params.dlen = 0;
-		wmt_params.data = शून्य;
-		wmt_params.status = शून्य;
+		wmt_params.data = NULL;
+		wmt_params.status = NULL;
 
 		err = mtk_hci_wmt_sync(hdev, &wmt_params);
-		अगर (err < 0) अणु
+		if (err < 0) {
 			bt_dev_err(hdev, "Failed to wakeup the chip (%d)", err);
-			वापस err;
-		पूर्ण
+			return err;
+		}
 
 		clear_bit(BTMTKUART_REQUIRED_WAKEUP, &bdev->tx_state);
-	पूर्ण
+	}
 
-	अगर (bपंचांगtkuart_is_standalone(bdev))
-		bपंचांगtkuart_change_baudrate(hdev);
+	if (btmtkuart_is_standalone(bdev))
+		btmtkuart_change_baudrate(hdev);
 
-	/* Query whether the firmware is alपढ़ोy करोwnload */
+	/* Query whether the firmware is already download */
 	wmt_params.op = MTK_WMT_SEMAPHORE;
 	wmt_params.flag = 1;
 	wmt_params.dlen = 0;
-	wmt_params.data = शून्य;
+	wmt_params.data = NULL;
 	wmt_params.status = &status;
 
 	err = mtk_hci_wmt_sync(hdev, &wmt_params);
-	अगर (err < 0) अणु
+	if (err < 0) {
 		bt_dev_err(hdev, "Failed to query firmware status (%d)", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	अगर (status == BTMTK_WMT_PATCH_DONE) अणु
+	if (status == BTMTK_WMT_PATCH_DONE) {
 		bt_dev_info(hdev, "Firmware already downloaded");
-		जाओ ignore_setup_fw;
-	पूर्ण
+		goto ignore_setup_fw;
+	}
 
 	/* Setup a firmware which the device definitely requires */
 	err = mtk_setup_firmware(hdev, bdev->data->fwname);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
 ignore_setup_fw:
-	/* Query whether the device is alपढ़ोy enabled */
-	err = पढ़ोx_poll_समयout(bपंचांगtkuart_func_query, hdev, status,
+	/* Query whether the device is already enabled */
+	err = readx_poll_timeout(btmtkuart_func_query, hdev, status,
 				 status < 0 || status != BTMTK_WMT_ON_PROGRESS,
 				 2000, 5000000);
 	/* -ETIMEDOUT happens */
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
 	/* The other errors happen in btusb_mtk_func_query */
-	अगर (status < 0)
-		वापस status;
+	if (status < 0)
+		return status;
 
-	अगर (status == BTMTK_WMT_ON_DONE) अणु
+	if (status == BTMTK_WMT_ON_DONE) {
 		bt_dev_info(hdev, "function already on");
-		जाओ ignore_func_on;
-	पूर्ण
+		goto ignore_func_on;
+	}
 
 	/* Enable Bluetooth protocol */
 	wmt_params.op = MTK_WMT_FUNC_CTRL;
 	wmt_params.flag = 0;
-	wmt_params.dlen = माप(param);
+	wmt_params.dlen = sizeof(param);
 	wmt_params.data = &param;
-	wmt_params.status = शून्य;
+	wmt_params.status = NULL;
 
 	err = mtk_hci_wmt_sync(hdev, &wmt_params);
-	अगर (err < 0) अणु
+	if (err < 0) {
 		bt_dev_err(hdev, "Failed to send wmt func ctrl (%d)", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 ignore_func_on:
-	/* Apply the low घातer environment setup */
+	/* Apply the low power environment setup */
 	tci_sleep.mode = 0x5;
 	tci_sleep.duration = cpu_to_le16(0x640);
 	tci_sleep.host_duration = cpu_to_le16(0x640);
 	tci_sleep.host_wakeup_pin = 0;
-	tci_sleep.समय_compensation = 0;
+	tci_sleep.time_compensation = 0;
 
-	skb = __hci_cmd_sync(hdev, 0xfc7a, माप(tci_sleep), &tci_sleep,
+	skb = __hci_cmd_sync(hdev, 0xfc7a, sizeof(tci_sleep), &tci_sleep,
 			     HCI_INIT_TIMEOUT);
-	अगर (IS_ERR(skb)) अणु
+	if (IS_ERR(skb)) {
 		err = PTR_ERR(skb);
 		bt_dev_err(hdev, "Failed to apply low power setting (%d)", err);
-		वापस err;
-	पूर्ण
-	kमुक्त_skb(skb);
+		return err;
+	}
+	kfree_skb(skb);
 
-	retसमय = kसमय_get();
-	delta = kसमय_sub(retसमय, callसमय);
-	duration = (अचिन्हित दीर्घ दीर्घ)kसमय_प्रकारo_ns(delta) >> 10;
+	rettime = ktime_get();
+	delta = ktime_sub(rettime, calltime);
+	duration = (unsigned long long)ktime_to_ns(delta) >> 10;
 
 	bt_dev_info(hdev, "Device setup in %llu usecs", duration);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक bपंचांगtkuart_shutकरोwn(काष्ठा hci_dev *hdev)
-अणु
-	काष्ठा bपंचांगtk_hci_wmt_params wmt_params;
+static int btmtkuart_shutdown(struct hci_dev *hdev)
+{
+	struct btmtk_hci_wmt_params wmt_params;
 	u8 param = 0x0;
-	पूर्णांक err;
+	int err;
 
 	/* Disable the device */
 	wmt_params.op = MTK_WMT_FUNC_CTRL;
 	wmt_params.flag = 0;
-	wmt_params.dlen = माप(param);
+	wmt_params.dlen = sizeof(param);
 	wmt_params.data = &param;
-	wmt_params.status = शून्य;
+	wmt_params.status = NULL;
 
 	err = mtk_hci_wmt_sync(hdev, &wmt_params);
-	अगर (err < 0) अणु
+	if (err < 0) {
 		bt_dev_err(hdev, "Failed to send wmt func ctrl (%d)", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक bपंचांगtkuart_send_frame(काष्ठा hci_dev *hdev, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा bपंचांगtkuart_dev *bdev = hci_get_drvdata(hdev);
-	काष्ठा mtk_stp_hdr *shdr;
-	पूर्णांक err, dlen, type = 0;
+static int btmtkuart_send_frame(struct hci_dev *hdev, struct sk_buff *skb)
+{
+	struct btmtkuart_dev *bdev = hci_get_drvdata(hdev);
+	struct mtk_stp_hdr *shdr;
+	int err, dlen, type = 0;
 
 	/* Prepend skb with frame type */
-	स_नकल(skb_push(skb, 1), &hci_skb_pkt_type(skb), 1);
+	memcpy(skb_push(skb, 1), &hci_skb_pkt_type(skb), 1);
 
-	/* Make sure that there is enough rooms क्रम STP header and trailer */
-	अगर (unlikely(skb_headroom(skb) < माप(*shdr)) ||
-	    (skb_tailroom(skb) < MTK_STP_TLR_SIZE)) अणु
-		err = pskb_expand_head(skb, माप(*shdr), MTK_STP_TLR_SIZE,
+	/* Make sure that there is enough rooms for STP header and trailer */
+	if (unlikely(skb_headroom(skb) < sizeof(*shdr)) ||
+	    (skb_tailroom(skb) < MTK_STP_TLR_SIZE)) {
+		err = pskb_expand_head(skb, sizeof(*shdr), MTK_STP_TLR_SIZE,
 				       GFP_ATOMIC);
-		अगर (err < 0)
-			वापस err;
-	पूर्ण
+		if (err < 0)
+			return err;
+	}
 
 	/* Add the STP header */
 	dlen = skb->len;
-	shdr = skb_push(skb, माप(*shdr));
+	shdr = skb_push(skb, sizeof(*shdr));
 	shdr->prefix = 0x80;
 	shdr->dlen = cpu_to_be16((dlen & 0x0fff) | (type << 12));
-	shdr->cs = 0;		/* MT7622 करोesn't care about checksum value */
+	shdr->cs = 0;		/* MT7622 doesn't care about checksum value */
 
 	/* Add the STP trailer */
 	skb_put_zero(skb, MTK_STP_TLR_SIZE);
 
 	skb_queue_tail(&bdev->txq, skb);
 
-	bपंचांगtkuart_tx_wakeup(bdev);
-	वापस 0;
-पूर्ण
+	btmtkuart_tx_wakeup(bdev);
+	return 0;
+}
 
-अटल पूर्णांक bपंचांगtkuart_parse_dt(काष्ठा serdev_device *serdev)
-अणु
-	काष्ठा bपंचांगtkuart_dev *bdev = serdev_device_get_drvdata(serdev);
-	काष्ठा device_node *node = serdev->dev.of_node;
+static int btmtkuart_parse_dt(struct serdev_device *serdev)
+{
+	struct btmtkuart_dev *bdev = serdev_device_get_drvdata(serdev);
+	struct device_node *node = serdev->dev.of_node;
 	u32 speed = 921600;
-	पूर्णांक err;
+	int err;
 
-	अगर (bपंचांगtkuart_is_standalone(bdev)) अणु
-		of_property_पढ़ो_u32(node, "current-speed", &speed);
+	if (btmtkuart_is_standalone(bdev)) {
+		of_property_read_u32(node, "current-speed", &speed);
 
 		bdev->desired_speed = speed;
 
 		bdev->vcc = devm_regulator_get(&serdev->dev, "vcc");
-		अगर (IS_ERR(bdev->vcc)) अणु
+		if (IS_ERR(bdev->vcc)) {
 			err = PTR_ERR(bdev->vcc);
-			वापस err;
-		पूर्ण
+			return err;
+		}
 
 		bdev->osc = devm_clk_get_optional(&serdev->dev, "osc");
-		अगर (IS_ERR(bdev->osc)) अणु
+		if (IS_ERR(bdev->osc)) {
 			err = PTR_ERR(bdev->osc);
-			वापस err;
-		पूर्ण
+			return err;
+		}
 
 		bdev->boot = devm_gpiod_get_optional(&serdev->dev, "boot",
 						     GPIOD_OUT_LOW);
-		अगर (IS_ERR(bdev->boot)) अणु
+		if (IS_ERR(bdev->boot)) {
 			err = PTR_ERR(bdev->boot);
-			वापस err;
-		पूर्ण
+			return err;
+		}
 
 		bdev->pinctrl = devm_pinctrl_get(&serdev->dev);
-		अगर (IS_ERR(bdev->pinctrl)) अणु
+		if (IS_ERR(bdev->pinctrl)) {
 			err = PTR_ERR(bdev->pinctrl);
-			वापस err;
-		पूर्ण
+			return err;
+		}
 
 		bdev->pins_boot = pinctrl_lookup_state(bdev->pinctrl,
 						       "default");
-		अगर (IS_ERR(bdev->pins_boot) && !bdev->boot) अणु
+		if (IS_ERR(bdev->pins_boot) && !bdev->boot) {
 			err = PTR_ERR(bdev->pins_boot);
 			dev_err(&serdev->dev,
 				"Should assign RXD to LOW at boot stage\n");
-			वापस err;
-		पूर्ण
+			return err;
+		}
 
-		bdev->pins_runसमय = pinctrl_lookup_state(bdev->pinctrl,
+		bdev->pins_runtime = pinctrl_lookup_state(bdev->pinctrl,
 							  "runtime");
-		अगर (IS_ERR(bdev->pins_runसमय)) अणु
-			err = PTR_ERR(bdev->pins_runसमय);
-			वापस err;
-		पूर्ण
+		if (IS_ERR(bdev->pins_runtime)) {
+			err = PTR_ERR(bdev->pins_runtime);
+			return err;
+		}
 
 		bdev->reset = devm_gpiod_get_optional(&serdev->dev, "reset",
 						      GPIOD_OUT_LOW);
-		अगर (IS_ERR(bdev->reset)) अणु
+		if (IS_ERR(bdev->reset)) {
 			err = PTR_ERR(bdev->reset);
-			वापस err;
-		पूर्ण
-	पूर्ण अन्यथा अगर (bपंचांगtkuart_is_builtin_soc(bdev)) अणु
+			return err;
+		}
+	} else if (btmtkuart_is_builtin_soc(bdev)) {
 		bdev->clk = devm_clk_get(&serdev->dev, "ref");
-		अगर (IS_ERR(bdev->clk))
-			वापस PTR_ERR(bdev->clk);
-	पूर्ण
+		if (IS_ERR(bdev->clk))
+			return PTR_ERR(bdev->clk);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक bपंचांगtkuart_probe(काष्ठा serdev_device *serdev)
-अणु
-	काष्ठा bपंचांगtkuart_dev *bdev;
-	काष्ठा hci_dev *hdev;
-	पूर्णांक err;
+static int btmtkuart_probe(struct serdev_device *serdev)
+{
+	struct btmtkuart_dev *bdev;
+	struct hci_dev *hdev;
+	int err;
 
-	bdev = devm_kzalloc(&serdev->dev, माप(*bdev), GFP_KERNEL);
-	अगर (!bdev)
-		वापस -ENOMEM;
+	bdev = devm_kzalloc(&serdev->dev, sizeof(*bdev), GFP_KERNEL);
+	if (!bdev)
+		return -ENOMEM;
 
 	bdev->data = of_device_get_match_data(&serdev->dev);
-	अगर (!bdev->data)
-		वापस -ENODEV;
+	if (!bdev->data)
+		return -ENODEV;
 
 	bdev->serdev = serdev;
 	serdev_device_set_drvdata(serdev, bdev);
 
-	serdev_device_set_client_ops(serdev, &bपंचांगtkuart_client_ops);
+	serdev_device_set_client_ops(serdev, &btmtkuart_client_ops);
 
-	err = bपंचांगtkuart_parse_dt(serdev);
-	अगर (err < 0)
-		वापस err;
+	err = btmtkuart_parse_dt(serdev);
+	if (err < 0)
+		return err;
 
-	INIT_WORK(&bdev->tx_work, bपंचांगtkuart_tx_work);
+	INIT_WORK(&bdev->tx_work, btmtkuart_tx_work);
 	skb_queue_head_init(&bdev->txq);
 
-	/* Initialize and रेजिस्टर HCI device */
+	/* Initialize and register HCI device */
 	hdev = hci_alloc_dev();
-	अगर (!hdev) अणु
+	if (!hdev) {
 		dev_err(&serdev->dev, "Can't allocate HCI device\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	bdev->hdev = hdev;
 
 	hdev->bus = HCI_UART;
 	hci_set_drvdata(hdev, bdev);
 
-	hdev->खोलो     = bपंचांगtkuart_खोलो;
-	hdev->बंद    = bपंचांगtkuart_बंद;
-	hdev->flush    = bपंचांगtkuart_flush;
-	hdev->setup    = bपंचांगtkuart_setup;
-	hdev->shutकरोwn = bपंचांगtkuart_shutकरोwn;
-	hdev->send     = bपंचांगtkuart_send_frame;
+	hdev->open     = btmtkuart_open;
+	hdev->close    = btmtkuart_close;
+	hdev->flush    = btmtkuart_flush;
+	hdev->setup    = btmtkuart_setup;
+	hdev->shutdown = btmtkuart_shutdown;
+	hdev->send     = btmtkuart_send_frame;
 	SET_HCIDEV_DEV(hdev, &serdev->dev);
 
 	hdev->manufacturer = 70;
 	set_bit(HCI_QUIRK_NON_PERSISTENT_SETUP, &hdev->quirks);
 
-	अगर (bपंचांगtkuart_is_standalone(bdev)) अणु
+	if (btmtkuart_is_standalone(bdev)) {
 		err = clk_prepare_enable(bdev->osc);
-		अगर (err < 0)
-			जाओ err_hci_मुक्त_dev;
+		if (err < 0)
+			goto err_hci_free_dev;
 
-		अगर (bdev->boot) अणु
+		if (bdev->boot) {
 			gpiod_set_value_cansleep(bdev->boot, 1);
-		पूर्ण अन्यथा अणु
-			/* Switch to the specअगरic pin state क्रम the booting
+		} else {
+			/* Switch to the specific pin state for the booting
 			 * requires.
 			 */
 			pinctrl_select_state(bdev->pinctrl, bdev->pins_boot);
-		पूर्ण
+		}
 
 		/* Power on */
 		err = regulator_enable(bdev->vcc);
-		अगर (err < 0)
-			जाओ err_clk_disable_unprepare;
+		if (err < 0)
+			goto err_clk_disable_unprepare;
 
-		/* Reset अगर the reset-gpios is available otherwise the board
+		/* Reset if the reset-gpios is available otherwise the board
 		 * -level design should be guaranteed.
 		 */
-		अगर (bdev->reset) अणु
+		if (bdev->reset) {
 			gpiod_set_value_cansleep(bdev->reset, 1);
 			usleep_range(1000, 2000);
 			gpiod_set_value_cansleep(bdev->reset, 0);
-		पूर्ण
+		}
 
-		/* Wait some समय until device got पढ़ोy and चयन to the pin
-		 * mode the device requires क्रम UART transfers.
+		/* Wait some time until device got ready and switch to the pin
+		 * mode the device requires for UART transfers.
 		 */
 		msleep(50);
 
-		अगर (bdev->boot)
+		if (bdev->boot)
 			devm_gpiod_put(&serdev->dev, bdev->boot);
 
-		pinctrl_select_state(bdev->pinctrl, bdev->pins_runसमय);
+		pinctrl_select_state(bdev->pinctrl, bdev->pins_runtime);
 
-		/* A standalone device करोesn't depends on घातer करोमुख्य on SoC,
+		/* A standalone device doesn't depends on power domain on SoC,
 		 * so mark it as no callbacks.
 		 */
-		pm_runसमय_no_callbacks(&serdev->dev);
+		pm_runtime_no_callbacks(&serdev->dev);
 
 		set_bit(BTMTKUART_REQUIRED_WAKEUP, &bdev->tx_state);
-	पूर्ण
+	}
 
-	err = hci_रेजिस्टर_dev(hdev);
-	अगर (err < 0) अणु
+	err = hci_register_dev(hdev);
+	if (err < 0) {
 		dev_err(&serdev->dev, "Can't register HCI device\n");
-		जाओ err_regulator_disable;
-	पूर्ण
+		goto err_regulator_disable;
+	}
 
-	वापस 0;
+	return 0;
 
 err_regulator_disable:
-	अगर (bपंचांगtkuart_is_standalone(bdev))
+	if (btmtkuart_is_standalone(bdev))
 		regulator_disable(bdev->vcc);
 err_clk_disable_unprepare:
-	अगर (bपंचांगtkuart_is_standalone(bdev))
+	if (btmtkuart_is_standalone(bdev))
 		clk_disable_unprepare(bdev->osc);
-err_hci_मुक्त_dev:
-	hci_मुक्त_dev(hdev);
+err_hci_free_dev:
+	hci_free_dev(hdev);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम bपंचांगtkuart_हटाओ(काष्ठा serdev_device *serdev)
-अणु
-	काष्ठा bपंचांगtkuart_dev *bdev = serdev_device_get_drvdata(serdev);
-	काष्ठा hci_dev *hdev = bdev->hdev;
+static void btmtkuart_remove(struct serdev_device *serdev)
+{
+	struct btmtkuart_dev *bdev = serdev_device_get_drvdata(serdev);
+	struct hci_dev *hdev = bdev->hdev;
 
-	अगर (bपंचांगtkuart_is_standalone(bdev)) अणु
+	if (btmtkuart_is_standalone(bdev)) {
 		regulator_disable(bdev->vcc);
 		clk_disable_unprepare(bdev->osc);
-	पूर्ण
+	}
 
-	hci_unरेजिस्टर_dev(hdev);
-	hci_मुक्त_dev(hdev);
-पूर्ण
+	hci_unregister_dev(hdev);
+	hci_free_dev(hdev);
+}
 
-अटल स्थिर काष्ठा bपंचांगtkuart_data mt7622_data = अणु
+static const struct btmtkuart_data mt7622_data = {
 	.fwname = FIRMWARE_MT7622,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा bपंचांगtkuart_data mt7663_data = अणु
+static const struct btmtkuart_data mt7663_data = {
 	.flags = BTMTKUART_FLAG_STANDALONE_HW,
 	.fwname = FIRMWARE_MT7663,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा bपंचांगtkuart_data mt7668_data = अणु
+static const struct btmtkuart_data mt7668_data = {
 	.flags = BTMTKUART_FLAG_STANDALONE_HW,
 	.fwname = FIRMWARE_MT7668,
-पूर्ण;
+};
 
-#अगर_घोषित CONFIG_OF
-अटल स्थिर काष्ठा of_device_id mtk_of_match_table[] = अणु
-	अणु .compatible = "mediatek,mt7622-bluetooth", .data = &mt7622_dataपूर्ण,
-	अणु .compatible = "mediatek,mt7663u-bluetooth", .data = &mt7663_dataपूर्ण,
-	अणु .compatible = "mediatek,mt7668u-bluetooth", .data = &mt7668_dataपूर्ण,
-	अणु पूर्ण
-पूर्ण;
+#ifdef CONFIG_OF
+static const struct of_device_id mtk_of_match_table[] = {
+	{ .compatible = "mediatek,mt7622-bluetooth", .data = &mt7622_data},
+	{ .compatible = "mediatek,mt7663u-bluetooth", .data = &mt7663_data},
+	{ .compatible = "mediatek,mt7668u-bluetooth", .data = &mt7668_data},
+	{ }
+};
 MODULE_DEVICE_TABLE(of, mtk_of_match_table);
-#पूर्ण_अगर
+#endif
 
-अटल काष्ठा serdev_device_driver bपंचांगtkuart_driver = अणु
-	.probe = bपंचांगtkuart_probe,
-	.हटाओ = bपंचांगtkuart_हटाओ,
-	.driver = अणु
+static struct serdev_device_driver btmtkuart_driver = {
+	.probe = btmtkuart_probe,
+	.remove = btmtkuart_remove,
+	.driver = {
 		.name = "btmtkuart",
 		.of_match_table = of_match_ptr(mtk_of_match_table),
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_serdev_device_driver(bपंचांगtkuart_driver);
+module_serdev_device_driver(btmtkuart_driver);
 
 MODULE_AUTHOR("Sean Wang <sean.wang@mediatek.com>");
 MODULE_DESCRIPTION("MediaTek Bluetooth Serial driver ver " VERSION);

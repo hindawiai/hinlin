@@ -1,16 +1,15 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _NET_STP_H
-#घोषणा _NET_STP_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _NET_STP_H
+#define _NET_STP_H
 
-काष्ठा stp_proto अणु
-	अचिन्हित अक्षर	group_address[ETH_ALEN];
-	व्योम		(*rcv)(स्थिर काष्ठा stp_proto *, काष्ठा sk_buff *,
-			       काष्ठा net_device *);
-	व्योम		*data;
-पूर्ण;
+struct stp_proto {
+	unsigned char	group_address[ETH_ALEN];
+	void		(*rcv)(const struct stp_proto *, struct sk_buff *,
+			       struct net_device *);
+	void		*data;
+};
 
-पूर्णांक stp_proto_रेजिस्टर(स्थिर काष्ठा stp_proto *proto);
-व्योम stp_proto_unरेजिस्टर(स्थिर काष्ठा stp_proto *proto);
+int stp_proto_register(const struct stp_proto *proto);
+void stp_proto_unregister(const struct stp_proto *proto);
 
-#पूर्ण_अगर /* _NET_STP_H */
+#endif /* _NET_STP_H */

@@ -1,27 +1,26 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright 2012 Steffen Trumtrar, Pengutronix
  *
  * based on imx27-dt.c
  */
 
-#समावेश <linux/irq.h>
-#समावेश <linux/irqकरोमुख्य.h>
-#समावेश <linux/of_irq.h>
-#समावेश <linux/of_platक्रमm.h>
-#समावेश <linux/clk-provider.h>
-#समावेश <linux/घड़ीsource.h>
-#समावेश <यंत्र/mach/arch.h>
-#समावेश <यंत्र/mach/समय.स>
-#समावेश <यंत्र/hardware/cache-l2x0.h>
-#समावेश "common.h"
-#समावेश "mx35.h"
+#include <linux/irq.h>
+#include <linux/irqdomain.h>
+#include <linux/of_irq.h>
+#include <linux/of_platform.h>
+#include <linux/clk-provider.h>
+#include <linux/clocksource.h>
+#include <asm/mach/arch.h>
+#include <asm/mach/time.h>
+#include <asm/hardware/cache-l2x0.h>
+#include "common.h"
+#include "mx35.h"
 
-अटल स्थिर अक्षर * स्थिर imx35_dt_board_compat[] __initस्थिर = अणु
+static const char * const imx35_dt_board_compat[] __initconst = {
 	"fsl,imx35",
-	शून्य
-पूर्ण;
+	NULL
+};
 
 DT_MACHINE_START(IMX35_DT, "Freescale i.MX35 (Device Tree Support)")
 	.l2c_aux_val 	= 0,

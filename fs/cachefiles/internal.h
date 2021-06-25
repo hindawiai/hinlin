@@ -1,376 +1,375 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
-/* General netfs cache on cache files पूर्णांकernal defs
+/* SPDX-License-Identifier: GPL-2.0-or-later */
+/* General netfs cache on cache files internal defs
  *
  * Copyright (C) 2007 Red Hat, Inc. All Rights Reserved.
  * Written by David Howells (dhowells@redhat.com)
  */
 
-#अगर_घोषित pr_fmt
-#अघोषित pr_fmt
-#पूर्ण_अगर
+#ifdef pr_fmt
+#undef pr_fmt
+#endif
 
-#घोषणा pr_fmt(fmt) "CacheFiles: " fmt
+#define pr_fmt(fmt) "CacheFiles: " fmt
 
 
-#समावेश <linux/fscache-cache.h>
-#समावेश <linux/समयr.h>
-#समावेश <linux/रुको_bit.h>
-#समावेश <linux/cred.h>
-#समावेश <linux/workqueue.h>
-#समावेश <linux/security.h>
+#include <linux/fscache-cache.h>
+#include <linux/timer.h>
+#include <linux/wait_bit.h>
+#include <linux/cred.h>
+#include <linux/workqueue.h>
+#include <linux/security.h>
 
-काष्ठा cachefiles_cache;
-काष्ठा cachefiles_object;
+struct cachefiles_cache;
+struct cachefiles_object;
 
-बाह्य अचिन्हित cachefiles_debug;
-#घोषणा CACHEखाताS_DEBUG_KENTER	1
-#घोषणा CACHEखाताS_DEBUG_KLEAVE	2
-#घोषणा CACHEखाताS_DEBUG_KDEBUG	4
+extern unsigned cachefiles_debug;
+#define CACHEFILES_DEBUG_KENTER	1
+#define CACHEFILES_DEBUG_KLEAVE	2
+#define CACHEFILES_DEBUG_KDEBUG	4
 
-#घोषणा cachefiles_gfp (__GFP_RECLAIM | __GFP_NORETRY | __GFP_NOMEMALLOC)
+#define cachefiles_gfp (__GFP_RECLAIM | __GFP_NORETRY | __GFP_NOMEMALLOC)
 
 /*
  * node records
  */
-काष्ठा cachefiles_object अणु
-	काष्ठा fscache_object		fscache;	/* fscache handle */
-	काष्ठा cachefiles_lookup_data	*lookup_data;	/* cached lookup data */
-	काष्ठा dentry			*dentry;	/* the file/dir representing this object */
-	काष्ठा dentry			*backer;	/* backing file */
+struct cachefiles_object {
+	struct fscache_object		fscache;	/* fscache handle */
+	struct cachefiles_lookup_data	*lookup_data;	/* cached lookup data */
+	struct dentry			*dentry;	/* the file/dir representing this object */
+	struct dentry			*backer;	/* backing file */
 	loff_t				i_size;		/* object size */
-	अचिन्हित दीर्घ			flags;
-#घोषणा CACHEखाताS_OBJECT_ACTIVE	0		/* T अगर marked active */
+	unsigned long			flags;
+#define CACHEFILES_OBJECT_ACTIVE	0		/* T if marked active */
 	atomic_t			usage;		/* object usage count */
-	uपूर्णांक8_t				type;		/* object type */
-	uपूर्णांक8_t				new;		/* T अगर object new */
+	uint8_t				type;		/* object type */
+	uint8_t				new;		/* T if object new */
 	spinlock_t			work_lock;
-	काष्ठा rb_node			active_node;	/* link in active tree (dentry is key) */
-पूर्ण;
+	struct rb_node			active_node;	/* link in active tree (dentry is key) */
+};
 
-बाह्य काष्ठा kmem_cache *cachefiles_object_jar;
+extern struct kmem_cache *cachefiles_object_jar;
 
 /*
  * Cache files cache definition
  */
-काष्ठा cachefiles_cache अणु
-	काष्ठा fscache_cache		cache;		/* FS-Cache record */
-	काष्ठा vfsmount			*mnt;		/* mountpoपूर्णांक holding the cache */
-	काष्ठा dentry			*graveyard;	/* directory पूर्णांकo which dead objects go */
-	काष्ठा file			*cachefilesd;	/* manager daemon handle */
-	स्थिर काष्ठा cred		*cache_cred;	/* security override क्रम accessing cache */
-	काष्ठा mutex			daemon_mutex;	/* command serialisation mutex */
-	रुको_queue_head_t		daemon_pollwq;	/* poll रुकोqueue क्रम daemon */
-	काष्ठा rb_root			active_nodes;	/* active nodes (can't be culled) */
-	rwlock_t			active_lock;	/* lock क्रम active_nodes */
-	atomic_t			gravecounter;	/* graveyard uniquअगरier */
+struct cachefiles_cache {
+	struct fscache_cache		cache;		/* FS-Cache record */
+	struct vfsmount			*mnt;		/* mountpoint holding the cache */
+	struct dentry			*graveyard;	/* directory into which dead objects go */
+	struct file			*cachefilesd;	/* manager daemon handle */
+	const struct cred		*cache_cred;	/* security override for accessing cache */
+	struct mutex			daemon_mutex;	/* command serialisation mutex */
+	wait_queue_head_t		daemon_pollwq;	/* poll waitqueue for daemon */
+	struct rb_root			active_nodes;	/* active nodes (can't be culled) */
+	rwlock_t			active_lock;	/* lock for active_nodes */
+	atomic_t			gravecounter;	/* graveyard uniquifier */
 	atomic_t			f_released;	/* number of objects released lately */
-	atomic_दीर्घ_t			b_released;	/* number of blocks released lately */
-	अचिन्हित			frun_percent;	/* when to stop culling (% files) */
-	अचिन्हित			fcull_percent;	/* when to start culling (% files) */
-	अचिन्हित			fstop_percent;	/* when to stop allocating (% files) */
-	अचिन्हित			brun_percent;	/* when to stop culling (% blocks) */
-	अचिन्हित			bcull_percent;	/* when to start culling (% blocks) */
-	अचिन्हित			bstop_percent;	/* when to stop allocating (% blocks) */
-	अचिन्हित			bsize;		/* cache's block size */
-	अचिन्हित			bshअगरt;		/* min(ilog2(PAGE_SIZE / bsize), 0) */
-	uपूर्णांक64_t			frun;		/* when to stop culling */
-	uपूर्णांक64_t			fcull;		/* when to start culling */
-	uपूर्णांक64_t			fstop;		/* when to stop allocating */
+	atomic_long_t			b_released;	/* number of blocks released lately */
+	unsigned			frun_percent;	/* when to stop culling (% files) */
+	unsigned			fcull_percent;	/* when to start culling (% files) */
+	unsigned			fstop_percent;	/* when to stop allocating (% files) */
+	unsigned			brun_percent;	/* when to stop culling (% blocks) */
+	unsigned			bcull_percent;	/* when to start culling (% blocks) */
+	unsigned			bstop_percent;	/* when to stop allocating (% blocks) */
+	unsigned			bsize;		/* cache's block size */
+	unsigned			bshift;		/* min(ilog2(PAGE_SIZE / bsize), 0) */
+	uint64_t			frun;		/* when to stop culling */
+	uint64_t			fcull;		/* when to start culling */
+	uint64_t			fstop;		/* when to stop allocating */
 	sector_t			brun;		/* when to stop culling */
 	sector_t			bcull;		/* when to start culling */
 	sector_t			bstop;		/* when to stop allocating */
-	अचिन्हित दीर्घ			flags;
-#घोषणा CACHEखाताS_READY		0	/* T अगर cache prepared */
-#घोषणा CACHEखाताS_DEAD			1	/* T अगर cache dead */
-#घोषणा CACHEखाताS_CULLING		2	/* T अगर cull engaged */
-#घोषणा CACHEखाताS_STATE_CHANGED	3	/* T अगर state changed (poll trigger) */
-	अक्षर				*rootस_नाम;	/* name of cache root directory */
-	अक्षर				*secctx;	/* LSM security context */
-	अक्षर				*tag;		/* cache binding tag */
-पूर्ण;
+	unsigned long			flags;
+#define CACHEFILES_READY		0	/* T if cache prepared */
+#define CACHEFILES_DEAD			1	/* T if cache dead */
+#define CACHEFILES_CULLING		2	/* T if cull engaged */
+#define CACHEFILES_STATE_CHANGED	3	/* T if state changed (poll trigger) */
+	char				*rootdirname;	/* name of cache root directory */
+	char				*secctx;	/* LSM security context */
+	char				*tag;		/* cache binding tag */
+};
 
 /*
- * backing file पढ़ो tracking
+ * backing file read tracking
  */
-काष्ठा cachefiles_one_पढ़ो अणु
-	रुको_queue_entry_t			monitor;	/* link पूर्णांकo monitored रुकोqueue */
-	काष्ठा page			*back_page;	/* backing file page we're रुकोing क्रम */
-	काष्ठा page			*netfs_page;	/* netfs page we're going to fill */
-	काष्ठा fscache_retrieval	*op;		/* retrieval op covering this */
-	काष्ठा list_head		op_link;	/* link in op's toकरो list */
-पूर्ण;
+struct cachefiles_one_read {
+	wait_queue_entry_t			monitor;	/* link into monitored waitqueue */
+	struct page			*back_page;	/* backing file page we're waiting for */
+	struct page			*netfs_page;	/* netfs page we're going to fill */
+	struct fscache_retrieval	*op;		/* retrieval op covering this */
+	struct list_head		op_link;	/* link in op's todo list */
+};
 
 /*
- * backing file ग_लिखो tracking
+ * backing file write tracking
  */
-काष्ठा cachefiles_one_ग_लिखो अणु
-	काष्ठा page			*netfs_page;	/* netfs page to copy */
-	काष्ठा cachefiles_object	*object;
-	काष्ठा list_head		obj_link;	/* link in object's lists */
+struct cachefiles_one_write {
+	struct page			*netfs_page;	/* netfs page to copy */
+	struct cachefiles_object	*object;
+	struct list_head		obj_link;	/* link in object's lists */
 	fscache_rw_complete_t		end_io_func;
-	व्योम				*context;
-पूर्ण;
+	void				*context;
+};
 
 /*
  * auxiliary data xattr buffer
  */
-काष्ठा cachefiles_xattr अणु
-	uपूर्णांक16_t			len;
-	uपूर्णांक8_t				type;
-	uपूर्णांक8_t				data[];
-पूर्ण;
+struct cachefiles_xattr {
+	uint16_t			len;
+	uint8_t				type;
+	uint8_t				data[];
+};
 
-#समावेश <trace/events/cachefiles.h>
+#include <trace/events/cachefiles.h>
 
 /*
- * note change of state क्रम daemon
+ * note change of state for daemon
  */
-अटल अंतरभूत व्योम cachefiles_state_changed(काष्ठा cachefiles_cache *cache)
-अणु
-	set_bit(CACHEखाताS_STATE_CHANGED, &cache->flags);
+static inline void cachefiles_state_changed(struct cachefiles_cache *cache)
+{
+	set_bit(CACHEFILES_STATE_CHANGED, &cache->flags);
 	wake_up_all(&cache->daemon_pollwq);
-पूर्ण
+}
 
 /*
  * bind.c
  */
-बाह्य पूर्णांक cachefiles_daemon_bind(काष्ठा cachefiles_cache *cache, अक्षर *args);
-बाह्य व्योम cachefiles_daemon_unbind(काष्ठा cachefiles_cache *cache);
+extern int cachefiles_daemon_bind(struct cachefiles_cache *cache, char *args);
+extern void cachefiles_daemon_unbind(struct cachefiles_cache *cache);
 
 /*
  * daemon.c
  */
-बाह्य स्थिर काष्ठा file_operations cachefiles_daemon_fops;
+extern const struct file_operations cachefiles_daemon_fops;
 
-बाह्य पूर्णांक cachefiles_has_space(काष्ठा cachefiles_cache *cache,
-				अचिन्हित fnr, अचिन्हित bnr);
+extern int cachefiles_has_space(struct cachefiles_cache *cache,
+				unsigned fnr, unsigned bnr);
 
 /*
- * पूर्णांकerface.c
+ * interface.c
  */
-बाह्य स्थिर काष्ठा fscache_cache_ops cachefiles_cache_ops;
+extern const struct fscache_cache_ops cachefiles_cache_ops;
 
-व्योम cachefiles_put_object(काष्ठा fscache_object *_object,
-			   क्रमागत fscache_obj_ref_trace why);
+void cachefiles_put_object(struct fscache_object *_object,
+			   enum fscache_obj_ref_trace why);
 
 /*
  * key.c
  */
-बाह्य अक्षर *cachefiles_cook_key(स्थिर u8 *raw, पूर्णांक keylen, uपूर्णांक8_t type);
+extern char *cachefiles_cook_key(const u8 *raw, int keylen, uint8_t type);
 
 /*
  * namei.c
  */
-बाह्य व्योम cachefiles_mark_object_inactive(काष्ठा cachefiles_cache *cache,
-					    काष्ठा cachefiles_object *object,
+extern void cachefiles_mark_object_inactive(struct cachefiles_cache *cache,
+					    struct cachefiles_object *object,
 					    blkcnt_t i_blocks);
-बाह्य पूर्णांक cachefiles_delete_object(काष्ठा cachefiles_cache *cache,
-				    काष्ठा cachefiles_object *object);
-बाह्य पूर्णांक cachefiles_walk_to_object(काष्ठा cachefiles_object *parent,
-				     काष्ठा cachefiles_object *object,
-				     स्थिर अक्षर *key,
-				     काष्ठा cachefiles_xattr *auxdata);
-बाह्य काष्ठा dentry *cachefiles_get_directory(काष्ठा cachefiles_cache *cache,
-					       काष्ठा dentry *dir,
-					       स्थिर अक्षर *name);
+extern int cachefiles_delete_object(struct cachefiles_cache *cache,
+				    struct cachefiles_object *object);
+extern int cachefiles_walk_to_object(struct cachefiles_object *parent,
+				     struct cachefiles_object *object,
+				     const char *key,
+				     struct cachefiles_xattr *auxdata);
+extern struct dentry *cachefiles_get_directory(struct cachefiles_cache *cache,
+					       struct dentry *dir,
+					       const char *name);
 
-बाह्य पूर्णांक cachefiles_cull(काष्ठा cachefiles_cache *cache, काष्ठा dentry *dir,
-			   अक्षर *filename);
+extern int cachefiles_cull(struct cachefiles_cache *cache, struct dentry *dir,
+			   char *filename);
 
-बाह्य पूर्णांक cachefiles_check_in_use(काष्ठा cachefiles_cache *cache,
-				   काष्ठा dentry *dir, अक्षर *filename);
+extern int cachefiles_check_in_use(struct cachefiles_cache *cache,
+				   struct dentry *dir, char *filename);
 
 /*
  * proc.c
  */
-#अगर_घोषित CONFIG_CACHEखाताS_HISTOGRAM
-बाह्य atomic_t cachefiles_lookup_histogram[HZ];
-बाह्य atomic_t cachefiles_सूची_गढ़ो_histogram[HZ];
-बाह्य atomic_t cachefiles_create_histogram[HZ];
+#ifdef CONFIG_CACHEFILES_HISTOGRAM
+extern atomic_t cachefiles_lookup_histogram[HZ];
+extern atomic_t cachefiles_mkdir_histogram[HZ];
+extern atomic_t cachefiles_create_histogram[HZ];
 
-बाह्य पूर्णांक __init cachefiles_proc_init(व्योम);
-बाह्य व्योम cachefiles_proc_cleanup(व्योम);
-अटल अंतरभूत
-व्योम cachefiles_hist(atomic_t histogram[], अचिन्हित दीर्घ start_jअगर)
-अणु
-	अचिन्हित दीर्घ jअगर = jअगरfies - start_jअगर;
-	अगर (jअगर >= HZ)
-		jअगर = HZ - 1;
-	atomic_inc(&histogram[jअगर]);
-पूर्ण
+extern int __init cachefiles_proc_init(void);
+extern void cachefiles_proc_cleanup(void);
+static inline
+void cachefiles_hist(atomic_t histogram[], unsigned long start_jif)
+{
+	unsigned long jif = jiffies - start_jif;
+	if (jif >= HZ)
+		jif = HZ - 1;
+	atomic_inc(&histogram[jif]);
+}
 
-#अन्यथा
-#घोषणा cachefiles_proc_init()		(0)
-#घोषणा cachefiles_proc_cleanup()	करो अणुपूर्ण जबतक (0)
-#घोषणा cachefiles_hist(hist, start_jअगर) करो अणुपूर्ण जबतक (0)
-#पूर्ण_अगर
+#else
+#define cachefiles_proc_init()		(0)
+#define cachefiles_proc_cleanup()	do {} while (0)
+#define cachefiles_hist(hist, start_jif) do {} while (0)
+#endif
 
 /*
  * rdwr.c
  */
-बाह्य पूर्णांक cachefiles_पढ़ो_or_alloc_page(काष्ठा fscache_retrieval *,
-					 काष्ठा page *, gfp_t);
-बाह्य पूर्णांक cachefiles_पढ़ो_or_alloc_pages(काष्ठा fscache_retrieval *,
-					  काष्ठा list_head *, अचिन्हित *,
+extern int cachefiles_read_or_alloc_page(struct fscache_retrieval *,
+					 struct page *, gfp_t);
+extern int cachefiles_read_or_alloc_pages(struct fscache_retrieval *,
+					  struct list_head *, unsigned *,
 					  gfp_t);
-बाह्य पूर्णांक cachefiles_allocate_page(काष्ठा fscache_retrieval *, काष्ठा page *,
+extern int cachefiles_allocate_page(struct fscache_retrieval *, struct page *,
 				    gfp_t);
-बाह्य पूर्णांक cachefiles_allocate_pages(काष्ठा fscache_retrieval *,
-				     काष्ठा list_head *, अचिन्हित *, gfp_t);
-बाह्य पूर्णांक cachefiles_ग_लिखो_page(काष्ठा fscache_storage *, काष्ठा page *);
-बाह्य व्योम cachefiles_uncache_page(काष्ठा fscache_object *, काष्ठा page *);
+extern int cachefiles_allocate_pages(struct fscache_retrieval *,
+				     struct list_head *, unsigned *, gfp_t);
+extern int cachefiles_write_page(struct fscache_storage *, struct page *);
+extern void cachefiles_uncache_page(struct fscache_object *, struct page *);
 
 /*
  * rdwr2.c
  */
-बाह्य पूर्णांक cachefiles_begin_पढ़ो_operation(काष्ठा netfs_पढ़ो_request *,
-					   काष्ठा fscache_retrieval *);
+extern int cachefiles_begin_read_operation(struct netfs_read_request *,
+					   struct fscache_retrieval *);
 
 /*
  * security.c
  */
-बाह्य पूर्णांक cachefiles_get_security_ID(काष्ठा cachefiles_cache *cache);
-बाह्य पूर्णांक cachefiles_determine_cache_security(काष्ठा cachefiles_cache *cache,
-					       काष्ठा dentry *root,
-					       स्थिर काष्ठा cred **_saved_cred);
+extern int cachefiles_get_security_ID(struct cachefiles_cache *cache);
+extern int cachefiles_determine_cache_security(struct cachefiles_cache *cache,
+					       struct dentry *root,
+					       const struct cred **_saved_cred);
 
-अटल अंतरभूत व्योम cachefiles_begin_secure(काष्ठा cachefiles_cache *cache,
-					   स्थिर काष्ठा cred **_saved_cred)
-अणु
+static inline void cachefiles_begin_secure(struct cachefiles_cache *cache,
+					   const struct cred **_saved_cred)
+{
 	*_saved_cred = override_creds(cache->cache_cred);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम cachefiles_end_secure(काष्ठा cachefiles_cache *cache,
-					 स्थिर काष्ठा cred *saved_cred)
-अणु
+static inline void cachefiles_end_secure(struct cachefiles_cache *cache,
+					 const struct cred *saved_cred)
+{
 	revert_creds(saved_cred);
-पूर्ण
+}
 
 /*
  * xattr.c
  */
-बाह्य पूर्णांक cachefiles_check_object_type(काष्ठा cachefiles_object *object);
-बाह्य पूर्णांक cachefiles_set_object_xattr(काष्ठा cachefiles_object *object,
-				       काष्ठा cachefiles_xattr *auxdata);
-बाह्य पूर्णांक cachefiles_update_object_xattr(काष्ठा cachefiles_object *object,
-					  काष्ठा cachefiles_xattr *auxdata);
-बाह्य पूर्णांक cachefiles_check_auxdata(काष्ठा cachefiles_object *object);
-बाह्य पूर्णांक cachefiles_check_object_xattr(काष्ठा cachefiles_object *object,
-					 काष्ठा cachefiles_xattr *auxdata);
-बाह्य पूर्णांक cachefiles_हटाओ_object_xattr(काष्ठा cachefiles_cache *cache,
-					  काष्ठा dentry *dentry);
+extern int cachefiles_check_object_type(struct cachefiles_object *object);
+extern int cachefiles_set_object_xattr(struct cachefiles_object *object,
+				       struct cachefiles_xattr *auxdata);
+extern int cachefiles_update_object_xattr(struct cachefiles_object *object,
+					  struct cachefiles_xattr *auxdata);
+extern int cachefiles_check_auxdata(struct cachefiles_object *object);
+extern int cachefiles_check_object_xattr(struct cachefiles_object *object,
+					 struct cachefiles_xattr *auxdata);
+extern int cachefiles_remove_object_xattr(struct cachefiles_cache *cache,
+					  struct dentry *dentry);
 
 
 /*
  * error handling
  */
 
-#घोषणा cachefiles_io_error(___cache, FMT, ...)		\
-करो अणु							\
+#define cachefiles_io_error(___cache, FMT, ...)		\
+do {							\
 	pr_err("I/O Error: " FMT"\n", ##__VA_ARGS__);	\
 	fscache_io_error(&(___cache)->cache);		\
-	set_bit(CACHEखाताS_DEAD, &(___cache)->flags);	\
-पूर्ण जबतक (0)
+	set_bit(CACHEFILES_DEAD, &(___cache)->flags);	\
+} while (0)
 
-#घोषणा cachefiles_io_error_obj(object, FMT, ...)			\
-करो अणु									\
-	काष्ठा cachefiles_cache *___cache;				\
+#define cachefiles_io_error_obj(object, FMT, ...)			\
+do {									\
+	struct cachefiles_cache *___cache;				\
 									\
 	___cache = container_of((object)->fscache.cache,		\
-				काष्ठा cachefiles_cache, cache);	\
+				struct cachefiles_cache, cache);	\
 	cachefiles_io_error(___cache, FMT, ##__VA_ARGS__);		\
-पूर्ण जबतक (0)
+} while (0)
 
 
 /*
  * debug tracing
  */
-#घोषणा dbgprपूर्णांकk(FMT, ...) \
-	prपूर्णांकk(KERN_DEBUG "[%-6.6s] "FMT"\n", current->comm, ##__VA_ARGS__)
+#define dbgprintk(FMT, ...) \
+	printk(KERN_DEBUG "[%-6.6s] "FMT"\n", current->comm, ##__VA_ARGS__)
 
-#घोषणा kenter(FMT, ...) dbgprपूर्णांकk("==> %s("FMT")", __func__, ##__VA_ARGS__)
-#घोषणा kleave(FMT, ...) dbgprपूर्णांकk("<== %s()"FMT"", __func__, ##__VA_ARGS__)
-#घोषणा kdebug(FMT, ...) dbgprपूर्णांकk(FMT, ##__VA_ARGS__)
+#define kenter(FMT, ...) dbgprintk("==> %s("FMT")", __func__, ##__VA_ARGS__)
+#define kleave(FMT, ...) dbgprintk("<== %s()"FMT"", __func__, ##__VA_ARGS__)
+#define kdebug(FMT, ...) dbgprintk(FMT, ##__VA_ARGS__)
 
 
-#अगर defined(__KDEBUG)
-#घोषणा _enter(FMT, ...) kenter(FMT, ##__VA_ARGS__)
-#घोषणा _leave(FMT, ...) kleave(FMT, ##__VA_ARGS__)
-#घोषणा _debug(FMT, ...) kdebug(FMT, ##__VA_ARGS__)
+#if defined(__KDEBUG)
+#define _enter(FMT, ...) kenter(FMT, ##__VA_ARGS__)
+#define _leave(FMT, ...) kleave(FMT, ##__VA_ARGS__)
+#define _debug(FMT, ...) kdebug(FMT, ##__VA_ARGS__)
 
-#या_अगर defined(CONFIG_CACHEखाताS_DEBUG)
-#घोषणा _enter(FMT, ...)				\
-करो अणु							\
-	अगर (cachefiles_debug & CACHEखाताS_DEBUG_KENTER)	\
+#elif defined(CONFIG_CACHEFILES_DEBUG)
+#define _enter(FMT, ...)				\
+do {							\
+	if (cachefiles_debug & CACHEFILES_DEBUG_KENTER)	\
 		kenter(FMT, ##__VA_ARGS__);		\
-पूर्ण जबतक (0)
+} while (0)
 
-#घोषणा _leave(FMT, ...)				\
-करो अणु							\
-	अगर (cachefiles_debug & CACHEखाताS_DEBUG_KLEAVE)	\
+#define _leave(FMT, ...)				\
+do {							\
+	if (cachefiles_debug & CACHEFILES_DEBUG_KLEAVE)	\
 		kleave(FMT, ##__VA_ARGS__);		\
-पूर्ण जबतक (0)
+} while (0)
 
-#घोषणा _debug(FMT, ...)				\
-करो अणु							\
-	अगर (cachefiles_debug & CACHEखाताS_DEBUG_KDEBUG)	\
+#define _debug(FMT, ...)				\
+do {							\
+	if (cachefiles_debug & CACHEFILES_DEBUG_KDEBUG)	\
 		kdebug(FMT, ##__VA_ARGS__);		\
-पूर्ण जबतक (0)
+} while (0)
 
-#अन्यथा
-#घोषणा _enter(FMT, ...) no_prपूर्णांकk("==> %s("FMT")", __func__, ##__VA_ARGS__)
-#घोषणा _leave(FMT, ...) no_prपूर्णांकk("<== %s()"FMT"", __func__, ##__VA_ARGS__)
-#घोषणा _debug(FMT, ...) no_prपूर्णांकk(FMT, ##__VA_ARGS__)
-#पूर्ण_अगर
+#else
+#define _enter(FMT, ...) no_printk("==> %s("FMT")", __func__, ##__VA_ARGS__)
+#define _leave(FMT, ...) no_printk("<== %s()"FMT"", __func__, ##__VA_ARGS__)
+#define _debug(FMT, ...) no_printk(FMT, ##__VA_ARGS__)
+#endif
 
-#अगर 1 /* defined(__KDEBUGALL) */
+#if 1 /* defined(__KDEBUGALL) */
 
-#घोषणा ASSERT(X)							\
-करो अणु									\
-	अगर (unlikely(!(X))) अणु						\
+#define ASSERT(X)							\
+do {									\
+	if (unlikely(!(X))) {						\
 		pr_err("\n");						\
 		pr_err("Assertion failed\n");		\
 		BUG();							\
-	पूर्ण								\
-पूर्ण जबतक (0)
+	}								\
+} while (0)
 
-#घोषणा ASSERTCMP(X, OP, Y)						\
-करो अणु									\
-	अगर (unlikely(!((X) OP (Y)))) अणु					\
-		pr_err("\n");						\
-		pr_err("Assertion failed\n");		\
-		pr_err("%lx " #OP " %lx is false\n",			\
-		       (अचिन्हित दीर्घ)(X), (अचिन्हित दीर्घ)(Y));		\
-		BUG();							\
-	पूर्ण								\
-पूर्ण जबतक (0)
-
-#घोषणा ASSERTIF(C, X)							\
-करो अणु									\
-	अगर (unlikely((C) && !(X))) अणु					\
-		pr_err("\n");						\
-		pr_err("Assertion failed\n");		\
-		BUG();							\
-	पूर्ण								\
-पूर्ण जबतक (0)
-
-#घोषणा ASSERTIFCMP(C, X, OP, Y)					\
-करो अणु									\
-	अगर (unlikely((C) && !((X) OP (Y)))) अणु				\
+#define ASSERTCMP(X, OP, Y)						\
+do {									\
+	if (unlikely(!((X) OP (Y)))) {					\
 		pr_err("\n");						\
 		pr_err("Assertion failed\n");		\
 		pr_err("%lx " #OP " %lx is false\n",			\
-		       (अचिन्हित दीर्घ)(X), (अचिन्हित दीर्घ)(Y));		\
+		       (unsigned long)(X), (unsigned long)(Y));		\
 		BUG();							\
-	पूर्ण								\
-पूर्ण जबतक (0)
+	}								\
+} while (0)
 
-#अन्यथा
+#define ASSERTIF(C, X)							\
+do {									\
+	if (unlikely((C) && !(X))) {					\
+		pr_err("\n");						\
+		pr_err("Assertion failed\n");		\
+		BUG();							\
+	}								\
+} while (0)
 
-#घोषणा ASSERT(X)			करो अणुपूर्ण जबतक (0)
-#घोषणा ASSERTCMP(X, OP, Y)		करो अणुपूर्ण जबतक (0)
-#घोषणा ASSERTIF(C, X)			करो अणुपूर्ण जबतक (0)
-#घोषणा ASSERTIFCMP(C, X, OP, Y)	करो अणुपूर्ण जबतक (0)
+#define ASSERTIFCMP(C, X, OP, Y)					\
+do {									\
+	if (unlikely((C) && !((X) OP (Y)))) {				\
+		pr_err("\n");						\
+		pr_err("Assertion failed\n");		\
+		pr_err("%lx " #OP " %lx is false\n",			\
+		       (unsigned long)(X), (unsigned long)(Y));		\
+		BUG();							\
+	}								\
+} while (0)
 
-#पूर्ण_अगर
+#else
+
+#define ASSERT(X)			do {} while (0)
+#define ASSERTCMP(X, OP, Y)		do {} while (0)
+#define ASSERTIF(C, X)			do {} while (0)
+#define ASSERTIFCMP(C, X, OP, Y)	do {} while (0)
+
+#endif

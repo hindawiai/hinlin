@@ -1,35 +1,34 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: ISC
+// SPDX-License-Identifier: ISC
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/platक्रमm_device.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/platform_device.h>
 
-#समावेश "mt7603.h"
+#include "mt7603.h"
 
-अटल पूर्णांक
-mt76_wmac_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा mt7603_dev *dev;
-	व्योम __iomem *mem_base;
-	काष्ठा mt76_dev *mdev;
-	पूर्णांक irq;
-	पूर्णांक ret;
+static int
+mt76_wmac_probe(struct platform_device *pdev)
+{
+	struct mt7603_dev *dev;
+	void __iomem *mem_base;
+	struct mt76_dev *mdev;
+	int irq;
+	int ret;
 
-	irq = platक्रमm_get_irq(pdev, 0);
-	अगर (irq < 0)
-		वापस irq;
+	irq = platform_get_irq(pdev, 0);
+	if (irq < 0)
+		return irq;
 
-	mem_base = devm_platक्रमm_ioremap_resource(pdev, 0);
-	अगर (IS_ERR(mem_base))
-		वापस PTR_ERR(mem_base);
+	mem_base = devm_platform_ioremap_resource(pdev, 0);
+	if (IS_ERR(mem_base))
+		return PTR_ERR(mem_base);
 
-	mdev = mt76_alloc_device(&pdev->dev, माप(*dev), &mt7603_ops,
+	mdev = mt76_alloc_device(&pdev->dev, sizeof(*dev), &mt7603_ops,
 				 &mt7603_drv_ops);
-	अगर (!mdev)
-		वापस -ENOMEM;
+	if (!mdev)
+		return -ENOMEM;
 
-	dev = container_of(mdev, काष्ठा mt7603_dev, mt76);
+	dev = container_of(mdev, struct mt7603_dev, mt76);
 	mt76_mmio_init(mdev, mem_base);
 
 	mdev->rev = (mt76_rr(dev, MT_HW_CHIPID) << 16) |
@@ -40,44 +39,44 @@ mt76_wmac_probe(काष्ठा platक्रमm_device *pdev)
 
 	ret = devm_request_irq(mdev->dev, irq, mt7603_irq_handler,
 			       IRQF_SHARED, KBUILD_MODNAME, dev);
-	अगर (ret)
-		जाओ error;
+	if (ret)
+		goto error;
 
-	ret = mt7603_रेजिस्टर_device(dev);
-	अगर (ret)
-		जाओ error;
+	ret = mt7603_register_device(dev);
+	if (ret)
+		goto error;
 
-	वापस 0;
+	return 0;
 error:
-	ieee80211_मुक्त_hw(mt76_hw(dev));
-	वापस ret;
-पूर्ण
+	ieee80211_free_hw(mt76_hw(dev));
+	return ret;
+}
 
-अटल पूर्णांक
-mt76_wmac_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा mt76_dev *mdev = platक्रमm_get_drvdata(pdev);
-	काष्ठा mt7603_dev *dev = container_of(mdev, काष्ठा mt7603_dev, mt76);
+static int
+mt76_wmac_remove(struct platform_device *pdev)
+{
+	struct mt76_dev *mdev = platform_get_drvdata(pdev);
+	struct mt7603_dev *dev = container_of(mdev, struct mt7603_dev, mt76);
 
-	mt7603_unरेजिस्टर_device(dev);
+	mt7603_unregister_device(dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id of_wmac_match[] = अणु
-	अणु .compatible = "mediatek,mt7628-wmac" पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct of_device_id of_wmac_match[] = {
+	{ .compatible = "mediatek,mt7628-wmac" },
+	{},
+};
 
 MODULE_DEVICE_TABLE(of, of_wmac_match);
 MODULE_FIRMWARE(MT7628_FIRMWARE_E1);
 MODULE_FIRMWARE(MT7628_FIRMWARE_E2);
 
-काष्ठा platक्रमm_driver mt76_wmac_driver = अणु
+struct platform_driver mt76_wmac_driver = {
 	.probe		= mt76_wmac_probe,
-	.हटाओ		= mt76_wmac_हटाओ,
-	.driver = अणु
+	.remove		= mt76_wmac_remove,
+	.driver = {
 		.name = "mt76_wmac",
 		.of_match_table = of_wmac_match,
-	पूर्ण,
-पूर्ण;
+	},
+};

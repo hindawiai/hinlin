@@ -1,129 +1,128 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * linux/net/sunrpc/auth_null.c
  *
- * AUTH_शून्य authentication. Really :-)
+ * AUTH_NULL authentication. Really :-)
  *
  * Copyright (C) 1996, Olaf Kirch <okir@monad.swb.de>
  */
 
-#समावेश <linux/types.h>
-#समावेश <linux/module.h>
-#समावेश <linux/sunrpc/clnt.h>
+#include <linux/types.h>
+#include <linux/module.h>
+#include <linux/sunrpc/clnt.h>
 
-#अगर IS_ENABLED(CONFIG_SUNRPC_DEBUG)
+#if IS_ENABLED(CONFIG_SUNRPC_DEBUG)
 # define RPCDBG_FACILITY	RPCDBG_AUTH
-#पूर्ण_अगर
+#endif
 
-अटल काष्ठा rpc_auth null_auth;
-अटल काष्ठा rpc_cred null_cred;
+static struct rpc_auth null_auth;
+static struct rpc_cred null_cred;
 
-अटल काष्ठा rpc_auth *
-nul_create(स्थिर काष्ठा rpc_auth_create_args *args, काष्ठा rpc_clnt *clnt)
-अणु
+static struct rpc_auth *
+nul_create(const struct rpc_auth_create_args *args, struct rpc_clnt *clnt)
+{
 	refcount_inc(&null_auth.au_count);
-	वापस &null_auth;
-पूर्ण
+	return &null_auth;
+}
 
-अटल व्योम
-nul_destroy(काष्ठा rpc_auth *auth)
-अणु
-पूर्ण
+static void
+nul_destroy(struct rpc_auth *auth)
+{
+}
 
 /*
- * Lookup शून्य creds क्रम current process
+ * Lookup NULL creds for current process
  */
-अटल काष्ठा rpc_cred *
-nul_lookup_cred(काष्ठा rpc_auth *auth, काष्ठा auth_cred *acred, पूर्णांक flags)
-अणु
-	वापस get_rpccred(&null_cred);
-पूर्ण
+static struct rpc_cred *
+nul_lookup_cred(struct rpc_auth *auth, struct auth_cred *acred, int flags)
+{
+	return get_rpccred(&null_cred);
+}
 
 /*
  * Destroy cred handle.
  */
-अटल व्योम
-nul_destroy_cred(काष्ठा rpc_cred *cred)
-अणु
-पूर्ण
+static void
+nul_destroy_cred(struct rpc_cred *cred)
+{
+}
 
 /*
  * Match cred handle against current process
  */
-अटल पूर्णांक
-nul_match(काष्ठा auth_cred *acred, काष्ठा rpc_cred *cred, पूर्णांक taskflags)
-अणु
-	वापस 1;
-पूर्ण
+static int
+nul_match(struct auth_cred *acred, struct rpc_cred *cred, int taskflags)
+{
+	return 1;
+}
 
 /*
  * Marshal credential.
  */
-अटल पूर्णांक
-nul_marshal(काष्ठा rpc_task *task, काष्ठा xdr_stream *xdr)
-अणु
+static int
+nul_marshal(struct rpc_task *task, struct xdr_stream *xdr)
+{
 	__be32 *p;
 
-	p = xdr_reserve_space(xdr, 4 * माप(*p));
-	अगर (!p)
-		वापस -EMSGSIZE;
+	p = xdr_reserve_space(xdr, 4 * sizeof(*p));
+	if (!p)
+		return -EMSGSIZE;
 	/* Credential */
 	*p++ = rpc_auth_null;
 	*p++ = xdr_zero;
-	/* Verअगरier */
+	/* Verifier */
 	*p++ = rpc_auth_null;
 	*p   = xdr_zero;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Refresh credential. This is a no-op क्रम AUTH_शून्य
+ * Refresh credential. This is a no-op for AUTH_NULL
  */
-अटल पूर्णांक
-nul_refresh(काष्ठा rpc_task *task)
-अणु
+static int
+nul_refresh(struct rpc_task *task)
+{
 	set_bit(RPCAUTH_CRED_UPTODATE, &task->tk_rqstp->rq_cred->cr_flags);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-nul_validate(काष्ठा rpc_task *task, काष्ठा xdr_stream *xdr)
-अणु
+static int
+nul_validate(struct rpc_task *task, struct xdr_stream *xdr)
+{
 	__be32 *p;
 
-	p = xdr_अंतरभूत_decode(xdr, 2 * माप(*p));
-	अगर (!p)
-		वापस -EIO;
-	अगर (*p++ != rpc_auth_null)
-		वापस -EIO;
-	अगर (*p != xdr_zero)
-		वापस -EIO;
-	वापस 0;
-पूर्ण
+	p = xdr_inline_decode(xdr, 2 * sizeof(*p));
+	if (!p)
+		return -EIO;
+	if (*p++ != rpc_auth_null)
+		return -EIO;
+	if (*p != xdr_zero)
+		return -EIO;
+	return 0;
+}
 
-स्थिर काष्ठा rpc_authops authnull_ops = अणु
+const struct rpc_authops authnull_ops = {
 	.owner		= THIS_MODULE,
-	.au_flavor	= RPC_AUTH_शून्य,
+	.au_flavor	= RPC_AUTH_NULL,
 	.au_name	= "NULL",
 	.create		= nul_create,
 	.destroy	= nul_destroy,
 	.lookup_cred	= nul_lookup_cred,
-पूर्ण;
+};
 
-अटल
-काष्ठा rpc_auth null_auth = अणु
+static
+struct rpc_auth null_auth = {
 	.au_cslack	= NUL_CALLSLACK,
 	.au_rslack	= NUL_REPLYSLACK,
 	.au_verfsize	= NUL_REPLYSLACK,
 	.au_ralign	= NUL_REPLYSLACK,
 	.au_ops		= &authnull_ops,
-	.au_flavor	= RPC_AUTH_शून्य,
+	.au_flavor	= RPC_AUTH_NULL,
 	.au_count	= REFCOUNT_INIT(1),
-पूर्ण;
+};
 
-अटल
-स्थिर काष्ठा rpc_creकरोps null_creकरोps = अणु
+static
+const struct rpc_credops null_credops = {
 	.cr_name	= "AUTH_NULL",
 	.crdestroy	= nul_destroy_cred,
 	.crmatch	= nul_match,
@@ -132,13 +131,13 @@ nul_validate(काष्ठा rpc_task *task, काष्ठा xdr_stream *x
 	.crrefresh	= nul_refresh,
 	.crvalidate	= nul_validate,
 	.crunwrap_resp	= rpcauth_unwrap_resp_decode,
-पूर्ण;
+};
 
-अटल
-काष्ठा rpc_cred null_cred = अणु
+static
+struct rpc_cred null_cred = {
 	.cr_lru		= LIST_HEAD_INIT(null_cred.cr_lru),
 	.cr_auth	= &null_auth,
-	.cr_ops		= &null_creकरोps,
+	.cr_ops		= &null_credops,
 	.cr_count	= REFCOUNT_INIT(2),
 	.cr_flags	= 1UL << RPCAUTH_CRED_UPTODATE,
-पूर्ण;
+};

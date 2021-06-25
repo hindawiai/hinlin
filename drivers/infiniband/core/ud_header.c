@@ -1,25 +1,24 @@
-<शैली गुरु>
 /*
  * Copyright (c) 2004 Topspin Corporation.  All rights reserved.
- * Copyright (c) 2005 Sun Microप्रणालीs, Inc. All rights reserved.
+ * Copyright (c) 2005 Sun Microsystems, Inc. All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the मुख्य directory of this source tree, or the
+ * COPYING in the main directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary क्रमms, with or
- *     without modअगरication, are permitted provided that the following
+ *     Redistribution and use in source and binary forms, with or
+ *     without modification, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary क्रमm must reproduce the above
+ *      - Redistributions in binary form must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the करोcumentation and/or other materials
+ *        disclaimer in the documentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -32,258 +31,258 @@
  * SOFTWARE.
  */
 
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/माला.स>
-#समावेश <linux/export.h>
-#समावेश <linux/अगर_ether.h>
-#समावेश <linux/ip.h>
+#include <linux/errno.h>
+#include <linux/string.h>
+#include <linux/export.h>
+#include <linux/if_ether.h>
+#include <linux/ip.h>
 
-#समावेश <rdma/ib_pack.h>
+#include <rdma/ib_pack.h>
 
-#घोषणा STRUCT_FIELD(header, field) \
-	.काष्ठा_offset_bytes = दुरत्व(काष्ठा ib_unpacked_ ## header, field),      \
-	.काष्ठा_size_bytes   = माप_field(काष्ठा ib_unpacked_ ## header, field), \
+#define STRUCT_FIELD(header, field) \
+	.struct_offset_bytes = offsetof(struct ib_unpacked_ ## header, field),      \
+	.struct_size_bytes   = sizeof_field(struct ib_unpacked_ ## header, field), \
 	.field_name          = #header ":" #field
 
-अटल स्थिर काष्ठा ib_field lrh_table[]  = अणु
-	अणु STRUCT_FIELD(lrh, भव_lane),
+static const struct ib_field lrh_table[]  = {
+	{ STRUCT_FIELD(lrh, virtual_lane),
 	  .offset_words = 0,
 	  .offset_bits  = 0,
-	  .size_bits    = 4 पूर्ण,
-	अणु STRUCT_FIELD(lrh, link_version),
+	  .size_bits    = 4 },
+	{ STRUCT_FIELD(lrh, link_version),
 	  .offset_words = 0,
 	  .offset_bits  = 4,
-	  .size_bits    = 4 पूर्ण,
-	अणु STRUCT_FIELD(lrh, service_level),
+	  .size_bits    = 4 },
+	{ STRUCT_FIELD(lrh, service_level),
 	  .offset_words = 0,
 	  .offset_bits  = 8,
-	  .size_bits    = 4 पूर्ण,
-	अणु RESERVED,
+	  .size_bits    = 4 },
+	{ RESERVED,
 	  .offset_words = 0,
 	  .offset_bits  = 12,
-	  .size_bits    = 2 पूर्ण,
-	अणु STRUCT_FIELD(lrh, link_next_header),
+	  .size_bits    = 2 },
+	{ STRUCT_FIELD(lrh, link_next_header),
 	  .offset_words = 0,
 	  .offset_bits  = 14,
-	  .size_bits    = 2 पूर्ण,
-	अणु STRUCT_FIELD(lrh, destination_lid),
+	  .size_bits    = 2 },
+	{ STRUCT_FIELD(lrh, destination_lid),
 	  .offset_words = 0,
 	  .offset_bits  = 16,
-	  .size_bits    = 16 पूर्ण,
-	अणु RESERVED,
+	  .size_bits    = 16 },
+	{ RESERVED,
 	  .offset_words = 1,
 	  .offset_bits  = 0,
-	  .size_bits    = 5 पूर्ण,
-	अणु STRUCT_FIELD(lrh, packet_length),
+	  .size_bits    = 5 },
+	{ STRUCT_FIELD(lrh, packet_length),
 	  .offset_words = 1,
 	  .offset_bits  = 5,
-	  .size_bits    = 11 पूर्ण,
-	अणु STRUCT_FIELD(lrh, source_lid),
+	  .size_bits    = 11 },
+	{ STRUCT_FIELD(lrh, source_lid),
 	  .offset_words = 1,
 	  .offset_bits  = 16,
-	  .size_bits    = 16 पूर्ण
-पूर्ण;
+	  .size_bits    = 16 }
+};
 
-अटल स्थिर काष्ठा ib_field eth_table[]  = अणु
-	अणु STRUCT_FIELD(eth, dmac_h),
+static const struct ib_field eth_table[]  = {
+	{ STRUCT_FIELD(eth, dmac_h),
 	  .offset_words = 0,
 	  .offset_bits  = 0,
-	  .size_bits    = 32 पूर्ण,
-	अणु STRUCT_FIELD(eth, dmac_l),
+	  .size_bits    = 32 },
+	{ STRUCT_FIELD(eth, dmac_l),
 	  .offset_words = 1,
 	  .offset_bits  = 0,
-	  .size_bits    = 16 पूर्ण,
-	अणु STRUCT_FIELD(eth, smac_h),
+	  .size_bits    = 16 },
+	{ STRUCT_FIELD(eth, smac_h),
 	  .offset_words = 1,
 	  .offset_bits  = 16,
-	  .size_bits    = 16 पूर्ण,
-	अणु STRUCT_FIELD(eth, smac_l),
+	  .size_bits    = 16 },
+	{ STRUCT_FIELD(eth, smac_l),
 	  .offset_words = 2,
 	  .offset_bits  = 0,
-	  .size_bits    = 32 पूर्ण,
-	अणु STRUCT_FIELD(eth, type),
+	  .size_bits    = 32 },
+	{ STRUCT_FIELD(eth, type),
 	  .offset_words = 3,
 	  .offset_bits  = 0,
-	  .size_bits    = 16 पूर्ण
-पूर्ण;
+	  .size_bits    = 16 }
+};
 
-अटल स्थिर काष्ठा ib_field vlan_table[]  = अणु
-	अणु STRUCT_FIELD(vlan, tag),
+static const struct ib_field vlan_table[]  = {
+	{ STRUCT_FIELD(vlan, tag),
 	  .offset_words = 0,
 	  .offset_bits  = 0,
-	  .size_bits    = 16 पूर्ण,
-	अणु STRUCT_FIELD(vlan, type),
+	  .size_bits    = 16 },
+	{ STRUCT_FIELD(vlan, type),
 	  .offset_words = 0,
 	  .offset_bits  = 16,
-	  .size_bits    = 16 पूर्ण
-पूर्ण;
+	  .size_bits    = 16 }
+};
 
-अटल स्थिर काष्ठा ib_field ip4_table[]  = अणु
-	अणु STRUCT_FIELD(ip4, ver),
+static const struct ib_field ip4_table[]  = {
+	{ STRUCT_FIELD(ip4, ver),
 	  .offset_words = 0,
 	  .offset_bits  = 0,
-	  .size_bits    = 4 पूर्ण,
-	अणु STRUCT_FIELD(ip4, hdr_len),
+	  .size_bits    = 4 },
+	{ STRUCT_FIELD(ip4, hdr_len),
 	  .offset_words = 0,
 	  .offset_bits  = 4,
-	  .size_bits    = 4 पूर्ण,
-	अणु STRUCT_FIELD(ip4, tos),
+	  .size_bits    = 4 },
+	{ STRUCT_FIELD(ip4, tos),
 	  .offset_words = 0,
 	  .offset_bits  = 8,
-	  .size_bits    = 8 पूर्ण,
-	अणु STRUCT_FIELD(ip4, tot_len),
+	  .size_bits    = 8 },
+	{ STRUCT_FIELD(ip4, tot_len),
 	  .offset_words = 0,
 	  .offset_bits  = 16,
-	  .size_bits    = 16 पूर्ण,
-	अणु STRUCT_FIELD(ip4, id),
+	  .size_bits    = 16 },
+	{ STRUCT_FIELD(ip4, id),
 	  .offset_words = 1,
 	  .offset_bits  = 0,
-	  .size_bits    = 16 पूर्ण,
-	अणु STRUCT_FIELD(ip4, frag_off),
+	  .size_bits    = 16 },
+	{ STRUCT_FIELD(ip4, frag_off),
 	  .offset_words = 1,
 	  .offset_bits  = 16,
-	  .size_bits    = 16 पूर्ण,
-	अणु STRUCT_FIELD(ip4, ttl),
+	  .size_bits    = 16 },
+	{ STRUCT_FIELD(ip4, ttl),
 	  .offset_words = 2,
 	  .offset_bits  = 0,
-	  .size_bits    = 8 पूर्ण,
-	अणु STRUCT_FIELD(ip4, protocol),
+	  .size_bits    = 8 },
+	{ STRUCT_FIELD(ip4, protocol),
 	  .offset_words = 2,
 	  .offset_bits  = 8,
-	  .size_bits    = 8 पूर्ण,
-	अणु STRUCT_FIELD(ip4, check),
+	  .size_bits    = 8 },
+	{ STRUCT_FIELD(ip4, check),
 	  .offset_words = 2,
 	  .offset_bits  = 16,
-	  .size_bits    = 16 पूर्ण,
-	अणु STRUCT_FIELD(ip4, saddr),
+	  .size_bits    = 16 },
+	{ STRUCT_FIELD(ip4, saddr),
 	  .offset_words = 3,
 	  .offset_bits  = 0,
-	  .size_bits    = 32 पूर्ण,
-	अणु STRUCT_FIELD(ip4, daddr),
+	  .size_bits    = 32 },
+	{ STRUCT_FIELD(ip4, daddr),
 	  .offset_words = 4,
 	  .offset_bits  = 0,
-	  .size_bits    = 32 पूर्ण
-पूर्ण;
+	  .size_bits    = 32 }
+};
 
-अटल स्थिर काष्ठा ib_field udp_table[]  = अणु
-	अणु STRUCT_FIELD(udp, sport),
+static const struct ib_field udp_table[]  = {
+	{ STRUCT_FIELD(udp, sport),
 	  .offset_words = 0,
 	  .offset_bits  = 0,
-	  .size_bits    = 16 पूर्ण,
-	अणु STRUCT_FIELD(udp, dport),
+	  .size_bits    = 16 },
+	{ STRUCT_FIELD(udp, dport),
 	  .offset_words = 0,
 	  .offset_bits  = 16,
-	  .size_bits    = 16 पूर्ण,
-	अणु STRUCT_FIELD(udp, length),
+	  .size_bits    = 16 },
+	{ STRUCT_FIELD(udp, length),
 	  .offset_words = 1,
 	  .offset_bits  = 0,
-	  .size_bits    = 16 पूर्ण,
-	अणु STRUCT_FIELD(udp, csum),
+	  .size_bits    = 16 },
+	{ STRUCT_FIELD(udp, csum),
 	  .offset_words = 1,
 	  .offset_bits  = 16,
-	  .size_bits    = 16 पूर्ण
-पूर्ण;
+	  .size_bits    = 16 }
+};
 
-अटल स्थिर काष्ठा ib_field grh_table[]  = अणु
-	अणु STRUCT_FIELD(grh, ip_version),
+static const struct ib_field grh_table[]  = {
+	{ STRUCT_FIELD(grh, ip_version),
 	  .offset_words = 0,
 	  .offset_bits  = 0,
-	  .size_bits    = 4 पूर्ण,
-	अणु STRUCT_FIELD(grh, traffic_class),
+	  .size_bits    = 4 },
+	{ STRUCT_FIELD(grh, traffic_class),
 	  .offset_words = 0,
 	  .offset_bits  = 4,
-	  .size_bits    = 8 पूर्ण,
-	अणु STRUCT_FIELD(grh, flow_label),
+	  .size_bits    = 8 },
+	{ STRUCT_FIELD(grh, flow_label),
 	  .offset_words = 0,
 	  .offset_bits  = 12,
-	  .size_bits    = 20 पूर्ण,
-	अणु STRUCT_FIELD(grh, payload_length),
+	  .size_bits    = 20 },
+	{ STRUCT_FIELD(grh, payload_length),
 	  .offset_words = 1,
 	  .offset_bits  = 0,
-	  .size_bits    = 16 पूर्ण,
-	अणु STRUCT_FIELD(grh, next_header),
+	  .size_bits    = 16 },
+	{ STRUCT_FIELD(grh, next_header),
 	  .offset_words = 1,
 	  .offset_bits  = 16,
-	  .size_bits    = 8 पूर्ण,
-	अणु STRUCT_FIELD(grh, hop_limit),
+	  .size_bits    = 8 },
+	{ STRUCT_FIELD(grh, hop_limit),
 	  .offset_words = 1,
 	  .offset_bits  = 24,
-	  .size_bits    = 8 पूर्ण,
-	अणु STRUCT_FIELD(grh, source_gid),
+	  .size_bits    = 8 },
+	{ STRUCT_FIELD(grh, source_gid),
 	  .offset_words = 2,
 	  .offset_bits  = 0,
-	  .size_bits    = 128 पूर्ण,
-	अणु STRUCT_FIELD(grh, destination_gid),
+	  .size_bits    = 128 },
+	{ STRUCT_FIELD(grh, destination_gid),
 	  .offset_words = 6,
 	  .offset_bits  = 0,
-	  .size_bits    = 128 पूर्ण
-पूर्ण;
+	  .size_bits    = 128 }
+};
 
-अटल स्थिर काष्ठा ib_field bth_table[]  = अणु
-	अणु STRUCT_FIELD(bth, opcode),
+static const struct ib_field bth_table[]  = {
+	{ STRUCT_FIELD(bth, opcode),
 	  .offset_words = 0,
 	  .offset_bits  = 0,
-	  .size_bits    = 8 पूर्ण,
-	अणु STRUCT_FIELD(bth, solicited_event),
+	  .size_bits    = 8 },
+	{ STRUCT_FIELD(bth, solicited_event),
 	  .offset_words = 0,
 	  .offset_bits  = 8,
-	  .size_bits    = 1 पूर्ण,
-	अणु STRUCT_FIELD(bth, mig_req),
+	  .size_bits    = 1 },
+	{ STRUCT_FIELD(bth, mig_req),
 	  .offset_words = 0,
 	  .offset_bits  = 9,
-	  .size_bits    = 1 पूर्ण,
-	अणु STRUCT_FIELD(bth, pad_count),
+	  .size_bits    = 1 },
+	{ STRUCT_FIELD(bth, pad_count),
 	  .offset_words = 0,
 	  .offset_bits  = 10,
-	  .size_bits    = 2 पूर्ण,
-	अणु STRUCT_FIELD(bth, transport_header_version),
+	  .size_bits    = 2 },
+	{ STRUCT_FIELD(bth, transport_header_version),
 	  .offset_words = 0,
 	  .offset_bits  = 12,
-	  .size_bits    = 4 पूर्ण,
-	अणु STRUCT_FIELD(bth, pkey),
+	  .size_bits    = 4 },
+	{ STRUCT_FIELD(bth, pkey),
 	  .offset_words = 0,
 	  .offset_bits  = 16,
-	  .size_bits    = 16 पूर्ण,
-	अणु RESERVED,
+	  .size_bits    = 16 },
+	{ RESERVED,
 	  .offset_words = 1,
 	  .offset_bits  = 0,
-	  .size_bits    = 8 पूर्ण,
-	अणु STRUCT_FIELD(bth, destination_qpn),
+	  .size_bits    = 8 },
+	{ STRUCT_FIELD(bth, destination_qpn),
 	  .offset_words = 1,
 	  .offset_bits  = 8,
-	  .size_bits    = 24 पूर्ण,
-	अणु STRUCT_FIELD(bth, ack_req),
+	  .size_bits    = 24 },
+	{ STRUCT_FIELD(bth, ack_req),
 	  .offset_words = 2,
 	  .offset_bits  = 0,
-	  .size_bits    = 1 पूर्ण,
-	अणु RESERVED,
+	  .size_bits    = 1 },
+	{ RESERVED,
 	  .offset_words = 2,
 	  .offset_bits  = 1,
-	  .size_bits    = 7 पूर्ण,
-	अणु STRUCT_FIELD(bth, psn),
+	  .size_bits    = 7 },
+	{ STRUCT_FIELD(bth, psn),
 	  .offset_words = 2,
 	  .offset_bits  = 8,
-	  .size_bits    = 24 पूर्ण
-पूर्ण;
+	  .size_bits    = 24 }
+};
 
-अटल स्थिर काष्ठा ib_field deth_table[] = अणु
-	अणु STRUCT_FIELD(deth, qkey),
+static const struct ib_field deth_table[] = {
+	{ STRUCT_FIELD(deth, qkey),
 	  .offset_words = 0,
 	  .offset_bits  = 0,
-	  .size_bits    = 32 पूर्ण,
-	अणु RESERVED,
+	  .size_bits    = 32 },
+	{ RESERVED,
 	  .offset_words = 1,
 	  .offset_bits  = 0,
-	  .size_bits    = 8 पूर्ण,
-	अणु STRUCT_FIELD(deth, source_qpn),
+	  .size_bits    = 8 },
+	{ STRUCT_FIELD(deth, source_qpn),
 	  .offset_words = 1,
 	  .offset_bits  = 8,
-	  .size_bits    = 24 पूर्ण
-पूर्ण;
+	  .size_bits    = 24 }
+};
 
-__sum16 ib_ud_ip4_csum(काष्ठा ib_ud_header *header)
-अणु
-	काष्ठा iphdr iph;
+__sum16 ib_ud_ip4_csum(struct ib_ud_header *header)
+{
+	struct iphdr iph;
 
 	iph.ihl		= 5;
 	iph.version	= 4;
@@ -297,44 +296,44 @@ __sum16 ib_ud_ip4_csum(काष्ठा ib_ud_header *header)
 	iph.saddr	= header->ip4.saddr;
 	iph.daddr	= header->ip4.daddr;
 
-	वापस ip_fast_csum((u8 *)&iph, iph.ihl);
-पूर्ण
+	return ip_fast_csum((u8 *)&iph, iph.ihl);
+}
 EXPORT_SYMBOL(ib_ud_ip4_csum);
 
 /**
- * ib_ud_header_init - Initialize UD header काष्ठाure
+ * ib_ud_header_init - Initialize UD header structure
  * @payload_bytes:Length of packet payload
- * @lrh_present: specअगरy अगर LRH is present
- * @eth_present: specअगरy अगर Eth header is present
+ * @lrh_present: specify if LRH is present
+ * @eth_present: specify if Eth header is present
  * @vlan_present: packet is tagged vlan
- * @grh_present: GRH flag (अगर non-zero, GRH will be included)
- * @ip_version: अगर non-zero, IP header, V4 or V6, will be included
- * @udp_present :अगर non-zero, UDP header will be included
- * @immediate_present: specअगरy अगर immediate data is present
+ * @grh_present: GRH flag (if non-zero, GRH will be included)
+ * @ip_version: if non-zero, IP header, V4 or V6, will be included
+ * @udp_present :if non-zero, UDP header will be included
+ * @immediate_present: specify if immediate data is present
  * @header:Structure to initialize
  */
-पूर्णांक ib_ud_header_init(पूर्णांक     payload_bytes,
-		      पूर्णांक    lrh_present,
-		      पूर्णांक    eth_present,
-		      पूर्णांक    vlan_present,
-		      पूर्णांक    grh_present,
-		      पूर्णांक    ip_version,
-		      पूर्णांक    udp_present,
-		      पूर्णांक    immediate_present,
-		      काष्ठा ib_ud_header *header)
-अणु
-	माप_प्रकार udp_bytes = udp_present ? IB_UDP_BYTES : 0;
+int ib_ud_header_init(int     payload_bytes,
+		      int    lrh_present,
+		      int    eth_present,
+		      int    vlan_present,
+		      int    grh_present,
+		      int    ip_version,
+		      int    udp_present,
+		      int    immediate_present,
+		      struct ib_ud_header *header)
+{
+	size_t udp_bytes = udp_present ? IB_UDP_BYTES : 0;
 
 	grh_present = grh_present && !ip_version;
-	स_रखो(header, 0, माप *header);
+	memset(header, 0, sizeof *header);
 
 	/*
-	 * UDP header without IP header करोesn't make sense
+	 * UDP header without IP header doesn't make sense
 	 */
-	अगर (udp_present && ip_version != 4 && ip_version != 6)
-		वापस -EINVAL;
+	if (udp_present && ip_version != 4 && ip_version != 6)
+		return -EINVAL;
 
-	अगर (lrh_present) अणु
+	if (lrh_present) {
 		u16 packet_length;
 
 		header->lrh.link_version     = 0;
@@ -348,12 +347,12 @@ EXPORT_SYMBOL(ib_ud_ip4_csum);
 				 4		+ /* ICRC     */
 				 3) / 4;	  /* round up */
 		header->lrh.packet_length = cpu_to_be16(packet_length);
-	पूर्ण
+	}
 
-	अगर (vlan_present)
+	if (vlan_present)
 		header->eth.type = cpu_to_be16(ETH_P_8021Q);
 
-	अगर (ip_version == 6 || grh_present) अणु
+	if (ip_version == 6 || grh_present) {
 		header->grh.ip_version      = 6;
 		header->grh.payload_length  =
 			cpu_to_be16((udp_bytes        +
@@ -363,9 +362,9 @@ EXPORT_SYMBOL(ib_ud_ip4_csum);
 				     4                + /* ICRC     */
 				     3) & ~3);          /* round up */
 		header->grh.next_header     = udp_present ? IPPROTO_UDP : 0x1b;
-	पूर्ण
+	}
 
-	अगर (ip_version == 4) अणु
+	if (ip_version == 4) {
 		header->ip4.ver = 4; /* version 4 */
 		header->ip4.hdr_len = 5; /* 5 words */
 		header->ip4.tot_len =
@@ -376,8 +375,8 @@ EXPORT_SYMBOL(ib_ud_ip4_csum);
 				     payload_bytes +
 				     4);     /* ICRC     */
 		header->ip4.protocol = IPPROTO_UDP;
-	पूर्ण
-	अगर (udp_present && ip_version)
+	}
+	if (udp_present && ip_version)
 		header->udp.length =
 			cpu_to_be16(IB_UDP_BYTES   +
 				     IB_BTH_BYTES  +
@@ -385,9 +384,9 @@ EXPORT_SYMBOL(ib_ud_ip4_csum);
 				     payload_bytes +
 				     4);     /* ICRC     */
 
-	अगर (immediate_present)
+	if (immediate_present)
 		header->bth.opcode           = IB_OPCODE_UD_SEND_ONLY_WITH_IMMEDIATE;
-	अन्यथा
+	else
 		header->bth.opcode           = IB_OPCODE_UD_SEND_ONLY;
 	header->bth.pad_count                = (4 - payload_bytes) & 3;
 	header->bth.transport_header_version = 0;
@@ -399,53 +398,53 @@ EXPORT_SYMBOL(ib_ud_ip4_csum);
 	header->ipv4_present = ip_version == 4;
 	header->udp_present = udp_present;
 	header->immediate_present = immediate_present;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL(ib_ud_header_init);
 
 /**
- * ib_ud_header_pack - Pack UD header काष्ठा पूर्णांकo wire क्रमmat
- * @header:UD header काष्ठा
- * @buf:Buffer to pack पूर्णांकo
+ * ib_ud_header_pack - Pack UD header struct into wire format
+ * @header:UD header struct
+ * @buf:Buffer to pack into
  *
- * ib_ud_header_pack() packs the UD header काष्ठाure @header पूर्णांकo wire
- * क्रमmat in the buffer @buf.
+ * ib_ud_header_pack() packs the UD header structure @header into wire
+ * format in the buffer @buf.
  */
-पूर्णांक ib_ud_header_pack(काष्ठा ib_ud_header *header,
-		      व्योम                *buf)
-अणु
-	पूर्णांक len = 0;
+int ib_ud_header_pack(struct ib_ud_header *header,
+		      void                *buf)
+{
+	int len = 0;
 
-	अगर (header->lrh_present) अणु
+	if (header->lrh_present) {
 		ib_pack(lrh_table, ARRAY_SIZE(lrh_table),
 			&header->lrh, buf + len);
 		len += IB_LRH_BYTES;
-	पूर्ण
-	अगर (header->eth_present) अणु
+	}
+	if (header->eth_present) {
 		ib_pack(eth_table, ARRAY_SIZE(eth_table),
 			&header->eth, buf + len);
 		len += IB_ETH_BYTES;
-	पूर्ण
-	अगर (header->vlan_present) अणु
+	}
+	if (header->vlan_present) {
 		ib_pack(vlan_table, ARRAY_SIZE(vlan_table),
 			&header->vlan, buf + len);
 		len += IB_VLAN_BYTES;
-	पूर्ण
-	अगर (header->grh_present) अणु
+	}
+	if (header->grh_present) {
 		ib_pack(grh_table, ARRAY_SIZE(grh_table),
 			&header->grh, buf + len);
 		len += IB_GRH_BYTES;
-	पूर्ण
-	अगर (header->ipv4_present) अणु
+	}
+	if (header->ipv4_present) {
 		ib_pack(ip4_table, ARRAY_SIZE(ip4_table),
 			&header->ip4, buf + len);
 		len += IB_IP4_BYTES;
-	पूर्ण
-	अगर (header->udp_present) अणु
+	}
+	if (header->udp_present) {
 		ib_pack(udp_table, ARRAY_SIZE(udp_table),
 			&header->udp, buf + len);
 		len += IB_UDP_BYTES;
-	पूर्ण
+	}
 
 	ib_pack(bth_table, ARRAY_SIZE(bth_table),
 		&header->bth, buf + len);
@@ -455,94 +454,94 @@ EXPORT_SYMBOL(ib_ud_header_init);
 		&header->deth, buf + len);
 	len += IB_DETH_BYTES;
 
-	अगर (header->immediate_present) अणु
-		स_नकल(buf + len, &header->immediate_data, माप header->immediate_data);
-		len += माप header->immediate_data;
-	पूर्ण
+	if (header->immediate_present) {
+		memcpy(buf + len, &header->immediate_data, sizeof header->immediate_data);
+		len += sizeof header->immediate_data;
+	}
 
-	वापस len;
-पूर्ण
+	return len;
+}
 EXPORT_SYMBOL(ib_ud_header_pack);
 
 /**
- * ib_ud_header_unpack - Unpack UD header काष्ठा from wire क्रमmat
- * @header:UD header काष्ठा
- * @buf:Buffer to pack पूर्णांकo
+ * ib_ud_header_unpack - Unpack UD header struct from wire format
+ * @header:UD header struct
+ * @buf:Buffer to pack into
  *
- * ib_ud_header_pack() unpacks the UD header काष्ठाure @header from wire
- * क्रमmat in the buffer @buf.
+ * ib_ud_header_pack() unpacks the UD header structure @header from wire
+ * format in the buffer @buf.
  */
-पूर्णांक ib_ud_header_unpack(व्योम                *buf,
-			काष्ठा ib_ud_header *header)
-अणु
+int ib_ud_header_unpack(void                *buf,
+			struct ib_ud_header *header)
+{
 	ib_unpack(lrh_table, ARRAY_SIZE(lrh_table),
 		  buf, &header->lrh);
 	buf += IB_LRH_BYTES;
 
-	अगर (header->lrh.link_version != 0) अणु
+	if (header->lrh.link_version != 0) {
 		pr_warn("Invalid LRH.link_version %d\n",
 			header->lrh.link_version);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	चयन (header->lrh.link_next_header) अणु
-	हाल IB_LNH_IBA_LOCAL:
+	switch (header->lrh.link_next_header) {
+	case IB_LNH_IBA_LOCAL:
 		header->grh_present = 0;
-		अवरोध;
+		break;
 
-	हाल IB_LNH_IBA_GLOBAL:
+	case IB_LNH_IBA_GLOBAL:
 		header->grh_present = 1;
 		ib_unpack(grh_table, ARRAY_SIZE(grh_table),
 			  buf, &header->grh);
 		buf += IB_GRH_BYTES;
 
-		अगर (header->grh.ip_version != 6) अणु
+		if (header->grh.ip_version != 6) {
 			pr_warn("Invalid GRH.ip_version %d\n",
 				header->grh.ip_version);
-			वापस -EINVAL;
-		पूर्ण
-		अगर (header->grh.next_header != 0x1b) अणु
+			return -EINVAL;
+		}
+		if (header->grh.next_header != 0x1b) {
 			pr_warn("Invalid GRH.next_header 0x%02x\n",
 				header->grh.next_header);
-			वापस -EINVAL;
-		पूर्ण
-		अवरोध;
+			return -EINVAL;
+		}
+		break;
 
-	शेष:
+	default:
 		pr_warn("Invalid LRH.link_next_header %d\n",
 			header->lrh.link_next_header);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	ib_unpack(bth_table, ARRAY_SIZE(bth_table),
 		  buf, &header->bth);
 	buf += IB_BTH_BYTES;
 
-	चयन (header->bth.opcode) अणु
-	हाल IB_OPCODE_UD_SEND_ONLY:
+	switch (header->bth.opcode) {
+	case IB_OPCODE_UD_SEND_ONLY:
 		header->immediate_present = 0;
-		अवरोध;
-	हाल IB_OPCODE_UD_SEND_ONLY_WITH_IMMEDIATE:
+		break;
+	case IB_OPCODE_UD_SEND_ONLY_WITH_IMMEDIATE:
 		header->immediate_present = 1;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		pr_warn("Invalid BTH.opcode 0x%02x\n", header->bth.opcode);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (header->bth.transport_header_version != 0) अणु
+	if (header->bth.transport_header_version != 0) {
 		pr_warn("Invalid BTH.transport_header_version %d\n",
 			header->bth.transport_header_version);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	ib_unpack(deth_table, ARRAY_SIZE(deth_table),
 		  buf, &header->deth);
 	buf += IB_DETH_BYTES;
 
-	अगर (header->immediate_present)
-		स_नकल(&header->immediate_data, buf, माप header->immediate_data);
+	if (header->immediate_present)
+		memcpy(&header->immediate_data, buf, sizeof header->immediate_data);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL(ib_ud_header_unpack);

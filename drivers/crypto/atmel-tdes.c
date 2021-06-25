@@ -1,164 +1,163 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Cryptographic API.
  *
- * Support क्रम ATMEL DES/TDES HW acceleration.
+ * Support for ATMEL DES/TDES HW acceleration.
  *
- * Copyright (c) 2012 Eukrथऊa Electromatique - ATMEL
+ * Copyright (c) 2012 Eukréa Electromatique - ATMEL
  * Author: Nicolas Royer <nicolas@eukrea.com>
  *
  * Some ideas are from omap-aes.c drivers.
  */
 
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/err.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/hw_अक्रमom.h>
-#समावेश <linux/platक्रमm_device.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/err.h>
+#include <linux/clk.h>
+#include <linux/io.h>
+#include <linux/hw_random.h>
+#include <linux/platform_device.h>
 
-#समावेश <linux/device.h>
-#समावेश <linux/dmaengine.h>
-#समावेश <linux/init.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/scatterlist.h>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/crypto.h>
-#समावेश <crypto/scatterwalk.h>
-#समावेश <crypto/algapi.h>
-#समावेश <crypto/पूर्णांकernal/des.h>
-#समावेश <crypto/पूर्णांकernal/skcipher.h>
-#समावेश "atmel-tdes-regs.h"
+#include <linux/device.h>
+#include <linux/dmaengine.h>
+#include <linux/init.h>
+#include <linux/errno.h>
+#include <linux/interrupt.h>
+#include <linux/irq.h>
+#include <linux/scatterlist.h>
+#include <linux/dma-mapping.h>
+#include <linux/of_device.h>
+#include <linux/delay.h>
+#include <linux/crypto.h>
+#include <crypto/scatterwalk.h>
+#include <crypto/algapi.h>
+#include <crypto/internal/des.h>
+#include <crypto/internal/skcipher.h>
+#include "atmel-tdes-regs.h"
 
-#घोषणा ATMEL_TDES_PRIORITY	300
+#define ATMEL_TDES_PRIORITY	300
 
 /* TDES flags  */
-/* Reserve bits [17:16], [13:12], [2:0] क्रम AES Mode Register */
-#घोषणा TDES_FLAGS_ENCRYPT	TDES_MR_CYPHER_ENC
-#घोषणा TDES_FLAGS_OPMODE_MASK	(TDES_MR_OPMOD_MASK | TDES_MR_CFBS_MASK)
-#घोषणा TDES_FLAGS_ECB		TDES_MR_OPMOD_ECB
-#घोषणा TDES_FLAGS_CBC		TDES_MR_OPMOD_CBC
-#घोषणा TDES_FLAGS_OFB		TDES_MR_OPMOD_OFB
-#घोषणा TDES_FLAGS_CFB64	(TDES_MR_OPMOD_CFB | TDES_MR_CFBS_64b)
-#घोषणा TDES_FLAGS_CFB32	(TDES_MR_OPMOD_CFB | TDES_MR_CFBS_32b)
-#घोषणा TDES_FLAGS_CFB16	(TDES_MR_OPMOD_CFB | TDES_MR_CFBS_16b)
-#घोषणा TDES_FLAGS_CFB8		(TDES_MR_OPMOD_CFB | TDES_MR_CFBS_8b)
+/* Reserve bits [17:16], [13:12], [2:0] for AES Mode Register */
+#define TDES_FLAGS_ENCRYPT	TDES_MR_CYPHER_ENC
+#define TDES_FLAGS_OPMODE_MASK	(TDES_MR_OPMOD_MASK | TDES_MR_CFBS_MASK)
+#define TDES_FLAGS_ECB		TDES_MR_OPMOD_ECB
+#define TDES_FLAGS_CBC		TDES_MR_OPMOD_CBC
+#define TDES_FLAGS_OFB		TDES_MR_OPMOD_OFB
+#define TDES_FLAGS_CFB64	(TDES_MR_OPMOD_CFB | TDES_MR_CFBS_64b)
+#define TDES_FLAGS_CFB32	(TDES_MR_OPMOD_CFB | TDES_MR_CFBS_32b)
+#define TDES_FLAGS_CFB16	(TDES_MR_OPMOD_CFB | TDES_MR_CFBS_16b)
+#define TDES_FLAGS_CFB8		(TDES_MR_OPMOD_CFB | TDES_MR_CFBS_8b)
 
-#घोषणा TDES_FLAGS_MODE_MASK	(TDES_FLAGS_OPMODE_MASK | TDES_FLAGS_ENCRYPT)
+#define TDES_FLAGS_MODE_MASK	(TDES_FLAGS_OPMODE_MASK | TDES_FLAGS_ENCRYPT)
 
-#घोषणा TDES_FLAGS_INIT		BIT(3)
-#घोषणा TDES_FLAGS_FAST		BIT(4)
-#घोषणा TDES_FLAGS_BUSY		BIT(5)
-#घोषणा TDES_FLAGS_DMA		BIT(6)
+#define TDES_FLAGS_INIT		BIT(3)
+#define TDES_FLAGS_FAST		BIT(4)
+#define TDES_FLAGS_BUSY		BIT(5)
+#define TDES_FLAGS_DMA		BIT(6)
 
-#घोषणा ATMEL_TDES_QUEUE_LENGTH	50
+#define ATMEL_TDES_QUEUE_LENGTH	50
 
-#घोषणा CFB8_BLOCK_SIZE		1
-#घोषणा CFB16_BLOCK_SIZE	2
-#घोषणा CFB32_BLOCK_SIZE	4
+#define CFB8_BLOCK_SIZE		1
+#define CFB16_BLOCK_SIZE	2
+#define CFB32_BLOCK_SIZE	4
 
-काष्ठा aपंचांगel_tdes_caps अणु
+struct atmel_tdes_caps {
 	bool	has_dma;
 	u32		has_cfb_3keys;
-पूर्ण;
+};
 
-काष्ठा aपंचांगel_tdes_dev;
+struct atmel_tdes_dev;
 
-काष्ठा aपंचांगel_tdes_ctx अणु
-	काष्ठा aपंचांगel_tdes_dev *dd;
+struct atmel_tdes_ctx {
+	struct atmel_tdes_dev *dd;
 
-	पूर्णांक		keylen;
-	u32		key[DES3_EDE_KEY_SIZE / माप(u32)];
-	अचिन्हित दीर्घ	flags;
+	int		keylen;
+	u32		key[DES3_EDE_KEY_SIZE / sizeof(u32)];
+	unsigned long	flags;
 
 	u16		block_size;
-पूर्ण;
+};
 
-काष्ठा aपंचांगel_tdes_reqctx अणु
-	अचिन्हित दीर्घ mode;
+struct atmel_tdes_reqctx {
+	unsigned long mode;
 	u8 lastc[DES_BLOCK_SIZE];
-पूर्ण;
+};
 
-काष्ठा aपंचांगel_tdes_dma अणु
-	काष्ठा dma_chan			*chan;
-	काष्ठा dma_slave_config dma_conf;
-पूर्ण;
+struct atmel_tdes_dma {
+	struct dma_chan			*chan;
+	struct dma_slave_config dma_conf;
+};
 
-काष्ठा aपंचांगel_tdes_dev अणु
-	काष्ठा list_head	list;
-	अचिन्हित दीर्घ		phys_base;
-	व्योम __iomem		*io_base;
+struct atmel_tdes_dev {
+	struct list_head	list;
+	unsigned long		phys_base;
+	void __iomem		*io_base;
 
-	काष्ठा aपंचांगel_tdes_ctx	*ctx;
-	काष्ठा device		*dev;
-	काष्ठा clk			*iclk;
-	पूर्णांक					irq;
+	struct atmel_tdes_ctx	*ctx;
+	struct device		*dev;
+	struct clk			*iclk;
+	int					irq;
 
-	अचिन्हित दीर्घ		flags;
+	unsigned long		flags;
 
 	spinlock_t		lock;
-	काष्ठा crypto_queue	queue;
+	struct crypto_queue	queue;
 
-	काष्ठा tasklet_काष्ठा	करोne_task;
-	काष्ठा tasklet_काष्ठा	queue_task;
+	struct tasklet_struct	done_task;
+	struct tasklet_struct	queue_task;
 
-	काष्ठा skcipher_request	*req;
-	माप_प्रकार				total;
+	struct skcipher_request	*req;
+	size_t				total;
 
-	काष्ठा scatterlist	*in_sg;
-	अचिन्हित पूर्णांक		nb_in_sg;
-	माप_प्रकार				in_offset;
-	काष्ठा scatterlist	*out_sg;
-	अचिन्हित पूर्णांक		nb_out_sg;
-	माप_प्रकार				out_offset;
+	struct scatterlist	*in_sg;
+	unsigned int		nb_in_sg;
+	size_t				in_offset;
+	struct scatterlist	*out_sg;
+	unsigned int		nb_out_sg;
+	size_t				out_offset;
 
-	माप_प्रकार	buflen;
-	माप_प्रकार	dma_size;
+	size_t	buflen;
+	size_t	dma_size;
 
-	व्योम	*buf_in;
-	पूर्णांक		dma_in;
+	void	*buf_in;
+	int		dma_in;
 	dma_addr_t	dma_addr_in;
-	काष्ठा aपंचांगel_tdes_dma	dma_lch_in;
+	struct atmel_tdes_dma	dma_lch_in;
 
-	व्योम	*buf_out;
-	पूर्णांक		dma_out;
+	void	*buf_out;
+	int		dma_out;
 	dma_addr_t	dma_addr_out;
-	काष्ठा aपंचांगel_tdes_dma	dma_lch_out;
+	struct atmel_tdes_dma	dma_lch_out;
 
-	काष्ठा aपंचांगel_tdes_caps	caps;
+	struct atmel_tdes_caps	caps;
 
 	u32	hw_version;
-पूर्ण;
+};
 
-काष्ठा aपंचांगel_tdes_drv अणु
-	काष्ठा list_head	dev_list;
+struct atmel_tdes_drv {
+	struct list_head	dev_list;
 	spinlock_t		lock;
-पूर्ण;
+};
 
-अटल काष्ठा aपंचांगel_tdes_drv aपंचांगel_tdes = अणु
-	.dev_list = LIST_HEAD_INIT(aपंचांगel_tdes.dev_list),
-	.lock = __SPIN_LOCK_UNLOCKED(aपंचांगel_tdes.lock),
-पूर्ण;
+static struct atmel_tdes_drv atmel_tdes = {
+	.dev_list = LIST_HEAD_INIT(atmel_tdes.dev_list),
+	.lock = __SPIN_LOCK_UNLOCKED(atmel_tdes.lock),
+};
 
-अटल पूर्णांक aपंचांगel_tdes_sg_copy(काष्ठा scatterlist **sg, माप_प्रकार *offset,
-			व्योम *buf, माप_प्रकार buflen, माप_प्रकार total, पूर्णांक out)
-अणु
-	माप_प्रकार count, off = 0;
+static int atmel_tdes_sg_copy(struct scatterlist **sg, size_t *offset,
+			void *buf, size_t buflen, size_t total, int out)
+{
+	size_t count, off = 0;
 
-	जबतक (buflen && total) अणु
+	while (buflen && total) {
 		count = min((*sg)->length - *offset, total);
 		count = min(count, buflen);
 
-		अगर (!count)
-			वापस off;
+		if (!count)
+			return off;
 
 		scatterwalk_map_and_copy(buf + off, *sg, *offset, count, out);
 
@@ -167,294 +166,294 @@
 		*offset += count;
 		total -= count;
 
-		अगर (*offset == (*sg)->length) अणु
+		if (*offset == (*sg)->length) {
 			*sg = sg_next(*sg);
-			अगर (*sg)
+			if (*sg)
 				*offset = 0;
-			अन्यथा
+			else
 				total = 0;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस off;
-पूर्ण
+	return off;
+}
 
-अटल अंतरभूत u32 aपंचांगel_tdes_पढ़ो(काष्ठा aपंचांगel_tdes_dev *dd, u32 offset)
-अणु
-	वापस पढ़ोl_relaxed(dd->io_base + offset);
-पूर्ण
+static inline u32 atmel_tdes_read(struct atmel_tdes_dev *dd, u32 offset)
+{
+	return readl_relaxed(dd->io_base + offset);
+}
 
-अटल अंतरभूत व्योम aपंचांगel_tdes_ग_लिखो(काष्ठा aपंचांगel_tdes_dev *dd,
+static inline void atmel_tdes_write(struct atmel_tdes_dev *dd,
 					u32 offset, u32 value)
-अणु
-	ग_लिखोl_relaxed(value, dd->io_base + offset);
-पूर्ण
+{
+	writel_relaxed(value, dd->io_base + offset);
+}
 
-अटल व्योम aपंचांगel_tdes_ग_लिखो_n(काष्ठा aपंचांगel_tdes_dev *dd, u32 offset,
-			       स्थिर u32 *value, पूर्णांक count)
-अणु
-	क्रम (; count--; value++, offset += 4)
-		aपंचांगel_tdes_ग_लिखो(dd, offset, *value);
-पूर्ण
+static void atmel_tdes_write_n(struct atmel_tdes_dev *dd, u32 offset,
+			       const u32 *value, int count)
+{
+	for (; count--; value++, offset += 4)
+		atmel_tdes_write(dd, offset, *value);
+}
 
-अटल काष्ठा aपंचांगel_tdes_dev *aपंचांगel_tdes_find_dev(काष्ठा aपंचांगel_tdes_ctx *ctx)
-अणु
-	काष्ठा aपंचांगel_tdes_dev *tdes_dd = शून्य;
-	काष्ठा aपंचांगel_tdes_dev *पंचांगp;
+static struct atmel_tdes_dev *atmel_tdes_find_dev(struct atmel_tdes_ctx *ctx)
+{
+	struct atmel_tdes_dev *tdes_dd = NULL;
+	struct atmel_tdes_dev *tmp;
 
-	spin_lock_bh(&aपंचांगel_tdes.lock);
-	अगर (!ctx->dd) अणु
-		list_क्रम_each_entry(पंचांगp, &aपंचांगel_tdes.dev_list, list) अणु
-			tdes_dd = पंचांगp;
-			अवरोध;
-		पूर्ण
+	spin_lock_bh(&atmel_tdes.lock);
+	if (!ctx->dd) {
+		list_for_each_entry(tmp, &atmel_tdes.dev_list, list) {
+			tdes_dd = tmp;
+			break;
+		}
 		ctx->dd = tdes_dd;
-	पूर्ण अन्यथा अणु
+	} else {
 		tdes_dd = ctx->dd;
-	पूर्ण
-	spin_unlock_bh(&aपंचांगel_tdes.lock);
+	}
+	spin_unlock_bh(&atmel_tdes.lock);
 
-	वापस tdes_dd;
-पूर्ण
+	return tdes_dd;
+}
 
-अटल पूर्णांक aपंचांगel_tdes_hw_init(काष्ठा aपंचांगel_tdes_dev *dd)
-अणु
-	पूर्णांक err;
+static int atmel_tdes_hw_init(struct atmel_tdes_dev *dd)
+{
+	int err;
 
 	err = clk_prepare_enable(dd->iclk);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	अगर (!(dd->flags & TDES_FLAGS_INIT)) अणु
-		aपंचांगel_tdes_ग_लिखो(dd, TDES_CR, TDES_CR_SWRST);
+	if (!(dd->flags & TDES_FLAGS_INIT)) {
+		atmel_tdes_write(dd, TDES_CR, TDES_CR_SWRST);
 		dd->flags |= TDES_FLAGS_INIT;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत अचिन्हित पूर्णांक aपंचांगel_tdes_get_version(काष्ठा aपंचांगel_tdes_dev *dd)
-अणु
-	वापस aपंचांगel_tdes_पढ़ो(dd, TDES_HW_VERSION) & 0x00000fff;
-पूर्ण
+static inline unsigned int atmel_tdes_get_version(struct atmel_tdes_dev *dd)
+{
+	return atmel_tdes_read(dd, TDES_HW_VERSION) & 0x00000fff;
+}
 
-अटल पूर्णांक aपंचांगel_tdes_hw_version_init(काष्ठा aपंचांगel_tdes_dev *dd)
-अणु
-	पूर्णांक err;
+static int atmel_tdes_hw_version_init(struct atmel_tdes_dev *dd)
+{
+	int err;
 
-	err = aपंचांगel_tdes_hw_init(dd);
-	अगर (err)
-		वापस err;
+	err = atmel_tdes_hw_init(dd);
+	if (err)
+		return err;
 
-	dd->hw_version = aपंचांगel_tdes_get_version(dd);
+	dd->hw_version = atmel_tdes_get_version(dd);
 
 	dev_info(dd->dev,
 			"version: 0x%x\n", dd->hw_version);
 
 	clk_disable_unprepare(dd->iclk);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम aपंचांगel_tdes_dma_callback(व्योम *data)
-अणु
-	काष्ठा aपंचांगel_tdes_dev *dd = data;
+static void atmel_tdes_dma_callback(void *data)
+{
+	struct atmel_tdes_dev *dd = data;
 
 	/* dma_lch_out - completed */
-	tasklet_schedule(&dd->करोne_task);
-पूर्ण
+	tasklet_schedule(&dd->done_task);
+}
 
-अटल पूर्णांक aपंचांगel_tdes_ग_लिखो_ctrl(काष्ठा aपंचांगel_tdes_dev *dd)
-अणु
-	पूर्णांक err;
+static int atmel_tdes_write_ctrl(struct atmel_tdes_dev *dd)
+{
+	int err;
 	u32 valmr = TDES_MR_SMOD_PDC;
 
-	err = aपंचांगel_tdes_hw_init(dd);
+	err = atmel_tdes_hw_init(dd);
 
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	अगर (!dd->caps.has_dma)
-		aपंचांगel_tdes_ग_लिखो(dd, TDES_PTCR,
+	if (!dd->caps.has_dma)
+		atmel_tdes_write(dd, TDES_PTCR,
 			TDES_PTCR_TXTDIS | TDES_PTCR_RXTDIS);
 
-	/* MR रेजिस्टर must be set beक्रमe IV रेजिस्टरs */
-	अगर (dd->ctx->keylen > (DES_KEY_SIZE << 1)) अणु
+	/* MR register must be set before IV registers */
+	if (dd->ctx->keylen > (DES_KEY_SIZE << 1)) {
 		valmr |= TDES_MR_KEYMOD_3KEY;
 		valmr |= TDES_MR_TDESMOD_TDES;
-	पूर्ण अन्यथा अगर (dd->ctx->keylen > DES_KEY_SIZE) अणु
+	} else if (dd->ctx->keylen > DES_KEY_SIZE) {
 		valmr |= TDES_MR_KEYMOD_2KEY;
 		valmr |= TDES_MR_TDESMOD_TDES;
-	पूर्ण अन्यथा अणु
+	} else {
 		valmr |= TDES_MR_TDESMOD_DES;
-	पूर्ण
+	}
 
 	valmr |= dd->flags & TDES_FLAGS_MODE_MASK;
 
-	aपंचांगel_tdes_ग_लिखो(dd, TDES_MR, valmr);
+	atmel_tdes_write(dd, TDES_MR, valmr);
 
-	aपंचांगel_tdes_ग_लिखो_n(dd, TDES_KEY1W1R, dd->ctx->key,
+	atmel_tdes_write_n(dd, TDES_KEY1W1R, dd->ctx->key,
 						dd->ctx->keylen >> 2);
 
-	अगर (dd->req->iv && (valmr & TDES_MR_OPMOD_MASK) != TDES_MR_OPMOD_ECB)
-		aपंचांगel_tdes_ग_लिखो_n(dd, TDES_IV1R, (व्योम *)dd->req->iv, 2);
+	if (dd->req->iv && (valmr & TDES_MR_OPMOD_MASK) != TDES_MR_OPMOD_ECB)
+		atmel_tdes_write_n(dd, TDES_IV1R, (void *)dd->req->iv, 2);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक aपंचांगel_tdes_crypt_pdc_stop(काष्ठा aपंचांगel_tdes_dev *dd)
-अणु
-	पूर्णांक err = 0;
-	माप_प्रकार count;
+static int atmel_tdes_crypt_pdc_stop(struct atmel_tdes_dev *dd)
+{
+	int err = 0;
+	size_t count;
 
-	aपंचांगel_tdes_ग_लिखो(dd, TDES_PTCR, TDES_PTCR_TXTDIS|TDES_PTCR_RXTDIS);
+	atmel_tdes_write(dd, TDES_PTCR, TDES_PTCR_TXTDIS|TDES_PTCR_RXTDIS);
 
-	अगर (dd->flags & TDES_FLAGS_FAST) अणु
+	if (dd->flags & TDES_FLAGS_FAST) {
 		dma_unmap_sg(dd->dev, dd->out_sg, 1, DMA_FROM_DEVICE);
 		dma_unmap_sg(dd->dev, dd->in_sg, 1, DMA_TO_DEVICE);
-	पूर्ण अन्यथा अणु
-		dma_sync_single_क्रम_device(dd->dev, dd->dma_addr_out,
+	} else {
+		dma_sync_single_for_device(dd->dev, dd->dma_addr_out,
 					   dd->dma_size, DMA_FROM_DEVICE);
 
 		/* copy data */
-		count = aपंचांगel_tdes_sg_copy(&dd->out_sg, &dd->out_offset,
+		count = atmel_tdes_sg_copy(&dd->out_sg, &dd->out_offset,
 				dd->buf_out, dd->buflen, dd->dma_size, 1);
-		अगर (count != dd->dma_size) अणु
+		if (count != dd->dma_size) {
 			err = -EINVAL;
 			pr_err("not all data converted: %zu\n", count);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक aपंचांगel_tdes_buff_init(काष्ठा aपंचांगel_tdes_dev *dd)
-अणु
-	पूर्णांक err = -ENOMEM;
+static int atmel_tdes_buff_init(struct atmel_tdes_dev *dd)
+{
+	int err = -ENOMEM;
 
-	dd->buf_in = (व्योम *)__get_मुक्त_pages(GFP_KERNEL, 0);
-	dd->buf_out = (व्योम *)__get_मुक्त_pages(GFP_KERNEL, 0);
+	dd->buf_in = (void *)__get_free_pages(GFP_KERNEL, 0);
+	dd->buf_out = (void *)__get_free_pages(GFP_KERNEL, 0);
 	dd->buflen = PAGE_SIZE;
 	dd->buflen &= ~(DES_BLOCK_SIZE - 1);
 
-	अगर (!dd->buf_in || !dd->buf_out) अणु
+	if (!dd->buf_in || !dd->buf_out) {
 		dev_err(dd->dev, "unable to alloc pages.\n");
-		जाओ err_alloc;
-	पूर्ण
+		goto err_alloc;
+	}
 
 	/* MAP here */
 	dd->dma_addr_in = dma_map_single(dd->dev, dd->buf_in,
 					dd->buflen, DMA_TO_DEVICE);
-	अगर (dma_mapping_error(dd->dev, dd->dma_addr_in)) अणु
+	if (dma_mapping_error(dd->dev, dd->dma_addr_in)) {
 		dev_err(dd->dev, "dma %zd bytes error\n", dd->buflen);
 		err = -EINVAL;
-		जाओ err_map_in;
-	पूर्ण
+		goto err_map_in;
+	}
 
 	dd->dma_addr_out = dma_map_single(dd->dev, dd->buf_out,
 					dd->buflen, DMA_FROM_DEVICE);
-	अगर (dma_mapping_error(dd->dev, dd->dma_addr_out)) अणु
+	if (dma_mapping_error(dd->dev, dd->dma_addr_out)) {
 		dev_err(dd->dev, "dma %zd bytes error\n", dd->buflen);
 		err = -EINVAL;
-		जाओ err_map_out;
-	पूर्ण
+		goto err_map_out;
+	}
 
-	वापस 0;
+	return 0;
 
 err_map_out:
 	dma_unmap_single(dd->dev, dd->dma_addr_in, dd->buflen,
 		DMA_TO_DEVICE);
 err_map_in:
 err_alloc:
-	मुक्त_page((अचिन्हित दीर्घ)dd->buf_out);
-	मुक्त_page((अचिन्हित दीर्घ)dd->buf_in);
-	अगर (err)
+	free_page((unsigned long)dd->buf_out);
+	free_page((unsigned long)dd->buf_in);
+	if (err)
 		pr_err("error: %d\n", err);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम aपंचांगel_tdes_buff_cleanup(काष्ठा aपंचांगel_tdes_dev *dd)
-अणु
+static void atmel_tdes_buff_cleanup(struct atmel_tdes_dev *dd)
+{
 	dma_unmap_single(dd->dev, dd->dma_addr_out, dd->buflen,
 			 DMA_FROM_DEVICE);
 	dma_unmap_single(dd->dev, dd->dma_addr_in, dd->buflen,
 		DMA_TO_DEVICE);
-	मुक्त_page((अचिन्हित दीर्घ)dd->buf_out);
-	मुक्त_page((अचिन्हित दीर्घ)dd->buf_in);
-पूर्ण
+	free_page((unsigned long)dd->buf_out);
+	free_page((unsigned long)dd->buf_in);
+}
 
-अटल पूर्णांक aपंचांगel_tdes_crypt_pdc(काष्ठा aपंचांगel_tdes_dev *dd,
+static int atmel_tdes_crypt_pdc(struct atmel_tdes_dev *dd,
 				dma_addr_t dma_addr_in,
-				dma_addr_t dma_addr_out, पूर्णांक length)
-अणु
-	काष्ठा aपंचांगel_tdes_reqctx *rctx = skcipher_request_ctx(dd->req);
-	पूर्णांक len32;
+				dma_addr_t dma_addr_out, int length)
+{
+	struct atmel_tdes_reqctx *rctx = skcipher_request_ctx(dd->req);
+	int len32;
 
 	dd->dma_size = length;
 
-	अगर (!(dd->flags & TDES_FLAGS_FAST)) अणु
-		dma_sync_single_क्रम_device(dd->dev, dma_addr_in, length,
+	if (!(dd->flags & TDES_FLAGS_FAST)) {
+		dma_sync_single_for_device(dd->dev, dma_addr_in, length,
 					   DMA_TO_DEVICE);
-	पूर्ण
+	}
 
-	चयन (rctx->mode & TDES_FLAGS_OPMODE_MASK) अणु
-	हाल TDES_FLAGS_CFB8:
-		len32 = DIV_ROUND_UP(length, माप(u8));
-		अवरोध;
+	switch (rctx->mode & TDES_FLAGS_OPMODE_MASK) {
+	case TDES_FLAGS_CFB8:
+		len32 = DIV_ROUND_UP(length, sizeof(u8));
+		break;
 
-	हाल TDES_FLAGS_CFB16:
-		len32 = DIV_ROUND_UP(length, माप(u16));
-		अवरोध;
+	case TDES_FLAGS_CFB16:
+		len32 = DIV_ROUND_UP(length, sizeof(u16));
+		break;
 
-	शेष:
-		len32 = DIV_ROUND_UP(length, माप(u32));
-		अवरोध;
-	पूर्ण
+	default:
+		len32 = DIV_ROUND_UP(length, sizeof(u32));
+		break;
+	}
 
-	aपंचांगel_tdes_ग_लिखो(dd, TDES_PTCR, TDES_PTCR_TXTDIS|TDES_PTCR_RXTDIS);
-	aपंचांगel_tdes_ग_लिखो(dd, TDES_TPR, dma_addr_in);
-	aपंचांगel_tdes_ग_लिखो(dd, TDES_TCR, len32);
-	aपंचांगel_tdes_ग_लिखो(dd, TDES_RPR, dma_addr_out);
-	aपंचांगel_tdes_ग_लिखो(dd, TDES_RCR, len32);
+	atmel_tdes_write(dd, TDES_PTCR, TDES_PTCR_TXTDIS|TDES_PTCR_RXTDIS);
+	atmel_tdes_write(dd, TDES_TPR, dma_addr_in);
+	atmel_tdes_write(dd, TDES_TCR, len32);
+	atmel_tdes_write(dd, TDES_RPR, dma_addr_out);
+	atmel_tdes_write(dd, TDES_RCR, len32);
 
 	/* Enable Interrupt */
-	aपंचांगel_tdes_ग_लिखो(dd, TDES_IER, TDES_INT_ENDRX);
+	atmel_tdes_write(dd, TDES_IER, TDES_INT_ENDRX);
 
 	/* Start DMA transfer */
-	aपंचांगel_tdes_ग_लिखो(dd, TDES_PTCR, TDES_PTCR_TXTEN | TDES_PTCR_RXTEN);
+	atmel_tdes_write(dd, TDES_PTCR, TDES_PTCR_TXTEN | TDES_PTCR_RXTEN);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक aपंचांगel_tdes_crypt_dma(काष्ठा aपंचांगel_tdes_dev *dd,
+static int atmel_tdes_crypt_dma(struct atmel_tdes_dev *dd,
 				dma_addr_t dma_addr_in,
-				dma_addr_t dma_addr_out, पूर्णांक length)
-अणु
-	काष्ठा aपंचांगel_tdes_reqctx *rctx = skcipher_request_ctx(dd->req);
-	काष्ठा scatterlist sg[2];
-	काष्ठा dma_async_tx_descriptor	*in_desc, *out_desc;
-	क्रमागत dma_slave_buswidth addr_width;
+				dma_addr_t dma_addr_out, int length)
+{
+	struct atmel_tdes_reqctx *rctx = skcipher_request_ctx(dd->req);
+	struct scatterlist sg[2];
+	struct dma_async_tx_descriptor	*in_desc, *out_desc;
+	enum dma_slave_buswidth addr_width;
 
 	dd->dma_size = length;
 
-	अगर (!(dd->flags & TDES_FLAGS_FAST)) अणु
-		dma_sync_single_क्रम_device(dd->dev, dma_addr_in, length,
+	if (!(dd->flags & TDES_FLAGS_FAST)) {
+		dma_sync_single_for_device(dd->dev, dma_addr_in, length,
 					   DMA_TO_DEVICE);
-	पूर्ण
+	}
 
-	चयन (rctx->mode & TDES_FLAGS_OPMODE_MASK) अणु
-	हाल TDES_FLAGS_CFB8:
+	switch (rctx->mode & TDES_FLAGS_OPMODE_MASK) {
+	case TDES_FLAGS_CFB8:
 		addr_width = DMA_SLAVE_BUSWIDTH_1_BYTE;
-		अवरोध;
+		break;
 
-	हाल TDES_FLAGS_CFB16:
+	case TDES_FLAGS_CFB16:
 		addr_width = DMA_SLAVE_BUSWIDTH_2_BYTES;
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		addr_width = DMA_SLAVE_BUSWIDTH_4_BYTES;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	dd->dma_lch_in.dma_conf.dst_addr_width = addr_width;
 	dd->dma_lch_out.dma_conf.src_addr_width = addr_width;
@@ -475,16 +474,16 @@ err_alloc:
 	in_desc = dmaengine_prep_slave_sg(dd->dma_lch_in.chan, &sg[0],
 				1, DMA_MEM_TO_DEV,
 				DMA_PREP_INTERRUPT  |  DMA_CTRL_ACK);
-	अगर (!in_desc)
-		वापस -EINVAL;
+	if (!in_desc)
+		return -EINVAL;
 
 	out_desc = dmaengine_prep_slave_sg(dd->dma_lch_out.chan, &sg[1],
 				1, DMA_DEV_TO_MEM,
 				DMA_PREP_INTERRUPT | DMA_CTRL_ACK);
-	अगर (!out_desc)
-		वापस -EINVAL;
+	if (!out_desc)
+		return -EINVAL;
 
-	out_desc->callback = aपंचांगel_tdes_dma_callback;
+	out_desc->callback = atmel_tdes_dma_callback;
 	out_desc->callback_param = dd;
 
 	dmaengine_submit(out_desc);
@@ -493,143 +492,143 @@ err_alloc:
 	dmaengine_submit(in_desc);
 	dma_async_issue_pending(dd->dma_lch_in.chan);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक aपंचांगel_tdes_crypt_start(काष्ठा aपंचांगel_tdes_dev *dd)
-अणु
-	पूर्णांक err, fast = 0, in, out;
-	माप_प्रकार count;
+static int atmel_tdes_crypt_start(struct atmel_tdes_dev *dd)
+{
+	int err, fast = 0, in, out;
+	size_t count;
 	dma_addr_t addr_in, addr_out;
 
-	अगर ((!dd->in_offset) && (!dd->out_offset)) अणु
-		/* check क्रम alignment */
-		in = IS_ALIGNED((u32)dd->in_sg->offset, माप(u32)) &&
+	if ((!dd->in_offset) && (!dd->out_offset)) {
+		/* check for alignment */
+		in = IS_ALIGNED((u32)dd->in_sg->offset, sizeof(u32)) &&
 			IS_ALIGNED(dd->in_sg->length, dd->ctx->block_size);
-		out = IS_ALIGNED((u32)dd->out_sg->offset, माप(u32)) &&
+		out = IS_ALIGNED((u32)dd->out_sg->offset, sizeof(u32)) &&
 			IS_ALIGNED(dd->out_sg->length, dd->ctx->block_size);
 		fast = in && out;
 
-		अगर (sg_dma_len(dd->in_sg) != sg_dma_len(dd->out_sg))
+		if (sg_dma_len(dd->in_sg) != sg_dma_len(dd->out_sg))
 			fast = 0;
-	पूर्ण
+	}
 
 
-	अगर (fast)  अणु
-		count = min_t(माप_प्रकार, dd->total, sg_dma_len(dd->in_sg));
-		count = min_t(माप_प्रकार, count, sg_dma_len(dd->out_sg));
+	if (fast)  {
+		count = min_t(size_t, dd->total, sg_dma_len(dd->in_sg));
+		count = min_t(size_t, count, sg_dma_len(dd->out_sg));
 
 		err = dma_map_sg(dd->dev, dd->in_sg, 1, DMA_TO_DEVICE);
-		अगर (!err) अणु
+		if (!err) {
 			dev_err(dd->dev, "dma_map_sg() error\n");
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
 		err = dma_map_sg(dd->dev, dd->out_sg, 1,
 				DMA_FROM_DEVICE);
-		अगर (!err) अणु
+		if (!err) {
 			dev_err(dd->dev, "dma_map_sg() error\n");
 			dma_unmap_sg(dd->dev, dd->in_sg, 1,
 				DMA_TO_DEVICE);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
 		addr_in = sg_dma_address(dd->in_sg);
 		addr_out = sg_dma_address(dd->out_sg);
 
 		dd->flags |= TDES_FLAGS_FAST;
 
-	पूर्ण अन्यथा अणु
+	} else {
 		/* use cache buffers */
-		count = aपंचांगel_tdes_sg_copy(&dd->in_sg, &dd->in_offset,
+		count = atmel_tdes_sg_copy(&dd->in_sg, &dd->in_offset,
 				dd->buf_in, dd->buflen, dd->total, 0);
 
 		addr_in = dd->dma_addr_in;
 		addr_out = dd->dma_addr_out;
 
 		dd->flags &= ~TDES_FLAGS_FAST;
-	पूर्ण
+	}
 
 	dd->total -= count;
 
-	अगर (dd->caps.has_dma)
-		err = aपंचांगel_tdes_crypt_dma(dd, addr_in, addr_out, count);
-	अन्यथा
-		err = aपंचांगel_tdes_crypt_pdc(dd, addr_in, addr_out, count);
+	if (dd->caps.has_dma)
+		err = atmel_tdes_crypt_dma(dd, addr_in, addr_out, count);
+	else
+		err = atmel_tdes_crypt_pdc(dd, addr_in, addr_out, count);
 
-	अगर (err && (dd->flags & TDES_FLAGS_FAST)) अणु
+	if (err && (dd->flags & TDES_FLAGS_FAST)) {
 		dma_unmap_sg(dd->dev, dd->in_sg, 1, DMA_TO_DEVICE);
 		dma_unmap_sg(dd->dev, dd->out_sg, 1, DMA_TO_DEVICE);
-	पूर्ण
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम
-aपंचांगel_tdes_set_iv_as_last_ciphertext_block(काष्ठा aपंचांगel_tdes_dev *dd)
-अणु
-	काष्ठा skcipher_request *req = dd->req;
-	काष्ठा aपंचांगel_tdes_reqctx *rctx = skcipher_request_ctx(req);
-	काष्ठा crypto_skcipher *skcipher = crypto_skcipher_reqtfm(req);
-	अचिन्हित पूर्णांक ivsize = crypto_skcipher_ivsize(skcipher);
+static void
+atmel_tdes_set_iv_as_last_ciphertext_block(struct atmel_tdes_dev *dd)
+{
+	struct skcipher_request *req = dd->req;
+	struct atmel_tdes_reqctx *rctx = skcipher_request_ctx(req);
+	struct crypto_skcipher *skcipher = crypto_skcipher_reqtfm(req);
+	unsigned int ivsize = crypto_skcipher_ivsize(skcipher);
 
-	अगर (req->cryptlen < ivsize)
-		वापस;
+	if (req->cryptlen < ivsize)
+		return;
 
-	अगर (rctx->mode & TDES_FLAGS_ENCRYPT) अणु
+	if (rctx->mode & TDES_FLAGS_ENCRYPT) {
 		scatterwalk_map_and_copy(req->iv, req->dst,
 					 req->cryptlen - ivsize, ivsize, 0);
-	पूर्ण अन्यथा अणु
-		अगर (req->src == req->dst)
-			स_नकल(req->iv, rctx->lastc, ivsize);
-		अन्यथा
+	} else {
+		if (req->src == req->dst)
+			memcpy(req->iv, rctx->lastc, ivsize);
+		else
 			scatterwalk_map_and_copy(req->iv, req->src,
 						 req->cryptlen - ivsize,
 						 ivsize, 0);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम aपंचांगel_tdes_finish_req(काष्ठा aपंचांगel_tdes_dev *dd, पूर्णांक err)
-अणु
-	काष्ठा skcipher_request *req = dd->req;
-	काष्ठा aपंचांगel_tdes_reqctx *rctx = skcipher_request_ctx(req);
+static void atmel_tdes_finish_req(struct atmel_tdes_dev *dd, int err)
+{
+	struct skcipher_request *req = dd->req;
+	struct atmel_tdes_reqctx *rctx = skcipher_request_ctx(req);
 
 	clk_disable_unprepare(dd->iclk);
 
 	dd->flags &= ~TDES_FLAGS_BUSY;
 
-	अगर (!err && (rctx->mode & TDES_FLAGS_OPMODE_MASK) != TDES_FLAGS_ECB)
-		aपंचांगel_tdes_set_iv_as_last_ciphertext_block(dd);
+	if (!err && (rctx->mode & TDES_FLAGS_OPMODE_MASK) != TDES_FLAGS_ECB)
+		atmel_tdes_set_iv_as_last_ciphertext_block(dd);
 
 	req->base.complete(&req->base, err);
-पूर्ण
+}
 
-अटल पूर्णांक aपंचांगel_tdes_handle_queue(काष्ठा aपंचांगel_tdes_dev *dd,
-			       काष्ठा skcipher_request *req)
-अणु
-	काष्ठा crypto_async_request *async_req, *backlog;
-	काष्ठा aपंचांगel_tdes_ctx *ctx;
-	काष्ठा aपंचांगel_tdes_reqctx *rctx;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक err, ret = 0;
+static int atmel_tdes_handle_queue(struct atmel_tdes_dev *dd,
+			       struct skcipher_request *req)
+{
+	struct crypto_async_request *async_req, *backlog;
+	struct atmel_tdes_ctx *ctx;
+	struct atmel_tdes_reqctx *rctx;
+	unsigned long flags;
+	int err, ret = 0;
 
 	spin_lock_irqsave(&dd->lock, flags);
-	अगर (req)
+	if (req)
 		ret = crypto_enqueue_request(&dd->queue, &req->base);
-	अगर (dd->flags & TDES_FLAGS_BUSY) अणु
+	if (dd->flags & TDES_FLAGS_BUSY) {
 		spin_unlock_irqrestore(&dd->lock, flags);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 	backlog = crypto_get_backlog(&dd->queue);
 	async_req = crypto_dequeue_request(&dd->queue);
-	अगर (async_req)
+	if (async_req)
 		dd->flags |= TDES_FLAGS_BUSY;
 	spin_unlock_irqrestore(&dd->lock, flags);
 
-	अगर (!async_req)
-		वापस ret;
+	if (!async_req)
+		return ret;
 
-	अगर (backlog)
+	if (backlog)
 		backlog->complete(backlog, -EINPROGRESS);
 
 	req = skcipher_request_cast(async_req);
@@ -649,109 +648,109 @@ aपंचांगel_tdes_set_iv_as_last_ciphertext_block(काष्ठा a�
 	dd->ctx = ctx;
 	ctx->dd = dd;
 
-	err = aपंचांगel_tdes_ग_लिखो_ctrl(dd);
-	अगर (!err)
-		err = aपंचांगel_tdes_crypt_start(dd);
-	अगर (err) अणु
-		/* des_task will not finish it, so करो it here */
-		aपंचांगel_tdes_finish_req(dd, err);
+	err = atmel_tdes_write_ctrl(dd);
+	if (!err)
+		err = atmel_tdes_crypt_start(dd);
+	if (err) {
+		/* des_task will not finish it, so do it here */
+		atmel_tdes_finish_req(dd, err);
 		tasklet_schedule(&dd->queue_task);
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक aपंचांगel_tdes_crypt_dma_stop(काष्ठा aपंचांगel_tdes_dev *dd)
-अणु
-	पूर्णांक err = -EINVAL;
-	माप_प्रकार count;
+static int atmel_tdes_crypt_dma_stop(struct atmel_tdes_dev *dd)
+{
+	int err = -EINVAL;
+	size_t count;
 
-	अगर (dd->flags & TDES_FLAGS_DMA) अणु
+	if (dd->flags & TDES_FLAGS_DMA) {
 		err = 0;
-		अगर  (dd->flags & TDES_FLAGS_FAST) अणु
+		if  (dd->flags & TDES_FLAGS_FAST) {
 			dma_unmap_sg(dd->dev, dd->out_sg, 1, DMA_FROM_DEVICE);
 			dma_unmap_sg(dd->dev, dd->in_sg, 1, DMA_TO_DEVICE);
-		पूर्ण अन्यथा अणु
-			dma_sync_single_क्रम_device(dd->dev, dd->dma_addr_out,
+		} else {
+			dma_sync_single_for_device(dd->dev, dd->dma_addr_out,
 				dd->dma_size, DMA_FROM_DEVICE);
 
 			/* copy data */
-			count = aपंचांगel_tdes_sg_copy(&dd->out_sg, &dd->out_offset,
+			count = atmel_tdes_sg_copy(&dd->out_sg, &dd->out_offset,
 				dd->buf_out, dd->buflen, dd->dma_size, 1);
-			अगर (count != dd->dma_size) अणु
+			if (count != dd->dma_size) {
 				err = -EINVAL;
 				pr_err("not all data converted: %zu\n", count);
-			पूर्ण
-		पूर्ण
-	पूर्ण
-	वापस err;
-पूर्ण
+			}
+		}
+	}
+	return err;
+}
 
-अटल पूर्णांक aपंचांगel_tdes_crypt(काष्ठा skcipher_request *req, अचिन्हित दीर्घ mode)
-अणु
-	काष्ठा crypto_skcipher *skcipher = crypto_skcipher_reqtfm(req);
-	काष्ठा aपंचांगel_tdes_ctx *ctx = crypto_skcipher_ctx(skcipher);
-	काष्ठा aपंचांगel_tdes_reqctx *rctx = skcipher_request_ctx(req);
+static int atmel_tdes_crypt(struct skcipher_request *req, unsigned long mode)
+{
+	struct crypto_skcipher *skcipher = crypto_skcipher_reqtfm(req);
+	struct atmel_tdes_ctx *ctx = crypto_skcipher_ctx(skcipher);
+	struct atmel_tdes_reqctx *rctx = skcipher_request_ctx(req);
 
-	चयन (mode & TDES_FLAGS_OPMODE_MASK) अणु
-	हाल TDES_FLAGS_CFB8:
-		अगर (!IS_ALIGNED(req->cryptlen, CFB8_BLOCK_SIZE)) अणु
+	switch (mode & TDES_FLAGS_OPMODE_MASK) {
+	case TDES_FLAGS_CFB8:
+		if (!IS_ALIGNED(req->cryptlen, CFB8_BLOCK_SIZE)) {
 			pr_err("request size is not exact amount of CFB8 blocks\n");
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 		ctx->block_size = CFB8_BLOCK_SIZE;
-		अवरोध;
+		break;
 
-	हाल TDES_FLAGS_CFB16:
-		अगर (!IS_ALIGNED(req->cryptlen, CFB16_BLOCK_SIZE)) अणु
+	case TDES_FLAGS_CFB16:
+		if (!IS_ALIGNED(req->cryptlen, CFB16_BLOCK_SIZE)) {
 			pr_err("request size is not exact amount of CFB16 blocks\n");
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 		ctx->block_size = CFB16_BLOCK_SIZE;
-		अवरोध;
+		break;
 
-	हाल TDES_FLAGS_CFB32:
-		अगर (!IS_ALIGNED(req->cryptlen, CFB32_BLOCK_SIZE)) अणु
+	case TDES_FLAGS_CFB32:
+		if (!IS_ALIGNED(req->cryptlen, CFB32_BLOCK_SIZE)) {
 			pr_err("request size is not exact amount of CFB32 blocks\n");
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 		ctx->block_size = CFB32_BLOCK_SIZE;
-		अवरोध;
+		break;
 
-	शेष:
-		अगर (!IS_ALIGNED(req->cryptlen, DES_BLOCK_SIZE)) अणु
+	default:
+		if (!IS_ALIGNED(req->cryptlen, DES_BLOCK_SIZE)) {
 			pr_err("request size is not exact amount of DES blocks\n");
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 		ctx->block_size = DES_BLOCK_SIZE;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	rctx->mode = mode;
 
-	अगर ((mode & TDES_FLAGS_OPMODE_MASK) != TDES_FLAGS_ECB &&
-	    !(mode & TDES_FLAGS_ENCRYPT) && req->src == req->dst) अणु
-		अचिन्हित पूर्णांक ivsize = crypto_skcipher_ivsize(skcipher);
+	if ((mode & TDES_FLAGS_OPMODE_MASK) != TDES_FLAGS_ECB &&
+	    !(mode & TDES_FLAGS_ENCRYPT) && req->src == req->dst) {
+		unsigned int ivsize = crypto_skcipher_ivsize(skcipher);
 
-		अगर (req->cryptlen >= ivsize)
+		if (req->cryptlen >= ivsize)
 			scatterwalk_map_and_copy(rctx->lastc, req->src,
 						 req->cryptlen - ivsize,
 						 ivsize, 0);
-	पूर्ण
+	}
 
-	वापस aपंचांगel_tdes_handle_queue(ctx->dd, req);
-पूर्ण
+	return atmel_tdes_handle_queue(ctx->dd, req);
+}
 
-अटल पूर्णांक aपंचांगel_tdes_dma_init(काष्ठा aपंचांगel_tdes_dev *dd)
-अणु
-	पूर्णांक ret;
+static int atmel_tdes_dma_init(struct atmel_tdes_dev *dd)
+{
+	int ret;
 
 	/* Try to grab 2 DMA channels */
 	dd->dma_lch_in.chan = dma_request_chan(dd->dev, "tx");
-	अगर (IS_ERR(dd->dma_lch_in.chan)) अणु
+	if (IS_ERR(dd->dma_lch_in.chan)) {
 		ret = PTR_ERR(dd->dma_lch_in.chan);
-		जाओ err_dma_in;
-	पूर्ण
+		goto err_dma_in;
+	}
 
 	dd->dma_lch_in.dma_conf.dst_addr = dd->phys_base +
 		TDES_IDATA1R;
@@ -764,10 +763,10 @@ aपंचांगel_tdes_set_iv_as_last_ciphertext_block(काष्ठा a�
 	dd->dma_lch_in.dma_conf.device_fc = false;
 
 	dd->dma_lch_out.chan = dma_request_chan(dd->dev, "rx");
-	अगर (IS_ERR(dd->dma_lch_out.chan)) अणु
+	if (IS_ERR(dd->dma_lch_out.chan)) {
 		ret = PTR_ERR(dd->dma_lch_out.chan);
-		जाओ err_dma_out;
-	पूर्ण
+		goto err_dma_out;
+	}
 
 	dd->dma_lch_out.dma_conf.src_addr = dd->phys_base +
 		TDES_ODATA1R;
@@ -779,148 +778,148 @@ aपंचांगel_tdes_set_iv_as_last_ciphertext_block(काष्ठा a�
 		DMA_SLAVE_BUSWIDTH_4_BYTES;
 	dd->dma_lch_out.dma_conf.device_fc = false;
 
-	वापस 0;
+	return 0;
 
 err_dma_out:
 	dma_release_channel(dd->dma_lch_in.chan);
 err_dma_in:
 	dev_err(dd->dev, "no DMA channel available\n");
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम aपंचांगel_tdes_dma_cleanup(काष्ठा aपंचांगel_tdes_dev *dd)
-अणु
+static void atmel_tdes_dma_cleanup(struct atmel_tdes_dev *dd)
+{
 	dma_release_channel(dd->dma_lch_in.chan);
 	dma_release_channel(dd->dma_lch_out.chan);
-पूर्ण
+}
 
-अटल पूर्णांक aपंचांगel_des_setkey(काष्ठा crypto_skcipher *tfm, स्थिर u8 *key,
-			   अचिन्हित पूर्णांक keylen)
-अणु
-	काष्ठा aपंचांगel_tdes_ctx *ctx = crypto_skcipher_ctx(tfm);
-	पूर्णांक err;
+static int atmel_des_setkey(struct crypto_skcipher *tfm, const u8 *key,
+			   unsigned int keylen)
+{
+	struct atmel_tdes_ctx *ctx = crypto_skcipher_ctx(tfm);
+	int err;
 
-	err = verअगरy_skcipher_des_key(tfm, key);
-	अगर (err)
-		वापस err;
+	err = verify_skcipher_des_key(tfm, key);
+	if (err)
+		return err;
 
-	स_नकल(ctx->key, key, keylen);
+	memcpy(ctx->key, key, keylen);
 	ctx->keylen = keylen;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक aपंचांगel_tdes_setkey(काष्ठा crypto_skcipher *tfm, स्थिर u8 *key,
-			   अचिन्हित पूर्णांक keylen)
-अणु
-	काष्ठा aपंचांगel_tdes_ctx *ctx = crypto_skcipher_ctx(tfm);
-	पूर्णांक err;
+static int atmel_tdes_setkey(struct crypto_skcipher *tfm, const u8 *key,
+			   unsigned int keylen)
+{
+	struct atmel_tdes_ctx *ctx = crypto_skcipher_ctx(tfm);
+	int err;
 
-	err = verअगरy_skcipher_des3_key(tfm, key);
-	अगर (err)
-		वापस err;
+	err = verify_skcipher_des3_key(tfm, key);
+	if (err)
+		return err;
 
-	स_नकल(ctx->key, key, keylen);
+	memcpy(ctx->key, key, keylen);
 	ctx->keylen = keylen;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक aपंचांगel_tdes_ecb_encrypt(काष्ठा skcipher_request *req)
-अणु
-	वापस aपंचांगel_tdes_crypt(req, TDES_FLAGS_ECB | TDES_FLAGS_ENCRYPT);
-पूर्ण
+static int atmel_tdes_ecb_encrypt(struct skcipher_request *req)
+{
+	return atmel_tdes_crypt(req, TDES_FLAGS_ECB | TDES_FLAGS_ENCRYPT);
+}
 
-अटल पूर्णांक aपंचांगel_tdes_ecb_decrypt(काष्ठा skcipher_request *req)
-अणु
-	वापस aपंचांगel_tdes_crypt(req, TDES_FLAGS_ECB);
-पूर्ण
+static int atmel_tdes_ecb_decrypt(struct skcipher_request *req)
+{
+	return atmel_tdes_crypt(req, TDES_FLAGS_ECB);
+}
 
-अटल पूर्णांक aपंचांगel_tdes_cbc_encrypt(काष्ठा skcipher_request *req)
-अणु
-	वापस aपंचांगel_tdes_crypt(req, TDES_FLAGS_CBC | TDES_FLAGS_ENCRYPT);
-पूर्ण
+static int atmel_tdes_cbc_encrypt(struct skcipher_request *req)
+{
+	return atmel_tdes_crypt(req, TDES_FLAGS_CBC | TDES_FLAGS_ENCRYPT);
+}
 
-अटल पूर्णांक aपंचांगel_tdes_cbc_decrypt(काष्ठा skcipher_request *req)
-अणु
-	वापस aपंचांगel_tdes_crypt(req, TDES_FLAGS_CBC);
-पूर्ण
-अटल पूर्णांक aपंचांगel_tdes_cfb_encrypt(काष्ठा skcipher_request *req)
-अणु
-	वापस aपंचांगel_tdes_crypt(req, TDES_FLAGS_CFB64 | TDES_FLAGS_ENCRYPT);
-पूर्ण
+static int atmel_tdes_cbc_decrypt(struct skcipher_request *req)
+{
+	return atmel_tdes_crypt(req, TDES_FLAGS_CBC);
+}
+static int atmel_tdes_cfb_encrypt(struct skcipher_request *req)
+{
+	return atmel_tdes_crypt(req, TDES_FLAGS_CFB64 | TDES_FLAGS_ENCRYPT);
+}
 
-अटल पूर्णांक aपंचांगel_tdes_cfb_decrypt(काष्ठा skcipher_request *req)
-अणु
-	वापस aपंचांगel_tdes_crypt(req, TDES_FLAGS_CFB64);
-पूर्ण
+static int atmel_tdes_cfb_decrypt(struct skcipher_request *req)
+{
+	return atmel_tdes_crypt(req, TDES_FLAGS_CFB64);
+}
 
-अटल पूर्णांक aपंचांगel_tdes_cfb8_encrypt(काष्ठा skcipher_request *req)
-अणु
-	वापस aपंचांगel_tdes_crypt(req, TDES_FLAGS_CFB8 | TDES_FLAGS_ENCRYPT);
-पूर्ण
+static int atmel_tdes_cfb8_encrypt(struct skcipher_request *req)
+{
+	return atmel_tdes_crypt(req, TDES_FLAGS_CFB8 | TDES_FLAGS_ENCRYPT);
+}
 
-अटल पूर्णांक aपंचांगel_tdes_cfb8_decrypt(काष्ठा skcipher_request *req)
-अणु
-	वापस aपंचांगel_tdes_crypt(req, TDES_FLAGS_CFB8);
-पूर्ण
+static int atmel_tdes_cfb8_decrypt(struct skcipher_request *req)
+{
+	return atmel_tdes_crypt(req, TDES_FLAGS_CFB8);
+}
 
-अटल पूर्णांक aपंचांगel_tdes_cfb16_encrypt(काष्ठा skcipher_request *req)
-अणु
-	वापस aपंचांगel_tdes_crypt(req, TDES_FLAGS_CFB16 | TDES_FLAGS_ENCRYPT);
-पूर्ण
+static int atmel_tdes_cfb16_encrypt(struct skcipher_request *req)
+{
+	return atmel_tdes_crypt(req, TDES_FLAGS_CFB16 | TDES_FLAGS_ENCRYPT);
+}
 
-अटल पूर्णांक aपंचांगel_tdes_cfb16_decrypt(काष्ठा skcipher_request *req)
-अणु
-	वापस aपंचांगel_tdes_crypt(req, TDES_FLAGS_CFB16);
-पूर्ण
+static int atmel_tdes_cfb16_decrypt(struct skcipher_request *req)
+{
+	return atmel_tdes_crypt(req, TDES_FLAGS_CFB16);
+}
 
-अटल पूर्णांक aपंचांगel_tdes_cfb32_encrypt(काष्ठा skcipher_request *req)
-अणु
-	वापस aपंचांगel_tdes_crypt(req, TDES_FLAGS_CFB32 | TDES_FLAGS_ENCRYPT);
-पूर्ण
+static int atmel_tdes_cfb32_encrypt(struct skcipher_request *req)
+{
+	return atmel_tdes_crypt(req, TDES_FLAGS_CFB32 | TDES_FLAGS_ENCRYPT);
+}
 
-अटल पूर्णांक aपंचांगel_tdes_cfb32_decrypt(काष्ठा skcipher_request *req)
-अणु
-	वापस aपंचांगel_tdes_crypt(req, TDES_FLAGS_CFB32);
-पूर्ण
+static int atmel_tdes_cfb32_decrypt(struct skcipher_request *req)
+{
+	return atmel_tdes_crypt(req, TDES_FLAGS_CFB32);
+}
 
-अटल पूर्णांक aपंचांगel_tdes_ofb_encrypt(काष्ठा skcipher_request *req)
-अणु
-	वापस aपंचांगel_tdes_crypt(req, TDES_FLAGS_OFB | TDES_FLAGS_ENCRYPT);
-पूर्ण
+static int atmel_tdes_ofb_encrypt(struct skcipher_request *req)
+{
+	return atmel_tdes_crypt(req, TDES_FLAGS_OFB | TDES_FLAGS_ENCRYPT);
+}
 
-अटल पूर्णांक aपंचांगel_tdes_ofb_decrypt(काष्ठा skcipher_request *req)
-अणु
-	वापस aपंचांगel_tdes_crypt(req, TDES_FLAGS_OFB);
-पूर्ण
+static int atmel_tdes_ofb_decrypt(struct skcipher_request *req)
+{
+	return atmel_tdes_crypt(req, TDES_FLAGS_OFB);
+}
 
-अटल पूर्णांक aपंचांगel_tdes_init_tfm(काष्ठा crypto_skcipher *tfm)
-अणु
-	काष्ठा aपंचांगel_tdes_ctx *ctx = crypto_skcipher_ctx(tfm);
-	काष्ठा aपंचांगel_tdes_dev *dd;
+static int atmel_tdes_init_tfm(struct crypto_skcipher *tfm)
+{
+	struct atmel_tdes_ctx *ctx = crypto_skcipher_ctx(tfm);
+	struct atmel_tdes_dev *dd;
 
-	crypto_skcipher_set_reqsize(tfm, माप(काष्ठा aपंचांगel_tdes_reqctx));
+	crypto_skcipher_set_reqsize(tfm, sizeof(struct atmel_tdes_reqctx));
 
-	dd = aपंचांगel_tdes_find_dev(ctx);
-	अगर (!dd)
-		वापस -ENODEV;
+	dd = atmel_tdes_find_dev(ctx);
+	if (!dd)
+		return -ENODEV;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम aपंचांगel_tdes_skcipher_alg_init(काष्ठा skcipher_alg *alg)
-अणु
+static void atmel_tdes_skcipher_alg_init(struct skcipher_alg *alg)
+{
 	alg->base.cra_priority = ATMEL_TDES_PRIORITY;
 	alg->base.cra_flags = CRYPTO_ALG_ASYNC;
-	alg->base.cra_ctxsize = माप(काष्ठा aपंचांगel_tdes_ctx);
+	alg->base.cra_ctxsize = sizeof(struct atmel_tdes_ctx);
 	alg->base.cra_module = THIS_MODULE;
 
-	alg->init = aपंचांगel_tdes_init_tfm;
-पूर्ण
+	alg->init = atmel_tdes_init_tfm;
+}
 
-अटल काष्ठा skcipher_alg tdes_algs[] = अणु
-अणु
+static struct skcipher_alg tdes_algs[] = {
+{
 	.base.cra_name		= "ecb(des)",
 	.base.cra_driver_name	= "atmel-ecb-des",
 	.base.cra_blocksize	= DES_BLOCK_SIZE,
@@ -928,11 +927,11 @@ err_dma_in:
 
 	.min_keysize		= DES_KEY_SIZE,
 	.max_keysize		= DES_KEY_SIZE,
-	.setkey			= aपंचांगel_des_setkey,
-	.encrypt		= aपंचांगel_tdes_ecb_encrypt,
-	.decrypt		= aपंचांगel_tdes_ecb_decrypt,
-पूर्ण,
-अणु
+	.setkey			= atmel_des_setkey,
+	.encrypt		= atmel_tdes_ecb_encrypt,
+	.decrypt		= atmel_tdes_ecb_decrypt,
+},
+{
 	.base.cra_name		= "cbc(des)",
 	.base.cra_driver_name	= "atmel-cbc-des",
 	.base.cra_blocksize	= DES_BLOCK_SIZE,
@@ -941,11 +940,11 @@ err_dma_in:
 	.min_keysize		= DES_KEY_SIZE,
 	.max_keysize		= DES_KEY_SIZE,
 	.ivsize			= DES_BLOCK_SIZE,
-	.setkey			= aपंचांगel_des_setkey,
-	.encrypt		= aपंचांगel_tdes_cbc_encrypt,
-	.decrypt		= aपंचांगel_tdes_cbc_decrypt,
-पूर्ण,
-अणु
+	.setkey			= atmel_des_setkey,
+	.encrypt		= atmel_tdes_cbc_encrypt,
+	.decrypt		= atmel_tdes_cbc_decrypt,
+},
+{
 	.base.cra_name		= "cfb(des)",
 	.base.cra_driver_name	= "atmel-cfb-des",
 	.base.cra_blocksize	= DES_BLOCK_SIZE,
@@ -954,11 +953,11 @@ err_dma_in:
 	.min_keysize		= DES_KEY_SIZE,
 	.max_keysize		= DES_KEY_SIZE,
 	.ivsize			= DES_BLOCK_SIZE,
-	.setkey			= aपंचांगel_des_setkey,
-	.encrypt		= aपंचांगel_tdes_cfb_encrypt,
-	.decrypt		= aपंचांगel_tdes_cfb_decrypt,
-पूर्ण,
-अणु
+	.setkey			= atmel_des_setkey,
+	.encrypt		= atmel_tdes_cfb_encrypt,
+	.decrypt		= atmel_tdes_cfb_decrypt,
+},
+{
 	.base.cra_name		= "cfb8(des)",
 	.base.cra_driver_name	= "atmel-cfb8-des",
 	.base.cra_blocksize	= CFB8_BLOCK_SIZE,
@@ -967,11 +966,11 @@ err_dma_in:
 	.min_keysize		= DES_KEY_SIZE,
 	.max_keysize		= DES_KEY_SIZE,
 	.ivsize			= DES_BLOCK_SIZE,
-	.setkey			= aपंचांगel_des_setkey,
-	.encrypt		= aपंचांगel_tdes_cfb8_encrypt,
-	.decrypt		= aपंचांगel_tdes_cfb8_decrypt,
-पूर्ण,
-अणु
+	.setkey			= atmel_des_setkey,
+	.encrypt		= atmel_tdes_cfb8_encrypt,
+	.decrypt		= atmel_tdes_cfb8_decrypt,
+},
+{
 	.base.cra_name		= "cfb16(des)",
 	.base.cra_driver_name	= "atmel-cfb16-des",
 	.base.cra_blocksize	= CFB16_BLOCK_SIZE,
@@ -980,11 +979,11 @@ err_dma_in:
 	.min_keysize		= DES_KEY_SIZE,
 	.max_keysize		= DES_KEY_SIZE,
 	.ivsize			= DES_BLOCK_SIZE,
-	.setkey			= aपंचांगel_des_setkey,
-	.encrypt		= aपंचांगel_tdes_cfb16_encrypt,
-	.decrypt		= aपंचांगel_tdes_cfb16_decrypt,
-पूर्ण,
-अणु
+	.setkey			= atmel_des_setkey,
+	.encrypt		= atmel_tdes_cfb16_encrypt,
+	.decrypt		= atmel_tdes_cfb16_decrypt,
+},
+{
 	.base.cra_name		= "cfb32(des)",
 	.base.cra_driver_name	= "atmel-cfb32-des",
 	.base.cra_blocksize	= CFB32_BLOCK_SIZE,
@@ -993,11 +992,11 @@ err_dma_in:
 	.min_keysize		= DES_KEY_SIZE,
 	.max_keysize		= DES_KEY_SIZE,
 	.ivsize			= DES_BLOCK_SIZE,
-	.setkey			= aपंचांगel_des_setkey,
-	.encrypt		= aपंचांगel_tdes_cfb32_encrypt,
-	.decrypt		= aपंचांगel_tdes_cfb32_decrypt,
-पूर्ण,
-अणु
+	.setkey			= atmel_des_setkey,
+	.encrypt		= atmel_tdes_cfb32_encrypt,
+	.decrypt		= atmel_tdes_cfb32_decrypt,
+},
+{
 	.base.cra_name		= "ofb(des)",
 	.base.cra_driver_name	= "atmel-ofb-des",
 	.base.cra_blocksize	= DES_BLOCK_SIZE,
@@ -1006,11 +1005,11 @@ err_dma_in:
 	.min_keysize		= DES_KEY_SIZE,
 	.max_keysize		= DES_KEY_SIZE,
 	.ivsize			= DES_BLOCK_SIZE,
-	.setkey			= aपंचांगel_des_setkey,
-	.encrypt		= aपंचांगel_tdes_ofb_encrypt,
-	.decrypt		= aपंचांगel_tdes_ofb_decrypt,
-पूर्ण,
-अणु
+	.setkey			= atmel_des_setkey,
+	.encrypt		= atmel_tdes_ofb_encrypt,
+	.decrypt		= atmel_tdes_ofb_decrypt,
+},
+{
 	.base.cra_name		= "ecb(des3_ede)",
 	.base.cra_driver_name	= "atmel-ecb-tdes",
 	.base.cra_blocksize	= DES_BLOCK_SIZE,
@@ -1018,11 +1017,11 @@ err_dma_in:
 
 	.min_keysize		= DES3_EDE_KEY_SIZE,
 	.max_keysize		= DES3_EDE_KEY_SIZE,
-	.setkey			= aपंचांगel_tdes_setkey,
-	.encrypt		= aपंचांगel_tdes_ecb_encrypt,
-	.decrypt		= aपंचांगel_tdes_ecb_decrypt,
-पूर्ण,
-अणु
+	.setkey			= atmel_tdes_setkey,
+	.encrypt		= atmel_tdes_ecb_encrypt,
+	.decrypt		= atmel_tdes_ecb_decrypt,
+},
+{
 	.base.cra_name		= "cbc(des3_ede)",
 	.base.cra_driver_name	= "atmel-cbc-tdes",
 	.base.cra_blocksize	= DES_BLOCK_SIZE,
@@ -1030,12 +1029,12 @@ err_dma_in:
 
 	.min_keysize		= DES3_EDE_KEY_SIZE,
 	.max_keysize		= DES3_EDE_KEY_SIZE,
-	.setkey			= aपंचांगel_tdes_setkey,
-	.encrypt		= aपंचांगel_tdes_cbc_encrypt,
-	.decrypt		= aपंचांगel_tdes_cbc_decrypt,
+	.setkey			= atmel_tdes_setkey,
+	.encrypt		= atmel_tdes_cbc_encrypt,
+	.decrypt		= atmel_tdes_cbc_decrypt,
 	.ivsize			= DES_BLOCK_SIZE,
-पूर्ण,
-अणु
+},
+{
 	.base.cra_name		= "ofb(des3_ede)",
 	.base.cra_driver_name	= "atmel-ofb-tdes",
 	.base.cra_blocksize	= DES_BLOCK_SIZE,
@@ -1043,267 +1042,267 @@ err_dma_in:
 
 	.min_keysize		= DES3_EDE_KEY_SIZE,
 	.max_keysize		= DES3_EDE_KEY_SIZE,
-	.setkey			= aपंचांगel_tdes_setkey,
-	.encrypt		= aपंचांगel_tdes_ofb_encrypt,
-	.decrypt		= aपंचांगel_tdes_ofb_decrypt,
+	.setkey			= atmel_tdes_setkey,
+	.encrypt		= atmel_tdes_ofb_encrypt,
+	.decrypt		= atmel_tdes_ofb_decrypt,
 	.ivsize			= DES_BLOCK_SIZE,
-पूर्ण,
-पूर्ण;
+},
+};
 
-अटल व्योम aपंचांगel_tdes_queue_task(अचिन्हित दीर्घ data)
-अणु
-	काष्ठा aपंचांगel_tdes_dev *dd = (काष्ठा aपंचांगel_tdes_dev *)data;
+static void atmel_tdes_queue_task(unsigned long data)
+{
+	struct atmel_tdes_dev *dd = (struct atmel_tdes_dev *)data;
 
-	aपंचांगel_tdes_handle_queue(dd, शून्य);
-पूर्ण
+	atmel_tdes_handle_queue(dd, NULL);
+}
 
-अटल व्योम aपंचांगel_tdes_करोne_task(अचिन्हित दीर्घ data)
-अणु
-	काष्ठा aपंचांगel_tdes_dev *dd = (काष्ठा aपंचांगel_tdes_dev *) data;
-	पूर्णांक err;
+static void atmel_tdes_done_task(unsigned long data)
+{
+	struct atmel_tdes_dev *dd = (struct atmel_tdes_dev *) data;
+	int err;
 
-	अगर (!(dd->flags & TDES_FLAGS_DMA))
-		err = aपंचांगel_tdes_crypt_pdc_stop(dd);
-	अन्यथा
-		err = aपंचांगel_tdes_crypt_dma_stop(dd);
+	if (!(dd->flags & TDES_FLAGS_DMA))
+		err = atmel_tdes_crypt_pdc_stop(dd);
+	else
+		err = atmel_tdes_crypt_dma_stop(dd);
 
-	अगर (dd->total && !err) अणु
-		अगर (dd->flags & TDES_FLAGS_FAST) अणु
+	if (dd->total && !err) {
+		if (dd->flags & TDES_FLAGS_FAST) {
 			dd->in_sg = sg_next(dd->in_sg);
 			dd->out_sg = sg_next(dd->out_sg);
-			अगर (!dd->in_sg || !dd->out_sg)
+			if (!dd->in_sg || !dd->out_sg)
 				err = -EINVAL;
-		पूर्ण
-		अगर (!err)
-			err = aपंचांगel_tdes_crypt_start(dd);
-		अगर (!err)
-			वापस; /* DMA started. Not fininishing. */
-	पूर्ण
+		}
+		if (!err)
+			err = atmel_tdes_crypt_start(dd);
+		if (!err)
+			return; /* DMA started. Not fininishing. */
+	}
 
-	aपंचांगel_tdes_finish_req(dd, err);
-	aपंचांगel_tdes_handle_queue(dd, शून्य);
-पूर्ण
+	atmel_tdes_finish_req(dd, err);
+	atmel_tdes_handle_queue(dd, NULL);
+}
 
-अटल irqवापस_t aपंचांगel_tdes_irq(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा aपंचांगel_tdes_dev *tdes_dd = dev_id;
+static irqreturn_t atmel_tdes_irq(int irq, void *dev_id)
+{
+	struct atmel_tdes_dev *tdes_dd = dev_id;
 	u32 reg;
 
-	reg = aपंचांगel_tdes_पढ़ो(tdes_dd, TDES_ISR);
-	अगर (reg & aपंचांगel_tdes_पढ़ो(tdes_dd, TDES_IMR)) अणु
-		aपंचांगel_tdes_ग_लिखो(tdes_dd, TDES_IDR, reg);
-		अगर (TDES_FLAGS_BUSY & tdes_dd->flags)
-			tasklet_schedule(&tdes_dd->करोne_task);
-		अन्यथा
+	reg = atmel_tdes_read(tdes_dd, TDES_ISR);
+	if (reg & atmel_tdes_read(tdes_dd, TDES_IMR)) {
+		atmel_tdes_write(tdes_dd, TDES_IDR, reg);
+		if (TDES_FLAGS_BUSY & tdes_dd->flags)
+			tasklet_schedule(&tdes_dd->done_task);
+		else
 			dev_warn(tdes_dd->dev, "TDES interrupt when no active requests.\n");
-		वापस IRQ_HANDLED;
-	पूर्ण
+		return IRQ_HANDLED;
+	}
 
-	वापस IRQ_NONE;
-पूर्ण
+	return IRQ_NONE;
+}
 
-अटल व्योम aपंचांगel_tdes_unरेजिस्टर_algs(काष्ठा aपंचांगel_tdes_dev *dd)
-अणु
-	पूर्णांक i;
+static void atmel_tdes_unregister_algs(struct atmel_tdes_dev *dd)
+{
+	int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(tdes_algs); i++)
-		crypto_unरेजिस्टर_skcipher(&tdes_algs[i]);
-पूर्ण
+	for (i = 0; i < ARRAY_SIZE(tdes_algs); i++)
+		crypto_unregister_skcipher(&tdes_algs[i]);
+}
 
-अटल पूर्णांक aपंचांगel_tdes_रेजिस्टर_algs(काष्ठा aपंचांगel_tdes_dev *dd)
-अणु
-	पूर्णांक err, i, j;
+static int atmel_tdes_register_algs(struct atmel_tdes_dev *dd)
+{
+	int err, i, j;
 
-	क्रम (i = 0; i < ARRAY_SIZE(tdes_algs); i++) अणु
-		aपंचांगel_tdes_skcipher_alg_init(&tdes_algs[i]);
+	for (i = 0; i < ARRAY_SIZE(tdes_algs); i++) {
+		atmel_tdes_skcipher_alg_init(&tdes_algs[i]);
 
-		err = crypto_रेजिस्टर_skcipher(&tdes_algs[i]);
-		अगर (err)
-			जाओ err_tdes_algs;
-	पूर्ण
+		err = crypto_register_skcipher(&tdes_algs[i]);
+		if (err)
+			goto err_tdes_algs;
+	}
 
-	वापस 0;
+	return 0;
 
 err_tdes_algs:
-	क्रम (j = 0; j < i; j++)
-		crypto_unरेजिस्टर_skcipher(&tdes_algs[j]);
+	for (j = 0; j < i; j++)
+		crypto_unregister_skcipher(&tdes_algs[j]);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम aपंचांगel_tdes_get_cap(काष्ठा aपंचांगel_tdes_dev *dd)
-अणु
+static void atmel_tdes_get_cap(struct atmel_tdes_dev *dd)
+{
 
 	dd->caps.has_dma = 0;
 	dd->caps.has_cfb_3keys = 0;
 
 	/* keep only major version number */
-	चयन (dd->hw_version & 0xf00) अणु
-	हाल 0x700:
+	switch (dd->hw_version & 0xf00) {
+	case 0x700:
 		dd->caps.has_dma = 1;
 		dd->caps.has_cfb_3keys = 1;
-		अवरोध;
-	हाल 0x600:
-		अवरोध;
-	शेष:
+		break;
+	case 0x600:
+		break;
+	default:
 		dev_warn(dd->dev,
 				"Unmanaged tdes version, set minimum capabilities\n");
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-#अगर defined(CONFIG_OF)
-अटल स्थिर काष्ठा of_device_id aपंचांगel_tdes_dt_ids[] = अणु
-	अणु .compatible = "atmel,at91sam9g46-tdes" पूर्ण,
-	अणु /* sentinel */ पूर्ण
-पूर्ण;
-MODULE_DEVICE_TABLE(of, aपंचांगel_tdes_dt_ids);
-#पूर्ण_अगर
+#if defined(CONFIG_OF)
+static const struct of_device_id atmel_tdes_dt_ids[] = {
+	{ .compatible = "atmel,at91sam9g46-tdes" },
+	{ /* sentinel */ }
+};
+MODULE_DEVICE_TABLE(of, atmel_tdes_dt_ids);
+#endif
 
-अटल पूर्णांक aपंचांगel_tdes_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा aपंचांगel_tdes_dev *tdes_dd;
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा resource *tdes_res;
-	पूर्णांक err;
+static int atmel_tdes_probe(struct platform_device *pdev)
+{
+	struct atmel_tdes_dev *tdes_dd;
+	struct device *dev = &pdev->dev;
+	struct resource *tdes_res;
+	int err;
 
-	tdes_dd = devm_kदो_स्मृति(&pdev->dev, माप(*tdes_dd), GFP_KERNEL);
-	अगर (!tdes_dd)
-		वापस -ENOMEM;
+	tdes_dd = devm_kmalloc(&pdev->dev, sizeof(*tdes_dd), GFP_KERNEL);
+	if (!tdes_dd)
+		return -ENOMEM;
 
 	tdes_dd->dev = dev;
 
-	platक्रमm_set_drvdata(pdev, tdes_dd);
+	platform_set_drvdata(pdev, tdes_dd);
 
 	INIT_LIST_HEAD(&tdes_dd->list);
 	spin_lock_init(&tdes_dd->lock);
 
-	tasklet_init(&tdes_dd->करोne_task, aपंचांगel_tdes_करोne_task,
-					(अचिन्हित दीर्घ)tdes_dd);
-	tasklet_init(&tdes_dd->queue_task, aपंचांगel_tdes_queue_task,
-					(अचिन्हित दीर्घ)tdes_dd);
+	tasklet_init(&tdes_dd->done_task, atmel_tdes_done_task,
+					(unsigned long)tdes_dd);
+	tasklet_init(&tdes_dd->queue_task, atmel_tdes_queue_task,
+					(unsigned long)tdes_dd);
 
 	crypto_init_queue(&tdes_dd->queue, ATMEL_TDES_QUEUE_LENGTH);
 
 	/* Get the base address */
-	tdes_res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
-	अगर (!tdes_res) अणु
+	tdes_res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	if (!tdes_res) {
 		dev_err(dev, "no MEM resource info\n");
 		err = -ENODEV;
-		जाओ err_tasklet_समाप्त;
-	पूर्ण
+		goto err_tasklet_kill;
+	}
 	tdes_dd->phys_base = tdes_res->start;
 
 	/* Get the IRQ */
-	tdes_dd->irq = platक्रमm_get_irq(pdev,  0);
-	अगर (tdes_dd->irq < 0) अणु
+	tdes_dd->irq = platform_get_irq(pdev,  0);
+	if (tdes_dd->irq < 0) {
 		err = tdes_dd->irq;
-		जाओ err_tasklet_समाप्त;
-	पूर्ण
+		goto err_tasklet_kill;
+	}
 
-	err = devm_request_irq(&pdev->dev, tdes_dd->irq, aपंचांगel_tdes_irq,
+	err = devm_request_irq(&pdev->dev, tdes_dd->irq, atmel_tdes_irq,
 			       IRQF_SHARED, "atmel-tdes", tdes_dd);
-	अगर (err) अणु
+	if (err) {
 		dev_err(dev, "unable to request tdes irq.\n");
-		जाओ err_tasklet_समाप्त;
-	पूर्ण
+		goto err_tasklet_kill;
+	}
 
-	/* Initializing the घड़ी */
+	/* Initializing the clock */
 	tdes_dd->iclk = devm_clk_get(&pdev->dev, "tdes_clk");
-	अगर (IS_ERR(tdes_dd->iclk)) अणु
+	if (IS_ERR(tdes_dd->iclk)) {
 		dev_err(dev, "clock initialization failed.\n");
 		err = PTR_ERR(tdes_dd->iclk);
-		जाओ err_tasklet_समाप्त;
-	पूर्ण
+		goto err_tasklet_kill;
+	}
 
 	tdes_dd->io_base = devm_ioremap_resource(&pdev->dev, tdes_res);
-	अगर (IS_ERR(tdes_dd->io_base)) अणु
+	if (IS_ERR(tdes_dd->io_base)) {
 		err = PTR_ERR(tdes_dd->io_base);
-		जाओ err_tasklet_समाप्त;
-	पूर्ण
+		goto err_tasklet_kill;
+	}
 
-	err = aपंचांगel_tdes_hw_version_init(tdes_dd);
-	अगर (err)
-		जाओ err_tasklet_समाप्त;
+	err = atmel_tdes_hw_version_init(tdes_dd);
+	if (err)
+		goto err_tasklet_kill;
 
-	aपंचांगel_tdes_get_cap(tdes_dd);
+	atmel_tdes_get_cap(tdes_dd);
 
-	err = aपंचांगel_tdes_buff_init(tdes_dd);
-	अगर (err)
-		जाओ err_tasklet_समाप्त;
+	err = atmel_tdes_buff_init(tdes_dd);
+	if (err)
+		goto err_tasklet_kill;
 
-	अगर (tdes_dd->caps.has_dma) अणु
-		err = aपंचांगel_tdes_dma_init(tdes_dd);
-		अगर (err)
-			जाओ err_buff_cleanup;
+	if (tdes_dd->caps.has_dma) {
+		err = atmel_tdes_dma_init(tdes_dd);
+		if (err)
+			goto err_buff_cleanup;
 
 		dev_info(dev, "using %s, %s for DMA transfers\n",
 				dma_chan_name(tdes_dd->dma_lch_in.chan),
 				dma_chan_name(tdes_dd->dma_lch_out.chan));
-	पूर्ण
+	}
 
-	spin_lock(&aपंचांगel_tdes.lock);
-	list_add_tail(&tdes_dd->list, &aपंचांगel_tdes.dev_list);
-	spin_unlock(&aपंचांगel_tdes.lock);
+	spin_lock(&atmel_tdes.lock);
+	list_add_tail(&tdes_dd->list, &atmel_tdes.dev_list);
+	spin_unlock(&atmel_tdes.lock);
 
-	err = aपंचांगel_tdes_रेजिस्टर_algs(tdes_dd);
-	अगर (err)
-		जाओ err_algs;
+	err = atmel_tdes_register_algs(tdes_dd);
+	if (err)
+		goto err_algs;
 
 	dev_info(dev, "Atmel DES/TDES\n");
 
-	वापस 0;
+	return 0;
 
 err_algs:
-	spin_lock(&aपंचांगel_tdes.lock);
+	spin_lock(&atmel_tdes.lock);
 	list_del(&tdes_dd->list);
-	spin_unlock(&aपंचांगel_tdes.lock);
-	अगर (tdes_dd->caps.has_dma)
-		aपंचांगel_tdes_dma_cleanup(tdes_dd);
+	spin_unlock(&atmel_tdes.lock);
+	if (tdes_dd->caps.has_dma)
+		atmel_tdes_dma_cleanup(tdes_dd);
 err_buff_cleanup:
-	aपंचांगel_tdes_buff_cleanup(tdes_dd);
-err_tasklet_समाप्त:
-	tasklet_समाप्त(&tdes_dd->करोne_task);
-	tasklet_समाप्त(&tdes_dd->queue_task);
+	atmel_tdes_buff_cleanup(tdes_dd);
+err_tasklet_kill:
+	tasklet_kill(&tdes_dd->done_task);
+	tasklet_kill(&tdes_dd->queue_task);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक aपंचांगel_tdes_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा aपंचांगel_tdes_dev *tdes_dd;
+static int atmel_tdes_remove(struct platform_device *pdev)
+{
+	struct atmel_tdes_dev *tdes_dd;
 
-	tdes_dd = platक्रमm_get_drvdata(pdev);
-	अगर (!tdes_dd)
-		वापस -ENODEV;
-	spin_lock(&aपंचांगel_tdes.lock);
+	tdes_dd = platform_get_drvdata(pdev);
+	if (!tdes_dd)
+		return -ENODEV;
+	spin_lock(&atmel_tdes.lock);
 	list_del(&tdes_dd->list);
-	spin_unlock(&aपंचांगel_tdes.lock);
+	spin_unlock(&atmel_tdes.lock);
 
-	aपंचांगel_tdes_unरेजिस्टर_algs(tdes_dd);
+	atmel_tdes_unregister_algs(tdes_dd);
 
-	tasklet_समाप्त(&tdes_dd->करोne_task);
-	tasklet_समाप्त(&tdes_dd->queue_task);
+	tasklet_kill(&tdes_dd->done_task);
+	tasklet_kill(&tdes_dd->queue_task);
 
-	अगर (tdes_dd->caps.has_dma)
-		aपंचांगel_tdes_dma_cleanup(tdes_dd);
+	if (tdes_dd->caps.has_dma)
+		atmel_tdes_dma_cleanup(tdes_dd);
 
-	aपंचांगel_tdes_buff_cleanup(tdes_dd);
+	atmel_tdes_buff_cleanup(tdes_dd);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver aपंचांगel_tdes_driver = अणु
-	.probe		= aपंचांगel_tdes_probe,
-	.हटाओ		= aपंचांगel_tdes_हटाओ,
-	.driver		= अणु
+static struct platform_driver atmel_tdes_driver = {
+	.probe		= atmel_tdes_probe,
+	.remove		= atmel_tdes_remove,
+	.driver		= {
 		.name	= "atmel_tdes",
-		.of_match_table = of_match_ptr(aपंचांगel_tdes_dt_ids),
-	पूर्ण,
-पूर्ण;
+		.of_match_table = of_match_ptr(atmel_tdes_dt_ids),
+	},
+};
 
-module_platक्रमm_driver(aपंचांगel_tdes_driver);
+module_platform_driver(atmel_tdes_driver);
 
 MODULE_DESCRIPTION("Atmel DES/TDES hw acceleration support.");
 MODULE_LICENSE("GPL v2");
-MODULE_AUTHOR("Nicolas Royer - Eukrथऊa Electromatique");
+MODULE_AUTHOR("Nicolas Royer - Eukréa Electromatique");

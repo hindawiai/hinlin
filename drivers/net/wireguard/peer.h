@@ -1,87 +1,86 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Copyright (C) 2015-2019 Jason A. Donenfeld <Jason@zx2c4.com>. All Rights Reserved.
  */
 
-#अगर_अघोषित _WG_PEER_H
-#घोषणा _WG_PEER_H
+#ifndef _WG_PEER_H
+#define _WG_PEER_H
 
-#समावेश "device.h"
-#समावेश "noise.h"
-#समावेश "cookie.h"
+#include "device.h"
+#include "noise.h"
+#include "cookie.h"
 
-#समावेश <linux/types.h>
-#समावेश <linux/netfilter.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/kref.h>
-#समावेश <net/dst_cache.h>
+#include <linux/types.h>
+#include <linux/netfilter.h>
+#include <linux/spinlock.h>
+#include <linux/kref.h>
+#include <net/dst_cache.h>
 
-काष्ठा wg_device;
+struct wg_device;
 
-काष्ठा endpoपूर्णांक अणु
-	जोड़ अणु
-		काष्ठा sockaddr addr;
-		काष्ठा sockaddr_in addr4;
-		काष्ठा sockaddr_in6 addr6;
-	पूर्ण;
-	जोड़ अणु
-		काष्ठा अणु
-			काष्ठा in_addr src4;
+struct endpoint {
+	union {
+		struct sockaddr addr;
+		struct sockaddr_in addr4;
+		struct sockaddr_in6 addr6;
+	};
+	union {
+		struct {
+			struct in_addr src4;
 			/* Essentially the same as addr6->scope_id */
-			पूर्णांक src_अगर4;
-		पूर्ण;
-		काष्ठा in6_addr src6;
-	पूर्ण;
-पूर्ण;
+			int src_if4;
+		};
+		struct in6_addr src6;
+	};
+};
 
-काष्ठा wg_peer अणु
-	काष्ठा wg_device *device;
-	काष्ठा prev_queue tx_queue, rx_queue;
-	काष्ठा sk_buff_head staged_packet_queue;
-	पूर्णांक serial_work_cpu;
+struct wg_peer {
+	struct wg_device *device;
+	struct prev_queue tx_queue, rx_queue;
+	struct sk_buff_head staged_packet_queue;
+	int serial_work_cpu;
 	bool is_dead;
-	काष्ठा noise_keypairs keypairs;
-	काष्ठा endpoपूर्णांक endpoपूर्णांक;
-	काष्ठा dst_cache endpoपूर्णांक_cache;
-	rwlock_t endpoपूर्णांक_lock;
-	काष्ठा noise_handshake handshake;
+	struct noise_keypairs keypairs;
+	struct endpoint endpoint;
+	struct dst_cache endpoint_cache;
+	rwlock_t endpoint_lock;
+	struct noise_handshake handshake;
 	atomic64_t last_sent_handshake;
-	काष्ठा work_काष्ठा transmit_handshake_work, clear_peer_work, transmit_packet_work;
-	काष्ठा cookie latest_cookie;
-	काष्ठा hlist_node pubkey_hash;
+	struct work_struct transmit_handshake_work, clear_peer_work, transmit_packet_work;
+	struct cookie latest_cookie;
+	struct hlist_node pubkey_hash;
 	u64 rx_bytes, tx_bytes;
-	काष्ठा समयr_list समयr_retransmit_handshake, समयr_send_keepalive;
-	काष्ठा समयr_list समयr_new_handshake, समयr_zero_key_material;
-	काष्ठा समयr_list समयr_persistent_keepalive;
-	अचिन्हित पूर्णांक समयr_handshake_attempts;
-	u16 persistent_keepalive_पूर्णांकerval;
-	bool समयr_need_another_keepalive;
-	bool sent_lasपंचांगinute_handshake;
-	काष्ठा बारpec64 wallसमय_last_handshake;
-	काष्ठा kref refcount;
-	काष्ठा rcu_head rcu;
-	काष्ठा list_head peer_list;
-	काष्ठा list_head allowedips_list;
-	काष्ठा napi_काष्ठा napi;
-	u64 पूर्णांकernal_id;
-पूर्ण;
+	struct timer_list timer_retransmit_handshake, timer_send_keepalive;
+	struct timer_list timer_new_handshake, timer_zero_key_material;
+	struct timer_list timer_persistent_keepalive;
+	unsigned int timer_handshake_attempts;
+	u16 persistent_keepalive_interval;
+	bool timer_need_another_keepalive;
+	bool sent_lastminute_handshake;
+	struct timespec64 walltime_last_handshake;
+	struct kref refcount;
+	struct rcu_head rcu;
+	struct list_head peer_list;
+	struct list_head allowedips_list;
+	struct napi_struct napi;
+	u64 internal_id;
+};
 
-काष्ठा wg_peer *wg_peer_create(काष्ठा wg_device *wg,
-			       स्थिर u8 खुला_key[NOISE_PUBLIC_KEY_LEN],
-			       स्थिर u8 preshared_key[NOISE_SYMMETRIC_KEY_LEN]);
+struct wg_peer *wg_peer_create(struct wg_device *wg,
+			       const u8 public_key[NOISE_PUBLIC_KEY_LEN],
+			       const u8 preshared_key[NOISE_SYMMETRIC_KEY_LEN]);
 
-काष्ठा wg_peer *__must_check wg_peer_get_maybe_zero(काष्ठा wg_peer *peer);
-अटल अंतरभूत काष्ठा wg_peer *wg_peer_get(काष्ठा wg_peer *peer)
-अणु
+struct wg_peer *__must_check wg_peer_get_maybe_zero(struct wg_peer *peer);
+static inline struct wg_peer *wg_peer_get(struct wg_peer *peer)
+{
 	kref_get(&peer->refcount);
-	वापस peer;
-पूर्ण
-व्योम wg_peer_put(काष्ठा wg_peer *peer);
-व्योम wg_peer_हटाओ(काष्ठा wg_peer *peer);
-व्योम wg_peer_हटाओ_all(काष्ठा wg_device *wg);
+	return peer;
+}
+void wg_peer_put(struct wg_peer *peer);
+void wg_peer_remove(struct wg_peer *peer);
+void wg_peer_remove_all(struct wg_device *wg);
 
-पूर्णांक wg_peer_init(व्योम);
-व्योम wg_peer_uninit(व्योम);
+int wg_peer_init(void);
+void wg_peer_uninit(void);
 
-#पूर्ण_अगर /* _WG_PEER_H */
+#endif /* _WG_PEER_H */

@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * Squashfs - a compressed पढ़ो only fileप्रणाली क्रम Linux
+ * Squashfs - a compressed read only filesystem for Linux
  *
  * Copyright (c) 2002, 2003, 2004, 2005, 2006, 2007, 2008
  * Phillip Lougher <phillip@squashfs.org.uk>
@@ -10,47 +9,47 @@
  */
 
 /*
- * This file implements the low-level routines to पढ़ो and decompress
+ * This file implements the low-level routines to read and decompress
  * datablocks and metadata blocks.
  */
 
-#समावेश <linux/blkdev.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/vfs.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/buffer_head.h>
-#समावेश <linux/bपन.स>
+#include <linux/blkdev.h>
+#include <linux/fs.h>
+#include <linux/vfs.h>
+#include <linux/slab.h>
+#include <linux/string.h>
+#include <linux/buffer_head.h>
+#include <linux/bio.h>
 
-#समावेश "squashfs_fs.h"
-#समावेश "squashfs_fs_sb.h"
-#समावेश "squashfs.h"
-#समावेश "decompressor.h"
-#समावेश "page_actor.h"
+#include "squashfs_fs.h"
+#include "squashfs_fs_sb.h"
+#include "squashfs.h"
+#include "decompressor.h"
+#include "page_actor.h"
 
 /*
  * Returns the amount of bytes copied to the page actor.
  */
-अटल पूर्णांक copy_bio_to_actor(काष्ठा bio *bio,
-			     काष्ठा squashfs_page_actor *actor,
-			     पूर्णांक offset, पूर्णांक req_length)
-अणु
-	व्योम *actor_addr = squashfs_first_page(actor);
-	काष्ठा bvec_iter_all iter_all = अणुपूर्ण;
-	काष्ठा bio_vec *bvec = bvec_init_iter_all(&iter_all);
-	पूर्णांक copied_bytes = 0;
-	पूर्णांक actor_offset = 0;
+static int copy_bio_to_actor(struct bio *bio,
+			     struct squashfs_page_actor *actor,
+			     int offset, int req_length)
+{
+	void *actor_addr = squashfs_first_page(actor);
+	struct bvec_iter_all iter_all = {};
+	struct bio_vec *bvec = bvec_init_iter_all(&iter_all);
+	int copied_bytes = 0;
+	int actor_offset = 0;
 
-	अगर (WARN_ON_ONCE(!bio_next_segment(bio, &iter_all)))
-		वापस 0;
+	if (WARN_ON_ONCE(!bio_next_segment(bio, &iter_all)))
+		return 0;
 
-	जबतक (copied_bytes < req_length) अणु
-		पूर्णांक bytes_to_copy = min_t(पूर्णांक, bvec->bv_len - offset,
+	while (copied_bytes < req_length) {
+		int bytes_to_copy = min_t(int, bvec->bv_len - offset,
 					  PAGE_SIZE - actor_offset);
 
-		bytes_to_copy = min_t(पूर्णांक, bytes_to_copy,
+		bytes_to_copy = min_t(int, bytes_to_copy,
 				      req_length - copied_bytes);
-		स_नकल(actor_addr + actor_offset,
+		memcpy(actor_addr + actor_offset,
 		       page_address(bvec->bv_page) + bvec->bv_offset + offset,
 		       bytes_to_copy);
 
@@ -58,98 +57,98 @@
 		copied_bytes += bytes_to_copy;
 		offset += bytes_to_copy;
 
-		अगर (actor_offset >= PAGE_SIZE) अणु
+		if (actor_offset >= PAGE_SIZE) {
 			actor_addr = squashfs_next_page(actor);
-			अगर (!actor_addr)
-				अवरोध;
+			if (!actor_addr)
+				break;
 			actor_offset = 0;
-		पूर्ण
-		अगर (offset >= bvec->bv_len) अणु
-			अगर (!bio_next_segment(bio, &iter_all))
-				अवरोध;
+		}
+		if (offset >= bvec->bv_len) {
+			if (!bio_next_segment(bio, &iter_all))
+				break;
 			offset = 0;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	squashfs_finish_page(actor);
-	वापस copied_bytes;
-पूर्ण
+	return copied_bytes;
+}
 
-अटल पूर्णांक squashfs_bio_पढ़ो(काष्ठा super_block *sb, u64 index, पूर्णांक length,
-			     काष्ठा bio **biop, पूर्णांक *block_offset)
-अणु
-	काष्ठा squashfs_sb_info *msblk = sb->s_fs_info;
-	स्थिर u64 पढ़ो_start = round_करोwn(index, msblk->devblksize);
-	स्थिर sector_t block = पढ़ो_start >> msblk->devblksize_log2;
-	स्थिर u64 पढ़ो_end = round_up(index + length, msblk->devblksize);
-	स्थिर sector_t block_end = पढ़ो_end >> msblk->devblksize_log2;
-	पूर्णांक offset = पढ़ो_start - round_करोwn(index, PAGE_SIZE);
-	पूर्णांक total_len = (block_end - block) << msblk->devblksize_log2;
-	स्थिर पूर्णांक page_count = DIV_ROUND_UP(total_len + offset, PAGE_SIZE);
-	पूर्णांक error, i;
-	काष्ठा bio *bio;
+static int squashfs_bio_read(struct super_block *sb, u64 index, int length,
+			     struct bio **biop, int *block_offset)
+{
+	struct squashfs_sb_info *msblk = sb->s_fs_info;
+	const u64 read_start = round_down(index, msblk->devblksize);
+	const sector_t block = read_start >> msblk->devblksize_log2;
+	const u64 read_end = round_up(index + length, msblk->devblksize);
+	const sector_t block_end = read_end >> msblk->devblksize_log2;
+	int offset = read_start - round_down(index, PAGE_SIZE);
+	int total_len = (block_end - block) << msblk->devblksize_log2;
+	const int page_count = DIV_ROUND_UP(total_len + offset, PAGE_SIZE);
+	int error, i;
+	struct bio *bio;
 
-	अगर (page_count <= BIO_MAX_VECS)
+	if (page_count <= BIO_MAX_VECS)
 		bio = bio_alloc(GFP_NOIO, page_count);
-	अन्यथा
-		bio = bio_kदो_स्मृति(GFP_NOIO, page_count);
+	else
+		bio = bio_kmalloc(GFP_NOIO, page_count);
 
-	अगर (!bio)
-		वापस -ENOMEM;
+	if (!bio)
+		return -ENOMEM;
 
 	bio_set_dev(bio, sb->s_bdev);
 	bio->bi_opf = READ;
 	bio->bi_iter.bi_sector = block * (msblk->devblksize >> SECTOR_SHIFT);
 
-	क्रम (i = 0; i < page_count; ++i) अणु
-		अचिन्हित पूर्णांक len =
-			min_t(अचिन्हित पूर्णांक, PAGE_SIZE - offset, total_len);
-		काष्ठा page *page = alloc_page(GFP_NOIO);
+	for (i = 0; i < page_count; ++i) {
+		unsigned int len =
+			min_t(unsigned int, PAGE_SIZE - offset, total_len);
+		struct page *page = alloc_page(GFP_NOIO);
 
-		अगर (!page) अणु
+		if (!page) {
 			error = -ENOMEM;
-			जाओ out_मुक्त_bio;
-		पूर्ण
-		अगर (!bio_add_page(bio, page, len, offset)) अणु
+			goto out_free_bio;
+		}
+		if (!bio_add_page(bio, page, len, offset)) {
 			error = -EIO;
-			जाओ out_मुक्त_bio;
-		पूर्ण
+			goto out_free_bio;
+		}
 		offset = 0;
 		total_len -= len;
-	पूर्ण
+	}
 
-	error = submit_bio_रुको(bio);
-	अगर (error)
-		जाओ out_मुक्त_bio;
+	error = submit_bio_wait(bio);
+	if (error)
+		goto out_free_bio;
 
 	*biop = bio;
 	*block_offset = index & ((1 << msblk->devblksize_log2) - 1);
-	वापस 0;
+	return 0;
 
-out_मुक्त_bio:
-	bio_मुक्त_pages(bio);
+out_free_bio:
+	bio_free_pages(bio);
 	bio_put(bio);
-	वापस error;
-पूर्ण
+	return error;
+}
 
 /*
  * Read and decompress a metadata block or datablock.  Length is non-zero
- * अगर a datablock is being पढ़ो (the size is stored अन्यथाwhere in the
- * fileप्रणाली), otherwise the length is obtained from the first two bytes of
- * the metadata block.  A bit in the length field indicates अगर the block
- * is stored uncompressed in the fileप्रणाली (usually because compression
- * generated a larger block - this करोes occasionally happen with compression
+ * if a datablock is being read (the size is stored elsewhere in the
+ * filesystem), otherwise the length is obtained from the first two bytes of
+ * the metadata block.  A bit in the length field indicates if the block
+ * is stored uncompressed in the filesystem (usually because compression
+ * generated a larger block - this does occasionally happen with compression
  * algorithms).
  */
-पूर्णांक squashfs_पढ़ो_data(काष्ठा super_block *sb, u64 index, पूर्णांक length,
-		       u64 *next_index, काष्ठा squashfs_page_actor *output)
-अणु
-	काष्ठा squashfs_sb_info *msblk = sb->s_fs_info;
-	काष्ठा bio *bio = शून्य;
-	पूर्णांक compressed;
-	पूर्णांक res;
-	पूर्णांक offset;
+int squashfs_read_data(struct super_block *sb, u64 index, int length,
+		       u64 *next_index, struct squashfs_page_actor *output)
+{
+	struct squashfs_sb_info *msblk = sb->s_fs_info;
+	struct bio *bio = NULL;
+	int compressed;
+	int res;
+	int offset;
 
-	अगर (length) अणु
+	if (length) {
 		/*
 		 * Datablock.
 		 */
@@ -157,40 +156,40 @@ out_मुक्त_bio:
 		length = SQUASHFS_COMPRESSED_SIZE_BLOCK(length);
 		TRACE("Block @ 0x%llx, %scompressed size %d, src size %d\n",
 			index, compressed ? "" : "un", length, output->length);
-	पूर्ण अन्यथा अणु
+	} else {
 		/*
 		 * Metadata block.
 		 */
-		स्थिर u8 *data;
-		काष्ठा bvec_iter_all iter_all = अणुपूर्ण;
-		काष्ठा bio_vec *bvec = bvec_init_iter_all(&iter_all);
+		const u8 *data;
+		struct bvec_iter_all iter_all = {};
+		struct bio_vec *bvec = bvec_init_iter_all(&iter_all);
 
-		अगर (index + 2 > msblk->bytes_used) अणु
+		if (index + 2 > msblk->bytes_used) {
 			res = -EIO;
-			जाओ out;
-		पूर्ण
-		res = squashfs_bio_पढ़ो(sb, index, 2, &bio, &offset);
-		अगर (res)
-			जाओ out;
+			goto out;
+		}
+		res = squashfs_bio_read(sb, index, 2, &bio, &offset);
+		if (res)
+			goto out;
 
-		अगर (WARN_ON_ONCE(!bio_next_segment(bio, &iter_all))) अणु
+		if (WARN_ON_ONCE(!bio_next_segment(bio, &iter_all))) {
 			res = -EIO;
-			जाओ out_मुक्त_bio;
-		पूर्ण
+			goto out_free_bio;
+		}
 		/* Extract the length of the metadata block */
 		data = page_address(bvec->bv_page) + bvec->bv_offset;
 		length = data[offset];
-		अगर (offset < bvec->bv_len - 1) अणु
+		if (offset < bvec->bv_len - 1) {
 			length |= data[offset + 1] << 8;
-		पूर्ण अन्यथा अणु
-			अगर (WARN_ON_ONCE(!bio_next_segment(bio, &iter_all))) अणु
+		} else {
+			if (WARN_ON_ONCE(!bio_next_segment(bio, &iter_all))) {
 				res = -EIO;
-				जाओ out_मुक्त_bio;
-			पूर्ण
+				goto out_free_bio;
+			}
 			data = page_address(bvec->bv_page) + bvec->bv_offset;
 			length |= data[0] << 8;
-		पूर्ण
-		bio_मुक्त_pages(bio);
+		}
+		bio_free_pages(bio);
 		bio_put(bio);
 
 		compressed = SQUASHFS_COMPRESSED(length);
@@ -199,36 +198,36 @@ out_मुक्त_bio:
 
 		TRACE("Block @ 0x%llx, %scompressed size %d\n", index - 2,
 		      compressed ? "" : "un", length);
-	पूर्ण
-	अगर (length < 0 || length > output->length ||
-			(index + length) > msblk->bytes_used) अणु
+	}
+	if (length < 0 || length > output->length ||
+			(index + length) > msblk->bytes_used) {
 		res = -EIO;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (next_index)
+	if (next_index)
 		*next_index = index + length;
 
-	res = squashfs_bio_पढ़ो(sb, index, length, &bio, &offset);
-	अगर (res)
-		जाओ out;
+	res = squashfs_bio_read(sb, index, length, &bio, &offset);
+	if (res)
+		goto out;
 
-	अगर (compressed) अणु
-		अगर (!msblk->stream) अणु
+	if (compressed) {
+		if (!msblk->stream) {
 			res = -EIO;
-			जाओ out_मुक्त_bio;
-		पूर्ण
+			goto out_free_bio;
+		}
 		res = squashfs_decompress(msblk, bio, offset, length, output);
-	पूर्ण अन्यथा अणु
+	} else {
 		res = copy_bio_to_actor(bio, output, offset, length);
-	पूर्ण
+	}
 
-out_मुक्त_bio:
-	bio_मुक्त_pages(bio);
+out_free_bio:
+	bio_free_pages(bio);
 	bio_put(bio);
 out:
-	अगर (res < 0)
+	if (res < 0)
 		ERROR("Failed to read block 0x%llx: %d\n", index, res);
 
-	वापस res;
-पूर्ण
+	return res;
+}

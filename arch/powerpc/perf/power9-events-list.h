@@ -1,7 +1,6 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
- * Perक्रमmance counter support क्रम POWER9 processors.
+ * Performance counter support for POWER9 processors.
  *
  * Copyright 2016 Madhavan Srinivasan, IBM Corporation.
  */
@@ -21,27 +20,27 @@ EVENT(PM_LD_REF_L1,				0x100fc)
 /* Load Missed L1 */
 EVENT(PM_LD_MISS_L1_FIN,			0x2c04e)
 EVENT(PM_LD_MISS_L1,				0x3e054)
-/* Alternate event code क्रम PM_LD_MISS_L1 */
+/* Alternate event code for PM_LD_MISS_L1 */
 EVENT(PM_LD_MISS_L1_ALT,			0x400f0)
 /* Store Missed L1 */
 EVENT(PM_ST_MISS_L1,				0x300f0)
 /* L1 cache data prefetches */
 EVENT(PM_L1_PREF,				0x20054)
-/* Inकाष्ठाion fetches from L1 */
+/* Instruction fetches from L1 */
 EVENT(PM_INST_FROM_L1,				0x04080)
 /* Demand iCache Miss */
 EVENT(PM_L1_ICACHE_MISS,			0x200fd)
-/* Inकाष्ठाion Demand sectors wriittent पूर्णांकo IL1 */
+/* Instruction Demand sectors wriittent into IL1 */
 EVENT(PM_L1_DEMAND_WRITE,			0x0408c)
-/* Inकाष्ठाion prefetch written पूर्णांकo IL1 */
+/* Instruction prefetch written into IL1 */
 EVENT(PM_IC_PREF_WRITE,				0x0488c)
 /* The data cache was reloaded from local core's L3 due to a demand load */
 EVENT(PM_DATA_FROM_L3,				0x4c042)
 /* Demand LD - L3 Miss (not L2 hit and not L3 hit) */
 EVENT(PM_DATA_FROM_L3MISS,			0x300fe)
-/* All successful D-side store dispatches क्रम this thपढ़ो */
+/* All successful D-side store dispatches for this thread */
 EVENT(PM_L2_ST,					0x16880)
-/* All successful D-side store dispatches क्रम this thपढ़ो that were L2 Miss */
+/* All successful D-side store dispatches for this thread that were L2 Miss */
 EVENT(PM_L2_ST_MISS,				0x26880)
 /* Total HW L3 prefetches(Load+store) */
 EVENT(PM_L3_PREF_ALL,				0x4e052)
@@ -49,15 +48,15 @@ EVENT(PM_L3_PREF_ALL,				0x4e052)
 EVENT(PM_DTLB_MISS,				0x300fc)
 /* ITLB Reloaded */
 EVENT(PM_ITLB_MISS,				0x400fc)
-/* Run_Inकाष्ठाions */
+/* Run_Instructions */
 EVENT(PM_RUN_INST_CMPL,				0x500fa)
-/* Alternate event code क्रम PM_RUN_INST_CMPL */
+/* Alternate event code for PM_RUN_INST_CMPL */
 EVENT(PM_RUN_INST_CMPL_ALT,			0x400fa)
 /* Run_cycles */
 EVENT(PM_RUN_CYC,				0x600f4)
-/* Alternate event code क्रम Run_cycles */
+/* Alternate event code for Run_cycles */
 EVENT(PM_RUN_CYC_ALT,				0x200f4)
-/* Inकाष्ठाion Dispatched */
+/* Instruction Dispatched */
 EVENT(PM_INST_DISP,				0x200f2)
 EVENT(PM_INST_DISP_ALT,				0x300f2)
 /* Branch event that are not strongly biased */
@@ -98,12 +97,12 @@ EVENT(PM_MRK_DTLB_MISS_16M,			0x4c15e)
  *
  * Primary PMU event used here is PM_MRK_INST_CMPL (0x401e0)
  * To enable capturing of memory profiling, these MMCRA bits
- * needs to be programmed and corresponding raw event क्रमmat
+ * needs to be programmed and corresponding raw event format
  * encoding.
  *
  * MMCRA bits encoding needed are
  *     SM (Sampling Mode)
- *     EM (Eligibility क्रम Ranकरोm Sampling)
+ *     EM (Eligibility for Random Sampling)
  *     TECE (Threshold Event Counter Event)
  *     TS (Threshold Start Event)
  *     TE (Threshold End Event)

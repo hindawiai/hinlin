@@ -1,15 +1,14 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
- * ILA kernel पूर्णांकerface
+ * ILA kernel interface
  *
  * Copyright (c) 2015 Tom Herbert <tom@herbertland.com>
  */
 
-#अगर_अघोषित _NET_ILA_H
-#घोषणा _NET_ILA_H
+#ifndef _NET_ILA_H
+#define _NET_ILA_H
 
-पूर्णांक ila_xlat_outgoing(काष्ठा sk_buff *skb);
-पूर्णांक ila_xlat_incoming(काष्ठा sk_buff *skb);
+int ila_xlat_outgoing(struct sk_buff *skb);
+int ila_xlat_incoming(struct sk_buff *skb);
 
-#पूर्ण_अगर /* _NET_ILA_H */
+#endif /* _NET_ILA_H */

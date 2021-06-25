@@ -1,327 +1,326 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * dlmcommon.h
  *
  * Copyright (C) 2004 Oracle.  All rights reserved.
  */
 
-#अगर_अघोषित DLMCOMMON_H
-#घोषणा DLMCOMMON_H
+#ifndef DLMCOMMON_H
+#define DLMCOMMON_H
 
-#समावेश <linux/kref.h>
+#include <linux/kref.h>
 
-#घोषणा DLM_HB_NODE_DOWN_PRI     (0xf000000)
-#घोषणा DLM_HB_NODE_UP_PRI       (0x8000000)
+#define DLM_HB_NODE_DOWN_PRI     (0xf000000)
+#define DLM_HB_NODE_UP_PRI       (0x8000000)
 
-#घोषणा DLM_LOCKID_NAME_MAX    32
+#define DLM_LOCKID_NAME_MAX    32
 
-#घोषणा DLM_LOCK_RES_OWNER_UNKNOWN     O2NM_MAX_NODES
+#define DLM_LOCK_RES_OWNER_UNKNOWN     O2NM_MAX_NODES
 
-#घोषणा DLM_HASH_SIZE_DEFAULT	(1 << 17)
-#अगर DLM_HASH_SIZE_DEFAULT < PAGE_SIZE
+#define DLM_HASH_SIZE_DEFAULT	(1 << 17)
+#if DLM_HASH_SIZE_DEFAULT < PAGE_SIZE
 # define DLM_HASH_PAGES		1
-#अन्यथा
+#else
 # define DLM_HASH_PAGES		(DLM_HASH_SIZE_DEFAULT / PAGE_SIZE)
-#पूर्ण_अगर
-#घोषणा DLM_BUCKETS_PER_PAGE	(PAGE_SIZE / माप(काष्ठा hlist_head))
-#घोषणा DLM_HASH_BUCKETS	(DLM_HASH_PAGES * DLM_BUCKETS_PER_PAGE)
+#endif
+#define DLM_BUCKETS_PER_PAGE	(PAGE_SIZE / sizeof(struct hlist_head))
+#define DLM_HASH_BUCKETS	(DLM_HASH_PAGES * DLM_BUCKETS_PER_PAGE)
 
-/* Intended to make it easier क्रम us to चयन out hash functions */
-#घोषणा dlm_lockid_hash(_n, _l) full_name_hash(शून्य, _n, _l)
+/* Intended to make it easier for us to switch out hash functions */
+#define dlm_lockid_hash(_n, _l) full_name_hash(NULL, _n, _l)
 
-क्रमागत dlm_mle_type अणु
+enum dlm_mle_type {
 	DLM_MLE_BLOCK = 0,
 	DLM_MLE_MASTER = 1,
 	DLM_MLE_MIGRATION = 2,
 	DLM_MLE_NUM_TYPES = 3,
-पूर्ण;
+};
 
-काष्ठा dlm_master_list_entry अणु
-	काष्ठा hlist_node master_hash_node;
-	काष्ठा list_head hb_events;
-	काष्ठा dlm_ctxt *dlm;
+struct dlm_master_list_entry {
+	struct hlist_node master_hash_node;
+	struct list_head hb_events;
+	struct dlm_ctxt *dlm;
 	spinlock_t spinlock;
-	रुको_queue_head_t wq;
+	wait_queue_head_t wq;
 	atomic_t woken;
-	काष्ठा kref mle_refs;
-	पूर्णांक inuse;
-	अचिन्हित दीर्घ maybe_map[BITS_TO_LONGS(O2NM_MAX_NODES)];
-	अचिन्हित दीर्घ vote_map[BITS_TO_LONGS(O2NM_MAX_NODES)];
-	अचिन्हित दीर्घ response_map[BITS_TO_LONGS(O2NM_MAX_NODES)];
-	अचिन्हित दीर्घ node_map[BITS_TO_LONGS(O2NM_MAX_NODES)];
+	struct kref mle_refs;
+	int inuse;
+	unsigned long maybe_map[BITS_TO_LONGS(O2NM_MAX_NODES)];
+	unsigned long vote_map[BITS_TO_LONGS(O2NM_MAX_NODES)];
+	unsigned long response_map[BITS_TO_LONGS(O2NM_MAX_NODES)];
+	unsigned long node_map[BITS_TO_LONGS(O2NM_MAX_NODES)];
 	u8 master;
 	u8 new_master;
-	क्रमागत dlm_mle_type type;
-	काष्ठा o2hb_callback_func mle_hb_up;
-	काष्ठा o2hb_callback_func mle_hb_करोwn;
-	काष्ठा dlm_lock_resource *mleres;
-	अचिन्हित अक्षर mname[DLM_LOCKID_NAME_MAX];
-	अचिन्हित पूर्णांक mnamelen;
-	अचिन्हित पूर्णांक mnamehash;
-पूर्ण;
+	enum dlm_mle_type type;
+	struct o2hb_callback_func mle_hb_up;
+	struct o2hb_callback_func mle_hb_down;
+	struct dlm_lock_resource *mleres;
+	unsigned char mname[DLM_LOCKID_NAME_MAX];
+	unsigned int mnamelen;
+	unsigned int mnamehash;
+};
 
-क्रमागत dlm_ast_type अणु
+enum dlm_ast_type {
 	DLM_AST = 0,
 	DLM_BAST = 1,
 	DLM_ASTUNLOCK = 2,
-पूर्ण;
+};
 
 
-#घोषणा LKM_VALID_FLAGS (LKM_VALBLK | LKM_CONVERT | LKM_UNLOCK | \
+#define LKM_VALID_FLAGS (LKM_VALBLK | LKM_CONVERT | LKM_UNLOCK | \
 			 LKM_CANCEL | LKM_INVVALBLK | LKM_FORCE | \
 			 LKM_RECOVERY | LKM_LOCAL | LKM_NOQUEUE)
 
-#घोषणा DLM_RECOVERY_LOCK_NAME       "$RECOVERY"
-#घोषणा DLM_RECOVERY_LOCK_NAME_LEN   9
+#define DLM_RECOVERY_LOCK_NAME       "$RECOVERY"
+#define DLM_RECOVERY_LOCK_NAME_LEN   9
 
-अटल अंतरभूत पूर्णांक dlm_is_recovery_lock(स्थिर अक्षर *lock_name, पूर्णांक name_len)
-अणु
-	अगर (name_len == DLM_RECOVERY_LOCK_NAME_LEN &&
-	    स_भेद(lock_name, DLM_RECOVERY_LOCK_NAME, name_len)==0)
-		वापस 1;
-	वापस 0;
-पूर्ण
+static inline int dlm_is_recovery_lock(const char *lock_name, int name_len)
+{
+	if (name_len == DLM_RECOVERY_LOCK_NAME_LEN &&
+	    memcmp(lock_name, DLM_RECOVERY_LOCK_NAME, name_len)==0)
+		return 1;
+	return 0;
+}
 
-#घोषणा DLM_RECO_STATE_ACTIVE    0x0001
-#घोषणा DLM_RECO_STATE_FINALIZE  0x0002
+#define DLM_RECO_STATE_ACTIVE    0x0001
+#define DLM_RECO_STATE_FINALIZE  0x0002
 
-काष्ठा dlm_recovery_ctxt
-अणु
-	काष्ठा list_head resources;
-	काष्ठा list_head node_data;
+struct dlm_recovery_ctxt
+{
+	struct list_head resources;
+	struct list_head node_data;
 	u8  new_master;
 	u8  dead_node;
 	u16 state;
-	अचिन्हित दीर्घ node_map[BITS_TO_LONGS(O2NM_MAX_NODES)];
-	रुको_queue_head_t event;
-पूर्ण;
+	unsigned long node_map[BITS_TO_LONGS(O2NM_MAX_NODES)];
+	wait_queue_head_t event;
+};
 
-क्रमागत dlm_ctxt_state अणु
+enum dlm_ctxt_state {
 	DLM_CTXT_NEW = 0,
 	DLM_CTXT_JOINED = 1,
 	DLM_CTXT_IN_SHUTDOWN = 2,
 	DLM_CTXT_LEAVING = 3,
-पूर्ण;
+};
 
-काष्ठा dlm_ctxt
-अणु
-	काष्ठा list_head list;
-	काष्ठा hlist_head **lockres_hash;
-	काष्ठा list_head dirty_list;
-	काष्ठा list_head purge_list;
-	काष्ठा list_head pending_asts;
-	काष्ठा list_head pending_basts;
-	काष्ठा list_head tracking_list;
-	अचिन्हित पूर्णांक purge_count;
+struct dlm_ctxt
+{
+	struct list_head list;
+	struct hlist_head **lockres_hash;
+	struct list_head dirty_list;
+	struct list_head purge_list;
+	struct list_head pending_asts;
+	struct list_head pending_basts;
+	struct list_head tracking_list;
+	unsigned int purge_count;
 	spinlock_t spinlock;
 	spinlock_t ast_lock;
 	spinlock_t track_lock;
-	अक्षर *name;
+	char *name;
 	u8 node_num;
 	u32 key;
 	u8  joining_node;
-	u8 migrate_करोne; /* set to 1 means node has migrated all lock resources */
-	रुको_queue_head_t dlm_join_events;
-	अचिन्हित दीर्घ live_nodes_map[BITS_TO_LONGS(O2NM_MAX_NODES)];
-	अचिन्हित दीर्घ करोमुख्य_map[BITS_TO_LONGS(O2NM_MAX_NODES)];
-	अचिन्हित दीर्घ निकास_करोमुख्य_map[BITS_TO_LONGS(O2NM_MAX_NODES)];
-	अचिन्हित दीर्घ recovery_map[BITS_TO_LONGS(O2NM_MAX_NODES)];
-	काष्ठा dlm_recovery_ctxt reco;
+	u8 migrate_done; /* set to 1 means node has migrated all lock resources */
+	wait_queue_head_t dlm_join_events;
+	unsigned long live_nodes_map[BITS_TO_LONGS(O2NM_MAX_NODES)];
+	unsigned long domain_map[BITS_TO_LONGS(O2NM_MAX_NODES)];
+	unsigned long exit_domain_map[BITS_TO_LONGS(O2NM_MAX_NODES)];
+	unsigned long recovery_map[BITS_TO_LONGS(O2NM_MAX_NODES)];
+	struct dlm_recovery_ctxt reco;
 	spinlock_t master_lock;
-	काष्ठा hlist_head **master_hash;
-	काष्ठा list_head mle_hb_events;
+	struct hlist_head **master_hash;
+	struct list_head mle_hb_events;
 
-	/* these give a really vague idea of the प्रणाली load */
+	/* these give a really vague idea of the system load */
 	atomic_t mle_tot_count[DLM_MLE_NUM_TYPES];
 	atomic_t mle_cur_count[DLM_MLE_NUM_TYPES];
 	atomic_t res_tot_count;
 	atomic_t res_cur_count;
 
-	काष्ठा dentry *dlm_debugfs_subroot;
+	struct dentry *dlm_debugfs_subroot;
 
-	/* NOTE: Next three are रक्षित by dlm_करोमुख्य_lock */
-	काष्ठा kref dlm_refs;
-	क्रमागत dlm_ctxt_state dlm_state;
-	अचिन्हित पूर्णांक num_joins;
+	/* NOTE: Next three are protected by dlm_domain_lock */
+	struct kref dlm_refs;
+	enum dlm_ctxt_state dlm_state;
+	unsigned int num_joins;
 
-	काष्ठा o2hb_callback_func dlm_hb_up;
-	काष्ठा o2hb_callback_func dlm_hb_करोwn;
-	काष्ठा task_काष्ठा *dlm_thपढ़ो_task;
-	काष्ठा task_काष्ठा *dlm_reco_thपढ़ो_task;
-	काष्ठा workqueue_काष्ठा *dlm_worker;
-	रुको_queue_head_t dlm_thपढ़ो_wq;
-	रुको_queue_head_t dlm_reco_thपढ़ो_wq;
-	रुको_queue_head_t ast_wq;
-	रुको_queue_head_t migration_wq;
+	struct o2hb_callback_func dlm_hb_up;
+	struct o2hb_callback_func dlm_hb_down;
+	struct task_struct *dlm_thread_task;
+	struct task_struct *dlm_reco_thread_task;
+	struct workqueue_struct *dlm_worker;
+	wait_queue_head_t dlm_thread_wq;
+	wait_queue_head_t dlm_reco_thread_wq;
+	wait_queue_head_t ast_wq;
+	wait_queue_head_t migration_wq;
 
-	काष्ठा work_काष्ठा dispatched_work;
-	काष्ठा list_head work_list;
+	struct work_struct dispatched_work;
+	struct list_head work_list;
 	spinlock_t work_lock;
-	काष्ठा list_head dlm_करोमुख्य_handlers;
-	काष्ठा list_head	dlm_eviction_callbacks;
+	struct list_head dlm_domain_handlers;
+	struct list_head	dlm_eviction_callbacks;
 
-	/* The fileप्रणाली specअगरies this at करोमुख्य registration.  We
+	/* The filesystem specifies this at domain registration.  We
 	 * cache it here to know what to tell other nodes. */
-	काष्ठा dlm_protocol_version fs_locking_proto;
-	/* This is the पूर्णांकer-dlm communication version */
-	काष्ठा dlm_protocol_version dlm_locking_proto;
-पूर्ण;
+	struct dlm_protocol_version fs_locking_proto;
+	/* This is the inter-dlm communication version */
+	struct dlm_protocol_version dlm_locking_proto;
+};
 
-अटल अंतरभूत काष्ठा hlist_head *dlm_lockres_hash(काष्ठा dlm_ctxt *dlm, अचिन्हित i)
-अणु
-	वापस dlm->lockres_hash[(i / DLM_BUCKETS_PER_PAGE) % DLM_HASH_PAGES] + (i % DLM_BUCKETS_PER_PAGE);
-पूर्ण
+static inline struct hlist_head *dlm_lockres_hash(struct dlm_ctxt *dlm, unsigned i)
+{
+	return dlm->lockres_hash[(i / DLM_BUCKETS_PER_PAGE) % DLM_HASH_PAGES] + (i % DLM_BUCKETS_PER_PAGE);
+}
 
-अटल अंतरभूत काष्ठा hlist_head *dlm_master_hash(काष्ठा dlm_ctxt *dlm,
-						 अचिन्हित i)
-अणु
-	वापस dlm->master_hash[(i / DLM_BUCKETS_PER_PAGE) % DLM_HASH_PAGES] +
+static inline struct hlist_head *dlm_master_hash(struct dlm_ctxt *dlm,
+						 unsigned i)
+{
+	return dlm->master_hash[(i / DLM_BUCKETS_PER_PAGE) % DLM_HASH_PAGES] +
 			(i % DLM_BUCKETS_PER_PAGE);
-पूर्ण
+}
 
-/* these keventd work queue items are क्रम less-frequently
+/* these keventd work queue items are for less-frequently
  * called functions that cannot be directly called from the
- * net message handlers क्रम some reason, usually because
+ * net message handlers for some reason, usually because
  * they need to send net messages of their own. */
-व्योम dlm_dispatch_work(काष्ठा work_काष्ठा *work);
+void dlm_dispatch_work(struct work_struct *work);
 
-काष्ठा dlm_lock_resource;
-काष्ठा dlm_work_item;
+struct dlm_lock_resource;
+struct dlm_work_item;
 
-प्रकार व्योम (dlm_workfunc_t)(काष्ठा dlm_work_item *, व्योम *);
+typedef void (dlm_workfunc_t)(struct dlm_work_item *, void *);
 
-काष्ठा dlm_request_all_locks_priv
-अणु
+struct dlm_request_all_locks_priv
+{
 	u8 reco_master;
 	u8 dead_node;
-पूर्ण;
+};
 
-काष्ठा dlm_mig_lockres_priv
-अणु
-	काष्ठा dlm_lock_resource *lockres;
+struct dlm_mig_lockres_priv
+{
+	struct dlm_lock_resource *lockres;
 	u8 real_master;
 	u8 extra_ref;
-पूर्ण;
+};
 
-काष्ठा dlm_निश्चित_master_priv
-अणु
-	काष्ठा dlm_lock_resource *lockres;
+struct dlm_assert_master_priv
+{
+	struct dlm_lock_resource *lockres;
 	u8 request_from;
 	u32 flags;
-	अचिन्हित ignore_higher:1;
-पूर्ण;
+	unsigned ignore_higher:1;
+};
 
-काष्ठा dlm_deref_lockres_priv
-अणु
-	काष्ठा dlm_lock_resource *deref_res;
+struct dlm_deref_lockres_priv
+{
+	struct dlm_lock_resource *deref_res;
 	u8 deref_node;
-पूर्ण;
+};
 
-काष्ठा dlm_work_item
-अणु
-	काष्ठा list_head list;
+struct dlm_work_item
+{
+	struct list_head list;
 	dlm_workfunc_t *func;
-	काष्ठा dlm_ctxt *dlm;
-	व्योम *data;
-	जोड़ अणु
-		काष्ठा dlm_request_all_locks_priv ral;
-		काष्ठा dlm_mig_lockres_priv ml;
-		काष्ठा dlm_निश्चित_master_priv am;
-		काष्ठा dlm_deref_lockres_priv dl;
-	पूर्ण u;
-पूर्ण;
+	struct dlm_ctxt *dlm;
+	void *data;
+	union {
+		struct dlm_request_all_locks_priv ral;
+		struct dlm_mig_lockres_priv ml;
+		struct dlm_assert_master_priv am;
+		struct dlm_deref_lockres_priv dl;
+	} u;
+};
 
-अटल अंतरभूत व्योम dlm_init_work_item(काष्ठा dlm_ctxt *dlm,
-				      काष्ठा dlm_work_item *i,
-				      dlm_workfunc_t *f, व्योम *data)
-अणु
-	स_रखो(i, 0, माप(*i));
+static inline void dlm_init_work_item(struct dlm_ctxt *dlm,
+				      struct dlm_work_item *i,
+				      dlm_workfunc_t *f, void *data)
+{
+	memset(i, 0, sizeof(*i));
 	i->func = f;
 	INIT_LIST_HEAD(&i->list);
 	i->data = data;
-	i->dlm = dlm;  /* must have alपढ़ोy करोne a dlm_grab on this! */
-पूर्ण
+	i->dlm = dlm;  /* must have already done a dlm_grab on this! */
+}
 
 
 
-अटल अंतरभूत व्योम __dlm_set_joining_node(काष्ठा dlm_ctxt *dlm,
+static inline void __dlm_set_joining_node(struct dlm_ctxt *dlm,
 					  u8 node)
-अणु
-	निश्चित_spin_locked(&dlm->spinlock);
+{
+	assert_spin_locked(&dlm->spinlock);
 
 	dlm->joining_node = node;
 	wake_up(&dlm->dlm_join_events);
-पूर्ण
+}
 
-#घोषणा DLM_LOCK_RES_UNINITED             0x00000001
-#घोषणा DLM_LOCK_RES_RECOVERING           0x00000002
-#घोषणा DLM_LOCK_RES_READY                0x00000004
-#घोषणा DLM_LOCK_RES_सूचीTY                0x00000008
-#घोषणा DLM_LOCK_RES_IN_PROGRESS          0x00000010
-#घोषणा DLM_LOCK_RES_MIGRATING            0x00000020
-#घोषणा DLM_LOCK_RES_DROPPING_REF         0x00000040
-#घोषणा DLM_LOCK_RES_BLOCK_सूचीTY          0x00001000
-#घोषणा DLM_LOCK_RES_SETREF_INPROG        0x00002000
-#घोषणा DLM_LOCK_RES_RECOVERY_WAITING     0x00004000
+#define DLM_LOCK_RES_UNINITED             0x00000001
+#define DLM_LOCK_RES_RECOVERING           0x00000002
+#define DLM_LOCK_RES_READY                0x00000004
+#define DLM_LOCK_RES_DIRTY                0x00000008
+#define DLM_LOCK_RES_IN_PROGRESS          0x00000010
+#define DLM_LOCK_RES_MIGRATING            0x00000020
+#define DLM_LOCK_RES_DROPPING_REF         0x00000040
+#define DLM_LOCK_RES_BLOCK_DIRTY          0x00001000
+#define DLM_LOCK_RES_SETREF_INPROG        0x00002000
+#define DLM_LOCK_RES_RECOVERY_WAITING     0x00004000
 
-/* max milliseconds to रुको to sync up a network failure with a node death */
-#घोषणा DLM_NODE_DEATH_WAIT_MAX (5 * 1000)
+/* max milliseconds to wait to sync up a network failure with a node death */
+#define DLM_NODE_DEATH_WAIT_MAX (5 * 1000)
 
-#घोषणा DLM_PURGE_INTERVAL_MS   (8 * 1000)
+#define DLM_PURGE_INTERVAL_MS   (8 * 1000)
 
-काष्ठा dlm_lock_resource
-अणु
-	/* WARNING: Please see the comment in dlm_init_lockres beक्रमe
+struct dlm_lock_resource
+{
+	/* WARNING: Please see the comment in dlm_init_lockres before
 	 * adding fields here. */
-	काष्ठा hlist_node hash_node;
-	काष्ठा qstr lockname;
-	काष्ठा kref      refs;
+	struct hlist_node hash_node;
+	struct qstr lockname;
+	struct kref      refs;
 
 	/*
 	 * Please keep granted, converting, and blocked in this order,
 	 * as some funcs want to iterate over all lists.
 	 *
-	 * All four lists are रक्षित by the hash's reference.
+	 * All four lists are protected by the hash's reference.
 	 */
-	काष्ठा list_head granted;
-	काष्ठा list_head converting;
-	काष्ठा list_head blocked;
-	काष्ठा list_head purge;
+	struct list_head granted;
+	struct list_head converting;
+	struct list_head blocked;
+	struct list_head purge;
 
 	/*
 	 * These two lists require you to hold an additional reference
-	 * जबतक they are on the list.
+	 * while they are on the list.
 	 */
-	काष्ठा list_head dirty;
-	काष्ठा list_head recovering; // dlm_recovery_ctxt.resources list
+	struct list_head dirty;
+	struct list_head recovering; // dlm_recovery_ctxt.resources list
 
-	/* Added during init and हटाओd during release */
-	काष्ठा list_head tracking;	/* dlm->tracking_list */
+	/* Added during init and removed during release */
+	struct list_head tracking;	/* dlm->tracking_list */
 
 	/* unused lock resources have their last_used stamped and are
-	 * put on a list क्रम the dlm thपढ़ो to run. */
-	अचिन्हित दीर्घ    last_used;
+	 * put on a list for the dlm thread to run. */
+	unsigned long    last_used;
 
-	काष्ठा dlm_ctxt *dlm;
+	struct dlm_ctxt *dlm;
 
-	अचिन्हित migration_pending:1;
+	unsigned migration_pending:1;
 	atomic_t asts_reserved;
 	spinlock_t spinlock;
-	रुको_queue_head_t wq;
+	wait_queue_head_t wq;
 	u8  owner;              //node which owns the lock resource, or unknown
 	u16 state;
-	अक्षर lvb[DLM_LVB_LEN];
-	अचिन्हित पूर्णांक inflight_locks;
-	अचिन्हित पूर्णांक inflight_निश्चित_workers;
-	अचिन्हित दीर्घ refmap[BITS_TO_LONGS(O2NM_MAX_NODES)];
-पूर्ण;
+	char lvb[DLM_LVB_LEN];
+	unsigned int inflight_locks;
+	unsigned int inflight_assert_workers;
+	unsigned long refmap[BITS_TO_LONGS(O2NM_MAX_NODES)];
+};
 
-काष्ठा dlm_migratable_lock
-अणु
+struct dlm_migratable_lock
+{
 	__be64 cookie;
 
-	/* these 3 are just padding क्रम the in-memory काष्ठाure, but
+	/* these 3 are just padding for the in-memory structure, but
 	 * list and flags are actually used when sent over the wire */
 	__be16 pad1;
 	u8 list;  // 0=granted, 1=converting, 2=blocked
@@ -331,86 +330,86 @@
 	s8 convert_type;
 	s8 highest_blocked;
 	u8 node;
-पूर्ण;  // 16 bytes
+};  // 16 bytes
 
-काष्ठा dlm_lock
-अणु
-	काष्ठा dlm_migratable_lock ml;
+struct dlm_lock
+{
+	struct dlm_migratable_lock ml;
 
-	काष्ठा list_head list;
-	काष्ठा list_head ast_list;
-	काष्ठा list_head bast_list;
-	काष्ठा dlm_lock_resource *lockres;
+	struct list_head list;
+	struct list_head ast_list;
+	struct list_head bast_list;
+	struct dlm_lock_resource *lockres;
 	spinlock_t spinlock;
-	काष्ठा kref lock_refs;
+	struct kref lock_refs;
 
-	// ast and bast must be callable जबतक holding a spinlock!
+	// ast and bast must be callable while holding a spinlock!
 	dlm_astlockfunc_t *ast;
 	dlm_bastlockfunc_t *bast;
-	व्योम *astdata;
-	काष्ठा dlm_lockstatus *lksb;
-	अचिन्हित ast_pending:1,
+	void *astdata;
+	struct dlm_lockstatus *lksb;
+	unsigned ast_pending:1,
 		 bast_pending:1,
 		 convert_pending:1,
 		 lock_pending:1,
 		 cancel_pending:1,
 		 unlock_pending:1,
 		 lksb_kernel_allocated:1;
-पूर्ण;
+};
 
-क्रमागत dlm_lockres_list अणु
+enum dlm_lockres_list {
 	DLM_GRANTED_LIST = 0,
 	DLM_CONVERTING_LIST = 1,
 	DLM_BLOCKED_LIST = 2,
-पूर्ण;
+};
 
-अटल अंतरभूत पूर्णांक dlm_lvb_is_empty(अक्षर *lvb)
-अणु
-	पूर्णांक i;
-	क्रम (i=0; i<DLM_LVB_LEN; i++)
-		अगर (lvb[i])
-			वापस 0;
-	वापस 1;
-पूर्ण
+static inline int dlm_lvb_is_empty(char *lvb)
+{
+	int i;
+	for (i=0; i<DLM_LVB_LEN; i++)
+		if (lvb[i])
+			return 0;
+	return 1;
+}
 
-अटल अंतरभूत अक्षर *dlm_list_in_text(क्रमागत dlm_lockres_list idx)
-अणु
-	अगर (idx == DLM_GRANTED_LIST)
-		वापस "granted";
-	अन्यथा अगर (idx == DLM_CONVERTING_LIST)
-		वापस "converting";
-	अन्यथा अगर (idx == DLM_BLOCKED_LIST)
-		वापस "blocked";
-	अन्यथा
-		वापस "unknown";
-पूर्ण
+static inline char *dlm_list_in_text(enum dlm_lockres_list idx)
+{
+	if (idx == DLM_GRANTED_LIST)
+		return "granted";
+	else if (idx == DLM_CONVERTING_LIST)
+		return "converting";
+	else if (idx == DLM_BLOCKED_LIST)
+		return "blocked";
+	else
+		return "unknown";
+}
 
-अटल अंतरभूत काष्ठा list_head *
-dlm_list_idx_to_ptr(काष्ठा dlm_lock_resource *res, क्रमागत dlm_lockres_list idx)
-अणु
-	काष्ठा list_head *ret = शून्य;
-	अगर (idx == DLM_GRANTED_LIST)
+static inline struct list_head *
+dlm_list_idx_to_ptr(struct dlm_lock_resource *res, enum dlm_lockres_list idx)
+{
+	struct list_head *ret = NULL;
+	if (idx == DLM_GRANTED_LIST)
 		ret = &res->granted;
-	अन्यथा अगर (idx == DLM_CONVERTING_LIST)
+	else if (idx == DLM_CONVERTING_LIST)
 		ret = &res->converting;
-	अन्यथा अगर (idx == DLM_BLOCKED_LIST)
+	else if (idx == DLM_BLOCKED_LIST)
 		ret = &res->blocked;
-	अन्यथा
+	else
 		BUG();
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 
 
 
-काष्ठा dlm_node_iter
-अणु
-	अचिन्हित दीर्घ node_map[BITS_TO_LONGS(O2NM_MAX_NODES)];
-	पूर्णांक curnode;
-पूर्ण;
+struct dlm_node_iter
+{
+	unsigned long node_map[BITS_TO_LONGS(O2NM_MAX_NODES)];
+	int curnode;
+};
 
 
-क्रमागत अणु
+enum {
 	DLM_MASTER_REQUEST_MSG		= 500,
 	DLM_UNUSED_MSG1			= 501,
 	DLM_ASSERT_MASTER_MSG		= 502,
@@ -434,16 +433,16 @@ dlm_list_idx_to_ptr(काष्ठा dlm_lock_resource *res, क्रमा�
 	DLM_QUERY_NODEINFO		= 520,
 	DLM_BEGIN_EXIT_DOMAIN_MSG	= 521,
 	DLM_DEREF_LOCKRES_DONE		= 522,
-पूर्ण;
+};
 
-काष्ठा dlm_reco_node_data
-अणु
-	पूर्णांक state;
+struct dlm_reco_node_data
+{
+	int state;
 	u8 node_num;
-	काष्ठा list_head list;
-पूर्ण;
+	struct list_head list;
+};
 
-क्रमागत अणु
+enum {
 	DLM_RECO_NODE_DATA_DEAD = -1,
 	DLM_RECO_NODE_DATA_INIT = 0,
 	DLM_RECO_NODE_DATA_REQUESTING = 1,
@@ -451,129 +450,129 @@ dlm_list_idx_to_ptr(काष्ठा dlm_lock_resource *res, क्रमा�
 	DLM_RECO_NODE_DATA_RECEIVING = 3,
 	DLM_RECO_NODE_DATA_DONE = 4,
 	DLM_RECO_NODE_DATA_FINALIZE_SENT = 5,
-पूर्ण;
+};
 
 
-क्रमागत अणु
+enum {
 	DLM_MASTER_RESP_NO = 0,
 	DLM_MASTER_RESP_YES = 1,
 	DLM_MASTER_RESP_MAYBE = 2,
 	DLM_MASTER_RESP_ERROR = 3,
-पूर्ण;
+};
 
 
-काष्ठा dlm_master_request
-अणु
+struct dlm_master_request
+{
 	u8 node_idx;
 	u8 namelen;
 	__be16 pad1;
 	__be32 flags;
 
 	u8 name[O2NM_MAX_NAME_LEN];
-पूर्ण;
+};
 
-#घोषणा DLM_ASSERT_RESPONSE_REASSERT       0x00000001
-#घोषणा DLM_ASSERT_RESPONSE_MASTERY_REF    0x00000002
+#define DLM_ASSERT_RESPONSE_REASSERT       0x00000001
+#define DLM_ASSERT_RESPONSE_MASTERY_REF    0x00000002
 
-#घोषणा DLM_ASSERT_MASTER_MLE_CLEANUP      0x00000001
-#घोषणा DLM_ASSERT_MASTER_REQUERY          0x00000002
-#घोषणा DLM_ASSERT_MASTER_FINISH_MIGRATION 0x00000004
-काष्ठा dlm_निश्चित_master
-अणु
+#define DLM_ASSERT_MASTER_MLE_CLEANUP      0x00000001
+#define DLM_ASSERT_MASTER_REQUERY          0x00000002
+#define DLM_ASSERT_MASTER_FINISH_MIGRATION 0x00000004
+struct dlm_assert_master
+{
 	u8 node_idx;
 	u8 namelen;
 	__be16 pad1;
 	__be32 flags;
 
 	u8 name[O2NM_MAX_NAME_LEN];
-पूर्ण;
+};
 
-#घोषणा DLM_MIGRATE_RESPONSE_MASTERY_REF   0x00000001
+#define DLM_MIGRATE_RESPONSE_MASTERY_REF   0x00000001
 
-काष्ठा dlm_migrate_request
-अणु
+struct dlm_migrate_request
+{
 	u8 master;
 	u8 new_master;
 	u8 namelen;
 	u8 pad1;
 	__be32 pad2;
 	u8 name[O2NM_MAX_NAME_LEN];
-पूर्ण;
+};
 
-काष्ठा dlm_master_requery
-अणु
+struct dlm_master_requery
+{
 	u8 pad1;
 	u8 pad2;
 	u8 node_idx;
 	u8 namelen;
 	__be32 pad3;
 	u8 name[O2NM_MAX_NAME_LEN];
-पूर्ण;
+};
 
-#घोषणा DLM_MRES_RECOVERY   0x01
-#घोषणा DLM_MRES_MIGRATION  0x02
-#घोषणा DLM_MRES_ALL_DONE   0x04
+#define DLM_MRES_RECOVERY   0x01
+#define DLM_MRES_MIGRATION  0x02
+#define DLM_MRES_ALL_DONE   0x04
 
 /*
- * We would like to get one whole lockres पूर्णांकo a single network
+ * We would like to get one whole lockres into a single network
  * message whenever possible.  Generally speaking, there will be
- * at most one dlm_lock on a lockres क्रम each node in the cluster,
+ * at most one dlm_lock on a lockres for each node in the cluster,
  * plus (infrequently) any additional locks coming in from userdlm.
  *
- * काष्ठा _dlm_lockres_page
- * अणु
+ * struct _dlm_lockres_page
+ * {
  * 	dlm_migratable_lockres mres;
  * 	dlm_migratable_lock ml[DLM_MAX_MIGRATABLE_LOCKS];
  * 	u8 pad[DLM_MIG_LOCKRES_RESERVED];
- * पूर्ण;
+ * };
  *
  * from ../cluster/tcp.h
- *    O2NET_MAX_PAYLOAD_BYTES  (4096 - माप(net_msg))
+ *    O2NET_MAX_PAYLOAD_BYTES  (4096 - sizeof(net_msg))
  *    (roughly 4080 bytes)
- * and माप(dlm_migratable_lockres) = 112 bytes
- * and माप(dlm_migratable_lock) = 16 bytes
+ * and sizeof(dlm_migratable_lockres) = 112 bytes
+ * and sizeof(dlm_migratable_lock) = 16 bytes
  *
  * Choosing DLM_MAX_MIGRATABLE_LOCKS=240 and
  * DLM_MIG_LOCKRES_RESERVED=128 means we have this:
  *
- *  (DLM_MAX_MIGRATABLE_LOCKS * माप(dlm_migratable_lock)) +
- *     माप(dlm_migratable_lockres) + DLM_MIG_LOCKRES_RESERVED =
+ *  (DLM_MAX_MIGRATABLE_LOCKS * sizeof(dlm_migratable_lock)) +
+ *     sizeof(dlm_migratable_lockres) + DLM_MIG_LOCKRES_RESERVED =
  *        NET_MAX_PAYLOAD_BYTES
  *  (240 * 16) + 112 + 128 = 4080
  *
- * So a lockres would need more than 240 locks beक्रमe it would
+ * So a lockres would need more than 240 locks before it would
  * use more than one network packet to recover.  Not too bad.
  */
-#घोषणा DLM_MAX_MIGRATABLE_LOCKS   240
+#define DLM_MAX_MIGRATABLE_LOCKS   240
 
-काष्ठा dlm_migratable_lockres
-अणु
+struct dlm_migratable_lockres
+{
 	u8 master;
 	u8 lockname_len;
-	u8 num_locks;    // locks sent in this काष्ठाure
+	u8 num_locks;    // locks sent in this structure
 	u8 flags;
-	__be32 total_locks; // locks to be sent क्रम this migration cookie
-	__be64 mig_cookie;  // cookie क्रम this lockres migration
-			 // or zero अगर not needed
+	__be32 total_locks; // locks to be sent for this migration cookie
+	__be64 mig_cookie;  // cookie for this lockres migration
+			 // or zero if not needed
 	// 16 bytes
 	u8 lockname[DLM_LOCKID_NAME_MAX];
 	// 48 bytes
 	u8 lvb[DLM_LVB_LEN];
 	// 112 bytes
-	काष्ठा dlm_migratable_lock ml[];  // 16 bytes each, begins at byte 112
-पूर्ण;
-#घोषणा DLM_MIG_LOCKRES_MAX_LEN  \
-	(माप(काष्ठा dlm_migratable_lockres) + \
-	 (माप(काष्ठा dlm_migratable_lock) * \
+	struct dlm_migratable_lock ml[];  // 16 bytes each, begins at byte 112
+};
+#define DLM_MIG_LOCKRES_MAX_LEN  \
+	(sizeof(struct dlm_migratable_lockres) + \
+	 (sizeof(struct dlm_migratable_lock) * \
 	  DLM_MAX_MIGRATABLE_LOCKS) )
 
 /* from above, 128 bytes
- * क्रम some undetermined future use */
-#घोषणा DLM_MIG_LOCKRES_RESERVED   (O2NET_MAX_PAYLOAD_BYTES - \
+ * for some undetermined future use */
+#define DLM_MIG_LOCKRES_RESERVED   (O2NET_MAX_PAYLOAD_BYTES - \
 				    DLM_MIG_LOCKRES_MAX_LEN)
 
-काष्ठा dlm_create_lock
-अणु
+struct dlm_create_lock
+{
 	__be64 cookie;
 
 	__be32 flags;
@@ -583,10 +582,10 @@ dlm_list_idx_to_ptr(काष्ठा dlm_lock_resource *res, क्रमा�
 	u8 namelen;
 
 	u8 name[O2NM_MAX_NAME_LEN];
-पूर्ण;
+};
 
-काष्ठा dlm_convert_lock
-अणु
+struct dlm_convert_lock
+{
 	__be64 cookie;
 
 	__be32 flags;
@@ -598,11 +597,11 @@ dlm_list_idx_to_ptr(काष्ठा dlm_lock_resource *res, क्रमा�
 	u8 name[O2NM_MAX_NAME_LEN];
 
 	s8 lvb[];
-पूर्ण;
-#घोषणा DLM_CONVERT_LOCK_MAX_LEN  (माप(काष्ठा dlm_convert_lock)+DLM_LVB_LEN)
+};
+#define DLM_CONVERT_LOCK_MAX_LEN  (sizeof(struct dlm_convert_lock)+DLM_LVB_LEN)
 
-काष्ठा dlm_unlock_lock
-अणु
+struct dlm_unlock_lock
+{
 	__be64 cookie;
 
 	__be32 flags;
@@ -613,11 +612,11 @@ dlm_list_idx_to_ptr(काष्ठा dlm_lock_resource *res, क्रमा�
 	u8 name[O2NM_MAX_NAME_LEN];
 
 	s8 lvb[];
-पूर्ण;
-#घोषणा DLM_UNLOCK_LOCK_MAX_LEN  (माप(काष्ठा dlm_unlock_lock)+DLM_LVB_LEN)
+};
+#define DLM_UNLOCK_LOCK_MAX_LEN  (sizeof(struct dlm_unlock_lock)+DLM_LVB_LEN)
 
-काष्ठा dlm_proxy_ast
-अणु
+struct dlm_proxy_ast
+{
 	__be64 cookie;
 
 	__be32 flags;
@@ -629,505 +628,505 @@ dlm_list_idx_to_ptr(काष्ठा dlm_lock_resource *res, क्रमा�
 	u8 name[O2NM_MAX_NAME_LEN];
 
 	s8 lvb[];
-पूर्ण;
-#घोषणा DLM_PROXY_AST_MAX_LEN  (माप(काष्ठा dlm_proxy_ast)+DLM_LVB_LEN)
+};
+#define DLM_PROXY_AST_MAX_LEN  (sizeof(struct dlm_proxy_ast)+DLM_LVB_LEN)
 
-#घोषणा DLM_MOD_KEY (0x666c6172)
-क्रमागत dlm_query_join_response_code अणु
+#define DLM_MOD_KEY (0x666c6172)
+enum dlm_query_join_response_code {
 	JOIN_DISALLOW = 0,
 	JOIN_OK = 1,
 	JOIN_OK_NO_MAP = 2,
 	JOIN_PROTOCOL_MISMATCH = 3,
-पूर्ण;
+};
 
-काष्ठा dlm_query_join_packet अणु
+struct dlm_query_join_packet {
 	u8 code;	/* Response code.  dlm_minor and fs_minor
-			   are only valid अगर this is JOIN_OK */
+			   are only valid if this is JOIN_OK */
 	u8 dlm_minor;	/* The minor version of the protocol the
 			   dlm is speaking. */
 	u8 fs_minor;	/* The minor version of the protocol the
-			   fileप्रणाली is speaking. */
+			   filesystem is speaking. */
 	u8 reserved;
-पूर्ण;
+};
 
-जोड़ dlm_query_join_response अणु
-	__be32 पूर्णांकval;
-	काष्ठा dlm_query_join_packet packet;
-पूर्ण;
+union dlm_query_join_response {
+	__be32 intval;
+	struct dlm_query_join_packet packet;
+};
 
-काष्ठा dlm_lock_request
-अणु
+struct dlm_lock_request
+{
 	u8 node_idx;
 	u8 dead_node;
 	__be16 pad1;
 	__be32 pad2;
-पूर्ण;
+};
 
-काष्ठा dlm_reco_data_करोne
-अणु
+struct dlm_reco_data_done
+{
 	u8 node_idx;
 	u8 dead_node;
 	__be16 pad1;
 	__be32 pad2;
 
-	/* unused क्रम now */
+	/* unused for now */
 	/* eventually we can use this to attempt
 	 * lvb recovery based on each node's info */
 	u8 reco_lvb[DLM_LVB_LEN];
-पूर्ण;
+};
 
-काष्ठा dlm_begin_reco
-अणु
+struct dlm_begin_reco
+{
 	u8 node_idx;
 	u8 dead_node;
 	__be16 pad1;
 	__be32 pad2;
-पूर्ण;
+};
 
-काष्ठा dlm_query_join_request
-अणु
+struct dlm_query_join_request
+{
 	u8 node_idx;
 	u8 pad1[2];
 	u8 name_len;
-	काष्ठा dlm_protocol_version dlm_proto;
-	काष्ठा dlm_protocol_version fs_proto;
-	u8 करोमुख्य[O2NM_MAX_NAME_LEN];
+	struct dlm_protocol_version dlm_proto;
+	struct dlm_protocol_version fs_proto;
+	u8 domain[O2NM_MAX_NAME_LEN];
 	u8 node_map[BITS_TO_BYTES(O2NM_MAX_NODES)];
-पूर्ण;
+};
 
-काष्ठा dlm_निश्चित_joined
-अणु
+struct dlm_assert_joined
+{
 	u8 node_idx;
 	u8 pad1[2];
 	u8 name_len;
-	u8 करोमुख्य[O2NM_MAX_NAME_LEN];
-पूर्ण;
+	u8 domain[O2NM_MAX_NAME_LEN];
+};
 
-काष्ठा dlm_cancel_join
-अणु
+struct dlm_cancel_join
+{
 	u8 node_idx;
 	u8 pad1[2];
 	u8 name_len;
-	u8 करोमुख्य[O2NM_MAX_NAME_LEN];
-पूर्ण;
+	u8 domain[O2NM_MAX_NAME_LEN];
+};
 
-काष्ठा dlm_query_region अणु
+struct dlm_query_region {
 	u8 qr_node;
 	u8 qr_numregions;
 	u8 qr_namelen;
 	u8 pad1;
-	u8 qr_करोमुख्य[O2NM_MAX_NAME_LEN];
+	u8 qr_domain[O2NM_MAX_NAME_LEN];
 	u8 qr_regions[O2HB_MAX_REGION_NAME_LEN * O2NM_MAX_REGIONS];
-पूर्ण;
+};
 
-काष्ठा dlm_node_info अणु
-	u8 ni_nodक्रमागत;
+struct dlm_node_info {
+	u8 ni_nodenum;
 	u8 pad1;
 	__be16 ni_ipv4_port;
 	__be32 ni_ipv4_address;
-पूर्ण;
+};
 
-काष्ठा dlm_query_nodeinfo अणु
-	u8 qn_nodक्रमागत;
+struct dlm_query_nodeinfo {
+	u8 qn_nodenum;
 	u8 qn_numnodes;
 	u8 qn_namelen;
 	u8 pad1;
-	u8 qn_करोमुख्य[O2NM_MAX_NAME_LEN];
-	काष्ठा dlm_node_info qn_nodes[O2NM_MAX_NODES];
-पूर्ण;
+	u8 qn_domain[O2NM_MAX_NAME_LEN];
+	struct dlm_node_info qn_nodes[O2NM_MAX_NODES];
+};
 
-काष्ठा dlm_निकास_करोमुख्य
-अणु
+struct dlm_exit_domain
+{
 	u8 node_idx;
 	u8 pad1[3];
-पूर्ण;
+};
 
-काष्ठा dlm_finalize_reco
-अणु
+struct dlm_finalize_reco
+{
 	u8 node_idx;
 	u8 dead_node;
 	u8 flags;
 	u8 pad1;
 	__be32 pad2;
-पूर्ण;
+};
 
-काष्ठा dlm_deref_lockres
-अणु
+struct dlm_deref_lockres
+{
 	u32 pad1;
 	u16 pad2;
 	u8 node_idx;
 	u8 namelen;
 
 	u8 name[O2NM_MAX_NAME_LEN];
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	DLM_DEREF_RESPONSE_DONE = 0,
 	DLM_DEREF_RESPONSE_INPROG = 1,
-पूर्ण;
+};
 
-काष्ठा dlm_deref_lockres_करोne अणु
+struct dlm_deref_lockres_done {
 	u32 pad1;
 	u16 pad2;
 	u8 node_idx;
 	u8 namelen;
 
 	u8 name[O2NM_MAX_NAME_LEN];
-पूर्ण;
+};
 
-अटल अंतरभूत क्रमागत dlm_status
-__dlm_lockres_state_to_status(काष्ठा dlm_lock_resource *res)
-अणु
-	क्रमागत dlm_status status = DLM_NORMAL;
+static inline enum dlm_status
+__dlm_lockres_state_to_status(struct dlm_lock_resource *res)
+{
+	enum dlm_status status = DLM_NORMAL;
 
-	निश्चित_spin_locked(&res->spinlock);
+	assert_spin_locked(&res->spinlock);
 
-	अगर (res->state & (DLM_LOCK_RES_RECOVERING|
+	if (res->state & (DLM_LOCK_RES_RECOVERING|
 			DLM_LOCK_RES_RECOVERY_WAITING))
 		status = DLM_RECOVERING;
-	अन्यथा अगर (res->state & DLM_LOCK_RES_MIGRATING)
+	else if (res->state & DLM_LOCK_RES_MIGRATING)
 		status = DLM_MIGRATING;
-	अन्यथा अगर (res->state & DLM_LOCK_RES_IN_PROGRESS)
+	else if (res->state & DLM_LOCK_RES_IN_PROGRESS)
 		status = DLM_FORWARD;
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल अंतरभूत u8 dlm_get_lock_cookie_node(u64 cookie)
-अणु
+static inline u8 dlm_get_lock_cookie_node(u64 cookie)
+{
 	u8 ret;
 	cookie >>= 56;
 	ret = (u8)(cookie & 0xffULL);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल अंतरभूत अचिन्हित दीर्घ दीर्घ dlm_get_lock_cookie_seq(u64 cookie)
-अणु
-	अचिन्हित दीर्घ दीर्घ ret;
-	ret = ((अचिन्हित दीर्घ दीर्घ)cookie) & 0x00ffffffffffffffULL;
-	वापस ret;
-पूर्ण
+static inline unsigned long long dlm_get_lock_cookie_seq(u64 cookie)
+{
+	unsigned long long ret;
+	ret = ((unsigned long long)cookie) & 0x00ffffffffffffffULL;
+	return ret;
+}
 
-काष्ठा dlm_lock * dlm_new_lock(पूर्णांक type, u8 node, u64 cookie,
-			       काष्ठा dlm_lockstatus *lksb);
-व्योम dlm_lock_get(काष्ठा dlm_lock *lock);
-व्योम dlm_lock_put(काष्ठा dlm_lock *lock);
+struct dlm_lock * dlm_new_lock(int type, u8 node, u64 cookie,
+			       struct dlm_lockstatus *lksb);
+void dlm_lock_get(struct dlm_lock *lock);
+void dlm_lock_put(struct dlm_lock *lock);
 
-व्योम dlm_lock_attach_lockres(काष्ठा dlm_lock *lock,
-			     काष्ठा dlm_lock_resource *res);
+void dlm_lock_attach_lockres(struct dlm_lock *lock,
+			     struct dlm_lock_resource *res);
 
-पूर्णांक dlm_create_lock_handler(काष्ठा o2net_msg *msg, u32 len, व्योम *data,
-			    व्योम **ret_data);
-पूर्णांक dlm_convert_lock_handler(काष्ठा o2net_msg *msg, u32 len, व्योम *data,
-			     व्योम **ret_data);
-पूर्णांक dlm_proxy_ast_handler(काष्ठा o2net_msg *msg, u32 len, व्योम *data,
-			  व्योम **ret_data);
+int dlm_create_lock_handler(struct o2net_msg *msg, u32 len, void *data,
+			    void **ret_data);
+int dlm_convert_lock_handler(struct o2net_msg *msg, u32 len, void *data,
+			     void **ret_data);
+int dlm_proxy_ast_handler(struct o2net_msg *msg, u32 len, void *data,
+			  void **ret_data);
 
-व्योम dlm_revert_pending_convert(काष्ठा dlm_lock_resource *res,
-				काष्ठा dlm_lock *lock);
-व्योम dlm_revert_pending_lock(काष्ठा dlm_lock_resource *res,
-			     काष्ठा dlm_lock *lock);
+void dlm_revert_pending_convert(struct dlm_lock_resource *res,
+				struct dlm_lock *lock);
+void dlm_revert_pending_lock(struct dlm_lock_resource *res,
+			     struct dlm_lock *lock);
 
-पूर्णांक dlm_unlock_lock_handler(काष्ठा o2net_msg *msg, u32 len, व्योम *data,
-			    व्योम **ret_data);
-व्योम dlm_commit_pending_cancel(काष्ठा dlm_lock_resource *res,
-			       काष्ठा dlm_lock *lock);
-व्योम dlm_commit_pending_unlock(काष्ठा dlm_lock_resource *res,
-			       काष्ठा dlm_lock *lock);
+int dlm_unlock_lock_handler(struct o2net_msg *msg, u32 len, void *data,
+			    void **ret_data);
+void dlm_commit_pending_cancel(struct dlm_lock_resource *res,
+			       struct dlm_lock *lock);
+void dlm_commit_pending_unlock(struct dlm_lock_resource *res,
+			       struct dlm_lock *lock);
 
-पूर्णांक dlm_launch_thपढ़ो(काष्ठा dlm_ctxt *dlm);
-व्योम dlm_complete_thपढ़ो(काष्ठा dlm_ctxt *dlm);
-पूर्णांक dlm_launch_recovery_thपढ़ो(काष्ठा dlm_ctxt *dlm);
-व्योम dlm_complete_recovery_thपढ़ो(काष्ठा dlm_ctxt *dlm);
-व्योम dlm_रुको_क्रम_recovery(काष्ठा dlm_ctxt *dlm);
-व्योम dlm_kick_recovery_thपढ़ो(काष्ठा dlm_ctxt *dlm);
-पूर्णांक dlm_is_node_dead(काष्ठा dlm_ctxt *dlm, u8 node);
-व्योम dlm_रुको_क्रम_node_death(काष्ठा dlm_ctxt *dlm, u8 node, पूर्णांक समयout);
-व्योम dlm_रुको_क्रम_node_recovery(काष्ठा dlm_ctxt *dlm, u8 node, पूर्णांक समयout);
+int dlm_launch_thread(struct dlm_ctxt *dlm);
+void dlm_complete_thread(struct dlm_ctxt *dlm);
+int dlm_launch_recovery_thread(struct dlm_ctxt *dlm);
+void dlm_complete_recovery_thread(struct dlm_ctxt *dlm);
+void dlm_wait_for_recovery(struct dlm_ctxt *dlm);
+void dlm_kick_recovery_thread(struct dlm_ctxt *dlm);
+int dlm_is_node_dead(struct dlm_ctxt *dlm, u8 node);
+void dlm_wait_for_node_death(struct dlm_ctxt *dlm, u8 node, int timeout);
+void dlm_wait_for_node_recovery(struct dlm_ctxt *dlm, u8 node, int timeout);
 
-व्योम dlm_put(काष्ठा dlm_ctxt *dlm);
-काष्ठा dlm_ctxt *dlm_grab(काष्ठा dlm_ctxt *dlm);
-पूर्णांक dlm_करोमुख्य_fully_joined(काष्ठा dlm_ctxt *dlm);
+void dlm_put(struct dlm_ctxt *dlm);
+struct dlm_ctxt *dlm_grab(struct dlm_ctxt *dlm);
+int dlm_domain_fully_joined(struct dlm_ctxt *dlm);
 
-व्योम __dlm_lockres_calc_usage(काष्ठा dlm_ctxt *dlm,
-			      काष्ठा dlm_lock_resource *res);
-व्योम dlm_lockres_calc_usage(काष्ठा dlm_ctxt *dlm,
-			    काष्ठा dlm_lock_resource *res);
-अटल अंतरभूत व्योम dlm_lockres_get(काष्ठा dlm_lock_resource *res)
-अणु
+void __dlm_lockres_calc_usage(struct dlm_ctxt *dlm,
+			      struct dlm_lock_resource *res);
+void dlm_lockres_calc_usage(struct dlm_ctxt *dlm,
+			    struct dlm_lock_resource *res);
+static inline void dlm_lockres_get(struct dlm_lock_resource *res)
+{
 	/* This is called on every lookup, so it might be worth
 	 * inlining. */
 	kref_get(&res->refs);
-पूर्ण
-व्योम dlm_lockres_put(काष्ठा dlm_lock_resource *res);
-व्योम __dlm_unhash_lockres(काष्ठा dlm_ctxt *dlm, काष्ठा dlm_lock_resource *res);
-व्योम __dlm_insert_lockres(काष्ठा dlm_ctxt *dlm, काष्ठा dlm_lock_resource *res);
-काष्ठा dlm_lock_resource * __dlm_lookup_lockres_full(काष्ठा dlm_ctxt *dlm,
-						     स्थिर अक्षर *name,
-						     अचिन्हित पूर्णांक len,
-						     अचिन्हित पूर्णांक hash);
-काष्ठा dlm_lock_resource * __dlm_lookup_lockres(काष्ठा dlm_ctxt *dlm,
-						स्थिर अक्षर *name,
-						अचिन्हित पूर्णांक len,
-						अचिन्हित पूर्णांक hash);
-काष्ठा dlm_lock_resource * dlm_lookup_lockres(काष्ठा dlm_ctxt *dlm,
-					      स्थिर अक्षर *name,
-					      अचिन्हित पूर्णांक len);
+}
+void dlm_lockres_put(struct dlm_lock_resource *res);
+void __dlm_unhash_lockres(struct dlm_ctxt *dlm, struct dlm_lock_resource *res);
+void __dlm_insert_lockres(struct dlm_ctxt *dlm, struct dlm_lock_resource *res);
+struct dlm_lock_resource * __dlm_lookup_lockres_full(struct dlm_ctxt *dlm,
+						     const char *name,
+						     unsigned int len,
+						     unsigned int hash);
+struct dlm_lock_resource * __dlm_lookup_lockres(struct dlm_ctxt *dlm,
+						const char *name,
+						unsigned int len,
+						unsigned int hash);
+struct dlm_lock_resource * dlm_lookup_lockres(struct dlm_ctxt *dlm,
+					      const char *name,
+					      unsigned int len);
 
-पूर्णांक dlm_is_host_करोwn(पूर्णांक त्रुटि_सं);
+int dlm_is_host_down(int errno);
 
-काष्ठा dlm_lock_resource * dlm_get_lock_resource(काष्ठा dlm_ctxt *dlm,
-						 स्थिर अक्षर *lockid,
-						 पूर्णांक namelen,
-						 पूर्णांक flags);
-काष्ठा dlm_lock_resource *dlm_new_lockres(काष्ठा dlm_ctxt *dlm,
-					  स्थिर अक्षर *name,
-					  अचिन्हित पूर्णांक namelen);
+struct dlm_lock_resource * dlm_get_lock_resource(struct dlm_ctxt *dlm,
+						 const char *lockid,
+						 int namelen,
+						 int flags);
+struct dlm_lock_resource *dlm_new_lockres(struct dlm_ctxt *dlm,
+					  const char *name,
+					  unsigned int namelen);
 
-व्योम dlm_lockres_set_refmap_bit(काष्ठा dlm_ctxt *dlm,
-				काष्ठा dlm_lock_resource *res, पूर्णांक bit);
-व्योम dlm_lockres_clear_refmap_bit(काष्ठा dlm_ctxt *dlm,
-				  काष्ठा dlm_lock_resource *res, पूर्णांक bit);
+void dlm_lockres_set_refmap_bit(struct dlm_ctxt *dlm,
+				struct dlm_lock_resource *res, int bit);
+void dlm_lockres_clear_refmap_bit(struct dlm_ctxt *dlm,
+				  struct dlm_lock_resource *res, int bit);
 
-व्योम dlm_lockres_drop_inflight_ref(काष्ठा dlm_ctxt *dlm,
-				   काष्ठा dlm_lock_resource *res);
-व्योम dlm_lockres_grab_inflight_ref(काष्ठा dlm_ctxt *dlm,
-				   काष्ठा dlm_lock_resource *res);
+void dlm_lockres_drop_inflight_ref(struct dlm_ctxt *dlm,
+				   struct dlm_lock_resource *res);
+void dlm_lockres_grab_inflight_ref(struct dlm_ctxt *dlm,
+				   struct dlm_lock_resource *res);
 
-व्योम __dlm_lockres_grab_inflight_worker(काष्ठा dlm_ctxt *dlm,
-		काष्ठा dlm_lock_resource *res);
+void __dlm_lockres_grab_inflight_worker(struct dlm_ctxt *dlm,
+		struct dlm_lock_resource *res);
 
-व्योम dlm_queue_ast(काष्ठा dlm_ctxt *dlm, काष्ठा dlm_lock *lock);
-व्योम __dlm_queue_ast(काष्ठा dlm_ctxt *dlm, काष्ठा dlm_lock *lock);
-व्योम __dlm_queue_bast(काष्ठा dlm_ctxt *dlm, काष्ठा dlm_lock *lock);
-व्योम dlm_करो_local_ast(काष्ठा dlm_ctxt *dlm,
-		      काष्ठा dlm_lock_resource *res,
-		      काष्ठा dlm_lock *lock);
-पूर्णांक dlm_करो_remote_ast(काष्ठा dlm_ctxt *dlm,
-		      काष्ठा dlm_lock_resource *res,
-		      काष्ठा dlm_lock *lock);
-व्योम dlm_करो_local_bast(काष्ठा dlm_ctxt *dlm,
-		       काष्ठा dlm_lock_resource *res,
-		       काष्ठा dlm_lock *lock,
-		       पूर्णांक blocked_type);
-पूर्णांक dlm_send_proxy_ast_msg(काष्ठा dlm_ctxt *dlm,
-			   काष्ठा dlm_lock_resource *res,
-			   काष्ठा dlm_lock *lock,
-			   पूर्णांक msg_type,
-			   पूर्णांक blocked_type, पूर्णांक flags);
-अटल अंतरभूत पूर्णांक dlm_send_proxy_bast(काष्ठा dlm_ctxt *dlm,
-				      काष्ठा dlm_lock_resource *res,
-				      काष्ठा dlm_lock *lock,
-				      पूर्णांक blocked_type)
-अणु
-	वापस dlm_send_proxy_ast_msg(dlm, res, lock, DLM_BAST,
+void dlm_queue_ast(struct dlm_ctxt *dlm, struct dlm_lock *lock);
+void __dlm_queue_ast(struct dlm_ctxt *dlm, struct dlm_lock *lock);
+void __dlm_queue_bast(struct dlm_ctxt *dlm, struct dlm_lock *lock);
+void dlm_do_local_ast(struct dlm_ctxt *dlm,
+		      struct dlm_lock_resource *res,
+		      struct dlm_lock *lock);
+int dlm_do_remote_ast(struct dlm_ctxt *dlm,
+		      struct dlm_lock_resource *res,
+		      struct dlm_lock *lock);
+void dlm_do_local_bast(struct dlm_ctxt *dlm,
+		       struct dlm_lock_resource *res,
+		       struct dlm_lock *lock,
+		       int blocked_type);
+int dlm_send_proxy_ast_msg(struct dlm_ctxt *dlm,
+			   struct dlm_lock_resource *res,
+			   struct dlm_lock *lock,
+			   int msg_type,
+			   int blocked_type, int flags);
+static inline int dlm_send_proxy_bast(struct dlm_ctxt *dlm,
+				      struct dlm_lock_resource *res,
+				      struct dlm_lock *lock,
+				      int blocked_type)
+{
+	return dlm_send_proxy_ast_msg(dlm, res, lock, DLM_BAST,
 				      blocked_type, 0);
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक dlm_send_proxy_ast(काष्ठा dlm_ctxt *dlm,
-				     काष्ठा dlm_lock_resource *res,
-				     काष्ठा dlm_lock *lock,
-				     पूर्णांक flags)
-अणु
-	वापस dlm_send_proxy_ast_msg(dlm, res, lock, DLM_AST,
+static inline int dlm_send_proxy_ast(struct dlm_ctxt *dlm,
+				     struct dlm_lock_resource *res,
+				     struct dlm_lock *lock,
+				     int flags)
+{
+	return dlm_send_proxy_ast_msg(dlm, res, lock, DLM_AST,
 				      0, flags);
-पूर्ण
+}
 
-व्योम dlm_prपूर्णांक_one_lock_resource(काष्ठा dlm_lock_resource *res);
-व्योम __dlm_prपूर्णांक_one_lock_resource(काष्ठा dlm_lock_resource *res);
+void dlm_print_one_lock_resource(struct dlm_lock_resource *res);
+void __dlm_print_one_lock_resource(struct dlm_lock_resource *res);
 
-व्योम dlm_kick_thपढ़ो(काष्ठा dlm_ctxt *dlm, काष्ठा dlm_lock_resource *res);
-व्योम __dlm_dirty_lockres(काष्ठा dlm_ctxt *dlm, काष्ठा dlm_lock_resource *res);
+void dlm_kick_thread(struct dlm_ctxt *dlm, struct dlm_lock_resource *res);
+void __dlm_dirty_lockres(struct dlm_ctxt *dlm, struct dlm_lock_resource *res);
 
 
-व्योम dlm_hb_node_करोwn_cb(काष्ठा o2nm_node *node, पूर्णांक idx, व्योम *data);
-व्योम dlm_hb_node_up_cb(काष्ठा o2nm_node *node, पूर्णांक idx, व्योम *data);
+void dlm_hb_node_down_cb(struct o2nm_node *node, int idx, void *data);
+void dlm_hb_node_up_cb(struct o2nm_node *node, int idx, void *data);
 
-पूर्णांक dlm_empty_lockres(काष्ठा dlm_ctxt *dlm, काष्ठा dlm_lock_resource *res);
-पूर्णांक dlm_finish_migration(काष्ठा dlm_ctxt *dlm,
-			 काष्ठा dlm_lock_resource *res,
+int dlm_empty_lockres(struct dlm_ctxt *dlm, struct dlm_lock_resource *res);
+int dlm_finish_migration(struct dlm_ctxt *dlm,
+			 struct dlm_lock_resource *res,
 			 u8 old_master);
-व्योम dlm_lockres_release_ast(काष्ठा dlm_ctxt *dlm,
-			     काष्ठा dlm_lock_resource *res);
-व्योम __dlm_lockres_reserve_ast(काष्ठा dlm_lock_resource *res);
+void dlm_lockres_release_ast(struct dlm_ctxt *dlm,
+			     struct dlm_lock_resource *res);
+void __dlm_lockres_reserve_ast(struct dlm_lock_resource *res);
 
-पूर्णांक dlm_master_request_handler(काष्ठा o2net_msg *msg, u32 len, व्योम *data,
-			       व्योम **ret_data);
-पूर्णांक dlm_निश्चित_master_handler(काष्ठा o2net_msg *msg, u32 len, व्योम *data,
-			      व्योम **ret_data);
-व्योम dlm_निश्चित_master_post_handler(पूर्णांक status, व्योम *data, व्योम *ret_data);
-पूर्णांक dlm_deref_lockres_handler(काष्ठा o2net_msg *msg, u32 len, व्योम *data,
-			      व्योम **ret_data);
-पूर्णांक dlm_deref_lockres_करोne_handler(काष्ठा o2net_msg *msg, u32 len, व्योम *data,
-			      व्योम **ret_data);
-पूर्णांक dlm_migrate_request_handler(काष्ठा o2net_msg *msg, u32 len, व्योम *data,
-				व्योम **ret_data);
-पूर्णांक dlm_mig_lockres_handler(काष्ठा o2net_msg *msg, u32 len, व्योम *data,
-			    व्योम **ret_data);
-पूर्णांक dlm_master_requery_handler(काष्ठा o2net_msg *msg, u32 len, व्योम *data,
-			       व्योम **ret_data);
-पूर्णांक dlm_request_all_locks_handler(काष्ठा o2net_msg *msg, u32 len, व्योम *data,
-				  व्योम **ret_data);
-पूर्णांक dlm_reco_data_करोne_handler(काष्ठा o2net_msg *msg, u32 len, व्योम *data,
-			       व्योम **ret_data);
-पूर्णांक dlm_begin_reco_handler(काष्ठा o2net_msg *msg, u32 len, व्योम *data,
-			   व्योम **ret_data);
-पूर्णांक dlm_finalize_reco_handler(काष्ठा o2net_msg *msg, u32 len, व्योम *data,
-			      व्योम **ret_data);
-पूर्णांक dlm_करो_master_requery(काष्ठा dlm_ctxt *dlm, काष्ठा dlm_lock_resource *res,
-			  u8 nodक्रमागत, u8 *real_master);
+int dlm_master_request_handler(struct o2net_msg *msg, u32 len, void *data,
+			       void **ret_data);
+int dlm_assert_master_handler(struct o2net_msg *msg, u32 len, void *data,
+			      void **ret_data);
+void dlm_assert_master_post_handler(int status, void *data, void *ret_data);
+int dlm_deref_lockres_handler(struct o2net_msg *msg, u32 len, void *data,
+			      void **ret_data);
+int dlm_deref_lockres_done_handler(struct o2net_msg *msg, u32 len, void *data,
+			      void **ret_data);
+int dlm_migrate_request_handler(struct o2net_msg *msg, u32 len, void *data,
+				void **ret_data);
+int dlm_mig_lockres_handler(struct o2net_msg *msg, u32 len, void *data,
+			    void **ret_data);
+int dlm_master_requery_handler(struct o2net_msg *msg, u32 len, void *data,
+			       void **ret_data);
+int dlm_request_all_locks_handler(struct o2net_msg *msg, u32 len, void *data,
+				  void **ret_data);
+int dlm_reco_data_done_handler(struct o2net_msg *msg, u32 len, void *data,
+			       void **ret_data);
+int dlm_begin_reco_handler(struct o2net_msg *msg, u32 len, void *data,
+			   void **ret_data);
+int dlm_finalize_reco_handler(struct o2net_msg *msg, u32 len, void *data,
+			      void **ret_data);
+int dlm_do_master_requery(struct dlm_ctxt *dlm, struct dlm_lock_resource *res,
+			  u8 nodenum, u8 *real_master);
 
-व्योम __dlm_करो_purge_lockres(काष्ठा dlm_ctxt *dlm,
-		काष्ठा dlm_lock_resource *res);
+void __dlm_do_purge_lockres(struct dlm_ctxt *dlm,
+		struct dlm_lock_resource *res);
 
-पूर्णांक dlm_dispatch_निश्चित_master(काष्ठा dlm_ctxt *dlm,
-			       काष्ठा dlm_lock_resource *res,
-			       पूर्णांक ignore_higher,
+int dlm_dispatch_assert_master(struct dlm_ctxt *dlm,
+			       struct dlm_lock_resource *res,
+			       int ignore_higher,
 			       u8 request_from,
 			       u32 flags);
 
 
-पूर्णांक dlm_send_one_lockres(काष्ठा dlm_ctxt *dlm,
-			 काष्ठा dlm_lock_resource *res,
-			 काष्ठा dlm_migratable_lockres *mres,
+int dlm_send_one_lockres(struct dlm_ctxt *dlm,
+			 struct dlm_lock_resource *res,
+			 struct dlm_migratable_lockres *mres,
 			 u8 send_to,
 			 u8 flags);
-व्योम dlm_move_lockres_to_recovery_list(काष्ठा dlm_ctxt *dlm,
-				       काष्ठा dlm_lock_resource *res);
+void dlm_move_lockres_to_recovery_list(struct dlm_ctxt *dlm,
+				       struct dlm_lock_resource *res);
 
-/* will निकास holding res->spinlock, but may drop in function */
-व्योम __dlm_रुको_on_lockres_flags(काष्ठा dlm_lock_resource *res, पूर्णांक flags);
+/* will exit holding res->spinlock, but may drop in function */
+void __dlm_wait_on_lockres_flags(struct dlm_lock_resource *res, int flags);
 
-/* will निकास holding res->spinlock, but may drop in function */
-अटल अंतरभूत व्योम __dlm_रुको_on_lockres(काष्ठा dlm_lock_resource *res)
-अणु
-	__dlm_रुको_on_lockres_flags(res, (DLM_LOCK_RES_IN_PROGRESS|
+/* will exit holding res->spinlock, but may drop in function */
+static inline void __dlm_wait_on_lockres(struct dlm_lock_resource *res)
+{
+	__dlm_wait_on_lockres_flags(res, (DLM_LOCK_RES_IN_PROGRESS|
 				    	  DLM_LOCK_RES_RECOVERING|
 					  DLM_LOCK_RES_RECOVERY_WAITING|
 					  DLM_LOCK_RES_MIGRATING));
-पूर्ण
+}
 
-व्योम __dlm_unlink_mle(काष्ठा dlm_ctxt *dlm, काष्ठा dlm_master_list_entry *mle);
-व्योम __dlm_insert_mle(काष्ठा dlm_ctxt *dlm, काष्ठा dlm_master_list_entry *mle);
+void __dlm_unlink_mle(struct dlm_ctxt *dlm, struct dlm_master_list_entry *mle);
+void __dlm_insert_mle(struct dlm_ctxt *dlm, struct dlm_master_list_entry *mle);
 
 /* create/destroy slab caches */
-पूर्णांक dlm_init_master_caches(व्योम);
-व्योम dlm_destroy_master_caches(व्योम);
+int dlm_init_master_caches(void);
+void dlm_destroy_master_caches(void);
 
-पूर्णांक dlm_init_lock_cache(व्योम);
-व्योम dlm_destroy_lock_cache(व्योम);
+int dlm_init_lock_cache(void);
+void dlm_destroy_lock_cache(void);
 
-पूर्णांक dlm_init_mle_cache(व्योम);
-व्योम dlm_destroy_mle_cache(व्योम);
+int dlm_init_mle_cache(void);
+void dlm_destroy_mle_cache(void);
 
-व्योम dlm_hb_event_notअगरy_attached(काष्ठा dlm_ctxt *dlm, पूर्णांक idx, पूर्णांक node_up);
-पूर्णांक dlm_drop_lockres_ref(काष्ठा dlm_ctxt *dlm,
-			 काष्ठा dlm_lock_resource *res);
-व्योम dlm_clean_master_list(काष्ठा dlm_ctxt *dlm,
+void dlm_hb_event_notify_attached(struct dlm_ctxt *dlm, int idx, int node_up);
+int dlm_drop_lockres_ref(struct dlm_ctxt *dlm,
+			 struct dlm_lock_resource *res);
+void dlm_clean_master_list(struct dlm_ctxt *dlm,
 			   u8 dead_node);
-व्योम dlm_क्रमce_मुक्त_mles(काष्ठा dlm_ctxt *dlm);
-पूर्णांक dlm_lock_basts_flushed(काष्ठा dlm_ctxt *dlm, काष्ठा dlm_lock *lock);
-पूर्णांक __dlm_lockres_has_locks(काष्ठा dlm_lock_resource *res);
-पूर्णांक __dlm_lockres_unused(काष्ठा dlm_lock_resource *res);
+void dlm_force_free_mles(struct dlm_ctxt *dlm);
+int dlm_lock_basts_flushed(struct dlm_ctxt *dlm, struct dlm_lock *lock);
+int __dlm_lockres_has_locks(struct dlm_lock_resource *res);
+int __dlm_lockres_unused(struct dlm_lock_resource *res);
 
-अटल अंतरभूत स्थिर अक्षर * dlm_lock_mode_name(पूर्णांक mode)
-अणु
-	चयन (mode) अणु
-		हाल LKM_EXMODE:
-			वापस "EX";
-		हाल LKM_PRMODE:
-			वापस "PR";
-		हाल LKM_NLMODE:
-			वापस "NL";
-	पूर्ण
-	वापस "UNKNOWN";
-पूर्ण
+static inline const char * dlm_lock_mode_name(int mode)
+{
+	switch (mode) {
+		case LKM_EXMODE:
+			return "EX";
+		case LKM_PRMODE:
+			return "PR";
+		case LKM_NLMODE:
+			return "NL";
+	}
+	return "UNKNOWN";
+}
 
 
-अटल अंतरभूत पूर्णांक dlm_lock_compatible(पूर्णांक existing, पूर्णांक request)
-अणु
+static inline int dlm_lock_compatible(int existing, int request)
+{
 	/* NO_LOCK compatible with all */
-	अगर (request == LKM_NLMODE ||
+	if (request == LKM_NLMODE ||
 	    existing == LKM_NLMODE)
-		वापस 1;
+		return 1;
 
 	/* EX incompatible with all non-NO_LOCK */
-	अगर (request == LKM_EXMODE)
-		वापस 0;
+	if (request == LKM_EXMODE)
+		return 0;
 
 	/* request must be PR, which is compatible with PR */
-	अगर (existing == LKM_PRMODE)
-		वापस 1;
+	if (existing == LKM_PRMODE)
+		return 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक dlm_lock_on_list(काष्ठा list_head *head,
-				   काष्ठा dlm_lock *lock)
-अणु
-	काष्ठा dlm_lock *पंचांगplock;
+static inline int dlm_lock_on_list(struct list_head *head,
+				   struct dlm_lock *lock)
+{
+	struct dlm_lock *tmplock;
 
-	list_क्रम_each_entry(पंचांगplock, head, list) अणु
-		अगर (पंचांगplock == lock)
-			वापस 1;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	list_for_each_entry(tmplock, head, list) {
+		if (tmplock == lock)
+			return 1;
+	}
+	return 0;
+}
 
 
-अटल अंतरभूत क्रमागत dlm_status dlm_err_to_dlm_status(पूर्णांक err)
-अणु
-	क्रमागत dlm_status ret;
-	अगर (err == -ENOMEM)
+static inline enum dlm_status dlm_err_to_dlm_status(int err)
+{
+	enum dlm_status ret;
+	if (err == -ENOMEM)
 		ret = DLM_SYSERR;
-	अन्यथा अगर (err == -ETIMEDOUT || o2net_link_करोwn(err, शून्य))
+	else if (err == -ETIMEDOUT || o2net_link_down(err, NULL))
 		ret = DLM_NOLOCKMGR;
-	अन्यथा अगर (err == -EINVAL)
+	else if (err == -EINVAL)
 		ret = DLM_BADPARAM;
-	अन्यथा अगर (err == -ENAMETOOLONG)
+	else if (err == -ENAMETOOLONG)
 		ret = DLM_IVBUFLEN;
-	अन्यथा
+	else
 		ret = DLM_BADARGS;
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 
-अटल अंतरभूत व्योम dlm_node_iter_init(अचिन्हित दीर्घ *map,
-				      काष्ठा dlm_node_iter *iter)
-अणु
-	स_नकल(iter->node_map, map, माप(iter->node_map));
+static inline void dlm_node_iter_init(unsigned long *map,
+				      struct dlm_node_iter *iter)
+{
+	memcpy(iter->node_map, map, sizeof(iter->node_map));
 	iter->curnode = -1;
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक dlm_node_iter_next(काष्ठा dlm_node_iter *iter)
-अणु
-	पूर्णांक bit;
+static inline int dlm_node_iter_next(struct dlm_node_iter *iter)
+{
+	int bit;
 	bit = find_next_bit(iter->node_map, O2NM_MAX_NODES, iter->curnode+1);
-	अगर (bit >= O2NM_MAX_NODES) अणु
+	if (bit >= O2NM_MAX_NODES) {
 		iter->curnode = O2NM_MAX_NODES;
-		वापस -ENOENT;
-	पूर्ण
+		return -ENOENT;
+	}
 	iter->curnode = bit;
-	वापस bit;
-पूर्ण
+	return bit;
+}
 
-अटल अंतरभूत व्योम dlm_set_lockres_owner(काष्ठा dlm_ctxt *dlm,
-					 काष्ठा dlm_lock_resource *res,
+static inline void dlm_set_lockres_owner(struct dlm_ctxt *dlm,
+					 struct dlm_lock_resource *res,
 					 u8 owner)
-अणु
-	निश्चित_spin_locked(&res->spinlock);
+{
+	assert_spin_locked(&res->spinlock);
 
 	res->owner = owner;
-पूर्ण
+}
 
-अटल अंतरभूत व्योम dlm_change_lockres_owner(काष्ठा dlm_ctxt *dlm,
-					    काष्ठा dlm_lock_resource *res,
+static inline void dlm_change_lockres_owner(struct dlm_ctxt *dlm,
+					    struct dlm_lock_resource *res,
 					    u8 owner)
-अणु
-	निश्चित_spin_locked(&res->spinlock);
+{
+	assert_spin_locked(&res->spinlock);
 
-	अगर (owner != res->owner)
+	if (owner != res->owner)
 		dlm_set_lockres_owner(dlm, res, owner);
-पूर्ण
+}
 
-#पूर्ण_अगर /* DLMCOMMON_H */
+#endif /* DLMCOMMON_H */

@@ -1,36 +1,35 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: MIT */
-#अगर_अघोषित __NVKM_DEVINIT_H__
-#घोषणा __NVKM_DEVINIT_H__
-#समावेश <core/subdev.h>
-काष्ठा nvkm_devinit;
+/* SPDX-License-Identifier: MIT */
+#ifndef __NVKM_DEVINIT_H__
+#define __NVKM_DEVINIT_H__
+#include <core/subdev.h>
+struct nvkm_devinit;
 
-काष्ठा nvkm_devinit अणु
-	स्थिर काष्ठा nvkm_devinit_func *func;
-	काष्ठा nvkm_subdev subdev;
+struct nvkm_devinit {
+	const struct nvkm_devinit_func *func;
+	struct nvkm_subdev subdev;
 	bool post;
-	bool क्रमce_post;
-पूर्ण;
+	bool force_post;
+};
 
-u32 nvkm_devinit_mmio(काष्ठा nvkm_devinit *, u32 addr);
-पूर्णांक nvkm_devinit_pll_set(काष्ठा nvkm_devinit *, u32 type, u32 khz);
-व्योम nvkm_devinit_meminit(काष्ठा nvkm_devinit *);
-पूर्णांक nvkm_devinit_post(काष्ठा nvkm_devinit *);
+u32 nvkm_devinit_mmio(struct nvkm_devinit *, u32 addr);
+int nvkm_devinit_pll_set(struct nvkm_devinit *, u32 type, u32 khz);
+void nvkm_devinit_meminit(struct nvkm_devinit *);
+int nvkm_devinit_post(struct nvkm_devinit *);
 
-पूर्णांक nv04_devinit_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक, काष्ठा nvkm_devinit **);
-पूर्णांक nv05_devinit_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक, काष्ठा nvkm_devinit **);
-पूर्णांक nv10_devinit_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक, काष्ठा nvkm_devinit **);
-पूर्णांक nv1a_devinit_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक, काष्ठा nvkm_devinit **);
-पूर्णांक nv20_devinit_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक, काष्ठा nvkm_devinit **);
-पूर्णांक nv50_devinit_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक, काष्ठा nvkm_devinit **);
-पूर्णांक g84_devinit_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक, काष्ठा nvkm_devinit **);
-पूर्णांक g98_devinit_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक, काष्ठा nvkm_devinit **);
-पूर्णांक gt215_devinit_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक, काष्ठा nvkm_devinit **);
-पूर्णांक mcp89_devinit_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक, काष्ठा nvkm_devinit **);
-पूर्णांक gf100_devinit_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक, काष्ठा nvkm_devinit **);
-पूर्णांक gm107_devinit_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक, काष्ठा nvkm_devinit **);
-पूर्णांक gm200_devinit_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक, काष्ठा nvkm_devinit **);
-पूर्णांक gv100_devinit_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक, काष्ठा nvkm_devinit **);
-पूर्णांक tu102_devinit_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक, काष्ठा nvkm_devinit **);
-पूर्णांक ga100_devinit_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक, काष्ठा nvkm_devinit **);
-#पूर्ण_अगर
+int nv04_devinit_new(struct nvkm_device *, enum nvkm_subdev_type, int, struct nvkm_devinit **);
+int nv05_devinit_new(struct nvkm_device *, enum nvkm_subdev_type, int, struct nvkm_devinit **);
+int nv10_devinit_new(struct nvkm_device *, enum nvkm_subdev_type, int, struct nvkm_devinit **);
+int nv1a_devinit_new(struct nvkm_device *, enum nvkm_subdev_type, int, struct nvkm_devinit **);
+int nv20_devinit_new(struct nvkm_device *, enum nvkm_subdev_type, int, struct nvkm_devinit **);
+int nv50_devinit_new(struct nvkm_device *, enum nvkm_subdev_type, int, struct nvkm_devinit **);
+int g84_devinit_new(struct nvkm_device *, enum nvkm_subdev_type, int, struct nvkm_devinit **);
+int g98_devinit_new(struct nvkm_device *, enum nvkm_subdev_type, int, struct nvkm_devinit **);
+int gt215_devinit_new(struct nvkm_device *, enum nvkm_subdev_type, int, struct nvkm_devinit **);
+int mcp89_devinit_new(struct nvkm_device *, enum nvkm_subdev_type, int, struct nvkm_devinit **);
+int gf100_devinit_new(struct nvkm_device *, enum nvkm_subdev_type, int, struct nvkm_devinit **);
+int gm107_devinit_new(struct nvkm_device *, enum nvkm_subdev_type, int, struct nvkm_devinit **);
+int gm200_devinit_new(struct nvkm_device *, enum nvkm_subdev_type, int, struct nvkm_devinit **);
+int gv100_devinit_new(struct nvkm_device *, enum nvkm_subdev_type, int, struct nvkm_devinit **);
+int tu102_devinit_new(struct nvkm_device *, enum nvkm_subdev_type, int, struct nvkm_devinit **);
+int ga100_devinit_new(struct nvkm_device *, enum nvkm_subdev_type, int, struct nvkm_devinit **);
+#endif

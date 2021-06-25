@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* Generate assembler source containing symbol inक्रमmation
+/* Generate assembler source containing symbol information
  *
  * Copyright 2002       by Kai Germaschewski
  *
@@ -8,9 +7,9 @@
  *
  * Usage: nm -n vmlinux | scripts/kallsyms [--all-symbols] > symbols.S
  *
- *      Table compression uses all the unused अक्षर codes on the symbols and
+ *      Table compression uses all the unused char codes on the symbols and
  *  maps these to the most used substrings (tokens). For instance, it might
- *  map अक्षर code 0xF7 to represent "write_" and then in every symbol where
+ *  map char code 0xF7 to represent "write_" and then in every symbol where
  *  "write_" appears it can be replaced by 0xF7, saving 5 bytes.
  *      The used codes themselves are also placed in the table so that the
  *  decompresion can work without "special cases".
@@ -19,77 +18,77 @@
  *
  */
 
-#समावेश <stdbool.h>
-#समावेश <मानकपन.स>
-#समावेश <मानककोष.स>
-#समावेश <माला.स>
-#समावेश <प्रकार.स>
-#समावेश <सीमा.स>
+#include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
+#include <limits.h>
 
-#घोषणा ARRAY_SIZE(arr) (माप(arr) / माप(arr[0]))
+#define ARRAY_SIZE(arr) (sizeof(arr) / sizeof(arr[0]))
 
-#घोषणा KSYM_NAME_LEN		128
+#define KSYM_NAME_LEN		128
 
-काष्ठा sym_entry अणु
-	अचिन्हित दीर्घ दीर्घ addr;
-	अचिन्हित पूर्णांक len;
-	अचिन्हित पूर्णांक start_pos;
-	अचिन्हित पूर्णांक percpu_असलolute;
-	अचिन्हित अक्षर sym[];
-पूर्ण;
+struct sym_entry {
+	unsigned long long addr;
+	unsigned int len;
+	unsigned int start_pos;
+	unsigned int percpu_absolute;
+	unsigned char sym[];
+};
 
-काष्ठा addr_range अणु
-	स्थिर अक्षर *start_sym, *end_sym;
-	अचिन्हित दीर्घ दीर्घ start, end;
-पूर्ण;
+struct addr_range {
+	const char *start_sym, *end_sym;
+	unsigned long long start, end;
+};
 
-अटल अचिन्हित दीर्घ दीर्घ _text;
-अटल अचिन्हित दीर्घ दीर्घ relative_base;
-अटल काष्ठा addr_range text_ranges[] = अणु
-	अणु "_stext",     "_etext"     पूर्ण,
-	अणु "_sinittext", "_einittext" पूर्ण,
-पूर्ण;
-#घोषणा text_range_text     (&text_ranges[0])
-#घोषणा text_range_inittext (&text_ranges[1])
+static unsigned long long _text;
+static unsigned long long relative_base;
+static struct addr_range text_ranges[] = {
+	{ "_stext",     "_etext"     },
+	{ "_sinittext", "_einittext" },
+};
+#define text_range_text     (&text_ranges[0])
+#define text_range_inittext (&text_ranges[1])
 
-अटल काष्ठा addr_range percpu_range = अणु
+static struct addr_range percpu_range = {
 	"__per_cpu_start", "__per_cpu_end", -1ULL, 0
-पूर्ण;
+};
 
-अटल काष्ठा sym_entry **table;
-अटल अचिन्हित पूर्णांक table_size, table_cnt;
-अटल पूर्णांक all_symbols;
-अटल पूर्णांक असलolute_percpu;
-अटल पूर्णांक base_relative;
+static struct sym_entry **table;
+static unsigned int table_size, table_cnt;
+static int all_symbols;
+static int absolute_percpu;
+static int base_relative;
 
-अटल पूर्णांक token_profit[0x10000];
+static int token_profit[0x10000];
 
 /* the table that holds the result of the compression */
-अटल अचिन्हित अक्षर best_table[256][2];
-अटल अचिन्हित अक्षर best_table_len[256];
+static unsigned char best_table[256][2];
+static unsigned char best_table_len[256];
 
 
-अटल व्योम usage(व्योम)
-अणु
-	ख_लिखो(मानक_त्रुटि, "Usage: kallsyms [--all-symbols] "
+static void usage(void)
+{
+	fprintf(stderr, "Usage: kallsyms [--all-symbols] "
 			"[--base-relative] < in.map > out.S\n");
-	निकास(1);
-पूर्ण
+	exit(1);
+}
 
-अटल अक्षर *sym_name(स्थिर काष्ठा sym_entry *s)
-अणु
-	वापस (अक्षर *)s->sym + 1;
-पूर्ण
+static char *sym_name(const struct sym_entry *s)
+{
+	return (char *)s->sym + 1;
+}
 
-अटल bool is_ignored_symbol(स्थिर अक्षर *name, अक्षर type)
-अणु
+static bool is_ignored_symbol(const char *name, char type)
+{
 	/* Symbol names that exactly match to the following are ignored.*/
-	अटल स्थिर अक्षर * स्थिर ignored_symbols[] = अणु
+	static const char * const ignored_symbols[] = {
 		/*
 		 * Symbols which vary between passes. Passes 1 and 2 must have
 		 * identical symbol lists. The kallsyms_* symbols below are
 		 * only added after pass 1, they would be included in pass 2
-		 * when --all-symbols is specअगरied so exclude them to get a
+		 * when --all-symbols is specified so exclude them to get a
 		 * stable symbol list.
 		 */
 		"kallsyms_addresses",
@@ -103,12 +102,12 @@
 		/* Exclude linker generated symbols which vary between passes */
 		"_SDA_BASE_",		/* ppc */
 		"_SDA2_BASE_",		/* ppc */
-		शून्य
-	पूर्ण;
+		NULL
+	};
 
 	/* Symbol names that begin with the following are ignored.*/
-	अटल स्थिर अक्षर * स्थिर ignored_prefixes[] = अणु
-		"$",			/* local symbols क्रम ARM, MIPS, etc. */
+	static const char * const ignored_prefixes[] = {
+		"$",			/* local symbols for ARM, MIPS, etc. */
 		".LASANPC",		/* s390 kasan local symbols */
 		"__crc_",		/* modversions */
 		"__efistub_",		/* arm64 EFI stub namespace */
@@ -119,509 +118,509 @@
 		"__ThumbV7PILongThunk_",
 		"__LA25Thunk_",		/* mips lld */
 		"__microLA25Thunk_",
-		शून्य
-	पूर्ण;
+		NULL
+	};
 
 	/* Symbol names that end with the following are ignored.*/
-	अटल स्थिर अक्षर * स्थिर ignored_suffixes[] = अणु
+	static const char * const ignored_suffixes[] = {
 		"_from_arm",		/* arm */
 		"_from_thumb",		/* arm */
 		"_veneer",		/* arm */
-		शून्य
-	पूर्ण;
+		NULL
+	};
 
 	/* Symbol names that contain the following are ignored.*/
-	अटल स्थिर अक्षर * स्थिर ignored_matches[] = अणु
+	static const char * const ignored_matches[] = {
 		".long_branch.",	/* ppc stub */
 		".plt_branch.",		/* ppc stub */
-		शून्य
-	पूर्ण;
+		NULL
+	};
 
-	स्थिर अक्षर * स्थिर *p;
+	const char * const *p;
 
-	क्रम (p = ignored_symbols; *p; p++)
-		अगर (!म_भेद(name, *p))
-			वापस true;
+	for (p = ignored_symbols; *p; p++)
+		if (!strcmp(name, *p))
+			return true;
 
-	क्रम (p = ignored_prefixes; *p; p++)
-		अगर (!म_भेदन(name, *p, म_माप(*p)))
-			वापस true;
+	for (p = ignored_prefixes; *p; p++)
+		if (!strncmp(name, *p, strlen(*p)))
+			return true;
 
-	क्रम (p = ignored_suffixes; *p; p++) अणु
-		पूर्णांक l = म_माप(name) - म_माप(*p);
+	for (p = ignored_suffixes; *p; p++) {
+		int l = strlen(name) - strlen(*p);
 
-		अगर (l >= 0 && !म_भेद(name + l, *p))
-			वापस true;
-	पूर्ण
+		if (l >= 0 && !strcmp(name + l, *p))
+			return true;
+	}
 
-	क्रम (p = ignored_matches; *p; p++) अणु
-		अगर (म_माला(name, *p))
-			वापस true;
-	पूर्ण
+	for (p = ignored_matches; *p; p++) {
+		if (strstr(name, *p))
+			return true;
+	}
 
-	अगर (type == 'U' || type == 'u')
-		वापस true;
+	if (type == 'U' || type == 'u')
+		return true;
 	/* exclude debugging symbols */
-	अगर (type == 'N' || type == 'n')
-		वापस true;
+	if (type == 'N' || type == 'n')
+		return true;
 
-	अगर (बड़े(type) == 'A') अणु
-		/* Keep these useful असलolute symbols */
-		अगर (म_भेद(name, "__kernel_syscall_via_break") &&
-		    म_भेद(name, "__kernel_syscall_via_epc") &&
-		    म_भेद(name, "__kernel_sigtramp") &&
-		    म_भेद(name, "__gp"))
-			वापस true;
-	पूर्ण
+	if (toupper(type) == 'A') {
+		/* Keep these useful absolute symbols */
+		if (strcmp(name, "__kernel_syscall_via_break") &&
+		    strcmp(name, "__kernel_syscall_via_epc") &&
+		    strcmp(name, "__kernel_sigtramp") &&
+		    strcmp(name, "__gp"))
+			return true;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल व्योम check_symbol_range(स्थिर अक्षर *sym, अचिन्हित दीर्घ दीर्घ addr,
-			       काष्ठा addr_range *ranges, पूर्णांक entries)
-अणु
-	माप_प्रकार i;
-	काष्ठा addr_range *ar;
+static void check_symbol_range(const char *sym, unsigned long long addr,
+			       struct addr_range *ranges, int entries)
+{
+	size_t i;
+	struct addr_range *ar;
 
-	क्रम (i = 0; i < entries; ++i) अणु
+	for (i = 0; i < entries; ++i) {
 		ar = &ranges[i];
 
-		अगर (म_भेद(sym, ar->start_sym) == 0) अणु
+		if (strcmp(sym, ar->start_sym) == 0) {
 			ar->start = addr;
-			वापस;
-		पूर्ण अन्यथा अगर (म_भेद(sym, ar->end_sym) == 0) अणु
+			return;
+		} else if (strcmp(sym, ar->end_sym) == 0) {
 			ar->end = addr;
-			वापस;
-		पूर्ण
-	पूर्ण
-पूर्ण
+			return;
+		}
+	}
+}
 
-अटल काष्ठा sym_entry *पढ़ो_symbol(खाता *in)
-अणु
-	अक्षर name[500], type;
-	अचिन्हित दीर्घ दीर्घ addr;
-	अचिन्हित पूर्णांक len;
-	काष्ठा sym_entry *sym;
-	पूर्णांक rc;
+static struct sym_entry *read_symbol(FILE *in)
+{
+	char name[500], type;
+	unsigned long long addr;
+	unsigned int len;
+	struct sym_entry *sym;
+	int rc;
 
-	rc = ख_पूछो(in, "%llx %c %499s\n", &addr, &type, name);
-	अगर (rc != 3) अणु
-		अगर (rc != खातापूर्ण && ख_माला_लो(name, 500, in) == शून्य)
-			ख_लिखो(मानक_त्रुटि, "Read error or end of file.\n");
-		वापस शून्य;
-	पूर्ण
-	अगर (म_माप(name) >= KSYM_NAME_LEN) अणु
-		ख_लिखो(मानक_त्रुटि, "Symbol %s too long for kallsyms (%zu >= %d).\n"
+	rc = fscanf(in, "%llx %c %499s\n", &addr, &type, name);
+	if (rc != 3) {
+		if (rc != EOF && fgets(name, 500, in) == NULL)
+			fprintf(stderr, "Read error or end of file.\n");
+		return NULL;
+	}
+	if (strlen(name) >= KSYM_NAME_LEN) {
+		fprintf(stderr, "Symbol %s too long for kallsyms (%zu >= %d).\n"
 				"Please increase KSYM_NAME_LEN both in kernel and kallsyms.c\n",
-			name, म_माप(name), KSYM_NAME_LEN);
-		वापस शून्य;
-	पूर्ण
+			name, strlen(name), KSYM_NAME_LEN);
+		return NULL;
+	}
 
-	अगर (म_भेद(name, "_text") == 0)
+	if (strcmp(name, "_text") == 0)
 		_text = addr;
 
-	/* Ignore most असलolute/undefined (?) symbols. */
-	अगर (is_ignored_symbol(name, type))
-		वापस शून्य;
+	/* Ignore most absolute/undefined (?) symbols. */
+	if (is_ignored_symbol(name, type))
+		return NULL;
 
 	check_symbol_range(name, addr, text_ranges, ARRAY_SIZE(text_ranges));
 	check_symbol_range(name, addr, &percpu_range, 1);
 
-	/* include the type field in the symbol name, so that it माला_लो
+	/* include the type field in the symbol name, so that it gets
 	 * compressed together */
 
-	len = म_माप(name) + 1;
+	len = strlen(name) + 1;
 
-	sym = दो_स्मृति(माप(*sym) + len + 1);
-	अगर (!sym) अणु
-		ख_लिखो(मानक_त्रुटि, "kallsyms failure: "
+	sym = malloc(sizeof(*sym) + len + 1);
+	if (!sym) {
+		fprintf(stderr, "kallsyms failure: "
 			"unable to allocate required amount of memory\n");
-		निकास(निकास_त्रुटि);
-	पूर्ण
+		exit(EXIT_FAILURE);
+	}
 	sym->addr = addr;
 	sym->len = len;
 	sym->sym[0] = type;
-	म_नकल(sym_name(sym), name);
-	sym->percpu_असलolute = 0;
+	strcpy(sym_name(sym), name);
+	sym->percpu_absolute = 0;
 
-	वापस sym;
-पूर्ण
+	return sym;
+}
 
-अटल पूर्णांक symbol_in_range(स्थिर काष्ठा sym_entry *s,
-			   स्थिर काष्ठा addr_range *ranges, पूर्णांक entries)
-अणु
-	माप_प्रकार i;
-	स्थिर काष्ठा addr_range *ar;
+static int symbol_in_range(const struct sym_entry *s,
+			   const struct addr_range *ranges, int entries)
+{
+	size_t i;
+	const struct addr_range *ar;
 
-	क्रम (i = 0; i < entries; ++i) अणु
+	for (i = 0; i < entries; ++i) {
 		ar = &ranges[i];
 
-		अगर (s->addr >= ar->start && s->addr <= ar->end)
-			वापस 1;
-	पूर्ण
+		if (s->addr >= ar->start && s->addr <= ar->end)
+			return 1;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक symbol_valid(स्थिर काष्ठा sym_entry *s)
-अणु
-	स्थिर अक्षर *name = sym_name(s);
+static int symbol_valid(const struct sym_entry *s)
+{
+	const char *name = sym_name(s);
 
-	/* अगर --all-symbols is not specअगरied, then symbols outside the text
+	/* if --all-symbols is not specified, then symbols outside the text
 	 * and inittext sections are discarded */
-	अगर (!all_symbols) अणु
-		अगर (symbol_in_range(s, text_ranges,
+	if (!all_symbols) {
+		if (symbol_in_range(s, text_ranges,
 				    ARRAY_SIZE(text_ranges)) == 0)
-			वापस 0;
-		/* Corner हाल.  Discard any symbols with the same value as
+			return 0;
+		/* Corner case.  Discard any symbols with the same value as
 		 * _etext _einittext; they can move between pass 1 and 2 when
 		 * the kallsyms data are added.  If these symbols move then
-		 * they may get dropped in pass 2, which अवरोधs the kallsyms
+		 * they may get dropped in pass 2, which breaks the kallsyms
 		 * rules.
 		 */
-		अगर ((s->addr == text_range_text->end &&
-		     म_भेद(name, text_range_text->end_sym)) ||
+		if ((s->addr == text_range_text->end &&
+		     strcmp(name, text_range_text->end_sym)) ||
 		    (s->addr == text_range_inittext->end &&
-		     म_भेद(name, text_range_inittext->end_sym)))
-			वापस 0;
-	पूर्ण
+		     strcmp(name, text_range_inittext->end_sym)))
+			return 0;
+	}
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-/* हटाओ all the invalid symbols from the table */
-अटल व्योम shrink_table(व्योम)
-अणु
-	अचिन्हित पूर्णांक i, pos;
+/* remove all the invalid symbols from the table */
+static void shrink_table(void)
+{
+	unsigned int i, pos;
 
 	pos = 0;
-	क्रम (i = 0; i < table_cnt; i++) अणु
-		अगर (symbol_valid(table[i])) अणु
-			अगर (pos != i)
+	for (i = 0; i < table_cnt; i++) {
+		if (symbol_valid(table[i])) {
+			if (pos != i)
 				table[pos] = table[i];
 			pos++;
-		पूर्ण अन्यथा अणु
-			मुक्त(table[i]);
-		पूर्ण
-	पूर्ण
+		} else {
+			free(table[i]);
+		}
+	}
 	table_cnt = pos;
 
-	/* When valid symbol is not रेजिस्टरed, निकास to error */
-	अगर (!table_cnt) अणु
-		ख_लिखो(मानक_त्रुटि, "No valid symbol.\n");
-		निकास(1);
-	पूर्ण
-पूर्ण
+	/* When valid symbol is not registered, exit to error */
+	if (!table_cnt) {
+		fprintf(stderr, "No valid symbol.\n");
+		exit(1);
+	}
+}
 
-अटल व्योम पढ़ो_map(खाता *in)
-अणु
-	काष्ठा sym_entry *sym;
+static void read_map(FILE *in)
+{
+	struct sym_entry *sym;
 
-	जबतक (!ख_पूर्ण(in)) अणु
-		sym = पढ़ो_symbol(in);
-		अगर (!sym)
-			जारी;
+	while (!feof(in)) {
+		sym = read_symbol(in);
+		if (!sym)
+			continue;
 
 		sym->start_pos = table_cnt;
 
-		अगर (table_cnt >= table_size) अणु
+		if (table_cnt >= table_size) {
 			table_size += 10000;
-			table = पुनः_स्मृति(table, माप(*table) * table_size);
-			अगर (!table) अणु
-				ख_लिखो(मानक_त्रुटि, "out of memory\n");
-				निकास (1);
-			पूर्ण
-		पूर्ण
+			table = realloc(table, sizeof(*table) * table_size);
+			if (!table) {
+				fprintf(stderr, "out of memory\n");
+				exit (1);
+			}
+		}
 
 		table[table_cnt++] = sym;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम output_label(स्थिर अक्षर *label)
-अणु
-	म_लिखो(".globl %s\n", label);
-	म_लिखो("\tALGN\n");
-	म_लिखो("%s:\n", label);
-पूर्ण
+static void output_label(const char *label)
+{
+	printf(".globl %s\n", label);
+	printf("\tALGN\n");
+	printf("%s:\n", label);
+}
 
 /* Provide proper symbols relocatability by their '_text' relativeness. */
-अटल व्योम output_address(अचिन्हित दीर्घ दीर्घ addr)
-अणु
-	अगर (_text <= addr)
-		म_लिखो("\tPTR\t_text + %#llx\n", addr - _text);
-	अन्यथा
-		म_लिखो("\tPTR\t_text - %#llx\n", _text - addr);
-पूर्ण
+static void output_address(unsigned long long addr)
+{
+	if (_text <= addr)
+		printf("\tPTR\t_text + %#llx\n", addr - _text);
+	else
+		printf("\tPTR\t_text - %#llx\n", _text - addr);
+}
 
 /* uncompress a compressed symbol. When this function is called, the best table
  * might still be compressed itself, so the function needs to be recursive */
-अटल पूर्णांक expand_symbol(स्थिर अचिन्हित अक्षर *data, पूर्णांक len, अक्षर *result)
-अणु
-	पूर्णांक c, rlen, total=0;
+static int expand_symbol(const unsigned char *data, int len, char *result)
+{
+	int c, rlen, total=0;
 
-	जबतक (len) अणु
+	while (len) {
 		c = *data;
-		/* अगर the table holds a single अक्षर that is the same as the one
-		 * we are looking क्रम, then end the search */
-		अगर (best_table[c][0]==c && best_table_len[c]==1) अणु
+		/* if the table holds a single char that is the same as the one
+		 * we are looking for, then end the search */
+		if (best_table[c][0]==c && best_table_len[c]==1) {
 			*result++ = c;
 			total++;
-		पूर्ण अन्यथा अणु
-			/* अगर not, recurse and expand */
+		} else {
+			/* if not, recurse and expand */
 			rlen = expand_symbol(best_table[c], best_table_len[c], result);
 			total += rlen;
 			result += rlen;
-		पूर्ण
+		}
 		data++;
 		len--;
-	पूर्ण
+	}
 	*result=0;
 
-	वापस total;
-पूर्ण
+	return total;
+}
 
-अटल पूर्णांक symbol_असलolute(स्थिर काष्ठा sym_entry *s)
-अणु
-	वापस s->percpu_असलolute;
-पूर्ण
+static int symbol_absolute(const struct sym_entry *s)
+{
+	return s->percpu_absolute;
+}
 
-अटल व्योम ग_लिखो_src(व्योम)
-अणु
-	अचिन्हित पूर्णांक i, k, off;
-	अचिन्हित पूर्णांक best_idx[256];
-	अचिन्हित पूर्णांक *markers;
-	अक्षर buf[KSYM_NAME_LEN];
+static void write_src(void)
+{
+	unsigned int i, k, off;
+	unsigned int best_idx[256];
+	unsigned int *markers;
+	char buf[KSYM_NAME_LEN];
 
-	म_लिखो("#include <asm/bitsperlong.h>\n");
-	म_लिखो("#if BITS_PER_LONG == 64\n");
-	म_लिखो("#define PTR .quad\n");
-	म_लिखो("#define ALGN .balign 8\n");
-	म_लिखो("#else\n");
-	म_लिखो("#define PTR .long\n");
-	म_लिखो("#define ALGN .balign 4\n");
-	म_लिखो("#endif\n");
+	printf("#include <asm/bitsperlong.h>\n");
+	printf("#if BITS_PER_LONG == 64\n");
+	printf("#define PTR .quad\n");
+	printf("#define ALGN .balign 8\n");
+	printf("#else\n");
+	printf("#define PTR .long\n");
+	printf("#define ALGN .balign 4\n");
+	printf("#endif\n");
 
-	म_लिखो("\t.section .rodata, \"a\"\n");
+	printf("\t.section .rodata, \"a\"\n");
 
-	अगर (!base_relative)
+	if (!base_relative)
 		output_label("kallsyms_addresses");
-	अन्यथा
+	else
 		output_label("kallsyms_offsets");
 
-	क्रम (i = 0; i < table_cnt; i++) अणु
-		अगर (base_relative) अणु
+	for (i = 0; i < table_cnt; i++) {
+		if (base_relative) {
 			/*
 			 * Use the offset relative to the lowest value
 			 * encountered of all relative symbols, and emit
 			 * non-relocatable fixed offsets that will be fixed
-			 * up at runसमय.
+			 * up at runtime.
 			 */
 
-			दीर्घ दीर्घ offset;
-			पूर्णांक overflow;
+			long long offset;
+			int overflow;
 
-			अगर (!असलolute_percpu) अणु
+			if (!absolute_percpu) {
 				offset = table[i]->addr - relative_base;
-				overflow = (offset < 0 || offset > अच_पूर्णांक_उच्च);
-			पूर्ण अन्यथा अगर (symbol_असलolute(table[i])) अणु
+				overflow = (offset < 0 || offset > UINT_MAX);
+			} else if (symbol_absolute(table[i])) {
 				offset = table[i]->addr;
-				overflow = (offset < 0 || offset > पूर्णांक_उच्च);
-			पूर्ण अन्यथा अणु
+				overflow = (offset < 0 || offset > INT_MAX);
+			} else {
 				offset = relative_base - table[i]->addr - 1;
-				overflow = (offset < पूर्णांक_न्यून || offset >= 0);
-			पूर्ण
-			अगर (overflow) अणु
-				ख_लिखो(मानक_त्रुटि, "kallsyms failure: "
+				overflow = (offset < INT_MIN || offset >= 0);
+			}
+			if (overflow) {
+				fprintf(stderr, "kallsyms failure: "
 					"%s symbol value %#llx out of range in relative mode\n",
-					symbol_असलolute(table[i]) ? "absolute" : "relative",
+					symbol_absolute(table[i]) ? "absolute" : "relative",
 					table[i]->addr);
-				निकास(निकास_त्रुटि);
-			पूर्ण
-			म_लिखो("\t.long\t%#x\n", (पूर्णांक)offset);
-		पूर्ण अन्यथा अगर (!symbol_असलolute(table[i])) अणु
+				exit(EXIT_FAILURE);
+			}
+			printf("\t.long\t%#x\n", (int)offset);
+		} else if (!symbol_absolute(table[i])) {
 			output_address(table[i]->addr);
-		पूर्ण अन्यथा अणु
-			म_लिखो("\tPTR\t%#llx\n", table[i]->addr);
-		पूर्ण
-	पूर्ण
-	म_लिखो("\n");
+		} else {
+			printf("\tPTR\t%#llx\n", table[i]->addr);
+		}
+	}
+	printf("\n");
 
-	अगर (base_relative) अणु
+	if (base_relative) {
 		output_label("kallsyms_relative_base");
 		output_address(relative_base);
-		म_लिखो("\n");
-	पूर्ण
+		printf("\n");
+	}
 
 	output_label("kallsyms_num_syms");
-	म_लिखो("\t.long\t%u\n", table_cnt);
-	म_लिखो("\n");
+	printf("\t.long\t%u\n", table_cnt);
+	printf("\n");
 
 	/* table of offset markers, that give the offset in the compressed stream
 	 * every 256 symbols */
-	markers = दो_स्मृति(माप(अचिन्हित पूर्णांक) * ((table_cnt + 255) / 256));
-	अगर (!markers) अणु
-		ख_लिखो(मानक_त्रुटि, "kallsyms failure: "
+	markers = malloc(sizeof(unsigned int) * ((table_cnt + 255) / 256));
+	if (!markers) {
+		fprintf(stderr, "kallsyms failure: "
 			"unable to allocate required memory\n");
-		निकास(निकास_त्रुटि);
-	पूर्ण
+		exit(EXIT_FAILURE);
+	}
 
 	output_label("kallsyms_names");
 	off = 0;
-	क्रम (i = 0; i < table_cnt; i++) अणु
-		अगर ((i & 0xFF) == 0)
+	for (i = 0; i < table_cnt; i++) {
+		if ((i & 0xFF) == 0)
 			markers[i >> 8] = off;
 
-		म_लिखो("\t.byte 0x%02x", table[i]->len);
-		क्रम (k = 0; k < table[i]->len; k++)
-			म_लिखो(", 0x%02x", table[i]->sym[k]);
-		म_लिखो("\n");
+		printf("\t.byte 0x%02x", table[i]->len);
+		for (k = 0; k < table[i]->len; k++)
+			printf(", 0x%02x", table[i]->sym[k]);
+		printf("\n");
 
 		off += table[i]->len + 1;
-	पूर्ण
-	म_लिखो("\n");
+	}
+	printf("\n");
 
 	output_label("kallsyms_markers");
-	क्रम (i = 0; i < ((table_cnt + 255) >> 8); i++)
-		म_लिखो("\t.long\t%u\n", markers[i]);
-	म_लिखो("\n");
+	for (i = 0; i < ((table_cnt + 255) >> 8); i++)
+		printf("\t.long\t%u\n", markers[i]);
+	printf("\n");
 
-	मुक्त(markers);
+	free(markers);
 
 	output_label("kallsyms_token_table");
 	off = 0;
-	क्रम (i = 0; i < 256; i++) अणु
+	for (i = 0; i < 256; i++) {
 		best_idx[i] = off;
 		expand_symbol(best_table[i], best_table_len[i], buf);
-		म_लिखो("\t.asciz\t\"%s\"\n", buf);
-		off += म_माप(buf) + 1;
-	पूर्ण
-	म_लिखो("\n");
+		printf("\t.asciz\t\"%s\"\n", buf);
+		off += strlen(buf) + 1;
+	}
+	printf("\n");
 
 	output_label("kallsyms_token_index");
-	क्रम (i = 0; i < 256; i++)
-		म_लिखो("\t.short\t%d\n", best_idx[i]);
-	म_लिखो("\n");
-पूर्ण
+	for (i = 0; i < 256; i++)
+		printf("\t.short\t%d\n", best_idx[i]);
+	printf("\n");
+}
 
 
 /* table lookup compression functions */
 
 /* count all the possible tokens in a symbol */
-अटल व्योम learn_symbol(स्थिर अचिन्हित अक्षर *symbol, पूर्णांक len)
-अणु
-	पूर्णांक i;
+static void learn_symbol(const unsigned char *symbol, int len)
+{
+	int i;
 
-	क्रम (i = 0; i < len - 1; i++)
+	for (i = 0; i < len - 1; i++)
 		token_profit[ symbol[i] + (symbol[i + 1] << 8) ]++;
-पूर्ण
+}
 
-/* decrease the count क्रम all the possible tokens in a symbol */
-अटल व्योम क्रमget_symbol(स्थिर अचिन्हित अक्षर *symbol, पूर्णांक len)
-अणु
-	पूर्णांक i;
+/* decrease the count for all the possible tokens in a symbol */
+static void forget_symbol(const unsigned char *symbol, int len)
+{
+	int i;
 
-	क्रम (i = 0; i < len - 1; i++)
+	for (i = 0; i < len - 1; i++)
 		token_profit[ symbol[i] + (symbol[i + 1] << 8) ]--;
-पूर्ण
+}
 
-/* करो the initial token count */
-अटल व्योम build_initial_tok_table(व्योम)
-अणु
-	अचिन्हित पूर्णांक i;
+/* do the initial token count */
+static void build_initial_tok_table(void)
+{
+	unsigned int i;
 
-	क्रम (i = 0; i < table_cnt; i++)
+	for (i = 0; i < table_cnt; i++)
 		learn_symbol(table[i]->sym, table[i]->len);
-पूर्ण
+}
 
-अटल अचिन्हित अक्षर *find_token(अचिन्हित अक्षर *str, पूर्णांक len,
-				 स्थिर अचिन्हित अक्षर *token)
-अणु
-	पूर्णांक i;
+static unsigned char *find_token(unsigned char *str, int len,
+				 const unsigned char *token)
+{
+	int i;
 
-	क्रम (i = 0; i < len - 1; i++) अणु
-		अगर (str[i] == token[0] && str[i+1] == token[1])
-			वापस &str[i];
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+	for (i = 0; i < len - 1; i++) {
+		if (str[i] == token[0] && str[i+1] == token[1])
+			return &str[i];
+	}
+	return NULL;
+}
 
 /* replace a given token in all the valid symbols. Use the sampled symbols
  * to update the counts */
-अटल व्योम compress_symbols(स्थिर अचिन्हित अक्षर *str, पूर्णांक idx)
-अणु
-	अचिन्हित पूर्णांक i, len, size;
-	अचिन्हित अक्षर *p1, *p2;
+static void compress_symbols(const unsigned char *str, int idx)
+{
+	unsigned int i, len, size;
+	unsigned char *p1, *p2;
 
-	क्रम (i = 0; i < table_cnt; i++) अणु
+	for (i = 0; i < table_cnt; i++) {
 
 		len = table[i]->len;
 		p1 = table[i]->sym;
 
 		/* find the token on the symbol */
 		p2 = find_token(p1, len, str);
-		अगर (!p2) जारी;
+		if (!p2) continue;
 
-		/* decrease the counts क्रम this symbol's tokens */
-		क्रमget_symbol(table[i]->sym, len);
+		/* decrease the counts for this symbol's tokens */
+		forget_symbol(table[i]->sym, len);
 
 		size = len;
 
-		करो अणु
+		do {
 			*p2 = idx;
 			p2++;
 			size -= (p2 - p1);
-			स_हटाओ(p2, p2 + 1, size);
+			memmove(p2, p2 + 1, size);
 			p1 = p2;
 			len--;
 
-			अगर (size < 2) अवरोध;
+			if (size < 2) break;
 
 			/* find the token on the symbol */
 			p2 = find_token(p1, size, str);
 
-		पूर्ण जबतक (p2);
+		} while (p2);
 
 		table[i]->len = len;
 
-		/* increase the counts क्रम this symbol's new tokens */
+		/* increase the counts for this symbol's new tokens */
 		learn_symbol(table[i]->sym, len);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /* search the token with the maximum profit */
-अटल पूर्णांक find_best_token(व्योम)
-अणु
-	पूर्णांक i, best, bestprofit;
+static int find_best_token(void)
+{
+	int i, best, bestprofit;
 
 	bestprofit=-10000;
 	best = 0;
 
-	क्रम (i = 0; i < 0x10000; i++) अणु
-		अगर (token_profit[i] > bestprofit) अणु
+	for (i = 0; i < 0x10000; i++) {
+		if (token_profit[i] > bestprofit) {
 			best = i;
 			bestprofit = token_profit[i];
-		पूर्ण
-	पूर्ण
-	वापस best;
-पूर्ण
+		}
+	}
+	return best;
+}
 
 /* this is the core of the algorithm: calculate the "best" table */
-अटल व्योम optimize_result(व्योम)
-अणु
-	पूर्णांक i, best;
+static void optimize_result(void)
+{
+	int i, best;
 
 	/* using the '\0' symbol last allows compress_symbols to use standard
 	 * fast string functions */
-	क्रम (i = 255; i >= 0; i--) अणु
+	for (i = 255; i >= 0; i--) {
 
-		/* अगर this table slot is empty (it is not used by an actual
-		 * original अक्षर code */
-		अगर (!best_table_len[i]) अणु
+		/* if this table slot is empty (it is not used by an actual
+		 * original char code */
+		if (!best_table_len[i]) {
 
 			/* find the token with the best profit value */
 			best = find_best_token();
-			अगर (token_profit[best] == 0)
-				अवरोध;
+			if (token_profit[best] == 0)
+				break;
 
 			/* place it in the "best" table */
 			best_table_len[i] = 2;
@@ -630,165 +629,165 @@
 
 			/* replace this token in all the valid symbols */
 			compress_symbols(best_table[i], i);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
 /* start by placing the symbols that are actually used on the table */
-अटल व्योम insert_real_symbols_in_table(व्योम)
-अणु
-	अचिन्हित पूर्णांक i, j, c;
+static void insert_real_symbols_in_table(void)
+{
+	unsigned int i, j, c;
 
-	क्रम (i = 0; i < table_cnt; i++) अणु
-		क्रम (j = 0; j < table[i]->len; j++) अणु
+	for (i = 0; i < table_cnt; i++) {
+		for (j = 0; j < table[i]->len; j++) {
 			c = table[i]->sym[j];
 			best_table[c][0]=c;
 			best_table_len[c]=1;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल व्योम optimize_token_table(व्योम)
-अणु
+static void optimize_token_table(void)
+{
 	build_initial_tok_table();
 
 	insert_real_symbols_in_table();
 
 	optimize_result();
-पूर्ण
+}
 
-/* guess क्रम "linker script provide" symbol */
-अटल पूर्णांक may_be_linker_script_provide_symbol(स्थिर काष्ठा sym_entry *se)
-अणु
-	स्थिर अक्षर *symbol = sym_name(se);
-	पूर्णांक len = se->len - 1;
+/* guess for "linker script provide" symbol */
+static int may_be_linker_script_provide_symbol(const struct sym_entry *se)
+{
+	const char *symbol = sym_name(se);
+	int len = se->len - 1;
 
-	अगर (len < 8)
-		वापस 0;
+	if (len < 8)
+		return 0;
 
-	अगर (symbol[0] != '_' || symbol[1] != '_')
-		वापस 0;
+	if (symbol[0] != '_' || symbol[1] != '_')
+		return 0;
 
 	/* __start_XXXXX */
-	अगर (!स_भेद(symbol + 2, "start_", 6))
-		वापस 1;
+	if (!memcmp(symbol + 2, "start_", 6))
+		return 1;
 
 	/* __stop_XXXXX */
-	अगर (!स_भेद(symbol + 2, "stop_", 5))
-		वापस 1;
+	if (!memcmp(symbol + 2, "stop_", 5))
+		return 1;
 
 	/* __end_XXXXX */
-	अगर (!स_भेद(symbol + 2, "end_", 4))
-		वापस 1;
+	if (!memcmp(symbol + 2, "end_", 4))
+		return 1;
 
 	/* __XXXXX_start */
-	अगर (!स_भेद(symbol + len - 6, "_start", 6))
-		वापस 1;
+	if (!memcmp(symbol + len - 6, "_start", 6))
+		return 1;
 
 	/* __XXXXX_end */
-	अगर (!स_भेद(symbol + len - 4, "_end", 4))
-		वापस 1;
+	if (!memcmp(symbol + len - 4, "_end", 4))
+		return 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक compare_symbols(स्थिर व्योम *a, स्थिर व्योम *b)
-अणु
-	स्थिर काष्ठा sym_entry *sa = *(स्थिर काष्ठा sym_entry **)a;
-	स्थिर काष्ठा sym_entry *sb = *(स्थिर काष्ठा sym_entry **)b;
-	पूर्णांक wa, wb;
+static int compare_symbols(const void *a, const void *b)
+{
+	const struct sym_entry *sa = *(const struct sym_entry **)a;
+	const struct sym_entry *sb = *(const struct sym_entry **)b;
+	int wa, wb;
 
 	/* sort by address first */
-	अगर (sa->addr > sb->addr)
-		वापस 1;
-	अगर (sa->addr < sb->addr)
-		वापस -1;
+	if (sa->addr > sb->addr)
+		return 1;
+	if (sa->addr < sb->addr)
+		return -1;
 
 	/* sort by "weakness" type */
 	wa = (sa->sym[0] == 'w') || (sa->sym[0] == 'W');
 	wb = (sb->sym[0] == 'w') || (sb->sym[0] == 'W');
-	अगर (wa != wb)
-		वापस wa - wb;
+	if (wa != wb)
+		return wa - wb;
 
 	/* sort by "linker script provide" type */
 	wa = may_be_linker_script_provide_symbol(sa);
 	wb = may_be_linker_script_provide_symbol(sb);
-	अगर (wa != wb)
-		वापस wa - wb;
+	if (wa != wb)
+		return wa - wb;
 
 	/* sort by the number of prefix underscores */
-	wa = म_अखोज(sym_name(sa), "_");
-	wb = म_अखोज(sym_name(sb), "_");
-	अगर (wa != wb)
-		वापस wa - wb;
+	wa = strspn(sym_name(sa), "_");
+	wb = strspn(sym_name(sb), "_");
+	if (wa != wb)
+		return wa - wb;
 
 	/* sort by initial order, so that other symbols are left undisturbed */
-	वापस sa->start_pos - sb->start_pos;
-पूर्ण
+	return sa->start_pos - sb->start_pos;
+}
 
-अटल व्योम sort_symbols(व्योम)
-अणु
-	क्विक(table, table_cnt, माप(table[0]), compare_symbols);
-पूर्ण
+static void sort_symbols(void)
+{
+	qsort(table, table_cnt, sizeof(table[0]), compare_symbols);
+}
 
-अटल व्योम make_percpus_असलolute(व्योम)
-अणु
-	अचिन्हित पूर्णांक i;
+static void make_percpus_absolute(void)
+{
+	unsigned int i;
 
-	क्रम (i = 0; i < table_cnt; i++)
-		अगर (symbol_in_range(table[i], &percpu_range, 1)) अणु
+	for (i = 0; i < table_cnt; i++)
+		if (symbol_in_range(table[i], &percpu_range, 1)) {
 			/*
-			 * Keep the 'A' override क्रम percpu symbols to
+			 * Keep the 'A' override for percpu symbols to
 			 * ensure consistent behavior compared to older
 			 * versions of this tool.
 			 */
 			table[i]->sym[0] = 'A';
-			table[i]->percpu_असलolute = 1;
-		पूर्ण
-पूर्ण
+			table[i]->percpu_absolute = 1;
+		}
+}
 
-/* find the minimum non-असलolute symbol address */
-अटल व्योम record_relative_base(व्योम)
-अणु
-	अचिन्हित पूर्णांक i;
+/* find the minimum non-absolute symbol address */
+static void record_relative_base(void)
+{
+	unsigned int i;
 
-	क्रम (i = 0; i < table_cnt; i++)
-		अगर (!symbol_असलolute(table[i])) अणु
+	for (i = 0; i < table_cnt; i++)
+		if (!symbol_absolute(table[i])) {
 			/*
 			 * The table is sorted by address.
-			 * Take the first non-असलolute symbol value.
+			 * Take the first non-absolute symbol value.
 			 */
 			relative_base = table[i]->addr;
-			वापस;
-		पूर्ण
-पूर्ण
+			return;
+		}
+}
 
-पूर्णांक मुख्य(पूर्णांक argc, अक्षर **argv)
-अणु
-	अगर (argc >= 2) अणु
-		पूर्णांक i;
-		क्रम (i = 1; i < argc; i++) अणु
-			अगर(म_भेद(argv[i], "--all-symbols") == 0)
+int main(int argc, char **argv)
+{
+	if (argc >= 2) {
+		int i;
+		for (i = 1; i < argc; i++) {
+			if(strcmp(argv[i], "--all-symbols") == 0)
 				all_symbols = 1;
-			अन्यथा अगर (म_भेद(argv[i], "--absolute-percpu") == 0)
-				असलolute_percpu = 1;
-			अन्यथा अगर (म_भेद(argv[i], "--base-relative") == 0)
+			else if (strcmp(argv[i], "--absolute-percpu") == 0)
+				absolute_percpu = 1;
+			else if (strcmp(argv[i], "--base-relative") == 0)
 				base_relative = 1;
-			अन्यथा
+			else
 				usage();
-		पूर्ण
-	पूर्ण अन्यथा अगर (argc != 1)
+		}
+	} else if (argc != 1)
 		usage();
 
-	पढ़ो_map(मानक_निवेश);
+	read_map(stdin);
 	shrink_table();
-	अगर (असलolute_percpu)
-		make_percpus_असलolute();
+	if (absolute_percpu)
+		make_percpus_absolute();
 	sort_symbols();
-	अगर (base_relative)
+	if (base_relative)
 		record_relative_base();
 	optimize_token_table();
-	ग_लिखो_src();
+	write_src();
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

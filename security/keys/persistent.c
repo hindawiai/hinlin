@@ -1,168 +1,167 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
-/* General persistent per-UID keyrings रेजिस्टर
+// SPDX-License-Identifier: GPL-2.0-or-later
+/* General persistent per-UID keyrings register
  *
  * Copyright (C) 2013 Red Hat, Inc. All Rights Reserved.
  * Written by David Howells (dhowells@redhat.com)
  */
 
-#समावेश <linux/user_namespace.h>
-#समावेश <linux/cred.h>
+#include <linux/user_namespace.h>
+#include <linux/cred.h>
 
-#समावेश "internal.h"
+#include "internal.h"
 
-अचिन्हित persistent_keyring_expiry = 3 * 24 * 3600; /* Expire after 3 days of non-use */
+unsigned persistent_keyring_expiry = 3 * 24 * 3600; /* Expire after 3 days of non-use */
 
 /*
- * Create the persistent keyring रेजिस्टर क्रम the current user namespace.
+ * Create the persistent keyring register for the current user namespace.
  *
- * Called with the namespace's sem locked क्रम writing.
+ * Called with the namespace's sem locked for writing.
  */
-अटल पूर्णांक key_create_persistent_रेजिस्टर(काष्ठा user_namespace *ns)
-अणु
-	काष्ठा key *reg = keyring_alloc(".persistent_register",
+static int key_create_persistent_register(struct user_namespace *ns)
+{
+	struct key *reg = keyring_alloc(".persistent_register",
 					KUIDT_INIT(0), KGIDT_INIT(0),
 					current_cred(),
 					((KEY_POS_ALL & ~KEY_POS_SETATTR) |
 					 KEY_USR_VIEW | KEY_USR_READ),
-					KEY_ALLOC_NOT_IN_QUOTA, शून्य, शून्य);
-	अगर (IS_ERR(reg))
-		वापस PTR_ERR(reg);
+					KEY_ALLOC_NOT_IN_QUOTA, NULL, NULL);
+	if (IS_ERR(reg))
+		return PTR_ERR(reg);
 
-	ns->persistent_keyring_रेजिस्टर = reg;
-	वापस 0;
-पूर्ण
+	ns->persistent_keyring_register = reg;
+	return 0;
+}
 
 /*
- * Create the persistent keyring क्रम the specअगरied user.
+ * Create the persistent keyring for the specified user.
  *
- * Called with the namespace's sem locked क्रम writing.
+ * Called with the namespace's sem locked for writing.
  */
-अटल key_ref_t key_create_persistent(काष्ठा user_namespace *ns, kuid_t uid,
-				       काष्ठा keyring_index_key *index_key)
-अणु
-	काष्ठा key *persistent;
+static key_ref_t key_create_persistent(struct user_namespace *ns, kuid_t uid,
+				       struct keyring_index_key *index_key)
+{
+	struct key *persistent;
 	key_ref_t reg_ref, persistent_ref;
 
-	अगर (!ns->persistent_keyring_रेजिस्टर) अणु
-		दीर्घ err = key_create_persistent_रेजिस्टर(ns);
-		अगर (err < 0)
-			वापस ERR_PTR(err);
-	पूर्ण अन्यथा अणु
-		reg_ref = make_key_ref(ns->persistent_keyring_रेजिस्टर, true);
+	if (!ns->persistent_keyring_register) {
+		long err = key_create_persistent_register(ns);
+		if (err < 0)
+			return ERR_PTR(err);
+	} else {
+		reg_ref = make_key_ref(ns->persistent_keyring_register, true);
 		persistent_ref = find_key_to_update(reg_ref, index_key);
-		अगर (persistent_ref)
-			वापस persistent_ref;
-	पूर्ण
+		if (persistent_ref)
+			return persistent_ref;
+	}
 
 	persistent = keyring_alloc(index_key->description,
 				   uid, INVALID_GID, current_cred(),
 				   ((KEY_POS_ALL & ~KEY_POS_SETATTR) |
 				    KEY_USR_VIEW | KEY_USR_READ),
-				   KEY_ALLOC_NOT_IN_QUOTA, शून्य,
-				   ns->persistent_keyring_रेजिस्टर);
-	अगर (IS_ERR(persistent))
-		वापस ERR_CAST(persistent);
+				   KEY_ALLOC_NOT_IN_QUOTA, NULL,
+				   ns->persistent_keyring_register);
+	if (IS_ERR(persistent))
+		return ERR_CAST(persistent);
 
-	वापस make_key_ref(persistent, true);
-पूर्ण
+	return make_key_ref(persistent, true);
+}
 
 /*
- * Get the persistent keyring क्रम a specअगरic UID and link it to the nominated
+ * Get the persistent keyring for a specific UID and link it to the nominated
  * keyring.
  */
-अटल दीर्घ key_get_persistent(काष्ठा user_namespace *ns, kuid_t uid,
+static long key_get_persistent(struct user_namespace *ns, kuid_t uid,
 			       key_ref_t dest_ref)
-अणु
-	काष्ठा keyring_index_key index_key;
-	काष्ठा key *persistent;
+{
+	struct keyring_index_key index_key;
+	struct key *persistent;
 	key_ref_t reg_ref, persistent_ref;
-	अक्षर buf[32];
-	दीर्घ ret;
+	char buf[32];
+	long ret;
 
-	/* Look in the रेजिस्टर अगर it exists */
-	स_रखो(&index_key, 0, माप(index_key));
+	/* Look in the register if it exists */
+	memset(&index_key, 0, sizeof(index_key));
 	index_key.type = &key_type_keyring;
 	index_key.description = buf;
-	index_key.desc_len = प्र_लिखो(buf, "_persistent.%u", from_kuid(ns, uid));
+	index_key.desc_len = sprintf(buf, "_persistent.%u", from_kuid(ns, uid));
 	key_set_index_key(&index_key);
 
-	अगर (ns->persistent_keyring_रेजिस्टर) अणु
-		reg_ref = make_key_ref(ns->persistent_keyring_रेजिस्टर, true);
-		करोwn_पढ़ो(&ns->keyring_sem);
+	if (ns->persistent_keyring_register) {
+		reg_ref = make_key_ref(ns->persistent_keyring_register, true);
+		down_read(&ns->keyring_sem);
 		persistent_ref = find_key_to_update(reg_ref, &index_key);
-		up_पढ़ो(&ns->keyring_sem);
+		up_read(&ns->keyring_sem);
 
-		अगर (persistent_ref)
-			जाओ found;
-	पूर्ण
+		if (persistent_ref)
+			goto found;
+	}
 
 	/* It wasn't in the register, so we'll need to create it.  We might
-	 * also need to create the रेजिस्टर.
+	 * also need to create the register.
 	 */
-	करोwn_ग_लिखो(&ns->keyring_sem);
+	down_write(&ns->keyring_sem);
 	persistent_ref = key_create_persistent(ns, uid, &index_key);
-	up_ग_लिखो(&ns->keyring_sem);
-	अगर (!IS_ERR(persistent_ref))
-		जाओ found;
+	up_write(&ns->keyring_sem);
+	if (!IS_ERR(persistent_ref))
+		goto found;
 
-	वापस PTR_ERR(persistent_ref);
+	return PTR_ERR(persistent_ref);
 
 found:
 	ret = key_task_permission(persistent_ref, current_cred(), KEY_NEED_LINK);
-	अगर (ret == 0) अणु
+	if (ret == 0) {
 		persistent = key_ref_to_ptr(persistent_ref);
 		ret = key_link(key_ref_to_ptr(dest_ref), persistent);
-		अगर (ret == 0) अणु
-			key_set_समयout(persistent, persistent_keyring_expiry);
+		if (ret == 0) {
+			key_set_timeout(persistent, persistent_keyring_expiry);
 			ret = persistent->serial;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	key_ref_put(persistent_ref);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * Get the persistent keyring क्रम a specअगरic UID and link it to the nominated
+ * Get the persistent keyring for a specific UID and link it to the nominated
  * keyring.
  */
-दीर्घ keyctl_get_persistent(uid_t _uid, key_serial_t destid)
-अणु
-	काष्ठा user_namespace *ns = current_user_ns();
+long keyctl_get_persistent(uid_t _uid, key_serial_t destid)
+{
+	struct user_namespace *ns = current_user_ns();
 	key_ref_t dest_ref;
 	kuid_t uid;
-	दीर्घ ret;
+	long ret;
 
 	/* -1 indicates the current user */
-	अगर (_uid == (uid_t)-1) अणु
+	if (_uid == (uid_t)-1) {
 		uid = current_uid();
-	पूर्ण अन्यथा अणु
+	} else {
 		uid = make_kuid(ns, _uid);
-		अगर (!uid_valid(uid))
-			वापस -EINVAL;
+		if (!uid_valid(uid))
+			return -EINVAL;
 
-		/* You can only see your own persistent cache अगर you're not
+		/* You can only see your own persistent cache if you're not
 		 * sufficiently privileged.
 		 */
-		अगर (!uid_eq(uid, current_uid()) &&
+		if (!uid_eq(uid, current_uid()) &&
 		    !uid_eq(uid, current_euid()) &&
 		    !ns_capable(ns, CAP_SETUID))
-			वापस -EPERM;
-	पूर्ण
+			return -EPERM;
+	}
 
 	/* There must be a destination keyring */
 	dest_ref = lookup_user_key(destid, KEY_LOOKUP_CREATE, KEY_NEED_WRITE);
-	अगर (IS_ERR(dest_ref))
-		वापस PTR_ERR(dest_ref);
-	अगर (key_ref_to_ptr(dest_ref)->type != &key_type_keyring) अणु
-		ret = -ENOTसूची;
-		जाओ out_put_dest;
-	पूर्ण
+	if (IS_ERR(dest_ref))
+		return PTR_ERR(dest_ref);
+	if (key_ref_to_ptr(dest_ref)->type != &key_type_keyring) {
+		ret = -ENOTDIR;
+		goto out_put_dest;
+	}
 
 	ret = key_get_persistent(ns, uid, dest_ref);
 
 out_put_dest:
 	key_ref_put(dest_ref);
-	वापस ret;
-पूर्ण
+	return ret;
+}

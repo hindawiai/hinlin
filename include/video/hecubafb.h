@@ -1,52 +1,51 @@
-<शैली गुरु>
 /*
- * hecubafb.h - definitions क्रम the hecuba framebuffer driver
+ * hecubafb.h - definitions for the hecuba framebuffer driver
  *
  * Copyright (C) 2008 by Jaya Kumar
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License. See the file COPYING in the मुख्य directory of this archive क्रम
+ * License. See the file COPYING in the main directory of this archive for
  * more details.
  *
  */
 
-#अगर_अघोषित _LINUX_HECUBAFB_H_
-#घोषणा _LINUX_HECUBAFB_H_
+#ifndef _LINUX_HECUBAFB_H_
+#define _LINUX_HECUBAFB_H_
 
-/* Apollo controller specअगरic defines */
-#घोषणा APOLLO_START_NEW_IMG	0xA0
-#घोषणा APOLLO_STOP_IMG_DATA	0xA1
-#घोषणा APOLLO_DISPLAY_IMG	0xA2
-#घोषणा APOLLO_ERASE_DISPLAY	0xA3
-#घोषणा APOLLO_INIT_DISPLAY	0xA4
+/* Apollo controller specific defines */
+#define APOLLO_START_NEW_IMG	0xA0
+#define APOLLO_STOP_IMG_DATA	0xA1
+#define APOLLO_DISPLAY_IMG	0xA2
+#define APOLLO_ERASE_DISPLAY	0xA3
+#define APOLLO_INIT_DISPLAY	0xA4
 
-/* Hecuba पूर्णांकerface specअगरic defines */
-#घोषणा HCB_WUP_BIT	0x01
-#घोषणा HCB_DS_BIT 	0x02
-#घोषणा HCB_RW_BIT 	0x04
-#घोषणा HCB_CD_BIT 	0x08
-#घोषणा HCB_ACK_BIT 	0x80
+/* Hecuba interface specific defines */
+#define HCB_WUP_BIT	0x01
+#define HCB_DS_BIT 	0x02
+#define HCB_RW_BIT 	0x04
+#define HCB_CD_BIT 	0x08
+#define HCB_ACK_BIT 	0x80
 
-/* काष्ठा used by hecuba. board specअगरic stuff comes from *board */
-काष्ठा hecubafb_par अणु
-	काष्ठा fb_info *info;
-	काष्ठा hecuba_board *board;
-	व्योम (*send_command)(काष्ठा hecubafb_par *, अचिन्हित अक्षर);
-	व्योम (*send_data)(काष्ठा hecubafb_par *, अचिन्हित अक्षर);
-पूर्ण;
+/* struct used by hecuba. board specific stuff comes from *board */
+struct hecubafb_par {
+	struct fb_info *info;
+	struct hecuba_board *board;
+	void (*send_command)(struct hecubafb_par *, unsigned char);
+	void (*send_data)(struct hecubafb_par *, unsigned char);
+};
 
-/* board specअगरic routines
-board drivers can implement रुको_क्रम_ack with पूर्णांकerrupts अगर desired. अगर
-रुको_क्रम_ack is called with clear=0, then go to sleep and वापस when ack
-goes hi or अगर रुको_क्रम_ack with clear=1, then वापस when ack goes lo */
-काष्ठा hecuba_board अणु
-	काष्ठा module *owner;
-	व्योम (*हटाओ)(काष्ठा hecubafb_par *);
-	व्योम (*set_ctl)(काष्ठा hecubafb_par *, अचिन्हित अक्षर, अचिन्हित अक्षर);
-	व्योम (*set_data)(काष्ठा hecubafb_par *, अचिन्हित अक्षर);
-	व्योम (*रुको_क्रम_ack)(काष्ठा hecubafb_par *, पूर्णांक);
-	पूर्णांक (*init)(काष्ठा hecubafb_par *);
-पूर्ण;
+/* board specific routines
+board drivers can implement wait_for_ack with interrupts if desired. if
+wait_for_ack is called with clear=0, then go to sleep and return when ack
+goes hi or if wait_for_ack with clear=1, then return when ack goes lo */
+struct hecuba_board {
+	struct module *owner;
+	void (*remove)(struct hecubafb_par *);
+	void (*set_ctl)(struct hecubafb_par *, unsigned char, unsigned char);
+	void (*set_data)(struct hecubafb_par *, unsigned char);
+	void (*wait_for_ack)(struct hecubafb_par *, int);
+	int (*init)(struct hecubafb_par *);
+};
 
 
-#पूर्ण_अगर
+#endif

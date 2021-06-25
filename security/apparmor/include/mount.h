@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * AppArmor security module
  *
@@ -8,44 +7,44 @@
  * Copyright 2017 Canonical Ltd.
  */
 
-#अगर_अघोषित __AA_MOUNT_H
-#घोषणा __AA_MOUNT_H
+#ifndef __AA_MOUNT_H
+#define __AA_MOUNT_H
 
-#समावेश <linux/fs.h>
-#समावेश <linux/path.h>
+#include <linux/fs.h>
+#include <linux/path.h>
 
-#समावेश "domain.h"
-#समावेश "policy.h"
+#include "domain.h"
+#include "policy.h"
 
 /* mount perms */
-#घोषणा AA_MAY_PIVOTROOT	0x01
-#घोषणा AA_MAY_MOUNT		0x02
-#घोषणा AA_MAY_UMOUNT		0x04
-#घोषणा AA_AUDIT_DATA		0x40
-#घोषणा AA_MNT_CONT_MATCH	0x40
+#define AA_MAY_PIVOTROOT	0x01
+#define AA_MAY_MOUNT		0x02
+#define AA_MAY_UMOUNT		0x04
+#define AA_AUDIT_DATA		0x40
+#define AA_MNT_CONT_MATCH	0x40
 
-#घोषणा AA_MS_IGNORE_MASK (MS_KERNMOUNT | MS_NOSEC | MS_ACTIVE | MS_BORN)
+#define AA_MS_IGNORE_MASK (MS_KERNMOUNT | MS_NOSEC | MS_ACTIVE | MS_BORN)
 
-पूर्णांक aa_remount(काष्ठा aa_label *label, स्थिर काष्ठा path *path,
-	       अचिन्हित दीर्घ flags, व्योम *data);
+int aa_remount(struct aa_label *label, const struct path *path,
+	       unsigned long flags, void *data);
 
-पूर्णांक aa_bind_mount(काष्ठा aa_label *label, स्थिर काष्ठा path *path,
-		  स्थिर अक्षर *old_name, अचिन्हित दीर्घ flags);
+int aa_bind_mount(struct aa_label *label, const struct path *path,
+		  const char *old_name, unsigned long flags);
 
 
-पूर्णांक aa_mount_change_type(काष्ठा aa_label *label, स्थिर काष्ठा path *path,
-			 अचिन्हित दीर्घ flags);
+int aa_mount_change_type(struct aa_label *label, const struct path *path,
+			 unsigned long flags);
 
-पूर्णांक aa_move_mount(काष्ठा aa_label *label, स्थिर काष्ठा path *path,
-		  स्थिर अक्षर *old_name);
+int aa_move_mount(struct aa_label *label, const struct path *path,
+		  const char *old_name);
 
-पूर्णांक aa_new_mount(काष्ठा aa_label *label, स्थिर अक्षर *dev_name,
-		 स्थिर काष्ठा path *path, स्थिर अक्षर *type, अचिन्हित दीर्घ flags,
-		 व्योम *data);
+int aa_new_mount(struct aa_label *label, const char *dev_name,
+		 const struct path *path, const char *type, unsigned long flags,
+		 void *data);
 
-पूर्णांक aa_umount(काष्ठा aa_label *label, काष्ठा vfsmount *mnt, पूर्णांक flags);
+int aa_umount(struct aa_label *label, struct vfsmount *mnt, int flags);
 
-पूर्णांक aa_pivotroot(काष्ठा aa_label *label, स्थिर काष्ठा path *old_path,
-		 स्थिर काष्ठा path *new_path);
+int aa_pivotroot(struct aa_label *label, const struct path *old_path,
+		 const struct path *new_path);
 
-#पूर्ण_अगर /* __AA_MOUNT_H */
+#endif /* __AA_MOUNT_H */

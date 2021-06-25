@@ -1,251 +1,250 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * security/tomoyo/securityfs_अगर.c
+ * security/tomoyo/securityfs_if.c
  *
  * Copyright (C) 2005-2011  NTT DATA CORPORATION
  */
 
-#समावेश <linux/security.h>
-#समावेश "common.h"
+#include <linux/security.h>
+#include "common.h"
 
 /**
- * tomoyo_check_task_acl - Check permission क्रम task operation.
+ * tomoyo_check_task_acl - Check permission for task operation.
  *
- * @r:   Poपूर्णांकer to "struct tomoyo_request_info".
- * @ptr: Poपूर्णांकer to "struct tomoyo_acl_info".
+ * @r:   Pointer to "struct tomoyo_request_info".
+ * @ptr: Pointer to "struct tomoyo_acl_info".
  *
- * Returns true अगर granted, false otherwise.
+ * Returns true if granted, false otherwise.
  */
-अटल bool tomoyo_check_task_acl(काष्ठा tomoyo_request_info *r,
-				  स्थिर काष्ठा tomoyo_acl_info *ptr)
-अणु
-	स्थिर काष्ठा tomoyo_task_acl *acl = container_of(ptr, typeof(*acl),
+static bool tomoyo_check_task_acl(struct tomoyo_request_info *r,
+				  const struct tomoyo_acl_info *ptr)
+{
+	const struct tomoyo_task_acl *acl = container_of(ptr, typeof(*acl),
 							 head);
 
-	वापस !tomoyo_pathcmp(r->param.task.करोमुख्यname, acl->करोमुख्यname);
-पूर्ण
+	return !tomoyo_pathcmp(r->param.task.domainname, acl->domainname);
+}
 
 /**
- * tomoyo_ग_लिखो_self - ग_लिखो() क्रम /sys/kernel/security/tomoyo/self_करोमुख्य पूर्णांकerface.
+ * tomoyo_write_self - write() for /sys/kernel/security/tomoyo/self_domain interface.
  *
- * @file:  Poपूर्णांकer to "struct file".
- * @buf:   Doमुख्यname to transit to.
+ * @file:  Pointer to "struct file".
+ * @buf:   Domainname to transit to.
  * @count: Size of @buf.
  * @ppos:  Unused.
  *
  * Returns @count on success, negative value otherwise.
  *
- * If करोमुख्य transition was permitted but the करोमुख्य transition failed, this
- * function वापसs error rather than terminating current thपढ़ो with SIGKILL.
+ * If domain transition was permitted but the domain transition failed, this
+ * function returns error rather than terminating current thread with SIGKILL.
  */
-अटल sमाप_प्रकार tomoyo_ग_लिखो_self(काष्ठा file *file, स्थिर अक्षर __user *buf,
-			      माप_प्रकार count, loff_t *ppos)
-अणु
-	अक्षर *data;
-	पूर्णांक error;
+static ssize_t tomoyo_write_self(struct file *file, const char __user *buf,
+			      size_t count, loff_t *ppos)
+{
+	char *data;
+	int error;
 
-	अगर (!count || count >= TOMOYO_EXEC_TMPSIZE - 10)
-		वापस -ENOMEM;
+	if (!count || count >= TOMOYO_EXEC_TMPSIZE - 10)
+		return -ENOMEM;
 	data = memdup_user_nul(buf, count);
-	अगर (IS_ERR(data))
-		वापस PTR_ERR(data);
+	if (IS_ERR(data))
+		return PTR_ERR(data);
 	tomoyo_normalize_line(data);
-	अगर (tomoyo_correct_करोमुख्य(data)) अणु
-		स्थिर पूर्णांक idx = tomoyo_पढ़ो_lock();
-		काष्ठा tomoyo_path_info name;
-		काष्ठा tomoyo_request_info r;
+	if (tomoyo_correct_domain(data)) {
+		const int idx = tomoyo_read_lock();
+		struct tomoyo_path_info name;
+		struct tomoyo_request_info r;
 
 		name.name = data;
 		tomoyo_fill_path_info(&name);
 		/* Check "task manual_domain_transition" permission. */
-		tomoyo_init_request_info(&r, शून्य, TOMOYO_MAC_खाता_EXECUTE);
+		tomoyo_init_request_info(&r, NULL, TOMOYO_MAC_FILE_EXECUTE);
 		r.param_type = TOMOYO_TYPE_MANUAL_TASK_ACL;
-		r.param.task.करोमुख्यname = &name;
+		r.param.task.domainname = &name;
 		tomoyo_check_acl(&r, tomoyo_check_task_acl);
-		अगर (!r.granted)
+		if (!r.granted)
 			error = -EPERM;
-		अन्यथा अणु
-			काष्ठा tomoyo_करोमुख्य_info *new_करोमुख्य =
-				tomoyo_assign_करोमुख्य(data, true);
-			अगर (!new_करोमुख्य) अणु
+		else {
+			struct tomoyo_domain_info *new_domain =
+				tomoyo_assign_domain(data, true);
+			if (!new_domain) {
 				error = -ENOENT;
-			पूर्ण अन्यथा अणु
-				काष्ठा tomoyo_task *s = tomoyo_task(current);
-				काष्ठा tomoyo_करोमुख्य_info *old_करोमुख्य =
-					s->करोमुख्य_info;
+			} else {
+				struct tomoyo_task *s = tomoyo_task(current);
+				struct tomoyo_domain_info *old_domain =
+					s->domain_info;
 
-				s->करोमुख्य_info = new_करोमुख्य;
-				atomic_inc(&new_करोमुख्य->users);
-				atomic_dec(&old_करोमुख्य->users);
+				s->domain_info = new_domain;
+				atomic_inc(&new_domain->users);
+				atomic_dec(&old_domain->users);
 				error = 0;
-			पूर्ण
-		पूर्ण
-		tomoyo_पढ़ो_unlock(idx);
-	पूर्ण अन्यथा
+			}
+		}
+		tomoyo_read_unlock(idx);
+	} else
 		error = -EINVAL;
-	kमुक्त(data);
-	वापस error ? error : count;
-पूर्ण
+	kfree(data);
+	return error ? error : count;
+}
 
 /**
- * tomoyo_पढ़ो_self - पढ़ो() क्रम /sys/kernel/security/tomoyo/self_करोमुख्य पूर्णांकerface.
+ * tomoyo_read_self - read() for /sys/kernel/security/tomoyo/self_domain interface.
  *
- * @file:  Poपूर्णांकer to "struct file".
- * @buf:   Doमुख्यname which current thपढ़ो beदीर्घs to.
+ * @file:  Pointer to "struct file".
+ * @buf:   Domainname which current thread belongs to.
  * @count: Size of @buf.
- * @ppos:  Bytes पढ़ो by now.
+ * @ppos:  Bytes read by now.
  *
- * Returns पढ़ो size on success, negative value otherwise.
+ * Returns read size on success, negative value otherwise.
  */
-अटल sमाप_प्रकार tomoyo_पढ़ो_self(काष्ठा file *file, अक्षर __user *buf,
-				माप_प्रकार count, loff_t *ppos)
-अणु
-	स्थिर अक्षर *करोमुख्य = tomoyo_करोमुख्य()->करोमुख्यname->name;
-	loff_t len = म_माप(करोमुख्य);
+static ssize_t tomoyo_read_self(struct file *file, char __user *buf,
+				size_t count, loff_t *ppos)
+{
+	const char *domain = tomoyo_domain()->domainname->name;
+	loff_t len = strlen(domain);
 	loff_t pos = *ppos;
 
-	अगर (pos >= len || !count)
-		वापस 0;
+	if (pos >= len || !count)
+		return 0;
 	len -= pos;
-	अगर (count < len)
+	if (count < len)
 		len = count;
-	अगर (copy_to_user(buf, करोमुख्य + pos, len))
-		वापस -EFAULT;
+	if (copy_to_user(buf, domain + pos, len))
+		return -EFAULT;
 	*ppos += len;
-	वापस len;
-पूर्ण
+	return len;
+}
 
-/* Operations क्रम /sys/kernel/security/tomoyo/self_करोमुख्य पूर्णांकerface. */
-अटल स्थिर काष्ठा file_operations tomoyo_self_operations = अणु
-	.ग_लिखो = tomoyo_ग_लिखो_self,
-	.पढ़ो  = tomoyo_पढ़ो_self,
-पूर्ण;
+/* Operations for /sys/kernel/security/tomoyo/self_domain interface. */
+static const struct file_operations tomoyo_self_operations = {
+	.write = tomoyo_write_self,
+	.read  = tomoyo_read_self,
+};
 
 /**
- * tomoyo_खोलो - खोलो() क्रम /sys/kernel/security/tomoyo/ पूर्णांकerface.
+ * tomoyo_open - open() for /sys/kernel/security/tomoyo/ interface.
  *
- * @inode: Poपूर्णांकer to "struct inode".
- * @file:  Poपूर्णांकer to "struct file".
+ * @inode: Pointer to "struct inode".
+ * @file:  Pointer to "struct file".
  *
  * Returns 0 on success, negative value otherwise.
  */
-अटल पूर्णांक tomoyo_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	स्थिर u8 key = (uपूर्णांकptr_t) file_inode(file)->i_निजी;
+static int tomoyo_open(struct inode *inode, struct file *file)
+{
+	const u8 key = (uintptr_t) file_inode(file)->i_private;
 
-	वापस tomoyo_खोलो_control(key, file);
-पूर्ण
+	return tomoyo_open_control(key, file);
+}
 
 /**
- * tomoyo_release - बंद() क्रम /sys/kernel/security/tomoyo/ पूर्णांकerface.
+ * tomoyo_release - close() for /sys/kernel/security/tomoyo/ interface.
  *
- * @file:  Poपूर्णांकer to "struct file".
+ * @file:  Pointer to "struct file".
  *
  */
-अटल पूर्णांक tomoyo_release(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	tomoyo_बंद_control(file->निजी_data);
-	वापस 0;
-पूर्ण
+static int tomoyo_release(struct inode *inode, struct file *file)
+{
+	tomoyo_close_control(file->private_data);
+	return 0;
+}
 
 /**
- * tomoyo_poll - poll() क्रम /sys/kernel/security/tomoyo/ पूर्णांकerface.
+ * tomoyo_poll - poll() for /sys/kernel/security/tomoyo/ interface.
  *
- * @file: Poपूर्णांकer to "struct file".
- * @रुको: Poपूर्णांकer to "poll_table". Maybe शून्य.
+ * @file: Pointer to "struct file".
+ * @wait: Pointer to "poll_table". Maybe NULL.
  *
- * Returns EPOLLIN | EPOLLRDNORM | EPOLLOUT | EPOLLWRNORM अगर पढ़ोy to पढ़ो/ग_लिखो,
+ * Returns EPOLLIN | EPOLLRDNORM | EPOLLOUT | EPOLLWRNORM if ready to read/write,
  * EPOLLOUT | EPOLLWRNORM otherwise.
  */
-अटल __poll_t tomoyo_poll(काष्ठा file *file, poll_table *रुको)
-अणु
-	वापस tomoyo_poll_control(file, रुको);
-पूर्ण
+static __poll_t tomoyo_poll(struct file *file, poll_table *wait)
+{
+	return tomoyo_poll_control(file, wait);
+}
 
 /**
- * tomoyo_पढ़ो - पढ़ो() क्रम /sys/kernel/security/tomoyo/ पूर्णांकerface.
+ * tomoyo_read - read() for /sys/kernel/security/tomoyo/ interface.
  *
- * @file:  Poपूर्णांकer to "struct file".
- * @buf:   Poपूर्णांकer to buffer.
+ * @file:  Pointer to "struct file".
+ * @buf:   Pointer to buffer.
  * @count: Size of @buf.
  * @ppos:  Unused.
  *
- * Returns bytes पढ़ो on success, negative value otherwise.
+ * Returns bytes read on success, negative value otherwise.
  */
-अटल sमाप_प्रकार tomoyo_पढ़ो(काष्ठा file *file, अक्षर __user *buf, माप_प्रकार count,
+static ssize_t tomoyo_read(struct file *file, char __user *buf, size_t count,
 			   loff_t *ppos)
-अणु
-	वापस tomoyo_पढ़ो_control(file->निजी_data, buf, count);
-पूर्ण
+{
+	return tomoyo_read_control(file->private_data, buf, count);
+}
 
 /**
- * tomoyo_ग_लिखो - ग_लिखो() क्रम /sys/kernel/security/tomoyo/ पूर्णांकerface.
+ * tomoyo_write - write() for /sys/kernel/security/tomoyo/ interface.
  *
- * @file:  Poपूर्णांकer to "struct file".
- * @buf:   Poपूर्णांकer to buffer.
+ * @file:  Pointer to "struct file".
+ * @buf:   Pointer to buffer.
  * @count: Size of @buf.
  * @ppos:  Unused.
  *
  * Returns @count on success, negative value otherwise.
  */
-अटल sमाप_प्रकार tomoyo_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buf,
-			    माप_प्रकार count, loff_t *ppos)
-अणु
-	वापस tomoyo_ग_लिखो_control(file->निजी_data, buf, count);
-पूर्ण
+static ssize_t tomoyo_write(struct file *file, const char __user *buf,
+			    size_t count, loff_t *ppos)
+{
+	return tomoyo_write_control(file->private_data, buf, count);
+}
 
 /*
- * tomoyo_operations is a "struct file_operations" which is used क्रम handling
- * /sys/kernel/security/tomoyo/ पूर्णांकerface.
+ * tomoyo_operations is a "struct file_operations" which is used for handling
+ * /sys/kernel/security/tomoyo/ interface.
  *
- * Some files under /sys/kernel/security/tomoyo/ directory accept खोलो(O_RDWR).
- * See tomoyo_io_buffer क्रम पूर्णांकernals.
+ * Some files under /sys/kernel/security/tomoyo/ directory accept open(O_RDWR).
+ * See tomoyo_io_buffer for internals.
  */
-अटल स्थिर काष्ठा file_operations tomoyo_operations = अणु
-	.खोलो    = tomoyo_खोलो,
+static const struct file_operations tomoyo_operations = {
+	.open    = tomoyo_open,
 	.release = tomoyo_release,
 	.poll    = tomoyo_poll,
-	.पढ़ो    = tomoyo_पढ़ो,
-	.ग_लिखो   = tomoyo_ग_लिखो,
+	.read    = tomoyo_read,
+	.write   = tomoyo_write,
 	.llseek  = noop_llseek,
-पूर्ण;
+};
 
 /**
- * tomoyo_create_entry - Create पूर्णांकerface files under /sys/kernel/security/tomoyo/ directory.
+ * tomoyo_create_entry - Create interface files under /sys/kernel/security/tomoyo/ directory.
  *
- * @name:   The name of the पूर्णांकerface file.
- * @mode:   The permission of the पूर्णांकerface file.
+ * @name:   The name of the interface file.
+ * @mode:   The permission of the interface file.
  * @parent: The parent directory.
- * @key:    Type of पूर्णांकerface.
+ * @key:    Type of interface.
  *
  * Returns nothing.
  */
-अटल व्योम __init tomoyo_create_entry(स्थिर अक्षर *name, स्थिर umode_t mode,
-				       काष्ठा dentry *parent, स्थिर u8 key)
-अणु
-	securityfs_create_file(name, mode, parent, (व्योम *) (uपूर्णांकptr_t) key,
+static void __init tomoyo_create_entry(const char *name, const umode_t mode,
+				       struct dentry *parent, const u8 key)
+{
+	securityfs_create_file(name, mode, parent, (void *) (uintptr_t) key,
 			       &tomoyo_operations);
-पूर्ण
+}
 
 /**
- * tomoyo_initerface_init - Initialize /sys/kernel/security/tomoyo/ पूर्णांकerface.
+ * tomoyo_initerface_init - Initialize /sys/kernel/security/tomoyo/ interface.
  *
  * Returns 0.
  */
-अटल पूर्णांक __init tomoyo_initerface_init(व्योम)
-अणु
-	काष्ठा tomoyo_करोमुख्य_info *करोमुख्य;
-	काष्ठा dentry *tomoyo_dir;
+static int __init tomoyo_initerface_init(void)
+{
+	struct tomoyo_domain_info *domain;
+	struct dentry *tomoyo_dir;
 
-	अगर (!tomoyo_enabled)
-		वापस 0;
-	करोमुख्य = tomoyo_करोमुख्य();
-	/* Don't create securityfs entries unless रेजिस्टरed. */
-	अगर (करोमुख्य != &tomoyo_kernel_करोमुख्य)
-		वापस 0;
+	if (!tomoyo_enabled)
+		return 0;
+	domain = tomoyo_domain();
+	/* Don't create securityfs entries unless registered. */
+	if (domain != &tomoyo_kernel_domain)
+		return 0;
 
-	tomoyo_dir = securityfs_create_dir("tomoyo", शून्य);
+	tomoyo_dir = securityfs_create_dir("tomoyo", NULL);
 	tomoyo_create_entry("query",            0600, tomoyo_dir,
 			    TOMOYO_QUERY);
 	tomoyo_create_entry("domain_policy",    0600, tomoyo_dir,
@@ -259,15 +258,15 @@
 	tomoyo_create_entry("stat",             0644, tomoyo_dir,
 			    TOMOYO_STAT);
 	tomoyo_create_entry("profile",          0600, tomoyo_dir,
-			    TOMOYO_PROखाता);
+			    TOMOYO_PROFILE);
 	tomoyo_create_entry("manager",          0600, tomoyo_dir,
 			    TOMOYO_MANAGER);
 	tomoyo_create_entry("version",          0400, tomoyo_dir,
 			    TOMOYO_VERSION);
-	securityfs_create_file("self_domain", 0666, tomoyo_dir, शून्य,
+	securityfs_create_file("self_domain", 0666, tomoyo_dir, NULL,
 			       &tomoyo_self_operations);
 	tomoyo_load_builtin_policy();
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 fs_initcall(tomoyo_initerface_init);

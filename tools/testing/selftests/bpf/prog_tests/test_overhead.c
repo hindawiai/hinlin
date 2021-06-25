@@ -1,105 +1,104 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /* Copyright (c) 2019 Facebook */
-#घोषणा _GNU_SOURCE
-#समावेश <sched.h>
-#समावेश <sys/prctl.h>
-#समावेश <test_progs.h>
+#define _GNU_SOURCE
+#include <sched.h>
+#include <sys/prctl.h>
+#include <test_progs.h>
 
-#घोषणा MAX_CNT 100000
+#define MAX_CNT 100000
 
-अटल __u64 समय_get_ns(व्योम)
-अणु
-	काष्ठा बारpec ts;
+static __u64 time_get_ns(void)
+{
+	struct timespec ts;
 
-	घड़ी_समय_लो(CLOCK_MONOTONIC, &ts);
-	वापस ts.tv_sec * 1000000000ull + ts.tv_nsec;
-पूर्ण
+	clock_gettime(CLOCK_MONOTONIC, &ts);
+	return ts.tv_sec * 1000000000ull + ts.tv_nsec;
+}
 
-अटल पूर्णांक test_task_नाम(स्थिर अक्षर *prog)
-अणु
-	पूर्णांक i, fd, duration = 0, err;
-	अक्षर buf[] = "test_overhead";
-	__u64 start_समय;
+static int test_task_rename(const char *prog)
+{
+	int i, fd, duration = 0, err;
+	char buf[] = "test_overhead";
+	__u64 start_time;
 
-	fd = खोलो("/proc/self/comm", O_WRONLY|O_TRUNC);
-	अगर (CHECK(fd < 0, "open /proc", "err %d", त्रुटि_सं))
-		वापस -1;
-	start_समय = समय_get_ns();
-	क्रम (i = 0; i < MAX_CNT; i++) अणु
-		err = ग_लिखो(fd, buf, माप(buf));
-		अगर (err < 0) अणु
-			CHECK(err < 0, "task rename", "err %d", त्रुटि_सं);
-			बंद(fd);
-			वापस -1;
-		पूर्ण
-	पूर्ण
-	म_लिखो("task_rename %s\t%lluK events per sec\n", prog,
-	       MAX_CNT * 1000000ll / (समय_get_ns() - start_समय));
-	बंद(fd);
-	वापस 0;
-पूर्ण
+	fd = open("/proc/self/comm", O_WRONLY|O_TRUNC);
+	if (CHECK(fd < 0, "open /proc", "err %d", errno))
+		return -1;
+	start_time = time_get_ns();
+	for (i = 0; i < MAX_CNT; i++) {
+		err = write(fd, buf, sizeof(buf));
+		if (err < 0) {
+			CHECK(err < 0, "task rename", "err %d", errno);
+			close(fd);
+			return -1;
+		}
+	}
+	printf("task_rename %s\t%lluK events per sec\n", prog,
+	       MAX_CNT * 1000000ll / (time_get_ns() - start_time));
+	close(fd);
+	return 0;
+}
 
-अटल व्योम test_run(स्थिर अक्षर *prog)
-अणु
-	test_task_नाम(prog);
-पूर्ण
+static void test_run(const char *prog)
+{
+	test_task_rename(prog);
+}
 
-अटल व्योम setaffinity(व्योम)
-अणु
+static void setaffinity(void)
+{
 	cpu_set_t cpuset;
-	पूर्णांक cpu = 0;
+	int cpu = 0;
 
 	CPU_ZERO(&cpuset);
 	CPU_SET(cpu, &cpuset);
-	sched_setaffinity(0, माप(cpuset), &cpuset);
-पूर्ण
+	sched_setaffinity(0, sizeof(cpuset), &cpuset);
+}
 
-व्योम test_test_overhead(व्योम)
-अणु
-	स्थिर अक्षर *kprobe_name = "kprobe/__set_task_comm";
-	स्थिर अक्षर *kretprobe_name = "kretprobe/__set_task_comm";
-	स्थिर अक्षर *raw_tp_name = "raw_tp/task_rename";
-	स्थिर अक्षर *fentry_name = "fentry/__set_task_comm";
-	स्थिर अक्षर *fनिकास_name = "fexit/__set_task_comm";
-	स्थिर अक्षर *kprobe_func = "__set_task_comm";
-	काष्ठा bpf_program *kprobe_prog, *kretprobe_prog, *raw_tp_prog;
-	काष्ठा bpf_program *fentry_prog, *fनिकास_prog;
-	काष्ठा bpf_object *obj;
-	काष्ठा bpf_link *link;
-	पूर्णांक err, duration = 0;
-	अक्षर comm[16] = अणुपूर्ण;
+void test_test_overhead(void)
+{
+	const char *kprobe_name = "kprobe/__set_task_comm";
+	const char *kretprobe_name = "kretprobe/__set_task_comm";
+	const char *raw_tp_name = "raw_tp/task_rename";
+	const char *fentry_name = "fentry/__set_task_comm";
+	const char *fexit_name = "fexit/__set_task_comm";
+	const char *kprobe_func = "__set_task_comm";
+	struct bpf_program *kprobe_prog, *kretprobe_prog, *raw_tp_prog;
+	struct bpf_program *fentry_prog, *fexit_prog;
+	struct bpf_object *obj;
+	struct bpf_link *link;
+	int err, duration = 0;
+	char comm[16] = {};
 
-	अगर (CHECK_FAIL(prctl(PR_GET_NAME, comm, 0L, 0L, 0L)))
-		वापस;
+	if (CHECK_FAIL(prctl(PR_GET_NAME, comm, 0L, 0L, 0L)))
+		return;
 
-	obj = bpf_object__खोलो_file("./test_overhead.o", शून्य);
-	अगर (CHECK(IS_ERR(obj), "obj_open_file", "err %ld\n", PTR_ERR(obj)))
-		वापस;
+	obj = bpf_object__open_file("./test_overhead.o", NULL);
+	if (CHECK(IS_ERR(obj), "obj_open_file", "err %ld\n", PTR_ERR(obj)))
+		return;
 
 	kprobe_prog = bpf_object__find_program_by_title(obj, kprobe_name);
-	अगर (CHECK(!kprobe_prog, "find_probe",
+	if (CHECK(!kprobe_prog, "find_probe",
 		  "prog '%s' not found\n", kprobe_name))
-		जाओ cleanup;
+		goto cleanup;
 	kretprobe_prog = bpf_object__find_program_by_title(obj, kretprobe_name);
-	अगर (CHECK(!kretprobe_prog, "find_probe",
+	if (CHECK(!kretprobe_prog, "find_probe",
 		  "prog '%s' not found\n", kretprobe_name))
-		जाओ cleanup;
+		goto cleanup;
 	raw_tp_prog = bpf_object__find_program_by_title(obj, raw_tp_name);
-	अगर (CHECK(!raw_tp_prog, "find_probe",
+	if (CHECK(!raw_tp_prog, "find_probe",
 		  "prog '%s' not found\n", raw_tp_name))
-		जाओ cleanup;
+		goto cleanup;
 	fentry_prog = bpf_object__find_program_by_title(obj, fentry_name);
-	अगर (CHECK(!fentry_prog, "find_probe",
+	if (CHECK(!fentry_prog, "find_probe",
 		  "prog '%s' not found\n", fentry_name))
-		जाओ cleanup;
-	fनिकास_prog = bpf_object__find_program_by_title(obj, fनिकास_name);
-	अगर (CHECK(!fनिकास_prog, "find_probe",
-		  "prog '%s' not found\n", fनिकास_name))
-		जाओ cleanup;
+		goto cleanup;
+	fexit_prog = bpf_object__find_program_by_title(obj, fexit_name);
+	if (CHECK(!fexit_prog, "find_probe",
+		  "prog '%s' not found\n", fexit_name))
+		goto cleanup;
 	err = bpf_object__load(obj);
-	अगर (CHECK(err, "obj_load", "err %d\n", err))
-		जाओ cleanup;
+	if (CHECK(err, "obj_load", "err %d\n", err))
+		goto cleanup;
 
 	setaffinity();
 
@@ -109,41 +108,41 @@
 	/* attach kprobe */
 	link = bpf_program__attach_kprobe(kprobe_prog, false /* retprobe */,
 					  kprobe_func);
-	अगर (CHECK(IS_ERR(link), "attach_kprobe", "err %ld\n", PTR_ERR(link)))
-		जाओ cleanup;
+	if (CHECK(IS_ERR(link), "attach_kprobe", "err %ld\n", PTR_ERR(link)))
+		goto cleanup;
 	test_run("kprobe");
 	bpf_link__destroy(link);
 
 	/* attach kretprobe */
 	link = bpf_program__attach_kprobe(kretprobe_prog, true /* retprobe */,
 					  kprobe_func);
-	अगर (CHECK(IS_ERR(link), "attach kretprobe", "err %ld\n", PTR_ERR(link)))
-		जाओ cleanup;
+	if (CHECK(IS_ERR(link), "attach kretprobe", "err %ld\n", PTR_ERR(link)))
+		goto cleanup;
 	test_run("kretprobe");
 	bpf_link__destroy(link);
 
 	/* attach raw_tp */
-	link = bpf_program__attach_raw_tracepoपूर्णांक(raw_tp_prog, "task_rename");
-	अगर (CHECK(IS_ERR(link), "attach fentry", "err %ld\n", PTR_ERR(link)))
-		जाओ cleanup;
+	link = bpf_program__attach_raw_tracepoint(raw_tp_prog, "task_rename");
+	if (CHECK(IS_ERR(link), "attach fentry", "err %ld\n", PTR_ERR(link)))
+		goto cleanup;
 	test_run("raw_tp");
 	bpf_link__destroy(link);
 
 	/* attach fentry */
 	link = bpf_program__attach_trace(fentry_prog);
-	अगर (CHECK(IS_ERR(link), "attach fentry", "err %ld\n", PTR_ERR(link)))
-		जाओ cleanup;
+	if (CHECK(IS_ERR(link), "attach fentry", "err %ld\n", PTR_ERR(link)))
+		goto cleanup;
 	test_run("fentry");
 	bpf_link__destroy(link);
 
-	/* attach fनिकास */
-	link = bpf_program__attach_trace(fनिकास_prog);
-	अगर (CHECK(IS_ERR(link), "attach fexit", "err %ld\n", PTR_ERR(link)))
-		जाओ cleanup;
+	/* attach fexit */
+	link = bpf_program__attach_trace(fexit_prog);
+	if (CHECK(IS_ERR(link), "attach fexit", "err %ld\n", PTR_ERR(link)))
+		goto cleanup;
 	test_run("fexit");
 	bpf_link__destroy(link);
 
 cleanup:
 	prctl(PR_SET_NAME, comm, 0L, 0L, 0L);
-	bpf_object__बंद(obj);
-पूर्ण
+	bpf_object__close(obj);
+}

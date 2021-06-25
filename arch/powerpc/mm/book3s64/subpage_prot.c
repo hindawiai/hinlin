@@ -1,59 +1,58 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright 2007-2008 Paul Mackerras, IBM Corp.
  */
 
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/gfp.h>
-#समावेश <linux/types.h>
-#समावेश <linux/pagewalk.h>
-#समावेश <linux/hugetlb.h>
-#समावेश <linux/syscalls.h>
+#include <linux/errno.h>
+#include <linux/kernel.h>
+#include <linux/gfp.h>
+#include <linux/types.h>
+#include <linux/pagewalk.h>
+#include <linux/hugetlb.h>
+#include <linux/syscalls.h>
 
-#समावेश <linux/pgtable.h>
-#समावेश <linux/uaccess.h>
+#include <linux/pgtable.h>
+#include <linux/uaccess.h>
 
 /*
- * Free all pages allocated क्रम subpage protection maps and poपूर्णांकers.
- * Also makes sure that the subpage_prot_table काष्ठाure is
- * reinitialized क्रम the next user.
+ * Free all pages allocated for subpage protection maps and pointers.
+ * Also makes sure that the subpage_prot_table structure is
+ * reinitialized for the next user.
  */
-व्योम subpage_prot_मुक्त(काष्ठा mm_काष्ठा *mm)
-अणु
-	काष्ठा subpage_prot_table *spt = mm_ctx_subpage_prot(&mm->context);
-	अचिन्हित दीर्घ i, j, addr;
+void subpage_prot_free(struct mm_struct *mm)
+{
+	struct subpage_prot_table *spt = mm_ctx_subpage_prot(&mm->context);
+	unsigned long i, j, addr;
 	u32 **p;
 
-	अगर (!spt)
-		वापस;
+	if (!spt)
+		return;
 
-	क्रम (i = 0; i < 4; ++i) अणु
-		अगर (spt->low_prot[i]) अणु
-			मुक्त_page((अचिन्हित दीर्घ)spt->low_prot[i]);
-			spt->low_prot[i] = शून्य;
-		पूर्ण
-	पूर्ण
+	for (i = 0; i < 4; ++i) {
+		if (spt->low_prot[i]) {
+			free_page((unsigned long)spt->low_prot[i]);
+			spt->low_prot[i] = NULL;
+		}
+	}
 	addr = 0;
-	क्रम (i = 0; i < (TASK_SIZE_USER64 >> 43); ++i) अणु
+	for (i = 0; i < (TASK_SIZE_USER64 >> 43); ++i) {
 		p = spt->protptrs[i];
-		अगर (!p)
-			जारी;
-		spt->protptrs[i] = शून्य;
-		क्रम (j = 0; j < SBP_L2_COUNT && addr < spt->maxaddr;
+		if (!p)
+			continue;
+		spt->protptrs[i] = NULL;
+		for (j = 0; j < SBP_L2_COUNT && addr < spt->maxaddr;
 		     ++j, addr += PAGE_SIZE)
-			अगर (p[j])
-				मुक्त_page((अचिन्हित दीर्घ)p[j]);
-		मुक्त_page((अचिन्हित दीर्घ)p);
-	पूर्ण
+			if (p[j])
+				free_page((unsigned long)p[j]);
+		free_page((unsigned long)p);
+	}
 	spt->maxaddr = 0;
-	kमुक्त(spt);
-पूर्ण
+	kfree(spt);
+}
 
-अटल व्योम hpte_flush_range(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ addr,
-			     पूर्णांक npages)
-अणु
+static void hpte_flush_range(struct mm_struct *mm, unsigned long addr,
+			     int npages)
+{
 	pgd_t *pgd;
 	p4d_t *p4d;
 	pud_t *pud;
@@ -63,202 +62,202 @@
 
 	pgd = pgd_offset(mm, addr);
 	p4d = p4d_offset(pgd, addr);
-	अगर (p4d_none(*p4d))
-		वापस;
+	if (p4d_none(*p4d))
+		return;
 	pud = pud_offset(p4d, addr);
-	अगर (pud_none(*pud))
-		वापस;
+	if (pud_none(*pud))
+		return;
 	pmd = pmd_offset(pud, addr);
-	अगर (pmd_none(*pmd))
-		वापस;
+	if (pmd_none(*pmd))
+		return;
 	pte = pte_offset_map_lock(mm, pmd, addr, &ptl);
 	arch_enter_lazy_mmu_mode();
-	क्रम (; npages > 0; --npages) अणु
+	for (; npages > 0; --npages) {
 		pte_update(mm, addr, pte, 0, 0, 0);
 		addr += PAGE_SIZE;
 		++pte;
-	पूर्ण
+	}
 	arch_leave_lazy_mmu_mode();
 	pte_unmap_unlock(pte - 1, ptl);
-पूर्ण
+}
 
 /*
- * Clear the subpage protection map क्रम an address range, allowing
+ * Clear the subpage protection map for an address range, allowing
  * all accesses that are allowed by the pte permissions.
  */
-अटल व्योम subpage_prot_clear(अचिन्हित दीर्घ addr, अचिन्हित दीर्घ len)
-अणु
-	काष्ठा mm_काष्ठा *mm = current->mm;
-	काष्ठा subpage_prot_table *spt;
+static void subpage_prot_clear(unsigned long addr, unsigned long len)
+{
+	struct mm_struct *mm = current->mm;
+	struct subpage_prot_table *spt;
 	u32 **spm, *spp;
-	अचिन्हित दीर्घ i;
-	माप_प्रकार nw;
-	अचिन्हित दीर्घ next, limit;
+	unsigned long i;
+	size_t nw;
+	unsigned long next, limit;
 
-	mmap_ग_लिखो_lock(mm);
+	mmap_write_lock(mm);
 
 	spt = mm_ctx_subpage_prot(&mm->context);
-	अगर (!spt)
-		जाओ err_out;
+	if (!spt)
+		goto err_out;
 
 	limit = addr + len;
-	अगर (limit > spt->maxaddr)
+	if (limit > spt->maxaddr)
 		limit = spt->maxaddr;
-	क्रम (; addr < limit; addr = next) अणु
+	for (; addr < limit; addr = next) {
 		next = pmd_addr_end(addr, limit);
-		अगर (addr < 0x100000000UL) अणु
+		if (addr < 0x100000000UL) {
 			spm = spt->low_prot;
-		पूर्ण अन्यथा अणु
+		} else {
 			spm = spt->protptrs[addr >> SBP_L3_SHIFT];
-			अगर (!spm)
-				जारी;
-		पूर्ण
+			if (!spm)
+				continue;
+		}
 		spp = spm[(addr >> SBP_L2_SHIFT) & (SBP_L2_COUNT - 1)];
-		अगर (!spp)
-			जारी;
+		if (!spp)
+			continue;
 		spp += (addr >> PAGE_SHIFT) & (SBP_L1_COUNT - 1);
 
 		i = (addr >> PAGE_SHIFT) & (PTRS_PER_PTE - 1);
 		nw = PTRS_PER_PTE - i;
-		अगर (addr + (nw << PAGE_SHIFT) > next)
+		if (addr + (nw << PAGE_SHIFT) > next)
 			nw = (next - addr) >> PAGE_SHIFT;
 
-		स_रखो(spp, 0, nw * माप(u32));
+		memset(spp, 0, nw * sizeof(u32));
 
-		/* now flush any existing HPTEs क्रम the range */
+		/* now flush any existing HPTEs for the range */
 		hpte_flush_range(mm, addr, nw);
-	पूर्ण
+	}
 
 err_out:
-	mmap_ग_लिखो_unlock(mm);
-पूर्ण
+	mmap_write_unlock(mm);
+}
 
-#अगर_घोषित CONFIG_TRANSPARENT_HUGEPAGE
-अटल पूर्णांक subpage_walk_pmd_entry(pmd_t *pmd, अचिन्हित दीर्घ addr,
-				  अचिन्हित दीर्घ end, काष्ठा mm_walk *walk)
-अणु
-	काष्ठा vm_area_काष्ठा *vma = walk->vma;
+#ifdef CONFIG_TRANSPARENT_HUGEPAGE
+static int subpage_walk_pmd_entry(pmd_t *pmd, unsigned long addr,
+				  unsigned long end, struct mm_walk *walk)
+{
+	struct vm_area_struct *vma = walk->vma;
 	split_huge_pmd(vma, pmd, addr);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा mm_walk_ops subpage_walk_ops = अणु
+static const struct mm_walk_ops subpage_walk_ops = {
 	.pmd_entry	= subpage_walk_pmd_entry,
-पूर्ण;
+};
 
-अटल व्योम subpage_mark_vma_nohuge(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ addr,
-				    अचिन्हित दीर्घ len)
-अणु
-	काष्ठा vm_area_काष्ठा *vma;
+static void subpage_mark_vma_nohuge(struct mm_struct *mm, unsigned long addr,
+				    unsigned long len)
+{
+	struct vm_area_struct *vma;
 
 	/*
-	 * We करोn't try too hard, we just mark all the vma in that range
+	 * We don't try too hard, we just mark all the vma in that range
 	 * VM_NOHUGEPAGE and split them.
 	 */
 	vma = find_vma(mm, addr);
 	/*
-	 * If the range is in unmapped range, just वापस
+	 * If the range is in unmapped range, just return
 	 */
-	अगर (vma && ((addr + len) <= vma->vm_start))
-		वापस;
+	if (vma && ((addr + len) <= vma->vm_start))
+		return;
 
-	जबतक (vma) अणु
-		अगर (vma->vm_start >= (addr + len))
-			अवरोध;
+	while (vma) {
+		if (vma->vm_start >= (addr + len))
+			break;
 		vma->vm_flags |= VM_NOHUGEPAGE;
-		walk_page_vma(vma, &subpage_walk_ops, शून्य);
+		walk_page_vma(vma, &subpage_walk_ops, NULL);
 		vma = vma->vm_next;
-	पूर्ण
-पूर्ण
-#अन्यथा
-अटल व्योम subpage_mark_vma_nohuge(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ addr,
-				    अचिन्हित दीर्घ len)
-अणु
-	वापस;
-पूर्ण
-#पूर्ण_अगर
+	}
+}
+#else
+static void subpage_mark_vma_nohuge(struct mm_struct *mm, unsigned long addr,
+				    unsigned long len)
+{
+	return;
+}
+#endif
 
 /*
- * Copy in a subpage protection map क्रम an address range.
+ * Copy in a subpage protection map for an address range.
  * The map has 2 bits per 4k subpage, so 32 bits per 64k page.
- * Each 2-bit field is 0 to allow any access, 1 to prevent ग_लिखोs,
+ * Each 2-bit field is 0 to allow any access, 1 to prevent writes,
  * 2 or 3 to prevent all accesses.
  * Note that the normal page protections also apply; the subpage
- * protection mechanism is an additional स्थिरraपूर्णांक, so putting 0
- * in a 2-bit field won't allow ग_लिखोs to a page that is otherwise
- * ग_लिखो-रक्षित.
+ * protection mechanism is an additional constraint, so putting 0
+ * in a 2-bit field won't allow writes to a page that is otherwise
+ * write-protected.
  */
-SYSCALL_DEFINE3(subpage_prot, अचिन्हित दीर्घ, addr,
-		अचिन्हित दीर्घ, len, u32 __user *, map)
-अणु
-	काष्ठा mm_काष्ठा *mm = current->mm;
-	काष्ठा subpage_prot_table *spt;
+SYSCALL_DEFINE3(subpage_prot, unsigned long, addr,
+		unsigned long, len, u32 __user *, map)
+{
+	struct mm_struct *mm = current->mm;
+	struct subpage_prot_table *spt;
 	u32 **spm, *spp;
-	अचिन्हित दीर्घ i;
-	माप_प्रकार nw;
-	अचिन्हित दीर्घ next, limit;
-	पूर्णांक err;
+	unsigned long i;
+	size_t nw;
+	unsigned long next, limit;
+	int err;
 
-	अगर (radix_enabled())
-		वापस -ENOENT;
+	if (radix_enabled())
+		return -ENOENT;
 
 	/* Check parameters */
-	अगर ((addr & ~PAGE_MASK) || (len & ~PAGE_MASK) ||
+	if ((addr & ~PAGE_MASK) || (len & ~PAGE_MASK) ||
 	    addr >= mm->task_size || len >= mm->task_size ||
 	    addr + len > mm->task_size)
-		वापस -EINVAL;
+		return -EINVAL;
 
-	अगर (is_hugepage_only_range(mm, addr, len))
-		वापस -EINVAL;
+	if (is_hugepage_only_range(mm, addr, len))
+		return -EINVAL;
 
-	अगर (!map) अणु
-		/* Clear out the protection map क्रम the address range */
+	if (!map) {
+		/* Clear out the protection map for the address range */
 		subpage_prot_clear(addr, len);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (!access_ok(map, (len >> PAGE_SHIFT) * माप(u32)))
-		वापस -EFAULT;
+	if (!access_ok(map, (len >> PAGE_SHIFT) * sizeof(u32)))
+		return -EFAULT;
 
-	mmap_ग_लिखो_lock(mm);
+	mmap_write_lock(mm);
 
 	spt = mm_ctx_subpage_prot(&mm->context);
-	अगर (!spt) अणु
+	if (!spt) {
 		/*
-		 * Allocate subpage prot table अगर not alपढ़ोy करोne.
+		 * Allocate subpage prot table if not already done.
 		 * Do this with mmap_lock held
 		 */
-		spt = kzalloc(माप(काष्ठा subpage_prot_table), GFP_KERNEL);
-		अगर (!spt) अणु
+		spt = kzalloc(sizeof(struct subpage_prot_table), GFP_KERNEL);
+		if (!spt) {
 			err = -ENOMEM;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		mm->context.hash_context->spt = spt;
-	पूर्ण
+	}
 
 	subpage_mark_vma_nohuge(mm, addr, len);
-	क्रम (limit = addr + len; addr < limit; addr = next) अणु
+	for (limit = addr + len; addr < limit; addr = next) {
 		next = pmd_addr_end(addr, limit);
 		err = -ENOMEM;
-		अगर (addr < 0x100000000UL) अणु
+		if (addr < 0x100000000UL) {
 			spm = spt->low_prot;
-		पूर्ण अन्यथा अणु
+		} else {
 			spm = spt->protptrs[addr >> SBP_L3_SHIFT];
-			अगर (!spm) अणु
+			if (!spm) {
 				spm = (u32 **)get_zeroed_page(GFP_KERNEL);
-				अगर (!spm)
-					जाओ out;
+				if (!spm)
+					goto out;
 				spt->protptrs[addr >> SBP_L3_SHIFT] = spm;
-			पूर्ण
-		पूर्ण
+			}
+		}
 		spm += (addr >> SBP_L2_SHIFT) & (SBP_L2_COUNT - 1);
 		spp = *spm;
-		अगर (!spp) अणु
+		if (!spp) {
 			spp = (u32 *)get_zeroed_page(GFP_KERNEL);
-			अगर (!spp)
-				जाओ out;
+			if (!spp)
+				goto out;
 			*spm = spp;
-		पूर्ण
+		}
 		spp += (addr >> PAGE_SHIFT) & (SBP_L1_COUNT - 1);
 
 		local_irq_disable();
@@ -267,22 +266,22 @@ SYSCALL_DEFINE3(subpage_prot, अचिन्हित दीर्घ, addr,
 
 		i = (addr >> PAGE_SHIFT) & (PTRS_PER_PTE - 1);
 		nw = PTRS_PER_PTE - i;
-		अगर (addr + (nw << PAGE_SHIFT) > next)
+		if (addr + (nw << PAGE_SHIFT) > next)
 			nw = (next - addr) >> PAGE_SHIFT;
 
-		mmap_ग_लिखो_unlock(mm);
-		अगर (__copy_from_user(spp, map, nw * माप(u32)))
-			वापस -EFAULT;
+		mmap_write_unlock(mm);
+		if (__copy_from_user(spp, map, nw * sizeof(u32)))
+			return -EFAULT;
 		map += nw;
-		mmap_ग_लिखो_lock(mm);
+		mmap_write_lock(mm);
 
-		/* now flush any existing HPTEs क्रम the range */
+		/* now flush any existing HPTEs for the range */
 		hpte_flush_range(mm, addr, nw);
-	पूर्ण
-	अगर (limit > spt->maxaddr)
+	}
+	if (limit > spt->maxaddr)
 		spt->maxaddr = limit;
 	err = 0;
  out:
-	mmap_ग_लिखो_unlock(mm);
-	वापस err;
-पूर्ण
+	mmap_write_unlock(mm);
+	return err;
+}

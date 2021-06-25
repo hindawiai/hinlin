@@ -1,337 +1,336 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * wm5110.c  --  WM5110 ALSA SoC Audio driver
  *
  * Copyright 2012 Wolfson Microelectronics plc
  *
- * Author: Mark Brown <broonie@खोलोsource.wolfsonmicro.com>
+ * Author: Mark Brown <broonie@opensource.wolfsonmicro.com>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/init.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/pm.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <linux/regmap.h>
-#समावेश <linux/slab.h>
-#समावेश <sound/core.h>
-#समावेश <sound/pcm.h>
-#समावेश <sound/pcm_params.h>
-#समावेश <sound/soc.h>
-#समावेश <sound/jack.h>
-#समावेश <sound/initval.h>
-#समावेश <sound/tlv.h>
+#include <linux/module.h>
+#include <linux/moduleparam.h>
+#include <linux/init.h>
+#include <linux/delay.h>
+#include <linux/pm.h>
+#include <linux/pm_runtime.h>
+#include <linux/regmap.h>
+#include <linux/slab.h>
+#include <sound/core.h>
+#include <sound/pcm.h>
+#include <sound/pcm_params.h>
+#include <sound/soc.h>
+#include <sound/jack.h>
+#include <sound/initval.h>
+#include <sound/tlv.h>
 
-#समावेश <linux/mfd/arizona/core.h>
-#समावेश <linux/mfd/arizona/रेजिस्टरs.h>
+#include <linux/mfd/arizona/core.h>
+#include <linux/mfd/arizona/registers.h>
 
-#समावेश "arizona.h"
-#समावेश "wm_adsp.h"
-#समावेश "wm5110.h"
+#include "arizona.h"
+#include "wm_adsp.h"
+#include "wm5110.h"
 
-#घोषणा WM5110_NUM_ADSP 4
+#define WM5110_NUM_ADSP 4
 
-#घोषणा DRV_NAME "wm5110-codec"
+#define DRV_NAME "wm5110-codec"
 
-काष्ठा wm5110_priv अणु
-	काष्ठा arizona_priv core;
-	काष्ठा arizona_fll fll[2];
+struct wm5110_priv {
+	struct arizona_priv core;
+	struct arizona_fll fll[2];
 
-	अचिन्हित पूर्णांक in_value;
-	पूर्णांक in_pre_pending;
-	पूर्णांक in_post_pending;
+	unsigned int in_value;
+	int in_pre_pending;
+	int in_post_pending;
 
-	अचिन्हित पूर्णांक in_pga_cache[6];
-पूर्ण;
+	unsigned int in_pga_cache[6];
+};
 
-अटल स्थिर काष्ठा wm_adsp_region wm5110_dsp1_regions[] = अणु
-	अणु .type = WMFW_ADSP2_PM, .base = 0x100000 पूर्ण,
-	अणु .type = WMFW_ADSP2_ZM, .base = 0x180000 पूर्ण,
-	अणु .type = WMFW_ADSP2_XM, .base = 0x190000 पूर्ण,
-	अणु .type = WMFW_ADSP2_YM, .base = 0x1a8000 पूर्ण,
-पूर्ण;
+static const struct wm_adsp_region wm5110_dsp1_regions[] = {
+	{ .type = WMFW_ADSP2_PM, .base = 0x100000 },
+	{ .type = WMFW_ADSP2_ZM, .base = 0x180000 },
+	{ .type = WMFW_ADSP2_XM, .base = 0x190000 },
+	{ .type = WMFW_ADSP2_YM, .base = 0x1a8000 },
+};
 
-अटल स्थिर काष्ठा wm_adsp_region wm5110_dsp2_regions[] = अणु
-	अणु .type = WMFW_ADSP2_PM, .base = 0x200000 पूर्ण,
-	अणु .type = WMFW_ADSP2_ZM, .base = 0x280000 पूर्ण,
-	अणु .type = WMFW_ADSP2_XM, .base = 0x290000 पूर्ण,
-	अणु .type = WMFW_ADSP2_YM, .base = 0x2a8000 पूर्ण,
-पूर्ण;
+static const struct wm_adsp_region wm5110_dsp2_regions[] = {
+	{ .type = WMFW_ADSP2_PM, .base = 0x200000 },
+	{ .type = WMFW_ADSP2_ZM, .base = 0x280000 },
+	{ .type = WMFW_ADSP2_XM, .base = 0x290000 },
+	{ .type = WMFW_ADSP2_YM, .base = 0x2a8000 },
+};
 
-अटल स्थिर काष्ठा wm_adsp_region wm5110_dsp3_regions[] = अणु
-	अणु .type = WMFW_ADSP2_PM, .base = 0x300000 पूर्ण,
-	अणु .type = WMFW_ADSP2_ZM, .base = 0x380000 पूर्ण,
-	अणु .type = WMFW_ADSP2_XM, .base = 0x390000 पूर्ण,
-	अणु .type = WMFW_ADSP2_YM, .base = 0x3a8000 पूर्ण,
-पूर्ण;
+static const struct wm_adsp_region wm5110_dsp3_regions[] = {
+	{ .type = WMFW_ADSP2_PM, .base = 0x300000 },
+	{ .type = WMFW_ADSP2_ZM, .base = 0x380000 },
+	{ .type = WMFW_ADSP2_XM, .base = 0x390000 },
+	{ .type = WMFW_ADSP2_YM, .base = 0x3a8000 },
+};
 
-अटल स्थिर काष्ठा wm_adsp_region wm5110_dsp4_regions[] = अणु
-	अणु .type = WMFW_ADSP2_PM, .base = 0x400000 पूर्ण,
-	अणु .type = WMFW_ADSP2_ZM, .base = 0x480000 पूर्ण,
-	अणु .type = WMFW_ADSP2_XM, .base = 0x490000 पूर्ण,
-	अणु .type = WMFW_ADSP2_YM, .base = 0x4a8000 पूर्ण,
-पूर्ण;
+static const struct wm_adsp_region wm5110_dsp4_regions[] = {
+	{ .type = WMFW_ADSP2_PM, .base = 0x400000 },
+	{ .type = WMFW_ADSP2_ZM, .base = 0x480000 },
+	{ .type = WMFW_ADSP2_XM, .base = 0x490000 },
+	{ .type = WMFW_ADSP2_YM, .base = 0x4a8000 },
+};
 
-अटल स्थिर काष्ठा wm_adsp_region *wm5110_dsp_regions[] = अणु
+static const struct wm_adsp_region *wm5110_dsp_regions[] = {
 	wm5110_dsp1_regions,
 	wm5110_dsp2_regions,
 	wm5110_dsp3_regions,
 	wm5110_dsp4_regions,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा reg_शेष wm5110_sysclk_revd_patch[] = अणु
-	अणु 0x3093, 0x1001 पूर्ण,
-	अणु 0x30E3, 0x1301 पूर्ण,
-	अणु 0x3133, 0x1201 पूर्ण,
-	अणु 0x3183, 0x1501 पूर्ण,
-	अणु 0x31D3, 0x1401 पूर्ण,
-	अणु 0x0049, 0x01ea पूर्ण,
-	अणु 0x004a, 0x01f2 पूर्ण,
-	अणु 0x0057, 0x01e7 पूर्ण,
-	अणु 0x0058, 0x01fb पूर्ण,
-	अणु 0x33ce, 0xc4f5 पूर्ण,
-	अणु 0x33cf, 0x1361 पूर्ण,
-	अणु 0x33d0, 0x0402 पूर्ण,
-	अणु 0x33d1, 0x4700 पूर्ण,
-	अणु 0x33d2, 0x026d पूर्ण,
-	अणु 0x33d3, 0xff00 पूर्ण,
-	अणु 0x33d4, 0x026d पूर्ण,
-	अणु 0x33d5, 0x0101 पूर्ण,
-	अणु 0x33d6, 0xc4f5 पूर्ण,
-	अणु 0x33d7, 0x0361 पूर्ण,
-	अणु 0x33d8, 0x0402 पूर्ण,
-	अणु 0x33d9, 0x6701 पूर्ण,
-	अणु 0x33da, 0xc4f5 पूर्ण,
-	अणु 0x33db, 0x136f पूर्ण,
-	अणु 0x33dc, 0xc4f5 पूर्ण,
-	अणु 0x33dd, 0x134f पूर्ण,
-	अणु 0x33de, 0xc4f5 पूर्ण,
-	अणु 0x33df, 0x131f पूर्ण,
-	अणु 0x33e0, 0x026d पूर्ण,
-	अणु 0x33e1, 0x4f01 पूर्ण,
-	अणु 0x33e2, 0x026d पूर्ण,
-	अणु 0x33e3, 0xf100 पूर्ण,
-	अणु 0x33e4, 0x026d पूर्ण,
-	अणु 0x33e5, 0x0001 पूर्ण,
-	अणु 0x33e6, 0xc4f5 पूर्ण,
-	अणु 0x33e7, 0x0361 पूर्ण,
-	अणु 0x33e8, 0x0402 पूर्ण,
-	अणु 0x33e9, 0x6601 पूर्ण,
-	अणु 0x33ea, 0xc4f5 पूर्ण,
-	अणु 0x33eb, 0x136f पूर्ण,
-	अणु 0x33ec, 0xc4f5 पूर्ण,
-	अणु 0x33ed, 0x134f पूर्ण,
-	अणु 0x33ee, 0xc4f5 पूर्ण,
-	अणु 0x33ef, 0x131f पूर्ण,
-	अणु 0x33f0, 0x026d पूर्ण,
-	अणु 0x33f1, 0x4e01 पूर्ण,
-	अणु 0x33f2, 0x026d पूर्ण,
-	अणु 0x33f3, 0xf000 पूर्ण,
-	अणु 0x33f6, 0xc4f5 पूर्ण,
-	अणु 0x33f7, 0x1361 पूर्ण,
-	अणु 0x33f8, 0x0402 पूर्ण,
-	अणु 0x33f9, 0x4600 पूर्ण,
-	अणु 0x33fa, 0x026d पूर्ण,
-	अणु 0x33fb, 0xfe00 पूर्ण,
-पूर्ण;
+static const struct reg_default wm5110_sysclk_revd_patch[] = {
+	{ 0x3093, 0x1001 },
+	{ 0x30E3, 0x1301 },
+	{ 0x3133, 0x1201 },
+	{ 0x3183, 0x1501 },
+	{ 0x31D3, 0x1401 },
+	{ 0x0049, 0x01ea },
+	{ 0x004a, 0x01f2 },
+	{ 0x0057, 0x01e7 },
+	{ 0x0058, 0x01fb },
+	{ 0x33ce, 0xc4f5 },
+	{ 0x33cf, 0x1361 },
+	{ 0x33d0, 0x0402 },
+	{ 0x33d1, 0x4700 },
+	{ 0x33d2, 0x026d },
+	{ 0x33d3, 0xff00 },
+	{ 0x33d4, 0x026d },
+	{ 0x33d5, 0x0101 },
+	{ 0x33d6, 0xc4f5 },
+	{ 0x33d7, 0x0361 },
+	{ 0x33d8, 0x0402 },
+	{ 0x33d9, 0x6701 },
+	{ 0x33da, 0xc4f5 },
+	{ 0x33db, 0x136f },
+	{ 0x33dc, 0xc4f5 },
+	{ 0x33dd, 0x134f },
+	{ 0x33de, 0xc4f5 },
+	{ 0x33df, 0x131f },
+	{ 0x33e0, 0x026d },
+	{ 0x33e1, 0x4f01 },
+	{ 0x33e2, 0x026d },
+	{ 0x33e3, 0xf100 },
+	{ 0x33e4, 0x026d },
+	{ 0x33e5, 0x0001 },
+	{ 0x33e6, 0xc4f5 },
+	{ 0x33e7, 0x0361 },
+	{ 0x33e8, 0x0402 },
+	{ 0x33e9, 0x6601 },
+	{ 0x33ea, 0xc4f5 },
+	{ 0x33eb, 0x136f },
+	{ 0x33ec, 0xc4f5 },
+	{ 0x33ed, 0x134f },
+	{ 0x33ee, 0xc4f5 },
+	{ 0x33ef, 0x131f },
+	{ 0x33f0, 0x026d },
+	{ 0x33f1, 0x4e01 },
+	{ 0x33f2, 0x026d },
+	{ 0x33f3, 0xf000 },
+	{ 0x33f6, 0xc4f5 },
+	{ 0x33f7, 0x1361 },
+	{ 0x33f8, 0x0402 },
+	{ 0x33f9, 0x4600 },
+	{ 0x33fa, 0x026d },
+	{ 0x33fb, 0xfe00 },
+};
 
-अटल स्थिर काष्ठा reg_शेष wm5110_sysclk_reve_patch[] = अणु
-	अणु 0x3270, 0xE410 पूर्ण,
-	अणु 0x3271, 0x3078 पूर्ण,
-	अणु 0x3272, 0xE410 पूर्ण,
-	अणु 0x3273, 0x3070 पूर्ण,
-	अणु 0x3274, 0xE410 पूर्ण,
-	अणु 0x3275, 0x3066 पूर्ण,
-	अणु 0x3276, 0xE410 पूर्ण,
-	अणु 0x3277, 0x3056 पूर्ण,
-	अणु 0x327A, 0xE414 पूर्ण,
-	अणु 0x327B, 0x3078 पूर्ण,
-	अणु 0x327C, 0xE414 पूर्ण,
-	अणु 0x327D, 0x3070 पूर्ण,
-	अणु 0x327E, 0xE414 पूर्ण,
-	अणु 0x327F, 0x3066 पूर्ण,
-	अणु 0x3280, 0xE414 पूर्ण,
-	अणु 0x3281, 0x3056 पूर्ण,
-पूर्ण;
+static const struct reg_default wm5110_sysclk_reve_patch[] = {
+	{ 0x3270, 0xE410 },
+	{ 0x3271, 0x3078 },
+	{ 0x3272, 0xE410 },
+	{ 0x3273, 0x3070 },
+	{ 0x3274, 0xE410 },
+	{ 0x3275, 0x3066 },
+	{ 0x3276, 0xE410 },
+	{ 0x3277, 0x3056 },
+	{ 0x327A, 0xE414 },
+	{ 0x327B, 0x3078 },
+	{ 0x327C, 0xE414 },
+	{ 0x327D, 0x3070 },
+	{ 0x327E, 0xE414 },
+	{ 0x327F, 0x3066 },
+	{ 0x3280, 0xE414 },
+	{ 0x3281, 0x3056 },
+};
 
-अटल पूर्णांक wm5110_sysclk_ev(काष्ठा snd_soc_dapm_widget *w,
-			    काष्ठा snd_kcontrol *kcontrol, पूर्णांक event)
-अणु
-	काष्ठा snd_soc_component *component = snd_soc_dapm_to_component(w->dapm);
-	काष्ठा arizona *arizona = dev_get_drvdata(component->dev->parent);
-	काष्ठा regmap *regmap = arizona->regmap;
-	स्थिर काष्ठा reg_शेष *patch = शून्य;
-	पूर्णांक i, patch_size;
+static int wm5110_sysclk_ev(struct snd_soc_dapm_widget *w,
+			    struct snd_kcontrol *kcontrol, int event)
+{
+	struct snd_soc_component *component = snd_soc_dapm_to_component(w->dapm);
+	struct arizona *arizona = dev_get_drvdata(component->dev->parent);
+	struct regmap *regmap = arizona->regmap;
+	const struct reg_default *patch = NULL;
+	int i, patch_size;
 
-	चयन (arizona->rev) अणु
-	हाल 3:
+	switch (arizona->rev) {
+	case 3:
 		patch = wm5110_sysclk_revd_patch;
 		patch_size = ARRAY_SIZE(wm5110_sysclk_revd_patch);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		patch = wm5110_sysclk_reve_patch;
 		patch_size = ARRAY_SIZE(wm5110_sysclk_reve_patch);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	चयन (event) अणु
-	हाल SND_SOC_DAPM_POST_PMU:
-		अगर (patch)
-			क्रम (i = 0; i < patch_size; i++)
-				regmap_ग_लिखो_async(regmap, patch[i].reg,
+	switch (event) {
+	case SND_SOC_DAPM_POST_PMU:
+		if (patch)
+			for (i = 0; i < patch_size; i++)
+				regmap_write_async(regmap, patch[i].reg,
 						   patch[i].def);
-		अवरोध;
-	हाल SND_SOC_DAPM_PRE_PMU:
-	हाल SND_SOC_DAPM_POST_PMD:
-		वापस arizona_clk_ev(w, kcontrol, event);
-	शेष:
-		अवरोध;
-	पूर्ण
+		break;
+	case SND_SOC_DAPM_PRE_PMU:
+	case SND_SOC_DAPM_POST_PMD:
+		return arizona_clk_ev(w, kcontrol, event);
+	default:
+		break;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक wm5110_adsp_घातer_ev(काष्ठा snd_soc_dapm_widget *w,
-				काष्ठा snd_kcontrol *kcontrol, पूर्णांक event)
-अणु
-	काष्ठा snd_soc_component *component = snd_soc_dapm_to_component(w->dapm);
-	काष्ठा arizona *arizona = dev_get_drvdata(component->dev->parent);
-	अचिन्हित पूर्णांक v;
-	पूर्णांक ret;
+static int wm5110_adsp_power_ev(struct snd_soc_dapm_widget *w,
+				struct snd_kcontrol *kcontrol, int event)
+{
+	struct snd_soc_component *component = snd_soc_dapm_to_component(w->dapm);
+	struct arizona *arizona = dev_get_drvdata(component->dev->parent);
+	unsigned int v;
+	int ret;
 
-	ret = regmap_पढ़ो(arizona->regmap, ARIZONA_SYSTEM_CLOCK_1, &v);
-	अगर (ret != 0) अणु
+	ret = regmap_read(arizona->regmap, ARIZONA_SYSTEM_CLOCK_1, &v);
+	if (ret != 0) {
 		dev_err(component->dev, "Failed to read SYSCLK state: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	v = (v & ARIZONA_SYSCLK_FREQ_MASK) >> ARIZONA_SYSCLK_FREQ_SHIFT;
 
 	wm_adsp2_set_dspclk(w, v);
 
-	वापस wm_adsp_early_event(w, kcontrol, event);
-पूर्ण
+	return wm_adsp_early_event(w, kcontrol, event);
+}
 
-अटल स्थिर काष्ठा reg_sequence wm5110_no_dre_left_enable[] = अणु
-	अणु 0x3024, 0xE410 पूर्ण,
-	अणु 0x3025, 0x0056 पूर्ण,
-	अणु 0x301B, 0x0224 पूर्ण,
-	अणु 0x301F, 0x4263 पूर्ण,
-	अणु 0x3021, 0x5291 पूर्ण,
-	अणु 0x3030, 0xE410 पूर्ण,
-	अणु 0x3031, 0x3066 पूर्ण,
-	अणु 0x3032, 0xE410 पूर्ण,
-	अणु 0x3033, 0x3070 पूर्ण,
-	अणु 0x3034, 0xE410 पूर्ण,
-	अणु 0x3035, 0x3078 पूर्ण,
-	अणु 0x3036, 0xE410 पूर्ण,
-	अणु 0x3037, 0x3080 पूर्ण,
-	अणु 0x3038, 0xE410 पूर्ण,
-	अणु 0x3039, 0x3080 पूर्ण,
-पूर्ण;
+static const struct reg_sequence wm5110_no_dre_left_enable[] = {
+	{ 0x3024, 0xE410 },
+	{ 0x3025, 0x0056 },
+	{ 0x301B, 0x0224 },
+	{ 0x301F, 0x4263 },
+	{ 0x3021, 0x5291 },
+	{ 0x3030, 0xE410 },
+	{ 0x3031, 0x3066 },
+	{ 0x3032, 0xE410 },
+	{ 0x3033, 0x3070 },
+	{ 0x3034, 0xE410 },
+	{ 0x3035, 0x3078 },
+	{ 0x3036, 0xE410 },
+	{ 0x3037, 0x3080 },
+	{ 0x3038, 0xE410 },
+	{ 0x3039, 0x3080 },
+};
 
-अटल स्थिर काष्ठा reg_sequence wm5110_dre_left_enable[] = अणु
-	अणु 0x3024, 0x0231 पूर्ण,
-	अणु 0x3025, 0x0B00 पूर्ण,
-	अणु 0x301B, 0x0227 पूर्ण,
-	अणु 0x301F, 0x4266 पूर्ण,
-	अणु 0x3021, 0x5294 पूर्ण,
-	अणु 0x3030, 0xE231 पूर्ण,
-	अणु 0x3031, 0x0266 पूर्ण,
-	अणु 0x3032, 0x8231 पूर्ण,
-	अणु 0x3033, 0x4B15 पूर्ण,
-	अणु 0x3034, 0x8231 पूर्ण,
-	अणु 0x3035, 0x0B15 पूर्ण,
-	अणु 0x3036, 0xE231 पूर्ण,
-	अणु 0x3037, 0x5294 पूर्ण,
-	अणु 0x3038, 0x0231 पूर्ण,
-	अणु 0x3039, 0x0B00 पूर्ण,
-पूर्ण;
+static const struct reg_sequence wm5110_dre_left_enable[] = {
+	{ 0x3024, 0x0231 },
+	{ 0x3025, 0x0B00 },
+	{ 0x301B, 0x0227 },
+	{ 0x301F, 0x4266 },
+	{ 0x3021, 0x5294 },
+	{ 0x3030, 0xE231 },
+	{ 0x3031, 0x0266 },
+	{ 0x3032, 0x8231 },
+	{ 0x3033, 0x4B15 },
+	{ 0x3034, 0x8231 },
+	{ 0x3035, 0x0B15 },
+	{ 0x3036, 0xE231 },
+	{ 0x3037, 0x5294 },
+	{ 0x3038, 0x0231 },
+	{ 0x3039, 0x0B00 },
+};
 
-अटल स्थिर काष्ठा reg_sequence wm5110_no_dre_right_enable[] = अणु
-	अणु 0x3074, 0xE414 पूर्ण,
-	अणु 0x3075, 0x0056 पूर्ण,
-	अणु 0x306B, 0x0224 पूर्ण,
-	अणु 0x306F, 0x4263 पूर्ण,
-	अणु 0x3071, 0x5291 पूर्ण,
-	अणु 0x3080, 0xE414 पूर्ण,
-	अणु 0x3081, 0x3066 पूर्ण,
-	अणु 0x3082, 0xE414 पूर्ण,
-	अणु 0x3083, 0x3070 पूर्ण,
-	अणु 0x3084, 0xE414 पूर्ण,
-	अणु 0x3085, 0x3078 पूर्ण,
-	अणु 0x3086, 0xE414 पूर्ण,
-	अणु 0x3087, 0x3080 पूर्ण,
-	अणु 0x3088, 0xE414 पूर्ण,
-	अणु 0x3089, 0x3080 पूर्ण,
-पूर्ण;
+static const struct reg_sequence wm5110_no_dre_right_enable[] = {
+	{ 0x3074, 0xE414 },
+	{ 0x3075, 0x0056 },
+	{ 0x306B, 0x0224 },
+	{ 0x306F, 0x4263 },
+	{ 0x3071, 0x5291 },
+	{ 0x3080, 0xE414 },
+	{ 0x3081, 0x3066 },
+	{ 0x3082, 0xE414 },
+	{ 0x3083, 0x3070 },
+	{ 0x3084, 0xE414 },
+	{ 0x3085, 0x3078 },
+	{ 0x3086, 0xE414 },
+	{ 0x3087, 0x3080 },
+	{ 0x3088, 0xE414 },
+	{ 0x3089, 0x3080 },
+};
 
-अटल स्थिर काष्ठा reg_sequence wm5110_dre_right_enable[] = अणु
-	अणु 0x3074, 0x0231 पूर्ण,
-	अणु 0x3075, 0x0B00 पूर्ण,
-	अणु 0x306B, 0x0227 पूर्ण,
-	अणु 0x306F, 0x4266 पूर्ण,
-	अणु 0x3071, 0x5294 पूर्ण,
-	अणु 0x3080, 0xE231 पूर्ण,
-	अणु 0x3081, 0x0266 पूर्ण,
-	अणु 0x3082, 0x8231 पूर्ण,
-	अणु 0x3083, 0x4B17 पूर्ण,
-	अणु 0x3084, 0x8231 पूर्ण,
-	अणु 0x3085, 0x0B17 पूर्ण,
-	अणु 0x3086, 0xE231 पूर्ण,
-	अणु 0x3087, 0x5294 पूर्ण,
-	अणु 0x3088, 0x0231 पूर्ण,
-	अणु 0x3089, 0x0B00 पूर्ण,
-पूर्ण;
+static const struct reg_sequence wm5110_dre_right_enable[] = {
+	{ 0x3074, 0x0231 },
+	{ 0x3075, 0x0B00 },
+	{ 0x306B, 0x0227 },
+	{ 0x306F, 0x4266 },
+	{ 0x3071, 0x5294 },
+	{ 0x3080, 0xE231 },
+	{ 0x3081, 0x0266 },
+	{ 0x3082, 0x8231 },
+	{ 0x3083, 0x4B17 },
+	{ 0x3084, 0x8231 },
+	{ 0x3085, 0x0B17 },
+	{ 0x3086, 0xE231 },
+	{ 0x3087, 0x5294 },
+	{ 0x3088, 0x0231 },
+	{ 0x3089, 0x0B00 },
+};
 
-अटल पूर्णांक wm5110_hp_pre_enable(काष्ठा snd_soc_dapm_widget *w)
-अणु
-	काष्ठा snd_soc_component *component = snd_soc_dapm_to_component(w->dapm);
-	काष्ठा arizona_priv *priv = snd_soc_component_get_drvdata(component);
-	काष्ठा arizona *arizona = priv->arizona;
-	अचिन्हित पूर्णांक val = snd_soc_component_पढ़ो(component, ARIZONA_DRE_ENABLE);
-	स्थिर काष्ठा reg_sequence *wseq;
-	पूर्णांक nregs;
+static int wm5110_hp_pre_enable(struct snd_soc_dapm_widget *w)
+{
+	struct snd_soc_component *component = snd_soc_dapm_to_component(w->dapm);
+	struct arizona_priv *priv = snd_soc_component_get_drvdata(component);
+	struct arizona *arizona = priv->arizona;
+	unsigned int val = snd_soc_component_read(component, ARIZONA_DRE_ENABLE);
+	const struct reg_sequence *wseq;
+	int nregs;
 
-	चयन (w->shअगरt) अणु
-	हाल ARIZONA_OUT1L_ENA_SHIFT:
-		अगर (val & ARIZONA_DRE1L_ENA_MASK) अणु
+	switch (w->shift) {
+	case ARIZONA_OUT1L_ENA_SHIFT:
+		if (val & ARIZONA_DRE1L_ENA_MASK) {
 			wseq = wm5110_dre_left_enable;
 			nregs = ARRAY_SIZE(wm5110_dre_left_enable);
-		पूर्ण अन्यथा अणु
+		} else {
 			wseq = wm5110_no_dre_left_enable;
 			nregs = ARRAY_SIZE(wm5110_no_dre_left_enable);
 			priv->out_up_delay += 10;
-		पूर्ण
-		अवरोध;
-	हाल ARIZONA_OUT1R_ENA_SHIFT:
-		अगर (val & ARIZONA_DRE1R_ENA_MASK) अणु
+		}
+		break;
+	case ARIZONA_OUT1R_ENA_SHIFT:
+		if (val & ARIZONA_DRE1R_ENA_MASK) {
 			wseq = wm5110_dre_right_enable;
 			nregs = ARRAY_SIZE(wm5110_dre_right_enable);
-		पूर्ण अन्यथा अणु
+		} else {
 			wseq = wm5110_no_dre_right_enable;
 			nregs = ARRAY_SIZE(wm5110_no_dre_right_enable);
 			priv->out_up_delay += 10;
-		पूर्ण
-		अवरोध;
-	शेष:
-		वापस 0;
-	पूर्ण
+		}
+		break;
+	default:
+		return 0;
+	}
 
-	वापस regmap_multi_reg_ग_लिखो(arizona->regmap, wseq, nregs);
-पूर्ण
+	return regmap_multi_reg_write(arizona->regmap, wseq, nregs);
+}
 
-अटल पूर्णांक wm5110_hp_pre_disable(काष्ठा snd_soc_dapm_widget *w)
-अणु
-	काष्ठा snd_soc_component *component = snd_soc_dapm_to_component(w->dapm);
-	काष्ठा arizona_priv *priv = snd_soc_component_get_drvdata(component);
-	अचिन्हित पूर्णांक val = snd_soc_component_पढ़ो(component, ARIZONA_DRE_ENABLE);
+static int wm5110_hp_pre_disable(struct snd_soc_dapm_widget *w)
+{
+	struct snd_soc_component *component = snd_soc_dapm_to_component(w->dapm);
+	struct arizona_priv *priv = snd_soc_component_get_drvdata(component);
+	unsigned int val = snd_soc_component_read(component, ARIZONA_DRE_ENABLE);
 
-	चयन (w->shअगरt) अणु
-	हाल ARIZONA_OUT1L_ENA_SHIFT:
-		अगर (!(val & ARIZONA_DRE1L_ENA_MASK)) अणु
+	switch (w->shift) {
+	case ARIZONA_OUT1L_ENA_SHIFT:
+		if (!(val & ARIZONA_DRE1L_ENA_MASK)) {
 			snd_soc_component_update_bits(component,
 						      ARIZONA_SPARE_TRIGGERS,
 						      ARIZONA_WS_TRG1,
@@ -339,11 +338,11 @@
 			snd_soc_component_update_bits(component,
 						      ARIZONA_SPARE_TRIGGERS,
 						      ARIZONA_WS_TRG1, 0);
-			priv->out_करोwn_delay += 27;
-		पूर्ण
-		अवरोध;
-	हाल ARIZONA_OUT1R_ENA_SHIFT:
-		अगर (!(val & ARIZONA_DRE1R_ENA_MASK)) अणु
+			priv->out_down_delay += 27;
+		}
+		break;
+	case ARIZONA_OUT1R_ENA_SHIFT:
+		if (!(val & ARIZONA_DRE1R_ENA_MASK)) {
 			snd_soc_component_update_bits(component,
 						      ARIZONA_SPARE_TRIGGERS,
 						      ARIZONA_WS_TRG2,
@@ -351,126 +350,126 @@
 			snd_soc_component_update_bits(component,
 						      ARIZONA_SPARE_TRIGGERS,
 						      ARIZONA_WS_TRG2, 0);
-			priv->out_करोwn_delay += 27;
-		पूर्ण
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+			priv->out_down_delay += 27;
+		}
+		break;
+	default:
+		break;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक wm5110_hp_ev(काष्ठा snd_soc_dapm_widget *w,
-			काष्ठा snd_kcontrol *kcontrol, पूर्णांक event)
-अणु
-	काष्ठा snd_soc_component *component = snd_soc_dapm_to_component(w->dapm);
-	काष्ठा arizona_priv *priv = snd_soc_component_get_drvdata(component);
+static int wm5110_hp_ev(struct snd_soc_dapm_widget *w,
+			struct snd_kcontrol *kcontrol, int event)
+{
+	struct snd_soc_component *component = snd_soc_dapm_to_component(w->dapm);
+	struct arizona_priv *priv = snd_soc_component_get_drvdata(component);
 
-	चयन (priv->arizona->rev) अणु
-	हाल 0 ... 3:
-		अवरोध;
-	शेष:
-		चयन (event) अणु
-		हाल SND_SOC_DAPM_PRE_PMU:
+	switch (priv->arizona->rev) {
+	case 0 ... 3:
+		break;
+	default:
+		switch (event) {
+		case SND_SOC_DAPM_PRE_PMU:
 			wm5110_hp_pre_enable(w);
-			अवरोध;
-		हाल SND_SOC_DAPM_PRE_PMD:
+			break;
+		case SND_SOC_DAPM_PRE_PMD:
 			wm5110_hp_pre_disable(w);
-			अवरोध;
-		शेष:
-			अवरोध;
-		पूर्ण
-		अवरोध;
-	पूर्ण
+			break;
+		default:
+			break;
+		}
+		break;
+	}
 
-	वापस arizona_hp_ev(w, kcontrol, event);
-पूर्ण
+	return arizona_hp_ev(w, kcontrol, event);
+}
 
-अटल पूर्णांक wm5110_clear_pga_volume(काष्ठा arizona *arizona, पूर्णांक output)
-अणु
-	अचिन्हित पूर्णांक reg = ARIZONA_OUTPUT_PATH_CONFIG_1L + output * 4;
-	पूर्णांक ret;
+static int wm5110_clear_pga_volume(struct arizona *arizona, int output)
+{
+	unsigned int reg = ARIZONA_OUTPUT_PATH_CONFIG_1L + output * 4;
+	int ret;
 
-	ret = regmap_ग_लिखो(arizona->regmap, reg, 0x80);
-	अगर (ret)
+	ret = regmap_write(arizona->regmap, reg, 0x80);
+	if (ret)
 		dev_err(arizona->dev, "Failed to clear PGA (0x%x): %d\n",
 			reg, ret);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक wm5110_put_dre(काष्ठा snd_kcontrol *kcontrol,
-			  काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_soc_component *component = snd_soc_kcontrol_component(kcontrol);
-	काष्ठा snd_soc_dapm_context *dapm = snd_soc_component_get_dapm(component);
-	काष्ठा arizona *arizona = dev_get_drvdata(component->dev->parent);
-	काष्ठा soc_mixer_control *mc =
-		(काष्ठा soc_mixer_control *)kcontrol->निजी_value;
-	अचिन्हित पूर्णांक ena, dre;
-	अचिन्हित पूर्णांक mask = (0x1 << mc->shअगरt) | (0x1 << mc->rshअगरt);
-	अचिन्हित पूर्णांक lnew = (!!ucontrol->value.पूर्णांकeger.value[0]) << mc->shअगरt;
-	अचिन्हित पूर्णांक rnew = (!!ucontrol->value.पूर्णांकeger.value[1]) << mc->rshअगरt;
-	अचिन्हित पूर्णांक lold, rold;
-	अचिन्हित पूर्णांक lena, rena;
-	पूर्णांक ret;
+static int wm5110_put_dre(struct snd_kcontrol *kcontrol,
+			  struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_component *component = snd_soc_kcontrol_component(kcontrol);
+	struct snd_soc_dapm_context *dapm = snd_soc_component_get_dapm(component);
+	struct arizona *arizona = dev_get_drvdata(component->dev->parent);
+	struct soc_mixer_control *mc =
+		(struct soc_mixer_control *)kcontrol->private_value;
+	unsigned int ena, dre;
+	unsigned int mask = (0x1 << mc->shift) | (0x1 << mc->rshift);
+	unsigned int lnew = (!!ucontrol->value.integer.value[0]) << mc->shift;
+	unsigned int rnew = (!!ucontrol->value.integer.value[1]) << mc->rshift;
+	unsigned int lold, rold;
+	unsigned int lena, rena;
+	int ret;
 
 	snd_soc_dapm_mutex_lock(dapm);
 
-	ret = regmap_पढ़ो(arizona->regmap, ARIZONA_OUTPUT_ENABLES_1, &ena);
-	अगर (ret) अणु
+	ret = regmap_read(arizona->regmap, ARIZONA_OUTPUT_ENABLES_1, &ena);
+	if (ret) {
 		dev_err(arizona->dev, "Failed to read output state: %d\n", ret);
-		जाओ err;
-	पूर्ण
-	ret = regmap_पढ़ो(arizona->regmap, ARIZONA_DRE_ENABLE, &dre);
-	अगर (ret) अणु
+		goto err;
+	}
+	ret = regmap_read(arizona->regmap, ARIZONA_DRE_ENABLE, &dre);
+	if (ret) {
 		dev_err(arizona->dev, "Failed to read DRE state: %d\n", ret);
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	lold = dre & (1 << mc->shअगरt);
-	rold = dre & (1 << mc->rshअगरt);
+	lold = dre & (1 << mc->shift);
+	rold = dre & (1 << mc->rshift);
 	/* Enables are channel wise swapped from the DRE enables */
-	lena = ena & (1 << mc->rshअगरt);
-	rena = ena & (1 << mc->shअगरt);
+	lena = ena & (1 << mc->rshift);
+	rena = ena & (1 << mc->shift);
 
-	अगर ((lena && lnew != lold) || (rena && rnew != rold)) अणु
+	if ((lena && lnew != lold) || (rena && rnew != rold)) {
 		dev_err(arizona->dev, "Can't change DRE on active outputs\n");
 		ret = -EBUSY;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	ret = regmap_update_bits(arizona->regmap, ARIZONA_DRE_ENABLE,
 				 mask, lnew | rnew);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(arizona->dev, "Failed to set DRE: %d\n", ret);
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	/* Force reset of PGA volumes, अगर turning DRE off */
-	अगर (!lnew && lold)
-		wm5110_clear_pga_volume(arizona, mc->shअगरt);
+	/* Force reset of PGA volumes, if turning DRE off */
+	if (!lnew && lold)
+		wm5110_clear_pga_volume(arizona, mc->shift);
 
-	अगर (!rnew && rold)
-		wm5110_clear_pga_volume(arizona, mc->rshअगरt);
+	if (!rnew && rold)
+		wm5110_clear_pga_volume(arizona, mc->rshift);
 
 err:
 	snd_soc_dapm_mutex_unlock(dapm);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक wm5110_in_pga_get(काष्ठा snd_kcontrol *kcontrol,
-			     काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_soc_component *component = snd_soc_kcontrol_component(kcontrol);
-	काष्ठा snd_soc_dapm_context *dapm = snd_soc_component_get_dapm(component);
-	पूर्णांक ret;
+static int wm5110_in_pga_get(struct snd_kcontrol *kcontrol,
+			     struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_component *component = snd_soc_kcontrol_component(kcontrol);
+	struct snd_soc_dapm_context *dapm = snd_soc_component_get_dapm(component);
+	int ret;
 
 	/*
 	 * PGA Volume is also used as part of the enable sequence, so
-	 * usage of it should be aव्योमed whilst that is running.
+	 * usage of it should be avoided whilst that is running.
 	 */
 	snd_soc_dapm_mutex_lock(dapm);
 
@@ -478,19 +477,19 @@ err:
 
 	snd_soc_dapm_mutex_unlock(dapm);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक wm5110_in_pga_put(काष्ठा snd_kcontrol *kcontrol,
-			     काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_soc_component *component = snd_soc_kcontrol_component(kcontrol);
-	काष्ठा snd_soc_dapm_context *dapm = snd_soc_component_get_dapm(component);
-	पूर्णांक ret;
+static int wm5110_in_pga_put(struct snd_kcontrol *kcontrol,
+			     struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_component *component = snd_soc_kcontrol_component(kcontrol);
+	struct snd_soc_dapm_context *dapm = snd_soc_component_get_dapm(component);
+	int ret;
 
 	/*
 	 * PGA Volume is also used as part of the enable sequence, so
-	 * usage of it should be aव्योमed whilst that is running.
+	 * usage of it should be avoided whilst that is running.
 	 */
 	snd_soc_dapm_mutex_lock(dapm);
 
@@ -498,95 +497,95 @@ err:
 
 	snd_soc_dapm_mutex_unlock(dapm);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक wm5110_in_analog_ev(काष्ठा snd_soc_dapm_widget *w,
-			       काष्ठा snd_kcontrol *kcontrol, पूर्णांक event)
-अणु
-	काष्ठा snd_soc_component *component = snd_soc_dapm_to_component(w->dapm);
-	काष्ठा arizona_priv *priv = snd_soc_component_get_drvdata(component);
-	काष्ठा wm5110_priv *wm5110 = snd_soc_component_get_drvdata(component);
-	काष्ठा arizona *arizona = priv->arizona;
-	अचिन्हित पूर्णांक reg, mask;
-	काष्ठा reg_sequence analog_seq[] = अणु
-		अणु 0x80, 0x3 पूर्ण,
-		अणु 0x35d, 0 पूर्ण,
-		अणु 0x80, 0x0 पूर्ण,
-	पूर्ण;
+static int wm5110_in_analog_ev(struct snd_soc_dapm_widget *w,
+			       struct snd_kcontrol *kcontrol, int event)
+{
+	struct snd_soc_component *component = snd_soc_dapm_to_component(w->dapm);
+	struct arizona_priv *priv = snd_soc_component_get_drvdata(component);
+	struct wm5110_priv *wm5110 = snd_soc_component_get_drvdata(component);
+	struct arizona *arizona = priv->arizona;
+	unsigned int reg, mask;
+	struct reg_sequence analog_seq[] = {
+		{ 0x80, 0x3 },
+		{ 0x35d, 0 },
+		{ 0x80, 0x0 },
+	};
 
-	reg = ARIZONA_IN1L_CONTROL + ((w->shअगरt ^ 0x1) * 4);
+	reg = ARIZONA_IN1L_CONTROL + ((w->shift ^ 0x1) * 4);
 	mask = ARIZONA_IN1L_PGA_VOL_MASK;
 
-	चयन (event) अणु
-	हाल SND_SOC_DAPM_WILL_PMU:
-		wm5110->in_value |= 0x3 << ((w->shअगरt ^ 0x1) * 2);
+	switch (event) {
+	case SND_SOC_DAPM_WILL_PMU:
+		wm5110->in_value |= 0x3 << ((w->shift ^ 0x1) * 2);
 		wm5110->in_pre_pending++;
 		wm5110->in_post_pending++;
-		वापस 0;
-	हाल SND_SOC_DAPM_PRE_PMU:
-		wm5110->in_pga_cache[w->shअगरt] = snd_soc_component_पढ़ो(component, reg);
+		return 0;
+	case SND_SOC_DAPM_PRE_PMU:
+		wm5110->in_pga_cache[w->shift] = snd_soc_component_read(component, reg);
 
 		snd_soc_component_update_bits(component, reg, mask,
 				    0x40 << ARIZONA_IN1L_PGA_VOL_SHIFT);
 
 		wm5110->in_pre_pending--;
-		अगर (wm5110->in_pre_pending == 0) अणु
+		if (wm5110->in_pre_pending == 0) {
 			analog_seq[1].def = wm5110->in_value;
-			regmap_multi_reg_ग_लिखो_bypassed(arizona->regmap,
+			regmap_multi_reg_write_bypassed(arizona->regmap,
 							analog_seq,
 							ARRAY_SIZE(analog_seq));
 
 			msleep(55);
 
 			wm5110->in_value = 0;
-		पूर्ण
+		}
 
-		अवरोध;
-	हाल SND_SOC_DAPM_POST_PMU:
+		break;
+	case SND_SOC_DAPM_POST_PMU:
 		snd_soc_component_update_bits(component, reg, mask,
-					      wm5110->in_pga_cache[w->shअगरt]);
+					      wm5110->in_pga_cache[w->shift]);
 
 		wm5110->in_post_pending--;
-		अगर (wm5110->in_post_pending == 0)
-			regmap_multi_reg_ग_लिखो_bypassed(arizona->regmap,
+		if (wm5110->in_post_pending == 0)
+			regmap_multi_reg_write_bypassed(arizona->regmap,
 							analog_seq,
 							ARRAY_SIZE(analog_seq));
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+		break;
+	default:
+		break;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक wm5110_in_ev(काष्ठा snd_soc_dapm_widget *w,
-			काष्ठा snd_kcontrol *kcontrol, पूर्णांक event)
-अणु
-	काष्ठा snd_soc_component *component = snd_soc_dapm_to_component(w->dapm);
-	काष्ठा arizona_priv *priv = snd_soc_component_get_drvdata(component);
-	काष्ठा arizona *arizona = priv->arizona;
+static int wm5110_in_ev(struct snd_soc_dapm_widget *w,
+			struct snd_kcontrol *kcontrol, int event)
+{
+	struct snd_soc_component *component = snd_soc_dapm_to_component(w->dapm);
+	struct arizona_priv *priv = snd_soc_component_get_drvdata(component);
+	struct arizona *arizona = priv->arizona;
 
-	चयन (arizona->rev) अणु
-	हाल 0 ... 4:
-		अगर (arizona_input_analog(component, w->shअगरt))
+	switch (arizona->rev) {
+	case 0 ... 4:
+		if (arizona_input_analog(component, w->shift))
 			wm5110_in_analog_ev(w, kcontrol, event);
 
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+		break;
+	default:
+		break;
+	}
 
-	वापस arizona_in_ev(w, kcontrol, event);
-पूर्ण
+	return arizona_in_ev(w, kcontrol, event);
+}
 
-अटल DECLARE_TLV_DB_SCALE(ana_tlv, 0, 100, 0);
-अटल DECLARE_TLV_DB_SCALE(eq_tlv, -1200, 100, 0);
-अटल DECLARE_TLV_DB_SCALE(digital_tlv, -6400, 50, 0);
-अटल DECLARE_TLV_DB_SCALE(noise_tlv, -13200, 600, 0);
-अटल DECLARE_TLV_DB_SCALE(ng_tlv, -10200, 600, 0);
+static DECLARE_TLV_DB_SCALE(ana_tlv, 0, 100, 0);
+static DECLARE_TLV_DB_SCALE(eq_tlv, -1200, 100, 0);
+static DECLARE_TLV_DB_SCALE(digital_tlv, -6400, 50, 0);
+static DECLARE_TLV_DB_SCALE(noise_tlv, -13200, 600, 0);
+static DECLARE_TLV_DB_SCALE(ng_tlv, -10200, 600, 0);
 
-#घोषणा WM5110_NG_SRC(name, base) \
+#define WM5110_NG_SRC(name, base) \
 	SOC_SINGLE(name " NG HPOUT1L Switch",  base,  0, 1, 0), \
 	SOC_SINGLE(name " NG HPOUT1R Switch",  base,  1, 1, 0), \
 	SOC_SINGLE(name " NG HPOUT2L Switch",  base,  2, 1, 0), \
@@ -600,34 +599,34 @@ err:
 	SOC_SINGLE(name " NG SPKDAT2L Switch", base, 10, 1, 0), \
 	SOC_SINGLE(name " NG SPKDAT2R Switch", base, 11, 1, 0)
 
-#घोषणा WM5110_RXANC_INPUT_ROUTES(widget, name) \
-	अणु widget, शून्य, name " NG Mux" पूर्ण, \
-	अणु name " NG Internal", शून्य, "RXANC NG Clock" पूर्ण, \
-	अणु name " NG Internal", शून्य, name " Channel" पूर्ण, \
-	अणु name " NG External", शून्य, "RXANC NG External Clock" पूर्ण, \
-	अणु name " NG External", शून्य, name " Channel" पूर्ण, \
-	अणु name " NG Mux", "None", name " Channel" पूर्ण, \
-	अणु name " NG Mux", "Internal", name " NG Internal" पूर्ण, \
-	अणु name " NG Mux", "External", name " NG External" पूर्ण, \
-	अणु name " Channel", "Left", name " Left Input" पूर्ण, \
-	अणु name " Channel", "Combine", name " Left Input" पूर्ण, \
-	अणु name " Channel", "Right", name " Right Input" पूर्ण, \
-	अणु name " Channel", "Combine", name " Right Input" पूर्ण, \
-	अणु name " Left Input", "IN1", "IN1L PGA" पूर्ण, \
-	अणु name " Right Input", "IN1", "IN1R PGA" पूर्ण, \
-	अणु name " Left Input", "IN2", "IN2L PGA" पूर्ण, \
-	अणु name " Right Input", "IN2", "IN2R PGA" पूर्ण, \
-	अणु name " Left Input", "IN3", "IN3L PGA" पूर्ण, \
-	अणु name " Right Input", "IN3", "IN3R PGA" पूर्ण, \
-	अणु name " Left Input", "IN4", "IN4L PGA" पूर्ण, \
-	अणु name " Right Input", "IN4", "IN4R PGA" पूर्ण
+#define WM5110_RXANC_INPUT_ROUTES(widget, name) \
+	{ widget, NULL, name " NG Mux" }, \
+	{ name " NG Internal", NULL, "RXANC NG Clock" }, \
+	{ name " NG Internal", NULL, name " Channel" }, \
+	{ name " NG External", NULL, "RXANC NG External Clock" }, \
+	{ name " NG External", NULL, name " Channel" }, \
+	{ name " NG Mux", "None", name " Channel" }, \
+	{ name " NG Mux", "Internal", name " NG Internal" }, \
+	{ name " NG Mux", "External", name " NG External" }, \
+	{ name " Channel", "Left", name " Left Input" }, \
+	{ name " Channel", "Combine", name " Left Input" }, \
+	{ name " Channel", "Right", name " Right Input" }, \
+	{ name " Channel", "Combine", name " Right Input" }, \
+	{ name " Left Input", "IN1", "IN1L PGA" }, \
+	{ name " Right Input", "IN1", "IN1R PGA" }, \
+	{ name " Left Input", "IN2", "IN2L PGA" }, \
+	{ name " Right Input", "IN2", "IN2R PGA" }, \
+	{ name " Left Input", "IN3", "IN3L PGA" }, \
+	{ name " Right Input", "IN3", "IN3R PGA" }, \
+	{ name " Left Input", "IN4", "IN4L PGA" }, \
+	{ name " Right Input", "IN4", "IN4R PGA" }
 
-#घोषणा WM5110_RXANC_OUTPUT_ROUTES(widget, name) \
-	अणु widget, शून्य, name " ANC Source" पूर्ण, \
-	अणु name " ANC Source", "RXANCL", "RXANCL" पूर्ण, \
-	अणु name " ANC Source", "RXANCR", "RXANCR" पूर्ण
+#define WM5110_RXANC_OUTPUT_ROUTES(widget, name) \
+	{ widget, NULL, name " ANC Source" }, \
+	{ name " ANC Source", "RXANCL", "RXANCL" }, \
+	{ name " ANC Source", "RXANCR", "RXANCR" }
 
-अटल स्थिर काष्ठा snd_kcontrol_new wm5110_snd_controls[] = अणु
+static const struct snd_kcontrol_new wm5110_snd_controls[] = {
 SOC_ENUM("IN1 OSR", arizona_in_dmic_osr[0]),
 SOC_ENUM("IN2 OSR", arizona_in_dmic_osr[1]),
 SOC_ENUM("IN3 OSR", arizona_in_dmic_osr[2]),
@@ -652,7 +651,7 @@ SOC_SINGLE_RANGE_EXT_TLV("IN3R Volume", ARIZONA_IN3R_CONTROL,
 			 ARIZONA_IN3R_PGA_VOL_SHIFT, 0x40, 0x5f, 0,
 			 wm5110_in_pga_get, wm5110_in_pga_put, ana_tlv),
 
-SOC_ENUM("IN HPF Cutoff Frequency", arizona_in_hpf_cut_क्रमागत),
+SOC_ENUM("IN HPF Cutoff Frequency", arizona_in_hpf_cut_enum),
 
 SOC_SINGLE("IN1L HPF Switch", ARIZONA_IN1L_CONTROL,
 	   ARIZONA_IN1L_HPF_SHIFT, 1, 0),
@@ -932,7 +931,7 @@ WM_ADSP_FW_CONTROL("DSP1", 0),
 WM_ADSP_FW_CONTROL("DSP2", 1),
 WM_ADSP_FW_CONTROL("DSP3", 2),
 WM_ADSP_FW_CONTROL("DSP4", 3),
-पूर्ण;
+};
 
 ARIZONA_MIXER_ENUMS(EQ1, ARIZONA_EQ1MIX_INPUT_1_SOURCE);
 ARIZONA_MIXER_ENUMS(EQ2, ARIZONA_EQ2MIX_INPUT_1_SOURCE);
@@ -1047,36 +1046,36 @@ ARIZONA_MUX_ENUMS(ISRC3DEC2, ARIZONA_ISRC3DEC2MIX_INPUT_1_SOURCE);
 ARIZONA_MUX_ENUMS(ISRC3DEC3, ARIZONA_ISRC3DEC3MIX_INPUT_1_SOURCE);
 ARIZONA_MUX_ENUMS(ISRC3DEC4, ARIZONA_ISRC3DEC4MIX_INPUT_1_SOURCE);
 
-अटल स्थिर अक्षर * स्थिर wm5110_aec_loopback_texts[] = अणु
+static const char * const wm5110_aec_loopback_texts[] = {
 	"HPOUT1L", "HPOUT1R", "HPOUT2L", "HPOUT2R", "HPOUT3L", "HPOUT3R",
 	"SPKOUTL", "SPKOUTR", "SPKDAT1L", "SPKDAT1R", "SPKDAT2L", "SPKDAT2R",
-पूर्ण;
+};
 
-अटल स्थिर अचिन्हित पूर्णांक wm5110_aec_loopback_values[] = अणु
+static const unsigned int wm5110_aec_loopback_values[] = {
 	0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा soc_क्रमागत wm5110_aec_loopback =
+static const struct soc_enum wm5110_aec_loopback =
 	SOC_VALUE_ENUM_SINGLE(ARIZONA_DAC_AEC_CONTROL_1,
 			      ARIZONA_AEC_LOOPBACK_SRC_SHIFT, 0xf,
 			      ARRAY_SIZE(wm5110_aec_loopback_texts),
 			      wm5110_aec_loopback_texts,
 			      wm5110_aec_loopback_values);
 
-अटल स्थिर काष्ठा snd_kcontrol_new wm5110_aec_loopback_mux =
+static const struct snd_kcontrol_new wm5110_aec_loopback_mux =
 	SOC_DAPM_ENUM("AEC Loopback", wm5110_aec_loopback);
 
-अटल स्थिर काष्ठा snd_kcontrol_new wm5110_anc_input_mux[] = अणु
+static const struct snd_kcontrol_new wm5110_anc_input_mux[] = {
 	SOC_DAPM_ENUM("RXANCL Input", arizona_anc_input_src[0]),
 	SOC_DAPM_ENUM("RXANCL Channel", arizona_anc_input_src[1]),
 	SOC_DAPM_ENUM("RXANCR Input", arizona_anc_input_src[2]),
 	SOC_DAPM_ENUM("RXANCR Channel", arizona_anc_input_src[3]),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा snd_kcontrol_new wm5110_anc_ng_mux =
-	SOC_DAPM_ENUM("RXANC NG Source", arizona_anc_ng_क्रमागत);
+static const struct snd_kcontrol_new wm5110_anc_ng_mux =
+	SOC_DAPM_ENUM("RXANC NG Source", arizona_anc_ng_enum);
 
-अटल स्थिर काष्ठा snd_kcontrol_new wm5110_output_anc_src[] = अणु
+static const struct snd_kcontrol_new wm5110_output_anc_src[] = {
 	SOC_DAPM_ENUM("HPOUT1L ANC Source", arizona_output_anc_src[0]),
 	SOC_DAPM_ENUM("HPOUT1R ANC Source", arizona_output_anc_src[1]),
 	SOC_DAPM_ENUM("HPOUT2L ANC Source", arizona_output_anc_src[2]),
@@ -1089,9 +1088,9 @@ ARIZONA_MUX_ENUMS(ISRC3DEC4, ARIZONA_ISRC3DEC4MIX_INPUT_1_SOURCE);
 	SOC_DAPM_ENUM("SPKDAT1R ANC Source", arizona_output_anc_src[9]),
 	SOC_DAPM_ENUM("SPKDAT2L ANC Source", arizona_output_anc_src[10]),
 	SOC_DAPM_ENUM("SPKDAT2R ANC Source", arizona_output_anc_src[11]),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा snd_soc_dapm_widget wm5110_dapm_widमाला_लो[] = अणु
+static const struct snd_soc_dapm_widget wm5110_dapm_widgets[] = {
 SND_SOC_DAPM_SUPPLY("SYSCLK", ARIZONA_SYSTEM_CLOCK_1, ARIZONA_SYSCLK_ENA_SHIFT,
 		    0, wm5110_sysclk_ev, SND_SOC_DAPM_POST_PMU |
 		    SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
@@ -1099,9 +1098,9 @@ SND_SOC_DAPM_SUPPLY("ASYNCCLK", ARIZONA_ASYNC_CLOCK_1,
 		    ARIZONA_ASYNC_CLK_ENA_SHIFT, 0, arizona_clk_ev,
 		    SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
 SND_SOC_DAPM_SUPPLY("OPCLK", ARIZONA_OUTPUT_SYSTEM_CLOCK,
-		    ARIZONA_OPCLK_ENA_SHIFT, 0, शून्य, 0),
+		    ARIZONA_OPCLK_ENA_SHIFT, 0, NULL, 0),
 SND_SOC_DAPM_SUPPLY("ASYNCOPCLK", ARIZONA_OUTPUT_ASYNC_CLOCK,
-		    ARIZONA_OPCLK_ASYNC_ENA_SHIFT, 0, शून्य, 0),
+		    ARIZONA_OPCLK_ASYNC_ENA_SHIFT, 0, NULL, 0),
 
 SND_SOC_DAPM_REGULATOR_SUPPLY("DBVDD2", 0, 0),
 SND_SOC_DAPM_REGULATOR_SUPPLY("DBVDD3", 0, 0),
@@ -1129,160 +1128,160 @@ SND_SOC_DAPM_OUTPUT("DRC2 Signal Activity"),
 SND_SOC_DAPM_OUTPUT("DSP Voice Trigger"),
 
 SND_SOC_DAPM_SWITCH("DSP3 Voice Trigger", SND_SOC_NOPM, 2, 0,
-		    &arizona_voice_trigger_चयन[2]),
+		    &arizona_voice_trigger_switch[2]),
 
 SND_SOC_DAPM_PGA_E("IN1L PGA", ARIZONA_INPUT_ENABLES, ARIZONA_IN1L_ENA_SHIFT,
-		   0, शून्य, 0, wm5110_in_ev,
+		   0, NULL, 0, wm5110_in_ev,
 		   SND_SOC_DAPM_PRE_PMD | SND_SOC_DAPM_POST_PMD |
 		   SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMU |
 		   SND_SOC_DAPM_WILL_PMU),
 SND_SOC_DAPM_PGA_E("IN1R PGA", ARIZONA_INPUT_ENABLES, ARIZONA_IN1R_ENA_SHIFT,
-		   0, शून्य, 0, wm5110_in_ev,
+		   0, NULL, 0, wm5110_in_ev,
 		   SND_SOC_DAPM_PRE_PMD | SND_SOC_DAPM_POST_PMD |
 		   SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMU |
 		   SND_SOC_DAPM_WILL_PMU),
 SND_SOC_DAPM_PGA_E("IN2L PGA", ARIZONA_INPUT_ENABLES, ARIZONA_IN2L_ENA_SHIFT,
-		   0, शून्य, 0, wm5110_in_ev,
+		   0, NULL, 0, wm5110_in_ev,
 		   SND_SOC_DAPM_PRE_PMD | SND_SOC_DAPM_POST_PMD |
 		   SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMU |
 		   SND_SOC_DAPM_WILL_PMU),
 SND_SOC_DAPM_PGA_E("IN2R PGA", ARIZONA_INPUT_ENABLES, ARIZONA_IN2R_ENA_SHIFT,
-		   0, शून्य, 0, wm5110_in_ev,
+		   0, NULL, 0, wm5110_in_ev,
 		   SND_SOC_DAPM_PRE_PMD | SND_SOC_DAPM_POST_PMD |
 		   SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMU |
 		   SND_SOC_DAPM_WILL_PMU),
 SND_SOC_DAPM_PGA_E("IN3L PGA", ARIZONA_INPUT_ENABLES, ARIZONA_IN3L_ENA_SHIFT,
-		   0, शून्य, 0, wm5110_in_ev,
+		   0, NULL, 0, wm5110_in_ev,
 		   SND_SOC_DAPM_PRE_PMD | SND_SOC_DAPM_POST_PMD |
 		   SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMU |
 		   SND_SOC_DAPM_WILL_PMU),
 SND_SOC_DAPM_PGA_E("IN3R PGA", ARIZONA_INPUT_ENABLES, ARIZONA_IN3R_ENA_SHIFT,
-		   0, शून्य, 0, wm5110_in_ev,
+		   0, NULL, 0, wm5110_in_ev,
 		   SND_SOC_DAPM_PRE_PMD | SND_SOC_DAPM_POST_PMD |
 		   SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMU |
 		   SND_SOC_DAPM_WILL_PMU),
 SND_SOC_DAPM_PGA_E("IN4L PGA", ARIZONA_INPUT_ENABLES, ARIZONA_IN4L_ENA_SHIFT,
-		   0, शून्य, 0, arizona_in_ev,
+		   0, NULL, 0, arizona_in_ev,
 		   SND_SOC_DAPM_PRE_PMD | SND_SOC_DAPM_POST_PMD |
 		   SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMU),
 SND_SOC_DAPM_PGA_E("IN4R PGA", ARIZONA_INPUT_ENABLES, ARIZONA_IN4R_ENA_SHIFT,
-		   0, शून्य, 0, arizona_in_ev,
+		   0, NULL, 0, arizona_in_ev,
 		   SND_SOC_DAPM_PRE_PMD | SND_SOC_DAPM_POST_PMD |
 		   SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMU),
 
 SND_SOC_DAPM_SUPPLY("MICBIAS1", ARIZONA_MIC_BIAS_CTRL_1,
-		    ARIZONA_MICB1_ENA_SHIFT, 0, शून्य, 0),
+		    ARIZONA_MICB1_ENA_SHIFT, 0, NULL, 0),
 SND_SOC_DAPM_SUPPLY("MICBIAS2", ARIZONA_MIC_BIAS_CTRL_2,
-		    ARIZONA_MICB1_ENA_SHIFT, 0, शून्य, 0),
+		    ARIZONA_MICB1_ENA_SHIFT, 0, NULL, 0),
 SND_SOC_DAPM_SUPPLY("MICBIAS3", ARIZONA_MIC_BIAS_CTRL_3,
-		    ARIZONA_MICB1_ENA_SHIFT, 0, शून्य, 0),
+		    ARIZONA_MICB1_ENA_SHIFT, 0, NULL, 0),
 
 SND_SOC_DAPM_PGA("Noise Generator", ARIZONA_COMFORT_NOISE_GENERATOR,
-		 ARIZONA_NOISE_GEN_ENA_SHIFT, 0, शून्य, 0),
+		 ARIZONA_NOISE_GEN_ENA_SHIFT, 0, NULL, 0),
 
 SND_SOC_DAPM_PGA("Tone Generator 1", ARIZONA_TONE_GENERATOR_1,
-		 ARIZONA_TONE1_ENA_SHIFT, 0, शून्य, 0),
+		 ARIZONA_TONE1_ENA_SHIFT, 0, NULL, 0),
 SND_SOC_DAPM_PGA("Tone Generator 2", ARIZONA_TONE_GENERATOR_1,
-		 ARIZONA_TONE2_ENA_SHIFT, 0, शून्य, 0),
+		 ARIZONA_TONE2_ENA_SHIFT, 0, NULL, 0),
 
 SND_SOC_DAPM_PGA("Mic Mute Mixer", ARIZONA_MIC_NOISE_MIX_CONTROL_1,
-		 ARIZONA_MICMUTE_MIX_ENA_SHIFT, 0, शून्य, 0),
+		 ARIZONA_MICMUTE_MIX_ENA_SHIFT, 0, NULL, 0),
 
-SND_SOC_DAPM_PGA("EQ1", ARIZONA_EQ1_1, ARIZONA_EQ1_ENA_SHIFT, 0, शून्य, 0),
-SND_SOC_DAPM_PGA("EQ2", ARIZONA_EQ2_1, ARIZONA_EQ2_ENA_SHIFT, 0, शून्य, 0),
-SND_SOC_DAPM_PGA("EQ3", ARIZONA_EQ3_1, ARIZONA_EQ3_ENA_SHIFT, 0, शून्य, 0),
-SND_SOC_DAPM_PGA("EQ4", ARIZONA_EQ4_1, ARIZONA_EQ4_ENA_SHIFT, 0, शून्य, 0),
+SND_SOC_DAPM_PGA("EQ1", ARIZONA_EQ1_1, ARIZONA_EQ1_ENA_SHIFT, 0, NULL, 0),
+SND_SOC_DAPM_PGA("EQ2", ARIZONA_EQ2_1, ARIZONA_EQ2_ENA_SHIFT, 0, NULL, 0),
+SND_SOC_DAPM_PGA("EQ3", ARIZONA_EQ3_1, ARIZONA_EQ3_ENA_SHIFT, 0, NULL, 0),
+SND_SOC_DAPM_PGA("EQ4", ARIZONA_EQ4_1, ARIZONA_EQ4_ENA_SHIFT, 0, NULL, 0),
 
 SND_SOC_DAPM_PGA("DRC1L", ARIZONA_DRC1_CTRL1, ARIZONA_DRC1L_ENA_SHIFT, 0,
-		 शून्य, 0),
+		 NULL, 0),
 SND_SOC_DAPM_PGA("DRC1R", ARIZONA_DRC1_CTRL1, ARIZONA_DRC1R_ENA_SHIFT, 0,
-		 शून्य, 0),
+		 NULL, 0),
 SND_SOC_DAPM_PGA("DRC2L", ARIZONA_DRC2_CTRL1, ARIZONA_DRC2L_ENA_SHIFT, 0,
-		 शून्य, 0),
+		 NULL, 0),
 SND_SOC_DAPM_PGA("DRC2R", ARIZONA_DRC2_CTRL1, ARIZONA_DRC2R_ENA_SHIFT, 0,
-		 शून्य, 0),
+		 NULL, 0),
 
 SND_SOC_DAPM_PGA("LHPF1", ARIZONA_HPLPF1_1, ARIZONA_LHPF1_ENA_SHIFT, 0,
-		 शून्य, 0),
+		 NULL, 0),
 SND_SOC_DAPM_PGA("LHPF2", ARIZONA_HPLPF2_1, ARIZONA_LHPF2_ENA_SHIFT, 0,
-		 शून्य, 0),
+		 NULL, 0),
 SND_SOC_DAPM_PGA("LHPF3", ARIZONA_HPLPF3_1, ARIZONA_LHPF3_ENA_SHIFT, 0,
-		 शून्य, 0),
+		 NULL, 0),
 SND_SOC_DAPM_PGA("LHPF4", ARIZONA_HPLPF4_1, ARIZONA_LHPF4_ENA_SHIFT, 0,
-		 शून्य, 0),
+		 NULL, 0),
 
 SND_SOC_DAPM_PGA("PWM1 Driver", ARIZONA_PWM_DRIVE_1, ARIZONA_PWM1_ENA_SHIFT,
-		 0, शून्य, 0),
+		 0, NULL, 0),
 SND_SOC_DAPM_PGA("PWM2 Driver", ARIZONA_PWM_DRIVE_1, ARIZONA_PWM2_ENA_SHIFT,
-		 0, शून्य, 0),
+		 0, NULL, 0),
 
 SND_SOC_DAPM_PGA("ASRC1L", ARIZONA_ASRC_ENABLE, ARIZONA_ASRC1L_ENA_SHIFT, 0,
-		 शून्य, 0),
+		 NULL, 0),
 SND_SOC_DAPM_PGA("ASRC1R", ARIZONA_ASRC_ENABLE, ARIZONA_ASRC1R_ENA_SHIFT, 0,
-		 शून्य, 0),
+		 NULL, 0),
 SND_SOC_DAPM_PGA("ASRC2L", ARIZONA_ASRC_ENABLE, ARIZONA_ASRC2L_ENA_SHIFT, 0,
-		 शून्य, 0),
+		 NULL, 0),
 SND_SOC_DAPM_PGA("ASRC2R", ARIZONA_ASRC_ENABLE, ARIZONA_ASRC2R_ENA_SHIFT, 0,
-		 शून्य, 0),
+		 NULL, 0),
 
-WM_ADSP2("DSP1", 0, wm5110_adsp_घातer_ev),
-WM_ADSP2("DSP2", 1, wm5110_adsp_घातer_ev),
-WM_ADSP2("DSP3", 2, wm5110_adsp_घातer_ev),
-WM_ADSP2("DSP4", 3, wm5110_adsp_घातer_ev),
+WM_ADSP2("DSP1", 0, wm5110_adsp_power_ev),
+WM_ADSP2("DSP2", 1, wm5110_adsp_power_ev),
+WM_ADSP2("DSP3", 2, wm5110_adsp_power_ev),
+WM_ADSP2("DSP4", 3, wm5110_adsp_power_ev),
 
 SND_SOC_DAPM_PGA("ISRC1INT1", ARIZONA_ISRC_1_CTRL_3,
-		 ARIZONA_ISRC1_INT0_ENA_SHIFT, 0, शून्य, 0),
+		 ARIZONA_ISRC1_INT0_ENA_SHIFT, 0, NULL, 0),
 SND_SOC_DAPM_PGA("ISRC1INT2", ARIZONA_ISRC_1_CTRL_3,
-		 ARIZONA_ISRC1_INT1_ENA_SHIFT, 0, शून्य, 0),
+		 ARIZONA_ISRC1_INT1_ENA_SHIFT, 0, NULL, 0),
 SND_SOC_DAPM_PGA("ISRC1INT3", ARIZONA_ISRC_1_CTRL_3,
-		 ARIZONA_ISRC1_INT2_ENA_SHIFT, 0, शून्य, 0),
+		 ARIZONA_ISRC1_INT2_ENA_SHIFT, 0, NULL, 0),
 SND_SOC_DAPM_PGA("ISRC1INT4", ARIZONA_ISRC_1_CTRL_3,
-		 ARIZONA_ISRC1_INT3_ENA_SHIFT, 0, शून्य, 0),
+		 ARIZONA_ISRC1_INT3_ENA_SHIFT, 0, NULL, 0),
 
 SND_SOC_DAPM_PGA("ISRC1DEC1", ARIZONA_ISRC_1_CTRL_3,
-		 ARIZONA_ISRC1_DEC0_ENA_SHIFT, 0, शून्य, 0),
+		 ARIZONA_ISRC1_DEC0_ENA_SHIFT, 0, NULL, 0),
 SND_SOC_DAPM_PGA("ISRC1DEC2", ARIZONA_ISRC_1_CTRL_3,
-		 ARIZONA_ISRC1_DEC1_ENA_SHIFT, 0, शून्य, 0),
+		 ARIZONA_ISRC1_DEC1_ENA_SHIFT, 0, NULL, 0),
 SND_SOC_DAPM_PGA("ISRC1DEC3", ARIZONA_ISRC_1_CTRL_3,
-		 ARIZONA_ISRC1_DEC2_ENA_SHIFT, 0, शून्य, 0),
+		 ARIZONA_ISRC1_DEC2_ENA_SHIFT, 0, NULL, 0),
 SND_SOC_DAPM_PGA("ISRC1DEC4", ARIZONA_ISRC_1_CTRL_3,
-		 ARIZONA_ISRC1_DEC3_ENA_SHIFT, 0, शून्य, 0),
+		 ARIZONA_ISRC1_DEC3_ENA_SHIFT, 0, NULL, 0),
 
 SND_SOC_DAPM_PGA("ISRC2INT1", ARIZONA_ISRC_2_CTRL_3,
-		 ARIZONA_ISRC2_INT0_ENA_SHIFT, 0, शून्य, 0),
+		 ARIZONA_ISRC2_INT0_ENA_SHIFT, 0, NULL, 0),
 SND_SOC_DAPM_PGA("ISRC2INT2", ARIZONA_ISRC_2_CTRL_3,
-		 ARIZONA_ISRC2_INT1_ENA_SHIFT, 0, शून्य, 0),
+		 ARIZONA_ISRC2_INT1_ENA_SHIFT, 0, NULL, 0),
 SND_SOC_DAPM_PGA("ISRC2INT3", ARIZONA_ISRC_2_CTRL_3,
-		 ARIZONA_ISRC2_INT2_ENA_SHIFT, 0, शून्य, 0),
+		 ARIZONA_ISRC2_INT2_ENA_SHIFT, 0, NULL, 0),
 SND_SOC_DAPM_PGA("ISRC2INT4", ARIZONA_ISRC_2_CTRL_3,
-		 ARIZONA_ISRC2_INT3_ENA_SHIFT, 0, शून्य, 0),
+		 ARIZONA_ISRC2_INT3_ENA_SHIFT, 0, NULL, 0),
 
 SND_SOC_DAPM_PGA("ISRC2DEC1", ARIZONA_ISRC_2_CTRL_3,
-		 ARIZONA_ISRC2_DEC0_ENA_SHIFT, 0, शून्य, 0),
+		 ARIZONA_ISRC2_DEC0_ENA_SHIFT, 0, NULL, 0),
 SND_SOC_DAPM_PGA("ISRC2DEC2", ARIZONA_ISRC_2_CTRL_3,
-		 ARIZONA_ISRC2_DEC1_ENA_SHIFT, 0, शून्य, 0),
+		 ARIZONA_ISRC2_DEC1_ENA_SHIFT, 0, NULL, 0),
 SND_SOC_DAPM_PGA("ISRC2DEC3", ARIZONA_ISRC_2_CTRL_3,
-		 ARIZONA_ISRC2_DEC2_ENA_SHIFT, 0, शून्य, 0),
+		 ARIZONA_ISRC2_DEC2_ENA_SHIFT, 0, NULL, 0),
 SND_SOC_DAPM_PGA("ISRC2DEC4", ARIZONA_ISRC_2_CTRL_3,
-		 ARIZONA_ISRC2_DEC3_ENA_SHIFT, 0, शून्य, 0),
+		 ARIZONA_ISRC2_DEC3_ENA_SHIFT, 0, NULL, 0),
 
 SND_SOC_DAPM_PGA("ISRC3INT1", ARIZONA_ISRC_3_CTRL_3,
-		 ARIZONA_ISRC3_INT0_ENA_SHIFT, 0, शून्य, 0),
+		 ARIZONA_ISRC3_INT0_ENA_SHIFT, 0, NULL, 0),
 SND_SOC_DAPM_PGA("ISRC3INT2", ARIZONA_ISRC_3_CTRL_3,
-		 ARIZONA_ISRC3_INT1_ENA_SHIFT, 0, शून्य, 0),
+		 ARIZONA_ISRC3_INT1_ENA_SHIFT, 0, NULL, 0),
 SND_SOC_DAPM_PGA("ISRC3INT3", ARIZONA_ISRC_3_CTRL_3,
-		 ARIZONA_ISRC3_INT2_ENA_SHIFT, 0, शून्य, 0),
+		 ARIZONA_ISRC3_INT2_ENA_SHIFT, 0, NULL, 0),
 SND_SOC_DAPM_PGA("ISRC3INT4", ARIZONA_ISRC_3_CTRL_3,
-		 ARIZONA_ISRC3_INT3_ENA_SHIFT, 0, शून्य, 0),
+		 ARIZONA_ISRC3_INT3_ENA_SHIFT, 0, NULL, 0),
 
 SND_SOC_DAPM_PGA("ISRC3DEC1", ARIZONA_ISRC_3_CTRL_3,
-		 ARIZONA_ISRC3_DEC0_ENA_SHIFT, 0, शून्य, 0),
+		 ARIZONA_ISRC3_DEC0_ENA_SHIFT, 0, NULL, 0),
 SND_SOC_DAPM_PGA("ISRC3DEC2", ARIZONA_ISRC_3_CTRL_3,
-		 ARIZONA_ISRC3_DEC1_ENA_SHIFT, 0, शून्य, 0),
+		 ARIZONA_ISRC3_DEC1_ENA_SHIFT, 0, NULL, 0),
 SND_SOC_DAPM_PGA("ISRC3DEC3", ARIZONA_ISRC_3_CTRL_3,
-		 ARIZONA_ISRC3_DEC2_ENA_SHIFT, 0, शून्य, 0),
+		 ARIZONA_ISRC3_DEC2_ENA_SHIFT, 0, NULL, 0),
 SND_SOC_DAPM_PGA("ISRC3DEC4", ARIZONA_ISRC_3_CTRL_3,
-		 ARIZONA_ISRC3_DEC3_ENA_SHIFT, 0, शून्य, 0),
+		 ARIZONA_ISRC3_DEC3_ENA_SHIFT, 0, NULL, 0),
 
 SND_SOC_DAPM_MUX("AEC Loopback", ARIZONA_DAC_AEC_CONTROL_1,
 		 ARIZONA_AEC_LOOPBACK_ENA_SHIFT, 0, &wm5110_aec_loopback_mux),
@@ -1290,14 +1289,14 @@ SND_SOC_DAPM_MUX("AEC Loopback", ARIZONA_DAC_AEC_CONTROL_1,
 SND_SOC_DAPM_SUPPLY("RXANC NG External Clock", SND_SOC_NOPM,
 		    ARIZONA_EXT_NG_SEL_SET_SHIFT, 0, arizona_anc_ev,
 		    SND_SOC_DAPM_POST_PMU | SND_SOC_DAPM_PRE_PMD),
-SND_SOC_DAPM_PGA("RXANCL NG External", SND_SOC_NOPM, 0, 0, शून्य, 0),
-SND_SOC_DAPM_PGA("RXANCR NG External", SND_SOC_NOPM, 0, 0, शून्य, 0),
+SND_SOC_DAPM_PGA("RXANCL NG External", SND_SOC_NOPM, 0, 0, NULL, 0),
+SND_SOC_DAPM_PGA("RXANCR NG External", SND_SOC_NOPM, 0, 0, NULL, 0),
 
 SND_SOC_DAPM_SUPPLY("RXANC NG Clock", SND_SOC_NOPM,
 		    ARIZONA_CLK_NG_ENA_SET_SHIFT, 0, arizona_anc_ev,
 		    SND_SOC_DAPM_POST_PMU | SND_SOC_DAPM_PRE_PMD),
-SND_SOC_DAPM_PGA("RXANCL NG Internal", SND_SOC_NOPM, 0, 0, शून्य, 0),
-SND_SOC_DAPM_PGA("RXANCR NG Internal", SND_SOC_NOPM, 0, 0, शून्य, 0),
+SND_SOC_DAPM_PGA("RXANCL NG Internal", SND_SOC_NOPM, 0, 0, NULL, 0),
+SND_SOC_DAPM_PGA("RXANCR NG Internal", SND_SOC_NOPM, 0, 0, NULL, 0),
 
 SND_SOC_DAPM_MUX("RXANCL Left Input", SND_SOC_NOPM, 0, 0,
 		 &wm5110_anc_input_mux[0]),
@@ -1315,10 +1314,10 @@ SND_SOC_DAPM_MUX("RXANCR Channel", SND_SOC_NOPM, 0, 0,
 SND_SOC_DAPM_MUX("RXANCR NG Mux", SND_SOC_NOPM, 0, 0, &wm5110_anc_ng_mux),
 
 SND_SOC_DAPM_PGA_E("RXANCL", SND_SOC_NOPM, ARIZONA_CLK_L_ENA_SET_SHIFT,
-		   0, शून्य, 0, arizona_anc_ev,
+		   0, NULL, 0, arizona_anc_ev,
 		   SND_SOC_DAPM_POST_PMU | SND_SOC_DAPM_PRE_PMD),
 SND_SOC_DAPM_PGA_E("RXANCR", SND_SOC_NOPM, ARIZONA_CLK_R_ENA_SET_SHIFT,
-		   0, शून्य, 0, arizona_anc_ev,
+		   0, NULL, 0, arizona_anc_ev,
 		   SND_SOC_DAPM_POST_PMU | SND_SOC_DAPM_PRE_PMD),
 
 SND_SOC_DAPM_MUX("HPOUT1L ANC Source", SND_SOC_NOPM, 0, 0,
@@ -1346,161 +1345,161 @@ SND_SOC_DAPM_MUX("SPKDAT2L ANC Source", SND_SOC_NOPM, 0, 0,
 SND_SOC_DAPM_MUX("SPKDAT2R ANC Source", SND_SOC_NOPM, 0, 0,
 		 &wm5110_output_anc_src[11]),
 
-SND_SOC_DAPM_AIF_OUT("AIF1TX1", शून्य, 0,
+SND_SOC_DAPM_AIF_OUT("AIF1TX1", NULL, 0,
 		     ARIZONA_AIF1_TX_ENABLES, ARIZONA_AIF1TX1_ENA_SHIFT, 0),
-SND_SOC_DAPM_AIF_OUT("AIF1TX2", शून्य, 1,
+SND_SOC_DAPM_AIF_OUT("AIF1TX2", NULL, 1,
 		     ARIZONA_AIF1_TX_ENABLES, ARIZONA_AIF1TX2_ENA_SHIFT, 0),
-SND_SOC_DAPM_AIF_OUT("AIF1TX3", शून्य, 2,
+SND_SOC_DAPM_AIF_OUT("AIF1TX3", NULL, 2,
 		     ARIZONA_AIF1_TX_ENABLES, ARIZONA_AIF1TX3_ENA_SHIFT, 0),
-SND_SOC_DAPM_AIF_OUT("AIF1TX4", शून्य, 3,
+SND_SOC_DAPM_AIF_OUT("AIF1TX4", NULL, 3,
 		     ARIZONA_AIF1_TX_ENABLES, ARIZONA_AIF1TX4_ENA_SHIFT, 0),
-SND_SOC_DAPM_AIF_OUT("AIF1TX5", शून्य, 4,
+SND_SOC_DAPM_AIF_OUT("AIF1TX5", NULL, 4,
 		     ARIZONA_AIF1_TX_ENABLES, ARIZONA_AIF1TX5_ENA_SHIFT, 0),
-SND_SOC_DAPM_AIF_OUT("AIF1TX6", शून्य, 5,
+SND_SOC_DAPM_AIF_OUT("AIF1TX6", NULL, 5,
 		     ARIZONA_AIF1_TX_ENABLES, ARIZONA_AIF1TX6_ENA_SHIFT, 0),
-SND_SOC_DAPM_AIF_OUT("AIF1TX7", शून्य, 6,
+SND_SOC_DAPM_AIF_OUT("AIF1TX7", NULL, 6,
 		     ARIZONA_AIF1_TX_ENABLES, ARIZONA_AIF1TX7_ENA_SHIFT, 0),
-SND_SOC_DAPM_AIF_OUT("AIF1TX8", शून्य, 7,
+SND_SOC_DAPM_AIF_OUT("AIF1TX8", NULL, 7,
 		     ARIZONA_AIF1_TX_ENABLES, ARIZONA_AIF1TX8_ENA_SHIFT, 0),
 
-SND_SOC_DAPM_AIF_IN("AIF1RX1", शून्य, 0,
+SND_SOC_DAPM_AIF_IN("AIF1RX1", NULL, 0,
 		    ARIZONA_AIF1_RX_ENABLES, ARIZONA_AIF1RX1_ENA_SHIFT, 0),
-SND_SOC_DAPM_AIF_IN("AIF1RX2", शून्य, 1,
+SND_SOC_DAPM_AIF_IN("AIF1RX2", NULL, 1,
 		    ARIZONA_AIF1_RX_ENABLES, ARIZONA_AIF1RX2_ENA_SHIFT, 0),
-SND_SOC_DAPM_AIF_IN("AIF1RX3", शून्य, 2,
+SND_SOC_DAPM_AIF_IN("AIF1RX3", NULL, 2,
 		    ARIZONA_AIF1_RX_ENABLES, ARIZONA_AIF1RX3_ENA_SHIFT, 0),
-SND_SOC_DAPM_AIF_IN("AIF1RX4", शून्य, 3,
+SND_SOC_DAPM_AIF_IN("AIF1RX4", NULL, 3,
 		    ARIZONA_AIF1_RX_ENABLES, ARIZONA_AIF1RX4_ENA_SHIFT, 0),
-SND_SOC_DAPM_AIF_IN("AIF1RX5", शून्य, 4,
+SND_SOC_DAPM_AIF_IN("AIF1RX5", NULL, 4,
 		    ARIZONA_AIF1_RX_ENABLES, ARIZONA_AIF1RX5_ENA_SHIFT, 0),
-SND_SOC_DAPM_AIF_IN("AIF1RX6", शून्य, 5,
+SND_SOC_DAPM_AIF_IN("AIF1RX6", NULL, 5,
 		    ARIZONA_AIF1_RX_ENABLES, ARIZONA_AIF1RX6_ENA_SHIFT, 0),
-SND_SOC_DAPM_AIF_IN("AIF1RX7", शून्य, 6,
+SND_SOC_DAPM_AIF_IN("AIF1RX7", NULL, 6,
 		    ARIZONA_AIF1_RX_ENABLES, ARIZONA_AIF1RX7_ENA_SHIFT, 0),
-SND_SOC_DAPM_AIF_IN("AIF1RX8", शून्य, 7,
+SND_SOC_DAPM_AIF_IN("AIF1RX8", NULL, 7,
 		    ARIZONA_AIF1_RX_ENABLES, ARIZONA_AIF1RX8_ENA_SHIFT, 0),
 
-SND_SOC_DAPM_AIF_OUT("AIF2TX1", शून्य, 0,
+SND_SOC_DAPM_AIF_OUT("AIF2TX1", NULL, 0,
 		     ARIZONA_AIF2_TX_ENABLES, ARIZONA_AIF2TX1_ENA_SHIFT, 0),
-SND_SOC_DAPM_AIF_OUT("AIF2TX2", शून्य, 1,
+SND_SOC_DAPM_AIF_OUT("AIF2TX2", NULL, 1,
 		     ARIZONA_AIF2_TX_ENABLES, ARIZONA_AIF2TX2_ENA_SHIFT, 0),
-SND_SOC_DAPM_AIF_OUT("AIF2TX3", शून्य, 2,
+SND_SOC_DAPM_AIF_OUT("AIF2TX3", NULL, 2,
 		     ARIZONA_AIF2_TX_ENABLES, ARIZONA_AIF2TX3_ENA_SHIFT, 0),
-SND_SOC_DAPM_AIF_OUT("AIF2TX4", शून्य, 3,
+SND_SOC_DAPM_AIF_OUT("AIF2TX4", NULL, 3,
 		     ARIZONA_AIF2_TX_ENABLES, ARIZONA_AIF2TX4_ENA_SHIFT, 0),
-SND_SOC_DAPM_AIF_OUT("AIF2TX5", शून्य, 4,
+SND_SOC_DAPM_AIF_OUT("AIF2TX5", NULL, 4,
 		     ARIZONA_AIF2_TX_ENABLES, ARIZONA_AIF2TX5_ENA_SHIFT, 0),
-SND_SOC_DAPM_AIF_OUT("AIF2TX6", शून्य, 5,
+SND_SOC_DAPM_AIF_OUT("AIF2TX6", NULL, 5,
 		     ARIZONA_AIF2_TX_ENABLES, ARIZONA_AIF2TX6_ENA_SHIFT, 0),
 
-SND_SOC_DAPM_AIF_IN("AIF2RX1", शून्य, 0,
+SND_SOC_DAPM_AIF_IN("AIF2RX1", NULL, 0,
 		    ARIZONA_AIF2_RX_ENABLES, ARIZONA_AIF2RX1_ENA_SHIFT, 0),
-SND_SOC_DAPM_AIF_IN("AIF2RX2", शून्य, 1,
+SND_SOC_DAPM_AIF_IN("AIF2RX2", NULL, 1,
 		    ARIZONA_AIF2_RX_ENABLES, ARIZONA_AIF2RX2_ENA_SHIFT, 0),
-SND_SOC_DAPM_AIF_IN("AIF2RX3", शून्य, 2,
+SND_SOC_DAPM_AIF_IN("AIF2RX3", NULL, 2,
 		    ARIZONA_AIF2_RX_ENABLES, ARIZONA_AIF2RX3_ENA_SHIFT, 0),
-SND_SOC_DAPM_AIF_IN("AIF2RX4", शून्य, 3,
+SND_SOC_DAPM_AIF_IN("AIF2RX4", NULL, 3,
 		    ARIZONA_AIF2_RX_ENABLES, ARIZONA_AIF2RX4_ENA_SHIFT, 0),
-SND_SOC_DAPM_AIF_IN("AIF2RX5", शून्य, 4,
+SND_SOC_DAPM_AIF_IN("AIF2RX5", NULL, 4,
 		    ARIZONA_AIF2_RX_ENABLES, ARIZONA_AIF2RX5_ENA_SHIFT, 0),
-SND_SOC_DAPM_AIF_IN("AIF2RX6", शून्य, 5,
+SND_SOC_DAPM_AIF_IN("AIF2RX6", NULL, 5,
 		    ARIZONA_AIF2_RX_ENABLES, ARIZONA_AIF2RX6_ENA_SHIFT, 0),
 
-SND_SOC_DAPM_AIF_IN("SLIMRX1", शून्य, 0,
+SND_SOC_DAPM_AIF_IN("SLIMRX1", NULL, 0,
 		    ARIZONA_SLIMBUS_RX_CHANNEL_ENABLE,
 		    ARIZONA_SLIMRX1_ENA_SHIFT, 0),
-SND_SOC_DAPM_AIF_IN("SLIMRX2", शून्य, 1,
+SND_SOC_DAPM_AIF_IN("SLIMRX2", NULL, 1,
 		    ARIZONA_SLIMBUS_RX_CHANNEL_ENABLE,
 		    ARIZONA_SLIMRX2_ENA_SHIFT, 0),
-SND_SOC_DAPM_AIF_IN("SLIMRX3", शून्य, 2,
+SND_SOC_DAPM_AIF_IN("SLIMRX3", NULL, 2,
 		    ARIZONA_SLIMBUS_RX_CHANNEL_ENABLE,
 		    ARIZONA_SLIMRX3_ENA_SHIFT, 0),
-SND_SOC_DAPM_AIF_IN("SLIMRX4", शून्य, 3,
+SND_SOC_DAPM_AIF_IN("SLIMRX4", NULL, 3,
 		    ARIZONA_SLIMBUS_RX_CHANNEL_ENABLE,
 		    ARIZONA_SLIMRX4_ENA_SHIFT, 0),
-SND_SOC_DAPM_AIF_IN("SLIMRX5", शून्य, 4,
+SND_SOC_DAPM_AIF_IN("SLIMRX5", NULL, 4,
 		    ARIZONA_SLIMBUS_RX_CHANNEL_ENABLE,
 		    ARIZONA_SLIMRX5_ENA_SHIFT, 0),
-SND_SOC_DAPM_AIF_IN("SLIMRX6", शून्य, 5,
+SND_SOC_DAPM_AIF_IN("SLIMRX6", NULL, 5,
 		    ARIZONA_SLIMBUS_RX_CHANNEL_ENABLE,
 		    ARIZONA_SLIMRX6_ENA_SHIFT, 0),
-SND_SOC_DAPM_AIF_IN("SLIMRX7", शून्य, 6,
+SND_SOC_DAPM_AIF_IN("SLIMRX7", NULL, 6,
 		    ARIZONA_SLIMBUS_RX_CHANNEL_ENABLE,
 		    ARIZONA_SLIMRX7_ENA_SHIFT, 0),
-SND_SOC_DAPM_AIF_IN("SLIMRX8", शून्य, 7,
+SND_SOC_DAPM_AIF_IN("SLIMRX8", NULL, 7,
 		    ARIZONA_SLIMBUS_RX_CHANNEL_ENABLE,
 		    ARIZONA_SLIMRX8_ENA_SHIFT, 0),
 
-SND_SOC_DAPM_AIF_OUT("SLIMTX1", शून्य, 0,
+SND_SOC_DAPM_AIF_OUT("SLIMTX1", NULL, 0,
 		     ARIZONA_SLIMBUS_TX_CHANNEL_ENABLE,
 		     ARIZONA_SLIMTX1_ENA_SHIFT, 0),
-SND_SOC_DAPM_AIF_OUT("SLIMTX2", शून्य, 1,
+SND_SOC_DAPM_AIF_OUT("SLIMTX2", NULL, 1,
 		     ARIZONA_SLIMBUS_TX_CHANNEL_ENABLE,
 		     ARIZONA_SLIMTX2_ENA_SHIFT, 0),
-SND_SOC_DAPM_AIF_OUT("SLIMTX3", शून्य, 2,
+SND_SOC_DAPM_AIF_OUT("SLIMTX3", NULL, 2,
 		     ARIZONA_SLIMBUS_TX_CHANNEL_ENABLE,
 		     ARIZONA_SLIMTX3_ENA_SHIFT, 0),
-SND_SOC_DAPM_AIF_OUT("SLIMTX4", शून्य, 3,
+SND_SOC_DAPM_AIF_OUT("SLIMTX4", NULL, 3,
 		     ARIZONA_SLIMBUS_TX_CHANNEL_ENABLE,
 		     ARIZONA_SLIMTX4_ENA_SHIFT, 0),
-SND_SOC_DAPM_AIF_OUT("SLIMTX5", शून्य, 4,
+SND_SOC_DAPM_AIF_OUT("SLIMTX5", NULL, 4,
 		     ARIZONA_SLIMBUS_TX_CHANNEL_ENABLE,
 		     ARIZONA_SLIMTX5_ENA_SHIFT, 0),
-SND_SOC_DAPM_AIF_OUT("SLIMTX6", शून्य, 5,
+SND_SOC_DAPM_AIF_OUT("SLIMTX6", NULL, 5,
 		     ARIZONA_SLIMBUS_TX_CHANNEL_ENABLE,
 		     ARIZONA_SLIMTX6_ENA_SHIFT, 0),
-SND_SOC_DAPM_AIF_OUT("SLIMTX7", शून्य, 6,
+SND_SOC_DAPM_AIF_OUT("SLIMTX7", NULL, 6,
 		     ARIZONA_SLIMBUS_TX_CHANNEL_ENABLE,
 		     ARIZONA_SLIMTX7_ENA_SHIFT, 0),
-SND_SOC_DAPM_AIF_OUT("SLIMTX8", शून्य, 7,
+SND_SOC_DAPM_AIF_OUT("SLIMTX8", NULL, 7,
 		     ARIZONA_SLIMBUS_TX_CHANNEL_ENABLE,
 		     ARIZONA_SLIMTX8_ENA_SHIFT, 0),
 
-SND_SOC_DAPM_AIF_OUT("AIF3TX1", शून्य, 0,
+SND_SOC_DAPM_AIF_OUT("AIF3TX1", NULL, 0,
 		     ARIZONA_AIF3_TX_ENABLES, ARIZONA_AIF3TX1_ENA_SHIFT, 0),
-SND_SOC_DAPM_AIF_OUT("AIF3TX2", शून्य, 1,
+SND_SOC_DAPM_AIF_OUT("AIF3TX2", NULL, 1,
 		     ARIZONA_AIF3_TX_ENABLES, ARIZONA_AIF3TX2_ENA_SHIFT, 0),
 
-SND_SOC_DAPM_AIF_IN("AIF3RX1", शून्य, 0,
+SND_SOC_DAPM_AIF_IN("AIF3RX1", NULL, 0,
 		    ARIZONA_AIF3_RX_ENABLES, ARIZONA_AIF3RX1_ENA_SHIFT, 0),
-SND_SOC_DAPM_AIF_IN("AIF3RX2", शून्य, 1,
+SND_SOC_DAPM_AIF_IN("AIF3RX2", NULL, 1,
 		    ARIZONA_AIF3_RX_ENABLES, ARIZONA_AIF3RX2_ENA_SHIFT, 0),
 
 SND_SOC_DAPM_PGA_E("OUT1L", SND_SOC_NOPM,
-		   ARIZONA_OUT1L_ENA_SHIFT, 0, शून्य, 0, wm5110_hp_ev,
+		   ARIZONA_OUT1L_ENA_SHIFT, 0, NULL, 0, wm5110_hp_ev,
 		   SND_SOC_DAPM_PRE_PMD | SND_SOC_DAPM_POST_PMD |
 		   SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMU),
 SND_SOC_DAPM_PGA_E("OUT1R", SND_SOC_NOPM,
-		   ARIZONA_OUT1R_ENA_SHIFT, 0, शून्य, 0, wm5110_hp_ev,
+		   ARIZONA_OUT1R_ENA_SHIFT, 0, NULL, 0, wm5110_hp_ev,
 		   SND_SOC_DAPM_PRE_PMD | SND_SOC_DAPM_POST_PMD |
 		   SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMU),
 SND_SOC_DAPM_PGA_E("OUT2L", ARIZONA_OUTPUT_ENABLES_1,
-		   ARIZONA_OUT2L_ENA_SHIFT, 0, शून्य, 0, arizona_out_ev,
+		   ARIZONA_OUT2L_ENA_SHIFT, 0, NULL, 0, arizona_out_ev,
 		   SND_SOC_DAPM_PRE_PMD | SND_SOC_DAPM_POST_PMD |
 		   SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMU),
 SND_SOC_DAPM_PGA_E("OUT2R", ARIZONA_OUTPUT_ENABLES_1,
-		   ARIZONA_OUT2R_ENA_SHIFT, 0, शून्य, 0, arizona_out_ev,
+		   ARIZONA_OUT2R_ENA_SHIFT, 0, NULL, 0, arizona_out_ev,
 		   SND_SOC_DAPM_PRE_PMD | SND_SOC_DAPM_POST_PMD |
 		   SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMU),
 SND_SOC_DAPM_PGA_E("OUT3L", ARIZONA_OUTPUT_ENABLES_1,
-		   ARIZONA_OUT3L_ENA_SHIFT, 0, शून्य, 0, arizona_out_ev,
+		   ARIZONA_OUT3L_ENA_SHIFT, 0, NULL, 0, arizona_out_ev,
 		   SND_SOC_DAPM_PRE_PMD | SND_SOC_DAPM_POST_PMD |
 		   SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMU),
 SND_SOC_DAPM_PGA_E("OUT3R", ARIZONA_OUTPUT_ENABLES_1,
-		   ARIZONA_OUT3R_ENA_SHIFT, 0, शून्य, 0, arizona_out_ev,
+		   ARIZONA_OUT3R_ENA_SHIFT, 0, NULL, 0, arizona_out_ev,
 		   SND_SOC_DAPM_PRE_PMD | SND_SOC_DAPM_POST_PMD |
 		   SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMU),
 SND_SOC_DAPM_PGA_E("OUT5L", ARIZONA_OUTPUT_ENABLES_1,
-		   ARIZONA_OUT5L_ENA_SHIFT, 0, शून्य, 0, arizona_out_ev,
+		   ARIZONA_OUT5L_ENA_SHIFT, 0, NULL, 0, arizona_out_ev,
 		   SND_SOC_DAPM_PRE_PMD | SND_SOC_DAPM_POST_PMU),
 SND_SOC_DAPM_PGA_E("OUT5R", ARIZONA_OUTPUT_ENABLES_1,
-		   ARIZONA_OUT5R_ENA_SHIFT, 0, शून्य, 0, arizona_out_ev,
+		   ARIZONA_OUT5R_ENA_SHIFT, 0, NULL, 0, arizona_out_ev,
 		   SND_SOC_DAPM_PRE_PMD | SND_SOC_DAPM_POST_PMU),
 SND_SOC_DAPM_PGA_E("OUT6L", ARIZONA_OUTPUT_ENABLES_1,
-		   ARIZONA_OUT6L_ENA_SHIFT, 0, शून्य, 0, arizona_out_ev,
+		   ARIZONA_OUT6L_ENA_SHIFT, 0, NULL, 0, arizona_out_ev,
 		   SND_SOC_DAPM_PRE_PMD | SND_SOC_DAPM_POST_PMU),
 SND_SOC_DAPM_PGA_E("OUT6R", ARIZONA_OUTPUT_ENABLES_1,
-		   ARIZONA_OUT6R_ENA_SHIFT, 0, शून्य, 0, arizona_out_ev,
+		   ARIZONA_OUT6R_ENA_SHIFT, 0, NULL, 0, arizona_out_ev,
 		   SND_SOC_DAPM_PRE_PMD | SND_SOC_DAPM_POST_PMU),
 
 ARIZONA_MIXER_WIDGETS(EQ1, "EQ1"),
@@ -1621,262 +1620,262 @@ SND_SOC_DAPM_OUTPUT("SPKDAT2L"),
 SND_SOC_DAPM_OUTPUT("SPKDAT2R"),
 
 SND_SOC_DAPM_OUTPUT("MICSUPP"),
-पूर्ण;
+};
 
-#घोषणा ARIZONA_MIXER_INPUT_ROUTES(name)	\
-	अणु name, "Noise Generator", "Noise Generator" पूर्ण, \
-	अणु name, "Tone Generator 1", "Tone Generator 1" पूर्ण, \
-	अणु name, "Tone Generator 2", "Tone Generator 2" पूर्ण, \
-	अणु name, "Haptics", "HAPTICS" पूर्ण, \
-	अणु name, "AEC", "AEC Loopback" पूर्ण, \
-	अणु name, "IN1L", "IN1L PGA" पूर्ण, \
-	अणु name, "IN1R", "IN1R PGA" पूर्ण, \
-	अणु name, "IN2L", "IN2L PGA" पूर्ण, \
-	अणु name, "IN2R", "IN2R PGA" पूर्ण, \
-	अणु name, "IN3L", "IN3L PGA" पूर्ण, \
-	अणु name, "IN3R", "IN3R PGA" पूर्ण, \
-	अणु name, "IN4L", "IN4L PGA" पूर्ण, \
-	अणु name, "IN4R", "IN4R PGA" पूर्ण, \
-	अणु name, "Mic Mute Mixer", "Mic Mute Mixer" पूर्ण, \
-	अणु name, "AIF1RX1", "AIF1RX1" पूर्ण, \
-	अणु name, "AIF1RX2", "AIF1RX2" पूर्ण, \
-	अणु name, "AIF1RX3", "AIF1RX3" पूर्ण, \
-	अणु name, "AIF1RX4", "AIF1RX4" पूर्ण, \
-	अणु name, "AIF1RX5", "AIF1RX5" पूर्ण, \
-	अणु name, "AIF1RX6", "AIF1RX6" पूर्ण, \
-	अणु name, "AIF1RX7", "AIF1RX7" पूर्ण, \
-	अणु name, "AIF1RX8", "AIF1RX8" पूर्ण, \
-	अणु name, "AIF2RX1", "AIF2RX1" पूर्ण, \
-	अणु name, "AIF2RX2", "AIF2RX2" पूर्ण, \
-	अणु name, "AIF2RX3", "AIF2RX3" पूर्ण, \
-	अणु name, "AIF2RX4", "AIF2RX4" पूर्ण, \
-	अणु name, "AIF2RX5", "AIF2RX5" पूर्ण, \
-	अणु name, "AIF2RX6", "AIF2RX6" पूर्ण, \
-	अणु name, "AIF3RX1", "AIF3RX1" पूर्ण, \
-	अणु name, "AIF3RX2", "AIF3RX2" पूर्ण, \
-	अणु name, "SLIMRX1", "SLIMRX1" पूर्ण, \
-	अणु name, "SLIMRX2", "SLIMRX2" पूर्ण, \
-	अणु name, "SLIMRX3", "SLIMRX3" पूर्ण, \
-	अणु name, "SLIMRX4", "SLIMRX4" पूर्ण, \
-	अणु name, "SLIMRX5", "SLIMRX5" पूर्ण, \
-	अणु name, "SLIMRX6", "SLIMRX6" पूर्ण, \
-	अणु name, "SLIMRX7", "SLIMRX7" पूर्ण, \
-	अणु name, "SLIMRX8", "SLIMRX8" पूर्ण, \
-	अणु name, "EQ1", "EQ1" पूर्ण, \
-	अणु name, "EQ2", "EQ2" पूर्ण, \
-	अणु name, "EQ3", "EQ3" पूर्ण, \
-	अणु name, "EQ4", "EQ4" पूर्ण, \
-	अणु name, "DRC1L", "DRC1L" पूर्ण, \
-	अणु name, "DRC1R", "DRC1R" पूर्ण, \
-	अणु name, "DRC2L", "DRC2L" पूर्ण, \
-	अणु name, "DRC2R", "DRC2R" पूर्ण, \
-	अणु name, "LHPF1", "LHPF1" पूर्ण, \
-	अणु name, "LHPF2", "LHPF2" पूर्ण, \
-	अणु name, "LHPF3", "LHPF3" पूर्ण, \
-	अणु name, "LHPF4", "LHPF4" पूर्ण, \
-	अणु name, "ASRC1L", "ASRC1L" पूर्ण, \
-	अणु name, "ASRC1R", "ASRC1R" पूर्ण, \
-	अणु name, "ASRC2L", "ASRC2L" पूर्ण, \
-	अणु name, "ASRC2R", "ASRC2R" पूर्ण, \
-	अणु name, "ISRC1DEC1", "ISRC1DEC1" पूर्ण, \
-	अणु name, "ISRC1DEC2", "ISRC1DEC2" पूर्ण, \
-	अणु name, "ISRC1DEC3", "ISRC1DEC3" पूर्ण, \
-	अणु name, "ISRC1DEC4", "ISRC1DEC4" पूर्ण, \
-	अणु name, "ISRC1INT1", "ISRC1INT1" पूर्ण, \
-	अणु name, "ISRC1INT2", "ISRC1INT2" पूर्ण, \
-	अणु name, "ISRC1INT3", "ISRC1INT3" पूर्ण, \
-	अणु name, "ISRC1INT4", "ISRC1INT4" पूर्ण, \
-	अणु name, "ISRC2DEC1", "ISRC2DEC1" पूर्ण, \
-	अणु name, "ISRC2DEC2", "ISRC2DEC2" पूर्ण, \
-	अणु name, "ISRC2DEC3", "ISRC2DEC3" पूर्ण, \
-	अणु name, "ISRC2DEC4", "ISRC2DEC4" पूर्ण, \
-	अणु name, "ISRC2INT1", "ISRC2INT1" पूर्ण, \
-	अणु name, "ISRC2INT2", "ISRC2INT2" पूर्ण, \
-	अणु name, "ISRC2INT3", "ISRC2INT3" पूर्ण, \
-	अणु name, "ISRC2INT4", "ISRC2INT4" पूर्ण, \
-	अणु name, "ISRC3DEC1", "ISRC3DEC1" पूर्ण, \
-	अणु name, "ISRC3DEC2", "ISRC3DEC2" पूर्ण, \
-	अणु name, "ISRC3DEC3", "ISRC3DEC3" पूर्ण, \
-	अणु name, "ISRC3DEC4", "ISRC3DEC4" पूर्ण, \
-	अणु name, "ISRC3INT1", "ISRC3INT1" पूर्ण, \
-	अणु name, "ISRC3INT2", "ISRC3INT2" पूर्ण, \
-	अणु name, "ISRC3INT3", "ISRC3INT3" पूर्ण, \
-	अणु name, "ISRC3INT4", "ISRC3INT4" पूर्ण, \
-	अणु name, "DSP1.1", "DSP1" पूर्ण, \
-	अणु name, "DSP1.2", "DSP1" पूर्ण, \
-	अणु name, "DSP1.3", "DSP1" पूर्ण, \
-	अणु name, "DSP1.4", "DSP1" पूर्ण, \
-	अणु name, "DSP1.5", "DSP1" पूर्ण, \
-	अणु name, "DSP1.6", "DSP1" पूर्ण, \
-	अणु name, "DSP2.1", "DSP2" पूर्ण, \
-	अणु name, "DSP2.2", "DSP2" पूर्ण, \
-	अणु name, "DSP2.3", "DSP2" पूर्ण, \
-	अणु name, "DSP2.4", "DSP2" पूर्ण, \
-	अणु name, "DSP2.5", "DSP2" पूर्ण, \
-	अणु name, "DSP2.6", "DSP2" पूर्ण, \
-	अणु name, "DSP3.1", "DSP3" पूर्ण, \
-	अणु name, "DSP3.2", "DSP3" पूर्ण, \
-	अणु name, "DSP3.3", "DSP3" पूर्ण, \
-	अणु name, "DSP3.4", "DSP3" पूर्ण, \
-	अणु name, "DSP3.5", "DSP3" पूर्ण, \
-	अणु name, "DSP3.6", "DSP3" पूर्ण, \
-	अणु name, "DSP4.1", "DSP4" पूर्ण, \
-	अणु name, "DSP4.2", "DSP4" पूर्ण, \
-	अणु name, "DSP4.3", "DSP4" पूर्ण, \
-	अणु name, "DSP4.4", "DSP4" पूर्ण, \
-	अणु name, "DSP4.5", "DSP4" पूर्ण, \
-	अणु name, "DSP4.6", "DSP4" पूर्ण
+#define ARIZONA_MIXER_INPUT_ROUTES(name)	\
+	{ name, "Noise Generator", "Noise Generator" }, \
+	{ name, "Tone Generator 1", "Tone Generator 1" }, \
+	{ name, "Tone Generator 2", "Tone Generator 2" }, \
+	{ name, "Haptics", "HAPTICS" }, \
+	{ name, "AEC", "AEC Loopback" }, \
+	{ name, "IN1L", "IN1L PGA" }, \
+	{ name, "IN1R", "IN1R PGA" }, \
+	{ name, "IN2L", "IN2L PGA" }, \
+	{ name, "IN2R", "IN2R PGA" }, \
+	{ name, "IN3L", "IN3L PGA" }, \
+	{ name, "IN3R", "IN3R PGA" }, \
+	{ name, "IN4L", "IN4L PGA" }, \
+	{ name, "IN4R", "IN4R PGA" }, \
+	{ name, "Mic Mute Mixer", "Mic Mute Mixer" }, \
+	{ name, "AIF1RX1", "AIF1RX1" }, \
+	{ name, "AIF1RX2", "AIF1RX2" }, \
+	{ name, "AIF1RX3", "AIF1RX3" }, \
+	{ name, "AIF1RX4", "AIF1RX4" }, \
+	{ name, "AIF1RX5", "AIF1RX5" }, \
+	{ name, "AIF1RX6", "AIF1RX6" }, \
+	{ name, "AIF1RX7", "AIF1RX7" }, \
+	{ name, "AIF1RX8", "AIF1RX8" }, \
+	{ name, "AIF2RX1", "AIF2RX1" }, \
+	{ name, "AIF2RX2", "AIF2RX2" }, \
+	{ name, "AIF2RX3", "AIF2RX3" }, \
+	{ name, "AIF2RX4", "AIF2RX4" }, \
+	{ name, "AIF2RX5", "AIF2RX5" }, \
+	{ name, "AIF2RX6", "AIF2RX6" }, \
+	{ name, "AIF3RX1", "AIF3RX1" }, \
+	{ name, "AIF3RX2", "AIF3RX2" }, \
+	{ name, "SLIMRX1", "SLIMRX1" }, \
+	{ name, "SLIMRX2", "SLIMRX2" }, \
+	{ name, "SLIMRX3", "SLIMRX3" }, \
+	{ name, "SLIMRX4", "SLIMRX4" }, \
+	{ name, "SLIMRX5", "SLIMRX5" }, \
+	{ name, "SLIMRX6", "SLIMRX6" }, \
+	{ name, "SLIMRX7", "SLIMRX7" }, \
+	{ name, "SLIMRX8", "SLIMRX8" }, \
+	{ name, "EQ1", "EQ1" }, \
+	{ name, "EQ2", "EQ2" }, \
+	{ name, "EQ3", "EQ3" }, \
+	{ name, "EQ4", "EQ4" }, \
+	{ name, "DRC1L", "DRC1L" }, \
+	{ name, "DRC1R", "DRC1R" }, \
+	{ name, "DRC2L", "DRC2L" }, \
+	{ name, "DRC2R", "DRC2R" }, \
+	{ name, "LHPF1", "LHPF1" }, \
+	{ name, "LHPF2", "LHPF2" }, \
+	{ name, "LHPF3", "LHPF3" }, \
+	{ name, "LHPF4", "LHPF4" }, \
+	{ name, "ASRC1L", "ASRC1L" }, \
+	{ name, "ASRC1R", "ASRC1R" }, \
+	{ name, "ASRC2L", "ASRC2L" }, \
+	{ name, "ASRC2R", "ASRC2R" }, \
+	{ name, "ISRC1DEC1", "ISRC1DEC1" }, \
+	{ name, "ISRC1DEC2", "ISRC1DEC2" }, \
+	{ name, "ISRC1DEC3", "ISRC1DEC3" }, \
+	{ name, "ISRC1DEC4", "ISRC1DEC4" }, \
+	{ name, "ISRC1INT1", "ISRC1INT1" }, \
+	{ name, "ISRC1INT2", "ISRC1INT2" }, \
+	{ name, "ISRC1INT3", "ISRC1INT3" }, \
+	{ name, "ISRC1INT4", "ISRC1INT4" }, \
+	{ name, "ISRC2DEC1", "ISRC2DEC1" }, \
+	{ name, "ISRC2DEC2", "ISRC2DEC2" }, \
+	{ name, "ISRC2DEC3", "ISRC2DEC3" }, \
+	{ name, "ISRC2DEC4", "ISRC2DEC4" }, \
+	{ name, "ISRC2INT1", "ISRC2INT1" }, \
+	{ name, "ISRC2INT2", "ISRC2INT2" }, \
+	{ name, "ISRC2INT3", "ISRC2INT3" }, \
+	{ name, "ISRC2INT4", "ISRC2INT4" }, \
+	{ name, "ISRC3DEC1", "ISRC3DEC1" }, \
+	{ name, "ISRC3DEC2", "ISRC3DEC2" }, \
+	{ name, "ISRC3DEC3", "ISRC3DEC3" }, \
+	{ name, "ISRC3DEC4", "ISRC3DEC4" }, \
+	{ name, "ISRC3INT1", "ISRC3INT1" }, \
+	{ name, "ISRC3INT2", "ISRC3INT2" }, \
+	{ name, "ISRC3INT3", "ISRC3INT3" }, \
+	{ name, "ISRC3INT4", "ISRC3INT4" }, \
+	{ name, "DSP1.1", "DSP1" }, \
+	{ name, "DSP1.2", "DSP1" }, \
+	{ name, "DSP1.3", "DSP1" }, \
+	{ name, "DSP1.4", "DSP1" }, \
+	{ name, "DSP1.5", "DSP1" }, \
+	{ name, "DSP1.6", "DSP1" }, \
+	{ name, "DSP2.1", "DSP2" }, \
+	{ name, "DSP2.2", "DSP2" }, \
+	{ name, "DSP2.3", "DSP2" }, \
+	{ name, "DSP2.4", "DSP2" }, \
+	{ name, "DSP2.5", "DSP2" }, \
+	{ name, "DSP2.6", "DSP2" }, \
+	{ name, "DSP3.1", "DSP3" }, \
+	{ name, "DSP3.2", "DSP3" }, \
+	{ name, "DSP3.3", "DSP3" }, \
+	{ name, "DSP3.4", "DSP3" }, \
+	{ name, "DSP3.5", "DSP3" }, \
+	{ name, "DSP3.6", "DSP3" }, \
+	{ name, "DSP4.1", "DSP4" }, \
+	{ name, "DSP4.2", "DSP4" }, \
+	{ name, "DSP4.3", "DSP4" }, \
+	{ name, "DSP4.4", "DSP4" }, \
+	{ name, "DSP4.5", "DSP4" }, \
+	{ name, "DSP4.6", "DSP4" }
 
-अटल स्थिर काष्ठा snd_soc_dapm_route wm5110_dapm_routes[] = अणु
-	अणु "AIF2 Capture", शून्य, "DBVDD2" पूर्ण,
-	अणु "AIF2 Playback", शून्य, "DBVDD2" पूर्ण,
+static const struct snd_soc_dapm_route wm5110_dapm_routes[] = {
+	{ "AIF2 Capture", NULL, "DBVDD2" },
+	{ "AIF2 Playback", NULL, "DBVDD2" },
 
-	अणु "AIF3 Capture", शून्य, "DBVDD3" पूर्ण,
-	अणु "AIF3 Playback", शून्य, "DBVDD3" पूर्ण,
+	{ "AIF3 Capture", NULL, "DBVDD3" },
+	{ "AIF3 Playback", NULL, "DBVDD3" },
 
-	अणु "OUT1L", शून्य, "CPVDD" पूर्ण,
-	अणु "OUT1R", शून्य, "CPVDD" पूर्ण,
-	अणु "OUT2L", शून्य, "CPVDD" पूर्ण,
-	अणु "OUT2R", शून्य, "CPVDD" पूर्ण,
-	अणु "OUT3L", शून्य, "CPVDD" पूर्ण,
-	अणु "OUT3R", शून्य, "CPVDD" पूर्ण,
+	{ "OUT1L", NULL, "CPVDD" },
+	{ "OUT1R", NULL, "CPVDD" },
+	{ "OUT2L", NULL, "CPVDD" },
+	{ "OUT2R", NULL, "CPVDD" },
+	{ "OUT3L", NULL, "CPVDD" },
+	{ "OUT3R", NULL, "CPVDD" },
 
-	अणु "OUT4L", शून्य, "SPKVDDL" पूर्ण,
-	अणु "OUT4R", शून्य, "SPKVDDR" पूर्ण,
+	{ "OUT4L", NULL, "SPKVDDL" },
+	{ "OUT4R", NULL, "SPKVDDR" },
 
-	अणु "OUT1L", शून्य, "SYSCLK" पूर्ण,
-	अणु "OUT1R", शून्य, "SYSCLK" पूर्ण,
-	अणु "OUT2L", शून्य, "SYSCLK" पूर्ण,
-	अणु "OUT2R", शून्य, "SYSCLK" पूर्ण,
-	अणु "OUT3L", शून्य, "SYSCLK" पूर्ण,
-	अणु "OUT3R", शून्य, "SYSCLK" पूर्ण,
-	अणु "OUT4L", शून्य, "SYSCLK" पूर्ण,
-	अणु "OUT4R", शून्य, "SYSCLK" पूर्ण,
-	अणु "OUT5L", शून्य, "SYSCLK" पूर्ण,
-	अणु "OUT5R", शून्य, "SYSCLK" पूर्ण,
-	अणु "OUT6L", शून्य, "SYSCLK" पूर्ण,
-	अणु "OUT6R", शून्य, "SYSCLK" पूर्ण,
+	{ "OUT1L", NULL, "SYSCLK" },
+	{ "OUT1R", NULL, "SYSCLK" },
+	{ "OUT2L", NULL, "SYSCLK" },
+	{ "OUT2R", NULL, "SYSCLK" },
+	{ "OUT3L", NULL, "SYSCLK" },
+	{ "OUT3R", NULL, "SYSCLK" },
+	{ "OUT4L", NULL, "SYSCLK" },
+	{ "OUT4R", NULL, "SYSCLK" },
+	{ "OUT5L", NULL, "SYSCLK" },
+	{ "OUT5R", NULL, "SYSCLK" },
+	{ "OUT6L", NULL, "SYSCLK" },
+	{ "OUT6R", NULL, "SYSCLK" },
 
-	अणु "IN1L", शून्य, "SYSCLK" पूर्ण,
-	अणु "IN1R", शून्य, "SYSCLK" पूर्ण,
-	अणु "IN2L", शून्य, "SYSCLK" पूर्ण,
-	अणु "IN2R", शून्य, "SYSCLK" पूर्ण,
-	अणु "IN3L", शून्य, "SYSCLK" पूर्ण,
-	अणु "IN3R", शून्य, "SYSCLK" पूर्ण,
-	अणु "IN4L", शून्य, "SYSCLK" पूर्ण,
-	अणु "IN4R", शून्य, "SYSCLK" पूर्ण,
+	{ "IN1L", NULL, "SYSCLK" },
+	{ "IN1R", NULL, "SYSCLK" },
+	{ "IN2L", NULL, "SYSCLK" },
+	{ "IN2R", NULL, "SYSCLK" },
+	{ "IN3L", NULL, "SYSCLK" },
+	{ "IN3R", NULL, "SYSCLK" },
+	{ "IN4L", NULL, "SYSCLK" },
+	{ "IN4R", NULL, "SYSCLK" },
 
-	अणु "ASRC1L", शून्य, "SYSCLK" पूर्ण,
-	अणु "ASRC1R", शून्य, "SYSCLK" पूर्ण,
-	अणु "ASRC2L", शून्य, "SYSCLK" पूर्ण,
-	अणु "ASRC2R", शून्य, "SYSCLK" पूर्ण,
+	{ "ASRC1L", NULL, "SYSCLK" },
+	{ "ASRC1R", NULL, "SYSCLK" },
+	{ "ASRC2L", NULL, "SYSCLK" },
+	{ "ASRC2R", NULL, "SYSCLK" },
 
-	अणु "ASRC1L", शून्य, "ASYNCCLK" पूर्ण,
-	अणु "ASRC1R", शून्य, "ASYNCCLK" पूर्ण,
-	अणु "ASRC2L", शून्य, "ASYNCCLK" पूर्ण,
-	अणु "ASRC2R", शून्य, "ASYNCCLK" पूर्ण,
+	{ "ASRC1L", NULL, "ASYNCCLK" },
+	{ "ASRC1R", NULL, "ASYNCCLK" },
+	{ "ASRC2L", NULL, "ASYNCCLK" },
+	{ "ASRC2R", NULL, "ASYNCCLK" },
 
-	अणु "MICBIAS1", शून्य, "MICVDD" पूर्ण,
-	अणु "MICBIAS2", शून्य, "MICVDD" पूर्ण,
-	अणु "MICBIAS3", शून्य, "MICVDD" पूर्ण,
+	{ "MICBIAS1", NULL, "MICVDD" },
+	{ "MICBIAS2", NULL, "MICVDD" },
+	{ "MICBIAS3", NULL, "MICVDD" },
 
-	अणु "Noise Generator", शून्य, "SYSCLK" पूर्ण,
-	अणु "Tone Generator 1", शून्य, "SYSCLK" पूर्ण,
-	अणु "Tone Generator 2", शून्य, "SYSCLK" पूर्ण,
+	{ "Noise Generator", NULL, "SYSCLK" },
+	{ "Tone Generator 1", NULL, "SYSCLK" },
+	{ "Tone Generator 2", NULL, "SYSCLK" },
 
-	अणु "Noise Generator", शून्य, "NOISE" पूर्ण,
-	अणु "Tone Generator 1", शून्य, "TONE" पूर्ण,
-	अणु "Tone Generator 2", शून्य, "TONE" पूर्ण,
+	{ "Noise Generator", NULL, "NOISE" },
+	{ "Tone Generator 1", NULL, "TONE" },
+	{ "Tone Generator 2", NULL, "TONE" },
 
-	अणु "AIF1 Capture", शून्य, "AIF1TX1" पूर्ण,
-	अणु "AIF1 Capture", शून्य, "AIF1TX2" पूर्ण,
-	अणु "AIF1 Capture", शून्य, "AIF1TX3" पूर्ण,
-	अणु "AIF1 Capture", शून्य, "AIF1TX4" पूर्ण,
-	अणु "AIF1 Capture", शून्य, "AIF1TX5" पूर्ण,
-	अणु "AIF1 Capture", शून्य, "AIF1TX6" पूर्ण,
-	अणु "AIF1 Capture", शून्य, "AIF1TX7" पूर्ण,
-	अणु "AIF1 Capture", शून्य, "AIF1TX8" पूर्ण,
+	{ "AIF1 Capture", NULL, "AIF1TX1" },
+	{ "AIF1 Capture", NULL, "AIF1TX2" },
+	{ "AIF1 Capture", NULL, "AIF1TX3" },
+	{ "AIF1 Capture", NULL, "AIF1TX4" },
+	{ "AIF1 Capture", NULL, "AIF1TX5" },
+	{ "AIF1 Capture", NULL, "AIF1TX6" },
+	{ "AIF1 Capture", NULL, "AIF1TX7" },
+	{ "AIF1 Capture", NULL, "AIF1TX8" },
 
-	अणु "AIF1RX1", शून्य, "AIF1 Playback" पूर्ण,
-	अणु "AIF1RX2", शून्य, "AIF1 Playback" पूर्ण,
-	अणु "AIF1RX3", शून्य, "AIF1 Playback" पूर्ण,
-	अणु "AIF1RX4", शून्य, "AIF1 Playback" पूर्ण,
-	अणु "AIF1RX5", शून्य, "AIF1 Playback" पूर्ण,
-	अणु "AIF1RX6", शून्य, "AIF1 Playback" पूर्ण,
-	अणु "AIF1RX7", शून्य, "AIF1 Playback" पूर्ण,
-	अणु "AIF1RX8", शून्य, "AIF1 Playback" पूर्ण,
+	{ "AIF1RX1", NULL, "AIF1 Playback" },
+	{ "AIF1RX2", NULL, "AIF1 Playback" },
+	{ "AIF1RX3", NULL, "AIF1 Playback" },
+	{ "AIF1RX4", NULL, "AIF1 Playback" },
+	{ "AIF1RX5", NULL, "AIF1 Playback" },
+	{ "AIF1RX6", NULL, "AIF1 Playback" },
+	{ "AIF1RX7", NULL, "AIF1 Playback" },
+	{ "AIF1RX8", NULL, "AIF1 Playback" },
 
-	अणु "AIF2 Capture", शून्य, "AIF2TX1" पूर्ण,
-	अणु "AIF2 Capture", शून्य, "AIF2TX2" पूर्ण,
-	अणु "AIF2 Capture", शून्य, "AIF2TX3" पूर्ण,
-	अणु "AIF2 Capture", शून्य, "AIF2TX4" पूर्ण,
-	अणु "AIF2 Capture", शून्य, "AIF2TX5" पूर्ण,
-	अणु "AIF2 Capture", शून्य, "AIF2TX6" पूर्ण,
+	{ "AIF2 Capture", NULL, "AIF2TX1" },
+	{ "AIF2 Capture", NULL, "AIF2TX2" },
+	{ "AIF2 Capture", NULL, "AIF2TX3" },
+	{ "AIF2 Capture", NULL, "AIF2TX4" },
+	{ "AIF2 Capture", NULL, "AIF2TX5" },
+	{ "AIF2 Capture", NULL, "AIF2TX6" },
 
-	अणु "AIF2RX1", शून्य, "AIF2 Playback" पूर्ण,
-	अणु "AIF2RX2", शून्य, "AIF2 Playback" पूर्ण,
-	अणु "AIF2RX3", शून्य, "AIF2 Playback" पूर्ण,
-	अणु "AIF2RX4", शून्य, "AIF2 Playback" पूर्ण,
-	अणु "AIF2RX5", शून्य, "AIF2 Playback" पूर्ण,
-	अणु "AIF2RX6", शून्य, "AIF2 Playback" पूर्ण,
+	{ "AIF2RX1", NULL, "AIF2 Playback" },
+	{ "AIF2RX2", NULL, "AIF2 Playback" },
+	{ "AIF2RX3", NULL, "AIF2 Playback" },
+	{ "AIF2RX4", NULL, "AIF2 Playback" },
+	{ "AIF2RX5", NULL, "AIF2 Playback" },
+	{ "AIF2RX6", NULL, "AIF2 Playback" },
 
-	अणु "AIF3 Capture", शून्य, "AIF3TX1" पूर्ण,
-	अणु "AIF3 Capture", शून्य, "AIF3TX2" पूर्ण,
+	{ "AIF3 Capture", NULL, "AIF3TX1" },
+	{ "AIF3 Capture", NULL, "AIF3TX2" },
 
-	अणु "AIF3RX1", शून्य, "AIF3 Playback" पूर्ण,
-	अणु "AIF3RX2", शून्य, "AIF3 Playback" पूर्ण,
+	{ "AIF3RX1", NULL, "AIF3 Playback" },
+	{ "AIF3RX2", NULL, "AIF3 Playback" },
 
-	अणु "Slim1 Capture", शून्य, "SLIMTX1" पूर्ण,
-	अणु "Slim1 Capture", शून्य, "SLIMTX2" पूर्ण,
-	अणु "Slim1 Capture", शून्य, "SLIMTX3" पूर्ण,
-	अणु "Slim1 Capture", शून्य, "SLIMTX4" पूर्ण,
+	{ "Slim1 Capture", NULL, "SLIMTX1" },
+	{ "Slim1 Capture", NULL, "SLIMTX2" },
+	{ "Slim1 Capture", NULL, "SLIMTX3" },
+	{ "Slim1 Capture", NULL, "SLIMTX4" },
 
-	अणु "SLIMRX1", शून्य, "Slim1 Playback" पूर्ण,
-	अणु "SLIMRX2", शून्य, "Slim1 Playback" पूर्ण,
-	अणु "SLIMRX3", शून्य, "Slim1 Playback" पूर्ण,
-	अणु "SLIMRX4", शून्य, "Slim1 Playback" पूर्ण,
+	{ "SLIMRX1", NULL, "Slim1 Playback" },
+	{ "SLIMRX2", NULL, "Slim1 Playback" },
+	{ "SLIMRX3", NULL, "Slim1 Playback" },
+	{ "SLIMRX4", NULL, "Slim1 Playback" },
 
-	अणु "Slim2 Capture", शून्य, "SLIMTX5" पूर्ण,
-	अणु "Slim2 Capture", शून्य, "SLIMTX6" पूर्ण,
+	{ "Slim2 Capture", NULL, "SLIMTX5" },
+	{ "Slim2 Capture", NULL, "SLIMTX6" },
 
-	अणु "SLIMRX5", शून्य, "Slim2 Playback" पूर्ण,
-	अणु "SLIMRX6", शून्य, "Slim2 Playback" पूर्ण,
+	{ "SLIMRX5", NULL, "Slim2 Playback" },
+	{ "SLIMRX6", NULL, "Slim2 Playback" },
 
-	अणु "Slim3 Capture", शून्य, "SLIMTX7" पूर्ण,
-	अणु "Slim3 Capture", शून्य, "SLIMTX8" पूर्ण,
+	{ "Slim3 Capture", NULL, "SLIMTX7" },
+	{ "Slim3 Capture", NULL, "SLIMTX8" },
 
-	अणु "SLIMRX7", शून्य, "Slim3 Playback" पूर्ण,
-	अणु "SLIMRX8", शून्य, "Slim3 Playback" पूर्ण,
+	{ "SLIMRX7", NULL, "Slim3 Playback" },
+	{ "SLIMRX8", NULL, "Slim3 Playback" },
 
-	अणु "AIF1 Playback", शून्य, "SYSCLK" पूर्ण,
-	अणु "AIF2 Playback", शून्य, "SYSCLK" पूर्ण,
-	अणु "AIF3 Playback", शून्य, "SYSCLK" पूर्ण,
-	अणु "Slim1 Playback", शून्य, "SYSCLK" पूर्ण,
-	अणु "Slim2 Playback", शून्य, "SYSCLK" पूर्ण,
-	अणु "Slim3 Playback", शून्य, "SYSCLK" पूर्ण,
+	{ "AIF1 Playback", NULL, "SYSCLK" },
+	{ "AIF2 Playback", NULL, "SYSCLK" },
+	{ "AIF3 Playback", NULL, "SYSCLK" },
+	{ "Slim1 Playback", NULL, "SYSCLK" },
+	{ "Slim2 Playback", NULL, "SYSCLK" },
+	{ "Slim3 Playback", NULL, "SYSCLK" },
 
-	अणु "AIF1 Capture", शून्य, "SYSCLK" पूर्ण,
-	अणु "AIF2 Capture", शून्य, "SYSCLK" पूर्ण,
-	अणु "AIF3 Capture", शून्य, "SYSCLK" पूर्ण,
-	अणु "Slim1 Capture", शून्य, "SYSCLK" पूर्ण,
-	अणु "Slim2 Capture", शून्य, "SYSCLK" पूर्ण,
-	अणु "Slim3 Capture", शून्य, "SYSCLK" पूर्ण,
+	{ "AIF1 Capture", NULL, "SYSCLK" },
+	{ "AIF2 Capture", NULL, "SYSCLK" },
+	{ "AIF3 Capture", NULL, "SYSCLK" },
+	{ "Slim1 Capture", NULL, "SYSCLK" },
+	{ "Slim2 Capture", NULL, "SYSCLK" },
+	{ "Slim3 Capture", NULL, "SYSCLK" },
 
-	अणु "Voice Control DSP", शून्य, "DSP3" पूर्ण,
+	{ "Voice Control DSP", NULL, "DSP3" },
 
-	अणु "Audio Trace DSP", शून्य, "DSP1" पूर्ण,
+	{ "Audio Trace DSP", NULL, "DSP1" },
 
-	अणु "IN1L PGA", शून्य, "IN1L" पूर्ण,
-	अणु "IN1R PGA", शून्य, "IN1R" पूर्ण,
+	{ "IN1L PGA", NULL, "IN1L" },
+	{ "IN1R PGA", NULL, "IN1R" },
 
-	अणु "IN2L PGA", शून्य, "IN2L" पूर्ण,
-	अणु "IN2R PGA", शून्य, "IN2R" पूर्ण,
+	{ "IN2L PGA", NULL, "IN2L" },
+	{ "IN2R PGA", NULL, "IN2R" },
 
-	अणु "IN3L PGA", शून्य, "IN3L" पूर्ण,
-	अणु "IN3R PGA", शून्य, "IN3R" पूर्ण,
+	{ "IN3L PGA", NULL, "IN3L" },
+	{ "IN3R PGA", NULL, "IN3R" },
 
-	अणु "IN4L PGA", शून्य, "IN4L" पूर्ण,
-	अणु "IN4R PGA", शून्य, "IN4R" पूर्ण,
+	{ "IN4L PGA", NULL, "IN4L" },
+	{ "IN4R PGA", NULL, "IN4R" },
 
 	ARIZONA_MIXER_ROUTES("OUT1L", "HPOUT1L"),
 	ARIZONA_MIXER_ROUTES("OUT1R", "HPOUT1R"),
@@ -1981,38 +1980,38 @@ SND_SOC_DAPM_OUTPUT("MICSUPP"),
 	ARIZONA_MUX_ROUTES("ISRC3DEC3", "ISRC3DEC3"),
 	ARIZONA_MUX_ROUTES("ISRC3DEC4", "ISRC3DEC4"),
 
-	अणु "AEC Loopback", "HPOUT1L", "OUT1L" पूर्ण,
-	अणु "AEC Loopback", "HPOUT1R", "OUT1R" पूर्ण,
-	अणु "HPOUT1L", शून्य, "OUT1L" पूर्ण,
-	अणु "HPOUT1R", शून्य, "OUT1R" पूर्ण,
+	{ "AEC Loopback", "HPOUT1L", "OUT1L" },
+	{ "AEC Loopback", "HPOUT1R", "OUT1R" },
+	{ "HPOUT1L", NULL, "OUT1L" },
+	{ "HPOUT1R", NULL, "OUT1R" },
 
-	अणु "AEC Loopback", "HPOUT2L", "OUT2L" पूर्ण,
-	अणु "AEC Loopback", "HPOUT2R", "OUT2R" पूर्ण,
-	अणु "HPOUT2L", शून्य, "OUT2L" पूर्ण,
-	अणु "HPOUT2R", शून्य, "OUT2R" पूर्ण,
+	{ "AEC Loopback", "HPOUT2L", "OUT2L" },
+	{ "AEC Loopback", "HPOUT2R", "OUT2R" },
+	{ "HPOUT2L", NULL, "OUT2L" },
+	{ "HPOUT2R", NULL, "OUT2R" },
 
-	अणु "AEC Loopback", "HPOUT3L", "OUT3L" पूर्ण,
-	अणु "AEC Loopback", "HPOUT3R", "OUT3R" पूर्ण,
-	अणु "HPOUT3L", शून्य, "OUT3L" पूर्ण,
-	अणु "HPOUT3R", शून्य, "OUT3R" पूर्ण,
+	{ "AEC Loopback", "HPOUT3L", "OUT3L" },
+	{ "AEC Loopback", "HPOUT3R", "OUT3R" },
+	{ "HPOUT3L", NULL, "OUT3L" },
+	{ "HPOUT3R", NULL, "OUT3R" },
 
-	अणु "AEC Loopback", "SPKOUTL", "OUT4L" पूर्ण,
-	अणु "SPKOUTLN", शून्य, "OUT4L" पूर्ण,
-	अणु "SPKOUTLP", शून्य, "OUT4L" पूर्ण,
+	{ "AEC Loopback", "SPKOUTL", "OUT4L" },
+	{ "SPKOUTLN", NULL, "OUT4L" },
+	{ "SPKOUTLP", NULL, "OUT4L" },
 
-	अणु "AEC Loopback", "SPKOUTR", "OUT4R" पूर्ण,
-	अणु "SPKOUTRN", शून्य, "OUT4R" पूर्ण,
-	अणु "SPKOUTRP", शून्य, "OUT4R" पूर्ण,
+	{ "AEC Loopback", "SPKOUTR", "OUT4R" },
+	{ "SPKOUTRN", NULL, "OUT4R" },
+	{ "SPKOUTRP", NULL, "OUT4R" },
 
-	अणु "AEC Loopback", "SPKDAT1L", "OUT5L" पूर्ण,
-	अणु "AEC Loopback", "SPKDAT1R", "OUT5R" पूर्ण,
-	अणु "SPKDAT1L", शून्य, "OUT5L" पूर्ण,
-	अणु "SPKDAT1R", शून्य, "OUT5R" पूर्ण,
+	{ "AEC Loopback", "SPKDAT1L", "OUT5L" },
+	{ "AEC Loopback", "SPKDAT1R", "OUT5R" },
+	{ "SPKDAT1L", NULL, "OUT5L" },
+	{ "SPKDAT1R", NULL, "OUT5R" },
 
-	अणु "AEC Loopback", "SPKDAT2L", "OUT6L" पूर्ण,
-	अणु "AEC Loopback", "SPKDAT2R", "OUT6R" पूर्ण,
-	अणु "SPKDAT2L", शून्य, "OUT6L" पूर्ण,
-	अणु "SPKDAT2R", शून्य, "OUT6R" पूर्ण,
+	{ "AEC Loopback", "SPKDAT2L", "OUT6L" },
+	{ "AEC Loopback", "SPKDAT2R", "OUT6R" },
+	{ "SPKDAT2L", NULL, "OUT6L" },
+	{ "SPKDAT2R", NULL, "OUT6R" },
 
 	WM5110_RXANC_INPUT_ROUTES("RXANCL", "RXANCL"),
 	WM5110_RXANC_INPUT_ROUTES("RXANCR", "RXANCR"),
@@ -2030,318 +2029,318 @@ SND_SOC_DAPM_OUTPUT("MICSUPP"),
 	WM5110_RXANC_OUTPUT_ROUTES("OUT6L", "SPKDAT2L"),
 	WM5110_RXANC_OUTPUT_ROUTES("OUT6R", "SPKDAT2R"),
 
-	अणु "MICSUPP", शून्य, "SYSCLK" पूर्ण,
+	{ "MICSUPP", NULL, "SYSCLK" },
 
-	अणु "DRC1 Signal Activity", शून्य, "SYSCLK" पूर्ण,
-	अणु "DRC2 Signal Activity", शून्य, "SYSCLK" पूर्ण,
-	अणु "DRC1 Signal Activity", शून्य, "DRC1L" पूर्ण,
-	अणु "DRC1 Signal Activity", शून्य, "DRC1R" पूर्ण,
-	अणु "DRC2 Signal Activity", शून्य, "DRC2L" पूर्ण,
-	अणु "DRC2 Signal Activity", शून्य, "DRC2R" पूर्ण,
+	{ "DRC1 Signal Activity", NULL, "SYSCLK" },
+	{ "DRC2 Signal Activity", NULL, "SYSCLK" },
+	{ "DRC1 Signal Activity", NULL, "DRC1L" },
+	{ "DRC1 Signal Activity", NULL, "DRC1R" },
+	{ "DRC2 Signal Activity", NULL, "DRC2L" },
+	{ "DRC2 Signal Activity", NULL, "DRC2R" },
 
-	अणु "DSP Voice Trigger", शून्य, "SYSCLK" पूर्ण,
-	अणु "DSP Voice Trigger", शून्य, "DSP3 Voice Trigger" पूर्ण,
-	अणु "DSP3 Voice Trigger", "Switch", "DSP3" पूर्ण,
-पूर्ण;
+	{ "DSP Voice Trigger", NULL, "SYSCLK" },
+	{ "DSP Voice Trigger", NULL, "DSP3 Voice Trigger" },
+	{ "DSP3 Voice Trigger", "Switch", "DSP3" },
+};
 
-अटल पूर्णांक wm5110_set_fll(काष्ठा snd_soc_component *component, पूर्णांक fll_id,
-			  पूर्णांक source, अचिन्हित पूर्णांक Fref, अचिन्हित पूर्णांक Fout)
-अणु
-	काष्ठा wm5110_priv *wm5110 = snd_soc_component_get_drvdata(component);
+static int wm5110_set_fll(struct snd_soc_component *component, int fll_id,
+			  int source, unsigned int Fref, unsigned int Fout)
+{
+	struct wm5110_priv *wm5110 = snd_soc_component_get_drvdata(component);
 
-	चयन (fll_id) अणु
-	हाल WM5110_FLL1:
-		वापस arizona_set_fll(&wm5110->fll[0], source, Fref, Fout);
-	हाल WM5110_FLL2:
-		वापस arizona_set_fll(&wm5110->fll[1], source, Fref, Fout);
-	हाल WM5110_FLL1_REFCLK:
-		वापस arizona_set_fll_refclk(&wm5110->fll[0], source, Fref,
+	switch (fll_id) {
+	case WM5110_FLL1:
+		return arizona_set_fll(&wm5110->fll[0], source, Fref, Fout);
+	case WM5110_FLL2:
+		return arizona_set_fll(&wm5110->fll[1], source, Fref, Fout);
+	case WM5110_FLL1_REFCLK:
+		return arizona_set_fll_refclk(&wm5110->fll[0], source, Fref,
 					      Fout);
-	हाल WM5110_FLL2_REFCLK:
-		वापस arizona_set_fll_refclk(&wm5110->fll[1], source, Fref,
+	case WM5110_FLL2_REFCLK:
+		return arizona_set_fll_refclk(&wm5110->fll[1], source, Fref,
 					      Fout);
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-पूर्ण
+	default:
+		return -EINVAL;
+	}
+}
 
-#घोषणा WM5110_RATES SNDRV_PCM_RATE_KNOT
+#define WM5110_RATES SNDRV_PCM_RATE_KNOT
 
-#घोषणा WM5110_FORMATS (SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S20_3LE |\
+#define WM5110_FORMATS (SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S20_3LE |\
 			SNDRV_PCM_FMTBIT_S24_LE | SNDRV_PCM_FMTBIT_S32_LE)
 
-अटल काष्ठा snd_soc_dai_driver wm5110_dai[] = अणु
-	अणु
+static struct snd_soc_dai_driver wm5110_dai[] = {
+	{
 		.name = "wm5110-aif1",
 		.id = 1,
 		.base = ARIZONA_AIF1_BCLK_CTRL,
-		.playback = अणु
+		.playback = {
 			.stream_name = "AIF1 Playback",
 			.channels_min = 1,
 			.channels_max = 8,
 			.rates = WM5110_RATES,
-			.क्रमmats = WM5110_FORMATS,
-		पूर्ण,
-		.capture = अणु
+			.formats = WM5110_FORMATS,
+		},
+		.capture = {
 			 .stream_name = "AIF1 Capture",
 			 .channels_min = 1,
 			 .channels_max = 8,
 			 .rates = WM5110_RATES,
-			 .क्रमmats = WM5110_FORMATS,
-		 पूर्ण,
+			 .formats = WM5110_FORMATS,
+		 },
 		.ops = &arizona_dai_ops,
 		.symmetric_rate = 1,
 		.symmetric_sample_bits = 1,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name = "wm5110-aif2",
 		.id = 2,
 		.base = ARIZONA_AIF2_BCLK_CTRL,
-		.playback = अणु
+		.playback = {
 			.stream_name = "AIF2 Playback",
 			.channels_min = 1,
 			.channels_max = 6,
 			.rates = WM5110_RATES,
-			.क्रमmats = WM5110_FORMATS,
-		पूर्ण,
-		.capture = अणु
+			.formats = WM5110_FORMATS,
+		},
+		.capture = {
 			 .stream_name = "AIF2 Capture",
 			 .channels_min = 1,
 			 .channels_max = 6,
 			 .rates = WM5110_RATES,
-			 .क्रमmats = WM5110_FORMATS,
-		 पूर्ण,
+			 .formats = WM5110_FORMATS,
+		 },
 		.ops = &arizona_dai_ops,
 		.symmetric_rate = 1,
 		.symmetric_sample_bits = 1,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name = "wm5110-aif3",
 		.id = 3,
 		.base = ARIZONA_AIF3_BCLK_CTRL,
-		.playback = अणु
+		.playback = {
 			.stream_name = "AIF3 Playback",
 			.channels_min = 1,
 			.channels_max = 2,
 			.rates = WM5110_RATES,
-			.क्रमmats = WM5110_FORMATS,
-		पूर्ण,
-		.capture = अणु
+			.formats = WM5110_FORMATS,
+		},
+		.capture = {
 			 .stream_name = "AIF3 Capture",
 			 .channels_min = 1,
 			 .channels_max = 2,
 			 .rates = WM5110_RATES,
-			 .क्रमmats = WM5110_FORMATS,
-		 पूर्ण,
+			 .formats = WM5110_FORMATS,
+		 },
 		.ops = &arizona_dai_ops,
 		.symmetric_rate = 1,
 		.symmetric_sample_bits = 1,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name = "wm5110-slim1",
 		.id = 4,
-		.playback = अणु
+		.playback = {
 			.stream_name = "Slim1 Playback",
 			.channels_min = 1,
 			.channels_max = 4,
 			.rates = WM5110_RATES,
-			.क्रमmats = WM5110_FORMATS,
-		पूर्ण,
-		.capture = अणु
+			.formats = WM5110_FORMATS,
+		},
+		.capture = {
 			 .stream_name = "Slim1 Capture",
 			 .channels_min = 1,
 			 .channels_max = 4,
 			 .rates = WM5110_RATES,
-			 .क्रमmats = WM5110_FORMATS,
-		 पूर्ण,
+			 .formats = WM5110_FORMATS,
+		 },
 		.ops = &arizona_simple_dai_ops,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name = "wm5110-slim2",
 		.id = 5,
-		.playback = अणु
+		.playback = {
 			.stream_name = "Slim2 Playback",
 			.channels_min = 1,
 			.channels_max = 2,
 			.rates = WM5110_RATES,
-			.क्रमmats = WM5110_FORMATS,
-		पूर्ण,
-		.capture = अणु
+			.formats = WM5110_FORMATS,
+		},
+		.capture = {
 			 .stream_name = "Slim2 Capture",
 			 .channels_min = 1,
 			 .channels_max = 2,
 			 .rates = WM5110_RATES,
-			 .क्रमmats = WM5110_FORMATS,
-		 पूर्ण,
+			 .formats = WM5110_FORMATS,
+		 },
 		.ops = &arizona_simple_dai_ops,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name = "wm5110-slim3",
 		.id = 6,
-		.playback = अणु
+		.playback = {
 			.stream_name = "Slim3 Playback",
 			.channels_min = 1,
 			.channels_max = 2,
 			.rates = WM5110_RATES,
-			.क्रमmats = WM5110_FORMATS,
-		पूर्ण,
-		.capture = अणु
+			.formats = WM5110_FORMATS,
+		},
+		.capture = {
 			 .stream_name = "Slim3 Capture",
 			 .channels_min = 1,
 			 .channels_max = 2,
 			 .rates = WM5110_RATES,
-			 .क्रमmats = WM5110_FORMATS,
-		 पूर्ण,
+			 .formats = WM5110_FORMATS,
+		 },
 		.ops = &arizona_simple_dai_ops,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name = "wm5110-cpu-voicectrl",
-		.capture = अणु
+		.capture = {
 			.stream_name = "Voice Control CPU",
 			.channels_min = 1,
 			.channels_max = 1,
 			.rates = WM5110_RATES,
-			.क्रमmats = WM5110_FORMATS,
-		पूर्ण,
+			.formats = WM5110_FORMATS,
+		},
 		.compress_new = snd_soc_new_compress,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name = "wm5110-dsp-voicectrl",
-		.capture = अणु
+		.capture = {
 			.stream_name = "Voice Control DSP",
 			.channels_min = 1,
 			.channels_max = 1,
 			.rates = WM5110_RATES,
-			.क्रमmats = WM5110_FORMATS,
-		पूर्ण,
-	पूर्ण,
-	अणु
+			.formats = WM5110_FORMATS,
+		},
+	},
+	{
 		.name = "wm5110-cpu-trace",
-		.capture = अणु
+		.capture = {
 			.stream_name = "Audio Trace CPU",
 			.channels_min = 1,
 			.channels_max = 6,
 			.rates = WM5110_RATES,
-			.क्रमmats = WM5110_FORMATS,
-		पूर्ण,
+			.formats = WM5110_FORMATS,
+		},
 		.compress_new = snd_soc_new_compress,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name = "wm5110-dsp-trace",
-		.capture = अणु
+		.capture = {
 			.stream_name = "Audio Trace DSP",
 			.channels_min = 1,
 			.channels_max = 6,
 			.rates = WM5110_RATES,
-			.क्रमmats = WM5110_FORMATS,
-		पूर्ण,
-	पूर्ण,
-पूर्ण;
+			.formats = WM5110_FORMATS,
+		},
+	},
+};
 
-अटल पूर्णांक wm5110_खोलो(काष्ठा snd_soc_component *component,
-		       काष्ठा snd_compr_stream *stream)
-अणु
-	काष्ठा snd_soc_pcm_runसमय *rtd = stream->निजी_data;
-	काष्ठा wm5110_priv *priv = snd_soc_component_get_drvdata(component);
-	काष्ठा arizona *arizona = priv->core.arizona;
-	पूर्णांक n_adsp;
+static int wm5110_open(struct snd_soc_component *component,
+		       struct snd_compr_stream *stream)
+{
+	struct snd_soc_pcm_runtime *rtd = stream->private_data;
+	struct wm5110_priv *priv = snd_soc_component_get_drvdata(component);
+	struct arizona *arizona = priv->core.arizona;
+	int n_adsp;
 
-	अगर (म_भेद(asoc_rtd_to_codec(rtd, 0)->name, "wm5110-dsp-voicectrl") == 0) अणु
+	if (strcmp(asoc_rtd_to_codec(rtd, 0)->name, "wm5110-dsp-voicectrl") == 0) {
 		n_adsp = 2;
-	पूर्ण अन्यथा अगर (म_भेद(asoc_rtd_to_codec(rtd, 0)->name, "wm5110-dsp-trace") == 0) अणु
+	} else if (strcmp(asoc_rtd_to_codec(rtd, 0)->name, "wm5110-dsp-trace") == 0) {
 		n_adsp = 0;
-	पूर्ण अन्यथा अणु
+	} else {
 		dev_err(arizona->dev,
 			"No suitable compressed stream for DAI '%s'\n",
 			asoc_rtd_to_codec(rtd, 0)->name);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस wm_adsp_compr_खोलो(&priv->core.adsp[n_adsp], stream);
-पूर्ण
+	return wm_adsp_compr_open(&priv->core.adsp[n_adsp], stream);
+}
 
-अटल irqवापस_t wm5110_adsp2_irq(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा wm5110_priv *priv = data;
-	काष्ठा arizona *arizona = priv->core.arizona;
-	काष्ठा arizona_voice_trigger_info info;
-	पूर्णांक serviced = 0;
-	पूर्णांक i, ret;
+static irqreturn_t wm5110_adsp2_irq(int irq, void *data)
+{
+	struct wm5110_priv *priv = data;
+	struct arizona *arizona = priv->core.arizona;
+	struct arizona_voice_trigger_info info;
+	int serviced = 0;
+	int i, ret;
 
-	क्रम (i = 0; i < WM5110_NUM_ADSP; ++i) अणु
+	for (i = 0; i < WM5110_NUM_ADSP; ++i) {
 		ret = wm_adsp_compr_handle_irq(&priv->core.adsp[i]);
-		अगर (ret != -ENODEV)
+		if (ret != -ENODEV)
 			serviced++;
-		अगर (ret == WM_ADSP_COMPR_VOICE_TRIGGER) अणु
+		if (ret == WM_ADSP_COMPR_VOICE_TRIGGER) {
 			info.core = i;
-			arizona_call_notअगरiers(arizona,
+			arizona_call_notifiers(arizona,
 					       ARIZONA_NOTIFY_VOICE_TRIGGER,
 					       &info);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (!serviced) अणु
+	if (!serviced) {
 		dev_err(arizona->dev, "Spurious compressed data IRQ\n");
-		वापस IRQ_NONE;
-	पूर्ण
+		return IRQ_NONE;
+	}
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक wm5110_component_probe(काष्ठा snd_soc_component *component)
-अणु
-	काष्ठा snd_soc_dapm_context *dapm = snd_soc_component_get_dapm(component);
-	काष्ठा wm5110_priv *priv = snd_soc_component_get_drvdata(component);
-	काष्ठा arizona *arizona = priv->core.arizona;
-	पूर्णांक i, ret;
+static int wm5110_component_probe(struct snd_soc_component *component)
+{
+	struct snd_soc_dapm_context *dapm = snd_soc_component_get_dapm(component);
+	struct wm5110_priv *priv = snd_soc_component_get_drvdata(component);
+	struct arizona *arizona = priv->core.arizona;
+	int i, ret;
 
 	arizona->dapm = dapm;
 	snd_soc_component_init_regmap(component, arizona->regmap);
 
 	ret = arizona_init_spk(component);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	arizona_init_gpio(component);
 	arizona_init_mono(component);
 
-	क्रम (i = 0; i < WM5110_NUM_ADSP; ++i) अणु
+	for (i = 0; i < WM5110_NUM_ADSP; ++i) {
 		ret = wm_adsp2_component_probe(&priv->core.adsp[i], component);
-		अगर (ret)
-			जाओ err_adsp2_codec_probe;
-	पूर्ण
+		if (ret)
+			goto err_adsp2_codec_probe;
+	}
 
 	ret = snd_soc_add_component_controls(component,
 					     arizona_adsp2_rate_controls,
 					     WM5110_NUM_ADSP);
-	अगर (ret)
-		जाओ err_adsp2_codec_probe;
+	if (ret)
+		goto err_adsp2_codec_probe;
 
 	snd_soc_component_disable_pin(component, "HAPTICS");
 
-	वापस 0;
+	return 0;
 
 err_adsp2_codec_probe:
-	क्रम (--i; i >= 0; --i)
-		wm_adsp2_component_हटाओ(&priv->core.adsp[i], component);
+	for (--i; i >= 0; --i)
+		wm_adsp2_component_remove(&priv->core.adsp[i], component);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम wm5110_component_हटाओ(काष्ठा snd_soc_component *component)
-अणु
-	काष्ठा wm5110_priv *priv = snd_soc_component_get_drvdata(component);
-	पूर्णांक i;
+static void wm5110_component_remove(struct snd_soc_component *component)
+{
+	struct wm5110_priv *priv = snd_soc_component_get_drvdata(component);
+	int i;
 
-	क्रम (i = 0; i < WM5110_NUM_ADSP; ++i)
-		wm_adsp2_component_हटाओ(&priv->core.adsp[i], component);
+	for (i = 0; i < WM5110_NUM_ADSP; ++i)
+		wm_adsp2_component_remove(&priv->core.adsp[i], component);
 
-	priv->core.arizona->dapm = शून्य;
-पूर्ण
+	priv->core.arizona->dapm = NULL;
+}
 
-#घोषणा WM5110_DIG_VU 0x0200
+#define WM5110_DIG_VU 0x0200
 
-अटल अचिन्हित पूर्णांक wm5110_digital_vu[] = अणु
+static unsigned int wm5110_digital_vu[] = {
 	ARIZONA_DAC_DIGITAL_VOLUME_1L,
 	ARIZONA_DAC_DIGITAL_VOLUME_1R,
 	ARIZONA_DAC_DIGITAL_VOLUME_2L,
@@ -2354,21 +2353,21 @@ err_adsp2_codec_probe:
 	ARIZONA_DAC_DIGITAL_VOLUME_5R,
 	ARIZONA_DAC_DIGITAL_VOLUME_6L,
 	ARIZONA_DAC_DIGITAL_VOLUME_6R,
-पूर्ण;
+};
 
-अटल काष्ठा snd_compress_ops wm5110_compress_ops = अणु
-	.खोलो		= wm5110_खोलो,
-	.मुक्त		= wm_adsp_compr_मुक्त,
+static struct snd_compress_ops wm5110_compress_ops = {
+	.open		= wm5110_open,
+	.free		= wm_adsp_compr_free,
 	.set_params	= wm_adsp_compr_set_params,
 	.get_caps	= wm_adsp_compr_get_caps,
 	.trigger	= wm_adsp_compr_trigger,
-	.poपूर्णांकer	= wm_adsp_compr_poपूर्णांकer,
+	.pointer	= wm_adsp_compr_pointer,
 	.copy		= wm_adsp_compr_copy,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा snd_soc_component_driver soc_component_dev_wm5110 = अणु
+static const struct snd_soc_component_driver soc_component_dev_wm5110 = {
 	.probe			= wm5110_component_probe,
-	.हटाओ			= wm5110_component_हटाओ,
+	.remove			= wm5110_component_remove,
 	.set_sysclk		= arizona_set_sysclk,
 	.set_pll		= wm5110_set_fll,
 	.set_jack		= arizona_jack_set_jack,
@@ -2376,39 +2375,39 @@ err_adsp2_codec_probe:
 	.compress_ops		= &wm5110_compress_ops,
 	.controls		= wm5110_snd_controls,
 	.num_controls		= ARRAY_SIZE(wm5110_snd_controls),
-	.dapm_widमाला_लो		= wm5110_dapm_widमाला_लो,
-	.num_dapm_widमाला_लो	= ARRAY_SIZE(wm5110_dapm_widमाला_लो),
+	.dapm_widgets		= wm5110_dapm_widgets,
+	.num_dapm_widgets	= ARRAY_SIZE(wm5110_dapm_widgets),
 	.dapm_routes		= wm5110_dapm_routes,
 	.num_dapm_routes	= ARRAY_SIZE(wm5110_dapm_routes),
-	.use_pmकरोwn_समय	= 1,
+	.use_pmdown_time	= 1,
 	.endianness		= 1,
 	.non_legacy_dai_naming	= 1,
-पूर्ण;
+};
 
-अटल पूर्णांक wm5110_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा arizona *arizona = dev_get_drvdata(pdev->dev.parent);
-	काष्ठा wm5110_priv *wm5110;
-	पूर्णांक i, ret;
+static int wm5110_probe(struct platform_device *pdev)
+{
+	struct arizona *arizona = dev_get_drvdata(pdev->dev.parent);
+	struct wm5110_priv *wm5110;
+	int i, ret;
 
-	wm5110 = devm_kzalloc(&pdev->dev, माप(काष्ठा wm5110_priv),
+	wm5110 = devm_kzalloc(&pdev->dev, sizeof(struct wm5110_priv),
 			      GFP_KERNEL);
-	अगर (wm5110 == शून्य)
-		वापस -ENOMEM;
-	platक्रमm_set_drvdata(pdev, wm5110);
+	if (wm5110 == NULL)
+		return -ENOMEM;
+	platform_set_drvdata(pdev, wm5110);
 
-	अगर (IS_ENABLED(CONFIG_OF)) अणु
-		अगर (!dev_get_platdata(arizona->dev)) अणु
+	if (IS_ENABLED(CONFIG_OF)) {
+		if (!dev_get_platdata(arizona->dev)) {
 			ret = arizona_of_get_audio_pdata(arizona);
-			अगर (ret < 0)
-				वापस ret;
-		पूर्ण
-	पूर्ण
+			if (ret < 0)
+				return ret;
+		}
+	}
 
 	wm5110->core.arizona = arizona;
-	wm5110->core.num_inमाला_दो = 8;
+	wm5110->core.num_inputs = 8;
 
-	क्रम (i = 0; i < WM5110_NUM_ADSP; i++) अणु
+	for (i = 0; i < WM5110_NUM_ADSP; i++) {
 		wm5110->core.adsp[i].part = "wm5110";
 		wm5110->core.adsp[i].num = i + 1;
 		wm5110->core.adsp[i].type = WMFW_ADSP2;
@@ -2422,16 +2421,16 @@ err_adsp2_codec_probe:
 			= ARRAY_SIZE(wm5110_dsp1_regions);
 
 		ret = wm_adsp2_init(&wm5110->core.adsp[i]);
-		अगर (ret != 0)
-			वापस ret;
-	पूर्ण
+		if (ret != 0)
+			return ret;
+	}
 
-	/* This may वापस -EPROBE_DEFER, so करो this early on */
+	/* This may return -EPROBE_DEFER, so do this early on */
 	ret = arizona_jack_codec_dev_probe(&wm5110->core, &pdev->dev);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	क्रम (i = 0; i < ARRAY_SIZE(wm5110->fll); i++)
+	for (i = 0; i < ARRAY_SIZE(wm5110->fll); i++)
 		wm5110->fll[i].vco_mult = 3;
 
 	arizona_init_fll(arizona, 1, ARIZONA_FLL1_CONTROL_1 - 1,
@@ -2447,27 +2446,27 @@ err_adsp2_codec_probe:
 	regmap_update_bits(arizona->regmap, ARIZONA_SAMPLE_RATE_3,
 			   ARIZONA_SAMPLE_RATE_3_MASK, 0x12);
 
-	क्रम (i = 0; i < ARRAY_SIZE(wm5110_dai); i++)
+	for (i = 0; i < ARRAY_SIZE(wm5110_dai); i++)
 		arizona_init_dai(&wm5110->core, i);
 
 	/* Latch volume update bits */
-	क्रम (i = 0; i < ARRAY_SIZE(wm5110_digital_vu); i++)
+	for (i = 0; i < ARRAY_SIZE(wm5110_digital_vu); i++)
 		regmap_update_bits(arizona->regmap, wm5110_digital_vu[i],
 				   WM5110_DIG_VU, WM5110_DIG_VU);
 
-	pm_runसमय_enable(&pdev->dev);
-	pm_runसमय_idle(&pdev->dev);
+	pm_runtime_enable(&pdev->dev);
+	pm_runtime_idle(&pdev->dev);
 
 	ret = arizona_request_irq(arizona, ARIZONA_IRQ_DSP_IRQ1,
 				  "ADSP2 Compressed IRQ", wm5110_adsp2_irq,
 				  wm5110);
-	अगर (ret != 0) अणु
+	if (ret != 0) {
 		dev_err(&pdev->dev, "Failed to request DSP IRQ: %d\n", ret);
-		जाओ err_jack_codec_dev;
-	पूर्ण
+		goto err_jack_codec_dev;
+	}
 
 	ret = arizona_set_irq_wake(arizona, ARIZONA_IRQ_DSP_IRQ1, 1);
-	अगर (ret != 0)
+	if (ret != 0)
 		dev_warn(&pdev->dev,
 			 "Failed to set compressed IRQ as a wake source: %d\n",
 			 ret);
@@ -2475,64 +2474,64 @@ err_adsp2_codec_probe:
 	arizona_init_common(arizona);
 
 	ret = arizona_init_vol_limit(arizona);
-	अगर (ret < 0)
-		जाओ err_dsp_irq;
+	if (ret < 0)
+		goto err_dsp_irq;
 	ret = arizona_init_spk_irqs(arizona);
-	अगर (ret < 0)
-		जाओ err_dsp_irq;
+	if (ret < 0)
+		goto err_dsp_irq;
 
-	ret = devm_snd_soc_रेजिस्टर_component(&pdev->dev,
+	ret = devm_snd_soc_register_component(&pdev->dev,
 					      &soc_component_dev_wm5110,
 					      wm5110_dai,
 					      ARRAY_SIZE(wm5110_dai));
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(&pdev->dev, "Failed to register component: %d\n", ret);
-		जाओ err_spk_irqs;
-	पूर्ण
+		goto err_spk_irqs;
+	}
 
-	वापस ret;
+	return ret;
 
 err_spk_irqs:
-	arizona_मुक्त_spk_irqs(arizona);
+	arizona_free_spk_irqs(arizona);
 err_dsp_irq:
 	arizona_set_irq_wake(arizona, ARIZONA_IRQ_DSP_IRQ1, 0);
-	arizona_मुक्त_irq(arizona, ARIZONA_IRQ_DSP_IRQ1, wm5110);
+	arizona_free_irq(arizona, ARIZONA_IRQ_DSP_IRQ1, wm5110);
 err_jack_codec_dev:
-	arizona_jack_codec_dev_हटाओ(&wm5110->core);
+	arizona_jack_codec_dev_remove(&wm5110->core);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक wm5110_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा wm5110_priv *wm5110 = platक्रमm_get_drvdata(pdev);
-	काष्ठा arizona *arizona = wm5110->core.arizona;
-	पूर्णांक i;
+static int wm5110_remove(struct platform_device *pdev)
+{
+	struct wm5110_priv *wm5110 = platform_get_drvdata(pdev);
+	struct arizona *arizona = wm5110->core.arizona;
+	int i;
 
-	pm_runसमय_disable(&pdev->dev);
+	pm_runtime_disable(&pdev->dev);
 
-	क्रम (i = 0; i < WM5110_NUM_ADSP; i++)
-		wm_adsp2_हटाओ(&wm5110->core.adsp[i]);
+	for (i = 0; i < WM5110_NUM_ADSP; i++)
+		wm_adsp2_remove(&wm5110->core.adsp[i]);
 
-	arizona_मुक्त_spk_irqs(arizona);
+	arizona_free_spk_irqs(arizona);
 
 	arizona_set_irq_wake(arizona, ARIZONA_IRQ_DSP_IRQ1, 0);
-	arizona_मुक्त_irq(arizona, ARIZONA_IRQ_DSP_IRQ1, wm5110);
+	arizona_free_irq(arizona, ARIZONA_IRQ_DSP_IRQ1, wm5110);
 
-	arizona_jack_codec_dev_हटाओ(&wm5110->core);
+	arizona_jack_codec_dev_remove(&wm5110->core);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver wm5110_codec_driver = अणु
-	.driver = अणु
+static struct platform_driver wm5110_codec_driver = {
+	.driver = {
 		.name = "wm5110-codec",
-	पूर्ण,
+	},
 	.probe = wm5110_probe,
-	.हटाओ = wm5110_हटाओ,
-पूर्ण;
+	.remove = wm5110_remove,
+};
 
-module_platक्रमm_driver(wm5110_codec_driver);
+module_platform_driver(wm5110_codec_driver);
 
 MODULE_DESCRIPTION("ASoC WM5110 driver");
 MODULE_AUTHOR("Mark Brown <broonie@opensource.wolfsonmicro.com>");

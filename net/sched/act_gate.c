@@ -1,78 +1,77 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /* Copyright 2020 NXP */
 
-#समावेश <linux/module.h>
-#समावेश <linux/types.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/rtnetlink.h>
-#समावेश <linux/init.h>
-#समावेश <linux/slab.h>
-#समावेश <net/act_api.h>
-#समावेश <net/netlink.h>
-#समावेश <net/pkt_cls.h>
-#समावेश <net/tc_act/tc_gate.h>
+#include <linux/module.h>
+#include <linux/types.h>
+#include <linux/kernel.h>
+#include <linux/string.h>
+#include <linux/errno.h>
+#include <linux/skbuff.h>
+#include <linux/rtnetlink.h>
+#include <linux/init.h>
+#include <linux/slab.h>
+#include <net/act_api.h>
+#include <net/netlink.h>
+#include <net/pkt_cls.h>
+#include <net/tc_act/tc_gate.h>
 
-अटल अचिन्हित पूर्णांक gate_net_id;
-अटल काष्ठा tc_action_ops act_gate_ops;
+static unsigned int gate_net_id;
+static struct tc_action_ops act_gate_ops;
 
-अटल kसमय_प्रकार gate_get_समय(काष्ठा tcf_gate *gact)
-अणु
-	kसमय_प्रकार mono = kसमय_get();
+static ktime_t gate_get_time(struct tcf_gate *gact)
+{
+	ktime_t mono = ktime_get();
 
-	चयन (gact->tk_offset) अणु
-	हाल TK_OFFS_MAX:
-		वापस mono;
-	शेष:
-		वापस kसमय_mono_to_any(mono, gact->tk_offset);
-	पूर्ण
+	switch (gact->tk_offset) {
+	case TK_OFFS_MAX:
+		return mono;
+	default:
+		return ktime_mono_to_any(mono, gact->tk_offset);
+	}
 
-	वापस KTIME_MAX;
-पूर्ण
+	return KTIME_MAX;
+}
 
-अटल व्योम gate_get_start_समय(काष्ठा tcf_gate *gact, kसमय_प्रकार *start)
-अणु
-	काष्ठा tcf_gate_params *param = &gact->param;
-	kसमय_प्रकार now, base, cycle;
+static void gate_get_start_time(struct tcf_gate *gact, ktime_t *start)
+{
+	struct tcf_gate_params *param = &gact->param;
+	ktime_t now, base, cycle;
 	u64 n;
 
-	base = ns_to_kसमय(param->tcfg_baseसमय);
-	now = gate_get_समय(gact);
+	base = ns_to_ktime(param->tcfg_basetime);
+	now = gate_get_time(gact);
 
-	अगर (kसमय_after(base, now)) अणु
+	if (ktime_after(base, now)) {
 		*start = base;
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	cycle = param->tcfg_cycleसमय;
+	cycle = param->tcfg_cycletime;
 
-	n = भाग64_u64(kसमय_sub_ns(now, base), cycle);
-	*start = kसमय_add_ns(base, (n + 1) * cycle);
-पूर्ण
+	n = div64_u64(ktime_sub_ns(now, base), cycle);
+	*start = ktime_add_ns(base, (n + 1) * cycle);
+}
 
-अटल व्योम gate_start_समयr(काष्ठा tcf_gate *gact, kसमय_प्रकार start)
-अणु
-	kसमय_प्रकार expires;
+static void gate_start_timer(struct tcf_gate *gact, ktime_t start)
+{
+	ktime_t expires;
 
-	expires = hrसमयr_get_expires(&gact->hiसमयr);
-	अगर (expires == 0)
+	expires = hrtimer_get_expires(&gact->hitimer);
+	if (expires == 0)
 		expires = KTIME_MAX;
 
-	start = min_t(kसमय_प्रकार, start, expires);
+	start = min_t(ktime_t, start, expires);
 
-	hrसमयr_start(&gact->hiसमयr, start, HRTIMER_MODE_ABS_SOFT);
-पूर्ण
+	hrtimer_start(&gact->hitimer, start, HRTIMER_MODE_ABS_SOFT);
+}
 
-अटल क्रमागत hrसमयr_restart gate_समयr_func(काष्ठा hrसमयr *समयr)
-अणु
-	काष्ठा tcf_gate *gact = container_of(समयr, काष्ठा tcf_gate,
-					     hiसमयr);
-	काष्ठा tcf_gate_params *p = &gact->param;
-	काष्ठा tcfg_gate_entry *next;
-	kसमय_प्रकार बंद_समय, now;
+static enum hrtimer_restart gate_timer_func(struct hrtimer *timer)
+{
+	struct tcf_gate *gact = container_of(timer, struct tcf_gate,
+					     hitimer);
+	struct tcf_gate_params *p = &gact->param;
+	struct tcfg_gate_entry *next;
+	ktime_t close_time, now;
 
 	spin_lock(&gact->tcf_lock);
 
@@ -83,522 +82,522 @@
 	gact->current_entry_octets = 0;
 	gact->current_max_octets = next->maxoctets;
 
-	gact->current_बंद_समय = kसमय_add_ns(gact->current_बंद_समय,
-						next->पूर्णांकerval);
+	gact->current_close_time = ktime_add_ns(gact->current_close_time,
+						next->interval);
 
-	बंद_समय = gact->current_बंद_समय;
+	close_time = gact->current_close_time;
 
-	अगर (list_is_last(&next->list, &p->entries))
+	if (list_is_last(&next->list, &p->entries))
 		next = list_first_entry(&p->entries,
-					काष्ठा tcfg_gate_entry, list);
-	अन्यथा
+					struct tcfg_gate_entry, list);
+	else
 		next = list_next_entry(next, list);
 
-	now = gate_get_समय(gact);
+	now = gate_get_time(gact);
 
-	अगर (kसमय_after(now, बंद_समय)) अणु
-		kसमय_प्रकार cycle, base;
+	if (ktime_after(now, close_time)) {
+		ktime_t cycle, base;
 		u64 n;
 
-		cycle = p->tcfg_cycleसमय;
-		base = ns_to_kसमय(p->tcfg_baseसमय);
-		n = भाग64_u64(kसमय_sub_ns(now, base), cycle);
-		बंद_समय = kसमय_add_ns(base, (n + 1) * cycle);
-	पूर्ण
+		cycle = p->tcfg_cycletime;
+		base = ns_to_ktime(p->tcfg_basetime);
+		n = div64_u64(ktime_sub_ns(now, base), cycle);
+		close_time = ktime_add_ns(base, (n + 1) * cycle);
+	}
 
 	gact->next_entry = next;
 
-	hrसमयr_set_expires(&gact->hiसमयr, बंद_समय);
+	hrtimer_set_expires(&gact->hitimer, close_time);
 
 	spin_unlock(&gact->tcf_lock);
 
-	वापस HRTIMER_RESTART;
-पूर्ण
+	return HRTIMER_RESTART;
+}
 
-अटल पूर्णांक tcf_gate_act(काष्ठा sk_buff *skb, स्थिर काष्ठा tc_action *a,
-			काष्ठा tcf_result *res)
-अणु
-	काष्ठा tcf_gate *gact = to_gate(a);
+static int tcf_gate_act(struct sk_buff *skb, const struct tc_action *a,
+			struct tcf_result *res)
+{
+	struct tcf_gate *gact = to_gate(a);
 
 	spin_lock(&gact->tcf_lock);
 
-	tcf_lastuse_update(&gact->tcf_पंचांग);
+	tcf_lastuse_update(&gact->tcf_tm);
 	bstats_update(&gact->tcf_bstats, skb);
 
-	अगर (unlikely(gact->current_gate_status & GATE_ACT_PENDING)) अणु
+	if (unlikely(gact->current_gate_status & GATE_ACT_PENDING)) {
 		spin_unlock(&gact->tcf_lock);
-		वापस gact->tcf_action;
-	पूर्ण
+		return gact->tcf_action;
+	}
 
-	अगर (!(gact->current_gate_status & GATE_ACT_GATE_OPEN))
-		जाओ drop;
+	if (!(gact->current_gate_status & GATE_ACT_GATE_OPEN))
+		goto drop;
 
-	अगर (gact->current_max_octets >= 0) अणु
+	if (gact->current_max_octets >= 0) {
 		gact->current_entry_octets += qdisc_pkt_len(skb);
-		अगर (gact->current_entry_octets > gact->current_max_octets) अणु
+		if (gact->current_entry_octets > gact->current_max_octets) {
 			gact->tcf_qstats.overlimits++;
-			जाओ drop;
-		पूर्ण
-	पूर्ण
+			goto drop;
+		}
+	}
 
 	spin_unlock(&gact->tcf_lock);
 
-	वापस gact->tcf_action;
+	return gact->tcf_action;
 drop:
 	gact->tcf_qstats.drops++;
 	spin_unlock(&gact->tcf_lock);
 
-	वापस TC_ACT_SHOT;
-पूर्ण
+	return TC_ACT_SHOT;
+}
 
-अटल स्थिर काष्ठा nla_policy entry_policy[TCA_GATE_ENTRY_MAX + 1] = अणु
-	[TCA_GATE_ENTRY_INDEX]		= अणु .type = NLA_U32 पूर्ण,
-	[TCA_GATE_ENTRY_GATE]		= अणु .type = NLA_FLAG पूर्ण,
-	[TCA_GATE_ENTRY_INTERVAL]	= अणु .type = NLA_U32 पूर्ण,
-	[TCA_GATE_ENTRY_IPV]		= अणु .type = NLA_S32 पूर्ण,
-	[TCA_GATE_ENTRY_MAX_OCTETS]	= अणु .type = NLA_S32 पूर्ण,
-पूर्ण;
+static const struct nla_policy entry_policy[TCA_GATE_ENTRY_MAX + 1] = {
+	[TCA_GATE_ENTRY_INDEX]		= { .type = NLA_U32 },
+	[TCA_GATE_ENTRY_GATE]		= { .type = NLA_FLAG },
+	[TCA_GATE_ENTRY_INTERVAL]	= { .type = NLA_U32 },
+	[TCA_GATE_ENTRY_IPV]		= { .type = NLA_S32 },
+	[TCA_GATE_ENTRY_MAX_OCTETS]	= { .type = NLA_S32 },
+};
 
-अटल स्थिर काष्ठा nla_policy gate_policy[TCA_GATE_MAX + 1] = अणु
+static const struct nla_policy gate_policy[TCA_GATE_MAX + 1] = {
 	[TCA_GATE_PARMS]		=
-		NLA_POLICY_EXACT_LEN(माप(काष्ठा tc_gate)),
-	[TCA_GATE_PRIORITY]		= अणु .type = NLA_S32 पूर्ण,
-	[TCA_GATE_ENTRY_LIST]		= अणु .type = NLA_NESTED पूर्ण,
-	[TCA_GATE_BASE_TIME]		= अणु .type = NLA_U64 पूर्ण,
-	[TCA_GATE_CYCLE_TIME]		= अणु .type = NLA_U64 पूर्ण,
-	[TCA_GATE_CYCLE_TIME_EXT]	= अणु .type = NLA_U64 पूर्ण,
-	[TCA_GATE_FLAGS]		= अणु .type = NLA_U32 पूर्ण,
-	[TCA_GATE_CLOCKID]		= अणु .type = NLA_S32 पूर्ण,
-पूर्ण;
+		NLA_POLICY_EXACT_LEN(sizeof(struct tc_gate)),
+	[TCA_GATE_PRIORITY]		= { .type = NLA_S32 },
+	[TCA_GATE_ENTRY_LIST]		= { .type = NLA_NESTED },
+	[TCA_GATE_BASE_TIME]		= { .type = NLA_U64 },
+	[TCA_GATE_CYCLE_TIME]		= { .type = NLA_U64 },
+	[TCA_GATE_CYCLE_TIME_EXT]	= { .type = NLA_U64 },
+	[TCA_GATE_FLAGS]		= { .type = NLA_U32 },
+	[TCA_GATE_CLOCKID]		= { .type = NLA_S32 },
+};
 
-अटल पूर्णांक fill_gate_entry(काष्ठा nlattr **tb, काष्ठा tcfg_gate_entry *entry,
-			   काष्ठा netlink_ext_ack *extack)
-अणु
-	u32 पूर्णांकerval = 0;
+static int fill_gate_entry(struct nlattr **tb, struct tcfg_gate_entry *entry,
+			   struct netlink_ext_ack *extack)
+{
+	u32 interval = 0;
 
 	entry->gate_state = nla_get_flag(tb[TCA_GATE_ENTRY_GATE]);
 
-	अगर (tb[TCA_GATE_ENTRY_INTERVAL])
-		पूर्णांकerval = nla_get_u32(tb[TCA_GATE_ENTRY_INTERVAL]);
+	if (tb[TCA_GATE_ENTRY_INTERVAL])
+		interval = nla_get_u32(tb[TCA_GATE_ENTRY_INTERVAL]);
 
-	अगर (पूर्णांकerval == 0) अणु
+	if (interval == 0) {
 		NL_SET_ERR_MSG(extack, "Invalid interval for schedule entry");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	entry->पूर्णांकerval = पूर्णांकerval;
+	entry->interval = interval;
 
-	अगर (tb[TCA_GATE_ENTRY_IPV])
+	if (tb[TCA_GATE_ENTRY_IPV])
 		entry->ipv = nla_get_s32(tb[TCA_GATE_ENTRY_IPV]);
-	अन्यथा
+	else
 		entry->ipv = -1;
 
-	अगर (tb[TCA_GATE_ENTRY_MAX_OCTETS])
+	if (tb[TCA_GATE_ENTRY_MAX_OCTETS])
 		entry->maxoctets = nla_get_s32(tb[TCA_GATE_ENTRY_MAX_OCTETS]);
-	अन्यथा
+	else
 		entry->maxoctets = -1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक parse_gate_entry(काष्ठा nlattr *n, काष्ठा  tcfg_gate_entry *entry,
-			    पूर्णांक index, काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा nlattr *tb[TCA_GATE_ENTRY_MAX + 1] = अणु पूर्ण;
-	पूर्णांक err;
+static int parse_gate_entry(struct nlattr *n, struct  tcfg_gate_entry *entry,
+			    int index, struct netlink_ext_ack *extack)
+{
+	struct nlattr *tb[TCA_GATE_ENTRY_MAX + 1] = { };
+	int err;
 
 	err = nla_parse_nested(tb, TCA_GATE_ENTRY_MAX, n, entry_policy, extack);
-	अगर (err < 0) अणु
+	if (err < 0) {
 		NL_SET_ERR_MSG(extack, "Could not parse nested entry");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	entry->index = index;
 
-	वापस fill_gate_entry(tb, entry, extack);
-पूर्ण
+	return fill_gate_entry(tb, entry, extack);
+}
 
-अटल व्योम release_entry_list(काष्ठा list_head *entries)
-अणु
-	काष्ठा tcfg_gate_entry *entry, *e;
+static void release_entry_list(struct list_head *entries)
+{
+	struct tcfg_gate_entry *entry, *e;
 
-	list_क्रम_each_entry_safe(entry, e, entries, list) अणु
+	list_for_each_entry_safe(entry, e, entries, list) {
 		list_del(&entry->list);
-		kमुक्त(entry);
-	पूर्ण
-पूर्ण
+		kfree(entry);
+	}
+}
 
-अटल पूर्णांक parse_gate_list(काष्ठा nlattr *list_attr,
-			   काष्ठा tcf_gate_params *sched,
-			   काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा tcfg_gate_entry *entry;
-	काष्ठा nlattr *n;
-	पूर्णांक err, rem;
-	पूर्णांक i = 0;
+static int parse_gate_list(struct nlattr *list_attr,
+			   struct tcf_gate_params *sched,
+			   struct netlink_ext_ack *extack)
+{
+	struct tcfg_gate_entry *entry;
+	struct nlattr *n;
+	int err, rem;
+	int i = 0;
 
-	अगर (!list_attr)
-		वापस -EINVAL;
+	if (!list_attr)
+		return -EINVAL;
 
-	nla_क्रम_each_nested(n, list_attr, rem) अणु
-		अगर (nla_type(n) != TCA_GATE_ONE_ENTRY) अणु
+	nla_for_each_nested(n, list_attr, rem) {
+		if (nla_type(n) != TCA_GATE_ONE_ENTRY) {
 			NL_SET_ERR_MSG(extack, "Attribute isn't type 'entry'");
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		entry = kzalloc(माप(*entry), GFP_ATOMIC);
-		अगर (!entry) अणु
+		entry = kzalloc(sizeof(*entry), GFP_ATOMIC);
+		if (!entry) {
 			NL_SET_ERR_MSG(extack, "Not enough memory for entry");
 			err = -ENOMEM;
-			जाओ release_list;
-		पूर्ण
+			goto release_list;
+		}
 
 		err = parse_gate_entry(n, entry, i, extack);
-		अगर (err < 0) अणु
-			kमुक्त(entry);
-			जाओ release_list;
-		पूर्ण
+		if (err < 0) {
+			kfree(entry);
+			goto release_list;
+		}
 
 		list_add_tail(&entry->list, &sched->entries);
 		i++;
-	पूर्ण
+	}
 
 	sched->num_entries = i;
 
-	वापस i;
+	return i;
 
 release_list:
 	release_entry_list(&sched->entries);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम gate_setup_समयr(काष्ठा tcf_gate *gact, u64 baseसमय,
-			     क्रमागत tk_offsets tko, s32 घड़ीid,
-			     bool करो_init)
-अणु
-	अगर (!करो_init) अणु
-		अगर (baseसमय == gact->param.tcfg_baseसमय &&
+static void gate_setup_timer(struct tcf_gate *gact, u64 basetime,
+			     enum tk_offsets tko, s32 clockid,
+			     bool do_init)
+{
+	if (!do_init) {
+		if (basetime == gact->param.tcfg_basetime &&
 		    tko == gact->tk_offset &&
-		    घड़ीid == gact->param.tcfg_घड़ीid)
-			वापस;
+		    clockid == gact->param.tcfg_clockid)
+			return;
 
 		spin_unlock_bh(&gact->tcf_lock);
-		hrसमयr_cancel(&gact->hiसमयr);
+		hrtimer_cancel(&gact->hitimer);
 		spin_lock_bh(&gact->tcf_lock);
-	पूर्ण
-	gact->param.tcfg_baseसमय = baseसमय;
-	gact->param.tcfg_घड़ीid = घड़ीid;
+	}
+	gact->param.tcfg_basetime = basetime;
+	gact->param.tcfg_clockid = clockid;
 	gact->tk_offset = tko;
-	hrसमयr_init(&gact->hiसमयr, घड़ीid, HRTIMER_MODE_ABS_SOFT);
-	gact->hiसमयr.function = gate_समयr_func;
-पूर्ण
+	hrtimer_init(&gact->hitimer, clockid, HRTIMER_MODE_ABS_SOFT);
+	gact->hitimer.function = gate_timer_func;
+}
 
-अटल पूर्णांक tcf_gate_init(काष्ठा net *net, काष्ठा nlattr *nla,
-			 काष्ठा nlattr *est, काष्ठा tc_action **a,
-			 पूर्णांक ovr, पूर्णांक bind, bool rtnl_held,
-			 काष्ठा tcf_proto *tp, u32 flags,
-			 काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा tc_action_net *tn = net_generic(net, gate_net_id);
-	क्रमागत tk_offsets tk_offset = TK_OFFS_TAI;
-	काष्ठा nlattr *tb[TCA_GATE_MAX + 1];
-	काष्ठा tcf_chain *जाओ_ch = शून्य;
-	u64 cycleसमय = 0, baseसमय = 0;
-	काष्ठा tcf_gate_params *p;
-	s32 घड़ीid = CLOCK_TAI;
-	काष्ठा tcf_gate *gact;
-	काष्ठा tc_gate *parm;
-	पूर्णांक ret = 0, err;
+static int tcf_gate_init(struct net *net, struct nlattr *nla,
+			 struct nlattr *est, struct tc_action **a,
+			 int ovr, int bind, bool rtnl_held,
+			 struct tcf_proto *tp, u32 flags,
+			 struct netlink_ext_ack *extack)
+{
+	struct tc_action_net *tn = net_generic(net, gate_net_id);
+	enum tk_offsets tk_offset = TK_OFFS_TAI;
+	struct nlattr *tb[TCA_GATE_MAX + 1];
+	struct tcf_chain *goto_ch = NULL;
+	u64 cycletime = 0, basetime = 0;
+	struct tcf_gate_params *p;
+	s32 clockid = CLOCK_TAI;
+	struct tcf_gate *gact;
+	struct tc_gate *parm;
+	int ret = 0, err;
 	u32 gflags = 0;
 	s32 prio = -1;
-	kसमय_प्रकार start;
+	ktime_t start;
 	u32 index;
 
-	अगर (!nla)
-		वापस -EINVAL;
+	if (!nla)
+		return -EINVAL;
 
 	err = nla_parse_nested(tb, TCA_GATE_MAX, nla, gate_policy, extack);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
-	अगर (!tb[TCA_GATE_PARMS])
-		वापस -EINVAL;
+	if (!tb[TCA_GATE_PARMS])
+		return -EINVAL;
 
-	अगर (tb[TCA_GATE_CLOCKID]) अणु
-		घड़ीid = nla_get_s32(tb[TCA_GATE_CLOCKID]);
-		चयन (घड़ीid) अणु
-		हाल CLOCK_REALTIME:
+	if (tb[TCA_GATE_CLOCKID]) {
+		clockid = nla_get_s32(tb[TCA_GATE_CLOCKID]);
+		switch (clockid) {
+		case CLOCK_REALTIME:
 			tk_offset = TK_OFFS_REAL;
-			अवरोध;
-		हाल CLOCK_MONOTONIC:
+			break;
+		case CLOCK_MONOTONIC:
 			tk_offset = TK_OFFS_MAX;
-			अवरोध;
-		हाल CLOCK_BOOTTIME:
+			break;
+		case CLOCK_BOOTTIME:
 			tk_offset = TK_OFFS_BOOT;
-			अवरोध;
-		हाल CLOCK_TAI:
+			break;
+		case CLOCK_TAI:
 			tk_offset = TK_OFFS_TAI;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			NL_SET_ERR_MSG(extack, "Invalid 'clockid'");
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 
 	parm = nla_data(tb[TCA_GATE_PARMS]);
 	index = parm->index;
 
 	err = tcf_idr_check_alloc(tn, &index, a, bind);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
-	अगर (err && bind)
-		वापस 0;
+	if (err && bind)
+		return 0;
 
-	अगर (!err) अणु
+	if (!err) {
 		ret = tcf_idr_create(tn, index, est, a,
 				     &act_gate_ops, bind, false, 0);
-		अगर (ret) अणु
+		if (ret) {
 			tcf_idr_cleanup(tn, index);
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 
 		ret = ACT_P_CREATED;
-	पूर्ण अन्यथा अगर (!ovr) अणु
+	} else if (!ovr) {
 		tcf_idr_release(*a, bind);
-		वापस -EEXIST;
-	पूर्ण
+		return -EEXIST;
+	}
 
-	अगर (tb[TCA_GATE_PRIORITY])
+	if (tb[TCA_GATE_PRIORITY])
 		prio = nla_get_s32(tb[TCA_GATE_PRIORITY]);
 
-	अगर (tb[TCA_GATE_BASE_TIME])
-		baseसमय = nla_get_u64(tb[TCA_GATE_BASE_TIME]);
+	if (tb[TCA_GATE_BASE_TIME])
+		basetime = nla_get_u64(tb[TCA_GATE_BASE_TIME]);
 
-	अगर (tb[TCA_GATE_FLAGS])
+	if (tb[TCA_GATE_FLAGS])
 		gflags = nla_get_u32(tb[TCA_GATE_FLAGS]);
 
 	gact = to_gate(*a);
-	अगर (ret == ACT_P_CREATED)
+	if (ret == ACT_P_CREATED)
 		INIT_LIST_HEAD(&gact->param.entries);
 
-	err = tcf_action_check_ctrlact(parm->action, tp, &जाओ_ch, extack);
-	अगर (err < 0)
-		जाओ release_idr;
+	err = tcf_action_check_ctrlact(parm->action, tp, &goto_ch, extack);
+	if (err < 0)
+		goto release_idr;
 
 	spin_lock_bh(&gact->tcf_lock);
 	p = &gact->param;
 
-	अगर (tb[TCA_GATE_CYCLE_TIME])
-		cycleसमय = nla_get_u64(tb[TCA_GATE_CYCLE_TIME]);
+	if (tb[TCA_GATE_CYCLE_TIME])
+		cycletime = nla_get_u64(tb[TCA_GATE_CYCLE_TIME]);
 
-	अगर (tb[TCA_GATE_ENTRY_LIST]) अणु
+	if (tb[TCA_GATE_ENTRY_LIST]) {
 		err = parse_gate_list(tb[TCA_GATE_ENTRY_LIST], p, extack);
-		अगर (err < 0)
-			जाओ chain_put;
-	पूर्ण
+		if (err < 0)
+			goto chain_put;
+	}
 
-	अगर (!cycleसमय) अणु
-		काष्ठा tcfg_gate_entry *entry;
-		kसमय_प्रकार cycle = 0;
+	if (!cycletime) {
+		struct tcfg_gate_entry *entry;
+		ktime_t cycle = 0;
 
-		list_क्रम_each_entry(entry, &p->entries, list)
-			cycle = kसमय_add_ns(cycle, entry->पूर्णांकerval);
-		cycleसमय = cycle;
-		अगर (!cycleसमय) अणु
+		list_for_each_entry(entry, &p->entries, list)
+			cycle = ktime_add_ns(cycle, entry->interval);
+		cycletime = cycle;
+		if (!cycletime) {
 			err = -EINVAL;
-			जाओ chain_put;
-		पूर्ण
-	पूर्ण
-	p->tcfg_cycleसमय = cycleसमय;
+			goto chain_put;
+		}
+	}
+	p->tcfg_cycletime = cycletime;
 
-	अगर (tb[TCA_GATE_CYCLE_TIME_EXT])
-		p->tcfg_cycleसमय_ext =
+	if (tb[TCA_GATE_CYCLE_TIME_EXT])
+		p->tcfg_cycletime_ext =
 			nla_get_u64(tb[TCA_GATE_CYCLE_TIME_EXT]);
 
-	gate_setup_समयr(gact, baseसमय, tk_offset, घड़ीid,
+	gate_setup_timer(gact, basetime, tk_offset, clockid,
 			 ret == ACT_P_CREATED);
 	p->tcfg_priority = prio;
 	p->tcfg_flags = gflags;
-	gate_get_start_समय(gact, &start);
+	gate_get_start_time(gact, &start);
 
-	gact->current_बंद_समय = start;
+	gact->current_close_time = start;
 	gact->current_gate_status = GATE_ACT_GATE_OPEN | GATE_ACT_PENDING;
 
 	gact->next_entry = list_first_entry(&p->entries,
-					    काष्ठा tcfg_gate_entry, list);
+					    struct tcfg_gate_entry, list);
 
-	जाओ_ch = tcf_action_set_ctrlact(*a, parm->action, जाओ_ch);
+	goto_ch = tcf_action_set_ctrlact(*a, parm->action, goto_ch);
 
-	gate_start_समयr(gact, start);
+	gate_start_timer(gact, start);
 
 	spin_unlock_bh(&gact->tcf_lock);
 
-	अगर (जाओ_ch)
-		tcf_chain_put_by_act(जाओ_ch);
+	if (goto_ch)
+		tcf_chain_put_by_act(goto_ch);
 
-	वापस ret;
+	return ret;
 
 chain_put:
 	spin_unlock_bh(&gact->tcf_lock);
 
-	अगर (जाओ_ch)
-		tcf_chain_put_by_act(जाओ_ch);
+	if (goto_ch)
+		tcf_chain_put_by_act(goto_ch);
 release_idr:
-	/* action is not inserted in any list: it's safe to init hiसमयr
+	/* action is not inserted in any list: it's safe to init hitimer
 	 * without taking tcf_lock.
 	 */
-	अगर (ret == ACT_P_CREATED)
-		gate_setup_समयr(gact, gact->param.tcfg_baseसमय,
-				 gact->tk_offset, gact->param.tcfg_घड़ीid,
+	if (ret == ACT_P_CREATED)
+		gate_setup_timer(gact, gact->param.tcfg_basetime,
+				 gact->tk_offset, gact->param.tcfg_clockid,
 				 true);
 	tcf_idr_release(*a, bind);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम tcf_gate_cleanup(काष्ठा tc_action *a)
-अणु
-	काष्ठा tcf_gate *gact = to_gate(a);
-	काष्ठा tcf_gate_params *p;
+static void tcf_gate_cleanup(struct tc_action *a)
+{
+	struct tcf_gate *gact = to_gate(a);
+	struct tcf_gate_params *p;
 
 	p = &gact->param;
-	hrसमयr_cancel(&gact->hiसमयr);
+	hrtimer_cancel(&gact->hitimer);
 	release_entry_list(&p->entries);
-पूर्ण
+}
 
-अटल पूर्णांक dumping_entry(काष्ठा sk_buff *skb,
-			 काष्ठा tcfg_gate_entry *entry)
-अणु
-	काष्ठा nlattr *item;
+static int dumping_entry(struct sk_buff *skb,
+			 struct tcfg_gate_entry *entry)
+{
+	struct nlattr *item;
 
 	item = nla_nest_start_noflag(skb, TCA_GATE_ONE_ENTRY);
-	अगर (!item)
-		वापस -ENOSPC;
+	if (!item)
+		return -ENOSPC;
 
-	अगर (nla_put_u32(skb, TCA_GATE_ENTRY_INDEX, entry->index))
-		जाओ nla_put_failure;
+	if (nla_put_u32(skb, TCA_GATE_ENTRY_INDEX, entry->index))
+		goto nla_put_failure;
 
-	अगर (entry->gate_state && nla_put_flag(skb, TCA_GATE_ENTRY_GATE))
-		जाओ nla_put_failure;
+	if (entry->gate_state && nla_put_flag(skb, TCA_GATE_ENTRY_GATE))
+		goto nla_put_failure;
 
-	अगर (nla_put_u32(skb, TCA_GATE_ENTRY_INTERVAL, entry->पूर्णांकerval))
-		जाओ nla_put_failure;
+	if (nla_put_u32(skb, TCA_GATE_ENTRY_INTERVAL, entry->interval))
+		goto nla_put_failure;
 
-	अगर (nla_put_s32(skb, TCA_GATE_ENTRY_MAX_OCTETS, entry->maxoctets))
-		जाओ nla_put_failure;
+	if (nla_put_s32(skb, TCA_GATE_ENTRY_MAX_OCTETS, entry->maxoctets))
+		goto nla_put_failure;
 
-	अगर (nla_put_s32(skb, TCA_GATE_ENTRY_IPV, entry->ipv))
-		जाओ nla_put_failure;
+	if (nla_put_s32(skb, TCA_GATE_ENTRY_IPV, entry->ipv))
+		goto nla_put_failure;
 
-	वापस nla_nest_end(skb, item);
+	return nla_nest_end(skb, item);
 
 nla_put_failure:
 	nla_nest_cancel(skb, item);
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
-अटल पूर्णांक tcf_gate_dump(काष्ठा sk_buff *skb, काष्ठा tc_action *a,
-			 पूर्णांक bind, पूर्णांक ref)
-अणु
-	अचिन्हित अक्षर *b = skb_tail_poपूर्णांकer(skb);
-	काष्ठा tcf_gate *gact = to_gate(a);
-	काष्ठा tc_gate opt = अणु
+static int tcf_gate_dump(struct sk_buff *skb, struct tc_action *a,
+			 int bind, int ref)
+{
+	unsigned char *b = skb_tail_pointer(skb);
+	struct tcf_gate *gact = to_gate(a);
+	struct tc_gate opt = {
 		.index    = gact->tcf_index,
-		.refcnt   = refcount_पढ़ो(&gact->tcf_refcnt) - ref,
-		.bindcnt  = atomic_पढ़ो(&gact->tcf_bindcnt) - bind,
-	पूर्ण;
-	काष्ठा tcfg_gate_entry *entry;
-	काष्ठा tcf_gate_params *p;
-	काष्ठा nlattr *entry_list;
-	काष्ठा tcf_t t;
+		.refcnt   = refcount_read(&gact->tcf_refcnt) - ref,
+		.bindcnt  = atomic_read(&gact->tcf_bindcnt) - bind,
+	};
+	struct tcfg_gate_entry *entry;
+	struct tcf_gate_params *p;
+	struct nlattr *entry_list;
+	struct tcf_t t;
 
 	spin_lock_bh(&gact->tcf_lock);
 	opt.action = gact->tcf_action;
 
 	p = &gact->param;
 
-	अगर (nla_put(skb, TCA_GATE_PARMS, माप(opt), &opt))
-		जाओ nla_put_failure;
+	if (nla_put(skb, TCA_GATE_PARMS, sizeof(opt), &opt))
+		goto nla_put_failure;
 
-	अगर (nla_put_u64_64bit(skb, TCA_GATE_BASE_TIME,
-			      p->tcfg_baseसमय, TCA_GATE_PAD))
-		जाओ nla_put_failure;
+	if (nla_put_u64_64bit(skb, TCA_GATE_BASE_TIME,
+			      p->tcfg_basetime, TCA_GATE_PAD))
+		goto nla_put_failure;
 
-	अगर (nla_put_u64_64bit(skb, TCA_GATE_CYCLE_TIME,
-			      p->tcfg_cycleसमय, TCA_GATE_PAD))
-		जाओ nla_put_failure;
+	if (nla_put_u64_64bit(skb, TCA_GATE_CYCLE_TIME,
+			      p->tcfg_cycletime, TCA_GATE_PAD))
+		goto nla_put_failure;
 
-	अगर (nla_put_u64_64bit(skb, TCA_GATE_CYCLE_TIME_EXT,
-			      p->tcfg_cycleसमय_ext, TCA_GATE_PAD))
-		जाओ nla_put_failure;
+	if (nla_put_u64_64bit(skb, TCA_GATE_CYCLE_TIME_EXT,
+			      p->tcfg_cycletime_ext, TCA_GATE_PAD))
+		goto nla_put_failure;
 
-	अगर (nla_put_s32(skb, TCA_GATE_CLOCKID, p->tcfg_घड़ीid))
-		जाओ nla_put_failure;
+	if (nla_put_s32(skb, TCA_GATE_CLOCKID, p->tcfg_clockid))
+		goto nla_put_failure;
 
-	अगर (nla_put_u32(skb, TCA_GATE_FLAGS, p->tcfg_flags))
-		जाओ nla_put_failure;
+	if (nla_put_u32(skb, TCA_GATE_FLAGS, p->tcfg_flags))
+		goto nla_put_failure;
 
-	अगर (nla_put_s32(skb, TCA_GATE_PRIORITY, p->tcfg_priority))
-		जाओ nla_put_failure;
+	if (nla_put_s32(skb, TCA_GATE_PRIORITY, p->tcfg_priority))
+		goto nla_put_failure;
 
 	entry_list = nla_nest_start_noflag(skb, TCA_GATE_ENTRY_LIST);
-	अगर (!entry_list)
-		जाओ nla_put_failure;
+	if (!entry_list)
+		goto nla_put_failure;
 
-	list_क्रम_each_entry(entry, &p->entries, list) अणु
-		अगर (dumping_entry(skb, entry) < 0)
-			जाओ nla_put_failure;
-	पूर्ण
+	list_for_each_entry(entry, &p->entries, list) {
+		if (dumping_entry(skb, entry) < 0)
+			goto nla_put_failure;
+	}
 
 	nla_nest_end(skb, entry_list);
 
-	tcf_पंचांग_dump(&t, &gact->tcf_पंचांग);
-	अगर (nla_put_64bit(skb, TCA_GATE_TM, माप(t), &t, TCA_GATE_PAD))
-		जाओ nla_put_failure;
+	tcf_tm_dump(&t, &gact->tcf_tm);
+	if (nla_put_64bit(skb, TCA_GATE_TM, sizeof(t), &t, TCA_GATE_PAD))
+		goto nla_put_failure;
 	spin_unlock_bh(&gact->tcf_lock);
 
-	वापस skb->len;
+	return skb->len;
 
 nla_put_failure:
 	spin_unlock_bh(&gact->tcf_lock);
 	nlmsg_trim(skb, b);
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
-अटल पूर्णांक tcf_gate_walker(काष्ठा net *net, काष्ठा sk_buff *skb,
-			   काष्ठा netlink_callback *cb, पूर्णांक type,
-			   स्थिर काष्ठा tc_action_ops *ops,
-			   काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा tc_action_net *tn = net_generic(net, gate_net_id);
+static int tcf_gate_walker(struct net *net, struct sk_buff *skb,
+			   struct netlink_callback *cb, int type,
+			   const struct tc_action_ops *ops,
+			   struct netlink_ext_ack *extack)
+{
+	struct tc_action_net *tn = net_generic(net, gate_net_id);
 
-	वापस tcf_generic_walker(tn, skb, cb, type, ops, extack);
-पूर्ण
+	return tcf_generic_walker(tn, skb, cb, type, ops, extack);
+}
 
-अटल व्योम tcf_gate_stats_update(काष्ठा tc_action *a, u64 bytes, u64 packets,
+static void tcf_gate_stats_update(struct tc_action *a, u64 bytes, u64 packets,
 				  u64 drops, u64 lastuse, bool hw)
-अणु
-	काष्ठा tcf_gate *gact = to_gate(a);
-	काष्ठा tcf_t *पंचांग = &gact->tcf_पंचांग;
+{
+	struct tcf_gate *gact = to_gate(a);
+	struct tcf_t *tm = &gact->tcf_tm;
 
 	tcf_action_update_stats(a, bytes, packets, drops, hw);
-	पंचांग->lastuse = max_t(u64, पंचांग->lastuse, lastuse);
-पूर्ण
+	tm->lastuse = max_t(u64, tm->lastuse, lastuse);
+}
 
-अटल पूर्णांक tcf_gate_search(काष्ठा net *net, काष्ठा tc_action **a, u32 index)
-अणु
-	काष्ठा tc_action_net *tn = net_generic(net, gate_net_id);
+static int tcf_gate_search(struct net *net, struct tc_action **a, u32 index)
+{
+	struct tc_action_net *tn = net_generic(net, gate_net_id);
 
-	वापस tcf_idr_search(tn, a, index);
-पूर्ण
+	return tcf_idr_search(tn, a, index);
+}
 
-अटल माप_प्रकार tcf_gate_get_fill_size(स्थिर काष्ठा tc_action *act)
-अणु
-	वापस nla_total_size(माप(काष्ठा tc_gate));
-पूर्ण
+static size_t tcf_gate_get_fill_size(const struct tc_action *act)
+{
+	return nla_total_size(sizeof(struct tc_gate));
+}
 
-अटल काष्ठा tc_action_ops act_gate_ops = अणु
+static struct tc_action_ops act_gate_ops = {
 	.kind		=	"gate",
 	.id		=	TCA_ID_GATE,
 	.owner		=	THIS_MODULE,
@@ -610,38 +609,38 @@ nla_put_failure:
 	.stats_update	=	tcf_gate_stats_update,
 	.get_fill_size	=	tcf_gate_get_fill_size,
 	.lookup		=	tcf_gate_search,
-	.size		=	माप(काष्ठा tcf_gate),
-पूर्ण;
+	.size		=	sizeof(struct tcf_gate),
+};
 
-अटल __net_init पूर्णांक gate_init_net(काष्ठा net *net)
-अणु
-	काष्ठा tc_action_net *tn = net_generic(net, gate_net_id);
+static __net_init int gate_init_net(struct net *net)
+{
+	struct tc_action_net *tn = net_generic(net, gate_net_id);
 
-	वापस tc_action_net_init(net, tn, &act_gate_ops);
-पूर्ण
+	return tc_action_net_init(net, tn, &act_gate_ops);
+}
 
-अटल व्योम __net_निकास gate_निकास_net(काष्ठा list_head *net_list)
-अणु
-	tc_action_net_निकास(net_list, gate_net_id);
-पूर्ण
+static void __net_exit gate_exit_net(struct list_head *net_list)
+{
+	tc_action_net_exit(net_list, gate_net_id);
+}
 
-अटल काष्ठा pernet_operations gate_net_ops = अणु
+static struct pernet_operations gate_net_ops = {
 	.init = gate_init_net,
-	.निकास_batch = gate_निकास_net,
+	.exit_batch = gate_exit_net,
 	.id   = &gate_net_id,
-	.size = माप(काष्ठा tc_action_net),
-पूर्ण;
+	.size = sizeof(struct tc_action_net),
+};
 
-अटल पूर्णांक __init gate_init_module(व्योम)
-अणु
-	वापस tcf_रेजिस्टर_action(&act_gate_ops, &gate_net_ops);
-पूर्ण
+static int __init gate_init_module(void)
+{
+	return tcf_register_action(&act_gate_ops, &gate_net_ops);
+}
 
-अटल व्योम __निकास gate_cleanup_module(व्योम)
-अणु
-	tcf_unरेजिस्टर_action(&act_gate_ops, &gate_net_ops);
-पूर्ण
+static void __exit gate_cleanup_module(void)
+{
+	tcf_unregister_action(&act_gate_ops, &gate_net_ops);
+}
 
 module_init(gate_init_module);
-module_निकास(gate_cleanup_module);
+module_exit(gate_cleanup_module);
 MODULE_LICENSE("GPL v2");

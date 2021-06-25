@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  *  linux/fs/hfsplus/extents.c
  *
@@ -10,86 +9,86 @@
  * Handling of Extents both in catalog and extents overflow trees
  */
 
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/fs.h>
-#समावेश <linux/pagemap.h>
+#include <linux/errno.h>
+#include <linux/fs.h>
+#include <linux/pagemap.h>
 
-#समावेश "hfsplus_fs.h"
-#समावेश "hfsplus_raw.h"
+#include "hfsplus_fs.h"
+#include "hfsplus_raw.h"
 
-/* Compare two extents keys, वापसs 0 on same, pos/neg क्रम dअगरference */
-पूर्णांक hfsplus_ext_cmp_key(स्थिर hfsplus_btree_key *k1,
-			स्थिर hfsplus_btree_key *k2)
-अणु
+/* Compare two extents keys, returns 0 on same, pos/neg for difference */
+int hfsplus_ext_cmp_key(const hfsplus_btree_key *k1,
+			const hfsplus_btree_key *k2)
+{
 	__be32 k1id, k2id;
 	__be32 k1s, k2s;
 
 	k1id = k1->ext.cnid;
 	k2id = k2->ext.cnid;
-	अगर (k1id != k2id)
-		वापस be32_to_cpu(k1id) < be32_to_cpu(k2id) ? -1 : 1;
+	if (k1id != k2id)
+		return be32_to_cpu(k1id) < be32_to_cpu(k2id) ? -1 : 1;
 
-	अगर (k1->ext.विभाजन_type != k2->ext.विभाजन_type)
-		वापस k1->ext.विभाजन_type < k2->ext.विभाजन_type ? -1 : 1;
+	if (k1->ext.fork_type != k2->ext.fork_type)
+		return k1->ext.fork_type < k2->ext.fork_type ? -1 : 1;
 
 	k1s = k1->ext.start_block;
 	k2s = k2->ext.start_block;
-	अगर (k1s == k2s)
-		वापस 0;
-	वापस be32_to_cpu(k1s) < be32_to_cpu(k2s) ? -1 : 1;
-पूर्ण
+	if (k1s == k2s)
+		return 0;
+	return be32_to_cpu(k1s) < be32_to_cpu(k2s) ? -1 : 1;
+}
 
-अटल व्योम hfsplus_ext_build_key(hfsplus_btree_key *key, u32 cnid,
+static void hfsplus_ext_build_key(hfsplus_btree_key *key, u32 cnid,
 				  u32 block, u8 type)
-अणु
+{
 	key->key_len = cpu_to_be16(HFSPLUS_EXT_KEYLEN - 2);
 	key->ext.cnid = cpu_to_be32(cnid);
 	key->ext.start_block = cpu_to_be32(block);
-	key->ext.विभाजन_type = type;
+	key->ext.fork_type = type;
 	key->ext.pad = 0;
-पूर्ण
+}
 
-अटल u32 hfsplus_ext_find_block(काष्ठा hfsplus_extent *ext, u32 off)
-अणु
-	पूर्णांक i;
+static u32 hfsplus_ext_find_block(struct hfsplus_extent *ext, u32 off)
+{
+	int i;
 	u32 count;
 
-	क्रम (i = 0; i < 8; ext++, i++) अणु
+	for (i = 0; i < 8; ext++, i++) {
 		count = be32_to_cpu(ext->block_count);
-		अगर (off < count)
-			वापस be32_to_cpu(ext->start_block) + off;
+		if (off < count)
+			return be32_to_cpu(ext->start_block) + off;
 		off -= count;
-	पूर्ण
+	}
 	/* panic? */
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक hfsplus_ext_block_count(काष्ठा hfsplus_extent *ext)
-अणु
-	पूर्णांक i;
+static int hfsplus_ext_block_count(struct hfsplus_extent *ext)
+{
+	int i;
 	u32 count = 0;
 
-	क्रम (i = 0; i < 8; ext++, i++)
+	for (i = 0; i < 8; ext++, i++)
 		count += be32_to_cpu(ext->block_count);
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल u32 hfsplus_ext_lastblock(काष्ठा hfsplus_extent *ext)
-अणु
-	पूर्णांक i;
+static u32 hfsplus_ext_lastblock(struct hfsplus_extent *ext)
+{
+	int i;
 
 	ext += 7;
-	क्रम (i = 0; i < 7; ext--, i++)
-		अगर (ext->block_count)
-			अवरोध;
-	वापस be32_to_cpu(ext->start_block) + be32_to_cpu(ext->block_count);
-पूर्ण
+	for (i = 0; i < 7; ext--, i++)
+		if (ext->block_count)
+			break;
+	return be32_to_cpu(ext->start_block) + be32_to_cpu(ext->block_count);
+}
 
-अटल पूर्णांक __hfsplus_ext_ग_लिखो_extent(काष्ठा inode *inode,
-		काष्ठा hfs_find_data *fd)
-अणु
-	काष्ठा hfsplus_inode_info *hip = HFSPLUS_I(inode);
-	पूर्णांक res;
+static int __hfsplus_ext_write_extent(struct inode *inode,
+		struct hfs_find_data *fd)
+{
+	struct hfsplus_inode_info *hip = HFSPLUS_I(inode);
+	int res;
 
 	WARN_ON(!mutex_is_locked(&hip->extents_lock));
 
@@ -98,525 +97,525 @@
 				HFSPLUS_TYPE_RSRC : HFSPLUS_TYPE_DATA);
 
 	res = hfs_brec_find(fd, hfs_find_rec_by_key);
-	अगर (hip->extent_state & HFSPLUS_EXT_NEW) अणु
-		अगर (res != -ENOENT)
-			वापस res;
-		/* Fail early and aव्योम ENOSPC during the btree operation */
+	if (hip->extent_state & HFSPLUS_EXT_NEW) {
+		if (res != -ENOENT)
+			return res;
+		/* Fail early and avoid ENOSPC during the btree operation */
 		res = hfs_bmap_reserve(fd->tree, fd->tree->depth + 1);
-		अगर (res)
-			वापस res;
+		if (res)
+			return res;
 		hfs_brec_insert(fd, hip->cached_extents,
-				माप(hfsplus_extent_rec));
-		hip->extent_state &= ~(HFSPLUS_EXT_सूचीTY | HFSPLUS_EXT_NEW);
-	पूर्ण अन्यथा अणु
-		अगर (res)
-			वापस res;
-		hfs_bnode_ग_लिखो(fd->bnode, hip->cached_extents,
+				sizeof(hfsplus_extent_rec));
+		hip->extent_state &= ~(HFSPLUS_EXT_DIRTY | HFSPLUS_EXT_NEW);
+	} else {
+		if (res)
+			return res;
+		hfs_bnode_write(fd->bnode, hip->cached_extents,
 				fd->entryoffset, fd->entrylength);
-		hip->extent_state &= ~HFSPLUS_EXT_सूचीTY;
-	पूर्ण
+		hip->extent_state &= ~HFSPLUS_EXT_DIRTY;
+	}
 
 	/*
 	 * We can't just use hfsplus_mark_inode_dirty here, because we
-	 * also get called from hfsplus_ग_लिखो_inode, which should not
+	 * also get called from hfsplus_write_inode, which should not
 	 * redirty the inode.  Instead the callers have to be careful
 	 * to explicily mark the inode dirty, too.
 	 */
-	set_bit(HFSPLUS_I_EXT_सूचीTY, &hip->flags);
+	set_bit(HFSPLUS_I_EXT_DIRTY, &hip->flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक hfsplus_ext_ग_लिखो_extent_locked(काष्ठा inode *inode)
-अणु
-	पूर्णांक res = 0;
+static int hfsplus_ext_write_extent_locked(struct inode *inode)
+{
+	int res = 0;
 
-	अगर (HFSPLUS_I(inode)->extent_state & HFSPLUS_EXT_सूचीTY) अणु
-		काष्ठा hfs_find_data fd;
+	if (HFSPLUS_I(inode)->extent_state & HFSPLUS_EXT_DIRTY) {
+		struct hfs_find_data fd;
 
 		res = hfs_find_init(HFSPLUS_SB(inode->i_sb)->ext_tree, &fd);
-		अगर (res)
-			वापस res;
-		res = __hfsplus_ext_ग_लिखो_extent(inode, &fd);
-		hfs_find_निकास(&fd);
-	पूर्ण
-	वापस res;
-पूर्ण
+		if (res)
+			return res;
+		res = __hfsplus_ext_write_extent(inode, &fd);
+		hfs_find_exit(&fd);
+	}
+	return res;
+}
 
-पूर्णांक hfsplus_ext_ग_लिखो_extent(काष्ठा inode *inode)
-अणु
-	पूर्णांक res;
+int hfsplus_ext_write_extent(struct inode *inode)
+{
+	int res;
 
 	mutex_lock(&HFSPLUS_I(inode)->extents_lock);
-	res = hfsplus_ext_ग_लिखो_extent_locked(inode);
+	res = hfsplus_ext_write_extent_locked(inode);
 	mutex_unlock(&HFSPLUS_I(inode)->extents_lock);
 
-	वापस res;
-पूर्ण
+	return res;
+}
 
-अटल अंतरभूत पूर्णांक __hfsplus_ext_पढ़ो_extent(काष्ठा hfs_find_data *fd,
-					    काष्ठा hfsplus_extent *extent,
+static inline int __hfsplus_ext_read_extent(struct hfs_find_data *fd,
+					    struct hfsplus_extent *extent,
 					    u32 cnid, u32 block, u8 type)
-अणु
-	पूर्णांक res;
+{
+	int res;
 
 	hfsplus_ext_build_key(fd->search_key, cnid, block, type);
 	fd->key->ext.cnid = 0;
 	res = hfs_brec_find(fd, hfs_find_rec_by_key);
-	अगर (res && res != -ENOENT)
-		वापस res;
-	अगर (fd->key->ext.cnid != fd->search_key->ext.cnid ||
-	    fd->key->ext.विभाजन_type != fd->search_key->ext.विभाजन_type)
-		वापस -ENOENT;
-	अगर (fd->entrylength != माप(hfsplus_extent_rec))
-		वापस -EIO;
-	hfs_bnode_पढ़ो(fd->bnode, extent, fd->entryoffset,
-		माप(hfsplus_extent_rec));
-	वापस 0;
-पूर्ण
+	if (res && res != -ENOENT)
+		return res;
+	if (fd->key->ext.cnid != fd->search_key->ext.cnid ||
+	    fd->key->ext.fork_type != fd->search_key->ext.fork_type)
+		return -ENOENT;
+	if (fd->entrylength != sizeof(hfsplus_extent_rec))
+		return -EIO;
+	hfs_bnode_read(fd->bnode, extent, fd->entryoffset,
+		sizeof(hfsplus_extent_rec));
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक __hfsplus_ext_cache_extent(काष्ठा hfs_find_data *fd,
-		काष्ठा inode *inode, u32 block)
-अणु
-	काष्ठा hfsplus_inode_info *hip = HFSPLUS_I(inode);
-	पूर्णांक res;
+static inline int __hfsplus_ext_cache_extent(struct hfs_find_data *fd,
+		struct inode *inode, u32 block)
+{
+	struct hfsplus_inode_info *hip = HFSPLUS_I(inode);
+	int res;
 
 	WARN_ON(!mutex_is_locked(&hip->extents_lock));
 
-	अगर (hip->extent_state & HFSPLUS_EXT_सूचीTY) अणु
-		res = __hfsplus_ext_ग_लिखो_extent(inode, fd);
-		अगर (res)
-			वापस res;
-	पूर्ण
+	if (hip->extent_state & HFSPLUS_EXT_DIRTY) {
+		res = __hfsplus_ext_write_extent(inode, fd);
+		if (res)
+			return res;
+	}
 
-	res = __hfsplus_ext_पढ़ो_extent(fd, hip->cached_extents, inode->i_ino,
+	res = __hfsplus_ext_read_extent(fd, hip->cached_extents, inode->i_ino,
 					block, HFSPLUS_IS_RSRC(inode) ?
 						HFSPLUS_TYPE_RSRC :
 						HFSPLUS_TYPE_DATA);
-	अगर (!res) अणु
+	if (!res) {
 		hip->cached_start = be32_to_cpu(fd->key->ext.start_block);
 		hip->cached_blocks =
 			hfsplus_ext_block_count(hip->cached_extents);
-	पूर्ण अन्यथा अणु
+	} else {
 		hip->cached_start = hip->cached_blocks = 0;
-		hip->extent_state &= ~(HFSPLUS_EXT_सूचीTY | HFSPLUS_EXT_NEW);
-	पूर्ण
-	वापस res;
-पूर्ण
+		hip->extent_state &= ~(HFSPLUS_EXT_DIRTY | HFSPLUS_EXT_NEW);
+	}
+	return res;
+}
 
-अटल पूर्णांक hfsplus_ext_पढ़ो_extent(काष्ठा inode *inode, u32 block)
-अणु
-	काष्ठा hfsplus_inode_info *hip = HFSPLUS_I(inode);
-	काष्ठा hfs_find_data fd;
-	पूर्णांक res;
+static int hfsplus_ext_read_extent(struct inode *inode, u32 block)
+{
+	struct hfsplus_inode_info *hip = HFSPLUS_I(inode);
+	struct hfs_find_data fd;
+	int res;
 
-	अगर (block >= hip->cached_start &&
+	if (block >= hip->cached_start &&
 	    block < hip->cached_start + hip->cached_blocks)
-		वापस 0;
+		return 0;
 
 	res = hfs_find_init(HFSPLUS_SB(inode->i_sb)->ext_tree, &fd);
-	अगर (!res) अणु
+	if (!res) {
 		res = __hfsplus_ext_cache_extent(&fd, inode, block);
-		hfs_find_निकास(&fd);
-	पूर्ण
-	वापस res;
-पूर्ण
+		hfs_find_exit(&fd);
+	}
+	return res;
+}
 
-/* Get a block at iblock क्रम inode, possibly allocating अगर create */
-पूर्णांक hfsplus_get_block(काष्ठा inode *inode, sector_t iblock,
-		      काष्ठा buffer_head *bh_result, पूर्णांक create)
-अणु
-	काष्ठा super_block *sb = inode->i_sb;
-	काष्ठा hfsplus_sb_info *sbi = HFSPLUS_SB(sb);
-	काष्ठा hfsplus_inode_info *hip = HFSPLUS_I(inode);
-	पूर्णांक res = -EIO;
+/* Get a block at iblock for inode, possibly allocating if create */
+int hfsplus_get_block(struct inode *inode, sector_t iblock,
+		      struct buffer_head *bh_result, int create)
+{
+	struct super_block *sb = inode->i_sb;
+	struct hfsplus_sb_info *sbi = HFSPLUS_SB(sb);
+	struct hfsplus_inode_info *hip = HFSPLUS_I(inode);
+	int res = -EIO;
 	u32 ablock, dblock, mask;
 	sector_t sector;
-	पूर्णांक was_dirty = 0;
+	int was_dirty = 0;
 
 	/* Convert inode block to disk allocation block */
-	ablock = iblock >> sbi->fs_shअगरt;
+	ablock = iblock >> sbi->fs_shift;
 
-	अगर (iblock >= hip->fs_blocks) अणु
-		अगर (!create)
-			वापस 0;
-		अगर (iblock > hip->fs_blocks)
-			वापस -EIO;
-		अगर (ablock >= hip->alloc_blocks) अणु
+	if (iblock >= hip->fs_blocks) {
+		if (!create)
+			return 0;
+		if (iblock > hip->fs_blocks)
+			return -EIO;
+		if (ablock >= hip->alloc_blocks) {
 			res = hfsplus_file_extend(inode, false);
-			अगर (res)
-				वापस res;
-		पूर्ण
-	पूर्ण अन्यथा
+			if (res)
+				return res;
+		}
+	} else
 		create = 0;
 
-	अगर (ablock < hip->first_blocks) अणु
+	if (ablock < hip->first_blocks) {
 		dblock = hfsplus_ext_find_block(hip->first_extents, ablock);
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	अगर (inode->i_ino == HFSPLUS_EXT_CNID)
-		वापस -EIO;
+	if (inode->i_ino == HFSPLUS_EXT_CNID)
+		return -EIO;
 
 	mutex_lock(&hip->extents_lock);
 
 	/*
-	 * hfsplus_ext_पढ़ो_extent will ग_लिखो out a cached extent पूर्णांकo
-	 * the extents btree.  In that हाल we may have to mark the inode
-	 * dirty even क्रम a pure पढ़ो of an extent here.
+	 * hfsplus_ext_read_extent will write out a cached extent into
+	 * the extents btree.  In that case we may have to mark the inode
+	 * dirty even for a pure read of an extent here.
 	 */
-	was_dirty = (hip->extent_state & HFSPLUS_EXT_सूचीTY);
-	res = hfsplus_ext_पढ़ो_extent(inode, ablock);
-	अगर (res) अणु
+	was_dirty = (hip->extent_state & HFSPLUS_EXT_DIRTY);
+	res = hfsplus_ext_read_extent(inode, ablock);
+	if (res) {
 		mutex_unlock(&hip->extents_lock);
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 	dblock = hfsplus_ext_find_block(hip->cached_extents,
 					ablock - hip->cached_start);
 	mutex_unlock(&hip->extents_lock);
 
-करोne:
+done:
 	hfs_dbg(EXTENT, "get_block(%lu): %llu - %u\n",
-		inode->i_ino, (दीर्घ दीर्घ)iblock, dblock);
+		inode->i_ino, (long long)iblock, dblock);
 
-	mask = (1 << sbi->fs_shअगरt) - 1;
-	sector = ((sector_t)dblock << sbi->fs_shअगरt) +
+	mask = (1 << sbi->fs_shift) - 1;
+	sector = ((sector_t)dblock << sbi->fs_shift) +
 		  sbi->blockoffset + (iblock & mask);
 	map_bh(bh_result, sb, sector);
 
-	अगर (create) अणु
+	if (create) {
 		set_buffer_new(bh_result);
 		hip->phys_size += sb->s_blocksize;
 		hip->fs_blocks++;
 		inode_add_bytes(inode, sb->s_blocksize);
-	पूर्ण
-	अगर (create || was_dirty)
+	}
+	if (create || was_dirty)
 		mark_inode_dirty(inode);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम hfsplus_dump_extent(काष्ठा hfsplus_extent *extent)
-अणु
-	पूर्णांक i;
+static void hfsplus_dump_extent(struct hfsplus_extent *extent)
+{
+	int i;
 
 	hfs_dbg(EXTENT, "   ");
-	क्रम (i = 0; i < 8; i++)
+	for (i = 0; i < 8; i++)
 		hfs_dbg_cont(EXTENT, " %u:%u",
 			     be32_to_cpu(extent[i].start_block),
 			     be32_to_cpu(extent[i].block_count));
 	hfs_dbg_cont(EXTENT, "\n");
-पूर्ण
+}
 
-अटल पूर्णांक hfsplus_add_extent(काष्ठा hfsplus_extent *extent, u32 offset,
+static int hfsplus_add_extent(struct hfsplus_extent *extent, u32 offset,
 			      u32 alloc_block, u32 block_count)
-अणु
+{
 	u32 count, start;
-	पूर्णांक i;
+	int i;
 
 	hfsplus_dump_extent(extent);
-	क्रम (i = 0; i < 8; extent++, i++) अणु
+	for (i = 0; i < 8; extent++, i++) {
 		count = be32_to_cpu(extent->block_count);
-		अगर (offset == count) अणु
+		if (offset == count) {
 			start = be32_to_cpu(extent->start_block);
-			अगर (alloc_block != start + count) अणु
-				अगर (++i >= 8)
-					वापस -ENOSPC;
+			if (alloc_block != start + count) {
+				if (++i >= 8)
+					return -ENOSPC;
 				extent++;
 				extent->start_block = cpu_to_be32(alloc_block);
-			पूर्ण अन्यथा
+			} else
 				block_count += count;
 			extent->block_count = cpu_to_be32(block_count);
-			वापस 0;
-		पूर्ण अन्यथा अगर (offset < count)
-			अवरोध;
+			return 0;
+		} else if (offset < count)
+			break;
 		offset -= count;
-	पूर्ण
+	}
 	/* panic? */
-	वापस -EIO;
-पूर्ण
+	return -EIO;
+}
 
-अटल पूर्णांक hfsplus_मुक्त_extents(काष्ठा super_block *sb,
-				काष्ठा hfsplus_extent *extent,
+static int hfsplus_free_extents(struct super_block *sb,
+				struct hfsplus_extent *extent,
 				u32 offset, u32 block_nr)
-अणु
+{
 	u32 count, start;
-	पूर्णांक i;
-	पूर्णांक err = 0;
+	int i;
+	int err = 0;
 
 	/* Mapping the allocation file may lock the extent tree */
 	WARN_ON(mutex_is_locked(&HFSPLUS_SB(sb)->ext_tree->tree_lock));
 
 	hfsplus_dump_extent(extent);
-	क्रम (i = 0; i < 8; extent++, i++) अणु
+	for (i = 0; i < 8; extent++, i++) {
 		count = be32_to_cpu(extent->block_count);
-		अगर (offset == count)
-			जाओ found;
-		अन्यथा अगर (offset < count)
-			अवरोध;
+		if (offset == count)
+			goto found;
+		else if (offset < count)
+			break;
 		offset -= count;
-	पूर्ण
+	}
 	/* panic? */
-	वापस -EIO;
+	return -EIO;
 found:
-	क्रम (;;) अणु
+	for (;;) {
 		start = be32_to_cpu(extent->start_block);
-		अगर (count <= block_nr) अणु
-			err = hfsplus_block_मुक्त(sb, start, count);
-			अगर (err) अणु
+		if (count <= block_nr) {
+			err = hfsplus_block_free(sb, start, count);
+			if (err) {
 				pr_err("can't free extent\n");
 				hfs_dbg(EXTENT, " start: %u count: %u\n",
 					start, count);
-			पूर्ण
+			}
 			extent->block_count = 0;
 			extent->start_block = 0;
 			block_nr -= count;
-		पूर्ण अन्यथा अणु
+		} else {
 			count -= block_nr;
-			err = hfsplus_block_मुक्त(sb, start + count, block_nr);
-			अगर (err) अणु
+			err = hfsplus_block_free(sb, start + count, block_nr);
+			if (err) {
 				pr_err("can't free extent\n");
 				hfs_dbg(EXTENT, " start: %u count: %u\n",
 					start, count);
-			पूर्ण
+			}
 			extent->block_count = cpu_to_be32(count);
 			block_nr = 0;
-		पूर्ण
-		अगर (!block_nr || !i) अणु
+		}
+		if (!block_nr || !i) {
 			/*
-			 * Try to मुक्त all extents and
-			 * वापस only last error
+			 * Try to free all extents and
+			 * return only last error
 			 */
-			वापस err;
-		पूर्ण
+			return err;
+		}
 		i--;
 		extent--;
 		count = be32_to_cpu(extent->block_count);
-	पूर्ण
-पूर्ण
+	}
+}
 
-पूर्णांक hfsplus_मुक्त_विभाजन(काष्ठा super_block *sb, u32 cnid,
-		काष्ठा hfsplus_विभाजन_raw *विभाजन, पूर्णांक type)
-अणु
-	काष्ठा hfs_find_data fd;
+int hfsplus_free_fork(struct super_block *sb, u32 cnid,
+		struct hfsplus_fork_raw *fork, int type)
+{
+	struct hfs_find_data fd;
 	hfsplus_extent_rec ext_entry;
 	u32 total_blocks, blocks, start;
-	पूर्णांक res, i;
+	int res, i;
 
-	total_blocks = be32_to_cpu(विभाजन->total_blocks);
-	अगर (!total_blocks)
-		वापस 0;
+	total_blocks = be32_to_cpu(fork->total_blocks);
+	if (!total_blocks)
+		return 0;
 
 	blocks = 0;
-	क्रम (i = 0; i < 8; i++)
-		blocks += be32_to_cpu(विभाजन->extents[i].block_count);
+	for (i = 0; i < 8; i++)
+		blocks += be32_to_cpu(fork->extents[i].block_count);
 
-	res = hfsplus_मुक्त_extents(sb, विभाजन->extents, blocks, blocks);
-	अगर (res)
-		वापस res;
-	अगर (total_blocks == blocks)
-		वापस 0;
+	res = hfsplus_free_extents(sb, fork->extents, blocks, blocks);
+	if (res)
+		return res;
+	if (total_blocks == blocks)
+		return 0;
 
 	res = hfs_find_init(HFSPLUS_SB(sb)->ext_tree, &fd);
-	अगर (res)
-		वापस res;
-	करो अणु
-		res = __hfsplus_ext_पढ़ो_extent(&fd, ext_entry, cnid,
+	if (res)
+		return res;
+	do {
+		res = __hfsplus_ext_read_extent(&fd, ext_entry, cnid,
 						total_blocks, type);
-		अगर (res)
-			अवरोध;
+		if (res)
+			break;
 		start = be32_to_cpu(fd.key->ext.start_block);
-		hfs_brec_हटाओ(&fd);
+		hfs_brec_remove(&fd);
 
 		mutex_unlock(&fd.tree->tree_lock);
-		hfsplus_मुक्त_extents(sb, ext_entry, total_blocks - start,
+		hfsplus_free_extents(sb, ext_entry, total_blocks - start,
 				     total_blocks);
 		total_blocks = start;
 		mutex_lock(&fd.tree->tree_lock);
-	पूर्ण जबतक (total_blocks > blocks);
-	hfs_find_निकास(&fd);
+	} while (total_blocks > blocks);
+	hfs_find_exit(&fd);
 
-	वापस res;
-पूर्ण
+	return res;
+}
 
-पूर्णांक hfsplus_file_extend(काष्ठा inode *inode, bool zeroout)
-अणु
-	काष्ठा super_block *sb = inode->i_sb;
-	काष्ठा hfsplus_sb_info *sbi = HFSPLUS_SB(sb);
-	काष्ठा hfsplus_inode_info *hip = HFSPLUS_I(inode);
+int hfsplus_file_extend(struct inode *inode, bool zeroout)
+{
+	struct super_block *sb = inode->i_sb;
+	struct hfsplus_sb_info *sbi = HFSPLUS_SB(sb);
+	struct hfsplus_inode_info *hip = HFSPLUS_I(inode);
 	u32 start, len, goal;
-	पूर्णांक res;
+	int res;
 
-	अगर (sbi->alloc_file->i_size * 8 <
-	    sbi->total_blocks - sbi->मुक्त_blocks + 8) अणु
+	if (sbi->alloc_file->i_size * 8 <
+	    sbi->total_blocks - sbi->free_blocks + 8) {
 		/* extend alloc file */
 		pr_err("extend alloc file! (%llu,%u,%u)\n",
 		       sbi->alloc_file->i_size * 8,
-		       sbi->total_blocks, sbi->मुक्त_blocks);
-		वापस -ENOSPC;
-	पूर्ण
+		       sbi->total_blocks, sbi->free_blocks);
+		return -ENOSPC;
+	}
 
 	mutex_lock(&hip->extents_lock);
-	अगर (hip->alloc_blocks == hip->first_blocks)
+	if (hip->alloc_blocks == hip->first_blocks)
 		goal = hfsplus_ext_lastblock(hip->first_extents);
-	अन्यथा अणु
-		res = hfsplus_ext_पढ़ो_extent(inode, hip->alloc_blocks);
-		अगर (res)
-			जाओ out;
+	else {
+		res = hfsplus_ext_read_extent(inode, hip->alloc_blocks);
+		if (res)
+			goto out;
 		goal = hfsplus_ext_lastblock(hip->cached_extents);
-	पूर्ण
+	}
 
 	len = hip->clump_blocks;
 	start = hfsplus_block_allocate(sb, sbi->total_blocks, goal, &len);
-	अगर (start >= sbi->total_blocks) अणु
+	if (start >= sbi->total_blocks) {
 		start = hfsplus_block_allocate(sb, goal, 0, &len);
-		अगर (start >= goal) अणु
+		if (start >= goal) {
 			res = -ENOSPC;
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 
-	अगर (zeroout) अणु
+	if (zeroout) {
 		res = sb_issue_zeroout(sb, start, len, GFP_NOFS);
-		अगर (res)
-			जाओ out;
-	पूर्ण
+		if (res)
+			goto out;
+	}
 
 	hfs_dbg(EXTENT, "extend %lu: %u,%u\n", inode->i_ino, start, len);
 
-	अगर (hip->alloc_blocks <= hip->first_blocks) अणु
-		अगर (!hip->first_blocks) अणु
+	if (hip->alloc_blocks <= hip->first_blocks) {
+		if (!hip->first_blocks) {
 			hfs_dbg(EXTENT, "first extents\n");
 			/* no extents yet */
 			hip->first_extents[0].start_block = cpu_to_be32(start);
 			hip->first_extents[0].block_count = cpu_to_be32(len);
 			res = 0;
-		पूर्ण अन्यथा अणु
+		} else {
 			/* try to append to extents in inode */
 			res = hfsplus_add_extent(hip->first_extents,
 						 hip->alloc_blocks,
 						 start, len);
-			अगर (res == -ENOSPC)
-				जाओ insert_extent;
-		पूर्ण
-		अगर (!res) अणु
+			if (res == -ENOSPC)
+				goto insert_extent;
+		}
+		if (!res) {
 			hfsplus_dump_extent(hip->first_extents);
 			hip->first_blocks += len;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		res = hfsplus_add_extent(hip->cached_extents,
 					 hip->alloc_blocks - hip->cached_start,
 					 start, len);
-		अगर (!res) अणु
+		if (!res) {
 			hfsplus_dump_extent(hip->cached_extents);
-			hip->extent_state |= HFSPLUS_EXT_सूचीTY;
+			hip->extent_state |= HFSPLUS_EXT_DIRTY;
 			hip->cached_blocks += len;
-		पूर्ण अन्यथा अगर (res == -ENOSPC)
-			जाओ insert_extent;
-	पूर्ण
+		} else if (res == -ENOSPC)
+			goto insert_extent;
+	}
 out:
-	अगर (!res) अणु
+	if (!res) {
 		hip->alloc_blocks += len;
 		mutex_unlock(&hip->extents_lock);
-		hfsplus_mark_inode_dirty(inode, HFSPLUS_I_ALLOC_सूचीTY);
-		वापस 0;
-	पूर्ण
+		hfsplus_mark_inode_dirty(inode, HFSPLUS_I_ALLOC_DIRTY);
+		return 0;
+	}
 	mutex_unlock(&hip->extents_lock);
-	वापस res;
+	return res;
 
 insert_extent:
 	hfs_dbg(EXTENT, "insert new extent\n");
-	res = hfsplus_ext_ग_लिखो_extent_locked(inode);
-	अगर (res)
-		जाओ out;
+	res = hfsplus_ext_write_extent_locked(inode);
+	if (res)
+		goto out;
 
-	स_रखो(hip->cached_extents, 0, माप(hfsplus_extent_rec));
+	memset(hip->cached_extents, 0, sizeof(hfsplus_extent_rec));
 	hip->cached_extents[0].start_block = cpu_to_be32(start);
 	hip->cached_extents[0].block_count = cpu_to_be32(len);
 	hfsplus_dump_extent(hip->cached_extents);
-	hip->extent_state |= HFSPLUS_EXT_सूचीTY | HFSPLUS_EXT_NEW;
+	hip->extent_state |= HFSPLUS_EXT_DIRTY | HFSPLUS_EXT_NEW;
 	hip->cached_start = hip->alloc_blocks;
 	hip->cached_blocks = len;
 
 	res = 0;
-	जाओ out;
-पूर्ण
+	goto out;
+}
 
-व्योम hfsplus_file_truncate(काष्ठा inode *inode)
-अणु
-	काष्ठा super_block *sb = inode->i_sb;
-	काष्ठा hfsplus_inode_info *hip = HFSPLUS_I(inode);
-	काष्ठा hfs_find_data fd;
+void hfsplus_file_truncate(struct inode *inode)
+{
+	struct super_block *sb = inode->i_sb;
+	struct hfsplus_inode_info *hip = HFSPLUS_I(inode);
+	struct hfs_find_data fd;
 	u32 alloc_cnt, blk_cnt, start;
-	पूर्णांक res;
+	int res;
 
 	hfs_dbg(INODE, "truncate: %lu, %llu -> %llu\n",
-		inode->i_ino, (दीर्घ दीर्घ)hip->phys_size, inode->i_size);
+		inode->i_ino, (long long)hip->phys_size, inode->i_size);
 
-	अगर (inode->i_size > hip->phys_size) अणु
-		काष्ठा address_space *mapping = inode->i_mapping;
-		काष्ठा page *page;
-		व्योम *fsdata;
+	if (inode->i_size > hip->phys_size) {
+		struct address_space *mapping = inode->i_mapping;
+		struct page *page;
+		void *fsdata;
 		loff_t size = inode->i_size;
 
-		res = pagecache_ग_लिखो_begin(शून्य, mapping, size, 0, 0,
+		res = pagecache_write_begin(NULL, mapping, size, 0, 0,
 					    &page, &fsdata);
-		अगर (res)
-			वापस;
-		res = pagecache_ग_लिखो_end(शून्य, mapping, size,
+		if (res)
+			return;
+		res = pagecache_write_end(NULL, mapping, size,
 			0, 0, page, fsdata);
-		अगर (res < 0)
-			वापस;
+		if (res < 0)
+			return;
 		mark_inode_dirty(inode);
-		वापस;
-	पूर्ण अन्यथा अगर (inode->i_size == hip->phys_size)
-		वापस;
+		return;
+	} else if (inode->i_size == hip->phys_size)
+		return;
 
 	blk_cnt = (inode->i_size + HFSPLUS_SB(sb)->alloc_blksz - 1) >>
-			HFSPLUS_SB(sb)->alloc_blksz_shअगरt;
+			HFSPLUS_SB(sb)->alloc_blksz_shift;
 
 	mutex_lock(&hip->extents_lock);
 
 	alloc_cnt = hip->alloc_blocks;
-	अगर (blk_cnt == alloc_cnt)
-		जाओ out_unlock;
+	if (blk_cnt == alloc_cnt)
+		goto out_unlock;
 
 	res = hfs_find_init(HFSPLUS_SB(sb)->ext_tree, &fd);
-	अगर (res) अणु
+	if (res) {
 		mutex_unlock(&hip->extents_lock);
 		/* XXX: We lack error handling of hfsplus_file_truncate() */
-		वापस;
-	पूर्ण
-	जबतक (1) अणु
-		अगर (alloc_cnt == hip->first_blocks) अणु
+		return;
+	}
+	while (1) {
+		if (alloc_cnt == hip->first_blocks) {
 			mutex_unlock(&fd.tree->tree_lock);
-			hfsplus_मुक्त_extents(sb, hip->first_extents,
+			hfsplus_free_extents(sb, hip->first_extents,
 					     alloc_cnt, alloc_cnt - blk_cnt);
 			hfsplus_dump_extent(hip->first_extents);
 			hip->first_blocks = blk_cnt;
 			mutex_lock(&fd.tree->tree_lock);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		res = __hfsplus_ext_cache_extent(&fd, inode, alloc_cnt);
-		अगर (res)
-			अवरोध;
+		if (res)
+			break;
 
 		start = hip->cached_start;
-		अगर (blk_cnt <= start)
-			hfs_brec_हटाओ(&fd);
+		if (blk_cnt <= start)
+			hfs_brec_remove(&fd);
 		mutex_unlock(&fd.tree->tree_lock);
-		hfsplus_मुक्त_extents(sb, hip->cached_extents,
+		hfsplus_free_extents(sb, hip->cached_extents,
 				     alloc_cnt - start, alloc_cnt - blk_cnt);
 		hfsplus_dump_extent(hip->cached_extents);
 		mutex_lock(&fd.tree->tree_lock);
-		अगर (blk_cnt > start) अणु
-			hip->extent_state |= HFSPLUS_EXT_सूचीTY;
-			अवरोध;
-		पूर्ण
+		if (blk_cnt > start) {
+			hip->extent_state |= HFSPLUS_EXT_DIRTY;
+			break;
+		}
 		alloc_cnt = start;
 		hip->cached_start = hip->cached_blocks = 0;
-		hip->extent_state &= ~(HFSPLUS_EXT_सूचीTY | HFSPLUS_EXT_NEW);
-	पूर्ण
-	hfs_find_निकास(&fd);
+		hip->extent_state &= ~(HFSPLUS_EXT_DIRTY | HFSPLUS_EXT_NEW);
+	}
+	hfs_find_exit(&fd);
 
 	hip->alloc_blocks = blk_cnt;
 out_unlock:
@@ -625,5 +624,5 @@ out_unlock:
 	hip->fs_blocks = (inode->i_size + sb->s_blocksize - 1) >>
 		sb->s_blocksize_bits;
 	inode_set_bytes(inode, hip->fs_blocks << sb->s_blocksize_bits);
-	hfsplus_mark_inode_dirty(inode, HFSPLUS_I_ALLOC_सूचीTY);
-पूर्ण
+	hfsplus_mark_inode_dirty(inode, HFSPLUS_I_ALLOC_DIRTY);
+}

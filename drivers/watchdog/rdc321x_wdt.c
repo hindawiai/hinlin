@@ -1,284 +1,283 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * RDC321x watchकरोg driver
+ * RDC321x watchdog driver
  *
- * Copyright (C) 2007-2010 Florian Fainelli <florian@खोलोwrt.org>
+ * Copyright (C) 2007-2010 Florian Fainelli <florian@openwrt.org>
  *
  * This driver is highly inspired from the cpu5_wdt driver
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/types.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/miscdevice.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/ioport.h>
-#समावेश <linux/समयr.h>
-#समावेश <linux/completion.h>
-#समावेश <linux/jअगरfies.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/watchकरोg.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/mfd/rdc321x.h>
+#include <linux/module.h>
+#include <linux/moduleparam.h>
+#include <linux/types.h>
+#include <linux/errno.h>
+#include <linux/miscdevice.h>
+#include <linux/fs.h>
+#include <linux/ioport.h>
+#include <linux/timer.h>
+#include <linux/completion.h>
+#include <linux/jiffies.h>
+#include <linux/platform_device.h>
+#include <linux/watchdog.h>
+#include <linux/io.h>
+#include <linux/uaccess.h>
+#include <linux/mfd/rdc321x.h>
 
-#घोषणा RDC_WDT_MASK	0x80000000 /* Mask */
-#घोषणा RDC_WDT_EN	0x00800000 /* Enable bit */
-#घोषणा RDC_WDT_WTI	0x00200000 /* Generate CPU reset/NMI/WDT on समयout */
-#घोषणा RDC_WDT_RST	0x00100000 /* Reset bit */
-#घोषणा RDC_WDT_WIF	0x00040000 /* WDT IRQ Flag */
-#घोषणा RDC_WDT_IRT	0x00000100 /* IRQ Routing table */
-#घोषणा RDC_WDT_CNT	0x00000001 /* WDT count */
+#define RDC_WDT_MASK	0x80000000 /* Mask */
+#define RDC_WDT_EN	0x00800000 /* Enable bit */
+#define RDC_WDT_WTI	0x00200000 /* Generate CPU reset/NMI/WDT on timeout */
+#define RDC_WDT_RST	0x00100000 /* Reset bit */
+#define RDC_WDT_WIF	0x00040000 /* WDT IRQ Flag */
+#define RDC_WDT_IRT	0x00000100 /* IRQ Routing table */
+#define RDC_WDT_CNT	0x00000001 /* WDT count */
 
-#घोषणा RDC_CLS_TMR	0x80003844 /* Clear समयr */
+#define RDC_CLS_TMR	0x80003844 /* Clear timer */
 
-#घोषणा RDC_WDT_INTERVAL	(HZ/10+1)
+#define RDC_WDT_INTERVAL	(HZ/10+1)
 
-अटल पूर्णांक ticks = 1000;
+static int ticks = 1000;
 
 /* some device data */
 
-अटल काष्ठा अणु
-	काष्ठा completion stop;
-	पूर्णांक running;
-	काष्ठा समयr_list समयr;
-	पूर्णांक queue;
-	पूर्णांक शेष_ticks;
-	अचिन्हित दीर्घ inuse;
+static struct {
+	struct completion stop;
+	int running;
+	struct timer_list timer;
+	int queue;
+	int default_ticks;
+	unsigned long inuse;
 	spinlock_t lock;
-	काष्ठा pci_dev *sb_pdev;
-	पूर्णांक base_reg;
-पूर्ण rdc321x_wdt_device;
+	struct pci_dev *sb_pdev;
+	int base_reg;
+} rdc321x_wdt_device;
 
 /* generic helper functions */
 
-अटल व्योम rdc321x_wdt_trigger(काष्ठा समयr_list *unused)
-अणु
-	अचिन्हित दीर्घ flags;
+static void rdc321x_wdt_trigger(struct timer_list *unused)
+{
+	unsigned long flags;
 	u32 val;
 
-	अगर (rdc321x_wdt_device.running)
+	if (rdc321x_wdt_device.running)
 		ticks--;
 
-	/* keep watchकरोg alive */
+	/* keep watchdog alive */
 	spin_lock_irqsave(&rdc321x_wdt_device.lock, flags);
-	pci_पढ़ो_config_dword(rdc321x_wdt_device.sb_pdev,
+	pci_read_config_dword(rdc321x_wdt_device.sb_pdev,
 					rdc321x_wdt_device.base_reg, &val);
 	val |= RDC_WDT_EN;
-	pci_ग_लिखो_config_dword(rdc321x_wdt_device.sb_pdev,
+	pci_write_config_dword(rdc321x_wdt_device.sb_pdev,
 					rdc321x_wdt_device.base_reg, val);
 	spin_unlock_irqrestore(&rdc321x_wdt_device.lock, flags);
 
 	/* requeue?? */
-	अगर (rdc321x_wdt_device.queue && ticks)
-		mod_समयr(&rdc321x_wdt_device.समयr,
-				jअगरfies + RDC_WDT_INTERVAL);
-	अन्यथा अणु
-		/* ticks करोesn't matter anyway */
+	if (rdc321x_wdt_device.queue && ticks)
+		mod_timer(&rdc321x_wdt_device.timer,
+				jiffies + RDC_WDT_INTERVAL);
+	else {
+		/* ticks doesn't matter anyway */
 		complete(&rdc321x_wdt_device.stop);
-	पूर्ण
+	}
 
-पूर्ण
+}
 
-अटल व्योम rdc321x_wdt_reset(व्योम)
-अणु
-	ticks = rdc321x_wdt_device.शेष_ticks;
-पूर्ण
+static void rdc321x_wdt_reset(void)
+{
+	ticks = rdc321x_wdt_device.default_ticks;
+}
 
-अटल व्योम rdc321x_wdt_start(व्योम)
-अणु
-	अचिन्हित दीर्घ flags;
+static void rdc321x_wdt_start(void)
+{
+	unsigned long flags;
 
-	अगर (!rdc321x_wdt_device.queue) अणु
+	if (!rdc321x_wdt_device.queue) {
 		rdc321x_wdt_device.queue = 1;
 
-		/* Clear the समयr */
+		/* Clear the timer */
 		spin_lock_irqsave(&rdc321x_wdt_device.lock, flags);
-		pci_ग_लिखो_config_dword(rdc321x_wdt_device.sb_pdev,
+		pci_write_config_dword(rdc321x_wdt_device.sb_pdev,
 				rdc321x_wdt_device.base_reg, RDC_CLS_TMR);
 
-		/* Enable watchकरोg and set the समयout to 81.92 us */
-		pci_ग_लिखो_config_dword(rdc321x_wdt_device.sb_pdev,
+		/* Enable watchdog and set the timeout to 81.92 us */
+		pci_write_config_dword(rdc321x_wdt_device.sb_pdev,
 					rdc321x_wdt_device.base_reg,
 					RDC_WDT_EN | RDC_WDT_CNT);
 		spin_unlock_irqrestore(&rdc321x_wdt_device.lock, flags);
 
-		mod_समयr(&rdc321x_wdt_device.समयr,
-				jअगरfies + RDC_WDT_INTERVAL);
-	पूर्ण
+		mod_timer(&rdc321x_wdt_device.timer,
+				jiffies + RDC_WDT_INTERVAL);
+	}
 
-	/* अगर process dies, counter is not decremented */
+	/* if process dies, counter is not decremented */
 	rdc321x_wdt_device.running++;
-पूर्ण
+}
 
-अटल पूर्णांक rdc321x_wdt_stop(व्योम)
-अणु
-	अगर (rdc321x_wdt_device.running)
+static int rdc321x_wdt_stop(void)
+{
+	if (rdc321x_wdt_device.running)
 		rdc321x_wdt_device.running = 0;
 
-	ticks = rdc321x_wdt_device.शेष_ticks;
+	ticks = rdc321x_wdt_device.default_ticks;
 
-	वापस -EIO;
-पूर्ण
+	return -EIO;
+}
 
-/* fileप्रणाली operations */
-अटल पूर्णांक rdc321x_wdt_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	अगर (test_and_set_bit(0, &rdc321x_wdt_device.inuse))
-		वापस -EBUSY;
+/* filesystem operations */
+static int rdc321x_wdt_open(struct inode *inode, struct file *file)
+{
+	if (test_and_set_bit(0, &rdc321x_wdt_device.inuse))
+		return -EBUSY;
 
-	वापस stream_खोलो(inode, file);
-पूर्ण
+	return stream_open(inode, file);
+}
 
-अटल पूर्णांक rdc321x_wdt_release(काष्ठा inode *inode, काष्ठा file *file)
-अणु
+static int rdc321x_wdt_release(struct inode *inode, struct file *file)
+{
 	clear_bit(0, &rdc321x_wdt_device.inuse);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल दीर्घ rdc321x_wdt_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd,
-				अचिन्हित दीर्घ arg)
-अणु
-	व्योम __user *argp = (व्योम __user *)arg;
+static long rdc321x_wdt_ioctl(struct file *file, unsigned int cmd,
+				unsigned long arg)
+{
+	void __user *argp = (void __user *)arg;
 	u32 value;
-	अटल स्थिर काष्ठा watchकरोg_info ident = अणु
+	static const struct watchdog_info ident = {
 		.options = WDIOF_CARDRESET,
 		.identity = "RDC321x WDT",
-	पूर्ण;
-	अचिन्हित दीर्घ flags;
+	};
+	unsigned long flags;
 
-	चयन (cmd) अणु
-	हाल WDIOC_KEEPALIVE:
+	switch (cmd) {
+	case WDIOC_KEEPALIVE:
 		rdc321x_wdt_reset();
-		अवरोध;
-	हाल WDIOC_GETSTATUS:
-		/* Read the value from the DATA रेजिस्टर */
+		break;
+	case WDIOC_GETSTATUS:
+		/* Read the value from the DATA register */
 		spin_lock_irqsave(&rdc321x_wdt_device.lock, flags);
-		pci_पढ़ो_config_dword(rdc321x_wdt_device.sb_pdev,
+		pci_read_config_dword(rdc321x_wdt_device.sb_pdev,
 					rdc321x_wdt_device.base_reg, &value);
 		spin_unlock_irqrestore(&rdc321x_wdt_device.lock, flags);
-		अगर (copy_to_user(argp, &value, माप(u32)))
-			वापस -EFAULT;
-		अवरोध;
-	हाल WDIOC_GETSUPPORT:
-		अगर (copy_to_user(argp, &ident, माप(ident)))
-			वापस -EFAULT;
-		अवरोध;
-	हाल WDIOC_SETOPTIONS:
-		अगर (copy_from_user(&value, argp, माप(पूर्णांक)))
-			वापस -EFAULT;
-		चयन (value) अणु
-		हाल WDIOS_ENABLECARD:
+		if (copy_to_user(argp, &value, sizeof(u32)))
+			return -EFAULT;
+		break;
+	case WDIOC_GETSUPPORT:
+		if (copy_to_user(argp, &ident, sizeof(ident)))
+			return -EFAULT;
+		break;
+	case WDIOC_SETOPTIONS:
+		if (copy_from_user(&value, argp, sizeof(int)))
+			return -EFAULT;
+		switch (value) {
+		case WDIOS_ENABLECARD:
 			rdc321x_wdt_start();
-			अवरोध;
-		हाल WDIOS_DISABLECARD:
-			वापस rdc321x_wdt_stop();
-		शेष:
-			वापस -EINVAL;
-		पूर्ण
-		अवरोध;
-	शेष:
-		वापस -ENOTTY;
-	पूर्ण
-	वापस 0;
-पूर्ण
+			break;
+		case WDIOS_DISABLECARD:
+			return rdc321x_wdt_stop();
+		default:
+			return -EINVAL;
+		}
+		break;
+	default:
+		return -ENOTTY;
+	}
+	return 0;
+}
 
-अटल sमाप_प्रकार rdc321x_wdt_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buf,
-				माप_प्रकार count, loff_t *ppos)
-अणु
-	अगर (!count)
-		वापस -EIO;
+static ssize_t rdc321x_wdt_write(struct file *file, const char __user *buf,
+				size_t count, loff_t *ppos)
+{
+	if (!count)
+		return -EIO;
 
 	rdc321x_wdt_reset();
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल स्थिर काष्ठा file_operations rdc321x_wdt_fops = अणु
+static const struct file_operations rdc321x_wdt_fops = {
 	.owner		= THIS_MODULE,
 	.llseek		= no_llseek,
 	.unlocked_ioctl	= rdc321x_wdt_ioctl,
 	.compat_ioctl	= compat_ptr_ioctl,
-	.खोलो		= rdc321x_wdt_खोलो,
-	.ग_लिखो		= rdc321x_wdt_ग_लिखो,
+	.open		= rdc321x_wdt_open,
+	.write		= rdc321x_wdt_write,
 	.release	= rdc321x_wdt_release,
-पूर्ण;
+};
 
-अटल काष्ठा miscdevice rdc321x_wdt_misc = अणु
+static struct miscdevice rdc321x_wdt_misc = {
 	.minor	= WATCHDOG_MINOR,
 	.name	= "watchdog",
 	.fops	= &rdc321x_wdt_fops,
-पूर्ण;
+};
 
-अटल पूर्णांक rdc321x_wdt_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	पूर्णांक err;
-	काष्ठा resource *r;
-	काष्ठा rdc321x_wdt_pdata *pdata;
+static int rdc321x_wdt_probe(struct platform_device *pdev)
+{
+	int err;
+	struct resource *r;
+	struct rdc321x_wdt_pdata *pdata;
 
 	pdata = dev_get_platdata(&pdev->dev);
-	अगर (!pdata) अणु
+	if (!pdata) {
 		dev_err(&pdev->dev, "no platform data supplied\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	r = platक्रमm_get_resource_byname(pdev, IORESOURCE_IO, "wdt-reg");
-	अगर (!r) अणु
+	r = platform_get_resource_byname(pdev, IORESOURCE_IO, "wdt-reg");
+	if (!r) {
 		dev_err(&pdev->dev, "failed to get wdt-reg resource\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	rdc321x_wdt_device.sb_pdev = pdata->sb_pdev;
 	rdc321x_wdt_device.base_reg = r->start;
 	rdc321x_wdt_device.queue = 0;
-	rdc321x_wdt_device.शेष_ticks = ticks;
+	rdc321x_wdt_device.default_ticks = ticks;
 
-	err = misc_रेजिस्टर(&rdc321x_wdt_misc);
-	अगर (err < 0) अणु
+	err = misc_register(&rdc321x_wdt_misc);
+	if (err < 0) {
 		dev_err(&pdev->dev, "misc_register failed\n");
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	spin_lock_init(&rdc321x_wdt_device.lock);
 
-	/* Reset the watchकरोg */
-	pci_ग_लिखो_config_dword(rdc321x_wdt_device.sb_pdev,
+	/* Reset the watchdog */
+	pci_write_config_dword(rdc321x_wdt_device.sb_pdev,
 				rdc321x_wdt_device.base_reg, RDC_WDT_RST);
 
 	init_completion(&rdc321x_wdt_device.stop);
 
 	clear_bit(0, &rdc321x_wdt_device.inuse);
 
-	समयr_setup(&rdc321x_wdt_device.समयr, rdc321x_wdt_trigger, 0);
+	timer_setup(&rdc321x_wdt_device.timer, rdc321x_wdt_trigger, 0);
 
 	dev_info(&pdev->dev, "watchdog init success\n");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rdc321x_wdt_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	अगर (rdc321x_wdt_device.queue) अणु
+static int rdc321x_wdt_remove(struct platform_device *pdev)
+{
+	if (rdc321x_wdt_device.queue) {
 		rdc321x_wdt_device.queue = 0;
-		रुको_क्रम_completion(&rdc321x_wdt_device.stop);
-	पूर्ण
+		wait_for_completion(&rdc321x_wdt_device.stop);
+	}
 
-	misc_deरेजिस्टर(&rdc321x_wdt_misc);
+	misc_deregister(&rdc321x_wdt_misc);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver rdc321x_wdt_driver = अणु
+static struct platform_driver rdc321x_wdt_driver = {
 	.probe = rdc321x_wdt_probe,
-	.हटाओ = rdc321x_wdt_हटाओ,
-	.driver = अणु
+	.remove = rdc321x_wdt_remove,
+	.driver = {
 		.name = "rdc321x-wdt",
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver(rdc321x_wdt_driver);
+module_platform_driver(rdc321x_wdt_driver);
 
 MODULE_AUTHOR("Florian Fainelli <florian@openwrt.org>");
 MODULE_DESCRIPTION("RDC321x watchdog driver");

@@ -1,86 +1,85 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Character device driver क्रम पढ़ोing z/VM *MONITOR service records.
+ * Character device driver for reading z/VM *MONITOR service records.
  *
  * Copyright IBM Corp. 2004, 2009
  *
  * Author: Gerald Schaefer <gerald.schaefer@de.ibm.com>
  */
 
-#घोषणा KMSG_COMPONENT "monreader"
-#घोषणा pr_fmt(fmt) KMSG_COMPONENT ": " fmt
+#define KMSG_COMPONENT "monreader"
+#define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
-#समावेश <linux/module.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/init.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/types.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/miscdevice.h>
-#समावेश <linux/प्रकार.स>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/poll.h>
-#समावेश <linux/device.h>
-#समावेश <linux/slab.h>
-#समावेश <net/iucv/iucv.h>
-#समावेश <linux/uaccess.h>
-#समावेश <यंत्र/ebcdic.h>
-#समावेश <यंत्र/exपंचांगem.h>
+#include <linux/module.h>
+#include <linux/moduleparam.h>
+#include <linux/init.h>
+#include <linux/errno.h>
+#include <linux/types.h>
+#include <linux/kernel.h>
+#include <linux/miscdevice.h>
+#include <linux/ctype.h>
+#include <linux/spinlock.h>
+#include <linux/interrupt.h>
+#include <linux/poll.h>
+#include <linux/device.h>
+#include <linux/slab.h>
+#include <net/iucv/iucv.h>
+#include <linux/uaccess.h>
+#include <asm/ebcdic.h>
+#include <asm/extmem.h>
 
 
-#घोषणा MON_COLLECT_SAMPLE 0x80
-#घोषणा MON_COLLECT_EVENT  0x40
-#घोषणा MON_SERVICE	   "*MONITOR"
-#घोषणा MON_IN_USE	   0x01
-#घोषणा MON_MSGLIM	   255
+#define MON_COLLECT_SAMPLE 0x80
+#define MON_COLLECT_EVENT  0x40
+#define MON_SERVICE	   "*MONITOR"
+#define MON_IN_USE	   0x01
+#define MON_MSGLIM	   255
 
-अटल अक्षर mon_dcss_name[9] = "MONDCSS\0";
+static char mon_dcss_name[9] = "MONDCSS\0";
 
-काष्ठा mon_msg अणु
+struct mon_msg {
 	u32 pos;
 	u32 mca_offset;
-	काष्ठा iucv_message msg;
-	अक्षर msglim_reached;
-	अक्षर replied_msglim;
-पूर्ण;
+	struct iucv_message msg;
+	char msglim_reached;
+	char replied_msglim;
+};
 
-काष्ठा mon_निजी अणु
-	काष्ठा iucv_path *path;
-	काष्ठा mon_msg *msg_array[MON_MSGLIM];
-	अचिन्हित पूर्णांक   ग_लिखो_index;
-	अचिन्हित पूर्णांक   पढ़ो_index;
+struct mon_private {
+	struct iucv_path *path;
+	struct mon_msg *msg_array[MON_MSGLIM];
+	unsigned int   write_index;
+	unsigned int   read_index;
 	atomic_t msglim_count;
-	atomic_t पढ़ो_पढ़ोy;
+	atomic_t read_ready;
 	atomic_t iucv_connected;
 	atomic_t iucv_severed;
-पूर्ण;
+};
 
-अटल अचिन्हित दीर्घ mon_in_use = 0;
+static unsigned long mon_in_use = 0;
 
-अटल अचिन्हित दीर्घ mon_dcss_start;
-अटल अचिन्हित दीर्घ mon_dcss_end;
+static unsigned long mon_dcss_start;
+static unsigned long mon_dcss_end;
 
-अटल DECLARE_WAIT_QUEUE_HEAD(mon_पढ़ो_रुको_queue);
-अटल DECLARE_WAIT_QUEUE_HEAD(mon_conn_रुको_queue);
+static DECLARE_WAIT_QUEUE_HEAD(mon_read_wait_queue);
+static DECLARE_WAIT_QUEUE_HEAD(mon_conn_wait_queue);
 
-अटल u8 user_data_connect[16] = अणु
-	/* Version code, must be 0x01 क्रम shared mode */
+static u8 user_data_connect[16] = {
+	/* Version code, must be 0x01 for shared mode */
 	0x01,
 	/* what to collect */
 	MON_COLLECT_SAMPLE | MON_COLLECT_EVENT,
 	/* DCSS name in EBCDIC, 8 bytes padded with blanks */
 	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 	0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-पूर्ण;
+};
 
-अटल u8 user_data_sever[16] = अणु
+static u8 user_data_sever[16] = {
 	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-पूर्ण;
+};
 
-अटल काष्ठा device *monपढ़ोer_device;
+static struct device *monreader_device;
 
 /******************************************************************************
  *                             helper functions                               *
@@ -89,53 +88,53 @@
  * Create the 8 bytes EBCDIC DCSS segment name from
  * an ASCII name, incl. padding
  */
-अटल व्योम dcss_mkname(अक्षर *ascii_name, अक्षर *ebcdic_name)
-अणु
-	पूर्णांक i;
+static void dcss_mkname(char *ascii_name, char *ebcdic_name)
+{
+	int i;
 
-	क्रम (i = 0; i < 8; i++) अणु
-		अगर (ascii_name[i] == '\0')
-			अवरोध;
-		ebcdic_name[i] = बड़े(ascii_name[i]);
-	पूर्ण
-	क्रम (; i < 8; i++)
+	for (i = 0; i < 8; i++) {
+		if (ascii_name[i] == '\0')
+			break;
+		ebcdic_name[i] = toupper(ascii_name[i]);
+	}
+	for (; i < 8; i++)
 		ebcdic_name[i] = ' ';
 	ASCEBC(ebcdic_name, 8);
-पूर्ण
+}
 
-अटल अंतरभूत अचिन्हित दीर्घ mon_mca_start(काष्ठा mon_msg *monmsg)
-अणु
-	वापस *(u32 *) &monmsg->msg.rmmsg;
-पूर्ण
+static inline unsigned long mon_mca_start(struct mon_msg *monmsg)
+{
+	return *(u32 *) &monmsg->msg.rmmsg;
+}
 
-अटल अंतरभूत अचिन्हित दीर्घ mon_mca_end(काष्ठा mon_msg *monmsg)
-अणु
-	वापस *(u32 *) &monmsg->msg.rmmsg[4];
-पूर्ण
+static inline unsigned long mon_mca_end(struct mon_msg *monmsg)
+{
+	return *(u32 *) &monmsg->msg.rmmsg[4];
+}
 
-अटल अंतरभूत u8 mon_mca_type(काष्ठा mon_msg *monmsg, u8 index)
-अणु
-	वापस *((u8 *) mon_mca_start(monmsg) + monmsg->mca_offset + index);
-पूर्ण
+static inline u8 mon_mca_type(struct mon_msg *monmsg, u8 index)
+{
+	return *((u8 *) mon_mca_start(monmsg) + monmsg->mca_offset + index);
+}
 
-अटल अंतरभूत u32 mon_mca_size(काष्ठा mon_msg *monmsg)
-अणु
-	वापस mon_mca_end(monmsg) - mon_mca_start(monmsg) + 1;
-पूर्ण
+static inline u32 mon_mca_size(struct mon_msg *monmsg)
+{
+	return mon_mca_end(monmsg) - mon_mca_start(monmsg) + 1;
+}
 
-अटल अंतरभूत u32 mon_rec_start(काष्ठा mon_msg *monmsg)
-अणु
-	वापस *((u32 *) (mon_mca_start(monmsg) + monmsg->mca_offset + 4));
-पूर्ण
+static inline u32 mon_rec_start(struct mon_msg *monmsg)
+{
+	return *((u32 *) (mon_mca_start(monmsg) + monmsg->mca_offset + 4));
+}
 
-अटल अंतरभूत u32 mon_rec_end(काष्ठा mon_msg *monmsg)
-अणु
-	वापस *((u32 *) (mon_mca_start(monmsg) + monmsg->mca_offset + 8));
-पूर्ण
+static inline u32 mon_rec_end(struct mon_msg *monmsg)
+{
+	return *((u32 *) (mon_mca_start(monmsg) + monmsg->mca_offset + 8));
+}
 
-अटल पूर्णांक mon_check_mca(काष्ठा mon_msg *monmsg)
-अणु
-	अगर ((mon_rec_end(monmsg) <= mon_rec_start(monmsg)) ||
+static int mon_check_mca(struct mon_msg *monmsg)
+{
+	if ((mon_rec_end(monmsg) <= mon_rec_start(monmsg)) ||
 	    (mon_rec_start(monmsg) < mon_dcss_start) ||
 	    (mon_rec_end(monmsg) > mon_dcss_end) ||
 	    (mon_mca_type(monmsg, 0) == 0) ||
@@ -144,504 +143,504 @@
 	    (mon_mca_end(monmsg) > mon_dcss_end) ||
 	    (mon_mca_start(monmsg) < mon_dcss_start) ||
 	    ((mon_mca_type(monmsg, 1) == 0) && (mon_mca_type(monmsg, 2) == 0)))
-		वापस -EINVAL;
-	वापस 0;
-पूर्ण
+		return -EINVAL;
+	return 0;
+}
 
-अटल पूर्णांक mon_send_reply(काष्ठा mon_msg *monmsg,
-			  काष्ठा mon_निजी *monpriv)
-अणु
-	पूर्णांक rc;
+static int mon_send_reply(struct mon_msg *monmsg,
+			  struct mon_private *monpriv)
+{
+	int rc;
 
 	rc = iucv_message_reply(monpriv->path, &monmsg->msg,
-				IUCV_IPRMDATA, शून्य, 0);
+				IUCV_IPRMDATA, NULL, 0);
 	atomic_dec(&monpriv->msglim_count);
-	अगर (likely(!monmsg->msglim_reached)) अणु
+	if (likely(!monmsg->msglim_reached)) {
 		monmsg->pos = 0;
 		monmsg->mca_offset = 0;
-		monpriv->पढ़ो_index = (monpriv->पढ़ो_index + 1) %
+		monpriv->read_index = (monpriv->read_index + 1) %
 				      MON_MSGLIM;
-		atomic_dec(&monpriv->पढ़ो_पढ़ोy);
-	पूर्ण अन्यथा
+		atomic_dec(&monpriv->read_ready);
+	} else
 		monmsg->replied_msglim = 1;
-	अगर (rc) अणु
+	if (rc) {
 		pr_err("Reading monitor data failed with rc=%i\n", rc);
-		वापस -EIO;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return -EIO;
+	}
+	return 0;
+}
 
-अटल व्योम mon_मुक्त_mem(काष्ठा mon_निजी *monpriv)
-अणु
-	पूर्णांक i;
+static void mon_free_mem(struct mon_private *monpriv)
+{
+	int i;
 
-	क्रम (i = 0; i < MON_MSGLIM; i++)
-		kमुक्त(monpriv->msg_array[i]);
-	kमुक्त(monpriv);
-पूर्ण
+	for (i = 0; i < MON_MSGLIM; i++)
+		kfree(monpriv->msg_array[i]);
+	kfree(monpriv);
+}
 
-अटल काष्ठा mon_निजी *mon_alloc_mem(व्योम)
-अणु
-	पूर्णांक i;
-	काष्ठा mon_निजी *monpriv;
+static struct mon_private *mon_alloc_mem(void)
+{
+	int i;
+	struct mon_private *monpriv;
 
-	monpriv = kzalloc(माप(काष्ठा mon_निजी), GFP_KERNEL);
-	अगर (!monpriv)
-		वापस शून्य;
-	क्रम (i = 0; i < MON_MSGLIM; i++) अणु
-		monpriv->msg_array[i] = kzalloc(माप(काष्ठा mon_msg),
+	monpriv = kzalloc(sizeof(struct mon_private), GFP_KERNEL);
+	if (!monpriv)
+		return NULL;
+	for (i = 0; i < MON_MSGLIM; i++) {
+		monpriv->msg_array[i] = kzalloc(sizeof(struct mon_msg),
 						    GFP_KERNEL);
-		अगर (!monpriv->msg_array[i]) अणु
-			mon_मुक्त_mem(monpriv);
-			वापस शून्य;
-		पूर्ण
-	पूर्ण
-	वापस monpriv;
-पूर्ण
+		if (!monpriv->msg_array[i]) {
+			mon_free_mem(monpriv);
+			return NULL;
+		}
+	}
+	return monpriv;
+}
 
-अटल अंतरभूत व्योम mon_next_mca(काष्ठा mon_msg *monmsg)
-अणु
-	अगर (likely((mon_mca_size(monmsg) - monmsg->mca_offset) == 12))
-		वापस;
+static inline void mon_next_mca(struct mon_msg *monmsg)
+{
+	if (likely((mon_mca_size(monmsg) - monmsg->mca_offset) == 12))
+		return;
 	monmsg->mca_offset += 12;
 	monmsg->pos = 0;
-पूर्ण
+}
 
-अटल काष्ठा mon_msg *mon_next_message(काष्ठा mon_निजी *monpriv)
-अणु
-	काष्ठा mon_msg *monmsg;
+static struct mon_msg *mon_next_message(struct mon_private *monpriv)
+{
+	struct mon_msg *monmsg;
 
-	अगर (!atomic_पढ़ो(&monpriv->पढ़ो_पढ़ोy))
-		वापस शून्य;
-	monmsg = monpriv->msg_array[monpriv->पढ़ो_index];
-	अगर (unlikely(monmsg->replied_msglim)) अणु
+	if (!atomic_read(&monpriv->read_ready))
+		return NULL;
+	monmsg = monpriv->msg_array[monpriv->read_index];
+	if (unlikely(monmsg->replied_msglim)) {
 		monmsg->replied_msglim = 0;
 		monmsg->msglim_reached = 0;
 		monmsg->pos = 0;
 		monmsg->mca_offset = 0;
-		monpriv->पढ़ो_index = (monpriv->पढ़ो_index + 1) %
+		monpriv->read_index = (monpriv->read_index + 1) %
 				      MON_MSGLIM;
-		atomic_dec(&monpriv->पढ़ो_पढ़ोy);
-		वापस ERR_PTR(-EOVERFLOW);
-	पूर्ण
-	वापस monmsg;
-पूर्ण
+		atomic_dec(&monpriv->read_ready);
+		return ERR_PTR(-EOVERFLOW);
+	}
+	return monmsg;
+}
 
 
 /******************************************************************************
  *                               IUCV handler                                 *
  *****************************************************************************/
-अटल व्योम mon_iucv_path_complete(काष्ठा iucv_path *path, u8 *ipuser)
-अणु
-	काष्ठा mon_निजी *monpriv = path->निजी;
+static void mon_iucv_path_complete(struct iucv_path *path, u8 *ipuser)
+{
+	struct mon_private *monpriv = path->private;
 
 	atomic_set(&monpriv->iucv_connected, 1);
-	wake_up(&mon_conn_रुको_queue);
-पूर्ण
+	wake_up(&mon_conn_wait_queue);
+}
 
-अटल व्योम mon_iucv_path_severed(काष्ठा iucv_path *path, u8 *ipuser)
-अणु
-	काष्ठा mon_निजी *monpriv = path->निजी;
+static void mon_iucv_path_severed(struct iucv_path *path, u8 *ipuser)
+{
+	struct mon_private *monpriv = path->private;
 
 	pr_err("z/VM *MONITOR system service disconnected with rc=%i\n",
 	       ipuser[0]);
-	iucv_path_sever(path, शून्य);
+	iucv_path_sever(path, NULL);
 	atomic_set(&monpriv->iucv_severed, 1);
-	wake_up(&mon_conn_रुको_queue);
-	wake_up_पूर्णांकerruptible(&mon_पढ़ो_रुको_queue);
-पूर्ण
+	wake_up(&mon_conn_wait_queue);
+	wake_up_interruptible(&mon_read_wait_queue);
+}
 
-अटल व्योम mon_iucv_message_pending(काष्ठा iucv_path *path,
-				     काष्ठा iucv_message *msg)
-अणु
-	काष्ठा mon_निजी *monpriv = path->निजी;
+static void mon_iucv_message_pending(struct iucv_path *path,
+				     struct iucv_message *msg)
+{
+	struct mon_private *monpriv = path->private;
 
-	स_नकल(&monpriv->msg_array[monpriv->ग_लिखो_index]->msg,
-	       msg, माप(*msg));
-	अगर (atomic_inc_वापस(&monpriv->msglim_count) == MON_MSGLIM) अणु
+	memcpy(&monpriv->msg_array[monpriv->write_index]->msg,
+	       msg, sizeof(*msg));
+	if (atomic_inc_return(&monpriv->msglim_count) == MON_MSGLIM) {
 		pr_warn("The read queue for monitor data is full\n");
-		monpriv->msg_array[monpriv->ग_लिखो_index]->msglim_reached = 1;
-	पूर्ण
-	monpriv->ग_लिखो_index = (monpriv->ग_लिखो_index + 1) % MON_MSGLIM;
-	atomic_inc(&monpriv->पढ़ो_पढ़ोy);
-	wake_up_पूर्णांकerruptible(&mon_पढ़ो_रुको_queue);
-पूर्ण
+		monpriv->msg_array[monpriv->write_index]->msglim_reached = 1;
+	}
+	monpriv->write_index = (monpriv->write_index + 1) % MON_MSGLIM;
+	atomic_inc(&monpriv->read_ready);
+	wake_up_interruptible(&mon_read_wait_queue);
+}
 
-अटल काष्ठा iucv_handler monपढ़ोer_iucv_handler = अणु
+static struct iucv_handler monreader_iucv_handler = {
 	.path_complete	 = mon_iucv_path_complete,
 	.path_severed	 = mon_iucv_path_severed,
 	.message_pending = mon_iucv_message_pending,
-पूर्ण;
+};
 
 /******************************************************************************
  *                               file operations                              *
  *****************************************************************************/
-अटल पूर्णांक mon_खोलो(काष्ठा inode *inode, काष्ठा file *filp)
-अणु
-	काष्ठा mon_निजी *monpriv;
-	पूर्णांक rc;
+static int mon_open(struct inode *inode, struct file *filp)
+{
+	struct mon_private *monpriv;
+	int rc;
 
 	/*
 	 * only one user allowed
 	 */
 	rc = -EBUSY;
-	अगर (test_and_set_bit(MON_IN_USE, &mon_in_use))
-		जाओ out;
+	if (test_and_set_bit(MON_IN_USE, &mon_in_use))
+		goto out;
 
 	rc = -ENOMEM;
 	monpriv = mon_alloc_mem();
-	अगर (!monpriv)
-		जाओ out_use;
+	if (!monpriv)
+		goto out_use;
 
 	/*
 	 * Connect to *MONITOR service
 	 */
 	monpriv->path = iucv_path_alloc(MON_MSGLIM, IUCV_IPRMDATA, GFP_KERNEL);
-	अगर (!monpriv->path)
-		जाओ out_priv;
-	rc = iucv_path_connect(monpriv->path, &monपढ़ोer_iucv_handler,
-			       MON_SERVICE, शून्य, user_data_connect, monpriv);
-	अगर (rc) अणु
+	if (!monpriv->path)
+		goto out_priv;
+	rc = iucv_path_connect(monpriv->path, &monreader_iucv_handler,
+			       MON_SERVICE, NULL, user_data_connect, monpriv);
+	if (rc) {
 		pr_err("Connecting to the z/VM *MONITOR system service "
 		       "failed with rc=%i\n", rc);
 		rc = -EIO;
-		जाओ out_path;
-	पूर्ण
+		goto out_path;
+	}
 	/*
-	 * Wait क्रम connection confirmation
+	 * Wait for connection confirmation
 	 */
-	रुको_event(mon_conn_रुको_queue,
-		   atomic_पढ़ो(&monpriv->iucv_connected) ||
-		   atomic_पढ़ो(&monpriv->iucv_severed));
-	अगर (atomic_पढ़ो(&monpriv->iucv_severed)) अणु
+	wait_event(mon_conn_wait_queue,
+		   atomic_read(&monpriv->iucv_connected) ||
+		   atomic_read(&monpriv->iucv_severed));
+	if (atomic_read(&monpriv->iucv_severed)) {
 		atomic_set(&monpriv->iucv_severed, 0);
 		atomic_set(&monpriv->iucv_connected, 0);
 		rc = -EIO;
-		जाओ out_path;
-	पूर्ण
-	filp->निजी_data = monpriv;
-	dev_set_drvdata(monपढ़ोer_device, monpriv);
-	वापस nonseekable_खोलो(inode, filp);
+		goto out_path;
+	}
+	filp->private_data = monpriv;
+	dev_set_drvdata(monreader_device, monpriv);
+	return nonseekable_open(inode, filp);
 
 out_path:
-	iucv_path_मुक्त(monpriv->path);
+	iucv_path_free(monpriv->path);
 out_priv:
-	mon_मुक्त_mem(monpriv);
+	mon_free_mem(monpriv);
 out_use:
 	clear_bit(MON_IN_USE, &mon_in_use);
 out:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक mon_बंद(काष्ठा inode *inode, काष्ठा file *filp)
-अणु
-	पूर्णांक rc, i;
-	काष्ठा mon_निजी *monpriv = filp->निजी_data;
+static int mon_close(struct inode *inode, struct file *filp)
+{
+	int rc, i;
+	struct mon_private *monpriv = filp->private_data;
 
 	/*
-	 * Close IUCV connection and unरेजिस्टर
+	 * Close IUCV connection and unregister
 	 */
-	अगर (monpriv->path) अणु
+	if (monpriv->path) {
 		rc = iucv_path_sever(monpriv->path, user_data_sever);
-		अगर (rc)
+		if (rc)
 			pr_warn("Disconnecting the z/VM *MONITOR system service failed with rc=%i\n",
 				rc);
-		iucv_path_मुक्त(monpriv->path);
-	पूर्ण
+		iucv_path_free(monpriv->path);
+	}
 
 	atomic_set(&monpriv->iucv_severed, 0);
 	atomic_set(&monpriv->iucv_connected, 0);
-	atomic_set(&monpriv->पढ़ो_पढ़ोy, 0);
+	atomic_set(&monpriv->read_ready, 0);
 	atomic_set(&monpriv->msglim_count, 0);
-	monpriv->ग_लिखो_index  = 0;
-	monpriv->पढ़ो_index   = 0;
-	dev_set_drvdata(monपढ़ोer_device, शून्य);
+	monpriv->write_index  = 0;
+	monpriv->read_index   = 0;
+	dev_set_drvdata(monreader_device, NULL);
 
-	क्रम (i = 0; i < MON_MSGLIM; i++)
-		kमुक्त(monpriv->msg_array[i]);
-	kमुक्त(monpriv);
+	for (i = 0; i < MON_MSGLIM; i++)
+		kfree(monpriv->msg_array[i]);
+	kfree(monpriv);
 	clear_bit(MON_IN_USE, &mon_in_use);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल sमाप_प्रकार mon_पढ़ो(काष्ठा file *filp, अक्षर __user *data,
-			माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा mon_निजी *monpriv = filp->निजी_data;
-	काष्ठा mon_msg *monmsg;
-	पूर्णांक ret;
+static ssize_t mon_read(struct file *filp, char __user *data,
+			size_t count, loff_t *ppos)
+{
+	struct mon_private *monpriv = filp->private_data;
+	struct mon_msg *monmsg;
+	int ret;
 	u32 mce_start;
 
 	monmsg = mon_next_message(monpriv);
-	अगर (IS_ERR(monmsg))
-		वापस PTR_ERR(monmsg);
+	if (IS_ERR(monmsg))
+		return PTR_ERR(monmsg);
 
-	अगर (!monmsg) अणु
-		अगर (filp->f_flags & O_NONBLOCK)
-			वापस -EAGAIN;
-		ret = रुको_event_पूर्णांकerruptible(mon_पढ़ो_रुको_queue,
-					atomic_पढ़ो(&monpriv->पढ़ो_पढ़ोy) ||
-					atomic_पढ़ो(&monpriv->iucv_severed));
-		अगर (ret)
-			वापस ret;
-		अगर (unlikely(atomic_पढ़ो(&monpriv->iucv_severed)))
-			वापस -EIO;
-		monmsg = monpriv->msg_array[monpriv->पढ़ो_index];
-	पूर्ण
+	if (!monmsg) {
+		if (filp->f_flags & O_NONBLOCK)
+			return -EAGAIN;
+		ret = wait_event_interruptible(mon_read_wait_queue,
+					atomic_read(&monpriv->read_ready) ||
+					atomic_read(&monpriv->iucv_severed));
+		if (ret)
+			return ret;
+		if (unlikely(atomic_read(&monpriv->iucv_severed)))
+			return -EIO;
+		monmsg = monpriv->msg_array[monpriv->read_index];
+	}
 
-	अगर (!monmsg->pos)
+	if (!monmsg->pos)
 		monmsg->pos = mon_mca_start(monmsg) + monmsg->mca_offset;
-	अगर (mon_check_mca(monmsg))
-		जाओ reply;
+	if (mon_check_mca(monmsg))
+		goto reply;
 
-	/* पढ़ो monitor control element (12 bytes) first */
+	/* read monitor control element (12 bytes) first */
 	mce_start = mon_mca_start(monmsg) + monmsg->mca_offset;
-	अगर ((monmsg->pos >= mce_start) && (monmsg->pos < mce_start + 12)) अणु
-		count = min(count, (माप_प्रकार) mce_start + 12 - monmsg->pos);
-		ret = copy_to_user(data, (व्योम *) (अचिन्हित दीर्घ) monmsg->pos,
+	if ((monmsg->pos >= mce_start) && (monmsg->pos < mce_start + 12)) {
+		count = min(count, (size_t) mce_start + 12 - monmsg->pos);
+		ret = copy_to_user(data, (void *) (unsigned long) monmsg->pos,
 				   count);
-		अगर (ret)
-			वापस -EFAULT;
+		if (ret)
+			return -EFAULT;
 		monmsg->pos += count;
-		अगर (monmsg->pos == mce_start + 12)
+		if (monmsg->pos == mce_start + 12)
 			monmsg->pos = mon_rec_start(monmsg);
-		जाओ out_copy;
-	पूर्ण
+		goto out_copy;
+	}
 
-	/* पढ़ो records */
-	अगर (monmsg->pos <= mon_rec_end(monmsg)) अणु
-		count = min(count, (माप_प्रकार) mon_rec_end(monmsg) - monmsg->pos
+	/* read records */
+	if (monmsg->pos <= mon_rec_end(monmsg)) {
+		count = min(count, (size_t) mon_rec_end(monmsg) - monmsg->pos
 					    + 1);
-		ret = copy_to_user(data, (व्योम *) (अचिन्हित दीर्घ) monmsg->pos,
+		ret = copy_to_user(data, (void *) (unsigned long) monmsg->pos,
 				   count);
-		अगर (ret)
-			वापस -EFAULT;
+		if (ret)
+			return -EFAULT;
 		monmsg->pos += count;
-		अगर (monmsg->pos > mon_rec_end(monmsg))
+		if (monmsg->pos > mon_rec_end(monmsg))
 			mon_next_mca(monmsg);
-		जाओ out_copy;
-	पूर्ण
+		goto out_copy;
+	}
 reply:
 	ret = mon_send_reply(monmsg, monpriv);
-	वापस ret;
+	return ret;
 
 out_copy:
 	*ppos += count;
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल __poll_t mon_poll(काष्ठा file *filp, काष्ठा poll_table_काष्ठा *p)
-अणु
-	काष्ठा mon_निजी *monpriv = filp->निजी_data;
+static __poll_t mon_poll(struct file *filp, struct poll_table_struct *p)
+{
+	struct mon_private *monpriv = filp->private_data;
 
-	poll_रुको(filp, &mon_पढ़ो_रुको_queue, p);
-	अगर (unlikely(atomic_पढ़ो(&monpriv->iucv_severed)))
-		वापस EPOLLERR;
-	अगर (atomic_पढ़ो(&monpriv->पढ़ो_पढ़ोy))
-		वापस EPOLLIN | EPOLLRDNORM;
-	वापस 0;
-पूर्ण
+	poll_wait(filp, &mon_read_wait_queue, p);
+	if (unlikely(atomic_read(&monpriv->iucv_severed)))
+		return EPOLLERR;
+	if (atomic_read(&monpriv->read_ready))
+		return EPOLLIN | EPOLLRDNORM;
+	return 0;
+}
 
-अटल स्थिर काष्ठा file_operations mon_fops = अणु
+static const struct file_operations mon_fops = {
 	.owner   = THIS_MODULE,
-	.खोलो    = &mon_खोलो,
-	.release = &mon_बंद,
-	.पढ़ो    = &mon_पढ़ो,
+	.open    = &mon_open,
+	.release = &mon_close,
+	.read    = &mon_read,
 	.poll    = &mon_poll,
 	.llseek  = noop_llseek,
-पूर्ण;
+};
 
-अटल काष्ठा miscdevice mon_dev = अणु
+static struct miscdevice mon_dev = {
 	.name       = "monreader",
 	.fops       = &mon_fops,
 	.minor      = MISC_DYNAMIC_MINOR,
-पूर्ण;
+};
 
 
 /******************************************************************************
  *				suspend / resume			      *
  *****************************************************************************/
-अटल पूर्णांक monपढ़ोer_मुक्तze(काष्ठा device *dev)
-अणु
-	काष्ठा mon_निजी *monpriv = dev_get_drvdata(dev);
-	पूर्णांक rc;
+static int monreader_freeze(struct device *dev)
+{
+	struct mon_private *monpriv = dev_get_drvdata(dev);
+	int rc;
 
-	अगर (!monpriv)
-		वापस 0;
-	अगर (monpriv->path) अणु
+	if (!monpriv)
+		return 0;
+	if (monpriv->path) {
 		rc = iucv_path_sever(monpriv->path, user_data_sever);
-		अगर (rc)
+		if (rc)
 			pr_warn("Disconnecting the z/VM *MONITOR system service failed with rc=%i\n",
 				rc);
-		iucv_path_मुक्त(monpriv->path);
-	पूर्ण
+		iucv_path_free(monpriv->path);
+	}
 	atomic_set(&monpriv->iucv_severed, 0);
 	atomic_set(&monpriv->iucv_connected, 0);
-	atomic_set(&monpriv->पढ़ो_पढ़ोy, 0);
+	atomic_set(&monpriv->read_ready, 0);
 	atomic_set(&monpriv->msglim_count, 0);
-	monpriv->ग_लिखो_index  = 0;
-	monpriv->पढ़ो_index   = 0;
-	monpriv->path = शून्य;
-	वापस 0;
-पूर्ण
+	monpriv->write_index  = 0;
+	monpriv->read_index   = 0;
+	monpriv->path = NULL;
+	return 0;
+}
 
-अटल पूर्णांक monपढ़ोer_thaw(काष्ठा device *dev)
-अणु
-	काष्ठा mon_निजी *monpriv = dev_get_drvdata(dev);
-	पूर्णांक rc;
+static int monreader_thaw(struct device *dev)
+{
+	struct mon_private *monpriv = dev_get_drvdata(dev);
+	int rc;
 
-	अगर (!monpriv)
-		वापस 0;
+	if (!monpriv)
+		return 0;
 	rc = -ENOMEM;
 	monpriv->path = iucv_path_alloc(MON_MSGLIM, IUCV_IPRMDATA, GFP_KERNEL);
-	अगर (!monpriv->path)
-		जाओ out;
-	rc = iucv_path_connect(monpriv->path, &monपढ़ोer_iucv_handler,
-			       MON_SERVICE, शून्य, user_data_connect, monpriv);
-	अगर (rc) अणु
+	if (!monpriv->path)
+		goto out;
+	rc = iucv_path_connect(monpriv->path, &monreader_iucv_handler,
+			       MON_SERVICE, NULL, user_data_connect, monpriv);
+	if (rc) {
 		pr_err("Connecting to the z/VM *MONITOR system service "
 		       "failed with rc=%i\n", rc);
-		जाओ out_path;
-	पूर्ण
-	रुको_event(mon_conn_रुको_queue,
-		   atomic_पढ़ो(&monpriv->iucv_connected) ||
-		   atomic_पढ़ो(&monpriv->iucv_severed));
-	अगर (atomic_पढ़ो(&monpriv->iucv_severed))
-		जाओ out_path;
-	वापस 0;
+		goto out_path;
+	}
+	wait_event(mon_conn_wait_queue,
+		   atomic_read(&monpriv->iucv_connected) ||
+		   atomic_read(&monpriv->iucv_severed));
+	if (atomic_read(&monpriv->iucv_severed))
+		goto out_path;
+	return 0;
 out_path:
 	rc = -EIO;
-	iucv_path_मुक्त(monpriv->path);
-	monpriv->path = शून्य;
+	iucv_path_free(monpriv->path);
+	monpriv->path = NULL;
 out:
 	atomic_set(&monpriv->iucv_severed, 1);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक monपढ़ोer_restore(काष्ठा device *dev)
-अणु
-	पूर्णांक rc;
+static int monreader_restore(struct device *dev)
+{
+	int rc;
 
 	segment_unload(mon_dcss_name);
 	rc = segment_load(mon_dcss_name, SEGMENT_SHARED,
 			  &mon_dcss_start, &mon_dcss_end);
-	अगर (rc < 0) अणु
+	if (rc < 0) {
 		segment_warning(rc, mon_dcss_name);
 		panic("fatal monreader resume error: no monitor dcss\n");
-	पूर्ण
-	वापस monपढ़ोer_thaw(dev);
-पूर्ण
+	}
+	return monreader_thaw(dev);
+}
 
-अटल स्थिर काष्ठा dev_pm_ops monपढ़ोer_pm_ops = अणु
-	.मुक्तze  = monपढ़ोer_मुक्तze,
-	.thaw	 = monपढ़ोer_thaw,
-	.restore = monपढ़ोer_restore,
-पूर्ण;
+static const struct dev_pm_ops monreader_pm_ops = {
+	.freeze  = monreader_freeze,
+	.thaw	 = monreader_thaw,
+	.restore = monreader_restore,
+};
 
-अटल काष्ठा device_driver monपढ़ोer_driver = अणु
+static struct device_driver monreader_driver = {
 	.name = "monreader",
 	.bus  = &iucv_bus,
-	.pm   = &monपढ़ोer_pm_ops,
-पूर्ण;
+	.pm   = &monreader_pm_ops,
+};
 
 
 /******************************************************************************
- *                              module init/निकास                              *
+ *                              module init/exit                              *
  *****************************************************************************/
-अटल पूर्णांक __init mon_init(व्योम)
-अणु
-	पूर्णांक rc;
+static int __init mon_init(void)
+{
+	int rc;
 
-	अगर (!MACHINE_IS_VM) अणु
+	if (!MACHINE_IS_VM) {
 		pr_err("The z/VM *MONITOR record device driver cannot be "
 		       "loaded without z/VM\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	/*
 	 * Register with IUCV and connect to *MONITOR service
 	 */
-	rc = iucv_रेजिस्टर(&monपढ़ोer_iucv_handler, 1);
-	अगर (rc) अणु
+	rc = iucv_register(&monreader_iucv_handler, 1);
+	if (rc) {
 		pr_err("The z/VM *MONITOR record device driver failed to "
 		       "register with IUCV\n");
-		वापस rc;
-	पूर्ण
+		return rc;
+	}
 
-	rc = driver_रेजिस्टर(&monपढ़ोer_driver);
-	अगर (rc)
-		जाओ out_iucv;
-	monपढ़ोer_device = kzalloc(माप(काष्ठा device), GFP_KERNEL);
-	अगर (!monपढ़ोer_device) अणु
+	rc = driver_register(&monreader_driver);
+	if (rc)
+		goto out_iucv;
+	monreader_device = kzalloc(sizeof(struct device), GFP_KERNEL);
+	if (!monreader_device) {
 		rc = -ENOMEM;
-		जाओ out_driver;
-	पूर्ण
+		goto out_driver;
+	}
 
-	dev_set_name(monपढ़ोer_device, "monreader-dev");
-	monपढ़ोer_device->bus = &iucv_bus;
-	monपढ़ोer_device->parent = iucv_root;
-	monपढ़ोer_device->driver = &monपढ़ोer_driver;
-	monपढ़ोer_device->release = (व्योम (*)(काष्ठा device *))kमुक्त;
-	rc = device_रेजिस्टर(monपढ़ोer_device);
-	अगर (rc) अणु
-		put_device(monपढ़ोer_device);
-		जाओ out_driver;
-	पूर्ण
+	dev_set_name(monreader_device, "monreader-dev");
+	monreader_device->bus = &iucv_bus;
+	monreader_device->parent = iucv_root;
+	monreader_device->driver = &monreader_driver;
+	monreader_device->release = (void (*)(struct device *))kfree;
+	rc = device_register(monreader_device);
+	if (rc) {
+		put_device(monreader_device);
+		goto out_driver;
+	}
 
 	rc = segment_type(mon_dcss_name);
-	अगर (rc < 0) अणु
+	if (rc < 0) {
 		segment_warning(rc, mon_dcss_name);
-		जाओ out_device;
-	पूर्ण
-	अगर (rc != SEG_TYPE_SC) अणु
+		goto out_device;
+	}
+	if (rc != SEG_TYPE_SC) {
 		pr_err("The specified *MONITOR DCSS %s does not have the "
 		       "required type SC\n", mon_dcss_name);
 		rc = -EINVAL;
-		जाओ out_device;
-	पूर्ण
+		goto out_device;
+	}
 
 	rc = segment_load(mon_dcss_name, SEGMENT_SHARED,
 			  &mon_dcss_start, &mon_dcss_end);
-	अगर (rc < 0) अणु
+	if (rc < 0) {
 		segment_warning(rc, mon_dcss_name);
 		rc = -EINVAL;
-		जाओ out_device;
-	पूर्ण
+		goto out_device;
+	}
 	dcss_mkname(mon_dcss_name, &user_data_connect[8]);
 
 	/*
-	 * misc_रेजिस्टर() has to be the last action in module_init(), because
+	 * misc_register() has to be the last action in module_init(), because
 	 * file operations will be available right after this.
 	 */
-	rc = misc_रेजिस्टर(&mon_dev);
-	अगर (rc < 0 )
-		जाओ out;
-	वापस 0;
+	rc = misc_register(&mon_dev);
+	if (rc < 0 )
+		goto out;
+	return 0;
 
 out:
 	segment_unload(mon_dcss_name);
 out_device:
-	device_unरेजिस्टर(monपढ़ोer_device);
+	device_unregister(monreader_device);
 out_driver:
-	driver_unरेजिस्टर(&monपढ़ोer_driver);
+	driver_unregister(&monreader_driver);
 out_iucv:
-	iucv_unरेजिस्टर(&monपढ़ोer_iucv_handler, 1);
-	वापस rc;
-पूर्ण
+	iucv_unregister(&monreader_iucv_handler, 1);
+	return rc;
+}
 
-अटल व्योम __निकास mon_निकास(व्योम)
-अणु
+static void __exit mon_exit(void)
+{
 	segment_unload(mon_dcss_name);
-	misc_deरेजिस्टर(&mon_dev);
-	device_unरेजिस्टर(monपढ़ोer_device);
-	driver_unरेजिस्टर(&monपढ़ोer_driver);
-	iucv_unरेजिस्टर(&monपढ़ोer_iucv_handler, 1);
-	वापस;
-पूर्ण
+	misc_deregister(&mon_dev);
+	device_unregister(monreader_device);
+	driver_unregister(&monreader_driver);
+	iucv_unregister(&monreader_iucv_handler, 1);
+	return;
+}
 
 
 module_init(mon_init);
-module_निकास(mon_निकास);
+module_exit(mon_exit);
 
 module_param_string(mondcss, mon_dcss_name, 9, 0444);
 MODULE_PARM_DESC(mondcss, "Name of DCSS segment to be used for *MONITOR "

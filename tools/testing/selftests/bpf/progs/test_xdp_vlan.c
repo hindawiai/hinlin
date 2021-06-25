@@ -1,131 +1,130 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0
+/* SPDX-License-Identifier: GPL-2.0
  *  Copyright(c) 2018 Jesper Dangaard Brouer.
  *
  * XDP/TC VLAN manipulation example
  *
  * GOTCHA: Remember to disable NIC hardware offloading of VLANs,
- * अन्यथा the VLAN tags are NOT अंतरभूतd in the packet payload:
+ * else the VLAN tags are NOT inlined in the packet payload:
  *
  *  # ethtool -K ixgbe2 rxvlan off
  *
- * Verअगरy setting:
+ * Verify setting:
  *  # ethtool -k ixgbe2 | grep rx-vlan-offload
  *  rx-vlan-offload: off
  *
  */
-#समावेश <मानकघोष.स>
-#समावेश <stdbool.h>
-#समावेश <माला.स>
-#समावेश <linux/bpf.h>
-#समावेश <linux/अगर_ether.h>
-#समावेश <linux/अगर_vlan.h>
-#समावेश <linux/in.h>
-#समावेश <linux/pkt_cls.h>
+#include <stddef.h>
+#include <stdbool.h>
+#include <string.h>
+#include <linux/bpf.h>
+#include <linux/if_ether.h>
+#include <linux/if_vlan.h>
+#include <linux/in.h>
+#include <linux/pkt_cls.h>
 
-#समावेश <bpf/bpf_helpers.h>
-#समावेश <bpf/bpf_endian.h>
+#include <bpf/bpf_helpers.h>
+#include <bpf/bpf_endian.h>
 
-/* linux/अगर_vlan.h have not exposed this as UAPI, thus mirror some here
+/* linux/if_vlan.h have not exposed this as UAPI, thus mirror some here
  *
- *	काष्ठा vlan_hdr - vlan header
+ *	struct vlan_hdr - vlan header
  *	@h_vlan_TCI: priority and VLAN ID
  *	@h_vlan_encapsulated_proto: packet type ID or len
  */
-काष्ठा _vlan_hdr अणु
+struct _vlan_hdr {
 	__be16 h_vlan_TCI;
 	__be16 h_vlan_encapsulated_proto;
-पूर्ण;
-#घोषणा VLAN_PRIO_MASK		0xe000 /* Priority Code Poपूर्णांक */
-#घोषणा VLAN_PRIO_SHIFT		13
-#घोषणा VLAN_CFI_MASK		0x1000 /* Canonical Format Indicator */
-#घोषणा VLAN_TAG_PRESENT	VLAN_CFI_MASK
-#घोषणा VLAN_VID_MASK		0x0fff /* VLAN Identअगरier */
-#घोषणा VLAN_N_VID		4096
+};
+#define VLAN_PRIO_MASK		0xe000 /* Priority Code Point */
+#define VLAN_PRIO_SHIFT		13
+#define VLAN_CFI_MASK		0x1000 /* Canonical Format Indicator */
+#define VLAN_TAG_PRESENT	VLAN_CFI_MASK
+#define VLAN_VID_MASK		0x0fff /* VLAN Identifier */
+#define VLAN_N_VID		4096
 
-काष्ठा parse_pkt अणु
+struct parse_pkt {
 	__u16 l3_proto;
 	__u16 l3_offset;
 	__u16 vlan_outer;
 	__u16 vlan_inner;
 	__u8  vlan_outer_offset;
 	__u8  vlan_inner_offset;
-पूर्ण;
+};
 
-अक्षर _license[] SEC("license") = "GPL";
+char _license[] SEC("license") = "GPL";
 
-अटल __always_अंतरभूत
-bool parse_eth_frame(काष्ठा ethhdr *eth, व्योम *data_end, काष्ठा parse_pkt *pkt)
-अणु
+static __always_inline
+bool parse_eth_frame(struct ethhdr *eth, void *data_end, struct parse_pkt *pkt)
+{
 	__u16 eth_type;
 	__u8 offset;
 
-	offset = माप(*eth);
-	/* Make sure packet is large enough क्रम parsing eth + 2 VLAN headers */
-	अगर ((व्योम *)eth + offset + (2*माप(काष्ठा _vlan_hdr)) > data_end)
-		वापस false;
+	offset = sizeof(*eth);
+	/* Make sure packet is large enough for parsing eth + 2 VLAN headers */
+	if ((void *)eth + offset + (2*sizeof(struct _vlan_hdr)) > data_end)
+		return false;
 
 	eth_type = eth->h_proto;
 
 	/* Handle outer VLAN tag */
-	अगर (eth_type == bpf_htons(ETH_P_8021Q)
-	    || eth_type == bpf_htons(ETH_P_8021AD)) अणु
-		काष्ठा _vlan_hdr *vlan_hdr;
+	if (eth_type == bpf_htons(ETH_P_8021Q)
+	    || eth_type == bpf_htons(ETH_P_8021AD)) {
+		struct _vlan_hdr *vlan_hdr;
 
-		vlan_hdr = (व्योम *)eth + offset;
+		vlan_hdr = (void *)eth + offset;
 		pkt->vlan_outer_offset = offset;
 		pkt->vlan_outer = bpf_ntohs(vlan_hdr->h_vlan_TCI)
 				& VLAN_VID_MASK;
 		eth_type        = vlan_hdr->h_vlan_encapsulated_proto;
-		offset += माप(*vlan_hdr);
-	पूर्ण
+		offset += sizeof(*vlan_hdr);
+	}
 
-	/* Handle inner (द्विगुन) VLAN tag */
-	अगर (eth_type == bpf_htons(ETH_P_8021Q)
-	    || eth_type == bpf_htons(ETH_P_8021AD)) अणु
-		काष्ठा _vlan_hdr *vlan_hdr;
+	/* Handle inner (double) VLAN tag */
+	if (eth_type == bpf_htons(ETH_P_8021Q)
+	    || eth_type == bpf_htons(ETH_P_8021AD)) {
+		struct _vlan_hdr *vlan_hdr;
 
-		vlan_hdr = (व्योम *)eth + offset;
+		vlan_hdr = (void *)eth + offset;
 		pkt->vlan_inner_offset = offset;
 		pkt->vlan_inner = bpf_ntohs(vlan_hdr->h_vlan_TCI)
 				& VLAN_VID_MASK;
 		eth_type        = vlan_hdr->h_vlan_encapsulated_proto;
-		offset += माप(*vlan_hdr);
-	पूर्ण
+		offset += sizeof(*vlan_hdr);
+	}
 
 	pkt->l3_proto = bpf_ntohs(eth_type); /* Convert to host-byte-order */
 	pkt->l3_offset = offset;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-/* Hपूर्णांक, VLANs are choosen to hit network-byte-order issues */
-#घोषणा TESTVLAN 4011 /* 0xFAB */
-// #घोषणा TO_VLAN  4000 /* 0xFA0 (hपूर्णांक 0xOA0 = 160) */
+/* Hint, VLANs are choosen to hit network-byte-order issues */
+#define TESTVLAN 4011 /* 0xFAB */
+// #define TO_VLAN  4000 /* 0xFA0 (hint 0xOA0 = 160) */
 
 SEC("xdp_drop_vlan_4011")
-पूर्णांक  xdp_prognum0(काष्ठा xdp_md *ctx)
-अणु
-	व्योम *data_end = (व्योम *)(दीर्घ)ctx->data_end;
-	व्योम *data     = (व्योम *)(दीर्घ)ctx->data;
-	काष्ठा parse_pkt pkt = अणु 0 पूर्ण;
+int  xdp_prognum0(struct xdp_md *ctx)
+{
+	void *data_end = (void *)(long)ctx->data_end;
+	void *data     = (void *)(long)ctx->data;
+	struct parse_pkt pkt = { 0 };
 
-	अगर (!parse_eth_frame(data, data_end, &pkt))
-		वापस XDP_ABORTED;
+	if (!parse_eth_frame(data, data_end, &pkt))
+		return XDP_ABORTED;
 
-	/* Drop specअगरic VLAN ID example */
-	अगर (pkt.vlan_outer == TESTVLAN)
-		वापस XDP_ABORTED;
+	/* Drop specific VLAN ID example */
+	if (pkt.vlan_outer == TESTVLAN)
+		return XDP_ABORTED;
 	/*
 	 * Using XDP_ABORTED makes it possible to record this event,
-	 * via tracepoपूर्णांक xdp:xdp_exception like:
+	 * via tracepoint xdp:xdp_exception like:
 	 *  # perf record -a -e xdp:xdp_exception
 	 *  # perf script
 	 */
-	वापस XDP_PASS;
-पूर्ण
+	return XDP_PASS;
+}
 /*
-Commands to setup VLAN on Linux to test packets माला_लो dropped:
+Commands to setup VLAN on Linux to test packets gets dropped:
 
  export ROOTDEV=ixgbe2
  export VLANID=4011
@@ -143,76 +142,76 @@ Load prog with ip tool:
 */
 
 /* Changing VLAN to zero, have same practical effect as removing the VLAN. */
-#घोषणा TO_VLAN	0
+#define TO_VLAN	0
 
 SEC("xdp_vlan_change")
-पूर्णांक  xdp_prognum1(काष्ठा xdp_md *ctx)
-अणु
-	व्योम *data_end = (व्योम *)(दीर्घ)ctx->data_end;
-	व्योम *data     = (व्योम *)(दीर्घ)ctx->data;
-	काष्ठा parse_pkt pkt = अणु 0 पूर्ण;
+int  xdp_prognum1(struct xdp_md *ctx)
+{
+	void *data_end = (void *)(long)ctx->data_end;
+	void *data     = (void *)(long)ctx->data;
+	struct parse_pkt pkt = { 0 };
 
-	अगर (!parse_eth_frame(data, data_end, &pkt))
-		वापस XDP_ABORTED;
+	if (!parse_eth_frame(data, data_end, &pkt))
+		return XDP_ABORTED;
 
-	/* Change specअगरic VLAN ID */
-	अगर (pkt.vlan_outer == TESTVLAN) अणु
-		काष्ठा _vlan_hdr *vlan_hdr = data + pkt.vlan_outer_offset;
+	/* Change specific VLAN ID */
+	if (pkt.vlan_outer == TESTVLAN) {
+		struct _vlan_hdr *vlan_hdr = data + pkt.vlan_outer_offset;
 
-		/* Modअगरying VLAN, preserve top 4 bits */
+		/* Modifying VLAN, preserve top 4 bits */
 		vlan_hdr->h_vlan_TCI =
 			bpf_htons((bpf_ntohs(vlan_hdr->h_vlan_TCI) & 0xf000)
 				  | TO_VLAN);
-	पूर्ण
+	}
 
-	वापस XDP_PASS;
-पूर्ण
+	return XDP_PASS;
+}
 
 /*
- * Show XDP+TC can cooperate, on creating a VLAN reग_लिखोr.
- * 1. Create a XDP prog that can "pop"/हटाओ a VLAN header.
+ * Show XDP+TC can cooperate, on creating a VLAN rewriter.
+ * 1. Create a XDP prog that can "pop"/remove a VLAN header.
  * 2. Create a TC-bpf prog that egress can add a VLAN header.
  */
 
-#अगर_अघोषित ETH_ALEN /* Ethernet MAC address length */
-#घोषणा ETH_ALEN	6	/* bytes */
-#पूर्ण_अगर
-#घोषणा VLAN_HDR_SZ	4	/* bytes */
+#ifndef ETH_ALEN /* Ethernet MAC address length */
+#define ETH_ALEN	6	/* bytes */
+#endif
+#define VLAN_HDR_SZ	4	/* bytes */
 
 SEC("xdp_vlan_remove_outer")
-पूर्णांक  xdp_prognum2(काष्ठा xdp_md *ctx)
-अणु
-	व्योम *data_end = (व्योम *)(दीर्घ)ctx->data_end;
-	व्योम *data     = (व्योम *)(दीर्घ)ctx->data;
-	काष्ठा parse_pkt pkt = अणु 0 पूर्ण;
-	अक्षर *dest;
+int  xdp_prognum2(struct xdp_md *ctx)
+{
+	void *data_end = (void *)(long)ctx->data_end;
+	void *data     = (void *)(long)ctx->data;
+	struct parse_pkt pkt = { 0 };
+	char *dest;
 
-	अगर (!parse_eth_frame(data, data_end, &pkt))
-		वापस XDP_ABORTED;
+	if (!parse_eth_frame(data, data_end, &pkt))
+		return XDP_ABORTED;
 
-	/* Skip packet अगर no outer VLAN was detected */
-	अगर (pkt.vlan_outer_offset == 0)
-		वापस XDP_PASS;
+	/* Skip packet if no outer VLAN was detected */
+	if (pkt.vlan_outer_offset == 0)
+		return XDP_PASS;
 
-	/* Moving Ethernet header, dest overlap with src, स_हटाओ handle this */
+	/* Moving Ethernet header, dest overlap with src, memmove handle this */
 	dest = data;
 	dest+= VLAN_HDR_SZ;
 	/*
 	 * Notice: Taking over vlan_hdr->h_vlan_encapsulated_proto, by
 	 * only moving two MAC addrs (12 bytes), not overwriting last 2 bytes
 	 */
-	__builtin_स_हटाओ(dest, data, ETH_ALEN * 2);
-	/* Note: LLVM built-in स_हटाओ inlining require size to be स्थिरant */
+	__builtin_memmove(dest, data, ETH_ALEN * 2);
+	/* Note: LLVM built-in memmove inlining require size to be constant */
 
 	/* Move start of packet header seen by Linux kernel stack */
 	bpf_xdp_adjust_head(ctx, VLAN_HDR_SZ);
 
-	वापस XDP_PASS;
-पूर्ण
+	return XDP_PASS;
+}
 
-अटल __always_अंतरभूत
-व्योम shअगरt_mac_4bytes_16bit(व्योम *data)
-अणु
+static __always_inline
+void shift_mac_4bytes_16bit(void *data)
+{
 	__u16 *p = data;
 
 	p[7] = p[5]; /* delete p[7] was vlan_hdr->h_vlan_TCI */
@@ -221,14 +220,14 @@ SEC("xdp_vlan_remove_outer")
 	p[4] = p[2];
 	p[3] = p[1];
 	p[2] = p[0];
-पूर्ण
+}
 
-अटल __always_अंतरभूत
-व्योम shअगरt_mac_4bytes_32bit(व्योम *data)
-अणु
+static __always_inline
+void shift_mac_4bytes_32bit(void *data)
+{
 	__u32 *p = data;
 
-	/* Assuming VLAN hdr present. The 4 bytes in p[3] that माला_लो
+	/* Assuming VLAN hdr present. The 4 bytes in p[3] that gets
 	 * overwritten, is ethhdr->h_proto and vlan_hdr->h_vlan_TCI.
 	 * The vlan_hdr->h_vlan_encapsulated_proto take over role as
 	 * ethhdr->h_proto.
@@ -236,31 +235,31 @@ SEC("xdp_vlan_remove_outer")
 	p[3] = p[2];
 	p[2] = p[1];
 	p[1] = p[0];
-पूर्ण
+}
 
 SEC("xdp_vlan_remove_outer2")
-पूर्णांक  xdp_prognum3(काष्ठा xdp_md *ctx)
-अणु
-	व्योम *data_end = (व्योम *)(दीर्घ)ctx->data_end;
-	व्योम *data     = (व्योम *)(दीर्घ)ctx->data;
-	काष्ठा ethhdr *orig_eth = data;
-	काष्ठा parse_pkt pkt = अणु 0 पूर्ण;
+int  xdp_prognum3(struct xdp_md *ctx)
+{
+	void *data_end = (void *)(long)ctx->data_end;
+	void *data     = (void *)(long)ctx->data;
+	struct ethhdr *orig_eth = data;
+	struct parse_pkt pkt = { 0 };
 
-	अगर (!parse_eth_frame(orig_eth, data_end, &pkt))
-		वापस XDP_ABORTED;
+	if (!parse_eth_frame(orig_eth, data_end, &pkt))
+		return XDP_ABORTED;
 
-	/* Skip packet अगर no outer VLAN was detected */
-	अगर (pkt.vlan_outer_offset == 0)
-		वापस XDP_PASS;
+	/* Skip packet if no outer VLAN was detected */
+	if (pkt.vlan_outer_offset == 0)
+		return XDP_PASS;
 
-	/* Simply shअगरt करोwn MAC addrs 4 bytes, overग_लिखो h_proto + TCI */
-	shअगरt_mac_4bytes_32bit(data);
+	/* Simply shift down MAC addrs 4 bytes, overwrite h_proto + TCI */
+	shift_mac_4bytes_32bit(data);
 
 	/* Move start of packet header seen by Linux kernel stack */
 	bpf_xdp_adjust_head(ctx, VLAN_HDR_SZ);
 
-	वापस XDP_PASS;
-पूर्ण
+	return XDP_PASS;
+}
 
 /*=====================================
  *  BELOW: TC-hook based ebpf programs
@@ -269,17 +268,17 @@ SEC("xdp_vlan_remove_outer2")
  */
 
 SEC("tc_vlan_push")
-पूर्णांक _tc_progA(काष्ठा __sk_buff *ctx)
-अणु
+int _tc_progA(struct __sk_buff *ctx)
+{
 	bpf_skb_vlan_push(ctx, bpf_htons(ETH_P_8021Q), TESTVLAN);
 
-	वापस TC_ACT_OK;
-पूर्ण
+	return TC_ACT_OK;
+}
 /*
 Commands to setup TC to use above bpf prog:
 
 export ROOTDEV=ixgbe2
-export खाता=xdp_vlan01_kern.o
+export FILE=xdp_vlan01_kern.o
 
 # Re-attach clsact to clear/flush existing role
 tc qdisc del dev $ROOTDEV clsact 2> /dev/null ;\
@@ -287,7 +286,7 @@ tc qdisc add dev $ROOTDEV clsact
 
 # Attach BPF prog EGRESS
 tc filter add dev $ROOTDEV egress \
-  prio 1 handle 1 bpf da obj $खाता sec tc_vlan_push
+  prio 1 handle 1 bpf da obj $FILE sec tc_vlan_push
 
 tc filter show dev $ROOTDEV egress
 */

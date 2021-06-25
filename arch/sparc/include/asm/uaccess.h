@@ -1,19 +1,18 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित ___ASM_SPARC_UACCESS_H
-#घोषणा ___ASM_SPARC_UACCESS_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef ___ASM_SPARC_UACCESS_H
+#define ___ASM_SPARC_UACCESS_H
 
-#समावेश <यंत्र/extable.h>
+#include <asm/extable.h>
 
-#अगर defined(__sparc__) && defined(__arch64__)
-#समावेश <यंत्र/uaccess_64.h>
-#अन्यथा
-#समावेश <यंत्र/uaccess_32.h>
-#पूर्ण_अगर
+#if defined(__sparc__) && defined(__arch64__)
+#include <asm/uaccess_64.h>
+#else
+#include <asm/uaccess_32.h>
+#endif
 
-#घोषणा user_addr_max() \
+#define user_addr_max() \
 	(uaccess_kernel() ? ~0UL : TASK_SIZE)
 
-दीर्घ म_नकलन_from_user(अक्षर *dest, स्थिर अक्षर __user *src, दीर्घ count);
+long strncpy_from_user(char *dest, const char __user *src, long count);
 
-#पूर्ण_अगर
+#endif

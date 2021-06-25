@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
     ivtv firmware functions.
     Copyright (C) 2003-2004  Kevin Thayer <nufan_wfk at yahoo.com>
@@ -8,13 +7,13 @@
 
  */
 
-#अगर_अघोषित IVTV_FIRMWARE_H
-#घोषणा IVTV_FIRMWARE_H
+#ifndef IVTV_FIRMWARE_H
+#define IVTV_FIRMWARE_H
 
-पूर्णांक ivtv_firmware_init(काष्ठा ivtv *itv);
-व्योम ivtv_firmware_versions(काष्ठा ivtv *itv);
-व्योम ivtv_halt_firmware(काष्ठा ivtv *itv);
-व्योम ivtv_init_mpeg_decoder(काष्ठा ivtv *itv);
-पूर्णांक ivtv_firmware_check(काष्ठा ivtv *itv, अक्षर *where);
+int ivtv_firmware_init(struct ivtv *itv);
+void ivtv_firmware_versions(struct ivtv *itv);
+void ivtv_halt_firmware(struct ivtv *itv);
+void ivtv_init_mpeg_decoder(struct ivtv *itv);
+int ivtv_firmware_check(struct ivtv *itv, char *where);
 
-#पूर्ण_अगर
+#endif

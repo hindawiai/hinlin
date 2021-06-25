@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Copyright (C) 2014-2018 MediaTek Inc.
  *
@@ -7,101 +6,101 @@
  *	   Sean Wang <sean.wang@mediatek.com>
  *
  */
-#अगर_अघोषित __MTK_EINT_H
-#घोषणा __MTK_EINT_H
+#ifndef __MTK_EINT_H
+#define __MTK_EINT_H
 
-#समावेश <linux/irqकरोमुख्य.h>
+#include <linux/irqdomain.h>
 
-काष्ठा mtk_eपूर्णांक_regs अणु
-	अचिन्हित पूर्णांक	stat;
-	अचिन्हित पूर्णांक	ack;
-	अचिन्हित पूर्णांक	mask;
-	अचिन्हित पूर्णांक	mask_set;
-	अचिन्हित पूर्णांक	mask_clr;
-	अचिन्हित पूर्णांक	sens;
-	अचिन्हित पूर्णांक	sens_set;
-	अचिन्हित पूर्णांक	sens_clr;
-	अचिन्हित पूर्णांक	soft;
-	अचिन्हित पूर्णांक	soft_set;
-	अचिन्हित पूर्णांक	soft_clr;
-	अचिन्हित पूर्णांक	pol;
-	अचिन्हित पूर्णांक	pol_set;
-	अचिन्हित पूर्णांक	pol_clr;
-	अचिन्हित पूर्णांक	करोm_en;
-	अचिन्हित पूर्णांक	dbnc_ctrl;
-	अचिन्हित पूर्णांक	dbnc_set;
-	अचिन्हित पूर्णांक	dbnc_clr;
-पूर्ण;
+struct mtk_eint_regs {
+	unsigned int	stat;
+	unsigned int	ack;
+	unsigned int	mask;
+	unsigned int	mask_set;
+	unsigned int	mask_clr;
+	unsigned int	sens;
+	unsigned int	sens_set;
+	unsigned int	sens_clr;
+	unsigned int	soft;
+	unsigned int	soft_set;
+	unsigned int	soft_clr;
+	unsigned int	pol;
+	unsigned int	pol_set;
+	unsigned int	pol_clr;
+	unsigned int	dom_en;
+	unsigned int	dbnc_ctrl;
+	unsigned int	dbnc_set;
+	unsigned int	dbnc_clr;
+};
 
-काष्ठा mtk_eपूर्णांक_hw अणु
+struct mtk_eint_hw {
 	u8		port_mask;
 	u8		ports;
-	अचिन्हित पूर्णांक	ap_num;
-	अचिन्हित पूर्णांक	db_cnt;
-पूर्ण;
+	unsigned int	ap_num;
+	unsigned int	db_cnt;
+};
 
-काष्ठा mtk_eपूर्णांक;
+struct mtk_eint;
 
-काष्ठा mtk_eपूर्णांक_xt अणु
-	पूर्णांक (*get_gpio_n)(व्योम *data, अचिन्हित दीर्घ eपूर्णांक_n,
-			  अचिन्हित पूर्णांक *gpio_n,
-			  काष्ठा gpio_chip **gpio_chip);
-	पूर्णांक (*get_gpio_state)(व्योम *data, अचिन्हित दीर्घ eपूर्णांक_n);
-	पूर्णांक (*set_gpio_as_eपूर्णांक)(व्योम *data, अचिन्हित दीर्घ eपूर्णांक_n);
-पूर्ण;
+struct mtk_eint_xt {
+	int (*get_gpio_n)(void *data, unsigned long eint_n,
+			  unsigned int *gpio_n,
+			  struct gpio_chip **gpio_chip);
+	int (*get_gpio_state)(void *data, unsigned long eint_n);
+	int (*set_gpio_as_eint)(void *data, unsigned long eint_n);
+};
 
-काष्ठा mtk_eपूर्णांक अणु
-	काष्ठा device *dev;
-	व्योम __iomem *base;
-	काष्ठा irq_करोमुख्य *करोमुख्य;
-	पूर्णांक irq;
+struct mtk_eint {
+	struct device *dev;
+	void __iomem *base;
+	struct irq_domain *domain;
+	int irq;
 
-	पूर्णांक *dual_edge;
+	int *dual_edge;
 	u32 *wake_mask;
 	u32 *cur_mask;
 
-	/* Used to fit पूर्णांकo various EINT device */
-	स्थिर काष्ठा mtk_eपूर्णांक_hw *hw;
-	स्थिर काष्ठा mtk_eपूर्णांक_regs *regs;
+	/* Used to fit into various EINT device */
+	const struct mtk_eint_hw *hw;
+	const struct mtk_eint_regs *regs;
 
-	/* Used to fit पूर्णांकo various pinctrl device */
-	व्योम *pctl;
-	स्थिर काष्ठा mtk_eपूर्णांक_xt *gpio_xlate;
-पूर्ण;
+	/* Used to fit into various pinctrl device */
+	void *pctl;
+	const struct mtk_eint_xt *gpio_xlate;
+};
 
-#अगर IS_ENABLED(CONFIG_EINT_MTK)
-पूर्णांक mtk_eपूर्णांक_करो_init(काष्ठा mtk_eपूर्णांक *eपूर्णांक);
-पूर्णांक mtk_eपूर्णांक_करो_suspend(काष्ठा mtk_eपूर्णांक *eपूर्णांक);
-पूर्णांक mtk_eपूर्णांक_करो_resume(काष्ठा mtk_eपूर्णांक *eपूर्णांक);
-पूर्णांक mtk_eपूर्णांक_set_debounce(काष्ठा mtk_eपूर्णांक *eपूर्णांक, अचिन्हित दीर्घ eपूर्णांक_n,
-			  अचिन्हित पूर्णांक debounce);
-पूर्णांक mtk_eपूर्णांक_find_irq(काष्ठा mtk_eपूर्णांक *eपूर्णांक, अचिन्हित दीर्घ eपूर्णांक_n);
+#if IS_ENABLED(CONFIG_EINT_MTK)
+int mtk_eint_do_init(struct mtk_eint *eint);
+int mtk_eint_do_suspend(struct mtk_eint *eint);
+int mtk_eint_do_resume(struct mtk_eint *eint);
+int mtk_eint_set_debounce(struct mtk_eint *eint, unsigned long eint_n,
+			  unsigned int debounce);
+int mtk_eint_find_irq(struct mtk_eint *eint, unsigned long eint_n);
 
-#अन्यथा
-अटल अंतरभूत पूर्णांक mtk_eपूर्णांक_करो_init(काष्ठा mtk_eपूर्णांक *eपूर्णांक)
-अणु
-	वापस -EOPNOTSUPP;
-पूर्ण
+#else
+static inline int mtk_eint_do_init(struct mtk_eint *eint)
+{
+	return -EOPNOTSUPP;
+}
 
-अटल अंतरभूत पूर्णांक mtk_eपूर्णांक_करो_suspend(काष्ठा mtk_eपूर्णांक *eपूर्णांक)
-अणु
-	वापस -EOPNOTSUPP;
-पूर्ण
+static inline int mtk_eint_do_suspend(struct mtk_eint *eint)
+{
+	return -EOPNOTSUPP;
+}
 
-अटल अंतरभूत पूर्णांक mtk_eपूर्णांक_करो_resume(काष्ठा mtk_eपूर्णांक *eपूर्णांक)
-अणु
-	वापस -EOPNOTSUPP;
-पूर्ण
+static inline int mtk_eint_do_resume(struct mtk_eint *eint)
+{
+	return -EOPNOTSUPP;
+}
 
-अटल अंतरभूत पूर्णांक mtk_eपूर्णांक_set_debounce(काष्ठा mtk_eपूर्णांक *eपूर्णांक, अचिन्हित दीर्घ eपूर्णांक_n,
-			  अचिन्हित पूर्णांक debounce)
-अणु
-	वापस -EOPNOTSUPP;
-पूर्ण
+static inline int mtk_eint_set_debounce(struct mtk_eint *eint, unsigned long eint_n,
+			  unsigned int debounce)
+{
+	return -EOPNOTSUPP;
+}
 
-अटल अंतरभूत पूर्णांक mtk_eपूर्णांक_find_irq(काष्ठा mtk_eपूर्णांक *eपूर्णांक, अचिन्हित दीर्घ eपूर्णांक_n)
-अणु
-	वापस -EOPNOTSUPP;
-पूर्ण
-#पूर्ण_अगर
-#पूर्ण_अगर /* __MTK_EINT_H */
+static inline int mtk_eint_find_irq(struct mtk_eint *eint, unsigned long eint_n)
+{
+	return -EOPNOTSUPP;
+}
+#endif
+#endif /* __MTK_EINT_H */

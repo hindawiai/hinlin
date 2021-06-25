@@ -1,129 +1,128 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright IBM Corp. 2016
  * Author(s): Martin Schwidefsky <schwidefsky@de.ibm.com>
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/syscalls.h>
-#समावेश <linux/संकेत.स>
-#समावेश <linux/mm.h>
-#समावेश <linux/slab.h>
-#समावेश <यंत्र/guarded_storage.h>
-#समावेश "entry.h"
+#include <linux/kernel.h>
+#include <linux/syscalls.h>
+#include <linux/signal.h>
+#include <linux/mm.h>
+#include <linux/slab.h>
+#include <asm/guarded_storage.h>
+#include "entry.h"
 
-व्योम guarded_storage_release(काष्ठा task_काष्ठा *tsk)
-अणु
-	kमुक्त(tsk->thपढ़ो.gs_cb);
-	kमुक्त(tsk->thपढ़ो.gs_bc_cb);
-पूर्ण
+void guarded_storage_release(struct task_struct *tsk)
+{
+	kfree(tsk->thread.gs_cb);
+	kfree(tsk->thread.gs_bc_cb);
+}
 
-अटल पूर्णांक gs_enable(व्योम)
-अणु
-	काष्ठा gs_cb *gs_cb;
+static int gs_enable(void)
+{
+	struct gs_cb *gs_cb;
 
-	अगर (!current->thपढ़ो.gs_cb) अणु
-		gs_cb = kzalloc(माप(*gs_cb), GFP_KERNEL);
-		अगर (!gs_cb)
-			वापस -ENOMEM;
+	if (!current->thread.gs_cb) {
+		gs_cb = kzalloc(sizeof(*gs_cb), GFP_KERNEL);
+		if (!gs_cb)
+			return -ENOMEM;
 		gs_cb->gsd = 25;
 		preempt_disable();
 		__ctl_set_bit(2, 4);
 		load_gs_cb(gs_cb);
-		current->thपढ़ो.gs_cb = gs_cb;
+		current->thread.gs_cb = gs_cb;
 		preempt_enable();
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल पूर्णांक gs_disable(व्योम)
-अणु
-	अगर (current->thपढ़ो.gs_cb) अणु
+static int gs_disable(void)
+{
+	if (current->thread.gs_cb) {
 		preempt_disable();
-		kमुक्त(current->thपढ़ो.gs_cb);
-		current->thपढ़ो.gs_cb = शून्य;
+		kfree(current->thread.gs_cb);
+		current->thread.gs_cb = NULL;
 		__ctl_clear_bit(2, 4);
 		preempt_enable();
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल पूर्णांक gs_set_bc_cb(काष्ठा gs_cb __user *u_gs_cb)
-अणु
-	काष्ठा gs_cb *gs_cb;
+static int gs_set_bc_cb(struct gs_cb __user *u_gs_cb)
+{
+	struct gs_cb *gs_cb;
 
-	gs_cb = current->thपढ़ो.gs_bc_cb;
-	अगर (!gs_cb) अणु
-		gs_cb = kzalloc(माप(*gs_cb), GFP_KERNEL);
-		अगर (!gs_cb)
-			वापस -ENOMEM;
-		current->thपढ़ो.gs_bc_cb = gs_cb;
-	पूर्ण
-	अगर (copy_from_user(gs_cb, u_gs_cb, माप(*gs_cb)))
-		वापस -EFAULT;
-	वापस 0;
-पूर्ण
+	gs_cb = current->thread.gs_bc_cb;
+	if (!gs_cb) {
+		gs_cb = kzalloc(sizeof(*gs_cb), GFP_KERNEL);
+		if (!gs_cb)
+			return -ENOMEM;
+		current->thread.gs_bc_cb = gs_cb;
+	}
+	if (copy_from_user(gs_cb, u_gs_cb, sizeof(*gs_cb)))
+		return -EFAULT;
+	return 0;
+}
 
-अटल पूर्णांक gs_clear_bc_cb(व्योम)
-अणु
-	काष्ठा gs_cb *gs_cb;
+static int gs_clear_bc_cb(void)
+{
+	struct gs_cb *gs_cb;
 
-	gs_cb = current->thपढ़ो.gs_bc_cb;
-	current->thपढ़ो.gs_bc_cb = शून्य;
-	kमुक्त(gs_cb);
-	वापस 0;
-पूर्ण
+	gs_cb = current->thread.gs_bc_cb;
+	current->thread.gs_bc_cb = NULL;
+	kfree(gs_cb);
+	return 0;
+}
 
-व्योम gs_load_bc_cb(काष्ठा pt_regs *regs)
-अणु
-	काष्ठा gs_cb *gs_cb;
+void gs_load_bc_cb(struct pt_regs *regs)
+{
+	struct gs_cb *gs_cb;
 
 	preempt_disable();
-	clear_thपढ़ो_flag(TIF_GUARDED_STORAGE);
-	gs_cb = current->thपढ़ो.gs_bc_cb;
-	अगर (gs_cb) अणु
-		kमुक्त(current->thपढ़ो.gs_cb);
-		current->thपढ़ो.gs_bc_cb = शून्य;
+	clear_thread_flag(TIF_GUARDED_STORAGE);
+	gs_cb = current->thread.gs_bc_cb;
+	if (gs_cb) {
+		kfree(current->thread.gs_cb);
+		current->thread.gs_bc_cb = NULL;
 		__ctl_set_bit(2, 4);
 		load_gs_cb(gs_cb);
-		current->thपढ़ो.gs_cb = gs_cb;
-	पूर्ण
+		current->thread.gs_cb = gs_cb;
+	}
 	preempt_enable();
-पूर्ण
+}
 
-अटल पूर्णांक gs_broadcast(व्योम)
-अणु
-	काष्ठा task_काष्ठा *sibling;
+static int gs_broadcast(void)
+{
+	struct task_struct *sibling;
 
-	पढ़ो_lock(&tasklist_lock);
-	क्रम_each_thपढ़ो(current, sibling) अणु
-		अगर (!sibling->thपढ़ो.gs_bc_cb)
-			जारी;
-		अगर (test_and_set_tsk_thपढ़ो_flag(sibling, TIF_GUARDED_STORAGE))
+	read_lock(&tasklist_lock);
+	for_each_thread(current, sibling) {
+		if (!sibling->thread.gs_bc_cb)
+			continue;
+		if (test_and_set_tsk_thread_flag(sibling, TIF_GUARDED_STORAGE))
 			kick_process(sibling);
-	पूर्ण
-	पढ़ो_unlock(&tasklist_lock);
-	वापस 0;
-पूर्ण
+	}
+	read_unlock(&tasklist_lock);
+	return 0;
+}
 
-SYSCALL_DEFINE2(s390_guarded_storage, पूर्णांक, command,
-		काष्ठा gs_cb __user *, gs_cb)
-अणु
-	अगर (!MACHINE_HAS_GS)
-		वापस -EOPNOTSUPP;
-	चयन (command) अणु
-	हाल GS_ENABLE:
-		वापस gs_enable();
-	हाल GS_DISABLE:
-		वापस gs_disable();
-	हाल GS_SET_BC_CB:
-		वापस gs_set_bc_cb(gs_cb);
-	हाल GS_CLEAR_BC_CB:
-		वापस gs_clear_bc_cb();
-	हाल GS_BROADCAST:
-		वापस gs_broadcast();
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-पूर्ण
+SYSCALL_DEFINE2(s390_guarded_storage, int, command,
+		struct gs_cb __user *, gs_cb)
+{
+	if (!MACHINE_HAS_GS)
+		return -EOPNOTSUPP;
+	switch (command) {
+	case GS_ENABLE:
+		return gs_enable();
+	case GS_DISABLE:
+		return gs_disable();
+	case GS_SET_BC_CB:
+		return gs_set_bc_cb(gs_cb);
+	case GS_CLEAR_BC_CB:
+		return gs_clear_bc_cb();
+	case GS_BROADCAST:
+		return gs_broadcast();
+	default:
+		return -EINVAL;
+	}
+}

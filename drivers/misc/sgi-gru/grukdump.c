@@ -1,165 +1,164 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * SN Platक्रमm GRU Driver
+ * SN Platform GRU Driver
  *
  *            Dump GRU State
  *
  *  Copyright (c) 2008 Silicon Graphics, Inc.  All Rights Reserved.
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/bitops.h>
-#समावेश <यंत्र/uv/uv_hub.h>
+#include <linux/kernel.h>
+#include <linux/mm.h>
+#include <linux/spinlock.h>
+#include <linux/uaccess.h>
+#include <linux/delay.h>
+#include <linux/bitops.h>
+#include <asm/uv/uv_hub.h>
 
-#समावेश <linux/nospec.h>
+#include <linux/nospec.h>
 
-#समावेश "gru.h"
-#समावेश "grutables.h"
-#समावेश "gruhandles.h"
-#समावेश "grulib.h"
+#include "gru.h"
+#include "grutables.h"
+#include "gruhandles.h"
+#include "grulib.h"
 
-#घोषणा CCH_LOCK_ATTEMPTS	10
+#define CCH_LOCK_ATTEMPTS	10
 
-अटल पूर्णांक gru_user_copy_handle(व्योम __user **dp, व्योम *s)
-अणु
-	अगर (copy_to_user(*dp, s, GRU_HANDLE_BYTES))
-		वापस -1;
+static int gru_user_copy_handle(void __user **dp, void *s)
+{
+	if (copy_to_user(*dp, s, GRU_HANDLE_BYTES))
+		return -1;
 	*dp += GRU_HANDLE_BYTES;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक gru_dump_context_data(व्योम *grubase,
-			काष्ठा gru_context_configuration_handle *cch,
-			व्योम __user *ubuf, पूर्णांक ctxnum, पूर्णांक dsrcnt,
-			पूर्णांक flush_cbrs)
-अणु
-	व्योम *cb, *cbe, *tfh, *gseg;
-	पूर्णांक i, scr;
+static int gru_dump_context_data(void *grubase,
+			struct gru_context_configuration_handle *cch,
+			void __user *ubuf, int ctxnum, int dsrcnt,
+			int flush_cbrs)
+{
+	void *cb, *cbe, *tfh, *gseg;
+	int i, scr;
 
 	gseg = grubase + ctxnum * GRU_GSEG_STRIDE;
 	cb = gseg + GRU_CB_BASE;
 	cbe = grubase + GRU_CBE_BASE;
 	tfh = grubase + GRU_TFH_BASE;
 
-	क्रम_each_cbr_in_allocation_map(i, &cch->cbr_allocation_map, scr) अणु
-		अगर (flush_cbrs)
+	for_each_cbr_in_allocation_map(i, &cch->cbr_allocation_map, scr) {
+		if (flush_cbrs)
 			gru_flush_cache(cb);
-		अगर (gru_user_copy_handle(&ubuf, cb))
-			जाओ fail;
-		अगर (gru_user_copy_handle(&ubuf, tfh + i * GRU_HANDLE_STRIDE))
-			जाओ fail;
-		अगर (gru_user_copy_handle(&ubuf, cbe + i * GRU_HANDLE_STRIDE))
-			जाओ fail;
+		if (gru_user_copy_handle(&ubuf, cb))
+			goto fail;
+		if (gru_user_copy_handle(&ubuf, tfh + i * GRU_HANDLE_STRIDE))
+			goto fail;
+		if (gru_user_copy_handle(&ubuf, cbe + i * GRU_HANDLE_STRIDE))
+			goto fail;
 		cb += GRU_HANDLE_STRIDE;
-	पूर्ण
-	अगर (dsrcnt)
-		स_नकल(ubuf, gseg + GRU_DS_BASE, dsrcnt * GRU_HANDLE_STRIDE);
-	वापस 0;
+	}
+	if (dsrcnt)
+		memcpy(ubuf, gseg + GRU_DS_BASE, dsrcnt * GRU_HANDLE_STRIDE);
+	return 0;
 
 fail:
-	वापस -EFAULT;
-पूर्ण
+	return -EFAULT;
+}
 
-अटल पूर्णांक gru_dump_tfm(काष्ठा gru_state *gru,
-		व्योम __user *ubuf, व्योम __user *ubufend)
-अणु
-	काष्ठा gru_tlb_fault_map *tfm;
-	पूर्णांक i;
+static int gru_dump_tfm(struct gru_state *gru,
+		void __user *ubuf, void __user *ubufend)
+{
+	struct gru_tlb_fault_map *tfm;
+	int i;
 
-	अगर (GRU_NUM_TFM * GRU_CACHE_LINE_BYTES > ubufend - ubuf)
-		वापस -EFBIG;
+	if (GRU_NUM_TFM * GRU_CACHE_LINE_BYTES > ubufend - ubuf)
+		return -EFBIG;
 
-	क्रम (i = 0; i < GRU_NUM_TFM; i++) अणु
+	for (i = 0; i < GRU_NUM_TFM; i++) {
 		tfm = get_tfm(gru->gs_gru_base_vaddr, i);
-		अगर (gru_user_copy_handle(&ubuf, tfm))
-			जाओ fail;
-	पूर्ण
-	वापस GRU_NUM_TFM * GRU_CACHE_LINE_BYTES;
+		if (gru_user_copy_handle(&ubuf, tfm))
+			goto fail;
+	}
+	return GRU_NUM_TFM * GRU_CACHE_LINE_BYTES;
 
 fail:
-	वापस -EFAULT;
-पूर्ण
+	return -EFAULT;
+}
 
-अटल पूर्णांक gru_dump_tgh(काष्ठा gru_state *gru,
-		व्योम __user *ubuf, व्योम __user *ubufend)
-अणु
-	काष्ठा gru_tlb_global_handle *tgh;
-	पूर्णांक i;
+static int gru_dump_tgh(struct gru_state *gru,
+		void __user *ubuf, void __user *ubufend)
+{
+	struct gru_tlb_global_handle *tgh;
+	int i;
 
-	अगर (GRU_NUM_TGH * GRU_CACHE_LINE_BYTES > ubufend - ubuf)
-		वापस -EFBIG;
+	if (GRU_NUM_TGH * GRU_CACHE_LINE_BYTES > ubufend - ubuf)
+		return -EFBIG;
 
-	क्रम (i = 0; i < GRU_NUM_TGH; i++) अणु
+	for (i = 0; i < GRU_NUM_TGH; i++) {
 		tgh = get_tgh(gru->gs_gru_base_vaddr, i);
-		अगर (gru_user_copy_handle(&ubuf, tgh))
-			जाओ fail;
-	पूर्ण
-	वापस GRU_NUM_TGH * GRU_CACHE_LINE_BYTES;
+		if (gru_user_copy_handle(&ubuf, tgh))
+			goto fail;
+	}
+	return GRU_NUM_TGH * GRU_CACHE_LINE_BYTES;
 
 fail:
-	वापस -EFAULT;
-पूर्ण
+	return -EFAULT;
+}
 
-अटल पूर्णांक gru_dump_context(काष्ठा gru_state *gru, पूर्णांक ctxnum,
-		व्योम __user *ubuf, व्योम __user *ubufend, अक्षर data_opt,
-		अक्षर lock_cch, अक्षर flush_cbrs)
-अणु
-	काष्ठा gru_dump_context_header hdr;
-	काष्ठा gru_dump_context_header __user *uhdr = ubuf;
-	काष्ठा gru_context_configuration_handle *cch, *ubufcch;
-	काष्ठा gru_thपढ़ो_state *gts;
-	पूर्णांक try, cch_locked, cbrcnt = 0, dsrcnt = 0, bytes = 0, ret = 0;
-	व्योम *grubase;
+static int gru_dump_context(struct gru_state *gru, int ctxnum,
+		void __user *ubuf, void __user *ubufend, char data_opt,
+		char lock_cch, char flush_cbrs)
+{
+	struct gru_dump_context_header hdr;
+	struct gru_dump_context_header __user *uhdr = ubuf;
+	struct gru_context_configuration_handle *cch, *ubufcch;
+	struct gru_thread_state *gts;
+	int try, cch_locked, cbrcnt = 0, dsrcnt = 0, bytes = 0, ret = 0;
+	void *grubase;
 
-	स_रखो(&hdr, 0, माप(hdr));
+	memset(&hdr, 0, sizeof(hdr));
 	grubase = gru->gs_gru_base_vaddr;
 	cch = get_cch(grubase, ctxnum);
-	क्रम (try = 0; try < CCH_LOCK_ATTEMPTS; try++) अणु
+	for (try = 0; try < CCH_LOCK_ATTEMPTS; try++) {
 		cch_locked =  trylock_cch_handle(cch);
-		अगर (cch_locked)
-			अवरोध;
+		if (cch_locked)
+			break;
 		msleep(1);
-	पूर्ण
+	}
 
-	ubuf += माप(hdr);
+	ubuf += sizeof(hdr);
 	ubufcch = ubuf;
-	अगर (gru_user_copy_handle(&ubuf, cch)) अणु
-		अगर (cch_locked)
+	if (gru_user_copy_handle(&ubuf, cch)) {
+		if (cch_locked)
 			unlock_cch_handle(cch);
-		वापस -EFAULT;
-	पूर्ण
-	अगर (cch_locked)
+		return -EFAULT;
+	}
+	if (cch_locked)
 		ubufcch->delresp = 0;
-	bytes = माप(hdr) + GRU_CACHE_LINE_BYTES;
+	bytes = sizeof(hdr) + GRU_CACHE_LINE_BYTES;
 
-	अगर (cch_locked || !lock_cch) अणु
+	if (cch_locked || !lock_cch) {
 		gts = gru->gs_gts[ctxnum];
-		अगर (gts && gts->ts_vma) अणु
+		if (gts && gts->ts_vma) {
 			hdr.pid = gts->ts_tgid_owner;
 			hdr.vaddr = gts->ts_vma->vm_start;
-		पूर्ण
-		अगर (cch->state != CCHSTATE_INACTIVE) अणु
+		}
+		if (cch->state != CCHSTATE_INACTIVE) {
 			cbrcnt = hweight64(cch->cbr_allocation_map) *
 						GRU_CBR_AU_SIZE;
 			dsrcnt = data_opt ? hweight32(cch->dsr_allocation_map) *
 						GRU_DSR_AU_CL : 0;
-		पूर्ण
+		}
 		bytes += (3 * cbrcnt + dsrcnt) * GRU_CACHE_LINE_BYTES;
-		अगर (bytes > ubufend - ubuf)
+		if (bytes > ubufend - ubuf)
 			ret = -EFBIG;
-		अन्यथा
+		else
 			ret = gru_dump_context_data(grubase, cch, ubuf, ctxnum,
 							dsrcnt, flush_cbrs);
-	पूर्ण
-	अगर (cch_locked)
+	}
+	if (cch_locked)
 		unlock_cch_handle(cch);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	hdr.magic = GRU_DUMP_MAGIC;
 	hdr.gid = gru->gs_gid;
@@ -167,26 +166,26 @@ fail:
 	hdr.cbrcnt = cbrcnt;
 	hdr.dsrcnt = dsrcnt;
 	hdr.cch_locked = cch_locked;
-	अगर (copy_to_user(uhdr, &hdr, माप(hdr)))
-		वापस -EFAULT;
+	if (copy_to_user(uhdr, &hdr, sizeof(hdr)))
+		return -EFAULT;
 
-	वापस bytes;
-पूर्ण
+	return bytes;
+}
 
-पूर्णांक gru_dump_chiplet_request(अचिन्हित दीर्घ arg)
-अणु
-	काष्ठा gru_state *gru;
-	काष्ठा gru_dump_chiplet_state_req req;
-	व्योम __user *ubuf;
-	व्योम __user *ubufend;
-	पूर्णांक ctxnum, ret, cnt = 0;
+int gru_dump_chiplet_request(unsigned long arg)
+{
+	struct gru_state *gru;
+	struct gru_dump_chiplet_state_req req;
+	void __user *ubuf;
+	void __user *ubufend;
+	int ctxnum, ret, cnt = 0;
 
-	अगर (copy_from_user(&req, (व्योम __user *)arg, माप(req)))
-		वापस -EFAULT;
+	if (copy_from_user(&req, (void __user *)arg, sizeof(req)))
+		return -EFAULT;
 
 	/* Currently, only dump by gid is implemented */
-	अगर (req.gid >= gru_max_gids)
-		वापस -EINVAL;
+	if (req.gid >= gru_max_gids)
+		return -EINVAL;
 	req.gid = array_index_nospec(req.gid, gru_max_gids);
 
 	gru = GID_TO_GRU(req.gid);
@@ -194,31 +193,31 @@ fail:
 	ubufend = req.buf + req.buflen;
 
 	ret = gru_dump_tfm(gru, ubuf, ubufend);
-	अगर (ret < 0)
-		जाओ fail;
+	if (ret < 0)
+		goto fail;
 	ubuf += ret;
 
 	ret = gru_dump_tgh(gru, ubuf, ubufend);
-	अगर (ret < 0)
-		जाओ fail;
+	if (ret < 0)
+		goto fail;
 	ubuf += ret;
 
-	क्रम (ctxnum = 0; ctxnum < GRU_NUM_CCH; ctxnum++) अणु
-		अगर (req.ctxnum == ctxnum || req.ctxnum < 0) अणु
+	for (ctxnum = 0; ctxnum < GRU_NUM_CCH; ctxnum++) {
+		if (req.ctxnum == ctxnum || req.ctxnum < 0) {
 			ret = gru_dump_context(gru, ctxnum, ubuf, ubufend,
 						req.data_opt, req.lock_cch,
 						req.flush_cbrs);
-			अगर (ret < 0)
-				जाओ fail;
+			if (ret < 0)
+				goto fail;
 			ubuf += ret;
 			cnt++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (copy_to_user((व्योम __user *)arg, &req, माप(req)))
-		वापस -EFAULT;
-	वापस cnt;
+	if (copy_to_user((void __user *)arg, &req, sizeof(req)))
+		return -EFAULT;
+	return cnt;
 
 fail:
-	वापस ret;
-पूर्ण
+	return ret;
+}

@@ -1,249 +1,248 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * ZyDAS ZD1301 driver (demodulator)
  *
  * Copyright (C) 2015 Antti Palosaari <crope@iki.fi>
  */
 
-#समावेश "zd1301_demod.h"
+#include "zd1301_demod.h"
 
-अटल u8 zd1301_demod_gain = 0x38;
+static u8 zd1301_demod_gain = 0x38;
 module_param_named(gain, zd1301_demod_gain, byte, 0644);
 MODULE_PARM_DESC(gain, "gain (value: 0x00 - 0x70, default: 0x38)");
 
-काष्ठा zd1301_demod_dev अणु
-	काष्ठा platक्रमm_device *pdev;
-	काष्ठा dvb_frontend frontend;
-	काष्ठा i2c_adapter adapter;
+struct zd1301_demod_dev {
+	struct platform_device *pdev;
+	struct dvb_frontend frontend;
+	struct i2c_adapter adapter;
 	u8 gain;
-पूर्ण;
+};
 
-अटल पूर्णांक zd1301_demod_wreg(काष्ठा zd1301_demod_dev *dev, u16 reg, u8 val)
-अणु
-	काष्ठा platक्रमm_device *pdev = dev->pdev;
-	काष्ठा zd1301_demod_platक्रमm_data *pdata = pdev->dev.platक्रमm_data;
+static int zd1301_demod_wreg(struct zd1301_demod_dev *dev, u16 reg, u8 val)
+{
+	struct platform_device *pdev = dev->pdev;
+	struct zd1301_demod_platform_data *pdata = pdev->dev.platform_data;
 
-	वापस pdata->reg_ग_लिखो(pdata->reg_priv, reg, val);
-पूर्ण
+	return pdata->reg_write(pdata->reg_priv, reg, val);
+}
 
-अटल पूर्णांक zd1301_demod_rreg(काष्ठा zd1301_demod_dev *dev, u16 reg, u8 *val)
-अणु
-	काष्ठा platक्रमm_device *pdev = dev->pdev;
-	काष्ठा zd1301_demod_platक्रमm_data *pdata = pdev->dev.platक्रमm_data;
+static int zd1301_demod_rreg(struct zd1301_demod_dev *dev, u16 reg, u8 *val)
+{
+	struct platform_device *pdev = dev->pdev;
+	struct zd1301_demod_platform_data *pdata = pdev->dev.platform_data;
 
-	वापस pdata->reg_पढ़ो(pdata->reg_priv, reg, val);
-पूर्ण
+	return pdata->reg_read(pdata->reg_priv, reg, val);
+}
 
-अटल पूर्णांक zd1301_demod_set_frontend(काष्ठा dvb_frontend *fe)
-अणु
-	काष्ठा zd1301_demod_dev *dev = fe->demodulator_priv;
-	काष्ठा platक्रमm_device *pdev = dev->pdev;
-	काष्ठा dtv_frontend_properties *c = &fe->dtv_property_cache;
-	पूर्णांक ret;
-	u32 अगर_frequency;
+static int zd1301_demod_set_frontend(struct dvb_frontend *fe)
+{
+	struct zd1301_demod_dev *dev = fe->demodulator_priv;
+	struct platform_device *pdev = dev->pdev;
+	struct dtv_frontend_properties *c = &fe->dtv_property_cache;
+	int ret;
+	u32 if_frequency;
 	u8 r6a50_val;
 
 	dev_dbg(&pdev->dev, "frequency=%u bandwidth_hz=%u\n",
 		c->frequency, c->bandwidth_hz);
 
 	/* Program tuner */
-	अगर (fe->ops.tuner_ops.set_params &&
-	    fe->ops.tuner_ops.get_अगर_frequency) अणु
+	if (fe->ops.tuner_ops.set_params &&
+	    fe->ops.tuner_ops.get_if_frequency) {
 		ret = fe->ops.tuner_ops.set_params(fe);
-		अगर (ret)
-			जाओ err;
-		ret = fe->ops.tuner_ops.get_अगर_frequency(fe, &अगर_frequency);
-		अगर (ret)
-			जाओ err;
-	पूर्ण अन्यथा अणु
+		if (ret)
+			goto err;
+		ret = fe->ops.tuner_ops.get_if_frequency(fe, &if_frequency);
+		if (ret)
+			goto err;
+	} else {
 		ret = -EINVAL;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	dev_dbg(&pdev->dev, "if_frequency=%u\n", अगर_frequency);
-	अगर (अगर_frequency != 36150000) अणु
+	dev_dbg(&pdev->dev, "if_frequency=%u\n", if_frequency);
+	if (if_frequency != 36150000) {
 		ret = -EINVAL;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	चयन (c->bandwidth_hz) अणु
-	हाल 6000000:
+	switch (c->bandwidth_hz) {
+	case 6000000:
 		r6a50_val = 0x78;
-		अवरोध;
-	हाल 7000000:
+		break;
+	case 7000000:
 		r6a50_val = 0x68;
-		अवरोध;
-	हाल 8000000:
+		break;
+	case 8000000:
 		r6a50_val = 0x58;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		ret = -EINVAL;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	ret = zd1301_demod_wreg(dev, 0x6a60, 0x11);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 	ret = zd1301_demod_wreg(dev, 0x6a47, 0x46);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 	ret = zd1301_demod_wreg(dev, 0x6a48, 0x46);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 	ret = zd1301_demod_wreg(dev, 0x6a4a, 0x15);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 	ret = zd1301_demod_wreg(dev, 0x6a4b, 0x63);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 	ret = zd1301_demod_wreg(dev, 0x6a5b, 0x99);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 	ret = zd1301_demod_wreg(dev, 0x6a3b, 0x10);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 	ret = zd1301_demod_wreg(dev, 0x6806, 0x01);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 	ret = zd1301_demod_wreg(dev, 0x6a41, 0x08);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 	ret = zd1301_demod_wreg(dev, 0x6a42, 0x46);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 	ret = zd1301_demod_wreg(dev, 0x6a44, 0x14);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 	ret = zd1301_demod_wreg(dev, 0x6a45, 0x67);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 	ret = zd1301_demod_wreg(dev, 0x6a38, 0x00);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 	ret = zd1301_demod_wreg(dev, 0x6a4c, 0x52);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 	ret = zd1301_demod_wreg(dev, 0x6a49, 0x2a);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 	ret = zd1301_demod_wreg(dev, 0x6840, 0x2e);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 	ret = zd1301_demod_wreg(dev, 0x6a50, r6a50_val);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 	ret = zd1301_demod_wreg(dev, 0x6a38, 0x07);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 
-	वापस 0;
+	return 0;
 err:
 	dev_dbg(&pdev->dev, "failed=%d\n", ret);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक zd1301_demod_sleep(काष्ठा dvb_frontend *fe)
-अणु
-	काष्ठा zd1301_demod_dev *dev = fe->demodulator_priv;
-	काष्ठा platक्रमm_device *pdev = dev->pdev;
-	पूर्णांक ret;
+static int zd1301_demod_sleep(struct dvb_frontend *fe)
+{
+	struct zd1301_demod_dev *dev = fe->demodulator_priv;
+	struct platform_device *pdev = dev->pdev;
+	int ret;
 
 	dev_dbg(&pdev->dev, "\n");
 
 	ret = zd1301_demod_wreg(dev, 0x6a43, 0x70);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 	ret = zd1301_demod_wreg(dev, 0x684e, 0x00);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 	ret = zd1301_demod_wreg(dev, 0x6849, 0x00);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 	ret = zd1301_demod_wreg(dev, 0x68e2, 0xd7);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 	ret = zd1301_demod_wreg(dev, 0x68e0, 0x39);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 	ret = zd1301_demod_wreg(dev, 0x6840, 0x21);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 
-	वापस 0;
+	return 0;
 err:
 	dev_dbg(&pdev->dev, "failed=%d\n", ret);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक zd1301_demod_init(काष्ठा dvb_frontend *fe)
-अणु
-	काष्ठा zd1301_demod_dev *dev = fe->demodulator_priv;
-	काष्ठा platक्रमm_device *pdev = dev->pdev;
-	पूर्णांक ret;
+static int zd1301_demod_init(struct dvb_frontend *fe)
+{
+	struct zd1301_demod_dev *dev = fe->demodulator_priv;
+	struct platform_device *pdev = dev->pdev;
+	int ret;
 
 	dev_dbg(&pdev->dev, "\n");
 
 	ret = zd1301_demod_wreg(dev, 0x6840, 0x26);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 	ret = zd1301_demod_wreg(dev, 0x68e0, 0xff);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 	ret = zd1301_demod_wreg(dev, 0x68e2, 0xd8);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 	ret = zd1301_demod_wreg(dev, 0x6849, 0x4e);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 	ret = zd1301_demod_wreg(dev, 0x684e, 0x01);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 	ret = zd1301_demod_wreg(dev, 0x6a43, zd1301_demod_gain);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 
-	वापस 0;
+	return 0;
 err:
 	dev_dbg(&pdev->dev, "failed=%d\n", ret);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक zd1301_demod_get_tune_settings(काष्ठा dvb_frontend *fe,
-					  काष्ठा dvb_frontend_tune_settings *settings)
-अणु
-	काष्ठा zd1301_demod_dev *dev = fe->demodulator_priv;
-	काष्ठा platक्रमm_device *pdev = dev->pdev;
+static int zd1301_demod_get_tune_settings(struct dvb_frontend *fe,
+					  struct dvb_frontend_tune_settings *settings)
+{
+	struct zd1301_demod_dev *dev = fe->demodulator_priv;
+	struct platform_device *pdev = dev->pdev;
 
 	dev_dbg(&pdev->dev, "\n");
 
 	/* ~180ms seems to be enough */
 	settings->min_delay_ms = 400;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक zd1301_demod_पढ़ो_status(काष्ठा dvb_frontend *fe,
-				    क्रमागत fe_status *status)
-अणु
-	काष्ठा zd1301_demod_dev *dev = fe->demodulator_priv;
-	काष्ठा platक्रमm_device *pdev = dev->pdev;
-	पूर्णांक ret;
-	u8 u8पंचांगp;
+static int zd1301_demod_read_status(struct dvb_frontend *fe,
+				    enum fe_status *status)
+{
+	struct zd1301_demod_dev *dev = fe->demodulator_priv;
+	struct platform_device *pdev = dev->pdev;
+	int ret;
+	u8 u8tmp;
 
-	ret = zd1301_demod_rreg(dev, 0x6a24, &u8पंचांगp);
-	अगर (ret)
-		जाओ err;
-	अगर (u8पंचांगp > 0x00 && u8पंचांगp < 0x20)
+	ret = zd1301_demod_rreg(dev, 0x6a24, &u8tmp);
+	if (ret)
+		goto err;
+	if (u8tmp > 0x00 && u8tmp < 0x20)
 		*status = FE_HAS_SIGNAL | FE_HAS_CARRIER | FE_HAS_VITERBI |
 			  FE_HAS_SYNC | FE_HAS_LOCK;
-	अन्यथा
+	else
 		*status = 0;
 
-	dev_dbg(&pdev->dev, "lock byte=%02x\n", u8पंचांगp);
+	dev_dbg(&pdev->dev, "lock byte=%02x\n", u8tmp);
 
 	/*
-	 * Interesting रेजिस्टरs here are:
+	 * Interesting registers here are:
 	 * 0x6a05: get some gain value
 	 * 0x6a06: get about same gain value than set to 0x6a43
 	 * 0x6a07: get some gain value
@@ -251,28 +250,28 @@ err:
 	 * 0x6a24: get demod lock bits (FSM stage?)
 	 *
 	 * Driver should implement some kind of algorithm to calculate suitable
-	 * value क्रम रेजिस्टर 0x6a43, based likely values from रेजिस्टर 0x6a05
-	 * and 0x6a07. Looks like gain रेजिस्टर 0x6a43 value could be from
+	 * value for register 0x6a43, based likely values from register 0x6a05
+	 * and 0x6a07. Looks like gain register 0x6a43 value could be from
 	 * range 0x00 - 0x70.
 	 */
 
-	अगर (dev->gain != zd1301_demod_gain) अणु
+	if (dev->gain != zd1301_demod_gain) {
 		dev->gain = zd1301_demod_gain;
 
 		ret = zd1301_demod_wreg(dev, 0x6a43, dev->gain);
-		अगर (ret)
-			जाओ err;
-	पूर्ण
+		if (ret)
+			goto err;
+	}
 
-	वापस 0;
+	return 0;
 err:
 	dev_dbg(&pdev->dev, "failed=%d\n", ret);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा dvb_frontend_ops zd1301_demod_ops = अणु
-	.delsys = अणुSYS_DVBTपूर्ण,
-	.info = अणु
+static const struct dvb_frontend_ops zd1301_demod_ops = {
+	.delsys = {SYS_DVBT},
+	.info = {
 		.name = "ZyDAS ZD1301",
 		.caps = FE_CAN_FEC_1_2 |
 			FE_CAN_FEC_2_3 |
@@ -288,194 +287,194 @@ err:
 			FE_CAN_GUARD_INTERVAL_AUTO |
 			FE_CAN_HIERARCHY_AUTO |
 			FE_CAN_MUTE_TS
-	पूर्ण,
+	},
 
 	.sleep = zd1301_demod_sleep,
 	.init = zd1301_demod_init,
 	.set_frontend = zd1301_demod_set_frontend,
 	.get_tune_settings = zd1301_demod_get_tune_settings,
-	.पढ़ो_status = zd1301_demod_पढ़ो_status,
-पूर्ण;
+	.read_status = zd1301_demod_read_status,
+};
 
-काष्ठा dvb_frontend *zd1301_demod_get_dvb_frontend(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा zd1301_demod_dev *dev = platक्रमm_get_drvdata(pdev);
+struct dvb_frontend *zd1301_demod_get_dvb_frontend(struct platform_device *pdev)
+{
+	struct zd1301_demod_dev *dev = platform_get_drvdata(pdev);
 
 	dev_dbg(&pdev->dev, "\n");
 
-	वापस &dev->frontend;
-पूर्ण
+	return &dev->frontend;
+}
 EXPORT_SYMBOL(zd1301_demod_get_dvb_frontend);
 
-अटल पूर्णांक zd1301_demod_i2c_master_xfer(काष्ठा i2c_adapter *adapter,
-					काष्ठा i2c_msg msg[], पूर्णांक num)
-अणु
-	काष्ठा zd1301_demod_dev *dev = i2c_get_adapdata(adapter);
-	काष्ठा platक्रमm_device *pdev = dev->pdev;
-	पूर्णांक ret, i;
-	अचिन्हित दीर्घ समयout;
-	u8 u8पंचांगp;
+static int zd1301_demod_i2c_master_xfer(struct i2c_adapter *adapter,
+					struct i2c_msg msg[], int num)
+{
+	struct zd1301_demod_dev *dev = i2c_get_adapdata(adapter);
+	struct platform_device *pdev = dev->pdev;
+	int ret, i;
+	unsigned long timeout;
+	u8 u8tmp;
 
-	#घोषणा I2C_XFER_TIMEOUT 5
-	#घोषणा ZD1301_IS_I2C_XFER_WRITE_READ(_msg, _num) \
+	#define I2C_XFER_TIMEOUT 5
+	#define ZD1301_IS_I2C_XFER_WRITE_READ(_msg, _num) \
 		(_num == 2 && !(_msg[0].flags & I2C_M_RD) && (_msg[1].flags & I2C_M_RD))
-	#घोषणा ZD1301_IS_I2C_XFER_WRITE(_msg, _num) \
+	#define ZD1301_IS_I2C_XFER_WRITE(_msg, _num) \
 		(_num == 1 && !(_msg[0].flags & I2C_M_RD))
-	#घोषणा ZD1301_IS_I2C_XFER_READ(_msg, _num) \
+	#define ZD1301_IS_I2C_XFER_READ(_msg, _num) \
 		(_num == 1 && (_msg[0].flags & I2C_M_RD))
-	अगर (ZD1301_IS_I2C_XFER_WRITE_READ(msg, num)) अणु
+	if (ZD1301_IS_I2C_XFER_WRITE_READ(msg, num)) {
 		dev_dbg(&pdev->dev, "write&read msg[0].len=%u msg[1].len=%u\n",
 			msg[0].len, msg[1].len);
-		अगर (msg[0].len > 1 || msg[1].len > 8) अणु
+		if (msg[0].len > 1 || msg[1].len > 8) {
 			ret = -EOPNOTSUPP;
-			जाओ err;
-		पूर्ण
+			goto err;
+		}
 
 		ret = zd1301_demod_wreg(dev, 0x6811, 0x80);
-		अगर (ret)
-			जाओ err;
+		if (ret)
+			goto err;
 		ret = zd1301_demod_wreg(dev, 0x6812, 0x05);
-		अगर (ret)
-			जाओ err;
+		if (ret)
+			goto err;
 		ret = zd1301_demod_wreg(dev, 0x6813, msg[1].addr << 1);
-		अगर (ret)
-			जाओ err;
+		if (ret)
+			goto err;
 		ret = zd1301_demod_wreg(dev, 0x6801, msg[0].buf[0]);
-		अगर (ret)
-			जाओ err;
+		if (ret)
+			goto err;
 		ret = zd1301_demod_wreg(dev, 0x6802, 0x00);
-		अगर (ret)
-			जाओ err;
+		if (ret)
+			goto err;
 		ret = zd1301_demod_wreg(dev, 0x6803, 0x06);
-		अगर (ret)
-			जाओ err;
+		if (ret)
+			goto err;
 		ret = zd1301_demod_wreg(dev, 0x6805, 0x00);
-		अगर (ret)
-			जाओ err;
+		if (ret)
+			goto err;
 		ret = zd1301_demod_wreg(dev, 0x6804, msg[1].len);
-		अगर (ret)
-			जाओ err;
+		if (ret)
+			goto err;
 
-		/* Poll xfer पढ़ोy */
-		समयout = jअगरfies + msecs_to_jअगरfies(I2C_XFER_TIMEOUT);
-		क्रम (u8पंचांगp = 1; !समय_after(jअगरfies, समयout) && u8पंचांगp;) अणु
+		/* Poll xfer ready */
+		timeout = jiffies + msecs_to_jiffies(I2C_XFER_TIMEOUT);
+		for (u8tmp = 1; !time_after(jiffies, timeout) && u8tmp;) {
 			usleep_range(500, 800);
 
-			ret = zd1301_demod_rreg(dev, 0x6804, &u8पंचांगp);
-			अगर (ret)
-				जाओ err;
-		पूर्ण
+			ret = zd1301_demod_rreg(dev, 0x6804, &u8tmp);
+			if (ret)
+				goto err;
+		}
 
-		क्रम (i = 0; i < msg[1].len; i++) अणु
+		for (i = 0; i < msg[1].len; i++) {
 			ret = zd1301_demod_rreg(dev, 0x0600 + i, &msg[1].buf[i]);
-			अगर (ret)
-				जाओ err;
-		पूर्ण
-	पूर्ण अन्यथा अगर (ZD1301_IS_I2C_XFER_WRITE(msg, num)) अणु
+			if (ret)
+				goto err;
+		}
+	} else if (ZD1301_IS_I2C_XFER_WRITE(msg, num)) {
 		dev_dbg(&pdev->dev, "write msg[0].len=%u\n", msg[0].len);
-		अगर (msg[0].len > 1 + 8) अणु
+		if (msg[0].len > 1 + 8) {
 			ret = -EOPNOTSUPP;
-			जाओ err;
-		पूर्ण
+			goto err;
+		}
 
 		ret = zd1301_demod_wreg(dev, 0x6811, 0x80);
-		अगर (ret)
-			जाओ err;
+		if (ret)
+			goto err;
 		ret = zd1301_demod_wreg(dev, 0x6812, 0x01);
-		अगर (ret)
-			जाओ err;
+		if (ret)
+			goto err;
 		ret = zd1301_demod_wreg(dev, 0x6813, msg[0].addr << 1);
-		अगर (ret)
-			जाओ err;
+		if (ret)
+			goto err;
 		ret = zd1301_demod_wreg(dev, 0x6800, msg[0].buf[0]);
-		अगर (ret)
-			जाओ err;
+		if (ret)
+			goto err;
 		ret = zd1301_demod_wreg(dev, 0x6802, 0x00);
-		अगर (ret)
-			जाओ err;
+		if (ret)
+			goto err;
 		ret = zd1301_demod_wreg(dev, 0x6803, 0x06);
-		अगर (ret)
-			जाओ err;
+		if (ret)
+			goto err;
 
-		क्रम (i = 0; i < msg[0].len - 1; i++) अणु
+		for (i = 0; i < msg[0].len - 1; i++) {
 			ret = zd1301_demod_wreg(dev, 0x0600 + i, msg[0].buf[1 + i]);
-			अगर (ret)
-				जाओ err;
-		पूर्ण
+			if (ret)
+				goto err;
+		}
 
 		ret = zd1301_demod_wreg(dev, 0x6805, 0x80);
-		अगर (ret)
-			जाओ err;
+		if (ret)
+			goto err;
 		ret = zd1301_demod_wreg(dev, 0x6804, msg[0].len - 1);
-		अगर (ret)
-			जाओ err;
+		if (ret)
+			goto err;
 
-		/* Poll xfer पढ़ोy */
-		समयout = jअगरfies + msecs_to_jअगरfies(I2C_XFER_TIMEOUT);
-		क्रम (u8पंचांगp = 1; !समय_after(jअगरfies, समयout) && u8पंचांगp;) अणु
+		/* Poll xfer ready */
+		timeout = jiffies + msecs_to_jiffies(I2C_XFER_TIMEOUT);
+		for (u8tmp = 1; !time_after(jiffies, timeout) && u8tmp;) {
 			usleep_range(500, 800);
 
-			ret = zd1301_demod_rreg(dev, 0x6804, &u8पंचांगp);
-			अगर (ret)
-				जाओ err;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			ret = zd1301_demod_rreg(dev, 0x6804, &u8tmp);
+			if (ret)
+				goto err;
+		}
+	} else {
 		dev_dbg(&pdev->dev, "unknown msg[0].len=%u\n", msg[0].len);
 		ret = -EOPNOTSUPP;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	वापस num;
+	return num;
 err:
 	dev_dbg(&pdev->dev, "failed=%d\n", ret);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल u32 zd1301_demod_i2c_functionality(काष्ठा i2c_adapter *adapter)
-अणु
-	वापस I2C_FUNC_I2C;
-पूर्ण
+static u32 zd1301_demod_i2c_functionality(struct i2c_adapter *adapter)
+{
+	return I2C_FUNC_I2C;
+}
 
-अटल स्थिर काष्ठा i2c_algorithm zd1301_demod_i2c_algorithm = अणु
+static const struct i2c_algorithm zd1301_demod_i2c_algorithm = {
 	.master_xfer   = zd1301_demod_i2c_master_xfer,
 	.functionality = zd1301_demod_i2c_functionality,
-पूर्ण;
+};
 
-काष्ठा i2c_adapter *zd1301_demod_get_i2c_adapter(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा zd1301_demod_dev *dev = platक्रमm_get_drvdata(pdev);
+struct i2c_adapter *zd1301_demod_get_i2c_adapter(struct platform_device *pdev)
+{
+	struct zd1301_demod_dev *dev = platform_get_drvdata(pdev);
 
 	dev_dbg(&pdev->dev, "\n");
 
-	वापस &dev->adapter;
-पूर्ण
+	return &dev->adapter;
+}
 EXPORT_SYMBOL(zd1301_demod_get_i2c_adapter);
 
-/* Platक्रमm driver पूर्णांकerface */
-अटल पूर्णांक zd1301_demod_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा zd1301_demod_dev *dev;
-	काष्ठा zd1301_demod_platक्रमm_data *pdata = pdev->dev.platक्रमm_data;
-	पूर्णांक ret;
+/* Platform driver interface */
+static int zd1301_demod_probe(struct platform_device *pdev)
+{
+	struct zd1301_demod_dev *dev;
+	struct zd1301_demod_platform_data *pdata = pdev->dev.platform_data;
+	int ret;
 
 	dev_dbg(&pdev->dev, "\n");
 
-	अगर (!pdata) अणु
+	if (!pdata) {
 		ret = -EINVAL;
 		dev_err(&pdev->dev, "cannot proceed without platform data\n");
-		जाओ err;
-	पूर्ण
-	अगर (!pdev->dev.parent->driver) अणु
+		goto err;
+	}
+	if (!pdev->dev.parent->driver) {
 		ret = -EINVAL;
 		dev_dbg(&pdev->dev, "no parent device\n");
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	dev = kzalloc(माप(*dev), GFP_KERNEL);
-	अगर (!dev) अणु
+	dev = kzalloc(sizeof(*dev), GFP_KERNEL);
+	if (!dev) {
 		ret = -ENOMEM;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	/* Setup the state */
 	dev->pdev = pdev;
@@ -483,60 +482,60 @@ EXPORT_SYMBOL(zd1301_demod_get_i2c_adapter);
 
 	/* Sleep */
 	ret = zd1301_demod_wreg(dev, 0x6840, 0x21);
-	अगर (ret)
-		जाओ err_kमुक्त;
+	if (ret)
+		goto err_kfree;
 	ret = zd1301_demod_wreg(dev, 0x6a38, 0x07);
-	अगर (ret)
-		जाओ err_kमुक्त;
+	if (ret)
+		goto err_kfree;
 
 	/* Create I2C adapter */
 	strscpy(dev->adapter.name, "ZyDAS ZD1301 demod",
-		माप(dev->adapter.name));
+		sizeof(dev->adapter.name));
 	dev->adapter.algo = &zd1301_demod_i2c_algorithm;
-	dev->adapter.algo_data = शून्य;
+	dev->adapter.algo_data = NULL;
 	dev->adapter.dev.parent = pdev->dev.parent;
 	i2c_set_adapdata(&dev->adapter, dev);
 	ret = i2c_add_adapter(&dev->adapter);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&pdev->dev, "I2C adapter add failed %d\n", ret);
-		जाओ err_kमुक्त;
-	पूर्ण
+		goto err_kfree;
+	}
 
 	/* Create dvb frontend */
-	स_नकल(&dev->frontend.ops, &zd1301_demod_ops, माप(dev->frontend.ops));
+	memcpy(&dev->frontend.ops, &zd1301_demod_ops, sizeof(dev->frontend.ops));
 	dev->frontend.demodulator_priv = dev;
-	platक्रमm_set_drvdata(pdev, dev);
+	platform_set_drvdata(pdev, dev);
 	dev_info(&pdev->dev, "ZyDAS ZD1301 demod attached\n");
 
-	वापस 0;
-err_kमुक्त:
-	kमुक्त(dev);
+	return 0;
+err_kfree:
+	kfree(dev);
 err:
 	dev_dbg(&pdev->dev, "failed=%d\n", ret);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक zd1301_demod_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा zd1301_demod_dev *dev = platक्रमm_get_drvdata(pdev);
+static int zd1301_demod_remove(struct platform_device *pdev)
+{
+	struct zd1301_demod_dev *dev = platform_get_drvdata(pdev);
 
 	dev_dbg(&pdev->dev, "\n");
 
 	i2c_del_adapter(&dev->adapter);
-	kमुक्त(dev);
+	kfree(dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver zd1301_demod_driver = अणु
-	.driver = अणु
+static struct platform_driver zd1301_demod_driver = {
+	.driver = {
 		.name                = "zd1301_demod",
 		.suppress_bind_attrs = true,
-	पूर्ण,
+	},
 	.probe          = zd1301_demod_probe,
-	.हटाओ         = zd1301_demod_हटाओ,
-पूर्ण;
-module_platक्रमm_driver(zd1301_demod_driver);
+	.remove         = zd1301_demod_remove,
+};
+module_platform_driver(zd1301_demod_driver);
 
 MODULE_AUTHOR("Antti Palosaari <crope@iki.fi>");
 MODULE_DESCRIPTION("ZyDAS ZD1301 demodulator driver");

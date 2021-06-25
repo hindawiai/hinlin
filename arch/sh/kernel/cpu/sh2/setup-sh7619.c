@@ -1,33 +1,32 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * SH7619 Setup
  *
  *  Copyright (C) 2006  Yoshinori Sato
  *  Copyright (C) 2009  Paul Mundt
  */
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/init.h>
-#समावेश <linux/serial.h>
-#समावेश <linux/serial_sci.h>
-#समावेश <linux/sh_eth.h>
-#समावेश <linux/sh_समयr.h>
-#समावेश <linux/पन.स>
-#समावेश <यंत्र/platक्रमm_early.h>
+#include <linux/platform_device.h>
+#include <linux/init.h>
+#include <linux/serial.h>
+#include <linux/serial_sci.h>
+#include <linux/sh_eth.h>
+#include <linux/sh_timer.h>
+#include <linux/io.h>
+#include <asm/platform_early.h>
 
-क्रमागत अणु
+enum {
 	UNUSED = 0,
 
-	/* पूर्णांकerrupt sources */
+	/* interrupt sources */
 	IRQ0, IRQ1, IRQ2, IRQ3, IRQ4, IRQ5, IRQ6, IRQ7,
 	WDT, EDMAC, CMT0, CMT1,
 	SCIF0, SCIF1, SCIF2,
 	HIF_HIFI, HIF_HIFBI,
 	DMAC0, DMAC1, DMAC2, DMAC3,
 	SIOF,
-पूर्ण;
+};
 
-अटल काष्ठा पूर्णांकc_vect vectors[] __initdata = अणु
+static struct intc_vect vectors[] __initdata = {
 	INTC_IRQ(IRQ0, 64), INTC_IRQ(IRQ1, 65),
 	INTC_IRQ(IRQ2, 66), INTC_IRQ(IRQ3, 67),
 	INTC_IRQ(IRQ4, 80), INTC_IRQ(IRQ5, 81),
@@ -44,163 +43,163 @@
 	INTC_IRQ(DMAC0, 104), INTC_IRQ(DMAC1, 105),
 	INTC_IRQ(DMAC2, 106), INTC_IRQ(DMAC3, 107),
 	INTC_IRQ(SIOF, 108),
-पूर्ण;
+};
 
-अटल काष्ठा पूर्णांकc_prio_reg prio_रेजिस्टरs[] __initdata = अणु
-	अणु 0xf8140006, 0, 16, 4, /* IPRA */ अणु IRQ0, IRQ1, IRQ2, IRQ3 पूर्ण पूर्ण,
-	अणु 0xf8140008, 0, 16, 4, /* IPRB */ अणु IRQ4, IRQ5, IRQ6, IRQ7 पूर्ण पूर्ण,
-	अणु 0xf8080000, 0, 16, 4, /* IPRC */ अणु WDT, EDMAC, CMT0, CMT1 पूर्ण पूर्ण,
-	अणु 0xf8080002, 0, 16, 4, /* IPRD */ अणु SCIF0, SCIF1, SCIF2 पूर्ण पूर्ण,
-	अणु 0xf8080004, 0, 16, 4, /* IPRE */ अणु HIF_HIFI, HIF_HIFBI पूर्ण पूर्ण,
-	अणु 0xf8080006, 0, 16, 4, /* IPRF */ अणु DMAC0, DMAC1, DMAC2, DMAC3 पूर्ण पूर्ण,
-	अणु 0xf8080008, 0, 16, 4, /* IPRG */ अणु SIOF पूर्ण पूर्ण,
-पूर्ण;
+static struct intc_prio_reg prio_registers[] __initdata = {
+	{ 0xf8140006, 0, 16, 4, /* IPRA */ { IRQ0, IRQ1, IRQ2, IRQ3 } },
+	{ 0xf8140008, 0, 16, 4, /* IPRB */ { IRQ4, IRQ5, IRQ6, IRQ7 } },
+	{ 0xf8080000, 0, 16, 4, /* IPRC */ { WDT, EDMAC, CMT0, CMT1 } },
+	{ 0xf8080002, 0, 16, 4, /* IPRD */ { SCIF0, SCIF1, SCIF2 } },
+	{ 0xf8080004, 0, 16, 4, /* IPRE */ { HIF_HIFI, HIF_HIFBI } },
+	{ 0xf8080006, 0, 16, 4, /* IPRF */ { DMAC0, DMAC1, DMAC2, DMAC3 } },
+	{ 0xf8080008, 0, 16, 4, /* IPRG */ { SIOF } },
+};
 
-अटल DECLARE_INTC_DESC(पूर्णांकc_desc, "sh7619", vectors, शून्य,
-			 शून्य, prio_रेजिस्टरs, शून्य);
+static DECLARE_INTC_DESC(intc_desc, "sh7619", vectors, NULL,
+			 NULL, prio_registers, NULL);
 
-अटल काष्ठा plat_sci_port scअगर0_platक्रमm_data = अणु
+static struct plat_sci_port scif0_platform_data = {
 	.scscr		= SCSCR_REIE,
 	.type		= PORT_SCIF,
-पूर्ण;
+};
 
-अटल काष्ठा resource scअगर0_resources[] = अणु
+static struct resource scif0_resources[] = {
 	DEFINE_RES_MEM(0xf8400000, 0x100),
 	DEFINE_RES_IRQ(88),
-पूर्ण;
+};
 
-अटल काष्ठा platक्रमm_device scअगर0_device = अणु
+static struct platform_device scif0_device = {
 	.name		= "sh-sci",
 	.id		= 0,
-	.resource	= scअगर0_resources,
-	.num_resources	= ARRAY_SIZE(scअगर0_resources),
-	.dev		= अणु
-		.platक्रमm_data	= &scअगर0_platक्रमm_data,
-	पूर्ण,
-पूर्ण;
+	.resource	= scif0_resources,
+	.num_resources	= ARRAY_SIZE(scif0_resources),
+	.dev		= {
+		.platform_data	= &scif0_platform_data,
+	},
+};
 
-अटल काष्ठा plat_sci_port scअगर1_platक्रमm_data = अणु
+static struct plat_sci_port scif1_platform_data = {
 	.scscr		= SCSCR_REIE,
 	.type		= PORT_SCIF,
-पूर्ण;
+};
 
-अटल काष्ठा resource scअगर1_resources[] = अणु
+static struct resource scif1_resources[] = {
 	DEFINE_RES_MEM(0xf8410000, 0x100),
 	DEFINE_RES_IRQ(92),
-पूर्ण;
+};
 
-अटल काष्ठा platक्रमm_device scअगर1_device = अणु
+static struct platform_device scif1_device = {
 	.name		= "sh-sci",
 	.id		= 1,
-	.resource	= scअगर1_resources,
-	.num_resources	= ARRAY_SIZE(scअगर1_resources),
-	.dev		= अणु
-		.platक्रमm_data	= &scअगर1_platक्रमm_data,
-	पूर्ण,
-पूर्ण;
+	.resource	= scif1_resources,
+	.num_resources	= ARRAY_SIZE(scif1_resources),
+	.dev		= {
+		.platform_data	= &scif1_platform_data,
+	},
+};
 
-अटल काष्ठा plat_sci_port scअगर2_platक्रमm_data = अणु
+static struct plat_sci_port scif2_platform_data = {
 	.scscr		= SCSCR_REIE,
 	.type		= PORT_SCIF,
-पूर्ण;
+};
 
-अटल काष्ठा resource scअगर2_resources[] = अणु
+static struct resource scif2_resources[] = {
 	DEFINE_RES_MEM(0xf8420000, 0x100),
 	DEFINE_RES_IRQ(96),
-पूर्ण;
+};
 
-अटल काष्ठा platक्रमm_device scअगर2_device = अणु
+static struct platform_device scif2_device = {
 	.name		= "sh-sci",
 	.id		= 2,
-	.resource	= scअगर2_resources,
-	.num_resources	= ARRAY_SIZE(scअगर2_resources),
-	.dev		= अणु
-		.platक्रमm_data	= &scअगर2_platक्रमm_data,
-	पूर्ण,
-पूर्ण;
+	.resource	= scif2_resources,
+	.num_resources	= ARRAY_SIZE(scif2_resources),
+	.dev		= {
+		.platform_data	= &scif2_platform_data,
+	},
+};
 
-अटल काष्ठा sh_eth_plat_data eth_platक्रमm_data = अणु
+static struct sh_eth_plat_data eth_platform_data = {
 	.phy		= 1,
-	.phy_पूर्णांकerface	= PHY_INTERFACE_MODE_MII,
-पूर्ण;
+	.phy_interface	= PHY_INTERFACE_MODE_MII,
+};
 
-अटल काष्ठा resource eth_resources[] = अणु
-	[0] = अणु
+static struct resource eth_resources[] = {
+	[0] = {
 		.start = 0xfb000000,
 		.end = 0xfb0001c7,
 		.flags = IORESOURCE_MEM,
-	पूर्ण,
-	[1] = अणु
+	},
+	[1] = {
 		.start = 85,
 		.end = 85,
 		.flags = IORESOURCE_IRQ,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल काष्ठा platक्रमm_device eth_device = अणु
+static struct platform_device eth_device = {
 	.name = "sh7619-ether",
 	.id = -1,
-	.dev = अणु
-		.platक्रमm_data = &eth_platक्रमm_data,
-	पूर्ण,
+	.dev = {
+		.platform_data = &eth_platform_data,
+	},
 	.num_resources = ARRAY_SIZE(eth_resources),
 	.resource = eth_resources,
-पूर्ण;
+};
 
-अटल काष्ठा sh_समयr_config cmt_platक्रमm_data = अणु
+static struct sh_timer_config cmt_platform_data = {
 	.channels_mask = 3,
-पूर्ण;
+};
 
-अटल काष्ठा resource cmt_resources[] = अणु
+static struct resource cmt_resources[] = {
 	DEFINE_RES_MEM(0xf84a0070, 0x10),
 	DEFINE_RES_IRQ(86),
 	DEFINE_RES_IRQ(87),
-पूर्ण;
+};
 
-अटल काष्ठा platक्रमm_device cmt_device = अणु
+static struct platform_device cmt_device = {
 	.name		= "sh-cmt-16",
 	.id		= 0,
-	.dev = अणु
-		.platक्रमm_data	= &cmt_platक्रमm_data,
-	पूर्ण,
+	.dev = {
+		.platform_data	= &cmt_platform_data,
+	},
 	.resource	= cmt_resources,
 	.num_resources	= ARRAY_SIZE(cmt_resources),
-पूर्ण;
+};
 
-अटल काष्ठा platक्रमm_device *sh7619_devices[] __initdata = अणु
-	&scअगर0_device,
-	&scअगर1_device,
-	&scअगर2_device,
+static struct platform_device *sh7619_devices[] __initdata = {
+	&scif0_device,
+	&scif1_device,
+	&scif2_device,
 	&eth_device,
 	&cmt_device,
-पूर्ण;
+};
 
-अटल पूर्णांक __init sh7619_devices_setup(व्योम)
-अणु
-	वापस platक्रमm_add_devices(sh7619_devices,
+static int __init sh7619_devices_setup(void)
+{
+	return platform_add_devices(sh7619_devices,
 				    ARRAY_SIZE(sh7619_devices));
-पूर्ण
+}
 arch_initcall(sh7619_devices_setup);
 
-व्योम __init plat_irq_setup(व्योम)
-अणु
-	रेजिस्टर_पूर्णांकc_controller(&पूर्णांकc_desc);
-पूर्ण
+void __init plat_irq_setup(void)
+{
+	register_intc_controller(&intc_desc);
+}
 
-अटल काष्ठा platक्रमm_device *sh7619_early_devices[] __initdata = अणु
-	&scअगर0_device,
-	&scअगर1_device,
-	&scअगर2_device,
+static struct platform_device *sh7619_early_devices[] __initdata = {
+	&scif0_device,
+	&scif1_device,
+	&scif2_device,
 	&cmt_device,
-पूर्ण;
+};
 
-#घोषणा STBCR3 0xf80a0000
+#define STBCR3 0xf80a0000
 
-व्योम __init plat_early_device_setup(व्योम)
-अणु
-	/* enable CMT घड़ी */
-	__raw_ग_लिखोb(__raw_पढ़ोb(STBCR3) & ~0x10, STBCR3);
+void __init plat_early_device_setup(void)
+{
+	/* enable CMT clock */
+	__raw_writeb(__raw_readb(STBCR3) & ~0x10, STBCR3);
 
-	sh_early_platक्रमm_add_devices(sh7619_early_devices,
+	sh_early_platform_add_devices(sh7619_early_devices,
 				   ARRAY_SIZE(sh7619_early_devices));
-पूर्ण
+}

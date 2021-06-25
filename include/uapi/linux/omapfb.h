@@ -1,14 +1,13 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0+ WITH Linux-syscall-note */
+/* SPDX-License-Identifier: GPL-2.0+ WITH Linux-syscall-note */
 /*
  * File: include/linux/omapfb.h
  *
- * Framebuffer driver क्रम TI OMAP boards
+ * Framebuffer driver for TI OMAP boards
  *
  * Copyright (C) 2004 Nokia Corporation
  * Author: Imre Deak <imre.deak@nokia.com>
  *
- * This program is मुक्त software; you can redistribute it and/or modअगरy it
+ * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.
@@ -16,81 +15,81 @@
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * General Public License क्रम more details.
+ * General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License aदीर्घ
- * with this program; अगर not, ग_लिखो to the Free Software Foundation, Inc.,
+ * You should have received a copy of the GNU General Public License along
+ * with this program; if not, write to the Free Software Foundation, Inc.,
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-#अगर_अघोषित _UAPI__LINUX_OMAPFB_H__
-#घोषणा _UAPI__LINUX_OMAPFB_H__
+#ifndef _UAPI__LINUX_OMAPFB_H__
+#define _UAPI__LINUX_OMAPFB_H__
 
-#समावेश <linux/fb.h>
-#समावेश <linux/ioctl.h>
-#समावेश <linux/types.h>
+#include <linux/fb.h>
+#include <linux/ioctl.h>
+#include <linux/types.h>
 
 /* IOCTL commands. */
 
-#घोषणा OMAP_IOW(num, dtype)	_IOW('O', num, dtype)
-#घोषणा OMAP_IOR(num, dtype)	_IOR('O', num, dtype)
-#घोषणा OMAP_IOWR(num, dtype)	_IOWR('O', num, dtype)
-#घोषणा OMAP_IO(num)		_IO('O', num)
+#define OMAP_IOW(num, dtype)	_IOW('O', num, dtype)
+#define OMAP_IOR(num, dtype)	_IOR('O', num, dtype)
+#define OMAP_IOWR(num, dtype)	_IOWR('O', num, dtype)
+#define OMAP_IO(num)		_IO('O', num)
 
-#घोषणा OMAPFB_MIRROR		OMAP_IOW(31, पूर्णांक)
-#घोषणा OMAPFB_SYNC_GFX		OMAP_IO(37)
-#घोषणा OMAPFB_VSYNC		OMAP_IO(38)
-#घोषणा OMAPFB_SET_UPDATE_MODE	OMAP_IOW(40, पूर्णांक)
-#घोषणा OMAPFB_GET_CAPS		OMAP_IOR(42, काष्ठा omapfb_caps)
-#घोषणा OMAPFB_GET_UPDATE_MODE	OMAP_IOW(43, पूर्णांक)
-#घोषणा OMAPFB_LCD_TEST		OMAP_IOW(45, पूर्णांक)
-#घोषणा OMAPFB_CTRL_TEST	OMAP_IOW(46, पूर्णांक)
-#घोषणा OMAPFB_UPDATE_WINDOW_OLD OMAP_IOW(47, काष्ठा omapfb_update_winकरोw_old)
-#घोषणा OMAPFB_SET_COLOR_KEY	OMAP_IOW(50, काष्ठा omapfb_color_key)
-#घोषणा OMAPFB_GET_COLOR_KEY	OMAP_IOW(51, काष्ठा omapfb_color_key)
-#घोषणा OMAPFB_SETUP_PLANE	OMAP_IOW(52, काष्ठा omapfb_plane_info)
-#घोषणा OMAPFB_QUERY_PLANE	OMAP_IOW(53, काष्ठा omapfb_plane_info)
-#घोषणा OMAPFB_UPDATE_WINDOW	OMAP_IOW(54, काष्ठा omapfb_update_winकरोw)
-#घोषणा OMAPFB_SETUP_MEM	OMAP_IOW(55, काष्ठा omapfb_mem_info)
-#घोषणा OMAPFB_QUERY_MEM	OMAP_IOW(56, काष्ठा omapfb_mem_info)
-#घोषणा OMAPFB_WAITFORVSYNC	OMAP_IO(57)
-#घोषणा OMAPFB_MEMORY_READ	OMAP_IOR(58, काष्ठा omapfb_memory_पढ़ो)
-#घोषणा OMAPFB_GET_OVERLAY_COLORMODE OMAP_IOR(59, काष्ठा omapfb_ovl_colormode)
-#घोषणा OMAPFB_WAITFORGO	OMAP_IO(60)
-#घोषणा OMAPFB_GET_VRAM_INFO	OMAP_IOR(61, काष्ठा omapfb_vram_info)
-#घोषणा OMAPFB_SET_TEARSYNC	OMAP_IOW(62, काष्ठा omapfb_tearsync_info)
-#घोषणा OMAPFB_GET_DISPLAY_INFO	OMAP_IOR(63, काष्ठा omapfb_display_info)
+#define OMAPFB_MIRROR		OMAP_IOW(31, int)
+#define OMAPFB_SYNC_GFX		OMAP_IO(37)
+#define OMAPFB_VSYNC		OMAP_IO(38)
+#define OMAPFB_SET_UPDATE_MODE	OMAP_IOW(40, int)
+#define OMAPFB_GET_CAPS		OMAP_IOR(42, struct omapfb_caps)
+#define OMAPFB_GET_UPDATE_MODE	OMAP_IOW(43, int)
+#define OMAPFB_LCD_TEST		OMAP_IOW(45, int)
+#define OMAPFB_CTRL_TEST	OMAP_IOW(46, int)
+#define OMAPFB_UPDATE_WINDOW_OLD OMAP_IOW(47, struct omapfb_update_window_old)
+#define OMAPFB_SET_COLOR_KEY	OMAP_IOW(50, struct omapfb_color_key)
+#define OMAPFB_GET_COLOR_KEY	OMAP_IOW(51, struct omapfb_color_key)
+#define OMAPFB_SETUP_PLANE	OMAP_IOW(52, struct omapfb_plane_info)
+#define OMAPFB_QUERY_PLANE	OMAP_IOW(53, struct omapfb_plane_info)
+#define OMAPFB_UPDATE_WINDOW	OMAP_IOW(54, struct omapfb_update_window)
+#define OMAPFB_SETUP_MEM	OMAP_IOW(55, struct omapfb_mem_info)
+#define OMAPFB_QUERY_MEM	OMAP_IOW(56, struct omapfb_mem_info)
+#define OMAPFB_WAITFORVSYNC	OMAP_IO(57)
+#define OMAPFB_MEMORY_READ	OMAP_IOR(58, struct omapfb_memory_read)
+#define OMAPFB_GET_OVERLAY_COLORMODE OMAP_IOR(59, struct omapfb_ovl_colormode)
+#define OMAPFB_WAITFORGO	OMAP_IO(60)
+#define OMAPFB_GET_VRAM_INFO	OMAP_IOR(61, struct omapfb_vram_info)
+#define OMAPFB_SET_TEARSYNC	OMAP_IOW(62, struct omapfb_tearsync_info)
+#define OMAPFB_GET_DISPLAY_INFO	OMAP_IOR(63, struct omapfb_display_info)
 
-#घोषणा OMAPFB_CAPS_GENERIC_MASK	0x00000fff
-#घोषणा OMAPFB_CAPS_LCDC_MASK		0x00fff000
-#घोषणा OMAPFB_CAPS_PANEL_MASK		0xff000000
+#define OMAPFB_CAPS_GENERIC_MASK	0x00000fff
+#define OMAPFB_CAPS_LCDC_MASK		0x00fff000
+#define OMAPFB_CAPS_PANEL_MASK		0xff000000
 
-#घोषणा OMAPFB_CAPS_MANUAL_UPDATE	0x00001000
-#घोषणा OMAPFB_CAPS_TEARSYNC		0x00002000
-#घोषणा OMAPFB_CAPS_PLANE_RELOCATE_MEM	0x00004000
-#घोषणा OMAPFB_CAPS_PLANE_SCALE		0x00008000
-#घोषणा OMAPFB_CAPS_WINDOW_PIXEL_DOUBLE	0x00010000
-#घोषणा OMAPFB_CAPS_WINDOW_SCALE	0x00020000
-#घोषणा OMAPFB_CAPS_WINDOW_OVERLAY	0x00040000
-#घोषणा OMAPFB_CAPS_WINDOW_ROTATE	0x00080000
-#घोषणा OMAPFB_CAPS_SET_BACKLIGHT	0x01000000
+#define OMAPFB_CAPS_MANUAL_UPDATE	0x00001000
+#define OMAPFB_CAPS_TEARSYNC		0x00002000
+#define OMAPFB_CAPS_PLANE_RELOCATE_MEM	0x00004000
+#define OMAPFB_CAPS_PLANE_SCALE		0x00008000
+#define OMAPFB_CAPS_WINDOW_PIXEL_DOUBLE	0x00010000
+#define OMAPFB_CAPS_WINDOW_SCALE	0x00020000
+#define OMAPFB_CAPS_WINDOW_OVERLAY	0x00040000
+#define OMAPFB_CAPS_WINDOW_ROTATE	0x00080000
+#define OMAPFB_CAPS_SET_BACKLIGHT	0x01000000
 
 /* Values from DSP must map to lower 16-bits */
-#घोषणा OMAPFB_FORMAT_MASK		0x00ff
-#घोषणा OMAPFB_FORMAT_FLAG_DOUBLE	0x0100
-#घोषणा OMAPFB_FORMAT_FLAG_TEARSYNC	0x0200
-#घोषणा OMAPFB_FORMAT_FLAG_FORCE_VSYNC	0x0400
-#घोषणा OMAPFB_FORMAT_FLAG_ENABLE_OVERLAY	0x0800
-#घोषणा OMAPFB_FORMAT_FLAG_DISABLE_OVERLAY	0x1000
+#define OMAPFB_FORMAT_MASK		0x00ff
+#define OMAPFB_FORMAT_FLAG_DOUBLE	0x0100
+#define OMAPFB_FORMAT_FLAG_TEARSYNC	0x0200
+#define OMAPFB_FORMAT_FLAG_FORCE_VSYNC	0x0400
+#define OMAPFB_FORMAT_FLAG_ENABLE_OVERLAY	0x0800
+#define OMAPFB_FORMAT_FLAG_DISABLE_OVERLAY	0x1000
 
-#घोषणा OMAPFB_MEMTYPE_SDRAM		0
-#घोषणा OMAPFB_MEMTYPE_SRAM		1
-#घोषणा OMAPFB_MEMTYPE_MAX		1
+#define OMAPFB_MEMTYPE_SDRAM		0
+#define OMAPFB_MEMTYPE_SRAM		1
+#define OMAPFB_MEMTYPE_MAX		1
 
-#घोषणा OMAPFB_MEM_IDX_ENABLED	0x80
-#घोषणा OMAPFB_MEM_IDX_MASK	0x7f
+#define OMAPFB_MEM_IDX_ENABLED	0x80
+#define OMAPFB_MEM_IDX_MASK	0x7f
 
-क्रमागत omapfb_color_क्रमmat अणु
+enum omapfb_color_format {
 	OMAPFB_COLOR_RGB565 = 0,
 	OMAPFB_COLOR_YUV422,
 	OMAPFB_COLOR_YUV420,
@@ -107,35 +106,35 @@
 	OMAPFB_COLOR_ARGB32,
 	OMAPFB_COLOR_RGBA32,
 	OMAPFB_COLOR_RGBX32,
-पूर्ण;
+};
 
-काष्ठा omapfb_update_winकरोw अणु
+struct omapfb_update_window {
 	__u32 x, y;
 	__u32 width, height;
-	__u32 क्रमmat;
+	__u32 format;
 	__u32 out_x, out_y;
 	__u32 out_width, out_height;
 	__u32 reserved[8];
-पूर्ण;
+};
 
-काष्ठा omapfb_update_winकरोw_old अणु
+struct omapfb_update_window_old {
 	__u32 x, y;
 	__u32 width, height;
-	__u32 क्रमmat;
-पूर्ण;
+	__u32 format;
+};
 
-क्रमागत omapfb_plane अणु
+enum omapfb_plane {
 	OMAPFB_PLANE_GFX = 0,
 	OMAPFB_PLANE_VID1,
 	OMAPFB_PLANE_VID2,
-पूर्ण;
+};
 
-क्रमागत omapfb_channel_out अणु
+enum omapfb_channel_out {
 	OMAPFB_CHANNEL_OUT_LCD = 0,
 	OMAPFB_CHANNEL_OUT_DIGIT,
-पूर्ण;
+};
 
-काष्ठा omapfb_plane_info अणु
+struct omapfb_plane_info {
 	__u32 pos_x;
 	__u32 pos_y;
 	__u8  enabled;
@@ -145,80 +144,80 @@
 	__u32 out_width;
 	__u32 out_height;
 	__u32 reserved2[12];
-पूर्ण;
+};
 
-काष्ठा omapfb_mem_info अणु
+struct omapfb_mem_info {
 	__u32 size;
 	__u8  type;
 	__u8  reserved[3];
-पूर्ण;
+};
 
-काष्ठा omapfb_caps अणु
+struct omapfb_caps {
 	__u32 ctrl;
 	__u32 plane_color;
 	__u32 wnd_color;
-पूर्ण;
+};
 
-क्रमागत omapfb_color_key_type अणु
+enum omapfb_color_key_type {
 	OMAPFB_COLOR_KEY_DISABLED = 0,
 	OMAPFB_COLOR_KEY_GFX_DST,
 	OMAPFB_COLOR_KEY_VID_SRC,
-पूर्ण;
+};
 
-काष्ठा omapfb_color_key अणु
+struct omapfb_color_key {
 	__u8  channel_out;
 	__u32 background;
 	__u32 trans_key;
 	__u8  key_type;
-पूर्ण;
+};
 
-क्रमागत omapfb_update_mode अणु
+enum omapfb_update_mode {
 	OMAPFB_UPDATE_DISABLED = 0,
 	OMAPFB_AUTO_UPDATE,
 	OMAPFB_MANUAL_UPDATE
-पूर्ण;
+};
 
-काष्ठा omapfb_memory_पढ़ो अणु
+struct omapfb_memory_read {
 	__u16 x;
 	__u16 y;
 	__u16 w;
 	__u16 h;
-	माप_प्रकार buffer_size;
-	व्योम __user *buffer;
-पूर्ण;
+	size_t buffer_size;
+	void __user *buffer;
+};
 
-काष्ठा omapfb_ovl_colormode अणु
+struct omapfb_ovl_colormode {
 	__u8 overlay_idx;
 	__u8 mode_idx;
 	__u32 bits_per_pixel;
 	__u32 nonstd;
-	काष्ठा fb_bitfield red;
-	काष्ठा fb_bitfield green;
-	काष्ठा fb_bitfield blue;
-	काष्ठा fb_bitfield transp;
-पूर्ण;
+	struct fb_bitfield red;
+	struct fb_bitfield green;
+	struct fb_bitfield blue;
+	struct fb_bitfield transp;
+};
 
-काष्ठा omapfb_vram_info अणु
+struct omapfb_vram_info {
 	__u32 total;
-	__u32 मुक्त;
-	__u32 largest_मुक्त_block;
+	__u32 free;
+	__u32 largest_free_block;
 	__u32 reserved[5];
-पूर्ण;
+};
 
-काष्ठा omapfb_tearsync_info अणु
+struct omapfb_tearsync_info {
 	__u8 enabled;
 	__u8 reserved1[3];
 	__u16 line;
 	__u16 reserved2;
-पूर्ण;
+};
 
-काष्ठा omapfb_display_info अणु
+struct omapfb_display_info {
 	__u16 xres;
 	__u16 yres;
 	__u32 width;	/* phys width of the display in micrometers */
 	__u32 height;	/* phys height of the display in micrometers */
 	__u32 reserved[5];
-पूर्ण;
+};
 
 
-#पूर्ण_अगर /* _UAPI__LINUX_OMAPFB_H__ */
+#endif /* _UAPI__LINUX_OMAPFB_H__ */

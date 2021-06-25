@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  *  linux/fs/nfs/symlink.c
  *
@@ -12,75 +11,75 @@
  *  nfs symlink handling code
  */
 
-#समावेश <linux/समय.स>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/sunrpc/clnt.h>
-#समावेश <linux/nfs.h>
-#समावेश <linux/nfs2.h>
-#समावेश <linux/nfs_fs.h>
-#समावेश <linux/pagemap.h>
-#समावेश <linux/स्थिति.स>
-#समावेश <linux/mm.h>
-#समावेश <linux/माला.स>
+#include <linux/time.h>
+#include <linux/errno.h>
+#include <linux/sunrpc/clnt.h>
+#include <linux/nfs.h>
+#include <linux/nfs2.h>
+#include <linux/nfs_fs.h>
+#include <linux/pagemap.h>
+#include <linux/stat.h>
+#include <linux/mm.h>
+#include <linux/string.h>
 
 /* Symlink caching in the page cache is even more simplistic
- * and straight-क्रमward than सूची_पढ़ो caching.
+ * and straight-forward than readdir caching.
  */
 
-अटल पूर्णांक nfs_symlink_filler(व्योम *data, काष्ठा page *page)
-अणु
-	काष्ठा inode *inode = data;
-	पूर्णांक error;
+static int nfs_symlink_filler(void *data, struct page *page)
+{
+	struct inode *inode = data;
+	int error;
 
-	error = NFS_PROTO(inode)->पढ़ोlink(inode, page, 0, PAGE_SIZE);
-	अगर (error < 0)
-		जाओ error;
+	error = NFS_PROTO(inode)->readlink(inode, page, 0, PAGE_SIZE);
+	if (error < 0)
+		goto error;
 	SetPageUptodate(page);
 	unlock_page(page);
-	वापस 0;
+	return 0;
 
 error:
 	SetPageError(page);
 	unlock_page(page);
-	वापस -EIO;
-पूर्ण
+	return -EIO;
+}
 
-अटल स्थिर अक्षर *nfs_get_link(काष्ठा dentry *dentry,
-				काष्ठा inode *inode,
-				काष्ठा delayed_call *करोne)
-अणु
-	काष्ठा page *page;
-	व्योम *err;
+static const char *nfs_get_link(struct dentry *dentry,
+				struct inode *inode,
+				struct delayed_call *done)
+{
+	struct page *page;
+	void *err;
 
-	अगर (!dentry) अणु
+	if (!dentry) {
 		err = ERR_PTR(nfs_revalidate_mapping_rcu(inode));
-		अगर (err)
-			वापस err;
+		if (err)
+			return err;
 		page = find_get_page(inode->i_mapping, 0);
-		अगर (!page)
-			वापस ERR_PTR(-ECHILD);
-		अगर (!PageUptodate(page)) अणु
+		if (!page)
+			return ERR_PTR(-ECHILD);
+		if (!PageUptodate(page)) {
 			put_page(page);
-			वापस ERR_PTR(-ECHILD);
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			return ERR_PTR(-ECHILD);
+		}
+	} else {
 		err = ERR_PTR(nfs_revalidate_mapping(inode, inode->i_mapping));
-		अगर (err)
-			वापस err;
-		page = पढ़ो_cache_page(&inode->i_data, 0, nfs_symlink_filler,
+		if (err)
+			return err;
+		page = read_cache_page(&inode->i_data, 0, nfs_symlink_filler,
 				inode);
-		अगर (IS_ERR(page))
-			वापस ERR_CAST(page);
-	पूर्ण
-	set_delayed_call(करोne, page_put_link, page);
-	वापस page_address(page);
-पूर्ण
+		if (IS_ERR(page))
+			return ERR_CAST(page);
+	}
+	set_delayed_call(done, page_put_link, page);
+	return page_address(page);
+}
 
 /*
- * symlinks can't करो much...
+ * symlinks can't do much...
  */
-स्थिर काष्ठा inode_operations nfs_symlink_inode_operations = अणु
+const struct inode_operations nfs_symlink_inode_operations = {
 	.get_link	= nfs_get_link,
 	.getattr	= nfs_getattr,
 	.setattr	= nfs_setattr,
-पूर्ण;
+};

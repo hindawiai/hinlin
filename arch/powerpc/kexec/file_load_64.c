@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * ppc64 code to implement the kexec_file_load syscall
  *
@@ -11,86 +10,86 @@
  * Copyright (C) 2020  IBM Corporation
  *
  * Based on kexec-tools' kexec-ppc64.c, kexec-elf-rel-ppc64.c, fs2dt.c.
- * Heavily modअगरied क्रम the kernel by
+ * Heavily modified for the kernel by
  * Hari Bathini, IBM Corporation.
  */
 
-#समावेश <linux/kexec.h>
-#समावेश <linux/of_fdt.h>
-#समावेश <linux/libfdt.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/memblock.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/vदो_स्मृति.h>
-#समावेश <यंत्र/setup.h>
-#समावेश <यंत्र/drस्मृति.स>
-#समावेश <यंत्र/kexec_ranges.h>
-#समावेश <यंत्र/crashdump-ppc64.h>
+#include <linux/kexec.h>
+#include <linux/of_fdt.h>
+#include <linux/libfdt.h>
+#include <linux/of_device.h>
+#include <linux/memblock.h>
+#include <linux/slab.h>
+#include <linux/vmalloc.h>
+#include <asm/setup.h>
+#include <asm/drmem.h>
+#include <asm/kexec_ranges.h>
+#include <asm/crashdump-ppc64.h>
 
-काष्ठा umem_info अणु
-	u64 *buf;		/* data buffer क्रम usable-memory property */
-	u32 size;		/* size allocated क्रम the data buffer */
+struct umem_info {
+	u64 *buf;		/* data buffer for usable-memory property */
+	u32 size;		/* size allocated for the data buffer */
 	u32 max_entries;	/* maximum no. of entries */
 	u32 idx;		/* index of current entry */
 
 	/* usable memory ranges to look up */
-	अचिन्हित पूर्णांक nr_ranges;
-	स्थिर काष्ठा crash_mem_range *ranges;
-पूर्ण;
+	unsigned int nr_ranges;
+	const struct crash_mem_range *ranges;
+};
 
-स्थिर काष्ठा kexec_file_ops * स्थिर kexec_file_loaders[] = अणु
+const struct kexec_file_ops * const kexec_file_loaders[] = {
 	&kexec_elf64_ops,
-	शून्य
-पूर्ण;
+	NULL
+};
 
 /**
  * get_exclude_memory_ranges - Get exclude memory ranges. This list includes
  *                             regions like opal/rtas, tce-table, initrd,
- *                             kernel, htab which should be aव्योमed जबतक
+ *                             kernel, htab which should be avoided while
  *                             setting up kexec load segments.
  * @mem_ranges:                Range list to add the memory ranges to.
  *
- * Returns 0 on success, negative त्रुटि_सं on error.
+ * Returns 0 on success, negative errno on error.
  */
-अटल पूर्णांक get_exclude_memory_ranges(काष्ठा crash_mem **mem_ranges)
-अणु
-	पूर्णांक ret;
+static int get_exclude_memory_ranges(struct crash_mem **mem_ranges)
+{
+	int ret;
 
 	ret = add_tce_mem_ranges(mem_ranges);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
 	ret = add_initrd_mem_range(mem_ranges);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
 	ret = add_htab_mem_range(mem_ranges);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
 	ret = add_kernel_mem_range(mem_ranges);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
 	ret = add_rtas_mem_range(mem_ranges);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
 	ret = add_opal_mem_range(mem_ranges);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
 	ret = add_reserved_mem_ranges(mem_ranges);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
-	/* exclude memory ranges should be sorted क्रम easy lookup */
+	/* exclude memory ranges should be sorted for easy lookup */
 	sort_memory_ranges(*mem_ranges, true);
 out:
-	अगर (ret)
+	if (ret)
 		pr_err("Failed to setup exclude memory ranges\n");
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
  * get_usable_memory_ranges - Get usable memory ranges. This list includes
@@ -98,37 +97,37 @@ out:
  *                            that kdump kernel could use.
  * @mem_ranges:               Range list to add the memory ranges to.
  *
- * Returns 0 on success, negative त्रुटि_सं on error.
+ * Returns 0 on success, negative errno on error.
  */
-अटल पूर्णांक get_usable_memory_ranges(काष्ठा crash_mem **mem_ranges)
-अणु
-	पूर्णांक ret;
+static int get_usable_memory_ranges(struct crash_mem **mem_ranges)
+{
+	int ret;
 
 	/*
 	 * Early boot failure observed on guests when low memory (first memory
 	 * block?) is not added to usable memory. So, add [0, crashk_res.end]
 	 * instead of [crashk_res.start, crashk_res.end] to workaround it.
 	 * Also, crashed kernel's memory must be added to reserve map to
-	 * aव्योम kdump kernel from using it.
+	 * avoid kdump kernel from using it.
 	 */
 	ret = add_mem_range(mem_ranges, 0, crashk_res.end + 1);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
 	ret = add_rtas_mem_range(mem_ranges);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
 	ret = add_opal_mem_range(mem_ranges);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
 	ret = add_tce_mem_ranges(mem_ranges);
 out:
-	अगर (ret)
+	if (ret)
 		pr_err("Failed to setup usable memory ranges\n");
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
  * get_crash_memory_ranges - Get crash memory ranges. This list includes
@@ -136,452 +135,452 @@ out:
  *                           would be exported via an elfcore.
  * @mem_ranges:              Range list to add the memory ranges to.
  *
- * Returns 0 on success, negative त्रुटि_सं on error.
+ * Returns 0 on success, negative errno on error.
  */
-अटल पूर्णांक get_crash_memory_ranges(काष्ठा crash_mem **mem_ranges)
-अणु
+static int get_crash_memory_ranges(struct crash_mem **mem_ranges)
+{
 	phys_addr_t base, end;
-	काष्ठा crash_mem *पंचांगem;
+	struct crash_mem *tmem;
 	u64 i;
-	पूर्णांक ret;
+	int ret;
 
-	क्रम_each_mem_range(i, &base, &end) अणु
+	for_each_mem_range(i, &base, &end) {
 		u64 size = end - base;
 
 		/* Skip backup memory region, which needs a separate entry */
-		अगर (base == BACKUP_SRC_START) अणु
-			अगर (size > BACKUP_SRC_SIZE) अणु
+		if (base == BACKUP_SRC_START) {
+			if (size > BACKUP_SRC_SIZE) {
 				base = BACKUP_SRC_END + 1;
 				size -= BACKUP_SRC_SIZE;
-			पूर्ण अन्यथा
-				जारी;
-		पूर्ण
+			} else
+				continue;
+		}
 
 		ret = add_mem_range(mem_ranges, base, size);
-		अगर (ret)
-			जाओ out;
+		if (ret)
+			goto out;
 
-		/* Try merging adjacent ranges beक्रमe पुनः_स्मृतिation attempt */
-		अगर ((*mem_ranges)->nr_ranges == (*mem_ranges)->max_nr_ranges)
+		/* Try merging adjacent ranges before reallocation attempt */
+		if ((*mem_ranges)->nr_ranges == (*mem_ranges)->max_nr_ranges)
 			sort_memory_ranges(*mem_ranges, true);
-	पूर्ण
+	}
 
-	/* Reallocate memory ranges अगर there is no space to split ranges */
-	पंचांगem = *mem_ranges;
-	अगर (पंचांगem && (पंचांगem->nr_ranges == पंचांगem->max_nr_ranges)) अणु
-		पंचांगem = पुनः_स्मृति_mem_ranges(mem_ranges);
-		अगर (!पंचांगem)
-			जाओ out;
-	पूर्ण
+	/* Reallocate memory ranges if there is no space to split ranges */
+	tmem = *mem_ranges;
+	if (tmem && (tmem->nr_ranges == tmem->max_nr_ranges)) {
+		tmem = realloc_mem_ranges(mem_ranges);
+		if (!tmem)
+			goto out;
+	}
 
 	/* Exclude crashkernel region */
-	ret = crash_exclude_mem_range(पंचांगem, crashk_res.start, crashk_res.end);
-	अगर (ret)
-		जाओ out;
+	ret = crash_exclude_mem_range(tmem, crashk_res.start, crashk_res.end);
+	if (ret)
+		goto out;
 
 	/*
-	 * FIXME: For now, stay in parity with kexec-tools but अगर RTAS/OPAL
-	 *        regions are exported to save their context at the समय of
+	 * FIXME: For now, stay in parity with kexec-tools but if RTAS/OPAL
+	 *        regions are exported to save their context at the time of
 	 *        crash, they should actually be backed up just like the
 	 *        first 64K bytes of memory.
 	 */
 	ret = add_rtas_mem_range(mem_ranges);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
 	ret = add_opal_mem_range(mem_ranges);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
-	/* create a separate program header क्रम the backup region */
+	/* create a separate program header for the backup region */
 	ret = add_mem_range(mem_ranges, BACKUP_SRC_START, BACKUP_SRC_SIZE);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
 	sort_memory_ranges(*mem_ranges, false);
 out:
-	अगर (ret)
+	if (ret)
 		pr_err("Failed to setup crash memory ranges\n");
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
  * get_reserved_memory_ranges - Get reserve memory ranges. This list includes
  *                              memory regions that should be added to the
  *                              memory reserve map to ensure the region is
- *                              रक्षित from any mischief.
+ *                              protected from any mischief.
  * @mem_ranges:                 Range list to add the memory ranges to.
  *
- * Returns 0 on success, negative त्रुटि_सं on error.
+ * Returns 0 on success, negative errno on error.
  */
-अटल पूर्णांक get_reserved_memory_ranges(काष्ठा crash_mem **mem_ranges)
-अणु
-	पूर्णांक ret;
+static int get_reserved_memory_ranges(struct crash_mem **mem_ranges)
+{
+	int ret;
 
 	ret = add_rtas_mem_range(mem_ranges);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
 	ret = add_tce_mem_ranges(mem_ranges);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
 	ret = add_reserved_mem_ranges(mem_ranges);
 out:
-	अगर (ret)
+	if (ret)
 		pr_err("Failed to setup reserved memory ranges\n");
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * __locate_mem_hole_top_करोwn - Looks top करोwn क्रम a large enough memory hole
+ * __locate_mem_hole_top_down - Looks top down for a large enough memory hole
  *                              in the memory regions between buf_min & buf_max
- *                              क्रम the buffer. If found, sets kbuf->mem.
+ *                              for the buffer. If found, sets kbuf->mem.
  * @kbuf:                       Buffer contents and memory parameters.
- * @buf_min:                    Minimum address क्रम the buffer.
- * @buf_max:                    Maximum address क्रम the buffer.
+ * @buf_min:                    Minimum address for the buffer.
+ * @buf_max:                    Maximum address for the buffer.
  *
- * Returns 0 on success, negative त्रुटि_सं on error.
+ * Returns 0 on success, negative errno on error.
  */
-अटल पूर्णांक __locate_mem_hole_top_करोwn(काष्ठा kexec_buf *kbuf,
+static int __locate_mem_hole_top_down(struct kexec_buf *kbuf,
 				      u64 buf_min, u64 buf_max)
-अणु
-	पूर्णांक ret = -EADDRNOTAVAIL;
+{
+	int ret = -EADDRNOTAVAIL;
 	phys_addr_t start, end;
 	u64 i;
 
-	क्रम_each_mem_range_rev(i, &start, &end) अणु
+	for_each_mem_range_rev(i, &start, &end) {
 		/*
-		 * memblock uses [start, end) convention जबतक it is
+		 * memblock uses [start, end) convention while it is
 		 * [start, end] here. Fix the off-by-one to have the
 		 * same convention.
 		 */
 		end -= 1;
 
-		अगर (start > buf_max)
-			जारी;
+		if (start > buf_max)
+			continue;
 
 		/* Memory hole not found */
-		अगर (end < buf_min)
-			अवरोध;
+		if (end < buf_min)
+			break;
 
 		/* Adjust memory region based on the given range */
-		अगर (start < buf_min)
+		if (start < buf_min)
 			start = buf_min;
-		अगर (end > buf_max)
+		if (end > buf_max)
 			end = buf_max;
 
 		start = ALIGN(start, kbuf->buf_align);
-		अगर (start < end && (end - start + 1) >= kbuf->memsz) अणु
+		if (start < end && (end - start + 1) >= kbuf->memsz) {
 			/* Suitable memory range found. Set kbuf->mem */
 			kbuf->mem = ALIGN_DOWN(end - kbuf->memsz + 1,
 					       kbuf->buf_align);
 			ret = 0;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * locate_mem_hole_top_करोwn_ppc64 - Skip special memory regions to find a
- *                                  suitable buffer with top करोwn approach.
+ * locate_mem_hole_top_down_ppc64 - Skip special memory regions to find a
+ *                                  suitable buffer with top down approach.
  * @kbuf:                           Buffer contents and memory parameters.
- * @buf_min:                        Minimum address क्रम the buffer.
- * @buf_max:                        Maximum address क्रम the buffer.
+ * @buf_min:                        Minimum address for the buffer.
+ * @buf_max:                        Maximum address for the buffer.
  * @emem:                           Exclude memory ranges.
  *
- * Returns 0 on success, negative त्रुटि_सं on error.
+ * Returns 0 on success, negative errno on error.
  */
-अटल पूर्णांक locate_mem_hole_top_करोwn_ppc64(काष्ठा kexec_buf *kbuf,
+static int locate_mem_hole_top_down_ppc64(struct kexec_buf *kbuf,
 					  u64 buf_min, u64 buf_max,
-					  स्थिर काष्ठा crash_mem *emem)
-अणु
-	पूर्णांक i, ret = 0, err = -EADDRNOTAVAIL;
-	u64 start, end, पंचांगin, पंचांगax;
+					  const struct crash_mem *emem)
+{
+	int i, ret = 0, err = -EADDRNOTAVAIL;
+	u64 start, end, tmin, tmax;
 
-	पंचांगax = buf_max;
-	क्रम (i = (emem->nr_ranges - 1); i >= 0; i--) अणु
+	tmax = buf_max;
+	for (i = (emem->nr_ranges - 1); i >= 0; i--) {
 		start = emem->ranges[i].start;
 		end = emem->ranges[i].end;
 
-		अगर (start > पंचांगax)
-			जारी;
+		if (start > tmax)
+			continue;
 
-		अगर (end < पंचांगax) अणु
-			पंचांगin = (end < buf_min ? buf_min : end + 1);
-			ret = __locate_mem_hole_top_करोwn(kbuf, पंचांगin, पंचांगax);
-			अगर (!ret)
-				वापस 0;
-		पूर्ण
+		if (end < tmax) {
+			tmin = (end < buf_min ? buf_min : end + 1);
+			ret = __locate_mem_hole_top_down(kbuf, tmin, tmax);
+			if (!ret)
+				return 0;
+		}
 
-		पंचांगax = start - 1;
+		tmax = start - 1;
 
-		अगर (पंचांगax < buf_min) अणु
+		if (tmax < buf_min) {
 			ret = err;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		ret = 0;
-	पूर्ण
+	}
 
-	अगर (!ret) अणु
-		पंचांगin = buf_min;
-		ret = __locate_mem_hole_top_करोwn(kbuf, पंचांगin, पंचांगax);
-	पूर्ण
-	वापस ret;
-पूर्ण
+	if (!ret) {
+		tmin = buf_min;
+		ret = __locate_mem_hole_top_down(kbuf, tmin, tmax);
+	}
+	return ret;
+}
 
 /**
- * __locate_mem_hole_bottom_up - Looks bottom up क्रम a large enough memory hole
+ * __locate_mem_hole_bottom_up - Looks bottom up for a large enough memory hole
  *                               in the memory regions between buf_min & buf_max
- *                               क्रम the buffer. If found, sets kbuf->mem.
+ *                               for the buffer. If found, sets kbuf->mem.
  * @kbuf:                        Buffer contents and memory parameters.
- * @buf_min:                     Minimum address क्रम the buffer.
- * @buf_max:                     Maximum address क्रम the buffer.
+ * @buf_min:                     Minimum address for the buffer.
+ * @buf_max:                     Maximum address for the buffer.
  *
- * Returns 0 on success, negative त्रुटि_सं on error.
+ * Returns 0 on success, negative errno on error.
  */
-अटल पूर्णांक __locate_mem_hole_bottom_up(काष्ठा kexec_buf *kbuf,
+static int __locate_mem_hole_bottom_up(struct kexec_buf *kbuf,
 				       u64 buf_min, u64 buf_max)
-अणु
-	पूर्णांक ret = -EADDRNOTAVAIL;
+{
+	int ret = -EADDRNOTAVAIL;
 	phys_addr_t start, end;
 	u64 i;
 
-	क्रम_each_mem_range(i, &start, &end) अणु
+	for_each_mem_range(i, &start, &end) {
 		/*
-		 * memblock uses [start, end) convention जबतक it is
+		 * memblock uses [start, end) convention while it is
 		 * [start, end] here. Fix the off-by-one to have the
 		 * same convention.
 		 */
 		end -= 1;
 
-		अगर (end < buf_min)
-			जारी;
+		if (end < buf_min)
+			continue;
 
 		/* Memory hole not found */
-		अगर (start > buf_max)
-			अवरोध;
+		if (start > buf_max)
+			break;
 
 		/* Adjust memory region based on the given range */
-		अगर (start < buf_min)
+		if (start < buf_min)
 			start = buf_min;
-		अगर (end > buf_max)
+		if (end > buf_max)
 			end = buf_max;
 
 		start = ALIGN(start, kbuf->buf_align);
-		अगर (start < end && (end - start + 1) >= kbuf->memsz) अणु
+		if (start < end && (end - start + 1) >= kbuf->memsz) {
 			/* Suitable memory range found. Set kbuf->mem */
 			kbuf->mem = start;
 			ret = 0;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
  * locate_mem_hole_bottom_up_ppc64 - Skip special memory regions to find a
  *                                   suitable buffer with bottom up approach.
  * @kbuf:                            Buffer contents and memory parameters.
- * @buf_min:                         Minimum address क्रम the buffer.
- * @buf_max:                         Maximum address क्रम the buffer.
+ * @buf_min:                         Minimum address for the buffer.
+ * @buf_max:                         Maximum address for the buffer.
  * @emem:                            Exclude memory ranges.
  *
- * Returns 0 on success, negative त्रुटि_सं on error.
+ * Returns 0 on success, negative errno on error.
  */
-अटल पूर्णांक locate_mem_hole_bottom_up_ppc64(काष्ठा kexec_buf *kbuf,
+static int locate_mem_hole_bottom_up_ppc64(struct kexec_buf *kbuf,
 					   u64 buf_min, u64 buf_max,
-					   स्थिर काष्ठा crash_mem *emem)
-अणु
-	पूर्णांक i, ret = 0, err = -EADDRNOTAVAIL;
-	u64 start, end, पंचांगin, पंचांगax;
+					   const struct crash_mem *emem)
+{
+	int i, ret = 0, err = -EADDRNOTAVAIL;
+	u64 start, end, tmin, tmax;
 
-	पंचांगin = buf_min;
-	क्रम (i = 0; i < emem->nr_ranges; i++) अणु
+	tmin = buf_min;
+	for (i = 0; i < emem->nr_ranges; i++) {
 		start = emem->ranges[i].start;
 		end = emem->ranges[i].end;
 
-		अगर (end < पंचांगin)
-			जारी;
+		if (end < tmin)
+			continue;
 
-		अगर (start > पंचांगin) अणु
-			पंचांगax = (start > buf_max ? buf_max : start - 1);
-			ret = __locate_mem_hole_bottom_up(kbuf, पंचांगin, पंचांगax);
-			अगर (!ret)
-				वापस 0;
-		पूर्ण
+		if (start > tmin) {
+			tmax = (start > buf_max ? buf_max : start - 1);
+			ret = __locate_mem_hole_bottom_up(kbuf, tmin, tmax);
+			if (!ret)
+				return 0;
+		}
 
-		पंचांगin = end + 1;
+		tmin = end + 1;
 
-		अगर (पंचांगin > buf_max) अणु
+		if (tmin > buf_max) {
 			ret = err;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		ret = 0;
-	पूर्ण
+	}
 
-	अगर (!ret) अणु
-		पंचांगax = buf_max;
-		ret = __locate_mem_hole_bottom_up(kbuf, पंचांगin, पंचांगax);
-	पूर्ण
-	वापस ret;
-पूर्ण
+	if (!ret) {
+		tmax = buf_max;
+		ret = __locate_mem_hole_bottom_up(kbuf, tmin, tmax);
+	}
+	return ret;
+}
 
 /**
- * check_पुनः_स्मृति_usable_mem - Reallocate buffer अगर it can't accommodate entries
+ * check_realloc_usable_mem - Reallocate buffer if it can't accommodate entries
  * @um_info:                  Usable memory buffer and ranges info.
  * @cnt:                      No. of entries to accommodate.
  *
- * Frees up the old buffer अगर memory पुनः_स्मृतिation fails.
+ * Frees up the old buffer if memory reallocation fails.
  *
- * Returns buffer on success, शून्य on error.
+ * Returns buffer on success, NULL on error.
  */
-अटल u64 *check_पुनः_स्मृति_usable_mem(काष्ठा umem_info *um_info, पूर्णांक cnt)
-अणु
+static u64 *check_realloc_usable_mem(struct umem_info *um_info, int cnt)
+{
 	u32 new_size;
 	u64 *tbuf;
 
-	अगर ((um_info->idx + cnt) <= um_info->max_entries)
-		वापस um_info->buf;
+	if ((um_info->idx + cnt) <= um_info->max_entries)
+		return um_info->buf;
 
 	new_size = um_info->size + MEM_RANGE_CHUNK_SZ;
-	tbuf = kपुनः_स्मृति(um_info->buf, new_size, GFP_KERNEL);
-	अगर (tbuf) अणु
+	tbuf = krealloc(um_info->buf, new_size, GFP_KERNEL);
+	if (tbuf) {
 		um_info->buf = tbuf;
 		um_info->size = new_size;
-		um_info->max_entries = (um_info->size / माप(u64));
-	पूर्ण
+		um_info->max_entries = (um_info->size / sizeof(u64));
+	}
 
-	वापस tbuf;
-पूर्ण
+	return tbuf;
+}
 
 /**
  * add_usable_mem - Add the usable memory ranges within the given memory range
  *                  to the buffer
  * @um_info:        Usable memory buffer and ranges info.
- * @base:           Base address of memory range to look क्रम.
- * @end:            End address of memory range to look क्रम.
+ * @base:           Base address of memory range to look for.
+ * @end:            End address of memory range to look for.
  *
- * Returns 0 on success, negative त्रुटि_सं on error.
+ * Returns 0 on success, negative errno on error.
  */
-अटल पूर्णांक add_usable_mem(काष्ठा umem_info *um_info, u64 base, u64 end)
-अणु
+static int add_usable_mem(struct umem_info *um_info, u64 base, u64 end)
+{
 	u64 loc_base, loc_end;
 	bool add;
-	पूर्णांक i;
+	int i;
 
-	क्रम (i = 0; i < um_info->nr_ranges; i++) अणु
+	for (i = 0; i < um_info->nr_ranges; i++) {
 		add = false;
 		loc_base = um_info->ranges[i].start;
 		loc_end = um_info->ranges[i].end;
-		अगर (loc_base >= base && loc_end <= end)
+		if (loc_base >= base && loc_end <= end)
 			add = true;
-		अन्यथा अगर (base < loc_end && end > loc_base) अणु
-			अगर (loc_base < base)
+		else if (base < loc_end && end > loc_base) {
+			if (loc_base < base)
 				loc_base = base;
-			अगर (loc_end > end)
+			if (loc_end > end)
 				loc_end = end;
 			add = true;
-		पूर्ण
+		}
 
-		अगर (add) अणु
-			अगर (!check_पुनः_स्मृति_usable_mem(um_info, 2))
-				वापस -ENOMEM;
+		if (add) {
+			if (!check_realloc_usable_mem(um_info, 2))
+				return -ENOMEM;
 
 			um_info->buf[um_info->idx++] = cpu_to_be64(loc_base);
 			um_info->buf[um_info->idx++] =
 					cpu_to_be64(loc_end - loc_base + 1);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * kdump_setup_usable_lmb - This is a callback function that माला_लो called by
- *                          walk_drmem_lmbs क्रम every LMB to set its
+ * kdump_setup_usable_lmb - This is a callback function that gets called by
+ *                          walk_drmem_lmbs for every LMB to set its
  *                          usable memory ranges.
  * @lmb:                    LMB info.
  * @usm:                    linux,drconf-usable-memory property value.
- * @data:                   Poपूर्णांकer to usable memory buffer and ranges info.
+ * @data:                   Pointer to usable memory buffer and ranges info.
  *
- * Returns 0 on success, negative त्रुटि_सं on error.
+ * Returns 0 on success, negative errno on error.
  */
-अटल पूर्णांक kdump_setup_usable_lmb(काष्ठा drmem_lmb *lmb, स्थिर __be32 **usm,
-				  व्योम *data)
-अणु
-	काष्ठा umem_info *um_info;
-	पूर्णांक पंचांगp_idx, ret;
+static int kdump_setup_usable_lmb(struct drmem_lmb *lmb, const __be32 **usm,
+				  void *data)
+{
+	struct umem_info *um_info;
+	int tmp_idx, ret;
 	u64 base, end;
 
 	/*
-	 * kdump load isn't supported on kernels alपढ़ोy booted with
+	 * kdump load isn't supported on kernels already booted with
 	 * linux,drconf-usable-memory property.
 	 */
-	अगर (*usm) अणु
+	if (*usm) {
 		pr_err("linux,drconf-usable-memory property already exists!");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	um_info = data;
-	पंचांगp_idx = um_info->idx;
-	अगर (!check_पुनः_स्मृति_usable_mem(um_info, 1))
-		वापस -ENOMEM;
+	tmp_idx = um_info->idx;
+	if (!check_realloc_usable_mem(um_info, 1))
+		return -ENOMEM;
 
 	um_info->idx++;
 	base = lmb->base_addr;
 	end = base + drmem_lmb_size() - 1;
 	ret = add_usable_mem(um_info, base, end);
-	अगर (!ret) अणु
+	if (!ret) {
 		/*
 		 * Update the no. of ranges added. Two entries (base & size)
-		 * क्रम every range added.
+		 * for every range added.
 		 */
-		um_info->buf[पंचांगp_idx] =
-				cpu_to_be64((um_info->idx - पंचांगp_idx - 1) / 2);
-	पूर्ण
+		um_info->buf[tmp_idx] =
+				cpu_to_be64((um_info->idx - tmp_idx - 1) / 2);
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-#घोषणा NODE_PATH_LEN		256
+#define NODE_PATH_LEN		256
 /**
- * add_usable_mem_property - Add usable memory property क्रम the given
+ * add_usable_mem_property - Add usable memory property for the given
  *                           memory node.
- * @fdt:                     Flattened device tree क्रम the kdump kernel.
+ * @fdt:                     Flattened device tree for the kdump kernel.
  * @dn:                      Memory node.
  * @um_info:                 Usable memory buffer and ranges info.
  *
- * Returns 0 on success, negative त्रुटि_सं on error.
+ * Returns 0 on success, negative errno on error.
  */
-अटल पूर्णांक add_usable_mem_property(व्योम *fdt, काष्ठा device_node *dn,
-				   काष्ठा umem_info *um_info)
-अणु
-	पूर्णांक n_mem_addr_cells, n_mem_size_cells, node;
-	अक्षर path[NODE_PATH_LEN];
-	पूर्णांक i, len, ranges, ret;
-	स्थिर __be32 *prop;
+static int add_usable_mem_property(void *fdt, struct device_node *dn,
+				   struct umem_info *um_info)
+{
+	int n_mem_addr_cells, n_mem_size_cells, node;
+	char path[NODE_PATH_LEN];
+	int i, len, ranges, ret;
+	const __be32 *prop;
 	u64 base, end;
 
 	of_node_get(dn);
 
-	अगर (snम_लिखो(path, NODE_PATH_LEN, "%pOF", dn) > (NODE_PATH_LEN - 1)) अणु
+	if (snprintf(path, NODE_PATH_LEN, "%pOF", dn) > (NODE_PATH_LEN - 1)) {
 		pr_err("Buffer (%d) too small for memory node: %pOF\n",
 		       NODE_PATH_LEN, dn);
-		वापस -EOVERFLOW;
-	पूर्ण
+		return -EOVERFLOW;
+	}
 	pr_debug("Memory node path: %s\n", path);
 
 	/* Now that we know the path, find its offset in kdump kernel's fdt */
 	node = fdt_path_offset(fdt, path);
-	अगर (node < 0) अणु
+	if (node < 0) {
 		pr_err("Malformed device tree: error reading %s\n", path);
 		ret = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/* Get the address & size cells */
 	n_mem_addr_cells = of_n_addr_cells(dn);
@@ -590,16 +589,16 @@ out:
 		 n_mem_size_cells);
 
 	um_info->idx  = 0;
-	अगर (!check_पुनः_स्मृति_usable_mem(um_info, 2)) अणु
+	if (!check_realloc_usable_mem(um_info, 2)) {
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	prop = of_get_property(dn, "reg", &len);
-	अगर (!prop || len <= 0) अणु
+	if (!prop || len <= 0) {
 		ret = 0;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/*
 	 * "reg" property represents sequence of (addr,size) tuples
@@ -607,66 +606,66 @@ out:
 	 */
 	ranges = (len >> 2) / (n_mem_addr_cells + n_mem_size_cells);
 
-	क्रम (i = 0; i < ranges; i++) अणु
-		base = of_पढ़ो_number(prop, n_mem_addr_cells);
+	for (i = 0; i < ranges; i++) {
+		base = of_read_number(prop, n_mem_addr_cells);
 		prop += n_mem_addr_cells;
-		end = base + of_पढ़ो_number(prop, n_mem_size_cells) - 1;
+		end = base + of_read_number(prop, n_mem_size_cells) - 1;
 		prop += n_mem_size_cells;
 
 		ret = add_usable_mem(um_info, base, end);
-		अगर (ret)
-			जाओ out;
-	पूर्ण
+		if (ret)
+			goto out;
+	}
 
 	/*
 	 * No kdump kernel usable memory found in this memory node.
-	 * Write (0,0) tuple in linux,usable-memory property क्रम
+	 * Write (0,0) tuple in linux,usable-memory property for
 	 * this region to be ignored.
 	 */
-	अगर (um_info->idx == 0) अणु
+	if (um_info->idx == 0) {
 		um_info->buf[0] = 0;
 		um_info->buf[1] = 0;
 		um_info->idx = 2;
-	पूर्ण
+	}
 
 	ret = fdt_setprop(fdt, node, "linux,usable-memory", um_info->buf,
-			  (um_info->idx * माप(u64)));
+			  (um_info->idx * sizeof(u64)));
 
 out:
 	of_node_put(dn);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 
 /**
  * update_usable_mem_fdt - Updates kdump kernel's fdt with linux,usable-memory
  *                         and linux,drconf-usable-memory DT properties as
  *                         appropriate to restrict its memory usage.
- * @fdt:                   Flattened device tree क्रम the kdump kernel.
- * @usable_mem:            Usable memory ranges क्रम kdump kernel.
+ * @fdt:                   Flattened device tree for the kdump kernel.
+ * @usable_mem:            Usable memory ranges for kdump kernel.
  *
- * Returns 0 on success, negative त्रुटि_सं on error.
+ * Returns 0 on success, negative errno on error.
  */
-अटल पूर्णांक update_usable_mem_fdt(व्योम *fdt, काष्ठा crash_mem *usable_mem)
-अणु
-	काष्ठा umem_info um_info;
-	काष्ठा device_node *dn;
-	पूर्णांक node, ret = 0;
+static int update_usable_mem_fdt(void *fdt, struct crash_mem *usable_mem)
+{
+	struct umem_info um_info;
+	struct device_node *dn;
+	int node, ret = 0;
 
-	अगर (!usable_mem) अणु
+	if (!usable_mem) {
 		pr_err("Usable memory ranges for kdump kernel not found\n");
-		वापस -ENOENT;
-	पूर्ण
+		return -ENOENT;
+	}
 
 	node = fdt_path_offset(fdt, "/ibm,dynamic-reconfiguration-memory");
-	अगर (node == -FDT_ERR_NOTFOUND)
+	if (node == -FDT_ERR_NOTFOUND)
 		pr_debug("No dynamic reconfiguration memory found\n");
-	अन्यथा अगर (node < 0) अणु
+	else if (node < 0) {
 		pr_err("Malformed device tree: error reading /ibm,dynamic-reconfiguration-memory.\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	um_info.buf  = शून्य;
+	um_info.buf  = NULL;
 	um_info.size = 0;
 	um_info.max_entries = 0;
 	um_info.idx  = 0;
@@ -675,107 +674,107 @@ out:
 	um_info.nr_ranges = usable_mem->nr_ranges;
 
 	dn = of_find_node_by_path("/ibm,dynamic-reconfiguration-memory");
-	अगर (dn) अणु
+	if (dn) {
 		ret = walk_drmem_lmbs(dn, &um_info, kdump_setup_usable_lmb);
 		of_node_put(dn);
 
-		अगर (ret) अणु
+		if (ret) {
 			pr_err("Could not setup linux,drconf-usable-memory property for kdump\n");
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		ret = fdt_setprop(fdt, node, "linux,drconf-usable-memory",
-				  um_info.buf, (um_info.idx * माप(u64)));
-		अगर (ret) अणु
+				  um_info.buf, (um_info.idx * sizeof(u64)));
+		if (ret) {
 			pr_err("Failed to update fdt with linux,drconf-usable-memory property");
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 
 	/*
 	 * Walk through each memory node and set linux,usable-memory property
-	 * क्रम the corresponding node in kdump kernel's fdt.
+	 * for the corresponding node in kdump kernel's fdt.
 	 */
-	क्रम_each_node_by_type(dn, "memory") अणु
+	for_each_node_by_type(dn, "memory") {
 		ret = add_usable_mem_property(fdt, dn, &um_info);
-		अगर (ret) अणु
+		if (ret) {
 			pr_err("Failed to set linux,usable-memory property for %s node",
 			       dn->full_name);
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 
 out:
-	kमुक्त(um_info.buf);
-	वापस ret;
-पूर्ण
+	kfree(um_info.buf);
+	return ret;
+}
 
 /**
  * load_backup_segment - Locate a memory hole to place the backup region.
  * @image:               Kexec image.
  * @kbuf:                Buffer contents and memory parameters.
  *
- * Returns 0 on success, negative त्रुटि_सं on error.
+ * Returns 0 on success, negative errno on error.
  */
-अटल पूर्णांक load_backup_segment(काष्ठा kimage *image, काष्ठा kexec_buf *kbuf)
-अणु
-	व्योम *buf;
-	पूर्णांक ret;
+static int load_backup_segment(struct kimage *image, struct kexec_buf *kbuf)
+{
+	void *buf;
+	int ret;
 
 	/*
-	 * Setup a source buffer क्रम backup segment.
+	 * Setup a source buffer for backup segment.
 	 *
-	 * A source buffer has no meaning क्रम backup region as data will
+	 * A source buffer has no meaning for backup region as data will
 	 * be copied from backup source, after crash, in the purgatory.
-	 * But as load segment code करोesn't recognize such segments,
-	 * setup a dummy source buffer to keep it happy क्रम now.
+	 * But as load segment code doesn't recognize such segments,
+	 * setup a dummy source buffer to keep it happy for now.
 	 */
 	buf = vzalloc(BACKUP_SRC_SIZE);
-	अगर (!buf)
-		वापस -ENOMEM;
+	if (!buf)
+		return -ENOMEM;
 
 	kbuf->buffer = buf;
 	kbuf->mem = KEXEC_BUF_MEM_UNKNOWN;
 	kbuf->bufsz = kbuf->memsz = BACKUP_SRC_SIZE;
-	kbuf->top_करोwn = false;
+	kbuf->top_down = false;
 
 	ret = kexec_add_buffer(kbuf);
-	अगर (ret) अणु
-		vमुक्त(buf);
-		वापस ret;
-	पूर्ण
+	if (ret) {
+		vfree(buf);
+		return ret;
+	}
 
 	image->arch.backup_buf = buf;
 	image->arch.backup_start = kbuf->mem;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * update_backup_region_phdr - Update backup region's offset क्रम the core to
+ * update_backup_region_phdr - Update backup region's offset for the core to
  *                             export the region appropriately.
  * @image:                     Kexec image.
  * @ehdr:                      ELF core header.
  *
- * Assumes an exclusive program header is setup क्रम the backup region
+ * Assumes an exclusive program header is setup for the backup region
  * in the ELF headers
  *
  * Returns nothing.
  */
-अटल व्योम update_backup_region_phdr(काष्ठा kimage *image, Elf64_Ehdr *ehdr)
-अणु
+static void update_backup_region_phdr(struct kimage *image, Elf64_Ehdr *ehdr)
+{
 	Elf64_Phdr *phdr;
-	अचिन्हित पूर्णांक i;
+	unsigned int i;
 
 	phdr = (Elf64_Phdr *)(ehdr + 1);
-	क्रम (i = 0; i < ehdr->e_phnum; i++) अणु
-		अगर (phdr->p_paddr == BACKUP_SRC_START) अणु
+	for (i = 0; i < ehdr->e_phnum; i++) {
+		if (phdr->p_paddr == BACKUP_SRC_START) {
 			phdr->p_offset = image->arch.backup_start;
 			pr_debug("Backup region offset updated to 0x%lx\n",
 				 image->arch.backup_start);
-			वापस;
-		पूर्ण
-	पूर्ण
-पूर्ण
+			return;
+		}
+	}
+}
 
 /**
  * load_elfcorehdr_segment - Setup crash memory ranges and initialize elfcorehdr
@@ -783,47 +782,47 @@ out:
  * @image:                   Kexec image.
  * @kbuf:                    Buffer contents and memory parameters.
  *
- * Returns 0 on success, negative त्रुटि_सं on error.
+ * Returns 0 on success, negative errno on error.
  */
-अटल पूर्णांक load_elfcorehdr_segment(काष्ठा kimage *image, काष्ठा kexec_buf *kbuf)
-अणु
-	काष्ठा crash_mem *cmem = शून्य;
-	अचिन्हित दीर्घ headers_sz;
-	व्योम *headers = शून्य;
-	पूर्णांक ret;
+static int load_elfcorehdr_segment(struct kimage *image, struct kexec_buf *kbuf)
+{
+	struct crash_mem *cmem = NULL;
+	unsigned long headers_sz;
+	void *headers = NULL;
+	int ret;
 
 	ret = get_crash_memory_ranges(&cmem);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
 	/* Setup elfcorehdr segment */
 	ret = crash_prepare_elf64_headers(cmem, false, &headers, &headers_sz);
-	अगर (ret) अणु
+	if (ret) {
 		pr_err("Failed to prepare elf headers for the core\n");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	/* Fix the offset क्रम backup region in the ELF header */
+	/* Fix the offset for backup region in the ELF header */
 	update_backup_region_phdr(image, headers);
 
 	kbuf->buffer = headers;
 	kbuf->mem = KEXEC_BUF_MEM_UNKNOWN;
 	kbuf->bufsz = kbuf->memsz = headers_sz;
-	kbuf->top_करोwn = false;
+	kbuf->top_down = false;
 
 	ret = kexec_add_buffer(kbuf);
-	अगर (ret) अणु
-		vमुक्त(headers);
-		जाओ out;
-	पूर्ण
+	if (ret) {
+		vfree(headers);
+		goto out;
+	}
 
 	image->elf_load_addr = kbuf->mem;
 	image->elf_headers_sz = headers_sz;
 	image->elf_headers = headers;
 out:
-	kमुक्त(cmem);
-	वापस ret;
-पूर्ण
+	kfree(cmem);
+	return ret;
+}
 
 /**
  * load_crashdump_segments_ppc64 - Initialize the additional segements needed
@@ -831,402 +830,402 @@ out:
  * @image:                         Kexec image.
  * @kbuf:                          Buffer contents and memory parameters.
  *
- * Returns 0 on success, negative त्रुटि_सं on error.
+ * Returns 0 on success, negative errno on error.
  */
-पूर्णांक load_crashdump_segments_ppc64(काष्ठा kimage *image,
-				  काष्ठा kexec_buf *kbuf)
-अणु
-	पूर्णांक ret;
+int load_crashdump_segments_ppc64(struct kimage *image,
+				  struct kexec_buf *kbuf)
+{
+	int ret;
 
 	/* Load backup segment - first 64K bytes of the crashing kernel */
 	ret = load_backup_segment(image, kbuf);
-	अगर (ret) अणु
+	if (ret) {
 		pr_err("Failed to load backup segment\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 	pr_debug("Loaded the backup region at 0x%lx\n", kbuf->mem);
 
 	/* Load elfcorehdr segment - to export crashing kernel's vmcore */
 	ret = load_elfcorehdr_segment(image, kbuf);
-	अगर (ret) अणु
+	if (ret) {
 		pr_err("Failed to load elfcorehdr segment\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 	pr_debug("Loaded elf core header at 0x%lx, bufsz=0x%lx memsz=0x%lx\n",
 		 image->elf_load_addr, kbuf->bufsz, kbuf->memsz);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * setup_purgatory_ppc64 - initialize PPC64 specअगरic purgatory's global
+ * setup_purgatory_ppc64 - initialize PPC64 specific purgatory's global
  *                         variables and call setup_purgatory() to initialize
  *                         common global variable.
  * @image:                 kexec image.
- * @slave_code:            Slave code क्रम the purgatory.
- * @fdt:                   Flattened device tree क्रम the next kernel.
+ * @slave_code:            Slave code for the purgatory.
+ * @fdt:                   Flattened device tree for the next kernel.
  * @kernel_load_addr:      Address where the kernel is loaded.
  * @fdt_load_addr:         Address where the flattened device tree is loaded.
  *
- * Returns 0 on success, negative त्रुटि_सं on error.
+ * Returns 0 on success, negative errno on error.
  */
-पूर्णांक setup_purgatory_ppc64(काष्ठा kimage *image, स्थिर व्योम *slave_code,
-			  स्थिर व्योम *fdt, अचिन्हित दीर्घ kernel_load_addr,
-			  अचिन्हित दीर्घ fdt_load_addr)
-अणु
-	काष्ठा device_node *dn = शून्य;
-	पूर्णांक ret;
+int setup_purgatory_ppc64(struct kimage *image, const void *slave_code,
+			  const void *fdt, unsigned long kernel_load_addr,
+			  unsigned long fdt_load_addr)
+{
+	struct device_node *dn = NULL;
+	int ret;
 
 	ret = setup_purgatory(image, slave_code, fdt, kernel_load_addr,
 			      fdt_load_addr);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
-	अगर (image->type == KEXEC_TYPE_CRASH) अणु
+	if (image->type == KEXEC_TYPE_CRASH) {
 		u32 my_run_at_load = 1;
 
 		/*
 		 * Tell relocatable kernel to run at load address
-		 * via the word meant क्रम that at 0x5c.
+		 * via the word meant for that at 0x5c.
 		 */
 		ret = kexec_purgatory_get_set_symbol(image, "run_at_load",
 						     &my_run_at_load,
-						     माप(my_run_at_load),
+						     sizeof(my_run_at_load),
 						     false);
-		अगर (ret)
-			जाओ out;
-	पूर्ण
+		if (ret)
+			goto out;
+	}
 
-	/* Tell purgatory where to look क्रम backup region */
+	/* Tell purgatory where to look for backup region */
 	ret = kexec_purgatory_get_set_symbol(image, "backup_start",
 					     &image->arch.backup_start,
-					     माप(image->arch.backup_start),
+					     sizeof(image->arch.backup_start),
 					     false);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
 	/* Setup OPAL base & entry values */
 	dn = of_find_node_by_path("/ibm,opal");
-	अगर (dn) अणु
+	if (dn) {
 		u64 val;
 
-		of_property_पढ़ो_u64(dn, "opal-base-address", &val);
+		of_property_read_u64(dn, "opal-base-address", &val);
 		ret = kexec_purgatory_get_set_symbol(image, "opal_base", &val,
-						     माप(val), false);
-		अगर (ret)
-			जाओ out;
+						     sizeof(val), false);
+		if (ret)
+			goto out;
 
-		of_property_पढ़ो_u64(dn, "opal-entry-address", &val);
+		of_property_read_u64(dn, "opal-entry-address", &val);
 		ret = kexec_purgatory_get_set_symbol(image, "opal_entry", &val,
-						     माप(val), false);
-	पूर्ण
+						     sizeof(val), false);
+	}
 out:
-	अगर (ret)
+	if (ret)
 		pr_err("Failed to setup purgatory symbols");
 	of_node_put(dn);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
  * kexec_extra_fdt_size_ppc64 - Return the estimated additional size needed to
- *                              setup FDT क्रम kexec/kdump kernel.
+ *                              setup FDT for kexec/kdump kernel.
  * @image:                      kexec image being loaded.
  *
- * Returns the estimated extra size needed क्रम kexec/kdump kernel FDT.
+ * Returns the estimated extra size needed for kexec/kdump kernel FDT.
  */
-अचिन्हित पूर्णांक kexec_extra_fdt_size_ppc64(काष्ठा kimage *image)
-अणु
+unsigned int kexec_extra_fdt_size_ppc64(struct kimage *image)
+{
 	u64 usm_entries;
 
-	अगर (image->type != KEXEC_TYPE_CRASH)
-		वापस 0;
+	if (image->type != KEXEC_TYPE_CRASH)
+		return 0;
 
 	/*
-	 * For kdump kernel, account क्रम linux,usable-memory and
+	 * For kdump kernel, account for linux,usable-memory and
 	 * linux,drconf-usable-memory properties. Get an approximate on the
-	 * number of usable memory entries and use क्रम FDT size estimation.
+	 * number of usable memory entries and use for FDT size estimation.
 	 */
 	usm_entries = ((memblock_end_of_DRAM() / drmem_lmb_size()) +
 		       (2 * (resource_size(&crashk_res) / drmem_lmb_size())));
-	वापस (अचिन्हित पूर्णांक)(usm_entries * माप(u64));
-पूर्ण
+	return (unsigned int)(usm_entries * sizeof(u64));
+}
 
 /**
- * add_node_props - Reads node properties from device node काष्ठाure and add
+ * add_node_props - Reads node properties from device node structure and add
  *                  them to fdt.
  * @fdt:            Flattened device tree of the kernel
  * @node_offset:    offset of the node to add a property at
- * @dn:             device node poपूर्णांकer
+ * @dn:             device node pointer
  *
- * Returns 0 on success, negative त्रुटि_सं on error.
+ * Returns 0 on success, negative errno on error.
  */
-अटल पूर्णांक add_node_props(व्योम *fdt, पूर्णांक node_offset, स्थिर काष्ठा device_node *dn)
-अणु
-	पूर्णांक ret = 0;
-	काष्ठा property *pp;
+static int add_node_props(void *fdt, int node_offset, const struct device_node *dn)
+{
+	int ret = 0;
+	struct property *pp;
 
-	अगर (!dn)
-		वापस -EINVAL;
+	if (!dn)
+		return -EINVAL;
 
-	क्रम_each_property_of_node(dn, pp) अणु
+	for_each_property_of_node(dn, pp) {
 		ret = fdt_setprop(fdt, node_offset, pp->name, pp->value, pp->length);
-		अगर (ret < 0) अणु
-			pr_err("Unable to add %s property: %s\n", pp->name, fdt_म_त्रुटि(ret));
-			वापस ret;
-		पूर्ण
-	पूर्ण
-	वापस ret;
-पूर्ण
+		if (ret < 0) {
+			pr_err("Unable to add %s property: %s\n", pp->name, fdt_strerror(ret));
+			return ret;
+		}
+	}
+	return ret;
+}
 
 /**
  * update_cpus_node - Update cpus node of flattened device tree using of_root
  *                    device node.
  * @fdt:              Flattened device tree of the kernel.
  *
- * Returns 0 on success, negative त्रुटि_सं on error.
+ * Returns 0 on success, negative errno on error.
  */
-अटल पूर्णांक update_cpus_node(व्योम *fdt)
-अणु
-	काष्ठा device_node *cpus_node, *dn;
-	पूर्णांक cpus_offset, cpus_subnode_offset, ret = 0;
+static int update_cpus_node(void *fdt)
+{
+	struct device_node *cpus_node, *dn;
+	int cpus_offset, cpus_subnode_offset, ret = 0;
 
 	cpus_offset = fdt_path_offset(fdt, "/cpus");
-	अगर (cpus_offset < 0 && cpus_offset != -FDT_ERR_NOTFOUND) अणु
+	if (cpus_offset < 0 && cpus_offset != -FDT_ERR_NOTFOUND) {
 		pr_err("Malformed device tree: error reading /cpus node: %s\n",
-		       fdt_म_त्रुटि(cpus_offset));
-		वापस cpus_offset;
-	पूर्ण
+		       fdt_strerror(cpus_offset));
+		return cpus_offset;
+	}
 
-	अगर (cpus_offset > 0) अणु
+	if (cpus_offset > 0) {
 		ret = fdt_del_node(fdt, cpus_offset);
-		अगर (ret < 0) अणु
-			pr_err("Error deleting /cpus node: %s\n", fdt_म_त्रुटि(ret));
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+		if (ret < 0) {
+			pr_err("Error deleting /cpus node: %s\n", fdt_strerror(ret));
+			return -EINVAL;
+		}
+	}
 
 	/* Add cpus node to fdt */
 	cpus_offset = fdt_add_subnode(fdt, fdt_path_offset(fdt, "/"), "cpus");
-	अगर (cpus_offset < 0) अणु
-		pr_err("Error creating /cpus node: %s\n", fdt_म_त्रुटि(cpus_offset));
-		वापस -EINVAL;
-	पूर्ण
+	if (cpus_offset < 0) {
+		pr_err("Error creating /cpus node: %s\n", fdt_strerror(cpus_offset));
+		return -EINVAL;
+	}
 
 	/* Add cpus node properties */
 	cpus_node = of_find_node_by_path("/cpus");
 	ret = add_node_props(fdt, cpus_offset, cpus_node);
 	of_node_put(cpus_node);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	/* Loop through all subnodes of cpus and add them to fdt */
-	क्रम_each_node_by_type(dn, "cpu") अणु
+	for_each_node_by_type(dn, "cpu") {
 		cpus_subnode_offset = fdt_add_subnode(fdt, cpus_offset, dn->full_name);
-		अगर (cpus_subnode_offset < 0) अणु
+		if (cpus_subnode_offset < 0) {
 			pr_err("Unable to add %s subnode: %s\n", dn->full_name,
-			       fdt_म_त्रुटि(cpus_subnode_offset));
+			       fdt_strerror(cpus_subnode_offset));
 			ret = cpus_subnode_offset;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		ret = add_node_props(fdt, cpus_subnode_offset, dn);
-		अगर (ret < 0)
-			जाओ out;
-	पूर्ण
+		if (ret < 0)
+			goto out;
+	}
 out:
 	of_node_put(dn);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
  * setup_new_fdt_ppc64 - Update the flattend device-tree of the kernel
  *                       being loaded.
  * @image:               kexec image being loaded.
- * @fdt:                 Flattened device tree क्रम the next kernel.
+ * @fdt:                 Flattened device tree for the next kernel.
  * @initrd_load_addr:    Address where the next initrd will be loaded.
- * @initrd_len:          Size of the next initrd, or 0 अगर there will be none.
- * @cmdline:             Command line क्रम the next kernel, or शून्य अगर there will
+ * @initrd_len:          Size of the next initrd, or 0 if there will be none.
+ * @cmdline:             Command line for the next kernel, or NULL if there will
  *                       be none.
  *
- * Returns 0 on success, negative त्रुटि_सं on error.
+ * Returns 0 on success, negative errno on error.
  */
-पूर्णांक setup_new_fdt_ppc64(स्थिर काष्ठा kimage *image, व्योम *fdt,
-			अचिन्हित दीर्घ initrd_load_addr,
-			अचिन्हित दीर्घ initrd_len, स्थिर अक्षर *cmdline)
-अणु
-	काष्ठा crash_mem *umem = शून्य, *rmem = शून्य;
-	पूर्णांक i, nr_ranges, ret;
+int setup_new_fdt_ppc64(const struct kimage *image, void *fdt,
+			unsigned long initrd_load_addr,
+			unsigned long initrd_len, const char *cmdline)
+{
+	struct crash_mem *umem = NULL, *rmem = NULL;
+	int i, nr_ranges, ret;
 
 	/*
-	 * Restrict memory usage क्रम kdump kernel by setting up
+	 * Restrict memory usage for kdump kernel by setting up
 	 * usable memory ranges and memory reserve map.
 	 */
-	अगर (image->type == KEXEC_TYPE_CRASH) अणु
+	if (image->type == KEXEC_TYPE_CRASH) {
 		ret = get_usable_memory_ranges(&umem);
-		अगर (ret)
-			जाओ out;
+		if (ret)
+			goto out;
 
 		ret = update_usable_mem_fdt(fdt, umem);
-		अगर (ret) अणु
+		if (ret) {
 			pr_err("Error setting up usable-memory property for kdump kernel\n");
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		/*
-		 * Ensure we करोn't touch crashed kernel's memory except the
+		 * Ensure we don't touch crashed kernel's memory except the
 		 * first 64K of RAM, which will be backed up.
 		 */
 		ret = fdt_add_mem_rsv(fdt, BACKUP_SRC_END + 1,
 				      crashk_res.start - BACKUP_SRC_SIZE);
-		अगर (ret) अणु
+		if (ret) {
 			pr_err("Error reserving crash memory: %s\n",
-			       fdt_म_त्रुटि(ret));
-			जाओ out;
-		पूर्ण
+			       fdt_strerror(ret));
+			goto out;
+		}
 
 		/* Ensure backup region is not used by kdump/capture kernel */
 		ret = fdt_add_mem_rsv(fdt, image->arch.backup_start,
 				      BACKUP_SRC_SIZE);
-		अगर (ret) अणु
+		if (ret) {
 			pr_err("Error reserving memory for backup: %s\n",
-			       fdt_म_त्रुटि(ret));
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			       fdt_strerror(ret));
+			goto out;
+		}
+	}
 
-	/* Update cpus nodes inक्रमmation to account hotplug CPUs. */
+	/* Update cpus nodes information to account hotplug CPUs. */
 	ret =  update_cpus_node(fdt);
-	अगर (ret < 0)
-		जाओ out;
+	if (ret < 0)
+		goto out;
 
 	/* Update memory reserve map */
 	ret = get_reserved_memory_ranges(&rmem);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
 	nr_ranges = rmem ? rmem->nr_ranges : 0;
-	क्रम (i = 0; i < nr_ranges; i++) अणु
+	for (i = 0; i < nr_ranges; i++) {
 		u64 base, size;
 
 		base = rmem->ranges[i].start;
 		size = rmem->ranges[i].end - base + 1;
 		ret = fdt_add_mem_rsv(fdt, base, size);
-		अगर (ret) अणु
+		if (ret) {
 			pr_err("Error updating memory reserve map: %s\n",
-			       fdt_म_त्रुटि(ret));
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			       fdt_strerror(ret));
+			goto out;
+		}
+	}
 
 out:
-	kमुक्त(rmem);
-	kमुक्त(umem);
-	वापस ret;
-पूर्ण
+	kfree(rmem);
+	kfree(umem);
+	return ret;
+}
 
 /**
  * arch_kexec_locate_mem_hole - Skip special memory regions like rtas, opal,
  *                              tce-table, reserved-ranges & such (exclude
- *                              memory ranges) as they can't be used क्रम kexec
+ *                              memory ranges) as they can't be used for kexec
  *                              segment buffer. Sets kbuf->mem when a suitable
  *                              memory hole is found.
  * @kbuf:                       Buffer contents and memory parameters.
  *
- * Assumes minimum of PAGE_SIZE alignment क्रम kbuf->memsz & kbuf->buf_align.
+ * Assumes minimum of PAGE_SIZE alignment for kbuf->memsz & kbuf->buf_align.
  *
- * Returns 0 on success, negative त्रुटि_सं on error.
+ * Returns 0 on success, negative errno on error.
  */
-पूर्णांक arch_kexec_locate_mem_hole(काष्ठा kexec_buf *kbuf)
-अणु
-	काष्ठा crash_mem **emem;
+int arch_kexec_locate_mem_hole(struct kexec_buf *kbuf)
+{
+	struct crash_mem **emem;
 	u64 buf_min, buf_max;
-	पूर्णांक ret;
+	int ret;
 
-	/* Look up the exclude ranges list जबतक locating the memory hole */
+	/* Look up the exclude ranges list while locating the memory hole */
 	emem = &(kbuf->image->arch.exclude_ranges);
-	अगर (!(*emem) || ((*emem)->nr_ranges == 0)) अणु
+	if (!(*emem) || ((*emem)->nr_ranges == 0)) {
 		pr_warn("No exclude range list. Using the default locate mem hole method\n");
-		वापस kexec_locate_mem_hole(kbuf);
-	पूर्ण
+		return kexec_locate_mem_hole(kbuf);
+	}
 
 	buf_min = kbuf->buf_min;
 	buf_max = kbuf->buf_max;
-	/* Segments क्रम kdump kernel should be within crashkernel region */
-	अगर (kbuf->image->type == KEXEC_TYPE_CRASH) अणु
+	/* Segments for kdump kernel should be within crashkernel region */
+	if (kbuf->image->type == KEXEC_TYPE_CRASH) {
 		buf_min = (buf_min < crashk_res.start ?
 			   crashk_res.start : buf_min);
 		buf_max = (buf_max > crashk_res.end ?
 			   crashk_res.end : buf_max);
-	पूर्ण
+	}
 
-	अगर (buf_min > buf_max) अणु
+	if (buf_min > buf_max) {
 		pr_err("Invalid buffer min and/or max values\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (kbuf->top_करोwn)
-		ret = locate_mem_hole_top_करोwn_ppc64(kbuf, buf_min, buf_max,
+	if (kbuf->top_down)
+		ret = locate_mem_hole_top_down_ppc64(kbuf, buf_min, buf_max,
 						     *emem);
-	अन्यथा
+	else
 		ret = locate_mem_hole_bottom_up_ppc64(kbuf, buf_min, buf_max,
 						      *emem);
 
-	/* Add the buffer allocated to the exclude list क्रम the next lookup */
-	अगर (!ret) अणु
+	/* Add the buffer allocated to the exclude list for the next lookup */
+	if (!ret) {
 		add_mem_range(emem, kbuf->mem, kbuf->memsz);
 		sort_memory_ranges(*emem, true);
-	पूर्ण अन्यथा अणु
+	} else {
 		pr_err("Failed to locate memory buffer of size %lu\n",
 		       kbuf->memsz);
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 
 /**
  * arch_kexec_kernel_image_probe - Does additional handling needed to setup
  *                                 kexec segments.
  * @image:                         kexec image being loaded.
- * @buf:                           Buffer poपूर्णांकing to elf data.
+ * @buf:                           Buffer pointing to elf data.
  * @buf_len:                       Length of the buffer.
  *
- * Returns 0 on success, negative त्रुटि_सं on error.
+ * Returns 0 on success, negative errno on error.
  */
-पूर्णांक arch_kexec_kernel_image_probe(काष्ठा kimage *image, व्योम *buf,
-				  अचिन्हित दीर्घ buf_len)
-अणु
-	पूर्णांक ret;
+int arch_kexec_kernel_image_probe(struct kimage *image, void *buf,
+				  unsigned long buf_len)
+{
+	int ret;
 
-	/* Get exclude memory ranges needed क्रम setting up kexec segments */
+	/* Get exclude memory ranges needed for setting up kexec segments */
 	ret = get_exclude_memory_ranges(&(image->arch.exclude_ranges));
-	अगर (ret) अणु
+	if (ret) {
 		pr_err("Failed to setup exclude memory ranges for buffer lookup\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस kexec_image_probe_शेष(image, buf, buf_len);
-पूर्ण
+	return kexec_image_probe_default(image, buf, buf_len);
+}
 
 /**
- * arch_kimage_file_post_load_cleanup - Frees up all the allocations करोne
- *                                      जबतक loading the image.
+ * arch_kimage_file_post_load_cleanup - Frees up all the allocations done
+ *                                      while loading the image.
  * @image:                              kexec image being loaded.
  *
- * Returns 0 on success, negative त्रुटि_सं on error.
+ * Returns 0 on success, negative errno on error.
  */
-पूर्णांक arch_kimage_file_post_load_cleanup(काष्ठा kimage *image)
-अणु
-	kमुक्त(image->arch.exclude_ranges);
-	image->arch.exclude_ranges = शून्य;
+int arch_kimage_file_post_load_cleanup(struct kimage *image)
+{
+	kfree(image->arch.exclude_ranges);
+	image->arch.exclude_ranges = NULL;
 
-	vमुक्त(image->arch.backup_buf);
-	image->arch.backup_buf = शून्य;
+	vfree(image->arch.backup_buf);
+	image->arch.backup_buf = NULL;
 
-	vमुक्त(image->elf_headers);
-	image->elf_headers = शून्य;
+	vfree(image->elf_headers);
+	image->elf_headers = NULL;
 	image->elf_headers_sz = 0;
 
-	kvमुक्त(image->arch.fdt);
-	image->arch.fdt = शून्य;
+	kvfree(image->arch.fdt);
+	image->arch.fdt = NULL;
 
-	वापस kexec_image_post_load_cleanup_शेष(image);
-पूर्ण
+	return kexec_image_post_load_cleanup_default(image);
+}

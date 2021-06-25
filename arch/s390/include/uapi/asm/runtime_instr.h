@@ -1,14 +1,13 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
-#अगर_अघोषित _S390_UAPI_RUNTIME_INSTR_H
-#घोषणा _S390_UAPI_RUNTIME_INSTR_H
+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+#ifndef _S390_UAPI_RUNTIME_INSTR_H
+#define _S390_UAPI_RUNTIME_INSTR_H
 
-#समावेश <linux/types.h>
+#include <linux/types.h>
 
-#घोषणा S390_RUNTIME_INSTR_START	0x1
-#घोषणा S390_RUNTIME_INSTR_STOP		0x2
+#define S390_RUNTIME_INSTR_START	0x1
+#define S390_RUNTIME_INSTR_STOP		0x2
 
-काष्ठा runसमय_instr_cb अणु
+struct runtime_instr_cb {
 	__u64 rca;
 	__u64 roa;
 	__u64 rla;
@@ -58,18 +57,18 @@
 	__u64 sf;
 	__u64 rsic;
 	__u64 reserved8;
-पूर्ण __attribute__((__packed__, __aligned__(8)));
+} __attribute__((__packed__, __aligned__(8)));
 
-अटल अंतरभूत व्योम load_runसमय_instr_cb(काष्ठा runसमय_instr_cb *cb)
-अणु
-	यंत्र अस्थिर(".insn	rsy,0xeb0000000060,0,0,%0"	/* LRIC */
+static inline void load_runtime_instr_cb(struct runtime_instr_cb *cb)
+{
+	asm volatile(".insn	rsy,0xeb0000000060,0,0,%0"	/* LRIC */
 		: : "Q" (*cb));
-पूर्ण
+}
 
-अटल अंतरभूत व्योम store_runसमय_instr_cb(काष्ठा runसमय_instr_cb *cb)
-अणु
-	यंत्र अस्थिर(".insn	rsy,0xeb0000000061,0,0,%0"	/* STRIC */
+static inline void store_runtime_instr_cb(struct runtime_instr_cb *cb)
+{
+	asm volatile(".insn	rsy,0xeb0000000061,0,0,%0"	/* STRIC */
 		: "=Q" (*cb) : : "cc");
-पूर्ण
+}
 
-#पूर्ण_अगर /* _S390_UAPI_RUNTIME_INSTR_H */
+#endif /* _S390_UAPI_RUNTIME_INSTR_H */

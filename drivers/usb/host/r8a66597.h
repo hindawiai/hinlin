@@ -1,340 +1,339 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * R8A66597 HCD (Host Controller Driver)
  *
  * Copyright (C) 2006-2007 Renesas Solutions Corp.
- * Portions Copyright (C) 2004 Psion Teklogix (क्रम NetBook PRO)
+ * Portions Copyright (C) 2004 Psion Teklogix (for NetBook PRO)
  * Portions Copyright (C) 2004-2005 David Brownell
  * Portions Copyright (C) 1999 Roman Weissgaerber
  *
  * Author : Yoshihiro Shimoda <shimoda.yoshihiro@renesas.com>
  */
 
-#अगर_अघोषित __R8A66597_H__
-#घोषणा __R8A66597_H__
+#ifndef __R8A66597_H__
+#define __R8A66597_H__
 
-#समावेश <linux/clk.h>
-#समावेश <linux/usb/r8a66597.h>
+#include <linux/clk.h>
+#include <linux/usb/r8a66597.h>
 
-#घोषणा R8A66597_MAX_NUM_PIPE		10
-#घोषणा R8A66597_BUF_BSIZE		8
-#घोषणा R8A66597_MAX_DEVICE		10
-#घोषणा R8A66597_MAX_ROOT_HUB		2
-#घोषणा R8A66597_MAX_SAMPLING		5
-#घोषणा R8A66597_RH_POLL_TIME		10
-#घोषणा R8A66597_MAX_DMA_CHANNEL	2
-#घोषणा R8A66597_PIPE_NO_DMA		R8A66597_MAX_DMA_CHANNEL
-#घोषणा check_bulk_or_isoc(pipक्रमागत)	((pipक्रमागत >= 1 && pipक्रमागत <= 5))
-#घोषणा check_पूर्णांकerrupt(pipक्रमागत)	((pipक्रमागत >= 6 && pipक्रमागत <= 9))
-#घोषणा make_devsel(addr)		(addr << 12)
+#define R8A66597_MAX_NUM_PIPE		10
+#define R8A66597_BUF_BSIZE		8
+#define R8A66597_MAX_DEVICE		10
+#define R8A66597_MAX_ROOT_HUB		2
+#define R8A66597_MAX_SAMPLING		5
+#define R8A66597_RH_POLL_TIME		10
+#define R8A66597_MAX_DMA_CHANNEL	2
+#define R8A66597_PIPE_NO_DMA		R8A66597_MAX_DMA_CHANNEL
+#define check_bulk_or_isoc(pipenum)	((pipenum >= 1 && pipenum <= 5))
+#define check_interrupt(pipenum)	((pipenum >= 6 && pipenum <= 9))
+#define make_devsel(addr)		(addr << 12)
 
-काष्ठा r8a66597_pipe_info अणु
-	अचिन्हित दीर्घ समयr_पूर्णांकerval;
-	u16 pipक्रमागत;
+struct r8a66597_pipe_info {
+	unsigned long timer_interval;
+	u16 pipenum;
 	u16 address;	/* R8A66597 HCD usb address */
 	u16 epnum;
 	u16 maxpacket;
 	u16 type;
 	u16 bufnum;
 	u16 buf_bsize;
-	u16 पूर्णांकerval;
+	u16 interval;
 	u16 dir_in;
-पूर्ण;
+};
 
-काष्ठा r8a66597_pipe अणु
-	काष्ठा r8a66597_pipe_info info;
+struct r8a66597_pipe {
+	struct r8a66597_pipe_info info;
 
-	अचिन्हित दीर्घ fअगरoaddr;
-	अचिन्हित दीर्घ fअगरosel;
-	अचिन्हित दीर्घ fअगरoctr;
-	अचिन्हित दीर्घ pipectr;
-	अचिन्हित दीर्घ pipetre;
-	अचिन्हित दीर्घ pipetrn;
-पूर्ण;
+	unsigned long fifoaddr;
+	unsigned long fifosel;
+	unsigned long fifoctr;
+	unsigned long pipectr;
+	unsigned long pipetre;
+	unsigned long pipetrn;
+};
 
-काष्ठा r8a66597_td अणु
-	काष्ठा r8a66597_pipe *pipe;
-	काष्ठा urb *urb;
-	काष्ठा list_head queue;
+struct r8a66597_td {
+	struct r8a66597_pipe *pipe;
+	struct urb *urb;
+	struct list_head queue;
 
 	u16 type;
-	u16 pipक्रमागत;
-	पूर्णांक iso_cnt;
+	u16 pipenum;
+	int iso_cnt;
 
 	u16 address;		/* R8A66597's USB address */
 	u16 maxpacket;
 
-	अचिन्हित zero_packet:1;
-	अचिन्हित लघु_packet:1;
-	अचिन्हित set_address:1;
-पूर्ण;
+	unsigned zero_packet:1;
+	unsigned short_packet:1;
+	unsigned set_address:1;
+};
 
-काष्ठा r8a66597_device अणु
+struct r8a66597_device {
 	u16	address;	/* R8A66597's USB address */
 	u16	hub_port;
 	u16	root_port;
 
-	अचिन्हित लघु ep_in_toggle;
-	अचिन्हित लघु ep_out_toggle;
-	अचिन्हित अक्षर pipe_cnt[R8A66597_MAX_NUM_PIPE];
-	अचिन्हित अक्षर dma_map;
+	unsigned short ep_in_toggle;
+	unsigned short ep_out_toggle;
+	unsigned char pipe_cnt[R8A66597_MAX_NUM_PIPE];
+	unsigned char dma_map;
 
-	क्रमागत usb_device_state state;
+	enum usb_device_state state;
 
-	काष्ठा usb_device *udev;
-	पूर्णांक usb_address;
-	काष्ठा list_head device_list;
-पूर्ण;
+	struct usb_device *udev;
+	int usb_address;
+	struct list_head device_list;
+};
 
-काष्ठा r8a66597_root_hub अणु
+struct r8a66597_root_hub {
 	u32 port;
 	u16 old_syssts;
-	पूर्णांक scount;
+	int scount;
 
-	काष्ठा r8a66597_device	*dev;
-पूर्ण;
+	struct r8a66597_device	*dev;
+};
 
-काष्ठा r8a66597;
+struct r8a66597;
 
-काष्ठा r8a66597_समयrs अणु
-	काष्ठा समयr_list td;
-	काष्ठा समयr_list पूर्णांकerval;
-	काष्ठा r8a66597 *r8a66597;
-पूर्ण;
+struct r8a66597_timers {
+	struct timer_list td;
+	struct timer_list interval;
+	struct r8a66597 *r8a66597;
+};
 
-काष्ठा r8a66597 अणु
+struct r8a66597 {
 	spinlock_t lock;
-	व्योम __iomem *reg;
-	काष्ठा clk *clk;
-	काष्ठा r8a66597_platdata	*pdata;
-	काष्ठा r8a66597_device		device0;
-	काष्ठा r8a66597_root_hub	root_hub[R8A66597_MAX_ROOT_HUB];
-	काष्ठा list_head		pipe_queue[R8A66597_MAX_NUM_PIPE];
+	void __iomem *reg;
+	struct clk *clk;
+	struct r8a66597_platdata	*pdata;
+	struct r8a66597_device		device0;
+	struct r8a66597_root_hub	root_hub[R8A66597_MAX_ROOT_HUB];
+	struct list_head		pipe_queue[R8A66597_MAX_NUM_PIPE];
 
-	काष्ठा समयr_list rh_समयr;
-	काष्ठा r8a66597_समयrs समयrs[R8A66597_MAX_NUM_PIPE];
+	struct timer_list rh_timer;
+	struct r8a66597_timers timers[R8A66597_MAX_NUM_PIPE];
 
-	अचिन्हित लघु address_map;
-	अचिन्हित लघु समयout_map;
-	अचिन्हित लघु पूर्णांकerval_map;
-	अचिन्हित अक्षर pipe_cnt[R8A66597_MAX_NUM_PIPE];
-	अचिन्हित अक्षर dma_map;
-	अचिन्हित पूर्णांक max_root_hub;
+	unsigned short address_map;
+	unsigned short timeout_map;
+	unsigned short interval_map;
+	unsigned char pipe_cnt[R8A66597_MAX_NUM_PIPE];
+	unsigned char dma_map;
+	unsigned int max_root_hub;
 
-	काष्ठा list_head child_device;
-	अचिन्हित दीर्घ child_connect_map[4];
+	struct list_head child_device;
+	unsigned long child_connect_map[4];
 
-	अचिन्हित bus_suspended:1;
-	अचिन्हित irq_sense_low:1;
-पूर्ण;
+	unsigned bus_suspended:1;
+	unsigned irq_sense_low:1;
+};
 
-अटल अंतरभूत काष्ठा r8a66597 *hcd_to_r8a66597(काष्ठा usb_hcd *hcd)
-अणु
-	वापस (काष्ठा r8a66597 *)(hcd->hcd_priv);
-पूर्ण
+static inline struct r8a66597 *hcd_to_r8a66597(struct usb_hcd *hcd)
+{
+	return (struct r8a66597 *)(hcd->hcd_priv);
+}
 
-अटल अंतरभूत काष्ठा usb_hcd *r8a66597_to_hcd(काष्ठा r8a66597 *r8a66597)
-अणु
-	वापस container_of((व्योम *)r8a66597, काष्ठा usb_hcd, hcd_priv);
-पूर्ण
+static inline struct usb_hcd *r8a66597_to_hcd(struct r8a66597 *r8a66597)
+{
+	return container_of((void *)r8a66597, struct usb_hcd, hcd_priv);
+}
 
-अटल अंतरभूत काष्ठा r8a66597_td *r8a66597_get_td(काष्ठा r8a66597 *r8a66597,
-						  u16 pipक्रमागत)
-अणु
-	अगर (unlikely(list_empty(&r8a66597->pipe_queue[pipक्रमागत])))
-		वापस शून्य;
+static inline struct r8a66597_td *r8a66597_get_td(struct r8a66597 *r8a66597,
+						  u16 pipenum)
+{
+	if (unlikely(list_empty(&r8a66597->pipe_queue[pipenum])))
+		return NULL;
 
-	वापस list_entry(r8a66597->pipe_queue[pipक्रमागत].next,
-			  काष्ठा r8a66597_td, queue);
-पूर्ण
+	return list_entry(r8a66597->pipe_queue[pipenum].next,
+			  struct r8a66597_td, queue);
+}
 
-अटल अंतरभूत काष्ठा urb *r8a66597_get_urb(काष्ठा r8a66597 *r8a66597,
-					   u16 pipक्रमागत)
-अणु
-	काष्ठा r8a66597_td *td;
+static inline struct urb *r8a66597_get_urb(struct r8a66597 *r8a66597,
+					   u16 pipenum)
+{
+	struct r8a66597_td *td;
 
-	td = r8a66597_get_td(r8a66597, pipक्रमागत);
-	वापस (td ? td->urb : शून्य);
-पूर्ण
+	td = r8a66597_get_td(r8a66597, pipenum);
+	return (td ? td->urb : NULL);
+}
 
-अटल अंतरभूत u16 r8a66597_पढ़ो(काष्ठा r8a66597 *r8a66597, अचिन्हित दीर्घ offset)
-अणु
-	वापस ioपढ़ो16(r8a66597->reg + offset);
-पूर्ण
+static inline u16 r8a66597_read(struct r8a66597 *r8a66597, unsigned long offset)
+{
+	return ioread16(r8a66597->reg + offset);
+}
 
-अटल अंतरभूत व्योम r8a66597_पढ़ो_fअगरo(काष्ठा r8a66597 *r8a66597,
-				      अचिन्हित दीर्घ offset, u16 *buf,
-				      पूर्णांक len)
-अणु
-	व्योम __iomem *fअगरoaddr = r8a66597->reg + offset;
-	अचिन्हित दीर्घ count;
+static inline void r8a66597_read_fifo(struct r8a66597 *r8a66597,
+				      unsigned long offset, u16 *buf,
+				      int len)
+{
+	void __iomem *fifoaddr = r8a66597->reg + offset;
+	unsigned long count;
 
-	अगर (r8a66597->pdata->on_chip) अणु
+	if (r8a66597->pdata->on_chip) {
 		count = len / 4;
-		ioपढ़ो32_rep(fअगरoaddr, buf, count);
+		ioread32_rep(fifoaddr, buf, count);
 
-		अगर (len & 0x00000003) अणु
-			अचिन्हित दीर्घ पंचांगp = ioपढ़ो32(fअगरoaddr);
-			स_नकल((अचिन्हित अक्षर *)buf + count * 4, &पंचांगp,
+		if (len & 0x00000003) {
+			unsigned long tmp = ioread32(fifoaddr);
+			memcpy((unsigned char *)buf + count * 4, &tmp,
 			       len & 0x03);
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		len = (len + 1) / 2;
-		ioपढ़ो16_rep(fअगरoaddr, buf, len);
-	पूर्ण
-पूर्ण
+		ioread16_rep(fifoaddr, buf, len);
+	}
+}
 
-अटल अंतरभूत व्योम r8a66597_ग_लिखो(काष्ठा r8a66597 *r8a66597, u16 val,
-				  अचिन्हित दीर्घ offset)
-अणु
-	ioग_लिखो16(val, r8a66597->reg + offset);
-पूर्ण
+static inline void r8a66597_write(struct r8a66597 *r8a66597, u16 val,
+				  unsigned long offset)
+{
+	iowrite16(val, r8a66597->reg + offset);
+}
 
-अटल अंतरभूत व्योम r8a66597_mdfy(काष्ठा r8a66597 *r8a66597,
-				 u16 val, u16 pat, अचिन्हित दीर्घ offset)
-अणु
-	u16 पंचांगp;
-	पंचांगp = r8a66597_पढ़ो(r8a66597, offset);
-	पंचांगp = पंचांगp & (~pat);
-	पंचांगp = पंचांगp | val;
-	r8a66597_ग_लिखो(r8a66597, पंचांगp, offset);
-पूर्ण
+static inline void r8a66597_mdfy(struct r8a66597 *r8a66597,
+				 u16 val, u16 pat, unsigned long offset)
+{
+	u16 tmp;
+	tmp = r8a66597_read(r8a66597, offset);
+	tmp = tmp & (~pat);
+	tmp = tmp | val;
+	r8a66597_write(r8a66597, tmp, offset);
+}
 
-#घोषणा r8a66597_bclr(r8a66597, val, offset)	\
+#define r8a66597_bclr(r8a66597, val, offset)	\
 			r8a66597_mdfy(r8a66597, 0, val, offset)
-#घोषणा r8a66597_bset(r8a66597, val, offset)	\
+#define r8a66597_bset(r8a66597, val, offset)	\
 			r8a66597_mdfy(r8a66597, val, 0, offset)
 
-अटल अंतरभूत व्योम r8a66597_ग_लिखो_fअगरo(काष्ठा r8a66597 *r8a66597,
-				       काष्ठा r8a66597_pipe *pipe, u16 *buf,
-				       पूर्णांक len)
-अणु
-	व्योम __iomem *fअगरoaddr = r8a66597->reg + pipe->fअगरoaddr;
-	अचिन्हित दीर्घ count;
-	अचिन्हित अक्षर *pb;
-	पूर्णांक i;
+static inline void r8a66597_write_fifo(struct r8a66597 *r8a66597,
+				       struct r8a66597_pipe *pipe, u16 *buf,
+				       int len)
+{
+	void __iomem *fifoaddr = r8a66597->reg + pipe->fifoaddr;
+	unsigned long count;
+	unsigned char *pb;
+	int i;
 
-	अगर (r8a66597->pdata->on_chip) अणु
+	if (r8a66597->pdata->on_chip) {
 		count = len / 4;
-		ioग_लिखो32_rep(fअगरoaddr, buf, count);
+		iowrite32_rep(fifoaddr, buf, count);
 
-		अगर (len & 0x00000003) अणु
-			pb = (अचिन्हित अक्षर *)buf + count * 4;
-			क्रम (i = 0; i < (len & 0x00000003); i++) अणु
-				अगर (r8a66597_पढ़ो(r8a66597, CFIFOSEL) & BIGEND)
-					ioग_लिखो8(pb[i], fअगरoaddr + i);
-				अन्यथा
-					ioग_लिखो8(pb[i], fअगरoaddr + 3 - i);
-			पूर्ण
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		पूर्णांक odd = len & 0x0001;
+		if (len & 0x00000003) {
+			pb = (unsigned char *)buf + count * 4;
+			for (i = 0; i < (len & 0x00000003); i++) {
+				if (r8a66597_read(r8a66597, CFIFOSEL) & BIGEND)
+					iowrite8(pb[i], fifoaddr + i);
+				else
+					iowrite8(pb[i], fifoaddr + 3 - i);
+			}
+		}
+	} else {
+		int odd = len & 0x0001;
 
 		len = len / 2;
-		ioग_लिखो16_rep(fअगरoaddr, buf, len);
-		अगर (unlikely(odd)) अणु
+		iowrite16_rep(fifoaddr, buf, len);
+		if (unlikely(odd)) {
 			buf = &buf[len];
-			अगर (r8a66597->pdata->wr0_लघुed_to_wr1)
-				r8a66597_bclr(r8a66597, MBW_16, pipe->fअगरosel);
-			ioग_लिखो8((अचिन्हित अक्षर)*buf, fअगरoaddr);
-			अगर (r8a66597->pdata->wr0_लघुed_to_wr1)
-				r8a66597_bset(r8a66597, MBW_16, pipe->fअगरosel);
-		पूर्ण
-	पूर्ण
-पूर्ण
+			if (r8a66597->pdata->wr0_shorted_to_wr1)
+				r8a66597_bclr(r8a66597, MBW_16, pipe->fifosel);
+			iowrite8((unsigned char)*buf, fifoaddr);
+			if (r8a66597->pdata->wr0_shorted_to_wr1)
+				r8a66597_bset(r8a66597, MBW_16, pipe->fifosel);
+		}
+	}
+}
 
-अटल अंतरभूत अचिन्हित दीर्घ get_syscfg_reg(पूर्णांक port)
-अणु
-	वापस port == 0 ? SYSCFG0 : SYSCFG1;
-पूर्ण
+static inline unsigned long get_syscfg_reg(int port)
+{
+	return port == 0 ? SYSCFG0 : SYSCFG1;
+}
 
-अटल अंतरभूत अचिन्हित दीर्घ get_syssts_reg(पूर्णांक port)
-अणु
-	वापस port == 0 ? SYSSTS0 : SYSSTS1;
-पूर्ण
+static inline unsigned long get_syssts_reg(int port)
+{
+	return port == 0 ? SYSSTS0 : SYSSTS1;
+}
 
-अटल अंतरभूत अचिन्हित दीर्घ get_dvstctr_reg(पूर्णांक port)
-अणु
-	वापस port == 0 ? DVSTCTR0 : DVSTCTR1;
-पूर्ण
+static inline unsigned long get_dvstctr_reg(int port)
+{
+	return port == 0 ? DVSTCTR0 : DVSTCTR1;
+}
 
-अटल अंतरभूत अचिन्हित दीर्घ get_dmacfg_reg(पूर्णांक port)
-अणु
-	वापस port == 0 ? DMA0CFG : DMA1CFG;
-पूर्ण
+static inline unsigned long get_dmacfg_reg(int port)
+{
+	return port == 0 ? DMA0CFG : DMA1CFG;
+}
 
-अटल अंतरभूत अचिन्हित दीर्घ get_पूर्णांकenb_reg(पूर्णांक port)
-अणु
-	वापस port == 0 ? INTENB1 : INTENB2;
-पूर्ण
+static inline unsigned long get_intenb_reg(int port)
+{
+	return port == 0 ? INTENB1 : INTENB2;
+}
 
-अटल अंतरभूत अचिन्हित दीर्घ get_पूर्णांकsts_reg(पूर्णांक port)
-अणु
-	वापस port == 0 ? INTSTS1 : INTSTS2;
-पूर्ण
+static inline unsigned long get_intsts_reg(int port)
+{
+	return port == 0 ? INTSTS1 : INTSTS2;
+}
 
-अटल अंतरभूत u16 get_rh_usb_speed(काष्ठा r8a66597 *r8a66597, पूर्णांक port)
-अणु
-	अचिन्हित दीर्घ dvstctr_reg = get_dvstctr_reg(port);
+static inline u16 get_rh_usb_speed(struct r8a66597 *r8a66597, int port)
+{
+	unsigned long dvstctr_reg = get_dvstctr_reg(port);
 
-	वापस r8a66597_पढ़ो(r8a66597, dvstctr_reg) & RHST;
-पूर्ण
+	return r8a66597_read(r8a66597, dvstctr_reg) & RHST;
+}
 
-अटल अंतरभूत व्योम r8a66597_port_घातer(काष्ठा r8a66597 *r8a66597, पूर्णांक port,
-				       पूर्णांक घातer)
-अणु
-	अचिन्हित दीर्घ dvstctr_reg = get_dvstctr_reg(port);
+static inline void r8a66597_port_power(struct r8a66597 *r8a66597, int port,
+				       int power)
+{
+	unsigned long dvstctr_reg = get_dvstctr_reg(port);
 
-	अगर (r8a66597->pdata->port_घातer) अणु
-		r8a66597->pdata->port_घातer(port, घातer);
-	पूर्ण अन्यथा अणु
-		अगर (घातer)
+	if (r8a66597->pdata->port_power) {
+		r8a66597->pdata->port_power(port, power);
+	} else {
+		if (power)
 			r8a66597_bset(r8a66597, VBOUT, dvstctr_reg);
-		अन्यथा
+		else
 			r8a66597_bclr(r8a66597, VBOUT, dvstctr_reg);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल अंतरभूत u16 get_xtal_from_pdata(काष्ठा r8a66597_platdata *pdata)
-अणु
-	u16 घड़ी = 0;
+static inline u16 get_xtal_from_pdata(struct r8a66597_platdata *pdata)
+{
+	u16 clock = 0;
 
-	चयन (pdata->xtal) अणु
-	हाल R8A66597_PLATDATA_XTAL_12MHZ:
-		घड़ी = XTAL12;
-		अवरोध;
-	हाल R8A66597_PLATDATA_XTAL_24MHZ:
-		घड़ी = XTAL24;
-		अवरोध;
-	हाल R8A66597_PLATDATA_XTAL_48MHZ:
-		घड़ी = XTAL48;
-		अवरोध;
-	शेष:
-		prपूर्णांकk(KERN_ERR "r8a66597: platdata clock is wrong.\n");
-		अवरोध;
-	पूर्ण
+	switch (pdata->xtal) {
+	case R8A66597_PLATDATA_XTAL_12MHZ:
+		clock = XTAL12;
+		break;
+	case R8A66597_PLATDATA_XTAL_24MHZ:
+		clock = XTAL24;
+		break;
+	case R8A66597_PLATDATA_XTAL_48MHZ:
+		clock = XTAL48;
+		break;
+	default:
+		printk(KERN_ERR "r8a66597: platdata clock is wrong.\n");
+		break;
+	}
 
-	वापस घड़ी;
-पूर्ण
+	return clock;
+}
 
-#घोषणा get_pipectr_addr(pipक्रमागत)	(PIPE1CTR + (pipक्रमागत - 1) * 2)
-#घोषणा get_pipetre_addr(pipक्रमागत)	(PIPE1TRE + (pipक्रमागत - 1) * 4)
-#घोषणा get_pipetrn_addr(pipक्रमागत)	(PIPE1TRN + (pipक्रमागत - 1) * 4)
-#घोषणा get_devadd_addr(address)	(DEVADD0 + address * 2)
+#define get_pipectr_addr(pipenum)	(PIPE1CTR + (pipenum - 1) * 2)
+#define get_pipetre_addr(pipenum)	(PIPE1TRE + (pipenum - 1) * 4)
+#define get_pipetrn_addr(pipenum)	(PIPE1TRN + (pipenum - 1) * 4)
+#define get_devadd_addr(address)	(DEVADD0 + address * 2)
 
-#घोषणा enable_irq_पढ़ोy(r8a66597, pipक्रमागत)	\
-	enable_pipe_irq(r8a66597, pipक्रमागत, BRDYENB)
-#घोषणा disable_irq_पढ़ोy(r8a66597, pipक्रमागत)	\
-	disable_pipe_irq(r8a66597, pipक्रमागत, BRDYENB)
-#घोषणा enable_irq_empty(r8a66597, pipक्रमागत)	\
-	enable_pipe_irq(r8a66597, pipक्रमागत, BEMPENB)
-#घोषणा disable_irq_empty(r8a66597, pipक्रमागत)	\
-	disable_pipe_irq(r8a66597, pipक्रमागत, BEMPENB)
-#घोषणा enable_irq_nrdy(r8a66597, pipक्रमागत)	\
-	enable_pipe_irq(r8a66597, pipक्रमागत, NRDYENB)
-#घोषणा disable_irq_nrdy(r8a66597, pipक्रमागत)	\
-	disable_pipe_irq(r8a66597, pipक्रमागत, NRDYENB)
+#define enable_irq_ready(r8a66597, pipenum)	\
+	enable_pipe_irq(r8a66597, pipenum, BRDYENB)
+#define disable_irq_ready(r8a66597, pipenum)	\
+	disable_pipe_irq(r8a66597, pipenum, BRDYENB)
+#define enable_irq_empty(r8a66597, pipenum)	\
+	enable_pipe_irq(r8a66597, pipenum, BEMPENB)
+#define disable_irq_empty(r8a66597, pipenum)	\
+	disable_pipe_irq(r8a66597, pipenum, BEMPENB)
+#define enable_irq_nrdy(r8a66597, pipenum)	\
+	enable_pipe_irq(r8a66597, pipenum, NRDYENB)
+#define disable_irq_nrdy(r8a66597, pipenum)	\
+	disable_pipe_irq(r8a66597, pipenum, NRDYENB)
 
-#पूर्ण_अगर	/* __R8A66597_H__ */
+#endif	/* __R8A66597_H__ */
 

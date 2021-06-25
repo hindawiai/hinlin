@@ -1,359 +1,358 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (C) 2007 Nokia Corporation
  *
- * Test पढ़ो and ग_लिखो speed of a MTD device.
+ * Test read and write speed of a MTD device.
  *
  * Author: Adrian Hunter <adrian.hunter@nokia.com>
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/init.h>
-#समावेश <linux/kसमय.स>
-#समावेश <linux/module.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/err.h>
-#समावेश <linux/mtd/mtd.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/अक्रमom.h>
+#include <linux/init.h>
+#include <linux/ktime.h>
+#include <linux/module.h>
+#include <linux/moduleparam.h>
+#include <linux/err.h>
+#include <linux/mtd/mtd.h>
+#include <linux/slab.h>
+#include <linux/sched.h>
+#include <linux/random.h>
 
-#समावेश "mtd_test.h"
+#include "mtd_test.h"
 
-अटल पूर्णांक dev = -EINVAL;
-module_param(dev, पूर्णांक, S_IRUGO);
+static int dev = -EINVAL;
+module_param(dev, int, S_IRUGO);
 MODULE_PARM_DESC(dev, "MTD device number to use");
 
-अटल पूर्णांक count;
-module_param(count, पूर्णांक, S_IRUGO);
+static int count;
+module_param(count, int, S_IRUGO);
 MODULE_PARM_DESC(count, "Maximum number of eraseblocks to use "
 			"(0 means use all)");
 
-अटल काष्ठा mtd_info *mtd;
-अटल अचिन्हित अक्षर *iobuf;
-अटल अचिन्हित अक्षर *bbt;
+static struct mtd_info *mtd;
+static unsigned char *iobuf;
+static unsigned char *bbt;
 
-अटल पूर्णांक pgsize;
-अटल पूर्णांक ebcnt;
-अटल पूर्णांक pgcnt;
-अटल पूर्णांक goodebcnt;
-अटल kसमय_प्रकार start, finish;
+static int pgsize;
+static int ebcnt;
+static int pgcnt;
+static int goodebcnt;
+static ktime_t start, finish;
 
-अटल पूर्णांक multiblock_erase(पूर्णांक ebnum, पूर्णांक blocks)
-अणु
-	पूर्णांक err;
-	काष्ठा erase_info ei;
+static int multiblock_erase(int ebnum, int blocks)
+{
+	int err;
+	struct erase_info ei;
 	loff_t addr = (loff_t)ebnum * mtd->erasesize;
 
-	स_रखो(&ei, 0, माप(काष्ठा erase_info));
+	memset(&ei, 0, sizeof(struct erase_info));
 	ei.addr = addr;
 	ei.len  = mtd->erasesize * blocks;
 
 	err = mtd_erase(mtd, &ei);
-	अगर (err) अणु
+	if (err) {
 		pr_err("error %d while erasing EB %d, blocks %d\n",
 		       err, ebnum, blocks);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ग_लिखो_eraseblock(पूर्णांक ebnum)
-अणु
+static int write_eraseblock(int ebnum)
+{
 	loff_t addr = (loff_t)ebnum * mtd->erasesize;
 
-	वापस mtdtest_ग_लिखो(mtd, addr, mtd->erasesize, iobuf);
-पूर्ण
+	return mtdtest_write(mtd, addr, mtd->erasesize, iobuf);
+}
 
-अटल पूर्णांक ग_लिखो_eraseblock_by_page(पूर्णांक ebnum)
-अणु
-	पूर्णांक i, err = 0;
+static int write_eraseblock_by_page(int ebnum)
+{
+	int i, err = 0;
 	loff_t addr = (loff_t)ebnum * mtd->erasesize;
-	व्योम *buf = iobuf;
+	void *buf = iobuf;
 
-	क्रम (i = 0; i < pgcnt; i++) अणु
-		err = mtdtest_ग_लिखो(mtd, addr, pgsize, buf);
-		अगर (err)
-			अवरोध;
+	for (i = 0; i < pgcnt; i++) {
+		err = mtdtest_write(mtd, addr, pgsize, buf);
+		if (err)
+			break;
 		addr += pgsize;
 		buf += pgsize;
-	पूर्ण
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक ग_लिखो_eraseblock_by_2pages(पूर्णांक ebnum)
-अणु
-	माप_प्रकार sz = pgsize * 2;
-	पूर्णांक i, n = pgcnt / 2, err = 0;
+static int write_eraseblock_by_2pages(int ebnum)
+{
+	size_t sz = pgsize * 2;
+	int i, n = pgcnt / 2, err = 0;
 	loff_t addr = (loff_t)ebnum * mtd->erasesize;
-	व्योम *buf = iobuf;
+	void *buf = iobuf;
 
-	क्रम (i = 0; i < n; i++) अणु
-		err = mtdtest_ग_लिखो(mtd, addr, sz, buf);
-		अगर (err)
-			वापस err;
+	for (i = 0; i < n; i++) {
+		err = mtdtest_write(mtd, addr, sz, buf);
+		if (err)
+			return err;
 		addr += sz;
 		buf += sz;
-	पूर्ण
-	अगर (pgcnt % 2)
-		err = mtdtest_ग_लिखो(mtd, addr, pgsize, buf);
+	}
+	if (pgcnt % 2)
+		err = mtdtest_write(mtd, addr, pgsize, buf);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक पढ़ो_eraseblock(पूर्णांक ebnum)
-अणु
+static int read_eraseblock(int ebnum)
+{
 	loff_t addr = (loff_t)ebnum * mtd->erasesize;
 
-	वापस mtdtest_पढ़ो(mtd, addr, mtd->erasesize, iobuf);
-पूर्ण
+	return mtdtest_read(mtd, addr, mtd->erasesize, iobuf);
+}
 
-अटल पूर्णांक पढ़ो_eraseblock_by_page(पूर्णांक ebnum)
-अणु
-	पूर्णांक i, err = 0;
+static int read_eraseblock_by_page(int ebnum)
+{
+	int i, err = 0;
 	loff_t addr = (loff_t)ebnum * mtd->erasesize;
-	व्योम *buf = iobuf;
+	void *buf = iobuf;
 
-	क्रम (i = 0; i < pgcnt; i++) अणु
-		err = mtdtest_पढ़ो(mtd, addr, pgsize, buf);
-		अगर (err)
-			अवरोध;
+	for (i = 0; i < pgcnt; i++) {
+		err = mtdtest_read(mtd, addr, pgsize, buf);
+		if (err)
+			break;
 		addr += pgsize;
 		buf += pgsize;
-	पूर्ण
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक पढ़ो_eraseblock_by_2pages(पूर्णांक ebnum)
-अणु
-	माप_प्रकार sz = pgsize * 2;
-	पूर्णांक i, n = pgcnt / 2, err = 0;
+static int read_eraseblock_by_2pages(int ebnum)
+{
+	size_t sz = pgsize * 2;
+	int i, n = pgcnt / 2, err = 0;
 	loff_t addr = (loff_t)ebnum * mtd->erasesize;
-	व्योम *buf = iobuf;
+	void *buf = iobuf;
 
-	क्रम (i = 0; i < n; i++) अणु
-		err = mtdtest_पढ़ो(mtd, addr, sz, buf);
-		अगर (err)
-			वापस err;
+	for (i = 0; i < n; i++) {
+		err = mtdtest_read(mtd, addr, sz, buf);
+		if (err)
+			return err;
 		addr += sz;
 		buf += sz;
-	पूर्ण
-	अगर (pgcnt % 2)
-		err = mtdtest_पढ़ो(mtd, addr, pgsize, buf);
+	}
+	if (pgcnt % 2)
+		err = mtdtest_read(mtd, addr, pgsize, buf);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल अंतरभूत व्योम start_timing(व्योम)
-अणु
-	start = kसमय_get();
-पूर्ण
+static inline void start_timing(void)
+{
+	start = ktime_get();
+}
 
-अटल अंतरभूत व्योम stop_timing(व्योम)
-अणु
-	finish = kसमय_get();
-पूर्ण
+static inline void stop_timing(void)
+{
+	finish = ktime_get();
+}
 
-अटल दीर्घ calc_speed(व्योम)
-अणु
-	uपूर्णांक64_t k;
-	दीर्घ ms;
+static long calc_speed(void)
+{
+	uint64_t k;
+	long ms;
 
-	ms = kसमय_ms_delta(finish, start);
-	अगर (ms == 0)
-		वापस 0;
-	k = (uपूर्णांक64_t)goodebcnt * (mtd->erasesize / 1024) * 1000;
-	करो_भाग(k, ms);
-	वापस k;
-पूर्ण
+	ms = ktime_ms_delta(finish, start);
+	if (ms == 0)
+		return 0;
+	k = (uint64_t)goodebcnt * (mtd->erasesize / 1024) * 1000;
+	do_div(k, ms);
+	return k;
+}
 
-अटल पूर्णांक __init mtd_speedtest_init(व्योम)
-अणु
-	पूर्णांक err, i, blocks, j, k;
-	दीर्घ speed;
-	uपूर्णांक64_t पंचांगp;
+static int __init mtd_speedtest_init(void)
+{
+	int err, i, blocks, j, k;
+	long speed;
+	uint64_t tmp;
 
-	prपूर्णांकk(KERN_INFO "\n");
-	prपूर्णांकk(KERN_INFO "=================================================\n");
+	printk(KERN_INFO "\n");
+	printk(KERN_INFO "=================================================\n");
 
-	अगर (dev < 0) अणु
+	if (dev < 0) {
 		pr_info("Please specify a valid mtd-device via module parameter\n");
 		pr_crit("CAREFUL: This test wipes all data on the specified MTD device!\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (count)
+	if (count)
 		pr_info("MTD device: %d    count: %d\n", dev, count);
-	अन्यथा
+	else
 		pr_info("MTD device: %d\n", dev);
 
-	mtd = get_mtd_device(शून्य, dev);
-	अगर (IS_ERR(mtd)) अणु
+	mtd = get_mtd_device(NULL, dev);
+	if (IS_ERR(mtd)) {
 		err = PTR_ERR(mtd);
 		pr_err("error: cannot get MTD device\n");
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	अगर (mtd->ग_लिखोsize == 1) अणु
+	if (mtd->writesize == 1) {
 		pr_info("not NAND flash, assume page size is 512 "
 		       "bytes.\n");
 		pgsize = 512;
-	पूर्ण अन्यथा
-		pgsize = mtd->ग_लिखोsize;
+	} else
+		pgsize = mtd->writesize;
 
-	पंचांगp = mtd->size;
-	करो_भाग(पंचांगp, mtd->erasesize);
-	ebcnt = पंचांगp;
+	tmp = mtd->size;
+	do_div(tmp, mtd->erasesize);
+	ebcnt = tmp;
 	pgcnt = mtd->erasesize / pgsize;
 
 	pr_info("MTD device size %llu, eraseblock size %u, "
 	       "page size %u, count of eraseblocks %u, pages per "
 	       "eraseblock %u, OOB size %u\n",
-	       (अचिन्हित दीर्घ दीर्घ)mtd->size, mtd->erasesize,
+	       (unsigned long long)mtd->size, mtd->erasesize,
 	       pgsize, ebcnt, pgcnt, mtd->oobsize);
 
-	अगर (count > 0 && count < ebcnt)
+	if (count > 0 && count < ebcnt)
 		ebcnt = count;
 
 	err = -ENOMEM;
-	iobuf = kदो_स्मृति(mtd->erasesize, GFP_KERNEL);
-	अगर (!iobuf)
-		जाओ out;
+	iobuf = kmalloc(mtd->erasesize, GFP_KERNEL);
+	if (!iobuf)
+		goto out;
 
-	pअक्रमom_bytes(iobuf, mtd->erasesize);
+	prandom_bytes(iobuf, mtd->erasesize);
 
 	bbt = kzalloc(ebcnt, GFP_KERNEL);
-	अगर (!bbt)
-		जाओ out;
-	err = mtdtest_scan_क्रम_bad_eraseblocks(mtd, bbt, 0, ebcnt);
-	अगर (err)
-		जाओ out;
-	क्रम (i = 0; i < ebcnt; i++) अणु
-		अगर (!bbt[i])
+	if (!bbt)
+		goto out;
+	err = mtdtest_scan_for_bad_eraseblocks(mtd, bbt, 0, ebcnt);
+	if (err)
+		goto out;
+	for (i = 0; i < ebcnt; i++) {
+		if (!bbt[i])
 			goodebcnt++;
-	पूर्ण
+	}
 
 	err = mtdtest_erase_good_eraseblocks(mtd, bbt, 0, ebcnt);
-	अगर (err)
-		जाओ out;
+	if (err)
+		goto out;
 
-	/* Write all eraseblocks, 1 eraseblock at a समय */
+	/* Write all eraseblocks, 1 eraseblock at a time */
 	pr_info("testing eraseblock write speed\n");
 	start_timing();
-	क्रम (i = 0; i < ebcnt; ++i) अणु
-		अगर (bbt[i])
-			जारी;
-		err = ग_लिखो_eraseblock(i);
-		अगर (err)
-			जाओ out;
+	for (i = 0; i < ebcnt; ++i) {
+		if (bbt[i])
+			continue;
+		err = write_eraseblock(i);
+		if (err)
+			goto out;
 
 		err = mtdtest_relax();
-		अगर (err)
-			जाओ out;
-	पूर्ण
+		if (err)
+			goto out;
+	}
 	stop_timing();
 	speed = calc_speed();
 	pr_info("eraseblock write speed is %ld KiB/s\n", speed);
 
-	/* Read all eraseblocks, 1 eraseblock at a समय */
+	/* Read all eraseblocks, 1 eraseblock at a time */
 	pr_info("testing eraseblock read speed\n");
 	start_timing();
-	क्रम (i = 0; i < ebcnt; ++i) अणु
-		अगर (bbt[i])
-			जारी;
-		err = पढ़ो_eraseblock(i);
-		अगर (err)
-			जाओ out;
+	for (i = 0; i < ebcnt; ++i) {
+		if (bbt[i])
+			continue;
+		err = read_eraseblock(i);
+		if (err)
+			goto out;
 
 		err = mtdtest_relax();
-		अगर (err)
-			जाओ out;
-	पूर्ण
+		if (err)
+			goto out;
+	}
 	stop_timing();
 	speed = calc_speed();
 	pr_info("eraseblock read speed is %ld KiB/s\n", speed);
 
 	err = mtdtest_erase_good_eraseblocks(mtd, bbt, 0, ebcnt);
-	अगर (err)
-		जाओ out;
+	if (err)
+		goto out;
 
-	/* Write all eraseblocks, 1 page at a समय */
+	/* Write all eraseblocks, 1 page at a time */
 	pr_info("testing page write speed\n");
 	start_timing();
-	क्रम (i = 0; i < ebcnt; ++i) अणु
-		अगर (bbt[i])
-			जारी;
-		err = ग_लिखो_eraseblock_by_page(i);
-		अगर (err)
-			जाओ out;
+	for (i = 0; i < ebcnt; ++i) {
+		if (bbt[i])
+			continue;
+		err = write_eraseblock_by_page(i);
+		if (err)
+			goto out;
 
 		err = mtdtest_relax();
-		अगर (err)
-			जाओ out;
-	पूर्ण
+		if (err)
+			goto out;
+	}
 	stop_timing();
 	speed = calc_speed();
 	pr_info("page write speed is %ld KiB/s\n", speed);
 
-	/* Read all eraseblocks, 1 page at a समय */
+	/* Read all eraseblocks, 1 page at a time */
 	pr_info("testing page read speed\n");
 	start_timing();
-	क्रम (i = 0; i < ebcnt; ++i) अणु
-		अगर (bbt[i])
-			जारी;
-		err = पढ़ो_eraseblock_by_page(i);
-		अगर (err)
-			जाओ out;
+	for (i = 0; i < ebcnt; ++i) {
+		if (bbt[i])
+			continue;
+		err = read_eraseblock_by_page(i);
+		if (err)
+			goto out;
 
 		err = mtdtest_relax();
-		अगर (err)
-			जाओ out;
-	पूर्ण
+		if (err)
+			goto out;
+	}
 	stop_timing();
 	speed = calc_speed();
 	pr_info("page read speed is %ld KiB/s\n", speed);
 
 	err = mtdtest_erase_good_eraseblocks(mtd, bbt, 0, ebcnt);
-	अगर (err)
-		जाओ out;
+	if (err)
+		goto out;
 
-	/* Write all eraseblocks, 2 pages at a समय */
+	/* Write all eraseblocks, 2 pages at a time */
 	pr_info("testing 2 page write speed\n");
 	start_timing();
-	क्रम (i = 0; i < ebcnt; ++i) अणु
-		अगर (bbt[i])
-			जारी;
-		err = ग_लिखो_eraseblock_by_2pages(i);
-		अगर (err)
-			जाओ out;
+	for (i = 0; i < ebcnt; ++i) {
+		if (bbt[i])
+			continue;
+		err = write_eraseblock_by_2pages(i);
+		if (err)
+			goto out;
 
 		err = mtdtest_relax();
-		अगर (err)
-			जाओ out;
-	पूर्ण
+		if (err)
+			goto out;
+	}
 	stop_timing();
 	speed = calc_speed();
 	pr_info("2 page write speed is %ld KiB/s\n", speed);
 
-	/* Read all eraseblocks, 2 pages at a समय */
+	/* Read all eraseblocks, 2 pages at a time */
 	pr_info("testing 2 page read speed\n");
 	start_timing();
-	क्रम (i = 0; i < ebcnt; ++i) अणु
-		अगर (bbt[i])
-			जारी;
-		err = पढ़ो_eraseblock_by_2pages(i);
-		अगर (err)
-			जाओ out;
+	for (i = 0; i < ebcnt; ++i) {
+		if (bbt[i])
+			continue;
+		err = read_eraseblock_by_2pages(i);
+		if (err)
+			goto out;
 
 		err = mtdtest_relax();
-		अगर (err)
-			जाओ out;
-	पूर्ण
+		if (err)
+			goto out;
+	}
 	stop_timing();
 	speed = calc_speed();
 	pr_info("2 page read speed is %ld KiB/s\n", speed);
@@ -362,58 +361,58 @@ MODULE_PARM_DESC(count, "Maximum number of eraseblocks to use "
 	pr_info("Testing erase speed\n");
 	start_timing();
 	err = mtdtest_erase_good_eraseblocks(mtd, bbt, 0, ebcnt);
-	अगर (err)
-		जाओ out;
+	if (err)
+		goto out;
 	stop_timing();
 	speed = calc_speed();
 	pr_info("erase speed is %ld KiB/s\n", speed);
 
 	/* Multi-block erase all eraseblocks */
-	क्रम (k = 1; k < 7; k++) अणु
+	for (k = 1; k < 7; k++) {
 		blocks = 1 << k;
 		pr_info("Testing %dx multi-block erase speed\n",
 		       blocks);
 		start_timing();
-		क्रम (i = 0; i < ebcnt; ) अणु
-			क्रम (j = 0; j < blocks && (i + j) < ebcnt; j++)
-				अगर (bbt[i + j])
-					अवरोध;
-			अगर (j < 1) अणु
+		for (i = 0; i < ebcnt; ) {
+			for (j = 0; j < blocks && (i + j) < ebcnt; j++)
+				if (bbt[i + j])
+					break;
+			if (j < 1) {
 				i++;
-				जारी;
-			पूर्ण
+				continue;
+			}
 			err = multiblock_erase(i, j);
-			अगर (err)
-				जाओ out;
+			if (err)
+				goto out;
 
 			err = mtdtest_relax();
-			अगर (err)
-				जाओ out;
+			if (err)
+				goto out;
 
 			i += j;
-		पूर्ण
+		}
 		stop_timing();
 		speed = calc_speed();
 		pr_info("%dx multi-block erase speed is %ld KiB/s\n",
 		       blocks, speed);
-	पूर्ण
+	}
 	pr_info("finished\n");
 out:
-	kमुक्त(iobuf);
-	kमुक्त(bbt);
+	kfree(iobuf);
+	kfree(bbt);
 	put_mtd_device(mtd);
-	अगर (err)
+	if (err)
 		pr_info("error %d occurred\n", err);
-	prपूर्णांकk(KERN_INFO "=================================================\n");
-	वापस err;
-पूर्ण
+	printk(KERN_INFO "=================================================\n");
+	return err;
+}
 module_init(mtd_speedtest_init);
 
-अटल व्योम __निकास mtd_speedtest_निकास(व्योम)
-अणु
-	वापस;
-पूर्ण
-module_निकास(mtd_speedtest_निकास);
+static void __exit mtd_speedtest_exit(void)
+{
+	return;
+}
+module_exit(mtd_speedtest_exit);
 
 MODULE_DESCRIPTION("Speed test module");
 MODULE_AUTHOR("Adrian Hunter");

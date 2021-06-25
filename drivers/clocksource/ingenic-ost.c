@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * JZ47xx SoCs TCU Operating System Timer driver
  *
@@ -7,105 +6,105 @@
  * Copyright (C) 2020 Paul Cercueil <paul@crapouillou.net>
  */
 
-#समावेश <linux/clk.h>
-#समावेश <linux/घड़ीsource.h>
-#समावेश <linux/mfd/ingenic-tcu.h>
-#समावेश <linux/mfd/syscon.h>
-#समावेश <linux/of.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/pm.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/sched_घड़ी.h>
+#include <linux/clk.h>
+#include <linux/clocksource.h>
+#include <linux/mfd/ingenic-tcu.h>
+#include <linux/mfd/syscon.h>
+#include <linux/of.h>
+#include <linux/platform_device.h>
+#include <linux/pm.h>
+#include <linux/regmap.h>
+#include <linux/sched_clock.h>
 
-#घोषणा TCU_OST_TCSR_MASK	0xffc0
-#घोषणा TCU_OST_TCSR_CNT_MD	BIT(15)
+#define TCU_OST_TCSR_MASK	0xffc0
+#define TCU_OST_TCSR_CNT_MD	BIT(15)
 
-#घोषणा TCU_OST_CHANNEL		15
+#define TCU_OST_CHANNEL		15
 
 /*
- * The TCU_REG_OST_CNTअणुL,Rपूर्ण from <linux/mfd/ingenic-tcu.h> are only क्रम the
- * regmap; these are क्रम use with the __iomem poपूर्णांकer.
+ * The TCU_REG_OST_CNT{L,R} from <linux/mfd/ingenic-tcu.h> are only for the
+ * regmap; these are for use with the __iomem pointer.
  */
-#घोषणा OST_REG_CNTL		0x4
-#घोषणा OST_REG_CNTH		0x8
+#define OST_REG_CNTL		0x4
+#define OST_REG_CNTH		0x8
 
-काष्ठा ingenic_ost_soc_info अणु
+struct ingenic_ost_soc_info {
 	bool is64bit;
-पूर्ण;
+};
 
-काष्ठा ingenic_ost अणु
-	व्योम __iomem *regs;
-	काष्ठा clk *clk;
+struct ingenic_ost {
+	void __iomem *regs;
+	struct clk *clk;
 
-	काष्ठा घड़ीsource cs;
-पूर्ण;
+	struct clocksource cs;
+};
 
-अटल काष्ठा ingenic_ost *ingenic_ost;
+static struct ingenic_ost *ingenic_ost;
 
-अटल u64 notrace ingenic_ost_पढ़ो_cntl(व्योम)
-अणु
-	/* Read using __iomem poपूर्णांकer instead of regmap to aव्योम locking */
-	वापस पढ़ोl(ingenic_ost->regs + OST_REG_CNTL);
-पूर्ण
+static u64 notrace ingenic_ost_read_cntl(void)
+{
+	/* Read using __iomem pointer instead of regmap to avoid locking */
+	return readl(ingenic_ost->regs + OST_REG_CNTL);
+}
 
-अटल u64 notrace ingenic_ost_पढ़ो_cnth(व्योम)
-अणु
-	/* Read using __iomem poपूर्णांकer instead of regmap to aव्योम locking */
-	वापस पढ़ोl(ingenic_ost->regs + OST_REG_CNTH);
-पूर्ण
+static u64 notrace ingenic_ost_read_cnth(void)
+{
+	/* Read using __iomem pointer instead of regmap to avoid locking */
+	return readl(ingenic_ost->regs + OST_REG_CNTH);
+}
 
-अटल u64 notrace ingenic_ost_घड़ीsource_पढ़ोl(काष्ठा घड़ीsource *cs)
-अणु
-	वापस ingenic_ost_पढ़ो_cntl();
-पूर्ण
+static u64 notrace ingenic_ost_clocksource_readl(struct clocksource *cs)
+{
+	return ingenic_ost_read_cntl();
+}
 
-अटल u64 notrace ingenic_ost_घड़ीsource_पढ़ोh(काष्ठा घड़ीsource *cs)
-अणु
-	वापस ingenic_ost_पढ़ो_cnth();
-पूर्ण
+static u64 notrace ingenic_ost_clocksource_readh(struct clocksource *cs)
+{
+	return ingenic_ost_read_cnth();
+}
 
-अटल पूर्णांक __init ingenic_ost_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	स्थिर काष्ठा ingenic_ost_soc_info *soc_info;
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा ingenic_ost *ost;
-	काष्ठा घड़ीsource *cs;
-	काष्ठा regmap *map;
-	अचिन्हित दीर्घ rate;
-	पूर्णांक err;
+static int __init ingenic_ost_probe(struct platform_device *pdev)
+{
+	const struct ingenic_ost_soc_info *soc_info;
+	struct device *dev = &pdev->dev;
+	struct ingenic_ost *ost;
+	struct clocksource *cs;
+	struct regmap *map;
+	unsigned long rate;
+	int err;
 
 	soc_info = device_get_match_data(dev);
-	अगर (!soc_info)
-		वापस -EINVAL;
+	if (!soc_info)
+		return -EINVAL;
 
-	ost = devm_kzalloc(dev, माप(*ost), GFP_KERNEL);
-	अगर (!ost)
-		वापस -ENOMEM;
+	ost = devm_kzalloc(dev, sizeof(*ost), GFP_KERNEL);
+	if (!ost)
+		return -ENOMEM;
 
 	ingenic_ost = ost;
 
-	ost->regs = devm_platक्रमm_ioremap_resource(pdev, 0);
-	अगर (IS_ERR(ost->regs))
-		वापस PTR_ERR(ost->regs);
+	ost->regs = devm_platform_ioremap_resource(pdev, 0);
+	if (IS_ERR(ost->regs))
+		return PTR_ERR(ost->regs);
 
 	map = device_node_to_regmap(dev->parent->of_node);
-	अगर (IS_ERR(map)) अणु
+	if (IS_ERR(map)) {
 		dev_err(dev, "regmap not found");
-		वापस PTR_ERR(map);
-	पूर्ण
+		return PTR_ERR(map);
+	}
 
 	ost->clk = devm_clk_get(dev, "ost");
-	अगर (IS_ERR(ost->clk))
-		वापस PTR_ERR(ost->clk);
+	if (IS_ERR(ost->clk))
+		return PTR_ERR(ost->clk);
 
 	err = clk_prepare_enable(ost->clk);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	/* Clear counter high/low रेजिस्टरs */
-	अगर (soc_info->is64bit)
-		regmap_ग_लिखो(map, TCU_REG_OST_CNTL, 0);
-	regmap_ग_लिखो(map, TCU_REG_OST_CNTH, 0);
+	/* Clear counter high/low registers */
+	if (soc_info->is64bit)
+		regmap_write(map, TCU_REG_OST_CNTL, 0);
+	regmap_write(map, TCU_REG_OST_CNTH, 0);
 
 	/* Don't reset counter at compare value. */
 	regmap_update_bits(map, TCU_REG_OST_TCSR,
@@ -114,7 +113,7 @@
 	rate = clk_get_rate(ost->clk);
 
 	/* Enable OST TCU channel */
-	regmap_ग_लिखो(map, TCU_REG_TESR, BIT(TCU_OST_CHANNEL));
+	regmap_write(map, TCU_REG_TESR, BIT(TCU_OST_CHANNEL));
 
 	cs = &ost->cs;
 	cs->name	= "ingenic-ost";
@@ -122,70 +121,70 @@
 	cs->flags	= CLOCK_SOURCE_IS_CONTINUOUS;
 	cs->mask	= CLOCKSOURCE_MASK(32);
 
-	अगर (soc_info->is64bit)
-		cs->पढ़ो = ingenic_ost_घड़ीsource_पढ़ोl;
-	अन्यथा
-		cs->पढ़ो = ingenic_ost_घड़ीsource_पढ़ोh;
+	if (soc_info->is64bit)
+		cs->read = ingenic_ost_clocksource_readl;
+	else
+		cs->read = ingenic_ost_clocksource_readh;
 
-	err = घड़ीsource_रेजिस्टर_hz(cs, rate);
-	अगर (err) अणु
+	err = clocksource_register_hz(cs, rate);
+	if (err) {
 		dev_err(dev, "clocksource registration failed");
 		clk_disable_unprepare(ost->clk);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	अगर (soc_info->is64bit)
-		sched_घड़ी_रेजिस्टर(ingenic_ost_पढ़ो_cntl, 32, rate);
-	अन्यथा
-		sched_घड़ी_रेजिस्टर(ingenic_ost_पढ़ो_cnth, 32, rate);
+	if (soc_info->is64bit)
+		sched_clock_register(ingenic_ost_read_cntl, 32, rate);
+	else
+		sched_clock_register(ingenic_ost_read_cnth, 32, rate);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __maybe_unused ingenic_ost_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा ingenic_ost *ost = dev_get_drvdata(dev);
+static int __maybe_unused ingenic_ost_suspend(struct device *dev)
+{
+	struct ingenic_ost *ost = dev_get_drvdata(dev);
 
 	clk_disable(ost->clk);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __maybe_unused ingenic_ost_resume(काष्ठा device *dev)
-अणु
-	काष्ठा ingenic_ost *ost = dev_get_drvdata(dev);
+static int __maybe_unused ingenic_ost_resume(struct device *dev)
+{
+	struct ingenic_ost *ost = dev_get_drvdata(dev);
 
-	वापस clk_enable(ost->clk);
-पूर्ण
+	return clk_enable(ost->clk);
+}
 
-अटल स्थिर काष्ठा dev_pm_ops __maybe_unused ingenic_ost_pm_ops = अणु
-	/* _noirq: We want the OST घड़ी to be gated last / ungated first */
+static const struct dev_pm_ops __maybe_unused ingenic_ost_pm_ops = {
+	/* _noirq: We want the OST clock to be gated last / ungated first */
 	.suspend_noirq = ingenic_ost_suspend,
 	.resume_noirq  = ingenic_ost_resume,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा ingenic_ost_soc_info jz4725b_ost_soc_info = अणु
+static const struct ingenic_ost_soc_info jz4725b_ost_soc_info = {
 	.is64bit = false,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा ingenic_ost_soc_info jz4760b_ost_soc_info = अणु
+static const struct ingenic_ost_soc_info jz4760b_ost_soc_info = {
 	.is64bit = true,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा of_device_id ingenic_ost_of_match[] = अणु
-	अणु .compatible = "ingenic,jz4725b-ost", .data = &jz4725b_ost_soc_info, पूर्ण,
-	अणु .compatible = "ingenic,jz4760b-ost", .data = &jz4760b_ost_soc_info, पूर्ण,
-	अणु .compatible = "ingenic,jz4770-ost", .data = &jz4760b_ost_soc_info, पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct of_device_id ingenic_ost_of_match[] = {
+	{ .compatible = "ingenic,jz4725b-ost", .data = &jz4725b_ost_soc_info, },
+	{ .compatible = "ingenic,jz4760b-ost", .data = &jz4760b_ost_soc_info, },
+	{ .compatible = "ingenic,jz4770-ost", .data = &jz4760b_ost_soc_info, },
+	{ }
+};
 
-अटल काष्ठा platक्रमm_driver ingenic_ost_driver = अणु
-	.driver = अणु
+static struct platform_driver ingenic_ost_driver = {
+	.driver = {
 		.name = "ingenic-ost",
-#अगर_घोषित CONFIG_PM_SUSPEND
+#ifdef CONFIG_PM_SUSPEND
 		.pm = &ingenic_ost_pm_ops,
-#पूर्ण_अगर
+#endif
 		.of_match_table = ingenic_ost_of_match,
-	पूर्ण,
-पूर्ण;
-builtin_platक्रमm_driver_probe(ingenic_ost_driver, ingenic_ost_probe);
+	},
+};
+builtin_platform_driver_probe(ingenic_ost_driver, ingenic_ost_probe);

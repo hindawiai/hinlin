@@ -1,228 +1,227 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <linux/err.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/gfp.h>
-#समावेश <linux/export.h>
-#समावेश <linux/of_address.h>
+// SPDX-License-Identifier: GPL-2.0
+#include <linux/err.h>
+#include <linux/pci.h>
+#include <linux/io.h>
+#include <linux/gfp.h>
+#include <linux/export.h>
+#include <linux/of_address.h>
 
-क्रमागत devm_ioremap_type अणु
+enum devm_ioremap_type {
 	DEVM_IOREMAP = 0,
 	DEVM_IOREMAP_UC,
 	DEVM_IOREMAP_WC,
 	DEVM_IOREMAP_NP,
-पूर्ण;
+};
 
-व्योम devm_ioremap_release(काष्ठा device *dev, व्योम *res)
-अणु
-	iounmap(*(व्योम __iomem **)res);
-पूर्ण
+void devm_ioremap_release(struct device *dev, void *res)
+{
+	iounmap(*(void __iomem **)res);
+}
 
-अटल पूर्णांक devm_ioremap_match(काष्ठा device *dev, व्योम *res, व्योम *match_data)
-अणु
-	वापस *(व्योम **)res == match_data;
-पूर्ण
+static int devm_ioremap_match(struct device *dev, void *res, void *match_data)
+{
+	return *(void **)res == match_data;
+}
 
-अटल व्योम __iomem *__devm_ioremap(काष्ठा device *dev, resource_माप_प्रकार offset,
-				    resource_माप_प्रकार size,
-				    क्रमागत devm_ioremap_type type)
-अणु
-	व्योम __iomem **ptr, *addr = शून्य;
+static void __iomem *__devm_ioremap(struct device *dev, resource_size_t offset,
+				    resource_size_t size,
+				    enum devm_ioremap_type type)
+{
+	void __iomem **ptr, *addr = NULL;
 
-	ptr = devres_alloc(devm_ioremap_release, माप(*ptr), GFP_KERNEL);
-	अगर (!ptr)
-		वापस शून्य;
+	ptr = devres_alloc(devm_ioremap_release, sizeof(*ptr), GFP_KERNEL);
+	if (!ptr)
+		return NULL;
 
-	चयन (type) अणु
-	हाल DEVM_IOREMAP:
+	switch (type) {
+	case DEVM_IOREMAP:
 		addr = ioremap(offset, size);
-		अवरोध;
-	हाल DEVM_IOREMAP_UC:
+		break;
+	case DEVM_IOREMAP_UC:
 		addr = ioremap_uc(offset, size);
-		अवरोध;
-	हाल DEVM_IOREMAP_WC:
+		break;
+	case DEVM_IOREMAP_WC:
 		addr = ioremap_wc(offset, size);
-		अवरोध;
-	हाल DEVM_IOREMAP_NP:
+		break;
+	case DEVM_IOREMAP_NP:
 		addr = ioremap_np(offset, size);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	अगर (addr) अणु
+	if (addr) {
 		*ptr = addr;
 		devres_add(dev, ptr);
-	पूर्ण अन्यथा
-		devres_मुक्त(ptr);
+	} else
+		devres_free(ptr);
 
-	वापस addr;
-पूर्ण
+	return addr;
+}
 
 /**
  * devm_ioremap - Managed ioremap()
- * @dev: Generic device to remap IO address क्रम
+ * @dev: Generic device to remap IO address for
  * @offset: Resource address to map
  * @size: Size of map
  *
- * Managed ioremap().  Map is स्वतःmatically unmapped on driver detach.
+ * Managed ioremap().  Map is automatically unmapped on driver detach.
  */
-व्योम __iomem *devm_ioremap(काष्ठा device *dev, resource_माप_प्रकार offset,
-			   resource_माप_प्रकार size)
-अणु
-	वापस __devm_ioremap(dev, offset, size, DEVM_IOREMAP);
-पूर्ण
+void __iomem *devm_ioremap(struct device *dev, resource_size_t offset,
+			   resource_size_t size)
+{
+	return __devm_ioremap(dev, offset, size, DEVM_IOREMAP);
+}
 EXPORT_SYMBOL(devm_ioremap);
 
 /**
  * devm_ioremap_uc - Managed ioremap_uc()
- * @dev: Generic device to remap IO address क्रम
+ * @dev: Generic device to remap IO address for
  * @offset: Resource address to map
  * @size: Size of map
  *
- * Managed ioremap_uc().  Map is स्वतःmatically unmapped on driver detach.
+ * Managed ioremap_uc().  Map is automatically unmapped on driver detach.
  */
-व्योम __iomem *devm_ioremap_uc(काष्ठा device *dev, resource_माप_प्रकार offset,
-			      resource_माप_प्रकार size)
-अणु
-	वापस __devm_ioremap(dev, offset, size, DEVM_IOREMAP_UC);
-पूर्ण
+void __iomem *devm_ioremap_uc(struct device *dev, resource_size_t offset,
+			      resource_size_t size)
+{
+	return __devm_ioremap(dev, offset, size, DEVM_IOREMAP_UC);
+}
 EXPORT_SYMBOL_GPL(devm_ioremap_uc);
 
 /**
  * devm_ioremap_wc - Managed ioremap_wc()
- * @dev: Generic device to remap IO address क्रम
+ * @dev: Generic device to remap IO address for
  * @offset: Resource address to map
  * @size: Size of map
  *
- * Managed ioremap_wc().  Map is स्वतःmatically unmapped on driver detach.
+ * Managed ioremap_wc().  Map is automatically unmapped on driver detach.
  */
-व्योम __iomem *devm_ioremap_wc(काष्ठा device *dev, resource_माप_प्रकार offset,
-			      resource_माप_प्रकार size)
-अणु
-	वापस __devm_ioremap(dev, offset, size, DEVM_IOREMAP_WC);
-पूर्ण
+void __iomem *devm_ioremap_wc(struct device *dev, resource_size_t offset,
+			      resource_size_t size)
+{
+	return __devm_ioremap(dev, offset, size, DEVM_IOREMAP_WC);
+}
 EXPORT_SYMBOL(devm_ioremap_wc);
 
 /**
  * devm_ioremap_np - Managed ioremap_np()
- * @dev: Generic device to remap IO address क्रम
+ * @dev: Generic device to remap IO address for
  * @offset: Resource address to map
  * @size: Size of map
  *
- * Managed ioremap_np().  Map is स्वतःmatically unmapped on driver detach.
+ * Managed ioremap_np().  Map is automatically unmapped on driver detach.
  */
-व्योम __iomem *devm_ioremap_np(काष्ठा device *dev, resource_माप_प्रकार offset,
-			      resource_माप_प्रकार size)
-अणु
-	वापस __devm_ioremap(dev, offset, size, DEVM_IOREMAP_NP);
-पूर्ण
+void __iomem *devm_ioremap_np(struct device *dev, resource_size_t offset,
+			      resource_size_t size)
+{
+	return __devm_ioremap(dev, offset, size, DEVM_IOREMAP_NP);
+}
 EXPORT_SYMBOL(devm_ioremap_np);
 
 /**
  * devm_iounmap - Managed iounmap()
- * @dev: Generic device to unmap क्रम
+ * @dev: Generic device to unmap for
  * @addr: Address to unmap
  *
  * Managed iounmap().  @addr must have been mapped using devm_ioremap*().
  */
-व्योम devm_iounmap(काष्ठा device *dev, व्योम __iomem *addr)
-अणु
+void devm_iounmap(struct device *dev, void __iomem *addr)
+{
 	WARN_ON(devres_destroy(dev, devm_ioremap_release, devm_ioremap_match,
-			       (__क्रमce व्योम *)addr));
+			       (__force void *)addr));
 	iounmap(addr);
-पूर्ण
+}
 EXPORT_SYMBOL(devm_iounmap);
 
-अटल व्योम __iomem *
-__devm_ioremap_resource(काष्ठा device *dev, स्थिर काष्ठा resource *res,
-			क्रमागत devm_ioremap_type type)
-अणु
-	resource_माप_प्रकार size;
-	व्योम __iomem *dest_ptr;
-	अक्षर *pretty_name;
+static void __iomem *
+__devm_ioremap_resource(struct device *dev, const struct resource *res,
+			enum devm_ioremap_type type)
+{
+	resource_size_t size;
+	void __iomem *dest_ptr;
+	char *pretty_name;
 
 	BUG_ON(!dev);
 
-	अगर (!res || resource_type(res) != IORESOURCE_MEM) अणु
+	if (!res || resource_type(res) != IORESOURCE_MEM) {
 		dev_err(dev, "invalid resource\n");
-		वापस IOMEM_ERR_PTR(-EINVAL);
-	पूर्ण
+		return IOMEM_ERR_PTR(-EINVAL);
+	}
 
-	अगर (type == DEVM_IOREMAP && res->flags & IORESOURCE_MEM_NONPOSTED)
+	if (type == DEVM_IOREMAP && res->flags & IORESOURCE_MEM_NONPOSTED)
 		type = DEVM_IOREMAP_NP;
 
 	size = resource_size(res);
 
-	अगर (res->name)
-		pretty_name = devm_kaप्र_लिखो(dev, GFP_KERNEL, "%s %s",
+	if (res->name)
+		pretty_name = devm_kasprintf(dev, GFP_KERNEL, "%s %s",
 					     dev_name(dev), res->name);
-	अन्यथा
+	else
 		pretty_name = devm_kstrdup(dev, dev_name(dev), GFP_KERNEL);
-	अगर (!pretty_name)
-		वापस IOMEM_ERR_PTR(-ENOMEM);
+	if (!pretty_name)
+		return IOMEM_ERR_PTR(-ENOMEM);
 
-	अगर (!devm_request_mem_region(dev, res->start, size, pretty_name)) अणु
+	if (!devm_request_mem_region(dev, res->start, size, pretty_name)) {
 		dev_err(dev, "can't request region for resource %pR\n", res);
-		वापस IOMEM_ERR_PTR(-EBUSY);
-	पूर्ण
+		return IOMEM_ERR_PTR(-EBUSY);
+	}
 
 	dest_ptr = __devm_ioremap(dev, res->start, size, type);
-	अगर (!dest_ptr) अणु
+	if (!dest_ptr) {
 		dev_err(dev, "ioremap failed for resource %pR\n", res);
 		devm_release_mem_region(dev, res->start, size);
 		dest_ptr = IOMEM_ERR_PTR(-ENOMEM);
-	पूर्ण
+	}
 
-	वापस dest_ptr;
-पूर्ण
+	return dest_ptr;
+}
 
 /**
  * devm_ioremap_resource() - check, request region, and ioremap resource
- * @dev: generic device to handle the resource क्रम
+ * @dev: generic device to handle the resource for
  * @res: resource to be handled
  *
  * Checks that a resource is a valid memory region, requests the memory
- * region and ioremaps it. All operations are managed and will be unकरोne
+ * region and ioremaps it. All operations are managed and will be undone
  * on driver detach.
  *
  * Usage example:
  *
- *	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+ *	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
  *	base = devm_ioremap_resource(&pdev->dev, res);
- *	अगर (IS_ERR(base))
- *		वापस PTR_ERR(base);
+ *	if (IS_ERR(base))
+ *		return PTR_ERR(base);
  *
- * Return: a poपूर्णांकer to the remapped memory or an ERR_PTR() encoded error code
+ * Return: a pointer to the remapped memory or an ERR_PTR() encoded error code
  * on failure.
  */
-व्योम __iomem *devm_ioremap_resource(काष्ठा device *dev,
-				    स्थिर काष्ठा resource *res)
-अणु
-	वापस __devm_ioremap_resource(dev, res, DEVM_IOREMAP);
-पूर्ण
+void __iomem *devm_ioremap_resource(struct device *dev,
+				    const struct resource *res)
+{
+	return __devm_ioremap_resource(dev, res, DEVM_IOREMAP);
+}
 EXPORT_SYMBOL(devm_ioremap_resource);
 
 /**
- * devm_ioremap_resource_wc() - ग_लिखो-combined variant of
+ * devm_ioremap_resource_wc() - write-combined variant of
  *				devm_ioremap_resource()
- * @dev: generic device to handle the resource क्रम
+ * @dev: generic device to handle the resource for
  * @res: resource to be handled
  *
- * Return: a poपूर्णांकer to the remapped memory or an ERR_PTR() encoded error code
+ * Return: a pointer to the remapped memory or an ERR_PTR() encoded error code
  * on failure.
  */
-व्योम __iomem *devm_ioremap_resource_wc(काष्ठा device *dev,
-				       स्थिर काष्ठा resource *res)
-अणु
-	वापस __devm_ioremap_resource(dev, res, DEVM_IOREMAP_WC);
-पूर्ण
+void __iomem *devm_ioremap_resource_wc(struct device *dev,
+				       const struct resource *res)
+{
+	return __devm_ioremap_resource(dev, res, DEVM_IOREMAP_WC);
+}
 
 /*
  * devm_of_iomap - Requests a resource and maps the memory mapped IO
- *		   क्रम a given device_node managed by a given device
+ *		   for a given device_node managed by a given device
  *
  * Checks that a resource is a valid memory region, requests the memory
- * region and ioremaps it. All operations are managed and will be unकरोne
+ * region and ioremaps it. All operations are managed and will be undone
  * on driver detach of the device.
  *
  * This is to be used when a device requests/maps resources described
@@ -231,299 +230,299 @@ EXPORT_SYMBOL(devm_ioremap_resource);
  * @dev:	The device "managing" the resource
  * @node:       The device-tree node where the resource resides
  * @index:	index of the MMIO range in the "reg" property
- * @size:	Returns the size of the resource (pass शून्य अगर not needed)
+ * @size:	Returns the size of the resource (pass NULL if not needed)
  *
  * Usage example:
  *
- *	base = devm_of_iomap(&pdev->dev, node, 0, शून्य);
- *	अगर (IS_ERR(base))
- *		वापस PTR_ERR(base);
+ *	base = devm_of_iomap(&pdev->dev, node, 0, NULL);
+ *	if (IS_ERR(base))
+ *		return PTR_ERR(base);
  *
- * Please Note: This is not a one-to-one replacement क्रम of_iomap() because the
- * of_iomap() function करोes not track whether the region is alपढ़ोy mapped.  If
+ * Please Note: This is not a one-to-one replacement for of_iomap() because the
+ * of_iomap() function does not track whether the region is already mapped.  If
  * two drivers try to map the same memory, the of_iomap() function will succeed
- * but the devm_of_iomap() function will वापस -EBUSY.
+ * but the devm_of_iomap() function will return -EBUSY.
  *
- * Return: a poपूर्णांकer to the requested and mapped memory or an ERR_PTR() encoded
+ * Return: a pointer to the requested and mapped memory or an ERR_PTR() encoded
  * error code on failure.
  */
-व्योम __iomem *devm_of_iomap(काष्ठा device *dev, काष्ठा device_node *node, पूर्णांक index,
-			    resource_माप_प्रकार *size)
-अणु
-	काष्ठा resource res;
+void __iomem *devm_of_iomap(struct device *dev, struct device_node *node, int index,
+			    resource_size_t *size)
+{
+	struct resource res;
 
-	अगर (of_address_to_resource(node, index, &res))
-		वापस IOMEM_ERR_PTR(-EINVAL);
-	अगर (size)
+	if (of_address_to_resource(node, index, &res))
+		return IOMEM_ERR_PTR(-EINVAL);
+	if (size)
 		*size = resource_size(&res);
-	वापस devm_ioremap_resource(dev, &res);
-पूर्ण
+	return devm_ioremap_resource(dev, &res);
+}
 EXPORT_SYMBOL(devm_of_iomap);
 
-#अगर_घोषित CONFIG_HAS_IOPORT_MAP
+#ifdef CONFIG_HAS_IOPORT_MAP
 /*
  * Generic iomap devres
  */
-अटल व्योम devm_ioport_map_release(काष्ठा device *dev, व्योम *res)
-अणु
-	ioport_unmap(*(व्योम __iomem **)res);
-पूर्ण
+static void devm_ioport_map_release(struct device *dev, void *res)
+{
+	ioport_unmap(*(void __iomem **)res);
+}
 
-अटल पूर्णांक devm_ioport_map_match(काष्ठा device *dev, व्योम *res,
-				 व्योम *match_data)
-अणु
-	वापस *(व्योम **)res == match_data;
-पूर्ण
+static int devm_ioport_map_match(struct device *dev, void *res,
+				 void *match_data)
+{
+	return *(void **)res == match_data;
+}
 
 /**
  * devm_ioport_map - Managed ioport_map()
- * @dev: Generic device to map ioport क्रम
+ * @dev: Generic device to map ioport for
  * @port: Port to map
  * @nr: Number of ports to map
  *
- * Managed ioport_map().  Map is स्वतःmatically unmapped on driver
+ * Managed ioport_map().  Map is automatically unmapped on driver
  * detach.
  *
- * Return: a poपूर्णांकer to the remapped memory or शून्य on failure.
+ * Return: a pointer to the remapped memory or NULL on failure.
  */
-व्योम __iomem *devm_ioport_map(काष्ठा device *dev, अचिन्हित दीर्घ port,
-			       अचिन्हित पूर्णांक nr)
-अणु
-	व्योम __iomem **ptr, *addr;
+void __iomem *devm_ioport_map(struct device *dev, unsigned long port,
+			       unsigned int nr)
+{
+	void __iomem **ptr, *addr;
 
-	ptr = devres_alloc(devm_ioport_map_release, माप(*ptr), GFP_KERNEL);
-	अगर (!ptr)
-		वापस शून्य;
+	ptr = devres_alloc(devm_ioport_map_release, sizeof(*ptr), GFP_KERNEL);
+	if (!ptr)
+		return NULL;
 
 	addr = ioport_map(port, nr);
-	अगर (addr) अणु
+	if (addr) {
 		*ptr = addr;
 		devres_add(dev, ptr);
-	पूर्ण अन्यथा
-		devres_मुक्त(ptr);
+	} else
+		devres_free(ptr);
 
-	वापस addr;
-पूर्ण
+	return addr;
+}
 EXPORT_SYMBOL(devm_ioport_map);
 
 /**
  * devm_ioport_unmap - Managed ioport_unmap()
- * @dev: Generic device to unmap क्रम
+ * @dev: Generic device to unmap for
  * @addr: Address to unmap
  *
  * Managed ioport_unmap().  @addr must have been mapped using
  * devm_ioport_map().
  */
-व्योम devm_ioport_unmap(काष्ठा device *dev, व्योम __iomem *addr)
-अणु
+void devm_ioport_unmap(struct device *dev, void __iomem *addr)
+{
 	ioport_unmap(addr);
 	WARN_ON(devres_destroy(dev, devm_ioport_map_release,
-			       devm_ioport_map_match, (__क्रमce व्योम *)addr));
-पूर्ण
+			       devm_ioport_map_match, (__force void *)addr));
+}
 EXPORT_SYMBOL(devm_ioport_unmap);
-#पूर्ण_अगर /* CONFIG_HAS_IOPORT_MAP */
+#endif /* CONFIG_HAS_IOPORT_MAP */
 
-#अगर_घोषित CONFIG_PCI
+#ifdef CONFIG_PCI
 /*
  * PCI iomap devres
  */
-#घोषणा PCIM_IOMAP_MAX	PCI_STD_NUM_BARS
+#define PCIM_IOMAP_MAX	PCI_STD_NUM_BARS
 
-काष्ठा pcim_iomap_devres अणु
-	व्योम __iomem *table[PCIM_IOMAP_MAX];
-पूर्ण;
+struct pcim_iomap_devres {
+	void __iomem *table[PCIM_IOMAP_MAX];
+};
 
-अटल व्योम pcim_iomap_release(काष्ठा device *gendev, व्योम *res)
-अणु
-	काष्ठा pci_dev *dev = to_pci_dev(gendev);
-	काष्ठा pcim_iomap_devres *this = res;
-	पूर्णांक i;
+static void pcim_iomap_release(struct device *gendev, void *res)
+{
+	struct pci_dev *dev = to_pci_dev(gendev);
+	struct pcim_iomap_devres *this = res;
+	int i;
 
-	क्रम (i = 0; i < PCIM_IOMAP_MAX; i++)
-		अगर (this->table[i])
+	for (i = 0; i < PCIM_IOMAP_MAX; i++)
+		if (this->table[i])
 			pci_iounmap(dev, this->table[i]);
-पूर्ण
+}
 
 /**
  * pcim_iomap_table - access iomap allocation table
- * @pdev: PCI device to access iomap table क्रम
+ * @pdev: PCI device to access iomap table for
  *
- * Access iomap allocation table क्रम @dev.  If iomap table करोesn't
+ * Access iomap allocation table for @dev.  If iomap table doesn't
  * exist and @pdev is managed, it will be allocated.  All iomaps
- * recorded in the iomap table are स्वतःmatically unmapped on driver
+ * recorded in the iomap table are automatically unmapped on driver
  * detach.
  *
  * This function might sleep when the table is first allocated but can
  * be safely called without context and guaranteed to succed once
  * allocated.
  */
-व्योम __iomem * स्थिर *pcim_iomap_table(काष्ठा pci_dev *pdev)
-अणु
-	काष्ठा pcim_iomap_devres *dr, *new_dr;
+void __iomem * const *pcim_iomap_table(struct pci_dev *pdev)
+{
+	struct pcim_iomap_devres *dr, *new_dr;
 
-	dr = devres_find(&pdev->dev, pcim_iomap_release, शून्य, शून्य);
-	अगर (dr)
-		वापस dr->table;
+	dr = devres_find(&pdev->dev, pcim_iomap_release, NULL, NULL);
+	if (dr)
+		return dr->table;
 
-	new_dr = devres_alloc(pcim_iomap_release, माप(*new_dr), GFP_KERNEL);
-	अगर (!new_dr)
-		वापस शून्य;
-	dr = devres_get(&pdev->dev, new_dr, शून्य, शून्य);
-	वापस dr->table;
-पूर्ण
+	new_dr = devres_alloc(pcim_iomap_release, sizeof(*new_dr), GFP_KERNEL);
+	if (!new_dr)
+		return NULL;
+	dr = devres_get(&pdev->dev, new_dr, NULL, NULL);
+	return dr->table;
+}
 EXPORT_SYMBOL(pcim_iomap_table);
 
 /**
  * pcim_iomap - Managed pcim_iomap()
- * @pdev: PCI device to iomap क्रम
+ * @pdev: PCI device to iomap for
  * @bar: BAR to iomap
  * @maxlen: Maximum length of iomap
  *
- * Managed pci_iomap().  Map is स्वतःmatically unmapped on driver
+ * Managed pci_iomap().  Map is automatically unmapped on driver
  * detach.
  */
-व्योम __iomem *pcim_iomap(काष्ठा pci_dev *pdev, पूर्णांक bar, अचिन्हित दीर्घ maxlen)
-अणु
-	व्योम __iomem **tbl;
+void __iomem *pcim_iomap(struct pci_dev *pdev, int bar, unsigned long maxlen)
+{
+	void __iomem **tbl;
 
 	BUG_ON(bar >= PCIM_IOMAP_MAX);
 
-	tbl = (व्योम __iomem **)pcim_iomap_table(pdev);
-	अगर (!tbl || tbl[bar])	/* duplicate mappings not allowed */
-		वापस शून्य;
+	tbl = (void __iomem **)pcim_iomap_table(pdev);
+	if (!tbl || tbl[bar])	/* duplicate mappings not allowed */
+		return NULL;
 
 	tbl[bar] = pci_iomap(pdev, bar, maxlen);
-	वापस tbl[bar];
-पूर्ण
+	return tbl[bar];
+}
 EXPORT_SYMBOL(pcim_iomap);
 
 /**
  * pcim_iounmap - Managed pci_iounmap()
- * @pdev: PCI device to iounmap क्रम
+ * @pdev: PCI device to iounmap for
  * @addr: Address to unmap
  *
  * Managed pci_iounmap().  @addr must have been mapped using pcim_iomap().
  */
-व्योम pcim_iounmap(काष्ठा pci_dev *pdev, व्योम __iomem *addr)
-अणु
-	व्योम __iomem **tbl;
-	पूर्णांक i;
+void pcim_iounmap(struct pci_dev *pdev, void __iomem *addr)
+{
+	void __iomem **tbl;
+	int i;
 
 	pci_iounmap(pdev, addr);
 
-	tbl = (व्योम __iomem **)pcim_iomap_table(pdev);
+	tbl = (void __iomem **)pcim_iomap_table(pdev);
 	BUG_ON(!tbl);
 
-	क्रम (i = 0; i < PCIM_IOMAP_MAX; i++)
-		अगर (tbl[i] == addr) अणु
-			tbl[i] = शून्य;
-			वापस;
-		पूर्ण
+	for (i = 0; i < PCIM_IOMAP_MAX; i++)
+		if (tbl[i] == addr) {
+			tbl[i] = NULL;
+			return;
+		}
 	WARN_ON(1);
-पूर्ण
+}
 EXPORT_SYMBOL(pcim_iounmap);
 
 /**
  * pcim_iomap_regions - Request and iomap PCI BARs
- * @pdev: PCI device to map IO resources क्रम
+ * @pdev: PCI device to map IO resources for
  * @mask: Mask of BARs to request and iomap
  * @name: Name used when requesting regions
  *
- * Request and iomap regions specअगरied by @mask.
+ * Request and iomap regions specified by @mask.
  */
-पूर्णांक pcim_iomap_regions(काष्ठा pci_dev *pdev, पूर्णांक mask, स्थिर अक्षर *name)
-अणु
-	व्योम __iomem * स्थिर *iomap;
-	पूर्णांक i, rc;
+int pcim_iomap_regions(struct pci_dev *pdev, int mask, const char *name)
+{
+	void __iomem * const *iomap;
+	int i, rc;
 
 	iomap = pcim_iomap_table(pdev);
-	अगर (!iomap)
-		वापस -ENOMEM;
+	if (!iomap)
+		return -ENOMEM;
 
-	क्रम (i = 0; i < DEVICE_COUNT_RESOURCE; i++) अणु
-		अचिन्हित दीर्घ len;
+	for (i = 0; i < DEVICE_COUNT_RESOURCE; i++) {
+		unsigned long len;
 
-		अगर (!(mask & (1 << i)))
-			जारी;
+		if (!(mask & (1 << i)))
+			continue;
 
 		rc = -EINVAL;
 		len = pci_resource_len(pdev, i);
-		अगर (!len)
-			जाओ err_inval;
+		if (!len)
+			goto err_inval;
 
 		rc = pci_request_region(pdev, i, name);
-		अगर (rc)
-			जाओ err_inval;
+		if (rc)
+			goto err_inval;
 
 		rc = -ENOMEM;
-		अगर (!pcim_iomap(pdev, i, 0))
-			जाओ err_region;
-	पूर्ण
+		if (!pcim_iomap(pdev, i, 0))
+			goto err_region;
+	}
 
-	वापस 0;
+	return 0;
 
  err_region:
 	pci_release_region(pdev, i);
  err_inval:
-	जबतक (--i >= 0) अणु
-		अगर (!(mask & (1 << i)))
-			जारी;
+	while (--i >= 0) {
+		if (!(mask & (1 << i)))
+			continue;
 		pcim_iounmap(pdev, iomap[i]);
 		pci_release_region(pdev, i);
-	पूर्ण
+	}
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 EXPORT_SYMBOL(pcim_iomap_regions);
 
 /**
- * pcim_iomap_regions_request_all - Request all BARs and iomap specअगरied ones
- * @pdev: PCI device to map IO resources क्रम
+ * pcim_iomap_regions_request_all - Request all BARs and iomap specified ones
+ * @pdev: PCI device to map IO resources for
  * @mask: Mask of BARs to iomap
  * @name: Name used when requesting regions
  *
- * Request all PCI BARs and iomap regions specअगरied by @mask.
+ * Request all PCI BARs and iomap regions specified by @mask.
  */
-पूर्णांक pcim_iomap_regions_request_all(काष्ठा pci_dev *pdev, पूर्णांक mask,
-				   स्थिर अक्षर *name)
-अणु
-	पूर्णांक request_mask = ((1 << 6) - 1) & ~mask;
-	पूर्णांक rc;
+int pcim_iomap_regions_request_all(struct pci_dev *pdev, int mask,
+				   const char *name)
+{
+	int request_mask = ((1 << 6) - 1) & ~mask;
+	int rc;
 
 	rc = pci_request_selected_regions(pdev, request_mask, name);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
 	rc = pcim_iomap_regions(pdev, mask, name);
-	अगर (rc)
+	if (rc)
 		pci_release_selected_regions(pdev, request_mask);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 EXPORT_SYMBOL(pcim_iomap_regions_request_all);
 
 /**
  * pcim_iounmap_regions - Unmap and release PCI BARs
- * @pdev: PCI device to map IO resources क्रम
+ * @pdev: PCI device to map IO resources for
  * @mask: Mask of BARs to unmap and release
  *
- * Unmap and release regions specअगरied by @mask.
+ * Unmap and release regions specified by @mask.
  */
-व्योम pcim_iounmap_regions(काष्ठा pci_dev *pdev, पूर्णांक mask)
-अणु
-	व्योम __iomem * स्थिर *iomap;
-	पूर्णांक i;
+void pcim_iounmap_regions(struct pci_dev *pdev, int mask)
+{
+	void __iomem * const *iomap;
+	int i;
 
 	iomap = pcim_iomap_table(pdev);
-	अगर (!iomap)
-		वापस;
+	if (!iomap)
+		return;
 
-	क्रम (i = 0; i < PCIM_IOMAP_MAX; i++) अणु
-		अगर (!(mask & (1 << i)))
-			जारी;
+	for (i = 0; i < PCIM_IOMAP_MAX; i++) {
+		if (!(mask & (1 << i)))
+			continue;
 
 		pcim_iounmap(pdev, iomap[i]);
 		pci_release_region(pdev, i);
-	पूर्ण
-पूर्ण
+	}
+}
 EXPORT_SYMBOL(pcim_iounmap_regions);
-#पूर्ण_अगर /* CONFIG_PCI */
+#endif /* CONFIG_PCI */

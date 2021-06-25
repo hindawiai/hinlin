@@ -1,99 +1,98 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2010 Werner Fink, Jiri Slaby
  */
 
-#समावेश <linux/console.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/proc_fs.h>
-#समावेश <linux/seq_file.h>
-#समावेश <linux/tty_driver.h>
+#include <linux/console.h>
+#include <linux/kernel.h>
+#include <linux/proc_fs.h>
+#include <linux/seq_file.h>
+#include <linux/tty_driver.h>
 
 /*
- * This is handler क्रम /proc/consoles
+ * This is handler for /proc/consoles
  */
-अटल पूर्णांक show_console_dev(काष्ठा seq_file *m, व्योम *v)
-अणु
-	अटल स्थिर काष्ठा अणु
-		लघु flag;
-		अक्षर name;
-	पूर्ण con_flags[] = अणु
-		अणु CON_ENABLED,		'E' पूर्ण,
-		अणु CON_CONSDEV,		'C' पूर्ण,
-		अणु CON_BOOT,		'B' पूर्ण,
-		अणु CON_PRINTBUFFER,	'p' पूर्ण,
-		अणु CON_BRL,		'b' पूर्ण,
-		अणु CON_ANYTIME,		'a' पूर्ण,
-	पूर्ण;
-	अक्षर flags[ARRAY_SIZE(con_flags) + 1];
-	काष्ठा console *con = v;
-	अचिन्हित पूर्णांक a;
+static int show_console_dev(struct seq_file *m, void *v)
+{
+	static const struct {
+		short flag;
+		char name;
+	} con_flags[] = {
+		{ CON_ENABLED,		'E' },
+		{ CON_CONSDEV,		'C' },
+		{ CON_BOOT,		'B' },
+		{ CON_PRINTBUFFER,	'p' },
+		{ CON_BRL,		'b' },
+		{ CON_ANYTIME,		'a' },
+	};
+	char flags[ARRAY_SIZE(con_flags) + 1];
+	struct console *con = v;
+	unsigned int a;
 	dev_t dev = 0;
 
-	अगर (con->device) अणु
-		स्थिर काष्ठा tty_driver *driver;
-		पूर्णांक index;
+	if (con->device) {
+		const struct tty_driver *driver;
+		int index;
 		driver = con->device(con, &index);
-		अगर (driver) अणु
+		if (driver) {
 			dev = MKDEV(driver->major, driver->minor_start);
 			dev += index;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	क्रम (a = 0; a < ARRAY_SIZE(con_flags); a++)
+	for (a = 0; a < ARRAY_SIZE(con_flags); a++)
 		flags[a] = (con->flags & con_flags[a].flag) ?
 			con_flags[a].name : ' ';
 	flags[a] = 0;
 
 	seq_setwidth(m, 21 - 1);
-	seq_म_लिखो(m, "%s%d", con->name, con->index);
+	seq_printf(m, "%s%d", con->name, con->index);
 	seq_pad(m, ' ');
-	seq_म_लिखो(m, "%c%c%c (%s)", con->पढ़ो ? 'R' : '-',
-			con->ग_लिखो ? 'W' : '-', con->unblank ? 'U' : '-',
+	seq_printf(m, "%c%c%c (%s)", con->read ? 'R' : '-',
+			con->write ? 'W' : '-', con->unblank ? 'U' : '-',
 			flags);
-	अगर (dev)
-		seq_म_लिखो(m, " %4d:%d", MAJOR(dev), MINOR(dev));
+	if (dev)
+		seq_printf(m, " %4d:%d", MAJOR(dev), MINOR(dev));
 
-	seq_अ_दो(m, '\n');
-	वापस 0;
-पूर्ण
+	seq_putc(m, '\n');
+	return 0;
+}
 
-अटल व्योम *c_start(काष्ठा seq_file *m, loff_t *pos)
-अणु
-	काष्ठा console *con;
+static void *c_start(struct seq_file *m, loff_t *pos)
+{
+	struct console *con;
 	loff_t off = 0;
 
 	console_lock();
-	क्रम_each_console(con)
-		अगर (off++ == *pos)
-			अवरोध;
+	for_each_console(con)
+		if (off++ == *pos)
+			break;
 
-	वापस con;
-पूर्ण
+	return con;
+}
 
-अटल व्योम *c_next(काष्ठा seq_file *m, व्योम *v, loff_t *pos)
-अणु
-	काष्ठा console *con = v;
+static void *c_next(struct seq_file *m, void *v, loff_t *pos)
+{
+	struct console *con = v;
 	++*pos;
-	वापस con->next;
-पूर्ण
+	return con->next;
+}
 
-अटल व्योम c_stop(काष्ठा seq_file *m, व्योम *v)
-अणु
+static void c_stop(struct seq_file *m, void *v)
+{
 	console_unlock();
-पूर्ण
+}
 
-अटल स्थिर काष्ठा seq_operations consoles_op = अणु
+static const struct seq_operations consoles_op = {
 	.start	= c_start,
 	.next	= c_next,
 	.stop	= c_stop,
 	.show	= show_console_dev
-पूर्ण;
+};
 
-अटल पूर्णांक __init proc_consoles_init(व्योम)
-अणु
-	proc_create_seq("consoles", 0, शून्य, &consoles_op);
-	वापस 0;
-पूर्ण
+static int __init proc_consoles_init(void)
+{
+	proc_create_seq("consoles", 0, NULL, &consoles_op);
+	return 0;
+}
 fs_initcall(proc_consoles_init);

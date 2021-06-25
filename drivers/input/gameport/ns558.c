@@ -1,138 +1,137 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  *  Copyright (c) 1999-2001 Vojtech Pavlik
  *  Copyright (c) 1999 Brian Gerst
  */
 
 /*
- * NS558 based standard IBM game port driver क्रम Linux
+ * NS558 based standard IBM game port driver for Linux
  */
 
 /*
  */
 
-#समावेश <यंत्र/पन.स>
+#include <asm/io.h>
 
-#समावेश <linux/module.h>
-#समावेश <linux/ioport.h>
-#समावेश <linux/init.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/gameport.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/pnp.h>
+#include <linux/module.h>
+#include <linux/ioport.h>
+#include <linux/init.h>
+#include <linux/delay.h>
+#include <linux/gameport.h>
+#include <linux/slab.h>
+#include <linux/pnp.h>
 
 MODULE_AUTHOR("Vojtech Pavlik <vojtech@ucw.cz>");
 MODULE_DESCRIPTION("Classic gameport (ISA/PnP) driver");
 MODULE_LICENSE("GPL");
 
-अटल पूर्णांक ns558_isa_portlist[] = अणु 0x201, 0x200, 0x202, 0x203, 0x204, 0x205, 0x207, 0x209,
-				    0x20b, 0x20c, 0x20e, 0x20f, 0x211, 0x219, 0x101, 0 पूर्ण;
+static int ns558_isa_portlist[] = { 0x201, 0x200, 0x202, 0x203, 0x204, 0x205, 0x207, 0x209,
+				    0x20b, 0x20c, 0x20e, 0x20f, 0x211, 0x219, 0x101, 0 };
 
-काष्ठा ns558 अणु
-	पूर्णांक type;
-	पूर्णांक io;
-	पूर्णांक size;
-	काष्ठा pnp_dev *dev;
-	काष्ठा gameport *gameport;
-	काष्ठा list_head node;
-पूर्ण;
+struct ns558 {
+	int type;
+	int io;
+	int size;
+	struct pnp_dev *dev;
+	struct gameport *gameport;
+	struct list_head node;
+};
 
-अटल LIST_HEAD(ns558_list);
+static LIST_HEAD(ns558_list);
 
 /*
  * ns558_isa_probe() tries to find an isa gameport at the
- * specअगरied address, and also checks क्रम mirrors.
- * A joystick must be attached क्रम this to work.
+ * specified address, and also checks for mirrors.
+ * A joystick must be attached for this to work.
  */
 
-अटल पूर्णांक ns558_isa_probe(पूर्णांक io)
-अणु
-	पूर्णांक i, j, b;
-	अचिन्हित अक्षर c, u, v;
-	काष्ठा ns558 *ns558;
-	काष्ठा gameport *port;
+static int ns558_isa_probe(int io)
+{
+	int i, j, b;
+	unsigned char c, u, v;
+	struct ns558 *ns558;
+	struct gameport *port;
 
 /*
  * No one should be using this address.
  */
 
-	अगर (!request_region(io, 1, "ns558-isa"))
-		वापस -EBUSY;
+	if (!request_region(io, 1, "ns558-isa"))
+		return -EBUSY;
 
 /*
- * We must not be able to ग_लिखो arbitrary values to the port.
- * The lower two axis bits must be 1 after a ग_लिखो.
+ * We must not be able to write arbitrary values to the port.
+ * The lower two axis bits must be 1 after a write.
  */
 
 	c = inb(io);
 	outb(~c & ~3, io);
-	अगर (~(u = v = inb(io)) & 3) अणु
+	if (~(u = v = inb(io)) & 3) {
 		outb(c, io);
 		release_region(io, 1);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 /*
  * After a trigger, there must be at least some bits changing.
  */
 
-	क्रम (i = 0; i < 1000; i++) v &= inb(io);
+	for (i = 0; i < 1000; i++) v &= inb(io);
 
-	अगर (u == v) अणु
+	if (u == v) {
 		outb(c, io);
 		release_region(io, 1);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 	msleep(3);
 /*
- * After some समय (4ms) the axes shouldn't change anymore.
+ * After some time (4ms) the axes shouldn't change anymore.
  */
 
 	u = inb(io);
-	क्रम (i = 0; i < 1000; i++)
-		अगर ((u ^ inb(io)) & 0xf) अणु
+	for (i = 0; i < 1000; i++)
+		if ((u ^ inb(io)) & 0xf) {
 			outb(c, io);
 			release_region(io, 1);
-			वापस -ENODEV;
-		पूर्ण
+			return -ENODEV;
+		}
 /*
  * And now find the number of mirrors of the port.
  */
 
-	क्रम (i = 1; i < 5; i++) अणु
+	for (i = 1; i < 5; i++) {
 
 		release_region(io & (-1 << (i - 1)), (1 << (i - 1)));
 
-		अगर (!request_region(io & (-1 << i), (1 << i), "ns558-isa"))
-			अवरोध;				/* Don't disturb anyone */
+		if (!request_region(io & (-1 << i), (1 << i), "ns558-isa"))
+			break;				/* Don't disturb anyone */
 
 		outb(0xff, io & (-1 << i));
-		क्रम (j = b = 0; j < 1000; j++)
-			अगर (inb(io & (-1 << i)) != inb((io & (-1 << i)) + (1 << i) - 1)) b++;
+		for (j = b = 0; j < 1000; j++)
+			if (inb(io & (-1 << i)) != inb((io & (-1 << i)) + (1 << i) - 1)) b++;
 		msleep(3);
 
-		अगर (b > 300) अणु				/* We allow 30% dअगरference */
+		if (b > 300) {				/* We allow 30% difference */
 			release_region(io & (-1 << i), (1 << i));
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
 	i--;
 
-	अगर (i != 4) अणु
-		अगर (!request_region(io & (-1 << i), (1 << i), "ns558-isa"))
-			वापस -EBUSY;
-	पूर्ण
+	if (i != 4) {
+		if (!request_region(io & (-1 << i), (1 << i), "ns558-isa"))
+			return -EBUSY;
+	}
 
-	ns558 = kzalloc(माप(काष्ठा ns558), GFP_KERNEL);
+	ns558 = kzalloc(sizeof(struct ns558), GFP_KERNEL);
 	port = gameport_allocate_port();
-	अगर (!ns558 || !port) अणु
-		prपूर्णांकk(KERN_ERR "ns558: Memory allocation failed.\n");
+	if (!ns558 || !port) {
+		printk(KERN_ERR "ns558: Memory allocation failed.\n");
 		release_region(io & (-1 << i), (1 << i));
-		kमुक्त(ns558);
-		gameport_मुक्त_port(port);
-		वापस -ENOMEM;
-	पूर्ण
+		kfree(ns558);
+		gameport_free_port(port);
+		return -ENOMEM;
+	}
 
 	ns558->io = io;
 	ns558->size = 1 << i;
@@ -142,68 +141,68 @@ MODULE_LICENSE("GPL");
 	gameport_set_name(port, "NS558 ISA Gameport");
 	gameport_set_phys(port, "isa%04x/gameport0", io & (-1 << i));
 
-	gameport_रेजिस्टर_port(port);
+	gameport_register_port(port);
 
 	list_add(&ns558->node, &ns558_list);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_PNP
+#ifdef CONFIG_PNP
 
-अटल स्थिर काष्ठा pnp_device_id pnp_devids[] = अणु
-	अणु .id = "@P@0001", .driver_data = 0 पूर्ण, /* ALS 100 */
-	अणु .id = "@P@0020", .driver_data = 0 पूर्ण, /* ALS 200 */
-	अणु .id = "@P@1001", .driver_data = 0 पूर्ण, /* ALS 100+ */
-	अणु .id = "@P@2001", .driver_data = 0 पूर्ण, /* ALS 120 */
-	अणु .id = "ASB16fd", .driver_data = 0 पूर्ण, /* AdLib NSC16 */
-	अणु .id = "AZT3001", .driver_data = 0 पूर्ण, /* AZT1008 */
-	अणु .id = "CDC0001", .driver_data = 0 पूर्ण, /* Opl3-SAx */
-	अणु .id = "CSC0001", .driver_data = 0 पूर्ण, /* CS4232 */
-	अणु .id = "CSC000f", .driver_data = 0 पूर्ण, /* CS4236 */
-	अणु .id = "CSC0101", .driver_data = 0 पूर्ण, /* CS4327 */
-	अणु .id = "CTL7001", .driver_data = 0 पूर्ण, /* SB16 */
-	अणु .id = "CTL7002", .driver_data = 0 पूर्ण, /* AWE64 */
-	अणु .id = "CTL7005", .driver_data = 0 पूर्ण, /* Vibra16 */
-	अणु .id = "ENS2020", .driver_data = 0 पूर्ण, /* SoundscapeVIVO */
-	अणु .id = "ESS0001", .driver_data = 0 पूर्ण, /* ES1869 */
-	अणु .id = "ESS0005", .driver_data = 0 पूर्ण, /* ES1878 */
-	अणु .id = "ESS6880", .driver_data = 0 पूर्ण, /* ES688 */
-	अणु .id = "IBM0012", .driver_data = 0 पूर्ण, /* CS4232 */
-	अणु .id = "OPT0001", .driver_data = 0 पूर्ण, /* OPTi Audio16 */
-	अणु .id = "YMH0006", .driver_data = 0 पूर्ण, /* Opl3-SA */
-	अणु .id = "YMH0022", .driver_data = 0 पूर्ण, /* Opl3-SAx */
-	अणु .id = "PNPb02f", .driver_data = 0 पूर्ण, /* Generic */
-	अणु .id = "", पूर्ण,
-पूर्ण;
+static const struct pnp_device_id pnp_devids[] = {
+	{ .id = "@P@0001", .driver_data = 0 }, /* ALS 100 */
+	{ .id = "@P@0020", .driver_data = 0 }, /* ALS 200 */
+	{ .id = "@P@1001", .driver_data = 0 }, /* ALS 100+ */
+	{ .id = "@P@2001", .driver_data = 0 }, /* ALS 120 */
+	{ .id = "ASB16fd", .driver_data = 0 }, /* AdLib NSC16 */
+	{ .id = "AZT3001", .driver_data = 0 }, /* AZT1008 */
+	{ .id = "CDC0001", .driver_data = 0 }, /* Opl3-SAx */
+	{ .id = "CSC0001", .driver_data = 0 }, /* CS4232 */
+	{ .id = "CSC000f", .driver_data = 0 }, /* CS4236 */
+	{ .id = "CSC0101", .driver_data = 0 }, /* CS4327 */
+	{ .id = "CTL7001", .driver_data = 0 }, /* SB16 */
+	{ .id = "CTL7002", .driver_data = 0 }, /* AWE64 */
+	{ .id = "CTL7005", .driver_data = 0 }, /* Vibra16 */
+	{ .id = "ENS2020", .driver_data = 0 }, /* SoundscapeVIVO */
+	{ .id = "ESS0001", .driver_data = 0 }, /* ES1869 */
+	{ .id = "ESS0005", .driver_data = 0 }, /* ES1878 */
+	{ .id = "ESS6880", .driver_data = 0 }, /* ES688 */
+	{ .id = "IBM0012", .driver_data = 0 }, /* CS4232 */
+	{ .id = "OPT0001", .driver_data = 0 }, /* OPTi Audio16 */
+	{ .id = "YMH0006", .driver_data = 0 }, /* Opl3-SA */
+	{ .id = "YMH0022", .driver_data = 0 }, /* Opl3-SAx */
+	{ .id = "PNPb02f", .driver_data = 0 }, /* Generic */
+	{ .id = "", },
+};
 
 MODULE_DEVICE_TABLE(pnp, pnp_devids);
 
-अटल पूर्णांक ns558_pnp_probe(काष्ठा pnp_dev *dev, स्थिर काष्ठा pnp_device_id *did)
-अणु
-	पूर्णांक ioport, iolen;
-	काष्ठा ns558 *ns558;
-	काष्ठा gameport *port;
+static int ns558_pnp_probe(struct pnp_dev *dev, const struct pnp_device_id *did)
+{
+	int ioport, iolen;
+	struct ns558 *ns558;
+	struct gameport *port;
 
-	अगर (!pnp_port_valid(dev, 0)) अणु
-		prपूर्णांकk(KERN_WARNING "ns558: No i/o ports on a gameport? Weird\n");
-		वापस -ENODEV;
-	पूर्ण
+	if (!pnp_port_valid(dev, 0)) {
+		printk(KERN_WARNING "ns558: No i/o ports on a gameport? Weird\n");
+		return -ENODEV;
+	}
 
 	ioport = pnp_port_start(dev, 0);
 	iolen = pnp_port_len(dev, 0);
 
-	अगर (!request_region(ioport, iolen, "ns558-pnp"))
-		वापस -EBUSY;
+	if (!request_region(ioport, iolen, "ns558-pnp"))
+		return -EBUSY;
 
-	ns558 = kzalloc(माप(काष्ठा ns558), GFP_KERNEL);
+	ns558 = kzalloc(sizeof(struct ns558), GFP_KERNEL);
 	port = gameport_allocate_port();
-	अगर (!ns558 || !port) अणु
-		prपूर्णांकk(KERN_ERR "ns558: Memory allocation failed\n");
-		kमुक्त(ns558);
-		gameport_मुक्त_port(port);
-		वापस -ENOMEM;
-	पूर्ण
+	if (!ns558 || !port) {
+		printk(KERN_ERR "ns558: Memory allocation failed\n");
+		kfree(ns558);
+		gameport_free_port(port);
+		return -ENOMEM;
+	}
 
 	ns558->io = ioport;
 	ns558->size = iolen;
@@ -215,57 +214,57 @@ MODULE_DEVICE_TABLE(pnp, pnp_devids);
 	port->dev.parent = &dev->dev;
 	port->io = ioport;
 
-	gameport_रेजिस्टर_port(port);
+	gameport_register_port(port);
 
 	list_add_tail(&ns558->node, &ns558_list);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा pnp_driver ns558_pnp_driver = अणु
+static struct pnp_driver ns558_pnp_driver = {
 	.name		= "ns558",
 	.id_table	= pnp_devids,
 	.probe		= ns558_pnp_probe,
-पूर्ण;
+};
 
-#अन्यथा
+#else
 
-अटल काष्ठा pnp_driver ns558_pnp_driver;
+static struct pnp_driver ns558_pnp_driver;
 
-#पूर्ण_अगर
+#endif
 
-अटल पूर्णांक __init ns558_init(व्योम)
-अणु
-	पूर्णांक i = 0;
-	पूर्णांक error;
+static int __init ns558_init(void)
+{
+	int i = 0;
+	int error;
 
-	error = pnp_रेजिस्टर_driver(&ns558_pnp_driver);
-	अगर (error && error != -ENODEV)	/* should be ENOSYS really */
-		वापस error;
+	error = pnp_register_driver(&ns558_pnp_driver);
+	if (error && error != -ENODEV)	/* should be ENOSYS really */
+		return error;
 
 /*
- * Probe ISA ports after PnP, so that PnP ports that are alपढ़ोy
+ * Probe ISA ports after PnP, so that PnP ports that are already
  * enabled get detected as PnP. This may be suboptimal in multi-device
  * configurations, but saves hassle with simple setups.
  */
 
-	जबतक (ns558_isa_portlist[i])
+	while (ns558_isa_portlist[i])
 		ns558_isa_probe(ns558_isa_portlist[i++]);
 
-	वापस list_empty(&ns558_list) && error ? -ENODEV : 0;
-पूर्ण
+	return list_empty(&ns558_list) && error ? -ENODEV : 0;
+}
 
-अटल व्योम __निकास ns558_निकास(व्योम)
-अणु
-	काष्ठा ns558 *ns558, *safe;
+static void __exit ns558_exit(void)
+{
+	struct ns558 *ns558, *safe;
 
-	list_क्रम_each_entry_safe(ns558, safe, &ns558_list, node) अणु
-		gameport_unरेजिस्टर_port(ns558->gameport);
+	list_for_each_entry_safe(ns558, safe, &ns558_list, node) {
+		gameport_unregister_port(ns558->gameport);
 		release_region(ns558->io & ~(ns558->size - 1), ns558->size);
-		kमुक्त(ns558);
-	पूर्ण
+		kfree(ns558);
+	}
 
-	pnp_unरेजिस्टर_driver(&ns558_pnp_driver);
-पूर्ण
+	pnp_unregister_driver(&ns558_pnp_driver);
+}
 
 module_init(ns558_init);
-module_निकास(ns558_निकास);
+module_exit(ns558_exit);

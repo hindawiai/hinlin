@@ -1,170 +1,169 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Access to user प्रणाली call parameters and results
+ * Access to user system call parameters and results
  *
  * Copyright (C) 2008-2009 Red Hat, Inc.  All rights reserved.
  *
- * See यंत्र-generic/syscall.h क्रम descriptions of what we must करो here.
+ * See asm-generic/syscall.h for descriptions of what we must do here.
  */
 
-#अगर_अघोषित _ASM_X86_SYSCALL_H
-#घोषणा _ASM_X86_SYSCALL_H
+#ifndef _ASM_X86_SYSCALL_H
+#define _ASM_X86_SYSCALL_H
 
-#समावेश <uapi/linux/audit.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/err.h>
-#समावेश <यंत्र/thपढ़ो_info.h>	/* क्रम TS_COMPAT */
-#समावेश <यंत्र/unistd.h>
+#include <uapi/linux/audit.h>
+#include <linux/sched.h>
+#include <linux/err.h>
+#include <asm/thread_info.h>	/* for TS_COMPAT */
+#include <asm/unistd.h>
 
-प्रकार दीर्घ (*sys_call_ptr_t)(स्थिर काष्ठा pt_regs *);
-बाह्य स्थिर sys_call_ptr_t sys_call_table[];
+typedef long (*sys_call_ptr_t)(const struct pt_regs *);
+extern const sys_call_ptr_t sys_call_table[];
 
-#अगर defined(CONFIG_X86_32)
-#घोषणा ia32_sys_call_table sys_call_table
-#पूर्ण_अगर
+#if defined(CONFIG_X86_32)
+#define ia32_sys_call_table sys_call_table
+#endif
 
-#अगर defined(CONFIG_IA32_EMULATION)
-बाह्य स्थिर sys_call_ptr_t ia32_sys_call_table[];
-#पूर्ण_अगर
+#if defined(CONFIG_IA32_EMULATION)
+extern const sys_call_ptr_t ia32_sys_call_table[];
+#endif
 
-#अगर_घोषित CONFIG_X86_X32_ABI
-बाह्य स्थिर sys_call_ptr_t x32_sys_call_table[];
-#पूर्ण_अगर
+#ifdef CONFIG_X86_X32_ABI
+extern const sys_call_ptr_t x32_sys_call_table[];
+#endif
 
 /*
- * Only the low 32 bits of orig_ax are meaningful, so we वापस पूर्णांक.
+ * Only the low 32 bits of orig_ax are meaningful, so we return int.
  * This importantly ignores the high bits on 64-bit, so comparisons
  * sign-extend the low 32 bits.
  */
-अटल अंतरभूत पूर्णांक syscall_get_nr(काष्ठा task_काष्ठा *task, काष्ठा pt_regs *regs)
-अणु
-	वापस regs->orig_ax;
-पूर्ण
+static inline int syscall_get_nr(struct task_struct *task, struct pt_regs *regs)
+{
+	return regs->orig_ax;
+}
 
-अटल अंतरभूत व्योम syscall_rollback(काष्ठा task_काष्ठा *task,
-				    काष्ठा pt_regs *regs)
-अणु
+static inline void syscall_rollback(struct task_struct *task,
+				    struct pt_regs *regs)
+{
 	regs->ax = regs->orig_ax;
-पूर्ण
+}
 
-अटल अंतरभूत दीर्घ syscall_get_error(काष्ठा task_काष्ठा *task,
-				     काष्ठा pt_regs *regs)
-अणु
-	अचिन्हित दीर्घ error = regs->ax;
-#अगर_घोषित CONFIG_IA32_EMULATION
+static inline long syscall_get_error(struct task_struct *task,
+				     struct pt_regs *regs)
+{
+	unsigned long error = regs->ax;
+#ifdef CONFIG_IA32_EMULATION
 	/*
-	 * TS_COMPAT is set क्रम 32-bit syscall entries and then
-	 * reमुख्यs set until we वापस to user mode.
+	 * TS_COMPAT is set for 32-bit syscall entries and then
+	 * remains set until we return to user mode.
 	 */
-	अगर (task->thपढ़ो_info.status & (TS_COMPAT|TS_I386_REGS_POKED))
+	if (task->thread_info.status & (TS_COMPAT|TS_I386_REGS_POKED))
 		/*
-		 * Sign-extend the value so (पूर्णांक)-EFOO becomes (दीर्घ)-EFOO
+		 * Sign-extend the value so (int)-EFOO becomes (long)-EFOO
 		 * and will match correctly in comparisons.
 		 */
-		error = (दीर्घ) (पूर्णांक) error;
-#पूर्ण_अगर
-	वापस IS_ERR_VALUE(error) ? error : 0;
-पूर्ण
+		error = (long) (int) error;
+#endif
+	return IS_ERR_VALUE(error) ? error : 0;
+}
 
-अटल अंतरभूत दीर्घ syscall_get_वापस_value(काष्ठा task_काष्ठा *task,
-					    काष्ठा pt_regs *regs)
-अणु
-	वापस regs->ax;
-पूर्ण
+static inline long syscall_get_return_value(struct task_struct *task,
+					    struct pt_regs *regs)
+{
+	return regs->ax;
+}
 
-अटल अंतरभूत व्योम syscall_set_वापस_value(काष्ठा task_काष्ठा *task,
-					    काष्ठा pt_regs *regs,
-					    पूर्णांक error, दीर्घ val)
-अणु
-	regs->ax = (दीर्घ) error ?: val;
-पूर्ण
+static inline void syscall_set_return_value(struct task_struct *task,
+					    struct pt_regs *regs,
+					    int error, long val)
+{
+	regs->ax = (long) error ?: val;
+}
 
-#अगर_घोषित CONFIG_X86_32
+#ifdef CONFIG_X86_32
 
-अटल अंतरभूत व्योम syscall_get_arguments(काष्ठा task_काष्ठा *task,
-					 काष्ठा pt_regs *regs,
-					 अचिन्हित दीर्घ *args)
-अणु
-	स_नकल(args, &regs->bx, 6 * माप(args[0]));
-पूर्ण
+static inline void syscall_get_arguments(struct task_struct *task,
+					 struct pt_regs *regs,
+					 unsigned long *args)
+{
+	memcpy(args, &regs->bx, 6 * sizeof(args[0]));
+}
 
-अटल अंतरभूत व्योम syscall_set_arguments(काष्ठा task_काष्ठा *task,
-					 काष्ठा pt_regs *regs,
-					 अचिन्हित पूर्णांक i, अचिन्हित पूर्णांक n,
-					 स्थिर अचिन्हित दीर्घ *args)
-अणु
+static inline void syscall_set_arguments(struct task_struct *task,
+					 struct pt_regs *regs,
+					 unsigned int i, unsigned int n,
+					 const unsigned long *args)
+{
 	BUG_ON(i + n > 6);
-	स_नकल(&regs->bx + i, args, n * माप(args[0]));
-पूर्ण
+	memcpy(&regs->bx + i, args, n * sizeof(args[0]));
+}
 
-अटल अंतरभूत पूर्णांक syscall_get_arch(काष्ठा task_काष्ठा *task)
-अणु
-	वापस AUDIT_ARCH_I386;
-पूर्ण
+static inline int syscall_get_arch(struct task_struct *task)
+{
+	return AUDIT_ARCH_I386;
+}
 
-#अन्यथा	 /* CONFIG_X86_64 */
+#else	 /* CONFIG_X86_64 */
 
-अटल अंतरभूत व्योम syscall_get_arguments(काष्ठा task_काष्ठा *task,
-					 काष्ठा pt_regs *regs,
-					 अचिन्हित दीर्घ *args)
-अणु
-# अगरdef CONFIG_IA32_EMULATION
-	अगर (task->thपढ़ो_info.status & TS_COMPAT) अणु
+static inline void syscall_get_arguments(struct task_struct *task,
+					 struct pt_regs *regs,
+					 unsigned long *args)
+{
+# ifdef CONFIG_IA32_EMULATION
+	if (task->thread_info.status & TS_COMPAT) {
 		*args++ = regs->bx;
 		*args++ = regs->cx;
 		*args++ = regs->dx;
 		*args++ = regs->si;
 		*args++ = regs->di;
 		*args   = regs->bp;
-	पूर्ण अन्यथा
-# endअगर
-	अणु
+	} else
+# endif
+	{
 		*args++ = regs->di;
 		*args++ = regs->si;
 		*args++ = regs->dx;
 		*args++ = regs->r10;
 		*args++ = regs->r8;
 		*args   = regs->r9;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल अंतरभूत व्योम syscall_set_arguments(काष्ठा task_काष्ठा *task,
-					 काष्ठा pt_regs *regs,
-					 स्थिर अचिन्हित दीर्घ *args)
-अणु
-# अगरdef CONFIG_IA32_EMULATION
-	अगर (task->thपढ़ो_info.status & TS_COMPAT) अणु
+static inline void syscall_set_arguments(struct task_struct *task,
+					 struct pt_regs *regs,
+					 const unsigned long *args)
+{
+# ifdef CONFIG_IA32_EMULATION
+	if (task->thread_info.status & TS_COMPAT) {
 		regs->bx = *args++;
 		regs->cx = *args++;
 		regs->dx = *args++;
 		regs->si = *args++;
 		regs->di = *args++;
 		regs->bp = *args;
-	पूर्ण अन्यथा
-# endअगर
-	अणु
+	} else
+# endif
+	{
 		regs->di = *args++;
 		regs->si = *args++;
 		regs->dx = *args++;
 		regs->r10 = *args++;
 		regs->r8 = *args++;
 		regs->r9 = *args;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल अंतरभूत पूर्णांक syscall_get_arch(काष्ठा task_काष्ठा *task)
-अणु
+static inline int syscall_get_arch(struct task_struct *task)
+{
 	/* x32 tasks should be considered AUDIT_ARCH_X86_64. */
-	वापस (IS_ENABLED(CONFIG_IA32_EMULATION) &&
-		task->thपढ़ो_info.status & TS_COMPAT)
+	return (IS_ENABLED(CONFIG_IA32_EMULATION) &&
+		task->thread_info.status & TS_COMPAT)
 		? AUDIT_ARCH_I386 : AUDIT_ARCH_X86_64;
-पूर्ण
+}
 
-व्योम करो_syscall_64(अचिन्हित दीर्घ nr, काष्ठा pt_regs *regs);
-व्योम करो_पूर्णांक80_syscall_32(काष्ठा pt_regs *regs);
-दीर्घ करो_fast_syscall_32(काष्ठा pt_regs *regs);
+void do_syscall_64(unsigned long nr, struct pt_regs *regs);
+void do_int80_syscall_32(struct pt_regs *regs);
+long do_fast_syscall_32(struct pt_regs *regs);
 
-#पूर्ण_अगर	/* CONFIG_X86_32 */
+#endif	/* CONFIG_X86_32 */
 
-#पूर्ण_अगर	/* _ASM_X86_SYSCALL_H */
+#endif	/* _ASM_X86_SYSCALL_H */

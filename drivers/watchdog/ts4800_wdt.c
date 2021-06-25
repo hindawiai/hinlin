@@ -1,6 +1,5 @@
-<शैली गुरु>
 /*
- * Watchकरोg driver क्रम TS-4800 based boards
+ * Watchdog driver for TS-4800 based boards
  *
  * Copyright (c) 2015 - Savoir-faire Linux
  *
@@ -9,195 +8,195 @@
  * warranty of any kind, whether express or implied.
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/mfd/syscon.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/watchकरोg.h>
+#include <linux/kernel.h>
+#include <linux/mfd/syscon.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/platform_device.h>
+#include <linux/regmap.h>
+#include <linux/watchdog.h>
 
-अटल bool nowayout = WATCHDOG_NOWAYOUT;
+static bool nowayout = WATCHDOG_NOWAYOUT;
 module_param(nowayout, bool, 0);
 MODULE_PARM_DESC(nowayout,
 	"Watchdog cannot be stopped once started (default="
 	__MODULE_STRING(WATCHDOG_NOWAYOUT) ")");
 
 /* possible feed values */
-#घोषणा TS4800_WDT_FEED_2S       0x1
-#घोषणा TS4800_WDT_FEED_10S      0x2
-#घोषणा TS4800_WDT_DISABLE       0x3
+#define TS4800_WDT_FEED_2S       0x1
+#define TS4800_WDT_FEED_10S      0x2
+#define TS4800_WDT_DISABLE       0x3
 
-काष्ठा ts4800_wdt अणु
-	काष्ठा watchकरोg_device  wdd;
-	काष्ठा regmap           *regmap;
+struct ts4800_wdt {
+	struct watchdog_device  wdd;
+	struct regmap           *regmap;
 	u32                     feed_offset;
 	u32                     feed_val;
-पूर्ण;
+};
 
 /*
- * TS-4800 supports the following समयout values:
+ * TS-4800 supports the following timeout values:
  *
  *   value desc
  *   ---------------------
- *     0    feed क्रम 338ms
- *     1    feed क्रम 2.706s
- *     2    feed क्रम 10.824s
- *     3    disable watchकरोg
+ *     0    feed for 338ms
+ *     1    feed for 2.706s
+ *     2    feed for 10.824s
+ *     3    disable watchdog
  *
- * Keep the regmap/समयout map ordered by समयout
+ * Keep the regmap/timeout map ordered by timeout
  */
-अटल स्थिर काष्ठा अणु
-	स्थिर पूर्णांक समयout;
-	स्थिर पूर्णांक regval;
-पूर्ण ts4800_wdt_map[] = अणु
-	अणु 2,  TS4800_WDT_FEED_2S पूर्ण,
-	अणु 10, TS4800_WDT_FEED_10S पूर्ण,
-पूर्ण;
+static const struct {
+	const int timeout;
+	const int regval;
+} ts4800_wdt_map[] = {
+	{ 2,  TS4800_WDT_FEED_2S },
+	{ 10, TS4800_WDT_FEED_10S },
+};
 
-#घोषणा MAX_TIMEOUT_INDEX       (ARRAY_SIZE(ts4800_wdt_map) - 1)
+#define MAX_TIMEOUT_INDEX       (ARRAY_SIZE(ts4800_wdt_map) - 1)
 
-अटल व्योम ts4800_ग_लिखो_feed(काष्ठा ts4800_wdt *wdt, u32 val)
-अणु
-	regmap_ग_लिखो(wdt->regmap, wdt->feed_offset, val);
-पूर्ण
+static void ts4800_write_feed(struct ts4800_wdt *wdt, u32 val)
+{
+	regmap_write(wdt->regmap, wdt->feed_offset, val);
+}
 
-अटल पूर्णांक ts4800_wdt_start(काष्ठा watchकरोg_device *wdd)
-अणु
-	काष्ठा ts4800_wdt *wdt = watchकरोg_get_drvdata(wdd);
+static int ts4800_wdt_start(struct watchdog_device *wdd)
+{
+	struct ts4800_wdt *wdt = watchdog_get_drvdata(wdd);
 
-	ts4800_ग_लिखो_feed(wdt, wdt->feed_val);
-	वापस 0;
-पूर्ण
+	ts4800_write_feed(wdt, wdt->feed_val);
+	return 0;
+}
 
-अटल पूर्णांक ts4800_wdt_stop(काष्ठा watchकरोg_device *wdd)
-अणु
-	काष्ठा ts4800_wdt *wdt = watchकरोg_get_drvdata(wdd);
+static int ts4800_wdt_stop(struct watchdog_device *wdd)
+{
+	struct ts4800_wdt *wdt = watchdog_get_drvdata(wdd);
 
-	ts4800_ग_लिखो_feed(wdt, TS4800_WDT_DISABLE);
-	वापस 0;
-पूर्ण
+	ts4800_write_feed(wdt, TS4800_WDT_DISABLE);
+	return 0;
+}
 
-अटल पूर्णांक ts4800_wdt_set_समयout(काष्ठा watchकरोg_device *wdd,
-				  अचिन्हित पूर्णांक समयout)
-अणु
-	काष्ठा ts4800_wdt *wdt = watchकरोg_get_drvdata(wdd);
-	पूर्णांक i;
+static int ts4800_wdt_set_timeout(struct watchdog_device *wdd,
+				  unsigned int timeout)
+{
+	struct ts4800_wdt *wdt = watchdog_get_drvdata(wdd);
+	int i;
 
-	क्रम (i = 0; i < MAX_TIMEOUT_INDEX; i++) अणु
-		अगर (ts4800_wdt_map[i].समयout >= समयout)
-			अवरोध;
-	पूर्ण
+	for (i = 0; i < MAX_TIMEOUT_INDEX; i++) {
+		if (ts4800_wdt_map[i].timeout >= timeout)
+			break;
+	}
 
-	wdd->समयout = ts4800_wdt_map[i].समयout;
+	wdd->timeout = ts4800_wdt_map[i].timeout;
 	wdt->feed_val = ts4800_wdt_map[i].regval;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा watchकरोg_ops ts4800_wdt_ops = अणु
+static const struct watchdog_ops ts4800_wdt_ops = {
 	.owner = THIS_MODULE,
 	.start = ts4800_wdt_start,
 	.stop = ts4800_wdt_stop,
-	.set_समयout = ts4800_wdt_set_समयout,
-पूर्ण;
+	.set_timeout = ts4800_wdt_set_timeout,
+};
 
-अटल स्थिर काष्ठा watchकरोg_info ts4800_wdt_info = अणु
+static const struct watchdog_info ts4800_wdt_info = {
 	.options = WDIOF_SETTIMEOUT | WDIOF_MAGICCLOSE | WDIOF_KEEPALIVEPING,
 	.identity = "TS-4800 Watchdog",
-पूर्ण;
+};
 
-अटल पूर्णांक ts4800_wdt_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा device_node *np = dev->of_node;
-	काष्ठा device_node *syscon_np;
-	काष्ठा watchकरोg_device *wdd;
-	काष्ठा ts4800_wdt *wdt;
+static int ts4800_wdt_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	struct device_node *np = dev->of_node;
+	struct device_node *syscon_np;
+	struct watchdog_device *wdd;
+	struct ts4800_wdt *wdt;
 	u32 reg;
-	पूर्णांक ret;
+	int ret;
 
 	syscon_np = of_parse_phandle(np, "syscon", 0);
-	अगर (!syscon_np) अणु
+	if (!syscon_np) {
 		dev_err(dev, "no syscon property\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	ret = of_property_पढ़ो_u32_index(np, "syscon", 1, &reg);
-	अगर (ret < 0) अणु
+	ret = of_property_read_u32_index(np, "syscon", 1, &reg);
+	if (ret < 0) {
 		dev_err(dev, "no offset in syscon\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	/* allocate memory क्रम watchकरोg काष्ठा */
-	wdt = devm_kzalloc(dev, माप(*wdt), GFP_KERNEL);
-	अगर (!wdt)
-		वापस -ENOMEM;
+	/* allocate memory for watchdog struct */
+	wdt = devm_kzalloc(dev, sizeof(*wdt), GFP_KERNEL);
+	if (!wdt)
+		return -ENOMEM;
 
-	/* set regmap and offset to know where to ग_लिखो */
+	/* set regmap and offset to know where to write */
 	wdt->feed_offset = reg;
 	wdt->regmap = syscon_node_to_regmap(syscon_np);
 	of_node_put(syscon_np);
-	अगर (IS_ERR(wdt->regmap)) अणु
+	if (IS_ERR(wdt->regmap)) {
 		dev_err(dev, "cannot get parent's regmap\n");
-		वापस PTR_ERR(wdt->regmap);
-	पूर्ण
+		return PTR_ERR(wdt->regmap);
+	}
 
-	/* Initialize काष्ठा watchकरोg_device */
+	/* Initialize struct watchdog_device */
 	wdd = &wdt->wdd;
 	wdd->parent = dev;
 	wdd->info = &ts4800_wdt_info;
 	wdd->ops = &ts4800_wdt_ops;
-	wdd->min_समयout = ts4800_wdt_map[0].समयout;
-	wdd->max_समयout = ts4800_wdt_map[MAX_TIMEOUT_INDEX].समयout;
+	wdd->min_timeout = ts4800_wdt_map[0].timeout;
+	wdd->max_timeout = ts4800_wdt_map[MAX_TIMEOUT_INDEX].timeout;
 
-	watchकरोg_set_drvdata(wdd, wdt);
-	watchकरोg_set_nowayout(wdd, nowayout);
-	watchकरोg_init_समयout(wdd, 0, dev);
+	watchdog_set_drvdata(wdd, wdt);
+	watchdog_set_nowayout(wdd, nowayout);
+	watchdog_init_timeout(wdd, 0, dev);
 
 	/*
-	 * As this watchकरोg supports only a few values, ts4800_wdt_set_समयout
-	 * must be called to initialize समयout and feed_val with valid values.
-	 * Default to maximum समयout अगर none, or an invalid one, is provided in
+	 * As this watchdog supports only a few values, ts4800_wdt_set_timeout
+	 * must be called to initialize timeout and feed_val with valid values.
+	 * Default to maximum timeout if none, or an invalid one, is provided in
 	 * device tree.
 	 */
-	अगर (!wdd->समयout)
-		wdd->समयout = wdd->max_समयout;
-	ts4800_wdt_set_समयout(wdd, wdd->समयout);
+	if (!wdd->timeout)
+		wdd->timeout = wdd->max_timeout;
+	ts4800_wdt_set_timeout(wdd, wdd->timeout);
 
 	/*
-	 * The feed रेजिस्टर is ग_लिखो-only, so it is not possible to determine
-	 * watchकरोg's state. Disable it to be in a known state.
+	 * The feed register is write-only, so it is not possible to determine
+	 * watchdog's state. Disable it to be in a known state.
 	 */
 	ts4800_wdt_stop(wdd);
 
-	ret = devm_watchकरोg_रेजिस्टर_device(dev, wdd);
-	अगर (ret)
-		वापस ret;
+	ret = devm_watchdog_register_device(dev, wdd);
+	if (ret)
+		return ret;
 
-	platक्रमm_set_drvdata(pdev, wdt);
+	platform_set_drvdata(pdev, wdt);
 
 	dev_info(dev, "initialized (timeout = %d sec, nowayout = %d)\n",
-		 wdd->समयout, nowayout);
+		 wdd->timeout, nowayout);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id ts4800_wdt_of_match[] = अणु
-	अणु .compatible = "technologic,ts4800-wdt", पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+static const struct of_device_id ts4800_wdt_of_match[] = {
+	{ .compatible = "technologic,ts4800-wdt", },
+	{ },
+};
 MODULE_DEVICE_TABLE(of, ts4800_wdt_of_match);
 
-अटल काष्ठा platक्रमm_driver ts4800_wdt_driver = अणु
+static struct platform_driver ts4800_wdt_driver = {
 	.probe		= ts4800_wdt_probe,
-	.driver		= अणु
+	.driver		= {
 		.name	= "ts4800_wdt",
 		.of_match_table = ts4800_wdt_of_match,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver(ts4800_wdt_driver);
+module_platform_driver(ts4800_wdt_driver);
 
 MODULE_AUTHOR("Damien Riegel <damien.riegel@savoirfairelinux.com>");
 MODULE_LICENSE("GPL v2");

@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0+ */
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  *  Copyright IBM Corp. 2001, 2006
  *  Author(s): Robert Burroughs
@@ -9,241 +8,241 @@
  *  Major cleanup & driver split: Martin Schwidefsky <schwidefsky@de.ibm.com>
  */
 
-#अगर_अघोषित _ZCRYPT_CCA_KEY_H_
-#घोषणा _ZCRYPT_CCA_KEY_H_
+#ifndef _ZCRYPT_CCA_KEY_H_
+#define _ZCRYPT_CCA_KEY_H_
 
-काष्ठा T6_keyBlock_hdr अणु
-	अचिन्हित लघु blen;
-	अचिन्हित लघु ulen;
-	अचिन्हित लघु flags;
-पूर्ण;
+struct T6_keyBlock_hdr {
+	unsigned short blen;
+	unsigned short ulen;
+	unsigned short flags;
+};
 
 /**
- * mapping क्रम the cca निजी ME key token.
- * Three parts of पूर्णांकerest here: the header, the निजी section and
- * the खुला section.
+ * mapping for the cca private ME key token.
+ * Three parts of interest here: the header, the private section and
+ * the public section.
  *
- * mapping क्रम the cca key token header
+ * mapping for the cca key token header
  */
-काष्ठा cca_token_hdr अणु
-	अचिन्हित अक्षर  token_identअगरier;
-	अचिन्हित अक्षर  version;
-	अचिन्हित लघु token_length;
-	अचिन्हित अक्षर  reserved[4];
-पूर्ण __packed;
+struct cca_token_hdr {
+	unsigned char  token_identifier;
+	unsigned char  version;
+	unsigned short token_length;
+	unsigned char  reserved[4];
+} __packed;
 
-#घोषणा CCA_TKN_HDR_ID_EXT 0x1E
+#define CCA_TKN_HDR_ID_EXT 0x1E
 
-#घोषणा CCA_PVT_USAGE_ALL 0x80
+#define CCA_PVT_USAGE_ALL 0x80
 
 /**
- * mapping क्रम the cca खुला section
- * In a निजी key, the modulus करोesn't appear in the खुला
- * section. So, an arbitrary खुला exponent of 0x010001 will be
- * used, क्रम a section length of 0x0F always.
+ * mapping for the cca public section
+ * In a private key, the modulus doesn't appear in the public
+ * section. So, an arbitrary public exponent of 0x010001 will be
+ * used, for a section length of 0x0F always.
  */
-काष्ठा cca_खुला_sec अणु
-	अचिन्हित अक्षर  section_identअगरier;
-	अचिन्हित अक्षर  version;
-	अचिन्हित लघु section_length;
-	अचिन्हित अक्षर  reserved[2];
-	अचिन्हित लघु exponent_len;
-	अचिन्हित लघु modulus_bit_len;
-	अचिन्हित लघु modulus_byte_len;    /* In a निजी key, this is 0 */
-पूर्ण __packed;
+struct cca_public_sec {
+	unsigned char  section_identifier;
+	unsigned char  version;
+	unsigned short section_length;
+	unsigned char  reserved[2];
+	unsigned short exponent_len;
+	unsigned short modulus_bit_len;
+	unsigned short modulus_byte_len;    /* In a private key, this is 0 */
+} __packed;
 
 /**
- * mapping क्रम the cca निजी CRT key 'token'
+ * mapping for the cca private CRT key 'token'
  * The first three parts (the only parts considered in this release)
- * are: the header, the निजी section and the खुला section.
- * The header and खुला section are the same as क्रम the
- * काष्ठा cca_निजी_ext_ME
+ * are: the header, the private section and the public section.
+ * The header and public section are the same as for the
+ * struct cca_private_ext_ME
  *
- * Following the काष्ठाure are the quantities p, q, dp, dq, u, pad,
+ * Following the structure are the quantities p, q, dp, dq, u, pad,
  * and modulus, in that order, where pad_len is the modulo 8
  * complement of the residue modulo 8 of the sum of
  * (p_len + q_len + dp_len + dq_len + u_len).
  */
-काष्ठा cca_pvt_ext_CRT_sec अणु
-	अचिन्हित अक्षर  section_identअगरier;
-	अचिन्हित अक्षर  version;
-	अचिन्हित लघु section_length;
-	अचिन्हित अक्षर  निजी_key_hash[20];
-	अचिन्हित अक्षर  reserved1[4];
-	अचिन्हित अक्षर  key_क्रमmat;
-	अचिन्हित अक्षर  reserved2;
-	अचिन्हित अक्षर  key_name_hash[20];
-	अचिन्हित अक्षर  key_use_flags[4];
-	अचिन्हित लघु p_len;
-	अचिन्हित लघु q_len;
-	अचिन्हित लघु dp_len;
-	अचिन्हित लघु dq_len;
-	अचिन्हित लघु u_len;
-	अचिन्हित लघु mod_len;
-	अचिन्हित अक्षर  reserved3[4];
-	अचिन्हित लघु pad_len;
-	अचिन्हित अक्षर  reserved4[52];
-	अचिन्हित अक्षर  confounder[8];
-पूर्ण __packed;
+struct cca_pvt_ext_CRT_sec {
+	unsigned char  section_identifier;
+	unsigned char  version;
+	unsigned short section_length;
+	unsigned char  private_key_hash[20];
+	unsigned char  reserved1[4];
+	unsigned char  key_format;
+	unsigned char  reserved2;
+	unsigned char  key_name_hash[20];
+	unsigned char  key_use_flags[4];
+	unsigned short p_len;
+	unsigned short q_len;
+	unsigned short dp_len;
+	unsigned short dq_len;
+	unsigned short u_len;
+	unsigned short mod_len;
+	unsigned char  reserved3[4];
+	unsigned short pad_len;
+	unsigned char  reserved4[52];
+	unsigned char  confounder[8];
+} __packed;
 
-#घोषणा CCA_PVT_EXT_CRT_SEC_ID_PVT 0x08
-#घोषणा CCA_PVT_EXT_CRT_SEC_FMT_CL 0x40
+#define CCA_PVT_EXT_CRT_SEC_ID_PVT 0x08
+#define CCA_PVT_EXT_CRT_SEC_FMT_CL 0x40
 
 /**
- * Set up निजी key fields of a type6 MEX message. The _pad variant
+ * Set up private key fields of a type6 MEX message. The _pad variant
  * strips leading zeroes from the b_key.
  * Note that all numerics in the key token are big-endian,
- * जबतक the entries in the key block header are little-endian.
+ * while the entries in the key block header are little-endian.
  *
- * @mex: poपूर्णांकer to user input data
- * @p: poपूर्णांकer to memory area क्रम the key
+ * @mex: pointer to user input data
+ * @p: pointer to memory area for the key
  *
- * Returns the size of the key area or negative त्रुटि_सं value.
+ * Returns the size of the key area or negative errno value.
  */
-अटल अंतरभूत पूर्णांक zcrypt_type6_mex_key_en(काष्ठा ica_rsa_modexpo *mex, व्योम *p)
-अणु
-	अटल काष्ठा cca_token_hdr अटल_pub_hdr = अणु
-		.token_identअगरier	=  0x1E,
-	पूर्ण;
-	अटल काष्ठा cca_खुला_sec अटल_pub_sec = अणु
-		.section_identअगरier	=  0x04,
-	पूर्ण;
-	काष्ठा अणु
-		काष्ठा T6_keyBlock_hdr t6_hdr;
-		काष्ठा cca_token_hdr pubHdr;
-		काष्ठा cca_खुला_sec pubSec;
-		अक्षर exponent[0];
-	पूर्ण __packed *key = p;
-	अचिन्हित अक्षर *temp;
-	पूर्णांक i;
+static inline int zcrypt_type6_mex_key_en(struct ica_rsa_modexpo *mex, void *p)
+{
+	static struct cca_token_hdr static_pub_hdr = {
+		.token_identifier	=  0x1E,
+	};
+	static struct cca_public_sec static_pub_sec = {
+		.section_identifier	=  0x04,
+	};
+	struct {
+		struct T6_keyBlock_hdr t6_hdr;
+		struct cca_token_hdr pubHdr;
+		struct cca_public_sec pubSec;
+		char exponent[0];
+	} __packed *key = p;
+	unsigned char *temp;
+	int i;
 
 	/*
 	 * The inputdatalength was a selection criteria in the dispatching
-	 * function zcrypt_rsa_modexpo(). However, करो a plausibility check
+	 * function zcrypt_rsa_modexpo(). However, do a plausibility check
 	 * here to make sure the following copy_from_user() can't be utilized
-	 * to compromise the प्रणाली.
+	 * to compromise the system.
 	 */
-	अगर (WARN_ON_ONCE(mex->inputdatalength > 512))
-		वापस -EINVAL;
+	if (WARN_ON_ONCE(mex->inputdatalength > 512))
+		return -EINVAL;
 
-	स_रखो(key, 0, माप(*key));
+	memset(key, 0, sizeof(*key));
 
-	key->pubHdr = अटल_pub_hdr;
-	key->pubSec = अटल_pub_sec;
+	key->pubHdr = static_pub_hdr;
+	key->pubSec = static_pub_sec;
 
 	/* key parameter block */
 	temp = key->exponent;
-	अगर (copy_from_user(temp, mex->b_key, mex->inputdatalength))
-		वापस -EFAULT;
+	if (copy_from_user(temp, mex->b_key, mex->inputdatalength))
+		return -EFAULT;
 	/* Strip leading zeroes from b_key. */
-	क्रम (i = 0; i < mex->inputdatalength; i++)
-		अगर (temp[i])
-			अवरोध;
-	अगर (i >= mex->inputdatalength)
-		वापस -EINVAL;
-	स_हटाओ(temp, temp + i, mex->inputdatalength - i);
+	for (i = 0; i < mex->inputdatalength; i++)
+		if (temp[i])
+			break;
+	if (i >= mex->inputdatalength)
+		return -EINVAL;
+	memmove(temp, temp + i, mex->inputdatalength - i);
 	temp += mex->inputdatalength - i;
 	/* modulus */
-	अगर (copy_from_user(temp, mex->n_modulus, mex->inputdatalength))
-		वापस -EFAULT;
+	if (copy_from_user(temp, mex->n_modulus, mex->inputdatalength))
+		return -EFAULT;
 
 	key->pubSec.modulus_bit_len = 8 * mex->inputdatalength;
 	key->pubSec.modulus_byte_len = mex->inputdatalength;
 	key->pubSec.exponent_len = mex->inputdatalength - i;
-	key->pubSec.section_length = माप(key->pubSec) +
+	key->pubSec.section_length = sizeof(key->pubSec) +
 					2*mex->inputdatalength - i;
 	key->pubHdr.token_length =
-		key->pubSec.section_length + माप(key->pubHdr);
+		key->pubSec.section_length + sizeof(key->pubHdr);
 	key->t6_hdr.ulen = key->pubHdr.token_length + 4;
 	key->t6_hdr.blen = key->pubHdr.token_length + 6;
-	वापस माप(*key) + 2*mex->inputdatalength - i;
-पूर्ण
+	return sizeof(*key) + 2*mex->inputdatalength - i;
+}
 
 /**
- * Set up निजी key fields of a type6 CRT message.
+ * Set up private key fields of a type6 CRT message.
  * Note that all numerics in the key token are big-endian,
- * जबतक the entries in the key block header are little-endian.
+ * while the entries in the key block header are little-endian.
  *
- * @mex: poपूर्णांकer to user input data
- * @p: poपूर्णांकer to memory area क्रम the key
+ * @mex: pointer to user input data
+ * @p: pointer to memory area for the key
  *
  * Returns the size of the key area or -EFAULT
  */
-अटल अंतरभूत पूर्णांक zcrypt_type6_crt_key(काष्ठा ica_rsa_modexpo_crt *crt, व्योम *p)
-अणु
-	अटल काष्ठा cca_खुला_sec अटल_cca_pub_sec = अणु
-		.section_identअगरier = 4,
+static inline int zcrypt_type6_crt_key(struct ica_rsa_modexpo_crt *crt, void *p)
+{
+	static struct cca_public_sec static_cca_pub_sec = {
+		.section_identifier = 4,
 		.section_length = 0x000f,
 		.exponent_len = 0x0003,
-	पूर्ण;
-	अटल अक्षर pk_exponent[3] = अणु 0x01, 0x00, 0x01 पूर्ण;
-	काष्ठा अणु
-		काष्ठा T6_keyBlock_hdr t6_hdr;
-		काष्ठा cca_token_hdr token;
-		काष्ठा cca_pvt_ext_CRT_sec pvt;
-		अक्षर key_parts[0];
-	पूर्ण __packed *key = p;
-	काष्ठा cca_खुला_sec *pub;
-	पूर्णांक लघु_len, दीर्घ_len, pad_len, key_len, size;
+	};
+	static char pk_exponent[3] = { 0x01, 0x00, 0x01 };
+	struct {
+		struct T6_keyBlock_hdr t6_hdr;
+		struct cca_token_hdr token;
+		struct cca_pvt_ext_CRT_sec pvt;
+		char key_parts[0];
+	} __packed *key = p;
+	struct cca_public_sec *pub;
+	int short_len, long_len, pad_len, key_len, size;
 
 	/*
 	 * The inputdatalength was a selection criteria in the dispatching
-	 * function zcrypt_rsa_crt(). However, करो a plausibility check
+	 * function zcrypt_rsa_crt(). However, do a plausibility check
 	 * here to make sure the following copy_from_user() can't be utilized
-	 * to compromise the प्रणाली.
+	 * to compromise the system.
 	 */
-	अगर (WARN_ON_ONCE(crt->inputdatalength > 512))
-		वापस -EINVAL;
+	if (WARN_ON_ONCE(crt->inputdatalength > 512))
+		return -EINVAL;
 
-	स_रखो(key, 0, माप(*key));
+	memset(key, 0, sizeof(*key));
 
-	लघु_len = (crt->inputdatalength + 1) / 2;
-	दीर्घ_len = लघु_len + 8;
-	pad_len = -(3*दीर्घ_len + 2*लघु_len) & 7;
-	key_len = 3*दीर्घ_len + 2*लघु_len + pad_len + crt->inputdatalength;
-	size = माप(*key) + key_len + माप(*pub) + 3;
+	short_len = (crt->inputdatalength + 1) / 2;
+	long_len = short_len + 8;
+	pad_len = -(3*long_len + 2*short_len) & 7;
+	key_len = 3*long_len + 2*short_len + pad_len + crt->inputdatalength;
+	size = sizeof(*key) + key_len + sizeof(*pub) + 3;
 
 	/* parameter block.key block */
 	key->t6_hdr.blen = size;
 	key->t6_hdr.ulen = size - 2;
 
 	/* key token header */
-	key->token.token_identअगरier = CCA_TKN_HDR_ID_EXT;
+	key->token.token_identifier = CCA_TKN_HDR_ID_EXT;
 	key->token.token_length = size - 6;
 
-	/* निजी section */
-	key->pvt.section_identअगरier = CCA_PVT_EXT_CRT_SEC_ID_PVT;
-	key->pvt.section_length = माप(key->pvt) + key_len;
-	key->pvt.key_क्रमmat = CCA_PVT_EXT_CRT_SEC_FMT_CL;
+	/* private section */
+	key->pvt.section_identifier = CCA_PVT_EXT_CRT_SEC_ID_PVT;
+	key->pvt.section_length = sizeof(key->pvt) + key_len;
+	key->pvt.key_format = CCA_PVT_EXT_CRT_SEC_FMT_CL;
 	key->pvt.key_use_flags[0] = CCA_PVT_USAGE_ALL;
-	key->pvt.p_len = key->pvt.dp_len = key->pvt.u_len = दीर्घ_len;
-	key->pvt.q_len = key->pvt.dq_len = लघु_len;
+	key->pvt.p_len = key->pvt.dp_len = key->pvt.u_len = long_len;
+	key->pvt.q_len = key->pvt.dq_len = short_len;
 	key->pvt.mod_len = crt->inputdatalength;
 	key->pvt.pad_len = pad_len;
 
 	/* key parts */
-	अगर (copy_from_user(key->key_parts, crt->np_prime, दीर्घ_len) ||
-	    copy_from_user(key->key_parts + दीर्घ_len,
-					crt->nq_prime, लघु_len) ||
-	    copy_from_user(key->key_parts + दीर्घ_len + लघु_len,
-					crt->bp_key, दीर्घ_len) ||
-	    copy_from_user(key->key_parts + 2*दीर्घ_len + लघु_len,
-					crt->bq_key, लघु_len) ||
-	    copy_from_user(key->key_parts + 2*दीर्घ_len + 2*लघु_len,
-					crt->u_mult_inv, दीर्घ_len))
-		वापस -EFAULT;
-	स_रखो(key->key_parts + 3*दीर्घ_len + 2*लघु_len + pad_len,
+	if (copy_from_user(key->key_parts, crt->np_prime, long_len) ||
+	    copy_from_user(key->key_parts + long_len,
+					crt->nq_prime, short_len) ||
+	    copy_from_user(key->key_parts + long_len + short_len,
+					crt->bp_key, long_len) ||
+	    copy_from_user(key->key_parts + 2*long_len + short_len,
+					crt->bq_key, short_len) ||
+	    copy_from_user(key->key_parts + 2*long_len + 2*short_len,
+					crt->u_mult_inv, long_len))
+		return -EFAULT;
+	memset(key->key_parts + 3*long_len + 2*short_len + pad_len,
 	       0xff, crt->inputdatalength);
-	pub = (काष्ठा cca_खुला_sec *)(key->key_parts + key_len);
-	*pub = अटल_cca_pub_sec;
+	pub = (struct cca_public_sec *)(key->key_parts + key_len);
+	*pub = static_cca_pub_sec;
 	pub->modulus_bit_len = 8 * crt->inputdatalength;
 	/*
-	 * In a निजी key, the modulus करोesn't appear in the खुला
-	 * section. So, an arbitrary खुला exponent of 0x010001 will be
+	 * In a private key, the modulus doesn't appear in the public
+	 * section. So, an arbitrary public exponent of 0x010001 will be
 	 * used.
 	 */
-	स_नकल((अक्षर *) (pub + 1), pk_exponent, 3);
-	वापस size;
-पूर्ण
+	memcpy((char *) (pub + 1), pk_exponent, 3);
+	return size;
+}
 
-#पूर्ण_अगर /* _ZCRYPT_CCA_KEY_H_ */
+#endif /* _ZCRYPT_CCA_KEY_H_ */

@@ -1,8 +1,7 @@
-<शैली गुरु>
 /*
  * linux/drivers/video/riva/fbdev.c - nVidia RIVA 128/TNT/TNT2 fb driver
  *
- * Maपूर्णांकained by Ani Joshi <ajoshi@shell.unixbox.com>
+ * Maintained by Ani Joshi <ajoshi@shell.unixbox.com>
  *
  * Copyright 1999-2000 Jeff Garzik
  *
@@ -15,78 +14,78 @@
  *
  *	Jindrich Makovicka:  Accel code help, hw cursor, mtrr
  *
- *	Paul Riअक्षरds:  Bug fixes, updates
+ *	Paul Richards:  Bug fixes, updates
  *
- * Initial ढाँचा from skeletonfb.c, created 28 Dec 1997 by Geert Uytterhoeven
+ * Initial template from skeletonfb.c, created 28 Dec 1997 by Geert Uytterhoeven
  * Includes riva_hw.c from nVidia, see copyright below.
- * KGI code provided the basis क्रम state storage, init, and mode चयनing.
+ * KGI code provided the basis for state storage, init, and mode switching.
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file COPYING in the मुख्य directory of this archive
- * क्रम more details.
+ * License.  See the file COPYING in the main directory of this archive
+ * for more details.
  *
  * Known bugs and issues:
  *	restoring text mode fails
- *	द्विगुनscan modes are broken
+ *	doublescan modes are broken
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/माला.स>
-#समावेश <linux/mm.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/fb.h>
-#समावेश <linux/init.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/backlight.h>
-#समावेश <linux/bitrev.h>
-#अगर_घोषित CONFIG_PMAC_BACKLIGHT
-#समावेश <यंत्र/machdep.h>
-#समावेश <यंत्र/backlight.h>
-#पूर्ण_अगर
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/errno.h>
+#include <linux/string.h>
+#include <linux/mm.h>
+#include <linux/slab.h>
+#include <linux/delay.h>
+#include <linux/fb.h>
+#include <linux/init.h>
+#include <linux/pci.h>
+#include <linux/backlight.h>
+#include <linux/bitrev.h>
+#ifdef CONFIG_PMAC_BACKLIGHT
+#include <asm/machdep.h>
+#include <asm/backlight.h>
+#endif
 
-#समावेश "rivafb.h"
-#समावेश "nvreg.h"
+#include "rivafb.h"
+#include "nvreg.h"
 
 /* version number of this driver */
-#घोषणा RIVAFB_VERSION "0.9.5b"
+#define RIVAFB_VERSION "0.9.5b"
 
 /* ------------------------------------------------------------------------- *
  *
- * various helpful macros and स्थिरants
+ * various helpful macros and constants
  *
  * ------------------------------------------------------------------------- */
-#अगर_घोषित CONFIG_FB_RIVA_DEBUG
-#घोषणा NVTRACE          prपूर्णांकk
-#अन्यथा
-#घोषणा NVTRACE          अगर(0) prपूर्णांकk
-#पूर्ण_अगर
+#ifdef CONFIG_FB_RIVA_DEBUG
+#define NVTRACE          printk
+#else
+#define NVTRACE          if(0) printk
+#endif
 
-#घोषणा NVTRACE_ENTER(...)  NVTRACE("%s START\n", __func__)
-#घोषणा NVTRACE_LEAVE(...)  NVTRACE("%s END\n", __func__)
+#define NVTRACE_ENTER(...)  NVTRACE("%s START\n", __func__)
+#define NVTRACE_LEAVE(...)  NVTRACE("%s END\n", __func__)
 
-#अगर_घोषित CONFIG_FB_RIVA_DEBUG
-#घोषणा निश्चित(expr) \
-	अगर(!(expr)) अणु \
-	prपूर्णांकk( "Assertion failed! %s,%s,%s,line=%d\n",\
-	#expr,__खाता__,__func__,__LINE__); \
+#ifdef CONFIG_FB_RIVA_DEBUG
+#define assert(expr) \
+	if(!(expr)) { \
+	printk( "Assertion failed! %s,%s,%s,line=%d\n",\
+	#expr,__FILE__,__func__,__LINE__); \
 	BUG(); \
-	पूर्ण
-#अन्यथा
-#घोषणा निश्चित(expr)
-#पूर्ण_अगर
+	}
+#else
+#define assert(expr)
+#endif
 
-#घोषणा PFX "rivafb: "
+#define PFX "rivafb: "
 
 /* macro that allows you to set overflow bits */
-#घोषणा SetBitField(value,from,to) SetBF(to,GetBF(value,from))
-#घोषणा SetBit(n)		(1<<(n))
-#घोषणा Set8Bits(value)		((value)&0xff)
+#define SetBitField(value,from,to) SetBF(to,GetBF(value,from))
+#define SetBit(n)		(1<<(n))
+#define Set8Bits(value)		((value)&0xff)
 
 /* HW cursor parameters */
-#घोषणा MAX_CURS		32
+#define MAX_CURS		32
 
 /* ------------------------------------------------------------------------- *
  *
@@ -94,102 +93,102 @@
  *
  * ------------------------------------------------------------------------- */
 
-अटल पूर्णांक rivafb_blank(पूर्णांक blank, काष्ठा fb_info *info);
+static int rivafb_blank(int blank, struct fb_info *info);
 
 /* ------------------------------------------------------------------------- *
  *
- * card identअगरication
+ * card identification
  *
  * ------------------------------------------------------------------------- */
 
-अटल स्थिर काष्ठा pci_device_id rivafb_pci_tbl[] = अणु
-	अणु PCI_VENDOR_ID_NVIDIA_SGS, PCI_DEVICE_ID_NVIDIA_SGS_RIVA128,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 पूर्ण,
-	अणु PCI_VENDOR_ID_NVIDIA, PCI_DEVICE_ID_NVIDIA_TNT,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 पूर्ण,
-	अणु PCI_VENDOR_ID_NVIDIA, PCI_DEVICE_ID_NVIDIA_TNT2,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 पूर्ण,
-	अणु PCI_VENDOR_ID_NVIDIA, PCI_DEVICE_ID_NVIDIA_UTNT2,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 पूर्ण,
-	अणु PCI_VENDOR_ID_NVIDIA, PCI_DEVICE_ID_NVIDIA_VTNT2,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 पूर्ण,
-	अणु PCI_VENDOR_ID_NVIDIA, PCI_DEVICE_ID_NVIDIA_UVTNT2,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 पूर्ण,
-	अणु PCI_VENDOR_ID_NVIDIA, PCI_DEVICE_ID_NVIDIA_ITNT2,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 पूर्ण,
-	अणु PCI_VENDOR_ID_NVIDIA, PCI_DEVICE_ID_NVIDIA_GEFORCE_SDR,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 पूर्ण,
-	अणु PCI_VENDOR_ID_NVIDIA, PCI_DEVICE_ID_NVIDIA_GEFORCE_DDR,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 पूर्ण,
-	अणु PCI_VENDOR_ID_NVIDIA, PCI_DEVICE_ID_NVIDIA_QUADRO,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 पूर्ण,
-	अणु PCI_VENDOR_ID_NVIDIA, PCI_DEVICE_ID_NVIDIA_GEFORCE2_MX,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 पूर्ण,
-	अणु PCI_VENDOR_ID_NVIDIA, PCI_DEVICE_ID_NVIDIA_GEFORCE2_MX2,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 पूर्ण,
-	अणु PCI_VENDOR_ID_NVIDIA, PCI_DEVICE_ID_NVIDIA_GEFORCE2_GO,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 पूर्ण,
-	अणु PCI_VENDOR_ID_NVIDIA, PCI_DEVICE_ID_NVIDIA_QUADRO2_MXR,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 पूर्ण,
-	अणु PCI_VENDOR_ID_NVIDIA, PCI_DEVICE_ID_NVIDIA_GEFORCE2_GTS,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 पूर्ण,
-	अणु PCI_VENDOR_ID_NVIDIA, PCI_DEVICE_ID_NVIDIA_GEFORCE2_GTS2,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 पूर्ण,
-	अणु PCI_VENDOR_ID_NVIDIA, PCI_DEVICE_ID_NVIDIA_GEFORCE2_ULTRA,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 पूर्ण,
-	अणु PCI_VENDOR_ID_NVIDIA, PCI_DEVICE_ID_NVIDIA_QUADRO2_PRO,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 पूर्ण,
-	अणु PCI_VENDOR_ID_NVIDIA, PCI_DEVICE_ID_NVIDIA_GEFORCE4_MX_460,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 पूर्ण,
-	अणु PCI_VENDOR_ID_NVIDIA, PCI_DEVICE_ID_NVIDIA_GEFORCE4_MX_440,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 पूर्ण,
+static const struct pci_device_id rivafb_pci_tbl[] = {
+	{ PCI_VENDOR_ID_NVIDIA_SGS, PCI_DEVICE_ID_NVIDIA_SGS_RIVA128,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 },
+	{ PCI_VENDOR_ID_NVIDIA, PCI_DEVICE_ID_NVIDIA_TNT,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 },
+	{ PCI_VENDOR_ID_NVIDIA, PCI_DEVICE_ID_NVIDIA_TNT2,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 },
+	{ PCI_VENDOR_ID_NVIDIA, PCI_DEVICE_ID_NVIDIA_UTNT2,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 },
+	{ PCI_VENDOR_ID_NVIDIA, PCI_DEVICE_ID_NVIDIA_VTNT2,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 },
+	{ PCI_VENDOR_ID_NVIDIA, PCI_DEVICE_ID_NVIDIA_UVTNT2,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 },
+	{ PCI_VENDOR_ID_NVIDIA, PCI_DEVICE_ID_NVIDIA_ITNT2,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 },
+	{ PCI_VENDOR_ID_NVIDIA, PCI_DEVICE_ID_NVIDIA_GEFORCE_SDR,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 },
+	{ PCI_VENDOR_ID_NVIDIA, PCI_DEVICE_ID_NVIDIA_GEFORCE_DDR,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 },
+	{ PCI_VENDOR_ID_NVIDIA, PCI_DEVICE_ID_NVIDIA_QUADRO,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 },
+	{ PCI_VENDOR_ID_NVIDIA, PCI_DEVICE_ID_NVIDIA_GEFORCE2_MX,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 },
+	{ PCI_VENDOR_ID_NVIDIA, PCI_DEVICE_ID_NVIDIA_GEFORCE2_MX2,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 },
+	{ PCI_VENDOR_ID_NVIDIA, PCI_DEVICE_ID_NVIDIA_GEFORCE2_GO,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 },
+	{ PCI_VENDOR_ID_NVIDIA, PCI_DEVICE_ID_NVIDIA_QUADRO2_MXR,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 },
+	{ PCI_VENDOR_ID_NVIDIA, PCI_DEVICE_ID_NVIDIA_GEFORCE2_GTS,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 },
+	{ PCI_VENDOR_ID_NVIDIA, PCI_DEVICE_ID_NVIDIA_GEFORCE2_GTS2,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 },
+	{ PCI_VENDOR_ID_NVIDIA, PCI_DEVICE_ID_NVIDIA_GEFORCE2_ULTRA,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 },
+	{ PCI_VENDOR_ID_NVIDIA, PCI_DEVICE_ID_NVIDIA_QUADRO2_PRO,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 },
+	{ PCI_VENDOR_ID_NVIDIA, PCI_DEVICE_ID_NVIDIA_GEFORCE4_MX_460,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 },
+	{ PCI_VENDOR_ID_NVIDIA, PCI_DEVICE_ID_NVIDIA_GEFORCE4_MX_440,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 },
 	// NF2/IGP version, GeForce 4 MX, NV18
-	अणु PCI_VENDOR_ID_NVIDIA, 0x01f0,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 पूर्ण,
-	अणु PCI_VENDOR_ID_NVIDIA, PCI_DEVICE_ID_NVIDIA_GEFORCE4_MX_420,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 पूर्ण,
-	अणु PCI_VENDOR_ID_NVIDIA, PCI_DEVICE_ID_NVIDIA_GEFORCE4_440_GO,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 पूर्ण,
-	अणु PCI_VENDOR_ID_NVIDIA, PCI_DEVICE_ID_NVIDIA_GEFORCE4_420_GO,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 पूर्ण,
-	अणु PCI_VENDOR_ID_NVIDIA, PCI_DEVICE_ID_NVIDIA_GEFORCE4_420_GO_M32,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 पूर्ण,
-	अणु PCI_VENDOR_ID_NVIDIA, PCI_DEVICE_ID_NVIDIA_QUADRO4_500XGL,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 पूर्ण,
-	अणु PCI_VENDOR_ID_NVIDIA, PCI_DEVICE_ID_NVIDIA_GEFORCE4_440_GO_M64,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 पूर्ण,
-	अणु PCI_VENDOR_ID_NVIDIA, PCI_DEVICE_ID_NVIDIA_QUADRO4_200,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 पूर्ण,
-	अणु PCI_VENDOR_ID_NVIDIA, PCI_DEVICE_ID_NVIDIA_QUADRO4_550XGL,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 पूर्ण,
-	अणु PCI_VENDOR_ID_NVIDIA, PCI_DEVICE_ID_NVIDIA_QUADRO4_500_GOGL,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 पूर्ण,
-	अणु PCI_VENDOR_ID_NVIDIA, PCI_DEVICE_ID_NVIDIA_IGEFORCE2,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 पूर्ण,
-	अणु PCI_VENDOR_ID_NVIDIA, PCI_DEVICE_ID_NVIDIA_GEFORCE3,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 पूर्ण,
-	अणु PCI_VENDOR_ID_NVIDIA, PCI_DEVICE_ID_NVIDIA_GEFORCE3_1,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 पूर्ण,
-	अणु PCI_VENDOR_ID_NVIDIA, PCI_DEVICE_ID_NVIDIA_GEFORCE3_2,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 पूर्ण,
-	अणु PCI_VENDOR_ID_NVIDIA, PCI_DEVICE_ID_NVIDIA_QUADRO_DDC,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 पूर्ण,
-	अणु PCI_VENDOR_ID_NVIDIA, PCI_DEVICE_ID_NVIDIA_GEFORCE4_TI_4600,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 पूर्ण,
-	अणु PCI_VENDOR_ID_NVIDIA, PCI_DEVICE_ID_NVIDIA_GEFORCE4_TI_4400,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 पूर्ण,
-	अणु PCI_VENDOR_ID_NVIDIA, PCI_DEVICE_ID_NVIDIA_GEFORCE4_TI_4200,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 पूर्ण,
- 	अणु PCI_VENDOR_ID_NVIDIA, PCI_DEVICE_ID_NVIDIA_QUADRO4_900XGL,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 पूर्ण,
-	अणु PCI_VENDOR_ID_NVIDIA, PCI_DEVICE_ID_NVIDIA_QUADRO4_750XGL,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 पूर्ण,
-	अणु PCI_VENDOR_ID_NVIDIA, PCI_DEVICE_ID_NVIDIA_QUADRO4_700XGL,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 पूर्ण,
-	अणु PCI_VENDOR_ID_NVIDIA, PCI_DEVICE_ID_NVIDIA_GEFORCE_FX_GO_5200,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 पूर्ण,
-	अणु 0, पूर्ण /* terminate list */
-पूर्ण;
+	{ PCI_VENDOR_ID_NVIDIA, 0x01f0,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 },
+	{ PCI_VENDOR_ID_NVIDIA, PCI_DEVICE_ID_NVIDIA_GEFORCE4_MX_420,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 },
+	{ PCI_VENDOR_ID_NVIDIA, PCI_DEVICE_ID_NVIDIA_GEFORCE4_440_GO,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 },
+	{ PCI_VENDOR_ID_NVIDIA, PCI_DEVICE_ID_NVIDIA_GEFORCE4_420_GO,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 },
+	{ PCI_VENDOR_ID_NVIDIA, PCI_DEVICE_ID_NVIDIA_GEFORCE4_420_GO_M32,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 },
+	{ PCI_VENDOR_ID_NVIDIA, PCI_DEVICE_ID_NVIDIA_QUADRO4_500XGL,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 },
+	{ PCI_VENDOR_ID_NVIDIA, PCI_DEVICE_ID_NVIDIA_GEFORCE4_440_GO_M64,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 },
+	{ PCI_VENDOR_ID_NVIDIA, PCI_DEVICE_ID_NVIDIA_QUADRO4_200,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 },
+	{ PCI_VENDOR_ID_NVIDIA, PCI_DEVICE_ID_NVIDIA_QUADRO4_550XGL,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 },
+	{ PCI_VENDOR_ID_NVIDIA, PCI_DEVICE_ID_NVIDIA_QUADRO4_500_GOGL,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 },
+	{ PCI_VENDOR_ID_NVIDIA, PCI_DEVICE_ID_NVIDIA_IGEFORCE2,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 },
+	{ PCI_VENDOR_ID_NVIDIA, PCI_DEVICE_ID_NVIDIA_GEFORCE3,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 },
+	{ PCI_VENDOR_ID_NVIDIA, PCI_DEVICE_ID_NVIDIA_GEFORCE3_1,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 },
+	{ PCI_VENDOR_ID_NVIDIA, PCI_DEVICE_ID_NVIDIA_GEFORCE3_2,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 },
+	{ PCI_VENDOR_ID_NVIDIA, PCI_DEVICE_ID_NVIDIA_QUADRO_DDC,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 },
+	{ PCI_VENDOR_ID_NVIDIA, PCI_DEVICE_ID_NVIDIA_GEFORCE4_TI_4600,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 },
+	{ PCI_VENDOR_ID_NVIDIA, PCI_DEVICE_ID_NVIDIA_GEFORCE4_TI_4400,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 },
+	{ PCI_VENDOR_ID_NVIDIA, PCI_DEVICE_ID_NVIDIA_GEFORCE4_TI_4200,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 },
+ 	{ PCI_VENDOR_ID_NVIDIA, PCI_DEVICE_ID_NVIDIA_QUADRO4_900XGL,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 },
+	{ PCI_VENDOR_ID_NVIDIA, PCI_DEVICE_ID_NVIDIA_QUADRO4_750XGL,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 },
+	{ PCI_VENDOR_ID_NVIDIA, PCI_DEVICE_ID_NVIDIA_QUADRO4_700XGL,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 },
+	{ PCI_VENDOR_ID_NVIDIA, PCI_DEVICE_ID_NVIDIA_GEFORCE_FX_GO_5200,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 },
+	{ 0, } /* terminate list */
+};
 MODULE_DEVICE_TABLE(pci, rivafb_pci_tbl);
 
 /* ------------------------------------------------------------------------- *
@@ -199,35 +198,35 @@ MODULE_DEVICE_TABLE(pci, rivafb_pci_tbl);
  * ------------------------------------------------------------------------- */
 
 /* command line data, set in rivafb_setup() */
-अटल पूर्णांक flatpanel = -1; /* Autodetect later */
-अटल पूर्णांक क्रमceCRTC = -1;
-अटल bool noaccel  = 0;
-अटल bool nomtrr = 0;
-अटल पूर्णांक backlight = IS_BUILTIN(CONFIG_PMAC_BACKLIGHT);
+static int flatpanel = -1; /* Autodetect later */
+static int forceCRTC = -1;
+static bool noaccel  = 0;
+static bool nomtrr = 0;
+static int backlight = IS_BUILTIN(CONFIG_PMAC_BACKLIGHT);
 
-अटल अक्षर *mode_option = शून्य;
-अटल bool stricपंचांगode       = 0;
+static char *mode_option = NULL;
+static bool strictmode       = 0;
 
-अटल काष्ठा fb_fix_screeninfo rivafb_fix = अणु
+static struct fb_fix_screeninfo rivafb_fix = {
 	.type		= FB_TYPE_PACKED_PIXELS,
 	.xpanstep	= 1,
 	.ypanstep	= 1,
-पूर्ण;
+};
 
-अटल काष्ठा fb_var_screeninfo rivafb_शेष_var = अणु
+static struct fb_var_screeninfo rivafb_default_var = {
 	.xres		= 640,
 	.yres		= 480,
-	.xres_भव	= 640,
-	.yres_भव	= 480,
+	.xres_virtual	= 640,
+	.yres_virtual	= 480,
 	.bits_per_pixel	= 8,
-	.red		= अणु0, 8, 0पूर्ण,
-	.green		= अणु0, 8, 0पूर्ण,
-	.blue		= अणु0, 8, 0पूर्ण,
-	.transp		= अणु0, 0, 0पूर्ण,
+	.red		= {0, 8, 0},
+	.green		= {0, 8, 0},
+	.blue		= {0, 8, 0},
+	.transp		= {0, 0, 0},
 	.activate	= FB_ACTIVATE_NOW,
 	.height		= -1,
 	.width		= -1,
-	.pixघड़ी	= 39721,
+	.pixclock	= 39721,
 	.left_margin	= 40,
 	.right_margin	= 24,
 	.upper_margin	= 32,
@@ -235,14 +234,14 @@ MODULE_DEVICE_TABLE(pci, rivafb_pci_tbl);
 	.hsync_len	= 96,
 	.vsync_len	= 2,
 	.vmode		= FB_VMODE_NONINTERLACED
-पूर्ण;
+};
 
 /* from GGI */
-अटल स्थिर काष्ठा riva_regs reg_ढाँचा = अणु
-	अणु0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,	/* ATTR */
+static const struct riva_regs reg_template = {
+	{0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,	/* ATTR */
 	 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F,
-	 0x41, 0x01, 0x0F, 0x00, 0x00पूर्ण,
-	अणु0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,	/* CRT  */
+	 0x41, 0x01, 0x0F, 0x00, 0x00},
+	{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,	/* CRT  */
 	 0x00, 0x00, 0x20, 0x00, 0x00, 0x00, 0x00, 0x00,
 	 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xE3,	/* 0x10 */
 	 0xFF, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -251,130 +250,130 @@ MODULE_DEVICE_TABLE(pci, rivafb_pci_tbl);
 	 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,	/* 0x30 */
 	 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	 0x00,							/* 0x40 */
-	 पूर्ण,
-	अणु0x00, 0x00, 0x00, 0x00, 0x00, 0x40, 0x05, 0x0F,	/* GRA  */
-	 0xFFपूर्ण,
-	अणु0x03, 0x01, 0x0F, 0x00, 0x0Eपूर्ण,				/* SEQ  */
+	 },
+	{0x00, 0x00, 0x00, 0x00, 0x00, 0x40, 0x05, 0x0F,	/* GRA  */
+	 0xFF},
+	{0x03, 0x01, 0x0F, 0x00, 0x0E},				/* SEQ  */
 	0xEB							/* MISC */
-पूर्ण;
+};
 
 /*
  * Backlight control
  */
-#अगर_घोषित CONFIG_FB_RIVA_BACKLIGHT
-/* We करो not have any inक्रमmation about which values are allowed, thus
+#ifdef CONFIG_FB_RIVA_BACKLIGHT
+/* We do not have any information about which values are allowed, thus
  * we used safe values.
  */
-#घोषणा MIN_LEVEL 0x158
-#घोषणा MAX_LEVEL 0x534
-#घोषणा LEVEL_STEP ((MAX_LEVEL - MIN_LEVEL) / FB_BACKLIGHT_MAX)
+#define MIN_LEVEL 0x158
+#define MAX_LEVEL 0x534
+#define LEVEL_STEP ((MAX_LEVEL - MIN_LEVEL) / FB_BACKLIGHT_MAX)
 
-अटल पूर्णांक riva_bl_get_level_brightness(काष्ठा riva_par *par,
-		पूर्णांक level)
-अणु
-	काष्ठा fb_info *info = pci_get_drvdata(par->pdev);
-	पूर्णांक nlevel;
+static int riva_bl_get_level_brightness(struct riva_par *par,
+		int level)
+{
+	struct fb_info *info = pci_get_drvdata(par->pdev);
+	int nlevel;
 
 	/* Get and convert the value */
 	/* No locking on bl_curve since accessing a single value */
 	nlevel = MIN_LEVEL + info->bl_curve[level] * LEVEL_STEP;
 
-	अगर (nlevel < 0)
+	if (nlevel < 0)
 		nlevel = 0;
-	अन्यथा अगर (nlevel < MIN_LEVEL)
+	else if (nlevel < MIN_LEVEL)
 		nlevel = MIN_LEVEL;
-	अन्यथा अगर (nlevel > MAX_LEVEL)
+	else if (nlevel > MAX_LEVEL)
 		nlevel = MAX_LEVEL;
 
-	वापस nlevel;
-पूर्ण
+	return nlevel;
+}
 
-अटल पूर्णांक riva_bl_update_status(काष्ठा backlight_device *bd)
-अणु
-	काष्ठा riva_par *par = bl_get_data(bd);
-	U032 पंचांगp_pcrt, पंचांगp_pmc;
-	पूर्णांक level;
+static int riva_bl_update_status(struct backlight_device *bd)
+{
+	struct riva_par *par = bl_get_data(bd);
+	U032 tmp_pcrt, tmp_pmc;
+	int level;
 
-	अगर (bd->props.घातer != FB_BLANK_UNBLANK ||
+	if (bd->props.power != FB_BLANK_UNBLANK ||
 	    bd->props.fb_blank != FB_BLANK_UNBLANK)
 		level = 0;
-	अन्यथा
+	else
 		level = bd->props.brightness;
 
-	पंचांगp_pmc = NV_RD32(par->riva.PMC, 0x10F0) & 0x0000FFFF;
-	पंचांगp_pcrt = NV_RD32(par->riva.PCRTC0, 0x081C) & 0xFFFFFFFC;
-	अगर(level > 0) अणु
-		पंचांगp_pcrt |= 0x1;
-		पंचांगp_pmc |= (1 << 31); /* backlight bit */
-		पंचांगp_pmc |= riva_bl_get_level_brightness(par, level) << 16; /* level */
-	पूर्ण
-	NV_WR32(par->riva.PCRTC0, 0x081C, पंचांगp_pcrt);
-	NV_WR32(par->riva.PMC, 0x10F0, पंचांगp_pmc);
+	tmp_pmc = NV_RD32(par->riva.PMC, 0x10F0) & 0x0000FFFF;
+	tmp_pcrt = NV_RD32(par->riva.PCRTC0, 0x081C) & 0xFFFFFFFC;
+	if(level > 0) {
+		tmp_pcrt |= 0x1;
+		tmp_pmc |= (1 << 31); /* backlight bit */
+		tmp_pmc |= riva_bl_get_level_brightness(par, level) << 16; /* level */
+	}
+	NV_WR32(par->riva.PCRTC0, 0x081C, tmp_pcrt);
+	NV_WR32(par->riva.PMC, 0x10F0, tmp_pmc);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा backlight_ops riva_bl_ops = अणु
+static const struct backlight_ops riva_bl_ops = {
 	.update_status	= riva_bl_update_status,
-पूर्ण;
+};
 
-अटल व्योम riva_bl_init(काष्ठा riva_par *par)
-अणु
-	काष्ठा backlight_properties props;
-	काष्ठा fb_info *info = pci_get_drvdata(par->pdev);
-	काष्ठा backlight_device *bd;
-	अक्षर name[12];
+static void riva_bl_init(struct riva_par *par)
+{
+	struct backlight_properties props;
+	struct fb_info *info = pci_get_drvdata(par->pdev);
+	struct backlight_device *bd;
+	char name[12];
 
-	अगर (!par->FlatPanel)
-		वापस;
+	if (!par->FlatPanel)
+		return;
 
-#अगर_घोषित CONFIG_PMAC_BACKLIGHT
-	अगर (!machine_is(घातermac) ||
+#ifdef CONFIG_PMAC_BACKLIGHT
+	if (!machine_is(powermac) ||
 	    !pmac_has_backlight_type("mnca"))
-		वापस;
-#पूर्ण_अगर
+		return;
+#endif
 
-	snम_लिखो(name, माप(name), "rivabl%d", info->node);
+	snprintf(name, sizeof(name), "rivabl%d", info->node);
 
-	स_रखो(&props, 0, माप(काष्ठा backlight_properties));
+	memset(&props, 0, sizeof(struct backlight_properties));
 	props.type = BACKLIGHT_RAW;
 	props.max_brightness = FB_BACKLIGHT_LEVELS - 1;
-	bd = backlight_device_रेजिस्टर(name, info->dev, par, &riva_bl_ops,
+	bd = backlight_device_register(name, info->dev, par, &riva_bl_ops,
 				       &props);
-	अगर (IS_ERR(bd)) अणु
-		info->bl_dev = शून्य;
-		prपूर्णांकk(KERN_WARNING "riva: Backlight registration failed\n");
-		जाओ error;
-	पूर्ण
+	if (IS_ERR(bd)) {
+		info->bl_dev = NULL;
+		printk(KERN_WARNING "riva: Backlight registration failed\n");
+		goto error;
+	}
 
 	info->bl_dev = bd;
-	fb_bl_शेष_curve(info, 0,
+	fb_bl_default_curve(info, 0,
 		MIN_LEVEL * FB_BACKLIGHT_MAX / MAX_LEVEL,
 		FB_BACKLIGHT_MAX);
 
 	bd->props.brightness = bd->props.max_brightness;
-	bd->props.घातer = FB_BLANK_UNBLANK;
+	bd->props.power = FB_BLANK_UNBLANK;
 	backlight_update_status(bd);
 
-	prपूर्णांकk("riva: Backlight initialized (%s)\n", name);
+	printk("riva: Backlight initialized (%s)\n", name);
 
-	वापस;
+	return;
 
 error:
-	वापस;
-पूर्ण
+	return;
+}
 
-अटल व्योम riva_bl_निकास(काष्ठा fb_info *info)
-अणु
-	काष्ठा backlight_device *bd = info->bl_dev;
+static void riva_bl_exit(struct fb_info *info)
+{
+	struct backlight_device *bd = info->bl_dev;
 
-	backlight_device_unरेजिस्टर(bd);
-	prपूर्णांकk("riva: Backlight unloaded\n");
-पूर्ण
-#अन्यथा
-अटल अंतरभूत व्योम riva_bl_init(काष्ठा riva_par *par) अणुपूर्ण
-अटल अंतरभूत व्योम riva_bl_निकास(काष्ठा fb_info *info) अणुपूर्ण
-#पूर्ण_अगर /* CONFIG_FB_RIVA_BACKLIGHT */
+	backlight_device_unregister(bd);
+	printk("riva: Backlight unloaded\n");
+}
+#else
+static inline void riva_bl_init(struct riva_par *par) {}
+static inline void riva_bl_exit(struct fb_info *info) {}
+#endif /* CONFIG_FB_RIVA_BACKLIGHT */
 
 /* ------------------------------------------------------------------------- *
  *
@@ -382,80 +381,80 @@ error:
  *
  * ------------------------------------------------------------------------- */
 
-अटल अंतरभूत व्योम CRTCout(काष्ठा riva_par *par, अचिन्हित अक्षर index,
-			   अचिन्हित अक्षर val)
-अणु
+static inline void CRTCout(struct riva_par *par, unsigned char index,
+			   unsigned char val)
+{
 	VGA_WR08(par->riva.PCIO, 0x3d4, index);
 	VGA_WR08(par->riva.PCIO, 0x3d5, val);
-पूर्ण
+}
 
-अटल अंतरभूत अचिन्हित अक्षर CRTCin(काष्ठा riva_par *par,
-				   अचिन्हित अक्षर index)
-अणु
+static inline unsigned char CRTCin(struct riva_par *par,
+				   unsigned char index)
+{
 	VGA_WR08(par->riva.PCIO, 0x3d4, index);
-	वापस (VGA_RD08(par->riva.PCIO, 0x3d5));
-पूर्ण
+	return (VGA_RD08(par->riva.PCIO, 0x3d5));
+}
 
-अटल अंतरभूत व्योम GRAout(काष्ठा riva_par *par, अचिन्हित अक्षर index,
-			  अचिन्हित अक्षर val)
-अणु
+static inline void GRAout(struct riva_par *par, unsigned char index,
+			  unsigned char val)
+{
 	VGA_WR08(par->riva.PVIO, 0x3ce, index);
 	VGA_WR08(par->riva.PVIO, 0x3cf, val);
-पूर्ण
+}
 
-अटल अंतरभूत अचिन्हित अक्षर GRAin(काष्ठा riva_par *par,
-				  अचिन्हित अक्षर index)
-अणु
+static inline unsigned char GRAin(struct riva_par *par,
+				  unsigned char index)
+{
 	VGA_WR08(par->riva.PVIO, 0x3ce, index);
-	वापस (VGA_RD08(par->riva.PVIO, 0x3cf));
-पूर्ण
+	return (VGA_RD08(par->riva.PVIO, 0x3cf));
+}
 
-अटल अंतरभूत व्योम SEQout(काष्ठा riva_par *par, अचिन्हित अक्षर index,
-			  अचिन्हित अक्षर val)
-अणु
+static inline void SEQout(struct riva_par *par, unsigned char index,
+			  unsigned char val)
+{
 	VGA_WR08(par->riva.PVIO, 0x3c4, index);
 	VGA_WR08(par->riva.PVIO, 0x3c5, val);
-पूर्ण
+}
 
-अटल अंतरभूत अचिन्हित अक्षर SEQin(काष्ठा riva_par *par,
-				  अचिन्हित अक्षर index)
-अणु
+static inline unsigned char SEQin(struct riva_par *par,
+				  unsigned char index)
+{
 	VGA_WR08(par->riva.PVIO, 0x3c4, index);
-	वापस (VGA_RD08(par->riva.PVIO, 0x3c5));
-पूर्ण
+	return (VGA_RD08(par->riva.PVIO, 0x3c5));
+}
 
-अटल अंतरभूत व्योम ATTRout(काष्ठा riva_par *par, अचिन्हित अक्षर index,
-			   अचिन्हित अक्षर val)
-अणु
+static inline void ATTRout(struct riva_par *par, unsigned char index,
+			   unsigned char val)
+{
 	VGA_WR08(par->riva.PCIO, 0x3c0, index);
 	VGA_WR08(par->riva.PCIO, 0x3c0, val);
-पूर्ण
+}
 
-अटल अंतरभूत अचिन्हित अक्षर ATTRin(काष्ठा riva_par *par,
-				   अचिन्हित अक्षर index)
-अणु
+static inline unsigned char ATTRin(struct riva_par *par,
+				   unsigned char index)
+{
 	VGA_WR08(par->riva.PCIO, 0x3c0, index);
-	वापस (VGA_RD08(par->riva.PCIO, 0x3c1));
-पूर्ण
+	return (VGA_RD08(par->riva.PCIO, 0x3c1));
+}
 
-अटल अंतरभूत व्योम MISCout(काष्ठा riva_par *par, अचिन्हित अक्षर val)
-अणु
+static inline void MISCout(struct riva_par *par, unsigned char val)
+{
 	VGA_WR08(par->riva.PVIO, 0x3c2, val);
-पूर्ण
+}
 
-अटल अंतरभूत अचिन्हित अक्षर MISCin(काष्ठा riva_par *par)
-अणु
-	वापस (VGA_RD08(par->riva.PVIO, 0x3cc));
-पूर्ण
+static inline unsigned char MISCin(struct riva_par *par)
+{
+	return (VGA_RD08(par->riva.PVIO, 0x3cc));
+}
 
-अटल अंतरभूत व्योम reverse_order(u32 *l)
-अणु
+static inline void reverse_order(u32 *l)
+{
 	u8 *a = (u8 *)l;
 	a[0] = bitrev8(a[0]);
 	a[1] = bitrev8(a[1]);
 	a[2] = bitrev8(a[2]);
 	a[3] = bitrev8(a[3]);
-पूर्ण
+}
 
 /* ------------------------------------------------------------------------- *
  *
@@ -465,55 +464,55 @@ error:
 
 /**
  * rivafb_load_cursor_image - load cursor image to hardware
- * @data8: address to monochrome biपंचांगap (1 = क्रमeground color, 0 = background)
- * @par:  poपूर्णांकer to निजी data
+ * @data8: address to monochrome bitmap (1 = foreground color, 0 = background)
+ * @par:  pointer to private data
  * @w:    width of cursor image in pixels
  * @h:    height of cursor image in scanlines
  * @bg:   background color (ARGB1555) - alpha bit determines opacity
- * @fg:   क्रमeground color (ARGB1555)
+ * @fg:   foreground color (ARGB1555)
  *
  * DESCRIPTiON:
- * Loads cursor image based on a monochrome source and mask biपंचांगap.  The
- * image bits determines the color of the pixel, 0 क्रम background, 1 क्रम
- * क्रमeground.  Only the affected region (as determined by @w and @h 
+ * Loads cursor image based on a monochrome source and mask bitmap.  The
+ * image bits determines the color of the pixel, 0 for background, 1 for
+ * foreground.  Only the affected region (as determined by @w and @h 
  * parameters) will be updated.
  *
  * CALLED FROM:
  * rivafb_cursor()
  */
-अटल व्योम rivafb_load_cursor_image(काष्ठा riva_par *par, u8 *data8,
+static void rivafb_load_cursor_image(struct riva_par *par, u8 *data8,
 				     u16 bg, u16 fg, u32 w, u32 h)
-अणु
-	पूर्णांक i, j, k = 0;
-	u32 b, पंचांगp;
+{
+	int i, j, k = 0;
+	u32 b, tmp;
 	u32 *data = (u32 *)data8;
 	bg = le16_to_cpu(bg);
 	fg = le16_to_cpu(fg);
 
 	w = (w + 1) & ~1;
 
-	क्रम (i = 0; i < h; i++) अणु
+	for (i = 0; i < h; i++) {
 		b = *data++;
 		reverse_order(&b);
 		
-		क्रम (j = 0; j < w/2; j++) अणु
-			पंचांगp = 0;
-#अगर defined (__BIG_ENDIAN)
-			पंचांगp = (b & (1 << 31)) ? fg << 16 : bg << 16;
+		for (j = 0; j < w/2; j++) {
+			tmp = 0;
+#if defined (__BIG_ENDIAN)
+			tmp = (b & (1 << 31)) ? fg << 16 : bg << 16;
 			b <<= 1;
-			पंचांगp |= (b & (1 << 31)) ? fg : bg;
+			tmp |= (b & (1 << 31)) ? fg : bg;
 			b <<= 1;
-#अन्यथा
-			पंचांगp = (b & 1) ? fg : bg;
+#else
+			tmp = (b & 1) ? fg : bg;
 			b >>= 1;
-			पंचांगp |= (b & 1) ? fg << 16 : bg << 16;
+			tmp |= (b & 1) ? fg << 16 : bg << 16;
 			b >>= 1;
-#पूर्ण_अगर
-			ग_लिखोl(पंचांगp, &par->riva.CURSOR[k++]);
-		पूर्ण
+#endif
+			writel(tmp, &par->riva.CURSOR[k++]);
+		}
 		k += (MAX_CURS - w)/2;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /* ------------------------------------------------------------------------- *
  *
@@ -523,57 +522,57 @@ error:
 
 /**
  * riva_wclut - set CLUT entry
- * @chip: poपूर्णांकer to RIVA_HW_INST object
- * @regnum: रेजिस्टर number
+ * @chip: pointer to RIVA_HW_INST object
+ * @regnum: register number
  * @red: red component
  * @green: green component
  * @blue: blue component
  *
  * DESCRIPTION:
- * Sets color रेजिस्टर @regnum.
+ * Sets color register @regnum.
  *
  * CALLED FROM:
  * rivafb_setcolreg()
  */
-अटल व्योम riva_wclut(RIVA_HW_INST *chip,
-		       अचिन्हित अक्षर regnum, अचिन्हित अक्षर red,
-		       अचिन्हित अक्षर green, अचिन्हित अक्षर blue)
-अणु
+static void riva_wclut(RIVA_HW_INST *chip,
+		       unsigned char regnum, unsigned char red,
+		       unsigned char green, unsigned char blue)
+{
 	VGA_WR08(chip->PDIO, 0x3c8, regnum);
 	VGA_WR08(chip->PDIO, 0x3c9, red);
 	VGA_WR08(chip->PDIO, 0x3c9, green);
 	VGA_WR08(chip->PDIO, 0x3c9, blue);
-पूर्ण
+}
 
 /**
- * riva_rclut - पढ़ो fromCLUT रेजिस्टर
- * @chip: poपूर्णांकer to RIVA_HW_INST object
- * @regnum: रेजिस्टर number
+ * riva_rclut - read fromCLUT register
+ * @chip: pointer to RIVA_HW_INST object
+ * @regnum: register number
  * @red: red component
  * @green: green component
  * @blue: blue component
  *
  * DESCRIPTION:
- * Reads red, green, and blue from color रेजिस्टर @regnum.
+ * Reads red, green, and blue from color register @regnum.
  *
  * CALLED FROM:
  * rivafb_setcolreg()
  */
-अटल व्योम riva_rclut(RIVA_HW_INST *chip,
-		       अचिन्हित अक्षर regnum, अचिन्हित अक्षर *red,
-		       अचिन्हित अक्षर *green, अचिन्हित अक्षर *blue)
-अणु
+static void riva_rclut(RIVA_HW_INST *chip,
+		       unsigned char regnum, unsigned char *red,
+		       unsigned char *green, unsigned char *blue)
+{
 	
 	VGA_WR08(chip->PDIO, 0x3c7, regnum);
 	*red = VGA_RD08(chip->PDIO, 0x3c9);
 	*green = VGA_RD08(chip->PDIO, 0x3c9);
 	*blue = VGA_RD08(chip->PDIO, 0x3c9);
-पूर्ण
+}
 
 /**
  * riva_save_state - saves current chip state
- * @par: poपूर्णांकer to riva_par object containing info क्रम current riva board
- * @regs: poपूर्णांकer to riva_regs object
+ * @par: pointer to riva_par object containing info for current riva board
+ * @regs: pointer to riva_regs object
  *
  * DESCRIPTION:
  * Saves current chip state to @regs.
@@ -582,9 +581,9 @@ error:
  * rivafb_probe()
  */
 /* from GGI */
-अटल व्योम riva_save_state(काष्ठा riva_par *par, काष्ठा riva_regs *regs)
-अणु
-	पूर्णांक i;
+static void riva_save_state(struct riva_par *par, struct riva_regs *regs)
+{
+	int i;
 
 	NVTRACE_ENTER();
 	par->riva.LockUnlock(&par->riva, 0);
@@ -593,24 +592,24 @@ error:
 
 	regs->misc_output = MISCin(par);
 
-	क्रम (i = 0; i < NUM_CRT_REGS; i++)
+	for (i = 0; i < NUM_CRT_REGS; i++)
 		regs->crtc[i] = CRTCin(par, i);
 
-	क्रम (i = 0; i < NUM_ATC_REGS; i++)
+	for (i = 0; i < NUM_ATC_REGS; i++)
 		regs->attr[i] = ATTRin(par, i);
 
-	क्रम (i = 0; i < NUM_GRC_REGS; i++)
+	for (i = 0; i < NUM_GRC_REGS; i++)
 		regs->gra[i] = GRAin(par, i);
 
-	क्रम (i = 0; i < NUM_SEQ_REGS; i++)
+	for (i = 0; i < NUM_SEQ_REGS; i++)
 		regs->seq[i] = SEQin(par, i);
 	NVTRACE_LEAVE();
-पूर्ण
+}
 
 /**
  * riva_load_state - loads current chip state
- * @par: poपूर्णांकer to riva_par object containing info क्रम current riva board
- * @regs: poपूर्णांकer to riva_regs object
+ * @par: pointer to riva_par object containing info for current riva board
+ * @regs: pointer to riva_regs object
  *
  * DESCRIPTION:
  * Loads chip state from @regs.
@@ -618,13 +617,13 @@ error:
  * CALLED FROM:
  * riva_load_video_mode()
  * rivafb_probe()
- * rivafb_हटाओ()
+ * rivafb_remove()
  */
 /* from GGI */
-अटल व्योम riva_load_state(काष्ठा riva_par *par, काष्ठा riva_regs *regs)
-अणु
+static void riva_load_state(struct riva_par *par, struct riva_regs *regs)
+{
 	RIVA_HW_STATE *state = &regs->ext;
-	पूर्णांक i;
+	int i;
 
 	NVTRACE_ENTER();
 	CRTCout(par, 0x11, 0x00);
@@ -635,30 +634,30 @@ error:
 
 	MISCout(par, regs->misc_output);
 
-	क्रम (i = 0; i < NUM_CRT_REGS; i++) अणु
-		चयन (i) अणु
-		हाल 0x19:
-		हाल 0x20 ... 0x40:
-			अवरोध;
-		शेष:
+	for (i = 0; i < NUM_CRT_REGS; i++) {
+		switch (i) {
+		case 0x19:
+		case 0x20 ... 0x40:
+			break;
+		default:
 			CRTCout(par, i, regs->crtc[i]);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	क्रम (i = 0; i < NUM_ATC_REGS; i++)
+	for (i = 0; i < NUM_ATC_REGS; i++)
 		ATTRout(par, i, regs->attr[i]);
 
-	क्रम (i = 0; i < NUM_GRC_REGS; i++)
+	for (i = 0; i < NUM_GRC_REGS; i++)
 		GRAout(par, i, regs->gra[i]);
 
-	क्रम (i = 0; i < NUM_SEQ_REGS; i++)
+	for (i = 0; i < NUM_SEQ_REGS; i++)
 		SEQout(par, i, regs->seq[i]);
 	NVTRACE_LEAVE();
-पूर्ण
+}
 
 /**
  * riva_load_video_mode - calculate timings
- * @info: poपूर्णांकer to fb_info object containing info क्रम current riva board
+ * @info: pointer to fb_info object containing info for current riva board
  *
  * DESCRIPTION:
  * Calculate some timings and then send em off to riva_load_state().
@@ -666,23 +665,23 @@ error:
  * CALLED FROM:
  * rivafb_set_par()
  */
-अटल पूर्णांक riva_load_video_mode(काष्ठा fb_info *info)
-अणु
-	पूर्णांक bpp, width, hDisplaySize, hDisplay, hStart,
-	    hEnd, hTotal, height, vDisplay, vStart, vEnd, vTotal, करोtClock;
-	पूर्णांक hBlankStart, hBlankEnd, vBlankStart, vBlankEnd;
-	पूर्णांक rc;
-	काष्ठा riva_par *par = info->par;
-	काष्ठा riva_regs newmode;
+static int riva_load_video_mode(struct fb_info *info)
+{
+	int bpp, width, hDisplaySize, hDisplay, hStart,
+	    hEnd, hTotal, height, vDisplay, vStart, vEnd, vTotal, dotClock;
+	int hBlankStart, hBlankEnd, vBlankStart, vBlankEnd;
+	int rc;
+	struct riva_par *par = info->par;
+	struct riva_regs newmode;
 	
 	NVTRACE_ENTER();
-	/* समय to calculate */
+	/* time to calculate */
 	rivafb_blank(FB_BLANK_NORMAL, info);
 
 	bpp = info->var.bits_per_pixel;
-	अगर (bpp == 16 && info->var.green.length == 5)
+	if (bpp == 16 && info->var.green.length == 5)
 		bpp = 15;
-	width = info->var.xres_भव;
+	width = info->var.xres_virtual;
 	hDisplaySize = info->var.xres;
 	hDisplay = (hDisplaySize / 8) - 1;
 	hStart = (hDisplaySize + info->var.right_margin) / 8 - 1;
@@ -693,7 +692,7 @@ error:
 	hBlankStart = hDisplay;
 	hBlankEnd = hTotal + 4;
 
-	height = info->var.yres_भव;
+	height = info->var.yres_virtual;
 	vDisplay = info->var.yres - 1;
 	vStart = info->var.yres + info->var.lower_margin - 1;
 	vEnd = info->var.yres + info->var.lower_margin +
@@ -702,21 +701,21 @@ error:
 		 info->var.vsync_len + info->var.upper_margin + 2;
 	vBlankStart = vDisplay;
 	vBlankEnd = vTotal + 1;
-	करोtClock = 1000000000 / info->var.pixघड़ी;
+	dotClock = 1000000000 / info->var.pixclock;
 
-	स_नकल(&newmode, &reg_ढाँचा, माप(काष्ठा riva_regs));
+	memcpy(&newmode, &reg_template, sizeof(struct riva_regs));
 
-	अगर ((info->var.vmode & FB_VMODE_MASK) == FB_VMODE_INTERLACED)
+	if ((info->var.vmode & FB_VMODE_MASK) == FB_VMODE_INTERLACED)
 		vTotal |= 1;
 
-	अगर (par->FlatPanel) अणु
+	if (par->FlatPanel) {
 		vStart = vTotal - 3;
 		vEnd = vTotal - 2;
 		vBlankStart = vStart;
 		hStart = hTotal - 3;
 		hEnd = hTotal - 2;
 		hBlankEnd = hTotal + 4;
-	पूर्ण
+	}
 
 	newmode.crtc[0x0] = Set8Bits (hTotal); 
 	newmode.crtc[0x1] = Set8Bits (hDisplay);
@@ -758,37 +757,37 @@ error:
 		| SetBitField(vStart,11:11,4:4)
 		| SetBitField(vBlankStart,11:11,6:6); 
 
-	अगर ((info->var.vmode & FB_VMODE_MASK) == FB_VMODE_INTERLACED) अणु
-		पूर्णांक पंचांगp = (hTotal >> 1) & ~1;
-		newmode.ext.पूर्णांकerlace = Set8Bits(पंचांगp);
-		newmode.ext.horiz |= SetBitField(पंचांगp, 8:8,4:4);
-	पूर्ण अन्यथा 
-		newmode.ext.पूर्णांकerlace = 0xff; /* पूर्णांकerlace off */
+	if ((info->var.vmode & FB_VMODE_MASK) == FB_VMODE_INTERLACED) {
+		int tmp = (hTotal >> 1) & ~1;
+		newmode.ext.interlace = Set8Bits(tmp);
+		newmode.ext.horiz |= SetBitField(tmp, 8:8,4:4);
+	} else 
+		newmode.ext.interlace = 0xff; /* interlace off */
 
-	अगर (par->riva.Architecture >= NV_ARCH_10)
+	if (par->riva.Architecture >= NV_ARCH_10)
 		par->riva.CURSOR = (U032 __iomem *)(info->screen_base + par->riva.CursorStart);
 
-	अगर (info->var.sync & FB_SYNC_HOR_HIGH_ACT)
+	if (info->var.sync & FB_SYNC_HOR_HIGH_ACT)
 		newmode.misc_output &= ~0x40;
-	अन्यथा
+	else
 		newmode.misc_output |= 0x40;
-	अगर (info->var.sync & FB_SYNC_VERT_HIGH_ACT)
+	if (info->var.sync & FB_SYNC_VERT_HIGH_ACT)
 		newmode.misc_output &= ~0x80;
-	अन्यथा
+	else
 		newmode.misc_output |= 0x80;	
 
 	rc = CalcStateExt(&par->riva, &newmode.ext, par->pdev, bpp, width,
-			  hDisplaySize, height, करोtClock);
-	अगर (rc)
-		जाओ out;
+			  hDisplaySize, height, dotClock);
+	if (rc)
+		goto out;
 
 	newmode.ext.scale = NV_RD32(par->riva.PRAMDAC, 0x00000848) &
 		0xfff000ff;
-	अगर (par->FlatPanel == 1) अणु
+	if (par->FlatPanel == 1) {
 		newmode.ext.pixel |= (1 << 7);
 		newmode.ext.scale |= (1 << 8);
-	पूर्ण
-	अगर (par->SecondCRTC) अणु
+	}
+	if (par->SecondCRTC) {
 		newmode.ext.head  = NV_RD32(par->riva.PCRTC0, 0x00000860) &
 			~0x00001000;
 		newmode.ext.head2 = NV_RD32(par->riva.PCRTC0, 0x00002860) |
@@ -796,40 +795,40 @@ error:
 		newmode.ext.crtcOwner = 3;
 		newmode.ext.pllsel |= 0x20000800;
 		newmode.ext.vpll2 = newmode.ext.vpll;
-	पूर्ण अन्यथा अगर (par->riva.twoHeads) अणु
+	} else if (par->riva.twoHeads) {
 		newmode.ext.head  =  NV_RD32(par->riva.PCRTC0, 0x00000860) |
 			0x00001000;
 		newmode.ext.head2 =  NV_RD32(par->riva.PCRTC0, 0x00002860) &
 			~0x00001000;
 		newmode.ext.crtcOwner = 0;
 		newmode.ext.vpll2 = NV_RD32(par->riva.PRAMDAC0, 0x00000520);
-	पूर्ण
-	अगर (par->FlatPanel == 1) अणु
+	}
+	if (par->FlatPanel == 1) {
 		newmode.ext.pixel |= (1 << 7);
 		newmode.ext.scale |= (1 << 8);
-	पूर्ण
+	}
 	newmode.ext.cursorConfig = 0x02000100;
 	par->current_state = newmode;
 	riva_load_state(par, &par->current_state);
-	par->riva.LockUnlock(&par->riva, 0); /* important क्रम HW cursor */
+	par->riva.LockUnlock(&par->riva, 0); /* important for HW cursor */
 
 out:
 	rivafb_blank(FB_BLANK_UNBLANK, info);
 	NVTRACE_LEAVE();
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल व्योम riva_update_var(काष्ठा fb_var_screeninfo *var,
-			    स्थिर काष्ठा fb_videomode *modedb)
-अणु
+static void riva_update_var(struct fb_var_screeninfo *var,
+			    const struct fb_videomode *modedb)
+{
 	NVTRACE_ENTER();
-	var->xres = var->xres_भव = modedb->xres;
+	var->xres = var->xres_virtual = modedb->xres;
 	var->yres = modedb->yres;
-        अगर (var->yres_भव < var->yres)
-	    var->yres_भव = var->yres;
+        if (var->yres_virtual < var->yres)
+	    var->yres_virtual = var->yres;
         var->xoffset = var->yoffset = 0;
-        var->pixघड़ी = modedb->pixघड़ी;
+        var->pixclock = modedb->pixclock;
         var->left_margin = modedb->left_margin;
         var->right_margin = modedb->right_margin;
         var->upper_margin = modedb->upper_margin;
@@ -839,11 +838,11 @@ out:
         var->sync = modedb->sync;
         var->vmode = modedb->vmode;
 	NVTRACE_LEAVE();
-पूर्ण
+}
 
 /**
- * rivafb_करो_maximize - 
- * @info: poपूर्णांकer to fb_info object containing info क्रम current riva board
+ * rivafb_do_maximize - 
+ * @info: pointer to fb_info object containing info for current riva board
  * @var: standard kernel fb changeable data
  * @nom: nom
  * @den: den
@@ -858,132 +857,132 @@ out:
  * CALLED FROM:
  * rivafb_check_var()
  */
-अटल पूर्णांक rivafb_करो_maximize(काष्ठा fb_info *info,
-			      काष्ठा fb_var_screeninfo *var,
-			      पूर्णांक nom, पूर्णांक den)
-अणु
-	अटल काष्ठा अणु
-		पूर्णांक xres, yres;
-	पूर्ण modes[] = अणु
-		अणु1600, 1280पूर्ण,
-		अणु1280, 1024पूर्ण,
-		अणु1024, 768पूर्ण,
-		अणु800, 600पूर्ण,
-		अणु640, 480पूर्ण,
-		अणु-1, -1पूर्ण
-	पूर्ण;
-	पूर्णांक i;
+static int rivafb_do_maximize(struct fb_info *info,
+			      struct fb_var_screeninfo *var,
+			      int nom, int den)
+{
+	static struct {
+		int xres, yres;
+	} modes[] = {
+		{1600, 1280},
+		{1280, 1024},
+		{1024, 768},
+		{800, 600},
+		{640, 480},
+		{-1, -1}
+	};
+	int i;
 
 	NVTRACE_ENTER();
-	/* use highest possible भव resolution */
-	अगर (var->xres_भव == -1 && var->yres_भव == -1) अणु
-		prपूर्णांकk(KERN_WARNING PFX
+	/* use highest possible virtual resolution */
+	if (var->xres_virtual == -1 && var->yres_virtual == -1) {
+		printk(KERN_WARNING PFX
 		       "using maximum available virtual resolution\n");
-		क्रम (i = 0; modes[i].xres != -1; i++) अणु
-			अगर (modes[i].xres * nom / den * modes[i].yres <
+		for (i = 0; modes[i].xres != -1; i++) {
+			if (modes[i].xres * nom / den * modes[i].yres <
 			    info->fix.smem_len)
-				अवरोध;
-		पूर्ण
-		अगर (modes[i].xres == -1) अणु
-			prपूर्णांकk(KERN_ERR PFX
+				break;
+		}
+		if (modes[i].xres == -1) {
+			printk(KERN_ERR PFX
 			       "could not find a virtual resolution that fits into video memory!!\n");
 			NVTRACE("EXIT - EINVAL error\n");
-			वापस -EINVAL;
-		पूर्ण
-		var->xres_भव = modes[i].xres;
-		var->yres_भव = modes[i].yres;
+			return -EINVAL;
+		}
+		var->xres_virtual = modes[i].xres;
+		var->yres_virtual = modes[i].yres;
 
-		prपूर्णांकk(KERN_INFO PFX
+		printk(KERN_INFO PFX
 		       "virtual resolution set to maximum of %dx%d\n",
-		       var->xres_भव, var->yres_भव);
-	पूर्ण अन्यथा अगर (var->xres_भव == -1) अणु
-		var->xres_भव = (info->fix.smem_len * den /
-			(nom * var->yres_भव)) & ~15;
-		prपूर्णांकk(KERN_WARNING PFX
-		       "setting virtual X resolution to %d\n", var->xres_भव);
-	पूर्ण अन्यथा अगर (var->yres_भव == -1) अणु
-		var->xres_भव = (var->xres_भव + 15) & ~15;
-		var->yres_भव = info->fix.smem_len * den /
-			(nom * var->xres_भव);
-		prपूर्णांकk(KERN_WARNING PFX
-		       "setting virtual Y resolution to %d\n", var->yres_भव);
-	पूर्ण अन्यथा अणु
-		var->xres_भव = (var->xres_भव + 15) & ~15;
-		अगर (var->xres_भव * nom / den * var->yres_भव > info->fix.smem_len) अणु
-			prपूर्णांकk(KERN_ERR PFX
+		       var->xres_virtual, var->yres_virtual);
+	} else if (var->xres_virtual == -1) {
+		var->xres_virtual = (info->fix.smem_len * den /
+			(nom * var->yres_virtual)) & ~15;
+		printk(KERN_WARNING PFX
+		       "setting virtual X resolution to %d\n", var->xres_virtual);
+	} else if (var->yres_virtual == -1) {
+		var->xres_virtual = (var->xres_virtual + 15) & ~15;
+		var->yres_virtual = info->fix.smem_len * den /
+			(nom * var->xres_virtual);
+		printk(KERN_WARNING PFX
+		       "setting virtual Y resolution to %d\n", var->yres_virtual);
+	} else {
+		var->xres_virtual = (var->xres_virtual + 15) & ~15;
+		if (var->xres_virtual * nom / den * var->yres_virtual > info->fix.smem_len) {
+			printk(KERN_ERR PFX
 			       "mode %dx%dx%d rejected...resolution too high to fit into video memory!\n",
 			       var->xres, var->yres, var->bits_per_pixel);
 			NVTRACE("EXIT - EINVAL error\n");
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 	
-	अगर (var->xres_भव * nom / den >= 8192) अणु
-		prपूर्णांकk(KERN_WARNING PFX
+	if (var->xres_virtual * nom / den >= 8192) {
+		printk(KERN_WARNING PFX
 		       "virtual X resolution (%d) is too high, lowering to %d\n",
-		       var->xres_भव, 8192 * den / nom - 16);
-		var->xres_भव = 8192 * den / nom - 16;
-	पूर्ण
+		       var->xres_virtual, 8192 * den / nom - 16);
+		var->xres_virtual = 8192 * den / nom - 16;
+	}
 	
-	अगर (var->xres_भव < var->xres) अणु
-		prपूर्णांकk(KERN_ERR PFX
-		       "virtual X resolution (%d) is smaller than real\n", var->xres_भव);
-		वापस -EINVAL;
-	पूर्ण
+	if (var->xres_virtual < var->xres) {
+		printk(KERN_ERR PFX
+		       "virtual X resolution (%d) is smaller than real\n", var->xres_virtual);
+		return -EINVAL;
+	}
 
-	अगर (var->yres_भव < var->yres) अणु
-		prपूर्णांकk(KERN_ERR PFX
-		       "virtual Y resolution (%d) is smaller than real\n", var->yres_भव);
-		वापस -EINVAL;
-	पूर्ण
-	अगर (var->yres_भव > 0x7fff/nom)
-		var->yres_भव = 0x7fff/nom;
-	अगर (var->xres_भव > 0x7fff/nom)
-		var->xres_भव = 0x7fff/nom;
+	if (var->yres_virtual < var->yres) {
+		printk(KERN_ERR PFX
+		       "virtual Y resolution (%d) is smaller than real\n", var->yres_virtual);
+		return -EINVAL;
+	}
+	if (var->yres_virtual > 0x7fff/nom)
+		var->yres_virtual = 0x7fff/nom;
+	if (var->xres_virtual > 0x7fff/nom)
+		var->xres_virtual = 0x7fff/nom;
 	NVTRACE_LEAVE();
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम
-riva_set_pattern(काष्ठा riva_par *par, पूर्णांक clr0, पूर्णांक clr1, पूर्णांक pat0, पूर्णांक pat1)
-अणु
+static void
+riva_set_pattern(struct riva_par *par, int clr0, int clr1, int pat0, int pat1)
+{
 	RIVA_FIFO_FREE(par->riva, Patt, 4);
 	NV_WR32(&par->riva.Patt->Color0, 0, clr0);
 	NV_WR32(&par->riva.Patt->Color1, 0, clr1);
 	NV_WR32(par->riva.Patt->Monochrome, 0, pat0);
 	NV_WR32(par->riva.Patt->Monochrome, 4, pat1);
-पूर्ण
+}
 
 /* acceleration routines */
-अटल अंतरभूत व्योम रुको_क्रम_idle(काष्ठा riva_par *par)
-अणु
-	जबतक (par->riva.Busy(&par->riva));
-पूर्ण
+static inline void wait_for_idle(struct riva_par *par)
+{
+	while (par->riva.Busy(&par->riva));
+}
 
 /*
- * Set ROP.  Translate X rop पूर्णांकo ROP3.  Internal routine.
+ * Set ROP.  Translate X rop into ROP3.  Internal routine.
  */
-अटल व्योम
-riva_set_rop_solid(काष्ठा riva_par *par, पूर्णांक rop)
-अणु
+static void
+riva_set_rop_solid(struct riva_par *par, int rop)
+{
 	riva_set_pattern(par, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF);
         RIVA_FIFO_FREE(par->riva, Rop, 1);
         NV_WR32(&par->riva.Rop->Rop3, 0, rop);
 
-पूर्ण
+}
 
-अटल व्योम riva_setup_accel(काष्ठा fb_info *info)
-अणु
-	काष्ठा riva_par *par = info->par;
+static void riva_setup_accel(struct fb_info *info)
+{
+	struct riva_par *par = info->par;
 
 	RIVA_FIFO_FREE(par->riva, Clip, 2);
 	NV_WR32(&par->riva.Clip->TopLeft, 0, 0x0);
 	NV_WR32(&par->riva.Clip->WidthHeight, 0,
-		(info->var.xres_भव & 0xffff) |
-		(info->var.yres_भव << 16));
+		(info->var.xres_virtual & 0xffff) |
+		(info->var.yres_virtual << 16));
 	riva_set_rop_solid(par, 0xcc);
-	रुको_क्रम_idle(par);
-पूर्ण
+	wait_for_idle(par);
+}
 
 /**
  * riva_get_cmap_len - query current color map length
@@ -998,26 +997,26 @@ riva_set_rop_solid(काष्ठा riva_par *par, पूर्णांक ro
  * CALLED FROM:
  * rivafb_setcolreg()
  */
-अटल पूर्णांक riva_get_cmap_len(स्थिर काष्ठा fb_var_screeninfo *var)
-अणु
-	पूर्णांक rc = 256;		/* reasonable शेष */
+static int riva_get_cmap_len(const struct fb_var_screeninfo *var)
+{
+	int rc = 256;		/* reasonable default */
 
-	चयन (var->green.length) अणु
-	हाल 8:
+	switch (var->green.length) {
+	case 8:
 		rc = 256;	/* 256 entries (2^8), 8 bpp and RGB8888 */
-		अवरोध;
-	हाल 5:
+		break;
+	case 5:
 		rc = 32;	/* 32 entries (2^5), 16 bpp, RGB555 */
-		अवरोध;
-	हाल 6:
+		break;
+	case 6:
 		rc = 64;	/* 64 entries (2^6), 16 bpp, RGB565 */
-		अवरोध;		
-	शेष:
+		break;		
+	default:
 		/* should not occur */
-		अवरोध;
-	पूर्ण
-	वापस rc;
-पूर्ण
+		break;
+	}
+	return rc;
+}
 
 /* ------------------------------------------------------------------------- *
  *
@@ -1025,82 +1024,82 @@ riva_set_rop_solid(काष्ठा riva_par *par, पूर्णांक ro
  *
  * ------------------------------------------------------------------------- */
 
-अटल पूर्णांक rivafb_खोलो(काष्ठा fb_info *info, पूर्णांक user)
-अणु
-	काष्ठा riva_par *par = info->par;
+static int rivafb_open(struct fb_info *info, int user)
+{
+	struct riva_par *par = info->par;
 
 	NVTRACE_ENTER();
-	mutex_lock(&par->खोलो_lock);
-	अगर (!par->ref_count) अणु
-#अगर_घोषित CONFIG_X86
-		स_रखो(&par->state, 0, माप(काष्ठा vgastate));
+	mutex_lock(&par->open_lock);
+	if (!par->ref_count) {
+#ifdef CONFIG_X86
+		memset(&par->state, 0, sizeof(struct vgastate));
 		par->state.flags = VGA_SAVE_MODE  | VGA_SAVE_FONTS;
-		/* save the DAC क्रम Riva128 */
-		अगर (par->riva.Architecture == NV_ARCH_03)
+		/* save the DAC for Riva128 */
+		if (par->riva.Architecture == NV_ARCH_03)
 			par->state.flags |= VGA_SAVE_CMAP;
 		save_vga(&par->state);
-#पूर्ण_अगर
+#endif
 		/* vgaHWunlock() + riva unlock (0x7F) */
 		CRTCout(par, 0x11, 0xFF);
 		par->riva.LockUnlock(&par->riva, 0);
 	
 		riva_save_state(par, &par->initial_state);
-	पूर्ण
+	}
 	par->ref_count++;
-	mutex_unlock(&par->खोलो_lock);
+	mutex_unlock(&par->open_lock);
 	NVTRACE_LEAVE();
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rivafb_release(काष्ठा fb_info *info, पूर्णांक user)
-अणु
-	काष्ठा riva_par *par = info->par;
+static int rivafb_release(struct fb_info *info, int user)
+{
+	struct riva_par *par = info->par;
 
 	NVTRACE_ENTER();
-	mutex_lock(&par->खोलो_lock);
-	अगर (!par->ref_count) अणु
-		mutex_unlock(&par->खोलो_lock);
-		वापस -EINVAL;
-	पूर्ण
-	अगर (par->ref_count == 1) अणु
+	mutex_lock(&par->open_lock);
+	if (!par->ref_count) {
+		mutex_unlock(&par->open_lock);
+		return -EINVAL;
+	}
+	if (par->ref_count == 1) {
 		par->riva.LockUnlock(&par->riva, 0);
 		par->riva.LoadStateExt(&par->riva, &par->initial_state.ext);
 		riva_load_state(par, &par->initial_state);
-#अगर_घोषित CONFIG_X86
+#ifdef CONFIG_X86
 		restore_vga(&par->state);
-#पूर्ण_अगर
+#endif
 		par->riva.LockUnlock(&par->riva, 1);
-	पूर्ण
+	}
 	par->ref_count--;
-	mutex_unlock(&par->खोलो_lock);
+	mutex_unlock(&par->open_lock);
 	NVTRACE_LEAVE();
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rivafb_check_var(काष्ठा fb_var_screeninfo *var, काष्ठा fb_info *info)
-अणु
-	स्थिर काष्ठा fb_videomode *mode;
-	काष्ठा riva_par *par = info->par;
-	पूर्णांक nom, den;		/* translating from pixels->bytes */
-	पूर्णांक mode_valid = 0;
+static int rivafb_check_var(struct fb_var_screeninfo *var, struct fb_info *info)
+{
+	const struct fb_videomode *mode;
+	struct riva_par *par = info->par;
+	int nom, den;		/* translating from pixels->bytes */
+	int mode_valid = 0;
 	
 	NVTRACE_ENTER();
-	चयन (var->bits_per_pixel) अणु
-	हाल 1 ... 8:
+	switch (var->bits_per_pixel) {
+	case 1 ... 8:
 		var->red.offset = var->green.offset = var->blue.offset = 0;
 		var->red.length = var->green.length = var->blue.length = 8;
 		var->bits_per_pixel = 8;
 		nom = den = 1;
-		अवरोध;
-	हाल 9 ... 15:
+		break;
+	case 9 ... 15:
 		var->green.length = 5;
 		fallthrough;
-	हाल 16:
+	case 16:
 		var->bits_per_pixel = 16;
 		/* The Riva128 supports RGB555 only */
-		अगर (par->riva.Architecture == NV_ARCH_03)
+		if (par->riva.Architecture == NV_ARCH_03)
 			var->green.length = 5;
-		अगर (var->green.length == 5) अणु
+		if (var->green.length == 5) {
 			/* 0rrrrrgg gggbbbbb */
 			var->red.offset = 10;
 			var->green.offset = 5;
@@ -1108,7 +1107,7 @@ riva_set_rop_solid(काष्ठा riva_par *par, पूर्णांक ro
 			var->red.length = 5;
 			var->green.length = 5;
 			var->blue.length = 5;
-		पूर्ण अन्यथा अणु
+		} else {
 			/* rrrrrggg gggbbbbb */
 			var->red.offset = 11;
 			var->green.offset = 5;
@@ -1116,11 +1115,11 @@ riva_set_rop_solid(काष्ठा riva_par *par, पूर्णांक ro
 			var->red.length = 5;
 			var->green.length = 6;
 			var->blue.length = 5;
-		पूर्ण
+		}
 		nom = 2;
 		den = 1;
-		अवरोध;
-	हाल 17 ... 32:
+		break;
+	case 17 ... 32:
 		var->red.length = var->green.length = var->blue.length = 8;
 		var->bits_per_pixel = 32;
 		var->red.offset = 16;
@@ -1128,310 +1127,310 @@ riva_set_rop_solid(काष्ठा riva_par *par, पूर्णांक ro
 		var->blue.offset = 0;
 		nom = 4;
 		den = 1;
-		अवरोध;
-	शेष:
-		prपूर्णांकk(KERN_ERR PFX
+		break;
+	default:
+		printk(KERN_ERR PFX
 		       "mode %dx%dx%d rejected...color depth not supported.\n",
 		       var->xres, var->yres, var->bits_per_pixel);
 		NVTRACE("EXIT, returning -EINVAL\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (!stricपंचांगode) अणु
-		अगर (!info->monspecs.vfmax || !info->monspecs.hfmax ||
+	if (!strictmode) {
+		if (!info->monspecs.vfmax || !info->monspecs.hfmax ||
 		    !info->monspecs.dclkmax || !fb_validate_mode(var, info))
 			mode_valid = 1;
-	पूर्ण
+	}
 
-	/* calculate modeline अगर supported by monitor */
-	अगर (!mode_valid && info->monspecs.gtf) अणु
-		अगर (!fb_get_mode(FB_MAXTIMINGS, 0, var, info))
+	/* calculate modeline if supported by monitor */
+	if (!mode_valid && info->monspecs.gtf) {
+		if (!fb_get_mode(FB_MAXTIMINGS, 0, var, info))
 			mode_valid = 1;
-	पूर्ण
+	}
 
-	अगर (!mode_valid) अणु
+	if (!mode_valid) {
 		mode = fb_find_best_mode(var, &info->modelist);
-		अगर (mode) अणु
+		if (mode) {
 			riva_update_var(var, mode);
 			mode_valid = 1;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (!mode_valid && info->monspecs.modedb_len)
-		वापस -EINVAL;
+	if (!mode_valid && info->monspecs.modedb_len)
+		return -EINVAL;
 
-	अगर (var->xres_भव < var->xres)
-		var->xres_भव = var->xres;
-	अगर (var->yres_भव <= var->yres)
-		var->yres_भव = -1;
-	अगर (rivafb_करो_maximize(info, var, nom, den) < 0)
-		वापस -EINVAL;
+	if (var->xres_virtual < var->xres)
+		var->xres_virtual = var->xres;
+	if (var->yres_virtual <= var->yres)
+		var->yres_virtual = -1;
+	if (rivafb_do_maximize(info, var, nom, den) < 0)
+		return -EINVAL;
 
-	/* truncate xoffset and yoffset to maximum अगर too high */
-	अगर (var->xoffset > var->xres_भव - var->xres)
-		var->xoffset = var->xres_भव - var->xres - 1;
+	/* truncate xoffset and yoffset to maximum if too high */
+	if (var->xoffset > var->xres_virtual - var->xres)
+		var->xoffset = var->xres_virtual - var->xres - 1;
 
-	अगर (var->yoffset > var->yres_भव - var->yres)
-		var->yoffset = var->yres_भव - var->yres - 1;
+	if (var->yoffset > var->yres_virtual - var->yres)
+		var->yoffset = var->yres_virtual - var->yres - 1;
 
 	var->red.msb_right = 
 	    var->green.msb_right =
 	    var->blue.msb_right =
 	    var->transp.offset = var->transp.length = var->transp.msb_right = 0;
 	NVTRACE_LEAVE();
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rivafb_set_par(काष्ठा fb_info *info)
-अणु
-	काष्ठा riva_par *par = info->par;
-	पूर्णांक rc = 0;
+static int rivafb_set_par(struct fb_info *info)
+{
+	struct riva_par *par = info->par;
+	int rc = 0;
 
 	NVTRACE_ENTER();
 	/* vgaHWunlock() + riva unlock (0x7F) */
 	CRTCout(par, 0x11, 0xFF);
 	par->riva.LockUnlock(&par->riva, 0);
 	rc = riva_load_video_mode(info);
-	अगर (rc)
-		जाओ out;
-	अगर(!(info->flags & FBINFO_HWACCEL_DISABLED))
+	if (rc)
+		goto out;
+	if(!(info->flags & FBINFO_HWACCEL_DISABLED))
 		riva_setup_accel(info);
 	
 	par->cursor_reset = 1;
-	info->fix.line_length = (info->var.xres_भव * (info->var.bits_per_pixel >> 3));
+	info->fix.line_length = (info->var.xres_virtual * (info->var.bits_per_pixel >> 3));
 	info->fix.visual = (info->var.bits_per_pixel == 8) ?
-				FB_VISUAL_PSEUDOCOLOR : FB_VISUAL_सूचीECTCOLOR;
+				FB_VISUAL_PSEUDOCOLOR : FB_VISUAL_DIRECTCOLOR;
 
-	अगर (info->flags & FBINFO_HWACCEL_DISABLED)
+	if (info->flags & FBINFO_HWACCEL_DISABLED)
 		info->pixmap.scan_align = 1;
-	अन्यथा
+	else
 		info->pixmap.scan_align = 4;
 
 out:
 	NVTRACE_LEAVE();
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /**
  * rivafb_pan_display
  * @var: standard kernel fb changeable data
- * @info: poपूर्णांकer to fb_info object containing info क्रम current riva board
+ * @info: pointer to fb_info object containing info for current riva board
  *
  * DESCRIPTION:
  * Pan (or wrap, depending on the `vmode' field) the display using the
- * `xoffset' and `yoffset' fields of the `var' काष्ठाure.
- * If the values करोn't fit, वापस -EINVAL.
+ * `xoffset' and `yoffset' fields of the `var' structure.
+ * If the values don't fit, return -EINVAL.
  *
  * This call looks only at xoffset, yoffset and the FB_VMODE_YWRAP flag
  */
-अटल पूर्णांक rivafb_pan_display(काष्ठा fb_var_screeninfo *var,
-			      काष्ठा fb_info *info)
-अणु
-	काष्ठा riva_par *par = info->par;
-	अचिन्हित पूर्णांक base;
+static int rivafb_pan_display(struct fb_var_screeninfo *var,
+			      struct fb_info *info)
+{
+	struct riva_par *par = info->par;
+	unsigned int base;
 
 	NVTRACE_ENTER();
 	base = var->yoffset * info->fix.line_length + var->xoffset;
 	par->riva.SetStartAddress(&par->riva, base);
 	NVTRACE_LEAVE();
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rivafb_blank(पूर्णांक blank, काष्ठा fb_info *info)
-अणु
-	काष्ठा riva_par *par= info->par;
-	अचिन्हित अक्षर पंचांगp, vesa;
+static int rivafb_blank(int blank, struct fb_info *info)
+{
+	struct riva_par *par= info->par;
+	unsigned char tmp, vesa;
 
-	पंचांगp = SEQin(par, 0x01) & ~0x20;	/* screen on/off */
+	tmp = SEQin(par, 0x01) & ~0x20;	/* screen on/off */
 	vesa = CRTCin(par, 0x1a) & ~0xc0;	/* sync on/off */
 
 	NVTRACE_ENTER();
 
-	अगर (blank)
-		पंचांगp |= 0x20;
+	if (blank)
+		tmp |= 0x20;
 
-	चयन (blank) अणु
-	हाल FB_BLANK_UNBLANK:
-	हाल FB_BLANK_NORMAL:
-		अवरोध;
-	हाल FB_BLANK_VSYNC_SUSPEND:
+	switch (blank) {
+	case FB_BLANK_UNBLANK:
+	case FB_BLANK_NORMAL:
+		break;
+	case FB_BLANK_VSYNC_SUSPEND:
 		vesa |= 0x80;
-		अवरोध;
-	हाल FB_BLANK_HSYNC_SUSPEND:
+		break;
+	case FB_BLANK_HSYNC_SUSPEND:
 		vesa |= 0x40;
-		अवरोध;
-	हाल FB_BLANK_POWERDOWN:
+		break;
+	case FB_BLANK_POWERDOWN:
 		vesa |= 0xc0;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	SEQout(par, 0x01, पंचांगp);
+	SEQout(par, 0x01, tmp);
 	CRTCout(par, 0x1a, vesa);
 
 	NVTRACE_LEAVE();
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * rivafb_setcolreg
- * @regno: रेजिस्टर index
+ * @regno: register index
  * @red: red component
  * @green: green component
  * @blue: blue component
  * @transp: transparency
- * @info: poपूर्णांकer to fb_info object containing info क्रम current riva board
+ * @info: pointer to fb_info object containing info for current riva board
  *
  * DESCRIPTION:
- * Set a single color रेजिस्टर. The values supplied have a 16 bit
+ * Set a single color register. The values supplied have a 16 bit
  * magnitude.
  *
  * RETURNS:
- * Return != 0 क्रम invalid regno.
+ * Return != 0 for invalid regno.
  *
  * CALLED FROM:
  * fbcmap.c:fb_set_cmap()
  */
-अटल पूर्णांक rivafb_setcolreg(अचिन्हित regno, अचिन्हित red, अचिन्हित green,
-			  अचिन्हित blue, अचिन्हित transp,
-			  काष्ठा fb_info *info)
-अणु
-	काष्ठा riva_par *par = info->par;
+static int rivafb_setcolreg(unsigned regno, unsigned red, unsigned green,
+			  unsigned blue, unsigned transp,
+			  struct fb_info *info)
+{
+	struct riva_par *par = info->par;
 	RIVA_HW_INST *chip = &par->riva;
-	पूर्णांक i;
+	int i;
 
-	अगर (regno >= riva_get_cmap_len(&info->var))
-			वापस -EINVAL;
+	if (regno >= riva_get_cmap_len(&info->var))
+			return -EINVAL;
 
-	अगर (info->var.grayscale) अणु
+	if (info->var.grayscale) {
 		/* gray = 0.30*R + 0.59*G + 0.11*B */
 		red = green = blue =
 		    (red * 77 + green * 151 + blue * 28) >> 8;
-	पूर्ण
+	}
 
-	अगर (regno < 16 && info->fix.visual == FB_VISUAL_सूचीECTCOLOR) अणु
-		((u32 *) info->pseuकरो_palette)[regno] =
+	if (regno < 16 && info->fix.visual == FB_VISUAL_DIRECTCOLOR) {
+		((u32 *) info->pseudo_palette)[regno] =
 			(regno << info->var.red.offset) |
 			(regno << info->var.green.offset) |
 			(regno << info->var.blue.offset);
 		/*
-		 * The Riva128 2D engine requires color inक्रमmation in
-		 * TrueColor क्रमmat even अगर framebuffer is in DirectColor
+		 * The Riva128 2D engine requires color information in
+		 * TrueColor format even if framebuffer is in DirectColor
 		 */
-		अगर (par->riva.Architecture == NV_ARCH_03) अणु
-			चयन (info->var.bits_per_pixel) अणु
-			हाल 16:
+		if (par->riva.Architecture == NV_ARCH_03) {
+			switch (info->var.bits_per_pixel) {
+			case 16:
 				par->palette[regno] = ((red & 0xf800) >> 1) |
 					((green & 0xf800) >> 6) |
 					((blue & 0xf800) >> 11);
-				अवरोध;
-			हाल 32:
+				break;
+			case 32:
 				par->palette[regno] = ((red & 0xff00) << 8) |
 					((green & 0xff00)) |
 					((blue & 0xff00) >> 8);
-				अवरोध;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				break;
+			}
+		}
+	}
 
-	चयन (info->var.bits_per_pixel) अणु
-	हाल 8:
+	switch (info->var.bits_per_pixel) {
+	case 8:
 		/* "transparent" stuff is completely ignored. */
 		riva_wclut(chip, regno, red >> 8, green >> 8, blue >> 8);
-		अवरोध;
-	हाल 16:
-		अगर (info->var.green.length == 5) अणु
-			क्रम (i = 0; i < 8; i++) अणु
+		break;
+	case 16:
+		if (info->var.green.length == 5) {
+			for (i = 0; i < 8; i++) {
 				riva_wclut(chip, regno*8+i, red >> 8,
 					   green >> 8, blue >> 8);
-			पूर्ण
-		पूर्ण अन्यथा अणु
+			}
+		} else {
 			u8 r, g, b;
 
-			अगर (regno < 32) अणु
-				क्रम (i = 0; i < 8; i++) अणु
+			if (regno < 32) {
+				for (i = 0; i < 8; i++) {
 					riva_wclut(chip, regno*8+i,
 						   red >> 8, green >> 8,
 						   blue >> 8);
-				पूर्ण
-			पूर्ण
+				}
+			}
 			riva_rclut(chip, regno*4, &r, &g, &b);
-			क्रम (i = 0; i < 4; i++)
+			for (i = 0; i < 4; i++)
 				riva_wclut(chip, regno*4+i, r,
 					   green >> 8, b);
-		पूर्ण
-		अवरोध;
-	हाल 32:
+		}
+		break;
+	case 32:
 		riva_wclut(chip, regno, red >> 8, green >> 8, blue >> 8);
-		अवरोध;
-	शेष:
-		/* करो nothing */
-		अवरोध;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		break;
+	default:
+		/* do nothing */
+		break;
+	}
+	return 0;
+}
 
 /**
  * rivafb_fillrect - hardware accelerated color fill function
- * @info: poपूर्णांकer to fb_info काष्ठाure
- * @rect: poपूर्णांकer to fb_fillrect काष्ठाure
+ * @info: pointer to fb_info structure
+ * @rect: pointer to fb_fillrect structure
  *
  * DESCRIPTION:
  * This function fills up a region of framebuffer memory with a solid
- * color with a choice of two dअगरferent ROP's, copy or invert.
+ * color with a choice of two different ROP's, copy or invert.
  *
  * CALLED FROM:
  * framebuffer hook
  */
-अटल व्योम rivafb_fillrect(काष्ठा fb_info *info, स्थिर काष्ठा fb_fillrect *rect)
-अणु
-	काष्ठा riva_par *par = info->par;
-	u_पूर्णांक color, rop = 0;
+static void rivafb_fillrect(struct fb_info *info, const struct fb_fillrect *rect)
+{
+	struct riva_par *par = info->par;
+	u_int color, rop = 0;
 
-	अगर ((info->flags & FBINFO_HWACCEL_DISABLED)) अणु
+	if ((info->flags & FBINFO_HWACCEL_DISABLED)) {
 		cfb_fillrect(info, rect);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (info->var.bits_per_pixel == 8)
+	if (info->var.bits_per_pixel == 8)
 		color = rect->color;
-	अन्यथा अणु
-		अगर (par->riva.Architecture != NV_ARCH_03)
-			color = ((u32 *)info->pseuकरो_palette)[rect->color];
-		अन्यथा
+	else {
+		if (par->riva.Architecture != NV_ARCH_03)
+			color = ((u32 *)info->pseudo_palette)[rect->color];
+		else
 			color = par->palette[rect->color];
-	पूर्ण
+	}
 
-	चयन (rect->rop) अणु
-	हाल ROP_XOR:
+	switch (rect->rop) {
+	case ROP_XOR:
 		rop = 0x66;
-		अवरोध;
-	हाल ROP_COPY:
-	शेष:
+		break;
+	case ROP_COPY:
+	default:
 		rop = 0xCC;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	riva_set_rop_solid(par, rop);
 
-	RIVA_FIFO_FREE(par->riva, Biपंचांगap, 1);
-	NV_WR32(&par->riva.Biपंचांगap->Color1A, 0, color);
+	RIVA_FIFO_FREE(par->riva, Bitmap, 1);
+	NV_WR32(&par->riva.Bitmap->Color1A, 0, color);
 
-	RIVA_FIFO_FREE(par->riva, Biपंचांगap, 2);
-	NV_WR32(&par->riva.Biपंचांगap->UnclippedRectangle[0].TopLeft, 0,
+	RIVA_FIFO_FREE(par->riva, Bitmap, 2);
+	NV_WR32(&par->riva.Bitmap->UnclippedRectangle[0].TopLeft, 0,
 		(rect->dx << 16) | rect->dy);
 	mb();
-	NV_WR32(&par->riva.Biपंचांगap->UnclippedRectangle[0].WidthHeight, 0,
+	NV_WR32(&par->riva.Bitmap->UnclippedRectangle[0].WidthHeight, 0,
 		(rect->width << 16) | rect->height);
 	mb();
 	riva_set_rop_solid(par, 0xcc);
 
-पूर्ण
+}
 
 /**
  * rivafb_copyarea - hardware accelerated blit function
- * @info: poपूर्णांकer to fb_info काष्ठाure
- * @region: poपूर्णांकer to fb_copyarea काष्ठाure
+ * @info: pointer to fb_info structure
+ * @region: pointer to fb_copyarea structure
  *
  * DESCRIPTION:
  * This copies an area of pixels from one location to another
@@ -1439,14 +1438,14 @@ out:
  * CALLED FROM:
  * framebuffer hook
  */
-अटल व्योम rivafb_copyarea(काष्ठा fb_info *info, स्थिर काष्ठा fb_copyarea *region)
-अणु
-	काष्ठा riva_par *par = info->par;
+static void rivafb_copyarea(struct fb_info *info, const struct fb_copyarea *region)
+{
+	struct riva_par *par = info->par;
 
-	अगर ((info->flags & FBINFO_HWACCEL_DISABLED)) अणु
+	if ((info->flags & FBINFO_HWACCEL_DISABLED)) {
 		cfb_copyarea(info, region);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	RIVA_FIFO_FREE(par->riva, Blt, 3);
 	NV_WR32(&par->riva.Blt->TopLeftSrc, 0,
@@ -1457,110 +1456,110 @@ out:
 	NV_WR32(&par->riva.Blt->WidthHeight, 0,
 		(region->height << 16) | region->width);
 	mb();
-पूर्ण
+}
 
-अटल अंतरभूत व्योम convert_bgcolor_16(u32 *col)
-अणु
+static inline void convert_bgcolor_16(u32 *col)
+{
 	*col = ((*col & 0x0000F800) << 8)
 		| ((*col & 0x00007E0) << 5)
 		| ((*col & 0x0000001F) << 3)
 		|	   0xFF000000;
 	mb();
-पूर्ण
+}
 
 /**
  * rivafb_imageblit: hardware accelerated color expand function
- * @info: poपूर्णांकer to fb_info काष्ठाure
- * @image: poपूर्णांकer to fb_image काष्ठाure
+ * @info: pointer to fb_info structure
+ * @image: pointer to fb_image structure
  *
  * DESCRIPTION:
- * If the source is a monochrome biपंचांगap, the function fills up a a region
+ * If the source is a monochrome bitmap, the function fills up a a region
  * of framebuffer memory with pixels whose color is determined by the bit
- * setting of the biपंचांगap, 1 - क्रमeground, 0 - background.
+ * setting of the bitmap, 1 - foreground, 0 - background.
  *
- * If the source is not a monochrome biपंचांगap, color expansion is not करोne.
- * In this हाल, it is channeled to a software function.
+ * If the source is not a monochrome bitmap, color expansion is not done.
+ * In this case, it is channeled to a software function.
  *
  * CALLED FROM:
  * framebuffer hook
  */
-अटल व्योम rivafb_imageblit(काष्ठा fb_info *info, 
-			     स्थिर काष्ठा fb_image *image)
-अणु
-	काष्ठा riva_par *par = info->par;
-	u32 fgx = 0, bgx = 0, width, पंचांगp;
+static void rivafb_imageblit(struct fb_info *info, 
+			     const struct fb_image *image)
+{
+	struct riva_par *par = info->par;
+	u32 fgx = 0, bgx = 0, width, tmp;
 	u8 *cdat = (u8 *) image->data;
-	अस्थिर u32 __iomem *d;
-	पूर्णांक i, size;
+	volatile u32 __iomem *d;
+	int i, size;
 
-	अगर ((info->flags & FBINFO_HWACCEL_DISABLED) || image->depth != 1) अणु
+	if ((info->flags & FBINFO_HWACCEL_DISABLED) || image->depth != 1) {
 		cfb_imageblit(info, image);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	चयन (info->var.bits_per_pixel) अणु
-	हाल 8:
+	switch (info->var.bits_per_pixel) {
+	case 8:
 		fgx = image->fg_color;
 		bgx = image->bg_color;
-		अवरोध;
-	हाल 16:
-	हाल 32:
-		अगर (par->riva.Architecture != NV_ARCH_03) अणु
-			fgx = ((u32 *)info->pseuकरो_palette)[image->fg_color];
-			bgx = ((u32 *)info->pseuकरो_palette)[image->bg_color];
-		पूर्ण अन्यथा अणु
+		break;
+	case 16:
+	case 32:
+		if (par->riva.Architecture != NV_ARCH_03) {
+			fgx = ((u32 *)info->pseudo_palette)[image->fg_color];
+			bgx = ((u32 *)info->pseudo_palette)[image->bg_color];
+		} else {
 			fgx = par->palette[image->fg_color];
 			bgx = par->palette[image->bg_color];
-		पूर्ण
-		अगर (info->var.green.length == 6)
+		}
+		if (info->var.green.length == 6)
 			convert_bgcolor_16(&bgx);	
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	RIVA_FIFO_FREE(par->riva, Biपंचांगap, 7);
-	NV_WR32(&par->riva.Biपंचांगap->ClipE.TopLeft, 0,
+	RIVA_FIFO_FREE(par->riva, Bitmap, 7);
+	NV_WR32(&par->riva.Bitmap->ClipE.TopLeft, 0,
 		(image->dy << 16) | (image->dx & 0xFFFF));
-	NV_WR32(&par->riva.Biपंचांगap->ClipE.BottomRight, 0,
+	NV_WR32(&par->riva.Bitmap->ClipE.BottomRight, 0,
 		(((image->dy + image->height) << 16) |
 		 ((image->dx + image->width) & 0xffff)));
-	NV_WR32(&par->riva.Biपंचांगap->Color0E, 0, bgx);
-	NV_WR32(&par->riva.Biपंचांगap->Color1E, 0, fgx);
-	NV_WR32(&par->riva.Biपंचांगap->WidthHeightInE, 0,
+	NV_WR32(&par->riva.Bitmap->Color0E, 0, bgx);
+	NV_WR32(&par->riva.Bitmap->Color1E, 0, fgx);
+	NV_WR32(&par->riva.Bitmap->WidthHeightInE, 0,
 		(image->height << 16) | ((image->width + 31) & ~31));
-	NV_WR32(&par->riva.Biपंचांगap->WidthHeightOutE, 0,
+	NV_WR32(&par->riva.Bitmap->WidthHeightOutE, 0,
 		(image->height << 16) | ((image->width + 31) & ~31));
-	NV_WR32(&par->riva.Biपंचांगap->Poपूर्णांकE, 0,
+	NV_WR32(&par->riva.Bitmap->PointE, 0,
 		(image->dy << 16) | (image->dx & 0xFFFF));
 
-	d = &par->riva.Biपंचांगap->MonochromeData01E;
+	d = &par->riva.Bitmap->MonochromeData01E;
 
 	width = (image->width + 31)/32;
 	size = width * image->height;
-	जबतक (size >= 16) अणु
-		RIVA_FIFO_FREE(par->riva, Biपंचांगap, 16);
-		क्रम (i = 0; i < 16; i++) अणु
-			पंचांगp = *((u32 *)cdat);
+	while (size >= 16) {
+		RIVA_FIFO_FREE(par->riva, Bitmap, 16);
+		for (i = 0; i < 16; i++) {
+			tmp = *((u32 *)cdat);
 			cdat = (u8 *)((u32 *)cdat + 1);
-			reverse_order(&पंचांगp);
-			NV_WR32(d, i*4, पंचांगp);
-		पूर्ण
+			reverse_order(&tmp);
+			NV_WR32(d, i*4, tmp);
+		}
 		size -= 16;
-	पूर्ण
-	अगर (size) अणु
-		RIVA_FIFO_FREE(par->riva, Biपंचांगap, size);
-		क्रम (i = 0; i < size; i++) अणु
-			पंचांगp = *((u32 *) cdat);
+	}
+	if (size) {
+		RIVA_FIFO_FREE(par->riva, Bitmap, size);
+		for (i = 0; i < size; i++) {
+			tmp = *((u32 *) cdat);
 			cdat = (u8 *)((u32 *)cdat + 1);
-			reverse_order(&पंचांगp);
-			NV_WR32(d, i*4, पंचांगp);
-		पूर्ण
-	पूर्ण
-पूर्ण
+			reverse_order(&tmp);
+			NV_WR32(d, i*4, tmp);
+		}
+	}
+}
 
 /**
  * rivafb_cursor - hardware cursor function
- * @info: poपूर्णांकer to info काष्ठाure
- * @cursor: poपूर्णांकer to fbcursor काष्ठाure
+ * @info: pointer to info structure
+ * @cursor: pointer to fbcursor structure
  *
  * DESCRIPTION:
  * A cursor function that supports displaying a cursor image via hardware.
@@ -1570,27 +1569,27 @@ out:
  * CALLED FROM
  * framebuffer hook
  */
-अटल पूर्णांक rivafb_cursor(काष्ठा fb_info *info, काष्ठा fb_cursor *cursor)
-अणु
-	काष्ठा riva_par *par = info->par;
+static int rivafb_cursor(struct fb_info *info, struct fb_cursor *cursor)
+{
+	struct riva_par *par = info->par;
 	u8 data[MAX_CURS * MAX_CURS/8];
-	पूर्णांक i, set = cursor->set;
+	int i, set = cursor->set;
 	u16 fg, bg;
 
-	अगर (cursor->image.width > MAX_CURS || cursor->image.height > MAX_CURS)
-		वापस -ENXIO;
+	if (cursor->image.width > MAX_CURS || cursor->image.height > MAX_CURS)
+		return -ENXIO;
 
 	par->riva.ShowHideCursor(&par->riva, 0);
 
-	अगर (par->cursor_reset) अणु
+	if (par->cursor_reset) {
 		set = FB_CUR_SETALL;
 		par->cursor_reset = 0;
-	पूर्ण
+	}
 
-	अगर (set & FB_CUR_SETSIZE)
-		स_रखो_io(par->riva.CURSOR, 0, MAX_CURS * MAX_CURS * 2);
+	if (set & FB_CUR_SETSIZE)
+		memset_io(par->riva.CURSOR, 0, MAX_CURS * MAX_CURS * 2);
 
-	अगर (set & FB_CUR_SETPOS) अणु
+	if (set & FB_CUR_SETPOS) {
 		u32 xx, yy, temp;
 
 		yy = cursor->image.dy - info->var.yoffset;
@@ -1599,10 +1598,10 @@ out:
 		temp |= yy << 16;
 
 		NV_WR32(par->riva.PRAMDAC, 0x0000300, temp);
-	पूर्ण
+	}
 
 
-	अगर (set & (FB_CUR_SETSHAPE | FB_CUR_SETCMAP | FB_CUR_SETIMAGE)) अणु
+	if (set & (FB_CUR_SETSHAPE | FB_CUR_SETCMAP | FB_CUR_SETIMAGE)) {
 		u32 bg_idx = cursor->image.bg_color;
 		u32 fg_idx = cursor->image.fg_color;
 		u32 s_pitch = (cursor->image.width+7) >> 3;
@@ -1611,20 +1610,20 @@ out:
 		u8 *msk = (u8 *) cursor->mask;
 		u8 *src;
 		
-		src = kदो_स्मृति_array(s_pitch, cursor->image.height, GFP_ATOMIC);
+		src = kmalloc_array(s_pitch, cursor->image.height, GFP_ATOMIC);
 
-		अगर (src) अणु
-			चयन (cursor->rop) अणु
-			हाल ROP_XOR:
-				क्रम (i = 0; i < s_pitch * cursor->image.height; i++)
+		if (src) {
+			switch (cursor->rop) {
+			case ROP_XOR:
+				for (i = 0; i < s_pitch * cursor->image.height; i++)
 					src[i] = dat[i] ^ msk[i];
-				अवरोध;
-			हाल ROP_COPY:
-			शेष:
-				क्रम (i = 0; i < s_pitch * cursor->image.height; i++)
+				break;
+			case ROP_COPY:
+			default:
+				for (i = 0; i < s_pitch * cursor->image.height; i++)
 					src[i] = dat[i] & msk[i];
-				अवरोध;
-			पूर्ण
+				break;
+			}
 
 			fb_pad_aligned_buffer(data, d_pitch, src, s_pitch,
 						cursor->image.height);
@@ -1644,23 +1643,23 @@ out:
 			rivafb_load_cursor_image(par, data, bg, fg,
 						 cursor->image.width,
 						 cursor->image.height);
-			kमुक्त(src);
-		पूर्ण
-	पूर्ण
+			kfree(src);
+		}
+	}
 
-	अगर (cursor->enable)
+	if (cursor->enable)
 		par->riva.ShowHideCursor(&par->riva, 1);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rivafb_sync(काष्ठा fb_info *info)
-अणु
-	काष्ठा riva_par *par = info->par;
+static int rivafb_sync(struct fb_info *info)
+{
+	struct riva_par *par = info->par;
 
-	रुको_क्रम_idle(par);
-	वापस 0;
-पूर्ण
+	wait_for_idle(par);
+	return 0;
+}
 
 /* ------------------------------------------------------------------------- *
  *
@@ -1668,10 +1667,10 @@ out:
  *
  * ------------------------------------------------------------------------- */
 
-/* kernel पूर्णांकerface */
-अटल स्थिर काष्ठा fb_ops riva_fb_ops = अणु
+/* kernel interface */
+static const struct fb_ops riva_fb_ops = {
 	.owner 		= THIS_MODULE,
-	.fb_खोलो	= rivafb_खोलो,
+	.fb_open	= rivafb_open,
 	.fb_release	= rivafb_release,
 	.fb_check_var 	= rivafb_check_var,
 	.fb_set_par 	= rivafb_set_par,
@@ -1683,12 +1682,12 @@ out:
 	.fb_imageblit 	= rivafb_imageblit,
 	.fb_cursor	= rivafb_cursor,	
 	.fb_sync 	= rivafb_sync,
-पूर्ण;
+};
 
-अटल पूर्णांक riva_set_fbinfo(काष्ठा fb_info *info)
-अणु
-	अचिन्हित पूर्णांक cmap_len;
-	काष्ठा riva_par *par = info->par;
+static int riva_set_fbinfo(struct fb_info *info)
+{
+	unsigned int cmap_len;
+	struct riva_par *par = info->par;
 
 	NVTRACE_ENTER();
 	info->flags = FBINFO_DEFAULT
@@ -1699,16 +1698,16 @@ out:
 	            | FBINFO_HWACCEL_IMAGEBLIT;
 
 	/* Accel seems to not work properly on NV30 yet...*/
-	अगर ((par->riva.Architecture == NV_ARCH_30) || noaccel) अणु
-	    	prपूर्णांकk(KERN_DEBUG PFX "disabling acceleration\n");
+	if ((par->riva.Architecture == NV_ARCH_30) || noaccel) {
+	    	printk(KERN_DEBUG PFX "disabling acceleration\n");
   		info->flags |= FBINFO_HWACCEL_DISABLED;
-	पूर्ण
+	}
 
-	info->var = rivafb_शेष_var;
+	info->var = rivafb_default_var;
 	info->fix.visual = (info->var.bits_per_pixel == 8) ?
-				FB_VISUAL_PSEUDOCOLOR : FB_VISUAL_सूचीECTCOLOR;
+				FB_VISUAL_PSEUDOCOLOR : FB_VISUAL_DIRECTCOLOR;
 
-	info->pseuकरो_palette = par->pseuकरो_palette;
+	info->pseudo_palette = par->pseudo_palette;
 
 	cmap_len = riva_get_cmap_len(&info->var);
 	fb_alloc_cmap(&info->cmap, cmap_len, 0);	
@@ -1717,131 +1716,131 @@ out:
 	info->pixmap.buf_align = 4;
 	info->pixmap.access_align = 32;
 	info->pixmap.flags = FB_PIXMAP_SYSTEM;
-	info->var.yres_भव = -1;
+	info->var.yres_virtual = -1;
 	NVTRACE_LEAVE();
-	वापस (rivafb_check_var(&info->var, info));
-पूर्ण
+	return (rivafb_check_var(&info->var, info));
+}
 
-अटल पूर्णांक riva_get_EDID_OF(काष्ठा fb_info *info, काष्ठा pci_dev *pd)
-अणु
-	काष्ठा riva_par *par = info->par;
-	काष्ठा device_node *dp;
-	स्थिर अचिन्हित अक्षर *pedid = शून्य;
-	स्थिर अचिन्हित अक्षर *disptype = शून्य;
-	अटल अक्षर *propnames[] = अणु
-		"DFP,EDID", "LCD,EDID", "EDID", "EDID1", "EDID,B", "EDID,A", शून्य पूर्ण;
-	पूर्णांक i;
+static int riva_get_EDID_OF(struct fb_info *info, struct pci_dev *pd)
+{
+	struct riva_par *par = info->par;
+	struct device_node *dp;
+	const unsigned char *pedid = NULL;
+	const unsigned char *disptype = NULL;
+	static char *propnames[] = {
+		"DFP,EDID", "LCD,EDID", "EDID", "EDID1", "EDID,B", "EDID,A", NULL };
+	int i;
 
 	NVTRACE_ENTER();
 	dp = pci_device_to_OF_node(pd);
-	क्रम (; dp != शून्य; dp = dp->child) अणु
-		disptype = of_get_property(dp, "display-type", शून्य);
-		अगर (disptype == शून्य)
-			जारी;
-		अगर (म_भेदन(disptype, "LCD", 3) != 0)
-			जारी;
-		क्रम (i = 0; propnames[i] != शून्य; ++i) अणु
-			pedid = of_get_property(dp, propnames[i], शून्य);
-			अगर (pedid != शून्य) अणु
-				par->EDID = (अचिन्हित अक्षर *)pedid;
+	for (; dp != NULL; dp = dp->child) {
+		disptype = of_get_property(dp, "display-type", NULL);
+		if (disptype == NULL)
+			continue;
+		if (strncmp(disptype, "LCD", 3) != 0)
+			continue;
+		for (i = 0; propnames[i] != NULL; ++i) {
+			pedid = of_get_property(dp, propnames[i], NULL);
+			if (pedid != NULL) {
+				par->EDID = (unsigned char *)pedid;
 				NVTRACE("LCD found.\n");
-				वापस 1;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				return 1;
+			}
+		}
+	}
 	NVTRACE_LEAVE();
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर defined(CONFIG_FB_RIVA_I2C)
-अटल पूर्णांक riva_get_EDID_i2c(काष्ठा fb_info *info)
-अणु
-	काष्ठा riva_par *par = info->par;
-	काष्ठा fb_var_screeninfo var;
-	पूर्णांक i;
+#if defined(CONFIG_FB_RIVA_I2C)
+static int riva_get_EDID_i2c(struct fb_info *info)
+{
+	struct riva_par *par = info->par;
+	struct fb_var_screeninfo var;
+	int i;
 
 	NVTRACE_ENTER();
 	par->riva.LockUnlock(&par->riva, 0);
 	riva_create_i2c_busses(par);
-	क्रम (i = 0; i < 3; i++) अणु
-		अगर (!par->chan[i].par)
-			जारी;
+	for (i = 0; i < 3; i++) {
+		if (!par->chan[i].par)
+			continue;
 		riva_probe_i2c_connector(par, i, &par->EDID);
-		अगर (par->EDID && !fb_parse_edid(par->EDID, &var)) अणु
-			prपूर्णांकk(PFX "Found EDID Block from BUS %i\n", i);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+		if (par->EDID && !fb_parse_edid(par->EDID, &var)) {
+			printk(PFX "Found EDID Block from BUS %i\n", i);
+			break;
+		}
+	}
 
 	NVTRACE_LEAVE();
-	वापस (par->EDID) ? 1 : 0;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_FB_RIVA_I2C */
+	return (par->EDID) ? 1 : 0;
+}
+#endif /* CONFIG_FB_RIVA_I2C */
 
-अटल व्योम riva_update_शेष_var(काष्ठा fb_var_screeninfo *var,
-				    काष्ठा fb_info *info)
-अणु
-	काष्ठा fb_monspecs *specs = &info->monspecs;
-	काष्ठा fb_videomode modedb;
+static void riva_update_default_var(struct fb_var_screeninfo *var,
+				    struct fb_info *info)
+{
+	struct fb_monspecs *specs = &info->monspecs;
+	struct fb_videomode modedb;
 
 	NVTRACE_ENTER();
 	/* respect mode options */
-	अगर (mode_option) अणु
+	if (mode_option) {
 		fb_find_mode(var, info, mode_option,
 			     specs->modedb, specs->modedb_len,
-			     शून्य, 8);
-	पूर्ण अन्यथा अगर (specs->modedb != शून्य) अणु
+			     NULL, 8);
+	} else if (specs->modedb != NULL) {
 		/* get first mode in database as fallback */
 		modedb = specs->modedb[0];
 		/* get preferred timing */
-		अगर (info->monspecs.misc & FB_MISC_1ST_DETAIL) अणु
-			पूर्णांक i;
+		if (info->monspecs.misc & FB_MISC_1ST_DETAIL) {
+			int i;
 
-			क्रम (i = 0; i < specs->modedb_len; i++) अणु
-				अगर (specs->modedb[i].flag & FB_MODE_IS_FIRST) अणु
+			for (i = 0; i < specs->modedb_len; i++) {
+				if (specs->modedb[i].flag & FB_MODE_IS_FIRST) {
 					modedb = specs->modedb[i];
-					अवरोध;
-				पूर्ण
-			पूर्ण
-		पूर्ण
+					break;
+				}
+			}
+		}
 		var->bits_per_pixel = 8;
 		riva_update_var(var, &modedb);
-	पूर्ण
+	}
 	NVTRACE_LEAVE();
-पूर्ण
+}
 
 
-अटल व्योम riva_get_EDID(काष्ठा fb_info *info, काष्ठा pci_dev *pdev)
-अणु
+static void riva_get_EDID(struct fb_info *info, struct pci_dev *pdev)
+{
 	NVTRACE_ENTER();
-	अगर (riva_get_EDID_OF(info, pdev)) अणु
+	if (riva_get_EDID_OF(info, pdev)) {
 		NVTRACE_LEAVE();
-		वापस;
-	पूर्ण
-	अगर (IS_ENABLED(CONFIG_OF))
-		prपूर्णांकk(PFX "could not retrieve EDID from OF\n");
-#अगर defined(CONFIG_FB_RIVA_I2C)
-	अगर (!riva_get_EDID_i2c(info))
-		prपूर्णांकk(PFX "could not retrieve EDID from DDC/I2C\n");
-#पूर्ण_अगर
+		return;
+	}
+	if (IS_ENABLED(CONFIG_OF))
+		printk(PFX "could not retrieve EDID from OF\n");
+#if defined(CONFIG_FB_RIVA_I2C)
+	if (!riva_get_EDID_i2c(info))
+		printk(PFX "could not retrieve EDID from DDC/I2C\n");
+#endif
 	NVTRACE_LEAVE();
-पूर्ण
+}
 
 
-अटल व्योम riva_get_edidinfo(काष्ठा fb_info *info)
-अणु
-	काष्ठा fb_var_screeninfo *var = &rivafb_शेष_var;
-	काष्ठा riva_par *par = info->par;
+static void riva_get_edidinfo(struct fb_info *info)
+{
+	struct fb_var_screeninfo *var = &rivafb_default_var;
+	struct riva_par *par = info->par;
 
 	fb_edid_to_monspecs(par->EDID, &info->monspecs);
 	fb_videomode_to_modelist(info->monspecs.modedb, info->monspecs.modedb_len,
 				 &info->modelist);
-	riva_update_शेष_var(var, info);
+	riva_update_default_var(var, info);
 
-	/* अगर user specअगरied flatpanel, we respect that */
-	अगर (info->monspecs.input & FB_DISP_DDI)
+	/* if user specified flatpanel, we respect that */
+	if (info->monspecs.input & FB_DISP_DDI)
 		par->FlatPanel = 1;
-पूर्ण
+}
 
 /* ------------------------------------------------------------------------- *
  *
@@ -1849,168 +1848,168 @@ out:
  *
  * ------------------------------------------------------------------------- */
 
-अटल u32 riva_get_arch(काष्ठा pci_dev *pd)
-अणु
+static u32 riva_get_arch(struct pci_dev *pd)
+{
     	u32 arch = 0;
 
-	चयन (pd->device & 0x0ff0) अणु
-		हाल 0x0100:   /* GeForce 256 */
-		हाल 0x0110:   /* GeForce2 MX */
-		हाल 0x0150:   /* GeForce2 */
-		हाल 0x0170:   /* GeForce4 MX */
-		हाल 0x0180:   /* GeForce4 MX (8x AGP) */
-		हाल 0x01A0:   /* nForce */
-		हाल 0x01F0:   /* nForce2 */
+	switch (pd->device & 0x0ff0) {
+		case 0x0100:   /* GeForce 256 */
+		case 0x0110:   /* GeForce2 MX */
+		case 0x0150:   /* GeForce2 */
+		case 0x0170:   /* GeForce4 MX */
+		case 0x0180:   /* GeForce4 MX (8x AGP) */
+		case 0x01A0:   /* nForce */
+		case 0x01F0:   /* nForce2 */
 		     arch =  NV_ARCH_10;
-		     अवरोध;
-		हाल 0x0200:   /* GeForce3 */
-		हाल 0x0250:   /* GeForce4 Ti */
-		हाल 0x0280:   /* GeForce4 Ti (8x AGP) */
+		     break;
+		case 0x0200:   /* GeForce3 */
+		case 0x0250:   /* GeForce4 Ti */
+		case 0x0280:   /* GeForce4 Ti (8x AGP) */
 		     arch =  NV_ARCH_20;
-		     अवरोध;
-		हाल 0x0300:   /* GeForceFX 5800 */
-		हाल 0x0310:   /* GeForceFX 5600 */
-		हाल 0x0320:   /* GeForceFX 5200 */
-		हाल 0x0330:   /* GeForceFX 5900 */
-		हाल 0x0340:   /* GeForceFX 5700 */
+		     break;
+		case 0x0300:   /* GeForceFX 5800 */
+		case 0x0310:   /* GeForceFX 5600 */
+		case 0x0320:   /* GeForceFX 5200 */
+		case 0x0330:   /* GeForceFX 5900 */
+		case 0x0340:   /* GeForceFX 5700 */
 		     arch =  NV_ARCH_30;
-		     अवरोध;
-		हाल 0x0020:   /* TNT, TNT2 */
+		     break;
+		case 0x0020:   /* TNT, TNT2 */
 		     arch =  NV_ARCH_04;
-		     अवरोध;
-		हाल 0x0010:   /* Riva128 */
+		     break;
+		case 0x0010:   /* Riva128 */
 		     arch =  NV_ARCH_03;
-		     अवरोध;
-		शेष:   /* unknown architecture */
-		     अवरोध;
-	पूर्ण
-	वापस arch;
-पूर्ण
+		     break;
+		default:   /* unknown architecture */
+		     break;
+	}
+	return arch;
+}
 
-अटल पूर्णांक rivafb_probe(काष्ठा pci_dev *pd, स्थिर काष्ठा pci_device_id *ent)
-अणु
-	काष्ठा riva_par *शेष_par;
-	काष्ठा fb_info *info;
-	पूर्णांक ret;
+static int rivafb_probe(struct pci_dev *pd, const struct pci_device_id *ent)
+{
+	struct riva_par *default_par;
+	struct fb_info *info;
+	int ret;
 
 	NVTRACE_ENTER();
-	निश्चित(pd != शून्य);
+	assert(pd != NULL);
 
-	info = framebuffer_alloc(माप(काष्ठा riva_par), &pd->dev);
-	अगर (!info) अणु
+	info = framebuffer_alloc(sizeof(struct riva_par), &pd->dev);
+	if (!info) {
 		ret = -ENOMEM;
-		जाओ err_ret;
-	पूर्ण
-	शेष_par = info->par;
-	शेष_par->pdev = pd;
+		goto err_ret;
+	}
+	default_par = info->par;
+	default_par->pdev = pd;
 
 	info->pixmap.addr = kzalloc(8 * 1024, GFP_KERNEL);
-	अगर (info->pixmap.addr == शून्य) अणु
+	if (info->pixmap.addr == NULL) {
 	    	ret = -ENOMEM;
-		जाओ err_framebuffer_release;
-	पूर्ण
+		goto err_framebuffer_release;
+	}
 
 	ret = pci_enable_device(pd);
-	अगर (ret < 0) अणु
-		prपूर्णांकk(KERN_ERR PFX "cannot enable PCI device\n");
-		जाओ err_मुक्त_pixmap;
-	पूर्ण
+	if (ret < 0) {
+		printk(KERN_ERR PFX "cannot enable PCI device\n");
+		goto err_free_pixmap;
+	}
 
 	ret = pci_request_regions(pd, "rivafb");
-	अगर (ret < 0) अणु
-		prपूर्णांकk(KERN_ERR PFX "cannot request PCI regions\n");
-		जाओ err_disable_device;
-	पूर्ण
+	if (ret < 0) {
+		printk(KERN_ERR PFX "cannot request PCI regions\n");
+		goto err_disable_device;
+	}
 
-	mutex_init(&शेष_par->खोलो_lock);
-	शेष_par->riva.Architecture = riva_get_arch(pd);
+	mutex_init(&default_par->open_lock);
+	default_par->riva.Architecture = riva_get_arch(pd);
 
-	शेष_par->Chipset = (pd->venकरोr << 16) | pd->device;
-	prपूर्णांकk(KERN_INFO PFX "nVidia device/chipset %X\n",शेष_par->Chipset);
+	default_par->Chipset = (pd->vendor << 16) | pd->device;
+	printk(KERN_INFO PFX "nVidia device/chipset %X\n",default_par->Chipset);
 	
-	अगर(शेष_par->riva.Architecture == 0) अणु
-		prपूर्णांकk(KERN_ERR PFX "unknown NV_ARCH\n");
+	if(default_par->riva.Architecture == 0) {
+		printk(KERN_ERR PFX "unknown NV_ARCH\n");
 		ret=-ENODEV;
-		जाओ err_release_region;
-	पूर्ण
-	अगर(शेष_par->riva.Architecture == NV_ARCH_10 ||
-	   शेष_par->riva.Architecture == NV_ARCH_20 ||
-	   शेष_par->riva.Architecture == NV_ARCH_30) अणु
-		प्र_लिखो(rivafb_fix.id, "NV%x", (pd->device & 0x0ff0) >> 4);
-	पूर्ण अन्यथा अणु
-		प्र_लिखो(rivafb_fix.id, "NV%x", शेष_par->riva.Architecture);
-	पूर्ण
+		goto err_release_region;
+	}
+	if(default_par->riva.Architecture == NV_ARCH_10 ||
+	   default_par->riva.Architecture == NV_ARCH_20 ||
+	   default_par->riva.Architecture == NV_ARCH_30) {
+		sprintf(rivafb_fix.id, "NV%x", (pd->device & 0x0ff0) >> 4);
+	} else {
+		sprintf(rivafb_fix.id, "NV%x", default_par->riva.Architecture);
+	}
 
-	शेष_par->FlatPanel = flatpanel;
-	अगर (flatpanel == 1)
-		prपूर्णांकk(KERN_INFO PFX "flatpanel support enabled\n");
-	शेष_par->क्रमceCRTC = क्रमceCRTC;
+	default_par->FlatPanel = flatpanel;
+	if (flatpanel == 1)
+		printk(KERN_INFO PFX "flatpanel support enabled\n");
+	default_par->forceCRTC = forceCRTC;
 	
 	rivafb_fix.mmio_len = pci_resource_len(pd, 0);
 	rivafb_fix.smem_len = pci_resource_len(pd, 1);
 
-	अणु
-		/* enable IO and mem अगर not alपढ़ोy करोne */
-		अचिन्हित लघु cmd;
+	{
+		/* enable IO and mem if not already done */
+		unsigned short cmd;
 
-		pci_पढ़ो_config_word(pd, PCI_COMMAND, &cmd);
+		pci_read_config_word(pd, PCI_COMMAND, &cmd);
 		cmd |= (PCI_COMMAND_IO | PCI_COMMAND_MEMORY);
-		pci_ग_लिखो_config_word(pd, PCI_COMMAND, cmd);
-	पूर्ण
+		pci_write_config_word(pd, PCI_COMMAND, cmd);
+	}
 	
 	rivafb_fix.mmio_start = pci_resource_start(pd, 0);
 	rivafb_fix.smem_start = pci_resource_start(pd, 1);
 
-	शेष_par->ctrl_base = ioremap(rivafb_fix.mmio_start,
+	default_par->ctrl_base = ioremap(rivafb_fix.mmio_start,
 					 rivafb_fix.mmio_len);
-	अगर (!शेष_par->ctrl_base) अणु
-		prपूर्णांकk(KERN_ERR PFX "cannot ioremap MMIO base\n");
+	if (!default_par->ctrl_base) {
+		printk(KERN_ERR PFX "cannot ioremap MMIO base\n");
 		ret = -EIO;
-		जाओ err_release_region;
-	पूर्ण
+		goto err_release_region;
+	}
 
-	चयन (शेष_par->riva.Architecture) अणु
-	हाल NV_ARCH_03:
+	switch (default_par->riva.Architecture) {
+	case NV_ARCH_03:
 		/* Riva128's PRAMIN is in the "framebuffer" space
 		 * Since these cards were never made with more than 8 megabytes
 		 * we can safely allocate this separately.
 		 */
-		शेष_par->riva.PRAMIN = ioremap(rivafb_fix.smem_start + 0x00C00000, 0x00008000);
-		अगर (!शेष_par->riva.PRAMIN) अणु
-			prपूर्णांकk(KERN_ERR PFX "cannot ioremap PRAMIN region\n");
+		default_par->riva.PRAMIN = ioremap(rivafb_fix.smem_start + 0x00C00000, 0x00008000);
+		if (!default_par->riva.PRAMIN) {
+			printk(KERN_ERR PFX "cannot ioremap PRAMIN region\n");
 			ret = -EIO;
-			जाओ err_iounmap_ctrl_base;
-		पूर्ण
-		अवरोध;
-	हाल NV_ARCH_04:
-	हाल NV_ARCH_10:
-	हाल NV_ARCH_20:
-	हाल NV_ARCH_30:
-		शेष_par->riva.PCRTC0 =
-			(u32 __iomem *)(शेष_par->ctrl_base + 0x00600000);
-		शेष_par->riva.PRAMIN =
-			(u32 __iomem *)(शेष_par->ctrl_base + 0x00710000);
-		अवरोध;
-	पूर्ण
-	riva_common_setup(शेष_par);
+			goto err_iounmap_ctrl_base;
+		}
+		break;
+	case NV_ARCH_04:
+	case NV_ARCH_10:
+	case NV_ARCH_20:
+	case NV_ARCH_30:
+		default_par->riva.PCRTC0 =
+			(u32 __iomem *)(default_par->ctrl_base + 0x00600000);
+		default_par->riva.PRAMIN =
+			(u32 __iomem *)(default_par->ctrl_base + 0x00710000);
+		break;
+	}
+	riva_common_setup(default_par);
 
-	अगर (शेष_par->riva.Architecture == NV_ARCH_03) अणु
-		शेष_par->riva.PCRTC = शेष_par->riva.PCRTC0
-		                        = शेष_par->riva.PGRAPH;
-	पूर्ण
+	if (default_par->riva.Architecture == NV_ARCH_03) {
+		default_par->riva.PCRTC = default_par->riva.PCRTC0
+		                        = default_par->riva.PGRAPH;
+	}
 
-	rivafb_fix.smem_len = riva_get_memlen(शेष_par) * 1024;
-	शेष_par->dclk_max = riva_get_maxdclk(शेष_par) * 1000;
+	rivafb_fix.smem_len = riva_get_memlen(default_par) * 1024;
+	default_par->dclk_max = riva_get_maxdclk(default_par) * 1000;
 	info->screen_base = ioremap_wc(rivafb_fix.smem_start,
 				       rivafb_fix.smem_len);
-	अगर (!info->screen_base) अणु
-		prपूर्णांकk(KERN_ERR PFX "cannot ioremap FB base\n");
+	if (!info->screen_base) {
+		printk(KERN_ERR PFX "cannot ioremap FB base\n");
 		ret = -EIO;
-		जाओ err_iounmap_pramin;
-	पूर्ण
+		goto err_iounmap_pramin;
+	}
 
-	अगर (!nomtrr)
-		शेष_par->wc_cookie =
+	if (!nomtrr)
+		default_par->wc_cookie =
 			arch_phys_wc_add(rivafb_fix.smem_start,
 					 rivafb_fix.smem_len);
 
@@ -2020,27 +2019,27 @@ out:
 	riva_get_edidinfo(info);
 
 	ret=riva_set_fbinfo(info);
-	अगर (ret < 0) अणु
-		prपूर्णांकk(KERN_ERR PFX "error setting initial video mode\n");
-		जाओ err_iounmap_screen_base;
-	पूर्ण
+	if (ret < 0) {
+		printk(KERN_ERR PFX "error setting initial video mode\n");
+		goto err_iounmap_screen_base;
+	}
 
 	fb_destroy_modedb(info->monspecs.modedb);
-	info->monspecs.modedb = शून्य;
+	info->monspecs.modedb = NULL;
 
 	pci_set_drvdata(pd, info);
 
-	अगर (backlight)
+	if (backlight)
 		riva_bl_init(info->par);
 
-	ret = रेजिस्टर_framebuffer(info);
-	अगर (ret < 0) अणु
-		prपूर्णांकk(KERN_ERR PFX
+	ret = register_framebuffer(info);
+	if (ret < 0) {
+		printk(KERN_ERR PFX
 			"error registering riva framebuffer\n");
-		जाओ err_iounmap_screen_base;
-	पूर्ण
+		goto err_iounmap_screen_base;
+	}
 
-	prपूर्णांकk(KERN_INFO PFX
+	printk(KERN_INFO PFX
 		"PCI nVidia %s framebuffer ver %s (%dMB @ 0x%lX)\n",
 		info->fix.id,
 		RIVAFB_VERSION,
@@ -2048,54 +2047,54 @@ out:
 		info->fix.smem_start);
 
 	NVTRACE_LEAVE();
-	वापस 0;
+	return 0;
 
 err_iounmap_screen_base:
-#अगर_घोषित CONFIG_FB_RIVA_I2C
+#ifdef CONFIG_FB_RIVA_I2C
 	riva_delete_i2c_busses(info->par);
-#पूर्ण_अगर
+#endif
 	iounmap(info->screen_base);
 err_iounmap_pramin:
-	अगर (शेष_par->riva.Architecture == NV_ARCH_03) 
-		iounmap(शेष_par->riva.PRAMIN);
+	if (default_par->riva.Architecture == NV_ARCH_03) 
+		iounmap(default_par->riva.PRAMIN);
 err_iounmap_ctrl_base:
-	iounmap(शेष_par->ctrl_base);
+	iounmap(default_par->ctrl_base);
 err_release_region:
 	pci_release_regions(pd);
 err_disable_device:
-err_मुक्त_pixmap:
-	kमुक्त(info->pixmap.addr);
+err_free_pixmap:
+	kfree(info->pixmap.addr);
 err_framebuffer_release:
 	framebuffer_release(info);
 err_ret:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम rivafb_हटाओ(काष्ठा pci_dev *pd)
-अणु
-	काष्ठा fb_info *info = pci_get_drvdata(pd);
-	काष्ठा riva_par *par = info->par;
+static void rivafb_remove(struct pci_dev *pd)
+{
+	struct fb_info *info = pci_get_drvdata(pd);
+	struct riva_par *par = info->par;
 	
 	NVTRACE_ENTER();
 
-#अगर_घोषित CONFIG_FB_RIVA_I2C
+#ifdef CONFIG_FB_RIVA_I2C
 	riva_delete_i2c_busses(par);
-	kमुक्त(par->EDID);
-#पूर्ण_अगर
+	kfree(par->EDID);
+#endif
 
-	unरेजिस्टर_framebuffer(info);
+	unregister_framebuffer(info);
 
-	riva_bl_निकास(info);
+	riva_bl_exit(info);
 	arch_phys_wc_del(par->wc_cookie);
 	iounmap(par->ctrl_base);
 	iounmap(info->screen_base);
-	अगर (par->riva.Architecture == NV_ARCH_03)
+	if (par->riva.Architecture == NV_ARCH_03)
 		iounmap(par->riva.PRAMIN);
 	pci_release_regions(pd);
-	kमुक्त(info->pixmap.addr);
+	kfree(info->pixmap.addr);
 	framebuffer_release(info);
 	NVTRACE_LEAVE();
-पूर्ण
+}
 
 /* ------------------------------------------------------------------------- *
  *
@@ -2103,48 +2102,48 @@ err_ret:
  *
  * ------------------------------------------------------------------------- */
 
-#अगर_अघोषित MODULE
-अटल पूर्णांक rivafb_setup(अक्षर *options)
-अणु
-	अक्षर *this_opt;
+#ifndef MODULE
+static int rivafb_setup(char *options)
+{
+	char *this_opt;
 
 	NVTRACE_ENTER();
-	अगर (!options || !*options)
-		वापस 0;
+	if (!options || !*options)
+		return 0;
 
-	जबतक ((this_opt = strsep(&options, ",")) != शून्य) अणु
-		अगर (!म_भेदन(this_opt, "forceCRTC", 9)) अणु
-			अक्षर *p;
+	while ((this_opt = strsep(&options, ",")) != NULL) {
+		if (!strncmp(this_opt, "forceCRTC", 9)) {
+			char *p;
 			
 			p = this_opt + 9;
-			अगर (!*p || !*(++p)) जारी; 
-			क्रमceCRTC = *p - '0';
-			अगर (क्रमceCRTC < 0 || क्रमceCRTC > 1) 
-				क्रमceCRTC = -1;
-		पूर्ण अन्यथा अगर (!म_भेदन(this_opt, "flatpanel", 9)) अणु
+			if (!*p || !*(++p)) continue; 
+			forceCRTC = *p - '0';
+			if (forceCRTC < 0 || forceCRTC > 1) 
+				forceCRTC = -1;
+		} else if (!strncmp(this_opt, "flatpanel", 9)) {
 			flatpanel = 1;
-		पूर्ण अन्यथा अगर (!म_भेदन(this_opt, "backlight:", 10)) अणु
-			backlight = simple_म_से_अदीर्घ(this_opt+10, शून्य, 0);
-		पूर्ण अन्यथा अगर (!म_भेदन(this_opt, "nomtrr", 6)) अणु
+		} else if (!strncmp(this_opt, "backlight:", 10)) {
+			backlight = simple_strtoul(this_opt+10, NULL, 0);
+		} else if (!strncmp(this_opt, "nomtrr", 6)) {
 			nomtrr = 1;
-		पूर्ण अन्यथा अगर (!म_भेदन(this_opt, "strictmode", 10)) अणु
-			stricपंचांगode = 1;
-		पूर्ण अन्यथा अगर (!म_भेदन(this_opt, "noaccel", 7)) अणु
+		} else if (!strncmp(this_opt, "strictmode", 10)) {
+			strictmode = 1;
+		} else if (!strncmp(this_opt, "noaccel", 7)) {
 			noaccel = 1;
-		पूर्ण अन्यथा
+		} else
 			mode_option = this_opt;
-	पूर्ण
+	}
 	NVTRACE_LEAVE();
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर /* !MODULE */
+	return 0;
+}
+#endif /* !MODULE */
 
-अटल काष्ठा pci_driver rivafb_driver = अणु
+static struct pci_driver rivafb_driver = {
 	.name		= "rivafb",
 	.id_table	= rivafb_pci_tbl,
 	.probe		= rivafb_probe,
-	.हटाओ		= rivafb_हटाओ,
-पूर्ण;
+	.remove		= rivafb_remove,
+};
 
 
 
@@ -2154,38 +2153,38 @@ err_ret:
  *
  * ------------------------------------------------------------------------- */
 
-अटल पूर्णांक rivafb_init(व्योम)
-अणु
-#अगर_अघोषित MODULE
-	अक्षर *option = शून्य;
+static int rivafb_init(void)
+{
+#ifndef MODULE
+	char *option = NULL;
 
-	अगर (fb_get_options("rivafb", &option))
-		वापस -ENODEV;
+	if (fb_get_options("rivafb", &option))
+		return -ENODEV;
 	rivafb_setup(option);
-#पूर्ण_अगर
-	वापस pci_रेजिस्टर_driver(&rivafb_driver);
-पूर्ण
+#endif
+	return pci_register_driver(&rivafb_driver);
+}
 
 
 module_init(rivafb_init);
 
-अटल व्योम __निकास rivafb_निकास(व्योम)
-अणु
-	pci_unरेजिस्टर_driver(&rivafb_driver);
-पूर्ण
+static void __exit rivafb_exit(void)
+{
+	pci_unregister_driver(&rivafb_driver);
+}
 
-module_निकास(rivafb_निकास);
+module_exit(rivafb_exit);
 
 module_param(noaccel, bool, 0);
 MODULE_PARM_DESC(noaccel, "bool: disable acceleration");
-module_param(flatpanel, पूर्णांक, 0);
+module_param(flatpanel, int, 0);
 MODULE_PARM_DESC(flatpanel, "Enables experimental flat panel support for some chipsets. (0 or 1=enabled) (default=0)");
-module_param(क्रमceCRTC, पूर्णांक, 0);
-MODULE_PARM_DESC(क्रमceCRTC, "Forces usage of a particular CRTC in case autodetection fails. (0 or 1) (default=autodetect)");
+module_param(forceCRTC, int, 0);
+MODULE_PARM_DESC(forceCRTC, "Forces usage of a particular CRTC in case autodetection fails. (0 or 1) (default=autodetect)");
 module_param(nomtrr, bool, 0);
 MODULE_PARM_DESC(nomtrr, "Disables MTRR support (0 or 1=disabled) (default=0)");
-module_param(stricपंचांगode, bool, 0);
-MODULE_PARM_DESC(stricपंचांगode, "Only use video modes from EDID");
+module_param(strictmode, bool, 0);
+MODULE_PARM_DESC(strictmode, "Only use video modes from EDID");
 
 MODULE_AUTHOR("Ani Joshi, maintainer");
 MODULE_DESCRIPTION("Framebuffer driver for nVidia Riva 128, TNT, TNT2, and the GeForce series");

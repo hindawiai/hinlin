@@ -1,10 +1,9 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _UAPI__ASM_BPF_PERF_EVENT_H__
-#घोषणा _UAPI__ASM_BPF_PERF_EVENT_H__
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _UAPI__ASM_BPF_PERF_EVENT_H__
+#define _UAPI__ASM_BPF_PERF_EVENT_H__
 
-#समावेश "ptrace.h"
+#include "ptrace.h"
 
-प्रकार user_pt_regs bpf_user_pt_regs_t;
+typedef user_pt_regs bpf_user_pt_regs_t;
 
-#पूर्ण_अगर /* _UAPI__ASM_BPF_PERF_EVENT_H__ */
+#endif /* _UAPI__ASM_BPF_PERF_EVENT_H__ */

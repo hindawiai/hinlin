@@ -1,105 +1,104 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 
-#अगर_अघोषित PERF_LINUX_LINKAGE_H_
-#घोषणा PERF_LINUX_LINKAGE_H_
+#ifndef PERF_LINUX_LINKAGE_H_
+#define PERF_LINUX_LINKAGE_H_
 
-/* linkage.h ... क्रम including arch/x86/lib/स_नकल_64.S */
+/* linkage.h ... for including arch/x86/lib/memcpy_64.S */
 
-/* Some toolchains use other अक्षरacters (e.g. '`') to mark new line in macro */
-#अगर_अघोषित ASM_NL
-#घोषणा ASM_NL		 ;
-#पूर्ण_अगर
+/* Some toolchains use other characters (e.g. '`') to mark new line in macro */
+#ifndef ASM_NL
+#define ASM_NL		 ;
+#endif
 
-#अगर_अघोषित __ALIGN
-#घोषणा __ALIGN		.align 4,0x90
-#घोषणा __ALIGN_STR	".align 4,0x90"
-#पूर्ण_अगर
+#ifndef __ALIGN
+#define __ALIGN		.align 4,0x90
+#define __ALIGN_STR	".align 4,0x90"
+#endif
 
 /* SYM_T_FUNC -- type used by assembler to mark functions */
-#अगर_अघोषित SYM_T_FUNC
-#घोषणा SYM_T_FUNC				STT_FUNC
-#पूर्ण_अगर
+#ifndef SYM_T_FUNC
+#define SYM_T_FUNC				STT_FUNC
+#endif
 
 /* SYM_A_* -- align the symbol? */
-#घोषणा SYM_A_ALIGN				ALIGN
+#define SYM_A_ALIGN				ALIGN
 
 /* SYM_L_* -- linkage of symbols */
-#घोषणा SYM_L_GLOBAL(name)			.globl name
-#घोषणा SYM_L_WEAK(name)			.weak name
-#घोषणा SYM_L_LOCAL(name)			/* nothing */
+#define SYM_L_GLOBAL(name)			.globl name
+#define SYM_L_WEAK(name)			.weak name
+#define SYM_L_LOCAL(name)			/* nothing */
 
-#घोषणा ALIGN __ALIGN
+#define ALIGN __ALIGN
 
 /* === generic annotations === */
 
-/* SYM_ENTRY -- use only अगर you have to क्रम non-paired symbols */
-#अगर_अघोषित SYM_ENTRY
-#घोषणा SYM_ENTRY(name, linkage, align...)		\
+/* SYM_ENTRY -- use only if you have to for non-paired symbols */
+#ifndef SYM_ENTRY
+#define SYM_ENTRY(name, linkage, align...)		\
 	linkage(name) ASM_NL				\
 	align ASM_NL					\
 	name:
-#पूर्ण_अगर
+#endif
 
-/* SYM_START -- use only अगर you have to */
-#अगर_अघोषित SYM_START
-#घोषणा SYM_START(name, linkage, align...)		\
+/* SYM_START -- use only if you have to */
+#ifndef SYM_START
+#define SYM_START(name, linkage, align...)		\
 	SYM_ENTRY(name, linkage, align)
-#पूर्ण_अगर
+#endif
 
-/* SYM_END -- use only अगर you have to */
-#अगर_अघोषित SYM_END
-#घोषणा SYM_END(name, sym_type)				\
+/* SYM_END -- use only if you have to */
+#ifndef SYM_END
+#define SYM_END(name, sym_type)				\
 	.type name sym_type ASM_NL			\
 	.size name, .-name
-#पूर्ण_अगर
+#endif
 
 /*
- * SYM_FUNC_START_ALIAS -- use where there are two global names क्रम one
+ * SYM_FUNC_START_ALIAS -- use where there are two global names for one
  * function
  */
-#अगर_अघोषित SYM_FUNC_START_ALIAS
-#घोषणा SYM_FUNC_START_ALIAS(name)			\
+#ifndef SYM_FUNC_START_ALIAS
+#define SYM_FUNC_START_ALIAS(name)			\
 	SYM_START(name, SYM_L_GLOBAL, SYM_A_ALIGN)
-#पूर्ण_अगर
+#endif
 
-/* SYM_FUNC_START -- use क्रम global functions */
-#अगर_अघोषित SYM_FUNC_START
+/* SYM_FUNC_START -- use for global functions */
+#ifndef SYM_FUNC_START
 /*
  * The same as SYM_FUNC_START_ALIAS, but we will need to distinguish these two
  * later.
  */
-#घोषणा SYM_FUNC_START(name)				\
+#define SYM_FUNC_START(name)				\
 	SYM_START(name, SYM_L_GLOBAL, SYM_A_ALIGN)
-#पूर्ण_अगर
+#endif
 
-/* SYM_FUNC_START_LOCAL -- use क्रम local functions */
-#अगर_अघोषित SYM_FUNC_START_LOCAL
+/* SYM_FUNC_START_LOCAL -- use for local functions */
+#ifndef SYM_FUNC_START_LOCAL
 /* the same as SYM_FUNC_START_LOCAL_ALIAS, see comment near SYM_FUNC_START */
-#घोषणा SYM_FUNC_START_LOCAL(name)			\
+#define SYM_FUNC_START_LOCAL(name)			\
 	SYM_START(name, SYM_L_LOCAL, SYM_A_ALIGN)
-#पूर्ण_अगर
+#endif
 
 /* SYM_FUNC_END_ALIAS -- the end of LOCAL_ALIASed or ALIASed function */
-#अगर_अघोषित SYM_FUNC_END_ALIAS
-#घोषणा SYM_FUNC_END_ALIAS(name)			\
+#ifndef SYM_FUNC_END_ALIAS
+#define SYM_FUNC_END_ALIAS(name)			\
 	SYM_END(name, SYM_T_FUNC)
-#पूर्ण_अगर
+#endif
 
-/* SYM_FUNC_START_WEAK -- use क्रम weak functions */
-#अगर_अघोषित SYM_FUNC_START_WEAK
-#घोषणा SYM_FUNC_START_WEAK(name)			\
+/* SYM_FUNC_START_WEAK -- use for weak functions */
+#ifndef SYM_FUNC_START_WEAK
+#define SYM_FUNC_START_WEAK(name)			\
 	SYM_START(name, SYM_L_WEAK, SYM_A_ALIGN)
-#पूर्ण_अगर
+#endif
 
 /*
  * SYM_FUNC_END -- the end of SYM_FUNC_START_LOCAL, SYM_FUNC_START,
  * SYM_FUNC_START_WEAK, ...
  */
-#अगर_अघोषित SYM_FUNC_END
+#ifndef SYM_FUNC_END
 /* the same as SYM_FUNC_END_ALIAS, see comment near SYM_FUNC_START */
-#घोषणा SYM_FUNC_END(name)				\
+#define SYM_FUNC_END(name)				\
 	SYM_END(name, SYM_T_FUNC)
-#पूर्ण_अगर
+#endif
 
-#पूर्ण_अगर	/* PERF_LINUX_LINKAGE_H_ */
+#endif	/* PERF_LINUX_LINKAGE_H_ */

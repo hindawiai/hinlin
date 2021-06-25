@@ -1,93 +1,92 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright (C) 2004 - 2006 rt2x00 SourceForge Project
  * <http://rt2x00.serialmonkey.com>
  *
  * Module: eeprom_93cx6
- * Abstract: EEPROM पढ़ोer routines क्रम 93cx6 chipsets.
+ * Abstract: EEPROM reader routines for 93cx6 chipsets.
  * Supported chipsets: 93c46 & 93c66.
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/eeprom_93cx6.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/delay.h>
+#include <linux/eeprom_93cx6.h>
 
 MODULE_AUTHOR("http://rt2x00.serialmonkey.com");
 MODULE_VERSION("1.0");
 MODULE_DESCRIPTION("EEPROM 93cx6 chip driver");
 MODULE_LICENSE("GPL");
 
-अटल अंतरभूत व्योम eeprom_93cx6_pulse_high(काष्ठा eeprom_93cx6 *eeprom)
-अणु
-	eeprom->reg_data_घड़ी = 1;
-	eeprom->रेजिस्टर_ग_लिखो(eeprom);
+static inline void eeprom_93cx6_pulse_high(struct eeprom_93cx6 *eeprom)
+{
+	eeprom->reg_data_clock = 1;
+	eeprom->register_write(eeprom);
 
 	/*
-	 * Add a लघु delay क्रम the pulse to work.
-	 * According to the specअगरications the "maximum minimum"
-	 * समय should be 450ns.
+	 * Add a short delay for the pulse to work.
+	 * According to the specifications the "maximum minimum"
+	 * time should be 450ns.
 	 */
 	ndelay(450);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम eeprom_93cx6_pulse_low(काष्ठा eeprom_93cx6 *eeprom)
-अणु
-	eeprom->reg_data_घड़ी = 0;
-	eeprom->रेजिस्टर_ग_लिखो(eeprom);
+static inline void eeprom_93cx6_pulse_low(struct eeprom_93cx6 *eeprom)
+{
+	eeprom->reg_data_clock = 0;
+	eeprom->register_write(eeprom);
 
 	/*
-	 * Add a लघु delay क्रम the pulse to work.
-	 * According to the specअगरications the "maximum minimum"
-	 * समय should be 450ns.
+	 * Add a short delay for the pulse to work.
+	 * According to the specifications the "maximum minimum"
+	 * time should be 450ns.
 	 */
 	ndelay(450);
-पूर्ण
+}
 
-अटल व्योम eeprom_93cx6_startup(काष्ठा eeprom_93cx6 *eeprom)
-अणु
+static void eeprom_93cx6_startup(struct eeprom_93cx6 *eeprom)
+{
 	/*
 	 * Clear all flags, and enable chip select.
 	 */
-	eeprom->रेजिस्टर_पढ़ो(eeprom);
+	eeprom->register_read(eeprom);
 	eeprom->reg_data_in = 0;
 	eeprom->reg_data_out = 0;
-	eeprom->reg_data_घड़ी = 0;
+	eeprom->reg_data_clock = 0;
 	eeprom->reg_chip_select = 1;
 	eeprom->drive_data = 1;
-	eeprom->रेजिस्टर_ग_लिखो(eeprom);
+	eeprom->register_write(eeprom);
 
 	/*
 	 * kick a pulse.
 	 */
 	eeprom_93cx6_pulse_high(eeprom);
 	eeprom_93cx6_pulse_low(eeprom);
-पूर्ण
+}
 
-अटल व्योम eeprom_93cx6_cleanup(काष्ठा eeprom_93cx6 *eeprom)
-अणु
+static void eeprom_93cx6_cleanup(struct eeprom_93cx6 *eeprom)
+{
 	/*
 	 * Clear chip_select and data_in flags.
 	 */
-	eeprom->रेजिस्टर_पढ़ो(eeprom);
+	eeprom->register_read(eeprom);
 	eeprom->reg_data_in = 0;
 	eeprom->reg_chip_select = 0;
-	eeprom->रेजिस्टर_ग_लिखो(eeprom);
+	eeprom->register_write(eeprom);
 
 	/*
 	 * kick a pulse.
 	 */
 	eeprom_93cx6_pulse_high(eeprom);
 	eeprom_93cx6_pulse_low(eeprom);
-पूर्ण
+}
 
-अटल व्योम eeprom_93cx6_ग_लिखो_bits(काष्ठा eeprom_93cx6 *eeprom,
-	स्थिर u16 data, स्थिर u16 count)
-अणु
-	अचिन्हित पूर्णांक i;
+static void eeprom_93cx6_write_bits(struct eeprom_93cx6 *eeprom,
+	const u16 data, const u16 count)
+{
+	unsigned int i;
 
-	eeprom->रेजिस्टर_पढ़ो(eeprom);
+	eeprom->register_read(eeprom);
 
 	/*
 	 * Clear data flags.
@@ -99,35 +98,35 @@ MODULE_LICENSE("GPL");
 	/*
 	 * Start writing all bits.
 	 */
-	क्रम (i = count; i > 0; i--) अणु
+	for (i = count; i > 0; i--) {
 		/*
-		 * Check अगर this bit needs to be set.
+		 * Check if this bit needs to be set.
 		 */
 		eeprom->reg_data_in = !!(data & (1 << (i - 1)));
 
 		/*
-		 * Write the bit to the eeprom रेजिस्टर.
+		 * Write the bit to the eeprom register.
 		 */
-		eeprom->रेजिस्टर_ग_लिखो(eeprom);
+		eeprom->register_write(eeprom);
 
 		/*
 		 * Kick a pulse.
 		 */
 		eeprom_93cx6_pulse_high(eeprom);
 		eeprom_93cx6_pulse_low(eeprom);
-	पूर्ण
+	}
 
 	eeprom->reg_data_in = 0;
-	eeprom->रेजिस्टर_ग_लिखो(eeprom);
-पूर्ण
+	eeprom->register_write(eeprom);
+}
 
-अटल व्योम eeprom_93cx6_पढ़ो_bits(काष्ठा eeprom_93cx6 *eeprom,
-	u16 *data, स्थिर u16 count)
-अणु
-	अचिन्हित पूर्णांक i;
+static void eeprom_93cx6_read_bits(struct eeprom_93cx6 *eeprom,
+	u16 *data, const u16 count)
+{
+	unsigned int i;
 	u16 buf = 0;
 
-	eeprom->रेजिस्टर_पढ़ो(eeprom);
+	eeprom->register_read(eeprom);
 
 	/*
 	 * Clear data flags.
@@ -137,12 +136,12 @@ MODULE_LICENSE("GPL");
 	eeprom->drive_data = 0;
 
 	/*
-	 * Start पढ़ोing all bits.
+	 * Start reading all bits.
 	 */
-	क्रम (i = count; i > 0; i--) अणु
+	for (i = count; i > 0; i--) {
 		eeprom_93cx6_pulse_high(eeprom);
 
-		eeprom->रेजिस्टर_पढ़ो(eeprom);
+		eeprom->register_read(eeprom);
 
 		/*
 		 * Clear data_in flag.
@@ -150,152 +149,152 @@ MODULE_LICENSE("GPL");
 		eeprom->reg_data_in = 0;
 
 		/*
-		 * Read अगर the bit has been set.
+		 * Read if the bit has been set.
 		 */
-		अगर (eeprom->reg_data_out)
+		if (eeprom->reg_data_out)
 			buf |= (1 << (i - 1));
 
 		eeprom_93cx6_pulse_low(eeprom);
-	पूर्ण
+	}
 
 	*data = buf;
-पूर्ण
+}
 
 /**
- * eeprom_93cx6_पढ़ो - Read a word from eeprom
- * @eeprom: Poपूर्णांकer to eeprom काष्ठाure
- * @word: Word index from where we should start पढ़ोing
- * @data: target poपूर्णांकer where the inक्रमmation will have to be stored
+ * eeprom_93cx6_read - Read a word from eeprom
+ * @eeprom: Pointer to eeprom structure
+ * @word: Word index from where we should start reading
+ * @data: target pointer where the information will have to be stored
  *
- * This function will पढ़ो the eeprom data as host-endian word
- * पूर्णांकo the given data poपूर्णांकer.
+ * This function will read the eeprom data as host-endian word
+ * into the given data pointer.
  */
-व्योम eeprom_93cx6_पढ़ो(काष्ठा eeprom_93cx6 *eeprom, स्थिर u8 word,
+void eeprom_93cx6_read(struct eeprom_93cx6 *eeprom, const u8 word,
 	u16 *data)
-अणु
+{
 	u16 command;
 
 	/*
-	 * Initialize the eeprom रेजिस्टर
+	 * Initialize the eeprom register
 	 */
 	eeprom_93cx6_startup(eeprom);
 
 	/*
-	 * Select the पढ़ो opcode and the word to be पढ़ो.
+	 * Select the read opcode and the word to be read.
 	 */
 	command = (PCI_EEPROM_READ_OPCODE << eeprom->width) | word;
-	eeprom_93cx6_ग_लिखो_bits(eeprom, command,
+	eeprom_93cx6_write_bits(eeprom, command,
 		PCI_EEPROM_WIDTH_OPCODE + eeprom->width);
 
 	/*
 	 * Read the requested 16 bits.
 	 */
-	eeprom_93cx6_पढ़ो_bits(eeprom, data, 16);
+	eeprom_93cx6_read_bits(eeprom, data, 16);
 
 	/*
-	 * Cleanup eeprom रेजिस्टर.
+	 * Cleanup eeprom register.
 	 */
 	eeprom_93cx6_cleanup(eeprom);
-पूर्ण
-EXPORT_SYMBOL_GPL(eeprom_93cx6_पढ़ो);
+}
+EXPORT_SYMBOL_GPL(eeprom_93cx6_read);
 
 /**
- * eeprom_93cx6_multiपढ़ो - Read multiple words from eeprom
- * @eeprom: Poपूर्णांकer to eeprom काष्ठाure
- * @word: Word index from where we should start पढ़ोing
- * @data: target poपूर्णांकer where the inक्रमmation will have to be stored
- * @words: Number of words that should be पढ़ो.
+ * eeprom_93cx6_multiread - Read multiple words from eeprom
+ * @eeprom: Pointer to eeprom structure
+ * @word: Word index from where we should start reading
+ * @data: target pointer where the information will have to be stored
+ * @words: Number of words that should be read.
  *
- * This function will पढ़ो all requested words from the eeprom,
- * this is करोne by calling eeprom_93cx6_पढ़ो() multiple बार.
- * But with the additional change that जबतक the eeprom_93cx6_पढ़ो
- * will वापस host ordered bytes, this method will वापस little
+ * This function will read all requested words from the eeprom,
+ * this is done by calling eeprom_93cx6_read() multiple times.
+ * But with the additional change that while the eeprom_93cx6_read
+ * will return host ordered bytes, this method will return little
  * endian words.
  */
-व्योम eeprom_93cx6_multiपढ़ो(काष्ठा eeprom_93cx6 *eeprom, स्थिर u8 word,
-	__le16 *data, स्थिर u16 words)
-अणु
-	अचिन्हित पूर्णांक i;
-	u16 पंचांगp;
+void eeprom_93cx6_multiread(struct eeprom_93cx6 *eeprom, const u8 word,
+	__le16 *data, const u16 words)
+{
+	unsigned int i;
+	u16 tmp;
 
-	क्रम (i = 0; i < words; i++) अणु
-		पंचांगp = 0;
-		eeprom_93cx6_पढ़ो(eeprom, word + i, &पंचांगp);
-		data[i] = cpu_to_le16(पंचांगp);
-	पूर्ण
-पूर्ण
-EXPORT_SYMBOL_GPL(eeprom_93cx6_multiपढ़ो);
+	for (i = 0; i < words; i++) {
+		tmp = 0;
+		eeprom_93cx6_read(eeprom, word + i, &tmp);
+		data[i] = cpu_to_le16(tmp);
+	}
+}
+EXPORT_SYMBOL_GPL(eeprom_93cx6_multiread);
 
 /**
- * eeprom_93cx6_पढ़ोb - Read a byte from eeprom
- * @eeprom: Poपूर्णांकer to eeprom काष्ठाure
- * @byte: Byte index from where we should start पढ़ोing
- * @data: target poपूर्णांकer where the inक्रमmation will have to be stored
+ * eeprom_93cx6_readb - Read a byte from eeprom
+ * @eeprom: Pointer to eeprom structure
+ * @byte: Byte index from where we should start reading
+ * @data: target pointer where the information will have to be stored
  *
- * This function will पढ़ो a byte of the eeprom data
- * पूर्णांकo the given data poपूर्णांकer.
+ * This function will read a byte of the eeprom data
+ * into the given data pointer.
  */
-व्योम eeprom_93cx6_पढ़ोb(काष्ठा eeprom_93cx6 *eeprom, स्थिर u8 byte,
+void eeprom_93cx6_readb(struct eeprom_93cx6 *eeprom, const u8 byte,
 	u8 *data)
-अणु
+{
 	u16 command;
-	u16 पंचांगp;
+	u16 tmp;
 
 	/*
-	 * Initialize the eeprom रेजिस्टर
+	 * Initialize the eeprom register
 	 */
 	eeprom_93cx6_startup(eeprom);
 
 	/*
-	 * Select the पढ़ो opcode and the byte to be पढ़ो.
+	 * Select the read opcode and the byte to be read.
 	 */
 	command = (PCI_EEPROM_READ_OPCODE << (eeprom->width + 1)) | byte;
-	eeprom_93cx6_ग_लिखो_bits(eeprom, command,
+	eeprom_93cx6_write_bits(eeprom, command,
 		PCI_EEPROM_WIDTH_OPCODE + eeprom->width + 1);
 
 	/*
 	 * Read the requested 8 bits.
 	 */
-	eeprom_93cx6_पढ़ो_bits(eeprom, &पंचांगp, 8);
-	*data = पंचांगp & 0xff;
+	eeprom_93cx6_read_bits(eeprom, &tmp, 8);
+	*data = tmp & 0xff;
 
 	/*
-	 * Cleanup eeprom रेजिस्टर.
+	 * Cleanup eeprom register.
 	 */
 	eeprom_93cx6_cleanup(eeprom);
-पूर्ण
-EXPORT_SYMBOL_GPL(eeprom_93cx6_पढ़ोb);
+}
+EXPORT_SYMBOL_GPL(eeprom_93cx6_readb);
 
 /**
- * eeprom_93cx6_multiपढ़ोb - Read multiple bytes from eeprom
- * @eeprom: Poपूर्णांकer to eeprom काष्ठाure
- * @byte: Index from where we should start पढ़ोing
- * @data: target poपूर्णांकer where the inक्रमmation will have to be stored
- * @bytes: Number of bytes that should be पढ़ो.
+ * eeprom_93cx6_multireadb - Read multiple bytes from eeprom
+ * @eeprom: Pointer to eeprom structure
+ * @byte: Index from where we should start reading
+ * @data: target pointer where the information will have to be stored
+ * @bytes: Number of bytes that should be read.
  *
- * This function will पढ़ो all requested bytes from the eeprom,
- * this is करोne by calling eeprom_93cx6_पढ़ोb() multiple बार.
+ * This function will read all requested bytes from the eeprom,
+ * this is done by calling eeprom_93cx6_readb() multiple times.
  */
-व्योम eeprom_93cx6_multiपढ़ोb(काष्ठा eeprom_93cx6 *eeprom, स्थिर u8 byte,
-	u8 *data, स्थिर u16 bytes)
-अणु
-	अचिन्हित पूर्णांक i;
+void eeprom_93cx6_multireadb(struct eeprom_93cx6 *eeprom, const u8 byte,
+	u8 *data, const u16 bytes)
+{
+	unsigned int i;
 
-	क्रम (i = 0; i < bytes; i++)
-		eeprom_93cx6_पढ़ोb(eeprom, byte + i, &data[i]);
-पूर्ण
-EXPORT_SYMBOL_GPL(eeprom_93cx6_multiपढ़ोb);
+	for (i = 0; i < bytes; i++)
+		eeprom_93cx6_readb(eeprom, byte + i, &data[i]);
+}
+EXPORT_SYMBOL_GPL(eeprom_93cx6_multireadb);
 
 /**
- * eeprom_93cx6_wren - set the ग_लिखो enable state
- * @eeprom: Poपूर्णांकer to eeprom काष्ठाure
- * @enable: true to enable ग_लिखोs, otherwise disable ग_लिखोs
+ * eeprom_93cx6_wren - set the write enable state
+ * @eeprom: Pointer to eeprom structure
+ * @enable: true to enable writes, otherwise disable writes
  *
- * Set the EEPROM ग_लिखो enable state to either allow or deny
- * ग_लिखोs depending on the @enable value.
+ * Set the EEPROM write enable state to either allow or deny
+ * writes depending on the @enable value.
  */
-व्योम eeprom_93cx6_wren(काष्ठा eeprom_93cx6 *eeprom, bool enable)
-अणु
+void eeprom_93cx6_wren(struct eeprom_93cx6 *eeprom, bool enable)
+{
 	u16 command;
 
 	/* start the command */
@@ -306,29 +305,29 @@ EXPORT_SYMBOL_GPL(eeprom_93cx6_multiपढ़ोb);
 	command = enable ? PCI_EEPROM_EWEN_OPCODE : PCI_EEPROM_EWDS_OPCODE;
 	command <<= (eeprom->width - 2);
 
-	eeprom_93cx6_ग_लिखो_bits(eeprom, command,
+	eeprom_93cx6_write_bits(eeprom, command,
 				PCI_EEPROM_WIDTH_OPCODE + eeprom->width);
 
 	eeprom_93cx6_cleanup(eeprom);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(eeprom_93cx6_wren);
 
 /**
- * eeprom_93cx6_ग_लिखो - ग_लिखो data to the EEPROM
- * @eeprom: Poपूर्णांकer to eeprom काष्ठाure
- * @addr: Address to ग_लिखो data to.
- * @data: The data to ग_लिखो to address @addr.
+ * eeprom_93cx6_write - write data to the EEPROM
+ * @eeprom: Pointer to eeprom structure
+ * @addr: Address to write data to.
+ * @data: The data to write to address @addr.
  *
- * Write the @data to the specअगरied @addr in the EEPROM and
- * रुकोing क्रम the device to finish writing.
+ * Write the @data to the specified @addr in the EEPROM and
+ * waiting for the device to finish writing.
  *
- * Note, since we करो not expect large number of ग_लिखो operations
- * we delay in between parts of the operation to aव्योम using excessive
- * amounts of CPU समय busy रुकोing.
+ * Note, since we do not expect large number of write operations
+ * we delay in between parts of the operation to avoid using excessive
+ * amounts of CPU time busy waiting.
  */
-व्योम eeprom_93cx6_ग_लिखो(काष्ठा eeprom_93cx6 *eeprom, u8 addr, u16 data)
-अणु
-	पूर्णांक समयout = 100;
+void eeprom_93cx6_write(struct eeprom_93cx6 *eeprom, u8 addr, u16 data)
+{
+	int timeout = 100;
 	u16 command;
 
 	/* start the command */
@@ -337,37 +336,37 @@ EXPORT_SYMBOL_GPL(eeprom_93cx6_wren);
 	command = PCI_EEPROM_WRITE_OPCODE << eeprom->width;
 	command |= addr;
 
-	/* send ग_लिखो command */
-	eeprom_93cx6_ग_लिखो_bits(eeprom, command,
+	/* send write command */
+	eeprom_93cx6_write_bits(eeprom, command,
 				PCI_EEPROM_WIDTH_OPCODE + eeprom->width);
 
 	/* send data */
-	eeprom_93cx6_ग_लिखो_bits(eeprom, data, 16);
+	eeprom_93cx6_write_bits(eeprom, data, 16);
 
-	/* get पढ़ोy to check क्रम busy */
+	/* get ready to check for busy */
 	eeprom->drive_data = 0;
 	eeprom->reg_chip_select = 1;
-	eeprom->रेजिस्टर_ग_लिखो(eeprom);
+	eeprom->register_write(eeprom);
 
-	/* रुको at-least 250ns to get DO to be the busy संकेत */
+	/* wait at-least 250ns to get DO to be the busy signal */
 	usleep_range(1000, 2000);
 
-	/* रुको क्रम DO to go high to signअगरy finish */
+	/* wait for DO to go high to signify finish */
 
-	जबतक (true) अणु
-		eeprom->रेजिस्टर_पढ़ो(eeprom);
+	while (true) {
+		eeprom->register_read(eeprom);
 
-		अगर (eeprom->reg_data_out)
-			अवरोध;
+		if (eeprom->reg_data_out)
+			break;
 
 		usleep_range(1000, 2000);
 
-		अगर (--समयout <= 0) अणु
-			prपूर्णांकk(KERN_ERR "%s: timeout\n", __func__);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+		if (--timeout <= 0) {
+			printk(KERN_ERR "%s: timeout\n", __func__);
+			break;
+		}
+	}
 
 	eeprom_93cx6_cleanup(eeprom);
-पूर्ण
-EXPORT_SYMBOL_GPL(eeprom_93cx6_ग_लिखो);
+}
+EXPORT_SYMBOL_GPL(eeprom_93cx6_write);

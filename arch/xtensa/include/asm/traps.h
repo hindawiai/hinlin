@@ -1,119 +1,118 @@
-<शैली गुरु>
 /*
- * arch/xtensa/include/यंत्र/traps.h
+ * arch/xtensa/include/asm/traps.h
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the मुख्य directory of this archive
- * क्रम more details.
+ * License.  See the file "COPYING" in the main directory of this archive
+ * for more details.
  *
  * Copyright (C) 2012 Tensilica Inc.
  */
-#अगर_अघोषित _XTENSA_TRAPS_H
-#घोषणा _XTENSA_TRAPS_H
+#ifndef _XTENSA_TRAPS_H
+#define _XTENSA_TRAPS_H
 
-#समावेश <यंत्र/ptrace.h>
+#include <asm/ptrace.h>
 
 /*
- * Per-CPU exception handling data काष्ठाure.
- * EXCSAVE1 poपूर्णांकs to it.
+ * Per-CPU exception handling data structure.
+ * EXCSAVE1 points to it.
  */
-काष्ठा exc_table अणु
+struct exc_table {
 	/* Kernel Stack */
-	व्योम *kstk;
-	/* Double exception save area क्रम a0 */
-	अचिन्हित दीर्घ द्विगुन_save;
+	void *kstk;
+	/* Double exception save area for a0 */
+	unsigned long double_save;
 	/* Fixup handler */
-	व्योम *fixup;
+	void *fixup;
 	/* For passing a parameter to fixup */
-	व्योम *fixup_param;
+	void *fixup_param;
 	/* Fast user exception handlers */
-	व्योम *fast_user_handler[EXCCAUSE_N];
+	void *fast_user_handler[EXCCAUSE_N];
 	/* Fast kernel exception handlers */
-	व्योम *fast_kernel_handler[EXCCAUSE_N];
+	void *fast_kernel_handler[EXCCAUSE_N];
 	/* Default C-Handlers */
-	व्योम *शेष_handler[EXCCAUSE_N];
-पूर्ण;
+	void *default_handler[EXCCAUSE_N];
+};
 
 /*
  * handler must be either of the following:
- *  व्योम (*)(काष्ठा pt_regs *regs);
- *  व्योम (*)(काष्ठा pt_regs *regs, अचिन्हित दीर्घ exccause);
+ *  void (*)(struct pt_regs *regs);
+ *  void (*)(struct pt_regs *regs, unsigned long exccause);
  */
-बाह्य व्योम * __init trap_set_handler(पूर्णांक cause, व्योम *handler);
-बाह्य व्योम करो_unhandled(काष्ठा pt_regs *regs, अचिन्हित दीर्घ exccause);
-व्योम fast_second_level_miss(व्योम);
+extern void * __init trap_set_handler(int cause, void *handler);
+extern void do_unhandled(struct pt_regs *regs, unsigned long exccause);
+void fast_second_level_miss(void);
 
-/* Initialize minimal exc_table काष्ठाure sufficient क्रम basic paging */
-अटल अंतरभूत व्योम __init early_trap_init(व्योम)
-अणु
-	अटल काष्ठा exc_table exc_table __initdata = अणु
+/* Initialize minimal exc_table structure sufficient for basic paging */
+static inline void __init early_trap_init(void)
+{
+	static struct exc_table exc_table __initdata = {
 		.fast_kernel_handler[EXCCAUSE_DTLB_MISS] =
 			fast_second_level_miss,
-	पूर्ण;
-	__यंत्र__ __अस्थिर__("wsr  %0, excsave1\n" : : "a" (&exc_table));
-पूर्ण
+	};
+	__asm__ __volatile__("wsr  %0, excsave1\n" : : "a" (&exc_table));
+}
 
-व्योम secondary_trap_init(व्योम);
+void secondary_trap_init(void);
 
-अटल अंतरभूत व्योम spill_रेजिस्टरs(व्योम)
-अणु
-#अगर XCHAL_NUM_AREGS > 16
-	__यंत्र__ __अस्थिर__ (
+static inline void spill_registers(void)
+{
+#if XCHAL_NUM_AREGS > 16
+	__asm__ __volatile__ (
 		"	call8	1f\n"
 		"	_j	2f\n"
 		"	retw\n"
 		"	.align	4\n"
 		"1:\n"
-#अगर XCHAL_NUM_AREGS == 32
+#if XCHAL_NUM_AREGS == 32
 		"	_entry	a1, 32\n"
 		"	addi	a8, a0, 3\n"
 		"	_entry	a1, 16\n"
 		"	mov	a12, a12\n"
 		"	retw\n"
-#अन्यथा
+#else
 		"	_entry	a1, 48\n"
 		"	call12	1f\n"
 		"	retw\n"
 		"	.align	4\n"
 		"1:\n"
-		"	.rept	(" __stringअगरy(XCHAL_NUM_AREGS) " - 16) / 12\n"
+		"	.rept	(" __stringify(XCHAL_NUM_AREGS) " - 16) / 12\n"
 		"	_entry	a1, 48\n"
 		"	mov	a12, a0\n"
 		"	.endr\n"
 		"	_entry	a1, 16\n"
-#अगर XCHAL_NUM_AREGS % 12 == 0
+#if XCHAL_NUM_AREGS % 12 == 0
 		"	mov	a12, a12\n"
-#या_अगर XCHAL_NUM_AREGS % 12 == 4
+#elif XCHAL_NUM_AREGS % 12 == 4
 		"	mov	a4, a4\n"
-#या_अगर XCHAL_NUM_AREGS % 12 == 8
+#elif XCHAL_NUM_AREGS % 12 == 8
 		"	mov	a8, a8\n"
-#पूर्ण_अगर
+#endif
 		"	retw\n"
-#पूर्ण_अगर
+#endif
 		"2:\n"
 		: : : "a8", "a9", "memory");
-#अन्यथा
-	__यंत्र__ __अस्थिर__ (
+#else
+	__asm__ __volatile__ (
 		"	mov	a12, a12\n"
 		: : : "memory");
-#पूर्ण_अगर
-पूर्ण
+#endif
+}
 
-काष्ठा debug_table अणु
-	/* Poपूर्णांकer to debug exception handler */
-	व्योम (*debug_exception)(व्योम);
-	/* Temporary रेजिस्टर save area */
-	अचिन्हित दीर्घ debug_save[1];
-#अगर_घोषित CONFIG_HAVE_HW_BREAKPOINT
-	/* Save area क्रम DBREAKC रेजिस्टरs */
-	अचिन्हित दीर्घ dअवरोधc_save[XCHAL_NUM_DBREAK];
-	/* Saved ICOUNT रेजिस्टर */
-	अचिन्हित दीर्घ icount_save;
-	/* Saved ICOUNTLEVEL रेजिस्टर */
-	अचिन्हित दीर्घ icount_level_save;
-#पूर्ण_अगर
-पूर्ण;
+struct debug_table {
+	/* Pointer to debug exception handler */
+	void (*debug_exception)(void);
+	/* Temporary register save area */
+	unsigned long debug_save[1];
+#ifdef CONFIG_HAVE_HW_BREAKPOINT
+	/* Save area for DBREAKC registers */
+	unsigned long dbreakc_save[XCHAL_NUM_DBREAK];
+	/* Saved ICOUNT register */
+	unsigned long icount_save;
+	/* Saved ICOUNTLEVEL register */
+	unsigned long icount_level_save;
+#endif
+};
 
-व्योम debug_exception(व्योम);
+void debug_exception(void);
 
-#पूर्ण_अगर /* _XTENSA_TRAPS_H */
+#endif /* _XTENSA_TRAPS_H */

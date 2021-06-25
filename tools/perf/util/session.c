@@ -1,798 +1,797 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <त्रुटिसं.स>
-#समावेश <पूर्णांकtypes.h>
-#समावेश <linux/err.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/zभाग.स>
-#समावेश <api/fs/fs.h>
+// SPDX-License-Identifier: GPL-2.0
+#include <errno.h>
+#include <inttypes.h>
+#include <linux/err.h>
+#include <linux/kernel.h>
+#include <linux/zalloc.h>
+#include <api/fs/fs.h>
 
-#समावेश <byteswap.h>
-#समावेश <unistd.h>
-#समावेश <sys/types.h>
-#समावेश <sys/mman.h>
-#समावेश <perf/cpumap.h>
+#include <byteswap.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/mman.h>
+#include <perf/cpumap.h>
 
-#समावेश "map_symbol.h"
-#समावेश "branch.h"
-#समावेश "debug.h"
-#समावेश "evlist.h"
-#समावेश "evsel.h"
-#समावेश "memswap.h"
-#समावेश "map.h"
-#समावेश "symbol.h"
-#समावेश "session.h"
-#समावेश "tool.h"
-#समावेश "perf_regs.h"
-#समावेश "asm/bug.h"
-#समावेश "auxtrace.h"
-#समावेश "thread.h"
-#समावेश "thread-stack.h"
-#समावेश "sample-raw.h"
-#समावेश "stat.h"
-#समावेश "tsc.h"
-#समावेश "ui/progress.h"
-#समावेश "../perf.h"
-#समावेश "arch/common.h"
-#समावेश "units.h"
-#समावेश <पूर्णांकernal/lib.h>
+#include "map_symbol.h"
+#include "branch.h"
+#include "debug.h"
+#include "evlist.h"
+#include "evsel.h"
+#include "memswap.h"
+#include "map.h"
+#include "symbol.h"
+#include "session.h"
+#include "tool.h"
+#include "perf_regs.h"
+#include "asm/bug.h"
+#include "auxtrace.h"
+#include "thread.h"
+#include "thread-stack.h"
+#include "sample-raw.h"
+#include "stat.h"
+#include "tsc.h"
+#include "ui/progress.h"
+#include "../perf.h"
+#include "arch/common.h"
+#include "units.h"
+#include <internal/lib.h>
 
-#अगर_घोषित HAVE_ZSTD_SUPPORT
-अटल पूर्णांक perf_session__process_compressed_event(काष्ठा perf_session *session,
-						  जोड़ perf_event *event, u64 file_offset)
-अणु
-	व्योम *src;
-	माप_प्रकार decomp_size, src_size;
+#ifdef HAVE_ZSTD_SUPPORT
+static int perf_session__process_compressed_event(struct perf_session *session,
+						  union perf_event *event, u64 file_offset)
+{
+	void *src;
+	size_t decomp_size, src_size;
 	u64 decomp_last_rem = 0;
-	माप_प्रकार mmap_len, decomp_len = session->header.env.comp_mmap_len;
-	काष्ठा decomp *decomp, *decomp_last = session->decomp_last;
+	size_t mmap_len, decomp_len = session->header.env.comp_mmap_len;
+	struct decomp *decomp, *decomp_last = session->decomp_last;
 
-	अगर (decomp_last) अणु
+	if (decomp_last) {
 		decomp_last_rem = decomp_last->size - decomp_last->head;
 		decomp_len += decomp_last_rem;
-	पूर्ण
+	}
 
-	mmap_len = माप(काष्ठा decomp) + decomp_len;
-	decomp = mmap(शून्य, mmap_len, PROT_READ|PROT_WRITE,
+	mmap_len = sizeof(struct decomp) + decomp_len;
+	decomp = mmap(NULL, mmap_len, PROT_READ|PROT_WRITE,
 		      MAP_ANONYMOUS|MAP_PRIVATE, -1, 0);
-	अगर (decomp == MAP_FAILED) अणु
+	if (decomp == MAP_FAILED) {
 		pr_err("Couldn't allocate memory for decompression\n");
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
 	decomp->file_pos = file_offset;
 	decomp->mmap_len = mmap_len;
 	decomp->head = 0;
 
-	अगर (decomp_last_rem) अणु
-		स_नकल(decomp->data, &(decomp_last->data[decomp_last->head]), decomp_last_rem);
+	if (decomp_last_rem) {
+		memcpy(decomp->data, &(decomp_last->data[decomp_last->head]), decomp_last_rem);
 		decomp->size = decomp_last_rem;
-	पूर्ण
+	}
 
-	src = (व्योम *)event + माप(काष्ठा perf_record_compressed);
-	src_size = event->pack.header.size - माप(काष्ठा perf_record_compressed);
+	src = (void *)event + sizeof(struct perf_record_compressed);
+	src_size = event->pack.header.size - sizeof(struct perf_record_compressed);
 
 	decomp_size = zstd_decompress_stream(&(session->zstd_data), src, src_size,
 				&(decomp->data[decomp_last_rem]), decomp_len - decomp_last_rem);
-	अगर (!decomp_size) अणु
+	if (!decomp_size) {
 		munmap(decomp, mmap_len);
 		pr_err("Couldn't decompress data\n");
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
 	decomp->size += decomp_size;
 
-	अगर (session->decomp == शून्य) अणु
+	if (session->decomp == NULL) {
 		session->decomp = decomp;
 		session->decomp_last = decomp;
-	पूर्ण अन्यथा अणु
+	} else {
 		session->decomp_last->next = decomp;
 		session->decomp_last = decomp;
-	पूर्ण
+	}
 
 	pr_debug("decomp (B): %zd to %zd\n", src_size, decomp_size);
 
-	वापस 0;
-पूर्ण
-#अन्यथा /* !HAVE_ZSTD_SUPPORT */
-#घोषणा perf_session__process_compressed_event perf_session__process_compressed_event_stub
-#पूर्ण_अगर
+	return 0;
+}
+#else /* !HAVE_ZSTD_SUPPORT */
+#define perf_session__process_compressed_event perf_session__process_compressed_event_stub
+#endif
 
-अटल पूर्णांक perf_session__deliver_event(काष्ठा perf_session *session,
-				       जोड़ perf_event *event,
-				       काष्ठा perf_tool *tool,
+static int perf_session__deliver_event(struct perf_session *session,
+				       union perf_event *event,
+				       struct perf_tool *tool,
 				       u64 file_offset);
 
-अटल पूर्णांक perf_session__खोलो(काष्ठा perf_session *session)
-अणु
-	काष्ठा perf_data *data = session->data;
+static int perf_session__open(struct perf_session *session)
+{
+	struct perf_data *data = session->data;
 
-	अगर (perf_session__पढ़ो_header(session) < 0) अणु
+	if (perf_session__read_header(session) < 0) {
 		pr_err("incompatible file format (rerun with -v to learn more)\n");
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	अगर (perf_data__is_pipe(data))
-		वापस 0;
+	if (perf_data__is_pipe(data))
+		return 0;
 
-	अगर (perf_header__has_feat(&session->header, HEADER_STAT))
-		वापस 0;
+	if (perf_header__has_feat(&session->header, HEADER_STAT))
+		return 0;
 
-	अगर (!evlist__valid_sample_type(session->evlist)) अणु
+	if (!evlist__valid_sample_type(session->evlist)) {
 		pr_err("non matching sample_type\n");
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	अगर (!evlist__valid_sample_id_all(session->evlist)) अणु
+	if (!evlist__valid_sample_id_all(session->evlist)) {
 		pr_err("non matching sample_id_all\n");
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	अगर (!evlist__valid_पढ़ो_क्रमmat(session->evlist)) अणु
+	if (!evlist__valid_read_format(session->evlist)) {
 		pr_err("non matching read_format\n");
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम perf_session__set_id_hdr_size(काष्ठा perf_session *session)
-अणु
+void perf_session__set_id_hdr_size(struct perf_session *session)
+{
 	u16 id_hdr_size = evlist__id_hdr_size(session->evlist);
 
 	machines__set_id_hdr_size(&session->machines, id_hdr_size);
-पूर्ण
+}
 
-पूर्णांक perf_session__create_kernel_maps(काष्ठा perf_session *session)
-अणु
-	पूर्णांक ret = machine__create_kernel_maps(&session->machines.host);
+int perf_session__create_kernel_maps(struct perf_session *session)
+{
+	int ret = machine__create_kernel_maps(&session->machines.host);
 
-	अगर (ret >= 0)
+	if (ret >= 0)
 		ret = machines__create_guest_kernel_maps(&session->machines);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम perf_session__destroy_kernel_maps(काष्ठा perf_session *session)
-अणु
+static void perf_session__destroy_kernel_maps(struct perf_session *session)
+{
 	machines__destroy_kernel_maps(&session->machines);
-पूर्ण
+}
 
-अटल bool perf_session__has_comm_exec(काष्ठा perf_session *session)
-अणु
-	काष्ठा evsel *evsel;
+static bool perf_session__has_comm_exec(struct perf_session *session)
+{
+	struct evsel *evsel;
 
-	evlist__क्रम_each_entry(session->evlist, evsel) अणु
-		अगर (evsel->core.attr.comm_exec)
-			वापस true;
-	पूर्ण
+	evlist__for_each_entry(session->evlist, evsel) {
+		if (evsel->core.attr.comm_exec)
+			return true;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल व्योम perf_session__set_comm_exec(काष्ठा perf_session *session)
-अणु
+static void perf_session__set_comm_exec(struct perf_session *session)
+{
 	bool comm_exec = perf_session__has_comm_exec(session);
 
 	machines__set_comm_exec(&session->machines, comm_exec);
-पूर्ण
+}
 
-अटल पूर्णांक ordered_events__deliver_event(काष्ठा ordered_events *oe,
-					 काष्ठा ordered_event *event)
-अणु
-	काष्ठा perf_session *session = container_of(oe, काष्ठा perf_session,
+static int ordered_events__deliver_event(struct ordered_events *oe,
+					 struct ordered_event *event)
+{
+	struct perf_session *session = container_of(oe, struct perf_session,
 						    ordered_events);
 
-	वापस perf_session__deliver_event(session, event->event,
+	return perf_session__deliver_event(session, event->event,
 					   session->tool, event->file_offset);
-पूर्ण
+}
 
-काष्ठा perf_session *perf_session__new(काष्ठा perf_data *data,
-				       bool repipe, काष्ठा perf_tool *tool)
-अणु
-	पूर्णांक ret = -ENOMEM;
-	काष्ठा perf_session *session = zalloc(माप(*session));
+struct perf_session *perf_session__new(struct perf_data *data,
+				       bool repipe, struct perf_tool *tool)
+{
+	int ret = -ENOMEM;
+	struct perf_session *session = zalloc(sizeof(*session));
 
-	अगर (!session)
-		जाओ out;
+	if (!session)
+		goto out;
 
 	session->repipe = repipe;
 	session->tool   = tool;
 	INIT_LIST_HEAD(&session->auxtrace_index);
 	machines__init(&session->machines);
 	ordered_events__init(&session->ordered_events,
-			     ordered_events__deliver_event, शून्य);
+			     ordered_events__deliver_event, NULL);
 
 	perf_env__init(&session->header.env);
-	अगर (data) अणु
-		ret = perf_data__खोलो(data);
-		अगर (ret < 0)
-			जाओ out_delete;
+	if (data) {
+		ret = perf_data__open(data);
+		if (ret < 0)
+			goto out_delete;
 
 		session->data = data;
 
-		अगर (perf_data__is_पढ़ो(data)) अणु
-			ret = perf_session__खोलो(session);
-			अगर (ret < 0)
-				जाओ out_delete;
+		if (perf_data__is_read(data)) {
+			ret = perf_session__open(session);
+			if (ret < 0)
+				goto out_delete;
 
 			/*
 			 * set session attributes that are present in perf.data
 			 * but not in pipe-mode.
 			 */
-			अगर (!data->is_pipe) अणु
+			if (!data->is_pipe) {
 				perf_session__set_id_hdr_size(session);
 				perf_session__set_comm_exec(session);
-			पूर्ण
+			}
 
 			evlist__init_trace_event_sample_raw(session->evlist);
 
 			/* Open the directory data. */
-			अगर (data->is_dir) अणु
-				ret = perf_data__खोलो_dir(data);
-				अगर (ret)
-					जाओ out_delete;
-			पूर्ण
+			if (data->is_dir) {
+				ret = perf_data__open_dir(data);
+				if (ret)
+					goto out_delete;
+			}
 
-			अगर (!symbol_conf.kallsyms_name &&
+			if (!symbol_conf.kallsyms_name &&
 			    !symbol_conf.vmlinux_name)
 				symbol_conf.kallsyms_name = perf_data__kallsyms_name(data);
-		पूर्ण
-	पूर्ण अन्यथा  अणु
+		}
+	} else  {
 		session->machines.host.env = &perf_env;
-	पूर्ण
+	}
 
 	session->machines.host.single_address_space =
 		perf_env__single_address_space(session->machines.host.env);
 
-	अगर (!data || perf_data__is_ग_लिखो(data)) अणु
+	if (!data || perf_data__is_write(data)) {
 		/*
-		 * In O_RDONLY mode this will be perक्रमmed when पढ़ोing the
+		 * In O_RDONLY mode this will be performed when reading the
 		 * kernel MMAP event, in perf_event__process_mmap().
 		 */
-		अगर (perf_session__create_kernel_maps(session) < 0)
+		if (perf_session__create_kernel_maps(session) < 0)
 			pr_warning("Cannot read kernel map\n");
-	पूर्ण
+	}
 
 	/*
 	 * In pipe-mode, evlist is empty until PERF_RECORD_HEADER_ATTR is
 	 * processed, so evlist__sample_id_all is not meaningful here.
 	 */
-	अगर ((!data || !data->is_pipe) && tool && tool->ordering_requires_बारtamps &&
-	    tool->ordered_events && !evlist__sample_id_all(session->evlist)) अणु
-		dump_म_लिखो("WARNING: No sample_id_all support, falling back to unordered processing\n");
+	if ((!data || !data->is_pipe) && tool && tool->ordering_requires_timestamps &&
+	    tool->ordered_events && !evlist__sample_id_all(session->evlist)) {
+		dump_printf("WARNING: No sample_id_all support, falling back to unordered processing\n");
 		tool->ordered_events = false;
-	पूर्ण
+	}
 
-	वापस session;
+	return session;
 
  out_delete:
 	perf_session__delete(session);
  out:
-	वापस ERR_PTR(ret);
-पूर्ण
+	return ERR_PTR(ret);
+}
 
-अटल व्योम perf_session__delete_thपढ़ोs(काष्ठा perf_session *session)
-अणु
-	machine__delete_thपढ़ोs(&session->machines.host);
-पूर्ण
+static void perf_session__delete_threads(struct perf_session *session)
+{
+	machine__delete_threads(&session->machines.host);
+}
 
-अटल व्योम perf_session__release_decomp_events(काष्ठा perf_session *session)
-अणु
-	काष्ठा decomp *next, *decomp;
-	माप_प्रकार mmap_len;
+static void perf_session__release_decomp_events(struct perf_session *session)
+{
+	struct decomp *next, *decomp;
+	size_t mmap_len;
 	next = session->decomp;
-	करो अणु
+	do {
 		decomp = next;
-		अगर (decomp == शून्य)
-			अवरोध;
+		if (decomp == NULL)
+			break;
 		next = decomp->next;
 		mmap_len = decomp->mmap_len;
 		munmap(decomp, mmap_len);
-	पूर्ण जबतक (1);
-पूर्ण
+	} while (1);
+}
 
-व्योम perf_session__delete(काष्ठा perf_session *session)
-अणु
-	अगर (session == शून्य)
-		वापस;
-	auxtrace__मुक्त(session);
-	auxtrace_index__मुक्त(&session->auxtrace_index);
+void perf_session__delete(struct perf_session *session)
+{
+	if (session == NULL)
+		return;
+	auxtrace__free(session);
+	auxtrace_index__free(&session->auxtrace_index);
 	perf_session__destroy_kernel_maps(session);
-	perf_session__delete_thपढ़ोs(session);
+	perf_session__delete_threads(session);
 	perf_session__release_decomp_events(session);
-	perf_env__निकास(&session->header.env);
-	machines__निकास(&session->machines);
-	अगर (session->data)
-		perf_data__बंद(session->data);
-	मुक्त(session);
-पूर्ण
+	perf_env__exit(&session->header.env);
+	machines__exit(&session->machines);
+	if (session->data)
+		perf_data__close(session->data);
+	free(session);
+}
 
-अटल पूर्णांक process_event_synth_tracing_data_stub(काष्ठा perf_session *session
+static int process_event_synth_tracing_data_stub(struct perf_session *session
 						 __maybe_unused,
-						 जोड़ perf_event *event
+						 union perf_event *event
 						 __maybe_unused)
-अणु
-	dump_म_लिखो(": unhandled!\n");
-	वापस 0;
-पूर्ण
+{
+	dump_printf(": unhandled!\n");
+	return 0;
+}
 
-अटल पूर्णांक process_event_synth_attr_stub(काष्ठा perf_tool *tool __maybe_unused,
-					 जोड़ perf_event *event __maybe_unused,
-					 काष्ठा evlist **pevlist
+static int process_event_synth_attr_stub(struct perf_tool *tool __maybe_unused,
+					 union perf_event *event __maybe_unused,
+					 struct evlist **pevlist
 					 __maybe_unused)
-अणु
-	dump_म_लिखो(": unhandled!\n");
-	वापस 0;
-पूर्ण
+{
+	dump_printf(": unhandled!\n");
+	return 0;
+}
 
-अटल पूर्णांक process_event_synth_event_update_stub(काष्ठा perf_tool *tool __maybe_unused,
-						 जोड़ perf_event *event __maybe_unused,
-						 काष्ठा evlist **pevlist
+static int process_event_synth_event_update_stub(struct perf_tool *tool __maybe_unused,
+						 union perf_event *event __maybe_unused,
+						 struct evlist **pevlist
 						 __maybe_unused)
-अणु
-	अगर (dump_trace)
-		perf_event__ख_लिखो_event_update(event, मानक_निकास);
+{
+	if (dump_trace)
+		perf_event__fprintf_event_update(event, stdout);
 
-	dump_म_लिखो(": unhandled!\n");
-	वापस 0;
-पूर्ण
+	dump_printf(": unhandled!\n");
+	return 0;
+}
 
-अटल पूर्णांक process_event_sample_stub(काष्ठा perf_tool *tool __maybe_unused,
-				     जोड़ perf_event *event __maybe_unused,
-				     काष्ठा perf_sample *sample __maybe_unused,
-				     काष्ठा evsel *evsel __maybe_unused,
-				     काष्ठा machine *machine __maybe_unused)
-अणु
-	dump_म_लिखो(": unhandled!\n");
-	वापस 0;
-पूर्ण
+static int process_event_sample_stub(struct perf_tool *tool __maybe_unused,
+				     union perf_event *event __maybe_unused,
+				     struct perf_sample *sample __maybe_unused,
+				     struct evsel *evsel __maybe_unused,
+				     struct machine *machine __maybe_unused)
+{
+	dump_printf(": unhandled!\n");
+	return 0;
+}
 
-अटल पूर्णांक process_event_stub(काष्ठा perf_tool *tool __maybe_unused,
-			      जोड़ perf_event *event __maybe_unused,
-			      काष्ठा perf_sample *sample __maybe_unused,
-			      काष्ठा machine *machine __maybe_unused)
-अणु
-	dump_म_लिखो(": unhandled!\n");
-	वापस 0;
-पूर्ण
+static int process_event_stub(struct perf_tool *tool __maybe_unused,
+			      union perf_event *event __maybe_unused,
+			      struct perf_sample *sample __maybe_unused,
+			      struct machine *machine __maybe_unused)
+{
+	dump_printf(": unhandled!\n");
+	return 0;
+}
 
-अटल पूर्णांक process_finished_round_stub(काष्ठा perf_tool *tool __maybe_unused,
-				       जोड़ perf_event *event __maybe_unused,
-				       काष्ठा ordered_events *oe __maybe_unused)
-अणु
-	dump_म_लिखो(": unhandled!\n");
-	वापस 0;
-पूर्ण
+static int process_finished_round_stub(struct perf_tool *tool __maybe_unused,
+				       union perf_event *event __maybe_unused,
+				       struct ordered_events *oe __maybe_unused)
+{
+	dump_printf(": unhandled!\n");
+	return 0;
+}
 
-अटल पूर्णांक process_finished_round(काष्ठा perf_tool *tool,
-				  जोड़ perf_event *event,
-				  काष्ठा ordered_events *oe);
+static int process_finished_round(struct perf_tool *tool,
+				  union perf_event *event,
+				  struct ordered_events *oe);
 
-अटल पूर्णांक skipn(पूर्णांक fd, off_t n)
-अणु
-	अक्षर buf[4096];
-	sमाप_प्रकार ret;
+static int skipn(int fd, off_t n)
+{
+	char buf[4096];
+	ssize_t ret;
 
-	जबतक (n > 0) अणु
-		ret = पढ़ो(fd, buf, min(n, (off_t)माप(buf)));
-		अगर (ret <= 0)
-			वापस ret;
+	while (n > 0) {
+		ret = read(fd, buf, min(n, (off_t)sizeof(buf)));
+		if (ret <= 0)
+			return ret;
 		n -= ret;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल s64 process_event_auxtrace_stub(काष्ठा perf_session *session __maybe_unused,
-				       जोड़ perf_event *event)
-अणु
-	dump_म_लिखो(": unhandled!\n");
-	अगर (perf_data__is_pipe(session->data))
+static s64 process_event_auxtrace_stub(struct perf_session *session __maybe_unused,
+				       union perf_event *event)
+{
+	dump_printf(": unhandled!\n");
+	if (perf_data__is_pipe(session->data))
 		skipn(perf_data__fd(session->data), event->auxtrace.size);
-	वापस event->auxtrace.size;
-पूर्ण
+	return event->auxtrace.size;
+}
 
-अटल पूर्णांक process_event_op2_stub(काष्ठा perf_session *session __maybe_unused,
-				  जोड़ perf_event *event __maybe_unused)
-अणु
-	dump_म_लिखो(": unhandled!\n");
-	वापस 0;
-पूर्ण
+static int process_event_op2_stub(struct perf_session *session __maybe_unused,
+				  union perf_event *event __maybe_unused)
+{
+	dump_printf(": unhandled!\n");
+	return 0;
+}
 
 
-अटल
-पूर्णांक process_event_thपढ़ो_map_stub(काष्ठा perf_session *session __maybe_unused,
-				  जोड़ perf_event *event __maybe_unused)
-अणु
-	अगर (dump_trace)
-		perf_event__ख_लिखो_thपढ़ो_map(event, मानक_निकास);
+static
+int process_event_thread_map_stub(struct perf_session *session __maybe_unused,
+				  union perf_event *event __maybe_unused)
+{
+	if (dump_trace)
+		perf_event__fprintf_thread_map(event, stdout);
 
-	dump_म_लिखो(": unhandled!\n");
-	वापस 0;
-पूर्ण
+	dump_printf(": unhandled!\n");
+	return 0;
+}
 
-अटल
-पूर्णांक process_event_cpu_map_stub(काष्ठा perf_session *session __maybe_unused,
-			       जोड़ perf_event *event __maybe_unused)
-अणु
-	अगर (dump_trace)
-		perf_event__ख_लिखो_cpu_map(event, मानक_निकास);
+static
+int process_event_cpu_map_stub(struct perf_session *session __maybe_unused,
+			       union perf_event *event __maybe_unused)
+{
+	if (dump_trace)
+		perf_event__fprintf_cpu_map(event, stdout);
 
-	dump_म_लिखो(": unhandled!\n");
-	वापस 0;
-पूर्ण
+	dump_printf(": unhandled!\n");
+	return 0;
+}
 
-अटल
-पूर्णांक process_event_stat_config_stub(काष्ठा perf_session *session __maybe_unused,
-				   जोड़ perf_event *event __maybe_unused)
-अणु
-	अगर (dump_trace)
-		perf_event__ख_लिखो_stat_config(event, मानक_निकास);
+static
+int process_event_stat_config_stub(struct perf_session *session __maybe_unused,
+				   union perf_event *event __maybe_unused)
+{
+	if (dump_trace)
+		perf_event__fprintf_stat_config(event, stdout);
 
-	dump_म_लिखो(": unhandled!\n");
-	वापस 0;
-पूर्ण
+	dump_printf(": unhandled!\n");
+	return 0;
+}
 
-अटल पूर्णांक process_stat_stub(काष्ठा perf_session *perf_session __maybe_unused,
-			     जोड़ perf_event *event)
-अणु
-	अगर (dump_trace)
-		perf_event__ख_लिखो_stat(event, मानक_निकास);
+static int process_stat_stub(struct perf_session *perf_session __maybe_unused,
+			     union perf_event *event)
+{
+	if (dump_trace)
+		perf_event__fprintf_stat(event, stdout);
 
-	dump_म_लिखो(": unhandled!\n");
-	वापस 0;
-पूर्ण
+	dump_printf(": unhandled!\n");
+	return 0;
+}
 
-अटल पूर्णांक process_stat_round_stub(काष्ठा perf_session *perf_session __maybe_unused,
-				   जोड़ perf_event *event)
-अणु
-	अगर (dump_trace)
-		perf_event__ख_लिखो_stat_round(event, मानक_निकास);
+static int process_stat_round_stub(struct perf_session *perf_session __maybe_unused,
+				   union perf_event *event)
+{
+	if (dump_trace)
+		perf_event__fprintf_stat_round(event, stdout);
 
-	dump_म_लिखो(": unhandled!\n");
-	वापस 0;
-पूर्ण
+	dump_printf(": unhandled!\n");
+	return 0;
+}
 
-अटल पूर्णांक process_event_समय_conv_stub(काष्ठा perf_session *perf_session __maybe_unused,
-					जोड़ perf_event *event)
-अणु
-	अगर (dump_trace)
-		perf_event__ख_लिखो_समय_conv(event, मानक_निकास);
+static int process_event_time_conv_stub(struct perf_session *perf_session __maybe_unused,
+					union perf_event *event)
+{
+	if (dump_trace)
+		perf_event__fprintf_time_conv(event, stdout);
 
-	dump_म_लिखो(": unhandled!\n");
-	वापस 0;
-पूर्ण
+	dump_printf(": unhandled!\n");
+	return 0;
+}
 
-अटल पूर्णांक perf_session__process_compressed_event_stub(काष्ठा perf_session *session __maybe_unused,
-						       जोड़ perf_event *event __maybe_unused,
+static int perf_session__process_compressed_event_stub(struct perf_session *session __maybe_unused,
+						       union perf_event *event __maybe_unused,
 						       u64 file_offset __maybe_unused)
-अणु
-       dump_म_लिखो(": unhandled!\n");
-       वापस 0;
-पूर्ण
+{
+       dump_printf(": unhandled!\n");
+       return 0;
+}
 
-व्योम perf_tool__fill_शेषs(काष्ठा perf_tool *tool)
-अणु
-	अगर (tool->sample == शून्य)
+void perf_tool__fill_defaults(struct perf_tool *tool)
+{
+	if (tool->sample == NULL)
 		tool->sample = process_event_sample_stub;
-	अगर (tool->mmap == शून्य)
+	if (tool->mmap == NULL)
 		tool->mmap = process_event_stub;
-	अगर (tool->mmap2 == शून्य)
+	if (tool->mmap2 == NULL)
 		tool->mmap2 = process_event_stub;
-	अगर (tool->comm == शून्य)
+	if (tool->comm == NULL)
 		tool->comm = process_event_stub;
-	अगर (tool->namespaces == शून्य)
+	if (tool->namespaces == NULL)
 		tool->namespaces = process_event_stub;
-	अगर (tool->cgroup == शून्य)
+	if (tool->cgroup == NULL)
 		tool->cgroup = process_event_stub;
-	अगर (tool->विभाजन == शून्य)
-		tool->विभाजन = process_event_stub;
-	अगर (tool->निकास == शून्य)
-		tool->निकास = process_event_stub;
-	अगर (tool->lost == शून्य)
+	if (tool->fork == NULL)
+		tool->fork = process_event_stub;
+	if (tool->exit == NULL)
+		tool->exit = process_event_stub;
+	if (tool->lost == NULL)
 		tool->lost = perf_event__process_lost;
-	अगर (tool->lost_samples == शून्य)
+	if (tool->lost_samples == NULL)
 		tool->lost_samples = perf_event__process_lost_samples;
-	अगर (tool->aux == शून्य)
+	if (tool->aux == NULL)
 		tool->aux = perf_event__process_aux;
-	अगर (tool->itrace_start == शून्य)
+	if (tool->itrace_start == NULL)
 		tool->itrace_start = perf_event__process_itrace_start;
-	अगर (tool->context_चयन == शून्य)
-		tool->context_चयन = perf_event__process_चयन;
-	अगर (tool->ksymbol == शून्य)
+	if (tool->context_switch == NULL)
+		tool->context_switch = perf_event__process_switch;
+	if (tool->ksymbol == NULL)
 		tool->ksymbol = perf_event__process_ksymbol;
-	अगर (tool->bpf == शून्य)
+	if (tool->bpf == NULL)
 		tool->bpf = perf_event__process_bpf;
-	अगर (tool->text_poke == शून्य)
+	if (tool->text_poke == NULL)
 		tool->text_poke = perf_event__process_text_poke;
-	अगर (tool->पढ़ो == शून्य)
-		tool->पढ़ो = process_event_sample_stub;
-	अगर (tool->throttle == शून्य)
+	if (tool->read == NULL)
+		tool->read = process_event_sample_stub;
+	if (tool->throttle == NULL)
 		tool->throttle = process_event_stub;
-	अगर (tool->unthrottle == शून्य)
+	if (tool->unthrottle == NULL)
 		tool->unthrottle = process_event_stub;
-	अगर (tool->attr == शून्य)
+	if (tool->attr == NULL)
 		tool->attr = process_event_synth_attr_stub;
-	अगर (tool->event_update == शून्य)
+	if (tool->event_update == NULL)
 		tool->event_update = process_event_synth_event_update_stub;
-	अगर (tool->tracing_data == शून्य)
+	if (tool->tracing_data == NULL)
 		tool->tracing_data = process_event_synth_tracing_data_stub;
-	अगर (tool->build_id == शून्य)
+	if (tool->build_id == NULL)
 		tool->build_id = process_event_op2_stub;
-	अगर (tool->finished_round == शून्य) अणु
-		अगर (tool->ordered_events)
+	if (tool->finished_round == NULL) {
+		if (tool->ordered_events)
 			tool->finished_round = process_finished_round;
-		अन्यथा
+		else
 			tool->finished_round = process_finished_round_stub;
-	पूर्ण
-	अगर (tool->id_index == शून्य)
+	}
+	if (tool->id_index == NULL)
 		tool->id_index = process_event_op2_stub;
-	अगर (tool->auxtrace_info == शून्य)
+	if (tool->auxtrace_info == NULL)
 		tool->auxtrace_info = process_event_op2_stub;
-	अगर (tool->auxtrace == शून्य)
+	if (tool->auxtrace == NULL)
 		tool->auxtrace = process_event_auxtrace_stub;
-	अगर (tool->auxtrace_error == शून्य)
+	if (tool->auxtrace_error == NULL)
 		tool->auxtrace_error = process_event_op2_stub;
-	अगर (tool->thपढ़ो_map == शून्य)
-		tool->thपढ़ो_map = process_event_thपढ़ो_map_stub;
-	अगर (tool->cpu_map == शून्य)
+	if (tool->thread_map == NULL)
+		tool->thread_map = process_event_thread_map_stub;
+	if (tool->cpu_map == NULL)
 		tool->cpu_map = process_event_cpu_map_stub;
-	अगर (tool->stat_config == शून्य)
+	if (tool->stat_config == NULL)
 		tool->stat_config = process_event_stat_config_stub;
-	अगर (tool->stat == शून्य)
+	if (tool->stat == NULL)
 		tool->stat = process_stat_stub;
-	अगर (tool->stat_round == शून्य)
+	if (tool->stat_round == NULL)
 		tool->stat_round = process_stat_round_stub;
-	अगर (tool->समय_conv == शून्य)
-		tool->समय_conv = process_event_समय_conv_stub;
-	अगर (tool->feature == शून्य)
+	if (tool->time_conv == NULL)
+		tool->time_conv = process_event_time_conv_stub;
+	if (tool->feature == NULL)
 		tool->feature = process_event_op2_stub;
-	अगर (tool->compressed == शून्य)
+	if (tool->compressed == NULL)
 		tool->compressed = perf_session__process_compressed_event;
-पूर्ण
+}
 
-अटल व्योम swap_sample_id_all(जोड़ perf_event *event, व्योम *data)
-अणु
-	व्योम *end = (व्योम *) event + event->header.size;
-	पूर्णांक size = end - data;
+static void swap_sample_id_all(union perf_event *event, void *data)
+{
+	void *end = (void *) event + event->header.size;
+	int size = end - data;
 
-	BUG_ON(size % माप(u64));
+	BUG_ON(size % sizeof(u64));
 	mem_bswap_64(data, size);
-पूर्ण
+}
 
-अटल व्योम perf_event__all64_swap(जोड़ perf_event *event,
+static void perf_event__all64_swap(union perf_event *event,
 				   bool sample_id_all __maybe_unused)
-अणु
-	काष्ठा perf_event_header *hdr = &event->header;
-	mem_bswap_64(hdr + 1, event->header.size - माप(*hdr));
-पूर्ण
+{
+	struct perf_event_header *hdr = &event->header;
+	mem_bswap_64(hdr + 1, event->header.size - sizeof(*hdr));
+}
 
-अटल व्योम perf_event__comm_swap(जोड़ perf_event *event, bool sample_id_all)
-अणु
+static void perf_event__comm_swap(union perf_event *event, bool sample_id_all)
+{
 	event->comm.pid = bswap_32(event->comm.pid);
 	event->comm.tid = bswap_32(event->comm.tid);
 
-	अगर (sample_id_all) अणु
-		व्योम *data = &event->comm.comm;
+	if (sample_id_all) {
+		void *data = &event->comm.comm;
 
-		data += PERF_ALIGN(म_माप(data) + 1, माप(u64));
+		data += PERF_ALIGN(strlen(data) + 1, sizeof(u64));
 		swap_sample_id_all(event, data);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम perf_event__mmap_swap(जोड़ perf_event *event,
+static void perf_event__mmap_swap(union perf_event *event,
 				  bool sample_id_all)
-अणु
+{
 	event->mmap.pid	  = bswap_32(event->mmap.pid);
 	event->mmap.tid	  = bswap_32(event->mmap.tid);
 	event->mmap.start = bswap_64(event->mmap.start);
 	event->mmap.len	  = bswap_64(event->mmap.len);
 	event->mmap.pgoff = bswap_64(event->mmap.pgoff);
 
-	अगर (sample_id_all) अणु
-		व्योम *data = &event->mmap.filename;
+	if (sample_id_all) {
+		void *data = &event->mmap.filename;
 
-		data += PERF_ALIGN(म_माप(data) + 1, माप(u64));
+		data += PERF_ALIGN(strlen(data) + 1, sizeof(u64));
 		swap_sample_id_all(event, data);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम perf_event__mmap2_swap(जोड़ perf_event *event,
+static void perf_event__mmap2_swap(union perf_event *event,
 				  bool sample_id_all)
-अणु
+{
 	event->mmap2.pid   = bswap_32(event->mmap2.pid);
 	event->mmap2.tid   = bswap_32(event->mmap2.tid);
 	event->mmap2.start = bswap_64(event->mmap2.start);
 	event->mmap2.len   = bswap_64(event->mmap2.len);
 	event->mmap2.pgoff = bswap_64(event->mmap2.pgoff);
 
-	अगर (!(event->header.misc & PERF_RECORD_MISC_MMAP_BUILD_ID)) अणु
+	if (!(event->header.misc & PERF_RECORD_MISC_MMAP_BUILD_ID)) {
 		event->mmap2.maj   = bswap_32(event->mmap2.maj);
 		event->mmap2.min   = bswap_32(event->mmap2.min);
 		event->mmap2.ino   = bswap_64(event->mmap2.ino);
 		event->mmap2.ino_generation = bswap_64(event->mmap2.ino_generation);
-	पूर्ण
+	}
 
-	अगर (sample_id_all) अणु
-		व्योम *data = &event->mmap2.filename;
+	if (sample_id_all) {
+		void *data = &event->mmap2.filename;
 
-		data += PERF_ALIGN(म_माप(data) + 1, माप(u64));
+		data += PERF_ALIGN(strlen(data) + 1, sizeof(u64));
 		swap_sample_id_all(event, data);
-	पूर्ण
-पूर्ण
-अटल व्योम perf_event__task_swap(जोड़ perf_event *event, bool sample_id_all)
-अणु
-	event->विभाजन.pid	 = bswap_32(event->विभाजन.pid);
-	event->विभाजन.tid	 = bswap_32(event->विभाजन.tid);
-	event->विभाजन.ppid = bswap_32(event->विभाजन.ppid);
-	event->विभाजन.ptid = bswap_32(event->विभाजन.ptid);
-	event->विभाजन.समय = bswap_64(event->विभाजन.समय);
+	}
+}
+static void perf_event__task_swap(union perf_event *event, bool sample_id_all)
+{
+	event->fork.pid	 = bswap_32(event->fork.pid);
+	event->fork.tid	 = bswap_32(event->fork.tid);
+	event->fork.ppid = bswap_32(event->fork.ppid);
+	event->fork.ptid = bswap_32(event->fork.ptid);
+	event->fork.time = bswap_64(event->fork.time);
 
-	अगर (sample_id_all)
-		swap_sample_id_all(event, &event->विभाजन + 1);
-पूर्ण
+	if (sample_id_all)
+		swap_sample_id_all(event, &event->fork + 1);
+}
 
-अटल व्योम perf_event__पढ़ो_swap(जोड़ perf_event *event, bool sample_id_all)
-अणु
-	event->पढ़ो.pid		 = bswap_32(event->पढ़ो.pid);
-	event->पढ़ो.tid		 = bswap_32(event->पढ़ो.tid);
-	event->पढ़ो.value	 = bswap_64(event->पढ़ो.value);
-	event->पढ़ो.समय_enabled = bswap_64(event->पढ़ो.समय_enabled);
-	event->पढ़ो.समय_running = bswap_64(event->पढ़ो.समय_running);
-	event->पढ़ो.id		 = bswap_64(event->पढ़ो.id);
+static void perf_event__read_swap(union perf_event *event, bool sample_id_all)
+{
+	event->read.pid		 = bswap_32(event->read.pid);
+	event->read.tid		 = bswap_32(event->read.tid);
+	event->read.value	 = bswap_64(event->read.value);
+	event->read.time_enabled = bswap_64(event->read.time_enabled);
+	event->read.time_running = bswap_64(event->read.time_running);
+	event->read.id		 = bswap_64(event->read.id);
 
-	अगर (sample_id_all)
-		swap_sample_id_all(event, &event->पढ़ो + 1);
-पूर्ण
+	if (sample_id_all)
+		swap_sample_id_all(event, &event->read + 1);
+}
 
-अटल व्योम perf_event__aux_swap(जोड़ perf_event *event, bool sample_id_all)
-अणु
+static void perf_event__aux_swap(union perf_event *event, bool sample_id_all)
+{
 	event->aux.aux_offset = bswap_64(event->aux.aux_offset);
 	event->aux.aux_size   = bswap_64(event->aux.aux_size);
 	event->aux.flags      = bswap_64(event->aux.flags);
 
-	अगर (sample_id_all)
+	if (sample_id_all)
 		swap_sample_id_all(event, &event->aux + 1);
-पूर्ण
+}
 
-अटल व्योम perf_event__itrace_start_swap(जोड़ perf_event *event,
+static void perf_event__itrace_start_swap(union perf_event *event,
 					  bool sample_id_all)
-अणु
+{
 	event->itrace_start.pid	 = bswap_32(event->itrace_start.pid);
 	event->itrace_start.tid	 = bswap_32(event->itrace_start.tid);
 
-	अगर (sample_id_all)
+	if (sample_id_all)
 		swap_sample_id_all(event, &event->itrace_start + 1);
-पूर्ण
+}
 
-अटल व्योम perf_event__चयन_swap(जोड़ perf_event *event, bool sample_id_all)
-अणु
-	अगर (event->header.type == PERF_RECORD_SWITCH_CPU_WIDE) अणु
-		event->context_चयन.next_prev_pid =
-				bswap_32(event->context_चयन.next_prev_pid);
-		event->context_चयन.next_prev_tid =
-				bswap_32(event->context_चयन.next_prev_tid);
-	पूर्ण
+static void perf_event__switch_swap(union perf_event *event, bool sample_id_all)
+{
+	if (event->header.type == PERF_RECORD_SWITCH_CPU_WIDE) {
+		event->context_switch.next_prev_pid =
+				bswap_32(event->context_switch.next_prev_pid);
+		event->context_switch.next_prev_tid =
+				bswap_32(event->context_switch.next_prev_tid);
+	}
 
-	अगर (sample_id_all)
-		swap_sample_id_all(event, &event->context_चयन + 1);
-पूर्ण
+	if (sample_id_all)
+		swap_sample_id_all(event, &event->context_switch + 1);
+}
 
-अटल व्योम perf_event__text_poke_swap(जोड़ perf_event *event, bool sample_id_all)
-अणु
+static void perf_event__text_poke_swap(union perf_event *event, bool sample_id_all)
+{
 	event->text_poke.addr    = bswap_64(event->text_poke.addr);
 	event->text_poke.old_len = bswap_16(event->text_poke.old_len);
 	event->text_poke.new_len = bswap_16(event->text_poke.new_len);
 
-	अगर (sample_id_all) अणु
-		माप_प्रकार len = माप(event->text_poke.old_len) +
-			     माप(event->text_poke.new_len) +
+	if (sample_id_all) {
+		size_t len = sizeof(event->text_poke.old_len) +
+			     sizeof(event->text_poke.new_len) +
 			     event->text_poke.old_len +
 			     event->text_poke.new_len;
-		व्योम *data = &event->text_poke.old_len;
+		void *data = &event->text_poke.old_len;
 
-		data += PERF_ALIGN(len, माप(u64));
+		data += PERF_ALIGN(len, sizeof(u64));
 		swap_sample_id_all(event, data);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम perf_event__throttle_swap(जोड़ perf_event *event,
+static void perf_event__throttle_swap(union perf_event *event,
 				      bool sample_id_all)
-अणु
-	event->throttle.समय	  = bswap_64(event->throttle.समय);
+{
+	event->throttle.time	  = bswap_64(event->throttle.time);
 	event->throttle.id	  = bswap_64(event->throttle.id);
 	event->throttle.stream_id = bswap_64(event->throttle.stream_id);
 
-	अगर (sample_id_all)
+	if (sample_id_all)
 		swap_sample_id_all(event, &event->throttle + 1);
-पूर्ण
+}
 
-अटल व्योम perf_event__namespaces_swap(जोड़ perf_event *event,
+static void perf_event__namespaces_swap(union perf_event *event,
 					bool sample_id_all)
-अणु
+{
 	u64 i;
 
 	event->namespaces.pid		= bswap_32(event->namespaces.pid);
 	event->namespaces.tid		= bswap_32(event->namespaces.tid);
 	event->namespaces.nr_namespaces	= bswap_64(event->namespaces.nr_namespaces);
 
-	क्रम (i = 0; i < event->namespaces.nr_namespaces; i++) अणु
-		काष्ठा perf_ns_link_info *ns = &event->namespaces.link_info[i];
+	for (i = 0; i < event->namespaces.nr_namespaces; i++) {
+		struct perf_ns_link_info *ns = &event->namespaces.link_info[i];
 
 		ns->dev = bswap_64(ns->dev);
 		ns->ino = bswap_64(ns->ino);
-	पूर्ण
+	}
 
-	अगर (sample_id_all)
+	if (sample_id_all)
 		swap_sample_id_all(event, &event->namespaces.link_info[i]);
-पूर्ण
+}
 
-अटल व्योम perf_event__cgroup_swap(जोड़ perf_event *event, bool sample_id_all)
-अणु
+static void perf_event__cgroup_swap(union perf_event *event, bool sample_id_all)
+{
 	event->cgroup.id = bswap_64(event->cgroup.id);
 
-	अगर (sample_id_all) अणु
-		व्योम *data = &event->cgroup.path;
+	if (sample_id_all) {
+		void *data = &event->cgroup.path;
 
-		data += PERF_ALIGN(म_माप(data) + 1, माप(u64));
+		data += PERF_ALIGN(strlen(data) + 1, sizeof(u64));
 		swap_sample_id_all(event, data);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल u8 revbyte(u8 b)
-अणु
-	पूर्णांक rev = (b >> 4) | ((b & 0xf) << 4);
+static u8 revbyte(u8 b)
+{
+	int rev = (b >> 4) | ((b & 0xf) << 4);
 	rev = ((rev & 0xcc) >> 2) | ((rev & 0x33) << 2);
 	rev = ((rev & 0xaa) >> 1) | ((rev & 0x55) << 1);
-	वापस (u8) rev;
-पूर्ण
+	return (u8) rev;
+}
 
 /*
  * XXX this is hack in attempt to carry flags bitfield
  * through endian village. ABI says:
  *
- * Bit-fields are allocated from right to left (least to most signअगरicant)
+ * Bit-fields are allocated from right to left (least to most significant)
  * on little-endian implementations and from left to right (most to least
- * signअगरicant) on big-endian implementations.
+ * significant) on big-endian implementations.
  *
- * The above seems to be byte specअगरic, so we need to reverse each
+ * The above seems to be byte specific, so we need to reverse each
  * byte of the bitfield. 'Internet' also says this might be implementation
- * specअगरic and we probably need proper fix and carry perf_event_attr
+ * specific and we probably need proper fix and carry perf_event_attr
  * bitfield flags in separate data file FEAT_ section. Thought this seems
- * to work क्रम now.
+ * to work for now.
  */
-अटल व्योम swap_bitfield(u8 *p, अचिन्हित len)
-अणु
-	अचिन्हित i;
+static void swap_bitfield(u8 *p, unsigned len)
+{
+	unsigned i;
 
-	क्रम (i = 0; i < len; i++) अणु
+	for (i = 0; i < len; i++) {
 		*p = revbyte(*p);
 		p++;
-	पूर्ण
-पूर्ण
+	}
+}
 
-/* exported क्रम swapping attributes in file header */
-व्योम perf_event__attr_swap(काष्ठा perf_event_attr *attr)
-अणु
+/* exported for swapping attributes in file header */
+void perf_event__attr_swap(struct perf_event_attr *attr)
+{
 	attr->type		= bswap_32(attr->type);
 	attr->size		= bswap_32(attr->size);
 
-#घोषणा bswap_safe(f, n) 					\
-	(attr->size > (दुरत्व(काष्ठा perf_event_attr, f) + 	\
-		       माप(attr->f) * (n)))
-#घोषणा bswap_field(f, sz) 			\
-करो अणु 						\
-	अगर (bswap_safe(f, 0))			\
+#define bswap_safe(f, n) 					\
+	(attr->size > (offsetof(struct perf_event_attr, f) + 	\
+		       sizeof(attr->f) * (n)))
+#define bswap_field(f, sz) 			\
+do { 						\
+	if (bswap_safe(f, 0))			\
 		attr->f = bswap_##sz(attr->f);	\
-पूर्ण जबतक(0)
-#घोषणा bswap_field_16(f) bswap_field(f, 16)
-#घोषणा bswap_field_32(f) bswap_field(f, 32)
-#घोषणा bswap_field_64(f) bswap_field(f, 64)
+} while(0)
+#define bswap_field_16(f) bswap_field(f, 16)
+#define bswap_field_32(f) bswap_field(f, 32)
+#define bswap_field_64(f) bswap_field(f, 64)
 
 	bswap_field_64(config);
 	bswap_field_64(sample_period);
 	bswap_field_64(sample_type);
-	bswap_field_64(पढ़ो_क्रमmat);
+	bswap_field_64(read_format);
 	bswap_field_32(wakeup_events);
 	bswap_field_32(bp_type);
 	bswap_field_64(bp_addr);
@@ -805,76 +804,76 @@
 	bswap_field_32(aux_sample_size);
 
 	/*
-	 * After पढ़ो_क्रमmat are bitfields. Check पढ़ो_क्रमmat because
-	 * we are unable to use दुरत्व on bitfield.
+	 * After read_format are bitfields. Check read_format because
+	 * we are unable to use offsetof on bitfield.
 	 */
-	अगर (bswap_safe(पढ़ो_क्रमmat, 1))
-		swap_bitfield((u8 *) (&attr->पढ़ो_क्रमmat + 1),
-			      माप(u64));
-#अघोषित bswap_field_64
-#अघोषित bswap_field_32
-#अघोषित bswap_field
-#अघोषित bswap_safe
-पूर्ण
+	if (bswap_safe(read_format, 1))
+		swap_bitfield((u8 *) (&attr->read_format + 1),
+			      sizeof(u64));
+#undef bswap_field_64
+#undef bswap_field_32
+#undef bswap_field
+#undef bswap_safe
+}
 
-अटल व्योम perf_event__hdr_attr_swap(जोड़ perf_event *event,
+static void perf_event__hdr_attr_swap(union perf_event *event,
 				      bool sample_id_all __maybe_unused)
-अणु
-	माप_प्रकार size;
+{
+	size_t size;
 
 	perf_event__attr_swap(&event->attr.attr);
 
 	size = event->header.size;
-	size -= (व्योम *)&event->attr.id - (व्योम *)event;
+	size -= (void *)&event->attr.id - (void *)event;
 	mem_bswap_64(event->attr.id, size);
-पूर्ण
+}
 
-अटल व्योम perf_event__event_update_swap(जोड़ perf_event *event,
+static void perf_event__event_update_swap(union perf_event *event,
 					  bool sample_id_all __maybe_unused)
-अणु
+{
 	event->event_update.type = bswap_64(event->event_update.type);
 	event->event_update.id   = bswap_64(event->event_update.id);
-पूर्ण
+}
 
-अटल व्योम perf_event__event_type_swap(जोड़ perf_event *event,
+static void perf_event__event_type_swap(union perf_event *event,
 					bool sample_id_all __maybe_unused)
-अणु
+{
 	event->event_type.event_type.event_id =
 		bswap_64(event->event_type.event_type.event_id);
-पूर्ण
+}
 
-अटल व्योम perf_event__tracing_data_swap(जोड़ perf_event *event,
+static void perf_event__tracing_data_swap(union perf_event *event,
 					  bool sample_id_all __maybe_unused)
-अणु
+{
 	event->tracing_data.size = bswap_32(event->tracing_data.size);
-पूर्ण
+}
 
-अटल व्योम perf_event__auxtrace_info_swap(जोड़ perf_event *event,
+static void perf_event__auxtrace_info_swap(union perf_event *event,
 					   bool sample_id_all __maybe_unused)
-अणु
-	माप_प्रकार size;
+{
+	size_t size;
 
 	event->auxtrace_info.type = bswap_32(event->auxtrace_info.type);
 
 	size = event->header.size;
-	size -= (व्योम *)&event->auxtrace_info.priv - (व्योम *)event;
+	size -= (void *)&event->auxtrace_info.priv - (void *)event;
 	mem_bswap_64(event->auxtrace_info.priv, size);
-पूर्ण
+}
 
-अटल व्योम perf_event__auxtrace_swap(जोड़ perf_event *event,
+static void perf_event__auxtrace_swap(union perf_event *event,
 				      bool sample_id_all __maybe_unused)
-अणु
+{
 	event->auxtrace.size      = bswap_64(event->auxtrace.size);
 	event->auxtrace.offset    = bswap_64(event->auxtrace.offset);
 	event->auxtrace.reference = bswap_64(event->auxtrace.reference);
 	event->auxtrace.idx       = bswap_32(event->auxtrace.idx);
 	event->auxtrace.tid       = bswap_32(event->auxtrace.tid);
 	event->auxtrace.cpu       = bswap_32(event->auxtrace.cpu);
-पूर्ण
+}
 
-अटल व्योम perf_event__auxtrace_error_swap(जोड़ perf_event *event,
+static void perf_event__auxtrace_error_swap(union perf_event *event,
 					    bool sample_id_all __maybe_unused)
-अणु
+{
 	event->auxtrace_error.type = bswap_32(event->auxtrace_error.type);
 	event->auxtrace_error.code = bswap_32(event->auxtrace_error.code);
 	event->auxtrace_error.cpu  = bswap_32(event->auxtrace_error.cpu);
@@ -882,152 +881,152 @@
 	event->auxtrace_error.tid  = bswap_32(event->auxtrace_error.tid);
 	event->auxtrace_error.fmt  = bswap_32(event->auxtrace_error.fmt);
 	event->auxtrace_error.ip   = bswap_64(event->auxtrace_error.ip);
-	अगर (event->auxtrace_error.fmt)
-		event->auxtrace_error.समय = bswap_64(event->auxtrace_error.समय);
-पूर्ण
+	if (event->auxtrace_error.fmt)
+		event->auxtrace_error.time = bswap_64(event->auxtrace_error.time);
+}
 
-अटल व्योम perf_event__thपढ़ो_map_swap(जोड़ perf_event *event,
+static void perf_event__thread_map_swap(union perf_event *event,
 					bool sample_id_all __maybe_unused)
-अणु
-	अचिन्हित i;
+{
+	unsigned i;
 
-	event->thपढ़ो_map.nr = bswap_64(event->thपढ़ो_map.nr);
+	event->thread_map.nr = bswap_64(event->thread_map.nr);
 
-	क्रम (i = 0; i < event->thपढ़ो_map.nr; i++)
-		event->thपढ़ो_map.entries[i].pid = bswap_64(event->thपढ़ो_map.entries[i].pid);
-पूर्ण
+	for (i = 0; i < event->thread_map.nr; i++)
+		event->thread_map.entries[i].pid = bswap_64(event->thread_map.entries[i].pid);
+}
 
-अटल व्योम perf_event__cpu_map_swap(जोड़ perf_event *event,
+static void perf_event__cpu_map_swap(union perf_event *event,
 				     bool sample_id_all __maybe_unused)
-अणु
-	काष्ठा perf_record_cpu_map_data *data = &event->cpu_map.data;
-	काष्ठा cpu_map_entries *cpus;
-	काष्ठा perf_record_record_cpu_map *mask;
-	अचिन्हित i;
+{
+	struct perf_record_cpu_map_data *data = &event->cpu_map.data;
+	struct cpu_map_entries *cpus;
+	struct perf_record_record_cpu_map *mask;
+	unsigned i;
 
 	data->type = bswap_16(data->type);
 
-	चयन (data->type) अणु
-	हाल PERF_CPU_MAP__CPUS:
-		cpus = (काष्ठा cpu_map_entries *)data->data;
+	switch (data->type) {
+	case PERF_CPU_MAP__CPUS:
+		cpus = (struct cpu_map_entries *)data->data;
 
 		cpus->nr = bswap_16(cpus->nr);
 
-		क्रम (i = 0; i < cpus->nr; i++)
+		for (i = 0; i < cpus->nr; i++)
 			cpus->cpu[i] = bswap_16(cpus->cpu[i]);
-		अवरोध;
-	हाल PERF_CPU_MAP__MASK:
-		mask = (काष्ठा perf_record_record_cpu_map *)data->data;
+		break;
+	case PERF_CPU_MAP__MASK:
+		mask = (struct perf_record_record_cpu_map *)data->data;
 
 		mask->nr = bswap_16(mask->nr);
-		mask->दीर्घ_size = bswap_16(mask->दीर्घ_size);
+		mask->long_size = bswap_16(mask->long_size);
 
-		चयन (mask->दीर्घ_size) अणु
-		हाल 4: mem_bswap_32(&mask->mask, mask->nr); अवरोध;
-		हाल 8: mem_bswap_64(&mask->mask, mask->nr); अवरोध;
-		शेष:
+		switch (mask->long_size) {
+		case 4: mem_bswap_32(&mask->mask, mask->nr); break;
+		case 8: mem_bswap_64(&mask->mask, mask->nr); break;
+		default:
 			pr_err("cpu_map swap: unsupported long size\n");
-		पूर्ण
-	शेष:
-		अवरोध;
-	पूर्ण
-पूर्ण
+		}
+	default:
+		break;
+	}
+}
 
-अटल व्योम perf_event__stat_config_swap(जोड़ perf_event *event,
+static void perf_event__stat_config_swap(union perf_event *event,
 					 bool sample_id_all __maybe_unused)
-अणु
+{
 	u64 size;
 
-	size  = bswap_64(event->stat_config.nr) * माप(event->stat_config.data[0]);
+	size  = bswap_64(event->stat_config.nr) * sizeof(event->stat_config.data[0]);
 	size += 1; /* nr item itself */
 	mem_bswap_64(&event->stat_config.nr, size);
-पूर्ण
+}
 
-अटल व्योम perf_event__stat_swap(जोड़ perf_event *event,
+static void perf_event__stat_swap(union perf_event *event,
 				  bool sample_id_all __maybe_unused)
-अणु
+{
 	event->stat.id     = bswap_64(event->stat.id);
-	event->stat.thपढ़ो = bswap_32(event->stat.thपढ़ो);
+	event->stat.thread = bswap_32(event->stat.thread);
 	event->stat.cpu    = bswap_32(event->stat.cpu);
 	event->stat.val    = bswap_64(event->stat.val);
 	event->stat.ena    = bswap_64(event->stat.ena);
 	event->stat.run    = bswap_64(event->stat.run);
-पूर्ण
+}
 
-अटल व्योम perf_event__stat_round_swap(जोड़ perf_event *event,
+static void perf_event__stat_round_swap(union perf_event *event,
 					bool sample_id_all __maybe_unused)
-अणु
+{
 	event->stat_round.type = bswap_64(event->stat_round.type);
-	event->stat_round.समय = bswap_64(event->stat_round.समय);
-पूर्ण
+	event->stat_round.time = bswap_64(event->stat_round.time);
+}
 
-अटल व्योम perf_event__समय_conv_swap(जोड़ perf_event *event,
+static void perf_event__time_conv_swap(union perf_event *event,
 				       bool sample_id_all __maybe_unused)
-अणु
-	event->समय_conv.समय_shअगरt = bswap_64(event->समय_conv.समय_shअगरt);
-	event->समय_conv.समय_mult  = bswap_64(event->समय_conv.समय_mult);
-	event->समय_conv.समय_zero  = bswap_64(event->समय_conv.समय_zero);
+{
+	event->time_conv.time_shift = bswap_64(event->time_conv.time_shift);
+	event->time_conv.time_mult  = bswap_64(event->time_conv.time_mult);
+	event->time_conv.time_zero  = bswap_64(event->time_conv.time_zero);
 
-	अगर (event_contains(event->समय_conv, समय_cycles)) अणु
-		event->समय_conv.समय_cycles = bswap_64(event->समय_conv.समय_cycles);
-		event->समय_conv.समय_mask = bswap_64(event->समय_conv.समय_mask);
-	पूर्ण
-पूर्ण
+	if (event_contains(event->time_conv, time_cycles)) {
+		event->time_conv.time_cycles = bswap_64(event->time_conv.time_cycles);
+		event->time_conv.time_mask = bswap_64(event->time_conv.time_mask);
+	}
+}
 
-प्रकार व्योम (*perf_event__swap_op)(जोड़ perf_event *event,
+typedef void (*perf_event__swap_op)(union perf_event *event,
 				    bool sample_id_all);
 
-अटल perf_event__swap_op perf_event__swap_ops[] = अणु
+static perf_event__swap_op perf_event__swap_ops[] = {
 	[PERF_RECORD_MMAP]		  = perf_event__mmap_swap,
 	[PERF_RECORD_MMAP2]		  = perf_event__mmap2_swap,
 	[PERF_RECORD_COMM]		  = perf_event__comm_swap,
 	[PERF_RECORD_FORK]		  = perf_event__task_swap,
 	[PERF_RECORD_EXIT]		  = perf_event__task_swap,
 	[PERF_RECORD_LOST]		  = perf_event__all64_swap,
-	[PERF_RECORD_READ]		  = perf_event__पढ़ो_swap,
+	[PERF_RECORD_READ]		  = perf_event__read_swap,
 	[PERF_RECORD_THROTTLE]		  = perf_event__throttle_swap,
 	[PERF_RECORD_UNTHROTTLE]	  = perf_event__throttle_swap,
 	[PERF_RECORD_SAMPLE]		  = perf_event__all64_swap,
 	[PERF_RECORD_AUX]		  = perf_event__aux_swap,
 	[PERF_RECORD_ITRACE_START]	  = perf_event__itrace_start_swap,
 	[PERF_RECORD_LOST_SAMPLES]	  = perf_event__all64_swap,
-	[PERF_RECORD_SWITCH]		  = perf_event__चयन_swap,
-	[PERF_RECORD_SWITCH_CPU_WIDE]	  = perf_event__चयन_swap,
+	[PERF_RECORD_SWITCH]		  = perf_event__switch_swap,
+	[PERF_RECORD_SWITCH_CPU_WIDE]	  = perf_event__switch_swap,
 	[PERF_RECORD_NAMESPACES]	  = perf_event__namespaces_swap,
 	[PERF_RECORD_CGROUP]		  = perf_event__cgroup_swap,
 	[PERF_RECORD_TEXT_POKE]		  = perf_event__text_poke_swap,
 	[PERF_RECORD_HEADER_ATTR]	  = perf_event__hdr_attr_swap,
 	[PERF_RECORD_HEADER_EVENT_TYPE]	  = perf_event__event_type_swap,
 	[PERF_RECORD_HEADER_TRACING_DATA] = perf_event__tracing_data_swap,
-	[PERF_RECORD_HEADER_BUILD_ID]	  = शून्य,
+	[PERF_RECORD_HEADER_BUILD_ID]	  = NULL,
 	[PERF_RECORD_ID_INDEX]		  = perf_event__all64_swap,
 	[PERF_RECORD_AUXTRACE_INFO]	  = perf_event__auxtrace_info_swap,
 	[PERF_RECORD_AUXTRACE]		  = perf_event__auxtrace_swap,
 	[PERF_RECORD_AUXTRACE_ERROR]	  = perf_event__auxtrace_error_swap,
-	[PERF_RECORD_THREAD_MAP]	  = perf_event__thपढ़ो_map_swap,
+	[PERF_RECORD_THREAD_MAP]	  = perf_event__thread_map_swap,
 	[PERF_RECORD_CPU_MAP]		  = perf_event__cpu_map_swap,
 	[PERF_RECORD_STAT_CONFIG]	  = perf_event__stat_config_swap,
 	[PERF_RECORD_STAT]		  = perf_event__stat_swap,
 	[PERF_RECORD_STAT_ROUND]	  = perf_event__stat_round_swap,
 	[PERF_RECORD_EVENT_UPDATE]	  = perf_event__event_update_swap,
-	[PERF_RECORD_TIME_CONV]		  = perf_event__समय_conv_swap,
-	[PERF_RECORD_HEADER_MAX]	  = शून्य,
-पूर्ण;
+	[PERF_RECORD_TIME_CONV]		  = perf_event__time_conv_swap,
+	[PERF_RECORD_HEADER_MAX]	  = NULL,
+};
 
 /*
- * When perf record finishes a pass on every buffers, it records this pseuकरो
+ * When perf record finishes a pass on every buffers, it records this pseudo
  * event.
- * We record the max बारtamp t found in the pass n.
- * Assuming these बारtamps are monotonic across cpus, we know that अगर
- * a buffer still has events with बारtamps below t, they will be all
- * available and then पढ़ो in the pass n + 1.
- * Hence when we start to पढ़ो the pass n + 2, we can safely flush every
- * events with बारtamps below t.
+ * We record the max timestamp t found in the pass n.
+ * Assuming these timestamps are monotonic across cpus, we know that if
+ * a buffer still has events with timestamps below t, they will be all
+ * available and then read in the pass n + 1.
+ * Hence when we start to read the pass n + 2, we can safely flush every
+ * events with timestamps below t.
  *
  *    ============ PASS n =================
  *       CPU 0         |   CPU 1
  *                     |
- *    cnt1 बारtamps  |   cnt2 बारtamps
+ *    cnt1 timestamps  |   cnt2 timestamps
  *          1          |         2
  *          2          |         3
  *          -          |         4  <--- max recorded
@@ -1035,851 +1034,851 @@
  *    ============ PASS n + 1 ==============
  *       CPU 0         |   CPU 1
  *                     |
- *    cnt1 बारtamps  |   cnt2 बारtamps
+ *    cnt1 timestamps  |   cnt2 timestamps
  *          3          |         5
  *          4          |         6
  *          5          |         7 <---- max recorded
  *
- *      Flush every events below बारtamp 4
+ *      Flush every events below timestamp 4
  *
  *    ============ PASS n + 2 ==============
  *       CPU 0         |   CPU 1
  *                     |
- *    cnt1 बारtamps  |   cnt2 बारtamps
+ *    cnt1 timestamps  |   cnt2 timestamps
  *          6          |         8
  *          7          |         9
  *          -          |         10
  *
- *      Flush every events below बारtamp 7
+ *      Flush every events below timestamp 7
  *      etc...
  */
-अटल पूर्णांक process_finished_round(काष्ठा perf_tool *tool __maybe_unused,
-				  जोड़ perf_event *event __maybe_unused,
-				  काष्ठा ordered_events *oe)
-अणु
-	अगर (dump_trace)
-		ख_लिखो(मानक_निकास, "\n");
-	वापस ordered_events__flush(oe, OE_FLUSH__ROUND);
-पूर्ण
+static int process_finished_round(struct perf_tool *tool __maybe_unused,
+				  union perf_event *event __maybe_unused,
+				  struct ordered_events *oe)
+{
+	if (dump_trace)
+		fprintf(stdout, "\n");
+	return ordered_events__flush(oe, OE_FLUSH__ROUND);
+}
 
-पूर्णांक perf_session__queue_event(काष्ठा perf_session *s, जोड़ perf_event *event,
-			      u64 बारtamp, u64 file_offset)
-अणु
-	वापस ordered_events__queue(&s->ordered_events, event, बारtamp, file_offset);
-पूर्ण
+int perf_session__queue_event(struct perf_session *s, union perf_event *event,
+			      u64 timestamp, u64 file_offset)
+{
+	return ordered_events__queue(&s->ordered_events, event, timestamp, file_offset);
+}
 
-अटल व्योम callchain__lbr_callstack_म_लिखो(काष्ठा perf_sample *sample)
-अणु
-	काष्ठा ip_callchain *callchain = sample->callchain;
-	काष्ठा branch_stack *lbr_stack = sample->branch_stack;
-	काष्ठा branch_entry *entries = perf_sample__branch_entries(sample);
+static void callchain__lbr_callstack_printf(struct perf_sample *sample)
+{
+	struct ip_callchain *callchain = sample->callchain;
+	struct branch_stack *lbr_stack = sample->branch_stack;
+	struct branch_entry *entries = perf_sample__branch_entries(sample);
 	u64 kernel_callchain_nr = callchain->nr;
-	अचिन्हित पूर्णांक i;
+	unsigned int i;
 
-	क्रम (i = 0; i < kernel_callchain_nr; i++) अणु
-		अगर (callchain->ips[i] == PERF_CONTEXT_USER)
-			अवरोध;
-	पूर्ण
+	for (i = 0; i < kernel_callchain_nr; i++) {
+		if (callchain->ips[i] == PERF_CONTEXT_USER)
+			break;
+	}
 
-	अगर ((i != kernel_callchain_nr) && lbr_stack->nr) अणु
+	if ((i != kernel_callchain_nr) && lbr_stack->nr) {
 		u64 total_nr;
 		/*
 		 * LBR callstack can only get user call chain,
 		 * i is kernel call chain number,
 		 * 1 is PERF_CONTEXT_USER.
 		 *
-		 * The user call chain is stored in LBR रेजिस्टरs.
-		 * LBR are pair रेजिस्टरs. The caller is stored
-		 * in "from" रेजिस्टर, जबतक the callee is stored
-		 * in "to" रेजिस्टर.
+		 * The user call chain is stored in LBR registers.
+		 * LBR are pair registers. The caller is stored
+		 * in "from" register, while the callee is stored
+		 * in "to" register.
 		 * For example, there is a call stack
 		 * "A"->"B"->"C"->"D".
-		 * The LBR रेजिस्टरs will be recorded like
+		 * The LBR registers will be recorded like
 		 * "C"->"D", "B"->"C", "A"->"B".
-		 * So only the first "to" रेजिस्टर and all "from"
-		 * रेजिस्टरs are needed to स्थिरruct the whole stack.
+		 * So only the first "to" register and all "from"
+		 * registers are needed to construct the whole stack.
 		 */
 		total_nr = i + 1 + lbr_stack->nr + 1;
 		kernel_callchain_nr = i + 1;
 
-		म_लिखो("... LBR call chain: nr:%" PRIu64 "\n", total_nr);
+		printf("... LBR call chain: nr:%" PRIu64 "\n", total_nr);
 
-		क्रम (i = 0; i < kernel_callchain_nr; i++)
-			म_लिखो("..... %2d: %016" PRIx64 "\n",
+		for (i = 0; i < kernel_callchain_nr; i++)
+			printf("..... %2d: %016" PRIx64 "\n",
 			       i, callchain->ips[i]);
 
-		म_लिखो("..... %2d: %016" PRIx64 "\n",
-		       (पूर्णांक)(kernel_callchain_nr), entries[0].to);
-		क्रम (i = 0; i < lbr_stack->nr; i++)
-			म_लिखो("..... %2d: %016" PRIx64 "\n",
-			       (पूर्णांक)(i + kernel_callchain_nr + 1), entries[i].from);
-	पूर्ण
-पूर्ण
+		printf("..... %2d: %016" PRIx64 "\n",
+		       (int)(kernel_callchain_nr), entries[0].to);
+		for (i = 0; i < lbr_stack->nr; i++)
+			printf("..... %2d: %016" PRIx64 "\n",
+			       (int)(i + kernel_callchain_nr + 1), entries[i].from);
+	}
+}
 
-अटल व्योम callchain__म_लिखो(काष्ठा evsel *evsel,
-			      काष्ठा perf_sample *sample)
-अणु
-	अचिन्हित पूर्णांक i;
-	काष्ठा ip_callchain *callchain = sample->callchain;
+static void callchain__printf(struct evsel *evsel,
+			      struct perf_sample *sample)
+{
+	unsigned int i;
+	struct ip_callchain *callchain = sample->callchain;
 
-	अगर (evsel__has_branch_callstack(evsel))
-		callchain__lbr_callstack_म_लिखो(sample);
+	if (evsel__has_branch_callstack(evsel))
+		callchain__lbr_callstack_printf(sample);
 
-	म_लिखो("... FP chain: nr:%" PRIu64 "\n", callchain->nr);
+	printf("... FP chain: nr:%" PRIu64 "\n", callchain->nr);
 
-	क्रम (i = 0; i < callchain->nr; i++)
-		म_लिखो("..... %2d: %016" PRIx64 "\n",
+	for (i = 0; i < callchain->nr; i++)
+		printf("..... %2d: %016" PRIx64 "\n",
 		       i, callchain->ips[i]);
-पूर्ण
+}
 
-अटल व्योम branch_stack__म_लिखो(काष्ठा perf_sample *sample, bool callstack)
-अणु
-	काष्ठा branch_entry *entries = perf_sample__branch_entries(sample);
-	uपूर्णांक64_t i;
+static void branch_stack__printf(struct perf_sample *sample, bool callstack)
+{
+	struct branch_entry *entries = perf_sample__branch_entries(sample);
+	uint64_t i;
 
-	म_लिखो("%s: nr:%" PRIu64 "\n",
+	printf("%s: nr:%" PRIu64 "\n",
 		!callstack ? "... branch stack" : "... branch callstack",
 		sample->branch_stack->nr);
 
-	क्रम (i = 0; i < sample->branch_stack->nr; i++) अणु
-		काष्ठा branch_entry *e = &entries[i];
+	for (i = 0; i < sample->branch_stack->nr; i++) {
+		struct branch_entry *e = &entries[i];
 
-		अगर (!callstack) अणु
-			म_लिखो("..... %2"PRIu64": %016" PRIx64 " -> %016" PRIx64 " %hu cycles %s%s%s%s %x\n",
+		if (!callstack) {
+			printf("..... %2"PRIu64": %016" PRIx64 " -> %016" PRIx64 " %hu cycles %s%s%s%s %x\n",
 				i, e->from, e->to,
-				(अचिन्हित लघु)e->flags.cycles,
+				(unsigned short)e->flags.cycles,
 				e->flags.mispred ? "M" : " ",
 				e->flags.predicted ? "P" : " ",
-				e->flags.पात ? "A" : " ",
+				e->flags.abort ? "A" : " ",
 				e->flags.in_tx ? "T" : " ",
-				(अचिन्हित)e->flags.reserved);
-		पूर्ण अन्यथा अणु
-			म_लिखो("..... %2"PRIu64": %016" PRIx64 "\n",
+				(unsigned)e->flags.reserved);
+		} else {
+			printf("..... %2"PRIu64": %016" PRIx64 "\n",
 				i, i > 0 ? e->from : e->to);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल व्योम regs_dump__म_लिखो(u64 mask, u64 *regs)
-अणु
-	अचिन्हित rid, i = 0;
+static void regs_dump__printf(u64 mask, u64 *regs)
+{
+	unsigned rid, i = 0;
 
-	क्रम_each_set_bit(rid, (अचिन्हित दीर्घ *) &mask, माप(mask) * 8) अणु
+	for_each_set_bit(rid, (unsigned long *) &mask, sizeof(mask) * 8) {
 		u64 val = regs[i++];
 
-		म_लिखो(".... %-5s 0x%016" PRIx64 "\n",
+		printf(".... %-5s 0x%016" PRIx64 "\n",
 		       perf_reg_name(rid), val);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल स्थिर अक्षर *regs_abi[] = अणु
+static const char *regs_abi[] = {
 	[PERF_SAMPLE_REGS_ABI_NONE] = "none",
 	[PERF_SAMPLE_REGS_ABI_32] = "32-bit",
 	[PERF_SAMPLE_REGS_ABI_64] = "64-bit",
-पूर्ण;
+};
 
-अटल अंतरभूत स्थिर अक्षर *regs_dump_abi(काष्ठा regs_dump *d)
-अणु
-	अगर (d->abi > PERF_SAMPLE_REGS_ABI_64)
-		वापस "unknown";
+static inline const char *regs_dump_abi(struct regs_dump *d)
+{
+	if (d->abi > PERF_SAMPLE_REGS_ABI_64)
+		return "unknown";
 
-	वापस regs_abi[d->abi];
-पूर्ण
+	return regs_abi[d->abi];
+}
 
-अटल व्योम regs__म_लिखो(स्थिर अक्षर *type, काष्ठा regs_dump *regs)
-अणु
+static void regs__printf(const char *type, struct regs_dump *regs)
+{
 	u64 mask = regs->mask;
 
-	म_लिखो("... %s regs: mask 0x%" PRIx64 " ABI %s\n",
+	printf("... %s regs: mask 0x%" PRIx64 " ABI %s\n",
 	       type,
 	       mask,
 	       regs_dump_abi(regs));
 
-	regs_dump__म_लिखो(mask, regs->regs);
-पूर्ण
+	regs_dump__printf(mask, regs->regs);
+}
 
-अटल व्योम regs_user__म_लिखो(काष्ठा perf_sample *sample)
-अणु
-	काष्ठा regs_dump *user_regs = &sample->user_regs;
+static void regs_user__printf(struct perf_sample *sample)
+{
+	struct regs_dump *user_regs = &sample->user_regs;
 
-	अगर (user_regs->regs)
-		regs__म_लिखो("user", user_regs);
-पूर्ण
+	if (user_regs->regs)
+		regs__printf("user", user_regs);
+}
 
-अटल व्योम regs_पूर्णांकr__म_लिखो(काष्ठा perf_sample *sample)
-अणु
-	काष्ठा regs_dump *पूर्णांकr_regs = &sample->पूर्णांकr_regs;
+static void regs_intr__printf(struct perf_sample *sample)
+{
+	struct regs_dump *intr_regs = &sample->intr_regs;
 
-	अगर (पूर्णांकr_regs->regs)
-		regs__म_लिखो("intr", पूर्णांकr_regs);
-पूर्ण
+	if (intr_regs->regs)
+		regs__printf("intr", intr_regs);
+}
 
-अटल व्योम stack_user__म_लिखो(काष्ठा stack_dump *dump)
-अणु
-	म_लिखो("... ustack: size %" PRIu64 ", offset 0x%x\n",
+static void stack_user__printf(struct stack_dump *dump)
+{
+	printf("... ustack: size %" PRIu64 ", offset 0x%x\n",
 	       dump->size, dump->offset);
-पूर्ण
+}
 
-अटल व्योम evlist__prपूर्णांक_tstamp(काष्ठा evlist *evlist, जोड़ perf_event *event, काष्ठा perf_sample *sample)
-अणु
+static void evlist__print_tstamp(struct evlist *evlist, union perf_event *event, struct perf_sample *sample)
+{
 	u64 sample_type = __evlist__combined_sample_type(evlist);
 
-	अगर (event->header.type != PERF_RECORD_SAMPLE &&
-	    !evlist__sample_id_all(evlist)) अणु
-		ख_माला_दो("-1 -1 ", मानक_निकास);
-		वापस;
-	पूर्ण
+	if (event->header.type != PERF_RECORD_SAMPLE &&
+	    !evlist__sample_id_all(evlist)) {
+		fputs("-1 -1 ", stdout);
+		return;
+	}
 
-	अगर ((sample_type & PERF_SAMPLE_CPU))
-		म_लिखो("%u ", sample->cpu);
+	if ((sample_type & PERF_SAMPLE_CPU))
+		printf("%u ", sample->cpu);
 
-	अगर (sample_type & PERF_SAMPLE_TIME)
-		म_लिखो("%" PRIu64 " ", sample->समय);
-पूर्ण
+	if (sample_type & PERF_SAMPLE_TIME)
+		printf("%" PRIu64 " ", sample->time);
+}
 
-अटल व्योम sample_पढ़ो__म_लिखो(काष्ठा perf_sample *sample, u64 पढ़ो_क्रमmat)
-अणु
-	म_लिखो("... sample_read:\n");
+static void sample_read__printf(struct perf_sample *sample, u64 read_format)
+{
+	printf("... sample_read:\n");
 
-	अगर (पढ़ो_क्रमmat & PERF_FORMAT_TOTAL_TIME_ENABLED)
-		म_लिखो("...... time enabled %016" PRIx64 "\n",
-		       sample->पढ़ो.समय_enabled);
+	if (read_format & PERF_FORMAT_TOTAL_TIME_ENABLED)
+		printf("...... time enabled %016" PRIx64 "\n",
+		       sample->read.time_enabled);
 
-	अगर (पढ़ो_क्रमmat & PERF_FORMAT_TOTAL_TIME_RUNNING)
-		म_लिखो("...... time running %016" PRIx64 "\n",
-		       sample->पढ़ो.समय_running);
+	if (read_format & PERF_FORMAT_TOTAL_TIME_RUNNING)
+		printf("...... time running %016" PRIx64 "\n",
+		       sample->read.time_running);
 
-	अगर (पढ़ो_क्रमmat & PERF_FORMAT_GROUP) अणु
+	if (read_format & PERF_FORMAT_GROUP) {
 		u64 i;
 
-		म_लिखो(".... group nr %" PRIu64 "\n", sample->पढ़ो.group.nr);
+		printf(".... group nr %" PRIu64 "\n", sample->read.group.nr);
 
-		क्रम (i = 0; i < sample->पढ़ो.group.nr; i++) अणु
-			काष्ठा sample_पढ़ो_value *value;
+		for (i = 0; i < sample->read.group.nr; i++) {
+			struct sample_read_value *value;
 
-			value = &sample->पढ़ो.group.values[i];
-			म_लिखो("..... id %016" PRIx64
+			value = &sample->read.group.values[i];
+			printf("..... id %016" PRIx64
 			       ", value %016" PRIx64 "\n",
 			       value->id, value->value);
-		पूर्ण
-	पूर्ण अन्यथा
-		म_लिखो("..... id %016" PRIx64 ", value %016" PRIx64 "\n",
-			sample->पढ़ो.one.id, sample->पढ़ो.one.value);
-पूर्ण
+		}
+	} else
+		printf("..... id %016" PRIx64 ", value %016" PRIx64 "\n",
+			sample->read.one.id, sample->read.one.value);
+}
 
-अटल व्योम dump_event(काष्ठा evlist *evlist, जोड़ perf_event *event,
-		       u64 file_offset, काष्ठा perf_sample *sample)
-अणु
-	अगर (!dump_trace)
-		वापस;
+static void dump_event(struct evlist *evlist, union perf_event *event,
+		       u64 file_offset, struct perf_sample *sample)
+{
+	if (!dump_trace)
+		return;
 
-	म_लिखो("\n%#" PRIx64 " [%#x]: event: %d\n",
+	printf("\n%#" PRIx64 " [%#x]: event: %d\n",
 	       file_offset, event->header.size, event->header.type);
 
 	trace_event(event);
-	अगर (event->header.type == PERF_RECORD_SAMPLE && evlist->trace_event_sample_raw)
+	if (event->header.type == PERF_RECORD_SAMPLE && evlist->trace_event_sample_raw)
 		evlist->trace_event_sample_raw(evlist, event, sample);
 
-	अगर (sample)
-		evlist__prपूर्णांक_tstamp(evlist, event, sample);
+	if (sample)
+		evlist__print_tstamp(evlist, event, sample);
 
-	म_लिखो("%#" PRIx64 " [%#x]: PERF_RECORD_%s", file_offset,
+	printf("%#" PRIx64 " [%#x]: PERF_RECORD_%s", file_offset,
 	       event->header.size, perf_event__name(event->header.type));
-पूर्ण
+}
 
-अक्षर *get_page_size_name(u64 size, अक्षर *str)
-अणु
-	अगर (!size || !unit_number__scnम_लिखो(str, PAGE_SIZE_NAME_LEN, size))
-		snम_लिखो(str, PAGE_SIZE_NAME_LEN, "%s", "N/A");
+char *get_page_size_name(u64 size, char *str)
+{
+	if (!size || !unit_number__scnprintf(str, PAGE_SIZE_NAME_LEN, size))
+		snprintf(str, PAGE_SIZE_NAME_LEN, "%s", "N/A");
 
-	वापस str;
-पूर्ण
+	return str;
+}
 
-अटल व्योम dump_sample(काष्ठा evsel *evsel, जोड़ perf_event *event,
-			काष्ठा perf_sample *sample)
-अणु
+static void dump_sample(struct evsel *evsel, union perf_event *event,
+			struct perf_sample *sample)
+{
 	u64 sample_type;
-	अक्षर str[PAGE_SIZE_NAME_LEN];
+	char str[PAGE_SIZE_NAME_LEN];
 
-	अगर (!dump_trace)
-		वापस;
+	if (!dump_trace)
+		return;
 
-	म_लिखो("(IP, 0x%x): %d/%d: %#" PRIx64 " period: %" PRIu64 " addr: %#" PRIx64 "\n",
+	printf("(IP, 0x%x): %d/%d: %#" PRIx64 " period: %" PRIu64 " addr: %#" PRIx64 "\n",
 	       event->header.misc, sample->pid, sample->tid, sample->ip,
 	       sample->period, sample->addr);
 
 	sample_type = evsel->core.attr.sample_type;
 
-	अगर (evsel__has_callchain(evsel))
-		callchain__म_लिखो(evsel, sample);
+	if (evsel__has_callchain(evsel))
+		callchain__printf(evsel, sample);
 
-	अगर (evsel__has_br_stack(evsel))
-		branch_stack__म_लिखो(sample, evsel__has_branch_callstack(evsel));
+	if (evsel__has_br_stack(evsel))
+		branch_stack__printf(sample, evsel__has_branch_callstack(evsel));
 
-	अगर (sample_type & PERF_SAMPLE_REGS_USER)
-		regs_user__म_लिखो(sample);
+	if (sample_type & PERF_SAMPLE_REGS_USER)
+		regs_user__printf(sample);
 
-	अगर (sample_type & PERF_SAMPLE_REGS_INTR)
-		regs_पूर्णांकr__म_लिखो(sample);
+	if (sample_type & PERF_SAMPLE_REGS_INTR)
+		regs_intr__printf(sample);
 
-	अगर (sample_type & PERF_SAMPLE_STACK_USER)
-		stack_user__म_लिखो(&sample->user_stack);
+	if (sample_type & PERF_SAMPLE_STACK_USER)
+		stack_user__printf(&sample->user_stack);
 
-	अगर (sample_type & PERF_SAMPLE_WEIGHT_TYPE) अणु
-		म_लिखो("... weight: %" PRIu64 "", sample->weight);
-			अगर (sample_type & PERF_SAMPLE_WEIGHT_STRUCT) अणु
-				म_लिखो(",0x%"PRIx16"", sample->ins_lat);
-				म_लिखो(",0x%"PRIx16"", sample->p_stage_cyc);
-			पूर्ण
-		म_लिखो("\n");
-	पूर्ण
+	if (sample_type & PERF_SAMPLE_WEIGHT_TYPE) {
+		printf("... weight: %" PRIu64 "", sample->weight);
+			if (sample_type & PERF_SAMPLE_WEIGHT_STRUCT) {
+				printf(",0x%"PRIx16"", sample->ins_lat);
+				printf(",0x%"PRIx16"", sample->p_stage_cyc);
+			}
+		printf("\n");
+	}
 
-	अगर (sample_type & PERF_SAMPLE_DATA_SRC)
-		म_लिखो(" . data_src: 0x%"PRIx64"\n", sample->data_src);
+	if (sample_type & PERF_SAMPLE_DATA_SRC)
+		printf(" . data_src: 0x%"PRIx64"\n", sample->data_src);
 
-	अगर (sample_type & PERF_SAMPLE_PHYS_ADDR)
-		म_लिखो(" .. phys_addr: 0x%"PRIx64"\n", sample->phys_addr);
+	if (sample_type & PERF_SAMPLE_PHYS_ADDR)
+		printf(" .. phys_addr: 0x%"PRIx64"\n", sample->phys_addr);
 
-	अगर (sample_type & PERF_SAMPLE_DATA_PAGE_SIZE)
-		म_लिखो(" .. data page size: %s\n", get_page_size_name(sample->data_page_size, str));
+	if (sample_type & PERF_SAMPLE_DATA_PAGE_SIZE)
+		printf(" .. data page size: %s\n", get_page_size_name(sample->data_page_size, str));
 
-	अगर (sample_type & PERF_SAMPLE_CODE_PAGE_SIZE)
-		म_लिखो(" .. code page size: %s\n", get_page_size_name(sample->code_page_size, str));
+	if (sample_type & PERF_SAMPLE_CODE_PAGE_SIZE)
+		printf(" .. code page size: %s\n", get_page_size_name(sample->code_page_size, str));
 
-	अगर (sample_type & PERF_SAMPLE_TRANSACTION)
-		म_लिखो("... transaction: %" PRIx64 "\n", sample->transaction);
+	if (sample_type & PERF_SAMPLE_TRANSACTION)
+		printf("... transaction: %" PRIx64 "\n", sample->transaction);
 
-	अगर (sample_type & PERF_SAMPLE_READ)
-		sample_पढ़ो__म_लिखो(sample, evsel->core.attr.पढ़ो_क्रमmat);
-पूर्ण
+	if (sample_type & PERF_SAMPLE_READ)
+		sample_read__printf(sample, evsel->core.attr.read_format);
+}
 
-अटल व्योम dump_पढ़ो(काष्ठा evsel *evsel, जोड़ perf_event *event)
-अणु
-	काष्ठा perf_record_पढ़ो *पढ़ो_event = &event->पढ़ो;
-	u64 पढ़ो_क्रमmat;
+static void dump_read(struct evsel *evsel, union perf_event *event)
+{
+	struct perf_record_read *read_event = &event->read;
+	u64 read_format;
 
-	अगर (!dump_trace)
-		वापस;
+	if (!dump_trace)
+		return;
 
-	म_लिखो(": %d %d %s %" PRI_lu64 "\n", event->पढ़ो.pid, event->पढ़ो.tid,
-	       evsel__name(evsel), event->पढ़ो.value);
+	printf(": %d %d %s %" PRI_lu64 "\n", event->read.pid, event->read.tid,
+	       evsel__name(evsel), event->read.value);
 
-	अगर (!evsel)
-		वापस;
+	if (!evsel)
+		return;
 
-	पढ़ो_क्रमmat = evsel->core.attr.पढ़ो_क्रमmat;
+	read_format = evsel->core.attr.read_format;
 
-	अगर (पढ़ो_क्रमmat & PERF_FORMAT_TOTAL_TIME_ENABLED)
-		म_लिखो("... time enabled : %" PRI_lu64 "\n", पढ़ो_event->समय_enabled);
+	if (read_format & PERF_FORMAT_TOTAL_TIME_ENABLED)
+		printf("... time enabled : %" PRI_lu64 "\n", read_event->time_enabled);
 
-	अगर (पढ़ो_क्रमmat & PERF_FORMAT_TOTAL_TIME_RUNNING)
-		म_लिखो("... time running : %" PRI_lu64 "\n", पढ़ो_event->समय_running);
+	if (read_format & PERF_FORMAT_TOTAL_TIME_RUNNING)
+		printf("... time running : %" PRI_lu64 "\n", read_event->time_running);
 
-	अगर (पढ़ो_क्रमmat & PERF_FORMAT_ID)
-		म_लिखो("... id           : %" PRI_lu64 "\n", पढ़ो_event->id);
-पूर्ण
+	if (read_format & PERF_FORMAT_ID)
+		printf("... id           : %" PRI_lu64 "\n", read_event->id);
+}
 
-अटल काष्ठा machine *machines__find_क्रम_cpumode(काष्ठा machines *machines,
-					       जोड़ perf_event *event,
-					       काष्ठा perf_sample *sample)
-अणु
-	अगर (perf_guest &&
+static struct machine *machines__find_for_cpumode(struct machines *machines,
+					       union perf_event *event,
+					       struct perf_sample *sample)
+{
+	if (perf_guest &&
 	    ((sample->cpumode == PERF_RECORD_MISC_GUEST_KERNEL) ||
-	     (sample->cpumode == PERF_RECORD_MISC_GUEST_USER))) अणु
+	     (sample->cpumode == PERF_RECORD_MISC_GUEST_USER))) {
 		u32 pid;
 
-		अगर (event->header.type == PERF_RECORD_MMAP
+		if (event->header.type == PERF_RECORD_MMAP
 		    || event->header.type == PERF_RECORD_MMAP2)
 			pid = event->mmap.pid;
-		अन्यथा
+		else
 			pid = sample->pid;
 
-		वापस machines__find_guest(machines, pid);
-	पूर्ण
+		return machines__find_guest(machines, pid);
+	}
 
-	वापस &machines->host;
-पूर्ण
+	return &machines->host;
+}
 
-अटल पूर्णांक deliver_sample_value(काष्ठा evlist *evlist,
-				काष्ठा perf_tool *tool,
-				जोड़ perf_event *event,
-				काष्ठा perf_sample *sample,
-				काष्ठा sample_पढ़ो_value *v,
-				काष्ठा machine *machine)
-अणु
-	काष्ठा perf_sample_id *sid = evlist__id2sid(evlist, v->id);
-	काष्ठा evsel *evsel;
+static int deliver_sample_value(struct evlist *evlist,
+				struct perf_tool *tool,
+				union perf_event *event,
+				struct perf_sample *sample,
+				struct sample_read_value *v,
+				struct machine *machine)
+{
+	struct perf_sample_id *sid = evlist__id2sid(evlist, v->id);
+	struct evsel *evsel;
 
-	अगर (sid) अणु
+	if (sid) {
 		sample->id     = v->id;
 		sample->period = v->value - sid->period;
 		sid->period    = v->value;
-	पूर्ण
+	}
 
-	अगर (!sid || sid->evsel == शून्य) अणु
+	if (!sid || sid->evsel == NULL) {
 		++evlist->stats.nr_unknown_id;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	/*
 	 * There's no reason to deliver sample
-	 * क्रम zero period, bail out.
+	 * for zero period, bail out.
 	 */
-	अगर (!sample->period)
-		वापस 0;
+	if (!sample->period)
+		return 0;
 
-	evsel = container_of(sid->evsel, काष्ठा evsel, core);
-	वापस tool->sample(tool, event, sample, evsel, machine);
-पूर्ण
+	evsel = container_of(sid->evsel, struct evsel, core);
+	return tool->sample(tool, event, sample, evsel, machine);
+}
 
-अटल पूर्णांक deliver_sample_group(काष्ठा evlist *evlist,
-				काष्ठा perf_tool *tool,
-				जोड़  perf_event *event,
-				काष्ठा perf_sample *sample,
-				काष्ठा machine *machine)
-अणु
-	पूर्णांक ret = -EINVAL;
+static int deliver_sample_group(struct evlist *evlist,
+				struct perf_tool *tool,
+				union  perf_event *event,
+				struct perf_sample *sample,
+				struct machine *machine)
+{
+	int ret = -EINVAL;
 	u64 i;
 
-	क्रम (i = 0; i < sample->पढ़ो.group.nr; i++) अणु
+	for (i = 0; i < sample->read.group.nr; i++) {
 		ret = deliver_sample_value(evlist, tool, event, sample,
-					   &sample->पढ़ो.group.values[i],
+					   &sample->read.group.values[i],
 					   machine);
-		अगर (ret)
-			अवरोध;
-	पूर्ण
+		if (ret)
+			break;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक evlist__deliver_sample(काष्ठा evlist *evlist, काष्ठा perf_tool *tool,
-				  जोड़  perf_event *event, काष्ठा perf_sample *sample,
-				  काष्ठा evsel *evsel, काष्ठा machine *machine)
-अणु
-	/* We know evsel != शून्य. */
+static int evlist__deliver_sample(struct evlist *evlist, struct perf_tool *tool,
+				  union  perf_event *event, struct perf_sample *sample,
+				  struct evsel *evsel, struct machine *machine)
+{
+	/* We know evsel != NULL. */
 	u64 sample_type = evsel->core.attr.sample_type;
-	u64 पढ़ो_क्रमmat = evsel->core.attr.पढ़ो_क्रमmat;
+	u64 read_format = evsel->core.attr.read_format;
 
 	/* Standard sample delivery. */
-	अगर (!(sample_type & PERF_SAMPLE_READ))
-		वापस tool->sample(tool, event, sample, evsel, machine);
+	if (!(sample_type & PERF_SAMPLE_READ))
+		return tool->sample(tool, event, sample, evsel, machine);
 
 	/* For PERF_SAMPLE_READ we have either single or group mode. */
-	अगर (पढ़ो_क्रमmat & PERF_FORMAT_GROUP)
-		वापस deliver_sample_group(evlist, tool, event, sample,
+	if (read_format & PERF_FORMAT_GROUP)
+		return deliver_sample_group(evlist, tool, event, sample,
 					    machine);
-	अन्यथा
-		वापस deliver_sample_value(evlist, tool, event, sample,
-					    &sample->पढ़ो.one, machine);
-पूर्ण
+	else
+		return deliver_sample_value(evlist, tool, event, sample,
+					    &sample->read.one, machine);
+}
 
-अटल पूर्णांक machines__deliver_event(काष्ठा machines *machines,
-				   काष्ठा evlist *evlist,
-				   जोड़ perf_event *event,
-				   काष्ठा perf_sample *sample,
-				   काष्ठा perf_tool *tool, u64 file_offset)
-अणु
-	काष्ठा evsel *evsel;
-	काष्ठा machine *machine;
+static int machines__deliver_event(struct machines *machines,
+				   struct evlist *evlist,
+				   union perf_event *event,
+				   struct perf_sample *sample,
+				   struct perf_tool *tool, u64 file_offset)
+{
+	struct evsel *evsel;
+	struct machine *machine;
 
 	dump_event(evlist, event, file_offset, sample);
 
 	evsel = evlist__id2evsel(evlist, sample->id);
 
-	machine = machines__find_क्रम_cpumode(machines, event, sample);
+	machine = machines__find_for_cpumode(machines, event, sample);
 
-	चयन (event->header.type) अणु
-	हाल PERF_RECORD_SAMPLE:
-		अगर (evsel == शून्य) अणु
+	switch (event->header.type) {
+	case PERF_RECORD_SAMPLE:
+		if (evsel == NULL) {
 			++evlist->stats.nr_unknown_id;
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 		dump_sample(evsel, event, sample);
-		अगर (machine == शून्य) अणु
+		if (machine == NULL) {
 			++evlist->stats.nr_unprocessable_samples;
-			वापस 0;
-		पूर्ण
-		वापस evlist__deliver_sample(evlist, tool, event, sample, evsel, machine);
-	हाल PERF_RECORD_MMAP:
-		वापस tool->mmap(tool, event, sample, machine);
-	हाल PERF_RECORD_MMAP2:
-		अगर (event->header.misc & PERF_RECORD_MISC_PROC_MAP_PARSE_TIMEOUT)
-			++evlist->stats.nr_proc_map_समयout;
-		वापस tool->mmap2(tool, event, sample, machine);
-	हाल PERF_RECORD_COMM:
-		वापस tool->comm(tool, event, sample, machine);
-	हाल PERF_RECORD_NAMESPACES:
-		वापस tool->namespaces(tool, event, sample, machine);
-	हाल PERF_RECORD_CGROUP:
-		वापस tool->cgroup(tool, event, sample, machine);
-	हाल PERF_RECORD_FORK:
-		वापस tool->विभाजन(tool, event, sample, machine);
-	हाल PERF_RECORD_EXIT:
-		वापस tool->निकास(tool, event, sample, machine);
-	हाल PERF_RECORD_LOST:
-		अगर (tool->lost == perf_event__process_lost)
+			return 0;
+		}
+		return evlist__deliver_sample(evlist, tool, event, sample, evsel, machine);
+	case PERF_RECORD_MMAP:
+		return tool->mmap(tool, event, sample, machine);
+	case PERF_RECORD_MMAP2:
+		if (event->header.misc & PERF_RECORD_MISC_PROC_MAP_PARSE_TIMEOUT)
+			++evlist->stats.nr_proc_map_timeout;
+		return tool->mmap2(tool, event, sample, machine);
+	case PERF_RECORD_COMM:
+		return tool->comm(tool, event, sample, machine);
+	case PERF_RECORD_NAMESPACES:
+		return tool->namespaces(tool, event, sample, machine);
+	case PERF_RECORD_CGROUP:
+		return tool->cgroup(tool, event, sample, machine);
+	case PERF_RECORD_FORK:
+		return tool->fork(tool, event, sample, machine);
+	case PERF_RECORD_EXIT:
+		return tool->exit(tool, event, sample, machine);
+	case PERF_RECORD_LOST:
+		if (tool->lost == perf_event__process_lost)
 			evlist->stats.total_lost += event->lost.lost;
-		वापस tool->lost(tool, event, sample, machine);
-	हाल PERF_RECORD_LOST_SAMPLES:
-		अगर (tool->lost_samples == perf_event__process_lost_samples)
+		return tool->lost(tool, event, sample, machine);
+	case PERF_RECORD_LOST_SAMPLES:
+		if (tool->lost_samples == perf_event__process_lost_samples)
 			evlist->stats.total_lost_samples += event->lost_samples.lost;
-		वापस tool->lost_samples(tool, event, sample, machine);
-	हाल PERF_RECORD_READ:
-		dump_पढ़ो(evsel, event);
-		वापस tool->पढ़ो(tool, event, sample, evsel, machine);
-	हाल PERF_RECORD_THROTTLE:
-		वापस tool->throttle(tool, event, sample, machine);
-	हाल PERF_RECORD_UNTHROTTLE:
-		वापस tool->unthrottle(tool, event, sample, machine);
-	हाल PERF_RECORD_AUX:
-		अगर (tool->aux == perf_event__process_aux) अणु
-			अगर (event->aux.flags & PERF_AUX_FLAG_TRUNCATED)
+		return tool->lost_samples(tool, event, sample, machine);
+	case PERF_RECORD_READ:
+		dump_read(evsel, event);
+		return tool->read(tool, event, sample, evsel, machine);
+	case PERF_RECORD_THROTTLE:
+		return tool->throttle(tool, event, sample, machine);
+	case PERF_RECORD_UNTHROTTLE:
+		return tool->unthrottle(tool, event, sample, machine);
+	case PERF_RECORD_AUX:
+		if (tool->aux == perf_event__process_aux) {
+			if (event->aux.flags & PERF_AUX_FLAG_TRUNCATED)
 				evlist->stats.total_aux_lost += 1;
-			अगर (event->aux.flags & PERF_AUX_FLAG_PARTIAL)
+			if (event->aux.flags & PERF_AUX_FLAG_PARTIAL)
 				evlist->stats.total_aux_partial += 1;
-		पूर्ण
-		वापस tool->aux(tool, event, sample, machine);
-	हाल PERF_RECORD_ITRACE_START:
-		वापस tool->itrace_start(tool, event, sample, machine);
-	हाल PERF_RECORD_SWITCH:
-	हाल PERF_RECORD_SWITCH_CPU_WIDE:
-		वापस tool->context_चयन(tool, event, sample, machine);
-	हाल PERF_RECORD_KSYMBOL:
-		वापस tool->ksymbol(tool, event, sample, machine);
-	हाल PERF_RECORD_BPF_EVENT:
-		वापस tool->bpf(tool, event, sample, machine);
-	हाल PERF_RECORD_TEXT_POKE:
-		वापस tool->text_poke(tool, event, sample, machine);
-	शेष:
+		}
+		return tool->aux(tool, event, sample, machine);
+	case PERF_RECORD_ITRACE_START:
+		return tool->itrace_start(tool, event, sample, machine);
+	case PERF_RECORD_SWITCH:
+	case PERF_RECORD_SWITCH_CPU_WIDE:
+		return tool->context_switch(tool, event, sample, machine);
+	case PERF_RECORD_KSYMBOL:
+		return tool->ksymbol(tool, event, sample, machine);
+	case PERF_RECORD_BPF_EVENT:
+		return tool->bpf(tool, event, sample, machine);
+	case PERF_RECORD_TEXT_POKE:
+		return tool->text_poke(tool, event, sample, machine);
+	default:
 		++evlist->stats.nr_unknown_events;
-		वापस -1;
-	पूर्ण
-पूर्ण
+		return -1;
+	}
+}
 
-अटल पूर्णांक perf_session__deliver_event(काष्ठा perf_session *session,
-				       जोड़ perf_event *event,
-				       काष्ठा perf_tool *tool,
+static int perf_session__deliver_event(struct perf_session *session,
+				       union perf_event *event,
+				       struct perf_tool *tool,
 				       u64 file_offset)
-अणु
-	काष्ठा perf_sample sample;
-	पूर्णांक ret = evlist__parse_sample(session->evlist, event, &sample);
+{
+	struct perf_sample sample;
+	int ret = evlist__parse_sample(session->evlist, event, &sample);
 
-	अगर (ret) अणु
+	if (ret) {
 		pr_err("Can't parse sample, err = %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	ret = auxtrace__process_event(session, event, &sample, tool);
-	अगर (ret < 0)
-		वापस ret;
-	अगर (ret > 0)
-		वापस 0;
+	if (ret < 0)
+		return ret;
+	if (ret > 0)
+		return 0;
 
 	ret = machines__deliver_event(&session->machines, session->evlist,
 				      event, &sample, tool, file_offset);
 
-	अगर (dump_trace && sample.aux_sample.size)
+	if (dump_trace && sample.aux_sample.size)
 		auxtrace__dump_auxtrace_sample(session, &sample);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल s64 perf_session__process_user_event(काष्ठा perf_session *session,
-					    जोड़ perf_event *event,
+static s64 perf_session__process_user_event(struct perf_session *session,
+					    union perf_event *event,
 					    u64 file_offset)
-अणु
-	काष्ठा ordered_events *oe = &session->ordered_events;
-	काष्ठा perf_tool *tool = session->tool;
-	काष्ठा perf_sample sample = अणु .समय = 0, पूर्ण;
-	पूर्णांक fd = perf_data__fd(session->data);
-	पूर्णांक err;
+{
+	struct ordered_events *oe = &session->ordered_events;
+	struct perf_tool *tool = session->tool;
+	struct perf_sample sample = { .time = 0, };
+	int fd = perf_data__fd(session->data);
+	int err;
 
-	अगर (event->header.type != PERF_RECORD_COMPRESSED ||
+	if (event->header.type != PERF_RECORD_COMPRESSED ||
 	    tool->compressed == perf_session__process_compressed_event_stub)
 		dump_event(session->evlist, event, file_offset, &sample);
 
 	/* These events are processed right away */
-	चयन (event->header.type) अणु
-	हाल PERF_RECORD_HEADER_ATTR:
+	switch (event->header.type) {
+	case PERF_RECORD_HEADER_ATTR:
 		err = tool->attr(tool, event, &session->evlist);
-		अगर (err == 0) अणु
+		if (err == 0) {
 			perf_session__set_id_hdr_size(session);
 			perf_session__set_comm_exec(session);
-		पूर्ण
-		वापस err;
-	हाल PERF_RECORD_EVENT_UPDATE:
-		वापस tool->event_update(tool, event, &session->evlist);
-	हाल PERF_RECORD_HEADER_EVENT_TYPE:
+		}
+		return err;
+	case PERF_RECORD_EVENT_UPDATE:
+		return tool->event_update(tool, event, &session->evlist);
+	case PERF_RECORD_HEADER_EVENT_TYPE:
 		/*
-		 * Deprecated, but we need to handle it क्रम sake
+		 * Deprecated, but we need to handle it for sake
 		 * of old data files create in pipe mode.
 		 */
-		वापस 0;
-	हाल PERF_RECORD_HEADER_TRACING_DATA:
+		return 0;
+	case PERF_RECORD_HEADER_TRACING_DATA:
 		/*
-		 * Setup क्रम पढ़ोing amidst mmap, but only when we
+		 * Setup for reading amidst mmap, but only when we
 		 * are in 'file' mode. The 'pipe' fd is in proper
-		 * place alपढ़ोy.
+		 * place already.
 		 */
-		अगर (!perf_data__is_pipe(session->data))
-			lseek(fd, file_offset, शुरू_से);
-		वापस tool->tracing_data(session, event);
-	हाल PERF_RECORD_HEADER_BUILD_ID:
-		वापस tool->build_id(session, event);
-	हाल PERF_RECORD_FINISHED_ROUND:
-		वापस tool->finished_round(tool, event, oe);
-	हाल PERF_RECORD_ID_INDEX:
-		वापस tool->id_index(session, event);
-	हाल PERF_RECORD_AUXTRACE_INFO:
-		वापस tool->auxtrace_info(session, event);
-	हाल PERF_RECORD_AUXTRACE:
-		/* setup क्रम पढ़ोing amidst mmap */
-		lseek(fd, file_offset + event->header.size, शुरू_से);
-		वापस tool->auxtrace(session, event);
-	हाल PERF_RECORD_AUXTRACE_ERROR:
+		if (!perf_data__is_pipe(session->data))
+			lseek(fd, file_offset, SEEK_SET);
+		return tool->tracing_data(session, event);
+	case PERF_RECORD_HEADER_BUILD_ID:
+		return tool->build_id(session, event);
+	case PERF_RECORD_FINISHED_ROUND:
+		return tool->finished_round(tool, event, oe);
+	case PERF_RECORD_ID_INDEX:
+		return tool->id_index(session, event);
+	case PERF_RECORD_AUXTRACE_INFO:
+		return tool->auxtrace_info(session, event);
+	case PERF_RECORD_AUXTRACE:
+		/* setup for reading amidst mmap */
+		lseek(fd, file_offset + event->header.size, SEEK_SET);
+		return tool->auxtrace(session, event);
+	case PERF_RECORD_AUXTRACE_ERROR:
 		perf_session__auxtrace_error_inc(session, event);
-		वापस tool->auxtrace_error(session, event);
-	हाल PERF_RECORD_THREAD_MAP:
-		वापस tool->thपढ़ो_map(session, event);
-	हाल PERF_RECORD_CPU_MAP:
-		वापस tool->cpu_map(session, event);
-	हाल PERF_RECORD_STAT_CONFIG:
-		वापस tool->stat_config(session, event);
-	हाल PERF_RECORD_STAT:
-		वापस tool->stat(session, event);
-	हाल PERF_RECORD_STAT_ROUND:
-		वापस tool->stat_round(session, event);
-	हाल PERF_RECORD_TIME_CONV:
-		session->समय_conv = event->समय_conv;
-		वापस tool->समय_conv(session, event);
-	हाल PERF_RECORD_HEADER_FEATURE:
-		वापस tool->feature(session, event);
-	हाल PERF_RECORD_COMPRESSED:
+		return tool->auxtrace_error(session, event);
+	case PERF_RECORD_THREAD_MAP:
+		return tool->thread_map(session, event);
+	case PERF_RECORD_CPU_MAP:
+		return tool->cpu_map(session, event);
+	case PERF_RECORD_STAT_CONFIG:
+		return tool->stat_config(session, event);
+	case PERF_RECORD_STAT:
+		return tool->stat(session, event);
+	case PERF_RECORD_STAT_ROUND:
+		return tool->stat_round(session, event);
+	case PERF_RECORD_TIME_CONV:
+		session->time_conv = event->time_conv;
+		return tool->time_conv(session, event);
+	case PERF_RECORD_HEADER_FEATURE:
+		return tool->feature(session, event);
+	case PERF_RECORD_COMPRESSED:
 		err = tool->compressed(session, event, file_offset);
-		अगर (err)
+		if (err)
 			dump_event(session->evlist, event, file_offset, &sample);
-		वापस err;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-पूर्ण
+		return err;
+	default:
+		return -EINVAL;
+	}
+}
 
-पूर्णांक perf_session__deliver_synth_event(काष्ठा perf_session *session,
-				      जोड़ perf_event *event,
-				      काष्ठा perf_sample *sample)
-अणु
-	काष्ठा evlist *evlist = session->evlist;
-	काष्ठा perf_tool *tool = session->tool;
+int perf_session__deliver_synth_event(struct perf_session *session,
+				      union perf_event *event,
+				      struct perf_sample *sample)
+{
+	struct evlist *evlist = session->evlist;
+	struct perf_tool *tool = session->tool;
 
 	events_stats__inc(&evlist->stats, event->header.type);
 
-	अगर (event->header.type >= PERF_RECORD_USER_TYPE_START)
-		वापस perf_session__process_user_event(session, event, 0);
+	if (event->header.type >= PERF_RECORD_USER_TYPE_START)
+		return perf_session__process_user_event(session, event, 0);
 
-	वापस machines__deliver_event(&session->machines, evlist, event, sample, tool, 0);
-पूर्ण
+	return machines__deliver_event(&session->machines, evlist, event, sample, tool, 0);
+}
 
-अटल व्योम event_swap(जोड़ perf_event *event, bool sample_id_all)
-अणु
+static void event_swap(union perf_event *event, bool sample_id_all)
+{
 	perf_event__swap_op swap;
 
 	swap = perf_event__swap_ops[event->header.type];
-	अगर (swap)
+	if (swap)
 		swap(event, sample_id_all);
-पूर्ण
+}
 
-पूर्णांक perf_session__peek_event(काष्ठा perf_session *session, off_t file_offset,
-			     व्योम *buf, माप_प्रकार buf_sz,
-			     जोड़ perf_event **event_ptr,
-			     काष्ठा perf_sample *sample)
-अणु
-	जोड़ perf_event *event;
-	माप_प्रकार hdr_sz, rest;
-	पूर्णांक fd;
+int perf_session__peek_event(struct perf_session *session, off_t file_offset,
+			     void *buf, size_t buf_sz,
+			     union perf_event **event_ptr,
+			     struct perf_sample *sample)
+{
+	union perf_event *event;
+	size_t hdr_sz, rest;
+	int fd;
 
-	अगर (session->one_mmap && !session->header.needs_swap) अणु
+	if (session->one_mmap && !session->header.needs_swap) {
 		event = file_offset - session->one_mmap_offset +
 			session->one_mmap_addr;
-		जाओ out_parse_sample;
-	पूर्ण
+		goto out_parse_sample;
+	}
 
-	अगर (perf_data__is_pipe(session->data))
-		वापस -1;
+	if (perf_data__is_pipe(session->data))
+		return -1;
 
 	fd = perf_data__fd(session->data);
-	hdr_sz = माप(काष्ठा perf_event_header);
+	hdr_sz = sizeof(struct perf_event_header);
 
-	अगर (buf_sz < hdr_sz)
-		वापस -1;
+	if (buf_sz < hdr_sz)
+		return -1;
 
-	अगर (lseek(fd, file_offset, शुरू_से) == (off_t)-1 ||
-	    पढ़ोn(fd, buf, hdr_sz) != (sमाप_प्रकार)hdr_sz)
-		वापस -1;
+	if (lseek(fd, file_offset, SEEK_SET) == (off_t)-1 ||
+	    readn(fd, buf, hdr_sz) != (ssize_t)hdr_sz)
+		return -1;
 
-	event = (जोड़ perf_event *)buf;
+	event = (union perf_event *)buf;
 
-	अगर (session->header.needs_swap)
+	if (session->header.needs_swap)
 		perf_event_header__bswap(&event->header);
 
-	अगर (event->header.size < hdr_sz || event->header.size > buf_sz)
-		वापस -1;
+	if (event->header.size < hdr_sz || event->header.size > buf_sz)
+		return -1;
 
 	buf += hdr_sz;
 	rest = event->header.size - hdr_sz;
 
-	अगर (पढ़ोn(fd, buf, rest) != (sमाप_प्रकार)rest)
-		वापस -1;
+	if (readn(fd, buf, rest) != (ssize_t)rest)
+		return -1;
 
-	अगर (session->header.needs_swap)
+	if (session->header.needs_swap)
 		event_swap(event, evlist__sample_id_all(session->evlist));
 
 out_parse_sample:
 
-	अगर (sample && event->header.type < PERF_RECORD_USER_TYPE_START &&
+	if (sample && event->header.type < PERF_RECORD_USER_TYPE_START &&
 	    evlist__parse_sample(session->evlist, event, sample))
-		वापस -1;
+		return -1;
 
 	*event_ptr = event;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक perf_session__peek_events(काष्ठा perf_session *session, u64 offset,
-			      u64 size, peek_events_cb_t cb, व्योम *data)
-अणु
+int perf_session__peek_events(struct perf_session *session, u64 offset,
+			      u64 size, peek_events_cb_t cb, void *data)
+{
 	u64 max_offset = offset + size;
-	अक्षर buf[PERF_SAMPLE_MAX_SIZE];
-	जोड़ perf_event *event;
-	पूर्णांक err;
+	char buf[PERF_SAMPLE_MAX_SIZE];
+	union perf_event *event;
+	int err;
 
-	करो अणु
+	do {
 		err = perf_session__peek_event(session, offset, buf,
 					       PERF_SAMPLE_MAX_SIZE, &event,
-					       शून्य);
-		अगर (err)
-			वापस err;
+					       NULL);
+		if (err)
+			return err;
 
 		err = cb(session, event, offset, data);
-		अगर (err)
-			वापस err;
+		if (err)
+			return err;
 
 		offset += event->header.size;
-		अगर (event->header.type == PERF_RECORD_AUXTRACE)
+		if (event->header.type == PERF_RECORD_AUXTRACE)
 			offset += event->auxtrace.size;
 
-	पूर्ण जबतक (offset < max_offset);
+	} while (offset < max_offset);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल s64 perf_session__process_event(काष्ठा perf_session *session,
-				       जोड़ perf_event *event, u64 file_offset)
-अणु
-	काष्ठा evlist *evlist = session->evlist;
-	काष्ठा perf_tool *tool = session->tool;
-	पूर्णांक ret;
+static s64 perf_session__process_event(struct perf_session *session,
+				       union perf_event *event, u64 file_offset)
+{
+	struct evlist *evlist = session->evlist;
+	struct perf_tool *tool = session->tool;
+	int ret;
 
-	अगर (session->header.needs_swap)
+	if (session->header.needs_swap)
 		event_swap(event, evlist__sample_id_all(evlist));
 
-	अगर (event->header.type >= PERF_RECORD_HEADER_MAX)
-		वापस -EINVAL;
+	if (event->header.type >= PERF_RECORD_HEADER_MAX)
+		return -EINVAL;
 
 	events_stats__inc(&evlist->stats, event->header.type);
 
-	अगर (event->header.type >= PERF_RECORD_USER_TYPE_START)
-		वापस perf_session__process_user_event(session, event, file_offset);
+	if (event->header.type >= PERF_RECORD_USER_TYPE_START)
+		return perf_session__process_user_event(session, event, file_offset);
 
-	अगर (tool->ordered_events) अणु
-		u64 बारtamp = -1ULL;
+	if (tool->ordered_events) {
+		u64 timestamp = -1ULL;
 
-		ret = evlist__parse_sample_बारtamp(evlist, event, &बारtamp);
-		अगर (ret && ret != -1)
-			वापस ret;
+		ret = evlist__parse_sample_timestamp(evlist, event, &timestamp);
+		if (ret && ret != -1)
+			return ret;
 
-		ret = perf_session__queue_event(session, event, बारtamp, file_offset);
-		अगर (ret != -ETIME)
-			वापस ret;
-	पूर्ण
+		ret = perf_session__queue_event(session, event, timestamp, file_offset);
+		if (ret != -ETIME)
+			return ret;
+	}
 
-	वापस perf_session__deliver_event(session, event, tool, file_offset);
-पूर्ण
+	return perf_session__deliver_event(session, event, tool, file_offset);
+}
 
-व्योम perf_event_header__bswap(काष्ठा perf_event_header *hdr)
-अणु
+void perf_event_header__bswap(struct perf_event_header *hdr)
+{
 	hdr->type = bswap_32(hdr->type);
 	hdr->misc = bswap_16(hdr->misc);
 	hdr->size = bswap_16(hdr->size);
-पूर्ण
+}
 
-काष्ठा thपढ़ो *perf_session__findnew(काष्ठा perf_session *session, pid_t pid)
-अणु
-	वापस machine__findnew_thपढ़ो(&session->machines.host, -1, pid);
-पूर्ण
+struct thread *perf_session__findnew(struct perf_session *session, pid_t pid)
+{
+	return machine__findnew_thread(&session->machines.host, -1, pid);
+}
 
-पूर्णांक perf_session__रेजिस्टर_idle_thपढ़ो(काष्ठा perf_session *session)
-अणु
-	काष्ठा thपढ़ो *thपढ़ो = machine__idle_thपढ़ो(&session->machines.host);
+int perf_session__register_idle_thread(struct perf_session *session)
+{
+	struct thread *thread = machine__idle_thread(&session->machines.host);
 
-	/* machine__idle_thपढ़ो() got the thपढ़ो, so put it */
-	thपढ़ो__put(thपढ़ो);
-	वापस thपढ़ो ? 0 : -1;
-पूर्ण
+	/* machine__idle_thread() got the thread, so put it */
+	thread__put(thread);
+	return thread ? 0 : -1;
+}
 
-अटल व्योम
-perf_session__warn_order(स्थिर काष्ठा perf_session *session)
-अणु
-	स्थिर काष्ठा ordered_events *oe = &session->ordered_events;
-	काष्ठा evsel *evsel;
+static void
+perf_session__warn_order(const struct perf_session *session)
+{
+	const struct ordered_events *oe = &session->ordered_events;
+	struct evsel *evsel;
 	bool should_warn = true;
 
-	evlist__क्रम_each_entry(session->evlist, evsel) अणु
-		अगर (evsel->core.attr.ग_लिखो_backward)
+	evlist__for_each_entry(session->evlist, evsel) {
+		if (evsel->core.attr.write_backward)
 			should_warn = false;
-	पूर्ण
+	}
 
-	अगर (!should_warn)
-		वापस;
-	अगर (oe->nr_unordered_events != 0)
+	if (!should_warn)
+		return;
+	if (oe->nr_unordered_events != 0)
 		ui__warning("%u out of order events recorded.\n", oe->nr_unordered_events);
-पूर्ण
+}
 
-अटल व्योम perf_session__warn_about_errors(स्थिर काष्ठा perf_session *session)
-अणु
-	स्थिर काष्ठा events_stats *stats = &session->evlist->stats;
+static void perf_session__warn_about_errors(const struct perf_session *session)
+{
+	const struct events_stats *stats = &session->evlist->stats;
 
-	अगर (session->tool->lost == perf_event__process_lost &&
-	    stats->nr_events[PERF_RECORD_LOST] != 0) अणु
+	if (session->tool->lost == perf_event__process_lost &&
+	    stats->nr_events[PERF_RECORD_LOST] != 0) {
 		ui__warning("Processed %d events and lost %d chunks!\n\n"
 			    "Check IO/CPU overload!\n\n",
 			    stats->nr_events[0],
 			    stats->nr_events[PERF_RECORD_LOST]);
-	पूर्ण
+	}
 
-	अगर (session->tool->lost_samples == perf_event__process_lost_samples) अणु
-		द्विगुन drop_rate;
+	if (session->tool->lost_samples == perf_event__process_lost_samples) {
+		double drop_rate;
 
-		drop_rate = (द्विगुन)stats->total_lost_samples /
-			    (द्विगुन) (stats->nr_events[PERF_RECORD_SAMPLE] + stats->total_lost_samples);
-		अगर (drop_rate > 0.05) अणु
+		drop_rate = (double)stats->total_lost_samples /
+			    (double) (stats->nr_events[PERF_RECORD_SAMPLE] + stats->total_lost_samples);
+		if (drop_rate > 0.05) {
 			ui__warning("Processed %" PRIu64 " samples and lost %3.2f%%!\n\n",
 				    stats->nr_events[PERF_RECORD_SAMPLE] + stats->total_lost_samples,
 				    drop_rate * 100.0);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (session->tool->aux == perf_event__process_aux &&
-	    stats->total_aux_lost != 0) अणु
+	if (session->tool->aux == perf_event__process_aux &&
+	    stats->total_aux_lost != 0) {
 		ui__warning("AUX data lost %" PRIu64 " times out of %u!\n\n",
 			    stats->total_aux_lost,
 			    stats->nr_events[PERF_RECORD_AUX]);
-	पूर्ण
+	}
 
-	अगर (session->tool->aux == perf_event__process_aux &&
-	    stats->total_aux_partial != 0) अणु
+	if (session->tool->aux == perf_event__process_aux &&
+	    stats->total_aux_partial != 0) {
 		bool vmm_exclusive = false;
 
-		(व्योम)sysfs__पढ़ो_bool("module/kvm_intel/parameters/vmm_exclusive",
+		(void)sysfs__read_bool("module/kvm_intel/parameters/vmm_exclusive",
 		                       &vmm_exclusive);
 
 		ui__warning("AUX data had gaps in it %" PRIu64 " times out of %u!\n\n"
@@ -1890,41 +1889,41 @@ perf_session__warn_order(स्थिर काष्ठा perf_session *sessio
 			    "\nReloading kvm_intel module with vmm_exclusive=0\n"
 			    "will reduce the gaps to only guest's timeslices." :
 			    "");
-	पूर्ण
+	}
 
-	अगर (stats->nr_unknown_events != 0) अणु
+	if (stats->nr_unknown_events != 0) {
 		ui__warning("Found %u unknown events!\n\n"
 			    "Is this an older tool processing a perf.data "
 			    "file generated by a more recent tool?\n\n"
 			    "If that is not the case, consider "
 			    "reporting to linux-kernel@vger.kernel.org.\n\n",
 			    stats->nr_unknown_events);
-	पूर्ण
+	}
 
-	अगर (stats->nr_unknown_id != 0) अणु
+	if (stats->nr_unknown_id != 0) {
 		ui__warning("%u samples with id not present in the header\n",
 			    stats->nr_unknown_id);
-	पूर्ण
+	}
 
-	अगर (stats->nr_invalid_chains != 0) अणु
+	if (stats->nr_invalid_chains != 0) {
 		ui__warning("Found invalid callchains!\n\n"
 			    "%u out of %u events were discarded for this reason.\n\n"
 			    "Consider reporting to linux-kernel@vger.kernel.org.\n\n",
 			    stats->nr_invalid_chains,
 			    stats->nr_events[PERF_RECORD_SAMPLE]);
-	पूर्ण
+	}
 
-	अगर (stats->nr_unprocessable_samples != 0) अणु
+	if (stats->nr_unprocessable_samples != 0) {
 		ui__warning("%u unprocessable samples recorded.\n"
 			    "Do you have a KVM guest running and not using 'perf kvm'?\n",
 			    stats->nr_unprocessable_samples);
-	पूर्ण
+	}
 
 	perf_session__warn_order(session);
 
 	events_stats__auxtrace_error_warn(stats);
 
-	अगर (stats->nr_proc_map_समयout != 0) अणु
+	if (stats->nr_proc_map_timeout != 0) {
 		ui__warning("%d map information files for pre-existing threads were\n"
 			    "not processed, if there are samples for addresses they\n"
 			    "will not be resolved, you may find out which are these\n"
@@ -1932,243 +1931,243 @@ perf_session__warn_order(स्थिर काष्ठा perf_session *sessio
 			    "to a file.\n"
 			    "The time limit to process proc map is too short?\n"
 			    "Increase it by --proc-map-timeout\n",
-			    stats->nr_proc_map_समयout);
-	पूर्ण
-पूर्ण
+			    stats->nr_proc_map_timeout);
+	}
+}
 
-अटल पूर्णांक perf_session__flush_thपढ़ो_stack(काष्ठा thपढ़ो *thपढ़ो,
-					    व्योम *p __maybe_unused)
-अणु
-	वापस thपढ़ो_stack__flush(thपढ़ो);
-पूर्ण
+static int perf_session__flush_thread_stack(struct thread *thread,
+					    void *p __maybe_unused)
+{
+	return thread_stack__flush(thread);
+}
 
-अटल पूर्णांक perf_session__flush_thपढ़ो_stacks(काष्ठा perf_session *session)
-अणु
-	वापस machines__क्रम_each_thपढ़ो(&session->machines,
-					 perf_session__flush_thपढ़ो_stack,
-					 शून्य);
-पूर्ण
+static int perf_session__flush_thread_stacks(struct perf_session *session)
+{
+	return machines__for_each_thread(&session->machines,
+					 perf_session__flush_thread_stack,
+					 NULL);
+}
 
-अस्थिर पूर्णांक session_करोne;
+volatile int session_done;
 
-अटल पूर्णांक __perf_session__process_decomp_events(काष्ठा perf_session *session);
+static int __perf_session__process_decomp_events(struct perf_session *session);
 
-अटल पूर्णांक __perf_session__process_pipe_events(काष्ठा perf_session *session)
-अणु
-	काष्ठा ordered_events *oe = &session->ordered_events;
-	काष्ठा perf_tool *tool = session->tool;
-	जोड़ perf_event *event;
-	uपूर्णांक32_t size, cur_size = 0;
-	व्योम *buf = शून्य;
+static int __perf_session__process_pipe_events(struct perf_session *session)
+{
+	struct ordered_events *oe = &session->ordered_events;
+	struct perf_tool *tool = session->tool;
+	union perf_event *event;
+	uint32_t size, cur_size = 0;
+	void *buf = NULL;
 	s64 skip = 0;
 	u64 head;
-	sमाप_प्रकार err;
-	व्योम *p;
+	ssize_t err;
+	void *p;
 
-	perf_tool__fill_शेषs(tool);
+	perf_tool__fill_defaults(tool);
 
 	head = 0;
-	cur_size = माप(जोड़ perf_event);
+	cur_size = sizeof(union perf_event);
 
-	buf = दो_स्मृति(cur_size);
-	अगर (!buf)
-		वापस -त्रुटि_सं;
+	buf = malloc(cur_size);
+	if (!buf)
+		return -errno;
 	ordered_events__set_copy_on_queue(oe, true);
 more:
 	event = buf;
-	err = perf_data__पढ़ो(session->data, event,
-			      माप(काष्ठा perf_event_header));
-	अगर (err <= 0) अणु
-		अगर (err == 0)
-			जाओ करोne;
+	err = perf_data__read(session->data, event,
+			      sizeof(struct perf_event_header));
+	if (err <= 0) {
+		if (err == 0)
+			goto done;
 
 		pr_err("failed to read event header\n");
-		जाओ out_err;
-	पूर्ण
+		goto out_err;
+	}
 
-	अगर (session->header.needs_swap)
+	if (session->header.needs_swap)
 		perf_event_header__bswap(&event->header);
 
 	size = event->header.size;
-	अगर (size < माप(काष्ठा perf_event_header)) अणु
+	if (size < sizeof(struct perf_event_header)) {
 		pr_err("bad event header size\n");
-		जाओ out_err;
-	पूर्ण
+		goto out_err;
+	}
 
-	अगर (size > cur_size) अणु
-		व्योम *new = पुनः_स्मृति(buf, size);
-		अगर (!new) अणु
+	if (size > cur_size) {
+		void *new = realloc(buf, size);
+		if (!new) {
 			pr_err("failed to allocate memory to read event\n");
-			जाओ out_err;
-		पूर्ण
+			goto out_err;
+		}
 		buf = new;
 		cur_size = size;
 		event = buf;
-	पूर्ण
+	}
 	p = event;
-	p += माप(काष्ठा perf_event_header);
+	p += sizeof(struct perf_event_header);
 
-	अगर (size - माप(काष्ठा perf_event_header)) अणु
-		err = perf_data__पढ़ो(session->data, p,
-				      size - माप(काष्ठा perf_event_header));
-		अगर (err <= 0) अणु
-			अगर (err == 0) अणु
+	if (size - sizeof(struct perf_event_header)) {
+		err = perf_data__read(session->data, p,
+				      size - sizeof(struct perf_event_header));
+		if (err <= 0) {
+			if (err == 0) {
 				pr_err("unexpected end of event stream\n");
-				जाओ करोne;
-			पूर्ण
+				goto done;
+			}
 
 			pr_err("failed to read event data\n");
-			जाओ out_err;
-		पूर्ण
-	पूर्ण
+			goto out_err;
+		}
+	}
 
-	अगर ((skip = perf_session__process_event(session, event, head)) < 0) अणु
+	if ((skip = perf_session__process_event(session, event, head)) < 0) {
 		pr_err("%#" PRIx64 " [%#x]: failed to process type: %d\n",
 		       head, event->header.size, event->header.type);
 		err = -EINVAL;
-		जाओ out_err;
-	पूर्ण
+		goto out_err;
+	}
 
 	head += size;
 
-	अगर (skip > 0)
+	if (skip > 0)
 		head += skip;
 
 	err = __perf_session__process_decomp_events(session);
-	अगर (err)
-		जाओ out_err;
+	if (err)
+		goto out_err;
 
-	अगर (!session_करोne())
-		जाओ more;
-करोne:
-	/* करो the final flush क्रम ordered samples */
+	if (!session_done())
+		goto more;
+done:
+	/* do the final flush for ordered samples */
 	err = ordered_events__flush(oe, OE_FLUSH__FINAL);
-	अगर (err)
-		जाओ out_err;
+	if (err)
+		goto out_err;
 	err = auxtrace__flush_events(session, tool);
-	अगर (err)
-		जाओ out_err;
-	err = perf_session__flush_thपढ़ो_stacks(session);
+	if (err)
+		goto out_err;
+	err = perf_session__flush_thread_stacks(session);
 out_err:
-	मुक्त(buf);
-	अगर (!tool->no_warn)
+	free(buf);
+	if (!tool->no_warn)
 		perf_session__warn_about_errors(session);
-	ordered_events__मुक्त(&session->ordered_events);
-	auxtrace__मुक्त_events(session);
-	वापस err;
-पूर्ण
+	ordered_events__free(&session->ordered_events);
+	auxtrace__free_events(session);
+	return err;
+}
 
-अटल जोड़ perf_event *
-prefetch_event(अक्षर *buf, u64 head, माप_प्रकार mmap_size,
-	       bool needs_swap, जोड़ perf_event *error)
-अणु
-	जोड़ perf_event *event;
+static union perf_event *
+prefetch_event(char *buf, u64 head, size_t mmap_size,
+	       bool needs_swap, union perf_event *error)
+{
+	union perf_event *event;
 
 	/*
-	 * Ensure we have enough space reमुख्यing to पढ़ो
+	 * Ensure we have enough space remaining to read
 	 * the size of the event in the headers.
 	 */
-	अगर (head + माप(event->header) > mmap_size)
-		वापस शून्य;
+	if (head + sizeof(event->header) > mmap_size)
+		return NULL;
 
-	event = (जोड़ perf_event *)(buf + head);
-	अगर (needs_swap)
+	event = (union perf_event *)(buf + head);
+	if (needs_swap)
 		perf_event_header__bswap(&event->header);
 
-	अगर (head + event->header.size <= mmap_size)
-		वापस event;
+	if (head + event->header.size <= mmap_size)
+		return event;
 
 	/* We're not fetching the event so swap back again */
-	अगर (needs_swap)
+	if (needs_swap)
 		perf_event_header__bswap(&event->header);
 
 	pr_debug("%s: head=%#" PRIx64 " event->header_size=%#x, mmap_size=%#zx:"
 		 " fuzzed or compressed perf.data?\n",__func__, head, event->header.size, mmap_size);
 
-	वापस error;
-पूर्ण
+	return error;
+}
 
-अटल जोड़ perf_event *
-fetch_mmaped_event(u64 head, माप_प्रकार mmap_size, अक्षर *buf, bool needs_swap)
-अणु
-	वापस prefetch_event(buf, head, mmap_size, needs_swap, ERR_PTR(-EINVAL));
-पूर्ण
+static union perf_event *
+fetch_mmaped_event(u64 head, size_t mmap_size, char *buf, bool needs_swap)
+{
+	return prefetch_event(buf, head, mmap_size, needs_swap, ERR_PTR(-EINVAL));
+}
 
-अटल जोड़ perf_event *
-fetch_decomp_event(u64 head, माप_प्रकार mmap_size, अक्षर *buf, bool needs_swap)
-अणु
-	वापस prefetch_event(buf, head, mmap_size, needs_swap, शून्य);
-पूर्ण
+static union perf_event *
+fetch_decomp_event(u64 head, size_t mmap_size, char *buf, bool needs_swap)
+{
+	return prefetch_event(buf, head, mmap_size, needs_swap, NULL);
+}
 
-अटल पूर्णांक __perf_session__process_decomp_events(काष्ठा perf_session *session)
-अणु
+static int __perf_session__process_decomp_events(struct perf_session *session)
+{
 	s64 skip;
 	u64 size, file_pos = 0;
-	काष्ठा decomp *decomp = session->decomp_last;
+	struct decomp *decomp = session->decomp_last;
 
-	अगर (!decomp)
-		वापस 0;
+	if (!decomp)
+		return 0;
 
-	जबतक (decomp->head < decomp->size && !session_करोne()) अणु
-		जोड़ perf_event *event = fetch_decomp_event(decomp->head, decomp->size, decomp->data,
+	while (decomp->head < decomp->size && !session_done()) {
+		union perf_event *event = fetch_decomp_event(decomp->head, decomp->size, decomp->data,
 							     session->header.needs_swap);
 
-		अगर (!event)
-			अवरोध;
+		if (!event)
+			break;
 
 		size = event->header.size;
 
-		अगर (size < माप(काष्ठा perf_event_header) ||
-		    (skip = perf_session__process_event(session, event, file_pos)) < 0) अणु
+		if (size < sizeof(struct perf_event_header) ||
+		    (skip = perf_session__process_event(session, event, file_pos)) < 0) {
 			pr_err("%#" PRIx64 " [%#x]: failed to process type: %d\n",
 				decomp->file_pos + decomp->head, event->header.size, event->header.type);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
-		अगर (skip)
+		if (skip)
 			size += skip;
 
 		decomp->head += size;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * On 64bit we can mmap the data file in one go. No need क्रम tiny mmap
+ * On 64bit we can mmap the data file in one go. No need for tiny mmap
  * slices. On 32bit we use 32MB.
  */
-#अगर BITS_PER_LONG == 64
-#घोषणा MMAP_SIZE ULदीर्घ_उच्च
-#घोषणा NUM_MMAPS 1
-#अन्यथा
-#घोषणा MMAP_SIZE (32 * 1024 * 1024ULL)
-#घोषणा NUM_MMAPS 128
-#पूर्ण_अगर
+#if BITS_PER_LONG == 64
+#define MMAP_SIZE ULLONG_MAX
+#define NUM_MMAPS 1
+#else
+#define MMAP_SIZE (32 * 1024 * 1024ULL)
+#define NUM_MMAPS 128
+#endif
 
-काष्ठा पढ़ोer;
+struct reader;
 
-प्रकार s64 (*पढ़ोer_cb_t)(काष्ठा perf_session *session,
-			   जोड़ perf_event *event,
+typedef s64 (*reader_cb_t)(struct perf_session *session,
+			   union perf_event *event,
 			   u64 file_offset);
 
-काष्ठा पढ़ोer अणु
-	पूर्णांक		 fd;
+struct reader {
+	int		 fd;
 	u64		 data_size;
 	u64		 data_offset;
-	पढ़ोer_cb_t	 process;
-पूर्ण;
+	reader_cb_t	 process;
+};
 
-अटल पूर्णांक
-पढ़ोer__process_events(काष्ठा पढ़ोer *rd, काष्ठा perf_session *session,
-		       काष्ठा ui_progress *prog)
-अणु
+static int
+reader__process_events(struct reader *rd, struct perf_session *session,
+		       struct ui_progress *prog)
+{
 	u64 data_size = rd->data_size;
 	u64 head, page_offset, file_offset, file_pos, size;
-	पूर्णांक err = 0, mmap_prot, mmap_flags, map_idx = 0;
-	माप_प्रकार	mmap_size;
-	अक्षर *buf, *mmaps[NUM_MMAPS];
-	जोड़ perf_event *event;
+	int err = 0, mmap_prot, mmap_flags, map_idx = 0;
+	size_t	mmap_size;
+	char *buf, *mmaps[NUM_MMAPS];
+	union perf_event *event;
 	s64 skip;
 
 	page_offset = page_size * (rd->data_offset / page_size);
@@ -2180,330 +2179,330 @@ fetch_decomp_event(u64 head, माप_प्रकार mmap_size, अक्�
 	data_size += rd->data_offset;
 
 	mmap_size = MMAP_SIZE;
-	अगर (mmap_size > data_size) अणु
+	if (mmap_size > data_size) {
 		mmap_size = data_size;
 		session->one_mmap = true;
-	पूर्ण
+	}
 
-	स_रखो(mmaps, 0, माप(mmaps));
+	memset(mmaps, 0, sizeof(mmaps));
 
 	mmap_prot  = PROT_READ;
 	mmap_flags = MAP_SHARED;
 
-	अगर (session->header.needs_swap) अणु
+	if (session->header.needs_swap) {
 		mmap_prot  |= PROT_WRITE;
 		mmap_flags = MAP_PRIVATE;
-	पूर्ण
+	}
 remap:
-	buf = mmap(शून्य, mmap_size, mmap_prot, mmap_flags, rd->fd,
+	buf = mmap(NULL, mmap_size, mmap_prot, mmap_flags, rd->fd,
 		   file_offset);
-	अगर (buf == MAP_FAILED) अणु
+	if (buf == MAP_FAILED) {
 		pr_err("failed to mmap file\n");
-		err = -त्रुटि_सं;
-		जाओ out;
-	पूर्ण
+		err = -errno;
+		goto out;
+	}
 	mmaps[map_idx] = buf;
 	map_idx = (map_idx + 1) & (ARRAY_SIZE(mmaps) - 1);
 	file_pos = file_offset + head;
-	अगर (session->one_mmap) अणु
+	if (session->one_mmap) {
 		session->one_mmap_addr = buf;
 		session->one_mmap_offset = file_offset;
-	पूर्ण
+	}
 
 more:
 	event = fetch_mmaped_event(head, mmap_size, buf, session->header.needs_swap);
-	अगर (IS_ERR(event))
-		वापस PTR_ERR(event);
+	if (IS_ERR(event))
+		return PTR_ERR(event);
 
-	अगर (!event) अणु
-		अगर (mmaps[map_idx]) अणु
+	if (!event) {
+		if (mmaps[map_idx]) {
 			munmap(mmaps[map_idx], mmap_size);
-			mmaps[map_idx] = शून्य;
-		पूर्ण
+			mmaps[map_idx] = NULL;
+		}
 
 		page_offset = page_size * (head / page_size);
 		file_offset += page_offset;
 		head -= page_offset;
-		जाओ remap;
-	पूर्ण
+		goto remap;
+	}
 
 	size = event->header.size;
 
 	skip = -EINVAL;
 
-	अगर (size < माप(काष्ठा perf_event_header) ||
-	    (skip = rd->process(session, event, file_pos)) < 0) अणु
+	if (size < sizeof(struct perf_event_header) ||
+	    (skip = rd->process(session, event, file_pos)) < 0) {
 		pr_err("%#" PRIx64 " [%#x]: failed to process type: %d [%s]\n",
 		       file_offset + head, event->header.size,
-		       event->header.type, म_त्रुटि(-skip));
+		       event->header.type, strerror(-skip));
 		err = skip;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (skip)
+	if (skip)
 		size += skip;
 
 	head += size;
 	file_pos += size;
 
 	err = __perf_session__process_decomp_events(session);
-	अगर (err)
-		जाओ out;
+	if (err)
+		goto out;
 
 	ui_progress__update(prog, size);
 
-	अगर (session_करोne())
-		जाओ out;
+	if (session_done())
+		goto out;
 
-	अगर (file_pos < data_size)
-		जाओ more;
+	if (file_pos < data_size)
+		goto more;
 
 out:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल s64 process_simple(काष्ठा perf_session *session,
-			  जोड़ perf_event *event,
+static s64 process_simple(struct perf_session *session,
+			  union perf_event *event,
 			  u64 file_offset)
-अणु
-	वापस perf_session__process_event(session, event, file_offset);
-पूर्ण
+{
+	return perf_session__process_event(session, event, file_offset);
+}
 
-अटल पूर्णांक __perf_session__process_events(काष्ठा perf_session *session)
-अणु
-	काष्ठा पढ़ोer rd = अणु
+static int __perf_session__process_events(struct perf_session *session)
+{
+	struct reader rd = {
 		.fd		= perf_data__fd(session->data),
 		.data_size	= session->header.data_size,
 		.data_offset	= session->header.data_offset,
 		.process	= process_simple,
-	पूर्ण;
-	काष्ठा ordered_events *oe = &session->ordered_events;
-	काष्ठा perf_tool *tool = session->tool;
-	काष्ठा ui_progress prog;
-	पूर्णांक err;
+	};
+	struct ordered_events *oe = &session->ordered_events;
+	struct perf_tool *tool = session->tool;
+	struct ui_progress prog;
+	int err;
 
-	perf_tool__fill_शेषs(tool);
+	perf_tool__fill_defaults(tool);
 
-	अगर (rd.data_size == 0)
-		वापस -1;
+	if (rd.data_size == 0)
+		return -1;
 
 	ui_progress__init_size(&prog, rd.data_size, "Processing events...");
 
-	err = पढ़ोer__process_events(&rd, session, &prog);
-	अगर (err)
-		जाओ out_err;
-	/* करो the final flush क्रम ordered samples */
+	err = reader__process_events(&rd, session, &prog);
+	if (err)
+		goto out_err;
+	/* do the final flush for ordered samples */
 	err = ordered_events__flush(oe, OE_FLUSH__FINAL);
-	अगर (err)
-		जाओ out_err;
+	if (err)
+		goto out_err;
 	err = auxtrace__flush_events(session, tool);
-	अगर (err)
-		जाओ out_err;
-	err = perf_session__flush_thपढ़ो_stacks(session);
+	if (err)
+		goto out_err;
+	err = perf_session__flush_thread_stacks(session);
 out_err:
 	ui_progress__finish();
-	अगर (!tool->no_warn)
+	if (!tool->no_warn)
 		perf_session__warn_about_errors(session);
 	/*
-	 * We may चयनing perf.data output, make ordered_events
+	 * We may switching perf.data output, make ordered_events
 	 * reusable.
 	 */
 	ordered_events__reinit(&session->ordered_events);
-	auxtrace__मुक्त_events(session);
+	auxtrace__free_events(session);
 	session->one_mmap = false;
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक perf_session__process_events(काष्ठा perf_session *session)
-अणु
-	अगर (perf_session__रेजिस्टर_idle_thपढ़ो(session) < 0)
-		वापस -ENOMEM;
+int perf_session__process_events(struct perf_session *session)
+{
+	if (perf_session__register_idle_thread(session) < 0)
+		return -ENOMEM;
 
-	अगर (perf_data__is_pipe(session->data))
-		वापस __perf_session__process_pipe_events(session);
+	if (perf_data__is_pipe(session->data))
+		return __perf_session__process_pipe_events(session);
 
-	वापस __perf_session__process_events(session);
-पूर्ण
+	return __perf_session__process_events(session);
+}
 
-bool perf_session__has_traces(काष्ठा perf_session *session, स्थिर अक्षर *msg)
-अणु
-	काष्ठा evsel *evsel;
+bool perf_session__has_traces(struct perf_session *session, const char *msg)
+{
+	struct evsel *evsel;
 
-	evlist__क्रम_each_entry(session->evlist, evsel) अणु
-		अगर (evsel->core.attr.type == PERF_TYPE_TRACEPOINT)
-			वापस true;
-	पूर्ण
+	evlist__for_each_entry(session->evlist, evsel) {
+		if (evsel->core.attr.type == PERF_TYPE_TRACEPOINT)
+			return true;
+	}
 
 	pr_err("No trace sample to read. Did you call 'perf %s'?\n", msg);
-	वापस false;
-पूर्ण
+	return false;
+}
 
-पूर्णांक map__set_kallsyms_ref_reloc_sym(काष्ठा map *map, स्थिर अक्षर *symbol_name, u64 addr)
-अणु
-	अक्षर *bracket;
-	काष्ठा ref_reloc_sym *ref;
-	काष्ठा kmap *kmap;
+int map__set_kallsyms_ref_reloc_sym(struct map *map, const char *symbol_name, u64 addr)
+{
+	char *bracket;
+	struct ref_reloc_sym *ref;
+	struct kmap *kmap;
 
-	ref = zalloc(माप(काष्ठा ref_reloc_sym));
-	अगर (ref == शून्य)
-		वापस -ENOMEM;
+	ref = zalloc(sizeof(struct ref_reloc_sym));
+	if (ref == NULL)
+		return -ENOMEM;
 
 	ref->name = strdup(symbol_name);
-	अगर (ref->name == शून्य) अणु
-		मुक्त(ref);
-		वापस -ENOMEM;
-	पूर्ण
+	if (ref->name == NULL) {
+		free(ref);
+		return -ENOMEM;
+	}
 
-	bracket = म_अक्षर(ref->name, ']');
-	अगर (bracket)
+	bracket = strchr(ref->name, ']');
+	if (bracket)
 		*bracket = '\0';
 
 	ref->addr = addr;
 
 	kmap = map__kmap(map);
-	अगर (kmap)
+	if (kmap)
 		kmap->ref_reloc_sym = ref;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-माप_प्रकार perf_session__ख_लिखो_dsos(काष्ठा perf_session *session, खाता *fp)
-अणु
-	वापस machines__ख_लिखो_dsos(&session->machines, fp);
-पूर्ण
+size_t perf_session__fprintf_dsos(struct perf_session *session, FILE *fp)
+{
+	return machines__fprintf_dsos(&session->machines, fp);
+}
 
-माप_प्रकार perf_session__ख_लिखो_dsos_buildid(काष्ठा perf_session *session, खाता *fp,
-					  bool (skip)(काष्ठा dso *dso, पूर्णांक parm), पूर्णांक parm)
-अणु
-	वापस machines__ख_लिखो_dsos_buildid(&session->machines, fp, skip, parm);
-पूर्ण
+size_t perf_session__fprintf_dsos_buildid(struct perf_session *session, FILE *fp,
+					  bool (skip)(struct dso *dso, int parm), int parm)
+{
+	return machines__fprintf_dsos_buildid(&session->machines, fp, skip, parm);
+}
 
-माप_प्रकार perf_session__ख_लिखो_nr_events(काष्ठा perf_session *session, खाता *fp,
+size_t perf_session__fprintf_nr_events(struct perf_session *session, FILE *fp,
 				       bool skip_empty)
-अणु
-	माप_प्रकार ret;
-	स्थिर अक्षर *msg = "";
+{
+	size_t ret;
+	const char *msg = "";
 
-	अगर (perf_header__has_feat(&session->header, HEADER_AUXTRACE))
+	if (perf_header__has_feat(&session->header, HEADER_AUXTRACE))
 		msg = " (excludes AUX area (e.g. instruction trace) decoded / synthesized events)";
 
-	ret = ख_लिखो(fp, "\nAggregated stats:%s\n", msg);
+	ret = fprintf(fp, "\nAggregated stats:%s\n", msg);
 
-	ret += events_stats__ख_लिखो(&session->evlist->stats, fp, skip_empty);
-	वापस ret;
-पूर्ण
+	ret += events_stats__fprintf(&session->evlist->stats, fp, skip_empty);
+	return ret;
+}
 
-माप_प्रकार perf_session__ख_लिखो(काष्ठा perf_session *session, खाता *fp)
-अणु
+size_t perf_session__fprintf(struct perf_session *session, FILE *fp)
+{
 	/*
-	 * FIXME: Here we have to actually prपूर्णांक all the machines in this
+	 * FIXME: Here we have to actually print all the machines in this
 	 * session, not just the host...
 	 */
-	वापस machine__ख_लिखो(&session->machines.host, fp);
-पूर्ण
+	return machine__fprintf(&session->machines.host, fp);
+}
 
-काष्ठा evsel *perf_session__find_first_evtype(काष्ठा perf_session *session,
-					      अचिन्हित पूर्णांक type)
-अणु
-	काष्ठा evsel *pos;
+struct evsel *perf_session__find_first_evtype(struct perf_session *session,
+					      unsigned int type)
+{
+	struct evsel *pos;
 
-	evlist__क्रम_each_entry(session->evlist, pos) अणु
-		अगर (pos->core.attr.type == type)
-			वापस pos;
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+	evlist__for_each_entry(session->evlist, pos) {
+		if (pos->core.attr.type == type)
+			return pos;
+	}
+	return NULL;
+}
 
-पूर्णांक perf_session__cpu_biपंचांगap(काष्ठा perf_session *session,
-			     स्थिर अक्षर *cpu_list, अचिन्हित दीर्घ *cpu_biपंचांगap)
-अणु
-	पूर्णांक i, err = -1;
-	काष्ठा perf_cpu_map *map;
-	पूर्णांक nr_cpus = min(session->header.env.nr_cpus_avail, MAX_NR_CPUS);
+int perf_session__cpu_bitmap(struct perf_session *session,
+			     const char *cpu_list, unsigned long *cpu_bitmap)
+{
+	int i, err = -1;
+	struct perf_cpu_map *map;
+	int nr_cpus = min(session->header.env.nr_cpus_avail, MAX_NR_CPUS);
 
-	क्रम (i = 0; i < PERF_TYPE_MAX; ++i) अणु
-		काष्ठा evsel *evsel;
+	for (i = 0; i < PERF_TYPE_MAX; ++i) {
+		struct evsel *evsel;
 
 		evsel = perf_session__find_first_evtype(session, i);
-		अगर (!evsel)
-			जारी;
+		if (!evsel)
+			continue;
 
-		अगर (!(evsel->core.attr.sample_type & PERF_SAMPLE_CPU)) अणु
+		if (!(evsel->core.attr.sample_type & PERF_SAMPLE_CPU)) {
 			pr_err("File does not contain CPU events. "
 			       "Remove -C option to proceed.\n");
-			वापस -1;
-		पूर्ण
-	पूर्ण
+			return -1;
+		}
+	}
 
 	map = perf_cpu_map__new(cpu_list);
-	अगर (map == शून्य) अणु
+	if (map == NULL) {
 		pr_err("Invalid cpu_list\n");
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	क्रम (i = 0; i < map->nr; i++) अणु
-		पूर्णांक cpu = map->map[i];
+	for (i = 0; i < map->nr; i++) {
+		int cpu = map->map[i];
 
-		अगर (cpu >= nr_cpus) अणु
+		if (cpu >= nr_cpus) {
 			pr_err("Requested CPU %d too large. "
 			       "Consider raising MAX_NR_CPUS\n", cpu);
-			जाओ out_delete_map;
-		पूर्ण
+			goto out_delete_map;
+		}
 
-		set_bit(cpu, cpu_biपंचांगap);
-	पूर्ण
+		set_bit(cpu, cpu_bitmap);
+	}
 
 	err = 0;
 
 out_delete_map:
 	perf_cpu_map__put(map);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-व्योम perf_session__ख_लिखो_info(काष्ठा perf_session *session, खाता *fp,
+void perf_session__fprintf_info(struct perf_session *session, FILE *fp,
 				bool full)
-अणु
-	अगर (session == शून्य || fp == शून्य)
-		वापस;
+{
+	if (session == NULL || fp == NULL)
+		return;
 
-	ख_लिखो(fp, "# ========\n");
-	perf_header__ख_लिखो_info(session, fp, full);
-	ख_लिखो(fp, "# ========\n#\n");
-पूर्ण
+	fprintf(fp, "# ========\n");
+	perf_header__fprintf_info(session, fp, full);
+	fprintf(fp, "# ========\n#\n");
+}
 
-पूर्णांक perf_event__process_id_index(काष्ठा perf_session *session,
-				 जोड़ perf_event *event)
-अणु
-	काष्ठा evlist *evlist = session->evlist;
-	काष्ठा perf_record_id_index *ie = &event->id_index;
-	माप_प्रकार i, nr, max_nr;
+int perf_event__process_id_index(struct perf_session *session,
+				 union perf_event *event)
+{
+	struct evlist *evlist = session->evlist;
+	struct perf_record_id_index *ie = &event->id_index;
+	size_t i, nr, max_nr;
 
-	max_nr = (ie->header.size - माप(काष्ठा perf_record_id_index)) /
-		 माप(काष्ठा id_index_entry);
+	max_nr = (ie->header.size - sizeof(struct perf_record_id_index)) /
+		 sizeof(struct id_index_entry);
 	nr = ie->nr;
-	अगर (nr > max_nr)
-		वापस -EINVAL;
+	if (nr > max_nr)
+		return -EINVAL;
 
-	अगर (dump_trace)
-		ख_लिखो(मानक_निकास, " nr: %zu\n", nr);
+	if (dump_trace)
+		fprintf(stdout, " nr: %zu\n", nr);
 
-	क्रम (i = 0; i < nr; i++) अणु
-		काष्ठा id_index_entry *e = &ie->entries[i];
-		काष्ठा perf_sample_id *sid;
+	for (i = 0; i < nr; i++) {
+		struct id_index_entry *e = &ie->entries[i];
+		struct perf_sample_id *sid;
 
-		अगर (dump_trace) अणु
-			ख_लिखो(मानक_निकास,	" ... id: %"PRI_lu64, e->id);
-			ख_लिखो(मानक_निकास,	"  idx: %"PRI_lu64, e->idx);
-			ख_लिखो(मानक_निकास,	"  cpu: %"PRI_ld64, e->cpu);
-			ख_लिखो(मानक_निकास,	"  tid: %"PRI_ld64"\n", e->tid);
-		पूर्ण
+		if (dump_trace) {
+			fprintf(stdout,	" ... id: %"PRI_lu64, e->id);
+			fprintf(stdout,	"  idx: %"PRI_lu64, e->idx);
+			fprintf(stdout,	"  cpu: %"PRI_ld64, e->cpu);
+			fprintf(stdout,	"  tid: %"PRI_ld64"\n", e->tid);
+		}
 
 		sid = evlist__id2sid(evlist, e->id);
-		अगर (!sid)
-			वापस -ENOENT;
+		if (!sid)
+			return -ENOENT;
 		sid->idx = e->idx;
 		sid->cpu = e->cpu;
 		sid->tid = e->tid;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}

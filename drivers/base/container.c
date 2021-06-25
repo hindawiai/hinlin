@@ -1,42 +1,41 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * System bus type क्रम containers.
+ * System bus type for containers.
  *
  * Copyright (C) 2013, Intel Corporation
- * Author: Rafael J. Wysocki <rafael.j.wysocki@पूर्णांकel.com>
+ * Author: Rafael J. Wysocki <rafael.j.wysocki@intel.com>
  */
 
-#समावेश <linux/container.h>
+#include <linux/container.h>
 
-#समावेश "base.h"
+#include "base.h"
 
-#घोषणा CONTAINER_BUS_NAME	"container"
+#define CONTAINER_BUS_NAME	"container"
 
-अटल पूर्णांक trivial_online(काष्ठा device *dev)
-अणु
-	वापस 0;
-पूर्ण
+static int trivial_online(struct device *dev)
+{
+	return 0;
+}
 
-अटल पूर्णांक container_offline(काष्ठा device *dev)
-अणु
-	काष्ठा container_dev *cdev = to_container_dev(dev);
+static int container_offline(struct device *dev)
+{
+	struct container_dev *cdev = to_container_dev(dev);
 
-	वापस cdev->offline ? cdev->offline(cdev) : 0;
-पूर्ण
+	return cdev->offline ? cdev->offline(cdev) : 0;
+}
 
-काष्ठा bus_type container_subsys = अणु
+struct bus_type container_subsys = {
 	.name = CONTAINER_BUS_NAME,
 	.dev_name = CONTAINER_BUS_NAME,
 	.online = trivial_online,
 	.offline = container_offline,
-पूर्ण;
+};
 
-व्योम __init container_dev_init(व्योम)
-अणु
-	पूर्णांक ret;
+void __init container_dev_init(void)
+{
+	int ret;
 
-	ret = subsys_प्रणाली_रेजिस्टर(&container_subsys, शून्य);
-	अगर (ret)
+	ret = subsys_system_register(&container_subsys, NULL);
+	if (ret)
 		pr_err("%s() failed: %d\n", __func__, ret);
-पूर्ण
+}

@@ -1,14 +1,13 @@
-<शैली गुरु>
 /*
  * Copyright (C) 2009 Francisco Jerez.
  * All Rights Reserved.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining
- * a copy of this software and associated करोcumentation files (the
+ * Permission is hereby granted, free of charge, to any person obtaining
+ * a copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modअगरy, merge, publish,
+ * without limitation the rights to use, copy, modify, merge, publish,
  * distribute, sublicense, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to करो so, subject to
+ * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
  *
  * The above copyright notice and this permission notice (including the
@@ -24,97 +23,97 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  */
-#समावेश "priv.h"
+#include "priv.h"
 
-अटल पूर्णांक
-nv10_gpio_sense(काष्ठा nvkm_gpio *gpio, पूर्णांक line)
-अणु
-	काष्ठा nvkm_device *device = gpio->subdev.device;
-	अगर (line < 2) अणु
+static int
+nv10_gpio_sense(struct nvkm_gpio *gpio, int line)
+{
+	struct nvkm_device *device = gpio->subdev.device;
+	if (line < 2) {
 		line = line * 16;
 		line = nvkm_rd32(device, 0x600818) >> line;
-		वापस !!(line & 0x0100);
-	पूर्ण अन्यथा
-	अगर (line < 10) अणु
+		return !!(line & 0x0100);
+	} else
+	if (line < 10) {
 		line = (line - 2) * 4;
 		line = nvkm_rd32(device, 0x60081c) >> line;
-		वापस !!(line & 0x04);
-	पूर्ण अन्यथा
-	अगर (line < 14) अणु
+		return !!(line & 0x04);
+	} else
+	if (line < 14) {
 		line = (line - 10) * 4;
 		line = nvkm_rd32(device, 0x600850) >> line;
-		वापस !!(line & 0x04);
-	पूर्ण
+		return !!(line & 0x04);
+	}
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल पूर्णांक
-nv10_gpio_drive(काष्ठा nvkm_gpio *gpio, पूर्णांक line, पूर्णांक dir, पूर्णांक out)
-अणु
-	काष्ठा nvkm_device *device = gpio->subdev.device;
+static int
+nv10_gpio_drive(struct nvkm_gpio *gpio, int line, int dir, int out)
+{
+	struct nvkm_device *device = gpio->subdev.device;
 	u32 reg, mask, data;
 
-	अगर (line < 2) अणु
+	if (line < 2) {
 		line = line * 16;
 		reg  = 0x600818;
 		mask = 0x00000011;
 		data = (dir << 4) | out;
-	पूर्ण अन्यथा
-	अगर (line < 10) अणु
+	} else
+	if (line < 10) {
 		line = (line - 2) * 4;
 		reg  = 0x60081c;
 		mask = 0x00000003;
 		data = (dir << 1) | out;
-	पूर्ण अन्यथा
-	अगर (line < 14) अणु
+	} else
+	if (line < 14) {
 		line = (line - 10) * 4;
 		reg  = 0x600850;
 		mask = 0x00000003;
 		data = (dir << 1) | out;
-	पूर्ण अन्यथा अणु
-		वापस -EINVAL;
-	पूर्ण
+	} else {
+		return -EINVAL;
+	}
 
 	nvkm_mask(device, reg, mask << line, data << line);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम
-nv10_gpio_पूर्णांकr_stat(काष्ठा nvkm_gpio *gpio, u32 *hi, u32 *lo)
-अणु
-	काष्ठा nvkm_device *device = gpio->subdev.device;
-	u32 पूर्णांकr = nvkm_rd32(device, 0x001104);
-	u32 stat = nvkm_rd32(device, 0x001144) & पूर्णांकr;
+static void
+nv10_gpio_intr_stat(struct nvkm_gpio *gpio, u32 *hi, u32 *lo)
+{
+	struct nvkm_device *device = gpio->subdev.device;
+	u32 intr = nvkm_rd32(device, 0x001104);
+	u32 stat = nvkm_rd32(device, 0x001144) & intr;
 	*lo = (stat & 0xffff0000) >> 16;
 	*hi = (stat & 0x0000ffff);
-	nvkm_wr32(device, 0x001104, पूर्णांकr);
-पूर्ण
+	nvkm_wr32(device, 0x001104, intr);
+}
 
-अटल व्योम
-nv10_gpio_पूर्णांकr_mask(काष्ठा nvkm_gpio *gpio, u32 type, u32 mask, u32 data)
-अणु
-	काष्ठा nvkm_device *device = gpio->subdev.device;
-	u32 पूर्णांकe = nvkm_rd32(device, 0x001144);
-	अगर (type & NVKM_GPIO_LO)
-		पूर्णांकe = (पूर्णांकe & ~(mask << 16)) | (data << 16);
-	अगर (type & NVKM_GPIO_HI)
-		पूर्णांकe = (पूर्णांकe & ~mask) | data;
-	nvkm_wr32(device, 0x001144, पूर्णांकe);
-पूर्ण
+static void
+nv10_gpio_intr_mask(struct nvkm_gpio *gpio, u32 type, u32 mask, u32 data)
+{
+	struct nvkm_device *device = gpio->subdev.device;
+	u32 inte = nvkm_rd32(device, 0x001144);
+	if (type & NVKM_GPIO_LO)
+		inte = (inte & ~(mask << 16)) | (data << 16);
+	if (type & NVKM_GPIO_HI)
+		inte = (inte & ~mask) | data;
+	nvkm_wr32(device, 0x001144, inte);
+}
 
-अटल स्थिर काष्ठा nvkm_gpio_func
-nv10_gpio = अणु
+static const struct nvkm_gpio_func
+nv10_gpio = {
 	.lines = 16,
-	.पूर्णांकr_stat = nv10_gpio_पूर्णांकr_stat,
-	.पूर्णांकr_mask = nv10_gpio_पूर्णांकr_mask,
+	.intr_stat = nv10_gpio_intr_stat,
+	.intr_mask = nv10_gpio_intr_mask,
 	.drive = nv10_gpio_drive,
 	.sense = nv10_gpio_sense,
-पूर्ण;
+};
 
-पूर्णांक
-nv10_gpio_new(काष्ठा nvkm_device *device, क्रमागत nvkm_subdev_type type, पूर्णांक inst,
-	      काष्ठा nvkm_gpio **pgpio)
-अणु
-	वापस nvkm_gpio_new_(&nv10_gpio, device, type, inst, pgpio);
-पूर्ण
+int
+nv10_gpio_new(struct nvkm_device *device, enum nvkm_subdev_type type, int inst,
+	      struct nvkm_gpio **pgpio)
+{
+	return nvkm_gpio_new_(&nv10_gpio, device, type, inst, pgpio);
+}

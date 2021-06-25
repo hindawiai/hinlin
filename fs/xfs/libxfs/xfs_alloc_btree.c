@@ -1,46 +1,45 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (c) 2000-2001,2005 Silicon Graphics, Inc.
  * All Rights Reserved.
  */
-#समावेश "xfs.h"
-#समावेश "xfs_fs.h"
-#समावेश "xfs_shared.h"
-#समावेश "xfs_format.h"
-#समावेश "xfs_log_format.h"
-#समावेश "xfs_trans_resv.h"
-#समावेश "xfs_sb.h"
-#समावेश "xfs_mount.h"
-#समावेश "xfs_btree.h"
-#समावेश "xfs_btree_staging.h"
-#समावेश "xfs_alloc_btree.h"
-#समावेश "xfs_alloc.h"
-#समावेश "xfs_extent_busy.h"
-#समावेश "xfs_error.h"
-#समावेश "xfs_trace.h"
-#समावेश "xfs_trans.h"
+#include "xfs.h"
+#include "xfs_fs.h"
+#include "xfs_shared.h"
+#include "xfs_format.h"
+#include "xfs_log_format.h"
+#include "xfs_trans_resv.h"
+#include "xfs_sb.h"
+#include "xfs_mount.h"
+#include "xfs_btree.h"
+#include "xfs_btree_staging.h"
+#include "xfs_alloc_btree.h"
+#include "xfs_alloc.h"
+#include "xfs_extent_busy.h"
+#include "xfs_error.h"
+#include "xfs_trace.h"
+#include "xfs_trans.h"
 
 
-STATIC काष्ठा xfs_btree_cur *
+STATIC struct xfs_btree_cur *
 xfs_allocbt_dup_cursor(
-	काष्ठा xfs_btree_cur	*cur)
-अणु
-	वापस xfs_allocbt_init_cursor(cur->bc_mp, cur->bc_tp,
+	struct xfs_btree_cur	*cur)
+{
+	return xfs_allocbt_init_cursor(cur->bc_mp, cur->bc_tp,
 			cur->bc_ag.agbp, cur->bc_ag.agno,
 			cur->bc_btnum);
-पूर्ण
+}
 
-STATIC व्योम
+STATIC void
 xfs_allocbt_set_root(
-	काष्ठा xfs_btree_cur	*cur,
-	जोड़ xfs_btree_ptr	*ptr,
-	पूर्णांक			inc)
-अणु
-	काष्ठा xfs_buf		*agbp = cur->bc_ag.agbp;
-	काष्ठा xfs_agf		*agf = agbp->b_addr;
-	पूर्णांक			btnum = cur->bc_btnum;
-	काष्ठा xfs_perag	*pag = agbp->b_pag;
+	struct xfs_btree_cur	*cur,
+	union xfs_btree_ptr	*ptr,
+	int			inc)
+{
+	struct xfs_buf		*agbp = cur->bc_ag.agbp;
+	struct xfs_agf		*agf = agbp->b_addr;
+	int			btnum = cur->bc_btnum;
+	struct xfs_perag	*pag = agbp->b_pag;
 
 	ASSERT(ptr->s != 0);
 
@@ -49,28 +48,28 @@ xfs_allocbt_set_root(
 	pag->pagf_levels[btnum] += inc;
 
 	xfs_alloc_log_agf(cur->bc_tp, agbp, XFS_AGF_ROOTS | XFS_AGF_LEVELS);
-पूर्ण
+}
 
-STATIC पूर्णांक
+STATIC int
 xfs_allocbt_alloc_block(
-	काष्ठा xfs_btree_cur	*cur,
-	जोड़ xfs_btree_ptr	*start,
-	जोड़ xfs_btree_ptr	*new,
-	पूर्णांक			*stat)
-अणु
-	पूर्णांक			error;
+	struct xfs_btree_cur	*cur,
+	union xfs_btree_ptr	*start,
+	union xfs_btree_ptr	*new,
+	int			*stat)
+{
+	int			error;
 	xfs_agblock_t		bno;
 
-	/* Allocate the new block from the मुक्तlist. If we can't, give up.  */
-	error = xfs_alloc_get_मुक्तlist(cur->bc_tp, cur->bc_ag.agbp,
+	/* Allocate the new block from the freelist. If we can't, give up.  */
+	error = xfs_alloc_get_freelist(cur->bc_tp, cur->bc_ag.agbp,
 				       &bno, 1);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
-	अगर (bno == शून्यAGBLOCK) अणु
+	if (bno == NULLAGBLOCK) {
 		*stat = 0;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	atomic64_inc(&cur->bc_mp->m_allocbt_blks);
 	xfs_extent_busy_reuse(cur->bc_mp, cur->bc_ag.agno, bno, 1, false);
@@ -78,361 +77,361 @@ xfs_allocbt_alloc_block(
 	new->s = cpu_to_be32(bno);
 
 	*stat = 1;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-STATIC पूर्णांक
-xfs_allocbt_मुक्त_block(
-	काष्ठा xfs_btree_cur	*cur,
-	काष्ठा xfs_buf		*bp)
-अणु
-	काष्ठा xfs_buf		*agbp = cur->bc_ag.agbp;
-	काष्ठा xfs_agf		*agf = agbp->b_addr;
+STATIC int
+xfs_allocbt_free_block(
+	struct xfs_btree_cur	*cur,
+	struct xfs_buf		*bp)
+{
+	struct xfs_buf		*agbp = cur->bc_ag.agbp;
+	struct xfs_agf		*agf = agbp->b_addr;
 	xfs_agblock_t		bno;
-	पूर्णांक			error;
+	int			error;
 
 	bno = xfs_daddr_to_agbno(cur->bc_mp, XFS_BUF_ADDR(bp));
-	error = xfs_alloc_put_मुक्तlist(cur->bc_tp, agbp, शून्य, bno, 1);
-	अगर (error)
-		वापस error;
+	error = xfs_alloc_put_freelist(cur->bc_tp, agbp, NULL, bno, 1);
+	if (error)
+		return error;
 
 	atomic64_dec(&cur->bc_mp->m_allocbt_blks);
 	xfs_extent_busy_insert(cur->bc_tp, be32_to_cpu(agf->agf_seqno), bno, 1,
 			      XFS_EXTENT_BUSY_SKIP_DISCARD);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Update the दीर्घest extent in the AGF
+ * Update the longest extent in the AGF
  */
-STATIC व्योम
+STATIC void
 xfs_allocbt_update_lastrec(
-	काष्ठा xfs_btree_cur	*cur,
-	काष्ठा xfs_btree_block	*block,
-	जोड़ xfs_btree_rec	*rec,
-	पूर्णांक			ptr,
-	पूर्णांक			reason)
-अणु
-	काष्ठा xfs_agf		*agf = cur->bc_ag.agbp->b_addr;
-	काष्ठा xfs_perag	*pag;
+	struct xfs_btree_cur	*cur,
+	struct xfs_btree_block	*block,
+	union xfs_btree_rec	*rec,
+	int			ptr,
+	int			reason)
+{
+	struct xfs_agf		*agf = cur->bc_ag.agbp->b_addr;
+	struct xfs_perag	*pag;
 	__be32			len;
-	पूर्णांक			numrecs;
+	int			numrecs;
 
 	ASSERT(cur->bc_btnum == XFS_BTNUM_CNT);
 
-	चयन (reason) अणु
-	हाल LASTREC_UPDATE:
+	switch (reason) {
+	case LASTREC_UPDATE:
 		/*
 		 * If this is the last leaf block and it's the last record,
-		 * then update the size of the दीर्घest extent in the AG.
+		 * then update the size of the longest extent in the AG.
 		 */
-		अगर (ptr != xfs_btree_get_numrecs(block))
-			वापस;
+		if (ptr != xfs_btree_get_numrecs(block))
+			return;
 		len = rec->alloc.ar_blockcount;
-		अवरोध;
-	हाल LASTREC_INSREC:
-		अगर (be32_to_cpu(rec->alloc.ar_blockcount) <=
-		    be32_to_cpu(agf->agf_दीर्घest))
-			वापस;
+		break;
+	case LASTREC_INSREC:
+		if (be32_to_cpu(rec->alloc.ar_blockcount) <=
+		    be32_to_cpu(agf->agf_longest))
+			return;
 		len = rec->alloc.ar_blockcount;
-		अवरोध;
-	हाल LASTREC_DELREC:
+		break;
+	case LASTREC_DELREC:
 		numrecs = xfs_btree_get_numrecs(block);
-		अगर (ptr <= numrecs)
-			वापस;
+		if (ptr <= numrecs)
+			return;
 		ASSERT(ptr == numrecs + 1);
 
-		अगर (numrecs) अणु
+		if (numrecs) {
 			xfs_alloc_rec_t *rrp;
 
 			rrp = XFS_ALLOC_REC_ADDR(cur->bc_mp, block, numrecs);
 			len = rrp->ar_blockcount;
-		पूर्ण अन्यथा अणु
+		} else {
 			len = 0;
-		पूर्ण
+		}
 
-		अवरोध;
-	शेष:
+		break;
+	default:
 		ASSERT(0);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	agf->agf_दीर्घest = len;
+	agf->agf_longest = len;
 	pag = cur->bc_ag.agbp->b_pag;
-	pag->pagf_दीर्घest = be32_to_cpu(len);
+	pag->pagf_longest = be32_to_cpu(len);
 	xfs_alloc_log_agf(cur->bc_tp, cur->bc_ag.agbp, XFS_AGF_LONGEST);
-पूर्ण
+}
 
-STATIC पूर्णांक
+STATIC int
 xfs_allocbt_get_minrecs(
-	काष्ठा xfs_btree_cur	*cur,
-	पूर्णांक			level)
-अणु
-	वापस cur->bc_mp->m_alloc_mnr[level != 0];
-पूर्ण
+	struct xfs_btree_cur	*cur,
+	int			level)
+{
+	return cur->bc_mp->m_alloc_mnr[level != 0];
+}
 
-STATIC पूर्णांक
+STATIC int
 xfs_allocbt_get_maxrecs(
-	काष्ठा xfs_btree_cur	*cur,
-	पूर्णांक			level)
-अणु
-	वापस cur->bc_mp->m_alloc_mxr[level != 0];
-पूर्ण
+	struct xfs_btree_cur	*cur,
+	int			level)
+{
+	return cur->bc_mp->m_alloc_mxr[level != 0];
+}
 
-STATIC व्योम
+STATIC void
 xfs_allocbt_init_key_from_rec(
-	जोड़ xfs_btree_key	*key,
-	जोड़ xfs_btree_rec	*rec)
-अणु
+	union xfs_btree_key	*key,
+	union xfs_btree_rec	*rec)
+{
 	key->alloc.ar_startblock = rec->alloc.ar_startblock;
 	key->alloc.ar_blockcount = rec->alloc.ar_blockcount;
-पूर्ण
+}
 
-STATIC व्योम
+STATIC void
 xfs_bnobt_init_high_key_from_rec(
-	जोड़ xfs_btree_key	*key,
-	जोड़ xfs_btree_rec	*rec)
-अणु
+	union xfs_btree_key	*key,
+	union xfs_btree_rec	*rec)
+{
 	__u32			x;
 
 	x = be32_to_cpu(rec->alloc.ar_startblock);
 	x += be32_to_cpu(rec->alloc.ar_blockcount) - 1;
 	key->alloc.ar_startblock = cpu_to_be32(x);
 	key->alloc.ar_blockcount = 0;
-पूर्ण
+}
 
-STATIC व्योम
+STATIC void
 xfs_cntbt_init_high_key_from_rec(
-	जोड़ xfs_btree_key	*key,
-	जोड़ xfs_btree_rec	*rec)
-अणु
+	union xfs_btree_key	*key,
+	union xfs_btree_rec	*rec)
+{
 	key->alloc.ar_blockcount = rec->alloc.ar_blockcount;
 	key->alloc.ar_startblock = 0;
-पूर्ण
+}
 
-STATIC व्योम
+STATIC void
 xfs_allocbt_init_rec_from_cur(
-	काष्ठा xfs_btree_cur	*cur,
-	जोड़ xfs_btree_rec	*rec)
-अणु
+	struct xfs_btree_cur	*cur,
+	union xfs_btree_rec	*rec)
+{
 	rec->alloc.ar_startblock = cpu_to_be32(cur->bc_rec.a.ar_startblock);
 	rec->alloc.ar_blockcount = cpu_to_be32(cur->bc_rec.a.ar_blockcount);
-पूर्ण
+}
 
-STATIC व्योम
+STATIC void
 xfs_allocbt_init_ptr_from_cur(
-	काष्ठा xfs_btree_cur	*cur,
-	जोड़ xfs_btree_ptr	*ptr)
-अणु
-	काष्ठा xfs_agf		*agf = cur->bc_ag.agbp->b_addr;
+	struct xfs_btree_cur	*cur,
+	union xfs_btree_ptr	*ptr)
+{
+	struct xfs_agf		*agf = cur->bc_ag.agbp->b_addr;
 
 	ASSERT(cur->bc_ag.agno == be32_to_cpu(agf->agf_seqno));
 
 	ptr->s = agf->agf_roots[cur->bc_btnum];
-पूर्ण
+}
 
-STATIC पूर्णांक64_t
-xfs_bnobt_key_dअगरf(
-	काष्ठा xfs_btree_cur	*cur,
-	जोड़ xfs_btree_key	*key)
-अणु
+STATIC int64_t
+xfs_bnobt_key_diff(
+	struct xfs_btree_cur	*cur,
+	union xfs_btree_key	*key)
+{
 	xfs_alloc_rec_incore_t	*rec = &cur->bc_rec.a;
 	xfs_alloc_key_t		*kp = &key->alloc;
 
-	वापस (पूर्णांक64_t)be32_to_cpu(kp->ar_startblock) - rec->ar_startblock;
-पूर्ण
+	return (int64_t)be32_to_cpu(kp->ar_startblock) - rec->ar_startblock;
+}
 
-STATIC पूर्णांक64_t
-xfs_cntbt_key_dअगरf(
-	काष्ठा xfs_btree_cur	*cur,
-	जोड़ xfs_btree_key	*key)
-अणु
+STATIC int64_t
+xfs_cntbt_key_diff(
+	struct xfs_btree_cur	*cur,
+	union xfs_btree_key	*key)
+{
 	xfs_alloc_rec_incore_t	*rec = &cur->bc_rec.a;
 	xfs_alloc_key_t		*kp = &key->alloc;
-	पूर्णांक64_t			dअगरf;
+	int64_t			diff;
 
-	dअगरf = (पूर्णांक64_t)be32_to_cpu(kp->ar_blockcount) - rec->ar_blockcount;
-	अगर (dअगरf)
-		वापस dअगरf;
+	diff = (int64_t)be32_to_cpu(kp->ar_blockcount) - rec->ar_blockcount;
+	if (diff)
+		return diff;
 
-	वापस (पूर्णांक64_t)be32_to_cpu(kp->ar_startblock) - rec->ar_startblock;
-पूर्ण
+	return (int64_t)be32_to_cpu(kp->ar_startblock) - rec->ar_startblock;
+}
 
-STATIC पूर्णांक64_t
-xfs_bnobt_dअगरf_two_keys(
-	काष्ठा xfs_btree_cur	*cur,
-	जोड़ xfs_btree_key	*k1,
-	जोड़ xfs_btree_key	*k2)
-अणु
-	वापस (पूर्णांक64_t)be32_to_cpu(k1->alloc.ar_startblock) -
+STATIC int64_t
+xfs_bnobt_diff_two_keys(
+	struct xfs_btree_cur	*cur,
+	union xfs_btree_key	*k1,
+	union xfs_btree_key	*k2)
+{
+	return (int64_t)be32_to_cpu(k1->alloc.ar_startblock) -
 			  be32_to_cpu(k2->alloc.ar_startblock);
-पूर्ण
+}
 
-STATIC पूर्णांक64_t
-xfs_cntbt_dअगरf_two_keys(
-	काष्ठा xfs_btree_cur	*cur,
-	जोड़ xfs_btree_key	*k1,
-	जोड़ xfs_btree_key	*k2)
-अणु
-	पूर्णांक64_t			dअगरf;
+STATIC int64_t
+xfs_cntbt_diff_two_keys(
+	struct xfs_btree_cur	*cur,
+	union xfs_btree_key	*k1,
+	union xfs_btree_key	*k2)
+{
+	int64_t			diff;
 
-	dअगरf =  be32_to_cpu(k1->alloc.ar_blockcount) -
+	diff =  be32_to_cpu(k1->alloc.ar_blockcount) -
 		be32_to_cpu(k2->alloc.ar_blockcount);
-	अगर (dअगरf)
-		वापस dअगरf;
+	if (diff)
+		return diff;
 
-	वापस  be32_to_cpu(k1->alloc.ar_startblock) -
+	return  be32_to_cpu(k1->alloc.ar_startblock) -
 		be32_to_cpu(k2->alloc.ar_startblock);
-पूर्ण
+}
 
-अटल xfs_failaddr_t
-xfs_allocbt_verअगरy(
-	काष्ठा xfs_buf		*bp)
-अणु
-	काष्ठा xfs_mount	*mp = bp->b_mount;
-	काष्ठा xfs_btree_block	*block = XFS_BUF_TO_BLOCK(bp);
-	काष्ठा xfs_perag	*pag = bp->b_pag;
+static xfs_failaddr_t
+xfs_allocbt_verify(
+	struct xfs_buf		*bp)
+{
+	struct xfs_mount	*mp = bp->b_mount;
+	struct xfs_btree_block	*block = XFS_BUF_TO_BLOCK(bp);
+	struct xfs_perag	*pag = bp->b_pag;
 	xfs_failaddr_t		fa;
-	अचिन्हित पूर्णांक		level;
+	unsigned int		level;
 	xfs_btnum_t		btnum = XFS_BTNUM_BNOi;
 
-	अगर (!xfs_verअगरy_magic(bp, block->bb_magic))
-		वापस __this_address;
+	if (!xfs_verify_magic(bp, block->bb_magic))
+		return __this_address;
 
-	अगर (xfs_sb_version_hascrc(&mp->m_sb)) अणु
-		fa = xfs_btree_sblock_v5hdr_verअगरy(bp);
-		अगर (fa)
-			वापस fa;
-	पूर्ण
+	if (xfs_sb_version_hascrc(&mp->m_sb)) {
+		fa = xfs_btree_sblock_v5hdr_verify(bp);
+		if (fa)
+			return fa;
+	}
 
 	/*
 	 * The perag may not be attached during grow operations or fully
-	 * initialized from the AGF during log recovery. Thereक्रमe we can only
+	 * initialized from the AGF during log recovery. Therefore we can only
 	 * check against maximum tree depth from those contexts.
 	 *
 	 * Otherwise check against the per-tree limit. Peek at one of the
-	 * verअगरier magic values to determine the type of tree we're verअगरying
+	 * verifier magic values to determine the type of tree we're verifying
 	 * against.
 	 */
 	level = be16_to_cpu(block->bb_level);
-	अगर (bp->b_ops->magic[0] == cpu_to_be32(XFS_ABTC_MAGIC))
+	if (bp->b_ops->magic[0] == cpu_to_be32(XFS_ABTC_MAGIC))
 		btnum = XFS_BTNUM_CNTi;
-	अगर (pag && pag->pagf_init) अणु
-		अगर (level >= pag->pagf_levels[btnum])
-			वापस __this_address;
-	पूर्ण अन्यथा अगर (level >= mp->m_ag_maxlevels)
-		वापस __this_address;
+	if (pag && pag->pagf_init) {
+		if (level >= pag->pagf_levels[btnum])
+			return __this_address;
+	} else if (level >= mp->m_ag_maxlevels)
+		return __this_address;
 
-	वापस xfs_btree_sblock_verअगरy(bp, mp->m_alloc_mxr[level != 0]);
-पूर्ण
+	return xfs_btree_sblock_verify(bp, mp->m_alloc_mxr[level != 0]);
+}
 
-अटल व्योम
-xfs_allocbt_पढ़ो_verअगरy(
-	काष्ठा xfs_buf	*bp)
-अणु
+static void
+xfs_allocbt_read_verify(
+	struct xfs_buf	*bp)
+{
 	xfs_failaddr_t	fa;
 
-	अगर (!xfs_btree_sblock_verअगरy_crc(bp))
-		xfs_verअगरier_error(bp, -EFSBADCRC, __this_address);
-	अन्यथा अणु
-		fa = xfs_allocbt_verअगरy(bp);
-		अगर (fa)
-			xfs_verअगरier_error(bp, -EFSCORRUPTED, fa);
-	पूर्ण
+	if (!xfs_btree_sblock_verify_crc(bp))
+		xfs_verifier_error(bp, -EFSBADCRC, __this_address);
+	else {
+		fa = xfs_allocbt_verify(bp);
+		if (fa)
+			xfs_verifier_error(bp, -EFSCORRUPTED, fa);
+	}
 
-	अगर (bp->b_error)
+	if (bp->b_error)
 		trace_xfs_btree_corrupt(bp, _RET_IP_);
-पूर्ण
+}
 
-अटल व्योम
-xfs_allocbt_ग_लिखो_verअगरy(
-	काष्ठा xfs_buf	*bp)
-अणु
+static void
+xfs_allocbt_write_verify(
+	struct xfs_buf	*bp)
+{
 	xfs_failaddr_t	fa;
 
-	fa = xfs_allocbt_verअगरy(bp);
-	अगर (fa) अणु
+	fa = xfs_allocbt_verify(bp);
+	if (fa) {
 		trace_xfs_btree_corrupt(bp, _RET_IP_);
-		xfs_verअगरier_error(bp, -EFSCORRUPTED, fa);
-		वापस;
-	पूर्ण
+		xfs_verifier_error(bp, -EFSCORRUPTED, fa);
+		return;
+	}
 	xfs_btree_sblock_calc_crc(bp);
 
-पूर्ण
+}
 
-स्थिर काष्ठा xfs_buf_ops xfs_bnobt_buf_ops = अणु
+const struct xfs_buf_ops xfs_bnobt_buf_ops = {
 	.name = "xfs_bnobt",
-	.magic = अणु cpu_to_be32(XFS_ABTB_MAGIC),
-		   cpu_to_be32(XFS_ABTB_CRC_MAGIC) पूर्ण,
-	.verअगरy_पढ़ो = xfs_allocbt_पढ़ो_verअगरy,
-	.verअगरy_ग_लिखो = xfs_allocbt_ग_लिखो_verअगरy,
-	.verअगरy_काष्ठा = xfs_allocbt_verअगरy,
-पूर्ण;
+	.magic = { cpu_to_be32(XFS_ABTB_MAGIC),
+		   cpu_to_be32(XFS_ABTB_CRC_MAGIC) },
+	.verify_read = xfs_allocbt_read_verify,
+	.verify_write = xfs_allocbt_write_verify,
+	.verify_struct = xfs_allocbt_verify,
+};
 
-स्थिर काष्ठा xfs_buf_ops xfs_cntbt_buf_ops = अणु
+const struct xfs_buf_ops xfs_cntbt_buf_ops = {
 	.name = "xfs_cntbt",
-	.magic = अणु cpu_to_be32(XFS_ABTC_MAGIC),
-		   cpu_to_be32(XFS_ABTC_CRC_MAGIC) पूर्ण,
-	.verअगरy_पढ़ो = xfs_allocbt_पढ़ो_verअगरy,
-	.verअगरy_ग_लिखो = xfs_allocbt_ग_लिखो_verअगरy,
-	.verअगरy_काष्ठा = xfs_allocbt_verअगरy,
-पूर्ण;
+	.magic = { cpu_to_be32(XFS_ABTC_MAGIC),
+		   cpu_to_be32(XFS_ABTC_CRC_MAGIC) },
+	.verify_read = xfs_allocbt_read_verify,
+	.verify_write = xfs_allocbt_write_verify,
+	.verify_struct = xfs_allocbt_verify,
+};
 
-STATIC पूर्णांक
+STATIC int
 xfs_bnobt_keys_inorder(
-	काष्ठा xfs_btree_cur	*cur,
-	जोड़ xfs_btree_key	*k1,
-	जोड़ xfs_btree_key	*k2)
-अणु
-	वापस be32_to_cpu(k1->alloc.ar_startblock) <
+	struct xfs_btree_cur	*cur,
+	union xfs_btree_key	*k1,
+	union xfs_btree_key	*k2)
+{
+	return be32_to_cpu(k1->alloc.ar_startblock) <
 	       be32_to_cpu(k2->alloc.ar_startblock);
-पूर्ण
+}
 
-STATIC पूर्णांक
+STATIC int
 xfs_bnobt_recs_inorder(
-	काष्ठा xfs_btree_cur	*cur,
-	जोड़ xfs_btree_rec	*r1,
-	जोड़ xfs_btree_rec	*r2)
-अणु
-	वापस be32_to_cpu(r1->alloc.ar_startblock) +
+	struct xfs_btree_cur	*cur,
+	union xfs_btree_rec	*r1,
+	union xfs_btree_rec	*r2)
+{
+	return be32_to_cpu(r1->alloc.ar_startblock) +
 		be32_to_cpu(r1->alloc.ar_blockcount) <=
 		be32_to_cpu(r2->alloc.ar_startblock);
-पूर्ण
+}
 
-STATIC पूर्णांक
+STATIC int
 xfs_cntbt_keys_inorder(
-	काष्ठा xfs_btree_cur	*cur,
-	जोड़ xfs_btree_key	*k1,
-	जोड़ xfs_btree_key	*k2)
-अणु
-	वापस be32_to_cpu(k1->alloc.ar_blockcount) <
+	struct xfs_btree_cur	*cur,
+	union xfs_btree_key	*k1,
+	union xfs_btree_key	*k2)
+{
+	return be32_to_cpu(k1->alloc.ar_blockcount) <
 		be32_to_cpu(k2->alloc.ar_blockcount) ||
 		(k1->alloc.ar_blockcount == k2->alloc.ar_blockcount &&
 		 be32_to_cpu(k1->alloc.ar_startblock) <
 		 be32_to_cpu(k2->alloc.ar_startblock));
-पूर्ण
+}
 
-STATIC पूर्णांक
+STATIC int
 xfs_cntbt_recs_inorder(
-	काष्ठा xfs_btree_cur	*cur,
-	जोड़ xfs_btree_rec	*r1,
-	जोड़ xfs_btree_rec	*r2)
-अणु
-	वापस be32_to_cpu(r1->alloc.ar_blockcount) <
+	struct xfs_btree_cur	*cur,
+	union xfs_btree_rec	*r1,
+	union xfs_btree_rec	*r2)
+{
+	return be32_to_cpu(r1->alloc.ar_blockcount) <
 		be32_to_cpu(r2->alloc.ar_blockcount) ||
 		(r1->alloc.ar_blockcount == r2->alloc.ar_blockcount &&
 		 be32_to_cpu(r1->alloc.ar_startblock) <
 		 be32_to_cpu(r2->alloc.ar_startblock));
-पूर्ण
+}
 
-अटल स्थिर काष्ठा xfs_btree_ops xfs_bnobt_ops = अणु
-	.rec_len		= माप(xfs_alloc_rec_t),
-	.key_len		= माप(xfs_alloc_key_t),
+static const struct xfs_btree_ops xfs_bnobt_ops = {
+	.rec_len		= sizeof(xfs_alloc_rec_t),
+	.key_len		= sizeof(xfs_alloc_key_t),
 
 	.dup_cursor		= xfs_allocbt_dup_cursor,
 	.set_root		= xfs_allocbt_set_root,
 	.alloc_block		= xfs_allocbt_alloc_block,
-	.मुक्त_block		= xfs_allocbt_मुक्त_block,
+	.free_block		= xfs_allocbt_free_block,
 	.update_lastrec		= xfs_allocbt_update_lastrec,
 	.get_minrecs		= xfs_allocbt_get_minrecs,
 	.get_maxrecs		= xfs_allocbt_get_maxrecs,
@@ -440,21 +439,21 @@ xfs_cntbt_recs_inorder(
 	.init_high_key_from_rec	= xfs_bnobt_init_high_key_from_rec,
 	.init_rec_from_cur	= xfs_allocbt_init_rec_from_cur,
 	.init_ptr_from_cur	= xfs_allocbt_init_ptr_from_cur,
-	.key_dअगरf		= xfs_bnobt_key_dअगरf,
+	.key_diff		= xfs_bnobt_key_diff,
 	.buf_ops		= &xfs_bnobt_buf_ops,
-	.dअगरf_two_keys		= xfs_bnobt_dअगरf_two_keys,
+	.diff_two_keys		= xfs_bnobt_diff_two_keys,
 	.keys_inorder		= xfs_bnobt_keys_inorder,
 	.recs_inorder		= xfs_bnobt_recs_inorder,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा xfs_btree_ops xfs_cntbt_ops = अणु
-	.rec_len		= माप(xfs_alloc_rec_t),
-	.key_len		= माप(xfs_alloc_key_t),
+static const struct xfs_btree_ops xfs_cntbt_ops = {
+	.rec_len		= sizeof(xfs_alloc_rec_t),
+	.key_len		= sizeof(xfs_alloc_key_t),
 
 	.dup_cursor		= xfs_allocbt_dup_cursor,
 	.set_root		= xfs_allocbt_set_root,
 	.alloc_block		= xfs_allocbt_alloc_block,
-	.मुक्त_block		= xfs_allocbt_मुक्त_block,
+	.free_block		= xfs_allocbt_free_block,
 	.update_lastrec		= xfs_allocbt_update_lastrec,
 	.get_minrecs		= xfs_allocbt_get_minrecs,
 	.get_maxrecs		= xfs_allocbt_get_maxrecs,
@@ -462,22 +461,22 @@ xfs_cntbt_recs_inorder(
 	.init_high_key_from_rec	= xfs_cntbt_init_high_key_from_rec,
 	.init_rec_from_cur	= xfs_allocbt_init_rec_from_cur,
 	.init_ptr_from_cur	= xfs_allocbt_init_ptr_from_cur,
-	.key_dअगरf		= xfs_cntbt_key_dअगरf,
+	.key_diff		= xfs_cntbt_key_diff,
 	.buf_ops		= &xfs_cntbt_buf_ops,
-	.dअगरf_two_keys		= xfs_cntbt_dअगरf_two_keys,
+	.diff_two_keys		= xfs_cntbt_diff_two_keys,
 	.keys_inorder		= xfs_cntbt_keys_inorder,
 	.recs_inorder		= xfs_cntbt_recs_inorder,
-पूर्ण;
+};
 
 /* Allocate most of a new allocation btree cursor. */
-STATIC काष्ठा xfs_btree_cur *
+STATIC struct xfs_btree_cur *
 xfs_allocbt_init_common(
-	काष्ठा xfs_mount	*mp,
-	काष्ठा xfs_trans	*tp,
+	struct xfs_mount	*mp,
+	struct xfs_trans	*tp,
 	xfs_agnumber_t		agno,
 	xfs_btnum_t		btnum)
-अणु
-	काष्ठा xfs_btree_cur	*cur;
+{
+	struct xfs_btree_cur	*cur;
 
 	ASSERT(btnum == XFS_BTNUM_BNO || btnum == XFS_BTNUM_CNT);
 
@@ -488,76 +487,76 @@ xfs_allocbt_init_common(
 	cur->bc_btnum = btnum;
 	cur->bc_blocklog = mp->m_sb.sb_blocklog;
 
-	अगर (btnum == XFS_BTNUM_CNT) अणु
+	if (btnum == XFS_BTNUM_CNT) {
 		cur->bc_ops = &xfs_cntbt_ops;
-		cur->bc_stम_से_भf = XFS_STATS_CALC_INDEX(xs_abtc_2);
+		cur->bc_statoff = XFS_STATS_CALC_INDEX(xs_abtc_2);
 		cur->bc_flags = XFS_BTREE_LASTREC_UPDATE;
-	पूर्ण अन्यथा अणु
+	} else {
 		cur->bc_ops = &xfs_bnobt_ops;
-		cur->bc_stम_से_भf = XFS_STATS_CALC_INDEX(xs_abtb_2);
-	पूर्ण
+		cur->bc_statoff = XFS_STATS_CALC_INDEX(xs_abtb_2);
+	}
 
 	cur->bc_ag.agno = agno;
 	cur->bc_ag.abt.active = false;
 
-	अगर (xfs_sb_version_hascrc(&mp->m_sb))
+	if (xfs_sb_version_hascrc(&mp->m_sb))
 		cur->bc_flags |= XFS_BTREE_CRC_BLOCKS;
 
-	वापस cur;
-पूर्ण
+	return cur;
+}
 
 /*
  * Allocate a new allocation btree cursor.
  */
-काष्ठा xfs_btree_cur *			/* new alloc btree cursor */
+struct xfs_btree_cur *			/* new alloc btree cursor */
 xfs_allocbt_init_cursor(
-	काष्ठा xfs_mount	*mp,		/* file प्रणाली mount poपूर्णांक */
-	काष्ठा xfs_trans	*tp,		/* transaction poपूर्णांकer */
-	काष्ठा xfs_buf		*agbp,		/* buffer क्रम agf काष्ठाure */
+	struct xfs_mount	*mp,		/* file system mount point */
+	struct xfs_trans	*tp,		/* transaction pointer */
+	struct xfs_buf		*agbp,		/* buffer for agf structure */
 	xfs_agnumber_t		agno,		/* allocation group number */
-	xfs_btnum_t		btnum)		/* btree identअगरier */
-अणु
-	काष्ठा xfs_agf		*agf = agbp->b_addr;
-	काष्ठा xfs_btree_cur	*cur;
+	xfs_btnum_t		btnum)		/* btree identifier */
+{
+	struct xfs_agf		*agf = agbp->b_addr;
+	struct xfs_btree_cur	*cur;
 
 	cur = xfs_allocbt_init_common(mp, tp, agno, btnum);
-	अगर (btnum == XFS_BTNUM_CNT)
+	if (btnum == XFS_BTNUM_CNT)
 		cur->bc_nlevels = be32_to_cpu(agf->agf_levels[XFS_BTNUM_CNT]);
-	अन्यथा
+	else
 		cur->bc_nlevels = be32_to_cpu(agf->agf_levels[XFS_BTNUM_BNO]);
 
 	cur->bc_ag.agbp = agbp;
 
-	वापस cur;
-पूर्ण
+	return cur;
+}
 
-/* Create a मुक्त space btree cursor with a fake root क्रम staging. */
-काष्ठा xfs_btree_cur *
+/* Create a free space btree cursor with a fake root for staging. */
+struct xfs_btree_cur *
 xfs_allocbt_stage_cursor(
-	काष्ठा xfs_mount	*mp,
-	काष्ठा xbtree_afakeroot	*afake,
+	struct xfs_mount	*mp,
+	struct xbtree_afakeroot	*afake,
 	xfs_agnumber_t		agno,
 	xfs_btnum_t		btnum)
-अणु
-	काष्ठा xfs_btree_cur	*cur;
+{
+	struct xfs_btree_cur	*cur;
 
-	cur = xfs_allocbt_init_common(mp, शून्य, agno, btnum);
+	cur = xfs_allocbt_init_common(mp, NULL, agno, btnum);
 	xfs_btree_stage_afakeroot(cur, afake);
-	वापस cur;
-पूर्ण
+	return cur;
+}
 
 /*
- * Install a new मुक्त space btree root.  Caller is responsible क्रम invalidating
- * and मुक्तing the old btree blocks.
+ * Install a new free space btree root.  Caller is responsible for invalidating
+ * and freeing the old btree blocks.
  */
-व्योम
+void
 xfs_allocbt_commit_staged_btree(
-	काष्ठा xfs_btree_cur	*cur,
-	काष्ठा xfs_trans	*tp,
-	काष्ठा xfs_buf		*agbp)
-अणु
-	काष्ठा xfs_agf		*agf = agbp->b_addr;
-	काष्ठा xbtree_afakeroot	*afake = cur->bc_ag.afake;
+	struct xfs_btree_cur	*cur,
+	struct xfs_trans	*tp,
+	struct xfs_buf		*agbp)
+{
+	struct xfs_agf		*agf = agbp->b_addr;
+	struct xbtree_afakeroot	*afake = cur->bc_ag.afake;
 
 	ASSERT(cur->bc_flags & XFS_BTREE_STAGING);
 
@@ -565,35 +564,35 @@ xfs_allocbt_commit_staged_btree(
 	agf->agf_levels[cur->bc_btnum] = cpu_to_be32(afake->af_levels);
 	xfs_alloc_log_agf(tp, agbp, XFS_AGF_ROOTS | XFS_AGF_LEVELS);
 
-	अगर (cur->bc_btnum == XFS_BTNUM_BNO) अणु
+	if (cur->bc_btnum == XFS_BTNUM_BNO) {
 		xfs_btree_commit_afakeroot(cur, tp, agbp, &xfs_bnobt_ops);
-	पूर्ण अन्यथा अणु
+	} else {
 		cur->bc_flags |= XFS_BTREE_LASTREC_UPDATE;
 		xfs_btree_commit_afakeroot(cur, tp, agbp, &xfs_cntbt_ops);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
  * Calculate number of records in an alloc btree block.
  */
-पूर्णांक
+int
 xfs_allocbt_maxrecs(
-	काष्ठा xfs_mount	*mp,
-	पूर्णांक			blocklen,
-	पूर्णांक			leaf)
-अणु
+	struct xfs_mount	*mp,
+	int			blocklen,
+	int			leaf)
+{
 	blocklen -= XFS_ALLOC_BLOCK_LEN(mp);
 
-	अगर (leaf)
-		वापस blocklen / माप(xfs_alloc_rec_t);
-	वापस blocklen / (माप(xfs_alloc_key_t) + माप(xfs_alloc_ptr_t));
-पूर्ण
+	if (leaf)
+		return blocklen / sizeof(xfs_alloc_rec_t);
+	return blocklen / (sizeof(xfs_alloc_key_t) + sizeof(xfs_alloc_ptr_t));
+}
 
-/* Calculate the मुक्तspace btree size क्रम some records. */
+/* Calculate the freespace btree size for some records. */
 xfs_extlen_t
 xfs_allocbt_calc_size(
-	काष्ठा xfs_mount	*mp,
-	अचिन्हित दीर्घ दीर्घ	len)
-अणु
-	वापस xfs_btree_calc_size(mp->m_alloc_mnr, len);
-पूर्ण
+	struct xfs_mount	*mp,
+	unsigned long long	len)
+{
+	return xfs_btree_calc_size(mp->m_alloc_mnr, len);
+}

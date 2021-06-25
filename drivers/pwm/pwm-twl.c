@@ -1,74 +1,73 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Driver क्रम TWL4030/6030 Generic Pulse Width Modulator
+ * Driver for TWL4030/6030 Generic Pulse Width Modulator
  *
  * Copyright (C) 2012 Texas Instruments
  * Author: Peter Ujfalusi <peter.ujfalusi@ti.com>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/pwm.h>
-#समावेश <linux/mfd/twl.h>
-#समावेश <linux/slab.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/platform_device.h>
+#include <linux/pwm.h>
+#include <linux/mfd/twl.h>
+#include <linux/slab.h>
 
 /*
  * This driver handles the PWMs of TWL4030 and TWL6030.
- * The TRM names क्रम the PWMs on TWL4030 are: PWM0, PWM1
+ * The TRM names for the PWMs on TWL4030 are: PWM0, PWM1
  * TWL6030 also have two PWMs named in the TRM as PWM1, PWM2
  */
 
-#घोषणा TWL_PWM_MAX		0x7f
+#define TWL_PWM_MAX		0x7f
 
-/* Registers, bits and macro क्रम TWL4030 */
-#घोषणा TWL4030_GPBR1_REG	0x0c
-#घोषणा TWL4030_PMBR1_REG	0x0d
+/* Registers, bits and macro for TWL4030 */
+#define TWL4030_GPBR1_REG	0x0c
+#define TWL4030_PMBR1_REG	0x0d
 
-/* GPBR1 रेजिस्टर bits */
-#घोषणा TWL4030_PWMXCLK_ENABLE	(1 << 0)
-#घोषणा TWL4030_PWMX_ENABLE	(1 << 2)
-#घोषणा TWL4030_PWMX_BITS	(TWL4030_PWMX_ENABLE | TWL4030_PWMXCLK_ENABLE)
-#घोषणा TWL4030_PWM_TOGGLE(pwm, x)	((x) << (pwm))
+/* GPBR1 register bits */
+#define TWL4030_PWMXCLK_ENABLE	(1 << 0)
+#define TWL4030_PWMX_ENABLE	(1 << 2)
+#define TWL4030_PWMX_BITS	(TWL4030_PWMX_ENABLE | TWL4030_PWMXCLK_ENABLE)
+#define TWL4030_PWM_TOGGLE(pwm, x)	((x) << (pwm))
 
-/* PMBR1 रेजिस्टर bits */
-#घोषणा TWL4030_GPIO6_PWM0_MUTE_MASK		(0x03 << 2)
-#घोषणा TWL4030_GPIO6_PWM0_MUTE_PWM0		(0x01 << 2)
-#घोषणा TWL4030_GPIO7_VIBRASYNC_PWM1_MASK	(0x03 << 4)
-#घोषणा TWL4030_GPIO7_VIBRASYNC_PWM1_PWM1	(0x03 << 4)
+/* PMBR1 register bits */
+#define TWL4030_GPIO6_PWM0_MUTE_MASK		(0x03 << 2)
+#define TWL4030_GPIO6_PWM0_MUTE_PWM0		(0x01 << 2)
+#define TWL4030_GPIO7_VIBRASYNC_PWM1_MASK	(0x03 << 4)
+#define TWL4030_GPIO7_VIBRASYNC_PWM1_PWM1	(0x03 << 4)
 
-/* Register, bits and macro क्रम TWL6030 */
-#घोषणा TWL6030_TOGGLE3_REG	0x92
+/* Register, bits and macro for TWL6030 */
+#define TWL6030_TOGGLE3_REG	0x92
 
-#घोषणा TWL6030_PWMXR		(1 << 0)
-#घोषणा TWL6030_PWMXS		(1 << 1)
-#घोषणा TWL6030_PWMXEN		(1 << 2)
-#घोषणा TWL6030_PWM_TOGGLE(pwm, x)	((x) << (pwm * 3))
+#define TWL6030_PWMXR		(1 << 0)
+#define TWL6030_PWMXS		(1 << 1)
+#define TWL6030_PWMXEN		(1 << 2)
+#define TWL6030_PWM_TOGGLE(pwm, x)	((x) << (pwm * 3))
 
-काष्ठा twl_pwm_chip अणु
-	काष्ठा pwm_chip chip;
-	काष्ठा mutex mutex;
+struct twl_pwm_chip {
+	struct pwm_chip chip;
+	struct mutex mutex;
 	u8 twl6030_toggle3;
 	u8 twl4030_pwm_mux;
-पूर्ण;
+};
 
-अटल अंतरभूत काष्ठा twl_pwm_chip *to_twl(काष्ठा pwm_chip *chip)
-अणु
-	वापस container_of(chip, काष्ठा twl_pwm_chip, chip);
-पूर्ण
+static inline struct twl_pwm_chip *to_twl(struct pwm_chip *chip)
+{
+	return container_of(chip, struct twl_pwm_chip, chip);
+}
 
-अटल पूर्णांक twl_pwm_config(काष्ठा pwm_chip *chip, काष्ठा pwm_device *pwm,
-			      पूर्णांक duty_ns, पूर्णांक period_ns)
-अणु
-	पूर्णांक duty_cycle = DIV_ROUND_UP(duty_ns * TWL_PWM_MAX, period_ns) + 1;
-	u8 pwm_config[2] = अणु 1, 0 पूर्ण;
-	पूर्णांक base, ret;
+static int twl_pwm_config(struct pwm_chip *chip, struct pwm_device *pwm,
+			      int duty_ns, int period_ns)
+{
+	int duty_cycle = DIV_ROUND_UP(duty_ns * TWL_PWM_MAX, period_ns) + 1;
+	u8 pwm_config[2] = { 1, 0 };
+	int base, ret;
 
 	/*
 	 * To configure the duty period:
 	 * On-cycle is set to 1 (the minimum allowed value)
-	 * The off समय of 0 is not configurable, so the mapping is:
+	 * The off time of 0 is not configurable, so the mapping is:
 	 * 0 -> off cycle = 2,
 	 * 1 -> off cycle = 2,
 	 * 2 -> off cycle = 3,
@@ -76,103 +75,103 @@
 	 * 127 - > off cycle 1
 	 * When on cycle == off cycle the PWM will be always on
 	 */
-	अगर (duty_cycle == 1)
+	if (duty_cycle == 1)
 		duty_cycle = 2;
-	अन्यथा अगर (duty_cycle > TWL_PWM_MAX)
+	else if (duty_cycle > TWL_PWM_MAX)
 		duty_cycle = 1;
 
 	base = pwm->hwpwm * 3;
 
 	pwm_config[1] = duty_cycle;
 
-	ret = twl_i2c_ग_लिखो(TWL_MODULE_PWM, pwm_config, base, 2);
-	अगर (ret < 0)
+	ret = twl_i2c_write(TWL_MODULE_PWM, pwm_config, base, 2);
+	if (ret < 0)
 		dev_err(chip->dev, "%s: Failed to configure PWM\n", pwm->label);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक twl4030_pwm_enable(काष्ठा pwm_chip *chip, काष्ठा pwm_device *pwm)
-अणु
-	काष्ठा twl_pwm_chip *twl = to_twl(chip);
-	पूर्णांक ret;
+static int twl4030_pwm_enable(struct pwm_chip *chip, struct pwm_device *pwm)
+{
+	struct twl_pwm_chip *twl = to_twl(chip);
+	int ret;
 	u8 val;
 
 	mutex_lock(&twl->mutex);
-	ret = twl_i2c_पढ़ो_u8(TWL4030_MODULE_INTBR, &val, TWL4030_GPBR1_REG);
-	अगर (ret < 0) अणु
+	ret = twl_i2c_read_u8(TWL4030_MODULE_INTBR, &val, TWL4030_GPBR1_REG);
+	if (ret < 0) {
 		dev_err(chip->dev, "%s: Failed to read GPBR1\n", pwm->label);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	val |= TWL4030_PWM_TOGGLE(pwm->hwpwm, TWL4030_PWMXCLK_ENABLE);
 
-	ret = twl_i2c_ग_लिखो_u8(TWL4030_MODULE_INTBR, val, TWL4030_GPBR1_REG);
-	अगर (ret < 0)
+	ret = twl_i2c_write_u8(TWL4030_MODULE_INTBR, val, TWL4030_GPBR1_REG);
+	if (ret < 0)
 		dev_err(chip->dev, "%s: Failed to enable PWM\n", pwm->label);
 
 	val |= TWL4030_PWM_TOGGLE(pwm->hwpwm, TWL4030_PWMX_ENABLE);
 
-	ret = twl_i2c_ग_लिखो_u8(TWL4030_MODULE_INTBR, val, TWL4030_GPBR1_REG);
-	अगर (ret < 0)
+	ret = twl_i2c_write_u8(TWL4030_MODULE_INTBR, val, TWL4030_GPBR1_REG);
+	if (ret < 0)
 		dev_err(chip->dev, "%s: Failed to enable PWM\n", pwm->label);
 
 out:
 	mutex_unlock(&twl->mutex);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम twl4030_pwm_disable(काष्ठा pwm_chip *chip, काष्ठा pwm_device *pwm)
-अणु
-	काष्ठा twl_pwm_chip *twl = to_twl(chip);
-	पूर्णांक ret;
+static void twl4030_pwm_disable(struct pwm_chip *chip, struct pwm_device *pwm)
+{
+	struct twl_pwm_chip *twl = to_twl(chip);
+	int ret;
 	u8 val;
 
 	mutex_lock(&twl->mutex);
-	ret = twl_i2c_पढ़ो_u8(TWL4030_MODULE_INTBR, &val, TWL4030_GPBR1_REG);
-	अगर (ret < 0) अणु
+	ret = twl_i2c_read_u8(TWL4030_MODULE_INTBR, &val, TWL4030_GPBR1_REG);
+	if (ret < 0) {
 		dev_err(chip->dev, "%s: Failed to read GPBR1\n", pwm->label);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	val &= ~TWL4030_PWM_TOGGLE(pwm->hwpwm, TWL4030_PWMX_ENABLE);
 
-	ret = twl_i2c_ग_लिखो_u8(TWL4030_MODULE_INTBR, val, TWL4030_GPBR1_REG);
-	अगर (ret < 0)
+	ret = twl_i2c_write_u8(TWL4030_MODULE_INTBR, val, TWL4030_GPBR1_REG);
+	if (ret < 0)
 		dev_err(chip->dev, "%s: Failed to disable PWM\n", pwm->label);
 
 	val &= ~TWL4030_PWM_TOGGLE(pwm->hwpwm, TWL4030_PWMXCLK_ENABLE);
 
-	ret = twl_i2c_ग_लिखो_u8(TWL4030_MODULE_INTBR, val, TWL4030_GPBR1_REG);
-	अगर (ret < 0)
+	ret = twl_i2c_write_u8(TWL4030_MODULE_INTBR, val, TWL4030_GPBR1_REG);
+	if (ret < 0)
 		dev_err(chip->dev, "%s: Failed to disable PWM\n", pwm->label);
 
 out:
 	mutex_unlock(&twl->mutex);
-पूर्ण
+}
 
-अटल पूर्णांक twl4030_pwm_request(काष्ठा pwm_chip *chip, काष्ठा pwm_device *pwm)
-अणु
-	काष्ठा twl_pwm_chip *twl = to_twl(chip);
-	पूर्णांक ret;
+static int twl4030_pwm_request(struct pwm_chip *chip, struct pwm_device *pwm)
+{
+	struct twl_pwm_chip *twl = to_twl(chip);
+	int ret;
 	u8 val, mask, bits;
 
-	अगर (pwm->hwpwm == 1) अणु
+	if (pwm->hwpwm == 1) {
 		mask = TWL4030_GPIO7_VIBRASYNC_PWM1_MASK;
 		bits = TWL4030_GPIO7_VIBRASYNC_PWM1_PWM1;
-	पूर्ण अन्यथा अणु
+	} else {
 		mask = TWL4030_GPIO6_PWM0_MUTE_MASK;
 		bits = TWL4030_GPIO6_PWM0_MUTE_PWM0;
-	पूर्ण
+	}
 
 	mutex_lock(&twl->mutex);
-	ret = twl_i2c_पढ़ो_u8(TWL4030_MODULE_INTBR, &val, TWL4030_PMBR1_REG);
-	अगर (ret < 0) अणु
+	ret = twl_i2c_read_u8(TWL4030_MODULE_INTBR, &val, TWL4030_PMBR1_REG);
+	if (ret < 0) {
 		dev_err(chip->dev, "%s: Failed to read PMBR1\n", pwm->label);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	/* Save the current MUX configuration क्रम the PWM */
+	/* Save the current MUX configuration for the PWM */
 	twl->twl4030_pwm_mux &= ~mask;
 	twl->twl4030_pwm_mux |= (val & mask);
 
@@ -180,49 +179,49 @@ out:
 	val &= ~mask;
 	val |= bits;
 
-	ret = twl_i2c_ग_लिखो_u8(TWL4030_MODULE_INTBR, val, TWL4030_PMBR1_REG);
-	अगर (ret < 0)
+	ret = twl_i2c_write_u8(TWL4030_MODULE_INTBR, val, TWL4030_PMBR1_REG);
+	if (ret < 0)
 		dev_err(chip->dev, "%s: Failed to request PWM\n", pwm->label);
 
 out:
 	mutex_unlock(&twl->mutex);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम twl4030_pwm_मुक्त(काष्ठा pwm_chip *chip, काष्ठा pwm_device *pwm)
-अणु
-	काष्ठा twl_pwm_chip *twl = to_twl(chip);
-	पूर्णांक ret;
+static void twl4030_pwm_free(struct pwm_chip *chip, struct pwm_device *pwm)
+{
+	struct twl_pwm_chip *twl = to_twl(chip);
+	int ret;
 	u8 val, mask;
 
-	अगर (pwm->hwpwm == 1)
+	if (pwm->hwpwm == 1)
 		mask = TWL4030_GPIO7_VIBRASYNC_PWM1_MASK;
-	अन्यथा
+	else
 		mask = TWL4030_GPIO6_PWM0_MUTE_MASK;
 
 	mutex_lock(&twl->mutex);
-	ret = twl_i2c_पढ़ो_u8(TWL4030_MODULE_INTBR, &val, TWL4030_PMBR1_REG);
-	अगर (ret < 0) अणु
+	ret = twl_i2c_read_u8(TWL4030_MODULE_INTBR, &val, TWL4030_PMBR1_REG);
+	if (ret < 0) {
 		dev_err(chip->dev, "%s: Failed to read PMBR1\n", pwm->label);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	/* Restore the MUX configuration क्रम the PWM */
+	/* Restore the MUX configuration for the PWM */
 	val &= ~mask;
 	val |= (twl->twl4030_pwm_mux & mask);
 
-	ret = twl_i2c_ग_लिखो_u8(TWL4030_MODULE_INTBR, val, TWL4030_PMBR1_REG);
-	अगर (ret < 0)
+	ret = twl_i2c_write_u8(TWL4030_MODULE_INTBR, val, TWL4030_PMBR1_REG);
+	if (ret < 0)
 		dev_err(chip->dev, "%s: Failed to free PWM\n", pwm->label);
 
 out:
 	mutex_unlock(&twl->mutex);
-पूर्ण
+}
 
-अटल पूर्णांक twl6030_pwm_enable(काष्ठा pwm_chip *chip, काष्ठा pwm_device *pwm)
-अणु
-	काष्ठा twl_pwm_chip *twl = to_twl(chip);
-	पूर्णांक ret;
+static int twl6030_pwm_enable(struct pwm_chip *chip, struct pwm_device *pwm)
+{
+	struct twl_pwm_chip *twl = to_twl(chip);
+	int ret;
 	u8 val;
 
 	mutex_lock(&twl->mutex);
@@ -230,22 +229,22 @@ out:
 	val |= TWL6030_PWM_TOGGLE(pwm->hwpwm, TWL6030_PWMXS | TWL6030_PWMXEN);
 	val &= ~TWL6030_PWM_TOGGLE(pwm->hwpwm, TWL6030_PWMXR);
 
-	ret = twl_i2c_ग_लिखो_u8(TWL6030_MODULE_ID1, val, TWL6030_TOGGLE3_REG);
-	अगर (ret < 0) अणु
+	ret = twl_i2c_write_u8(TWL6030_MODULE_ID1, val, TWL6030_TOGGLE3_REG);
+	if (ret < 0) {
 		dev_err(chip->dev, "%s: Failed to enable PWM\n", pwm->label);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	twl->twl6030_toggle3 = val;
 out:
 	mutex_unlock(&twl->mutex);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम twl6030_pwm_disable(काष्ठा pwm_chip *chip, काष्ठा pwm_device *pwm)
-अणु
-	काष्ठा twl_pwm_chip *twl = to_twl(chip);
-	पूर्णांक ret;
+static void twl6030_pwm_disable(struct pwm_chip *chip, struct pwm_device *pwm)
+{
+	struct twl_pwm_chip *twl = to_twl(chip);
+	int ret;
 	u8 val;
 
 	mutex_lock(&twl->mutex);
@@ -253,61 +252,61 @@ out:
 	val |= TWL6030_PWM_TOGGLE(pwm->hwpwm, TWL6030_PWMXR);
 	val &= ~TWL6030_PWM_TOGGLE(pwm->hwpwm, TWL6030_PWMXS | TWL6030_PWMXEN);
 
-	ret = twl_i2c_ग_लिखो_u8(TWL6030_MODULE_ID1, val, TWL6030_TOGGLE3_REG);
-	अगर (ret < 0) अणु
+	ret = twl_i2c_write_u8(TWL6030_MODULE_ID1, val, TWL6030_TOGGLE3_REG);
+	if (ret < 0) {
 		dev_err(chip->dev, "%s: Failed to disable PWM\n", pwm->label);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	val |= TWL6030_PWM_TOGGLE(pwm->hwpwm, TWL6030_PWMXEN);
 
-	ret = twl_i2c_ग_लिखो_u8(TWL6030_MODULE_ID1, val, TWL6030_TOGGLE3_REG);
-	अगर (ret < 0) अणु
+	ret = twl_i2c_write_u8(TWL6030_MODULE_ID1, val, TWL6030_TOGGLE3_REG);
+	if (ret < 0) {
 		dev_err(chip->dev, "%s: Failed to disable PWM\n", pwm->label);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	val &= ~TWL6030_PWM_TOGGLE(pwm->hwpwm, TWL6030_PWMXEN);
 
-	ret = twl_i2c_ग_लिखो_u8(TWL6030_MODULE_ID1, val, TWL6030_TOGGLE3_REG);
-	अगर (ret < 0) अणु
+	ret = twl_i2c_write_u8(TWL6030_MODULE_ID1, val, TWL6030_TOGGLE3_REG);
+	if (ret < 0) {
 		dev_err(chip->dev, "%s: Failed to disable PWM\n", pwm->label);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	twl->twl6030_toggle3 = val;
 out:
 	mutex_unlock(&twl->mutex);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा pwm_ops twl4030_pwm_ops = अणु
+static const struct pwm_ops twl4030_pwm_ops = {
 	.config = twl_pwm_config,
 	.enable = twl4030_pwm_enable,
 	.disable = twl4030_pwm_disable,
 	.request = twl4030_pwm_request,
-	.मुक्त = twl4030_pwm_मुक्त,
+	.free = twl4030_pwm_free,
 	.owner = THIS_MODULE,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा pwm_ops twl6030_pwm_ops = अणु
+static const struct pwm_ops twl6030_pwm_ops = {
 	.config = twl_pwm_config,
 	.enable = twl6030_pwm_enable,
 	.disable = twl6030_pwm_disable,
 	.owner = THIS_MODULE,
-पूर्ण;
+};
 
-अटल पूर्णांक twl_pwm_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा twl_pwm_chip *twl;
-	पूर्णांक ret;
+static int twl_pwm_probe(struct platform_device *pdev)
+{
+	struct twl_pwm_chip *twl;
+	int ret;
 
-	twl = devm_kzalloc(&pdev->dev, माप(*twl), GFP_KERNEL);
-	अगर (!twl)
-		वापस -ENOMEM;
+	twl = devm_kzalloc(&pdev->dev, sizeof(*twl), GFP_KERNEL);
+	if (!twl)
+		return -ENOMEM;
 
-	अगर (twl_class_is_4030())
+	if (twl_class_is_4030())
 		twl->chip.ops = &twl4030_pwm_ops;
-	अन्यथा
+	else
 		twl->chip.ops = &twl6030_pwm_ops;
 
 	twl->chip.dev = &pdev->dev;
@@ -316,39 +315,39 @@ out:
 	mutex_init(&twl->mutex);
 
 	ret = pwmchip_add(&twl->chip);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	platक्रमm_set_drvdata(pdev, twl);
+	platform_set_drvdata(pdev, twl);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक twl_pwm_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा twl_pwm_chip *twl = platक्रमm_get_drvdata(pdev);
+static int twl_pwm_remove(struct platform_device *pdev)
+{
+	struct twl_pwm_chip *twl = platform_get_drvdata(pdev);
 
-	वापस pwmchip_हटाओ(&twl->chip);
-पूर्ण
+	return pwmchip_remove(&twl->chip);
+}
 
-#अगर_घोषित CONFIG_OF
-अटल स्थिर काष्ठा of_device_id twl_pwm_of_match[] = अणु
-	अणु .compatible = "ti,twl4030-pwm" पूर्ण,
-	अणु .compatible = "ti,twl6030-pwm" पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+#ifdef CONFIG_OF
+static const struct of_device_id twl_pwm_of_match[] = {
+	{ .compatible = "ti,twl4030-pwm" },
+	{ .compatible = "ti,twl6030-pwm" },
+	{ },
+};
 MODULE_DEVICE_TABLE(of, twl_pwm_of_match);
-#पूर्ण_अगर
+#endif
 
-अटल काष्ठा platक्रमm_driver twl_pwm_driver = अणु
-	.driver = अणु
+static struct platform_driver twl_pwm_driver = {
+	.driver = {
 		.name = "twl-pwm",
 		.of_match_table = of_match_ptr(twl_pwm_of_match),
-	पूर्ण,
+	},
 	.probe = twl_pwm_probe,
-	.हटाओ = twl_pwm_हटाओ,
-पूर्ण;
-module_platक्रमm_driver(twl_pwm_driver);
+	.remove = twl_pwm_remove,
+};
+module_platform_driver(twl_pwm_driver);
 
 MODULE_AUTHOR("Peter Ujfalusi <peter.ujfalusi@ti.com>");
 MODULE_DESCRIPTION("PWM driver for TWL4030 and TWL6030");

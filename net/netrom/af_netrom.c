@@ -1,439 +1,438 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  *
  * Copyright Jonathan Naylor G4KLX (g4klx@g4klx.demon.co.uk)
  * Copyright Alan Cox GW4PTS (alan@lxorguk.ukuu.org.uk)
  * Copyright Darryl Miles G7LED (dlm@g7led.demon.co.uk)
  */
-#समावेश <linux/module.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/capability.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/types.h>
-#समावेश <linux/socket.h>
-#समावेश <linux/in.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/sched/संकेत.स>
-#समावेश <linux/समयr.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/sockios.h>
-#समावेश <linux/net.h>
-#समावेश <linux/स्थिति.स>
-#समावेश <net/ax25.h>
-#समावेश <linux/inet.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/अगर_arp.h>
-#समावेश <linux/skbuff.h>
-#समावेश <net/net_namespace.h>
-#समावेश <net/sock.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/fcntl.h>
-#समावेश <linux/termios.h>	/* For TIOCINQ/OUTQ */
-#समावेश <linux/mm.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/notअगरier.h>
-#समावेश <net/netrom.h>
-#समावेश <linux/proc_fs.h>
-#समावेश <linux/seq_file.h>
-#समावेश <net/ip.h>
-#समावेश <net/tcp_states.h>
-#समावेश <net/arp.h>
-#समावेश <linux/init.h>
+#include <linux/module.h>
+#include <linux/moduleparam.h>
+#include <linux/capability.h>
+#include <linux/errno.h>
+#include <linux/types.h>
+#include <linux/socket.h>
+#include <linux/in.h>
+#include <linux/slab.h>
+#include <linux/kernel.h>
+#include <linux/sched/signal.h>
+#include <linux/timer.h>
+#include <linux/string.h>
+#include <linux/sockios.h>
+#include <linux/net.h>
+#include <linux/stat.h>
+#include <net/ax25.h>
+#include <linux/inet.h>
+#include <linux/netdevice.h>
+#include <linux/if_arp.h>
+#include <linux/skbuff.h>
+#include <net/net_namespace.h>
+#include <net/sock.h>
+#include <linux/uaccess.h>
+#include <linux/fcntl.h>
+#include <linux/termios.h>	/* For TIOCINQ/OUTQ */
+#include <linux/mm.h>
+#include <linux/interrupt.h>
+#include <linux/notifier.h>
+#include <net/netrom.h>
+#include <linux/proc_fs.h>
+#include <linux/seq_file.h>
+#include <net/ip.h>
+#include <net/tcp_states.h>
+#include <net/arp.h>
+#include <linux/init.h>
 
-अटल पूर्णांक nr_ndevs = 4;
+static int nr_ndevs = 4;
 
-पूर्णांक sysctl_netrom_शेष_path_quality            = NR_DEFAULT_QUAL;
-पूर्णांक sysctl_netrom_obsolescence_count_initialiser  = NR_DEFAULT_OBS;
-पूर्णांक sysctl_netrom_network_ttl_initialiser         = NR_DEFAULT_TTL;
-पूर्णांक sysctl_netrom_transport_समयout               = NR_DEFAULT_T1;
-पूर्णांक sysctl_netrom_transport_maximum_tries         = NR_DEFAULT_N2;
-पूर्णांक sysctl_netrom_transport_acknowledge_delay     = NR_DEFAULT_T2;
-पूर्णांक sysctl_netrom_transport_busy_delay            = NR_DEFAULT_T4;
-पूर्णांक sysctl_netrom_transport_requested_winकरोw_size = NR_DEFAULT_WINDOW;
-पूर्णांक sysctl_netrom_transport_no_activity_समयout   = NR_DEFAULT_IDLE;
-पूर्णांक sysctl_netrom_routing_control                 = NR_DEFAULT_ROUTING;
-पूर्णांक sysctl_netrom_link_fails_count                = NR_DEFAULT_FAILS;
-पूर्णांक sysctl_netrom_reset_circuit                   = NR_DEFAULT_RESET;
+int sysctl_netrom_default_path_quality            = NR_DEFAULT_QUAL;
+int sysctl_netrom_obsolescence_count_initialiser  = NR_DEFAULT_OBS;
+int sysctl_netrom_network_ttl_initialiser         = NR_DEFAULT_TTL;
+int sysctl_netrom_transport_timeout               = NR_DEFAULT_T1;
+int sysctl_netrom_transport_maximum_tries         = NR_DEFAULT_N2;
+int sysctl_netrom_transport_acknowledge_delay     = NR_DEFAULT_T2;
+int sysctl_netrom_transport_busy_delay            = NR_DEFAULT_T4;
+int sysctl_netrom_transport_requested_window_size = NR_DEFAULT_WINDOW;
+int sysctl_netrom_transport_no_activity_timeout   = NR_DEFAULT_IDLE;
+int sysctl_netrom_routing_control                 = NR_DEFAULT_ROUTING;
+int sysctl_netrom_link_fails_count                = NR_DEFAULT_FAILS;
+int sysctl_netrom_reset_circuit                   = NR_DEFAULT_RESET;
 
-अटल अचिन्हित लघु circuit = 0x101;
+static unsigned short circuit = 0x101;
 
-अटल HLIST_HEAD(nr_list);
-अटल DEFINE_SPINLOCK(nr_list_lock);
+static HLIST_HEAD(nr_list);
+static DEFINE_SPINLOCK(nr_list_lock);
 
-अटल स्थिर काष्ठा proto_ops nr_proto_ops;
+static const struct proto_ops nr_proto_ops;
 
 /*
- * NETROM network devices are भव network devices encapsulating NETROM
- * frames पूर्णांकo AX.25 which will be sent through an AX.25 device, so क्रमm a
- * special "super class" of normal net devices; split their locks off पूर्णांकo a
+ * NETROM network devices are virtual network devices encapsulating NETROM
+ * frames into AX.25 which will be sent through an AX.25 device, so form a
+ * special "super class" of normal net devices; split their locks off into a
  * separate class since they always nest.
  */
-अटल काष्ठा lock_class_key nr_netdev_xmit_lock_key;
-अटल काष्ठा lock_class_key nr_netdev_addr_lock_key;
+static struct lock_class_key nr_netdev_xmit_lock_key;
+static struct lock_class_key nr_netdev_addr_lock_key;
 
-अटल व्योम nr_set_lockdep_one(काष्ठा net_device *dev,
-			       काष्ठा netdev_queue *txq,
-			       व्योम *_unused)
-अणु
+static void nr_set_lockdep_one(struct net_device *dev,
+			       struct netdev_queue *txq,
+			       void *_unused)
+{
 	lockdep_set_class(&txq->_xmit_lock, &nr_netdev_xmit_lock_key);
-पूर्ण
+}
 
-अटल व्योम nr_set_lockdep_key(काष्ठा net_device *dev)
-अणु
+static void nr_set_lockdep_key(struct net_device *dev)
+{
 	lockdep_set_class(&dev->addr_list_lock, &nr_netdev_addr_lock_key);
-	netdev_क्रम_each_tx_queue(dev, nr_set_lockdep_one, शून्य);
-पूर्ण
+	netdev_for_each_tx_queue(dev, nr_set_lockdep_one, NULL);
+}
 
 /*
- *	Socket removal during an पूर्णांकerrupt is now safe.
+ *	Socket removal during an interrupt is now safe.
  */
-अटल व्योम nr_हटाओ_socket(काष्ठा sock *sk)
-अणु
+static void nr_remove_socket(struct sock *sk)
+{
 	spin_lock_bh(&nr_list_lock);
 	sk_del_node_init(sk);
 	spin_unlock_bh(&nr_list_lock);
-पूर्ण
+}
 
 /*
  *	Kill all bound sockets on a dropped device.
  */
-अटल व्योम nr_समाप्त_by_device(काष्ठा net_device *dev)
-अणु
-	काष्ठा sock *s;
+static void nr_kill_by_device(struct net_device *dev)
+{
+	struct sock *s;
 
 	spin_lock_bh(&nr_list_lock);
-	sk_क्रम_each(s, &nr_list)
-		अगर (nr_sk(s)->device == dev)
+	sk_for_each(s, &nr_list)
+		if (nr_sk(s)->device == dev)
 			nr_disconnect(s, ENETUNREACH);
 	spin_unlock_bh(&nr_list_lock);
-पूर्ण
+}
 
 /*
  *	Handle device status changes.
  */
-अटल पूर्णांक nr_device_event(काष्ठा notअगरier_block *this, अचिन्हित दीर्घ event, व्योम *ptr)
-अणु
-	काष्ठा net_device *dev = netdev_notअगरier_info_to_dev(ptr);
+static int nr_device_event(struct notifier_block *this, unsigned long event, void *ptr)
+{
+	struct net_device *dev = netdev_notifier_info_to_dev(ptr);
 
-	अगर (!net_eq(dev_net(dev), &init_net))
-		वापस NOTIFY_DONE;
+	if (!net_eq(dev_net(dev), &init_net))
+		return NOTIFY_DONE;
 
-	अगर (event != NETDEV_DOWN)
-		वापस NOTIFY_DONE;
+	if (event != NETDEV_DOWN)
+		return NOTIFY_DONE;
 
-	nr_समाप्त_by_device(dev);
-	nr_rt_device_करोwn(dev);
+	nr_kill_by_device(dev);
+	nr_rt_device_down(dev);
 
-	वापस NOTIFY_DONE;
-पूर्ण
+	return NOTIFY_DONE;
+}
 
 /*
  *	Add a socket to the bound sockets list.
  */
-अटल व्योम nr_insert_socket(काष्ठा sock *sk)
-अणु
+static void nr_insert_socket(struct sock *sk)
+{
 	spin_lock_bh(&nr_list_lock);
 	sk_add_node(sk, &nr_list);
 	spin_unlock_bh(&nr_list_lock);
-पूर्ण
+}
 
 /*
  *	Find a socket that wants to accept the Connect Request we just
  *	received.
  */
-अटल काष्ठा sock *nr_find_listener(ax25_address *addr)
-अणु
-	काष्ठा sock *s;
+static struct sock *nr_find_listener(ax25_address *addr)
+{
+	struct sock *s;
 
 	spin_lock_bh(&nr_list_lock);
-	sk_क्रम_each(s, &nr_list)
-		अगर (!ax25cmp(&nr_sk(s)->source_addr, addr) &&
-		    s->sk_state == TCP_LISTEN) अणु
+	sk_for_each(s, &nr_list)
+		if (!ax25cmp(&nr_sk(s)->source_addr, addr) &&
+		    s->sk_state == TCP_LISTEN) {
 			sock_hold(s);
-			जाओ found;
-		पूर्ण
-	s = शून्य;
+			goto found;
+		}
+	s = NULL;
 found:
 	spin_unlock_bh(&nr_list_lock);
-	वापस s;
-पूर्ण
+	return s;
+}
 
 /*
  *	Find a connected NET/ROM socket given my circuit IDs.
  */
-अटल काष्ठा sock *nr_find_socket(अचिन्हित अक्षर index, अचिन्हित अक्षर id)
-अणु
-	काष्ठा sock *s;
+static struct sock *nr_find_socket(unsigned char index, unsigned char id)
+{
+	struct sock *s;
 
 	spin_lock_bh(&nr_list_lock);
-	sk_क्रम_each(s, &nr_list) अणु
-		काष्ठा nr_sock *nr = nr_sk(s);
+	sk_for_each(s, &nr_list) {
+		struct nr_sock *nr = nr_sk(s);
 
-		अगर (nr->my_index == index && nr->my_id == id) अणु
+		if (nr->my_index == index && nr->my_id == id) {
 			sock_hold(s);
-			जाओ found;
-		पूर्ण
-	पूर्ण
-	s = शून्य;
+			goto found;
+		}
+	}
+	s = NULL;
 found:
 	spin_unlock_bh(&nr_list_lock);
-	वापस s;
-पूर्ण
+	return s;
+}
 
 /*
  *	Find a connected NET/ROM socket given their circuit IDs.
  */
-अटल काष्ठा sock *nr_find_peer(अचिन्हित अक्षर index, अचिन्हित अक्षर id,
+static struct sock *nr_find_peer(unsigned char index, unsigned char id,
 	ax25_address *dest)
-अणु
-	काष्ठा sock *s;
+{
+	struct sock *s;
 
 	spin_lock_bh(&nr_list_lock);
-	sk_क्रम_each(s, &nr_list) अणु
-		काष्ठा nr_sock *nr = nr_sk(s);
+	sk_for_each(s, &nr_list) {
+		struct nr_sock *nr = nr_sk(s);
 
-		अगर (nr->your_index == index && nr->your_id == id &&
-		    !ax25cmp(&nr->dest_addr, dest)) अणु
+		if (nr->your_index == index && nr->your_id == id &&
+		    !ax25cmp(&nr->dest_addr, dest)) {
 			sock_hold(s);
-			जाओ found;
-		पूर्ण
-	पूर्ण
-	s = शून्य;
+			goto found;
+		}
+	}
+	s = NULL;
 found:
 	spin_unlock_bh(&nr_list_lock);
-	वापस s;
-पूर्ण
+	return s;
+}
 
 /*
- *	Find next मुक्त circuit ID.
+ *	Find next free circuit ID.
  */
-अटल अचिन्हित लघु nr_find_next_circuit(व्योम)
-अणु
-	अचिन्हित लघु id = circuit;
-	अचिन्हित अक्षर i, j;
-	काष्ठा sock *sk;
+static unsigned short nr_find_next_circuit(void)
+{
+	unsigned short id = circuit;
+	unsigned char i, j;
+	struct sock *sk;
 
-	क्रम (;;) अणु
+	for (;;) {
 		i = id / 256;
 		j = id % 256;
 
-		अगर (i != 0 && j != 0) अणु
-			अगर ((sk=nr_find_socket(i, j)) == शून्य)
-				अवरोध;
+		if (i != 0 && j != 0) {
+			if ((sk=nr_find_socket(i, j)) == NULL)
+				break;
 			sock_put(sk);
-		पूर्ण
+		}
 
 		id++;
-	पूर्ण
+	}
 
-	वापस id;
-पूर्ण
+	return id;
+}
 
 /*
  *	Deferred destroy.
  */
-व्योम nr_destroy_socket(काष्ठा sock *);
+void nr_destroy_socket(struct sock *);
 
 /*
- *	Handler क्रम deferred समाप्तs.
+ *	Handler for deferred kills.
  */
-अटल व्योम nr_destroy_समयr(काष्ठा समयr_list *t)
-अणु
-	काष्ठा sock *sk = from_समयr(sk, t, sk_समयr);
+static void nr_destroy_timer(struct timer_list *t)
+{
+	struct sock *sk = from_timer(sk, t, sk_timer);
 	bh_lock_sock(sk);
 	sock_hold(sk);
 	nr_destroy_socket(sk);
 	bh_unlock_sock(sk);
 	sock_put(sk);
-पूर्ण
+}
 
 /*
- *	This is called from user mode and the समयrs. Thus it protects itself
- *	against पूर्णांकerrupt users but करोesn't worry about being called during
- *	work. Once it is हटाओd from the queue no पूर्णांकerrupt or bottom half
+ *	This is called from user mode and the timers. Thus it protects itself
+ *	against interrupt users but doesn't worry about being called during
+ *	work. Once it is removed from the queue no interrupt or bottom half
  *	will touch it and we are (fairly 8-) ) safe.
  */
-व्योम nr_destroy_socket(काष्ठा sock *sk)
-अणु
-	काष्ठा sk_buff *skb;
+void nr_destroy_socket(struct sock *sk)
+{
+	struct sk_buff *skb;
 
-	nr_हटाओ_socket(sk);
+	nr_remove_socket(sk);
 
 	nr_stop_heartbeat(sk);
-	nr_stop_t1समयr(sk);
-	nr_stop_t2समयr(sk);
-	nr_stop_t4समयr(sk);
-	nr_stop_idleसमयr(sk);
+	nr_stop_t1timer(sk);
+	nr_stop_t2timer(sk);
+	nr_stop_t4timer(sk);
+	nr_stop_idletimer(sk);
 
 	nr_clear_queues(sk);		/* Flush the queues */
 
-	जबतक ((skb = skb_dequeue(&sk->sk_receive_queue)) != शून्य) अणु
-		अगर (skb->sk != sk) अणु /* A pending connection */
-			/* Queue the unaccepted socket क्रम death */
+	while ((skb = skb_dequeue(&sk->sk_receive_queue)) != NULL) {
+		if (skb->sk != sk) { /* A pending connection */
+			/* Queue the unaccepted socket for death */
 			sock_set_flag(skb->sk, SOCK_DEAD);
 			nr_start_heartbeat(skb->sk);
 			nr_sk(skb->sk)->state = NR_STATE_0;
-		पूर्ण
+		}
 
-		kमुक्त_skb(skb);
-	पूर्ण
+		kfree_skb(skb);
+	}
 
-	अगर (sk_has_allocations(sk)) अणु
+	if (sk_has_allocations(sk)) {
 		/* Defer: outstanding buffers */
-		sk->sk_समयr.function = nr_destroy_समयr;
-		sk->sk_समयr.expires  = jअगरfies + 2 * HZ;
-		add_समयr(&sk->sk_समयr);
-	पूर्ण अन्यथा
+		sk->sk_timer.function = nr_destroy_timer;
+		sk->sk_timer.expires  = jiffies + 2 * HZ;
+		add_timer(&sk->sk_timer);
+	} else
 		sock_put(sk);
-पूर्ण
+}
 
 /*
- *	Handling क्रम प्रणाली calls applied via the various पूर्णांकerfaces to a
+ *	Handling for system calls applied via the various interfaces to a
  *	NET/ROM socket object.
  */
 
-अटल पूर्णांक nr_setsockopt(काष्ठा socket *sock, पूर्णांक level, पूर्णांक optname,
-		sockptr_t optval, अचिन्हित पूर्णांक optlen)
-अणु
-	काष्ठा sock *sk = sock->sk;
-	काष्ठा nr_sock *nr = nr_sk(sk);
-	अचिन्हित दीर्घ opt;
+static int nr_setsockopt(struct socket *sock, int level, int optname,
+		sockptr_t optval, unsigned int optlen)
+{
+	struct sock *sk = sock->sk;
+	struct nr_sock *nr = nr_sk(sk);
+	unsigned long opt;
 
-	अगर (level != SOL_NETROM)
-		वापस -ENOPROTOOPT;
+	if (level != SOL_NETROM)
+		return -ENOPROTOOPT;
 
-	अगर (optlen < माप(अचिन्हित पूर्णांक))
-		वापस -EINVAL;
+	if (optlen < sizeof(unsigned int))
+		return -EINVAL;
 
-	अगर (copy_from_sockptr(&opt, optval, माप(अचिन्हित पूर्णांक)))
-		वापस -EFAULT;
+	if (copy_from_sockptr(&opt, optval, sizeof(unsigned int)))
+		return -EFAULT;
 
-	चयन (optname) अणु
-	हाल NETROM_T1:
-		अगर (opt < 1 || opt > अच_दीर्घ_उच्च / HZ)
-			वापस -EINVAL;
+	switch (optname) {
+	case NETROM_T1:
+		if (opt < 1 || opt > ULONG_MAX / HZ)
+			return -EINVAL;
 		nr->t1 = opt * HZ;
-		वापस 0;
+		return 0;
 
-	हाल NETROM_T2:
-		अगर (opt < 1 || opt > अच_दीर्घ_उच्च / HZ)
-			वापस -EINVAL;
+	case NETROM_T2:
+		if (opt < 1 || opt > ULONG_MAX / HZ)
+			return -EINVAL;
 		nr->t2 = opt * HZ;
-		वापस 0;
+		return 0;
 
-	हाल NETROM_N2:
-		अगर (opt < 1 || opt > 31)
-			वापस -EINVAL;
+	case NETROM_N2:
+		if (opt < 1 || opt > 31)
+			return -EINVAL;
 		nr->n2 = opt;
-		वापस 0;
+		return 0;
 
-	हाल NETROM_T4:
-		अगर (opt < 1 || opt > अच_दीर्घ_उच्च / HZ)
-			वापस -EINVAL;
+	case NETROM_T4:
+		if (opt < 1 || opt > ULONG_MAX / HZ)
+			return -EINVAL;
 		nr->t4 = opt * HZ;
-		वापस 0;
+		return 0;
 
-	हाल NETROM_IDLE:
-		अगर (opt > अच_दीर्घ_उच्च / (60 * HZ))
-			वापस -EINVAL;
+	case NETROM_IDLE:
+		if (opt > ULONG_MAX / (60 * HZ))
+			return -EINVAL;
 		nr->idle = opt * 60 * HZ;
-		वापस 0;
+		return 0;
 
-	शेष:
-		वापस -ENOPROTOOPT;
-	पूर्ण
-पूर्ण
+	default:
+		return -ENOPROTOOPT;
+	}
+}
 
-अटल पूर्णांक nr_माला_लोockopt(काष्ठा socket *sock, पूर्णांक level, पूर्णांक optname,
-	अक्षर __user *optval, पूर्णांक __user *optlen)
-अणु
-	काष्ठा sock *sk = sock->sk;
-	काष्ठा nr_sock *nr = nr_sk(sk);
-	पूर्णांक val = 0;
-	पूर्णांक len;
+static int nr_getsockopt(struct socket *sock, int level, int optname,
+	char __user *optval, int __user *optlen)
+{
+	struct sock *sk = sock->sk;
+	struct nr_sock *nr = nr_sk(sk);
+	int val = 0;
+	int len;
 
-	अगर (level != SOL_NETROM)
-		वापस -ENOPROTOOPT;
+	if (level != SOL_NETROM)
+		return -ENOPROTOOPT;
 
-	अगर (get_user(len, optlen))
-		वापस -EFAULT;
+	if (get_user(len, optlen))
+		return -EFAULT;
 
-	अगर (len < 0)
-		वापस -EINVAL;
+	if (len < 0)
+		return -EINVAL;
 
-	चयन (optname) अणु
-	हाल NETROM_T1:
+	switch (optname) {
+	case NETROM_T1:
 		val = nr->t1 / HZ;
-		अवरोध;
+		break;
 
-	हाल NETROM_T2:
+	case NETROM_T2:
 		val = nr->t2 / HZ;
-		अवरोध;
+		break;
 
-	हाल NETROM_N2:
+	case NETROM_N2:
 		val = nr->n2;
-		अवरोध;
+		break;
 
-	हाल NETROM_T4:
+	case NETROM_T4:
 		val = nr->t4 / HZ;
-		अवरोध;
+		break;
 
-	हाल NETROM_IDLE:
+	case NETROM_IDLE:
 		val = nr->idle / (60 * HZ);
-		अवरोध;
+		break;
 
-	शेष:
-		वापस -ENOPROTOOPT;
-	पूर्ण
+	default:
+		return -ENOPROTOOPT;
+	}
 
-	len = min_t(अचिन्हित पूर्णांक, len, माप(पूर्णांक));
+	len = min_t(unsigned int, len, sizeof(int));
 
-	अगर (put_user(len, optlen))
-		वापस -EFAULT;
+	if (put_user(len, optlen))
+		return -EFAULT;
 
-	वापस copy_to_user(optval, &val, len) ? -EFAULT : 0;
-पूर्ण
+	return copy_to_user(optval, &val, len) ? -EFAULT : 0;
+}
 
-अटल पूर्णांक nr_listen(काष्ठा socket *sock, पूर्णांक backlog)
-अणु
-	काष्ठा sock *sk = sock->sk;
+static int nr_listen(struct socket *sock, int backlog)
+{
+	struct sock *sk = sock->sk;
 
 	lock_sock(sk);
-	अगर (sk->sk_state != TCP_LISTEN) अणु
-		स_रखो(&nr_sk(sk)->user_addr, 0, AX25_ADDR_LEN);
+	if (sk->sk_state != TCP_LISTEN) {
+		memset(&nr_sk(sk)->user_addr, 0, AX25_ADDR_LEN);
 		sk->sk_max_ack_backlog = backlog;
 		sk->sk_state           = TCP_LISTEN;
 		release_sock(sk);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 	release_sock(sk);
 
-	वापस -EOPNOTSUPP;
-पूर्ण
+	return -EOPNOTSUPP;
+}
 
-अटल काष्ठा proto nr_proto = अणु
+static struct proto nr_proto = {
 	.name	  = "NETROM",
 	.owner	  = THIS_MODULE,
-	.obj_size = माप(काष्ठा nr_sock),
-पूर्ण;
+	.obj_size = sizeof(struct nr_sock),
+};
 
-अटल पूर्णांक nr_create(काष्ठा net *net, काष्ठा socket *sock, पूर्णांक protocol,
-		     पूर्णांक kern)
-अणु
-	काष्ठा sock *sk;
-	काष्ठा nr_sock *nr;
+static int nr_create(struct net *net, struct socket *sock, int protocol,
+		     int kern)
+{
+	struct sock *sk;
+	struct nr_sock *nr;
 
-	अगर (!net_eq(net, &init_net))
-		वापस -EAFNOSUPPORT;
+	if (!net_eq(net, &init_net))
+		return -EAFNOSUPPORT;
 
-	अगर (sock->type != SOCK_SEQPACKET || protocol != 0)
-		वापस -ESOCKTNOSUPPORT;
+	if (sock->type != SOCK_SEQPACKET || protocol != 0)
+		return -ESOCKTNOSUPPORT;
 
 	sk = sk_alloc(net, PF_NETROM, GFP_ATOMIC, &nr_proto, kern);
-	अगर (sk  == शून्य)
-		वापस -ENOMEM;
+	if (sk  == NULL)
+		return -ENOMEM;
 
 	nr = nr_sk(sk);
 
@@ -446,41 +445,41 @@ found:
 	skb_queue_head_init(&nr->reseq_queue);
 	skb_queue_head_init(&nr->frag_queue);
 
-	nr_init_समयrs(sk);
+	nr_init_timers(sk);
 
 	nr->t1     =
-		msecs_to_jअगरfies(sysctl_netrom_transport_समयout);
+		msecs_to_jiffies(sysctl_netrom_transport_timeout);
 	nr->t2     =
-		msecs_to_jअगरfies(sysctl_netrom_transport_acknowledge_delay);
+		msecs_to_jiffies(sysctl_netrom_transport_acknowledge_delay);
 	nr->n2     =
-		msecs_to_jअगरfies(sysctl_netrom_transport_maximum_tries);
+		msecs_to_jiffies(sysctl_netrom_transport_maximum_tries);
 	nr->t4     =
-		msecs_to_jअगरfies(sysctl_netrom_transport_busy_delay);
+		msecs_to_jiffies(sysctl_netrom_transport_busy_delay);
 	nr->idle   =
-		msecs_to_jअगरfies(sysctl_netrom_transport_no_activity_समयout);
-	nr->winकरोw = sysctl_netrom_transport_requested_winकरोw_size;
+		msecs_to_jiffies(sysctl_netrom_transport_no_activity_timeout);
+	nr->window = sysctl_netrom_transport_requested_window_size;
 
 	nr->bpqext = 1;
 	nr->state  = NR_STATE_0;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा sock *nr_make_new(काष्ठा sock *osk)
-अणु
-	काष्ठा sock *sk;
-	काष्ठा nr_sock *nr, *onr;
+static struct sock *nr_make_new(struct sock *osk)
+{
+	struct sock *sk;
+	struct nr_sock *nr, *onr;
 
-	अगर (osk->sk_type != SOCK_SEQPACKET)
-		वापस शून्य;
+	if (osk->sk_type != SOCK_SEQPACKET)
+		return NULL;
 
 	sk = sk_alloc(sock_net(osk), PF_NETROM, GFP_ATOMIC, osk->sk_prot, 0);
-	अगर (sk == शून्य)
-		वापस शून्य;
+	if (sk == NULL)
+		return NULL;
 
 	nr = nr_sk(sk);
 
-	sock_init_data(शून्य, sk);
+	sock_init_data(NULL, sk);
 
 	sk->sk_type     = osk->sk_type;
 	sk->sk_priority = osk->sk_priority;
@@ -494,7 +493,7 @@ found:
 	skb_queue_head_init(&nr->reseq_queue);
 	skb_queue_head_init(&nr->frag_queue);
 
-	nr_init_समयrs(sk);
+	nr_init_timers(sk);
 
 	onr = nr_sk(osk);
 
@@ -503,120 +502,120 @@ found:
 	nr->n2      = onr->n2;
 	nr->t4      = onr->t4;
 	nr->idle    = onr->idle;
-	nr->winकरोw  = onr->winकरोw;
+	nr->window  = onr->window;
 
 	nr->device  = onr->device;
 	nr->bpqext  = onr->bpqext;
 
-	वापस sk;
-पूर्ण
+	return sk;
+}
 
-अटल पूर्णांक nr_release(काष्ठा socket *sock)
-अणु
-	काष्ठा sock *sk = sock->sk;
-	काष्ठा nr_sock *nr;
+static int nr_release(struct socket *sock)
+{
+	struct sock *sk = sock->sk;
+	struct nr_sock *nr;
 
-	अगर (sk == शून्य) वापस 0;
+	if (sk == NULL) return 0;
 
 	sock_hold(sk);
 	sock_orphan(sk);
 	lock_sock(sk);
 	nr = nr_sk(sk);
 
-	चयन (nr->state) अणु
-	हाल NR_STATE_0:
-	हाल NR_STATE_1:
-	हाल NR_STATE_2:
+	switch (nr->state) {
+	case NR_STATE_0:
+	case NR_STATE_1:
+	case NR_STATE_2:
 		nr_disconnect(sk, 0);
 		nr_destroy_socket(sk);
-		अवरोध;
+		break;
 
-	हाल NR_STATE_3:
+	case NR_STATE_3:
 		nr_clear_queues(sk);
 		nr->n2count = 0;
-		nr_ग_लिखो_पूर्णांकernal(sk, NR_DISCREQ);
-		nr_start_t1समयr(sk);
-		nr_stop_t2समयr(sk);
-		nr_stop_t4समयr(sk);
-		nr_stop_idleसमयr(sk);
+		nr_write_internal(sk, NR_DISCREQ);
+		nr_start_t1timer(sk);
+		nr_stop_t2timer(sk);
+		nr_stop_t4timer(sk);
+		nr_stop_idletimer(sk);
 		nr->state    = NR_STATE_2;
 		sk->sk_state    = TCP_CLOSE;
-		sk->sk_shutकरोwn |= SEND_SHUTDOWN;
+		sk->sk_shutdown |= SEND_SHUTDOWN;
 		sk->sk_state_change(sk);
 		sock_set_flag(sk, SOCK_DESTROY);
-		अवरोध;
+		break;
 
-	शेष:
-		अवरोध;
-	पूर्ण
+	default:
+		break;
+	}
 
-	sock->sk   = शून्य;
+	sock->sk   = NULL;
 	release_sock(sk);
 	sock_put(sk);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक nr_bind(काष्ठा socket *sock, काष्ठा sockaddr *uaddr, पूर्णांक addr_len)
-अणु
-	काष्ठा sock *sk = sock->sk;
-	काष्ठा nr_sock *nr = nr_sk(sk);
-	काष्ठा full_sockaddr_ax25 *addr = (काष्ठा full_sockaddr_ax25 *)uaddr;
-	काष्ठा net_device *dev;
+static int nr_bind(struct socket *sock, struct sockaddr *uaddr, int addr_len)
+{
+	struct sock *sk = sock->sk;
+	struct nr_sock *nr = nr_sk(sk);
+	struct full_sockaddr_ax25 *addr = (struct full_sockaddr_ax25 *)uaddr;
+	struct net_device *dev;
 	ax25_uid_assoc *user;
 	ax25_address *source;
 
 	lock_sock(sk);
-	अगर (!sock_flag(sk, SOCK_ZAPPED)) अणु
+	if (!sock_flag(sk, SOCK_ZAPPED)) {
 		release_sock(sk);
-		वापस -EINVAL;
-	पूर्ण
-	अगर (addr_len < माप(काष्ठा sockaddr_ax25) || addr_len > माप(काष्ठा full_sockaddr_ax25)) अणु
+		return -EINVAL;
+	}
+	if (addr_len < sizeof(struct sockaddr_ax25) || addr_len > sizeof(struct full_sockaddr_ax25)) {
 		release_sock(sk);
-		वापस -EINVAL;
-	पूर्ण
-	अगर (addr_len < (addr->fsa_ax25.sax25_ndigis * माप(ax25_address) + माप(काष्ठा sockaddr_ax25))) अणु
+		return -EINVAL;
+	}
+	if (addr_len < (addr->fsa_ax25.sax25_ndigis * sizeof(ax25_address) + sizeof(struct sockaddr_ax25))) {
 		release_sock(sk);
-		वापस -EINVAL;
-	पूर्ण
-	अगर (addr->fsa_ax25.sax25_family != AF_NETROM) अणु
+		return -EINVAL;
+	}
+	if (addr->fsa_ax25.sax25_family != AF_NETROM) {
 		release_sock(sk);
-		वापस -EINVAL;
-	पूर्ण
-	अगर ((dev = nr_dev_get(&addr->fsa_ax25.sax25_call)) == शून्य) अणु
+		return -EINVAL;
+	}
+	if ((dev = nr_dev_get(&addr->fsa_ax25.sax25_call)) == NULL) {
 		release_sock(sk);
-		वापस -EADDRNOTAVAIL;
-	पूर्ण
+		return -EADDRNOTAVAIL;
+	}
 
 	/*
 	 * Only the super user can set an arbitrary user callsign.
 	 */
-	अगर (addr->fsa_ax25.sax25_ndigis == 1) अणु
-		अगर (!capable(CAP_NET_BIND_SERVICE)) अणु
+	if (addr->fsa_ax25.sax25_ndigis == 1) {
+		if (!capable(CAP_NET_BIND_SERVICE)) {
 			dev_put(dev);
 			release_sock(sk);
-			वापस -EPERM;
-		पूर्ण
+			return -EPERM;
+		}
 		nr->user_addr   = addr->fsa_digipeater[0];
 		nr->source_addr = addr->fsa_ax25.sax25_call;
-	पूर्ण अन्यथा अणु
+	} else {
 		source = &addr->fsa_ax25.sax25_call;
 
 		user = ax25_findbyuid(current_euid());
-		अगर (user) अणु
+		if (user) {
 			nr->user_addr   = user->call;
 			ax25_uid_put(user);
-		पूर्ण अन्यथा अणु
-			अगर (ax25_uid_policy && !capable(CAP_NET_BIND_SERVICE)) अणु
+		} else {
+			if (ax25_uid_policy && !capable(CAP_NET_BIND_SERVICE)) {
 				release_sock(sk);
 				dev_put(dev);
-				वापस -EPERM;
-			पूर्ण
+				return -EPERM;
+			}
 			nr->user_addr   = *source;
-		पूर्ण
+		}
 
 		nr->source_addr = *source;
-	पूर्ण
+	}
 
 	nr->device = dev;
 	nr_insert_socket(sk);
@@ -625,76 +624,76 @@ found:
 	dev_put(dev);
 	release_sock(sk);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक nr_connect(काष्ठा socket *sock, काष्ठा sockaddr *uaddr,
-	पूर्णांक addr_len, पूर्णांक flags)
-अणु
-	काष्ठा sock *sk = sock->sk;
-	काष्ठा nr_sock *nr = nr_sk(sk);
-	काष्ठा sockaddr_ax25 *addr = (काष्ठा sockaddr_ax25 *)uaddr;
-	ax25_address *source = शून्य;
+static int nr_connect(struct socket *sock, struct sockaddr *uaddr,
+	int addr_len, int flags)
+{
+	struct sock *sk = sock->sk;
+	struct nr_sock *nr = nr_sk(sk);
+	struct sockaddr_ax25 *addr = (struct sockaddr_ax25 *)uaddr;
+	ax25_address *source = NULL;
 	ax25_uid_assoc *user;
-	काष्ठा net_device *dev;
-	पूर्णांक err = 0;
+	struct net_device *dev;
+	int err = 0;
 
 	lock_sock(sk);
-	अगर (sk->sk_state == TCP_ESTABLISHED && sock->state == SS_CONNECTING) अणु
+	if (sk->sk_state == TCP_ESTABLISHED && sock->state == SS_CONNECTING) {
 		sock->state = SS_CONNECTED;
-		जाओ out_release;	/* Connect completed during a ERESTARTSYS event */
-	पूर्ण
+		goto out_release;	/* Connect completed during a ERESTARTSYS event */
+	}
 
-	अगर (sk->sk_state == TCP_CLOSE && sock->state == SS_CONNECTING) अणु
+	if (sk->sk_state == TCP_CLOSE && sock->state == SS_CONNECTING) {
 		sock->state = SS_UNCONNECTED;
 		err = -ECONNREFUSED;
-		जाओ out_release;
-	पूर्ण
+		goto out_release;
+	}
 
-	अगर (sk->sk_state == TCP_ESTABLISHED) अणु
+	if (sk->sk_state == TCP_ESTABLISHED) {
 		err = -EISCONN;	/* No reconnect on a seqpacket socket */
-		जाओ out_release;
-	पूर्ण
+		goto out_release;
+	}
 
 	sk->sk_state   = TCP_CLOSE;
 	sock->state = SS_UNCONNECTED;
 
-	अगर (addr_len != माप(काष्ठा sockaddr_ax25) && addr_len != माप(काष्ठा full_sockaddr_ax25)) अणु
+	if (addr_len != sizeof(struct sockaddr_ax25) && addr_len != sizeof(struct full_sockaddr_ax25)) {
 		err = -EINVAL;
-		जाओ out_release;
-	पूर्ण
-	अगर (addr->sax25_family != AF_NETROM) अणु
+		goto out_release;
+	}
+	if (addr->sax25_family != AF_NETROM) {
 		err = -EINVAL;
-		जाओ out_release;
-	पूर्ण
-	अगर (sock_flag(sk, SOCK_ZAPPED)) अणु	/* Must bind first - स्वतःbinding in this may or may not work */
+		goto out_release;
+	}
+	if (sock_flag(sk, SOCK_ZAPPED)) {	/* Must bind first - autobinding in this may or may not work */
 		sock_reset_flag(sk, SOCK_ZAPPED);
 
-		अगर ((dev = nr_dev_first()) == शून्य) अणु
+		if ((dev = nr_dev_first()) == NULL) {
 			err = -ENETUNREACH;
-			जाओ out_release;
-		पूर्ण
+			goto out_release;
+		}
 		source = (ax25_address *)dev->dev_addr;
 
 		user = ax25_findbyuid(current_euid());
-		अगर (user) अणु
+		if (user) {
 			nr->user_addr   = user->call;
 			ax25_uid_put(user);
-		पूर्ण अन्यथा अणु
-			अगर (ax25_uid_policy && !capable(CAP_NET_ADMIN)) अणु
+		} else {
+			if (ax25_uid_policy && !capable(CAP_NET_ADMIN)) {
 				dev_put(dev);
 				err = -EPERM;
-				जाओ out_release;
-			पूर्ण
+				goto out_release;
+			}
 			nr->user_addr   = *source;
-		पूर्ण
+		}
 
 		nr->source_addr = *source;
 		nr->device      = dev;
 
 		dev_put(dev);
 		nr_insert_socket(sk);		/* Finish the bind */
-	पूर्ण
+	}
 
 	nr->dest_addr = addr->sax25_call;
 
@@ -718,162 +717,162 @@ found:
 	nr_start_heartbeat(sk);
 
 	/* Now the loop */
-	अगर (sk->sk_state != TCP_ESTABLISHED && (flags & O_NONBLOCK)) अणु
+	if (sk->sk_state != TCP_ESTABLISHED && (flags & O_NONBLOCK)) {
 		err = -EINPROGRESS;
-		जाओ out_release;
-	पूर्ण
+		goto out_release;
+	}
 
 	/*
-	 * A Connect Ack with Choke or समयout or failed routing will go to
-	 * बंदd.
+	 * A Connect Ack with Choke or timeout or failed routing will go to
+	 * closed.
 	 */
-	अगर (sk->sk_state == TCP_SYN_SENT) अणु
-		DEFINE_WAIT(रुको);
+	if (sk->sk_state == TCP_SYN_SENT) {
+		DEFINE_WAIT(wait);
 
-		क्रम (;;) अणु
-			prepare_to_रुको(sk_sleep(sk), &रुको,
+		for (;;) {
+			prepare_to_wait(sk_sleep(sk), &wait,
 					TASK_INTERRUPTIBLE);
-			अगर (sk->sk_state != TCP_SYN_SENT)
-				अवरोध;
-			अगर (!संकेत_pending(current)) अणु
+			if (sk->sk_state != TCP_SYN_SENT)
+				break;
+			if (!signal_pending(current)) {
 				release_sock(sk);
 				schedule();
 				lock_sock(sk);
-				जारी;
-			पूर्ण
+				continue;
+			}
 			err = -ERESTARTSYS;
-			अवरोध;
-		पूर्ण
-		finish_रुको(sk_sleep(sk), &रुको);
-		अगर (err)
-			जाओ out_release;
-	पूर्ण
+			break;
+		}
+		finish_wait(sk_sleep(sk), &wait);
+		if (err)
+			goto out_release;
+	}
 
-	अगर (sk->sk_state != TCP_ESTABLISHED) अणु
+	if (sk->sk_state != TCP_ESTABLISHED) {
 		sock->state = SS_UNCONNECTED;
-		err = sock_error(sk);	/* Always set at this poपूर्णांक */
-		जाओ out_release;
-	पूर्ण
+		err = sock_error(sk);	/* Always set at this point */
+		goto out_release;
+	}
 
 	sock->state = SS_CONNECTED;
 
 out_release:
 	release_sock(sk);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक nr_accept(काष्ठा socket *sock, काष्ठा socket *newsock, पूर्णांक flags,
+static int nr_accept(struct socket *sock, struct socket *newsock, int flags,
 		     bool kern)
-अणु
-	काष्ठा sk_buff *skb;
-	काष्ठा sock *newsk;
-	DEFINE_WAIT(रुको);
-	काष्ठा sock *sk;
-	पूर्णांक err = 0;
+{
+	struct sk_buff *skb;
+	struct sock *newsk;
+	DEFINE_WAIT(wait);
+	struct sock *sk;
+	int err = 0;
 
-	अगर ((sk = sock->sk) == शून्य)
-		वापस -EINVAL;
+	if ((sk = sock->sk) == NULL)
+		return -EINVAL;
 
 	lock_sock(sk);
-	अगर (sk->sk_type != SOCK_SEQPACKET) अणु
+	if (sk->sk_type != SOCK_SEQPACKET) {
 		err = -EOPNOTSUPP;
-		जाओ out_release;
-	पूर्ण
+		goto out_release;
+	}
 
-	अगर (sk->sk_state != TCP_LISTEN) अणु
+	if (sk->sk_state != TCP_LISTEN) {
 		err = -EINVAL;
-		जाओ out_release;
-	पूर्ण
+		goto out_release;
+	}
 
 	/*
-	 *	The ग_लिखो queue this समय is holding sockets पढ़ोy to use
-	 *	hooked पूर्णांकo the SABM we saved
+	 *	The write queue this time is holding sockets ready to use
+	 *	hooked into the SABM we saved
 	 */
-	क्रम (;;) अणु
-		prepare_to_रुको(sk_sleep(sk), &रुको, TASK_INTERRUPTIBLE);
+	for (;;) {
+		prepare_to_wait(sk_sleep(sk), &wait, TASK_INTERRUPTIBLE);
 		skb = skb_dequeue(&sk->sk_receive_queue);
-		अगर (skb)
-			अवरोध;
+		if (skb)
+			break;
 
-		अगर (flags & O_NONBLOCK) अणु
+		if (flags & O_NONBLOCK) {
 			err = -EWOULDBLOCK;
-			अवरोध;
-		पूर्ण
-		अगर (!संकेत_pending(current)) अणु
+			break;
+		}
+		if (!signal_pending(current)) {
 			release_sock(sk);
 			schedule();
 			lock_sock(sk);
-			जारी;
-		पूर्ण
+			continue;
+		}
 		err = -ERESTARTSYS;
-		अवरोध;
-	पूर्ण
-	finish_रुको(sk_sleep(sk), &रुको);
-	अगर (err)
-		जाओ out_release;
+		break;
+	}
+	finish_wait(sk_sleep(sk), &wait);
+	if (err)
+		goto out_release;
 
 	newsk = skb->sk;
 	sock_graft(newsk, newsock);
 
 	/* Now attach up the new socket */
-	kमुक्त_skb(skb);
-	sk_acceptq_हटाओd(sk);
+	kfree_skb(skb);
+	sk_acceptq_removed(sk);
 
 out_release:
 	release_sock(sk);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक nr_getname(काष्ठा socket *sock, काष्ठा sockaddr *uaddr,
-	पूर्णांक peer)
-अणु
-	काष्ठा full_sockaddr_ax25 *sax = (काष्ठा full_sockaddr_ax25 *)uaddr;
-	काष्ठा sock *sk = sock->sk;
-	काष्ठा nr_sock *nr = nr_sk(sk);
-	पूर्णांक uaddr_len;
+static int nr_getname(struct socket *sock, struct sockaddr *uaddr,
+	int peer)
+{
+	struct full_sockaddr_ax25 *sax = (struct full_sockaddr_ax25 *)uaddr;
+	struct sock *sk = sock->sk;
+	struct nr_sock *nr = nr_sk(sk);
+	int uaddr_len;
 
-	स_रखो(&sax->fsa_ax25, 0, माप(काष्ठा sockaddr_ax25));
+	memset(&sax->fsa_ax25, 0, sizeof(struct sockaddr_ax25));
 
 	lock_sock(sk);
-	अगर (peer != 0) अणु
-		अगर (sk->sk_state != TCP_ESTABLISHED) अणु
+	if (peer != 0) {
+		if (sk->sk_state != TCP_ESTABLISHED) {
 			release_sock(sk);
-			वापस -ENOTCONN;
-		पूर्ण
+			return -ENOTCONN;
+		}
 		sax->fsa_ax25.sax25_family = AF_NETROM;
 		sax->fsa_ax25.sax25_ndigis = 1;
 		sax->fsa_ax25.sax25_call   = nr->user_addr;
-		स_रखो(sax->fsa_digipeater, 0, माप(sax->fsa_digipeater));
+		memset(sax->fsa_digipeater, 0, sizeof(sax->fsa_digipeater));
 		sax->fsa_digipeater[0]     = nr->dest_addr;
-		uaddr_len = माप(काष्ठा full_sockaddr_ax25);
-	पूर्ण अन्यथा अणु
+		uaddr_len = sizeof(struct full_sockaddr_ax25);
+	} else {
 		sax->fsa_ax25.sax25_family = AF_NETROM;
 		sax->fsa_ax25.sax25_ndigis = 0;
 		sax->fsa_ax25.sax25_call   = nr->source_addr;
-		uaddr_len = माप(काष्ठा sockaddr_ax25);
-	पूर्ण
+		uaddr_len = sizeof(struct sockaddr_ax25);
+	}
 	release_sock(sk);
 
-	वापस uaddr_len;
-पूर्ण
+	return uaddr_len;
+}
 
-पूर्णांक nr_rx_frame(काष्ठा sk_buff *skb, काष्ठा net_device *dev)
-अणु
-	काष्ठा sock *sk;
-	काष्ठा sock *make;
-	काष्ठा nr_sock *nr_make;
+int nr_rx_frame(struct sk_buff *skb, struct net_device *dev)
+{
+	struct sock *sk;
+	struct sock *make;
+	struct nr_sock *nr_make;
 	ax25_address *src, *dest, *user;
-	अचिन्हित लघु circuit_index, circuit_id;
-	अचिन्हित लघु peer_circuit_index, peer_circuit_id;
-	अचिन्हित लघु frametype, flags, winकरोw, समयout;
-	पूर्णांक ret;
+	unsigned short circuit_index, circuit_id;
+	unsigned short peer_circuit_index, peer_circuit_id;
+	unsigned short frametype, flags, window, timeout;
+	int ret;
 
 	skb_orphan(skb);
 
 	/*
-	 *	skb->data poपूर्णांकs to the netrom frame start
+	 *	skb->data points to the netrom frame start
 	 */
 
 	src  = (ax25_address *)(skb->data + 0);
@@ -887,90 +886,90 @@ out_release:
 	flags              = skb->data[19] & 0xF0;
 
 	/*
-	 * Check क्रम an incoming IP over NET/ROM frame.
+	 * Check for an incoming IP over NET/ROM frame.
 	 */
-	अगर (frametype == NR_PROTOEXT &&
-	    circuit_index == NR_PROTO_IP && circuit_id == NR_PROTO_IP) अणु
+	if (frametype == NR_PROTOEXT &&
+	    circuit_index == NR_PROTO_IP && circuit_id == NR_PROTO_IP) {
 		skb_pull(skb, NR_NETWORK_LEN + NR_TRANSPORT_LEN);
 		skb_reset_transport_header(skb);
 
-		वापस nr_rx_ip(skb, dev);
-	पूर्ण
+		return nr_rx_ip(skb, dev);
+	}
 
 	/*
-	 * Find an existing socket connection, based on circuit ID, अगर it's
+	 * Find an existing socket connection, based on circuit ID, if it's
 	 * a Connect Request base it on their circuit ID.
 	 *
-	 * Circuit ID 0/0 is not valid but it could still be a "reset" क्रम a
-	 * circuit that no दीर्घer exists at the other end ...
+	 * Circuit ID 0/0 is not valid but it could still be a "reset" for a
+	 * circuit that no longer exists at the other end ...
 	 */
 
-	sk = शून्य;
+	sk = NULL;
 
-	अगर (circuit_index == 0 && circuit_id == 0) अणु
-		अगर (frametype == NR_CONNACK && flags == NR_CHOKE_FLAG)
+	if (circuit_index == 0 && circuit_id == 0) {
+		if (frametype == NR_CONNACK && flags == NR_CHOKE_FLAG)
 			sk = nr_find_peer(peer_circuit_index, peer_circuit_id, src);
-	पूर्ण अन्यथा अणु
-		अगर (frametype == NR_CONNREQ)
+	} else {
+		if (frametype == NR_CONNREQ)
 			sk = nr_find_peer(circuit_index, circuit_id, src);
-		अन्यथा
+		else
 			sk = nr_find_socket(circuit_index, circuit_id);
-	पूर्ण
+	}
 
-	अगर (sk != शून्य) अणु
+	if (sk != NULL) {
 		bh_lock_sock(sk);
 		skb_reset_transport_header(skb);
 
-		अगर (frametype == NR_CONNACK && skb->len == 22)
+		if (frametype == NR_CONNACK && skb->len == 22)
 			nr_sk(sk)->bpqext = 1;
-		अन्यथा
+		else
 			nr_sk(sk)->bpqext = 0;
 
 		ret = nr_process_rx_frame(sk, skb);
 		bh_unlock_sock(sk);
 		sock_put(sk);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	/*
 	 * Now it should be a CONNREQ.
 	 */
-	अगर (frametype != NR_CONNREQ) अणु
+	if (frametype != NR_CONNREQ) {
 		/*
 		 * Here it would be nice to be able to send a reset but
-		 * NET/ROM करोesn't have one.  We've tried to extend the protocol
+		 * NET/ROM doesn't have one.  We've tried to extend the protocol
 		 * by sending NR_CONNACK | NR_CHOKE_FLAGS replies but that
-		 * apparently समाप्तs BPQ boxes... :-(
+		 * apparently kills BPQ boxes... :-(
 		 * So now we try to follow the established behaviour of
 		 * G8PZT's Xrouter which is sending packets with command type 7
 		 * as an extension of the protocol.
 		 */
-		अगर (sysctl_netrom_reset_circuit &&
+		if (sysctl_netrom_reset_circuit &&
 		    (frametype != NR_RESET || flags != 0))
 			nr_transmit_reset(skb, 1);
 
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	sk = nr_find_listener(dest);
 
 	user = (ax25_address *)(skb->data + 21);
 
-	अगर (sk == शून्य || sk_acceptq_is_full(sk) ||
-	    (make = nr_make_new(sk)) == शून्य) अणु
+	if (sk == NULL || sk_acceptq_is_full(sk) ||
+	    (make = nr_make_new(sk)) == NULL) {
 		nr_transmit_refusal(skb, 0);
-		अगर (sk)
+		if (sk)
 			sock_put(sk);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	bh_lock_sock(sk);
 
-	winकरोw = skb->data[20];
+	window = skb->data[20];
 
 	sock_hold(make);
 	skb->sk             = make;
-	skb->deकाष्ठाor     = sock_eमुक्त;
+	skb->destructor     = sock_efree;
 	make->sk_state	    = TCP_ESTABLISHED;
 
 	/* Fill in his circuit details */
@@ -991,21 +990,21 @@ out_release:
 
 	circuit++;
 
-	/* Winकरोw negotiation */
-	अगर (winकरोw < nr_make->winकरोw)
-		nr_make->winकरोw = winकरोw;
+	/* Window negotiation */
+	if (window < nr_make->window)
+		nr_make->window = window;
 
-	/* L4 समयout negotiation */
-	अगर (skb->len == 37) अणु
-		समयout = skb->data[36] * 256 + skb->data[35];
-		अगर (समयout * HZ < nr_make->t1)
-			nr_make->t1 = समयout * HZ;
+	/* L4 timeout negotiation */
+	if (skb->len == 37) {
+		timeout = skb->data[36] * 256 + skb->data[35];
+		if (timeout * HZ < nr_make->t1)
+			nr_make->t1 = timeout * HZ;
 		nr_make->bpqext = 1;
-	पूर्ण अन्यथा अणु
+	} else {
 		nr_make->bpqext = 0;
-	पूर्ण
+	}
 
-	nr_ग_लिखो_पूर्णांकernal(make, NR_CONNACK);
+	nr_write_internal(make, NR_CONNACK);
 
 	nr_make->condition = 0x00;
 	nr_make->vs        = 0;
@@ -1016,8 +1015,8 @@ out_release:
 	sk_acceptq_added(sk);
 	skb_queue_head(&sk->sk_receive_queue, skb);
 
-	अगर (!sock_flag(sk, SOCK_DEAD))
-		sk->sk_data_पढ़ोy(sk);
+	if (!sock_flag(sk, SOCK_DEAD))
+		sk->sk_data_ready(sk);
 
 	bh_unlock_sock(sk);
 	sock_put(sk);
@@ -1025,93 +1024,93 @@ out_release:
 	nr_insert_socket(make);
 
 	nr_start_heartbeat(make);
-	nr_start_idleसमयr(make);
+	nr_start_idletimer(make);
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल पूर्णांक nr_sendmsg(काष्ठा socket *sock, काष्ठा msghdr *msg, माप_प्रकार len)
-अणु
-	काष्ठा sock *sk = sock->sk;
-	काष्ठा nr_sock *nr = nr_sk(sk);
-	DECLARE_SOCKADDR(काष्ठा sockaddr_ax25 *, usax, msg->msg_name);
-	पूर्णांक err;
-	काष्ठा sockaddr_ax25 sax;
-	काष्ठा sk_buff *skb;
-	अचिन्हित अक्षर *यंत्रptr;
-	पूर्णांक size;
+static int nr_sendmsg(struct socket *sock, struct msghdr *msg, size_t len)
+{
+	struct sock *sk = sock->sk;
+	struct nr_sock *nr = nr_sk(sk);
+	DECLARE_SOCKADDR(struct sockaddr_ax25 *, usax, msg->msg_name);
+	int err;
+	struct sockaddr_ax25 sax;
+	struct sk_buff *skb;
+	unsigned char *asmptr;
+	int size;
 
-	अगर (msg->msg_flags & ~(MSG_DONTWAIT|MSG_EOR|MSG_CMSG_COMPAT))
-		वापस -EINVAL;
+	if (msg->msg_flags & ~(MSG_DONTWAIT|MSG_EOR|MSG_CMSG_COMPAT))
+		return -EINVAL;
 
 	lock_sock(sk);
-	अगर (sock_flag(sk, SOCK_ZAPPED)) अणु
+	if (sock_flag(sk, SOCK_ZAPPED)) {
 		err = -EADDRNOTAVAIL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (sk->sk_shutकरोwn & SEND_SHUTDOWN) अणु
+	if (sk->sk_shutdown & SEND_SHUTDOWN) {
 		send_sig(SIGPIPE, current, 0);
 		err = -EPIPE;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (nr->device == शून्य) अणु
+	if (nr->device == NULL) {
 		err = -ENETUNREACH;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (usax) अणु
-		अगर (msg->msg_namelen < माप(sax)) अणु
+	if (usax) {
+		if (msg->msg_namelen < sizeof(sax)) {
 			err = -EINVAL;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		sax = *usax;
-		अगर (ax25cmp(&nr->dest_addr, &sax.sax25_call) != 0) अणु
+		if (ax25cmp(&nr->dest_addr, &sax.sax25_call) != 0) {
 			err = -EISCONN;
-			जाओ out;
-		पूर्ण
-		अगर (sax.sax25_family != AF_NETROM) अणु
+			goto out;
+		}
+		if (sax.sax25_family != AF_NETROM) {
 			err = -EINVAL;
-			जाओ out;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		अगर (sk->sk_state != TCP_ESTABLISHED) अणु
+			goto out;
+		}
+	} else {
+		if (sk->sk_state != TCP_ESTABLISHED) {
 			err = -ENOTCONN;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		sax.sax25_family = AF_NETROM;
 		sax.sax25_call   = nr->dest_addr;
-	पूर्ण
+	}
 
 	/* Build a packet - the conventional user limit is 236 bytes. We can
-	   करो ludicrously large NetROM frames but must not overflow */
-	अगर (len > 65536) अणु
+	   do ludicrously large NetROM frames but must not overflow */
+	if (len > 65536) {
 		err = -EMSGSIZE;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	size = len + NR_NETWORK_LEN + NR_TRANSPORT_LEN;
 
-	अगर ((skb = sock_alloc_send_skb(sk, size, msg->msg_flags & MSG_DONTWAIT, &err)) == शून्य)
-		जाओ out;
+	if ((skb = sock_alloc_send_skb(sk, size, msg->msg_flags & MSG_DONTWAIT, &err)) == NULL)
+		goto out;
 
 	skb_reserve(skb, size - len);
 	skb_reset_transport_header(skb);
 
 	/*
-	 *	Push करोwn the NET/ROM header
+	 *	Push down the NET/ROM header
 	 */
 
-	यंत्रptr = skb_push(skb, NR_TRANSPORT_LEN);
+	asmptr = skb_push(skb, NR_TRANSPORT_LEN);
 
 	/* Build a NET/ROM Transport header */
 
-	*यंत्रptr++ = nr->your_index;
-	*यंत्रptr++ = nr->your_id;
-	*यंत्रptr++ = 0;		/* To be filled in later */
-	*यंत्रptr++ = 0;		/*      Ditto            */
-	*यंत्रptr++ = NR_INFO;
+	*asmptr++ = nr->your_index;
+	*asmptr++ = nr->your_id;
+	*asmptr++ = 0;		/* To be filled in later */
+	*asmptr++ = 0;		/*      Ditto            */
+	*asmptr++ = NR_INFO;
 
 	/*
 	 *	Put the data on the end
@@ -1119,182 +1118,182 @@ out_release:
 	skb_put(skb, len);
 
 	/* User data follows immediately after the NET/ROM transport header */
-	अगर (स_नकल_from_msg(skb_transport_header(skb), msg, len)) अणु
-		kमुक्त_skb(skb);
+	if (memcpy_from_msg(skb_transport_header(skb), msg, len)) {
+		kfree_skb(skb);
 		err = -EFAULT;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (sk->sk_state != TCP_ESTABLISHED) अणु
-		kमुक्त_skb(skb);
+	if (sk->sk_state != TCP_ESTABLISHED) {
+		kfree_skb(skb);
 		err = -ENOTCONN;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	nr_output(sk, skb);	/* Shove it onto the queue */
 
 	err = len;
 out:
 	release_sock(sk);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक nr_recvmsg(काष्ठा socket *sock, काष्ठा msghdr *msg, माप_प्रकार size,
-		      पूर्णांक flags)
-अणु
-	काष्ठा sock *sk = sock->sk;
-	DECLARE_SOCKADDR(काष्ठा sockaddr_ax25 *, sax, msg->msg_name);
-	माप_प्रकार copied;
-	काष्ठा sk_buff *skb;
-	पूर्णांक er;
+static int nr_recvmsg(struct socket *sock, struct msghdr *msg, size_t size,
+		      int flags)
+{
+	struct sock *sk = sock->sk;
+	DECLARE_SOCKADDR(struct sockaddr_ax25 *, sax, msg->msg_name);
+	size_t copied;
+	struct sk_buff *skb;
+	int er;
 
 	/*
-	 * This works क्रम seqpacket too. The receiver has ordered the queue क्रम
-	 * us! We करो one quick check first though
+	 * This works for seqpacket too. The receiver has ordered the queue for
+	 * us! We do one quick check first though
 	 */
 
 	lock_sock(sk);
-	अगर (sk->sk_state != TCP_ESTABLISHED) अणु
+	if (sk->sk_state != TCP_ESTABLISHED) {
 		release_sock(sk);
-		वापस -ENOTCONN;
-	पूर्ण
+		return -ENOTCONN;
+	}
 
 	/* Now we can treat all alike */
-	अगर ((skb = skb_recv_datagram(sk, flags & ~MSG_DONTWAIT, flags & MSG_DONTWAIT, &er)) == शून्य) अणु
+	if ((skb = skb_recv_datagram(sk, flags & ~MSG_DONTWAIT, flags & MSG_DONTWAIT, &er)) == NULL) {
 		release_sock(sk);
-		वापस er;
-	पूर्ण
+		return er;
+	}
 
 	skb_reset_transport_header(skb);
 	copied     = skb->len;
 
-	अगर (copied > size) अणु
+	if (copied > size) {
 		copied = size;
 		msg->msg_flags |= MSG_TRUNC;
-	पूर्ण
+	}
 
 	er = skb_copy_datagram_msg(skb, 0, msg, copied);
-	अगर (er < 0) अणु
-		skb_मुक्त_datagram(sk, skb);
+	if (er < 0) {
+		skb_free_datagram(sk, skb);
 		release_sock(sk);
-		वापस er;
-	पूर्ण
+		return er;
+	}
 
-	अगर (sax != शून्य) अणु
-		स_रखो(sax, 0, माप(*sax));
+	if (sax != NULL) {
+		memset(sax, 0, sizeof(*sax));
 		sax->sax25_family = AF_NETROM;
 		skb_copy_from_linear_data_offset(skb, 7, sax->sax25_call.ax25_call,
 			      AX25_ADDR_LEN);
-		msg->msg_namelen = माप(*sax);
-	पूर्ण
+		msg->msg_namelen = sizeof(*sax);
+	}
 
-	skb_मुक्त_datagram(sk, skb);
+	skb_free_datagram(sk, skb);
 
 	release_sock(sk);
-	वापस copied;
-पूर्ण
+	return copied;
+}
 
 
-अटल पूर्णांक nr_ioctl(काष्ठा socket *sock, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
-अणु
-	काष्ठा sock *sk = sock->sk;
-	व्योम __user *argp = (व्योम __user *)arg;
+static int nr_ioctl(struct socket *sock, unsigned int cmd, unsigned long arg)
+{
+	struct sock *sk = sock->sk;
+	void __user *argp = (void __user *)arg;
 
-	चयन (cmd) अणु
-	हाल TIOCOUTQ: अणु
-		दीर्घ amount;
+	switch (cmd) {
+	case TIOCOUTQ: {
+		long amount;
 
 		lock_sock(sk);
 		amount = sk->sk_sndbuf - sk_wmem_alloc_get(sk);
-		अगर (amount < 0)
+		if (amount < 0)
 			amount = 0;
 		release_sock(sk);
-		वापस put_user(amount, (पूर्णांक __user *)argp);
-	पूर्ण
+		return put_user(amount, (int __user *)argp);
+	}
 
-	हाल TIOCINQ: अणु
-		काष्ठा sk_buff *skb;
-		दीर्घ amount = 0L;
+	case TIOCINQ: {
+		struct sk_buff *skb;
+		long amount = 0L;
 
 		lock_sock(sk);
-		/* These two are safe on a single CPU प्रणाली as only user tasks fiddle here */
-		अगर ((skb = skb_peek(&sk->sk_receive_queue)) != शून्य)
+		/* These two are safe on a single CPU system as only user tasks fiddle here */
+		if ((skb = skb_peek(&sk->sk_receive_queue)) != NULL)
 			amount = skb->len;
 		release_sock(sk);
-		वापस put_user(amount, (पूर्णांक __user *)argp);
-	पूर्ण
+		return put_user(amount, (int __user *)argp);
+	}
 
-	हाल SIOCGIFADDR:
-	हाल SIOCSIFADDR:
-	हाल SIOCGIFDSTADDR:
-	हाल SIOCSIFDSTADDR:
-	हाल SIOCGIFBRDADDR:
-	हाल SIOCSIFBRDADDR:
-	हाल SIOCGIFNETMASK:
-	हाल SIOCSIFNETMASK:
-	हाल SIOCGIFMETRIC:
-	हाल SIOCSIFMETRIC:
-		वापस -EINVAL;
+	case SIOCGIFADDR:
+	case SIOCSIFADDR:
+	case SIOCGIFDSTADDR:
+	case SIOCSIFDSTADDR:
+	case SIOCGIFBRDADDR:
+	case SIOCSIFBRDADDR:
+	case SIOCGIFNETMASK:
+	case SIOCSIFNETMASK:
+	case SIOCGIFMETRIC:
+	case SIOCSIFMETRIC:
+		return -EINVAL;
 
-	हाल SIOCADDRT:
-	हाल SIOCDELRT:
-	हाल SIOCNRDECOBS:
-		अगर (!capable(CAP_NET_ADMIN))
-			वापस -EPERM;
-		वापस nr_rt_ioctl(cmd, argp);
+	case SIOCADDRT:
+	case SIOCDELRT:
+	case SIOCNRDECOBS:
+		if (!capable(CAP_NET_ADMIN))
+			return -EPERM;
+		return nr_rt_ioctl(cmd, argp);
 
-	शेष:
-		वापस -ENOIOCTLCMD;
-	पूर्ण
+	default:
+		return -ENOIOCTLCMD;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_PROC_FS
+#ifdef CONFIG_PROC_FS
 
-अटल व्योम *nr_info_start(काष्ठा seq_file *seq, loff_t *pos)
+static void *nr_info_start(struct seq_file *seq, loff_t *pos)
 	__acquires(&nr_list_lock)
-अणु
+{
 	spin_lock_bh(&nr_list_lock);
-	वापस seq_hlist_start_head(&nr_list, *pos);
-पूर्ण
+	return seq_hlist_start_head(&nr_list, *pos);
+}
 
-अटल व्योम *nr_info_next(काष्ठा seq_file *seq, व्योम *v, loff_t *pos)
-अणु
-	वापस seq_hlist_next(v, &nr_list, pos);
-पूर्ण
+static void *nr_info_next(struct seq_file *seq, void *v, loff_t *pos)
+{
+	return seq_hlist_next(v, &nr_list, pos);
+}
 
-अटल व्योम nr_info_stop(काष्ठा seq_file *seq, व्योम *v)
+static void nr_info_stop(struct seq_file *seq, void *v)
 	__releases(&nr_list_lock)
-अणु
+{
 	spin_unlock_bh(&nr_list_lock);
-पूर्ण
+}
 
-अटल पूर्णांक nr_info_show(काष्ठा seq_file *seq, व्योम *v)
-अणु
-	काष्ठा sock *s = sk_entry(v);
-	काष्ठा net_device *dev;
-	काष्ठा nr_sock *nr;
-	स्थिर अक्षर *devname;
-	अक्षर buf[11];
+static int nr_info_show(struct seq_file *seq, void *v)
+{
+	struct sock *s = sk_entry(v);
+	struct net_device *dev;
+	struct nr_sock *nr;
+	const char *devname;
+	char buf[11];
 
-	अगर (v == SEQ_START_TOKEN)
-		seq_माला_दो(seq,
+	if (v == SEQ_START_TOKEN)
+		seq_puts(seq,
 "user_addr dest_node src_node  dev    my  your  st  vs  vr  va    t1     t2     t4      idle   n2  wnd Snd-Q Rcv-Q inode\n");
 
-	अन्यथा अणु
+	else {
 
 		bh_lock_sock(s);
 		nr = nr_sk(s);
 
-		अगर ((dev = nr->device) == शून्य)
+		if ((dev = nr->device) == NULL)
 			devname = "???";
-		अन्यथा
+		else
 			devname = dev->name;
 
-		seq_म_लिखो(seq, "%-9s ", ax2asc(buf, &nr->user_addr));
-		seq_म_लिखो(seq, "%-9s ", ax2asc(buf, &nr->dest_addr));
-		seq_म_लिखो(seq,
+		seq_printf(seq, "%-9s ", ax2asc(buf, &nr->user_addr));
+		seq_printf(seq, "%-9s ", ax2asc(buf, &nr->dest_addr));
+		seq_printf(seq,
 "%-9s %-3s  %02X/%02X %02X/%02X %2d %3d %3d %3d %3lu/%03lu %2lu/%02lu %3lu/%03lu %3lu/%03lu %2d/%02d %3d %5d %5d %ld\n",
 			ax2asc(buf, &nr->source_addr),
 			devname,
@@ -1306,41 +1305,41 @@ out:
 			nr->vs,
 			nr->vr,
 			nr->va,
-			ax25_display_समयr(&nr->t1समयr) / HZ,
+			ax25_display_timer(&nr->t1timer) / HZ,
 			nr->t1 / HZ,
-			ax25_display_समयr(&nr->t2समयr) / HZ,
+			ax25_display_timer(&nr->t2timer) / HZ,
 			nr->t2 / HZ,
-			ax25_display_समयr(&nr->t4समयr) / HZ,
+			ax25_display_timer(&nr->t4timer) / HZ,
 			nr->t4 / HZ,
-			ax25_display_समयr(&nr->idleसमयr) / (60 * HZ),
+			ax25_display_timer(&nr->idletimer) / (60 * HZ),
 			nr->idle / (60 * HZ),
 			nr->n2count,
 			nr->n2,
-			nr->winकरोw,
+			nr->window,
 			sk_wmem_alloc_get(s),
 			sk_rmem_alloc_get(s),
 			s->sk_socket ? SOCK_INODE(s->sk_socket)->i_ino : 0L);
 
 		bh_unlock_sock(s);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल स्थिर काष्ठा seq_operations nr_info_seqops = अणु
+static const struct seq_operations nr_info_seqops = {
 	.start = nr_info_start,
 	.next = nr_info_next,
 	.stop = nr_info_stop,
 	.show = nr_info_show,
-पूर्ण;
-#पूर्ण_अगर	/* CONFIG_PROC_FS */
+};
+#endif	/* CONFIG_PROC_FS */
 
-अटल स्थिर काष्ठा net_proto_family nr_family_ops = अणु
+static const struct net_proto_family nr_family_ops = {
 	.family		=	PF_NETROM,
 	.create		=	nr_create,
 	.owner		=	THIS_MODULE,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा proto_ops nr_proto_ops = अणु
+static const struct proto_ops nr_proto_ops = {
 	.family		=	PF_NETROM,
 	.owner		=	THIS_MODULE,
 	.release	=	nr_release,
@@ -1353,137 +1352,137 @@ out:
 	.ioctl		=	nr_ioctl,
 	.gettstamp	=	sock_gettstamp,
 	.listen		=	nr_listen,
-	.shutकरोwn	=	sock_no_shutकरोwn,
+	.shutdown	=	sock_no_shutdown,
 	.setsockopt	=	nr_setsockopt,
-	.माला_लोockopt	=	nr_माला_लोockopt,
+	.getsockopt	=	nr_getsockopt,
 	.sendmsg	=	nr_sendmsg,
 	.recvmsg	=	nr_recvmsg,
 	.mmap		=	sock_no_mmap,
 	.sendpage	=	sock_no_sendpage,
-पूर्ण;
+};
 
-अटल काष्ठा notअगरier_block nr_dev_notअगरier = अणु
-	.notअगरier_call	=	nr_device_event,
-पूर्ण;
+static struct notifier_block nr_dev_notifier = {
+	.notifier_call	=	nr_device_event,
+};
 
-अटल काष्ठा net_device **dev_nr;
+static struct net_device **dev_nr;
 
-अटल काष्ठा ax25_protocol nr_pid = अणु
+static struct ax25_protocol nr_pid = {
 	.pid	= AX25_P_NETROM,
 	.func	= nr_route_frame
-पूर्ण;
+};
 
-अटल काष्ठा ax25_linkfail nr_linkfail_notअगरier = अणु
+static struct ax25_linkfail nr_linkfail_notifier = {
 	.func	= nr_link_failed,
-पूर्ण;
+};
 
-अटल पूर्णांक __init nr_proto_init(व्योम)
-अणु
-	पूर्णांक i;
-	पूर्णांक rc = proto_रेजिस्टर(&nr_proto, 0);
+static int __init nr_proto_init(void)
+{
+	int i;
+	int rc = proto_register(&nr_proto, 0);
 
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
-	अगर (nr_ndevs > 0x7fffffff/माप(काष्ठा net_device *)) अणु
+	if (nr_ndevs > 0x7fffffff/sizeof(struct net_device *)) {
 		pr_err("NET/ROM: %s - nr_ndevs parameter too large\n",
 		       __func__);
 		rc = -EINVAL;
-		जाओ unरेजिस्टर_proto;
-	पूर्ण
+		goto unregister_proto;
+	}
 
-	dev_nr = kसुस्मृति(nr_ndevs, माप(काष्ठा net_device *), GFP_KERNEL);
-	अगर (!dev_nr) अणु
+	dev_nr = kcalloc(nr_ndevs, sizeof(struct net_device *), GFP_KERNEL);
+	if (!dev_nr) {
 		pr_err("NET/ROM: %s - unable to allocate device array\n",
 		       __func__);
 		rc = -ENOMEM;
-		जाओ unरेजिस्टर_proto;
-	पूर्ण
+		goto unregister_proto;
+	}
 
-	क्रम (i = 0; i < nr_ndevs; i++) अणु
-		अक्षर name[IFNAMSIZ];
-		काष्ठा net_device *dev;
+	for (i = 0; i < nr_ndevs; i++) {
+		char name[IFNAMSIZ];
+		struct net_device *dev;
 
-		प्र_लिखो(name, "nr%d", i);
+		sprintf(name, "nr%d", i);
 		dev = alloc_netdev(0, name, NET_NAME_UNKNOWN, nr_setup);
-		अगर (!dev) अणु
+		if (!dev) {
 			rc = -ENOMEM;
-			जाओ fail;
-		पूर्ण
+			goto fail;
+		}
 
 		dev->base_addr = i;
-		rc = रेजिस्टर_netdev(dev);
-		अगर (rc) अणु
-			मुक्त_netdev(dev);
-			जाओ fail;
-		पूर्ण
+		rc = register_netdev(dev);
+		if (rc) {
+			free_netdev(dev);
+			goto fail;
+		}
 		nr_set_lockdep_key(dev);
 		dev_nr[i] = dev;
-	पूर्ण
+	}
 
-	rc = sock_रेजिस्टर(&nr_family_ops);
-	अगर (rc)
-		जाओ fail;
+	rc = sock_register(&nr_family_ops);
+	if (rc)
+		goto fail;
 
-	rc = रेजिस्टर_netdevice_notअगरier(&nr_dev_notअगरier);
-	अगर (rc)
-		जाओ out_sock;
+	rc = register_netdevice_notifier(&nr_dev_notifier);
+	if (rc)
+		goto out_sock;
 
-	ax25_रेजिस्टर_pid(&nr_pid);
-	ax25_linkfail_रेजिस्टर(&nr_linkfail_notअगरier);
+	ax25_register_pid(&nr_pid);
+	ax25_linkfail_register(&nr_linkfail_notifier);
 
-#अगर_घोषित CONFIG_SYSCTL
-	rc = nr_रेजिस्टर_sysctl();
-	अगर (rc)
-		जाओ out_sysctl;
-#पूर्ण_अगर
+#ifdef CONFIG_SYSCTL
+	rc = nr_register_sysctl();
+	if (rc)
+		goto out_sysctl;
+#endif
 
 	nr_loopback_init();
 
 	rc = -ENOMEM;
-	अगर (!proc_create_seq("nr", 0444, init_net.proc_net, &nr_info_seqops))
-		जाओ proc_हटाओ1;
-	अगर (!proc_create_seq("nr_neigh", 0444, init_net.proc_net,
+	if (!proc_create_seq("nr", 0444, init_net.proc_net, &nr_info_seqops))
+		goto proc_remove1;
+	if (!proc_create_seq("nr_neigh", 0444, init_net.proc_net,
 			     &nr_neigh_seqops))
-		जाओ proc_हटाओ2;
-	अगर (!proc_create_seq("nr_nodes", 0444, init_net.proc_net,
+		goto proc_remove2;
+	if (!proc_create_seq("nr_nodes", 0444, init_net.proc_net,
 			     &nr_node_seqops))
-		जाओ proc_हटाओ3;
+		goto proc_remove3;
 
-	वापस 0;
+	return 0;
 
-proc_हटाओ3:
-	हटाओ_proc_entry("nr_neigh", init_net.proc_net);
-proc_हटाओ2:
-	हटाओ_proc_entry("nr", init_net.proc_net);
-proc_हटाओ1:
+proc_remove3:
+	remove_proc_entry("nr_neigh", init_net.proc_net);
+proc_remove2:
+	remove_proc_entry("nr", init_net.proc_net);
+proc_remove1:
 
 	nr_loopback_clear();
-	nr_rt_मुक्त();
+	nr_rt_free();
 
-#अगर_घोषित CONFIG_SYSCTL
-	nr_unरेजिस्टर_sysctl();
+#ifdef CONFIG_SYSCTL
+	nr_unregister_sysctl();
 out_sysctl:
-#पूर्ण_अगर
-	ax25_linkfail_release(&nr_linkfail_notअगरier);
+#endif
+	ax25_linkfail_release(&nr_linkfail_notifier);
 	ax25_protocol_release(AX25_P_NETROM);
-	unरेजिस्टर_netdevice_notअगरier(&nr_dev_notअगरier);
+	unregister_netdevice_notifier(&nr_dev_notifier);
 out_sock:
-	sock_unरेजिस्टर(PF_NETROM);
+	sock_unregister(PF_NETROM);
 fail:
-	जबतक (--i >= 0) अणु
-		unरेजिस्टर_netdev(dev_nr[i]);
-		मुक्त_netdev(dev_nr[i]);
-	पूर्ण
-	kमुक्त(dev_nr);
-unरेजिस्टर_proto:
-	proto_unरेजिस्टर(&nr_proto);
-	वापस rc;
-पूर्ण
+	while (--i >= 0) {
+		unregister_netdev(dev_nr[i]);
+		free_netdev(dev_nr[i]);
+	}
+	kfree(dev_nr);
+unregister_proto:
+	proto_unregister(&nr_proto);
+	return rc;
+}
 
 module_init(nr_proto_init);
 
-module_param(nr_ndevs, पूर्णांक, 0);
+module_param(nr_ndevs, int, 0);
 MODULE_PARM_DESC(nr_ndevs, "number of NET/ROM devices");
 
 MODULE_AUTHOR("Jonathan Naylor G4KLX <g4klx@g4klx.demon.co.uk>");
@@ -1491,37 +1490,37 @@ MODULE_DESCRIPTION("The amateur radio NET/ROM network and transport layer protoc
 MODULE_LICENSE("GPL");
 MODULE_ALIAS_NETPROTO(PF_NETROM);
 
-अटल व्योम __निकास nr_निकास(व्योम)
-अणु
-	पूर्णांक i;
+static void __exit nr_exit(void)
+{
+	int i;
 
-	हटाओ_proc_entry("nr", init_net.proc_net);
-	हटाओ_proc_entry("nr_neigh", init_net.proc_net);
-	हटाओ_proc_entry("nr_nodes", init_net.proc_net);
+	remove_proc_entry("nr", init_net.proc_net);
+	remove_proc_entry("nr_neigh", init_net.proc_net);
+	remove_proc_entry("nr_nodes", init_net.proc_net);
 	nr_loopback_clear();
 
-	nr_rt_मुक्त();
+	nr_rt_free();
 
-#अगर_घोषित CONFIG_SYSCTL
-	nr_unरेजिस्टर_sysctl();
-#पूर्ण_अगर
+#ifdef CONFIG_SYSCTL
+	nr_unregister_sysctl();
+#endif
 
-	ax25_linkfail_release(&nr_linkfail_notअगरier);
+	ax25_linkfail_release(&nr_linkfail_notifier);
 	ax25_protocol_release(AX25_P_NETROM);
 
-	unरेजिस्टर_netdevice_notअगरier(&nr_dev_notअगरier);
+	unregister_netdevice_notifier(&nr_dev_notifier);
 
-	sock_unरेजिस्टर(PF_NETROM);
+	sock_unregister(PF_NETROM);
 
-	क्रम (i = 0; i < nr_ndevs; i++) अणु
-		काष्ठा net_device *dev = dev_nr[i];
-		अगर (dev) अणु
-			unरेजिस्टर_netdev(dev);
-			मुक्त_netdev(dev);
-		पूर्ण
-	पूर्ण
+	for (i = 0; i < nr_ndevs; i++) {
+		struct net_device *dev = dev_nr[i];
+		if (dev) {
+			unregister_netdev(dev);
+			free_netdev(dev);
+		}
+	}
 
-	kमुक्त(dev_nr);
-	proto_unरेजिस्टर(&nr_proto);
-पूर्ण
-module_निकास(nr_निकास);
+	kfree(dev_nr);
+	proto_unregister(&nr_proto);
+}
+module_exit(nr_exit);

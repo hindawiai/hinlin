@@ -1,8 +1,7 @@
-<शैली गुरु>
 /*
  * Copyright 2011 Cisco Systems, Inc.  All rights reserved.
  *
- * This program is मुक्त software; you may redistribute it and/or modअगरy
+ * This program is free software; you may redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; version 2 of the License.
  *
@@ -17,21 +16,21 @@
  *
  */
 
-#अगर_अघोषित _ENIC_PP_H_
-#घोषणा _ENIC_PP_H_
+#ifndef _ENIC_PP_H_
+#define _ENIC_PP_H_
 
-#घोषणा ENIC_PP_BY_INDEX(enic, vf, pp, err) \
-	करो अणु \
-		अगर (enic_is_valid_pp_vf(enic, vf, err)) \
+#define ENIC_PP_BY_INDEX(enic, vf, pp, err) \
+	do { \
+		if (enic_is_valid_pp_vf(enic, vf, err)) \
 			pp = (vf == PORT_SELF_VF) ? enic->pp : enic->pp + vf; \
-		अन्यथा \
-			pp = शून्य; \
-	पूर्ण जबतक (0)
+		else \
+			pp = NULL; \
+	} while (0)
 
-पूर्णांक enic_process_set_pp_request(काष्ठा enic *enic, पूर्णांक vf,
-	काष्ठा enic_port_profile *prev_pp, पूर्णांक *restore_pp);
-पूर्णांक enic_process_get_pp_request(काष्ठा enic *enic, पूर्णांक vf,
-	पूर्णांक request, u16 *response);
-पूर्णांक enic_is_valid_pp_vf(काष्ठा enic *enic, पूर्णांक vf, पूर्णांक *err);
+int enic_process_set_pp_request(struct enic *enic, int vf,
+	struct enic_port_profile *prev_pp, int *restore_pp);
+int enic_process_get_pp_request(struct enic *enic, int vf,
+	int request, u16 *response);
+int enic_is_valid_pp_vf(struct enic *enic, int vf, int *err);
 
-#पूर्ण_अगर /* _ENIC_PP_H_ */
+#endif /* _ENIC_PP_H_ */

@@ -1,25 +1,24 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (C) 2013 STMicroelectronics (R&D) Limited.
  * Author(s): Srinivas Kandagatla <srinivas.kandagatla@st.com>
  */
 
-#समावेश <linux/irq.h>
-#समावेश <linux/of_platक्रमm.h>
-#समावेश <यंत्र/hardware/cache-l2x0.h>
-#समावेश <यंत्र/mach/arch.h>
+#include <linux/irq.h>
+#include <linux/of_platform.h>
+#include <asm/hardware/cache-l2x0.h>
+#include <asm/mach/arch.h>
 
-#समावेश "smp.h"
+#include "smp.h"
 
-अटल स्थिर अक्षर *स्थिर stih41x_dt_match[] __initस्थिर = अणु
+static const char *const stih41x_dt_match[] __initconst = {
 	"st,stih415",
 	"st,stih416",
 	"st,stih407",
 	"st,stih410",
 	"st,stih418",
-	शून्य
-पूर्ण;
+	NULL
+};
 
 DT_MACHINE_START(STM, "STi SoC with Flattened Device Tree")
 	.dt_compat	= stih41x_dt_match,

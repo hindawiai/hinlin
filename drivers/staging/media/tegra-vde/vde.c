@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * NVIDIA Tegra Video decoder driver
  *
@@ -7,239 +6,239 @@
  *
  */
 
-#समावेश <linux/clk.h>
-#समावेश <linux/dma-buf.h>
-#समावेश <linux/genभाग.स>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/iopoll.h>
-#समावेश <linux/list.h>
-#समावेश <linux/miscdevice.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <linux/reset.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/uaccess.h>
+#include <linux/clk.h>
+#include <linux/dma-buf.h>
+#include <linux/genalloc.h>
+#include <linux/interrupt.h>
+#include <linux/iopoll.h>
+#include <linux/list.h>
+#include <linux/miscdevice.h>
+#include <linux/module.h>
+#include <linux/of_device.h>
+#include <linux/pm_runtime.h>
+#include <linux/reset.h>
+#include <linux/slab.h>
+#include <linux/uaccess.h>
 
-#समावेश <soc/tegra/pmc.h>
+#include <soc/tegra/pmc.h>
 
-#समावेश "uapi.h"
-#समावेश "vde.h"
+#include "uapi.h"
+#include "vde.h"
 
-#घोषणा CREATE_TRACE_POINTS
-#समावेश "trace.h"
+#define CREATE_TRACE_POINTS
+#include "trace.h"
 
-#घोषणा ICMDQUE_WR		0x00
-#घोषणा CMDQUE_CONTROL		0x08
-#घोषणा INTR_STATUS		0x18
-#घोषणा BSE_INT_ENB		0x40
-#घोषणा BSE_CONFIG		0x44
+#define ICMDQUE_WR		0x00
+#define CMDQUE_CONTROL		0x08
+#define INTR_STATUS		0x18
+#define BSE_INT_ENB		0x40
+#define BSE_CONFIG		0x44
 
-#घोषणा BSE_ICMDQUE_EMPTY	BIT(3)
-#घोषणा BSE_DMA_BUSY		BIT(23)
+#define BSE_ICMDQUE_EMPTY	BIT(3)
+#define BSE_DMA_BUSY		BIT(23)
 
-काष्ठा video_frame अणु
-	काष्ठा dma_buf_attachment *y_dmabuf_attachment;
-	काष्ठा dma_buf_attachment *cb_dmabuf_attachment;
-	काष्ठा dma_buf_attachment *cr_dmabuf_attachment;
-	काष्ठा dma_buf_attachment *aux_dmabuf_attachment;
+struct video_frame {
+	struct dma_buf_attachment *y_dmabuf_attachment;
+	struct dma_buf_attachment *cb_dmabuf_attachment;
+	struct dma_buf_attachment *cr_dmabuf_attachment;
+	struct dma_buf_attachment *aux_dmabuf_attachment;
 	dma_addr_t y_addr;
 	dma_addr_t cb_addr;
 	dma_addr_t cr_addr;
 	dma_addr_t aux_addr;
 	u32 frame_num;
 	u32 flags;
-पूर्ण;
+};
 
-अटल व्योम tegra_vde_ग_लिखोl(काष्ठा tegra_vde *vde,
-			     u32 value, व्योम __iomem *base, u32 offset)
-अणु
-	trace_vde_ग_लिखोl(vde, base, offset, value);
+static void tegra_vde_writel(struct tegra_vde *vde,
+			     u32 value, void __iomem *base, u32 offset)
+{
+	trace_vde_writel(vde, base, offset, value);
 
-	ग_लिखोl_relaxed(value, base + offset);
-पूर्ण
+	writel_relaxed(value, base + offset);
+}
 
-अटल u32 tegra_vde_पढ़ोl(काष्ठा tegra_vde *vde,
-			   व्योम __iomem *base, u32 offset)
-अणु
-	u32 value = पढ़ोl_relaxed(base + offset);
+static u32 tegra_vde_readl(struct tegra_vde *vde,
+			   void __iomem *base, u32 offset)
+{
+	u32 value = readl_relaxed(base + offset);
 
-	trace_vde_पढ़ोl(vde, base, offset, value);
+	trace_vde_readl(vde, base, offset, value);
 
-	वापस value;
-पूर्ण
+	return value;
+}
 
-अटल व्योम tegra_vde_set_bits(काष्ठा tegra_vde *vde,
-			       u32 mask, व्योम __iomem *base, u32 offset)
-अणु
-	u32 value = tegra_vde_पढ़ोl(vde, base, offset);
+static void tegra_vde_set_bits(struct tegra_vde *vde,
+			       u32 mask, void __iomem *base, u32 offset)
+{
+	u32 value = tegra_vde_readl(vde, base, offset);
 
-	tegra_vde_ग_लिखोl(vde, value | mask, base, offset);
-पूर्ण
+	tegra_vde_writel(vde, value | mask, base, offset);
+}
 
-अटल पूर्णांक tegra_vde_रुको_mbe(काष्ठा tegra_vde *vde)
-अणु
-	u32 पंचांगp;
+static int tegra_vde_wait_mbe(struct tegra_vde *vde)
+{
+	u32 tmp;
 
-	वापस पढ़ोl_relaxed_poll_समयout(vde->mbe + 0x8C, पंचांगp,
-					  (पंचांगp >= 0x10), 1, 100);
-पूर्ण
+	return readl_relaxed_poll_timeout(vde->mbe + 0x8C, tmp,
+					  (tmp >= 0x10), 1, 100);
+}
 
-अटल पूर्णांक tegra_vde_setup_mbe_frame_idx(काष्ठा tegra_vde *vde,
-					 अचिन्हित पूर्णांक refs_nb,
+static int tegra_vde_setup_mbe_frame_idx(struct tegra_vde *vde,
+					 unsigned int refs_nb,
 					 bool setup_refs)
-अणु
+{
 	u32 frame_idx_enb_mask = 0;
 	u32 value;
-	अचिन्हित पूर्णांक frame_idx;
-	अचिन्हित पूर्णांक idx;
-	पूर्णांक err;
+	unsigned int frame_idx;
+	unsigned int idx;
+	int err;
 
-	tegra_vde_ग_लिखोl(vde, 0xD0000000 | (0 << 23), vde->mbe, 0x80);
-	tegra_vde_ग_लिखोl(vde, 0xD0200000 | (0 << 23), vde->mbe, 0x80);
+	tegra_vde_writel(vde, 0xD0000000 | (0 << 23), vde->mbe, 0x80);
+	tegra_vde_writel(vde, 0xD0200000 | (0 << 23), vde->mbe, 0x80);
 
-	err = tegra_vde_रुको_mbe(vde);
-	अगर (err)
-		वापस err;
+	err = tegra_vde_wait_mbe(vde);
+	if (err)
+		return err;
 
-	अगर (!setup_refs)
-		वापस 0;
+	if (!setup_refs)
+		return 0;
 
-	क्रम (idx = 0, frame_idx = 1; idx < refs_nb; idx++, frame_idx++) अणु
-		tegra_vde_ग_लिखोl(vde, 0xD0000000 | (frame_idx << 23),
+	for (idx = 0, frame_idx = 1; idx < refs_nb; idx++, frame_idx++) {
+		tegra_vde_writel(vde, 0xD0000000 | (frame_idx << 23),
 				 vde->mbe, 0x80);
-		tegra_vde_ग_लिखोl(vde, 0xD0200000 | (frame_idx << 23),
+		tegra_vde_writel(vde, 0xD0200000 | (frame_idx << 23),
 				 vde->mbe, 0x80);
 
 		frame_idx_enb_mask |= frame_idx << (6 * (idx % 4));
 
-		अगर (idx % 4 == 3 || idx == refs_nb - 1) अणु
+		if (idx % 4 == 3 || idx == refs_nb - 1) {
 			value = 0xC0000000;
 			value |= (idx >> 2) << 24;
 			value |= frame_idx_enb_mask;
 
-			tegra_vde_ग_लिखोl(vde, value, vde->mbe, 0x80);
+			tegra_vde_writel(vde, value, vde->mbe, 0x80);
 
-			err = tegra_vde_रुको_mbe(vde);
-			अगर (err)
-				वापस err;
+			err = tegra_vde_wait_mbe(vde);
+			if (err)
+				return err;
 
 			frame_idx_enb_mask = 0;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम tegra_vde_mbe_set_0xa_reg(काष्ठा tegra_vde *vde, पूर्णांक reg, u32 val)
-अणु
-	tegra_vde_ग_लिखोl(vde, 0xA0000000 | (reg << 24) | (val & 0xFFFF),
+static void tegra_vde_mbe_set_0xa_reg(struct tegra_vde *vde, int reg, u32 val)
+{
+	tegra_vde_writel(vde, 0xA0000000 | (reg << 24) | (val & 0xFFFF),
 			 vde->mbe, 0x80);
-	tegra_vde_ग_लिखोl(vde, 0xA0000000 | ((reg + 1) << 24) | (val >> 16),
+	tegra_vde_writel(vde, 0xA0000000 | ((reg + 1) << 24) | (val >> 16),
 			 vde->mbe, 0x80);
-पूर्ण
+}
 
-अटल पूर्णांक tegra_vde_रुको_bsev(काष्ठा tegra_vde *vde, bool रुको_dma)
-अणु
-	काष्ठा device *dev = vde->miscdev.parent;
+static int tegra_vde_wait_bsev(struct tegra_vde *vde, bool wait_dma)
+{
+	struct device *dev = vde->miscdev.parent;
 	u32 value;
-	पूर्णांक err;
+	int err;
 
-	err = पढ़ोl_relaxed_poll_समयout(vde->bsev + INTR_STATUS, value,
+	err = readl_relaxed_poll_timeout(vde->bsev + INTR_STATUS, value,
 					 !(value & BIT(2)), 1, 100);
-	अगर (err) अणु
+	if (err) {
 		dev_err(dev, "BSEV unknown bit timeout\n");
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	err = पढ़ोl_relaxed_poll_समयout(vde->bsev + INTR_STATUS, value,
+	err = readl_relaxed_poll_timeout(vde->bsev + INTR_STATUS, value,
 					 (value & BSE_ICMDQUE_EMPTY), 1, 100);
-	अगर (err) अणु
+	if (err) {
 		dev_err(dev, "BSEV ICMDQUE flush timeout\n");
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	अगर (!रुको_dma)
-		वापस 0;
+	if (!wait_dma)
+		return 0;
 
-	err = पढ़ोl_relaxed_poll_समयout(vde->bsev + INTR_STATUS, value,
+	err = readl_relaxed_poll_timeout(vde->bsev + INTR_STATUS, value,
 					 !(value & BSE_DMA_BUSY), 1, 100);
-	अगर (err) अणु
+	if (err) {
 		dev_err(dev, "BSEV DMA timeout\n");
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tegra_vde_push_to_bsev_icmdqueue(काष्ठा tegra_vde *vde,
-					    u32 value, bool रुको_dma)
-अणु
-	tegra_vde_ग_लिखोl(vde, value, vde->bsev, ICMDQUE_WR);
+static int tegra_vde_push_to_bsev_icmdqueue(struct tegra_vde *vde,
+					    u32 value, bool wait_dma)
+{
+	tegra_vde_writel(vde, value, vde->bsev, ICMDQUE_WR);
 
-	वापस tegra_vde_रुको_bsev(vde, रुको_dma);
-पूर्ण
+	return tegra_vde_wait_bsev(vde, wait_dma);
+}
 
-अटल व्योम tegra_vde_setup_frameid(काष्ठा tegra_vde *vde,
-				    काष्ठा video_frame *frame,
-				    अचिन्हित पूर्णांक frameid,
+static void tegra_vde_setup_frameid(struct tegra_vde *vde,
+				    struct video_frame *frame,
+				    unsigned int frameid,
 				    u32 mbs_width, u32 mbs_height)
-अणु
+{
 	u32 y_addr  = frame ? frame->y_addr  : 0x6CDEAD00;
 	u32 cb_addr = frame ? frame->cb_addr : 0x6CDEAD00;
 	u32 cr_addr = frame ? frame->cr_addr : 0x6CDEAD00;
 	u32 value1 = frame ? ((mbs_width << 16) | mbs_height) : 0;
 	u32 value2 = frame ? ((((mbs_width + 1) >> 1) << 6) | 1) : 0;
 
-	tegra_vde_ग_लिखोl(vde, y_addr  >> 8, vde->frameid, 0x000 + frameid * 4);
-	tegra_vde_ग_लिखोl(vde, cb_addr >> 8, vde->frameid, 0x100 + frameid * 4);
-	tegra_vde_ग_लिखोl(vde, cr_addr >> 8, vde->frameid, 0x180 + frameid * 4);
-	tegra_vde_ग_लिखोl(vde, value1,       vde->frameid, 0x080 + frameid * 4);
-	tegra_vde_ग_लिखोl(vde, value2,       vde->frameid, 0x280 + frameid * 4);
-पूर्ण
+	tegra_vde_writel(vde, y_addr  >> 8, vde->frameid, 0x000 + frameid * 4);
+	tegra_vde_writel(vde, cb_addr >> 8, vde->frameid, 0x100 + frameid * 4);
+	tegra_vde_writel(vde, cr_addr >> 8, vde->frameid, 0x180 + frameid * 4);
+	tegra_vde_writel(vde, value1,       vde->frameid, 0x080 + frameid * 4);
+	tegra_vde_writel(vde, value2,       vde->frameid, 0x280 + frameid * 4);
+}
 
-अटल व्योम tegra_setup_frameidx(काष्ठा tegra_vde *vde,
-				 काष्ठा video_frame *frames,
-				 अचिन्हित पूर्णांक frames_nb,
+static void tegra_setup_frameidx(struct tegra_vde *vde,
+				 struct video_frame *frames,
+				 unsigned int frames_nb,
 				 u32 mbs_width, u32 mbs_height)
-अणु
-	अचिन्हित पूर्णांक idx;
+{
+	unsigned int idx;
 
-	क्रम (idx = 0; idx < frames_nb; idx++)
+	for (idx = 0; idx < frames_nb; idx++)
 		tegra_vde_setup_frameid(vde, &frames[idx], idx,
 					mbs_width, mbs_height);
 
-	क्रम (; idx < 17; idx++)
-		tegra_vde_setup_frameid(vde, शून्य, idx, 0, 0);
-पूर्ण
+	for (; idx < 17; idx++)
+		tegra_vde_setup_frameid(vde, NULL, idx, 0, 0);
+}
 
-अटल व्योम tegra_vde_setup_iram_entry(काष्ठा tegra_vde *vde,
-				       अचिन्हित पूर्णांक table,
-				       अचिन्हित पूर्णांक row,
+static void tegra_vde_setup_iram_entry(struct tegra_vde *vde,
+				       unsigned int table,
+				       unsigned int row,
 				       u32 value1, u32 value2)
-अणु
+{
 	u32 *iram_tables = vde->iram;
 
 	trace_vde_setup_iram_entry(table, row, value1, value2);
 
 	iram_tables[0x20 * table + row * 2] = value1;
 	iram_tables[0x20 * table + row * 2 + 1] = value2;
-पूर्ण
+}
 
-अटल व्योम tegra_vde_setup_iram_tables(काष्ठा tegra_vde *vde,
-					काष्ठा video_frame *dpb_frames,
-					अचिन्हित पूर्णांक ref_frames_nb,
-					अचिन्हित पूर्णांक with_earlier_poc_nb)
-अणु
-	काष्ठा video_frame *frame;
+static void tegra_vde_setup_iram_tables(struct tegra_vde *vde,
+					struct video_frame *dpb_frames,
+					unsigned int ref_frames_nb,
+					unsigned int with_earlier_poc_nb)
+{
+	struct video_frame *frame;
 	u32 value, aux_addr;
-	पूर्णांक with_later_poc_nb;
-	अचिन्हित पूर्णांक i, k;
+	int with_later_poc_nb;
+	unsigned int i, k;
 
 	trace_vde_ref_l0(dpb_frames[0].frame_num);
 
-	क्रम (i = 0; i < 16; i++) अणु
-		अगर (i < ref_frames_nb) अणु
+	for (i = 0; i < 16; i++) {
+		if (i < ref_frames_nb) {
 			frame = &dpb_frames[i + 1];
 
 			aux_addr = frame->aux_addr;
@@ -248,28 +247,28 @@
 			value |= !(frame->flags & FLAG_B_FRAME) << 25;
 			value |= 1 << 24;
 			value |= frame->frame_num;
-		पूर्ण अन्यथा अणु
+		} else {
 			aux_addr = 0x6ADEAD00;
 			value = 0;
-		पूर्ण
+		}
 
 		tegra_vde_setup_iram_entry(vde, 0, i, value, aux_addr);
 		tegra_vde_setup_iram_entry(vde, 1, i, value, aux_addr);
 		tegra_vde_setup_iram_entry(vde, 2, i, value, aux_addr);
 		tegra_vde_setup_iram_entry(vde, 3, i, value, aux_addr);
-	पूर्ण
+	}
 
-	अगर (!(dpb_frames[0].flags & FLAG_B_FRAME))
-		वापस;
+	if (!(dpb_frames[0].flags & FLAG_B_FRAME))
+		return;
 
-	अगर (with_earlier_poc_nb >= ref_frames_nb)
-		वापस;
+	if (with_earlier_poc_nb >= ref_frames_nb)
+		return;
 
 	with_later_poc_nb = ref_frames_nb - with_earlier_poc_nb;
 
 	trace_vde_ref_l1(with_later_poc_nb, with_earlier_poc_nb);
 
-	क्रम (i = 0, k = with_earlier_poc_nb; i < with_later_poc_nb; i++, k++) अणु
+	for (i = 0, k = with_earlier_poc_nb; i < with_later_poc_nb; i++, k++) {
 		frame = &dpb_frames[k + 1];
 
 		aux_addr = frame->aux_addr;
@@ -280,9 +279,9 @@
 		value |= frame->frame_num;
 
 		tegra_vde_setup_iram_entry(vde, 2, i, value, aux_addr);
-	पूर्ण
+	}
 
-	क्रम (k = 0; i < ref_frames_nb; i++, k++) अणु
+	for (k = 0; i < ref_frames_nb; i++, k++) {
 		frame = &dpb_frames[k + 1];
 
 		aux_addr = frame->aux_addr;
@@ -293,19 +292,19 @@
 		value |= frame->frame_num;
 
 		tegra_vde_setup_iram_entry(vde, 2, i, value, aux_addr);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक tegra_vde_setup_hw_context(काष्ठा tegra_vde *vde,
-				      काष्ठा tegra_vde_h264_decoder_ctx *ctx,
-				      काष्ठा video_frame *dpb_frames,
+static int tegra_vde_setup_hw_context(struct tegra_vde *vde,
+				      struct tegra_vde_h264_decoder_ctx *ctx,
+				      struct video_frame *dpb_frames,
 				      dma_addr_t bitstream_data_addr,
-				      माप_प्रकार bitstream_data_size,
-				      अचिन्हित पूर्णांक macroblocks_nb)
-अणु
-	काष्ठा device *dev = vde->miscdev.parent;
+				      size_t bitstream_data_size,
+				      unsigned int macroblocks_nb)
+{
+	struct device *dev = vde->miscdev.parent;
 	u32 value;
-	पूर्णांक err;
+	int err;
 
 	tegra_vde_set_bits(vde, 0x000A, vde->sxe, 0xF0);
 	tegra_vde_set_bits(vde, 0x000B, vde->bsev, CMDQUE_CONTROL);
@@ -317,24 +316,24 @@
 	tegra_vde_set_bits(vde, 0x000A, vde->tfe, 0x00);
 	tegra_vde_set_bits(vde, 0x0005, vde->vdma, 0x04);
 
-	tegra_vde_ग_लिखोl(vde, 0x00000000, vde->vdma, 0x1C);
-	tegra_vde_ग_लिखोl(vde, 0x00000000, vde->vdma, 0x00);
-	tegra_vde_ग_लिखोl(vde, 0x00000007, vde->vdma, 0x04);
-	tegra_vde_ग_लिखोl(vde, 0x00000007, vde->frameid, 0x200);
-	tegra_vde_ग_लिखोl(vde, 0x00000005, vde->tfe, 0x04);
-	tegra_vde_ग_लिखोl(vde, 0x00000000, vde->mbe, 0x84);
-	tegra_vde_ग_लिखोl(vde, 0x00000010, vde->sxe, 0x08);
-	tegra_vde_ग_लिखोl(vde, 0x00000150, vde->sxe, 0x54);
-	tegra_vde_ग_लिखोl(vde, 0x0000054C, vde->sxe, 0x58);
-	tegra_vde_ग_लिखोl(vde, 0x00000E34, vde->sxe, 0x5C);
-	tegra_vde_ग_लिखोl(vde, 0x063C063C, vde->mce, 0x10);
-	tegra_vde_ग_लिखोl(vde, 0x0003FC00, vde->bsev, INTR_STATUS);
-	tegra_vde_ग_लिखोl(vde, 0x0000150D, vde->bsev, BSE_CONFIG);
-	tegra_vde_ग_लिखोl(vde, 0x00000100, vde->bsev, BSE_INT_ENB);
-	tegra_vde_ग_लिखोl(vde, 0x00000000, vde->bsev, 0x98);
-	tegra_vde_ग_लिखोl(vde, 0x00000060, vde->bsev, 0x9C);
+	tegra_vde_writel(vde, 0x00000000, vde->vdma, 0x1C);
+	tegra_vde_writel(vde, 0x00000000, vde->vdma, 0x00);
+	tegra_vde_writel(vde, 0x00000007, vde->vdma, 0x04);
+	tegra_vde_writel(vde, 0x00000007, vde->frameid, 0x200);
+	tegra_vde_writel(vde, 0x00000005, vde->tfe, 0x04);
+	tegra_vde_writel(vde, 0x00000000, vde->mbe, 0x84);
+	tegra_vde_writel(vde, 0x00000010, vde->sxe, 0x08);
+	tegra_vde_writel(vde, 0x00000150, vde->sxe, 0x54);
+	tegra_vde_writel(vde, 0x0000054C, vde->sxe, 0x58);
+	tegra_vde_writel(vde, 0x00000E34, vde->sxe, 0x5C);
+	tegra_vde_writel(vde, 0x063C063C, vde->mce, 0x10);
+	tegra_vde_writel(vde, 0x0003FC00, vde->bsev, INTR_STATUS);
+	tegra_vde_writel(vde, 0x0000150D, vde->bsev, BSE_CONFIG);
+	tegra_vde_writel(vde, 0x00000100, vde->bsev, BSE_INT_ENB);
+	tegra_vde_writel(vde, 0x00000000, vde->bsev, 0x98);
+	tegra_vde_writel(vde, 0x00000060, vde->bsev, 0x9C);
 
-	स_रखो(vde->iram + 128, 0, macroblocks_nb / 2);
+	memset(vde->iram + 128, 0, macroblocks_nb / 2);
 
 	tegra_setup_frameidx(vde, dpb_frames, ctx->dpb_frames_nb,
 			     ctx->pic_width_in_mbs, ctx->pic_height_in_mbs);
@@ -344,53 +343,53 @@
 				    ctx->dpb_ref_frames_with_earlier_poc_nb);
 
 	/*
-	 * The IRAM mapping is ग_लिखो-combine, ensure that CPU buffers have
-	 * been flushed at this poपूर्णांक.
+	 * The IRAM mapping is write-combine, ensure that CPU buffers have
+	 * been flushed at this point.
 	 */
 	wmb();
 
-	tegra_vde_ग_लिखोl(vde, 0x00000000, vde->bsev, 0x8C);
-	tegra_vde_ग_लिखोl(vde, bitstream_data_addr + bitstream_data_size,
+	tegra_vde_writel(vde, 0x00000000, vde->bsev, 0x8C);
+	tegra_vde_writel(vde, bitstream_data_addr + bitstream_data_size,
 			 vde->bsev, 0x54);
 
 	value = ctx->pic_width_in_mbs << 11 | ctx->pic_height_in_mbs << 3;
 
-	tegra_vde_ग_लिखोl(vde, value, vde->bsev, 0x88);
+	tegra_vde_writel(vde, value, vde->bsev, 0x88);
 
-	err = tegra_vde_रुको_bsev(vde, false);
-	अगर (err)
-		वापस err;
+	err = tegra_vde_wait_bsev(vde, false);
+	if (err)
+		return err;
 
 	err = tegra_vde_push_to_bsev_icmdqueue(vde, 0x800003FC, false);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	value = 0x01500000;
 	value |= ((vde->iram_lists_addr + 512) >> 2) & 0xFFFF;
 
 	err = tegra_vde_push_to_bsev_icmdqueue(vde, value, true);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	err = tegra_vde_push_to_bsev_icmdqueue(vde, 0x840F054C, false);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	err = tegra_vde_push_to_bsev_icmdqueue(vde, 0x80000080, false);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	value = 0x0E340000 | ((vde->iram_lists_addr >> 2) & 0xFFFF);
 
 	err = tegra_vde_push_to_bsev_icmdqueue(vde, value, true);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	value = 0x00800005;
 	value |= ctx->pic_width_in_mbs << 11;
 	value |= ctx->pic_height_in_mbs << 3;
 
-	tegra_vde_ग_लिखोl(vde, value, vde->sxe, 0x10);
+	tegra_vde_writel(vde, value, vde->sxe, 0x10);
 
 	value = !ctx->baseline_profile << 17;
 	value |= ctx->level_idc << 13;
@@ -398,62 +397,62 @@
 	value |= ctx->pic_order_cnt_type << 5;
 	value |= ctx->log2_max_frame_num;
 
-	tegra_vde_ग_लिखोl(vde, value, vde->sxe, 0x40);
+	tegra_vde_writel(vde, value, vde->sxe, 0x40);
 
 	value = ctx->pic_init_qp << 25;
 	value |= !!(ctx->deblocking_filter_control_present_flag) << 2;
 	value |= !!ctx->pic_order_present_flag;
 
-	tegra_vde_ग_लिखोl(vde, value, vde->sxe, 0x44);
+	tegra_vde_writel(vde, value, vde->sxe, 0x44);
 
 	value = ctx->chroma_qp_index_offset;
 	value |= ctx->num_ref_idx_l0_active_minus1 << 5;
 	value |= ctx->num_ref_idx_l1_active_minus1 << 10;
-	value |= !!ctx->स्थिरrained_पूर्णांकra_pred_flag << 15;
+	value |= !!ctx->constrained_intra_pred_flag << 15;
 
-	tegra_vde_ग_लिखोl(vde, value, vde->sxe, 0x48);
+	tegra_vde_writel(vde, value, vde->sxe, 0x48);
 
 	value = 0x0C000000;
 	value |= !!(dpb_frames[0].flags & FLAG_B_FRAME) << 24;
 
-	tegra_vde_ग_लिखोl(vde, value, vde->sxe, 0x4C);
+	tegra_vde_writel(vde, value, vde->sxe, 0x4C);
 
 	value = 0x03800000;
 	value |= bitstream_data_size & GENMASK(19, 15);
 
-	tegra_vde_ग_लिखोl(vde, value, vde->sxe, 0x68);
+	tegra_vde_writel(vde, value, vde->sxe, 0x68);
 
-	tegra_vde_ग_लिखोl(vde, bitstream_data_addr, vde->sxe, 0x6C);
+	tegra_vde_writel(vde, bitstream_data_addr, vde->sxe, 0x6C);
 
 	value = 0x10000005;
 	value |= ctx->pic_width_in_mbs << 11;
 	value |= ctx->pic_height_in_mbs << 3;
 
-	tegra_vde_ग_लिखोl(vde, value, vde->mbe, 0x80);
+	tegra_vde_writel(vde, value, vde->mbe, 0x80);
 
 	value = 0x26800000;
 	value |= ctx->level_idc << 4;
 	value |= !ctx->baseline_profile << 1;
 	value |= !!ctx->direct_8x8_inference_flag;
 
-	tegra_vde_ग_लिखोl(vde, value, vde->mbe, 0x80);
+	tegra_vde_writel(vde, value, vde->mbe, 0x80);
 
-	tegra_vde_ग_लिखोl(vde, 0xF4000001, vde->mbe, 0x80);
-	tegra_vde_ग_लिखोl(vde, 0x20000000, vde->mbe, 0x80);
-	tegra_vde_ग_लिखोl(vde, 0xF4000101, vde->mbe, 0x80);
+	tegra_vde_writel(vde, 0xF4000001, vde->mbe, 0x80);
+	tegra_vde_writel(vde, 0x20000000, vde->mbe, 0x80);
+	tegra_vde_writel(vde, 0xF4000101, vde->mbe, 0x80);
 
 	value = 0x20000000;
 	value |= ctx->chroma_qp_index_offset << 8;
 
-	tegra_vde_ग_लिखोl(vde, value, vde->mbe, 0x80);
+	tegra_vde_writel(vde, value, vde->mbe, 0x80);
 
 	err = tegra_vde_setup_mbe_frame_idx(vde,
 					    ctx->dpb_frames_nb - 1,
 					    ctx->pic_order_cnt_type == 0);
-	अगर (err) अणु
+	if (err) {
 		dev_err(dev, "MBE frames setup failed %d\n", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	tegra_vde_mbe_set_0xa_reg(vde, 0, 0x000009FC);
 	tegra_vde_mbe_set_0xa_reg(vde, 2, 0x61DEAD00);
@@ -464,126 +463,126 @@
 	value = 0xFC000000;
 	value |= !!(dpb_frames[0].flags & FLAG_B_FRAME) << 2;
 
-	अगर (!ctx->baseline_profile)
+	if (!ctx->baseline_profile)
 		value |= !!(dpb_frames[0].flags & FLAG_REFERENCE) << 1;
 
-	tegra_vde_ग_लिखोl(vde, value, vde->mbe, 0x80);
+	tegra_vde_writel(vde, value, vde->mbe, 0x80);
 
-	err = tegra_vde_रुको_mbe(vde);
-	अगर (err) अणु
+	err = tegra_vde_wait_mbe(vde);
+	if (err) {
 		dev_err(dev, "MBE programming failed %d\n", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम tegra_vde_decode_frame(काष्ठा tegra_vde *vde,
-				   अचिन्हित पूर्णांक macroblocks_nb)
-अणु
+static void tegra_vde_decode_frame(struct tegra_vde *vde,
+				   unsigned int macroblocks_nb)
+{
 	reinit_completion(&vde->decode_completion);
 
-	tegra_vde_ग_लिखोl(vde, 0x00000001, vde->bsev, 0x8C);
-	tegra_vde_ग_लिखोl(vde, 0x20000000 | (macroblocks_nb - 1),
+	tegra_vde_writel(vde, 0x00000001, vde->bsev, 0x8C);
+	tegra_vde_writel(vde, 0x20000000 | (macroblocks_nb - 1),
 			 vde->sxe, 0x00);
-पूर्ण
+}
 
-अटल पूर्णांक tegra_vde_attach_dmabuf(काष्ठा tegra_vde *vde,
-				   पूर्णांक fd,
-				   अचिन्हित दीर्घ offset,
-				   माप_प्रकार min_size,
-				   माप_प्रकार align_size,
-				   काष्ठा dma_buf_attachment **a,
+static int tegra_vde_attach_dmabuf(struct tegra_vde *vde,
+				   int fd,
+				   unsigned long offset,
+				   size_t min_size,
+				   size_t align_size,
+				   struct dma_buf_attachment **a,
 				   dma_addr_t *addrp,
-				   माप_प्रकार *size,
-				   क्रमागत dma_data_direction dma_dir)
-अणु
-	काष्ठा device *dev = vde->miscdev.parent;
-	काष्ठा dma_buf *dmabuf;
-	पूर्णांक err;
+				   size_t *size,
+				   enum dma_data_direction dma_dir)
+{
+	struct device *dev = vde->miscdev.parent;
+	struct dma_buf *dmabuf;
+	int err;
 
 	dmabuf = dma_buf_get(fd);
-	अगर (IS_ERR(dmabuf)) अणु
+	if (IS_ERR(dmabuf)) {
 		dev_err(dev, "Invalid dmabuf FD\n");
-		वापस PTR_ERR(dmabuf);
-	पूर्ण
+		return PTR_ERR(dmabuf);
+	}
 
-	अगर (dmabuf->size & (align_size - 1)) अणु
+	if (dmabuf->size & (align_size - 1)) {
 		dev_err(dev, "Unaligned dmabuf 0x%zX, should be aligned to 0x%zX\n",
 			dmabuf->size, align_size);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर ((u64)offset + min_size > dmabuf->size) अणु
+	if ((u64)offset + min_size > dmabuf->size) {
 		dev_err(dev, "Too small dmabuf size %zu @0x%lX, should be at least %zu\n",
 			dmabuf->size, offset, min_size);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	err = tegra_vde_dmabuf_cache_map(vde, dmabuf, dma_dir, a, addrp);
-	अगर (err)
-		जाओ err_put;
+	if (err)
+		goto err_put;
 
 	*addrp = *addrp + offset;
 
-	अगर (size)
+	if (size)
 		*size = dmabuf->size - offset;
 
-	वापस 0;
+	return 0;
 
 err_put:
 	dma_buf_put(dmabuf);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक tegra_vde_attach_dmabufs_to_frame(काष्ठा tegra_vde *vde,
-					     काष्ठा video_frame *frame,
-					     काष्ठा tegra_vde_h264_frame *src,
-					     क्रमागत dma_data_direction dma_dir,
+static int tegra_vde_attach_dmabufs_to_frame(struct tegra_vde *vde,
+					     struct video_frame *frame,
+					     struct tegra_vde_h264_frame *src,
+					     enum dma_data_direction dma_dir,
 					     bool baseline_profile,
-					     माप_प्रकार lsize, माप_प्रकार csize)
-अणु
-	पूर्णांक err;
+					     size_t lsize, size_t csize)
+{
+	int err;
 
 	err = tegra_vde_attach_dmabuf(vde, src->y_fd,
 				      src->y_offset, lsize, SZ_256,
 				      &frame->y_dmabuf_attachment,
 				      &frame->y_addr,
-				      शून्य, dma_dir);
-	अगर (err)
-		वापस err;
+				      NULL, dma_dir);
+	if (err)
+		return err;
 
 	err = tegra_vde_attach_dmabuf(vde, src->cb_fd,
 				      src->cb_offset, csize, SZ_256,
 				      &frame->cb_dmabuf_attachment,
 				      &frame->cb_addr,
-				      शून्य, dma_dir);
-	अगर (err)
-		जाओ err_release_y;
+				      NULL, dma_dir);
+	if (err)
+		goto err_release_y;
 
 	err = tegra_vde_attach_dmabuf(vde, src->cr_fd,
 				      src->cr_offset, csize, SZ_256,
 				      &frame->cr_dmabuf_attachment,
 				      &frame->cr_addr,
-				      शून्य, dma_dir);
-	अगर (err)
-		जाओ err_release_cb;
+				      NULL, dma_dir);
+	if (err)
+		goto err_release_cb;
 
-	अगर (baseline_profile) अणु
+	if (baseline_profile) {
 		frame->aux_addr = 0x64DEAD00;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	err = tegra_vde_attach_dmabuf(vde, src->aux_fd,
 				      src->aux_offset, csize, SZ_256,
 				      &frame->aux_dmabuf_attachment,
 				      &frame->aux_addr,
-				      शून्य, dma_dir);
-	अगर (err)
-		जाओ err_release_cr;
+				      NULL, dma_dir);
+	if (err)
+		goto err_release_cr;
 
-	वापस 0;
+	return 0;
 
 err_release_cr:
 	tegra_vde_dmabuf_cache_unmap(vde, frame->cr_dmabuf_attachment, true);
@@ -592,131 +591,131 @@ err_release_cb:
 err_release_y:
 	tegra_vde_dmabuf_cache_unmap(vde, frame->y_dmabuf_attachment, true);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम tegra_vde_release_frame_dmabufs(काष्ठा tegra_vde *vde,
-					    काष्ठा video_frame *frame,
-					    क्रमागत dma_data_direction dma_dir,
+static void tegra_vde_release_frame_dmabufs(struct tegra_vde *vde,
+					    struct video_frame *frame,
+					    enum dma_data_direction dma_dir,
 					    bool baseline_profile,
 					    bool release)
-अणु
-	अगर (!baseline_profile)
+{
+	if (!baseline_profile)
 		tegra_vde_dmabuf_cache_unmap(vde, frame->aux_dmabuf_attachment,
 					     release);
 
 	tegra_vde_dmabuf_cache_unmap(vde, frame->cr_dmabuf_attachment, release);
 	tegra_vde_dmabuf_cache_unmap(vde, frame->cb_dmabuf_attachment, release);
 	tegra_vde_dmabuf_cache_unmap(vde, frame->y_dmabuf_attachment, release);
-पूर्ण
+}
 
-अटल पूर्णांक tegra_vde_validate_frame(काष्ठा device *dev,
-				    काष्ठा tegra_vde_h264_frame *frame)
-अणु
-	अगर (frame->frame_num > 0x7FFFFF) अणु
+static int tegra_vde_validate_frame(struct device *dev,
+				    struct tegra_vde_h264_frame *frame)
+{
+	if (frame->frame_num > 0x7FFFFF) {
 		dev_err(dev, "Bad frame_num %u\n", frame->frame_num);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tegra_vde_validate_h264_ctx(काष्ठा device *dev,
-				       काष्ठा tegra_vde_h264_decoder_ctx *ctx)
-अणु
-	अगर (ctx->dpb_frames_nb == 0 || ctx->dpb_frames_nb > 17) अणु
+static int tegra_vde_validate_h264_ctx(struct device *dev,
+				       struct tegra_vde_h264_decoder_ctx *ctx)
+{
+	if (ctx->dpb_frames_nb == 0 || ctx->dpb_frames_nb > 17) {
 		dev_err(dev, "Bad DPB size %u\n", ctx->dpb_frames_nb);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (ctx->level_idc > 15) अणु
+	if (ctx->level_idc > 15) {
 		dev_err(dev, "Bad level value %u\n", ctx->level_idc);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (ctx->pic_init_qp > 52) अणु
+	if (ctx->pic_init_qp > 52) {
 		dev_err(dev, "Bad pic_init_qp value %u\n", ctx->pic_init_qp);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (ctx->log2_max_pic_order_cnt_lsb > 16) अणु
+	if (ctx->log2_max_pic_order_cnt_lsb > 16) {
 		dev_err(dev, "Bad log2_max_pic_order_cnt_lsb value %u\n",
 			ctx->log2_max_pic_order_cnt_lsb);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (ctx->log2_max_frame_num > 16) अणु
+	if (ctx->log2_max_frame_num > 16) {
 		dev_err(dev, "Bad log2_max_frame_num value %u\n",
 			ctx->log2_max_frame_num);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (ctx->chroma_qp_index_offset > 31) अणु
+	if (ctx->chroma_qp_index_offset > 31) {
 		dev_err(dev, "Bad chroma_qp_index_offset value %u\n",
 			ctx->chroma_qp_index_offset);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (ctx->pic_order_cnt_type > 2) अणु
+	if (ctx->pic_order_cnt_type > 2) {
 		dev_err(dev, "Bad pic_order_cnt_type value %u\n",
 			ctx->pic_order_cnt_type);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (ctx->num_ref_idx_l0_active_minus1 > 15) अणु
+	if (ctx->num_ref_idx_l0_active_minus1 > 15) {
 		dev_err(dev, "Bad num_ref_idx_l0_active_minus1 value %u\n",
 			ctx->num_ref_idx_l0_active_minus1);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (ctx->num_ref_idx_l1_active_minus1 > 15) अणु
+	if (ctx->num_ref_idx_l1_active_minus1 > 15) {
 		dev_err(dev, "Bad num_ref_idx_l1_active_minus1 value %u\n",
 			ctx->num_ref_idx_l1_active_minus1);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (!ctx->pic_width_in_mbs || ctx->pic_width_in_mbs > 127) अणु
+	if (!ctx->pic_width_in_mbs || ctx->pic_width_in_mbs > 127) {
 		dev_err(dev, "Bad pic_width_in_mbs value %u\n",
 			ctx->pic_width_in_mbs);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (!ctx->pic_height_in_mbs || ctx->pic_height_in_mbs > 127) अणु
+	if (!ctx->pic_height_in_mbs || ctx->pic_height_in_mbs > 127) {
 		dev_err(dev, "Bad pic_height_in_mbs value %u\n",
 			ctx->pic_height_in_mbs);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tegra_vde_ioctl_decode_h264(काष्ठा tegra_vde *vde,
-				       अचिन्हित दीर्घ vaddr)
-अणु
-	काष्ठा device *dev = vde->miscdev.parent;
-	काष्ठा tegra_vde_h264_decoder_ctx ctx;
-	काष्ठा tegra_vde_h264_frame *frames;
-	काष्ठा tegra_vde_h264_frame __user *frames_user;
-	काष्ठा video_frame *dpb_frames;
-	काष्ठा dma_buf_attachment *bitstream_data_dmabuf_attachment;
-	क्रमागत dma_data_direction dma_dir;
+static int tegra_vde_ioctl_decode_h264(struct tegra_vde *vde,
+				       unsigned long vaddr)
+{
+	struct device *dev = vde->miscdev.parent;
+	struct tegra_vde_h264_decoder_ctx ctx;
+	struct tegra_vde_h264_frame *frames;
+	struct tegra_vde_h264_frame __user *frames_user;
+	struct video_frame *dpb_frames;
+	struct dma_buf_attachment *bitstream_data_dmabuf_attachment;
+	enum dma_data_direction dma_dir;
 	dma_addr_t bitstream_data_addr;
 	dma_addr_t bsev_ptr;
-	माप_प्रकार lsize, csize;
-	माप_प्रकार bitstream_data_size;
-	अचिन्हित पूर्णांक macroblocks_nb;
-	अचिन्हित पूर्णांक पढ़ो_bytes;
-	अचिन्हित पूर्णांक cstride;
-	अचिन्हित पूर्णांक i;
-	दीर्घ समयout;
-	पूर्णांक ret, err;
+	size_t lsize, csize;
+	size_t bitstream_data_size;
+	unsigned int macroblocks_nb;
+	unsigned int read_bytes;
+	unsigned int cstride;
+	unsigned int i;
+	long timeout;
+	int ret, err;
 
-	अगर (copy_from_user(&ctx, (व्योम __user *)vaddr, माप(ctx)))
-		वापस -EFAULT;
+	if (copy_from_user(&ctx, (void __user *)vaddr, sizeof(ctx)))
+		return -EFAULT;
 
 	ret = tegra_vde_validate_h264_ctx(dev, &ctx);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = tegra_vde_attach_dmabuf(vde, ctx.bitstream_data_fd,
 				      ctx.bitstream_data_offset,
@@ -725,39 +724,39 @@ err_release_y:
 				      &bitstream_data_addr,
 				      &bitstream_data_size,
 				      DMA_TO_DEVICE);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	frames = kदो_स्मृति_array(ctx.dpb_frames_nb, माप(*frames), GFP_KERNEL);
-	अगर (!frames) अणु
+	frames = kmalloc_array(ctx.dpb_frames_nb, sizeof(*frames), GFP_KERNEL);
+	if (!frames) {
 		ret = -ENOMEM;
-		जाओ release_bitstream_dmabuf;
-	पूर्ण
+		goto release_bitstream_dmabuf;
+	}
 
-	dpb_frames = kसुस्मृति(ctx.dpb_frames_nb, माप(*dpb_frames),
+	dpb_frames = kcalloc(ctx.dpb_frames_nb, sizeof(*dpb_frames),
 			     GFP_KERNEL);
-	अगर (!dpb_frames) अणु
+	if (!dpb_frames) {
 		ret = -ENOMEM;
-		जाओ मुक्त_frames;
-	पूर्ण
+		goto free_frames;
+	}
 
 	macroblocks_nb = ctx.pic_width_in_mbs * ctx.pic_height_in_mbs;
 	frames_user = u64_to_user_ptr(ctx.dpb_frames_ptr);
 
-	अगर (copy_from_user(frames, frames_user,
-			   ctx.dpb_frames_nb * माप(*frames))) अणु
+	if (copy_from_user(frames, frames_user,
+			   ctx.dpb_frames_nb * sizeof(*frames))) {
 		ret = -EFAULT;
-		जाओ मुक्त_dpb_frames;
-	पूर्ण
+		goto free_dpb_frames;
+	}
 
 	cstride = ALIGN(ctx.pic_width_in_mbs * 8, 16);
 	csize = cstride * ctx.pic_height_in_mbs * 8;
 	lsize = macroblocks_nb * 256;
 
-	क्रम (i = 0; i < ctx.dpb_frames_nb; i++) अणु
+	for (i = 0; i < ctx.dpb_frames_nb; i++) {
 		ret = tegra_vde_validate_frame(dev, &frames[i]);
-		अगर (ret)
-			जाओ release_dpb_frames;
+		if (ret)
+			goto release_dpb_frames;
 
 		dpb_frames[i].flags = frames[i].flags;
 		dpb_frames[i].frame_num = frames[i].frame_num;
@@ -768,276 +767,276 @@ err_release_y:
 							&frames[i], dma_dir,
 							ctx.baseline_profile,
 							lsize, csize);
-		अगर (ret)
-			जाओ release_dpb_frames;
-	पूर्ण
+		if (ret)
+			goto release_dpb_frames;
+	}
 
-	ret = mutex_lock_पूर्णांकerruptible(&vde->lock);
-	अगर (ret)
-		जाओ release_dpb_frames;
+	ret = mutex_lock_interruptible(&vde->lock);
+	if (ret)
+		goto release_dpb_frames;
 
-	ret = pm_runसमय_get_sync(dev);
-	अगर (ret < 0)
-		जाओ put_runसमय_pm;
+	ret = pm_runtime_get_sync(dev);
+	if (ret < 0)
+		goto put_runtime_pm;
 
 	/*
-	 * We rely on the VDE रेजिस्टरs reset value, otherwise VDE
+	 * We rely on the VDE registers reset value, otherwise VDE
 	 * causes bus lockup.
 	 */
-	ret = reset_control_निश्चित(vde->rst_mc);
-	अगर (ret) अणु
+	ret = reset_control_assert(vde->rst_mc);
+	if (ret) {
 		dev_err(dev, "DEC start: Failed to assert MC reset: %d\n",
 			ret);
-		जाओ put_runसमय_pm;
-	पूर्ण
+		goto put_runtime_pm;
+	}
 
 	ret = reset_control_reset(vde->rst);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "DEC start: Failed to reset HW: %d\n", ret);
-		जाओ put_runसमय_pm;
-	पूर्ण
+		goto put_runtime_pm;
+	}
 
-	ret = reset_control_deनिश्चित(vde->rst_mc);
-	अगर (ret) अणु
+	ret = reset_control_deassert(vde->rst_mc);
+	if (ret) {
 		dev_err(dev, "DEC start: Failed to deassert MC reset: %d\n",
 			ret);
-		जाओ put_runसमय_pm;
-	पूर्ण
+		goto put_runtime_pm;
+	}
 
 	ret = tegra_vde_setup_hw_context(vde, &ctx, dpb_frames,
 					 bitstream_data_addr,
 					 bitstream_data_size,
 					 macroblocks_nb);
-	अगर (ret)
-		जाओ put_runसमय_pm;
+	if (ret)
+		goto put_runtime_pm;
 
 	tegra_vde_decode_frame(vde, macroblocks_nb);
 
-	समयout = रुको_क्रम_completion_पूर्णांकerruptible_समयout(
-			&vde->decode_completion, msecs_to_jअगरfies(1000));
-	अगर (समयout == 0) अणु
-		bsev_ptr = tegra_vde_पढ़ोl(vde, vde->bsev, 0x10);
-		macroblocks_nb = tegra_vde_पढ़ोl(vde, vde->sxe, 0xC8) & 0x1FFF;
-		पढ़ो_bytes = bsev_ptr ? bsev_ptr - bitstream_data_addr : 0;
+	timeout = wait_for_completion_interruptible_timeout(
+			&vde->decode_completion, msecs_to_jiffies(1000));
+	if (timeout == 0) {
+		bsev_ptr = tegra_vde_readl(vde, vde->bsev, 0x10);
+		macroblocks_nb = tegra_vde_readl(vde, vde->sxe, 0xC8) & 0x1FFF;
+		read_bytes = bsev_ptr ? bsev_ptr - bitstream_data_addr : 0;
 
 		dev_err(dev, "Decoding failed: read 0x%X bytes, %u macroblocks parsed\n",
-			पढ़ो_bytes, macroblocks_nb);
+			read_bytes, macroblocks_nb);
 
 		ret = -EIO;
-	पूर्ण अन्यथा अगर (समयout < 0) अणु
-		ret = समयout;
-	पूर्ण
+	} else if (timeout < 0) {
+		ret = timeout;
+	}
 
 	/*
-	 * At first reset memory client to aव्योम resetting VDE HW in the
-	 * middle of DMA which could result पूर्णांकo memory corruption or hang
-	 * the whole प्रणाली.
+	 * At first reset memory client to avoid resetting VDE HW in the
+	 * middle of DMA which could result into memory corruption or hang
+	 * the whole system.
 	 */
-	err = reset_control_निश्चित(vde->rst_mc);
-	अगर (err)
+	err = reset_control_assert(vde->rst_mc);
+	if (err)
 		dev_err(dev, "DEC end: Failed to assert MC reset: %d\n", err);
 
-	err = reset_control_निश्चित(vde->rst);
-	अगर (err)
+	err = reset_control_assert(vde->rst);
+	if (err)
 		dev_err(dev, "DEC end: Failed to assert HW reset: %d\n", err);
 
-put_runसमय_pm:
-	pm_runसमय_mark_last_busy(dev);
-	pm_runसमय_put_स्वतःsuspend(dev);
+put_runtime_pm:
+	pm_runtime_mark_last_busy(dev);
+	pm_runtime_put_autosuspend(dev);
 	mutex_unlock(&vde->lock);
 
 release_dpb_frames:
-	जबतक (i--) अणु
+	while (i--) {
 		dma_dir = (i == 0) ? DMA_FROM_DEVICE : DMA_TO_DEVICE;
 
 		tegra_vde_release_frame_dmabufs(vde, &dpb_frames[i], dma_dir,
 						ctx.baseline_profile, ret != 0);
-	पूर्ण
+	}
 
-मुक्त_dpb_frames:
-	kमुक्त(dpb_frames);
+free_dpb_frames:
+	kfree(dpb_frames);
 
-मुक्त_frames:
-	kमुक्त(frames);
+free_frames:
+	kfree(frames);
 
 release_bitstream_dmabuf:
 	tegra_vde_dmabuf_cache_unmap(vde, bitstream_data_dmabuf_attachment,
 				     ret != 0);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल दीर्घ tegra_vde_unlocked_ioctl(काष्ठा file *filp,
-				     अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
-अणु
-	काष्ठा miscdevice *miscdev = filp->निजी_data;
-	काष्ठा tegra_vde *vde = container_of(miscdev, काष्ठा tegra_vde,
+static long tegra_vde_unlocked_ioctl(struct file *filp,
+				     unsigned int cmd, unsigned long arg)
+{
+	struct miscdevice *miscdev = filp->private_data;
+	struct tegra_vde *vde = container_of(miscdev, struct tegra_vde,
 					     miscdev);
 
-	चयन (cmd) अणु
-	हाल TEGRA_VDE_IOCTL_DECODE_H264:
-		वापस tegra_vde_ioctl_decode_h264(vde, arg);
-	पूर्ण
+	switch (cmd) {
+	case TEGRA_VDE_IOCTL_DECODE_H264:
+		return tegra_vde_ioctl_decode_h264(vde, arg);
+	}
 
 	dev_err(miscdev->parent, "Invalid IOCTL command %u\n", cmd);
 
-	वापस -ENOTTY;
-पूर्ण
+	return -ENOTTY;
+}
 
-अटल पूर्णांक tegra_vde_release_file(काष्ठा inode *inode, काष्ठा file *filp)
-अणु
-	काष्ठा miscdevice *miscdev = filp->निजी_data;
-	काष्ठा tegra_vde *vde = container_of(miscdev, काष्ठा tegra_vde,
+static int tegra_vde_release_file(struct inode *inode, struct file *filp)
+{
+	struct miscdevice *miscdev = filp->private_data;
+	struct tegra_vde *vde = container_of(miscdev, struct tegra_vde,
 					     miscdev);
 
 	tegra_vde_dmabuf_cache_unmap_sync(vde);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा file_operations tegra_vde_fops = अणु
+static const struct file_operations tegra_vde_fops = {
 	.owner		= THIS_MODULE,
 	.unlocked_ioctl	= tegra_vde_unlocked_ioctl,
 	.release	= tegra_vde_release_file,
-पूर्ण;
+};
 
-अटल irqवापस_t tegra_vde_isr(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा tegra_vde *vde = data;
+static irqreturn_t tegra_vde_isr(int irq, void *data)
+{
+	struct tegra_vde *vde = data;
 
-	अगर (completion_करोne(&vde->decode_completion))
-		वापस IRQ_NONE;
+	if (completion_done(&vde->decode_completion))
+		return IRQ_NONE;
 
 	tegra_vde_set_bits(vde, 0, vde->frameid, 0x208);
 	complete(&vde->decode_completion);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल __maybe_unused पूर्णांक tegra_vde_runसमय_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा tegra_vde *vde = dev_get_drvdata(dev);
-	पूर्णांक err;
+static __maybe_unused int tegra_vde_runtime_suspend(struct device *dev)
+{
+	struct tegra_vde *vde = dev_get_drvdata(dev);
+	int err;
 
-	err = tegra_घातergate_घातer_off(TEGRA_POWERGATE_VDEC);
-	अगर (err) अणु
+	err = tegra_powergate_power_off(TEGRA_POWERGATE_VDEC);
+	if (err) {
 		dev_err(dev, "Failed to power down HW: %d\n", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	clk_disable_unprepare(vde->clk);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल __maybe_unused पूर्णांक tegra_vde_runसमय_resume(काष्ठा device *dev)
-अणु
-	काष्ठा tegra_vde *vde = dev_get_drvdata(dev);
-	पूर्णांक err;
+static __maybe_unused int tegra_vde_runtime_resume(struct device *dev)
+{
+	struct tegra_vde *vde = dev_get_drvdata(dev);
+	int err;
 
-	err = tegra_घातergate_sequence_घातer_up(TEGRA_POWERGATE_VDEC,
+	err = tegra_powergate_sequence_power_up(TEGRA_POWERGATE_VDEC,
 						vde->clk, vde->rst);
-	अगर (err) अणु
+	if (err) {
 		dev_err(dev, "Failed to power up HW : %d\n", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tegra_vde_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा tegra_vde *vde;
-	पूर्णांक irq, err;
+static int tegra_vde_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	struct tegra_vde *vde;
+	int irq, err;
 
-	vde = devm_kzalloc(dev, माप(*vde), GFP_KERNEL);
-	अगर (!vde)
-		वापस -ENOMEM;
+	vde = devm_kzalloc(dev, sizeof(*vde), GFP_KERNEL);
+	if (!vde)
+		return -ENOMEM;
 
-	platक्रमm_set_drvdata(pdev, vde);
+	platform_set_drvdata(pdev, vde);
 
-	vde->sxe = devm_platक्रमm_ioremap_resource_byname(pdev, "sxe");
-	अगर (IS_ERR(vde->sxe))
-		वापस PTR_ERR(vde->sxe);
+	vde->sxe = devm_platform_ioremap_resource_byname(pdev, "sxe");
+	if (IS_ERR(vde->sxe))
+		return PTR_ERR(vde->sxe);
 
-	vde->bsev = devm_platक्रमm_ioremap_resource_byname(pdev, "bsev");
-	अगर (IS_ERR(vde->bsev))
-		वापस PTR_ERR(vde->bsev);
+	vde->bsev = devm_platform_ioremap_resource_byname(pdev, "bsev");
+	if (IS_ERR(vde->bsev))
+		return PTR_ERR(vde->bsev);
 
-	vde->mbe = devm_platक्रमm_ioremap_resource_byname(pdev, "mbe");
-	अगर (IS_ERR(vde->mbe))
-		वापस PTR_ERR(vde->mbe);
+	vde->mbe = devm_platform_ioremap_resource_byname(pdev, "mbe");
+	if (IS_ERR(vde->mbe))
+		return PTR_ERR(vde->mbe);
 
-	vde->ppe = devm_platक्रमm_ioremap_resource_byname(pdev, "ppe");
-	अगर (IS_ERR(vde->ppe))
-		वापस PTR_ERR(vde->ppe);
+	vde->ppe = devm_platform_ioremap_resource_byname(pdev, "ppe");
+	if (IS_ERR(vde->ppe))
+		return PTR_ERR(vde->ppe);
 
-	vde->mce = devm_platक्रमm_ioremap_resource_byname(pdev, "mce");
-	अगर (IS_ERR(vde->mce))
-		वापस PTR_ERR(vde->mce);
+	vde->mce = devm_platform_ioremap_resource_byname(pdev, "mce");
+	if (IS_ERR(vde->mce))
+		return PTR_ERR(vde->mce);
 
-	vde->tfe = devm_platक्रमm_ioremap_resource_byname(pdev, "tfe");
-	अगर (IS_ERR(vde->tfe))
-		वापस PTR_ERR(vde->tfe);
+	vde->tfe = devm_platform_ioremap_resource_byname(pdev, "tfe");
+	if (IS_ERR(vde->tfe))
+		return PTR_ERR(vde->tfe);
 
-	vde->ppb = devm_platक्रमm_ioremap_resource_byname(pdev, "ppb");
-	अगर (IS_ERR(vde->ppb))
-		वापस PTR_ERR(vde->ppb);
+	vde->ppb = devm_platform_ioremap_resource_byname(pdev, "ppb");
+	if (IS_ERR(vde->ppb))
+		return PTR_ERR(vde->ppb);
 
-	vde->vdma = devm_platक्रमm_ioremap_resource_byname(pdev, "vdma");
-	अगर (IS_ERR(vde->vdma))
-		वापस PTR_ERR(vde->vdma);
+	vde->vdma = devm_platform_ioremap_resource_byname(pdev, "vdma");
+	if (IS_ERR(vde->vdma))
+		return PTR_ERR(vde->vdma);
 
-	vde->frameid = devm_platक्रमm_ioremap_resource_byname(pdev, "frameid");
-	अगर (IS_ERR(vde->frameid))
-		वापस PTR_ERR(vde->frameid);
+	vde->frameid = devm_platform_ioremap_resource_byname(pdev, "frameid");
+	if (IS_ERR(vde->frameid))
+		return PTR_ERR(vde->frameid);
 
-	vde->clk = devm_clk_get(dev, शून्य);
-	अगर (IS_ERR(vde->clk)) अणु
+	vde->clk = devm_clk_get(dev, NULL);
+	if (IS_ERR(vde->clk)) {
 		err = PTR_ERR(vde->clk);
 		dev_err(dev, "Could not get VDE clk %d\n", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	vde->rst = devm_reset_control_get(dev, शून्य);
-	अगर (IS_ERR(vde->rst)) अणु
+	vde->rst = devm_reset_control_get(dev, NULL);
+	if (IS_ERR(vde->rst)) {
 		err = PTR_ERR(vde->rst);
 		dev_err(dev, "Could not get VDE reset %d\n", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	vde->rst_mc = devm_reset_control_get_optional(dev, "mc");
-	अगर (IS_ERR(vde->rst_mc)) अणु
+	if (IS_ERR(vde->rst_mc)) {
 		err = PTR_ERR(vde->rst_mc);
 		dev_err(dev, "Could not get MC reset %d\n", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	irq = platक्रमm_get_irq_byname(pdev, "sync-token");
-	अगर (irq < 0)
-		वापस irq;
+	irq = platform_get_irq_byname(pdev, "sync-token");
+	if (irq < 0)
+		return irq;
 
 	err = devm_request_irq(dev, irq, tegra_vde_isr, 0,
 			       dev_name(dev), vde);
-	अगर (err) अणु
+	if (err) {
 		dev_err(dev, "Could not request IRQ %d\n", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	vde->iram_pool = of_gen_pool_get(dev->of_node, "iram", 0);
-	अगर (!vde->iram_pool) अणु
+	if (!vde->iram_pool) {
 		dev_err(dev, "Could not get IRAM pool\n");
-		वापस -EPROBE_DEFER;
-	पूर्ण
+		return -EPROBE_DEFER;
+	}
 
 	vde->iram = gen_pool_dma_alloc(vde->iram_pool,
 				       gen_pool_size(vde->iram_pool),
 				       &vde->iram_lists_addr);
-	अगर (!vde->iram) अणु
+	if (!vde->iram) {
 		dev_err(dev, "Could not reserve IRAM\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	INIT_LIST_HEAD(&vde->map_list);
 	mutex_init(&vde->map_lock);
@@ -1050,131 +1049,131 @@ release_bitstream_dmabuf:
 	vde->miscdev.parent = dev;
 
 	err = tegra_vde_iommu_init(vde);
-	अगर (err) अणु
+	if (err) {
 		dev_err(dev, "Failed to initialize IOMMU: %d\n", err);
-		जाओ err_gen_मुक्त;
-	पूर्ण
+		goto err_gen_free;
+	}
 
-	err = misc_रेजिस्टर(&vde->miscdev);
-	अगर (err) अणु
+	err = misc_register(&vde->miscdev);
+	if (err) {
 		dev_err(dev, "Failed to register misc device: %d\n", err);
-		जाओ err_deinit_iommu;
-	पूर्ण
+		goto err_deinit_iommu;
+	}
 
-	pm_runसमय_enable(dev);
-	pm_runसमय_use_स्वतःsuspend(dev);
-	pm_runसमय_set_स्वतःsuspend_delay(dev, 300);
+	pm_runtime_enable(dev);
+	pm_runtime_use_autosuspend(dev);
+	pm_runtime_set_autosuspend_delay(dev, 300);
 
 	/*
 	 * VDE partition may be left ON after bootloader, hence let's
-	 * घातer-cycle it in order to put hardware पूर्णांकo a predictable lower
-	 * घातer state.
+	 * power-cycle it in order to put hardware into a predictable lower
+	 * power state.
 	 */
-	pm_runसमय_get_sync(dev);
-	pm_runसमय_put(dev);
+	pm_runtime_get_sync(dev);
+	pm_runtime_put(dev);
 
-	वापस 0;
+	return 0;
 
 err_deinit_iommu:
 	tegra_vde_iommu_deinit(vde);
 
-err_gen_मुक्त:
-	gen_pool_मुक्त(vde->iram_pool, (अचिन्हित दीर्घ)vde->iram,
+err_gen_free:
+	gen_pool_free(vde->iram_pool, (unsigned long)vde->iram,
 		      gen_pool_size(vde->iram_pool));
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक tegra_vde_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा tegra_vde *vde = platक्रमm_get_drvdata(pdev);
-	काष्ठा device *dev = &pdev->dev;
+static int tegra_vde_remove(struct platform_device *pdev)
+{
+	struct tegra_vde *vde = platform_get_drvdata(pdev);
+	struct device *dev = &pdev->dev;
 
-	pm_runसमय_get_sync(dev);
-	pm_runसमय_करोnt_use_स्वतःsuspend(dev);
-	pm_runसमय_disable(dev);
+	pm_runtime_get_sync(dev);
+	pm_runtime_dont_use_autosuspend(dev);
+	pm_runtime_disable(dev);
 
 	/*
-	 * Balance RPM state, the VDE घातer करोमुख्य is left ON and hardware
-	 * is घड़ी-gated. It's safe to reboot machine now.
+	 * Balance RPM state, the VDE power domain is left ON and hardware
+	 * is clock-gated. It's safe to reboot machine now.
 	 */
-	pm_runसमय_put_noidle(dev);
+	pm_runtime_put_noidle(dev);
 	clk_disable_unprepare(vde->clk);
 
-	misc_deरेजिस्टर(&vde->miscdev);
+	misc_deregister(&vde->miscdev);
 
 	tegra_vde_dmabuf_cache_unmap_all(vde);
 	tegra_vde_iommu_deinit(vde);
 
-	gen_pool_मुक्त(vde->iram_pool, (अचिन्हित दीर्घ)vde->iram,
+	gen_pool_free(vde->iram_pool, (unsigned long)vde->iram,
 		      gen_pool_size(vde->iram_pool));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम tegra_vde_shutकरोwn(काष्ठा platक्रमm_device *pdev)
-अणु
+static void tegra_vde_shutdown(struct platform_device *pdev)
+{
 	/*
-	 * On some devices bootloader isn't पढ़ोy to a घातer-gated VDE on
-	 * a warm-reboot, machine will hang in that हाल.
+	 * On some devices bootloader isn't ready to a power-gated VDE on
+	 * a warm-reboot, machine will hang in that case.
 	 */
-	अगर (pm_runसमय_status_suspended(&pdev->dev))
-		tegra_vde_runसमय_resume(&pdev->dev);
-पूर्ण
+	if (pm_runtime_status_suspended(&pdev->dev))
+		tegra_vde_runtime_resume(&pdev->dev);
+}
 
-अटल __maybe_unused पूर्णांक tegra_vde_pm_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा tegra_vde *vde = dev_get_drvdata(dev);
-	पूर्णांक err;
+static __maybe_unused int tegra_vde_pm_suspend(struct device *dev)
+{
+	struct tegra_vde *vde = dev_get_drvdata(dev);
+	int err;
 
 	mutex_lock(&vde->lock);
 
-	err = pm_runसमय_क्रमce_suspend(dev);
-	अगर (err < 0)
-		वापस err;
+	err = pm_runtime_force_suspend(dev);
+	if (err < 0)
+		return err;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल __maybe_unused पूर्णांक tegra_vde_pm_resume(काष्ठा device *dev)
-अणु
-	काष्ठा tegra_vde *vde = dev_get_drvdata(dev);
-	पूर्णांक err;
+static __maybe_unused int tegra_vde_pm_resume(struct device *dev)
+{
+	struct tegra_vde *vde = dev_get_drvdata(dev);
+	int err;
 
-	err = pm_runसमय_क्रमce_resume(dev);
-	अगर (err < 0)
-		वापस err;
+	err = pm_runtime_force_resume(dev);
+	if (err < 0)
+		return err;
 
 	mutex_unlock(&vde->lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा dev_pm_ops tegra_vde_pm_ops = अणु
-	SET_RUNTIME_PM_OPS(tegra_vde_runसमय_suspend,
-			   tegra_vde_runसमय_resume,
-			   शून्य)
+static const struct dev_pm_ops tegra_vde_pm_ops = {
+	SET_RUNTIME_PM_OPS(tegra_vde_runtime_suspend,
+			   tegra_vde_runtime_resume,
+			   NULL)
 	SET_SYSTEM_SLEEP_PM_OPS(tegra_vde_pm_suspend,
 				tegra_vde_pm_resume)
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा of_device_id tegra_vde_of_match[] = अणु
-	अणु .compatible = "nvidia,tegra20-vde", पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+static const struct of_device_id tegra_vde_of_match[] = {
+	{ .compatible = "nvidia,tegra20-vde", },
+	{ },
+};
 MODULE_DEVICE_TABLE(of, tegra_vde_of_match);
 
-अटल काष्ठा platक्रमm_driver tegra_vde_driver = अणु
+static struct platform_driver tegra_vde_driver = {
 	.probe		= tegra_vde_probe,
-	.हटाओ		= tegra_vde_हटाओ,
-	.shutकरोwn	= tegra_vde_shutकरोwn,
-	.driver		= अणु
+	.remove		= tegra_vde_remove,
+	.shutdown	= tegra_vde_shutdown,
+	.driver		= {
 		.name		= "tegra-vde",
 		.of_match_table = tegra_vde_of_match,
 		.pm		= &tegra_vde_pm_ops,
-	पूर्ण,
-पूर्ण;
-module_platक्रमm_driver(tegra_vde_driver);
+	},
+};
+module_platform_driver(tegra_vde_driver);
 
 MODULE_DESCRIPTION("NVIDIA Tegra Video Decoder driver");
 MODULE_AUTHOR("Dmitry Osipenko <digetx@gmail.com>");

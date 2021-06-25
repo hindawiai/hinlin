@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * OpenRISC cache.c
  *
@@ -7,52 +6,52 @@
  * others.  All original copyrights apply as per the original source
  * declaration.
  *
- * Modअगरications क्रम the OpenRISC architecture:
+ * Modifications for the OpenRISC architecture:
  * Copyright (C) 2015 Jan Henrik Weinstock <jan.weinstock@rwth-aachen.de>
  */
 
-#समावेश <यंत्र/spr.h>
-#समावेश <यंत्र/spr_defs.h>
-#समावेश <यंत्र/cache.h>
-#समावेश <यंत्र/cacheflush.h>
-#समावेश <यंत्र/tlbflush.h>
+#include <asm/spr.h>
+#include <asm/spr_defs.h>
+#include <asm/cache.h>
+#include <asm/cacheflush.h>
+#include <asm/tlbflush.h>
 
-अटल __always_अंतरभूत व्योम cache_loop(काष्ठा page *page, स्थिर अचिन्हित पूर्णांक reg)
-अणु
-	अचिन्हित दीर्घ paddr = page_to_pfn(page) << PAGE_SHIFT;
-	अचिन्हित दीर्घ line = paddr & ~(L1_CACHE_BYTES - 1);
+static __always_inline void cache_loop(struct page *page, const unsigned int reg)
+{
+	unsigned long paddr = page_to_pfn(page) << PAGE_SHIFT;
+	unsigned long line = paddr & ~(L1_CACHE_BYTES - 1);
 
-	जबतक (line < paddr + PAGE_SIZE) अणु
+	while (line < paddr + PAGE_SIZE) {
 		mtspr(reg, line);
 		line += L1_CACHE_BYTES;
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम local_dcache_page_flush(काष्ठा page *page)
-अणु
+void local_dcache_page_flush(struct page *page)
+{
 	cache_loop(page, SPR_DCBFR);
-पूर्ण
+}
 EXPORT_SYMBOL(local_dcache_page_flush);
 
-व्योम local_icache_page_inv(काष्ठा page *page)
-अणु
+void local_icache_page_inv(struct page *page)
+{
 	cache_loop(page, SPR_ICBIR);
-पूर्ण
+}
 EXPORT_SYMBOL(local_icache_page_inv);
 
-व्योम update_cache(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ address,
+void update_cache(struct vm_area_struct *vma, unsigned long address,
 	pte_t *pte)
-अणु
-	अचिन्हित दीर्घ pfn = pte_val(*pte) >> PAGE_SHIFT;
-	काष्ठा page *page = pfn_to_page(pfn);
-	पूर्णांक dirty = !test_and_set_bit(PG_dc_clean, &page->flags);
+{
+	unsigned long pfn = pte_val(*pte) >> PAGE_SHIFT;
+	struct page *page = pfn_to_page(pfn);
+	int dirty = !test_and_set_bit(PG_dc_clean, &page->flags);
 
 	/*
-	 * Since icaches करो not snoop क्रम updated data on OpenRISC, we
-	 * must ग_लिखो back and invalidate any dirty pages manually. We
+	 * Since icaches do not snoop for updated data on OpenRISC, we
+	 * must write back and invalidate any dirty pages manually. We
 	 * can skip data pages, since they will not end up in icaches.
 	 */
-	अगर ((vma->vm_flags & VM_EXEC) && dirty)
+	if ((vma->vm_flags & VM_EXEC) && dirty)
 		sync_icache_dcache(page);
-पूर्ण
+}
 

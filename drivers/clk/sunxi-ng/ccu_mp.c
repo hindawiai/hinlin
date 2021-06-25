@@ -1,240 +1,239 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright (C) 2016 Maxime Ripard
- * Maxime Ripard <maxime.ripard@मुक्त-electrons.com>
+ * Maxime Ripard <maxime.ripard@free-electrons.com>
  */
 
-#समावेश <linux/clk-provider.h>
-#समावेश <linux/पन.स>
+#include <linux/clk-provider.h>
+#include <linux/io.h>
 
-#समावेश "ccu_gate.h"
-#समावेश "ccu_mp.h"
+#include "ccu_gate.h"
+#include "ccu_mp.h"
 
-अटल व्योम ccu_mp_find_best(अचिन्हित दीर्घ parent, अचिन्हित दीर्घ rate,
-			     अचिन्हित पूर्णांक max_m, अचिन्हित पूर्णांक max_p,
-			     अचिन्हित पूर्णांक *m, अचिन्हित पूर्णांक *p)
-अणु
-	अचिन्हित दीर्घ best_rate = 0;
-	अचिन्हित पूर्णांक best_m = 0, best_p = 0;
-	अचिन्हित पूर्णांक _m, _p;
+static void ccu_mp_find_best(unsigned long parent, unsigned long rate,
+			     unsigned int max_m, unsigned int max_p,
+			     unsigned int *m, unsigned int *p)
+{
+	unsigned long best_rate = 0;
+	unsigned int best_m = 0, best_p = 0;
+	unsigned int _m, _p;
 
-	क्रम (_p = 1; _p <= max_p; _p <<= 1) अणु
-		क्रम (_m = 1; _m <= max_m; _m++) अणु
-			अचिन्हित दीर्घ पंचांगp_rate = parent / _p / _m;
+	for (_p = 1; _p <= max_p; _p <<= 1) {
+		for (_m = 1; _m <= max_m; _m++) {
+			unsigned long tmp_rate = parent / _p / _m;
 
-			अगर (पंचांगp_rate > rate)
-				जारी;
+			if (tmp_rate > rate)
+				continue;
 
-			अगर ((rate - पंचांगp_rate) < (rate - best_rate)) अणु
-				best_rate = पंचांगp_rate;
+			if ((rate - tmp_rate) < (rate - best_rate)) {
+				best_rate = tmp_rate;
 				best_m = _m;
 				best_p = _p;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
 	*m = best_m;
 	*p = best_p;
-पूर्ण
+}
 
-अटल अचिन्हित दीर्घ ccu_mp_find_best_with_parent_adj(काष्ठा clk_hw *hw,
-						      अचिन्हित दीर्घ *parent,
-						      अचिन्हित दीर्घ rate,
-						      अचिन्हित पूर्णांक max_m,
-						      अचिन्हित पूर्णांक max_p)
-अणु
-	अचिन्हित दीर्घ parent_rate_saved;
-	अचिन्हित दीर्घ parent_rate, now;
-	अचिन्हित दीर्घ best_rate = 0;
-	अचिन्हित पूर्णांक _m, _p, भाग;
-	अचिन्हित दीर्घ maxभाग;
+static unsigned long ccu_mp_find_best_with_parent_adj(struct clk_hw *hw,
+						      unsigned long *parent,
+						      unsigned long rate,
+						      unsigned int max_m,
+						      unsigned int max_p)
+{
+	unsigned long parent_rate_saved;
+	unsigned long parent_rate, now;
+	unsigned long best_rate = 0;
+	unsigned int _m, _p, div;
+	unsigned long maxdiv;
 
 	parent_rate_saved = *parent;
 
 	/*
-	 * The maximum भागider we can use without overflowing
-	 * अचिन्हित दीर्घ in rate * m * p below
+	 * The maximum divider we can use without overflowing
+	 * unsigned long in rate * m * p below
 	 */
-	maxभाग = max_m * max_p;
-	maxभाग = min(अच_दीर्घ_उच्च / rate, maxभाग);
+	maxdiv = max_m * max_p;
+	maxdiv = min(ULONG_MAX / rate, maxdiv);
 
-	क्रम (_p = 1; _p <= max_p; _p <<= 1) अणु
-		क्रम (_m = 1; _m <= max_m; _m++) अणु
-			भाग = _m * _p;
+	for (_p = 1; _p <= max_p; _p <<= 1) {
+		for (_m = 1; _m <= max_m; _m++) {
+			div = _m * _p;
 
-			अगर (भाग > maxभाग)
-				अवरोध;
+			if (div > maxdiv)
+				break;
 
-			अगर (rate * भाग == parent_rate_saved) अणु
+			if (rate * div == parent_rate_saved) {
 				/*
-				 * It's the most ideal हाल अगर the requested
-				 * rate can be भागided from parent घड़ी without
-				 * needing to change parent rate, so वापस the
-				 * भागider immediately.
+				 * It's the most ideal case if the requested
+				 * rate can be divided from parent clock without
+				 * needing to change parent rate, so return the
+				 * divider immediately.
 				 */
 				*parent = parent_rate_saved;
-				वापस rate;
-			पूर्ण
+				return rate;
+			}
 
-			parent_rate = clk_hw_round_rate(hw, rate * भाग);
-			now = parent_rate / भाग;
+			parent_rate = clk_hw_round_rate(hw, rate * div);
+			now = parent_rate / div;
 
-			अगर (now <= rate && now > best_rate) अणु
+			if (now <= rate && now > best_rate) {
 				best_rate = now;
 				*parent = parent_rate;
 
-				अगर (now == rate)
-					वापस rate;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				if (now == rate)
+					return rate;
+			}
+		}
+	}
 
-	वापस best_rate;
-पूर्ण
+	return best_rate;
+}
 
-अटल अचिन्हित दीर्घ ccu_mp_round_rate(काष्ठा ccu_mux_पूर्णांकernal *mux,
-				       काष्ठा clk_hw *hw,
-				       अचिन्हित दीर्घ *parent_rate,
-				       अचिन्हित दीर्घ rate,
-				       व्योम *data)
-अणु
-	काष्ठा ccu_mp *cmp = data;
-	अचिन्हित पूर्णांक max_m, max_p;
-	अचिन्हित पूर्णांक m, p;
+static unsigned long ccu_mp_round_rate(struct ccu_mux_internal *mux,
+				       struct clk_hw *hw,
+				       unsigned long *parent_rate,
+				       unsigned long rate,
+				       void *data)
+{
+	struct ccu_mp *cmp = data;
+	unsigned int max_m, max_p;
+	unsigned int m, p;
 
-	अगर (cmp->common.features & CCU_FEATURE_FIXED_POSTDIV)
-		rate *= cmp->fixed_post_भाग;
+	if (cmp->common.features & CCU_FEATURE_FIXED_POSTDIV)
+		rate *= cmp->fixed_post_div;
 
 	max_m = cmp->m.max ?: 1 << cmp->m.width;
 	max_p = cmp->p.max ?: 1 << ((1 << cmp->p.width) - 1);
 
-	अगर (!clk_hw_can_set_rate_parent(&cmp->common.hw)) अणु
+	if (!clk_hw_can_set_rate_parent(&cmp->common.hw)) {
 		ccu_mp_find_best(*parent_rate, rate, max_m, max_p, &m, &p);
 		rate = *parent_rate / p / m;
-	पूर्ण अन्यथा अणु
+	} else {
 		rate = ccu_mp_find_best_with_parent_adj(hw, parent_rate, rate,
 							max_m, max_p);
-	पूर्ण
+	}
 
-	अगर (cmp->common.features & CCU_FEATURE_FIXED_POSTDIV)
-		rate /= cmp->fixed_post_भाग;
+	if (cmp->common.features & CCU_FEATURE_FIXED_POSTDIV)
+		rate /= cmp->fixed_post_div;
 
-	वापस rate;
-पूर्ण
+	return rate;
+}
 
-अटल व्योम ccu_mp_disable(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा ccu_mp *cmp = hw_to_ccu_mp(hw);
+static void ccu_mp_disable(struct clk_hw *hw)
+{
+	struct ccu_mp *cmp = hw_to_ccu_mp(hw);
 
-	वापस ccu_gate_helper_disable(&cmp->common, cmp->enable);
-पूर्ण
+	return ccu_gate_helper_disable(&cmp->common, cmp->enable);
+}
 
-अटल पूर्णांक ccu_mp_enable(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा ccu_mp *cmp = hw_to_ccu_mp(hw);
+static int ccu_mp_enable(struct clk_hw *hw)
+{
+	struct ccu_mp *cmp = hw_to_ccu_mp(hw);
 
-	वापस ccu_gate_helper_enable(&cmp->common, cmp->enable);
-पूर्ण
+	return ccu_gate_helper_enable(&cmp->common, cmp->enable);
+}
 
-अटल पूर्णांक ccu_mp_is_enabled(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा ccu_mp *cmp = hw_to_ccu_mp(hw);
+static int ccu_mp_is_enabled(struct clk_hw *hw)
+{
+	struct ccu_mp *cmp = hw_to_ccu_mp(hw);
 
-	वापस ccu_gate_helper_is_enabled(&cmp->common, cmp->enable);
-पूर्ण
+	return ccu_gate_helper_is_enabled(&cmp->common, cmp->enable);
+}
 
-अटल अचिन्हित दीर्घ ccu_mp_recalc_rate(काष्ठा clk_hw *hw,
-					अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा ccu_mp *cmp = hw_to_ccu_mp(hw);
-	अचिन्हित दीर्घ rate;
-	अचिन्हित पूर्णांक m, p;
+static unsigned long ccu_mp_recalc_rate(struct clk_hw *hw,
+					unsigned long parent_rate)
+{
+	struct ccu_mp *cmp = hw_to_ccu_mp(hw);
+	unsigned long rate;
+	unsigned int m, p;
 	u32 reg;
 
-	/* Adjust parent_rate according to pre-भागiders */
-	parent_rate = ccu_mux_helper_apply_preभाग(&cmp->common, &cmp->mux, -1,
+	/* Adjust parent_rate according to pre-dividers */
+	parent_rate = ccu_mux_helper_apply_prediv(&cmp->common, &cmp->mux, -1,
 						  parent_rate);
 
-	reg = पढ़ोl(cmp->common.base + cmp->common.reg);
+	reg = readl(cmp->common.base + cmp->common.reg);
 
-	m = reg >> cmp->m.shअगरt;
+	m = reg >> cmp->m.shift;
 	m &= (1 << cmp->m.width) - 1;
 	m += cmp->m.offset;
-	अगर (!m)
+	if (!m)
 		m++;
 
-	p = reg >> cmp->p.shअगरt;
+	p = reg >> cmp->p.shift;
 	p &= (1 << cmp->p.width) - 1;
 
 	rate = (parent_rate >> p) / m;
-	अगर (cmp->common.features & CCU_FEATURE_FIXED_POSTDIV)
-		rate /= cmp->fixed_post_भाग;
+	if (cmp->common.features & CCU_FEATURE_FIXED_POSTDIV)
+		rate /= cmp->fixed_post_div;
 
-	वापस rate;
-पूर्ण
+	return rate;
+}
 
-अटल पूर्णांक ccu_mp_determine_rate(काष्ठा clk_hw *hw,
-				 काष्ठा clk_rate_request *req)
-अणु
-	काष्ठा ccu_mp *cmp = hw_to_ccu_mp(hw);
+static int ccu_mp_determine_rate(struct clk_hw *hw,
+				 struct clk_rate_request *req)
+{
+	struct ccu_mp *cmp = hw_to_ccu_mp(hw);
 
-	वापस ccu_mux_helper_determine_rate(&cmp->common, &cmp->mux,
+	return ccu_mux_helper_determine_rate(&cmp->common, &cmp->mux,
 					     req, ccu_mp_round_rate, cmp);
-पूर्ण
+}
 
-अटल पूर्णांक ccu_mp_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
-			   अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा ccu_mp *cmp = hw_to_ccu_mp(hw);
-	अचिन्हित दीर्घ flags;
-	अचिन्हित पूर्णांक max_m, max_p;
-	अचिन्हित पूर्णांक m, p;
+static int ccu_mp_set_rate(struct clk_hw *hw, unsigned long rate,
+			   unsigned long parent_rate)
+{
+	struct ccu_mp *cmp = hw_to_ccu_mp(hw);
+	unsigned long flags;
+	unsigned int max_m, max_p;
+	unsigned int m, p;
 	u32 reg;
 
-	/* Adjust parent_rate according to pre-भागiders */
-	parent_rate = ccu_mux_helper_apply_preभाग(&cmp->common, &cmp->mux, -1,
+	/* Adjust parent_rate according to pre-dividers */
+	parent_rate = ccu_mux_helper_apply_prediv(&cmp->common, &cmp->mux, -1,
 						  parent_rate);
 
 	max_m = cmp->m.max ?: 1 << cmp->m.width;
 	max_p = cmp->p.max ?: 1 << ((1 << cmp->p.width) - 1);
 
-	/* Adjust target rate according to post-भागiders */
-	अगर (cmp->common.features & CCU_FEATURE_FIXED_POSTDIV)
-		rate = rate * cmp->fixed_post_भाग;
+	/* Adjust target rate according to post-dividers */
+	if (cmp->common.features & CCU_FEATURE_FIXED_POSTDIV)
+		rate = rate * cmp->fixed_post_div;
 
 	ccu_mp_find_best(parent_rate, rate, max_m, max_p, &m, &p);
 
 	spin_lock_irqsave(cmp->common.lock, flags);
 
-	reg = पढ़ोl(cmp->common.base + cmp->common.reg);
-	reg &= ~GENMASK(cmp->m.width + cmp->m.shअगरt - 1, cmp->m.shअगरt);
-	reg &= ~GENMASK(cmp->p.width + cmp->p.shअगरt - 1, cmp->p.shअगरt);
-	reg |= (m - cmp->m.offset) << cmp->m.shअगरt;
-	reg |= ilog2(p) << cmp->p.shअगरt;
+	reg = readl(cmp->common.base + cmp->common.reg);
+	reg &= ~GENMASK(cmp->m.width + cmp->m.shift - 1, cmp->m.shift);
+	reg &= ~GENMASK(cmp->p.width + cmp->p.shift - 1, cmp->p.shift);
+	reg |= (m - cmp->m.offset) << cmp->m.shift;
+	reg |= ilog2(p) << cmp->p.shift;
 
-	ग_लिखोl(reg, cmp->common.base + cmp->common.reg);
+	writel(reg, cmp->common.base + cmp->common.reg);
 
 	spin_unlock_irqrestore(cmp->common.lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल u8 ccu_mp_get_parent(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा ccu_mp *cmp = hw_to_ccu_mp(hw);
+static u8 ccu_mp_get_parent(struct clk_hw *hw)
+{
+	struct ccu_mp *cmp = hw_to_ccu_mp(hw);
 
-	वापस ccu_mux_helper_get_parent(&cmp->common, &cmp->mux);
-पूर्ण
+	return ccu_mux_helper_get_parent(&cmp->common, &cmp->mux);
+}
 
-अटल पूर्णांक ccu_mp_set_parent(काष्ठा clk_hw *hw, u8 index)
-अणु
-	काष्ठा ccu_mp *cmp = hw_to_ccu_mp(hw);
+static int ccu_mp_set_parent(struct clk_hw *hw, u8 index)
+{
+	struct ccu_mp *cmp = hw_to_ccu_mp(hw);
 
-	वापस ccu_mux_helper_set_parent(&cmp->common, &cmp->mux, index);
-पूर्ण
+	return ccu_mux_helper_set_parent(&cmp->common, &cmp->mux, index);
+}
 
-स्थिर काष्ठा clk_ops ccu_mp_ops = अणु
+const struct clk_ops ccu_mp_ops = {
 	.disable	= ccu_mp_disable,
 	.enable		= ccu_mp_enable,
 	.is_enabled	= ccu_mp_is_enabled,
@@ -245,76 +244,76 @@
 	.determine_rate	= ccu_mp_determine_rate,
 	.recalc_rate	= ccu_mp_recalc_rate,
 	.set_rate	= ccu_mp_set_rate,
-पूर्ण;
+};
 
 /*
- * Support क्रम MMC timing mode चयनing
+ * Support for MMC timing mode switching
  *
- * The MMC घड़ीs on some SoCs support चयनing between old and
- * new timing modes. A platक्रमm specअगरic API is provided to query
+ * The MMC clocks on some SoCs support switching between old and
+ * new timing modes. A platform specific API is provided to query
  * and set the timing mode on supported SoCs.
  *
  * In addition, a special class of ccu_mp_ops is provided, which
- * takes in to account the timing mode चयन. When the new timing
- * mode is active, the घड़ी output rate is halved. This new class
- * is a wrapper around the generic ccu_mp_ops. When घड़ी rates
- * are passed through to ccu_mp_ops callbacks, they are द्विगुनd
- * अगर the new timing mode bit is set, to account क्रम the post
- * भागider. Conversely, when घड़ी rates are passed back, they
- * are halved अगर the mode bit is set.
+ * takes in to account the timing mode switch. When the new timing
+ * mode is active, the clock output rate is halved. This new class
+ * is a wrapper around the generic ccu_mp_ops. When clock rates
+ * are passed through to ccu_mp_ops callbacks, they are doubled
+ * if the new timing mode bit is set, to account for the post
+ * divider. Conversely, when clock rates are passed back, they
+ * are halved if the mode bit is set.
  */
 
-अटल अचिन्हित दीर्घ ccu_mp_mmc_recalc_rate(काष्ठा clk_hw *hw,
-					    अचिन्हित दीर्घ parent_rate)
-अणु
-	अचिन्हित दीर्घ rate = ccu_mp_recalc_rate(hw, parent_rate);
-	काष्ठा ccu_common *cm = hw_to_ccu_common(hw);
-	u32 val = पढ़ोl(cm->base + cm->reg);
+static unsigned long ccu_mp_mmc_recalc_rate(struct clk_hw *hw,
+					    unsigned long parent_rate)
+{
+	unsigned long rate = ccu_mp_recalc_rate(hw, parent_rate);
+	struct ccu_common *cm = hw_to_ccu_common(hw);
+	u32 val = readl(cm->base + cm->reg);
 
-	अगर (val & CCU_MMC_NEW_TIMING_MODE)
-		वापस rate / 2;
-	वापस rate;
-पूर्ण
+	if (val & CCU_MMC_NEW_TIMING_MODE)
+		return rate / 2;
+	return rate;
+}
 
-अटल पूर्णांक ccu_mp_mmc_determine_rate(काष्ठा clk_hw *hw,
-				     काष्ठा clk_rate_request *req)
-अणु
-	काष्ठा ccu_common *cm = hw_to_ccu_common(hw);
-	u32 val = पढ़ोl(cm->base + cm->reg);
-	पूर्णांक ret;
+static int ccu_mp_mmc_determine_rate(struct clk_hw *hw,
+				     struct clk_rate_request *req)
+{
+	struct ccu_common *cm = hw_to_ccu_common(hw);
+	u32 val = readl(cm->base + cm->reg);
+	int ret;
 
-	/* adjust the requested घड़ी rate */
-	अगर (val & CCU_MMC_NEW_TIMING_MODE) अणु
+	/* adjust the requested clock rate */
+	if (val & CCU_MMC_NEW_TIMING_MODE) {
 		req->rate *= 2;
 		req->min_rate *= 2;
 		req->max_rate *= 2;
-	पूर्ण
+	}
 
 	ret = ccu_mp_determine_rate(hw, req);
 
-	/* re-adjust the requested घड़ी rate back */
-	अगर (val & CCU_MMC_NEW_TIMING_MODE) अणु
+	/* re-adjust the requested clock rate back */
+	if (val & CCU_MMC_NEW_TIMING_MODE) {
 		req->rate /= 2;
 		req->min_rate /= 2;
 		req->max_rate /= 2;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक ccu_mp_mmc_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
-			       अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा ccu_common *cm = hw_to_ccu_common(hw);
-	u32 val = पढ़ोl(cm->base + cm->reg);
+static int ccu_mp_mmc_set_rate(struct clk_hw *hw, unsigned long rate,
+			       unsigned long parent_rate)
+{
+	struct ccu_common *cm = hw_to_ccu_common(hw);
+	u32 val = readl(cm->base + cm->reg);
 
-	अगर (val & CCU_MMC_NEW_TIMING_MODE)
+	if (val & CCU_MMC_NEW_TIMING_MODE)
 		rate *= 2;
 
-	वापस ccu_mp_set_rate(hw, rate, parent_rate);
-पूर्ण
+	return ccu_mp_set_rate(hw, rate, parent_rate);
+}
 
-स्थिर काष्ठा clk_ops ccu_mp_mmc_ops = अणु
+const struct clk_ops ccu_mp_mmc_ops = {
 	.disable	= ccu_mp_disable,
 	.enable		= ccu_mp_enable,
 	.is_enabled	= ccu_mp_is_enabled,
@@ -325,4 +324,4 @@
 	.determine_rate	= ccu_mp_mmc_determine_rate,
 	.recalc_rate	= ccu_mp_mmc_recalc_rate,
 	.set_rate	= ccu_mp_mmc_set_rate,
-पूर्ण;
+};

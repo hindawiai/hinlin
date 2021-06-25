@@ -1,27 +1,26 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 //
-// Spपढ़ोtrum pll घड़ी driver
+// Spreadtrum pll clock driver
 //
-// Copyright (C) 2015~2017 Spपढ़ोtrum, Inc.
-// Author: Chunyan Zhang <chunyan.zhang@spपढ़ोtrum.com>
+// Copyright (C) 2015~2017 Spreadtrum, Inc.
+// Author: Chunyan Zhang <chunyan.zhang@spreadtrum.com>
 
-#अगर_अघोषित _SPRD_PLL_H_
-#घोषणा _SPRD_PLL_H_
+#ifndef _SPRD_PLL_H_
+#define _SPRD_PLL_H_
 
-#समावेश "common.h"
+#include "common.h"
 
-काष्ठा reg_cfg अणु
+struct reg_cfg {
 	u32 val;
 	u32 msk;
-पूर्ण;
+};
 
-काष्ठा clk_bit_field अणु
-	u8 shअगरt;
+struct clk_bit_field {
+	u8 shift;
 	u8 width;
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	PLL_LOCK_DONE,
 	PLL_DIV_S,
 	PLL_MOD_EN,
@@ -35,38 +34,38 @@
 	PLL_POSTDIV,
 
 	PLL_FACT_MAX
-पूर्ण;
+};
 
 /*
- * काष्ठा sprd_pll - definition of adjustable pll घड़ी
+ * struct sprd_pll - definition of adjustable pll clock
  *
- * @reg:	रेजिस्टरs used to set the configuration of pll घड़ी,
- *		reg[0] shows how many रेजिस्टरs this pll घड़ी uses.
+ * @reg:	registers used to set the configuration of pll clock,
+ *		reg[0] shows how many registers this pll clock uses.
  * @itable:	pll ibias table, itable[0] means how many items this
  *		table includes
- * @udelay	delay समय after setting rate
- * @factors	used to calculate the pll घड़ी rate
+ * @udelay	delay time after setting rate
+ * @factors	used to calculate the pll clock rate
  * @fvco:	fvco threshold rate
  * @fflag:	fvco flag
  */
-काष्ठा sprd_pll अणु
+struct sprd_pll {
 	u32 regs_num;
-	स्थिर u64 *itable;
-	स्थिर काष्ठा clk_bit_field *factors;
+	const u64 *itable;
+	const struct clk_bit_field *factors;
 	u16 udelay;
 	u16 k1;
 	u16 k2;
 	u16 fflag;
 	u64 fvco;
 
-	काष्ठा sprd_clk_common	common;
-पूर्ण;
+	struct sprd_clk_common	common;
+};
 
-#घोषणा SPRD_PLL_HW_INIT_FN(_काष्ठा, _name, _parent, _reg,	\
+#define SPRD_PLL_HW_INIT_FN(_struct, _name, _parent, _reg,	\
 			    _regs_num, _itable, _factors,	\
 			    _udelay, _k1, _k2, _fflag,		\
 			    _fvco, _fn)				\
-	काष्ठा sprd_pll _काष्ठा = अणु				\
+	struct sprd_pll _struct = {				\
 		.regs_num	= _regs_num,			\
 		.itable		= _itable,			\
 		.factors	= _factors,			\
@@ -75,54 +74,54 @@
 		.k2		= _k2,				\
 		.fflag		= _fflag,			\
 		.fvco		= _fvco,			\
-		.common		= अणु				\
-			.regmap		= शून्य,			\
+		.common		= {				\
+			.regmap		= NULL,			\
 			.reg		= _reg,			\
 			.hw.init	= _fn(_name, _parent,	\
 					      &sprd_pll_ops, 0),\
-		पूर्ण,						\
-	पूर्ण
+		},						\
+	}
 
-#घोषणा SPRD_PLL_WITH_ITABLE_K_FVCO(_काष्ठा, _name, _parent, _reg,	\
+#define SPRD_PLL_WITH_ITABLE_K_FVCO(_struct, _name, _parent, _reg,	\
 				    _regs_num, _itable, _factors,	\
 				    _udelay, _k1, _k2, _fflag, _fvco)	\
-	SPRD_PLL_HW_INIT_FN(_काष्ठा, _name, _parent, _reg, _regs_num,	\
+	SPRD_PLL_HW_INIT_FN(_struct, _name, _parent, _reg, _regs_num,	\
 			    _itable, _factors, _udelay, _k1, _k2,	\
 			    _fflag, _fvco, CLK_HW_INIT)
 
-#घोषणा SPRD_PLL_WITH_ITABLE_K(_काष्ठा, _name, _parent, _reg,		\
+#define SPRD_PLL_WITH_ITABLE_K(_struct, _name, _parent, _reg,		\
 			       _regs_num, _itable, _factors,		\
 			       _udelay, _k1, _k2)			\
-	SPRD_PLL_WITH_ITABLE_K_FVCO(_काष्ठा, _name, _parent, _reg,	\
+	SPRD_PLL_WITH_ITABLE_K_FVCO(_struct, _name, _parent, _reg,	\
 				    _regs_num, _itable, _factors,	\
 				    _udelay, _k1, _k2, 0, 0)
 
-#घोषणा SPRD_PLL_WITH_ITABLE_1K(_काष्ठा, _name, _parent, _reg,		\
+#define SPRD_PLL_WITH_ITABLE_1K(_struct, _name, _parent, _reg,		\
 				_regs_num, _itable, _factors, _udelay)	\
-	SPRD_PLL_WITH_ITABLE_K_FVCO(_काष्ठा, _name, _parent, _reg,	\
+	SPRD_PLL_WITH_ITABLE_K_FVCO(_struct, _name, _parent, _reg,	\
 				    _regs_num, _itable, _factors,	\
 				    _udelay, 1000, 1000, 0, 0)
 
-#घोषणा SPRD_PLL_FW_NAME(_काष्ठा, _name, _parent, _reg, _regs_num,	\
+#define SPRD_PLL_FW_NAME(_struct, _name, _parent, _reg, _regs_num,	\
 			 _itable, _factors, _udelay, _k1, _k2,		\
 			 _fflag, _fvco)					\
-	SPRD_PLL_HW_INIT_FN(_काष्ठा, _name, _parent, _reg, _regs_num,	\
+	SPRD_PLL_HW_INIT_FN(_struct, _name, _parent, _reg, _regs_num,	\
 			    _itable, _factors, _udelay, _k1, _k2,	\
 			    _fflag, _fvco, CLK_HW_INIT_FW_NAME)
 
-#घोषणा SPRD_PLL_HW(_काष्ठा, _name, _parent, _reg, _regs_num, _itable,	\
+#define SPRD_PLL_HW(_struct, _name, _parent, _reg, _regs_num, _itable,	\
 		    _factors, _udelay, _k1, _k2, _fflag, _fvco)		\
-	SPRD_PLL_HW_INIT_FN(_काष्ठा, _name, _parent, _reg, _regs_num,	\
+	SPRD_PLL_HW_INIT_FN(_struct, _name, _parent, _reg, _regs_num,	\
 			    _itable, _factors, _udelay, _k1, _k2,	\
 			    _fflag, _fvco, CLK_HW_INIT_HW)
 
-अटल अंतरभूत काष्ठा sprd_pll *hw_to_sprd_pll(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा sprd_clk_common *common = hw_to_sprd_clk_common(hw);
+static inline struct sprd_pll *hw_to_sprd_pll(struct clk_hw *hw)
+{
+	struct sprd_clk_common *common = hw_to_sprd_clk_common(hw);
 
-	वापस container_of(common, काष्ठा sprd_pll, common);
-पूर्ण
+	return container_of(common, struct sprd_pll, common);
+}
 
-बाह्य स्थिर काष्ठा clk_ops sprd_pll_ops;
+extern const struct clk_ops sprd_pll_ops;
 
-#पूर्ण_अगर /* _SPRD_PLL_H_ */
+#endif /* _SPRD_PLL_H_ */

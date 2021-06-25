@@ -1,59 +1,58 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 //
-// RTC driver क्रम Maxim MAX8998
+// RTC driver for Maxim MAX8998
 //
 // Copyright (C) 2010 Samsung Electronics Co.Ltd
 // Author: Minkyu Kang <mk7.kang@samsung.com>
 // Author: Joonyoung Shim <jy0922.shim@samsung.com>
 
-#समावेश <linux/module.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/bcd.h>
-#समावेश <linux/irqकरोमुख्य.h>
-#समावेश <linux/rtc.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/mfd/max8998.h>
-#समावेश <linux/mfd/max8998-निजी.h>
-#समावेश <linux/delay.h>
+#include <linux/module.h>
+#include <linux/i2c.h>
+#include <linux/slab.h>
+#include <linux/bcd.h>
+#include <linux/irqdomain.h>
+#include <linux/rtc.h>
+#include <linux/platform_device.h>
+#include <linux/mfd/max8998.h>
+#include <linux/mfd/max8998-private.h>
+#include <linux/delay.h>
 
-#घोषणा MAX8998_RTC_SEC			0x00
-#घोषणा MAX8998_RTC_MIN			0x01
-#घोषणा MAX8998_RTC_HOUR		0x02
-#घोषणा MAX8998_RTC_WEEKDAY		0x03
-#घोषणा MAX8998_RTC_DATE		0x04
-#घोषणा MAX8998_RTC_MONTH		0x05
-#घोषणा MAX8998_RTC_YEAR1		0x06
-#घोषणा MAX8998_RTC_YEAR2		0x07
-#घोषणा MAX8998_ALARM0_SEC		0x08
-#घोषणा MAX8998_ALARM0_MIN		0x09
-#घोषणा MAX8998_ALARM0_HOUR		0x0a
-#घोषणा MAX8998_ALARM0_WEEKDAY		0x0b
-#घोषणा MAX8998_ALARM0_DATE		0x0c
-#घोषणा MAX8998_ALARM0_MONTH		0x0d
-#घोषणा MAX8998_ALARM0_YEAR1		0x0e
-#घोषणा MAX8998_ALARM0_YEAR2		0x0f
-#घोषणा MAX8998_ALARM1_SEC		0x10
-#घोषणा MAX8998_ALARM1_MIN		0x11
-#घोषणा MAX8998_ALARM1_HOUR		0x12
-#घोषणा MAX8998_ALARM1_WEEKDAY		0x13
-#घोषणा MAX8998_ALARM1_DATE		0x14
-#घोषणा MAX8998_ALARM1_MONTH		0x15
-#घोषणा MAX8998_ALARM1_YEAR1		0x16
-#घोषणा MAX8998_ALARM1_YEAR2		0x17
-#घोषणा MAX8998_ALARM0_CONF		0x18
-#घोषणा MAX8998_ALARM1_CONF		0x19
-#घोषणा MAX8998_RTC_STATUS		0x1a
-#घोषणा MAX8998_WTSR_SMPL_CNTL		0x1b
-#घोषणा MAX8998_TEST			0x1f
+#define MAX8998_RTC_SEC			0x00
+#define MAX8998_RTC_MIN			0x01
+#define MAX8998_RTC_HOUR		0x02
+#define MAX8998_RTC_WEEKDAY		0x03
+#define MAX8998_RTC_DATE		0x04
+#define MAX8998_RTC_MONTH		0x05
+#define MAX8998_RTC_YEAR1		0x06
+#define MAX8998_RTC_YEAR2		0x07
+#define MAX8998_ALARM0_SEC		0x08
+#define MAX8998_ALARM0_MIN		0x09
+#define MAX8998_ALARM0_HOUR		0x0a
+#define MAX8998_ALARM0_WEEKDAY		0x0b
+#define MAX8998_ALARM0_DATE		0x0c
+#define MAX8998_ALARM0_MONTH		0x0d
+#define MAX8998_ALARM0_YEAR1		0x0e
+#define MAX8998_ALARM0_YEAR2		0x0f
+#define MAX8998_ALARM1_SEC		0x10
+#define MAX8998_ALARM1_MIN		0x11
+#define MAX8998_ALARM1_HOUR		0x12
+#define MAX8998_ALARM1_WEEKDAY		0x13
+#define MAX8998_ALARM1_DATE		0x14
+#define MAX8998_ALARM1_MONTH		0x15
+#define MAX8998_ALARM1_YEAR1		0x16
+#define MAX8998_ALARM1_YEAR2		0x17
+#define MAX8998_ALARM0_CONF		0x18
+#define MAX8998_ALARM1_CONF		0x19
+#define MAX8998_RTC_STATUS		0x1a
+#define MAX8998_WTSR_SMPL_CNTL		0x1b
+#define MAX8998_TEST			0x1f
 
-#घोषणा HOUR_12				(1 << 7)
-#घोषणा HOUR_PM				(1 << 5)
-#घोषणा ALARM0_STATUS			(1 << 1)
-#घोषणा ALARM1_STATUS			(1 << 2)
+#define HOUR_12				(1 << 7)
+#define HOUR_PM				(1 << 5)
+#define ALARM0_STATUS			(1 << 1)
+#define ALARM1_STATUS			(1 << 2)
 
-क्रमागत अणु
+enum {
 	RTC_SEC = 0,
 	RTC_MIN,
 	RTC_HOUR,
@@ -62,259 +61,259 @@
 	RTC_MONTH,
 	RTC_YEAR1,
 	RTC_YEAR2,
-पूर्ण;
+};
 
-काष्ठा max8998_rtc_info अणु
-	काष्ठा device		*dev;
-	काष्ठा max8998_dev	*max8998;
-	काष्ठा i2c_client	*rtc;
-	काष्ठा rtc_device	*rtc_dev;
-	पूर्णांक irq;
+struct max8998_rtc_info {
+	struct device		*dev;
+	struct max8998_dev	*max8998;
+	struct i2c_client	*rtc;
+	struct rtc_device	*rtc_dev;
+	int irq;
 	bool lp3974_bug_workaround;
-पूर्ण;
+};
 
-अटल व्योम max8998_data_to_पंचांग(u8 *data, काष्ठा rtc_समय *पंचांग)
-अणु
-	पंचांग->पंचांग_sec = bcd2bin(data[RTC_SEC]);
-	पंचांग->पंचांग_min = bcd2bin(data[RTC_MIN]);
-	अगर (data[RTC_HOUR] & HOUR_12) अणु
-		पंचांग->पंचांग_hour = bcd2bin(data[RTC_HOUR] & 0x1f);
-		अगर (data[RTC_HOUR] & HOUR_PM)
-			पंचांग->पंचांग_hour += 12;
-	पूर्ण अन्यथा
-		पंचांग->पंचांग_hour = bcd2bin(data[RTC_HOUR] & 0x3f);
+static void max8998_data_to_tm(u8 *data, struct rtc_time *tm)
+{
+	tm->tm_sec = bcd2bin(data[RTC_SEC]);
+	tm->tm_min = bcd2bin(data[RTC_MIN]);
+	if (data[RTC_HOUR] & HOUR_12) {
+		tm->tm_hour = bcd2bin(data[RTC_HOUR] & 0x1f);
+		if (data[RTC_HOUR] & HOUR_PM)
+			tm->tm_hour += 12;
+	} else
+		tm->tm_hour = bcd2bin(data[RTC_HOUR] & 0x3f);
 
-	पंचांग->पंचांग_wday = data[RTC_WEEKDAY] & 0x07;
-	पंचांग->पंचांग_mday = bcd2bin(data[RTC_DATE]);
-	पंचांग->पंचांग_mon = bcd2bin(data[RTC_MONTH]);
-	पंचांग->पंचांग_year = bcd2bin(data[RTC_YEAR1]) + bcd2bin(data[RTC_YEAR2]) * 100;
-	पंचांग->पंचांग_year -= 1900;
-पूर्ण
+	tm->tm_wday = data[RTC_WEEKDAY] & 0x07;
+	tm->tm_mday = bcd2bin(data[RTC_DATE]);
+	tm->tm_mon = bcd2bin(data[RTC_MONTH]);
+	tm->tm_year = bcd2bin(data[RTC_YEAR1]) + bcd2bin(data[RTC_YEAR2]) * 100;
+	tm->tm_year -= 1900;
+}
 
-अटल व्योम max8998_पंचांग_to_data(काष्ठा rtc_समय *पंचांग, u8 *data)
-अणु
-	data[RTC_SEC] = bin2bcd(पंचांग->पंचांग_sec);
-	data[RTC_MIN] = bin2bcd(पंचांग->पंचांग_min);
-	data[RTC_HOUR] = bin2bcd(पंचांग->पंचांग_hour);
-	data[RTC_WEEKDAY] = पंचांग->पंचांग_wday;
-	data[RTC_DATE] = bin2bcd(पंचांग->पंचांग_mday);
-	data[RTC_MONTH] = bin2bcd(पंचांग->पंचांग_mon);
-	data[RTC_YEAR1] = bin2bcd(पंचांग->पंचांग_year % 100);
-	data[RTC_YEAR2] = bin2bcd((पंचांग->पंचांग_year + 1900) / 100);
-पूर्ण
+static void max8998_tm_to_data(struct rtc_time *tm, u8 *data)
+{
+	data[RTC_SEC] = bin2bcd(tm->tm_sec);
+	data[RTC_MIN] = bin2bcd(tm->tm_min);
+	data[RTC_HOUR] = bin2bcd(tm->tm_hour);
+	data[RTC_WEEKDAY] = tm->tm_wday;
+	data[RTC_DATE] = bin2bcd(tm->tm_mday);
+	data[RTC_MONTH] = bin2bcd(tm->tm_mon);
+	data[RTC_YEAR1] = bin2bcd(tm->tm_year % 100);
+	data[RTC_YEAR2] = bin2bcd((tm->tm_year + 1900) / 100);
+}
 
-अटल पूर्णांक max8998_rtc_पढ़ो_समय(काष्ठा device *dev, काष्ठा rtc_समय *पंचांग)
-अणु
-	काष्ठा max8998_rtc_info *info = dev_get_drvdata(dev);
+static int max8998_rtc_read_time(struct device *dev, struct rtc_time *tm)
+{
+	struct max8998_rtc_info *info = dev_get_drvdata(dev);
 	u8 data[8];
-	पूर्णांक ret;
+	int ret;
 
-	ret = max8998_bulk_पढ़ो(info->rtc, MAX8998_RTC_SEC, 8, data);
-	अगर (ret < 0)
-		वापस ret;
+	ret = max8998_bulk_read(info->rtc, MAX8998_RTC_SEC, 8, data);
+	if (ret < 0)
+		return ret;
 
-	max8998_data_to_पंचांग(data, पंचांग);
+	max8998_data_to_tm(data, tm);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक max8998_rtc_set_समय(काष्ठा device *dev, काष्ठा rtc_समय *पंचांग)
-अणु
-	काष्ठा max8998_rtc_info *info = dev_get_drvdata(dev);
+static int max8998_rtc_set_time(struct device *dev, struct rtc_time *tm)
+{
+	struct max8998_rtc_info *info = dev_get_drvdata(dev);
 	u8 data[8];
-	पूर्णांक ret;
+	int ret;
 
-	max8998_पंचांग_to_data(पंचांग, data);
+	max8998_tm_to_data(tm, data);
 
-	ret = max8998_bulk_ग_लिखो(info->rtc, MAX8998_RTC_SEC, 8, data);
+	ret = max8998_bulk_write(info->rtc, MAX8998_RTC_SEC, 8, data);
 
-	अगर (info->lp3974_bug_workaround)
+	if (info->lp3974_bug_workaround)
 		msleep(2000);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक max8998_rtc_पढ़ो_alarm(काष्ठा device *dev, काष्ठा rtc_wkalrm *alrm)
-अणु
-	काष्ठा max8998_rtc_info *info = dev_get_drvdata(dev);
+static int max8998_rtc_read_alarm(struct device *dev, struct rtc_wkalrm *alrm)
+{
+	struct max8998_rtc_info *info = dev_get_drvdata(dev);
 	u8 data[8];
 	u8 val;
-	पूर्णांक ret;
+	int ret;
 
-	ret = max8998_bulk_पढ़ो(info->rtc, MAX8998_ALARM0_SEC, 8, data);
-	अगर (ret < 0)
-		वापस ret;
+	ret = max8998_bulk_read(info->rtc, MAX8998_ALARM0_SEC, 8, data);
+	if (ret < 0)
+		return ret;
 
-	max8998_data_to_पंचांग(data, &alrm->समय);
+	max8998_data_to_tm(data, &alrm->time);
 
-	ret = max8998_पढ़ो_reg(info->rtc, MAX8998_ALARM0_CONF, &val);
-	अगर (ret < 0)
-		वापस ret;
+	ret = max8998_read_reg(info->rtc, MAX8998_ALARM0_CONF, &val);
+	if (ret < 0)
+		return ret;
 
 	alrm->enabled = !!val;
 
-	ret = max8998_पढ़ो_reg(info->rtc, MAX8998_RTC_STATUS, &val);
-	अगर (ret < 0)
-		वापस ret;
+	ret = max8998_read_reg(info->rtc, MAX8998_RTC_STATUS, &val);
+	if (ret < 0)
+		return ret;
 
-	अगर (val & ALARM0_STATUS)
+	if (val & ALARM0_STATUS)
 		alrm->pending = 1;
-	अन्यथा
+	else
 		alrm->pending = 0;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक max8998_rtc_stop_alarm(काष्ठा max8998_rtc_info *info)
-अणु
-	पूर्णांक ret = max8998_ग_लिखो_reg(info->rtc, MAX8998_ALARM0_CONF, 0);
+static int max8998_rtc_stop_alarm(struct max8998_rtc_info *info)
+{
+	int ret = max8998_write_reg(info->rtc, MAX8998_ALARM0_CONF, 0);
 
-	अगर (info->lp3974_bug_workaround)
+	if (info->lp3974_bug_workaround)
 		msleep(2000);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक max8998_rtc_start_alarm(काष्ठा max8998_rtc_info *info)
-अणु
-	पूर्णांक ret;
+static int max8998_rtc_start_alarm(struct max8998_rtc_info *info)
+{
+	int ret;
 	u8 alarm0_conf = 0x77;
 
 	/* LP3974 with delay bug chips has rtc alarm bugs with "MONTH" field */
-	अगर (info->lp3974_bug_workaround)
+	if (info->lp3974_bug_workaround)
 		alarm0_conf = 0x57;
 
-	ret = max8998_ग_लिखो_reg(info->rtc, MAX8998_ALARM0_CONF, alarm0_conf);
+	ret = max8998_write_reg(info->rtc, MAX8998_ALARM0_CONF, alarm0_conf);
 
-	अगर (info->lp3974_bug_workaround)
+	if (info->lp3974_bug_workaround)
 		msleep(2000);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक max8998_rtc_set_alarm(काष्ठा device *dev, काष्ठा rtc_wkalrm *alrm)
-अणु
-	काष्ठा max8998_rtc_info *info = dev_get_drvdata(dev);
+static int max8998_rtc_set_alarm(struct device *dev, struct rtc_wkalrm *alrm)
+{
+	struct max8998_rtc_info *info = dev_get_drvdata(dev);
 	u8 data[8];
-	पूर्णांक ret;
+	int ret;
 
-	max8998_पंचांग_to_data(&alrm->समय, data);
+	max8998_tm_to_data(&alrm->time, data);
 
 	ret = max8998_rtc_stop_alarm(info);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	ret = max8998_bulk_ग_लिखो(info->rtc, MAX8998_ALARM0_SEC, 8, data);
-	अगर (ret < 0)
-		वापस ret;
+	ret = max8998_bulk_write(info->rtc, MAX8998_ALARM0_SEC, 8, data);
+	if (ret < 0)
+		return ret;
 
-	अगर (info->lp3974_bug_workaround)
+	if (info->lp3974_bug_workaround)
 		msleep(2000);
 
-	अगर (alrm->enabled)
+	if (alrm->enabled)
 		ret = max8998_rtc_start_alarm(info);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक max8998_rtc_alarm_irq_enable(काष्ठा device *dev,
-					अचिन्हित पूर्णांक enabled)
-अणु
-	काष्ठा max8998_rtc_info *info = dev_get_drvdata(dev);
+static int max8998_rtc_alarm_irq_enable(struct device *dev,
+					unsigned int enabled)
+{
+	struct max8998_rtc_info *info = dev_get_drvdata(dev);
 
-	अगर (enabled)
-		वापस max8998_rtc_start_alarm(info);
-	अन्यथा
-		वापस max8998_rtc_stop_alarm(info);
-पूर्ण
+	if (enabled)
+		return max8998_rtc_start_alarm(info);
+	else
+		return max8998_rtc_stop_alarm(info);
+}
 
-अटल irqवापस_t max8998_rtc_alarm_irq(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा max8998_rtc_info *info = data;
+static irqreturn_t max8998_rtc_alarm_irq(int irq, void *data)
+{
+	struct max8998_rtc_info *info = data;
 
 	rtc_update_irq(info->rtc_dev, 1, RTC_IRQF | RTC_AF);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल स्थिर काष्ठा rtc_class_ops max8998_rtc_ops = अणु
-	.पढ़ो_समय = max8998_rtc_पढ़ो_समय,
-	.set_समय = max8998_rtc_set_समय,
-	.पढ़ो_alarm = max8998_rtc_पढ़ो_alarm,
+static const struct rtc_class_ops max8998_rtc_ops = {
+	.read_time = max8998_rtc_read_time,
+	.set_time = max8998_rtc_set_time,
+	.read_alarm = max8998_rtc_read_alarm,
 	.set_alarm = max8998_rtc_set_alarm,
 	.alarm_irq_enable = max8998_rtc_alarm_irq_enable,
-पूर्ण;
+};
 
-अटल पूर्णांक max8998_rtc_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा max8998_dev *max8998 = dev_get_drvdata(pdev->dev.parent);
-	काष्ठा max8998_platक्रमm_data *pdata = max8998->pdata;
-	काष्ठा max8998_rtc_info *info;
-	पूर्णांक ret;
+static int max8998_rtc_probe(struct platform_device *pdev)
+{
+	struct max8998_dev *max8998 = dev_get_drvdata(pdev->dev.parent);
+	struct max8998_platform_data *pdata = max8998->pdata;
+	struct max8998_rtc_info *info;
+	int ret;
 
-	info = devm_kzalloc(&pdev->dev, माप(काष्ठा max8998_rtc_info),
+	info = devm_kzalloc(&pdev->dev, sizeof(struct max8998_rtc_info),
 			GFP_KERNEL);
-	अगर (!info)
-		वापस -ENOMEM;
+	if (!info)
+		return -ENOMEM;
 
 	info->dev = &pdev->dev;
 	info->max8998 = max8998;
 	info->rtc = max8998->rtc;
 
-	platक्रमm_set_drvdata(pdev, info);
+	platform_set_drvdata(pdev, info);
 
-	info->rtc_dev = devm_rtc_device_रेजिस्टर(&pdev->dev, "max8998-rtc",
+	info->rtc_dev = devm_rtc_device_register(&pdev->dev, "max8998-rtc",
 			&max8998_rtc_ops, THIS_MODULE);
 
-	अगर (IS_ERR(info->rtc_dev)) अणु
+	if (IS_ERR(info->rtc_dev)) {
 		ret = PTR_ERR(info->rtc_dev);
 		dev_err(&pdev->dev, "Failed to register RTC device: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	अगर (!max8998->irq_करोमुख्य)
-		जाओ no_irq;
+	if (!max8998->irq_domain)
+		goto no_irq;
 
-	info->irq = irq_create_mapping(max8998->irq_करोमुख्य, MAX8998_IRQ_ALARM0);
-	अगर (!info->irq) अणु
+	info->irq = irq_create_mapping(max8998->irq_domain, MAX8998_IRQ_ALARM0);
+	if (!info->irq) {
 		dev_warn(&pdev->dev, "Failed to map alarm IRQ\n");
-		जाओ no_irq;
-	पूर्ण
+		goto no_irq;
+	}
 
-	ret = devm_request_thपढ़ोed_irq(&pdev->dev, info->irq, शून्य,
+	ret = devm_request_threaded_irq(&pdev->dev, info->irq, NULL,
 				max8998_rtc_alarm_irq, 0, "rtc-alarm0", info);
 
-	अगर (ret < 0)
+	if (ret < 0)
 		dev_err(&pdev->dev, "Failed to request alarm IRQ: %d: %d\n",
 			info->irq, ret);
 
 no_irq:
 	dev_info(&pdev->dev, "RTC CHIP NAME: %s\n", pdev->id_entry->name);
-	अगर (pdata && pdata->rtc_delay) अणु
+	if (pdata && pdata->rtc_delay) {
 		info->lp3974_bug_workaround = true;
 		dev_warn(&pdev->dev, "LP3974 with RTC REGERR option."
 				" RTC updates will be extremely slow.\n");
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा platक्रमm_device_id max8998_rtc_id[] = अणु
-	अणु "max8998-rtc", TYPE_MAX8998 पूर्ण,
-	अणु "lp3974-rtc", TYPE_LP3974 पूर्ण,
-	अणु पूर्ण
-पूर्ण;
-MODULE_DEVICE_TABLE(platक्रमm, max8998_rtc_id);
+static const struct platform_device_id max8998_rtc_id[] = {
+	{ "max8998-rtc", TYPE_MAX8998 },
+	{ "lp3974-rtc", TYPE_LP3974 },
+	{ }
+};
+MODULE_DEVICE_TABLE(platform, max8998_rtc_id);
 
-अटल काष्ठा platक्रमm_driver max8998_rtc_driver = अणु
-	.driver		= अणु
+static struct platform_driver max8998_rtc_driver = {
+	.driver		= {
 		.name	= "max8998-rtc",
-	पूर्ण,
+	},
 	.probe		= max8998_rtc_probe,
 	.id_table	= max8998_rtc_id,
-पूर्ण;
+};
 
-module_platक्रमm_driver(max8998_rtc_driver);
+module_platform_driver(max8998_rtc_driver);
 
 MODULE_AUTHOR("Minkyu Kang <mk7.kang@samsung.com>");
 MODULE_AUTHOR("Joonyoung Shim <jy0922.shim@samsung.com>");

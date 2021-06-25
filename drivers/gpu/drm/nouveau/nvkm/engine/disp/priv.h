@@ -1,33 +1,32 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: MIT */
-#अगर_अघोषित __NVKM_DISP_PRIV_H__
-#घोषणा __NVKM_DISP_PRIV_H__
-#समावेश <engine/disp.h>
-#समावेश "outp.h"
+/* SPDX-License-Identifier: MIT */
+#ifndef __NVKM_DISP_PRIV_H__
+#define __NVKM_DISP_PRIV_H__
+#include <engine/disp.h>
+#include "outp.h"
 
-पूर्णांक nvkm_disp_ctor(स्थिर काष्ठा nvkm_disp_func *, काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक,
-		   काष्ठा nvkm_disp *);
-पूर्णांक nvkm_disp_new_(स्थिर काष्ठा nvkm_disp_func *, काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक,
-		   काष्ठा nvkm_disp **);
-व्योम nvkm_disp_vblank(काष्ठा nvkm_disp *, पूर्णांक head);
+int nvkm_disp_ctor(const struct nvkm_disp_func *, struct nvkm_device *, enum nvkm_subdev_type, int,
+		   struct nvkm_disp *);
+int nvkm_disp_new_(const struct nvkm_disp_func *, struct nvkm_device *, enum nvkm_subdev_type, int,
+		   struct nvkm_disp **);
+void nvkm_disp_vblank(struct nvkm_disp *, int head);
 
-काष्ठा nvkm_disp_func अणु
-	व्योम *(*dtor)(काष्ठा nvkm_disp *);
-	पूर्णांक (*oneinit)(काष्ठा nvkm_disp *);
-	पूर्णांक (*init)(काष्ठा nvkm_disp *);
-	व्योम (*fini)(काष्ठा nvkm_disp *);
-	व्योम (*पूर्णांकr)(काष्ठा nvkm_disp *);
+struct nvkm_disp_func {
+	void *(*dtor)(struct nvkm_disp *);
+	int (*oneinit)(struct nvkm_disp *);
+	int (*init)(struct nvkm_disp *);
+	void (*fini)(struct nvkm_disp *);
+	void (*intr)(struct nvkm_disp *);
 
-	स्थिर काष्ठा nvkm_disp_oclass *(*root)(काष्ठा nvkm_disp *);
-पूर्ण;
+	const struct nvkm_disp_oclass *(*root)(struct nvkm_disp *);
+};
 
-पूर्णांक  nvkm_disp_ntfy(काष्ठा nvkm_object *, u32, काष्ठा nvkm_event **);
+int  nvkm_disp_ntfy(struct nvkm_object *, u32, struct nvkm_event **);
 
-बाह्य स्थिर काष्ठा nvkm_disp_oclass nv04_disp_root_oclass;
+extern const struct nvkm_disp_oclass nv04_disp_root_oclass;
 
-काष्ठा nvkm_disp_oclass अणु
-	पूर्णांक (*ctor)(काष्ठा nvkm_disp *, स्थिर काष्ठा nvkm_oclass *,
-		    व्योम *data, u32 size, काष्ठा nvkm_object **);
-	काष्ठा nvkm_sclass base;
-पूर्ण;
-#पूर्ण_अगर
+struct nvkm_disp_oclass {
+	int (*ctor)(struct nvkm_disp *, const struct nvkm_oclass *,
+		    void *data, u32 size, struct nvkm_object **);
+	struct nvkm_sclass base;
+};
+#endif

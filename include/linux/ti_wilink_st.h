@@ -1,8 +1,7 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  *  Shared Transport Header file
- *	To be included by the protocol stack drivers क्रम
+ *	To be included by the protocol stack drivers for
  *	Texas Instruments BT,FM and GPS combo chip drivers
  *	and also serves the sub-modules of the shared transport driver.
  *
@@ -10,431 +9,431 @@
  *  Author: Pavan Savoy <pavan_savoy@ti.com>
  */
 
-#अगर_अघोषित TI_WILINK_ST_H
-#घोषणा TI_WILINK_ST_H
+#ifndef TI_WILINK_ST_H
+#define TI_WILINK_ST_H
 
-#समावेश <linux/skbuff.h>
+#include <linux/skbuff.h>
 
 /**
- * क्रमागत proto-type - The protocol on WiLink chips which share a
- *	common physical पूर्णांकerface like UART.
+ * enum proto-type - The protocol on WiLink chips which share a
+ *	common physical interface like UART.
  */
-क्रमागत proto_type अणु
+enum proto_type {
 	ST_BT,
 	ST_FM,
 	ST_GPS,
 	ST_MAX_CHANNELS = 16,
-पूर्ण;
+};
 
 /**
- * काष्ठा st_proto_s - Per Protocol काष्ठाure from BT/FM/GPS to ST
- * @type: type of the protocol being रेजिस्टरed among the
+ * struct st_proto_s - Per Protocol structure from BT/FM/GPS to ST
+ * @type: type of the protocol being registered among the
  *	available proto_type(BT, FM, GPS the protocol which share TTY).
- * @recv: the receiver callback poपूर्णांकing to a function in the
+ * @recv: the receiver callback pointing to a function in the
  *	protocol drivers called by the ST driver upon receiving
  *	relevant data.
- * @match_packet: reserved क्रम future use, to make ST more generic
- * @reg_complete_cb: callback handler poपूर्णांकing to a function in protocol
+ * @match_packet: reserved for future use, to make ST more generic
+ * @reg_complete_cb: callback handler pointing to a function in protocol
  *	handler called by ST when the pending registrations are complete.
  *	The registrations are marked pending, in situations when fw
- *	करोwnload is in progress.
- * @ग_लिखो: poपूर्णांकer to function in ST provided to protocol drivers from ST,
+ *	download is in progress.
+ * @write: pointer to function in ST provided to protocol drivers from ST,
  *	to be made use when protocol drivers have data to send to TTY.
- * @priv_data: privdate data holder क्रम the protocol drivers, sent
+ * @priv_data: privdate data holder for the protocol drivers, sent
  *	from the protocol drivers during registration, and sent back on
  *	reg_complete_cb and recv.
- * @chnl_id: channel id the protocol driver is पूर्णांकerested in, the channel
+ * @chnl_id: channel id the protocol driver is interested in, the channel
  *	id is nothing but the 1st byte of the packet in UART frame.
  * @max_frame_size: size of the largest frame the protocol can receive.
- * @hdr_len: length of the header काष्ठाure of the protocol.
+ * @hdr_len: length of the header structure of the protocol.
  * @offset_len_in_hdr: this provides the offset of the length field in the
- *	header काष्ठाure of the protocol header, to assist ST to know
- *	how much to receive, अगर the data is split across UART frames.
+ *	header structure of the protocol header, to assist ST to know
+ *	how much to receive, if the data is split across UART frames.
  * @len_size: whether the length field inside the header is 2 bytes
  *	or 1 byte.
  * @reserve: the number of bytes ST needs to reserve in the skb being
- *	prepared क्रम the protocol driver.
+ *	prepared for the protocol driver.
  */
-काष्ठा st_proto_s अणु
-	क्रमागत proto_type type;
-	दीर्घ (*recv) (व्योम *, काष्ठा sk_buff *);
-	अचिन्हित अक्षर (*match_packet) (स्थिर अचिन्हित अक्षर *data);
-	व्योम (*reg_complete_cb) (व्योम *, पूर्णांक data);
-	दीर्घ (*ग_लिखो) (काष्ठा sk_buff *skb);
-	व्योम *priv_data;
+struct st_proto_s {
+	enum proto_type type;
+	long (*recv) (void *, struct sk_buff *);
+	unsigned char (*match_packet) (const unsigned char *data);
+	void (*reg_complete_cb) (void *, int data);
+	long (*write) (struct sk_buff *skb);
+	void *priv_data;
 
-	अचिन्हित अक्षर chnl_id;
-	अचिन्हित लघु max_frame_size;
-	अचिन्हित अक्षर hdr_len;
-	अचिन्हित अक्षर offset_len_in_hdr;
-	अचिन्हित अक्षर len_size;
-	अचिन्हित अक्षर reserve;
-पूर्ण;
+	unsigned char chnl_id;
+	unsigned short max_frame_size;
+	unsigned char hdr_len;
+	unsigned char offset_len_in_hdr;
+	unsigned char len_size;
+	unsigned char reserve;
+};
 
-बाह्य दीर्घ st_रेजिस्टर(काष्ठा st_proto_s *);
-बाह्य दीर्घ st_unरेजिस्टर(काष्ठा st_proto_s *);
+extern long st_register(struct st_proto_s *);
+extern long st_unregister(struct st_proto_s *);
 
 
 /*
- * header inक्रमmation used by st_core.c
+ * header information used by st_core.c
  */
 
 /* states of protocol list */
-#घोषणा ST_NOTEMPTY	1
-#घोषणा ST_EMPTY	0
+#define ST_NOTEMPTY	1
+#define ST_EMPTY	0
 
 /*
  * possible st_states
  */
-#घोषणा ST_INITIALIZING		1
-#घोषणा ST_REG_IN_PROGRESS	2
-#घोषणा ST_REG_PENDING		3
-#घोषणा ST_WAITING_FOR_RESP	4
+#define ST_INITIALIZING		1
+#define ST_REG_IN_PROGRESS	2
+#define ST_REG_PENDING		3
+#define ST_WAITING_FOR_RESP	4
 
 /**
- * काष्ठा st_data_s - ST core पूर्णांकernal काष्ठाure
- * @st_state: dअगरferent states of ST like initializing, registration
- *	in progress, this is मुख्यly used to वापस relevant err codes
- *	when protocol drivers are रेजिस्टरing. It is also used to track
- *	the recv function, as in during fw करोwnload only HCI events
- *	can occur , where as during other बार other events CH8, CH9
+ * struct st_data_s - ST core internal structure
+ * @st_state: different states of ST like initializing, registration
+ *	in progress, this is mainly used to return relevant err codes
+ *	when protocol drivers are registering. It is also used to track
+ *	the recv function, as in during fw download only HCI events
+ *	can occur , where as during other times other events CH8, CH9
  *	can occur.
- * @tty: tty provided by the TTY core क्रम line disciplines.
- * @tx_skb: If क्रम some reason the tty's ग_लिखो वापसs lesser bytes written
- *	then to मुख्यtain the rest of data to be written on next instance.
- *	This needs to be रक्षित, hence the lock inside wakeup func.
- * @tx_state: अगर the data is being written onto the TTY and protocol driver
+ * @tty: tty provided by the TTY core for line disciplines.
+ * @tx_skb: If for some reason the tty's write returns lesser bytes written
+ *	then to maintain the rest of data to be written on next instance.
+ *	This needs to be protected, hence the lock inside wakeup func.
+ * @tx_state: if the data is being written onto the TTY and protocol driver
  *	wants to send more, queue up data and mark that there is
  *	more data to send.
- * @list: the list of protocols रेजिस्टरed, only MAX can exist, one protocol
- *	can रेजिस्टर only once.
- * @rx_state: states to be मुख्यtained inside st's tty receive
- * @rx_count: count to be मुख्यtained inside st's tty receieve
- * @rx_skb: the skb where all data क्रम a protocol माला_लो accumulated,
+ * @list: the list of protocols registered, only MAX can exist, one protocol
+ *	can register only once.
+ * @rx_state: states to be maintained inside st's tty receive
+ * @rx_count: count to be maintained inside st's tty receieve
+ * @rx_skb: the skb where all data for a protocol gets accumulated,
  *	since tty might not call receive when a complete event packet
- *	is received, the states, count and the skb needs to be मुख्यtained.
- * @rx_chnl: the channel ID क्रम which the data is getting accumalated क्रम.
+ *	is received, the states, count and the skb needs to be maintained.
+ * @rx_chnl: the channel ID for which the data is getting accumalated for.
  * @txq: the list of skbs which needs to be sent onto the TTY.
- * @tx_रुकोq: अगर the chip is not in AWAKE state, the skbs needs to be queued
+ * @tx_waitq: if the chip is not in AWAKE state, the skbs needs to be queued
  *	up in here, PM(WAKEUP_IND) data needs to be sent and then the skbs
- *	from रुकोq can be moved onto the txq.
+ *	from waitq can be moved onto the txq.
  *	Needs locking too.
  * @lock: the lock to protect skbs, queues, and ST states.
- * @protos_रेजिस्टरed: count of the protocols रेजिस्टरed, also when 0 the
+ * @protos_registered: count of the protocols registered, also when 0 the
  *	chip enable gpio can be toggled, and when it changes to 1 the fw
- *	needs to be करोwnloaded to initialize chip side ST.
- * @ll_state: the various PM states the chip can be, the states are notअगरied
+ *	needs to be downloaded to initialize chip side ST.
+ * @ll_state: the various PM states the chip can be, the states are notified
  *	to us, when the chip sends relevant PM packets(SLEEP_IND, WAKE_IND).
- * @kim_data: reference to the parent encapsulating काष्ठाure.
+ * @kim_data: reference to the parent encapsulating structure.
  *
  */
-काष्ठा st_data_s अणु
-	अचिन्हित दीर्घ st_state;
-	काष्ठा sk_buff *tx_skb;
-#घोषणा ST_TX_SENDING	1
-#घोषणा ST_TX_WAKEUP	2
-	अचिन्हित दीर्घ tx_state;
-	काष्ठा st_proto_s *list[ST_MAX_CHANNELS];
-	bool is_रेजिस्टरed[ST_MAX_CHANNELS];
-	अचिन्हित दीर्घ rx_state;
-	अचिन्हित दीर्घ rx_count;
-	काष्ठा sk_buff *rx_skb;
-	अचिन्हित अक्षर rx_chnl;
-	काष्ठा sk_buff_head txq, tx_रुकोq;
+struct st_data_s {
+	unsigned long st_state;
+	struct sk_buff *tx_skb;
+#define ST_TX_SENDING	1
+#define ST_TX_WAKEUP	2
+	unsigned long tx_state;
+	struct st_proto_s *list[ST_MAX_CHANNELS];
+	bool is_registered[ST_MAX_CHANNELS];
+	unsigned long rx_state;
+	unsigned long rx_count;
+	struct sk_buff *rx_skb;
+	unsigned char rx_chnl;
+	struct sk_buff_head txq, tx_waitq;
 	spinlock_t lock;
-	अचिन्हित अक्षर	protos_रेजिस्टरed;
-	अचिन्हित दीर्घ ll_state;
-	व्योम *kim_data;
-	काष्ठा tty_काष्ठा *tty;
-	काष्ठा work_काष्ठा work_ग_लिखो_wakeup;
-पूर्ण;
+	unsigned char	protos_registered;
+	unsigned long ll_state;
+	void *kim_data;
+	struct tty_struct *tty;
+	struct work_struct work_write_wakeup;
+};
 
 /*
- * wrapper around tty->ops->ग_लिखो_room to check
- * availability during firmware करोwnload
+ * wrapper around tty->ops->write_room to check
+ * availability during firmware download
  */
-पूर्णांक st_get_uart_wr_room(काष्ठा st_data_s *st_gdata);
+int st_get_uart_wr_room(struct st_data_s *st_gdata);
 /**
- * st_पूर्णांक_ग_लिखो -
- * poपूर्णांक this to tty->driver->ग_लिखो or tty->ops->ग_लिखो
+ * st_int_write -
+ * point this to tty->driver->write or tty->ops->write
  * depending upon the kernel version
  */
-पूर्णांक st_पूर्णांक_ग_लिखो(काष्ठा st_data_s*, स्थिर अचिन्हित अक्षर*, पूर्णांक);
+int st_int_write(struct st_data_s*, const unsigned char*, int);
 
 /**
- * st_ग_लिखो -
- * पूर्णांकernal ग_लिखो function, passed onto protocol drivers
- * via the ग_लिखो function ptr of protocol काष्ठा
+ * st_write -
+ * internal write function, passed onto protocol drivers
+ * via the write function ptr of protocol struct
  */
-दीर्घ st_ग_लिखो(काष्ठा sk_buff *);
+long st_write(struct sk_buff *);
 
 /* function to be called from ST-LL */
-व्योम st_ll_send_frame(क्रमागत proto_type, काष्ठा sk_buff *);
+void st_ll_send_frame(enum proto_type, struct sk_buff *);
 
-/* पूर्णांकernal wake up function */
-व्योम st_tx_wakeup(काष्ठा st_data_s *st_data);
+/* internal wake up function */
+void st_tx_wakeup(struct st_data_s *st_data);
 
-/* init, निकास entry funcs called from KIM */
-पूर्णांक st_core_init(काष्ठा st_data_s **);
-व्योम st_core_निकास(काष्ठा st_data_s *);
+/* init, exit entry funcs called from KIM */
+int st_core_init(struct st_data_s **);
+void st_core_exit(struct st_data_s *);
 
-/* ask क्रम reference from KIM */
-व्योम st_kim_ref(काष्ठा st_data_s **, पूर्णांक);
+/* ask for reference from KIM */
+void st_kim_ref(struct st_data_s **, int);
 
-#घोषणा GPS_STUB_TEST
-#अगर_घोषित GPS_STUB_TEST
-पूर्णांक gps_chrdrv_stub_ग_लिखो(स्थिर अचिन्हित अक्षर*, पूर्णांक);
-व्योम gps_chrdrv_stub_init(व्योम);
-#पूर्ण_अगर
+#define GPS_STUB_TEST
+#ifdef GPS_STUB_TEST
+int gps_chrdrv_stub_write(const unsigned char*, int);
+void gps_chrdrv_stub_init(void);
+#endif
 
 /*
- * header inक्रमmation used by st_kim.c
+ * header information used by st_kim.c
  */
 
-/* समय in msec to रुको क्रम
+/* time in msec to wait for
  * line discipline to be installed
  */
-#घोषणा LDISC_TIME	1000
-#घोषणा CMD_RESP_TIME	800
-#घोषणा CMD_WR_TIME	5000
-#घोषणा MAKEWORD(a, b)  ((अचिन्हित लघु)(((अचिन्हित अक्षर)(a)) \
-	| ((अचिन्हित लघु)((अचिन्हित अक्षर)(b))) << 8))
+#define LDISC_TIME	1000
+#define CMD_RESP_TIME	800
+#define CMD_WR_TIME	5000
+#define MAKEWORD(a, b)  ((unsigned short)(((unsigned char)(a)) \
+	| ((unsigned short)((unsigned char)(b))) << 8))
 
-#घोषणा GPIO_HIGH 1
-#घोषणा GPIO_LOW  0
+#define GPIO_HIGH 1
+#define GPIO_LOW  0
 
 /* the Power-On-Reset logic, requires to attempt
- * to करोwnload firmware onto chip more than once
- * since the self-test क्रम chip takes a जबतक
+ * to download firmware onto chip more than once
+ * since the self-test for chip takes a while
  */
-#घोषणा POR_RETRY_COUNT 5
+#define POR_RETRY_COUNT 5
 
 /**
- * काष्ठा chip_version - save the chip version
+ * struct chip_version - save the chip version
  */
-काष्ठा chip_version अणु
-	अचिन्हित लघु full;
-	अचिन्हित लघु chip;
-	अचिन्हित लघु min_ver;
-	अचिन्हित लघु maj_ver;
-पूर्ण;
+struct chip_version {
+	unsigned short full;
+	unsigned short chip;
+	unsigned short min_ver;
+	unsigned short maj_ver;
+};
 
-#घोषणा UART_DEV_NAME_LEN 32
+#define UART_DEV_NAME_LEN 32
 /**
- * काष्ठा kim_data_s - the KIM पूर्णांकernal data, embedded as the
- *	platक्रमm's drv data. One क्रम each ST device in the प्रणाली.
+ * struct kim_data_s - the KIM internal data, embedded as the
+ *	platform's drv data. One for each ST device in the system.
  * @uim_pid: KIM needs to communicate with UIM to request to install
- *	the ldisc by खोलोing UART when protocol drivers रेजिस्टर.
- * @kim_pdev: the platक्रमm device added in one of the board-XX.c file
- *	in arch/XX/ directory, 1 क्रम each ST device.
- * @kim_rcvd: completion handler to notअगरy when data was received,
- *	मुख्यly used during fw करोwnload, which involves multiple send/रुको
- *	क्रम each of the HCI-VS commands.
- * @ldisc_installed: completion handler to notअगरy that the UIM accepted
- *	the request to install ldisc, notअगरy from tty_खोलो which suggests
+ *	the ldisc by opening UART when protocol drivers register.
+ * @kim_pdev: the platform device added in one of the board-XX.c file
+ *	in arch/XX/ directory, 1 for each ST device.
+ * @kim_rcvd: completion handler to notify when data was received,
+ *	mainly used during fw download, which involves multiple send/wait
+ *	for each of the HCI-VS commands.
+ * @ldisc_installed: completion handler to notify that the UIM accepted
+ *	the request to install ldisc, notify from tty_open which suggests
  *	the ldisc was properly installed.
- * @resp_buffer: data buffer क्रम the .bts fw file name.
- * @fw_entry: firmware class काष्ठा to request/release the fw.
- * @rx_state: the rx state क्रम kim's receive func during fw करोwnload.
- * @rx_count: the rx count क्रम the kim's receive func during fw करोwnload.
- * @rx_skb: all of fw data might not come at once, and hence data storage क्रम
- *	whole of the fw response, only HCI_EVENTs and hence dअगरf from ST's
+ * @resp_buffer: data buffer for the .bts fw file name.
+ * @fw_entry: firmware class struct to request/release the fw.
+ * @rx_state: the rx state for kim's receive func during fw download.
+ * @rx_count: the rx count for the kim's receive func during fw download.
+ * @rx_skb: all of fw data might not come at once, and hence data storage for
+ *	whole of the fw response, only HCI_EVENTs and hence diff from ST's
  *	response.
  * @core_data: ST core's data, which mainly is the tty's disc_data
  * @version: chip version available via a sysfs entry.
  *
  */
-काष्ठा kim_data_s अणु
-	दीर्घ uim_pid;
-	काष्ठा platक्रमm_device *kim_pdev;
-	काष्ठा completion kim_rcvd, ldisc_installed;
-	अक्षर resp_buffer[30];
-	स्थिर काष्ठा firmware *fw_entry;
-	अचिन्हित nshutकरोwn;
-	अचिन्हित दीर्घ rx_state;
-	अचिन्हित दीर्घ rx_count;
-	काष्ठा sk_buff *rx_skb;
-	काष्ठा st_data_s *core_data;
-	काष्ठा chip_version version;
-	अचिन्हित अक्षर ldisc_install;
-	अचिन्हित अक्षर dev_name[UART_DEV_NAME_LEN + 1];
-	अचिन्हित flow_cntrl;
-	अचिन्हित baud_rate;
-पूर्ण;
+struct kim_data_s {
+	long uim_pid;
+	struct platform_device *kim_pdev;
+	struct completion kim_rcvd, ldisc_installed;
+	char resp_buffer[30];
+	const struct firmware *fw_entry;
+	unsigned nshutdown;
+	unsigned long rx_state;
+	unsigned long rx_count;
+	struct sk_buff *rx_skb;
+	struct st_data_s *core_data;
+	struct chip_version version;
+	unsigned char ldisc_install;
+	unsigned char dev_name[UART_DEV_NAME_LEN + 1];
+	unsigned flow_cntrl;
+	unsigned baud_rate;
+};
 
 /**
- * functions called when 1 of the protocol drivers माला_लो
- * रेजिस्टरed, these need to communicate with UIM to request
- * ldisc installed, पढ़ो chip_version, करोwnload relevant fw
+ * functions called when 1 of the protocol drivers gets
+ * registered, these need to communicate with UIM to request
+ * ldisc installed, read chip_version, download relevant fw
  */
-दीर्घ st_kim_start(व्योम *);
-दीर्घ st_kim_stop(व्योम *);
+long st_kim_start(void *);
+long st_kim_stop(void *);
 
-व्योम st_kim_complete(व्योम *);
-व्योम kim_st_list_protocols(काष्ठा st_data_s *, व्योम *);
-व्योम st_kim_recv(व्योम *, स्थिर अचिन्हित अक्षर *, दीर्घ);
+void st_kim_complete(void *);
+void kim_st_list_protocols(struct st_data_s *, void *);
+void st_kim_recv(void *, const unsigned char *, long);
 
 
 /*
  * BTS headers
  */
-#घोषणा ACTION_SEND_COMMAND     1
-#घोषणा ACTION_WAIT_EVENT       2
-#घोषणा ACTION_SERIAL           3
-#घोषणा ACTION_DELAY            4
-#घोषणा ACTION_RUN_SCRIPT       5
-#घोषणा ACTION_REMARKS          6
+#define ACTION_SEND_COMMAND     1
+#define ACTION_WAIT_EVENT       2
+#define ACTION_SERIAL           3
+#define ACTION_DELAY            4
+#define ACTION_RUN_SCRIPT       5
+#define ACTION_REMARKS          6
 
 /**
- * काष्ठा bts_header - the fw file is NOT binary which can
+ * struct bts_header - the fw file is NOT binary which can
  *	be sent onto TTY as is. The .bts is more a script
- *	file which has dअगरferent types of actions.
+ *	file which has different types of actions.
  *	Each such action needs to be parsed by the KIM and
  *	relevant procedure to be called.
  */
-काष्ठा bts_header अणु
+struct bts_header {
 	u32 magic;
 	u32 version;
 	u8 future[24];
 	u8 actions[];
-पूर्ण __attribute__ ((packed));
+} __attribute__ ((packed));
 
 /**
- * काष्ठा bts_action - Each .bts action has its own type of
+ * struct bts_action - Each .bts action has its own type of
  *	data.
  */
-काष्ठा bts_action अणु
+struct bts_action {
 	u16 type;
 	u16 size;
 	u8 data[];
-पूर्ण __attribute__ ((packed));
+} __attribute__ ((packed));
 
-काष्ठा bts_action_send अणु
+struct bts_action_send {
 	u8 data[0];
-पूर्ण __attribute__ ((packed));
+} __attribute__ ((packed));
 
-काष्ठा bts_action_रुको अणु
+struct bts_action_wait {
 	u32 msec;
 	u32 size;
 	u8 data[];
-पूर्ण __attribute__ ((packed));
+} __attribute__ ((packed));
 
-काष्ठा bts_action_delay अणु
+struct bts_action_delay {
 	u32 msec;
-पूर्ण __attribute__ ((packed));
+} __attribute__ ((packed));
 
-काष्ठा bts_action_serial अणु
+struct bts_action_serial {
 	u32 baud;
 	u32 flow_control;
-पूर्ण __attribute__ ((packed));
+} __attribute__ ((packed));
 
 /**
- * काष्ठा hci_command - the HCI-VS क्रम पूर्णांकrepreting
+ * struct hci_command - the HCI-VS for intrepreting
  *	the change baud rate of host-side UART, which
- *	needs to be ignored, since UIM would करो that
- *	when it receives request from KIM क्रम ldisc installation.
+ *	needs to be ignored, since UIM would do that
+ *	when it receives request from KIM for ldisc installation.
  */
-काष्ठा hci_command अणु
+struct hci_command {
 	u8 prefix;
 	u16 opcode;
 	u8 plen;
 	u32 speed;
-पूर्ण __attribute__ ((packed));
+} __attribute__ ((packed));
 
 /*
- * header inक्रमmation used by st_ll.c
+ * header information used by st_ll.c
  */
 
 /* ST LL receiver states */
-#घोषणा ST_W4_PACKET_TYPE       0
-#घोषणा ST_W4_HEADER		1
-#घोषणा ST_W4_DATA		2
+#define ST_W4_PACKET_TYPE       0
+#define ST_W4_HEADER		1
+#define ST_W4_DATA		2
 
 /* ST LL state machines */
-#घोषणा ST_LL_ASLEEP               0
-#घोषणा ST_LL_ASLEEP_TO_AWAKE      1
-#घोषणा ST_LL_AWAKE                2
-#घोषणा ST_LL_AWAKE_TO_ASLEEP      3
-#घोषणा ST_LL_INVALID		   4
+#define ST_LL_ASLEEP               0
+#define ST_LL_ASLEEP_TO_AWAKE      1
+#define ST_LL_AWAKE                2
+#define ST_LL_AWAKE_TO_ASLEEP      3
+#define ST_LL_INVALID		   4
 
-/* dअगरferent PM notअगरications coming from chip */
-#घोषणा LL_SLEEP_IND	0x30
-#घोषणा LL_SLEEP_ACK	0x31
-#घोषणा LL_WAKE_UP_IND	0x32
-#घोषणा LL_WAKE_UP_ACK	0x33
+/* different PM notifications coming from chip */
+#define LL_SLEEP_IND	0x30
+#define LL_SLEEP_ACK	0x31
+#define LL_WAKE_UP_IND	0x32
+#define LL_WAKE_UP_ACK	0x33
 
 /* initialize and de-init ST LL */
-दीर्घ st_ll_init(काष्ठा st_data_s *);
-दीर्घ st_ll_deinit(काष्ठा st_data_s *);
+long st_ll_init(struct st_data_s *);
+long st_ll_deinit(struct st_data_s *);
 
 /**
- * enable/disable ST LL aदीर्घ with KIM start/stop
+ * enable/disable ST LL along with KIM start/stop
  * called by ST Core
  */
-व्योम st_ll_enable(काष्ठा st_data_s *);
-व्योम st_ll_disable(काष्ठा st_data_s *);
+void st_ll_enable(struct st_data_s *);
+void st_ll_disable(struct st_data_s *);
 
 /**
  * various funcs used by ST core to set/get the various PM states
  * of the chip.
  */
-अचिन्हित दीर्घ st_ll_माला_लोtate(काष्ठा st_data_s *);
-अचिन्हित दीर्घ st_ll_sleep_state(काष्ठा st_data_s *, अचिन्हित अक्षर);
-व्योम st_ll_wakeup(काष्ठा st_data_s *);
+unsigned long st_ll_getstate(struct st_data_s *);
+unsigned long st_ll_sleep_state(struct st_data_s *, unsigned char);
+void st_ll_wakeup(struct st_data_s *);
 
 /*
- * header inक्रमmation used by st_core.c क्रम FM and GPS
- * packet parsing, the bluetooth headers are alपढ़ोy available
+ * header information used by st_core.c for FM and GPS
+ * packet parsing, the bluetooth headers are already available
  * at net/bluetooth/
  */
 
-काष्ठा fm_event_hdr अणु
+struct fm_event_hdr {
 	u8 plen;
-पूर्ण __attribute__ ((packed));
+} __attribute__ ((packed));
 
-#घोषणा FM_MAX_FRAME_SIZE 0xFF	/* TODO: */
-#घोषणा FM_EVENT_HDR_SIZE 1	/* size of fm_event_hdr */
-#घोषणा ST_FM_CH8_PKT 0x8
+#define FM_MAX_FRAME_SIZE 0xFF	/* TODO: */
+#define FM_EVENT_HDR_SIZE 1	/* size of fm_event_hdr */
+#define ST_FM_CH8_PKT 0x8
 
 /* gps stuff */
-काष्ठा gps_event_hdr अणु
+struct gps_event_hdr {
 	u8 opcode;
 	u16 plen;
-पूर्ण __attribute__ ((packed));
+} __attribute__ ((packed));
 
 /**
- * काष्ठा ti_st_plat_data - platक्रमm data shared between ST driver and
- *	platक्रमm specअगरic board file which adds the ST device.
- * @nshutकरोwn_gpio: Host's GPIO line to which chip's BT_EN is connected.
- * @dev_name: The UART/TTY name to which chip is पूर्णांकerfaced. (eg: /dev/ttyS1)
- * @flow_cntrl: Should always be 1, since UART's CTS/RTS is used क्रम PM
+ * struct ti_st_plat_data - platform data shared between ST driver and
+ *	platform specific board file which adds the ST device.
+ * @nshutdown_gpio: Host's GPIO line to which chip's BT_EN is connected.
+ * @dev_name: The UART/TTY name to which chip is interfaced. (eg: /dev/ttyS1)
+ * @flow_cntrl: Should always be 1, since UART's CTS/RTS is used for PM
  *	purposes.
  * @baud_rate: The baud rate supported by the Host UART controller, this will
  *	be shared across with the chip via a HCI VS command from User-Space Init
  *	Mgr application.
  * @suspend:
- * @resume: legacy PM routines hooked to platक्रमm specअगरic board file, so as
- *	to take chip-host पूर्णांकerface specअगरic action.
+ * @resume: legacy PM routines hooked to platform specific board file, so as
+ *	to take chip-host interface specific action.
  * @chip_enable:
- * @chip_disable: Platक्रमm/Interface specअगरic mux mode setting, GPIO
- *	configuring, Host side PM disabling etc.. can be करोne here.
+ * @chip_disable: Platform/Interface specific mux mode setting, GPIO
+ *	configuring, Host side PM disabling etc.. can be done here.
  * @chip_asleep:
- * @chip_awake: Chip specअगरic deep sleep states is communicated to Host
- *	specअगरic board-xx.c to take actions such as cut UART घड़ीs when chip
+ * @chip_awake: Chip specific deep sleep states is communicated to Host
+ *	specific board-xx.c to take actions such as cut UART clocks when chip
  *	asleep or run host faster when chip awake etc..
  *
  */
-काष्ठा ti_st_plat_data अणु
-	u32 nshutकरोwn_gpio;
-	अचिन्हित अक्षर dev_name[UART_DEV_NAME_LEN]; /* uart name */
+struct ti_st_plat_data {
+	u32 nshutdown_gpio;
+	unsigned char dev_name[UART_DEV_NAME_LEN]; /* uart name */
 	u32 flow_cntrl; /* flow control flag */
 	u32 baud_rate;
-	पूर्णांक (*suspend)(काष्ठा platक्रमm_device *, pm_message_t);
-	पूर्णांक (*resume)(काष्ठा platक्रमm_device *);
-	पूर्णांक (*chip_enable) (काष्ठा kim_data_s *);
-	पूर्णांक (*chip_disable) (काष्ठा kim_data_s *);
-	पूर्णांक (*chip_asleep) (काष्ठा kim_data_s *);
-	पूर्णांक (*chip_awake) (काष्ठा kim_data_s *);
-पूर्ण;
+	int (*suspend)(struct platform_device *, pm_message_t);
+	int (*resume)(struct platform_device *);
+	int (*chip_enable) (struct kim_data_s *);
+	int (*chip_disable) (struct kim_data_s *);
+	int (*chip_asleep) (struct kim_data_s *);
+	int (*chip_awake) (struct kim_data_s *);
+};
 
-#पूर्ण_अगर /* TI_WILINK_ST_H */
+#endif /* TI_WILINK_ST_H */

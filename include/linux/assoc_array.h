@@ -1,89 +1,88 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /* Generic associative array implementation.
  *
- * See Documentation/core-api/assoc_array.rst क्रम inक्रमmation.
+ * See Documentation/core-api/assoc_array.rst for information.
  *
  * Copyright (C) 2013 Red Hat, Inc. All Rights Reserved.
  * Written by David Howells (dhowells@redhat.com)
  */
 
-#अगर_अघोषित _LINUX_ASSOC_ARRAY_H
-#घोषणा _LINUX_ASSOC_ARRAY_H
+#ifndef _LINUX_ASSOC_ARRAY_H
+#define _LINUX_ASSOC_ARRAY_H
 
-#अगर_घोषित CONFIG_ASSOCIATIVE_ARRAY
+#ifdef CONFIG_ASSOCIATIVE_ARRAY
 
-#समावेश <linux/types.h>
+#include <linux/types.h>
 
-#घोषणा ASSOC_ARRAY_KEY_CHUNK_SIZE BITS_PER_LONG /* Key data retrieved in chunks of this size */
+#define ASSOC_ARRAY_KEY_CHUNK_SIZE BITS_PER_LONG /* Key data retrieved in chunks of this size */
 
 /*
  * Generic associative array.
  */
-काष्ठा assoc_array अणु
-	काष्ठा assoc_array_ptr	*root;		/* The node at the root of the tree */
-	अचिन्हित दीर्घ		nr_leaves_on_tree;
-पूर्ण;
+struct assoc_array {
+	struct assoc_array_ptr	*root;		/* The node at the root of the tree */
+	unsigned long		nr_leaves_on_tree;
+};
 
 /*
- * Operations on objects and index keys क्रम use by array manipulation routines.
+ * Operations on objects and index keys for use by array manipulation routines.
  */
-काष्ठा assoc_array_ops अणु
+struct assoc_array_ops {
 	/* Method to get a chunk of an index key from caller-supplied data */
-	अचिन्हित दीर्घ (*get_key_chunk)(स्थिर व्योम *index_key, पूर्णांक level);
+	unsigned long (*get_key_chunk)(const void *index_key, int level);
 
 	/* Method to get a piece of an object's index key */
-	अचिन्हित दीर्घ (*get_object_key_chunk)(स्थिर व्योम *object, पूर्णांक level);
+	unsigned long (*get_object_key_chunk)(const void *object, int level);
 
-	/* Is this the object we're looking क्रम? */
-	bool (*compare_object)(स्थिर व्योम *object, स्थिर व्योम *index_key);
+	/* Is this the object we're looking for? */
+	bool (*compare_object)(const void *object, const void *index_key);
 
-	/* How dअगरferent is an object from an index key, to a bit position in
-	 * their keys? (or -1 अगर they're the same)
+	/* How different is an object from an index key, to a bit position in
+	 * their keys? (or -1 if they're the same)
 	 */
-	पूर्णांक (*dअगरf_objects)(स्थिर व्योम *object, स्थिर व्योम *index_key);
+	int (*diff_objects)(const void *object, const void *index_key);
 
-	/* Method to मुक्त an object. */
-	व्योम (*मुक्त_object)(व्योम *object);
-पूर्ण;
+	/* Method to free an object. */
+	void (*free_object)(void *object);
+};
 
 /*
  * Access and manipulation functions.
  */
-काष्ठा assoc_array_edit;
+struct assoc_array_edit;
 
-अटल अंतरभूत व्योम assoc_array_init(काष्ठा assoc_array *array)
-अणु
-	array->root = शून्य;
+static inline void assoc_array_init(struct assoc_array *array)
+{
+	array->root = NULL;
 	array->nr_leaves_on_tree = 0;
-पूर्ण
+}
 
-बाह्य पूर्णांक assoc_array_iterate(स्थिर काष्ठा assoc_array *array,
-			       पूर्णांक (*iterator)(स्थिर व्योम *object,
-					       व्योम *iterator_data),
-			       व्योम *iterator_data);
-बाह्य व्योम *assoc_array_find(स्थिर काष्ठा assoc_array *array,
-			      स्थिर काष्ठा assoc_array_ops *ops,
-			      स्थिर व्योम *index_key);
-बाह्य व्योम assoc_array_destroy(काष्ठा assoc_array *array,
-				स्थिर काष्ठा assoc_array_ops *ops);
-बाह्य काष्ठा assoc_array_edit *assoc_array_insert(काष्ठा assoc_array *array,
-						   स्थिर काष्ठा assoc_array_ops *ops,
-						   स्थिर व्योम *index_key,
-						   व्योम *object);
-बाह्य व्योम assoc_array_insert_set_object(काष्ठा assoc_array_edit *edit,
-					  व्योम *object);
-बाह्य काष्ठा assoc_array_edit *assoc_array_delete(काष्ठा assoc_array *array,
-						   स्थिर काष्ठा assoc_array_ops *ops,
-						   स्थिर व्योम *index_key);
-बाह्य काष्ठा assoc_array_edit *assoc_array_clear(काष्ठा assoc_array *array,
-						  स्थिर काष्ठा assoc_array_ops *ops);
-बाह्य व्योम assoc_array_apply_edit(काष्ठा assoc_array_edit *edit);
-बाह्य व्योम assoc_array_cancel_edit(काष्ठा assoc_array_edit *edit);
-बाह्य पूर्णांक assoc_array_gc(काष्ठा assoc_array *array,
-			  स्थिर काष्ठा assoc_array_ops *ops,
-			  bool (*iterator)(व्योम *object, व्योम *iterator_data),
-			  व्योम *iterator_data);
+extern int assoc_array_iterate(const struct assoc_array *array,
+			       int (*iterator)(const void *object,
+					       void *iterator_data),
+			       void *iterator_data);
+extern void *assoc_array_find(const struct assoc_array *array,
+			      const struct assoc_array_ops *ops,
+			      const void *index_key);
+extern void assoc_array_destroy(struct assoc_array *array,
+				const struct assoc_array_ops *ops);
+extern struct assoc_array_edit *assoc_array_insert(struct assoc_array *array,
+						   const struct assoc_array_ops *ops,
+						   const void *index_key,
+						   void *object);
+extern void assoc_array_insert_set_object(struct assoc_array_edit *edit,
+					  void *object);
+extern struct assoc_array_edit *assoc_array_delete(struct assoc_array *array,
+						   const struct assoc_array_ops *ops,
+						   const void *index_key);
+extern struct assoc_array_edit *assoc_array_clear(struct assoc_array *array,
+						  const struct assoc_array_ops *ops);
+extern void assoc_array_apply_edit(struct assoc_array_edit *edit);
+extern void assoc_array_cancel_edit(struct assoc_array_edit *edit);
+extern int assoc_array_gc(struct assoc_array *array,
+			  const struct assoc_array_ops *ops,
+			  bool (*iterator)(void *object, void *iterator_data),
+			  void *iterator_data);
 
-#पूर्ण_अगर /* CONFIG_ASSOCIATIVE_ARRAY */
-#पूर्ण_अगर /* _LINUX_ASSOC_ARRAY_H */
+#endif /* CONFIG_ASSOCIATIVE_ARRAY */
+#endif /* _LINUX_ASSOC_ARRAY_H */

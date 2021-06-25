@@ -1,58 +1,57 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0
+// SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
 /*******************************************************************************
  *
- * Module Name: uपंचांगath - Integer math support routines
+ * Module Name: utmath - Integer math support routines
  *
  ******************************************************************************/
 
-#समावेश <acpi/acpi.h>
-#समावेश "accommon.h"
+#include <acpi/acpi.h>
+#include "accommon.h"
 
-#घोषणा _COMPONENT          ACPI_UTILITIES
+#define _COMPONENT          ACPI_UTILITIES
 ACPI_MODULE_NAME("utmath")
 
-/* Structures used only क्रम 64-bit भागide */
-प्रकार काष्ठा uपूर्णांक64_काष्ठा अणु
+/* Structures used only for 64-bit divide */
+typedef struct uint64_struct {
 	u32 lo;
 	u32 hi;
 
-पूर्ण uपूर्णांक64_काष्ठा;
+} uint64_struct;
 
-प्रकार जोड़ uपूर्णांक64_overlay अणु
+typedef union uint64_overlay {
 	u64 full;
-	काष्ठा uपूर्णांक64_काष्ठा part;
+	struct uint64_struct part;
 
-पूर्ण uपूर्णांक64_overlay;
+} uint64_overlay;
 
 /*
- * Optional support क्रम 64-bit द्विगुन-precision पूर्णांकeger multiply and shअगरt.
+ * Optional support for 64-bit double-precision integer multiply and shift.
  * This code is configurable and is implemented in order to support 32-bit
- * kernel environments where a 64-bit द्विगुन-precision math library is not
+ * kernel environments where a 64-bit double-precision math library is not
  * available.
  */
-#अगर_अघोषित ACPI_USE_NATIVE_MATH64
+#ifndef ACPI_USE_NATIVE_MATH64
 
 /*******************************************************************************
  *
- * FUNCTION:    acpi_ut_लघु_multiply
+ * FUNCTION:    acpi_ut_short_multiply
  *
  * PARAMETERS:  multiplicand        - 64-bit multiplicand
  *              multiplier          - 32-bit multiplier
- *              out_product         - Poपूर्णांकer to where the product is वापसed
+ *              out_product         - Pointer to where the product is returned
  *
- * DESCRIPTION: Perक्रमm a लघु multiply.
+ * DESCRIPTION: Perform a short multiply.
  *
  ******************************************************************************/
 
 acpi_status
-acpi_ut_लघु_multiply(u64 multiplicand, u32 multiplier, u64 *out_product)
-अणु
-	जोड़ uपूर्णांक64_overlay multiplicand_ovl;
-	जोड़ uपूर्णांक64_overlay product;
+acpi_ut_short_multiply(u64 multiplicand, u32 multiplier, u64 *out_product)
+{
+	union uint64_overlay multiplicand_ovl;
+	union uint64_overlay product;
 	u32 carry32;
 
-	ACPI_FUNCTION_TRACE(ut_लघु_multiply);
+	ACPI_FUNCTION_TRACE(ut_short_multiply);
 
 	multiplicand_ovl.full = multiplicand;
 
@@ -70,426 +69,426 @@ acpi_ut_लघु_multiply(u64 multiplicand, u32 multiplier, u64 *out_product)
 
 	/* Return only what was requested */
 
-	अगर (out_product) अणु
+	if (out_product) {
 		*out_product = product.full;
-	पूर्ण
+	}
 
-	वापस_ACPI_STATUS(AE_OK);
-पूर्ण
+	return_ACPI_STATUS(AE_OK);
+}
 
 /*******************************************************************************
  *
- * FUNCTION:    acpi_ut_लघु_shअगरt_left
+ * FUNCTION:    acpi_ut_short_shift_left
  *
- * PARAMETERS:  opeअक्रम             - 64-bit shअगरt opeअक्रम
- *              count               - 32-bit shअगरt count
- *              out_result          - Poपूर्णांकer to where the result is वापसed
+ * PARAMETERS:  operand             - 64-bit shift operand
+ *              count               - 32-bit shift count
+ *              out_result          - Pointer to where the result is returned
  *
- * DESCRIPTION: Perक्रमm a लघु left shअगरt.
+ * DESCRIPTION: Perform a short left shift.
  *
  ******************************************************************************/
 
-acpi_status acpi_ut_लघु_shअगरt_left(u64 opeअक्रम, u32 count, u64 *out_result)
-अणु
-	जोड़ uपूर्णांक64_overlay opeअक्रम_ovl;
+acpi_status acpi_ut_short_shift_left(u64 operand, u32 count, u64 *out_result)
+{
+	union uint64_overlay operand_ovl;
 
-	ACPI_FUNCTION_TRACE(ut_लघु_shअगरt_left);
+	ACPI_FUNCTION_TRACE(ut_short_shift_left);
 
-	opeअक्रम_ovl.full = opeअक्रम;
+	operand_ovl.full = operand;
 
-	अगर ((count & 63) >= 32) अणु
-		opeअक्रम_ovl.part.hi = opeअक्रम_ovl.part.lo;
-		opeअक्रम_ovl.part.lo = 0;
+	if ((count & 63) >= 32) {
+		operand_ovl.part.hi = operand_ovl.part.lo;
+		operand_ovl.part.lo = 0;
 		count = (count & 63) - 32;
-	पूर्ण
-	ACPI_SHIFT_LEFT_64_BY_32(opeअक्रम_ovl.part.hi,
-				 opeअक्रम_ovl.part.lo, count);
+	}
+	ACPI_SHIFT_LEFT_64_BY_32(operand_ovl.part.hi,
+				 operand_ovl.part.lo, count);
 
 	/* Return only what was requested */
 
-	अगर (out_result) अणु
-		*out_result = opeअक्रम_ovl.full;
-	पूर्ण
+	if (out_result) {
+		*out_result = operand_ovl.full;
+	}
 
-	वापस_ACPI_STATUS(AE_OK);
-पूर्ण
+	return_ACPI_STATUS(AE_OK);
+}
 
 /*******************************************************************************
  *
- * FUNCTION:    acpi_ut_लघु_shअगरt_right
+ * FUNCTION:    acpi_ut_short_shift_right
  *
- * PARAMETERS:  opeअक्रम             - 64-bit shअगरt opeअक्रम
- *              count               - 32-bit shअगरt count
- *              out_result          - Poपूर्णांकer to where the result is वापसed
+ * PARAMETERS:  operand             - 64-bit shift operand
+ *              count               - 32-bit shift count
+ *              out_result          - Pointer to where the result is returned
  *
- * DESCRIPTION: Perक्रमm a लघु right shअगरt.
+ * DESCRIPTION: Perform a short right shift.
  *
  ******************************************************************************/
 
-acpi_status acpi_ut_लघु_shअगरt_right(u64 opeअक्रम, u32 count, u64 *out_result)
-अणु
-	जोड़ uपूर्णांक64_overlay opeअक्रम_ovl;
+acpi_status acpi_ut_short_shift_right(u64 operand, u32 count, u64 *out_result)
+{
+	union uint64_overlay operand_ovl;
 
-	ACPI_FUNCTION_TRACE(ut_लघु_shअगरt_right);
+	ACPI_FUNCTION_TRACE(ut_short_shift_right);
 
-	opeअक्रम_ovl.full = opeअक्रम;
+	operand_ovl.full = operand;
 
-	अगर ((count & 63) >= 32) अणु
-		opeअक्रम_ovl.part.lo = opeअक्रम_ovl.part.hi;
-		opeअक्रम_ovl.part.hi = 0;
+	if ((count & 63) >= 32) {
+		operand_ovl.part.lo = operand_ovl.part.hi;
+		operand_ovl.part.hi = 0;
 		count = (count & 63) - 32;
-	पूर्ण
-	ACPI_SHIFT_RIGHT_64_BY_32(opeअक्रम_ovl.part.hi,
-				  opeअक्रम_ovl.part.lo, count);
+	}
+	ACPI_SHIFT_RIGHT_64_BY_32(operand_ovl.part.hi,
+				  operand_ovl.part.lo, count);
 
 	/* Return only what was requested */
 
-	अगर (out_result) अणु
-		*out_result = opeअक्रम_ovl.full;
-	पूर्ण
+	if (out_result) {
+		*out_result = operand_ovl.full;
+	}
 
-	वापस_ACPI_STATUS(AE_OK);
-पूर्ण
-#अन्यथा
+	return_ACPI_STATUS(AE_OK);
+}
+#else
 
 /*******************************************************************************
  *
- * FUNCTION:    acpi_ut_लघु_multiply
+ * FUNCTION:    acpi_ut_short_multiply
  *
  * PARAMETERS:  See function headers above
  *
- * DESCRIPTION: Native version of the ut_लघु_multiply function.
+ * DESCRIPTION: Native version of the ut_short_multiply function.
  *
  ******************************************************************************/
 
 acpi_status
-acpi_ut_लघु_multiply(u64 multiplicand, u32 multiplier, u64 *out_product)
-अणु
+acpi_ut_short_multiply(u64 multiplicand, u32 multiplier, u64 *out_product)
+{
 
-	ACPI_FUNCTION_TRACE(ut_लघु_multiply);
+	ACPI_FUNCTION_TRACE(ut_short_multiply);
 
 	/* Return only what was requested */
 
-	अगर (out_product) अणु
+	if (out_product) {
 		*out_product = multiplicand * multiplier;
-	पूर्ण
+	}
 
-	वापस_ACPI_STATUS(AE_OK);
-पूर्ण
-
-/*******************************************************************************
- *
- * FUNCTION:    acpi_ut_लघु_shअगरt_left
- *
- * PARAMETERS:  See function headers above
- *
- * DESCRIPTION: Native version of the ut_लघु_shअगरt_left function.
- *
- ******************************************************************************/
-
-acpi_status acpi_ut_लघु_shअगरt_left(u64 opeअक्रम, u32 count, u64 *out_result)
-अणु
-
-	ACPI_FUNCTION_TRACE(ut_लघु_shअगरt_left);
-
-	/* Return only what was requested */
-
-	अगर (out_result) अणु
-		*out_result = opeअक्रम << count;
-	पूर्ण
-
-	वापस_ACPI_STATUS(AE_OK);
-पूर्ण
+	return_ACPI_STATUS(AE_OK);
+}
 
 /*******************************************************************************
  *
- * FUNCTION:    acpi_ut_लघु_shअगरt_right
+ * FUNCTION:    acpi_ut_short_shift_left
  *
  * PARAMETERS:  See function headers above
  *
- * DESCRIPTION: Native version of the ut_लघु_shअगरt_right function.
+ * DESCRIPTION: Native version of the ut_short_shift_left function.
  *
  ******************************************************************************/
 
-acpi_status acpi_ut_लघु_shअगरt_right(u64 opeअक्रम, u32 count, u64 *out_result)
-अणु
+acpi_status acpi_ut_short_shift_left(u64 operand, u32 count, u64 *out_result)
+{
 
-	ACPI_FUNCTION_TRACE(ut_लघु_shअगरt_right);
+	ACPI_FUNCTION_TRACE(ut_short_shift_left);
 
 	/* Return only what was requested */
 
-	अगर (out_result) अणु
-		*out_result = opeअक्रम >> count;
-	पूर्ण
+	if (out_result) {
+		*out_result = operand << count;
+	}
 
-	वापस_ACPI_STATUS(AE_OK);
-पूर्ण
-#पूर्ण_अगर
+	return_ACPI_STATUS(AE_OK);
+}
+
+/*******************************************************************************
+ *
+ * FUNCTION:    acpi_ut_short_shift_right
+ *
+ * PARAMETERS:  See function headers above
+ *
+ * DESCRIPTION: Native version of the ut_short_shift_right function.
+ *
+ ******************************************************************************/
+
+acpi_status acpi_ut_short_shift_right(u64 operand, u32 count, u64 *out_result)
+{
+
+	ACPI_FUNCTION_TRACE(ut_short_shift_right);
+
+	/* Return only what was requested */
+
+	if (out_result) {
+		*out_result = operand >> count;
+	}
+
+	return_ACPI_STATUS(AE_OK);
+}
+#endif
 
 /*
- * Optional support क्रम 64-bit द्विगुन-precision पूर्णांकeger भागide. This code
+ * Optional support for 64-bit double-precision integer divide. This code
  * is configurable and is implemented in order to support 32-bit kernel
- * environments where a 64-bit द्विगुन-precision math library is not available.
+ * environments where a 64-bit double-precision math library is not available.
  *
- * Support क्रम a more normal 64-bit भागide/modulo (with check क्रम a भागide-
+ * Support for a more normal 64-bit divide/modulo (with check for a divide-
  * by-zero) appears after this optional section of code.
  */
-#अगर_अघोषित ACPI_USE_NATIVE_DIVIDE
+#ifndef ACPI_USE_NATIVE_DIVIDE
 
 /*******************************************************************************
  *
- * FUNCTION:    acpi_ut_लघु_भागide
+ * FUNCTION:    acpi_ut_short_divide
  *
- * PARAMETERS:  भागidend            - 64-bit भागidend
- *              भागisor             - 32-bit भागisor
- *              out_quotient        - Poपूर्णांकer to where the quotient is वापसed
- *              out_reमुख्यder       - Poपूर्णांकer to where the reमुख्यder is वापसed
+ * PARAMETERS:  dividend            - 64-bit dividend
+ *              divisor             - 32-bit divisor
+ *              out_quotient        - Pointer to where the quotient is returned
+ *              out_remainder       - Pointer to where the remainder is returned
  *
- * RETURN:      Status (Checks क्रम भागide-by-zero)
+ * RETURN:      Status (Checks for divide-by-zero)
  *
- * DESCRIPTION: Perक्रमm a लघु (maximum 64 bits भागided by 32 bits)
- *              भागide and modulo. The result is a 64-bit quotient and a
- *              32-bit reमुख्यder.
+ * DESCRIPTION: Perform a short (maximum 64 bits divided by 32 bits)
+ *              divide and modulo. The result is a 64-bit quotient and a
+ *              32-bit remainder.
  *
  ******************************************************************************/
 
 acpi_status
-acpi_ut_लघु_भागide(u64 भागidend,
-		     u32 भागisor, u64 *out_quotient, u32 *out_reमुख्यder)
-अणु
-	जोड़ uपूर्णांक64_overlay भागidend_ovl;
-	जोड़ uपूर्णांक64_overlay quotient;
-	u32 reमुख्यder32;
+acpi_ut_short_divide(u64 dividend,
+		     u32 divisor, u64 *out_quotient, u32 *out_remainder)
+{
+	union uint64_overlay dividend_ovl;
+	union uint64_overlay quotient;
+	u32 remainder32;
 
-	ACPI_FUNCTION_TRACE(ut_लघु_भागide);
+	ACPI_FUNCTION_TRACE(ut_short_divide);
 
-	/* Always check क्रम a zero भागisor */
+	/* Always check for a zero divisor */
 
-	अगर (भागisor == 0) अणु
+	if (divisor == 0) {
 		ACPI_ERROR((AE_INFO, "Divide by zero"));
-		वापस_ACPI_STATUS(AE_AML_DIVIDE_BY_ZERO);
-	पूर्ण
+		return_ACPI_STATUS(AE_AML_DIVIDE_BY_ZERO);
+	}
 
-	भागidend_ovl.full = भागidend;
+	dividend_ovl.full = dividend;
 
 	/*
-	 * The quotient is 64 bits, the reमुख्यder is always 32 bits,
-	 * and is generated by the second भागide.
+	 * The quotient is 64 bits, the remainder is always 32 bits,
+	 * and is generated by the second divide.
 	 */
-	ACPI_DIV_64_BY_32(0, भागidend_ovl.part.hi, भागisor,
-			  quotient.part.hi, reमुख्यder32);
+	ACPI_DIV_64_BY_32(0, dividend_ovl.part.hi, divisor,
+			  quotient.part.hi, remainder32);
 
-	ACPI_DIV_64_BY_32(reमुख्यder32, भागidend_ovl.part.lo, भागisor,
-			  quotient.part.lo, reमुख्यder32);
+	ACPI_DIV_64_BY_32(remainder32, dividend_ovl.part.lo, divisor,
+			  quotient.part.lo, remainder32);
 
 	/* Return only what was requested */
 
-	अगर (out_quotient) अणु
+	if (out_quotient) {
 		*out_quotient = quotient.full;
-	पूर्ण
-	अगर (out_reमुख्यder) अणु
-		*out_reमुख्यder = reमुख्यder32;
-	पूर्ण
+	}
+	if (out_remainder) {
+		*out_remainder = remainder32;
+	}
 
-	वापस_ACPI_STATUS(AE_OK);
-पूर्ण
+	return_ACPI_STATUS(AE_OK);
+}
 
 /*******************************************************************************
  *
- * FUNCTION:    acpi_ut_भागide
+ * FUNCTION:    acpi_ut_divide
  *
- * PARAMETERS:  in_भागidend         - Dividend
- *              in_भागisor          - Divisor
- *              out_quotient        - Poपूर्णांकer to where the quotient is वापसed
- *              out_reमुख्यder       - Poपूर्णांकer to where the reमुख्यder is वापसed
+ * PARAMETERS:  in_dividend         - Dividend
+ *              in_divisor          - Divisor
+ *              out_quotient        - Pointer to where the quotient is returned
+ *              out_remainder       - Pointer to where the remainder is returned
  *
- * RETURN:      Status (Checks क्रम भागide-by-zero)
+ * RETURN:      Status (Checks for divide-by-zero)
  *
- * DESCRIPTION: Perक्रमm a भागide and modulo.
+ * DESCRIPTION: Perform a divide and modulo.
  *
  ******************************************************************************/
 
 acpi_status
-acpi_ut_भागide(u64 in_भागidend,
-	       u64 in_भागisor, u64 *out_quotient, u64 *out_reमुख्यder)
-अणु
-	जोड़ uपूर्णांक64_overlay भागidend;
-	जोड़ uपूर्णांक64_overlay भागisor;
-	जोड़ uपूर्णांक64_overlay quotient;
-	जोड़ uपूर्णांक64_overlay reमुख्यder;
-	जोड़ uपूर्णांक64_overlay normalized_भागidend;
-	जोड़ uपूर्णांक64_overlay normalized_भागisor;
+acpi_ut_divide(u64 in_dividend,
+	       u64 in_divisor, u64 *out_quotient, u64 *out_remainder)
+{
+	union uint64_overlay dividend;
+	union uint64_overlay divisor;
+	union uint64_overlay quotient;
+	union uint64_overlay remainder;
+	union uint64_overlay normalized_dividend;
+	union uint64_overlay normalized_divisor;
 	u32 partial1;
-	जोड़ uपूर्णांक64_overlay partial2;
-	जोड़ uपूर्णांक64_overlay partial3;
+	union uint64_overlay partial2;
+	union uint64_overlay partial3;
 
-	ACPI_FUNCTION_TRACE(ut_भागide);
+	ACPI_FUNCTION_TRACE(ut_divide);
 
-	/* Always check क्रम a zero भागisor */
+	/* Always check for a zero divisor */
 
-	अगर (in_भागisor == 0) अणु
+	if (in_divisor == 0) {
 		ACPI_ERROR((AE_INFO, "Divide by zero"));
-		वापस_ACPI_STATUS(AE_AML_DIVIDE_BY_ZERO);
-	पूर्ण
+		return_ACPI_STATUS(AE_AML_DIVIDE_BY_ZERO);
+	}
 
-	भागisor.full = in_भागisor;
-	भागidend.full = in_भागidend;
-	अगर (भागisor.part.hi == 0) अणु
+	divisor.full = in_divisor;
+	dividend.full = in_dividend;
+	if (divisor.part.hi == 0) {
 		/*
-		 * 1) Simplest हाल is where the भागisor is 32 bits, we can
-		 * just करो two भागides
+		 * 1) Simplest case is where the divisor is 32 bits, we can
+		 * just do two divides
 		 */
-		reमुख्यder.part.hi = 0;
+		remainder.part.hi = 0;
 
 		/*
-		 * The quotient is 64 bits, the reमुख्यder is always 32 bits,
-		 * and is generated by the second भागide.
+		 * The quotient is 64 bits, the remainder is always 32 bits,
+		 * and is generated by the second divide.
 		 */
-		ACPI_DIV_64_BY_32(0, भागidend.part.hi, भागisor.part.lo,
+		ACPI_DIV_64_BY_32(0, dividend.part.hi, divisor.part.lo,
 				  quotient.part.hi, partial1);
 
-		ACPI_DIV_64_BY_32(partial1, भागidend.part.lo, भागisor.part.lo,
-				  quotient.part.lo, reमुख्यder.part.lo);
-	पूर्ण
+		ACPI_DIV_64_BY_32(partial1, dividend.part.lo, divisor.part.lo,
+				  quotient.part.lo, remainder.part.lo);
+	}
 
-	अन्यथा अणु
+	else {
 		/*
-		 * 2) The general हाल where the भागisor is a full 64 bits
-		 * is more dअगरficult
+		 * 2) The general case where the divisor is a full 64 bits
+		 * is more difficult
 		 */
 		quotient.part.hi = 0;
-		normalized_भागidend = भागidend;
-		normalized_भागisor = भागisor;
+		normalized_dividend = dividend;
+		normalized_divisor = divisor;
 
-		/* Normalize the opeअक्रमs (shअगरt until the भागisor is < 32 bits) */
+		/* Normalize the operands (shift until the divisor is < 32 bits) */
 
-		करो अणु
-			ACPI_SHIFT_RIGHT_64(normalized_भागisor.part.hi,
-					    normalized_भागisor.part.lo);
-			ACPI_SHIFT_RIGHT_64(normalized_भागidend.part.hi,
-					    normalized_भागidend.part.lo);
+		do {
+			ACPI_SHIFT_RIGHT_64(normalized_divisor.part.hi,
+					    normalized_divisor.part.lo);
+			ACPI_SHIFT_RIGHT_64(normalized_dividend.part.hi,
+					    normalized_dividend.part.lo);
 
-		पूर्ण जबतक (normalized_भागisor.part.hi != 0);
+		} while (normalized_divisor.part.hi != 0);
 
-		/* Partial भागide */
+		/* Partial divide */
 
-		ACPI_DIV_64_BY_32(normalized_भागidend.part.hi,
-				  normalized_भागidend.part.lo,
-				  normalized_भागisor.part.lo, quotient.part.lo,
+		ACPI_DIV_64_BY_32(normalized_dividend.part.hi,
+				  normalized_dividend.part.lo,
+				  normalized_divisor.part.lo, quotient.part.lo,
 				  partial1);
 
 		/*
 		 * The quotient is always 32 bits, and simply requires
-		 * adjusपंचांगent. The 64-bit reमुख्यder must be generated.
+		 * adjustment. The 64-bit remainder must be generated.
 		 */
-		partial1 = quotient.part.lo * भागisor.part.hi;
-		partial2.full = (u64) quotient.part.lo * भागisor.part.lo;
+		partial1 = quotient.part.lo * divisor.part.hi;
+		partial2.full = (u64) quotient.part.lo * divisor.part.lo;
 		partial3.full = (u64) partial2.part.hi + partial1;
 
-		reमुख्यder.part.hi = partial3.part.lo;
-		reमुख्यder.part.lo = partial2.part.lo;
+		remainder.part.hi = partial3.part.lo;
+		remainder.part.lo = partial2.part.lo;
 
-		अगर (partial3.part.hi == 0) अणु
-			अगर (partial3.part.lo >= भागidend.part.hi) अणु
-				अगर (partial3.part.lo == भागidend.part.hi) अणु
-					अगर (partial2.part.lo > भागidend.part.lo) अणु
+		if (partial3.part.hi == 0) {
+			if (partial3.part.lo >= dividend.part.hi) {
+				if (partial3.part.lo == dividend.part.hi) {
+					if (partial2.part.lo > dividend.part.lo) {
 						quotient.part.lo--;
-						reमुख्यder.full -= भागisor.full;
-					पूर्ण
-				पूर्ण अन्यथा अणु
+						remainder.full -= divisor.full;
+					}
+				} else {
 					quotient.part.lo--;
-					reमुख्यder.full -= भागisor.full;
-				पूर्ण
-			पूर्ण
+					remainder.full -= divisor.full;
+				}
+			}
 
-			reमुख्यder.full = reमुख्यder.full - भागidend.full;
-			reमुख्यder.part.hi = (u32)-((s32)reमुख्यder.part.hi);
-			reमुख्यder.part.lo = (u32)-((s32)reमुख्यder.part.lo);
+			remainder.full = remainder.full - dividend.full;
+			remainder.part.hi = (u32)-((s32)remainder.part.hi);
+			remainder.part.lo = (u32)-((s32)remainder.part.lo);
 
-			अगर (reमुख्यder.part.lo) अणु
-				reमुख्यder.part.hi--;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			if (remainder.part.lo) {
+				remainder.part.hi--;
+			}
+		}
+	}
 
 	/* Return only what was requested */
 
-	अगर (out_quotient) अणु
+	if (out_quotient) {
 		*out_quotient = quotient.full;
-	पूर्ण
-	अगर (out_reमुख्यder) अणु
-		*out_reमुख्यder = reमुख्यder.full;
-	पूर्ण
+	}
+	if (out_remainder) {
+		*out_remainder = remainder.full;
+	}
 
-	वापस_ACPI_STATUS(AE_OK);
-पूर्ण
+	return_ACPI_STATUS(AE_OK);
+}
 
-#अन्यथा
+#else
 
 /*******************************************************************************
  *
- * FUNCTION:    acpi_ut_लघु_भागide, acpi_ut_भागide
+ * FUNCTION:    acpi_ut_short_divide, acpi_ut_divide
  *
  * PARAMETERS:  See function headers above
  *
- * DESCRIPTION: Native versions of the ut_भागide functions. Use these अगर either
- *              1) The target is a 64-bit platक्रमm and thereक्रमe 64-bit
- *                 पूर्णांकeger math is supported directly by the machine.
- *              2) The target is a 32-bit or 16-bit platक्रमm, and the
- *                 द्विगुन-precision पूर्णांकeger math library is available to
- *                 perक्रमm the भागide.
+ * DESCRIPTION: Native versions of the ut_divide functions. Use these if either
+ *              1) The target is a 64-bit platform and therefore 64-bit
+ *                 integer math is supported directly by the machine.
+ *              2) The target is a 32-bit or 16-bit platform, and the
+ *                 double-precision integer math library is available to
+ *                 perform the divide.
  *
  ******************************************************************************/
 
 acpi_status
-acpi_ut_लघु_भागide(u64 in_भागidend,
-		     u32 भागisor, u64 *out_quotient, u32 *out_reमुख्यder)
-अणु
+acpi_ut_short_divide(u64 in_dividend,
+		     u32 divisor, u64 *out_quotient, u32 *out_remainder)
+{
 
-	ACPI_FUNCTION_TRACE(ut_लघु_भागide);
+	ACPI_FUNCTION_TRACE(ut_short_divide);
 
-	/* Always check क्रम a zero भागisor */
+	/* Always check for a zero divisor */
 
-	अगर (भागisor == 0) अणु
+	if (divisor == 0) {
 		ACPI_ERROR((AE_INFO, "Divide by zero"));
-		वापस_ACPI_STATUS(AE_AML_DIVIDE_BY_ZERO);
-	पूर्ण
+		return_ACPI_STATUS(AE_AML_DIVIDE_BY_ZERO);
+	}
 
 	/* Return only what was requested */
 
-	अगर (out_quotient) अणु
-		*out_quotient = in_भागidend / भागisor;
-	पूर्ण
-	अगर (out_reमुख्यder) अणु
-		*out_reमुख्यder = (u32) (in_भागidend % भागisor);
-	पूर्ण
+	if (out_quotient) {
+		*out_quotient = in_dividend / divisor;
+	}
+	if (out_remainder) {
+		*out_remainder = (u32) (in_dividend % divisor);
+	}
 
-	वापस_ACPI_STATUS(AE_OK);
-पूर्ण
+	return_ACPI_STATUS(AE_OK);
+}
 
 acpi_status
-acpi_ut_भागide(u64 in_भागidend,
-	       u64 in_भागisor, u64 *out_quotient, u64 *out_reमुख्यder)
-अणु
-	ACPI_FUNCTION_TRACE(ut_भागide);
+acpi_ut_divide(u64 in_dividend,
+	       u64 in_divisor, u64 *out_quotient, u64 *out_remainder)
+{
+	ACPI_FUNCTION_TRACE(ut_divide);
 
-	/* Always check क्रम a zero भागisor */
+	/* Always check for a zero divisor */
 
-	अगर (in_भागisor == 0) अणु
+	if (in_divisor == 0) {
 		ACPI_ERROR((AE_INFO, "Divide by zero"));
-		वापस_ACPI_STATUS(AE_AML_DIVIDE_BY_ZERO);
-	पूर्ण
+		return_ACPI_STATUS(AE_AML_DIVIDE_BY_ZERO);
+	}
 
 	/* Return only what was requested */
 
-	अगर (out_quotient) अणु
-		*out_quotient = in_भागidend / in_भागisor;
-	पूर्ण
-	अगर (out_reमुख्यder) अणु
-		*out_reमुख्यder = in_भागidend % in_भागisor;
-	पूर्ण
+	if (out_quotient) {
+		*out_quotient = in_dividend / in_divisor;
+	}
+	if (out_remainder) {
+		*out_remainder = in_dividend % in_divisor;
+	}
 
-	वापस_ACPI_STATUS(AE_OK);
-पूर्ण
+	return_ACPI_STATUS(AE_OK);
+}
 
-#पूर्ण_अगर
+#endif

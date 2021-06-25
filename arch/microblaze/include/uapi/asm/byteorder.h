@@ -1,12 +1,11 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
-#अगर_अघोषित _ASM_MICROBLAZE_BYTEORDER_H
-#घोषणा _ASM_MICROBLAZE_BYTEORDER_H
+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+#ifndef _ASM_MICROBLAZE_BYTEORDER_H
+#define _ASM_MICROBLAZE_BYTEORDER_H
 
-#अगर_घोषित __MICROBLAZEEL__
-#समावेश <linux/byteorder/little_endian.h>
-#अन्यथा
-#समावेश <linux/byteorder/big_endian.h>
-#पूर्ण_अगर
+#ifdef __MICROBLAZEEL__
+#include <linux/byteorder/little_endian.h>
+#else
+#include <linux/byteorder/big_endian.h>
+#endif
 
-#पूर्ण_अगर /* _ASM_MICROBLAZE_BYTEORDER_H */
+#endif /* _ASM_MICROBLAZE_BYTEORDER_H */

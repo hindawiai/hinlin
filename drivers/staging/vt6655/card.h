@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0+ */
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * Copyright (c) 1996, 2003 VIA Networking Technologies, Inc.
  * All rights reserved.
@@ -14,52 +13,52 @@
  *
  */
 
-#अगर_अघोषित __CARD_H__
-#घोषणा __CARD_H__
+#ifndef __CARD_H__
+#define __CARD_H__
 
-#समावेश <linux/types.h>
-#समावेश <linux/nl80211.h>
+#include <linux/types.h>
+#include <linux/nl80211.h>
 
 /*
  * Loopback mode
  *
  * LOBYTE is MAC LB mode, HIBYTE is MII LB mode
  */
-#घोषणा CARD_LB_NONE            MAKEWORD(MAC_LB_NONE, 0)
-/* PHY must ISO, aव्योम MAC loopback packet go out */
-#घोषणा CARD_LB_MAC             MAKEWORD(MAC_LB_INTERNAL, 0)
-#घोषणा CARD_LB_PHY             MAKEWORD(MAC_LB_EXT, 0)
+#define CARD_LB_NONE            MAKEWORD(MAC_LB_NONE, 0)
+/* PHY must ISO, avoid MAC loopback packet go out */
+#define CARD_LB_MAC             MAKEWORD(MAC_LB_INTERNAL, 0)
+#define CARD_LB_PHY             MAKEWORD(MAC_LB_EXT, 0)
 
-#घोषणा DEFAULT_MSDU_LIFETIME           512  /* ms */
-#घोषणा DEFAULT_MSDU_LIFETIME_RES_64us  8000 /* 64us */
+#define DEFAULT_MSDU_LIFETIME           512  /* ms */
+#define DEFAULT_MSDU_LIFETIME_RES_64us  8000 /* 64us */
 
-#घोषणा DEFAULT_MGN_LIFETIME            8    /* ms */
-#घोषणा DEFAULT_MGN_LIFETIME_RES_64us   125  /* 64us */
+#define DEFAULT_MGN_LIFETIME            8    /* ms */
+#define DEFAULT_MGN_LIFETIME_RES_64us   125  /* 64us */
 
-#घोषणा CB_MAX_CHANNEL_24G      14
-#घोषणा CB_MAX_CHANNEL_5G       42
-#घोषणा CB_MAX_CHANNEL          (CB_MAX_CHANNEL_24G + CB_MAX_CHANNEL_5G)
+#define CB_MAX_CHANNEL_24G      14
+#define CB_MAX_CHANNEL_5G       42
+#define CB_MAX_CHANNEL          (CB_MAX_CHANNEL_24G + CB_MAX_CHANNEL_5G)
 
-काष्ठा vnt_निजी;
+struct vnt_private;
 
-व्योम CARDvSetRSPINF(काष्ठा vnt_निजी *priv, u8 bb_type);
-व्योम CARDvUpdateBasicTopRate(काष्ठा vnt_निजी *priv);
-bool CARDbIsOFDMinBasicRate(काष्ठा vnt_निजी *priv);
-व्योम CARDvSetFirstNextTBTT(काष्ठा vnt_निजी *priv,
-			   अचिन्हित लघु wBeaconInterval);
-व्योम CARDvUpdateNextTBTT(काष्ठा vnt_निजी *priv, u64 qwTSF,
-			 अचिन्हित लघु wBeaconInterval);
-bool CARDbGetCurrentTSF(काष्ठा vnt_निजी *priv, u64 *pqwCurrTSF);
-u64 CARDqGetNextTBTT(u64 qwTSF, अचिन्हित लघु wBeaconInterval);
-u64 CARDqGetTSFOffset(अचिन्हित अक्षर byRxRate, u64 qwTSF1, u64 qwTSF2);
-अचिन्हित अक्षर CARDbyGetPktType(काष्ठा vnt_निजी *priv);
-व्योम CARDvSafeResetTx(काष्ठा vnt_निजी *priv);
-व्योम CARDvSafeResetRx(काष्ठा vnt_निजी *priv);
-व्योम CARDbRadioPowerOff(काष्ठा vnt_निजी *priv);
-bool CARDbSetPhyParameter(काष्ठा vnt_निजी *priv, u8 bb_type);
-bool CARDbUpdateTSF(काष्ठा vnt_निजी *priv, अचिन्हित अक्षर byRxRate,
+void CARDvSetRSPINF(struct vnt_private *priv, u8 bb_type);
+void CARDvUpdateBasicTopRate(struct vnt_private *priv);
+bool CARDbIsOFDMinBasicRate(struct vnt_private *priv);
+void CARDvSetFirstNextTBTT(struct vnt_private *priv,
+			   unsigned short wBeaconInterval);
+void CARDvUpdateNextTBTT(struct vnt_private *priv, u64 qwTSF,
+			 unsigned short wBeaconInterval);
+bool CARDbGetCurrentTSF(struct vnt_private *priv, u64 *pqwCurrTSF);
+u64 CARDqGetNextTBTT(u64 qwTSF, unsigned short wBeaconInterval);
+u64 CARDqGetTSFOffset(unsigned char byRxRate, u64 qwTSF1, u64 qwTSF2);
+unsigned char CARDbyGetPktType(struct vnt_private *priv);
+void CARDvSafeResetTx(struct vnt_private *priv);
+void CARDvSafeResetRx(struct vnt_private *priv);
+void CARDbRadioPowerOff(struct vnt_private *priv);
+bool CARDbSetPhyParameter(struct vnt_private *priv, u8 bb_type);
+bool CARDbUpdateTSF(struct vnt_private *priv, unsigned char byRxRate,
 		    u64 qwBSSTimestamp);
-bool CARDbSetBeaconPeriod(काष्ठा vnt_निजी *priv,
-			  अचिन्हित लघु wBeaconInterval);
+bool CARDbSetBeaconPeriod(struct vnt_private *priv,
+			  unsigned short wBeaconInterval);
 
-#पूर्ण_अगर /* __CARD_H__ */
+#endif /* __CARD_H__ */

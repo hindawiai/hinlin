@@ -1,248 +1,247 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-/* Interface क्रम implementing AF_XDP zero-copy support in drivers.
+/* SPDX-License-Identifier: GPL-2.0 */
+/* Interface for implementing AF_XDP zero-copy support in drivers.
  * Copyright(c) 2020 Intel Corporation.
  */
 
-#अगर_अघोषित _LINUX_XDP_SOCK_DRV_H
-#घोषणा _LINUX_XDP_SOCK_DRV_H
+#ifndef _LINUX_XDP_SOCK_DRV_H
+#define _LINUX_XDP_SOCK_DRV_H
 
-#समावेश <net/xdp_sock.h>
-#समावेश <net/xsk_buff_pool.h>
+#include <net/xdp_sock.h>
+#include <net/xsk_buff_pool.h>
 
-#अगर_घोषित CONFIG_XDP_SOCKETS
+#ifdef CONFIG_XDP_SOCKETS
 
-व्योम xsk_tx_completed(काष्ठा xsk_buff_pool *pool, u32 nb_entries);
-bool xsk_tx_peek_desc(काष्ठा xsk_buff_pool *pool, काष्ठा xdp_desc *desc);
-u32 xsk_tx_peek_release_desc_batch(काष्ठा xsk_buff_pool *pool, काष्ठा xdp_desc *desc, u32 max);
-व्योम xsk_tx_release(काष्ठा xsk_buff_pool *pool);
-काष्ठा xsk_buff_pool *xsk_get_pool_from_qid(काष्ठा net_device *dev,
+void xsk_tx_completed(struct xsk_buff_pool *pool, u32 nb_entries);
+bool xsk_tx_peek_desc(struct xsk_buff_pool *pool, struct xdp_desc *desc);
+u32 xsk_tx_peek_release_desc_batch(struct xsk_buff_pool *pool, struct xdp_desc *desc, u32 max);
+void xsk_tx_release(struct xsk_buff_pool *pool);
+struct xsk_buff_pool *xsk_get_pool_from_qid(struct net_device *dev,
 					    u16 queue_id);
-व्योम xsk_set_rx_need_wakeup(काष्ठा xsk_buff_pool *pool);
-व्योम xsk_set_tx_need_wakeup(काष्ठा xsk_buff_pool *pool);
-व्योम xsk_clear_rx_need_wakeup(काष्ठा xsk_buff_pool *pool);
-व्योम xsk_clear_tx_need_wakeup(काष्ठा xsk_buff_pool *pool);
-bool xsk_uses_need_wakeup(काष्ठा xsk_buff_pool *pool);
+void xsk_set_rx_need_wakeup(struct xsk_buff_pool *pool);
+void xsk_set_tx_need_wakeup(struct xsk_buff_pool *pool);
+void xsk_clear_rx_need_wakeup(struct xsk_buff_pool *pool);
+void xsk_clear_tx_need_wakeup(struct xsk_buff_pool *pool);
+bool xsk_uses_need_wakeup(struct xsk_buff_pool *pool);
 
-अटल अंतरभूत u32 xsk_pool_get_headroom(काष्ठा xsk_buff_pool *pool)
-अणु
-	वापस XDP_PACKET_HEADROOM + pool->headroom;
-पूर्ण
+static inline u32 xsk_pool_get_headroom(struct xsk_buff_pool *pool)
+{
+	return XDP_PACKET_HEADROOM + pool->headroom;
+}
 
-अटल अंतरभूत u32 xsk_pool_get_chunk_size(काष्ठा xsk_buff_pool *pool)
-अणु
-	वापस pool->chunk_size;
-पूर्ण
+static inline u32 xsk_pool_get_chunk_size(struct xsk_buff_pool *pool)
+{
+	return pool->chunk_size;
+}
 
-अटल अंतरभूत u32 xsk_pool_get_rx_frame_size(काष्ठा xsk_buff_pool *pool)
-अणु
-	वापस xsk_pool_get_chunk_size(pool) - xsk_pool_get_headroom(pool);
-पूर्ण
+static inline u32 xsk_pool_get_rx_frame_size(struct xsk_buff_pool *pool)
+{
+	return xsk_pool_get_chunk_size(pool) - xsk_pool_get_headroom(pool);
+}
 
-अटल अंतरभूत व्योम xsk_pool_set_rxq_info(काष्ठा xsk_buff_pool *pool,
-					 काष्ठा xdp_rxq_info *rxq)
-अणु
+static inline void xsk_pool_set_rxq_info(struct xsk_buff_pool *pool,
+					 struct xdp_rxq_info *rxq)
+{
 	xp_set_rxq_info(pool, rxq);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम xsk_pool_dma_unmap(काष्ठा xsk_buff_pool *pool,
-				      अचिन्हित दीर्घ attrs)
-अणु
+static inline void xsk_pool_dma_unmap(struct xsk_buff_pool *pool,
+				      unsigned long attrs)
+{
 	xp_dma_unmap(pool, attrs);
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक xsk_pool_dma_map(काष्ठा xsk_buff_pool *pool,
-				   काष्ठा device *dev, अचिन्हित दीर्घ attrs)
-अणु
-	काष्ठा xdp_umem *umem = pool->umem;
+static inline int xsk_pool_dma_map(struct xsk_buff_pool *pool,
+				   struct device *dev, unsigned long attrs)
+{
+	struct xdp_umem *umem = pool->umem;
 
-	वापस xp_dma_map(pool, dev, attrs, umem->pgs, umem->npgs);
-पूर्ण
+	return xp_dma_map(pool, dev, attrs, umem->pgs, umem->npgs);
+}
 
-अटल अंतरभूत dma_addr_t xsk_buff_xdp_get_dma(काष्ठा xdp_buff *xdp)
-अणु
-	काष्ठा xdp_buff_xsk *xskb = container_of(xdp, काष्ठा xdp_buff_xsk, xdp);
+static inline dma_addr_t xsk_buff_xdp_get_dma(struct xdp_buff *xdp)
+{
+	struct xdp_buff_xsk *xskb = container_of(xdp, struct xdp_buff_xsk, xdp);
 
-	वापस xp_get_dma(xskb);
-पूर्ण
+	return xp_get_dma(xskb);
+}
 
-अटल अंतरभूत dma_addr_t xsk_buff_xdp_get_frame_dma(काष्ठा xdp_buff *xdp)
-अणु
-	काष्ठा xdp_buff_xsk *xskb = container_of(xdp, काष्ठा xdp_buff_xsk, xdp);
+static inline dma_addr_t xsk_buff_xdp_get_frame_dma(struct xdp_buff *xdp)
+{
+	struct xdp_buff_xsk *xskb = container_of(xdp, struct xdp_buff_xsk, xdp);
 
-	वापस xp_get_frame_dma(xskb);
-पूर्ण
+	return xp_get_frame_dma(xskb);
+}
 
-अटल अंतरभूत काष्ठा xdp_buff *xsk_buff_alloc(काष्ठा xsk_buff_pool *pool)
-अणु
-	वापस xp_alloc(pool);
-पूर्ण
+static inline struct xdp_buff *xsk_buff_alloc(struct xsk_buff_pool *pool)
+{
+	return xp_alloc(pool);
+}
 
-अटल अंतरभूत bool xsk_buff_can_alloc(काष्ठा xsk_buff_pool *pool, u32 count)
-अणु
-	वापस xp_can_alloc(pool, count);
-पूर्ण
+static inline bool xsk_buff_can_alloc(struct xsk_buff_pool *pool, u32 count)
+{
+	return xp_can_alloc(pool, count);
+}
 
-अटल अंतरभूत व्योम xsk_buff_मुक्त(काष्ठा xdp_buff *xdp)
-अणु
-	काष्ठा xdp_buff_xsk *xskb = container_of(xdp, काष्ठा xdp_buff_xsk, xdp);
+static inline void xsk_buff_free(struct xdp_buff *xdp)
+{
+	struct xdp_buff_xsk *xskb = container_of(xdp, struct xdp_buff_xsk, xdp);
 
-	xp_मुक्त(xskb);
-पूर्ण
+	xp_free(xskb);
+}
 
-अटल अंतरभूत dma_addr_t xsk_buff_raw_get_dma(काष्ठा xsk_buff_pool *pool,
+static inline dma_addr_t xsk_buff_raw_get_dma(struct xsk_buff_pool *pool,
 					      u64 addr)
-अणु
-	वापस xp_raw_get_dma(pool, addr);
-पूर्ण
+{
+	return xp_raw_get_dma(pool, addr);
+}
 
-अटल अंतरभूत व्योम *xsk_buff_raw_get_data(काष्ठा xsk_buff_pool *pool, u64 addr)
-अणु
-	वापस xp_raw_get_data(pool, addr);
-पूर्ण
+static inline void *xsk_buff_raw_get_data(struct xsk_buff_pool *pool, u64 addr)
+{
+	return xp_raw_get_data(pool, addr);
+}
 
-अटल अंतरभूत व्योम xsk_buff_dma_sync_क्रम_cpu(काष्ठा xdp_buff *xdp, काष्ठा xsk_buff_pool *pool)
-अणु
-	काष्ठा xdp_buff_xsk *xskb = container_of(xdp, काष्ठा xdp_buff_xsk, xdp);
+static inline void xsk_buff_dma_sync_for_cpu(struct xdp_buff *xdp, struct xsk_buff_pool *pool)
+{
+	struct xdp_buff_xsk *xskb = container_of(xdp, struct xdp_buff_xsk, xdp);
 
-	अगर (!pool->dma_need_sync)
-		वापस;
+	if (!pool->dma_need_sync)
+		return;
 
-	xp_dma_sync_क्रम_cpu(xskb);
-पूर्ण
+	xp_dma_sync_for_cpu(xskb);
+}
 
-अटल अंतरभूत व्योम xsk_buff_raw_dma_sync_क्रम_device(काष्ठा xsk_buff_pool *pool,
+static inline void xsk_buff_raw_dma_sync_for_device(struct xsk_buff_pool *pool,
 						    dma_addr_t dma,
-						    माप_प्रकार size)
-अणु
-	xp_dma_sync_क्रम_device(pool, dma, size);
-पूर्ण
+						    size_t size)
+{
+	xp_dma_sync_for_device(pool, dma, size);
+}
 
-#अन्यथा
+#else
 
-अटल अंतरभूत व्योम xsk_tx_completed(काष्ठा xsk_buff_pool *pool, u32 nb_entries)
-अणु
-पूर्ण
+static inline void xsk_tx_completed(struct xsk_buff_pool *pool, u32 nb_entries)
+{
+}
 
-अटल अंतरभूत bool xsk_tx_peek_desc(काष्ठा xsk_buff_pool *pool,
-				    काष्ठा xdp_desc *desc)
-अणु
-	वापस false;
-पूर्ण
+static inline bool xsk_tx_peek_desc(struct xsk_buff_pool *pool,
+				    struct xdp_desc *desc)
+{
+	return false;
+}
 
-अटल अंतरभूत u32 xsk_tx_peek_release_desc_batch(काष्ठा xsk_buff_pool *pool, काष्ठा xdp_desc *desc,
+static inline u32 xsk_tx_peek_release_desc_batch(struct xsk_buff_pool *pool, struct xdp_desc *desc,
 						 u32 max)
-अणु
-	वापस 0;
-पूर्ण
+{
+	return 0;
+}
 
-अटल अंतरभूत व्योम xsk_tx_release(काष्ठा xsk_buff_pool *pool)
-अणु
-पूर्ण
+static inline void xsk_tx_release(struct xsk_buff_pool *pool)
+{
+}
 
-अटल अंतरभूत काष्ठा xsk_buff_pool *
-xsk_get_pool_from_qid(काष्ठा net_device *dev, u16 queue_id)
-अणु
-	वापस शून्य;
-पूर्ण
+static inline struct xsk_buff_pool *
+xsk_get_pool_from_qid(struct net_device *dev, u16 queue_id)
+{
+	return NULL;
+}
 
-अटल अंतरभूत व्योम xsk_set_rx_need_wakeup(काष्ठा xsk_buff_pool *pool)
-अणु
-पूर्ण
+static inline void xsk_set_rx_need_wakeup(struct xsk_buff_pool *pool)
+{
+}
 
-अटल अंतरभूत व्योम xsk_set_tx_need_wakeup(काष्ठा xsk_buff_pool *pool)
-अणु
-पूर्ण
+static inline void xsk_set_tx_need_wakeup(struct xsk_buff_pool *pool)
+{
+}
 
-अटल अंतरभूत व्योम xsk_clear_rx_need_wakeup(काष्ठा xsk_buff_pool *pool)
-अणु
-पूर्ण
+static inline void xsk_clear_rx_need_wakeup(struct xsk_buff_pool *pool)
+{
+}
 
-अटल अंतरभूत व्योम xsk_clear_tx_need_wakeup(काष्ठा xsk_buff_pool *pool)
-अणु
-पूर्ण
+static inline void xsk_clear_tx_need_wakeup(struct xsk_buff_pool *pool)
+{
+}
 
-अटल अंतरभूत bool xsk_uses_need_wakeup(काष्ठा xsk_buff_pool *pool)
-अणु
-	वापस false;
-पूर्ण
+static inline bool xsk_uses_need_wakeup(struct xsk_buff_pool *pool)
+{
+	return false;
+}
 
-अटल अंतरभूत u32 xsk_pool_get_headroom(काष्ठा xsk_buff_pool *pool)
-अणु
-	वापस 0;
-पूर्ण
+static inline u32 xsk_pool_get_headroom(struct xsk_buff_pool *pool)
+{
+	return 0;
+}
 
-अटल अंतरभूत u32 xsk_pool_get_chunk_size(काष्ठा xsk_buff_pool *pool)
-अणु
-	वापस 0;
-पूर्ण
+static inline u32 xsk_pool_get_chunk_size(struct xsk_buff_pool *pool)
+{
+	return 0;
+}
 
-अटल अंतरभूत u32 xsk_pool_get_rx_frame_size(काष्ठा xsk_buff_pool *pool)
-अणु
-	वापस 0;
-पूर्ण
+static inline u32 xsk_pool_get_rx_frame_size(struct xsk_buff_pool *pool)
+{
+	return 0;
+}
 
-अटल अंतरभूत व्योम xsk_pool_set_rxq_info(काष्ठा xsk_buff_pool *pool,
-					 काष्ठा xdp_rxq_info *rxq)
-अणु
-पूर्ण
+static inline void xsk_pool_set_rxq_info(struct xsk_buff_pool *pool,
+					 struct xdp_rxq_info *rxq)
+{
+}
 
-अटल अंतरभूत व्योम xsk_pool_dma_unmap(काष्ठा xsk_buff_pool *pool,
-				      अचिन्हित दीर्घ attrs)
-अणु
-पूर्ण
+static inline void xsk_pool_dma_unmap(struct xsk_buff_pool *pool,
+				      unsigned long attrs)
+{
+}
 
-अटल अंतरभूत पूर्णांक xsk_pool_dma_map(काष्ठा xsk_buff_pool *pool,
-				   काष्ठा device *dev, अचिन्हित दीर्घ attrs)
-अणु
-	वापस 0;
-पूर्ण
+static inline int xsk_pool_dma_map(struct xsk_buff_pool *pool,
+				   struct device *dev, unsigned long attrs)
+{
+	return 0;
+}
 
-अटल अंतरभूत dma_addr_t xsk_buff_xdp_get_dma(काष्ठा xdp_buff *xdp)
-अणु
-	वापस 0;
-पूर्ण
+static inline dma_addr_t xsk_buff_xdp_get_dma(struct xdp_buff *xdp)
+{
+	return 0;
+}
 
-अटल अंतरभूत dma_addr_t xsk_buff_xdp_get_frame_dma(काष्ठा xdp_buff *xdp)
-अणु
-	वापस 0;
-पूर्ण
+static inline dma_addr_t xsk_buff_xdp_get_frame_dma(struct xdp_buff *xdp)
+{
+	return 0;
+}
 
-अटल अंतरभूत काष्ठा xdp_buff *xsk_buff_alloc(काष्ठा xsk_buff_pool *pool)
-अणु
-	वापस शून्य;
-पूर्ण
+static inline struct xdp_buff *xsk_buff_alloc(struct xsk_buff_pool *pool)
+{
+	return NULL;
+}
 
-अटल अंतरभूत bool xsk_buff_can_alloc(काष्ठा xsk_buff_pool *pool, u32 count)
-अणु
-	वापस false;
-पूर्ण
+static inline bool xsk_buff_can_alloc(struct xsk_buff_pool *pool, u32 count)
+{
+	return false;
+}
 
-अटल अंतरभूत व्योम xsk_buff_मुक्त(काष्ठा xdp_buff *xdp)
-अणु
-पूर्ण
+static inline void xsk_buff_free(struct xdp_buff *xdp)
+{
+}
 
-अटल अंतरभूत dma_addr_t xsk_buff_raw_get_dma(काष्ठा xsk_buff_pool *pool,
+static inline dma_addr_t xsk_buff_raw_get_dma(struct xsk_buff_pool *pool,
 					      u64 addr)
-अणु
-	वापस 0;
-पूर्ण
+{
+	return 0;
+}
 
-अटल अंतरभूत व्योम *xsk_buff_raw_get_data(काष्ठा xsk_buff_pool *pool, u64 addr)
-अणु
-	वापस शून्य;
-पूर्ण
+static inline void *xsk_buff_raw_get_data(struct xsk_buff_pool *pool, u64 addr)
+{
+	return NULL;
+}
 
-अटल अंतरभूत व्योम xsk_buff_dma_sync_क्रम_cpu(काष्ठा xdp_buff *xdp, काष्ठा xsk_buff_pool *pool)
-अणु
-पूर्ण
+static inline void xsk_buff_dma_sync_for_cpu(struct xdp_buff *xdp, struct xsk_buff_pool *pool)
+{
+}
 
-अटल अंतरभूत व्योम xsk_buff_raw_dma_sync_क्रम_device(काष्ठा xsk_buff_pool *pool,
+static inline void xsk_buff_raw_dma_sync_for_device(struct xsk_buff_pool *pool,
 						    dma_addr_t dma,
-						    माप_प्रकार size)
-अणु
-पूर्ण
+						    size_t size)
+{
+}
 
-#पूर्ण_अगर /* CONFIG_XDP_SOCKETS */
+#endif /* CONFIG_XDP_SOCKETS */
 
-#पूर्ण_अगर /* _LINUX_XDP_SOCK_DRV_H */
+#endif /* _LINUX_XDP_SOCK_DRV_H */

@@ -1,175 +1,174 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (C) 2011 Marvell International Ltd. All rights reserved.
- * Copyright (C) 2018 Lubomir Rपूर्णांकel <lkundrak@v3.sk>
+ * Copyright (C) 2018 Lubomir Rintel <lkundrak@v3.sk>
  */
 
-#समावेश <dt-bindings/phy/phy.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/module.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/phy/phy.h>
-#समावेश <linux/platक्रमm_device.h>
+#include <dt-bindings/phy/phy.h>
+#include <linux/clk.h>
+#include <linux/delay.h>
+#include <linux/io.h>
+#include <linux/module.h>
+#include <linux/of_address.h>
+#include <linux/phy/phy.h>
+#include <linux/platform_device.h>
 
 /* phy regs */
-#घोषणा UTMI_REVISION		0x0
-#घोषणा UTMI_CTRL		0x4
-#घोषणा UTMI_PLL		0x8
-#घोषणा UTMI_TX			0xc
-#घोषणा UTMI_RX			0x10
-#घोषणा UTMI_IVREF		0x14
-#घोषणा UTMI_T0			0x18
-#घोषणा UTMI_T1			0x1c
-#घोषणा UTMI_T2			0x20
-#घोषणा UTMI_T3			0x24
-#घोषणा UTMI_T4			0x28
-#घोषणा UTMI_T5			0x2c
-#घोषणा UTMI_RESERVE		0x30
-#घोषणा UTMI_USB_INT		0x34
-#घोषणा UTMI_DBG_CTL		0x38
-#घोषणा UTMI_OTG_ADDON		0x3c
+#define UTMI_REVISION		0x0
+#define UTMI_CTRL		0x4
+#define UTMI_PLL		0x8
+#define UTMI_TX			0xc
+#define UTMI_RX			0x10
+#define UTMI_IVREF		0x14
+#define UTMI_T0			0x18
+#define UTMI_T1			0x1c
+#define UTMI_T2			0x20
+#define UTMI_T3			0x24
+#define UTMI_T4			0x28
+#define UTMI_T5			0x2c
+#define UTMI_RESERVE		0x30
+#define UTMI_USB_INT		0x34
+#define UTMI_DBG_CTL		0x38
+#define UTMI_OTG_ADDON		0x3c
 
 /* For UTMICTRL Register */
-#घोषणा UTMI_CTRL_USB_CLK_EN                    (1 << 31)
+#define UTMI_CTRL_USB_CLK_EN                    (1 << 31)
 /* pxa168 */
-#घोषणा UTMI_CTRL_SUSPEND_SET1                  (1 << 30)
-#घोषणा UTMI_CTRL_SUSPEND_SET2                  (1 << 29)
-#घोषणा UTMI_CTRL_RXBUF_PDWN                    (1 << 24)
-#घोषणा UTMI_CTRL_TXBUF_PDWN                    (1 << 11)
+#define UTMI_CTRL_SUSPEND_SET1                  (1 << 30)
+#define UTMI_CTRL_SUSPEND_SET2                  (1 << 29)
+#define UTMI_CTRL_RXBUF_PDWN                    (1 << 24)
+#define UTMI_CTRL_TXBUF_PDWN                    (1 << 11)
 
-#घोषणा UTMI_CTRL_INPKT_DELAY_SHIFT             30
-#घोषणा UTMI_CTRL_INPKT_DELAY_SOF_SHIFT		28
-#घोषणा UTMI_CTRL_PU_REF_SHIFT			20
-#घोषणा UTMI_CTRL_ARC_PULLDN_SHIFT              12
-#घोषणा UTMI_CTRL_PLL_PWR_UP_SHIFT              1
-#घोषणा UTMI_CTRL_PWR_UP_SHIFT                  0
+#define UTMI_CTRL_INPKT_DELAY_SHIFT             30
+#define UTMI_CTRL_INPKT_DELAY_SOF_SHIFT		28
+#define UTMI_CTRL_PU_REF_SHIFT			20
+#define UTMI_CTRL_ARC_PULLDN_SHIFT              12
+#define UTMI_CTRL_PLL_PWR_UP_SHIFT              1
+#define UTMI_CTRL_PWR_UP_SHIFT                  0
 
 /* For UTMI_PLL Register */
-#घोषणा UTMI_PLL_PLLCALI12_SHIFT		29
-#घोषणा UTMI_PLL_PLLCALI12_MASK			(0x3 << 29)
+#define UTMI_PLL_PLLCALI12_SHIFT		29
+#define UTMI_PLL_PLLCALI12_MASK			(0x3 << 29)
 
-#घोषणा UTMI_PLL_PLLVDD18_SHIFT			27
-#घोषणा UTMI_PLL_PLLVDD18_MASK			(0x3 << 27)
+#define UTMI_PLL_PLLVDD18_SHIFT			27
+#define UTMI_PLL_PLLVDD18_MASK			(0x3 << 27)
 
-#घोषणा UTMI_PLL_PLLVDD12_SHIFT			25
-#घोषणा UTMI_PLL_PLLVDD12_MASK			(0x3 << 25)
+#define UTMI_PLL_PLLVDD12_SHIFT			25
+#define UTMI_PLL_PLLVDD12_MASK			(0x3 << 25)
 
-#घोषणा UTMI_PLL_CLK_BLK_EN_SHIFT               24
-#घोषणा CLK_BLK_EN                              (0x1 << 24)
-#घोषणा PLL_READY                               (0x1 << 23)
-#घोषणा KVCO_EXT                                (0x1 << 22)
-#घोषणा VCOCAL_START                            (0x1 << 21)
+#define UTMI_PLL_CLK_BLK_EN_SHIFT               24
+#define CLK_BLK_EN                              (0x1 << 24)
+#define PLL_READY                               (0x1 << 23)
+#define KVCO_EXT                                (0x1 << 22)
+#define VCOCAL_START                            (0x1 << 21)
 
-#घोषणा UTMI_PLL_KVCO_SHIFT			15
-#घोषणा UTMI_PLL_KVCO_MASK                      (0x7 << 15)
+#define UTMI_PLL_KVCO_SHIFT			15
+#define UTMI_PLL_KVCO_MASK                      (0x7 << 15)
 
-#घोषणा UTMI_PLL_ICP_SHIFT			12
-#घोषणा UTMI_PLL_ICP_MASK                       (0x7 << 12)
+#define UTMI_PLL_ICP_SHIFT			12
+#define UTMI_PLL_ICP_MASK                       (0x7 << 12)
 
-#घोषणा UTMI_PLL_FBDIV_SHIFT                    4
-#घोषणा UTMI_PLL_FBDIV_MASK                     (0xFF << 4)
+#define UTMI_PLL_FBDIV_SHIFT                    4
+#define UTMI_PLL_FBDIV_MASK                     (0xFF << 4)
 
-#घोषणा UTMI_PLL_REFDIV_SHIFT                   0
-#घोषणा UTMI_PLL_REFDIV_MASK                    (0xF << 0)
+#define UTMI_PLL_REFDIV_SHIFT                   0
+#define UTMI_PLL_REFDIV_MASK                    (0xF << 0)
 
 /* For UTMI_TX Register */
-#घोषणा UTMI_TX_REG_EXT_FS_RCAL_SHIFT		27
-#घोषणा UTMI_TX_REG_EXT_FS_RCAL_MASK		(0xf << 27)
+#define UTMI_TX_REG_EXT_FS_RCAL_SHIFT		27
+#define UTMI_TX_REG_EXT_FS_RCAL_MASK		(0xf << 27)
 
-#घोषणा UTMI_TX_REG_EXT_FS_RCAL_EN_SHIFT	26
-#घोषणा UTMI_TX_REG_EXT_FS_RCAL_EN_MASK		(0x1 << 26)
+#define UTMI_TX_REG_EXT_FS_RCAL_EN_SHIFT	26
+#define UTMI_TX_REG_EXT_FS_RCAL_EN_MASK		(0x1 << 26)
 
-#घोषणा UTMI_TX_TXVDD12_SHIFT                   22
-#घोषणा UTMI_TX_TXVDD12_MASK                    (0x3 << 22)
+#define UTMI_TX_TXVDD12_SHIFT                   22
+#define UTMI_TX_TXVDD12_MASK                    (0x3 << 22)
 
-#घोषणा UTMI_TX_CK60_PHSEL_SHIFT                17
-#घोषणा UTMI_TX_CK60_PHSEL_MASK                 (0xf << 17)
+#define UTMI_TX_CK60_PHSEL_SHIFT                17
+#define UTMI_TX_CK60_PHSEL_MASK                 (0xf << 17)
 
-#घोषणा UTMI_TX_IMPCAL_VTH_SHIFT                14
-#घोषणा UTMI_TX_IMPCAL_VTH_MASK                 (0x7 << 14)
+#define UTMI_TX_IMPCAL_VTH_SHIFT                14
+#define UTMI_TX_IMPCAL_VTH_MASK                 (0x7 << 14)
 
-#घोषणा REG_RCAL_START                          (0x1 << 12)
+#define REG_RCAL_START                          (0x1 << 12)
 
-#घोषणा UTMI_TX_LOW_VDD_EN_SHIFT                11
+#define UTMI_TX_LOW_VDD_EN_SHIFT                11
 
-#घोषणा UTMI_TX_AMP_SHIFT			0
-#घोषणा UTMI_TX_AMP_MASK			(0x7 << 0)
+#define UTMI_TX_AMP_SHIFT			0
+#define UTMI_TX_AMP_MASK			(0x7 << 0)
 
 /* For UTMI_RX Register */
-#घोषणा UTMI_REG_SQ_LENGTH_SHIFT                15
-#घोषणा UTMI_REG_SQ_LENGTH_MASK                 (0x3 << 15)
+#define UTMI_REG_SQ_LENGTH_SHIFT                15
+#define UTMI_REG_SQ_LENGTH_MASK                 (0x3 << 15)
 
-#घोषणा UTMI_RX_SQ_THRESH_SHIFT                 4
-#घोषणा UTMI_RX_SQ_THRESH_MASK                  (0xf << 4)
+#define UTMI_RX_SQ_THRESH_SHIFT                 4
+#define UTMI_RX_SQ_THRESH_MASK                  (0xf << 4)
 
-#घोषणा UTMI_OTG_ADDON_OTG_ON			(1 << 0)
+#define UTMI_OTG_ADDON_OTG_ON			(1 << 0)
 
-क्रमागत pxa_usb_phy_version अणु
+enum pxa_usb_phy_version {
 	PXA_USB_PHY_MMP2,
 	PXA_USB_PHY_PXA910,
 	PXA_USB_PHY_PXA168,
-पूर्ण;
+};
 
-काष्ठा pxa_usb_phy अणु
-	काष्ठा phy *phy;
-	व्योम __iomem *base;
-	क्रमागत pxa_usb_phy_version version;
-पूर्ण;
+struct pxa_usb_phy {
+	struct phy *phy;
+	void __iomem *base;
+	enum pxa_usb_phy_version version;
+};
 
 /*****************************************************************************
- * The रेजिस्टरs पढ़ो/ग_लिखो routines
+ * The registers read/write routines
  *****************************************************************************/
 
-अटल अचिन्हित पूर्णांक u2o_get(व्योम __iomem *base, अचिन्हित पूर्णांक offset)
-अणु
-	वापस पढ़ोl_relaxed(base + offset);
-पूर्ण
+static unsigned int u2o_get(void __iomem *base, unsigned int offset)
+{
+	return readl_relaxed(base + offset);
+}
 
-अटल व्योम u2o_set(व्योम __iomem *base, अचिन्हित पूर्णांक offset,
-		अचिन्हित पूर्णांक value)
-अणु
+static void u2o_set(void __iomem *base, unsigned int offset,
+		unsigned int value)
+{
 	u32 reg;
 
-	reg = पढ़ोl_relaxed(base + offset);
+	reg = readl_relaxed(base + offset);
 	reg |= value;
-	ग_लिखोl_relaxed(reg, base + offset);
-	पढ़ोl_relaxed(base + offset);
-पूर्ण
+	writel_relaxed(reg, base + offset);
+	readl_relaxed(base + offset);
+}
 
-अटल व्योम u2o_clear(व्योम __iomem *base, अचिन्हित पूर्णांक offset,
-		अचिन्हित पूर्णांक value)
-अणु
+static void u2o_clear(void __iomem *base, unsigned int offset,
+		unsigned int value)
+{
 	u32 reg;
 
-	reg = पढ़ोl_relaxed(base + offset);
+	reg = readl_relaxed(base + offset);
 	reg &= ~value;
-	ग_लिखोl_relaxed(reg, base + offset);
-	पढ़ोl_relaxed(base + offset);
-पूर्ण
+	writel_relaxed(reg, base + offset);
+	readl_relaxed(base + offset);
+}
 
-अटल व्योम u2o_ग_लिखो(व्योम __iomem *base, अचिन्हित पूर्णांक offset,
-		अचिन्हित पूर्णांक value)
-अणु
-	ग_लिखोl_relaxed(value, base + offset);
-	पढ़ोl_relaxed(base + offset);
-पूर्ण
+static void u2o_write(void __iomem *base, unsigned int offset,
+		unsigned int value)
+{
+	writel_relaxed(value, base + offset);
+	readl_relaxed(base + offset);
+}
 
-अटल पूर्णांक pxa_usb_phy_init(काष्ठा phy *phy)
-अणु
-	काष्ठा pxa_usb_phy *pxa_usb_phy = phy_get_drvdata(phy);
-	व्योम __iomem *base = pxa_usb_phy->base;
-	पूर्णांक loops;
+static int pxa_usb_phy_init(struct phy *phy)
+{
+	struct pxa_usb_phy *pxa_usb_phy = phy_get_drvdata(phy);
+	void __iomem *base = pxa_usb_phy->base;
+	int loops;
 
 	dev_info(&phy->dev, "initializing Marvell PXA USB PHY");
 
-	/* Initialize the USB PHY घातer */
-	अगर (pxa_usb_phy->version == PXA_USB_PHY_PXA910) अणु
+	/* Initialize the USB PHY power */
+	if (pxa_usb_phy->version == PXA_USB_PHY_PXA910) {
 		u2o_set(base, UTMI_CTRL, (1<<UTMI_CTRL_INPKT_DELAY_SOF_SHIFT)
 			| (1<<UTMI_CTRL_PU_REF_SHIFT));
-	पूर्ण
+	}
 
 	u2o_set(base, UTMI_CTRL, 1<<UTMI_CTRL_PLL_PWR_UP_SHIFT);
 	u2o_set(base, UTMI_CTRL, 1<<UTMI_CTRL_PWR_UP_SHIFT);
@@ -201,13 +200,13 @@
 		| 2<<UTMI_REG_SQ_LENGTH_SHIFT);
 
 	/* UTMI_IVREF */
-	अगर (pxa_usb_phy->version == PXA_USB_PHY_PXA168) अणु
+	if (pxa_usb_phy->version == PXA_USB_PHY_PXA168) {
 		/*
-		 * fixing Microsoft Altair board पूर्णांकerface with NEC hub issue -
+		 * fixing Microsoft Altair board interface with NEC hub issue -
 		 * Set UTMI_IVREF from 0x4a3 to 0x4bf
 		 */
-		u2o_ग_लिखो(base, UTMI_IVREF, 0x4bf);
-	पूर्ण
+		u2o_write(base, UTMI_IVREF, 0x4bf);
+	}
 
 	/* toggle VCOCAL_START bit of UTMI_PLL */
 	udelay(200);
@@ -222,36 +221,36 @@
 	u2o_clear(base, UTMI_TX, REG_RCAL_START);
 	udelay(400);
 
-	/* Make sure PHY PLL is पढ़ोy */
+	/* Make sure PHY PLL is ready */
 	loops = 0;
-	जबतक ((u2o_get(base, UTMI_PLL) & PLL_READY) == 0) अणु
+	while ((u2o_get(base, UTMI_PLL) & PLL_READY) == 0) {
 		mdelay(1);
 		loops++;
-		अगर (loops > 100) अणु
+		if (loops > 100) {
 			dev_warn(&phy->dev, "calibrate timeout, UTMI_PLL %x\n",
 						u2o_get(base, UTMI_PLL));
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	अगर (pxa_usb_phy->version == PXA_USB_PHY_PXA168) अणु
+	if (pxa_usb_phy->version == PXA_USB_PHY_PXA168) {
 		u2o_set(base, UTMI_RESERVE, 1 << 5);
 		/* Turn on UTMI PHY OTG extension */
-		u2o_ग_लिखो(base, UTMI_OTG_ADDON, 1);
-	पूर्ण
+		u2o_write(base, UTMI_OTG_ADDON, 1);
+	}
 
-	वापस 0;
+	return 0;
 
-पूर्ण
+}
 
-अटल पूर्णांक pxa_usb_phy_निकास(काष्ठा phy *phy)
-अणु
-	काष्ठा pxa_usb_phy *pxa_usb_phy = phy_get_drvdata(phy);
-	व्योम __iomem *base = pxa_usb_phy->base;
+static int pxa_usb_phy_exit(struct phy *phy)
+{
+	struct pxa_usb_phy *pxa_usb_phy = phy_get_drvdata(phy);
+	void __iomem *base = pxa_usb_phy->base;
 
 	dev_info(&phy->dev, "deinitializing Marvell PXA USB PHY");
 
-	अगर (pxa_usb_phy->version == PXA_USB_PHY_PXA168)
+	if (pxa_usb_phy->version == PXA_USB_PHY_PXA168)
 		u2o_clear(base, UTMI_OTG_ADDON, UTMI_OTG_ADDON_OTG_ON);
 
 	u2o_clear(base, UTMI_CTRL, UTMI_CTRL_RXBUF_PDWN);
@@ -260,84 +259,84 @@
 	u2o_clear(base, UTMI_CTRL, 1<<UTMI_CTRL_PWR_UP_SHIFT);
 	u2o_clear(base, UTMI_CTRL, 1<<UTMI_CTRL_PLL_PWR_UP_SHIFT);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा phy_ops pxa_usb_phy_ops = अणु
+static const struct phy_ops pxa_usb_phy_ops = {
 	.init	= pxa_usb_phy_init,
-	.निकास	= pxa_usb_phy_निकास,
+	.exit	= pxa_usb_phy_exit,
 	.owner	= THIS_MODULE,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा of_device_id pxa_usb_phy_of_match[] = अणु
-	अणु
+static const struct of_device_id pxa_usb_phy_of_match[] = {
+	{
 		.compatible = "marvell,mmp2-usb-phy",
-		.data = (व्योम *)PXA_USB_PHY_MMP2,
-	पूर्ण, अणु
+		.data = (void *)PXA_USB_PHY_MMP2,
+	}, {
 		.compatible = "marvell,pxa910-usb-phy",
-		.data = (व्योम *)PXA_USB_PHY_PXA910,
-	पूर्ण, अणु
+		.data = (void *)PXA_USB_PHY_PXA910,
+	}, {
 		.compatible = "marvell,pxa168-usb-phy",
-		.data = (व्योम *)PXA_USB_PHY_PXA168,
-	पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+		.data = (void *)PXA_USB_PHY_PXA168,
+	},
+	{ },
+};
 MODULE_DEVICE_TABLE(of, pxa_usb_phy_of_match);
 
-अटल पूर्णांक pxa_usb_phy_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा pxa_usb_phy *pxa_usb_phy;
-	काष्ठा phy_provider *provider;
-	स्थिर काष्ठा of_device_id *of_id;
+static int pxa_usb_phy_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	struct pxa_usb_phy *pxa_usb_phy;
+	struct phy_provider *provider;
+	const struct of_device_id *of_id;
 
-	pxa_usb_phy = devm_kzalloc(dev, माप(काष्ठा pxa_usb_phy), GFP_KERNEL);
-	अगर (!pxa_usb_phy)
-		वापस -ENOMEM;
+	pxa_usb_phy = devm_kzalloc(dev, sizeof(struct pxa_usb_phy), GFP_KERNEL);
+	if (!pxa_usb_phy)
+		return -ENOMEM;
 
 	of_id = of_match_node(pxa_usb_phy_of_match, dev->of_node);
-	अगर (of_id)
-		pxa_usb_phy->version = (क्रमागत pxa_usb_phy_version)of_id->data;
-	अन्यथा
+	if (of_id)
+		pxa_usb_phy->version = (enum pxa_usb_phy_version)of_id->data;
+	else
 		pxa_usb_phy->version = PXA_USB_PHY_MMP2;
 
-	pxa_usb_phy->base = devm_platक्रमm_ioremap_resource(pdev, 0);
-	अगर (IS_ERR(pxa_usb_phy->base)) अणु
+	pxa_usb_phy->base = devm_platform_ioremap_resource(pdev, 0);
+	if (IS_ERR(pxa_usb_phy->base)) {
 		dev_err(dev, "failed to remap PHY regs\n");
-		वापस PTR_ERR(pxa_usb_phy->base);
-	पूर्ण
+		return PTR_ERR(pxa_usb_phy->base);
+	}
 
-	pxa_usb_phy->phy = devm_phy_create(dev, शून्य, &pxa_usb_phy_ops);
-	अगर (IS_ERR(pxa_usb_phy->phy)) अणु
+	pxa_usb_phy->phy = devm_phy_create(dev, NULL, &pxa_usb_phy_ops);
+	if (IS_ERR(pxa_usb_phy->phy)) {
 		dev_err(dev, "failed to create PHY\n");
-		वापस PTR_ERR(pxa_usb_phy->phy);
-	पूर्ण
+		return PTR_ERR(pxa_usb_phy->phy);
+	}
 
 	phy_set_drvdata(pxa_usb_phy->phy, pxa_usb_phy);
-	provider = devm_of_phy_provider_रेजिस्टर(dev, of_phy_simple_xlate);
-	अगर (IS_ERR(provider)) अणु
+	provider = devm_of_phy_provider_register(dev, of_phy_simple_xlate);
+	if (IS_ERR(provider)) {
 		dev_err(dev, "failed to register PHY provider\n");
-		वापस PTR_ERR(provider);
-	पूर्ण
+		return PTR_ERR(provider);
+	}
 
-	अगर (!dev->of_node) अणु
+	if (!dev->of_node) {
 		phy_create_lookup(pxa_usb_phy->phy, "usb", "mv-udc");
 		phy_create_lookup(pxa_usb_phy->phy, "usb", "pxa-u2oehci");
 		phy_create_lookup(pxa_usb_phy->phy, "usb", "mv-otg");
-	पूर्ण
+	}
 
 	dev_info(dev, "Marvell PXA USB PHY");
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver pxa_usb_phy_driver = अणु
+static struct platform_driver pxa_usb_phy_driver = {
 	.probe		= pxa_usb_phy_probe,
-	.driver		= अणु
+	.driver		= {
 		.name	= "pxa-usb-phy",
 		.of_match_table = pxa_usb_phy_of_match,
-	पूर्ण,
-पूर्ण;
-module_platक्रमm_driver(pxa_usb_phy_driver);
+	},
+};
+module_platform_driver(pxa_usb_phy_driver);
 
 MODULE_AUTHOR("Lubomir Rintel <lkundrak@v3.sk>");
 MODULE_DESCRIPTION("Marvell PXA USB PHY Driver");

@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * RDMA Network Block Driver
  *
@@ -7,36 +6,36 @@
  * Copyright (c) 2018 - 2019 1&1 IONOS Cloud GmbH. All rights reserved.
  * Copyright (c) 2019 - 2020 1&1 IONOS SE. All rights reserved.
  */
-#अगर_अघोषित RNBD_LOG_H
-#घोषणा RNBD_LOG_H
+#ifndef RNBD_LOG_H
+#define RNBD_LOG_H
 
-#समावेश "rnbd-clt.h"
-#समावेश "rnbd-srv.h"
+#include "rnbd-clt.h"
+#include "rnbd-srv.h"
 
-#घोषणा rnbd_clt_log(fn, dev, fmt, ...) (				\
+#define rnbd_clt_log(fn, dev, fmt, ...) (				\
 		fn("<%s@%s> " fmt, (dev)->pathname,			\
 		(dev)->sess->sessname,					\
 		   ##__VA_ARGS__))
-#घोषणा rnbd_srv_log(fn, dev, fmt, ...) (				\
+#define rnbd_srv_log(fn, dev, fmt, ...) (				\
 			fn("<%s@%s>: " fmt, (dev)->pathname,		\
 			   (dev)->sess->sessname, ##__VA_ARGS__))
 
-#घोषणा rnbd_clt_err(dev, fmt, ...)	\
+#define rnbd_clt_err(dev, fmt, ...)	\
 	rnbd_clt_log(pr_err, dev, fmt, ##__VA_ARGS__)
-#घोषणा rnbd_clt_err_rl(dev, fmt, ...)	\
+#define rnbd_clt_err_rl(dev, fmt, ...)	\
 	rnbd_clt_log(pr_err_ratelimited, dev, fmt, ##__VA_ARGS__)
-#घोषणा rnbd_clt_info(dev, fmt, ...) \
+#define rnbd_clt_info(dev, fmt, ...) \
 	rnbd_clt_log(pr_info, dev, fmt, ##__VA_ARGS__)
-#घोषणा rnbd_clt_info_rl(dev, fmt, ...) \
+#define rnbd_clt_info_rl(dev, fmt, ...) \
 	rnbd_clt_log(pr_info_ratelimited, dev, fmt, ##__VA_ARGS__)
 
-#घोषणा rnbd_srv_err(dev, fmt, ...)	\
+#define rnbd_srv_err(dev, fmt, ...)	\
 	rnbd_srv_log(pr_err, dev, fmt, ##__VA_ARGS__)
-#घोषणा rnbd_srv_err_rl(dev, fmt, ...)	\
+#define rnbd_srv_err_rl(dev, fmt, ...)	\
 	rnbd_srv_log(pr_err_ratelimited, dev, fmt, ##__VA_ARGS__)
-#घोषणा rnbd_srv_info(dev, fmt, ...) \
+#define rnbd_srv_info(dev, fmt, ...) \
 	rnbd_srv_log(pr_info, dev, fmt, ##__VA_ARGS__)
-#घोषणा rnbd_srv_info_rl(dev, fmt, ...) \
+#define rnbd_srv_info_rl(dev, fmt, ...) \
 	rnbd_srv_log(pr_info_ratelimited, dev, fmt, ##__VA_ARGS__)
 
-#पूर्ण_अगर /* RNBD_LOG_H */
+#endif /* RNBD_LOG_H */

@@ -1,47 +1,46 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  *	SEGA Dreamcast controller driver
- *	Based on drivers/usb/अगरorce.c
+ *	Based on drivers/usb/iforce.c
  *
  *	Copyright Yaegashi Takeshi, 2001
  *	Adrian McMenamin, 2008 - 2009
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/input.h>
-#समावेश <linux/module.h>
-#समावेश <linux/init.h>
-#समावेश <linux/समयr.h>
-#समावेश <linux/maple.h>
+#include <linux/kernel.h>
+#include <linux/slab.h>
+#include <linux/input.h>
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/timer.h>
+#include <linux/maple.h>
 
 MODULE_AUTHOR("Adrian McMenamin <adrian@mcmen.demon.co.uk>");
 MODULE_DESCRIPTION("SEGA Dreamcast controller driver");
 MODULE_LICENSE("GPL");
 
-काष्ठा dc_pad अणु
-	काष्ठा input_dev *dev;
-	काष्ठा maple_device *mdev;
-पूर्ण;
+struct dc_pad {
+	struct input_dev *dev;
+	struct maple_device *mdev;
+};
 
-अटल व्योम dc_pad_callback(काष्ठा mapleq *mq)
-अणु
-	अचिन्हित लघु buttons;
-	काष्ठा maple_device *mapledev = mq->dev;
-	काष्ठा dc_pad *pad = maple_get_drvdata(mapledev);
-	काष्ठा input_dev *dev = pad->dev;
-	अचिन्हित अक्षर *res = mq->recvbuf->buf;
+static void dc_pad_callback(struct mapleq *mq)
+{
+	unsigned short buttons;
+	struct maple_device *mapledev = mq->dev;
+	struct dc_pad *pad = maple_get_drvdata(mapledev);
+	struct input_dev *dev = pad->dev;
+	unsigned char *res = mq->recvbuf->buf;
 
 	buttons = ~le16_to_cpup((__le16 *)(res + 8));
 
-	input_report_असल(dev, ABS_HAT0Y,
+	input_report_abs(dev, ABS_HAT0Y,
 		(buttons & 0x0010 ? -1 : 0) + (buttons & 0x0020 ? 1 : 0));
-	input_report_असल(dev, ABS_HAT0X,
+	input_report_abs(dev, ABS_HAT0X,
 		(buttons & 0x0040 ? -1 : 0) + (buttons & 0x0080 ? 1 : 0));
-	input_report_असल(dev, ABS_HAT1Y,
+	input_report_abs(dev, ABS_HAT1Y,
 		(buttons & 0x1000 ? -1 : 0) + (buttons & 0x2000 ? 1 : 0));
-	input_report_असल(dev, ABS_HAT1X,
+	input_report_abs(dev, ABS_HAT1X,
 		(buttons & 0x4000 ? -1 : 0) + (buttons & 0x8000 ? 1 : 0));
 
 	input_report_key(dev, BTN_C,      buttons & 0x0001);
@@ -53,142 +52,142 @@ MODULE_LICENSE("GPL");
 	input_report_key(dev, BTN_X,      buttons & 0x0400);
 	input_report_key(dev, BTN_SELECT, buttons & 0x0800);
 
-	input_report_असल(dev, ABS_GAS,    res[10]);
-	input_report_असल(dev, ABS_BRAKE,  res[11]);
-	input_report_असल(dev, ABS_X,      res[12]);
-	input_report_असल(dev, ABS_Y,      res[13]);
-	input_report_असल(dev, ABS_RX,     res[14]);
-	input_report_असल(dev, ABS_RY,     res[15]);
-पूर्ण
+	input_report_abs(dev, ABS_GAS,    res[10]);
+	input_report_abs(dev, ABS_BRAKE,  res[11]);
+	input_report_abs(dev, ABS_X,      res[12]);
+	input_report_abs(dev, ABS_Y,      res[13]);
+	input_report_abs(dev, ABS_RX,     res[14]);
+	input_report_abs(dev, ABS_RY,     res[15]);
+}
 
-अटल पूर्णांक dc_pad_खोलो(काष्ठा input_dev *dev)
-अणु
-	काष्ठा dc_pad *pad = dev_get_platdata(&dev->dev);
+static int dc_pad_open(struct input_dev *dev)
+{
+	struct dc_pad *pad = dev_get_platdata(&dev->dev);
 
-	maple_अ_लोond_callback(pad->mdev, dc_pad_callback, HZ/20,
+	maple_getcond_callback(pad->mdev, dc_pad_callback, HZ/20,
 		MAPLE_FUNC_CONTROLLER);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम dc_pad_बंद(काष्ठा input_dev *dev)
-अणु
-	काष्ठा dc_pad *pad = dev_get_platdata(&dev->dev);
+static void dc_pad_close(struct input_dev *dev)
+{
+	struct dc_pad *pad = dev_get_platdata(&dev->dev);
 
-	maple_अ_लोond_callback(pad->mdev, dc_pad_callback, 0,
+	maple_getcond_callback(pad->mdev, dc_pad_callback, 0,
 		MAPLE_FUNC_CONTROLLER);
-पूर्ण
+}
 
 /* allow the controller to be used */
-अटल पूर्णांक probe_maple_controller(काष्ठा device *dev)
-अणु
-	अटल स्थिर लघु btn_bit[32] = अणु
+static int probe_maple_controller(struct device *dev)
+{
+	static const short btn_bit[32] = {
 		BTN_C, BTN_B, BTN_A, BTN_START, -1, -1, -1, -1,
 		BTN_Z, BTN_Y, BTN_X, BTN_SELECT, -1, -1, -1, -1,
 		-1, -1, -1, -1, -1, -1, -1, -1,
 		-1, -1, -1, -1, -1, -1, -1, -1,
-	पूर्ण;
+	};
 
-	अटल स्थिर लघु असल_bit[32] = अणु
+	static const short abs_bit[32] = {
 		-1, -1, -1, -1, ABS_HAT0Y, ABS_HAT0Y, ABS_HAT0X, ABS_HAT0X,
 		-1, -1, -1, -1, ABS_HAT1Y, ABS_HAT1Y, ABS_HAT1X, ABS_HAT1X,
 		ABS_GAS, ABS_BRAKE, ABS_X, ABS_Y, ABS_RX, ABS_RY, -1, -1,
 		-1, -1, -1, -1, -1, -1, -1, -1,
-	पूर्ण;
+	};
 
-	काष्ठा maple_device *mdev = to_maple_dev(dev);
-	काष्ठा maple_driver *mdrv = to_maple_driver(dev->driver);
-	पूर्णांक i, error;
-	काष्ठा dc_pad *pad;
-	काष्ठा input_dev *idev;
-	अचिन्हित दीर्घ data = be32_to_cpu(mdev->devinfo.function_data[0]);
+	struct maple_device *mdev = to_maple_dev(dev);
+	struct maple_driver *mdrv = to_maple_driver(dev->driver);
+	int i, error;
+	struct dc_pad *pad;
+	struct input_dev *idev;
+	unsigned long data = be32_to_cpu(mdev->devinfo.function_data[0]);
 
-	pad = kzalloc(माप(काष्ठा dc_pad), GFP_KERNEL);
+	pad = kzalloc(sizeof(struct dc_pad), GFP_KERNEL);
 	idev = input_allocate_device();
-	अगर (!pad || !idev) अणु
+	if (!pad || !idev) {
 		error = -ENOMEM;
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
 	pad->dev = idev;
 	pad->mdev = mdev;
 
-	idev->खोलो = dc_pad_खोलो;
-	idev->बंद = dc_pad_बंद;
+	idev->open = dc_pad_open;
+	idev->close = dc_pad_close;
 
-	क्रम (i = 0; i < 32; i++) अणु
-		अगर (data & (1 << i)) अणु
-			अगर (btn_bit[i] >= 0)
+	for (i = 0; i < 32; i++) {
+		if (data & (1 << i)) {
+			if (btn_bit[i] >= 0)
 				__set_bit(btn_bit[i], idev->keybit);
-			अन्यथा अगर (असल_bit[i] >= 0)
-				__set_bit(असल_bit[i], idev->असलbit);
-		पूर्ण
-	पूर्ण
+			else if (abs_bit[i] >= 0)
+				__set_bit(abs_bit[i], idev->absbit);
+		}
+	}
 
-	अगर (idev->keybit[BIT_WORD(BTN_JOYSTICK)])
+	if (idev->keybit[BIT_WORD(BTN_JOYSTICK)])
 		idev->evbit[0] |= BIT_MASK(EV_KEY);
 
-	अगर (idev->असलbit[0])
+	if (idev->absbit[0])
 		idev->evbit[0] |= BIT_MASK(EV_ABS);
 
-	क्रम (i = ABS_X; i <= ABS_BRAKE; i++)
-		input_set_असल_params(idev, i, 0, 255, 0, 0);
+	for (i = ABS_X; i <= ABS_BRAKE; i++)
+		input_set_abs_params(idev, i, 0, 255, 0, 0);
 
-	क्रम (i = ABS_HAT0X; i <= ABS_HAT3Y; i++)
-		input_set_असल_params(idev, i, 1, -1, 0, 0);
+	for (i = ABS_HAT0X; i <= ABS_HAT3Y; i++)
+		input_set_abs_params(idev, i, 1, -1, 0, 0);
 
-	idev->dev.platक्रमm_data = pad;
+	idev->dev.platform_data = pad;
 	idev->dev.parent = &mdev->dev;
 	idev->name = mdev->product_name;
 	idev->id.bustype = BUS_HOST;
 
-	error = input_रेजिस्टर_device(idev);
-	अगर (error)
-		जाओ fail;
+	error = input_register_device(idev);
+	if (error)
+		goto fail;
 
 	mdev->driver = mdrv;
 	maple_set_drvdata(mdev, pad);
 
-	वापस 0;
+	return 0;
 
 fail:
-	input_मुक्त_device(idev);
-	kमुक्त(pad);
-	maple_set_drvdata(mdev, शून्य);
-	वापस error;
-पूर्ण
+	input_free_device(idev);
+	kfree(pad);
+	maple_set_drvdata(mdev, NULL);
+	return error;
+}
 
-अटल पूर्णांक हटाओ_maple_controller(काष्ठा device *dev)
-अणु
-	काष्ठा maple_device *mdev = to_maple_dev(dev);
-	काष्ठा dc_pad *pad = maple_get_drvdata(mdev);
+static int remove_maple_controller(struct device *dev)
+{
+	struct maple_device *mdev = to_maple_dev(dev);
+	struct dc_pad *pad = maple_get_drvdata(mdev);
 
-	mdev->callback = शून्य;
-	input_unरेजिस्टर_device(pad->dev);
-	maple_set_drvdata(mdev, शून्य);
-	kमुक्त(pad);
+	mdev->callback = NULL;
+	input_unregister_device(pad->dev);
+	maple_set_drvdata(mdev, NULL);
+	kfree(pad);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा maple_driver dc_pad_driver = अणु
+static struct maple_driver dc_pad_driver = {
 	.function =	MAPLE_FUNC_CONTROLLER,
-	.drv = अणु
+	.drv = {
 		.name	= "Dreamcast_controller",
 		.probe	= probe_maple_controller,
-		.हटाओ	= हटाओ_maple_controller,
-	पूर्ण,
-पूर्ण;
+		.remove	= remove_maple_controller,
+	},
+};
 
-अटल पूर्णांक __init dc_pad_init(व्योम)
-अणु
-	वापस maple_driver_रेजिस्टर(&dc_pad_driver);
-पूर्ण
+static int __init dc_pad_init(void)
+{
+	return maple_driver_register(&dc_pad_driver);
+}
 
-अटल व्योम __निकास dc_pad_निकास(व्योम)
-अणु
-	maple_driver_unरेजिस्टर(&dc_pad_driver);
-पूर्ण
+static void __exit dc_pad_exit(void)
+{
+	maple_driver_unregister(&dc_pad_driver);
+}
 
 module_init(dc_pad_init);
-module_निकास(dc_pad_निकास);
+module_exit(dc_pad_exit);

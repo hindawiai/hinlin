@@ -1,13 +1,12 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 OR Linux-OpenIB */
+/* SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB */
 /* Copyright (c) 2020 Mellanox Technologies inc. */
 
-#समावेश <linux/mlx5/driver.h>
+#include <linux/mlx5/driver.h>
 
-#अगर_अघोषित __MLX5_RSC_DUMP
-#घोषणा __MLX5_RSC_DUMP
+#ifndef __MLX5_RSC_DUMP
+#define __MLX5_RSC_DUMP
 
-क्रमागत mlx5_sgmt_type अणु
+enum mlx5_sgmt_type {
 	MLX5_SGMT_TYPE_HW_CQPC,
 	MLX5_SGMT_TYPE_HW_SQPC,
 	MLX5_SGMT_TYPE_HW_RQPC,
@@ -31,22 +30,22 @@
 	MLX5_SGMT_TYPE_TERMINATE,
 
 	MLX5_SGMT_TYPE_NUM, /* Keep last */
-पूर्ण;
+};
 
-काष्ठा mlx5_rsc_key अणु
-	क्रमागत mlx5_sgmt_type rsc;
-	पूर्णांक index1;
-	पूर्णांक index2;
-	पूर्णांक num_of_obj1;
-	पूर्णांक num_of_obj2;
-	पूर्णांक size;
-पूर्ण;
+struct mlx5_rsc_key {
+	enum mlx5_sgmt_type rsc;
+	int index1;
+	int index2;
+	int num_of_obj1;
+	int num_of_obj2;
+	int size;
+};
 
-काष्ठा mlx5_rsc_dump_cmd;
+struct mlx5_rsc_dump_cmd;
 
-काष्ठा mlx5_rsc_dump_cmd *mlx5_rsc_dump_cmd_create(काष्ठा mlx5_core_dev *dev,
-						   काष्ठा mlx5_rsc_key *key);
-व्योम mlx5_rsc_dump_cmd_destroy(काष्ठा mlx5_rsc_dump_cmd *cmd);
-पूर्णांक mlx5_rsc_dump_next(काष्ठा mlx5_core_dev *dev, काष्ठा mlx5_rsc_dump_cmd *cmd,
-		       काष्ठा page *page, पूर्णांक *size);
-#पूर्ण_अगर /* __MLX5_RSC_DUMP */
+struct mlx5_rsc_dump_cmd *mlx5_rsc_dump_cmd_create(struct mlx5_core_dev *dev,
+						   struct mlx5_rsc_key *key);
+void mlx5_rsc_dump_cmd_destroy(struct mlx5_rsc_dump_cmd *cmd);
+int mlx5_rsc_dump_next(struct mlx5_core_dev *dev, struct mlx5_rsc_dump_cmd *cmd,
+		       struct page *page, int *size);
+#endif /* __MLX5_RSC_DUMP */

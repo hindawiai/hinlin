@@ -1,26 +1,25 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _ALPHA_BUG_H
-#घोषणा _ALPHA_BUG_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _ALPHA_BUG_H
+#define _ALPHA_BUG_H
 
-#समावेश <linux/linkage.h>
+#include <linux/linkage.h>
 
-#अगर_घोषित CONFIG_BUG
-#समावेश <यंत्र/pal.h>
+#ifdef CONFIG_BUG
+#include <asm/pal.h>
 
 /* ??? Would be nice to use .gprel32 here, but we can't be sure that the
    function loaded the GP, so this could fail in modules.  */
-#घोषणा BUG()	करो अणु							\
-	__यंत्र__ __अस्थिर__(						\
+#define BUG()	do {							\
+	__asm__ __volatile__(						\
 		"call_pal %0  # bugchk\n\t"				\
 		".long %1\n\t.8byte %2"					\
-		: : "i"(PAL_bugchk), "i"(__LINE__), "i"(__खाता__));	\
+		: : "i"(PAL_bugchk), "i"(__LINE__), "i"(__FILE__));	\
 	unreachable();							\
-  पूर्ण जबतक (0)
+  } while (0)
 
-#घोषणा HAVE_ARCH_BUG
-#पूर्ण_अगर
+#define HAVE_ARCH_BUG
+#endif
 
-#समावेश <यंत्र-generic/bug.h>
+#include <asm-generic/bug.h>
 
-#पूर्ण_अगर
+#endif

@@ -1,24 +1,23 @@
-<शैली गुरु>
 /*
  * Copyright (c) 2006, 2017 Oracle and/or its affiliates. All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the मुख्य directory of this source tree, or the
+ * COPYING in the main directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary क्रमms, with or
- *     without modअगरication, are permitted provided that the following
+ *     Redistribution and use in source and binary forms, with or
+ *     without modification, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary क्रमm must reproduce the above
+ *      - Redistributions in binary form must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the करोcumentation and/or other materials
+ *        disclaimer in the documentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -31,140 +30,140 @@
  * SOFTWARE.
  *
  */
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/in.h>
-#समावेश <linux/ipv6.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/in.h>
+#include <linux/ipv6.h>
 
-#समावेश "rds.h"
-#समावेश "loop.h"
+#include "rds.h"
+#include "loop.h"
 
-अटल अक्षर * स्थिर rds_trans_modules[] = अणु
+static char * const rds_trans_modules[] = {
 	[RDS_TRANS_IB] = "rds_rdma",
-	[RDS_TRANS_GAP] = शून्य,
+	[RDS_TRANS_GAP] = NULL,
 	[RDS_TRANS_TCP] = "rds_tcp",
-पूर्ण;
+};
 
-अटल काष्ठा rds_transport *transports[RDS_TRANS_COUNT];
-अटल DECLARE_RWSEM(rds_trans_sem);
+static struct rds_transport *transports[RDS_TRANS_COUNT];
+static DECLARE_RWSEM(rds_trans_sem);
 
-व्योम rds_trans_रेजिस्टर(काष्ठा rds_transport *trans)
-अणु
-	BUG_ON(म_माप(trans->t_name) + 1 > TRANSNAMSIZ);
+void rds_trans_register(struct rds_transport *trans)
+{
+	BUG_ON(strlen(trans->t_name) + 1 > TRANSNAMSIZ);
 
-	करोwn_ग_लिखो(&rds_trans_sem);
+	down_write(&rds_trans_sem);
 
-	अगर (transports[trans->t_type])
-		prपूर्णांकk(KERN_ERR "RDS Transport type %d already registered\n",
+	if (transports[trans->t_type])
+		printk(KERN_ERR "RDS Transport type %d already registered\n",
 			trans->t_type);
-	अन्यथा अणु
+	else {
 		transports[trans->t_type] = trans;
-		prपूर्णांकk(KERN_INFO "Registered RDS/%s transport\n", trans->t_name);
-	पूर्ण
+		printk(KERN_INFO "Registered RDS/%s transport\n", trans->t_name);
+	}
 
-	up_ग_लिखो(&rds_trans_sem);
-पूर्ण
-EXPORT_SYMBOL_GPL(rds_trans_रेजिस्टर);
+	up_write(&rds_trans_sem);
+}
+EXPORT_SYMBOL_GPL(rds_trans_register);
 
-व्योम rds_trans_unरेजिस्टर(काष्ठा rds_transport *trans)
-अणु
-	करोwn_ग_लिखो(&rds_trans_sem);
+void rds_trans_unregister(struct rds_transport *trans)
+{
+	down_write(&rds_trans_sem);
 
-	transports[trans->t_type] = शून्य;
-	prपूर्णांकk(KERN_INFO "Unregistered RDS/%s transport\n", trans->t_name);
+	transports[trans->t_type] = NULL;
+	printk(KERN_INFO "Unregistered RDS/%s transport\n", trans->t_name);
 
-	up_ग_लिखो(&rds_trans_sem);
-पूर्ण
-EXPORT_SYMBOL_GPL(rds_trans_unरेजिस्टर);
+	up_write(&rds_trans_sem);
+}
+EXPORT_SYMBOL_GPL(rds_trans_unregister);
 
-व्योम rds_trans_put(काष्ठा rds_transport *trans)
-अणु
-	अगर (trans)
+void rds_trans_put(struct rds_transport *trans)
+{
+	if (trans)
 		module_put(trans->t_owner);
-पूर्ण
+}
 
-काष्ठा rds_transport *rds_trans_get_preferred(काष्ठा net *net,
-					      स्थिर काष्ठा in6_addr *addr,
+struct rds_transport *rds_trans_get_preferred(struct net *net,
+					      const struct in6_addr *addr,
 					      __u32 scope_id)
-अणु
-	काष्ठा rds_transport *ret = शून्य;
-	काष्ठा rds_transport *trans;
-	अचिन्हित पूर्णांक i;
+{
+	struct rds_transport *ret = NULL;
+	struct rds_transport *trans;
+	unsigned int i;
 
-	अगर (ipv6_addr_v4mapped(addr)) अणु
-		अगर (*(u_पूर्णांक8_t *)&addr->s6_addr32[3] == IN_LOOPBACKNET)
-			वापस &rds_loop_transport;
-	पूर्ण अन्यथा अगर (ipv6_addr_loopback(addr)) अणु
-		वापस &rds_loop_transport;
-	पूर्ण
+	if (ipv6_addr_v4mapped(addr)) {
+		if (*(u_int8_t *)&addr->s6_addr32[3] == IN_LOOPBACKNET)
+			return &rds_loop_transport;
+	} else if (ipv6_addr_loopback(addr)) {
+		return &rds_loop_transport;
+	}
 
-	करोwn_पढ़ो(&rds_trans_sem);
-	क्रम (i = 0; i < RDS_TRANS_COUNT; i++) अणु
+	down_read(&rds_trans_sem);
+	for (i = 0; i < RDS_TRANS_COUNT; i++) {
 		trans = transports[i];
 
-		अगर (trans && (trans->laddr_check(net, addr, scope_id) == 0) &&
-		    (!trans->t_owner || try_module_get(trans->t_owner))) अणु
+		if (trans && (trans->laddr_check(net, addr, scope_id) == 0) &&
+		    (!trans->t_owner || try_module_get(trans->t_owner))) {
 			ret = trans;
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	up_पढ़ो(&rds_trans_sem);
+			break;
+		}
+	}
+	up_read(&rds_trans_sem);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-काष्ठा rds_transport *rds_trans_get(पूर्णांक t_type)
-अणु
-	काष्ठा rds_transport *ret = शून्य;
-	काष्ठा rds_transport *trans;
+struct rds_transport *rds_trans_get(int t_type)
+{
+	struct rds_transport *ret = NULL;
+	struct rds_transport *trans;
 
-	करोwn_पढ़ो(&rds_trans_sem);
+	down_read(&rds_trans_sem);
 	trans = transports[t_type];
-	अगर (!trans) अणु
-		up_पढ़ो(&rds_trans_sem);
-		अगर (rds_trans_modules[t_type])
+	if (!trans) {
+		up_read(&rds_trans_sem);
+		if (rds_trans_modules[t_type])
 			request_module(rds_trans_modules[t_type]);
-		करोwn_पढ़ो(&rds_trans_sem);
+		down_read(&rds_trans_sem);
 		trans = transports[t_type];
-	पूर्ण
-	अगर (trans && trans->t_type == t_type &&
+	}
+	if (trans && trans->t_type == t_type &&
 	    (!trans->t_owner || try_module_get(trans->t_owner)))
 		ret = trans;
 
-	up_पढ़ो(&rds_trans_sem);
+	up_read(&rds_trans_sem);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * This वापसs the number of stats entries in the snapshot and only
- * copies them using the iter अगर there is enough space क्रम them.  The
- * caller passes in the global stats so that we can size and copy जबतक
+ * This returns the number of stats entries in the snapshot and only
+ * copies them using the iter if there is enough space for them.  The
+ * caller passes in the global stats so that we can size and copy while
  * holding the lock.
  */
-अचिन्हित पूर्णांक rds_trans_stats_info_copy(काष्ठा rds_info_iterator *iter,
-				       अचिन्हित पूर्णांक avail)
+unsigned int rds_trans_stats_info_copy(struct rds_info_iterator *iter,
+				       unsigned int avail)
 
-अणु
-	काष्ठा rds_transport *trans;
-	अचिन्हित पूर्णांक total = 0;
-	अचिन्हित पूर्णांक part;
-	पूर्णांक i;
+{
+	struct rds_transport *trans;
+	unsigned int total = 0;
+	unsigned int part;
+	int i;
 
 	rds_info_iter_unmap(iter);
-	करोwn_पढ़ो(&rds_trans_sem);
+	down_read(&rds_trans_sem);
 
-	क्रम (i = 0; i < RDS_TRANS_COUNT; i++) अणु
+	for (i = 0; i < RDS_TRANS_COUNT; i++) {
 		trans = transports[i];
-		अगर (!trans || !trans->stats_info_copy)
-			जारी;
+		if (!trans || !trans->stats_info_copy)
+			continue;
 
 		part = trans->stats_info_copy(iter, avail);
 		avail -= min(avail, part);
 		total += part;
-	पूर्ण
+	}
 
-	up_पढ़ो(&rds_trans_sem);
+	up_read(&rds_trans_sem);
 
-	वापस total;
-पूर्ण
+	return total;
+}

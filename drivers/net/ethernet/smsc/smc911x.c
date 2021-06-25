@@ -1,268 +1,267 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * smc911x.c
- * This is a driver क्रम SMSC's LAN911अणु5,6,7,8पूर्ण single-chip Ethernet devices.
+ * This is a driver for SMSC's LAN911{5,6,7,8} single-chip Ethernet devices.
  *
  * Copyright (C) 2005 Sensoria Corp
- *	   Derived from the unअगरied SMC91x driver by Nicolas Pitre
+ *	   Derived from the unified SMC91x driver by Nicolas Pitre
  *	   and the smsc911x.c reference driver by SMSC
  *
  * Arguments:
- *	 watchकरोg  = TX watchकरोg समयout
- *	 tx_fअगरo_kb = Size of TX FIFO in KB
+ *	 watchdog  = TX watchdog timeout
+ *	 tx_fifo_kb = Size of TX FIFO in KB
  *
  * History:
  *	  04/16/05	Dustin McIntire		 Initial version
  */
-अटल स्थिर अक्षर version[] =
+static const char version[] =
 	 "smc911x.c: v1.0 04-16-2005 by Dustin McIntire <dustin@sensoria.com>\n";
 
 /* Debugging options */
-#घोषणा ENABLE_SMC_DEBUG_RX		0
-#घोषणा ENABLE_SMC_DEBUG_TX		0
-#घोषणा ENABLE_SMC_DEBUG_DMA		0
-#घोषणा ENABLE_SMC_DEBUG_PKTS		0
-#घोषणा ENABLE_SMC_DEBUG_MISC		0
-#घोषणा ENABLE_SMC_DEBUG_FUNC		0
+#define ENABLE_SMC_DEBUG_RX		0
+#define ENABLE_SMC_DEBUG_TX		0
+#define ENABLE_SMC_DEBUG_DMA		0
+#define ENABLE_SMC_DEBUG_PKTS		0
+#define ENABLE_SMC_DEBUG_MISC		0
+#define ENABLE_SMC_DEBUG_FUNC		0
 
-#घोषणा SMC_DEBUG_RX		((ENABLE_SMC_DEBUG_RX	? 1 : 0) << 0)
-#घोषणा SMC_DEBUG_TX		((ENABLE_SMC_DEBUG_TX	? 1 : 0) << 1)
-#घोषणा SMC_DEBUG_DMA		((ENABLE_SMC_DEBUG_DMA	? 1 : 0) << 2)
-#घोषणा SMC_DEBUG_PKTS		((ENABLE_SMC_DEBUG_PKTS ? 1 : 0) << 3)
-#घोषणा SMC_DEBUG_MISC		((ENABLE_SMC_DEBUG_MISC ? 1 : 0) << 4)
-#घोषणा SMC_DEBUG_FUNC		((ENABLE_SMC_DEBUG_FUNC ? 1 : 0) << 5)
+#define SMC_DEBUG_RX		((ENABLE_SMC_DEBUG_RX	? 1 : 0) << 0)
+#define SMC_DEBUG_TX		((ENABLE_SMC_DEBUG_TX	? 1 : 0) << 1)
+#define SMC_DEBUG_DMA		((ENABLE_SMC_DEBUG_DMA	? 1 : 0) << 2)
+#define SMC_DEBUG_PKTS		((ENABLE_SMC_DEBUG_PKTS ? 1 : 0) << 3)
+#define SMC_DEBUG_MISC		((ENABLE_SMC_DEBUG_MISC ? 1 : 0) << 4)
+#define SMC_DEBUG_FUNC		((ENABLE_SMC_DEBUG_FUNC ? 1 : 0) << 5)
 
-#अगर_अघोषित SMC_DEBUG
-#घोषणा SMC_DEBUG	 ( SMC_DEBUG_RX	  | \
+#ifndef SMC_DEBUG
+#define SMC_DEBUG	 ( SMC_DEBUG_RX	  | \
 			   SMC_DEBUG_TX	  | \
 			   SMC_DEBUG_DMA  | \
 			   SMC_DEBUG_PKTS | \
 			   SMC_DEBUG_MISC | \
 			   SMC_DEBUG_FUNC   \
 			 )
-#पूर्ण_अगर
+#endif
 
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/ioport.h>
-#समावेश <linux/crc32.h>
-#समावेश <linux/device.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/ethtool.h>
-#समावेश <linux/mii.h>
-#समावेश <linux/workqueue.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/sched.h>
+#include <linux/delay.h>
+#include <linux/interrupt.h>
+#include <linux/errno.h>
+#include <linux/ioport.h>
+#include <linux/crc32.h>
+#include <linux/device.h>
+#include <linux/platform_device.h>
+#include <linux/spinlock.h>
+#include <linux/ethtool.h>
+#include <linux/mii.h>
+#include <linux/workqueue.h>
 
-#समावेश <linux/netdevice.h>
-#समावेश <linux/etherdevice.h>
-#समावेश <linux/skbuff.h>
+#include <linux/netdevice.h>
+#include <linux/etherdevice.h>
+#include <linux/skbuff.h>
 
-#समावेश <linux/dmaengine.h>
+#include <linux/dmaengine.h>
 
-#समावेश <यंत्र/पन.स>
+#include <asm/io.h>
 
-#समावेश "smc911x.h"
+#include "smc911x.h"
 
 /*
- * Transmit समयout, शेष 5 seconds.
+ * Transmit timeout, default 5 seconds.
  */
-अटल पूर्णांक watchकरोg = 5000;
-module_param(watchकरोg, पूर्णांक, 0400);
-MODULE_PARM_DESC(watchकरोg, "transmit timeout in milliseconds");
+static int watchdog = 5000;
+module_param(watchdog, int, 0400);
+MODULE_PARM_DESC(watchdog, "transmit timeout in milliseconds");
 
-अटल पूर्णांक tx_fअगरo_kb=8;
-module_param(tx_fअगरo_kb, पूर्णांक, 0400);
-MODULE_PARM_DESC(tx_fअगरo_kb,"transmit FIFO size in KB (1<x<15)(default=8)");
+static int tx_fifo_kb=8;
+module_param(tx_fifo_kb, int, 0400);
+MODULE_PARM_DESC(tx_fifo_kb,"transmit FIFO size in KB (1<x<15)(default=8)");
 
 MODULE_LICENSE("GPL");
 MODULE_ALIAS("platform:smc911x");
 
 /*
- * The पूर्णांकernal workings of the driver.  If you are changing anything
+ * The internal workings of the driver.  If you are changing anything
  * here with the SMC stuff, you should have the datasheet and know
- * what you are करोing.
+ * what you are doing.
  */
-#घोषणा CARDNAME "smc911x"
+#define CARDNAME "smc911x"
 
 /*
- * Use घातer-करोwn feature of the chip
+ * Use power-down feature of the chip
  */
-#घोषणा POWER_DOWN		 1
+#define POWER_DOWN		 1
 
-#अगर SMC_DEBUG > 0
-#घोषणा DBG(n, dev, args...)			 \
-	करो अणु					 \
-		अगर (SMC_DEBUG & (n))		 \
+#if SMC_DEBUG > 0
+#define DBG(n, dev, args...)			 \
+	do {					 \
+		if (SMC_DEBUG & (n))		 \
 			netdev_dbg(dev, args);	 \
-	पूर्ण जबतक (0)
+	} while (0)
 
-#घोषणा PRINTK(dev, args...)   netdev_info(dev, args)
-#अन्यथा
-#घोषणा DBG(n, dev, args...)			 \
-	जबतक (0) अणु				 \
+#define PRINTK(dev, args...)   netdev_info(dev, args)
+#else
+#define DBG(n, dev, args...)			 \
+	while (0) {				 \
 		netdev_dbg(dev, args);		 \
-	पूर्ण
-#घोषणा PRINTK(dev, args...)   netdev_dbg(dev, args)
-#पूर्ण_अगर
+	}
+#define PRINTK(dev, args...)   netdev_dbg(dev, args)
+#endif
 
-#अगर SMC_DEBUG_PKTS > 0
-अटल व्योम PRINT_PKT(u_अक्षर *buf, पूर्णांक length)
-अणु
-	पूर्णांक i;
-	पूर्णांक reमुख्यder;
-	पूर्णांक lines;
+#if SMC_DEBUG_PKTS > 0
+static void PRINT_PKT(u_char *buf, int length)
+{
+	int i;
+	int remainder;
+	int lines;
 
 	lines = length / 16;
-	reमुख्यder = length % 16;
+	remainder = length % 16;
 
-	क्रम (i = 0; i < lines ; i ++) अणु
-		पूर्णांक cur;
-		prपूर्णांकk(KERN_DEBUG);
-		क्रम (cur = 0; cur < 8; cur++) अणु
-			u_अक्षर a, b;
+	for (i = 0; i < lines ; i ++) {
+		int cur;
+		printk(KERN_DEBUG);
+		for (cur = 0; cur < 8; cur++) {
+			u_char a, b;
 			a = *buf++;
 			b = *buf++;
 			pr_cont("%02x%02x ", a, b);
-		पूर्ण
+		}
 		pr_cont("\n");
-	पूर्ण
-	prपूर्णांकk(KERN_DEBUG);
-	क्रम (i = 0; i < reमुख्यder/2 ; i++) अणु
-		u_अक्षर a, b;
+	}
+	printk(KERN_DEBUG);
+	for (i = 0; i < remainder/2 ; i++) {
+		u_char a, b;
 		a = *buf++;
 		b = *buf++;
 		pr_cont("%02x%02x ", a, b);
-	पूर्ण
+	}
 	pr_cont("\n");
-पूर्ण
-#अन्यथा
-#घोषणा PRINT_PKT(x...)  करो अणु पूर्ण जबतक (0)
-#पूर्ण_अगर
+}
+#else
+#define PRINT_PKT(x...)  do { } while (0)
+#endif
 
 
-/* this enables an पूर्णांकerrupt in the पूर्णांकerrupt mask रेजिस्टर */
-#घोषणा SMC_ENABLE_INT(lp, x) करो अणु			\
-	अचिन्हित पूर्णांक  __mask;				\
+/* this enables an interrupt in the interrupt mask register */
+#define SMC_ENABLE_INT(lp, x) do {			\
+	unsigned int  __mask;				\
 	__mask = SMC_GET_INT_EN((lp));			\
 	__mask |= (x);					\
 	SMC_SET_INT_EN((lp), __mask);			\
-पूर्ण जबतक (0)
+} while (0)
 
-/* this disables an पूर्णांकerrupt from the पूर्णांकerrupt mask रेजिस्टर */
-#घोषणा SMC_DISABLE_INT(lp, x) करो अणु			\
-	अचिन्हित पूर्णांक  __mask;				\
+/* this disables an interrupt from the interrupt mask register */
+#define SMC_DISABLE_INT(lp, x) do {			\
+	unsigned int  __mask;				\
 	__mask = SMC_GET_INT_EN((lp));			\
 	__mask &= ~(x);					\
 	SMC_SET_INT_EN((lp), __mask);			\
-पूर्ण जबतक (0)
+} while (0)
 
 /*
- * this करोes a soft reset on the device
+ * this does a soft reset on the device
  */
-अटल व्योम smc911x_reset(काष्ठा net_device *dev)
-अणु
-	काष्ठा smc911x_local *lp = netdev_priv(dev);
-	अचिन्हित पूर्णांक reg, समयout=0, resets=1, irq_cfg;
-	अचिन्हित दीर्घ flags;
+static void smc911x_reset(struct net_device *dev)
+{
+	struct smc911x_local *lp = netdev_priv(dev);
+	unsigned int reg, timeout=0, resets=1, irq_cfg;
+	unsigned long flags;
 
 	DBG(SMC_DEBUG_FUNC, dev, "--> %s\n", __func__);
 
 	/*	 Take out of PM setting first */
-	अगर ((SMC_GET_PMT_CTRL(lp) & PMT_CTRL_READY_) == 0) अणु
-		/* Write to the bytetest will take out of घातerकरोwn */
+	if ((SMC_GET_PMT_CTRL(lp) & PMT_CTRL_READY_) == 0) {
+		/* Write to the bytetest will take out of powerdown */
 		SMC_SET_BYTE_TEST(lp, 0);
-		समयout=10;
-		करो अणु
+		timeout=10;
+		do {
 			udelay(10);
 			reg = SMC_GET_PMT_CTRL(lp) & PMT_CTRL_READY_;
-		पूर्ण जबतक (--समयout && !reg);
-		अगर (समयout == 0) अणु
+		} while (--timeout && !reg);
+		if (timeout == 0) {
 			PRINTK(dev, "smc911x_reset timeout waiting for PM restore\n");
-			वापस;
-		पूर्ण
-	पूर्ण
+			return;
+		}
+	}
 
-	/* Disable all पूर्णांकerrupts */
+	/* Disable all interrupts */
 	spin_lock_irqsave(&lp->lock, flags);
 	SMC_SET_INT_EN(lp, 0);
 	spin_unlock_irqrestore(&lp->lock, flags);
 
-	जबतक (resets--) अणु
+	while (resets--) {
 		SMC_SET_HW_CFG(lp, HW_CFG_SRST_);
-		समयout=10;
-		करो अणु
+		timeout=10;
+		do {
 			udelay(10);
 			reg = SMC_GET_HW_CFG(lp);
-			/* If chip indicates reset समयout then try again */
-			अगर (reg & HW_CFG_SRST_TO_) अणु
+			/* If chip indicates reset timeout then try again */
+			if (reg & HW_CFG_SRST_TO_) {
 				PRINTK(dev, "chip reset timeout, retrying...\n");
 				resets++;
-				अवरोध;
-			पूर्ण
-		पूर्ण जबतक (--समयout && (reg & HW_CFG_SRST_));
-	पूर्ण
-	अगर (समयout == 0) अणु
+				break;
+			}
+		} while (--timeout && (reg & HW_CFG_SRST_));
+	}
+	if (timeout == 0) {
 		PRINTK(dev, "smc911x_reset timeout waiting for reset\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	/* make sure EEPROM has finished loading beक्रमe setting GPIO_CFG */
-	समयout=1000;
-	जबतक (--समयout && (SMC_GET_E2P_CMD(lp) & E2P_CMD_EPC_BUSY_))
+	/* make sure EEPROM has finished loading before setting GPIO_CFG */
+	timeout=1000;
+	while (--timeout && (SMC_GET_E2P_CMD(lp) & E2P_CMD_EPC_BUSY_))
 		udelay(10);
 
-	अगर (समयout == 0)अणु
+	if (timeout == 0){
 		PRINTK(dev, "smc911x_reset timeout waiting for EEPROM busy\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	/* Initialize पूर्णांकerrupts */
+	/* Initialize interrupts */
 	SMC_SET_INT_EN(lp, 0);
 	SMC_ACK_INT(lp, -1);
 
 	/* Reset the FIFO level and flow control settings */
-	SMC_SET_HW_CFG(lp, (lp->tx_fअगरo_kb & 0xF) << 16);
-//TODO: Figure out what appropriate छोड़ो समय is
+	SMC_SET_HW_CFG(lp, (lp->tx_fifo_kb & 0xF) << 16);
+//TODO: Figure out what appropriate pause time is
 	SMC_SET_FLOW(lp, FLOW_FCPT_ | FLOW_FCEN_);
 	SMC_SET_AFC_CFG(lp, lp->afc_cfg);
 
 
-	/* Set to LED outमाला_दो */
+	/* Set to LED outputs */
 	SMC_SET_GPIO_CFG(lp, 0x70070000);
 
 	/*
-	 * Deनिश्चित IRQ क्रम 1*10us क्रम edge type पूर्णांकerrupts
+	 * Deassert IRQ for 1*10us for edge type interrupts
 	 * and drive IRQ pin push-pull
 	 */
 	irq_cfg = (1 << 24) | INT_CFG_IRQ_EN_ | INT_CFG_IRQ_TYPE_;
-#अगर_घोषित SMC_DYNAMIC_BUS_CONFIG
-	अगर (lp->cfg.irq_polarity)
+#ifdef SMC_DYNAMIC_BUS_CONFIG
+	if (lp->cfg.irq_polarity)
 		irq_cfg |= INT_CFG_IRQ_POL_;
-#पूर्ण_अगर
+#endif
 	SMC_SET_IRQ_CFG(lp, irq_cfg);
 
 	/* clear anything saved */
-	अगर (lp->pending_tx_skb != शून्य) अणु
-		dev_kमुक्त_skb (lp->pending_tx_skb);
-		lp->pending_tx_skb = शून्य;
+	if (lp->pending_tx_skb != NULL) {
+		dev_kfree_skb (lp->pending_tx_skb);
+		lp->pending_tx_skb = NULL;
 		dev->stats.tx_errors++;
-		dev->stats.tx_पातed_errors++;
-	पूर्ण
-पूर्ण
+		dev->stats.tx_aborted_errors++;
+	}
+}
 
 /*
  * Enable Interrupts, Receive, and Transmit
  */
-अटल व्योम smc911x_enable(काष्ठा net_device *dev)
-अणु
-	काष्ठा smc911x_local *lp = netdev_priv(dev);
-	अचिन्हित mask, cfg, cr;
-	अचिन्हित दीर्घ flags;
+static void smc911x_enable(struct net_device *dev)
+{
+	struct smc911x_local *lp = netdev_priv(dev);
+	unsigned mask, cfg, cr;
+	unsigned long flags;
 
 	DBG(SMC_DEBUG_FUNC, dev, "--> %s\n", __func__);
 
@@ -289,7 +288,7 @@ MODULE_ALIAS("platform:smc911x");
 	SMC_SET_RX_CFG(lp, (2<<8) & RX_CFG_RXDOFF_);
 
 	/* Turn on receiver and enable RX */
-	अगर (cr & MAC_CR_RXEN_)
+	if (cr & MAC_CR_RXEN_)
 		DBG(SMC_DEBUG_RX, dev, "Receiver already enabled\n");
 
 	SMC_SET_MAC_CR(lp, cr | MAC_CR_RXEN_);
@@ -298,28 +297,28 @@ MODULE_ALIAS("platform:smc911x");
 	SMC_SET_FIFO_RSA(lp, 0x01);
 	SMC_SET_FIFO_RSL(lp, 0x00);
 
-	/* now, enable पूर्णांकerrupts */
+	/* now, enable interrupts */
 	mask = INT_EN_TDFA_EN_ | INT_EN_TSFL_EN_ | INT_EN_RSFL_EN_ |
 		INT_EN_GPT_INT_EN_ | INT_EN_RXDFH_INT_EN_ | INT_EN_RXE_EN_ |
 		INT_EN_PHY_INT_EN_;
-	अगर (IS_REV_A(lp->revision))
+	if (IS_REV_A(lp->revision))
 		mask|=INT_EN_RDFL_EN_;
-	अन्यथा अणु
+	else {
 		mask|=INT_EN_RDFO_EN_;
-	पूर्ण
+	}
 	SMC_ENABLE_INT(lp, mask);
 
 	spin_unlock_irqrestore(&lp->lock, flags);
-पूर्ण
+}
 
 /*
- * this माला_दो the device in an inactive state
+ * this puts the device in an inactive state
  */
-अटल व्योम smc911x_shutकरोwn(काष्ठा net_device *dev)
-अणु
-	काष्ठा smc911x_local *lp = netdev_priv(dev);
-	अचिन्हित cr;
-	अचिन्हित दीर्घ flags;
+static void smc911x_shutdown(struct net_device *dev)
+{
+	struct smc911x_local *lp = netdev_priv(dev);
+	unsigned cr;
+	unsigned long flags;
 
 	DBG(SMC_DEBUG_FUNC, dev, "%s: --> %s\n", CARDNAME, __func__);
 
@@ -333,46 +332,46 @@ MODULE_ALIAS("platform:smc911x");
 	SMC_SET_MAC_CR(lp, cr);
 	SMC_SET_TX_CFG(lp, TX_CFG_STOP_TX_);
 	spin_unlock_irqrestore(&lp->lock, flags);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम smc911x_drop_pkt(काष्ठा net_device *dev)
-अणु
-	काष्ठा smc911x_local *lp = netdev_priv(dev);
-	अचिन्हित पूर्णांक fअगरo_count, समयout, reg;
+static inline void smc911x_drop_pkt(struct net_device *dev)
+{
+	struct smc911x_local *lp = netdev_priv(dev);
+	unsigned int fifo_count, timeout, reg;
 
 	DBG(SMC_DEBUG_FUNC | SMC_DEBUG_RX, dev, "%s: --> %s\n",
 	    CARDNAME, __func__);
-	fअगरo_count = SMC_GET_RX_FIFO_INF(lp) & 0xFFFF;
-	अगर (fअगरo_count <= 4) अणु
+	fifo_count = SMC_GET_RX_FIFO_INF(lp) & 0xFFFF;
+	if (fifo_count <= 4) {
 		/* Manually dump the packet data */
-		जबतक (fअगरo_count--)
+		while (fifo_count--)
 			SMC_GET_RX_FIFO(lp);
-	पूर्ण अन्यथा	 अणु
-		/* Fast क्रमward through the bad packet */
+	} else	 {
+		/* Fast forward through the bad packet */
 		SMC_SET_RX_DP_CTRL(lp, RX_DP_CTRL_FFWD_BUSY_);
-		समयout=50;
-		करो अणु
+		timeout=50;
+		do {
 			udelay(10);
 			reg = SMC_GET_RX_DP_CTRL(lp) & RX_DP_CTRL_FFWD_BUSY_;
-		पूर्ण जबतक (--समयout && reg);
-		अगर (समयout == 0) अणु
+		} while (--timeout && reg);
+		if (timeout == 0) {
 			PRINTK(dev, "timeout waiting for RX fast forward\n");
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
 /*
  * This is the procedure to handle the receipt of a packet.
- * It should be called after checking क्रम packet presence in
+ * It should be called after checking for packet presence in
  * the RX status FIFO.	 It must be called with the spin lock
- * alपढ़ोy held.
+ * already held.
  */
-अटल अंतरभूत व्योम	 smc911x_rcv(काष्ठा net_device *dev)
-अणु
-	काष्ठा smc911x_local *lp = netdev_priv(dev);
-	अचिन्हित पूर्णांक pkt_len, status;
-	काष्ठा sk_buff *skb;
-	अचिन्हित अक्षर *data;
+static inline void	 smc911x_rcv(struct net_device *dev)
+{
+	struct smc911x_local *lp = netdev_priv(dev);
+	unsigned int pkt_len, status;
+	struct sk_buff *skb;
+	unsigned char *data;
 
 	DBG(SMC_DEBUG_FUNC | SMC_DEBUG_RX, dev, "--> %s\n",
 	    __func__);
@@ -380,98 +379,98 @@ MODULE_ALIAS("platform:smc911x");
 	DBG(SMC_DEBUG_RX, dev, "Rx pkt len %d status 0x%08x\n",
 	    (status & 0x3fff0000) >> 16, status & 0xc000ffff);
 	pkt_len = (status & RX_STS_PKT_LEN_) >> 16;
-	अगर (status & RX_STS_ES_) अणु
+	if (status & RX_STS_ES_) {
 		/* Deal with a bad packet */
 		dev->stats.rx_errors++;
-		अगर (status & RX_STS_CRC_ERR_)
+		if (status & RX_STS_CRC_ERR_)
 			dev->stats.rx_crc_errors++;
-		अन्यथा अणु
-			अगर (status & RX_STS_LEN_ERR_)
+		else {
+			if (status & RX_STS_LEN_ERR_)
 				dev->stats.rx_length_errors++;
-			अगर (status & RX_STS_MCAST_)
+			if (status & RX_STS_MCAST_)
 				dev->stats.multicast++;
-		पूर्ण
+		}
 		/* Remove the bad packet data from the RX FIFO */
 		smc911x_drop_pkt(dev);
-	पूर्ण अन्यथा अणु
+	} else {
 		/* Receive a valid packet */
-		/* Alloc a buffer with extra room क्रम DMA alignment */
+		/* Alloc a buffer with extra room for DMA alignment */
 		skb = netdev_alloc_skb(dev, pkt_len+32);
-		अगर (unlikely(skb == शून्य)) अणु
+		if (unlikely(skb == NULL)) {
 			PRINTK(dev, "Low memory, rcvd packet dropped.\n");
 			dev->stats.rx_dropped++;
 			smc911x_drop_pkt(dev);
-			वापस;
-		पूर्ण
+			return;
+		}
 		/* Align IP header to 32 bits
 		 * Note that the device is configured to add a 2
 		 * byte padding to the packet start, so we really
-		 * want to ग_लिखो to the orignal data poपूर्णांकer */
+		 * want to write to the orignal data pointer */
 		data = skb->data;
 		skb_reserve(skb, 2);
 		skb_put(skb,pkt_len-4);
-#अगर_घोषित SMC_USE_DMA
-		अणु
-		अचिन्हित पूर्णांक fअगरo;
-		/* Lower the FIFO threshold अगर possible */
-		fअगरo = SMC_GET_FIFO_INT(lp);
-		अगर (fअगरo & 0xFF) fअगरo--;
+#ifdef SMC_USE_DMA
+		{
+		unsigned int fifo;
+		/* Lower the FIFO threshold if possible */
+		fifo = SMC_GET_FIFO_INT(lp);
+		if (fifo & 0xFF) fifo--;
 		DBG(SMC_DEBUG_RX, dev, "Setting RX stat FIFO threshold to %d\n",
-		    fअगरo & 0xff);
-		SMC_SET_FIFO_INT(lp, fअगरo);
+		    fifo & 0xff);
+		SMC_SET_FIFO_INT(lp, fifo);
 		/* Setup RX DMA */
 		SMC_SET_RX_CFG(lp, RX_CFG_RX_END_ALGN16_ | ((2<<8) & RX_CFG_RXDOFF_));
 		lp->rxdma_active = 1;
 		lp->current_rx_skb = skb;
 		SMC_PULL_DATA(lp, data, (pkt_len+2+15) & ~15);
-		/* Packet processing deferred to DMA RX पूर्णांकerrupt */
-		पूर्ण
-#अन्यथा
+		/* Packet processing deferred to DMA RX interrupt */
+		}
+#else
 		SMC_SET_RX_CFG(lp, RX_CFG_RX_END_ALGN4_ | ((2<<8) & RX_CFG_RXDOFF_));
 		SMC_PULL_DATA(lp, data, pkt_len+2+3);
 
 		DBG(SMC_DEBUG_PKTS, dev, "Received packet\n");
 		PRINT_PKT(data, ((pkt_len - 4) <= 64) ? pkt_len - 4 : 64);
 		skb->protocol = eth_type_trans(skb, dev);
-		netअगर_rx(skb);
+		netif_rx(skb);
 		dev->stats.rx_packets++;
 		dev->stats.rx_bytes += pkt_len-4;
-#पूर्ण_अगर
-	पूर्ण
-पूर्ण
+#endif
+	}
+}
 
 /*
  * This is called to actually send a packet to the chip.
  */
-अटल व्योम smc911x_hardware_send_pkt(काष्ठा net_device *dev)
-अणु
-	काष्ठा smc911x_local *lp = netdev_priv(dev);
-	काष्ठा sk_buff *skb;
-	अचिन्हित पूर्णांक cmdA, cmdB, len;
-	अचिन्हित अक्षर *buf;
+static void smc911x_hardware_send_pkt(struct net_device *dev)
+{
+	struct smc911x_local *lp = netdev_priv(dev);
+	struct sk_buff *skb;
+	unsigned int cmdA, cmdB, len;
+	unsigned char *buf;
 
 	DBG(SMC_DEBUG_FUNC | SMC_DEBUG_TX, dev, "--> %s\n", __func__);
-	BUG_ON(lp->pending_tx_skb == शून्य);
+	BUG_ON(lp->pending_tx_skb == NULL);
 
 	skb = lp->pending_tx_skb;
-	lp->pending_tx_skb = शून्य;
+	lp->pending_tx_skb = NULL;
 
-	/* cmdA अणु25:24] data alignment [20:16] start offset [10:0] buffer length */
-	/* cmdB अणु31:16] pkt tag [10:0] length */
-#अगर_घोषित SMC_USE_DMA
+	/* cmdA {25:24] data alignment [20:16] start offset [10:0] buffer length */
+	/* cmdB {31:16] pkt tag [10:0] length */
+#ifdef SMC_USE_DMA
 	/* 16 byte buffer alignment mode */
-	buf = (अक्षर*)((u32)(skb->data) & ~0xF);
+	buf = (char*)((u32)(skb->data) & ~0xF);
 	len = (skb->len + 0xF + ((u32)skb->data & 0xF)) & ~0xF;
 	cmdA = (1<<24) | (((u32)skb->data & 0xF)<<16) |
 			TX_CMD_A_INT_FIRST_SEG_ | TX_CMD_A_INT_LAST_SEG_ |
 			skb->len;
-#अन्यथा
-	buf = (अक्षर *)((uपूर्णांकptr_t)skb->data & ~0x3);
-	len = (skb->len + 3 + ((uपूर्णांकptr_t)skb->data & 3)) & ~0x3;
-	cmdA = (((uपूर्णांकptr_t)skb->data & 0x3) << 16) |
+#else
+	buf = (char *)((uintptr_t)skb->data & ~0x3);
+	len = (skb->len + 3 + ((uintptr_t)skb->data & 3)) & ~0x3;
+	cmdA = (((uintptr_t)skb->data & 0x3) << 16) |
 			TX_CMD_A_INT_FIRST_SEG_ | TX_CMD_A_INT_LAST_SEG_ |
 			skb->len;
-#पूर्ण_अगर
+#endif
 	/* tag is packet length so we can use this in stats update later */
 	cmdB = (skb->len  << 16) | (skb->len & 0x7FF);
 
@@ -484,111 +483,111 @@ MODULE_ALIAS("platform:smc911x");
 	PRINT_PKT(buf, len <= 64 ? len : 64);
 
 	/* Send pkt via PIO or DMA */
-#अगर_घोषित SMC_USE_DMA
+#ifdef SMC_USE_DMA
 	lp->current_tx_skb = skb;
 	SMC_PUSH_DATA(lp, buf, len);
-	/* DMA complete IRQ will मुक्त buffer and set jअगरfies */
-#अन्यथा
+	/* DMA complete IRQ will free buffer and set jiffies */
+#else
 	SMC_PUSH_DATA(lp, buf, len);
-	netअगर_trans_update(dev);
-	dev_kमुक्त_skb_irq(skb);
-#पूर्ण_अगर
-	अगर (!lp->tx_throttle) अणु
-		netअगर_wake_queue(dev);
-	पूर्ण
+	netif_trans_update(dev);
+	dev_kfree_skb_irq(skb);
+#endif
+	if (!lp->tx_throttle) {
+		netif_wake_queue(dev);
+	}
 	SMC_ENABLE_INT(lp, INT_EN_TDFA_EN_ | INT_EN_TSFL_EN_);
-पूर्ण
+}
 
 /*
- * Since I am not sure अगर I will have enough room in the chip's ram
+ * Since I am not sure if I will have enough room in the chip's ram
  * to store the packet, I call this routine which either sends it
- * now, or set the card to generates an पूर्णांकerrupt when पढ़ोy
- * क्रम the packet.
+ * now, or set the card to generates an interrupt when ready
+ * for the packet.
  */
-अटल netdev_tx_t
-smc911x_hard_start_xmit(काष्ठा sk_buff *skb, काष्ठा net_device *dev)
-अणु
-	काष्ठा smc911x_local *lp = netdev_priv(dev);
-	अचिन्हित पूर्णांक मुक्त;
-	अचिन्हित दीर्घ flags;
+static netdev_tx_t
+smc911x_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
+{
+	struct smc911x_local *lp = netdev_priv(dev);
+	unsigned int free;
+	unsigned long flags;
 
 	DBG(SMC_DEBUG_FUNC | SMC_DEBUG_TX, dev, "--> %s\n",
 	    __func__);
 
 	spin_lock_irqsave(&lp->lock, flags);
 
-	BUG_ON(lp->pending_tx_skb != शून्य);
+	BUG_ON(lp->pending_tx_skb != NULL);
 
-	मुक्त = SMC_GET_TX_FIFO_INF(lp) & TX_FIFO_INF_TDFREE_;
-	DBG(SMC_DEBUG_TX, dev, "TX free space %d\n", मुक्त);
+	free = SMC_GET_TX_FIFO_INF(lp) & TX_FIFO_INF_TDFREE_;
+	DBG(SMC_DEBUG_TX, dev, "TX free space %d\n", free);
 
 	/* Turn off the flow when running out of space in FIFO */
-	अगर (मुक्त <= SMC911X_TX_FIFO_LOW_THRESHOLD) अणु
+	if (free <= SMC911X_TX_FIFO_LOW_THRESHOLD) {
 		DBG(SMC_DEBUG_TX, dev, "Disabling data flow due to low FIFO space (%d)\n",
-		    मुक्त);
+		    free);
 		/* Reenable when at least 1 packet of size MTU present */
 		SMC_SET_FIFO_TDA(lp, (SMC911X_TX_FIFO_LOW_THRESHOLD)/64);
 		lp->tx_throttle = 1;
-		netअगर_stop_queue(dev);
-	पूर्ण
+		netif_stop_queue(dev);
+	}
 
 	/* Drop packets when we run out of space in TX FIFO
-	 * Account क्रम overhead required क्रम:
+	 * Account for overhead required for:
 	 *
 	 *	  Tx command words			 8 bytes
 	 *	  Start offset				 15 bytes
 	 *	  End padding				 15 bytes
 	 */
-	अगर (unlikely(मुक्त < (skb->len + 8 + 15 + 15))) अणु
+	if (unlikely(free < (skb->len + 8 + 15 + 15))) {
 		netdev_warn(dev, "No Tx free space %d < %d\n",
-			    मुक्त, skb->len);
-		lp->pending_tx_skb = शून्य;
+			    free, skb->len);
+		lp->pending_tx_skb = NULL;
 		dev->stats.tx_errors++;
 		dev->stats.tx_dropped++;
 		spin_unlock_irqrestore(&lp->lock, flags);
-		dev_kमुक्त_skb_any(skb);
-		वापस NETDEV_TX_OK;
-	पूर्ण
+		dev_kfree_skb_any(skb);
+		return NETDEV_TX_OK;
+	}
 
-#अगर_घोषित SMC_USE_DMA
-	अणु
-		/* If the DMA is alपढ़ोy running then defer this packet Tx until
+#ifdef SMC_USE_DMA
+	{
+		/* If the DMA is already running then defer this packet Tx until
 		 * the DMA IRQ starts it
 		 */
-		अगर (lp->txdma_active) अणु
+		if (lp->txdma_active) {
 			DBG(SMC_DEBUG_TX | SMC_DEBUG_DMA, dev, "Tx DMA running, deferring packet\n");
 			lp->pending_tx_skb = skb;
-			netअगर_stop_queue(dev);
+			netif_stop_queue(dev);
 			spin_unlock_irqrestore(&lp->lock, flags);
-			वापस NETDEV_TX_OK;
-		पूर्ण अन्यथा अणु
+			return NETDEV_TX_OK;
+		} else {
 			DBG(SMC_DEBUG_TX | SMC_DEBUG_DMA, dev, "Activating Tx DMA\n");
 			lp->txdma_active = 1;
-		पूर्ण
-	पूर्ण
-#पूर्ण_अगर
+		}
+	}
+#endif
 	lp->pending_tx_skb = skb;
 	smc911x_hardware_send_pkt(dev);
 	spin_unlock_irqrestore(&lp->lock, flags);
 
-	वापस NETDEV_TX_OK;
-पूर्ण
+	return NETDEV_TX_OK;
+}
 
 /*
- * This handles a TX status पूर्णांकerrupt, which is only called when:
+ * This handles a TX status interrupt, which is only called when:
  * - a TX error occurred, or
  * - TX of a packet completed.
  */
-अटल व्योम smc911x_tx(काष्ठा net_device *dev)
-अणु
-	काष्ठा smc911x_local *lp = netdev_priv(dev);
-	अचिन्हित पूर्णांक tx_status;
+static void smc911x_tx(struct net_device *dev)
+{
+	struct smc911x_local *lp = netdev_priv(dev);
+	unsigned int tx_status;
 
 	DBG(SMC_DEBUG_FUNC | SMC_DEBUG_TX, dev, "--> %s\n",
 	    __func__);
 
 	/* Collect the TX status */
-	जबतक (((SMC_GET_TX_FIFO_INF(lp) & TX_FIFO_INF_TSUSED_) >> 16) != 0) अणु
+	while (((SMC_GET_TX_FIFO_INF(lp) & TX_FIFO_INF_TSUSED_) >> 16) != 0) {
 		DBG(SMC_DEBUG_TX, dev, "Tx stat FIFO used 0x%04x\n",
 		    (SMC_GET_TX_FIFO_INF(lp) & TX_FIFO_INF_TSUSED_) >> 16);
 		tx_status = SMC_GET_TX_STS_FIFO(lp);
@@ -599,146 +598,146 @@ smc911x_hard_start_xmit(काष्ठा sk_buff *skb, काष्ठा net_
 		    tx_status & 0x0000ffff);
 		/* count Tx errors, but ignore lost carrier errors when in
 		 * full-duplex mode */
-		अगर ((tx_status & TX_STS_ES_) && !(lp->ctl_rfduplx &&
-		    !(tx_status & 0x00000306))) अणु
+		if ((tx_status & TX_STS_ES_) && !(lp->ctl_rfduplx &&
+		    !(tx_status & 0x00000306))) {
 			dev->stats.tx_errors++;
-		पूर्ण
-		अगर (tx_status & TX_STS_MANY_COLL_) अणु
+		}
+		if (tx_status & TX_STS_MANY_COLL_) {
 			dev->stats.collisions+=16;
-			dev->stats.tx_पातed_errors++;
-		पूर्ण अन्यथा अणु
+			dev->stats.tx_aborted_errors++;
+		} else {
 			dev->stats.collisions+=(tx_status & TX_STS_COLL_CNT_) >> 3;
-		पूर्ण
-		/* carrier error only has meaning क्रम half-duplex communication */
-		अगर ((tx_status & (TX_STS_LOC_ | TX_STS_NO_CARR_)) &&
-		    !lp->ctl_rfduplx) अणु
+		}
+		/* carrier error only has meaning for half-duplex communication */
+		if ((tx_status & (TX_STS_LOC_ | TX_STS_NO_CARR_)) &&
+		    !lp->ctl_rfduplx) {
 			dev->stats.tx_carrier_errors++;
-		पूर्ण
-		अगर (tx_status & TX_STS_LATE_COLL_) अणु
+		}
+		if (tx_status & TX_STS_LATE_COLL_) {
 			dev->stats.collisions++;
-			dev->stats.tx_पातed_errors++;
-		पूर्ण
-	पूर्ण
-पूर्ण
+			dev->stats.tx_aborted_errors++;
+		}
+	}
+}
 
 
 /*---PHY CONTROL AND CONFIGURATION-----------------------------------------*/
 /*
- * Reads a रेजिस्टर from the MII Management serial पूर्णांकerface
+ * Reads a register from the MII Management serial interface
  */
 
-अटल पूर्णांक smc911x_phy_पढ़ो(काष्ठा net_device *dev, पूर्णांक phyaddr, पूर्णांक phyreg)
-अणु
-	काष्ठा smc911x_local *lp = netdev_priv(dev);
-	अचिन्हित पूर्णांक phydata;
+static int smc911x_phy_read(struct net_device *dev, int phyaddr, int phyreg)
+{
+	struct smc911x_local *lp = netdev_priv(dev);
+	unsigned int phydata;
 
 	SMC_GET_MII(lp, phyreg, phyaddr, phydata);
 
 	DBG(SMC_DEBUG_MISC, dev, "%s: phyaddr=0x%x, phyreg=0x%02x, phydata=0x%04x\n",
 	    __func__, phyaddr, phyreg, phydata);
-	वापस phydata;
-पूर्ण
+	return phydata;
+}
 
 
 /*
- * Writes a रेजिस्टर to the MII Management serial पूर्णांकerface
+ * Writes a register to the MII Management serial interface
  */
-अटल व्योम smc911x_phy_ग_लिखो(काष्ठा net_device *dev, पूर्णांक phyaddr, पूर्णांक phyreg,
-			पूर्णांक phydata)
-अणु
-	काष्ठा smc911x_local *lp = netdev_priv(dev);
+static void smc911x_phy_write(struct net_device *dev, int phyaddr, int phyreg,
+			int phydata)
+{
+	struct smc911x_local *lp = netdev_priv(dev);
 
 	DBG(SMC_DEBUG_MISC, dev, "%s: phyaddr=0x%x, phyreg=0x%x, phydata=0x%x\n",
 	    __func__, phyaddr, phyreg, phydata);
 
 	SMC_SET_MII(lp, phyreg, phyaddr, phydata);
-पूर्ण
+}
 
 /*
- * Finds and reports the PHY address (115 and 117 have बाह्यal
- * PHY पूर्णांकerface 118 has पूर्णांकernal only
+ * Finds and reports the PHY address (115 and 117 have external
+ * PHY interface 118 has internal only
  */
-अटल व्योम smc911x_phy_detect(काष्ठा net_device *dev)
-अणु
-	काष्ठा smc911x_local *lp = netdev_priv(dev);
-	पूर्णांक phyaddr;
-	अचिन्हित पूर्णांक cfg, id1, id2;
+static void smc911x_phy_detect(struct net_device *dev)
+{
+	struct smc911x_local *lp = netdev_priv(dev);
+	int phyaddr;
+	unsigned int cfg, id1, id2;
 
 	DBG(SMC_DEBUG_FUNC, dev, "--> %s\n", __func__);
 
 	lp->phy_type = 0;
 
 	/*
-	 * Scan all 32 PHY addresses अगर necessary, starting at
+	 * Scan all 32 PHY addresses if necessary, starting at
 	 * PHY#1 to PHY#31, and then PHY#0 last.
 	 */
-	चयन(lp->version) अणु
-		हाल CHIP_9115:
-		हाल CHIP_9117:
-		हाल CHIP_9215:
-		हाल CHIP_9217:
+	switch(lp->version) {
+		case CHIP_9115:
+		case CHIP_9117:
+		case CHIP_9215:
+		case CHIP_9217:
 			cfg = SMC_GET_HW_CFG(lp);
-			अगर (cfg & HW_CFG_EXT_PHY_DET_) अणु
+			if (cfg & HW_CFG_EXT_PHY_DET_) {
 				cfg &= ~HW_CFG_PHY_CLK_SEL_;
 				cfg |= HW_CFG_PHY_CLK_SEL_CLK_DIS_;
 				SMC_SET_HW_CFG(lp, cfg);
-				udelay(10); /* Wait क्रम घड़ीs to stop */
+				udelay(10); /* Wait for clocks to stop */
 
 				cfg |= HW_CFG_EXT_PHY_EN_;
 				SMC_SET_HW_CFG(lp, cfg);
-				udelay(10); /* Wait क्रम घड़ीs to stop */
+				udelay(10); /* Wait for clocks to stop */
 
 				cfg &= ~HW_CFG_PHY_CLK_SEL_;
 				cfg |= HW_CFG_PHY_CLK_SEL_EXT_PHY_;
 				SMC_SET_HW_CFG(lp, cfg);
-				udelay(10); /* Wait क्रम घड़ीs to stop */
+				udelay(10); /* Wait for clocks to stop */
 
 				cfg |= HW_CFG_SMI_SEL_;
 				SMC_SET_HW_CFG(lp, cfg);
 
-				क्रम (phyaddr = 1; phyaddr < 32; ++phyaddr) अणु
+				for (phyaddr = 1; phyaddr < 32; ++phyaddr) {
 
-					/* Read the PHY identअगरiers */
+					/* Read the PHY identifiers */
 					SMC_GET_PHY_ID1(lp, phyaddr & 31, id1);
 					SMC_GET_PHY_ID2(lp, phyaddr & 31, id2);
 
-					/* Make sure it is a valid identअगरier */
-					अगर (id1 != 0x0000 && id1 != 0xffff &&
+					/* Make sure it is a valid identifier */
+					if (id1 != 0x0000 && id1 != 0xffff &&
 					    id1 != 0x8000 && id2 != 0x0000 &&
-					    id2 != 0xffff && id2 != 0x8000) अणु
+					    id2 != 0xffff && id2 != 0x8000) {
 						/* Save the PHY's address */
 						lp->mii.phy_id = phyaddr & 31;
 						lp->phy_type = id1 << 16 | id2;
-						अवरोध;
-					पूर्ण
-				पूर्ण
-				अगर (phyaddr < 32)
-					/* Found an बाह्यal PHY */
-					अवरोध;
-			पूर्ण
+						break;
+					}
+				}
+				if (phyaddr < 32)
+					/* Found an external PHY */
+					break;
+			}
 			fallthrough;
-		शेष:
+		default:
 			/* Internal media only */
 			SMC_GET_PHY_ID1(lp, 1, id1);
 			SMC_GET_PHY_ID2(lp, 1, id2);
 			/* Save the PHY's address */
 			lp->mii.phy_id = 1;
 			lp->phy_type = id1 << 16 | id2;
-	पूर्ण
+	}
 
 	DBG(SMC_DEBUG_MISC, dev, "phy_id1=0x%x, phy_id2=0x%x phyaddr=0x%x\n",
 	    id1, id2, lp->mii.phy_id);
-पूर्ण
+}
 
 /*
  * Sets the PHY to a configuration as determined by the user.
  * Called with spin_lock held.
  */
-अटल पूर्णांक smc911x_phy_fixed(काष्ठा net_device *dev)
-अणु
-	काष्ठा smc911x_local *lp = netdev_priv(dev);
-	पूर्णांक phyaddr = lp->mii.phy_id;
-	पूर्णांक bmcr;
+static int smc911x_phy_fixed(struct net_device *dev)
+{
+	struct smc911x_local *lp = netdev_priv(dev);
+	int phyaddr = lp->mii.phy_id;
+	int bmcr;
 
 	DBG(SMC_DEBUG_FUNC, dev, "--> %s\n", __func__);
 
@@ -749,43 +748,43 @@ smc911x_hard_start_xmit(काष्ठा sk_buff *skb, काष्ठा net_
 
 	/*
 	 * Set our fixed capabilities
-	 * Disable स्वतः-negotiation
+	 * Disable auto-negotiation
 	 */
 	bmcr &= ~BMCR_ANENABLE;
-	अगर (lp->ctl_rfduplx)
+	if (lp->ctl_rfduplx)
 		bmcr |= BMCR_FULLDPLX;
 
-	अगर (lp->ctl_rspeed == 100)
+	if (lp->ctl_rspeed == 100)
 		bmcr |= BMCR_SPEED100;
 
-	/* Write our capabilities to the phy control रेजिस्टर */
+	/* Write our capabilities to the phy control register */
 	SMC_SET_PHY_BMCR(lp, phyaddr, bmcr);
 
-	/* Re-Configure the Receive/Phy Control रेजिस्टर */
+	/* Re-Configure the Receive/Phy Control register */
 	bmcr &= ~BMCR_PDOWN;
 	SMC_SET_PHY_BMCR(lp, phyaddr, bmcr);
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
 /**
  * smc911x_phy_reset - reset the phy
  * @dev: net device
  * @phy: phy address
  *
- * Issue a software reset क्रम the specअगरied PHY and
- * रुको up to 100ms क्रम the reset to complete.	 We should
- * not access the PHY क्रम 50ms after issuing the reset.
+ * Issue a software reset for the specified PHY and
+ * wait up to 100ms for the reset to complete.	 We should
+ * not access the PHY for 50ms after issuing the reset.
  *
- * The समय to रुको appears to be dependent on the PHY.
+ * The time to wait appears to be dependent on the PHY.
  *
  */
-अटल पूर्णांक smc911x_phy_reset(काष्ठा net_device *dev, पूर्णांक phy)
-अणु
-	काष्ठा smc911x_local *lp = netdev_priv(dev);
-	पूर्णांक समयout;
-	अचिन्हित दीर्घ flags;
-	अचिन्हित पूर्णांक reg;
+static int smc911x_phy_reset(struct net_device *dev, int phy)
+{
+	struct smc911x_local *lp = netdev_priv(dev);
+	int timeout;
+	unsigned long flags;
+	unsigned int reg;
 
 	DBG(SMC_DEBUG_FUNC, dev, "--> %s()\n", __func__);
 
@@ -795,152 +794,152 @@ smc911x_hard_start_xmit(काष्ठा sk_buff *skb, काष्ठा net_
 	reg |= PMT_CTRL_PHY_RST_;
 	SMC_SET_PMT_CTRL(lp, reg);
 	spin_unlock_irqrestore(&lp->lock, flags);
-	क्रम (समयout = 2; समयout; समयout--) अणु
+	for (timeout = 2; timeout; timeout--) {
 		msleep(50);
 		spin_lock_irqsave(&lp->lock, flags);
 		reg = SMC_GET_PMT_CTRL(lp);
 		spin_unlock_irqrestore(&lp->lock, flags);
-		अगर (!(reg & PMT_CTRL_PHY_RST_)) अणु
+		if (!(reg & PMT_CTRL_PHY_RST_)) {
 			/* extra delay required because the phy may
 			 * not be completed with its reset
 			 * when PHY_BCR_RESET_ is cleared. 256us
 			 * should suffice, but use 500us to be safe
 			 */
 			udelay(500);
-		अवरोध;
-		पूर्ण
-	पूर्ण
+		break;
+		}
+	}
 
-	वापस reg & PMT_CTRL_PHY_RST_;
-पूर्ण
+	return reg & PMT_CTRL_PHY_RST_;
+}
 
 /**
- * smc911x_phy_घातerकरोwn - घातerकरोwn phy
+ * smc911x_phy_powerdown - powerdown phy
  * @dev: net device
  * @phy: phy address
  *
- * Power करोwn the specअगरied PHY
+ * Power down the specified PHY
  */
-अटल व्योम smc911x_phy_घातerकरोwn(काष्ठा net_device *dev, पूर्णांक phy)
-अणु
-	काष्ठा smc911x_local *lp = netdev_priv(dev);
-	अचिन्हित पूर्णांक bmcr;
+static void smc911x_phy_powerdown(struct net_device *dev, int phy)
+{
+	struct smc911x_local *lp = netdev_priv(dev);
+	unsigned int bmcr;
 
 	/* Enter Link Disable state */
 	SMC_GET_PHY_BMCR(lp, phy, bmcr);
 	bmcr |= BMCR_PDOWN;
 	SMC_SET_PHY_BMCR(lp, phy, bmcr);
-पूर्ण
+}
 
 /**
  * smc911x_phy_check_media - check the media status and adjust BMCR
  * @dev: net device
- * @init: set true क्रम initialisation
+ * @init: set true for initialisation
  *
  * Select duplex mode depending on negotiation state.	This
  * also updates our carrier state.
  */
-अटल व्योम smc911x_phy_check_media(काष्ठा net_device *dev, पूर्णांक init)
-अणु
-	काष्ठा smc911x_local *lp = netdev_priv(dev);
-	पूर्णांक phyaddr = lp->mii.phy_id;
-	अचिन्हित पूर्णांक bmcr, cr;
+static void smc911x_phy_check_media(struct net_device *dev, int init)
+{
+	struct smc911x_local *lp = netdev_priv(dev);
+	int phyaddr = lp->mii.phy_id;
+	unsigned int bmcr, cr;
 
 	DBG(SMC_DEBUG_FUNC, dev, "--> %s\n", __func__);
 
-	अगर (mii_check_media(&lp->mii, netअगर_msg_link(lp), init)) अणु
+	if (mii_check_media(&lp->mii, netif_msg_link(lp), init)) {
 		/* duplex state has changed */
 		SMC_GET_PHY_BMCR(lp, phyaddr, bmcr);
 		SMC_GET_MAC_CR(lp, cr);
-		अगर (lp->mii.full_duplex) अणु
+		if (lp->mii.full_duplex) {
 			DBG(SMC_DEBUG_MISC, dev, "Configuring for full-duplex mode\n");
 			bmcr |= BMCR_FULLDPLX;
 			cr |= MAC_CR_RCVOWN_;
-		पूर्ण अन्यथा अणु
+		} else {
 			DBG(SMC_DEBUG_MISC, dev, "Configuring for half-duplex mode\n");
 			bmcr &= ~BMCR_FULLDPLX;
 			cr &= ~MAC_CR_RCVOWN_;
-		पूर्ण
+		}
 		SMC_SET_PHY_BMCR(lp, phyaddr, bmcr);
 		SMC_SET_MAC_CR(lp, cr);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
- * Configures the specअगरied PHY through the MII management पूर्णांकerface
+ * Configures the specified PHY through the MII management interface
  * using Autonegotiation.
- * Calls smc911x_phy_fixed() अगर the user has requested a certain config.
+ * Calls smc911x_phy_fixed() if the user has requested a certain config.
  * If RPC ANEG bit is set, the media selection is dependent purely on
  * the selection by the MII (either in the MII BMCR reg or the result
- * of स्वतःnegotiation.)  If the RPC ANEG bit is cleared, the selection
+ * of autonegotiation.)  If the RPC ANEG bit is cleared, the selection
  * is controlled by the RPC SPEED and RPC DPLX bits.
  */
-अटल व्योम smc911x_phy_configure(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा smc911x_local *lp = container_of(work, काष्ठा smc911x_local,
+static void smc911x_phy_configure(struct work_struct *work)
+{
+	struct smc911x_local *lp = container_of(work, struct smc911x_local,
 						phy_configure);
-	काष्ठा net_device *dev = lp->netdev;
-	पूर्णांक phyaddr = lp->mii.phy_id;
-	पूर्णांक my_phy_caps; /* My PHY capabilities */
-	पूर्णांक my_ad_caps; /* My Advertised capabilities */
-	पूर्णांक status __always_unused;
-	अचिन्हित दीर्घ flags;
+	struct net_device *dev = lp->netdev;
+	int phyaddr = lp->mii.phy_id;
+	int my_phy_caps; /* My PHY capabilities */
+	int my_ad_caps; /* My Advertised capabilities */
+	int status __always_unused;
+	unsigned long flags;
 
 	DBG(SMC_DEBUG_FUNC, dev, "--> %s()\n", __func__);
 
 	/*
-	 * We should not be called अगर phy_type is zero.
+	 * We should not be called if phy_type is zero.
 	 */
-	अगर (lp->phy_type == 0)
-		वापस;
+	if (lp->phy_type == 0)
+		return;
 
-	अगर (smc911x_phy_reset(dev, phyaddr)) अणु
+	if (smc911x_phy_reset(dev, phyaddr)) {
 		netdev_info(dev, "PHY reset timed out\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 	spin_lock_irqsave(&lp->lock, flags);
 
 	/*
-	 * Enable PHY Interrupts (क्रम रेजिस्टर 18)
+	 * Enable PHY Interrupts (for register 18)
 	 * Interrupts listed here are enabled
 	 */
 	SMC_SET_PHY_INT_MASK(lp, phyaddr, PHY_INT_MASK_ENERGY_ON_ |
 		 PHY_INT_MASK_ANEG_COMP_ | PHY_INT_MASK_REMOTE_FAULT_ |
 		 PHY_INT_MASK_LINK_DOWN_);
 
-	/* If the user requested no स्वतः neg, then go set his request */
-	अगर (lp->mii.क्रमce_media) अणु
+	/* If the user requested no auto neg, then go set his request */
+	if (lp->mii.force_media) {
 		smc911x_phy_fixed(dev);
-		जाओ smc911x_phy_configure_निकास;
-	पूर्ण
+		goto smc911x_phy_configure_exit;
+	}
 
 	/* Copy our capabilities from MII_BMSR to MII_ADVERTISE */
 	SMC_GET_PHY_BMSR(lp, phyaddr, my_phy_caps);
-	अगर (!(my_phy_caps & BMSR_ANEGCAPABLE)) अणु
+	if (!(my_phy_caps & BMSR_ANEGCAPABLE)) {
 		netdev_info(dev, "Auto negotiation NOT supported\n");
 		smc911x_phy_fixed(dev);
-		जाओ smc911x_phy_configure_निकास;
-	पूर्ण
+		goto smc911x_phy_configure_exit;
+	}
 
-	/* CSMA capable w/ both छोड़ोs */
+	/* CSMA capable w/ both pauses */
 	my_ad_caps = ADVERTISE_CSMA | ADVERTISE_PAUSE_CAP | ADVERTISE_PAUSE_ASYM;
 
-	अगर (my_phy_caps & BMSR_100BASE4)
+	if (my_phy_caps & BMSR_100BASE4)
 		my_ad_caps |= ADVERTISE_100BASE4;
-	अगर (my_phy_caps & BMSR_100FULL)
+	if (my_phy_caps & BMSR_100FULL)
 		my_ad_caps |= ADVERTISE_100FULL;
-	अगर (my_phy_caps & BMSR_100HALF)
+	if (my_phy_caps & BMSR_100HALF)
 		my_ad_caps |= ADVERTISE_100HALF;
-	अगर (my_phy_caps & BMSR_10FULL)
+	if (my_phy_caps & BMSR_10FULL)
 		my_ad_caps |= ADVERTISE_10FULL;
-	अगर (my_phy_caps & BMSR_10HALF)
+	if (my_phy_caps & BMSR_10HALF)
 		my_ad_caps |= ADVERTISE_10HALF;
 
 	/* Disable capabilities not selected by our user */
-	अगर (lp->ctl_rspeed != 100)
+	if (lp->ctl_rspeed != 100)
 		my_ad_caps &= ~(ADVERTISE_100BASE4|ADVERTISE_100FULL|ADVERTISE_100HALF);
 
-	अगर (!lp->ctl_rfduplx)
+	if (!lp->ctl_rfduplx)
 		my_ad_caps &= ~(ADVERTISE_100FULL|ADVERTISE_10FULL);
 
 	/* Update our Auto-Neg Advertisement Register */
@@ -948,9 +947,9 @@ smc911x_hard_start_xmit(काष्ठा sk_buff *skb, काष्ठा net_
 	lp->mii.advertising = my_ad_caps;
 
 	/*
-	 * Read the रेजिस्टर back.	 Without this, it appears that when
-	 * स्वतः-negotiation is restarted, someबार it isn't पढ़ोy and
-	 * the link करोes not come up.
+	 * Read the register back.	 Without this, it appears that when
+	 * auto-negotiation is restarted, sometimes it isn't ready and
+	 * the link does not come up.
 	 */
 	udelay(10);
 	SMC_GET_PHY_MII_ADV(lp, phyaddr, status);
@@ -958,168 +957,168 @@ smc911x_hard_start_xmit(काष्ठा sk_buff *skb, काष्ठा net_
 	DBG(SMC_DEBUG_MISC, dev, "phy caps=0x%04x\n", my_phy_caps);
 	DBG(SMC_DEBUG_MISC, dev, "phy advertised caps=0x%04x\n", my_ad_caps);
 
-	/* Restart स्वतः-negotiation process in order to advertise my caps */
+	/* Restart auto-negotiation process in order to advertise my caps */
 	SMC_SET_PHY_BMCR(lp, phyaddr, BMCR_ANENABLE | BMCR_ANRESTART);
 
 	smc911x_phy_check_media(dev, 1);
 
-smc911x_phy_configure_निकास:
+smc911x_phy_configure_exit:
 	spin_unlock_irqrestore(&lp->lock, flags);
-पूर्ण
+}
 
 /*
- * smc911x_phy_पूर्णांकerrupt
+ * smc911x_phy_interrupt
  *
- * Purpose:  Handle पूर्णांकerrupts relating to PHY रेजिस्टर 18. This is
- *	 called from the "hard" पूर्णांकerrupt handler under our निजी spinlock.
+ * Purpose:  Handle interrupts relating to PHY register 18. This is
+ *	 called from the "hard" interrupt handler under our private spinlock.
  */
-अटल व्योम smc911x_phy_पूर्णांकerrupt(काष्ठा net_device *dev)
-अणु
-	काष्ठा smc911x_local *lp = netdev_priv(dev);
-	पूर्णांक phyaddr = lp->mii.phy_id;
-	पूर्णांक status __always_unused;
+static void smc911x_phy_interrupt(struct net_device *dev)
+{
+	struct smc911x_local *lp = netdev_priv(dev);
+	int phyaddr = lp->mii.phy_id;
+	int status __always_unused;
 
 	DBG(SMC_DEBUG_FUNC, dev, "--> %s\n", __func__);
 
-	अगर (lp->phy_type == 0)
-		वापस;
+	if (lp->phy_type == 0)
+		return;
 
 	smc911x_phy_check_media(dev, 0);
-	/* पढ़ो to clear status bits */
+	/* read to clear status bits */
 	SMC_GET_PHY_INT_SRC(lp, phyaddr,status);
 	DBG(SMC_DEBUG_MISC, dev, "PHY interrupt status 0x%04x\n",
 	    status & 0xffff);
 	DBG(SMC_DEBUG_MISC, dev, "AFC_CFG 0x%08x\n",
 	    SMC_GET_AFC_CFG(lp));
-पूर्ण
+}
 
 /*--- END PHY CONTROL AND CONFIGURATION-------------------------------------*/
 
 /*
- * This is the मुख्य routine of the driver, to handle the device when
+ * This is the main routine of the driver, to handle the device when
  * it needs some attention.
  */
-अटल irqवापस_t smc911x_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा net_device *dev = dev_id;
-	काष्ठा smc911x_local *lp = netdev_priv(dev);
-	अचिन्हित पूर्णांक status, mask, समयout;
-	अचिन्हित पूर्णांक rx_overrun=0, cr, pkts;
-	अचिन्हित दीर्घ flags;
+static irqreturn_t smc911x_interrupt(int irq, void *dev_id)
+{
+	struct net_device *dev = dev_id;
+	struct smc911x_local *lp = netdev_priv(dev);
+	unsigned int status, mask, timeout;
+	unsigned int rx_overrun=0, cr, pkts;
+	unsigned long flags;
 
 	DBG(SMC_DEBUG_FUNC, dev, "--> %s\n", __func__);
 
 	spin_lock_irqsave(&lp->lock, flags);
 
-	/* Spurious पूर्णांकerrupt check */
-	अगर ((SMC_GET_IRQ_CFG(lp) & (INT_CFG_IRQ_INT_ | INT_CFG_IRQ_EN_)) !=
-		(INT_CFG_IRQ_INT_ | INT_CFG_IRQ_EN_)) अणु
+	/* Spurious interrupt check */
+	if ((SMC_GET_IRQ_CFG(lp) & (INT_CFG_IRQ_INT_ | INT_CFG_IRQ_EN_)) !=
+		(INT_CFG_IRQ_INT_ | INT_CFG_IRQ_EN_)) {
 		spin_unlock_irqrestore(&lp->lock, flags);
-		वापस IRQ_NONE;
-	पूर्ण
+		return IRQ_NONE;
+	}
 
 	mask = SMC_GET_INT_EN(lp);
 	SMC_SET_INT_EN(lp, 0);
 
-	/* set a समयout value, so I करोn't stay here क्रमever */
-	समयout = 8;
+	/* set a timeout value, so I don't stay here forever */
+	timeout = 8;
 
 
-	करो अणु
+	do {
 		status = SMC_GET_INT(lp);
 
 		DBG(SMC_DEBUG_MISC, dev, "INT 0x%08x MASK 0x%08x OUTSIDE MASK 0x%08x\n",
 		    status, mask, status & ~mask);
 
 		status &= mask;
-		अगर (!status)
-			अवरोध;
+		if (!status)
+			break;
 
-		/* Handle SW पूर्णांकerrupt condition */
-		अगर (status & INT_STS_SW_INT_) अणु
+		/* Handle SW interrupt condition */
+		if (status & INT_STS_SW_INT_) {
 			SMC_ACK_INT(lp, INT_STS_SW_INT_);
 			mask &= ~INT_EN_SW_INT_EN_;
-		पूर्ण
+		}
 		/* Handle various error conditions */
-		अगर (status & INT_STS_RXE_) अणु
+		if (status & INT_STS_RXE_) {
 			SMC_ACK_INT(lp, INT_STS_RXE_);
 			dev->stats.rx_errors++;
-		पूर्ण
-		अगर (status & INT_STS_RXDFH_INT_) अणु
+		}
+		if (status & INT_STS_RXDFH_INT_) {
 			SMC_ACK_INT(lp, INT_STS_RXDFH_INT_);
 			dev->stats.rx_dropped+=SMC_GET_RX_DROP(lp);
-		 पूर्ण
-		/* Unकरोcumented पूर्णांकerrupt-what is the right thing to करो here? */
-		अगर (status & INT_STS_RXDF_INT_) अणु
+		 }
+		/* Undocumented interrupt-what is the right thing to do here? */
+		if (status & INT_STS_RXDF_INT_) {
 			SMC_ACK_INT(lp, INT_STS_RXDF_INT_);
-		पूर्ण
+		}
 
 		/* Rx Data FIFO exceeds set level */
-		अगर (status & INT_STS_RDFL_) अणु
-			अगर (IS_REV_A(lp->revision)) अणु
+		if (status & INT_STS_RDFL_) {
+			if (IS_REV_A(lp->revision)) {
 				rx_overrun=1;
 				SMC_GET_MAC_CR(lp, cr);
 				cr &= ~MAC_CR_RXEN_;
 				SMC_SET_MAC_CR(lp, cr);
 				DBG(SMC_DEBUG_RX, dev, "RX overrun\n");
 				dev->stats.rx_errors++;
-				dev->stats.rx_fअगरo_errors++;
-			पूर्ण
+				dev->stats.rx_fifo_errors++;
+			}
 			SMC_ACK_INT(lp, INT_STS_RDFL_);
-		पूर्ण
-		अगर (status & INT_STS_RDFO_) अणु
-			अगर (!IS_REV_A(lp->revision)) अणु
+		}
+		if (status & INT_STS_RDFO_) {
+			if (!IS_REV_A(lp->revision)) {
 				SMC_GET_MAC_CR(lp, cr);
 				cr &= ~MAC_CR_RXEN_;
 				SMC_SET_MAC_CR(lp, cr);
 				rx_overrun=1;
 				DBG(SMC_DEBUG_RX, dev, "RX overrun\n");
 				dev->stats.rx_errors++;
-				dev->stats.rx_fअगरo_errors++;
-			पूर्ण
+				dev->stats.rx_fifo_errors++;
+			}
 			SMC_ACK_INT(lp, INT_STS_RDFO_);
-		पूर्ण
+		}
 		/* Handle receive condition */
-		अगर ((status & INT_STS_RSFL_) || rx_overrun) अणु
-			अचिन्हित पूर्णांक fअगरo;
+		if ((status & INT_STS_RSFL_) || rx_overrun) {
+			unsigned int fifo;
 			DBG(SMC_DEBUG_RX, dev, "RX irq\n");
-			fअगरo = SMC_GET_RX_FIFO_INF(lp);
-			pkts = (fअगरo & RX_FIFO_INF_RXSUSED_) >> 16;
+			fifo = SMC_GET_RX_FIFO_INF(lp);
+			pkts = (fifo & RX_FIFO_INF_RXSUSED_) >> 16;
 			DBG(SMC_DEBUG_RX, dev, "Rx FIFO pkts %d, bytes %d\n",
-			    pkts, fअगरo & 0xFFFF);
-			अगर (pkts != 0) अणु
-#अगर_घोषित SMC_USE_DMA
-				अचिन्हित पूर्णांक fअगरo;
-				अगर (lp->rxdma_active)अणु
+			    pkts, fifo & 0xFFFF);
+			if (pkts != 0) {
+#ifdef SMC_USE_DMA
+				unsigned int fifo;
+				if (lp->rxdma_active){
 					DBG(SMC_DEBUG_RX | SMC_DEBUG_DMA, dev,
 					    "RX DMA active\n");
-					/* The DMA is alपढ़ोy running so up the IRQ threshold */
-					fअगरo = SMC_GET_FIFO_INT(lp) & ~0xFF;
-					fअगरo |= pkts & 0xFF;
+					/* The DMA is already running so up the IRQ threshold */
+					fifo = SMC_GET_FIFO_INT(lp) & ~0xFF;
+					fifo |= pkts & 0xFF;
 					DBG(SMC_DEBUG_RX, dev,
 					    "Setting RX stat FIFO threshold to %d\n",
-					    fअगरo & 0xff);
-					SMC_SET_FIFO_INT(lp, fअगरo);
-				पूर्ण अन्यथा
-#पूर्ण_अगर
+					    fifo & 0xff);
+					SMC_SET_FIFO_INT(lp, fifo);
+				} else
+#endif
 				smc911x_rcv(dev);
-			पूर्ण
+			}
 			SMC_ACK_INT(lp, INT_STS_RSFL_);
-		पूर्ण
+		}
 		/* Handle transmit FIFO available */
-		अगर (status & INT_STS_TDFA_) अणु
+		if (status & INT_STS_TDFA_) {
 			DBG(SMC_DEBUG_TX, dev, "TX data FIFO space available irq\n");
 			SMC_SET_FIFO_TDA(lp, 0xFF);
 			lp->tx_throttle = 0;
-#अगर_घोषित SMC_USE_DMA
-			अगर (!lp->txdma_active)
-#पूर्ण_अगर
-				netअगर_wake_queue(dev);
+#ifdef SMC_USE_DMA
+			if (!lp->txdma_active)
+#endif
+				netif_wake_queue(dev);
 			SMC_ACK_INT(lp, INT_STS_TDFA_);
-		पूर्ण
-		/* Handle transmit करोne condition */
-#अगर 1
-		अगर (status & (INT_STS_TSFL_ | INT_STS_GPT_INT_)) अणु
+		}
+		/* Handle transmit done condition */
+#if 1
+		if (status & (INT_STS_TSFL_ | INT_STS_GPT_INT_)) {
 			DBG(SMC_DEBUG_TX | SMC_DEBUG_MISC, dev,
 			    "Tx stat FIFO limit (%d) /GPT irq\n",
 			    (SMC_GET_FIFO_INT(lp) & 0x00ff0000) >> 16);
@@ -1127,15 +1126,15 @@ smc911x_phy_configure_निकास:
 			SMC_SET_GPT_CFG(lp, GPT_CFG_TIMER_EN_ | 10000);
 			SMC_ACK_INT(lp, INT_STS_TSFL_);
 			SMC_ACK_INT(lp, INT_STS_TSFL_ | INT_STS_GPT_INT_);
-		पूर्ण
-#अन्यथा
-		अगर (status & INT_STS_TSFL_) अणु
+		}
+#else
+		if (status & INT_STS_TSFL_) {
 			DBG(SMC_DEBUG_TX, dev, "TX status FIFO limit (%d) irq\n", ?);
 			smc911x_tx(dev);
 			SMC_ACK_INT(lp, INT_STS_TSFL_);
-		पूर्ण
+		}
 
-		अगर (status & INT_STS_GPT_INT_) अणु
+		if (status & INT_STS_GPT_INT_) {
 			DBG(SMC_DEBUG_RX, dev, "IRQ_CFG 0x%08x FIFO_INT 0x%08x RX_CFG 0x%08x\n",
 			    SMC_GET_IRQ_CFG(lp),
 			    SMC_GET_FIFO_INT(lp),
@@ -1146,114 +1145,114 @@ smc911x_phy_configure_निकास:
 			    SMC_GET_RX_STS_FIFO_PEEK(lp));
 			SMC_SET_GPT_CFG(lp, GPT_CFG_TIMER_EN_ | 10000);
 			SMC_ACK_INT(lp, INT_STS_GPT_INT_);
-		पूर्ण
-#पूर्ण_अगर
+		}
+#endif
 
-		/* Handle PHY पूर्णांकerrupt condition */
-		अगर (status & INT_STS_PHY_INT_) अणु
+		/* Handle PHY interrupt condition */
+		if (status & INT_STS_PHY_INT_) {
 			DBG(SMC_DEBUG_MISC, dev, "PHY irq\n");
-			smc911x_phy_पूर्णांकerrupt(dev);
+			smc911x_phy_interrupt(dev);
 			SMC_ACK_INT(lp, INT_STS_PHY_INT_);
-		पूर्ण
-	पूर्ण जबतक (--समयout);
+		}
+	} while (--timeout);
 
 	/* restore mask state */
 	SMC_SET_INT_EN(lp, mask);
 
 	DBG(SMC_DEBUG_MISC, dev, "Interrupt done (%d loops)\n",
-	    8-समयout);
+	    8-timeout);
 
 	spin_unlock_irqrestore(&lp->lock, flags);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-#अगर_घोषित SMC_USE_DMA
-अटल व्योम
-smc911x_tx_dma_irq(व्योम *data)
-अणु
-	काष्ठा smc911x_local *lp = data;
-	काष्ठा net_device *dev = lp->netdev;
-	काष्ठा sk_buff *skb = lp->current_tx_skb;
-	अचिन्हित दीर्घ flags;
+#ifdef SMC_USE_DMA
+static void
+smc911x_tx_dma_irq(void *data)
+{
+	struct smc911x_local *lp = data;
+	struct net_device *dev = lp->netdev;
+	struct sk_buff *skb = lp->current_tx_skb;
+	unsigned long flags;
 
 	DBG(SMC_DEBUG_FUNC, dev, "--> %s\n", __func__);
 
 	DBG(SMC_DEBUG_TX | SMC_DEBUG_DMA, dev, "TX DMA irq handler\n");
-	BUG_ON(skb == शून्य);
+	BUG_ON(skb == NULL);
 	dma_unmap_single(lp->dev, tx_dmabuf, tx_dmalen, DMA_TO_DEVICE);
-	netअगर_trans_update(dev);
-	dev_kमुक्त_skb_irq(skb);
-	lp->current_tx_skb = शून्य;
-	अगर (lp->pending_tx_skb != शून्य)
+	netif_trans_update(dev);
+	dev_kfree_skb_irq(skb);
+	lp->current_tx_skb = NULL;
+	if (lp->pending_tx_skb != NULL)
 		smc911x_hardware_send_pkt(dev);
-	अन्यथा अणु
+	else {
 		DBG(SMC_DEBUG_TX | SMC_DEBUG_DMA, dev,
 		    "No pending Tx packets. DMA disabled\n");
 		spin_lock_irqsave(&lp->lock, flags);
 		lp->txdma_active = 0;
-		अगर (!lp->tx_throttle) अणु
-			netअगर_wake_queue(dev);
-		पूर्ण
+		if (!lp->tx_throttle) {
+			netif_wake_queue(dev);
+		}
 		spin_unlock_irqrestore(&lp->lock, flags);
-	पूर्ण
+	}
 
 	DBG(SMC_DEBUG_TX | SMC_DEBUG_DMA, dev,
 	    "TX DMA irq completed\n");
-पूर्ण
-अटल व्योम
-smc911x_rx_dma_irq(व्योम *data)
-अणु
-	काष्ठा smc911x_local *lp = data;
-	काष्ठा net_device *dev = lp->netdev;
-	काष्ठा sk_buff *skb = lp->current_rx_skb;
-	अचिन्हित दीर्घ flags;
-	अचिन्हित पूर्णांक pkts;
+}
+static void
+smc911x_rx_dma_irq(void *data)
+{
+	struct smc911x_local *lp = data;
+	struct net_device *dev = lp->netdev;
+	struct sk_buff *skb = lp->current_rx_skb;
+	unsigned long flags;
+	unsigned int pkts;
 
 	DBG(SMC_DEBUG_FUNC, dev, "--> %s\n", __func__);
 	DBG(SMC_DEBUG_RX | SMC_DEBUG_DMA, dev, "RX DMA irq handler\n");
 	dma_unmap_single(lp->dev, rx_dmabuf, rx_dmalen, DMA_FROM_DEVICE);
-	BUG_ON(skb == शून्य);
-	lp->current_rx_skb = शून्य;
+	BUG_ON(skb == NULL);
+	lp->current_rx_skb = NULL;
 	PRINT_PKT(skb->data, skb->len);
 	skb->protocol = eth_type_trans(skb, dev);
 	dev->stats.rx_packets++;
 	dev->stats.rx_bytes += skb->len;
-	netअगर_rx(skb);
+	netif_rx(skb);
 
 	spin_lock_irqsave(&lp->lock, flags);
 	pkts = (SMC_GET_RX_FIFO_INF(lp) & RX_FIFO_INF_RXSUSED_) >> 16;
-	अगर (pkts != 0) अणु
+	if (pkts != 0) {
 		smc911x_rcv(dev);
-	पूर्णअन्यथा अणु
+	}else {
 		lp->rxdma_active = 0;
-	पूर्ण
+	}
 	spin_unlock_irqrestore(&lp->lock, flags);
 	DBG(SMC_DEBUG_RX | SMC_DEBUG_DMA, dev,
 	    "RX DMA irq completed. DMA RX FIFO PKTS %d\n",
 	    pkts);
-पूर्ण
-#पूर्ण_अगर	 /* SMC_USE_DMA */
+}
+#endif	 /* SMC_USE_DMA */
 
-#अगर_घोषित CONFIG_NET_POLL_CONTROLLER
+#ifdef CONFIG_NET_POLL_CONTROLLER
 /*
  * Polling receive - used by netconsole and other diagnostic tools
- * to allow network i/o with पूर्णांकerrupts disabled.
+ * to allow network i/o with interrupts disabled.
  */
-अटल व्योम smc911x_poll_controller(काष्ठा net_device *dev)
-अणु
+static void smc911x_poll_controller(struct net_device *dev)
+{
 	disable_irq(dev->irq);
-	smc911x_पूर्णांकerrupt(dev->irq, dev);
+	smc911x_interrupt(dev->irq, dev);
 	enable_irq(dev->irq);
-पूर्ण
-#पूर्ण_अगर
+}
+#endif
 
-/* Our watchकरोg समयd out. Called by the networking layer */
-अटल व्योम smc911x_समयout(काष्ठा net_device *dev, अचिन्हित पूर्णांक txqueue)
-अणु
-	काष्ठा smc911x_local *lp = netdev_priv(dev);
-	पूर्णांक status, mask;
-	अचिन्हित दीर्घ flags;
+/* Our watchdog timed out. Called by the networking layer */
+static void smc911x_timeout(struct net_device *dev, unsigned int txqueue)
+{
+	struct smc911x_local *lp = netdev_priv(dev);
+	int status, mask;
+	unsigned long flags;
 
 	DBG(SMC_DEBUG_FUNC, dev, "--> %s\n", __func__);
 
@@ -1268,30 +1267,30 @@ smc911x_rx_dma_irq(व्योम *data)
 	mask = SMC_GET_TX_CFG(lp);
 	SMC_SET_TX_CFG(lp, mask | TX_CFG_TXS_DUMP_ | TX_CFG_TXD_DUMP_);
 	/*
-	 * Reconfiguring the PHY करोesn't seem like a bad idea here, but
-	 * smc911x_phy_configure() calls msleep() which calls schedule_समयout()
+	 * Reconfiguring the PHY doesn't seem like a bad idea here, but
+	 * smc911x_phy_configure() calls msleep() which calls schedule_timeout()
 	 * which calls schedule().	 Hence we use a work queue.
 	 */
-	अगर (lp->phy_type != 0)
+	if (lp->phy_type != 0)
 		schedule_work(&lp->phy_configure);
 
 	/* We can accept TX packets again */
-	netअगर_trans_update(dev); /* prevent tx समयout */
-	netअगर_wake_queue(dev);
-पूर्ण
+	netif_trans_update(dev); /* prevent tx timeout */
+	netif_wake_queue(dev);
+}
 
 /*
  * This routine will, depending on the values passed to it,
- * either make it accept multicast packets, go पूर्णांकo
- * promiscuous mode (क्रम TCPDUMP and cousins) or accept
+ * either make it accept multicast packets, go into
+ * promiscuous mode (for TCPDUMP and cousins) or accept
  * a select set of multicast packets
  */
-अटल व्योम smc911x_set_multicast_list(काष्ठा net_device *dev)
-अणु
-	काष्ठा smc911x_local *lp = netdev_priv(dev);
-	अचिन्हित पूर्णांक multicast_table[2];
-	अचिन्हित पूर्णांक mcr, update_multicast = 0;
-	अचिन्हित दीर्घ flags;
+static void smc911x_set_multicast_list(struct net_device *dev)
+{
+	struct smc911x_local *lp = netdev_priv(dev);
+	unsigned int multicast_table[2];
+	unsigned int mcr, update_multicast = 0;
+	unsigned long flags;
 
 	DBG(SMC_DEBUG_FUNC, dev, "--> %s\n", __func__);
 
@@ -1299,57 +1298,57 @@ smc911x_rx_dma_irq(व्योम *data)
 	SMC_GET_MAC_CR(lp, mcr);
 	spin_unlock_irqrestore(&lp->lock, flags);
 
-	अगर (dev->flags & IFF_PROMISC) अणु
+	if (dev->flags & IFF_PROMISC) {
 
 		DBG(SMC_DEBUG_MISC, dev, "RCR_PRMS\n");
 		mcr |= MAC_CR_PRMS_;
-	पूर्ण
+	}
 	/*
 	 * Here, I am setting this to accept all multicast packets.
-	 * I करोn't need to zero the multicast table, because the flag is
-	 * checked beक्रमe the table is
+	 * I don't need to zero the multicast table, because the flag is
+	 * checked before the table is
 	 */
-	अन्यथा अगर (dev->flags & IFF_ALLMULTI || netdev_mc_count(dev) > 16) अणु
+	else if (dev->flags & IFF_ALLMULTI || netdev_mc_count(dev) > 16) {
 		DBG(SMC_DEBUG_MISC, dev, "RCR_ALMUL\n");
 		mcr |= MAC_CR_MCPAS_;
-	पूर्ण
+	}
 
 	/*
-	 * This sets the पूर्णांकernal hardware table to filter out unwanted
-	 * multicast packets beक्रमe they take up memory.
+	 * This sets the internal hardware table to filter out unwanted
+	 * multicast packets before they take up memory.
 	 *
 	 * The SMC chip uses a hash table where the high 6 bits of the CRC of
-	 * address are the offset पूर्णांकo the table.	If that bit is 1, then the
+	 * address are the offset into the table.	If that bit is 1, then the
 	 * multicast packet is accepted.  Otherwise, it's dropped silently.
 	 *
-	 * To use the 6 bits as an offset पूर्णांकo the table, the high 1 bit is
-	 * the number of the 32 bit रेजिस्टर, जबतक the low 5 bits are the bit
-	 * within that रेजिस्टर.
+	 * To use the 6 bits as an offset into the table, the high 1 bit is
+	 * the number of the 32 bit register, while the low 5 bits are the bit
+	 * within that register.
 	 */
-	अन्यथा अगर (!netdev_mc_empty(dev)) अणु
-		काष्ठा netdev_hw_addr *ha;
+	else if (!netdev_mc_empty(dev)) {
+		struct netdev_hw_addr *ha;
 
 		/* Set the Hash perfec mode */
 		mcr |= MAC_CR_HPFILT_;
 
 		/* start with a table of all zeros: reject all */
-		स_रखो(multicast_table, 0, माप(multicast_table));
+		memset(multicast_table, 0, sizeof(multicast_table));
 
-		netdev_क्रम_each_mc_addr(ha, dev) अणु
+		netdev_for_each_mc_addr(ha, dev) {
 			u32 position;
 
 			/* upper 6 bits are used as hash index */
 			position = ether_crc(ETH_ALEN, ha->addr)>>26;
 
 			multicast_table[position>>5] |= 1 << (position&0x1f);
-		पूर्ण
+		}
 
 		/* be sure I get rid of flags I might have set */
 		mcr &= ~(MAC_CR_PRMS_ | MAC_CR_MCPAS_);
 
-		/* now, the table can be loaded पूर्णांकo the chipset */
+		/* now, the table can be loaded into the chipset */
 		update_multicast = 1;
-	पूर्ण अन्यथा	 अणु
+	} else	 {
 		DBG(SMC_DEBUG_MISC, dev, "~(MAC_CR_PRMS_|MAC_CR_MCPAS_)\n");
 		mcr &= ~(MAC_CR_PRMS_ | MAC_CR_MCPAS_);
 
@@ -1357,21 +1356,21 @@ smc911x_rx_dma_irq(व्योम *data)
 		 * since I'm disabling all multicast entirely, I need to
 		 * clear the multicast list
 		 */
-		स_रखो(multicast_table, 0, माप(multicast_table));
+		memset(multicast_table, 0, sizeof(multicast_table));
 		update_multicast = 1;
-	पूर्ण
+	}
 
 	spin_lock_irqsave(&lp->lock, flags);
 	SMC_SET_MAC_CR(lp, mcr);
-	अगर (update_multicast) अणु
+	if (update_multicast) {
 		DBG(SMC_DEBUG_MISC, dev,
 		    "update mcast hash table 0x%08x 0x%08x\n",
 		    multicast_table[0], multicast_table[1]);
 		SMC_SET_HASHL(lp, multicast_table[0]);
 		SMC_SET_HASHH(lp, multicast_table[1]);
-	पूर्ण
+	}
 	spin_unlock_irqrestore(&lp->lock, flags);
-पूर्ण
+}
 
 
 /*
@@ -1379,10 +1378,10 @@ smc911x_rx_dma_irq(व्योम *data)
  *
  * Set up everything, reset the card, etc..
  */
-अटल पूर्णांक
-smc911x_खोलो(काष्ठा net_device *dev)
-अणु
-	काष्ठा smc911x_local *lp = netdev_priv(dev);
+static int
+smc911x_open(struct net_device *dev)
+{
+	struct smc911x_local *lp = netdev_priv(dev);
 
 	DBG(SMC_DEBUG_FUNC, dev, "--> %s\n", __func__);
 
@@ -1395,75 +1394,75 @@ smc911x_खोलो(काष्ठा net_device *dev)
 	/* Turn on Tx + Rx */
 	smc911x_enable(dev);
 
-	netअगर_start_queue(dev);
+	netif_start_queue(dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * smc911x_बंद
+ * smc911x_close
  *
  * this makes the board clean up everything that it can
  * and not talk to the outside world.	 Caused by
  * an 'ifconfig ethX down'
  */
-अटल पूर्णांक smc911x_बंद(काष्ठा net_device *dev)
-अणु
-	काष्ठा smc911x_local *lp = netdev_priv(dev);
+static int smc911x_close(struct net_device *dev)
+{
+	struct smc911x_local *lp = netdev_priv(dev);
 
 	DBG(SMC_DEBUG_FUNC, dev, "--> %s\n", __func__);
 
-	netअगर_stop_queue(dev);
-	netअगर_carrier_off(dev);
+	netif_stop_queue(dev);
+	netif_carrier_off(dev);
 
 	/* clear everything */
-	smc911x_shutकरोwn(dev);
+	smc911x_shutdown(dev);
 
-	अगर (lp->phy_type != 0) अणु
+	if (lp->phy_type != 0) {
 		/* We need to ensure that no calls to
 		 * smc911x_phy_configure are pending.
 		 */
 		cancel_work_sync(&lp->phy_configure);
-		smc911x_phy_घातerकरोwn(dev, lp->mii.phy_id);
-	पूर्ण
+		smc911x_phy_powerdown(dev, lp->mii.phy_id);
+	}
 
-	अगर (lp->pending_tx_skb) अणु
-		dev_kमुक्त_skb(lp->pending_tx_skb);
-		lp->pending_tx_skb = शून्य;
-	पूर्ण
+	if (lp->pending_tx_skb) {
+		dev_kfree_skb(lp->pending_tx_skb);
+		lp->pending_tx_skb = NULL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Ethtool support
  */
-अटल पूर्णांक
-smc911x_ethtool_get_link_ksettings(काष्ठा net_device *dev,
-				   काष्ठा ethtool_link_ksettings *cmd)
-अणु
-	काष्ठा smc911x_local *lp = netdev_priv(dev);
-	पूर्णांक status;
-	अचिन्हित दीर्घ flags;
+static int
+smc911x_ethtool_get_link_ksettings(struct net_device *dev,
+				   struct ethtool_link_ksettings *cmd)
+{
+	struct smc911x_local *lp = netdev_priv(dev);
+	int status;
+	unsigned long flags;
 	u32 supported;
 
 	DBG(SMC_DEBUG_FUNC, dev, "--> %s\n", __func__);
 
-	अगर (lp->phy_type != 0) अणु
+	if (lp->phy_type != 0) {
 		spin_lock_irqsave(&lp->lock, flags);
 		mii_ethtool_get_link_ksettings(&lp->mii, cmd);
 		spin_unlock_irqrestore(&lp->lock, flags);
-	पूर्ण अन्यथा अणु
+	} else {
 		supported = SUPPORTED_10baseT_Half |
 				SUPPORTED_10baseT_Full |
 				SUPPORTED_TP | SUPPORTED_AUI;
 
-		अगर (lp->ctl_rspeed == 10)
+		if (lp->ctl_rspeed == 10)
 			cmd->base.speed = SPEED_10;
-		अन्यथा अगर (lp->ctl_rspeed == 100)
+		else if (lp->ctl_rspeed == 100)
 			cmd->base.speed = SPEED_100;
 
-		cmd->base.स्वतःneg = AUTONEG_DISABLE;
+		cmd->base.autoneg = AUTONEG_DISABLE;
 		cmd->base.port = 0;
 		SMC_GET_PHY_SPECIAL(lp, lp->mii.phy_id, status);
 		cmd->base.duplex =
@@ -1473,217 +1472,217 @@ smc911x_ethtool_get_link_ksettings(काष्ठा net_device *dev,
 		ethtool_convert_legacy_u32_to_link_mode(
 			cmd->link_modes.supported, supported);
 
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-smc911x_ethtool_set_link_ksettings(काष्ठा net_device *dev,
-				   स्थिर काष्ठा ethtool_link_ksettings *cmd)
-अणु
-	काष्ठा smc911x_local *lp = netdev_priv(dev);
-	पूर्णांक ret;
-	अचिन्हित दीर्घ flags;
+static int
+smc911x_ethtool_set_link_ksettings(struct net_device *dev,
+				   const struct ethtool_link_ksettings *cmd)
+{
+	struct smc911x_local *lp = netdev_priv(dev);
+	int ret;
+	unsigned long flags;
 
-	अगर (lp->phy_type != 0) अणु
+	if (lp->phy_type != 0) {
 		spin_lock_irqsave(&lp->lock, flags);
 		ret = mii_ethtool_set_link_ksettings(&lp->mii, cmd);
 		spin_unlock_irqrestore(&lp->lock, flags);
-	पूर्ण अन्यथा अणु
-		अगर (cmd->base.स्वतःneg != AUTONEG_DISABLE ||
+	} else {
+		if (cmd->base.autoneg != AUTONEG_DISABLE ||
 		    cmd->base.speed != SPEED_10 ||
 		    (cmd->base.duplex != DUPLEX_HALF &&
 		     cmd->base.duplex != DUPLEX_FULL) ||
 		    (cmd->base.port != PORT_TP &&
 		     cmd->base.port != PORT_AUI))
-			वापस -EINVAL;
+			return -EINVAL;
 
 		lp->ctl_rfduplx = cmd->base.duplex == DUPLEX_FULL;
 
 		ret = 0;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम
-smc911x_ethtool_getdrvinfo(काष्ठा net_device *dev, काष्ठा ethtool_drvinfo *info)
-अणु
-	strlcpy(info->driver, CARDNAME, माप(info->driver));
-	strlcpy(info->version, version, माप(info->version));
+static void
+smc911x_ethtool_getdrvinfo(struct net_device *dev, struct ethtool_drvinfo *info)
+{
+	strlcpy(info->driver, CARDNAME, sizeof(info->driver));
+	strlcpy(info->version, version, sizeof(info->version));
 	strlcpy(info->bus_info, dev_name(dev->dev.parent),
-		माप(info->bus_info));
-पूर्ण
+		sizeof(info->bus_info));
+}
 
-अटल पूर्णांक smc911x_ethtool_nwayreset(काष्ठा net_device *dev)
-अणु
-	काष्ठा smc911x_local *lp = netdev_priv(dev);
-	पूर्णांक ret = -EINVAL;
-	अचिन्हित दीर्घ flags;
+static int smc911x_ethtool_nwayreset(struct net_device *dev)
+{
+	struct smc911x_local *lp = netdev_priv(dev);
+	int ret = -EINVAL;
+	unsigned long flags;
 
-	अगर (lp->phy_type != 0) अणु
+	if (lp->phy_type != 0) {
 		spin_lock_irqsave(&lp->lock, flags);
 		ret = mii_nway_restart(&lp->mii);
 		spin_unlock_irqrestore(&lp->lock, flags);
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल u32 smc911x_ethtool_geपंचांगsglevel(काष्ठा net_device *dev)
-अणु
-	काष्ठा smc911x_local *lp = netdev_priv(dev);
-	वापस lp->msg_enable;
-पूर्ण
+static u32 smc911x_ethtool_getmsglevel(struct net_device *dev)
+{
+	struct smc911x_local *lp = netdev_priv(dev);
+	return lp->msg_enable;
+}
 
-अटल व्योम smc911x_ethtool_seपंचांगsglevel(काष्ठा net_device *dev, u32 level)
-अणु
-	काष्ठा smc911x_local *lp = netdev_priv(dev);
+static void smc911x_ethtool_setmsglevel(struct net_device *dev, u32 level)
+{
+	struct smc911x_local *lp = netdev_priv(dev);
 	lp->msg_enable = level;
-पूर्ण
+}
 
-अटल पूर्णांक smc911x_ethtool_getregslen(काष्ठा net_device *dev)
-अणु
+static int smc911x_ethtool_getregslen(struct net_device *dev)
+{
 	/* System regs + MAC regs + PHY regs */
-	वापस (((E2P_CMD - ID_REV)/4 + 1) +
-			(WUCSR - MAC_CR)+1 + 32) * माप(u32);
-पूर्ण
+	return (((E2P_CMD - ID_REV)/4 + 1) +
+			(WUCSR - MAC_CR)+1 + 32) * sizeof(u32);
+}
 
-अटल व्योम smc911x_ethtool_getregs(काष्ठा net_device *dev,
-										 काष्ठा ethtool_regs* regs, व्योम *buf)
-अणु
-	काष्ठा smc911x_local *lp = netdev_priv(dev);
-	अचिन्हित दीर्घ flags;
+static void smc911x_ethtool_getregs(struct net_device *dev,
+										 struct ethtool_regs* regs, void *buf)
+{
+	struct smc911x_local *lp = netdev_priv(dev);
+	unsigned long flags;
 	u32 reg,i,j=0;
 	u32 *data = (u32*)buf;
 
 	regs->version = lp->version;
-	क्रम(i=ID_REV;i<=E2P_CMD;i+=4) अणु
+	for(i=ID_REV;i<=E2P_CMD;i+=4) {
 		data[j++] = SMC_inl(lp, i);
-	पूर्ण
-	क्रम(i=MAC_CR;i<=WUCSR;i++) अणु
+	}
+	for(i=MAC_CR;i<=WUCSR;i++) {
 		spin_lock_irqsave(&lp->lock, flags);
 		SMC_GET_MAC_CSR(lp, i, reg);
 		spin_unlock_irqrestore(&lp->lock, flags);
 		data[j++] = reg;
-	पूर्ण
-	क्रम(i=0;i<=31;i++) अणु
+	}
+	for(i=0;i<=31;i++) {
 		spin_lock_irqsave(&lp->lock, flags);
 		SMC_GET_MII(lp, i, lp->mii.phy_id, reg);
 		spin_unlock_irqrestore(&lp->lock, flags);
 		data[j++] = reg & 0xFFFF;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक smc911x_ethtool_रुको_eeprom_पढ़ोy(काष्ठा net_device *dev)
-अणु
-	काष्ठा smc911x_local *lp = netdev_priv(dev);
-	अचिन्हित पूर्णांक समयout;
-	पूर्णांक e2p_cmd;
+static int smc911x_ethtool_wait_eeprom_ready(struct net_device *dev)
+{
+	struct smc911x_local *lp = netdev_priv(dev);
+	unsigned int timeout;
+	int e2p_cmd;
 
 	e2p_cmd = SMC_GET_E2P_CMD(lp);
-	क्रम(समयout=10;(e2p_cmd & E2P_CMD_EPC_BUSY_) && समयout; समयout--) अणु
-		अगर (e2p_cmd & E2P_CMD_EPC_TIMEOUT_) अणु
+	for(timeout=10;(e2p_cmd & E2P_CMD_EPC_BUSY_) && timeout; timeout--) {
+		if (e2p_cmd & E2P_CMD_EPC_TIMEOUT_) {
 			PRINTK(dev, "%s timeout waiting for EEPROM to respond\n",
 			       __func__);
-			वापस -EFAULT;
-		पूर्ण
+			return -EFAULT;
+		}
 		mdelay(1);
 		e2p_cmd = SMC_GET_E2P_CMD(lp);
-	पूर्ण
-	अगर (समयout == 0) अणु
+	}
+	if (timeout == 0) {
 		PRINTK(dev, "%s timeout waiting for EEPROM CMD not busy\n",
 		       __func__);
-		वापस -ETIMEDOUT;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return -ETIMEDOUT;
+	}
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक smc911x_ethtool_ग_लिखो_eeprom_cmd(काष्ठा net_device *dev,
-													पूर्णांक cmd, पूर्णांक addr)
-अणु
-	काष्ठा smc911x_local *lp = netdev_priv(dev);
-	पूर्णांक ret;
+static inline int smc911x_ethtool_write_eeprom_cmd(struct net_device *dev,
+													int cmd, int addr)
+{
+	struct smc911x_local *lp = netdev_priv(dev);
+	int ret;
 
-	अगर ((ret = smc911x_ethtool_रुको_eeprom_पढ़ोy(dev))!=0)
-		वापस ret;
+	if ((ret = smc911x_ethtool_wait_eeprom_ready(dev))!=0)
+		return ret;
 	SMC_SET_E2P_CMD(lp, E2P_CMD_EPC_BUSY_ |
 		((cmd) & (0x7<<28)) |
 		((addr) & 0xFF));
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक smc911x_ethtool_पढ़ो_eeprom_byte(काष्ठा net_device *dev,
+static inline int smc911x_ethtool_read_eeprom_byte(struct net_device *dev,
 													u8 *data)
-अणु
-	काष्ठा smc911x_local *lp = netdev_priv(dev);
-	पूर्णांक ret;
+{
+	struct smc911x_local *lp = netdev_priv(dev);
+	int ret;
 
-	अगर ((ret = smc911x_ethtool_रुको_eeprom_पढ़ोy(dev))!=0)
-		वापस ret;
+	if ((ret = smc911x_ethtool_wait_eeprom_ready(dev))!=0)
+		return ret;
 	*data = SMC_GET_E2P_DATA(lp);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक smc911x_ethtool_ग_लिखो_eeprom_byte(काष्ठा net_device *dev,
+static inline int smc911x_ethtool_write_eeprom_byte(struct net_device *dev,
 													 u8 data)
-अणु
-	काष्ठा smc911x_local *lp = netdev_priv(dev);
-	पूर्णांक ret;
+{
+	struct smc911x_local *lp = netdev_priv(dev);
+	int ret;
 
-	अगर ((ret = smc911x_ethtool_रुको_eeprom_पढ़ोy(dev))!=0)
-		वापस ret;
+	if ((ret = smc911x_ethtool_wait_eeprom_ready(dev))!=0)
+		return ret;
 	SMC_SET_E2P_DATA(lp, data);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक smc911x_ethtool_geteeprom(काष्ठा net_device *dev,
-									  काष्ठा ethtool_eeprom *eeprom, u8 *data)
-अणु
+static int smc911x_ethtool_geteeprom(struct net_device *dev,
+									  struct ethtool_eeprom *eeprom, u8 *data)
+{
 	u8 eebuf[SMC911X_EEPROM_LEN];
-	पूर्णांक i, ret;
+	int i, ret;
 
-	क्रम(i=0;i<SMC911X_EEPROM_LEN;i++) अणु
-		अगर ((ret=smc911x_ethtool_ग_लिखो_eeprom_cmd(dev, E2P_CMD_EPC_CMD_READ_, i ))!=0)
-			वापस ret;
-		अगर ((ret=smc911x_ethtool_पढ़ो_eeprom_byte(dev, &eebuf[i]))!=0)
-			वापस ret;
-		पूर्ण
-	स_नकल(data, eebuf+eeprom->offset, eeprom->len);
-	वापस 0;
-पूर्ण
+	for(i=0;i<SMC911X_EEPROM_LEN;i++) {
+		if ((ret=smc911x_ethtool_write_eeprom_cmd(dev, E2P_CMD_EPC_CMD_READ_, i ))!=0)
+			return ret;
+		if ((ret=smc911x_ethtool_read_eeprom_byte(dev, &eebuf[i]))!=0)
+			return ret;
+		}
+	memcpy(data, eebuf+eeprom->offset, eeprom->len);
+	return 0;
+}
 
-अटल पूर्णांक smc911x_ethtool_seteeprom(काष्ठा net_device *dev,
-									   काष्ठा ethtool_eeprom *eeprom, u8 *data)
-अणु
-	पूर्णांक i, ret;
+static int smc911x_ethtool_seteeprom(struct net_device *dev,
+									   struct ethtool_eeprom *eeprom, u8 *data)
+{
+	int i, ret;
 
 	/* Enable erase */
-	अगर ((ret=smc911x_ethtool_ग_लिखो_eeprom_cmd(dev, E2P_CMD_EPC_CMD_EWEN_, 0 ))!=0)
-		वापस ret;
-	क्रम(i=eeprom->offset;i<(eeprom->offset+eeprom->len);i++) अणु
+	if ((ret=smc911x_ethtool_write_eeprom_cmd(dev, E2P_CMD_EPC_CMD_EWEN_, 0 ))!=0)
+		return ret;
+	for(i=eeprom->offset;i<(eeprom->offset+eeprom->len);i++) {
 		/* erase byte */
-		अगर ((ret=smc911x_ethtool_ग_लिखो_eeprom_cmd(dev, E2P_CMD_EPC_CMD_ERASE_, i ))!=0)
-			वापस ret;
-		/* ग_लिखो byte */
-		अगर ((ret=smc911x_ethtool_ग_लिखो_eeprom_byte(dev, *data))!=0)
-			 वापस ret;
-		अगर ((ret=smc911x_ethtool_ग_लिखो_eeprom_cmd(dev, E2P_CMD_EPC_CMD_WRITE_, i ))!=0)
-			वापस ret;
-		पूर्ण
-	 वापस 0;
-पूर्ण
+		if ((ret=smc911x_ethtool_write_eeprom_cmd(dev, E2P_CMD_EPC_CMD_ERASE_, i ))!=0)
+			return ret;
+		/* write byte */
+		if ((ret=smc911x_ethtool_write_eeprom_byte(dev, *data))!=0)
+			 return ret;
+		if ((ret=smc911x_ethtool_write_eeprom_cmd(dev, E2P_CMD_EPC_CMD_WRITE_, i ))!=0)
+			return ret;
+		}
+	 return 0;
+}
 
-अटल पूर्णांक smc911x_ethtool_geteeprom_len(काष्ठा net_device *dev)
-अणु
-	 वापस SMC911X_EEPROM_LEN;
-पूर्ण
+static int smc911x_ethtool_geteeprom_len(struct net_device *dev)
+{
+	 return SMC911X_EEPROM_LEN;
+}
 
-अटल स्थिर काष्ठा ethtool_ops smc911x_ethtool_ops = अणु
+static const struct ethtool_ops smc911x_ethtool_ops = {
 	.get_drvinfo	 = smc911x_ethtool_getdrvinfo,
-	.get_msglevel	 = smc911x_ethtool_geपंचांगsglevel,
-	.set_msglevel	 = smc911x_ethtool_seपंचांगsglevel,
+	.get_msglevel	 = smc911x_ethtool_getmsglevel,
+	.set_msglevel	 = smc911x_ethtool_setmsglevel,
 	.nway_reset = smc911x_ethtool_nwayreset,
 	.get_link	 = ethtool_op_get_link,
 	.get_regs_len	 = smc911x_ethtool_getregslen,
@@ -1693,282 +1692,282 @@ smc911x_ethtool_getdrvinfo(काष्ठा net_device *dev, काष्ठ�
 	.set_eeprom = smc911x_ethtool_seteeprom,
 	.get_link_ksettings	 = smc911x_ethtool_get_link_ksettings,
 	.set_link_ksettings	 = smc911x_ethtool_set_link_ksettings,
-पूर्ण;
+};
 
 /*
  * smc911x_findirq
  *
  * This routine has a simple purpose -- make the SMC chip generate an
- * पूर्णांकerrupt, so an स्वतः-detect routine can detect it, and find the IRQ,
+ * interrupt, so an auto-detect routine can detect it, and find the IRQ,
  */
-अटल पूर्णांक smc911x_findirq(काष्ठा net_device *dev)
-अणु
-	काष्ठा smc911x_local *lp = netdev_priv(dev);
-	पूर्णांक समयout = 20;
-	अचिन्हित दीर्घ cookie;
+static int smc911x_findirq(struct net_device *dev)
+{
+	struct smc911x_local *lp = netdev_priv(dev);
+	int timeout = 20;
+	unsigned long cookie;
 
 	DBG(SMC_DEBUG_FUNC, dev, "--> %s\n", __func__);
 
 	cookie = probe_irq_on();
 
 	/*
-	 * Force a SW पूर्णांकerrupt
+	 * Force a SW interrupt
 	 */
 
 	SMC_SET_INT_EN(lp, INT_EN_SW_INT_EN_);
 
 	/*
-	 * Wait until positive that the पूर्णांकerrupt has been generated
+	 * Wait until positive that the interrupt has been generated
 	 */
-	करो अणु
-		पूर्णांक पूर्णांक_status;
+	do {
+		int int_status;
 		udelay(10);
-		पूर्णांक_status = SMC_GET_INT_EN(lp);
-		अगर (पूर्णांक_status & INT_EN_SW_INT_EN_)
-			 अवरोध;		/* got the पूर्णांकerrupt */
-	पूर्ण जबतक (--समयout);
+		int_status = SMC_GET_INT_EN(lp);
+		if (int_status & INT_EN_SW_INT_EN_)
+			 break;		/* got the interrupt */
+	} while (--timeout);
 
 	/*
-	 * there is really nothing that I can करो here अगर समयout fails,
-	 * as स्वतःirq_report will वापस a 0 anyway, which is what I
-	 * want in this हाल.	 Plus, the clean up is needed in both
-	 * हालs.
+	 * there is really nothing that I can do here if timeout fails,
+	 * as autoirq_report will return a 0 anyway, which is what I
+	 * want in this case.	 Plus, the clean up is needed in both
+	 * cases.
 	 */
 
-	/* and disable all पूर्णांकerrupts again */
+	/* and disable all interrupts again */
 	SMC_SET_INT_EN(lp, 0);
 
-	/* and वापस what I found */
-	वापस probe_irq_off(cookie);
-पूर्ण
+	/* and return what I found */
+	return probe_irq_off(cookie);
+}
 
-अटल स्थिर काष्ठा net_device_ops smc911x_netdev_ops = अणु
-	.nकरो_खोलो		= smc911x_खोलो,
-	.nकरो_stop		= smc911x_बंद,
-	.nकरो_start_xmit		= smc911x_hard_start_xmit,
-	.nकरो_tx_समयout		= smc911x_समयout,
-	.nकरो_set_rx_mode	= smc911x_set_multicast_list,
-	.nकरो_validate_addr	= eth_validate_addr,
-	.nकरो_set_mac_address	= eth_mac_addr,
-#अगर_घोषित CONFIG_NET_POLL_CONTROLLER
-	.nकरो_poll_controller	= smc911x_poll_controller,
-#पूर्ण_अगर
-पूर्ण;
+static const struct net_device_ops smc911x_netdev_ops = {
+	.ndo_open		= smc911x_open,
+	.ndo_stop		= smc911x_close,
+	.ndo_start_xmit		= smc911x_hard_start_xmit,
+	.ndo_tx_timeout		= smc911x_timeout,
+	.ndo_set_rx_mode	= smc911x_set_multicast_list,
+	.ndo_validate_addr	= eth_validate_addr,
+	.ndo_set_mac_address	= eth_mac_addr,
+#ifdef CONFIG_NET_POLL_CONTROLLER
+	.ndo_poll_controller	= smc911x_poll_controller,
+#endif
+};
 
 /*
- * Function: smc911x_probe(अचिन्हित दीर्घ ioaddr)
+ * Function: smc911x_probe(unsigned long ioaddr)
  *
  * Purpose:
- *	 Tests to see अगर a given ioaddr poपूर्णांकs to an SMC911x chip.
+ *	 Tests to see if a given ioaddr points to an SMC911x chip.
  *	 Returns a 0 on success
  *
  * Algorithm:
- *	 (1) see अगर the endian word is OK
- *	 (1) see अगर I recognize the chip ID in the appropriate रेजिस्टर
+ *	 (1) see if the endian word is OK
+ *	 (1) see if I recognize the chip ID in the appropriate register
  *
- * Here I करो typical initialization tasks.
+ * Here I do typical initialization tasks.
  *
- * o  Initialize the काष्ठाure अगर needed
- * o  prपूर्णांक out my vanity message अगर not करोne so alपढ़ोy
- * o  prपूर्णांक out what type of hardware is detected
- * o  prपूर्णांक out the ethernet address
+ * o  Initialize the structure if needed
+ * o  print out my vanity message if not done so already
+ * o  print out what type of hardware is detected
+ * o  print out the ethernet address
  * o  find the IRQ
- * o  set up my निजी data
- * o  configure the dev काष्ठाure with my subroutines
+ * o  set up my private data
+ * o  configure the dev structure with my subroutines
  * o  actually GRAB the irq.
  * o  GRAB the region
  */
-अटल पूर्णांक smc911x_probe(काष्ठा net_device *dev)
-अणु
-	काष्ठा smc911x_local *lp = netdev_priv(dev);
-	पूर्णांक i, retval;
-	अचिन्हित पूर्णांक val, chip_id, revision;
-	स्थिर अक्षर *version_string;
-	अचिन्हित दीर्घ irq_flags;
-#अगर_घोषित SMC_USE_DMA
-	काष्ठा dma_slave_config	config;
+static int smc911x_probe(struct net_device *dev)
+{
+	struct smc911x_local *lp = netdev_priv(dev);
+	int i, retval;
+	unsigned int val, chip_id, revision;
+	const char *version_string;
+	unsigned long irq_flags;
+#ifdef SMC_USE_DMA
+	struct dma_slave_config	config;
 	dma_cap_mask_t mask;
-#पूर्ण_अगर
+#endif
 
 	DBG(SMC_DEBUG_FUNC, dev, "--> %s\n", __func__);
 
-	/* First, see अगर the endian word is recognized */
+	/* First, see if the endian word is recognized */
 	val = SMC_GET_BYTE_TEST(lp);
 	DBG(SMC_DEBUG_MISC, dev, "%s: endian probe returned 0x%04x\n",
 	    CARDNAME, val);
-	अगर (val != 0x87654321) अणु
+	if (val != 0x87654321) {
 		netdev_err(dev, "Invalid chip endian 0x%08x\n", val);
 		retval = -ENODEV;
-		जाओ err_out;
-	पूर्ण
+		goto err_out;
+	}
 
 	/*
-	 * check अगर the revision रेजिस्टर is something that I
+	 * check if the revision register is something that I
 	 * recognize.	These might need to be added to later,
 	 * as future revisions could be added.
 	 */
 	chip_id = SMC_GET_PN(lp);
 	DBG(SMC_DEBUG_MISC, dev, "%s: id probe returned 0x%04x\n",
 	    CARDNAME, chip_id);
-	क्रम(i=0;chip_ids[i].id != 0; i++) अणु
-		अगर (chip_ids[i].id == chip_id) अवरोध;
-	पूर्ण
-	अगर (!chip_ids[i].id) अणु
+	for(i=0;chip_ids[i].id != 0; i++) {
+		if (chip_ids[i].id == chip_id) break;
+	}
+	if (!chip_ids[i].id) {
 		netdev_err(dev, "Unknown chip ID %04x\n", chip_id);
 		retval = -ENODEV;
-		जाओ err_out;
-	पूर्ण
+		goto err_out;
+	}
 	version_string = chip_ids[i].name;
 
 	revision = SMC_GET_REV(lp);
 	DBG(SMC_DEBUG_MISC, dev, "%s: revision = 0x%04x\n", CARDNAME, revision);
 
-	/* At this poपूर्णांक I'll assume that the chip is an SMC911x. */
+	/* At this point I'll assume that the chip is an SMC911x. */
 	DBG(SMC_DEBUG_MISC, dev, "%s: Found a %s\n",
 	    CARDNAME, chip_ids[i].name);
 
 	/* Validate the TX FIFO size requested */
-	अगर ((tx_fअगरo_kb < 2) || (tx_fअगरo_kb > 14)) अणु
+	if ((tx_fifo_kb < 2) || (tx_fifo_kb > 14)) {
 		netdev_err(dev, "Invalid TX FIFO size requested %d\n",
-			   tx_fअगरo_kb);
+			   tx_fifo_kb);
 		retval = -EINVAL;
-		जाओ err_out;
-	पूर्ण
+		goto err_out;
+	}
 
 	/* fill in some of the fields */
 	lp->version = chip_ids[i].id;
 	lp->revision = revision;
-	lp->tx_fअगरo_kb = tx_fअगरo_kb;
+	lp->tx_fifo_kb = tx_fifo_kb;
 	/* Reverse calculate the RX FIFO size from the TX */
-	lp->tx_fअगरo_size=(lp->tx_fअगरo_kb<<10) - 512;
-	lp->rx_fअगरo_size= ((0x4000 - 512 - lp->tx_fअगरo_size) / 16) * 15;
+	lp->tx_fifo_size=(lp->tx_fifo_kb<<10) - 512;
+	lp->rx_fifo_size= ((0x4000 - 512 - lp->tx_fifo_size) / 16) * 15;
 
-	/* Set the स्वतःmatic flow control values */
-	चयन(lp->tx_fअगरo_kb) अणु
+	/* Set the automatic flow control values */
+	switch(lp->tx_fifo_kb) {
 		/*
-		 *	 AFC_HI is about ((Rx Data Fअगरo Size)*2/3)/64
+		 *	 AFC_HI is about ((Rx Data Fifo Size)*2/3)/64
 		 *	 AFC_LO is AFC_HI/2
-		 *	 BACK_DUR is about 5uS*(AFC_LO) rounded करोwn
+		 *	 BACK_DUR is about 5uS*(AFC_LO) rounded down
 		 */
-		हाल 2:/* 13440 Rx Data Fअगरo Size */
-			lp->afc_cfg=0x008C46AF;अवरोध;
-		हाल 3:/* 12480 Rx Data Fअगरo Size */
-			lp->afc_cfg=0x0082419F;अवरोध;
-		हाल 4:/* 11520 Rx Data Fअगरo Size */
-			lp->afc_cfg=0x00783C9F;अवरोध;
-		हाल 5:/* 10560 Rx Data Fअगरo Size */
-			lp->afc_cfg=0x006E374F;अवरोध;
-		हाल 6:/* 9600 Rx Data Fअगरo Size */
-			lp->afc_cfg=0x0064328F;अवरोध;
-		हाल 7:/* 8640 Rx Data Fअगरo Size */
-			lp->afc_cfg=0x005A2D7F;अवरोध;
-		हाल 8:/* 7680 Rx Data Fअगरo Size */
-			lp->afc_cfg=0x0050287F;अवरोध;
-		हाल 9:/* 6720 Rx Data Fअगरo Size */
-			lp->afc_cfg=0x0046236F;अवरोध;
-		हाल 10:/* 5760 Rx Data Fअगरo Size */
-			lp->afc_cfg=0x003C1E6F;अवरोध;
-		हाल 11:/* 4800 Rx Data Fअगरo Size */
-			lp->afc_cfg=0x0032195F;अवरोध;
+		case 2:/* 13440 Rx Data Fifo Size */
+			lp->afc_cfg=0x008C46AF;break;
+		case 3:/* 12480 Rx Data Fifo Size */
+			lp->afc_cfg=0x0082419F;break;
+		case 4:/* 11520 Rx Data Fifo Size */
+			lp->afc_cfg=0x00783C9F;break;
+		case 5:/* 10560 Rx Data Fifo Size */
+			lp->afc_cfg=0x006E374F;break;
+		case 6:/* 9600 Rx Data Fifo Size */
+			lp->afc_cfg=0x0064328F;break;
+		case 7:/* 8640 Rx Data Fifo Size */
+			lp->afc_cfg=0x005A2D7F;break;
+		case 8:/* 7680 Rx Data Fifo Size */
+			lp->afc_cfg=0x0050287F;break;
+		case 9:/* 6720 Rx Data Fifo Size */
+			lp->afc_cfg=0x0046236F;break;
+		case 10:/* 5760 Rx Data Fifo Size */
+			lp->afc_cfg=0x003C1E6F;break;
+		case 11:/* 4800 Rx Data Fifo Size */
+			lp->afc_cfg=0x0032195F;break;
 		/*
-		 *	 AFC_HI is ~1520 bytes less than RX Data Fअगरo Size
+		 *	 AFC_HI is ~1520 bytes less than RX Data Fifo Size
 		 *	 AFC_LO is AFC_HI/2
-		 *	 BACK_DUR is about 5uS*(AFC_LO) rounded करोwn
+		 *	 BACK_DUR is about 5uS*(AFC_LO) rounded down
 		 */
-		हाल 12:/* 3840 Rx Data Fअगरo Size */
-			lp->afc_cfg=0x0024124F;अवरोध;
-		हाल 13:/* 2880 Rx Data Fअगरo Size */
-			lp->afc_cfg=0x0015073F;अवरोध;
-		हाल 14:/* 1920 Rx Data Fअगरo Size */
-			lp->afc_cfg=0x0006032F;अवरोध;
-		 शेष:
+		case 12:/* 3840 Rx Data Fifo Size */
+			lp->afc_cfg=0x0024124F;break;
+		case 13:/* 2880 Rx Data Fifo Size */
+			lp->afc_cfg=0x0015073F;break;
+		case 14:/* 1920 Rx Data Fifo Size */
+			lp->afc_cfg=0x0006032F;break;
+		 default:
 			 PRINTK(dev, "ERROR -- no AFC_CFG setting found");
-			 अवरोध;
-	पूर्ण
+			 break;
+	}
 
 	DBG(SMC_DEBUG_MISC | SMC_DEBUG_TX | SMC_DEBUG_RX, dev,
 	    "%s: tx_fifo %d rx_fifo %d afc_cfg 0x%08x\n", CARDNAME,
-	    lp->tx_fअगरo_size, lp->rx_fअगरo_size, lp->afc_cfg);
+	    lp->tx_fifo_size, lp->rx_fifo_size, lp->afc_cfg);
 
 	spin_lock_init(&lp->lock);
 
 	/* Get the MAC address */
 	SMC_GET_MAC_ADDR(lp, dev->dev_addr);
 
-	/* now, reset the chip, and put it पूर्णांकo a known state */
+	/* now, reset the chip, and put it into a known state */
 	smc911x_reset(dev);
 
 	/*
 	 * If dev->irq is 0, then the device has to be banged on to see
 	 * what the IRQ is.
 	 *
-	 * Specअगरying an IRQ is करोne with the assumption that the user knows
-	 * what (s)he is करोing.  No checking is करोne!!!!
+	 * Specifying an IRQ is done with the assumption that the user knows
+	 * what (s)he is doing.  No checking is done!!!!
 	 */
-	अगर (dev->irq < 1) अणु
-		पूर्णांक trials;
+	if (dev->irq < 1) {
+		int trials;
 
 		trials = 3;
-		जबतक (trials--) अणु
+		while (trials--) {
 			dev->irq = smc911x_findirq(dev);
-			अगर (dev->irq)
-				अवरोध;
+			if (dev->irq)
+				break;
 			/* kick the card and try again */
 			smc911x_reset(dev);
-		पूर्ण
-	पूर्ण
-	अगर (dev->irq == 0) अणु
+		}
+	}
+	if (dev->irq == 0) {
 		netdev_warn(dev, "Couldn't autodetect your IRQ. Use irq=xx.\n");
 		retval = -ENODEV;
-		जाओ err_out;
-	पूर्ण
+		goto err_out;
+	}
 	dev->irq = irq_canonicalize(dev->irq);
 
 	dev->netdev_ops = &smc911x_netdev_ops;
-	dev->watchकरोg_समयo = msecs_to_jअगरfies(watchकरोg);
+	dev->watchdog_timeo = msecs_to_jiffies(watchdog);
 	dev->ethtool_ops = &smc911x_ethtool_ops;
 
 	INIT_WORK(&lp->phy_configure, smc911x_phy_configure);
 	lp->mii.phy_id_mask = 0x1f;
 	lp->mii.reg_num_mask = 0x1f;
-	lp->mii.क्रमce_media = 0;
+	lp->mii.force_media = 0;
 	lp->mii.full_duplex = 0;
 	lp->mii.dev = dev;
-	lp->mii.mdio_पढ़ो = smc911x_phy_पढ़ो;
-	lp->mii.mdio_ग_लिखो = smc911x_phy_ग_लिखो;
+	lp->mii.mdio_read = smc911x_phy_read;
+	lp->mii.mdio_write = smc911x_phy_write;
 
 	/*
-	 * Locate the phy, अगर any.
+	 * Locate the phy, if any.
 	 */
 	smc911x_phy_detect(dev);
 
-	/* Set शेष parameters */
+	/* Set default parameters */
 	lp->msg_enable = NETIF_MSG_LINK;
 	lp->ctl_rfduplx = 1;
 	lp->ctl_rspeed = 100;
 
-#अगर_घोषित SMC_DYNAMIC_BUS_CONFIG
+#ifdef SMC_DYNAMIC_BUS_CONFIG
 	irq_flags = lp->cfg.irq_flags;
-#अन्यथा
+#else
 	irq_flags = IRQF_SHARED | SMC_IRQ_SENSE;
-#पूर्ण_अगर
+#endif
 
 	/* Grab the IRQ */
-	retval = request_irq(dev->irq, smc911x_पूर्णांकerrupt,
+	retval = request_irq(dev->irq, smc911x_interrupt,
 			     irq_flags, dev->name, dev);
-	अगर (retval)
-		जाओ err_out;
+	if (retval)
+		goto err_out;
 
-#अगर_घोषित SMC_USE_DMA
+#ifdef SMC_USE_DMA
 
 	dma_cap_zero(mask);
 	dma_cap_set(DMA_SLAVE, mask);
-	lp->rxdma = dma_request_channel(mask, शून्य, शून्य);
-	lp->txdma = dma_request_channel(mask, शून्य, शून्य);
+	lp->rxdma = dma_request_channel(mask, NULL, NULL);
+	lp->txdma = dma_request_channel(mask, NULL, NULL);
 	lp->rxdma_active = 0;
 	lp->txdma_active = 0;
 
-	स_रखो(&config, 0, माप(config));
+	memset(&config, 0, sizeof(config));
 	config.src_addr_width = DMA_SLAVE_BUSWIDTH_4_BYTES;
 	config.dst_addr_width = DMA_SLAVE_BUSWIDTH_4_BYTES;
 	config.src_addr = lp->physaddr + RX_DATA_FIFO;
@@ -1976,217 +1975,217 @@ smc911x_ethtool_getdrvinfo(काष्ठा net_device *dev, काष्ठ�
 	config.src_maxburst = 32;
 	config.dst_maxburst = 32;
 	retval = dmaengine_slave_config(lp->rxdma, &config);
-	अगर (retval) अणु
+	if (retval) {
 		dev_err(lp->dev, "dma rx channel configuration failed: %d\n",
 			retval);
-		जाओ err_out;
-	पूर्ण
+		goto err_out;
+	}
 	retval = dmaengine_slave_config(lp->txdma, &config);
-	अगर (retval) अणु
+	if (retval) {
 		dev_err(lp->dev, "dma tx channel configuration failed: %d\n",
 			retval);
-		जाओ err_out;
-	पूर्ण
-#पूर्ण_अगर
+		goto err_out;
+	}
+#endif
 
-	retval = रेजिस्टर_netdev(dev);
-	अगर (retval == 0) अणु
-		/* now, prपूर्णांक out the card info, in a लघु क्रमmat.. */
+	retval = register_netdev(dev);
+	if (retval == 0) {
+		/* now, print out the card info, in a short format.. */
 		netdev_info(dev, "%s (rev %d) at %#lx IRQ %d",
 			    version_string, lp->revision,
 			    dev->base_addr, dev->irq);
 
-#अगर_घोषित SMC_USE_DMA
-		अगर (lp->rxdma)
+#ifdef SMC_USE_DMA
+		if (lp->rxdma)
 			pr_cont(" RXDMA %p", lp->rxdma);
 
-		अगर (lp->txdma)
+		if (lp->txdma)
 			pr_cont(" TXDMA %p", lp->txdma);
-#पूर्ण_अगर
+#endif
 		pr_cont("\n");
-		अगर (!is_valid_ether_addr(dev->dev_addr)) अणु
+		if (!is_valid_ether_addr(dev->dev_addr)) {
 			netdev_warn(dev, "Invalid ethernet MAC address. Please set using ifconfig\n");
-		पूर्ण अन्यथा अणु
-			/* Prपूर्णांक the Ethernet address */
+		} else {
+			/* Print the Ethernet address */
 			netdev_info(dev, "Ethernet addr: %pM\n",
 				    dev->dev_addr);
-		पूर्ण
+		}
 
-		अगर (lp->phy_type == 0) अणु
+		if (lp->phy_type == 0) {
 			PRINTK(dev, "No PHY found\n");
-		पूर्ण अन्यथा अगर ((lp->phy_type & ~0xff) == LAN911X_INTERNAL_PHY_ID) अणु
+		} else if ((lp->phy_type & ~0xff) == LAN911X_INTERNAL_PHY_ID) {
 			PRINTK(dev, "LAN911x Internal PHY\n");
-		पूर्ण अन्यथा अणु
+		} else {
 			PRINTK(dev, "External PHY 0x%08x\n", lp->phy_type);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 err_out:
-#अगर_घोषित SMC_USE_DMA
-	अगर (retval) अणु
-		अगर (lp->rxdma)
+#ifdef SMC_USE_DMA
+	if (retval) {
+		if (lp->rxdma)
 			dma_release_channel(lp->rxdma);
-		अगर (lp->txdma)
+		if (lp->txdma)
 			dma_release_channel(lp->txdma);
-	पूर्ण
-#पूर्ण_अगर
-	वापस retval;
-पूर्ण
+	}
+#endif
+	return retval;
+}
 
 /*
- * smc911x_drv_probe(व्योम)
+ * smc911x_drv_probe(void)
  *
  *	  Output:
  *	 0 --> there is a device
- *	 anything अन्यथा, error
+ *	 anything else, error
  */
-अटल पूर्णांक smc911x_drv_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा net_device *ndev;
-	काष्ठा resource *res;
-	काष्ठा smc911x_local *lp;
-	व्योम __iomem *addr;
-	पूर्णांक ret;
+static int smc911x_drv_probe(struct platform_device *pdev)
+{
+	struct net_device *ndev;
+	struct resource *res;
+	struct smc911x_local *lp;
+	void __iomem *addr;
+	int ret;
 
-	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
-	अगर (!res) अणु
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	if (!res) {
 		ret = -ENODEV;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/*
 	 * Request the regions.
 	 */
-	अगर (!request_mem_region(res->start, SMC911X_IO_EXTENT, CARDNAME)) अणु
+	if (!request_mem_region(res->start, SMC911X_IO_EXTENT, CARDNAME)) {
 		 ret = -EBUSY;
-		 जाओ out;
-	पूर्ण
+		 goto out;
+	}
 
-	ndev = alloc_etherdev(माप(काष्ठा smc911x_local));
-	अगर (!ndev) अणु
+	ndev = alloc_etherdev(sizeof(struct smc911x_local));
+	if (!ndev) {
 		ret = -ENOMEM;
-		जाओ release_1;
-	पूर्ण
+		goto release_1;
+	}
 	SET_NETDEV_DEV(ndev, &pdev->dev);
 
-	ndev->dma = (अचिन्हित अक्षर)-1;
-	ndev->irq = platक्रमm_get_irq(pdev, 0);
+	ndev->dma = (unsigned char)-1;
+	ndev->irq = platform_get_irq(pdev, 0);
 	lp = netdev_priv(ndev);
 	lp->netdev = ndev;
-#अगर_घोषित SMC_DYNAMIC_BUS_CONFIG
-	अणु
-		काष्ठा smc911x_platdata *pd = dev_get_platdata(&pdev->dev);
-		अगर (!pd) अणु
+#ifdef SMC_DYNAMIC_BUS_CONFIG
+	{
+		struct smc911x_platdata *pd = dev_get_platdata(&pdev->dev);
+		if (!pd) {
 			ret = -EINVAL;
-			जाओ release_both;
-		पूर्ण
-		स_नकल(&lp->cfg, pd, माप(lp->cfg));
-	पूर्ण
-#पूर्ण_अगर
+			goto release_both;
+		}
+		memcpy(&lp->cfg, pd, sizeof(lp->cfg));
+	}
+#endif
 
 	addr = ioremap(res->start, SMC911X_IO_EXTENT);
-	अगर (!addr) अणु
+	if (!addr) {
 		ret = -ENOMEM;
-		जाओ release_both;
-	पूर्ण
+		goto release_both;
+	}
 
-	platक्रमm_set_drvdata(pdev, ndev);
+	platform_set_drvdata(pdev, ndev);
 	lp->base = addr;
 	ndev->base_addr = res->start;
 	ret = smc911x_probe(ndev);
-	अगर (ret != 0) अणु
+	if (ret != 0) {
 		iounmap(addr);
 release_both:
-		मुक्त_netdev(ndev);
+		free_netdev(ndev);
 release_1:
 		release_mem_region(res->start, SMC911X_IO_EXTENT);
 out:
 		pr_info("%s: not found (%d).\n", CARDNAME, ret);
-	पूर्ण
-#अगर_घोषित SMC_USE_DMA
-	अन्यथा अणु
+	}
+#ifdef SMC_USE_DMA
+	else {
 		lp->physaddr = res->start;
 		lp->dev = &pdev->dev;
-	पूर्ण
-#पूर्ण_अगर
+	}
+#endif
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक smc911x_drv_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा net_device *ndev = platक्रमm_get_drvdata(pdev);
-	काष्ठा smc911x_local *lp = netdev_priv(ndev);
-	काष्ठा resource *res;
+static int smc911x_drv_remove(struct platform_device *pdev)
+{
+	struct net_device *ndev = platform_get_drvdata(pdev);
+	struct smc911x_local *lp = netdev_priv(ndev);
+	struct resource *res;
 
 	DBG(SMC_DEBUG_FUNC, ndev, "--> %s\n", __func__);
 
-	unरेजिस्टर_netdev(ndev);
+	unregister_netdev(ndev);
 
-	मुक्त_irq(ndev->irq, ndev);
+	free_irq(ndev->irq, ndev);
 
-#अगर_घोषित SMC_USE_DMA
-	अणु
-		अगर (lp->rxdma)
+#ifdef SMC_USE_DMA
+	{
+		if (lp->rxdma)
 			dma_release_channel(lp->rxdma);
-		अगर (lp->txdma)
+		if (lp->txdma)
 			dma_release_channel(lp->txdma);
-	पूर्ण
-#पूर्ण_अगर
+	}
+#endif
 	iounmap(lp->base);
-	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	release_mem_region(res->start, SMC911X_IO_EXTENT);
 
-	मुक्त_netdev(ndev);
-	वापस 0;
-पूर्ण
+	free_netdev(ndev);
+	return 0;
+}
 
-अटल पूर्णांक smc911x_drv_suspend(काष्ठा platक्रमm_device *dev, pm_message_t state)
-अणु
-	काष्ठा net_device *ndev = platक्रमm_get_drvdata(dev);
-	काष्ठा smc911x_local *lp = netdev_priv(ndev);
+static int smc911x_drv_suspend(struct platform_device *dev, pm_message_t state)
+{
+	struct net_device *ndev = platform_get_drvdata(dev);
+	struct smc911x_local *lp = netdev_priv(ndev);
 
 	DBG(SMC_DEBUG_FUNC, ndev, "--> %s\n", __func__);
-	अगर (ndev) अणु
-		अगर (netअगर_running(ndev)) अणु
-			netअगर_device_detach(ndev);
-			smc911x_shutकरोwn(ndev);
-#अगर POWER_DOWN
+	if (ndev) {
+		if (netif_running(ndev)) {
+			netif_device_detach(ndev);
+			smc911x_shutdown(ndev);
+#if POWER_DOWN
 			/* Set D2 - Energy detect only setting */
 			SMC_SET_PMT_CTRL(lp, 2<<12);
-#पूर्ण_अगर
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+#endif
+		}
+	}
+	return 0;
+}
 
-अटल पूर्णांक smc911x_drv_resume(काष्ठा platक्रमm_device *dev)
-अणु
-	काष्ठा net_device *ndev = platक्रमm_get_drvdata(dev);
+static int smc911x_drv_resume(struct platform_device *dev)
+{
+	struct net_device *ndev = platform_get_drvdata(dev);
 
 	DBG(SMC_DEBUG_FUNC, ndev, "--> %s\n", __func__);
-	अगर (ndev) अणु
-		काष्ठा smc911x_local *lp = netdev_priv(ndev);
+	if (ndev) {
+		struct smc911x_local *lp = netdev_priv(ndev);
 
-		अगर (netअगर_running(ndev)) अणु
+		if (netif_running(ndev)) {
 			smc911x_reset(ndev);
-			अगर (lp->phy_type != 0)
+			if (lp->phy_type != 0)
 				smc911x_phy_configure(&lp->phy_configure);
 			smc911x_enable(ndev);
-			netअगर_device_attach(ndev);
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+			netif_device_attach(ndev);
+		}
+	}
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver smc911x_driver = अणु
+static struct platform_driver smc911x_driver = {
 	.probe		 = smc911x_drv_probe,
-	.हटाओ	 = smc911x_drv_हटाओ,
+	.remove	 = smc911x_drv_remove,
 	.suspend	 = smc911x_drv_suspend,
 	.resume	 = smc911x_drv_resume,
-	.driver	 = अणु
+	.driver	 = {
 		.name	 = CARDNAME,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver(smc911x_driver);
+module_platform_driver(smc911x_driver);

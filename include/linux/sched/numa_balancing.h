@@ -1,48 +1,47 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _LINUX_SCHED_NUMA_BALANCING_H
-#घोषणा _LINUX_SCHED_NUMA_BALANCING_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _LINUX_SCHED_NUMA_BALANCING_H
+#define _LINUX_SCHED_NUMA_BALANCING_H
 
 /*
- * This is the पूर्णांकerface between the scheduler and the MM that
+ * This is the interface between the scheduler and the MM that
  * implements memory access pattern based NUMA-balancing:
  */
 
-#समावेश <linux/sched.h>
+#include <linux/sched.h>
 
-#घोषणा TNF_MIGRATED	0x01
-#घोषणा TNF_NO_GROUP	0x02
-#घोषणा TNF_SHARED	0x04
-#घोषणा TNF_FAULT_LOCAL	0x08
-#घोषणा TNF_MIGRATE_FAIL 0x10
+#define TNF_MIGRATED	0x01
+#define TNF_NO_GROUP	0x02
+#define TNF_SHARED	0x04
+#define TNF_FAULT_LOCAL	0x08
+#define TNF_MIGRATE_FAIL 0x10
 
-#अगर_घोषित CONFIG_NUMA_BALANCING
-बाह्य व्योम task_numa_fault(पूर्णांक last_node, पूर्णांक node, पूर्णांक pages, पूर्णांक flags);
-बाह्य pid_t task_numa_group_id(काष्ठा task_काष्ठा *p);
-बाह्य व्योम set_numabalancing_state(bool enabled);
-बाह्य व्योम task_numa_मुक्त(काष्ठा task_काष्ठा *p, bool final);
-बाह्य bool should_numa_migrate_memory(काष्ठा task_काष्ठा *p, काष्ठा page *page,
-					पूर्णांक src_nid, पूर्णांक dst_cpu);
-#अन्यथा
-अटल अंतरभूत व्योम task_numa_fault(पूर्णांक last_node, पूर्णांक node, पूर्णांक pages,
-				   पूर्णांक flags)
-अणु
-पूर्ण
-अटल अंतरभूत pid_t task_numa_group_id(काष्ठा task_काष्ठा *p)
-अणु
-	वापस 0;
-पूर्ण
-अटल अंतरभूत व्योम set_numabalancing_state(bool enabled)
-अणु
-पूर्ण
-अटल अंतरभूत व्योम task_numa_मुक्त(काष्ठा task_काष्ठा *p, bool final)
-अणु
-पूर्ण
-अटल अंतरभूत bool should_numa_migrate_memory(काष्ठा task_काष्ठा *p,
-				काष्ठा page *page, पूर्णांक src_nid, पूर्णांक dst_cpu)
-अणु
-	वापस true;
-पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_NUMA_BALANCING
+extern void task_numa_fault(int last_node, int node, int pages, int flags);
+extern pid_t task_numa_group_id(struct task_struct *p);
+extern void set_numabalancing_state(bool enabled);
+extern void task_numa_free(struct task_struct *p, bool final);
+extern bool should_numa_migrate_memory(struct task_struct *p, struct page *page,
+					int src_nid, int dst_cpu);
+#else
+static inline void task_numa_fault(int last_node, int node, int pages,
+				   int flags)
+{
+}
+static inline pid_t task_numa_group_id(struct task_struct *p)
+{
+	return 0;
+}
+static inline void set_numabalancing_state(bool enabled)
+{
+}
+static inline void task_numa_free(struct task_struct *p, bool final)
+{
+}
+static inline bool should_numa_migrate_memory(struct task_struct *p,
+				struct page *page, int src_nid, int dst_cpu)
+{
+	return true;
+}
+#endif
 
-#पूर्ण_अगर /* _LINUX_SCHED_NUMA_BALANCING_H */
+#endif /* _LINUX_SCHED_NUMA_BALANCING_H */

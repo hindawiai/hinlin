@@ -1,68 +1,67 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Linux perक्रमmance counter support क्रम MIPS.
+ * Linux performance counter support for MIPS.
  *
  * Copyright (C) 2010 MIPS Technologies, Inc.
  * Author: Deng-Cheng Zhu
  *
- * This code is based on the implementation क्रम ARM, which is in turn
- * based on the sparc64 perf event code and the x86 code. Perक्रमmance
+ * This code is based on the implementation for ARM, which is in turn
+ * based on the sparc64 perf event code and the x86 code. Performance
  * counter access is based on the MIPS Oprofile code. And the callchain
  * support references the code of MIPS stacktrace.c.
  */
 
-#समावेश <linux/perf_event.h>
-#समावेश <linux/sched/task_stack.h>
+#include <linux/perf_event.h>
+#include <linux/sched/task_stack.h>
 
-#समावेश <यंत्र/stacktrace.h>
+#include <asm/stacktrace.h>
 
 /* Callchain handling code. */
 
 /*
- * Leave userspace callchain empty क्रम now. When we find a way to trace
+ * Leave userspace callchain empty for now. When we find a way to trace
  * the user stack callchains, we will add it here.
  */
 
-अटल व्योम save_raw_perf_callchain(काष्ठा perf_callchain_entry_ctx *entry,
-				    अचिन्हित दीर्घ reg29)
-अणु
-	अचिन्हित दीर्घ *sp = (अचिन्हित दीर्घ *)reg29;
-	अचिन्हित दीर्घ addr;
+static void save_raw_perf_callchain(struct perf_callchain_entry_ctx *entry,
+				    unsigned long reg29)
+{
+	unsigned long *sp = (unsigned long *)reg29;
+	unsigned long addr;
 
-	जबतक (!kstack_end(sp)) अणु
+	while (!kstack_end(sp)) {
 		addr = *sp++;
-		अगर (__kernel_text_address(addr)) अणु
+		if (__kernel_text_address(addr)) {
 			perf_callchain_store(entry, addr);
-			अगर (entry->nr >= entry->max_stack)
-				अवरोध;
-		पूर्ण
-	पूर्ण
-पूर्ण
+			if (entry->nr >= entry->max_stack)
+				break;
+		}
+	}
+}
 
-व्योम perf_callchain_kernel(काष्ठा perf_callchain_entry_ctx *entry,
-			   काष्ठा pt_regs *regs)
-अणु
-	अचिन्हित दीर्घ sp = regs->regs[29];
-#अगर_घोषित CONFIG_KALLSYMS
-	अचिन्हित दीर्घ ra = regs->regs[31];
-	अचिन्हित दीर्घ pc = regs->cp0_epc;
+void perf_callchain_kernel(struct perf_callchain_entry_ctx *entry,
+			   struct pt_regs *regs)
+{
+	unsigned long sp = regs->regs[29];
+#ifdef CONFIG_KALLSYMS
+	unsigned long ra = regs->regs[31];
+	unsigned long pc = regs->cp0_epc;
 
-	अगर (raw_show_trace || !__kernel_text_address(pc)) अणु
-		अचिन्हित दीर्घ stack_page =
-			(अचिन्हित दीर्घ)task_stack_page(current);
-		अगर (stack_page && sp >= stack_page &&
+	if (raw_show_trace || !__kernel_text_address(pc)) {
+		unsigned long stack_page =
+			(unsigned long)task_stack_page(current);
+		if (stack_page && sp >= stack_page &&
 		    sp <= stack_page + THREAD_SIZE - 32)
 			save_raw_perf_callchain(entry, sp);
-		वापस;
-	पूर्ण
-	करो अणु
+		return;
+	}
+	do {
 		perf_callchain_store(entry, pc);
-		अगर (entry->nr >= entry->max_stack)
-			अवरोध;
+		if (entry->nr >= entry->max_stack)
+			break;
 		pc = unwind_stack(current, &sp, pc, &ra);
-	पूर्ण जबतक (pc);
-#अन्यथा
+	} while (pc);
+#else
 	save_raw_perf_callchain(entry, sp);
-#पूर्ण_अगर
-पूर्ण
+#endif
+}

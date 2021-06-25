@@ -1,153 +1,152 @@
-<शैली गुरु>
 /*
  * Copyright (c) 2013 Qualcomm Atheros, Inc.
  *
- * Permission to use, copy, modअगरy, and/or distribute this software क्रम any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
- * ANY SPECIAL, सूचीECT, INसूचीECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#अगर_अघोषित SPECTRAL_H
-#घोषणा SPECTRAL_H
+#ifndef SPECTRAL_H
+#define SPECTRAL_H
 
-#समावेश "../spectral_common.h"
+#include "../spectral_common.h"
 
-/* क्रमागत spectral_mode:
+/* enum spectral_mode:
  *
  * @SPECTRAL_DISABLED: spectral mode is disabled
  * @SPECTRAL_BACKGROUND: hardware sends samples when it is not busy with
- *	something अन्यथा.
- * @SPECTRAL_MANUAL: spectral scan is enabled, triggering क्रम samples
- *	is perक्रमmed manually.
+ *	something else.
+ * @SPECTRAL_MANUAL: spectral scan is enabled, triggering for samples
+ *	is performed manually.
  * @SPECTRAL_CHANSCAN: Like manual, but also triggered when changing channels
  *	during a channel scan.
  */
-क्रमागत spectral_mode अणु
+enum spectral_mode {
 	SPECTRAL_DISABLED = 0,
 	SPECTRAL_BACKGROUND,
 	SPECTRAL_MANUAL,
 	SPECTRAL_CHANSCAN,
-पूर्ण;
+};
 
-#घोषणा SPECTRAL_SCAN_BITMASK		0x10
-/* Radar info packet क्रमmat, used क्रम DFS and spectral क्रमmats. */
-काष्ठा ath_radar_info अणु
+#define SPECTRAL_SCAN_BITMASK		0x10
+/* Radar info packet format, used for DFS and spectral formats. */
+struct ath_radar_info {
 	u8 pulse_length_pri;
 	u8 pulse_length_ext;
 	u8 pulse_bw_info;
-पूर्ण __packed;
+} __packed;
 
-/* The HT20 spectral data has 4 bytes of additional inक्रमmation at it's end.
+/* The HT20 spectral data has 4 bytes of additional information at it's end.
  *
- * [7:0]: all bins अणुmax_magnitude[1:0], biपंचांगap_weight[5:0]पूर्ण
+ * [7:0]: all bins {max_magnitude[1:0], bitmap_weight[5:0]}
  * [7:0]: all bins  max_magnitude[9:2]
- * [7:0]: all bins अणुmax_index[5:0], max_magnitude[11:10]पूर्ण
- * [3:0]: max_exp (shअगरt amount to size max bin to 8-bit अचिन्हित)
+ * [7:0]: all bins {max_index[5:0], max_magnitude[11:10]}
+ * [3:0]: max_exp (shift amount to size max bin to 8-bit unsigned)
  */
-काष्ठा ath_ht20_mag_info अणु
+struct ath_ht20_mag_info {
 	u8 all_bins[3];
 	u8 max_exp;
-पूर्ण __packed;
+} __packed;
 
-/* WARNING: करोn't actually use this काष्ठा! MAC may vary the amount of
- * data by -1/+2. This काष्ठा is क्रम reference only.
+/* WARNING: don't actually use this struct! MAC may vary the amount of
+ * data by -1/+2. This struct is for reference only.
  */
-काष्ठा ath_ht20_fft_packet अणु
+struct ath_ht20_fft_packet {
 	u8 data[SPECTRAL_HT20_NUM_BINS];
-	काष्ठा ath_ht20_mag_info mag_info;
-	काष्ठा ath_radar_info radar_info;
-पूर्ण __packed;
+	struct ath_ht20_mag_info mag_info;
+	struct ath_radar_info radar_info;
+} __packed;
 
-#घोषणा SPECTRAL_HT20_TOTAL_DATA_LEN	(माप(काष्ठा ath_ht20_fft_packet))
-#घोषणा	SPECTRAL_HT20_SAMPLE_LEN	(माप(काष्ठा ath_ht20_mag_info) +\
+#define SPECTRAL_HT20_TOTAL_DATA_LEN	(sizeof(struct ath_ht20_fft_packet))
+#define	SPECTRAL_HT20_SAMPLE_LEN	(sizeof(struct ath_ht20_mag_info) +\
 					SPECTRAL_HT20_NUM_BINS)
 
 /* Dynamic 20/40 mode:
  *
- * [7:0]: lower bins अणुmax_magnitude[1:0], biपंचांगap_weight[5:0]पूर्ण
+ * [7:0]: lower bins {max_magnitude[1:0], bitmap_weight[5:0]}
  * [7:0]: lower bins  max_magnitude[9:2]
- * [7:0]: lower bins अणुmax_index[5:0], max_magnitude[11:10]पूर्ण
- * [7:0]: upper bins अणुmax_magnitude[1:0], biपंचांगap_weight[5:0]पूर्ण
+ * [7:0]: lower bins {max_index[5:0], max_magnitude[11:10]}
+ * [7:0]: upper bins {max_magnitude[1:0], bitmap_weight[5:0]}
  * [7:0]: upper bins  max_magnitude[9:2]
- * [7:0]: upper bins अणुmax_index[5:0], max_magnitude[11:10]पूर्ण
- * [3:0]: max_exp (shअगरt amount to size max bin to 8-bit अचिन्हित)
+ * [7:0]: upper bins {max_index[5:0], max_magnitude[11:10]}
+ * [3:0]: max_exp (shift amount to size max bin to 8-bit unsigned)
  */
-काष्ठा ath_ht20_40_mag_info अणु
+struct ath_ht20_40_mag_info {
 	u8 lower_bins[3];
 	u8 upper_bins[3];
 	u8 max_exp;
-पूर्ण __packed;
+} __packed;
 
-/* WARNING: करोn't actually use this काष्ठा! MAC may vary the amount of
- * data. This काष्ठा is क्रम reference only.
+/* WARNING: don't actually use this struct! MAC may vary the amount of
+ * data. This struct is for reference only.
  */
-काष्ठा ath_ht20_40_fft_packet अणु
+struct ath_ht20_40_fft_packet {
 	u8 data[SPECTRAL_HT20_40_NUM_BINS];
-	काष्ठा ath_ht20_40_mag_info mag_info;
-	काष्ठा ath_radar_info radar_info;
-पूर्ण __packed;
+	struct ath_ht20_40_mag_info mag_info;
+	struct ath_radar_info radar_info;
+} __packed;
 
-काष्ठा ath_spec_scan_priv अणु
-	काष्ठा ath_hw *ah;
-	/* relay(fs) channel क्रम spectral scan */
-	काष्ठा rchan *rfs_chan_spec_scan;
-	क्रमागत spectral_mode spectral_mode;
-	काष्ठा ath_spec_scan spec_config;
-पूर्ण;
+struct ath_spec_scan_priv {
+	struct ath_hw *ah;
+	/* relay(fs) channel for spectral scan */
+	struct rchan *rfs_chan_spec_scan;
+	enum spectral_mode spectral_mode;
+	struct ath_spec_scan spec_config;
+};
 
-#घोषणा SPECTRAL_HT20_40_TOTAL_DATA_LEN	(माप(काष्ठा ath_ht20_40_fft_packet))
-#घोषणा	SPECTRAL_HT20_40_SAMPLE_LEN	(माप(काष्ठा ath_ht20_40_mag_info) +\
+#define SPECTRAL_HT20_40_TOTAL_DATA_LEN	(sizeof(struct ath_ht20_40_fft_packet))
+#define	SPECTRAL_HT20_40_SAMPLE_LEN	(sizeof(struct ath_ht20_40_mag_info) +\
 					SPECTRAL_HT20_40_NUM_BINS)
 
-#घोषणा	SPECTRAL_SAMPLE_MAX_LEN		SPECTRAL_HT20_40_SAMPLE_LEN
+#define	SPECTRAL_SAMPLE_MAX_LEN		SPECTRAL_HT20_40_SAMPLE_LEN
 
-/* grअसल the max magnitude from the all/upper/lower bins */
-अटल अंतरभूत u16 spectral_max_magnitude(u8 *bins)
-अणु
-	वापस (bins[0] & 0xc0) >> 6 |
+/* grabs the max magnitude from the all/upper/lower bins */
+static inline u16 spectral_max_magnitude(u8 *bins)
+{
+	return (bins[0] & 0xc0) >> 6 |
 	       (bins[1] & 0xff) << 2 |
 	       (bins[2] & 0x03) << 10;
-पूर्ण
+}
 
-/* वापस the max magnitude from the all/upper/lower bins */
-अटल अंतरभूत u8 spectral_max_index(u8 *bins, पूर्णांक num_bins)
-अणु
+/* return the max magnitude from the all/upper/lower bins */
+static inline u8 spectral_max_index(u8 *bins, int num_bins)
+{
 	s8 m = (bins[2] & 0xfc) >> 2;
 	u8 zero_idx = num_bins / 2;
 
 	/* It's a 5 bit signed int, remove its sign and use one's
-	 * complement पूर्णांकerpretation to add the sign back to the 8
-	 * bit पूर्णांक
+	 * complement interpretation to add the sign back to the 8
+	 * bit int
 	 */
-	अगर (m & 0x20) अणु
+	if (m & 0x20) {
 		m &= ~0x20;
 		m |= 0xe0;
-	पूर्ण
+	}
 
-	/* Bring the zero poपूर्णांक to the beginning
+	/* Bring the zero point to the beginning
 	 * instead of the middle so that we can use
-	 * it क्रम array lookup and that we करोn't deal
+	 * it for array lookup and that we don't deal
 	 * with negative values later
 	 */
 	m += zero_idx;
 
 	/* Sanity check to make sure index is within bounds */
-	अगर (m < 0 || m > num_bins - 1)
+	if (m < 0 || m > num_bins - 1)
 		m = 0;
 
-	वापस m;
-पूर्ण
+	return m;
+}
 
-अटल अंतरभूत u8 spectral_max_index_ht40(u8 *bins)
-अणु
+static inline u8 spectral_max_index_ht40(u8 *bins)
+{
 	u8 idx;
 
 	idx = spectral_max_index(bins, SPECTRAL_HT20_40_NUM_BINS);
@@ -155,52 +154,52 @@
 	/* positive values and zero are starting at the beginning
 	 * of the data field.
 	 */
-	वापस idx % (SPECTRAL_HT20_40_NUM_BINS / 2);
-पूर्ण
+	return idx % (SPECTRAL_HT20_40_NUM_BINS / 2);
+}
 
-अटल अंतरभूत u8 spectral_max_index_ht20(u8 *bins)
-अणु
-	वापस spectral_max_index(bins, SPECTRAL_HT20_NUM_BINS);
-पूर्ण
+static inline u8 spectral_max_index_ht20(u8 *bins)
+{
+	return spectral_max_index(bins, SPECTRAL_HT20_NUM_BINS);
+}
 
-/* वापस the biपंचांगap weight from the all/upper/lower bins */
-अटल अंतरभूत u8 spectral_biपंचांगap_weight(u8 *bins)
-अणु
-	वापस bins[0] & 0x3f;
-पूर्ण
+/* return the bitmap weight from the all/upper/lower bins */
+static inline u8 spectral_bitmap_weight(u8 *bins)
+{
+	return bins[0] & 0x3f;
+}
 
-#अगर_घोषित CONFIG_ATH9K_COMMON_SPECTRAL
-व्योम ath9k_cmn_spectral_init_debug(काष्ठा ath_spec_scan_priv *spec_priv, काष्ठा dentry *debugfs_phy);
-व्योम ath9k_cmn_spectral_deinit_debug(काष्ठा ath_spec_scan_priv *spec_priv);
+#ifdef CONFIG_ATH9K_COMMON_SPECTRAL
+void ath9k_cmn_spectral_init_debug(struct ath_spec_scan_priv *spec_priv, struct dentry *debugfs_phy);
+void ath9k_cmn_spectral_deinit_debug(struct ath_spec_scan_priv *spec_priv);
 
-व्योम ath9k_cmn_spectral_scan_trigger(काष्ठा ath_common *common,
-				 काष्ठा ath_spec_scan_priv *spec_priv);
-पूर्णांक ath9k_cmn_spectral_scan_config(काष्ठा ath_common *common,
-			       काष्ठा ath_spec_scan_priv *spec_priv,
-			       क्रमागत spectral_mode spectral_mode);
-पूर्णांक ath_cmn_process_fft(काष्ठा ath_spec_scan_priv *spec_priv, काष्ठा ieee80211_hdr *hdr,
-		    काष्ठा ath_rx_status *rs, u64 tsf);
-#अन्यथा
-अटल अंतरभूत व्योम ath9k_cmn_spectral_init_debug(काष्ठा ath_spec_scan_priv *spec_priv,
-						 काष्ठा dentry *debugfs_phy)
-अणु
-पूर्ण
+void ath9k_cmn_spectral_scan_trigger(struct ath_common *common,
+				 struct ath_spec_scan_priv *spec_priv);
+int ath9k_cmn_spectral_scan_config(struct ath_common *common,
+			       struct ath_spec_scan_priv *spec_priv,
+			       enum spectral_mode spectral_mode);
+int ath_cmn_process_fft(struct ath_spec_scan_priv *spec_priv, struct ieee80211_hdr *hdr,
+		    struct ath_rx_status *rs, u64 tsf);
+#else
+static inline void ath9k_cmn_spectral_init_debug(struct ath_spec_scan_priv *spec_priv,
+						 struct dentry *debugfs_phy)
+{
+}
 
-अटल अंतरभूत व्योम ath9k_cmn_spectral_deinit_debug(काष्ठा ath_spec_scan_priv *spec_priv)
-अणु
-पूर्ण
+static inline void ath9k_cmn_spectral_deinit_debug(struct ath_spec_scan_priv *spec_priv)
+{
+}
 
-अटल अंतरभूत व्योम ath9k_cmn_spectral_scan_trigger(काष्ठा ath_common *common,
-						   काष्ठा ath_spec_scan_priv *spec_priv)
-अणु
-पूर्ण
+static inline void ath9k_cmn_spectral_scan_trigger(struct ath_common *common,
+						   struct ath_spec_scan_priv *spec_priv)
+{
+}
 
-अटल अंतरभूत पूर्णांक ath_cmn_process_fft(काष्ठा ath_spec_scan_priv *spec_priv,
-				      काष्ठा ieee80211_hdr *hdr,
-				      काष्ठा ath_rx_status *rs, u64 tsf)
-अणु
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_ATH9K_COMMON_SPECTRAL */
+static inline int ath_cmn_process_fft(struct ath_spec_scan_priv *spec_priv,
+				      struct ieee80211_hdr *hdr,
+				      struct ath_rx_status *rs, u64 tsf)
+{
+	return 0;
+}
+#endif /* CONFIG_ATH9K_COMMON_SPECTRAL */
 
-#पूर्ण_अगर /* SPECTRAL_H */
+#endif /* SPECTRAL_H */

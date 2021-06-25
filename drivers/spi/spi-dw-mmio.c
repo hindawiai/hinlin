@@ -1,379 +1,378 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Memory-mapped पूर्णांकerface driver क्रम DW SPI Core
+ * Memory-mapped interface driver for DW SPI Core
  *
  * Copyright (c) 2010, Octasic semiconductor.
  */
 
-#समावेश <linux/clk.h>
-#समावेश <linux/err.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <linux/slab.h>
-#समावेश <linux/spi/spi.h>
-#समावेश <linux/scatterlist.h>
-#समावेश <linux/mfd/syscon.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_platक्रमm.h>
-#समावेश <linux/acpi.h>
-#समावेश <linux/property.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/reset.h>
+#include <linux/clk.h>
+#include <linux/err.h>
+#include <linux/platform_device.h>
+#include <linux/pm_runtime.h>
+#include <linux/slab.h>
+#include <linux/spi/spi.h>
+#include <linux/scatterlist.h>
+#include <linux/mfd/syscon.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/of_platform.h>
+#include <linux/acpi.h>
+#include <linux/property.h>
+#include <linux/regmap.h>
+#include <linux/reset.h>
 
-#समावेश "spi-dw.h"
+#include "spi-dw.h"
 
-#घोषणा DRIVER_NAME "dw_spi_mmio"
+#define DRIVER_NAME "dw_spi_mmio"
 
-काष्ठा dw_spi_mmio अणु
-	काष्ठा dw_spi  dws;
-	काष्ठा clk     *clk;
-	काष्ठा clk     *pclk;
-	व्योम           *priv;
-	काष्ठा reset_control *rstc;
-पूर्ण;
+struct dw_spi_mmio {
+	struct dw_spi  dws;
+	struct clk     *clk;
+	struct clk     *pclk;
+	void           *priv;
+	struct reset_control *rstc;
+};
 
-#घोषणा MSCC_CPU_SYSTEM_CTRL_GENERAL_CTRL	0x24
-#घोषणा OCELOT_IF_SI_OWNER_OFFSET		4
-#घोषणा JAGUAR2_IF_SI_OWNER_OFFSET		6
-#घोषणा MSCC_IF_SI_OWNER_MASK			GENMASK(1, 0)
-#घोषणा MSCC_IF_SI_OWNER_SISL			0
-#घोषणा MSCC_IF_SI_OWNER_SIBM			1
-#घोषणा MSCC_IF_SI_OWNER_SIMC			2
+#define MSCC_CPU_SYSTEM_CTRL_GENERAL_CTRL	0x24
+#define OCELOT_IF_SI_OWNER_OFFSET		4
+#define JAGUAR2_IF_SI_OWNER_OFFSET		6
+#define MSCC_IF_SI_OWNER_MASK			GENMASK(1, 0)
+#define MSCC_IF_SI_OWNER_SISL			0
+#define MSCC_IF_SI_OWNER_SIBM			1
+#define MSCC_IF_SI_OWNER_SIMC			2
 
-#घोषणा MSCC_SPI_MST_SW_MODE			0x14
-#घोषणा MSCC_SPI_MST_SW_MODE_SW_PIN_CTRL_MODE	BIT(13)
-#घोषणा MSCC_SPI_MST_SW_MODE_SW_SPI_CS(x)	(x << 5)
+#define MSCC_SPI_MST_SW_MODE			0x14
+#define MSCC_SPI_MST_SW_MODE_SW_PIN_CTRL_MODE	BIT(13)
+#define MSCC_SPI_MST_SW_MODE_SW_SPI_CS(x)	(x << 5)
 
-#घोषणा SPARX5_FORCE_ENA			0xa4
-#घोषणा SPARX5_FORCE_VAL			0xa8
+#define SPARX5_FORCE_ENA			0xa4
+#define SPARX5_FORCE_VAL			0xa8
 
-काष्ठा dw_spi_mscc अणु
-	काष्ठा regmap       *syscon;
-	व्योम __iomem        *spi_mst; /* Not sparx5 */
-पूर्ण;
+struct dw_spi_mscc {
+	struct regmap       *syscon;
+	void __iomem        *spi_mst; /* Not sparx5 */
+};
 
 /*
- * The Designware SPI controller (referred to as master in the करोcumentation)
- * स्वतःmatically deनिश्चितs chip select when the tx fअगरo is empty. The chip
- * selects then needs to be either driven as GPIOs or, क्रम the first 4 using the
- * the SPI boot controller रेजिस्टरs. the final chip select is an OR gate
+ * The Designware SPI controller (referred to as master in the documentation)
+ * automatically deasserts chip select when the tx fifo is empty. The chip
+ * selects then needs to be either driven as GPIOs or, for the first 4 using the
+ * the SPI boot controller registers. the final chip select is an OR gate
  * between the Designware SPI controller and the SPI boot controller.
  */
-अटल व्योम dw_spi_mscc_set_cs(काष्ठा spi_device *spi, bool enable)
-अणु
-	काष्ठा dw_spi *dws = spi_master_get_devdata(spi->master);
-	काष्ठा dw_spi_mmio *dwsmmio = container_of(dws, काष्ठा dw_spi_mmio, dws);
-	काष्ठा dw_spi_mscc *dwsmscc = dwsmmio->priv;
+static void dw_spi_mscc_set_cs(struct spi_device *spi, bool enable)
+{
+	struct dw_spi *dws = spi_master_get_devdata(spi->master);
+	struct dw_spi_mmio *dwsmmio = container_of(dws, struct dw_spi_mmio, dws);
+	struct dw_spi_mscc *dwsmscc = dwsmmio->priv;
 	u32 cs = spi->chip_select;
 
-	अगर (cs < 4) अणु
+	if (cs < 4) {
 		u32 sw_mode = MSCC_SPI_MST_SW_MODE_SW_PIN_CTRL_MODE;
 
-		अगर (!enable)
+		if (!enable)
 			sw_mode |= MSCC_SPI_MST_SW_MODE_SW_SPI_CS(BIT(cs));
 
-		ग_लिखोl(sw_mode, dwsmscc->spi_mst + MSCC_SPI_MST_SW_MODE);
-	पूर्ण
+		writel(sw_mode, dwsmscc->spi_mst + MSCC_SPI_MST_SW_MODE);
+	}
 
 	dw_spi_set_cs(spi, enable);
-पूर्ण
+}
 
-अटल पूर्णांक dw_spi_mscc_init(काष्ठा platक्रमm_device *pdev,
-			    काष्ठा dw_spi_mmio *dwsmmio,
-			    स्थिर अक्षर *cpu_syscon, u32 अगर_si_owner_offset)
-अणु
-	काष्ठा dw_spi_mscc *dwsmscc;
+static int dw_spi_mscc_init(struct platform_device *pdev,
+			    struct dw_spi_mmio *dwsmmio,
+			    const char *cpu_syscon, u32 if_si_owner_offset)
+{
+	struct dw_spi_mscc *dwsmscc;
 
-	dwsmscc = devm_kzalloc(&pdev->dev, माप(*dwsmscc), GFP_KERNEL);
-	अगर (!dwsmscc)
-		वापस -ENOMEM;
+	dwsmscc = devm_kzalloc(&pdev->dev, sizeof(*dwsmscc), GFP_KERNEL);
+	if (!dwsmscc)
+		return -ENOMEM;
 
-	dwsmscc->spi_mst = devm_platक्रमm_ioremap_resource(pdev, 1);
-	अगर (IS_ERR(dwsmscc->spi_mst)) अणु
+	dwsmscc->spi_mst = devm_platform_ioremap_resource(pdev, 1);
+	if (IS_ERR(dwsmscc->spi_mst)) {
 		dev_err(&pdev->dev, "SPI_MST region map failed\n");
-		वापस PTR_ERR(dwsmscc->spi_mst);
-	पूर्ण
+		return PTR_ERR(dwsmscc->spi_mst);
+	}
 
 	dwsmscc->syscon = syscon_regmap_lookup_by_compatible(cpu_syscon);
-	अगर (IS_ERR(dwsmscc->syscon))
-		वापस PTR_ERR(dwsmscc->syscon);
+	if (IS_ERR(dwsmscc->syscon))
+		return PTR_ERR(dwsmscc->syscon);
 
-	/* Deनिश्चित all CS */
-	ग_लिखोl(0, dwsmscc->spi_mst + MSCC_SPI_MST_SW_MODE);
+	/* Deassert all CS */
+	writel(0, dwsmscc->spi_mst + MSCC_SPI_MST_SW_MODE);
 
-	/* Select the owner of the SI पूर्णांकerface */
+	/* Select the owner of the SI interface */
 	regmap_update_bits(dwsmscc->syscon, MSCC_CPU_SYSTEM_CTRL_GENERAL_CTRL,
-			   MSCC_IF_SI_OWNER_MASK << अगर_si_owner_offset,
-			   MSCC_IF_SI_OWNER_SIMC << अगर_si_owner_offset);
+			   MSCC_IF_SI_OWNER_MASK << if_si_owner_offset,
+			   MSCC_IF_SI_OWNER_SIMC << if_si_owner_offset);
 
 	dwsmmio->dws.set_cs = dw_spi_mscc_set_cs;
 	dwsmmio->priv = dwsmscc;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dw_spi_mscc_ocelot_init(काष्ठा platक्रमm_device *pdev,
-				   काष्ठा dw_spi_mmio *dwsmmio)
-अणु
-	वापस dw_spi_mscc_init(pdev, dwsmmio, "mscc,ocelot-cpu-syscon",
+static int dw_spi_mscc_ocelot_init(struct platform_device *pdev,
+				   struct dw_spi_mmio *dwsmmio)
+{
+	return dw_spi_mscc_init(pdev, dwsmmio, "mscc,ocelot-cpu-syscon",
 				OCELOT_IF_SI_OWNER_OFFSET);
-पूर्ण
+}
 
-अटल पूर्णांक dw_spi_mscc_jaguar2_init(काष्ठा platक्रमm_device *pdev,
-				    काष्ठा dw_spi_mmio *dwsmmio)
-अणु
-	वापस dw_spi_mscc_init(pdev, dwsmmio, "mscc,jaguar2-cpu-syscon",
+static int dw_spi_mscc_jaguar2_init(struct platform_device *pdev,
+				    struct dw_spi_mmio *dwsmmio)
+{
+	return dw_spi_mscc_init(pdev, dwsmmio, "mscc,jaguar2-cpu-syscon",
 				JAGUAR2_IF_SI_OWNER_OFFSET);
-पूर्ण
+}
 
 /*
  * The Designware SPI controller (referred to as master in the
- * करोcumentation) स्वतःmatically deनिश्चितs chip select when the tx fअगरo
+ * documentation) automatically deasserts chip select when the tx fifo
  * is empty. The chip selects then needs to be driven by a CS override
- * रेजिस्टर. enable is an active low संकेत.
+ * register. enable is an active low signal.
  */
-अटल व्योम dw_spi_sparx5_set_cs(काष्ठा spi_device *spi, bool enable)
-अणु
-	काष्ठा dw_spi *dws = spi_master_get_devdata(spi->master);
-	काष्ठा dw_spi_mmio *dwsmmio = container_of(dws, काष्ठा dw_spi_mmio, dws);
-	काष्ठा dw_spi_mscc *dwsmscc = dwsmmio->priv;
+static void dw_spi_sparx5_set_cs(struct spi_device *spi, bool enable)
+{
+	struct dw_spi *dws = spi_master_get_devdata(spi->master);
+	struct dw_spi_mmio *dwsmmio = container_of(dws, struct dw_spi_mmio, dws);
+	struct dw_spi_mscc *dwsmscc = dwsmmio->priv;
 	u8 cs = spi->chip_select;
 
-	अगर (!enable) अणु
+	if (!enable) {
 		/* CS override drive enable */
-		regmap_ग_लिखो(dwsmscc->syscon, SPARX5_FORCE_ENA, 1);
+		regmap_write(dwsmscc->syscon, SPARX5_FORCE_ENA, 1);
 		/* Now set CSx enabled */
-		regmap_ग_लिखो(dwsmscc->syscon, SPARX5_FORCE_VAL, ~BIT(cs));
+		regmap_write(dwsmscc->syscon, SPARX5_FORCE_VAL, ~BIT(cs));
 		/* Allow settle */
 		usleep_range(1, 5);
-	पूर्ण अन्यथा अणु
+	} else {
 		/* CS value */
-		regmap_ग_लिखो(dwsmscc->syscon, SPARX5_FORCE_VAL, ~0);
+		regmap_write(dwsmscc->syscon, SPARX5_FORCE_VAL, ~0);
 		/* Allow settle */
 		usleep_range(1, 5);
 		/* CS override drive disable */
-		regmap_ग_लिखो(dwsmscc->syscon, SPARX5_FORCE_ENA, 0);
-	पूर्ण
+		regmap_write(dwsmscc->syscon, SPARX5_FORCE_ENA, 0);
+	}
 
 	dw_spi_set_cs(spi, enable);
-पूर्ण
+}
 
-अटल पूर्णांक dw_spi_mscc_sparx5_init(काष्ठा platक्रमm_device *pdev,
-				   काष्ठा dw_spi_mmio *dwsmmio)
-अणु
-	स्थिर अक्षर *syscon_name = "microchip,sparx5-cpu-syscon";
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा dw_spi_mscc *dwsmscc;
+static int dw_spi_mscc_sparx5_init(struct platform_device *pdev,
+				   struct dw_spi_mmio *dwsmmio)
+{
+	const char *syscon_name = "microchip,sparx5-cpu-syscon";
+	struct device *dev = &pdev->dev;
+	struct dw_spi_mscc *dwsmscc;
 
-	अगर (!IS_ENABLED(CONFIG_SPI_MUX)) अणु
+	if (!IS_ENABLED(CONFIG_SPI_MUX)) {
 		dev_err(dev, "This driver needs CONFIG_SPI_MUX\n");
-		वापस -EOPNOTSUPP;
-	पूर्ण
+		return -EOPNOTSUPP;
+	}
 
-	dwsmscc = devm_kzalloc(dev, माप(*dwsmscc), GFP_KERNEL);
-	अगर (!dwsmscc)
-		वापस -ENOMEM;
+	dwsmscc = devm_kzalloc(dev, sizeof(*dwsmscc), GFP_KERNEL);
+	if (!dwsmscc)
+		return -ENOMEM;
 
 	dwsmscc->syscon =
 		syscon_regmap_lookup_by_compatible(syscon_name);
-	अगर (IS_ERR(dwsmscc->syscon)) अणु
+	if (IS_ERR(dwsmscc->syscon)) {
 		dev_err(dev, "No syscon map %s\n", syscon_name);
-		वापस PTR_ERR(dwsmscc->syscon);
-	पूर्ण
+		return PTR_ERR(dwsmscc->syscon);
+	}
 
 	dwsmmio->dws.set_cs = dw_spi_sparx5_set_cs;
 	dwsmmio->priv = dwsmscc;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dw_spi_alpine_init(काष्ठा platक्रमm_device *pdev,
-			      काष्ठा dw_spi_mmio *dwsmmio)
-अणु
+static int dw_spi_alpine_init(struct platform_device *pdev,
+			      struct dw_spi_mmio *dwsmmio)
+{
 	dwsmmio->dws.caps = DW_SPI_CAP_CS_OVERRIDE;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dw_spi_dw_apb_init(काष्ठा platक्रमm_device *pdev,
-			      काष्ठा dw_spi_mmio *dwsmmio)
-अणु
+static int dw_spi_dw_apb_init(struct platform_device *pdev,
+			      struct dw_spi_mmio *dwsmmio)
+{
 	dw_spi_dma_setup_generic(&dwsmmio->dws);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dw_spi_dwc_ssi_init(काष्ठा platक्रमm_device *pdev,
-			       काष्ठा dw_spi_mmio *dwsmmio)
-अणु
+static int dw_spi_dwc_ssi_init(struct platform_device *pdev,
+			       struct dw_spi_mmio *dwsmmio)
+{
 	dwsmmio->dws.caps = DW_SPI_CAP_DWC_SSI;
 
 	dw_spi_dma_setup_generic(&dwsmmio->dws);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dw_spi_keembay_init(काष्ठा platक्रमm_device *pdev,
-			       काष्ठा dw_spi_mmio *dwsmmio)
-अणु
+static int dw_spi_keembay_init(struct platform_device *pdev,
+			       struct dw_spi_mmio *dwsmmio)
+{
 	dwsmmio->dws.caps = DW_SPI_CAP_KEEMBAY_MST | DW_SPI_CAP_DWC_SSI;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dw_spi_canaan_k210_init(काष्ठा platक्रमm_device *pdev,
-				   काष्ठा dw_spi_mmio *dwsmmio)
-अणु
+static int dw_spi_canaan_k210_init(struct platform_device *pdev,
+				   struct dw_spi_mmio *dwsmmio)
+{
 	/*
 	 * The Canaan Kendryte K210 SoC DW apb_ssi v4 spi controller is
-	 * करोcumented to have a 32 word deep TX and RX FIFO, which
+	 * documented to have a 32 word deep TX and RX FIFO, which
 	 * spi_hw_init() detects. However, when the RX FIFO is filled up to
-	 * 32 entries (RXFLR = 32), an RX FIFO overrun error occurs. Aव्योम this
-	 * problem by क्रमce setting fअगरo_len to 31.
+	 * 32 entries (RXFLR = 32), an RX FIFO overrun error occurs. Avoid this
+	 * problem by force setting fifo_len to 31.
 	 */
-	dwsmmio->dws.fअगरo_len = 31;
+	dwsmmio->dws.fifo_len = 31;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dw_spi_mmio_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	पूर्णांक (*init_func)(काष्ठा platक्रमm_device *pdev,
-			 काष्ठा dw_spi_mmio *dwsmmio);
-	काष्ठा dw_spi_mmio *dwsmmio;
-	काष्ठा resource *mem;
-	काष्ठा dw_spi *dws;
-	पूर्णांक ret;
-	पूर्णांक num_cs;
+static int dw_spi_mmio_probe(struct platform_device *pdev)
+{
+	int (*init_func)(struct platform_device *pdev,
+			 struct dw_spi_mmio *dwsmmio);
+	struct dw_spi_mmio *dwsmmio;
+	struct resource *mem;
+	struct dw_spi *dws;
+	int ret;
+	int num_cs;
 
-	dwsmmio = devm_kzalloc(&pdev->dev, माप(काष्ठा dw_spi_mmio),
+	dwsmmio = devm_kzalloc(&pdev->dev, sizeof(struct dw_spi_mmio),
 			GFP_KERNEL);
-	अगर (!dwsmmio)
-		वापस -ENOMEM;
+	if (!dwsmmio)
+		return -ENOMEM;
 
 	dws = &dwsmmio->dws;
 
 	/* Get basic io resource and map it */
-	dws->regs = devm_platक्रमm_get_and_ioremap_resource(pdev, 0, &mem);
-	अगर (IS_ERR(dws->regs))
-		वापस PTR_ERR(dws->regs);
+	dws->regs = devm_platform_get_and_ioremap_resource(pdev, 0, &mem);
+	if (IS_ERR(dws->regs))
+		return PTR_ERR(dws->regs);
 
 	dws->paddr = mem->start;
 
-	dws->irq = platक्रमm_get_irq(pdev, 0);
-	अगर (dws->irq < 0)
-		वापस dws->irq; /* -ENXIO */
+	dws->irq = platform_get_irq(pdev, 0);
+	if (dws->irq < 0)
+		return dws->irq; /* -ENXIO */
 
-	dwsmmio->clk = devm_clk_get(&pdev->dev, शून्य);
-	अगर (IS_ERR(dwsmmio->clk))
-		वापस PTR_ERR(dwsmmio->clk);
+	dwsmmio->clk = devm_clk_get(&pdev->dev, NULL);
+	if (IS_ERR(dwsmmio->clk))
+		return PTR_ERR(dwsmmio->clk);
 	ret = clk_prepare_enable(dwsmmio->clk);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	/* Optional घड़ी needed to access the रेजिस्टरs */
+	/* Optional clock needed to access the registers */
 	dwsmmio->pclk = devm_clk_get_optional(&pdev->dev, "pclk");
-	अगर (IS_ERR(dwsmmio->pclk)) अणु
+	if (IS_ERR(dwsmmio->pclk)) {
 		ret = PTR_ERR(dwsmmio->pclk);
-		जाओ out_clk;
-	पूर्ण
+		goto out_clk;
+	}
 	ret = clk_prepare_enable(dwsmmio->pclk);
-	अगर (ret)
-		जाओ out_clk;
+	if (ret)
+		goto out_clk;
 
 	/* find an optional reset controller */
 	dwsmmio->rstc = devm_reset_control_get_optional_exclusive(&pdev->dev, "spi");
-	अगर (IS_ERR(dwsmmio->rstc)) अणु
+	if (IS_ERR(dwsmmio->rstc)) {
 		ret = PTR_ERR(dwsmmio->rstc);
-		जाओ out_clk;
-	पूर्ण
-	reset_control_deनिश्चित(dwsmmio->rstc);
+		goto out_clk;
+	}
+	reset_control_deassert(dwsmmio->rstc);
 
 	dws->bus_num = pdev->id;
 
 	dws->max_freq = clk_get_rate(dwsmmio->clk);
 
-	device_property_पढ़ो_u32(&pdev->dev, "reg-io-width", &dws->reg_io_width);
+	device_property_read_u32(&pdev->dev, "reg-io-width", &dws->reg_io_width);
 
 	num_cs = 4;
 
-	device_property_पढ़ो_u32(&pdev->dev, "num-cs", &num_cs);
+	device_property_read_u32(&pdev->dev, "num-cs", &num_cs);
 
 	dws->num_cs = num_cs;
 
 	init_func = device_get_match_data(&pdev->dev);
-	अगर (init_func) अणु
+	if (init_func) {
 		ret = init_func(pdev, dwsmmio);
-		अगर (ret)
-			जाओ out;
-	पूर्ण
+		if (ret)
+			goto out;
+	}
 
-	pm_runसमय_enable(&pdev->dev);
+	pm_runtime_enable(&pdev->dev);
 
 	ret = dw_spi_add_host(&pdev->dev, dws);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
-	platक्रमm_set_drvdata(pdev, dwsmmio);
-	वापस 0;
+	platform_set_drvdata(pdev, dwsmmio);
+	return 0;
 
 out:
-	pm_runसमय_disable(&pdev->dev);
+	pm_runtime_disable(&pdev->dev);
 	clk_disable_unprepare(dwsmmio->pclk);
 out_clk:
 	clk_disable_unprepare(dwsmmio->clk);
-	reset_control_निश्चित(dwsmmio->rstc);
+	reset_control_assert(dwsmmio->rstc);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक dw_spi_mmio_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा dw_spi_mmio *dwsmmio = platक्रमm_get_drvdata(pdev);
+static int dw_spi_mmio_remove(struct platform_device *pdev)
+{
+	struct dw_spi_mmio *dwsmmio = platform_get_drvdata(pdev);
 
-	dw_spi_हटाओ_host(&dwsmmio->dws);
-	pm_runसमय_disable(&pdev->dev);
+	dw_spi_remove_host(&dwsmmio->dws);
+	pm_runtime_disable(&pdev->dev);
 	clk_disable_unprepare(dwsmmio->pclk);
 	clk_disable_unprepare(dwsmmio->clk);
-	reset_control_निश्चित(dwsmmio->rstc);
+	reset_control_assert(dwsmmio->rstc);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id dw_spi_mmio_of_match[] = अणु
-	अणु .compatible = "snps,dw-apb-ssi", .data = dw_spi_dw_apb_initपूर्ण,
-	अणु .compatible = "mscc,ocelot-spi", .data = dw_spi_mscc_ocelot_initपूर्ण,
-	अणु .compatible = "mscc,jaguar2-spi", .data = dw_spi_mscc_jaguar2_initपूर्ण,
-	अणु .compatible = "amazon,alpine-dw-apb-ssi", .data = dw_spi_alpine_initपूर्ण,
-	अणु .compatible = "renesas,rzn1-spi", .data = dw_spi_dw_apb_initपूर्ण,
-	अणु .compatible = "snps,dwc-ssi-1.01a", .data = dw_spi_dwc_ssi_initपूर्ण,
-	अणु .compatible = "intel,keembay-ssi", .data = dw_spi_keembay_initपूर्ण,
-	अणु .compatible = "microchip,sparx5-spi", dw_spi_mscc_sparx5_initपूर्ण,
-	अणु .compatible = "canaan,k210-spi", dw_spi_canaan_k210_initपूर्ण,
-	अणु /* end of table */पूर्ण
-पूर्ण;
+static const struct of_device_id dw_spi_mmio_of_match[] = {
+	{ .compatible = "snps,dw-apb-ssi", .data = dw_spi_dw_apb_init},
+	{ .compatible = "mscc,ocelot-spi", .data = dw_spi_mscc_ocelot_init},
+	{ .compatible = "mscc,jaguar2-spi", .data = dw_spi_mscc_jaguar2_init},
+	{ .compatible = "amazon,alpine-dw-apb-ssi", .data = dw_spi_alpine_init},
+	{ .compatible = "renesas,rzn1-spi", .data = dw_spi_dw_apb_init},
+	{ .compatible = "snps,dwc-ssi-1.01a", .data = dw_spi_dwc_ssi_init},
+	{ .compatible = "intel,keembay-ssi", .data = dw_spi_keembay_init},
+	{ .compatible = "microchip,sparx5-spi", dw_spi_mscc_sparx5_init},
+	{ .compatible = "canaan,k210-spi", dw_spi_canaan_k210_init},
+	{ /* end of table */}
+};
 MODULE_DEVICE_TABLE(of, dw_spi_mmio_of_match);
 
-#अगर_घोषित CONFIG_ACPI
-अटल स्थिर काष्ठा acpi_device_id dw_spi_mmio_acpi_match[] = अणु
-	अणु"HISI0173", (kernel_uदीर्घ_t)dw_spi_dw_apb_initपूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+#ifdef CONFIG_ACPI
+static const struct acpi_device_id dw_spi_mmio_acpi_match[] = {
+	{"HISI0173", (kernel_ulong_t)dw_spi_dw_apb_init},
+	{},
+};
 MODULE_DEVICE_TABLE(acpi, dw_spi_mmio_acpi_match);
-#पूर्ण_अगर
+#endif
 
-अटल काष्ठा platक्रमm_driver dw_spi_mmio_driver = अणु
+static struct platform_driver dw_spi_mmio_driver = {
 	.probe		= dw_spi_mmio_probe,
-	.हटाओ		= dw_spi_mmio_हटाओ,
-	.driver		= अणु
+	.remove		= dw_spi_mmio_remove,
+	.driver		= {
 		.name	= DRIVER_NAME,
 		.of_match_table = dw_spi_mmio_of_match,
 		.acpi_match_table = ACPI_PTR(dw_spi_mmio_acpi_match),
-	पूर्ण,
-पूर्ण;
-module_platक्रमm_driver(dw_spi_mmio_driver);
+	},
+};
+module_platform_driver(dw_spi_mmio_driver);
 
 MODULE_AUTHOR("Jean-Hugues Deschenes <jean-hugues.deschenes@octasic.com>");
 MODULE_DESCRIPTION("Memory-mapped I/O interface driver for DW SPI Core");

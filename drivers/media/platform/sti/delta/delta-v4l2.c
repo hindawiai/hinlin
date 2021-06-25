@@ -1,83 +1,82 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (C) STMicroelectronics SA 2015
  * Authors: Hugues Fruchet <hugues.fruchet@st.com>
  *          Jean-Christophe Trotin <jean-christophe.trotin@st.com>
- *          क्रम STMicroelectronics.
+ *          for STMicroelectronics.
  */
 
-#समावेश <linux/clk.h>
-#समावेश <linux/module.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <linux/slab.h>
+#include <linux/clk.h>
+#include <linux/module.h>
+#include <linux/platform_device.h>
+#include <linux/pm_runtime.h>
+#include <linux/slab.h>
 
-#समावेश <media/v4l2-ioctl.h>
-#समावेश <media/v4l2-event.h>
-#समावेश <media/videobuf2-dma-contig.h>
+#include <media/v4l2-ioctl.h>
+#include <media/v4l2-event.h>
+#include <media/videobuf2-dma-contig.h>
 
-#समावेश "delta.h"
-#समावेश "delta-debug.h"
-#समावेश "delta-ipc.h"
+#include "delta.h"
+#include "delta-debug.h"
+#include "delta-ipc.h"
 
-#घोषणा DELTA_NAME	"st-delta"
+#define DELTA_NAME	"st-delta"
 
-#घोषणा DELTA_PREFIX "[---:----]"
+#define DELTA_PREFIX "[---:----]"
 
-#घोषणा to_ctx(__fh) container_of(__fh, काष्ठा delta_ctx, fh)
-#घोषणा to_au(__vbuf) container_of(__vbuf, काष्ठा delta_au, vbuf)
-#घोषणा to_frame(__vbuf) container_of(__vbuf, काष्ठा delta_frame, vbuf)
+#define to_ctx(__fh) container_of(__fh, struct delta_ctx, fh)
+#define to_au(__vbuf) container_of(__vbuf, struct delta_au, vbuf)
+#define to_frame(__vbuf) container_of(__vbuf, struct delta_frame, vbuf)
 
-#घोषणा call_dec_op(dec, op, args...)\
+#define call_dec_op(dec, op, args...)\
 		((dec && (dec)->op) ? (dec)->op(args) : 0)
 
 /* registry of available decoders */
-अटल स्थिर काष्ठा delta_dec *delta_decoders[] = अणु
-#अगर_घोषित CONFIG_VIDEO_STI_DELTA_MJPEG
+static const struct delta_dec *delta_decoders[] = {
+#ifdef CONFIG_VIDEO_STI_DELTA_MJPEG
 	&mjpegdec,
-#पूर्ण_अगर
-पूर्ण;
+#endif
+};
 
-अटल अंतरभूत पूर्णांक frame_size(u32 w, u32 h, u32 fmt)
-अणु
-	चयन (fmt) अणु
-	हाल V4L2_PIX_FMT_NV12:
-		वापस (w * h * 3) / 2;
-	शेष:
-		वापस 0;
-	पूर्ण
-पूर्ण
+static inline int frame_size(u32 w, u32 h, u32 fmt)
+{
+	switch (fmt) {
+	case V4L2_PIX_FMT_NV12:
+		return (w * h * 3) / 2;
+	default:
+		return 0;
+	}
+}
 
-अटल अंतरभूत पूर्णांक frame_stride(u32 w, u32 fmt)
-अणु
-	चयन (fmt) अणु
-	हाल V4L2_PIX_FMT_NV12:
-		वापस w;
-	शेष:
-		वापस 0;
-	पूर्ण
-पूर्ण
+static inline int frame_stride(u32 w, u32 fmt)
+{
+	switch (fmt) {
+	case V4L2_PIX_FMT_NV12:
+		return w;
+	default:
+		return 0;
+	}
+}
 
-अटल व्योम dump_au(काष्ठा delta_ctx *ctx, काष्ठा delta_au *au)
-अणु
-	काष्ठा delta_dev *delta = ctx->dev;
+static void dump_au(struct delta_ctx *ctx, struct delta_au *au)
+{
+	struct delta_dev *delta = ctx->dev;
 	u32 size = 10;	/* dump first & last 10 bytes */
 	u8 *data = (u8 *)(au->vaddr);
 
-	अगर (au->size <= (size * 2))
+	if (au->size <= (size * 2))
 		dev_dbg(delta->dev, "%s dump au[%d] dts=%lld size=%d data=%*ph\n",
 			ctx->name, au->vbuf.vb2_buf.index, au->dts, au->size,
 			au->size, data);
-	अन्यथा
+	else
 		dev_dbg(delta->dev, "%s dump au[%d] dts=%lld size=%d data=%*ph..%*ph\n",
 			ctx->name, au->vbuf.vb2_buf.index, au->dts, au->size,
 			size, data, size, data + au->size - size);
-पूर्ण
+}
 
-अटल व्योम dump_frame(काष्ठा delta_ctx *ctx, काष्ठा delta_frame *frame)
-अणु
-	काष्ठा delta_dev *delta = ctx->dev;
+static void dump_frame(struct delta_ctx *ctx, struct delta_frame *frame)
+{
+	struct delta_dev *delta = ctx->dev;
 	u32 size = 10;	/* dump first 10 bytes */
 	u8 *data = (u8 *)(frame->vaddr);
 
@@ -86,21 +85,21 @@
 		frame_type_str(frame->flags),
 		frame_field_str(frame->field),
 		size, data);
-पूर्ण
+}
 
-अटल व्योम delta_au_करोne(काष्ठा delta_ctx *ctx, काष्ठा delta_au *au, पूर्णांक err)
-अणु
-	काष्ठा vb2_v4l2_buffer *vbuf;
+static void delta_au_done(struct delta_ctx *ctx, struct delta_au *au, int err)
+{
+	struct vb2_v4l2_buffer *vbuf;
 
 	vbuf = &au->vbuf;
 	vbuf->sequence = ctx->au_num++;
-	v4l2_m2m_buf_करोne(vbuf, err ? VB2_BUF_STATE_ERROR : VB2_BUF_STATE_DONE);
-पूर्ण
+	v4l2_m2m_buf_done(vbuf, err ? VB2_BUF_STATE_ERROR : VB2_BUF_STATE_DONE);
+}
 
-अटल व्योम delta_frame_करोne(काष्ठा delta_ctx *ctx, काष्ठा delta_frame *frame,
-			     पूर्णांक err)
-अणु
-	काष्ठा vb2_v4l2_buffer *vbuf;
+static void delta_frame_done(struct delta_ctx *ctx, struct delta_frame *frame,
+			     int err)
+{
+	struct vb2_v4l2_buffer *vbuf;
 
 	dump_frame(ctx, frame);
 
@@ -109,32 +108,32 @@
 
 	vbuf = &frame->vbuf;
 	vbuf->sequence = ctx->frame_num++;
-	v4l2_m2m_buf_करोne(vbuf, err ? VB2_BUF_STATE_ERROR : VB2_BUF_STATE_DONE);
+	v4l2_m2m_buf_done(vbuf, err ? VB2_BUF_STATE_ERROR : VB2_BUF_STATE_DONE);
 
-	अगर (frame->info.size) /* ignore EOS */
+	if (frame->info.size) /* ignore EOS */
 		ctx->output_frames++;
-पूर्ण
+}
 
-अटल व्योम requeue_मुक्त_frames(काष्ठा delta_ctx *ctx)
-अणु
-	काष्ठा vb2_v4l2_buffer *vbuf;
-	काष्ठा delta_frame *frame;
-	अचिन्हित पूर्णांक i;
+static void requeue_free_frames(struct delta_ctx *ctx)
+{
+	struct vb2_v4l2_buffer *vbuf;
+	struct delta_frame *frame;
+	unsigned int i;
 
-	/* requeue all मुक्त frames */
-	क्रम (i = 0; i < ctx->nb_of_frames; i++) अणु
+	/* requeue all free frames */
+	for (i = 0; i < ctx->nb_of_frames; i++) {
 		frame = ctx->frames[i];
-		अगर (frame->state == DELTA_FRAME_FREE) अणु
+		if (frame->state == DELTA_FRAME_FREE) {
 			vbuf = &frame->vbuf;
 			v4l2_m2m_buf_queue(ctx->fh.m2m_ctx, vbuf);
 			frame->state = DELTA_FRAME_M2M;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल पूर्णांक delta_recycle(काष्ठा delta_ctx *ctx, काष्ठा delta_frame *frame)
-अणु
-	स्थिर काष्ठा delta_dec *dec = ctx->dec;
+static int delta_recycle(struct delta_ctx *ctx, struct delta_frame *frame)
+{
+	const struct delta_dec *dec = ctx->dec;
 
 	/* recycle frame on decoder side */
 	call_dec_op(dec, recycle, ctx, frame);
@@ -142,111 +141,111 @@
 	/* this frame is no more output */
 	frame->state &= ~DELTA_FRAME_OUT;
 
-	/* requeue मुक्त frame */
-	अगर (frame->state == DELTA_FRAME_FREE) अणु
-		काष्ठा vb2_v4l2_buffer *vbuf = &frame->vbuf;
+	/* requeue free frame */
+	if (frame->state == DELTA_FRAME_FREE) {
+		struct vb2_v4l2_buffer *vbuf = &frame->vbuf;
 
 		v4l2_m2m_buf_queue(ctx->fh.m2m_ctx, vbuf);
 		frame->state = DELTA_FRAME_M2M;
-	पूर्ण
+	}
 
 	/* reset other frame fields */
 	frame->flags = 0;
 	frame->dts = 0;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम delta_push_dts(काष्ठा delta_ctx *ctx, u64 val)
-अणु
-	काष्ठा delta_dts *dts;
+static void delta_push_dts(struct delta_ctx *ctx, u64 val)
+{
+	struct delta_dts *dts;
 
-	dts = kzalloc(माप(*dts), GFP_KERNEL);
-	अगर (!dts)
-		वापस;
+	dts = kzalloc(sizeof(*dts), GFP_KERNEL);
+	if (!dts)
+		return;
 
 	INIT_LIST_HEAD(&dts->list);
 
 	/*
-	 * रक्षित by global lock acquired
+	 * protected by global lock acquired
 	 * by V4L2 when calling delta_vb2_au_queue
 	 */
 	dts->val = val;
 	list_add_tail(&dts->list, &ctx->dts);
-पूर्ण
+}
 
-अटल व्योम delta_pop_dts(काष्ठा delta_ctx *ctx, u64 *val)
-अणु
-	काष्ठा delta_dev *delta = ctx->dev;
-	काष्ठा delta_dts *dts;
+static void delta_pop_dts(struct delta_ctx *ctx, u64 *val)
+{
+	struct delta_dev *delta = ctx->dev;
+	struct delta_dts *dts;
 
 	/*
-	 * रक्षित by global lock acquired
+	 * protected by global lock acquired
 	 * by V4L2 when calling delta_vb2_au_queue
 	 */
-	अगर (list_empty(&ctx->dts)) अणु
+	if (list_empty(&ctx->dts)) {
 		dev_warn(delta->dev, "%s no dts to pop ... output dts = 0\n",
 			 ctx->name);
 		*val = 0;
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	dts = list_first_entry(&ctx->dts, काष्ठा delta_dts, list);
+	dts = list_first_entry(&ctx->dts, struct delta_dts, list);
 	list_del(&dts->list);
 
 	*val = dts->val;
 
-	kमुक्त(dts);
-पूर्ण
+	kfree(dts);
+}
 
-अटल व्योम delta_flush_dts(काष्ठा delta_ctx *ctx)
-अणु
-	काष्ठा delta_dts *dts;
-	काष्ठा delta_dts *next;
+static void delta_flush_dts(struct delta_ctx *ctx)
+{
+	struct delta_dts *dts;
+	struct delta_dts *next;
 
 	/*
-	 * रक्षित by global lock acquired
+	 * protected by global lock acquired
 	 * by V4L2 when calling delta_vb2_au_queue
 	 */
 
-	/* मुक्त all pending dts */
-	list_क्रम_each_entry_safe(dts, next, &ctx->dts, list)
-		kमुक्त(dts);
+	/* free all pending dts */
+	list_for_each_entry_safe(dts, next, &ctx->dts, list)
+		kfree(dts);
 
 	/* reset list */
 	INIT_LIST_HEAD(&ctx->dts);
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक frame_alignment(u32 fmt)
-अणु
-	चयन (fmt) अणु
-	हाल V4L2_PIX_FMT_NV12:
-	हाल V4L2_PIX_FMT_NV21:
+static inline int frame_alignment(u32 fmt)
+{
+	switch (fmt) {
+	case V4L2_PIX_FMT_NV12:
+	case V4L2_PIX_FMT_NV21:
 		/* multiple of 2 */
-		वापस 2;
-	शेष:
-		वापस 1;
-	पूर्ण
-पूर्ण
+		return 2;
+	default:
+		return 1;
+	}
+}
 
-अटल अंतरभूत पूर्णांक estimated_au_size(u32 w, u32 h)
-अणु
+static inline int estimated_au_size(u32 w, u32 h)
+{
 	/*
-	 * क्रम a MJPEG stream encoded from YUV422 pixel क्रमmat,
+	 * for a MJPEG stream encoded from YUV422 pixel format,
 	 * assuming a compression ratio of 2, the maximum size
 	 * of an access unit is (width x height x 2) / 2,
 	 * so (width x height)
 	 */
-	वापस (w * h);
-पूर्ण
+	return (w * h);
+}
 
-अटल व्योम set_शेष_params(काष्ठा delta_ctx *ctx)
-अणु
-	काष्ठा delta_frameinfo *frameinfo = &ctx->frameinfo;
-	काष्ठा delta_streaminfo *streaminfo = &ctx->streaminfo;
+static void set_default_params(struct delta_ctx *ctx)
+{
+	struct delta_frameinfo *frameinfo = &ctx->frameinfo;
+	struct delta_streaminfo *streaminfo = &ctx->streaminfo;
 
-	स_रखो(frameinfo, 0, माप(*frameinfo));
-	frameinfo->pixelक्रमmat = V4L2_PIX_FMT_NV12;
+	memset(frameinfo, 0, sizeof(*frameinfo));
+	frameinfo->pixelformat = V4L2_PIX_FMT_NV12;
 	frameinfo->width = DELTA_DEFAULT_WIDTH;
 	frameinfo->height = DELTA_DEFAULT_HEIGHT;
 	frameinfo->aligned_width = ALIGN(frameinfo->width,
@@ -255,15 +254,15 @@
 					  DELTA_HEIGHT_ALIGNMENT);
 	frameinfo->size = frame_size(frameinfo->aligned_width,
 				     frameinfo->aligned_height,
-				     frameinfo->pixelक्रमmat);
+				     frameinfo->pixelformat);
 	frameinfo->field = V4L2_FIELD_NONE;
 	frameinfo->colorspace = V4L2_COLORSPACE_REC709;
 	frameinfo->xfer_func = V4L2_XFER_FUNC_DEFAULT;
 	frameinfo->ycbcr_enc = V4L2_YCBCR_ENC_DEFAULT;
 	frameinfo->quantization = V4L2_QUANTIZATION_DEFAULT;
 
-	स_रखो(streaminfo, 0, माप(*streaminfo));
-	streaminfo->streamक्रमmat = DELTA_DEFAULT_STREAMFORMAT;
+	memset(streaminfo, 0, sizeof(*streaminfo));
+	streaminfo->streamformat = DELTA_DEFAULT_STREAMFORMAT;
 	streaminfo->width = DELTA_DEFAULT_WIDTH;
 	streaminfo->height = DELTA_DEFAULT_HEIGHT;
 	streaminfo->field = V4L2_FIELD_NONE;
@@ -274,170 +273,170 @@
 
 	ctx->max_au_size = estimated_au_size(streaminfo->width,
 					     streaminfo->height);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा delta_dec *delta_find_decoder(काष्ठा delta_ctx *ctx,
-						  u32 streamक्रमmat,
-						  u32 pixelक्रमmat)
-अणु
-	काष्ठा delta_dev *delta = ctx->dev;
-	स्थिर काष्ठा delta_dec *dec;
-	अचिन्हित पूर्णांक i;
+static const struct delta_dec *delta_find_decoder(struct delta_ctx *ctx,
+						  u32 streamformat,
+						  u32 pixelformat)
+{
+	struct delta_dev *delta = ctx->dev;
+	const struct delta_dec *dec;
+	unsigned int i;
 
-	क्रम (i = 0; i < delta->nb_of_decoders; i++) अणु
+	for (i = 0; i < delta->nb_of_decoders; i++) {
 		dec = delta->decoders[i];
-		अगर ((dec->pixelक्रमmat == pixelक्रमmat) &&
-		    (dec->streamक्रमmat == streamक्रमmat))
-			वापस dec;
-	पूर्ण
+		if ((dec->pixelformat == pixelformat) &&
+		    (dec->streamformat == streamformat))
+			return dec;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल व्योम रेजिस्टर_क्रमmat(u32 क्रमmat, u32 क्रमmats[], u32 *nb_of_क्रमmats)
-अणु
+static void register_format(u32 format, u32 formats[], u32 *nb_of_formats)
+{
 	u32 i;
 
-	क्रम (i = 0; i < *nb_of_क्रमmats; i++) अणु
-		अगर (क्रमmat == क्रमmats[i])
-			वापस;
-	पूर्ण
+	for (i = 0; i < *nb_of_formats; i++) {
+		if (format == formats[i])
+			return;
+	}
 
-	क्रमmats[(*nb_of_क्रमmats)++] = क्रमmat;
-पूर्ण
+	formats[(*nb_of_formats)++] = format;
+}
 
-अटल व्योम रेजिस्टर_क्रमmats(काष्ठा delta_dev *delta)
-अणु
-	अचिन्हित पूर्णांक i;
+static void register_formats(struct delta_dev *delta)
+{
+	unsigned int i;
 
-	क्रम (i = 0; i < delta->nb_of_decoders; i++) अणु
-		रेजिस्टर_क्रमmat(delta->decoders[i]->pixelक्रमmat,
-				delta->pixelक्रमmats,
-				&delta->nb_of_pixelक्रमmats);
+	for (i = 0; i < delta->nb_of_decoders; i++) {
+		register_format(delta->decoders[i]->pixelformat,
+				delta->pixelformats,
+				&delta->nb_of_pixelformats);
 
-		रेजिस्टर_क्रमmat(delta->decoders[i]->streamक्रमmat,
-				delta->streamक्रमmats,
-				&delta->nb_of_streamक्रमmats);
-	पूर्ण
-पूर्ण
+		register_format(delta->decoders[i]->streamformat,
+				delta->streamformats,
+				&delta->nb_of_streamformats);
+	}
+}
 
-अटल व्योम रेजिस्टर_decoders(काष्ठा delta_dev *delta)
-अणु
-	अचिन्हित पूर्णांक i;
+static void register_decoders(struct delta_dev *delta)
+{
+	unsigned int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(delta_decoders); i++) अणु
-		अगर (delta->nb_of_decoders >= DELTA_MAX_DECODERS) अणु
+	for (i = 0; i < ARRAY_SIZE(delta_decoders); i++) {
+		if (delta->nb_of_decoders >= DELTA_MAX_DECODERS) {
 			dev_dbg(delta->dev,
 				"%s failed to register %s decoder (%d maximum reached)\n",
 				DELTA_PREFIX, delta_decoders[i]->name,
 				DELTA_MAX_DECODERS);
-			वापस;
-		पूर्ण
+			return;
+		}
 
 		delta->decoders[delta->nb_of_decoders++] = delta_decoders[i];
 		dev_info(delta->dev, "%s %s decoder registered\n",
 			 DELTA_PREFIX, delta_decoders[i]->name);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक delta_खोलो_decoder(काष्ठा delta_ctx *ctx, u32 streamक्रमmat,
-			      u32 pixelक्रमmat, स्थिर काष्ठा delta_dec **pdec)
-अणु
-	काष्ठा delta_dev *delta = ctx->dev;
-	स्थिर काष्ठा delta_dec *dec;
-	पूर्णांक ret;
+static int delta_open_decoder(struct delta_ctx *ctx, u32 streamformat,
+			      u32 pixelformat, const struct delta_dec **pdec)
+{
+	struct delta_dev *delta = ctx->dev;
+	const struct delta_dec *dec;
+	int ret;
 
-	dec = delta_find_decoder(ctx, streamक्रमmat, ctx->frameinfo.pixelक्रमmat);
-	अगर (!dec) अणु
+	dec = delta_find_decoder(ctx, streamformat, ctx->frameinfo.pixelformat);
+	if (!dec) {
 		dev_err(delta->dev, "%s no decoder found matching %4.4s => %4.4s\n",
-			ctx->name, (अक्षर *)&streamक्रमmat, (अक्षर *)&pixelक्रमmat);
-		वापस -EINVAL;
-	पूर्ण
+			ctx->name, (char *)&streamformat, (char *)&pixelformat);
+		return -EINVAL;
+	}
 
 	dev_dbg(delta->dev, "%s one decoder matching %4.4s => %4.4s\n",
-		ctx->name, (अक्षर *)&streamक्रमmat, (अक्षर *)&pixelक्रमmat);
+		ctx->name, (char *)&streamformat, (char *)&pixelformat);
 
 	/* update instance name */
-	snम_लिखो(ctx->name, माप(ctx->name), "[%3d:%4.4s]",
-		 delta->instance_id, (अक्षर *)&streamक्रमmat);
+	snprintf(ctx->name, sizeof(ctx->name), "[%3d:%4.4s]",
+		 delta->instance_id, (char *)&streamformat);
 
-	/* खोलो decoder instance */
-	ret = call_dec_op(dec, खोलो, ctx);
-	अगर (ret) अणु
+	/* open decoder instance */
+	ret = call_dec_op(dec, open, ctx);
+	if (ret) {
 		dev_err(delta->dev, "%s failed to open decoder instance (%d)\n",
 			ctx->name, ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	dev_dbg(delta->dev, "%s %s decoder opened\n", ctx->name, dec->name);
 
 	*pdec = dec;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
  * V4L2 ioctl operations
  */
 
-अटल पूर्णांक delta_querycap(काष्ठा file *file, व्योम *priv,
-			  काष्ठा v4l2_capability *cap)
-अणु
-	काष्ठा delta_ctx *ctx = to_ctx(file->निजी_data);
-	काष्ठा delta_dev *delta = ctx->dev;
+static int delta_querycap(struct file *file, void *priv,
+			  struct v4l2_capability *cap)
+{
+	struct delta_ctx *ctx = to_ctx(file->private_data);
+	struct delta_dev *delta = ctx->dev;
 
-	strscpy(cap->driver, DELTA_NAME, माप(cap->driver));
-	strscpy(cap->card, delta->vdev->name, माप(cap->card));
-	snम_लिखो(cap->bus_info, माप(cap->bus_info), "platform:%s",
+	strscpy(cap->driver, DELTA_NAME, sizeof(cap->driver));
+	strscpy(cap->card, delta->vdev->name, sizeof(cap->card));
+	snprintf(cap->bus_info, sizeof(cap->bus_info), "platform:%s",
 		 delta->pdev->name);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक delta_क्रमागत_fmt_stream(काष्ठा file *file, व्योम *priv,
-				 काष्ठा v4l2_fmtdesc *f)
-अणु
-	काष्ठा delta_ctx *ctx = to_ctx(file->निजी_data);
-	काष्ठा delta_dev *delta = ctx->dev;
+static int delta_enum_fmt_stream(struct file *file, void *priv,
+				 struct v4l2_fmtdesc *f)
+{
+	struct delta_ctx *ctx = to_ctx(file->private_data);
+	struct delta_dev *delta = ctx->dev;
 
-	अगर (unlikely(f->index >= delta->nb_of_streamक्रमmats))
-		वापस -EINVAL;
+	if (unlikely(f->index >= delta->nb_of_streamformats))
+		return -EINVAL;
 
-	f->pixelक्रमmat = delta->streamक्रमmats[f->index];
+	f->pixelformat = delta->streamformats[f->index];
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक delta_क्रमागत_fmt_frame(काष्ठा file *file, व्योम *priv,
-				काष्ठा v4l2_fmtdesc *f)
-अणु
-	काष्ठा delta_ctx *ctx = to_ctx(file->निजी_data);
-	काष्ठा delta_dev *delta = ctx->dev;
+static int delta_enum_fmt_frame(struct file *file, void *priv,
+				struct v4l2_fmtdesc *f)
+{
+	struct delta_ctx *ctx = to_ctx(file->private_data);
+	struct delta_dev *delta = ctx->dev;
 
-	अगर (unlikely(f->index >= delta->nb_of_pixelक्रमmats))
-		वापस -EINVAL;
+	if (unlikely(f->index >= delta->nb_of_pixelformats))
+		return -EINVAL;
 
-	f->pixelक्रमmat = delta->pixelक्रमmats[f->index];
+	f->pixelformat = delta->pixelformats[f->index];
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक delta_g_fmt_stream(काष्ठा file *file, व्योम *fh,
-			      काष्ठा v4l2_क्रमmat *f)
-अणु
-	काष्ठा delta_ctx *ctx = to_ctx(file->निजी_data);
-	काष्ठा delta_dev *delta = ctx->dev;
-	काष्ठा v4l2_pix_क्रमmat *pix = &f->fmt.pix;
-	काष्ठा delta_streaminfo *streaminfo = &ctx->streaminfo;
-	अचिन्हित अक्षर str[100] = "";
+static int delta_g_fmt_stream(struct file *file, void *fh,
+			      struct v4l2_format *f)
+{
+	struct delta_ctx *ctx = to_ctx(file->private_data);
+	struct delta_dev *delta = ctx->dev;
+	struct v4l2_pix_format *pix = &f->fmt.pix;
+	struct delta_streaminfo *streaminfo = &ctx->streaminfo;
+	unsigned char str[100] = "";
 
-	अगर (!(ctx->flags & DELTA_FLAG_STREAMINFO))
+	if (!(ctx->flags & DELTA_FLAG_STREAMINFO))
 		dev_dbg(delta->dev,
 			"%s V4L2 GET_FMT (OUTPUT): no stream information available, default to %s\n",
 			ctx->name,
-			delta_streaminfo_str(streaminfo, str, माप(str)));
+			delta_streaminfo_str(streaminfo, str, sizeof(str)));
 
-	pix->pixelक्रमmat = streaminfo->streamक्रमmat;
+	pix->pixelformat = streaminfo->streamformat;
 	pix->width = streaminfo->width;
 	pix->height = streaminfo->height;
 	pix->field = streaminfo->field;
@@ -448,65 +447,65 @@
 	pix->ycbcr_enc = streaminfo->ycbcr_enc;
 	pix->quantization = streaminfo->quantization;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक delta_g_fmt_frame(काष्ठा file *file, व्योम *fh, काष्ठा v4l2_क्रमmat *f)
-अणु
-	काष्ठा delta_ctx *ctx = to_ctx(file->निजी_data);
-	काष्ठा delta_dev *delta = ctx->dev;
-	काष्ठा v4l2_pix_क्रमmat *pix = &f->fmt.pix;
-	काष्ठा delta_frameinfo *frameinfo = &ctx->frameinfo;
-	काष्ठा delta_streaminfo *streaminfo = &ctx->streaminfo;
-	अचिन्हित अक्षर str[100] = "";
+static int delta_g_fmt_frame(struct file *file, void *fh, struct v4l2_format *f)
+{
+	struct delta_ctx *ctx = to_ctx(file->private_data);
+	struct delta_dev *delta = ctx->dev;
+	struct v4l2_pix_format *pix = &f->fmt.pix;
+	struct delta_frameinfo *frameinfo = &ctx->frameinfo;
+	struct delta_streaminfo *streaminfo = &ctx->streaminfo;
+	unsigned char str[100] = "";
 
-	अगर (!(ctx->flags & DELTA_FLAG_FRAMEINFO))
+	if (!(ctx->flags & DELTA_FLAG_FRAMEINFO))
 		dev_dbg(delta->dev,
 			"%s V4L2 GET_FMT (CAPTURE): no frame information available, default to %s\n",
 			ctx->name,
-			delta_frameinfo_str(frameinfo, str, माप(str)));
+			delta_frameinfo_str(frameinfo, str, sizeof(str)));
 
-	pix->pixelक्रमmat = frameinfo->pixelक्रमmat;
+	pix->pixelformat = frameinfo->pixelformat;
 	pix->width = frameinfo->aligned_width;
 	pix->height = frameinfo->aligned_height;
 	pix->field = frameinfo->field;
 	pix->bytesperline = frame_stride(frameinfo->aligned_width,
-					       frameinfo->pixelक्रमmat);
+					       frameinfo->pixelformat);
 	pix->sizeimage = frameinfo->size;
 
-	अगर (ctx->flags & DELTA_FLAG_STREAMINFO) अणु
-		/* align colorspace & मित्रs on stream ones अगर any set */
+	if (ctx->flags & DELTA_FLAG_STREAMINFO) {
+		/* align colorspace & friends on stream ones if any set */
 		frameinfo->colorspace = streaminfo->colorspace;
 		frameinfo->xfer_func = streaminfo->xfer_func;
 		frameinfo->ycbcr_enc = streaminfo->ycbcr_enc;
 		frameinfo->quantization = streaminfo->quantization;
-	पूर्ण
+	}
 	pix->colorspace = frameinfo->colorspace;
 	pix->xfer_func = frameinfo->xfer_func;
 	pix->ycbcr_enc = frameinfo->ycbcr_enc;
 	pix->quantization = frameinfo->quantization;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक delta_try_fmt_stream(काष्ठा file *file, व्योम *priv,
-				काष्ठा v4l2_क्रमmat *f)
-अणु
-	काष्ठा delta_ctx *ctx = to_ctx(file->निजी_data);
-	काष्ठा delta_dev *delta = ctx->dev;
-	काष्ठा v4l2_pix_क्रमmat *pix = &f->fmt.pix;
-	u32 streamक्रमmat = pix->pixelक्रमmat;
-	स्थिर काष्ठा delta_dec *dec;
+static int delta_try_fmt_stream(struct file *file, void *priv,
+				struct v4l2_format *f)
+{
+	struct delta_ctx *ctx = to_ctx(file->private_data);
+	struct delta_dev *delta = ctx->dev;
+	struct v4l2_pix_format *pix = &f->fmt.pix;
+	u32 streamformat = pix->pixelformat;
+	const struct delta_dec *dec;
 	u32 width, height;
 	u32 au_size;
 
-	dec = delta_find_decoder(ctx, streamक्रमmat, ctx->frameinfo.pixelक्रमmat);
-	अगर (!dec) अणु
+	dec = delta_find_decoder(ctx, streamformat, ctx->frameinfo.pixelformat);
+	if (!dec) {
 		dev_dbg(delta->dev,
 			"%s V4L2 TRY_FMT (OUTPUT): unsupported format %4.4s\n",
-			ctx->name, (अक्षर *)&pix->pixelक्रमmat);
-		वापस -EINVAL;
-	पूर्ण
+			ctx->name, (char *)&pix->pixelformat);
+		return -EINVAL;
+	}
 
 	/* adjust width & height */
 	width = pix->width;
@@ -521,164 +520,164 @@
 		 dec->max_height ? dec->max_height : DELTA_MAX_HEIGHT,
 		 0, 0);
 
-	अगर ((pix->width != width) || (pix->height != height))
+	if ((pix->width != width) || (pix->height != height))
 		dev_dbg(delta->dev,
 			"%s V4L2 TRY_FMT (OUTPUT): resolution updated %dx%d -> %dx%d to fit min/max/alignment\n",
 			ctx->name, width, height,
 			pix->width, pix->height);
 
 	au_size = estimated_au_size(pix->width, pix->height);
-	अगर (pix->sizeimage < au_size) अणु
+	if (pix->sizeimage < au_size) {
 		dev_dbg(delta->dev,
 			"%s V4L2 TRY_FMT (OUTPUT): size updated %d -> %d to fit estimated size\n",
 			ctx->name, pix->sizeimage, au_size);
 		pix->sizeimage = au_size;
-	पूर्ण
+	}
 
 	pix->bytesperline = 0;
 
-	अगर (pix->field == V4L2_FIELD_ANY)
+	if (pix->field == V4L2_FIELD_ANY)
 		pix->field = V4L2_FIELD_NONE;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक delta_try_fmt_frame(काष्ठा file *file, व्योम *priv,
-			       काष्ठा v4l2_क्रमmat *f)
-अणु
-	काष्ठा delta_ctx *ctx = to_ctx(file->निजी_data);
-	काष्ठा delta_dev *delta = ctx->dev;
-	काष्ठा v4l2_pix_क्रमmat *pix = &f->fmt.pix;
-	u32 pixelक्रमmat = pix->pixelक्रमmat;
-	स्थिर काष्ठा delta_dec *dec;
+static int delta_try_fmt_frame(struct file *file, void *priv,
+			       struct v4l2_format *f)
+{
+	struct delta_ctx *ctx = to_ctx(file->private_data);
+	struct delta_dev *delta = ctx->dev;
+	struct v4l2_pix_format *pix = &f->fmt.pix;
+	u32 pixelformat = pix->pixelformat;
+	const struct delta_dec *dec;
 	u32 width, height;
 
-	dec = delta_find_decoder(ctx, ctx->streaminfo.streamक्रमmat,
-				 pixelक्रमmat);
-	अगर (!dec) अणु
+	dec = delta_find_decoder(ctx, ctx->streaminfo.streamformat,
+				 pixelformat);
+	if (!dec) {
 		dev_dbg(delta->dev,
 			"%s V4L2 TRY_FMT (CAPTURE): unsupported format %4.4s\n",
-			ctx->name, (अक्षर *)&pixelक्रमmat);
-		वापस -EINVAL;
-	पूर्ण
+			ctx->name, (char *)&pixelformat);
+		return -EINVAL;
+	}
 
 	/* adjust width & height */
 	width = pix->width;
 	height = pix->height;
 	v4l_bound_align_image(&pix->width,
 			      DELTA_MIN_WIDTH, DELTA_MAX_WIDTH,
-			      frame_alignment(pixelक्रमmat) - 1,
+			      frame_alignment(pixelformat) - 1,
 			      &pix->height,
 			      DELTA_MIN_HEIGHT, DELTA_MAX_HEIGHT,
-			      frame_alignment(pixelक्रमmat) - 1, 0);
+			      frame_alignment(pixelformat) - 1, 0);
 
-	अगर ((pix->width != width) || (pix->height != height))
+	if ((pix->width != width) || (pix->height != height))
 		dev_dbg(delta->dev,
 			"%s V4L2 TRY_FMT (CAPTURE): resolution updated %dx%d -> %dx%d to fit min/max/alignment\n",
 			ctx->name, width, height, pix->width, pix->height);
 
-	/* शेष decoder alignment स्थिरraपूर्णांक */
+	/* default decoder alignment constraint */
 	width = ALIGN(pix->width, DELTA_WIDTH_ALIGNMENT);
 	height = ALIGN(pix->height, DELTA_HEIGHT_ALIGNMENT);
-	अगर ((pix->width != width) || (pix->height != height))
+	if ((pix->width != width) || (pix->height != height))
 		dev_dbg(delta->dev,
 			"%s V4L2 TRY_FMT (CAPTURE): resolution updated %dx%d -> %dx%d to fit decoder alignment\n",
 			ctx->name, width, height, pix->width, pix->height);
 
-	अगर (!pix->colorspace) अणु
+	if (!pix->colorspace) {
 		pix->colorspace = V4L2_COLORSPACE_REC709;
 		pix->xfer_func = V4L2_XFER_FUNC_DEFAULT;
 		pix->ycbcr_enc = V4L2_YCBCR_ENC_DEFAULT;
 		pix->quantization = V4L2_QUANTIZATION_DEFAULT;
-	पूर्ण
+	}
 
 	pix->width = width;
 	pix->height = height;
-	pix->bytesperline = frame_stride(pix->width, pixelक्रमmat);
-	pix->sizeimage = frame_size(pix->width, pix->height, pixelक्रमmat);
+	pix->bytesperline = frame_stride(pix->width, pixelformat);
+	pix->sizeimage = frame_size(pix->width, pix->height, pixelformat);
 
-	अगर (pix->field == V4L2_FIELD_ANY)
+	if (pix->field == V4L2_FIELD_ANY)
 		pix->field = V4L2_FIELD_NONE;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक delta_s_fmt_stream(काष्ठा file *file, व्योम *fh,
-			      काष्ठा v4l2_क्रमmat *f)
-अणु
-	काष्ठा delta_ctx *ctx = to_ctx(file->निजी_data);
-	काष्ठा delta_dev *delta = ctx->dev;
-	काष्ठा vb2_queue *vq;
-	काष्ठा v4l2_pix_क्रमmat *pix = &f->fmt.pix;
-	पूर्णांक ret;
+static int delta_s_fmt_stream(struct file *file, void *fh,
+			      struct v4l2_format *f)
+{
+	struct delta_ctx *ctx = to_ctx(file->private_data);
+	struct delta_dev *delta = ctx->dev;
+	struct vb2_queue *vq;
+	struct v4l2_pix_format *pix = &f->fmt.pix;
+	int ret;
 
 	ret = delta_try_fmt_stream(file, fh, f);
-	अगर (ret) अणु
+	if (ret) {
 		dev_dbg(delta->dev,
 			"%s V4L2 S_FMT (OUTPUT): unsupported format %4.4s\n",
-			ctx->name, (अक्षर *)&pix->pixelक्रमmat);
-		वापस ret;
-	पूर्ण
+			ctx->name, (char *)&pix->pixelformat);
+		return ret;
+	}
 
 	vq = v4l2_m2m_get_vq(ctx->fh.m2m_ctx, f->type);
-	अगर (vb2_is_streaming(vq)) अणु
+	if (vb2_is_streaming(vq)) {
 		dev_dbg(delta->dev, "%s V4L2 S_FMT (OUTPUT): queue busy\n",
 			ctx->name);
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
 	ctx->max_au_size = pix->sizeimage;
 	ctx->streaminfo.width = pix->width;
 	ctx->streaminfo.height = pix->height;
-	ctx->streaminfo.streamक्रमmat = pix->pixelक्रमmat;
+	ctx->streaminfo.streamformat = pix->pixelformat;
 	ctx->streaminfo.colorspace = pix->colorspace;
 	ctx->streaminfo.xfer_func = pix->xfer_func;
 	ctx->streaminfo.ycbcr_enc = pix->ycbcr_enc;
 	ctx->streaminfo.quantization = pix->quantization;
 	ctx->flags |= DELTA_FLAG_STREAMINFO;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक delta_s_fmt_frame(काष्ठा file *file, व्योम *fh, काष्ठा v4l2_क्रमmat *f)
-अणु
-	काष्ठा delta_ctx *ctx = to_ctx(file->निजी_data);
-	काष्ठा delta_dev *delta = ctx->dev;
-	स्थिर काष्ठा delta_dec *dec = ctx->dec;
-	काष्ठा v4l2_pix_क्रमmat *pix = &f->fmt.pix;
-	काष्ठा delta_frameinfo frameinfo;
-	अचिन्हित अक्षर str[100] = "";
-	काष्ठा vb2_queue *vq;
-	पूर्णांक ret;
+static int delta_s_fmt_frame(struct file *file, void *fh, struct v4l2_format *f)
+{
+	struct delta_ctx *ctx = to_ctx(file->private_data);
+	struct delta_dev *delta = ctx->dev;
+	const struct delta_dec *dec = ctx->dec;
+	struct v4l2_pix_format *pix = &f->fmt.pix;
+	struct delta_frameinfo frameinfo;
+	unsigned char str[100] = "";
+	struct vb2_queue *vq;
+	int ret;
 
 	vq = v4l2_m2m_get_vq(ctx->fh.m2m_ctx, f->type);
-	अगर (vb2_is_streaming(vq)) अणु
+	if (vb2_is_streaming(vq)) {
 		dev_dbg(delta->dev, "%s V4L2 S_FMT (CAPTURE): queue busy\n",
 			ctx->name);
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
-	अगर (ctx->state < DELTA_STATE_READY) अणु
+	if (ctx->state < DELTA_STATE_READY) {
 		/*
-		 * decoder not yet खोलोed and valid stream header not found,
-		 * could not negotiate क्रमmat with decoder, check at least
-		 * pixel क्रमmat & negotiate resolution boundaries
+		 * decoder not yet opened and valid stream header not found,
+		 * could not negotiate format with decoder, check at least
+		 * pixel format & negotiate resolution boundaries
 		 * and alignment...
 		 */
 		ret = delta_try_fmt_frame(file, fh, f);
-		अगर (ret) अणु
+		if (ret) {
 			dev_dbg(delta->dev,
 				"%s V4L2 S_FMT (CAPTURE): unsupported format %4.4s\n",
-				ctx->name, (अक्षर *)&pix->pixelक्रमmat);
-			वापस ret;
-		पूर्ण
+				ctx->name, (char *)&pix->pixelformat);
+			return ret;
+		}
 
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	/* set frame inक्रमmation to decoder */
-	स_रखो(&frameinfo, 0, माप(frameinfo));
-	frameinfo.pixelक्रमmat = pix->pixelक्रमmat;
+	/* set frame information to decoder */
+	memset(&frameinfo, 0, sizeof(frameinfo));
+	frameinfo.pixelformat = pix->pixelformat;
 	frameinfo.width = pix->width;
 	frameinfo.height = pix->height;
 	frameinfo.aligned_width = pix->width;
@@ -690,25 +689,25 @@
 	frameinfo.ycbcr_enc = pix->ycbcr_enc;
 	frameinfo.quantization = pix->quantization;
 	ret = call_dec_op(dec, set_frameinfo, ctx, &frameinfo);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	/* then get what decoder can really करो */
+	/* then get what decoder can really do */
 	ret = call_dec_op(dec, get_frameinfo, ctx, &frameinfo);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ctx->flags |= DELTA_FLAG_FRAMEINFO;
 	ctx->frameinfo = frameinfo;
 	dev_dbg(delta->dev,
 		"%s V4L2 SET_FMT (CAPTURE): frameinfo updated to %s\n",
 		ctx->name,
-		delta_frameinfo_str(&frameinfo, str, माप(str)));
+		delta_frameinfo_str(&frameinfo, str, sizeof(str)));
 
-	pix->pixelक्रमmat = frameinfo.pixelक्रमmat;
+	pix->pixelformat = frameinfo.pixelformat;
 	pix->width = frameinfo.aligned_width;
 	pix->height = frameinfo.aligned_height;
-	pix->bytesperline = frame_stride(pix->width, pix->pixelक्रमmat);
+	pix->bytesperline = frame_stride(pix->width, pix->pixelformat);
 	pix->sizeimage = frameinfo.size;
 	pix->field = frameinfo.field;
 	pix->colorspace = frameinfo.colorspace;
@@ -716,60 +715,60 @@
 	pix->ycbcr_enc = frameinfo.ycbcr_enc;
 	pix->quantization = frameinfo.quantization;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक delta_g_selection(काष्ठा file *file, व्योम *fh,
-			     काष्ठा v4l2_selection *s)
-अणु
-	काष्ठा delta_ctx *ctx = to_ctx(fh);
-	काष्ठा delta_frameinfo *frameinfo = &ctx->frameinfo;
-	काष्ठा v4l2_rect crop;
+static int delta_g_selection(struct file *file, void *fh,
+			     struct v4l2_selection *s)
+{
+	struct delta_ctx *ctx = to_ctx(fh);
+	struct delta_frameinfo *frameinfo = &ctx->frameinfo;
+	struct v4l2_rect crop;
 
-	अगर (s->type != V4L2_BUF_TYPE_VIDEO_CAPTURE)
-		वापस -EINVAL;
+	if (s->type != V4L2_BUF_TYPE_VIDEO_CAPTURE)
+		return -EINVAL;
 
-	अगर ((ctx->flags & DELTA_FLAG_FRAMEINFO) &&
-	    (frameinfo->flags & DELTA_FRAMEINFO_FLAG_CROP)) अणु
+	if ((ctx->flags & DELTA_FLAG_FRAMEINFO) &&
+	    (frameinfo->flags & DELTA_FRAMEINFO_FLAG_CROP)) {
 		crop = frameinfo->crop;
-	पूर्ण अन्यथा अणु
-		/* शेष to video dimensions */
+	} else {
+		/* default to video dimensions */
 		crop.left = 0;
 		crop.top = 0;
 		crop.width = frameinfo->width;
 		crop.height = frameinfo->height;
-	पूर्ण
+	}
 
-	चयन (s->target) अणु
-	हाल V4L2_SEL_TGT_COMPOSE:
-	हाल V4L2_SEL_TGT_COMPOSE_DEFAULT:
+	switch (s->target) {
+	case V4L2_SEL_TGT_COMPOSE:
+	case V4L2_SEL_TGT_COMPOSE_DEFAULT:
 		/* visible area inside video */
 		s->r = crop;
-		अवरोध;
-	हाल V4L2_SEL_TGT_COMPOSE_PADDED:
-	हाल V4L2_SEL_TGT_COMPOSE_BOUNDS:
+		break;
+	case V4L2_SEL_TGT_COMPOSE_PADDED:
+	case V4L2_SEL_TGT_COMPOSE_BOUNDS:
 		/* up to aligned dimensions */
 		s->r.left = 0;
 		s->r.top = 0;
 		s->r.width = frameinfo->aligned_width;
 		s->r.height = frameinfo->aligned_height;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम delta_complete_eos(काष्ठा delta_ctx *ctx,
-			       काष्ठा delta_frame *frame)
-अणु
-	काष्ठा delta_dev *delta = ctx->dev;
-	स्थिर काष्ठा v4l2_event ev = अणु.type = V4L2_EVENT_EOSपूर्ण;
+static void delta_complete_eos(struct delta_ctx *ctx,
+			       struct delta_frame *frame)
+{
+	struct delta_dev *delta = ctx->dev;
+	const struct v4l2_event ev = {.type = V4L2_EVENT_EOS};
 
 	/*
 	 * Send EOS to user:
-	 * - by वापसing an empty frame flagged to V4L2_BUF_FLAG_LAST
+	 * - by returning an empty frame flagged to V4L2_BUF_FLAG_LAST
 	 * - and then send EOS event
 	 */
 
@@ -780,124 +779,124 @@
 	frame->flags |= V4L2_BUF_FLAG_LAST;
 
 	/* release frame to user */
-	delta_frame_करोne(ctx, frame, 0);
+	delta_frame_done(ctx, frame, 0);
 
 	/* send EOS event */
 	v4l2_event_queue_fh(&ctx->fh, &ev);
 
 	dev_dbg(delta->dev, "%s EOS completed\n", ctx->name);
-पूर्ण
+}
 
-अटल पूर्णांक delta_try_decoder_cmd(काष्ठा file *file, व्योम *fh,
-				 काष्ठा v4l2_decoder_cmd *cmd)
-अणु
-	अगर (cmd->cmd != V4L2_DEC_CMD_STOP)
-		वापस -EINVAL;
+static int delta_try_decoder_cmd(struct file *file, void *fh,
+				 struct v4l2_decoder_cmd *cmd)
+{
+	if (cmd->cmd != V4L2_DEC_CMD_STOP)
+		return -EINVAL;
 
-	अगर (cmd->flags & V4L2_DEC_CMD_STOP_TO_BLACK)
-		वापस -EINVAL;
+	if (cmd->flags & V4L2_DEC_CMD_STOP_TO_BLACK)
+		return -EINVAL;
 
-	अगर (!(cmd->flags & V4L2_DEC_CMD_STOP_IMMEDIATELY) &&
+	if (!(cmd->flags & V4L2_DEC_CMD_STOP_IMMEDIATELY) &&
 	    (cmd->stop.pts != 0))
-		वापस -EINVAL;
+		return -EINVAL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक delta_decoder_stop_cmd(काष्ठा delta_ctx *ctx, व्योम *fh)
-अणु
-	स्थिर काष्ठा delta_dec *dec = ctx->dec;
-	काष्ठा delta_dev *delta = ctx->dev;
-	काष्ठा delta_frame *frame = शून्य;
-	पूर्णांक ret = 0;
+static int delta_decoder_stop_cmd(struct delta_ctx *ctx, void *fh)
+{
+	const struct delta_dec *dec = ctx->dec;
+	struct delta_dev *delta = ctx->dev;
+	struct delta_frame *frame = NULL;
+	int ret = 0;
 
 	dev_dbg(delta->dev, "%s EOS received\n", ctx->name);
 
-	अगर (ctx->state != DELTA_STATE_READY)
-		वापस 0;
+	if (ctx->state != DELTA_STATE_READY)
+		return 0;
 
 	/* drain the decoder */
 	call_dec_op(dec, drain, ctx);
 
 	/* release to user drained frames */
-	जबतक (1) अणु
-		frame = शून्य;
+	while (1) {
+		frame = NULL;
 		ret = call_dec_op(dec, get_frame, ctx, &frame);
-		अगर (ret == -ENODATA) अणु
+		if (ret == -ENODATA) {
 			/* no more decoded frames */
-			अवरोध;
-		पूर्ण
-		अगर (frame) अणु
+			break;
+		}
+		if (frame) {
 			dev_dbg(delta->dev, "%s drain frame[%d]\n",
 				ctx->name, frame->index);
 
-			/* pop बारtamp and mark frame with it */
+			/* pop timestamp and mark frame with it */
 			delta_pop_dts(ctx, &frame->dts);
 
 			/* release decoded frame to user */
-			delta_frame_करोne(ctx, frame, 0);
-		पूर्ण
-	पूर्ण
+			delta_frame_done(ctx, frame, 0);
+		}
+	}
 
 	/* try to complete EOS */
-	ret = delta_get_मुक्त_frame(ctx, &frame);
-	अगर (ret)
-		जाओ delay_eos;
+	ret = delta_get_free_frame(ctx, &frame);
+	if (ret)
+		goto delay_eos;
 
 	/* new frame available, EOS can now be completed */
 	delta_complete_eos(ctx, frame);
 
 	ctx->state = DELTA_STATE_EOS;
 
-	वापस 0;
+	return 0;
 
 delay_eos:
 	/*
 	 * EOS completion from driver is delayed because
-	 * we करोn't have a मुक्त empty frame available.
+	 * we don't have a free empty frame available.
 	 * EOS completion is so delayed till next frame_queue() call
-	 * to be sure to have a मुक्त empty frame available.
+	 * to be sure to have a free empty frame available.
 	 */
 	ctx->state = DELTA_STATE_WF_EOS;
 	dev_dbg(delta->dev, "%s EOS delayed\n", ctx->name);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक delta_decoder_cmd(काष्ठा file *file, व्योम *fh,
-			     काष्ठा v4l2_decoder_cmd *cmd)
-अणु
-	काष्ठा delta_ctx *ctx = to_ctx(fh);
-	पूर्णांक ret = 0;
+static int delta_decoder_cmd(struct file *file, void *fh,
+			     struct v4l2_decoder_cmd *cmd)
+{
+	struct delta_ctx *ctx = to_ctx(fh);
+	int ret = 0;
 
 	ret = delta_try_decoder_cmd(file, fh, cmd);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस delta_decoder_stop_cmd(ctx, fh);
-पूर्ण
+	return delta_decoder_stop_cmd(ctx, fh);
+}
 
-अटल पूर्णांक delta_subscribe_event(काष्ठा v4l2_fh *fh,
-				 स्थिर काष्ठा v4l2_event_subscription *sub)
-अणु
-	चयन (sub->type) अणु
-	हाल V4L2_EVENT_EOS:
-		वापस v4l2_event_subscribe(fh, sub, 2, शून्य);
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+static int delta_subscribe_event(struct v4l2_fh *fh,
+				 const struct v4l2_event_subscription *sub)
+{
+	switch (sub->type) {
+	case V4L2_EVENT_EOS:
+		return v4l2_event_subscribe(fh, sub, 2, NULL);
+	default:
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* v4l2 ioctl ops */
-अटल स्थिर काष्ठा v4l2_ioctl_ops delta_ioctl_ops = अणु
+static const struct v4l2_ioctl_ops delta_ioctl_ops = {
 	.vidioc_querycap = delta_querycap,
-	.vidioc_क्रमागत_fmt_vid_cap = delta_क्रमागत_fmt_frame,
+	.vidioc_enum_fmt_vid_cap = delta_enum_fmt_frame,
 	.vidioc_g_fmt_vid_cap = delta_g_fmt_frame,
 	.vidioc_try_fmt_vid_cap = delta_try_fmt_frame,
 	.vidioc_s_fmt_vid_cap = delta_s_fmt_frame,
-	.vidioc_क्रमागत_fmt_vid_out = delta_क्रमागत_fmt_stream,
+	.vidioc_enum_fmt_vid_out = delta_enum_fmt_stream,
 	.vidioc_g_fmt_vid_out = delta_g_fmt_stream,
 	.vidioc_try_fmt_vid_out = delta_try_fmt_stream,
 	.vidioc_s_fmt_vid_out = delta_s_fmt_stream,
@@ -914,216 +913,216 @@ delay_eos:
 	.vidioc_decoder_cmd = delta_decoder_cmd,
 	.vidioc_subscribe_event = delta_subscribe_event,
 	.vidioc_unsubscribe_event = v4l2_event_unsubscribe,
-पूर्ण;
+};
 
 /*
  * mem-to-mem operations
  */
 
-अटल व्योम delta_run_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा delta_ctx *ctx = container_of(work, काष्ठा delta_ctx, run_work);
-	काष्ठा delta_dev *delta = ctx->dev;
-	स्थिर काष्ठा delta_dec *dec = ctx->dec;
-	काष्ठा delta_au *au;
-	काष्ठा delta_frame *frame = शून्य;
-	पूर्णांक ret = 0;
+static void delta_run_work(struct work_struct *work)
+{
+	struct delta_ctx *ctx = container_of(work, struct delta_ctx, run_work);
+	struct delta_dev *delta = ctx->dev;
+	const struct delta_dec *dec = ctx->dec;
+	struct delta_au *au;
+	struct delta_frame *frame = NULL;
+	int ret = 0;
 	bool discard = false;
-	काष्ठा vb2_v4l2_buffer *vbuf;
+	struct vb2_v4l2_buffer *vbuf;
 
-	अगर (!dec) अणु
+	if (!dec) {
 		dev_err(delta->dev, "%s no decoder opened yet\n", ctx->name);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/* protect instance against reentrancy */
 	mutex_lock(&ctx->lock);
 
-	vbuf = v4l2_m2m_src_buf_हटाओ(ctx->fh.m2m_ctx);
-	अगर (!vbuf) अणु
+	vbuf = v4l2_m2m_src_buf_remove(ctx->fh.m2m_ctx);
+	if (!vbuf) {
 		dev_err(delta->dev, "%s no buffer to decode\n", ctx->name);
 		mutex_unlock(&ctx->lock);
-		वापस;
-	पूर्ण
+		return;
+	}
 	au = to_au(vbuf);
 	au->size = vb2_get_plane_payload(&vbuf->vb2_buf, 0);
-	au->dts = vbuf->vb2_buf.बारtamp;
+	au->dts = vbuf->vb2_buf.timestamp;
 
 	/* dump access unit */
 	dump_au(ctx, au);
 
 	/* enable the hardware */
-	अगर (!dec->pm) अणु
+	if (!dec->pm) {
 		ret = delta_get_sync(ctx);
-		अगर (ret) अणु
-			delta_put_स्वतःsuspend(ctx);
-			जाओ err;
-		पूर्ण
-	पूर्ण
+		if (ret) {
+			delta_put_autosuspend(ctx);
+			goto err;
+		}
+	}
 
 	/* decode this access unit */
 	ret = call_dec_op(dec, decode, ctx, au);
 
 	/*
-	 * अगर the (-ENODATA) value is वापसed, it refers to the पूर्णांकerlaced
-	 * stream हाल क्रम which 2 access units are needed to get 1 frame.
-	 * So, this वापसed value करोesn't mean that the decoding fails, but
-	 * indicates that the बारtamp inक्रमmation of the access unit shall
-	 * not be taken पूर्णांकo account, and that the V4L2 buffer associated with
-	 * the access unit shall be flagged with V4L2_BUF_FLAG_ERROR to inक्रमm
+	 * if the (-ENODATA) value is returned, it refers to the interlaced
+	 * stream case for which 2 access units are needed to get 1 frame.
+	 * So, this returned value doesn't mean that the decoding fails, but
+	 * indicates that the timestamp information of the access unit shall
+	 * not be taken into account, and that the V4L2 buffer associated with
+	 * the access unit shall be flagged with V4L2_BUF_FLAG_ERROR to inform
 	 * the user of this situation
 	 */
-	अगर (ret == -ENODATA) अणु
+	if (ret == -ENODATA) {
 		discard = true;
-	पूर्ण अन्यथा अगर (ret) अणु
+	} else if (ret) {
 		dev_err(delta->dev, "%s decoding failed (%d)\n",
 			ctx->name, ret);
 
 		/* disable the hardware */
-		अगर (!dec->pm)
-			delta_put_स्वतःsuspend(ctx);
+		if (!dec->pm)
+			delta_put_autosuspend(ctx);
 
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	/* disable the hardware */
-	अगर (!dec->pm)
-		delta_put_स्वतःsuspend(ctx);
+	if (!dec->pm)
+		delta_put_autosuspend(ctx);
 
-	/* push au बारtamp in FIFO */
-	अगर (!discard)
+	/* push au timestamp in FIFO */
+	if (!discard)
 		delta_push_dts(ctx, au->dts);
 
 	/* get available decoded frames */
-	जबतक (1) अणु
+	while (1) {
 		ret = call_dec_op(dec, get_frame, ctx, &frame);
-		अगर (ret == -ENODATA) अणु
+		if (ret == -ENODATA) {
 			/* no more decoded frames */
-			जाओ out;
-		पूर्ण
-		अगर (ret) अणु
+			goto out;
+		}
+		if (ret) {
 			dev_err(delta->dev, "%s  cannot get decoded frame (%d)\n",
 				ctx->name, ret);
-			जाओ out;
-		पूर्ण
-		अगर (!frame) अणु
+			goto out;
+		}
+		if (!frame) {
 			dev_err(delta->dev,
 				"%s  NULL decoded frame\n",
 				ctx->name);
 			ret = -EIO;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
-		/* pop बारtamp and mark frame with it */
+		/* pop timestamp and mark frame with it */
 		delta_pop_dts(ctx, &frame->dts);
 
 		/* release decoded frame to user */
-		delta_frame_करोne(ctx, frame, 0);
-	पूर्ण
+		delta_frame_done(ctx, frame, 0);
+	}
 
 out:
-	requeue_मुक्त_frames(ctx);
-	delta_au_करोne(ctx, au, (discard ? -ENODATA : 0));
+	requeue_free_frames(ctx);
+	delta_au_done(ctx, au, (discard ? -ENODATA : 0));
 	mutex_unlock(&ctx->lock);
 	v4l2_m2m_job_finish(delta->m2m_dev, ctx->fh.m2m_ctx);
-	वापस;
+	return;
 
 err:
-	requeue_मुक्त_frames(ctx);
-	delta_au_करोne(ctx, au, ret);
+	requeue_free_frames(ctx);
+	delta_au_done(ctx, au, ret);
 	mutex_unlock(&ctx->lock);
 	v4l2_m2m_job_finish(delta->m2m_dev, ctx->fh.m2m_ctx);
-पूर्ण
+}
 
-अटल व्योम delta_device_run(व्योम *priv)
-अणु
-	काष्ठा delta_ctx *ctx = priv;
-	काष्ठा delta_dev *delta = ctx->dev;
+static void delta_device_run(void *priv)
+{
+	struct delta_ctx *ctx = priv;
+	struct delta_dev *delta = ctx->dev;
 
 	queue_work(delta->work_queue, &ctx->run_work);
-पूर्ण
+}
 
-अटल व्योम delta_job_पात(व्योम *priv)
-अणु
-	काष्ठा delta_ctx *ctx = priv;
-	काष्ठा delta_dev *delta = ctx->dev;
+static void delta_job_abort(void *priv)
+{
+	struct delta_ctx *ctx = priv;
+	struct delta_dev *delta = ctx->dev;
 
 	dev_dbg(delta->dev, "%s aborting job\n", ctx->name);
 
-	ctx->पातing = true;
-पूर्ण
+	ctx->aborting = true;
+}
 
-अटल पूर्णांक delta_job_पढ़ोy(व्योम *priv)
-अणु
-	काष्ठा delta_ctx *ctx = priv;
-	काष्ठा delta_dev *delta = ctx->dev;
-	पूर्णांक src_bufs = v4l2_m2m_num_src_bufs_पढ़ोy(ctx->fh.m2m_ctx);
+static int delta_job_ready(void *priv)
+{
+	struct delta_ctx *ctx = priv;
+	struct delta_dev *delta = ctx->dev;
+	int src_bufs = v4l2_m2m_num_src_bufs_ready(ctx->fh.m2m_ctx);
 
-	अगर (!src_bufs) अणु
+	if (!src_bufs) {
 		dev_dbg(delta->dev, "%s not ready: not enough video buffers.\n",
 			ctx->name);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (!v4l2_m2m_num_dst_bufs_पढ़ोy(ctx->fh.m2m_ctx)) अणु
+	if (!v4l2_m2m_num_dst_bufs_ready(ctx->fh.m2m_ctx)) {
 		dev_dbg(delta->dev, "%s not ready: not enough video capture buffers.\n",
 			ctx->name);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (ctx->पातing) अणु
+	if (ctx->aborting) {
 		dev_dbg(delta->dev, "%s job not ready: aborting\n", ctx->name);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	dev_dbg(delta->dev, "%s job ready\n", ctx->name);
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
 /* mem-to-mem ops */
-अटल स्थिर काष्ठा v4l2_m2m_ops delta_m2m_ops = अणु
+static const struct v4l2_m2m_ops delta_m2m_ops = {
 	.device_run     = delta_device_run,
-	.job_पढ़ोy	= delta_job_पढ़ोy,
-	.job_पात      = delta_job_पात,
-पूर्ण;
+	.job_ready	= delta_job_ready,
+	.job_abort      = delta_job_abort,
+};
 
 /*
  * VB2 queue operations
  */
 
-अटल पूर्णांक delta_vb2_au_queue_setup(काष्ठा vb2_queue *vq,
-				    अचिन्हित पूर्णांक *num_buffers,
-				    अचिन्हित पूर्णांक *num_planes,
-				    अचिन्हित पूर्णांक sizes[],
-				    काष्ठा device *alloc_devs[])
-अणु
-	काष्ठा delta_ctx *ctx = vb2_get_drv_priv(vq);
-	अचिन्हित पूर्णांक size = ctx->max_au_size;
+static int delta_vb2_au_queue_setup(struct vb2_queue *vq,
+				    unsigned int *num_buffers,
+				    unsigned int *num_planes,
+				    unsigned int sizes[],
+				    struct device *alloc_devs[])
+{
+	struct delta_ctx *ctx = vb2_get_drv_priv(vq);
+	unsigned int size = ctx->max_au_size;
 
-	अगर (*num_planes)
-		वापस sizes[0] < size ? -EINVAL : 0;
+	if (*num_planes)
+		return sizes[0] < size ? -EINVAL : 0;
 
 	*num_planes = 1;
-	अगर (*num_buffers < 1)
+	if (*num_buffers < 1)
 		*num_buffers = 1;
-	अगर (*num_buffers > DELTA_MAX_AUS)
+	if (*num_buffers > DELTA_MAX_AUS)
 		*num_buffers = DELTA_MAX_AUS;
 
 	sizes[0] = size;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक delta_vb2_au_prepare(काष्ठा vb2_buffer *vb)
-अणु
-	काष्ठा vb2_queue *q = vb->vb2_queue;
-	काष्ठा delta_ctx *ctx = vb2_get_drv_priv(q);
-	काष्ठा delta_dev *delta = ctx->dev;
-	काष्ठा vb2_v4l2_buffer *vbuf = to_vb2_v4l2_buffer(vb);
-	काष्ठा delta_au *au = to_au(vbuf);
+static int delta_vb2_au_prepare(struct vb2_buffer *vb)
+{
+	struct vb2_queue *q = vb->vb2_queue;
+	struct delta_ctx *ctx = vb2_get_drv_priv(q);
+	struct delta_dev *delta = ctx->dev;
+	struct vb2_v4l2_buffer *vbuf = to_vb2_v4l2_buffer(vb);
+	struct delta_au *au = to_au(vbuf);
 
-	अगर (!au->prepared) अणु
+	if (!au->prepared) {
 		/* get memory addresses */
 		au->vaddr = vb2_plane_vaddr(&au->vbuf.vb2_buf, 0);
 		au->paddr = vb2_dma_contig_plane_dma_addr
@@ -1131,60 +1130,60 @@ err:
 		au->prepared = true;
 		dev_dbg(delta->dev, "%s au[%d] prepared; virt=0x%p, phy=0x%pad\n",
 			ctx->name, vb->index, au->vaddr, &au->paddr);
-	पूर्ण
+	}
 
-	अगर (vbuf->field == V4L2_FIELD_ANY)
+	if (vbuf->field == V4L2_FIELD_ANY)
 		vbuf->field = V4L2_FIELD_NONE;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक delta_setup_frame(काष्ठा delta_ctx *ctx,
-			     काष्ठा delta_frame *frame)
-अणु
-	काष्ठा delta_dev *delta = ctx->dev;
-	स्थिर काष्ठा delta_dec *dec = ctx->dec;
+static int delta_setup_frame(struct delta_ctx *ctx,
+			     struct delta_frame *frame)
+{
+	struct delta_dev *delta = ctx->dev;
+	const struct delta_dec *dec = ctx->dec;
 
-	अगर (frame->index >= DELTA_MAX_FRAMES) अणु
+	if (frame->index >= DELTA_MAX_FRAMES) {
 		dev_err(delta->dev,
 			"%s frame index=%d exceeds output frame count (%d)\n",
 			ctx->name, frame->index, DELTA_MAX_FRAMES);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (ctx->nb_of_frames >= DELTA_MAX_FRAMES) अणु
+	if (ctx->nb_of_frames >= DELTA_MAX_FRAMES) {
 		dev_err(delta->dev,
 			"%s number of frames exceeds output frame count (%d > %d)\n",
 			ctx->name, ctx->nb_of_frames, DELTA_MAX_FRAMES);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (frame->index != ctx->nb_of_frames) अणु
+	if (frame->index != ctx->nb_of_frames) {
 		dev_warn(delta->dev,
 			 "%s frame index discontinuity detected, expected %d, got %d\n",
 			 ctx->name, ctx->nb_of_frames, frame->index);
-	पूर्ण
+	}
 
 	frame->state = DELTA_FRAME_FREE;
 	ctx->frames[ctx->nb_of_frames] = frame;
 	ctx->nb_of_frames++;
 
 	/* setup frame on decoder side */
-	वापस call_dec_op(dec, setup_frame, ctx, frame);
-पूर्ण
+	return call_dec_op(dec, setup_frame, ctx, frame);
+}
 
 /*
- * शेष implementation of get_frameinfo decoder ops
- * matching frame inक्रमmation from stream inक्रमmation
- * & with शेष pixel क्रमmat & शेष alignment.
+ * default implementation of get_frameinfo decoder ops
+ * matching frame information from stream information
+ * & with default pixel format & default alignment.
  */
-पूर्णांक delta_get_frameinfo_शेष(काष्ठा delta_ctx *ctx,
-				काष्ठा delta_frameinfo *frameinfo)
-अणु
-	काष्ठा delta_streaminfo *streaminfo = &ctx->streaminfo;
+int delta_get_frameinfo_default(struct delta_ctx *ctx,
+				struct delta_frameinfo *frameinfo)
+{
+	struct delta_streaminfo *streaminfo = &ctx->streaminfo;
 
-	स_रखो(frameinfo, 0, माप(*frameinfo));
-	frameinfo->pixelक्रमmat = V4L2_PIX_FMT_NV12;
+	memset(frameinfo, 0, sizeof(*frameinfo));
+	frameinfo->pixelformat = V4L2_PIX_FMT_NV12;
 	frameinfo->width = streaminfo->width;
 	frameinfo->height = streaminfo->height;
 	frameinfo->aligned_width = ALIGN(streaminfo->width,
@@ -1193,161 +1192,161 @@ err:
 					  DELTA_HEIGHT_ALIGNMENT);
 	frameinfo->size = frame_size(frameinfo->aligned_width,
 				     frameinfo->aligned_height,
-				     frameinfo->pixelक्रमmat);
-	अगर (streaminfo->flags & DELTA_STREAMINFO_FLAG_CROP) अणु
+				     frameinfo->pixelformat);
+	if (streaminfo->flags & DELTA_STREAMINFO_FLAG_CROP) {
 		frameinfo->flags |= DELTA_FRAMEINFO_FLAG_CROP;
 		frameinfo->crop = streaminfo->crop;
-	पूर्ण
-	अगर (streaminfo->flags & DELTA_STREAMINFO_FLAG_PIXELASPECT) अणु
+	}
+	if (streaminfo->flags & DELTA_STREAMINFO_FLAG_PIXELASPECT) {
 		frameinfo->flags |= DELTA_FRAMEINFO_FLAG_PIXELASPECT;
 		frameinfo->pixelaspect = streaminfo->pixelaspect;
-	पूर्ण
+	}
 	frameinfo->field = streaminfo->field;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * शेष implementation of recycle decoder ops
+ * default implementation of recycle decoder ops
  * consisting to relax the "decoded" frame state
  */
-पूर्णांक delta_recycle_शेष(काष्ठा delta_ctx *pctx,
-			  काष्ठा delta_frame *frame)
-अणु
+int delta_recycle_default(struct delta_ctx *pctx,
+			  struct delta_frame *frame)
+{
 	frame->state &= ~DELTA_FRAME_DEC;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम dump_frames_status(काष्ठा delta_ctx *ctx)
-अणु
-	काष्ठा delta_dev *delta = ctx->dev;
-	अचिन्हित पूर्णांक i;
-	काष्ठा delta_frame *frame;
-	अचिन्हित अक्षर str[100] = "";
+static void dump_frames_status(struct delta_ctx *ctx)
+{
+	struct delta_dev *delta = ctx->dev;
+	unsigned int i;
+	struct delta_frame *frame;
+	unsigned char str[100] = "";
 
 	dev_info(delta->dev,
 		 "%s dumping frames status...\n", ctx->name);
 
-	क्रम (i = 0; i < ctx->nb_of_frames; i++) अणु
+	for (i = 0; i < ctx->nb_of_frames; i++) {
 		frame = ctx->frames[i];
 		dev_info(delta->dev,
 			 "%s frame[%d] %s\n",
 			 ctx->name, frame->index,
 			 frame_state_str(frame->state,
-					 str, माप(str)));
-	पूर्ण
-पूर्ण
+					 str, sizeof(str)));
+	}
+}
 
-पूर्णांक delta_get_मुक्त_frame(काष्ठा delta_ctx *ctx,
-			 काष्ठा delta_frame **pframe)
-अणु
-	काष्ठा delta_dev *delta = ctx->dev;
-	काष्ठा vb2_v4l2_buffer *vbuf;
-	काष्ठा delta_frame *frame;
+int delta_get_free_frame(struct delta_ctx *ctx,
+			 struct delta_frame **pframe)
+{
+	struct delta_dev *delta = ctx->dev;
+	struct vb2_v4l2_buffer *vbuf;
+	struct delta_frame *frame;
 
-	*pframe = शून्य;
+	*pframe = NULL;
 
-	vbuf = v4l2_m2m_dst_buf_हटाओ(ctx->fh.m2m_ctx);
-	अगर (!vbuf) अणु
+	vbuf = v4l2_m2m_dst_buf_remove(ctx->fh.m2m_ctx);
+	if (!vbuf) {
 		dev_err(delta->dev, "%s no frame available",
 			ctx->name);
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
 	frame = to_frame(vbuf);
 	frame->state &= ~DELTA_FRAME_M2M;
-	अगर (frame->state != DELTA_FRAME_FREE) अणु
+	if (frame->state != DELTA_FRAME_FREE) {
 		dev_err(delta->dev,
 			"%s frame[%d] is not free\n",
 			ctx->name, frame->index);
 		dump_frames_status(ctx);
-		वापस -ENODATA;
-	पूर्ण
+		return -ENODATA;
+	}
 
 	dev_dbg(delta->dev,
 		"%s get free frame[%d]\n", ctx->name, frame->index);
 
 	*pframe = frame;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक delta_get_sync(काष्ठा delta_ctx *ctx)
-अणु
-	काष्ठा delta_dev *delta = ctx->dev;
-	पूर्णांक ret = 0;
+int delta_get_sync(struct delta_ctx *ctx)
+{
+	struct delta_dev *delta = ctx->dev;
+	int ret = 0;
 
 	/* enable the hardware */
-	ret = pm_runसमय_get_sync(delta->dev);
-	अगर (ret < 0) अणु
+	ret = pm_runtime_get_sync(delta->dev);
+	if (ret < 0) {
 		dev_err(delta->dev, "%s pm_runtime_get_sync failed (%d)\n",
 			__func__, ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम delta_put_स्वतःsuspend(काष्ठा delta_ctx *ctx)
-अणु
-	काष्ठा delta_dev *delta = ctx->dev;
+void delta_put_autosuspend(struct delta_ctx *ctx)
+{
+	struct delta_dev *delta = ctx->dev;
 
-	pm_runसमय_put_स्वतःsuspend(delta->dev);
-पूर्ण
+	pm_runtime_put_autosuspend(delta->dev);
+}
 
-अटल व्योम delta_vb2_au_queue(काष्ठा vb2_buffer *vb)
-अणु
-	काष्ठा vb2_queue *q = vb->vb2_queue;
-	काष्ठा delta_ctx *ctx = vb2_get_drv_priv(q);
-	काष्ठा vb2_v4l2_buffer *vbuf = to_vb2_v4l2_buffer(vb);
+static void delta_vb2_au_queue(struct vb2_buffer *vb)
+{
+	struct vb2_queue *q = vb->vb2_queue;
+	struct delta_ctx *ctx = vb2_get_drv_priv(q);
+	struct vb2_v4l2_buffer *vbuf = to_vb2_v4l2_buffer(vb);
 
 	v4l2_m2m_buf_queue(ctx->fh.m2m_ctx, vbuf);
-पूर्ण
+}
 
-अटल पूर्णांक delta_vb2_au_start_streaming(काष्ठा vb2_queue *q,
-					अचिन्हित पूर्णांक count)
-अणु
-	काष्ठा delta_ctx *ctx = vb2_get_drv_priv(q);
-	काष्ठा delta_dev *delta = ctx->dev;
-	स्थिर काष्ठा delta_dec *dec = ctx->dec;
-	काष्ठा delta_au *au;
-	पूर्णांक ret = 0;
-	काष्ठा vb2_v4l2_buffer *vbuf = शून्य;
-	काष्ठा delta_streaminfo *streaminfo = &ctx->streaminfo;
-	काष्ठा delta_frameinfo *frameinfo = &ctx->frameinfo;
-	अचिन्हित अक्षर str1[100] = "";
-	अचिन्हित अक्षर str2[100] = "";
+static int delta_vb2_au_start_streaming(struct vb2_queue *q,
+					unsigned int count)
+{
+	struct delta_ctx *ctx = vb2_get_drv_priv(q);
+	struct delta_dev *delta = ctx->dev;
+	const struct delta_dec *dec = ctx->dec;
+	struct delta_au *au;
+	int ret = 0;
+	struct vb2_v4l2_buffer *vbuf = NULL;
+	struct delta_streaminfo *streaminfo = &ctx->streaminfo;
+	struct delta_frameinfo *frameinfo = &ctx->frameinfo;
+	unsigned char str1[100] = "";
+	unsigned char str2[100] = "";
 
-	अगर ((ctx->state != DELTA_STATE_WF_FORMAT) &&
+	if ((ctx->state != DELTA_STATE_WF_FORMAT) &&
 	    (ctx->state != DELTA_STATE_WF_STREAMINFO))
-		वापस 0;
+		return 0;
 
-	अगर (ctx->state == DELTA_STATE_WF_FORMAT) अणु
-		/* खोलो decoder अगर not yet करोne */
-		ret = delta_खोलो_decoder(ctx,
-					 ctx->streaminfo.streamक्रमmat,
-					 ctx->frameinfo.pixelक्रमmat, &dec);
-		अगर (ret)
-			जाओ err;
+	if (ctx->state == DELTA_STATE_WF_FORMAT) {
+		/* open decoder if not yet done */
+		ret = delta_open_decoder(ctx,
+					 ctx->streaminfo.streamformat,
+					 ctx->frameinfo.pixelformat, &dec);
+		if (ret)
+			goto err;
 		ctx->dec = dec;
 		ctx->state = DELTA_STATE_WF_STREAMINFO;
-	पूर्ण
+	}
 
 	/*
 	 * first buffer should contain stream header,
 	 * decode it to get the infos related to stream
 	 * such as width, height, dpb, ...
 	 */
-	vbuf = v4l2_m2m_src_buf_हटाओ(ctx->fh.m2m_ctx);
-	अगर (!vbuf) अणु
+	vbuf = v4l2_m2m_src_buf_remove(ctx->fh.m2m_ctx);
+	if (!vbuf) {
 		dev_err(delta->dev, "%s failed to start streaming, no stream header buffer enqueued\n",
 			ctx->name);
 		ret = -EINVAL;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 	au = to_au(vbuf);
 	au->size = vb2_get_plane_payload(&vbuf->vb2_buf, 0);
-	au->dts = vbuf->vb2_buf.बारtamp;
+	au->dts = vbuf->vb2_buf.timestamp;
 
 	delta_push_dts(ctx, au->dts);
 
@@ -1356,292 +1355,292 @@ err:
 
 	/* decode this access unit */
 	ret = call_dec_op(dec, decode, ctx, au);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(delta->dev, "%s failed to start streaming, header decoding failed (%d)\n",
 			ctx->name, ret);
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	ret = call_dec_op(dec, get_streaminfo, ctx, streaminfo);
-	अगर (ret) अणु
+	if (ret) {
 		dev_dbg_ratelimited(delta->dev,
 				    "%s failed to start streaming, valid stream header not yet decoded\n",
 				    ctx->name);
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 	ctx->flags |= DELTA_FLAG_STREAMINFO;
 
 	ret = call_dec_op(dec, get_frameinfo, ctx, frameinfo);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 	ctx->flags |= DELTA_FLAG_FRAMEINFO;
 
 	ctx->state = DELTA_STATE_READY;
 
 	dev_dbg(delta->dev, "%s %s => %s\n", ctx->name,
-		delta_streaminfo_str(streaminfo, str1, माप(str1)),
-		delta_frameinfo_str(frameinfo, str2, माप(str2)));
+		delta_streaminfo_str(streaminfo, str1, sizeof(str1)),
+		delta_frameinfo_str(frameinfo, str2, sizeof(str2)));
 
-	delta_au_करोne(ctx, au, ret);
-	वापस 0;
+	delta_au_done(ctx, au, ret);
+	return 0;
 
 err:
 	/*
-	 * वापस all buffers to vb2 in QUEUED state.
+	 * return all buffers to vb2 in QUEUED state.
 	 * This will give ownership back to userspace
 	 */
-	अगर (vbuf)
-		v4l2_m2m_buf_करोne(vbuf, VB2_BUF_STATE_QUEUED);
+	if (vbuf)
+		v4l2_m2m_buf_done(vbuf, VB2_BUF_STATE_QUEUED);
 
-	जबतक ((vbuf = v4l2_m2m_src_buf_हटाओ(ctx->fh.m2m_ctx)))
-		v4l2_m2m_buf_करोne(vbuf, VB2_BUF_STATE_QUEUED);
-	वापस ret;
-पूर्ण
+	while ((vbuf = v4l2_m2m_src_buf_remove(ctx->fh.m2m_ctx)))
+		v4l2_m2m_buf_done(vbuf, VB2_BUF_STATE_QUEUED);
+	return ret;
+}
 
-अटल व्योम delta_vb2_au_stop_streaming(काष्ठा vb2_queue *q)
-अणु
-	काष्ठा delta_ctx *ctx = vb2_get_drv_priv(q);
-	काष्ठा vb2_v4l2_buffer *vbuf;
+static void delta_vb2_au_stop_streaming(struct vb2_queue *q)
+{
+	struct delta_ctx *ctx = vb2_get_drv_priv(q);
+	struct vb2_v4l2_buffer *vbuf;
 
 	delta_flush_dts(ctx);
 
-	/* वापस all buffers to vb2 in ERROR state */
-	जबतक ((vbuf = v4l2_m2m_src_buf_हटाओ(ctx->fh.m2m_ctx)))
-		v4l2_m2m_buf_करोne(vbuf, VB2_BUF_STATE_ERROR);
+	/* return all buffers to vb2 in ERROR state */
+	while ((vbuf = v4l2_m2m_src_buf_remove(ctx->fh.m2m_ctx)))
+		v4l2_m2m_buf_done(vbuf, VB2_BUF_STATE_ERROR);
 
 	ctx->au_num = 0;
 
-	ctx->पातing = false;
-पूर्ण
+	ctx->aborting = false;
+}
 
-अटल पूर्णांक delta_vb2_frame_queue_setup(काष्ठा vb2_queue *vq,
-				       अचिन्हित पूर्णांक *num_buffers,
-				       अचिन्हित पूर्णांक *num_planes,
-				       अचिन्हित पूर्णांक sizes[],
-				       काष्ठा device *alloc_devs[])
-अणु
-	काष्ठा delta_ctx *ctx = vb2_get_drv_priv(vq);
-	काष्ठा delta_dev *delta = ctx->dev;
-	काष्ठा delta_streaminfo *streaminfo = &ctx->streaminfo;
-	काष्ठा delta_frameinfo *frameinfo = &ctx->frameinfo;
-	अचिन्हित पूर्णांक size = frameinfo->size;
+static int delta_vb2_frame_queue_setup(struct vb2_queue *vq,
+				       unsigned int *num_buffers,
+				       unsigned int *num_planes,
+				       unsigned int sizes[],
+				       struct device *alloc_devs[])
+{
+	struct delta_ctx *ctx = vb2_get_drv_priv(vq);
+	struct delta_dev *delta = ctx->dev;
+	struct delta_streaminfo *streaminfo = &ctx->streaminfo;
+	struct delta_frameinfo *frameinfo = &ctx->frameinfo;
+	unsigned int size = frameinfo->size;
 
 	/*
-	 * the number of output buffers needed क्रम decoding =
-	 * user need (*num_buffers given, usually क्रम display pipeline) +
+	 * the number of output buffers needed for decoding =
+	 * user need (*num_buffers given, usually for display pipeline) +
 	 * stream need (streaminfo->dpb) +
 	 * decoding peak smoothing (depends on DELTA IP perf)
 	 */
-	अगर (*num_buffers < DELTA_MIN_FRAME_USER) अणु
+	if (*num_buffers < DELTA_MIN_FRAME_USER) {
 		dev_dbg(delta->dev,
 			"%s num_buffers too low (%d), increasing to %d\n",
 			ctx->name, *num_buffers, DELTA_MIN_FRAME_USER);
 		*num_buffers = DELTA_MIN_FRAME_USER;
-	पूर्ण
+	}
 
 	*num_buffers += streaminfo->dpb + DELTA_PEAK_FRAME_SMOOTHING;
 
-	अगर (*num_buffers > DELTA_MAX_FRAMES) अणु
+	if (*num_buffers > DELTA_MAX_FRAMES) {
 		dev_dbg(delta->dev,
 			"%s output frame count too high (%d), cut to %d\n",
 			ctx->name, *num_buffers, DELTA_MAX_FRAMES);
 		*num_buffers = DELTA_MAX_FRAMES;
-	पूर्ण
+	}
 
-	अगर (*num_planes)
-		वापस sizes[0] < size ? -EINVAL : 0;
+	if (*num_planes)
+		return sizes[0] < size ? -EINVAL : 0;
 
-	/* single plane क्रम Y and CbCr */
+	/* single plane for Y and CbCr */
 	*num_planes = 1;
 
 	sizes[0] = size;
 
 	ctx->nb_of_frames = 0;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक delta_vb2_frame_prepare(काष्ठा vb2_buffer *vb)
-अणु
-	काष्ठा vb2_queue *q = vb->vb2_queue;
-	काष्ठा delta_ctx *ctx = vb2_get_drv_priv(q);
-	काष्ठा delta_dev *delta = ctx->dev;
-	काष्ठा vb2_v4l2_buffer *vbuf = to_vb2_v4l2_buffer(vb);
-	काष्ठा delta_frame *frame = to_frame(vbuf);
-	पूर्णांक ret = 0;
+static int delta_vb2_frame_prepare(struct vb2_buffer *vb)
+{
+	struct vb2_queue *q = vb->vb2_queue;
+	struct delta_ctx *ctx = vb2_get_drv_priv(q);
+	struct delta_dev *delta = ctx->dev;
+	struct vb2_v4l2_buffer *vbuf = to_vb2_v4l2_buffer(vb);
+	struct delta_frame *frame = to_frame(vbuf);
+	int ret = 0;
 
-	अगर (!frame->prepared) अणु
+	if (!frame->prepared) {
 		frame->index = vbuf->vb2_buf.index;
 		frame->vaddr = vb2_plane_vaddr(&vbuf->vb2_buf, 0);
 		frame->paddr = vb2_dma_contig_plane_dma_addr(&vbuf->vb2_buf, 0);
 		frame->info = ctx->frameinfo;
 
 		ret = delta_setup_frame(ctx, frame);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(delta->dev,
 				"%s setup_frame() failed (%d)\n",
 				ctx->name, ret);
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 		frame->prepared = true;
 		dev_dbg(delta->dev,
 			"%s frame[%d] prepared; virt=0x%p, phy=0x%pad\n",
 			ctx->name, vb->index, frame->vaddr,
 			&frame->paddr);
-	पूर्ण
+	}
 
 	frame->flags = vbuf->flags;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम delta_vb2_frame_finish(काष्ठा vb2_buffer *vb)
-अणु
-	काष्ठा vb2_v4l2_buffer *vbuf = to_vb2_v4l2_buffer(vb);
-	काष्ठा delta_frame *frame = to_frame(vbuf);
+static void delta_vb2_frame_finish(struct vb2_buffer *vb)
+{
+	struct vb2_v4l2_buffer *vbuf = to_vb2_v4l2_buffer(vb);
+	struct delta_frame *frame = to_frame(vbuf);
 
-	/* update V4L2 fields क्रम user */
+	/* update V4L2 fields for user */
 	vb2_set_plane_payload(&vbuf->vb2_buf, 0, frame->info.size);
-	vb->बारtamp = frame->dts;
+	vb->timestamp = frame->dts;
 	vbuf->field = frame->field;
 	vbuf->flags = frame->flags;
-पूर्ण
+}
 
-अटल व्योम delta_vb2_frame_queue(काष्ठा vb2_buffer *vb)
-अणु
-	काष्ठा vb2_queue *q = vb->vb2_queue;
-	काष्ठा delta_ctx *ctx = vb2_get_drv_priv(q);
-	काष्ठा vb2_v4l2_buffer *vbuf = to_vb2_v4l2_buffer(vb);
-	काष्ठा delta_frame *frame = to_frame(vbuf);
+static void delta_vb2_frame_queue(struct vb2_buffer *vb)
+{
+	struct vb2_queue *q = vb->vb2_queue;
+	struct delta_ctx *ctx = vb2_get_drv_priv(q);
+	struct vb2_v4l2_buffer *vbuf = to_vb2_v4l2_buffer(vb);
+	struct delta_frame *frame = to_frame(vbuf);
 
-	अगर (ctx->state == DELTA_STATE_WF_EOS) अणु
+	if (ctx->state == DELTA_STATE_WF_EOS) {
 		/* new frame available, EOS can now be completed */
 		delta_complete_eos(ctx, frame);
 
 		ctx->state = DELTA_STATE_EOS;
 
-		/* वापस, no need to recycle this buffer to decoder */
-		वापस;
-	पूर्ण
+		/* return, no need to recycle this buffer to decoder */
+		return;
+	}
 
 	/* recycle this frame */
 	delta_recycle(ctx, frame);
-पूर्ण
+}
 
-अटल व्योम delta_vb2_frame_stop_streaming(काष्ठा vb2_queue *q)
-अणु
-	काष्ठा delta_ctx *ctx = vb2_get_drv_priv(q);
-	काष्ठा vb2_v4l2_buffer *vbuf;
-	काष्ठा delta_frame *frame;
-	स्थिर काष्ठा delta_dec *dec = ctx->dec;
-	अचिन्हित पूर्णांक i;
+static void delta_vb2_frame_stop_streaming(struct vb2_queue *q)
+{
+	struct delta_ctx *ctx = vb2_get_drv_priv(q);
+	struct vb2_v4l2_buffer *vbuf;
+	struct delta_frame *frame;
+	const struct delta_dec *dec = ctx->dec;
+	unsigned int i;
 
 	delta_flush_dts(ctx);
 
 	call_dec_op(dec, flush, ctx);
 
 	/*
-	 * वापस all buffers to vb2 in ERROR state
+	 * return all buffers to vb2 in ERROR state
 	 * & reset each frame state to OUT
 	 */
-	क्रम (i = 0; i < ctx->nb_of_frames; i++) अणु
+	for (i = 0; i < ctx->nb_of_frames; i++) {
 		frame = ctx->frames[i];
-		अगर (!(frame->state & DELTA_FRAME_OUT)) अणु
+		if (!(frame->state & DELTA_FRAME_OUT)) {
 			vbuf = &frame->vbuf;
-			v4l2_m2m_buf_करोne(vbuf, VB2_BUF_STATE_ERROR);
-		पूर्ण
+			v4l2_m2m_buf_done(vbuf, VB2_BUF_STATE_ERROR);
+		}
 		frame->state = DELTA_FRAME_OUT;
-	पूर्ण
+	}
 
 	ctx->frame_num = 0;
 
-	ctx->पातing = false;
-पूर्ण
+	ctx->aborting = false;
+}
 
 /* VB2 queue ops */
-अटल स्थिर काष्ठा vb2_ops delta_vb2_au_ops = अणु
+static const struct vb2_ops delta_vb2_au_ops = {
 	.queue_setup = delta_vb2_au_queue_setup,
 	.buf_prepare = delta_vb2_au_prepare,
 	.buf_queue = delta_vb2_au_queue,
-	.रुको_prepare = vb2_ops_रुको_prepare,
-	.रुको_finish = vb2_ops_रुको_finish,
+	.wait_prepare = vb2_ops_wait_prepare,
+	.wait_finish = vb2_ops_wait_finish,
 	.start_streaming = delta_vb2_au_start_streaming,
 	.stop_streaming = delta_vb2_au_stop_streaming,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा vb2_ops delta_vb2_frame_ops = अणु
+static const struct vb2_ops delta_vb2_frame_ops = {
 	.queue_setup = delta_vb2_frame_queue_setup,
 	.buf_prepare = delta_vb2_frame_prepare,
 	.buf_finish = delta_vb2_frame_finish,
 	.buf_queue = delta_vb2_frame_queue,
-	.रुको_prepare = vb2_ops_रुको_prepare,
-	.रुको_finish = vb2_ops_रुको_finish,
+	.wait_prepare = vb2_ops_wait_prepare,
+	.wait_finish = vb2_ops_wait_finish,
 	.stop_streaming = delta_vb2_frame_stop_streaming,
-पूर्ण;
+};
 
 /*
  * V4L2 file operations
  */
 
-अटल पूर्णांक queue_init(व्योम *priv,
-		      काष्ठा vb2_queue *src_vq, काष्ठा vb2_queue *dst_vq)
-अणु
-	काष्ठा vb2_queue *q;
-	काष्ठा delta_ctx *ctx = priv;
-	काष्ठा delta_dev *delta = ctx->dev;
-	पूर्णांक ret;
+static int queue_init(void *priv,
+		      struct vb2_queue *src_vq, struct vb2_queue *dst_vq)
+{
+	struct vb2_queue *q;
+	struct delta_ctx *ctx = priv;
+	struct delta_dev *delta = ctx->dev;
+	int ret;
 
-	/* setup vb2 queue क्रम stream input */
+	/* setup vb2 queue for stream input */
 	q = src_vq;
 	q->type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
 	q->io_modes = VB2_MMAP | VB2_DMABUF;
 	q->drv_priv = ctx;
-	/* overload vb2 buf with निजी au काष्ठा */
-	q->buf_काष्ठा_size = माप(काष्ठा delta_au);
+	/* overload vb2 buf with private au struct */
+	q->buf_struct_size = sizeof(struct delta_au);
 	q->ops = &delta_vb2_au_ops;
 	q->mem_ops = &vb2_dma_contig_memops;
-	q->बारtamp_flags = V4L2_BUF_FLAG_TIMESTAMP_COPY;
+	q->timestamp_flags = V4L2_BUF_FLAG_TIMESTAMP_COPY;
 	q->lock = &delta->lock;
 	q->dev = delta->dev;
 
 	ret = vb2_queue_init(q);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	/* setup vb2 queue क्रम frame output */
+	/* setup vb2 queue for frame output */
 	q = dst_vq;
 	q->type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 	q->io_modes = VB2_MMAP | VB2_DMABUF;
 	q->drv_priv = ctx;
-	/* overload vb2 buf with निजी frame काष्ठा */
-	q->buf_काष्ठा_size = माप(काष्ठा delta_frame)
+	/* overload vb2 buf with private frame struct */
+	q->buf_struct_size = sizeof(struct delta_frame)
 			     + DELTA_MAX_FRAME_PRIV_SIZE;
 	q->ops = &delta_vb2_frame_ops;
 	q->mem_ops = &vb2_dma_contig_memops;
-	q->बारtamp_flags = V4L2_BUF_FLAG_TIMESTAMP_COPY;
+	q->timestamp_flags = V4L2_BUF_FLAG_TIMESTAMP_COPY;
 	q->lock = &delta->lock;
 	q->dev = delta->dev;
 
-	वापस vb2_queue_init(q);
-पूर्ण
+	return vb2_queue_init(q);
+}
 
-अटल पूर्णांक delta_खोलो(काष्ठा file *file)
-अणु
-	काष्ठा delta_dev *delta = video_drvdata(file);
-	काष्ठा delta_ctx *ctx = शून्य;
-	पूर्णांक ret = 0;
+static int delta_open(struct file *file)
+{
+	struct delta_dev *delta = video_drvdata(file);
+	struct delta_ctx *ctx = NULL;
+	int ret = 0;
 
 	mutex_lock(&delta->lock);
 
-	ctx = kzalloc(माप(*ctx), GFP_KERNEL);
-	अगर (!ctx) अणु
+	ctx = kzalloc(sizeof(*ctx), GFP_KERNEL);
+	if (!ctx) {
 		ret = -ENOMEM;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 	ctx->dev = delta;
 
 	v4l2_fh_init(&ctx->fh, video_devdata(file));
-	file->निजी_data = &ctx->fh;
+	file->private_data = &ctx->fh;
 	v4l2_fh_add(&ctx->fh);
 
 	INIT_WORK(&ctx->run_work, delta_run_work);
@@ -1649,16 +1648,16 @@ err:
 
 	ctx->fh.m2m_ctx = v4l2_m2m_ctx_init(delta->m2m_dev, ctx,
 					    queue_init);
-	अगर (IS_ERR(ctx->fh.m2m_ctx)) अणु
+	if (IS_ERR(ctx->fh.m2m_ctx)) {
 		ret = PTR_ERR(ctx->fh.m2m_ctx);
 		dev_err(delta->dev, "%s failed to initialize m2m context (%d)\n",
 			DELTA_PREFIX, ret);
-		जाओ err_fh_del;
-	पूर्ण
+		goto err_fh_del;
+	}
 
 	/*
-	 * रुको stream क्रमmat to determine which
-	 * decoder to खोलो
+	 * wait stream format to determine which
+	 * decoder to open
 	 */
 	ctx->state = DELTA_STATE_WF_FORMAT;
 
@@ -1666,312 +1665,312 @@ err:
 
 	/* set the instance name */
 	delta->instance_id++;
-	snम_लिखो(ctx->name, माप(ctx->name), "[%3d:----]",
+	snprintf(ctx->name, sizeof(ctx->name), "[%3d:----]",
 		 delta->instance_id);
 
-	/* शेष parameters क्रम frame and stream */
-	set_शेष_params(ctx);
+	/* default parameters for frame and stream */
+	set_default_params(ctx);
 
-	/* enable ST231 घड़ीs */
-	अगर (delta->clk_st231)
-		अगर (clk_prepare_enable(delta->clk_st231))
+	/* enable ST231 clocks */
+	if (delta->clk_st231)
+		if (clk_prepare_enable(delta->clk_st231))
 			dev_warn(delta->dev, "failed to enable st231 clk\n");
 
-	/* enable FLASH_PROMIP घड़ी */
-	अगर (delta->clk_flash_promip)
-		अगर (clk_prepare_enable(delta->clk_flash_promip))
+	/* enable FLASH_PROMIP clock */
+	if (delta->clk_flash_promip)
+		if (clk_prepare_enable(delta->clk_flash_promip))
 			dev_warn(delta->dev, "failed to enable delta promip clk\n");
 
 	mutex_unlock(&delta->lock);
 
 	dev_dbg(delta->dev, "%s decoder instance created\n", ctx->name);
 
-	वापस 0;
+	return 0;
 
 err_fh_del:
 	v4l2_fh_del(&ctx->fh);
-	v4l2_fh_निकास(&ctx->fh);
-	kमुक्त(ctx);
+	v4l2_fh_exit(&ctx->fh);
+	kfree(ctx);
 err:
 	mutex_unlock(&delta->lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक delta_release(काष्ठा file *file)
-अणु
-	काष्ठा delta_ctx *ctx = to_ctx(file->निजी_data);
-	काष्ठा delta_dev *delta = ctx->dev;
-	स्थिर काष्ठा delta_dec *dec = ctx->dec;
+static int delta_release(struct file *file)
+{
+	struct delta_ctx *ctx = to_ctx(file->private_data);
+	struct delta_dev *delta = ctx->dev;
+	const struct delta_dec *dec = ctx->dec;
 
 	mutex_lock(&delta->lock);
 
-	/* बंद decoder */
-	call_dec_op(dec, बंद, ctx);
+	/* close decoder */
+	call_dec_op(dec, close, ctx);
 
 	/*
 	 * trace a summary of instance
-	 * beक्रमe closing (debug purpose)
+	 * before closing (debug purpose)
 	 */
 	delta_trace_summary(ctx);
 
 	v4l2_m2m_ctx_release(ctx->fh.m2m_ctx);
 
 	v4l2_fh_del(&ctx->fh);
-	v4l2_fh_निकास(&ctx->fh);
+	v4l2_fh_exit(&ctx->fh);
 
-	/* disable ST231 घड़ीs */
-	अगर (delta->clk_st231)
+	/* disable ST231 clocks */
+	if (delta->clk_st231)
 		clk_disable_unprepare(delta->clk_st231);
 
-	/* disable FLASH_PROMIP घड़ी */
-	अगर (delta->clk_flash_promip)
+	/* disable FLASH_PROMIP clock */
+	if (delta->clk_flash_promip)
 		clk_disable_unprepare(delta->clk_flash_promip);
 
 	dev_dbg(delta->dev, "%s decoder instance released\n", ctx->name);
 
-	kमुक्त(ctx);
+	kfree(ctx);
 
 	mutex_unlock(&delta->lock);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* V4L2 file ops */
-अटल स्थिर काष्ठा v4l2_file_operations delta_fops = अणु
+static const struct v4l2_file_operations delta_fops = {
 	.owner = THIS_MODULE,
-	.खोलो = delta_खोलो,
+	.open = delta_open,
 	.release = delta_release,
 	.unlocked_ioctl = video_ioctl2,
 	.mmap = v4l2_m2m_fop_mmap,
 	.poll = v4l2_m2m_fop_poll,
-पूर्ण;
+};
 
 /*
- * Platक्रमm device operations
+ * Platform device operations
  */
 
-अटल पूर्णांक delta_रेजिस्टर_device(काष्ठा delta_dev *delta)
-अणु
-	पूर्णांक ret;
-	काष्ठा video_device *vdev;
+static int delta_register_device(struct delta_dev *delta)
+{
+	int ret;
+	struct video_device *vdev;
 
-	अगर (!delta)
-		वापस -ENODEV;
+	if (!delta)
+		return -ENODEV;
 
 	delta->m2m_dev = v4l2_m2m_init(&delta_m2m_ops);
-	अगर (IS_ERR(delta->m2m_dev)) अणु
+	if (IS_ERR(delta->m2m_dev)) {
 		dev_err(delta->dev, "%s failed to initialize v4l2-m2m device\n",
 			DELTA_PREFIX);
 		ret = PTR_ERR(delta->m2m_dev);
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	vdev = video_device_alloc();
-	अगर (!vdev) अणु
+	if (!vdev) {
 		dev_err(delta->dev, "%s failed to allocate video device\n",
 			DELTA_PREFIX);
 		ret = -ENOMEM;
-		जाओ err_m2m_release;
-	पूर्ण
+		goto err_m2m_release;
+	}
 
 	vdev->fops = &delta_fops;
 	vdev->ioctl_ops = &delta_ioctl_ops;
 	vdev->release = video_device_release;
 	vdev->lock = &delta->lock;
-	vdev->vfl_dir = VFL_सूची_M2M;
+	vdev->vfl_dir = VFL_DIR_M2M;
 	vdev->device_caps = V4L2_CAP_STREAMING | V4L2_CAP_VIDEO_M2M;
 	vdev->v4l2_dev = &delta->v4l2_dev;
-	snम_लिखो(vdev->name, माप(vdev->name), "%s-%s",
+	snprintf(vdev->name, sizeof(vdev->name), "%s-%s",
 		 DELTA_NAME, DELTA_FW_VERSION);
 
-	ret = video_रेजिस्टर_device(vdev, VFL_TYPE_VIDEO, -1);
-	अगर (ret) अणु
+	ret = video_register_device(vdev, VFL_TYPE_VIDEO, -1);
+	if (ret) {
 		dev_err(delta->dev, "%s failed to register video device\n",
 			DELTA_PREFIX);
-		जाओ err_vdev_release;
-	पूर्ण
+		goto err_vdev_release;
+	}
 
 	delta->vdev = vdev;
 	video_set_drvdata(vdev, delta);
-	वापस 0;
+	return 0;
 
 err_vdev_release:
 	video_device_release(vdev);
 err_m2m_release:
 	v4l2_m2m_release(delta->m2m_dev);
 err:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम delta_unरेजिस्टर_device(काष्ठा delta_dev *delta)
-अणु
-	अगर (!delta)
-		वापस;
+static void delta_unregister_device(struct delta_dev *delta)
+{
+	if (!delta)
+		return;
 
-	अगर (delta->m2m_dev)
+	if (delta->m2m_dev)
 		v4l2_m2m_release(delta->m2m_dev);
 
-	video_unरेजिस्टर_device(delta->vdev);
-पूर्ण
+	video_unregister_device(delta->vdev);
+}
 
-अटल पूर्णांक delta_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा delta_dev *delta;
-	काष्ठा device *dev = &pdev->dev;
-	पूर्णांक ret;
+static int delta_probe(struct platform_device *pdev)
+{
+	struct delta_dev *delta;
+	struct device *dev = &pdev->dev;
+	int ret;
 
-	delta = devm_kzalloc(dev, माप(*delta), GFP_KERNEL);
-	अगर (!delta) अणु
+	delta = devm_kzalloc(dev, sizeof(*delta), GFP_KERNEL);
+	if (!delta) {
 		ret = -ENOMEM;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	delta->dev = dev;
 	delta->pdev = pdev;
-	platक्रमm_set_drvdata(pdev, delta);
+	platform_set_drvdata(pdev, delta);
 
 	mutex_init(&delta->lock);
 
-	/* get घड़ी resources */
+	/* get clock resources */
 	delta->clk_delta = devm_clk_get(dev, "delta");
-	अगर (IS_ERR(delta->clk_delta)) अणु
+	if (IS_ERR(delta->clk_delta)) {
 		dev_dbg(dev, "%s can't get delta clock\n", DELTA_PREFIX);
-		delta->clk_delta = शून्य;
-	पूर्ण
+		delta->clk_delta = NULL;
+	}
 
 	delta->clk_st231 = devm_clk_get(dev, "delta-st231");
-	अगर (IS_ERR(delta->clk_st231)) अणु
+	if (IS_ERR(delta->clk_st231)) {
 		dev_dbg(dev, "%s can't get delta-st231 clock\n", DELTA_PREFIX);
-		delta->clk_st231 = शून्य;
-	पूर्ण
+		delta->clk_st231 = NULL;
+	}
 
 	delta->clk_flash_promip = devm_clk_get(dev, "delta-flash-promip");
-	अगर (IS_ERR(delta->clk_flash_promip)) अणु
+	if (IS_ERR(delta->clk_flash_promip)) {
 		dev_dbg(dev, "%s can't get delta-flash-promip clock\n",
 			DELTA_PREFIX);
-		delta->clk_flash_promip = शून्य;
-	पूर्ण
+		delta->clk_flash_promip = NULL;
+	}
 
-	/* init pm_runसमय used क्रम घातer management */
-	pm_runसमय_set_स्वतःsuspend_delay(dev, DELTA_HW_AUTOSUSPEND_DELAY_MS);
-	pm_runसमय_use_स्वतःsuspend(dev);
-	pm_runसमय_set_suspended(dev);
-	pm_runसमय_enable(dev);
+	/* init pm_runtime used for power management */
+	pm_runtime_set_autosuspend_delay(dev, DELTA_HW_AUTOSUSPEND_DELAY_MS);
+	pm_runtime_use_autosuspend(dev);
+	pm_runtime_set_suspended(dev);
+	pm_runtime_enable(dev);
 
 	/* init firmware ipc channel */
 	ret = delta_ipc_init(delta);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(delta->dev, "%s failed to initialize firmware ipc channel\n",
 			DELTA_PREFIX);
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	/* रेजिस्टर all available decoders */
-	रेजिस्टर_decoders(delta);
+	/* register all available decoders */
+	register_decoders(delta);
 
-	/* रेजिस्टर all supported क्रमmats */
-	रेजिस्टर_क्रमmats(delta);
+	/* register all supported formats */
+	register_formats(delta);
 
-	/* रेजिस्टर on V4L2 */
-	ret = v4l2_device_रेजिस्टर(dev, &delta->v4l2_dev);
-	अगर (ret) अणु
+	/* register on V4L2 */
+	ret = v4l2_device_register(dev, &delta->v4l2_dev);
+	if (ret) {
 		dev_err(delta->dev, "%s failed to register V4L2 device\n",
 			DELTA_PREFIX);
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	delta->work_queue = create_workqueue(DELTA_NAME);
-	अगर (!delta->work_queue) अणु
+	if (!delta->work_queue) {
 		dev_err(delta->dev, "%s failed to allocate work queue\n",
 			DELTA_PREFIX);
 		ret = -ENOMEM;
-		जाओ err_v4l2;
-	पूर्ण
+		goto err_v4l2;
+	}
 
-	/* रेजिस्टर device */
-	ret = delta_रेजिस्टर_device(delta);
-	अगर (ret)
-		जाओ err_work_queue;
+	/* register device */
+	ret = delta_register_device(delta);
+	if (ret)
+		goto err_work_queue;
 
 	dev_info(dev, "%s %s registered as /dev/video%d\n",
 		 DELTA_PREFIX, delta->vdev->name, delta->vdev->num);
 
-	वापस 0;
+	return 0;
 
 err_work_queue:
 	destroy_workqueue(delta->work_queue);
 err_v4l2:
-	v4l2_device_unरेजिस्टर(&delta->v4l2_dev);
+	v4l2_device_unregister(&delta->v4l2_dev);
 err:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक delta_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा delta_dev *delta = platक्रमm_get_drvdata(pdev);
+static int delta_remove(struct platform_device *pdev)
+{
+	struct delta_dev *delta = platform_get_drvdata(pdev);
 
-	delta_ipc_निकास(delta);
+	delta_ipc_exit(delta);
 
-	delta_unरेजिस्टर_device(delta);
+	delta_unregister_device(delta);
 
 	destroy_workqueue(delta->work_queue);
 
-	pm_runसमय_put_स्वतःsuspend(delta->dev);
-	pm_runसमय_disable(delta->dev);
+	pm_runtime_put_autosuspend(delta->dev);
+	pm_runtime_disable(delta->dev);
 
-	v4l2_device_unरेजिस्टर(&delta->v4l2_dev);
+	v4l2_device_unregister(&delta->v4l2_dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक delta_runसमय_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा delta_dev *delta = dev_get_drvdata(dev);
+static int delta_runtime_suspend(struct device *dev)
+{
+	struct delta_dev *delta = dev_get_drvdata(dev);
 
-	अगर (delta->clk_delta)
+	if (delta->clk_delta)
 		clk_disable_unprepare(delta->clk_delta);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक delta_runसमय_resume(काष्ठा device *dev)
-अणु
-	काष्ठा delta_dev *delta = dev_get_drvdata(dev);
+static int delta_runtime_resume(struct device *dev)
+{
+	struct delta_dev *delta = dev_get_drvdata(dev);
 
-	अगर (delta->clk_delta)
-		अगर (clk_prepare_enable(delta->clk_delta))
+	if (delta->clk_delta)
+		if (clk_prepare_enable(delta->clk_delta))
 			dev_warn(dev, "failed to prepare/enable delta clk\n");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* PM ops */
-अटल स्थिर काष्ठा dev_pm_ops delta_pm_ops = अणु
-	.runसमय_suspend = delta_runसमय_suspend,
-	.runसमय_resume = delta_runसमय_resume,
-पूर्ण;
+static const struct dev_pm_ops delta_pm_ops = {
+	.runtime_suspend = delta_runtime_suspend,
+	.runtime_resume = delta_runtime_resume,
+};
 
-अटल स्थिर काष्ठा of_device_id delta_match_types[] = अणु
-	अणु
+static const struct of_device_id delta_match_types[] = {
+	{
 	 .compatible = "st,st-delta",
-	पूर्ण,
-	अणु
+	},
+	{
 	 /* end node */
-	पूर्ण
-पूर्ण;
+	}
+};
 
 MODULE_DEVICE_TABLE(of, delta_match_types);
 
-अटल काष्ठा platक्रमm_driver delta_driver = अणु
+static struct platform_driver delta_driver = {
 	.probe = delta_probe,
-	.हटाओ = delta_हटाओ,
-	.driver = अणु
+	.remove = delta_remove,
+	.driver = {
 		   .name = DELTA_NAME,
 		   .of_match_table = delta_match_types,
-		   .pm = &delta_pm_opsपूर्ण,
-पूर्ण;
+		   .pm = &delta_pm_ops},
+};
 
-module_platक्रमm_driver(delta_driver);
+module_platform_driver(delta_driver);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Hugues Fruchet <hugues.fruchet@st.com>");

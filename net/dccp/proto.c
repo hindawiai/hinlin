@@ -1,61 +1,60 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  *  net/dccp/proto.c
  *
  *  An implementation of the DCCP protocol
- *  Arnalकरो Carvalho de Melo <acme@conectiva.com.br>
+ *  Arnaldo Carvalho de Melo <acme@conectiva.com.br>
  */
 
-#समावेश <linux/dccp.h>
-#समावेश <linux/module.h>
-#समावेश <linux/types.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/in.h>
-#समावेश <linux/अगर_arp.h>
-#समावेश <linux/init.h>
-#समावेश <linux/अक्रमom.h>
-#समावेश <linux/slab.h>
-#समावेश <net/checksum.h>
+#include <linux/dccp.h>
+#include <linux/module.h>
+#include <linux/types.h>
+#include <linux/sched.h>
+#include <linux/kernel.h>
+#include <linux/skbuff.h>
+#include <linux/netdevice.h>
+#include <linux/in.h>
+#include <linux/if_arp.h>
+#include <linux/init.h>
+#include <linux/random.h>
+#include <linux/slab.h>
+#include <net/checksum.h>
 
-#समावेश <net/inet_sock.h>
-#समावेश <net/inet_common.h>
-#समावेश <net/sock.h>
-#समावेश <net/xfrm.h>
+#include <net/inet_sock.h>
+#include <net/inet_common.h>
+#include <net/sock.h>
+#include <net/xfrm.h>
 
-#समावेश <यंत्र/ioctls.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/समयr.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/poll.h>
+#include <asm/ioctls.h>
+#include <linux/spinlock.h>
+#include <linux/timer.h>
+#include <linux/delay.h>
+#include <linux/poll.h>
 
-#समावेश "ccid.h"
-#समावेश "dccp.h"
-#समावेश "feat.h"
+#include "ccid.h"
+#include "dccp.h"
+#include "feat.h"
 
-#घोषणा CREATE_TRACE_POINTS
-#समावेश "trace.h"
+#define CREATE_TRACE_POINTS
+#include "trace.h"
 
-DEFINE_SNMP_STAT(काष्ठा dccp_mib, dccp_statistics) __पढ़ो_mostly;
+DEFINE_SNMP_STAT(struct dccp_mib, dccp_statistics) __read_mostly;
 
 EXPORT_SYMBOL_GPL(dccp_statistics);
 
-काष्ठा percpu_counter dccp_orphan_count;
+struct percpu_counter dccp_orphan_count;
 EXPORT_SYMBOL_GPL(dccp_orphan_count);
 
-काष्ठा inet_hashinfo dccp_hashinfo;
+struct inet_hashinfo dccp_hashinfo;
 EXPORT_SYMBOL_GPL(dccp_hashinfo);
 
-/* the maximum queue length क्रम tx in packets. 0 is no limit */
-पूर्णांक sysctl_dccp_tx_qlen __पढ़ो_mostly = 5;
+/* the maximum queue length for tx in packets. 0 is no limit */
+int sysctl_dccp_tx_qlen __read_mostly = 5;
 
-#अगर_घोषित CONFIG_IP_DCCP_DEBUG
-अटल स्थिर अक्षर *dccp_state_name(स्थिर पूर्णांक state)
-अणु
-	अटल स्थिर अक्षर *स्थिर dccp_state_names[] = अणु
+#ifdef CONFIG_IP_DCCP_DEBUG
+static const char *dccp_state_name(const int state)
+{
+	static const char *const dccp_state_names[] = {
 	[DCCP_OPEN]		= "OPEN",
 	[DCCP_REQUESTING]	= "REQUESTING",
 	[DCCP_PARTOPEN]		= "PARTOPEN",
@@ -67,91 +66,91 @@ EXPORT_SYMBOL_GPL(dccp_hashinfo);
 	[DCCP_PASSIVE_CLOSEREQ]	= "PASSIVE_CLOSEREQ",
 	[DCCP_TIME_WAIT]	= "TIME_WAIT",
 	[DCCP_CLOSED]		= "CLOSED",
-	पूर्ण;
+	};
 
-	अगर (state >= DCCP_MAX_STATES)
-		वापस "INVALID STATE!";
-	अन्यथा
-		वापस dccp_state_names[state];
-पूर्ण
-#पूर्ण_अगर
+	if (state >= DCCP_MAX_STATES)
+		return "INVALID STATE!";
+	else
+		return dccp_state_names[state];
+}
+#endif
 
-व्योम dccp_set_state(काष्ठा sock *sk, स्थिर पूर्णांक state)
-अणु
-	स्थिर पूर्णांक oldstate = sk->sk_state;
+void dccp_set_state(struct sock *sk, const int state)
+{
+	const int oldstate = sk->sk_state;
 
 	dccp_pr_debug("%s(%p)  %s  -->  %s\n", dccp_role(sk), sk,
 		      dccp_state_name(oldstate), dccp_state_name(state));
 	WARN_ON(state == oldstate);
 
-	चयन (state) अणु
-	हाल DCCP_OPEN:
-		अगर (oldstate != DCCP_OPEN)
+	switch (state) {
+	case DCCP_OPEN:
+		if (oldstate != DCCP_OPEN)
 			DCCP_INC_STATS(DCCP_MIB_CURRESTAB);
 		/* Client retransmits all Confirm options until entering OPEN */
-		अगर (oldstate == DCCP_PARTOPEN)
+		if (oldstate == DCCP_PARTOPEN)
 			dccp_feat_list_purge(&dccp_sk(sk)->dccps_featneg);
-		अवरोध;
+		break;
 
-	हाल DCCP_CLOSED:
-		अगर (oldstate == DCCP_OPEN || oldstate == DCCP_ACTIVE_CLOSEREQ ||
+	case DCCP_CLOSED:
+		if (oldstate == DCCP_OPEN || oldstate == DCCP_ACTIVE_CLOSEREQ ||
 		    oldstate == DCCP_CLOSING)
 			DCCP_INC_STATS(DCCP_MIB_ESTABRESETS);
 
 		sk->sk_prot->unhash(sk);
-		अगर (inet_csk(sk)->icsk_bind_hash != शून्य &&
+		if (inet_csk(sk)->icsk_bind_hash != NULL &&
 		    !(sk->sk_userlocks & SOCK_BINDPORT_LOCK))
 			inet_put_port(sk);
 		fallthrough;
-	शेष:
-		अगर (oldstate == DCCP_OPEN)
+	default:
+		if (oldstate == DCCP_OPEN)
 			DCCP_DEC_STATS(DCCP_MIB_CURRESTAB);
-	पूर्ण
+	}
 
-	/* Change state AFTER socket is unhashed to aव्योम बंदd
+	/* Change state AFTER socket is unhashed to avoid closed
 	 * socket sitting in hash tables.
 	 */
 	inet_sk_set_state(sk, state);
-पूर्ण
+}
 
 EXPORT_SYMBOL_GPL(dccp_set_state);
 
-अटल व्योम dccp_finish_passive_बंद(काष्ठा sock *sk)
-अणु
-	चयन (sk->sk_state) अणु
-	हाल DCCP_PASSIVE_CLOSE:
+static void dccp_finish_passive_close(struct sock *sk)
+{
+	switch (sk->sk_state) {
+	case DCCP_PASSIVE_CLOSE:
 		/* Node (client or server) has received Close packet. */
 		dccp_send_reset(sk, DCCP_RESET_CODE_CLOSED);
 		dccp_set_state(sk, DCCP_CLOSED);
-		अवरोध;
-	हाल DCCP_PASSIVE_CLOSEREQ:
+		break;
+	case DCCP_PASSIVE_CLOSEREQ:
 		/*
 		 * Client received CloseReq. We set the `active' flag so that
-		 * dccp_send_बंद() retransmits the Close as per RFC 4340, 8.3.
+		 * dccp_send_close() retransmits the Close as per RFC 4340, 8.3.
 		 */
-		dccp_send_बंद(sk, 1);
+		dccp_send_close(sk, 1);
 		dccp_set_state(sk, DCCP_CLOSING);
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम dccp_करोne(काष्ठा sock *sk)
-अणु
+void dccp_done(struct sock *sk)
+{
 	dccp_set_state(sk, DCCP_CLOSED);
-	dccp_clear_xmit_समयrs(sk);
+	dccp_clear_xmit_timers(sk);
 
-	sk->sk_shutकरोwn = SHUTDOWN_MASK;
+	sk->sk_shutdown = SHUTDOWN_MASK;
 
-	अगर (!sock_flag(sk, SOCK_DEAD))
+	if (!sock_flag(sk, SOCK_DEAD))
 		sk->sk_state_change(sk);
-	अन्यथा
+	else
 		inet_csk_destroy_sock(sk);
-पूर्ण
+}
 
-EXPORT_SYMBOL_GPL(dccp_करोne);
+EXPORT_SYMBOL_GPL(dccp_done);
 
-स्थिर अक्षर *dccp_packet_name(स्थिर पूर्णांक type)
-अणु
-	अटल स्थिर अक्षर *स्थिर dccp_packet_names[] = अणु
+const char *dccp_packet_name(const int type)
+{
+	static const char *const dccp_packet_names[] = {
 		[DCCP_PKT_REQUEST]  = "REQUEST",
 		[DCCP_PKT_RESPONSE] = "RESPONSE",
 		[DCCP_PKT_DATA]	    = "DATA",
@@ -162,139 +161,139 @@ EXPORT_SYMBOL_GPL(dccp_करोne);
 		[DCCP_PKT_RESET]    = "RESET",
 		[DCCP_PKT_SYNC]	    = "SYNC",
 		[DCCP_PKT_SYNCACK]  = "SYNCACK",
-	पूर्ण;
+	};
 
-	अगर (type >= DCCP_NR_PKT_TYPES)
-		वापस "INVALID";
-	अन्यथा
-		वापस dccp_packet_names[type];
-पूर्ण
+	if (type >= DCCP_NR_PKT_TYPES)
+		return "INVALID";
+	else
+		return dccp_packet_names[type];
+}
 
 EXPORT_SYMBOL_GPL(dccp_packet_name);
 
-अटल व्योम dccp_sk_deकाष्ठा(काष्ठा sock *sk)
-अणु
-	काष्ठा dccp_sock *dp = dccp_sk(sk);
+static void dccp_sk_destruct(struct sock *sk)
+{
+	struct dccp_sock *dp = dccp_sk(sk);
 
 	ccid_hc_tx_delete(dp->dccps_hc_tx_ccid, sk);
-	dp->dccps_hc_tx_ccid = शून्य;
-	inet_sock_deकाष्ठा(sk);
-पूर्ण
+	dp->dccps_hc_tx_ccid = NULL;
+	inet_sock_destruct(sk);
+}
 
-पूर्णांक dccp_init_sock(काष्ठा sock *sk, स्थिर __u8 ctl_sock_initialized)
-अणु
-	काष्ठा dccp_sock *dp = dccp_sk(sk);
-	काष्ठा inet_connection_sock *icsk = inet_csk(sk);
+int dccp_init_sock(struct sock *sk, const __u8 ctl_sock_initialized)
+{
+	struct dccp_sock *dp = dccp_sk(sk);
+	struct inet_connection_sock *icsk = inet_csk(sk);
 
 	icsk->icsk_rto		= DCCP_TIMEOUT_INIT;
 	icsk->icsk_syn_retries	= sysctl_dccp_request_retries;
 	sk->sk_state		= DCCP_CLOSED;
-	sk->sk_ग_लिखो_space	= dccp_ग_लिखो_space;
-	sk->sk_deकाष्ठा		= dccp_sk_deकाष्ठा;
+	sk->sk_write_space	= dccp_write_space;
+	sk->sk_destruct		= dccp_sk_destruct;
 	icsk->icsk_sync_mss	= dccp_sync_mss;
 	dp->dccps_mss_cache	= 536;
-	dp->dccps_rate_last	= jअगरfies;
+	dp->dccps_rate_last	= jiffies;
 	dp->dccps_role		= DCCP_ROLE_UNDEFINED;
 	dp->dccps_service	= DCCP_SERVICE_CODE_IS_ABSENT;
 	dp->dccps_tx_qlen	= sysctl_dccp_tx_qlen;
 
-	dccp_init_xmit_समयrs(sk);
+	dccp_init_xmit_timers(sk);
 
 	INIT_LIST_HEAD(&dp->dccps_featneg);
-	/* control socket करोesn't need feat nego */
-	अगर (likely(ctl_sock_initialized))
-		वापस dccp_feat_init(sk);
-	वापस 0;
-पूर्ण
+	/* control socket doesn't need feat nego */
+	if (likely(ctl_sock_initialized))
+		return dccp_feat_init(sk);
+	return 0;
+}
 
 EXPORT_SYMBOL_GPL(dccp_init_sock);
 
-व्योम dccp_destroy_sock(काष्ठा sock *sk)
-अणु
-	काष्ठा dccp_sock *dp = dccp_sk(sk);
+void dccp_destroy_sock(struct sock *sk)
+{
+	struct dccp_sock *dp = dccp_sk(sk);
 
-	__skb_queue_purge(&sk->sk_ग_लिखो_queue);
-	अगर (sk->sk_send_head != शून्य) अणु
-		kमुक्त_skb(sk->sk_send_head);
-		sk->sk_send_head = शून्य;
-	पूर्ण
+	__skb_queue_purge(&sk->sk_write_queue);
+	if (sk->sk_send_head != NULL) {
+		kfree_skb(sk->sk_send_head);
+		sk->sk_send_head = NULL;
+	}
 
 	/* Clean up a referenced DCCP bind bucket. */
-	अगर (inet_csk(sk)->icsk_bind_hash != शून्य)
+	if (inet_csk(sk)->icsk_bind_hash != NULL)
 		inet_put_port(sk);
 
-	kमुक्त(dp->dccps_service_list);
-	dp->dccps_service_list = शून्य;
+	kfree(dp->dccps_service_list);
+	dp->dccps_service_list = NULL;
 
-	अगर (dp->dccps_hc_rx_ackvec != शून्य) अणु
-		dccp_ackvec_मुक्त(dp->dccps_hc_rx_ackvec);
-		dp->dccps_hc_rx_ackvec = शून्य;
-	पूर्ण
+	if (dp->dccps_hc_rx_ackvec != NULL) {
+		dccp_ackvec_free(dp->dccps_hc_rx_ackvec);
+		dp->dccps_hc_rx_ackvec = NULL;
+	}
 	ccid_hc_rx_delete(dp->dccps_hc_rx_ccid, sk);
-	dp->dccps_hc_rx_ccid = शून्य;
+	dp->dccps_hc_rx_ccid = NULL;
 
 	/* clean up feature negotiation state */
 	dccp_feat_list_purge(&dp->dccps_featneg);
-पूर्ण
+}
 
 EXPORT_SYMBOL_GPL(dccp_destroy_sock);
 
-अटल अंतरभूत पूर्णांक dccp_listen_start(काष्ठा sock *sk, पूर्णांक backlog)
-अणु
-	काष्ठा dccp_sock *dp = dccp_sk(sk);
+static inline int dccp_listen_start(struct sock *sk, int backlog)
+{
+	struct dccp_sock *dp = dccp_sk(sk);
 
 	dp->dccps_role = DCCP_ROLE_LISTEN;
-	/* करो not start to listen अगर feature negotiation setup fails */
-	अगर (dccp_feat_finalise_settings(dp))
-		वापस -EPROTO;
-	वापस inet_csk_listen_start(sk, backlog);
-पूर्ण
+	/* do not start to listen if feature negotiation setup fails */
+	if (dccp_feat_finalise_settings(dp))
+		return -EPROTO;
+	return inet_csk_listen_start(sk, backlog);
+}
 
-अटल अंतरभूत पूर्णांक dccp_need_reset(पूर्णांक state)
-अणु
-	वापस state != DCCP_CLOSED && state != DCCP_LISTEN &&
+static inline int dccp_need_reset(int state)
+{
+	return state != DCCP_CLOSED && state != DCCP_LISTEN &&
 	       state != DCCP_REQUESTING;
-पूर्ण
+}
 
-पूर्णांक dccp_disconnect(काष्ठा sock *sk, पूर्णांक flags)
-अणु
-	काष्ठा inet_connection_sock *icsk = inet_csk(sk);
-	काष्ठा inet_sock *inet = inet_sk(sk);
-	काष्ठा dccp_sock *dp = dccp_sk(sk);
-	स्थिर पूर्णांक old_state = sk->sk_state;
+int dccp_disconnect(struct sock *sk, int flags)
+{
+	struct inet_connection_sock *icsk = inet_csk(sk);
+	struct inet_sock *inet = inet_sk(sk);
+	struct dccp_sock *dp = dccp_sk(sk);
+	const int old_state = sk->sk_state;
 
-	अगर (old_state != DCCP_CLOSED)
+	if (old_state != DCCP_CLOSED)
 		dccp_set_state(sk, DCCP_CLOSED);
 
 	/*
 	 * This corresponds to the ABORT function of RFC793, sec. 3.8
 	 * TCP uses a RST segment, DCCP a Reset packet with Code 2, "Aborted".
 	 */
-	अगर (old_state == DCCP_LISTEN) अणु
+	if (old_state == DCCP_LISTEN) {
 		inet_csk_listen_stop(sk);
-	पूर्ण अन्यथा अगर (dccp_need_reset(old_state)) अणु
+	} else if (dccp_need_reset(old_state)) {
 		dccp_send_reset(sk, DCCP_RESET_CODE_ABORTED);
 		sk->sk_err = ECONNRESET;
-	पूर्ण अन्यथा अगर (old_state == DCCP_REQUESTING)
+	} else if (old_state == DCCP_REQUESTING)
 		sk->sk_err = ECONNRESET;
 
-	dccp_clear_xmit_समयrs(sk);
+	dccp_clear_xmit_timers(sk);
 	ccid_hc_rx_delete(dp->dccps_hc_rx_ccid, sk);
-	dp->dccps_hc_rx_ccid = शून्य;
+	dp->dccps_hc_rx_ccid = NULL;
 
 	__skb_queue_purge(&sk->sk_receive_queue);
-	__skb_queue_purge(&sk->sk_ग_लिखो_queue);
-	अगर (sk->sk_send_head != शून्य) अणु
-		__kमुक्त_skb(sk->sk_send_head);
-		sk->sk_send_head = शून्य;
-	पूर्ण
+	__skb_queue_purge(&sk->sk_write_queue);
+	if (sk->sk_send_head != NULL) {
+		__kfree_skb(sk->sk_send_head);
+		sk->sk_send_head = NULL;
+	}
 
 	inet->inet_dport = 0;
 
-	अगर (!(sk->sk_userlocks & SOCK_BINDADDR_LOCK))
+	if (!(sk->sk_userlocks & SOCK_BINDADDR_LOCK))
 		inet_reset_saddr(sk);
 
-	sk->sk_shutकरोwn = 0;
+	sk->sk_shutdown = 0;
 	sock_reset_flag(sk, SOCK_DONE);
 
 	icsk->icsk_backoff = 0;
@@ -304,740 +303,740 @@ EXPORT_SYMBOL_GPL(dccp_destroy_sock);
 	WARN_ON(inet->inet_num && !icsk->icsk_bind_hash);
 
 	sk->sk_error_report(sk);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 EXPORT_SYMBOL_GPL(dccp_disconnect);
 
 /*
- *	Wait क्रम a DCCP event.
+ *	Wait for a DCCP event.
  *
- *	Note that we करोn't need to lock the socket, as the upper poll layers
- *	take care of normal races (between the test and the event) and we करोn't
+ *	Note that we don't need to lock the socket, as the upper poll layers
+ *	take care of normal races (between the test and the event) and we don't
  *	go look at any of the socket buffers directly.
  */
-__poll_t dccp_poll(काष्ठा file *file, काष्ठा socket *sock,
-		       poll_table *रुको)
-अणु
+__poll_t dccp_poll(struct file *file, struct socket *sock,
+		       poll_table *wait)
+{
 	__poll_t mask;
-	काष्ठा sock *sk = sock->sk;
+	struct sock *sk = sock->sk;
 
-	sock_poll_रुको(file, sock, रुको);
-	अगर (sk->sk_state == DCCP_LISTEN)
-		वापस inet_csk_listen_poll(sk);
+	sock_poll_wait(file, sock, wait);
+	if (sk->sk_state == DCCP_LISTEN)
+		return inet_csk_listen_poll(sk);
 
-	/* Socket is not locked. We are रक्षित from async events
+	/* Socket is not locked. We are protected from async events
 	   by poll logic and correct handling of state changes
-	   made by another thपढ़ोs is impossible in any हाल.
+	   made by another threads is impossible in any case.
 	 */
 
 	mask = 0;
-	अगर (sk->sk_err)
+	if (sk->sk_err)
 		mask = EPOLLERR;
 
-	अगर (sk->sk_shutकरोwn == SHUTDOWN_MASK || sk->sk_state == DCCP_CLOSED)
+	if (sk->sk_shutdown == SHUTDOWN_MASK || sk->sk_state == DCCP_CLOSED)
 		mask |= EPOLLHUP;
-	अगर (sk->sk_shutकरोwn & RCV_SHUTDOWN)
+	if (sk->sk_shutdown & RCV_SHUTDOWN)
 		mask |= EPOLLIN | EPOLLRDNORM | EPOLLRDHUP;
 
 	/* Connected? */
-	अगर ((1 << sk->sk_state) & ~(DCCPF_REQUESTING | DCCPF_RESPOND)) अणु
-		अगर (atomic_पढ़ो(&sk->sk_rmem_alloc) > 0)
+	if ((1 << sk->sk_state) & ~(DCCPF_REQUESTING | DCCPF_RESPOND)) {
+		if (atomic_read(&sk->sk_rmem_alloc) > 0)
 			mask |= EPOLLIN | EPOLLRDNORM;
 
-		अगर (!(sk->sk_shutकरोwn & SEND_SHUTDOWN)) अणु
-			अगर (sk_stream_is_ग_लिखोable(sk)) अणु
+		if (!(sk->sk_shutdown & SEND_SHUTDOWN)) {
+			if (sk_stream_is_writeable(sk)) {
 				mask |= EPOLLOUT | EPOLLWRNORM;
-			पूर्ण अन्यथा अणु  /* send SIGIO later */
+			} else {  /* send SIGIO later */
 				sk_set_bit(SOCKWQ_ASYNC_NOSPACE, sk);
 				set_bit(SOCK_NOSPACE, &sk->sk_socket->flags);
 
-				/* Race अवरोधer. If space is मुक्तd after
-				 * wspace test but beक्रमe the flags are set,
-				 * IO संकेत will be lost.
+				/* Race breaker. If space is freed after
+				 * wspace test but before the flags are set,
+				 * IO signal will be lost.
 				 */
-				अगर (sk_stream_is_ग_लिखोable(sk))
+				if (sk_stream_is_writeable(sk))
 					mask |= EPOLLOUT | EPOLLWRNORM;
-			पूर्ण
-		पूर्ण
-	पूर्ण
-	वापस mask;
-पूर्ण
+			}
+		}
+	}
+	return mask;
+}
 
 EXPORT_SYMBOL_GPL(dccp_poll);
 
-पूर्णांक dccp_ioctl(काष्ठा sock *sk, पूर्णांक cmd, अचिन्हित दीर्घ arg)
-अणु
-	पूर्णांक rc = -ENOTCONN;
+int dccp_ioctl(struct sock *sk, int cmd, unsigned long arg)
+{
+	int rc = -ENOTCONN;
 
 	lock_sock(sk);
 
-	अगर (sk->sk_state == DCCP_LISTEN)
-		जाओ out;
+	if (sk->sk_state == DCCP_LISTEN)
+		goto out;
 
-	चयन (cmd) अणु
-	हाल SIOCOUTQ: अणु
-		पूर्णांक amount = sk_wmem_alloc_get(sk);
+	switch (cmd) {
+	case SIOCOUTQ: {
+		int amount = sk_wmem_alloc_get(sk);
 		/* Using sk_wmem_alloc here because sk_wmem_queued is not used by DCCP and
 		 * always 0, comparably to UDP.
 		 */
 
-		rc = put_user(amount, (पूर्णांक __user *)arg);
-	पूर्ण
-		अवरोध;
-	हाल SIOCINQ: अणु
-		काष्ठा sk_buff *skb;
-		अचिन्हित दीर्घ amount = 0;
+		rc = put_user(amount, (int __user *)arg);
+	}
+		break;
+	case SIOCINQ: {
+		struct sk_buff *skb;
+		unsigned long amount = 0;
 
 		skb = skb_peek(&sk->sk_receive_queue);
-		अगर (skb != शून्य) अणु
+		if (skb != NULL) {
 			/*
-			 * We will only वापस the amount of this packet since
-			 * that is all that will be पढ़ो.
+			 * We will only return the amount of this packet since
+			 * that is all that will be read.
 			 */
 			amount = skb->len;
-		पूर्ण
-		rc = put_user(amount, (पूर्णांक __user *)arg);
-	पूर्ण
-		अवरोध;
-	शेष:
+		}
+		rc = put_user(amount, (int __user *)arg);
+	}
+		break;
+	default:
 		rc = -ENOIOCTLCMD;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 out:
 	release_sock(sk);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 EXPORT_SYMBOL_GPL(dccp_ioctl);
 
-अटल पूर्णांक dccp_setsockopt_service(काष्ठा sock *sk, स्थिर __be32 service,
-				   sockptr_t optval, अचिन्हित पूर्णांक optlen)
-अणु
-	काष्ठा dccp_sock *dp = dccp_sk(sk);
-	काष्ठा dccp_service_list *sl = शून्य;
+static int dccp_setsockopt_service(struct sock *sk, const __be32 service,
+				   sockptr_t optval, unsigned int optlen)
+{
+	struct dccp_sock *dp = dccp_sk(sk);
+	struct dccp_service_list *sl = NULL;
 
-	अगर (service == DCCP_SERVICE_INVALID_VALUE ||
-	    optlen > DCCP_SERVICE_LIST_MAX_LEN * माप(u32))
-		वापस -EINVAL;
+	if (service == DCCP_SERVICE_INVALID_VALUE ||
+	    optlen > DCCP_SERVICE_LIST_MAX_LEN * sizeof(u32))
+		return -EINVAL;
 
-	अगर (optlen > माप(service)) अणु
-		sl = kदो_स्मृति(optlen, GFP_KERNEL);
-		अगर (sl == शून्य)
-			वापस -ENOMEM;
+	if (optlen > sizeof(service)) {
+		sl = kmalloc(optlen, GFP_KERNEL);
+		if (sl == NULL)
+			return -ENOMEM;
 
-		sl->dccpsl_nr = optlen / माप(u32) - 1;
-		अगर (copy_from_sockptr_offset(sl->dccpsl_list, optval,
-				माप(service), optlen - माप(service)) ||
-		    dccp_list_has_service(sl, DCCP_SERVICE_INVALID_VALUE)) अणु
-			kमुक्त(sl);
-			वापस -EFAULT;
-		पूर्ण
-	पूर्ण
+		sl->dccpsl_nr = optlen / sizeof(u32) - 1;
+		if (copy_from_sockptr_offset(sl->dccpsl_list, optval,
+				sizeof(service), optlen - sizeof(service)) ||
+		    dccp_list_has_service(sl, DCCP_SERVICE_INVALID_VALUE)) {
+			kfree(sl);
+			return -EFAULT;
+		}
+	}
 
 	lock_sock(sk);
 	dp->dccps_service = service;
 
-	kमुक्त(dp->dccps_service_list);
+	kfree(dp->dccps_service_list);
 
 	dp->dccps_service_list = sl;
 	release_sock(sk);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dccp_setsockopt_cscov(काष्ठा sock *sk, पूर्णांक cscov, bool rx)
-अणु
+static int dccp_setsockopt_cscov(struct sock *sk, int cscov, bool rx)
+{
 	u8 *list, len;
-	पूर्णांक i, rc;
+	int i, rc;
 
-	अगर (cscov < 0 || cscov > 15)
-		वापस -EINVAL;
+	if (cscov < 0 || cscov > 15)
+		return -EINVAL;
 	/*
 	 * Populate a list of permissible values, in the range cscov...15. This
-	 * is necessary since feature negotiation of single values only works अगर
+	 * is necessary since feature negotiation of single values only works if
 	 * both sides incidentally choose the same value. Since the list starts
 	 * lowest-value first, negotiation will pick the smallest shared value.
 	 */
-	अगर (cscov == 0)
-		वापस 0;
+	if (cscov == 0)
+		return 0;
 	len = 16 - cscov;
 
-	list = kदो_स्मृति(len, GFP_KERNEL);
-	अगर (list == शून्य)
-		वापस -ENOBUFS;
+	list = kmalloc(len, GFP_KERNEL);
+	if (list == NULL)
+		return -ENOBUFS;
 
-	क्रम (i = 0; i < len; i++)
+	for (i = 0; i < len; i++)
 		list[i] = cscov++;
 
-	rc = dccp_feat_रेजिस्टर_sp(sk, DCCPF_MIN_CSUM_COVER, rx, list, len);
+	rc = dccp_feat_register_sp(sk, DCCPF_MIN_CSUM_COVER, rx, list, len);
 
-	अगर (rc == 0) अणु
-		अगर (rx)
+	if (rc == 0) {
+		if (rx)
 			dccp_sk(sk)->dccps_pcrlen = cscov;
-		अन्यथा
+		else
 			dccp_sk(sk)->dccps_pcslen = cscov;
-	पूर्ण
-	kमुक्त(list);
-	वापस rc;
-पूर्ण
+	}
+	kfree(list);
+	return rc;
+}
 
-अटल पूर्णांक dccp_setsockopt_ccid(काष्ठा sock *sk, पूर्णांक type,
-				sockptr_t optval, अचिन्हित पूर्णांक optlen)
-अणु
+static int dccp_setsockopt_ccid(struct sock *sk, int type,
+				sockptr_t optval, unsigned int optlen)
+{
 	u8 *val;
-	पूर्णांक rc = 0;
+	int rc = 0;
 
-	अगर (optlen < 1 || optlen > DCCP_FEAT_MAX_SP_VALS)
-		वापस -EINVAL;
+	if (optlen < 1 || optlen > DCCP_FEAT_MAX_SP_VALS)
+		return -EINVAL;
 
 	val = memdup_sockptr(optval, optlen);
-	अगर (IS_ERR(val))
-		वापस PTR_ERR(val);
+	if (IS_ERR(val))
+		return PTR_ERR(val);
 
 	lock_sock(sk);
-	अगर (type == DCCP_SOCKOPT_TX_CCID || type == DCCP_SOCKOPT_CCID)
-		rc = dccp_feat_रेजिस्टर_sp(sk, DCCPF_CCID, 1, val, optlen);
+	if (type == DCCP_SOCKOPT_TX_CCID || type == DCCP_SOCKOPT_CCID)
+		rc = dccp_feat_register_sp(sk, DCCPF_CCID, 1, val, optlen);
 
-	अगर (!rc && (type == DCCP_SOCKOPT_RX_CCID || type == DCCP_SOCKOPT_CCID))
-		rc = dccp_feat_रेजिस्टर_sp(sk, DCCPF_CCID, 0, val, optlen);
+	if (!rc && (type == DCCP_SOCKOPT_RX_CCID || type == DCCP_SOCKOPT_CCID))
+		rc = dccp_feat_register_sp(sk, DCCPF_CCID, 0, val, optlen);
 	release_sock(sk);
 
-	kमुक्त(val);
-	वापस rc;
-पूर्ण
+	kfree(val);
+	return rc;
+}
 
-अटल पूर्णांक करो_dccp_setsockopt(काष्ठा sock *sk, पूर्णांक level, पूर्णांक optname,
-		sockptr_t optval, अचिन्हित पूर्णांक optlen)
-अणु
-	काष्ठा dccp_sock *dp = dccp_sk(sk);
-	पूर्णांक val, err = 0;
+static int do_dccp_setsockopt(struct sock *sk, int level, int optname,
+		sockptr_t optval, unsigned int optlen)
+{
+	struct dccp_sock *dp = dccp_sk(sk);
+	int val, err = 0;
 
-	चयन (optname) अणु
-	हाल DCCP_SOCKOPT_PACKET_SIZE:
+	switch (optname) {
+	case DCCP_SOCKOPT_PACKET_SIZE:
 		DCCP_WARN("sockopt(PACKET_SIZE) is deprecated: fix your app\n");
-		वापस 0;
-	हाल DCCP_SOCKOPT_CHANGE_L:
-	हाल DCCP_SOCKOPT_CHANGE_R:
+		return 0;
+	case DCCP_SOCKOPT_CHANGE_L:
+	case DCCP_SOCKOPT_CHANGE_R:
 		DCCP_WARN("sockopt(CHANGE_L/R) is deprecated: fix your app\n");
-		वापस 0;
-	हाल DCCP_SOCKOPT_CCID:
-	हाल DCCP_SOCKOPT_RX_CCID:
-	हाल DCCP_SOCKOPT_TX_CCID:
-		वापस dccp_setsockopt_ccid(sk, optname, optval, optlen);
-	पूर्ण
+		return 0;
+	case DCCP_SOCKOPT_CCID:
+	case DCCP_SOCKOPT_RX_CCID:
+	case DCCP_SOCKOPT_TX_CCID:
+		return dccp_setsockopt_ccid(sk, optname, optval, optlen);
+	}
 
-	अगर (optlen < (पूर्णांक)माप(पूर्णांक))
-		वापस -EINVAL;
+	if (optlen < (int)sizeof(int))
+		return -EINVAL;
 
-	अगर (copy_from_sockptr(&val, optval, माप(पूर्णांक)))
-		वापस -EFAULT;
+	if (copy_from_sockptr(&val, optval, sizeof(int)))
+		return -EFAULT;
 
-	अगर (optname == DCCP_SOCKOPT_SERVICE)
-		वापस dccp_setsockopt_service(sk, val, optval, optlen);
+	if (optname == DCCP_SOCKOPT_SERVICE)
+		return dccp_setsockopt_service(sk, val, optval, optlen);
 
 	lock_sock(sk);
-	चयन (optname) अणु
-	हाल DCCP_SOCKOPT_SERVER_TIMEWAIT:
-		अगर (dp->dccps_role != DCCP_ROLE_SERVER)
+	switch (optname) {
+	case DCCP_SOCKOPT_SERVER_TIMEWAIT:
+		if (dp->dccps_role != DCCP_ROLE_SERVER)
 			err = -EOPNOTSUPP;
-		अन्यथा
-			dp->dccps_server_समयरुको = (val != 0);
-		अवरोध;
-	हाल DCCP_SOCKOPT_SEND_CSCOV:
+		else
+			dp->dccps_server_timewait = (val != 0);
+		break;
+	case DCCP_SOCKOPT_SEND_CSCOV:
 		err = dccp_setsockopt_cscov(sk, val, false);
-		अवरोध;
-	हाल DCCP_SOCKOPT_RECV_CSCOV:
+		break;
+	case DCCP_SOCKOPT_RECV_CSCOV:
 		err = dccp_setsockopt_cscov(sk, val, true);
-		अवरोध;
-	हाल DCCP_SOCKOPT_QPOLICY_ID:
-		अगर (sk->sk_state != DCCP_CLOSED)
+		break;
+	case DCCP_SOCKOPT_QPOLICY_ID:
+		if (sk->sk_state != DCCP_CLOSED)
 			err = -EISCONN;
-		अन्यथा अगर (val < 0 || val >= DCCPQ_POLICY_MAX)
+		else if (val < 0 || val >= DCCPQ_POLICY_MAX)
 			err = -EINVAL;
-		अन्यथा
+		else
 			dp->dccps_qpolicy = val;
-		अवरोध;
-	हाल DCCP_SOCKOPT_QPOLICY_TXQLEN:
-		अगर (val < 0)
+		break;
+	case DCCP_SOCKOPT_QPOLICY_TXQLEN:
+		if (val < 0)
 			err = -EINVAL;
-		अन्यथा
+		else
 			dp->dccps_tx_qlen = val;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		err = -ENOPROTOOPT;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 	release_sock(sk);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक dccp_setsockopt(काष्ठा sock *sk, पूर्णांक level, पूर्णांक optname, sockptr_t optval,
-		    अचिन्हित पूर्णांक optlen)
-अणु
-	अगर (level != SOL_DCCP)
-		वापस inet_csk(sk)->icsk_af_ops->setsockopt(sk, level,
+int dccp_setsockopt(struct sock *sk, int level, int optname, sockptr_t optval,
+		    unsigned int optlen)
+{
+	if (level != SOL_DCCP)
+		return inet_csk(sk)->icsk_af_ops->setsockopt(sk, level,
 							     optname, optval,
 							     optlen);
-	वापस करो_dccp_setsockopt(sk, level, optname, optval, optlen);
-पूर्ण
+	return do_dccp_setsockopt(sk, level, optname, optval, optlen);
+}
 
 EXPORT_SYMBOL_GPL(dccp_setsockopt);
 
-अटल पूर्णांक dccp_माला_लोockopt_service(काष्ठा sock *sk, पूर्णांक len,
+static int dccp_getsockopt_service(struct sock *sk, int len,
 				   __be32 __user *optval,
-				   पूर्णांक __user *optlen)
-अणु
-	स्थिर काष्ठा dccp_sock *dp = dccp_sk(sk);
-	स्थिर काष्ठा dccp_service_list *sl;
-	पूर्णांक err = -ENOENT, slen = 0, total_len = माप(u32);
+				   int __user *optlen)
+{
+	const struct dccp_sock *dp = dccp_sk(sk);
+	const struct dccp_service_list *sl;
+	int err = -ENOENT, slen = 0, total_len = sizeof(u32);
 
 	lock_sock(sk);
-	अगर ((sl = dp->dccps_service_list) != शून्य) अणु
-		slen = sl->dccpsl_nr * माप(u32);
+	if ((sl = dp->dccps_service_list) != NULL) {
+		slen = sl->dccpsl_nr * sizeof(u32);
 		total_len += slen;
-	पूर्ण
+	}
 
 	err = -EINVAL;
-	अगर (total_len > len)
-		जाओ out;
+	if (total_len > len)
+		goto out;
 
 	err = 0;
-	अगर (put_user(total_len, optlen) ||
+	if (put_user(total_len, optlen) ||
 	    put_user(dp->dccps_service, optval) ||
-	    (sl != शून्य && copy_to_user(optval + 1, sl->dccpsl_list, slen)))
+	    (sl != NULL && copy_to_user(optval + 1, sl->dccpsl_list, slen)))
 		err = -EFAULT;
 out:
 	release_sock(sk);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक करो_dccp_माला_लोockopt(काष्ठा sock *sk, पूर्णांक level, पूर्णांक optname,
-		    अक्षर __user *optval, पूर्णांक __user *optlen)
-अणु
-	काष्ठा dccp_sock *dp;
-	पूर्णांक val, len;
+static int do_dccp_getsockopt(struct sock *sk, int level, int optname,
+		    char __user *optval, int __user *optlen)
+{
+	struct dccp_sock *dp;
+	int val, len;
 
-	अगर (get_user(len, optlen))
-		वापस -EFAULT;
+	if (get_user(len, optlen))
+		return -EFAULT;
 
-	अगर (len < (पूर्णांक)माप(पूर्णांक))
-		वापस -EINVAL;
+	if (len < (int)sizeof(int))
+		return -EINVAL;
 
 	dp = dccp_sk(sk);
 
-	चयन (optname) अणु
-	हाल DCCP_SOCKOPT_PACKET_SIZE:
+	switch (optname) {
+	case DCCP_SOCKOPT_PACKET_SIZE:
 		DCCP_WARN("sockopt(PACKET_SIZE) is deprecated: fix your app\n");
-		वापस 0;
-	हाल DCCP_SOCKOPT_SERVICE:
-		वापस dccp_माला_लोockopt_service(sk, len,
+		return 0;
+	case DCCP_SOCKOPT_SERVICE:
+		return dccp_getsockopt_service(sk, len,
 					       (__be32 __user *)optval, optlen);
-	हाल DCCP_SOCKOPT_GET_CUR_MPS:
+	case DCCP_SOCKOPT_GET_CUR_MPS:
 		val = dp->dccps_mss_cache;
-		अवरोध;
-	हाल DCCP_SOCKOPT_AVAILABLE_CCIDS:
-		वापस ccid_माला_लोockopt_builtin_ccids(sk, len, optval, optlen);
-	हाल DCCP_SOCKOPT_TX_CCID:
+		break;
+	case DCCP_SOCKOPT_AVAILABLE_CCIDS:
+		return ccid_getsockopt_builtin_ccids(sk, len, optval, optlen);
+	case DCCP_SOCKOPT_TX_CCID:
 		val = ccid_get_current_tx_ccid(dp);
-		अगर (val < 0)
-			वापस -ENOPROTOOPT;
-		अवरोध;
-	हाल DCCP_SOCKOPT_RX_CCID:
+		if (val < 0)
+			return -ENOPROTOOPT;
+		break;
+	case DCCP_SOCKOPT_RX_CCID:
 		val = ccid_get_current_rx_ccid(dp);
-		अगर (val < 0)
-			वापस -ENOPROTOOPT;
-		अवरोध;
-	हाल DCCP_SOCKOPT_SERVER_TIMEWAIT:
-		val = dp->dccps_server_समयरुको;
-		अवरोध;
-	हाल DCCP_SOCKOPT_SEND_CSCOV:
+		if (val < 0)
+			return -ENOPROTOOPT;
+		break;
+	case DCCP_SOCKOPT_SERVER_TIMEWAIT:
+		val = dp->dccps_server_timewait;
+		break;
+	case DCCP_SOCKOPT_SEND_CSCOV:
 		val = dp->dccps_pcslen;
-		अवरोध;
-	हाल DCCP_SOCKOPT_RECV_CSCOV:
+		break;
+	case DCCP_SOCKOPT_RECV_CSCOV:
 		val = dp->dccps_pcrlen;
-		अवरोध;
-	हाल DCCP_SOCKOPT_QPOLICY_ID:
+		break;
+	case DCCP_SOCKOPT_QPOLICY_ID:
 		val = dp->dccps_qpolicy;
-		अवरोध;
-	हाल DCCP_SOCKOPT_QPOLICY_TXQLEN:
+		break;
+	case DCCP_SOCKOPT_QPOLICY_TXQLEN:
 		val = dp->dccps_tx_qlen;
-		अवरोध;
-	हाल 128 ... 191:
-		वापस ccid_hc_rx_माला_लोockopt(dp->dccps_hc_rx_ccid, sk, optname,
+		break;
+	case 128 ... 191:
+		return ccid_hc_rx_getsockopt(dp->dccps_hc_rx_ccid, sk, optname,
 					     len, (u32 __user *)optval, optlen);
-	हाल 192 ... 255:
-		वापस ccid_hc_tx_माला_लोockopt(dp->dccps_hc_tx_ccid, sk, optname,
+	case 192 ... 255:
+		return ccid_hc_tx_getsockopt(dp->dccps_hc_tx_ccid, sk, optname,
 					     len, (u32 __user *)optval, optlen);
-	शेष:
-		वापस -ENOPROTOOPT;
-	पूर्ण
+	default:
+		return -ENOPROTOOPT;
+	}
 
-	len = माप(val);
-	अगर (put_user(len, optlen) || copy_to_user(optval, &val, len))
-		वापस -EFAULT;
+	len = sizeof(val);
+	if (put_user(len, optlen) || copy_to_user(optval, &val, len))
+		return -EFAULT;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक dccp_माला_लोockopt(काष्ठा sock *sk, पूर्णांक level, पूर्णांक optname,
-		    अक्षर __user *optval, पूर्णांक __user *optlen)
-अणु
-	अगर (level != SOL_DCCP)
-		वापस inet_csk(sk)->icsk_af_ops->माला_लोockopt(sk, level,
+int dccp_getsockopt(struct sock *sk, int level, int optname,
+		    char __user *optval, int __user *optlen)
+{
+	if (level != SOL_DCCP)
+		return inet_csk(sk)->icsk_af_ops->getsockopt(sk, level,
 							     optname, optval,
 							     optlen);
-	वापस करो_dccp_माला_लोockopt(sk, level, optname, optval, optlen);
-पूर्ण
+	return do_dccp_getsockopt(sk, level, optname, optval, optlen);
+}
 
-EXPORT_SYMBOL_GPL(dccp_माला_लोockopt);
+EXPORT_SYMBOL_GPL(dccp_getsockopt);
 
-अटल पूर्णांक dccp_msghdr_parse(काष्ठा msghdr *msg, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा cmsghdr *cmsg;
+static int dccp_msghdr_parse(struct msghdr *msg, struct sk_buff *skb)
+{
+	struct cmsghdr *cmsg;
 
 	/*
 	 * Assign an (opaque) qpolicy priority value to skb->priority.
 	 *
-	 * We are overloading this skb field क्रम use with the qpolicy subystem.
-	 * The skb->priority is normally used क्रम the SO_PRIORITY option, which
+	 * We are overloading this skb field for use with the qpolicy subystem.
+	 * The skb->priority is normally used for the SO_PRIORITY option, which
 	 * is initialised from sk_priority. Since the assignment of sk_priority
 	 * to skb->priority happens later (on layer 3), we overload this field
-	 * क्रम use with queueing priorities as दीर्घ as the skb is on layer 4.
-	 * The शेष priority value (अगर nothing is set) is 0.
+	 * for use with queueing priorities as long as the skb is on layer 4.
+	 * The default priority value (if nothing is set) is 0.
 	 */
 	skb->priority = 0;
 
-	क्रम_each_cmsghdr(cmsg, msg) अणु
-		अगर (!CMSG_OK(msg, cmsg))
-			वापस -EINVAL;
+	for_each_cmsghdr(cmsg, msg) {
+		if (!CMSG_OK(msg, cmsg))
+			return -EINVAL;
 
-		अगर (cmsg->cmsg_level != SOL_DCCP)
-			जारी;
+		if (cmsg->cmsg_level != SOL_DCCP)
+			continue;
 
-		अगर (cmsg->cmsg_type <= DCCP_SCM_QPOLICY_MAX &&
+		if (cmsg->cmsg_type <= DCCP_SCM_QPOLICY_MAX &&
 		    !dccp_qpolicy_param_ok(skb->sk, cmsg->cmsg_type))
-			वापस -EINVAL;
+			return -EINVAL;
 
-		चयन (cmsg->cmsg_type) अणु
-		हाल DCCP_SCM_PRIORITY:
-			अगर (cmsg->cmsg_len != CMSG_LEN(माप(__u32)))
-				वापस -EINVAL;
+		switch (cmsg->cmsg_type) {
+		case DCCP_SCM_PRIORITY:
+			if (cmsg->cmsg_len != CMSG_LEN(sizeof(__u32)))
+				return -EINVAL;
 			skb->priority = *(__u32 *)CMSG_DATA(cmsg);
-			अवरोध;
-		शेष:
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+			break;
+		default:
+			return -EINVAL;
+		}
+	}
+	return 0;
+}
 
-पूर्णांक dccp_sendmsg(काष्ठा sock *sk, काष्ठा msghdr *msg, माप_प्रकार len)
-अणु
-	स्थिर काष्ठा dccp_sock *dp = dccp_sk(sk);
-	स्थिर पूर्णांक flags = msg->msg_flags;
-	स्थिर पूर्णांक noblock = flags & MSG_DONTWAIT;
-	काष्ठा sk_buff *skb;
-	पूर्णांक rc, size;
-	दीर्घ समयo;
+int dccp_sendmsg(struct sock *sk, struct msghdr *msg, size_t len)
+{
+	const struct dccp_sock *dp = dccp_sk(sk);
+	const int flags = msg->msg_flags;
+	const int noblock = flags & MSG_DONTWAIT;
+	struct sk_buff *skb;
+	int rc, size;
+	long timeo;
 
 	trace_dccp_probe(sk, len);
 
-	अगर (len > dp->dccps_mss_cache)
-		वापस -EMSGSIZE;
+	if (len > dp->dccps_mss_cache)
+		return -EMSGSIZE;
 
 	lock_sock(sk);
 
-	अगर (dccp_qpolicy_full(sk)) अणु
+	if (dccp_qpolicy_full(sk)) {
 		rc = -EAGAIN;
-		जाओ out_release;
-	पूर्ण
+		goto out_release;
+	}
 
-	समयo = sock_sndसमयo(sk, noblock);
+	timeo = sock_sndtimeo(sk, noblock);
 
 	/*
-	 * We have to use sk_stream_रुको_connect here to set sk_ग_लिखो_pending,
+	 * We have to use sk_stream_wait_connect here to set sk_write_pending,
 	 * so that the trick in dccp_rcv_request_sent_state_process.
 	 */
-	/* Wait क्रम a connection to finish. */
-	अगर ((1 << sk->sk_state) & ~(DCCPF_OPEN | DCCPF_PARTOPEN))
-		अगर ((rc = sk_stream_रुको_connect(sk, &समयo)) != 0)
-			जाओ out_release;
+	/* Wait for a connection to finish. */
+	if ((1 << sk->sk_state) & ~(DCCPF_OPEN | DCCPF_PARTOPEN))
+		if ((rc = sk_stream_wait_connect(sk, &timeo)) != 0)
+			goto out_release;
 
 	size = sk->sk_prot->max_header + len;
 	release_sock(sk);
 	skb = sock_alloc_send_skb(sk, size, noblock, &rc);
 	lock_sock(sk);
-	अगर (skb == शून्य)
-		जाओ out_release;
+	if (skb == NULL)
+		goto out_release;
 
-	अगर (sk->sk_state == DCCP_CLOSED) अणु
+	if (sk->sk_state == DCCP_CLOSED) {
 		rc = -ENOTCONN;
-		जाओ out_discard;
-	पूर्ण
+		goto out_discard;
+	}
 
 	skb_reserve(skb, sk->sk_prot->max_header);
-	rc = स_नकल_from_msg(skb_put(skb, len), msg, len);
-	अगर (rc != 0)
-		जाओ out_discard;
+	rc = memcpy_from_msg(skb_put(skb, len), msg, len);
+	if (rc != 0)
+		goto out_discard;
 
 	rc = dccp_msghdr_parse(msg, skb);
-	अगर (rc != 0)
-		जाओ out_discard;
+	if (rc != 0)
+		goto out_discard;
 
 	dccp_qpolicy_push(sk, skb);
 	/*
-	 * The xmit_समयr is set अगर the TX CCID is rate-based and will expire
-	 * when congestion control permits to release further packets पूर्णांकo the
-	 * network. Winकरोw-based CCIDs करो not use this समयr.
+	 * The xmit_timer is set if the TX CCID is rate-based and will expire
+	 * when congestion control permits to release further packets into the
+	 * network. Window-based CCIDs do not use this timer.
 	 */
-	अगर (!समयr_pending(&dp->dccps_xmit_समयr))
-		dccp_ग_लिखो_xmit(sk);
+	if (!timer_pending(&dp->dccps_xmit_timer))
+		dccp_write_xmit(sk);
 out_release:
 	release_sock(sk);
-	वापस rc ? : len;
+	return rc ? : len;
 out_discard:
-	kमुक्त_skb(skb);
-	जाओ out_release;
-पूर्ण
+	kfree_skb(skb);
+	goto out_release;
+}
 
 EXPORT_SYMBOL_GPL(dccp_sendmsg);
 
-पूर्णांक dccp_recvmsg(काष्ठा sock *sk, काष्ठा msghdr *msg, माप_प्रकार len, पूर्णांक nonblock,
-		 पूर्णांक flags, पूर्णांक *addr_len)
-अणु
-	स्थिर काष्ठा dccp_hdr *dh;
-	दीर्घ समयo;
+int dccp_recvmsg(struct sock *sk, struct msghdr *msg, size_t len, int nonblock,
+		 int flags, int *addr_len)
+{
+	const struct dccp_hdr *dh;
+	long timeo;
 
 	lock_sock(sk);
 
-	अगर (sk->sk_state == DCCP_LISTEN) अणु
+	if (sk->sk_state == DCCP_LISTEN) {
 		len = -ENOTCONN;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	समयo = sock_rcvसमयo(sk, nonblock);
+	timeo = sock_rcvtimeo(sk, nonblock);
 
-	करो अणु
-		काष्ठा sk_buff *skb = skb_peek(&sk->sk_receive_queue);
+	do {
+		struct sk_buff *skb = skb_peek(&sk->sk_receive_queue);
 
-		अगर (skb == शून्य)
-			जाओ verअगरy_sock_status;
+		if (skb == NULL)
+			goto verify_sock_status;
 
 		dh = dccp_hdr(skb);
 
-		चयन (dh->dccph_type) अणु
-		हाल DCCP_PKT_DATA:
-		हाल DCCP_PKT_DATAACK:
-			जाओ found_ok_skb;
+		switch (dh->dccph_type) {
+		case DCCP_PKT_DATA:
+		case DCCP_PKT_DATAACK:
+			goto found_ok_skb;
 
-		हाल DCCP_PKT_CLOSE:
-		हाल DCCP_PKT_CLOSEREQ:
-			अगर (!(flags & MSG_PEEK))
-				dccp_finish_passive_बंद(sk);
+		case DCCP_PKT_CLOSE:
+		case DCCP_PKT_CLOSEREQ:
+			if (!(flags & MSG_PEEK))
+				dccp_finish_passive_close(sk);
 			fallthrough;
-		हाल DCCP_PKT_RESET:
+		case DCCP_PKT_RESET:
 			dccp_pr_debug("found fin (%s) ok!\n",
 				      dccp_packet_name(dh->dccph_type));
 			len = 0;
-			जाओ found_fin_ok;
-		शेष:
+			goto found_fin_ok;
+		default:
 			dccp_pr_debug("packet_type=%s\n",
 				      dccp_packet_name(dh->dccph_type));
 			sk_eat_skb(sk, skb);
-		पूर्ण
-verअगरy_sock_status:
-		अगर (sock_flag(sk, SOCK_DONE)) अणु
+		}
+verify_sock_status:
+		if (sock_flag(sk, SOCK_DONE)) {
 			len = 0;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (sk->sk_err) अणु
+		if (sk->sk_err) {
 			len = sock_error(sk);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (sk->sk_shutकरोwn & RCV_SHUTDOWN) अणु
+		if (sk->sk_shutdown & RCV_SHUTDOWN) {
 			len = 0;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (sk->sk_state == DCCP_CLOSED) अणु
-			अगर (!sock_flag(sk, SOCK_DONE)) अणु
-				/* This occurs when user tries to पढ़ो
+		if (sk->sk_state == DCCP_CLOSED) {
+			if (!sock_flag(sk, SOCK_DONE)) {
+				/* This occurs when user tries to read
 				 * from never connected socket.
 				 */
 				len = -ENOTCONN;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 			len = 0;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (!समयo) अणु
+		if (!timeo) {
 			len = -EAGAIN;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (संकेत_pending(current)) अणु
-			len = sock_पूर्णांकr_त्रुटि_सं(समयo);
-			अवरोध;
-		पूर्ण
+		if (signal_pending(current)) {
+			len = sock_intr_errno(timeo);
+			break;
+		}
 
-		sk_रुको_data(sk, &समयo, शून्य);
-		जारी;
+		sk_wait_data(sk, &timeo, NULL);
+		continue;
 	found_ok_skb:
-		अगर (len > skb->len)
+		if (len > skb->len)
 			len = skb->len;
-		अन्यथा अगर (len < skb->len)
+		else if (len < skb->len)
 			msg->msg_flags |= MSG_TRUNC;
 
-		अगर (skb_copy_datagram_msg(skb, 0, msg, len)) अणु
+		if (skb_copy_datagram_msg(skb, 0, msg, len)) {
 			/* Exception. Bailout! */
 			len = -EFAULT;
-			अवरोध;
-		पूर्ण
-		अगर (flags & MSG_TRUNC)
+			break;
+		}
+		if (flags & MSG_TRUNC)
 			len = skb->len;
 	found_fin_ok:
-		अगर (!(flags & MSG_PEEK))
+		if (!(flags & MSG_PEEK))
 			sk_eat_skb(sk, skb);
-		अवरोध;
-	पूर्ण जबतक (1);
+		break;
+	} while (1);
 out:
 	release_sock(sk);
-	वापस len;
-पूर्ण
+	return len;
+}
 
 EXPORT_SYMBOL_GPL(dccp_recvmsg);
 
-पूर्णांक inet_dccp_listen(काष्ठा socket *sock, पूर्णांक backlog)
-अणु
-	काष्ठा sock *sk = sock->sk;
-	अचिन्हित अक्षर old_state;
-	पूर्णांक err;
+int inet_dccp_listen(struct socket *sock, int backlog)
+{
+	struct sock *sk = sock->sk;
+	unsigned char old_state;
+	int err;
 
 	lock_sock(sk);
 
 	err = -EINVAL;
-	अगर (sock->state != SS_UNCONNECTED || sock->type != SOCK_DCCP)
-		जाओ out;
+	if (sock->state != SS_UNCONNECTED || sock->type != SOCK_DCCP)
+		goto out;
 
 	old_state = sk->sk_state;
-	अगर (!((1 << old_state) & (DCCPF_CLOSED | DCCPF_LISTEN)))
-		जाओ out;
+	if (!((1 << old_state) & (DCCPF_CLOSED | DCCPF_LISTEN)))
+		goto out;
 
 	WRITE_ONCE(sk->sk_max_ack_backlog, backlog);
-	/* Really, अगर the socket is alपढ़ोy in listen state
+	/* Really, if the socket is already in listen state
 	 * we can only allow the backlog to be adjusted.
 	 */
-	अगर (old_state != DCCP_LISTEN) अणु
+	if (old_state != DCCP_LISTEN) {
 		/*
 		 * FIXME: here it probably should be sk->sk_prot->listen_start
 		 * see tcp_listen_start
 		 */
 		err = dccp_listen_start(sk, backlog);
-		अगर (err)
-			जाओ out;
-	पूर्ण
+		if (err)
+			goto out;
+	}
 	err = 0;
 
 out:
 	release_sock(sk);
-	वापस err;
-पूर्ण
+	return err;
+}
 
 EXPORT_SYMBOL_GPL(inet_dccp_listen);
 
-अटल व्योम dccp_terminate_connection(काष्ठा sock *sk)
-अणु
+static void dccp_terminate_connection(struct sock *sk)
+{
 	u8 next_state = DCCP_CLOSED;
 
-	चयन (sk->sk_state) अणु
-	हाल DCCP_PASSIVE_CLOSE:
-	हाल DCCP_PASSIVE_CLOSEREQ:
-		dccp_finish_passive_बंद(sk);
-		अवरोध;
-	हाल DCCP_PARTOPEN:
+	switch (sk->sk_state) {
+	case DCCP_PASSIVE_CLOSE:
+	case DCCP_PASSIVE_CLOSEREQ:
+		dccp_finish_passive_close(sk);
+		break;
+	case DCCP_PARTOPEN:
 		dccp_pr_debug("Stop PARTOPEN timer (%p)\n", sk);
-		inet_csk_clear_xmit_समयr(sk, ICSK_TIME_DACK);
+		inet_csk_clear_xmit_timer(sk, ICSK_TIME_DACK);
 		fallthrough;
-	हाल DCCP_OPEN:
-		dccp_send_बंद(sk, 1);
+	case DCCP_OPEN:
+		dccp_send_close(sk, 1);
 
-		अगर (dccp_sk(sk)->dccps_role == DCCP_ROLE_SERVER &&
-		    !dccp_sk(sk)->dccps_server_समयरुको)
+		if (dccp_sk(sk)->dccps_role == DCCP_ROLE_SERVER &&
+		    !dccp_sk(sk)->dccps_server_timewait)
 			next_state = DCCP_ACTIVE_CLOSEREQ;
-		अन्यथा
+		else
 			next_state = DCCP_CLOSING;
 		fallthrough;
-	शेष:
+	default:
 		dccp_set_state(sk, next_state);
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम dccp_बंद(काष्ठा sock *sk, दीर्घ समयout)
-अणु
-	काष्ठा dccp_sock *dp = dccp_sk(sk);
-	काष्ठा sk_buff *skb;
-	u32 data_was_unपढ़ो = 0;
-	पूर्णांक state;
+void dccp_close(struct sock *sk, long timeout)
+{
+	struct dccp_sock *dp = dccp_sk(sk);
+	struct sk_buff *skb;
+	u32 data_was_unread = 0;
+	int state;
 
 	lock_sock(sk);
 
-	sk->sk_shutकरोwn = SHUTDOWN_MASK;
+	sk->sk_shutdown = SHUTDOWN_MASK;
 
-	अगर (sk->sk_state == DCCP_LISTEN) अणु
+	if (sk->sk_state == DCCP_LISTEN) {
 		dccp_set_state(sk, DCCP_CLOSED);
 
-		/* Special हाल. */
+		/* Special case. */
 		inet_csk_listen_stop(sk);
 
-		जाओ adjudge_to_death;
-	पूर्ण
+		goto adjudge_to_death;
+	}
 
-	sk_stop_समयr(sk, &dp->dccps_xmit_समयr);
+	sk_stop_timer(sk, &dp->dccps_xmit_timer);
 
 	/*
-	 * We need to flush the recv. buffs.  We करो this only on the
-	 * descriptor बंद, not protocol-sourced बंदs, because the
-	  *पढ़ोer process may not have drained the data yet!
+	 * We need to flush the recv. buffs.  We do this only on the
+	 * descriptor close, not protocol-sourced closes, because the
+	  *reader process may not have drained the data yet!
 	 */
-	जबतक ((skb = __skb_dequeue(&sk->sk_receive_queue)) != शून्य) अणु
-		data_was_unपढ़ो += skb->len;
-		__kमुक्त_skb(skb);
-	पूर्ण
+	while ((skb = __skb_dequeue(&sk->sk_receive_queue)) != NULL) {
+		data_was_unread += skb->len;
+		__kfree_skb(skb);
+	}
 
-	/* If socket has been alपढ़ोy reset समाप्त it. */
-	अगर (sk->sk_state == DCCP_CLOSED)
-		जाओ adjudge_to_death;
+	/* If socket has been already reset kill it. */
+	if (sk->sk_state == DCCP_CLOSED)
+		goto adjudge_to_death;
 
-	अगर (data_was_unपढ़ो) अणु
-		/* Unपढ़ो data was tossed, send an appropriate Reset Code */
-		DCCP_WARN("ABORT with %u bytes unread\n", data_was_unपढ़ो);
+	if (data_was_unread) {
+		/* Unread data was tossed, send an appropriate Reset Code */
+		DCCP_WARN("ABORT with %u bytes unread\n", data_was_unread);
 		dccp_send_reset(sk, DCCP_RESET_CODE_ABORTED);
 		dccp_set_state(sk, DCCP_CLOSED);
-	पूर्ण अन्यथा अगर (sock_flag(sk, SOCK_LINGER) && !sk->sk_lingerसमय) अणु
-		/* Check zero linger _after_ checking क्रम unपढ़ो data. */
+	} else if (sock_flag(sk, SOCK_LINGER) && !sk->sk_lingertime) {
+		/* Check zero linger _after_ checking for unread data. */
 		sk->sk_prot->disconnect(sk, 0);
-	पूर्ण अन्यथा अगर (sk->sk_state != DCCP_CLOSED) अणु
+	} else if (sk->sk_state != DCCP_CLOSED) {
 		/*
-		 * Normal connection termination. May need to रुको अगर there are
+		 * Normal connection termination. May need to wait if there are
 		 * still packets in the TX queue that are delayed by the CCID.
 		 */
-		dccp_flush_ग_लिखो_queue(sk, &समयout);
+		dccp_flush_write_queue(sk, &timeout);
 		dccp_terminate_connection(sk);
-	पूर्ण
+	}
 
 	/*
-	 * Flush ग_लिखो queue. This may be necessary in several हालs:
-	 * - we have been बंदd by the peer but still have application data;
-	 * - पातive termination (unपढ़ो data or zero linger समय),
-	 * - normal termination but queue could not be flushed within समय limit
+	 * Flush write queue. This may be necessary in several cases:
+	 * - we have been closed by the peer but still have application data;
+	 * - abortive termination (unread data or zero linger time),
+	 * - normal termination but queue could not be flushed within time limit
 	 */
-	__skb_queue_purge(&sk->sk_ग_लिखो_queue);
+	__skb_queue_purge(&sk->sk_write_queue);
 
-	sk_stream_रुको_बंद(sk, समयout);
+	sk_stream_wait_close(sk, timeout);
 
 adjudge_to_death:
 	state = sk->sk_state;
@@ -1045,12 +1044,12 @@ adjudge_to_death:
 	sock_orphan(sk);
 
 	/*
-	 * It is the last release_sock in its lअगरe. It will हटाओ backlog.
+	 * It is the last release_sock in its life. It will remove backlog.
 	 */
 	release_sock(sk);
 	/*
 	 * Now socket is owned by kernel and we acquire BH lock
-	 * to finish बंद. No need to check क्रम user refs.
+	 * to finish close. No need to check for user refs.
 	 */
 	local_bh_disable();
 	bh_lock_sock(sk);
@@ -1058,204 +1057,204 @@ adjudge_to_death:
 
 	percpu_counter_inc(sk->sk_prot->orphan_count);
 
-	/* Have we alपढ़ोy been destroyed by a softirq or backlog? */
-	अगर (state != DCCP_CLOSED && sk->sk_state == DCCP_CLOSED)
-		जाओ out;
+	/* Have we already been destroyed by a softirq or backlog? */
+	if (state != DCCP_CLOSED && sk->sk_state == DCCP_CLOSED)
+		goto out;
 
-	अगर (sk->sk_state == DCCP_CLOSED)
+	if (sk->sk_state == DCCP_CLOSED)
 		inet_csk_destroy_sock(sk);
 
-	/* Otherwise, socket is reprieved until protocol बंद. */
+	/* Otherwise, socket is reprieved until protocol close. */
 
 out:
 	bh_unlock_sock(sk);
 	local_bh_enable();
 	sock_put(sk);
-पूर्ण
+}
 
-EXPORT_SYMBOL_GPL(dccp_बंद);
+EXPORT_SYMBOL_GPL(dccp_close);
 
-व्योम dccp_shutकरोwn(काष्ठा sock *sk, पूर्णांक how)
-अणु
+void dccp_shutdown(struct sock *sk, int how)
+{
 	dccp_pr_debug("called shutdown(%x)\n", how);
-पूर्ण
+}
 
-EXPORT_SYMBOL_GPL(dccp_shutकरोwn);
+EXPORT_SYMBOL_GPL(dccp_shutdown);
 
-अटल अंतरभूत पूर्णांक __init dccp_mib_init(व्योम)
-अणु
-	dccp_statistics = alloc_percpu(काष्ठा dccp_mib);
-	अगर (!dccp_statistics)
-		वापस -ENOMEM;
-	वापस 0;
-पूर्ण
+static inline int __init dccp_mib_init(void)
+{
+	dccp_statistics = alloc_percpu(struct dccp_mib);
+	if (!dccp_statistics)
+		return -ENOMEM;
+	return 0;
+}
 
-अटल अंतरभूत व्योम dccp_mib_निकास(व्योम)
-अणु
-	मुक्त_percpu(dccp_statistics);
-पूर्ण
+static inline void dccp_mib_exit(void)
+{
+	free_percpu(dccp_statistics);
+}
 
-अटल पूर्णांक thash_entries;
-module_param(thash_entries, पूर्णांक, 0444);
+static int thash_entries;
+module_param(thash_entries, int, 0444);
 MODULE_PARM_DESC(thash_entries, "Number of ehash buckets");
 
-#अगर_घोषित CONFIG_IP_DCCP_DEBUG
+#ifdef CONFIG_IP_DCCP_DEBUG
 bool dccp_debug;
 module_param(dccp_debug, bool, 0644);
 MODULE_PARM_DESC(dccp_debug, "Enable debug messages");
 
 EXPORT_SYMBOL_GPL(dccp_debug);
-#पूर्ण_अगर
+#endif
 
-अटल पूर्णांक __init dccp_init(व्योम)
-अणु
-	अचिन्हित दीर्घ goal;
-	अचिन्हित दीर्घ nr_pages = totalram_pages();
-	पूर्णांक ehash_order, bhash_order, i;
-	पूर्णांक rc;
+static int __init dccp_init(void)
+{
+	unsigned long goal;
+	unsigned long nr_pages = totalram_pages();
+	int ehash_order, bhash_order, i;
+	int rc;
 
-	BUILD_BUG_ON(माप(काष्ठा dccp_skb_cb) >
-		     माप_field(काष्ठा sk_buff, cb));
+	BUILD_BUG_ON(sizeof(struct dccp_skb_cb) >
+		     sizeof_field(struct sk_buff, cb));
 	rc = percpu_counter_init(&dccp_orphan_count, 0, GFP_KERNEL);
-	अगर (rc)
-		जाओ out_fail;
+	if (rc)
+		goto out_fail;
 	inet_hashinfo_init(&dccp_hashinfo);
 	rc = inet_hashinfo2_init_mod(&dccp_hashinfo);
-	अगर (rc)
-		जाओ out_मुक्त_percpu;
+	if (rc)
+		goto out_free_percpu;
 	rc = -ENOBUFS;
 	dccp_hashinfo.bind_bucket_cachep =
 		kmem_cache_create("dccp_bind_bucket",
-				  माप(काष्ठा inet_bind_bucket), 0,
-				  SLAB_HWCACHE_ALIGN, शून्य);
-	अगर (!dccp_hashinfo.bind_bucket_cachep)
-		जाओ out_मुक्त_hashinfo2;
+				  sizeof(struct inet_bind_bucket), 0,
+				  SLAB_HWCACHE_ALIGN, NULL);
+	if (!dccp_hashinfo.bind_bucket_cachep)
+		goto out_free_hashinfo2;
 
 	/*
-	 * Size and allocate the मुख्य established and bind bucket
+	 * Size and allocate the main established and bind bucket
 	 * hash tables.
 	 *
-	 * The methoकरोlogy is similar to that of the buffer cache.
+	 * The methodology is similar to that of the buffer cache.
 	 */
-	अगर (nr_pages >= (128 * 1024))
+	if (nr_pages >= (128 * 1024))
 		goal = nr_pages >> (21 - PAGE_SHIFT);
-	अन्यथा
+	else
 		goal = nr_pages >> (23 - PAGE_SHIFT);
 
-	अगर (thash_entries)
+	if (thash_entries)
 		goal = (thash_entries *
-			माप(काष्ठा inet_ehash_bucket)) >> PAGE_SHIFT;
-	क्रम (ehash_order = 0; (1UL << ehash_order) < goal; ehash_order++)
+			sizeof(struct inet_ehash_bucket)) >> PAGE_SHIFT;
+	for (ehash_order = 0; (1UL << ehash_order) < goal; ehash_order++)
 		;
-	करो अणु
-		अचिन्हित दीर्घ hash_size = (1UL << ehash_order) * PAGE_SIZE /
-					माप(काष्ठा inet_ehash_bucket);
+	do {
+		unsigned long hash_size = (1UL << ehash_order) * PAGE_SIZE /
+					sizeof(struct inet_ehash_bucket);
 
-		जबतक (hash_size & (hash_size - 1))
+		while (hash_size & (hash_size - 1))
 			hash_size--;
 		dccp_hashinfo.ehash_mask = hash_size - 1;
-		dccp_hashinfo.ehash = (काष्ठा inet_ehash_bucket *)
-			__get_मुक्त_pages(GFP_ATOMIC|__GFP_NOWARN, ehash_order);
-	पूर्ण जबतक (!dccp_hashinfo.ehash && --ehash_order > 0);
+		dccp_hashinfo.ehash = (struct inet_ehash_bucket *)
+			__get_free_pages(GFP_ATOMIC|__GFP_NOWARN, ehash_order);
+	} while (!dccp_hashinfo.ehash && --ehash_order > 0);
 
-	अगर (!dccp_hashinfo.ehash) अणु
+	if (!dccp_hashinfo.ehash) {
 		DCCP_CRIT("Failed to allocate DCCP established hash table");
-		जाओ out_मुक्त_bind_bucket_cachep;
-	पूर्ण
+		goto out_free_bind_bucket_cachep;
+	}
 
-	क्रम (i = 0; i <= dccp_hashinfo.ehash_mask; i++)
-		INIT_HLIST_शून्यS_HEAD(&dccp_hashinfo.ehash[i].chain, i);
+	for (i = 0; i <= dccp_hashinfo.ehash_mask; i++)
+		INIT_HLIST_NULLS_HEAD(&dccp_hashinfo.ehash[i].chain, i);
 
-	अगर (inet_ehash_locks_alloc(&dccp_hashinfo))
-			जाओ out_मुक्त_dccp_ehash;
+	if (inet_ehash_locks_alloc(&dccp_hashinfo))
+			goto out_free_dccp_ehash;
 
 	bhash_order = ehash_order;
 
-	करो अणु
+	do {
 		dccp_hashinfo.bhash_size = (1UL << bhash_order) * PAGE_SIZE /
-					माप(काष्ठा inet_bind_hashbucket);
-		अगर ((dccp_hashinfo.bhash_size > (64 * 1024)) &&
+					sizeof(struct inet_bind_hashbucket);
+		if ((dccp_hashinfo.bhash_size > (64 * 1024)) &&
 		    bhash_order > 0)
-			जारी;
-		dccp_hashinfo.bhash = (काष्ठा inet_bind_hashbucket *)
-			__get_मुक्त_pages(GFP_ATOMIC|__GFP_NOWARN, bhash_order);
-	पूर्ण जबतक (!dccp_hashinfo.bhash && --bhash_order >= 0);
+			continue;
+		dccp_hashinfo.bhash = (struct inet_bind_hashbucket *)
+			__get_free_pages(GFP_ATOMIC|__GFP_NOWARN, bhash_order);
+	} while (!dccp_hashinfo.bhash && --bhash_order >= 0);
 
-	अगर (!dccp_hashinfo.bhash) अणु
+	if (!dccp_hashinfo.bhash) {
 		DCCP_CRIT("Failed to allocate DCCP bind hash table");
-		जाओ out_मुक्त_dccp_locks;
-	पूर्ण
+		goto out_free_dccp_locks;
+	}
 
-	क्रम (i = 0; i < dccp_hashinfo.bhash_size; i++) अणु
+	for (i = 0; i < dccp_hashinfo.bhash_size; i++) {
 		spin_lock_init(&dccp_hashinfo.bhash[i].lock);
 		INIT_HLIST_HEAD(&dccp_hashinfo.bhash[i].chain);
-	पूर्ण
+	}
 
 	rc = dccp_mib_init();
-	अगर (rc)
-		जाओ out_मुक्त_dccp_bhash;
+	if (rc)
+		goto out_free_dccp_bhash;
 
 	rc = dccp_ackvec_init();
-	अगर (rc)
-		जाओ out_मुक्त_dccp_mib;
+	if (rc)
+		goto out_free_dccp_mib;
 
 	rc = dccp_sysctl_init();
-	अगर (rc)
-		जाओ out_ackvec_निकास;
+	if (rc)
+		goto out_ackvec_exit;
 
 	rc = ccid_initialize_builtins();
-	अगर (rc)
-		जाओ out_sysctl_निकास;
+	if (rc)
+		goto out_sysctl_exit;
 
-	dccp_बारtamping_init();
+	dccp_timestamping_init();
 
-	वापस 0;
+	return 0;
 
-out_sysctl_निकास:
-	dccp_sysctl_निकास();
-out_ackvec_निकास:
-	dccp_ackvec_निकास();
-out_मुक्त_dccp_mib:
-	dccp_mib_निकास();
-out_मुक्त_dccp_bhash:
-	मुक्त_pages((अचिन्हित दीर्घ)dccp_hashinfo.bhash, bhash_order);
-out_मुक्त_dccp_locks:
-	inet_ehash_locks_मुक्त(&dccp_hashinfo);
-out_मुक्त_dccp_ehash:
-	मुक्त_pages((अचिन्हित दीर्घ)dccp_hashinfo.ehash, ehash_order);
-out_मुक्त_bind_bucket_cachep:
+out_sysctl_exit:
+	dccp_sysctl_exit();
+out_ackvec_exit:
+	dccp_ackvec_exit();
+out_free_dccp_mib:
+	dccp_mib_exit();
+out_free_dccp_bhash:
+	free_pages((unsigned long)dccp_hashinfo.bhash, bhash_order);
+out_free_dccp_locks:
+	inet_ehash_locks_free(&dccp_hashinfo);
+out_free_dccp_ehash:
+	free_pages((unsigned long)dccp_hashinfo.ehash, ehash_order);
+out_free_bind_bucket_cachep:
 	kmem_cache_destroy(dccp_hashinfo.bind_bucket_cachep);
-out_मुक्त_hashinfo2:
-	inet_hashinfo2_मुक्त_mod(&dccp_hashinfo);
-out_मुक्त_percpu:
+out_free_hashinfo2:
+	inet_hashinfo2_free_mod(&dccp_hashinfo);
+out_free_percpu:
 	percpu_counter_destroy(&dccp_orphan_count);
 out_fail:
-	dccp_hashinfo.bhash = शून्य;
-	dccp_hashinfo.ehash = शून्य;
-	dccp_hashinfo.bind_bucket_cachep = शून्य;
-	वापस rc;
-पूर्ण
+	dccp_hashinfo.bhash = NULL;
+	dccp_hashinfo.ehash = NULL;
+	dccp_hashinfo.bind_bucket_cachep = NULL;
+	return rc;
+}
 
-अटल व्योम __निकास dccp_fini(व्योम)
-अणु
+static void __exit dccp_fini(void)
+{
 	ccid_cleanup_builtins();
-	dccp_mib_निकास();
-	मुक्त_pages((अचिन्हित दीर्घ)dccp_hashinfo.bhash,
+	dccp_mib_exit();
+	free_pages((unsigned long)dccp_hashinfo.bhash,
 		   get_order(dccp_hashinfo.bhash_size *
-			     माप(काष्ठा inet_bind_hashbucket)));
-	मुक्त_pages((अचिन्हित दीर्घ)dccp_hashinfo.ehash,
+			     sizeof(struct inet_bind_hashbucket)));
+	free_pages((unsigned long)dccp_hashinfo.ehash,
 		   get_order((dccp_hashinfo.ehash_mask + 1) *
-			     माप(काष्ठा inet_ehash_bucket)));
-	inet_ehash_locks_मुक्त(&dccp_hashinfo);
+			     sizeof(struct inet_ehash_bucket)));
+	inet_ehash_locks_free(&dccp_hashinfo);
 	kmem_cache_destroy(dccp_hashinfo.bind_bucket_cachep);
-	dccp_ackvec_निकास();
-	dccp_sysctl_निकास();
-	inet_hashinfo2_मुक्त_mod(&dccp_hashinfo);
+	dccp_ackvec_exit();
+	dccp_sysctl_exit();
+	inet_hashinfo2_free_mod(&dccp_hashinfo);
 	percpu_counter_destroy(&dccp_orphan_count);
-पूर्ण
+}
 
 module_init(dccp_init);
-module_निकास(dccp_fini);
+module_exit(dccp_fini);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Arnaldo Carvalho de Melo <acme@conectiva.com.br>");

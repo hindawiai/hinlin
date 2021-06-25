@@ -1,5 +1,4 @@
-<शैली गुरु>
-/*	tulip_core.c: A DEC 21x4x-family ethernet driver क्रम Linux.
+/*	tulip_core.c: A DEC 21x4x-family ethernet driver for Linux.
 
 	Copyright 2000,2001  The Linux Kernel Team
 	Written/copyright 1994-2001 by Donald Becker.
@@ -10,351 +9,351 @@
 	Please submit bugs to http://bugzilla.kernel.org/ .
 */
 
-#घोषणा pr_fmt(fmt) "tulip: " fmt
+#define pr_fmt(fmt) "tulip: " fmt
 
-#घोषणा DRV_NAME	"tulip"
+#define DRV_NAME	"tulip"
 
-#समावेश <linux/module.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/slab.h>
-#समावेश "tulip.h"
-#समावेश <linux/init.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/etherdevice.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/mii.h>
-#समावेश <linux/crc32.h>
-#समावेश <यंत्र/unaligned.h>
-#समावेश <linux/uaccess.h>
+#include <linux/module.h>
+#include <linux/pci.h>
+#include <linux/slab.h>
+#include "tulip.h"
+#include <linux/init.h>
+#include <linux/interrupt.h>
+#include <linux/etherdevice.h>
+#include <linux/delay.h>
+#include <linux/mii.h>
+#include <linux/crc32.h>
+#include <asm/unaligned.h>
+#include <linux/uaccess.h>
 
-#अगर_घोषित CONFIG_SPARC
-#समावेश <यंत्र/prom.h>
-#पूर्ण_अगर
+#ifdef CONFIG_SPARC
+#include <asm/prom.h>
+#endif
 
 /* A few user-configurable values. */
 
-/* Maximum events (Rx packets, etc.) to handle at each पूर्णांकerrupt. */
-अटल अचिन्हित पूर्णांक max_पूर्णांकerrupt_work = 25;
+/* Maximum events (Rx packets, etc.) to handle at each interrupt. */
+static unsigned int max_interrupt_work = 25;
 
-#घोषणा MAX_UNITS 8
+#define MAX_UNITS 8
 /* Used to pass the full-duplex flag, etc. */
-अटल पूर्णांक full_duplex[MAX_UNITS];
-अटल पूर्णांक options[MAX_UNITS];
-अटल पूर्णांक mtu[MAX_UNITS];			/* Jumbo MTU क्रम पूर्णांकerfaces. */
+static int full_duplex[MAX_UNITS];
+static int options[MAX_UNITS];
+static int mtu[MAX_UNITS];			/* Jumbo MTU for interfaces. */
 
 /*  The possible media types that can be set in options[] are: */
-स्थिर अक्षर * स्थिर medianame[32] = अणु
+const char * const medianame[32] = {
 	"10baseT", "10base2", "AUI", "100baseTx",
 	"10baseT-FDX", "100baseTx-FDX", "100baseT4", "100baseFx",
 	"100baseFx-FDX", "MII 10baseT", "MII 10baseT-FDX", "MII",
 	"10baseT(forced)", "MII 100baseTx", "MII 100baseTx-FDX", "MII 100baseT4",
 	"MII 100baseFx-HDX", "MII 100baseFx-FDX", "Home-PNA 1Mbps", "Invalid-19",
 	"","","","", "","","","",  "","","","Transceiver reset",
-पूर्ण;
+};
 
-/* Set the copy अवरोधpoपूर्णांक क्रम the copy-only-tiny-buffer Rx काष्ठाure. */
-#अगर defined(__alpha__) || defined(__arm__) || defined(__hppa__) || \
+/* Set the copy breakpoint for the copy-only-tiny-buffer Rx structure. */
+#if defined(__alpha__) || defined(__arm__) || defined(__hppa__) || \
 	defined(CONFIG_SPARC) || defined(__ia64__) || \
 	defined(__sh__) || defined(__mips__)
-अटल पूर्णांक rx_copyअवरोध = 1518;
-#अन्यथा
-अटल पूर्णांक rx_copyअवरोध = 100;
-#पूर्ण_अगर
+static int rx_copybreak = 1518;
+#else
+static int rx_copybreak = 100;
+#endif
 
 /*
-  Set the bus perक्रमmance रेजिस्टर.
-	Typical: Set 16 दीर्घword cache alignment, no burst limit.
+  Set the bus performance register.
+	Typical: Set 16 longword cache alignment, no burst limit.
 	Cache alignment bits 15:14	     Burst length 13:8
-		0000	No alignment  0x00000000 unlimited		0800 8 दीर्घwords
-		4000	8  दीर्घwords		0100 1 दीर्घword		1000 16 दीर्घwords
-		8000	16 दीर्घwords		0200 2 दीर्घwords	2000 32 दीर्घwords
-		C000	32  दीर्घwords		0400 4 दीर्घwords
-	Warning: many older 486 प्रणालीs are broken and require setting 0x00A04800
-	   8 दीर्घword cache alignment, 8 दीर्घword burst.
+		0000	No alignment  0x00000000 unlimited		0800 8 longwords
+		4000	8  longwords		0100 1 longword		1000 16 longwords
+		8000	16 longwords		0200 2 longwords	2000 32 longwords
+		C000	32  longwords		0400 4 longwords
+	Warning: many older 486 systems are broken and require setting 0x00A04800
+	   8 longword cache alignment, 8 longword burst.
 	ToDo: Non-Intel setting could be better.
 */
 
-#अगर defined(__alpha__) || defined(__ia64__)
-अटल पूर्णांक csr0 = 0x01A00000 | 0xE000;
-#या_अगर defined(__i386__) || defined(__घातerpc__) || defined(__x86_64__)
-अटल पूर्णांक csr0 = 0x01A00000 | 0x8000;
-#या_अगर defined(CONFIG_SPARC) || defined(__hppa__)
+#if defined(__alpha__) || defined(__ia64__)
+static int csr0 = 0x01A00000 | 0xE000;
+#elif defined(__i386__) || defined(__powerpc__) || defined(__x86_64__)
+static int csr0 = 0x01A00000 | 0x8000;
+#elif defined(CONFIG_SPARC) || defined(__hppa__)
 /* The UltraSparc PCI controllers will disconnect at every 64-byte
  * crossing anyways so it makes no sense to tell Tulip to burst
  * any more than that.
  */
-अटल पूर्णांक csr0 = 0x01A00000 | 0x9000;
-#या_अगर defined(__arm__) || defined(__sh__)
-अटल पूर्णांक csr0 = 0x01A00000 | 0x4800;
-#या_अगर defined(__mips__)
-अटल पूर्णांक csr0 = 0x00200000 | 0x4000;
-#अन्यथा
-अटल पूर्णांक csr0;
-#पूर्ण_अगर
+static int csr0 = 0x01A00000 | 0x9000;
+#elif defined(__arm__) || defined(__sh__)
+static int csr0 = 0x01A00000 | 0x4800;
+#elif defined(__mips__)
+static int csr0 = 0x00200000 | 0x4000;
+#else
+static int csr0;
+#endif
 
 /* Operational parameters that usually are not changed. */
-/* Time in jअगरfies beक्रमe concluding the transmitter is hung. */
-#घोषणा TX_TIMEOUT  (4*HZ)
+/* Time in jiffies before concluding the transmitter is hung. */
+#define TX_TIMEOUT  (4*HZ)
 
 
 MODULE_AUTHOR("The Linux Kernel Team");
 MODULE_DESCRIPTION("Digital 21*4* Tulip ethernet driver");
 MODULE_LICENSE("GPL");
-module_param(tulip_debug, पूर्णांक, 0);
-module_param(max_पूर्णांकerrupt_work, पूर्णांक, 0);
-module_param(rx_copyअवरोध, पूर्णांक, 0);
-module_param(csr0, पूर्णांक, 0);
-module_param_array(options, पूर्णांक, शून्य, 0);
-module_param_array(full_duplex, पूर्णांक, शून्य, 0);
+module_param(tulip_debug, int, 0);
+module_param(max_interrupt_work, int, 0);
+module_param(rx_copybreak, int, 0);
+module_param(csr0, int, 0);
+module_param_array(options, int, NULL, 0);
+module_param_array(full_duplex, int, NULL, 0);
 
-#अगर_घोषित TULIP_DEBUG
-पूर्णांक tulip_debug = TULIP_DEBUG;
-#अन्यथा
-पूर्णांक tulip_debug = 1;
-#पूर्ण_अगर
+#ifdef TULIP_DEBUG
+int tulip_debug = TULIP_DEBUG;
+#else
+int tulip_debug = 1;
+#endif
 
-अटल व्योम tulip_समयr(काष्ठा समयr_list *t)
-अणु
-	काष्ठा tulip_निजी *tp = from_समयr(tp, t, समयr);
-	काष्ठा net_device *dev = tp->dev;
+static void tulip_timer(struct timer_list *t)
+{
+	struct tulip_private *tp = from_timer(tp, t, timer);
+	struct net_device *dev = tp->dev;
 
-	अगर (netअगर_running(dev))
+	if (netif_running(dev))
 		schedule_work(&tp->media_work);
-पूर्ण
+}
 
 /*
- * This table use during operation क्रम capabilities and media समयr.
+ * This table use during operation for capabilities and media timer.
  *
  * It is indexed via the values in 'enum chips'
  */
 
-स्थिर काष्ठा tulip_chip_table tulip_tbl[] = अणु
-  अणु पूर्ण, /* placeholder क्रम array, slot unused currently */
-  अणु पूर्ण, /* placeholder क्रम array, slot unused currently */
+const struct tulip_chip_table tulip_tbl[] = {
+  { }, /* placeholder for array, slot unused currently */
+  { }, /* placeholder for array, slot unused currently */
 
   /* DC21140 */
-  अणु "Digital DS21140 Tulip", 128, 0x0001ebef,
-	HAS_MII | HAS_MEDIA_TABLE | CSR12_IN_SROM | HAS_PCI_MWI, tulip_समयr,
-	tulip_media_task पूर्ण,
+  { "Digital DS21140 Tulip", 128, 0x0001ebef,
+	HAS_MII | HAS_MEDIA_TABLE | CSR12_IN_SROM | HAS_PCI_MWI, tulip_timer,
+	tulip_media_task },
 
   /* DC21142, DC21143 */
-  अणु "Digital DS21142/43 Tulip", 128, 0x0801fbff,
+  { "Digital DS21142/43 Tulip", 128, 0x0801fbff,
 	HAS_MII | HAS_MEDIA_TABLE | ALWAYS_CHECK_MII | HAS_ACPI | HAS_NWAY
-	| HAS_INTR_MITIGATION | HAS_PCI_MWI, tulip_समयr, t21142_media_task पूर्ण,
+	| HAS_INTR_MITIGATION | HAS_PCI_MWI, tulip_timer, t21142_media_task },
 
   /* LC82C168 */
-  अणु "Lite-On 82c168 PNIC", 256, 0x0001fbef,
-	HAS_MII | HAS_PNICNWAY, pnic_समयr, पूर्ण,
+  { "Lite-On 82c168 PNIC", 256, 0x0001fbef,
+	HAS_MII | HAS_PNICNWAY, pnic_timer, },
 
   /* MX98713 */
-  अणु "Macronix 98713 PMAC", 128, 0x0001ebef,
-	HAS_MII | HAS_MEDIA_TABLE | CSR12_IN_SROM, mxic_समयr, पूर्ण,
+  { "Macronix 98713 PMAC", 128, 0x0001ebef,
+	HAS_MII | HAS_MEDIA_TABLE | CSR12_IN_SROM, mxic_timer, },
 
   /* MX98715 */
-  अणु "Macronix 98715 PMAC", 256, 0x0001ebef,
-	HAS_MEDIA_TABLE, mxic_समयr, पूर्ण,
+  { "Macronix 98715 PMAC", 256, 0x0001ebef,
+	HAS_MEDIA_TABLE, mxic_timer, },
 
   /* MX98725 */
-  अणु "Macronix 98725 PMAC", 256, 0x0001ebef,
-	HAS_MEDIA_TABLE, mxic_समयr, पूर्ण,
+  { "Macronix 98725 PMAC", 256, 0x0001ebef,
+	HAS_MEDIA_TABLE, mxic_timer, },
 
   /* AX88140 */
-  अणु "ASIX AX88140", 128, 0x0001fbff,
+  { "ASIX AX88140", 128, 0x0001fbff,
 	HAS_MII | HAS_MEDIA_TABLE | CSR12_IN_SROM | MC_HASH_ONLY
-	| IS_ASIX, tulip_समयr, tulip_media_task पूर्ण,
+	| IS_ASIX, tulip_timer, tulip_media_task },
 
   /* PNIC2 */
-  अणु "Lite-On PNIC-II", 256, 0x0801fbff,
-	HAS_MII | HAS_NWAY | HAS_8023X | HAS_PCI_MWI, pnic2_समयr, पूर्ण,
+  { "Lite-On PNIC-II", 256, 0x0801fbff,
+	HAS_MII | HAS_NWAY | HAS_8023X | HAS_PCI_MWI, pnic2_timer, },
 
   /* COMET */
-  अणु "ADMtek Comet", 256, 0x0001abef,
-	HAS_MII | MC_HASH_ONLY | COMET_MAC_ADDR, comet_समयr, पूर्ण,
+  { "ADMtek Comet", 256, 0x0001abef,
+	HAS_MII | MC_HASH_ONLY | COMET_MAC_ADDR, comet_timer, },
 
   /* COMPEX9881 */
-  अणु "Compex 9881 PMAC", 128, 0x0001ebef,
-	HAS_MII | HAS_MEDIA_TABLE | CSR12_IN_SROM, mxic_समयr, पूर्ण,
+  { "Compex 9881 PMAC", 128, 0x0001ebef,
+	HAS_MII | HAS_MEDIA_TABLE | CSR12_IN_SROM, mxic_timer, },
 
   /* I21145 */
-  अणु "Intel DS21145 Tulip", 128, 0x0801fbff,
+  { "Intel DS21145 Tulip", 128, 0x0801fbff,
 	HAS_MII | HAS_MEDIA_TABLE | ALWAYS_CHECK_MII | HAS_ACPI
-	| HAS_NWAY | HAS_PCI_MWI, tulip_समयr, tulip_media_task पूर्ण,
+	| HAS_NWAY | HAS_PCI_MWI, tulip_timer, tulip_media_task },
 
   /* DM910X */
-#अगर_घोषित CONFIG_TULIP_DM910X
-  अणु "Davicom DM9102/DM9102A", 128, 0x0001ebef,
+#ifdef CONFIG_TULIP_DM910X
+  { "Davicom DM9102/DM9102A", 128, 0x0001ebef,
 	HAS_MII | HAS_MEDIA_TABLE | CSR12_IN_SROM | HAS_ACPI,
-	tulip_समयr, tulip_media_task पूर्ण,
-#अन्यथा
-  अणु शून्य पूर्ण,
-#पूर्ण_अगर
+	tulip_timer, tulip_media_task },
+#else
+  { NULL },
+#endif
 
   /* RS7112 */
-  अणु "Conexant LANfinity", 256, 0x0001ebef,
-	HAS_MII | HAS_ACPI, tulip_समयr, tulip_media_task पूर्ण,
+  { "Conexant LANfinity", 256, 0x0001ebef,
+	HAS_MII | HAS_ACPI, tulip_timer, tulip_media_task },
 
-पूर्ण;
+};
 
 
-अटल स्थिर काष्ठा pci_device_id tulip_pci_tbl[] = अणु
-	अणु 0x1011, 0x0009, PCI_ANY_ID, PCI_ANY_ID, 0, 0, DC21140 पूर्ण,
-	अणु 0x1011, 0x0019, PCI_ANY_ID, PCI_ANY_ID, 0, 0, DC21143 पूर्ण,
-	अणु 0x11AD, 0x0002, PCI_ANY_ID, PCI_ANY_ID, 0, 0, LC82C168 पूर्ण,
-	अणु 0x10d9, 0x0512, PCI_ANY_ID, PCI_ANY_ID, 0, 0, MX98713 पूर्ण,
-	अणु 0x10d9, 0x0531, PCI_ANY_ID, PCI_ANY_ID, 0, 0, MX98715 पूर्ण,
-/*	अणु 0x10d9, 0x0531, PCI_ANY_ID, PCI_ANY_ID, 0, 0, MX98725 पूर्ण,*/
-	अणु 0x125B, 0x1400, PCI_ANY_ID, PCI_ANY_ID, 0, 0, AX88140 पूर्ण,
-	अणु 0x11AD, 0xc115, PCI_ANY_ID, PCI_ANY_ID, 0, 0, PNIC2 पूर्ण,
-	अणु 0x1317, 0x0981, PCI_ANY_ID, PCI_ANY_ID, 0, 0, COMET पूर्ण,
-	अणु 0x1317, 0x0985, PCI_ANY_ID, PCI_ANY_ID, 0, 0, COMET पूर्ण,
-	अणु 0x1317, 0x1985, PCI_ANY_ID, PCI_ANY_ID, 0, 0, COMET पूर्ण,
-	अणु 0x1317, 0x9511, PCI_ANY_ID, PCI_ANY_ID, 0, 0, COMET पूर्ण,
-	अणु 0x13D1, 0xAB02, PCI_ANY_ID, PCI_ANY_ID, 0, 0, COMET पूर्ण,
-	अणु 0x13D1, 0xAB03, PCI_ANY_ID, PCI_ANY_ID, 0, 0, COMET पूर्ण,
-	अणु 0x13D1, 0xAB08, PCI_ANY_ID, PCI_ANY_ID, 0, 0, COMET पूर्ण,
-	अणु 0x104A, 0x0981, PCI_ANY_ID, PCI_ANY_ID, 0, 0, COMET पूर्ण,
-	अणु 0x104A, 0x2774, PCI_ANY_ID, PCI_ANY_ID, 0, 0, COMET पूर्ण,
-	अणु 0x1259, 0xa120, PCI_ANY_ID, PCI_ANY_ID, 0, 0, COMET पूर्ण,
-	अणु 0x11F6, 0x9881, PCI_ANY_ID, PCI_ANY_ID, 0, 0, COMPEX9881 पूर्ण,
-	अणु 0x8086, 0x0039, PCI_ANY_ID, PCI_ANY_ID, 0, 0, I21145 पूर्ण,
-#अगर_घोषित CONFIG_TULIP_DM910X
-	अणु 0x1282, 0x9100, PCI_ANY_ID, PCI_ANY_ID, 0, 0, DM910X पूर्ण,
-	अणु 0x1282, 0x9102, PCI_ANY_ID, PCI_ANY_ID, 0, 0, DM910X पूर्ण,
-#पूर्ण_अगर
-	अणु 0x1113, 0x1216, PCI_ANY_ID, PCI_ANY_ID, 0, 0, COMET पूर्ण,
-	अणु 0x1113, 0x1217, PCI_ANY_ID, PCI_ANY_ID, 0, 0, MX98715 पूर्ण,
-	अणु 0x1113, 0x9511, PCI_ANY_ID, PCI_ANY_ID, 0, 0, COMET पूर्ण,
-	अणु 0x1186, 0x1541, PCI_ANY_ID, PCI_ANY_ID, 0, 0, COMET पूर्ण,
-	अणु 0x1186, 0x1561, PCI_ANY_ID, PCI_ANY_ID, 0, 0, COMET पूर्ण,
-	अणु 0x1186, 0x1591, PCI_ANY_ID, PCI_ANY_ID, 0, 0, COMET पूर्ण,
-	अणु 0x14f1, 0x1803, PCI_ANY_ID, PCI_ANY_ID, 0, 0, CONEXANT पूर्ण,
-	अणु 0x1626, 0x8410, PCI_ANY_ID, PCI_ANY_ID, 0, 0, COMET पूर्ण,
-	अणु 0x1737, 0xAB09, PCI_ANY_ID, PCI_ANY_ID, 0, 0, COMET पूर्ण,
-	अणु 0x1737, 0xAB08, PCI_ANY_ID, PCI_ANY_ID, 0, 0, COMET पूर्ण,
-	अणु 0x17B3, 0xAB08, PCI_ANY_ID, PCI_ANY_ID, 0, 0, COMET पूर्ण,
-	अणु 0x10b7, 0x9300, PCI_ANY_ID, PCI_ANY_ID, 0, 0, COMET पूर्ण, /* 3Com 3CSOHO100B-TX */
-	अणु 0x14ea, 0xab08, PCI_ANY_ID, PCI_ANY_ID, 0, 0, COMET पूर्ण, /* Planex FNW-3602-TX */
-	अणु 0x1414, 0x0001, PCI_ANY_ID, PCI_ANY_ID, 0, 0, COMET पूर्ण, /* Microsoft MN-120 */
-	अणु 0x1414, 0x0002, PCI_ANY_ID, PCI_ANY_ID, 0, 0, COMET पूर्ण,
-	अणु पूर्ण /* terminate list */
-पूर्ण;
+static const struct pci_device_id tulip_pci_tbl[] = {
+	{ 0x1011, 0x0009, PCI_ANY_ID, PCI_ANY_ID, 0, 0, DC21140 },
+	{ 0x1011, 0x0019, PCI_ANY_ID, PCI_ANY_ID, 0, 0, DC21143 },
+	{ 0x11AD, 0x0002, PCI_ANY_ID, PCI_ANY_ID, 0, 0, LC82C168 },
+	{ 0x10d9, 0x0512, PCI_ANY_ID, PCI_ANY_ID, 0, 0, MX98713 },
+	{ 0x10d9, 0x0531, PCI_ANY_ID, PCI_ANY_ID, 0, 0, MX98715 },
+/*	{ 0x10d9, 0x0531, PCI_ANY_ID, PCI_ANY_ID, 0, 0, MX98725 },*/
+	{ 0x125B, 0x1400, PCI_ANY_ID, PCI_ANY_ID, 0, 0, AX88140 },
+	{ 0x11AD, 0xc115, PCI_ANY_ID, PCI_ANY_ID, 0, 0, PNIC2 },
+	{ 0x1317, 0x0981, PCI_ANY_ID, PCI_ANY_ID, 0, 0, COMET },
+	{ 0x1317, 0x0985, PCI_ANY_ID, PCI_ANY_ID, 0, 0, COMET },
+	{ 0x1317, 0x1985, PCI_ANY_ID, PCI_ANY_ID, 0, 0, COMET },
+	{ 0x1317, 0x9511, PCI_ANY_ID, PCI_ANY_ID, 0, 0, COMET },
+	{ 0x13D1, 0xAB02, PCI_ANY_ID, PCI_ANY_ID, 0, 0, COMET },
+	{ 0x13D1, 0xAB03, PCI_ANY_ID, PCI_ANY_ID, 0, 0, COMET },
+	{ 0x13D1, 0xAB08, PCI_ANY_ID, PCI_ANY_ID, 0, 0, COMET },
+	{ 0x104A, 0x0981, PCI_ANY_ID, PCI_ANY_ID, 0, 0, COMET },
+	{ 0x104A, 0x2774, PCI_ANY_ID, PCI_ANY_ID, 0, 0, COMET },
+	{ 0x1259, 0xa120, PCI_ANY_ID, PCI_ANY_ID, 0, 0, COMET },
+	{ 0x11F6, 0x9881, PCI_ANY_ID, PCI_ANY_ID, 0, 0, COMPEX9881 },
+	{ 0x8086, 0x0039, PCI_ANY_ID, PCI_ANY_ID, 0, 0, I21145 },
+#ifdef CONFIG_TULIP_DM910X
+	{ 0x1282, 0x9100, PCI_ANY_ID, PCI_ANY_ID, 0, 0, DM910X },
+	{ 0x1282, 0x9102, PCI_ANY_ID, PCI_ANY_ID, 0, 0, DM910X },
+#endif
+	{ 0x1113, 0x1216, PCI_ANY_ID, PCI_ANY_ID, 0, 0, COMET },
+	{ 0x1113, 0x1217, PCI_ANY_ID, PCI_ANY_ID, 0, 0, MX98715 },
+	{ 0x1113, 0x9511, PCI_ANY_ID, PCI_ANY_ID, 0, 0, COMET },
+	{ 0x1186, 0x1541, PCI_ANY_ID, PCI_ANY_ID, 0, 0, COMET },
+	{ 0x1186, 0x1561, PCI_ANY_ID, PCI_ANY_ID, 0, 0, COMET },
+	{ 0x1186, 0x1591, PCI_ANY_ID, PCI_ANY_ID, 0, 0, COMET },
+	{ 0x14f1, 0x1803, PCI_ANY_ID, PCI_ANY_ID, 0, 0, CONEXANT },
+	{ 0x1626, 0x8410, PCI_ANY_ID, PCI_ANY_ID, 0, 0, COMET },
+	{ 0x1737, 0xAB09, PCI_ANY_ID, PCI_ANY_ID, 0, 0, COMET },
+	{ 0x1737, 0xAB08, PCI_ANY_ID, PCI_ANY_ID, 0, 0, COMET },
+	{ 0x17B3, 0xAB08, PCI_ANY_ID, PCI_ANY_ID, 0, 0, COMET },
+	{ 0x10b7, 0x9300, PCI_ANY_ID, PCI_ANY_ID, 0, 0, COMET }, /* 3Com 3CSOHO100B-TX */
+	{ 0x14ea, 0xab08, PCI_ANY_ID, PCI_ANY_ID, 0, 0, COMET }, /* Planex FNW-3602-TX */
+	{ 0x1414, 0x0001, PCI_ANY_ID, PCI_ANY_ID, 0, 0, COMET }, /* Microsoft MN-120 */
+	{ 0x1414, 0x0002, PCI_ANY_ID, PCI_ANY_ID, 0, 0, COMET },
+	{ } /* terminate list */
+};
 MODULE_DEVICE_TABLE(pci, tulip_pci_tbl);
 
 
-/* A full-duplex map क्रम media types. */
-स्थिर अक्षर tulip_media_cap[32] =
-अणु0,0,0,16,  3,19,16,24,  27,4,7,5, 0,20,23,20,  28,31,0,0, पूर्ण;
+/* A full-duplex map for media types. */
+const char tulip_media_cap[32] =
+{0,0,0,16,  3,19,16,24,  27,4,7,5, 0,20,23,20,  28,31,0,0, };
 
-अटल व्योम tulip_tx_समयout(काष्ठा net_device *dev, अचिन्हित पूर्णांक txqueue);
-अटल व्योम tulip_init_ring(काष्ठा net_device *dev);
-अटल व्योम tulip_मुक्त_ring(काष्ठा net_device *dev);
-अटल netdev_tx_t tulip_start_xmit(काष्ठा sk_buff *skb,
-					  काष्ठा net_device *dev);
-अटल पूर्णांक tulip_खोलो(काष्ठा net_device *dev);
-अटल पूर्णांक tulip_बंद(काष्ठा net_device *dev);
-अटल व्योम tulip_up(काष्ठा net_device *dev);
-अटल व्योम tulip_करोwn(काष्ठा net_device *dev);
-अटल काष्ठा net_device_stats *tulip_get_stats(काष्ठा net_device *dev);
-अटल पूर्णांक निजी_ioctl(काष्ठा net_device *dev, काष्ठा अगरreq *rq, पूर्णांक cmd);
-अटल व्योम set_rx_mode(काष्ठा net_device *dev);
-अटल व्योम tulip_set_wolopts(काष्ठा pci_dev *pdev, u32 wolopts);
-#अगर_घोषित CONFIG_NET_POLL_CONTROLLER
-अटल व्योम poll_tulip(काष्ठा net_device *dev);
-#पूर्ण_अगर
+static void tulip_tx_timeout(struct net_device *dev, unsigned int txqueue);
+static void tulip_init_ring(struct net_device *dev);
+static void tulip_free_ring(struct net_device *dev);
+static netdev_tx_t tulip_start_xmit(struct sk_buff *skb,
+					  struct net_device *dev);
+static int tulip_open(struct net_device *dev);
+static int tulip_close(struct net_device *dev);
+static void tulip_up(struct net_device *dev);
+static void tulip_down(struct net_device *dev);
+static struct net_device_stats *tulip_get_stats(struct net_device *dev);
+static int private_ioctl(struct net_device *dev, struct ifreq *rq, int cmd);
+static void set_rx_mode(struct net_device *dev);
+static void tulip_set_wolopts(struct pci_dev *pdev, u32 wolopts);
+#ifdef CONFIG_NET_POLL_CONTROLLER
+static void poll_tulip(struct net_device *dev);
+#endif
 
-अटल व्योम tulip_set_घातer_state (काष्ठा tulip_निजी *tp,
-				   पूर्णांक sleep, पूर्णांक snooze)
-अणु
-	अगर (tp->flags & HAS_ACPI) अणु
-		u32 पंचांगp, newपंचांगp;
-		pci_पढ़ो_config_dword (tp->pdev, CFDD, &पंचांगp);
-		newपंचांगp = पंचांगp & ~(CFDD_Sleep | CFDD_Snooze);
-		अगर (sleep)
-			newपंचांगp |= CFDD_Sleep;
-		अन्यथा अगर (snooze)
-			newपंचांगp |= CFDD_Snooze;
-		अगर (पंचांगp != newपंचांगp)
-			pci_ग_लिखो_config_dword (tp->pdev, CFDD, newपंचांगp);
-	पूर्ण
+static void tulip_set_power_state (struct tulip_private *tp,
+				   int sleep, int snooze)
+{
+	if (tp->flags & HAS_ACPI) {
+		u32 tmp, newtmp;
+		pci_read_config_dword (tp->pdev, CFDD, &tmp);
+		newtmp = tmp & ~(CFDD_Sleep | CFDD_Snooze);
+		if (sleep)
+			newtmp |= CFDD_Sleep;
+		else if (snooze)
+			newtmp |= CFDD_Snooze;
+		if (tmp != newtmp)
+			pci_write_config_dword (tp->pdev, CFDD, newtmp);
+	}
 
-पूर्ण
+}
 
 
-अटल व्योम tulip_up(काष्ठा net_device *dev)
-अणु
-	काष्ठा tulip_निजी *tp = netdev_priv(dev);
-	व्योम __iomem *ioaddr = tp->base_addr;
-	पूर्णांक next_tick = 3*HZ;
+static void tulip_up(struct net_device *dev)
+{
+	struct tulip_private *tp = netdev_priv(dev);
+	void __iomem *ioaddr = tp->base_addr;
+	int next_tick = 3*HZ;
 	u32 reg;
-	पूर्णांक i;
+	int i;
 
-#अगर_घोषित CONFIG_TULIP_NAPI
+#ifdef CONFIG_TULIP_NAPI
 	napi_enable(&tp->napi);
-#पूर्ण_अगर
+#endif
 
 	/* Wake the chip from sleep/snooze mode. */
-	tulip_set_घातer_state (tp, 0, 0);
+	tulip_set_power_state (tp, 0, 0);
 
 	/* Disable all WOL events */
 	pci_enable_wake(tp->pdev, PCI_D3hot, 0);
 	pci_enable_wake(tp->pdev, PCI_D3cold, 0);
 	tulip_set_wolopts(tp->pdev, 0);
 
-	/* On some chip revs we must set the MII/SYM port beक्रमe the reset!? */
-	अगर (tp->mii_cnt  ||  (tp->mtable  &&  tp->mtable->has_mii))
-		ioग_लिखो32(0x00040000, ioaddr + CSR6);
+	/* On some chip revs we must set the MII/SYM port before the reset!? */
+	if (tp->mii_cnt  ||  (tp->mtable  &&  tp->mtable->has_mii))
+		iowrite32(0x00040000, ioaddr + CSR6);
 
 	/* Reset the chip, holding bit 0 set at least 50 PCI cycles. */
-	ioग_लिखो32(0x00000001, ioaddr + CSR0);
-	pci_पढ़ो_config_dword(tp->pdev, PCI_COMMAND, &reg);  /* flush ग_लिखो */
+	iowrite32(0x00000001, ioaddr + CSR0);
+	pci_read_config_dword(tp->pdev, PCI_COMMAND, &reg);  /* flush write */
 	udelay(100);
 
-	/* Deनिश्चित reset.
-	   Wait the specअगरied 50 PCI cycles after a reset by initializing
+	/* Deassert reset.
+	   Wait the specified 50 PCI cycles after a reset by initializing
 	   Tx and Rx queues and the address filter list. */
-	ioग_लिखो32(tp->csr0, ioaddr + CSR0);
-	pci_पढ़ो_config_dword(tp->pdev, PCI_COMMAND, &reg);  /* flush ग_लिखो */
+	iowrite32(tp->csr0, ioaddr + CSR0);
+	pci_read_config_dword(tp->pdev, PCI_COMMAND, &reg);  /* flush write */
 	udelay(100);
 
-	अगर (tulip_debug > 1)
+	if (tulip_debug > 1)
 		netdev_dbg(dev, "tulip_up(), irq==%d\n", tp->pdev->irq);
 
-	ioग_लिखो32(tp->rx_ring_dma, ioaddr + CSR3);
-	ioग_लिखो32(tp->tx_ring_dma, ioaddr + CSR4);
+	iowrite32(tp->rx_ring_dma, ioaddr + CSR3);
+	iowrite32(tp->tx_ring_dma, ioaddr + CSR4);
 	tp->cur_rx = tp->cur_tx = 0;
 	tp->dirty_rx = tp->dirty_tx = 0;
 
-	अगर (tp->flags & MC_HASH_ONLY) अणु
+	if (tp->flags & MC_HASH_ONLY) {
 		u32 addr_low = get_unaligned_le32(dev->dev_addr);
 		u32 addr_high = get_unaligned_le16(dev->dev_addr + 4);
-		अगर (tp->chip_id == AX88140) अणु
-			ioग_लिखो32(0, ioaddr + CSR13);
-			ioग_लिखो32(addr_low,  ioaddr + CSR14);
-			ioग_लिखो32(1, ioaddr + CSR13);
-			ioग_लिखो32(addr_high, ioaddr + CSR14);
-		पूर्ण अन्यथा अगर (tp->flags & COMET_MAC_ADDR) अणु
-			ioग_लिखो32(addr_low,  ioaddr + 0xA4);
-			ioग_लिखो32(addr_high, ioaddr + 0xA8);
-			ioग_लिखो32(0, ioaddr + CSR27);
-			ioग_लिखो32(0, ioaddr + CSR28);
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		if (tp->chip_id == AX88140) {
+			iowrite32(0, ioaddr + CSR13);
+			iowrite32(addr_low,  ioaddr + CSR14);
+			iowrite32(1, ioaddr + CSR13);
+			iowrite32(addr_high, ioaddr + CSR14);
+		} else if (tp->flags & COMET_MAC_ADDR) {
+			iowrite32(addr_low,  ioaddr + 0xA4);
+			iowrite32(addr_high, ioaddr + 0xA8);
+			iowrite32(0, ioaddr + CSR27);
+			iowrite32(0, ioaddr + CSR28);
+		}
+	} else {
 		/* This is set_rx_mode(), but without starting the transmitter. */
 		u16 *eaddrs = (u16 *)dev->dev_addr;
 		u16 *setup_frm = &tp->setup_frame[15*6];
 		dma_addr_t mapping;
 
 		/* 21140 bug: you must add the broadcast address. */
-		स_रखो(tp->setup_frame, 0xff, माप(tp->setup_frame));
+		memset(tp->setup_frame, 0xff, sizeof(tp->setup_frame));
 		/* Fill the final entry of the table with our physical address. */
 		*setup_frm++ = eaddrs[0]; *setup_frm++ = eaddrs[0];
 		*setup_frm++ = eaddrs[1]; *setup_frm++ = eaddrs[1];
 		*setup_frm++ = eaddrs[2]; *setup_frm++ = eaddrs[2];
 
 		mapping = dma_map_single(&tp->pdev->dev, tp->setup_frame,
-					 माप(tp->setup_frame),
+					 sizeof(tp->setup_frame),
 					 DMA_TO_DEVICE);
-		tp->tx_buffers[tp->cur_tx].skb = शून्य;
+		tp->tx_buffers[tp->cur_tx].skb = NULL;
 		tp->tx_buffers[tp->cur_tx].mapping = mapping;
 
 		/* Put the setup frame on the Tx list. */
@@ -363,39 +362,39 @@ MODULE_DEVICE_TABLE(pci, tulip_pci_tbl);
 		tp->tx_ring[tp->cur_tx].status = cpu_to_le32(DescOwned);
 
 		tp->cur_tx++;
-	पूर्ण
+	}
 
-	tp->saved_अगर_port = dev->अगर_port;
-	अगर (dev->अगर_port == 0)
-		dev->अगर_port = tp->शेष_port;
+	tp->saved_if_port = dev->if_port;
+	if (dev->if_port == 0)
+		dev->if_port = tp->default_port;
 
-	/* Allow selecting a शेष media. */
+	/* Allow selecting a default media. */
 	i = 0;
-	अगर (tp->mtable == शून्य)
-		जाओ media_picked;
-	अगर (dev->अगर_port) अणु
-		पूर्णांक looking_क्रम = tulip_media_cap[dev->अगर_port] & MediaIsMII ? 11 :
-			(dev->अगर_port == 12 ? 0 : dev->अगर_port);
-		क्रम (i = 0; i < tp->mtable->leafcount; i++)
-			अगर (tp->mtable->mleaf[i].media == looking_क्रम) अणु
+	if (tp->mtable == NULL)
+		goto media_picked;
+	if (dev->if_port) {
+		int looking_for = tulip_media_cap[dev->if_port] & MediaIsMII ? 11 :
+			(dev->if_port == 12 ? 0 : dev->if_port);
+		for (i = 0; i < tp->mtable->leafcount; i++)
+			if (tp->mtable->mleaf[i].media == looking_for) {
 				dev_info(&dev->dev,
 					 "Using user-specified media %s\n",
-					 medianame[dev->अगर_port]);
-				जाओ media_picked;
-			पूर्ण
-	पूर्ण
-	अगर ((tp->mtable->शेषmedia & 0x0800) == 0) अणु
-		पूर्णांक looking_क्रम = tp->mtable->शेषmedia & MEDIA_MASK;
-		क्रम (i = 0; i < tp->mtable->leafcount; i++)
-			अगर (tp->mtable->mleaf[i].media == looking_क्रम) अणु
+					 medianame[dev->if_port]);
+				goto media_picked;
+			}
+	}
+	if ((tp->mtable->defaultmedia & 0x0800) == 0) {
+		int looking_for = tp->mtable->defaultmedia & MEDIA_MASK;
+		for (i = 0; i < tp->mtable->leafcount; i++)
+			if (tp->mtable->mleaf[i].media == looking_for) {
 				dev_info(&dev->dev,
 					 "Using EEPROM-set media %s\n",
-					 medianame[looking_क्रम]);
-				जाओ media_picked;
-			पूर्ण
-	पूर्ण
+					 medianame[looking_for]);
+				goto media_picked;
+			}
+	}
 	/* Start sensing first non-full-duplex media. */
-	क्रम (i = tp->mtable->leafcount - 1;
+	for (i = tp->mtable->leafcount - 1;
 		 (tulip_media_cap[tp->mtable->mleaf[i].media] & MediaAlwaysFD) && i > 0; i--)
 		;
 media_picked:
@@ -404,260 +403,260 @@ media_picked:
 	tp->cur_index = i;
 	tp->nwayset = 0;
 
-	अगर (dev->अगर_port) अणु
-		अगर (tp->chip_id == DC21143  &&
-		    (tulip_media_cap[dev->अगर_port] & MediaIsMII)) अणु
-			/* We must reset the media CSRs when we क्रमce-select MII mode. */
-			ioग_लिखो32(0x0000, ioaddr + CSR13);
-			ioग_लिखो32(0x0000, ioaddr + CSR14);
-			ioग_लिखो32(0x0008, ioaddr + CSR15);
-		पूर्ण
+	if (dev->if_port) {
+		if (tp->chip_id == DC21143  &&
+		    (tulip_media_cap[dev->if_port] & MediaIsMII)) {
+			/* We must reset the media CSRs when we force-select MII mode. */
+			iowrite32(0x0000, ioaddr + CSR13);
+			iowrite32(0x0000, ioaddr + CSR14);
+			iowrite32(0x0008, ioaddr + CSR15);
+		}
 		tulip_select_media(dev, 1);
-	पूर्ण अन्यथा अगर (tp->chip_id == DC21142) अणु
-		अगर (tp->mii_cnt) अणु
+	} else if (tp->chip_id == DC21142) {
+		if (tp->mii_cnt) {
 			tulip_select_media(dev, 1);
-			अगर (tulip_debug > 1)
+			if (tulip_debug > 1)
 				dev_info(&dev->dev,
 					 "Using MII transceiver %d, status %04x\n",
 					 tp->phys[0],
-					 tulip_mdio_पढ़ो(dev, tp->phys[0], 1));
-			ioग_लिखो32(csr6_mask_deख_स्थितिe, ioaddr + CSR6);
+					 tulip_mdio_read(dev, tp->phys[0], 1));
+			iowrite32(csr6_mask_defstate, ioaddr + CSR6);
 			tp->csr6 = csr6_mask_hdcap;
-			dev->अगर_port = 11;
-			ioग_लिखो32(0x0000, ioaddr + CSR13);
-			ioग_लिखो32(0x0000, ioaddr + CSR14);
-		पूर्ण अन्यथा
+			dev->if_port = 11;
+			iowrite32(0x0000, ioaddr + CSR13);
+			iowrite32(0x0000, ioaddr + CSR14);
+		} else
 			t21142_start_nway(dev);
-	पूर्ण अन्यथा अगर (tp->chip_id == PNIC2) अणु
-	        /* क्रम initial startup advertise 10/100 Full and Half */
+	} else if (tp->chip_id == PNIC2) {
+	        /* for initial startup advertise 10/100 Full and Half */
 	        tp->sym_advertise = 0x01E0;
-                /* enable स्वतःnegotiate end पूर्णांकerrupt */
-	        ioग_लिखो32(ioपढ़ो32(ioaddr+CSR5)| 0x00008010, ioaddr + CSR5);
-	        ioग_लिखो32(ioपढ़ो32(ioaddr+CSR7)| 0x00008010, ioaddr + CSR7);
+                /* enable autonegotiate end interrupt */
+	        iowrite32(ioread32(ioaddr+CSR5)| 0x00008010, ioaddr + CSR5);
+	        iowrite32(ioread32(ioaddr+CSR7)| 0x00008010, ioaddr + CSR7);
 		pnic2_start_nway(dev);
-	पूर्ण अन्यथा अगर (tp->chip_id == LC82C168  &&  ! tp->medialock) अणु
-		अगर (tp->mii_cnt) अणु
-			dev->अगर_port = 11;
+	} else if (tp->chip_id == LC82C168  &&  ! tp->medialock) {
+		if (tp->mii_cnt) {
+			dev->if_port = 11;
 			tp->csr6 = 0x814C0000 | (tp->full_duplex ? 0x0200 : 0);
-			ioग_लिखो32(0x0001, ioaddr + CSR15);
-		पूर्ण अन्यथा अगर (ioपढ़ो32(ioaddr + CSR5) & TPLnkPass)
-			pnic_करो_nway(dev);
-		अन्यथा अणु
-			/* Start with 10mbps to करो स्वतःnegotiation. */
-			ioग_लिखो32(0x32, ioaddr + CSR12);
+			iowrite32(0x0001, ioaddr + CSR15);
+		} else if (ioread32(ioaddr + CSR5) & TPLnkPass)
+			pnic_do_nway(dev);
+		else {
+			/* Start with 10mbps to do autonegotiation. */
+			iowrite32(0x32, ioaddr + CSR12);
 			tp->csr6 = 0x00420000;
-			ioग_लिखो32(0x0001B078, ioaddr + 0xB8);
-			ioग_लिखो32(0x0201B078, ioaddr + 0xB8);
+			iowrite32(0x0001B078, ioaddr + 0xB8);
+			iowrite32(0x0201B078, ioaddr + 0xB8);
 			next_tick = 1*HZ;
-		पूर्ण
-	पूर्ण अन्यथा अगर ((tp->chip_id == MX98713 || tp->chip_id == COMPEX9881) &&
-		   ! tp->medialock) अणु
-		dev->अगर_port = 0;
+		}
+	} else if ((tp->chip_id == MX98713 || tp->chip_id == COMPEX9881) &&
+		   ! tp->medialock) {
+		dev->if_port = 0;
 		tp->csr6 = 0x01880000 | (tp->full_duplex ? 0x0200 : 0);
-		ioग_लिखो32(0x0f370000 | ioपढ़ो16(ioaddr + 0x80), ioaddr + 0x80);
-	पूर्ण अन्यथा अगर (tp->chip_id == MX98715 || tp->chip_id == MX98725) अणु
+		iowrite32(0x0f370000 | ioread16(ioaddr + 0x80), ioaddr + 0x80);
+	} else if (tp->chip_id == MX98715 || tp->chip_id == MX98725) {
 		/* Provided by BOLO, Macronix - 12/10/1998. */
-		dev->अगर_port = 0;
+		dev->if_port = 0;
 		tp->csr6 = 0x01a80200;
-		ioग_लिखो32(0x0f370000 | ioपढ़ो16(ioaddr + 0x80), ioaddr + 0x80);
-		ioग_लिखो32(0x11000 | ioपढ़ो16(ioaddr + 0xa0), ioaddr + 0xa0);
-	पूर्ण अन्यथा अगर (tp->chip_id == COMET || tp->chip_id == CONEXANT) अणु
-		/* Enable स्वतःmatic Tx underrun recovery. */
-		ioग_लिखो32(ioपढ़ो32(ioaddr + 0x88) | 1, ioaddr + 0x88);
-		dev->अगर_port = tp->mii_cnt ? 11 : 0;
+		iowrite32(0x0f370000 | ioread16(ioaddr + 0x80), ioaddr + 0x80);
+		iowrite32(0x11000 | ioread16(ioaddr + 0xa0), ioaddr + 0xa0);
+	} else if (tp->chip_id == COMET || tp->chip_id == CONEXANT) {
+		/* Enable automatic Tx underrun recovery. */
+		iowrite32(ioread32(ioaddr + 0x88) | 1, ioaddr + 0x88);
+		dev->if_port = tp->mii_cnt ? 11 : 0;
 		tp->csr6 = 0x00040000;
-	पूर्ण अन्यथा अगर (tp->chip_id == AX88140) अणु
+	} else if (tp->chip_id == AX88140) {
 		tp->csr6 = tp->mii_cnt ? 0x00040100 : 0x00000100;
-	पूर्ण अन्यथा
+	} else
 		tulip_select_media(dev, 1);
 
 	/* Start the chip's Tx to process setup frame. */
 	tulip_stop_rxtx(tp);
 	barrier();
 	udelay(5);
-	ioग_लिखो32(tp->csr6 | TxOn, ioaddr + CSR6);
+	iowrite32(tp->csr6 | TxOn, ioaddr + CSR6);
 
-	/* Enable पूर्णांकerrupts by setting the पूर्णांकerrupt mask. */
-	ioग_लिखो32(tulip_tbl[tp->chip_id].valid_पूर्णांकrs, ioaddr + CSR5);
-	ioग_लिखो32(tulip_tbl[tp->chip_id].valid_पूर्णांकrs, ioaddr + CSR7);
+	/* Enable interrupts by setting the interrupt mask. */
+	iowrite32(tulip_tbl[tp->chip_id].valid_intrs, ioaddr + CSR5);
+	iowrite32(tulip_tbl[tp->chip_id].valid_intrs, ioaddr + CSR7);
 	tulip_start_rxtx(tp);
-	ioग_लिखो32(0, ioaddr + CSR2);		/* Rx poll demand */
+	iowrite32(0, ioaddr + CSR2);		/* Rx poll demand */
 
-	अगर (tulip_debug > 2) अणु
+	if (tulip_debug > 2) {
 		netdev_dbg(dev, "Done tulip_up(), CSR0 %08x, CSR5 %08x CSR6 %08x\n",
-			   ioपढ़ो32(ioaddr + CSR0),
-			   ioपढ़ो32(ioaddr + CSR5),
-			   ioपढ़ो32(ioaddr + CSR6));
-	पूर्ण
+			   ioread32(ioaddr + CSR0),
+			   ioread32(ioaddr + CSR5),
+			   ioread32(ioaddr + CSR6));
+	}
 
-	/* Set the समयr to चयन to check क्रम link beat and perhaps चयन
+	/* Set the timer to switch to check for link beat and perhaps switch
 	   to an alternate media type. */
-	tp->समयr.expires = RUN_AT(next_tick);
-	add_समयr(&tp->समयr);
-#अगर_घोषित CONFIG_TULIP_NAPI
-	समयr_setup(&tp->oom_समयr, oom_समयr, 0);
-#पूर्ण_अगर
-पूर्ण
+	tp->timer.expires = RUN_AT(next_tick);
+	add_timer(&tp->timer);
+#ifdef CONFIG_TULIP_NAPI
+	timer_setup(&tp->oom_timer, oom_timer, 0);
+#endif
+}
 
-अटल पूर्णांक
-tulip_खोलो(काष्ठा net_device *dev)
-अणु
-	काष्ठा tulip_निजी *tp = netdev_priv(dev);
-	पूर्णांक retval;
+static int
+tulip_open(struct net_device *dev)
+{
+	struct tulip_private *tp = netdev_priv(dev);
+	int retval;
 
 	tulip_init_ring (dev);
 
-	retval = request_irq(tp->pdev->irq, tulip_पूर्णांकerrupt, IRQF_SHARED,
+	retval = request_irq(tp->pdev->irq, tulip_interrupt, IRQF_SHARED,
 			     dev->name, dev);
-	अगर (retval)
-		जाओ मुक्त_ring;
+	if (retval)
+		goto free_ring;
 
 	tulip_up (dev);
 
-	netअगर_start_queue (dev);
+	netif_start_queue (dev);
 
-	वापस 0;
+	return 0;
 
-मुक्त_ring:
-	tulip_मुक्त_ring (dev);
-	वापस retval;
-पूर्ण
+free_ring:
+	tulip_free_ring (dev);
+	return retval;
+}
 
 
-अटल व्योम tulip_tx_समयout(काष्ठा net_device *dev, अचिन्हित पूर्णांक txqueue)
-अणु
-	काष्ठा tulip_निजी *tp = netdev_priv(dev);
-	व्योम __iomem *ioaddr = tp->base_addr;
-	अचिन्हित दीर्घ flags;
+static void tulip_tx_timeout(struct net_device *dev, unsigned int txqueue)
+{
+	struct tulip_private *tp = netdev_priv(dev);
+	void __iomem *ioaddr = tp->base_addr;
+	unsigned long flags;
 
 	spin_lock_irqsave (&tp->lock, flags);
 
-	अगर (tulip_media_cap[dev->अगर_port] & MediaIsMII) अणु
+	if (tulip_media_cap[dev->if_port] & MediaIsMII) {
 		/* Do nothing -- the media monitor should handle this. */
-		अगर (tulip_debug > 1)
+		if (tulip_debug > 1)
 			dev_warn(&dev->dev,
 				 "Transmit timeout using MII device\n");
-	पूर्ण अन्यथा अगर (tp->chip_id == DC21140 || tp->chip_id == DC21142 ||
+	} else if (tp->chip_id == DC21140 || tp->chip_id == DC21142 ||
 		   tp->chip_id == MX98713 || tp->chip_id == COMPEX9881 ||
-		   tp->chip_id == DM910X) अणु
+		   tp->chip_id == DM910X) {
 		dev_warn(&dev->dev,
 			 "21140 transmit timed out, status %08x, SIA %08x %08x %08x %08x, resetting...\n",
-			 ioपढ़ो32(ioaddr + CSR5), ioपढ़ो32(ioaddr + CSR12),
-			 ioपढ़ो32(ioaddr + CSR13), ioपढ़ो32(ioaddr + CSR14),
-			 ioपढ़ो32(ioaddr + CSR15));
-		tp->समयout_recovery = 1;
+			 ioread32(ioaddr + CSR5), ioread32(ioaddr + CSR12),
+			 ioread32(ioaddr + CSR13), ioread32(ioaddr + CSR14),
+			 ioread32(ioaddr + CSR15));
+		tp->timeout_recovery = 1;
 		schedule_work(&tp->media_work);
-		जाओ out_unlock;
-	पूर्ण अन्यथा अगर (tp->chip_id == PNIC2) अणु
+		goto out_unlock;
+	} else if (tp->chip_id == PNIC2) {
 		dev_warn(&dev->dev,
 			 "PNIC2 transmit timed out, status %08x, CSR6/7 %08x / %08x CSR12 %08x, resetting...\n",
-			 (पूर्णांक)ioपढ़ो32(ioaddr + CSR5),
-			 (पूर्णांक)ioपढ़ो32(ioaddr + CSR6),
-			 (पूर्णांक)ioपढ़ो32(ioaddr + CSR7),
-			 (पूर्णांक)ioपढ़ो32(ioaddr + CSR12));
-	पूर्ण अन्यथा अणु
+			 (int)ioread32(ioaddr + CSR5),
+			 (int)ioread32(ioaddr + CSR6),
+			 (int)ioread32(ioaddr + CSR7),
+			 (int)ioread32(ioaddr + CSR12));
+	} else {
 		dev_warn(&dev->dev,
 			 "Transmit timed out, status %08x, CSR12 %08x, resetting...\n",
-			 ioपढ़ो32(ioaddr + CSR5), ioपढ़ो32(ioaddr + CSR12));
-		dev->अगर_port = 0;
-	पूर्ण
+			 ioread32(ioaddr + CSR5), ioread32(ioaddr + CSR12));
+		dev->if_port = 0;
+	}
 
-#अगर defined(way_too_many_messages)
-	अगर (tulip_debug > 3) अणु
-		पूर्णांक i;
-		क्रम (i = 0; i < RX_RING_SIZE; i++) अणु
+#if defined(way_too_many_messages)
+	if (tulip_debug > 3) {
+		int i;
+		for (i = 0; i < RX_RING_SIZE; i++) {
 			u8 *buf = (u8 *)(tp->rx_ring[i].buffer1);
-			पूर्णांक j;
-			prपूर्णांकk(KERN_DEBUG
+			int j;
+			printk(KERN_DEBUG
 			       "%2d: %08x %08x %08x %08x  %02x %02x %02x\n",
 			       i,
-			       (अचिन्हित पूर्णांक)tp->rx_ring[i].status,
-			       (अचिन्हित पूर्णांक)tp->rx_ring[i].length,
-			       (अचिन्हित पूर्णांक)tp->rx_ring[i].buffer1,
-			       (अचिन्हित पूर्णांक)tp->rx_ring[i].buffer2,
+			       (unsigned int)tp->rx_ring[i].status,
+			       (unsigned int)tp->rx_ring[i].length,
+			       (unsigned int)tp->rx_ring[i].buffer1,
+			       (unsigned int)tp->rx_ring[i].buffer2,
 			       buf[0], buf[1], buf[2]);
-			क्रम (j = 0; ((j < 1600) && buf[j] != 0xee); j++)
-				अगर (j < 100)
+			for (j = 0; ((j < 1600) && buf[j] != 0xee); j++)
+				if (j < 100)
 					pr_cont(" %02x", buf[j]);
 			pr_cont(" j=%d\n", j);
-		पूर्ण
-		prपूर्णांकk(KERN_DEBUG "  Rx ring %p: ", tp->rx_ring);
-		क्रम (i = 0; i < RX_RING_SIZE; i++)
-			pr_cont(" %08x", (अचिन्हित पूर्णांक)tp->rx_ring[i].status);
-		prपूर्णांकk(KERN_DEBUG "  Tx ring %p: ", tp->tx_ring);
-		क्रम (i = 0; i < TX_RING_SIZE; i++)
-			pr_cont(" %08x", (अचिन्हित पूर्णांक)tp->tx_ring[i].status);
+		}
+		printk(KERN_DEBUG "  Rx ring %p: ", tp->rx_ring);
+		for (i = 0; i < RX_RING_SIZE; i++)
+			pr_cont(" %08x", (unsigned int)tp->rx_ring[i].status);
+		printk(KERN_DEBUG "  Tx ring %p: ", tp->tx_ring);
+		for (i = 0; i < TX_RING_SIZE; i++)
+			pr_cont(" %08x", (unsigned int)tp->tx_ring[i].status);
 		pr_cont("\n");
-	पूर्ण
-#पूर्ण_अगर
+	}
+#endif
 
-	tulip_tx_समयout_complete(tp, ioaddr);
+	tulip_tx_timeout_complete(tp, ioaddr);
 
 out_unlock:
 	spin_unlock_irqrestore (&tp->lock, flags);
-	netअगर_trans_update(dev); /* prevent tx समयout */
-	netअगर_wake_queue (dev);
-पूर्ण
+	netif_trans_update(dev); /* prevent tx timeout */
+	netif_wake_queue (dev);
+}
 
 
-/* Initialize the Rx and Tx rings, aदीर्घ with various 'dev' bits. */
-अटल व्योम tulip_init_ring(काष्ठा net_device *dev)
-अणु
-	काष्ठा tulip_निजी *tp = netdev_priv(dev);
-	पूर्णांक i;
+/* Initialize the Rx and Tx rings, along with various 'dev' bits. */
+static void tulip_init_ring(struct net_device *dev)
+{
+	struct tulip_private *tp = netdev_priv(dev);
+	int i;
 
 	tp->susp_rx = 0;
-	tp->tसमयr = 0;
+	tp->ttimer = 0;
 	tp->nir = 0;
 
-	क्रम (i = 0; i < RX_RING_SIZE; i++) अणु
+	for (i = 0; i < RX_RING_SIZE; i++) {
 		tp->rx_ring[i].status = 0x00000000;
 		tp->rx_ring[i].length = cpu_to_le32(PKT_BUF_SZ);
-		tp->rx_ring[i].buffer2 = cpu_to_le32(tp->rx_ring_dma + माप(काष्ठा tulip_rx_desc) * (i + 1));
-		tp->rx_buffers[i].skb = शून्य;
+		tp->rx_ring[i].buffer2 = cpu_to_le32(tp->rx_ring_dma + sizeof(struct tulip_rx_desc) * (i + 1));
+		tp->rx_buffers[i].skb = NULL;
 		tp->rx_buffers[i].mapping = 0;
-	पूर्ण
+	}
 	/* Mark the last entry as wrapping the ring. */
 	tp->rx_ring[i-1].length = cpu_to_le32(PKT_BUF_SZ | DESC_RING_WRAP);
 	tp->rx_ring[i-1].buffer2 = cpu_to_le32(tp->rx_ring_dma);
 
-	क्रम (i = 0; i < RX_RING_SIZE; i++) अणु
+	for (i = 0; i < RX_RING_SIZE; i++) {
 		dma_addr_t mapping;
 
-		/* Note the receive buffer must be दीर्घword aligned.
-		   netdev_alloc_skb() provides 16 byte alignment.  But करो *not*
+		/* Note the receive buffer must be longword aligned.
+		   netdev_alloc_skb() provides 16 byte alignment.  But do *not*
 		   use skb_reserve() to align the IP header! */
-		काष्ठा sk_buff *skb = netdev_alloc_skb(dev, PKT_BUF_SZ);
+		struct sk_buff *skb = netdev_alloc_skb(dev, PKT_BUF_SZ);
 		tp->rx_buffers[i].skb = skb;
-		अगर (skb == शून्य)
-			अवरोध;
+		if (skb == NULL)
+			break;
 		mapping = dma_map_single(&tp->pdev->dev, skb->data,
 					 PKT_BUF_SZ, DMA_FROM_DEVICE);
 		tp->rx_buffers[i].mapping = mapping;
 		tp->rx_ring[i].status = cpu_to_le32(DescOwned);	/* Owned by Tulip chip */
 		tp->rx_ring[i].buffer1 = cpu_to_le32(mapping);
-	पूर्ण
-	tp->dirty_rx = (अचिन्हित पूर्णांक)(i - RX_RING_SIZE);
+	}
+	tp->dirty_rx = (unsigned int)(i - RX_RING_SIZE);
 
 	/* The Tx buffer descriptor is filled in as needed, but we
-	   करो need to clear the ownership bit. */
-	क्रम (i = 0; i < TX_RING_SIZE; i++) अणु
-		tp->tx_buffers[i].skb = शून्य;
+	   do need to clear the ownership bit. */
+	for (i = 0; i < TX_RING_SIZE; i++) {
+		tp->tx_buffers[i].skb = NULL;
 		tp->tx_buffers[i].mapping = 0;
 		tp->tx_ring[i].status = 0x00000000;
-		tp->tx_ring[i].buffer2 = cpu_to_le32(tp->tx_ring_dma + माप(काष्ठा tulip_tx_desc) * (i + 1));
-	पूर्ण
+		tp->tx_ring[i].buffer2 = cpu_to_le32(tp->tx_ring_dma + sizeof(struct tulip_tx_desc) * (i + 1));
+	}
 	tp->tx_ring[i-1].buffer2 = cpu_to_le32(tp->tx_ring_dma);
-पूर्ण
+}
 
-अटल netdev_tx_t
-tulip_start_xmit(काष्ठा sk_buff *skb, काष्ठा net_device *dev)
-अणु
-	काष्ठा tulip_निजी *tp = netdev_priv(dev);
-	पूर्णांक entry;
+static netdev_tx_t
+tulip_start_xmit(struct sk_buff *skb, struct net_device *dev)
+{
+	struct tulip_private *tp = netdev_priv(dev);
+	int entry;
 	u32 flag;
 	dma_addr_t mapping;
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 
 	spin_lock_irqsave(&tp->lock, flags);
 
@@ -670,21 +669,21 @@ tulip_start_xmit(काष्ठा sk_buff *skb, काष्ठा net_device 
 	tp->tx_buffers[entry].mapping = mapping;
 	tp->tx_ring[entry].buffer1 = cpu_to_le32(mapping);
 
-	अगर (tp->cur_tx - tp->dirty_tx < TX_RING_SIZE/2) अणु/* Typical path */
-		flag = 0x60000000; /* No पूर्णांकerrupt */
-	पूर्ण अन्यथा अगर (tp->cur_tx - tp->dirty_tx == TX_RING_SIZE/2) अणु
-		flag = 0xe0000000; /* Tx-करोne पूर्णांकr. */
-	पूर्ण अन्यथा अगर (tp->cur_tx - tp->dirty_tx < TX_RING_SIZE - 2) अणु
-		flag = 0x60000000; /* No Tx-करोne पूर्णांकr. */
-	पूर्ण अन्यथा अणु		/* Leave room क्रम set_rx_mode() to fill entries. */
-		flag = 0xe0000000; /* Tx-करोne पूर्णांकr. */
-		netअगर_stop_queue(dev);
-	पूर्ण
-	अगर (entry == TX_RING_SIZE-1)
+	if (tp->cur_tx - tp->dirty_tx < TX_RING_SIZE/2) {/* Typical path */
+		flag = 0x60000000; /* No interrupt */
+	} else if (tp->cur_tx - tp->dirty_tx == TX_RING_SIZE/2) {
+		flag = 0xe0000000; /* Tx-done intr. */
+	} else if (tp->cur_tx - tp->dirty_tx < TX_RING_SIZE - 2) {
+		flag = 0x60000000; /* No Tx-done intr. */
+	} else {		/* Leave room for set_rx_mode() to fill entries. */
+		flag = 0xe0000000; /* Tx-done intr. */
+		netif_stop_queue(dev);
+	}
+	if (entry == TX_RING_SIZE-1)
 		flag = 0xe0000000 | DESC_RING_WRAP;
 
 	tp->tx_ring[entry].length = cpu_to_le32(skb->len | flag);
-	/* अगर we were using Transmit Automatic Polling, we would need a
+	/* if we were using Transmit Automatic Polling, we would need a
 	 * wmb() here. */
 	tp->tx_ring[entry].status = cpu_to_le32(DescOwned);
 	wmb();
@@ -692,37 +691,37 @@ tulip_start_xmit(काष्ठा sk_buff *skb, काष्ठा net_device 
 	tp->cur_tx++;
 
 	/* Trigger an immediate transmit demand. */
-	ioग_लिखो32(0, tp->base_addr + CSR1);
+	iowrite32(0, tp->base_addr + CSR1);
 
 	spin_unlock_irqrestore(&tp->lock, flags);
 
-	वापस NETDEV_TX_OK;
-पूर्ण
+	return NETDEV_TX_OK;
+}
 
-अटल व्योम tulip_clean_tx_ring(काष्ठा tulip_निजी *tp)
-अणु
-	अचिन्हित पूर्णांक dirty_tx;
+static void tulip_clean_tx_ring(struct tulip_private *tp)
+{
+	unsigned int dirty_tx;
 
-	क्रम (dirty_tx = tp->dirty_tx ; tp->cur_tx - dirty_tx > 0;
-		dirty_tx++) अणु
-		पूर्णांक entry = dirty_tx % TX_RING_SIZE;
-		पूर्णांक status = le32_to_cpu(tp->tx_ring[entry].status);
+	for (dirty_tx = tp->dirty_tx ; tp->cur_tx - dirty_tx > 0;
+		dirty_tx++) {
+		int entry = dirty_tx % TX_RING_SIZE;
+		int status = le32_to_cpu(tp->tx_ring[entry].status);
 
-		अगर (status < 0) अणु
+		if (status < 0) {
 			tp->dev->stats.tx_errors++;	/* It wasn't Txed */
 			tp->tx_ring[entry].status = 0;
-		पूर्ण
+		}
 
-		/* Check क्रम Tx filter setup frames. */
-		अगर (tp->tx_buffers[entry].skb == शून्य) अणु
+		/* Check for Tx filter setup frames. */
+		if (tp->tx_buffers[entry].skb == NULL) {
 			/* test because dummy frames not mapped */
-			अगर (tp->tx_buffers[entry].mapping)
+			if (tp->tx_buffers[entry].mapping)
 				dma_unmap_single(&tp->pdev->dev,
 						 tp->tx_buffers[entry].mapping,
-						 माप(tp->setup_frame),
+						 sizeof(tp->setup_frame),
 						 DMA_TO_DEVICE);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		dma_unmap_single(&tp->pdev->dev,
 				 tp->tx_buffers[entry].mapping,
@@ -730,32 +729,32 @@ tulip_start_xmit(काष्ठा sk_buff *skb, काष्ठा net_device 
 				 DMA_TO_DEVICE);
 
 		/* Free the original skb. */
-		dev_kमुक्त_skb_irq(tp->tx_buffers[entry].skb);
-		tp->tx_buffers[entry].skb = शून्य;
+		dev_kfree_skb_irq(tp->tx_buffers[entry].skb);
+		tp->tx_buffers[entry].skb = NULL;
 		tp->tx_buffers[entry].mapping = 0;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम tulip_करोwn (काष्ठा net_device *dev)
-अणु
-	काष्ठा tulip_निजी *tp = netdev_priv(dev);
-	व्योम __iomem *ioaddr = tp->base_addr;
-	अचिन्हित दीर्घ flags;
+static void tulip_down (struct net_device *dev)
+{
+	struct tulip_private *tp = netdev_priv(dev);
+	void __iomem *ioaddr = tp->base_addr;
+	unsigned long flags;
 
 	cancel_work_sync(&tp->media_work);
 
-#अगर_घोषित CONFIG_TULIP_NAPI
+#ifdef CONFIG_TULIP_NAPI
 	napi_disable(&tp->napi);
-#पूर्ण_अगर
+#endif
 
-	del_समयr_sync (&tp->समयr);
-#अगर_घोषित CONFIG_TULIP_NAPI
-	del_समयr_sync (&tp->oom_समयr);
-#पूर्ण_अगर
+	del_timer_sync (&tp->timer);
+#ifdef CONFIG_TULIP_NAPI
+	del_timer_sync (&tp->oom_timer);
+#endif
 	spin_lock_irqsave (&tp->lock, flags);
 
-	/* Disable पूर्णांकerrupts by clearing the पूर्णांकerrupt mask. */
-	ioग_लिखो32 (0x00000000, ioaddr + CSR7);
+	/* Disable interrupts by clearing the interrupt mask. */
+	iowrite32 (0x00000000, ioaddr + CSR7);
 
 	/* Stop the Tx and Rx processes. */
 	tulip_stop_rxtx(tp);
@@ -766,257 +765,257 @@ tulip_start_xmit(काष्ठा sk_buff *skb, काष्ठा net_device 
 	/* release any unconsumed transmit buffers */
 	tulip_clean_tx_ring(tp);
 
-	अगर (ioपढ़ो32(ioaddr + CSR6) != 0xffffffff)
-		dev->stats.rx_missed_errors += ioपढ़ो32(ioaddr + CSR8) & 0xffff;
+	if (ioread32(ioaddr + CSR6) != 0xffffffff)
+		dev->stats.rx_missed_errors += ioread32(ioaddr + CSR8) & 0xffff;
 
 	spin_unlock_irqrestore (&tp->lock, flags);
 
-	समयr_setup(&tp->समयr, tulip_tbl[tp->chip_id].media_समयr, 0);
+	timer_setup(&tp->timer, tulip_tbl[tp->chip_id].media_timer, 0);
 
-	dev->अगर_port = tp->saved_अगर_port;
+	dev->if_port = tp->saved_if_port;
 
 	/* Leave the driver in snooze, not sleep, mode. */
-	tulip_set_घातer_state (tp, 0, 1);
-पूर्ण
+	tulip_set_power_state (tp, 0, 1);
+}
 
-अटल व्योम tulip_मुक्त_ring (काष्ठा net_device *dev)
-अणु
-	काष्ठा tulip_निजी *tp = netdev_priv(dev);
-	पूर्णांक i;
+static void tulip_free_ring (struct net_device *dev)
+{
+	struct tulip_private *tp = netdev_priv(dev);
+	int i;
 
 	/* Free all the skbuffs in the Rx queue. */
-	क्रम (i = 0; i < RX_RING_SIZE; i++) अणु
-		काष्ठा sk_buff *skb = tp->rx_buffers[i].skb;
+	for (i = 0; i < RX_RING_SIZE; i++) {
+		struct sk_buff *skb = tp->rx_buffers[i].skb;
 		dma_addr_t mapping = tp->rx_buffers[i].mapping;
 
-		tp->rx_buffers[i].skb = शून्य;
+		tp->rx_buffers[i].skb = NULL;
 		tp->rx_buffers[i].mapping = 0;
 
 		tp->rx_ring[i].status = 0;	/* Not owned by Tulip chip. */
 		tp->rx_ring[i].length = 0;
 		/* An invalid address. */
 		tp->rx_ring[i].buffer1 = cpu_to_le32(0xBADF00D0);
-		अगर (skb) अणु
+		if (skb) {
 			dma_unmap_single(&tp->pdev->dev, mapping, PKT_BUF_SZ,
 					 DMA_FROM_DEVICE);
-			dev_kमुक्त_skb (skb);
-		पूर्ण
-	पूर्ण
+			dev_kfree_skb (skb);
+		}
+	}
 
-	क्रम (i = 0; i < TX_RING_SIZE; i++) अणु
-		काष्ठा sk_buff *skb = tp->tx_buffers[i].skb;
+	for (i = 0; i < TX_RING_SIZE; i++) {
+		struct sk_buff *skb = tp->tx_buffers[i].skb;
 
-		अगर (skb != शून्य) अणु
+		if (skb != NULL) {
 			dma_unmap_single(&tp->pdev->dev,
 					 tp->tx_buffers[i].mapping, skb->len,
 					 DMA_TO_DEVICE);
-			dev_kमुक्त_skb (skb);
-		पूर्ण
-		tp->tx_buffers[i].skb = शून्य;
+			dev_kfree_skb (skb);
+		}
+		tp->tx_buffers[i].skb = NULL;
 		tp->tx_buffers[i].mapping = 0;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक tulip_बंद (काष्ठा net_device *dev)
-अणु
-	काष्ठा tulip_निजी *tp = netdev_priv(dev);
-	व्योम __iomem *ioaddr = tp->base_addr;
+static int tulip_close (struct net_device *dev)
+{
+	struct tulip_private *tp = netdev_priv(dev);
+	void __iomem *ioaddr = tp->base_addr;
 
-	netअगर_stop_queue (dev);
+	netif_stop_queue (dev);
 
-	tulip_करोwn (dev);
+	tulip_down (dev);
 
-	अगर (tulip_debug > 1)
+	if (tulip_debug > 1)
 		netdev_dbg(dev, "Shutting down ethercard, status was %02x\n",
-			   ioपढ़ो32 (ioaddr + CSR5));
+			   ioread32 (ioaddr + CSR5));
 
-	मुक्त_irq (tp->pdev->irq, dev);
+	free_irq (tp->pdev->irq, dev);
 
-	tulip_मुक्त_ring (dev);
+	tulip_free_ring (dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा net_device_stats *tulip_get_stats(काष्ठा net_device *dev)
-अणु
-	काष्ठा tulip_निजी *tp = netdev_priv(dev);
-	व्योम __iomem *ioaddr = tp->base_addr;
+static struct net_device_stats *tulip_get_stats(struct net_device *dev)
+{
+	struct tulip_private *tp = netdev_priv(dev);
+	void __iomem *ioaddr = tp->base_addr;
 
-	अगर (netअगर_running(dev)) अणु
-		अचिन्हित दीर्घ flags;
+	if (netif_running(dev)) {
+		unsigned long flags;
 
 		spin_lock_irqsave (&tp->lock, flags);
 
-		dev->stats.rx_missed_errors += ioपढ़ो32(ioaddr + CSR8) & 0xffff;
+		dev->stats.rx_missed_errors += ioread32(ioaddr + CSR8) & 0xffff;
 
 		spin_unlock_irqrestore(&tp->lock, flags);
-	पूर्ण
+	}
 
-	वापस &dev->stats;
-पूर्ण
-
-
-अटल व्योम tulip_get_drvinfo(काष्ठा net_device *dev, काष्ठा ethtool_drvinfo *info)
-अणु
-	काष्ठा tulip_निजी *np = netdev_priv(dev);
-	strlcpy(info->driver, DRV_NAME, माप(info->driver));
-	strlcpy(info->bus_info, pci_name(np->pdev), माप(info->bus_info));
-पूर्ण
+	return &dev->stats;
+}
 
 
-अटल पूर्णांक tulip_ethtool_set_wol(काष्ठा net_device *dev,
-				 काष्ठा ethtool_wolinfo *wolinfo)
-अणु
-	काष्ठा tulip_निजी *tp = netdev_priv(dev);
+static void tulip_get_drvinfo(struct net_device *dev, struct ethtool_drvinfo *info)
+{
+	struct tulip_private *np = netdev_priv(dev);
+	strlcpy(info->driver, DRV_NAME, sizeof(info->driver));
+	strlcpy(info->bus_info, pci_name(np->pdev), sizeof(info->bus_info));
+}
 
-	अगर (wolinfo->wolopts & (~tp->wolinfo.supported))
-		   वापस -EOPNOTSUPP;
+
+static int tulip_ethtool_set_wol(struct net_device *dev,
+				 struct ethtool_wolinfo *wolinfo)
+{
+	struct tulip_private *tp = netdev_priv(dev);
+
+	if (wolinfo->wolopts & (~tp->wolinfo.supported))
+		   return -EOPNOTSUPP;
 
 	tp->wolinfo.wolopts = wolinfo->wolopts;
 	device_set_wakeup_enable(&tp->pdev->dev, tp->wolinfo.wolopts);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम tulip_ethtool_get_wol(काष्ठा net_device *dev,
-				  काष्ठा ethtool_wolinfo *wolinfo)
-अणु
-	काष्ठा tulip_निजी *tp = netdev_priv(dev);
+static void tulip_ethtool_get_wol(struct net_device *dev,
+				  struct ethtool_wolinfo *wolinfo)
+{
+	struct tulip_private *tp = netdev_priv(dev);
 
 	wolinfo->supported = tp->wolinfo.supported;
 	wolinfo->wolopts = tp->wolinfo.wolopts;
-	वापस;
-पूर्ण
+	return;
+}
 
 
-अटल स्थिर काष्ठा ethtool_ops ops = अणु
+static const struct ethtool_ops ops = {
 	.get_drvinfo = tulip_get_drvinfo,
 	.set_wol     = tulip_ethtool_set_wol,
 	.get_wol     = tulip_ethtool_get_wol,
-पूर्ण;
+};
 
 /* Provide ioctl() calls to examine the MII xcvr state. */
-अटल पूर्णांक निजी_ioctl (काष्ठा net_device *dev, काष्ठा अगरreq *rq, पूर्णांक cmd)
-अणु
-	काष्ठा tulip_निजी *tp = netdev_priv(dev);
-	व्योम __iomem *ioaddr = tp->base_addr;
-	काष्ठा mii_ioctl_data *data = अगर_mii(rq);
-	स्थिर अचिन्हित पूर्णांक phy_idx = 0;
-	पूर्णांक phy = tp->phys[phy_idx] & 0x1f;
-	अचिन्हित पूर्णांक regnum = data->reg_num;
+static int private_ioctl (struct net_device *dev, struct ifreq *rq, int cmd)
+{
+	struct tulip_private *tp = netdev_priv(dev);
+	void __iomem *ioaddr = tp->base_addr;
+	struct mii_ioctl_data *data = if_mii(rq);
+	const unsigned int phy_idx = 0;
+	int phy = tp->phys[phy_idx] & 0x1f;
+	unsigned int regnum = data->reg_num;
 
-	चयन (cmd) अणु
-	हाल SIOCGMIIPHY:		/* Get address of MII PHY in use. */
-		अगर (tp->mii_cnt)
+	switch (cmd) {
+	case SIOCGMIIPHY:		/* Get address of MII PHY in use. */
+		if (tp->mii_cnt)
 			data->phy_id = phy;
-		अन्यथा अगर (tp->flags & HAS_NWAY)
+		else if (tp->flags & HAS_NWAY)
 			data->phy_id = 32;
-		अन्यथा अगर (tp->chip_id == COMET)
+		else if (tp->chip_id == COMET)
 			data->phy_id = 1;
-		अन्यथा
-			वापस -ENODEV;
+		else
+			return -ENODEV;
 		fallthrough;
 
-	हाल SIOCGMIIREG:		/* Read MII PHY रेजिस्टर. */
-		अगर (data->phy_id == 32 && (tp->flags & HAS_NWAY)) अणु
-			पूर्णांक csr12 = ioपढ़ो32 (ioaddr + CSR12);
-			पूर्णांक csr14 = ioपढ़ो32 (ioaddr + CSR14);
-			चयन (regnum) अणु
-			हाल 0:
-                                अगर (((csr14<<5) & 0x1000) ||
-                                        (dev->अगर_port == 5 && tp->nwayset))
+	case SIOCGMIIREG:		/* Read MII PHY register. */
+		if (data->phy_id == 32 && (tp->flags & HAS_NWAY)) {
+			int csr12 = ioread32 (ioaddr + CSR12);
+			int csr14 = ioread32 (ioaddr + CSR14);
+			switch (regnum) {
+			case 0:
+                                if (((csr14<<5) & 0x1000) ||
+                                        (dev->if_port == 5 && tp->nwayset))
                                         data->val_out = 0x1000;
-                                अन्यथा
-                                        data->val_out = (tulip_media_cap[dev->अगर_port]&MediaIs100 ? 0x2000 : 0)
-                                                | (tulip_media_cap[dev->अगर_port]&MediaIsFD ? 0x0100 : 0);
-				अवरोध;
-			हाल 1:
+                                else
+                                        data->val_out = (tulip_media_cap[dev->if_port]&MediaIs100 ? 0x2000 : 0)
+                                                | (tulip_media_cap[dev->if_port]&MediaIsFD ? 0x0100 : 0);
+				break;
+			case 1:
                                 data->val_out =
 					0x1848 +
 					((csr12&0x7000) == 0x5000 ? 0x20 : 0) +
 					((csr12&0x06) == 6 ? 0 : 4);
                                 data->val_out |= 0x6048;
-				अवरोध;
-			हाल 4:
+				break;
+			case 4:
                                 /* Advertised value, bogus 10baseTx-FD value from CSR6. */
                                 data->val_out =
-					((ioपढ़ो32(ioaddr + CSR6) >> 3) & 0x0040) +
+					((ioread32(ioaddr + CSR6) >> 3) & 0x0040) +
 					((csr14 >> 1) & 0x20) + 1;
                                 data->val_out |= ((csr14 >> 9) & 0x03C0);
-				अवरोध;
-			हाल 5: data->val_out = tp->lpar; अवरोध;
-			शेष: data->val_out = 0; अवरोध;
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			data->val_out = tulip_mdio_पढ़ो (dev, data->phy_id & 0x1f, regnum);
-		पूर्ण
-		वापस 0;
+				break;
+			case 5: data->val_out = tp->lpar; break;
+			default: data->val_out = 0; break;
+			}
+		} else {
+			data->val_out = tulip_mdio_read (dev, data->phy_id & 0x1f, regnum);
+		}
+		return 0;
 
-	हाल SIOCSMIIREG:		/* Write MII PHY रेजिस्टर. */
-		अगर (regnum & ~0x1f)
-			वापस -EINVAL;
-		अगर (data->phy_id == phy) अणु
+	case SIOCSMIIREG:		/* Write MII PHY register. */
+		if (regnum & ~0x1f)
+			return -EINVAL;
+		if (data->phy_id == phy) {
 			u16 value = data->val_in;
-			चयन (regnum) अणु
-			हाल 0:	/* Check क्रम स्वतःnegotiation on or reset. */
+			switch (regnum) {
+			case 0:	/* Check for autonegotiation on or reset. */
 				tp->full_duplex_lock = (value & 0x9000) ? 0 : 1;
-				अगर (tp->full_duplex_lock)
+				if (tp->full_duplex_lock)
 					tp->full_duplex = (value & 0x0100) ? 1 : 0;
-				अवरोध;
-			हाल 4:
+				break;
+			case 4:
 				tp->advertising[phy_idx] =
 				tp->mii_advertise = data->val_in;
-				अवरोध;
-			पूर्ण
-		पूर्ण
-		अगर (data->phy_id == 32 && (tp->flags & HAS_NWAY)) अणु
+				break;
+			}
+		}
+		if (data->phy_id == 32 && (tp->flags & HAS_NWAY)) {
 			u16 value = data->val_in;
-			अगर (regnum == 0) अणु
-			  अगर ((value & 0x1200) == 0x1200) अणु
-			    अगर (tp->chip_id == PNIC2) अणु
+			if (regnum == 0) {
+			  if ((value & 0x1200) == 0x1200) {
+			    if (tp->chip_id == PNIC2) {
                                    pnic2_start_nway (dev);
-                            पूर्ण अन्यथा अणु
+                            } else {
 				   t21142_start_nway (dev);
-                            पूर्ण
-			  पूर्ण
-			पूर्ण अन्यथा अगर (regnum == 4)
+                            }
+			  }
+			} else if (regnum == 4)
 				tp->sym_advertise = value;
-		पूर्ण अन्यथा अणु
-			tulip_mdio_ग_लिखो (dev, data->phy_id & 0x1f, regnum, data->val_in);
-		पूर्ण
-		वापस 0;
-	शेष:
-		वापस -EOPNOTSUPP;
-	पूर्ण
+		} else {
+			tulip_mdio_write (dev, data->phy_id & 0x1f, regnum, data->val_in);
+		}
+		return 0;
+	default:
+		return -EOPNOTSUPP;
+	}
 
-	वापस -EOPNOTSUPP;
-पूर्ण
+	return -EOPNOTSUPP;
+}
 
 
-/* Set or clear the multicast filter क्रम this adaptor.
+/* Set or clear the multicast filter for this adaptor.
    Note that we only use exclusion around actually queueing the
    new frame, not around filling tp->setup_frame.  This is non-deterministic
    when re-entered but still correct. */
 
-अटल व्योम build_setup_frame_hash(u16 *setup_frm, काष्ठा net_device *dev)
-अणु
-	काष्ठा tulip_निजी *tp = netdev_priv(dev);
+static void build_setup_frame_hash(u16 *setup_frm, struct net_device *dev)
+{
+	struct tulip_private *tp = netdev_priv(dev);
 	u16 hash_table[32];
-	काष्ठा netdev_hw_addr *ha;
-	पूर्णांक i;
+	struct netdev_hw_addr *ha;
+	int i;
 	u16 *eaddrs;
 
-	स_रखो(hash_table, 0, माप(hash_table));
+	memset(hash_table, 0, sizeof(hash_table));
 	__set_bit_le(255, hash_table);			/* Broadcast entry */
 	/* This should work on big-endian machines as well. */
-	netdev_क्रम_each_mc_addr(ha, dev) अणु
-		पूर्णांक index = ether_crc_le(ETH_ALEN, ha->addr) & 0x1ff;
+	netdev_for_each_mc_addr(ha, dev) {
+		int index = ether_crc_le(ETH_ALEN, ha->addr) & 0x1ff;
 
 		__set_bit_le(index, hash_table);
-	पूर्ण
-	क्रम (i = 0; i < 32; i++) अणु
+	}
+	for (i = 0; i < 32; i++) {
 		*setup_frm++ = hash_table[i];
 		*setup_frm++ = hash_table[i];
-	पूर्ण
+	}
 	setup_frm = &tp->setup_frame[13*6];
 
 	/* Fill the final entry with our physical address. */
@@ -1024,24 +1023,24 @@ tulip_start_xmit(काष्ठा sk_buff *skb, काष्ठा net_device 
 	*setup_frm++ = eaddrs[0]; *setup_frm++ = eaddrs[0];
 	*setup_frm++ = eaddrs[1]; *setup_frm++ = eaddrs[1];
 	*setup_frm++ = eaddrs[2]; *setup_frm++ = eaddrs[2];
-पूर्ण
+}
 
-अटल व्योम build_setup_frame_perfect(u16 *setup_frm, काष्ठा net_device *dev)
-अणु
-	काष्ठा tulip_निजी *tp = netdev_priv(dev);
-	काष्ठा netdev_hw_addr *ha;
+static void build_setup_frame_perfect(u16 *setup_frm, struct net_device *dev)
+{
+	struct tulip_private *tp = netdev_priv(dev);
+	struct netdev_hw_addr *ha;
 	u16 *eaddrs;
 
 	/* We have <= 14 addresses so we can use the wonderful
 	   16 address perfect filtering of the Tulip. */
-	netdev_क्रम_each_mc_addr(ha, dev) अणु
+	netdev_for_each_mc_addr(ha, dev) {
 		eaddrs = (u16 *) ha->addr;
 		*setup_frm++ = *eaddrs; *setup_frm++ = *eaddrs++;
 		*setup_frm++ = *eaddrs; *setup_frm++ = *eaddrs++;
 		*setup_frm++ = *eaddrs; *setup_frm++ = *eaddrs++;
-	पूर्ण
+	}
 	/* Fill the unused entries with the broadcast address. */
-	स_रखो(setup_frm, 0xff, (15 - netdev_mc_count(dev)) * 12);
+	memset(setup_frm, 0xff, (15 - netdev_mc_count(dev)) * 12);
 	setup_frm = &tp->setup_frame[15*6];
 
 	/* Fill the final entry with our physical address. */
@@ -1049,909 +1048,909 @@ tulip_start_xmit(काष्ठा sk_buff *skb, काष्ठा net_device 
 	*setup_frm++ = eaddrs[0]; *setup_frm++ = eaddrs[0];
 	*setup_frm++ = eaddrs[1]; *setup_frm++ = eaddrs[1];
 	*setup_frm++ = eaddrs[2]; *setup_frm++ = eaddrs[2];
-पूर्ण
+}
 
 
-अटल व्योम set_rx_mode(काष्ठा net_device *dev)
-अणु
-	काष्ठा tulip_निजी *tp = netdev_priv(dev);
-	व्योम __iomem *ioaddr = tp->base_addr;
-	पूर्णांक csr6;
+static void set_rx_mode(struct net_device *dev)
+{
+	struct tulip_private *tp = netdev_priv(dev);
+	void __iomem *ioaddr = tp->base_addr;
+	int csr6;
 
-	csr6 = ioपढ़ो32(ioaddr + CSR6) & ~0x00D5;
+	csr6 = ioread32(ioaddr + CSR6) & ~0x00D5;
 
 	tp->csr6 &= ~0x00D5;
-	अगर (dev->flags & IFF_PROMISC) अणु			/* Set promiscuous. */
+	if (dev->flags & IFF_PROMISC) {			/* Set promiscuous. */
 		tp->csr6 |= AcceptAllMulticast | AcceptAllPhys;
 		csr6 |= AcceptAllMulticast | AcceptAllPhys;
-	पूर्ण अन्यथा अगर ((netdev_mc_count(dev) > 1000) ||
-		   (dev->flags & IFF_ALLMULTI)) अणु
+	} else if ((netdev_mc_count(dev) > 1000) ||
+		   (dev->flags & IFF_ALLMULTI)) {
 		/* Too many to filter well -- accept all multicasts. */
 		tp->csr6 |= AcceptAllMulticast;
 		csr6 |= AcceptAllMulticast;
-	पूर्ण अन्यथा	अगर (tp->flags & MC_HASH_ONLY) अणु
+	} else	if (tp->flags & MC_HASH_ONLY) {
 		/* Some work-alikes have only a 64-entry hash filter table. */
-		/* Should verअगरy correctness on big-endian/__घातerpc__ */
-		काष्ठा netdev_hw_addr *ha;
-		अगर (netdev_mc_count(dev) > 64) अणु
+		/* Should verify correctness on big-endian/__powerpc__ */
+		struct netdev_hw_addr *ha;
+		if (netdev_mc_count(dev) > 64) {
 			/* Arbitrary non-effective limit. */
 			tp->csr6 |= AcceptAllMulticast;
 			csr6 |= AcceptAllMulticast;
-		पूर्ण अन्यथा अणु
-			u32 mc_filter[2] = अणु0, 0पूर्ण;		 /* Multicast hash filter */
-			पूर्णांक filterbit;
-			netdev_क्रम_each_mc_addr(ha, dev) अणु
-				अगर (tp->flags & COMET_MAC_ADDR)
+		} else {
+			u32 mc_filter[2] = {0, 0};		 /* Multicast hash filter */
+			int filterbit;
+			netdev_for_each_mc_addr(ha, dev) {
+				if (tp->flags & COMET_MAC_ADDR)
 					filterbit = ether_crc_le(ETH_ALEN,
 								 ha->addr);
-				अन्यथा
+				else
 					filterbit = ether_crc(ETH_ALEN,
 							      ha->addr) >> 26;
 				filterbit &= 0x3f;
 				mc_filter[filterbit >> 5] |= 1 << (filterbit & 31);
-				अगर (tulip_debug > 2)
+				if (tulip_debug > 2)
 					dev_info(&dev->dev,
 						 "Added filter for %pM  %08x bit %d\n",
 						 ha->addr,
 						 ether_crc(ETH_ALEN, ha->addr),
 						 filterbit);
-			पूर्ण
-			अगर (mc_filter[0] == tp->mc_filter[0]  &&
+			}
+			if (mc_filter[0] == tp->mc_filter[0]  &&
 				mc_filter[1] == tp->mc_filter[1])
 				;				/* No change. */
-			अन्यथा अगर (tp->flags & IS_ASIX) अणु
-				ioग_लिखो32(2, ioaddr + CSR13);
-				ioग_लिखो32(mc_filter[0], ioaddr + CSR14);
-				ioग_लिखो32(3, ioaddr + CSR13);
-				ioग_लिखो32(mc_filter[1], ioaddr + CSR14);
-			पूर्ण अन्यथा अगर (tp->flags & COMET_MAC_ADDR) अणु
-				ioग_लिखो32(mc_filter[0], ioaddr + CSR27);
-				ioग_लिखो32(mc_filter[1], ioaddr + CSR28);
-			पूर्ण
+			else if (tp->flags & IS_ASIX) {
+				iowrite32(2, ioaddr + CSR13);
+				iowrite32(mc_filter[0], ioaddr + CSR14);
+				iowrite32(3, ioaddr + CSR13);
+				iowrite32(mc_filter[1], ioaddr + CSR14);
+			} else if (tp->flags & COMET_MAC_ADDR) {
+				iowrite32(mc_filter[0], ioaddr + CSR27);
+				iowrite32(mc_filter[1], ioaddr + CSR28);
+			}
 			tp->mc_filter[0] = mc_filter[0];
 			tp->mc_filter[1] = mc_filter[1];
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		अचिन्हित दीर्घ flags;
+		}
+	} else {
+		unsigned long flags;
 		u32 tx_flags = 0x08000000 | 192;
 
-		/* Note that only the low-address लघुword of setup_frame is valid!
-		   The values are द्विगुनd क्रम big-endian architectures. */
-		अगर (netdev_mc_count(dev) > 14) अणु
+		/* Note that only the low-address shortword of setup_frame is valid!
+		   The values are doubled for big-endian architectures. */
+		if (netdev_mc_count(dev) > 14) {
 			/* Must use a multicast hash table. */
 			build_setup_frame_hash(tp->setup_frame, dev);
 			tx_flags = 0x08400000 | 192;
-		पूर्ण अन्यथा अणु
+		} else {
 			build_setup_frame_perfect(tp->setup_frame, dev);
-		पूर्ण
+		}
 
 		spin_lock_irqsave(&tp->lock, flags);
 
-		अगर (tp->cur_tx - tp->dirty_tx > TX_RING_SIZE - 2) अणु
+		if (tp->cur_tx - tp->dirty_tx > TX_RING_SIZE - 2) {
 			/* Same setup recently queued, we need not add it. */
-		पूर्ण अन्यथा अणु
-			अचिन्हित पूर्णांक entry;
-			पूर्णांक dummy = -1;
+		} else {
+			unsigned int entry;
+			int dummy = -1;
 
 			/* Now add this frame to the Tx list. */
 
 			entry = tp->cur_tx++ % TX_RING_SIZE;
 
-			अगर (entry != 0) अणु
-				/* Aव्योम a chip errata by prefixing a dummy entry. */
-				tp->tx_buffers[entry].skb = शून्य;
+			if (entry != 0) {
+				/* Avoid a chip errata by prefixing a dummy entry. */
+				tp->tx_buffers[entry].skb = NULL;
 				tp->tx_buffers[entry].mapping = 0;
 				tp->tx_ring[entry].length =
 					(entry == TX_RING_SIZE-1) ? cpu_to_le32(DESC_RING_WRAP) : 0;
 				tp->tx_ring[entry].buffer1 = 0;
-				/* Must set DescOwned later to aव्योम race with chip */
+				/* Must set DescOwned later to avoid race with chip */
 				dummy = entry;
 				entry = tp->cur_tx++ % TX_RING_SIZE;
 
-			पूर्ण
+			}
 
-			tp->tx_buffers[entry].skb = शून्य;
+			tp->tx_buffers[entry].skb = NULL;
 			tp->tx_buffers[entry].mapping =
 				dma_map_single(&tp->pdev->dev,
 					       tp->setup_frame,
-					       माप(tp->setup_frame),
+					       sizeof(tp->setup_frame),
 					       DMA_TO_DEVICE);
 			/* Put the setup frame on the Tx list. */
-			अगर (entry == TX_RING_SIZE-1)
+			if (entry == TX_RING_SIZE-1)
 				tx_flags |= DESC_RING_WRAP;		/* Wrap ring. */
 			tp->tx_ring[entry].length = cpu_to_le32(tx_flags);
 			tp->tx_ring[entry].buffer1 =
 				cpu_to_le32(tp->tx_buffers[entry].mapping);
 			tp->tx_ring[entry].status = cpu_to_le32(DescOwned);
-			अगर (dummy >= 0)
+			if (dummy >= 0)
 				tp->tx_ring[dummy].status = cpu_to_le32(DescOwned);
-			अगर (tp->cur_tx - tp->dirty_tx >= TX_RING_SIZE - 2)
-				netअगर_stop_queue(dev);
+			if (tp->cur_tx - tp->dirty_tx >= TX_RING_SIZE - 2)
+				netif_stop_queue(dev);
 
 			/* Trigger an immediate transmit demand. */
-			ioग_लिखो32(0, ioaddr + CSR1);
-		पूर्ण
+			iowrite32(0, ioaddr + CSR1);
+		}
 
 		spin_unlock_irqrestore(&tp->lock, flags);
-	पूर्ण
+	}
 
-	ioग_लिखो32(csr6, ioaddr + CSR6);
-पूर्ण
+	iowrite32(csr6, ioaddr + CSR6);
+}
 
-#अगर_घोषित CONFIG_TULIP_MWI
-अटल व्योम tulip_mwi_config(काष्ठा pci_dev *pdev, काष्ठा net_device *dev)
-अणु
-	काष्ठा tulip_निजी *tp = netdev_priv(dev);
+#ifdef CONFIG_TULIP_MWI
+static void tulip_mwi_config(struct pci_dev *pdev, struct net_device *dev)
+{
+	struct tulip_private *tp = netdev_priv(dev);
 	u8 cache;
 	u16 pci_command;
 	u32 csr0;
 
-	अगर (tulip_debug > 3)
+	if (tulip_debug > 3)
 		netdev_dbg(dev, "tulip_mwi_config()\n");
 
 	tp->csr0 = csr0 = 0;
 
-	/* अगर we have any cache line size at all, we can करो MRM and MWI */
+	/* if we have any cache line size at all, we can do MRM and MWI */
 	csr0 |= MRM | MWI;
 
 	/* Enable MWI in the standard PCI command bit.
-	 * Check क्रम the हाल where MWI is desired but not available
+	 * Check for the case where MWI is desired but not available
 	 */
 	pci_try_set_mwi(pdev);
 
-	/* पढ़ो result from hardware (in हाल bit refused to enable) */
-	pci_पढ़ो_config_word(pdev, PCI_COMMAND, &pci_command);
-	अगर ((csr0 & MWI) && (!(pci_command & PCI_COMMAND_INVALIDATE)))
+	/* read result from hardware (in case bit refused to enable) */
+	pci_read_config_word(pdev, PCI_COMMAND, &pci_command);
+	if ((csr0 & MWI) && (!(pci_command & PCI_COMMAND_INVALIDATE)))
 		csr0 &= ~MWI;
 
-	/* अगर cache line size hardwired to zero, no MWI */
-	pci_पढ़ो_config_byte(pdev, PCI_CACHE_LINE_SIZE, &cache);
-	अगर ((csr0 & MWI) && (cache == 0)) अणु
+	/* if cache line size hardwired to zero, no MWI */
+	pci_read_config_byte(pdev, PCI_CACHE_LINE_SIZE, &cache);
+	if ((csr0 & MWI) && (cache == 0)) {
 		csr0 &= ~MWI;
 		pci_clear_mwi(pdev);
-	पूर्ण
+	}
 
 	/* assign per-cacheline-size cache alignment and
 	 * burst length values
 	 */
-	चयन (cache) अणु
-	हाल 8:
-		csr0 |= MRL | (1 << CALShअगरt) | (16 << BurstLenShअगरt);
-		अवरोध;
-	हाल 16:
-		csr0 |= MRL | (2 << CALShअगरt) | (16 << BurstLenShअगरt);
-		अवरोध;
-	हाल 32:
-		csr0 |= MRL | (3 << CALShअगरt) | (32 << BurstLenShअगरt);
-		अवरोध;
-	शेष:
+	switch (cache) {
+	case 8:
+		csr0 |= MRL | (1 << CALShift) | (16 << BurstLenShift);
+		break;
+	case 16:
+		csr0 |= MRL | (2 << CALShift) | (16 << BurstLenShift);
+		break;
+	case 32:
+		csr0 |= MRL | (3 << CALShift) | (32 << BurstLenShift);
+		break;
+	default:
 		cache = 0;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	/* अगर we have a good cache line size, we by now have a good
-	 * csr0, so save it and निकास
+	/* if we have a good cache line size, we by now have a good
+	 * csr0, so save it and exit
 	 */
-	अगर (cache)
-		जाओ out;
+	if (cache)
+		goto out;
 
-	/* we करोn't have a good csr0 or cache line size, disable MWI */
-	अगर (csr0 & MWI) अणु
+	/* we don't have a good csr0 or cache line size, disable MWI */
+	if (csr0 & MWI) {
 		pci_clear_mwi(pdev);
 		csr0 &= ~MWI;
-	पूर्ण
+	}
 
-	/* sane शेषs क्रम burst length and cache alignment
+	/* sane defaults for burst length and cache alignment
 	 * originally from de4x5 driver
 	 */
-	csr0 |= (8 << BurstLenShअगरt) | (1 << CALShअगरt);
+	csr0 |= (8 << BurstLenShift) | (1 << CALShift);
 
 out:
 	tp->csr0 = csr0;
-	अगर (tulip_debug > 2)
+	if (tulip_debug > 2)
 		netdev_dbg(dev, "MWI config cacheline=%d, csr0=%08x\n",
 			   cache, csr0);
-पूर्ण
-#पूर्ण_अगर
+}
+#endif
 
 /*
  *	Chips that have the MRM/reserved bit quirk and the burst quirk. That
  *	is the DM910X and the on chip ULi devices
  */
 
-अटल पूर्णांक tulip_uli_dm_quirk(काष्ठा pci_dev *pdev)
-अणु
-	अगर (pdev->venकरोr == 0x1282 && pdev->device == 0x9102)
-		वापस 1;
-	वापस 0;
-पूर्ण
+static int tulip_uli_dm_quirk(struct pci_dev *pdev)
+{
+	if (pdev->vendor == 0x1282 && pdev->device == 0x9102)
+		return 1;
+	return 0;
+}
 
-अटल स्थिर काष्ठा net_device_ops tulip_netdev_ops = अणु
-	.nकरो_खोलो		= tulip_खोलो,
-	.nकरो_start_xmit		= tulip_start_xmit,
-	.nकरो_tx_समयout		= tulip_tx_समयout,
-	.nकरो_stop		= tulip_बंद,
-	.nकरो_get_stats		= tulip_get_stats,
-	.nकरो_करो_ioctl 		= निजी_ioctl,
-	.nकरो_set_rx_mode	= set_rx_mode,
-	.nकरो_set_mac_address	= eth_mac_addr,
-	.nकरो_validate_addr	= eth_validate_addr,
-#अगर_घोषित CONFIG_NET_POLL_CONTROLLER
-	.nकरो_poll_controller	 = poll_tulip,
-#पूर्ण_अगर
-पूर्ण;
+static const struct net_device_ops tulip_netdev_ops = {
+	.ndo_open		= tulip_open,
+	.ndo_start_xmit		= tulip_start_xmit,
+	.ndo_tx_timeout		= tulip_tx_timeout,
+	.ndo_stop		= tulip_close,
+	.ndo_get_stats		= tulip_get_stats,
+	.ndo_do_ioctl 		= private_ioctl,
+	.ndo_set_rx_mode	= set_rx_mode,
+	.ndo_set_mac_address	= eth_mac_addr,
+	.ndo_validate_addr	= eth_validate_addr,
+#ifdef CONFIG_NET_POLL_CONTROLLER
+	.ndo_poll_controller	 = poll_tulip,
+#endif
+};
 
-अटल स्थिर काष्ठा pci_device_id early_486_chipsets[] = अणु
-	अणु PCI_DEVICE(PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_82424) पूर्ण,
-	अणु PCI_DEVICE(PCI_VENDOR_ID_SI, PCI_DEVICE_ID_SI_496) पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+static const struct pci_device_id early_486_chipsets[] = {
+	{ PCI_DEVICE(PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_82424) },
+	{ PCI_DEVICE(PCI_VENDOR_ID_SI, PCI_DEVICE_ID_SI_496) },
+	{ },
+};
 
-अटल पूर्णांक tulip_init_one(काष्ठा pci_dev *pdev, स्थिर काष्ठा pci_device_id *ent)
-अणु
-	काष्ठा tulip_निजी *tp;
+static int tulip_init_one(struct pci_dev *pdev, const struct pci_device_id *ent)
+{
+	struct tulip_private *tp;
 	/* See note below on the multiport cards. */
-	अटल अचिन्हित अक्षर last_phys_addr[ETH_ALEN] = अणु
+	static unsigned char last_phys_addr[ETH_ALEN] = {
 		0x00, 'L', 'i', 'n', 'u', 'x'
-	पूर्ण;
-#अगर defined(__i386__) || defined(__x86_64__)	/* Patch up x86 BIOS bug. */
-	अटल पूर्णांक last_irq;
-#पूर्ण_अगर
-	पूर्णांक i, irq;
-	अचिन्हित लघु sum;
-	अचिन्हित अक्षर *ee_data;
-	काष्ठा net_device *dev;
-	व्योम __iomem *ioaddr;
-	अटल पूर्णांक board_idx = -1;
-	पूर्णांक chip_idx = ent->driver_data;
-	स्थिर अक्षर *chip_name = tulip_tbl[chip_idx].chip_name;
-	अचिन्हित पूर्णांक eeprom_missing = 0;
-	अचिन्हित पूर्णांक क्रमce_csr0 = 0;
+	};
+#if defined(__i386__) || defined(__x86_64__)	/* Patch up x86 BIOS bug. */
+	static int last_irq;
+#endif
+	int i, irq;
+	unsigned short sum;
+	unsigned char *ee_data;
+	struct net_device *dev;
+	void __iomem *ioaddr;
+	static int board_idx = -1;
+	int chip_idx = ent->driver_data;
+	const char *chip_name = tulip_tbl[chip_idx].chip_name;
+	unsigned int eeprom_missing = 0;
+	unsigned int force_csr0 = 0;
 
 	board_idx++;
 
 	/*
-	 *	Lan media wire a tulip chip to a wan पूर्णांकerface. Needs a very
-	 *	dअगरferent driver (lmc driver)
+	 *	Lan media wire a tulip chip to a wan interface. Needs a very
+	 *	different driver (lmc driver)
 	 */
 
-        अगर (pdev->subप्रणाली_venकरोr == PCI_VENDOR_ID_LMC) अणु
+        if (pdev->subsystem_vendor == PCI_VENDOR_ID_LMC) {
 		pr_err("skipping LMC card\n");
-		वापस -ENODEV;
-	पूर्ण अन्यथा अगर (pdev->subप्रणाली_venकरोr == PCI_VENDOR_ID_SBE &&
-		   (pdev->subप्रणाली_device == PCI_SUBDEVICE_ID_SBE_T3E3 ||
-		    pdev->subप्रणाली_device == PCI_SUBDEVICE_ID_SBE_2T3E3_P0 ||
-		    pdev->subप्रणाली_device == PCI_SUBDEVICE_ID_SBE_2T3E3_P1)) अणु
+		return -ENODEV;
+	} else if (pdev->subsystem_vendor == PCI_VENDOR_ID_SBE &&
+		   (pdev->subsystem_device == PCI_SUBDEVICE_ID_SBE_T3E3 ||
+		    pdev->subsystem_device == PCI_SUBDEVICE_ID_SBE_2T3E3_P0 ||
+		    pdev->subsystem_device == PCI_SUBDEVICE_ID_SBE_2T3E3_P1)) {
 		pr_err("skipping SBE T3E3 port\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	/*
 	 *	DM910x chips should be handled by the dmfe driver, except
-	 *	on-board chips on SPARC प्रणालीs.  Also, early DM9100s need
+	 *	on-board chips on SPARC systems.  Also, early DM9100s need
 	 *	software CRC which only the dmfe driver supports.
 	 */
 
-#अगर_घोषित CONFIG_TULIP_DM910X
-	अगर (chip_idx == DM910X) अणु
-		काष्ठा device_node *dp;
+#ifdef CONFIG_TULIP_DM910X
+	if (chip_idx == DM910X) {
+		struct device_node *dp;
 
-		अगर (pdev->venकरोr == 0x1282 && pdev->device == 0x9100 &&
-		    pdev->revision < 0x30) अणु
+		if (pdev->vendor == 0x1282 && pdev->device == 0x9100 &&
+		    pdev->revision < 0x30) {
 			pr_info("skipping early DM9100 with Crc bug (use dmfe)\n");
-			वापस -ENODEV;
-		पूर्ण
+			return -ENODEV;
+		}
 
 		dp = pci_device_to_OF_node(pdev);
-		अगर (!(dp && of_get_property(dp, "local-mac-address", शून्य))) अणु
+		if (!(dp && of_get_property(dp, "local-mac-address", NULL))) {
 			pr_info("skipping DM910x expansion card (use dmfe)\n");
-			वापस -ENODEV;
-		पूर्ण
-	पूर्ण
-#पूर्ण_अगर
+			return -ENODEV;
+		}
+	}
+#endif
 
 	/*
-	 *	Looks क्रम early PCI chipsets where people report hangs
+	 *	Looks for early PCI chipsets where people report hangs
 	 *	without the workarounds being on.
 	 */
 
-	/* 1. Intel Saturn. Switch to 8 दीर्घ words burst, 8 दीर्घ word cache
+	/* 1. Intel Saturn. Switch to 8 long words burst, 8 long word cache
 	      aligned.  Aries might need this too. The Saturn errata are not
-	      pretty पढ़ोing but thankfully it's an old 486 chipset.
+	      pretty reading but thankfully it's an old 486 chipset.
 
-	   2. The dपढ़ोed SiS496 486 chipset. Same workaround as Intel
+	   2. The dreaded SiS496 486 chipset. Same workaround as Intel
 	      Saturn.
 	*/
 
-	अगर (pci_dev_present(early_486_chipsets)) अणु
-		csr0 = MRL | MRM | (8 << BurstLenShअगरt) | (1 << CALShअगरt);
-		क्रमce_csr0 = 1;
-	पूर्ण
+	if (pci_dev_present(early_486_chipsets)) {
+		csr0 = MRL | MRM | (8 << BurstLenShift) | (1 << CALShift);
+		force_csr0 = 1;
+	}
 
 	/* bugfix: the ASIX must have a burst limit or horrible things happen. */
-	अगर (chip_idx == AX88140) अणु
-		अगर ((csr0 & 0x3f00) == 0)
+	if (chip_idx == AX88140) {
+		if ((csr0 & 0x3f00) == 0)
 			csr0 |= 0x2000;
-	पूर्ण
+	}
 
-	/* PNIC करोesn't have MWI/MRL/MRM... */
-	अगर (chip_idx == LC82C168)
+	/* PNIC doesn't have MWI/MRL/MRM... */
+	if (chip_idx == LC82C168)
 		csr0 &= ~0xfff10000; /* zero reserved bits 31:20, 16 */
 
 	/* DM9102A has troubles with MRM & clear reserved bits 24:22, 20, 16, 7:1 */
-	अगर (tulip_uli_dm_quirk(pdev)) अणु
+	if (tulip_uli_dm_quirk(pdev)) {
 		csr0 &= ~0x01f100ff;
-#अगर defined(CONFIG_SPARC)
+#if defined(CONFIG_SPARC)
                 csr0 = (csr0 & ~0xff00) | 0xe000;
-#पूर्ण_अगर
-	पूर्ण
+#endif
+	}
 	/*
 	 *	And back to business
 	 */
 
 	i = pci_enable_device(pdev);
-	अगर (i) अणु
+	if (i) {
 		pr_err("Cannot enable tulip board #%d, aborting\n", board_idx);
-		वापस i;
-	पूर्ण
+		return i;
+	}
 
 	irq = pdev->irq;
 
-	/* alloc_etherdev ensures aligned and zeroed निजी काष्ठाures */
-	dev = alloc_etherdev (माप (*tp));
-	अगर (!dev)
-		वापस -ENOMEM;
+	/* alloc_etherdev ensures aligned and zeroed private structures */
+	dev = alloc_etherdev (sizeof (*tp));
+	if (!dev)
+		return -ENOMEM;
 
 	SET_NETDEV_DEV(dev, &pdev->dev);
-	अगर (pci_resource_len (pdev, 0) < tulip_tbl[chip_idx].io_size) अणु
+	if (pci_resource_len (pdev, 0) < tulip_tbl[chip_idx].io_size) {
 		pr_err("%s: I/O region (0x%llx@0x%llx) too small, aborting\n",
 		       pci_name(pdev),
-		       (अचिन्हित दीर्घ दीर्घ)pci_resource_len (pdev, 0),
-		       (अचिन्हित दीर्घ दीर्घ)pci_resource_start (pdev, 0));
-		जाओ err_out_मुक्त_netdev;
-	पूर्ण
+		       (unsigned long long)pci_resource_len (pdev, 0),
+		       (unsigned long long)pci_resource_start (pdev, 0));
+		goto err_out_free_netdev;
+	}
 
 	/* grab all resources from both PIO and MMIO regions, as we
-	 * करोn't want anyone अन्यथा messing around with our hardware */
-	अगर (pci_request_regions (pdev, DRV_NAME))
-		जाओ err_out_मुक्त_netdev;
+	 * don't want anyone else messing around with our hardware */
+	if (pci_request_regions (pdev, DRV_NAME))
+		goto err_out_free_netdev;
 
 	ioaddr =  pci_iomap(pdev, TULIP_BAR, tulip_tbl[chip_idx].io_size);
 
-	अगर (!ioaddr)
-		जाओ err_out_मुक्त_res;
+	if (!ioaddr)
+		goto err_out_free_res;
 
 	/*
-	 * initialize निजी data काष्ठाure 'tp'
+	 * initialize private data structure 'tp'
 	 * it is zeroed and aligned in alloc_etherdev
 	 */
 	tp = netdev_priv(dev);
 	tp->dev = dev;
 
 	tp->rx_ring = dma_alloc_coherent(&pdev->dev,
-					 माप(काष्ठा tulip_rx_desc) * RX_RING_SIZE +
-					 माप(काष्ठा tulip_tx_desc) * TX_RING_SIZE,
+					 sizeof(struct tulip_rx_desc) * RX_RING_SIZE +
+					 sizeof(struct tulip_tx_desc) * TX_RING_SIZE,
 					 &tp->rx_ring_dma, GFP_KERNEL);
-	अगर (!tp->rx_ring)
-		जाओ err_out_mtable;
-	tp->tx_ring = (काष्ठा tulip_tx_desc *)(tp->rx_ring + RX_RING_SIZE);
-	tp->tx_ring_dma = tp->rx_ring_dma + माप(काष्ठा tulip_rx_desc) * RX_RING_SIZE;
+	if (!tp->rx_ring)
+		goto err_out_mtable;
+	tp->tx_ring = (struct tulip_tx_desc *)(tp->rx_ring + RX_RING_SIZE);
+	tp->tx_ring_dma = tp->rx_ring_dma + sizeof(struct tulip_rx_desc) * RX_RING_SIZE;
 
 	tp->chip_id = chip_idx;
 	tp->flags = tulip_tbl[chip_idx].flags;
 
 	tp->wolinfo.supported = 0;
 	tp->wolinfo.wolopts = 0;
-	/* COMET: Enable घातer management only क्रम AN983B */
-	अगर (chip_idx == COMET ) अणु
+	/* COMET: Enable power management only for AN983B */
+	if (chip_idx == COMET ) {
 		u32 sig;
-		pci_पढ़ो_config_dword (pdev, 0x80, &sig);
-		अगर (sig == 0x09811317) अणु
+		pci_read_config_dword (pdev, 0x80, &sig);
+		if (sig == 0x09811317) {
 			tp->flags |= COMET_PM;
 			tp->wolinfo.supported = WAKE_PHY | WAKE_MAGIC;
 			pr_info("%s: Enabled WOL support for AN983B\n",
 				__func__);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	tp->pdev = pdev;
 	tp->base_addr = ioaddr;
 	tp->revision = pdev->revision;
 	tp->csr0 = csr0;
 	spin_lock_init(&tp->lock);
 	spin_lock_init(&tp->mii_lock);
-	समयr_setup(&tp->समयr, tulip_tbl[tp->chip_id].media_समयr, 0);
+	timer_setup(&tp->timer, tulip_tbl[tp->chip_id].media_timer, 0);
 
 	INIT_WORK(&tp->media_work, tulip_tbl[tp->chip_id].media_task);
 
-#अगर_घोषित CONFIG_TULIP_MWI
-	अगर (!क्रमce_csr0 && (tp->flags & HAS_PCI_MWI))
+#ifdef CONFIG_TULIP_MWI
+	if (!force_csr0 && (tp->flags & HAS_PCI_MWI))
 		tulip_mwi_config (pdev, dev);
-#पूर्ण_अगर
+#endif
 
 	/* Stop the chip's Tx and Rx processes. */
 	tulip_stop_rxtx(tp);
 
 	pci_set_master(pdev);
 
-#अगर_घोषित CONFIG_GSC
-	अगर (pdev->subप्रणाली_venकरोr == PCI_VENDOR_ID_HP) अणु
-		चयन (pdev->subप्रणाली_device) अणु
-		शेष:
-			अवरोध;
-		हाल 0x1061:
-		हाल 0x1062:
-		हाल 0x1063:
-		हाल 0x1098:
-		हाल 0x1099:
-		हाल 0x10EE:
+#ifdef CONFIG_GSC
+	if (pdev->subsystem_vendor == PCI_VENDOR_ID_HP) {
+		switch (pdev->subsystem_device) {
+		default:
+			break;
+		case 0x1061:
+		case 0x1062:
+		case 0x1063:
+		case 0x1098:
+		case 0x1099:
+		case 0x10EE:
 			tp->flags |= HAS_SWAPPED_SEEPROM | NEEDS_FAKE_MEDIA_TABLE;
 			chip_name = "GSC DS21140 Tulip";
-		पूर्ण
-	पूर्ण
-#पूर्ण_अगर
+		}
+	}
+#endif
 
 	/* Clear the missed-packet counter. */
-	ioपढ़ो32(ioaddr + CSR8);
+	ioread32(ioaddr + CSR8);
 
-	/* The station address ROM is पढ़ो byte serially.  The रेजिस्टर must
-	   be polled, रुकोing क्रम the value to be पढ़ो bit serially from the
+	/* The station address ROM is read byte serially.  The register must
+	   be polled, waiting for the value to be read bit serially from the
 	   EEPROM.
 	   */
 	ee_data = tp->eeprom;
-	स_रखो(ee_data, 0, माप(tp->eeprom));
+	memset(ee_data, 0, sizeof(tp->eeprom));
 	sum = 0;
-	अगर (chip_idx == LC82C168) अणु
-		क्रम (i = 0; i < 3; i++) अणु
-			पूर्णांक value, boguscnt = 100000;
-			ioग_लिखो32(0x600 | i, ioaddr + 0x98);
-			करो अणु
-				value = ioपढ़ो32(ioaddr + CSR9);
-			पूर्ण जबतक (value < 0  && --boguscnt > 0);
+	if (chip_idx == LC82C168) {
+		for (i = 0; i < 3; i++) {
+			int value, boguscnt = 100000;
+			iowrite32(0x600 | i, ioaddr + 0x98);
+			do {
+				value = ioread32(ioaddr + CSR9);
+			} while (value < 0  && --boguscnt > 0);
 			put_unaligned_le16(value, ((__le16 *)dev->dev_addr) + i);
 			sum += value & 0xffff;
-		पूर्ण
-	पूर्ण अन्यथा अगर (chip_idx == COMET) अणु
-		/* No need to पढ़ो the EEPROM. */
-		put_unaligned_le32(ioपढ़ो32(ioaddr + 0xA4), dev->dev_addr);
-		put_unaligned_le16(ioपढ़ो32(ioaddr + 0xA8), dev->dev_addr + 4);
-		क्रम (i = 0; i < 6; i ++)
+		}
+	} else if (chip_idx == COMET) {
+		/* No need to read the EEPROM. */
+		put_unaligned_le32(ioread32(ioaddr + 0xA4), dev->dev_addr);
+		put_unaligned_le16(ioread32(ioaddr + 0xA8), dev->dev_addr + 4);
+		for (i = 0; i < 6; i ++)
 			sum += dev->dev_addr[i];
-	पूर्ण अन्यथा अणु
-		/* A serial EEPROM पूर्णांकerface, we पढ़ो now and sort it out later. */
-		पूर्णांक sa_offset = 0;
-		पूर्णांक ee_addr_size = tulip_पढ़ो_eeprom(dev, 0xff, 8) & 0x40000 ? 8 : 6;
-		पूर्णांक ee_max_addr = ((1 << ee_addr_size) - 1) * माप(u16);
+	} else {
+		/* A serial EEPROM interface, we read now and sort it out later. */
+		int sa_offset = 0;
+		int ee_addr_size = tulip_read_eeprom(dev, 0xff, 8) & 0x40000 ? 8 : 6;
+		int ee_max_addr = ((1 << ee_addr_size) - 1) * sizeof(u16);
 
-		अगर (ee_max_addr > माप(tp->eeprom))
-			ee_max_addr = माप(tp->eeprom);
+		if (ee_max_addr > sizeof(tp->eeprom))
+			ee_max_addr = sizeof(tp->eeprom);
 
-		क्रम (i = 0; i < ee_max_addr ; i += माप(u16)) अणु
-			u16 data = tulip_पढ़ो_eeprom(dev, i/2, ee_addr_size);
+		for (i = 0; i < ee_max_addr ; i += sizeof(u16)) {
+			u16 data = tulip_read_eeprom(dev, i/2, ee_addr_size);
 			ee_data[i] = data & 0xff;
 			ee_data[i + 1] = data >> 8;
-		पूर्ण
+		}
 
-		/* DEC now has a specअगरication (see Notes) but early board makers
+		/* DEC now has a specification (see Notes) but early board makers
 		   just put the address in the first EEPROM locations. */
-		/* This करोes  स_भेद(ee_data, ee_data+16, 8) */
-		क्रम (i = 0; i < 8; i ++)
-			अगर (ee_data[i] != ee_data[16+i])
+		/* This does  memcmp(ee_data, ee_data+16, 8) */
+		for (i = 0; i < 8; i ++)
+			if (ee_data[i] != ee_data[16+i])
 				sa_offset = 20;
-		अगर (chip_idx == CONEXANT) अणु
+		if (chip_idx == CONEXANT) {
 			/* Check that the tuple type and length is correct. */
-			अगर (ee_data[0x198] == 0x04  &&  ee_data[0x199] == 6)
+			if (ee_data[0x198] == 0x04  &&  ee_data[0x199] == 6)
 				sa_offset = 0x19A;
-		पूर्ण अन्यथा अगर (ee_data[0] == 0xff  &&  ee_data[1] == 0xff &&
-				   ee_data[2] == 0) अणु
+		} else if (ee_data[0] == 0xff  &&  ee_data[1] == 0xff &&
+				   ee_data[2] == 0) {
 			sa_offset = 2;		/* Grrr, damn Matrox boards. */
-		पूर्ण
-#अगर_घोषित CONFIG_MIPS_COBALT
-               अगर ((pdev->bus->number == 0) &&
+		}
+#ifdef CONFIG_MIPS_COBALT
+               if ((pdev->bus->number == 0) &&
                    ((PCI_SLOT(pdev->devfn) == 7) ||
-                    (PCI_SLOT(pdev->devfn) == 12))) अणु
+                    (PCI_SLOT(pdev->devfn) == 12))) {
                        /* Cobalt MAC address in first EEPROM locations. */
                        sa_offset = 0;
 		       /* Ensure our media table fixup get's applied */
-		       स_नकल(ee_data + 16, ee_data, 8);
-               पूर्ण
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_GSC
-		/* Check to see अगर we have a broken srom */
-		अगर (ee_data[0] == 0x61 && ee_data[1] == 0x10) अणु
-			/* pci_venकरोr_id and subप्रणाली_id are swapped */
+		       memcpy(ee_data + 16, ee_data, 8);
+               }
+#endif
+#ifdef CONFIG_GSC
+		/* Check to see if we have a broken srom */
+		if (ee_data[0] == 0x61 && ee_data[1] == 0x10) {
+			/* pci_vendor_id and subsystem_id are swapped */
 			ee_data[0] = ee_data[2];
 			ee_data[1] = ee_data[3];
 			ee_data[2] = 0x61;
 			ee_data[3] = 0x10;
 
-			/* HSC-PCI boards need to be byte-swaped and shअगरted
-			 * up 1 word.  This shअगरt needs to happen at the end
+			/* HSC-PCI boards need to be byte-swaped and shifted
+			 * up 1 word.  This shift needs to happen at the end
 			 * of the MAC first because of the 2 byte overlap.
 			 */
-			क्रम (i = 4; i >= 0; i -= 2) अणु
+			for (i = 4; i >= 0; i -= 2) {
 				ee_data[17 + i + 3] = ee_data[17 + i];
 				ee_data[16 + i + 5] = ee_data[16 + i];
-			पूर्ण
-		पूर्ण
-#पूर्ण_अगर
+			}
+		}
+#endif
 
-		क्रम (i = 0; i < 6; i ++) अणु
+		for (i = 0; i < 6; i ++) {
 			dev->dev_addr[i] = ee_data[i + sa_offset];
 			sum += ee_data[i + sa_offset];
-		पूर्ण
-	पूर्ण
+		}
+	}
 	/* Lite-On boards have the address byte-swapped. */
-	अगर ((dev->dev_addr[0] == 0xA0 ||
+	if ((dev->dev_addr[0] == 0xA0 ||
 	     dev->dev_addr[0] == 0xC0 ||
 	     dev->dev_addr[0] == 0x02) &&
 	    dev->dev_addr[1] == 0x00)
-		क्रम (i = 0; i < 6; i+=2) अणु
-			अक्षर पंचांगp = dev->dev_addr[i];
+		for (i = 0; i < 6; i+=2) {
+			char tmp = dev->dev_addr[i];
 			dev->dev_addr[i] = dev->dev_addr[i+1];
-			dev->dev_addr[i+1] = पंचांगp;
-		पूर्ण
+			dev->dev_addr[i+1] = tmp;
+		}
 	/* On the Zynx 315 Etherarray and other multiport boards only the
 	   first Tulip has an EEPROM.
-	   On Sparc प्रणालीs the mac address is held in the OBP property
+	   On Sparc systems the mac address is held in the OBP property
 	   "local-mac-address".
 	   The addresses of the subsequent ports are derived from the first.
 	   Many PCI BIOSes also incorrectly report the IRQ line, so we correct
 	   that here as well. */
-	अगर (sum == 0  || sum == 6*0xff) अणु
-#अगर defined(CONFIG_SPARC)
-		काष्ठा device_node *dp = pci_device_to_OF_node(pdev);
-		स्थिर अचिन्हित अक्षर *addr;
-		पूर्णांक len;
-#पूर्ण_अगर
+	if (sum == 0  || sum == 6*0xff) {
+#if defined(CONFIG_SPARC)
+		struct device_node *dp = pci_device_to_OF_node(pdev);
+		const unsigned char *addr;
+		int len;
+#endif
 		eeprom_missing = 1;
-		क्रम (i = 0; i < 5; i++)
+		for (i = 0; i < 5; i++)
 			dev->dev_addr[i] = last_phys_addr[i];
 		dev->dev_addr[i] = last_phys_addr[i] + 1;
-#अगर defined(CONFIG_SPARC)
+#if defined(CONFIG_SPARC)
 		addr = of_get_property(dp, "local-mac-address", &len);
-		अगर (addr && len == ETH_ALEN)
-			स_नकल(dev->dev_addr, addr, ETH_ALEN);
-#पूर्ण_अगर
-#अगर defined(__i386__) || defined(__x86_64__)	/* Patch up x86 BIOS bug. */
-		अगर (last_irq)
+		if (addr && len == ETH_ALEN)
+			memcpy(dev->dev_addr, addr, ETH_ALEN);
+#endif
+#if defined(__i386__) || defined(__x86_64__)	/* Patch up x86 BIOS bug. */
+		if (last_irq)
 			irq = last_irq;
-#पूर्ण_अगर
-	पूर्ण
+#endif
+	}
 
-	क्रम (i = 0; i < 6; i++)
+	for (i = 0; i < 6; i++)
 		last_phys_addr[i] = dev->dev_addr[i];
-#अगर defined(__i386__) || defined(__x86_64__)	/* Patch up x86 BIOS bug. */
+#if defined(__i386__) || defined(__x86_64__)	/* Patch up x86 BIOS bug. */
 	last_irq = irq;
-#पूर्ण_अगर
+#endif
 
 	/* The lower four bits are the media type. */
-	अगर (board_idx >= 0  &&  board_idx < MAX_UNITS) अणु
-		अगर (options[board_idx] & MEDIA_MASK)
-			tp->शेष_port = options[board_idx] & MEDIA_MASK;
-		अगर ((options[board_idx] & FullDuplex) || full_duplex[board_idx] > 0)
+	if (board_idx >= 0  &&  board_idx < MAX_UNITS) {
+		if (options[board_idx] & MEDIA_MASK)
+			tp->default_port = options[board_idx] & MEDIA_MASK;
+		if ((options[board_idx] & FullDuplex) || full_duplex[board_idx] > 0)
 			tp->full_duplex = 1;
-		अगर (mtu[board_idx] > 0)
+		if (mtu[board_idx] > 0)
 			dev->mtu = mtu[board_idx];
-	पूर्ण
-	अगर (dev->mem_start & MEDIA_MASK)
-		tp->शेष_port = dev->mem_start & MEDIA_MASK;
-	अगर (tp->शेष_port) अणु
+	}
+	if (dev->mem_start & MEDIA_MASK)
+		tp->default_port = dev->mem_start & MEDIA_MASK;
+	if (tp->default_port) {
 		pr_info(DRV_NAME "%d: Transceiver selection forced to %s\n",
-			board_idx, medianame[tp->शेष_port & MEDIA_MASK]);
+			board_idx, medianame[tp->default_port & MEDIA_MASK]);
 		tp->medialock = 1;
-		अगर (tulip_media_cap[tp->शेष_port] & MediaAlwaysFD)
+		if (tulip_media_cap[tp->default_port] & MediaAlwaysFD)
 			tp->full_duplex = 1;
-	पूर्ण
-	अगर (tp->full_duplex)
+	}
+	if (tp->full_duplex)
 		tp->full_duplex_lock = 1;
 
-	अगर (tulip_media_cap[tp->शेष_port] & MediaIsMII) अणु
-		अटल स्थिर u16 media2advert[] = अणु
+	if (tulip_media_cap[tp->default_port] & MediaIsMII) {
+		static const u16 media2advert[] = {
 			0x20, 0x40, 0x03e0, 0x60, 0x80, 0x100, 0x200
-		पूर्ण;
-		tp->mii_advertise = media2advert[tp->शेष_port - 9];
+		};
+		tp->mii_advertise = media2advert[tp->default_port - 9];
 		tp->mii_advertise |= (tp->flags & HAS_8023X); /* Matching bits! */
-	पूर्ण
+	}
 
-	अगर (tp->flags & HAS_MEDIA_TABLE) अणु
-		प्र_लिखो(dev->name, DRV_NAME "%d", board_idx);	/* hack */
+	if (tp->flags & HAS_MEDIA_TABLE) {
+		sprintf(dev->name, DRV_NAME "%d", board_idx);	/* hack */
 		tulip_parse_eeprom(dev);
-		म_नकल(dev->name, "eth%d");			/* un-hack */
-	पूर्ण
+		strcpy(dev->name, "eth%d");			/* un-hack */
+	}
 
-	अगर ((tp->flags & ALWAYS_CHECK_MII) ||
+	if ((tp->flags & ALWAYS_CHECK_MII) ||
 		(tp->mtable  &&  tp->mtable->has_mii) ||
-		( ! tp->mtable  &&  (tp->flags & HAS_MII))) अणु
-		अगर (tp->mtable  &&  tp->mtable->has_mii) अणु
-			क्रम (i = 0; i < tp->mtable->leafcount; i++)
-				अगर (tp->mtable->mleaf[i].media == 11) अणु
+		( ! tp->mtable  &&  (tp->flags & HAS_MII))) {
+		if (tp->mtable  &&  tp->mtable->has_mii) {
+			for (i = 0; i < tp->mtable->leafcount; i++)
+				if (tp->mtable->mleaf[i].media == 11) {
 					tp->cur_index = i;
-					tp->saved_अगर_port = dev->अगर_port;
+					tp->saved_if_port = dev->if_port;
 					tulip_select_media(dev, 2);
-					dev->अगर_port = tp->saved_अगर_port;
-					अवरोध;
-				पूर्ण
-		पूर्ण
+					dev->if_port = tp->saved_if_port;
+					break;
+				}
+		}
 
 		/* Find the connected MII xcvrs.
-		   Doing this in खोलो() would allow detecting बाह्यal xcvrs
-		   later, but takes much समय. */
+		   Doing this in open() would allow detecting external xcvrs
+		   later, but takes much time. */
 		tulip_find_mii (dev, board_idx);
-	पूर्ण
+	}
 
-	/* The Tulip-specअगरic entries in the device काष्ठाure. */
+	/* The Tulip-specific entries in the device structure. */
 	dev->netdev_ops = &tulip_netdev_ops;
-	dev->watchकरोg_समयo = TX_TIMEOUT;
-#अगर_घोषित CONFIG_TULIP_NAPI
-	netअगर_napi_add(dev, &tp->napi, tulip_poll, 16);
-#पूर्ण_अगर
+	dev->watchdog_timeo = TX_TIMEOUT;
+#ifdef CONFIG_TULIP_NAPI
+	netif_napi_add(dev, &tp->napi, tulip_poll, 16);
+#endif
 	dev->ethtool_ops = &ops;
 
-	अगर (रेजिस्टर_netdev(dev))
-		जाओ err_out_मुक्त_ring;
+	if (register_netdev(dev))
+		goto err_out_free_ring;
 
 	pci_set_drvdata(pdev, dev);
 
 	dev_info(&dev->dev,
-#अगर_घोषित CONFIG_TULIP_MMIO
+#ifdef CONFIG_TULIP_MMIO
 		 "%s rev %d at MMIO %#llx,%s %pM, IRQ %d\n",
-#अन्यथा
+#else
 		 "%s rev %d at Port %#llx,%s %pM, IRQ %d\n",
-#पूर्ण_अगर
+#endif
 		 chip_name, pdev->revision,
-		 (अचिन्हित दीर्घ दीर्घ)pci_resource_start(pdev, TULIP_BAR),
+		 (unsigned long long)pci_resource_start(pdev, TULIP_BAR),
 		 eeprom_missing ? " EEPROM not present," : "",
 		 dev->dev_addr, irq);
 
-        अगर (tp->chip_id == PNIC2)
+        if (tp->chip_id == PNIC2)
 		tp->link_change = pnic2_lnk_change;
-	अन्यथा अगर (tp->flags & HAS_NWAY)
+	else if (tp->flags & HAS_NWAY)
 		tp->link_change = t21142_lnk_change;
-	अन्यथा अगर (tp->flags & HAS_PNICNWAY)
+	else if (tp->flags & HAS_PNICNWAY)
 		tp->link_change = pnic_lnk_change;
 
-	/* Reset the xcvr पूर्णांकerface and turn on heartbeat. */
-	चयन (chip_idx) अणु
-	हाल DC21140:
-	हाल DM910X:
-	शेष:
-		अगर (tp->mtable)
-			ioग_लिखो32(tp->mtable->csr12dir | 0x100, ioaddr + CSR12);
-		अवरोध;
-	हाल DC21142:
-		अगर (tp->mii_cnt  ||  tulip_media_cap[dev->अगर_port] & MediaIsMII) अणु
-			ioग_लिखो32(csr6_mask_deख_स्थितिe, ioaddr + CSR6);
-			ioग_लिखो32(0x0000, ioaddr + CSR13);
-			ioग_लिखो32(0x0000, ioaddr + CSR14);
-			ioग_लिखो32(csr6_mask_hdcap, ioaddr + CSR6);
-		पूर्ण अन्यथा
+	/* Reset the xcvr interface and turn on heartbeat. */
+	switch (chip_idx) {
+	case DC21140:
+	case DM910X:
+	default:
+		if (tp->mtable)
+			iowrite32(tp->mtable->csr12dir | 0x100, ioaddr + CSR12);
+		break;
+	case DC21142:
+		if (tp->mii_cnt  ||  tulip_media_cap[dev->if_port] & MediaIsMII) {
+			iowrite32(csr6_mask_defstate, ioaddr + CSR6);
+			iowrite32(0x0000, ioaddr + CSR13);
+			iowrite32(0x0000, ioaddr + CSR14);
+			iowrite32(csr6_mask_hdcap, ioaddr + CSR6);
+		} else
 			t21142_start_nway(dev);
-		अवरोध;
-	हाल PNIC2:
-	        /* just करो a reset क्रम sanity sake */
-		ioग_लिखो32(0x0000, ioaddr + CSR13);
-		ioग_लिखो32(0x0000, ioaddr + CSR14);
-		अवरोध;
-	हाल LC82C168:
-		अगर ( ! tp->mii_cnt) अणु
+		break;
+	case PNIC2:
+	        /* just do a reset for sanity sake */
+		iowrite32(0x0000, ioaddr + CSR13);
+		iowrite32(0x0000, ioaddr + CSR14);
+		break;
+	case LC82C168:
+		if ( ! tp->mii_cnt) {
 			tp->nway = 1;
 			tp->nwayset = 0;
-			ioग_लिखो32(csr6_tपंचांग | csr6_ca, ioaddr + CSR6);
-			ioग_लिखो32(0x30, ioaddr + CSR12);
-			ioग_लिखो32(0x0001F078, ioaddr + CSR6);
-			ioग_लिखो32(0x0201F078, ioaddr + CSR6); /* Turn on स्वतःnegotiation. */
-		पूर्ण
-		अवरोध;
-	हाल MX98713:
-	हाल COMPEX9881:
-		ioग_लिखो32(0x00000000, ioaddr + CSR6);
-		ioग_लिखो32(0x000711C0, ioaddr + CSR14); /* Turn on NWay. */
-		ioग_लिखो32(0x00000001, ioaddr + CSR13);
-		अवरोध;
-	हाल MX98715:
-	हाल MX98725:
-		ioग_लिखो32(0x01a80000, ioaddr + CSR6);
-		ioग_लिखो32(0xFFFFFFFF, ioaddr + CSR14);
-		ioग_लिखो32(0x00001000, ioaddr + CSR12);
-		अवरोध;
-	हाल COMET:
+			iowrite32(csr6_ttm | csr6_ca, ioaddr + CSR6);
+			iowrite32(0x30, ioaddr + CSR12);
+			iowrite32(0x0001F078, ioaddr + CSR6);
+			iowrite32(0x0201F078, ioaddr + CSR6); /* Turn on autonegotiation. */
+		}
+		break;
+	case MX98713:
+	case COMPEX9881:
+		iowrite32(0x00000000, ioaddr + CSR6);
+		iowrite32(0x000711C0, ioaddr + CSR14); /* Turn on NWay. */
+		iowrite32(0x00000001, ioaddr + CSR13);
+		break;
+	case MX98715:
+	case MX98725:
+		iowrite32(0x01a80000, ioaddr + CSR6);
+		iowrite32(0xFFFFFFFF, ioaddr + CSR14);
+		iowrite32(0x00001000, ioaddr + CSR12);
+		break;
+	case COMET:
 		/* No initialization necessary. */
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	/* put the chip in snooze mode until खोलोed */
-	tulip_set_घातer_state (tp, 0, 1);
+	/* put the chip in snooze mode until opened */
+	tulip_set_power_state (tp, 0, 1);
 
-	वापस 0;
+	return 0;
 
-err_out_मुक्त_ring:
-	dma_मुक्त_coherent(&pdev->dev,
-			  माप(काष्ठा tulip_rx_desc) * RX_RING_SIZE +
-			  माप(काष्ठा tulip_tx_desc) * TX_RING_SIZE,
+err_out_free_ring:
+	dma_free_coherent(&pdev->dev,
+			  sizeof(struct tulip_rx_desc) * RX_RING_SIZE +
+			  sizeof(struct tulip_tx_desc) * TX_RING_SIZE,
 			  tp->rx_ring, tp->rx_ring_dma);
 
 err_out_mtable:
-	kमुक्त (tp->mtable);
+	kfree (tp->mtable);
 	pci_iounmap(pdev, ioaddr);
 
-err_out_मुक्त_res:
+err_out_free_res:
 	pci_release_regions (pdev);
 
-err_out_मुक्त_netdev:
-	मुक्त_netdev (dev);
-	वापस -ENODEV;
-पूर्ण
+err_out_free_netdev:
+	free_netdev (dev);
+	return -ENODEV;
+}
 
 
-/* set the रेजिस्टरs according to the given wolopts */
-अटल व्योम tulip_set_wolopts (काष्ठा pci_dev *pdev, u32 wolopts)
-अणु
-	काष्ठा net_device *dev = pci_get_drvdata(pdev);
-	काष्ठा tulip_निजी *tp = netdev_priv(dev);
-	व्योम __iomem *ioaddr = tp->base_addr;
+/* set the registers according to the given wolopts */
+static void tulip_set_wolopts (struct pci_dev *pdev, u32 wolopts)
+{
+	struct net_device *dev = pci_get_drvdata(pdev);
+	struct tulip_private *tp = netdev_priv(dev);
+	void __iomem *ioaddr = tp->base_addr;
 
-	अगर (tp->flags & COMET_PM) अणु
-		अचिन्हित पूर्णांक पंचांगp;
+	if (tp->flags & COMET_PM) {
+		unsigned int tmp;
 
-		पंचांगp = ioपढ़ो32(ioaddr + CSR18);
-		पंचांगp &= ~(comet_csr18_pmes_sticky | comet_csr18_apm_mode | comet_csr18_d3a);
-		पंचांगp |= comet_csr18_pm_mode;
-		ioग_लिखो32(पंचांगp, ioaddr + CSR18);
+		tmp = ioread32(ioaddr + CSR18);
+		tmp &= ~(comet_csr18_pmes_sticky | comet_csr18_apm_mode | comet_csr18_d3a);
+		tmp |= comet_csr18_pm_mode;
+		iowrite32(tmp, ioaddr + CSR18);
 
 		/* Set the Wake-up Control/Status Register to the given WOL options*/
-		पंचांगp = ioपढ़ो32(ioaddr + CSR13);
-		पंचांगp &= ~(comet_csr13_linkoffe | comet_csr13_linkone | comet_csr13_wfre | comet_csr13_lsce | comet_csr13_mpre);
-		अगर (wolopts & WAKE_MAGIC)
-			पंचांगp |= comet_csr13_mpre;
-		अगर (wolopts & WAKE_PHY)
-			पंचांगp |= comet_csr13_linkoffe | comet_csr13_linkone | comet_csr13_lsce;
+		tmp = ioread32(ioaddr + CSR13);
+		tmp &= ~(comet_csr13_linkoffe | comet_csr13_linkone | comet_csr13_wfre | comet_csr13_lsce | comet_csr13_mpre);
+		if (wolopts & WAKE_MAGIC)
+			tmp |= comet_csr13_mpre;
+		if (wolopts & WAKE_PHY)
+			tmp |= comet_csr13_linkoffe | comet_csr13_linkone | comet_csr13_lsce;
 		/* Clear the event flags */
-		पंचांगp |= comet_csr13_wfr | comet_csr13_mpr | comet_csr13_lsc;
-		ioग_लिखो32(पंचांगp, ioaddr + CSR13);
-	पूर्ण
-पूर्ण
+		tmp |= comet_csr13_wfr | comet_csr13_mpr | comet_csr13_lsc;
+		iowrite32(tmp, ioaddr + CSR13);
+	}
+}
 
-अटल पूर्णांक __maybe_unused tulip_suspend(काष्ठा device *dev_d)
-अणु
-	काष्ठा net_device *dev = dev_get_drvdata(dev_d);
-	काष्ठा tulip_निजी *tp = netdev_priv(dev);
+static int __maybe_unused tulip_suspend(struct device *dev_d)
+{
+	struct net_device *dev = dev_get_drvdata(dev_d);
+	struct tulip_private *tp = netdev_priv(dev);
 
-	अगर (!dev)
-		वापस -EINVAL;
+	if (!dev)
+		return -EINVAL;
 
-	अगर (!netअगर_running(dev))
-		जाओ save_state;
+	if (!netif_running(dev))
+		goto save_state;
 
-	tulip_करोwn(dev);
+	tulip_down(dev);
 
-	netअगर_device_detach(dev);
+	netif_device_detach(dev);
 	/* FIXME: it needlessly adds an error path. */
-	मुक्त_irq(tp->pdev->irq, dev);
+	free_irq(tp->pdev->irq, dev);
 
 save_state:
 	tulip_set_wolopts(to_pci_dev(dev_d), tp->wolinfo.wolopts);
 	device_set_wakeup_enable(dev_d, !!tp->wolinfo.wolopts);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __maybe_unused tulip_resume(काष्ठा device *dev_d)
-अणु
-	काष्ठा pci_dev *pdev = to_pci_dev(dev_d);
-	काष्ठा net_device *dev = dev_get_drvdata(dev_d);
-	काष्ठा tulip_निजी *tp = netdev_priv(dev);
-	व्योम __iomem *ioaddr = tp->base_addr;
-	अचिन्हित पूर्णांक पंचांगp;
-	पूर्णांक retval = 0;
+static int __maybe_unused tulip_resume(struct device *dev_d)
+{
+	struct pci_dev *pdev = to_pci_dev(dev_d);
+	struct net_device *dev = dev_get_drvdata(dev_d);
+	struct tulip_private *tp = netdev_priv(dev);
+	void __iomem *ioaddr = tp->base_addr;
+	unsigned int tmp;
+	int retval = 0;
 
-	अगर (!dev)
-		वापस -EINVAL;
+	if (!dev)
+		return -EINVAL;
 
-	अगर (!netअगर_running(dev))
-		वापस 0;
+	if (!netif_running(dev))
+		return 0;
 
-	retval = request_irq(pdev->irq, tulip_पूर्णांकerrupt, IRQF_SHARED,
+	retval = request_irq(pdev->irq, tulip_interrupt, IRQF_SHARED,
 			     dev->name, dev);
-	अगर (retval) अणु
+	if (retval) {
 		pr_err("request_irq failed in resume\n");
-		वापस retval;
-	पूर्ण
+		return retval;
+	}
 
-	अगर (tp->flags & COMET_PM) अणु
+	if (tp->flags & COMET_PM) {
 		device_set_wakeup_enable(dev_d, 0);
 
 		/* Clear the PMES flag */
-		पंचांगp = ioपढ़ो32(ioaddr + CSR20);
-		पंचांगp |= comet_csr20_pmes;
-		ioग_लिखो32(पंचांगp, ioaddr + CSR20);
+		tmp = ioread32(ioaddr + CSR20);
+		tmp |= comet_csr20_pmes;
+		iowrite32(tmp, ioaddr + CSR20);
 
 		/* Disable all wake-up events */
 		tulip_set_wolopts(pdev, 0);
-	पूर्ण
-	netअगर_device_attach(dev);
+	}
+	netif_device_attach(dev);
 
-	अगर (netअगर_running(dev))
+	if (netif_running(dev))
 		tulip_up(dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम tulip_हटाओ_one(काष्ठा pci_dev *pdev)
-अणु
-	काष्ठा net_device *dev = pci_get_drvdata (pdev);
-	काष्ठा tulip_निजी *tp;
+static void tulip_remove_one(struct pci_dev *pdev)
+{
+	struct net_device *dev = pci_get_drvdata (pdev);
+	struct tulip_private *tp;
 
-	अगर (!dev)
-		वापस;
+	if (!dev)
+		return;
 
 	tp = netdev_priv(dev);
-	unरेजिस्टर_netdev(dev);
-	dma_मुक्त_coherent(&pdev->dev,
-			  माप(काष्ठा tulip_rx_desc) * RX_RING_SIZE +
-			  माप(काष्ठा tulip_tx_desc) * TX_RING_SIZE,
+	unregister_netdev(dev);
+	dma_free_coherent(&pdev->dev,
+			  sizeof(struct tulip_rx_desc) * RX_RING_SIZE +
+			  sizeof(struct tulip_tx_desc) * TX_RING_SIZE,
 			  tp->rx_ring, tp->rx_ring_dma);
-	kमुक्त (tp->mtable);
+	kfree (tp->mtable);
 	pci_iounmap(pdev, tp->base_addr);
-	मुक्त_netdev (dev);
+	free_netdev (dev);
 	pci_release_regions (pdev);
 	pci_disable_device(pdev);
 
-	/* pci_घातer_off (pdev, -1); */
-पूर्ण
+	/* pci_power_off (pdev, -1); */
+}
 
-#अगर_घोषित CONFIG_NET_POLL_CONTROLLER
+#ifdef CONFIG_NET_POLL_CONTROLLER
 /*
  * Polling 'interrupt' - used by things like netconsole to send skbs
- * without having to re-enable पूर्णांकerrupts. It's not called जबतक
- * the पूर्णांकerrupt routine is executing.
+ * without having to re-enable interrupts. It's not called while
+ * the interrupt routine is executing.
  */
 
-अटल व्योम poll_tulip (काष्ठा net_device *dev)
-अणु
-	काष्ठा tulip_निजी *tp = netdev_priv(dev);
-	स्थिर पूर्णांक irq = tp->pdev->irq;
+static void poll_tulip (struct net_device *dev)
+{
+	struct tulip_private *tp = netdev_priv(dev);
+	const int irq = tp->pdev->irq;
 
 	/* disable_irq here is not very nice, but with the lockless
-	   पूर्णांकerrupt handler we have no other choice. */
+	   interrupt handler we have no other choice. */
 	disable_irq(irq);
-	tulip_पूर्णांकerrupt (irq, dev);
+	tulip_interrupt (irq, dev);
 	enable_irq(irq);
-पूर्ण
-#पूर्ण_अगर
+}
+#endif
 
-अटल SIMPLE_DEV_PM_OPS(tulip_pm_ops, tulip_suspend, tulip_resume);
+static SIMPLE_DEV_PM_OPS(tulip_pm_ops, tulip_suspend, tulip_resume);
 
-अटल काष्ठा pci_driver tulip_driver = अणु
+static struct pci_driver tulip_driver = {
 	.name		= DRV_NAME,
 	.id_table	= tulip_pci_tbl,
 	.probe		= tulip_init_one,
-	.हटाओ		= tulip_हटाओ_one,
+	.remove		= tulip_remove_one,
 	.driver.pm	= &tulip_pm_ops,
-पूर्ण;
+};
 
 
-अटल पूर्णांक __init tulip_init (व्योम)
-अणु
-	अगर (!csr0) अणु
+static int __init tulip_init (void)
+{
+	if (!csr0) {
 		pr_warn("tulip: unknown CPU architecture, using default csr0\n");
-		/* शेष to 8 दीर्घword cache line alignment */
+		/* default to 8 longword cache line alignment */
 		csr0 = 0x00A00000 | 0x4800;
-	पूर्ण
+	}
 
-	/* copy module parms पूर्णांकo globals */
-	tulip_rx_copyअवरोध = rx_copyअवरोध;
-	tulip_max_पूर्णांकerrupt_work = max_पूर्णांकerrupt_work;
+	/* copy module parms into globals */
+	tulip_rx_copybreak = rx_copybreak;
+	tulip_max_interrupt_work = max_interrupt_work;
 
-	/* probe क्रम and init boards */
-	वापस pci_रेजिस्टर_driver(&tulip_driver);
-पूर्ण
+	/* probe for and init boards */
+	return pci_register_driver(&tulip_driver);
+}
 
 
-अटल व्योम __निकास tulip_cleanup (व्योम)
-अणु
-	pci_unरेजिस्टर_driver (&tulip_driver);
-पूर्ण
+static void __exit tulip_cleanup (void)
+{
+	pci_unregister_driver (&tulip_driver);
+}
 
 
 module_init(tulip_init);
-module_निकास(tulip_cleanup);
+module_exit(tulip_cleanup);

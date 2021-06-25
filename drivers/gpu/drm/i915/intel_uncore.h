@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
- * Copyright तऊ 2017 Intel Corporation
+ * Copyright © 2017 Intel Corporation
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -23,29 +22,29 @@
  *
  */
 
-#अगर_अघोषित __INTEL_UNCORE_H__
-#घोषणा __INTEL_UNCORE_H__
+#ifndef __INTEL_UNCORE_H__
+#define __INTEL_UNCORE_H__
 
-#समावेश <linux/spinlock.h>
-#समावेश <linux/notअगरier.h>
-#समावेश <linux/hrसमयr.h>
-#समावेश <linux/io-64-nonatomic-lo-hi.h>
+#include <linux/spinlock.h>
+#include <linux/notifier.h>
+#include <linux/hrtimer.h>
+#include <linux/io-64-nonatomic-lo-hi.h>
 
-#समावेश "i915_reg.h"
+#include "i915_reg.h"
 
-काष्ठा drm_i915_निजी;
-काष्ठा पूर्णांकel_runसमय_pm;
-काष्ठा पूर्णांकel_uncore;
-काष्ठा पूर्णांकel_gt;
+struct drm_i915_private;
+struct intel_runtime_pm;
+struct intel_uncore;
+struct intel_gt;
 
-काष्ठा पूर्णांकel_uncore_mmio_debug अणु
+struct intel_uncore_mmio_debug {
 	spinlock_t lock; /** lock is also taken in irq contexts. */
-	पूर्णांक unclaimed_mmio_check;
-	पूर्णांक saved_mmio_check;
+	int unclaimed_mmio_check;
+	int saved_mmio_check;
 	u32 suspend_count;
-पूर्ण;
+};
 
-क्रमागत क्रमcewake_करोमुख्य_id अणु
+enum forcewake_domain_id {
 	FW_DOMAIN_ID_RENDER = 0,
 	FW_DOMAIN_ID_GT,        /* also includes blitter engine */
 	FW_DOMAIN_ID_MEDIA,
@@ -57,9 +56,9 @@
 	FW_DOMAIN_ID_MEDIA_VEBOX1,
 
 	FW_DOMAIN_ID_COUNT
-पूर्ण;
+};
 
-क्रमागत क्रमcewake_करोमुख्यs अणु
+enum forcewake_domains {
 	FORCEWAKE_RENDER	= BIT(FW_DOMAIN_ID_RENDER),
 	FORCEWAKE_GT		= BIT(FW_DOMAIN_ID_GT),
 	FORCEWAKE_MEDIA		= BIT(FW_DOMAIN_ID_MEDIA),
@@ -71,354 +70,354 @@
 	FORCEWAKE_MEDIA_VEBOX1	= BIT(FW_DOMAIN_ID_MEDIA_VEBOX1),
 
 	FORCEWAKE_ALL = BIT(FW_DOMAIN_ID_COUNT) - 1
-पूर्ण;
+};
 
-काष्ठा पूर्णांकel_uncore_funcs अणु
-	व्योम (*क्रमce_wake_get)(काष्ठा पूर्णांकel_uncore *uncore,
-			       क्रमागत क्रमcewake_करोमुख्यs करोमुख्यs);
-	व्योम (*क्रमce_wake_put)(काष्ठा पूर्णांकel_uncore *uncore,
-			       क्रमागत क्रमcewake_करोमुख्यs करोमुख्यs);
+struct intel_uncore_funcs {
+	void (*force_wake_get)(struct intel_uncore *uncore,
+			       enum forcewake_domains domains);
+	void (*force_wake_put)(struct intel_uncore *uncore,
+			       enum forcewake_domains domains);
 
-	क्रमागत क्रमcewake_करोमुख्यs (*पढ़ो_fw_करोमुख्यs)(काष्ठा पूर्णांकel_uncore *uncore,
+	enum forcewake_domains (*read_fw_domains)(struct intel_uncore *uncore,
 						  i915_reg_t r);
-	क्रमागत क्रमcewake_करोमुख्यs (*ग_लिखो_fw_करोमुख्यs)(काष्ठा पूर्णांकel_uncore *uncore,
+	enum forcewake_domains (*write_fw_domains)(struct intel_uncore *uncore,
 						   i915_reg_t r);
 
-	u8 (*mmio_पढ़ोb)(काष्ठा पूर्णांकel_uncore *uncore,
+	u8 (*mmio_readb)(struct intel_uncore *uncore,
 			 i915_reg_t r, bool trace);
-	u16 (*mmio_पढ़ोw)(काष्ठा पूर्णांकel_uncore *uncore,
+	u16 (*mmio_readw)(struct intel_uncore *uncore,
 			  i915_reg_t r, bool trace);
-	u32 (*mmio_पढ़ोl)(काष्ठा पूर्णांकel_uncore *uncore,
+	u32 (*mmio_readl)(struct intel_uncore *uncore,
 			  i915_reg_t r, bool trace);
-	u64 (*mmio_पढ़ोq)(काष्ठा पूर्णांकel_uncore *uncore,
+	u64 (*mmio_readq)(struct intel_uncore *uncore,
 			  i915_reg_t r, bool trace);
 
-	व्योम (*mmio_ग_लिखोb)(काष्ठा पूर्णांकel_uncore *uncore,
+	void (*mmio_writeb)(struct intel_uncore *uncore,
 			    i915_reg_t r, u8 val, bool trace);
-	व्योम (*mmio_ग_लिखोw)(काष्ठा पूर्णांकel_uncore *uncore,
+	void (*mmio_writew)(struct intel_uncore *uncore,
 			    i915_reg_t r, u16 val, bool trace);
-	व्योम (*mmio_ग_लिखोl)(काष्ठा पूर्णांकel_uncore *uncore,
+	void (*mmio_writel)(struct intel_uncore *uncore,
 			    i915_reg_t r, u32 val, bool trace);
-पूर्ण;
+};
 
-काष्ठा पूर्णांकel_क्रमcewake_range अणु
+struct intel_forcewake_range {
 	u32 start;
 	u32 end;
 
-	क्रमागत क्रमcewake_करोमुख्यs करोमुख्यs;
-पूर्ण;
+	enum forcewake_domains domains;
+};
 
-काष्ठा पूर्णांकel_uncore अणु
-	व्योम __iomem *regs;
+struct intel_uncore {
+	void __iomem *regs;
 
-	काष्ठा drm_i915_निजी *i915;
-	काष्ठा पूर्णांकel_runसमय_pm *rpm;
+	struct drm_i915_private *i915;
+	struct intel_runtime_pm *rpm;
 
 	spinlock_t lock; /** lock is also taken in irq contexts. */
 
-	अचिन्हित पूर्णांक flags;
-#घोषणा UNCORE_HAS_FORCEWAKE		BIT(0)
-#घोषणा UNCORE_HAS_FPGA_DBG_UNCLAIMED	BIT(1)
-#घोषणा UNCORE_HAS_DBG_UNCLAIMED	BIT(2)
-#घोषणा UNCORE_HAS_FIFO			BIT(3)
+	unsigned int flags;
+#define UNCORE_HAS_FORCEWAKE		BIT(0)
+#define UNCORE_HAS_FPGA_DBG_UNCLAIMED	BIT(1)
+#define UNCORE_HAS_DBG_UNCLAIMED	BIT(2)
+#define UNCORE_HAS_FIFO			BIT(3)
 
-	स्थिर काष्ठा पूर्णांकel_क्रमcewake_range *fw_करोमुख्यs_table;
-	अचिन्हित पूर्णांक fw_करोमुख्यs_table_entries;
+	const struct intel_forcewake_range *fw_domains_table;
+	unsigned int fw_domains_table_entries;
 
-	काष्ठा notअगरier_block pmic_bus_access_nb;
-	काष्ठा पूर्णांकel_uncore_funcs funcs;
+	struct notifier_block pmic_bus_access_nb;
+	struct intel_uncore_funcs funcs;
 
-	अचिन्हित पूर्णांक fअगरo_count;
+	unsigned int fifo_count;
 
-	क्रमागत क्रमcewake_करोमुख्यs fw_करोमुख्यs;
-	क्रमागत क्रमcewake_करोमुख्यs fw_करोमुख्यs_active;
-	क्रमागत क्रमcewake_करोमुख्यs fw_करोमुख्यs_समयr;
-	क्रमागत क्रमcewake_करोमुख्यs fw_करोमुख्यs_saved; /* user करोमुख्यs saved क्रम S3 */
+	enum forcewake_domains fw_domains;
+	enum forcewake_domains fw_domains_active;
+	enum forcewake_domains fw_domains_timer;
+	enum forcewake_domains fw_domains_saved; /* user domains saved for S3 */
 
-	काष्ठा पूर्णांकel_uncore_क्रमcewake_करोमुख्य अणु
-		काष्ठा पूर्णांकel_uncore *uncore;
-		क्रमागत क्रमcewake_करोमुख्य_id id;
-		क्रमागत क्रमcewake_करोमुख्यs mask;
-		अचिन्हित पूर्णांक wake_count;
+	struct intel_uncore_forcewake_domain {
+		struct intel_uncore *uncore;
+		enum forcewake_domain_id id;
+		enum forcewake_domains mask;
+		unsigned int wake_count;
 		bool active;
-		काष्ठा hrसमयr समयr;
+		struct hrtimer timer;
 		u32 __iomem *reg_set;
 		u32 __iomem *reg_ack;
-	पूर्ण *fw_करोमुख्य[FW_DOMAIN_ID_COUNT];
+	} *fw_domain[FW_DOMAIN_ID_COUNT];
 
-	अचिन्हित पूर्णांक user_क्रमcewake_count;
+	unsigned int user_forcewake_count;
 
-	काष्ठा पूर्णांकel_uncore_mmio_debug *debug;
-पूर्ण;
+	struct intel_uncore_mmio_debug *debug;
+};
 
-/* Iterate over initialised fw करोमुख्यs */
-#घोषणा क्रम_each_fw_करोमुख्य_masked(करोमुख्य__, mask__, uncore__, पंचांगp__) \
-	क्रम (पंचांगp__ = (mask__); पंचांगp__ ;) \
-		क्रम_each_अगर(करोमुख्य__ = (uncore__)->fw_करोमुख्य[__mask_next_bit(पंचांगp__)])
+/* Iterate over initialised fw domains */
+#define for_each_fw_domain_masked(domain__, mask__, uncore__, tmp__) \
+	for (tmp__ = (mask__); tmp__ ;) \
+		for_each_if(domain__ = (uncore__)->fw_domain[__mask_next_bit(tmp__)])
 
-#घोषणा क्रम_each_fw_करोमुख्य(करोमुख्य__, uncore__, पंचांगp__) \
-	क्रम_each_fw_करोमुख्य_masked(करोमुख्य__, (uncore__)->fw_करोमुख्यs, uncore__, पंचांगp__)
+#define for_each_fw_domain(domain__, uncore__, tmp__) \
+	for_each_fw_domain_masked(domain__, (uncore__)->fw_domains, uncore__, tmp__)
 
-अटल अंतरभूत bool
-पूर्णांकel_uncore_has_क्रमcewake(स्थिर काष्ठा पूर्णांकel_uncore *uncore)
-अणु
-	वापस uncore->flags & UNCORE_HAS_FORCEWAKE;
-पूर्ण
+static inline bool
+intel_uncore_has_forcewake(const struct intel_uncore *uncore)
+{
+	return uncore->flags & UNCORE_HAS_FORCEWAKE;
+}
 
-अटल अंतरभूत bool
-पूर्णांकel_uncore_has_fpga_dbg_unclaimed(स्थिर काष्ठा पूर्णांकel_uncore *uncore)
-अणु
-	वापस uncore->flags & UNCORE_HAS_FPGA_DBG_UNCLAIMED;
-पूर्ण
+static inline bool
+intel_uncore_has_fpga_dbg_unclaimed(const struct intel_uncore *uncore)
+{
+	return uncore->flags & UNCORE_HAS_FPGA_DBG_UNCLAIMED;
+}
 
-अटल अंतरभूत bool
-पूर्णांकel_uncore_has_dbg_unclaimed(स्थिर काष्ठा पूर्णांकel_uncore *uncore)
-अणु
-	वापस uncore->flags & UNCORE_HAS_DBG_UNCLAIMED;
-पूर्ण
+static inline bool
+intel_uncore_has_dbg_unclaimed(const struct intel_uncore *uncore)
+{
+	return uncore->flags & UNCORE_HAS_DBG_UNCLAIMED;
+}
 
-अटल अंतरभूत bool
-पूर्णांकel_uncore_has_fअगरo(स्थिर काष्ठा पूर्णांकel_uncore *uncore)
-अणु
-	वापस uncore->flags & UNCORE_HAS_FIFO;
-पूर्ण
+static inline bool
+intel_uncore_has_fifo(const struct intel_uncore *uncore)
+{
+	return uncore->flags & UNCORE_HAS_FIFO;
+}
 
-व्योम
-पूर्णांकel_uncore_mmio_debug_init_early(काष्ठा पूर्णांकel_uncore_mmio_debug *mmio_debug);
-व्योम पूर्णांकel_uncore_init_early(काष्ठा पूर्णांकel_uncore *uncore,
-			     काष्ठा drm_i915_निजी *i915);
-पूर्णांक पूर्णांकel_uncore_init_mmio(काष्ठा पूर्णांकel_uncore *uncore);
-व्योम पूर्णांकel_uncore_prune_engine_fw_करोमुख्यs(काष्ठा पूर्णांकel_uncore *uncore,
-					  काष्ठा पूर्णांकel_gt *gt);
-bool पूर्णांकel_uncore_unclaimed_mmio(काष्ठा पूर्णांकel_uncore *uncore);
-bool पूर्णांकel_uncore_arm_unclaimed_mmio_detection(काष्ठा पूर्णांकel_uncore *uncore);
-व्योम पूर्णांकel_uncore_fini_mmio(काष्ठा पूर्णांकel_uncore *uncore);
-व्योम पूर्णांकel_uncore_suspend(काष्ठा पूर्णांकel_uncore *uncore);
-व्योम पूर्णांकel_uncore_resume_early(काष्ठा पूर्णांकel_uncore *uncore);
-व्योम पूर्णांकel_uncore_runसमय_resume(काष्ठा पूर्णांकel_uncore *uncore);
+void
+intel_uncore_mmio_debug_init_early(struct intel_uncore_mmio_debug *mmio_debug);
+void intel_uncore_init_early(struct intel_uncore *uncore,
+			     struct drm_i915_private *i915);
+int intel_uncore_init_mmio(struct intel_uncore *uncore);
+void intel_uncore_prune_engine_fw_domains(struct intel_uncore *uncore,
+					  struct intel_gt *gt);
+bool intel_uncore_unclaimed_mmio(struct intel_uncore *uncore);
+bool intel_uncore_arm_unclaimed_mmio_detection(struct intel_uncore *uncore);
+void intel_uncore_fini_mmio(struct intel_uncore *uncore);
+void intel_uncore_suspend(struct intel_uncore *uncore);
+void intel_uncore_resume_early(struct intel_uncore *uncore);
+void intel_uncore_runtime_resume(struct intel_uncore *uncore);
 
-व्योम निश्चित_क्रमcewakes_inactive(काष्ठा पूर्णांकel_uncore *uncore);
-व्योम निश्चित_क्रमcewakes_active(काष्ठा पूर्णांकel_uncore *uncore,
-			      क्रमागत क्रमcewake_करोमुख्यs fw_करोमुख्यs);
-स्थिर अक्षर *पूर्णांकel_uncore_क्रमcewake_करोमुख्य_to_str(स्थिर क्रमागत क्रमcewake_करोमुख्य_id id);
+void assert_forcewakes_inactive(struct intel_uncore *uncore);
+void assert_forcewakes_active(struct intel_uncore *uncore,
+			      enum forcewake_domains fw_domains);
+const char *intel_uncore_forcewake_domain_to_str(const enum forcewake_domain_id id);
 
-क्रमागत क्रमcewake_करोमुख्यs
-पूर्णांकel_uncore_क्रमcewake_क्रम_reg(काष्ठा पूर्णांकel_uncore *uncore,
-			       i915_reg_t reg, अचिन्हित पूर्णांक op);
-#घोषणा FW_REG_READ  (1)
-#घोषणा FW_REG_WRITE (2)
+enum forcewake_domains
+intel_uncore_forcewake_for_reg(struct intel_uncore *uncore,
+			       i915_reg_t reg, unsigned int op);
+#define FW_REG_READ  (1)
+#define FW_REG_WRITE (2)
 
-व्योम पूर्णांकel_uncore_क्रमcewake_get(काष्ठा पूर्णांकel_uncore *uncore,
-				क्रमागत क्रमcewake_करोमुख्यs करोमुख्यs);
-व्योम पूर्णांकel_uncore_क्रमcewake_put(काष्ठा पूर्णांकel_uncore *uncore,
-				क्रमागत क्रमcewake_करोमुख्यs करोमुख्यs);
-व्योम पूर्णांकel_uncore_क्रमcewake_flush(काष्ठा पूर्णांकel_uncore *uncore,
-				  क्रमागत क्रमcewake_करोमुख्यs fw_करोमुख्यs);
+void intel_uncore_forcewake_get(struct intel_uncore *uncore,
+				enum forcewake_domains domains);
+void intel_uncore_forcewake_put(struct intel_uncore *uncore,
+				enum forcewake_domains domains);
+void intel_uncore_forcewake_flush(struct intel_uncore *uncore,
+				  enum forcewake_domains fw_domains);
 
 /*
  * Like above but the caller must manage the uncore.lock itself.
- * Must be used with पूर्णांकel_uncore_पढ़ो_fw() and मित्रs.
+ * Must be used with intel_uncore_read_fw() and friends.
  */
-व्योम पूर्णांकel_uncore_क्रमcewake_get__locked(काष्ठा पूर्णांकel_uncore *uncore,
-					क्रमागत क्रमcewake_करोमुख्यs करोमुख्यs);
-व्योम पूर्णांकel_uncore_क्रमcewake_put__locked(काष्ठा पूर्णांकel_uncore *uncore,
-					क्रमागत क्रमcewake_करोमुख्यs करोमुख्यs);
+void intel_uncore_forcewake_get__locked(struct intel_uncore *uncore,
+					enum forcewake_domains domains);
+void intel_uncore_forcewake_put__locked(struct intel_uncore *uncore,
+					enum forcewake_domains domains);
 
-व्योम पूर्णांकel_uncore_क्रमcewake_user_get(काष्ठा पूर्णांकel_uncore *uncore);
-व्योम पूर्णांकel_uncore_क्रमcewake_user_put(काष्ठा पूर्णांकel_uncore *uncore);
+void intel_uncore_forcewake_user_get(struct intel_uncore *uncore);
+void intel_uncore_forcewake_user_put(struct intel_uncore *uncore);
 
-पूर्णांक __पूर्णांकel_रुको_क्रम_रेजिस्टर(काष्ठा पूर्णांकel_uncore *uncore,
+int __intel_wait_for_register(struct intel_uncore *uncore,
 			      i915_reg_t reg,
 			      u32 mask,
 			      u32 value,
-			      अचिन्हित पूर्णांक fast_समयout_us,
-			      अचिन्हित पूर्णांक slow_समयout_ms,
+			      unsigned int fast_timeout_us,
+			      unsigned int slow_timeout_ms,
 			      u32 *out_value);
-अटल अंतरभूत पूर्णांक
-पूर्णांकel_रुको_क्रम_रेजिस्टर(काष्ठा पूर्णांकel_uncore *uncore,
+static inline int
+intel_wait_for_register(struct intel_uncore *uncore,
 			i915_reg_t reg,
 			u32 mask,
 			u32 value,
-			अचिन्हित पूर्णांक समयout_ms)
-अणु
-	वापस __पूर्णांकel_रुको_क्रम_रेजिस्टर(uncore, reg, mask, value, 2,
-					 समयout_ms, शून्य);
-पूर्ण
+			unsigned int timeout_ms)
+{
+	return __intel_wait_for_register(uncore, reg, mask, value, 2,
+					 timeout_ms, NULL);
+}
 
-पूर्णांक __पूर्णांकel_रुको_क्रम_रेजिस्टर_fw(काष्ठा पूर्णांकel_uncore *uncore,
+int __intel_wait_for_register_fw(struct intel_uncore *uncore,
 				 i915_reg_t reg,
 				 u32 mask,
 				 u32 value,
-				 अचिन्हित पूर्णांक fast_समयout_us,
-				 अचिन्हित पूर्णांक slow_समयout_ms,
+				 unsigned int fast_timeout_us,
+				 unsigned int slow_timeout_ms,
 				 u32 *out_value);
-अटल अंतरभूत पूर्णांक
-पूर्णांकel_रुको_क्रम_रेजिस्टर_fw(काष्ठा पूर्णांकel_uncore *uncore,
+static inline int
+intel_wait_for_register_fw(struct intel_uncore *uncore,
 			   i915_reg_t reg,
 			   u32 mask,
 			   u32 value,
-			       अचिन्हित पूर्णांक समयout_ms)
-अणु
-	वापस __पूर्णांकel_रुको_क्रम_रेजिस्टर_fw(uncore, reg, mask, value,
-					    2, समयout_ms, शून्य);
-पूर्ण
+			       unsigned int timeout_ms)
+{
+	return __intel_wait_for_register_fw(uncore, reg, mask, value,
+					    2, timeout_ms, NULL);
+}
 
-/* रेजिस्टर access functions */
-#घोषणा __raw_पढ़ो(x__, s__) \
-अटल अंतरभूत u##x__ __raw_uncore_पढ़ो##x__(स्थिर काष्ठा पूर्णांकel_uncore *uncore, \
+/* register access functions */
+#define __raw_read(x__, s__) \
+static inline u##x__ __raw_uncore_read##x__(const struct intel_uncore *uncore, \
 					    i915_reg_t reg) \
-अणु \
-	वापस पढ़ो##s__(uncore->regs + i915_mmio_reg_offset(reg)); \
-पूर्ण
+{ \
+	return read##s__(uncore->regs + i915_mmio_reg_offset(reg)); \
+}
 
-#घोषणा __raw_ग_लिखो(x__, s__) \
-अटल अंतरभूत व्योम __raw_uncore_ग_लिखो##x__(स्थिर काष्ठा पूर्णांकel_uncore *uncore, \
+#define __raw_write(x__, s__) \
+static inline void __raw_uncore_write##x__(const struct intel_uncore *uncore, \
 					   i915_reg_t reg, u##x__ val) \
-अणु \
-	ग_लिखो##s__(val, uncore->regs + i915_mmio_reg_offset(reg)); \
-पूर्ण
-__raw_पढ़ो(8, b)
-__raw_पढ़ो(16, w)
-__raw_पढ़ो(32, l)
-__raw_पढ़ो(64, q)
+{ \
+	write##s__(val, uncore->regs + i915_mmio_reg_offset(reg)); \
+}
+__raw_read(8, b)
+__raw_read(16, w)
+__raw_read(32, l)
+__raw_read(64, q)
 
-__raw_ग_लिखो(8, b)
-__raw_ग_लिखो(16, w)
-__raw_ग_लिखो(32, l)
-__raw_ग_लिखो(64, q)
+__raw_write(8, b)
+__raw_write(16, w)
+__raw_write(32, l)
+__raw_write(64, q)
 
-#अघोषित __raw_पढ़ो
-#अघोषित __raw_ग_लिखो
+#undef __raw_read
+#undef __raw_write
 
-#घोषणा __uncore_पढ़ो(name__, x__, s__, trace__) \
-अटल अंतरभूत u##x__ पूर्णांकel_uncore_##name__(काष्ठा पूर्णांकel_uncore *uncore, \
+#define __uncore_read(name__, x__, s__, trace__) \
+static inline u##x__ intel_uncore_##name__(struct intel_uncore *uncore, \
 					   i915_reg_t reg) \
-अणु \
-	वापस uncore->funcs.mmio_पढ़ो##s__(uncore, reg, (trace__)); \
-पूर्ण
+{ \
+	return uncore->funcs.mmio_read##s__(uncore, reg, (trace__)); \
+}
 
-#घोषणा __uncore_ग_लिखो(name__, x__, s__, trace__) \
-अटल अंतरभूत व्योम पूर्णांकel_uncore_##name__(काष्ठा पूर्णांकel_uncore *uncore, \
+#define __uncore_write(name__, x__, s__, trace__) \
+static inline void intel_uncore_##name__(struct intel_uncore *uncore, \
 					 i915_reg_t reg, u##x__ val) \
-अणु \
-	uncore->funcs.mmio_ग_लिखो##s__(uncore, reg, val, (trace__)); \
-पूर्ण
+{ \
+	uncore->funcs.mmio_write##s__(uncore, reg, val, (trace__)); \
+}
 
-__uncore_पढ़ो(पढ़ो8, 8, b, true)
-__uncore_पढ़ो(पढ़ो16, 16, w, true)
-__uncore_पढ़ो(पढ़ो, 32, l, true)
-__uncore_पढ़ो(पढ़ो16_notrace, 16, w, false)
-__uncore_पढ़ो(पढ़ो_notrace, 32, l, false)
+__uncore_read(read8, 8, b, true)
+__uncore_read(read16, 16, w, true)
+__uncore_read(read, 32, l, true)
+__uncore_read(read16_notrace, 16, w, false)
+__uncore_read(read_notrace, 32, l, false)
 
-__uncore_ग_लिखो(ग_लिखो8, 8, b, true)
-__uncore_ग_लिखो(ग_लिखो16, 16, w, true)
-__uncore_ग_लिखो(ग_लिखो, 32, l, true)
-__uncore_ग_लिखो(ग_लिखो_notrace, 32, l, false)
+__uncore_write(write8, 8, b, true)
+__uncore_write(write16, 16, w, true)
+__uncore_write(write, 32, l, true)
+__uncore_write(write_notrace, 32, l, false)
 
-/* Be very careful with पढ़ो/ग_लिखो 64-bit values. On 32-bit machines, they
- * will be implemented using 2 32-bit ग_लिखोs in an arbitrary order with
+/* Be very careful with read/write 64-bit values. On 32-bit machines, they
+ * will be implemented using 2 32-bit writes in an arbitrary order with
  * an arbitrary delay between them. This can cause the hardware to
- * act upon the पूर्णांकermediate value, possibly leading to corruption and
- * machine death. For this reason we करो not support पूर्णांकel_uncore_ग_लिखो64,
- * or uncore->funcs.mmio_ग_लिखोq.
+ * act upon the intermediate value, possibly leading to corruption and
+ * machine death. For this reason we do not support intel_uncore_write64,
+ * or uncore->funcs.mmio_writeq.
  *
- * When पढ़ोing a 64-bit value as two 32-bit values, the delay may cause
- * the two पढ़ोs to mismatch, e.g. a बारtamp overflowing. Also note that
- * occasionally a 64-bit रेजिस्टर करोes not actually support a full पढ़ोq
- * and must be पढ़ो using two 32-bit पढ़ोs.
+ * When reading a 64-bit value as two 32-bit values, the delay may cause
+ * the two reads to mismatch, e.g. a timestamp overflowing. Also note that
+ * occasionally a 64-bit register does not actually support a full readq
+ * and must be read using two 32-bit reads.
  *
  * You have been warned.
  */
-__uncore_पढ़ो(पढ़ो64, 64, q, true)
+__uncore_read(read64, 64, q, true)
 
-अटल अंतरभूत u64
-पूर्णांकel_uncore_पढ़ो64_2x32(काष्ठा पूर्णांकel_uncore *uncore,
+static inline u64
+intel_uncore_read64_2x32(struct intel_uncore *uncore,
 			 i915_reg_t lower_reg, i915_reg_t upper_reg)
-अणु
+{
 	u32 upper, lower, old_upper, loop = 0;
-	upper = पूर्णांकel_uncore_पढ़ो(uncore, upper_reg);
-	करो अणु
+	upper = intel_uncore_read(uncore, upper_reg);
+	do {
 		old_upper = upper;
-		lower = पूर्णांकel_uncore_पढ़ो(uncore, lower_reg);
-		upper = पूर्णांकel_uncore_पढ़ो(uncore, upper_reg);
-	पूर्ण जबतक (upper != old_upper && loop++ < 2);
-	वापस (u64)upper << 32 | lower;
-पूर्ण
+		lower = intel_uncore_read(uncore, lower_reg);
+		upper = intel_uncore_read(uncore, upper_reg);
+	} while (upper != old_upper && loop++ < 2);
+	return (u64)upper << 32 | lower;
+}
 
-#घोषणा पूर्णांकel_uncore_posting_पढ़ो(...) ((व्योम)पूर्णांकel_uncore_पढ़ो_notrace(__VA_ARGS__))
-#घोषणा पूर्णांकel_uncore_posting_पढ़ो16(...) ((व्योम)पूर्णांकel_uncore_पढ़ो16_notrace(__VA_ARGS__))
+#define intel_uncore_posting_read(...) ((void)intel_uncore_read_notrace(__VA_ARGS__))
+#define intel_uncore_posting_read16(...) ((void)intel_uncore_read16_notrace(__VA_ARGS__))
 
-#अघोषित __uncore_पढ़ो
-#अघोषित __uncore_ग_लिखो
+#undef __uncore_read
+#undef __uncore_write
 
 /* These are untraced mmio-accessors that are only valid to be used inside
- * critical sections, such as inside IRQ handlers, where क्रमcewake is explicitly
+ * critical sections, such as inside IRQ handlers, where forcewake is explicitly
  * controlled.
  *
- * Think twice, and think again, beक्रमe using these.
+ * Think twice, and think again, before using these.
  *
  * As an example, these accessors can possibly be used between:
  *
  * spin_lock_irq(&uncore->lock);
- * पूर्णांकel_uncore_क्रमcewake_get__locked();
+ * intel_uncore_forcewake_get__locked();
  *
  * and
  *
- * पूर्णांकel_uncore_क्रमcewake_put__locked();
+ * intel_uncore_forcewake_put__locked();
  * spin_unlock_irq(&uncore->lock);
  *
  *
- * Note: some रेजिस्टरs may not need क्रमcewake held, so
- * पूर्णांकel_uncore_क्रमcewake_अणुget,putपूर्ण can be omitted, see
- * पूर्णांकel_uncore_क्रमcewake_क्रम_reg().
+ * Note: some registers may not need forcewake held, so
+ * intel_uncore_forcewake_{get,put} can be omitted, see
+ * intel_uncore_forcewake_for_reg().
  *
- * Certain architectures will die अगर the same cacheline is concurrently accessed
- * by dअगरferent clients (e.g. on Ivybridge). Access to रेजिस्टरs should
- * thereक्रमe generally be serialised, by either the dev_priv->uncore.lock or
- * a more localised lock guarding all access to that bank of रेजिस्टरs.
+ * Certain architectures will die if the same cacheline is concurrently accessed
+ * by different clients (e.g. on Ivybridge). Access to registers should
+ * therefore generally be serialised, by either the dev_priv->uncore.lock or
+ * a more localised lock guarding all access to that bank of registers.
  */
-#घोषणा पूर्णांकel_uncore_पढ़ो_fw(...) __raw_uncore_पढ़ो32(__VA_ARGS__)
-#घोषणा पूर्णांकel_uncore_ग_लिखो_fw(...) __raw_uncore_ग_लिखो32(__VA_ARGS__)
-#घोषणा पूर्णांकel_uncore_ग_लिखो64_fw(...) __raw_uncore_ग_लिखो64(__VA_ARGS__)
-#घोषणा पूर्णांकel_uncore_posting_पढ़ो_fw(...) ((व्योम)पूर्णांकel_uncore_पढ़ो_fw(__VA_ARGS__))
+#define intel_uncore_read_fw(...) __raw_uncore_read32(__VA_ARGS__)
+#define intel_uncore_write_fw(...) __raw_uncore_write32(__VA_ARGS__)
+#define intel_uncore_write64_fw(...) __raw_uncore_write64(__VA_ARGS__)
+#define intel_uncore_posting_read_fw(...) ((void)intel_uncore_read_fw(__VA_ARGS__))
 
-अटल अंतरभूत व्योम पूर्णांकel_uncore_rmw(काष्ठा पूर्णांकel_uncore *uncore,
+static inline void intel_uncore_rmw(struct intel_uncore *uncore,
 				    i915_reg_t reg, u32 clear, u32 set)
-अणु
+{
 	u32 old, val;
 
-	old = पूर्णांकel_uncore_पढ़ो(uncore, reg);
+	old = intel_uncore_read(uncore, reg);
 	val = (old & ~clear) | set;
-	अगर (val != old)
-		पूर्णांकel_uncore_ग_लिखो(uncore, reg, val);
-पूर्ण
+	if (val != old)
+		intel_uncore_write(uncore, reg, val);
+}
 
-अटल अंतरभूत व्योम पूर्णांकel_uncore_rmw_fw(काष्ठा पूर्णांकel_uncore *uncore,
+static inline void intel_uncore_rmw_fw(struct intel_uncore *uncore,
 				       i915_reg_t reg, u32 clear, u32 set)
-अणु
+{
 	u32 old, val;
 
-	old = पूर्णांकel_uncore_पढ़ो_fw(uncore, reg);
+	old = intel_uncore_read_fw(uncore, reg);
 	val = (old & ~clear) | set;
-	अगर (val != old)
-		पूर्णांकel_uncore_ग_लिखो_fw(uncore, reg, val);
-पूर्ण
+	if (val != old)
+		intel_uncore_write_fw(uncore, reg, val);
+}
 
-अटल अंतरभूत पूर्णांक पूर्णांकel_uncore_ग_लिखो_and_verअगरy(काष्ठा पूर्णांकel_uncore *uncore,
+static inline int intel_uncore_write_and_verify(struct intel_uncore *uncore,
 						i915_reg_t reg, u32 val,
 						u32 mask, u32 expected_val)
-अणु
+{
 	u32 reg_val;
 
-	पूर्णांकel_uncore_ग_लिखो(uncore, reg, val);
-	reg_val = पूर्णांकel_uncore_पढ़ो(uncore, reg);
+	intel_uncore_write(uncore, reg, val);
+	reg_val = intel_uncore_read(uncore, reg);
 
-	वापस (reg_val & mask) != expected_val ? -EINVAL : 0;
-पूर्ण
+	return (reg_val & mask) != expected_val ? -EINVAL : 0;
+}
 
-#घोषणा raw_reg_पढ़ो(base, reg) \
-	पढ़ोl(base + i915_mmio_reg_offset(reg))
-#घोषणा raw_reg_ग_लिखो(base, reg, value) \
-	ग_लिखोl(value, base + i915_mmio_reg_offset(reg))
+#define raw_reg_read(base, reg) \
+	readl(base + i915_mmio_reg_offset(reg))
+#define raw_reg_write(base, reg, value) \
+	writel(value, base + i915_mmio_reg_offset(reg))
 
-#पूर्ण_अगर /* !__INTEL_UNCORE_H__ */
+#endif /* !__INTEL_UNCORE_H__ */

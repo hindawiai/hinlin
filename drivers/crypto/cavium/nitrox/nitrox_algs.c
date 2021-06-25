@@ -1,25 +1,24 @@
-<शैली गुरु>
-#समावेश "nitrox_common.h"
+#include "nitrox_common.h"
 
-पूर्णांक nitrox_crypto_रेजिस्टर(व्योम)
-अणु
-	पूर्णांक err;
+int nitrox_crypto_register(void)
+{
+	int err;
 
-	err = nitrox_रेजिस्टर_skciphers();
-	अगर (err)
-		वापस err;
+	err = nitrox_register_skciphers();
+	if (err)
+		return err;
 
-	err = nitrox_रेजिस्टर_aeads();
-	अगर (err) अणु
-		nitrox_unरेजिस्टर_skciphers();
-		वापस err;
-	पूर्ण
+	err = nitrox_register_aeads();
+	if (err) {
+		nitrox_unregister_skciphers();
+		return err;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम nitrox_crypto_unरेजिस्टर(व्योम)
-अणु
-	nitrox_unरेजिस्टर_aeads();
-	nitrox_unरेजिस्टर_skciphers();
-पूर्ण
+void nitrox_crypto_unregister(void)
+{
+	nitrox_unregister_aeads();
+	nitrox_unregister_skciphers();
+}

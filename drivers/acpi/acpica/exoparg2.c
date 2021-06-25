@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0
+// SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
 /******************************************************************************
  *
  * Module Name: exoparg2 - AML execution - opcodes with 2 arguments
@@ -8,36 +7,36 @@
  *
  *****************************************************************************/
 
-#समावेश <acpi/acpi.h>
-#समावेश "accommon.h"
-#समावेश "acparser.h"
-#समावेश "acinterp.h"
-#समावेश "acevents.h"
-#समावेश "amlcode.h"
+#include <acpi/acpi.h>
+#include "accommon.h"
+#include "acparser.h"
+#include "acinterp.h"
+#include "acevents.h"
+#include "amlcode.h"
 
-#घोषणा _COMPONENT          ACPI_EXECUTER
+#define _COMPONENT          ACPI_EXECUTER
 ACPI_MODULE_NAME("exoparg2")
 
 /*!
- * Naming convention क्रम AML पूर्णांकerpreter execution routines.
+ * Naming convention for AML interpreter execution routines.
  *
  * The routines that begin execution of AML opcodes are named with a common
- * convention based upon the number of arguments, the number of target opeअक्रमs,
- * and whether or not a value is वापसed:
+ * convention based upon the number of arguments, the number of target operands,
+ * and whether or not a value is returned:
  *
  *      AcpiExOpcode_xA_yT_zR
  *
  * Where:
  *
- * xA - ARGUMENTS:    The number of arguments (input opeअक्रमs) that are
- *                    required क्रम this opcode type (1 through 6 args).
- * yT - TARGETS:      The number of tarमाला_लो (output opeअक्रमs) that are required
- *                    क्रम this opcode type (0, 1, or 2 tarमाला_लो).
- * zR - RETURN VALUE: Indicates whether this opcode type वापसs a value
- *                    as the function वापस (0 or 1).
+ * xA - ARGUMENTS:    The number of arguments (input operands) that are
+ *                    required for this opcode type (1 through 6 args).
+ * yT - TARGETS:      The number of targets (output operands) that are required
+ *                    for this opcode type (0, 1, or 2 targets).
+ * zR - RETURN VALUE: Indicates whether this opcode type returns a value
+ *                    as the function return (0 or 1).
  *
  * The AcpiExOpcode* functions are called via the Dispatcher component with
- * fully resolved opeअक्रमs.
+ * fully resolved operands.
 !*/
 /*******************************************************************************
  *
@@ -47,16 +46,16 @@ ACPI_MODULE_NAME("exoparg2")
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Execute opcode with two arguments, no target, and no वापस
+ * DESCRIPTION: Execute opcode with two arguments, no target, and no return
  *              value.
  *
- * ALLOCATION:  Deletes both opeअक्रमs
+ * ALLOCATION:  Deletes both operands
  *
  ******************************************************************************/
-acpi_status acpi_ex_opcode_2A_0T_0R(काष्ठा acpi_walk_state *walk_state)
-अणु
-	जोड़ acpi_opeअक्रम_object **opeअक्रम = &walk_state->opeअक्रमs[0];
-	काष्ठा acpi_namespace_node *node;
+acpi_status acpi_ex_opcode_2A_0T_0R(struct acpi_walk_state *walk_state)
+{
+	union acpi_operand_object **operand = &walk_state->operands[0];
+	struct acpi_namespace_node *node;
 	u32 value;
 	acpi_status status = AE_OK;
 
@@ -65,47 +64,47 @@ acpi_status acpi_ex_opcode_2A_0T_0R(काष्ठा acpi_walk_state *walk_sta
 
 	/* Examine the opcode */
 
-	चयन (walk_state->opcode) अणु
-	हाल AML_NOTIFY_OP:	/* Notअगरy (notअगरy_object, notअगरy_value) */
+	switch (walk_state->opcode) {
+	case AML_NOTIFY_OP:	/* Notify (notify_object, notify_value) */
 
-		/* The first opeअक्रम is a namespace node */
+		/* The first operand is a namespace node */
 
-		node = (काष्ठा acpi_namespace_node *)opeअक्रम[0];
+		node = (struct acpi_namespace_node *)operand[0];
 
-		/* Second value is the notअगरy value */
+		/* Second value is the notify value */
 
-		value = (u32) opeअक्रम[1]->पूर्णांकeger.value;
+		value = (u32) operand[1]->integer.value;
 
-		/* Are notअगरies allowed on this object? */
+		/* Are notifies allowed on this object? */
 
-		अगर (!acpi_ev_is_notअगरy_object(node)) अणु
+		if (!acpi_ev_is_notify_object(node)) {
 			ACPI_ERROR((AE_INFO,
 				    "Unexpected notify object type [%s]",
 				    acpi_ut_get_type_name(node->type)));
 
 			status = AE_AML_OPERAND_TYPE;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		/*
-		 * Dispatch the notअगरy to the appropriate handler
-		 * NOTE: the request is queued क्रम execution after this method
-		 * completes. The notअगरy handlers are NOT invoked synchronously
-		 * from this thपढ़ो -- because handlers may in turn run other
+		 * Dispatch the notify to the appropriate handler
+		 * NOTE: the request is queued for execution after this method
+		 * completes. The notify handlers are NOT invoked synchronously
+		 * from this thread -- because handlers may in turn run other
 		 * control methods.
 		 */
-		status = acpi_ev_queue_notअगरy_request(node, value);
-		अवरोध;
+		status = acpi_ev_queue_notify_request(node, value);
+		break;
 
-	शेष:
+	default:
 
 		ACPI_ERROR((AE_INFO, "Unknown AML opcode 0x%X",
 			    walk_state->opcode));
 		status = AE_AML_BAD_OPCODE;
-	पूर्ण
+	}
 
-	वापस_ACPI_STATUS(status);
-पूर्ण
+	return_ACPI_STATUS(status);
+}
 
 /*******************************************************************************
  *
@@ -115,16 +114,16 @@ acpi_status acpi_ex_opcode_2A_0T_0R(काष्ठा acpi_walk_state *walk_sta
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Execute a dyadic चालक (2 opeअक्रमs) with 2 output tarमाला_लो
- *              and one implicit वापस value.
+ * DESCRIPTION: Execute a dyadic operator (2 operands) with 2 output targets
+ *              and one implicit return value.
  *
  ******************************************************************************/
 
-acpi_status acpi_ex_opcode_2A_2T_1R(काष्ठा acpi_walk_state *walk_state)
-अणु
-	जोड़ acpi_opeअक्रम_object **opeअक्रम = &walk_state->opeअक्रमs[0];
-	जोड़ acpi_opeअक्रम_object *वापस_desc1 = शून्य;
-	जोड़ acpi_opeअक्रम_object *वापस_desc2 = शून्य;
+acpi_status acpi_ex_opcode_2A_2T_1R(struct acpi_walk_state *walk_state)
+{
+	union acpi_operand_object **operand = &walk_state->operands[0];
+	union acpi_operand_object *return_desc1 = NULL;
+	union acpi_operand_object *return_desc2 = NULL;
 	acpi_status status;
 
 	ACPI_FUNCTION_TRACE_STR(ex_opcode_2A_2T_1R,
@@ -132,79 +131,79 @@ acpi_status acpi_ex_opcode_2A_2T_1R(काष्ठा acpi_walk_state *walk_sta
 
 	/* Execute the opcode */
 
-	चयन (walk_state->opcode) अणु
-	हाल AML_DIVIDE_OP:
+	switch (walk_state->opcode) {
+	case AML_DIVIDE_OP:
 
-		/* Divide (Dividend, Divisor, reमुख्यder_result quotient_result) */
+		/* Divide (Dividend, Divisor, remainder_result quotient_result) */
 
-		वापस_desc1 =
-		    acpi_ut_create_पूर्णांकernal_object(ACPI_TYPE_INTEGER);
-		अगर (!वापस_desc1) अणु
+		return_desc1 =
+		    acpi_ut_create_internal_object(ACPI_TYPE_INTEGER);
+		if (!return_desc1) {
 			status = AE_NO_MEMORY;
-			जाओ cleanup;
-		पूर्ण
+			goto cleanup;
+		}
 
-		वापस_desc2 =
-		    acpi_ut_create_पूर्णांकernal_object(ACPI_TYPE_INTEGER);
-		अगर (!वापस_desc2) अणु
+		return_desc2 =
+		    acpi_ut_create_internal_object(ACPI_TYPE_INTEGER);
+		if (!return_desc2) {
 			status = AE_NO_MEMORY;
-			जाओ cleanup;
-		पूर्ण
+			goto cleanup;
+		}
 
-		/* Quotient to वापस_desc1, reमुख्यder to वापस_desc2 */
+		/* Quotient to return_desc1, remainder to return_desc2 */
 
-		status = acpi_ut_भागide(opeअक्रम[0]->पूर्णांकeger.value,
-					opeअक्रम[1]->पूर्णांकeger.value,
-					&वापस_desc1->पूर्णांकeger.value,
-					&वापस_desc2->पूर्णांकeger.value);
-		अगर (ACPI_FAILURE(status)) अणु
-			जाओ cleanup;
-		पूर्ण
-		अवरोध;
+		status = acpi_ut_divide(operand[0]->integer.value,
+					operand[1]->integer.value,
+					&return_desc1->integer.value,
+					&return_desc2->integer.value);
+		if (ACPI_FAILURE(status)) {
+			goto cleanup;
+		}
+		break;
 
-	शेष:
+	default:
 
 		ACPI_ERROR((AE_INFO, "Unknown AML opcode 0x%X",
 			    walk_state->opcode));
 
 		status = AE_AML_BAD_OPCODE;
-		जाओ cleanup;
-	पूर्ण
+		goto cleanup;
+	}
 
-	/* Store the results to the target reference opeअक्रमs */
+	/* Store the results to the target reference operands */
 
-	status = acpi_ex_store(वापस_desc2, opeअक्रम[2], walk_state);
-	अगर (ACPI_FAILURE(status)) अणु
-		जाओ cleanup;
-	पूर्ण
+	status = acpi_ex_store(return_desc2, operand[2], walk_state);
+	if (ACPI_FAILURE(status)) {
+		goto cleanup;
+	}
 
-	status = acpi_ex_store(वापस_desc1, opeअक्रम[3], walk_state);
-	अगर (ACPI_FAILURE(status)) अणु
-		जाओ cleanup;
-	पूर्ण
+	status = acpi_ex_store(return_desc1, operand[3], walk_state);
+	if (ACPI_FAILURE(status)) {
+		goto cleanup;
+	}
 
 cleanup:
 	/*
-	 * Since the reमुख्यder is not वापसed indirectly, हटाओ a reference to
-	 * it. Only the quotient is वापसed indirectly.
+	 * Since the remainder is not returned indirectly, remove a reference to
+	 * it. Only the quotient is returned indirectly.
 	 */
-	acpi_ut_हटाओ_reference(वापस_desc2);
+	acpi_ut_remove_reference(return_desc2);
 
-	अगर (ACPI_FAILURE(status)) अणु
+	if (ACPI_FAILURE(status)) {
 
-		/* Delete the वापस object */
+		/* Delete the return object */
 
-		acpi_ut_हटाओ_reference(वापस_desc1);
-	पूर्ण
+		acpi_ut_remove_reference(return_desc1);
+	}
 
-	/* Save वापस object (the reमुख्यder) on success */
+	/* Save return object (the remainder) on success */
 
-	अन्यथा अणु
-		walk_state->result_obj = वापस_desc1;
-	पूर्ण
+	else {
+		walk_state->result_obj = return_desc1;
+	}
 
-	वापस_ACPI_STATUS(status);
-पूर्ण
+	return_ACPI_STATUS(status);
+}
 
 /*******************************************************************************
  *
@@ -214,15 +213,15 @@ cleanup:
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Execute opcode with two arguments, one target, and a वापस
+ * DESCRIPTION: Execute opcode with two arguments, one target, and a return
  *              value.
  *
  ******************************************************************************/
 
-acpi_status acpi_ex_opcode_2A_1T_1R(काष्ठा acpi_walk_state *walk_state)
-अणु
-	जोड़ acpi_opeअक्रम_object **opeअक्रम = &walk_state->opeअक्रमs[0];
-	जोड़ acpi_opeअक्रम_object *वापस_desc = शून्य;
+acpi_status acpi_ex_opcode_2A_1T_1R(struct acpi_walk_state *walk_state)
+{
+	union acpi_operand_object **operand = &walk_state->operands[0];
+	union acpi_operand_object *return_desc = NULL;
 	u64 index;
 	acpi_status status = AE_OK;
 	acpi_size length = 0;
@@ -232,49 +231,49 @@ acpi_status acpi_ex_opcode_2A_1T_1R(काष्ठा acpi_walk_state *walk_sta
 
 	/* Execute the opcode */
 
-	अगर (walk_state->op_info->flags & AML_MATH) अणु
+	if (walk_state->op_info->flags & AML_MATH) {
 
 		/* All simple math opcodes (add, etc.) */
 
-		वापस_desc = acpi_ut_create_पूर्णांकernal_object(ACPI_TYPE_INTEGER);
-		अगर (!वापस_desc) अणु
+		return_desc = acpi_ut_create_internal_object(ACPI_TYPE_INTEGER);
+		if (!return_desc) {
 			status = AE_NO_MEMORY;
-			जाओ cleanup;
-		पूर्ण
+			goto cleanup;
+		}
 
-		वापस_desc->पूर्णांकeger.value =
-		    acpi_ex_करो_math_op(walk_state->opcode,
-				       opeअक्रम[0]->पूर्णांकeger.value,
-				       opeअक्रम[1]->पूर्णांकeger.value);
-		जाओ store_result_to_target;
-	पूर्ण
+		return_desc->integer.value =
+		    acpi_ex_do_math_op(walk_state->opcode,
+				       operand[0]->integer.value,
+				       operand[1]->integer.value);
+		goto store_result_to_target;
+	}
 
-	चयन (walk_state->opcode) अणु
-	हाल AML_MOD_OP:	/* Mod (Dividend, Divisor, reमुख्यder_result (ACPI 2.0) */
+	switch (walk_state->opcode) {
+	case AML_MOD_OP:	/* Mod (Dividend, Divisor, remainder_result (ACPI 2.0) */
 
-		वापस_desc = acpi_ut_create_पूर्णांकernal_object(ACPI_TYPE_INTEGER);
-		अगर (!वापस_desc) अणु
+		return_desc = acpi_ut_create_internal_object(ACPI_TYPE_INTEGER);
+		if (!return_desc) {
 			status = AE_NO_MEMORY;
-			जाओ cleanup;
-		पूर्ण
+			goto cleanup;
+		}
 
-		/* वापस_desc will contain the reमुख्यder */
+		/* return_desc will contain the remainder */
 
-		status = acpi_ut_भागide(opeअक्रम[0]->पूर्णांकeger.value,
-					opeअक्रम[1]->पूर्णांकeger.value,
-					शून्य, &वापस_desc->पूर्णांकeger.value);
-		अवरोध;
+		status = acpi_ut_divide(operand[0]->integer.value,
+					operand[1]->integer.value,
+					NULL, &return_desc->integer.value);
+		break;
 
-	हाल AML_CONCATENATE_OP:	/* Concatenate (Data1, Data2, Result) */
+	case AML_CONCATENATE_OP:	/* Concatenate (Data1, Data2, Result) */
 
 		status =
-		    acpi_ex_करो_concatenate(opeअक्रम[0], opeअक्रम[1], &वापस_desc,
+		    acpi_ex_do_concatenate(operand[0], operand[1], &return_desc,
 					   walk_state);
-		अवरोध;
+		break;
 
-	हाल AML_TO_STRING_OP:	/* to_string (Buffer, Length, Result) (ACPI 2.0) */
+	case AML_TO_STRING_OP:	/* to_string (Buffer, Length, Result) (ACPI 2.0) */
 		/*
-		 * Input object is guaranteed to be a buffer at this poपूर्णांक (it may have
+		 * Input object is guaranteed to be a buffer at this point (it may have
 		 * been converted.)  Copy the raw buffer data to a new object of
 		 * type String.
 		 */
@@ -282,174 +281,174 @@ acpi_status acpi_ex_opcode_2A_1T_1R(काष्ठा acpi_walk_state *walk_sta
 		/*
 		 * Get the length of the new string. It is the smallest of:
 		 * 1) Length of the input buffer
-		 * 2) Max length as specअगरied in the to_string चालक
+		 * 2) Max length as specified in the to_string operator
 		 * 3) Length of input buffer up to a zero byte (null terminator)
 		 *
 		 * NOTE: A length of zero is ok, and will create a zero-length, null
 		 *       terminated string.
 		 */
-		जबतक ((length < opeअक्रम[0]->buffer.length) &&	/* Length of input buffer */
-		       (length < opeअक्रम[1]->पूर्णांकeger.value) &&	/* Length opeअक्रम */
-		       (opeअक्रम[0]->buffer.poपूर्णांकer[length])) अणु	/* Null terminator */
+		while ((length < operand[0]->buffer.length) &&	/* Length of input buffer */
+		       (length < operand[1]->integer.value) &&	/* Length operand */
+		       (operand[0]->buffer.pointer[length])) {	/* Null terminator */
 			length++;
-		पूर्ण
+		}
 
 		/* Allocate a new string object */
 
-		वापस_desc = acpi_ut_create_string_object(length);
-		अगर (!वापस_desc) अणु
+		return_desc = acpi_ut_create_string_object(length);
+		if (!return_desc) {
 			status = AE_NO_MEMORY;
-			जाओ cleanup;
-		पूर्ण
+			goto cleanup;
+		}
 
 		/*
-		 * Copy the raw buffer data with no transक्रमm.
-		 * (शून्य terminated alपढ़ोy)
+		 * Copy the raw buffer data with no transform.
+		 * (NULL terminated already)
 		 */
-		स_नकल(वापस_desc->string.poपूर्णांकer,
-		       opeअक्रम[0]->buffer.poपूर्णांकer, length);
-		अवरोध;
+		memcpy(return_desc->string.pointer,
+		       operand[0]->buffer.pointer, length);
+		break;
 
-	हाल AML_CONCATENATE_TEMPLATE_OP:
+	case AML_CONCATENATE_TEMPLATE_OP:
 
-		/* concatenate_res_ढाँचा (Buffer, Buffer, Result) (ACPI 2.0) */
+		/* concatenate_res_template (Buffer, Buffer, Result) (ACPI 2.0) */
 
 		status =
-		    acpi_ex_concat_ढाँचा(opeअक्रम[0], opeअक्रम[1],
-					    &वापस_desc, walk_state);
-		अवरोध;
+		    acpi_ex_concat_template(operand[0], operand[1],
+					    &return_desc, walk_state);
+		break;
 
-	हाल AML_INDEX_OP:	/* Index (Source Index Result) */
+	case AML_INDEX_OP:	/* Index (Source Index Result) */
 
-		/* Create the पूर्णांकernal वापस object */
+		/* Create the internal return object */
 
-		वापस_desc =
-		    acpi_ut_create_पूर्णांकernal_object(ACPI_TYPE_LOCAL_REFERENCE);
-		अगर (!वापस_desc) अणु
+		return_desc =
+		    acpi_ut_create_internal_object(ACPI_TYPE_LOCAL_REFERENCE);
+		if (!return_desc) {
 			status = AE_NO_MEMORY;
-			जाओ cleanup;
-		पूर्ण
+			goto cleanup;
+		}
 
 		/* Initialize the Index reference object */
 
-		index = opeअक्रम[1]->पूर्णांकeger.value;
-		वापस_desc->reference.value = (u32) index;
-		वापस_desc->reference.class = ACPI_REFCLASS_INDEX;
+		index = operand[1]->integer.value;
+		return_desc->reference.value = (u32) index;
+		return_desc->reference.class = ACPI_REFCLASS_INDEX;
 
 		/*
-		 * At this poपूर्णांक, the Source opeअक्रम is a String, Buffer, or Package.
-		 * Verअगरy that the index is within range.
+		 * At this point, the Source operand is a String, Buffer, or Package.
+		 * Verify that the index is within range.
 		 */
-		चयन ((opeअक्रम[0])->common.type) अणु
-		हाल ACPI_TYPE_STRING:
+		switch ((operand[0])->common.type) {
+		case ACPI_TYPE_STRING:
 
-			अगर (index >= opeअक्रम[0]->string.length) अणु
-				length = opeअक्रम[0]->string.length;
+			if (index >= operand[0]->string.length) {
+				length = operand[0]->string.length;
 				status = AE_AML_STRING_LIMIT;
-			पूर्ण
+			}
 
-			वापस_desc->reference.target_type =
+			return_desc->reference.target_type =
 			    ACPI_TYPE_BUFFER_FIELD;
-			वापस_desc->reference.index_poपूर्णांकer =
-			    &(opeअक्रम[0]->buffer.poपूर्णांकer[index]);
-			अवरोध;
+			return_desc->reference.index_pointer =
+			    &(operand[0]->buffer.pointer[index]);
+			break;
 
-		हाल ACPI_TYPE_BUFFER:
+		case ACPI_TYPE_BUFFER:
 
-			अगर (index >= opeअक्रम[0]->buffer.length) अणु
-				length = opeअक्रम[0]->buffer.length;
+			if (index >= operand[0]->buffer.length) {
+				length = operand[0]->buffer.length;
 				status = AE_AML_BUFFER_LIMIT;
-			पूर्ण
+			}
 
-			वापस_desc->reference.target_type =
+			return_desc->reference.target_type =
 			    ACPI_TYPE_BUFFER_FIELD;
-			वापस_desc->reference.index_poपूर्णांकer =
-			    &(opeअक्रम[0]->buffer.poपूर्णांकer[index]);
-			अवरोध;
+			return_desc->reference.index_pointer =
+			    &(operand[0]->buffer.pointer[index]);
+			break;
 
-		हाल ACPI_TYPE_PACKAGE:
+		case ACPI_TYPE_PACKAGE:
 
-			अगर (index >= opeअक्रम[0]->package.count) अणु
-				length = opeअक्रम[0]->package.count;
+			if (index >= operand[0]->package.count) {
+				length = operand[0]->package.count;
 				status = AE_AML_PACKAGE_LIMIT;
-			पूर्ण
+			}
 
-			वापस_desc->reference.target_type = ACPI_TYPE_PACKAGE;
-			वापस_desc->reference.where =
-			    &opeअक्रम[0]->package.elements[index];
-			अवरोध;
+			return_desc->reference.target_type = ACPI_TYPE_PACKAGE;
+			return_desc->reference.where =
+			    &operand[0]->package.elements[index];
+			break;
 
-		शेष:
+		default:
 
 			ACPI_ERROR((AE_INFO,
 				    "Invalid object type: %X",
-				    (opeअक्रम[0])->common.type));
+				    (operand[0])->common.type));
 			status = AE_AML_INTERNAL;
-			जाओ cleanup;
-		पूर्ण
+			goto cleanup;
+		}
 
 		/* Failure means that the Index was beyond the end of the object */
 
-		अगर (ACPI_FAILURE(status)) अणु
+		if (ACPI_FAILURE(status)) {
 			ACPI_BIOS_EXCEPTION((AE_INFO, status,
 					     "Index (0x%X%8.8X) is beyond end of object (length 0x%X)",
 					     ACPI_FORMAT_UINT64(index),
 					     (u32)length));
-			जाओ cleanup;
-		पूर्ण
+			goto cleanup;
+		}
 
 		/*
-		 * Save the target object and add a reference to it क्रम the lअगरe
+		 * Save the target object and add a reference to it for the life
 		 * of the index
 		 */
-		वापस_desc->reference.object = opeअक्रम[0];
-		acpi_ut_add_reference(opeअक्रम[0]);
+		return_desc->reference.object = operand[0];
+		acpi_ut_add_reference(operand[0]);
 
 		/* Store the reference to the Target */
 
-		status = acpi_ex_store(वापस_desc, opeअक्रम[2], walk_state);
+		status = acpi_ex_store(return_desc, operand[2], walk_state);
 
 		/* Return the reference */
 
-		walk_state->result_obj = वापस_desc;
-		जाओ cleanup;
+		walk_state->result_obj = return_desc;
+		goto cleanup;
 
-	शेष:
+	default:
 
 		ACPI_ERROR((AE_INFO, "Unknown AML opcode 0x%X",
 			    walk_state->opcode));
 		status = AE_AML_BAD_OPCODE;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 store_result_to_target:
 
-	अगर (ACPI_SUCCESS(status)) अणु
+	if (ACPI_SUCCESS(status)) {
 		/*
-		 * Store the result of the operation (which is now in वापस_desc) पूर्णांकo
+		 * Store the result of the operation (which is now in return_desc) into
 		 * the Target descriptor.
 		 */
-		status = acpi_ex_store(वापस_desc, opeअक्रम[2], walk_state);
-		अगर (ACPI_FAILURE(status)) अणु
-			जाओ cleanup;
-		पूर्ण
+		status = acpi_ex_store(return_desc, operand[2], walk_state);
+		if (ACPI_FAILURE(status)) {
+			goto cleanup;
+		}
 
-		अगर (!walk_state->result_obj) अणु
-			walk_state->result_obj = वापस_desc;
-		पूर्ण
-	पूर्ण
+		if (!walk_state->result_obj) {
+			walk_state->result_obj = return_desc;
+		}
+	}
 
 cleanup:
 
-	/* Delete वापस object on error */
+	/* Delete return object on error */
 
-	अगर (ACPI_FAILURE(status)) अणु
-		acpi_ut_हटाओ_reference(वापस_desc);
-		walk_state->result_obj = शून्य;
-	पूर्ण
+	if (ACPI_FAILURE(status)) {
+		acpi_ut_remove_reference(return_desc);
+		walk_state->result_obj = NULL;
+	}
 
-	वापस_ACPI_STATUS(status);
-पूर्ण
+	return_ACPI_STATUS(status);
+}
 
 /*******************************************************************************
  *
@@ -459,100 +458,100 @@ cleanup:
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Execute opcode with 2 arguments, no target, and a वापस value
+ * DESCRIPTION: Execute opcode with 2 arguments, no target, and a return value
  *
  ******************************************************************************/
 
-acpi_status acpi_ex_opcode_2A_0T_1R(काष्ठा acpi_walk_state *walk_state)
-अणु
-	जोड़ acpi_opeअक्रम_object **opeअक्रम = &walk_state->opeअक्रमs[0];
-	जोड़ acpi_opeअक्रम_object *वापस_desc = शून्य;
+acpi_status acpi_ex_opcode_2A_0T_1R(struct acpi_walk_state *walk_state)
+{
+	union acpi_operand_object **operand = &walk_state->operands[0];
+	union acpi_operand_object *return_desc = NULL;
 	acpi_status status = AE_OK;
 	u8 logical_result = FALSE;
 
 	ACPI_FUNCTION_TRACE_STR(ex_opcode_2A_0T_1R,
 				acpi_ps_get_opcode_name(walk_state->opcode));
 
-	/* Create the पूर्णांकernal वापस object */
+	/* Create the internal return object */
 
-	वापस_desc = acpi_ut_create_पूर्णांकernal_object(ACPI_TYPE_INTEGER);
-	अगर (!वापस_desc) अणु
+	return_desc = acpi_ut_create_internal_object(ACPI_TYPE_INTEGER);
+	if (!return_desc) {
 		status = AE_NO_MEMORY;
-		जाओ cleanup;
-	पूर्ण
+		goto cleanup;
+	}
 
 	/* Execute the Opcode */
 
-	अगर (walk_state->op_info->flags & AML_LOGICAL_NUMERIC) अणु
+	if (walk_state->op_info->flags & AML_LOGICAL_NUMERIC) {
 
-		/* logical_op (Opeअक्रम0, Opeअक्रम1) */
+		/* logical_op (Operand0, Operand1) */
 
-		status = acpi_ex_करो_logical_numeric_op(walk_state->opcode,
-						       opeअक्रम[0]->पूर्णांकeger.
+		status = acpi_ex_do_logical_numeric_op(walk_state->opcode,
+						       operand[0]->integer.
 						       value,
-						       opeअक्रम[1]->पूर्णांकeger.
+						       operand[1]->integer.
 						       value, &logical_result);
-		जाओ store_logical_result;
-	पूर्ण अन्यथा अगर (walk_state->op_info->flags & AML_LOGICAL) अणु
+		goto store_logical_result;
+	} else if (walk_state->op_info->flags & AML_LOGICAL) {
 
-		/* logical_op (Opeअक्रम0, Opeअक्रम1) */
+		/* logical_op (Operand0, Operand1) */
 
-		status = acpi_ex_करो_logical_op(walk_state->opcode, opeअक्रम[0],
-					       opeअक्रम[1], &logical_result);
-		जाओ store_logical_result;
-	पूर्ण
+		status = acpi_ex_do_logical_op(walk_state->opcode, operand[0],
+					       operand[1], &logical_result);
+		goto store_logical_result;
+	}
 
-	चयन (walk_state->opcode) अणु
-	हाल AML_ACQUIRE_OP:	/* Acquire (mutex_object, Timeout) */
+	switch (walk_state->opcode) {
+	case AML_ACQUIRE_OP:	/* Acquire (mutex_object, Timeout) */
 
 		status =
-		    acpi_ex_acquire_mutex(opeअक्रम[1], opeअक्रम[0], walk_state);
-		अगर (status == AE_TIME) अणु
-			logical_result = TRUE;	/* TRUE = Acquire समयd out */
+		    acpi_ex_acquire_mutex(operand[1], operand[0], walk_state);
+		if (status == AE_TIME) {
+			logical_result = TRUE;	/* TRUE = Acquire timed out */
 			status = AE_OK;
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	हाल AML_WAIT_OP:	/* Wait (event_object, Timeout) */
+	case AML_WAIT_OP:	/* Wait (event_object, Timeout) */
 
-		status = acpi_ex_प्रणाली_रुको_event(opeअक्रम[1], opeअक्रम[0]);
-		अगर (status == AE_TIME) अणु
-			logical_result = TRUE;	/* TRUE, Wait समयd out */
+		status = acpi_ex_system_wait_event(operand[1], operand[0]);
+		if (status == AE_TIME) {
+			logical_result = TRUE;	/* TRUE, Wait timed out */
 			status = AE_OK;
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	शेष:
+	default:
 
 		ACPI_ERROR((AE_INFO, "Unknown AML opcode 0x%X",
 			    walk_state->opcode));
 
 		status = AE_AML_BAD_OPCODE;
-		जाओ cleanup;
-	पूर्ण
+		goto cleanup;
+	}
 
 store_logical_result:
 	/*
-	 * Set वापस value to according to logical_result. logical TRUE (all ones)
+	 * Set return value to according to logical_result. logical TRUE (all ones)
 	 * Default is FALSE (zero)
 	 */
-	अगर (logical_result) अणु
-		वापस_desc->पूर्णांकeger.value = ACPI_UINT64_MAX;
-	पूर्ण
+	if (logical_result) {
+		return_desc->integer.value = ACPI_UINT64_MAX;
+	}
 
 cleanup:
 
-	/* Delete वापस object on error */
+	/* Delete return object on error */
 
-	अगर (ACPI_FAILURE(status)) अणु
-		acpi_ut_हटाओ_reference(वापस_desc);
-	पूर्ण
+	if (ACPI_FAILURE(status)) {
+		acpi_ut_remove_reference(return_desc);
+	}
 
-	/* Save वापस object on success */
+	/* Save return object on success */
 
-	अन्यथा अणु
-		walk_state->result_obj = वापस_desc;
-	पूर्ण
+	else {
+		walk_state->result_obj = return_desc;
+	}
 
-	वापस_ACPI_STATUS(status);
-पूर्ण
+	return_ACPI_STATUS(status);
+}

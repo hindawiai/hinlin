@@ -1,162 +1,161 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /* AFS cell and server record management
  *
  * Copyright (C) 2002, 2017 Red Hat, Inc. All Rights Reserved.
  * Written by David Howells (dhowells@redhat.com)
  */
 
-#समावेश <linux/slab.h>
-#समावेश <linux/key.h>
-#समावेश <linux/प्रकार.स>
-#समावेश <linux/dns_resolver.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/inet.h>
-#समावेश <linux/namei.h>
-#समावेश <keys/rxrpc-type.h>
-#समावेश "internal.h"
+#include <linux/slab.h>
+#include <linux/key.h>
+#include <linux/ctype.h>
+#include <linux/dns_resolver.h>
+#include <linux/sched.h>
+#include <linux/inet.h>
+#include <linux/namei.h>
+#include <keys/rxrpc-type.h>
+#include "internal.h"
 
-अटल अचिन्हित __पढ़ो_mostly afs_cell_gc_delay = 10;
-अटल अचिन्हित __पढ़ो_mostly afs_cell_min_ttl = 10 * 60;
-अटल अचिन्हित __पढ़ो_mostly afs_cell_max_ttl = 24 * 60 * 60;
-अटल atomic_t cell_debug_id;
+static unsigned __read_mostly afs_cell_gc_delay = 10;
+static unsigned __read_mostly afs_cell_min_ttl = 10 * 60;
+static unsigned __read_mostly afs_cell_max_ttl = 24 * 60 * 60;
+static atomic_t cell_debug_id;
 
-अटल व्योम afs_queue_cell_manager(काष्ठा afs_net *);
-अटल व्योम afs_manage_cell_work(काष्ठा work_काष्ठा *);
+static void afs_queue_cell_manager(struct afs_net *);
+static void afs_manage_cell_work(struct work_struct *);
 
-अटल व्योम afs_dec_cells_outstanding(काष्ठा afs_net *net)
-अणु
-	अगर (atomic_dec_and_test(&net->cells_outstanding))
+static void afs_dec_cells_outstanding(struct afs_net *net)
+{
+	if (atomic_dec_and_test(&net->cells_outstanding))
 		wake_up_var(&net->cells_outstanding);
-पूर्ण
+}
 
 /*
- * Set the cell समयr to fire after a given delay, assuming it's not alपढ़ोy
- * set क्रम an earlier समय.
+ * Set the cell timer to fire after a given delay, assuming it's not already
+ * set for an earlier time.
  */
-अटल व्योम afs_set_cell_समयr(काष्ठा afs_net *net, समय64_t delay)
-अणु
-	अगर (net->live) अणु
+static void afs_set_cell_timer(struct afs_net *net, time64_t delay)
+{
+	if (net->live) {
 		atomic_inc(&net->cells_outstanding);
-		अगर (समयr_reduce(&net->cells_समयr, jअगरfies + delay * HZ))
+		if (timer_reduce(&net->cells_timer, jiffies + delay * HZ))
 			afs_dec_cells_outstanding(net);
-	पूर्ण अन्यथा अणु
+	} else {
 		afs_queue_cell_manager(net);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
  * Look up and get an activation reference on a cell record.  The caller must
- * hold net->cells_lock at least पढ़ो-locked.
+ * hold net->cells_lock at least read-locked.
  */
-अटल काष्ठा afs_cell *afs_find_cell_locked(काष्ठा afs_net *net,
-					     स्थिर अक्षर *name, अचिन्हित पूर्णांक namesz,
-					     क्रमागत afs_cell_trace reason)
-अणु
-	काष्ठा afs_cell *cell = शून्य;
-	काष्ठा rb_node *p;
-	पूर्णांक n;
+static struct afs_cell *afs_find_cell_locked(struct afs_net *net,
+					     const char *name, unsigned int namesz,
+					     enum afs_cell_trace reason)
+{
+	struct afs_cell *cell = NULL;
+	struct rb_node *p;
+	int n;
 
 	_enter("%*.*s", namesz, namesz, name);
 
-	अगर (name && namesz == 0)
-		वापस ERR_PTR(-EINVAL);
-	अगर (namesz > AFS_MAXCELLNAME)
-		वापस ERR_PTR(-ENAMETOOLONG);
+	if (name && namesz == 0)
+		return ERR_PTR(-EINVAL);
+	if (namesz > AFS_MAXCELLNAME)
+		return ERR_PTR(-ENAMETOOLONG);
 
-	अगर (!name) अणु
+	if (!name) {
 		cell = net->ws_cell;
-		अगर (!cell)
-			वापस ERR_PTR(-EDESTADDRREQ);
-		जाओ found;
-	पूर्ण
+		if (!cell)
+			return ERR_PTR(-EDESTADDRREQ);
+		goto found;
+	}
 
 	p = net->cells.rb_node;
-	जबतक (p) अणु
-		cell = rb_entry(p, काष्ठा afs_cell, net_node);
+	while (p) {
+		cell = rb_entry(p, struct afs_cell, net_node);
 
-		n = strnहालcmp(cell->name, name,
-				min_t(माप_प्रकार, cell->name_len, namesz));
-		अगर (n == 0)
+		n = strncasecmp(cell->name, name,
+				min_t(size_t, cell->name_len, namesz));
+		if (n == 0)
 			n = cell->name_len - namesz;
-		अगर (n < 0)
+		if (n < 0)
 			p = p->rb_left;
-		अन्यथा अगर (n > 0)
+		else if (n > 0)
 			p = p->rb_right;
-		अन्यथा
-			जाओ found;
-	पूर्ण
+		else
+			goto found;
+	}
 
-	वापस ERR_PTR(-ENOENT);
+	return ERR_PTR(-ENOENT);
 
 found:
-	वापस afs_use_cell(cell, reason);
-पूर्ण
+	return afs_use_cell(cell, reason);
+}
 
 /*
  * Look up and get an activation reference on a cell record.
  */
-काष्ठा afs_cell *afs_find_cell(काष्ठा afs_net *net,
-			       स्थिर अक्षर *name, अचिन्हित पूर्णांक namesz,
-			       क्रमागत afs_cell_trace reason)
-अणु
-	काष्ठा afs_cell *cell;
+struct afs_cell *afs_find_cell(struct afs_net *net,
+			       const char *name, unsigned int namesz,
+			       enum afs_cell_trace reason)
+{
+	struct afs_cell *cell;
 
-	करोwn_पढ़ो(&net->cells_lock);
+	down_read(&net->cells_lock);
 	cell = afs_find_cell_locked(net, name, namesz, reason);
-	up_पढ़ो(&net->cells_lock);
-	वापस cell;
-पूर्ण
+	up_read(&net->cells_lock);
+	return cell;
+}
 
 /*
  * Set up a cell record and fill in its name, VL server address list and
  * allocate an anonymous key
  */
-अटल काष्ठा afs_cell *afs_alloc_cell(काष्ठा afs_net *net,
-				       स्थिर अक्षर *name, अचिन्हित पूर्णांक namelen,
-				       स्थिर अक्षर *addresses)
-अणु
-	काष्ठा afs_vlserver_list *vllist;
-	काष्ठा afs_cell *cell;
-	पूर्णांक i, ret;
+static struct afs_cell *afs_alloc_cell(struct afs_net *net,
+				       const char *name, unsigned int namelen,
+				       const char *addresses)
+{
+	struct afs_vlserver_list *vllist;
+	struct afs_cell *cell;
+	int i, ret;
 
 	ASSERT(name);
-	अगर (namelen == 0)
-		वापस ERR_PTR(-EINVAL);
-	अगर (namelen > AFS_MAXCELLNAME) अणु
+	if (namelen == 0)
+		return ERR_PTR(-EINVAL);
+	if (namelen > AFS_MAXCELLNAME) {
 		_leave(" = -ENAMETOOLONG");
-		वापस ERR_PTR(-ENAMETOOLONG);
-	पूर्ण
+		return ERR_PTR(-ENAMETOOLONG);
+	}
 
-	/* Prohibit cell names that contain unprपूर्णांकable अक्षरs, '/' and '@' or
-	 * that begin with a करोt.  This also precludes "@cell".
+	/* Prohibit cell names that contain unprintable chars, '/' and '@' or
+	 * that begin with a dot.  This also precludes "@cell".
 	 */
-	अगर (name[0] == '.')
-		वापस ERR_PTR(-EINVAL);
-	क्रम (i = 0; i < namelen; i++) अणु
-		अक्षर ch = name[i];
-		अगर (!है_छाप(ch) || ch == '/' || ch == '@')
-			वापस ERR_PTR(-EINVAL);
-	पूर्ण
+	if (name[0] == '.')
+		return ERR_PTR(-EINVAL);
+	for (i = 0; i < namelen; i++) {
+		char ch = name[i];
+		if (!isprint(ch) || ch == '/' || ch == '@')
+			return ERR_PTR(-EINVAL);
+	}
 
 	_enter("%*.*s,%s", namelen, namelen, name, addresses);
 
-	cell = kzalloc(माप(काष्ठा afs_cell), GFP_KERNEL);
-	अगर (!cell) अणु
+	cell = kzalloc(sizeof(struct afs_cell), GFP_KERNEL);
+	if (!cell) {
 		_leave(" = -ENOMEM");
-		वापस ERR_PTR(-ENOMEM);
-	पूर्ण
+		return ERR_PTR(-ENOMEM);
+	}
 
-	cell->name = kदो_स्मृति(namelen + 1, GFP_KERNEL);
-	अगर (!cell->name) अणु
-		kमुक्त(cell);
-		वापस ERR_PTR(-ENOMEM);
-	पूर्ण
+	cell->name = kmalloc(namelen + 1, GFP_KERNEL);
+	if (!cell->name) {
+		kfree(cell);
+		return ERR_PTR(-ENOMEM);
+	}
 
 	cell->net = net;
 	cell->name_len = namelen;
-	क्रम (i = 0; i < namelen; i++)
-		cell->name[i] = छोटे(name[i]);
+	for (i = 0; i < namelen; i++)
+		cell->name[i] = tolower(name[i]);
 	cell->name[i] = 0;
 
 	atomic_set(&cell->ref, 1);
@@ -170,308 +169,308 @@ found:
 	rwlock_init(&cell->vl_servers_lock);
 	cell->flags = (1 << AFS_CELL_FL_CHECK_ALIAS);
 
-	/* Provide a VL server list, filling it in अगर we were given a list of
+	/* Provide a VL server list, filling it in if we were given a list of
 	 * addresses to use.
 	 */
-	अगर (addresses) अणु
+	if (addresses) {
 		vllist = afs_parse_text_addrs(net,
-					      addresses, म_माप(addresses), ':',
+					      addresses, strlen(addresses), ':',
 					      VL_SERVICE, AFS_VL_PORT);
-		अगर (IS_ERR(vllist)) अणु
+		if (IS_ERR(vllist)) {
 			ret = PTR_ERR(vllist);
-			जाओ parse_failed;
-		पूर्ण
+			goto parse_failed;
+		}
 
 		vllist->source = DNS_RECORD_FROM_CONFIG;
 		vllist->status = DNS_LOOKUP_NOT_DONE;
 		cell->dns_expiry = TIME64_MAX;
-	पूर्ण अन्यथा अणु
+	} else {
 		ret = -ENOMEM;
 		vllist = afs_alloc_vlserver_list(0);
-		अगर (!vllist)
-			जाओ error;
+		if (!vllist)
+			goto error;
 		vllist->source = DNS_RECORD_UNAVAILABLE;
 		vllist->status = DNS_LOOKUP_NOT_DONE;
-		cell->dns_expiry = kसमय_get_real_seconds();
-	पूर्ण
+		cell->dns_expiry = ktime_get_real_seconds();
+	}
 
-	rcu_assign_poपूर्णांकer(cell->vl_servers, vllist);
+	rcu_assign_pointer(cell->vl_servers, vllist);
 
 	cell->dns_source = vllist->source;
 	cell->dns_status = vllist->status;
 	smp_store_release(&cell->dns_lookup_count, 1); /* vs source/status */
 	atomic_inc(&net->cells_outstanding);
-	cell->debug_id = atomic_inc_वापस(&cell_debug_id);
+	cell->debug_id = atomic_inc_return(&cell_debug_id);
 	trace_afs_cell(cell->debug_id, 1, 0, afs_cell_trace_alloc);
 
 	_leave(" = %p", cell);
-	वापस cell;
+	return cell;
 
 parse_failed:
-	अगर (ret == -EINVAL)
-		prपूर्णांकk(KERN_ERR "kAFS: bad VL server IP address\n");
+	if (ret == -EINVAL)
+		printk(KERN_ERR "kAFS: bad VL server IP address\n");
 error:
-	kमुक्त(cell->name);
-	kमुक्त(cell);
+	kfree(cell->name);
+	kfree(cell);
 	_leave(" = %d", ret);
-	वापस ERR_PTR(ret);
-पूर्ण
+	return ERR_PTR(ret);
+}
 
 /*
  * afs_lookup_cell - Look up or create a cell record.
  * @net:	The network namespace
  * @name:	The name of the cell.
- * @namesz:	The म_माप of the cell name.
- * @vllist:	A colon/comma separated list of numeric IP addresses or शून्य.
- * @excl:	T अगर an error should be given अगर the cell name alपढ़ोy exists.
+ * @namesz:	The strlen of the cell name.
+ * @vllist:	A colon/comma separated list of numeric IP addresses or NULL.
+ * @excl:	T if an error should be given if the cell name already exists.
  *
- * Look up a cell record by name and query the DNS क्रम VL server addresses अगर
- * needed.  Note that that actual DNS query is punted off to the manager thपढ़ो
- * so that this function can वापस immediately अगर पूर्णांकerrupted whilst allowing
- * cell records to be shared even अगर not yet fully स्थिरructed.
+ * Look up a cell record by name and query the DNS for VL server addresses if
+ * needed.  Note that that actual DNS query is punted off to the manager thread
+ * so that this function can return immediately if interrupted whilst allowing
+ * cell records to be shared even if not yet fully constructed.
  */
-काष्ठा afs_cell *afs_lookup_cell(काष्ठा afs_net *net,
-				 स्थिर अक्षर *name, अचिन्हित पूर्णांक namesz,
-				 स्थिर अक्षर *vllist, bool excl)
-अणु
-	काष्ठा afs_cell *cell, *candidate, *cursor;
-	काष्ठा rb_node *parent, **pp;
-	क्रमागत afs_cell_state state;
-	पूर्णांक ret, n;
+struct afs_cell *afs_lookup_cell(struct afs_net *net,
+				 const char *name, unsigned int namesz,
+				 const char *vllist, bool excl)
+{
+	struct afs_cell *cell, *candidate, *cursor;
+	struct rb_node *parent, **pp;
+	enum afs_cell_state state;
+	int ret, n;
 
 	_enter("%s,%s", name, vllist);
 
-	अगर (!excl) अणु
+	if (!excl) {
 		cell = afs_find_cell(net, name, namesz, afs_cell_trace_use_lookup);
-		अगर (!IS_ERR(cell))
-			जाओ रुको_क्रम_cell;
-	पूर्ण
+		if (!IS_ERR(cell))
+			goto wait_for_cell;
+	}
 
-	/* Assume we're probably going to create a cell and pपुनः_स्मृतिate and
+	/* Assume we're probably going to create a cell and preallocate and
 	 * mostly set up a candidate record.  We can then use this to stash the
 	 * name, the net namespace and VL server addresses.
 	 *
-	 * We also want to करो this beक्रमe we hold any locks as it may involve
+	 * We also want to do this before we hold any locks as it may involve
 	 * upcalling to userspace to make DNS queries.
 	 */
 	candidate = afs_alloc_cell(net, name, namesz, vllist);
-	अगर (IS_ERR(candidate)) अणु
+	if (IS_ERR(candidate)) {
 		_leave(" = %ld", PTR_ERR(candidate));
-		वापस candidate;
-	पूर्ण
+		return candidate;
+	}
 
-	/* Find the insertion poपूर्णांक and check to see अगर someone अन्यथा added a
+	/* Find the insertion point and check to see if someone else added a
 	 * cell whilst we were allocating.
 	 */
-	करोwn_ग_लिखो(&net->cells_lock);
+	down_write(&net->cells_lock);
 
 	pp = &net->cells.rb_node;
-	parent = शून्य;
-	जबतक (*pp) अणु
+	parent = NULL;
+	while (*pp) {
 		parent = *pp;
-		cursor = rb_entry(parent, काष्ठा afs_cell, net_node);
+		cursor = rb_entry(parent, struct afs_cell, net_node);
 
-		n = strnहालcmp(cursor->name, name,
-				min_t(माप_प्रकार, cursor->name_len, namesz));
-		अगर (n == 0)
+		n = strncasecmp(cursor->name, name,
+				min_t(size_t, cursor->name_len, namesz));
+		if (n == 0)
 			n = cursor->name_len - namesz;
-		अगर (n < 0)
+		if (n < 0)
 			pp = &(*pp)->rb_left;
-		अन्यथा अगर (n > 0)
+		else if (n > 0)
 			pp = &(*pp)->rb_right;
-		अन्यथा
-			जाओ cell_alपढ़ोy_exists;
-	पूर्ण
+		else
+			goto cell_already_exists;
+	}
 
 	cell = candidate;
-	candidate = शून्य;
+	candidate = NULL;
 	atomic_set(&cell->active, 2);
-	trace_afs_cell(cell->debug_id, atomic_पढ़ो(&cell->ref), 2, afs_cell_trace_insert);
+	trace_afs_cell(cell->debug_id, atomic_read(&cell->ref), 2, afs_cell_trace_insert);
 	rb_link_node_rcu(&cell->net_node, parent, pp);
 	rb_insert_color(&cell->net_node, &net->cells);
-	up_ग_लिखो(&net->cells_lock);
+	up_write(&net->cells_lock);
 
 	afs_queue_cell(cell, afs_cell_trace_get_queue_new);
 
-रुको_क्रम_cell:
-	trace_afs_cell(cell->debug_id, atomic_पढ़ो(&cell->ref), atomic_पढ़ो(&cell->active),
-		       afs_cell_trace_रुको);
+wait_for_cell:
+	trace_afs_cell(cell->debug_id, atomic_read(&cell->ref), atomic_read(&cell->active),
+		       afs_cell_trace_wait);
 	_debug("wait_for_cell");
-	रुको_var_event(&cell->state,
-		       (अणु
+	wait_var_event(&cell->state,
+		       ({
 			       state = smp_load_acquire(&cell->state); /* vs error */
 			       state == AFS_CELL_ACTIVE || state == AFS_CELL_REMOVED;
-		       पूर्ण));
+		       }));
 
-	/* Check the state obtained from the रुको check. */
-	अगर (state == AFS_CELL_REMOVED) अणु
+	/* Check the state obtained from the wait check. */
+	if (state == AFS_CELL_REMOVED) {
 		ret = cell->error;
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
 	_leave(" = %p [cell]", cell);
-	वापस cell;
+	return cell;
 
-cell_alपढ़ोy_exists:
+cell_already_exists:
 	_debug("cell exists");
 	cell = cursor;
-	अगर (excl) अणु
+	if (excl) {
 		ret = -EEXIST;
-	पूर्ण अन्यथा अणु
+	} else {
 		afs_use_cell(cursor, afs_cell_trace_use_lookup);
 		ret = 0;
-	पूर्ण
-	up_ग_लिखो(&net->cells_lock);
-	अगर (candidate)
+	}
+	up_write(&net->cells_lock);
+	if (candidate)
 		afs_put_cell(candidate, afs_cell_trace_put_candidate);
-	अगर (ret == 0)
-		जाओ रुको_क्रम_cell;
-	जाओ error_noput;
+	if (ret == 0)
+		goto wait_for_cell;
+	goto error_noput;
 error:
 	afs_unuse_cell(net, cell, afs_cell_trace_unuse_lookup);
 error_noput:
 	_leave(" = %d [error]", ret);
-	वापस ERR_PTR(ret);
-पूर्ण
+	return ERR_PTR(ret);
+}
 
 /*
- * set the root cell inक्रमmation
+ * set the root cell information
  * - can be called with a module parameter string
- * - can be called from a ग_लिखो to /proc/fs/afs/rootcell
+ * - can be called from a write to /proc/fs/afs/rootcell
  */
-पूर्णांक afs_cell_init(काष्ठा afs_net *net, स्थिर अक्षर *rootcell)
-अणु
-	काष्ठा afs_cell *old_root, *new_root;
-	स्थिर अक्षर *cp, *vllist;
-	माप_प्रकार len;
+int afs_cell_init(struct afs_net *net, const char *rootcell)
+{
+	struct afs_cell *old_root, *new_root;
+	const char *cp, *vllist;
+	size_t len;
 
 	_enter("");
 
-	अगर (!rootcell) अणु
-		/* module is loaded with no parameters, or built अटलally.
+	if (!rootcell) {
+		/* module is loaded with no parameters, or built statically.
 		 * - in the future we might initialize cell DB here.
 		 */
 		_leave(" = 0 [no root]");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	cp = म_अक्षर(rootcell, ':');
-	अगर (!cp) अणु
+	cp = strchr(rootcell, ':');
+	if (!cp) {
 		_debug("kAFS: no VL server IP addresses specified");
-		vllist = शून्य;
-		len = म_माप(rootcell);
-	पूर्ण अन्यथा अणु
+		vllist = NULL;
+		len = strlen(rootcell);
+	} else {
 		vllist = cp + 1;
 		len = cp - rootcell;
-	पूर्ण
+	}
 
-	/* allocate a cell record क्रम the root cell */
+	/* allocate a cell record for the root cell */
 	new_root = afs_lookup_cell(net, rootcell, len, vllist, false);
-	अगर (IS_ERR(new_root)) अणु
+	if (IS_ERR(new_root)) {
 		_leave(" = %ld", PTR_ERR(new_root));
-		वापस PTR_ERR(new_root);
-	पूर्ण
+		return PTR_ERR(new_root);
+	}
 
-	अगर (!test_and_set_bit(AFS_CELL_FL_NO_GC, &new_root->flags))
+	if (!test_and_set_bit(AFS_CELL_FL_NO_GC, &new_root->flags))
 		afs_use_cell(new_root, afs_cell_trace_use_pin);
 
 	/* install the new cell */
-	करोwn_ग_लिखो(&net->cells_lock);
+	down_write(&net->cells_lock);
 	afs_see_cell(new_root, afs_cell_trace_see_ws);
 	old_root = net->ws_cell;
 	net->ws_cell = new_root;
-	up_ग_लिखो(&net->cells_lock);
+	up_write(&net->cells_lock);
 
 	afs_unuse_cell(net, old_root, afs_cell_trace_unuse_ws);
 	_leave(" = 0");
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Update a cell's VL server address list from the DNS.
  */
-अटल पूर्णांक afs_update_cell(काष्ठा afs_cell *cell)
-अणु
-	काष्ठा afs_vlserver_list *vllist, *old = शून्य, *p;
-	अचिन्हित पूर्णांक min_ttl = READ_ONCE(afs_cell_min_ttl);
-	अचिन्हित पूर्णांक max_ttl = READ_ONCE(afs_cell_max_ttl);
-	समय64_t now, expiry = 0;
-	पूर्णांक ret = 0;
+static int afs_update_cell(struct afs_cell *cell)
+{
+	struct afs_vlserver_list *vllist, *old = NULL, *p;
+	unsigned int min_ttl = READ_ONCE(afs_cell_min_ttl);
+	unsigned int max_ttl = READ_ONCE(afs_cell_max_ttl);
+	time64_t now, expiry = 0;
+	int ret = 0;
 
 	_enter("%s", cell->name);
 
 	vllist = afs_dns_query(cell, &expiry);
-	अगर (IS_ERR(vllist)) अणु
+	if (IS_ERR(vllist)) {
 		ret = PTR_ERR(vllist);
 
 		_debug("%s: fail %d", cell->name, ret);
-		अगर (ret == -ENOMEM)
-			जाओ out_wake;
+		if (ret == -ENOMEM)
+			goto out_wake;
 
 		ret = -ENOMEM;
 		vllist = afs_alloc_vlserver_list(0);
-		अगर (!vllist)
-			जाओ out_wake;
+		if (!vllist)
+			goto out_wake;
 
-		चयन (ret) अणु
-		हाल -ENODATA:
-		हाल -EDESTADDRREQ:
+		switch (ret) {
+		case -ENODATA:
+		case -EDESTADDRREQ:
 			vllist->status = DNS_LOOKUP_GOT_NOT_FOUND;
-			अवरोध;
-		हाल -EAGAIN:
-		हाल -ECONNREFUSED:
+			break;
+		case -EAGAIN:
+		case -ECONNREFUSED:
 			vllist->status = DNS_LOOKUP_GOT_TEMP_FAILURE;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			vllist->status = DNS_LOOKUP_GOT_LOCAL_FAILURE;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
 	_debug("%s: got list %d %d", cell->name, vllist->source, vllist->status);
 	cell->dns_status = vllist->status;
 
-	now = kसमय_get_real_seconds();
-	अगर (min_ttl > max_ttl)
+	now = ktime_get_real_seconds();
+	if (min_ttl > max_ttl)
 		max_ttl = min_ttl;
-	अगर (expiry < now + min_ttl)
+	if (expiry < now + min_ttl)
 		expiry = now + min_ttl;
-	अन्यथा अगर (expiry > now + max_ttl)
+	else if (expiry > now + max_ttl)
 		expiry = now + max_ttl;
 
 	_debug("%s: status %d", cell->name, vllist->status);
-	अगर (vllist->source == DNS_RECORD_UNAVAILABLE) अणु
-		चयन (vllist->status) अणु
-		हाल DNS_LOOKUP_GOT_NOT_FOUND:
-			/* The DNS said that the cell करोes not exist or there
+	if (vllist->source == DNS_RECORD_UNAVAILABLE) {
+		switch (vllist->status) {
+		case DNS_LOOKUP_GOT_NOT_FOUND:
+			/* The DNS said that the cell does not exist or there
 			 * weren't any addresses to be had.
 			 */
 			cell->dns_expiry = expiry;
-			अवरोध;
+			break;
 
-		हाल DNS_LOOKUP_BAD:
-		हाल DNS_LOOKUP_GOT_LOCAL_FAILURE:
-		हाल DNS_LOOKUP_GOT_TEMP_FAILURE:
-		हाल DNS_LOOKUP_GOT_NS_FAILURE:
-		शेष:
+		case DNS_LOOKUP_BAD:
+		case DNS_LOOKUP_GOT_LOCAL_FAILURE:
+		case DNS_LOOKUP_GOT_TEMP_FAILURE:
+		case DNS_LOOKUP_GOT_NS_FAILURE:
+		default:
 			cell->dns_expiry = now + 10;
-			अवरोध;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			break;
+		}
+	} else {
 		cell->dns_expiry = expiry;
-	पूर्ण
+	}
 
-	/* Replace the VL server list अगर the new record has servers or the old
-	 * record करोesn't.
+	/* Replace the VL server list if the new record has servers or the old
+	 * record doesn't.
 	 */
-	ग_लिखो_lock(&cell->vl_servers_lock);
-	p = rcu_dereference_रक्षित(cell->vl_servers, true);
-	अगर (vllist->nr_servers > 0 || p->nr_servers == 0) अणु
-		rcu_assign_poपूर्णांकer(cell->vl_servers, vllist);
+	write_lock(&cell->vl_servers_lock);
+	p = rcu_dereference_protected(cell->vl_servers, true);
+	if (vllist->nr_servers > 0 || p->nr_servers == 0) {
+		rcu_assign_pointer(cell->vl_servers, vllist);
 		cell->dns_source = vllist->source;
 		old = p;
-	पूर्ण
-	ग_लिखो_unlock(&cell->vl_servers_lock);
+	}
+	write_unlock(&cell->vl_servers_lock);
 	afs_put_vlserverlist(cell->net, old);
 
 out_wake:
@@ -479,333 +478,333 @@ out_wake:
 			  cell->dns_lookup_count + 1); /* vs source/status */
 	wake_up_var(&cell->dns_lookup_count);
 	_leave(" = %d", ret);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
  * Destroy a cell record
  */
-अटल व्योम afs_cell_destroy(काष्ठा rcu_head *rcu)
-अणु
-	काष्ठा afs_cell *cell = container_of(rcu, काष्ठा afs_cell, rcu);
-	काष्ठा afs_net *net = cell->net;
-	पूर्णांक u;
+static void afs_cell_destroy(struct rcu_head *rcu)
+{
+	struct afs_cell *cell = container_of(rcu, struct afs_cell, rcu);
+	struct afs_net *net = cell->net;
+	int u;
 
 	_enter("%p{%s}", cell, cell->name);
 
-	u = atomic_पढ़ो(&cell->ref);
+	u = atomic_read(&cell->ref);
 	ASSERTCMP(u, ==, 0);
-	trace_afs_cell(cell->debug_id, u, atomic_पढ़ो(&cell->active), afs_cell_trace_मुक्त);
+	trace_afs_cell(cell->debug_id, u, atomic_read(&cell->active), afs_cell_trace_free);
 
-	afs_put_vlserverlist(net, rcu_access_poपूर्णांकer(cell->vl_servers));
+	afs_put_vlserverlist(net, rcu_access_pointer(cell->vl_servers));
 	afs_unuse_cell(net, cell->alias_of, afs_cell_trace_unuse_alias);
 	key_put(cell->anonymous_key);
-	kमुक्त(cell->name);
-	kमुक्त(cell);
+	kfree(cell->name);
+	kfree(cell);
 
 	afs_dec_cells_outstanding(net);
 	_leave(" [destroyed]");
-पूर्ण
+}
 
 /*
  * Queue the cell manager.
  */
-अटल व्योम afs_queue_cell_manager(काष्ठा afs_net *net)
-अणु
-	पूर्णांक outstanding = atomic_inc_वापस(&net->cells_outstanding);
+static void afs_queue_cell_manager(struct afs_net *net)
+{
+	int outstanding = atomic_inc_return(&net->cells_outstanding);
 
 	_enter("%d", outstanding);
 
-	अगर (!queue_work(afs_wq, &net->cells_manager))
+	if (!queue_work(afs_wq, &net->cells_manager))
 		afs_dec_cells_outstanding(net);
-पूर्ण
+}
 
 /*
- * Cell management समयr.  We have an increment on cells_outstanding that we
- * need to pass aदीर्घ to the work item.
+ * Cell management timer.  We have an increment on cells_outstanding that we
+ * need to pass along to the work item.
  */
-व्योम afs_cells_समयr(काष्ठा समयr_list *समयr)
-अणु
-	काष्ठा afs_net *net = container_of(समयr, काष्ठा afs_net, cells_समयr);
+void afs_cells_timer(struct timer_list *timer)
+{
+	struct afs_net *net = container_of(timer, struct afs_net, cells_timer);
 
 	_enter("");
-	अगर (!queue_work(afs_wq, &net->cells_manager))
+	if (!queue_work(afs_wq, &net->cells_manager))
 		afs_dec_cells_outstanding(net);
-पूर्ण
+}
 
 /*
  * Get a reference on a cell record.
  */
-काष्ठा afs_cell *afs_get_cell(काष्ठा afs_cell *cell, क्रमागत afs_cell_trace reason)
-अणु
-	पूर्णांक u;
+struct afs_cell *afs_get_cell(struct afs_cell *cell, enum afs_cell_trace reason)
+{
+	int u;
 
-	अगर (atomic_पढ़ो(&cell->ref) <= 0)
+	if (atomic_read(&cell->ref) <= 0)
 		BUG();
 
-	u = atomic_inc_वापस(&cell->ref);
-	trace_afs_cell(cell->debug_id, u, atomic_पढ़ो(&cell->active), reason);
-	वापस cell;
-पूर्ण
+	u = atomic_inc_return(&cell->ref);
+	trace_afs_cell(cell->debug_id, u, atomic_read(&cell->active), reason);
+	return cell;
+}
 
 /*
  * Drop a reference on a cell record.
  */
-व्योम afs_put_cell(काष्ठा afs_cell *cell, क्रमागत afs_cell_trace reason)
-अणु
-	अगर (cell) अणु
-		अचिन्हित पूर्णांक debug_id = cell->debug_id;
-		अचिन्हित पूर्णांक u, a;
+void afs_put_cell(struct afs_cell *cell, enum afs_cell_trace reason)
+{
+	if (cell) {
+		unsigned int debug_id = cell->debug_id;
+		unsigned int u, a;
 
-		a = atomic_पढ़ो(&cell->active);
-		u = atomic_dec_वापस(&cell->ref);
+		a = atomic_read(&cell->active);
+		u = atomic_dec_return(&cell->ref);
 		trace_afs_cell(debug_id, u, a, reason);
-		अगर (u == 0) अणु
-			a = atomic_पढ़ो(&cell->active);
+		if (u == 0) {
+			a = atomic_read(&cell->active);
 			WARN(a != 0, "Cell active count %u > 0\n", a);
 			call_rcu(&cell->rcu, afs_cell_destroy);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
 /*
  * Note a cell becoming more active.
  */
-काष्ठा afs_cell *afs_use_cell(काष्ठा afs_cell *cell, क्रमागत afs_cell_trace reason)
-अणु
-	पूर्णांक u, a;
+struct afs_cell *afs_use_cell(struct afs_cell *cell, enum afs_cell_trace reason)
+{
+	int u, a;
 
-	अगर (atomic_पढ़ो(&cell->ref) <= 0)
+	if (atomic_read(&cell->ref) <= 0)
 		BUG();
 
-	u = atomic_पढ़ो(&cell->ref);
-	a = atomic_inc_वापस(&cell->active);
+	u = atomic_read(&cell->ref);
+	a = atomic_inc_return(&cell->active);
 	trace_afs_cell(cell->debug_id, u, a, reason);
-	वापस cell;
-पूर्ण
+	return cell;
+}
 
 /*
  * Record a cell becoming less active.  When the active counter reaches 1, it
- * is scheduled क्रम deकाष्ठाion, but may get reactivated.
+ * is scheduled for destruction, but may get reactivated.
  */
-व्योम afs_unuse_cell(काष्ठा afs_net *net, काष्ठा afs_cell *cell, क्रमागत afs_cell_trace reason)
-अणु
-	अचिन्हित पूर्णांक debug_id;
-	समय64_t now, expire_delay;
-	पूर्णांक u, a;
+void afs_unuse_cell(struct afs_net *net, struct afs_cell *cell, enum afs_cell_trace reason)
+{
+	unsigned int debug_id;
+	time64_t now, expire_delay;
+	int u, a;
 
-	अगर (!cell)
-		वापस;
+	if (!cell)
+		return;
 
 	_enter("%s", cell->name);
 
-	now = kसमय_get_real_seconds();
+	now = ktime_get_real_seconds();
 	cell->last_inactive = now;
 	expire_delay = 0;
-	अगर (cell->vl_servers->nr_servers)
+	if (cell->vl_servers->nr_servers)
 		expire_delay = afs_cell_gc_delay;
 
 	debug_id = cell->debug_id;
-	u = atomic_पढ़ो(&cell->ref);
-	a = atomic_dec_वापस(&cell->active);
+	u = atomic_read(&cell->ref);
+	a = atomic_dec_return(&cell->active);
 	trace_afs_cell(debug_id, u, a, reason);
 	WARN_ON(a == 0);
-	अगर (a == 1)
+	if (a == 1)
 		/* 'cell' may now be garbage collected. */
-		afs_set_cell_समयr(net, expire_delay);
-पूर्ण
+		afs_set_cell_timer(net, expire_delay);
+}
 
 /*
  * Note that a cell has been seen.
  */
-व्योम afs_see_cell(काष्ठा afs_cell *cell, क्रमागत afs_cell_trace reason)
-अणु
-	पूर्णांक u, a;
+void afs_see_cell(struct afs_cell *cell, enum afs_cell_trace reason)
+{
+	int u, a;
 
-	u = atomic_पढ़ो(&cell->ref);
-	a = atomic_पढ़ो(&cell->active);
+	u = atomic_read(&cell->ref);
+	a = atomic_read(&cell->active);
 	trace_afs_cell(cell->debug_id, u, a, reason);
-पूर्ण
+}
 
 /*
- * Queue a cell क्रम management, giving the workqueue a ref to hold.
+ * Queue a cell for management, giving the workqueue a ref to hold.
  */
-व्योम afs_queue_cell(काष्ठा afs_cell *cell, क्रमागत afs_cell_trace reason)
-अणु
+void afs_queue_cell(struct afs_cell *cell, enum afs_cell_trace reason)
+{
 	afs_get_cell(cell, reason);
-	अगर (!queue_work(afs_wq, &cell->manager))
+	if (!queue_work(afs_wq, &cell->manager))
 		afs_put_cell(cell, afs_cell_trace_put_queue_fail);
-पूर्ण
+}
 
 /*
- * Allocate a key to use as a placeholder क्रम anonymous user security.
+ * Allocate a key to use as a placeholder for anonymous user security.
  */
-अटल पूर्णांक afs_alloc_anon_key(काष्ठा afs_cell *cell)
-अणु
-	काष्ठा key *key;
-	अक्षर keyname[4 + AFS_MAXCELLNAME + 1], *cp, *dp;
+static int afs_alloc_anon_key(struct afs_cell *cell)
+{
+	struct key *key;
+	char keyname[4 + AFS_MAXCELLNAME + 1], *cp, *dp;
 
 	/* Create a key to represent an anonymous user. */
-	स_नकल(keyname, "afs@", 4);
+	memcpy(keyname, "afs@", 4);
 	dp = keyname + 4;
 	cp = cell->name;
-	करो अणु
-		*dp++ = छोटे(*cp);
-	पूर्ण जबतक (*cp++);
+	do {
+		*dp++ = tolower(*cp);
+	} while (*cp++);
 
 	key = rxrpc_get_null_key(keyname);
-	अगर (IS_ERR(key))
-		वापस PTR_ERR(key);
+	if (IS_ERR(key))
+		return PTR_ERR(key);
 
 	cell->anonymous_key = key;
 
 	_debug("anon key %p{%x}",
 	       cell->anonymous_key, key_serial(cell->anonymous_key));
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Activate a cell.
  */
-अटल पूर्णांक afs_activate_cell(काष्ठा afs_net *net, काष्ठा afs_cell *cell)
-अणु
-	काष्ठा hlist_node **p;
-	काष्ठा afs_cell *pcell;
-	पूर्णांक ret;
+static int afs_activate_cell(struct afs_net *net, struct afs_cell *cell)
+{
+	struct hlist_node **p;
+	struct afs_cell *pcell;
+	int ret;
 
-	अगर (!cell->anonymous_key) अणु
+	if (!cell->anonymous_key) {
 		ret = afs_alloc_anon_key(cell);
-		अगर (ret < 0)
-			वापस ret;
-	पूर्ण
+		if (ret < 0)
+			return ret;
+	}
 
-#अगर_घोषित CONFIG_AFS_FSCACHE
+#ifdef CONFIG_AFS_FSCACHE
 	cell->cache = fscache_acquire_cookie(afs_cache_netfs.primary_index,
 					     &afs_cell_cache_index_def,
-					     cell->name, म_माप(cell->name),
-					     शून्य, 0,
+					     cell->name, strlen(cell->name),
+					     NULL, 0,
 					     cell, 0, true);
-#पूर्ण_अगर
+#endif
 	ret = afs_proc_cell_setup(cell);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	mutex_lock(&net->proc_cells_lock);
-	क्रम (p = &net->proc_cells.first; *p; p = &(*p)->next) अणु
-		pcell = hlist_entry(*p, काष्ठा afs_cell, proc_link);
-		अगर (म_भेद(cell->name, pcell->name) < 0)
-			अवरोध;
-	पूर्ण
+	for (p = &net->proc_cells.first; *p; p = &(*p)->next) {
+		pcell = hlist_entry(*p, struct afs_cell, proc_link);
+		if (strcmp(cell->name, pcell->name) < 0)
+			break;
+	}
 
 	cell->proc_link.pprev = p;
 	cell->proc_link.next = *p;
-	rcu_assign_poपूर्णांकer(*p, &cell->proc_link.next);
-	अगर (cell->proc_link.next)
+	rcu_assign_pointer(*p, &cell->proc_link.next);
+	if (cell->proc_link.next)
 		cell->proc_link.next->pprev = &cell->proc_link.next;
 
-	afs_dynroot_सूची_गढ़ो(net, cell);
+	afs_dynroot_mkdir(net, cell);
 	mutex_unlock(&net->proc_cells_lock);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Deactivate a cell.
  */
-अटल व्योम afs_deactivate_cell(काष्ठा afs_net *net, काष्ठा afs_cell *cell)
-अणु
+static void afs_deactivate_cell(struct afs_net *net, struct afs_cell *cell)
+{
 	_enter("%s", cell->name);
 
-	afs_proc_cell_हटाओ(cell);
+	afs_proc_cell_remove(cell);
 
 	mutex_lock(&net->proc_cells_lock);
 	hlist_del_rcu(&cell->proc_link);
-	afs_dynroot_सूची_हटाओ(net, cell);
+	afs_dynroot_rmdir(net, cell);
 	mutex_unlock(&net->proc_cells_lock);
 
-#अगर_घोषित CONFIG_AFS_FSCACHE
-	fscache_relinquish_cookie(cell->cache, शून्य, false);
-	cell->cache = शून्य;
-#पूर्ण_अगर
+#ifdef CONFIG_AFS_FSCACHE
+	fscache_relinquish_cookie(cell->cache, NULL, false);
+	cell->cache = NULL;
+#endif
 
 	_leave("");
-पूर्ण
+}
 
 /*
- * Manage a cell record, initialising and destroying it, मुख्यtaining its DNS
+ * Manage a cell record, initialising and destroying it, maintaining its DNS
  * records.
  */
-अटल व्योम afs_manage_cell(काष्ठा afs_cell *cell)
-अणु
-	काष्ठा afs_net *net = cell->net;
-	पूर्णांक ret, active;
+static void afs_manage_cell(struct afs_cell *cell)
+{
+	struct afs_net *net = cell->net;
+	int ret, active;
 
 	_enter("%s", cell->name);
 
 again:
 	_debug("state %u", cell->state);
-	चयन (cell->state) अणु
-	हाल AFS_CELL_INACTIVE:
-	हाल AFS_CELL_FAILED:
-		करोwn_ग_लिखो(&net->cells_lock);
+	switch (cell->state) {
+	case AFS_CELL_INACTIVE:
+	case AFS_CELL_FAILED:
+		down_write(&net->cells_lock);
 		active = 1;
-		अगर (atomic_try_cmpxchg_relaxed(&cell->active, &active, 0)) अणु
+		if (atomic_try_cmpxchg_relaxed(&cell->active, &active, 0)) {
 			rb_erase(&cell->net_node, &net->cells);
-			trace_afs_cell(cell->debug_id, atomic_पढ़ो(&cell->ref), 0,
+			trace_afs_cell(cell->debug_id, atomic_read(&cell->ref), 0,
 				       afs_cell_trace_unuse_delete);
 			smp_store_release(&cell->state, AFS_CELL_REMOVED);
-		पूर्ण
-		up_ग_लिखो(&net->cells_lock);
-		अगर (cell->state == AFS_CELL_REMOVED) अणु
+		}
+		up_write(&net->cells_lock);
+		if (cell->state == AFS_CELL_REMOVED) {
 			wake_up_var(&cell->state);
-			जाओ final_deकाष्ठाion;
-		पूर्ण
-		अगर (cell->state == AFS_CELL_FAILED)
-			जाओ करोne;
+			goto final_destruction;
+		}
+		if (cell->state == AFS_CELL_FAILED)
+			goto done;
 		smp_store_release(&cell->state, AFS_CELL_UNSET);
 		wake_up_var(&cell->state);
-		जाओ again;
+		goto again;
 
-	हाल AFS_CELL_UNSET:
+	case AFS_CELL_UNSET:
 		smp_store_release(&cell->state, AFS_CELL_ACTIVATING);
 		wake_up_var(&cell->state);
-		जाओ again;
+		goto again;
 
-	हाल AFS_CELL_ACTIVATING:
+	case AFS_CELL_ACTIVATING:
 		ret = afs_activate_cell(net, cell);
-		अगर (ret < 0)
-			जाओ activation_failed;
+		if (ret < 0)
+			goto activation_failed;
 
 		smp_store_release(&cell->state, AFS_CELL_ACTIVE);
 		wake_up_var(&cell->state);
-		जाओ again;
+		goto again;
 
-	हाल AFS_CELL_ACTIVE:
-		अगर (atomic_पढ़ो(&cell->active) > 1) अणु
-			अगर (test_and_clear_bit(AFS_CELL_FL_DO_LOOKUP, &cell->flags)) अणु
+	case AFS_CELL_ACTIVE:
+		if (atomic_read(&cell->active) > 1) {
+			if (test_and_clear_bit(AFS_CELL_FL_DO_LOOKUP, &cell->flags)) {
 				ret = afs_update_cell(cell);
-				अगर (ret < 0)
+				if (ret < 0)
 					cell->error = ret;
-			पूर्ण
-			जाओ करोne;
-		पूर्ण
+			}
+			goto done;
+		}
 		smp_store_release(&cell->state, AFS_CELL_DEACTIVATING);
 		wake_up_var(&cell->state);
-		जाओ again;
+		goto again;
 
-	हाल AFS_CELL_DEACTIVATING:
-		अगर (atomic_पढ़ो(&cell->active) > 1)
-			जाओ reverse_deactivation;
+	case AFS_CELL_DEACTIVATING:
+		if (atomic_read(&cell->active) > 1)
+			goto reverse_deactivation;
 		afs_deactivate_cell(net, cell);
 		smp_store_release(&cell->state, AFS_CELL_INACTIVE);
 		wake_up_var(&cell->state);
-		जाओ again;
+		goto again;
 
-	हाल AFS_CELL_REMOVED:
-		जाओ करोne;
+	case AFS_CELL_REMOVED:
+		goto done;
 
-	शेष:
-		अवरोध;
-	पूर्ण
+	default:
+		break;
+	}
 	_debug("bad state %u", cell->state);
 	BUG(); /* Unhandled state */
 
@@ -815,152 +814,152 @@ activation_failed:
 
 	smp_store_release(&cell->state, AFS_CELL_FAILED); /* vs error */
 	wake_up_var(&cell->state);
-	जाओ again;
+	goto again;
 
 reverse_deactivation:
 	smp_store_release(&cell->state, AFS_CELL_ACTIVE);
 	wake_up_var(&cell->state);
 	_leave(" [deact->act]");
-	वापस;
+	return;
 
-करोne:
+done:
 	_leave(" [done %u]", cell->state);
-	वापस;
+	return;
 
-final_deकाष्ठाion:
+final_destruction:
 	/* The root volume is pinning the cell */
 	afs_put_volume(cell->net, cell->root_volume, afs_volume_trace_put_cell_root);
-	cell->root_volume = शून्य;
+	cell->root_volume = NULL;
 	afs_put_cell(cell, afs_cell_trace_put_destroy);
-पूर्ण
+}
 
-अटल व्योम afs_manage_cell_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा afs_cell *cell = container_of(work, काष्ठा afs_cell, manager);
+static void afs_manage_cell_work(struct work_struct *work)
+{
+	struct afs_cell *cell = container_of(work, struct afs_cell, manager);
 
 	afs_manage_cell(cell);
 	afs_put_cell(cell, afs_cell_trace_put_queue_work);
-पूर्ण
+}
 
 /*
  * Manage the records of cells known to a network namespace.  This includes
  * updating the DNS records and garbage collecting unused cells that were
- * स्वतःmatically added.
+ * automatically added.
  *
- * Note that स्थिरructed cell records may only be हटाओd from net->cells by
- * this work item, so it is safe क्रम this work item to stash a cursor poपूर्णांकing
- * पूर्णांकo the tree and then वापस to caller (provided it skips cells that are
- * still under स्थिरruction).
+ * Note that constructed cell records may only be removed from net->cells by
+ * this work item, so it is safe for this work item to stash a cursor pointing
+ * into the tree and then return to caller (provided it skips cells that are
+ * still under construction).
  *
  * Note also that we were given an increment on net->cells_outstanding by
- * whoever queued us that we need to deal with beक्रमe वापसing.
+ * whoever queued us that we need to deal with before returning.
  */
-व्योम afs_manage_cells(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा afs_net *net = container_of(work, काष्ठा afs_net, cells_manager);
-	काष्ठा rb_node *cursor;
-	समय64_t now = kसमय_get_real_seconds(), next_manage = TIME64_MAX;
+void afs_manage_cells(struct work_struct *work)
+{
+	struct afs_net *net = container_of(work, struct afs_net, cells_manager);
+	struct rb_node *cursor;
+	time64_t now = ktime_get_real_seconds(), next_manage = TIME64_MAX;
 	bool purging = !net->live;
 
 	_enter("");
 
-	/* Trawl the cell database looking क्रम cells that have expired from
+	/* Trawl the cell database looking for cells that have expired from
 	 * lack of use and cells whose DNS results have expired and dispatch
 	 * their managers.
 	 */
-	करोwn_पढ़ो(&net->cells_lock);
+	down_read(&net->cells_lock);
 
-	क्रम (cursor = rb_first(&net->cells); cursor; cursor = rb_next(cursor)) अणु
-		काष्ठा afs_cell *cell =
-			rb_entry(cursor, काष्ठा afs_cell, net_node);
-		अचिन्हित active;
+	for (cursor = rb_first(&net->cells); cursor; cursor = rb_next(cursor)) {
+		struct afs_cell *cell =
+			rb_entry(cursor, struct afs_cell, net_node);
+		unsigned active;
 		bool sched_cell = false;
 
-		active = atomic_पढ़ो(&cell->active);
-		trace_afs_cell(cell->debug_id, atomic_पढ़ो(&cell->ref),
+		active = atomic_read(&cell->active);
+		trace_afs_cell(cell->debug_id, atomic_read(&cell->ref),
 			       active, afs_cell_trace_manage);
 
 		ASSERTCMP(active, >=, 1);
 
-		अगर (purging) अणु
-			अगर (test_and_clear_bit(AFS_CELL_FL_NO_GC, &cell->flags)) अणु
-				active = atomic_dec_वापस(&cell->active);
-				trace_afs_cell(cell->debug_id, atomic_पढ़ो(&cell->ref),
+		if (purging) {
+			if (test_and_clear_bit(AFS_CELL_FL_NO_GC, &cell->flags)) {
+				active = atomic_dec_return(&cell->active);
+				trace_afs_cell(cell->debug_id, atomic_read(&cell->ref),
 					       active, afs_cell_trace_unuse_pin);
-			पूर्ण
-		पूर्ण
+			}
+		}
 
-		अगर (active == 1) अणु
-			काष्ठा afs_vlserver_list *vllist;
-			समय64_t expire_at = cell->last_inactive;
+		if (active == 1) {
+			struct afs_vlserver_list *vllist;
+			time64_t expire_at = cell->last_inactive;
 
-			पढ़ो_lock(&cell->vl_servers_lock);
-			vllist = rcu_dereference_रक्षित(
+			read_lock(&cell->vl_servers_lock);
+			vllist = rcu_dereference_protected(
 				cell->vl_servers,
 				lockdep_is_held(&cell->vl_servers_lock));
-			अगर (vllist->nr_servers > 0)
+			if (vllist->nr_servers > 0)
 				expire_at += afs_cell_gc_delay;
-			पढ़ो_unlock(&cell->vl_servers_lock);
-			अगर (purging || expire_at <= now)
+			read_unlock(&cell->vl_servers_lock);
+			if (purging || expire_at <= now)
 				sched_cell = true;
-			अन्यथा अगर (expire_at < next_manage)
+			else if (expire_at < next_manage)
 				next_manage = expire_at;
-		पूर्ण
+		}
 
-		अगर (!purging) अणु
-			अगर (test_bit(AFS_CELL_FL_DO_LOOKUP, &cell->flags))
+		if (!purging) {
+			if (test_bit(AFS_CELL_FL_DO_LOOKUP, &cell->flags))
 				sched_cell = true;
-		पूर्ण
+		}
 
-		अगर (sched_cell)
+		if (sched_cell)
 			afs_queue_cell(cell, afs_cell_trace_get_queue_manage);
-	पूर्ण
+	}
 
-	up_पढ़ो(&net->cells_lock);
+	up_read(&net->cells_lock);
 
-	/* Update the समयr on the way out.  We have to pass an increment on
-	 * cells_outstanding in the namespace that we are in to the समयr or
+	/* Update the timer on the way out.  We have to pass an increment on
+	 * cells_outstanding in the namespace that we are in to the timer or
 	 * the work scheduler.
 	 */
-	अगर (!purging && next_manage < TIME64_MAX) अणु
-		now = kसमय_get_real_seconds();
+	if (!purging && next_manage < TIME64_MAX) {
+		now = ktime_get_real_seconds();
 
-		अगर (next_manage - now <= 0) अणु
-			अगर (queue_work(afs_wq, &net->cells_manager))
+		if (next_manage - now <= 0) {
+			if (queue_work(afs_wq, &net->cells_manager))
 				atomic_inc(&net->cells_outstanding);
-		पूर्ण अन्यथा अणु
-			afs_set_cell_समयr(net, next_manage - now);
-		पूर्ण
-	पूर्ण
+		} else {
+			afs_set_cell_timer(net, next_manage - now);
+		}
+	}
 
 	afs_dec_cells_outstanding(net);
-	_leave(" [%d]", atomic_पढ़ो(&net->cells_outstanding));
-पूर्ण
+	_leave(" [%d]", atomic_read(&net->cells_outstanding));
+}
 
 /*
  * Purge in-memory cell database.
  */
-व्योम afs_cell_purge(काष्ठा afs_net *net)
-अणु
-	काष्ठा afs_cell *ws;
+void afs_cell_purge(struct afs_net *net)
+{
+	struct afs_cell *ws;
 
 	_enter("");
 
-	करोwn_ग_लिखो(&net->cells_lock);
+	down_write(&net->cells_lock);
 	ws = net->ws_cell;
-	net->ws_cell = शून्य;
-	up_ग_लिखो(&net->cells_lock);
+	net->ws_cell = NULL;
+	up_write(&net->cells_lock);
 	afs_unuse_cell(net, ws, afs_cell_trace_unuse_ws);
 
 	_debug("del timer");
-	अगर (del_समयr_sync(&net->cells_समयr))
+	if (del_timer_sync(&net->cells_timer))
 		atomic_dec(&net->cells_outstanding);
 
 	_debug("kick mgr");
 	afs_queue_cell_manager(net);
 
 	_debug("wait");
-	रुको_var_event(&net->cells_outstanding,
-		       !atomic_पढ़ो(&net->cells_outstanding));
+	wait_var_event(&net->cells_outstanding,
+		       !atomic_read(&net->cells_outstanding));
 	_leave("");
-पूर्ण
+}

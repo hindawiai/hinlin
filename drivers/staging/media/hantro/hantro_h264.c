@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Rockchip RK3288 VPU codec driver
  *
@@ -11,32 +10,32 @@
  *	Tomasz Figa <tfiga@chromium.org>
  */
 
-#समावेश <linux/types.h>
-#समावेश <media/v4l2-h264.h>
-#समावेश <media/v4l2-mem2स्मृति.स>
+#include <linux/types.h>
+#include <media/v4l2-h264.h>
+#include <media/v4l2-mem2mem.h>
 
-#समावेश "hantro.h"
-#समावेश "hantro_hw.h"
+#include "hantro.h"
+#include "hantro_hw.h"
 
 /* Size with u32 units. */
-#घोषणा CABAC_INIT_BUFFER_SIZE		(460 * 2)
-#घोषणा POC_BUFFER_SIZE			34
-#घोषणा SCALING_LIST_SIZE		(6 * 16 + 2 * 64)
+#define CABAC_INIT_BUFFER_SIZE		(460 * 2)
+#define POC_BUFFER_SIZE			34
+#define SCALING_LIST_SIZE		(6 * 16 + 2 * 64)
 
-/* Data काष्ठाure describing auxiliary buffer क्रमmat. */
-काष्ठा hantro_h264_dec_priv_tbl अणु
+/* Data structure describing auxiliary buffer format. */
+struct hantro_h264_dec_priv_tbl {
 	u32 cabac_table[CABAC_INIT_BUFFER_SIZE];
 	u32 poc[POC_BUFFER_SIZE];
 	u8 scaling_list[SCALING_LIST_SIZE];
-पूर्ण;
+};
 
 /*
  * Constant CABAC table.
- * From drivers/media/platक्रमm/rk3288-vpu/rk3288_vpu_hw_h264d.c
+ * From drivers/media/platform/rk3288-vpu/rk3288_vpu_hw_h264d.c
  * in https://chromium.googlesource.com/chromiumos/third_party/kernel,
  * chromeos-3.14 branch.
  */
-अटल स्थिर u32 h264_cabac_table[] = अणु
+static const u32 h264_cabac_table[] = {
 	0x14f10236, 0x034a14f1, 0x0236034a, 0xe47fe968, 0xfa35ff36, 0x07330000,
 	0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
 	0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
@@ -191,110 +190,110 @@
 	0xf83ff743, 0xfa44f64f, 0xfd4ef84a, 0xf748f648, 0xee4bf447, 0xf53ffb46,
 	0xef4bf248, 0xf043f835, 0xf23bf734, 0xf54409fe, 0x1ef61ffc, 0x21ff2107,
 	0x1f0c2517, 0x1f261440
-पूर्ण;
+};
 
-अटल व्योम
-assemble_scaling_list(काष्ठा hantro_ctx *ctx)
-अणु
-	स्थिर काष्ठा hantro_h264_dec_ctrls *ctrls = &ctx->h264_dec.ctrls;
-	स्थिर काष्ठा v4l2_ctrl_h264_scaling_matrix *scaling = ctrls->scaling;
-	स्थिर काष्ठा v4l2_ctrl_h264_pps *pps = ctrls->pps;
-	स्थिर माप_प्रकार num_list_4x4 = ARRAY_SIZE(scaling->scaling_list_4x4);
-	स्थिर माप_प्रकार list_len_4x4 = ARRAY_SIZE(scaling->scaling_list_4x4[0]);
-	स्थिर माप_प्रकार list_len_8x8 = ARRAY_SIZE(scaling->scaling_list_8x8[0]);
-	काष्ठा hantro_h264_dec_priv_tbl *tbl = ctx->h264_dec.priv.cpu;
+static void
+assemble_scaling_list(struct hantro_ctx *ctx)
+{
+	const struct hantro_h264_dec_ctrls *ctrls = &ctx->h264_dec.ctrls;
+	const struct v4l2_ctrl_h264_scaling_matrix *scaling = ctrls->scaling;
+	const struct v4l2_ctrl_h264_pps *pps = ctrls->pps;
+	const size_t num_list_4x4 = ARRAY_SIZE(scaling->scaling_list_4x4);
+	const size_t list_len_4x4 = ARRAY_SIZE(scaling->scaling_list_4x4[0]);
+	const size_t list_len_8x8 = ARRAY_SIZE(scaling->scaling_list_8x8[0]);
+	struct hantro_h264_dec_priv_tbl *tbl = ctx->h264_dec.priv.cpu;
 	u32 *dst = (u32 *)tbl->scaling_list;
-	स्थिर u32 *src;
-	पूर्णांक i, j;
+	const u32 *src;
+	int i, j;
 
-	अगर (!(pps->flags & V4L2_H264_PPS_FLAG_SCALING_MATRIX_PRESENT))
-		वापस;
+	if (!(pps->flags & V4L2_H264_PPS_FLAG_SCALING_MATRIX_PRESENT))
+		return;
 
-	क्रम (i = 0; i < num_list_4x4; i++) अणु
+	for (i = 0; i < num_list_4x4; i++) {
 		src = (u32 *)&scaling->scaling_list_4x4[i];
-		क्रम (j = 0; j < list_len_4x4 / 4; j++)
+		for (j = 0; j < list_len_4x4 / 4; j++)
 			*dst++ = swab32(src[j]);
-	पूर्ण
+	}
 
 	/* Only Intra/Inter Y lists */
-	क्रम (i = 0; i < 2; i++) अणु
+	for (i = 0; i < 2; i++) {
 		src = (u32 *)&scaling->scaling_list_8x8[i];
-		क्रम (j = 0; j < list_len_8x8 / 4; j++)
+		for (j = 0; j < list_len_8x8 / 4; j++)
 			*dst++ = swab32(src[j]);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम prepare_table(काष्ठा hantro_ctx *ctx)
-अणु
-	स्थिर काष्ठा hantro_h264_dec_ctrls *ctrls = &ctx->h264_dec.ctrls;
-	स्थिर काष्ठा v4l2_ctrl_h264_decode_params *dec_param = ctrls->decode;
-	काष्ठा hantro_h264_dec_priv_tbl *tbl = ctx->h264_dec.priv.cpu;
-	स्थिर काष्ठा v4l2_h264_dpb_entry *dpb = ctx->h264_dec.dpb;
-	पूर्णांक i;
+static void prepare_table(struct hantro_ctx *ctx)
+{
+	const struct hantro_h264_dec_ctrls *ctrls = &ctx->h264_dec.ctrls;
+	const struct v4l2_ctrl_h264_decode_params *dec_param = ctrls->decode;
+	struct hantro_h264_dec_priv_tbl *tbl = ctx->h264_dec.priv.cpu;
+	const struct v4l2_h264_dpb_entry *dpb = ctx->h264_dec.dpb;
+	int i;
 
-	क्रम (i = 0; i < HANTRO_H264_DPB_SIZE; ++i) अणु
+	for (i = 0; i < HANTRO_H264_DPB_SIZE; ++i) {
 		tbl->poc[i * 2] = dpb[i].top_field_order_cnt;
 		tbl->poc[i * 2 + 1] = dpb[i].bottom_field_order_cnt;
-	पूर्ण
+	}
 
 	tbl->poc[32] = dec_param->top_field_order_cnt;
 	tbl->poc[33] = dec_param->bottom_field_order_cnt;
 
 	assemble_scaling_list(ctx);
-पूर्ण
+}
 
-अटल bool dpb_entry_match(स्थिर काष्ठा v4l2_h264_dpb_entry *a,
-			    स्थिर काष्ठा v4l2_h264_dpb_entry *b)
-अणु
-	वापस a->top_field_order_cnt == b->top_field_order_cnt &&
+static bool dpb_entry_match(const struct v4l2_h264_dpb_entry *a,
+			    const struct v4l2_h264_dpb_entry *b)
+{
+	return a->top_field_order_cnt == b->top_field_order_cnt &&
 	       a->bottom_field_order_cnt == b->bottom_field_order_cnt;
-पूर्ण
+}
 
-अटल व्योम update_dpb(काष्ठा hantro_ctx *ctx)
-अणु
-	स्थिर काष्ठा v4l2_ctrl_h264_decode_params *dec_param;
-	DECLARE_BITMAP(new, ARRAY_SIZE(dec_param->dpb)) = अणु 0, पूर्ण;
-	DECLARE_BITMAP(used, ARRAY_SIZE(dec_param->dpb)) = अणु 0, पूर्ण;
-	अचिन्हित पूर्णांक i, j;
+static void update_dpb(struct hantro_ctx *ctx)
+{
+	const struct v4l2_ctrl_h264_decode_params *dec_param;
+	DECLARE_BITMAP(new, ARRAY_SIZE(dec_param->dpb)) = { 0, };
+	DECLARE_BITMAP(used, ARRAY_SIZE(dec_param->dpb)) = { 0, };
+	unsigned int i, j;
 
 	dec_param = ctx->h264_dec.ctrls.decode;
 
-	/* Disable all entries by शेष. */
-	क्रम (i = 0; i < ARRAY_SIZE(ctx->h264_dec.dpb); i++)
+	/* Disable all entries by default. */
+	for (i = 0; i < ARRAY_SIZE(ctx->h264_dec.dpb); i++)
 		ctx->h264_dec.dpb[i].flags &= ~V4L2_H264_DPB_ENTRY_FLAG_ACTIVE;
 
 	/* Try to match new DPB entries with existing ones by their POCs. */
-	क्रम (i = 0; i < ARRAY_SIZE(dec_param->dpb); i++) अणु
-		स्थिर काष्ठा v4l2_h264_dpb_entry *ndpb = &dec_param->dpb[i];
+	for (i = 0; i < ARRAY_SIZE(dec_param->dpb); i++) {
+		const struct v4l2_h264_dpb_entry *ndpb = &dec_param->dpb[i];
 
-		अगर (!(ndpb->flags & V4L2_H264_DPB_ENTRY_FLAG_ACTIVE))
-			जारी;
+		if (!(ndpb->flags & V4L2_H264_DPB_ENTRY_FLAG_ACTIVE))
+			continue;
 
 		/*
 		 * To cut off some comparisons, iterate only on target DPB
 		 * entries which are not used yet.
 		 */
-		क्रम_each_clear_bit(j, used, ARRAY_SIZE(ctx->h264_dec.dpb)) अणु
-			काष्ठा v4l2_h264_dpb_entry *cdpb;
+		for_each_clear_bit(j, used, ARRAY_SIZE(ctx->h264_dec.dpb)) {
+			struct v4l2_h264_dpb_entry *cdpb;
 
 			cdpb = &ctx->h264_dec.dpb[j];
-			अगर (cdpb->flags & V4L2_H264_DPB_ENTRY_FLAG_ACTIVE ||
+			if (cdpb->flags & V4L2_H264_DPB_ENTRY_FLAG_ACTIVE ||
 			    !dpb_entry_match(cdpb, ndpb))
-				जारी;
+				continue;
 
 			*cdpb = *ndpb;
 			set_bit(j, used);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (j == ARRAY_SIZE(ctx->h264_dec.dpb))
+		if (j == ARRAY_SIZE(ctx->h264_dec.dpb))
 			set_bit(i, new);
-	पूर्ण
+	}
 
-	/* For entries that could not be matched, use reमुख्यing मुक्त slots. */
-	क्रम_each_set_bit(i, new, ARRAY_SIZE(dec_param->dpb)) अणु
-		स्थिर काष्ठा v4l2_h264_dpb_entry *ndpb = &dec_param->dpb[i];
-		काष्ठा v4l2_h264_dpb_entry *cdpb;
+	/* For entries that could not be matched, use remaining free slots. */
+	for_each_set_bit(i, new, ARRAY_SIZE(dec_param->dpb)) {
+		const struct v4l2_h264_dpb_entry *ndpb = &dec_param->dpb[i];
+		struct v4l2_h264_dpb_entry *cdpb;
 
 		/*
 		 * Both arrays are of the same sizes, so there is no way
@@ -302,67 +301,67 @@ assemble_scaling_list(काष्ठा hantro_ctx *ctx)
 		 * something is buggy.
 		 */
 		j = find_first_zero_bit(used, ARRAY_SIZE(ctx->h264_dec.dpb));
-		अगर (WARN_ON(j >= ARRAY_SIZE(ctx->h264_dec.dpb)))
-			वापस;
+		if (WARN_ON(j >= ARRAY_SIZE(ctx->h264_dec.dpb)))
+			return;
 
 		cdpb = &ctx->h264_dec.dpb[j];
 		*cdpb = *ndpb;
 		set_bit(j, used);
-	पूर्ण
-पूर्ण
+	}
+}
 
-dma_addr_t hantro_h264_get_ref_buf(काष्ठा hantro_ctx *ctx,
-				   अचिन्हित पूर्णांक dpb_idx)
-अणु
-	काष्ठा v4l2_h264_dpb_entry *dpb = ctx->h264_dec.dpb;
+dma_addr_t hantro_h264_get_ref_buf(struct hantro_ctx *ctx,
+				   unsigned int dpb_idx)
+{
+	struct v4l2_h264_dpb_entry *dpb = ctx->h264_dec.dpb;
 	dma_addr_t dma_addr = 0;
 
-	अगर (dpb[dpb_idx].flags & V4L2_H264_DPB_ENTRY_FLAG_ACTIVE)
+	if (dpb[dpb_idx].flags & V4L2_H264_DPB_ENTRY_FLAG_ACTIVE)
 		dma_addr = hantro_get_ref(ctx, dpb[dpb_idx].reference_ts);
 
-	अगर (!dma_addr) अणु
-		काष्ठा vb2_v4l2_buffer *dst_buf;
-		काष्ठा vb2_buffer *buf;
+	if (!dma_addr) {
+		struct vb2_v4l2_buffer *dst_buf;
+		struct vb2_buffer *buf;
 
 		/*
 		 * If a DPB entry is unused or invalid, address of current
-		 * destination buffer is वापसed.
+		 * destination buffer is returned.
 		 */
 		dst_buf = hantro_get_dst_buf(ctx);
 		buf = &dst_buf->vb2_buf;
 		dma_addr = hantro_get_dec_buf_addr(ctx, buf);
-	पूर्ण
+	}
 
-	वापस dma_addr;
-पूर्ण
+	return dma_addr;
+}
 
-पूर्णांक hantro_h264_dec_prepare_run(काष्ठा hantro_ctx *ctx)
-अणु
-	काष्ठा hantro_h264_dec_hw_ctx *h264_ctx = &ctx->h264_dec;
-	काष्ठा hantro_h264_dec_ctrls *ctrls = &h264_ctx->ctrls;
-	काष्ठा v4l2_h264_reflist_builder reflist_builder;
+int hantro_h264_dec_prepare_run(struct hantro_ctx *ctx)
+{
+	struct hantro_h264_dec_hw_ctx *h264_ctx = &ctx->h264_dec;
+	struct hantro_h264_dec_ctrls *ctrls = &h264_ctx->ctrls;
+	struct v4l2_h264_reflist_builder reflist_builder;
 
 	hantro_start_prepare_run(ctx);
 
 	ctrls->scaling =
 		hantro_get_ctrl(ctx, V4L2_CID_STATELESS_H264_SCALING_MATRIX);
-	अगर (WARN_ON(!ctrls->scaling))
-		वापस -EINVAL;
+	if (WARN_ON(!ctrls->scaling))
+		return -EINVAL;
 
 	ctrls->decode =
 		hantro_get_ctrl(ctx, V4L2_CID_STATELESS_H264_DECODE_PARAMS);
-	अगर (WARN_ON(!ctrls->decode))
-		वापस -EINVAL;
+	if (WARN_ON(!ctrls->decode))
+		return -EINVAL;
 
 	ctrls->sps =
 		hantro_get_ctrl(ctx, V4L2_CID_STATELESS_H264_SPS);
-	अगर (WARN_ON(!ctrls->sps))
-		वापस -EINVAL;
+	if (WARN_ON(!ctrls->sps))
+		return -EINVAL;
 
 	ctrls->pps =
 		hantro_get_ctrl(ctx, V4L2_CID_STATELESS_H264_PPS);
-	अगर (WARN_ON(!ctrls->pps))
-		वापस -EINVAL;
+	if (WARN_ON(!ctrls->pps))
+		return -EINVAL;
 
 	/* Update the DPB with new refs. */
 	update_dpb(ctx);
@@ -370,39 +369,39 @@ dma_addr_t hantro_h264_get_ref_buf(काष्ठा hantro_ctx *ctx,
 	/* Prepare data in memory. */
 	prepare_table(ctx);
 
-	/* Build the P/Bअणु0,1पूर्ण ref lists. */
+	/* Build the P/B{0,1} ref lists. */
 	v4l2_h264_init_reflist_builder(&reflist_builder, ctrls->decode,
 				       ctrls->sps, ctx->h264_dec.dpb);
 	v4l2_h264_build_p_ref_list(&reflist_builder, h264_ctx->reflists.p);
 	v4l2_h264_build_b_ref_lists(&reflist_builder, h264_ctx->reflists.b0,
 				    h264_ctx->reflists.b1);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम hantro_h264_dec_निकास(काष्ठा hantro_ctx *ctx)
-अणु
-	काष्ठा hantro_dev *vpu = ctx->dev;
-	काष्ठा hantro_h264_dec_hw_ctx *h264_dec = &ctx->h264_dec;
-	काष्ठा hantro_aux_buf *priv = &h264_dec->priv;
+void hantro_h264_dec_exit(struct hantro_ctx *ctx)
+{
+	struct hantro_dev *vpu = ctx->dev;
+	struct hantro_h264_dec_hw_ctx *h264_dec = &ctx->h264_dec;
+	struct hantro_aux_buf *priv = &h264_dec->priv;
 
-	dma_मुक्त_coherent(vpu->dev, priv->size, priv->cpu, priv->dma);
-पूर्ण
+	dma_free_coherent(vpu->dev, priv->size, priv->cpu, priv->dma);
+}
 
-पूर्णांक hantro_h264_dec_init(काष्ठा hantro_ctx *ctx)
-अणु
-	काष्ठा hantro_dev *vpu = ctx->dev;
-	काष्ठा hantro_h264_dec_hw_ctx *h264_dec = &ctx->h264_dec;
-	काष्ठा hantro_aux_buf *priv = &h264_dec->priv;
-	काष्ठा hantro_h264_dec_priv_tbl *tbl;
+int hantro_h264_dec_init(struct hantro_ctx *ctx)
+{
+	struct hantro_dev *vpu = ctx->dev;
+	struct hantro_h264_dec_hw_ctx *h264_dec = &ctx->h264_dec;
+	struct hantro_aux_buf *priv = &h264_dec->priv;
+	struct hantro_h264_dec_priv_tbl *tbl;
 
-	priv->cpu = dma_alloc_coherent(vpu->dev, माप(*tbl), &priv->dma,
+	priv->cpu = dma_alloc_coherent(vpu->dev, sizeof(*tbl), &priv->dma,
 				       GFP_KERNEL);
-	अगर (!priv->cpu)
-		वापस -ENOMEM;
+	if (!priv->cpu)
+		return -ENOMEM;
 
-	priv->size = माप(*tbl);
+	priv->size = sizeof(*tbl);
 	tbl = priv->cpu;
-	स_नकल(tbl->cabac_table, h264_cabac_table, माप(tbl->cabac_table));
+	memcpy(tbl->cabac_table, h264_cabac_table, sizeof(tbl->cabac_table));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

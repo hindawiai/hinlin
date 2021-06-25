@@ -1,10 +1,9 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#घोषणा _GNU_SOURCE
-#समावेश <sched.h>
+// SPDX-License-Identifier: GPL-2.0
+#define _GNU_SOURCE
+#include <sched.h>
 
-पूर्णांक मुख्य(व्योम)
-अणु
-	वापस setns(0, 0);
-पूर्ण
-#अघोषित _GNU_SOURCE
+int main(void)
+{
+	return setns(0, 0);
+}
+#undef _GNU_SOURCE

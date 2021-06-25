@@ -1,17 +1,16 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Tracepoपूर्णांक definitions क्रम s390_cio
+ * Tracepoint definitions for s390_cio
  *
  * Copyright IBM Corp. 2015
  * Author(s): Peter Oberparleiter <oberpar@linux.vnet.ibm.com>
  */
 
-#समावेश <यंत्र/crw.h>
-#समावेश "cio.h"
+#include <asm/crw.h>
+#include "cio.h"
 
-#घोषणा CREATE_TRACE_POINTS
-#समावेश "trace.h"
+#define CREATE_TRACE_POINTS
+#include "trace.h"
 
 EXPORT_TRACEPOINT_SYMBOL(s390_cio_stsch);
 EXPORT_TRACEPOINT_SYMBOL(s390_cio_msch);

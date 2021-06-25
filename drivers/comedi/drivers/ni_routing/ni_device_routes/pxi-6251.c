@@ -1,14 +1,13 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /* vim: set ts=8 sw=8 noet tw=80 nowrap: */
 /*
  *  comedi/drivers/ni_routing/ni_device_routes/pxi-6251.c
- *  List of valid routes क्रम specअगरic NI boards.
+ *  List of valid routes for specific NI boards.
  *
  *  COMEDI - Linux Control and Measurement Device Interface
  *  Copyright (C) 2016 Spencer E. Olson <olsonse@umich.edu>
  *
- *  This program is मुक्त software; you can redistribute it and/or modअगरy
+ *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 2 of the License, or
  *  (at your option) any later version.
@@ -16,25 +15,25 @@
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License क्रम more details.
+ *  GNU General Public License for more details.
  */
 
 /*
  * The contents of this file are generated using the tools in
  * comedi/drivers/ni_routing/tools
  *
- * Please use those tools to help मुख्यtain the contents of this file.
+ * Please use those tools to help maintain the contents of this file.
  */
 
-#समावेश "../ni_device_routes.h"
-#समावेश "all.h"
+#include "../ni_device_routes.h"
+#include "all.h"
 
-काष्ठा ni_device_routes ni_pxi_6251_device_routes = अणु
+struct ni_device_routes ni_pxi_6251_device_routes = {
 	.device = "pxi-6251",
-	.routes = (काष्ठा ni_route_set[])अणु
-		अणु
+	.routes = (struct ni_route_set[]){
+		{
 			.dest = NI_PFI(0),
-			.src = (पूर्णांक[])अणु
+			.src = (int[]){
 				TRIGGER_LINE(0),
 				TRIGGER_LINE(1),
 				TRIGGER_LINE(2),
@@ -61,11 +60,11 @@
 				NI_ChangeDetectionEvent,
 				NI_AnalogComparisonEvent,
 				0, /* Termination */
-			पूर्ण
-		पूर्ण,
-		अणु
+			}
+		},
+		{
 			.dest = NI_PFI(1),
-			.src = (पूर्णांक[])अणु
+			.src = (int[]){
 				TRIGGER_LINE(0),
 				TRIGGER_LINE(1),
 				TRIGGER_LINE(2),
@@ -92,11 +91,11 @@
 				NI_ChangeDetectionEvent,
 				NI_AnalogComparisonEvent,
 				0, /* Termination */
-			पूर्ण
-		पूर्ण,
-		अणु
+			}
+		},
+		{
 			.dest = NI_PFI(2),
-			.src = (पूर्णांक[])अणु
+			.src = (int[]){
 				TRIGGER_LINE(0),
 				TRIGGER_LINE(1),
 				TRIGGER_LINE(2),
@@ -123,11 +122,11 @@
 				NI_ChangeDetectionEvent,
 				NI_AnalogComparisonEvent,
 				0, /* Termination */
-			पूर्ण
-		पूर्ण,
-		अणु
+			}
+		},
+		{
 			.dest = NI_PFI(3),
-			.src = (पूर्णांक[])अणु
+			.src = (int[]){
 				TRIGGER_LINE(0),
 				TRIGGER_LINE(1),
 				TRIGGER_LINE(2),
@@ -154,11 +153,11 @@
 				NI_ChangeDetectionEvent,
 				NI_AnalogComparisonEvent,
 				0, /* Termination */
-			पूर्ण
-		पूर्ण,
-		अणु
+			}
+		},
+		{
 			.dest = NI_PFI(4),
-			.src = (पूर्णांक[])अणु
+			.src = (int[]){
 				TRIGGER_LINE(0),
 				TRIGGER_LINE(1),
 				TRIGGER_LINE(2),
@@ -185,11 +184,11 @@
 				NI_ChangeDetectionEvent,
 				NI_AnalogComparisonEvent,
 				0, /* Termination */
-			पूर्ण
-		पूर्ण,
-		अणु
+			}
+		},
+		{
 			.dest = NI_PFI(5),
-			.src = (पूर्णांक[])अणु
+			.src = (int[]){
 				TRIGGER_LINE(0),
 				TRIGGER_LINE(1),
 				TRIGGER_LINE(2),
@@ -216,11 +215,11 @@
 				NI_ChangeDetectionEvent,
 				NI_AnalogComparisonEvent,
 				0, /* Termination */
-			पूर्ण
-		पूर्ण,
-		अणु
+			}
+		},
+		{
 			.dest = NI_PFI(6),
-			.src = (पूर्णांक[])अणु
+			.src = (int[]){
 				TRIGGER_LINE(0),
 				TRIGGER_LINE(1),
 				TRIGGER_LINE(2),
@@ -247,11 +246,11 @@
 				NI_ChangeDetectionEvent,
 				NI_AnalogComparisonEvent,
 				0, /* Termination */
-			पूर्ण
-		पूर्ण,
-		अणु
+			}
+		},
+		{
 			.dest = NI_PFI(7),
-			.src = (पूर्णांक[])अणु
+			.src = (int[]){
 				TRIGGER_LINE(0),
 				TRIGGER_LINE(1),
 				TRIGGER_LINE(2),
@@ -278,11 +277,11 @@
 				NI_ChangeDetectionEvent,
 				NI_AnalogComparisonEvent,
 				0, /* Termination */
-			पूर्ण
-		पूर्ण,
-		अणु
+			}
+		},
+		{
 			.dest = NI_PFI(8),
-			.src = (पूर्णांक[])अणु
+			.src = (int[]){
 				TRIGGER_LINE(0),
 				TRIGGER_LINE(1),
 				TRIGGER_LINE(2),
@@ -309,11 +308,11 @@
 				NI_ChangeDetectionEvent,
 				NI_AnalogComparisonEvent,
 				0, /* Termination */
-			पूर्ण
-		पूर्ण,
-		अणु
+			}
+		},
+		{
 			.dest = NI_PFI(9),
-			.src = (पूर्णांक[])अणु
+			.src = (int[]){
 				TRIGGER_LINE(0),
 				TRIGGER_LINE(1),
 				TRIGGER_LINE(2),
@@ -340,11 +339,11 @@
 				NI_ChangeDetectionEvent,
 				NI_AnalogComparisonEvent,
 				0, /* Termination */
-			पूर्ण
-		पूर्ण,
-		अणु
+			}
+		},
+		{
 			.dest = NI_PFI(10),
-			.src = (पूर्णांक[])अणु
+			.src = (int[]){
 				TRIGGER_LINE(0),
 				TRIGGER_LINE(1),
 				TRIGGER_LINE(2),
@@ -371,11 +370,11 @@
 				NI_ChangeDetectionEvent,
 				NI_AnalogComparisonEvent,
 				0, /* Termination */
-			पूर्ण
-		पूर्ण,
-		अणु
+			}
+		},
+		{
 			.dest = NI_PFI(11),
-			.src = (पूर्णांक[])अणु
+			.src = (int[]){
 				TRIGGER_LINE(0),
 				TRIGGER_LINE(1),
 				TRIGGER_LINE(2),
@@ -402,11 +401,11 @@
 				NI_ChangeDetectionEvent,
 				NI_AnalogComparisonEvent,
 				0, /* Termination */
-			पूर्ण
-		पूर्ण,
-		अणु
+			}
+		},
+		{
 			.dest = NI_PFI(12),
-			.src = (पूर्णांक[])अणु
+			.src = (int[]){
 				TRIGGER_LINE(0),
 				TRIGGER_LINE(1),
 				TRIGGER_LINE(2),
@@ -433,11 +432,11 @@
 				NI_ChangeDetectionEvent,
 				NI_AnalogComparisonEvent,
 				0, /* Termination */
-			पूर्ण
-		पूर्ण,
-		अणु
+			}
+		},
+		{
 			.dest = NI_PFI(13),
-			.src = (पूर्णांक[])अणु
+			.src = (int[]){
 				TRIGGER_LINE(0),
 				TRIGGER_LINE(1),
 				TRIGGER_LINE(2),
@@ -464,11 +463,11 @@
 				NI_ChangeDetectionEvent,
 				NI_AnalogComparisonEvent,
 				0, /* Termination */
-			पूर्ण
-		पूर्ण,
-		अणु
+			}
+		},
+		{
 			.dest = NI_PFI(14),
-			.src = (पूर्णांक[])अणु
+			.src = (int[]){
 				TRIGGER_LINE(0),
 				TRIGGER_LINE(1),
 				TRIGGER_LINE(2),
@@ -495,11 +494,11 @@
 				NI_ChangeDetectionEvent,
 				NI_AnalogComparisonEvent,
 				0, /* Termination */
-			पूर्ण
-		पूर्ण,
-		अणु
+			}
+		},
+		{
 			.dest = NI_PFI(15),
-			.src = (पूर्णांक[])अणु
+			.src = (int[]){
 				TRIGGER_LINE(0),
 				TRIGGER_LINE(1),
 				TRIGGER_LINE(2),
@@ -526,11 +525,11 @@
 				NI_ChangeDetectionEvent,
 				NI_AnalogComparisonEvent,
 				0, /* Termination */
-			पूर्ण
-		पूर्ण,
-		अणु
+			}
+		},
+		{
 			.dest = TRIGGER_LINE(0),
-			.src = (पूर्णांक[])अणु
+			.src = (int[]){
 				NI_PFI(0),
 				NI_PFI(1),
 				NI_PFI(2),
@@ -553,11 +552,11 @@
 				NI_ChangeDetectionEvent,
 				NI_AnalogComparisonEvent,
 				0, /* Termination */
-			पूर्ण
-		पूर्ण,
-		अणु
+			}
+		},
+		{
 			.dest = TRIGGER_LINE(1),
-			.src = (पूर्णांक[])अणु
+			.src = (int[]){
 				NI_PFI(0),
 				NI_PFI(1),
 				NI_PFI(2),
@@ -580,11 +579,11 @@
 				NI_ChangeDetectionEvent,
 				NI_AnalogComparisonEvent,
 				0, /* Termination */
-			पूर्ण
-		पूर्ण,
-		अणु
+			}
+		},
+		{
 			.dest = TRIGGER_LINE(2),
-			.src = (पूर्णांक[])अणु
+			.src = (int[]){
 				NI_PFI(0),
 				NI_PFI(1),
 				NI_PFI(2),
@@ -607,11 +606,11 @@
 				NI_ChangeDetectionEvent,
 				NI_AnalogComparisonEvent,
 				0, /* Termination */
-			पूर्ण
-		पूर्ण,
-		अणु
+			}
+		},
+		{
 			.dest = TRIGGER_LINE(3),
-			.src = (पूर्णांक[])अणु
+			.src = (int[]){
 				NI_PFI(0),
 				NI_PFI(1),
 				NI_PFI(2),
@@ -634,11 +633,11 @@
 				NI_ChangeDetectionEvent,
 				NI_AnalogComparisonEvent,
 				0, /* Termination */
-			पूर्ण
-		पूर्ण,
-		अणु
+			}
+		},
+		{
 			.dest = TRIGGER_LINE(4),
-			.src = (पूर्णांक[])अणु
+			.src = (int[]){
 				NI_PFI(0),
 				NI_PFI(1),
 				NI_PFI(2),
@@ -661,11 +660,11 @@
 				NI_ChangeDetectionEvent,
 				NI_AnalogComparisonEvent,
 				0, /* Termination */
-			पूर्ण
-		पूर्ण,
-		अणु
+			}
+		},
+		{
 			.dest = TRIGGER_LINE(5),
-			.src = (पूर्णांक[])अणु
+			.src = (int[]){
 				NI_PFI(0),
 				NI_PFI(1),
 				NI_PFI(2),
@@ -688,11 +687,11 @@
 				NI_ChangeDetectionEvent,
 				NI_AnalogComparisonEvent,
 				0, /* Termination */
-			पूर्ण
-		पूर्ण,
-		अणु
+			}
+		},
+		{
 			.dest = TRIGGER_LINE(6),
-			.src = (पूर्णांक[])अणु
+			.src = (int[]){
 				NI_PFI(0),
 				NI_PFI(1),
 				NI_PFI(2),
@@ -715,11 +714,11 @@
 				NI_ChangeDetectionEvent,
 				NI_AnalogComparisonEvent,
 				0, /* Termination */
-			पूर्ण
-		पूर्ण,
-		अणु
+			}
+		},
+		{
 			.dest = TRIGGER_LINE(7),
-			.src = (पूर्णांक[])अणु
+			.src = (int[]){
 				NI_PFI(0),
 				NI_PFI(1),
 				NI_PFI(2),
@@ -742,11 +741,11 @@
 				NI_ChangeDetectionEvent,
 				NI_AnalogComparisonEvent,
 				0, /* Termination */
-			पूर्ण
-		पूर्ण,
-		अणु
+			}
+		},
+		{
 			.dest = NI_CtrSource(0),
-			.src = (पूर्णांक[])अणु
+			.src = (int[]){
 				NI_PFI(0),
 				NI_PFI(1),
 				NI_PFI(2),
@@ -778,11 +777,11 @@
 				NI_100kHzTimebase,
 				NI_AnalogComparisonEvent,
 				0, /* Termination */
-			पूर्ण
-		पूर्ण,
-		अणु
+			}
+		},
+		{
 			.dest = NI_CtrSource(1),
-			.src = (पूर्णांक[])अणु
+			.src = (int[]){
 				NI_PFI(0),
 				NI_PFI(1),
 				NI_PFI(2),
@@ -815,11 +814,11 @@
 				NI_100kHzTimebase,
 				NI_AnalogComparisonEvent,
 				0, /* Termination */
-			पूर्ण
-		पूर्ण,
-		अणु
+			}
+		},
+		{
 			.dest = NI_CtrGate(0),
-			.src = (पूर्णांक[])अणु
+			.src = (int[]){
 				NI_PFI(0),
 				NI_PFI(1),
 				NI_PFI(2),
@@ -851,11 +850,11 @@
 				NI_AI_ReferenceTrigger,
 				NI_AnalogComparisonEvent,
 				0, /* Termination */
-			पूर्ण
-		पूर्ण,
-		अणु
+			}
+		},
+		{
 			.dest = NI_CtrGate(1),
-			.src = (पूर्णांक[])अणु
+			.src = (int[]){
 				NI_PFI(0),
 				NI_PFI(1),
 				NI_PFI(2),
@@ -887,11 +886,11 @@
 				NI_AI_ReferenceTrigger,
 				NI_AnalogComparisonEvent,
 				0, /* Termination */
-			पूर्ण
-		पूर्ण,
-		अणु
+			}
+		},
+		{
 			.dest = NI_CtrAux(0),
-			.src = (पूर्णांक[])अणु
+			.src = (int[]){
 				NI_PFI(0),
 				NI_PFI(1),
 				NI_PFI(2),
@@ -924,11 +923,11 @@
 				NI_AI_ReferenceTrigger,
 				NI_AnalogComparisonEvent,
 				0, /* Termination */
-			पूर्ण
-		पूर्ण,
-		अणु
+			}
+		},
+		{
 			.dest = NI_CtrAux(1),
-			.src = (पूर्णांक[])अणु
+			.src = (int[]){
 				NI_PFI(0),
 				NI_PFI(1),
 				NI_PFI(2),
@@ -961,11 +960,11 @@
 				NI_AI_ReferenceTrigger,
 				NI_AnalogComparisonEvent,
 				0, /* Termination */
-			पूर्ण
-		पूर्ण,
-		अणु
+			}
+		},
+		{
 			.dest = NI_CtrA(0),
-			.src = (पूर्णांक[])अणु
+			.src = (int[]){
 				NI_PFI(0),
 				NI_PFI(1),
 				NI_PFI(2),
@@ -993,11 +992,11 @@
 				PXI_Star,
 				NI_AnalogComparisonEvent,
 				0, /* Termination */
-			पूर्ण
-		पूर्ण,
-		अणु
+			}
+		},
+		{
 			.dest = NI_CtrA(1),
-			.src = (पूर्णांक[])अणु
+			.src = (int[]){
 				NI_PFI(0),
 				NI_PFI(1),
 				NI_PFI(2),
@@ -1025,11 +1024,11 @@
 				PXI_Star,
 				NI_AnalogComparisonEvent,
 				0, /* Termination */
-			पूर्ण
-		पूर्ण,
-		अणु
+			}
+		},
+		{
 			.dest = NI_CtrB(0),
-			.src = (पूर्णांक[])अणु
+			.src = (int[]){
 				NI_PFI(0),
 				NI_PFI(1),
 				NI_PFI(2),
@@ -1057,11 +1056,11 @@
 				PXI_Star,
 				NI_AnalogComparisonEvent,
 				0, /* Termination */
-			पूर्ण
-		पूर्ण,
-		अणु
+			}
+		},
+		{
 			.dest = NI_CtrB(1),
-			.src = (पूर्णांक[])अणु
+			.src = (int[]){
 				NI_PFI(0),
 				NI_PFI(1),
 				NI_PFI(2),
@@ -1089,11 +1088,11 @@
 				PXI_Star,
 				NI_AnalogComparisonEvent,
 				0, /* Termination */
-			पूर्ण
-		पूर्ण,
-		अणु
+			}
+		},
+		{
 			.dest = NI_CtrZ(0),
-			.src = (पूर्णांक[])अणु
+			.src = (int[]){
 				NI_PFI(0),
 				NI_PFI(1),
 				NI_PFI(2),
@@ -1121,11 +1120,11 @@
 				PXI_Star,
 				NI_AnalogComparisonEvent,
 				0, /* Termination */
-			पूर्ण
-		पूर्ण,
-		अणु
+			}
+		},
+		{
 			.dest = NI_CtrZ(1),
-			.src = (पूर्णांक[])अणु
+			.src = (int[]){
 				NI_PFI(0),
 				NI_PFI(1),
 				NI_PFI(2),
@@ -1153,11 +1152,11 @@
 				PXI_Star,
 				NI_AnalogComparisonEvent,
 				0, /* Termination */
-			पूर्ण
-		पूर्ण,
-		अणु
+			}
+		},
+		{
 			.dest = NI_CtrArmStartTrigger(0),
-			.src = (पूर्णांक[])अणु
+			.src = (int[]){
 				NI_PFI(0),
 				NI_PFI(1),
 				NI_PFI(2),
@@ -1188,11 +1187,11 @@
 				NI_AI_ReferenceTrigger,
 				NI_AnalogComparisonEvent,
 				0, /* Termination */
-			पूर्ण
-		पूर्ण,
-		अणु
+			}
+		},
+		{
 			.dest = NI_CtrArmStartTrigger(1),
-			.src = (पूर्णांक[])अणु
+			.src = (int[]){
 				NI_PFI(0),
 				NI_PFI(1),
 				NI_PFI(2),
@@ -1223,11 +1222,11 @@
 				NI_AI_ReferenceTrigger,
 				NI_AnalogComparisonEvent,
 				0, /* Termination */
-			पूर्ण
-		पूर्ण,
-		अणु
+			}
+		},
+		{
 			.dest = NI_AI_SampleClock,
-			.src = (पूर्णांक[])अणु
+			.src = (int[]){
 				NI_PFI(0),
 				NI_PFI(1),
 				NI_PFI(2),
@@ -1258,11 +1257,11 @@
 				NI_AI_SampleClockTimebase,
 				NI_AnalogComparisonEvent,
 				0, /* Termination */
-			पूर्ण
-		पूर्ण,
-		अणु
+			}
+		},
+		{
 			.dest = NI_AI_SampleClockTimebase,
-			.src = (पूर्णांक[])अणु
+			.src = (int[]){
 				NI_PFI(0),
 				NI_PFI(1),
 				NI_PFI(2),
@@ -1293,11 +1292,11 @@
 				NI_100kHzTimebase,
 				NI_AnalogComparisonEvent,
 				0, /* Termination */
-			पूर्ण
-		पूर्ण,
-		अणु
+			}
+		},
+		{
 			.dest = NI_AI_StartTrigger,
-			.src = (पूर्णांक[])अणु
+			.src = (int[]){
 				NI_PFI(0),
 				NI_PFI(1),
 				NI_PFI(2),
@@ -1327,11 +1326,11 @@
 				PXI_Star,
 				NI_AnalogComparisonEvent,
 				0, /* Termination */
-			पूर्ण
-		पूर्ण,
-		अणु
+			}
+		},
+		{
 			.dest = NI_AI_ReferenceTrigger,
-			.src = (पूर्णांक[])अणु
+			.src = (int[]){
 				NI_PFI(0),
 				NI_PFI(1),
 				NI_PFI(2),
@@ -1359,11 +1358,11 @@
 				PXI_Star,
 				NI_AnalogComparisonEvent,
 				0, /* Termination */
-			पूर्ण
-		पूर्ण,
-		अणु
+			}
+		},
+		{
 			.dest = NI_AI_ConvertClock,
-			.src = (पूर्णांक[])अणु
+			.src = (int[]){
 				NI_PFI(0),
 				NI_PFI(1),
 				NI_PFI(2),
@@ -1394,19 +1393,19 @@
 				NI_AI_ConvertClockTimebase,
 				NI_AnalogComparisonEvent,
 				0, /* Termination */
-			पूर्ण
-		पूर्ण,
-		अणु
+			}
+		},
+		{
 			.dest = NI_AI_ConvertClockTimebase,
-			.src = (पूर्णांक[])अणु
+			.src = (int[]){
 				NI_AI_SampleClockTimebase,
 				NI_20MHzTimebase,
 				0, /* Termination */
-			पूर्ण
-		पूर्ण,
-		अणु
+			}
+		},
+		{
 			.dest = NI_AI_PauseTrigger,
-			.src = (पूर्णांक[])अणु
+			.src = (int[]){
 				NI_PFI(0),
 				NI_PFI(1),
 				NI_PFI(2),
@@ -1434,11 +1433,11 @@
 				PXI_Star,
 				NI_AnalogComparisonEvent,
 				0, /* Termination */
-			पूर्ण
-		पूर्ण,
-		अणु
+			}
+		},
+		{
 			.dest = NI_AO_SampleClock,
-			.src = (पूर्णांक[])अणु
+			.src = (int[]){
 				NI_PFI(0),
 				NI_PFI(1),
 				NI_PFI(2),
@@ -1469,11 +1468,11 @@
 				NI_AO_SampleClockTimebase,
 				NI_AnalogComparisonEvent,
 				0, /* Termination */
-			पूर्ण
-		पूर्ण,
-		अणु
+			}
+		},
+		{
 			.dest = NI_AO_SampleClockTimebase,
-			.src = (पूर्णांक[])अणु
+			.src = (int[]){
 				NI_PFI(0),
 				NI_PFI(1),
 				NI_PFI(2),
@@ -1504,11 +1503,11 @@
 				NI_100kHzTimebase,
 				NI_AnalogComparisonEvent,
 				0, /* Termination */
-			पूर्ण
-		पूर्ण,
-		अणु
+			}
+		},
+		{
 			.dest = NI_AO_StartTrigger,
-			.src = (पूर्णांक[])अणु
+			.src = (int[]){
 				NI_PFI(0),
 				NI_PFI(1),
 				NI_PFI(2),
@@ -1537,11 +1536,11 @@
 				NI_AI_StartTrigger,
 				NI_AnalogComparisonEvent,
 				0, /* Termination */
-			पूर्ण
-		पूर्ण,
-		अणु
+			}
+		},
+		{
 			.dest = NI_AO_PauseTrigger,
-			.src = (पूर्णांक[])अणु
+			.src = (int[]){
 				NI_PFI(0),
 				NI_PFI(1),
 				NI_PFI(2),
@@ -1569,11 +1568,11 @@
 				PXI_Star,
 				NI_AnalogComparisonEvent,
 				0, /* Termination */
-			पूर्ण
-		पूर्ण,
-		अणु
+			}
+		},
+		{
 			.dest = NI_DI_SampleClock,
-			.src = (पूर्णांक[])अणु
+			.src = (int[]){
 				NI_PFI(0),
 				NI_PFI(1),
 				NI_PFI(2),
@@ -1608,11 +1607,11 @@
 				NI_ChangeDetectionEvent,
 				NI_AnalogComparisonEvent,
 				0, /* Termination */
-			पूर्ण
-		पूर्ण,
-		अणु
+			}
+		},
+		{
 			.dest = NI_DO_SampleClock,
-			.src = (पूर्णांक[])अणु
+			.src = (int[]){
 				NI_PFI(0),
 				NI_PFI(1),
 				NI_PFI(2),
@@ -1647,10 +1646,10 @@
 				NI_ChangeDetectionEvent,
 				NI_AnalogComparisonEvent,
 				0, /* Termination */
-			पूर्ण
-		पूर्ण,
-		अणु /* Termination of list */
+			}
+		},
+		{ /* Termination of list */
 			.dest = 0,
-		पूर्ण,
-	पूर्ण,
-पूर्ण;
+		},
+	},
+};

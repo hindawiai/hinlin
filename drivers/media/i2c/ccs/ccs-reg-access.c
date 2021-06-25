@@ -1,334 +1,333 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * drivers/media/i2c/ccs/ccs-reg-access.c
  *
- * Generic driver क्रम MIPI CCS/SMIA/SMIA++ compliant camera sensors
+ * Generic driver for MIPI CCS/SMIA/SMIA++ compliant camera sensors
  *
  * Copyright (C) 2020 Intel Corporation
  * Copyright (C) 2011--2012 Nokia Corporation
- * Contact: Sakari Ailus <sakari.ailus@linux.पूर्णांकel.com>
+ * Contact: Sakari Ailus <sakari.ailus@linux.intel.com>
  */
 
-#समावेश <यंत्र/unaligned.h>
+#include <asm/unaligned.h>
 
-#समावेश <linux/delay.h>
-#समावेश <linux/i2c.h>
+#include <linux/delay.h>
+#include <linux/i2c.h>
 
-#समावेश "ccs.h"
-#समावेश "ccs-limits.h"
+#include "ccs.h"
+#include "ccs-limits.h"
 
-अटल u32 भग्न_to_u32_mul_1000000(काष्ठा i2c_client *client, u32 phloat)
-अणु
+static u32 float_to_u32_mul_1000000(struct i2c_client *client, u32 phloat)
+{
 	s32 exp;
 	u64 man;
 
-	अगर (phloat >= 0x80000000) अणु
+	if (phloat >= 0x80000000) {
 		dev_err(&client->dev, "this is a negative number\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (phloat == 0x7f800000)
-		वापस ~0; /* Inf. */
+	if (phloat == 0x7f800000)
+		return ~0; /* Inf. */
 
-	अगर ((phloat & 0x7f800000) == 0x7f800000) अणु
+	if ((phloat & 0x7f800000) == 0x7f800000) {
 		dev_err(&client->dev, "NaN or other special number\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	/* Valid हालs begin here */
-	अगर (phloat == 0)
-		वापस 0; /* Valid zero */
+	/* Valid cases begin here */
+	if (phloat == 0)
+		return 0; /* Valid zero */
 
-	अगर (phloat > 0x4f800000)
-		वापस ~0; /* larger than 4294967295 */
+	if (phloat > 0x4f800000)
+		return ~0; /* larger than 4294967295 */
 
 	/*
 	 * Unbias exponent (note how phloat is now guaranteed to
 	 * have 0 in the high bit)
 	 */
-	exp = ((पूर्णांक32_t)phloat >> 23) - 127;
+	exp = ((int32_t)phloat >> 23) - 127;
 
 	/* Extract mantissa, add missing '1' bit and it's in MHz */
 	man = ((phloat & 0x7fffff) | 0x800000) * 1000000ULL;
 
-	अगर (exp < 0)
+	if (exp < 0)
 		man >>= -exp;
-	अन्यथा
+	else
 		man <<= exp;
 
 	man >>= 23; /* Remove mantissa bias */
 
-	वापस man & 0xffffffff;
-पूर्ण
+	return man & 0xffffffff;
+}
 
 
 /*
- * Read a 8/16/32-bit i2c रेजिस्टर.  The value is वापसed in 'val'.
- * Returns zero अगर successful, or non-zero otherwise.
+ * Read a 8/16/32-bit i2c register.  The value is returned in 'val'.
+ * Returns zero if successful, or non-zero otherwise.
  */
-अटल पूर्णांक ____ccs_पढ़ो_addr(काष्ठा ccs_sensor *sensor, u16 reg, u16 len,
+static int ____ccs_read_addr(struct ccs_sensor *sensor, u16 reg, u16 len,
 			     u32 *val)
-अणु
-	काष्ठा i2c_client *client = v4l2_get_subdevdata(&sensor->src->sd);
-	काष्ठा i2c_msg msg;
-	अचिन्हित अक्षर data_buf[माप(u32)] = अणु 0 पूर्ण;
-	अचिन्हित अक्षर offset_buf[माप(u16)];
-	पूर्णांक r;
+{
+	struct i2c_client *client = v4l2_get_subdevdata(&sensor->src->sd);
+	struct i2c_msg msg;
+	unsigned char data_buf[sizeof(u32)] = { 0 };
+	unsigned char offset_buf[sizeof(u16)];
+	int r;
 
-	अगर (len > माप(data_buf))
-		वापस -EINVAL;
+	if (len > sizeof(data_buf))
+		return -EINVAL;
 
 	msg.addr = client->addr;
 	msg.flags = 0;
-	msg.len = माप(offset_buf);
+	msg.len = sizeof(offset_buf);
 	msg.buf = offset_buf;
 	put_unaligned_be16(reg, offset_buf);
 
 	r = i2c_transfer(client->adapter, &msg, 1);
-	अगर (r != 1) अणु
-		अगर (r >= 0)
+	if (r != 1) {
+		if (r >= 0)
 			r = -EBUSY;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	msg.len = len;
 	msg.flags = I2C_M_RD;
-	msg.buf = &data_buf[माप(data_buf) - len];
+	msg.buf = &data_buf[sizeof(data_buf) - len];
 
 	r = i2c_transfer(client->adapter, &msg, 1);
-	अगर (r != 1) अणु
-		अगर (r >= 0)
+	if (r != 1) {
+		if (r >= 0)
 			r = -EBUSY;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	*val = get_unaligned_be32(data_buf);
 
-	वापस 0;
+	return 0;
 
 err:
 	dev_err(&client->dev, "read from offset 0x%x error %d\n", reg, r);
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-/* Read a रेजिस्टर using 8-bit access only. */
-अटल पूर्णांक ____ccs_पढ़ो_addr_8only(काष्ठा ccs_sensor *sensor, u16 reg,
+/* Read a register using 8-bit access only. */
+static int ____ccs_read_addr_8only(struct ccs_sensor *sensor, u16 reg,
 				   u16 len, u32 *val)
-अणु
-	अचिन्हित पूर्णांक i;
-	पूर्णांक rval;
+{
+	unsigned int i;
+	int rval;
 
 	*val = 0;
 
-	क्रम (i = 0; i < len; i++) अणु
+	for (i = 0; i < len; i++) {
 		u32 val8;
 
-		rval = ____ccs_पढ़ो_addr(sensor, reg + i, 1, &val8);
-		अगर (rval < 0)
-			वापस rval;
+		rval = ____ccs_read_addr(sensor, reg + i, 1, &val8);
+		if (rval < 0)
+			return rval;
 		*val |= val8 << ((len - i - 1) << 3);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अचिन्हित पूर्णांक ccs_reg_width(u32 reg)
-अणु
-	अगर (reg & CCS_FL_16BIT)
-		वापस माप(u16);
-	अगर (reg & CCS_FL_32BIT)
-		वापस माप(u32);
+unsigned int ccs_reg_width(u32 reg)
+{
+	if (reg & CCS_FL_16BIT)
+		return sizeof(u16);
+	if (reg & CCS_FL_32BIT)
+		return sizeof(u32);
 
-	वापस माप(u8);
-पूर्ण
+	return sizeof(u8);
+}
 
-अटल u32 ireal32_to_u32_mul_1000000(काष्ठा i2c_client *client, u32 val)
-अणु
-	अगर (val >> 10 > U32_MAX / 15625) अणु
+static u32 ireal32_to_u32_mul_1000000(struct i2c_client *client, u32 val)
+{
+	if (val >> 10 > U32_MAX / 15625) {
 		dev_warn(&client->dev, "value %u overflows!\n", val);
-		वापस U32_MAX;
-	पूर्ण
+		return U32_MAX;
+	}
 
-	वापस ((val >> 10) * 15625) +
+	return ((val >> 10) * 15625) +
 		(val & GENMASK(9, 0)) * 15625 / 1024;
-पूर्ण
+}
 
-u32 ccs_reg_conv(काष्ठा ccs_sensor *sensor, u32 reg, u32 val)
-अणु
-	काष्ठा i2c_client *client = v4l2_get_subdevdata(&sensor->src->sd);
+u32 ccs_reg_conv(struct ccs_sensor *sensor, u32 reg, u32 val)
+{
+	struct i2c_client *client = v4l2_get_subdevdata(&sensor->src->sd);
 
-	अगर (reg & CCS_FL_FLOAT_IREAL) अणु
-		अगर (CCS_LIM(sensor, CLOCK_CAPA_TYPE_CAPABILITY) &
+	if (reg & CCS_FL_FLOAT_IREAL) {
+		if (CCS_LIM(sensor, CLOCK_CAPA_TYPE_CAPABILITY) &
 		    CCS_CLOCK_CAPA_TYPE_CAPABILITY_IREAL)
 			val = ireal32_to_u32_mul_1000000(client, val);
-		अन्यथा
-			val = भग्न_to_u32_mul_1000000(client, val);
-	पूर्ण अन्यथा अगर (reg & CCS_FL_IREAL) अणु
+		else
+			val = float_to_u32_mul_1000000(client, val);
+	} else if (reg & CCS_FL_IREAL) {
 		val = ireal32_to_u32_mul_1000000(client, val);
-	पूर्ण
+	}
 
-	वापस val;
-पूर्ण
+	return val;
+}
 
 /*
- * Read a 8/16/32-bit i2c रेजिस्टर.  The value is वापसed in 'val'.
- * Returns zero अगर successful, or non-zero otherwise.
+ * Read a 8/16/32-bit i2c register.  The value is returned in 'val'.
+ * Returns zero if successful, or non-zero otherwise.
  */
-अटल पूर्णांक __ccs_पढ़ो_addr(काष्ठा ccs_sensor *sensor, u32 reg, u32 *val,
+static int __ccs_read_addr(struct ccs_sensor *sensor, u32 reg, u32 *val,
 			   bool only8, bool conv)
-अणु
-	अचिन्हित पूर्णांक len = ccs_reg_width(reg);
-	पूर्णांक rval;
+{
+	unsigned int len = ccs_reg_width(reg);
+	int rval;
 
-	अगर (!only8)
-		rval = ____ccs_पढ़ो_addr(sensor, CCS_REG_ADDR(reg), len, val);
-	अन्यथा
-		rval = ____ccs_पढ़ो_addr_8only(sensor, CCS_REG_ADDR(reg), len,
+	if (!only8)
+		rval = ____ccs_read_addr(sensor, CCS_REG_ADDR(reg), len, val);
+	else
+		rval = ____ccs_read_addr_8only(sensor, CCS_REG_ADDR(reg), len,
 					       val);
-	अगर (rval < 0)
-		वापस rval;
+	if (rval < 0)
+		return rval;
 
-	अगर (!conv)
-		वापस 0;
+	if (!conv)
+		return 0;
 
 	*val = ccs_reg_conv(sensor, reg, *val);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __ccs_पढ़ो_data(काष्ठा ccs_reg *regs, माप_प्रकार num_regs,
+static int __ccs_read_data(struct ccs_reg *regs, size_t num_regs,
 			   u32 reg, u32 *val)
-अणु
-	अचिन्हित पूर्णांक width = ccs_reg_width(reg);
-	माप_प्रकार i;
+{
+	unsigned int width = ccs_reg_width(reg);
+	size_t i;
 
-	क्रम (i = 0; i < num_regs; i++, regs++) अणु
+	for (i = 0; i < num_regs; i++, regs++) {
 		u8 *data;
 
-		अगर (regs->addr + regs->len < CCS_REG_ADDR(reg) + width)
-			जारी;
+		if (regs->addr + regs->len < CCS_REG_ADDR(reg) + width)
+			continue;
 
-		अगर (regs->addr > CCS_REG_ADDR(reg))
-			अवरोध;
+		if (regs->addr > CCS_REG_ADDR(reg))
+			break;
 
 		data = &regs->value[CCS_REG_ADDR(reg) - regs->addr];
 
-		चयन (width) अणु
-		हाल माप(u8):
+		switch (width) {
+		case sizeof(u8):
 			*val = *data;
-			अवरोध;
-		हाल माप(u16):
+			break;
+		case sizeof(u16):
 			*val = get_unaligned_be16(data);
-			अवरोध;
-		हाल माप(u32):
+			break;
+		case sizeof(u32):
 			*val = get_unaligned_be32(data);
-			अवरोध;
-		शेष:
+			break;
+		default:
 			WARN_ON(1);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	वापस -ENOENT;
-पूर्ण
+	return -ENOENT;
+}
 
-अटल पूर्णांक ccs_पढ़ो_data(काष्ठा ccs_sensor *sensor, u32 reg, u32 *val)
-अणु
-	अगर (!__ccs_पढ़ो_data(sensor->sdata.sensor_पढ़ो_only_regs,
-			     sensor->sdata.num_sensor_पढ़ो_only_regs,
+static int ccs_read_data(struct ccs_sensor *sensor, u32 reg, u32 *val)
+{
+	if (!__ccs_read_data(sensor->sdata.sensor_read_only_regs,
+			     sensor->sdata.num_sensor_read_only_regs,
 			     reg, val))
-		वापस 0;
+		return 0;
 
-	वापस __ccs_पढ़ो_data(sensor->mdata.module_पढ़ो_only_regs,
-			       sensor->mdata.num_module_पढ़ो_only_regs,
+	return __ccs_read_data(sensor->mdata.module_read_only_regs,
+			       sensor->mdata.num_module_read_only_regs,
 			       reg, val);
-पूर्ण
+}
 
-अटल पूर्णांक ccs_पढ़ो_addr_raw(काष्ठा ccs_sensor *sensor, u32 reg, u32 *val,
-			     bool क्रमce8, bool quirk, bool conv, bool data)
-अणु
-	पूर्णांक rval;
+static int ccs_read_addr_raw(struct ccs_sensor *sensor, u32 reg, u32 *val,
+			     bool force8, bool quirk, bool conv, bool data)
+{
+	int rval;
 
-	अगर (data) अणु
-		rval = ccs_पढ़ो_data(sensor, reg, val);
-		अगर (!rval)
-			वापस 0;
-	पूर्ण
+	if (data) {
+		rval = ccs_read_data(sensor, reg, val);
+		if (!rval)
+			return 0;
+	}
 
-	अगर (quirk) अणु
+	if (quirk) {
 		*val = 0;
 		rval = ccs_call_quirk(sensor, reg_access, false, &reg, val);
-		अगर (rval == -ENOIOCTLCMD)
-			वापस 0;
-		अगर (rval < 0)
-			वापस rval;
+		if (rval == -ENOIOCTLCMD)
+			return 0;
+		if (rval < 0)
+			return rval;
 
-		अगर (क्रमce8)
-			वापस __ccs_पढ़ो_addr(sensor, reg, val, true, conv);
-	पूर्ण
+		if (force8)
+			return __ccs_read_addr(sensor, reg, val, true, conv);
+	}
 
-	वापस __ccs_पढ़ो_addr(sensor, reg, val,
+	return __ccs_read_addr(sensor, reg, val,
 			       ccs_needs_quirk(sensor,
 					       CCS_QUIRK_FLAG_8BIT_READ_ONLY),
 			       conv);
-पूर्ण
+}
 
-पूर्णांक ccs_पढ़ो_addr(काष्ठा ccs_sensor *sensor, u32 reg, u32 *val)
-अणु
-	वापस ccs_पढ़ो_addr_raw(sensor, reg, val, false, true, true, true);
-पूर्ण
+int ccs_read_addr(struct ccs_sensor *sensor, u32 reg, u32 *val)
+{
+	return ccs_read_addr_raw(sensor, reg, val, false, true, true, true);
+}
 
-पूर्णांक ccs_पढ़ो_addr_8only(काष्ठा ccs_sensor *sensor, u32 reg, u32 *val)
-अणु
-	वापस ccs_पढ़ो_addr_raw(sensor, reg, val, true, true, true, true);
-पूर्ण
+int ccs_read_addr_8only(struct ccs_sensor *sensor, u32 reg, u32 *val)
+{
+	return ccs_read_addr_raw(sensor, reg, val, true, true, true, true);
+}
 
-पूर्णांक ccs_पढ़ो_addr_noconv(काष्ठा ccs_sensor *sensor, u32 reg, u32 *val)
-अणु
-	वापस ccs_पढ़ो_addr_raw(sensor, reg, val, false, true, false, true);
-पूर्ण
+int ccs_read_addr_noconv(struct ccs_sensor *sensor, u32 reg, u32 *val)
+{
+	return ccs_read_addr_raw(sensor, reg, val, false, true, false, true);
+}
 
-अटल पूर्णांक ccs_ग_लिखो_retry(काष्ठा i2c_client *client, काष्ठा i2c_msg *msg)
-अणु
-	अचिन्हित पूर्णांक retries;
-	पूर्णांक r;
+static int ccs_write_retry(struct i2c_client *client, struct i2c_msg *msg)
+{
+	unsigned int retries;
+	int r;
 
-	क्रम (retries = 0; retries < 10; retries++) अणु
+	for (retries = 0; retries < 10; retries++) {
 		/*
 		 * Due to unknown reason sensor stops responding. This
 		 * loop is a temporaty solution until the root cause
 		 * is found.
 		 */
 		r = i2c_transfer(client->adapter, msg, 1);
-		अगर (r != 1) अणु
+		if (r != 1) {
 			usleep_range(1000, 2000);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		अगर (retries)
+		if (retries)
 			dev_err(&client->dev,
 				"sensor i2c stall encountered. retries: %d\n",
 				retries);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-पूर्णांक ccs_ग_लिखो_addr_no_quirk(काष्ठा ccs_sensor *sensor, u32 reg, u32 val)
-अणु
-	काष्ठा i2c_client *client = v4l2_get_subdevdata(&sensor->src->sd);
-	काष्ठा i2c_msg msg;
-	अचिन्हित अक्षर data[6];
-	अचिन्हित पूर्णांक len = ccs_reg_width(reg);
-	पूर्णांक r;
+int ccs_write_addr_no_quirk(struct ccs_sensor *sensor, u32 reg, u32 val)
+{
+	struct i2c_client *client = v4l2_get_subdevdata(&sensor->src->sd);
+	struct i2c_msg msg;
+	unsigned char data[6];
+	unsigned int len = ccs_reg_width(reg);
+	int r;
 
-	अगर (len > माप(data) - 2)
-		वापस -EINVAL;
+	if (len > sizeof(data) - 2)
+		return -EINVAL;
 
 	msg.addr = client->addr;
 	msg.flags = 0; /* Write */
@@ -336,82 +335,82 @@ u32 ccs_reg_conv(काष्ठा ccs_sensor *sensor, u32 reg, u32 val)
 	msg.buf = data;
 
 	put_unaligned_be16(CCS_REG_ADDR(reg), data);
-	put_unaligned_be32(val << (8 * (माप(val) - len)), data + 2);
+	put_unaligned_be32(val << (8 * (sizeof(val) - len)), data + 2);
 
 	dev_dbg(&client->dev, "writing reg 0x%4.4x value 0x%*.*x (%u)\n",
 		CCS_REG_ADDR(reg), ccs_reg_width(reg) << 1,
 		ccs_reg_width(reg) << 1, val, val);
 
-	r = ccs_ग_लिखो_retry(client, &msg);
-	अगर (r)
+	r = ccs_write_retry(client, &msg);
+	if (r)
 		dev_err(&client->dev,
 			"wrote 0x%x to offset 0x%x error %d\n", val,
 			CCS_REG_ADDR(reg), r);
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
 /*
- * Write to a 8/16-bit रेजिस्टर.
- * Returns zero अगर successful, or non-zero otherwise.
+ * Write to a 8/16-bit register.
+ * Returns zero if successful, or non-zero otherwise.
  */
-पूर्णांक ccs_ग_लिखो_addr(काष्ठा ccs_sensor *sensor, u32 reg, u32 val)
-अणु
-	पूर्णांक rval;
+int ccs_write_addr(struct ccs_sensor *sensor, u32 reg, u32 val)
+{
+	int rval;
 
 	rval = ccs_call_quirk(sensor, reg_access, true, &reg, &val);
-	अगर (rval == -ENOIOCTLCMD)
-		वापस 0;
-	अगर (rval < 0)
-		वापस rval;
+	if (rval == -ENOIOCTLCMD)
+		return 0;
+	if (rval < 0)
+		return rval;
 
-	वापस ccs_ग_लिखो_addr_no_quirk(sensor, reg, val);
-पूर्ण
+	return ccs_write_addr_no_quirk(sensor, reg, val);
+}
 
-#घोषणा MAX_WRITE_LEN	32U
+#define MAX_WRITE_LEN	32U
 
-पूर्णांक ccs_ग_लिखो_data_regs(काष्ठा ccs_sensor *sensor, काष्ठा ccs_reg *regs,
-			माप_प्रकार num_regs)
-अणु
-	काष्ठा i2c_client *client = v4l2_get_subdevdata(&sensor->src->sd);
-	अचिन्हित अक्षर buf[2 + MAX_WRITE_LEN];
-	काष्ठा i2c_msg msg = अणु
+int ccs_write_data_regs(struct ccs_sensor *sensor, struct ccs_reg *regs,
+			size_t num_regs)
+{
+	struct i2c_client *client = v4l2_get_subdevdata(&sensor->src->sd);
+	unsigned char buf[2 + MAX_WRITE_LEN];
+	struct i2c_msg msg = {
 		.addr = client->addr,
 		.buf = buf,
-	पूर्ण;
-	माप_प्रकार i;
+	};
+	size_t i;
 
-	क्रम (i = 0; i < num_regs; i++, regs++) अणु
-		अचिन्हित अक्षर *regdata = regs->value;
-		अचिन्हित पूर्णांक j;
+	for (i = 0; i < num_regs; i++, regs++) {
+		unsigned char *regdata = regs->value;
+		unsigned int j;
 
-		क्रम (j = 0; j < regs->len;
-		     j += msg.len - 2, regdata += msg.len - 2) अणु
-			अक्षर prपूर्णांकbuf[(MAX_WRITE_LEN << 1) +
-				      1 /* \0 */] = अणु 0 पूर्ण;
-			पूर्णांक rval;
+		for (j = 0; j < regs->len;
+		     j += msg.len - 2, regdata += msg.len - 2) {
+			char printbuf[(MAX_WRITE_LEN << 1) +
+				      1 /* \0 */] = { 0 };
+			int rval;
 
 			msg.len = min(regs->len - j, MAX_WRITE_LEN);
 
-			bin2hex(prपूर्णांकbuf, regdata, msg.len);
+			bin2hex(printbuf, regdata, msg.len);
 			dev_dbg(&client->dev,
 				"writing msr reg 0x%4.4x value 0x%s\n",
-				regs->addr + j, prपूर्णांकbuf);
+				regs->addr + j, printbuf);
 
 			put_unaligned_be16(regs->addr + j, buf);
-			स_नकल(buf + 2, regdata, msg.len);
+			memcpy(buf + 2, regdata, msg.len);
 
 			msg.len += 2;
 
-			rval = ccs_ग_लिखो_retry(client, &msg);
-			अगर (rval) अणु
+			rval = ccs_write_retry(client, &msg);
+			if (rval) {
 				dev_err(&client->dev,
 					"error writing %u octets to address 0x%4.4x\n",
 					msg.len, regs->addr + j);
-				वापस rval;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				return rval;
+			}
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

@@ -1,620 +1,619 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * Marvell 88E6xxx Switch hardware बारtamping support
+ * Marvell 88E6xxx Switch hardware timestamping support
  *
  * Copyright (c) 2008 Marvell Semiconductor
  *
  * Copyright (c) 2017 National Instruments
  *      Erik Hons <erik.hons@ni.com>
- *      Bअक्रमon Streअगरf <bअक्रमon.streअगरf@ni.com>
+ *      Brandon Streiff <brandon.streiff@ni.com>
  *      Dane Wagner <dane.wagner@ni.com>
  */
 
-#समावेश "chip.h"
-#समावेश "global2.h"
-#समावेश "hwtstamp.h"
-#समावेश "ptp.h"
-#समावेश <linux/ptp_classअगरy.h>
+#include "chip.h"
+#include "global2.h"
+#include "hwtstamp.h"
+#include "ptp.h"
+#include <linux/ptp_classify.h>
 
-#घोषणा SKB_PTP_TYPE(__skb) (*(अचिन्हित पूर्णांक *)((__skb)->cb))
+#define SKB_PTP_TYPE(__skb) (*(unsigned int *)((__skb)->cb))
 
-अटल पूर्णांक mv88e6xxx_port_ptp_पढ़ो(काष्ठा mv88e6xxx_chip *chip, पूर्णांक port,
-				   पूर्णांक addr, u16 *data, पूर्णांक len)
-अणु
-	अगर (!chip->info->ops->avb_ops->port_ptp_पढ़ो)
-		वापस -EOPNOTSUPP;
+static int mv88e6xxx_port_ptp_read(struct mv88e6xxx_chip *chip, int port,
+				   int addr, u16 *data, int len)
+{
+	if (!chip->info->ops->avb_ops->port_ptp_read)
+		return -EOPNOTSUPP;
 
-	वापस chip->info->ops->avb_ops->port_ptp_पढ़ो(chip, port, addr,
+	return chip->info->ops->avb_ops->port_ptp_read(chip, port, addr,
 						       data, len);
-पूर्ण
+}
 
-अटल पूर्णांक mv88e6xxx_port_ptp_ग_लिखो(काष्ठा mv88e6xxx_chip *chip, पूर्णांक port,
-				    पूर्णांक addr, u16 data)
-अणु
-	अगर (!chip->info->ops->avb_ops->port_ptp_ग_लिखो)
-		वापस -EOPNOTSUPP;
+static int mv88e6xxx_port_ptp_write(struct mv88e6xxx_chip *chip, int port,
+				    int addr, u16 data)
+{
+	if (!chip->info->ops->avb_ops->port_ptp_write)
+		return -EOPNOTSUPP;
 
-	वापस chip->info->ops->avb_ops->port_ptp_ग_लिखो(chip, port, addr,
+	return chip->info->ops->avb_ops->port_ptp_write(chip, port, addr,
 							data);
-पूर्ण
+}
 
-अटल पूर्णांक mv88e6xxx_ptp_ग_लिखो(काष्ठा mv88e6xxx_chip *chip, पूर्णांक addr,
+static int mv88e6xxx_ptp_write(struct mv88e6xxx_chip *chip, int addr,
 			       u16 data)
-अणु
-	अगर (!chip->info->ops->avb_ops->ptp_ग_लिखो)
-		वापस -EOPNOTSUPP;
+{
+	if (!chip->info->ops->avb_ops->ptp_write)
+		return -EOPNOTSUPP;
 
-	वापस chip->info->ops->avb_ops->ptp_ग_लिखो(chip, addr, data);
-पूर्ण
+	return chip->info->ops->avb_ops->ptp_write(chip, addr, data);
+}
 
-अटल पूर्णांक mv88e6xxx_ptp_पढ़ो(काष्ठा mv88e6xxx_chip *chip, पूर्णांक addr,
+static int mv88e6xxx_ptp_read(struct mv88e6xxx_chip *chip, int addr,
 			      u16 *data)
-अणु
-	अगर (!chip->info->ops->avb_ops->ptp_पढ़ो)
-		वापस -EOPNOTSUPP;
+{
+	if (!chip->info->ops->avb_ops->ptp_read)
+		return -EOPNOTSUPP;
 
-	वापस chip->info->ops->avb_ops->ptp_पढ़ो(chip, addr, data, 1);
-पूर्ण
+	return chip->info->ops->avb_ops->ptp_read(chip, addr, data, 1);
+}
 
-/* TX_TSTAMP_TIMEOUT: This limits the समय spent polling क्रम a TX
- * बारtamp. When working properly, hardware will produce a बारtamp
+/* TX_TSTAMP_TIMEOUT: This limits the time spent polling for a TX
+ * timestamp. When working properly, hardware will produce a timestamp
  * within 1ms. Software may enounter delays due to MDIO contention, so
- * the समयout is set accordingly.
+ * the timeout is set accordingly.
  */
-#घोषणा TX_TSTAMP_TIMEOUT	msecs_to_jअगरfies(40)
+#define TX_TSTAMP_TIMEOUT	msecs_to_jiffies(40)
 
-पूर्णांक mv88e6xxx_get_ts_info(काष्ठा dsa_चयन *ds, पूर्णांक port,
-			  काष्ठा ethtool_ts_info *info)
-अणु
-	स्थिर काष्ठा mv88e6xxx_ptp_ops *ptp_ops;
-	काष्ठा mv88e6xxx_chip *chip;
+int mv88e6xxx_get_ts_info(struct dsa_switch *ds, int port,
+			  struct ethtool_ts_info *info)
+{
+	const struct mv88e6xxx_ptp_ops *ptp_ops;
+	struct mv88e6xxx_chip *chip;
 
 	chip = ds->priv;
 	ptp_ops = chip->info->ops->ptp_ops;
 
-	अगर (!chip->info->ptp_support)
-		वापस -EOPNOTSUPP;
+	if (!chip->info->ptp_support)
+		return -EOPNOTSUPP;
 
-	info->so_बारtamping =
+	info->so_timestamping =
 		SOF_TIMESTAMPING_TX_HARDWARE |
 		SOF_TIMESTAMPING_RX_HARDWARE |
 		SOF_TIMESTAMPING_RAW_HARDWARE;
-	info->phc_index = ptp_घड़ी_index(chip->ptp_घड़ी);
+	info->phc_index = ptp_clock_index(chip->ptp_clock);
 	info->tx_types =
 		(1 << HWTSTAMP_TX_OFF) |
 		(1 << HWTSTAMP_TX_ON);
 	info->rx_filters = ptp_ops->rx_filters;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mv88e6xxx_set_hwtstamp_config(काष्ठा mv88e6xxx_chip *chip, पूर्णांक port,
-					 काष्ठा hwtstamp_config *config)
-अणु
-	स्थिर काष्ठा mv88e6xxx_ptp_ops *ptp_ops = chip->info->ops->ptp_ops;
-	काष्ठा mv88e6xxx_port_hwtstamp *ps = &chip->port_hwtstamp[port];
+static int mv88e6xxx_set_hwtstamp_config(struct mv88e6xxx_chip *chip, int port,
+					 struct hwtstamp_config *config)
+{
+	const struct mv88e6xxx_ptp_ops *ptp_ops = chip->info->ops->ptp_ops;
+	struct mv88e6xxx_port_hwtstamp *ps = &chip->port_hwtstamp[port];
 	bool tstamp_enable = false;
 
-	/* Prevent the TX/RX paths from trying to पूर्णांकeract with the
-	 * बारtamp hardware जबतक we reconfigure it.
+	/* Prevent the TX/RX paths from trying to interact with the
+	 * timestamp hardware while we reconfigure it.
 	 */
 	clear_bit_unlock(MV88E6XXX_HWTSTAMP_ENABLED, &ps->state);
 
-	/* reserved क्रम future extensions */
-	अगर (config->flags)
-		वापस -EINVAL;
+	/* reserved for future extensions */
+	if (config->flags)
+		return -EINVAL;
 
-	चयन (config->tx_type) अणु
-	हाल HWTSTAMP_TX_OFF:
+	switch (config->tx_type) {
+	case HWTSTAMP_TX_OFF:
 		tstamp_enable = false;
-		अवरोध;
-	हाल HWTSTAMP_TX_ON:
+		break;
+	case HWTSTAMP_TX_ON:
 		tstamp_enable = true;
-		अवरोध;
-	शेष:
-		वापस -दुस्फल;
-	पूर्ण
+		break;
+	default:
+		return -ERANGE;
+	}
 
-	/* The चयन supports बारtamping both L2 and L4; one cannot be
+	/* The switch supports timestamping both L2 and L4; one cannot be
 	 * disabled independently of the other.
 	 */
 
-	अगर (!(BIT(config->rx_filter) & ptp_ops->rx_filters)) अणु
+	if (!(BIT(config->rx_filter) & ptp_ops->rx_filters)) {
 		config->rx_filter = HWTSTAMP_FILTER_NONE;
 		dev_dbg(chip->dev, "Unsupported rx_filter %d\n",
 			config->rx_filter);
-		वापस -दुस्फल;
-	पूर्ण
+		return -ERANGE;
+	}
 
-	चयन (config->rx_filter) अणु
-	हाल HWTSTAMP_FILTER_NONE:
+	switch (config->rx_filter) {
+	case HWTSTAMP_FILTER_NONE:
 		tstamp_enable = false;
-		अवरोध;
-	हाल HWTSTAMP_FILTER_PTP_V2_L4_EVENT:
-	हाल HWTSTAMP_FILTER_PTP_V2_L4_SYNC:
-	हाल HWTSTAMP_FILTER_PTP_V2_L4_DELAY_REQ:
-	हाल HWTSTAMP_FILTER_PTP_V2_L2_EVENT:
-	हाल HWTSTAMP_FILTER_PTP_V2_L2_SYNC:
-	हाल HWTSTAMP_FILTER_PTP_V2_L2_DELAY_REQ:
-	हाल HWTSTAMP_FILTER_PTP_V2_EVENT:
-	हाल HWTSTAMP_FILTER_PTP_V2_SYNC:
-	हाल HWTSTAMP_FILTER_PTP_V2_DELAY_REQ:
+		break;
+	case HWTSTAMP_FILTER_PTP_V2_L4_EVENT:
+	case HWTSTAMP_FILTER_PTP_V2_L4_SYNC:
+	case HWTSTAMP_FILTER_PTP_V2_L4_DELAY_REQ:
+	case HWTSTAMP_FILTER_PTP_V2_L2_EVENT:
+	case HWTSTAMP_FILTER_PTP_V2_L2_SYNC:
+	case HWTSTAMP_FILTER_PTP_V2_L2_DELAY_REQ:
+	case HWTSTAMP_FILTER_PTP_V2_EVENT:
+	case HWTSTAMP_FILTER_PTP_V2_SYNC:
+	case HWTSTAMP_FILTER_PTP_V2_DELAY_REQ:
 		config->rx_filter = HWTSTAMP_FILTER_PTP_V2_EVENT;
-		अवरोध;
-	हाल HWTSTAMP_FILTER_ALL:
-	शेष:
+		break;
+	case HWTSTAMP_FILTER_ALL:
+	default:
 		config->rx_filter = HWTSTAMP_FILTER_NONE;
-		वापस -दुस्फल;
-	पूर्ण
+		return -ERANGE;
+	}
 
 	mv88e6xxx_reg_lock(chip);
-	अगर (tstamp_enable) अणु
+	if (tstamp_enable) {
 		chip->enable_count += 1;
-		अगर (chip->enable_count == 1 && ptp_ops->global_enable)
+		if (chip->enable_count == 1 && ptp_ops->global_enable)
 			ptp_ops->global_enable(chip);
-		अगर (ptp_ops->port_enable)
+		if (ptp_ops->port_enable)
 			ptp_ops->port_enable(chip, port);
-	पूर्ण अन्यथा अणु
-		अगर (ptp_ops->port_disable)
+	} else {
+		if (ptp_ops->port_disable)
 			ptp_ops->port_disable(chip, port);
 		chip->enable_count -= 1;
-		अगर (chip->enable_count == 0 && ptp_ops->global_disable)
+		if (chip->enable_count == 0 && ptp_ops->global_disable)
 			ptp_ops->global_disable(chip);
-	पूर्ण
+	}
 	mv88e6xxx_reg_unlock(chip);
 
-	/* Once hardware has been configured, enable बारtamp checks
+	/* Once hardware has been configured, enable timestamp checks
 	 * in the RX/TX paths.
 	 */
-	अगर (tstamp_enable)
+	if (tstamp_enable)
 		set_bit(MV88E6XXX_HWTSTAMP_ENABLED, &ps->state);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक mv88e6xxx_port_hwtstamp_set(काष्ठा dsa_चयन *ds, पूर्णांक port,
-				काष्ठा अगरreq *अगरr)
-अणु
-	काष्ठा mv88e6xxx_chip *chip = ds->priv;
-	काष्ठा mv88e6xxx_port_hwtstamp *ps = &chip->port_hwtstamp[port];
-	काष्ठा hwtstamp_config config;
-	पूर्णांक err;
+int mv88e6xxx_port_hwtstamp_set(struct dsa_switch *ds, int port,
+				struct ifreq *ifr)
+{
+	struct mv88e6xxx_chip *chip = ds->priv;
+	struct mv88e6xxx_port_hwtstamp *ps = &chip->port_hwtstamp[port];
+	struct hwtstamp_config config;
+	int err;
 
-	अगर (!chip->info->ptp_support)
-		वापस -EOPNOTSUPP;
+	if (!chip->info->ptp_support)
+		return -EOPNOTSUPP;
 
-	अगर (copy_from_user(&config, अगरr->अगरr_data, माप(config)))
-		वापस -EFAULT;
+	if (copy_from_user(&config, ifr->ifr_data, sizeof(config)))
+		return -EFAULT;
 
 	err = mv88e6xxx_set_hwtstamp_config(chip, port, &config);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	/* Save the chosen configuration to be वापसed later. */
-	स_नकल(&ps->tstamp_config, &config, माप(config));
+	/* Save the chosen configuration to be returned later. */
+	memcpy(&ps->tstamp_config, &config, sizeof(config));
 
-	वापस copy_to_user(अगरr->अगरr_data, &config, माप(config)) ?
+	return copy_to_user(ifr->ifr_data, &config, sizeof(config)) ?
 		-EFAULT : 0;
-पूर्ण
+}
 
-पूर्णांक mv88e6xxx_port_hwtstamp_get(काष्ठा dsa_चयन *ds, पूर्णांक port,
-				काष्ठा अगरreq *अगरr)
-अणु
-	काष्ठा mv88e6xxx_chip *chip = ds->priv;
-	काष्ठा mv88e6xxx_port_hwtstamp *ps = &chip->port_hwtstamp[port];
-	काष्ठा hwtstamp_config *config = &ps->tstamp_config;
+int mv88e6xxx_port_hwtstamp_get(struct dsa_switch *ds, int port,
+				struct ifreq *ifr)
+{
+	struct mv88e6xxx_chip *chip = ds->priv;
+	struct mv88e6xxx_port_hwtstamp *ps = &chip->port_hwtstamp[port];
+	struct hwtstamp_config *config = &ps->tstamp_config;
 
-	अगर (!chip->info->ptp_support)
-		वापस -EOPNOTSUPP;
+	if (!chip->info->ptp_support)
+		return -EOPNOTSUPP;
 
-	वापस copy_to_user(अगरr->अगरr_data, config, माप(*config)) ?
+	return copy_to_user(ifr->ifr_data, config, sizeof(*config)) ?
 		-EFAULT : 0;
-पूर्ण
+}
 
-/* Returns a poपूर्णांकer to the PTP header अगर the caller should समय stamp,
- * or शून्य अगर the caller should not.
+/* Returns a pointer to the PTP header if the caller should time stamp,
+ * or NULL if the caller should not.
  */
-अटल काष्ठा ptp_header *mv88e6xxx_should_tstamp(काष्ठा mv88e6xxx_chip *chip,
-						  पूर्णांक port, काष्ठा sk_buff *skb,
-						  अचिन्हित पूर्णांक type)
-अणु
-	काष्ठा mv88e6xxx_port_hwtstamp *ps = &chip->port_hwtstamp[port];
-	काष्ठा ptp_header *hdr;
+static struct ptp_header *mv88e6xxx_should_tstamp(struct mv88e6xxx_chip *chip,
+						  int port, struct sk_buff *skb,
+						  unsigned int type)
+{
+	struct mv88e6xxx_port_hwtstamp *ps = &chip->port_hwtstamp[port];
+	struct ptp_header *hdr;
 
-	अगर (!chip->info->ptp_support)
-		वापस शून्य;
-
-	hdr = ptp_parse_header(skb, type);
-	अगर (!hdr)
-		वापस शून्य;
-
-	अगर (!test_bit(MV88E6XXX_HWTSTAMP_ENABLED, &ps->state))
-		वापस शून्य;
-
-	वापस hdr;
-पूर्ण
-
-अटल पूर्णांक mv88e6xxx_ts_valid(u16 status)
-अणु
-	अगर (!(status & MV88E6XXX_PTP_TS_VALID))
-		वापस 0;
-	अगर (status & MV88E6XXX_PTP_TS_STATUS_MASK)
-		वापस 0;
-	वापस 1;
-पूर्ण
-
-अटल पूर्णांक seq_match(काष्ठा sk_buff *skb, u16 ts_seqid)
-अणु
-	अचिन्हित पूर्णांक type = SKB_PTP_TYPE(skb);
-	काष्ठा ptp_header *hdr;
+	if (!chip->info->ptp_support)
+		return NULL;
 
 	hdr = ptp_parse_header(skb, type);
+	if (!hdr)
+		return NULL;
 
-	वापस ts_seqid == ntohs(hdr->sequence_id);
-पूर्ण
+	if (!test_bit(MV88E6XXX_HWTSTAMP_ENABLED, &ps->state))
+		return NULL;
 
-अटल व्योम mv88e6xxx_get_rxts(काष्ठा mv88e6xxx_chip *chip,
-			       काष्ठा mv88e6xxx_port_hwtstamp *ps,
-			       काष्ठा sk_buff *skb, u16 reg,
-			       काष्ठा sk_buff_head *rxq)
-अणु
-	u16 buf[4] = अणु 0 पूर्ण, status, seq_id;
-	काष्ठा skb_shared_hwtstamps *shwt;
-	काष्ठा sk_buff_head received;
-	u64 ns, समयlo, समयhi;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक err;
+	return hdr;
+}
 
-	/* The latched बारtamp beदीर्घs to one of the received frames. */
+static int mv88e6xxx_ts_valid(u16 status)
+{
+	if (!(status & MV88E6XXX_PTP_TS_VALID))
+		return 0;
+	if (status & MV88E6XXX_PTP_TS_STATUS_MASK)
+		return 0;
+	return 1;
+}
+
+static int seq_match(struct sk_buff *skb, u16 ts_seqid)
+{
+	unsigned int type = SKB_PTP_TYPE(skb);
+	struct ptp_header *hdr;
+
+	hdr = ptp_parse_header(skb, type);
+
+	return ts_seqid == ntohs(hdr->sequence_id);
+}
+
+static void mv88e6xxx_get_rxts(struct mv88e6xxx_chip *chip,
+			       struct mv88e6xxx_port_hwtstamp *ps,
+			       struct sk_buff *skb, u16 reg,
+			       struct sk_buff_head *rxq)
+{
+	u16 buf[4] = { 0 }, status, seq_id;
+	struct skb_shared_hwtstamps *shwt;
+	struct sk_buff_head received;
+	u64 ns, timelo, timehi;
+	unsigned long flags;
+	int err;
+
+	/* The latched timestamp belongs to one of the received frames. */
 	__skb_queue_head_init(&received);
 	spin_lock_irqsave(&rxq->lock, flags);
 	skb_queue_splice_tail_init(rxq, &received);
 	spin_unlock_irqrestore(&rxq->lock, flags);
 
 	mv88e6xxx_reg_lock(chip);
-	err = mv88e6xxx_port_ptp_पढ़ो(chip, ps->port_id,
+	err = mv88e6xxx_port_ptp_read(chip, ps->port_id,
 				      reg, buf, ARRAY_SIZE(buf));
 	mv88e6xxx_reg_unlock(chip);
-	अगर (err)
+	if (err)
 		pr_err("failed to get the receive time stamp\n");
 
 	status = buf[0];
-	समयlo = buf[1];
-	समयhi = buf[2];
+	timelo = buf[1];
+	timehi = buf[2];
 	seq_id = buf[3];
 
-	अगर (status & MV88E6XXX_PTP_TS_VALID) अणु
+	if (status & MV88E6XXX_PTP_TS_VALID) {
 		mv88e6xxx_reg_lock(chip);
-		err = mv88e6xxx_port_ptp_ग_लिखो(chip, ps->port_id, reg, 0);
+		err = mv88e6xxx_port_ptp_write(chip, ps->port_id, reg, 0);
 		mv88e6xxx_reg_unlock(chip);
-		अगर (err)
+		if (err)
 			pr_err("failed to clear the receive status\n");
-	पूर्ण
-	/* Since the device can only handle one समय stamp at a समय,
+	}
+	/* Since the device can only handle one time stamp at a time,
 	 * we purge any extra frames from the queue.
 	 */
-	क्रम ( ; skb; skb = __skb_dequeue(&received)) अणु
-		अगर (mv88e6xxx_ts_valid(status) && seq_match(skb, seq_id)) अणु
-			ns = समयhi << 16 | समयlo;
+	for ( ; skb; skb = __skb_dequeue(&received)) {
+		if (mv88e6xxx_ts_valid(status) && seq_match(skb, seq_id)) {
+			ns = timehi << 16 | timelo;
 
 			mv88e6xxx_reg_lock(chip);
-			ns = समयcounter_cyc2समय(&chip->tstamp_tc, ns);
+			ns = timecounter_cyc2time(&chip->tstamp_tc, ns);
 			mv88e6xxx_reg_unlock(chip);
 			shwt = skb_hwtstamps(skb);
-			स_रखो(shwt, 0, माप(*shwt));
-			shwt->hwtstamp = ns_to_kसमय(ns);
+			memset(shwt, 0, sizeof(*shwt));
+			shwt->hwtstamp = ns_to_ktime(ns);
 			status &= ~MV88E6XXX_PTP_TS_VALID;
-		पूर्ण
-		netअगर_rx_ni(skb);
-	पूर्ण
-पूर्ण
+		}
+		netif_rx_ni(skb);
+	}
+}
 
-अटल व्योम mv88e6xxx_rxtstamp_work(काष्ठा mv88e6xxx_chip *chip,
-				    काष्ठा mv88e6xxx_port_hwtstamp *ps)
-अणु
-	स्थिर काष्ठा mv88e6xxx_ptp_ops *ptp_ops = chip->info->ops->ptp_ops;
-	काष्ठा sk_buff *skb;
+static void mv88e6xxx_rxtstamp_work(struct mv88e6xxx_chip *chip,
+				    struct mv88e6xxx_port_hwtstamp *ps)
+{
+	const struct mv88e6xxx_ptp_ops *ptp_ops = chip->info->ops->ptp_ops;
+	struct sk_buff *skb;
 
 	skb = skb_dequeue(&ps->rx_queue);
 
-	अगर (skb)
+	if (skb)
 		mv88e6xxx_get_rxts(chip, ps, skb, ptp_ops->arr0_sts_reg,
 				   &ps->rx_queue);
 
 	skb = skb_dequeue(&ps->rx_queue2);
-	अगर (skb)
+	if (skb)
 		mv88e6xxx_get_rxts(chip, ps, skb, ptp_ops->arr1_sts_reg,
 				   &ps->rx_queue2);
-पूर्ण
+}
 
-अटल पूर्णांक is_pdelay_resp(स्थिर काष्ठा ptp_header *hdr)
-अणु
-	वापस (hdr->tsmt & 0xf) == 3;
-पूर्ण
+static int is_pdelay_resp(const struct ptp_header *hdr)
+{
+	return (hdr->tsmt & 0xf) == 3;
+}
 
-bool mv88e6xxx_port_rxtstamp(काष्ठा dsa_चयन *ds, पूर्णांक port,
-			     काष्ठा sk_buff *skb, अचिन्हित पूर्णांक type)
-अणु
-	काष्ठा mv88e6xxx_port_hwtstamp *ps;
-	काष्ठा mv88e6xxx_chip *chip;
-	काष्ठा ptp_header *hdr;
+bool mv88e6xxx_port_rxtstamp(struct dsa_switch *ds, int port,
+			     struct sk_buff *skb, unsigned int type)
+{
+	struct mv88e6xxx_port_hwtstamp *ps;
+	struct mv88e6xxx_chip *chip;
+	struct ptp_header *hdr;
 
 	chip = ds->priv;
 	ps = &chip->port_hwtstamp[port];
 
-	अगर (ps->tstamp_config.rx_filter != HWTSTAMP_FILTER_PTP_V2_EVENT)
-		वापस false;
+	if (ps->tstamp_config.rx_filter != HWTSTAMP_FILTER_PTP_V2_EVENT)
+		return false;
 
 	hdr = mv88e6xxx_should_tstamp(chip, port, skb, type);
-	अगर (!hdr)
-		वापस false;
+	if (!hdr)
+		return false;
 
 	SKB_PTP_TYPE(skb) = type;
 
-	अगर (is_pdelay_resp(hdr))
+	if (is_pdelay_resp(hdr))
 		skb_queue_tail(&ps->rx_queue2, skb);
-	अन्यथा
+	else
 		skb_queue_tail(&ps->rx_queue, skb);
 
-	ptp_schedule_worker(chip->ptp_घड़ी, 0);
+	ptp_schedule_worker(chip->ptp_clock, 0);
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल पूर्णांक mv88e6xxx_txtstamp_work(काष्ठा mv88e6xxx_chip *chip,
-				   काष्ठा mv88e6xxx_port_hwtstamp *ps)
-अणु
-	स्थिर काष्ठा mv88e6xxx_ptp_ops *ptp_ops = chip->info->ops->ptp_ops;
-	काष्ठा skb_shared_hwtstamps shhwtstamps;
+static int mv88e6xxx_txtstamp_work(struct mv88e6xxx_chip *chip,
+				   struct mv88e6xxx_port_hwtstamp *ps)
+{
+	const struct mv88e6xxx_ptp_ops *ptp_ops = chip->info->ops->ptp_ops;
+	struct skb_shared_hwtstamps shhwtstamps;
 	u16 departure_block[4], status;
-	काष्ठा sk_buff *पंचांगp_skb;
-	u32 समय_raw;
-	पूर्णांक err;
+	struct sk_buff *tmp_skb;
+	u32 time_raw;
+	int err;
 	u64 ns;
 
-	अगर (!ps->tx_skb)
-		वापस 0;
+	if (!ps->tx_skb)
+		return 0;
 
 	mv88e6xxx_reg_lock(chip);
-	err = mv88e6xxx_port_ptp_पढ़ो(chip, ps->port_id,
+	err = mv88e6xxx_port_ptp_read(chip, ps->port_id,
 				      ptp_ops->dep_sts_reg,
 				      departure_block,
 				      ARRAY_SIZE(departure_block));
 	mv88e6xxx_reg_unlock(chip);
 
-	अगर (err)
-		जाओ मुक्त_and_clear_skb;
+	if (err)
+		goto free_and_clear_skb;
 
-	अगर (!(departure_block[0] & MV88E6XXX_PTP_TS_VALID)) अणु
-		अगर (समय_is_beक्रमe_jअगरfies(ps->tx_tstamp_start +
-					   TX_TSTAMP_TIMEOUT)) अणु
+	if (!(departure_block[0] & MV88E6XXX_PTP_TS_VALID)) {
+		if (time_is_before_jiffies(ps->tx_tstamp_start +
+					   TX_TSTAMP_TIMEOUT)) {
 			dev_warn(chip->dev, "p%d: clearing tx timestamp hang\n",
 				 ps->port_id);
-			जाओ मुक्त_and_clear_skb;
-		पूर्ण
-		/* The बारtamp should be available quickly, जबतक getting it
-		 * is high priority and समय bounded to only 10ms. A poll is
+			goto free_and_clear_skb;
+		}
+		/* The timestamp should be available quickly, while getting it
+		 * is high priority and time bounded to only 10ms. A poll is
 		 * warranted so restart the work.
 		 */
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 
-	/* We have the बारtamp; go ahead and clear valid now */
+	/* We have the timestamp; go ahead and clear valid now */
 	mv88e6xxx_reg_lock(chip);
-	mv88e6xxx_port_ptp_ग_लिखो(chip, ps->port_id, ptp_ops->dep_sts_reg, 0);
+	mv88e6xxx_port_ptp_write(chip, ps->port_id, ptp_ops->dep_sts_reg, 0);
 	mv88e6xxx_reg_unlock(chip);
 
 	status = departure_block[0] & MV88E6XXX_PTP_TS_STATUS_MASK;
-	अगर (status != MV88E6XXX_PTP_TS_STATUS_NORMAL) अणु
+	if (status != MV88E6XXX_PTP_TS_STATUS_NORMAL) {
 		dev_warn(chip->dev, "p%d: tx timestamp overrun\n", ps->port_id);
-		जाओ मुक्त_and_clear_skb;
-	पूर्ण
+		goto free_and_clear_skb;
+	}
 
-	अगर (departure_block[3] != ps->tx_seq_id) अणु
+	if (departure_block[3] != ps->tx_seq_id) {
 		dev_warn(chip->dev, "p%d: unexpected seq. id\n", ps->port_id);
-		जाओ मुक्त_and_clear_skb;
-	पूर्ण
+		goto free_and_clear_skb;
+	}
 
-	स_रखो(&shhwtstamps, 0, माप(shhwtstamps));
-	समय_raw = ((u32)departure_block[2] << 16) | departure_block[1];
+	memset(&shhwtstamps, 0, sizeof(shhwtstamps));
+	time_raw = ((u32)departure_block[2] << 16) | departure_block[1];
 	mv88e6xxx_reg_lock(chip);
-	ns = समयcounter_cyc2समय(&chip->tstamp_tc, समय_raw);
+	ns = timecounter_cyc2time(&chip->tstamp_tc, time_raw);
 	mv88e6xxx_reg_unlock(chip);
-	shhwtstamps.hwtstamp = ns_to_kसमय(ns);
+	shhwtstamps.hwtstamp = ns_to_ktime(ns);
 
 	dev_dbg(chip->dev,
 		"p%d: txtstamp %llx status 0x%04x skb ID 0x%04x hw ID 0x%04x\n",
-		ps->port_id, kसमय_प्रकारo_ns(shhwtstamps.hwtstamp),
+		ps->port_id, ktime_to_ns(shhwtstamps.hwtstamp),
 		departure_block[0], ps->tx_seq_id, departure_block[3]);
 
-	/* skb_complete_tx_बारtamp() will मुक्त up the client to make
-	 * another बारtamp-able transmit. We have to be पढ़ोy क्रम it
-	 * -- by clearing the ps->tx_skb "flag" -- beक्रमehand.
+	/* skb_complete_tx_timestamp() will free up the client to make
+	 * another timestamp-able transmit. We have to be ready for it
+	 * -- by clearing the ps->tx_skb "flag" -- beforehand.
 	 */
 
-	पंचांगp_skb = ps->tx_skb;
-	ps->tx_skb = शून्य;
+	tmp_skb = ps->tx_skb;
+	ps->tx_skb = NULL;
 	clear_bit_unlock(MV88E6XXX_HWTSTAMP_TX_IN_PROGRESS, &ps->state);
-	skb_complete_tx_बारtamp(पंचांगp_skb, &shhwtstamps);
+	skb_complete_tx_timestamp(tmp_skb, &shhwtstamps);
 
-	वापस 0;
+	return 0;
 
-मुक्त_and_clear_skb:
-	dev_kमुक्त_skb_any(ps->tx_skb);
-	ps->tx_skb = शून्य;
+free_and_clear_skb:
+	dev_kfree_skb_any(ps->tx_skb);
+	ps->tx_skb = NULL;
 	clear_bit_unlock(MV88E6XXX_HWTSTAMP_TX_IN_PROGRESS, &ps->state);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-दीर्घ mv88e6xxx_hwtstamp_work(काष्ठा ptp_घड़ी_info *ptp)
-अणु
-	काष्ठा mv88e6xxx_chip *chip = ptp_to_chip(ptp);
-	काष्ठा dsa_चयन *ds = chip->ds;
-	काष्ठा mv88e6xxx_port_hwtstamp *ps;
-	पूर्णांक i, restart = 0;
+long mv88e6xxx_hwtstamp_work(struct ptp_clock_info *ptp)
+{
+	struct mv88e6xxx_chip *chip = ptp_to_chip(ptp);
+	struct dsa_switch *ds = chip->ds;
+	struct mv88e6xxx_port_hwtstamp *ps;
+	int i, restart = 0;
 
-	क्रम (i = 0; i < ds->num_ports; i++) अणु
-		अगर (!dsa_is_user_port(ds, i))
-			जारी;
+	for (i = 0; i < ds->num_ports; i++) {
+		if (!dsa_is_user_port(ds, i))
+			continue;
 
 		ps = &chip->port_hwtstamp[i];
-		अगर (test_bit(MV88E6XXX_HWTSTAMP_TX_IN_PROGRESS, &ps->state))
+		if (test_bit(MV88E6XXX_HWTSTAMP_TX_IN_PROGRESS, &ps->state))
 			restart |= mv88e6xxx_txtstamp_work(chip, ps);
 
 		mv88e6xxx_rxtstamp_work(chip, ps);
-	पूर्ण
+	}
 
-	वापस restart ? 1 : -1;
-पूर्ण
+	return restart ? 1 : -1;
+}
 
-व्योम mv88e6xxx_port_txtstamp(काष्ठा dsa_चयन *ds, पूर्णांक port,
-			     काष्ठा sk_buff *skb)
-अणु
-	काष्ठा mv88e6xxx_chip *chip = ds->priv;
-	काष्ठा mv88e6xxx_port_hwtstamp *ps = &chip->port_hwtstamp[port];
-	काष्ठा ptp_header *hdr;
-	काष्ठा sk_buff *clone;
-	अचिन्हित पूर्णांक type;
+void mv88e6xxx_port_txtstamp(struct dsa_switch *ds, int port,
+			     struct sk_buff *skb)
+{
+	struct mv88e6xxx_chip *chip = ds->priv;
+	struct mv88e6xxx_port_hwtstamp *ps = &chip->port_hwtstamp[port];
+	struct ptp_header *hdr;
+	struct sk_buff *clone;
+	unsigned int type;
 
-	type = ptp_classअगरy_raw(skb);
-	अगर (type == PTP_CLASS_NONE)
-		वापस;
+	type = ptp_classify_raw(skb);
+	if (type == PTP_CLASS_NONE)
+		return;
 
 	hdr = mv88e6xxx_should_tstamp(chip, port, skb, type);
-	अगर (!hdr)
-		वापस;
+	if (!hdr)
+		return;
 
 	clone = skb_clone_sk(skb);
-	अगर (!clone)
-		वापस;
+	if (!clone)
+		return;
 
-	अगर (test_and_set_bit_lock(MV88E6XXX_HWTSTAMP_TX_IN_PROGRESS,
-				  &ps->state)) अणु
-		kमुक्त_skb(clone);
-		वापस;
-	पूर्ण
+	if (test_and_set_bit_lock(MV88E6XXX_HWTSTAMP_TX_IN_PROGRESS,
+				  &ps->state)) {
+		kfree_skb(clone);
+		return;
+	}
 
 	ps->tx_skb = clone;
-	ps->tx_tstamp_start = jअगरfies;
+	ps->tx_tstamp_start = jiffies;
 	ps->tx_seq_id = be16_to_cpu(hdr->sequence_id);
 
-	ptp_schedule_worker(chip->ptp_घड़ी, 0);
-पूर्ण
+	ptp_schedule_worker(chip->ptp_clock, 0);
+}
 
-पूर्णांक mv88e6165_global_disable(काष्ठा mv88e6xxx_chip *chip)
-अणु
+int mv88e6165_global_disable(struct mv88e6xxx_chip *chip)
+{
 	u16 val;
-	पूर्णांक err;
+	int err;
 
-	err = mv88e6xxx_ptp_पढ़ो(chip, MV88E6165_PTP_CFG, &val);
-	अगर (err)
-		वापस err;
+	err = mv88e6xxx_ptp_read(chip, MV88E6165_PTP_CFG, &val);
+	if (err)
+		return err;
 	val |= MV88E6165_PTP_CFG_DISABLE_PTP;
 
-	वापस mv88e6xxx_ptp_ग_लिखो(chip, MV88E6165_PTP_CFG, val);
-पूर्ण
+	return mv88e6xxx_ptp_write(chip, MV88E6165_PTP_CFG, val);
+}
 
-पूर्णांक mv88e6165_global_enable(काष्ठा mv88e6xxx_chip *chip)
-अणु
+int mv88e6165_global_enable(struct mv88e6xxx_chip *chip)
+{
 	u16 val;
-	पूर्णांक err;
+	int err;
 
-	err = mv88e6xxx_ptp_पढ़ो(chip, MV88E6165_PTP_CFG, &val);
-	अगर (err)
-		वापस err;
+	err = mv88e6xxx_ptp_read(chip, MV88E6165_PTP_CFG, &val);
+	if (err)
+		return err;
 
 	val &= ~(MV88E6165_PTP_CFG_DISABLE_PTP | MV88E6165_PTP_CFG_TSPEC_MASK);
 
-	वापस mv88e6xxx_ptp_ग_लिखो(chip, MV88E6165_PTP_CFG, val);
-पूर्ण
+	return mv88e6xxx_ptp_write(chip, MV88E6165_PTP_CFG, val);
+}
 
-पूर्णांक mv88e6352_hwtstamp_port_disable(काष्ठा mv88e6xxx_chip *chip, पूर्णांक port)
-अणु
-	वापस mv88e6xxx_port_ptp_ग_लिखो(chip, port, MV88E6XXX_PORT_PTP_CFG0,
+int mv88e6352_hwtstamp_port_disable(struct mv88e6xxx_chip *chip, int port)
+{
+	return mv88e6xxx_port_ptp_write(chip, port, MV88E6XXX_PORT_PTP_CFG0,
 					MV88E6XXX_PORT_PTP_CFG0_DISABLE_PTP);
-पूर्ण
+}
 
-पूर्णांक mv88e6352_hwtstamp_port_enable(काष्ठा mv88e6xxx_chip *chip, पूर्णांक port)
-अणु
-	वापस mv88e6xxx_port_ptp_ग_लिखो(chip, port, MV88E6XXX_PORT_PTP_CFG0,
+int mv88e6352_hwtstamp_port_enable(struct mv88e6xxx_chip *chip, int port)
+{
+	return mv88e6xxx_port_ptp_write(chip, port, MV88E6XXX_PORT_PTP_CFG0,
 					MV88E6XXX_PORT_PTP_CFG0_DISABLE_TSPEC_MATCH);
-पूर्ण
+}
 
-अटल पूर्णांक mv88e6xxx_hwtstamp_port_setup(काष्ठा mv88e6xxx_chip *chip, पूर्णांक port)
-अणु
-	स्थिर काष्ठा mv88e6xxx_ptp_ops *ptp_ops = chip->info->ops->ptp_ops;
-	काष्ठा mv88e6xxx_port_hwtstamp *ps = &chip->port_hwtstamp[port];
+static int mv88e6xxx_hwtstamp_port_setup(struct mv88e6xxx_chip *chip, int port)
+{
+	const struct mv88e6xxx_ptp_ops *ptp_ops = chip->info->ops->ptp_ops;
+	struct mv88e6xxx_port_hwtstamp *ps = &chip->port_hwtstamp[port];
 
 	ps->port_id = port;
 
 	skb_queue_head_init(&ps->rx_queue);
 	skb_queue_head_init(&ps->rx_queue2);
 
-	अगर (ptp_ops->port_disable)
-		वापस ptp_ops->port_disable(chip, port);
+	if (ptp_ops->port_disable)
+		return ptp_ops->port_disable(chip, port);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक mv88e6xxx_hwtstamp_setup(काष्ठा mv88e6xxx_chip *chip)
-अणु
-	स्थिर काष्ठा mv88e6xxx_ptp_ops *ptp_ops = chip->info->ops->ptp_ops;
-	पूर्णांक err;
-	पूर्णांक i;
+int mv88e6xxx_hwtstamp_setup(struct mv88e6xxx_chip *chip)
+{
+	const struct mv88e6xxx_ptp_ops *ptp_ops = chip->info->ops->ptp_ops;
+	int err;
+	int i;
 
-	/* Disable बारtamping on all ports. */
-	क्रम (i = 0; i < mv88e6xxx_num_ports(chip); ++i) अणु
+	/* Disable timestamping on all ports. */
+	for (i = 0; i < mv88e6xxx_num_ports(chip); ++i) {
 		err = mv88e6xxx_hwtstamp_port_setup(chip, i);
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 
 	/* Disable PTP globally */
-	अगर (ptp_ops->global_disable) अणु
+	if (ptp_ops->global_disable) {
 		err = ptp_ops->global_disable(chip);
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 
 	/* Set the ethertype of L2 PTP messages */
-	err = mv88e6xxx_ptp_ग_लिखो(chip, MV88E6XXX_PTP_GC_ETYPE, ETH_P_1588);
-	अगर (err)
-		वापस err;
+	err = mv88e6xxx_ptp_write(chip, MV88E6XXX_PTP_GC_ETYPE, ETH_P_1588);
+	if (err)
+		return err;
 
 	/* MV88E6XXX_PTP_MSG_TYPE is a mask of PTP message types to
-	 * बारtamp. This affects all ports that have बारtamping enabled,
-	 * but the बारtamp config is per-port; thus we configure all events
+	 * timestamp. This affects all ports that have timestamping enabled,
+	 * but the timestamp config is per-port; thus we configure all events
 	 * here and only support the HWTSTAMP_FILTER_*_EVENT filter types.
 	 */
-	err = mv88e6xxx_ptp_ग_लिखो(chip, MV88E6XXX_PTP_MSGTYPE,
+	err = mv88e6xxx_ptp_write(chip, MV88E6XXX_PTP_MSGTYPE,
 				  MV88E6XXX_PTP_MSGTYPE_ALL_EVENT);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	/* Use ARRIVAL1 क्रम peer delay response messages. */
-	err = mv88e6xxx_ptp_ग_लिखो(chip, MV88E6XXX_PTP_TS_ARRIVAL_PTR,
+	/* Use ARRIVAL1 for peer delay response messages. */
+	err = mv88e6xxx_ptp_write(chip, MV88E6XXX_PTP_TS_ARRIVAL_PTR,
 				  MV88E6XXX_PTP_MSGTYPE_PDLAY_RES);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	/* 88E6341 devices शेष to बारtamping at the PHY, but this has
-	 * a hardware issue that results in unreliable बारtamps. Force
-	 * these devices to बारtamp at the MAC.
+	/* 88E6341 devices default to timestamping at the PHY, but this has
+	 * a hardware issue that results in unreliable timestamps. Force
+	 * these devices to timestamp at the MAC.
 	 */
-	अगर (chip->info->family == MV88E6XXX_FAMILY_6341) अणु
+	if (chip->info->family == MV88E6XXX_FAMILY_6341) {
 		u16 val = MV88E6341_PTP_CFG_UPDATE |
 			  MV88E6341_PTP_CFG_MODE_IDX |
 			  MV88E6341_PTP_CFG_MODE_TS_AT_MAC;
-		err = mv88e6xxx_ptp_ग_लिखो(chip, MV88E6341_PTP_CFG, val);
-		अगर (err)
-			वापस err;
-	पूर्ण
+		err = mv88e6xxx_ptp_write(chip, MV88E6341_PTP_CFG, val);
+		if (err)
+			return err;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम mv88e6xxx_hwtstamp_मुक्त(काष्ठा mv88e6xxx_chip *chip)
-अणु
-पूर्ण
+void mv88e6xxx_hwtstamp_free(struct mv88e6xxx_chip *chip)
+{
+}

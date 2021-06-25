@@ -1,47 +1,46 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2016 MediaTek Inc.
  */
 
-#समावेश <linux/delay.h>
-#समावेश <linux/err.h>
-#समावेश <linux/gpio/consumer.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of_graph.h>
-#समावेश <linux/regulator/consumer.h>
+#include <linux/delay.h>
+#include <linux/err.h>
+#include <linux/gpio/consumer.h>
+#include <linux/i2c.h>
+#include <linux/module.h>
+#include <linux/of_graph.h>
+#include <linux/regulator/consumer.h>
 
-#समावेश <drm/drm_bridge.h>
-#समावेश <drm/drm_mipi_dsi.h>
-#समावेश <drm/drm_of.h>
-#समावेश <drm/drm_panel.h>
-#समावेश <drm/drm_prपूर्णांक.h>
+#include <drm/drm_bridge.h>
+#include <drm/drm_mipi_dsi.h>
+#include <drm/drm_of.h>
+#include <drm/drm_panel.h>
+#include <drm/drm_print.h>
 
-#घोषणा PAGE2_GPIO_H		0xa7
-#घोषणा PS_GPIO9		BIT(1)
-#घोषणा PAGE2_I2C_BYPASS	0xea
-#घोषणा I2C_BYPASS_EN		0xd0
-#घोषणा PAGE2_MCS_EN		0xf3
-#घोषणा MCS_EN			BIT(0)
-#घोषणा PAGE3_SET_ADD		0xfe
-#घोषणा VDO_CTL_ADD		0x13
-#घोषणा VDO_DIS			0x18
-#घोषणा VDO_EN			0x1c
-#घोषणा DP_NUM_LANES		4
+#define PAGE2_GPIO_H		0xa7
+#define PS_GPIO9		BIT(1)
+#define PAGE2_I2C_BYPASS	0xea
+#define I2C_BYPASS_EN		0xd0
+#define PAGE2_MCS_EN		0xf3
+#define MCS_EN			BIT(0)
+#define PAGE3_SET_ADD		0xfe
+#define VDO_CTL_ADD		0x13
+#define VDO_DIS			0x18
+#define VDO_EN			0x1c
+#define DP_NUM_LANES		4
 
 /*
  * PS8640 uses multiple addresses:
- * page[0]: क्रम DP control
- * page[1]: क्रम VIDEO Bridge
- * page[2]: क्रम control top
- * page[3]: क्रम DSI Link Control1
- * page[4]: क्रम MIPI Phy
- * page[5]: क्रम VPLL
- * page[6]: क्रम DSI Link Control2
- * page[7]: क्रम SPI ROM mapping
+ * page[0]: for DP control
+ * page[1]: for VIDEO Bridge
+ * page[2]: for control top
+ * page[3]: for DSI Link Control1
+ * page[4]: for MIPI Phy
+ * page[5]: for VPLL
+ * page[6]: for DSI Link Control2
+ * page[7]: for SPI ROM mapping
  */
-क्रमागत page_addr_offset अणु
+enum page_addr_offset {
 	PAGE0_DP_CNTL = 0,
 	PAGE1_VDO_BDG,
 	PAGE2_TOP_CNTL,
@@ -51,241 +50,241 @@
 	PAGE6_DSI_CNTL2,
 	PAGE7_SPI_CNTL,
 	MAX_DEVS
-पूर्ण;
+};
 
-क्रमागत ps8640_vकरो_control अणु
+enum ps8640_vdo_control {
 	DISABLE = VDO_DIS,
 	ENABLE = VDO_EN,
-पूर्ण;
+};
 
-काष्ठा ps8640 अणु
-	काष्ठा drm_bridge bridge;
-	काष्ठा drm_bridge *panel_bridge;
-	काष्ठा mipi_dsi_device *dsi;
-	काष्ठा i2c_client *page[MAX_DEVS];
-	काष्ठा regulator_bulk_data supplies[2];
-	काष्ठा gpio_desc *gpio_reset;
-	काष्ठा gpio_desc *gpio_घातerकरोwn;
-	bool घातered;
-पूर्ण;
+struct ps8640 {
+	struct drm_bridge bridge;
+	struct drm_bridge *panel_bridge;
+	struct mipi_dsi_device *dsi;
+	struct i2c_client *page[MAX_DEVS];
+	struct regulator_bulk_data supplies[2];
+	struct gpio_desc *gpio_reset;
+	struct gpio_desc *gpio_powerdown;
+	bool powered;
+};
 
-अटल अंतरभूत काष्ठा ps8640 *bridge_to_ps8640(काष्ठा drm_bridge *e)
-अणु
-	वापस container_of(e, काष्ठा ps8640, bridge);
-पूर्ण
+static inline struct ps8640 *bridge_to_ps8640(struct drm_bridge *e)
+{
+	return container_of(e, struct ps8640, bridge);
+}
 
-अटल पूर्णांक ps8640_bridge_vकरो_control(काष्ठा ps8640 *ps_bridge,
-				     स्थिर क्रमागत ps8640_vकरो_control ctrl)
-अणु
-	काष्ठा i2c_client *client = ps_bridge->page[PAGE3_DSI_CNTL1];
-	u8 vकरो_ctrl_buf[] = अणु VDO_CTL_ADD, ctrl पूर्ण;
-	पूर्णांक ret;
+static int ps8640_bridge_vdo_control(struct ps8640 *ps_bridge,
+				     const enum ps8640_vdo_control ctrl)
+{
+	struct i2c_client *client = ps_bridge->page[PAGE3_DSI_CNTL1];
+	u8 vdo_ctrl_buf[] = { VDO_CTL_ADD, ctrl };
+	int ret;
 
-	ret = i2c_smbus_ग_लिखो_i2c_block_data(client, PAGE3_SET_ADD,
-					     माप(vकरो_ctrl_buf),
-					     vकरो_ctrl_buf);
-	अगर (ret < 0) अणु
+	ret = i2c_smbus_write_i2c_block_data(client, PAGE3_SET_ADD,
+					     sizeof(vdo_ctrl_buf),
+					     vdo_ctrl_buf);
+	if (ret < 0) {
 		DRM_ERROR("failed to %sable VDO: %d\n",
 			  ctrl == ENABLE ? "en" : "dis", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ps8640_bridge_घातeron(काष्ठा ps8640 *ps_bridge)
-अणु
-	काष्ठा i2c_client *client = ps_bridge->page[PAGE2_TOP_CNTL];
-	अचिन्हित दीर्घ समयout;
-	पूर्णांक ret, status;
+static void ps8640_bridge_poweron(struct ps8640 *ps_bridge)
+{
+	struct i2c_client *client = ps_bridge->page[PAGE2_TOP_CNTL];
+	unsigned long timeout;
+	int ret, status;
 
-	अगर (ps_bridge->घातered)
-		वापस;
+	if (ps_bridge->powered)
+		return;
 
 	ret = regulator_bulk_enable(ARRAY_SIZE(ps_bridge->supplies),
 				    ps_bridge->supplies);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		DRM_ERROR("cannot enable regulators %d\n", ret);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	gpiod_set_value(ps_bridge->gpio_घातerकरोwn, 0);
+	gpiod_set_value(ps_bridge->gpio_powerdown, 0);
 	gpiod_set_value(ps_bridge->gpio_reset, 1);
 	usleep_range(2000, 2500);
 	gpiod_set_value(ps_bridge->gpio_reset, 0);
 
 	/*
-	 * Wait क्रम the ps8640 embedded MCU to be पढ़ोy
-	 * First रुको 200ms and then check the MCU पढ़ोy flag every 20ms
+	 * Wait for the ps8640 embedded MCU to be ready
+	 * First wait 200ms and then check the MCU ready flag every 20ms
 	 */
 	msleep(200);
 
-	समयout = jअगरfies + msecs_to_jअगरfies(200) + 1;
+	timeout = jiffies + msecs_to_jiffies(200) + 1;
 
-	जबतक (समय_is_after_jअगरfies(समयout)) अणु
-		status = i2c_smbus_पढ़ो_byte_data(client, PAGE2_GPIO_H);
-		अगर (status < 0) अणु
+	while (time_is_after_jiffies(timeout)) {
+		status = i2c_smbus_read_byte_data(client, PAGE2_GPIO_H);
+		if (status < 0) {
 			DRM_ERROR("failed read PAGE2_GPIO_H: %d\n", status);
-			जाओ err_regulators_disable;
-		पूर्ण
-		अगर ((status & PS_GPIO9) == PS_GPIO9)
-			अवरोध;
+			goto err_regulators_disable;
+		}
+		if ((status & PS_GPIO9) == PS_GPIO9)
+			break;
 
 		msleep(20);
-	पूर्ण
+	}
 
 	msleep(50);
 
 	/*
-	 * The Manufacturer Command Set (MCS) is a device dependent पूर्णांकerface
-	 * पूर्णांकended क्रम factory programming of the display module शेष
+	 * The Manufacturer Command Set (MCS) is a device dependent interface
+	 * intended for factory programming of the display module default
 	 * parameters. Once the display module is configured, the MCS shall be
 	 * disabled by the manufacturer. Once disabled, all MCS commands are
-	 * ignored by the display पूर्णांकerface.
+	 * ignored by the display interface.
 	 */
-	status = i2c_smbus_पढ़ो_byte_data(client, PAGE2_MCS_EN);
-	अगर (status < 0) अणु
+	status = i2c_smbus_read_byte_data(client, PAGE2_MCS_EN);
+	if (status < 0) {
 		DRM_ERROR("failed read PAGE2_MCS_EN: %d\n", status);
-		जाओ err_regulators_disable;
-	पूर्ण
+		goto err_regulators_disable;
+	}
 
-	ret = i2c_smbus_ग_लिखो_byte_data(client, PAGE2_MCS_EN,
+	ret = i2c_smbus_write_byte_data(client, PAGE2_MCS_EN,
 					status & ~MCS_EN);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		DRM_ERROR("failed write PAGE2_MCS_EN: %d\n", ret);
-		जाओ err_regulators_disable;
-	पूर्ण
+		goto err_regulators_disable;
+	}
 
 	/* Switch access edp panel's edid through i2c */
-	ret = i2c_smbus_ग_लिखो_byte_data(client, PAGE2_I2C_BYPASS,
+	ret = i2c_smbus_write_byte_data(client, PAGE2_I2C_BYPASS,
 					I2C_BYPASS_EN);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		DRM_ERROR("failed write PAGE2_I2C_BYPASS: %d\n", ret);
-		जाओ err_regulators_disable;
-	पूर्ण
+		goto err_regulators_disable;
+	}
 
-	ps_bridge->घातered = true;
+	ps_bridge->powered = true;
 
-	वापस;
+	return;
 
 err_regulators_disable:
 	regulator_bulk_disable(ARRAY_SIZE(ps_bridge->supplies),
 			       ps_bridge->supplies);
-पूर्ण
+}
 
-अटल व्योम ps8640_bridge_घातeroff(काष्ठा ps8640 *ps_bridge)
-अणु
-	पूर्णांक ret;
+static void ps8640_bridge_poweroff(struct ps8640 *ps_bridge)
+{
+	int ret;
 
-	अगर (!ps_bridge->घातered)
-		वापस;
+	if (!ps_bridge->powered)
+		return;
 
 	gpiod_set_value(ps_bridge->gpio_reset, 1);
-	gpiod_set_value(ps_bridge->gpio_घातerकरोwn, 1);
+	gpiod_set_value(ps_bridge->gpio_powerdown, 1);
 	ret = regulator_bulk_disable(ARRAY_SIZE(ps_bridge->supplies),
 				     ps_bridge->supplies);
-	अगर (ret < 0)
+	if (ret < 0)
 		DRM_ERROR("cannot disable regulators %d\n", ret);
 
-	ps_bridge->घातered = false;
-पूर्ण
+	ps_bridge->powered = false;
+}
 
-अटल व्योम ps8640_pre_enable(काष्ठा drm_bridge *bridge)
-अणु
-	काष्ठा ps8640 *ps_bridge = bridge_to_ps8640(bridge);
-	पूर्णांक ret;
+static void ps8640_pre_enable(struct drm_bridge *bridge)
+{
+	struct ps8640 *ps_bridge = bridge_to_ps8640(bridge);
+	int ret;
 
-	ps8640_bridge_घातeron(ps_bridge);
+	ps8640_bridge_poweron(ps_bridge);
 
-	ret = ps8640_bridge_vकरो_control(ps_bridge, ENABLE);
-	अगर (ret < 0)
-		ps8640_bridge_घातeroff(ps_bridge);
-पूर्ण
+	ret = ps8640_bridge_vdo_control(ps_bridge, ENABLE);
+	if (ret < 0)
+		ps8640_bridge_poweroff(ps_bridge);
+}
 
-अटल व्योम ps8640_post_disable(काष्ठा drm_bridge *bridge)
-अणु
-	काष्ठा ps8640 *ps_bridge = bridge_to_ps8640(bridge);
+static void ps8640_post_disable(struct drm_bridge *bridge)
+{
+	struct ps8640 *ps_bridge = bridge_to_ps8640(bridge);
 
-	ps8640_bridge_vकरो_control(ps_bridge, DISABLE);
-	ps8640_bridge_घातeroff(ps_bridge);
-पूर्ण
+	ps8640_bridge_vdo_control(ps_bridge, DISABLE);
+	ps8640_bridge_poweroff(ps_bridge);
+}
 
-अटल पूर्णांक ps8640_bridge_attach(काष्ठा drm_bridge *bridge,
-				क्रमागत drm_bridge_attach_flags flags)
-अणु
-	काष्ठा ps8640 *ps_bridge = bridge_to_ps8640(bridge);
-	काष्ठा device *dev = &ps_bridge->page[0]->dev;
-	काष्ठा device_node *in_ep, *dsi_node;
-	काष्ठा mipi_dsi_device *dsi;
-	काष्ठा mipi_dsi_host *host;
-	पूर्णांक ret;
-	स्थिर काष्ठा mipi_dsi_device_info info = अणु .type = "ps8640",
+static int ps8640_bridge_attach(struct drm_bridge *bridge,
+				enum drm_bridge_attach_flags flags)
+{
+	struct ps8640 *ps_bridge = bridge_to_ps8640(bridge);
+	struct device *dev = &ps_bridge->page[0]->dev;
+	struct device_node *in_ep, *dsi_node;
+	struct mipi_dsi_device *dsi;
+	struct mipi_dsi_host *host;
+	int ret;
+	const struct mipi_dsi_device_info info = { .type = "ps8640",
 						   .channel = 0,
-						   .node = शून्य,
-						 पूर्ण;
+						   .node = NULL,
+						 };
 
-	अगर (!(flags & DRM_BRIDGE_ATTACH_NO_CONNECTOR))
-		वापस -EINVAL;
+	if (!(flags & DRM_BRIDGE_ATTACH_NO_CONNECTOR))
+		return -EINVAL;
 
 	/* port@0 is ps8640 dsi input port */
-	in_ep = of_graph_get_endpoपूर्णांक_by_regs(dev->of_node, 0, -1);
-	अगर (!in_ep)
-		वापस -ENODEV;
+	in_ep = of_graph_get_endpoint_by_regs(dev->of_node, 0, -1);
+	if (!in_ep)
+		return -ENODEV;
 
 	dsi_node = of_graph_get_remote_port_parent(in_ep);
 	of_node_put(in_ep);
-	अगर (!dsi_node)
-		वापस -ENODEV;
+	if (!dsi_node)
+		return -ENODEV;
 
 	host = of_find_mipi_dsi_host_by_node(dsi_node);
 	of_node_put(dsi_node);
-	अगर (!host)
-		वापस -ENODEV;
+	if (!host)
+		return -ENODEV;
 
-	dsi = mipi_dsi_device_रेजिस्टर_full(host, &info);
-	अगर (IS_ERR(dsi)) अणु
+	dsi = mipi_dsi_device_register_full(host, &info);
+	if (IS_ERR(dsi)) {
 		dev_err(dev, "failed to create dsi device\n");
 		ret = PTR_ERR(dsi);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	ps_bridge->dsi = dsi;
 
 	dsi->host = host;
 	dsi->mode_flags = MIPI_DSI_MODE_VIDEO |
 			  MIPI_DSI_MODE_VIDEO_SYNC_PULSE;
-	dsi->क्रमmat = MIPI_DSI_FMT_RGB888;
+	dsi->format = MIPI_DSI_FMT_RGB888;
 	dsi->lanes = DP_NUM_LANES;
 	ret = mipi_dsi_attach(dsi);
-	अगर (ret)
-		जाओ err_dsi_attach;
+	if (ret)
+		goto err_dsi_attach;
 
 	/* Attach the panel-bridge to the dsi bridge */
-	वापस drm_bridge_attach(bridge->encoder, ps_bridge->panel_bridge,
+	return drm_bridge_attach(bridge->encoder, ps_bridge->panel_bridge,
 				 &ps_bridge->bridge, flags);
 
 err_dsi_attach:
-	mipi_dsi_device_unरेजिस्टर(dsi);
-	वापस ret;
-पूर्ण
+	mipi_dsi_device_unregister(dsi);
+	return ret;
+}
 
-अटल काष्ठा edid *ps8640_bridge_get_edid(काष्ठा drm_bridge *bridge,
-					   काष्ठा drm_connector *connector)
-अणु
-	काष्ठा ps8640 *ps_bridge = bridge_to_ps8640(bridge);
-	bool घातeroff = !ps_bridge->घातered;
-	काष्ठा edid *edid;
+static struct edid *ps8640_bridge_get_edid(struct drm_bridge *bridge,
+					   struct drm_connector *connector)
+{
+	struct ps8640 *ps_bridge = bridge_to_ps8640(bridge);
+	bool poweroff = !ps_bridge->powered;
+	struct edid *edid;
 
 	/*
 	 * When we end calling get_edid() triggered by an ioctl, i.e
 	 *
-	 *   drm_mode_अ_लोonnector (ioctl)
+	 *   drm_mode_getconnector (ioctl)
 	 *     -> drm_helper_probe_single_connector_modes
 	 *        -> drm_bridge_connector_get_modes
 	 *           -> ps8640_bridge_get_edid
 	 *
-	 * We need to make sure that what we need is enabled beक्रमe पढ़ोing
-	 * EDID, क्रम this chip, we need to करो a full घातeron, otherwise it will
+	 * We need to make sure that what we need is enabled before reading
+	 * EDID, for this chip, we need to do a full poweron, otherwise it will
 	 * fail.
 	 */
 	drm_bridge_chain_pre_enable(bridge);
@@ -295,64 +294,64 @@ err_dsi_attach:
 
 	/*
 	 * If we call the get_edid() function without having enabled the chip
-	 * beक्रमe, वापस the chip to its original घातer state.
+	 * before, return the chip to its original power state.
 	 */
-	अगर (घातeroff)
+	if (poweroff)
 		drm_bridge_chain_post_disable(bridge);
 
-	वापस edid;
-पूर्ण
+	return edid;
+}
 
-अटल स्थिर काष्ठा drm_bridge_funcs ps8640_bridge_funcs = अणु
+static const struct drm_bridge_funcs ps8640_bridge_funcs = {
 	.attach = ps8640_bridge_attach,
 	.get_edid = ps8640_bridge_get_edid,
 	.post_disable = ps8640_post_disable,
 	.pre_enable = ps8640_pre_enable,
-पूर्ण;
+};
 
-अटल पूर्णांक ps8640_probe(काष्ठा i2c_client *client)
-अणु
-	काष्ठा device *dev = &client->dev;
-	काष्ठा device_node *np = dev->of_node;
-	काष्ठा ps8640 *ps_bridge;
-	काष्ठा drm_panel *panel;
-	पूर्णांक ret;
+static int ps8640_probe(struct i2c_client *client)
+{
+	struct device *dev = &client->dev;
+	struct device_node *np = dev->of_node;
+	struct ps8640 *ps_bridge;
+	struct drm_panel *panel;
+	int ret;
 	u32 i;
 
-	ps_bridge = devm_kzalloc(dev, माप(*ps_bridge), GFP_KERNEL);
-	अगर (!ps_bridge)
-		वापस -ENOMEM;
+	ps_bridge = devm_kzalloc(dev, sizeof(*ps_bridge), GFP_KERNEL);
+	if (!ps_bridge)
+		return -ENOMEM;
 
 	/* port@1 is ps8640 output port */
-	ret = drm_of_find_panel_or_bridge(np, 1, 0, &panel, शून्य);
-	अगर (ret < 0)
-		वापस ret;
-	अगर (!panel)
-		वापस -ENODEV;
+	ret = drm_of_find_panel_or_bridge(np, 1, 0, &panel, NULL);
+	if (ret < 0)
+		return ret;
+	if (!panel)
+		return -ENODEV;
 
 	ps_bridge->panel_bridge = devm_drm_panel_bridge_add(dev, panel);
-	अगर (IS_ERR(ps_bridge->panel_bridge))
-		वापस PTR_ERR(ps_bridge->panel_bridge);
+	if (IS_ERR(ps_bridge->panel_bridge))
+		return PTR_ERR(ps_bridge->panel_bridge);
 
 	ps_bridge->supplies[0].supply = "vdd33";
 	ps_bridge->supplies[1].supply = "vdd12";
 	ret = devm_regulator_bulk_get(dev, ARRAY_SIZE(ps_bridge->supplies),
 				      ps_bridge->supplies);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	ps_bridge->gpio_घातerकरोwn = devm_gpiod_get(&client->dev, "powerdown",
+	ps_bridge->gpio_powerdown = devm_gpiod_get(&client->dev, "powerdown",
 						   GPIOD_OUT_HIGH);
-	अगर (IS_ERR(ps_bridge->gpio_घातerकरोwn))
-		वापस PTR_ERR(ps_bridge->gpio_घातerकरोwn);
+	if (IS_ERR(ps_bridge->gpio_powerdown))
+		return PTR_ERR(ps_bridge->gpio_powerdown);
 
 	/*
-	 * Assert the reset to aव्योम the bridge being initialized prematurely
+	 * Assert the reset to avoid the bridge being initialized prematurely
 	 */
 	ps_bridge->gpio_reset = devm_gpiod_get(&client->dev, "reset",
 					       GPIOD_OUT_HIGH);
-	अगर (IS_ERR(ps_bridge->gpio_reset))
-		वापस PTR_ERR(ps_bridge->gpio_reset);
+	if (IS_ERR(ps_bridge->gpio_reset))
+		return PTR_ERR(ps_bridge->gpio_reset);
 
 	ps_bridge->bridge.funcs = &ps8640_bridge_funcs;
 	ps_bridge->bridge.of_node = dev->of_node;
@@ -361,47 +360,47 @@ err_dsi_attach:
 
 	ps_bridge->page[PAGE0_DP_CNTL] = client;
 
-	क्रम (i = 1; i < ARRAY_SIZE(ps_bridge->page); i++) अणु
+	for (i = 1; i < ARRAY_SIZE(ps_bridge->page); i++) {
 		ps_bridge->page[i] = devm_i2c_new_dummy_device(&client->dev,
 							     client->adapter,
 							     client->addr + i);
-		अगर (IS_ERR(ps_bridge->page[i])) अणु
+		if (IS_ERR(ps_bridge->page[i])) {
 			dev_err(dev, "failed i2c dummy device, address %02x\n",
 				client->addr + i);
-			वापस PTR_ERR(ps_bridge->page[i]);
-		पूर्ण
-	पूर्ण
+			return PTR_ERR(ps_bridge->page[i]);
+		}
+	}
 
 	i2c_set_clientdata(client, ps_bridge);
 
 	drm_bridge_add(&ps_bridge->bridge);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ps8640_हटाओ(काष्ठा i2c_client *client)
-अणु
-	काष्ठा ps8640 *ps_bridge = i2c_get_clientdata(client);
+static int ps8640_remove(struct i2c_client *client)
+{
+	struct ps8640 *ps_bridge = i2c_get_clientdata(client);
 
-	drm_bridge_हटाओ(&ps_bridge->bridge);
+	drm_bridge_remove(&ps_bridge->bridge);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id ps8640_match[] = अणु
-	अणु .compatible = "parade,ps8640" पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct of_device_id ps8640_match[] = {
+	{ .compatible = "parade,ps8640" },
+	{ }
+};
 MODULE_DEVICE_TABLE(of, ps8640_match);
 
-अटल काष्ठा i2c_driver ps8640_driver = अणु
+static struct i2c_driver ps8640_driver = {
 	.probe_new = ps8640_probe,
-	.हटाओ = ps8640_हटाओ,
-	.driver = अणु
+	.remove = ps8640_remove,
+	.driver = {
 		.name = "ps8640",
 		.of_match_table = ps8640_match,
-	पूर्ण,
-पूर्ण;
+	},
+};
 module_i2c_driver(ps8640_driver);
 
 MODULE_AUTHOR("Jitao Shi <jitao.shi@mediatek.com>");

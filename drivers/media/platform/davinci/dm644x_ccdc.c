@@ -1,64 +1,63 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright (C) 2006-2009 Texas Instruments Inc
  *
- * CCDC hardware module क्रम DM6446
+ * CCDC hardware module for DM6446
  * ------------------------------
  *
- * This module is क्रम configuring CCD controller of DM6446 VPFE to capture
+ * This module is for configuring CCD controller of DM6446 VPFE to capture
  * Raw yuv or Bayer RGB data from a decoder. CCDC has several modules
  * such as Defect Pixel Correction, Color Space Conversion etc to
- * pre-process the Raw Bayer RGB data, beक्रमe writing it to SDRAM.
+ * pre-process the Raw Bayer RGB data, before writing it to SDRAM.
  * This file is named DM644x so that other variants such DM6443
  * may be supported using the same module.
  *
  * TODO: Test Raw bayer parameter settings and bayer capture
- *	 Split module parameter काष्ठाure to module specअगरic ioctl काष्ठाs
- *	 investigate अगर क्रमागत used क्रम user space type definition
- *	 to be replaced by #घोषणाs or पूर्णांकeger
+ *	 Split module parameter structure to module specific ioctl structs
+ *	 investigate if enum used for user space type definition
+ *	 to be replaced by #defines or integer
  */
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/videodev2.h>
-#समावेश <linux/gfp.h>
-#समावेश <linux/err.h>
-#समावेश <linux/module.h>
+#include <linux/platform_device.h>
+#include <linux/uaccess.h>
+#include <linux/videodev2.h>
+#include <linux/gfp.h>
+#include <linux/err.h>
+#include <linux/module.h>
 
-#समावेश <media/davinci/dm644x_ccdc.h>
-#समावेश <media/davinci/vpss.h>
+#include <media/davinci/dm644x_ccdc.h>
+#include <media/davinci/vpss.h>
 
-#समावेश "dm644x_ccdc_regs.h"
-#समावेश "ccdc_hw_device.h"
+#include "dm644x_ccdc_regs.h"
+#include "ccdc_hw_device.h"
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("CCDC Driver for DM6446");
 MODULE_AUTHOR("Texas Instruments");
 
-अटल काष्ठा ccdc_oper_config अणु
-	काष्ठा device *dev;
-	/* CCDC पूर्णांकerface type */
-	क्रमागत vpfe_hw_अगर_type अगर_type;
+static struct ccdc_oper_config {
+	struct device *dev;
+	/* CCDC interface type */
+	enum vpfe_hw_if_type if_type;
 	/* Raw Bayer configuration */
-	काष्ठा ccdc_params_raw bayer;
+	struct ccdc_params_raw bayer;
 	/* YCbCr configuration */
-	काष्ठा ccdc_params_ycbcr ycbcr;
+	struct ccdc_params_ycbcr ycbcr;
 	/* ccdc base address */
-	व्योम __iomem *base_addr;
-पूर्ण ccdc_cfg = अणु
+	void __iomem *base_addr;
+} ccdc_cfg = {
 	/* Raw configurations */
-	.bayer = अणु
+	.bayer = {
 		.pix_fmt = CCDC_PIXFMT_RAW,
 		.frm_fmt = CCDC_FRMFMT_PROGRESSIVE,
 		.win = CCDC_WIN_VGA,
 		.fid_pol = VPFE_PINPOL_POSITIVE,
 		.vd_pol = VPFE_PINPOL_POSITIVE,
 		.hd_pol = VPFE_PINPOL_POSITIVE,
-		.config_params = अणु
+		.config_params = {
 			.data_sz = CCDC_DATA_10BITS,
-		पूर्ण,
-	पूर्ण,
-	.ycbcr = अणु
+		},
+	},
+	.ycbcr = {
 		.pix_fmt = CCDC_PIXFMT_YCBCR_8BIT,
 		.frm_fmt = CCDC_FRMFMT_INTERLACED,
 		.win = CCDC_WIN_PAL,
@@ -68,64 +67,64 @@ MODULE_AUTHOR("Texas Instruments");
 		.bt656_enable = 1,
 		.pix_order = CCDC_PIXORDER_CBYCRY,
 		.buf_type = CCDC_BUFTYPE_FLD_INTERLEAVED
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-#घोषणा CCDC_MAX_RAW_YUV_FORMATS	2
+#define CCDC_MAX_RAW_YUV_FORMATS	2
 
-/* Raw Bayer क्रमmats */
-अटल u32 ccdc_raw_bayer_pix_क्रमmats[] =
-	अणुV4L2_PIX_FMT_SBGGR8, V4L2_PIX_FMT_SBGGR16पूर्ण;
+/* Raw Bayer formats */
+static u32 ccdc_raw_bayer_pix_formats[] =
+	{V4L2_PIX_FMT_SBGGR8, V4L2_PIX_FMT_SBGGR16};
 
-/* Raw YUV क्रमmats */
-अटल u32 ccdc_raw_yuv_pix_क्रमmats[] =
-	अणुV4L2_PIX_FMT_UYVY, V4L2_PIX_FMT_YUYVपूर्ण;
+/* Raw YUV formats */
+static u32 ccdc_raw_yuv_pix_formats[] =
+	{V4L2_PIX_FMT_UYVY, V4L2_PIX_FMT_YUYV};
 
 /* CCDC Save/Restore context */
-अटल u32 ccdc_ctx[CCDC_REG_END / माप(u32)];
+static u32 ccdc_ctx[CCDC_REG_END / sizeof(u32)];
 
-/* रेजिस्टर access routines */
-अटल अंतरभूत u32 regr(u32 offset)
-अणु
-	वापस __raw_पढ़ोl(ccdc_cfg.base_addr + offset);
-पूर्ण
+/* register access routines */
+static inline u32 regr(u32 offset)
+{
+	return __raw_readl(ccdc_cfg.base_addr + offset);
+}
 
-अटल अंतरभूत व्योम regw(u32 val, u32 offset)
-अणु
-	__raw_ग_लिखोl(val, ccdc_cfg.base_addr + offset);
-पूर्ण
+static inline void regw(u32 val, u32 offset)
+{
+	__raw_writel(val, ccdc_cfg.base_addr + offset);
+}
 
-अटल व्योम ccdc_enable(पूर्णांक flag)
-अणु
+static void ccdc_enable(int flag)
+{
 	regw(flag, CCDC_PCR);
-पूर्ण
+}
 
-अटल व्योम ccdc_enable_vport(पूर्णांक flag)
-अणु
-	अगर (flag)
+static void ccdc_enable_vport(int flag)
+{
+	if (flag)
 		/* enable video port */
 		regw(CCDC_ENABLE_VIDEO_PORT, CCDC_FMTCFG);
-	अन्यथा
+	else
 		regw(CCDC_DISABLE_VIDEO_PORT, CCDC_FMTCFG);
-पूर्ण
+}
 
 /*
  * ccdc_setwin()
- * This function will configure the winकरोw size
+ * This function will configure the window size
  * to be capture in CCDC reg
  */
-अटल व्योम ccdc_setwin(काष्ठा v4l2_rect *image_win,
-			क्रमागत ccdc_frmfmt frm_fmt,
-			पूर्णांक ppc)
-अणु
-	पूर्णांक horz_start, horz_nr_pixels;
-	पूर्णांक vert_start, vert_nr_lines;
-	पूर्णांक val = 0, mid_img = 0;
+static void ccdc_setwin(struct v4l2_rect *image_win,
+			enum ccdc_frmfmt frm_fmt,
+			int ppc)
+{
+	int horz_start, horz_nr_pixels;
+	int vert_start, vert_nr_lines;
+	int val = 0, mid_img = 0;
 
 	dev_dbg(ccdc_cfg.dev, "\nStarting ccdc_setwin...");
 	/*
 	 * ppc - per pixel count. indicates how many pixels per cell
-	 * output to SDRAM. example, क्रम ycbcr, it is one y and one c, so 2.
+	 * output to SDRAM. example, for ycbcr, it is one y and one c, so 2.
 	 * raw capture this is 1
 	 */
 	horz_start = image_win->left << (ppc - 1);
@@ -135,17 +134,17 @@ MODULE_AUTHOR("Texas Instruments");
 
 	vert_start = image_win->top;
 
-	अगर (frm_fmt == CCDC_FRMFMT_INTERLACED) अणु
+	if (frm_fmt == CCDC_FRMFMT_INTERLACED) {
 		vert_nr_lines = (image_win->height >> 1) - 1;
 		vert_start >>= 1;
-		/* Since first line करोesn't have any data */
+		/* Since first line doesn't have any data */
 		vert_start += 1;
 		/* configure VDINT0 */
 		val = (vert_start << CCDC_VDINT_VDINT0_SHIFT);
 		regw(val, CCDC_VDINT);
 
-	पूर्ण अन्यथा अणु
-		/* Since first line करोesn't have any data */
+	} else {
+		/* Since first line doesn't have any data */
 		vert_start += 1;
 		vert_nr_lines = image_win->height - 1;
 		/*
@@ -157,16 +156,16 @@ MODULE_AUTHOR("Texas Instruments");
 		    (mid_img & CCDC_VDINT_VDINT1_MASK);
 		regw(val, CCDC_VDINT);
 
-	पूर्ण
+	}
 	regw((vert_start << CCDC_VERT_START_SLV0_SHIFT) | vert_start,
 	     CCDC_VERT_START);
 	regw(vert_nr_lines, CCDC_VERT_LINES);
 	dev_dbg(ccdc_cfg.dev, "\nEnd of ccdc_setwin...");
-पूर्ण
+}
 
-अटल व्योम ccdc_पढ़ोregs(व्योम)
-अणु
-	अचिन्हित पूर्णांक val = 0;
+static void ccdc_readregs(void)
+{
+	unsigned int val = 0;
 
 	val = regr(CCDC_ALAW);
 	dev_notice(ccdc_cfg.dev, "\nReading 0x%x to ALAW...\n", val);
@@ -202,63 +201,63 @@ MODULE_AUTHOR("Texas Instruments");
 	dev_notice(ccdc_cfg.dev, "\nReading 0x%x to VERT_START...\n", val);
 	val = regr(CCDC_VERT_LINES);
 	dev_notice(ccdc_cfg.dev, "\nReading 0x%x to VERT_LINES...\n", val);
-पूर्ण
+}
 
-अटल पूर्णांक ccdc_बंद(काष्ठा device *dev)
-अणु
-	वापस 0;
-पूर्ण
+static int ccdc_close(struct device *dev)
+{
+	return 0;
+}
 
 /*
- * ccdc_restore_शेषs()
- * This function will ग_लिखो शेषs to all CCDC रेजिस्टरs
+ * ccdc_restore_defaults()
+ * This function will write defaults to all CCDC registers
  */
-अटल व्योम ccdc_restore_शेषs(व्योम)
-अणु
-	पूर्णांक i;
+static void ccdc_restore_defaults(void)
+{
+	int i;
 
 	/* disable CCDC */
 	ccdc_enable(0);
-	/* set all रेजिस्टरs to शेष value */
-	क्रम (i = 4; i <= 0x94; i += 4)
+	/* set all registers to default value */
+	for (i = 4; i <= 0x94; i += 4)
 		regw(0,  i);
 	regw(CCDC_NO_CULLING, CCDC_CULLING);
 	regw(CCDC_GAMMA_BITS_11_2, CCDC_ALAW);
-पूर्ण
+}
 
-अटल पूर्णांक ccdc_खोलो(काष्ठा device *device)
-अणु
-	ccdc_restore_शेषs();
-	अगर (ccdc_cfg.अगर_type == VPFE_RAW_BAYER)
+static int ccdc_open(struct device *device)
+{
+	ccdc_restore_defaults();
+	if (ccdc_cfg.if_type == VPFE_RAW_BAYER)
 		ccdc_enable_vport(1);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ccdc_sbl_reset(व्योम)
-अणु
+static void ccdc_sbl_reset(void)
+{
 	vpss_clear_wbl_overflow(VPSS_PCR_CCDC_WBL_O);
-पूर्ण
+}
 
 /*
  * ccdc_config_ycbcr()
- * This function will configure CCDC क्रम YCbCr video capture
+ * This function will configure CCDC for YCbCr video capture
  */
-अटल व्योम ccdc_config_ycbcr(व्योम)
-अणु
-	काष्ठा ccdc_params_ycbcr *params = &ccdc_cfg.ycbcr;
+static void ccdc_config_ycbcr(void)
+{
+	struct ccdc_params_ycbcr *params = &ccdc_cfg.ycbcr;
 	u32 syn_mode;
 
 	dev_dbg(ccdc_cfg.dev, "\nStarting ccdc_config_ycbcr...");
 	/*
-	 * first restore the CCDC रेजिस्टरs to शेष values
-	 * This is important since we assume शेष values to be set in
-	 * a lot of रेजिस्टरs that we didn't touch
+	 * first restore the CCDC registers to default values
+	 * This is important since we assume default values to be set in
+	 * a lot of registers that we didn't touch
 	 */
-	ccdc_restore_शेषs();
+	ccdc_restore_defaults();
 
 	/*
-	 * configure pixel क्रमmat, frame क्रमmat, configure video frame
-	 * क्रमmat, enable output to SDRAM, enable पूर्णांकernal timing generator
+	 * configure pixel format, frame format, configure video frame
+	 * format, enable output to SDRAM, enable internal timing generator
 	 * and 8bit pack mode
 	 */
 	syn_mode = (((params->pix_fmt & CCDC_SYN_MODE_INPMOD_MASK) <<
@@ -268,7 +267,7 @@ MODULE_AUTHOR("Texas Instruments");
 		    CCDC_WEN_ENABLE | CCDC_DATA_PACK_ENABLE);
 
 	/* setup BT.656 sync mode */
-	अगर (params->bt656_enable) अणु
+	if (params->bt656_enable) {
 		regw(CCDC_REC656IF_BT656_EN, CCDC_REC656IF);
 
 		/*
@@ -276,33 +275,33 @@ MODULE_AUTHOR("Texas Instruments");
 		 * fld,hd pol positive, vd negative, 8-bit data
 		 */
 		syn_mode |= CCDC_SYN_MODE_VD_POL_NEGATIVE;
-		अगर (ccdc_cfg.अगर_type == VPFE_BT656_10BIT)
+		if (ccdc_cfg.if_type == VPFE_BT656_10BIT)
 			syn_mode |= CCDC_SYN_MODE_10BITS;
-		अन्यथा
+		else
 			syn_mode |= CCDC_SYN_MODE_8BITS;
-	पूर्ण अन्यथा अणु
-		/* y/c बाह्यal sync mode */
+	} else {
+		/* y/c external sync mode */
 		syn_mode |= (((params->fid_pol & CCDC_FID_POL_MASK) <<
 			     CCDC_FID_POL_SHIFT) |
 			     ((params->hd_pol & CCDC_HD_POL_MASK) <<
 			     CCDC_HD_POL_SHIFT) |
 			     ((params->vd_pol & CCDC_VD_POL_MASK) <<
 			     CCDC_VD_POL_SHIFT));
-	पूर्ण
+	}
 	regw(syn_mode, CCDC_SYN_MODE);
 
-	/* configure video winकरोw */
+	/* configure video window */
 	ccdc_setwin(&params->win, params->frm_fmt, 2);
 
 	/*
 	 * configure the order of y cb cr in SDRAM, and disable latch
-	 * पूर्णांकernal रेजिस्टर on vsync
+	 * internal register on vsync
 	 */
-	अगर (ccdc_cfg.अगर_type == VPFE_BT656_10BIT)
+	if (ccdc_cfg.if_type == VPFE_BT656_10BIT)
 		regw((params->pix_order << CCDC_CCDCFG_Y8POS_SHIFT) |
 			CCDC_LATCH_ON_VSYNC_DISABLE | CCDC_CCDCFG_BW656_10BIT,
 			CCDC_CCDCFG);
-	अन्यथा
+	else
 		regw((params->pix_order << CCDC_CCDCFG_Y8POS_SHIFT) |
 			CCDC_LATCH_ON_VSYNC_DISABLE, CCDC_CCDCFG);
 
@@ -313,27 +312,27 @@ MODULE_AUTHOR("Texas Instruments");
 	regw(((params->win.width * 2  + 31) & ~0x1f), CCDC_HSIZE_OFF);
 
 	/* configure the memory line offset */
-	अगर (params->buf_type == CCDC_BUFTYPE_FLD_INTERLEAVED)
-		/* two fields are पूर्णांकerleaved in memory */
+	if (params->buf_type == CCDC_BUFTYPE_FLD_INTERLEAVED)
+		/* two fields are interleaved in memory */
 		regw(CCDC_SDOFST_FIELD_INTERLEAVED, CCDC_SDOFST);
 
 	ccdc_sbl_reset();
 	dev_dbg(ccdc_cfg.dev, "\nEnd of ccdc_config_ycbcr...\n");
-पूर्ण
+}
 
-अटल व्योम ccdc_config_black_clamp(काष्ठा ccdc_black_clamp *bclamp)
-अणु
+static void ccdc_config_black_clamp(struct ccdc_black_clamp *bclamp)
+{
 	u32 val;
 
-	अगर (!bclamp->enable) अणु
+	if (!bclamp->enable) {
 		/* configure DCSub */
 		val = (bclamp->dc_sub) & CCDC_BLK_DC_SUB_MASK;
 		regw(val, CCDC_DCSUB);
 		dev_dbg(ccdc_cfg.dev, "\nWriting 0x%x to DCSUB...\n", val);
 		regw(CCDC_CLAMP_DEFAULT_VAL, CCDC_CLAMP);
 		dev_dbg(ccdc_cfg.dev, "\nWriting 0x0000 to CLAMP...\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 	/*
 	 * Configure gain,  Start pixel, No of line to be avg,
 	 * No of pixel/line to be avg, & Enable the Black clamping
@@ -350,10 +349,10 @@ MODULE_AUTHOR("Texas Instruments");
 	/* If Black clamping is enable then make dcsub 0 */
 	regw(CCDC_DCSUB_DEFAULT_VAL, CCDC_DCSUB);
 	dev_dbg(ccdc_cfg.dev, "\nWriting 0x00000000 to DCSUB...\n");
-पूर्ण
+}
 
-अटल व्योम ccdc_config_black_compense(काष्ठा ccdc_black_compensation *bcomp)
-अणु
+static void ccdc_config_black_compense(struct ccdc_black_compensation *bcomp)
+{
 	u32 val;
 
 	val = ((bcomp->b & CCDC_BLK_COMP_MASK) |
@@ -364,34 +363,34 @@ MODULE_AUTHOR("Texas Instruments");
 	      ((bcomp->r & CCDC_BLK_COMP_MASK) <<
 	       CCDC_BLK_COMP_R_COMP_SHIFT));
 	regw(val, CCDC_BLKCMP);
-पूर्ण
+}
 
 /*
  * ccdc_config_raw()
- * This function will configure CCDC क्रम Raw capture mode
+ * This function will configure CCDC for Raw capture mode
  */
-अटल व्योम ccdc_config_raw(व्योम)
-अणु
-	काष्ठा ccdc_params_raw *params = &ccdc_cfg.bayer;
-	काष्ठा ccdc_config_params_raw *config_params =
+static void ccdc_config_raw(void)
+{
+	struct ccdc_params_raw *params = &ccdc_cfg.bayer;
+	struct ccdc_config_params_raw *config_params =
 				&ccdc_cfg.bayer.config_params;
-	अचिन्हित पूर्णांक syn_mode = 0;
-	अचिन्हित पूर्णांक val;
+	unsigned int syn_mode = 0;
+	unsigned int val;
 
 	dev_dbg(ccdc_cfg.dev, "\nStarting ccdc_config_raw...");
 
 	/*      Reset CCDC */
-	ccdc_restore_शेषs();
+	ccdc_restore_defaults();
 
-	/* Disable latching function रेजिस्टरs on VSYNC  */
+	/* Disable latching function registers on VSYNC  */
 	regw(CCDC_LATCH_ON_VSYNC_DISABLE, CCDC_CCDCFG);
 
 	/*
 	 * Configure the vertical sync polarity(SYN_MODE.VDPOL),
 	 * horizontal sync polarity (SYN_MODE.HDPOL), frame id polarity
-	 * (SYN_MODE.FLDPOL), frame क्रमmat(progressive or पूर्णांकerlace),
-	 * data size(SYNMODE.DATSIZ), &pixel क्रमmat (Input mode), output
-	 * SDRAM, enable पूर्णांकernal timing generator
+	 * (SYN_MODE.FLDPOL), frame format(progressive or interlace),
+	 * data size(SYNMODE.DATSIZ), &pixel format (Input mode), output
+	 * SDRAM, enable internal timing generator
 	 */
 	syn_mode =
 		(((params->vd_pol & CCDC_VD_POL_MASK) << CCDC_VD_POL_SHIFT) |
@@ -403,15 +402,15 @@ MODULE_AUTHOR("Texas Instruments");
 		((params->pix_fmt & CCDC_PIX_FMT_MASK) << CCDC_PIX_FMT_SHIFT) |
 		CCDC_WEN_ENABLE | CCDC_VDHDEN_ENABLE);
 
-	/* Enable and configure aLaw रेजिस्टर अगर needed */
-	अगर (config_params->alaw.enable) अणु
+	/* Enable and configure aLaw register if needed */
+	if (config_params->alaw.enable) {
 		val = ((config_params->alaw.gamma_wd &
 		      CCDC_ALAW_GAMMA_WD_MASK) | CCDC_ALAW_ENABLE);
 		regw(val, CCDC_ALAW);
 		dev_dbg(ccdc_cfg.dev, "\nWriting 0x%x to ALAW...\n", val);
-	पूर्ण
+	}
 
-	/* Configure video winकरोw */
+	/* Configure video window */
 	ccdc_setwin(&params->win, params->frm_fmt, CCDC_PPC_RAW);
 
 	/* Configure Black Clamp */
@@ -421,17 +420,17 @@ MODULE_AUTHOR("Texas Instruments");
 	ccdc_config_black_compense(&config_params->blk_comp);
 
 	/* If data size is 8 bit then pack the data */
-	अगर ((config_params->data_sz == CCDC_DATA_8BITS) ||
+	if ((config_params->data_sz == CCDC_DATA_8BITS) ||
 	     config_params->alaw.enable)
 		syn_mode |= CCDC_DATA_PACK_ENABLE;
 
 	/* disable video port */
 	val = CCDC_DISABLE_VIDEO_PORT;
 
-	अगर (config_params->data_sz == CCDC_DATA_8BITS)
+	if (config_params->data_sz == CCDC_DATA_8BITS)
 		val |= (CCDC_DATA_10BITS & CCDC_FMTCFG_VPIN_MASK)
 		    << CCDC_FMTCFG_VPIN_SHIFT;
-	अन्यथा
+	else
 		val |= (config_params->data_sz & CCDC_FMTCFG_VPIN_MASK)
 		    << CCDC_FMTCFG_VPIN_SHIFT;
 	/* Write value in FMTCFG */
@@ -443,7 +442,7 @@ MODULE_AUTHOR("Texas Instruments");
 
 	dev_dbg(ccdc_cfg.dev, "\nWriting 0xBB11BB11 to COLPTN...\n");
 	/*
-	 * Configure Data क्रमmatter(Video port) pixel selection
+	 * Configure Data formatter(Video port) pixel selection
 	 * (FMT_HORZ, FMT_VERT)
 	 */
 	val = ((params->win.left & CCDC_FMT_HORZ_FMTSPH_MASK) <<
@@ -454,9 +453,9 @@ MODULE_AUTHOR("Texas Instruments");
 	dev_dbg(ccdc_cfg.dev, "\nWriting 0x%x to FMT_HORZ...\n", val);
 	val = (params->win.top & CCDC_FMT_VERT_FMTSLV_MASK)
 	    << CCDC_FMT_VERT_FMTSLV_SHIFT;
-	अगर (params->frm_fmt == CCDC_FRMFMT_PROGRESSIVE)
+	if (params->frm_fmt == CCDC_FRMFMT_PROGRESSIVE)
 		val |= (params->win.height) & CCDC_FMT_VERT_FMTLNV_MASK;
-	अन्यथा
+	else
 		val |= (params->win.height >> 1) & CCDC_FMT_VERT_FMTLNV_MASK;
 
 	dev_dbg(ccdc_cfg.dev, "\nparams->win.height  0x%x ...\n",
@@ -468,45 +467,45 @@ MODULE_AUTHOR("Texas Instruments");
 	dev_dbg(ccdc_cfg.dev, "\nbelow regw(val, FMT_VERT)...");
 
 	/*
-	 * Configure Horizontal offset रेजिस्टर. If pack 8 is enabled then
+	 * Configure Horizontal offset register. If pack 8 is enabled then
 	 * 1 pixel will take 1 byte
 	 */
-	अगर ((config_params->data_sz == CCDC_DATA_8BITS) ||
+	if ((config_params->data_sz == CCDC_DATA_8BITS) ||
 	    config_params->alaw.enable)
 		regw((params->win.width + CCDC_32BYTE_ALIGN_VAL) &
 		    CCDC_HSIZE_OFF_MASK, CCDC_HSIZE_OFF);
-	अन्यथा
-		/* अन्यथा one pixel will take 2 byte */
+	else
+		/* else one pixel will take 2 byte */
 		regw(((params->win.width * CCDC_TWO_BYTES_PER_PIXEL) +
 		    CCDC_32BYTE_ALIGN_VAL) & CCDC_HSIZE_OFF_MASK,
 		    CCDC_HSIZE_OFF);
 
-	/* Set value क्रम SDOFST */
-	अगर (params->frm_fmt == CCDC_FRMFMT_INTERLACED) अणु
-		अगर (params->image_invert_enable) अणु
-			/* For पूर्णांकelace inverse mode */
+	/* Set value for SDOFST */
+	if (params->frm_fmt == CCDC_FRMFMT_INTERLACED) {
+		if (params->image_invert_enable) {
+			/* For intelace inverse mode */
 			regw(CCDC_INTERLACED_IMAGE_INVERT, CCDC_SDOFST);
 			dev_dbg(ccdc_cfg.dev, "\nWriting 0x4B6D to SDOFST..\n");
-		पूर्ण
+		}
 
-		अन्यथा अणु
-			/* For पूर्णांकelace non inverse mode */
+		else {
+			/* For intelace non inverse mode */
 			regw(CCDC_INTERLACED_NO_IMAGE_INVERT, CCDC_SDOFST);
 			dev_dbg(ccdc_cfg.dev, "\nWriting 0x0249 to SDOFST..\n");
-		पूर्ण
-	पूर्ण अन्यथा अगर (params->frm_fmt == CCDC_FRMFMT_PROGRESSIVE) अणु
+		}
+	} else if (params->frm_fmt == CCDC_FRMFMT_PROGRESSIVE) {
 		regw(CCDC_PROGRESSIVE_NO_IMAGE_INVERT, CCDC_SDOFST);
 		dev_dbg(ccdc_cfg.dev, "\nWriting 0x0000 to SDOFST...\n");
-	पूर्ण
+	}
 
 	/*
 	 * Configure video port pixel selection (VPOUT)
 	 * Here -1 is to make the height value less than FMT_VERT.FMTLNV
 	 */
-	अगर (params->frm_fmt == CCDC_FRMFMT_PROGRESSIVE)
+	if (params->frm_fmt == CCDC_FRMFMT_PROGRESSIVE)
 		val = (((params->win.height - 1) & CCDC_VP_OUT_VERT_NUM_MASK))
 		    << CCDC_VP_OUT_VERT_NUM_SHIFT;
-	अन्यथा
+	else
 		val =
 		    ((((params->win.height >> CCDC_INTERLACED_HEIGHT_SHIFT) -
 		     1) & CCDC_VP_OUT_VERT_NUM_MASK)) <<
@@ -523,172 +522,172 @@ MODULE_AUTHOR("Texas Instruments");
 
 	ccdc_sbl_reset();
 	dev_dbg(ccdc_cfg.dev, "\nend of ccdc_config_raw...");
-	ccdc_पढ़ोregs();
-पूर्ण
+	ccdc_readregs();
+}
 
-अटल पूर्णांक ccdc_configure(व्योम)
-अणु
-	अगर (ccdc_cfg.अगर_type == VPFE_RAW_BAYER)
+static int ccdc_configure(void)
+{
+	if (ccdc_cfg.if_type == VPFE_RAW_BAYER)
 		ccdc_config_raw();
-	अन्यथा
+	else
 		ccdc_config_ycbcr();
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ccdc_set_buftype(क्रमागत ccdc_buftype buf_type)
-अणु
-	अगर (ccdc_cfg.अगर_type == VPFE_RAW_BAYER)
+static int ccdc_set_buftype(enum ccdc_buftype buf_type)
+{
+	if (ccdc_cfg.if_type == VPFE_RAW_BAYER)
 		ccdc_cfg.bayer.buf_type = buf_type;
-	अन्यथा
+	else
 		ccdc_cfg.ycbcr.buf_type = buf_type;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल क्रमागत ccdc_buftype ccdc_get_buftype(व्योम)
-अणु
-	अगर (ccdc_cfg.अगर_type == VPFE_RAW_BAYER)
-		वापस ccdc_cfg.bayer.buf_type;
-	वापस ccdc_cfg.ycbcr.buf_type;
-पूर्ण
+static enum ccdc_buftype ccdc_get_buftype(void)
+{
+	if (ccdc_cfg.if_type == VPFE_RAW_BAYER)
+		return ccdc_cfg.bayer.buf_type;
+	return ccdc_cfg.ycbcr.buf_type;
+}
 
-अटल पूर्णांक ccdc_क्रमागत_pix(u32 *pix, पूर्णांक i)
-अणु
-	पूर्णांक ret = -EINVAL;
-	अगर (ccdc_cfg.अगर_type == VPFE_RAW_BAYER) अणु
-		अगर (i < ARRAY_SIZE(ccdc_raw_bayer_pix_क्रमmats)) अणु
-			*pix = ccdc_raw_bayer_pix_क्रमmats[i];
+static int ccdc_enum_pix(u32 *pix, int i)
+{
+	int ret = -EINVAL;
+	if (ccdc_cfg.if_type == VPFE_RAW_BAYER) {
+		if (i < ARRAY_SIZE(ccdc_raw_bayer_pix_formats)) {
+			*pix = ccdc_raw_bayer_pix_formats[i];
 			ret = 0;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		अगर (i < ARRAY_SIZE(ccdc_raw_yuv_pix_क्रमmats)) अणु
-			*pix = ccdc_raw_yuv_pix_क्रमmats[i];
+		}
+	} else {
+		if (i < ARRAY_SIZE(ccdc_raw_yuv_pix_formats)) {
+			*pix = ccdc_raw_yuv_pix_formats[i];
 			ret = 0;
-		पूर्ण
-	पूर्ण
-	वापस ret;
-पूर्ण
+		}
+	}
+	return ret;
+}
 
-अटल पूर्णांक ccdc_set_pixel_क्रमmat(u32 pixfmt)
-अणु
-	अगर (ccdc_cfg.अगर_type == VPFE_RAW_BAYER) अणु
+static int ccdc_set_pixel_format(u32 pixfmt)
+{
+	if (ccdc_cfg.if_type == VPFE_RAW_BAYER) {
 		ccdc_cfg.bayer.pix_fmt = CCDC_PIXFMT_RAW;
-		अगर (pixfmt == V4L2_PIX_FMT_SBGGR8)
+		if (pixfmt == V4L2_PIX_FMT_SBGGR8)
 			ccdc_cfg.bayer.config_params.alaw.enable = 1;
-		अन्यथा अगर (pixfmt != V4L2_PIX_FMT_SBGGR16)
-			वापस -EINVAL;
-	पूर्ण अन्यथा अणु
-		अगर (pixfmt == V4L2_PIX_FMT_YUYV)
+		else if (pixfmt != V4L2_PIX_FMT_SBGGR16)
+			return -EINVAL;
+	} else {
+		if (pixfmt == V4L2_PIX_FMT_YUYV)
 			ccdc_cfg.ycbcr.pix_order = CCDC_PIXORDER_YCBYCR;
-		अन्यथा अगर (pixfmt == V4L2_PIX_FMT_UYVY)
+		else if (pixfmt == V4L2_PIX_FMT_UYVY)
 			ccdc_cfg.ycbcr.pix_order = CCDC_PIXORDER_CBYCRY;
-		अन्यथा
-			वापस -EINVAL;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		else
+			return -EINVAL;
+	}
+	return 0;
+}
 
-अटल u32 ccdc_get_pixel_क्रमmat(व्योम)
-अणु
-	काष्ठा ccdc_a_law *alaw = &ccdc_cfg.bayer.config_params.alaw;
+static u32 ccdc_get_pixel_format(void)
+{
+	struct ccdc_a_law *alaw = &ccdc_cfg.bayer.config_params.alaw;
 	u32 pixfmt;
 
-	अगर (ccdc_cfg.अगर_type == VPFE_RAW_BAYER)
-		अगर (alaw->enable)
+	if (ccdc_cfg.if_type == VPFE_RAW_BAYER)
+		if (alaw->enable)
 			pixfmt = V4L2_PIX_FMT_SBGGR8;
-		अन्यथा
+		else
 			pixfmt = V4L2_PIX_FMT_SBGGR16;
-	अन्यथा अणु
-		अगर (ccdc_cfg.ycbcr.pix_order == CCDC_PIXORDER_YCBYCR)
+	else {
+		if (ccdc_cfg.ycbcr.pix_order == CCDC_PIXORDER_YCBYCR)
 			pixfmt = V4L2_PIX_FMT_YUYV;
-		अन्यथा
+		else
 			pixfmt = V4L2_PIX_FMT_UYVY;
-	पूर्ण
-	वापस pixfmt;
-पूर्ण
+	}
+	return pixfmt;
+}
 
-अटल पूर्णांक ccdc_set_image_winकरोw(काष्ठा v4l2_rect *win)
-अणु
-	अगर (ccdc_cfg.अगर_type == VPFE_RAW_BAYER)
+static int ccdc_set_image_window(struct v4l2_rect *win)
+{
+	if (ccdc_cfg.if_type == VPFE_RAW_BAYER)
 		ccdc_cfg.bayer.win = *win;
-	अन्यथा
+	else
 		ccdc_cfg.ycbcr.win = *win;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ccdc_get_image_winकरोw(काष्ठा v4l2_rect *win)
-अणु
-	अगर (ccdc_cfg.अगर_type == VPFE_RAW_BAYER)
+static void ccdc_get_image_window(struct v4l2_rect *win)
+{
+	if (ccdc_cfg.if_type == VPFE_RAW_BAYER)
 		*win = ccdc_cfg.bayer.win;
-	अन्यथा
+	else
 		*win = ccdc_cfg.ycbcr.win;
-पूर्ण
+}
 
-अटल अचिन्हित पूर्णांक ccdc_get_line_length(व्योम)
-अणु
-	काष्ठा ccdc_config_params_raw *config_params =
+static unsigned int ccdc_get_line_length(void)
+{
+	struct ccdc_config_params_raw *config_params =
 				&ccdc_cfg.bayer.config_params;
-	अचिन्हित पूर्णांक len;
+	unsigned int len;
 
-	अगर (ccdc_cfg.अगर_type == VPFE_RAW_BAYER) अणु
-		अगर ((config_params->alaw.enable) ||
+	if (ccdc_cfg.if_type == VPFE_RAW_BAYER) {
+		if ((config_params->alaw.enable) ||
 		    (config_params->data_sz == CCDC_DATA_8BITS))
 			len = ccdc_cfg.bayer.win.width;
-		अन्यथा
+		else
 			len = ccdc_cfg.bayer.win.width * 2;
-	पूर्ण अन्यथा
+	} else
 		len = ccdc_cfg.ycbcr.win.width * 2;
-	वापस ALIGN(len, 32);
-पूर्ण
+	return ALIGN(len, 32);
+}
 
-अटल पूर्णांक ccdc_set_frame_क्रमmat(क्रमागत ccdc_frmfmt frm_fmt)
-अणु
-	अगर (ccdc_cfg.अगर_type == VPFE_RAW_BAYER)
+static int ccdc_set_frame_format(enum ccdc_frmfmt frm_fmt)
+{
+	if (ccdc_cfg.if_type == VPFE_RAW_BAYER)
 		ccdc_cfg.bayer.frm_fmt = frm_fmt;
-	अन्यथा
+	else
 		ccdc_cfg.ycbcr.frm_fmt = frm_fmt;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल क्रमागत ccdc_frmfmt ccdc_get_frame_क्रमmat(व्योम)
-अणु
-	अगर (ccdc_cfg.अगर_type == VPFE_RAW_BAYER)
-		वापस ccdc_cfg.bayer.frm_fmt;
-	अन्यथा
-		वापस ccdc_cfg.ycbcr.frm_fmt;
-पूर्ण
+static enum ccdc_frmfmt ccdc_get_frame_format(void)
+{
+	if (ccdc_cfg.if_type == VPFE_RAW_BAYER)
+		return ccdc_cfg.bayer.frm_fmt;
+	else
+		return ccdc_cfg.ycbcr.frm_fmt;
+}
 
-अटल पूर्णांक ccdc_getfid(व्योम)
-अणु
-	वापस (regr(CCDC_SYN_MODE) >> 15) & 1;
-पूर्ण
+static int ccdc_getfid(void)
+{
+	return (regr(CCDC_SYN_MODE) >> 15) & 1;
+}
 
 /* misc operations */
-अटल अंतरभूत व्योम ccdc_setfbaddr(अचिन्हित दीर्घ addr)
-अणु
+static inline void ccdc_setfbaddr(unsigned long addr)
+{
 	regw(addr & 0xffffffe0, CCDC_SDR_ADDR);
-पूर्ण
+}
 
-अटल पूर्णांक ccdc_set_hw_अगर_params(काष्ठा vpfe_hw_अगर_param *params)
-अणु
-	ccdc_cfg.अगर_type = params->अगर_type;
+static int ccdc_set_hw_if_params(struct vpfe_hw_if_param *params)
+{
+	ccdc_cfg.if_type = params->if_type;
 
-	चयन (params->अगर_type) अणु
-	हाल VPFE_BT656:
-	हाल VPFE_YCBCR_SYNC_16:
-	हाल VPFE_YCBCR_SYNC_8:
-	हाल VPFE_BT656_10BIT:
+	switch (params->if_type) {
+	case VPFE_BT656:
+	case VPFE_YCBCR_SYNC_16:
+	case VPFE_YCBCR_SYNC_8:
+	case VPFE_BT656_10BIT:
 		ccdc_cfg.ycbcr.vd_pol = params->vdpol;
 		ccdc_cfg.ycbcr.hd_pol = params->hdpol;
-		अवरोध;
-	शेष:
-		/* TODO add support क्रम raw bayer here */
-		वापस -EINVAL;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		break;
+	default:
+		/* TODO add support for raw bayer here */
+		return -EINVAL;
+	}
+	return 0;
+}
 
-अटल व्योम ccdc_save_context(व्योम)
-अणु
+static void ccdc_save_context(void)
+{
 	ccdc_ctx[CCDC_PCR >> 2] = regr(CCDC_PCR);
 	ccdc_ctx[CCDC_SYN_MODE >> 2] = regr(CCDC_SYN_MODE);
 	ccdc_ctx[CCDC_HD_VD_WID >> 2] = regr(CCDC_HD_VD_WID);
@@ -726,10 +725,10 @@ MODULE_AUTHOR("Texas Instruments");
 	ccdc_ctx[CCDC_PRGODD_0 >> 2] = regr(CCDC_PRGODD_0);
 	ccdc_ctx[CCDC_PRGODD_1 >> 2] = regr(CCDC_PRGODD_1);
 	ccdc_ctx[CCDC_VP_OUT >> 2] = regr(CCDC_VP_OUT);
-पूर्ण
+}
 
-अटल व्योम ccdc_restore_context(व्योम)
-अणु
+static void ccdc_restore_context(void)
+{
 	regw(ccdc_ctx[CCDC_SYN_MODE >> 2], CCDC_SYN_MODE);
 	regw(ccdc_ctx[CCDC_HD_VD_WID >> 2], CCDC_HD_VD_WID);
 	regw(ccdc_ctx[CCDC_PIX_LINES >> 2], CCDC_PIX_LINES);
@@ -767,115 +766,115 @@ MODULE_AUTHOR("Texas Instruments");
 	regw(ccdc_ctx[CCDC_PRGODD_1 >> 2], CCDC_PRGODD_1);
 	regw(ccdc_ctx[CCDC_VP_OUT >> 2], CCDC_VP_OUT);
 	regw(ccdc_ctx[CCDC_PCR >> 2], CCDC_PCR);
-पूर्ण
-अटल स्थिर काष्ठा ccdc_hw_device ccdc_hw_dev = अणु
+}
+static const struct ccdc_hw_device ccdc_hw_dev = {
 	.name = "DM6446 CCDC",
 	.owner = THIS_MODULE,
-	.hw_ops = अणु
-		.खोलो = ccdc_खोलो,
-		.बंद = ccdc_बंद,
+	.hw_ops = {
+		.open = ccdc_open,
+		.close = ccdc_close,
 		.reset = ccdc_sbl_reset,
 		.enable = ccdc_enable,
-		.set_hw_अगर_params = ccdc_set_hw_अगर_params,
+		.set_hw_if_params = ccdc_set_hw_if_params,
 		.configure = ccdc_configure,
 		.set_buftype = ccdc_set_buftype,
 		.get_buftype = ccdc_get_buftype,
-		.क्रमागत_pix = ccdc_क्रमागत_pix,
-		.set_pixel_क्रमmat = ccdc_set_pixel_क्रमmat,
-		.get_pixel_क्रमmat = ccdc_get_pixel_क्रमmat,
-		.set_frame_क्रमmat = ccdc_set_frame_क्रमmat,
-		.get_frame_क्रमmat = ccdc_get_frame_क्रमmat,
-		.set_image_winकरोw = ccdc_set_image_winकरोw,
-		.get_image_winकरोw = ccdc_get_image_winकरोw,
+		.enum_pix = ccdc_enum_pix,
+		.set_pixel_format = ccdc_set_pixel_format,
+		.get_pixel_format = ccdc_get_pixel_format,
+		.set_frame_format = ccdc_set_frame_format,
+		.get_frame_format = ccdc_get_frame_format,
+		.set_image_window = ccdc_set_image_window,
+		.get_image_window = ccdc_get_image_window,
 		.get_line_length = ccdc_get_line_length,
 		.setfbaddr = ccdc_setfbaddr,
 		.getfid = ccdc_getfid,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक dm644x_ccdc_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा resource	*res;
-	पूर्णांक status = 0;
+static int dm644x_ccdc_probe(struct platform_device *pdev)
+{
+	struct resource	*res;
+	int status = 0;
 
 	/*
-	 * first try to रेजिस्टर with vpfe. If not correct platक्रमm, then we
-	 * करोn't have to iomap
+	 * first try to register with vpfe. If not correct platform, then we
+	 * don't have to iomap
 	 */
-	status = vpfe_रेजिस्टर_ccdc_device(&ccdc_hw_dev);
-	अगर (status < 0)
-		वापस status;
+	status = vpfe_register_ccdc_device(&ccdc_hw_dev);
+	if (status < 0)
+		return status;
 
-	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
-	अगर (!res) अणु
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	if (!res) {
 		status = -ENODEV;
-		जाओ fail_nores;
-	पूर्ण
+		goto fail_nores;
+	}
 
 	res = request_mem_region(res->start, resource_size(res), res->name);
-	अगर (!res) अणु
+	if (!res) {
 		status = -EBUSY;
-		जाओ fail_nores;
-	पूर्ण
+		goto fail_nores;
+	}
 
 	ccdc_cfg.base_addr = ioremap(res->start, resource_size(res));
-	अगर (!ccdc_cfg.base_addr) अणु
+	if (!ccdc_cfg.base_addr) {
 		status = -ENOMEM;
-		जाओ fail_nomem;
-	पूर्ण
+		goto fail_nomem;
+	}
 
 	ccdc_cfg.dev = &pdev->dev;
-	prपूर्णांकk(KERN_NOTICE "%s is registered with vpfe.\n", ccdc_hw_dev.name);
-	वापस 0;
+	printk(KERN_NOTICE "%s is registered with vpfe.\n", ccdc_hw_dev.name);
+	return 0;
 fail_nomem:
 	release_mem_region(res->start, resource_size(res));
 fail_nores:
-	vpfe_unरेजिस्टर_ccdc_device(&ccdc_hw_dev);
-	वापस status;
-पूर्ण
+	vpfe_unregister_ccdc_device(&ccdc_hw_dev);
+	return status;
+}
 
-अटल पूर्णांक dm644x_ccdc_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा resource	*res;
+static int dm644x_ccdc_remove(struct platform_device *pdev)
+{
+	struct resource	*res;
 
 	iounmap(ccdc_cfg.base_addr);
-	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
-	अगर (res)
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	if (res)
 		release_mem_region(res->start, resource_size(res));
-	vpfe_unरेजिस्टर_ccdc_device(&ccdc_hw_dev);
-	वापस 0;
-पूर्ण
+	vpfe_unregister_ccdc_device(&ccdc_hw_dev);
+	return 0;
+}
 
-अटल पूर्णांक dm644x_ccdc_suspend(काष्ठा device *dev)
-अणु
+static int dm644x_ccdc_suspend(struct device *dev)
+{
 	/* Save CCDC context */
 	ccdc_save_context();
 	/* Disable CCDC */
 	ccdc_enable(0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dm644x_ccdc_resume(काष्ठा device *dev)
-अणु
+static int dm644x_ccdc_resume(struct device *dev)
+{
 	/* Restore CCDC context */
 	ccdc_restore_context();
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा dev_pm_ops dm644x_ccdc_pm_ops = अणु
+static const struct dev_pm_ops dm644x_ccdc_pm_ops = {
 	.suspend = dm644x_ccdc_suspend,
 	.resume = dm644x_ccdc_resume,
-पूर्ण;
+};
 
-अटल काष्ठा platक्रमm_driver dm644x_ccdc_driver = अणु
-	.driver = अणु
+static struct platform_driver dm644x_ccdc_driver = {
+	.driver = {
 		.name	= "dm644x_ccdc",
 		.pm = &dm644x_ccdc_pm_ops,
-	पूर्ण,
-	.हटाओ = dm644x_ccdc_हटाओ,
+	},
+	.remove = dm644x_ccdc_remove,
 	.probe = dm644x_ccdc_probe,
-पूर्ण;
+};
 
-module_platक्रमm_driver(dm644x_ccdc_driver);
+module_platform_driver(dm644x_ccdc_driver);

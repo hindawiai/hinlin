@@ -1,25 +1,24 @@
-<शैली गुरु>
 /*
- * Inline routines shareable across OS platक्रमms.
+ * Inline routines shareable across OS platforms.
  *
  * Copyright (c) 1994-2001 Justin T. Gibbs.
  * Copyright (c) 2000-2003 Adaptec Inc.
  * All rights reserved.
  *
- * Redistribution and use in source and binary क्रमms, with or without
- * modअगरication, are permitted provided that the following conditions
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions, and the following disclaimer,
- *    without modअगरication.
- * 2. Redistributions in binary क्रमm must reproduce at minimum a disclaimer
+ *    without modification.
+ * 2. Redistributions in binary form must reproduce at minimum a disclaimer
  *    substantially similar to the "NO WARRANTY" disclaimer below
  *    ("Disclaimer") and any redistribution must be conditioned upon
- *    including a substantially similar Disclaimer requirement क्रम further
+ *    including a substantially similar Disclaimer requirement for further
  *    binary redistribution.
  * 3. Neither the names of the above-listed copyright holders nor the names
- *    of any contributors may be used to enकरोrse or promote products derived
- *    from this software without specअगरic prior written permission.
+ *    of any contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
  *
  * Alternatively, this software may be distributed under the terms of the
  * GNU General Public License ("GPL") version 2 as published by the Free
@@ -38,136 +37,136 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: //depot/aic7xxx/aic7xxx/aic79xx_अंतरभूत.h#59 $
+ * $Id: //depot/aic7xxx/aic7xxx/aic79xx_inline.h#59 $
  *
  * $FreeBSD$
  */
 
-#अगर_अघोषित _AIC79XX_INLINE_H_
-#घोषणा _AIC79XX_INLINE_H_
+#ifndef _AIC79XX_INLINE_H_
+#define _AIC79XX_INLINE_H_
 
 /******************************** Debugging ***********************************/
-अटल अंतरभूत अक्षर *ahd_name(काष्ठा ahd_softc *ahd);
+static inline char *ahd_name(struct ahd_softc *ahd);
 
-अटल अंतरभूत अक्षर *ahd_name(काष्ठा ahd_softc *ahd)
-अणु
-	वापस (ahd->name);
-पूर्ण
+static inline char *ahd_name(struct ahd_softc *ahd)
+{
+	return (ahd->name);
+}
 
 /************************ Sequencer Execution Control *************************/
-अटल अंतरभूत व्योम ahd_known_modes(काष्ठा ahd_softc *ahd,
+static inline void ahd_known_modes(struct ahd_softc *ahd,
 				     ahd_mode src, ahd_mode dst);
-अटल अंतरभूत ahd_mode_state ahd_build_mode_state(काष्ठा ahd_softc *ahd,
+static inline ahd_mode_state ahd_build_mode_state(struct ahd_softc *ahd,
 						    ahd_mode src,
 						    ahd_mode dst);
-अटल अंतरभूत व्योम ahd_extract_mode_state(काष्ठा ahd_softc *ahd,
+static inline void ahd_extract_mode_state(struct ahd_softc *ahd,
 					    ahd_mode_state state,
 					    ahd_mode *src, ahd_mode *dst);
 
-व्योम ahd_set_modes(काष्ठा ahd_softc *ahd, ahd_mode src,
+void ahd_set_modes(struct ahd_softc *ahd, ahd_mode src,
 		   ahd_mode dst);
-ahd_mode_state ahd_save_modes(काष्ठा ahd_softc *ahd);
-व्योम ahd_restore_modes(काष्ठा ahd_softc *ahd,
+ahd_mode_state ahd_save_modes(struct ahd_softc *ahd);
+void ahd_restore_modes(struct ahd_softc *ahd,
 		       ahd_mode_state state);
-पूर्णांक  ahd_is_छोड़ोd(काष्ठा ahd_softc *ahd);
-व्योम ahd_छोड़ो(काष्ठा ahd_softc *ahd);
-व्योम ahd_unछोड़ो(काष्ठा ahd_softc *ahd);
+int  ahd_is_paused(struct ahd_softc *ahd);
+void ahd_pause(struct ahd_softc *ahd);
+void ahd_unpause(struct ahd_softc *ahd);
 
-अटल अंतरभूत व्योम
-ahd_known_modes(काष्ठा ahd_softc *ahd, ahd_mode src, ahd_mode dst)
-अणु
+static inline void
+ahd_known_modes(struct ahd_softc *ahd, ahd_mode src, ahd_mode dst)
+{
 	ahd->src_mode = src;
 	ahd->dst_mode = dst;
 	ahd->saved_src_mode = src;
 	ahd->saved_dst_mode = dst;
-पूर्ण
+}
 
-अटल अंतरभूत ahd_mode_state
-ahd_build_mode_state(काष्ठा ahd_softc *ahd, ahd_mode src, ahd_mode dst)
-अणु
-	वापस ((src << SRC_MODE_SHIFT) | (dst << DST_MODE_SHIFT));
-पूर्ण
+static inline ahd_mode_state
+ahd_build_mode_state(struct ahd_softc *ahd, ahd_mode src, ahd_mode dst)
+{
+	return ((src << SRC_MODE_SHIFT) | (dst << DST_MODE_SHIFT));
+}
 
-अटल अंतरभूत व्योम
-ahd_extract_mode_state(काष्ठा ahd_softc *ahd, ahd_mode_state state,
+static inline void
+ahd_extract_mode_state(struct ahd_softc *ahd, ahd_mode_state state,
 		       ahd_mode *src, ahd_mode *dst)
-अणु
+{
 	*src = (state & SRC_MODE) >> SRC_MODE_SHIFT;
 	*dst = (state & DST_MODE) >> DST_MODE_SHIFT;
-पूर्ण
+}
 
 /*********************** Scatter Gather List Handling *************************/
-व्योम	*ahd_sg_setup(काष्ठा ahd_softc *ahd, काष्ठा scb *scb,
-		      व्योम *sgptr, dma_addr_t addr,
-		      bus_माप_प्रकार len, पूर्णांक last);
+void	*ahd_sg_setup(struct ahd_softc *ahd, struct scb *scb,
+		      void *sgptr, dma_addr_t addr,
+		      bus_size_t len, int last);
 
 /************************** Memory mapping routines ***************************/
-अटल अंतरभूत माप_प्रकार	ahd_sg_size(काष्ठा ahd_softc *ahd);
+static inline size_t	ahd_sg_size(struct ahd_softc *ahd);
 
-व्योम	ahd_sync_sglist(काष्ठा ahd_softc *ahd,
-			काष्ठा scb *scb, पूर्णांक op);
+void	ahd_sync_sglist(struct ahd_softc *ahd,
+			struct scb *scb, int op);
 
-अटल अंतरभूत माप_प्रकार ahd_sg_size(काष्ठा ahd_softc *ahd)
-अणु
-	अगर ((ahd->flags & AHD_64BIT_ADDRESSING) != 0)
-		वापस (माप(काष्ठा ahd_dma64_seg));
-	वापस (माप(काष्ठा ahd_dma_seg));
-पूर्ण
+static inline size_t ahd_sg_size(struct ahd_softc *ahd)
+{
+	if ((ahd->flags & AHD_64BIT_ADDRESSING) != 0)
+		return (sizeof(struct ahd_dma64_seg));
+	return (sizeof(struct ahd_dma_seg));
+}
 
 /*********************** Miscellaneous Support Functions ***********************/
-काष्ठा ahd_initiator_tinfo *
-	ahd_fetch_transinfo(काष्ठा ahd_softc *ahd,
-			    अक्षर channel, u_पूर्णांक our_id,
-			    u_पूर्णांक remote_id,
-			    काष्ठा ahd_पंचांगode_tstate **tstate);
-uपूर्णांक16_t
-	ahd_inw(काष्ठा ahd_softc *ahd, u_पूर्णांक port);
-व्योम	ahd_outw(काष्ठा ahd_softc *ahd, u_पूर्णांक port,
-		 u_पूर्णांक value);
-uपूर्णांक32_t
-	ahd_inl(काष्ठा ahd_softc *ahd, u_पूर्णांक port);
-व्योम	ahd_outl(काष्ठा ahd_softc *ahd, u_पूर्णांक port,
-		 uपूर्णांक32_t value);
-uपूर्णांक64_t
-	ahd_inq(काष्ठा ahd_softc *ahd, u_पूर्णांक port);
-व्योम	ahd_outq(काष्ठा ahd_softc *ahd, u_पूर्णांक port,
-		 uपूर्णांक64_t value);
-u_पूर्णांक	ahd_get_scbptr(काष्ठा ahd_softc *ahd);
-व्योम	ahd_set_scbptr(काष्ठा ahd_softc *ahd, u_पूर्णांक scbptr);
-u_पूर्णांक	ahd_inb_scbram(काष्ठा ahd_softc *ahd, u_पूर्णांक offset);
-u_पूर्णांक	ahd_inw_scbram(काष्ठा ahd_softc *ahd, u_पूर्णांक offset);
-काष्ठा scb *
-	ahd_lookup_scb(काष्ठा ahd_softc *ahd, u_पूर्णांक tag);
-व्योम	ahd_queue_scb(काष्ठा ahd_softc *ahd, काष्ठा scb *scb);
+struct ahd_initiator_tinfo *
+	ahd_fetch_transinfo(struct ahd_softc *ahd,
+			    char channel, u_int our_id,
+			    u_int remote_id,
+			    struct ahd_tmode_tstate **tstate);
+uint16_t
+	ahd_inw(struct ahd_softc *ahd, u_int port);
+void	ahd_outw(struct ahd_softc *ahd, u_int port,
+		 u_int value);
+uint32_t
+	ahd_inl(struct ahd_softc *ahd, u_int port);
+void	ahd_outl(struct ahd_softc *ahd, u_int port,
+		 uint32_t value);
+uint64_t
+	ahd_inq(struct ahd_softc *ahd, u_int port);
+void	ahd_outq(struct ahd_softc *ahd, u_int port,
+		 uint64_t value);
+u_int	ahd_get_scbptr(struct ahd_softc *ahd);
+void	ahd_set_scbptr(struct ahd_softc *ahd, u_int scbptr);
+u_int	ahd_inb_scbram(struct ahd_softc *ahd, u_int offset);
+u_int	ahd_inw_scbram(struct ahd_softc *ahd, u_int offset);
+struct scb *
+	ahd_lookup_scb(struct ahd_softc *ahd, u_int tag);
+void	ahd_queue_scb(struct ahd_softc *ahd, struct scb *scb);
 
-अटल अंतरभूत uपूर्णांक8_t *ahd_get_sense_buf(काष्ठा ahd_softc *ahd,
-					  काष्ठा scb *scb);
-अटल अंतरभूत uपूर्णांक32_t ahd_get_sense_bufaddr(काष्ठा ahd_softc *ahd,
-					      काष्ठा scb *scb);
+static inline uint8_t *ahd_get_sense_buf(struct ahd_softc *ahd,
+					  struct scb *scb);
+static inline uint32_t ahd_get_sense_bufaddr(struct ahd_softc *ahd,
+					      struct scb *scb);
 
-#अगर 0 /* unused */
+#if 0 /* unused */
 
-#घोषणा AHD_COPY_COL_IDX(dst, src)				\
-करो अणु								\
+#define AHD_COPY_COL_IDX(dst, src)				\
+do {								\
 	dst->hscb->scsiid = src->hscb->scsiid;			\
 	dst->hscb->lun = src->hscb->lun;			\
-पूर्ण जबतक (0)
+} while (0)
 
-#पूर्ण_अगर
+#endif
 
-अटल अंतरभूत uपूर्णांक8_t *
-ahd_get_sense_buf(काष्ठा ahd_softc *ahd, काष्ठा scb *scb)
-अणु
-	वापस (scb->sense_data);
-पूर्ण
+static inline uint8_t *
+ahd_get_sense_buf(struct ahd_softc *ahd, struct scb *scb)
+{
+	return (scb->sense_data);
+}
 
-अटल अंतरभूत uपूर्णांक32_t
-ahd_get_sense_bufaddr(काष्ठा ahd_softc *ahd, काष्ठा scb *scb)
-अणु
-	वापस (scb->sense_busaddr);
-पूर्ण
+static inline uint32_t
+ahd_get_sense_bufaddr(struct ahd_softc *ahd, struct scb *scb)
+{
+	return (scb->sense_busaddr);
+}
 
 /************************** Interrupt Processing ******************************/
-पूर्णांक	ahd_पूर्णांकr(काष्ठा ahd_softc *ahd);
+int	ahd_intr(struct ahd_softc *ahd);
 
-#पूर्ण_अगर  /* _AIC79XX_INLINE_H_ */
+#endif  /* _AIC79XX_INLINE_H_ */

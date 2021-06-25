@@ -1,122 +1,121 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Netlink event notअगरications क्रम SELinux.
+ * Netlink event notifications for SELinux.
  *
  * Author: James Morris <jmorris@redhat.com>
  *
  * Copyright (C) 2004 Red Hat, Inc., James Morris <jmorris@redhat.com>
  */
-#समावेश <linux/init.h>
-#समावेश <linux/types.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/मानकघोष.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/export.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/selinux_netlink.h>
-#समावेश <net/net_namespace.h>
-#समावेश <net/netlink.h>
+#include <linux/init.h>
+#include <linux/types.h>
+#include <linux/slab.h>
+#include <linux/stddef.h>
+#include <linux/kernel.h>
+#include <linux/export.h>
+#include <linux/skbuff.h>
+#include <linux/selinux_netlink.h>
+#include <net/net_namespace.h>
+#include <net/netlink.h>
 
-#समावेश "security.h"
+#include "security.h"
 
-अटल काष्ठा sock *selnl __ro_after_init;
+static struct sock *selnl __ro_after_init;
 
-अटल पूर्णांक selnl_msglen(पूर्णांक msgtype)
-अणु
-	पूर्णांक ret = 0;
+static int selnl_msglen(int msgtype)
+{
+	int ret = 0;
 
-	चयन (msgtype) अणु
-	हाल SELNL_MSG_SETENFORCE:
-		ret = माप(काष्ठा selnl_msg_setenक्रमce);
-		अवरोध;
+	switch (msgtype) {
+	case SELNL_MSG_SETENFORCE:
+		ret = sizeof(struct selnl_msg_setenforce);
+		break;
 
-	हाल SELNL_MSG_POLICYLOAD:
-		ret = माप(काष्ठा selnl_msg_policyload);
-		अवरोध;
+	case SELNL_MSG_POLICYLOAD:
+		ret = sizeof(struct selnl_msg_policyload);
+		break;
 
-	शेष:
+	default:
 		BUG();
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 
-अटल व्योम selnl_add_payload(काष्ठा nlmsghdr *nlh, पूर्णांक len, पूर्णांक msgtype, व्योम *data)
-अणु
-	चयन (msgtype) अणु
-	हाल SELNL_MSG_SETENFORCE: अणु
-		काष्ठा selnl_msg_setenक्रमce *msg = nlmsg_data(nlh);
+static void selnl_add_payload(struct nlmsghdr *nlh, int len, int msgtype, void *data)
+{
+	switch (msgtype) {
+	case SELNL_MSG_SETENFORCE: {
+		struct selnl_msg_setenforce *msg = nlmsg_data(nlh);
 
-		स_रखो(msg, 0, len);
-		msg->val = *((पूर्णांक *)data);
-		अवरोध;
-	पूर्ण
+		memset(msg, 0, len);
+		msg->val = *((int *)data);
+		break;
+	}
 
-	हाल SELNL_MSG_POLICYLOAD: अणु
-		काष्ठा selnl_msg_policyload *msg = nlmsg_data(nlh);
+	case SELNL_MSG_POLICYLOAD: {
+		struct selnl_msg_policyload *msg = nlmsg_data(nlh);
 
-		स_रखो(msg, 0, len);
+		memset(msg, 0, len);
 		msg->seqno = *((u32 *)data);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	शेष:
+	default:
 		BUG();
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम selnl_notअगरy(पूर्णांक msgtype, व्योम *data)
-अणु
-	पूर्णांक len;
-	sk_buff_data_t पंचांगp;
-	काष्ठा sk_buff *skb;
-	काष्ठा nlmsghdr *nlh;
+static void selnl_notify(int msgtype, void *data)
+{
+	int len;
+	sk_buff_data_t tmp;
+	struct sk_buff *skb;
+	struct nlmsghdr *nlh;
 
 	len = selnl_msglen(msgtype);
 
 	skb = nlmsg_new(len, GFP_USER);
-	अगर (!skb)
-		जाओ oom;
+	if (!skb)
+		goto oom;
 
-	पंचांगp = skb->tail;
+	tmp = skb->tail;
 	nlh = nlmsg_put(skb, 0, 0, msgtype, len, 0);
-	अगर (!nlh)
-		जाओ out_kमुक्त_skb;
+	if (!nlh)
+		goto out_kfree_skb;
 	selnl_add_payload(nlh, len, msgtype, data);
-	nlh->nlmsg_len = skb->tail - पंचांगp;
+	nlh->nlmsg_len = skb->tail - tmp;
 	NETLINK_CB(skb).dst_group = SELNLGRP_AVC;
 	netlink_broadcast(selnl, skb, 0, SELNLGRP_AVC, GFP_USER);
 out:
-	वापस;
+	return;
 
-out_kमुक्त_skb:
-	kमुक्त_skb(skb);
+out_kfree_skb:
+	kfree_skb(skb);
 oom:
 	pr_err("SELinux:  OOM in %s\n", __func__);
-	जाओ out;
-पूर्ण
+	goto out;
+}
 
-व्योम selnl_notअगरy_setenक्रमce(पूर्णांक val)
-अणु
-	selnl_notअगरy(SELNL_MSG_SETENFORCE, &val);
-पूर्ण
+void selnl_notify_setenforce(int val)
+{
+	selnl_notify(SELNL_MSG_SETENFORCE, &val);
+}
 
-व्योम selnl_notअगरy_policyload(u32 seqno)
-अणु
-	selnl_notअगरy(SELNL_MSG_POLICYLOAD, &seqno);
-पूर्ण
+void selnl_notify_policyload(u32 seqno)
+{
+	selnl_notify(SELNL_MSG_POLICYLOAD, &seqno);
+}
 
-अटल पूर्णांक __init selnl_init(व्योम)
-अणु
-	काष्ठा netlink_kernel_cfg cfg = अणु
+static int __init selnl_init(void)
+{
+	struct netlink_kernel_cfg cfg = {
 		.groups	= SELNLGRP_MAX,
 		.flags	= NL_CFG_F_NONROOT_RECV,
-	पूर्ण;
+	};
 
 	selnl = netlink_kernel_create(&init_net, NETLINK_SELINUX, &cfg);
-	अगर (selnl == शून्य)
+	if (selnl == NULL)
 		panic("SELinux:  Cannot create netlink socket.");
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 __initcall(selnl_init);

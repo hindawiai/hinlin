@@ -1,56 +1,55 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: (GPL-2.0-only OR BSD-3-Clause) */
+/* SPDX-License-Identifier: (GPL-2.0-only OR BSD-3-Clause) */
 /* QLogic qed NIC Driver
  * Copyright (c) 2015-2017  QLogic Corporation
  * Copyright (c) 2019-2020 Marvell International Ltd.
  */
 
-#अगर_अघोषित _QED_ETH_IF_H
-#घोषणा _QED_ETH_IF_H
+#ifndef _QED_ETH_IF_H
+#define _QED_ETH_IF_H
 
-#समावेश <linux/list.h>
-#समावेश <linux/अगर_link.h>
-#समावेश <linux/qed/eth_common.h>
-#समावेश <linux/qed/qed_अगर.h>
-#समावेश <linux/qed/qed_iov_अगर.h>
+#include <linux/list.h>
+#include <linux/if_link.h>
+#include <linux/qed/eth_common.h>
+#include <linux/qed/qed_if.h>
+#include <linux/qed/qed_iov_if.h>
 
 /* 64 max queues * (1 rx + 4 tx-cos + 1 xdp) */
-#घोषणा QED_MIN_L2_CONS (2 + NUM_PHYS_TCS_4PORT_K2)
-#घोषणा QED_MAX_L2_CONS (64 * (QED_MIN_L2_CONS))
+#define QED_MIN_L2_CONS (2 + NUM_PHYS_TCS_4PORT_K2)
+#define QED_MAX_L2_CONS (64 * (QED_MIN_L2_CONS))
 
-काष्ठा qed_queue_start_common_params अणु
+struct qed_queue_start_common_params {
 	/* Should always be relative to entity sending this. */
 	u8 vport_id;
 	u16 queue_id;
 
-	/* Relative, but relevant only क्रम PFs */
+	/* Relative, but relevant only for PFs */
 	u8 stats_id;
 
-	काष्ठा qed_sb_info *p_sb;
+	struct qed_sb_info *p_sb;
 	u8 sb_idx;
 
 	u8 tc;
-पूर्ण;
+};
 
-काष्ठा qed_rxq_start_ret_params अणु
-	व्योम __iomem *p_prod;
-	व्योम *p_handle;
-पूर्ण;
+struct qed_rxq_start_ret_params {
+	void __iomem *p_prod;
+	void *p_handle;
+};
 
-काष्ठा qed_txq_start_ret_params अणु
-	व्योम __iomem *p_करोorbell;
-	व्योम *p_handle;
-पूर्ण;
+struct qed_txq_start_ret_params {
+	void __iomem *p_doorbell;
+	void *p_handle;
+};
 
-क्रमागत qed_filter_config_mode अणु
+enum qed_filter_config_mode {
 	QED_FILTER_CONFIG_MODE_DISABLE,
 	QED_FILTER_CONFIG_MODE_5_TUPLE,
 	QED_FILTER_CONFIG_MODE_L4_PORT,
 	QED_FILTER_CONFIG_MODE_IP_DEST,
 	QED_FILTER_CONFIG_MODE_IP_SRC,
-पूर्ण;
+};
 
-काष्ठा qed_ntuple_filter_params अणु
+struct qed_ntuple_filter_params {
 	/* Physically mapped address containing header of buffer to be used
 	 * as filter.
 	 */
@@ -59,24 +58,24 @@
 	/* Length of header in bytes */
 	u16 length;
 
-	/* Relative queue-id to receive classअगरied packet */
-#घोषणा QED_RFS_NTUPLE_QID_RSS ((u16)-1)
+	/* Relative queue-id to receive classified packet */
+#define QED_RFS_NTUPLE_QID_RSS ((u16)-1)
 	u16 qid;
 
-	/* Identअगरier can either be according to vport-id or vfid */
+	/* Identifier can either be according to vport-id or vfid */
 	bool b_is_vf;
 	u8 vport_id;
 	u8 vf_id;
 
-	/* true अगरf this filter is to be added. Else to be हटाओd */
+	/* true iff this filter is to be added. Else to be removed */
 	bool b_is_add;
 
 	/* If flow needs to be dropped */
 	bool b_is_drop;
-पूर्ण;
+};
 
-काष्ठा qed_dev_eth_info अणु
-	काष्ठा qed_dev_info common;
+struct qed_dev_eth_info {
+	struct qed_dev_info common;
 
 	u8	num_queues;
 	u8	num_tc;
@@ -88,98 +87,98 @@
 	/* Legacy VF - this affects the datapath, so qede has to know */
 	bool is_legacy;
 
-	/* Might depend on available resources [in हाल of VF] */
+	/* Might depend on available resources [in case of VF] */
 	bool xdp_supported;
-पूर्ण;
+};
 
-काष्ठा qed_update_vport_rss_params अणु
-	व्योम	*rss_ind_table[128];
+struct qed_update_vport_rss_params {
+	void	*rss_ind_table[128];
 	u32	rss_key[10];
 	u8	rss_caps;
-पूर्ण;
+};
 
-काष्ठा qed_update_vport_params अणु
+struct qed_update_vport_params {
 	u8 vport_id;
 	u8 update_vport_active_flg;
 	u8 vport_active_flg;
-	u8 update_tx_चयनing_flg;
-	u8 tx_चयनing_flg;
+	u8 update_tx_switching_flg;
+	u8 tx_switching_flg;
 	u8 update_accept_any_vlan_flg;
 	u8 accept_any_vlan;
 	u8 update_rss_flg;
-	काष्ठा qed_update_vport_rss_params rss_params;
-पूर्ण;
+	struct qed_update_vport_rss_params rss_params;
+};
 
-काष्ठा qed_start_vport_params अणु
-	bool हटाओ_inner_vlan;
+struct qed_start_vport_params {
+	bool remove_inner_vlan;
 	bool handle_ptp_pkts;
 	bool gro_enable;
 	bool drop_ttl0;
 	u8 vport_id;
 	u16 mtu;
 	bool clear_stats;
-पूर्ण;
+};
 
-क्रमागत qed_filter_rx_mode_type अणु
+enum qed_filter_rx_mode_type {
 	QED_FILTER_RX_MODE_TYPE_REGULAR,
 	QED_FILTER_RX_MODE_TYPE_MULTI_PROMISC,
 	QED_FILTER_RX_MODE_TYPE_PROMISC,
-पूर्ण;
+};
 
-क्रमागत qed_filter_xcast_params_type अणु
+enum qed_filter_xcast_params_type {
 	QED_FILTER_XCAST_TYPE_ADD,
 	QED_FILTER_XCAST_TYPE_DEL,
 	QED_FILTER_XCAST_TYPE_REPLACE,
-पूर्ण;
+};
 
-काष्ठा qed_filter_ucast_params अणु
-	क्रमागत qed_filter_xcast_params_type type;
+struct qed_filter_ucast_params {
+	enum qed_filter_xcast_params_type type;
 	u8 vlan_valid;
 	u16 vlan;
 	u8 mac_valid;
-	अचिन्हित अक्षर mac[ETH_ALEN];
-पूर्ण;
+	unsigned char mac[ETH_ALEN];
+};
 
-काष्ठा qed_filter_mcast_params अणु
-	क्रमागत qed_filter_xcast_params_type type;
+struct qed_filter_mcast_params {
+	enum qed_filter_xcast_params_type type;
 	u8 num;
-	अचिन्हित अक्षर mac[64][ETH_ALEN];
-पूर्ण;
+	unsigned char mac[64][ETH_ALEN];
+};
 
-जोड़ qed_filter_type_params अणु
-	क्रमागत qed_filter_rx_mode_type accept_flags;
-	काष्ठा qed_filter_ucast_params ucast;
-	काष्ठा qed_filter_mcast_params mcast;
-पूर्ण;
+union qed_filter_type_params {
+	enum qed_filter_rx_mode_type accept_flags;
+	struct qed_filter_ucast_params ucast;
+	struct qed_filter_mcast_params mcast;
+};
 
-क्रमागत qed_filter_type अणु
+enum qed_filter_type {
 	QED_FILTER_TYPE_UCAST,
 	QED_FILTER_TYPE_MCAST,
 	QED_FILTER_TYPE_RX_MODE,
 	QED_MAX_FILTER_TYPES,
-पूर्ण;
+};
 
-काष्ठा qed_filter_params अणु
-	क्रमागत qed_filter_type type;
-	जोड़ qed_filter_type_params filter;
-पूर्ण;
+struct qed_filter_params {
+	enum qed_filter_type type;
+	union qed_filter_type_params filter;
+};
 
-काष्ठा qed_tunn_params अणु
+struct qed_tunn_params {
 	u16 vxlan_port;
 	u8 update_vxlan_port;
 	u16 geneve_port;
 	u8 update_geneve_port;
-पूर्ण;
+};
 
-काष्ठा qed_eth_cb_ops अणु
-	काष्ठा qed_common_cb_ops common;
-	व्योम (*क्रमce_mac) (व्योम *dev, u8 *mac, bool क्रमced);
-	व्योम (*ports_update)(व्योम *dev, u16 vxlan_port, u16 geneve_port);
-पूर्ण;
+struct qed_eth_cb_ops {
+	struct qed_common_cb_ops common;
+	void (*force_mac) (void *dev, u8 *mac, bool forced);
+	void (*ports_update)(void *dev, u16 vxlan_port, u16 geneve_port);
+};
 
-#घोषणा QED_MAX_PHC_DRIFT_PPB   291666666
+#define QED_MAX_PHC_DRIFT_PPB   291666666
 
-क्रमागत qed_ptp_filter_type अणु
+enum qed_ptp_filter_type {
 	QED_PTP_FILTER_NONE,
 	QED_PTP_FILTER_ALL,
 	QED_PTP_FILTER_V1_L4_EVENT,
@@ -190,157 +189,157 @@
 	QED_PTP_FILTER_V2_L2_GEN,
 	QED_PTP_FILTER_V2_EVENT,
 	QED_PTP_FILTER_V2_GEN
-पूर्ण;
+};
 
-क्रमागत qed_ptp_hwtstamp_tx_type अणु
+enum qed_ptp_hwtstamp_tx_type {
 	QED_PTP_HWTSTAMP_TX_OFF,
 	QED_PTP_HWTSTAMP_TX_ON,
-पूर्ण;
+};
 
-#अगर_घोषित CONFIG_DCB
+#ifdef CONFIG_DCB
 /* Prototype declaration of qed_eth_dcbnl_ops should match with the declaration
- * of dcbnl_rtnl_ops काष्ठाure.
+ * of dcbnl_rtnl_ops structure.
  */
-काष्ठा qed_eth_dcbnl_ops अणु
+struct qed_eth_dcbnl_ops {
 	/* IEEE 802.1Qaz std */
-	पूर्णांक (*ieee_getpfc)(काष्ठा qed_dev *cdev, काष्ठा ieee_pfc *pfc);
-	पूर्णांक (*ieee_setpfc)(काष्ठा qed_dev *cdev, काष्ठा ieee_pfc *pfc);
-	पूर्णांक (*ieee_getets)(काष्ठा qed_dev *cdev, काष्ठा ieee_ets *ets);
-	पूर्णांक (*ieee_setets)(काष्ठा qed_dev *cdev, काष्ठा ieee_ets *ets);
-	पूर्णांक (*ieee_peer_getets)(काष्ठा qed_dev *cdev, काष्ठा ieee_ets *ets);
-	पूर्णांक (*ieee_peer_getpfc)(काष्ठा qed_dev *cdev, काष्ठा ieee_pfc *pfc);
-	पूर्णांक (*ieee_getapp)(काष्ठा qed_dev *cdev, काष्ठा dcb_app *app);
-	पूर्णांक (*ieee_setapp)(काष्ठा qed_dev *cdev, काष्ठा dcb_app *app);
+	int (*ieee_getpfc)(struct qed_dev *cdev, struct ieee_pfc *pfc);
+	int (*ieee_setpfc)(struct qed_dev *cdev, struct ieee_pfc *pfc);
+	int (*ieee_getets)(struct qed_dev *cdev, struct ieee_ets *ets);
+	int (*ieee_setets)(struct qed_dev *cdev, struct ieee_ets *ets);
+	int (*ieee_peer_getets)(struct qed_dev *cdev, struct ieee_ets *ets);
+	int (*ieee_peer_getpfc)(struct qed_dev *cdev, struct ieee_pfc *pfc);
+	int (*ieee_getapp)(struct qed_dev *cdev, struct dcb_app *app);
+	int (*ieee_setapp)(struct qed_dev *cdev, struct dcb_app *app);
 
 	/* CEE std */
-	u8 (*माला_लोtate)(काष्ठा qed_dev *cdev);
-	u8 (*setstate)(काष्ठा qed_dev *cdev, u8 state);
-	व्योम (*getpgtccfgtx)(काष्ठा qed_dev *cdev, पूर्णांक prio, u8 *prio_type,
+	u8 (*getstate)(struct qed_dev *cdev);
+	u8 (*setstate)(struct qed_dev *cdev, u8 state);
+	void (*getpgtccfgtx)(struct qed_dev *cdev, int prio, u8 *prio_type,
 			     u8 *pgid, u8 *bw_pct, u8 *up_map);
-	व्योम (*getpgbwgcfgtx)(काष्ठा qed_dev *cdev, पूर्णांक pgid, u8 *bw_pct);
-	व्योम (*getpgtccfgrx)(काष्ठा qed_dev *cdev, पूर्णांक prio, u8 *prio_type,
+	void (*getpgbwgcfgtx)(struct qed_dev *cdev, int pgid, u8 *bw_pct);
+	void (*getpgtccfgrx)(struct qed_dev *cdev, int prio, u8 *prio_type,
 			     u8 *pgid, u8 *bw_pct, u8 *up_map);
-	व्योम (*getpgbwgcfgrx)(काष्ठा qed_dev *cdev, पूर्णांक pgid, u8 *bw_pct);
-	व्योम (*getpfccfg)(काष्ठा qed_dev *cdev, पूर्णांक prio, u8 *setting);
-	व्योम (*setpfccfg)(काष्ठा qed_dev *cdev, पूर्णांक prio, u8 setting);
-	u8 (*अ_लोap)(काष्ठा qed_dev *cdev, पूर्णांक capid, u8 *cap);
-	पूर्णांक (*getnumtcs)(काष्ठा qed_dev *cdev, पूर्णांक tcid, u8 *num);
-	u8 (*getpfcstate)(काष्ठा qed_dev *cdev);
-	पूर्णांक (*getapp)(काष्ठा qed_dev *cdev, u8 idtype, u16 id);
-	u8 (*getfeatcfg)(काष्ठा qed_dev *cdev, पूर्णांक featid, u8 *flags);
+	void (*getpgbwgcfgrx)(struct qed_dev *cdev, int pgid, u8 *bw_pct);
+	void (*getpfccfg)(struct qed_dev *cdev, int prio, u8 *setting);
+	void (*setpfccfg)(struct qed_dev *cdev, int prio, u8 setting);
+	u8 (*getcap)(struct qed_dev *cdev, int capid, u8 *cap);
+	int (*getnumtcs)(struct qed_dev *cdev, int tcid, u8 *num);
+	u8 (*getpfcstate)(struct qed_dev *cdev);
+	int (*getapp)(struct qed_dev *cdev, u8 idtype, u16 id);
+	u8 (*getfeatcfg)(struct qed_dev *cdev, int featid, u8 *flags);
 
 	/* DCBX configuration */
-	u8 (*getdcbx)(काष्ठा qed_dev *cdev);
-	व्योम (*setpgtccfgtx)(काष्ठा qed_dev *cdev, पूर्णांक prio,
+	u8 (*getdcbx)(struct qed_dev *cdev);
+	void (*setpgtccfgtx)(struct qed_dev *cdev, int prio,
 			     u8 pri_type, u8 pgid, u8 bw_pct, u8 up_map);
-	व्योम (*setpgtccfgrx)(काष्ठा qed_dev *cdev, पूर्णांक prio,
+	void (*setpgtccfgrx)(struct qed_dev *cdev, int prio,
 			     u8 pri_type, u8 pgid, u8 bw_pct, u8 up_map);
-	व्योम (*setpgbwgcfgtx)(काष्ठा qed_dev *cdev, पूर्णांक pgid, u8 bw_pct);
-	व्योम (*setpgbwgcfgrx)(काष्ठा qed_dev *cdev, पूर्णांक pgid, u8 bw_pct);
-	u8 (*setall)(काष्ठा qed_dev *cdev);
-	पूर्णांक (*setnumtcs)(काष्ठा qed_dev *cdev, पूर्णांक tcid, u8 num);
-	व्योम (*setpfcstate)(काष्ठा qed_dev *cdev, u8 state);
-	पूर्णांक (*setapp)(काष्ठा qed_dev *cdev, u8 idtype, u16 idval, u8 up);
-	u8 (*setdcbx)(काष्ठा qed_dev *cdev, u8 state);
-	u8 (*setfeatcfg)(काष्ठा qed_dev *cdev, पूर्णांक featid, u8 flags);
+	void (*setpgbwgcfgtx)(struct qed_dev *cdev, int pgid, u8 bw_pct);
+	void (*setpgbwgcfgrx)(struct qed_dev *cdev, int pgid, u8 bw_pct);
+	u8 (*setall)(struct qed_dev *cdev);
+	int (*setnumtcs)(struct qed_dev *cdev, int tcid, u8 num);
+	void (*setpfcstate)(struct qed_dev *cdev, u8 state);
+	int (*setapp)(struct qed_dev *cdev, u8 idtype, u16 idval, u8 up);
+	u8 (*setdcbx)(struct qed_dev *cdev, u8 state);
+	u8 (*setfeatcfg)(struct qed_dev *cdev, int featid, u8 flags);
 
 	/* Peer apps */
-	पूर्णांक (*peer_getappinfo)(काष्ठा qed_dev *cdev,
-			       काष्ठा dcb_peer_app_info *info,
+	int (*peer_getappinfo)(struct qed_dev *cdev,
+			       struct dcb_peer_app_info *info,
 			       u16 *app_count);
-	पूर्णांक (*peer_getapptable)(काष्ठा qed_dev *cdev, काष्ठा dcb_app *table);
+	int (*peer_getapptable)(struct qed_dev *cdev, struct dcb_app *table);
 
 	/* CEE peer */
-	पूर्णांक (*cee_peer_getpfc)(काष्ठा qed_dev *cdev, काष्ठा cee_pfc *pfc);
-	पूर्णांक (*cee_peer_getpg)(काष्ठा qed_dev *cdev, काष्ठा cee_pg *pg);
-पूर्ण;
-#पूर्ण_अगर
+	int (*cee_peer_getpfc)(struct qed_dev *cdev, struct cee_pfc *pfc);
+	int (*cee_peer_getpg)(struct qed_dev *cdev, struct cee_pg *pg);
+};
+#endif
 
-काष्ठा qed_eth_ptp_ops अणु
-	पूर्णांक (*cfg_filters)(काष्ठा qed_dev *, क्रमागत qed_ptp_filter_type,
-			   क्रमागत qed_ptp_hwtstamp_tx_type);
-	पूर्णांक (*पढ़ो_rx_ts)(काष्ठा qed_dev *, u64 *);
-	पूर्णांक (*पढ़ो_tx_ts)(काष्ठा qed_dev *, u64 *);
-	पूर्णांक (*पढ़ो_cc)(काष्ठा qed_dev *, u64 *);
-	पूर्णांक (*disable)(काष्ठा qed_dev *);
-	पूर्णांक (*adjfreq)(काष्ठा qed_dev *, s32);
-	पूर्णांक (*enable)(काष्ठा qed_dev *);
-पूर्ण;
+struct qed_eth_ptp_ops {
+	int (*cfg_filters)(struct qed_dev *, enum qed_ptp_filter_type,
+			   enum qed_ptp_hwtstamp_tx_type);
+	int (*read_rx_ts)(struct qed_dev *, u64 *);
+	int (*read_tx_ts)(struct qed_dev *, u64 *);
+	int (*read_cc)(struct qed_dev *, u64 *);
+	int (*disable)(struct qed_dev *);
+	int (*adjfreq)(struct qed_dev *, s32);
+	int (*enable)(struct qed_dev *);
+};
 
-काष्ठा qed_eth_ops अणु
-	स्थिर काष्ठा qed_common_ops *common;
-#अगर_घोषित CONFIG_QED_SRIOV
-	स्थिर काष्ठा qed_iov_hv_ops *iov;
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_DCB
-	स्थिर काष्ठा qed_eth_dcbnl_ops *dcb;
-#पूर्ण_अगर
-	स्थिर काष्ठा qed_eth_ptp_ops *ptp;
+struct qed_eth_ops {
+	const struct qed_common_ops *common;
+#ifdef CONFIG_QED_SRIOV
+	const struct qed_iov_hv_ops *iov;
+#endif
+#ifdef CONFIG_DCB
+	const struct qed_eth_dcbnl_ops *dcb;
+#endif
+	const struct qed_eth_ptp_ops *ptp;
 
-	पूर्णांक (*fill_dev_info)(काष्ठा qed_dev *cdev,
-			     काष्ठा qed_dev_eth_info *info);
+	int (*fill_dev_info)(struct qed_dev *cdev,
+			     struct qed_dev_eth_info *info);
 
-	व्योम (*रेजिस्टर_ops)(काष्ठा qed_dev *cdev,
-			     काष्ठा qed_eth_cb_ops *ops,
-			     व्योम *cookie);
+	void (*register_ops)(struct qed_dev *cdev,
+			     struct qed_eth_cb_ops *ops,
+			     void *cookie);
 
-	 bool(*check_mac) (काष्ठा qed_dev *cdev, u8 *mac);
+	 bool(*check_mac) (struct qed_dev *cdev, u8 *mac);
 
-	पूर्णांक (*vport_start)(काष्ठा qed_dev *cdev,
-			   काष्ठा qed_start_vport_params *params);
+	int (*vport_start)(struct qed_dev *cdev,
+			   struct qed_start_vport_params *params);
 
-	पूर्णांक (*vport_stop)(काष्ठा qed_dev *cdev,
+	int (*vport_stop)(struct qed_dev *cdev,
 			  u8 vport_id);
 
-	पूर्णांक (*vport_update)(काष्ठा qed_dev *cdev,
-			    काष्ठा qed_update_vport_params *params);
+	int (*vport_update)(struct qed_dev *cdev,
+			    struct qed_update_vport_params *params);
 
-	पूर्णांक (*q_rx_start)(काष्ठा qed_dev *cdev,
+	int (*q_rx_start)(struct qed_dev *cdev,
 			  u8 rss_num,
-			  काष्ठा qed_queue_start_common_params *params,
+			  struct qed_queue_start_common_params *params,
 			  u16 bd_max_bytes,
 			  dma_addr_t bd_chain_phys_addr,
 			  dma_addr_t cqe_pbl_addr,
 			  u16 cqe_pbl_size,
-			  काष्ठा qed_rxq_start_ret_params *ret_params);
+			  struct qed_rxq_start_ret_params *ret_params);
 
-	पूर्णांक (*q_rx_stop)(काष्ठा qed_dev *cdev, u8 rss_id, व्योम *handle);
+	int (*q_rx_stop)(struct qed_dev *cdev, u8 rss_id, void *handle);
 
-	पूर्णांक (*q_tx_start)(काष्ठा qed_dev *cdev,
+	int (*q_tx_start)(struct qed_dev *cdev,
 			  u8 rss_num,
-			  काष्ठा qed_queue_start_common_params *params,
+			  struct qed_queue_start_common_params *params,
 			  dma_addr_t pbl_addr,
 			  u16 pbl_size,
-			  काष्ठा qed_txq_start_ret_params *ret_params);
+			  struct qed_txq_start_ret_params *ret_params);
 
-	पूर्णांक (*q_tx_stop)(काष्ठा qed_dev *cdev, u8 rss_id, व्योम *handle);
+	int (*q_tx_stop)(struct qed_dev *cdev, u8 rss_id, void *handle);
 
-	पूर्णांक (*filter_config)(काष्ठा qed_dev *cdev,
-			     काष्ठा qed_filter_params *params);
+	int (*filter_config)(struct qed_dev *cdev,
+			     struct qed_filter_params *params);
 
-	पूर्णांक (*fastpath_stop)(काष्ठा qed_dev *cdev);
+	int (*fastpath_stop)(struct qed_dev *cdev);
 
-	पूर्णांक (*eth_cqe_completion)(काष्ठा qed_dev *cdev,
+	int (*eth_cqe_completion)(struct qed_dev *cdev,
 				  u8 rss_id,
-				  काष्ठा eth_slow_path_rx_cqe *cqe);
+				  struct eth_slow_path_rx_cqe *cqe);
 
-	व्योम (*get_vport_stats)(काष्ठा qed_dev *cdev,
-				काष्ठा qed_eth_stats *stats);
+	void (*get_vport_stats)(struct qed_dev *cdev,
+				struct qed_eth_stats *stats);
 
-	पूर्णांक (*tunn_config)(काष्ठा qed_dev *cdev,
-			   काष्ठा qed_tunn_params *params);
+	int (*tunn_config)(struct qed_dev *cdev,
+			   struct qed_tunn_params *params);
 
-	पूर्णांक (*ntuple_filter_config)(काष्ठा qed_dev *cdev,
-				    व्योम *cookie,
-				    काष्ठा qed_ntuple_filter_params *params);
+	int (*ntuple_filter_config)(struct qed_dev *cdev,
+				    void *cookie,
+				    struct qed_ntuple_filter_params *params);
 
-	पूर्णांक (*configure_arfs_searcher)(काष्ठा qed_dev *cdev,
-				       क्रमागत qed_filter_config_mode mode);
-	पूर्णांक (*get_coalesce)(काष्ठा qed_dev *cdev, u16 *coal, व्योम *handle);
-	पूर्णांक (*req_bulletin_update_mac)(काष्ठा qed_dev *cdev, u8 *mac);
-पूर्ण;
+	int (*configure_arfs_searcher)(struct qed_dev *cdev,
+				       enum qed_filter_config_mode mode);
+	int (*get_coalesce)(struct qed_dev *cdev, u16 *coal, void *handle);
+	int (*req_bulletin_update_mac)(struct qed_dev *cdev, u8 *mac);
+};
 
-स्थिर काष्ठा qed_eth_ops *qed_get_eth_ops(व्योम);
-व्योम qed_put_eth_ops(व्योम);
+const struct qed_eth_ops *qed_get_eth_ops(void);
+void qed_put_eth_ops(void);
 
-#पूर्ण_अगर
+#endif

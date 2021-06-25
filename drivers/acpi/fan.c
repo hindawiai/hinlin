@@ -1,423 +1,422 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  *  acpi_fan.c - ACPI Fan Driver ($Revision: 29 $)
  *
- *  Copyright (C) 2001, 2002 Andy Grover <andrew.grover@पूर्णांकel.com>
- *  Copyright (C) 2001, 2002 Paul Diefenbaugh <paul.s.diefenbaugh@पूर्णांकel.com>
+ *  Copyright (C) 2001, 2002 Andy Grover <andrew.grover@intel.com>
+ *  Copyright (C) 2001, 2002 Paul Diefenbaugh <paul.s.diefenbaugh@intel.com>
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/init.h>
-#समावेश <linux/types.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/thermal.h>
-#समावेश <linux/acpi.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/sort.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/types.h>
+#include <linux/uaccess.h>
+#include <linux/thermal.h>
+#include <linux/acpi.h>
+#include <linux/platform_device.h>
+#include <linux/sort.h>
 
 MODULE_AUTHOR("Paul Diefenbaugh");
 MODULE_DESCRIPTION("ACPI Fan Driver");
 MODULE_LICENSE("GPL");
 
-अटल पूर्णांक acpi_fan_probe(काष्ठा platक्रमm_device *pdev);
-अटल पूर्णांक acpi_fan_हटाओ(काष्ठा platक्रमm_device *pdev);
+static int acpi_fan_probe(struct platform_device *pdev);
+static int acpi_fan_remove(struct platform_device *pdev);
 
-अटल स्थिर काष्ठा acpi_device_id fan_device_ids[] = अणु
-	अणु"PNP0C0B", 0पूर्ण,
-	अणु"INT3404", 0पूर्ण,
-	अणु"INTC1044", 0पूर्ण,
-	अणु"INTC1048", 0पूर्ण,
-	अणु"", 0पूर्ण,
-पूर्ण;
+static const struct acpi_device_id fan_device_ids[] = {
+	{"PNP0C0B", 0},
+	{"INT3404", 0},
+	{"INTC1044", 0},
+	{"INTC1048", 0},
+	{"", 0},
+};
 MODULE_DEVICE_TABLE(acpi, fan_device_ids);
 
-#अगर_घोषित CONFIG_PM_SLEEP
-अटल पूर्णांक acpi_fan_suspend(काष्ठा device *dev);
-अटल पूर्णांक acpi_fan_resume(काष्ठा device *dev);
-अटल स्थिर काष्ठा dev_pm_ops acpi_fan_pm = अणु
+#ifdef CONFIG_PM_SLEEP
+static int acpi_fan_suspend(struct device *dev);
+static int acpi_fan_resume(struct device *dev);
+static const struct dev_pm_ops acpi_fan_pm = {
 	.resume = acpi_fan_resume,
-	.मुक्तze = acpi_fan_suspend,
+	.freeze = acpi_fan_suspend,
 	.thaw = acpi_fan_resume,
 	.restore = acpi_fan_resume,
-पूर्ण;
-#घोषणा FAN_PM_OPS_PTR (&acpi_fan_pm)
-#अन्यथा
-#घोषणा FAN_PM_OPS_PTR शून्य
-#पूर्ण_अगर
+};
+#define FAN_PM_OPS_PTR (&acpi_fan_pm)
+#else
+#define FAN_PM_OPS_PTR NULL
+#endif
 
-#घोषणा ACPI_FPS_NAME_LEN	20
+#define ACPI_FPS_NAME_LEN	20
 
-काष्ठा acpi_fan_fps अणु
+struct acpi_fan_fps {
 	u64 control;
-	u64 trip_poपूर्णांक;
+	u64 trip_point;
 	u64 speed;
 	u64 noise_level;
-	u64 घातer;
-	अक्षर name[ACPI_FPS_NAME_LEN];
-	काष्ठा device_attribute dev_attr;
-पूर्ण;
+	u64 power;
+	char name[ACPI_FPS_NAME_LEN];
+	struct device_attribute dev_attr;
+};
 
-काष्ठा acpi_fan_fअगर अणु
+struct acpi_fan_fif {
 	u64 revision;
 	u64 fine_grain_ctrl;
 	u64 step_size;
-	u64 low_speed_notअगरication;
-पूर्ण;
+	u64 low_speed_notification;
+};
 
-काष्ठा acpi_fan अणु
+struct acpi_fan {
 	bool acpi4;
-	काष्ठा acpi_fan_fअगर fअगर;
-	काष्ठा acpi_fan_fps *fps;
-	पूर्णांक fps_count;
-	काष्ठा thermal_cooling_device *cdev;
-पूर्ण;
+	struct acpi_fan_fif fif;
+	struct acpi_fan_fps *fps;
+	int fps_count;
+	struct thermal_cooling_device *cdev;
+};
 
-अटल काष्ठा platक्रमm_driver acpi_fan_driver = अणु
+static struct platform_driver acpi_fan_driver = {
 	.probe = acpi_fan_probe,
-	.हटाओ = acpi_fan_हटाओ,
-	.driver = अणु
+	.remove = acpi_fan_remove,
+	.driver = {
 		.name = "acpi-fan",
 		.acpi_match_table = fan_device_ids,
 		.pm = FAN_PM_OPS_PTR,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
 /* thermal cooling device callbacks */
-अटल पूर्णांक fan_get_max_state(काष्ठा thermal_cooling_device *cdev, अचिन्हित दीर्घ
+static int fan_get_max_state(struct thermal_cooling_device *cdev, unsigned long
 			     *state)
-अणु
-	काष्ठा acpi_device *device = cdev->devdata;
-	काष्ठा acpi_fan *fan = acpi_driver_data(device);
+{
+	struct acpi_device *device = cdev->devdata;
+	struct acpi_fan *fan = acpi_driver_data(device);
 
-	अगर (fan->acpi4)
+	if (fan->acpi4)
 		*state = fan->fps_count - 1;
-	अन्यथा
+	else
 		*state = 1;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक fan_get_state_acpi4(काष्ठा acpi_device *device, अचिन्हित दीर्घ *state)
-अणु
-	काष्ठा acpi_buffer buffer = अणु ACPI_ALLOCATE_BUFFER, शून्य पूर्ण;
-	काष्ठा acpi_fan *fan = acpi_driver_data(device);
-	जोड़ acpi_object *obj;
+static int fan_get_state_acpi4(struct acpi_device *device, unsigned long *state)
+{
+	struct acpi_buffer buffer = { ACPI_ALLOCATE_BUFFER, NULL };
+	struct acpi_fan *fan = acpi_driver_data(device);
+	union acpi_object *obj;
 	acpi_status status;
-	पूर्णांक control, i;
+	int control, i;
 
-	status = acpi_evaluate_object(device->handle, "_FST", शून्य, &buffer);
-	अगर (ACPI_FAILURE(status)) अणु
+	status = acpi_evaluate_object(device->handle, "_FST", NULL, &buffer);
+	if (ACPI_FAILURE(status)) {
 		dev_err(&device->dev, "Get fan state failed\n");
-		वापस status;
-	पूर्ण
+		return status;
+	}
 
-	obj = buffer.poपूर्णांकer;
-	अगर (!obj || obj->type != ACPI_TYPE_PACKAGE ||
+	obj = buffer.pointer;
+	if (!obj || obj->type != ACPI_TYPE_PACKAGE ||
 	    obj->package.count != 3 ||
-	    obj->package.elements[1].type != ACPI_TYPE_INTEGER) अणु
+	    obj->package.elements[1].type != ACPI_TYPE_INTEGER) {
 		dev_err(&device->dev, "Invalid _FST data\n");
 		status = -EINVAL;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	control = obj->package.elements[1].पूर्णांकeger.value;
-	क्रम (i = 0; i < fan->fps_count; i++) अणु
+	control = obj->package.elements[1].integer.value;
+	for (i = 0; i < fan->fps_count; i++) {
 		/*
-		 * When Fine Grain Control is set, वापस the state
+		 * When Fine Grain Control is set, return the state
 		 * corresponding to maximum fan->fps[i].control
 		 * value compared to the current speed. Here the
 		 * fan->fps[] is sorted array with increasing speed.
 		 */
-		अगर (fan->fअगर.fine_grain_ctrl && control < fan->fps[i].control) अणु
+		if (fan->fif.fine_grain_ctrl && control < fan->fps[i].control) {
 			i = (i > 0) ? i - 1 : 0;
-			अवरोध;
-		पूर्ण अन्यथा अगर (control == fan->fps[i].control) अणु
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	अगर (i == fan->fps_count) अणु
+			break;
+		} else if (control == fan->fps[i].control) {
+			break;
+		}
+	}
+	if (i == fan->fps_count) {
 		dev_dbg(&device->dev, "Invalid control value returned\n");
 		status = -EINVAL;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	*state = i;
 
 err:
-	kमुक्त(obj);
-	वापस status;
-पूर्ण
+	kfree(obj);
+	return status;
+}
 
-अटल पूर्णांक fan_get_state(काष्ठा acpi_device *device, अचिन्हित दीर्घ *state)
-अणु
-	पूर्णांक result;
-	पूर्णांक acpi_state = ACPI_STATE_D0;
+static int fan_get_state(struct acpi_device *device, unsigned long *state)
+{
+	int result;
+	int acpi_state = ACPI_STATE_D0;
 
-	result = acpi_device_update_घातer(device, &acpi_state);
-	अगर (result)
-		वापस result;
+	result = acpi_device_update_power(device, &acpi_state);
+	if (result)
+		return result;
 
 	*state = acpi_state == ACPI_STATE_D3_COLD
 			|| acpi_state == ACPI_STATE_D3_HOT ?
 		0 : (acpi_state == ACPI_STATE_D0 ? 1 : -1);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक fan_get_cur_state(काष्ठा thermal_cooling_device *cdev, अचिन्हित दीर्घ
+static int fan_get_cur_state(struct thermal_cooling_device *cdev, unsigned long
 			     *state)
-अणु
-	काष्ठा acpi_device *device = cdev->devdata;
-	काष्ठा acpi_fan *fan = acpi_driver_data(device);
+{
+	struct acpi_device *device = cdev->devdata;
+	struct acpi_fan *fan = acpi_driver_data(device);
 
-	अगर (fan->acpi4)
-		वापस fan_get_state_acpi4(device, state);
-	अन्यथा
-		वापस fan_get_state(device, state);
-पूर्ण
+	if (fan->acpi4)
+		return fan_get_state_acpi4(device, state);
+	else
+		return fan_get_state(device, state);
+}
 
-अटल पूर्णांक fan_set_state(काष्ठा acpi_device *device, अचिन्हित दीर्घ state)
-अणु
-	अगर (state != 0 && state != 1)
-		वापस -EINVAL;
+static int fan_set_state(struct acpi_device *device, unsigned long state)
+{
+	if (state != 0 && state != 1)
+		return -EINVAL;
 
-	वापस acpi_device_set_घातer(device,
+	return acpi_device_set_power(device,
 				     state ? ACPI_STATE_D0 : ACPI_STATE_D3_COLD);
-पूर्ण
+}
 
-अटल पूर्णांक fan_set_state_acpi4(काष्ठा acpi_device *device, अचिन्हित दीर्घ state)
-अणु
-	काष्ठा acpi_fan *fan = acpi_driver_data(device);
+static int fan_set_state_acpi4(struct acpi_device *device, unsigned long state)
+{
+	struct acpi_fan *fan = acpi_driver_data(device);
 	acpi_status status;
 
-	अगर (state >= fan->fps_count)
-		वापस -EINVAL;
+	if (state >= fan->fps_count)
+		return -EINVAL;
 
 	status = acpi_execute_simple_method(device->handle, "_FSL",
 					    fan->fps[state].control);
-	अगर (ACPI_FAILURE(status)) अणु
+	if (ACPI_FAILURE(status)) {
 		dev_dbg(&device->dev, "Failed to set state by _FSL\n");
-		वापस status;
-	पूर्ण
+		return status;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-fan_set_cur_state(काष्ठा thermal_cooling_device *cdev, अचिन्हित दीर्घ state)
-अणु
-	काष्ठा acpi_device *device = cdev->devdata;
-	काष्ठा acpi_fan *fan = acpi_driver_data(device);
+static int
+fan_set_cur_state(struct thermal_cooling_device *cdev, unsigned long state)
+{
+	struct acpi_device *device = cdev->devdata;
+	struct acpi_fan *fan = acpi_driver_data(device);
 
-	अगर (fan->acpi4)
-		वापस fan_set_state_acpi4(device, state);
-	अन्यथा
-		वापस fan_set_state(device, state);
-पूर्ण
+	if (fan->acpi4)
+		return fan_set_state_acpi4(device, state);
+	else
+		return fan_set_state(device, state);
+}
 
-अटल स्थिर काष्ठा thermal_cooling_device_ops fan_cooling_ops = अणु
+static const struct thermal_cooling_device_ops fan_cooling_ops = {
 	.get_max_state = fan_get_max_state,
 	.get_cur_state = fan_get_cur_state,
 	.set_cur_state = fan_set_cur_state,
-पूर्ण;
+};
 
 /* --------------------------------------------------------------------------
  *                               Driver Interface
  * --------------------------------------------------------------------------
 */
 
-अटल bool acpi_fan_is_acpi4(काष्ठा acpi_device *device)
-अणु
-	वापस acpi_has_method(device->handle, "_FIF") &&
+static bool acpi_fan_is_acpi4(struct acpi_device *device)
+{
+	return acpi_has_method(device->handle, "_FIF") &&
 	       acpi_has_method(device->handle, "_FPS") &&
 	       acpi_has_method(device->handle, "_FSL") &&
 	       acpi_has_method(device->handle, "_FST");
-पूर्ण
+}
 
-अटल पूर्णांक acpi_fan_get_fअगर(काष्ठा acpi_device *device)
-अणु
-	काष्ठा acpi_buffer buffer = अणु ACPI_ALLOCATE_BUFFER, शून्य पूर्ण;
-	काष्ठा acpi_fan *fan = acpi_driver_data(device);
-	काष्ठा acpi_buffer क्रमmat = अणु माप("NNNN"), "NNNN" पूर्ण;
-	काष्ठा acpi_buffer fअगर = अणु माप(fan->fअगर), &fan->fअगर पूर्ण;
-	जोड़ acpi_object *obj;
+static int acpi_fan_get_fif(struct acpi_device *device)
+{
+	struct acpi_buffer buffer = { ACPI_ALLOCATE_BUFFER, NULL };
+	struct acpi_fan *fan = acpi_driver_data(device);
+	struct acpi_buffer format = { sizeof("NNNN"), "NNNN" };
+	struct acpi_buffer fif = { sizeof(fan->fif), &fan->fif };
+	union acpi_object *obj;
 	acpi_status status;
 
-	status = acpi_evaluate_object(device->handle, "_FIF", शून्य, &buffer);
-	अगर (ACPI_FAILURE(status))
-		वापस status;
+	status = acpi_evaluate_object(device->handle, "_FIF", NULL, &buffer);
+	if (ACPI_FAILURE(status))
+		return status;
 
-	obj = buffer.poपूर्णांकer;
-	अगर (!obj || obj->type != ACPI_TYPE_PACKAGE) अणु
+	obj = buffer.pointer;
+	if (!obj || obj->type != ACPI_TYPE_PACKAGE) {
 		dev_err(&device->dev, "Invalid _FIF data\n");
 		status = -EINVAL;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	status = acpi_extract_package(obj, &क्रमmat, &fअगर);
-	अगर (ACPI_FAILURE(status)) अणु
+	status = acpi_extract_package(obj, &format, &fif);
+	if (ACPI_FAILURE(status)) {
 		dev_err(&device->dev, "Invalid _FIF element\n");
 		status = -EINVAL;
-	पूर्ण
+	}
 
 err:
-	kमुक्त(obj);
-	वापस status;
-पूर्ण
+	kfree(obj);
+	return status;
+}
 
-अटल पूर्णांक acpi_fan_speed_cmp(स्थिर व्योम *a, स्थिर व्योम *b)
-अणु
-	स्थिर काष्ठा acpi_fan_fps *fps1 = a;
-	स्थिर काष्ठा acpi_fan_fps *fps2 = b;
-	वापस fps1->speed - fps2->speed;
-पूर्ण
+static int acpi_fan_speed_cmp(const void *a, const void *b)
+{
+	const struct acpi_fan_fps *fps1 = a;
+	const struct acpi_fan_fps *fps2 = b;
+	return fps1->speed - fps2->speed;
+}
 
-अटल sमाप_प्रकार show_state(काष्ठा device *dev, काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा acpi_fan_fps *fps = container_of(attr, काष्ठा acpi_fan_fps, dev_attr);
-	पूर्णांक count;
+static ssize_t show_state(struct device *dev, struct device_attribute *attr, char *buf)
+{
+	struct acpi_fan_fps *fps = container_of(attr, struct acpi_fan_fps, dev_attr);
+	int count;
 
-	अगर (fps->control == 0xFFFFFFFF || fps->control > 100)
-		count = scnम_लिखो(buf, PAGE_SIZE, "not-defined:");
-	अन्यथा
-		count = scnम_लिखो(buf, PAGE_SIZE, "%lld:", fps->control);
+	if (fps->control == 0xFFFFFFFF || fps->control > 100)
+		count = scnprintf(buf, PAGE_SIZE, "not-defined:");
+	else
+		count = scnprintf(buf, PAGE_SIZE, "%lld:", fps->control);
 
-	अगर (fps->trip_poपूर्णांक == 0xFFFFFFFF || fps->trip_poपूर्णांक > 9)
-		count += scnम_लिखो(&buf[count], PAGE_SIZE - count, "not-defined:");
-	अन्यथा
-		count += scnम_लिखो(&buf[count], PAGE_SIZE - count, "%lld:", fps->trip_poपूर्णांक);
+	if (fps->trip_point == 0xFFFFFFFF || fps->trip_point > 9)
+		count += scnprintf(&buf[count], PAGE_SIZE - count, "not-defined:");
+	else
+		count += scnprintf(&buf[count], PAGE_SIZE - count, "%lld:", fps->trip_point);
 
-	अगर (fps->speed == 0xFFFFFFFF)
-		count += scnम_लिखो(&buf[count], PAGE_SIZE - count, "not-defined:");
-	अन्यथा
-		count += scnम_लिखो(&buf[count], PAGE_SIZE - count, "%lld:", fps->speed);
+	if (fps->speed == 0xFFFFFFFF)
+		count += scnprintf(&buf[count], PAGE_SIZE - count, "not-defined:");
+	else
+		count += scnprintf(&buf[count], PAGE_SIZE - count, "%lld:", fps->speed);
 
-	अगर (fps->noise_level == 0xFFFFFFFF)
-		count += scnम_लिखो(&buf[count], PAGE_SIZE - count, "not-defined:");
-	अन्यथा
-		count += scnम_लिखो(&buf[count], PAGE_SIZE - count, "%lld:", fps->noise_level * 100);
+	if (fps->noise_level == 0xFFFFFFFF)
+		count += scnprintf(&buf[count], PAGE_SIZE - count, "not-defined:");
+	else
+		count += scnprintf(&buf[count], PAGE_SIZE - count, "%lld:", fps->noise_level * 100);
 
-	अगर (fps->घातer == 0xFFFFFFFF)
-		count += scnम_लिखो(&buf[count], PAGE_SIZE - count, "not-defined\n");
-	अन्यथा
-		count += scnम_लिखो(&buf[count], PAGE_SIZE - count, "%lld\n", fps->घातer);
+	if (fps->power == 0xFFFFFFFF)
+		count += scnprintf(&buf[count], PAGE_SIZE - count, "not-defined\n");
+	else
+		count += scnprintf(&buf[count], PAGE_SIZE - count, "%lld\n", fps->power);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल पूर्णांक acpi_fan_get_fps(काष्ठा acpi_device *device)
-अणु
-	काष्ठा acpi_fan *fan = acpi_driver_data(device);
-	काष्ठा acpi_buffer buffer = अणु ACPI_ALLOCATE_BUFFER, शून्य पूर्ण;
-	जोड़ acpi_object *obj;
+static int acpi_fan_get_fps(struct acpi_device *device)
+{
+	struct acpi_fan *fan = acpi_driver_data(device);
+	struct acpi_buffer buffer = { ACPI_ALLOCATE_BUFFER, NULL };
+	union acpi_object *obj;
 	acpi_status status;
-	पूर्णांक i;
+	int i;
 
-	status = acpi_evaluate_object(device->handle, "_FPS", शून्य, &buffer);
-	अगर (ACPI_FAILURE(status))
-		वापस status;
+	status = acpi_evaluate_object(device->handle, "_FPS", NULL, &buffer);
+	if (ACPI_FAILURE(status))
+		return status;
 
-	obj = buffer.poपूर्णांकer;
-	अगर (!obj || obj->type != ACPI_TYPE_PACKAGE || obj->package.count < 2) अणु
+	obj = buffer.pointer;
+	if (!obj || obj->type != ACPI_TYPE_PACKAGE || obj->package.count < 2) {
 		dev_err(&device->dev, "Invalid _FPS data\n");
 		status = -EINVAL;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	fan->fps_count = obj->package.count - 1; /* minus revision field */
-	fan->fps = devm_kसुस्मृति(&device->dev,
-				fan->fps_count, माप(काष्ठा acpi_fan_fps),
+	fan->fps = devm_kcalloc(&device->dev,
+				fan->fps_count, sizeof(struct acpi_fan_fps),
 				GFP_KERNEL);
-	अगर (!fan->fps) अणु
+	if (!fan->fps) {
 		dev_err(&device->dev, "Not enough memory\n");
 		status = -ENOMEM;
-		जाओ err;
-	पूर्ण
-	क्रम (i = 0; i < fan->fps_count; i++) अणु
-		काष्ठा acpi_buffer क्रमmat = अणु माप("NNNNN"), "NNNNN" पूर्ण;
-		काष्ठा acpi_buffer fps = अणु दुरत्व(काष्ठा acpi_fan_fps, name),
-						&fan->fps[i] पूर्ण;
+		goto err;
+	}
+	for (i = 0; i < fan->fps_count; i++) {
+		struct acpi_buffer format = { sizeof("NNNNN"), "NNNNN" };
+		struct acpi_buffer fps = { offsetof(struct acpi_fan_fps, name),
+						&fan->fps[i] };
 		status = acpi_extract_package(&obj->package.elements[i + 1],
-					      &क्रमmat, &fps);
-		अगर (ACPI_FAILURE(status)) अणु
+					      &format, &fps);
+		if (ACPI_FAILURE(status)) {
 			dev_err(&device->dev, "Invalid _FPS element\n");
-			जाओ err;
-		पूर्ण
-	पूर्ण
+			goto err;
+		}
+	}
 
 	/* sort the state array according to fan speed in increase order */
-	sort(fan->fps, fan->fps_count, माप(*fan->fps),
-	     acpi_fan_speed_cmp, शून्य);
+	sort(fan->fps, fan->fps_count, sizeof(*fan->fps),
+	     acpi_fan_speed_cmp, NULL);
 
-	क्रम (i = 0; i < fan->fps_count; ++i) अणु
-		काष्ठा acpi_fan_fps *fps = &fan->fps[i];
+	for (i = 0; i < fan->fps_count; ++i) {
+		struct acpi_fan_fps *fps = &fan->fps[i];
 
-		snम_लिखो(fps->name, ACPI_FPS_NAME_LEN, "state%d", i);
+		snprintf(fps->name, ACPI_FPS_NAME_LEN, "state%d", i);
 		sysfs_attr_init(&fps->dev_attr.attr);
 		fps->dev_attr.show = show_state;
-		fps->dev_attr.store = शून्य;
+		fps->dev_attr.store = NULL;
 		fps->dev_attr.attr.name = fps->name;
 		fps->dev_attr.attr.mode = 0444;
 		status = sysfs_create_file(&device->dev.kobj, &fps->dev_attr.attr);
-		अगर (status) अणु
-			पूर्णांक j;
+		if (status) {
+			int j;
 
-			क्रम (j = 0; j < i; ++j)
-				sysfs_हटाओ_file(&device->dev.kobj, &fan->fps[j].dev_attr.attr);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			for (j = 0; j < i; ++j)
+				sysfs_remove_file(&device->dev.kobj, &fan->fps[j].dev_attr.attr);
+			break;
+		}
+	}
 
 err:
-	kमुक्त(obj);
-	वापस status;
-पूर्ण
+	kfree(obj);
+	return status;
+}
 
-अटल पूर्णांक acpi_fan_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	पूर्णांक result = 0;
-	काष्ठा thermal_cooling_device *cdev;
-	काष्ठा acpi_fan *fan;
-	काष्ठा acpi_device *device = ACPI_COMPANION(&pdev->dev);
-	अक्षर *name;
+static int acpi_fan_probe(struct platform_device *pdev)
+{
+	int result = 0;
+	struct thermal_cooling_device *cdev;
+	struct acpi_fan *fan;
+	struct acpi_device *device = ACPI_COMPANION(&pdev->dev);
+	char *name;
 
-	fan = devm_kzalloc(&pdev->dev, माप(*fan), GFP_KERNEL);
-	अगर (!fan) अणु
+	fan = devm_kzalloc(&pdev->dev, sizeof(*fan), GFP_KERNEL);
+	if (!fan) {
 		dev_err(&device->dev, "No memory for fan\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 	device->driver_data = fan;
-	platक्रमm_set_drvdata(pdev, fan);
+	platform_set_drvdata(pdev, fan);
 
-	अगर (acpi_fan_is_acpi4(device)) अणु
-		result = acpi_fan_get_fअगर(device);
-		अगर (result)
-			वापस result;
+	if (acpi_fan_is_acpi4(device)) {
+		result = acpi_fan_get_fif(device);
+		if (result)
+			return result;
 
 		result = acpi_fan_get_fps(device);
-		अगर (result)
-			वापस result;
+		if (result)
+			return result;
 
 		fan->acpi4 = true;
-	पूर्ण अन्यथा अणु
-		result = acpi_device_update_घातer(device, शून्य);
-		अगर (result) अणु
+	} else {
+		result = acpi_device_update_power(device, NULL);
+		if (result) {
 			dev_err(&device->dev, "Failed to set initial power state\n");
-			जाओ err_end;
-		पूर्ण
-	पूर्ण
+			goto err_end;
+		}
+	}
 
-	अगर (!म_भेदन(pdev->name, "PNP0C0B", म_माप("PNP0C0B")))
+	if (!strncmp(pdev->name, "PNP0C0B", strlen("PNP0C0B")))
 		name = "Fan";
-	अन्यथा
+	else
 		name = acpi_device_bid(device);
 
-	cdev = thermal_cooling_device_रेजिस्टर(name, device,
+	cdev = thermal_cooling_device_register(name, device,
 						&fan_cooling_ops);
-	अगर (IS_ERR(cdev)) अणु
+	if (IS_ERR(cdev)) {
 		result = PTR_ERR(cdev);
-		जाओ err_end;
-	पूर्ण
+		goto err_end;
+	}
 
 	dev_dbg(&pdev->dev, "registered as cooling_device%d\n", cdev->id);
 
@@ -425,74 +424,74 @@ err:
 	result = sysfs_create_link(&pdev->dev.kobj,
 				   &cdev->device.kobj,
 				   "thermal_cooling");
-	अगर (result)
+	if (result)
 		dev_err(&pdev->dev, "Failed to create sysfs link 'thermal_cooling'\n");
 
 	result = sysfs_create_link(&cdev->device.kobj,
 				   &pdev->dev.kobj,
 				   "device");
-	अगर (result) अणु
+	if (result) {
 		dev_err(&pdev->dev, "Failed to create sysfs link 'device'\n");
-		जाओ err_end;
-	पूर्ण
+		goto err_end;
+	}
 
-	वापस 0;
+	return 0;
 
 err_end:
-	अगर (fan->acpi4) अणु
-		पूर्णांक i;
+	if (fan->acpi4) {
+		int i;
 
-		क्रम (i = 0; i < fan->fps_count; ++i)
-			sysfs_हटाओ_file(&device->dev.kobj, &fan->fps[i].dev_attr.attr);
-	पूर्ण
+		for (i = 0; i < fan->fps_count; ++i)
+			sysfs_remove_file(&device->dev.kobj, &fan->fps[i].dev_attr.attr);
+	}
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
-अटल पूर्णांक acpi_fan_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा acpi_fan *fan = platक्रमm_get_drvdata(pdev);
+static int acpi_fan_remove(struct platform_device *pdev)
+{
+	struct acpi_fan *fan = platform_get_drvdata(pdev);
 
-	अगर (fan->acpi4) अणु
-		काष्ठा acpi_device *device = ACPI_COMPANION(&pdev->dev);
-		पूर्णांक i;
+	if (fan->acpi4) {
+		struct acpi_device *device = ACPI_COMPANION(&pdev->dev);
+		int i;
 
-		क्रम (i = 0; i < fan->fps_count; ++i)
-			sysfs_हटाओ_file(&device->dev.kobj, &fan->fps[i].dev_attr.attr);
-	पूर्ण
-	sysfs_हटाओ_link(&pdev->dev.kobj, "thermal_cooling");
-	sysfs_हटाओ_link(&fan->cdev->device.kobj, "device");
-	thermal_cooling_device_unरेजिस्टर(fan->cdev);
+		for (i = 0; i < fan->fps_count; ++i)
+			sysfs_remove_file(&device->dev.kobj, &fan->fps[i].dev_attr.attr);
+	}
+	sysfs_remove_link(&pdev->dev.kobj, "thermal_cooling");
+	sysfs_remove_link(&fan->cdev->device.kobj, "device");
+	thermal_cooling_device_unregister(fan->cdev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_PM_SLEEP
-अटल पूर्णांक acpi_fan_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा acpi_fan *fan = dev_get_drvdata(dev);
-	अगर (fan->acpi4)
-		वापस 0;
+#ifdef CONFIG_PM_SLEEP
+static int acpi_fan_suspend(struct device *dev)
+{
+	struct acpi_fan *fan = dev_get_drvdata(dev);
+	if (fan->acpi4)
+		return 0;
 
-	acpi_device_set_घातer(ACPI_COMPANION(dev), ACPI_STATE_D0);
+	acpi_device_set_power(ACPI_COMPANION(dev), ACPI_STATE_D0);
 
-	वापस AE_OK;
-पूर्ण
+	return AE_OK;
+}
 
-अटल पूर्णांक acpi_fan_resume(काष्ठा device *dev)
-अणु
-	पूर्णांक result;
-	काष्ठा acpi_fan *fan = dev_get_drvdata(dev);
+static int acpi_fan_resume(struct device *dev)
+{
+	int result;
+	struct acpi_fan *fan = dev_get_drvdata(dev);
 
-	अगर (fan->acpi4)
-		वापस 0;
+	if (fan->acpi4)
+		return 0;
 
-	result = acpi_device_update_घातer(ACPI_COMPANION(dev), शून्य);
-	अगर (result)
+	result = acpi_device_update_power(ACPI_COMPANION(dev), NULL);
+	if (result)
 		dev_err(dev, "Error updating fan power state\n");
 
-	वापस result;
-पूर्ण
-#पूर्ण_अगर
+	return result;
+}
+#endif
 
-module_platक्रमm_driver(acpi_fan_driver);
+module_platform_driver(acpi_fan_driver);

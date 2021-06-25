@@ -1,11 +1,10 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: MIT */
-#अगर_अघोषित __NVBIOS_PERF_H__
-#घोषणा __NVBIOS_PERF_H__
-u32 nvbios_perf_table(काष्ठा nvkm_bios *, u8 *ver, u8 *hdr,
+/* SPDX-License-Identifier: MIT */
+#ifndef __NVBIOS_PERF_H__
+#define __NVBIOS_PERF_H__
+u32 nvbios_perf_table(struct nvkm_bios *, u8 *ver, u8 *hdr,
 		      u8 *cnt, u8 *len, u8 *snr, u8 *ssz);
 
-काष्ठा nvbios_perfE अणु
+struct nvbios_perfE {
 	u8  pstate;
 	u8  fanspeed;
 	u8  voltage;
@@ -17,29 +16,29 @@ u32 nvbios_perf_table(काष्ठा nvkm_bios *, u8 *ver, u8 *hdr,
 	u32 script;
 	u8  pcie_speed;
 	u8  pcie_width;
-पूर्ण;
+};
 
-u32 nvbios_perf_entry(काष्ठा nvkm_bios *, पूर्णांक idx,
+u32 nvbios_perf_entry(struct nvkm_bios *, int idx,
 		      u8 *ver, u8 *hdr, u8 *cnt, u8 *len);
-u32 nvbios_perfEp(काष्ठा nvkm_bios *, पूर्णांक idx,
-		  u8 *ver, u8 *hdr, u8 *cnt, u8 *len, काष्ठा nvbios_perfE *);
+u32 nvbios_perfEp(struct nvkm_bios *, int idx,
+		  u8 *ver, u8 *hdr, u8 *cnt, u8 *len, struct nvbios_perfE *);
 
-काष्ठा nvbios_perfS अणु
-	जोड़ अणु
-		काष्ठा अणु
+struct nvbios_perfS {
+	union {
+		struct {
 			u32 freq;
-		पूर्ण v40;
-	पूर्ण;
-पूर्ण;
+		} v40;
+	};
+};
 
-u32 nvbios_perfSe(काष्ठा nvkm_bios *, u32 data, पूर्णांक idx,
+u32 nvbios_perfSe(struct nvkm_bios *, u32 data, int idx,
 		  u8 *ver, u8 *hdr, u8 cnt, u8 len);
-u32 nvbios_perfSp(काष्ठा nvkm_bios *, u32 data, पूर्णांक idx,
-		  u8 *ver, u8 *hdr, u8 cnt, u8 len, काष्ठा nvbios_perfS *);
+u32 nvbios_perfSp(struct nvkm_bios *, u32 data, int idx,
+		  u8 *ver, u8 *hdr, u8 cnt, u8 len, struct nvbios_perfS *);
 
-काष्ठा nvbios_perf_fan अणु
-	u32 pwm_भागisor;
-पूर्ण;
+struct nvbios_perf_fan {
+	u32 pwm_divisor;
+};
 
-पूर्णांक nvbios_perf_fan_parse(काष्ठा nvkm_bios *, काष्ठा nvbios_perf_fan *);
-#पूर्ण_अगर
+int nvbios_perf_fan_parse(struct nvkm_bios *, struct nvbios_perf_fan *);
+#endif

@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Infraकाष्ठाure क्रम statistic tracing (histogram output).
+ * Infrastructure for statistic tracing (histogram output).
  *
  * Copyright (C) 2008-2009 Frederic Weisbecker <fweisbec@gmail.com>
  *
@@ -10,13 +9,13 @@
  *
  */
 
-#समावेश <linux/security.h>
-#समावेश <linux/list.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/rbtree.h>
-#समावेश <linux/tracefs.h>
-#समावेश "trace_stat.h"
-#समावेश "trace.h"
+#include <linux/security.h>
+#include <linux/list.h>
+#include <linux/slab.h>
+#include <linux/rbtree.h>
+#include <linux/tracefs.h>
+#include "trace_stat.h"
+#include "trace.h"
 
 
 /*
@@ -24,321 +23,321 @@
  * We use a such tree to sort quickly the stat
  * entries from the tracer.
  */
-काष्ठा stat_node अणु
-	काष्ठा rb_node		node;
-	व्योम			*stat;
-पूर्ण;
+struct stat_node {
+	struct rb_node		node;
+	void			*stat;
+};
 
 /* A stat session is the stats output in one file */
-काष्ठा stat_session अणु
-	काष्ठा list_head	session_list;
-	काष्ठा tracer_stat	*ts;
-	काष्ठा rb_root		stat_root;
-	काष्ठा mutex		stat_mutex;
-	काष्ठा dentry		*file;
-पूर्ण;
+struct stat_session {
+	struct list_head	session_list;
+	struct tracer_stat	*ts;
+	struct rb_root		stat_root;
+	struct mutex		stat_mutex;
+	struct dentry		*file;
+};
 
 /* All of the sessions currently in use. Each stat file embed one session */
-अटल LIST_HEAD(all_stat_sessions);
-अटल DEFINE_MUTEX(all_stat_sessions_mutex);
+static LIST_HEAD(all_stat_sessions);
+static DEFINE_MUTEX(all_stat_sessions_mutex);
 
-/* The root directory क्रम all stat files */
-अटल काष्ठा dentry		*stat_dir;
+/* The root directory for all stat files */
+static struct dentry		*stat_dir;
 
-अटल व्योम __reset_stat_session(काष्ठा stat_session *session)
-अणु
-	काष्ठा stat_node *snode, *n;
+static void __reset_stat_session(struct stat_session *session)
+{
+	struct stat_node *snode, *n;
 
-	rbtree_postorder_क्रम_each_entry_safe(snode, n, &session->stat_root, node) अणु
-		अगर (session->ts->stat_release)
+	rbtree_postorder_for_each_entry_safe(snode, n, &session->stat_root, node) {
+		if (session->ts->stat_release)
 			session->ts->stat_release(snode->stat);
-		kमुक्त(snode);
-	पूर्ण
+		kfree(snode);
+	}
 
 	session->stat_root = RB_ROOT;
-पूर्ण
+}
 
-अटल व्योम reset_stat_session(काष्ठा stat_session *session)
-अणु
+static void reset_stat_session(struct stat_session *session)
+{
 	mutex_lock(&session->stat_mutex);
 	__reset_stat_session(session);
 	mutex_unlock(&session->stat_mutex);
-पूर्ण
+}
 
-अटल व्योम destroy_session(काष्ठा stat_session *session)
-अणु
-	tracefs_हटाओ(session->file);
+static void destroy_session(struct stat_session *session)
+{
+	tracefs_remove(session->file);
 	__reset_stat_session(session);
 	mutex_destroy(&session->stat_mutex);
-	kमुक्त(session);
-पूर्ण
+	kfree(session);
+}
 
-अटल पूर्णांक insert_stat(काष्ठा rb_root *root, व्योम *stat, cmp_func_t cmp)
-अणु
-	काष्ठा rb_node **new = &(root->rb_node), *parent = शून्य;
-	काष्ठा stat_node *data;
+static int insert_stat(struct rb_root *root, void *stat, cmp_func_t cmp)
+{
+	struct rb_node **new = &(root->rb_node), *parent = NULL;
+	struct stat_node *data;
 
-	data = kzalloc(माप(*data), GFP_KERNEL);
-	अगर (!data)
-		वापस -ENOMEM;
+	data = kzalloc(sizeof(*data), GFP_KERNEL);
+	if (!data)
+		return -ENOMEM;
 	data->stat = stat;
 
 	/*
 	 * Figure out where to put new node
 	 * This is a descendent sorting
 	 */
-	जबतक (*new) अणु
-		काष्ठा stat_node *this;
-		पूर्णांक result;
+	while (*new) {
+		struct stat_node *this;
+		int result;
 
-		this = container_of(*new, काष्ठा stat_node, node);
+		this = container_of(*new, struct stat_node, node);
 		result = cmp(data->stat, this->stat);
 
 		parent = *new;
-		अगर (result >= 0)
+		if (result >= 0)
 			new = &((*new)->rb_left);
-		अन्यथा
+		else
 			new = &((*new)->rb_right);
-	पूर्ण
+	}
 
 	rb_link_node(&data->node, parent, new);
 	rb_insert_color(&data->node, root);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * For tracers that करोn't provide a stat_cmp callback.
- * This one will क्रमce an insertion as right-most node
+ * For tracers that don't provide a stat_cmp callback.
+ * This one will force an insertion as right-most node
  * in the rbtree.
  */
-अटल पूर्णांक dummy_cmp(स्थिर व्योम *p1, स्थिर व्योम *p2)
-अणु
-	वापस -1;
-पूर्ण
+static int dummy_cmp(const void *p1, const void *p2)
+{
+	return -1;
+}
 
 /*
- * Initialize the stat rbtree at each trace_stat file खोलोing.
- * All of these copies and sorting are required on all खोलोing
+ * Initialize the stat rbtree at each trace_stat file opening.
+ * All of these copies and sorting are required on all opening
  * since the stats could have changed between two file sessions.
  */
-अटल पूर्णांक stat_seq_init(काष्ठा stat_session *session)
-अणु
-	काष्ठा tracer_stat *ts = session->ts;
-	काष्ठा rb_root *root = &session->stat_root;
-	व्योम *stat;
-	पूर्णांक ret = 0;
-	पूर्णांक i;
+static int stat_seq_init(struct stat_session *session)
+{
+	struct tracer_stat *ts = session->ts;
+	struct rb_root *root = &session->stat_root;
+	void *stat;
+	int ret = 0;
+	int i;
 
 	mutex_lock(&session->stat_mutex);
 	__reset_stat_session(session);
 
-	अगर (!ts->stat_cmp)
+	if (!ts->stat_cmp)
 		ts->stat_cmp = dummy_cmp;
 
 	stat = ts->stat_start(ts);
-	अगर (!stat)
-		जाओ निकास;
+	if (!stat)
+		goto exit;
 
 	ret = insert_stat(root, stat, ts->stat_cmp);
-	अगर (ret)
-		जाओ निकास;
+	if (ret)
+		goto exit;
 
 	/*
 	 * Iterate over the tracer stat entries and store them in an rbtree.
 	 */
-	क्रम (i = 1; ; i++) अणु
+	for (i = 1; ; i++) {
 		stat = ts->stat_next(stat, i);
 
 		/* End of insertion */
-		अगर (!stat)
-			अवरोध;
+		if (!stat)
+			break;
 
 		ret = insert_stat(root, stat, ts->stat_cmp);
-		अगर (ret)
-			जाओ निकास_मुक्त_rbtree;
-	पूर्ण
+		if (ret)
+			goto exit_free_rbtree;
+	}
 
-निकास:
+exit:
 	mutex_unlock(&session->stat_mutex);
-	वापस ret;
+	return ret;
 
-निकास_मुक्त_rbtree:
+exit_free_rbtree:
 	__reset_stat_session(session);
 	mutex_unlock(&session->stat_mutex);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 
-अटल व्योम *stat_seq_start(काष्ठा seq_file *s, loff_t *pos)
-अणु
-	काष्ठा stat_session *session = s->निजी;
-	काष्ठा rb_node *node;
-	पूर्णांक n = *pos;
-	पूर्णांक i;
+static void *stat_seq_start(struct seq_file *s, loff_t *pos)
+{
+	struct stat_session *session = s->private;
+	struct rb_node *node;
+	int n = *pos;
+	int i;
 
-	/* Prevent from tracer चयन or rbtree modअगरication */
+	/* Prevent from tracer switch or rbtree modification */
 	mutex_lock(&session->stat_mutex);
 
-	/* If we are in the beginning of the file, prपूर्णांक the headers */
-	अगर (session->ts->stat_headers) अणु
-		अगर (n == 0)
-			वापस SEQ_START_TOKEN;
+	/* If we are in the beginning of the file, print the headers */
+	if (session->ts->stat_headers) {
+		if (n == 0)
+			return SEQ_START_TOKEN;
 		n--;
-	पूर्ण
+	}
 
 	node = rb_first(&session->stat_root);
-	क्रम (i = 0; node && i < n; i++)
+	for (i = 0; node && i < n; i++)
 		node = rb_next(node);
 
-	वापस node;
-पूर्ण
+	return node;
+}
 
-अटल व्योम *stat_seq_next(काष्ठा seq_file *s, व्योम *p, loff_t *pos)
-अणु
-	काष्ठा stat_session *session = s->निजी;
-	काष्ठा rb_node *node = p;
+static void *stat_seq_next(struct seq_file *s, void *p, loff_t *pos)
+{
+	struct stat_session *session = s->private;
+	struct rb_node *node = p;
 
 	(*pos)++;
 
-	अगर (p == SEQ_START_TOKEN)
-		वापस rb_first(&session->stat_root);
+	if (p == SEQ_START_TOKEN)
+		return rb_first(&session->stat_root);
 
-	वापस rb_next(node);
-पूर्ण
+	return rb_next(node);
+}
 
-अटल व्योम stat_seq_stop(काष्ठा seq_file *s, व्योम *p)
-अणु
-	काष्ठा stat_session *session = s->निजी;
+static void stat_seq_stop(struct seq_file *s, void *p)
+{
+	struct stat_session *session = s->private;
 	mutex_unlock(&session->stat_mutex);
-पूर्ण
+}
 
-अटल पूर्णांक stat_seq_show(काष्ठा seq_file *s, व्योम *v)
-अणु
-	काष्ठा stat_session *session = s->निजी;
-	काष्ठा stat_node *l = container_of(v, काष्ठा stat_node, node);
+static int stat_seq_show(struct seq_file *s, void *v)
+{
+	struct stat_session *session = s->private;
+	struct stat_node *l = container_of(v, struct stat_node, node);
 
-	अगर (v == SEQ_START_TOKEN)
-		वापस session->ts->stat_headers(s);
+	if (v == SEQ_START_TOKEN)
+		return session->ts->stat_headers(s);
 
-	वापस session->ts->stat_show(s, l->stat);
-पूर्ण
+	return session->ts->stat_show(s, l->stat);
+}
 
-अटल स्थिर काष्ठा seq_operations trace_stat_seq_ops = अणु
+static const struct seq_operations trace_stat_seq_ops = {
 	.start		= stat_seq_start,
 	.next		= stat_seq_next,
 	.stop		= stat_seq_stop,
 	.show		= stat_seq_show
-पूर्ण;
+};
 
-/* The session stat is refilled and resorted at each stat file खोलोing */
-अटल पूर्णांक tracing_stat_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	पूर्णांक ret;
-	काष्ठा seq_file *m;
-	काष्ठा stat_session *session = inode->i_निजी;
+/* The session stat is refilled and resorted at each stat file opening */
+static int tracing_stat_open(struct inode *inode, struct file *file)
+{
+	int ret;
+	struct seq_file *m;
+	struct stat_session *session = inode->i_private;
 
-	ret = security_locked_करोwn(LOCKDOWN_TRACEFS);
-	अगर (ret)
-		वापस ret;
+	ret = security_locked_down(LOCKDOWN_TRACEFS);
+	if (ret)
+		return ret;
 
 	ret = stat_seq_init(session);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	ret = seq_खोलो(file, &trace_stat_seq_ops);
-	अगर (ret) अणु
+	ret = seq_open(file, &trace_stat_seq_ops);
+	if (ret) {
 		reset_stat_session(session);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	m = file->निजी_data;
-	m->निजी = session;
-	वापस ret;
-पूर्ण
+	m = file->private_data;
+	m->private = session;
+	return ret;
+}
 
 /*
- * Aव्योम consuming memory with our now useless rbtree.
+ * Avoid consuming memory with our now useless rbtree.
  */
-अटल पूर्णांक tracing_stat_release(काष्ठा inode *i, काष्ठा file *f)
-अणु
-	काष्ठा stat_session *session = i->i_निजी;
+static int tracing_stat_release(struct inode *i, struct file *f)
+{
+	struct stat_session *session = i->i_private;
 
 	reset_stat_session(session);
 
-	वापस seq_release(i, f);
-पूर्ण
+	return seq_release(i, f);
+}
 
-अटल स्थिर काष्ठा file_operations tracing_stat_fops = अणु
-	.खोलो		= tracing_stat_खोलो,
-	.पढ़ो		= seq_पढ़ो,
+static const struct file_operations tracing_stat_fops = {
+	.open		= tracing_stat_open,
+	.read		= seq_read,
 	.llseek		= seq_lseek,
 	.release	= tracing_stat_release
-पूर्ण;
+};
 
-अटल पूर्णांक tracing_stat_init(व्योम)
-अणु
-	पूर्णांक ret;
+static int tracing_stat_init(void)
+{
+	int ret;
 
 	ret = tracing_init_dentry();
-	अगर (ret)
-		वापस -ENODEV;
+	if (ret)
+		return -ENODEV;
 
-	stat_dir = tracefs_create_dir("trace_stat", शून्य);
-	अगर (!stat_dir) अणु
+	stat_dir = tracefs_create_dir("trace_stat", NULL);
+	if (!stat_dir) {
 		pr_warn("Could not create tracefs 'trace_stat' entry\n");
-		वापस -ENOMEM;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return -ENOMEM;
+	}
+	return 0;
+}
 
-अटल पूर्णांक init_stat_file(काष्ठा stat_session *session)
-अणु
-	पूर्णांक ret;
+static int init_stat_file(struct stat_session *session)
+{
+	int ret;
 
-	अगर (!stat_dir && (ret = tracing_stat_init()))
-		वापस ret;
+	if (!stat_dir && (ret = tracing_stat_init()))
+		return ret;
 
 	session->file = tracefs_create_file(session->ts->name, 0644,
 					    stat_dir,
 					    session, &tracing_stat_fops);
-	अगर (!session->file)
-		वापस -ENOMEM;
-	वापस 0;
-पूर्ण
+	if (!session->file)
+		return -ENOMEM;
+	return 0;
+}
 
-पूर्णांक रेजिस्टर_stat_tracer(काष्ठा tracer_stat *trace)
-अणु
-	काष्ठा stat_session *session, *node;
-	पूर्णांक ret = -EINVAL;
+int register_stat_tracer(struct tracer_stat *trace)
+{
+	struct stat_session *session, *node;
+	int ret = -EINVAL;
 
-	अगर (!trace)
-		वापस -EINVAL;
+	if (!trace)
+		return -EINVAL;
 
-	अगर (!trace->stat_start || !trace->stat_next || !trace->stat_show)
-		वापस -EINVAL;
+	if (!trace->stat_start || !trace->stat_next || !trace->stat_show)
+		return -EINVAL;
 
-	/* Alपढ़ोy रेजिस्टरed? */
+	/* Already registered? */
 	mutex_lock(&all_stat_sessions_mutex);
-	list_क्रम_each_entry(node, &all_stat_sessions, session_list) अणु
-		अगर (node->ts == trace)
-			जाओ out;
-	पूर्ण
+	list_for_each_entry(node, &all_stat_sessions, session_list) {
+		if (node->ts == trace)
+			goto out;
+	}
 
 	ret = -ENOMEM;
 	/* Init the session */
-	session = kzalloc(माप(*session), GFP_KERNEL);
-	अगर (!session)
-		जाओ out;
+	session = kzalloc(sizeof(*session), GFP_KERNEL);
+	if (!session)
+		goto out;
 
 	session->ts = trace;
 	INIT_LIST_HEAD(&session->session_list);
 	mutex_init(&session->stat_mutex);
 
 	ret = init_stat_file(session);
-	अगर (ret) अणु
+	if (ret) {
 		destroy_session(session);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	ret = 0;
 	/* Register */
@@ -346,20 +345,20 @@
  out:
 	mutex_unlock(&all_stat_sessions_mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम unरेजिस्टर_stat_tracer(काष्ठा tracer_stat *trace)
-अणु
-	काष्ठा stat_session *node, *पंचांगp;
+void unregister_stat_tracer(struct tracer_stat *trace)
+{
+	struct stat_session *node, *tmp;
 
 	mutex_lock(&all_stat_sessions_mutex);
-	list_क्रम_each_entry_safe(node, पंचांगp, &all_stat_sessions, session_list) अणु
-		अगर (node->ts == trace) अणु
+	list_for_each_entry_safe(node, tmp, &all_stat_sessions, session_list) {
+		if (node->ts == trace) {
 			list_del(&node->session_list);
 			destroy_session(node);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 	mutex_unlock(&all_stat_sessions_mutex);
-पूर्ण
+}

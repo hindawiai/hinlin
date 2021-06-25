@@ -1,153 +1,152 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _TOOLS_LINUX_REFCOUNT_H
-#घोषणा _TOOLS_LINUX_REFCOUNT_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _TOOLS_LINUX_REFCOUNT_H
+#define _TOOLS_LINUX_REFCOUNT_H
 
 /*
- * Variant of atomic_t specialized क्रम reference counts.
+ * Variant of atomic_t specialized for reference counts.
  *
- * The पूर्णांकerface matches the atomic_t पूर्णांकerface (to aid in porting) but only
- * provides the few functions one should use क्रम reference counting.
+ * The interface matches the atomic_t interface (to aid in porting) but only
+ * provides the few functions one should use for reference counting.
  *
- * It dअगरfers in that the counter saturates at अच_पूर्णांक_उच्च and will not move once
- * there. This aव्योमs wrapping the counter and causing 'spurious'
- * use-after-मुक्त issues.
+ * It differs in that the counter saturates at UINT_MAX and will not move once
+ * there. This avoids wrapping the counter and causing 'spurious'
+ * use-after-free issues.
  *
  * Memory ordering rules are slightly relaxed wrt regular atomic_t functions
- * and provide only what is strictly required क्रम refcounts.
+ * and provide only what is strictly required for refcounts.
  *
  * The increments are fully relaxed; these will not provide ordering. The
  * rationale is that whatever is used to obtain the object we're increasing the
- * reference count on will provide the ordering. For locked data काष्ठाures,
- * its the lock acquire, क्रम RCU/lockless data काष्ठाures its the dependent
+ * reference count on will provide the ordering. For locked data structures,
+ * its the lock acquire, for RCU/lockless data structures its the dependent
  * load.
  *
  * Do note that inc_not_zero() provides a control dependency which will order
- * future stores against the inc, this ensures we'll never modअगरy the object
- * अगर we did not in fact acquire a reference.
+ * future stores against the inc, this ensures we'll never modify the object
+ * if we did not in fact acquire a reference.
  *
  * The decrements will provide release order, such that all the prior loads and
- * stores will be issued beक्रमe, it also provides a control dependency, which
- * will order us against the subsequent मुक्त().
+ * stores will be issued before, it also provides a control dependency, which
+ * will order us against the subsequent free().
  *
  * The control dependency is against the load of the cmpxchg (ll/sc) that
  * succeeded. This means the stores aren't fully ordered, but this is fine
  * because the 1->0 transition indicates no concurrency.
  *
- * Note that the allocator is responsible क्रम ordering things between मुक्त()
+ * Note that the allocator is responsible for ordering things between free()
  * and alloc().
  *
  */
 
-#समावेश <linux/atomic.h>
-#समावेश <linux/kernel.h>
+#include <linux/atomic.h>
+#include <linux/kernel.h>
 
-#अगर_घोषित न_संशोधन
-#घोषणा REFCOUNT_WARN(cond, str) (व्योम)(cond)
-#घोषणा __refcount_check
-#अन्यथा
-#घोषणा REFCOUNT_WARN(cond, str) BUG_ON(cond)
-#घोषणा __refcount_check	__must_check
-#पूर्ण_अगर
+#ifdef NDEBUG
+#define REFCOUNT_WARN(cond, str) (void)(cond)
+#define __refcount_check
+#else
+#define REFCOUNT_WARN(cond, str) BUG_ON(cond)
+#define __refcount_check	__must_check
+#endif
 
-प्रकार काष्ठा refcount_काष्ठा अणु
+typedef struct refcount_struct {
 	atomic_t refs;
-पूर्ण refcount_t;
+} refcount_t;
 
-#घोषणा REFCOUNT_INIT(n)	अणु .refs = ATOMIC_INIT(n), पूर्ण
+#define REFCOUNT_INIT(n)	{ .refs = ATOMIC_INIT(n), }
 
-अटल अंतरभूत व्योम refcount_set(refcount_t *r, अचिन्हित पूर्णांक n)
-अणु
+static inline void refcount_set(refcount_t *r, unsigned int n)
+{
 	atomic_set(&r->refs, n);
-पूर्ण
+}
 
-अटल अंतरभूत अचिन्हित पूर्णांक refcount_पढ़ो(स्थिर refcount_t *r)
-अणु
-	वापस atomic_पढ़ो(&r->refs);
-पूर्ण
+static inline unsigned int refcount_read(const refcount_t *r)
+{
+	return atomic_read(&r->refs);
+}
 
 /*
- * Similar to atomic_inc_not_zero(), will saturate at अच_पूर्णांक_उच्च and WARN.
+ * Similar to atomic_inc_not_zero(), will saturate at UINT_MAX and WARN.
  *
  * Provides no memory ordering, it is assumed the caller has guaranteed the
- * object memory to be stable (RCU, etc.). It करोes provide a control dependency
+ * object memory to be stable (RCU, etc.). It does provide a control dependency
  * and thereby orders future stores. See the comment on top.
  */
-अटल अंतरभूत __refcount_check
+static inline __refcount_check
 bool refcount_inc_not_zero(refcount_t *r)
-अणु
-	अचिन्हित पूर्णांक old, new, val = atomic_पढ़ो(&r->refs);
+{
+	unsigned int old, new, val = atomic_read(&r->refs);
 
-	क्रम (;;) अणु
+	for (;;) {
 		new = val + 1;
 
-		अगर (!val)
-			वापस false;
+		if (!val)
+			return false;
 
-		अगर (unlikely(!new))
-			वापस true;
+		if (unlikely(!new))
+			return true;
 
 		old = atomic_cmpxchg_relaxed(&r->refs, val, new);
-		अगर (old == val)
-			अवरोध;
+		if (old == val)
+			break;
 
 		val = old;
-	पूर्ण
+	}
 
-	REFCOUNT_WARN(new == अच_पूर्णांक_उच्च, "refcount_t: saturated; leaking memory.\n");
+	REFCOUNT_WARN(new == UINT_MAX, "refcount_t: saturated; leaking memory.\n");
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
 /*
- * Similar to atomic_inc(), will saturate at अच_पूर्णांक_उच्च and WARN.
+ * Similar to atomic_inc(), will saturate at UINT_MAX and WARN.
  *
- * Provides no memory ordering, it is assumed the caller alपढ़ोy has a
+ * Provides no memory ordering, it is assumed the caller already has a
  * reference on the object, will WARN when this is not so.
  */
-अटल अंतरभूत व्योम refcount_inc(refcount_t *r)
-अणु
+static inline void refcount_inc(refcount_t *r)
+{
 	REFCOUNT_WARN(!refcount_inc_not_zero(r), "refcount_t: increment on 0; use-after-free.\n");
-पूर्ण
+}
 
 /*
  * Similar to atomic_dec_and_test(), it will WARN on underflow and fail to
- * decrement when saturated at अच_पूर्णांक_उच्च.
+ * decrement when saturated at UINT_MAX.
  *
- * Provides release memory ordering, such that prior loads and stores are करोne
- * beक्रमe, and provides a control dependency such that मुक्त() must come after.
+ * Provides release memory ordering, such that prior loads and stores are done
+ * before, and provides a control dependency such that free() must come after.
  * See the comment on top.
  */
-अटल अंतरभूत __refcount_check
-bool refcount_sub_and_test(अचिन्हित पूर्णांक i, refcount_t *r)
-अणु
-	अचिन्हित पूर्णांक old, new, val = atomic_पढ़ो(&r->refs);
+static inline __refcount_check
+bool refcount_sub_and_test(unsigned int i, refcount_t *r)
+{
+	unsigned int old, new, val = atomic_read(&r->refs);
 
-	क्रम (;;) अणु
-		अगर (unlikely(val == अच_पूर्णांक_उच्च))
-			वापस false;
+	for (;;) {
+		if (unlikely(val == UINT_MAX))
+			return false;
 
 		new = val - i;
-		अगर (new > val) अणु
+		if (new > val) {
 			REFCOUNT_WARN(new > val, "refcount_t: underflow; use-after-free.\n");
-			वापस false;
-		पूर्ण
+			return false;
+		}
 
 		old = atomic_cmpxchg_release(&r->refs, val, new);
-		अगर (old == val)
-			अवरोध;
+		if (old == val)
+			break;
 
 		val = old;
-	पूर्ण
+	}
 
-	वापस !new;
-पूर्ण
+	return !new;
+}
 
-अटल अंतरभूत __refcount_check
+static inline __refcount_check
 bool refcount_dec_and_test(refcount_t *r)
-अणु
-	वापस refcount_sub_and_test(1, r);
-पूर्ण
+{
+	return refcount_sub_and_test(1, r);
+}
 
 
-#पूर्ण_अगर /* _ATOMIC_LINUX_REFCOUNT_H */
+#endif /* _ATOMIC_LINUX_REFCOUNT_H */

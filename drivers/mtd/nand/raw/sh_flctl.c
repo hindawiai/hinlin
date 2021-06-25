@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * SuperH FLCTL nand controller
  *
@@ -9,328 +8,328 @@
  * Based on fsl_elbc_nand.c, Copyright (c) 2006-2007 Freescale Semiconductor
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/completion.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/dmaengine.h>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/of.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <linux/sh_dma.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/माला.स>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/completion.h>
+#include <linux/delay.h>
+#include <linux/dmaengine.h>
+#include <linux/dma-mapping.h>
+#include <linux/interrupt.h>
+#include <linux/io.h>
+#include <linux/of.h>
+#include <linux/of_device.h>
+#include <linux/platform_device.h>
+#include <linux/pm_runtime.h>
+#include <linux/sh_dma.h>
+#include <linux/slab.h>
+#include <linux/string.h>
 
-#समावेश <linux/mtd/mtd.h>
-#समावेश <linux/mtd/rawnand.h>
-#समावेश <linux/mtd/partitions.h>
-#समावेश <linux/mtd/sh_flctl.h>
+#include <linux/mtd/mtd.h>
+#include <linux/mtd/rawnand.h>
+#include <linux/mtd/partitions.h>
+#include <linux/mtd/sh_flctl.h>
 
-अटल पूर्णांक flctl_4secc_ooblayout_sp_ecc(काष्ठा mtd_info *mtd, पूर्णांक section,
-					काष्ठा mtd_oob_region *oobregion)
-अणु
-	काष्ठा nand_chip *chip = mtd_to_nand(mtd);
+static int flctl_4secc_ooblayout_sp_ecc(struct mtd_info *mtd, int section,
+					struct mtd_oob_region *oobregion)
+{
+	struct nand_chip *chip = mtd_to_nand(mtd);
 
-	अगर (section)
-		वापस -दुस्फल;
+	if (section)
+		return -ERANGE;
 
 	oobregion->offset = 0;
 	oobregion->length = chip->ecc.bytes;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक flctl_4secc_ooblayout_sp_मुक्त(काष्ठा mtd_info *mtd, पूर्णांक section,
-					 काष्ठा mtd_oob_region *oobregion)
-अणु
-	अगर (section)
-		वापस -दुस्फल;
+static int flctl_4secc_ooblayout_sp_free(struct mtd_info *mtd, int section,
+					 struct mtd_oob_region *oobregion)
+{
+	if (section)
+		return -ERANGE;
 
 	oobregion->offset = 12;
 	oobregion->length = 4;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा mtd_ooblayout_ops flctl_4secc_oob_smallpage_ops = अणु
+static const struct mtd_ooblayout_ops flctl_4secc_oob_smallpage_ops = {
 	.ecc = flctl_4secc_ooblayout_sp_ecc,
-	.मुक्त = flctl_4secc_ooblayout_sp_मुक्त,
-पूर्ण;
+	.free = flctl_4secc_ooblayout_sp_free,
+};
 
-अटल पूर्णांक flctl_4secc_ooblayout_lp_ecc(काष्ठा mtd_info *mtd, पूर्णांक section,
-					काष्ठा mtd_oob_region *oobregion)
-अणु
-	काष्ठा nand_chip *chip = mtd_to_nand(mtd);
+static int flctl_4secc_ooblayout_lp_ecc(struct mtd_info *mtd, int section,
+					struct mtd_oob_region *oobregion)
+{
+	struct nand_chip *chip = mtd_to_nand(mtd);
 
-	अगर (section >= chip->ecc.steps)
-		वापस -दुस्फल;
+	if (section >= chip->ecc.steps)
+		return -ERANGE;
 
 	oobregion->offset = (section * 16) + 6;
 	oobregion->length = chip->ecc.bytes;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक flctl_4secc_ooblayout_lp_मुक्त(काष्ठा mtd_info *mtd, पूर्णांक section,
-					 काष्ठा mtd_oob_region *oobregion)
-अणु
-	काष्ठा nand_chip *chip = mtd_to_nand(mtd);
+static int flctl_4secc_ooblayout_lp_free(struct mtd_info *mtd, int section,
+					 struct mtd_oob_region *oobregion)
+{
+	struct nand_chip *chip = mtd_to_nand(mtd);
 
-	अगर (section >= chip->ecc.steps)
-		वापस -दुस्फल;
+	if (section >= chip->ecc.steps)
+		return -ERANGE;
 
 	oobregion->offset = section * 16;
 	oobregion->length = 6;
 
-	अगर (!section) अणु
+	if (!section) {
 		oobregion->offset += 2;
 		oobregion->length -= 2;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा mtd_ooblayout_ops flctl_4secc_oob_largepage_ops = अणु
+static const struct mtd_ooblayout_ops flctl_4secc_oob_largepage_ops = {
 	.ecc = flctl_4secc_ooblayout_lp_ecc,
-	.मुक्त = flctl_4secc_ooblayout_lp_मुक्त,
-पूर्ण;
+	.free = flctl_4secc_ooblayout_lp_free,
+};
 
-अटल uपूर्णांक8_t scan_ff_pattern[] = अणु 0xff, 0xff पूर्ण;
+static uint8_t scan_ff_pattern[] = { 0xff, 0xff };
 
-अटल काष्ठा nand_bbt_descr flctl_4secc_smallpage = अणु
+static struct nand_bbt_descr flctl_4secc_smallpage = {
 	.offs = 11,
 	.len = 1,
 	.pattern = scan_ff_pattern,
-पूर्ण;
+};
 
-अटल काष्ठा nand_bbt_descr flctl_4secc_largepage = अणु
+static struct nand_bbt_descr flctl_4secc_largepage = {
 	.offs = 0,
 	.len = 2,
 	.pattern = scan_ff_pattern,
-पूर्ण;
+};
 
-अटल व्योम empty_fअगरo(काष्ठा sh_flctl *flctl)
-अणु
-	ग_लिखोl(flctl->flपूर्णांकdmacr_base | AC1CLR | AC0CLR, FLINTDMACR(flctl));
-	ग_लिखोl(flctl->flपूर्णांकdmacr_base, FLINTDMACR(flctl));
-पूर्ण
+static void empty_fifo(struct sh_flctl *flctl)
+{
+	writel(flctl->flintdmacr_base | AC1CLR | AC0CLR, FLINTDMACR(flctl));
+	writel(flctl->flintdmacr_base, FLINTDMACR(flctl));
+}
 
-अटल व्योम start_translation(काष्ठा sh_flctl *flctl)
-अणु
-	ग_लिखोb(TRSTRT, FLTRCR(flctl));
-पूर्ण
+static void start_translation(struct sh_flctl *flctl)
+{
+	writeb(TRSTRT, FLTRCR(flctl));
+}
 
-अटल व्योम समयout_error(काष्ठा sh_flctl *flctl, स्थिर अक्षर *str)
-अणु
+static void timeout_error(struct sh_flctl *flctl, const char *str)
+{
 	dev_err(&flctl->pdev->dev, "Timeout occurred in %s\n", str);
-पूर्ण
+}
 
-अटल व्योम रुको_completion(काष्ठा sh_flctl *flctl)
-अणु
-	uपूर्णांक32_t समयout = LOOP_TIMEOUT_MAX;
+static void wait_completion(struct sh_flctl *flctl)
+{
+	uint32_t timeout = LOOP_TIMEOUT_MAX;
 
-	जबतक (समयout--) अणु
-		अगर (पढ़ोb(FLTRCR(flctl)) & TREND) अणु
-			ग_लिखोb(0x0, FLTRCR(flctl));
-			वापस;
-		पूर्ण
+	while (timeout--) {
+		if (readb(FLTRCR(flctl)) & TREND) {
+			writeb(0x0, FLTRCR(flctl));
+			return;
+		}
 		udelay(1);
-	पूर्ण
+	}
 
-	समयout_error(flctl, __func__);
-	ग_लिखोb(0x0, FLTRCR(flctl));
-पूर्ण
+	timeout_error(flctl, __func__);
+	writeb(0x0, FLTRCR(flctl));
+}
 
-अटल व्योम flctl_dma_complete(व्योम *param)
-अणु
-	काष्ठा sh_flctl *flctl = param;
+static void flctl_dma_complete(void *param)
+{
+	struct sh_flctl *flctl = param;
 
 	complete(&flctl->dma_complete);
-पूर्ण
+}
 
-अटल व्योम flctl_release_dma(काष्ठा sh_flctl *flctl)
-अणु
-	अगर (flctl->chan_fअगरo0_rx) अणु
-		dma_release_channel(flctl->chan_fअगरo0_rx);
-		flctl->chan_fअगरo0_rx = शून्य;
-	पूर्ण
-	अगर (flctl->chan_fअगरo0_tx) अणु
-		dma_release_channel(flctl->chan_fअगरo0_tx);
-		flctl->chan_fअगरo0_tx = शून्य;
-	पूर्ण
-पूर्ण
+static void flctl_release_dma(struct sh_flctl *flctl)
+{
+	if (flctl->chan_fifo0_rx) {
+		dma_release_channel(flctl->chan_fifo0_rx);
+		flctl->chan_fifo0_rx = NULL;
+	}
+	if (flctl->chan_fifo0_tx) {
+		dma_release_channel(flctl->chan_fifo0_tx);
+		flctl->chan_fifo0_tx = NULL;
+	}
+}
 
-अटल व्योम flctl_setup_dma(काष्ठा sh_flctl *flctl)
-अणु
+static void flctl_setup_dma(struct sh_flctl *flctl)
+{
 	dma_cap_mask_t mask;
-	काष्ठा dma_slave_config cfg;
-	काष्ठा platक्रमm_device *pdev = flctl->pdev;
-	काष्ठा sh_flctl_platक्रमm_data *pdata = dev_get_platdata(&pdev->dev);
-	पूर्णांक ret;
+	struct dma_slave_config cfg;
+	struct platform_device *pdev = flctl->pdev;
+	struct sh_flctl_platform_data *pdata = dev_get_platdata(&pdev->dev);
+	int ret;
 
-	अगर (!pdata)
-		वापस;
+	if (!pdata)
+		return;
 
-	अगर (pdata->slave_id_fअगरo0_tx <= 0 || pdata->slave_id_fअगरo0_rx <= 0)
-		वापस;
+	if (pdata->slave_id_fifo0_tx <= 0 || pdata->slave_id_fifo0_rx <= 0)
+		return;
 
-	/* We can only either use DMA क्रम both Tx and Rx or not use it at all */
+	/* We can only either use DMA for both Tx and Rx or not use it at all */
 	dma_cap_zero(mask);
 	dma_cap_set(DMA_SLAVE, mask);
 
-	flctl->chan_fअगरo0_tx = dma_request_channel(mask, shdma_chan_filter,
-				(व्योम *)(uपूर्णांकptr_t)pdata->slave_id_fअगरo0_tx);
+	flctl->chan_fifo0_tx = dma_request_channel(mask, shdma_chan_filter,
+				(void *)(uintptr_t)pdata->slave_id_fifo0_tx);
 	dev_dbg(&pdev->dev, "%s: TX: got channel %p\n", __func__,
-		flctl->chan_fअगरo0_tx);
+		flctl->chan_fifo0_tx);
 
-	अगर (!flctl->chan_fअगरo0_tx)
-		वापस;
+	if (!flctl->chan_fifo0_tx)
+		return;
 
-	स_रखो(&cfg, 0, माप(cfg));
+	memset(&cfg, 0, sizeof(cfg));
 	cfg.direction = DMA_MEM_TO_DEV;
-	cfg.dst_addr = flctl->fअगरo;
+	cfg.dst_addr = flctl->fifo;
 	cfg.src_addr = 0;
-	ret = dmaengine_slave_config(flctl->chan_fअगरo0_tx, &cfg);
-	अगर (ret < 0)
-		जाओ err;
+	ret = dmaengine_slave_config(flctl->chan_fifo0_tx, &cfg);
+	if (ret < 0)
+		goto err;
 
-	flctl->chan_fअगरo0_rx = dma_request_channel(mask, shdma_chan_filter,
-				(व्योम *)(uपूर्णांकptr_t)pdata->slave_id_fअगरo0_rx);
+	flctl->chan_fifo0_rx = dma_request_channel(mask, shdma_chan_filter,
+				(void *)(uintptr_t)pdata->slave_id_fifo0_rx);
 	dev_dbg(&pdev->dev, "%s: RX: got channel %p\n", __func__,
-		flctl->chan_fअगरo0_rx);
+		flctl->chan_fifo0_rx);
 
-	अगर (!flctl->chan_fअगरo0_rx)
-		जाओ err;
+	if (!flctl->chan_fifo0_rx)
+		goto err;
 
 	cfg.direction = DMA_DEV_TO_MEM;
 	cfg.dst_addr = 0;
-	cfg.src_addr = flctl->fअगरo;
-	ret = dmaengine_slave_config(flctl->chan_fअगरo0_rx, &cfg);
-	अगर (ret < 0)
-		जाओ err;
+	cfg.src_addr = flctl->fifo;
+	ret = dmaengine_slave_config(flctl->chan_fifo0_rx, &cfg);
+	if (ret < 0)
+		goto err;
 
 	init_completion(&flctl->dma_complete);
 
-	वापस;
+	return;
 
 err:
 	flctl_release_dma(flctl);
-पूर्ण
+}
 
-अटल व्योम set_addr(काष्ठा mtd_info *mtd, पूर्णांक column, पूर्णांक page_addr)
-अणु
-	काष्ठा sh_flctl *flctl = mtd_to_flctl(mtd);
-	uपूर्णांक32_t addr = 0;
+static void set_addr(struct mtd_info *mtd, int column, int page_addr)
+{
+	struct sh_flctl *flctl = mtd_to_flctl(mtd);
+	uint32_t addr = 0;
 
-	अगर (column == -1) अणु
+	if (column == -1) {
 		addr = page_addr;	/* ERASE1 */
-	पूर्ण अन्यथा अगर (page_addr != -1) अणु
+	} else if (page_addr != -1) {
 		/* SEQIN, READ0, etc.. */
-		अगर (flctl->chip.options & न_अंकD_BUSWIDTH_16)
+		if (flctl->chip.options & NAND_BUSWIDTH_16)
 			column >>= 1;
-		अगर (flctl->page_size) अणु
+		if (flctl->page_size) {
 			addr = column & 0x0FFF;
 			addr |= (page_addr & 0xff) << 16;
 			addr |= ((page_addr >> 8) & 0xff) << 24;
 			/* big than 128MB */
-			अगर (flctl->rw_ADRCNT == ADRCNT2_E) अणु
-				uपूर्णांक32_t 	addr2;
+			if (flctl->rw_ADRCNT == ADRCNT2_E) {
+				uint32_t 	addr2;
 				addr2 = (page_addr >> 16) & 0xff;
-				ग_लिखोl(addr2, FLADR2(flctl));
-			पूर्ण
-		पूर्ण अन्यथा अणु
+				writel(addr2, FLADR2(flctl));
+			}
+		} else {
 			addr = column;
 			addr |= (page_addr & 0xff) << 8;
 			addr |= ((page_addr >> 8) & 0xff) << 16;
 			addr |= ((page_addr >> 16) & 0xff) << 24;
-		पूर्ण
-	पूर्ण
-	ग_लिखोl(addr, FLADR(flctl));
-पूर्ण
+		}
+	}
+	writel(addr, FLADR(flctl));
+}
 
-अटल व्योम रुको_rfअगरo_पढ़ोy(काष्ठा sh_flctl *flctl)
-अणु
-	uपूर्णांक32_t समयout = LOOP_TIMEOUT_MAX;
+static void wait_rfifo_ready(struct sh_flctl *flctl)
+{
+	uint32_t timeout = LOOP_TIMEOUT_MAX;
 
-	जबतक (समयout--) अणु
-		uपूर्णांक32_t val;
+	while (timeout--) {
+		uint32_t val;
 		/* check FIFO */
-		val = पढ़ोl(FLDTCNTR(flctl)) >> 16;
-		अगर (val & 0xFF)
-			वापस;
+		val = readl(FLDTCNTR(flctl)) >> 16;
+		if (val & 0xFF)
+			return;
 		udelay(1);
-	पूर्ण
-	समयout_error(flctl, __func__);
-पूर्ण
+	}
+	timeout_error(flctl, __func__);
+}
 
-अटल व्योम रुको_wfअगरo_पढ़ोy(काष्ठा sh_flctl *flctl)
-अणु
-	uपूर्णांक32_t len, समयout = LOOP_TIMEOUT_MAX;
+static void wait_wfifo_ready(struct sh_flctl *flctl)
+{
+	uint32_t len, timeout = LOOP_TIMEOUT_MAX;
 
-	जबतक (समयout--) अणु
+	while (timeout--) {
 		/* check FIFO */
-		len = (पढ़ोl(FLDTCNTR(flctl)) >> 16) & 0xFF;
-		अगर (len >= 4)
-			वापस;
+		len = (readl(FLDTCNTR(flctl)) >> 16) & 0xFF;
+		if (len >= 4)
+			return;
 		udelay(1);
-	पूर्ण
-	समयout_error(flctl, __func__);
-पूर्ण
+	}
+	timeout_error(flctl, __func__);
+}
 
-अटल क्रमागत flctl_ecc_res_t रुको_recfअगरo_पढ़ोy
-		(काष्ठा sh_flctl *flctl, पूर्णांक sector_number)
-अणु
-	uपूर्णांक32_t समयout = LOOP_TIMEOUT_MAX;
-	व्योम __iomem *ecc_reg[4];
-	पूर्णांक i;
-	पूर्णांक state = FL_SUCCESS;
-	uपूर्णांक32_t data, size;
+static enum flctl_ecc_res_t wait_recfifo_ready
+		(struct sh_flctl *flctl, int sector_number)
+{
+	uint32_t timeout = LOOP_TIMEOUT_MAX;
+	void __iomem *ecc_reg[4];
+	int i;
+	int state = FL_SUCCESS;
+	uint32_t data, size;
 
 	/*
-	 * First this loops checks in FLDTCNTR अगर we are पढ़ोy to पढ़ो out the
-	 * oob data. This is the हाल अगर either all went fine without errors or
-	 * अगर the bottom part of the loop corrected the errors or marked them as
-	 * uncorrectable and the controller is given समय to push the data पूर्णांकo
+	 * First this loops checks in FLDTCNTR if we are ready to read out the
+	 * oob data. This is the case if either all went fine without errors or
+	 * if the bottom part of the loop corrected the errors or marked them as
+	 * uncorrectable and the controller is given time to push the data into
 	 * the FIFO.
 	 */
-	जबतक (समयout--) अणु
-		/* check अगर all is ok and we can पढ़ो out the OOB */
-		size = पढ़ोl(FLDTCNTR(flctl)) >> 24;
-		अगर ((size & 0xFF) == 4)
-			वापस state;
+	while (timeout--) {
+		/* check if all is ok and we can read out the OOB */
+		size = readl(FLDTCNTR(flctl)) >> 24;
+		if ((size & 0xFF) == 4)
+			return state;
 
-		/* check अगर a correction code has been calculated */
-		अगर (!(पढ़ोl(FL4ECCCR(flctl)) & _4ECCEND)) अणु
+		/* check if a correction code has been calculated */
+		if (!(readl(FL4ECCCR(flctl)) & _4ECCEND)) {
 			/*
-			 * either we रुको क्रम the fअगरo to be filled or a
+			 * either we wait for the fifo to be filled or a
 			 * correction pattern is being generated
 			 */
 			udelay(1);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		/* check क्रम an uncorrectable error */
-		अगर (पढ़ोl(FL4ECCCR(flctl)) & _4ECCFA) अणु
-			/* check अगर we face a non-empty page */
-			क्रम (i = 0; i < 512; i++) अणु
-				अगर (flctl->करोne_buff[i] != 0xff) अणु
+		/* check for an uncorrectable error */
+		if (readl(FL4ECCCR(flctl)) & _4ECCFA) {
+			/* check if we face a non-empty page */
+			for (i = 0; i < 512; i++) {
+				if (flctl->done_buff[i] != 0xff) {
 					state = FL_ERROR; /* can't correct */
-					अवरोध;
-				पूर्ण
-			पूर्ण
+					break;
+				}
+			}
 
-			अगर (state == FL_SUCCESS)
+			if (state == FL_SUCCESS)
 				dev_dbg(&flctl->pdev->dev,
 				"reading empty sector %d, ecc error ignored\n",
 				sector_number);
 
-			ग_लिखोl(0, FL4ECCCR(flctl));
-			जारी;
-		पूर्ण
+			writel(0, FL4ECCCR(flctl));
+			continue;
+		}
 
 		/* start error correction */
 		ecc_reg[0] = FL4ECCRESULT0(flctl);
@@ -338,819 +337,819 @@ err:
 		ecc_reg[2] = FL4ECCRESULT2(flctl);
 		ecc_reg[3] = FL4ECCRESULT3(flctl);
 
-		क्रम (i = 0; i < 3; i++) अणु
-			uपूर्णांक8_t org;
-			अचिन्हित पूर्णांक index;
+		for (i = 0; i < 3; i++) {
+			uint8_t org;
+			unsigned int index;
 
-			data = पढ़ोl(ecc_reg[i]);
+			data = readl(ecc_reg[i]);
 
-			अगर (flctl->page_size)
+			if (flctl->page_size)
 				index = (512 * sector_number) +
 					(data >> 16);
-			अन्यथा
+			else
 				index = data >> 16;
 
-			org = flctl->करोne_buff[index];
-			flctl->करोne_buff[index] = org ^ (data & 0xFF);
-		पूर्ण
+			org = flctl->done_buff[index];
+			flctl->done_buff[index] = org ^ (data & 0xFF);
+		}
 		state = FL_REPAIRABLE;
-		ग_लिखोl(0, FL4ECCCR(flctl));
-	पूर्ण
+		writel(0, FL4ECCCR(flctl));
+	}
 
-	समयout_error(flctl, __func__);
-	वापस FL_TIMEOUT;	/* समयout */
-पूर्ण
+	timeout_error(flctl, __func__);
+	return FL_TIMEOUT;	/* timeout */
+}
 
-अटल व्योम रुको_wecfअगरo_पढ़ोy(काष्ठा sh_flctl *flctl)
-अणु
-	uपूर्णांक32_t समयout = LOOP_TIMEOUT_MAX;
-	uपूर्णांक32_t len;
+static void wait_wecfifo_ready(struct sh_flctl *flctl)
+{
+	uint32_t timeout = LOOP_TIMEOUT_MAX;
+	uint32_t len;
 
-	जबतक (समयout--) अणु
+	while (timeout--) {
 		/* check FLECFIFO */
-		len = (पढ़ोl(FLDTCNTR(flctl)) >> 24) & 0xFF;
-		अगर (len >= 4)
-			वापस;
+		len = (readl(FLDTCNTR(flctl)) >> 24) & 0xFF;
+		if (len >= 4)
+			return;
 		udelay(1);
-	पूर्ण
-	समयout_error(flctl, __func__);
-पूर्ण
+	}
+	timeout_error(flctl, __func__);
+}
 
-अटल पूर्णांक flctl_dma_fअगरo0_transfer(काष्ठा sh_flctl *flctl, अचिन्हित दीर्घ *buf,
-					पूर्णांक len, क्रमागत dma_data_direction dir)
-अणु
-	काष्ठा dma_async_tx_descriptor *desc = शून्य;
-	काष्ठा dma_chan *chan;
-	क्रमागत dma_transfer_direction tr_dir;
+static int flctl_dma_fifo0_transfer(struct sh_flctl *flctl, unsigned long *buf,
+					int len, enum dma_data_direction dir)
+{
+	struct dma_async_tx_descriptor *desc = NULL;
+	struct dma_chan *chan;
+	enum dma_transfer_direction tr_dir;
 	dma_addr_t dma_addr;
 	dma_cookie_t cookie;
-	uपूर्णांक32_t reg;
-	पूर्णांक ret;
+	uint32_t reg;
+	int ret;
 
-	अगर (dir == DMA_FROM_DEVICE) अणु
-		chan = flctl->chan_fअगरo0_rx;
+	if (dir == DMA_FROM_DEVICE) {
+		chan = flctl->chan_fifo0_rx;
 		tr_dir = DMA_DEV_TO_MEM;
-	पूर्ण अन्यथा अणु
-		chan = flctl->chan_fअगरo0_tx;
+	} else {
+		chan = flctl->chan_fifo0_tx;
 		tr_dir = DMA_MEM_TO_DEV;
-	पूर्ण
+	}
 
 	dma_addr = dma_map_single(chan->device->dev, buf, len, dir);
 
-	अगर (!dma_mapping_error(chan->device->dev, dma_addr))
+	if (!dma_mapping_error(chan->device->dev, dma_addr))
 		desc = dmaengine_prep_slave_single(chan, dma_addr, len,
 			tr_dir, DMA_PREP_INTERRUPT | DMA_CTRL_ACK);
 
-	अगर (desc) अणु
-		reg = पढ़ोl(FLINTDMACR(flctl));
+	if (desc) {
+		reg = readl(FLINTDMACR(flctl));
 		reg |= DREQ0EN;
-		ग_लिखोl(reg, FLINTDMACR(flctl));
+		writel(reg, FLINTDMACR(flctl));
 
 		desc->callback = flctl_dma_complete;
 		desc->callback_param = flctl;
 		cookie = dmaengine_submit(desc);
-		अगर (dma_submit_error(cookie)) अणु
+		if (dma_submit_error(cookie)) {
 			ret = dma_submit_error(cookie);
 			dev_warn(&flctl->pdev->dev,
 				 "DMA submit failed, falling back to PIO\n");
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		dma_async_issue_pending(chan);
-	पूर्ण अन्यथा अणु
+	} else {
 		/* DMA failed, fall back to PIO */
 		flctl_release_dma(flctl);
 		dev_warn(&flctl->pdev->dev,
 			 "DMA failed, falling back to PIO\n");
 		ret = -EIO;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	ret =
-	रुको_क्रम_completion_समयout(&flctl->dma_complete,
-				msecs_to_jअगरfies(3000));
+	wait_for_completion_timeout(&flctl->dma_complete,
+				msecs_to_jiffies(3000));
 
-	अगर (ret <= 0) अणु
+	if (ret <= 0) {
 		dmaengine_terminate_all(chan);
 		dev_err(&flctl->pdev->dev, "wait_for_completion_timeout\n");
-	पूर्ण
+	}
 
 out:
-	reg = पढ़ोl(FLINTDMACR(flctl));
+	reg = readl(FLINTDMACR(flctl));
 	reg &= ~DREQ0EN;
-	ग_लिखोl(reg, FLINTDMACR(flctl));
+	writel(reg, FLINTDMACR(flctl));
 
 	dma_unmap_single(chan->device->dev, dma_addr, len, dir);
 
 	/* ret > 0 is success */
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम पढ़ो_datareg(काष्ठा sh_flctl *flctl, पूर्णांक offset)
-अणु
-	अचिन्हित दीर्घ data;
-	अचिन्हित दीर्घ *buf = (अचिन्हित दीर्घ *)&flctl->करोne_buff[offset];
+static void read_datareg(struct sh_flctl *flctl, int offset)
+{
+	unsigned long data;
+	unsigned long *buf = (unsigned long *)&flctl->done_buff[offset];
 
-	रुको_completion(flctl);
+	wait_completion(flctl);
 
-	data = पढ़ोl(FLDATAR(flctl));
+	data = readl(FLDATAR(flctl));
 	*buf = le32_to_cpu(data);
-पूर्ण
+}
 
-अटल व्योम पढ़ो_fअगरoreg(काष्ठा sh_flctl *flctl, पूर्णांक rlen, पूर्णांक offset)
-अणु
-	पूर्णांक i, len_4align;
-	अचिन्हित दीर्घ *buf = (अचिन्हित दीर्घ *)&flctl->करोne_buff[offset];
+static void read_fiforeg(struct sh_flctl *flctl, int rlen, int offset)
+{
+	int i, len_4align;
+	unsigned long *buf = (unsigned long *)&flctl->done_buff[offset];
 
 	len_4align = (rlen + 3) / 4;
 
 	/* initiate DMA transfer */
-	अगर (flctl->chan_fअगरo0_rx && rlen >= 32 &&
-		flctl_dma_fअगरo0_transfer(flctl, buf, rlen, DMA_FROM_DEVICE) > 0)
-			जाओ convert;	/* DMA success */
+	if (flctl->chan_fifo0_rx && rlen >= 32 &&
+		flctl_dma_fifo0_transfer(flctl, buf, rlen, DMA_FROM_DEVICE) > 0)
+			goto convert;	/* DMA success */
 
-	/* करो polling transfer */
-	क्रम (i = 0; i < len_4align; i++) अणु
-		रुको_rfअगरo_पढ़ोy(flctl);
-		buf[i] = पढ़ोl(FLDTFIFO(flctl));
-	पूर्ण
+	/* do polling transfer */
+	for (i = 0; i < len_4align; i++) {
+		wait_rfifo_ready(flctl);
+		buf[i] = readl(FLDTFIFO(flctl));
+	}
 
 convert:
-	क्रम (i = 0; i < len_4align; i++)
+	for (i = 0; i < len_4align; i++)
 		buf[i] = be32_to_cpu(buf[i]);
-पूर्ण
+}
 
-अटल क्रमागत flctl_ecc_res_t पढ़ो_ecfअगरoreg
-		(काष्ठा sh_flctl *flctl, uपूर्णांक8_t *buff, पूर्णांक sector)
-अणु
-	पूर्णांक i;
-	क्रमागत flctl_ecc_res_t res;
-	अचिन्हित दीर्घ *ecc_buf = (अचिन्हित दीर्घ *)buff;
+static enum flctl_ecc_res_t read_ecfiforeg
+		(struct sh_flctl *flctl, uint8_t *buff, int sector)
+{
+	int i;
+	enum flctl_ecc_res_t res;
+	unsigned long *ecc_buf = (unsigned long *)buff;
 
-	res = रुको_recfअगरo_पढ़ोy(flctl , sector);
+	res = wait_recfifo_ready(flctl , sector);
 
-	अगर (res != FL_ERROR) अणु
-		क्रम (i = 0; i < 4; i++) अणु
-			ecc_buf[i] = पढ़ोl(FLECFIFO(flctl));
+	if (res != FL_ERROR) {
+		for (i = 0; i < 4; i++) {
+			ecc_buf[i] = readl(FLECFIFO(flctl));
 			ecc_buf[i] = be32_to_cpu(ecc_buf[i]);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस res;
-पूर्ण
+	return res;
+}
 
-अटल व्योम ग_लिखो_fअगरoreg(काष्ठा sh_flctl *flctl, पूर्णांक rlen,
-						अचिन्हित पूर्णांक offset)
-अणु
-	पूर्णांक i, len_4align;
-	अचिन्हित दीर्घ *buf = (अचिन्हित दीर्घ *)&flctl->करोne_buff[offset];
-
-	len_4align = (rlen + 3) / 4;
-	क्रम (i = 0; i < len_4align; i++) अणु
-		रुको_wfअगरo_पढ़ोy(flctl);
-		ग_लिखोl(cpu_to_be32(buf[i]), FLDTFIFO(flctl));
-	पूर्ण
-पूर्ण
-
-अटल व्योम ग_लिखो_ec_fअगरoreg(काष्ठा sh_flctl *flctl, पूर्णांक rlen,
-						अचिन्हित पूर्णांक offset)
-अणु
-	पूर्णांक i, len_4align;
-	अचिन्हित दीर्घ *buf = (अचिन्हित दीर्घ *)&flctl->करोne_buff[offset];
+static void write_fiforeg(struct sh_flctl *flctl, int rlen,
+						unsigned int offset)
+{
+	int i, len_4align;
+	unsigned long *buf = (unsigned long *)&flctl->done_buff[offset];
 
 	len_4align = (rlen + 3) / 4;
+	for (i = 0; i < len_4align; i++) {
+		wait_wfifo_ready(flctl);
+		writel(cpu_to_be32(buf[i]), FLDTFIFO(flctl));
+	}
+}
 
-	क्रम (i = 0; i < len_4align; i++)
+static void write_ec_fiforeg(struct sh_flctl *flctl, int rlen,
+						unsigned int offset)
+{
+	int i, len_4align;
+	unsigned long *buf = (unsigned long *)&flctl->done_buff[offset];
+
+	len_4align = (rlen + 3) / 4;
+
+	for (i = 0; i < len_4align; i++)
 		buf[i] = cpu_to_be32(buf[i]);
 
 	/* initiate DMA transfer */
-	अगर (flctl->chan_fअगरo0_tx && rlen >= 32 &&
-		flctl_dma_fअगरo0_transfer(flctl, buf, rlen, DMA_TO_DEVICE) > 0)
-			वापस;	/* DMA success */
+	if (flctl->chan_fifo0_tx && rlen >= 32 &&
+		flctl_dma_fifo0_transfer(flctl, buf, rlen, DMA_TO_DEVICE) > 0)
+			return;	/* DMA success */
 
-	/* करो polling transfer */
-	क्रम (i = 0; i < len_4align; i++) अणु
-		रुको_wecfअगरo_पढ़ोy(flctl);
-		ग_लिखोl(buf[i], FLECFIFO(flctl));
-	पूर्ण
-पूर्ण
+	/* do polling transfer */
+	for (i = 0; i < len_4align; i++) {
+		wait_wecfifo_ready(flctl);
+		writel(buf[i], FLECFIFO(flctl));
+	}
+}
 
-अटल व्योम set_cmd_regs(काष्ठा mtd_info *mtd, uपूर्णांक32_t cmd, uपूर्णांक32_t flcmcdr_val)
-अणु
-	काष्ठा sh_flctl *flctl = mtd_to_flctl(mtd);
-	uपूर्णांक32_t flcmncr_val = flctl->flcmncr_base & ~SEL_16BIT;
-	uपूर्णांक32_t flcmdcr_val, addr_len_bytes = 0;
+static void set_cmd_regs(struct mtd_info *mtd, uint32_t cmd, uint32_t flcmcdr_val)
+{
+	struct sh_flctl *flctl = mtd_to_flctl(mtd);
+	uint32_t flcmncr_val = flctl->flcmncr_base & ~SEL_16BIT;
+	uint32_t flcmdcr_val, addr_len_bytes = 0;
 
-	/* Set Sन_अंकD bit अगर page size is 2048byte */
-	अगर (flctl->page_size)
-		flcmncr_val |= Sन_अंकD_E;
-	अन्यथा
-		flcmncr_val &= ~Sन_अंकD_E;
+	/* Set SNAND bit if page size is 2048byte */
+	if (flctl->page_size)
+		flcmncr_val |= SNAND_E;
+	else
+		flcmncr_val &= ~SNAND_E;
 
-	/* शेष FLCMDCR val */
+	/* default FLCMDCR val */
 	flcmdcr_val = DOCMD1_E | DOADR_E;
 
-	/* Set क्रम FLCMDCR */
-	चयन (cmd) अणु
-	हाल न_अंकD_CMD_ERASE1:
+	/* Set for FLCMDCR */
+	switch (cmd) {
+	case NAND_CMD_ERASE1:
 		addr_len_bytes = flctl->erase_ADRCNT;
 		flcmdcr_val |= DOCMD2_E;
-		अवरोध;
-	हाल न_अंकD_CMD_READ0:
-	हाल न_अंकD_CMD_READOOB:
-	हाल न_अंकD_CMD_RNDOUT:
+		break;
+	case NAND_CMD_READ0:
+	case NAND_CMD_READOOB:
+	case NAND_CMD_RNDOUT:
 		addr_len_bytes = flctl->rw_ADRCNT;
 		flcmdcr_val |= CDSRC_E;
-		अगर (flctl->chip.options & न_अंकD_BUSWIDTH_16)
+		if (flctl->chip.options & NAND_BUSWIDTH_16)
 			flcmncr_val |= SEL_16BIT;
-		अवरोध;
-	हाल न_अंकD_CMD_SEQIN:
-		/* This हाल is that cmd is READ0 or READ1 or READ00 */
+		break;
+	case NAND_CMD_SEQIN:
+		/* This case is that cmd is READ0 or READ1 or READ00 */
 		flcmdcr_val &= ~DOADR_E;	/* ONLY execute 1st cmd */
-		अवरोध;
-	हाल न_अंकD_CMD_PAGEPROG:
+		break;
+	case NAND_CMD_PAGEPROG:
 		addr_len_bytes = flctl->rw_ADRCNT;
 		flcmdcr_val |= DOCMD2_E | CDSRC_E | SELRW;
-		अगर (flctl->chip.options & न_अंकD_BUSWIDTH_16)
+		if (flctl->chip.options & NAND_BUSWIDTH_16)
 			flcmncr_val |= SEL_16BIT;
-		अवरोध;
-	हाल न_अंकD_CMD_READID:
-		flcmncr_val &= ~Sन_अंकD_E;
+		break;
+	case NAND_CMD_READID:
+		flcmncr_val &= ~SNAND_E;
 		flcmdcr_val |= CDSRC_E;
 		addr_len_bytes = ADRCNT_1;
-		अवरोध;
-	हाल न_अंकD_CMD_STATUS:
-	हाल न_अंकD_CMD_RESET:
-		flcmncr_val &= ~Sन_अंकD_E;
+		break;
+	case NAND_CMD_STATUS:
+	case NAND_CMD_RESET:
+		flcmncr_val &= ~SNAND_E;
 		flcmdcr_val &= ~(DOADR_E | DOSR_E);
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+		break;
+	default:
+		break;
+	}
 
 	/* Set address bytes parameter */
 	flcmdcr_val |= addr_len_bytes;
 
-	/* Now actually ग_लिखो */
-	ग_लिखोl(flcmncr_val, FLCMNCR(flctl));
-	ग_लिखोl(flcmdcr_val, FLCMDCR(flctl));
-	ग_लिखोl(flcmcdr_val, FLCMCDR(flctl));
-पूर्ण
+	/* Now actually write */
+	writel(flcmncr_val, FLCMNCR(flctl));
+	writel(flcmdcr_val, FLCMDCR(flctl));
+	writel(flcmcdr_val, FLCMCDR(flctl));
+}
 
-अटल पूर्णांक flctl_पढ़ो_page_hwecc(काष्ठा nand_chip *chip, uपूर्णांक8_t *buf,
-				 पूर्णांक oob_required, पूर्णांक page)
-अणु
-	काष्ठा mtd_info *mtd = nand_to_mtd(chip);
+static int flctl_read_page_hwecc(struct nand_chip *chip, uint8_t *buf,
+				 int oob_required, int page)
+{
+	struct mtd_info *mtd = nand_to_mtd(chip);
 
-	nand_पढ़ो_page_op(chip, page, 0, buf, mtd->ग_लिखोsize);
-	अगर (oob_required)
-		chip->legacy.पढ़ो_buf(chip, chip->oob_poi, mtd->oobsize);
-	वापस 0;
-पूर्ण
+	nand_read_page_op(chip, page, 0, buf, mtd->writesize);
+	if (oob_required)
+		chip->legacy.read_buf(chip, chip->oob_poi, mtd->oobsize);
+	return 0;
+}
 
-अटल पूर्णांक flctl_ग_लिखो_page_hwecc(काष्ठा nand_chip *chip, स्थिर uपूर्णांक8_t *buf,
-				  पूर्णांक oob_required, पूर्णांक page)
-अणु
-	काष्ठा mtd_info *mtd = nand_to_mtd(chip);
+static int flctl_write_page_hwecc(struct nand_chip *chip, const uint8_t *buf,
+				  int oob_required, int page)
+{
+	struct mtd_info *mtd = nand_to_mtd(chip);
 
-	nand_prog_page_begin_op(chip, page, 0, buf, mtd->ग_लिखोsize);
-	chip->legacy.ग_लिखो_buf(chip, chip->oob_poi, mtd->oobsize);
-	वापस nand_prog_page_end_op(chip);
-पूर्ण
+	nand_prog_page_begin_op(chip, page, 0, buf, mtd->writesize);
+	chip->legacy.write_buf(chip, chip->oob_poi, mtd->oobsize);
+	return nand_prog_page_end_op(chip);
+}
 
-अटल व्योम execmd_पढ़ो_page_sector(काष्ठा mtd_info *mtd, पूर्णांक page_addr)
-अणु
-	काष्ठा sh_flctl *flctl = mtd_to_flctl(mtd);
-	पूर्णांक sector, page_sectors;
-	क्रमागत flctl_ecc_res_t ecc_result;
+static void execmd_read_page_sector(struct mtd_info *mtd, int page_addr)
+{
+	struct sh_flctl *flctl = mtd_to_flctl(mtd);
+	int sector, page_sectors;
+	enum flctl_ecc_res_t ecc_result;
 
 	page_sectors = flctl->page_size ? 4 : 1;
 
-	set_cmd_regs(mtd, न_अंकD_CMD_READ0,
-		(न_अंकD_CMD_READSTART << 8) | न_अंकD_CMD_READ0);
+	set_cmd_regs(mtd, NAND_CMD_READ0,
+		(NAND_CMD_READSTART << 8) | NAND_CMD_READ0);
 
-	ग_लिखोl(पढ़ोl(FLCMNCR(flctl)) | ACM_SACCES_MODE | _4ECCCORRECT,
+	writel(readl(FLCMNCR(flctl)) | ACM_SACCES_MODE | _4ECCCORRECT,
 		 FLCMNCR(flctl));
-	ग_लिखोl(पढ़ोl(FLCMDCR(flctl)) | page_sectors, FLCMDCR(flctl));
-	ग_लिखोl(page_addr << 2, FLADR(flctl));
+	writel(readl(FLCMDCR(flctl)) | page_sectors, FLCMDCR(flctl));
+	writel(page_addr << 2, FLADR(flctl));
 
-	empty_fअगरo(flctl);
+	empty_fifo(flctl);
 	start_translation(flctl);
 
-	क्रम (sector = 0; sector < page_sectors; sector++) अणु
-		पढ़ो_fअगरoreg(flctl, 512, 512 * sector);
+	for (sector = 0; sector < page_sectors; sector++) {
+		read_fiforeg(flctl, 512, 512 * sector);
 
-		ecc_result = पढ़ो_ecfअगरoreg(flctl,
-			&flctl->करोne_buff[mtd->ग_लिखोsize + 16 * sector],
+		ecc_result = read_ecfiforeg(flctl,
+			&flctl->done_buff[mtd->writesize + 16 * sector],
 			sector);
 
-		चयन (ecc_result) अणु
-		हाल FL_REPAIRABLE:
+		switch (ecc_result) {
+		case FL_REPAIRABLE:
 			dev_info(&flctl->pdev->dev,
 				"applied ecc on page 0x%x", page_addr);
 			mtd->ecc_stats.corrected++;
-			अवरोध;
-		हाल FL_ERROR:
+			break;
+		case FL_ERROR:
 			dev_warn(&flctl->pdev->dev,
 				"page 0x%x contains corrupted data\n",
 				page_addr);
 			mtd->ecc_stats.failed++;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	रुको_completion(flctl);
+	wait_completion(flctl);
 
-	ग_लिखोl(पढ़ोl(FLCMNCR(flctl)) & ~(ACM_SACCES_MODE | _4ECCCORRECT),
+	writel(readl(FLCMNCR(flctl)) & ~(ACM_SACCES_MODE | _4ECCCORRECT),
 			FLCMNCR(flctl));
-पूर्ण
+}
 
-अटल व्योम execmd_पढ़ो_oob(काष्ठा mtd_info *mtd, पूर्णांक page_addr)
-अणु
-	काष्ठा sh_flctl *flctl = mtd_to_flctl(mtd);
-	पूर्णांक page_sectors = flctl->page_size ? 4 : 1;
-	पूर्णांक i;
+static void execmd_read_oob(struct mtd_info *mtd, int page_addr)
+{
+	struct sh_flctl *flctl = mtd_to_flctl(mtd);
+	int page_sectors = flctl->page_size ? 4 : 1;
+	int i;
 
-	set_cmd_regs(mtd, न_अंकD_CMD_READ0,
-		(न_अंकD_CMD_READSTART << 8) | न_अंकD_CMD_READ0);
+	set_cmd_regs(mtd, NAND_CMD_READ0,
+		(NAND_CMD_READSTART << 8) | NAND_CMD_READ0);
 
-	empty_fअगरo(flctl);
+	empty_fifo(flctl);
 
-	क्रम (i = 0; i < page_sectors; i++) अणु
+	for (i = 0; i < page_sectors; i++) {
 		set_addr(mtd, (512 + 16) * i + 512 , page_addr);
-		ग_लिखोl(16, FLDTCNTR(flctl));
+		writel(16, FLDTCNTR(flctl));
 
 		start_translation(flctl);
-		पढ़ो_fअगरoreg(flctl, 16, 16 * i);
-		रुको_completion(flctl);
-	पूर्ण
-पूर्ण
+		read_fiforeg(flctl, 16, 16 * i);
+		wait_completion(flctl);
+	}
+}
 
-अटल व्योम execmd_ग_लिखो_page_sector(काष्ठा mtd_info *mtd)
-अणु
-	काष्ठा sh_flctl *flctl = mtd_to_flctl(mtd);
-	पूर्णांक page_addr = flctl->seqin_page_addr;
-	पूर्णांक sector, page_sectors;
+static void execmd_write_page_sector(struct mtd_info *mtd)
+{
+	struct sh_flctl *flctl = mtd_to_flctl(mtd);
+	int page_addr = flctl->seqin_page_addr;
+	int sector, page_sectors;
 
 	page_sectors = flctl->page_size ? 4 : 1;
 
-	set_cmd_regs(mtd, न_अंकD_CMD_PAGEPROG,
-			(न_अंकD_CMD_PAGEPROG << 8) | न_अंकD_CMD_SEQIN);
+	set_cmd_regs(mtd, NAND_CMD_PAGEPROG,
+			(NAND_CMD_PAGEPROG << 8) | NAND_CMD_SEQIN);
 
-	empty_fअगरo(flctl);
-	ग_लिखोl(पढ़ोl(FLCMNCR(flctl)) | ACM_SACCES_MODE, FLCMNCR(flctl));
-	ग_लिखोl(पढ़ोl(FLCMDCR(flctl)) | page_sectors, FLCMDCR(flctl));
-	ग_लिखोl(page_addr << 2, FLADR(flctl));
+	empty_fifo(flctl);
+	writel(readl(FLCMNCR(flctl)) | ACM_SACCES_MODE, FLCMNCR(flctl));
+	writel(readl(FLCMDCR(flctl)) | page_sectors, FLCMDCR(flctl));
+	writel(page_addr << 2, FLADR(flctl));
 	start_translation(flctl);
 
-	क्रम (sector = 0; sector < page_sectors; sector++) अणु
-		ग_लिखो_fअगरoreg(flctl, 512, 512 * sector);
-		ग_लिखो_ec_fअगरoreg(flctl, 16, mtd->ग_लिखोsize + 16 * sector);
-	पूर्ण
+	for (sector = 0; sector < page_sectors; sector++) {
+		write_fiforeg(flctl, 512, 512 * sector);
+		write_ec_fiforeg(flctl, 16, mtd->writesize + 16 * sector);
+	}
 
-	रुको_completion(flctl);
-	ग_लिखोl(पढ़ोl(FLCMNCR(flctl)) & ~ACM_SACCES_MODE, FLCMNCR(flctl));
-पूर्ण
+	wait_completion(flctl);
+	writel(readl(FLCMNCR(flctl)) & ~ACM_SACCES_MODE, FLCMNCR(flctl));
+}
 
-अटल व्योम execmd_ग_लिखो_oob(काष्ठा mtd_info *mtd)
-अणु
-	काष्ठा sh_flctl *flctl = mtd_to_flctl(mtd);
-	पूर्णांक page_addr = flctl->seqin_page_addr;
-	पूर्णांक sector, page_sectors;
+static void execmd_write_oob(struct mtd_info *mtd)
+{
+	struct sh_flctl *flctl = mtd_to_flctl(mtd);
+	int page_addr = flctl->seqin_page_addr;
+	int sector, page_sectors;
 
 	page_sectors = flctl->page_size ? 4 : 1;
 
-	set_cmd_regs(mtd, न_अंकD_CMD_PAGEPROG,
-			(न_अंकD_CMD_PAGEPROG << 8) | न_अंकD_CMD_SEQIN);
+	set_cmd_regs(mtd, NAND_CMD_PAGEPROG,
+			(NAND_CMD_PAGEPROG << 8) | NAND_CMD_SEQIN);
 
-	क्रम (sector = 0; sector < page_sectors; sector++) अणु
-		empty_fअगरo(flctl);
+	for (sector = 0; sector < page_sectors; sector++) {
+		empty_fifo(flctl);
 		set_addr(mtd, sector * 528 + 512, page_addr);
-		ग_लिखोl(16, FLDTCNTR(flctl));	/* set पढ़ो size */
+		writel(16, FLDTCNTR(flctl));	/* set read size */
 
 		start_translation(flctl);
-		ग_लिखो_fअगरoreg(flctl, 16, 16 * sector);
-		रुको_completion(flctl);
-	पूर्ण
-पूर्ण
+		write_fiforeg(flctl, 16, 16 * sector);
+		wait_completion(flctl);
+	}
+}
 
-अटल व्योम flctl_cmdfunc(काष्ठा nand_chip *chip, अचिन्हित पूर्णांक command,
-			पूर्णांक column, पूर्णांक page_addr)
-अणु
-	काष्ठा mtd_info *mtd = nand_to_mtd(chip);
-	काष्ठा sh_flctl *flctl = mtd_to_flctl(mtd);
-	uपूर्णांक32_t पढ़ो_cmd = 0;
+static void flctl_cmdfunc(struct nand_chip *chip, unsigned int command,
+			int column, int page_addr)
+{
+	struct mtd_info *mtd = nand_to_mtd(chip);
+	struct sh_flctl *flctl = mtd_to_flctl(mtd);
+	uint32_t read_cmd = 0;
 
-	pm_runसमय_get_sync(&flctl->pdev->dev);
+	pm_runtime_get_sync(&flctl->pdev->dev);
 
-	flctl->पढ़ो_bytes = 0;
-	अगर (command != न_अंकD_CMD_PAGEPROG)
+	flctl->read_bytes = 0;
+	if (command != NAND_CMD_PAGEPROG)
 		flctl->index = 0;
 
-	चयन (command) अणु
-	हाल न_अंकD_CMD_READ1:
-	हाल न_अंकD_CMD_READ0:
-		अगर (flctl->hwecc) अणु
-			/* पढ़ो page with hwecc */
-			execmd_पढ़ो_page_sector(mtd, page_addr);
-			अवरोध;
-		पूर्ण
-		अगर (flctl->page_size)
-			set_cmd_regs(mtd, command, (न_अंकD_CMD_READSTART << 8)
+	switch (command) {
+	case NAND_CMD_READ1:
+	case NAND_CMD_READ0:
+		if (flctl->hwecc) {
+			/* read page with hwecc */
+			execmd_read_page_sector(mtd, page_addr);
+			break;
+		}
+		if (flctl->page_size)
+			set_cmd_regs(mtd, command, (NAND_CMD_READSTART << 8)
 				| command);
-		अन्यथा
+		else
 			set_cmd_regs(mtd, command, command);
 
 		set_addr(mtd, 0, page_addr);
 
-		flctl->पढ़ो_bytes = mtd->ग_लिखोsize + mtd->oobsize;
-		अगर (flctl->chip.options & न_अंकD_BUSWIDTH_16)
+		flctl->read_bytes = mtd->writesize + mtd->oobsize;
+		if (flctl->chip.options & NAND_BUSWIDTH_16)
 			column >>= 1;
 		flctl->index += column;
-		जाओ पढ़ो_normal_निकास;
+		goto read_normal_exit;
 
-	हाल न_अंकD_CMD_READOOB:
-		अगर (flctl->hwecc) अणु
-			/* पढ़ो page with hwecc */
-			execmd_पढ़ो_oob(mtd, page_addr);
-			अवरोध;
-		पूर्ण
+	case NAND_CMD_READOOB:
+		if (flctl->hwecc) {
+			/* read page with hwecc */
+			execmd_read_oob(mtd, page_addr);
+			break;
+		}
 
-		अगर (flctl->page_size) अणु
-			set_cmd_regs(mtd, command, (न_अंकD_CMD_READSTART << 8)
-				| न_अंकD_CMD_READ0);
-			set_addr(mtd, mtd->ग_लिखोsize, page_addr);
-		पूर्ण अन्यथा अणु
+		if (flctl->page_size) {
+			set_cmd_regs(mtd, command, (NAND_CMD_READSTART << 8)
+				| NAND_CMD_READ0);
+			set_addr(mtd, mtd->writesize, page_addr);
+		} else {
 			set_cmd_regs(mtd, command, command);
 			set_addr(mtd, 0, page_addr);
-		पूर्ण
-		flctl->पढ़ो_bytes = mtd->oobsize;
-		जाओ पढ़ो_normal_निकास;
+		}
+		flctl->read_bytes = mtd->oobsize;
+		goto read_normal_exit;
 
-	हाल न_अंकD_CMD_RNDOUT:
-		अगर (flctl->hwecc)
-			अवरोध;
+	case NAND_CMD_RNDOUT:
+		if (flctl->hwecc)
+			break;
 
-		अगर (flctl->page_size)
-			set_cmd_regs(mtd, command, (न_अंकD_CMD_RNDOUTSTART << 8)
+		if (flctl->page_size)
+			set_cmd_regs(mtd, command, (NAND_CMD_RNDOUTSTART << 8)
 				| command);
-		अन्यथा
+		else
 			set_cmd_regs(mtd, command, command);
 
 		set_addr(mtd, column, 0);
 
-		flctl->पढ़ो_bytes = mtd->ग_लिखोsize + mtd->oobsize - column;
-		जाओ पढ़ो_normal_निकास;
+		flctl->read_bytes = mtd->writesize + mtd->oobsize - column;
+		goto read_normal_exit;
 
-	हाल न_अंकD_CMD_READID:
+	case NAND_CMD_READID:
 		set_cmd_regs(mtd, command, command);
 
-		/* READID is always perक्रमmed using an 8-bit bus */
-		अगर (flctl->chip.options & न_अंकD_BUSWIDTH_16)
+		/* READID is always performed using an 8-bit bus */
+		if (flctl->chip.options & NAND_BUSWIDTH_16)
 			column <<= 1;
 		set_addr(mtd, column, 0);
 
-		flctl->पढ़ो_bytes = 8;
-		ग_लिखोl(flctl->पढ़ो_bytes, FLDTCNTR(flctl)); /* set पढ़ो size */
-		empty_fअगरo(flctl);
+		flctl->read_bytes = 8;
+		writel(flctl->read_bytes, FLDTCNTR(flctl)); /* set read size */
+		empty_fifo(flctl);
 		start_translation(flctl);
-		पढ़ो_fअगरoreg(flctl, flctl->पढ़ो_bytes, 0);
-		रुको_completion(flctl);
-		अवरोध;
+		read_fiforeg(flctl, flctl->read_bytes, 0);
+		wait_completion(flctl);
+		break;
 
-	हाल न_अंकD_CMD_ERASE1:
+	case NAND_CMD_ERASE1:
 		flctl->erase1_page_addr = page_addr;
-		अवरोध;
+		break;
 
-	हाल न_अंकD_CMD_ERASE2:
-		set_cmd_regs(mtd, न_अंकD_CMD_ERASE1,
-			(command << 8) | न_अंकD_CMD_ERASE1);
+	case NAND_CMD_ERASE2:
+		set_cmd_regs(mtd, NAND_CMD_ERASE1,
+			(command << 8) | NAND_CMD_ERASE1);
 		set_addr(mtd, -1, flctl->erase1_page_addr);
 		start_translation(flctl);
-		रुको_completion(flctl);
-		अवरोध;
+		wait_completion(flctl);
+		break;
 
-	हाल न_अंकD_CMD_SEQIN:
-		अगर (!flctl->page_size) अणु
-			/* output पढ़ो command */
-			अगर (column >= mtd->ग_लिखोsize) अणु
-				column -= mtd->ग_लिखोsize;
-				पढ़ो_cmd = न_अंकD_CMD_READOOB;
-			पूर्ण अन्यथा अगर (column < 256) अणु
-				पढ़ो_cmd = न_अंकD_CMD_READ0;
-			पूर्ण अन्यथा अणु
+	case NAND_CMD_SEQIN:
+		if (!flctl->page_size) {
+			/* output read command */
+			if (column >= mtd->writesize) {
+				column -= mtd->writesize;
+				read_cmd = NAND_CMD_READOOB;
+			} else if (column < 256) {
+				read_cmd = NAND_CMD_READ0;
+			} else {
 				column -= 256;
-				पढ़ो_cmd = न_अंकD_CMD_READ1;
-			पूर्ण
-		पूर्ण
+				read_cmd = NAND_CMD_READ1;
+			}
+		}
 		flctl->seqin_column = column;
 		flctl->seqin_page_addr = page_addr;
-		flctl->seqin_पढ़ो_cmd = पढ़ो_cmd;
-		अवरोध;
+		flctl->seqin_read_cmd = read_cmd;
+		break;
 
-	हाल न_अंकD_CMD_PAGEPROG:
-		empty_fअगरo(flctl);
-		अगर (!flctl->page_size) अणु
-			set_cmd_regs(mtd, न_अंकD_CMD_SEQIN,
-					flctl->seqin_पढ़ो_cmd);
+	case NAND_CMD_PAGEPROG:
+		empty_fifo(flctl);
+		if (!flctl->page_size) {
+			set_cmd_regs(mtd, NAND_CMD_SEQIN,
+					flctl->seqin_read_cmd);
 			set_addr(mtd, -1, -1);
-			ग_लिखोl(0, FLDTCNTR(flctl));	/* set 0 size */
+			writel(0, FLDTCNTR(flctl));	/* set 0 size */
 			start_translation(flctl);
-			रुको_completion(flctl);
-		पूर्ण
-		अगर (flctl->hwecc) अणु
-			/* ग_लिखो page with hwecc */
-			अगर (flctl->seqin_column == mtd->ग_लिखोsize)
-				execmd_ग_लिखो_oob(mtd);
-			अन्यथा अगर (!flctl->seqin_column)
-				execmd_ग_लिखो_page_sector(mtd);
-			अन्यथा
+			wait_completion(flctl);
+		}
+		if (flctl->hwecc) {
+			/* write page with hwecc */
+			if (flctl->seqin_column == mtd->writesize)
+				execmd_write_oob(mtd);
+			else if (!flctl->seqin_column)
+				execmd_write_page_sector(mtd);
+			else
 				pr_err("Invalid address !?\n");
-			अवरोध;
-		पूर्ण
-		set_cmd_regs(mtd, command, (command << 8) | न_अंकD_CMD_SEQIN);
+			break;
+		}
+		set_cmd_regs(mtd, command, (command << 8) | NAND_CMD_SEQIN);
 		set_addr(mtd, flctl->seqin_column, flctl->seqin_page_addr);
-		ग_लिखोl(flctl->index, FLDTCNTR(flctl));	/* set ग_लिखो size */
+		writel(flctl->index, FLDTCNTR(flctl));	/* set write size */
 		start_translation(flctl);
-		ग_लिखो_fअगरoreg(flctl, flctl->index, 0);
-		रुको_completion(flctl);
-		अवरोध;
+		write_fiforeg(flctl, flctl->index, 0);
+		wait_completion(flctl);
+		break;
 
-	हाल न_अंकD_CMD_STATUS:
+	case NAND_CMD_STATUS:
 		set_cmd_regs(mtd, command, command);
 		set_addr(mtd, -1, -1);
 
-		flctl->पढ़ो_bytes = 1;
-		ग_लिखोl(flctl->पढ़ो_bytes, FLDTCNTR(flctl)); /* set पढ़ो size */
+		flctl->read_bytes = 1;
+		writel(flctl->read_bytes, FLDTCNTR(flctl)); /* set read size */
 		start_translation(flctl);
-		पढ़ो_datareg(flctl, 0); /* पढ़ो and end */
-		अवरोध;
+		read_datareg(flctl, 0); /* read and end */
+		break;
 
-	हाल न_अंकD_CMD_RESET:
+	case NAND_CMD_RESET:
 		set_cmd_regs(mtd, command, command);
 		set_addr(mtd, -1, -1);
 
-		ग_लिखोl(0, FLDTCNTR(flctl));	/* set 0 size */
+		writel(0, FLDTCNTR(flctl));	/* set 0 size */
 		start_translation(flctl);
-		रुको_completion(flctl);
-		अवरोध;
+		wait_completion(flctl);
+		break;
 
-	शेष:
-		अवरोध;
-	पूर्ण
-	जाओ runसमय_निकास;
+	default:
+		break;
+	}
+	goto runtime_exit;
 
-पढ़ो_normal_निकास:
-	ग_लिखोl(flctl->पढ़ो_bytes, FLDTCNTR(flctl));	/* set पढ़ो size */
-	empty_fअगरo(flctl);
+read_normal_exit:
+	writel(flctl->read_bytes, FLDTCNTR(flctl));	/* set read size */
+	empty_fifo(flctl);
 	start_translation(flctl);
-	पढ़ो_fअगरoreg(flctl, flctl->पढ़ो_bytes, 0);
-	रुको_completion(flctl);
-runसमय_निकास:
-	pm_runसमय_put_sync(&flctl->pdev->dev);
-	वापस;
-पूर्ण
+	read_fiforeg(flctl, flctl->read_bytes, 0);
+	wait_completion(flctl);
+runtime_exit:
+	pm_runtime_put_sync(&flctl->pdev->dev);
+	return;
+}
 
-अटल व्योम flctl_select_chip(काष्ठा nand_chip *chip, पूर्णांक chipnr)
-अणु
-	काष्ठा sh_flctl *flctl = mtd_to_flctl(nand_to_mtd(chip));
-	पूर्णांक ret;
+static void flctl_select_chip(struct nand_chip *chip, int chipnr)
+{
+	struct sh_flctl *flctl = mtd_to_flctl(nand_to_mtd(chip));
+	int ret;
 
-	चयन (chipnr) अणु
-	हाल -1:
+	switch (chipnr) {
+	case -1:
 		flctl->flcmncr_base &= ~CE0_ENABLE;
 
-		pm_runसमय_get_sync(&flctl->pdev->dev);
-		ग_लिखोl(flctl->flcmncr_base, FLCMNCR(flctl));
+		pm_runtime_get_sync(&flctl->pdev->dev);
+		writel(flctl->flcmncr_base, FLCMNCR(flctl));
 
-		अगर (flctl->qos_request) अणु
-			dev_pm_qos_हटाओ_request(&flctl->pm_qos);
+		if (flctl->qos_request) {
+			dev_pm_qos_remove_request(&flctl->pm_qos);
 			flctl->qos_request = 0;
-		पूर्ण
+		}
 
-		pm_runसमय_put_sync(&flctl->pdev->dev);
-		अवरोध;
-	हाल 0:
+		pm_runtime_put_sync(&flctl->pdev->dev);
+		break;
+	case 0:
 		flctl->flcmncr_base |= CE0_ENABLE;
 
-		अगर (!flctl->qos_request) अणु
+		if (!flctl->qos_request) {
 			ret = dev_pm_qos_add_request(&flctl->pdev->dev,
 							&flctl->pm_qos,
 							DEV_PM_QOS_RESUME_LATENCY,
 							100);
-			अगर (ret < 0)
+			if (ret < 0)
 				dev_err(&flctl->pdev->dev,
 					"PM QoS request failed: %d\n", ret);
 			flctl->qos_request = 1;
-		पूर्ण
+		}
 
-		अगर (flctl->holden) अणु
-			pm_runसमय_get_sync(&flctl->pdev->dev);
-			ग_लिखोl(HOLDEN, FLHOLDCR(flctl));
-			pm_runसमय_put_sync(&flctl->pdev->dev);
-		पूर्ण
-		अवरोध;
-	शेष:
+		if (flctl->holden) {
+			pm_runtime_get_sync(&flctl->pdev->dev);
+			writel(HOLDEN, FLHOLDCR(flctl));
+			pm_runtime_put_sync(&flctl->pdev->dev);
+		}
+		break;
+	default:
 		BUG();
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम flctl_ग_लिखो_buf(काष्ठा nand_chip *chip, स्थिर uपूर्णांक8_t *buf, पूर्णांक len)
-अणु
-	काष्ठा sh_flctl *flctl = mtd_to_flctl(nand_to_mtd(chip));
+static void flctl_write_buf(struct nand_chip *chip, const uint8_t *buf, int len)
+{
+	struct sh_flctl *flctl = mtd_to_flctl(nand_to_mtd(chip));
 
-	स_नकल(&flctl->करोne_buff[flctl->index], buf, len);
+	memcpy(&flctl->done_buff[flctl->index], buf, len);
 	flctl->index += len;
-पूर्ण
+}
 
-अटल uपूर्णांक8_t flctl_पढ़ो_byte(काष्ठा nand_chip *chip)
-अणु
-	काष्ठा sh_flctl *flctl = mtd_to_flctl(nand_to_mtd(chip));
-	uपूर्णांक8_t data;
+static uint8_t flctl_read_byte(struct nand_chip *chip)
+{
+	struct sh_flctl *flctl = mtd_to_flctl(nand_to_mtd(chip));
+	uint8_t data;
 
-	data = flctl->करोne_buff[flctl->index];
+	data = flctl->done_buff[flctl->index];
 	flctl->index++;
-	वापस data;
-पूर्ण
+	return data;
+}
 
-अटल व्योम flctl_पढ़ो_buf(काष्ठा nand_chip *chip, uपूर्णांक8_t *buf, पूर्णांक len)
-अणु
-	काष्ठा sh_flctl *flctl = mtd_to_flctl(nand_to_mtd(chip));
+static void flctl_read_buf(struct nand_chip *chip, uint8_t *buf, int len)
+{
+	struct sh_flctl *flctl = mtd_to_flctl(nand_to_mtd(chip));
 
-	स_नकल(buf, &flctl->करोne_buff[flctl->index], len);
+	memcpy(buf, &flctl->done_buff[flctl->index], len);
 	flctl->index += len;
-पूर्ण
+}
 
-अटल पूर्णांक flctl_chip_attach_chip(काष्ठा nand_chip *chip)
-अणु
-	u64 tarमाला_लोize = nanddev_target_size(&chip->base);
-	काष्ठा mtd_info *mtd = nand_to_mtd(chip);
-	काष्ठा sh_flctl *flctl = mtd_to_flctl(mtd);
+static int flctl_chip_attach_chip(struct nand_chip *chip)
+{
+	u64 targetsize = nanddev_target_size(&chip->base);
+	struct mtd_info *mtd = nand_to_mtd(chip);
+	struct sh_flctl *flctl = mtd_to_flctl(mtd);
 
 	/*
-	 * न_अंकD_BUSWIDTH_16 may have been set by nand_scan_ident().
+	 * NAND_BUSWIDTH_16 may have been set by nand_scan_ident().
 	 * Add the SEL_16BIT flag in flctl->flcmncr_base.
 	 */
-	अगर (chip->options & न_अंकD_BUSWIDTH_16)
+	if (chip->options & NAND_BUSWIDTH_16)
 		flctl->flcmncr_base |= SEL_16BIT;
 
-	अगर (mtd->ग_लिखोsize == 512) अणु
+	if (mtd->writesize == 512) {
 		flctl->page_size = 0;
-		अगर (tarमाला_लोize > (32 << 20)) अणु
+		if (targetsize > (32 << 20)) {
 			/* big than 32MB */
 			flctl->rw_ADRCNT = ADRCNT_4;
 			flctl->erase_ADRCNT = ADRCNT_3;
-		पूर्ण अन्यथा अगर (tarमाला_लोize > (2 << 16)) अणु
+		} else if (targetsize > (2 << 16)) {
 			/* big than 128KB */
 			flctl->rw_ADRCNT = ADRCNT_3;
 			flctl->erase_ADRCNT = ADRCNT_2;
-		पूर्ण अन्यथा अणु
+		} else {
 			flctl->rw_ADRCNT = ADRCNT_2;
 			flctl->erase_ADRCNT = ADRCNT_1;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		flctl->page_size = 1;
-		अगर (tarमाला_लोize > (128 << 20)) अणु
+		if (targetsize > (128 << 20)) {
 			/* big than 128MB */
 			flctl->rw_ADRCNT = ADRCNT2_E;
 			flctl->erase_ADRCNT = ADRCNT_3;
-		पूर्ण अन्यथा अगर (tarमाला_लोize > (8 << 16)) अणु
+		} else if (targetsize > (8 << 16)) {
 			/* big than 512KB */
 			flctl->rw_ADRCNT = ADRCNT_4;
 			flctl->erase_ADRCNT = ADRCNT_2;
-		पूर्ण अन्यथा अणु
+		} else {
 			flctl->rw_ADRCNT = ADRCNT_3;
 			flctl->erase_ADRCNT = ADRCNT_1;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (flctl->hwecc) अणु
-		अगर (mtd->ग_लिखोsize == 512) अणु
+	if (flctl->hwecc) {
+		if (mtd->writesize == 512) {
 			mtd_set_ooblayout(mtd, &flctl_4secc_oob_smallpage_ops);
 			chip->badblock_pattern = &flctl_4secc_smallpage;
-		पूर्ण अन्यथा अणु
+		} else {
 			mtd_set_ooblayout(mtd, &flctl_4secc_oob_largepage_ops);
 			chip->badblock_pattern = &flctl_4secc_largepage;
-		पूर्ण
+		}
 
 		chip->ecc.size = 512;
 		chip->ecc.bytes = 10;
 		chip->ecc.strength = 4;
-		chip->ecc.पढ़ो_page = flctl_पढ़ो_page_hwecc;
-		chip->ecc.ग_लिखो_page = flctl_ग_लिखो_page_hwecc;
-		chip->ecc.engine_type = न_अंकD_ECC_ENGINE_TYPE_ON_HOST;
+		chip->ecc.read_page = flctl_read_page_hwecc;
+		chip->ecc.write_page = flctl_write_page_hwecc;
+		chip->ecc.engine_type = NAND_ECC_ENGINE_TYPE_ON_HOST;
 
 		/* 4 symbols ECC enabled */
 		flctl->flcmncr_base |= _4ECCEN;
-	पूर्ण अन्यथा अणु
-		chip->ecc.engine_type = न_अंकD_ECC_ENGINE_TYPE_SOFT;
-		chip->ecc.algo = न_अंकD_ECC_ALGO_HAMMING;
-	पूर्ण
+	} else {
+		chip->ecc.engine_type = NAND_ECC_ENGINE_TYPE_SOFT;
+		chip->ecc.algo = NAND_ECC_ALGO_HAMMING;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा nand_controller_ops flctl_nand_controller_ops = अणु
+static const struct nand_controller_ops flctl_nand_controller_ops = {
 	.attach_chip = flctl_chip_attach_chip,
-पूर्ण;
+};
 
-अटल irqवापस_t flctl_handle_flste(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा sh_flctl *flctl = dev_id;
+static irqreturn_t flctl_handle_flste(int irq, void *dev_id)
+{
+	struct sh_flctl *flctl = dev_id;
 
-	dev_err(&flctl->pdev->dev, "flste irq: %x\n", पढ़ोl(FLINTDMACR(flctl)));
-	ग_लिखोl(flctl->flपूर्णांकdmacr_base, FLINTDMACR(flctl));
+	dev_err(&flctl->pdev->dev, "flste irq: %x\n", readl(FLINTDMACR(flctl)));
+	writel(flctl->flintdmacr_base, FLINTDMACR(flctl));
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-काष्ठा flctl_soc_config अणु
-	अचिन्हित दीर्घ flcmncr_val;
-	अचिन्हित has_hwecc:1;
-	अचिन्हित use_holden:1;
-पूर्ण;
+struct flctl_soc_config {
+	unsigned long flcmncr_val;
+	unsigned has_hwecc:1;
+	unsigned use_holden:1;
+};
 
-अटल काष्ठा flctl_soc_config flctl_sh7372_config = अणु
+static struct flctl_soc_config flctl_sh7372_config = {
 	.flcmncr_val = CLK_16B_12L_4H | TYPESEL_SET | SHBUSSEL,
 	.has_hwecc = 1,
 	.use_holden = 1,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा of_device_id of_flctl_match[] = अणु
-	अणु .compatible = "renesas,shmobile-flctl-sh7372",
-				.data = &flctl_sh7372_config पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct of_device_id of_flctl_match[] = {
+	{ .compatible = "renesas,shmobile-flctl-sh7372",
+				.data = &flctl_sh7372_config },
+	{},
+};
 MODULE_DEVICE_TABLE(of, of_flctl_match);
 
-अटल काष्ठा sh_flctl_platक्रमm_data *flctl_parse_dt(काष्ठा device *dev)
-अणु
-	स्थिर काष्ठा flctl_soc_config *config;
-	काष्ठा sh_flctl_platक्रमm_data *pdata;
+static struct sh_flctl_platform_data *flctl_parse_dt(struct device *dev)
+{
+	const struct flctl_soc_config *config;
+	struct sh_flctl_platform_data *pdata;
 
 	config = of_device_get_match_data(dev);
-	अगर (!config) अणु
+	if (!config) {
 		dev_err(dev, "%s: no OF configuration attached\n", __func__);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	pdata = devm_kzalloc(dev, माप(काष्ठा sh_flctl_platक्रमm_data),
+	pdata = devm_kzalloc(dev, sizeof(struct sh_flctl_platform_data),
 								GFP_KERNEL);
-	अगर (!pdata)
-		वापस शून्य;
+	if (!pdata)
+		return NULL;
 
-	/* set SoC specअगरic options */
+	/* set SoC specific options */
 	pdata->flcmncr_val = config->flcmncr_val;
 	pdata->has_hwecc = config->has_hwecc;
 	pdata->use_holden = config->use_holden;
 
-	वापस pdata;
-पूर्ण
+	return pdata;
+}
 
-अटल पूर्णांक flctl_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा resource *res;
-	काष्ठा sh_flctl *flctl;
-	काष्ठा mtd_info *flctl_mtd;
-	काष्ठा nand_chip *nand;
-	काष्ठा sh_flctl_platक्रमm_data *pdata;
-	पूर्णांक ret;
-	पूर्णांक irq;
+static int flctl_probe(struct platform_device *pdev)
+{
+	struct resource *res;
+	struct sh_flctl *flctl;
+	struct mtd_info *flctl_mtd;
+	struct nand_chip *nand;
+	struct sh_flctl_platform_data *pdata;
+	int ret;
+	int irq;
 
-	flctl = devm_kzalloc(&pdev->dev, माप(काष्ठा sh_flctl), GFP_KERNEL);
-	अगर (!flctl)
-		वापस -ENOMEM;
+	flctl = devm_kzalloc(&pdev->dev, sizeof(struct sh_flctl), GFP_KERNEL);
+	if (!flctl)
+		return -ENOMEM;
 
-	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	flctl->reg = devm_ioremap_resource(&pdev->dev, res);
-	अगर (IS_ERR(flctl->reg))
-		वापस PTR_ERR(flctl->reg);
-	flctl->fअगरo = res->start + 0x24; /* FLDTFIFO */
+	if (IS_ERR(flctl->reg))
+		return PTR_ERR(flctl->reg);
+	flctl->fifo = res->start + 0x24; /* FLDTFIFO */
 
-	irq = platक्रमm_get_irq(pdev, 0);
-	अगर (irq < 0)
-		वापस irq;
+	irq = platform_get_irq(pdev, 0);
+	if (irq < 0)
+		return irq;
 
 	ret = devm_request_irq(&pdev->dev, irq, flctl_handle_flste, IRQF_SHARED,
 			       "flste", flctl);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&pdev->dev, "request interrupt failed.\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	अगर (pdev->dev.of_node)
+	if (pdev->dev.of_node)
 		pdata = flctl_parse_dt(&pdev->dev);
-	अन्यथा
+	else
 		pdata = dev_get_platdata(&pdev->dev);
 
-	अगर (!pdata) अणु
+	if (!pdata) {
 		dev_err(&pdev->dev, "no setup data defined\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	platक्रमm_set_drvdata(pdev, flctl);
+	platform_set_drvdata(pdev, flctl);
 	nand = &flctl->chip;
 	flctl_mtd = nand_to_mtd(nand);
 	nand_set_flash_node(nand, pdev->dev.of_node);
@@ -1159,73 +1158,73 @@ MODULE_DEVICE_TABLE(of, of_flctl_match);
 	flctl->hwecc = pdata->has_hwecc;
 	flctl->holden = pdata->use_holden;
 	flctl->flcmncr_base = pdata->flcmncr_val;
-	flctl->flपूर्णांकdmacr_base = flctl->hwecc ? (STERINTE | ECERB) : STERINTE;
+	flctl->flintdmacr_base = flctl->hwecc ? (STERINTE | ECERB) : STERINTE;
 
 	/* Set address of hardware control function */
-	/* 20 us command delay समय */
+	/* 20 us command delay time */
 	nand->legacy.chip_delay = 20;
 
-	nand->legacy.पढ़ो_byte = flctl_पढ़ो_byte;
-	nand->legacy.ग_लिखो_buf = flctl_ग_लिखो_buf;
-	nand->legacy.पढ़ो_buf = flctl_पढ़ो_buf;
+	nand->legacy.read_byte = flctl_read_byte;
+	nand->legacy.write_buf = flctl_write_buf;
+	nand->legacy.read_buf = flctl_read_buf;
 	nand->legacy.select_chip = flctl_select_chip;
 	nand->legacy.cmdfunc = flctl_cmdfunc;
 	nand->legacy.set_features = nand_get_set_features_notsupp;
 	nand->legacy.get_features = nand_get_set_features_notsupp;
 
-	अगर (pdata->flcmncr_val & SEL_16BIT)
-		nand->options |= न_अंकD_BUSWIDTH_16;
+	if (pdata->flcmncr_val & SEL_16BIT)
+		nand->options |= NAND_BUSWIDTH_16;
 
-	nand->options |= न_अंकD_BBM_FIRSTPAGE | न_अंकD_BBM_SECONDPAGE;
+	nand->options |= NAND_BBM_FIRSTPAGE | NAND_BBM_SECONDPAGE;
 
-	pm_runसमय_enable(&pdev->dev);
-	pm_runसमय_resume(&pdev->dev);
+	pm_runtime_enable(&pdev->dev);
+	pm_runtime_resume(&pdev->dev);
 
 	flctl_setup_dma(flctl);
 
 	nand->legacy.dummy_controller.ops = &flctl_nand_controller_ops;
 	ret = nand_scan(nand, 1);
-	अगर (ret)
-		जाओ err_chip;
+	if (ret)
+		goto err_chip;
 
-	ret = mtd_device_रेजिस्टर(flctl_mtd, pdata->parts, pdata->nr_parts);
-	अगर (ret)
-		जाओ cleanup_nand;
+	ret = mtd_device_register(flctl_mtd, pdata->parts, pdata->nr_parts);
+	if (ret)
+		goto cleanup_nand;
 
-	वापस 0;
+	return 0;
 
 cleanup_nand:
 	nand_cleanup(nand);
 err_chip:
 	flctl_release_dma(flctl);
-	pm_runसमय_disable(&pdev->dev);
-	वापस ret;
-पूर्ण
+	pm_runtime_disable(&pdev->dev);
+	return ret;
+}
 
-अटल पूर्णांक flctl_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा sh_flctl *flctl = platक्रमm_get_drvdata(pdev);
-	काष्ठा nand_chip *chip = &flctl->chip;
-	पूर्णांक ret;
+static int flctl_remove(struct platform_device *pdev)
+{
+	struct sh_flctl *flctl = platform_get_drvdata(pdev);
+	struct nand_chip *chip = &flctl->chip;
+	int ret;
 
 	flctl_release_dma(flctl);
-	ret = mtd_device_unरेजिस्टर(nand_to_mtd(chip));
+	ret = mtd_device_unregister(nand_to_mtd(chip));
 	WARN_ON(ret);
 	nand_cleanup(chip);
-	pm_runसमय_disable(&pdev->dev);
+	pm_runtime_disable(&pdev->dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver flctl_driver = अणु
-	.हटाओ		= flctl_हटाओ,
-	.driver = अणु
+static struct platform_driver flctl_driver = {
+	.remove		= flctl_remove,
+	.driver = {
 		.name	= "sh_flctl",
 		.of_match_table = of_match_ptr(of_flctl_match),
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver_probe(flctl_driver, flctl_probe);
+module_platform_driver_probe(flctl_driver, flctl_probe);
 
 MODULE_LICENSE("GPL v2");
 MODULE_AUTHOR("Yoshihiro Shimoda");

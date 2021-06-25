@@ -1,149 +1,148 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <dirent.h>
-#समावेश <त्रुटिसं.स>
-#समावेश <पूर्णांकtypes.h>
-#समावेश <मानकपन.स>
-#समावेश <मानककोष.स>
-#समावेश <माला.स>
-#समावेश <linux/rbtree.h>
-#समावेश <linux/माला.स>
-#समावेश <sys/ttyशेषs.h>
-#समावेश <linux/समय64.h>
-#समावेश <linux/zभाग.स>
+// SPDX-License-Identifier: GPL-2.0
+#include <dirent.h>
+#include <errno.h>
+#include <inttypes.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <linux/rbtree.h>
+#include <linux/string.h>
+#include <sys/ttydefaults.h>
+#include <linux/time64.h>
+#include <linux/zalloc.h>
 
-#समावेश "../../util/debug.h"
-#समावेश "../../util/dso.h"
-#समावेश "../../util/callchain.h"
-#समावेश "../../util/evsel.h"
-#समावेश "../../util/evlist.h"
-#समावेश "../../util/header.h"
-#समावेश "../../util/hist.h"
-#समावेश "../../util/machine.h"
-#समावेश "../../util/map.h"
-#समावेश "../../util/maps.h"
-#समावेश "../../util/symbol.h"
-#समावेश "../../util/map_symbol.h"
-#समावेश "../../util/branch.h"
-#समावेश "../../util/pstack.h"
-#समावेश "../../util/sort.h"
-#समावेश "../../util/top.h"
-#समावेश "../../util/thread.h"
-#समावेश "../../util/block-info.h"
-#समावेश "../../arch/common.h"
-#समावेश "../../perf.h"
+#include "../../util/debug.h"
+#include "../../util/dso.h"
+#include "../../util/callchain.h"
+#include "../../util/evsel.h"
+#include "../../util/evlist.h"
+#include "../../util/header.h"
+#include "../../util/hist.h"
+#include "../../util/machine.h"
+#include "../../util/map.h"
+#include "../../util/maps.h"
+#include "../../util/symbol.h"
+#include "../../util/map_symbol.h"
+#include "../../util/branch.h"
+#include "../../util/pstack.h"
+#include "../../util/sort.h"
+#include "../../util/top.h"
+#include "../../util/thread.h"
+#include "../../util/block-info.h"
+#include "../../arch/common.h"
+#include "../../perf.h"
 
-#समावेश "../browsers/hists.h"
-#समावेश "../helpline.h"
-#समावेश "../util.h"
-#समावेश "../ui.h"
-#समावेश "map.h"
-#समावेश "annotate.h"
-#समावेश "srcline.h"
-#समावेश "string2.h"
-#समावेश "units.h"
-#समावेश "time-utils.h"
+#include "../browsers/hists.h"
+#include "../helpline.h"
+#include "../util.h"
+#include "../ui.h"
+#include "map.h"
+#include "annotate.h"
+#include "srcline.h"
+#include "string2.h"
+#include "units.h"
+#include "time-utils.h"
 
-#समावेश <linux/प्रकार.स>
+#include <linux/ctype.h>
 
-बाह्य व्योम hist_browser__init_hpp(व्योम);
+extern void hist_browser__init_hpp(void);
 
-अटल पूर्णांक hists_browser__scnम_लिखो_title(काष्ठा hist_browser *browser, अक्षर *bf, माप_प्रकार size);
-अटल व्योम hist_browser__update_nr_entries(काष्ठा hist_browser *hb);
+static int hists_browser__scnprintf_title(struct hist_browser *browser, char *bf, size_t size);
+static void hist_browser__update_nr_entries(struct hist_browser *hb);
 
-अटल काष्ठा rb_node *hists__filter_entries(काष्ठा rb_node *nd,
-					     भग्न min_pcnt);
+static struct rb_node *hists__filter_entries(struct rb_node *nd,
+					     float min_pcnt);
 
-अटल bool hist_browser__has_filter(काष्ठा hist_browser *hb)
-अणु
-	वापस hists__has_filter(hb->hists) || hb->min_pcnt || symbol_conf.has_filter || hb->c2c_filter;
-पूर्ण
+static bool hist_browser__has_filter(struct hist_browser *hb)
+{
+	return hists__has_filter(hb->hists) || hb->min_pcnt || symbol_conf.has_filter || hb->c2c_filter;
+}
 
-अटल पूर्णांक hist_browser__get_folding(काष्ठा hist_browser *browser)
-अणु
-	काष्ठा rb_node *nd;
-	काष्ठा hists *hists = browser->hists;
-	पूर्णांक unfolded_rows = 0;
+static int hist_browser__get_folding(struct hist_browser *browser)
+{
+	struct rb_node *nd;
+	struct hists *hists = browser->hists;
+	int unfolded_rows = 0;
 
-	क्रम (nd = rb_first_cached(&hists->entries);
-	     (nd = hists__filter_entries(nd, browser->min_pcnt)) != शून्य;
-	     nd = rb_hierarchy_next(nd)) अणु
-		काष्ठा hist_entry *he =
-			rb_entry(nd, काष्ठा hist_entry, rb_node);
+	for (nd = rb_first_cached(&hists->entries);
+	     (nd = hists__filter_entries(nd, browser->min_pcnt)) != NULL;
+	     nd = rb_hierarchy_next(nd)) {
+		struct hist_entry *he =
+			rb_entry(nd, struct hist_entry, rb_node);
 
-		अगर (he->leaf && he->unfolded)
+		if (he->leaf && he->unfolded)
 			unfolded_rows += he->nr_rows;
-	पूर्ण
-	वापस unfolded_rows;
-पूर्ण
+	}
+	return unfolded_rows;
+}
 
-अटल व्योम hist_browser__set_title_space(काष्ठा hist_browser *hb)
-अणु
-	काष्ठा ui_browser *browser = &hb->b;
-	काष्ठा hists *hists = hb->hists;
-	काष्ठा perf_hpp_list *hpp_list = hists->hpp_list;
+static void hist_browser__set_title_space(struct hist_browser *hb)
+{
+	struct ui_browser *browser = &hb->b;
+	struct hists *hists = hb->hists;
+	struct perf_hpp_list *hpp_list = hists->hpp_list;
 
 	browser->extra_title_lines = hb->show_headers ? hpp_list->nr_header_lines : 0;
-पूर्ण
+}
 
-अटल u32 hist_browser__nr_entries(काष्ठा hist_browser *hb)
-अणु
+static u32 hist_browser__nr_entries(struct hist_browser *hb)
+{
 	u32 nr_entries;
 
-	अगर (symbol_conf.report_hierarchy)
+	if (symbol_conf.report_hierarchy)
 		nr_entries = hb->nr_hierarchy_entries;
-	अन्यथा अगर (hist_browser__has_filter(hb))
+	else if (hist_browser__has_filter(hb))
 		nr_entries = hb->nr_non_filtered_entries;
-	अन्यथा
+	else
 		nr_entries = hb->hists->nr_entries;
 
 	hb->nr_callchain_rows = hist_browser__get_folding(hb);
-	वापस nr_entries + hb->nr_callchain_rows;
-पूर्ण
+	return nr_entries + hb->nr_callchain_rows;
+}
 
-अटल व्योम hist_browser__update_rows(काष्ठा hist_browser *hb)
-अणु
-	काष्ठा ui_browser *browser = &hb->b;
-	काष्ठा hists *hists = hb->hists;
-	काष्ठा perf_hpp_list *hpp_list = hists->hpp_list;
+static void hist_browser__update_rows(struct hist_browser *hb)
+{
+	struct ui_browser *browser = &hb->b;
+	struct hists *hists = hb->hists;
+	struct perf_hpp_list *hpp_list = hists->hpp_list;
 	u16 index_row;
 
-	अगर (!hb->show_headers) अणु
+	if (!hb->show_headers) {
 		browser->rows += browser->extra_title_lines;
 		browser->extra_title_lines = 0;
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	browser->extra_title_lines = hpp_list->nr_header_lines;
 	browser->rows -= browser->extra_title_lines;
 	/*
-	 * Verअगरy अगर we were at the last line and that line isn't
+	 * Verify if we were at the last line and that line isn't
 	 * visible because we now show the header line(s).
 	 */
 	index_row = browser->index - browser->top_idx;
-	अगर (index_row >= browser->rows)
+	if (index_row >= browser->rows)
 		browser->index -= index_row - browser->rows + 1;
-पूर्ण
+}
 
-अटल व्योम hist_browser__refresh_dimensions(काष्ठा ui_browser *browser)
-अणु
-	काष्ठा hist_browser *hb = container_of(browser, काष्ठा hist_browser, b);
+static void hist_browser__refresh_dimensions(struct ui_browser *browser)
+{
+	struct hist_browser *hb = container_of(browser, struct hist_browser, b);
 
-	/* 3 == +/- toggle symbol beक्रमe actual hist_entry rendering */
-	browser->width = 3 + (hists__sort_list_width(hb->hists) + माप("[k]"));
+	/* 3 == +/- toggle symbol before actual hist_entry rendering */
+	browser->width = 3 + (hists__sort_list_width(hb->hists) + sizeof("[k]"));
 	/*
  	 * FIXME: Just keeping existing behaviour, but this really should be
- 	 *	  beक्रमe updating browser->width, as it will invalidate the
+ 	 *	  before updating browser->width, as it will invalidate the
  	 *	  calculation above. Fix this and the fallout in another
  	 *	  changeset.
  	 */
 	ui_browser__refresh_dimensions(browser);
-पूर्ण
+}
 
-अटल व्योम hist_browser__reset(काष्ठा hist_browser *browser)
-अणु
+static void hist_browser__reset(struct hist_browser *browser)
+{
 	/*
-	 * The hists__हटाओ_entry_filter() alपढ़ोy folds non-filtered
+	 * The hists__remove_entry_filter() already folds non-filtered
 	 * entries so we can assume it has 0 callchain rows.
 	 */
 	browser->nr_callchain_rows = 0;
@@ -152,500 +151,500 @@
 	browser->b.nr_entries = hist_browser__nr_entries(browser);
 	hist_browser__refresh_dimensions(&browser->b);
 	ui_browser__reset_index(&browser->b);
-पूर्ण
+}
 
-अटल अक्षर tree__folded_sign(bool unfolded)
-अणु
-	वापस unfolded ? '-' : '+';
-पूर्ण
+static char tree__folded_sign(bool unfolded)
+{
+	return unfolded ? '-' : '+';
+}
 
-अटल अक्षर hist_entry__folded(स्थिर काष्ठा hist_entry *he)
-अणु
-	वापस he->has_children ? tree__folded_sign(he->unfolded) : ' ';
-पूर्ण
+static char hist_entry__folded(const struct hist_entry *he)
+{
+	return he->has_children ? tree__folded_sign(he->unfolded) : ' ';
+}
 
-अटल अक्षर callchain_list__folded(स्थिर काष्ठा callchain_list *cl)
-अणु
-	वापस cl->has_children ? tree__folded_sign(cl->unfolded) : ' ';
-पूर्ण
+static char callchain_list__folded(const struct callchain_list *cl)
+{
+	return cl->has_children ? tree__folded_sign(cl->unfolded) : ' ';
+}
 
-अटल व्योम callchain_list__set_folding(काष्ठा callchain_list *cl, bool unfold)
-अणु
+static void callchain_list__set_folding(struct callchain_list *cl, bool unfold)
+{
 	cl->unfolded = unfold ? cl->has_children : false;
-पूर्ण
+}
 
-अटल पूर्णांक callchain_node__count_rows_rb_tree(काष्ठा callchain_node *node)
-अणु
-	पूर्णांक n = 0;
-	काष्ठा rb_node *nd;
+static int callchain_node__count_rows_rb_tree(struct callchain_node *node)
+{
+	int n = 0;
+	struct rb_node *nd;
 
-	क्रम (nd = rb_first(&node->rb_root); nd; nd = rb_next(nd)) अणु
-		काष्ठा callchain_node *child = rb_entry(nd, काष्ठा callchain_node, rb_node);
-		काष्ठा callchain_list *chain;
-		अक्षर folded_sign = ' '; /* No children */
+	for (nd = rb_first(&node->rb_root); nd; nd = rb_next(nd)) {
+		struct callchain_node *child = rb_entry(nd, struct callchain_node, rb_node);
+		struct callchain_list *chain;
+		char folded_sign = ' '; /* No children */
 
-		list_क्रम_each_entry(chain, &child->val, list) अणु
+		list_for_each_entry(chain, &child->val, list) {
 			++n;
 
 			/* We need this because we may not have children */
 			folded_sign = callchain_list__folded(chain);
-			अगर (folded_sign == '+')
-				अवरोध;
-		पूर्ण
+			if (folded_sign == '+')
+				break;
+		}
 
-		अगर (folded_sign == '-') /* Have children and they're unfolded */
+		if (folded_sign == '-') /* Have children and they're unfolded */
 			n += callchain_node__count_rows_rb_tree(child);
-	पूर्ण
+	}
 
-	वापस n;
-पूर्ण
+	return n;
+}
 
-अटल पूर्णांक callchain_node__count_flat_rows(काष्ठा callchain_node *node)
-अणु
-	काष्ठा callchain_list *chain;
-	अक्षर folded_sign = 0;
-	पूर्णांक n = 0;
+static int callchain_node__count_flat_rows(struct callchain_node *node)
+{
+	struct callchain_list *chain;
+	char folded_sign = 0;
+	int n = 0;
 
-	list_क्रम_each_entry(chain, &node->parent_val, list) अणु
-		अगर (!folded_sign) अणु
+	list_for_each_entry(chain, &node->parent_val, list) {
+		if (!folded_sign) {
 			/* only check first chain list entry */
 			folded_sign = callchain_list__folded(chain);
-			अगर (folded_sign == '+')
-				वापस 1;
-		पूर्ण
+			if (folded_sign == '+')
+				return 1;
+		}
 		n++;
-	पूर्ण
+	}
 
-	list_क्रम_each_entry(chain, &node->val, list) अणु
-		अगर (!folded_sign) अणु
+	list_for_each_entry(chain, &node->val, list) {
+		if (!folded_sign) {
 			/* node->parent_val list might be empty */
 			folded_sign = callchain_list__folded(chain);
-			अगर (folded_sign == '+')
-				वापस 1;
-		पूर्ण
+			if (folded_sign == '+')
+				return 1;
+		}
 		n++;
-	पूर्ण
+	}
 
-	वापस n;
-पूर्ण
+	return n;
+}
 
-अटल पूर्णांक callchain_node__count_folded_rows(काष्ठा callchain_node *node __maybe_unused)
-अणु
-	वापस 1;
-पूर्ण
+static int callchain_node__count_folded_rows(struct callchain_node *node __maybe_unused)
+{
+	return 1;
+}
 
-अटल पूर्णांक callchain_node__count_rows(काष्ठा callchain_node *node)
-अणु
-	काष्ठा callchain_list *chain;
+static int callchain_node__count_rows(struct callchain_node *node)
+{
+	struct callchain_list *chain;
 	bool unfolded = false;
-	पूर्णांक n = 0;
+	int n = 0;
 
-	अगर (callchain_param.mode == CHAIN_FLAT)
-		वापस callchain_node__count_flat_rows(node);
-	अन्यथा अगर (callchain_param.mode == CHAIN_FOLDED)
-		वापस callchain_node__count_folded_rows(node);
+	if (callchain_param.mode == CHAIN_FLAT)
+		return callchain_node__count_flat_rows(node);
+	else if (callchain_param.mode == CHAIN_FOLDED)
+		return callchain_node__count_folded_rows(node);
 
-	list_क्रम_each_entry(chain, &node->val, list) अणु
+	list_for_each_entry(chain, &node->val, list) {
 		++n;
 
 		unfolded = chain->unfolded;
-	पूर्ण
+	}
 
-	अगर (unfolded)
+	if (unfolded)
 		n += callchain_node__count_rows_rb_tree(node);
 
-	वापस n;
-पूर्ण
+	return n;
+}
 
-अटल पूर्णांक callchain__count_rows(काष्ठा rb_root *chain)
-अणु
-	काष्ठा rb_node *nd;
-	पूर्णांक n = 0;
+static int callchain__count_rows(struct rb_root *chain)
+{
+	struct rb_node *nd;
+	int n = 0;
 
-	क्रम (nd = rb_first(chain); nd; nd = rb_next(nd)) अणु
-		काष्ठा callchain_node *node = rb_entry(nd, काष्ठा callchain_node, rb_node);
+	for (nd = rb_first(chain); nd; nd = rb_next(nd)) {
+		struct callchain_node *node = rb_entry(nd, struct callchain_node, rb_node);
 		n += callchain_node__count_rows(node);
-	पूर्ण
+	}
 
-	वापस n;
-पूर्ण
+	return n;
+}
 
-अटल पूर्णांक hierarchy_count_rows(काष्ठा hist_browser *hb, काष्ठा hist_entry *he,
+static int hierarchy_count_rows(struct hist_browser *hb, struct hist_entry *he,
 				bool include_children)
-अणु
-	पूर्णांक count = 0;
-	काष्ठा rb_node *node;
-	काष्ठा hist_entry *child;
+{
+	int count = 0;
+	struct rb_node *node;
+	struct hist_entry *child;
 
-	अगर (he->leaf)
-		वापस callchain__count_rows(&he->sorted_chain);
+	if (he->leaf)
+		return callchain__count_rows(&he->sorted_chain);
 
-	अगर (he->has_no_entry)
-		वापस 1;
+	if (he->has_no_entry)
+		return 1;
 
 	node = rb_first_cached(&he->hroot_out);
-	जबतक (node) अणु
-		भग्न percent;
+	while (node) {
+		float percent;
 
-		child = rb_entry(node, काष्ठा hist_entry, rb_node);
+		child = rb_entry(node, struct hist_entry, rb_node);
 		percent = hist_entry__get_percent_limit(child);
 
-		अगर (!child->filtered && percent >= hb->min_pcnt) अणु
+		if (!child->filtered && percent >= hb->min_pcnt) {
 			count++;
 
-			अगर (include_children && child->unfolded)
+			if (include_children && child->unfolded)
 				count += hierarchy_count_rows(hb, child, true);
-		पूर्ण
+		}
 
 		node = rb_next(node);
-	पूर्ण
-	वापस count;
-पूर्ण
+	}
+	return count;
+}
 
-अटल bool hist_entry__toggle_fold(काष्ठा hist_entry *he)
-अणु
-	अगर (!he)
-		वापस false;
+static bool hist_entry__toggle_fold(struct hist_entry *he)
+{
+	if (!he)
+		return false;
 
-	अगर (!he->has_children)
-		वापस false;
+	if (!he->has_children)
+		return false;
 
 	he->unfolded = !he->unfolded;
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल bool callchain_list__toggle_fold(काष्ठा callchain_list *cl)
-अणु
-	अगर (!cl)
-		वापस false;
+static bool callchain_list__toggle_fold(struct callchain_list *cl)
+{
+	if (!cl)
+		return false;
 
-	अगर (!cl->has_children)
-		वापस false;
+	if (!cl->has_children)
+		return false;
 
 	cl->unfolded = !cl->unfolded;
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल व्योम callchain_node__init_have_children_rb_tree(काष्ठा callchain_node *node)
-अणु
-	काष्ठा rb_node *nd = rb_first(&node->rb_root);
+static void callchain_node__init_have_children_rb_tree(struct callchain_node *node)
+{
+	struct rb_node *nd = rb_first(&node->rb_root);
 
-	क्रम (nd = rb_first(&node->rb_root); nd; nd = rb_next(nd)) अणु
-		काष्ठा callchain_node *child = rb_entry(nd, काष्ठा callchain_node, rb_node);
-		काष्ठा callchain_list *chain;
+	for (nd = rb_first(&node->rb_root); nd; nd = rb_next(nd)) {
+		struct callchain_node *child = rb_entry(nd, struct callchain_node, rb_node);
+		struct callchain_list *chain;
 		bool first = true;
 
-		list_क्रम_each_entry(chain, &child->val, list) अणु
-			अगर (first) अणु
+		list_for_each_entry(chain, &child->val, list) {
+			if (first) {
 				first = false;
 				chain->has_children = chain->list.next != &child->val ||
 							 !RB_EMPTY_ROOT(&child->rb_root);
-			पूर्ण अन्यथा
+			} else
 				chain->has_children = chain->list.next == &child->val &&
 							 !RB_EMPTY_ROOT(&child->rb_root);
-		पूर्ण
+		}
 
 		callchain_node__init_have_children_rb_tree(child);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम callchain_node__init_have_children(काष्ठा callchain_node *node,
+static void callchain_node__init_have_children(struct callchain_node *node,
 					       bool has_sibling)
-अणु
-	काष्ठा callchain_list *chain;
+{
+	struct callchain_list *chain;
 
-	chain = list_entry(node->val.next, काष्ठा callchain_list, list);
+	chain = list_entry(node->val.next, struct callchain_list, list);
 	chain->has_children = has_sibling;
 
-	अगर (!list_empty(&node->val)) अणु
-		chain = list_entry(node->val.prev, काष्ठा callchain_list, list);
+	if (!list_empty(&node->val)) {
+		chain = list_entry(node->val.prev, struct callchain_list, list);
 		chain->has_children = !RB_EMPTY_ROOT(&node->rb_root);
-	पूर्ण
+	}
 
 	callchain_node__init_have_children_rb_tree(node);
-पूर्ण
+}
 
-अटल व्योम callchain__init_have_children(काष्ठा rb_root *root)
-अणु
-	काष्ठा rb_node *nd = rb_first(root);
+static void callchain__init_have_children(struct rb_root *root)
+{
+	struct rb_node *nd = rb_first(root);
 	bool has_sibling = nd && rb_next(nd);
 
-	क्रम (nd = rb_first(root); nd; nd = rb_next(nd)) अणु
-		काष्ठा callchain_node *node = rb_entry(nd, काष्ठा callchain_node, rb_node);
+	for (nd = rb_first(root); nd; nd = rb_next(nd)) {
+		struct callchain_node *node = rb_entry(nd, struct callchain_node, rb_node);
 		callchain_node__init_have_children(node, has_sibling);
-		अगर (callchain_param.mode == CHAIN_FLAT ||
+		if (callchain_param.mode == CHAIN_FLAT ||
 		    callchain_param.mode == CHAIN_FOLDED)
 			callchain_node__make_parent_list(node);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम hist_entry__init_have_children(काष्ठा hist_entry *he)
-अणु
-	अगर (he->init_have_children)
-		वापस;
+static void hist_entry__init_have_children(struct hist_entry *he)
+{
+	if (he->init_have_children)
+		return;
 
-	अगर (he->leaf) अणु
+	if (he->leaf) {
 		he->has_children = !RB_EMPTY_ROOT(&he->sorted_chain);
 		callchain__init_have_children(&he->sorted_chain);
-	पूर्ण अन्यथा अणु
+	} else {
 		he->has_children = !RB_EMPTY_ROOT(&he->hroot_out.rb_root);
-	पूर्ण
+	}
 
 	he->init_have_children = true;
-पूर्ण
+}
 
-अटल bool hist_browser__selection_has_children(काष्ठा hist_browser *browser)
-अणु
-	काष्ठा hist_entry *he = browser->he_selection;
-	काष्ठा map_symbol *ms = browser->selection;
+static bool hist_browser__selection_has_children(struct hist_browser *browser)
+{
+	struct hist_entry *he = browser->he_selection;
+	struct map_symbol *ms = browser->selection;
 
-	अगर (!he || !ms)
-		वापस false;
+	if (!he || !ms)
+		return false;
 
-	अगर (ms == &he->ms)
-	       वापस he->has_children;
+	if (ms == &he->ms)
+	       return he->has_children;
 
-	वापस container_of(ms, काष्ठा callchain_list, ms)->has_children;
-पूर्ण
+	return container_of(ms, struct callchain_list, ms)->has_children;
+}
 
-अटल bool hist_browser__he_selection_unfolded(काष्ठा hist_browser *browser)
-अणु
-	वापस browser->he_selection ? browser->he_selection->unfolded : false;
-पूर्ण
+static bool hist_browser__he_selection_unfolded(struct hist_browser *browser)
+{
+	return browser->he_selection ? browser->he_selection->unfolded : false;
+}
 
-अटल bool hist_browser__selection_unfolded(काष्ठा hist_browser *browser)
-अणु
-	काष्ठा hist_entry *he = browser->he_selection;
-	काष्ठा map_symbol *ms = browser->selection;
+static bool hist_browser__selection_unfolded(struct hist_browser *browser)
+{
+	struct hist_entry *he = browser->he_selection;
+	struct map_symbol *ms = browser->selection;
 
-	अगर (!he || !ms)
-		वापस false;
+	if (!he || !ms)
+		return false;
 
-	अगर (ms == &he->ms)
-	       वापस he->unfolded;
+	if (ms == &he->ms)
+	       return he->unfolded;
 
-	वापस container_of(ms, काष्ठा callchain_list, ms)->unfolded;
-पूर्ण
+	return container_of(ms, struct callchain_list, ms)->unfolded;
+}
 
-अटल अक्षर *hist_browser__selection_sym_name(काष्ठा hist_browser *browser, अक्षर *bf, माप_प्रकार size)
-अणु
-	काष्ठा hist_entry *he = browser->he_selection;
-	काष्ठा map_symbol *ms = browser->selection;
-	काष्ठा callchain_list *callchain_entry;
+static char *hist_browser__selection_sym_name(struct hist_browser *browser, char *bf, size_t size)
+{
+	struct hist_entry *he = browser->he_selection;
+	struct map_symbol *ms = browser->selection;
+	struct callchain_list *callchain_entry;
 
-	अगर (!he || !ms)
-		वापस शून्य;
+	if (!he || !ms)
+		return NULL;
 
-	अगर (ms == &he->ms) अणु
-	       hist_entry__sym_snम_लिखो(he, bf, size, 0);
-	       वापस bf + 4; // skip the level, e.g. '[k] '
-	पूर्ण
+	if (ms == &he->ms) {
+	       hist_entry__sym_snprintf(he, bf, size, 0);
+	       return bf + 4; // skip the level, e.g. '[k] '
+	}
 
-	callchain_entry = container_of(ms, काष्ठा callchain_list, ms);
-	वापस callchain_list__sym_name(callchain_entry, bf, size, browser->show_dso);
-पूर्ण
+	callchain_entry = container_of(ms, struct callchain_list, ms);
+	return callchain_list__sym_name(callchain_entry, bf, size, browser->show_dso);
+}
 
-अटल bool hist_browser__toggle_fold(काष्ठा hist_browser *browser)
-अणु
-	काष्ठा hist_entry *he = browser->he_selection;
-	काष्ठा map_symbol *ms = browser->selection;
-	काष्ठा callchain_list *cl = container_of(ms, काष्ठा callchain_list, ms);
+static bool hist_browser__toggle_fold(struct hist_browser *browser)
+{
+	struct hist_entry *he = browser->he_selection;
+	struct map_symbol *ms = browser->selection;
+	struct callchain_list *cl = container_of(ms, struct callchain_list, ms);
 	bool has_children;
 
-	अगर (!he || !ms)
-		वापस false;
+	if (!he || !ms)
+		return false;
 
-	अगर (ms == &he->ms)
+	if (ms == &he->ms)
 		has_children = hist_entry__toggle_fold(he);
-	अन्यथा
+	else
 		has_children = callchain_list__toggle_fold(cl);
 
-	अगर (has_children) अणु
-		पूर्णांक child_rows = 0;
+	if (has_children) {
+		int child_rows = 0;
 
 		hist_entry__init_have_children(he);
 		browser->b.nr_entries -= he->nr_rows;
 
-		अगर (he->leaf)
+		if (he->leaf)
 			browser->nr_callchain_rows -= he->nr_rows;
-		अन्यथा
+		else
 			browser->nr_hierarchy_entries -= he->nr_rows;
 
-		अगर (symbol_conf.report_hierarchy)
+		if (symbol_conf.report_hierarchy)
 			child_rows = hierarchy_count_rows(browser, he, true);
 
-		अगर (he->unfolded) अणु
-			अगर (he->leaf)
+		if (he->unfolded) {
+			if (he->leaf)
 				he->nr_rows = callchain__count_rows(
 						&he->sorted_chain);
-			अन्यथा
+			else
 				he->nr_rows = hierarchy_count_rows(browser, he, false);
 
-			/* account gअक्रम children */
-			अगर (symbol_conf.report_hierarchy)
+			/* account grand children */
+			if (symbol_conf.report_hierarchy)
 				browser->b.nr_entries += child_rows - he->nr_rows;
 
-			अगर (!he->leaf && he->nr_rows == 0) अणु
+			if (!he->leaf && he->nr_rows == 0) {
 				he->has_no_entry = true;
 				he->nr_rows = 1;
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			अगर (symbol_conf.report_hierarchy)
+			}
+		} else {
+			if (symbol_conf.report_hierarchy)
 				browser->b.nr_entries -= child_rows - he->nr_rows;
 
-			अगर (he->has_no_entry)
+			if (he->has_no_entry)
 				he->has_no_entry = false;
 
 			he->nr_rows = 0;
-		पूर्ण
+		}
 
 		browser->b.nr_entries += he->nr_rows;
 
-		अगर (he->leaf)
+		if (he->leaf)
 			browser->nr_callchain_rows += he->nr_rows;
-		अन्यथा
+		else
 			browser->nr_hierarchy_entries += he->nr_rows;
 
-		वापस true;
-	पूर्ण
+		return true;
+	}
 
-	/* If it करोesn't have children, no toggling perक्रमmed */
-	वापस false;
-पूर्ण
+	/* If it doesn't have children, no toggling performed */
+	return false;
+}
 
-अटल पूर्णांक callchain_node__set_folding_rb_tree(काष्ठा callchain_node *node, bool unfold)
-अणु
-	पूर्णांक n = 0;
-	काष्ठा rb_node *nd;
+static int callchain_node__set_folding_rb_tree(struct callchain_node *node, bool unfold)
+{
+	int n = 0;
+	struct rb_node *nd;
 
-	क्रम (nd = rb_first(&node->rb_root); nd; nd = rb_next(nd)) अणु
-		काष्ठा callchain_node *child = rb_entry(nd, काष्ठा callchain_node, rb_node);
-		काष्ठा callchain_list *chain;
+	for (nd = rb_first(&node->rb_root); nd; nd = rb_next(nd)) {
+		struct callchain_node *child = rb_entry(nd, struct callchain_node, rb_node);
+		struct callchain_list *chain;
 		bool has_children = false;
 
-		list_क्रम_each_entry(chain, &child->val, list) अणु
+		list_for_each_entry(chain, &child->val, list) {
 			++n;
 			callchain_list__set_folding(chain, unfold);
 			has_children = chain->has_children;
-		पूर्ण
+		}
 
-		अगर (has_children)
+		if (has_children)
 			n += callchain_node__set_folding_rb_tree(child, unfold);
-	पूर्ण
+	}
 
-	वापस n;
-पूर्ण
+	return n;
+}
 
-अटल पूर्णांक callchain_node__set_folding(काष्ठा callchain_node *node, bool unfold)
-अणु
-	काष्ठा callchain_list *chain;
+static int callchain_node__set_folding(struct callchain_node *node, bool unfold)
+{
+	struct callchain_list *chain;
 	bool has_children = false;
-	पूर्णांक n = 0;
+	int n = 0;
 
-	list_क्रम_each_entry(chain, &node->val, list) अणु
+	list_for_each_entry(chain, &node->val, list) {
 		++n;
 		callchain_list__set_folding(chain, unfold);
 		has_children = chain->has_children;
-	पूर्ण
+	}
 
-	अगर (has_children)
+	if (has_children)
 		n += callchain_node__set_folding_rb_tree(node, unfold);
 
-	वापस n;
-पूर्ण
+	return n;
+}
 
-अटल पूर्णांक callchain__set_folding(काष्ठा rb_root *chain, bool unfold)
-अणु
-	काष्ठा rb_node *nd;
-	पूर्णांक n = 0;
+static int callchain__set_folding(struct rb_root *chain, bool unfold)
+{
+	struct rb_node *nd;
+	int n = 0;
 
-	क्रम (nd = rb_first(chain); nd; nd = rb_next(nd)) अणु
-		काष्ठा callchain_node *node = rb_entry(nd, काष्ठा callchain_node, rb_node);
+	for (nd = rb_first(chain); nd; nd = rb_next(nd)) {
+		struct callchain_node *node = rb_entry(nd, struct callchain_node, rb_node);
 		n += callchain_node__set_folding(node, unfold);
-	पूर्ण
+	}
 
-	वापस n;
-पूर्ण
+	return n;
+}
 
-अटल पूर्णांक hierarchy_set_folding(काष्ठा hist_browser *hb, काष्ठा hist_entry *he,
+static int hierarchy_set_folding(struct hist_browser *hb, struct hist_entry *he,
 				 bool unfold __maybe_unused)
-अणु
-	भग्न percent;
-	काष्ठा rb_node *nd;
-	काष्ठा hist_entry *child;
-	पूर्णांक n = 0;
+{
+	float percent;
+	struct rb_node *nd;
+	struct hist_entry *child;
+	int n = 0;
 
-	क्रम (nd = rb_first_cached(&he->hroot_out); nd; nd = rb_next(nd)) अणु
-		child = rb_entry(nd, काष्ठा hist_entry, rb_node);
+	for (nd = rb_first_cached(&he->hroot_out); nd; nd = rb_next(nd)) {
+		child = rb_entry(nd, struct hist_entry, rb_node);
 		percent = hist_entry__get_percent_limit(child);
-		अगर (!child->filtered && percent >= hb->min_pcnt)
+		if (!child->filtered && percent >= hb->min_pcnt)
 			n++;
-	पूर्ण
+	}
 
-	वापस n;
-पूर्ण
+	return n;
+}
 
-अटल व्योम __hist_entry__set_folding(काष्ठा hist_entry *he,
-				      काष्ठा hist_browser *hb, bool unfold)
-अणु
+static void __hist_entry__set_folding(struct hist_entry *he,
+				      struct hist_browser *hb, bool unfold)
+{
 	hist_entry__init_have_children(he);
 	he->unfolded = unfold ? he->has_children : false;
 
-	अगर (he->has_children) अणु
-		पूर्णांक n;
+	if (he->has_children) {
+		int n;
 
-		अगर (he->leaf)
+		if (he->leaf)
 			n = callchain__set_folding(&he->sorted_chain, unfold);
-		अन्यथा
+		else
 			n = hierarchy_set_folding(hb, he, unfold);
 
 		he->nr_rows = unfold ? n : 0;
-	पूर्ण अन्यथा
+	} else
 		he->nr_rows = 0;
-पूर्ण
+}
 
-अटल व्योम hist_entry__set_folding(काष्ठा hist_entry *he,
-				    काष्ठा hist_browser *browser, bool unfold)
-अणु
-	द्विगुन percent;
+static void hist_entry__set_folding(struct hist_entry *he,
+				    struct hist_browser *browser, bool unfold)
+{
+	double percent;
 
 	percent = hist_entry__get_percent_limit(he);
-	अगर (he->filtered || percent < browser->min_pcnt)
-		वापस;
+	if (he->filtered || percent < browser->min_pcnt)
+		return;
 
 	__hist_entry__set_folding(he, browser, unfold);
 
-	अगर (!he->depth || unfold)
+	if (!he->depth || unfold)
 		browser->nr_hierarchy_entries++;
-	अगर (he->leaf)
+	if (he->leaf)
 		browser->nr_callchain_rows += he->nr_rows;
-	अन्यथा अगर (unfold && !hist_entry__has_hierarchy_children(he, browser->min_pcnt)) अणु
+	else if (unfold && !hist_entry__has_hierarchy_children(he, browser->min_pcnt)) {
 		browser->nr_hierarchy_entries++;
 		he->has_no_entry = true;
 		he->nr_rows = 1;
-	पूर्ण अन्यथा
+	} else
 		he->has_no_entry = false;
-पूर्ण
+}
 
-अटल व्योम
-__hist_browser__set_folding(काष्ठा hist_browser *browser, bool unfold)
-अणु
-	काष्ठा rb_node *nd;
-	काष्ठा hist_entry *he;
+static void
+__hist_browser__set_folding(struct hist_browser *browser, bool unfold)
+{
+	struct rb_node *nd;
+	struct hist_entry *he;
 
 	nd = rb_first_cached(&browser->hists->entries);
-	जबतक (nd) अणु
-		he = rb_entry(nd, काष्ठा hist_entry, rb_node);
+	while (nd) {
+		he = rb_entry(nd, struct hist_entry, rb_node);
 
-		/* set folding state even अगर it's currently folded */
+		/* set folding state even if it's currently folded */
 		nd = __rb_hierarchy_next(nd, HMD_FORCE_CHILD);
 
 		hist_entry__set_folding(he, browser, unfold);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम hist_browser__set_folding(काष्ठा hist_browser *browser, bool unfold)
-अणु
+static void hist_browser__set_folding(struct hist_browser *browser, bool unfold)
+{
 	browser->nr_hierarchy_entries = 0;
 	browser->nr_callchain_rows = 0;
 	__hist_browser__set_folding(browser, unfold);
@@ -653,298 +652,298 @@ __hist_browser__set_folding(काष्ठा hist_browser *browser, bool unfol
 	browser->b.nr_entries = hist_browser__nr_entries(browser);
 	/* Go to the start, we may be way after valid entries after a collapse */
 	ui_browser__reset_index(&browser->b);
-पूर्ण
+}
 
-अटल व्योम hist_browser__set_folding_selected(काष्ठा hist_browser *browser, bool unfold)
-अणु
-	अगर (!browser->he_selection)
-		वापस;
+static void hist_browser__set_folding_selected(struct hist_browser *browser, bool unfold)
+{
+	if (!browser->he_selection)
+		return;
 
 	hist_entry__set_folding(browser->he_selection, browser, unfold);
 	browser->b.nr_entries = hist_browser__nr_entries(browser);
-पूर्ण
+}
 
-अटल व्योम ui_browser__warn_lost_events(काष्ठा ui_browser *browser)
-अणु
+static void ui_browser__warn_lost_events(struct ui_browser *browser)
+{
 	ui_browser__warning(browser, 4,
 		"Events are being lost, check IO/CPU overload!\n\n"
 		"You may want to run 'perf' using a RT scheduler policy:\n\n"
 		" perf top -r 80\n\n"
 		"Or reduce the sampling frequency.");
-पूर्ण
+}
 
-अटल पूर्णांक hist_browser__title(काष्ठा hist_browser *browser, अक्षर *bf, माप_प्रकार size)
-अणु
-	वापस browser->title ? browser->title(browser, bf, size) : 0;
-पूर्ण
+static int hist_browser__title(struct hist_browser *browser, char *bf, size_t size)
+{
+	return browser->title ? browser->title(browser, bf, size) : 0;
+}
 
-अटल पूर्णांक hist_browser__handle_hotkey(काष्ठा hist_browser *browser, bool warn_lost_event, अक्षर *title, माप_प्रकार size, पूर्णांक key)
-अणु
-	चयन (key) अणु
-	हाल K_TIMER: अणु
-		काष्ठा hist_browser_समयr *hbt = browser->hbt;
-		काष्ठा evsel *evsel = hists_to_evsel(browser->hists);
+static int hist_browser__handle_hotkey(struct hist_browser *browser, bool warn_lost_event, char *title, size_t size, int key)
+{
+	switch (key) {
+	case K_TIMER: {
+		struct hist_browser_timer *hbt = browser->hbt;
+		struct evsel *evsel = hists_to_evsel(browser->hists);
 		u64 nr_entries;
 
 		WARN_ON_ONCE(!hbt);
 
-		अगर (hbt)
-			hbt->समयr(hbt->arg);
+		if (hbt)
+			hbt->timer(hbt->arg);
 
-		अगर (hist_browser__has_filter(browser) || symbol_conf.report_hierarchy)
+		if (hist_browser__has_filter(browser) || symbol_conf.report_hierarchy)
 			hist_browser__update_nr_entries(browser);
 
 		nr_entries = hist_browser__nr_entries(browser);
 		ui_browser__update_nr_entries(&browser->b, nr_entries);
 
-		अगर (warn_lost_event &&
+		if (warn_lost_event &&
 		    (evsel->evlist->stats.nr_lost_warned !=
-		     evsel->evlist->stats.nr_events[PERF_RECORD_LOST])) अणु
+		     evsel->evlist->stats.nr_events[PERF_RECORD_LOST])) {
 			evsel->evlist->stats.nr_lost_warned =
 				evsel->evlist->stats.nr_events[PERF_RECORD_LOST];
 			ui_browser__warn_lost_events(&browser->b);
-		पूर्ण
+		}
 
 		hist_browser__title(browser, title, size);
 		ui_browser__show_title(&browser->b, title);
-		अवरोध;
-	पूर्ण
-	हाल 'D': अणु /* Debug */
-		काष्ठा hist_entry *h = rb_entry(browser->b.top, काष्ठा hist_entry, rb_node);
-		अटल पूर्णांक seq;
+		break;
+	}
+	case 'D': { /* Debug */
+		struct hist_entry *h = rb_entry(browser->b.top, struct hist_entry, rb_node);
+		static int seq;
 
 		ui_helpline__pop();
 		ui_helpline__fpush("%d: nr_ent=(%d,%d), etl: %d, rows=%d, idx=%d, fve: idx=%d, row_off=%d, nrows=%d",
 				   seq++, browser->b.nr_entries, browser->hists->nr_entries,
 				   browser->b.extra_title_lines, browser->b.rows,
 				   browser->b.index, browser->b.top_idx, h->row_offset, h->nr_rows);
-	पूर्ण
-		अवरोध;
-	हाल 'C':
+	}
+		break;
+	case 'C':
 		/* Collapse the whole world. */
 		hist_browser__set_folding(browser, false);
-		अवरोध;
-	हाल 'c':
+		break;
+	case 'c':
 		/* Collapse the selected entry. */
 		hist_browser__set_folding_selected(browser, false);
-		अवरोध;
-	हाल 'E':
+		break;
+	case 'E':
 		/* Expand the whole world. */
 		hist_browser__set_folding(browser, true);
-		अवरोध;
-	हाल 'e':
+		break;
+	case 'e':
 		/* Expand the selected entry. */
 		hist_browser__set_folding_selected(browser, !hist_browser__he_selection_unfolded(browser));
-		अवरोध;
-	हाल 'H':
+		break;
+	case 'H':
 		browser->show_headers = !browser->show_headers;
 		hist_browser__update_rows(browser);
-		अवरोध;
-	हाल '+':
-		अगर (hist_browser__toggle_fold(browser))
-			अवरोध;
+		break;
+	case '+':
+		if (hist_browser__toggle_fold(browser))
+			break;
 		/* fall thru */
-	शेष:
-		वापस -1;
-	पूर्ण
+	default:
+		return -1;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक hist_browser__run(काष्ठा hist_browser *browser, स्थिर अक्षर *help,
-		      bool warn_lost_event, पूर्णांक key)
-अणु
-	अक्षर title[160];
-	काष्ठा hist_browser_समयr *hbt = browser->hbt;
-	पूर्णांक delay_secs = hbt ? hbt->refresh : 0;
+int hist_browser__run(struct hist_browser *browser, const char *help,
+		      bool warn_lost_event, int key)
+{
+	char title[160];
+	struct hist_browser_timer *hbt = browser->hbt;
+	int delay_secs = hbt ? hbt->refresh : 0;
 
 	browser->b.entries = &browser->hists->entries;
 	browser->b.nr_entries = hist_browser__nr_entries(browser);
 
-	hist_browser__title(browser, title, माप(title));
+	hist_browser__title(browser, title, sizeof(title));
 
-	अगर (ui_browser__show(&browser->b, title, "%s", help) < 0)
-		वापस -1;
+	if (ui_browser__show(&browser->b, title, "%s", help) < 0)
+		return -1;
 
-	अगर (key && hist_browser__handle_hotkey(browser, warn_lost_event, title, माप(title), key))
-		जाओ out;
+	if (key && hist_browser__handle_hotkey(browser, warn_lost_event, title, sizeof(title), key))
+		goto out;
 
-	जबतक (1) अणु
+	while (1) {
 		key = ui_browser__run(&browser->b, delay_secs);
 
-		अगर (hist_browser__handle_hotkey(browser, warn_lost_event, title, माप(title), key))
-			अवरोध;
-	पूर्ण
+		if (hist_browser__handle_hotkey(browser, warn_lost_event, title, sizeof(title), key))
+			break;
+	}
 out:
 	ui_browser__hide(&browser->b);
-	वापस key;
-पूर्ण
+	return key;
+}
 
-काष्ठा callchain_prपूर्णांक_arg अणु
-	/* क्रम hists browser */
+struct callchain_print_arg {
+	/* for hists browser */
 	off_t	row_offset;
 	bool	is_current_entry;
 
-	/* क्रम file dump */
-	खाता	*fp;
-	पूर्णांक	prपूर्णांकed;
-पूर्ण;
+	/* for file dump */
+	FILE	*fp;
+	int	printed;
+};
 
-प्रकार व्योम (*prपूर्णांक_callchain_entry_fn)(काष्ठा hist_browser *browser,
-					 काष्ठा callchain_list *chain,
-					 स्थिर अक्षर *str, पूर्णांक offset,
-					 अचिन्हित लघु row,
-					 काष्ठा callchain_prपूर्णांक_arg *arg);
+typedef void (*print_callchain_entry_fn)(struct hist_browser *browser,
+					 struct callchain_list *chain,
+					 const char *str, int offset,
+					 unsigned short row,
+					 struct callchain_print_arg *arg);
 
-अटल व्योम hist_browser__show_callchain_entry(काष्ठा hist_browser *browser,
-					       काष्ठा callchain_list *chain,
-					       स्थिर अक्षर *str, पूर्णांक offset,
-					       अचिन्हित लघु row,
-					       काष्ठा callchain_prपूर्णांक_arg *arg)
-अणु
-	पूर्णांक color, width;
-	अक्षर folded_sign = callchain_list__folded(chain);
+static void hist_browser__show_callchain_entry(struct hist_browser *browser,
+					       struct callchain_list *chain,
+					       const char *str, int offset,
+					       unsigned short row,
+					       struct callchain_print_arg *arg)
+{
+	int color, width;
+	char folded_sign = callchain_list__folded(chain);
 	bool show_annotated = browser->show_dso && chain->ms.sym && symbol__annotation(chain->ms.sym)->src;
 
 	color = HE_COLORSET_NORMAL;
 	width = browser->b.width - (offset + 2);
-	अगर (ui_browser__is_current_entry(&browser->b, row)) अणु
+	if (ui_browser__is_current_entry(&browser->b, row)) {
 		browser->selection = &chain->ms;
 		color = HE_COLORSET_SELECTED;
 		arg->is_current_entry = true;
-	पूर्ण
+	}
 
 	ui_browser__set_color(&browser->b, color);
-	ui_browser__जाओrc(&browser->b, row, 0);
-	ui_browser__ग_लिखो_nstring(&browser->b, " ", offset);
-	ui_browser__म_लिखो(&browser->b, "%c", folded_sign);
-	ui_browser__ग_लिखो_graph(&browser->b, show_annotated ? SLSMG_RARROW_CHAR : ' ');
-	ui_browser__ग_लिखो_nstring(&browser->b, str, width);
-पूर्ण
+	ui_browser__gotorc(&browser->b, row, 0);
+	ui_browser__write_nstring(&browser->b, " ", offset);
+	ui_browser__printf(&browser->b, "%c", folded_sign);
+	ui_browser__write_graph(&browser->b, show_annotated ? SLSMG_RARROW_CHAR : ' ');
+	ui_browser__write_nstring(&browser->b, str, width);
+}
 
-अटल व्योम hist_browser__ख_लिखो_callchain_entry(काष्ठा hist_browser *b __maybe_unused,
-						  काष्ठा callchain_list *chain,
-						  स्थिर अक्षर *str, पूर्णांक offset,
-						  अचिन्हित लघु row __maybe_unused,
-						  काष्ठा callchain_prपूर्णांक_arg *arg)
-अणु
-	अक्षर folded_sign = callchain_list__folded(chain);
+static void hist_browser__fprintf_callchain_entry(struct hist_browser *b __maybe_unused,
+						  struct callchain_list *chain,
+						  const char *str, int offset,
+						  unsigned short row __maybe_unused,
+						  struct callchain_print_arg *arg)
+{
+	char folded_sign = callchain_list__folded(chain);
 
-	arg->prपूर्णांकed += ख_लिखो(arg->fp, "%*s%c %s\n", offset, " ",
+	arg->printed += fprintf(arg->fp, "%*s%c %s\n", offset, " ",
 				folded_sign, str);
-पूर्ण
+}
 
-प्रकार bool (*check_output_full_fn)(काष्ठा hist_browser *browser,
-				     अचिन्हित लघु row);
+typedef bool (*check_output_full_fn)(struct hist_browser *browser,
+				     unsigned short row);
 
-अटल bool hist_browser__check_output_full(काष्ठा hist_browser *browser,
-					    अचिन्हित लघु row)
-अणु
-	वापस browser->b.rows == row;
-पूर्ण
+static bool hist_browser__check_output_full(struct hist_browser *browser,
+					    unsigned short row)
+{
+	return browser->b.rows == row;
+}
 
-अटल bool hist_browser__check_dump_full(काष्ठा hist_browser *browser __maybe_unused,
-					  अचिन्हित लघु row __maybe_unused)
-अणु
-	वापस false;
-पूर्ण
+static bool hist_browser__check_dump_full(struct hist_browser *browser __maybe_unused,
+					  unsigned short row __maybe_unused)
+{
+	return false;
+}
 
-#घोषणा LEVEL_OFFSET_STEP 3
+#define LEVEL_OFFSET_STEP 3
 
-अटल पूर्णांक hist_browser__show_callchain_list(काष्ठा hist_browser *browser,
-					     काष्ठा callchain_node *node,
-					     काष्ठा callchain_list *chain,
-					     अचिन्हित लघु row, u64 total,
-					     bool need_percent, पूर्णांक offset,
-					     prपूर्णांक_callchain_entry_fn prपूर्णांक,
-					     काष्ठा callchain_prपूर्णांक_arg *arg)
-अणु
-	अक्षर bf[1024], *alloc_str;
-	अक्षर buf[64], *alloc_str2;
-	स्थिर अक्षर *str;
-	पूर्णांक ret = 1;
+static int hist_browser__show_callchain_list(struct hist_browser *browser,
+					     struct callchain_node *node,
+					     struct callchain_list *chain,
+					     unsigned short row, u64 total,
+					     bool need_percent, int offset,
+					     print_callchain_entry_fn print,
+					     struct callchain_print_arg *arg)
+{
+	char bf[1024], *alloc_str;
+	char buf[64], *alloc_str2;
+	const char *str;
+	int ret = 1;
 
-	अगर (arg->row_offset != 0) अणु
+	if (arg->row_offset != 0) {
 		arg->row_offset--;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	alloc_str = शून्य;
-	alloc_str2 = शून्य;
+	alloc_str = NULL;
+	alloc_str2 = NULL;
 
-	str = callchain_list__sym_name(chain, bf, माप(bf),
+	str = callchain_list__sym_name(chain, bf, sizeof(bf),
 				       browser->show_dso);
 
-	अगर (symbol_conf.show_branchflag_count) अणु
-		callchain_list_counts__म_लिखो_value(chain, शून्य,
-						    buf, माप(buf));
+	if (symbol_conf.show_branchflag_count) {
+		callchain_list_counts__printf_value(chain, NULL,
+						    buf, sizeof(buf));
 
-		अगर (aप्र_लिखो(&alloc_str2, "%s%s", str, buf) < 0)
+		if (asprintf(&alloc_str2, "%s%s", str, buf) < 0)
 			str = "Not enough memory!";
-		अन्यथा
+		else
 			str = alloc_str2;
-	पूर्ण
+	}
 
-	अगर (need_percent) अणु
-		callchain_node__scnम_लिखो_value(node, buf, माप(buf),
+	if (need_percent) {
+		callchain_node__scnprintf_value(node, buf, sizeof(buf),
 						total);
 
-		अगर (aप्र_लिखो(&alloc_str, "%s %s", buf, str) < 0)
+		if (asprintf(&alloc_str, "%s %s", buf, str) < 0)
 			str = "Not enough memory!";
-		अन्यथा
+		else
 			str = alloc_str;
-	पूर्ण
+	}
 
-	prपूर्णांक(browser, chain, str, offset, row, arg);
-	मुक्त(alloc_str);
-	मुक्त(alloc_str2);
+	print(browser, chain, str, offset, row, arg);
+	free(alloc_str);
+	free(alloc_str2);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल bool check_percent_display(काष्ठा rb_node *node, u64 parent_total)
-अणु
-	काष्ठा callchain_node *child;
+static bool check_percent_display(struct rb_node *node, u64 parent_total)
+{
+	struct callchain_node *child;
 
-	अगर (node == शून्य)
-		वापस false;
+	if (node == NULL)
+		return false;
 
-	अगर (rb_next(node))
-		वापस true;
+	if (rb_next(node))
+		return true;
 
-	child = rb_entry(node, काष्ठा callchain_node, rb_node);
-	वापस callchain_cumul_hits(child) != parent_total;
-पूर्ण
+	child = rb_entry(node, struct callchain_node, rb_node);
+	return callchain_cumul_hits(child) != parent_total;
+}
 
-अटल पूर्णांक hist_browser__show_callchain_flat(काष्ठा hist_browser *browser,
-					     काष्ठा rb_root *root,
-					     अचिन्हित लघु row, u64 total,
+static int hist_browser__show_callchain_flat(struct hist_browser *browser,
+					     struct rb_root *root,
+					     unsigned short row, u64 total,
 					     u64 parent_total,
-					     prपूर्णांक_callchain_entry_fn prपूर्णांक,
-					     काष्ठा callchain_prपूर्णांक_arg *arg,
+					     print_callchain_entry_fn print,
+					     struct callchain_print_arg *arg,
 					     check_output_full_fn is_output_full)
-अणु
-	काष्ठा rb_node *node;
-	पूर्णांक first_row = row, offset = LEVEL_OFFSET_STEP;
+{
+	struct rb_node *node;
+	int first_row = row, offset = LEVEL_OFFSET_STEP;
 	bool need_percent;
 
 	node = rb_first(root);
 	need_percent = check_percent_display(node, parent_total);
 
-	जबतक (node) अणु
-		काष्ठा callchain_node *child = rb_entry(node, काष्ठा callchain_node, rb_node);
-		काष्ठा rb_node *next = rb_next(node);
-		काष्ठा callchain_list *chain;
-		अक्षर folded_sign = ' ';
-		पूर्णांक first = true;
-		पूर्णांक extra_offset = 0;
+	while (node) {
+		struct callchain_node *child = rb_entry(node, struct callchain_node, rb_node);
+		struct rb_node *next = rb_next(node);
+		struct callchain_list *chain;
+		char folded_sign = ' ';
+		int first = true;
+		int extra_offset = 0;
 
-		list_क्रम_each_entry(chain, &child->parent_val, list) अणु
+		list_for_each_entry(chain, &child->parent_val, list) {
 			bool was_first = first;
 
-			अगर (first)
+			if (first)
 				first = false;
-			अन्यथा अगर (need_percent)
+			else if (need_percent)
 				extra_offset = LEVEL_OFFSET_STEP;
 
 			folded_sign = callchain_list__folded(chain);
@@ -953,21 +952,21 @@ out:
 							chain, row, total,
 							was_first && need_percent,
 							offset + extra_offset,
-							prपूर्णांक, arg);
+							print, arg);
 
-			अगर (is_output_full(browser, row))
-				जाओ out;
+			if (is_output_full(browser, row))
+				goto out;
 
-			अगर (folded_sign == '+')
-				जाओ next;
-		पूर्ण
+			if (folded_sign == '+')
+				goto next;
+		}
 
-		list_क्रम_each_entry(chain, &child->val, list) अणु
+		list_for_each_entry(chain, &child->val, list) {
 			bool was_first = first;
 
-			अगर (first)
+			if (first)
 				first = false;
-			अन्यथा अगर (need_percent)
+			else if (need_percent)
 				extra_offset = LEVEL_OFFSET_STEP;
 
 			folded_sign = callchain_list__folded(chain);
@@ -976,168 +975,168 @@ out:
 							chain, row, total,
 							was_first && need_percent,
 							offset + extra_offset,
-							prपूर्णांक, arg);
+							print, arg);
 
-			अगर (is_output_full(browser, row))
-				जाओ out;
+			if (is_output_full(browser, row))
+				goto out;
 
-			अगर (folded_sign == '+')
-				अवरोध;
-		पूर्ण
+			if (folded_sign == '+')
+				break;
+		}
 
 next:
-		अगर (is_output_full(browser, row))
-			अवरोध;
+		if (is_output_full(browser, row))
+			break;
 		node = next;
-	पूर्ण
+	}
 out:
-	वापस row - first_row;
-पूर्ण
+	return row - first_row;
+}
 
-अटल अक्षर *hist_browser__folded_callchain_str(काष्ठा hist_browser *browser,
-						काष्ठा callchain_list *chain,
-						अक्षर *value_str, अक्षर *old_str)
-अणु
-	अक्षर bf[1024];
-	स्थिर अक्षर *str;
-	अक्षर *new;
+static char *hist_browser__folded_callchain_str(struct hist_browser *browser,
+						struct callchain_list *chain,
+						char *value_str, char *old_str)
+{
+	char bf[1024];
+	const char *str;
+	char *new;
 
-	str = callchain_list__sym_name(chain, bf, माप(bf),
+	str = callchain_list__sym_name(chain, bf, sizeof(bf),
 				       browser->show_dso);
-	अगर (old_str) अणु
-		अगर (aप्र_लिखो(&new, "%s%s%s", old_str,
+	if (old_str) {
+		if (asprintf(&new, "%s%s%s", old_str,
 			     symbol_conf.field_sep ?: ";", str) < 0)
-			new = शून्य;
-	पूर्ण अन्यथा अणु
-		अगर (value_str) अणु
-			अगर (aप्र_लिखो(&new, "%s %s", value_str, str) < 0)
-				new = शून्य;
-		पूर्ण अन्यथा अणु
-			अगर (aप्र_लिखो(&new, "%s", str) < 0)
-				new = शून्य;
-		पूर्ण
-	पूर्ण
-	वापस new;
-पूर्ण
+			new = NULL;
+	} else {
+		if (value_str) {
+			if (asprintf(&new, "%s %s", value_str, str) < 0)
+				new = NULL;
+		} else {
+			if (asprintf(&new, "%s", str) < 0)
+				new = NULL;
+		}
+	}
+	return new;
+}
 
-अटल पूर्णांक hist_browser__show_callchain_folded(काष्ठा hist_browser *browser,
-					       काष्ठा rb_root *root,
-					       अचिन्हित लघु row, u64 total,
+static int hist_browser__show_callchain_folded(struct hist_browser *browser,
+					       struct rb_root *root,
+					       unsigned short row, u64 total,
 					       u64 parent_total,
-					       prपूर्णांक_callchain_entry_fn prपूर्णांक,
-					       काष्ठा callchain_prपूर्णांक_arg *arg,
+					       print_callchain_entry_fn print,
+					       struct callchain_print_arg *arg,
 					       check_output_full_fn is_output_full)
-अणु
-	काष्ठा rb_node *node;
-	पूर्णांक first_row = row, offset = LEVEL_OFFSET_STEP;
+{
+	struct rb_node *node;
+	int first_row = row, offset = LEVEL_OFFSET_STEP;
 	bool need_percent;
 
 	node = rb_first(root);
 	need_percent = check_percent_display(node, parent_total);
 
-	जबतक (node) अणु
-		काष्ठा callchain_node *child = rb_entry(node, काष्ठा callchain_node, rb_node);
-		काष्ठा rb_node *next = rb_next(node);
-		काष्ठा callchain_list *chain, *first_chain = शून्य;
-		पूर्णांक first = true;
-		अक्षर *value_str = शून्य, *value_str_alloc = शून्य;
-		अक्षर *chain_str = शून्य, *chain_str_alloc = शून्य;
+	while (node) {
+		struct callchain_node *child = rb_entry(node, struct callchain_node, rb_node);
+		struct rb_node *next = rb_next(node);
+		struct callchain_list *chain, *first_chain = NULL;
+		int first = true;
+		char *value_str = NULL, *value_str_alloc = NULL;
+		char *chain_str = NULL, *chain_str_alloc = NULL;
 
-		अगर (arg->row_offset != 0) अणु
+		if (arg->row_offset != 0) {
 			arg->row_offset--;
-			जाओ next;
-		पूर्ण
+			goto next;
+		}
 
-		अगर (need_percent) अणु
-			अक्षर buf[64];
+		if (need_percent) {
+			char buf[64];
 
-			callchain_node__scnम_लिखो_value(child, buf, माप(buf), total);
-			अगर (aप्र_लिखो(&value_str, "%s", buf) < 0) अणु
-				value_str = (अक्षर *)"<...>";
-				जाओ करो_prपूर्णांक;
-			पूर्ण
+			callchain_node__scnprintf_value(child, buf, sizeof(buf), total);
+			if (asprintf(&value_str, "%s", buf) < 0) {
+				value_str = (char *)"<...>";
+				goto do_print;
+			}
 			value_str_alloc = value_str;
-		पूर्ण
+		}
 
-		list_क्रम_each_entry(chain, &child->parent_val, list) अणु
+		list_for_each_entry(chain, &child->parent_val, list) {
 			chain_str = hist_browser__folded_callchain_str(browser,
 						chain, value_str, chain_str);
-			अगर (first) अणु
+			if (first) {
 				first = false;
 				first_chain = chain;
-			पूर्ण
+			}
 
-			अगर (chain_str == शून्य) अणु
-				chain_str = (अक्षर *)"Not enough memory!";
-				जाओ करो_prपूर्णांक;
-			पूर्ण
+			if (chain_str == NULL) {
+				chain_str = (char *)"Not enough memory!";
+				goto do_print;
+			}
 
 			chain_str_alloc = chain_str;
-		पूर्ण
+		}
 
-		list_क्रम_each_entry(chain, &child->val, list) अणु
+		list_for_each_entry(chain, &child->val, list) {
 			chain_str = hist_browser__folded_callchain_str(browser,
 						chain, value_str, chain_str);
-			अगर (first) अणु
+			if (first) {
 				first = false;
 				first_chain = chain;
-			पूर्ण
+			}
 
-			अगर (chain_str == शून्य) अणु
-				chain_str = (अक्षर *)"Not enough memory!";
-				जाओ करो_prपूर्णांक;
-			पूर्ण
+			if (chain_str == NULL) {
+				chain_str = (char *)"Not enough memory!";
+				goto do_print;
+			}
 
 			chain_str_alloc = chain_str;
-		पूर्ण
+		}
 
-करो_prपूर्णांक:
-		prपूर्णांक(browser, first_chain, chain_str, offset, row++, arg);
-		मुक्त(value_str_alloc);
-		मुक्त(chain_str_alloc);
+do_print:
+		print(browser, first_chain, chain_str, offset, row++, arg);
+		free(value_str_alloc);
+		free(chain_str_alloc);
 
 next:
-		अगर (is_output_full(browser, row))
-			अवरोध;
+		if (is_output_full(browser, row))
+			break;
 		node = next;
-	पूर्ण
+	}
 
-	वापस row - first_row;
-पूर्ण
+	return row - first_row;
+}
 
-अटल पूर्णांक hist_browser__show_callchain_graph(काष्ठा hist_browser *browser,
-					काष्ठा rb_root *root, पूर्णांक level,
-					अचिन्हित लघु row, u64 total,
+static int hist_browser__show_callchain_graph(struct hist_browser *browser,
+					struct rb_root *root, int level,
+					unsigned short row, u64 total,
 					u64 parent_total,
-					prपूर्णांक_callchain_entry_fn prपूर्णांक,
-					काष्ठा callchain_prपूर्णांक_arg *arg,
+					print_callchain_entry_fn print,
+					struct callchain_print_arg *arg,
 					check_output_full_fn is_output_full)
-अणु
-	काष्ठा rb_node *node;
-	पूर्णांक first_row = row, offset = level * LEVEL_OFFSET_STEP;
+{
+	struct rb_node *node;
+	int first_row = row, offset = level * LEVEL_OFFSET_STEP;
 	bool need_percent;
 	u64 percent_total = total;
 
-	अगर (callchain_param.mode == CHAIN_GRAPH_REL)
+	if (callchain_param.mode == CHAIN_GRAPH_REL)
 		percent_total = parent_total;
 
 	node = rb_first(root);
 	need_percent = check_percent_display(node, parent_total);
 
-	जबतक (node) अणु
-		काष्ठा callchain_node *child = rb_entry(node, काष्ठा callchain_node, rb_node);
-		काष्ठा rb_node *next = rb_next(node);
-		काष्ठा callchain_list *chain;
-		अक्षर folded_sign = ' ';
-		पूर्णांक first = true;
-		पूर्णांक extra_offset = 0;
+	while (node) {
+		struct callchain_node *child = rb_entry(node, struct callchain_node, rb_node);
+		struct rb_node *next = rb_next(node);
+		struct callchain_list *chain;
+		char folded_sign = ' ';
+		int first = true;
+		int extra_offset = 0;
 
-		list_क्रम_each_entry(chain, &child->val, list) अणु
+		list_for_each_entry(chain, &child->val, list) {
 			bool was_first = first;
 
-			अगर (first)
+			if (first)
 				first = false;
-			अन्यथा अगर (need_percent)
+			else if (need_percent)
 				extra_offset = LEVEL_OFFSET_STEP;
 
 			folded_sign = callchain_list__folded(chain);
@@ -1146,134 +1145,134 @@ next:
 							chain, row, percent_total,
 							was_first && need_percent,
 							offset + extra_offset,
-							prपूर्णांक, arg);
+							print, arg);
 
-			अगर (is_output_full(browser, row))
-				जाओ out;
+			if (is_output_full(browser, row))
+				goto out;
 
-			अगर (folded_sign == '+')
-				अवरोध;
-		पूर्ण
+			if (folded_sign == '+')
+				break;
+		}
 
-		अगर (folded_sign == '-') अणु
-			स्थिर पूर्णांक new_level = level + (extra_offset ? 2 : 1);
+		if (folded_sign == '-') {
+			const int new_level = level + (extra_offset ? 2 : 1);
 
 			row += hist_browser__show_callchain_graph(browser, &child->rb_root,
 							    new_level, row, total,
 							    child->children_hit,
-							    prपूर्णांक, arg, is_output_full);
-		पूर्ण
-		अगर (is_output_full(browser, row))
-			अवरोध;
+							    print, arg, is_output_full);
+		}
+		if (is_output_full(browser, row))
+			break;
 		node = next;
-	पूर्ण
+	}
 out:
-	वापस row - first_row;
-पूर्ण
+	return row - first_row;
+}
 
-अटल पूर्णांक hist_browser__show_callchain(काष्ठा hist_browser *browser,
-					काष्ठा hist_entry *entry, पूर्णांक level,
-					अचिन्हित लघु row,
-					prपूर्णांक_callchain_entry_fn prपूर्णांक,
-					काष्ठा callchain_prपूर्णांक_arg *arg,
+static int hist_browser__show_callchain(struct hist_browser *browser,
+					struct hist_entry *entry, int level,
+					unsigned short row,
+					print_callchain_entry_fn print,
+					struct callchain_print_arg *arg,
 					check_output_full_fn is_output_full)
-अणु
+{
 	u64 total = hists__total_period(entry->hists);
 	u64 parent_total;
-	पूर्णांक prपूर्णांकed;
+	int printed;
 
-	अगर (symbol_conf.cumulate_callchain)
+	if (symbol_conf.cumulate_callchain)
 		parent_total = entry->stat_acc->period;
-	अन्यथा
+	else
 		parent_total = entry->stat.period;
 
-	अगर (callchain_param.mode == CHAIN_FLAT) अणु
-		prपूर्णांकed = hist_browser__show_callchain_flat(browser,
+	if (callchain_param.mode == CHAIN_FLAT) {
+		printed = hist_browser__show_callchain_flat(browser,
 						&entry->sorted_chain, row,
-						total, parent_total, prपूर्णांक, arg,
+						total, parent_total, print, arg,
 						is_output_full);
-	पूर्ण अन्यथा अगर (callchain_param.mode == CHAIN_FOLDED) अणु
-		prपूर्णांकed = hist_browser__show_callchain_folded(browser,
+	} else if (callchain_param.mode == CHAIN_FOLDED) {
+		printed = hist_browser__show_callchain_folded(browser,
 						&entry->sorted_chain, row,
-						total, parent_total, prपूर्णांक, arg,
+						total, parent_total, print, arg,
 						is_output_full);
-	पूर्ण अन्यथा अणु
-		prपूर्णांकed = hist_browser__show_callchain_graph(browser,
+	} else {
+		printed = hist_browser__show_callchain_graph(browser,
 						&entry->sorted_chain, level, row,
-						total, parent_total, prपूर्णांक, arg,
+						total, parent_total, print, arg,
 						is_output_full);
-	पूर्ण
+	}
 
-	अगर (arg->is_current_entry)
+	if (arg->is_current_entry)
 		browser->he_selection = entry;
 
-	वापस prपूर्णांकed;
-पूर्ण
+	return printed;
+}
 
-काष्ठा hpp_arg अणु
-	काष्ठा ui_browser *b;
-	अक्षर folded_sign;
+struct hpp_arg {
+	struct ui_browser *b;
+	char folded_sign;
 	bool current_entry;
-पूर्ण;
+};
 
-पूर्णांक __hpp__slsmg_color_म_लिखो(काष्ठा perf_hpp *hpp, स्थिर अक्षर *fmt, ...)
-अणु
-	काष्ठा hpp_arg *arg = hpp->ptr;
-	पूर्णांक ret, len;
-	बहु_सूची args;
-	द्विगुन percent;
+int __hpp__slsmg_color_printf(struct perf_hpp *hpp, const char *fmt, ...)
+{
+	struct hpp_arg *arg = hpp->ptr;
+	int ret, len;
+	va_list args;
+	double percent;
 
-	बहु_शुरू(args, fmt);
-	len = बहु_तर्क(args, पूर्णांक);
-	percent = बहु_तर्क(args, द्विगुन);
-	बहु_पूर्ण(args);
+	va_start(args, fmt);
+	len = va_arg(args, int);
+	percent = va_arg(args, double);
+	va_end(args);
 
 	ui_browser__set_percent_color(arg->b, percent, arg->current_entry);
 
-	ret = scnम_लिखो(hpp->buf, hpp->size, fmt, len, percent);
-	ui_browser__म_लिखो(arg->b, "%s", hpp->buf);
+	ret = scnprintf(hpp->buf, hpp->size, fmt, len, percent);
+	ui_browser__printf(arg->b, "%s", hpp->buf);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-#घोषणा __HPP_COLOR_PERCENT_FN(_type, _field)				\
-अटल u64 __hpp_get_##_field(काष्ठा hist_entry *he)			\
-अणु									\
-	वापस he->stat._field;						\
-पूर्ण									\
+#define __HPP_COLOR_PERCENT_FN(_type, _field)				\
+static u64 __hpp_get_##_field(struct hist_entry *he)			\
+{									\
+	return he->stat._field;						\
+}									\
 									\
-अटल पूर्णांक								\
-hist_browser__hpp_color_##_type(काष्ठा perf_hpp_fmt *fmt,		\
-				काष्ठा perf_hpp *hpp,			\
-				काष्ठा hist_entry *he)			\
-अणु									\
-	वापस hpp__fmt(fmt, hpp, he, __hpp_get_##_field, " %*.2f%%",	\
-			__hpp__slsmg_color_म_लिखो, true);		\
-पूर्ण
+static int								\
+hist_browser__hpp_color_##_type(struct perf_hpp_fmt *fmt,		\
+				struct perf_hpp *hpp,			\
+				struct hist_entry *he)			\
+{									\
+	return hpp__fmt(fmt, hpp, he, __hpp_get_##_field, " %*.2f%%",	\
+			__hpp__slsmg_color_printf, true);		\
+}
 
-#घोषणा __HPP_COLOR_ACC_PERCENT_FN(_type, _field)			\
-अटल u64 __hpp_get_acc_##_field(काष्ठा hist_entry *he)		\
-अणु									\
-	वापस he->stat_acc->_field;					\
-पूर्ण									\
+#define __HPP_COLOR_ACC_PERCENT_FN(_type, _field)			\
+static u64 __hpp_get_acc_##_field(struct hist_entry *he)		\
+{									\
+	return he->stat_acc->_field;					\
+}									\
 									\
-अटल पूर्णांक								\
-hist_browser__hpp_color_##_type(काष्ठा perf_hpp_fmt *fmt,		\
-				काष्ठा perf_hpp *hpp,			\
-				काष्ठा hist_entry *he)			\
-अणु									\
-	अगर (!symbol_conf.cumulate_callchain) अणु				\
-		काष्ठा hpp_arg *arg = hpp->ptr;				\
-		पूर्णांक len = fmt->user_len ?: fmt->len;			\
-		पूर्णांक ret = scnम_लिखो(hpp->buf, hpp->size,		\
+static int								\
+hist_browser__hpp_color_##_type(struct perf_hpp_fmt *fmt,		\
+				struct perf_hpp *hpp,			\
+				struct hist_entry *he)			\
+{									\
+	if (!symbol_conf.cumulate_callchain) {				\
+		struct hpp_arg *arg = hpp->ptr;				\
+		int len = fmt->user_len ?: fmt->len;			\
+		int ret = scnprintf(hpp->buf, hpp->size,		\
 				    "%*s", len, "N/A");			\
-		ui_browser__म_लिखो(arg->b, "%s", hpp->buf);		\
+		ui_browser__printf(arg->b, "%s", hpp->buf);		\
 									\
-		वापस ret;						\
-	पूर्ण								\
-	वापस hpp__fmt(fmt, hpp, he, __hpp_get_acc_##_field,		\
-			" %*.2f%%", __hpp__slsmg_color_म_लिखो, true);	\
-पूर्ण
+		return ret;						\
+	}								\
+	return hpp__fmt(fmt, hpp, he, __hpp_get_acc_##_field,		\
+			" %*.2f%%", __hpp__slsmg_color_printf, true);	\
+}
 
 __HPP_COLOR_PERCENT_FN(overhead, period)
 __HPP_COLOR_PERCENT_FN(overhead_sys, period_sys)
@@ -1282,944 +1281,944 @@ __HPP_COLOR_PERCENT_FN(overhead_guest_sys, period_guest_sys)
 __HPP_COLOR_PERCENT_FN(overhead_guest_us, period_guest_us)
 __HPP_COLOR_ACC_PERCENT_FN(overhead_acc, period)
 
-#अघोषित __HPP_COLOR_PERCENT_FN
-#अघोषित __HPP_COLOR_ACC_PERCENT_FN
+#undef __HPP_COLOR_PERCENT_FN
+#undef __HPP_COLOR_ACC_PERCENT_FN
 
-व्योम hist_browser__init_hpp(व्योम)
-अणु
-	perf_hpp__क्रमmat[PERF_HPP__OVERHEAD].color =
+void hist_browser__init_hpp(void)
+{
+	perf_hpp__format[PERF_HPP__OVERHEAD].color =
 				hist_browser__hpp_color_overhead;
-	perf_hpp__क्रमmat[PERF_HPP__OVERHEAD_SYS].color =
+	perf_hpp__format[PERF_HPP__OVERHEAD_SYS].color =
 				hist_browser__hpp_color_overhead_sys;
-	perf_hpp__क्रमmat[PERF_HPP__OVERHEAD_US].color =
+	perf_hpp__format[PERF_HPP__OVERHEAD_US].color =
 				hist_browser__hpp_color_overhead_us;
-	perf_hpp__क्रमmat[PERF_HPP__OVERHEAD_GUEST_SYS].color =
+	perf_hpp__format[PERF_HPP__OVERHEAD_GUEST_SYS].color =
 				hist_browser__hpp_color_overhead_guest_sys;
-	perf_hpp__क्रमmat[PERF_HPP__OVERHEAD_GUEST_US].color =
+	perf_hpp__format[PERF_HPP__OVERHEAD_GUEST_US].color =
 				hist_browser__hpp_color_overhead_guest_us;
-	perf_hpp__क्रमmat[PERF_HPP__OVERHEAD_ACC].color =
+	perf_hpp__format[PERF_HPP__OVERHEAD_ACC].color =
 				hist_browser__hpp_color_overhead_acc;
 
 	res_sample_init();
-पूर्ण
+}
 
-अटल पूर्णांक hist_browser__show_entry(काष्ठा hist_browser *browser,
-				    काष्ठा hist_entry *entry,
-				    अचिन्हित लघु row)
-अणु
-	पूर्णांक prपूर्णांकed = 0;
-	पूर्णांक width = browser->b.width;
-	अक्षर folded_sign = ' ';
+static int hist_browser__show_entry(struct hist_browser *browser,
+				    struct hist_entry *entry,
+				    unsigned short row)
+{
+	int printed = 0;
+	int width = browser->b.width;
+	char folded_sign = ' ';
 	bool current_entry = ui_browser__is_current_entry(&browser->b, row);
 	bool use_callchain = hist_entry__has_callchains(entry) && symbol_conf.use_callchain;
 	off_t row_offset = entry->row_offset;
 	bool first = true;
-	काष्ठा perf_hpp_fmt *fmt;
+	struct perf_hpp_fmt *fmt;
 
-	अगर (current_entry) अणु
+	if (current_entry) {
 		browser->he_selection = entry;
 		browser->selection = &entry->ms;
-	पूर्ण
+	}
 
-	अगर (use_callchain) अणु
+	if (use_callchain) {
 		hist_entry__init_have_children(entry);
 		folded_sign = hist_entry__folded(entry);
-	पूर्ण
+	}
 
-	अगर (row_offset == 0) अणु
-		काष्ठा hpp_arg arg = अणु
+	if (row_offset == 0) {
+		struct hpp_arg arg = {
 			.b		= &browser->b,
 			.folded_sign	= folded_sign,
 			.current_entry	= current_entry,
-		पूर्ण;
-		पूर्णांक column = 0;
+		};
+		int column = 0;
 
-		ui_browser__जाओrc(&browser->b, row, 0);
+		ui_browser__gotorc(&browser->b, row, 0);
 
-		hists__क्रम_each_क्रमmat(browser->hists, fmt) अणु
-			अक्षर s[2048];
-			काष्ठा perf_hpp hpp = अणु
+		hists__for_each_format(browser->hists, fmt) {
+			char s[2048];
+			struct perf_hpp hpp = {
 				.buf	= s,
-				.size	= माप(s),
+				.size	= sizeof(s),
 				.ptr	= &arg,
-			पूर्ण;
+			};
 
-			अगर (perf_hpp__should_skip(fmt, entry->hists) ||
+			if (perf_hpp__should_skip(fmt, entry->hists) ||
 			    column++ < browser->b.horiz_scroll)
-				जारी;
+				continue;
 
-			अगर (current_entry && browser->b.navkeypressed) अणु
+			if (current_entry && browser->b.navkeypressed) {
 				ui_browser__set_color(&browser->b,
 						      HE_COLORSET_SELECTED);
-			पूर्ण अन्यथा अणु
+			} else {
 				ui_browser__set_color(&browser->b,
 						      HE_COLORSET_NORMAL);
-			पूर्ण
+			}
 
-			अगर (first) अणु
-				अगर (use_callchain) अणु
-					ui_browser__म_लिखो(&browser->b, "%c ", folded_sign);
+			if (first) {
+				if (use_callchain) {
+					ui_browser__printf(&browser->b, "%c ", folded_sign);
 					width -= 2;
-				पूर्ण
+				}
 				first = false;
-			पूर्ण अन्यथा अणु
-				ui_browser__म_लिखो(&browser->b, "  ");
+			} else {
+				ui_browser__printf(&browser->b, "  ");
 				width -= 2;
-			पूर्ण
+			}
 
-			अगर (fmt->color) अणु
-				पूर्णांक ret = fmt->color(fmt, &hpp, entry);
-				hist_entry__snम_लिखो_alignment(entry, &hpp, fmt, ret);
+			if (fmt->color) {
+				int ret = fmt->color(fmt, &hpp, entry);
+				hist_entry__snprintf_alignment(entry, &hpp, fmt, ret);
 				/*
-				 * fmt->color() alपढ़ोy used ui_browser to
-				 * prपूर्णांक the non alignment bits, skip it (+ret):
+				 * fmt->color() already used ui_browser to
+				 * print the non alignment bits, skip it (+ret):
 				 */
-				ui_browser__म_लिखो(&browser->b, "%s", s + ret);
-			पूर्ण अन्यथा अणु
-				hist_entry__snम_लिखो_alignment(entry, &hpp, fmt, fmt->entry(fmt, &hpp, entry));
-				ui_browser__म_लिखो(&browser->b, "%s", s);
-			पूर्ण
+				ui_browser__printf(&browser->b, "%s", s + ret);
+			} else {
+				hist_entry__snprintf_alignment(entry, &hpp, fmt, fmt->entry(fmt, &hpp, entry));
+				ui_browser__printf(&browser->b, "%s", s);
+			}
 			width -= hpp.buf - s;
-		पूर्ण
+		}
 
 		/* The scroll bar isn't being used */
-		अगर (!browser->b.navkeypressed)
+		if (!browser->b.navkeypressed)
 			width += 1;
 
-		ui_browser__ग_लिखो_nstring(&browser->b, "", width);
+		ui_browser__write_nstring(&browser->b, "", width);
 
 		++row;
-		++prपूर्णांकed;
-	पूर्ण अन्यथा
+		++printed;
+	} else
 		--row_offset;
 
-	अगर (folded_sign == '-' && row != browser->b.rows) अणु
-		काष्ठा callchain_prपूर्णांक_arg arg = अणु
+	if (folded_sign == '-' && row != browser->b.rows) {
+		struct callchain_print_arg arg = {
 			.row_offset = row_offset,
 			.is_current_entry = current_entry,
-		पूर्ण;
+		};
 
-		prपूर्णांकed += hist_browser__show_callchain(browser,
+		printed += hist_browser__show_callchain(browser,
 				entry, 1, row,
 				hist_browser__show_callchain_entry,
 				&arg,
 				hist_browser__check_output_full);
-	पूर्ण
+	}
 
-	वापस prपूर्णांकed;
-पूर्ण
+	return printed;
+}
 
-अटल पूर्णांक hist_browser__show_hierarchy_entry(काष्ठा hist_browser *browser,
-					      काष्ठा hist_entry *entry,
-					      अचिन्हित लघु row,
-					      पूर्णांक level)
-अणु
-	पूर्णांक prपूर्णांकed = 0;
-	पूर्णांक width = browser->b.width;
-	अक्षर folded_sign = ' ';
+static int hist_browser__show_hierarchy_entry(struct hist_browser *browser,
+					      struct hist_entry *entry,
+					      unsigned short row,
+					      int level)
+{
+	int printed = 0;
+	int width = browser->b.width;
+	char folded_sign = ' ';
 	bool current_entry = ui_browser__is_current_entry(&browser->b, row);
 	off_t row_offset = entry->row_offset;
 	bool first = true;
-	काष्ठा perf_hpp_fmt *fmt;
-	काष्ठा perf_hpp_list_node *fmt_node;
-	काष्ठा hpp_arg arg = अणु
+	struct perf_hpp_fmt *fmt;
+	struct perf_hpp_list_node *fmt_node;
+	struct hpp_arg arg = {
 		.b		= &browser->b,
 		.current_entry	= current_entry,
-	पूर्ण;
-	पूर्णांक column = 0;
-	पूर्णांक hierarchy_indent = (entry->hists->nr_hpp_node - 2) * HIERARCHY_INDENT;
+	};
+	int column = 0;
+	int hierarchy_indent = (entry->hists->nr_hpp_node - 2) * HIERARCHY_INDENT;
 
-	अगर (current_entry) अणु
+	if (current_entry) {
 		browser->he_selection = entry;
 		browser->selection = &entry->ms;
-	पूर्ण
+	}
 
 	hist_entry__init_have_children(entry);
 	folded_sign = hist_entry__folded(entry);
 	arg.folded_sign = folded_sign;
 
-	अगर (entry->leaf && row_offset) अणु
+	if (entry->leaf && row_offset) {
 		row_offset--;
-		जाओ show_callchain;
-	पूर्ण
+		goto show_callchain;
+	}
 
-	ui_browser__जाओrc(&browser->b, row, 0);
+	ui_browser__gotorc(&browser->b, row, 0);
 
-	अगर (current_entry && browser->b.navkeypressed)
+	if (current_entry && browser->b.navkeypressed)
 		ui_browser__set_color(&browser->b, HE_COLORSET_SELECTED);
-	अन्यथा
+	else
 		ui_browser__set_color(&browser->b, HE_COLORSET_NORMAL);
 
-	ui_browser__ग_लिखो_nstring(&browser->b, "", level * HIERARCHY_INDENT);
+	ui_browser__write_nstring(&browser->b, "", level * HIERARCHY_INDENT);
 	width -= level * HIERARCHY_INDENT;
 
-	/* the first hpp_list_node is क्रम overhead columns */
-	fmt_node = list_first_entry(&entry->hists->hpp_क्रमmats,
-				    काष्ठा perf_hpp_list_node, list);
-	perf_hpp_list__क्रम_each_क्रमmat(&fmt_node->hpp, fmt) अणु
-		अक्षर s[2048];
-		काष्ठा perf_hpp hpp = अणु
+	/* the first hpp_list_node is for overhead columns */
+	fmt_node = list_first_entry(&entry->hists->hpp_formats,
+				    struct perf_hpp_list_node, list);
+	perf_hpp_list__for_each_format(&fmt_node->hpp, fmt) {
+		char s[2048];
+		struct perf_hpp hpp = {
 			.buf		= s,
-			.size		= माप(s),
+			.size		= sizeof(s),
 			.ptr		= &arg,
-		पूर्ण;
+		};
 
-		अगर (perf_hpp__should_skip(fmt, entry->hists) ||
+		if (perf_hpp__should_skip(fmt, entry->hists) ||
 		    column++ < browser->b.horiz_scroll)
-			जारी;
+			continue;
 
-		अगर (current_entry && browser->b.navkeypressed) अणु
+		if (current_entry && browser->b.navkeypressed) {
 			ui_browser__set_color(&browser->b,
 					      HE_COLORSET_SELECTED);
-		पूर्ण अन्यथा अणु
+		} else {
 			ui_browser__set_color(&browser->b,
 					      HE_COLORSET_NORMAL);
-		पूर्ण
+		}
 
-		अगर (first) अणु
-			ui_browser__म_लिखो(&browser->b, "%c ", folded_sign);
+		if (first) {
+			ui_browser__printf(&browser->b, "%c ", folded_sign);
 			width -= 2;
 			first = false;
-		पूर्ण अन्यथा अणु
-			ui_browser__म_लिखो(&browser->b, "  ");
+		} else {
+			ui_browser__printf(&browser->b, "  ");
 			width -= 2;
-		पूर्ण
+		}
 
-		अगर (fmt->color) अणु
-			पूर्णांक ret = fmt->color(fmt, &hpp, entry);
-			hist_entry__snम_लिखो_alignment(entry, &hpp, fmt, ret);
+		if (fmt->color) {
+			int ret = fmt->color(fmt, &hpp, entry);
+			hist_entry__snprintf_alignment(entry, &hpp, fmt, ret);
 			/*
-			 * fmt->color() alपढ़ोy used ui_browser to
-			 * prपूर्णांक the non alignment bits, skip it (+ret):
+			 * fmt->color() already used ui_browser to
+			 * print the non alignment bits, skip it (+ret):
 			 */
-			ui_browser__म_लिखो(&browser->b, "%s", s + ret);
-		पूर्ण अन्यथा अणु
-			पूर्णांक ret = fmt->entry(fmt, &hpp, entry);
-			hist_entry__snम_लिखो_alignment(entry, &hpp, fmt, ret);
-			ui_browser__म_लिखो(&browser->b, "%s", s);
-		पूर्ण
+			ui_browser__printf(&browser->b, "%s", s + ret);
+		} else {
+			int ret = fmt->entry(fmt, &hpp, entry);
+			hist_entry__snprintf_alignment(entry, &hpp, fmt, ret);
+			ui_browser__printf(&browser->b, "%s", s);
+		}
 		width -= hpp.buf - s;
-	पूर्ण
+	}
 
-	अगर (!first) अणु
-		ui_browser__ग_लिखो_nstring(&browser->b, "", hierarchy_indent);
+	if (!first) {
+		ui_browser__write_nstring(&browser->b, "", hierarchy_indent);
 		width -= hierarchy_indent;
-	पूर्ण
+	}
 
-	अगर (column >= browser->b.horiz_scroll) अणु
-		अक्षर s[2048];
-		काष्ठा perf_hpp hpp = अणु
+	if (column >= browser->b.horiz_scroll) {
+		char s[2048];
+		struct perf_hpp hpp = {
 			.buf		= s,
-			.size		= माप(s),
+			.size		= sizeof(s),
 			.ptr		= &arg,
-		पूर्ण;
+		};
 
-		अगर (current_entry && browser->b.navkeypressed) अणु
+		if (current_entry && browser->b.navkeypressed) {
 			ui_browser__set_color(&browser->b,
 					      HE_COLORSET_SELECTED);
-		पूर्ण अन्यथा अणु
+		} else {
 			ui_browser__set_color(&browser->b,
 					      HE_COLORSET_NORMAL);
-		पूर्ण
+		}
 
-		perf_hpp_list__क्रम_each_क्रमmat(entry->hpp_list, fmt) अणु
-			अगर (first) अणु
-				ui_browser__म_लिखो(&browser->b, "%c ", folded_sign);
+		perf_hpp_list__for_each_format(entry->hpp_list, fmt) {
+			if (first) {
+				ui_browser__printf(&browser->b, "%c ", folded_sign);
 				first = false;
-			पूर्ण अन्यथा अणु
-				ui_browser__ग_लिखो_nstring(&browser->b, "", 2);
-			पूर्ण
+			} else {
+				ui_browser__write_nstring(&browser->b, "", 2);
+			}
 
 			width -= 2;
 
 			/*
-			 * No need to call hist_entry__snम_लिखो_alignment()
+			 * No need to call hist_entry__snprintf_alignment()
 			 * since this fmt is always the last column in the
 			 * hierarchy mode.
 			 */
-			अगर (fmt->color) अणु
+			if (fmt->color) {
 				width -= fmt->color(fmt, &hpp, entry);
-			पूर्ण अन्यथा अणु
-				पूर्णांक i = 0;
+			} else {
+				int i = 0;
 
 				width -= fmt->entry(fmt, &hpp, entry);
-				ui_browser__म_लिखो(&browser->b, "%s", skip_spaces(s));
+				ui_browser__printf(&browser->b, "%s", skip_spaces(s));
 
-				जबतक (है_खाली(s[i++]))
+				while (isspace(s[i++]))
 					width++;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
 	/* The scroll bar isn't being used */
-	अगर (!browser->b.navkeypressed)
+	if (!browser->b.navkeypressed)
 		width += 1;
 
-	ui_browser__ग_लिखो_nstring(&browser->b, "", width);
+	ui_browser__write_nstring(&browser->b, "", width);
 
 	++row;
-	++prपूर्णांकed;
+	++printed;
 
 show_callchain:
-	अगर (entry->leaf && folded_sign == '-' && row != browser->b.rows) अणु
-		काष्ठा callchain_prपूर्णांक_arg carg = अणु
+	if (entry->leaf && folded_sign == '-' && row != browser->b.rows) {
+		struct callchain_print_arg carg = {
 			.row_offset = row_offset,
-		पूर्ण;
+		};
 
-		prपूर्णांकed += hist_browser__show_callchain(browser, entry,
+		printed += hist_browser__show_callchain(browser, entry,
 					level + 1, row,
 					hist_browser__show_callchain_entry, &carg,
 					hist_browser__check_output_full);
-	पूर्ण
+	}
 
-	वापस prपूर्णांकed;
-पूर्ण
+	return printed;
+}
 
-अटल पूर्णांक hist_browser__show_no_entry(काष्ठा hist_browser *browser,
-				       अचिन्हित लघु row, पूर्णांक level)
-अणु
-	पूर्णांक width = browser->b.width;
+static int hist_browser__show_no_entry(struct hist_browser *browser,
+				       unsigned short row, int level)
+{
+	int width = browser->b.width;
 	bool current_entry = ui_browser__is_current_entry(&browser->b, row);
 	bool first = true;
-	पूर्णांक column = 0;
-	पूर्णांक ret;
-	काष्ठा perf_hpp_fmt *fmt;
-	काष्ठा perf_hpp_list_node *fmt_node;
-	पूर्णांक indent = browser->hists->nr_hpp_node - 2;
+	int column = 0;
+	int ret;
+	struct perf_hpp_fmt *fmt;
+	struct perf_hpp_list_node *fmt_node;
+	int indent = browser->hists->nr_hpp_node - 2;
 
-	अगर (current_entry) अणु
-		browser->he_selection = शून्य;
-		browser->selection = शून्य;
-	पूर्ण
+	if (current_entry) {
+		browser->he_selection = NULL;
+		browser->selection = NULL;
+	}
 
-	ui_browser__जाओrc(&browser->b, row, 0);
+	ui_browser__gotorc(&browser->b, row, 0);
 
-	अगर (current_entry && browser->b.navkeypressed)
+	if (current_entry && browser->b.navkeypressed)
 		ui_browser__set_color(&browser->b, HE_COLORSET_SELECTED);
-	अन्यथा
+	else
 		ui_browser__set_color(&browser->b, HE_COLORSET_NORMAL);
 
-	ui_browser__ग_लिखो_nstring(&browser->b, "", level * HIERARCHY_INDENT);
+	ui_browser__write_nstring(&browser->b, "", level * HIERARCHY_INDENT);
 	width -= level * HIERARCHY_INDENT;
 
-	/* the first hpp_list_node is क्रम overhead columns */
-	fmt_node = list_first_entry(&browser->hists->hpp_क्रमmats,
-				    काष्ठा perf_hpp_list_node, list);
-	perf_hpp_list__क्रम_each_क्रमmat(&fmt_node->hpp, fmt) अणु
-		अगर (perf_hpp__should_skip(fmt, browser->hists) ||
+	/* the first hpp_list_node is for overhead columns */
+	fmt_node = list_first_entry(&browser->hists->hpp_formats,
+				    struct perf_hpp_list_node, list);
+	perf_hpp_list__for_each_format(&fmt_node->hpp, fmt) {
+		if (perf_hpp__should_skip(fmt, browser->hists) ||
 		    column++ < browser->b.horiz_scroll)
-			जारी;
+			continue;
 
-		ret = fmt->width(fmt, शून्य, browser->hists);
+		ret = fmt->width(fmt, NULL, browser->hists);
 
-		अगर (first) अणु
-			/* क्रम folded sign */
+		if (first) {
+			/* for folded sign */
 			first = false;
 			ret++;
-		पूर्ण अन्यथा अणु
+		} else {
 			/* space between columns */
 			ret += 2;
-		पूर्ण
+		}
 
-		ui_browser__ग_लिखो_nstring(&browser->b, "", ret);
+		ui_browser__write_nstring(&browser->b, "", ret);
 		width -= ret;
-	पूर्ण
+	}
 
-	ui_browser__ग_लिखो_nstring(&browser->b, "", indent * HIERARCHY_INDENT);
+	ui_browser__write_nstring(&browser->b, "", indent * HIERARCHY_INDENT);
 	width -= indent * HIERARCHY_INDENT;
 
-	अगर (column >= browser->b.horiz_scroll) अणु
-		अक्षर buf[32];
+	if (column >= browser->b.horiz_scroll) {
+		char buf[32];
 
-		ret = snम_लिखो(buf, माप(buf), "no entry >= %.2f%%", browser->min_pcnt);
-		ui_browser__म_लिखो(&browser->b, "  %s", buf);
+		ret = snprintf(buf, sizeof(buf), "no entry >= %.2f%%", browser->min_pcnt);
+		ui_browser__printf(&browser->b, "  %s", buf);
 		width -= ret + 2;
-	पूर्ण
+	}
 
 	/* The scroll bar isn't being used */
-	अगर (!browser->b.navkeypressed)
+	if (!browser->b.navkeypressed)
 		width += 1;
 
-	ui_browser__ग_लिखो_nstring(&browser->b, "", width);
-	वापस 1;
-पूर्ण
+	ui_browser__write_nstring(&browser->b, "", width);
+	return 1;
+}
 
-अटल पूर्णांक advance_hpp_check(काष्ठा perf_hpp *hpp, पूर्णांक inc)
-अणु
+static int advance_hpp_check(struct perf_hpp *hpp, int inc)
+{
 	advance_hpp(hpp, inc);
-	वापस hpp->size <= 0;
-पूर्ण
+	return hpp->size <= 0;
+}
 
-अटल पूर्णांक
-hists_browser__scnम_लिखो_headers(काष्ठा hist_browser *browser, अक्षर *buf,
-				 माप_प्रकार size, पूर्णांक line)
-अणु
-	काष्ठा hists *hists = browser->hists;
-	काष्ठा perf_hpp dummy_hpp = अणु
+static int
+hists_browser__scnprintf_headers(struct hist_browser *browser, char *buf,
+				 size_t size, int line)
+{
+	struct hists *hists = browser->hists;
+	struct perf_hpp dummy_hpp = {
 		.buf    = buf,
 		.size   = size,
-	पूर्ण;
-	काष्ठा perf_hpp_fmt *fmt;
-	माप_प्रकार ret = 0;
-	पूर्णांक column = 0;
-	पूर्णांक span = 0;
+	};
+	struct perf_hpp_fmt *fmt;
+	size_t ret = 0;
+	int column = 0;
+	int span = 0;
 
-	अगर (hists__has_callchains(hists) && symbol_conf.use_callchain) अणु
-		ret = scnम_लिखो(buf, size, "  ");
-		अगर (advance_hpp_check(&dummy_hpp, ret))
-			वापस ret;
-	पूर्ण
+	if (hists__has_callchains(hists) && symbol_conf.use_callchain) {
+		ret = scnprintf(buf, size, "  ");
+		if (advance_hpp_check(&dummy_hpp, ret))
+			return ret;
+	}
 
-	hists__क्रम_each_क्रमmat(browser->hists, fmt) अणु
-		अगर (perf_hpp__should_skip(fmt, hists)  || column++ < browser->b.horiz_scroll)
-			जारी;
+	hists__for_each_format(browser->hists, fmt) {
+		if (perf_hpp__should_skip(fmt, hists)  || column++ < browser->b.horiz_scroll)
+			continue;
 
 		ret = fmt->header(fmt, &dummy_hpp, hists, line, &span);
-		अगर (advance_hpp_check(&dummy_hpp, ret))
-			अवरोध;
+		if (advance_hpp_check(&dummy_hpp, ret))
+			break;
 
-		अगर (span)
-			जारी;
+		if (span)
+			continue;
 
-		ret = scnम_लिखो(dummy_hpp.buf, dummy_hpp.size, "  ");
-		अगर (advance_hpp_check(&dummy_hpp, ret))
-			अवरोध;
-	पूर्ण
+		ret = scnprintf(dummy_hpp.buf, dummy_hpp.size, "  ");
+		if (advance_hpp_check(&dummy_hpp, ret))
+			break;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक hists_browser__scnम_लिखो_hierarchy_headers(काष्ठा hist_browser *browser, अक्षर *buf, माप_प्रकार size)
-अणु
-	काष्ठा hists *hists = browser->hists;
-	काष्ठा perf_hpp dummy_hpp = अणु
+static int hists_browser__scnprintf_hierarchy_headers(struct hist_browser *browser, char *buf, size_t size)
+{
+	struct hists *hists = browser->hists;
+	struct perf_hpp dummy_hpp = {
 		.buf    = buf,
 		.size   = size,
-	पूर्ण;
-	काष्ठा perf_hpp_fmt *fmt;
-	काष्ठा perf_hpp_list_node *fmt_node;
-	माप_प्रकार ret = 0;
-	पूर्णांक column = 0;
-	पूर्णांक indent = hists->nr_hpp_node - 2;
+	};
+	struct perf_hpp_fmt *fmt;
+	struct perf_hpp_list_node *fmt_node;
+	size_t ret = 0;
+	int column = 0;
+	int indent = hists->nr_hpp_node - 2;
 	bool first_node, first_col;
 
-	ret = scnम_लिखो(buf, size, "  ");
-	अगर (advance_hpp_check(&dummy_hpp, ret))
-		वापस ret;
+	ret = scnprintf(buf, size, "  ");
+	if (advance_hpp_check(&dummy_hpp, ret))
+		return ret;
 
 	first_node = true;
-	/* the first hpp_list_node is क्रम overhead columns */
-	fmt_node = list_first_entry(&hists->hpp_क्रमmats,
-				    काष्ठा perf_hpp_list_node, list);
-	perf_hpp_list__क्रम_each_क्रमmat(&fmt_node->hpp, fmt) अणु
-		अगर (column++ < browser->b.horiz_scroll)
-			जारी;
+	/* the first hpp_list_node is for overhead columns */
+	fmt_node = list_first_entry(&hists->hpp_formats,
+				    struct perf_hpp_list_node, list);
+	perf_hpp_list__for_each_format(&fmt_node->hpp, fmt) {
+		if (column++ < browser->b.horiz_scroll)
+			continue;
 
-		ret = fmt->header(fmt, &dummy_hpp, hists, 0, शून्य);
-		अगर (advance_hpp_check(&dummy_hpp, ret))
-			अवरोध;
+		ret = fmt->header(fmt, &dummy_hpp, hists, 0, NULL);
+		if (advance_hpp_check(&dummy_hpp, ret))
+			break;
 
-		ret = scnम_लिखो(dummy_hpp.buf, dummy_hpp.size, "  ");
-		अगर (advance_hpp_check(&dummy_hpp, ret))
-			अवरोध;
+		ret = scnprintf(dummy_hpp.buf, dummy_hpp.size, "  ");
+		if (advance_hpp_check(&dummy_hpp, ret))
+			break;
 
 		first_node = false;
-	पूर्ण
+	}
 
-	अगर (!first_node) अणु
-		ret = scnम_लिखो(dummy_hpp.buf, dummy_hpp.size, "%*s",
+	if (!first_node) {
+		ret = scnprintf(dummy_hpp.buf, dummy_hpp.size, "%*s",
 				indent * HIERARCHY_INDENT, "");
-		अगर (advance_hpp_check(&dummy_hpp, ret))
-			वापस ret;
-	पूर्ण
+		if (advance_hpp_check(&dummy_hpp, ret))
+			return ret;
+	}
 
 	first_node = true;
-	list_क्रम_each_entry_जारी(fmt_node, &hists->hpp_क्रमmats, list) अणु
-		अगर (!first_node) अणु
-			ret = scnम_लिखो(dummy_hpp.buf, dummy_hpp.size, " / ");
-			अगर (advance_hpp_check(&dummy_hpp, ret))
-				अवरोध;
-		पूर्ण
+	list_for_each_entry_continue(fmt_node, &hists->hpp_formats, list) {
+		if (!first_node) {
+			ret = scnprintf(dummy_hpp.buf, dummy_hpp.size, " / ");
+			if (advance_hpp_check(&dummy_hpp, ret))
+				break;
+		}
 		first_node = false;
 
 		first_col = true;
-		perf_hpp_list__क्रम_each_क्रमmat(&fmt_node->hpp, fmt) अणु
-			अक्षर *start;
+		perf_hpp_list__for_each_format(&fmt_node->hpp, fmt) {
+			char *start;
 
-			अगर (perf_hpp__should_skip(fmt, hists))
-				जारी;
+			if (perf_hpp__should_skip(fmt, hists))
+				continue;
 
-			अगर (!first_col) अणु
-				ret = scnम_लिखो(dummy_hpp.buf, dummy_hpp.size, "+");
-				अगर (advance_hpp_check(&dummy_hpp, ret))
-					अवरोध;
-			पूर्ण
+			if (!first_col) {
+				ret = scnprintf(dummy_hpp.buf, dummy_hpp.size, "+");
+				if (advance_hpp_check(&dummy_hpp, ret))
+					break;
+			}
 			first_col = false;
 
-			ret = fmt->header(fmt, &dummy_hpp, hists, 0, शून्य);
+			ret = fmt->header(fmt, &dummy_hpp, hists, 0, NULL);
 			dummy_hpp.buf[ret] = '\0';
 
 			start = strim(dummy_hpp.buf);
-			ret = म_माप(start);
+			ret = strlen(start);
 
-			अगर (start != dummy_hpp.buf)
-				स_हटाओ(dummy_hpp.buf, start, ret + 1);
+			if (start != dummy_hpp.buf)
+				memmove(dummy_hpp.buf, start, ret + 1);
 
-			अगर (advance_hpp_check(&dummy_hpp, ret))
-				अवरोध;
-		पूर्ण
-	पूर्ण
+			if (advance_hpp_check(&dummy_hpp, ret))
+				break;
+		}
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम hists_browser__hierarchy_headers(काष्ठा hist_browser *browser)
-अणु
-	अक्षर headers[1024];
+static void hists_browser__hierarchy_headers(struct hist_browser *browser)
+{
+	char headers[1024];
 
-	hists_browser__scnम_लिखो_hierarchy_headers(browser, headers,
-						   माप(headers));
+	hists_browser__scnprintf_hierarchy_headers(browser, headers,
+						   sizeof(headers));
 
-	ui_browser__जाओrc(&browser->b, 0, 0);
+	ui_browser__gotorc(&browser->b, 0, 0);
 	ui_browser__set_color(&browser->b, HE_COLORSET_ROOT);
-	ui_browser__ग_लिखो_nstring(&browser->b, headers, browser->b.width + 1);
-पूर्ण
+	ui_browser__write_nstring(&browser->b, headers, browser->b.width + 1);
+}
 
-अटल व्योम hists_browser__headers(काष्ठा hist_browser *browser)
-अणु
-	काष्ठा hists *hists = browser->hists;
-	काष्ठा perf_hpp_list *hpp_list = hists->hpp_list;
+static void hists_browser__headers(struct hist_browser *browser)
+{
+	struct hists *hists = browser->hists;
+	struct perf_hpp_list *hpp_list = hists->hpp_list;
 
-	पूर्णांक line;
+	int line;
 
-	क्रम (line = 0; line < hpp_list->nr_header_lines; line++) अणु
-		अक्षर headers[1024];
+	for (line = 0; line < hpp_list->nr_header_lines; line++) {
+		char headers[1024];
 
-		hists_browser__scnम_लिखो_headers(browser, headers,
-						 माप(headers), line);
+		hists_browser__scnprintf_headers(browser, headers,
+						 sizeof(headers), line);
 
-		ui_browser__जाओrc_title(&browser->b, line, 0);
+		ui_browser__gotorc_title(&browser->b, line, 0);
 		ui_browser__set_color(&browser->b, HE_COLORSET_ROOT);
-		ui_browser__ग_लिखो_nstring(&browser->b, headers, browser->b.width + 1);
-	पूर्ण
-पूर्ण
+		ui_browser__write_nstring(&browser->b, headers, browser->b.width + 1);
+	}
+}
 
-अटल व्योम hist_browser__show_headers(काष्ठा hist_browser *browser)
-अणु
-	अगर (symbol_conf.report_hierarchy)
+static void hist_browser__show_headers(struct hist_browser *browser)
+{
+	if (symbol_conf.report_hierarchy)
 		hists_browser__hierarchy_headers(browser);
-	अन्यथा
+	else
 		hists_browser__headers(browser);
-पूर्ण
+}
 
-अटल व्योम ui_browser__hists_init_top(काष्ठा ui_browser *browser)
-अणु
-	अगर (browser->top == शून्य) अणु
-		काष्ठा hist_browser *hb;
+static void ui_browser__hists_init_top(struct ui_browser *browser)
+{
+	if (browser->top == NULL) {
+		struct hist_browser *hb;
 
-		hb = container_of(browser, काष्ठा hist_browser, b);
+		hb = container_of(browser, struct hist_browser, b);
 		browser->top = rb_first_cached(&hb->hists->entries);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल अचिन्हित पूर्णांक hist_browser__refresh(काष्ठा ui_browser *browser)
-अणु
-	अचिन्हित row = 0;
-	काष्ठा rb_node *nd;
-	काष्ठा hist_browser *hb = container_of(browser, काष्ठा hist_browser, b);
+static unsigned int hist_browser__refresh(struct ui_browser *browser)
+{
+	unsigned row = 0;
+	struct rb_node *nd;
+	struct hist_browser *hb = container_of(browser, struct hist_browser, b);
 
-	अगर (hb->show_headers)
+	if (hb->show_headers)
 		hist_browser__show_headers(hb);
 
 	ui_browser__hists_init_top(browser);
-	hb->he_selection = शून्य;
-	hb->selection = शून्य;
+	hb->he_selection = NULL;
+	hb->selection = NULL;
 
-	क्रम (nd = browser->top; nd; nd = rb_hierarchy_next(nd)) अणु
-		काष्ठा hist_entry *h = rb_entry(nd, काष्ठा hist_entry, rb_node);
-		भग्न percent;
+	for (nd = browser->top; nd; nd = rb_hierarchy_next(nd)) {
+		struct hist_entry *h = rb_entry(nd, struct hist_entry, rb_node);
+		float percent;
 
-		अगर (h->filtered) अणु
+		if (h->filtered) {
 			/* let it move to sibling */
 			h->unfolded = false;
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		अगर (symbol_conf.report_inभागidual_block)
+		if (symbol_conf.report_individual_block)
 			percent = block_info__total_cycles_percent(h);
-		अन्यथा
+		else
 			percent = hist_entry__get_percent_limit(h);
 
-		अगर (percent < hb->min_pcnt)
-			जारी;
+		if (percent < hb->min_pcnt)
+			continue;
 
-		अगर (symbol_conf.report_hierarchy) अणु
+		if (symbol_conf.report_hierarchy) {
 			row += hist_browser__show_hierarchy_entry(hb, h, row,
 								  h->depth);
-			अगर (row == browser->rows)
-				अवरोध;
+			if (row == browser->rows)
+				break;
 
-			अगर (h->has_no_entry) अणु
+			if (h->has_no_entry) {
 				hist_browser__show_no_entry(hb, row, h->depth + 1);
 				row++;
-			पूर्ण
-		पूर्ण अन्यथा अणु
+			}
+		} else {
 			row += hist_browser__show_entry(hb, h, row);
-		पूर्ण
+		}
 
-		अगर (row == browser->rows)
-			अवरोध;
-	पूर्ण
+		if (row == browser->rows)
+			break;
+	}
 
-	वापस row;
-पूर्ण
+	return row;
+}
 
-अटल काष्ठा rb_node *hists__filter_entries(काष्ठा rb_node *nd,
-					     भग्न min_pcnt)
-अणु
-	जबतक (nd != शून्य) अणु
-		काष्ठा hist_entry *h = rb_entry(nd, काष्ठा hist_entry, rb_node);
-		भग्न percent = hist_entry__get_percent_limit(h);
+static struct rb_node *hists__filter_entries(struct rb_node *nd,
+					     float min_pcnt)
+{
+	while (nd != NULL) {
+		struct hist_entry *h = rb_entry(nd, struct hist_entry, rb_node);
+		float percent = hist_entry__get_percent_limit(h);
 
-		अगर (!h->filtered && percent >= min_pcnt)
-			वापस nd;
+		if (!h->filtered && percent >= min_pcnt)
+			return nd;
 
 		/*
 		 * If it's filtered, its all children also were filtered.
 		 * So move to sibling node.
 		 */
-		अगर (rb_next(nd))
+		if (rb_next(nd))
 			nd = rb_next(nd);
-		अन्यथा
+		else
 			nd = rb_hierarchy_next(nd);
-	पूर्ण
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल काष्ठा rb_node *hists__filter_prev_entries(काष्ठा rb_node *nd,
-						  भग्न min_pcnt)
-अणु
-	जबतक (nd != शून्य) अणु
-		काष्ठा hist_entry *h = rb_entry(nd, काष्ठा hist_entry, rb_node);
-		भग्न percent = hist_entry__get_percent_limit(h);
+static struct rb_node *hists__filter_prev_entries(struct rb_node *nd,
+						  float min_pcnt)
+{
+	while (nd != NULL) {
+		struct hist_entry *h = rb_entry(nd, struct hist_entry, rb_node);
+		float percent = hist_entry__get_percent_limit(h);
 
-		अगर (!h->filtered && percent >= min_pcnt)
-			वापस nd;
+		if (!h->filtered && percent >= min_pcnt)
+			return nd;
 
 		nd = rb_hierarchy_prev(nd);
-	पूर्ण
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल व्योम ui_browser__hists_seek(काष्ठा ui_browser *browser,
-				   off_t offset, पूर्णांक whence)
-अणु
-	काष्ठा hist_entry *h;
-	काष्ठा rb_node *nd;
+static void ui_browser__hists_seek(struct ui_browser *browser,
+				   off_t offset, int whence)
+{
+	struct hist_entry *h;
+	struct rb_node *nd;
 	bool first = true;
-	काष्ठा hist_browser *hb;
+	struct hist_browser *hb;
 
-	hb = container_of(browser, काष्ठा hist_browser, b);
+	hb = container_of(browser, struct hist_browser, b);
 
-	अगर (browser->nr_entries == 0)
-		वापस;
+	if (browser->nr_entries == 0)
+		return;
 
 	ui_browser__hists_init_top(browser);
 
-	चयन (whence) अणु
-	हाल शुरू_से:
+	switch (whence) {
+	case SEEK_SET:
 		nd = hists__filter_entries(rb_first(browser->entries),
 					   hb->min_pcnt);
-		अवरोध;
-	हाल प्रस्तुत_से:
+		break;
+	case SEEK_CUR:
 		nd = browser->top;
-		जाओ करो_offset;
-	हाल अंत_से:
+		goto do_offset;
+	case SEEK_END:
 		nd = rb_hierarchy_last(rb_last(browser->entries));
 		nd = hists__filter_prev_entries(nd, hb->min_pcnt);
 		first = false;
-		अवरोध;
-	शेष:
-		वापस;
-	पूर्ण
+		break;
+	default:
+		return;
+	}
 
 	/*
 	 * Moves not relative to the first visible entry invalidates its
 	 * row_offset:
 	 */
-	h = rb_entry(browser->top, काष्ठा hist_entry, rb_node);
+	h = rb_entry(browser->top, struct hist_entry, rb_node);
 	h->row_offset = 0;
 
 	/*
-	 * Here we have to check अगर nd is expanded (+), अगर it is we can't go
+	 * Here we have to check if nd is expanded (+), if it is we can't go
 	 * the next top level hist_entry, instead we must compute an offset of
 	 * what _not_ to show and not change the first visible entry.
 	 *
 	 * This offset increments when we are going from top to bottom and
 	 * decreases when we're going from bottom to top.
 	 *
-	 * As we करोn't have backpoपूर्णांकers to the top level in the callchains
-	 * काष्ठाure, we need to always prपूर्णांक the whole hist_entry callchain,
-	 * skipping the first ones that are beक्रमe the first visible entry
-	 * and stop when we prपूर्णांकed enough lines to fill the screen.
+	 * As we don't have backpointers to the top level in the callchains
+	 * structure, we need to always print the whole hist_entry callchain,
+	 * skipping the first ones that are before the first visible entry
+	 * and stop when we printed enough lines to fill the screen.
 	 */
-करो_offset:
-	अगर (!nd)
-		वापस;
+do_offset:
+	if (!nd)
+		return;
 
-	अगर (offset > 0) अणु
-		करो अणु
-			h = rb_entry(nd, काष्ठा hist_entry, rb_node);
-			अगर (h->unfolded && h->leaf) अणु
-				u16 reमुख्यing = h->nr_rows - h->row_offset;
-				अगर (offset > reमुख्यing) अणु
-					offset -= reमुख्यing;
+	if (offset > 0) {
+		do {
+			h = rb_entry(nd, struct hist_entry, rb_node);
+			if (h->unfolded && h->leaf) {
+				u16 remaining = h->nr_rows - h->row_offset;
+				if (offset > remaining) {
+					offset -= remaining;
 					h->row_offset = 0;
-				पूर्ण अन्यथा अणु
+				} else {
 					h->row_offset += offset;
 					offset = 0;
 					browser->top = nd;
-					अवरोध;
-				पूर्ण
-			पूर्ण
+					break;
+				}
+			}
 			nd = hists__filter_entries(rb_hierarchy_next(nd),
 						   hb->min_pcnt);
-			अगर (nd == शून्य)
-				अवरोध;
+			if (nd == NULL)
+				break;
 			--offset;
 			browser->top = nd;
-		पूर्ण जबतक (offset != 0);
-	पूर्ण अन्यथा अगर (offset < 0) अणु
-		जबतक (1) अणु
-			h = rb_entry(nd, काष्ठा hist_entry, rb_node);
-			अगर (h->unfolded && h->leaf) अणु
-				अगर (first) अणु
-					अगर (-offset > h->row_offset) अणु
+		} while (offset != 0);
+	} else if (offset < 0) {
+		while (1) {
+			h = rb_entry(nd, struct hist_entry, rb_node);
+			if (h->unfolded && h->leaf) {
+				if (first) {
+					if (-offset > h->row_offset) {
 						offset += h->row_offset;
 						h->row_offset = 0;
-					पूर्ण अन्यथा अणु
+					} else {
 						h->row_offset += offset;
 						offset = 0;
 						browser->top = nd;
-						अवरोध;
-					पूर्ण
-				पूर्ण अन्यथा अणु
-					अगर (-offset > h->nr_rows) अणु
+						break;
+					}
+				} else {
+					if (-offset > h->nr_rows) {
 						offset += h->nr_rows;
 						h->row_offset = 0;
-					पूर्ण अन्यथा अणु
+					} else {
 						h->row_offset = h->nr_rows + offset;
 						offset = 0;
 						browser->top = nd;
-						अवरोध;
-					पूर्ण
-				पूर्ण
-			पूर्ण
+						break;
+					}
+				}
+			}
 
 			nd = hists__filter_prev_entries(rb_hierarchy_prev(nd),
 							hb->min_pcnt);
-			अगर (nd == शून्य)
-				अवरोध;
+			if (nd == NULL)
+				break;
 			++offset;
 			browser->top = nd;
-			अगर (offset == 0) अणु
+			if (offset == 0) {
 				/*
-				 * Last unfiltered hist_entry, check अगर it is
-				 * unfolded, अगर it is then we should have
+				 * Last unfiltered hist_entry, check if it is
+				 * unfolded, if it is then we should have
 				 * row_offset at its last entry.
 				 */
-				h = rb_entry(nd, काष्ठा hist_entry, rb_node);
-				अगर (h->unfolded && h->leaf)
+				h = rb_entry(nd, struct hist_entry, rb_node);
+				if (h->unfolded && h->leaf)
 					h->row_offset = h->nr_rows;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 			first = false;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		browser->top = nd;
-		h = rb_entry(nd, काष्ठा hist_entry, rb_node);
+		h = rb_entry(nd, struct hist_entry, rb_node);
 		h->row_offset = 0;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक hist_browser__ख_लिखो_callchain(काष्ठा hist_browser *browser,
-					   काष्ठा hist_entry *he, खाता *fp,
-					   पूर्णांक level)
-अणु
-	काष्ठा callchain_prपूर्णांक_arg arg  = अणु
+static int hist_browser__fprintf_callchain(struct hist_browser *browser,
+					   struct hist_entry *he, FILE *fp,
+					   int level)
+{
+	struct callchain_print_arg arg  = {
 		.fp = fp,
-	पूर्ण;
+	};
 
 	hist_browser__show_callchain(browser, he, level, 0,
-				     hist_browser__ख_लिखो_callchain_entry, &arg,
+				     hist_browser__fprintf_callchain_entry, &arg,
 				     hist_browser__check_dump_full);
-	वापस arg.prपूर्णांकed;
-पूर्ण
+	return arg.printed;
+}
 
-अटल पूर्णांक hist_browser__ख_लिखो_entry(काष्ठा hist_browser *browser,
-				       काष्ठा hist_entry *he, खाता *fp)
-अणु
-	अक्षर s[8192];
-	पूर्णांक prपूर्णांकed = 0;
-	अक्षर folded_sign = ' ';
-	काष्ठा perf_hpp hpp = अणु
+static int hist_browser__fprintf_entry(struct hist_browser *browser,
+				       struct hist_entry *he, FILE *fp)
+{
+	char s[8192];
+	int printed = 0;
+	char folded_sign = ' ';
+	struct perf_hpp hpp = {
 		.buf = s,
-		.size = माप(s),
-	पूर्ण;
-	काष्ठा perf_hpp_fmt *fmt;
+		.size = sizeof(s),
+	};
+	struct perf_hpp_fmt *fmt;
 	bool first = true;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (hist_entry__has_callchains(he) && symbol_conf.use_callchain) अणु
+	if (hist_entry__has_callchains(he) && symbol_conf.use_callchain) {
 		folded_sign = hist_entry__folded(he);
-		prपूर्णांकed += ख_लिखो(fp, "%c ", folded_sign);
-	पूर्ण
+		printed += fprintf(fp, "%c ", folded_sign);
+	}
 
-	hists__क्रम_each_क्रमmat(browser->hists, fmt) अणु
-		अगर (perf_hpp__should_skip(fmt, he->hists))
-			जारी;
+	hists__for_each_format(browser->hists, fmt) {
+		if (perf_hpp__should_skip(fmt, he->hists))
+			continue;
 
-		अगर (!first) अणु
-			ret = scnम_लिखो(hpp.buf, hpp.size, "  ");
+		if (!first) {
+			ret = scnprintf(hpp.buf, hpp.size, "  ");
 			advance_hpp(&hpp, ret);
-		पूर्ण अन्यथा
+		} else
 			first = false;
 
 		ret = fmt->entry(fmt, &hpp, he);
-		ret = hist_entry__snम_लिखो_alignment(he, &hpp, fmt, ret);
+		ret = hist_entry__snprintf_alignment(he, &hpp, fmt, ret);
 		advance_hpp(&hpp, ret);
-	पूर्ण
-	prपूर्णांकed += ख_लिखो(fp, "%s\n", s);
+	}
+	printed += fprintf(fp, "%s\n", s);
 
-	अगर (folded_sign == '-')
-		prपूर्णांकed += hist_browser__ख_लिखो_callchain(browser, he, fp, 1);
+	if (folded_sign == '-')
+		printed += hist_browser__fprintf_callchain(browser, he, fp, 1);
 
-	वापस prपूर्णांकed;
-पूर्ण
+	return printed;
+}
 
 
-अटल पूर्णांक hist_browser__ख_लिखो_hierarchy_entry(काष्ठा hist_browser *browser,
-						 काष्ठा hist_entry *he,
-						 खाता *fp, पूर्णांक level)
-अणु
-	अक्षर s[8192];
-	पूर्णांक prपूर्णांकed = 0;
-	अक्षर folded_sign = ' ';
-	काष्ठा perf_hpp hpp = अणु
+static int hist_browser__fprintf_hierarchy_entry(struct hist_browser *browser,
+						 struct hist_entry *he,
+						 FILE *fp, int level)
+{
+	char s[8192];
+	int printed = 0;
+	char folded_sign = ' ';
+	struct perf_hpp hpp = {
 		.buf = s,
-		.size = माप(s),
-	पूर्ण;
-	काष्ठा perf_hpp_fmt *fmt;
-	काष्ठा perf_hpp_list_node *fmt_node;
+		.size = sizeof(s),
+	};
+	struct perf_hpp_fmt *fmt;
+	struct perf_hpp_list_node *fmt_node;
 	bool first = true;
-	पूर्णांक ret;
-	पूर्णांक hierarchy_indent = (he->hists->nr_hpp_node - 2) * HIERARCHY_INDENT;
+	int ret;
+	int hierarchy_indent = (he->hists->nr_hpp_node - 2) * HIERARCHY_INDENT;
 
-	prपूर्णांकed = ख_लिखो(fp, "%*s", level * HIERARCHY_INDENT, "");
+	printed = fprintf(fp, "%*s", level * HIERARCHY_INDENT, "");
 
 	folded_sign = hist_entry__folded(he);
-	prपूर्णांकed += ख_लिखो(fp, "%c", folded_sign);
+	printed += fprintf(fp, "%c", folded_sign);
 
-	/* the first hpp_list_node is क्रम overhead columns */
-	fmt_node = list_first_entry(&he->hists->hpp_क्रमmats,
-				    काष्ठा perf_hpp_list_node, list);
-	perf_hpp_list__क्रम_each_क्रमmat(&fmt_node->hpp, fmt) अणु
-		अगर (!first) अणु
-			ret = scnम_लिखो(hpp.buf, hpp.size, "  ");
+	/* the first hpp_list_node is for overhead columns */
+	fmt_node = list_first_entry(&he->hists->hpp_formats,
+				    struct perf_hpp_list_node, list);
+	perf_hpp_list__for_each_format(&fmt_node->hpp, fmt) {
+		if (!first) {
+			ret = scnprintf(hpp.buf, hpp.size, "  ");
 			advance_hpp(&hpp, ret);
-		पूर्ण अन्यथा
+		} else
 			first = false;
 
 		ret = fmt->entry(fmt, &hpp, he);
 		advance_hpp(&hpp, ret);
-	पूर्ण
+	}
 
-	ret = scnम_लिखो(hpp.buf, hpp.size, "%*s", hierarchy_indent, "");
+	ret = scnprintf(hpp.buf, hpp.size, "%*s", hierarchy_indent, "");
 	advance_hpp(&hpp, ret);
 
-	perf_hpp_list__क्रम_each_क्रमmat(he->hpp_list, fmt) अणु
-		ret = scnम_लिखो(hpp.buf, hpp.size, "  ");
+	perf_hpp_list__for_each_format(he->hpp_list, fmt) {
+		ret = scnprintf(hpp.buf, hpp.size, "  ");
 		advance_hpp(&hpp, ret);
 
 		ret = fmt->entry(fmt, &hpp, he);
 		advance_hpp(&hpp, ret);
-	पूर्ण
+	}
 
 	strim(s);
-	prपूर्णांकed += ख_लिखो(fp, "%s\n", s);
+	printed += fprintf(fp, "%s\n", s);
 
-	अगर (he->leaf && folded_sign == '-') अणु
-		prपूर्णांकed += hist_browser__ख_लिखो_callchain(browser, he, fp,
+	if (he->leaf && folded_sign == '-') {
+		printed += hist_browser__fprintf_callchain(browser, he, fp,
 							   he->depth + 1);
-	पूर्ण
+	}
 
-	वापस prपूर्णांकed;
-पूर्ण
+	return printed;
+}
 
-अटल पूर्णांक hist_browser__ख_लिखो(काष्ठा hist_browser *browser, खाता *fp)
-अणु
-	काष्ठा rb_node *nd = hists__filter_entries(rb_first(browser->b.entries),
+static int hist_browser__fprintf(struct hist_browser *browser, FILE *fp)
+{
+	struct rb_node *nd = hists__filter_entries(rb_first(browser->b.entries),
 						   browser->min_pcnt);
-	पूर्णांक prपूर्णांकed = 0;
+	int printed = 0;
 
-	जबतक (nd) अणु
-		काष्ठा hist_entry *h = rb_entry(nd, काष्ठा hist_entry, rb_node);
+	while (nd) {
+		struct hist_entry *h = rb_entry(nd, struct hist_entry, rb_node);
 
-		अगर (symbol_conf.report_hierarchy) अणु
-			prपूर्णांकed += hist_browser__ख_लिखो_hierarchy_entry(browser,
+		if (symbol_conf.report_hierarchy) {
+			printed += hist_browser__fprintf_hierarchy_entry(browser,
 									 h, fp,
 									 h->depth);
-		पूर्ण अन्यथा अणु
-			prपूर्णांकed += hist_browser__ख_लिखो_entry(browser, h, fp);
-		पूर्ण
+		} else {
+			printed += hist_browser__fprintf_entry(browser, h, fp);
+		}
 
 		nd = hists__filter_entries(rb_hierarchy_next(nd),
 					   browser->min_pcnt);
-	पूर्ण
+	}
 
-	वापस prपूर्णांकed;
-पूर्ण
+	return printed;
+}
 
-अटल पूर्णांक hist_browser__dump(काष्ठा hist_browser *browser)
-अणु
-	अक्षर filename[64];
-	खाता *fp;
+static int hist_browser__dump(struct hist_browser *browser)
+{
+	char filename[64];
+	FILE *fp;
 
-	जबतक (1) अणु
-		scnम_लिखो(filename, माप(filename), "perf.hist.%d", browser->prपूर्णांक_seq);
-		अगर (access(filename, F_OK))
-			अवरोध;
+	while (1) {
+		scnprintf(filename, sizeof(filename), "perf.hist.%d", browser->print_seq);
+		if (access(filename, F_OK))
+			break;
 		/*
  		 * XXX: Just an arbitrary lazy upper limit
  		 */
-		अगर (++browser->prपूर्णांक_seq == 8192) अणु
+		if (++browser->print_seq == 8192) {
 			ui_helpline__fpush("Too many perf.hist.N files, nothing written!");
-			वापस -1;
-		पूर्ण
-	पूर्ण
+			return -1;
+		}
+	}
 
-	fp = ख_खोलो(filename, "w");
-	अगर (fp == शून्य) अणु
-		अक्षर bf[64];
-		स्थिर अक्षर *err = str_error_r(त्रुटि_सं, bf, माप(bf));
+	fp = fopen(filename, "w");
+	if (fp == NULL) {
+		char bf[64];
+		const char *err = str_error_r(errno, bf, sizeof(bf));
 		ui_helpline__fpush("Couldn't write to %s: %s", filename, err);
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	++browser->prपूर्णांक_seq;
-	hist_browser__ख_लिखो(browser, fp);
-	ख_बंद(fp);
+	++browser->print_seq;
+	hist_browser__fprintf(browser, fp);
+	fclose(fp);
 	ui_helpline__fpush("%s written!", filename);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम hist_browser__init(काष्ठा hist_browser *browser,
-			काष्ठा hists *hists)
-अणु
-	काष्ठा perf_hpp_fmt *fmt;
+void hist_browser__init(struct hist_browser *browser,
+			struct hists *hists)
+{
+	struct perf_hpp_fmt *fmt;
 
 	browser->hists			= hists;
 	browser->b.refresh		= hist_browser__refresh;
@@ -2229,231 +2228,231 @@ hists_browser__scnम_लिखो_headers(काष्ठा hist_browser *brow
 	browser->show_headers		= symbol_conf.show_hist_headers;
 	hist_browser__set_title_space(browser);
 
-	अगर (symbol_conf.report_hierarchy) अणु
-		काष्ठा perf_hpp_list_node *fmt_node;
+	if (symbol_conf.report_hierarchy) {
+		struct perf_hpp_list_node *fmt_node;
 
 		/* count overhead columns (in the first node) */
-		fmt_node = list_first_entry(&hists->hpp_क्रमmats,
-					    काष्ठा perf_hpp_list_node, list);
-		perf_hpp_list__क्रम_each_क्रमmat(&fmt_node->hpp, fmt)
+		fmt_node = list_first_entry(&hists->hpp_formats,
+					    struct perf_hpp_list_node, list);
+		perf_hpp_list__for_each_format(&fmt_node->hpp, fmt)
 			++browser->b.columns;
 
-		/* add a single column क्रम whole hierarchy sort keys*/
+		/* add a single column for whole hierarchy sort keys*/
 		++browser->b.columns;
-	पूर्ण अन्यथा अणु
-		hists__क्रम_each_क्रमmat(hists, fmt)
+	} else {
+		hists__for_each_format(hists, fmt)
 			++browser->b.columns;
-	पूर्ण
+	}
 
 	hists__reset_column_width(hists);
-पूर्ण
+}
 
-काष्ठा hist_browser *hist_browser__new(काष्ठा hists *hists)
-अणु
-	काष्ठा hist_browser *browser = zalloc(माप(*browser));
+struct hist_browser *hist_browser__new(struct hists *hists)
+{
+	struct hist_browser *browser = zalloc(sizeof(*browser));
 
-	अगर (browser)
+	if (browser)
 		hist_browser__init(browser, hists);
 
-	वापस browser;
-पूर्ण
+	return browser;
+}
 
-अटल काष्ठा hist_browser *
-perf_evsel_browser__new(काष्ठा evsel *evsel,
-			काष्ठा hist_browser_समयr *hbt,
-			काष्ठा perf_env *env,
-			काष्ठा annotation_options *annotation_opts)
-अणु
-	काष्ठा hist_browser *browser = hist_browser__new(evsel__hists(evsel));
+static struct hist_browser *
+perf_evsel_browser__new(struct evsel *evsel,
+			struct hist_browser_timer *hbt,
+			struct perf_env *env,
+			struct annotation_options *annotation_opts)
+{
+	struct hist_browser *browser = hist_browser__new(evsel__hists(evsel));
 
-	अगर (browser) अणु
+	if (browser) {
 		browser->hbt   = hbt;
 		browser->env   = env;
-		browser->title = hists_browser__scnम_लिखो_title;
+		browser->title = hists_browser__scnprintf_title;
 		browser->annotation_opts = annotation_opts;
-	पूर्ण
-	वापस browser;
-पूर्ण
+	}
+	return browser;
+}
 
-व्योम hist_browser__delete(काष्ठा hist_browser *browser)
-अणु
-	मुक्त(browser);
-पूर्ण
+void hist_browser__delete(struct hist_browser *browser)
+{
+	free(browser);
+}
 
-अटल काष्ठा hist_entry *hist_browser__selected_entry(काष्ठा hist_browser *browser)
-अणु
-	वापस browser->he_selection;
-पूर्ण
+static struct hist_entry *hist_browser__selected_entry(struct hist_browser *browser)
+{
+	return browser->he_selection;
+}
 
-अटल काष्ठा thपढ़ो *hist_browser__selected_thपढ़ो(काष्ठा hist_browser *browser)
-अणु
-	वापस browser->he_selection->thपढ़ो;
-पूर्ण
+static struct thread *hist_browser__selected_thread(struct hist_browser *browser)
+{
+	return browser->he_selection->thread;
+}
 
-अटल काष्ठा res_sample *hist_browser__selected_res_sample(काष्ठा hist_browser *browser)
-अणु
-	वापस browser->he_selection ? browser->he_selection->res_samples : शून्य;
-पूर्ण
+static struct res_sample *hist_browser__selected_res_sample(struct hist_browser *browser)
+{
+	return browser->he_selection ? browser->he_selection->res_samples : NULL;
+}
 
-/* Check whether the browser is क्रम 'top' or 'report' */
-अटल अंतरभूत bool is_report_browser(व्योम *समयr)
-अणु
-	वापस समयr == शून्य;
-पूर्ण
+/* Check whether the browser is for 'top' or 'report' */
+static inline bool is_report_browser(void *timer)
+{
+	return timer == NULL;
+}
 
-अटल पूर्णांक hists_browser__scnम_लिखो_title(काष्ठा hist_browser *browser, अक्षर *bf, माप_प्रकार size)
-अणु
-	काष्ठा hist_browser_समयr *hbt = browser->hbt;
-	पूर्णांक prपूर्णांकed = __hists__scnम_लिखो_title(browser->hists, bf, size, !is_report_browser(hbt));
+static int hists_browser__scnprintf_title(struct hist_browser *browser, char *bf, size_t size)
+{
+	struct hist_browser_timer *hbt = browser->hbt;
+	int printed = __hists__scnprintf_title(browser->hists, bf, size, !is_report_browser(hbt));
 
-	अगर (!is_report_browser(hbt)) अणु
-		काष्ठा perf_top *top = hbt->arg;
+	if (!is_report_browser(hbt)) {
+		struct perf_top *top = hbt->arg;
 
-		prपूर्णांकed += scnम_लिखो(bf + prपूर्णांकed, size - prपूर्णांकed,
+		printed += scnprintf(bf + printed, size - printed,
 				     " lost: %" PRIu64 "/%" PRIu64,
 				     top->lost, top->lost_total);
 
-		prपूर्णांकed += scnम_लिखो(bf + prपूर्णांकed, size - prपूर्णांकed,
+		printed += scnprintf(bf + printed, size - printed,
 				     " drop: %" PRIu64 "/%" PRIu64,
 				     top->drop, top->drop_total);
 
-		अगर (top->zero)
-			prपूर्णांकed += scnम_लिखो(bf + prपूर्णांकed, size - prपूर्णांकed, " [z]");
+		if (top->zero)
+			printed += scnprintf(bf + printed, size - printed, " [z]");
 
 		perf_top__reset_sample_counters(top);
-	पूर्ण
+	}
 
 
-	वापस prपूर्णांकed;
-पूर्ण
+	return printed;
+}
 
-अटल अंतरभूत व्योम मुक्त_popup_options(अक्षर **options, पूर्णांक n)
-अणु
-	पूर्णांक i;
+static inline void free_popup_options(char **options, int n)
+{
+	int i;
 
-	क्रम (i = 0; i < n; ++i)
-		zमुक्त(&options[i]);
-पूर्ण
+	for (i = 0; i < n; ++i)
+		zfree(&options[i]);
+}
 
 /*
- * Only runसमय चयनing of perf data file will make "input_name" poपूर्णांक
- * to a दो_स्मृतिed buffer. So add "is_input_name_malloced" flag to decide
- * whether we need to call मुक्त() क्रम current "input_name" during the चयन.
+ * Only runtime switching of perf data file will make "input_name" point
+ * to a malloced buffer. So add "is_input_name_malloced" flag to decide
+ * whether we need to call free() for current "input_name" during the switch.
  */
-अटल bool is_input_name_दो_स्मृतिed = false;
+static bool is_input_name_malloced = false;
 
-अटल पूर्णांक चयन_data_file(व्योम)
-अणु
-	अक्षर *pwd, *options[32], *असल_path[32], *पंचांगp;
-	सूची *pwd_dir;
-	पूर्णांक nr_options = 0, choice = -1, ret = -1;
-	काष्ठा dirent *dent;
+static int switch_data_file(void)
+{
+	char *pwd, *options[32], *abs_path[32], *tmp;
+	DIR *pwd_dir;
+	int nr_options = 0, choice = -1, ret = -1;
+	struct dirent *dent;
 
-	pwd = दो_पर्या("PWD");
-	अगर (!pwd)
-		वापस ret;
+	pwd = getenv("PWD");
+	if (!pwd)
+		return ret;
 
-	pwd_dir = सूची_खोलो(pwd);
-	अगर (!pwd_dir)
-		वापस ret;
+	pwd_dir = opendir(pwd);
+	if (!pwd_dir)
+		return ret;
 
-	स_रखो(options, 0, माप(options));
-	स_रखो(असल_path, 0, माप(असल_path));
+	memset(options, 0, sizeof(options));
+	memset(abs_path, 0, sizeof(abs_path));
 
-	जबतक ((dent = सूची_पढ़ो(pwd_dir))) अणु
-		अक्षर path[PATH_MAX];
+	while ((dent = readdir(pwd_dir))) {
+		char path[PATH_MAX];
 		u64 magic;
-		अक्षर *name = dent->d_name;
-		खाता *file;
+		char *name = dent->d_name;
+		FILE *file;
 
-		अगर (!(dent->d_type == DT_REG))
-			जारी;
+		if (!(dent->d_type == DT_REG))
+			continue;
 
-		snम_लिखो(path, माप(path), "%s/%s", pwd, name);
+		snprintf(path, sizeof(path), "%s/%s", pwd, name);
 
-		file = ख_खोलो(path, "r");
-		अगर (!file)
-			जारी;
+		file = fopen(path, "r");
+		if (!file)
+			continue;
 
-		अगर (ख_पढ़ो(&magic, 1, 8, file) < 8)
-			जाओ बंद_file_and_जारी;
+		if (fread(&magic, 1, 8, file) < 8)
+			goto close_file_and_continue;
 
-		अगर (is_perf_magic(magic)) अणु
+		if (is_perf_magic(magic)) {
 			options[nr_options] = strdup(name);
-			अगर (!options[nr_options])
-				जाओ बंद_file_and_जारी;
+			if (!options[nr_options])
+				goto close_file_and_continue;
 
-			असल_path[nr_options] = strdup(path);
-			अगर (!असल_path[nr_options]) अणु
-				zमुक्त(&options[nr_options]);
+			abs_path[nr_options] = strdup(path);
+			if (!abs_path[nr_options]) {
+				zfree(&options[nr_options]);
 				ui__warning("Can't search all data files due to memory shortage.\n");
-				ख_बंद(file);
-				अवरोध;
-			पूर्ण
+				fclose(file);
+				break;
+			}
 
 			nr_options++;
-		पूर्ण
+		}
 
-बंद_file_and_जारी:
-		ख_बंद(file);
-		अगर (nr_options >= 32) अणु
+close_file_and_continue:
+		fclose(file);
+		if (nr_options >= 32) {
 			ui__warning("Too many perf data files in PWD!\n"
 				    "Only the first 32 files will be listed.\n");
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	बंद_सूची(pwd_dir);
+			break;
+		}
+	}
+	closedir(pwd_dir);
 
-	अगर (nr_options) अणु
-		choice = ui__popup_menu(nr_options, options, शून्य);
-		अगर (choice < nr_options && choice >= 0) अणु
-			पंचांगp = strdup(असल_path[choice]);
-			अगर (पंचांगp) अणु
-				अगर (is_input_name_दो_स्मृतिed)
-					मुक्त((व्योम *)input_name);
-				input_name = पंचांगp;
-				is_input_name_दो_स्मृतिed = true;
+	if (nr_options) {
+		choice = ui__popup_menu(nr_options, options, NULL);
+		if (choice < nr_options && choice >= 0) {
+			tmp = strdup(abs_path[choice]);
+			if (tmp) {
+				if (is_input_name_malloced)
+					free((void *)input_name);
+				input_name = tmp;
+				is_input_name_malloced = true;
 				ret = 0;
-			पूर्ण अन्यथा
+			} else
 				ui__warning("Data switch failed due to memory shortage!\n");
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	मुक्त_popup_options(options, nr_options);
-	मुक्त_popup_options(असल_path, nr_options);
-	वापस ret;
-पूर्ण
+	free_popup_options(options, nr_options);
+	free_popup_options(abs_path, nr_options);
+	return ret;
+}
 
-काष्ठा popup_action अणु
-	अचिन्हित दीर्घ		समय;
-	काष्ठा thपढ़ो 		*thपढ़ो;
-	काष्ठा map_symbol 	ms;
-	पूर्णांक			socket;
-	काष्ठा evsel	*evsel;
-	क्रमागत rstype		rstype;
+struct popup_action {
+	unsigned long		time;
+	struct thread 		*thread;
+	struct map_symbol 	ms;
+	int			socket;
+	struct evsel	*evsel;
+	enum rstype		rstype;
 
-	पूर्णांक (*fn)(काष्ठा hist_browser *browser, काष्ठा popup_action *act);
-पूर्ण;
+	int (*fn)(struct hist_browser *browser, struct popup_action *act);
+};
 
-अटल पूर्णांक
-करो_annotate(काष्ठा hist_browser *browser, काष्ठा popup_action *act)
-अणु
-	काष्ठा evsel *evsel;
-	काष्ठा annotation *notes;
-	काष्ठा hist_entry *he;
-	पूर्णांक err;
+static int
+do_annotate(struct hist_browser *browser, struct popup_action *act)
+{
+	struct evsel *evsel;
+	struct annotation *notes;
+	struct hist_entry *he;
+	int err;
 
-	अगर (!browser->annotation_opts->objdump_path &&
+	if (!browser->annotation_opts->objdump_path &&
 	    perf_env__lookup_objdump(browser->env, &browser->annotation_opts->objdump_path))
-		वापस 0;
+		return 0;
 
 	notes = symbol__annotation(act->ms.sym);
-	अगर (!notes->src)
-		वापस 0;
+	if (!notes->src)
+		return 0;
 
-	अगर (browser->block_evsel)
+	if (browser->block_evsel)
 		evsel = browser->block_evsel;
-	अन्यथा
+	else
 		evsel = hists_to_evsel(browser->hists);
 
 	err = map_symbol__tui_annotate(&act->ms, evsel, browser->hbt,
@@ -2461,480 +2460,480 @@ perf_evsel_browser__new(काष्ठा evsel *evsel,
 	he = hist_browser__selected_entry(browser);
 	/*
 	 * offer option to annotate the other branch source or target
-	 * (अगर they exists) when वापसing from annotate
+	 * (if they exists) when returning from annotate
 	 */
-	अगर ((err == 'q' || err == CTRL('c')) && he->branch_info)
-		वापस 1;
+	if ((err == 'q' || err == CTRL('c')) && he->branch_info)
+		return 1;
 
 	ui_browser__update_nr_entries(&browser->b, browser->hists->nr_entries);
-	अगर (err)
+	if (err)
 		ui_browser__handle_resize(&browser->b);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा symbol *symbol__new_unresolved(u64 addr, काष्ठा map *map)
-अणु
-	काष्ठा annotated_source *src;
-	काष्ठा symbol *sym;
-	अक्षर name[64];
+static struct symbol *symbol__new_unresolved(u64 addr, struct map *map)
+{
+	struct annotated_source *src;
+	struct symbol *sym;
+	char name[64];
 
-	snम_लिखो(name, माप(name), "%.*" PRIx64, BITS_PER_LONG / 4, addr);
+	snprintf(name, sizeof(name), "%.*" PRIx64, BITS_PER_LONG / 4, addr);
 
 	sym = symbol__new(addr, ANNOTATION_DUMMY_LEN, 0, 0, name);
-	अगर (sym) अणु
+	if (sym) {
 		src = symbol__hists(sym, 1);
-		अगर (!src) अणु
+		if (!src) {
 			symbol__delete(sym);
-			वापस शून्य;
-		पूर्ण
+			return NULL;
+		}
 
 		dso__insert_symbol(map->dso, sym);
-	पूर्ण
+	}
 
-	वापस sym;
-पूर्ण
+	return sym;
+}
 
-अटल पूर्णांक
-add_annotate_opt(काष्ठा hist_browser *browser __maybe_unused,
-		 काष्ठा popup_action *act, अक्षर **optstr,
-		 काष्ठा map_symbol *ms,
+static int
+add_annotate_opt(struct hist_browser *browser __maybe_unused,
+		 struct popup_action *act, char **optstr,
+		 struct map_symbol *ms,
 		 u64 addr)
-अणु
-	अगर (!ms->map || !ms->map->dso || ms->map->dso->annotate_warned)
-		वापस 0;
+{
+	if (!ms->map || !ms->map->dso || ms->map->dso->annotate_warned)
+		return 0;
 
-	अगर (!ms->sym)
+	if (!ms->sym)
 		ms->sym = symbol__new_unresolved(addr, ms->map);
 
-	अगर (ms->sym == शून्य || symbol__annotation(ms->sym)->src == शून्य)
-		वापस 0;
+	if (ms->sym == NULL || symbol__annotation(ms->sym)->src == NULL)
+		return 0;
 
-	अगर (aप्र_लिखो(optstr, "Annotate %s", ms->sym->name) < 0)
-		वापस 0;
+	if (asprintf(optstr, "Annotate %s", ms->sym->name) < 0)
+		return 0;
 
 	act->ms = *ms;
-	act->fn = करो_annotate;
-	वापस 1;
-पूर्ण
+	act->fn = do_annotate;
+	return 1;
+}
 
-अटल पूर्णांक
-करो_zoom_thपढ़ो(काष्ठा hist_browser *browser, काष्ठा popup_action *act)
-अणु
-	काष्ठा thपढ़ो *thपढ़ो = act->thपढ़ो;
+static int
+do_zoom_thread(struct hist_browser *browser, struct popup_action *act)
+{
+	struct thread *thread = act->thread;
 
-	अगर ((!hists__has(browser->hists, thपढ़ो) &&
-	     !hists__has(browser->hists, comm)) || thपढ़ो == शून्य)
-		वापस 0;
+	if ((!hists__has(browser->hists, thread) &&
+	     !hists__has(browser->hists, comm)) || thread == NULL)
+		return 0;
 
-	अगर (browser->hists->thपढ़ो_filter) अणु
-		pstack__हटाओ(browser->pstack, &browser->hists->thपढ़ो_filter);
+	if (browser->hists->thread_filter) {
+		pstack__remove(browser->pstack, &browser->hists->thread_filter);
 		perf_hpp__set_elide(HISTC_THREAD, false);
-		thपढ़ो__zput(browser->hists->thपढ़ो_filter);
+		thread__zput(browser->hists->thread_filter);
 		ui_helpline__pop();
-	पूर्ण अन्यथा अणु
-		अगर (hists__has(browser->hists, thपढ़ो)) अणु
+	} else {
+		if (hists__has(browser->hists, thread)) {
 			ui_helpline__fpush("To zoom out press ESC or ENTER + \"Zoom out of %s(%d) thread\"",
-					   thपढ़ो->comm_set ? thपढ़ो__comm_str(thपढ़ो) : "",
-					   thपढ़ो->tid);
-		पूर्ण अन्यथा अणु
+					   thread->comm_set ? thread__comm_str(thread) : "",
+					   thread->tid);
+		} else {
 			ui_helpline__fpush("To zoom out press ESC or ENTER + \"Zoom out of %s thread\"",
-					   thपढ़ो->comm_set ? thपढ़ो__comm_str(thपढ़ो) : "");
-		पूर्ण
+					   thread->comm_set ? thread__comm_str(thread) : "");
+		}
 
-		browser->hists->thपढ़ो_filter = thपढ़ो__get(thपढ़ो);
+		browser->hists->thread_filter = thread__get(thread);
 		perf_hpp__set_elide(HISTC_THREAD, false);
-		pstack__push(browser->pstack, &browser->hists->thपढ़ो_filter);
-	पूर्ण
+		pstack__push(browser->pstack, &browser->hists->thread_filter);
+	}
 
-	hists__filter_by_thपढ़ो(browser->hists);
+	hists__filter_by_thread(browser->hists);
 	hist_browser__reset(browser);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-add_thपढ़ो_opt(काष्ठा hist_browser *browser, काष्ठा popup_action *act,
-	       अक्षर **optstr, काष्ठा thपढ़ो *thपढ़ो)
-अणु
-	पूर्णांक ret;
+static int
+add_thread_opt(struct hist_browser *browser, struct popup_action *act,
+	       char **optstr, struct thread *thread)
+{
+	int ret;
 
-	अगर ((!hists__has(browser->hists, thपढ़ो) &&
-	     !hists__has(browser->hists, comm)) || thपढ़ो == शून्य)
-		वापस 0;
+	if ((!hists__has(browser->hists, thread) &&
+	     !hists__has(browser->hists, comm)) || thread == NULL)
+		return 0;
 
-	अगर (hists__has(browser->hists, thपढ़ो)) अणु
-		ret = aप्र_लिखो(optstr, "Zoom %s %s(%d) thread",
-			       browser->hists->thपढ़ो_filter ? "out of" : "into",
-			       thपढ़ो->comm_set ? thपढ़ो__comm_str(thपढ़ो) : "",
-			       thपढ़ो->tid);
-	पूर्ण अन्यथा अणु
-		ret = aप्र_लिखो(optstr, "Zoom %s %s thread",
-			       browser->hists->thपढ़ो_filter ? "out of" : "into",
-			       thपढ़ो->comm_set ? thपढ़ो__comm_str(thपढ़ो) : "");
-	पूर्ण
-	अगर (ret < 0)
-		वापस 0;
+	if (hists__has(browser->hists, thread)) {
+		ret = asprintf(optstr, "Zoom %s %s(%d) thread",
+			       browser->hists->thread_filter ? "out of" : "into",
+			       thread->comm_set ? thread__comm_str(thread) : "",
+			       thread->tid);
+	} else {
+		ret = asprintf(optstr, "Zoom %s %s thread",
+			       browser->hists->thread_filter ? "out of" : "into",
+			       thread->comm_set ? thread__comm_str(thread) : "");
+	}
+	if (ret < 0)
+		return 0;
 
-	act->thपढ़ो = thपढ़ो;
-	act->fn = करो_zoom_thपढ़ो;
-	वापस 1;
-पूर्ण
+	act->thread = thread;
+	act->fn = do_zoom_thread;
+	return 1;
+}
 
-अटल पूर्णांक hists_browser__zoom_map(काष्ठा hist_browser *browser, काष्ठा map *map)
-अणु
-	अगर (!hists__has(browser->hists, dso) || map == शून्य)
-		वापस 0;
+static int hists_browser__zoom_map(struct hist_browser *browser, struct map *map)
+{
+	if (!hists__has(browser->hists, dso) || map == NULL)
+		return 0;
 
-	अगर (browser->hists->dso_filter) अणु
-		pstack__हटाओ(browser->pstack, &browser->hists->dso_filter);
+	if (browser->hists->dso_filter) {
+		pstack__remove(browser->pstack, &browser->hists->dso_filter);
 		perf_hpp__set_elide(HISTC_DSO, false);
-		browser->hists->dso_filter = शून्य;
+		browser->hists->dso_filter = NULL;
 		ui_helpline__pop();
-	पूर्ण अन्यथा अणु
+	} else {
 		ui_helpline__fpush("To zoom out press ESC or ENTER + \"Zoom out of %s DSO\"",
-				   __map__is_kernel(map) ? "the Kernel" : map->dso->लघु_name);
+				   __map__is_kernel(map) ? "the Kernel" : map->dso->short_name);
 		browser->hists->dso_filter = map->dso;
 		perf_hpp__set_elide(HISTC_DSO, true);
 		pstack__push(browser->pstack, &browser->hists->dso_filter);
-	पूर्ण
+	}
 
 	hists__filter_by_dso(browser->hists);
 	hist_browser__reset(browser);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-करो_zoom_dso(काष्ठा hist_browser *browser, काष्ठा popup_action *act)
-अणु
-	वापस hists_browser__zoom_map(browser, act->ms.map);
-पूर्ण
+static int
+do_zoom_dso(struct hist_browser *browser, struct popup_action *act)
+{
+	return hists_browser__zoom_map(browser, act->ms.map);
+}
 
-अटल पूर्णांक
-add_dso_opt(काष्ठा hist_browser *browser, काष्ठा popup_action *act,
-	    अक्षर **optstr, काष्ठा map *map)
-अणु
-	अगर (!hists__has(browser->hists, dso) || map == शून्य)
-		वापस 0;
+static int
+add_dso_opt(struct hist_browser *browser, struct popup_action *act,
+	    char **optstr, struct map *map)
+{
+	if (!hists__has(browser->hists, dso) || map == NULL)
+		return 0;
 
-	अगर (aप्र_लिखो(optstr, "Zoom %s %s DSO (use the 'k' hotkey to zoom directly into the kernel)",
+	if (asprintf(optstr, "Zoom %s %s DSO (use the 'k' hotkey to zoom directly into the kernel)",
 		     browser->hists->dso_filter ? "out of" : "into",
-		     __map__is_kernel(map) ? "the Kernel" : map->dso->लघु_name) < 0)
-		वापस 0;
+		     __map__is_kernel(map) ? "the Kernel" : map->dso->short_name) < 0)
+		return 0;
 
 	act->ms.map = map;
-	act->fn = करो_zoom_dso;
-	वापस 1;
-पूर्ण
+	act->fn = do_zoom_dso;
+	return 1;
+}
 
-अटल पूर्णांक करो_toggle_callchain(काष्ठा hist_browser *browser, काष्ठा popup_action *act __maybe_unused)
-अणु
+static int do_toggle_callchain(struct hist_browser *browser, struct popup_action *act __maybe_unused)
+{
 	hist_browser__toggle_fold(browser);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक add_callchain_toggle_opt(काष्ठा hist_browser *browser, काष्ठा popup_action *act, अक्षर **optstr)
-अणु
-	अक्षर sym_name[512];
+static int add_callchain_toggle_opt(struct hist_browser *browser, struct popup_action *act, char **optstr)
+{
+	char sym_name[512];
 
-        अगर (!hist_browser__selection_has_children(browser))
-                वापस 0;
+        if (!hist_browser__selection_has_children(browser))
+                return 0;
 
-	अगर (aप्र_लिखो(optstr, "%s [%s] callchain (one level, same as '+' hotkey, use 'e'/'c' for the whole main level entry)",
+	if (asprintf(optstr, "%s [%s] callchain (one level, same as '+' hotkey, use 'e'/'c' for the whole main level entry)",
 		     hist_browser__selection_unfolded(browser) ? "Collapse" : "Expand",
-		     hist_browser__selection_sym_name(browser, sym_name, माप(sym_name))) < 0)
-		वापस 0;
+		     hist_browser__selection_sym_name(browser, sym_name, sizeof(sym_name))) < 0)
+		return 0;
 
-	act->fn = करो_toggle_callchain;
-	वापस 1;
-पूर्ण
+	act->fn = do_toggle_callchain;
+	return 1;
+}
 
-अटल पूर्णांक
-करो_browse_map(काष्ठा hist_browser *browser __maybe_unused,
-	      काष्ठा popup_action *act)
-अणु
+static int
+do_browse_map(struct hist_browser *browser __maybe_unused,
+	      struct popup_action *act)
+{
 	map__browse(act->ms.map);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-add_map_opt(काष्ठा hist_browser *browser,
-	    काष्ठा popup_action *act, अक्षर **optstr, काष्ठा map *map)
-अणु
-	अगर (!hists__has(browser->hists, dso) || map == शून्य)
-		वापस 0;
+static int
+add_map_opt(struct hist_browser *browser,
+	    struct popup_action *act, char **optstr, struct map *map)
+{
+	if (!hists__has(browser->hists, dso) || map == NULL)
+		return 0;
 
-	अगर (aप्र_लिखो(optstr, "Browse map details") < 0)
-		वापस 0;
+	if (asprintf(optstr, "Browse map details") < 0)
+		return 0;
 
 	act->ms.map = map;
-	act->fn = करो_browse_map;
-	वापस 1;
-पूर्ण
+	act->fn = do_browse_map;
+	return 1;
+}
 
-अटल पूर्णांक
-करो_run_script(काष्ठा hist_browser *browser __maybe_unused,
-	      काष्ठा popup_action *act)
-अणु
-	अक्षर *script_opt;
-	पूर्णांक len;
-	पूर्णांक n = 0;
+static int
+do_run_script(struct hist_browser *browser __maybe_unused,
+	      struct popup_action *act)
+{
+	char *script_opt;
+	int len;
+	int n = 0;
 
 	len = 100;
-	अगर (act->thपढ़ो)
-		len += म_माप(thपढ़ो__comm_str(act->thपढ़ो));
-	अन्यथा अगर (act->ms.sym)
-		len += म_माप(act->ms.sym->name);
-	script_opt = दो_स्मृति(len);
-	अगर (!script_opt)
-		वापस -1;
+	if (act->thread)
+		len += strlen(thread__comm_str(act->thread));
+	else if (act->ms.sym)
+		len += strlen(act->ms.sym->name);
+	script_opt = malloc(len);
+	if (!script_opt)
+		return -1;
 
 	script_opt[0] = 0;
-	अगर (act->thपढ़ो) अणु
-		n = scnम_लिखो(script_opt, len, " -c %s ",
-			  thपढ़ो__comm_str(act->thपढ़ो));
-	पूर्ण अन्यथा अगर (act->ms.sym) अणु
-		n = scnम_लिखो(script_opt, len, " -S %s ",
+	if (act->thread) {
+		n = scnprintf(script_opt, len, " -c %s ",
+			  thread__comm_str(act->thread));
+	} else if (act->ms.sym) {
+		n = scnprintf(script_opt, len, " -S %s ",
 			  act->ms.sym->name);
-	पूर्ण
+	}
 
-	अगर (act->समय) अणु
-		अक्षर start[32], end[32];
-		अचिन्हित दीर्घ startसमय = act->समय;
-		अचिन्हित दीर्घ endसमय = act->समय + symbol_conf.समय_quantum;
+	if (act->time) {
+		char start[32], end[32];
+		unsigned long starttime = act->time;
+		unsigned long endtime = act->time + symbol_conf.time_quantum;
 
-		अगर (startसमय == endसमय) अणु /* Display 1ms as fallback */
-			startसमय -= 1*NSEC_PER_MSEC;
-			endसमय += 1*NSEC_PER_MSEC;
-		पूर्ण
-		बारtamp__scnम_लिखो_usec(startसमय, start, माप start);
-		बारtamp__scnम_लिखो_usec(endसमय, end, माप end);
-		n += snम_लिखो(script_opt + n, len - n, " --time %s,%s", start, end);
-	पूर्ण
+		if (starttime == endtime) { /* Display 1ms as fallback */
+			starttime -= 1*NSEC_PER_MSEC;
+			endtime += 1*NSEC_PER_MSEC;
+		}
+		timestamp__scnprintf_usec(starttime, start, sizeof start);
+		timestamp__scnprintf_usec(endtime, end, sizeof end);
+		n += snprintf(script_opt + n, len - n, " --time %s,%s", start, end);
+	}
 
 	script_browse(script_opt, act->evsel);
-	मुक्त(script_opt);
-	वापस 0;
-पूर्ण
+	free(script_opt);
+	return 0;
+}
 
-अटल पूर्णांक
-करो_res_sample_script(काष्ठा hist_browser *browser __maybe_unused,
-		     काष्ठा popup_action *act)
-अणु
-	काष्ठा hist_entry *he;
+static int
+do_res_sample_script(struct hist_browser *browser __maybe_unused,
+		     struct popup_action *act)
+{
+	struct hist_entry *he;
 
 	he = hist_browser__selected_entry(browser);
 	res_sample_browse(he->res_samples, he->num_res, act->evsel, act->rstype);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-add_script_opt_2(काष्ठा hist_browser *browser __maybe_unused,
-	       काष्ठा popup_action *act, अक्षर **optstr,
-	       काष्ठा thपढ़ो *thपढ़ो, काष्ठा symbol *sym,
-	       काष्ठा evsel *evsel, स्थिर अक्षर *tstr)
-अणु
+static int
+add_script_opt_2(struct hist_browser *browser __maybe_unused,
+	       struct popup_action *act, char **optstr,
+	       struct thread *thread, struct symbol *sym,
+	       struct evsel *evsel, const char *tstr)
+{
 
-	अगर (thपढ़ो) अणु
-		अगर (aप्र_लिखो(optstr, "Run scripts for samples of thread [%s]%s",
-			     thपढ़ो__comm_str(thपढ़ो), tstr) < 0)
-			वापस 0;
-	पूर्ण अन्यथा अगर (sym) अणु
-		अगर (aप्र_लिखो(optstr, "Run scripts for samples of symbol [%s]%s",
+	if (thread) {
+		if (asprintf(optstr, "Run scripts for samples of thread [%s]%s",
+			     thread__comm_str(thread), tstr) < 0)
+			return 0;
+	} else if (sym) {
+		if (asprintf(optstr, "Run scripts for samples of symbol [%s]%s",
 			     sym->name, tstr) < 0)
-			वापस 0;
-	पूर्ण अन्यथा अणु
-		अगर (aप्र_लिखो(optstr, "Run scripts for all samples%s", tstr) < 0)
-			वापस 0;
-	पूर्ण
+			return 0;
+	} else {
+		if (asprintf(optstr, "Run scripts for all samples%s", tstr) < 0)
+			return 0;
+	}
 
-	act->thपढ़ो = thपढ़ो;
+	act->thread = thread;
 	act->ms.sym = sym;
 	act->evsel = evsel;
-	act->fn = करो_run_script;
-	वापस 1;
-पूर्ण
+	act->fn = do_run_script;
+	return 1;
+}
 
-अटल पूर्णांक
-add_script_opt(काष्ठा hist_browser *browser,
-	       काष्ठा popup_action *act, अक्षर **optstr,
-	       काष्ठा thपढ़ो *thपढ़ो, काष्ठा symbol *sym,
-	       काष्ठा evsel *evsel)
-अणु
-	पूर्णांक n, j;
-	काष्ठा hist_entry *he;
+static int
+add_script_opt(struct hist_browser *browser,
+	       struct popup_action *act, char **optstr,
+	       struct thread *thread, struct symbol *sym,
+	       struct evsel *evsel)
+{
+	int n, j;
+	struct hist_entry *he;
 
-	n = add_script_opt_2(browser, act, optstr, thपढ़ो, sym, evsel, "");
+	n = add_script_opt_2(browser, act, optstr, thread, sym, evsel, "");
 
 	he = hist_browser__selected_entry(browser);
-	अगर (sort_order && म_माला(sort_order, "time")) अणु
-		अक्षर tstr[128];
+	if (sort_order && strstr(sort_order, "time")) {
+		char tstr[128];
 
 		optstr++;
 		act++;
-		j = प्र_लिखो(tstr, " in ");
-		j += बारtamp__scnम_लिखो_usec(he->समय, tstr + j,
-					       माप tstr - j);
-		j += प्र_लिखो(tstr + j, "-");
-		बारtamp__scnम_लिखो_usec(he->समय + symbol_conf.समय_quantum,
-				          tstr + j, माप tstr - j);
-		n += add_script_opt_2(browser, act, optstr, thपढ़ो, sym,
+		j = sprintf(tstr, " in ");
+		j += timestamp__scnprintf_usec(he->time, tstr + j,
+					       sizeof tstr - j);
+		j += sprintf(tstr + j, "-");
+		timestamp__scnprintf_usec(he->time + symbol_conf.time_quantum,
+				          tstr + j, sizeof tstr - j);
+		n += add_script_opt_2(browser, act, optstr, thread, sym,
 					  evsel, tstr);
-		act->समय = he->समय;
-	पूर्ण
-	वापस n;
-पूर्ण
+		act->time = he->time;
+	}
+	return n;
+}
 
-अटल पूर्णांक
-add_res_sample_opt(काष्ठा hist_browser *browser __maybe_unused,
-		   काष्ठा popup_action *act, अक्षर **optstr,
-		   काष्ठा res_sample *res_sample,
-		   काष्ठा evsel *evsel,
-		   क्रमागत rstype type)
-अणु
-	अगर (!res_sample)
-		वापस 0;
+static int
+add_res_sample_opt(struct hist_browser *browser __maybe_unused,
+		   struct popup_action *act, char **optstr,
+		   struct res_sample *res_sample,
+		   struct evsel *evsel,
+		   enum rstype type)
+{
+	if (!res_sample)
+		return 0;
 
-	अगर (aप्र_लिखो(optstr, "Show context for individual samples %s",
+	if (asprintf(optstr, "Show context for individual samples %s",
 		type == A_ASM ? "with assembler" :
 		type == A_SOURCE ? "with source" : "") < 0)
-		वापस 0;
+		return 0;
 
-	act->fn = करो_res_sample_script;
+	act->fn = do_res_sample_script;
 	act->evsel = evsel;
 	act->rstype = type;
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल पूर्णांक
-करो_चयन_data(काष्ठा hist_browser *browser __maybe_unused,
-	       काष्ठा popup_action *act __maybe_unused)
-अणु
-	अगर (चयन_data_file()) अणु
+static int
+do_switch_data(struct hist_browser *browser __maybe_unused,
+	       struct popup_action *act __maybe_unused)
+{
+	if (switch_data_file()) {
 		ui__warning("Won't switch the data files due to\n"
 			    "no valid data file get selected!\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	वापस K_SWITCH_INPUT_DATA;
-पूर्ण
+	return K_SWITCH_INPUT_DATA;
+}
 
-अटल पूर्णांक
-add_चयन_opt(काष्ठा hist_browser *browser,
-	       काष्ठा popup_action *act, अक्षर **optstr)
-अणु
-	अगर (!is_report_browser(browser->hbt))
-		वापस 0;
+static int
+add_switch_opt(struct hist_browser *browser,
+	       struct popup_action *act, char **optstr)
+{
+	if (!is_report_browser(browser->hbt))
+		return 0;
 
-	अगर (aप्र_लिखो(optstr, "Switch to another data file in PWD") < 0)
-		वापस 0;
+	if (asprintf(optstr, "Switch to another data file in PWD") < 0)
+		return 0;
 
-	act->fn = करो_चयन_data;
-	वापस 1;
-पूर्ण
+	act->fn = do_switch_data;
+	return 1;
+}
 
-अटल पूर्णांक
-करो_निकास_browser(काष्ठा hist_browser *browser __maybe_unused,
-		काष्ठा popup_action *act __maybe_unused)
-अणु
-	वापस 0;
-पूर्ण
+static int
+do_exit_browser(struct hist_browser *browser __maybe_unused,
+		struct popup_action *act __maybe_unused)
+{
+	return 0;
+}
 
-अटल पूर्णांक
-add_निकास_opt(काष्ठा hist_browser *browser __maybe_unused,
-	     काष्ठा popup_action *act, अक्षर **optstr)
-अणु
-	अगर (aप्र_लिखो(optstr, "Exit") < 0)
-		वापस 0;
+static int
+add_exit_opt(struct hist_browser *browser __maybe_unused,
+	     struct popup_action *act, char **optstr)
+{
+	if (asprintf(optstr, "Exit") < 0)
+		return 0;
 
-	act->fn = करो_निकास_browser;
-	वापस 1;
-पूर्ण
+	act->fn = do_exit_browser;
+	return 1;
+}
 
-अटल पूर्णांक
-करो_zoom_socket(काष्ठा hist_browser *browser, काष्ठा popup_action *act)
-अणु
-	अगर (!hists__has(browser->hists, socket) || act->socket < 0)
-		वापस 0;
+static int
+do_zoom_socket(struct hist_browser *browser, struct popup_action *act)
+{
+	if (!hists__has(browser->hists, socket) || act->socket < 0)
+		return 0;
 
-	अगर (browser->hists->socket_filter > -1) अणु
-		pstack__हटाओ(browser->pstack, &browser->hists->socket_filter);
+	if (browser->hists->socket_filter > -1) {
+		pstack__remove(browser->pstack, &browser->hists->socket_filter);
 		browser->hists->socket_filter = -1;
 		perf_hpp__set_elide(HISTC_SOCKET, false);
-	पूर्ण अन्यथा अणु
+	} else {
 		browser->hists->socket_filter = act->socket;
 		perf_hpp__set_elide(HISTC_SOCKET, true);
 		pstack__push(browser->pstack, &browser->hists->socket_filter);
-	पूर्ण
+	}
 
 	hists__filter_by_socket(browser->hists);
 	hist_browser__reset(browser);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-add_socket_opt(काष्ठा hist_browser *browser, काष्ठा popup_action *act,
-	       अक्षर **optstr, पूर्णांक socket_id)
-अणु
-	अगर (!hists__has(browser->hists, socket) || socket_id < 0)
-		वापस 0;
+static int
+add_socket_opt(struct hist_browser *browser, struct popup_action *act,
+	       char **optstr, int socket_id)
+{
+	if (!hists__has(browser->hists, socket) || socket_id < 0)
+		return 0;
 
-	अगर (aप्र_लिखो(optstr, "Zoom %s Processor Socket %d",
+	if (asprintf(optstr, "Zoom %s Processor Socket %d",
 		     (browser->hists->socket_filter > -1) ? "out of" : "into",
 		     socket_id) < 0)
-		वापस 0;
+		return 0;
 
 	act->socket = socket_id;
-	act->fn = करो_zoom_socket;
-	वापस 1;
-पूर्ण
+	act->fn = do_zoom_socket;
+	return 1;
+}
 
-अटल व्योम hist_browser__update_nr_entries(काष्ठा hist_browser *hb)
-अणु
+static void hist_browser__update_nr_entries(struct hist_browser *hb)
+{
 	u64 nr_entries = 0;
-	काष्ठा rb_node *nd = rb_first_cached(&hb->hists->entries);
+	struct rb_node *nd = rb_first_cached(&hb->hists->entries);
 
-	अगर (hb->min_pcnt == 0 && !symbol_conf.report_hierarchy) अणु
+	if (hb->min_pcnt == 0 && !symbol_conf.report_hierarchy) {
 		hb->nr_non_filtered_entries = hb->hists->nr_non_filtered_entries;
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	जबतक ((nd = hists__filter_entries(nd, hb->min_pcnt)) != शून्य) अणु
+	while ((nd = hists__filter_entries(nd, hb->min_pcnt)) != NULL) {
 		nr_entries++;
 		nd = rb_hierarchy_next(nd);
-	पूर्ण
+	}
 
 	hb->nr_non_filtered_entries = nr_entries;
 	hb->nr_hierarchy_entries = nr_entries;
-पूर्ण
+}
 
-अटल व्योम hist_browser__update_percent_limit(काष्ठा hist_browser *hb,
-					       द्विगुन percent)
-अणु
-	काष्ठा hist_entry *he;
-	काष्ठा rb_node *nd = rb_first_cached(&hb->hists->entries);
+static void hist_browser__update_percent_limit(struct hist_browser *hb,
+					       double percent)
+{
+	struct hist_entry *he;
+	struct rb_node *nd = rb_first_cached(&hb->hists->entries);
 	u64 total = hists__total_period(hb->hists);
 	u64 min_callchain_hits = total * (percent / 100);
 
 	hb->min_pcnt = callchain_param.min_percent = percent;
 
-	जबतक ((nd = hists__filter_entries(nd, hb->min_pcnt)) != शून्य) अणु
-		he = rb_entry(nd, काष्ठा hist_entry, rb_node);
+	while ((nd = hists__filter_entries(nd, hb->min_pcnt)) != NULL) {
+		he = rb_entry(nd, struct hist_entry, rb_node);
 
-		अगर (he->has_no_entry) अणु
+		if (he->has_no_entry) {
 			he->has_no_entry = false;
 			he->nr_rows = 0;
-		पूर्ण
+		}
 
-		अगर (!he->leaf || !hist_entry__has_callchains(he) || !symbol_conf.use_callchain)
-			जाओ next;
+		if (!he->leaf || !hist_entry__has_callchains(he) || !symbol_conf.use_callchain)
+			goto next;
 
-		अगर (callchain_param.mode == CHAIN_GRAPH_REL) अणु
+		if (callchain_param.mode == CHAIN_GRAPH_REL) {
 			total = he->stat.period;
 
-			अगर (symbol_conf.cumulate_callchain)
+			if (symbol_conf.cumulate_callchain)
 				total = he->stat_acc->period;
 
 			min_callchain_hits = total * (percent / 100);
-		पूर्ण
+		}
 
 		callchain_param.sort(&he->sorted_chain, he->callchain,
 				     min_callchain_hits, &callchain_param);
@@ -2942,29 +2941,29 @@ add_socket_opt(काष्ठा hist_browser *browser, काष्ठा popu
 next:
 		nd = __rb_hierarchy_next(nd, HMD_FORCE_CHILD);
 
-		/* क्रमce to re-evaluate folding state of callchains */
+		/* force to re-evaluate folding state of callchains */
 		he->init_have_children = false;
 		hist_entry__set_folding(he, hb, false);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक evsel__hists_browse(काष्ठा evsel *evsel, पूर्णांक nr_events, स्थिर अक्षर *helpline,
-			       bool left_निकासs, काष्ठा hist_browser_समयr *hbt, भग्न min_pcnt,
-			       काष्ठा perf_env *env, bool warn_lost_event,
-			       काष्ठा annotation_options *annotation_opts)
-अणु
-	काष्ठा hists *hists = evsel__hists(evsel);
-	काष्ठा hist_browser *browser = perf_evsel_browser__new(evsel, hbt, env, annotation_opts);
-	काष्ठा branch_info *bi = शून्य;
-#घोषणा MAX_OPTIONS  16
-	अक्षर *options[MAX_OPTIONS];
-	काष्ठा popup_action actions[MAX_OPTIONS];
-	पूर्णांक nr_options = 0;
-	पूर्णांक key = -1;
-	अक्षर buf[128];
-	पूर्णांक delay_secs = hbt ? hbt->refresh : 0;
+static int evsel__hists_browse(struct evsel *evsel, int nr_events, const char *helpline,
+			       bool left_exits, struct hist_browser_timer *hbt, float min_pcnt,
+			       struct perf_env *env, bool warn_lost_event,
+			       struct annotation_options *annotation_opts)
+{
+	struct hists *hists = evsel__hists(evsel);
+	struct hist_browser *browser = perf_evsel_browser__new(evsel, hbt, env, annotation_opts);
+	struct branch_info *bi = NULL;
+#define MAX_OPTIONS  16
+	char *options[MAX_OPTIONS];
+	struct popup_action actions[MAX_OPTIONS];
+	int nr_options = 0;
+	int key = -1;
+	char buf[128];
+	int delay_secs = hbt ? hbt->refresh : 0;
 
-#घोषणा HIST_BROWSER_HELP_COMMON					\
+#define HIST_BROWSER_HELP_COMMON					\
 	"h/?/F1        Show this window\n"				\
 	"UP/DOWN/PGUP\n"						\
 	"PGDN/SPACE    Navigate\n"					\
@@ -2988,7 +2987,7 @@ next:
 	"S             Zoom into current Processor Socket\n"		\
 
 	/* help messages are sorted by lexical order of the hotkey */
-	अटल स्थिर अक्षर report_help[] = HIST_BROWSER_HELP_COMMON
+	static const char report_help[] = HIST_BROWSER_HELP_COMMON
 	"i             Show header information\n"
 	"P             Print histograms to perf.hist.N\n"
 	"r             Run available scripts\n"
@@ -2997,7 +2996,7 @@ next:
 	"V             Verbose (DSO names in callchains, etc)\n"
 	"/             Filter symbol by name\n"
 	"0-9           Sort by event n in group";
-	अटल स्थिर अक्षर top_help[] = HIST_BROWSER_HELP_COMMON
+	static const char top_help[] = HIST_BROWSER_HELP_COMMON
 	"P             Print histograms to perf.hist.N\n"
 	"t             Zoom into current Thread\n"
 	"V             Verbose (DSO names in callchains, etc)\n"
@@ -3005,359 +3004,359 @@ next:
 	"f             Enable/Disable events\n"
 	"/             Filter symbol by name";
 
-	अगर (browser == शून्य)
-		वापस -1;
+	if (browser == NULL)
+		return -1;
 
-	/* reset पात key so that it can get Ctrl-C as a key */
+	/* reset abort key so that it can get Ctrl-C as a key */
 	SLang_reset_tty();
 	SLang_init_tty(0, 0, 0);
 
-	अगर (min_pcnt)
+	if (min_pcnt)
 		browser->min_pcnt = min_pcnt;
 	hist_browser__update_nr_entries(browser);
 
 	browser->pstack = pstack__new(3);
-	अगर (browser->pstack == शून्य)
-		जाओ out;
+	if (browser->pstack == NULL)
+		goto out;
 
 	ui_helpline__push(helpline);
 
-	स_रखो(options, 0, माप(options));
-	स_रखो(actions, 0, माप(actions));
+	memset(options, 0, sizeof(options));
+	memset(actions, 0, sizeof(actions));
 
-	अगर (symbol_conf.col_width_list_str)
+	if (symbol_conf.col_width_list_str)
 		perf_hpp__set_user_width(symbol_conf.col_width_list_str);
 
-	अगर (!is_report_browser(hbt))
+	if (!is_report_browser(hbt))
 		browser->b.no_samples_msg = "Collecting samples...";
 
-	जबतक (1) अणु
-		काष्ठा thपढ़ो *thपढ़ो = शून्य;
-		काष्ठा map *map = शून्य;
-		पूर्णांक choice;
-		पूर्णांक socked_id = -1;
+	while (1) {
+		struct thread *thread = NULL;
+		struct map *map = NULL;
+		int choice;
+		int socked_id = -1;
 
 		key = 0; // reset key
-करो_hotkey:		 // key came straight from options ui__popup_menu()
+do_hotkey:		 // key came straight from options ui__popup_menu()
 		choice = nr_options = 0;
 		key = hist_browser__run(browser, helpline, warn_lost_event, key);
 
-		अगर (browser->he_selection != शून्य) अणु
-			thपढ़ो = hist_browser__selected_thपढ़ो(browser);
+		if (browser->he_selection != NULL) {
+			thread = hist_browser__selected_thread(browser);
 			map = browser->selection->map;
 			socked_id = browser->he_selection->socket;
-		पूर्ण
-		चयन (key) अणु
-		हाल K_TAB:
-		हाल K_UNTAB:
-			अगर (nr_events == 1)
-				जारी;
+		}
+		switch (key) {
+		case K_TAB:
+		case K_UNTAB:
+			if (nr_events == 1)
+				continue;
 			/*
 			 * Exit the browser, let hists__browser_tree
 			 * go to the next or previous
 			 */
-			जाओ out_मुक्त_stack;
-		हाल '0' ... '9':
-			अगर (!symbol_conf.event_group ||
-			    evsel->core.nr_members < 2) अणु
-				snम_लिखो(buf, माप(buf),
+			goto out_free_stack;
+		case '0' ... '9':
+			if (!symbol_conf.event_group ||
+			    evsel->core.nr_members < 2) {
+				snprintf(buf, sizeof(buf),
 					 "Sort by index only available with group events!");
 				helpline = buf;
-				जारी;
-			पूर्ण
+				continue;
+			}
 
-			अगर (key - '0' == symbol_conf.group_sort_idx)
-				जारी;
+			if (key - '0' == symbol_conf.group_sort_idx)
+				continue;
 
 			symbol_conf.group_sort_idx = key - '0';
 
-			अगर (symbol_conf.group_sort_idx >= evsel->core.nr_members) अणु
-				snम_लिखो(buf, माप(buf),
+			if (symbol_conf.group_sort_idx >= evsel->core.nr_members) {
+				snprintf(buf, sizeof(buf),
 					 "Max event group index to sort is %d (index from 0 to %d)",
 					 evsel->core.nr_members - 1,
 					 evsel->core.nr_members - 1);
 				helpline = buf;
-				जारी;
-			पूर्ण
+				continue;
+			}
 
 			key = K_RELOAD;
-			जाओ out_मुक्त_stack;
-		हाल 'a':
-			अगर (!hists__has(hists, sym)) अणु
+			goto out_free_stack;
+		case 'a':
+			if (!hists__has(hists, sym)) {
 				ui_browser__warning(&browser->b, delay_secs * 2,
 			"Annotation is only available for symbolic views, "
 			"include \"sym*\" in --sort to use it.");
-				जारी;
-			पूर्ण
+				continue;
+			}
 
-			अगर (!browser->selection ||
+			if (!browser->selection ||
 			    !browser->selection->map ||
 			    !browser->selection->map->dso ||
-			    browser->selection->map->dso->annotate_warned) अणु
-				जारी;
-			पूर्ण
+			    browser->selection->map->dso->annotate_warned) {
+				continue;
+			}
 
-			अगर (!browser->selection->sym) अणु
-				अगर (!browser->he_selection)
-					जारी;
+			if (!browser->selection->sym) {
+				if (!browser->he_selection)
+					continue;
 
-				अगर (sort__mode == SORT_MODE__BRANCH) अणु
+				if (sort__mode == SORT_MODE__BRANCH) {
 					bi = browser->he_selection->branch_info;
-					अगर (!bi || !bi->to.ms.map)
-						जारी;
+					if (!bi || !bi->to.ms.map)
+						continue;
 
 					actions->ms.sym = symbol__new_unresolved(bi->to.al_addr, bi->to.ms.map);
 					actions->ms.map = bi->to.ms.map;
-				पूर्ण अन्यथा अणु
+				} else {
 					actions->ms.sym = symbol__new_unresolved(browser->he_selection->ip,
 										 browser->selection->map);
 					actions->ms.map = browser->selection->map;
-				पूर्ण
+				}
 
-				अगर (!actions->ms.sym)
-					जारी;
-			पूर्ण अन्यथा अणु
-				अगर (symbol__annotation(browser->selection->sym)->src == शून्य) अणु
+				if (!actions->ms.sym)
+					continue;
+			} else {
+				if (symbol__annotation(browser->selection->sym)->src == NULL) {
 					ui_browser__warning(&browser->b, delay_secs * 2,
 						"No samples for the \"%s\" symbol.\n\n"
 						"Probably appeared just in a callchain",
 						browser->selection->sym->name);
-					जारी;
-				पूर्ण
+					continue;
+				}
 
 				actions->ms.map = browser->selection->map;
 				actions->ms.sym = browser->selection->sym;
-			पूर्ण
+			}
 
-			करो_annotate(browser, actions);
-			जारी;
-		हाल 'P':
+			do_annotate(browser, actions);
+			continue;
+		case 'P':
 			hist_browser__dump(browser);
-			जारी;
-		हाल 'd':
+			continue;
+		case 'd':
 			actions->ms.map = map;
-			करो_zoom_dso(browser, actions);
-			जारी;
-		हाल 'k':
-			अगर (browser->selection != शून्य)
+			do_zoom_dso(browser, actions);
+			continue;
+		case 'k':
+			if (browser->selection != NULL)
 				hists_browser__zoom_map(browser, browser->selection->maps->machine->vmlinux_map);
-			जारी;
-		हाल 'V':
+			continue;
+		case 'V':
 			verbose = (verbose + 1) % 4;
 			browser->show_dso = verbose > 0;
 			ui_helpline__fpush("Verbosity level set to %d\n",
 					   verbose);
-			जारी;
-		हाल 't':
-			actions->thपढ़ो = thपढ़ो;
-			करो_zoom_thपढ़ो(browser, actions);
-			जारी;
-		हाल 'S':
+			continue;
+		case 't':
+			actions->thread = thread;
+			do_zoom_thread(browser, actions);
+			continue;
+		case 'S':
 			actions->socket = socked_id;
-			करो_zoom_socket(browser, actions);
-			जारी;
-		हाल '/':
-			अगर (ui_browser__input_winकरोw("Symbol to show",
+			do_zoom_socket(browser, actions);
+			continue;
+		case '/':
+			if (ui_browser__input_window("Symbol to show",
 					"Please enter the name of symbol you want to see.\n"
 					"To remove the filter later, press / + ENTER.",
 					buf, "ENTER: OK, ESC: Cancel",
-					delay_secs * 2) == K_ENTER) अणु
-				hists->symbol_filter_str = *buf ? buf : शून्य;
+					delay_secs * 2) == K_ENTER) {
+				hists->symbol_filter_str = *buf ? buf : NULL;
 				hists__filter_by_symbol(hists);
 				hist_browser__reset(browser);
-			पूर्ण
-			जारी;
-		हाल 'r':
-			अगर (is_report_browser(hbt)) अणु
-				actions->thपढ़ो = शून्य;
-				actions->ms.sym = शून्य;
-				करो_run_script(browser, actions);
-			पूर्ण
-			जारी;
-		हाल 's':
-			अगर (is_report_browser(hbt)) अणु
-				key = करो_चयन_data(browser, actions);
-				अगर (key == K_SWITCH_INPUT_DATA)
-					जाओ out_मुक्त_stack;
-			पूर्ण
-			जारी;
-		हाल 'i':
-			/* env->arch is शून्य क्रम live-mode (i.e. perf top) */
-			अगर (env->arch)
-				tui__header_winकरोw(env);
-			जारी;
-		हाल 'F':
+			}
+			continue;
+		case 'r':
+			if (is_report_browser(hbt)) {
+				actions->thread = NULL;
+				actions->ms.sym = NULL;
+				do_run_script(browser, actions);
+			}
+			continue;
+		case 's':
+			if (is_report_browser(hbt)) {
+				key = do_switch_data(browser, actions);
+				if (key == K_SWITCH_INPUT_DATA)
+					goto out_free_stack;
+			}
+			continue;
+		case 'i':
+			/* env->arch is NULL for live-mode (i.e. perf top) */
+			if (env->arch)
+				tui__header_window(env);
+			continue;
+		case 'F':
 			symbol_conf.filter_relative ^= 1;
-			जारी;
-		हाल 'z':
-			अगर (!is_report_browser(hbt)) अणु
-				काष्ठा perf_top *top = hbt->arg;
+			continue;
+		case 'z':
+			if (!is_report_browser(hbt)) {
+				struct perf_top *top = hbt->arg;
 
 				top->zero = !top->zero;
-			पूर्ण
-			जारी;
-		हाल 'L':
-			अगर (ui_browser__input_winकरोw("Percent Limit",
+			}
+			continue;
+		case 'L':
+			if (ui_browser__input_window("Percent Limit",
 					"Please enter the value you want to hide entries under that percent.",
 					buf, "ENTER: OK, ESC: Cancel",
-					delay_secs * 2) == K_ENTER) अणु
-				अक्षर *end;
-				द्विगुन new_percent = म_से_भग्न(buf, &end);
+					delay_secs * 2) == K_ENTER) {
+				char *end;
+				double new_percent = strtod(buf, &end);
 
-				अगर (new_percent < 0 || new_percent > 100) अणु
+				if (new_percent < 0 || new_percent > 100) {
 					ui_browser__warning(&browser->b, delay_secs * 2,
 						"Invalid percent: %.2f", new_percent);
-					जारी;
-				पूर्ण
+					continue;
+				}
 
 				hist_browser__update_percent_limit(browser, new_percent);
 				hist_browser__reset(browser);
-			पूर्ण
-			जारी;
-		हाल K_F1:
-		हाल 'h':
-		हाल '?':
-			ui_browser__help_winकरोw(&browser->b,
+			}
+			continue;
+		case K_F1:
+		case 'h':
+		case '?':
+			ui_browser__help_window(&browser->b,
 				is_report_browser(hbt) ? report_help : top_help);
-			जारी;
-		हाल K_ENTER:
-		हाल K_RIGHT:
-		हाल 'm':
+			continue;
+		case K_ENTER:
+		case K_RIGHT:
+		case 'm':
 			/* menu */
-			अवरोध;
-		हाल K_ESC:
-		हाल K_LEFT: अणु
-			स्थिर व्योम *top;
+			break;
+		case K_ESC:
+		case K_LEFT: {
+			const void *top;
 
-			अगर (pstack__empty(browser->pstack)) अणु
+			if (pstack__empty(browser->pstack)) {
 				/*
 				 * Go back to the perf_evsel_menu__run or other user
 				 */
-				अगर (left_निकासs)
-					जाओ out_मुक्त_stack;
+				if (left_exits)
+					goto out_free_stack;
 
-				अगर (key == K_ESC &&
+				if (key == K_ESC &&
 				    ui_browser__dialog_yesno(&browser->b,
 							     "Do you really want to exit?"))
-					जाओ out_मुक्त_stack;
+					goto out_free_stack;
 
-				जारी;
-			पूर्ण
+				continue;
+			}
 			actions->ms.map = map;
 			top = pstack__peek(browser->pstack);
-			अगर (top == &browser->hists->dso_filter) अणु
+			if (top == &browser->hists->dso_filter) {
 				/*
 				 * No need to set actions->dso here since
-				 * it's just to हटाओ the current filter.
-				 * Ditto क्रम thपढ़ो below.
+				 * it's just to remove the current filter.
+				 * Ditto for thread below.
 				 */
-				करो_zoom_dso(browser, actions);
-			पूर्ण अन्यथा अगर (top == &browser->hists->thपढ़ो_filter) अणु
-				करो_zoom_thपढ़ो(browser, actions);
-			पूर्ण अन्यथा अगर (top == &browser->hists->socket_filter) अणु
-				करो_zoom_socket(browser, actions);
-			पूर्ण
-			जारी;
-		पूर्ण
-		हाल 'q':
-		हाल CTRL('c'):
-			जाओ out_मुक्त_stack;
-		हाल 'f':
-			अगर (!is_report_browser(hbt)) अणु
-				काष्ठा perf_top *top = hbt->arg;
+				do_zoom_dso(browser, actions);
+			} else if (top == &browser->hists->thread_filter) {
+				do_zoom_thread(browser, actions);
+			} else if (top == &browser->hists->socket_filter) {
+				do_zoom_socket(browser, actions);
+			}
+			continue;
+		}
+		case 'q':
+		case CTRL('c'):
+			goto out_free_stack;
+		case 'f':
+			if (!is_report_browser(hbt)) {
+				struct perf_top *top = hbt->arg;
 
 				evlist__toggle_enable(top->evlist);
 				/*
 				 * No need to refresh, resort/decay histogram
-				 * entries अगर we are not collecting samples:
+				 * entries if we are not collecting samples:
 				 */
-				अगर (top->evlist->enabled) अणु
+				if (top->evlist->enabled) {
 					helpline = "Press 'f' to disable the events or 'h' to see other hotkeys";
 					hbt->refresh = delay_secs;
-				पूर्ण अन्यथा अणु
+				} else {
 					helpline = "Press 'f' again to re-enable the events";
 					hbt->refresh = 0;
-				पूर्ण
-				जारी;
-			पूर्ण
+				}
+				continue;
+			}
 			/* Fall thru */
-		शेष:
+		default:
 			helpline = "Press '?' for help on key bindings";
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		अगर (!hists__has(hists, sym) || browser->selection == शून्य)
-			जाओ skip_annotation;
+		if (!hists__has(hists, sym) || browser->selection == NULL)
+			goto skip_annotation;
 
-		अगर (sort__mode == SORT_MODE__BRANCH) अणु
+		if (sort__mode == SORT_MODE__BRANCH) {
 
-			अगर (browser->he_selection)
+			if (browser->he_selection)
 				bi = browser->he_selection->branch_info;
 
-			अगर (bi == शून्य)
-				जाओ skip_annotation;
+			if (bi == NULL)
+				goto skip_annotation;
 
 			nr_options += add_annotate_opt(browser,
 						       &actions[nr_options],
 						       &options[nr_options],
 						       &bi->from.ms,
 						       bi->from.al_addr);
-			अगर (bi->to.ms.sym != bi->from.ms.sym)
+			if (bi->to.ms.sym != bi->from.ms.sym)
 				nr_options += add_annotate_opt(browser,
 							&actions[nr_options],
 							&options[nr_options],
 							&bi->to.ms,
 							bi->to.al_addr);
-		पूर्ण अन्यथा अणु
+		} else {
 			nr_options += add_annotate_opt(browser,
 						       &actions[nr_options],
 						       &options[nr_options],
 						       browser->selection,
 						       browser->he_selection->ip);
-		पूर्ण
+		}
 skip_annotation:
-		nr_options += add_thपढ़ो_opt(browser, &actions[nr_options],
-					     &options[nr_options], thपढ़ो);
+		nr_options += add_thread_opt(browser, &actions[nr_options],
+					     &options[nr_options], thread);
 		nr_options += add_dso_opt(browser, &actions[nr_options],
 					  &options[nr_options], map);
 		nr_options += add_callchain_toggle_opt(browser, &actions[nr_options], &options[nr_options]);
 		nr_options += add_map_opt(browser, &actions[nr_options],
 					  &options[nr_options],
 					  browser->selection ?
-						browser->selection->map : शून्य);
+						browser->selection->map : NULL);
 		nr_options += add_socket_opt(browser, &actions[nr_options],
 					     &options[nr_options],
 					     socked_id);
 		/* perf script support */
-		अगर (!is_report_browser(hbt))
-			जाओ skip_scripting;
+		if (!is_report_browser(hbt))
+			goto skip_scripting;
 
-		अगर (browser->he_selection) अणु
-			अगर (hists__has(hists, thपढ़ो) && thपढ़ो) अणु
+		if (browser->he_selection) {
+			if (hists__has(hists, thread) && thread) {
 				nr_options += add_script_opt(browser,
 							     &actions[nr_options],
 							     &options[nr_options],
-							     thपढ़ो, शून्य, evsel);
-			पूर्ण
+							     thread, NULL, evsel);
+			}
 			/*
-			 * Note that browser->selection != शून्य
-			 * when browser->he_selection is not शून्य,
-			 * so we करोn't need to check browser->selection
-			 * beक्रमe fetching browser->selection->sym like what
-			 * we करो beक्रमe fetching browser->selection->map.
+			 * Note that browser->selection != NULL
+			 * when browser->he_selection is not NULL,
+			 * so we don't need to check browser->selection
+			 * before fetching browser->selection->sym like what
+			 * we do before fetching browser->selection->map.
 			 *
 			 * See hist_browser__show_entry.
 			 */
-			अगर (hists__has(hists, sym) && browser->selection->sym) अणु
+			if (hists__has(hists, sym) && browser->selection->sym) {
 				nr_options += add_script_opt(browser,
 							     &actions[nr_options],
 							     &options[nr_options],
-							     शून्य, browser->selection->sym,
+							     NULL, browser->selection->sym,
 							     evsel);
-			पूर्ण
-		पूर्ण
+			}
+		}
 		nr_options += add_script_opt(browser, &actions[nr_options],
-					     &options[nr_options], शून्य, शून्य, evsel);
+					     &options[nr_options], NULL, NULL, evsel);
 		nr_options += add_res_sample_opt(browser, &actions[nr_options],
 						 &options[nr_options],
 						 hist_browser__selected_res_sample(browser),
@@ -3370,309 +3369,309 @@ skip_annotation:
 						 &options[nr_options],
 						 hist_browser__selected_res_sample(browser),
 						 evsel, A_SOURCE);
-		nr_options += add_चयन_opt(browser, &actions[nr_options],
+		nr_options += add_switch_opt(browser, &actions[nr_options],
 					     &options[nr_options]);
 skip_scripting:
-		nr_options += add_निकास_opt(browser, &actions[nr_options],
+		nr_options += add_exit_opt(browser, &actions[nr_options],
 					   &options[nr_options]);
 
-		करो अणु
-			काष्ठा popup_action *act;
+		do {
+			struct popup_action *act;
 
 			choice = ui__popup_menu(nr_options, options, &key);
-			अगर (choice == -1)
-				अवरोध;
+			if (choice == -1)
+				break;
 
-			अगर (choice == nr_options)
-				जाओ करो_hotkey;
+			if (choice == nr_options)
+				goto do_hotkey;
 
 			act = &actions[choice];
 			key = act->fn(browser, act);
-		पूर्ण जबतक (key == 1);
+		} while (key == 1);
 
-		अगर (key == K_SWITCH_INPUT_DATA)
-			अवरोध;
-	पूर्ण
-out_मुक्त_stack:
+		if (key == K_SWITCH_INPUT_DATA)
+			break;
+	}
+out_free_stack:
 	pstack__delete(browser->pstack);
 out:
 	hist_browser__delete(browser);
-	मुक्त_popup_options(options, MAX_OPTIONS);
-	वापस key;
-पूर्ण
+	free_popup_options(options, MAX_OPTIONS);
+	return key;
+}
 
-काष्ठा evsel_menu अणु
-	काष्ठा ui_browser b;
-	काष्ठा evsel *selection;
-	काष्ठा annotation_options *annotation_opts;
+struct evsel_menu {
+	struct ui_browser b;
+	struct evsel *selection;
+	struct annotation_options *annotation_opts;
 	bool lost_events, lost_events_warned;
-	भग्न min_pcnt;
-	काष्ठा perf_env *env;
-पूर्ण;
+	float min_pcnt;
+	struct perf_env *env;
+};
 
-अटल व्योम perf_evsel_menu__ग_लिखो(काष्ठा ui_browser *browser,
-				   व्योम *entry, पूर्णांक row)
-अणु
-	काष्ठा evsel_menu *menu = container_of(browser,
-						    काष्ठा evsel_menu, b);
-	काष्ठा evsel *evsel = list_entry(entry, काष्ठा evsel, core.node);
-	काष्ठा hists *hists = evsel__hists(evsel);
+static void perf_evsel_menu__write(struct ui_browser *browser,
+				   void *entry, int row)
+{
+	struct evsel_menu *menu = container_of(browser,
+						    struct evsel_menu, b);
+	struct evsel *evsel = list_entry(entry, struct evsel, core.node);
+	struct hists *hists = evsel__hists(evsel);
 	bool current_entry = ui_browser__is_current_entry(browser, row);
-	अचिन्हित दीर्घ nr_events = hists->stats.nr_samples;
-	स्थिर अक्षर *ev_name = evsel__name(evsel);
-	अक्षर bf[256], unit;
-	स्थिर अक्षर *warn = " ";
-	माप_प्रकार prपूर्णांकed;
+	unsigned long nr_events = hists->stats.nr_samples;
+	const char *ev_name = evsel__name(evsel);
+	char bf[256], unit;
+	const char *warn = " ";
+	size_t printed;
 
 	ui_browser__set_color(browser, current_entry ? HE_COLORSET_SELECTED :
 						       HE_COLORSET_NORMAL);
 
-	अगर (evsel__is_group_event(evsel)) अणु
-		काष्ठा evsel *pos;
+	if (evsel__is_group_event(evsel)) {
+		struct evsel *pos;
 
 		ev_name = evsel__group_name(evsel);
 
-		क्रम_each_group_member(pos, evsel) अणु
-			काष्ठा hists *pos_hists = evsel__hists(pos);
+		for_each_group_member(pos, evsel) {
+			struct hists *pos_hists = evsel__hists(pos);
 			nr_events += pos_hists->stats.nr_samples;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	nr_events = convert_unit(nr_events, &unit);
-	prपूर्णांकed = scnम_लिखो(bf, माप(bf), "%lu%c%s%s", nr_events,
+	printed = scnprintf(bf, sizeof(bf), "%lu%c%s%s", nr_events,
 			   unit, unit == ' ' ? "" : " ", ev_name);
-	ui_browser__म_लिखो(browser, "%s", bf);
+	ui_browser__printf(browser, "%s", bf);
 
 	nr_events = evsel->evlist->stats.nr_events[PERF_RECORD_LOST];
-	अगर (nr_events != 0) अणु
+	if (nr_events != 0) {
 		menu->lost_events = true;
-		अगर (!current_entry)
+		if (!current_entry)
 			ui_browser__set_color(browser, HE_COLORSET_TOP);
 		nr_events = convert_unit(nr_events, &unit);
-		prपूर्णांकed += scnम_लिखो(bf, माप(bf), ": %ld%c%schunks LOST!",
+		printed += scnprintf(bf, sizeof(bf), ": %ld%c%schunks LOST!",
 				     nr_events, unit, unit == ' ' ? "" : " ");
 		warn = bf;
-	पूर्ण
+	}
 
-	ui_browser__ग_लिखो_nstring(browser, warn, browser->width - prपूर्णांकed);
+	ui_browser__write_nstring(browser, warn, browser->width - printed);
 
-	अगर (current_entry)
+	if (current_entry)
 		menu->selection = evsel;
-पूर्ण
+}
 
-अटल पूर्णांक perf_evsel_menu__run(काष्ठा evsel_menu *menu,
-				पूर्णांक nr_events, स्थिर अक्षर *help,
-				काष्ठा hist_browser_समयr *hbt,
+static int perf_evsel_menu__run(struct evsel_menu *menu,
+				int nr_events, const char *help,
+				struct hist_browser_timer *hbt,
 				bool warn_lost_event)
-अणु
-	काष्ठा evlist *evlist = menu->b.priv;
-	काष्ठा evsel *pos;
-	स्थिर अक्षर *title = "Available samples";
-	पूर्णांक delay_secs = hbt ? hbt->refresh : 0;
-	पूर्णांक key;
+{
+	struct evlist *evlist = menu->b.priv;
+	struct evsel *pos;
+	const char *title = "Available samples";
+	int delay_secs = hbt ? hbt->refresh : 0;
+	int key;
 
-	अगर (ui_browser__show(&menu->b, title,
+	if (ui_browser__show(&menu->b, title,
 			     "ESC: exit, ENTER|->: Browse histograms") < 0)
-		वापस -1;
+		return -1;
 
-	जबतक (1) अणु
+	while (1) {
 		key = ui_browser__run(&menu->b, delay_secs);
 
-		चयन (key) अणु
-		हाल K_TIMER:
-			अगर (hbt)
-				hbt->समयr(hbt->arg);
+		switch (key) {
+		case K_TIMER:
+			if (hbt)
+				hbt->timer(hbt->arg);
 
-			अगर (!menu->lost_events_warned &&
+			if (!menu->lost_events_warned &&
 			    menu->lost_events &&
-			    warn_lost_event) अणु
+			    warn_lost_event) {
 				ui_browser__warn_lost_events(&menu->b);
 				menu->lost_events_warned = true;
-			पूर्ण
-			जारी;
-		हाल K_RIGHT:
-		हाल K_ENTER:
-			अगर (!menu->selection)
-				जारी;
+			}
+			continue;
+		case K_RIGHT:
+		case K_ENTER:
+			if (!menu->selection)
+				continue;
 			pos = menu->selection;
 browse_hists:
 			evlist__set_selected(evlist, pos);
 			/*
 			 * Give the calling tool a chance to populate the non
-			 * शेष evsel resorted hists tree.
+			 * default evsel resorted hists tree.
 			 */
-			अगर (hbt)
-				hbt->समयr(hbt->arg);
+			if (hbt)
+				hbt->timer(hbt->arg);
 			key = evsel__hists_browse(pos, nr_events, help, true, hbt,
 						  menu->min_pcnt, menu->env,
 						  warn_lost_event,
 						  menu->annotation_opts);
 			ui_browser__show_title(&menu->b, title);
-			चयन (key) अणु
-			हाल K_TAB:
-				अगर (pos->core.node.next == &evlist->core.entries)
+			switch (key) {
+			case K_TAB:
+				if (pos->core.node.next == &evlist->core.entries)
 					pos = evlist__first(evlist);
-				अन्यथा
+				else
 					pos = evsel__next(pos);
-				जाओ browse_hists;
-			हाल K_UNTAB:
-				अगर (pos->core.node.prev == &evlist->core.entries)
+				goto browse_hists;
+			case K_UNTAB:
+				if (pos->core.node.prev == &evlist->core.entries)
 					pos = evlist__last(evlist);
-				अन्यथा
+				else
 					pos = evsel__prev(pos);
-				जाओ browse_hists;
-			हाल K_SWITCH_INPUT_DATA:
-			हाल K_RELOAD:
-			हाल 'q':
-			हाल CTRL('c'):
-				जाओ out;
-			हाल K_ESC:
-			शेष:
-				जारी;
-			पूर्ण
-		हाल K_LEFT:
-			जारी;
-		हाल K_ESC:
-			अगर (!ui_browser__dialog_yesno(&menu->b,
+				goto browse_hists;
+			case K_SWITCH_INPUT_DATA:
+			case K_RELOAD:
+			case 'q':
+			case CTRL('c'):
+				goto out;
+			case K_ESC:
+			default:
+				continue;
+			}
+		case K_LEFT:
+			continue;
+		case K_ESC:
+			if (!ui_browser__dialog_yesno(&menu->b,
 					       "Do you really want to exit?"))
-				जारी;
+				continue;
 			/* Fall thru */
-		हाल 'q':
-		हाल CTRL('c'):
-			जाओ out;
-		शेष:
-			जारी;
-		पूर्ण
-	पूर्ण
+		case 'q':
+		case CTRL('c'):
+			goto out;
+		default:
+			continue;
+		}
+	}
 
 out:
 	ui_browser__hide(&menu->b);
-	वापस key;
-पूर्ण
+	return key;
+}
 
-अटल bool filter_group_entries(काष्ठा ui_browser *browser __maybe_unused,
-				 व्योम *entry)
-अणु
-	काष्ठा evsel *evsel = list_entry(entry, काष्ठा evsel, core.node);
+static bool filter_group_entries(struct ui_browser *browser __maybe_unused,
+				 void *entry)
+{
+	struct evsel *evsel = list_entry(entry, struct evsel, core.node);
 
-	अगर (symbol_conf.event_group && !evsel__is_group_leader(evsel))
-		वापस true;
+	if (symbol_conf.event_group && !evsel__is_group_leader(evsel))
+		return true;
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल पूर्णांक __evlist__tui_browse_hists(काष्ठा evlist *evlist, पूर्णांक nr_entries, स्थिर अक्षर *help,
-				      काष्ठा hist_browser_समयr *hbt, भग्न min_pcnt, काष्ठा perf_env *env,
-				      bool warn_lost_event, काष्ठा annotation_options *annotation_opts)
-अणु
-	काष्ठा evsel *pos;
-	काष्ठा evsel_menu menu = अणु
-		.b = अणु
+static int __evlist__tui_browse_hists(struct evlist *evlist, int nr_entries, const char *help,
+				      struct hist_browser_timer *hbt, float min_pcnt, struct perf_env *env,
+				      bool warn_lost_event, struct annotation_options *annotation_opts)
+{
+	struct evsel *pos;
+	struct evsel_menu menu = {
+		.b = {
 			.entries    = &evlist->core.entries,
 			.refresh    = ui_browser__list_head_refresh,
 			.seek	    = ui_browser__list_head_seek,
-			.ग_लिखो	    = perf_evsel_menu__ग_लिखो,
+			.write	    = perf_evsel_menu__write,
 			.filter	    = filter_group_entries,
 			.nr_entries = nr_entries,
 			.priv	    = evlist,
-		पूर्ण,
+		},
 		.min_pcnt = min_pcnt,
 		.env = env,
 		.annotation_opts = annotation_opts,
-	पूर्ण;
+	};
 
 	ui_helpline__push("Press ESC to exit");
 
-	evlist__क्रम_each_entry(evlist, pos) अणु
-		स्थिर अक्षर *ev_name = evsel__name(pos);
-		माप_प्रकार line_len = म_माप(ev_name) + 7;
+	evlist__for_each_entry(evlist, pos) {
+		const char *ev_name = evsel__name(pos);
+		size_t line_len = strlen(ev_name) + 7;
 
-		अगर (menu.b.width < line_len)
+		if (menu.b.width < line_len)
 			menu.b.width = line_len;
-	पूर्ण
+	}
 
-	वापस perf_evsel_menu__run(&menu, nr_entries, help,
+	return perf_evsel_menu__run(&menu, nr_entries, help,
 				    hbt, warn_lost_event);
-पूर्ण
+}
 
-अटल bool evlist__single_entry(काष्ठा evlist *evlist)
-अणु
-	पूर्णांक nr_entries = evlist->core.nr_entries;
+static bool evlist__single_entry(struct evlist *evlist)
+{
+	int nr_entries = evlist->core.nr_entries;
 
-	अगर (nr_entries == 1)
-	       वापस true;
+	if (nr_entries == 1)
+	       return true;
 
-	अगर (nr_entries == 2) अणु
-		काष्ठा evsel *last = evlist__last(evlist);
+	if (nr_entries == 2) {
+		struct evsel *last = evlist__last(evlist);
 
-		अगर (evsel__is_dummy_event(last))
-			वापस true;
-	पूर्ण
+		if (evsel__is_dummy_event(last))
+			return true;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-पूर्णांक evlist__tui_browse_hists(काष्ठा evlist *evlist, स्थिर अक्षर *help, काष्ठा hist_browser_समयr *hbt,
-			     भग्न min_pcnt, काष्ठा perf_env *env, bool warn_lost_event,
-			     काष्ठा annotation_options *annotation_opts)
-अणु
-	पूर्णांक nr_entries = evlist->core.nr_entries;
+int evlist__tui_browse_hists(struct evlist *evlist, const char *help, struct hist_browser_timer *hbt,
+			     float min_pcnt, struct perf_env *env, bool warn_lost_event,
+			     struct annotation_options *annotation_opts)
+{
+	int nr_entries = evlist->core.nr_entries;
 
-	अगर (evlist__single_entry(evlist)) अणु
-single_entry: अणु
-		काष्ठा evsel *first = evlist__first(evlist);
+	if (evlist__single_entry(evlist)) {
+single_entry: {
+		struct evsel *first = evlist__first(evlist);
 
-		वापस evsel__hists_browse(first, nr_entries, help, false, hbt, min_pcnt,
+		return evsel__hists_browse(first, nr_entries, help, false, hbt, min_pcnt,
 					   env, warn_lost_event, annotation_opts);
-	पूर्ण
-	पूर्ण
+	}
+	}
 
-	अगर (symbol_conf.event_group) अणु
-		काष्ठा evsel *pos;
+	if (symbol_conf.event_group) {
+		struct evsel *pos;
 
 		nr_entries = 0;
-		evlist__क्रम_each_entry(evlist, pos) अणु
-			अगर (evsel__is_group_leader(pos))
+		evlist__for_each_entry(evlist, pos) {
+			if (evsel__is_group_leader(pos))
 				nr_entries++;
-		पूर्ण
+		}
 
-		अगर (nr_entries == 1)
-			जाओ single_entry;
-	पूर्ण
+		if (nr_entries == 1)
+			goto single_entry;
+	}
 
-	वापस __evlist__tui_browse_hists(evlist, nr_entries, help, hbt, min_pcnt, env,
+	return __evlist__tui_browse_hists(evlist, nr_entries, help, hbt, min_pcnt, env,
 					  warn_lost_event, annotation_opts);
-पूर्ण
+}
 
-अटल पूर्णांक block_hists_browser__title(काष्ठा hist_browser *browser, अक्षर *bf,
-				      माप_प्रकार size)
-अणु
-	काष्ठा hists *hists = evsel__hists(browser->block_evsel);
-	स्थिर अक्षर *evname = evsel__name(browser->block_evsel);
-	अचिन्हित दीर्घ nr_samples = hists->stats.nr_samples;
-	पूर्णांक ret;
+static int block_hists_browser__title(struct hist_browser *browser, char *bf,
+				      size_t size)
+{
+	struct hists *hists = evsel__hists(browser->block_evsel);
+	const char *evname = evsel__name(browser->block_evsel);
+	unsigned long nr_samples = hists->stats.nr_samples;
+	int ret;
 
-	ret = scnम_लिखो(bf, size, "# Samples: %lu", nr_samples);
-	अगर (evname)
-		scnम_लिखो(bf + ret, size -  ret, " of event '%s'", evname);
+	ret = scnprintf(bf, size, "# Samples: %lu", nr_samples);
+	if (evname)
+		scnprintf(bf + ret, size -  ret, " of event '%s'", evname);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक block_hists_tui_browse(काष्ठा block_hist *bh, काष्ठा evsel *evsel,
-			   भग्न min_percent, काष्ठा perf_env *env,
-			   काष्ठा annotation_options *annotation_opts)
-अणु
-	काष्ठा hists *hists = &bh->block_hists;
-	काष्ठा hist_browser *browser;
-	पूर्णांक key = -1;
-	काष्ठा popup_action action;
-	अटल स्थिर अक्षर help[] =
+int block_hists_tui_browse(struct block_hist *bh, struct evsel *evsel,
+			   float min_percent, struct perf_env *env,
+			   struct annotation_options *annotation_opts)
+{
+	struct hists *hists = &bh->block_hists;
+	struct hist_browser *browser;
+	int key = -1;
+	struct popup_action action;
+	static const char help[] =
 	" q             Quit \n";
 
 	browser = hist_browser__new(hists);
-	अगर (!browser)
-		वापस -1;
+	if (!browser)
+		return -1;
 
 	browser->block_evsel = evsel;
 	browser->title = block_hists_browser__title;
@@ -3680,38 +3679,38 @@ single_entry: अणु
 	browser->env = env;
 	browser->annotation_opts = annotation_opts;
 
-	/* reset पात key so that it can get Ctrl-C as a key */
+	/* reset abort key so that it can get Ctrl-C as a key */
 	SLang_reset_tty();
 	SLang_init_tty(0, 0, 0);
 
-	स_रखो(&action, 0, माप(action));
+	memset(&action, 0, sizeof(action));
 
-	जबतक (1) अणु
+	while (1) {
 		key = hist_browser__run(browser, "? - help", true, 0);
 
-		चयन (key) अणु
-		हाल 'q':
-			जाओ out;
-		हाल '?':
-			ui_browser__help_winकरोw(&browser->b, help);
-			अवरोध;
-		हाल 'a':
-		हाल K_ENTER:
-			अगर (!browser->selection ||
-			    !browser->selection->sym) अणु
-				जारी;
-			पूर्ण
+		switch (key) {
+		case 'q':
+			goto out;
+		case '?':
+			ui_browser__help_window(&browser->b, help);
+			break;
+		case 'a':
+		case K_ENTER:
+			if (!browser->selection ||
+			    !browser->selection->sym) {
+				continue;
+			}
 
 			action.ms.map = browser->selection->map;
 			action.ms.sym = browser->selection->sym;
-			करो_annotate(browser, &action);
-			जारी;
-		शेष:
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			do_annotate(browser, &action);
+			continue;
+		default:
+			break;
+		}
+	}
 
 out:
 	hist_browser__delete(browser);
-	वापस 0;
-पूर्ण
+	return 0;
+}

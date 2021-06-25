@@ -1,354 +1,353 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /* SCTP kernel implementation
  * (C) Copyright IBM Corp. 2003, 2004
  *
  * This file is part of the SCTP kernel implementation
  *
- * This file contains the code relating the chunk असलtraction.
+ * This file contains the code relating the chunk abstraction.
  *
  * Please send any bug reports or fixes you make to the
  * email address(es):
  *    lksctp developers <linux-sctp@vger.kernel.org>
  *
- * Written or modअगरied by:
+ * Written or modified by:
  *    Jon Grimm             <jgrimm@us.ibm.com>
  *    Sridhar Samudrala     <sri@us.ibm.com>
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/types.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/net.h>
-#समावेश <linux/inet.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/slab.h>
-#समावेश <net/sock.h>
-#समावेश <net/sctp/sctp.h>
-#समावेश <net/sctp/sm.h>
+#include <linux/types.h>
+#include <linux/kernel.h>
+#include <linux/net.h>
+#include <linux/inet.h>
+#include <linux/skbuff.h>
+#include <linux/slab.h>
+#include <net/sock.h>
+#include <net/sctp/sctp.h>
+#include <net/sctp/sm.h>
 
 /* This file is mostly in anticipation of future work, but initially
- * populate with fragment tracking क्रम an outbound message.
+ * populate with fragment tracking for an outbound message.
  */
 
 /* Initialize datamsg from memory. */
-अटल व्योम sctp_datamsg_init(काष्ठा sctp_datamsg *msg)
-अणु
+static void sctp_datamsg_init(struct sctp_datamsg *msg)
+{
 	refcount_set(&msg->refcnt, 1);
 	msg->send_failed = 0;
 	msg->send_error = 0;
 	msg->can_delay = 1;
-	msg->abanकरोned = 0;
+	msg->abandoned = 0;
 	msg->expires_at = 0;
 	INIT_LIST_HEAD(&msg->chunks);
-पूर्ण
+}
 
 /* Allocate and initialize datamsg. */
-अटल काष्ठा sctp_datamsg *sctp_datamsg_new(gfp_t gfp)
-अणु
-	काष्ठा sctp_datamsg *msg;
-	msg = kदो_स्मृति(माप(काष्ठा sctp_datamsg), gfp);
-	अगर (msg) अणु
+static struct sctp_datamsg *sctp_datamsg_new(gfp_t gfp)
+{
+	struct sctp_datamsg *msg;
+	msg = kmalloc(sizeof(struct sctp_datamsg), gfp);
+	if (msg) {
 		sctp_datamsg_init(msg);
 		SCTP_DBG_OBJCNT_INC(datamsg);
-	पूर्ण
-	वापस msg;
-पूर्ण
+	}
+	return msg;
+}
 
-व्योम sctp_datamsg_मुक्त(काष्ठा sctp_datamsg *msg)
-अणु
-	काष्ठा sctp_chunk *chunk;
+void sctp_datamsg_free(struct sctp_datamsg *msg)
+{
+	struct sctp_chunk *chunk;
 
-	/* This करोesn't have to be a _safe vairant because
-	 * sctp_chunk_मुक्त() only drops the refs.
+	/* This doesn't have to be a _safe vairant because
+	 * sctp_chunk_free() only drops the refs.
 	 */
-	list_क्रम_each_entry(chunk, &msg->chunks, frag_list)
-		sctp_chunk_मुक्त(chunk);
+	list_for_each_entry(chunk, &msg->chunks, frag_list)
+		sctp_chunk_free(chunk);
 
 	sctp_datamsg_put(msg);
-पूर्ण
+}
 
-/* Final deकाष्ठाruction of datamsg memory. */
-अटल व्योम sctp_datamsg_destroy(काष्ठा sctp_datamsg *msg)
-अणु
-	काष्ठा sctp_association *asoc = शून्य;
-	काष्ठा list_head *pos, *temp;
-	काष्ठा sctp_chunk *chunk;
-	काष्ठा sctp_ulpevent *ev;
-	पूर्णांक error, sent;
+/* Final destructruction of datamsg memory. */
+static void sctp_datamsg_destroy(struct sctp_datamsg *msg)
+{
+	struct sctp_association *asoc = NULL;
+	struct list_head *pos, *temp;
+	struct sctp_chunk *chunk;
+	struct sctp_ulpevent *ev;
+	int error, sent;
 
 	/* Release all references. */
-	list_क्रम_each_safe(pos, temp, &msg->chunks) अणु
+	list_for_each_safe(pos, temp, &msg->chunks) {
 		list_del_init(pos);
-		chunk = list_entry(pos, काष्ठा sctp_chunk, frag_list);
+		chunk = list_entry(pos, struct sctp_chunk, frag_list);
 
-		अगर (!msg->send_failed) अणु
+		if (!msg->send_failed) {
 			sctp_chunk_put(chunk);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		asoc = chunk->asoc;
 		error = msg->send_error ?: asoc->outqueue.error;
 		sent = chunk->has_tsn ? SCTP_DATA_SENT : SCTP_DATA_UNSENT;
 
-		अगर (sctp_ulpevent_type_enabled(asoc->subscribe,
-					       SCTP_SEND_FAILED)) अणु
+		if (sctp_ulpevent_type_enabled(asoc->subscribe,
+					       SCTP_SEND_FAILED)) {
 			ev = sctp_ulpevent_make_send_failed(asoc, chunk, sent,
 							    error, GFP_ATOMIC);
-			अगर (ev)
+			if (ev)
 				asoc->stream.si->enqueue_event(&asoc->ulpq, ev);
-		पूर्ण
+		}
 
-		अगर (sctp_ulpevent_type_enabled(asoc->subscribe,
-					       SCTP_SEND_FAILED_EVENT)) अणु
+		if (sctp_ulpevent_type_enabled(asoc->subscribe,
+					       SCTP_SEND_FAILED_EVENT)) {
 			ev = sctp_ulpevent_make_send_failed_event(asoc, chunk,
 								  sent, error,
 								  GFP_ATOMIC);
-			अगर (ev)
+			if (ev)
 				asoc->stream.si->enqueue_event(&asoc->ulpq, ev);
-		पूर्ण
+		}
 
 		sctp_chunk_put(chunk);
-	पूर्ण
+	}
 
 	SCTP_DBG_OBJCNT_DEC(datamsg);
-	kमुक्त(msg);
-पूर्ण
+	kfree(msg);
+}
 
 /* Hold a reference. */
-अटल व्योम sctp_datamsg_hold(काष्ठा sctp_datamsg *msg)
-अणु
+static void sctp_datamsg_hold(struct sctp_datamsg *msg)
+{
 	refcount_inc(&msg->refcnt);
-पूर्ण
+}
 
 /* Release a reference. */
-व्योम sctp_datamsg_put(काष्ठा sctp_datamsg *msg)
-अणु
-	अगर (refcount_dec_and_test(&msg->refcnt))
+void sctp_datamsg_put(struct sctp_datamsg *msg)
+{
+	if (refcount_dec_and_test(&msg->refcnt))
 		sctp_datamsg_destroy(msg);
-पूर्ण
+}
 
 /* Assign a chunk to this datamsg. */
-अटल व्योम sctp_datamsg_assign(काष्ठा sctp_datamsg *msg, काष्ठा sctp_chunk *chunk)
-अणु
+static void sctp_datamsg_assign(struct sctp_datamsg *msg, struct sctp_chunk *chunk)
+{
 	sctp_datamsg_hold(msg);
 	chunk->msg = msg;
-पूर्ण
+}
 
 
 /* A data chunk can have a maximum payload of (2^16 - 20).  Break
- * करोwn any such message पूर्णांकo smaller chunks.  Opportunistically, fragment
- * the chunks करोwn to the current MTU स्थिरraपूर्णांकs.  We may get refragmented
- * later अगर the PMTU changes, but it is _much better_ to fragment immediately
- * with a reasonable guess than always करोing our fragmentation on the
- * soft-पूर्णांकerrupt.
+ * down any such message into smaller chunks.  Opportunistically, fragment
+ * the chunks down to the current MTU constraints.  We may get refragmented
+ * later if the PMTU changes, but it is _much better_ to fragment immediately
+ * with a reasonable guess than always doing our fragmentation on the
+ * soft-interrupt.
  */
-काष्ठा sctp_datamsg *sctp_datamsg_from_user(काष्ठा sctp_association *asoc,
-					    काष्ठा sctp_sndrcvinfo *sinfo,
-					    काष्ठा iov_iter *from)
-अणु
-	माप_प्रकार len, first_len, max_data, reमुख्यing;
-	माप_प्रकार msg_len = iov_iter_count(from);
-	काष्ठा sctp_shared_key *shkey = शून्य;
-	काष्ठा list_head *pos, *temp;
-	काष्ठा sctp_chunk *chunk;
-	काष्ठा sctp_datamsg *msg;
-	पूर्णांक err;
+struct sctp_datamsg *sctp_datamsg_from_user(struct sctp_association *asoc,
+					    struct sctp_sndrcvinfo *sinfo,
+					    struct iov_iter *from)
+{
+	size_t len, first_len, max_data, remaining;
+	size_t msg_len = iov_iter_count(from);
+	struct sctp_shared_key *shkey = NULL;
+	struct list_head *pos, *temp;
+	struct sctp_chunk *chunk;
+	struct sctp_datamsg *msg;
+	int err;
 
 	msg = sctp_datamsg_new(GFP_KERNEL);
-	अगर (!msg)
-		वापस ERR_PTR(-ENOMEM);
+	if (!msg)
+		return ERR_PTR(-ENOMEM);
 
 	/* Note: Calculate this outside of the loop, so that all fragments
 	 * have the same expiration.
 	 */
-	अगर (asoc->peer.prsctp_capable && sinfo->sinfo_समयtolive &&
+	if (asoc->peer.prsctp_capable && sinfo->sinfo_timetolive &&
 	    (SCTP_PR_TTL_ENABLED(sinfo->sinfo_flags) ||
 	     !SCTP_PR_POLICY(sinfo->sinfo_flags)))
-		msg->expires_at = jअगरfies +
-				  msecs_to_jअगरfies(sinfo->sinfo_समयtolive);
+		msg->expires_at = jiffies +
+				  msecs_to_jiffies(sinfo->sinfo_timetolive);
 
-	/* This is the biggest possible DATA chunk that can fit पूर्णांकo
+	/* This is the biggest possible DATA chunk that can fit into
 	 * the packet
 	 */
-	max_data = asoc->frag_poपूर्णांक;
-	अगर (unlikely(!max_data)) अणु
-		max_data = sctp_min_frag_poपूर्णांक(sctp_sk(asoc->base.sk),
+	max_data = asoc->frag_point;
+	if (unlikely(!max_data)) {
+		max_data = sctp_min_frag_point(sctp_sk(asoc->base.sk),
 					       sctp_datachk_len(&asoc->stream));
 		pr_warn_ratelimited("%s: asoc:%p frag_point is zero, forcing max_data to default minimum (%zu)",
 				    __func__, asoc, max_data);
-	पूर्ण
+	}
 
 	/* If the peer requested that we authenticate DATA chunks
-	 * we need to account क्रम bundling of the AUTH chunks aदीर्घ with
+	 * we need to account for bundling of the AUTH chunks along with
 	 * DATA.
 	 */
-	अगर (sctp_auth_send_cid(SCTP_CID_DATA, asoc)) अणु
-		काष्ठा sctp_hmac *hmac_desc = sctp_auth_asoc_get_hmac(asoc);
+	if (sctp_auth_send_cid(SCTP_CID_DATA, asoc)) {
+		struct sctp_hmac *hmac_desc = sctp_auth_asoc_get_hmac(asoc);
 
-		अगर (hmac_desc)
-			max_data -= SCTP_PAD4(माप(काष्ठा sctp_auth_chunk) +
+		if (hmac_desc)
+			max_data -= SCTP_PAD4(sizeof(struct sctp_auth_chunk) +
 					      hmac_desc->hmac_len);
 
-		अगर (sinfo->sinfo_tsn &&
-		    sinfo->sinfo_ssn != asoc->active_key_id) अणु
+		if (sinfo->sinfo_tsn &&
+		    sinfo->sinfo_ssn != asoc->active_key_id) {
 			shkey = sctp_auth_get_shkey(asoc, sinfo->sinfo_ssn);
-			अगर (!shkey) अणु
+			if (!shkey) {
 				err = -EINVAL;
-				जाओ errout;
-			पूर्ण
-		पूर्ण अन्यथा अणु
+				goto errout;
+			}
+		} else {
 			shkey = asoc->shkey;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	/* Set first_len and then account क्रम possible bundles on first frag */
+	/* Set first_len and then account for possible bundles on first frag */
 	first_len = max_data;
 
-	/* Check to see अगर we have a pending SACK and try to let it be bundled
-	 * with this message.  Do this अगर we करोn't have any data queued alपढ़ोy.
+	/* Check to see if we have a pending SACK and try to let it be bundled
+	 * with this message.  Do this if we don't have any data queued already.
 	 * To check that, look at out_qlen and retransmit list.
-	 * NOTE: we will not reduce to account क्रम SACK, अगर the message would
+	 * NOTE: we will not reduce to account for SACK, if the message would
 	 * not have been fragmented.
 	 */
-	अगर (समयr_pending(&asoc->समयrs[SCTP_EVENT_TIMEOUT_SACK]) &&
+	if (timer_pending(&asoc->timers[SCTP_EVENT_TIMEOUT_SACK]) &&
 	    asoc->outqueue.out_qlen == 0 &&
 	    list_empty(&asoc->outqueue.retransmit) &&
 	    msg_len > max_data)
-		first_len -= SCTP_PAD4(माप(काष्ठा sctp_sack_chunk));
+		first_len -= SCTP_PAD4(sizeof(struct sctp_sack_chunk));
 
 	/* Encourage Cookie-ECHO bundling. */
-	अगर (asoc->state < SCTP_STATE_COOKIE_ECHOED)
+	if (asoc->state < SCTP_STATE_COOKIE_ECHOED)
 		first_len -= SCTP_ARBITRARY_COOKIE_ECHO_LEN;
 
-	/* Account क्रम a dअगरferent sized first fragment */
-	अगर (msg_len >= first_len) अणु
+	/* Account for a different sized first fragment */
+	if (msg_len >= first_len) {
 		msg->can_delay = 0;
-		अगर (msg_len > first_len)
+		if (msg_len > first_len)
 			SCTP_INC_STATS(asoc->base.net,
 				       SCTP_MIB_FRAGUSRMSGS);
-	पूर्ण अन्यथा अणु
+	} else {
 		/* Which may be the only one... */
 		first_len = msg_len;
-	पूर्ण
+	}
 
-	/* Create chunks क्रम all DATA chunks. */
-	क्रम (reमुख्यing = msg_len; reमुख्यing; reमुख्यing -= len) अणु
+	/* Create chunks for all DATA chunks. */
+	for (remaining = msg_len; remaining; remaining -= len) {
 		u8 frag = SCTP_DATA_MIDDLE_FRAG;
 
-		अगर (reमुख्यing == msg_len) अणु
+		if (remaining == msg_len) {
 			/* First frag, which may also be the last */
 			frag |= SCTP_DATA_FIRST_FRAG;
 			len = first_len;
-		पूर्ण अन्यथा अणु
+		} else {
 			/* Middle frags */
 			len = max_data;
-		पूर्ण
+		}
 
-		अगर (len >= reमुख्यing) अणु
+		if (len >= remaining) {
 			/* Last frag, which may also be the first */
-			len = reमुख्यing;
+			len = remaining;
 			frag |= SCTP_DATA_LAST_FRAG;
 
 			/* The application requests to set the I-bit of the
 			 * last DATA chunk of a user message when providing
 			 * the user message to the SCTP implementation.
 			 */
-			अगर ((sinfo->sinfo_flags & SCTP_खातापूर्ण) ||
+			if ((sinfo->sinfo_flags & SCTP_EOF) ||
 			    (sinfo->sinfo_flags & SCTP_SACK_IMMEDIATELY))
 				frag |= SCTP_DATA_SACK_IMM;
-		पूर्ण
+		}
 
 		chunk = asoc->stream.si->make_datafrag(asoc, sinfo, len, frag,
 						       GFP_KERNEL);
-		अगर (!chunk) अणु
+		if (!chunk) {
 			err = -ENOMEM;
-			जाओ errout;
-		पूर्ण
+			goto errout;
+		}
 
 		err = sctp_user_addto_chunk(chunk, len, from);
-		अगर (err < 0)
-			जाओ errout_chunk_मुक्त;
+		if (err < 0)
+			goto errout_chunk_free;
 
 		chunk->shkey = shkey;
 
-		/* Put the chunk->skb back पूर्णांकo the क्रमm expected by send.  */
+		/* Put the chunk->skb back into the form expected by send.  */
 		__skb_pull(chunk->skb, (__u8 *)chunk->chunk_hdr -
 				       chunk->skb->data);
 
 		sctp_datamsg_assign(msg, chunk);
 		list_add_tail(&chunk->frag_list, &msg->chunks);
-	पूर्ण
+	}
 
-	वापस msg;
+	return msg;
 
-errout_chunk_मुक्त:
-	sctp_chunk_मुक्त(chunk);
+errout_chunk_free:
+	sctp_chunk_free(chunk);
 
 errout:
-	list_क्रम_each_safe(pos, temp, &msg->chunks) अणु
+	list_for_each_safe(pos, temp, &msg->chunks) {
 		list_del_init(pos);
-		chunk = list_entry(pos, काष्ठा sctp_chunk, frag_list);
-		sctp_chunk_मुक्त(chunk);
-	पूर्ण
+		chunk = list_entry(pos, struct sctp_chunk, frag_list);
+		sctp_chunk_free(chunk);
+	}
 	sctp_datamsg_put(msg);
 
-	वापस ERR_PTR(err);
-पूर्ण
+	return ERR_PTR(err);
+}
 
 /* Check whether this message has expired. */
-पूर्णांक sctp_chunk_abanकरोned(काष्ठा sctp_chunk *chunk)
-अणु
-	अगर (!chunk->asoc->peer.prsctp_capable)
-		वापस 0;
+int sctp_chunk_abandoned(struct sctp_chunk *chunk)
+{
+	if (!chunk->asoc->peer.prsctp_capable)
+		return 0;
 
-	अगर (chunk->msg->abanकरोned)
-		वापस 1;
+	if (chunk->msg->abandoned)
+		return 1;
 
-	अगर (!chunk->has_tsn &&
+	if (!chunk->has_tsn &&
 	    !(chunk->chunk_hdr->flags & SCTP_DATA_FIRST_FRAG))
-		वापस 0;
+		return 0;
 
-	अगर (SCTP_PR_TTL_ENABLED(chunk->sinfo.sinfo_flags) &&
-	    समय_after(jअगरfies, chunk->msg->expires_at)) अणु
-		काष्ठा sctp_stream_out *streamout =
+	if (SCTP_PR_TTL_ENABLED(chunk->sinfo.sinfo_flags) &&
+	    time_after(jiffies, chunk->msg->expires_at)) {
+		struct sctp_stream_out *streamout =
 			SCTP_SO(&chunk->asoc->stream,
 				chunk->sinfo.sinfo_stream);
 
-		अगर (chunk->sent_count) अणु
-			chunk->asoc->abanकरोned_sent[SCTP_PR_INDEX(TTL)]++;
-			streamout->ext->abanकरोned_sent[SCTP_PR_INDEX(TTL)]++;
-		पूर्ण अन्यथा अणु
-			chunk->asoc->abanकरोned_unsent[SCTP_PR_INDEX(TTL)]++;
-			streamout->ext->abanकरोned_unsent[SCTP_PR_INDEX(TTL)]++;
-		पूर्ण
-		chunk->msg->abanकरोned = 1;
-		वापस 1;
-	पूर्ण अन्यथा अगर (SCTP_PR_RTX_ENABLED(chunk->sinfo.sinfo_flags) &&
-		   chunk->sent_count > chunk->sinfo.sinfo_समयtolive) अणु
-		काष्ठा sctp_stream_out *streamout =
+		if (chunk->sent_count) {
+			chunk->asoc->abandoned_sent[SCTP_PR_INDEX(TTL)]++;
+			streamout->ext->abandoned_sent[SCTP_PR_INDEX(TTL)]++;
+		} else {
+			chunk->asoc->abandoned_unsent[SCTP_PR_INDEX(TTL)]++;
+			streamout->ext->abandoned_unsent[SCTP_PR_INDEX(TTL)]++;
+		}
+		chunk->msg->abandoned = 1;
+		return 1;
+	} else if (SCTP_PR_RTX_ENABLED(chunk->sinfo.sinfo_flags) &&
+		   chunk->sent_count > chunk->sinfo.sinfo_timetolive) {
+		struct sctp_stream_out *streamout =
 			SCTP_SO(&chunk->asoc->stream,
 				chunk->sinfo.sinfo_stream);
 
-		chunk->asoc->abanकरोned_sent[SCTP_PR_INDEX(RTX)]++;
-		streamout->ext->abanकरोned_sent[SCTP_PR_INDEX(RTX)]++;
-		chunk->msg->abanकरोned = 1;
-		वापस 1;
-	पूर्ण अन्यथा अगर (!SCTP_PR_POLICY(chunk->sinfo.sinfo_flags) &&
+		chunk->asoc->abandoned_sent[SCTP_PR_INDEX(RTX)]++;
+		streamout->ext->abandoned_sent[SCTP_PR_INDEX(RTX)]++;
+		chunk->msg->abandoned = 1;
+		return 1;
+	} else if (!SCTP_PR_POLICY(chunk->sinfo.sinfo_flags) &&
 		   chunk->msg->expires_at &&
-		   समय_after(jअगरfies, chunk->msg->expires_at)) अणु
-		chunk->msg->abanकरोned = 1;
-		वापस 1;
-	पूर्ण
+		   time_after(jiffies, chunk->msg->expires_at)) {
+		chunk->msg->abandoned = 1;
+		return 1;
+	}
 	/* PRIO policy is processed by sendmsg, not here */
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* This chunk (and consequently entire message) has failed in its sending. */
-व्योम sctp_chunk_fail(काष्ठा sctp_chunk *chunk, पूर्णांक error)
-अणु
+void sctp_chunk_fail(struct sctp_chunk *chunk, int error)
+{
 	chunk->msg->send_failed = 1;
 	chunk->msg->send_error = error;
-पूर्ण
+}

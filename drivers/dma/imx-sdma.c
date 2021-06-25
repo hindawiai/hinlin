@@ -1,9 +1,8 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 //
 // drivers/dma/imx-sdma.c
 //
-// This file contains a driver क्रम the Freescale Smart DMA engine
+// This file contains a driver for the Freescale Smart DMA engine
 //
 // Copyright 2010 Sascha Hauer, Pengutronix <s.hauer@pengutronix.de>
 //
@@ -11,118 +10,118 @@
 //
 // Copyright 2004-2009 Freescale Semiconductor, Inc. All Rights Reserved.
 
-#समावेश <linux/init.h>
-#समावेश <linux/iopoll.h>
-#समावेश <linux/module.h>
-#समावेश <linux/types.h>
-#समावेश <linux/bitops.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/semaphore.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/device.h>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/firmware.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/dmaengine.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/of_dma.h>
-#समावेश <linux/workqueue.h>
+#include <linux/init.h>
+#include <linux/iopoll.h>
+#include <linux/module.h>
+#include <linux/types.h>
+#include <linux/bitops.h>
+#include <linux/mm.h>
+#include <linux/interrupt.h>
+#include <linux/clk.h>
+#include <linux/delay.h>
+#include <linux/sched.h>
+#include <linux/semaphore.h>
+#include <linux/spinlock.h>
+#include <linux/device.h>
+#include <linux/dma-mapping.h>
+#include <linux/firmware.h>
+#include <linux/slab.h>
+#include <linux/platform_device.h>
+#include <linux/dmaengine.h>
+#include <linux/of.h>
+#include <linux/of_address.h>
+#include <linux/of_device.h>
+#include <linux/of_dma.h>
+#include <linux/workqueue.h>
 
-#समावेश <यंत्र/irq.h>
-#समावेश <linux/platक्रमm_data/dma-imx-sdma.h>
-#समावेश <linux/platक्रमm_data/dma-imx.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/mfd/syscon.h>
-#समावेश <linux/mfd/syscon/imx6q-iomuxc-gpr.h>
+#include <asm/irq.h>
+#include <linux/platform_data/dma-imx-sdma.h>
+#include <linux/platform_data/dma-imx.h>
+#include <linux/regmap.h>
+#include <linux/mfd/syscon.h>
+#include <linux/mfd/syscon/imx6q-iomuxc-gpr.h>
 
-#समावेश "dmaengine.h"
-#समावेश "virt-dma.h"
+#include "dmaengine.h"
+#include "virt-dma.h"
 
-/* SDMA रेजिस्टरs */
-#घोषणा SDMA_H_C0PTR		0x000
-#घोषणा SDMA_H_INTR		0x004
-#घोषणा SDMA_H_STATSTOP		0x008
-#घोषणा SDMA_H_START		0x00c
-#घोषणा SDMA_H_EVTOVR		0x010
-#घोषणा SDMA_H_DSPOVR		0x014
-#घोषणा SDMA_H_HOSTOVR		0x018
-#घोषणा SDMA_H_EVTPEND		0x01c
-#घोषणा SDMA_H_DSPENBL		0x020
-#घोषणा SDMA_H_RESET		0x024
-#घोषणा SDMA_H_EVTERR		0x028
-#घोषणा SDMA_H_INTRMSK		0x02c
-#घोषणा SDMA_H_PSW		0x030
-#घोषणा SDMA_H_EVTERRDBG	0x034
-#घोषणा SDMA_H_CONFIG		0x038
-#घोषणा SDMA_ONCE_ENB		0x040
-#घोषणा SDMA_ONCE_DATA		0x044
-#घोषणा SDMA_ONCE_INSTR		0x048
-#घोषणा SDMA_ONCE_STAT		0x04c
-#घोषणा SDMA_ONCE_CMD		0x050
-#घोषणा SDMA_EVT_MIRROR		0x054
-#घोषणा SDMA_ILLINSTADDR	0x058
-#घोषणा SDMA_CHN0ADDR		0x05c
-#घोषणा SDMA_ONCE_RTB		0x060
-#घोषणा SDMA_XTRIG_CONF1	0x070
-#घोषणा SDMA_XTRIG_CONF2	0x074
-#घोषणा SDMA_CHNENBL0_IMX35	0x200
-#घोषणा SDMA_CHNENBL0_IMX31	0x080
-#घोषणा SDMA_CHNPRI_0		0x100
+/* SDMA registers */
+#define SDMA_H_C0PTR		0x000
+#define SDMA_H_INTR		0x004
+#define SDMA_H_STATSTOP		0x008
+#define SDMA_H_START		0x00c
+#define SDMA_H_EVTOVR		0x010
+#define SDMA_H_DSPOVR		0x014
+#define SDMA_H_HOSTOVR		0x018
+#define SDMA_H_EVTPEND		0x01c
+#define SDMA_H_DSPENBL		0x020
+#define SDMA_H_RESET		0x024
+#define SDMA_H_EVTERR		0x028
+#define SDMA_H_INTRMSK		0x02c
+#define SDMA_H_PSW		0x030
+#define SDMA_H_EVTERRDBG	0x034
+#define SDMA_H_CONFIG		0x038
+#define SDMA_ONCE_ENB		0x040
+#define SDMA_ONCE_DATA		0x044
+#define SDMA_ONCE_INSTR		0x048
+#define SDMA_ONCE_STAT		0x04c
+#define SDMA_ONCE_CMD		0x050
+#define SDMA_EVT_MIRROR		0x054
+#define SDMA_ILLINSTADDR	0x058
+#define SDMA_CHN0ADDR		0x05c
+#define SDMA_ONCE_RTB		0x060
+#define SDMA_XTRIG_CONF1	0x070
+#define SDMA_XTRIG_CONF2	0x074
+#define SDMA_CHNENBL0_IMX35	0x200
+#define SDMA_CHNENBL0_IMX31	0x080
+#define SDMA_CHNPRI_0		0x100
 
 /*
  * Buffer descriptor status values.
  */
-#घोषणा BD_DONE  0x01
-#घोषणा BD_WRAP  0x02
-#घोषणा BD_CONT  0x04
-#घोषणा BD_INTR  0x08
-#घोषणा BD_RROR  0x10
-#घोषणा BD_LAST  0x20
-#घोषणा BD_EXTD  0x80
+#define BD_DONE  0x01
+#define BD_WRAP  0x02
+#define BD_CONT  0x04
+#define BD_INTR  0x08
+#define BD_RROR  0x10
+#define BD_LAST  0x20
+#define BD_EXTD  0x80
 
 /*
  * Data Node descriptor status values.
  */
-#घोषणा DND_END_OF_FRAME  0x80
-#घोषणा DND_END_OF_XFER   0x40
-#घोषणा DND_DONE          0x20
-#घोषणा DND_UNUSED        0x01
+#define DND_END_OF_FRAME  0x80
+#define DND_END_OF_XFER   0x40
+#define DND_DONE          0x20
+#define DND_UNUSED        0x01
 
 /*
  * IPCV2 descriptor status values.
  */
-#घोषणा BD_IPCV2_END_OF_FRAME  0x40
+#define BD_IPCV2_END_OF_FRAME  0x40
 
-#घोषणा IPCV2_MAX_NODES        50
+#define IPCV2_MAX_NODES        50
 /*
  * Error bit set in the CCB status field by the SDMA,
- * in setbd routine, in हाल of a transfer error
+ * in setbd routine, in case of a transfer error
  */
-#घोषणा DATA_ERROR  0x10000000
+#define DATA_ERROR  0x10000000
 
 /*
  * Buffer descriptor commands.
  */
-#घोषणा C0_ADDR             0x01
-#घोषणा C0_LOAD             0x02
-#घोषणा C0_DUMP             0x03
-#घोषणा C0_SETCTX           0x07
-#घोषणा C0_GETCTX           0x03
-#घोषणा C0_SETDM            0x01
-#घोषणा C0_SETPM            0x04
-#घोषणा C0_GETDM            0x02
-#घोषणा C0_GETPM            0x08
+#define C0_ADDR             0x01
+#define C0_LOAD             0x02
+#define C0_DUMP             0x03
+#define C0_SETCTX           0x07
+#define C0_GETCTX           0x03
+#define C0_SETDM            0x01
+#define C0_SETPM            0x04
+#define C0_GETDM            0x02
+#define C0_GETPM            0x08
 /*
  * Change endianness indicator in the BD command field
  */
-#घोषणा CHANGE_ENDIANNESS   0x80
+#define CHANGE_ENDIANNESS   0x80
 
 /*
  *  p_2_p watermark_level description
@@ -142,20 +141,20 @@
  *	16-23		Higher WML		HWML
  *	24-27		N			Total number of samples after
  *						which Pad adding/Swallowing
- *						must be करोne. It must be odd.
- *	28		Lower WML Event(LWE)	SDMA events reg to check क्रम
+ *						must be done. It must be odd.
+ *	28		Lower WML Event(LWE)	SDMA events reg to check for
  *						LWML event mask
- *						0: LWE in EVENTS रेजिस्टर
- *						1: LWE in EVENTS2 रेजिस्टर
- *	29		Higher WML Event(HWE)	SDMA events reg to check क्रम
+ *						0: LWE in EVENTS register
+ *						1: LWE in EVENTS2 register
+ *	29		Higher WML Event(HWE)	SDMA events reg to check for
  *						HWML event mask
- *						0: HWE in EVENTS रेजिस्टर
- *						1: HWE in EVENTS2 रेजिस्टर
+ *						0: HWE in EVENTS register
+ *						1: HWE in EVENTS2 register
  *	30		---------		MUST BE 0
  *	31		CONT			1: Amount of samples to be
  *						transferred is unknown and
  *						script will keep on
- *						transferring samples as दीर्घ as
+ *						transferring samples as long as
  *						both events are detected and
  *						script must be manually stopped
  *						by the application
@@ -163,74 +162,74 @@
  *						transferred is equal to the
  *						count field of mode word
  */
-#घोषणा SDMA_WATERMARK_LEVEL_LWML	0xFF
-#घोषणा SDMA_WATERMARK_LEVEL_PS		BIT(8)
-#घोषणा SDMA_WATERMARK_LEVEL_PA		BIT(9)
-#घोषणा SDMA_WATERMARK_LEVEL_SPDIF	BIT(10)
-#घोषणा SDMA_WATERMARK_LEVEL_SP		BIT(11)
-#घोषणा SDMA_WATERMARK_LEVEL_DP		BIT(12)
-#घोषणा SDMA_WATERMARK_LEVEL_HWML	(0xFF << 16)
-#घोषणा SDMA_WATERMARK_LEVEL_LWE	BIT(28)
-#घोषणा SDMA_WATERMARK_LEVEL_HWE	BIT(29)
-#घोषणा SDMA_WATERMARK_LEVEL_CONT	BIT(31)
+#define SDMA_WATERMARK_LEVEL_LWML	0xFF
+#define SDMA_WATERMARK_LEVEL_PS		BIT(8)
+#define SDMA_WATERMARK_LEVEL_PA		BIT(9)
+#define SDMA_WATERMARK_LEVEL_SPDIF	BIT(10)
+#define SDMA_WATERMARK_LEVEL_SP		BIT(11)
+#define SDMA_WATERMARK_LEVEL_DP		BIT(12)
+#define SDMA_WATERMARK_LEVEL_HWML	(0xFF << 16)
+#define SDMA_WATERMARK_LEVEL_LWE	BIT(28)
+#define SDMA_WATERMARK_LEVEL_HWE	BIT(29)
+#define SDMA_WATERMARK_LEVEL_CONT	BIT(31)
 
-#घोषणा SDMA_DMA_BUSWIDTHS	(BIT(DMA_SLAVE_BUSWIDTH_1_BYTE) | \
+#define SDMA_DMA_BUSWIDTHS	(BIT(DMA_SLAVE_BUSWIDTH_1_BYTE) | \
 				 BIT(DMA_SLAVE_BUSWIDTH_2_BYTES) | \
 				 BIT(DMA_SLAVE_BUSWIDTH_4_BYTES))
 
-#घोषणा SDMA_DMA_सूचीECTIONS	(BIT(DMA_DEV_TO_MEM) | \
+#define SDMA_DMA_DIRECTIONS	(BIT(DMA_DEV_TO_MEM) | \
 				 BIT(DMA_MEM_TO_DEV) | \
 				 BIT(DMA_DEV_TO_DEV))
 
 /*
  * Mode/Count of data node descriptors - IPCv2
  */
-काष्ठा sdma_mode_count अणु
-#घोषणा SDMA_BD_MAX_CNT	0xffff
-	u32 count   : 16; /* size of the buffer poपूर्णांकed by this BD */
+struct sdma_mode_count {
+#define SDMA_BD_MAX_CNT	0xffff
+	u32 count   : 16; /* size of the buffer pointed by this BD */
 	u32 status  :  8; /* E,R,I,C,W,D status bits stored here */
-	u32 command :  8; /* command mostly used क्रम channel 0 */
-पूर्ण;
+	u32 command :  8; /* command mostly used for channel 0 */
+};
 
 /*
  * Buffer descriptor
  */
-काष्ठा sdma_buffer_descriptor अणु
-	काष्ठा sdma_mode_count  mode;
+struct sdma_buffer_descriptor {
+	struct sdma_mode_count  mode;
 	u32 buffer_addr;	/* address of the buffer described */
 	u32 ext_buffer_addr;	/* extended buffer address */
-पूर्ण __attribute__ ((packed));
+} __attribute__ ((packed));
 
 /**
- * काष्ठा sdma_channel_control - Channel control Block
+ * struct sdma_channel_control - Channel control Block
  *
  * @current_bd_ptr:	current buffer descriptor processed
  * @base_bd_ptr:	first element of buffer descriptor array
  * @unused:		padding. The SDMA engine expects an array of 128 byte
  *			control blocks
  */
-काष्ठा sdma_channel_control अणु
+struct sdma_channel_control {
 	u32 current_bd_ptr;
 	u32 base_bd_ptr;
 	u32 unused[2];
-पूर्ण __attribute__ ((packed));
+} __attribute__ ((packed));
 
 /**
- * काष्ठा sdma_state_रेजिस्टरs - SDMA context क्रम a channel
+ * struct sdma_state_registers - SDMA context for a channel
  *
  * @pc:		program counter
  * @unused1:	unused
- * @t:		test bit: status of arithmetic & test inकाष्ठाion
- * @rpc:	वापस program counter
+ * @t:		test bit: status of arithmetic & test instruction
+ * @rpc:	return program counter
  * @unused0:	unused
- * @sf:		source fault जबतक loading data
+ * @sf:		source fault while loading data
  * @spc:	loop start program counter
  * @unused2:	unused
- * @df:		destination fault जबतक storing data
+ * @df:		destination fault while storing data
  * @epc:	loop end program counter
  * @lm:		loop mode
  */
-काष्ठा sdma_state_रेजिस्टरs अणु
+struct sdma_state_registers {
 	u32 pc     :14;
 	u32 unused1: 1;
 	u32 t      : 1;
@@ -242,38 +241,38 @@
 	u32 df     : 1;
 	u32 epc    :14;
 	u32 lm     : 2;
-पूर्ण __attribute__ ((packed));
+} __attribute__ ((packed));
 
 /**
- * काष्ठा sdma_context_data - sdma context specअगरic to a channel
+ * struct sdma_context_data - sdma context specific to a channel
  *
  * @channel_state:	channel state bits
- * @gReg:		general रेजिस्टरs
- * @mda:		burst dma destination address रेजिस्टर
- * @msa:		burst dma source address रेजिस्टर
- * @ms:			burst dma status रेजिस्टर
- * @md:			burst dma data रेजिस्टर
- * @pda:		peripheral dma destination address रेजिस्टर
- * @psa:		peripheral dma source address रेजिस्टर
- * @ps:			peripheral dma status रेजिस्टर
- * @pd:			peripheral dma data रेजिस्टर
- * @ca:			CRC polynomial रेजिस्टर
- * @cs:			CRC accumulator रेजिस्टर
- * @dda:		dedicated core destination address रेजिस्टर
- * @dsa:		dedicated core source address रेजिस्टर
- * @ds:			dedicated core status रेजिस्टर
- * @dd:			dedicated core data रेजिस्टर
- * @scratch0:		1st word of dedicated ram क्रम context चयन
- * @scratch1:		2nd word of dedicated ram क्रम context चयन
- * @scratch2:		3rd word of dedicated ram क्रम context चयन
- * @scratch3:		4th word of dedicated ram क्रम context चयन
- * @scratch4:		5th word of dedicated ram क्रम context चयन
- * @scratch5:		6th word of dedicated ram क्रम context चयन
- * @scratch6:		7th word of dedicated ram क्रम context चयन
- * @scratch7:		8th word of dedicated ram क्रम context चयन
+ * @gReg:		general registers
+ * @mda:		burst dma destination address register
+ * @msa:		burst dma source address register
+ * @ms:			burst dma status register
+ * @md:			burst dma data register
+ * @pda:		peripheral dma destination address register
+ * @psa:		peripheral dma source address register
+ * @ps:			peripheral dma status register
+ * @pd:			peripheral dma data register
+ * @ca:			CRC polynomial register
+ * @cs:			CRC accumulator register
+ * @dda:		dedicated core destination address register
+ * @dsa:		dedicated core source address register
+ * @ds:			dedicated core status register
+ * @dd:			dedicated core data register
+ * @scratch0:		1st word of dedicated ram for context switch
+ * @scratch1:		2nd word of dedicated ram for context switch
+ * @scratch2:		3rd word of dedicated ram for context switch
+ * @scratch3:		4th word of dedicated ram for context switch
+ * @scratch4:		5th word of dedicated ram for context switch
+ * @scratch5:		6th word of dedicated ram for context switch
+ * @scratch6:		7th word of dedicated ram for context switch
+ * @scratch7:		8th word of dedicated ram for context switch
  */
-काष्ठा sdma_context_data अणु
-	काष्ठा sdma_state_रेजिस्टरs  channel_state;
+struct sdma_context_data {
+	struct sdma_state_registers  channel_state;
 	u32  gReg[8];
 	u32  mda;
 	u32  msa;
@@ -297,14 +296,14 @@
 	u32  scratch5;
 	u32  scratch6;
 	u32  scratch7;
-पूर्ण __attribute__ ((packed));
+} __attribute__ ((packed));
 
 
-काष्ठा sdma_engine;
+struct sdma_engine;
 
 /**
- * काष्ठा sdma_desc - descriptor काष्ठाor क्रम one transfer
- * @vd:			descriptor क्रम virt dma
+ * struct sdma_desc - descriptor structor for one transfer
+ * @vd:			descriptor for virt dma
  * @num_bd:		number of descriptors currently handling
  * @bd_phys:		physical address of bd
  * @buf_tail:		ID of the buffer that was processed
@@ -312,103 +311,103 @@
  * @period_len:		period length, used in cyclic.
  * @chn_real_count:	the real count updated from bd->mode.count
  * @chn_count:		the transfer count set
- * @sdmac:		sdma_channel poपूर्णांकer
- * @bd:			poपूर्णांकer of allocate bd
+ * @sdmac:		sdma_channel pointer
+ * @bd:			pointer of allocate bd
  */
-काष्ठा sdma_desc अणु
-	काष्ठा virt_dma_desc	vd;
-	अचिन्हित पूर्णांक		num_bd;
+struct sdma_desc {
+	struct virt_dma_desc	vd;
+	unsigned int		num_bd;
 	dma_addr_t		bd_phys;
-	अचिन्हित पूर्णांक		buf_tail;
-	अचिन्हित पूर्णांक		buf_ptail;
-	अचिन्हित पूर्णांक		period_len;
-	अचिन्हित पूर्णांक		chn_real_count;
-	अचिन्हित पूर्णांक		chn_count;
-	काष्ठा sdma_channel	*sdmac;
-	काष्ठा sdma_buffer_descriptor *bd;
-पूर्ण;
+	unsigned int		buf_tail;
+	unsigned int		buf_ptail;
+	unsigned int		period_len;
+	unsigned int		chn_real_count;
+	unsigned int		chn_count;
+	struct sdma_channel	*sdmac;
+	struct sdma_buffer_descriptor *bd;
+};
 
 /**
- * काष्ठा sdma_channel - housekeeping क्रम a SDMA channel
+ * struct sdma_channel - housekeeping for a SDMA channel
  *
- * @vc:			virt_dma base काष्ठाure
+ * @vc:			virt_dma base structure
  * @desc:		sdma description including vd and other special member
- * @sdma:		poपूर्णांकer to the SDMA engine क्रम this channel
+ * @sdma:		pointer to the SDMA engine for this channel
  * @channel:		the channel number, matches dmaengine chan_id + 1
- * @direction:		transfer type. Needed क्रम setting SDMA script
+ * @direction:		transfer type. Needed for setting SDMA script
  * @slave_config:	Slave configuration
- * @peripheral_type:	Peripheral type. Needed क्रम setting SDMA script
+ * @peripheral_type:	Peripheral type. Needed for setting SDMA script
  * @event_id0:		aka dma request line
- * @event_id1:		क्रम channels that use 2 events
+ * @event_id1:		for channels that use 2 events
  * @word_size:		peripheral access size
- * @pc_from_device:	script address क्रम those device_2_memory
- * @pc_to_device:	script address क्रम those memory_2_device
- * @device_to_device:	script address क्रम those device_2_device
- * @pc_to_pc:		script address क्रम those memory_2_memory
+ * @pc_from_device:	script address for those device_2_memory
+ * @pc_to_device:	script address for those memory_2_device
+ * @device_to_device:	script address for those device_2_device
+ * @pc_to_pc:		script address for those memory_2_memory
  * @flags:		loop mode or not
- * @per_address:	peripheral source or destination address in common हाल
- *                      destination address in p_2_p हाल
- * @per_address2:	peripheral source address in p_2_p हाल
+ * @per_address:	peripheral source or destination address in common case
+ *                      destination address in p_2_p case
+ * @per_address2:	peripheral source address in p_2_p case
  * @event_mask:		event mask used in p_2_p script
- * @watermark_level:	value क्रम gReg[7], some script will extend it from
+ * @watermark_level:	value for gReg[7], some script will extend it from
  *			basic watermark such as p_2_p
- * @shp_addr:		value क्रम gReg[6]
- * @per_addr:		value क्रम gReg[2]
+ * @shp_addr:		value for gReg[6]
+ * @per_addr:		value for gReg[2]
  * @status:		status of dma channel
  * @context_loaded:	ensure context is only loaded once
- * @data:		specअगरic sdma पूर्णांकerface काष्ठाure
- * @bd_pool:		dma_pool क्रम bd
- * @terminate_worker:	used to call back पूर्णांकo terminate work function
+ * @data:		specific sdma interface structure
+ * @bd_pool:		dma_pool for bd
+ * @terminate_worker:	used to call back into terminate work function
  */
-काष्ठा sdma_channel अणु
-	काष्ठा virt_dma_chan		vc;
-	काष्ठा sdma_desc		*desc;
-	काष्ठा sdma_engine		*sdma;
-	अचिन्हित पूर्णांक			channel;
-	क्रमागत dma_transfer_direction		direction;
-	काष्ठा dma_slave_config		slave_config;
-	क्रमागत sdma_peripheral_type	peripheral_type;
-	अचिन्हित पूर्णांक			event_id0;
-	अचिन्हित पूर्णांक			event_id1;
-	क्रमागत dma_slave_buswidth		word_size;
-	अचिन्हित पूर्णांक			pc_from_device, pc_to_device;
-	अचिन्हित पूर्णांक			device_to_device;
-	अचिन्हित पूर्णांक                    pc_to_pc;
-	अचिन्हित दीर्घ			flags;
+struct sdma_channel {
+	struct virt_dma_chan		vc;
+	struct sdma_desc		*desc;
+	struct sdma_engine		*sdma;
+	unsigned int			channel;
+	enum dma_transfer_direction		direction;
+	struct dma_slave_config		slave_config;
+	enum sdma_peripheral_type	peripheral_type;
+	unsigned int			event_id0;
+	unsigned int			event_id1;
+	enum dma_slave_buswidth		word_size;
+	unsigned int			pc_from_device, pc_to_device;
+	unsigned int			device_to_device;
+	unsigned int                    pc_to_pc;
+	unsigned long			flags;
 	dma_addr_t			per_address, per_address2;
-	अचिन्हित दीर्घ			event_mask[2];
-	अचिन्हित दीर्घ			watermark_level;
+	unsigned long			event_mask[2];
+	unsigned long			watermark_level;
 	u32				shp_addr, per_addr;
-	क्रमागत dma_status			status;
+	enum dma_status			status;
 	bool				context_loaded;
-	काष्ठा imx_dma_data		data;
-	काष्ठा work_काष्ठा		terminate_worker;
-पूर्ण;
+	struct imx_dma_data		data;
+	struct work_struct		terminate_worker;
+};
 
-#घोषणा IMX_DMA_SG_LOOP		BIT(0)
+#define IMX_DMA_SG_LOOP		BIT(0)
 
-#घोषणा MAX_DMA_CHANNELS 32
-#घोषणा MXC_SDMA_DEFAULT_PRIORITY 1
-#घोषणा MXC_SDMA_MIN_PRIORITY 1
-#घोषणा MXC_SDMA_MAX_PRIORITY 7
+#define MAX_DMA_CHANNELS 32
+#define MXC_SDMA_DEFAULT_PRIORITY 1
+#define MXC_SDMA_MIN_PRIORITY 1
+#define MXC_SDMA_MAX_PRIORITY 7
 
-#घोषणा SDMA_FIRMWARE_MAGIC 0x414d4453
+#define SDMA_FIRMWARE_MAGIC 0x414d4453
 
 /**
- * काष्ठा sdma_firmware_header - Layout of the firmware image
+ * struct sdma_firmware_header - Layout of the firmware image
  *
  * @magic:		"SDMA"
- * @version_major:	increased whenever layout of काष्ठा
+ * @version_major:	increased whenever layout of struct
  *			sdma_script_start_addrs changes.
- * @version_minor:	firmware minor version (क्रम binary compatible changes)
- * @script_addrs_start:	offset of काष्ठा sdma_script_start_addrs in this image
+ * @version_minor:	firmware minor version (for binary compatible changes)
+ * @script_addrs_start:	offset of struct sdma_script_start_addrs in this image
  * @num_script_addrs:	Number of script addresses in this image
  * @ram_code_start:	offset of SDMA ram image in this firmware image
  * @ram_code_size:	size of SDMA ram image
  * @script_addrs:	Stores the start address of the SDMA scripts
  *			(in SDMA memory space)
  */
-काष्ठा sdma_firmware_header अणु
+struct sdma_firmware_header {
 	u32	magic;
 	u32	version_major;
 	u32	version_minor;
@@ -416,48 +415,48 @@
 	u32	num_script_addrs;
 	u32	ram_code_start;
 	u32	ram_code_size;
-पूर्ण;
+};
 
-काष्ठा sdma_driver_data अणु
-	पूर्णांक chnenbl0;
-	पूर्णांक num_events;
-	काष्ठा sdma_script_start_addrs	*script_addrs;
+struct sdma_driver_data {
+	int chnenbl0;
+	int num_events;
+	struct sdma_script_start_addrs	*script_addrs;
 	bool check_ratio;
-पूर्ण;
+};
 
-काष्ठा sdma_engine अणु
-	काष्ठा device			*dev;
-	काष्ठा sdma_channel		channel[MAX_DMA_CHANNELS];
-	काष्ठा sdma_channel_control	*channel_control;
-	व्योम __iomem			*regs;
-	काष्ठा sdma_context_data	*context;
+struct sdma_engine {
+	struct device			*dev;
+	struct sdma_channel		channel[MAX_DMA_CHANNELS];
+	struct sdma_channel_control	*channel_control;
+	void __iomem			*regs;
+	struct sdma_context_data	*context;
 	dma_addr_t			context_phys;
-	काष्ठा dma_device		dma_device;
-	काष्ठा clk			*clk_ipg;
-	काष्ठा clk			*clk_ahb;
+	struct dma_device		dma_device;
+	struct clk			*clk_ipg;
+	struct clk			*clk_ahb;
 	spinlock_t			channel_0_lock;
 	u32				script_number;
-	काष्ठा sdma_script_start_addrs	*script_addrs;
-	स्थिर काष्ठा sdma_driver_data	*drvdata;
+	struct sdma_script_start_addrs	*script_addrs;
+	const struct sdma_driver_data	*drvdata;
 	u32				spba_start_addr;
 	u32				spba_end_addr;
-	अचिन्हित पूर्णांक			irq;
+	unsigned int			irq;
 	dma_addr_t			bd0_phys;
-	काष्ठा sdma_buffer_descriptor	*bd0;
-	/* घड़ी ratio क्रम AHB:SDMA core. 1:1 is 1, 2:1 is 0*/
+	struct sdma_buffer_descriptor	*bd0;
+	/* clock ratio for AHB:SDMA core. 1:1 is 1, 2:1 is 0*/
 	bool				clk_ratio;
-पूर्ण;
+};
 
-अटल पूर्णांक sdma_config_ग_लिखो(काष्ठा dma_chan *chan,
-		       काष्ठा dma_slave_config *dmaengine_cfg,
-		       क्रमागत dma_transfer_direction direction);
+static int sdma_config_write(struct dma_chan *chan,
+		       struct dma_slave_config *dmaengine_cfg,
+		       enum dma_transfer_direction direction);
 
-अटल काष्ठा sdma_driver_data sdma_imx31 = अणु
+static struct sdma_driver_data sdma_imx31 = {
 	.chnenbl0 = SDMA_CHNENBL0_IMX31,
 	.num_events = 32,
-पूर्ण;
+};
 
-अटल काष्ठा sdma_script_start_addrs sdma_script_imx25 = अणु
+static struct sdma_script_start_addrs sdma_script_imx25 = {
 	.ap_2_ap_addr = 729,
 	.uart_2_mcu_addr = 904,
 	.per_2_app_addr = 1255,
@@ -471,20 +470,20 @@
 	.app_2_mcu_addr = 770,
 	.shp_2_per_addr = 1407,
 	.shp_2_mcu_addr = 979,
-पूर्ण;
+};
 
-अटल काष्ठा sdma_driver_data sdma_imx25 = अणु
+static struct sdma_driver_data sdma_imx25 = {
 	.chnenbl0 = SDMA_CHNENBL0_IMX35,
 	.num_events = 48,
 	.script_addrs = &sdma_script_imx25,
-पूर्ण;
+};
 
-अटल काष्ठा sdma_driver_data sdma_imx35 = अणु
+static struct sdma_driver_data sdma_imx35 = {
 	.chnenbl0 = SDMA_CHNENBL0_IMX35,
 	.num_events = 48,
-पूर्ण;
+};
 
-अटल काष्ठा sdma_script_start_addrs sdma_script_imx51 = अणु
+static struct sdma_script_start_addrs sdma_script_imx51 = {
 	.ap_2_ap_addr = 642,
 	.uart_2_mcu_addr = 817,
 	.mcu_2_app_addr = 747,
@@ -495,15 +494,15 @@
 	.app_2_mcu_addr = 683,
 	.shp_2_per_addr = 1251,
 	.shp_2_mcu_addr = 892,
-पूर्ण;
+};
 
-अटल काष्ठा sdma_driver_data sdma_imx51 = अणु
+static struct sdma_driver_data sdma_imx51 = {
 	.chnenbl0 = SDMA_CHNENBL0_IMX35,
 	.num_events = 48,
 	.script_addrs = &sdma_script_imx51,
-पूर्ण;
+};
 
-अटल काष्ठा sdma_script_start_addrs sdma_script_imx53 = अणु
+static struct sdma_script_start_addrs sdma_script_imx53 = {
 	.ap_2_ap_addr = 642,
 	.app_2_mcu_addr = 683,
 	.mcu_2_app_addr = 747,
@@ -511,19 +510,19 @@
 	.shp_2_mcu_addr = 891,
 	.mcu_2_shp_addr = 960,
 	.uartsh_2_mcu_addr = 1032,
-	.spdअगर_2_mcu_addr = 1100,
-	.mcu_2_spdअगर_addr = 1134,
+	.spdif_2_mcu_addr = 1100,
+	.mcu_2_spdif_addr = 1134,
 	.firi_2_mcu_addr = 1193,
 	.mcu_2_firi_addr = 1290,
-पूर्ण;
+};
 
-अटल काष्ठा sdma_driver_data sdma_imx53 = अणु
+static struct sdma_driver_data sdma_imx53 = {
 	.chnenbl0 = SDMA_CHNENBL0_IMX35,
 	.num_events = 48,
 	.script_addrs = &sdma_script_imx53,
-पूर्ण;
+};
 
-अटल काष्ठा sdma_script_start_addrs sdma_script_imx6q = अणु
+static struct sdma_script_start_addrs sdma_script_imx6q = {
 	.ap_2_ap_addr = 642,
 	.uart_2_mcu_addr = 817,
 	.mcu_2_app_addr = 747,
@@ -532,17 +531,17 @@
 	.mcu_2_shp_addr = 960,
 	.app_2_mcu_addr = 683,
 	.shp_2_mcu_addr = 891,
-	.spdअगर_2_mcu_addr = 1100,
-	.mcu_2_spdअगर_addr = 1134,
-पूर्ण;
+	.spdif_2_mcu_addr = 1100,
+	.mcu_2_spdif_addr = 1134,
+};
 
-अटल काष्ठा sdma_driver_data sdma_imx6q = अणु
+static struct sdma_driver_data sdma_imx6q = {
 	.chnenbl0 = SDMA_CHNENBL0_IMX35,
 	.num_events = 48,
 	.script_addrs = &sdma_script_imx6q,
-पूर्ण;
+};
 
-अटल काष्ठा sdma_script_start_addrs sdma_script_imx7d = अणु
+static struct sdma_script_start_addrs sdma_script_imx7d = {
 	.ap_2_ap_addr = 644,
 	.uart_2_mcu_addr = 819,
 	.mcu_2_app_addr = 749,
@@ -550,126 +549,126 @@
 	.mcu_2_shp_addr = 962,
 	.app_2_mcu_addr = 685,
 	.shp_2_mcu_addr = 893,
-	.spdअगर_2_mcu_addr = 1102,
-	.mcu_2_spdअगर_addr = 1136,
-पूर्ण;
+	.spdif_2_mcu_addr = 1102,
+	.mcu_2_spdif_addr = 1136,
+};
 
-अटल काष्ठा sdma_driver_data sdma_imx7d = अणु
+static struct sdma_driver_data sdma_imx7d = {
 	.chnenbl0 = SDMA_CHNENBL0_IMX35,
 	.num_events = 48,
 	.script_addrs = &sdma_script_imx7d,
-पूर्ण;
+};
 
-अटल काष्ठा sdma_driver_data sdma_imx8mq = अणु
+static struct sdma_driver_data sdma_imx8mq = {
 	.chnenbl0 = SDMA_CHNENBL0_IMX35,
 	.num_events = 48,
 	.script_addrs = &sdma_script_imx7d,
 	.check_ratio = 1,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा of_device_id sdma_dt_ids[] = अणु
-	अणु .compatible = "fsl,imx6q-sdma", .data = &sdma_imx6q, पूर्ण,
-	अणु .compatible = "fsl,imx53-sdma", .data = &sdma_imx53, पूर्ण,
-	अणु .compatible = "fsl,imx51-sdma", .data = &sdma_imx51, पूर्ण,
-	अणु .compatible = "fsl,imx35-sdma", .data = &sdma_imx35, पूर्ण,
-	अणु .compatible = "fsl,imx31-sdma", .data = &sdma_imx31, पूर्ण,
-	अणु .compatible = "fsl,imx25-sdma", .data = &sdma_imx25, पूर्ण,
-	अणु .compatible = "fsl,imx7d-sdma", .data = &sdma_imx7d, पूर्ण,
-	अणु .compatible = "fsl,imx8mq-sdma", .data = &sdma_imx8mq, पूर्ण,
-	अणु /* sentinel */ पूर्ण
-पूर्ण;
+static const struct of_device_id sdma_dt_ids[] = {
+	{ .compatible = "fsl,imx6q-sdma", .data = &sdma_imx6q, },
+	{ .compatible = "fsl,imx53-sdma", .data = &sdma_imx53, },
+	{ .compatible = "fsl,imx51-sdma", .data = &sdma_imx51, },
+	{ .compatible = "fsl,imx35-sdma", .data = &sdma_imx35, },
+	{ .compatible = "fsl,imx31-sdma", .data = &sdma_imx31, },
+	{ .compatible = "fsl,imx25-sdma", .data = &sdma_imx25, },
+	{ .compatible = "fsl,imx7d-sdma", .data = &sdma_imx7d, },
+	{ .compatible = "fsl,imx8mq-sdma", .data = &sdma_imx8mq, },
+	{ /* sentinel */ }
+};
 MODULE_DEVICE_TABLE(of, sdma_dt_ids);
 
-#घोषणा SDMA_H_CONFIG_DSPDMA	BIT(12) /* indicates अगर the DSPDMA is used */
-#घोषणा SDMA_H_CONFIG_RTD_PINS	BIT(11) /* indicates अगर Real-Time Debug pins are enabled */
-#घोषणा SDMA_H_CONFIG_ACR	BIT(4)  /* indicates अगर AHB freq /core freq = 2 or 1 */
-#घोषणा SDMA_H_CONFIG_CSM	(3)       /* indicates which context चयन mode is selected*/
+#define SDMA_H_CONFIG_DSPDMA	BIT(12) /* indicates if the DSPDMA is used */
+#define SDMA_H_CONFIG_RTD_PINS	BIT(11) /* indicates if Real-Time Debug pins are enabled */
+#define SDMA_H_CONFIG_ACR	BIT(4)  /* indicates if AHB freq /core freq = 2 or 1 */
+#define SDMA_H_CONFIG_CSM	(3)       /* indicates which context switch mode is selected*/
 
-अटल अंतरभूत u32 chnenbl_ofs(काष्ठा sdma_engine *sdma, अचिन्हित पूर्णांक event)
-अणु
+static inline u32 chnenbl_ofs(struct sdma_engine *sdma, unsigned int event)
+{
 	u32 chnenbl0 = sdma->drvdata->chnenbl0;
-	वापस chnenbl0 + event * 4;
-पूर्ण
+	return chnenbl0 + event * 4;
+}
 
-अटल पूर्णांक sdma_config_ownership(काष्ठा sdma_channel *sdmac,
+static int sdma_config_ownership(struct sdma_channel *sdmac,
 		bool event_override, bool mcu_override, bool dsp_override)
-अणु
-	काष्ठा sdma_engine *sdma = sdmac->sdma;
-	पूर्णांक channel = sdmac->channel;
-	अचिन्हित दीर्घ evt, mcu, dsp;
+{
+	struct sdma_engine *sdma = sdmac->sdma;
+	int channel = sdmac->channel;
+	unsigned long evt, mcu, dsp;
 
-	अगर (event_override && mcu_override && dsp_override)
-		वापस -EINVAL;
+	if (event_override && mcu_override && dsp_override)
+		return -EINVAL;
 
-	evt = पढ़ोl_relaxed(sdma->regs + SDMA_H_EVTOVR);
-	mcu = पढ़ोl_relaxed(sdma->regs + SDMA_H_HOSTOVR);
-	dsp = पढ़ोl_relaxed(sdma->regs + SDMA_H_DSPOVR);
+	evt = readl_relaxed(sdma->regs + SDMA_H_EVTOVR);
+	mcu = readl_relaxed(sdma->regs + SDMA_H_HOSTOVR);
+	dsp = readl_relaxed(sdma->regs + SDMA_H_DSPOVR);
 
-	अगर (dsp_override)
+	if (dsp_override)
 		__clear_bit(channel, &dsp);
-	अन्यथा
+	else
 		__set_bit(channel, &dsp);
 
-	अगर (event_override)
+	if (event_override)
 		__clear_bit(channel, &evt);
-	अन्यथा
+	else
 		__set_bit(channel, &evt);
 
-	अगर (mcu_override)
+	if (mcu_override)
 		__clear_bit(channel, &mcu);
-	अन्यथा
+	else
 		__set_bit(channel, &mcu);
 
-	ग_लिखोl_relaxed(evt, sdma->regs + SDMA_H_EVTOVR);
-	ग_लिखोl_relaxed(mcu, sdma->regs + SDMA_H_HOSTOVR);
-	ग_लिखोl_relaxed(dsp, sdma->regs + SDMA_H_DSPOVR);
+	writel_relaxed(evt, sdma->regs + SDMA_H_EVTOVR);
+	writel_relaxed(mcu, sdma->regs + SDMA_H_HOSTOVR);
+	writel_relaxed(dsp, sdma->regs + SDMA_H_DSPOVR);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम sdma_enable_channel(काष्ठा sdma_engine *sdma, पूर्णांक channel)
-अणु
-	ग_लिखोl(BIT(channel), sdma->regs + SDMA_H_START);
-पूर्ण
+static void sdma_enable_channel(struct sdma_engine *sdma, int channel)
+{
+	writel(BIT(channel), sdma->regs + SDMA_H_START);
+}
 
 /*
- * sdma_run_channel0 - run a channel and रुको till it's करोne
+ * sdma_run_channel0 - run a channel and wait till it's done
  */
-अटल पूर्णांक sdma_run_channel0(काष्ठा sdma_engine *sdma)
-अणु
-	पूर्णांक ret;
+static int sdma_run_channel0(struct sdma_engine *sdma)
+{
+	int ret;
 	u32 reg;
 
 	sdma_enable_channel(sdma, 0);
 
-	ret = पढ़ोl_relaxed_poll_समयout_atomic(sdma->regs + SDMA_H_STATSTOP,
+	ret = readl_relaxed_poll_timeout_atomic(sdma->regs + SDMA_H_STATSTOP,
 						reg, !(reg & 1), 1, 500);
-	अगर (ret)
+	if (ret)
 		dev_err(sdma->dev, "Timeout waiting for CH0 ready\n");
 
-	/* Set bits of CONFIG रेजिस्टर with dynamic context चयनing */
-	reg = पढ़ोl(sdma->regs + SDMA_H_CONFIG);
-	अगर ((reg & SDMA_H_CONFIG_CSM) == 0) अणु
+	/* Set bits of CONFIG register with dynamic context switching */
+	reg = readl(sdma->regs + SDMA_H_CONFIG);
+	if ((reg & SDMA_H_CONFIG_CSM) == 0) {
 		reg |= SDMA_H_CONFIG_CSM;
-		ग_लिखोl_relaxed(reg, sdma->regs + SDMA_H_CONFIG);
-	पूर्ण
+		writel_relaxed(reg, sdma->regs + SDMA_H_CONFIG);
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक sdma_load_script(काष्ठा sdma_engine *sdma, व्योम *buf, पूर्णांक size,
+static int sdma_load_script(struct sdma_engine *sdma, void *buf, int size,
 		u32 address)
-अणु
-	काष्ठा sdma_buffer_descriptor *bd0 = sdma->bd0;
-	व्योम *buf_virt;
+{
+	struct sdma_buffer_descriptor *bd0 = sdma->bd0;
+	void *buf_virt;
 	dma_addr_t buf_phys;
-	पूर्णांक ret;
-	अचिन्हित दीर्घ flags;
+	int ret;
+	unsigned long flags;
 
 	buf_virt = dma_alloc_coherent(sdma->dev, size, &buf_phys, GFP_KERNEL);
-	अगर (!buf_virt) अणु
-		वापस -ENOMEM;
-	पूर्ण
+	if (!buf_virt) {
+		return -ENOMEM;
+	}
 
 	spin_lock_irqsave(&sdma->channel_0_lock, flags);
 
@@ -679,57 +678,57 @@ MODULE_DEVICE_TABLE(of, sdma_dt_ids);
 	bd0->buffer_addr = buf_phys;
 	bd0->ext_buffer_addr = address;
 
-	स_नकल(buf_virt, buf, size);
+	memcpy(buf_virt, buf, size);
 
 	ret = sdma_run_channel0(sdma);
 
 	spin_unlock_irqrestore(&sdma->channel_0_lock, flags);
 
-	dma_मुक्त_coherent(sdma->dev, size, buf_virt, buf_phys);
+	dma_free_coherent(sdma->dev, size, buf_virt, buf_phys);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम sdma_event_enable(काष्ठा sdma_channel *sdmac, अचिन्हित पूर्णांक event)
-अणु
-	काष्ठा sdma_engine *sdma = sdmac->sdma;
-	पूर्णांक channel = sdmac->channel;
-	अचिन्हित दीर्घ val;
+static void sdma_event_enable(struct sdma_channel *sdmac, unsigned int event)
+{
+	struct sdma_engine *sdma = sdmac->sdma;
+	int channel = sdmac->channel;
+	unsigned long val;
 	u32 chnenbl = chnenbl_ofs(sdma, event);
 
-	val = पढ़ोl_relaxed(sdma->regs + chnenbl);
+	val = readl_relaxed(sdma->regs + chnenbl);
 	__set_bit(channel, &val);
-	ग_लिखोl_relaxed(val, sdma->regs + chnenbl);
-पूर्ण
+	writel_relaxed(val, sdma->regs + chnenbl);
+}
 
-अटल व्योम sdma_event_disable(काष्ठा sdma_channel *sdmac, अचिन्हित पूर्णांक event)
-अणु
-	काष्ठा sdma_engine *sdma = sdmac->sdma;
-	पूर्णांक channel = sdmac->channel;
+static void sdma_event_disable(struct sdma_channel *sdmac, unsigned int event)
+{
+	struct sdma_engine *sdma = sdmac->sdma;
+	int channel = sdmac->channel;
 	u32 chnenbl = chnenbl_ofs(sdma, event);
-	अचिन्हित दीर्घ val;
+	unsigned long val;
 
-	val = पढ़ोl_relaxed(sdma->regs + chnenbl);
+	val = readl_relaxed(sdma->regs + chnenbl);
 	__clear_bit(channel, &val);
-	ग_लिखोl_relaxed(val, sdma->regs + chnenbl);
-पूर्ण
+	writel_relaxed(val, sdma->regs + chnenbl);
+}
 
-अटल काष्ठा sdma_desc *to_sdma_desc(काष्ठा dma_async_tx_descriptor *t)
-अणु
-	वापस container_of(t, काष्ठा sdma_desc, vd.tx);
-पूर्ण
+static struct sdma_desc *to_sdma_desc(struct dma_async_tx_descriptor *t)
+{
+	return container_of(t, struct sdma_desc, vd.tx);
+}
 
-अटल व्योम sdma_start_desc(काष्ठा sdma_channel *sdmac)
-अणु
-	काष्ठा virt_dma_desc *vd = vchan_next_desc(&sdmac->vc);
-	काष्ठा sdma_desc *desc;
-	काष्ठा sdma_engine *sdma = sdmac->sdma;
-	पूर्णांक channel = sdmac->channel;
+static void sdma_start_desc(struct sdma_channel *sdmac)
+{
+	struct virt_dma_desc *vd = vchan_next_desc(&sdmac->vc);
+	struct sdma_desc *desc;
+	struct sdma_engine *sdma = sdmac->sdma;
+	int channel = sdmac->channel;
 
-	अगर (!vd) अणु
-		sdmac->desc = शून्य;
-		वापस;
-	पूर्ण
+	if (!vd) {
+		sdmac->desc = NULL;
+		return;
+	}
 	sdmac->desc = desc = to_sdma_desc(&vd->tx);
 
 	list_del(&vd->node);
@@ -737,31 +736,31 @@ MODULE_DEVICE_TABLE(of, sdma_dt_ids);
 	sdma->channel_control[channel].base_bd_ptr = desc->bd_phys;
 	sdma->channel_control[channel].current_bd_ptr = desc->bd_phys;
 	sdma_enable_channel(sdma, sdmac->channel);
-पूर्ण
+}
 
-अटल व्योम sdma_update_channel_loop(काष्ठा sdma_channel *sdmac)
-अणु
-	काष्ठा sdma_buffer_descriptor *bd;
-	पूर्णांक error = 0;
-	क्रमागत dma_status	old_status = sdmac->status;
+static void sdma_update_channel_loop(struct sdma_channel *sdmac)
+{
+	struct sdma_buffer_descriptor *bd;
+	int error = 0;
+	enum dma_status	old_status = sdmac->status;
 
 	/*
 	 * loop mode. Iterate over descriptors, re-setup them and
 	 * call callback function.
 	 */
-	जबतक (sdmac->desc) अणु
-		काष्ठा sdma_desc *desc = sdmac->desc;
+	while (sdmac->desc) {
+		struct sdma_desc *desc = sdmac->desc;
 
 		bd = &desc->bd[desc->buf_tail];
 
-		अगर (bd->mode.status & BD_DONE)
-			अवरोध;
+		if (bd->mode.status & BD_DONE)
+			break;
 
-		अगर (bd->mode.status & BD_RROR) अणु
+		if (bd->mode.status & BD_RROR) {
 			bd->mode.status &= ~BD_RROR;
 			sdmac->status = DMA_ERROR;
 			error = -EIO;
-		पूर्ण
+		}
 
 	       /*
 		* We use bd->mode.count to calculate the residue, since contains
@@ -775,200 +774,200 @@ MODULE_DEVICE_TABLE(of, sdma_dt_ids);
 		desc->buf_tail = (desc->buf_tail + 1) % desc->num_bd;
 
 		/*
-		 * The callback is called from the पूर्णांकerrupt context in order
-		 * to reduce latency and to aव्योम the risk of altering the
-		 * SDMA transaction status by the समय the client tasklet is
+		 * The callback is called from the interrupt context in order
+		 * to reduce latency and to avoid the risk of altering the
+		 * SDMA transaction status by the time the client tasklet is
 		 * executed.
 		 */
 		spin_unlock(&sdmac->vc.lock);
-		dmaengine_desc_get_callback_invoke(&desc->vd.tx, शून्य);
+		dmaengine_desc_get_callback_invoke(&desc->vd.tx, NULL);
 		spin_lock(&sdmac->vc.lock);
 
-		अगर (error)
+		if (error)
 			sdmac->status = old_status;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम mxc_sdma_handle_channel_normal(काष्ठा sdma_channel *data)
-अणु
-	काष्ठा sdma_channel *sdmac = (काष्ठा sdma_channel *) data;
-	काष्ठा sdma_buffer_descriptor *bd;
-	पूर्णांक i, error = 0;
+static void mxc_sdma_handle_channel_normal(struct sdma_channel *data)
+{
+	struct sdma_channel *sdmac = (struct sdma_channel *) data;
+	struct sdma_buffer_descriptor *bd;
+	int i, error = 0;
 
 	sdmac->desc->chn_real_count = 0;
 	/*
 	 * non loop mode. Iterate over all descriptors, collect
 	 * errors and call callback function
 	 */
-	क्रम (i = 0; i < sdmac->desc->num_bd; i++) अणु
+	for (i = 0; i < sdmac->desc->num_bd; i++) {
 		bd = &sdmac->desc->bd[i];
 
-		 अगर (bd->mode.status & (BD_DONE | BD_RROR))
+		 if (bd->mode.status & (BD_DONE | BD_RROR))
 			error = -EIO;
 		 sdmac->desc->chn_real_count += bd->mode.count;
-	पूर्ण
+	}
 
-	अगर (error)
+	if (error)
 		sdmac->status = DMA_ERROR;
-	अन्यथा
+	else
 		sdmac->status = DMA_COMPLETE;
-पूर्ण
+}
 
-अटल irqवापस_t sdma_पूर्णांक_handler(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा sdma_engine *sdma = dev_id;
-	अचिन्हित दीर्घ stat;
+static irqreturn_t sdma_int_handler(int irq, void *dev_id)
+{
+	struct sdma_engine *sdma = dev_id;
+	unsigned long stat;
 
-	stat = पढ़ोl_relaxed(sdma->regs + SDMA_H_INTR);
-	ग_लिखोl_relaxed(stat, sdma->regs + SDMA_H_INTR);
+	stat = readl_relaxed(sdma->regs + SDMA_H_INTR);
+	writel_relaxed(stat, sdma->regs + SDMA_H_INTR);
 	/* channel 0 is special and not handled here, see run_channel0() */
 	stat &= ~1;
 
-	जबतक (stat) अणु
-		पूर्णांक channel = fls(stat) - 1;
-		काष्ठा sdma_channel *sdmac = &sdma->channel[channel];
-		काष्ठा sdma_desc *desc;
+	while (stat) {
+		int channel = fls(stat) - 1;
+		struct sdma_channel *sdmac = &sdma->channel[channel];
+		struct sdma_desc *desc;
 
 		spin_lock(&sdmac->vc.lock);
 		desc = sdmac->desc;
-		अगर (desc) अणु
-			अगर (sdmac->flags & IMX_DMA_SG_LOOP) अणु
+		if (desc) {
+			if (sdmac->flags & IMX_DMA_SG_LOOP) {
 				sdma_update_channel_loop(sdmac);
-			पूर्ण अन्यथा अणु
+			} else {
 				mxc_sdma_handle_channel_normal(sdmac);
 				vchan_cookie_complete(&desc->vd);
 				sdma_start_desc(sdmac);
-			पूर्ण
-		पूर्ण
+			}
+		}
 
 		spin_unlock(&sdmac->vc.lock);
 		__clear_bit(channel, &stat);
-	पूर्ण
+	}
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
 /*
  * sets the pc of SDMA script according to the peripheral type
  */
-अटल व्योम sdma_get_pc(काष्ठा sdma_channel *sdmac,
-		क्रमागत sdma_peripheral_type peripheral_type)
-अणु
-	काष्ठा sdma_engine *sdma = sdmac->sdma;
-	पूर्णांक per_2_emi = 0, emi_2_per = 0;
+static void sdma_get_pc(struct sdma_channel *sdmac,
+		enum sdma_peripheral_type peripheral_type)
+{
+	struct sdma_engine *sdma = sdmac->sdma;
+	int per_2_emi = 0, emi_2_per = 0;
 	/*
 	 * These are needed once we start to support transfers between
 	 * two peripherals or memory-to-memory transfers
 	 */
-	पूर्णांक per_2_per = 0, emi_2_emi = 0;
+	int per_2_per = 0, emi_2_emi = 0;
 
 	sdmac->pc_from_device = 0;
 	sdmac->pc_to_device = 0;
 	sdmac->device_to_device = 0;
 	sdmac->pc_to_pc = 0;
 
-	चयन (peripheral_type) अणु
-	हाल IMX_DMATYPE_MEMORY:
+	switch (peripheral_type) {
+	case IMX_DMATYPE_MEMORY:
 		emi_2_emi = sdma->script_addrs->ap_2_ap_addr;
-		अवरोध;
-	हाल IMX_DMATYPE_DSP:
+		break;
+	case IMX_DMATYPE_DSP:
 		emi_2_per = sdma->script_addrs->bp_2_ap_addr;
 		per_2_emi = sdma->script_addrs->ap_2_bp_addr;
-		अवरोध;
-	हाल IMX_DMATYPE_FIRI:
+		break;
+	case IMX_DMATYPE_FIRI:
 		per_2_emi = sdma->script_addrs->firi_2_mcu_addr;
 		emi_2_per = sdma->script_addrs->mcu_2_firi_addr;
-		अवरोध;
-	हाल IMX_DMATYPE_UART:
+		break;
+	case IMX_DMATYPE_UART:
 		per_2_emi = sdma->script_addrs->uart_2_mcu_addr;
 		emi_2_per = sdma->script_addrs->mcu_2_app_addr;
-		अवरोध;
-	हाल IMX_DMATYPE_UART_SP:
+		break;
+	case IMX_DMATYPE_UART_SP:
 		per_2_emi = sdma->script_addrs->uartsh_2_mcu_addr;
 		emi_2_per = sdma->script_addrs->mcu_2_shp_addr;
-		अवरोध;
-	हाल IMX_DMATYPE_ATA:
+		break;
+	case IMX_DMATYPE_ATA:
 		per_2_emi = sdma->script_addrs->ata_2_mcu_addr;
 		emi_2_per = sdma->script_addrs->mcu_2_ata_addr;
-		अवरोध;
-	हाल IMX_DMATYPE_CSPI:
-	हाल IMX_DMATYPE_EXT:
-	हाल IMX_DMATYPE_SSI:
-	हाल IMX_DMATYPE_SAI:
+		break;
+	case IMX_DMATYPE_CSPI:
+	case IMX_DMATYPE_EXT:
+	case IMX_DMATYPE_SSI:
+	case IMX_DMATYPE_SAI:
 		per_2_emi = sdma->script_addrs->app_2_mcu_addr;
 		emi_2_per = sdma->script_addrs->mcu_2_app_addr;
-		अवरोध;
-	हाल IMX_DMATYPE_SSI_DUAL:
+		break;
+	case IMX_DMATYPE_SSI_DUAL:
 		per_2_emi = sdma->script_addrs->ssish_2_mcu_addr;
 		emi_2_per = sdma->script_addrs->mcu_2_ssish_addr;
-		अवरोध;
-	हाल IMX_DMATYPE_SSI_SP:
-	हाल IMX_DMATYPE_MMC:
-	हाल IMX_DMATYPE_SDHC:
-	हाल IMX_DMATYPE_CSPI_SP:
-	हाल IMX_DMATYPE_ESAI:
-	हाल IMX_DMATYPE_MSHC_SP:
+		break;
+	case IMX_DMATYPE_SSI_SP:
+	case IMX_DMATYPE_MMC:
+	case IMX_DMATYPE_SDHC:
+	case IMX_DMATYPE_CSPI_SP:
+	case IMX_DMATYPE_ESAI:
+	case IMX_DMATYPE_MSHC_SP:
 		per_2_emi = sdma->script_addrs->shp_2_mcu_addr;
 		emi_2_per = sdma->script_addrs->mcu_2_shp_addr;
-		अवरोध;
-	हाल IMX_DMATYPE_ASRC:
+		break;
+	case IMX_DMATYPE_ASRC:
 		per_2_emi = sdma->script_addrs->asrc_2_mcu_addr;
 		emi_2_per = sdma->script_addrs->asrc_2_mcu_addr;
 		per_2_per = sdma->script_addrs->per_2_per_addr;
-		अवरोध;
-	हाल IMX_DMATYPE_ASRC_SP:
+		break;
+	case IMX_DMATYPE_ASRC_SP:
 		per_2_emi = sdma->script_addrs->shp_2_mcu_addr;
 		emi_2_per = sdma->script_addrs->mcu_2_shp_addr;
 		per_2_per = sdma->script_addrs->per_2_per_addr;
-		अवरोध;
-	हाल IMX_DMATYPE_MSHC:
+		break;
+	case IMX_DMATYPE_MSHC:
 		per_2_emi = sdma->script_addrs->mshc_2_mcu_addr;
 		emi_2_per = sdma->script_addrs->mcu_2_mshc_addr;
-		अवरोध;
-	हाल IMX_DMATYPE_CCM:
+		break;
+	case IMX_DMATYPE_CCM:
 		per_2_emi = sdma->script_addrs->dptc_dvfs_addr;
-		अवरोध;
-	हाल IMX_DMATYPE_SPDIF:
-		per_2_emi = sdma->script_addrs->spdअगर_2_mcu_addr;
-		emi_2_per = sdma->script_addrs->mcu_2_spdअगर_addr;
-		अवरोध;
-	हाल IMX_DMATYPE_IPU_MEMORY:
+		break;
+	case IMX_DMATYPE_SPDIF:
+		per_2_emi = sdma->script_addrs->spdif_2_mcu_addr;
+		emi_2_per = sdma->script_addrs->mcu_2_spdif_addr;
+		break;
+	case IMX_DMATYPE_IPU_MEMORY:
 		emi_2_per = sdma->script_addrs->ext_mem_2_ipu_addr;
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+		break;
+	default:
+		break;
+	}
 
 	sdmac->pc_from_device = per_2_emi;
 	sdmac->pc_to_device = emi_2_per;
 	sdmac->device_to_device = per_2_per;
 	sdmac->pc_to_pc = emi_2_emi;
-पूर्ण
+}
 
-अटल पूर्णांक sdma_load_context(काष्ठा sdma_channel *sdmac)
-अणु
-	काष्ठा sdma_engine *sdma = sdmac->sdma;
-	पूर्णांक channel = sdmac->channel;
-	पूर्णांक load_address;
-	काष्ठा sdma_context_data *context = sdma->context;
-	काष्ठा sdma_buffer_descriptor *bd0 = sdma->bd0;
-	पूर्णांक ret;
-	अचिन्हित दीर्घ flags;
+static int sdma_load_context(struct sdma_channel *sdmac)
+{
+	struct sdma_engine *sdma = sdmac->sdma;
+	int channel = sdmac->channel;
+	int load_address;
+	struct sdma_context_data *context = sdma->context;
+	struct sdma_buffer_descriptor *bd0 = sdma->bd0;
+	int ret;
+	unsigned long flags;
 
-	अगर (sdmac->context_loaded)
-		वापस 0;
+	if (sdmac->context_loaded)
+		return 0;
 
-	अगर (sdmac->direction == DMA_DEV_TO_MEM)
+	if (sdmac->direction == DMA_DEV_TO_MEM)
 		load_address = sdmac->pc_from_device;
-	अन्यथा अगर (sdmac->direction == DMA_DEV_TO_DEV)
+	else if (sdmac->direction == DMA_DEV_TO_DEV)
 		load_address = sdmac->device_to_device;
-	अन्यथा अगर (sdmac->direction == DMA_MEM_TO_MEM)
+	else if (sdmac->direction == DMA_MEM_TO_MEM)
 		load_address = sdmac->pc_to_pc;
-	अन्यथा
+	else
 		load_address = sdmac->pc_to_device;
 
-	अगर (load_address < 0)
-		वापस load_address;
+	if (load_address < 0)
+		return load_address;
 
 	dev_dbg(sdma->dev, "load_address = %d\n", load_address);
 	dev_dbg(sdma->dev, "wml = 0x%08x\n", (u32)sdmac->watermark_level);
@@ -979,10 +978,10 @@ MODULE_DEVICE_TABLE(of, sdma_dt_ids);
 
 	spin_lock_irqsave(&sdma->channel_0_lock, flags);
 
-	स_रखो(context, 0, माप(*context));
+	memset(context, 0, sizeof(*context));
 	context->channel_state.pc = load_address;
 
-	/* Send by context the event mask,base address क्रम peripheral
+	/* Send by context the event mask,base address for peripheral
 	 * and watermark level
 	 */
 	context->gReg[0] = sdmac->event_mask[1];
@@ -993,43 +992,43 @@ MODULE_DEVICE_TABLE(of, sdma_dt_ids);
 
 	bd0->mode.command = C0_SETDM;
 	bd0->mode.status = BD_DONE | BD_WRAP | BD_EXTD;
-	bd0->mode.count = माप(*context) / 4;
+	bd0->mode.count = sizeof(*context) / 4;
 	bd0->buffer_addr = sdma->context_phys;
-	bd0->ext_buffer_addr = 2048 + (माप(*context) / 4) * channel;
+	bd0->ext_buffer_addr = 2048 + (sizeof(*context) / 4) * channel;
 	ret = sdma_run_channel0(sdma);
 
 	spin_unlock_irqrestore(&sdma->channel_0_lock, flags);
 
 	sdmac->context_loaded = true;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल काष्ठा sdma_channel *to_sdma_chan(काष्ठा dma_chan *chan)
-अणु
-	वापस container_of(chan, काष्ठा sdma_channel, vc.chan);
-पूर्ण
+static struct sdma_channel *to_sdma_chan(struct dma_chan *chan)
+{
+	return container_of(chan, struct sdma_channel, vc.chan);
+}
 
-अटल पूर्णांक sdma_disable_channel(काष्ठा dma_chan *chan)
-अणु
-	काष्ठा sdma_channel *sdmac = to_sdma_chan(chan);
-	काष्ठा sdma_engine *sdma = sdmac->sdma;
-	पूर्णांक channel = sdmac->channel;
+static int sdma_disable_channel(struct dma_chan *chan)
+{
+	struct sdma_channel *sdmac = to_sdma_chan(chan);
+	struct sdma_engine *sdma = sdmac->sdma;
+	int channel = sdmac->channel;
 
-	ग_लिखोl_relaxed(BIT(channel), sdma->regs + SDMA_H_STATSTOP);
+	writel_relaxed(BIT(channel), sdma->regs + SDMA_H_STATSTOP);
 	sdmac->status = DMA_ERROR;
 
-	वापस 0;
-पूर्ण
-अटल व्योम sdma_channel_terminate_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा sdma_channel *sdmac = container_of(work, काष्ठा sdma_channel,
+	return 0;
+}
+static void sdma_channel_terminate_work(struct work_struct *work)
+{
+	struct sdma_channel *sdmac = container_of(work, struct sdma_channel,
 						  terminate_worker);
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 	LIST_HEAD(head);
 
 	/*
-	 * According to NXP R&D team a delay of one BD SDMA cost समय
+	 * According to NXP R&D team a delay of one BD SDMA cost time
 	 * (maximum is 1ms) should be added after disable of the channel
 	 * bit, to ensure SDMA core has really been stopped after SDMA
 	 * clients call .device_terminate_all.
@@ -1039,53 +1038,53 @@ MODULE_DEVICE_TABLE(of, sdma_dt_ids);
 	spin_lock_irqsave(&sdmac->vc.lock, flags);
 	vchan_get_all_descriptors(&sdmac->vc, &head);
 	spin_unlock_irqrestore(&sdmac->vc.lock, flags);
-	vchan_dma_desc_मुक्त_list(&sdmac->vc, &head);
+	vchan_dma_desc_free_list(&sdmac->vc, &head);
 	sdmac->context_loaded = false;
-पूर्ण
+}
 
-अटल पूर्णांक sdma_terminate_all(काष्ठा dma_chan *chan)
-अणु
-	काष्ठा sdma_channel *sdmac = to_sdma_chan(chan);
-	अचिन्हित दीर्घ flags;
+static int sdma_terminate_all(struct dma_chan *chan)
+{
+	struct sdma_channel *sdmac = to_sdma_chan(chan);
+	unsigned long flags;
 
 	spin_lock_irqsave(&sdmac->vc.lock, flags);
 
 	sdma_disable_channel(chan);
 
-	अगर (sdmac->desc) अणु
+	if (sdmac->desc) {
 		vchan_terminate_vdesc(&sdmac->desc->vd);
-		sdmac->desc = शून्य;
+		sdmac->desc = NULL;
 		schedule_work(&sdmac->terminate_worker);
-	पूर्ण
+	}
 
 	spin_unlock_irqrestore(&sdmac->vc.lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम sdma_channel_synchronize(काष्ठा dma_chan *chan)
-अणु
-	काष्ठा sdma_channel *sdmac = to_sdma_chan(chan);
+static void sdma_channel_synchronize(struct dma_chan *chan)
+{
+	struct sdma_channel *sdmac = to_sdma_chan(chan);
 
 	vchan_synchronize(&sdmac->vc);
 
 	flush_work(&sdmac->terminate_worker);
-पूर्ण
+}
 
-अटल व्योम sdma_set_watermarklevel_क्रम_p2p(काष्ठा sdma_channel *sdmac)
-अणु
-	काष्ठा sdma_engine *sdma = sdmac->sdma;
+static void sdma_set_watermarklevel_for_p2p(struct sdma_channel *sdmac)
+{
+	struct sdma_engine *sdma = sdmac->sdma;
 
-	पूर्णांक lwml = sdmac->watermark_level & SDMA_WATERMARK_LEVEL_LWML;
-	पूर्णांक hwml = (sdmac->watermark_level & SDMA_WATERMARK_LEVEL_HWML) >> 16;
+	int lwml = sdmac->watermark_level & SDMA_WATERMARK_LEVEL_LWML;
+	int hwml = (sdmac->watermark_level & SDMA_WATERMARK_LEVEL_HWML) >> 16;
 
 	set_bit(sdmac->event_id0 % 32, &sdmac->event_mask[1]);
 	set_bit(sdmac->event_id1 % 32, &sdmac->event_mask[0]);
 
-	अगर (sdmac->event_id0 > 31)
+	if (sdmac->event_id0 > 31)
 		sdmac->watermark_level |= SDMA_WATERMARK_LEVEL_LWE;
 
-	अगर (sdmac->event_id1 > 31)
+	if (sdmac->event_id1 > 31)
 		sdmac->watermark_level |= SDMA_WATERMARK_LEVEL_HWE;
 
 	/*
@@ -1093,29 +1092,29 @@ MODULE_DEVICE_TABLE(of, sdma_dt_ids);
 	 * swap LWML and HWML of INFO(A.3.2.5.1), also need swap
 	 * r0(event_mask[1]) and r1(event_mask[0]).
 	 */
-	अगर (lwml > hwml) अणु
+	if (lwml > hwml) {
 		sdmac->watermark_level &= ~(SDMA_WATERMARK_LEVEL_LWML |
 						SDMA_WATERMARK_LEVEL_HWML);
 		sdmac->watermark_level |= hwml;
 		sdmac->watermark_level |= lwml << 16;
 		swap(sdmac->event_mask[0], sdmac->event_mask[1]);
-	पूर्ण
+	}
 
-	अगर (sdmac->per_address2 >= sdma->spba_start_addr &&
+	if (sdmac->per_address2 >= sdma->spba_start_addr &&
 			sdmac->per_address2 <= sdma->spba_end_addr)
 		sdmac->watermark_level |= SDMA_WATERMARK_LEVEL_SP;
 
-	अगर (sdmac->per_address >= sdma->spba_start_addr &&
+	if (sdmac->per_address >= sdma->spba_start_addr &&
 			sdmac->per_address <= sdma->spba_end_addr)
 		sdmac->watermark_level |= SDMA_WATERMARK_LEVEL_DP;
 
 	sdmac->watermark_level |= SDMA_WATERMARK_LEVEL_CONT;
-पूर्ण
+}
 
-अटल पूर्णांक sdma_config_channel(काष्ठा dma_chan *chan)
-अणु
-	काष्ठा sdma_channel *sdmac = to_sdma_chan(chan);
-	पूर्णांक ret;
+static int sdma_config_channel(struct dma_chan *chan)
+{
+	struct sdma_channel *sdmac = to_sdma_chan(chan);
+	int ret;
 
 	sdma_disable_channel(chan);
 
@@ -1124,128 +1123,128 @@ MODULE_DEVICE_TABLE(of, sdma_dt_ids);
 	sdmac->shp_addr = 0;
 	sdmac->per_addr = 0;
 
-	चयन (sdmac->peripheral_type) अणु
-	हाल IMX_DMATYPE_DSP:
+	switch (sdmac->peripheral_type) {
+	case IMX_DMATYPE_DSP:
 		sdma_config_ownership(sdmac, false, true, true);
-		अवरोध;
-	हाल IMX_DMATYPE_MEMORY:
+		break;
+	case IMX_DMATYPE_MEMORY:
 		sdma_config_ownership(sdmac, false, true, false);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		sdma_config_ownership(sdmac, true, true, false);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	sdma_get_pc(sdmac, sdmac->peripheral_type);
 
-	अगर ((sdmac->peripheral_type != IMX_DMATYPE_MEMORY) &&
-			(sdmac->peripheral_type != IMX_DMATYPE_DSP)) अणु
-		/* Handle multiple event channels dअगरferently */
-		अगर (sdmac->event_id1) अणु
-			अगर (sdmac->peripheral_type == IMX_DMATYPE_ASRC_SP ||
+	if ((sdmac->peripheral_type != IMX_DMATYPE_MEMORY) &&
+			(sdmac->peripheral_type != IMX_DMATYPE_DSP)) {
+		/* Handle multiple event channels differently */
+		if (sdmac->event_id1) {
+			if (sdmac->peripheral_type == IMX_DMATYPE_ASRC_SP ||
 			    sdmac->peripheral_type == IMX_DMATYPE_ASRC)
-				sdma_set_watermarklevel_क्रम_p2p(sdmac);
-		पूर्ण अन्यथा
+				sdma_set_watermarklevel_for_p2p(sdmac);
+		} else
 			__set_bit(sdmac->event_id0, sdmac->event_mask);
 
 		/* Address */
 		sdmac->shp_addr = sdmac->per_address;
 		sdmac->per_addr = sdmac->per_address2;
-	पूर्ण अन्यथा अणु
+	} else {
 		sdmac->watermark_level = 0; /* FIXME: M3_BASE_ADDRESS */
-	पूर्ण
+	}
 
 	ret = sdma_load_context(sdmac);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक sdma_set_channel_priority(काष्ठा sdma_channel *sdmac,
-		अचिन्हित पूर्णांक priority)
-अणु
-	काष्ठा sdma_engine *sdma = sdmac->sdma;
-	पूर्णांक channel = sdmac->channel;
+static int sdma_set_channel_priority(struct sdma_channel *sdmac,
+		unsigned int priority)
+{
+	struct sdma_engine *sdma = sdmac->sdma;
+	int channel = sdmac->channel;
 
-	अगर (priority < MXC_SDMA_MIN_PRIORITY
-	    || priority > MXC_SDMA_MAX_PRIORITY) अणु
-		वापस -EINVAL;
-	पूर्ण
+	if (priority < MXC_SDMA_MIN_PRIORITY
+	    || priority > MXC_SDMA_MAX_PRIORITY) {
+		return -EINVAL;
+	}
 
-	ग_लिखोl_relaxed(priority, sdma->regs + SDMA_CHNPRI_0 + 4 * channel);
+	writel_relaxed(priority, sdma->regs + SDMA_CHNPRI_0 + 4 * channel);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sdma_request_channel0(काष्ठा sdma_engine *sdma)
-अणु
-	पूर्णांक ret = -EBUSY;
+static int sdma_request_channel0(struct sdma_engine *sdma)
+{
+	int ret = -EBUSY;
 
 	sdma->bd0 = dma_alloc_coherent(sdma->dev, PAGE_SIZE, &sdma->bd0_phys,
 					GFP_NOWAIT);
-	अगर (!sdma->bd0) अणु
+	if (!sdma->bd0) {
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	sdma->channel_control[0].base_bd_ptr = sdma->bd0_phys;
 	sdma->channel_control[0].current_bd_ptr = sdma->bd0_phys;
 
 	sdma_set_channel_priority(&sdma->channel[0], MXC_SDMA_DEFAULT_PRIORITY);
-	वापस 0;
+	return 0;
 out:
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 
-अटल पूर्णांक sdma_alloc_bd(काष्ठा sdma_desc *desc)
-अणु
-	u32 bd_size = desc->num_bd * माप(काष्ठा sdma_buffer_descriptor);
-	पूर्णांक ret = 0;
+static int sdma_alloc_bd(struct sdma_desc *desc)
+{
+	u32 bd_size = desc->num_bd * sizeof(struct sdma_buffer_descriptor);
+	int ret = 0;
 
 	desc->bd = dma_alloc_coherent(desc->sdmac->sdma->dev, bd_size,
 				       &desc->bd_phys, GFP_NOWAIT);
-	अगर (!desc->bd) अणु
+	if (!desc->bd) {
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम sdma_मुक्त_bd(काष्ठा sdma_desc *desc)
-अणु
-	u32 bd_size = desc->num_bd * माप(काष्ठा sdma_buffer_descriptor);
+static void sdma_free_bd(struct sdma_desc *desc)
+{
+	u32 bd_size = desc->num_bd * sizeof(struct sdma_buffer_descriptor);
 
-	dma_मुक्त_coherent(desc->sdmac->sdma->dev, bd_size, desc->bd,
+	dma_free_coherent(desc->sdmac->sdma->dev, bd_size, desc->bd,
 			  desc->bd_phys);
-पूर्ण
+}
 
-अटल व्योम sdma_desc_मुक्त(काष्ठा virt_dma_desc *vd)
-अणु
-	काष्ठा sdma_desc *desc = container_of(vd, काष्ठा sdma_desc, vd);
+static void sdma_desc_free(struct virt_dma_desc *vd)
+{
+	struct sdma_desc *desc = container_of(vd, struct sdma_desc, vd);
 
-	sdma_मुक्त_bd(desc);
-	kमुक्त(desc);
-पूर्ण
+	sdma_free_bd(desc);
+	kfree(desc);
+}
 
-अटल पूर्णांक sdma_alloc_chan_resources(काष्ठा dma_chan *chan)
-अणु
-	काष्ठा sdma_channel *sdmac = to_sdma_chan(chan);
-	काष्ठा imx_dma_data *data = chan->निजी;
-	काष्ठा imx_dma_data mem_data;
-	पूर्णांक prio, ret;
+static int sdma_alloc_chan_resources(struct dma_chan *chan)
+{
+	struct sdma_channel *sdmac = to_sdma_chan(chan);
+	struct imx_dma_data *data = chan->private;
+	struct imx_dma_data mem_data;
+	int prio, ret;
 
 	/*
-	 * MEMCPY may never setup chan->निजी by filter function such as
-	 * dmatest, thus create 'struct imx_dma_data mem_data' क्रम this हाल.
-	 * Please note in any other slave हाल, you have to setup chan->निजी
-	 * with 'struct imx_dma_data' in your own filter function अगर you want to
+	 * MEMCPY may never setup chan->private by filter function such as
+	 * dmatest, thus create 'struct imx_dma_data mem_data' for this case.
+	 * Please note in any other slave case, you have to setup chan->private
+	 * with 'struct imx_dma_data' in your own filter function if you want to
 	 * request dma channel by dma_request_channel() rather than
 	 * dma_request_slave_channel(). Othwise, 'MEMCPY in case?' will appear
 	 * to warn you to correct your filter function.
 	 */
-	अगर (!data) अणु
+	if (!data) {
 		dev_dbg(sdmac->sdma->dev, "MEMCPY in case?\n");
 		mem_data.priority = 2;
 		mem_data.peripheral_type = IMX_DMATYPE_MEMORY;
@@ -1254,56 +1253,56 @@ out:
 		data = &mem_data;
 
 		sdma_get_pc(sdmac, IMX_DMATYPE_MEMORY);
-	पूर्ण
+	}
 
-	चयन (data->priority) अणु
-	हाल DMA_PRIO_HIGH:
+	switch (data->priority) {
+	case DMA_PRIO_HIGH:
 		prio = 3;
-		अवरोध;
-	हाल DMA_PRIO_MEDIUM:
+		break;
+	case DMA_PRIO_MEDIUM:
 		prio = 2;
-		अवरोध;
-	हाल DMA_PRIO_LOW:
-	शेष:
+		break;
+	case DMA_PRIO_LOW:
+	default:
 		prio = 1;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	sdmac->peripheral_type = data->peripheral_type;
 	sdmac->event_id0 = data->dma_request;
 	sdmac->event_id1 = data->dma_request2;
 
 	ret = clk_enable(sdmac->sdma->clk_ipg);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 	ret = clk_enable(sdmac->sdma->clk_ahb);
-	अगर (ret)
-		जाओ disable_clk_ipg;
+	if (ret)
+		goto disable_clk_ipg;
 
 	ret = sdma_set_channel_priority(sdmac, prio);
-	अगर (ret)
-		जाओ disable_clk_ahb;
+	if (ret)
+		goto disable_clk_ahb;
 
-	वापस 0;
+	return 0;
 
 disable_clk_ahb:
 	clk_disable(sdmac->sdma->clk_ahb);
 disable_clk_ipg:
 	clk_disable(sdmac->sdma->clk_ipg);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम sdma_मुक्त_chan_resources(काष्ठा dma_chan *chan)
-अणु
-	काष्ठा sdma_channel *sdmac = to_sdma_chan(chan);
-	काष्ठा sdma_engine *sdma = sdmac->sdma;
+static void sdma_free_chan_resources(struct dma_chan *chan)
+{
+	struct sdma_channel *sdmac = to_sdma_chan(chan);
+	struct sdma_engine *sdma = sdmac->sdma;
 
 	sdma_terminate_all(chan);
 
 	sdma_channel_synchronize(chan);
 
 	sdma_event_disable(sdmac, sdmac->event_id0);
-	अगर (sdmac->event_id1)
+	if (sdmac->event_id1)
 		sdma_event_disable(sdmac, sdmac->event_id1);
 
 	sdmac->event_id0 = 0;
@@ -1314,16 +1313,16 @@ disable_clk_ipg:
 
 	clk_disable(sdma->clk_ipg);
 	clk_disable(sdma->clk_ahb);
-पूर्ण
+}
 
-अटल काष्ठा sdma_desc *sdma_transfer_init(काष्ठा sdma_channel *sdmac,
-				क्रमागत dma_transfer_direction direction, u32 bds)
-अणु
-	काष्ठा sdma_desc *desc;
+static struct sdma_desc *sdma_transfer_init(struct sdma_channel *sdmac,
+				enum dma_transfer_direction direction, u32 bds)
+{
+	struct sdma_desc *desc;
 
-	desc = kzalloc((माप(*desc)), GFP_NOWAIT);
-	अगर (!desc)
-		जाओ err_out;
+	desc = kzalloc((sizeof(*desc)), GFP_NOWAIT);
+	if (!desc)
+		goto err_out;
 
 	sdmac->status = DMA_IN_PROGRESS;
 	sdmac->direction = direction;
@@ -1336,49 +1335,49 @@ disable_clk_ipg:
 	desc->sdmac = sdmac;
 	desc->num_bd = bds;
 
-	अगर (sdma_alloc_bd(desc))
-		जाओ err_desc_out;
+	if (sdma_alloc_bd(desc))
+		goto err_desc_out;
 
-	/* No slave_config called in MEMCPY हाल, so करो here */
-	अगर (direction == DMA_MEM_TO_MEM)
+	/* No slave_config called in MEMCPY case, so do here */
+	if (direction == DMA_MEM_TO_MEM)
 		sdma_config_ownership(sdmac, false, true, false);
 
-	अगर (sdma_load_context(sdmac))
-		जाओ err_desc_out;
+	if (sdma_load_context(sdmac))
+		goto err_desc_out;
 
-	वापस desc;
+	return desc;
 
 err_desc_out:
-	kमुक्त(desc);
+	kfree(desc);
 err_out:
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल काष्ठा dma_async_tx_descriptor *sdma_prep_स_नकल(
-		काष्ठा dma_chan *chan, dma_addr_t dma_dst,
-		dma_addr_t dma_src, माप_प्रकार len, अचिन्हित दीर्घ flags)
-अणु
-	काष्ठा sdma_channel *sdmac = to_sdma_chan(chan);
-	काष्ठा sdma_engine *sdma = sdmac->sdma;
-	पूर्णांक channel = sdmac->channel;
-	माप_प्रकार count;
-	पूर्णांक i = 0, param;
-	काष्ठा sdma_buffer_descriptor *bd;
-	काष्ठा sdma_desc *desc;
+static struct dma_async_tx_descriptor *sdma_prep_memcpy(
+		struct dma_chan *chan, dma_addr_t dma_dst,
+		dma_addr_t dma_src, size_t len, unsigned long flags)
+{
+	struct sdma_channel *sdmac = to_sdma_chan(chan);
+	struct sdma_engine *sdma = sdmac->sdma;
+	int channel = sdmac->channel;
+	size_t count;
+	int i = 0, param;
+	struct sdma_buffer_descriptor *bd;
+	struct sdma_desc *desc;
 
-	अगर (!chan || !len)
-		वापस शून्य;
+	if (!chan || !len)
+		return NULL;
 
 	dev_dbg(sdma->dev, "memcpy: %pad->%pad, len=%zu, channel=%d.\n",
 		&dma_src, &dma_dst, len, channel);
 
 	desc = sdma_transfer_init(sdmac, DMA_MEM_TO_MEM,
 					len / SDMA_BD_MAX_CNT + 1);
-	अगर (!desc)
-		वापस शून्य;
+	if (!desc)
+		return NULL;
 
-	करो अणु
-		count = min_t(माप_प्रकार, len, SDMA_BD_MAX_CNT);
+	do {
+		count = min_t(size_t, len, SDMA_BD_MAX_CNT);
 		bd = &desc->bd[i];
 		bd->buffer_addr = dma_src;
 		bd->ext_buffer_addr = dma_dst;
@@ -1393,11 +1392,11 @@ err_out:
 
 		param = BD_DONE | BD_EXTD | BD_CONT;
 		/* last bd */
-		अगर (!len) अणु
+		if (!len) {
 			param |= BD_INTR;
 			param |= BD_LAST;
 			param &= ~BD_CONT;
-		पूर्ण
+		}
 
 		dev_dbg(sdma->dev, "entry %d: count: %zd dma: 0x%x %s%s\n",
 				i, count, bd->buffer_addr,
@@ -1405,77 +1404,77 @@ err_out:
 				param & BD_INTR ? " intr" : "");
 
 		bd->mode.status = param;
-	पूर्ण जबतक (len);
+	} while (len);
 
-	वापस vchan_tx_prep(&sdmac->vc, &desc->vd, flags);
-पूर्ण
+	return vchan_tx_prep(&sdmac->vc, &desc->vd, flags);
+}
 
-अटल काष्ठा dma_async_tx_descriptor *sdma_prep_slave_sg(
-		काष्ठा dma_chan *chan, काष्ठा scatterlist *sgl,
-		अचिन्हित पूर्णांक sg_len, क्रमागत dma_transfer_direction direction,
-		अचिन्हित दीर्घ flags, व्योम *context)
-अणु
-	काष्ठा sdma_channel *sdmac = to_sdma_chan(chan);
-	काष्ठा sdma_engine *sdma = sdmac->sdma;
-	पूर्णांक i, count;
-	पूर्णांक channel = sdmac->channel;
-	काष्ठा scatterlist *sg;
-	काष्ठा sdma_desc *desc;
+static struct dma_async_tx_descriptor *sdma_prep_slave_sg(
+		struct dma_chan *chan, struct scatterlist *sgl,
+		unsigned int sg_len, enum dma_transfer_direction direction,
+		unsigned long flags, void *context)
+{
+	struct sdma_channel *sdmac = to_sdma_chan(chan);
+	struct sdma_engine *sdma = sdmac->sdma;
+	int i, count;
+	int channel = sdmac->channel;
+	struct scatterlist *sg;
+	struct sdma_desc *desc;
 
-	sdma_config_ग_लिखो(chan, &sdmac->slave_config, direction);
+	sdma_config_write(chan, &sdmac->slave_config, direction);
 
 	desc = sdma_transfer_init(sdmac, direction, sg_len);
-	अगर (!desc)
-		जाओ err_out;
+	if (!desc)
+		goto err_out;
 
 	dev_dbg(sdma->dev, "setting up %d entries for channel %d.\n",
 			sg_len, channel);
 
-	क्रम_each_sg(sgl, sg, sg_len, i) अणु
-		काष्ठा sdma_buffer_descriptor *bd = &desc->bd[i];
-		पूर्णांक param;
+	for_each_sg(sgl, sg, sg_len, i) {
+		struct sdma_buffer_descriptor *bd = &desc->bd[i];
+		int param;
 
 		bd->buffer_addr = sg->dma_address;
 
 		count = sg_dma_len(sg);
 
-		अगर (count > SDMA_BD_MAX_CNT) अणु
+		if (count > SDMA_BD_MAX_CNT) {
 			dev_err(sdma->dev, "SDMA channel %d: maximum bytes for sg entry exceeded: %d > %d\n",
 					channel, count, SDMA_BD_MAX_CNT);
-			जाओ err_bd_out;
-		पूर्ण
+			goto err_bd_out;
+		}
 
 		bd->mode.count = count;
 		desc->chn_count += count;
 
-		अगर (sdmac->word_size > DMA_SLAVE_BUSWIDTH_4_BYTES)
-			जाओ err_bd_out;
+		if (sdmac->word_size > DMA_SLAVE_BUSWIDTH_4_BYTES)
+			goto err_bd_out;
 
-		चयन (sdmac->word_size) अणु
-		हाल DMA_SLAVE_BUSWIDTH_4_BYTES:
+		switch (sdmac->word_size) {
+		case DMA_SLAVE_BUSWIDTH_4_BYTES:
 			bd->mode.command = 0;
-			अगर (count & 3 || sg->dma_address & 3)
-				जाओ err_bd_out;
-			अवरोध;
-		हाल DMA_SLAVE_BUSWIDTH_2_BYTES:
+			if (count & 3 || sg->dma_address & 3)
+				goto err_bd_out;
+			break;
+		case DMA_SLAVE_BUSWIDTH_2_BYTES:
 			bd->mode.command = 2;
-			अगर (count & 1 || sg->dma_address & 1)
-				जाओ err_bd_out;
-			अवरोध;
-		हाल DMA_SLAVE_BUSWIDTH_1_BYTE:
+			if (count & 1 || sg->dma_address & 1)
+				goto err_bd_out;
+			break;
+		case DMA_SLAVE_BUSWIDTH_1_BYTE:
 			bd->mode.command = 1;
-			अवरोध;
-		शेष:
-			जाओ err_bd_out;
-		पूर्ण
+			break;
+		default:
+			goto err_bd_out;
+		}
 
 		param = BD_DONE | BD_EXTD | BD_CONT;
 
-		अगर (i + 1 == sg_len) अणु
+		if (i + 1 == sg_len) {
 			param |= BD_INTR;
 			param |= BD_LAST;
 			param &= ~BD_CONT;
-		पूर्ण
+		}
 
 		dev_dbg(sdma->dev, "entry %d: count: %d dma: %#llx %s%s\n",
 				i, count, (u64)sg->dma_address,
@@ -1483,64 +1482,64 @@ err_out:
 				param & BD_INTR ? " intr" : "");
 
 		bd->mode.status = param;
-	पूर्ण
+	}
 
-	वापस vchan_tx_prep(&sdmac->vc, &desc->vd, flags);
+	return vchan_tx_prep(&sdmac->vc, &desc->vd, flags);
 err_bd_out:
-	sdma_मुक्त_bd(desc);
-	kमुक्त(desc);
+	sdma_free_bd(desc);
+	kfree(desc);
 err_out:
 	sdmac->status = DMA_ERROR;
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल काष्ठा dma_async_tx_descriptor *sdma_prep_dma_cyclic(
-		काष्ठा dma_chan *chan, dma_addr_t dma_addr, माप_प्रकार buf_len,
-		माप_प्रकार period_len, क्रमागत dma_transfer_direction direction,
-		अचिन्हित दीर्घ flags)
-अणु
-	काष्ठा sdma_channel *sdmac = to_sdma_chan(chan);
-	काष्ठा sdma_engine *sdma = sdmac->sdma;
-	पूर्णांक num_periods = buf_len / period_len;
-	पूर्णांक channel = sdmac->channel;
-	पूर्णांक i = 0, buf = 0;
-	काष्ठा sdma_desc *desc;
+static struct dma_async_tx_descriptor *sdma_prep_dma_cyclic(
+		struct dma_chan *chan, dma_addr_t dma_addr, size_t buf_len,
+		size_t period_len, enum dma_transfer_direction direction,
+		unsigned long flags)
+{
+	struct sdma_channel *sdmac = to_sdma_chan(chan);
+	struct sdma_engine *sdma = sdmac->sdma;
+	int num_periods = buf_len / period_len;
+	int channel = sdmac->channel;
+	int i = 0, buf = 0;
+	struct sdma_desc *desc;
 
 	dev_dbg(sdma->dev, "%s channel: %d\n", __func__, channel);
 
-	sdma_config_ग_लिखो(chan, &sdmac->slave_config, direction);
+	sdma_config_write(chan, &sdmac->slave_config, direction);
 
 	desc = sdma_transfer_init(sdmac, direction, num_periods);
-	अगर (!desc)
-		जाओ err_out;
+	if (!desc)
+		goto err_out;
 
 	desc->period_len = period_len;
 
 	sdmac->flags |= IMX_DMA_SG_LOOP;
 
-	अगर (period_len > SDMA_BD_MAX_CNT) अणु
+	if (period_len > SDMA_BD_MAX_CNT) {
 		dev_err(sdma->dev, "SDMA channel %d: maximum period size exceeded: %zu > %d\n",
 				channel, period_len, SDMA_BD_MAX_CNT);
-		जाओ err_bd_out;
-	पूर्ण
+		goto err_bd_out;
+	}
 
-	जबतक (buf < buf_len) अणु
-		काष्ठा sdma_buffer_descriptor *bd = &desc->bd[i];
-		पूर्णांक param;
+	while (buf < buf_len) {
+		struct sdma_buffer_descriptor *bd = &desc->bd[i];
+		int param;
 
 		bd->buffer_addr = dma_addr;
 
 		bd->mode.count = period_len;
 
-		अगर (sdmac->word_size > DMA_SLAVE_BUSWIDTH_4_BYTES)
-			जाओ err_bd_out;
-		अगर (sdmac->word_size == DMA_SLAVE_BUSWIDTH_4_BYTES)
+		if (sdmac->word_size > DMA_SLAVE_BUSWIDTH_4_BYTES)
+			goto err_bd_out;
+		if (sdmac->word_size == DMA_SLAVE_BUSWIDTH_4_BYTES)
 			bd->mode.command = 0;
-		अन्यथा
+		else
 			bd->mode.command = sdmac->word_size;
 
 		param = BD_DONE | BD_EXTD | BD_CONT | BD_INTR;
-		अगर (i + 1 == num_periods)
+		if (i + 1 == num_periods)
 			param |= BD_WRAP;
 
 		dev_dbg(sdma->dev, "entry %d: count: %zu dma: %#llx %s%s\n",
@@ -1554,29 +1553,29 @@ err_out:
 		buf += period_len;
 
 		i++;
-	पूर्ण
+	}
 
-	वापस vchan_tx_prep(&sdmac->vc, &desc->vd, flags);
+	return vchan_tx_prep(&sdmac->vc, &desc->vd, flags);
 err_bd_out:
-	sdma_मुक्त_bd(desc);
-	kमुक्त(desc);
+	sdma_free_bd(desc);
+	kfree(desc);
 err_out:
 	sdmac->status = DMA_ERROR;
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल पूर्णांक sdma_config_ग_लिखो(काष्ठा dma_chan *chan,
-		       काष्ठा dma_slave_config *dmaengine_cfg,
-		       क्रमागत dma_transfer_direction direction)
-अणु
-	काष्ठा sdma_channel *sdmac = to_sdma_chan(chan);
+static int sdma_config_write(struct dma_chan *chan,
+		       struct dma_slave_config *dmaengine_cfg,
+		       enum dma_transfer_direction direction)
+{
+	struct sdma_channel *sdmac = to_sdma_chan(chan);
 
-	अगर (direction == DMA_DEV_TO_MEM) अणु
+	if (direction == DMA_DEV_TO_MEM) {
 		sdmac->per_address = dmaengine_cfg->src_addr;
 		sdmac->watermark_level = dmaengine_cfg->src_maxburst *
 			dmaengine_cfg->src_addr_width;
 		sdmac->word_size = dmaengine_cfg->src_addr_width;
-	पूर्ण अन्यथा अगर (direction == DMA_DEV_TO_DEV) अणु
+	} else if (direction == DMA_DEV_TO_DEV) {
 		sdmac->per_address2 = dmaengine_cfg->src_addr;
 		sdmac->per_address = dmaengine_cfg->dst_addr;
 		sdmac->watermark_level = dmaengine_cfg->src_maxburst &
@@ -1584,164 +1583,164 @@ err_out:
 		sdmac->watermark_level |= (dmaengine_cfg->dst_maxburst << 16) &
 			SDMA_WATERMARK_LEVEL_HWML;
 		sdmac->word_size = dmaengine_cfg->dst_addr_width;
-	पूर्ण अन्यथा अणु
+	} else {
 		sdmac->per_address = dmaengine_cfg->dst_addr;
 		sdmac->watermark_level = dmaengine_cfg->dst_maxburst *
 			dmaengine_cfg->dst_addr_width;
 		sdmac->word_size = dmaengine_cfg->dst_addr_width;
-	पूर्ण
+	}
 	sdmac->direction = direction;
-	वापस sdma_config_channel(chan);
-पूर्ण
+	return sdma_config_channel(chan);
+}
 
-अटल पूर्णांक sdma_config(काष्ठा dma_chan *chan,
-		       काष्ठा dma_slave_config *dmaengine_cfg)
-अणु
-	काष्ठा sdma_channel *sdmac = to_sdma_chan(chan);
+static int sdma_config(struct dma_chan *chan,
+		       struct dma_slave_config *dmaengine_cfg)
+{
+	struct sdma_channel *sdmac = to_sdma_chan(chan);
 
-	स_नकल(&sdmac->slave_config, dmaengine_cfg, माप(*dmaengine_cfg));
+	memcpy(&sdmac->slave_config, dmaengine_cfg, sizeof(*dmaengine_cfg));
 
 	/* Set ENBLn earlier to make sure dma request triggered after that */
-	अगर (sdmac->event_id0 >= sdmac->sdma->drvdata->num_events)
-		वापस -EINVAL;
+	if (sdmac->event_id0 >= sdmac->sdma->drvdata->num_events)
+		return -EINVAL;
 	sdma_event_enable(sdmac, sdmac->event_id0);
 
-	अगर (sdmac->event_id1) अणु
-		अगर (sdmac->event_id1 >= sdmac->sdma->drvdata->num_events)
-			वापस -EINVAL;
+	if (sdmac->event_id1) {
+		if (sdmac->event_id1 >= sdmac->sdma->drvdata->num_events)
+			return -EINVAL;
 		sdma_event_enable(sdmac, sdmac->event_id1);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल क्रमागत dma_status sdma_tx_status(काष्ठा dma_chan *chan,
+static enum dma_status sdma_tx_status(struct dma_chan *chan,
 				      dma_cookie_t cookie,
-				      काष्ठा dma_tx_state *txstate)
-अणु
-	काष्ठा sdma_channel *sdmac = to_sdma_chan(chan);
-	काष्ठा sdma_desc *desc = शून्य;
+				      struct dma_tx_state *txstate)
+{
+	struct sdma_channel *sdmac = to_sdma_chan(chan);
+	struct sdma_desc *desc = NULL;
 	u32 residue;
-	काष्ठा virt_dma_desc *vd;
-	क्रमागत dma_status ret;
-	अचिन्हित दीर्घ flags;
+	struct virt_dma_desc *vd;
+	enum dma_status ret;
+	unsigned long flags;
 
 	ret = dma_cookie_status(chan, cookie, txstate);
-	अगर (ret == DMA_COMPLETE || !txstate)
-		वापस ret;
+	if (ret == DMA_COMPLETE || !txstate)
+		return ret;
 
 	spin_lock_irqsave(&sdmac->vc.lock, flags);
 
 	vd = vchan_find_desc(&sdmac->vc, cookie);
-	अगर (vd)
+	if (vd)
 		desc = to_sdma_desc(&vd->tx);
-	अन्यथा अगर (sdmac->desc && sdmac->desc->vd.tx.cookie == cookie)
+	else if (sdmac->desc && sdmac->desc->vd.tx.cookie == cookie)
 		desc = sdmac->desc;
 
-	अगर (desc) अणु
-		अगर (sdmac->flags & IMX_DMA_SG_LOOP)
+	if (desc) {
+		if (sdmac->flags & IMX_DMA_SG_LOOP)
 			residue = (desc->num_bd - desc->buf_ptail) *
 				desc->period_len - desc->chn_real_count;
-		अन्यथा
+		else
 			residue = desc->chn_count - desc->chn_real_count;
-	पूर्ण अन्यथा अणु
+	} else {
 		residue = 0;
-	पूर्ण
+	}
 
 	spin_unlock_irqrestore(&sdmac->vc.lock, flags);
 
 	dma_set_tx_state(txstate, chan->completed_cookie, chan->cookie,
 			 residue);
 
-	वापस sdmac->status;
-पूर्ण
+	return sdmac->status;
+}
 
-अटल व्योम sdma_issue_pending(काष्ठा dma_chan *chan)
-अणु
-	काष्ठा sdma_channel *sdmac = to_sdma_chan(chan);
-	अचिन्हित दीर्घ flags;
+static void sdma_issue_pending(struct dma_chan *chan)
+{
+	struct sdma_channel *sdmac = to_sdma_chan(chan);
+	unsigned long flags;
 
 	spin_lock_irqsave(&sdmac->vc.lock, flags);
-	अगर (vchan_issue_pending(&sdmac->vc) && !sdmac->desc)
+	if (vchan_issue_pending(&sdmac->vc) && !sdmac->desc)
 		sdma_start_desc(sdmac);
 	spin_unlock_irqrestore(&sdmac->vc.lock, flags);
-पूर्ण
+}
 
-#घोषणा SDMA_SCRIPT_ADDRS_ARRAY_SIZE_V1	34
-#घोषणा SDMA_SCRIPT_ADDRS_ARRAY_SIZE_V2	38
-#घोषणा SDMA_SCRIPT_ADDRS_ARRAY_SIZE_V3	41
-#घोषणा SDMA_SCRIPT_ADDRS_ARRAY_SIZE_V4	42
+#define SDMA_SCRIPT_ADDRS_ARRAY_SIZE_V1	34
+#define SDMA_SCRIPT_ADDRS_ARRAY_SIZE_V2	38
+#define SDMA_SCRIPT_ADDRS_ARRAY_SIZE_V3	41
+#define SDMA_SCRIPT_ADDRS_ARRAY_SIZE_V4	42
 
-अटल व्योम sdma_add_scripts(काष्ठा sdma_engine *sdma,
-		स्थिर काष्ठा sdma_script_start_addrs *addr)
-अणु
+static void sdma_add_scripts(struct sdma_engine *sdma,
+		const struct sdma_script_start_addrs *addr)
+{
 	s32 *addr_arr = (u32 *)addr;
 	s32 *saddr_arr = (u32 *)sdma->script_addrs;
-	पूर्णांक i;
+	int i;
 
-	/* use the शेष firmware in ROM अगर missing बाह्यal firmware */
-	अगर (!sdma->script_number)
+	/* use the default firmware in ROM if missing external firmware */
+	if (!sdma->script_number)
 		sdma->script_number = SDMA_SCRIPT_ADDRS_ARRAY_SIZE_V1;
 
-	अगर (sdma->script_number > माप(काष्ठा sdma_script_start_addrs)
-				  / माप(s32)) अणु
+	if (sdma->script_number > sizeof(struct sdma_script_start_addrs)
+				  / sizeof(s32)) {
 		dev_err(sdma->dev,
 			"SDMA script number %d not match with firmware.\n",
 			sdma->script_number);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	क्रम (i = 0; i < sdma->script_number; i++)
-		अगर (addr_arr[i] > 0)
+	for (i = 0; i < sdma->script_number; i++)
+		if (addr_arr[i] > 0)
 			saddr_arr[i] = addr_arr[i];
-पूर्ण
+}
 
-अटल व्योम sdma_load_firmware(स्थिर काष्ठा firmware *fw, व्योम *context)
-अणु
-	काष्ठा sdma_engine *sdma = context;
-	स्थिर काष्ठा sdma_firmware_header *header;
-	स्थिर काष्ठा sdma_script_start_addrs *addr;
-	अचिन्हित लघु *ram_code;
+static void sdma_load_firmware(const struct firmware *fw, void *context)
+{
+	struct sdma_engine *sdma = context;
+	const struct sdma_firmware_header *header;
+	const struct sdma_script_start_addrs *addr;
+	unsigned short *ram_code;
 
-	अगर (!fw) अणु
+	if (!fw) {
 		dev_info(sdma->dev, "external firmware not found, using ROM firmware\n");
-		/* In this हाल we just use the ROM firmware. */
-		वापस;
-	पूर्ण
+		/* In this case we just use the ROM firmware. */
+		return;
+	}
 
-	अगर (fw->size < माप(*header))
-		जाओ err_firmware;
+	if (fw->size < sizeof(*header))
+		goto err_firmware;
 
-	header = (काष्ठा sdma_firmware_header *)fw->data;
+	header = (struct sdma_firmware_header *)fw->data;
 
-	अगर (header->magic != SDMA_FIRMWARE_MAGIC)
-		जाओ err_firmware;
-	अगर (header->ram_code_start + header->ram_code_size > fw->size)
-		जाओ err_firmware;
-	चयन (header->version_major) अणु
-	हाल 1:
+	if (header->magic != SDMA_FIRMWARE_MAGIC)
+		goto err_firmware;
+	if (header->ram_code_start + header->ram_code_size > fw->size)
+		goto err_firmware;
+	switch (header->version_major) {
+	case 1:
 		sdma->script_number = SDMA_SCRIPT_ADDRS_ARRAY_SIZE_V1;
-		अवरोध;
-	हाल 2:
+		break;
+	case 2:
 		sdma->script_number = SDMA_SCRIPT_ADDRS_ARRAY_SIZE_V2;
-		अवरोध;
-	हाल 3:
+		break;
+	case 3:
 		sdma->script_number = SDMA_SCRIPT_ADDRS_ARRAY_SIZE_V3;
-		अवरोध;
-	हाल 4:
+		break;
+	case 4:
 		sdma->script_number = SDMA_SCRIPT_ADDRS_ARRAY_SIZE_V4;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		dev_err(sdma->dev, "unknown firmware version\n");
-		जाओ err_firmware;
-	पूर्ण
+		goto err_firmware;
+	}
 
-	addr = (व्योम *)header + header->script_addrs_start;
-	ram_code = (व्योम *)header + header->ram_code_start;
+	addr = (void *)header + header->script_addrs_start;
+	ram_code = (void *)header + header->ram_code_start;
 
 	clk_enable(sdma->clk_ipg);
 	clk_enable(sdma->clk_ahb);
-	/* करोwnload the RAM image क्रम SDMA */
+	/* download the RAM image for SDMA */
 	sdma_load_script(sdma, ram_code,
 			header->ram_code_size,
 			addr->ram_code_start_addr);
@@ -1756,144 +1755,144 @@ err_out:
 
 err_firmware:
 	release_firmware(fw);
-पूर्ण
+}
 
-#घोषणा EVENT_REMAP_CELLS 3
+#define EVENT_REMAP_CELLS 3
 
-अटल पूर्णांक sdma_event_remap(काष्ठा sdma_engine *sdma)
-अणु
-	काष्ठा device_node *np = sdma->dev->of_node;
-	काष्ठा device_node *gpr_np = of_parse_phandle(np, "gpr", 0);
-	काष्ठा property *event_remap;
-	काष्ठा regmap *gpr;
-	अक्षर propname[] = "fsl,sdma-event-remap";
-	u32 reg, val, shअगरt, num_map, i;
-	पूर्णांक ret = 0;
+static int sdma_event_remap(struct sdma_engine *sdma)
+{
+	struct device_node *np = sdma->dev->of_node;
+	struct device_node *gpr_np = of_parse_phandle(np, "gpr", 0);
+	struct property *event_remap;
+	struct regmap *gpr;
+	char propname[] = "fsl,sdma-event-remap";
+	u32 reg, val, shift, num_map, i;
+	int ret = 0;
 
-	अगर (IS_ERR(np) || IS_ERR(gpr_np))
-		जाओ out;
+	if (IS_ERR(np) || IS_ERR(gpr_np))
+		goto out;
 
-	event_remap = of_find_property(np, propname, शून्य);
-	num_map = event_remap ? (event_remap->length / माप(u32)) : 0;
-	अगर (!num_map) अणु
+	event_remap = of_find_property(np, propname, NULL);
+	num_map = event_remap ? (event_remap->length / sizeof(u32)) : 0;
+	if (!num_map) {
 		dev_dbg(sdma->dev, "no event needs to be remapped\n");
-		जाओ out;
-	पूर्ण अन्यथा अगर (num_map % EVENT_REMAP_CELLS) अणु
+		goto out;
+	} else if (num_map % EVENT_REMAP_CELLS) {
 		dev_err(sdma->dev, "the property %s must modulo %d\n",
 				propname, EVENT_REMAP_CELLS);
 		ret = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	gpr = syscon_node_to_regmap(gpr_np);
-	अगर (IS_ERR(gpr)) अणु
+	if (IS_ERR(gpr)) {
 		dev_err(sdma->dev, "failed to get gpr regmap\n");
 		ret = PTR_ERR(gpr);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	क्रम (i = 0; i < num_map; i += EVENT_REMAP_CELLS) अणु
-		ret = of_property_पढ़ो_u32_index(np, propname, i, &reg);
-		अगर (ret) अणु
+	for (i = 0; i < num_map; i += EVENT_REMAP_CELLS) {
+		ret = of_property_read_u32_index(np, propname, i, &reg);
+		if (ret) {
 			dev_err(sdma->dev, "failed to read property %s index %d\n",
 					propname, i);
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
-		ret = of_property_पढ़ो_u32_index(np, propname, i + 1, &shअगरt);
-		अगर (ret) अणु
+		ret = of_property_read_u32_index(np, propname, i + 1, &shift);
+		if (ret) {
 			dev_err(sdma->dev, "failed to read property %s index %d\n",
 					propname, i + 1);
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
-		ret = of_property_पढ़ो_u32_index(np, propname, i + 2, &val);
-		अगर (ret) अणु
+		ret = of_property_read_u32_index(np, propname, i + 2, &val);
+		if (ret) {
 			dev_err(sdma->dev, "failed to read property %s index %d\n",
 					propname, i + 2);
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
-		regmap_update_bits(gpr, reg, BIT(shअगरt), val << shअगरt);
-	पूर्ण
+		regmap_update_bits(gpr, reg, BIT(shift), val << shift);
+	}
 
 out:
-	अगर (!IS_ERR(gpr_np))
+	if (!IS_ERR(gpr_np))
 		of_node_put(gpr_np);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक sdma_get_firmware(काष्ठा sdma_engine *sdma,
-		स्थिर अक्षर *fw_name)
-अणु
-	पूर्णांक ret;
+static int sdma_get_firmware(struct sdma_engine *sdma,
+		const char *fw_name)
+{
+	int ret;
 
-	ret = request_firmware_noरुको(THIS_MODULE,
+	ret = request_firmware_nowait(THIS_MODULE,
 			FW_ACTION_HOTPLUG, fw_name, sdma->dev,
 			GFP_KERNEL, sdma, sdma_load_firmware);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक sdma_init(काष्ठा sdma_engine *sdma)
-अणु
-	पूर्णांक i, ret;
+static int sdma_init(struct sdma_engine *sdma)
+{
+	int i, ret;
 	dma_addr_t ccb_phys;
 
 	ret = clk_enable(sdma->clk_ipg);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 	ret = clk_enable(sdma->clk_ahb);
-	अगर (ret)
-		जाओ disable_clk_ipg;
+	if (ret)
+		goto disable_clk_ipg;
 
-	अगर (sdma->drvdata->check_ratio &&
+	if (sdma->drvdata->check_ratio &&
 	    (clk_get_rate(sdma->clk_ahb) == clk_get_rate(sdma->clk_ipg)))
 		sdma->clk_ratio = 1;
 
 	/* Be sure SDMA has not started yet */
-	ग_लिखोl_relaxed(0, sdma->regs + SDMA_H_C0PTR);
+	writel_relaxed(0, sdma->regs + SDMA_H_C0PTR);
 
 	sdma->channel_control = dma_alloc_coherent(sdma->dev,
-			MAX_DMA_CHANNELS * माप (काष्ठा sdma_channel_control) +
-			माप(काष्ठा sdma_context_data),
+			MAX_DMA_CHANNELS * sizeof (struct sdma_channel_control) +
+			sizeof(struct sdma_context_data),
 			&ccb_phys, GFP_KERNEL);
 
-	अगर (!sdma->channel_control) अणु
+	if (!sdma->channel_control) {
 		ret = -ENOMEM;
-		जाओ err_dma_alloc;
-	पूर्ण
+		goto err_dma_alloc;
+	}
 
-	sdma->context = (व्योम *)sdma->channel_control +
-		MAX_DMA_CHANNELS * माप (काष्ठा sdma_channel_control);
+	sdma->context = (void *)sdma->channel_control +
+		MAX_DMA_CHANNELS * sizeof (struct sdma_channel_control);
 	sdma->context_phys = ccb_phys +
-		MAX_DMA_CHANNELS * माप (काष्ठा sdma_channel_control);
+		MAX_DMA_CHANNELS * sizeof (struct sdma_channel_control);
 
 	/* disable all channels */
-	क्रम (i = 0; i < sdma->drvdata->num_events; i++)
-		ग_लिखोl_relaxed(0, sdma->regs + chnenbl_ofs(sdma, i));
+	for (i = 0; i < sdma->drvdata->num_events; i++)
+		writel_relaxed(0, sdma->regs + chnenbl_ofs(sdma, i));
 
 	/* All channels have priority 0 */
-	क्रम (i = 0; i < MAX_DMA_CHANNELS; i++)
-		ग_लिखोl_relaxed(0, sdma->regs + SDMA_CHNPRI_0 + i * 4);
+	for (i = 0; i < MAX_DMA_CHANNELS; i++)
+		writel_relaxed(0, sdma->regs + SDMA_CHNPRI_0 + i * 4);
 
 	ret = sdma_request_channel0(sdma);
-	अगर (ret)
-		जाओ err_dma_alloc;
+	if (ret)
+		goto err_dma_alloc;
 
 	sdma_config_ownership(&sdma->channel[0], false, true, false);
 
 	/* Set Command Channel (Channel Zero) */
-	ग_लिखोl_relaxed(0x4050, sdma->regs + SDMA_CHN0ADDR);
+	writel_relaxed(0x4050, sdma->regs + SDMA_CHN0ADDR);
 
-	/* Set bits of CONFIG रेजिस्टर but with अटल context चयनing */
-	अगर (sdma->clk_ratio)
-		ग_लिखोl_relaxed(SDMA_H_CONFIG_ACR, sdma->regs + SDMA_H_CONFIG);
-	अन्यथा
-		ग_लिखोl_relaxed(0, sdma->regs + SDMA_H_CONFIG);
+	/* Set bits of CONFIG register but with static context switching */
+	if (sdma->clk_ratio)
+		writel_relaxed(SDMA_H_CONFIG_ACR, sdma->regs + SDMA_H_CONFIG);
+	else
+		writel_relaxed(0, sdma->regs + SDMA_H_CONFIG);
 
-	ग_लिखोl_relaxed(ccb_phys, sdma->regs + SDMA_H_C0PTR);
+	writel_relaxed(ccb_phys, sdma->regs + SDMA_H_C0PTR);
 
 	/* Initializes channel's priorities */
 	sdma_set_channel_priority(&sdma->channel[0], 7);
@@ -1901,39 +1900,39 @@ out:
 	clk_disable(sdma->clk_ipg);
 	clk_disable(sdma->clk_ahb);
 
-	वापस 0;
+	return 0;
 
 err_dma_alloc:
 	clk_disable(sdma->clk_ahb);
 disable_clk_ipg:
 	clk_disable(sdma->clk_ipg);
 	dev_err(sdma->dev, "initialisation failed with %d\n", ret);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल bool sdma_filter_fn(काष्ठा dma_chan *chan, व्योम *fn_param)
-अणु
-	काष्ठा sdma_channel *sdmac = to_sdma_chan(chan);
-	काष्ठा imx_dma_data *data = fn_param;
+static bool sdma_filter_fn(struct dma_chan *chan, void *fn_param)
+{
+	struct sdma_channel *sdmac = to_sdma_chan(chan);
+	struct imx_dma_data *data = fn_param;
 
-	अगर (!imx_dma_is_general_purpose(chan))
-		वापस false;
+	if (!imx_dma_is_general_purpose(chan))
+		return false;
 
 	sdmac->data = *data;
-	chan->निजी = &sdmac->data;
+	chan->private = &sdmac->data;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल काष्ठा dma_chan *sdma_xlate(काष्ठा of_phandle_args *dma_spec,
-				   काष्ठा of_dma *ofdma)
-अणु
-	काष्ठा sdma_engine *sdma = ofdma->of_dma_data;
+static struct dma_chan *sdma_xlate(struct of_phandle_args *dma_spec,
+				   struct of_dma *ofdma)
+{
+	struct sdma_engine *sdma = ofdma->of_dma_data;
 	dma_cap_mask_t mask = sdma->dma_device.cap_mask;
-	काष्ठा imx_dma_data data;
+	struct imx_dma_data data;
 
-	अगर (dma_spec->args_count != 3)
-		वापस शून्य;
+	if (dma_spec->args_count != 3)
+		return NULL;
 
 	data.dma_request = dma_spec->args[0];
 	data.peripheral_type = dma_spec->args[1];
@@ -1941,83 +1940,83 @@ disable_clk_ipg:
 	/*
 	 * init dma_request2 to zero, which is not used by the dts.
 	 * For P2P, dma_request2 is init from dma_request_channel(),
-	 * chan->निजी will poपूर्णांक to the imx_dma_data, and in
+	 * chan->private will point to the imx_dma_data, and in
 	 * device_alloc_chan_resources(), imx_dma_data.dma_request2 will
 	 * be set to sdmac->event_id1.
 	 */
 	data.dma_request2 = 0;
 
-	वापस __dma_request_channel(&mask, sdma_filter_fn, &data,
+	return __dma_request_channel(&mask, sdma_filter_fn, &data,
 				     ofdma->of_node);
-पूर्ण
+}
 
-अटल पूर्णांक sdma_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device_node *np = pdev->dev.of_node;
-	काष्ठा device_node *spba_bus;
-	स्थिर अक्षर *fw_name;
-	पूर्णांक ret;
-	पूर्णांक irq;
-	काष्ठा resource *iores;
-	काष्ठा resource spba_res;
-	पूर्णांक i;
-	काष्ठा sdma_engine *sdma;
+static int sdma_probe(struct platform_device *pdev)
+{
+	struct device_node *np = pdev->dev.of_node;
+	struct device_node *spba_bus;
+	const char *fw_name;
+	int ret;
+	int irq;
+	struct resource *iores;
+	struct resource spba_res;
+	int i;
+	struct sdma_engine *sdma;
 	s32 *saddr_arr;
 
 	ret = dma_coerce_mask_and_coherent(&pdev->dev, DMA_BIT_MASK(32));
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	sdma = devm_kzalloc(&pdev->dev, माप(*sdma), GFP_KERNEL);
-	अगर (!sdma)
-		वापस -ENOMEM;
+	sdma = devm_kzalloc(&pdev->dev, sizeof(*sdma), GFP_KERNEL);
+	if (!sdma)
+		return -ENOMEM;
 
 	spin_lock_init(&sdma->channel_0_lock);
 
 	sdma->dev = &pdev->dev;
 	sdma->drvdata = of_device_get_match_data(sdma->dev);
 
-	irq = platक्रमm_get_irq(pdev, 0);
-	अगर (irq < 0)
-		वापस irq;
+	irq = platform_get_irq(pdev, 0);
+	if (irq < 0)
+		return irq;
 
-	iores = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	iores = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	sdma->regs = devm_ioremap_resource(&pdev->dev, iores);
-	अगर (IS_ERR(sdma->regs))
-		वापस PTR_ERR(sdma->regs);
+	if (IS_ERR(sdma->regs))
+		return PTR_ERR(sdma->regs);
 
 	sdma->clk_ipg = devm_clk_get(&pdev->dev, "ipg");
-	अगर (IS_ERR(sdma->clk_ipg))
-		वापस PTR_ERR(sdma->clk_ipg);
+	if (IS_ERR(sdma->clk_ipg))
+		return PTR_ERR(sdma->clk_ipg);
 
 	sdma->clk_ahb = devm_clk_get(&pdev->dev, "ahb");
-	अगर (IS_ERR(sdma->clk_ahb))
-		वापस PTR_ERR(sdma->clk_ahb);
+	if (IS_ERR(sdma->clk_ahb))
+		return PTR_ERR(sdma->clk_ahb);
 
 	ret = clk_prepare(sdma->clk_ipg);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = clk_prepare(sdma->clk_ahb);
-	अगर (ret)
-		जाओ err_clk;
+	if (ret)
+		goto err_clk;
 
-	ret = devm_request_irq(&pdev->dev, irq, sdma_पूर्णांक_handler, 0, "sdma",
+	ret = devm_request_irq(&pdev->dev, irq, sdma_int_handler, 0, "sdma",
 			       sdma);
-	अगर (ret)
-		जाओ err_irq;
+	if (ret)
+		goto err_irq;
 
 	sdma->irq = irq;
 
-	sdma->script_addrs = kzalloc(माप(*sdma->script_addrs), GFP_KERNEL);
-	अगर (!sdma->script_addrs) अणु
+	sdma->script_addrs = kzalloc(sizeof(*sdma->script_addrs), GFP_KERNEL);
+	if (!sdma->script_addrs) {
 		ret = -ENOMEM;
-		जाओ err_irq;
-	पूर्ण
+		goto err_irq;
+	}
 
 	/* initially no scripts available */
 	saddr_arr = (s32 *)sdma->script_addrs;
-	क्रम (i = 0; i < माप(*sdma->script_addrs) / माप(s32); i++)
+	for (i = 0; i < sizeof(*sdma->script_addrs) / sizeof(s32); i++)
 		saddr_arr[i] = -EINVAL;
 
 	dma_cap_set(DMA_SLAVE, sdma->dma_device.cap_mask);
@@ -2026,39 +2025,39 @@ disable_clk_ipg:
 
 	INIT_LIST_HEAD(&sdma->dma_device.channels);
 	/* Initialize channel parameters */
-	क्रम (i = 0; i < MAX_DMA_CHANNELS; i++) अणु
-		काष्ठा sdma_channel *sdmac = &sdma->channel[i];
+	for (i = 0; i < MAX_DMA_CHANNELS; i++) {
+		struct sdma_channel *sdmac = &sdma->channel[i];
 
 		sdmac->sdma = sdma;
 
 		sdmac->channel = i;
-		sdmac->vc.desc_मुक्त = sdma_desc_मुक्त;
+		sdmac->vc.desc_free = sdma_desc_free;
 		INIT_WORK(&sdmac->terminate_worker,
 				sdma_channel_terminate_work);
 		/*
 		 * Add the channel to the DMAC list. Do not add channel 0 though
-		 * because we need it पूर्णांकernally in the SDMA driver. This also means
+		 * because we need it internally in the SDMA driver. This also means
 		 * that channel 0 in dmaengine counting matches sdma channel 1.
 		 */
-		अगर (i)
+		if (i)
 			vchan_init(&sdmac->vc, &sdma->dma_device);
-	पूर्ण
+	}
 
 	ret = sdma_init(sdma);
-	अगर (ret)
-		जाओ err_init;
+	if (ret)
+		goto err_init;
 
 	ret = sdma_event_remap(sdma);
-	अगर (ret)
-		जाओ err_init;
+	if (ret)
+		goto err_init;
 
-	अगर (sdma->drvdata->script_addrs)
+	if (sdma->drvdata->script_addrs)
 		sdma_add_scripts(sdma, sdma->drvdata->script_addrs);
 
 	sdma->dma_device.dev = &pdev->dev;
 
 	sdma->dma_device.device_alloc_chan_resources = sdma_alloc_chan_resources;
-	sdma->dma_device.device_मुक्त_chan_resources = sdma_मुक्त_chan_resources;
+	sdma->dma_device.device_free_chan_resources = sdma_free_chan_resources;
 	sdma->dma_device.device_tx_status = sdma_tx_status;
 	sdma->dma_device.device_prep_slave_sg = sdma_prep_slave_sg;
 	sdma->dma_device.device_prep_dma_cyclic = sdma_prep_dma_cyclic;
@@ -2067,104 +2066,104 @@ disable_clk_ipg:
 	sdma->dma_device.device_synchronize = sdma_channel_synchronize;
 	sdma->dma_device.src_addr_widths = SDMA_DMA_BUSWIDTHS;
 	sdma->dma_device.dst_addr_widths = SDMA_DMA_BUSWIDTHS;
-	sdma->dma_device.directions = SDMA_DMA_सूचीECTIONS;
+	sdma->dma_device.directions = SDMA_DMA_DIRECTIONS;
 	sdma->dma_device.residue_granularity = DMA_RESIDUE_GRANULARITY_SEGMENT;
-	sdma->dma_device.device_prep_dma_स_नकल = sdma_prep_स_नकल;
+	sdma->dma_device.device_prep_dma_memcpy = sdma_prep_memcpy;
 	sdma->dma_device.device_issue_pending = sdma_issue_pending;
 	sdma->dma_device.copy_align = 2;
 	dma_set_max_seg_size(sdma->dma_device.dev, SDMA_BD_MAX_CNT);
 
-	platक्रमm_set_drvdata(pdev, sdma);
+	platform_set_drvdata(pdev, sdma);
 
-	ret = dma_async_device_रेजिस्टर(&sdma->dma_device);
-	अगर (ret) अणु
+	ret = dma_async_device_register(&sdma->dma_device);
+	if (ret) {
 		dev_err(&pdev->dev, "unable to register\n");
-		जाओ err_init;
-	पूर्ण
+		goto err_init;
+	}
 
-	अगर (np) अणु
-		ret = of_dma_controller_रेजिस्टर(np, sdma_xlate, sdma);
-		अगर (ret) अणु
+	if (np) {
+		ret = of_dma_controller_register(np, sdma_xlate, sdma);
+		if (ret) {
 			dev_err(&pdev->dev, "failed to register controller\n");
-			जाओ err_रेजिस्टर;
-		पूर्ण
+			goto err_register;
+		}
 
-		spba_bus = of_find_compatible_node(शून्य, शून्य, "fsl,spba-bus");
+		spba_bus = of_find_compatible_node(NULL, NULL, "fsl,spba-bus");
 		ret = of_address_to_resource(spba_bus, 0, &spba_res);
-		अगर (!ret) अणु
+		if (!ret) {
 			sdma->spba_start_addr = spba_res.start;
 			sdma->spba_end_addr = spba_res.end;
-		पूर्ण
+		}
 		of_node_put(spba_bus);
-	पूर्ण
+	}
 
 	/*
-	 * Because that device tree करोes not encode ROM script address,
-	 * the RAM script in firmware is mandatory क्रम device tree
+	 * Because that device tree does not encode ROM script address,
+	 * the RAM script in firmware is mandatory for device tree
 	 * probe, otherwise it fails.
 	 */
-	ret = of_property_पढ़ो_string(np, "fsl,sdma-ram-script-name",
+	ret = of_property_read_string(np, "fsl,sdma-ram-script-name",
 				      &fw_name);
-	अगर (ret) अणु
+	if (ret) {
 		dev_warn(&pdev->dev, "failed to get firmware name\n");
-	पूर्ण अन्यथा अणु
+	} else {
 		ret = sdma_get_firmware(sdma, fw_name);
-		अगर (ret)
+		if (ret)
 			dev_warn(&pdev->dev, "failed to get firmware from device tree\n");
-	पूर्ण
+	}
 
-	वापस 0;
+	return 0;
 
-err_रेजिस्टर:
-	dma_async_device_unरेजिस्टर(&sdma->dma_device);
+err_register:
+	dma_async_device_unregister(&sdma->dma_device);
 err_init:
-	kमुक्त(sdma->script_addrs);
+	kfree(sdma->script_addrs);
 err_irq:
 	clk_unprepare(sdma->clk_ahb);
 err_clk:
 	clk_unprepare(sdma->clk_ipg);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक sdma_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा sdma_engine *sdma = platक्रमm_get_drvdata(pdev);
-	पूर्णांक i;
+static int sdma_remove(struct platform_device *pdev)
+{
+	struct sdma_engine *sdma = platform_get_drvdata(pdev);
+	int i;
 
-	devm_मुक्त_irq(&pdev->dev, sdma->irq, sdma);
-	dma_async_device_unरेजिस्टर(&sdma->dma_device);
-	kमुक्त(sdma->script_addrs);
+	devm_free_irq(&pdev->dev, sdma->irq, sdma);
+	dma_async_device_unregister(&sdma->dma_device);
+	kfree(sdma->script_addrs);
 	clk_unprepare(sdma->clk_ahb);
 	clk_unprepare(sdma->clk_ipg);
 	/* Kill the tasklet */
-	क्रम (i = 0; i < MAX_DMA_CHANNELS; i++) अणु
-		काष्ठा sdma_channel *sdmac = &sdma->channel[i];
+	for (i = 0; i < MAX_DMA_CHANNELS; i++) {
+		struct sdma_channel *sdmac = &sdma->channel[i];
 
-		tasklet_समाप्त(&sdmac->vc.task);
-		sdma_मुक्त_chan_resources(&sdmac->vc.chan);
-	पूर्ण
+		tasklet_kill(&sdmac->vc.task);
+		sdma_free_chan_resources(&sdmac->vc.chan);
+	}
 
-	platक्रमm_set_drvdata(pdev, शून्य);
-	वापस 0;
-पूर्ण
+	platform_set_drvdata(pdev, NULL);
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver sdma_driver = अणु
-	.driver		= अणु
+static struct platform_driver sdma_driver = {
+	.driver		= {
 		.name	= "imx-sdma",
 		.of_match_table = sdma_dt_ids,
-	पूर्ण,
-	.हटाओ		= sdma_हटाओ,
+	},
+	.remove		= sdma_remove,
 	.probe		= sdma_probe,
-पूर्ण;
+};
 
-module_platक्रमm_driver(sdma_driver);
+module_platform_driver(sdma_driver);
 
 MODULE_AUTHOR("Sascha Hauer, Pengutronix <s.hauer@pengutronix.de>");
 MODULE_DESCRIPTION("i.MX SDMA driver");
-#अगर IS_ENABLED(CONFIG_SOC_IMX6Q)
+#if IS_ENABLED(CONFIG_SOC_IMX6Q)
 MODULE_FIRMWARE("imx/sdma/sdma-imx6q.bin");
-#पूर्ण_अगर
-#अगर IS_ENABLED(CONFIG_SOC_IMX7D)
+#endif
+#if IS_ENABLED(CONFIG_SOC_IMX7D)
 MODULE_FIRMWARE("imx/sdma/sdma-imx7d.bin");
-#पूर्ण_अगर
+#endif
 MODULE_LICENSE("GPL");

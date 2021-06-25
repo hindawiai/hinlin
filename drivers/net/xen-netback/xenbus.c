@@ -1,303 +1,302 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * Xenbus code क्रम netअगर backend
+ * Xenbus code for netif backend
  *
  * Copyright (C) 2005 Rusty Russell <rusty@rustcorp.com.au>
  * Copyright (C) 2005 XenSource Ltd
 */
 
-#समावेश "common.h"
-#समावेश <linux/vदो_स्मृति.h>
-#समावेश <linux/rtnetlink.h>
+#include "common.h"
+#include <linux/vmalloc.h>
+#include <linux/rtnetlink.h>
 
-अटल पूर्णांक connect_data_rings(काष्ठा backend_info *be,
-			      काष्ठा xenvअगर_queue *queue);
-अटल व्योम connect(काष्ठा backend_info *be);
-अटल पूर्णांक पढ़ो_xenbus_vअगर_flags(काष्ठा backend_info *be);
-अटल पूर्णांक backend_create_xenvअगर(काष्ठा backend_info *be);
-अटल व्योम unरेजिस्टर_hotplug_status_watch(काष्ठा backend_info *be);
-अटल व्योम xen_unरेजिस्टर_watchers(काष्ठा xenvअगर *vअगर);
-अटल व्योम set_backend_state(काष्ठा backend_info *be,
-			      क्रमागत xenbus_state state);
+static int connect_data_rings(struct backend_info *be,
+			      struct xenvif_queue *queue);
+static void connect(struct backend_info *be);
+static int read_xenbus_vif_flags(struct backend_info *be);
+static int backend_create_xenvif(struct backend_info *be);
+static void unregister_hotplug_status_watch(struct backend_info *be);
+static void xen_unregister_watchers(struct xenvif *vif);
+static void set_backend_state(struct backend_info *be,
+			      enum xenbus_state state);
 
-#अगर_घोषित CONFIG_DEBUG_FS
-काष्ठा dentry *xen_netback_dbg_root = शून्य;
+#ifdef CONFIG_DEBUG_FS
+struct dentry *xen_netback_dbg_root = NULL;
 
-अटल पूर्णांक xenvअगर_पढ़ो_io_ring(काष्ठा seq_file *m, व्योम *v)
-अणु
-	काष्ठा xenvअगर_queue *queue = m->निजी;
-	काष्ठा xen_netअगर_tx_back_ring *tx_ring = &queue->tx;
-	काष्ठा xen_netअगर_rx_back_ring *rx_ring = &queue->rx;
-	काष्ठा netdev_queue *dev_queue;
+static int xenvif_read_io_ring(struct seq_file *m, void *v)
+{
+	struct xenvif_queue *queue = m->private;
+	struct xen_netif_tx_back_ring *tx_ring = &queue->tx;
+	struct xen_netif_rx_back_ring *rx_ring = &queue->rx;
+	struct netdev_queue *dev_queue;
 
-	अगर (tx_ring->sring) अणु
-		काष्ठा xen_netअगर_tx_sring *sring = tx_ring->sring;
+	if (tx_ring->sring) {
+		struct xen_netif_tx_sring *sring = tx_ring->sring;
 
-		seq_म_लिखो(m, "Queue %d\nTX: nr_ents %u\n", queue->id,
+		seq_printf(m, "Queue %d\nTX: nr_ents %u\n", queue->id,
 			   tx_ring->nr_ents);
-		seq_म_लिखो(m, "req prod %u (%d) cons %u (%d) event %u (%d)\n",
+		seq_printf(m, "req prod %u (%d) cons %u (%d) event %u (%d)\n",
 			   sring->req_prod,
 			   sring->req_prod - sring->rsp_prod,
 			   tx_ring->req_cons,
 			   tx_ring->req_cons - sring->rsp_prod,
 			   sring->req_event,
 			   sring->req_event - sring->rsp_prod);
-		seq_म_लिखो(m, "rsp prod %u (base) pvt %u (%d) event %u (%d)\n",
+		seq_printf(m, "rsp prod %u (base) pvt %u (%d) event %u (%d)\n",
 			   sring->rsp_prod,
 			   tx_ring->rsp_prod_pvt,
 			   tx_ring->rsp_prod_pvt - sring->rsp_prod,
 			   sring->rsp_event,
 			   sring->rsp_event - sring->rsp_prod);
-		seq_म_लिखो(m, "pending prod %u pending cons %u nr_pending_reqs %u\n",
+		seq_printf(m, "pending prod %u pending cons %u nr_pending_reqs %u\n",
 			   queue->pending_prod,
 			   queue->pending_cons,
 			   nr_pending_reqs(queue));
-		seq_म_लिखो(m, "dealloc prod %u dealloc cons %u dealloc_queue %u\n\n",
+		seq_printf(m, "dealloc prod %u dealloc cons %u dealloc_queue %u\n\n",
 			   queue->dealloc_prod,
 			   queue->dealloc_cons,
 			   queue->dealloc_prod - queue->dealloc_cons);
-	पूर्ण
+	}
 
-	अगर (rx_ring->sring) अणु
-		काष्ठा xen_netअगर_rx_sring *sring = rx_ring->sring;
+	if (rx_ring->sring) {
+		struct xen_netif_rx_sring *sring = rx_ring->sring;
 
-		seq_म_लिखो(m, "RX: nr_ents %u\n", rx_ring->nr_ents);
-		seq_म_लिखो(m, "req prod %u (%d) cons %u (%d) event %u (%d)\n",
+		seq_printf(m, "RX: nr_ents %u\n", rx_ring->nr_ents);
+		seq_printf(m, "req prod %u (%d) cons %u (%d) event %u (%d)\n",
 			   sring->req_prod,
 			   sring->req_prod - sring->rsp_prod,
 			   rx_ring->req_cons,
 			   rx_ring->req_cons - sring->rsp_prod,
 			   sring->req_event,
 			   sring->req_event - sring->rsp_prod);
-		seq_म_लिखो(m, "rsp prod %u (base) pvt %u (%d) event %u (%d)\n\n",
+		seq_printf(m, "rsp prod %u (base) pvt %u (%d) event %u (%d)\n\n",
 			   sring->rsp_prod,
 			   rx_ring->rsp_prod_pvt,
 			   rx_ring->rsp_prod_pvt - sring->rsp_prod,
 			   sring->rsp_event,
 			   sring->rsp_event - sring->rsp_prod);
-	पूर्ण
+	}
 
-	seq_म_लिखो(m, "NAPI state: %lx NAPI weight: %d TX queue len %u\n"
+	seq_printf(m, "NAPI state: %lx NAPI weight: %d TX queue len %u\n"
 		   "Credit timer_pending: %d, credit: %lu, usec: %lu\n"
 		   "remaining: %lu, expires: %lu, now: %lu\n",
 		   queue->napi.state, queue->napi.weight,
 		   skb_queue_len(&queue->tx_queue),
-		   समयr_pending(&queue->credit_समयout),
+		   timer_pending(&queue->credit_timeout),
 		   queue->credit_bytes,
 		   queue->credit_usec,
-		   queue->reमुख्यing_credit,
-		   queue->credit_समयout.expires,
-		   jअगरfies);
+		   queue->remaining_credit,
+		   queue->credit_timeout.expires,
+		   jiffies);
 
-	dev_queue = netdev_get_tx_queue(queue->vअगर->dev, queue->id);
+	dev_queue = netdev_get_tx_queue(queue->vif->dev, queue->id);
 
-	seq_म_लिखो(m, "\nRx internal queue: len %u max %u pkts %u %s\n",
+	seq_printf(m, "\nRx internal queue: len %u max %u pkts %u %s\n",
 		   queue->rx_queue_len, queue->rx_queue_max,
 		   skb_queue_len(&queue->rx_queue),
-		   netअगर_tx_queue_stopped(dev_queue) ? "stopped" : "running");
+		   netif_tx_queue_stopped(dev_queue) ? "stopped" : "running");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#घोषणा XENVIF_KICK_STR "kick"
-#घोषणा BUFFER_SIZE     32
+#define XENVIF_KICK_STR "kick"
+#define BUFFER_SIZE     32
 
-अटल sमाप_प्रकार
-xenvअगर_ग_लिखो_io_ring(काष्ठा file *filp, स्थिर अक्षर __user *buf, माप_प्रकार count,
+static ssize_t
+xenvif_write_io_ring(struct file *filp, const char __user *buf, size_t count,
 		     loff_t *ppos)
-अणु
-	काष्ठा xenvअगर_queue *queue =
-		((काष्ठा seq_file *)filp->निजी_data)->निजी;
-	पूर्णांक len;
-	अक्षर ग_लिखो[BUFFER_SIZE];
+{
+	struct xenvif_queue *queue =
+		((struct seq_file *)filp->private_data)->private;
+	int len;
+	char write[BUFFER_SIZE];
 
-	/* करोn't allow partial ग_लिखोs and check the length */
-	अगर (*ppos != 0)
-		वापस 0;
-	अगर (count >= माप(ग_लिखो))
-		वापस -ENOSPC;
+	/* don't allow partial writes and check the length */
+	if (*ppos != 0)
+		return 0;
+	if (count >= sizeof(write))
+		return -ENOSPC;
 
-	len = simple_ग_लिखो_to_buffer(ग_लिखो,
-				     माप(ग_लिखो) - 1,
+	len = simple_write_to_buffer(write,
+				     sizeof(write) - 1,
 				     ppos,
 				     buf,
 				     count);
-	अगर (len < 0)
-		वापस len;
+	if (len < 0)
+		return len;
 
-	ग_लिखो[len] = '\0';
+	write[len] = '\0';
 
-	अगर (!म_भेदन(ग_लिखो, XENVIF_KICK_STR, माप(XENVIF_KICK_STR) - 1))
-		xenvअगर_पूर्णांकerrupt(0, (व्योम *)queue);
-	अन्यथा अणु
+	if (!strncmp(write, XENVIF_KICK_STR, sizeof(XENVIF_KICK_STR) - 1))
+		xenvif_interrupt(0, (void *)queue);
+	else {
 		pr_warn("Unknown command to io_ring_q%d. Available: kick\n",
 			queue->id);
 		count = -EINVAL;
-	पूर्ण
-	वापस count;
-पूर्ण
+	}
+	return count;
+}
 
-अटल पूर्णांक xenvअगर_io_ring_खोलो(काष्ठा inode *inode, काष्ठा file *filp)
-अणु
-	पूर्णांक ret;
-	व्योम *queue = शून्य;
+static int xenvif_io_ring_open(struct inode *inode, struct file *filp)
+{
+	int ret;
+	void *queue = NULL;
 
-	अगर (inode->i_निजी)
-		queue = inode->i_निजी;
-	ret = single_खोलो(filp, xenvअगर_पढ़ो_io_ring, queue);
+	if (inode->i_private)
+		queue = inode->i_private;
+	ret = single_open(filp, xenvif_read_io_ring, queue);
 	filp->f_mode |= FMODE_PWRITE;
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा file_operations xenvअगर_dbg_io_ring_ops_fops = अणु
+static const struct file_operations xenvif_dbg_io_ring_ops_fops = {
 	.owner = THIS_MODULE,
-	.खोलो = xenvअगर_io_ring_खोलो,
-	.पढ़ो = seq_पढ़ो,
+	.open = xenvif_io_ring_open,
+	.read = seq_read,
 	.llseek = seq_lseek,
 	.release = single_release,
-	.ग_लिखो = xenvअगर_ग_लिखो_io_ring,
-पूर्ण;
+	.write = xenvif_write_io_ring,
+};
 
-अटल पूर्णांक xenvअगर_ctrl_show(काष्ठा seq_file *m, व्योम *v)
-अणु
-	काष्ठा xenvअगर *vअगर = m->निजी;
+static int xenvif_ctrl_show(struct seq_file *m, void *v)
+{
+	struct xenvif *vif = m->private;
 
-	xenvअगर_dump_hash_info(vअगर, m);
+	xenvif_dump_hash_info(vif, m);
 
-	वापस 0;
-पूर्ण
-DEFINE_SHOW_ATTRIBUTE(xenvअगर_ctrl);
+	return 0;
+}
+DEFINE_SHOW_ATTRIBUTE(xenvif_ctrl);
 
-अटल व्योम xenvअगर_debugfs_addअगर(काष्ठा xenvअगर *vअगर)
-अणु
-	पूर्णांक i;
+static void xenvif_debugfs_addif(struct xenvif *vif)
+{
+	int i;
 
-	vअगर->xenvअगर_dbg_root = debugfs_create_dir(vअगर->dev->name,
+	vif->xenvif_dbg_root = debugfs_create_dir(vif->dev->name,
 						  xen_netback_dbg_root);
-	क्रम (i = 0; i < vअगर->num_queues; ++i) अणु
-		अक्षर filename[माप("io_ring_q") + 4];
+	for (i = 0; i < vif->num_queues; ++i) {
+		char filename[sizeof("io_ring_q") + 4];
 
-		snम_लिखो(filename, माप(filename), "io_ring_q%d", i);
-		debugfs_create_file(filename, 0600, vअगर->xenvअगर_dbg_root,
-				    &vअगर->queues[i],
-				    &xenvअगर_dbg_io_ring_ops_fops);
-	पूर्ण
+		snprintf(filename, sizeof(filename), "io_ring_q%d", i);
+		debugfs_create_file(filename, 0600, vif->xenvif_dbg_root,
+				    &vif->queues[i],
+				    &xenvif_dbg_io_ring_ops_fops);
+	}
 
-	अगर (vअगर->ctrl_irq)
-		debugfs_create_file("ctrl", 0400, vअगर->xenvअगर_dbg_root, vअगर,
-				    &xenvअगर_ctrl_fops);
-पूर्ण
+	if (vif->ctrl_irq)
+		debugfs_create_file("ctrl", 0400, vif->xenvif_dbg_root, vif,
+				    &xenvif_ctrl_fops);
+}
 
-अटल व्योम xenvअगर_debugfs_delअगर(काष्ठा xenvअगर *vअगर)
-अणु
-	debugfs_हटाओ_recursive(vअगर->xenvअगर_dbg_root);
-	vअगर->xenvअगर_dbg_root = शून्य;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_DEBUG_FS */
+static void xenvif_debugfs_delif(struct xenvif *vif)
+{
+	debugfs_remove_recursive(vif->xenvif_dbg_root);
+	vif->xenvif_dbg_root = NULL;
+}
+#endif /* CONFIG_DEBUG_FS */
 
 /*
  * Handle the creation of the hotplug script environment.  We add the script
- * and vअगर variables to the environment, क्रम the benefit of the vअगर-* hotplug
+ * and vif variables to the environment, for the benefit of the vif-* hotplug
  * scripts.
  */
-अटल पूर्णांक netback_uevent(काष्ठा xenbus_device *xdev,
-			  काष्ठा kobj_uevent_env *env)
-अणु
-	काष्ठा backend_info *be = dev_get_drvdata(&xdev->dev);
+static int netback_uevent(struct xenbus_device *xdev,
+			  struct kobj_uevent_env *env)
+{
+	struct backend_info *be = dev_get_drvdata(&xdev->dev);
 
-	अगर (!be)
-		वापस 0;
+	if (!be)
+		return 0;
 
-	अगर (add_uevent_var(env, "script=%s", be->hotplug_script))
-		वापस -ENOMEM;
+	if (add_uevent_var(env, "script=%s", be->hotplug_script))
+		return -ENOMEM;
 
-	अगर (!be->vअगर)
-		वापस 0;
+	if (!be->vif)
+		return 0;
 
-	वापस add_uevent_var(env, "vif=%s", be->vअगर->dev->name);
-पूर्ण
+	return add_uevent_var(env, "vif=%s", be->vif->dev->name);
+}
 
 
-अटल पूर्णांक backend_create_xenvअगर(काष्ठा backend_info *be)
-अणु
-	पूर्णांक err;
-	दीर्घ handle;
-	काष्ठा xenbus_device *dev = be->dev;
-	काष्ठा xenvअगर *vअगर;
+static int backend_create_xenvif(struct backend_info *be)
+{
+	int err;
+	long handle;
+	struct xenbus_device *dev = be->dev;
+	struct xenvif *vif;
 
-	अगर (be->vअगर != शून्य)
-		वापस 0;
+	if (be->vif != NULL)
+		return 0;
 
-	err = xenbus_म_पूछो(XBT_NIL, dev->nodename, "handle", "%li", &handle);
-	अगर (err != 1) अणु
+	err = xenbus_scanf(XBT_NIL, dev->nodename, "handle", "%li", &handle);
+	if (err != 1) {
 		xenbus_dev_fatal(dev, err, "reading handle");
-		वापस (err < 0) ? err : -EINVAL;
-	पूर्ण
+		return (err < 0) ? err : -EINVAL;
+	}
 
-	vअगर = xenvअगर_alloc(&dev->dev, dev->otherend_id, handle);
-	अगर (IS_ERR(vअगर)) अणु
-		err = PTR_ERR(vअगर);
+	vif = xenvif_alloc(&dev->dev, dev->otherend_id, handle);
+	if (IS_ERR(vif)) {
+		err = PTR_ERR(vif);
 		xenbus_dev_fatal(dev, err, "creating interface");
-		वापस err;
-	पूर्ण
-	be->vअगर = vअगर;
-	vअगर->be = be;
+		return err;
+	}
+	be->vif = vif;
+	vif->be = be;
 
 	kobject_uevent(&dev->dev.kobj, KOBJ_ONLINE);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम backend_disconnect(काष्ठा backend_info *be)
-अणु
-	काष्ठा xenvअगर *vअगर = be->vअगर;
+static void backend_disconnect(struct backend_info *be)
+{
+	struct xenvif *vif = be->vif;
 
-	अगर (vअगर) अणु
-		अचिन्हित पूर्णांक num_queues = vअगर->num_queues;
-		अचिन्हित पूर्णांक queue_index;
+	if (vif) {
+		unsigned int num_queues = vif->num_queues;
+		unsigned int queue_index;
 
-		xen_unरेजिस्टर_watchers(vअगर);
-#अगर_घोषित CONFIG_DEBUG_FS
-		xenvअगर_debugfs_delअगर(vअगर);
-#पूर्ण_अगर /* CONFIG_DEBUG_FS */
-		xenvअगर_disconnect_data(vअगर);
+		xen_unregister_watchers(vif);
+#ifdef CONFIG_DEBUG_FS
+		xenvif_debugfs_delif(vif);
+#endif /* CONFIG_DEBUG_FS */
+		xenvif_disconnect_data(vif);
 
-		/* At this poपूर्णांक some of the handlers may still be active
+		/* At this point some of the handlers may still be active
 		 * so we need to have additional synchronization here.
 		 */
-		vअगर->num_queues = 0;
+		vif->num_queues = 0;
 		synchronize_net();
 
-		क्रम (queue_index = 0; queue_index < num_queues; ++queue_index)
-			xenvअगर_deinit_queue(&vअगर->queues[queue_index]);
+		for (queue_index = 0; queue_index < num_queues; ++queue_index)
+			xenvif_deinit_queue(&vif->queues[queue_index]);
 
-		vमुक्त(vअगर->queues);
-		vअगर->queues = शून्य;
+		vfree(vif->queues);
+		vif->queues = NULL;
 
-		xenvअगर_disconnect_ctrl(vअगर);
-	पूर्ण
-पूर्ण
+		xenvif_disconnect_ctrl(vif);
+	}
+}
 
-अटल व्योम backend_connect(काष्ठा backend_info *be)
-अणु
-	अगर (be->vअगर)
+static void backend_connect(struct backend_info *be)
+{
+	if (be->vif)
 		connect(be);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम backend_चयन_state(काष्ठा backend_info *be,
-					क्रमागत xenbus_state state)
-अणु
-	काष्ठा xenbus_device *dev = be->dev;
+static inline void backend_switch_state(struct backend_info *be,
+					enum xenbus_state state)
+{
+	struct xenbus_device *dev = be->dev;
 
 	pr_debug("%s -> %s\n", dev->nodename, xenbus_strstate(state));
 	be->state = state;
 
-	/* If we are रुकोing क्रम a hotplug script then defer the
+	/* If we are waiting for a hotplug script then defer the
 	 * actual xenbus state change.
 	 */
-	अगर (!be->have_hotplug_status_watch)
-		xenbus_चयन_state(dev, state);
-पूर्ण
+	if (!be->have_hotplug_status_watch)
+		xenbus_switch_state(dev, state);
+}
 
 /* Handle backend state transitions:
  *
@@ -316,871 +315,871 @@ DEFINE_SHOW_ATTRIBUTE(xenvअगर_ctrl);
  *
  *                  Closed  <-> Closing
  *
- * The state argument specअगरies the eventual state of the backend and the
- * function transitions to that state via the लघुest path.
+ * The state argument specifies the eventual state of the backend and the
+ * function transitions to that state via the shortest path.
  */
-अटल व्योम set_backend_state(काष्ठा backend_info *be,
-			      क्रमागत xenbus_state state)
-अणु
-	जबतक (be->state != state) अणु
-		चयन (be->state) अणु
-		हाल XenbusStateInitialising:
-			चयन (state) अणु
-			हाल XenbusStateInitWait:
-			हाल XenbusStateConnected:
-			हाल XenbusStateClosing:
-				backend_चयन_state(be, XenbusStateInitWait);
-				अवरोध;
-			हाल XenbusStateClosed:
-				backend_चयन_state(be, XenbusStateClosed);
-				अवरोध;
-			शेष:
+static void set_backend_state(struct backend_info *be,
+			      enum xenbus_state state)
+{
+	while (be->state != state) {
+		switch (be->state) {
+		case XenbusStateInitialising:
+			switch (state) {
+			case XenbusStateInitWait:
+			case XenbusStateConnected:
+			case XenbusStateClosing:
+				backend_switch_state(be, XenbusStateInitWait);
+				break;
+			case XenbusStateClosed:
+				backend_switch_state(be, XenbusStateClosed);
+				break;
+			default:
 				BUG();
-			पूर्ण
-			अवरोध;
-		हाल XenbusStateClosed:
-			चयन (state) अणु
-			हाल XenbusStateInitWait:
-			हाल XenbusStateConnected:
-				backend_चयन_state(be, XenbusStateInitWait);
-				अवरोध;
-			हाल XenbusStateClosing:
-				backend_चयन_state(be, XenbusStateClosing);
-				अवरोध;
-			शेष:
+			}
+			break;
+		case XenbusStateClosed:
+			switch (state) {
+			case XenbusStateInitWait:
+			case XenbusStateConnected:
+				backend_switch_state(be, XenbusStateInitWait);
+				break;
+			case XenbusStateClosing:
+				backend_switch_state(be, XenbusStateClosing);
+				break;
+			default:
 				BUG();
-			पूर्ण
-			अवरोध;
-		हाल XenbusStateInitWait:
-			चयन (state) अणु
-			हाल XenbusStateConnected:
+			}
+			break;
+		case XenbusStateInitWait:
+			switch (state) {
+			case XenbusStateConnected:
 				backend_connect(be);
-				backend_चयन_state(be, XenbusStateConnected);
-				अवरोध;
-			हाल XenbusStateClosing:
-			हाल XenbusStateClosed:
-				backend_चयन_state(be, XenbusStateClosing);
-				अवरोध;
-			शेष:
+				backend_switch_state(be, XenbusStateConnected);
+				break;
+			case XenbusStateClosing:
+			case XenbusStateClosed:
+				backend_switch_state(be, XenbusStateClosing);
+				break;
+			default:
 				BUG();
-			पूर्ण
-			अवरोध;
-		हाल XenbusStateConnected:
-			चयन (state) अणु
-			हाल XenbusStateInitWait:
-			हाल XenbusStateClosing:
-			हाल XenbusStateClosed:
+			}
+			break;
+		case XenbusStateConnected:
+			switch (state) {
+			case XenbusStateInitWait:
+			case XenbusStateClosing:
+			case XenbusStateClosed:
 				backend_disconnect(be);
-				backend_चयन_state(be, XenbusStateClosing);
-				अवरोध;
-			शेष:
+				backend_switch_state(be, XenbusStateClosing);
+				break;
+			default:
 				BUG();
-			पूर्ण
-			अवरोध;
-		हाल XenbusStateClosing:
-			चयन (state) अणु
-			हाल XenbusStateInitWait:
-			हाल XenbusStateConnected:
-			हाल XenbusStateClosed:
-				backend_चयन_state(be, XenbusStateClosed);
-				अवरोध;
-			शेष:
+			}
+			break;
+		case XenbusStateClosing:
+			switch (state) {
+			case XenbusStateInitWait:
+			case XenbusStateConnected:
+			case XenbusStateClosed:
+				backend_switch_state(be, XenbusStateClosed);
+				break;
+			default:
 				BUG();
-			पूर्ण
-			अवरोध;
-		शेष:
+			}
+			break;
+		default:
 			BUG();
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल व्योम पढ़ो_xenbus_frontend_xdp(काष्ठा backend_info *be,
-				      काष्ठा xenbus_device *dev)
-अणु
-	काष्ठा xenvअगर *vअगर = be->vअगर;
+static void read_xenbus_frontend_xdp(struct backend_info *be,
+				      struct xenbus_device *dev)
+{
+	struct xenvif *vif = be->vif;
 	u16 headroom;
-	पूर्णांक err;
+	int err;
 
-	err = xenbus_म_पूछो(XBT_NIL, dev->otherend,
+	err = xenbus_scanf(XBT_NIL, dev->otherend,
 			   "xdp-headroom", "%hu", &headroom);
-	अगर (err != 1) अणु
-		vअगर->xdp_headroom = 0;
-		वापस;
-	पूर्ण
-	अगर (headroom > XEN_NETIF_MAX_XDP_HEADROOM)
+	if (err != 1) {
+		vif->xdp_headroom = 0;
+		return;
+	}
+	if (headroom > XEN_NETIF_MAX_XDP_HEADROOM)
 		headroom = XEN_NETIF_MAX_XDP_HEADROOM;
-	vअगर->xdp_headroom = headroom;
-पूर्ण
+	vif->xdp_headroom = headroom;
+}
 
 /*
  * Callback received when the frontend's state changes.
  */
-अटल व्योम frontend_changed(काष्ठा xenbus_device *dev,
-			     क्रमागत xenbus_state frontend_state)
-अणु
-	काष्ठा backend_info *be = dev_get_drvdata(&dev->dev);
+static void frontend_changed(struct xenbus_device *dev,
+			     enum xenbus_state frontend_state)
+{
+	struct backend_info *be = dev_get_drvdata(&dev->dev);
 
 	pr_debug("%s -> %s\n", dev->otherend, xenbus_strstate(frontend_state));
 
 	be->frontend_state = frontend_state;
 
-	चयन (frontend_state) अणु
-	हाल XenbusStateInitialising:
+	switch (frontend_state) {
+	case XenbusStateInitialising:
 		set_backend_state(be, XenbusStateInitWait);
-		अवरोध;
+		break;
 
-	हाल XenbusStateInitialised:
-		अवरोध;
+	case XenbusStateInitialised:
+		break;
 
-	हाल XenbusStateConnected:
+	case XenbusStateConnected:
 		set_backend_state(be, XenbusStateConnected);
-		अवरोध;
+		break;
 
-	हाल XenbusStateReconfiguring:
-		पढ़ो_xenbus_frontend_xdp(be, dev);
-		xenbus_चयन_state(dev, XenbusStateReconfigured);
-		अवरोध;
+	case XenbusStateReconfiguring:
+		read_xenbus_frontend_xdp(be, dev);
+		xenbus_switch_state(dev, XenbusStateReconfigured);
+		break;
 
-	हाल XenbusStateClosing:
+	case XenbusStateClosing:
 		set_backend_state(be, XenbusStateClosing);
-		अवरोध;
+		break;
 
-	हाल XenbusStateClosed:
+	case XenbusStateClosed:
 		set_backend_state(be, XenbusStateClosed);
-		अगर (xenbus_dev_is_online(dev))
-			अवरोध;
-		fallthrough;	/* अगर not online */
-	हाल XenbusStateUnknown:
+		if (xenbus_dev_is_online(dev))
+			break;
+		fallthrough;	/* if not online */
+	case XenbusStateUnknown:
 		set_backend_state(be, XenbusStateClosed);
-		device_unरेजिस्टर(&dev->dev);
-		अवरोध;
+		device_unregister(&dev->dev);
+		break;
 
-	शेष:
+	default:
 		xenbus_dev_fatal(dev, -EINVAL, "saw state %d at frontend",
 				 frontend_state);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
 
-अटल व्योम xen_net_पढ़ो_rate(काष्ठा xenbus_device *dev,
-			      अचिन्हित दीर्घ *bytes, अचिन्हित दीर्घ *usec)
-अणु
-	अक्षर *s, *e;
-	अचिन्हित दीर्घ b, u;
-	अक्षर *ratestr;
+static void xen_net_read_rate(struct xenbus_device *dev,
+			      unsigned long *bytes, unsigned long *usec)
+{
+	char *s, *e;
+	unsigned long b, u;
+	char *ratestr;
 
 	/* Default to unlimited bandwidth. */
 	*bytes = ~0UL;
 	*usec = 0;
 
-	ratestr = xenbus_पढ़ो(XBT_NIL, dev->nodename, "rate", शून्य);
-	अगर (IS_ERR(ratestr))
-		वापस;
+	ratestr = xenbus_read(XBT_NIL, dev->nodename, "rate", NULL);
+	if (IS_ERR(ratestr))
+		return;
 
 	s = ratestr;
-	b = simple_म_से_अदीर्घ(s, &e, 10);
-	अगर ((s == e) || (*e != ','))
-		जाओ fail;
+	b = simple_strtoul(s, &e, 10);
+	if ((s == e) || (*e != ','))
+		goto fail;
 
 	s = e + 1;
-	u = simple_म_से_अदीर्घ(s, &e, 10);
-	अगर ((s == e) || (*e != '\0'))
-		जाओ fail;
+	u = simple_strtoul(s, &e, 10);
+	if ((s == e) || (*e != '\0'))
+		goto fail;
 
 	*bytes = b;
 	*usec = u;
 
-	kमुक्त(ratestr);
-	वापस;
+	kfree(ratestr);
+	return;
 
  fail:
 	pr_warn("Failed to parse network rate limit. Traffic unlimited.\n");
-	kमुक्त(ratestr);
-पूर्ण
+	kfree(ratestr);
+}
 
-अटल पूर्णांक xen_net_पढ़ो_mac(काष्ठा xenbus_device *dev, u8 mac[])
-अणु
-	अक्षर *s, *e, *macstr;
-	पूर्णांक i;
+static int xen_net_read_mac(struct xenbus_device *dev, u8 mac[])
+{
+	char *s, *e, *macstr;
+	int i;
 
-	macstr = s = xenbus_पढ़ो(XBT_NIL, dev->nodename, "mac", शून्य);
-	अगर (IS_ERR(macstr))
-		वापस PTR_ERR(macstr);
+	macstr = s = xenbus_read(XBT_NIL, dev->nodename, "mac", NULL);
+	if (IS_ERR(macstr))
+		return PTR_ERR(macstr);
 
-	क्रम (i = 0; i < ETH_ALEN; i++) अणु
-		mac[i] = simple_म_से_अदीर्घ(s, &e, 16);
-		अगर ((s == e) || (*e != ((i == ETH_ALEN-1) ? '\0' : ':'))) अणु
-			kमुक्त(macstr);
-			वापस -ENOENT;
-		पूर्ण
+	for (i = 0; i < ETH_ALEN; i++) {
+		mac[i] = simple_strtoul(s, &e, 16);
+		if ((s == e) || (*e != ((i == ETH_ALEN-1) ? '\0' : ':'))) {
+			kfree(macstr);
+			return -ENOENT;
+		}
 		s = e+1;
-	पूर्ण
+	}
 
-	kमुक्त(macstr);
-	वापस 0;
-पूर्ण
+	kfree(macstr);
+	return 0;
+}
 
-अटल व्योम xen_net_rate_changed(काष्ठा xenbus_watch *watch,
-				 स्थिर अक्षर *path, स्थिर अक्षर *token)
-अणु
-	काष्ठा xenvअगर *vअगर = container_of(watch, काष्ठा xenvअगर, credit_watch);
-	काष्ठा xenbus_device *dev = xenvअगर_to_xenbus_device(vअगर);
-	अचिन्हित दीर्घ   credit_bytes;
-	अचिन्हित दीर्घ   credit_usec;
-	अचिन्हित पूर्णांक queue_index;
+static void xen_net_rate_changed(struct xenbus_watch *watch,
+				 const char *path, const char *token)
+{
+	struct xenvif *vif = container_of(watch, struct xenvif, credit_watch);
+	struct xenbus_device *dev = xenvif_to_xenbus_device(vif);
+	unsigned long   credit_bytes;
+	unsigned long   credit_usec;
+	unsigned int queue_index;
 
-	xen_net_पढ़ो_rate(dev, &credit_bytes, &credit_usec);
-	क्रम (queue_index = 0; queue_index < vअगर->num_queues; queue_index++) अणु
-		काष्ठा xenvअगर_queue *queue = &vअगर->queues[queue_index];
+	xen_net_read_rate(dev, &credit_bytes, &credit_usec);
+	for (queue_index = 0; queue_index < vif->num_queues; queue_index++) {
+		struct xenvif_queue *queue = &vif->queues[queue_index];
 
 		queue->credit_bytes = credit_bytes;
 		queue->credit_usec = credit_usec;
-		अगर (!mod_समयr_pending(&queue->credit_समयout, jअगरfies) &&
-			queue->reमुख्यing_credit > queue->credit_bytes) अणु
-			queue->reमुख्यing_credit = queue->credit_bytes;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		if (!mod_timer_pending(&queue->credit_timeout, jiffies) &&
+			queue->remaining_credit > queue->credit_bytes) {
+			queue->remaining_credit = queue->credit_bytes;
+		}
+	}
+}
 
-अटल पूर्णांक xen_रेजिस्टर_credit_watch(काष्ठा xenbus_device *dev,
-				     काष्ठा xenvअगर *vअगर)
-अणु
-	पूर्णांक err = 0;
-	अक्षर *node;
-	अचिन्हित maxlen = म_माप(dev->nodename) + माप("/rate");
+static int xen_register_credit_watch(struct xenbus_device *dev,
+				     struct xenvif *vif)
+{
+	int err = 0;
+	char *node;
+	unsigned maxlen = strlen(dev->nodename) + sizeof("/rate");
 
-	अगर (vअगर->credit_watch.node)
-		वापस -EADDRINUSE;
+	if (vif->credit_watch.node)
+		return -EADDRINUSE;
 
-	node = kदो_स्मृति(maxlen, GFP_KERNEL);
-	अगर (!node)
-		वापस -ENOMEM;
-	snम_लिखो(node, maxlen, "%s/rate", dev->nodename);
-	vअगर->credit_watch.node = node;
-	vअगर->credit_watch.will_handle = शून्य;
-	vअगर->credit_watch.callback = xen_net_rate_changed;
-	err = रेजिस्टर_xenbus_watch(&vअगर->credit_watch);
-	अगर (err) अणु
-		pr_err("Failed to set watcher %s\n", vअगर->credit_watch.node);
-		kमुक्त(node);
-		vअगर->credit_watch.node = शून्य;
-		vअगर->credit_watch.will_handle = शून्य;
-		vअगर->credit_watch.callback = शून्य;
-	पूर्ण
-	वापस err;
-पूर्ण
+	node = kmalloc(maxlen, GFP_KERNEL);
+	if (!node)
+		return -ENOMEM;
+	snprintf(node, maxlen, "%s/rate", dev->nodename);
+	vif->credit_watch.node = node;
+	vif->credit_watch.will_handle = NULL;
+	vif->credit_watch.callback = xen_net_rate_changed;
+	err = register_xenbus_watch(&vif->credit_watch);
+	if (err) {
+		pr_err("Failed to set watcher %s\n", vif->credit_watch.node);
+		kfree(node);
+		vif->credit_watch.node = NULL;
+		vif->credit_watch.will_handle = NULL;
+		vif->credit_watch.callback = NULL;
+	}
+	return err;
+}
 
-अटल व्योम xen_unरेजिस्टर_credit_watch(काष्ठा xenvअगर *vअगर)
-अणु
-	अगर (vअगर->credit_watch.node) अणु
-		unरेजिस्टर_xenbus_watch(&vअगर->credit_watch);
-		kमुक्त(vअगर->credit_watch.node);
-		vअगर->credit_watch.node = शून्य;
-	पूर्ण
-पूर्ण
+static void xen_unregister_credit_watch(struct xenvif *vif)
+{
+	if (vif->credit_watch.node) {
+		unregister_xenbus_watch(&vif->credit_watch);
+		kfree(vif->credit_watch.node);
+		vif->credit_watch.node = NULL;
+	}
+}
 
-अटल व्योम xen_mcast_ctrl_changed(काष्ठा xenbus_watch *watch,
-				   स्थिर अक्षर *path, स्थिर अक्षर *token)
-अणु
-	काष्ठा xenvअगर *vअगर = container_of(watch, काष्ठा xenvअगर,
+static void xen_mcast_ctrl_changed(struct xenbus_watch *watch,
+				   const char *path, const char *token)
+{
+	struct xenvif *vif = container_of(watch, struct xenvif,
 					  mcast_ctrl_watch);
-	काष्ठा xenbus_device *dev = xenvअगर_to_xenbus_device(vअगर);
+	struct xenbus_device *dev = xenvif_to_xenbus_device(vif);
 
-	vअगर->multicast_control = !!xenbus_पढ़ो_अचिन्हित(dev->otherend,
+	vif->multicast_control = !!xenbus_read_unsigned(dev->otherend,
 					"request-multicast-control", 0);
-पूर्ण
+}
 
-अटल पूर्णांक xen_रेजिस्टर_mcast_ctrl_watch(काष्ठा xenbus_device *dev,
-					 काष्ठा xenvअगर *vअगर)
-अणु
-	पूर्णांक err = 0;
-	अक्षर *node;
-	अचिन्हित maxlen = म_माप(dev->otherend) +
-		माप("/request-multicast-control");
+static int xen_register_mcast_ctrl_watch(struct xenbus_device *dev,
+					 struct xenvif *vif)
+{
+	int err = 0;
+	char *node;
+	unsigned maxlen = strlen(dev->otherend) +
+		sizeof("/request-multicast-control");
 
-	अगर (vअगर->mcast_ctrl_watch.node) अणु
+	if (vif->mcast_ctrl_watch.node) {
 		pr_err_ratelimited("Watch is already registered\n");
-		वापस -EADDRINUSE;
-	पूर्ण
+		return -EADDRINUSE;
+	}
 
-	node = kदो_स्मृति(maxlen, GFP_KERNEL);
-	अगर (!node) अणु
+	node = kmalloc(maxlen, GFP_KERNEL);
+	if (!node) {
 		pr_err("Failed to allocate memory for watch\n");
-		वापस -ENOMEM;
-	पूर्ण
-	snम_लिखो(node, maxlen, "%s/request-multicast-control",
+		return -ENOMEM;
+	}
+	snprintf(node, maxlen, "%s/request-multicast-control",
 		 dev->otherend);
-	vअगर->mcast_ctrl_watch.node = node;
-	vअगर->mcast_ctrl_watch.will_handle = शून्य;
-	vअगर->mcast_ctrl_watch.callback = xen_mcast_ctrl_changed;
-	err = रेजिस्टर_xenbus_watch(&vअगर->mcast_ctrl_watch);
-	अगर (err) अणु
+	vif->mcast_ctrl_watch.node = node;
+	vif->mcast_ctrl_watch.will_handle = NULL;
+	vif->mcast_ctrl_watch.callback = xen_mcast_ctrl_changed;
+	err = register_xenbus_watch(&vif->mcast_ctrl_watch);
+	if (err) {
 		pr_err("Failed to set watcher %s\n",
-		       vअगर->mcast_ctrl_watch.node);
-		kमुक्त(node);
-		vअगर->mcast_ctrl_watch.node = शून्य;
-		vअगर->mcast_ctrl_watch.will_handle = शून्य;
-		vअगर->mcast_ctrl_watch.callback = शून्य;
-	पूर्ण
-	वापस err;
-पूर्ण
+		       vif->mcast_ctrl_watch.node);
+		kfree(node);
+		vif->mcast_ctrl_watch.node = NULL;
+		vif->mcast_ctrl_watch.will_handle = NULL;
+		vif->mcast_ctrl_watch.callback = NULL;
+	}
+	return err;
+}
 
-अटल व्योम xen_unरेजिस्टर_mcast_ctrl_watch(काष्ठा xenvअगर *vअगर)
-अणु
-	अगर (vअगर->mcast_ctrl_watch.node) अणु
-		unरेजिस्टर_xenbus_watch(&vअगर->mcast_ctrl_watch);
-		kमुक्त(vअगर->mcast_ctrl_watch.node);
-		vअगर->mcast_ctrl_watch.node = शून्य;
-	पूर्ण
-पूर्ण
+static void xen_unregister_mcast_ctrl_watch(struct xenvif *vif)
+{
+	if (vif->mcast_ctrl_watch.node) {
+		unregister_xenbus_watch(&vif->mcast_ctrl_watch);
+		kfree(vif->mcast_ctrl_watch.node);
+		vif->mcast_ctrl_watch.node = NULL;
+	}
+}
 
-अटल व्योम xen_रेजिस्टर_watchers(काष्ठा xenbus_device *dev,
-				  काष्ठा xenvअगर *vअगर)
-अणु
-	xen_रेजिस्टर_credit_watch(dev, vअगर);
-	xen_रेजिस्टर_mcast_ctrl_watch(dev, vअगर);
-पूर्ण
+static void xen_register_watchers(struct xenbus_device *dev,
+				  struct xenvif *vif)
+{
+	xen_register_credit_watch(dev, vif);
+	xen_register_mcast_ctrl_watch(dev, vif);
+}
 
-अटल व्योम xen_unरेजिस्टर_watchers(काष्ठा xenvअगर *vअगर)
-अणु
-	xen_unरेजिस्टर_mcast_ctrl_watch(vअगर);
-	xen_unरेजिस्टर_credit_watch(vअगर);
-पूर्ण
+static void xen_unregister_watchers(struct xenvif *vif)
+{
+	xen_unregister_mcast_ctrl_watch(vif);
+	xen_unregister_credit_watch(vif);
+}
 
-अटल व्योम unरेजिस्टर_hotplug_status_watch(काष्ठा backend_info *be)
-अणु
-	अगर (be->have_hotplug_status_watch) अणु
-		unरेजिस्टर_xenbus_watch(&be->hotplug_status_watch);
-		kमुक्त(be->hotplug_status_watch.node);
-	पूर्ण
+static void unregister_hotplug_status_watch(struct backend_info *be)
+{
+	if (be->have_hotplug_status_watch) {
+		unregister_xenbus_watch(&be->hotplug_status_watch);
+		kfree(be->hotplug_status_watch.node);
+	}
 	be->have_hotplug_status_watch = 0;
-पूर्ण
+}
 
-अटल व्योम hotplug_status_changed(काष्ठा xenbus_watch *watch,
-				   स्थिर अक्षर *path,
-				   स्थिर अक्षर *token)
-अणु
-	काष्ठा backend_info *be = container_of(watch,
-					       काष्ठा backend_info,
+static void hotplug_status_changed(struct xenbus_watch *watch,
+				   const char *path,
+				   const char *token)
+{
+	struct backend_info *be = container_of(watch,
+					       struct backend_info,
 					       hotplug_status_watch);
-	अक्षर *str;
-	अचिन्हित पूर्णांक len;
+	char *str;
+	unsigned int len;
 
-	str = xenbus_पढ़ो(XBT_NIL, be->dev->nodename, "hotplug-status", &len);
-	अगर (IS_ERR(str))
-		वापस;
-	अगर (len == माप("connected")-1 && !स_भेद(str, "connected", len)) अणु
+	str = xenbus_read(XBT_NIL, be->dev->nodename, "hotplug-status", &len);
+	if (IS_ERR(str))
+		return;
+	if (len == sizeof("connected")-1 && !memcmp(str, "connected", len)) {
 		/* Complete any pending state change */
-		xenbus_चयन_state(be->dev, be->state);
+		xenbus_switch_state(be->dev, be->state);
 
-		/* Not पूर्णांकerested in this watch anymore. */
-		unरेजिस्टर_hotplug_status_watch(be);
+		/* Not interested in this watch anymore. */
+		unregister_hotplug_status_watch(be);
 		xenbus_rm(XBT_NIL, be->dev->nodename, "hotplug-status");
-	पूर्ण
-	kमुक्त(str);
-पूर्ण
+	}
+	kfree(str);
+}
 
-अटल पूर्णांक connect_ctrl_ring(काष्ठा backend_info *be)
-अणु
-	काष्ठा xenbus_device *dev = be->dev;
-	काष्ठा xenvअगर *vअगर = be->vअगर;
-	अचिन्हित पूर्णांक val;
+static int connect_ctrl_ring(struct backend_info *be)
+{
+	struct xenbus_device *dev = be->dev;
+	struct xenvif *vif = be->vif;
+	unsigned int val;
 	grant_ref_t ring_ref;
-	अचिन्हित पूर्णांक evtchn;
-	पूर्णांक err;
+	unsigned int evtchn;
+	int err;
 
-	err = xenbus_म_पूछो(XBT_NIL, dev->otherend,
+	err = xenbus_scanf(XBT_NIL, dev->otherend,
 			   "ctrl-ring-ref", "%u", &val);
-	अगर (err < 0)
-		जाओ करोne; /* The frontend करोes not have a control ring */
+	if (err < 0)
+		goto done; /* The frontend does not have a control ring */
 
 	ring_ref = val;
 
-	err = xenbus_म_पूछो(XBT_NIL, dev->otherend,
+	err = xenbus_scanf(XBT_NIL, dev->otherend,
 			   "event-channel-ctrl", "%u", &val);
-	अगर (err < 0) अणु
+	if (err < 0) {
 		xenbus_dev_fatal(dev, err,
 				 "reading %s/event-channel-ctrl",
 				 dev->otherend);
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
 	evtchn = val;
 
-	err = xenvअगर_connect_ctrl(vअगर, ring_ref, evtchn);
-	अगर (err) अणु
+	err = xenvif_connect_ctrl(vif, ring_ref, evtchn);
+	if (err) {
 		xenbus_dev_fatal(dev, err,
 				 "mapping shared-frame %u port %u",
 				 ring_ref, evtchn);
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
-करोne:
-	वापस 0;
+done:
+	return 0;
 
 fail:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम connect(काष्ठा backend_info *be)
-अणु
-	पूर्णांक err;
-	काष्ठा xenbus_device *dev = be->dev;
-	अचिन्हित दीर्घ credit_bytes, credit_usec;
-	अचिन्हित पूर्णांक queue_index;
-	अचिन्हित पूर्णांक requested_num_queues;
-	काष्ठा xenvअगर_queue *queue;
+static void connect(struct backend_info *be)
+{
+	int err;
+	struct xenbus_device *dev = be->dev;
+	unsigned long credit_bytes, credit_usec;
+	unsigned int queue_index;
+	unsigned int requested_num_queues;
+	struct xenvif_queue *queue;
 
 	/* Check whether the frontend requested multiple queues
-	 * and पढ़ो the number requested.
+	 * and read the number requested.
 	 */
-	requested_num_queues = xenbus_पढ़ो_अचिन्हित(dev->otherend,
+	requested_num_queues = xenbus_read_unsigned(dev->otherend,
 					"multi-queue-num-queues", 1);
-	अगर (requested_num_queues > xenvअगर_max_queues) अणु
+	if (requested_num_queues > xenvif_max_queues) {
 		/* buggy or malicious guest */
 		xenbus_dev_fatal(dev, -EINVAL,
 				 "guest requested %u queues, exceeding the maximum of %u.",
-				 requested_num_queues, xenvअगर_max_queues);
-		वापस;
-	पूर्ण
+				 requested_num_queues, xenvif_max_queues);
+		return;
+	}
 
-	err = xen_net_पढ़ो_mac(dev, be->vअगर->fe_dev_addr);
-	अगर (err) अणु
+	err = xen_net_read_mac(dev, be->vif->fe_dev_addr);
+	if (err) {
 		xenbus_dev_fatal(dev, err, "parsing %s/mac", dev->nodename);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	xen_net_पढ़ो_rate(dev, &credit_bytes, &credit_usec);
-	xen_unरेजिस्टर_watchers(be->vअगर);
-	xen_रेजिस्टर_watchers(dev, be->vअगर);
-	पढ़ो_xenbus_vअगर_flags(be);
+	xen_net_read_rate(dev, &credit_bytes, &credit_usec);
+	xen_unregister_watchers(be->vif);
+	xen_register_watchers(dev, be->vif);
+	read_xenbus_vif_flags(be);
 
 	err = connect_ctrl_ring(be);
-	अगर (err) अणु
+	if (err) {
 		xenbus_dev_fatal(dev, err, "connecting control ring");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/* Use the number of queues requested by the frontend */
-	be->vअगर->queues = vzalloc(array_size(requested_num_queues,
-					     माप(काष्ठा xenvअगर_queue)));
-	अगर (!be->vअगर->queues) अणु
+	be->vif->queues = vzalloc(array_size(requested_num_queues,
+					     sizeof(struct xenvif_queue)));
+	if (!be->vif->queues) {
 		xenbus_dev_fatal(dev, -ENOMEM,
 				 "allocating queues");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	be->vअगर->num_queues = requested_num_queues;
-	be->vअगर->stalled_queues = requested_num_queues;
+	be->vif->num_queues = requested_num_queues;
+	be->vif->stalled_queues = requested_num_queues;
 
-	क्रम (queue_index = 0; queue_index < requested_num_queues; ++queue_index) अणु
-		queue = &be->vअगर->queues[queue_index];
-		queue->vअगर = be->vअगर;
+	for (queue_index = 0; queue_index < requested_num_queues; ++queue_index) {
+		queue = &be->vif->queues[queue_index];
+		queue->vif = be->vif;
 		queue->id = queue_index;
-		snम_लिखो(queue->name, माप(queue->name), "%s-q%u",
-				be->vअगर->dev->name, queue->id);
+		snprintf(queue->name, sizeof(queue->name), "%s-q%u",
+				be->vif->dev->name, queue->id);
 
-		err = xenvअगर_init_queue(queue);
-		अगर (err) अणु
-			/* xenvअगर_init_queue() cleans up after itself on
+		err = xenvif_init_queue(queue);
+		if (err) {
+			/* xenvif_init_queue() cleans up after itself on
 			 * failure, but we need to clean up any previously
 			 * initialised queues. Set num_queues to i so that
 			 * earlier queues can be destroyed using the regular
 			 * disconnect logic.
 			 */
-			be->vअगर->num_queues = queue_index;
-			जाओ err;
-		पूर्ण
+			be->vif->num_queues = queue_index;
+			goto err;
+		}
 
 		queue->credit_bytes = credit_bytes;
-		queue->reमुख्यing_credit = credit_bytes;
+		queue->remaining_credit = credit_bytes;
 		queue->credit_usec = credit_usec;
 
 		err = connect_data_rings(be, queue);
-		अगर (err) अणु
+		if (err) {
 			/* connect_data_rings() cleans up after itself on
 			 * failure, but we need to clean up after
-			 * xenvअगर_init_queue() here, and also clean up any
+			 * xenvif_init_queue() here, and also clean up any
 			 * previously initialised queues.
 			 */
-			xenvअगर_deinit_queue(queue);
-			be->vअगर->num_queues = queue_index;
-			जाओ err;
-		पूर्ण
-	पूर्ण
+			xenvif_deinit_queue(queue);
+			be->vif->num_queues = queue_index;
+			goto err;
+		}
+	}
 
-#अगर_घोषित CONFIG_DEBUG_FS
-	xenvअगर_debugfs_addअगर(be->vअगर);
-#पूर्ण_अगर /* CONFIG_DEBUG_FS */
+#ifdef CONFIG_DEBUG_FS
+	xenvif_debugfs_addif(be->vif);
+#endif /* CONFIG_DEBUG_FS */
 
 	/* Initialisation completed, tell core driver the number of
 	 * active queues.
 	 */
 	rtnl_lock();
-	netअगर_set_real_num_tx_queues(be->vअगर->dev, requested_num_queues);
-	netअगर_set_real_num_rx_queues(be->vअगर->dev, requested_num_queues);
+	netif_set_real_num_tx_queues(be->vif->dev, requested_num_queues);
+	netif_set_real_num_rx_queues(be->vif->dev, requested_num_queues);
 	rtnl_unlock();
 
-	xenvअगर_carrier_on(be->vअगर);
+	xenvif_carrier_on(be->vif);
 
-	unरेजिस्टर_hotplug_status_watch(be);
-	अगर (xenbus_exists(XBT_NIL, dev->nodename, "hotplug-status")) अणु
+	unregister_hotplug_status_watch(be);
+	if (xenbus_exists(XBT_NIL, dev->nodename, "hotplug-status")) {
 		err = xenbus_watch_pathfmt(dev, &be->hotplug_status_watch,
-					   शून्य, hotplug_status_changed,
+					   NULL, hotplug_status_changed,
 					   "%s/%s", dev->nodename,
 					   "hotplug-status");
-		अगर (err)
-			जाओ err;
+		if (err)
+			goto err;
 		be->have_hotplug_status_watch = 1;
-	पूर्ण
+	}
 
-	netअगर_tx_wake_all_queues(be->vअगर->dev);
+	netif_tx_wake_all_queues(be->vif->dev);
 
-	वापस;
+	return;
 
 err:
-	अगर (be->vअगर->num_queues > 0)
-		xenvअगर_disconnect_data(be->vअगर); /* Clean up existing queues */
-	क्रम (queue_index = 0; queue_index < be->vअगर->num_queues; ++queue_index)
-		xenvअगर_deinit_queue(&be->vअगर->queues[queue_index]);
-	vमुक्त(be->vअगर->queues);
-	be->vअगर->queues = शून्य;
-	be->vअगर->num_queues = 0;
-	xenvअगर_disconnect_ctrl(be->vअगर);
-	वापस;
-पूर्ण
+	if (be->vif->num_queues > 0)
+		xenvif_disconnect_data(be->vif); /* Clean up existing queues */
+	for (queue_index = 0; queue_index < be->vif->num_queues; ++queue_index)
+		xenvif_deinit_queue(&be->vif->queues[queue_index]);
+	vfree(be->vif->queues);
+	be->vif->queues = NULL;
+	be->vif->num_queues = 0;
+	xenvif_disconnect_ctrl(be->vif);
+	return;
+}
 
 
-अटल पूर्णांक connect_data_rings(काष्ठा backend_info *be,
-			      काष्ठा xenvअगर_queue *queue)
-अणु
-	काष्ठा xenbus_device *dev = be->dev;
-	अचिन्हित पूर्णांक num_queues = queue->vअगर->num_queues;
-	अचिन्हित दीर्घ tx_ring_ref, rx_ring_ref;
-	अचिन्हित पूर्णांक tx_evtchn, rx_evtchn;
-	पूर्णांक err;
-	अक्षर *xspath;
-	माप_प्रकार xspathsize;
-	स्थिर माप_प्रकार xenstore_path_ext_size = 11; /* sufficient क्रम "/queue-NNN" */
+static int connect_data_rings(struct backend_info *be,
+			      struct xenvif_queue *queue)
+{
+	struct xenbus_device *dev = be->dev;
+	unsigned int num_queues = queue->vif->num_queues;
+	unsigned long tx_ring_ref, rx_ring_ref;
+	unsigned int tx_evtchn, rx_evtchn;
+	int err;
+	char *xspath;
+	size_t xspathsize;
+	const size_t xenstore_path_ext_size = 11; /* sufficient for "/queue-NNN" */
 
 	/* If the frontend requested 1 queue, or we have fallen back
-	 * to single queue due to lack of frontend support क्रम multi-
-	 * queue, expect the reमुख्यing XenStore keys in the toplevel
+	 * to single queue due to lack of frontend support for multi-
+	 * queue, expect the remaining XenStore keys in the toplevel
 	 * directory. Otherwise, expect them in a subdirectory called
 	 * queue-N.
 	 */
-	अगर (num_queues == 1) अणु
-		xspath = kzalloc(म_माप(dev->otherend) + 1, GFP_KERNEL);
-		अगर (!xspath) अणु
+	if (num_queues == 1) {
+		xspath = kzalloc(strlen(dev->otherend) + 1, GFP_KERNEL);
+		if (!xspath) {
 			xenbus_dev_fatal(dev, -ENOMEM,
 					 "reading ring references");
-			वापस -ENOMEM;
-		पूर्ण
-		म_नकल(xspath, dev->otherend);
-	पूर्ण अन्यथा अणु
-		xspathsize = म_माप(dev->otherend) + xenstore_path_ext_size;
+			return -ENOMEM;
+		}
+		strcpy(xspath, dev->otherend);
+	} else {
+		xspathsize = strlen(dev->otherend) + xenstore_path_ext_size;
 		xspath = kzalloc(xspathsize, GFP_KERNEL);
-		अगर (!xspath) अणु
+		if (!xspath) {
 			xenbus_dev_fatal(dev, -ENOMEM,
 					 "reading ring references");
-			वापस -ENOMEM;
-		पूर्ण
-		snम_लिखो(xspath, xspathsize, "%s/queue-%u", dev->otherend,
+			return -ENOMEM;
+		}
+		snprintf(xspath, xspathsize, "%s/queue-%u", dev->otherend,
 			 queue->id);
-	पूर्ण
+	}
 
 	err = xenbus_gather(XBT_NIL, xspath,
 			    "tx-ring-ref", "%lu", &tx_ring_ref,
-			    "rx-ring-ref", "%lu", &rx_ring_ref, शून्य);
-	अगर (err) अणु
+			    "rx-ring-ref", "%lu", &rx_ring_ref, NULL);
+	if (err) {
 		xenbus_dev_fatal(dev, err,
 				 "reading %s/ring-ref",
 				 xspath);
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	/* Try split event channels first, then single event channel. */
 	err = xenbus_gather(XBT_NIL, xspath,
 			    "event-channel-tx", "%u", &tx_evtchn,
-			    "event-channel-rx", "%u", &rx_evtchn, शून्य);
-	अगर (err < 0) अणु
-		err = xenbus_म_पूछो(XBT_NIL, xspath,
+			    "event-channel-rx", "%u", &rx_evtchn, NULL);
+	if (err < 0) {
+		err = xenbus_scanf(XBT_NIL, xspath,
 				   "event-channel", "%u", &tx_evtchn);
-		अगर (err < 0) अणु
+		if (err < 0) {
 			xenbus_dev_fatal(dev, err,
 					 "reading %s/event-channel(-tx/rx)",
 					 xspath);
-			जाओ err;
-		पूर्ण
+			goto err;
+		}
 		rx_evtchn = tx_evtchn;
-	पूर्ण
+	}
 
 	/* Map the shared frame, irq etc. */
-	err = xenvअगर_connect_data(queue, tx_ring_ref, rx_ring_ref,
+	err = xenvif_connect_data(queue, tx_ring_ref, rx_ring_ref,
 				  tx_evtchn, rx_evtchn);
-	अगर (err) अणु
+	if (err) {
 		xenbus_dev_fatal(dev, err,
 				 "mapping shared-frames %lu/%lu port tx %u rx %u",
 				 tx_ring_ref, rx_ring_ref,
 				 tx_evtchn, rx_evtchn);
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	err = 0;
-err: /* Regular वापस falls through with err == 0 */
-	kमुक्त(xspath);
-	वापस err;
-पूर्ण
+err: /* Regular return falls through with err == 0 */
+	kfree(xspath);
+	return err;
+}
 
-अटल पूर्णांक पढ़ो_xenbus_vअगर_flags(काष्ठा backend_info *be)
-अणु
-	काष्ठा xenvअगर *vअगर = be->vअगर;
-	काष्ठा xenbus_device *dev = be->dev;
-	अचिन्हित पूर्णांक rx_copy;
-	पूर्णांक err;
+static int read_xenbus_vif_flags(struct backend_info *be)
+{
+	struct xenvif *vif = be->vif;
+	struct xenbus_device *dev = be->dev;
+	unsigned int rx_copy;
+	int err;
 
-	err = xenbus_म_पूछो(XBT_NIL, dev->otherend, "request-rx-copy", "%u",
+	err = xenbus_scanf(XBT_NIL, dev->otherend, "request-rx-copy", "%u",
 			   &rx_copy);
-	अगर (err == -ENOENT) अणु
+	if (err == -ENOENT) {
 		err = 0;
 		rx_copy = 0;
-	पूर्ण
-	अगर (err < 0) अणु
+	}
+	if (err < 0) {
 		xenbus_dev_fatal(dev, err, "reading %s/request-rx-copy",
 				 dev->otherend);
-		वापस err;
-	पूर्ण
-	अगर (!rx_copy)
-		वापस -EOPNOTSUPP;
+		return err;
+	}
+	if (!rx_copy)
+		return -EOPNOTSUPP;
 
-	अगर (!xenbus_पढ़ो_अचिन्हित(dev->otherend, "feature-rx-notify", 0)) अणु
-		/* - Reduce drain समयout to poll more frequently क्रम
+	if (!xenbus_read_unsigned(dev->otherend, "feature-rx-notify", 0)) {
+		/* - Reduce drain timeout to poll more frequently for
 		 *   Rx requests.
 		 * - Disable Rx stall detection.
 		 */
-		be->vअगर->drain_समयout = msecs_to_jअगरfies(30);
-		be->vअगर->stall_समयout = 0;
-	पूर्ण
+		be->vif->drain_timeout = msecs_to_jiffies(30);
+		be->vif->stall_timeout = 0;
+	}
 
-	vअगर->can_sg = !!xenbus_पढ़ो_अचिन्हित(dev->otherend, "feature-sg", 0);
+	vif->can_sg = !!xenbus_read_unsigned(dev->otherend, "feature-sg", 0);
 
-	vअगर->gso_mask = 0;
+	vif->gso_mask = 0;
 
-	अगर (xenbus_पढ़ो_अचिन्हित(dev->otherend, "feature-gso-tcpv4", 0))
-		vअगर->gso_mask |= GSO_BIT(TCPV4);
+	if (xenbus_read_unsigned(dev->otherend, "feature-gso-tcpv4", 0))
+		vif->gso_mask |= GSO_BIT(TCPV4);
 
-	अगर (xenbus_पढ़ो_अचिन्हित(dev->otherend, "feature-gso-tcpv6", 0))
-		vअगर->gso_mask |= GSO_BIT(TCPV6);
+	if (xenbus_read_unsigned(dev->otherend, "feature-gso-tcpv6", 0))
+		vif->gso_mask |= GSO_BIT(TCPV6);
 
-	vअगर->ip_csum = !xenbus_पढ़ो_अचिन्हित(dev->otherend,
+	vif->ip_csum = !xenbus_read_unsigned(dev->otherend,
 					     "feature-no-csum-offload", 0);
 
-	vअगर->ipv6_csum = !!xenbus_पढ़ो_अचिन्हित(dev->otherend,
+	vif->ipv6_csum = !!xenbus_read_unsigned(dev->otherend,
 						"feature-ipv6-csum-offload", 0);
 
-	पढ़ो_xenbus_frontend_xdp(be, dev);
+	read_xenbus_frontend_xdp(be, dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक netback_हटाओ(काष्ठा xenbus_device *dev)
-अणु
-	काष्ठा backend_info *be = dev_get_drvdata(&dev->dev);
+static int netback_remove(struct xenbus_device *dev)
+{
+	struct backend_info *be = dev_get_drvdata(&dev->dev);
 
-	unरेजिस्टर_hotplug_status_watch(be);
-	अगर (be->vअगर) अणु
+	unregister_hotplug_status_watch(be);
+	if (be->vif) {
 		kobject_uevent(&dev->dev.kobj, KOBJ_OFFLINE);
 		backend_disconnect(be);
-		xenvअगर_मुक्त(be->vअगर);
-		be->vअगर = शून्य;
-	पूर्ण
-	kमुक्त(be->hotplug_script);
-	kमुक्त(be);
-	dev_set_drvdata(&dev->dev, शून्य);
-	वापस 0;
-पूर्ण
+		xenvif_free(be->vif);
+		be->vif = NULL;
+	}
+	kfree(be->hotplug_script);
+	kfree(be);
+	dev_set_drvdata(&dev->dev, NULL);
+	return 0;
+}
 
 /*
- * Entry poपूर्णांक to this code when a new device is created.  Allocate the basic
- * काष्ठाures and चयन to InitWait.
+ * Entry point to this code when a new device is created.  Allocate the basic
+ * structures and switch to InitWait.
  */
-अटल पूर्णांक netback_probe(काष्ठा xenbus_device *dev,
-			 स्थिर काष्ठा xenbus_device_id *id)
-अणु
-	स्थिर अक्षर *message;
-	काष्ठा xenbus_transaction xbt;
-	पूर्णांक err;
-	पूर्णांक sg;
-	स्थिर अक्षर *script;
-	काष्ठा backend_info *be = kzalloc(माप(*be), GFP_KERNEL);
+static int netback_probe(struct xenbus_device *dev,
+			 const struct xenbus_device_id *id)
+{
+	const char *message;
+	struct xenbus_transaction xbt;
+	int err;
+	int sg;
+	const char *script;
+	struct backend_info *be = kzalloc(sizeof(*be), GFP_KERNEL);
 
-	अगर (!be) अणु
+	if (!be) {
 		xenbus_dev_fatal(dev, -ENOMEM,
 				 "allocating backend structure");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	be->dev = dev;
 	dev_set_drvdata(&dev->dev, be);
 
 	sg = 1;
 
-	करो अणु
+	do {
 		err = xenbus_transaction_start(&xbt);
-		अगर (err) अणु
+		if (err) {
 			xenbus_dev_fatal(dev, err, "starting transaction");
-			जाओ fail;
-		पूर्ण
+			goto fail;
+		}
 
-		err = xenbus_म_लिखो(xbt, dev->nodename, "feature-sg", "%d", sg);
-		अगर (err) अणु
+		err = xenbus_printf(xbt, dev->nodename, "feature-sg", "%d", sg);
+		if (err) {
 			message = "writing feature-sg";
-			जाओ पात_transaction;
-		पूर्ण
+			goto abort_transaction;
+		}
 
-		err = xenbus_म_लिखो(xbt, dev->nodename, "feature-gso-tcpv4",
+		err = xenbus_printf(xbt, dev->nodename, "feature-gso-tcpv4",
 				    "%d", sg);
-		अगर (err) अणु
+		if (err) {
 			message = "writing feature-gso-tcpv4";
-			जाओ पात_transaction;
-		पूर्ण
+			goto abort_transaction;
+		}
 
-		err = xenbus_म_लिखो(xbt, dev->nodename, "feature-gso-tcpv6",
+		err = xenbus_printf(xbt, dev->nodename, "feature-gso-tcpv6",
 				    "%d", sg);
-		अगर (err) अणु
+		if (err) {
 			message = "writing feature-gso-tcpv6";
-			जाओ पात_transaction;
-		पूर्ण
+			goto abort_transaction;
+		}
 
-		/* We support partial checksum setup क्रम IPv6 packets */
-		err = xenbus_म_लिखो(xbt, dev->nodename,
+		/* We support partial checksum setup for IPv6 packets */
+		err = xenbus_printf(xbt, dev->nodename,
 				    "feature-ipv6-csum-offload",
 				    "%d", 1);
-		अगर (err) अणु
+		if (err) {
 			message = "writing feature-ipv6-csum-offload";
-			जाओ पात_transaction;
-		पूर्ण
+			goto abort_transaction;
+		}
 
 		/* We support rx-copy path. */
-		err = xenbus_म_लिखो(xbt, dev->nodename,
+		err = xenbus_printf(xbt, dev->nodename,
 				    "feature-rx-copy", "%d", 1);
-		अगर (err) अणु
+		if (err) {
 			message = "writing feature-rx-copy";
-			जाओ पात_transaction;
-		पूर्ण
+			goto abort_transaction;
+		}
 
-		/* we can adjust a headroom क्रम netfront XDP processing */
-		err = xenbus_म_लिखो(xbt, dev->nodename,
+		/* we can adjust a headroom for netfront XDP processing */
+		err = xenbus_printf(xbt, dev->nodename,
 				    "feature-xdp-headroom", "%d",
 				    provides_xdp_headroom);
-		अगर (err) अणु
+		if (err) {
 			message = "writing feature-xdp-headroom";
-			जाओ पात_transaction;
-		पूर्ण
+			goto abort_transaction;
+		}
 
-		/* We करोn't support rx-flip path (except old guests who
-		 * करोn't grok this feature flag).
+		/* We don't support rx-flip path (except old guests who
+		 * don't grok this feature flag).
 		 */
-		err = xenbus_म_लिखो(xbt, dev->nodename,
+		err = xenbus_printf(xbt, dev->nodename,
 				    "feature-rx-flip", "%d", 0);
-		अगर (err) अणु
+		if (err) {
 			message = "writing feature-rx-flip";
-			जाओ पात_transaction;
-		पूर्ण
+			goto abort_transaction;
+		}
 
 		/* We support dynamic multicast-control. */
-		err = xenbus_म_लिखो(xbt, dev->nodename,
+		err = xenbus_printf(xbt, dev->nodename,
 				    "feature-multicast-control", "%d", 1);
-		अगर (err) अणु
+		if (err) {
 			message = "writing feature-multicast-control";
-			जाओ पात_transaction;
-		पूर्ण
+			goto abort_transaction;
+		}
 
-		err = xenbus_म_लिखो(xbt, dev->nodename,
+		err = xenbus_printf(xbt, dev->nodename,
 				    "feature-dynamic-multicast-control",
 				    "%d", 1);
-		अगर (err) अणु
+		if (err) {
 			message = "writing feature-dynamic-multicast-control";
-			जाओ पात_transaction;
-		पूर्ण
+			goto abort_transaction;
+		}
 
 		err = xenbus_transaction_end(xbt, 0);
-	पूर्ण जबतक (err == -EAGAIN);
+	} while (err == -EAGAIN);
 
-	अगर (err) अणु
+	if (err) {
 		xenbus_dev_fatal(dev, err, "completing transaction");
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
 	/* Split event channels support, this is optional so it is not
 	 * put inside the above loop.
 	 */
-	err = xenbus_म_लिखो(XBT_NIL, dev->nodename,
+	err = xenbus_printf(XBT_NIL, dev->nodename,
 			    "feature-split-event-channels",
 			    "%u", separate_tx_rx_irq);
-	अगर (err)
+	if (err)
 		pr_debug("Error writing feature-split-event-channels\n");
 
 	/* Multi-queue support: This is an optional feature. */
-	err = xenbus_म_लिखो(XBT_NIL, dev->nodename,
-			    "multi-queue-max-queues", "%u", xenvअगर_max_queues);
-	अगर (err)
+	err = xenbus_printf(XBT_NIL, dev->nodename,
+			    "multi-queue-max-queues", "%u", xenvif_max_queues);
+	if (err)
 		pr_debug("Error writing multi-queue-max-queues\n");
 
-	err = xenbus_म_लिखो(XBT_NIL, dev->nodename,
+	err = xenbus_printf(XBT_NIL, dev->nodename,
 			    "feature-ctrl-ring",
 			    "%u", true);
-	अगर (err)
+	if (err)
 		pr_debug("Error writing feature-ctrl-ring\n");
 
-	backend_चयन_state(be, XenbusStateInitWait);
+	backend_switch_state(be, XenbusStateInitWait);
 
-	script = xenbus_पढ़ो(XBT_NIL, dev->nodename, "script", शून्य);
-	अगर (IS_ERR(script)) अणु
+	script = xenbus_read(XBT_NIL, dev->nodename, "script", NULL);
+	if (IS_ERR(script)) {
 		err = PTR_ERR(script);
 		xenbus_dev_fatal(dev, err, "reading script");
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
 	be->hotplug_script = script;
 
-	/* This kicks hotplug scripts, so करो it immediately. */
-	err = backend_create_xenvअगर(be);
-	अगर (err)
-		जाओ fail;
+	/* This kicks hotplug scripts, so do it immediately. */
+	err = backend_create_xenvif(be);
+	if (err)
+		goto fail;
 
-	वापस 0;
+	return 0;
 
-पात_transaction:
+abort_transaction:
 	xenbus_transaction_end(xbt, 1);
 	xenbus_dev_fatal(dev, err, "%s", message);
 fail:
 	pr_debug("failed\n");
-	netback_हटाओ(dev);
-	वापस err;
-पूर्ण
+	netback_remove(dev);
+	return err;
+}
 
-अटल स्थिर काष्ठा xenbus_device_id netback_ids[] = अणु
-	अणु "vif" पूर्ण,
-	अणु "" पूर्ण
-पूर्ण;
+static const struct xenbus_device_id netback_ids[] = {
+	{ "vif" },
+	{ "" }
+};
 
-अटल काष्ठा xenbus_driver netback_driver = अणु
+static struct xenbus_driver netback_driver = {
 	.ids = netback_ids,
 	.probe = netback_probe,
-	.हटाओ = netback_हटाओ,
+	.remove = netback_remove,
 	.uevent = netback_uevent,
 	.otherend_changed = frontend_changed,
 	.allow_rebind = true,
-पूर्ण;
+};
 
-पूर्णांक xenvअगर_xenbus_init(व्योम)
-अणु
-	वापस xenbus_रेजिस्टर_backend(&netback_driver);
-पूर्ण
+int xenvif_xenbus_init(void)
+{
+	return xenbus_register_backend(&netback_driver);
+}
 
-व्योम xenvअगर_xenbus_fini(व्योम)
-अणु
-	वापस xenbus_unरेजिस्टर_driver(&netback_driver);
-पूर्ण
+void xenvif_xenbus_fini(void)
+{
+	return xenbus_unregister_driver(&netback_driver);
+}

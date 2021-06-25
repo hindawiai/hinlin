@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Samsung LSI S5C73M3 8M pixel camera driver
  *
@@ -8,147 +7,147 @@
  * Andrzej Hajda <a.hajda@samsung.com>
  */
 
-#समावेश <linux/sizes.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/init.h>
-#समावेश <linux/media.h>
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/spi/spi.h>
+#include <linux/sizes.h>
+#include <linux/delay.h>
+#include <linux/init.h>
+#include <linux/media.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/spi/spi.h>
 
-#समावेश "s5c73m3.h"
+#include "s5c73m3.h"
 
-#घोषणा S5C73M3_SPI_DRV_NAME "S5C73M3-SPI"
+#define S5C73M3_SPI_DRV_NAME "S5C73M3-SPI"
 
-अटल स्थिर काष्ठा of_device_id s5c73m3_spi_ids[] = अणु
-	अणु .compatible = "samsung,s5c73m3" पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct of_device_id s5c73m3_spi_ids[] = {
+	{ .compatible = "samsung,s5c73m3" },
+	{ }
+};
 MODULE_DEVICE_TABLE(of, s5c73m3_spi_ids);
 
-क्रमागत spi_direction अणु
-	SPI_सूची_RX,
-	SPI_सूची_TX
-पूर्ण;
+enum spi_direction {
+	SPI_DIR_RX,
+	SPI_DIR_TX
+};
 
-अटल पूर्णांक spi_xmit(काष्ठा spi_device *spi_dev, व्योम *addr, स्थिर पूर्णांक len,
-							क्रमागत spi_direction dir)
-अणु
-	काष्ठा spi_message msg;
-	पूर्णांक r;
-	काष्ठा spi_transfer xfer = अणु
+static int spi_xmit(struct spi_device *spi_dev, void *addr, const int len,
+							enum spi_direction dir)
+{
+	struct spi_message msg;
+	int r;
+	struct spi_transfer xfer = {
 		.len	= len,
-	पूर्ण;
+	};
 
-	अगर (dir == SPI_सूची_TX)
+	if (dir == SPI_DIR_TX)
 		xfer.tx_buf = addr;
-	अन्यथा
+	else
 		xfer.rx_buf = addr;
 
-	अगर (spi_dev == शून्य) अणु
+	if (spi_dev == NULL) {
 		pr_err("SPI device is uninitialized\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	spi_message_init(&msg);
 	spi_message_add_tail(&xfer, &msg);
 
 	r = spi_sync(spi_dev, &msg);
-	अगर (r < 0)
+	if (r < 0)
 		dev_err(&spi_dev->dev, "%s spi_sync failed %d\n", __func__, r);
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-पूर्णांक s5c73m3_spi_ग_लिखो(काष्ठा s5c73m3 *state, स्थिर व्योम *addr,
-		      स्थिर अचिन्हित पूर्णांक len, स्थिर अचिन्हित पूर्णांक tx_size)
-अणु
-	काष्ठा spi_device *spi_dev = state->spi_dev;
+int s5c73m3_spi_write(struct s5c73m3 *state, const void *addr,
+		      const unsigned int len, const unsigned int tx_size)
+{
+	struct spi_device *spi_dev = state->spi_dev;
 	u32 count = len / tx_size;
 	u32 extra = len % tx_size;
-	अचिन्हित पूर्णांक i, j = 0;
+	unsigned int i, j = 0;
 	u8 padding[32];
-	पूर्णांक r = 0;
+	int r = 0;
 
-	स_रखो(padding, 0, माप(padding));
+	memset(padding, 0, sizeof(padding));
 
-	क्रम (i = 0; i < count; i++) अणु
-		r = spi_xmit(spi_dev, (व्योम *)addr + j, tx_size, SPI_सूची_TX);
-		अगर (r < 0)
-			वापस r;
+	for (i = 0; i < count; i++) {
+		r = spi_xmit(spi_dev, (void *)addr + j, tx_size, SPI_DIR_TX);
+		if (r < 0)
+			return r;
 		j += tx_size;
-	पूर्ण
+	}
 
-	अगर (extra > 0) अणु
-		r = spi_xmit(spi_dev, (व्योम *)addr + j, extra, SPI_सूची_TX);
-		अगर (r < 0)
-			वापस r;
-	पूर्ण
+	if (extra > 0) {
+		r = spi_xmit(spi_dev, (void *)addr + j, extra, SPI_DIR_TX);
+		if (r < 0)
+			return r;
+	}
 
-	वापस spi_xmit(spi_dev, padding, माप(padding), SPI_सूची_TX);
-पूर्ण
+	return spi_xmit(spi_dev, padding, sizeof(padding), SPI_DIR_TX);
+}
 
-पूर्णांक s5c73m3_spi_पढ़ो(काष्ठा s5c73m3 *state, व्योम *addr,
-		     स्थिर अचिन्हित पूर्णांक len, स्थिर अचिन्हित पूर्णांक tx_size)
-अणु
-	काष्ठा spi_device *spi_dev = state->spi_dev;
+int s5c73m3_spi_read(struct s5c73m3 *state, void *addr,
+		     const unsigned int len, const unsigned int tx_size)
+{
+	struct spi_device *spi_dev = state->spi_dev;
 	u32 count = len / tx_size;
 	u32 extra = len % tx_size;
-	अचिन्हित पूर्णांक i, j = 0;
-	पूर्णांक r = 0;
+	unsigned int i, j = 0;
+	int r = 0;
 
-	क्रम (i = 0; i < count; i++) अणु
-		r = spi_xmit(spi_dev, addr + j, tx_size, SPI_सूची_RX);
-		अगर (r < 0)
-			वापस r;
+	for (i = 0; i < count; i++) {
+		r = spi_xmit(spi_dev, addr + j, tx_size, SPI_DIR_RX);
+		if (r < 0)
+			return r;
 		j += tx_size;
-	पूर्ण
+	}
 
-	अगर (extra > 0)
-		वापस spi_xmit(spi_dev, addr + j, extra, SPI_सूची_RX);
+	if (extra > 0)
+		return spi_xmit(spi_dev, addr + j, extra, SPI_DIR_RX);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक s5c73m3_spi_probe(काष्ठा spi_device *spi)
-अणु
-	पूर्णांक r;
-	काष्ठा s5c73m3 *state = container_of(spi->dev.driver, काष्ठा s5c73m3,
+static int s5c73m3_spi_probe(struct spi_device *spi)
+{
+	int r;
+	struct s5c73m3 *state = container_of(spi->dev.driver, struct s5c73m3,
 					     spidrv.driver);
 	spi->bits_per_word = 32;
 
 	r = spi_setup(spi);
-	अगर (r < 0) अणु
+	if (r < 0) {
 		dev_err(&spi->dev, "spi_setup() failed\n");
-		वापस r;
-	पूर्ण
+		return r;
+	}
 
 	mutex_lock(&state->lock);
 	state->spi_dev = spi;
 	mutex_unlock(&state->lock);
 
 	v4l2_info(&state->sensor_sd, "S5C73M3 SPI probed successfully\n");
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक s5c73m3_spi_हटाओ(काष्ठा spi_device *spi)
-अणु
-	वापस 0;
-पूर्ण
+static int s5c73m3_spi_remove(struct spi_device *spi)
+{
+	return 0;
+}
 
-पूर्णांक s5c73m3_रेजिस्टर_spi_driver(काष्ठा s5c73m3 *state)
-अणु
-	काष्ठा spi_driver *spidrv = &state->spidrv;
+int s5c73m3_register_spi_driver(struct s5c73m3 *state)
+{
+	struct spi_driver *spidrv = &state->spidrv;
 
-	spidrv->हटाओ = s5c73m3_spi_हटाओ;
+	spidrv->remove = s5c73m3_spi_remove;
 	spidrv->probe = s5c73m3_spi_probe;
 	spidrv->driver.name = S5C73M3_SPI_DRV_NAME;
 	spidrv->driver.of_match_table = s5c73m3_spi_ids;
 
-	वापस spi_रेजिस्टर_driver(spidrv);
-पूर्ण
+	return spi_register_driver(spidrv);
+}
 
-व्योम s5c73m3_unरेजिस्टर_spi_driver(काष्ठा s5c73m3 *state)
-अणु
-	spi_unरेजिस्टर_driver(&state->spidrv);
-पूर्ण
+void s5c73m3_unregister_spi_driver(struct s5c73m3 *state)
+{
+	spi_unregister_driver(&state->spidrv);
+}

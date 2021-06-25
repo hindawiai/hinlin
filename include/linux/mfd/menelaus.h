@@ -1,42 +1,41 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * Functions to access Menelaus घातer management chip
+ * Functions to access Menelaus power management chip
  */
 
-#अगर_अघोषित __ASM_ARCH_MENELAUS_H
-#घोषणा __ASM_ARCH_MENELAUS_H
+#ifndef __ASM_ARCH_MENELAUS_H
+#define __ASM_ARCH_MENELAUS_H
 
-काष्ठा device;
+struct device;
 
-काष्ठा menelaus_platक्रमm_data अणु
-	पूर्णांक (* late_init)(काष्ठा device *dev);
-पूर्ण;
+struct menelaus_platform_data {
+	int (* late_init)(struct device *dev);
+};
 
-बाह्य पूर्णांक menelaus_रेजिस्टर_mmc_callback(व्योम (*callback)(व्योम *data, u8 card_mask),
-					  व्योम *data);
-बाह्य व्योम menelaus_unरेजिस्टर_mmc_callback(व्योम);
-बाह्य पूर्णांक menelaus_set_mmc_खोलोdrain(पूर्णांक slot, पूर्णांक enable);
-बाह्य पूर्णांक menelaus_set_mmc_slot(पूर्णांक slot, पूर्णांक enable, पूर्णांक घातer, पूर्णांक cd_on);
+extern int menelaus_register_mmc_callback(void (*callback)(void *data, u8 card_mask),
+					  void *data);
+extern void menelaus_unregister_mmc_callback(void);
+extern int menelaus_set_mmc_opendrain(int slot, int enable);
+extern int menelaus_set_mmc_slot(int slot, int enable, int power, int cd_on);
 
-बाह्य पूर्णांक menelaus_set_vmem(अचिन्हित पूर्णांक mV);
-बाह्य पूर्णांक menelaus_set_vio(अचिन्हित पूर्णांक mV);
-बाह्य पूर्णांक menelaus_set_vmmc(अचिन्हित पूर्णांक mV);
-बाह्य पूर्णांक menelaus_set_vaux(अचिन्हित पूर्णांक mV);
-बाह्य पूर्णांक menelaus_set_vdcdc(पूर्णांक dcdc, अचिन्हित पूर्णांक mV);
-बाह्य पूर्णांक menelaus_set_slot_sel(पूर्णांक enable);
-बाह्य पूर्णांक menelaus_get_slot_pin_states(व्योम);
-बाह्य पूर्णांक menelaus_set_vcore_hw(अचिन्हित पूर्णांक roof_mV, अचिन्हित पूर्णांक न्यूनमान_mV);
+extern int menelaus_set_vmem(unsigned int mV);
+extern int menelaus_set_vio(unsigned int mV);
+extern int menelaus_set_vmmc(unsigned int mV);
+extern int menelaus_set_vaux(unsigned int mV);
+extern int menelaus_set_vdcdc(int dcdc, unsigned int mV);
+extern int menelaus_set_slot_sel(int enable);
+extern int menelaus_get_slot_pin_states(void);
+extern int menelaus_set_vcore_hw(unsigned int roof_mV, unsigned int floor_mV);
 
-#घोषणा EN_VPLL_SLEEP	(1 << 7)
-#घोषणा EN_VMMC_SLEEP	(1 << 6)
-#घोषणा EN_VAUX_SLEEP	(1 << 5)
-#घोषणा EN_VIO_SLEEP	(1 << 4)
-#घोषणा EN_VMEM_SLEEP	(1 << 3)
-#घोषणा EN_DC3_SLEEP	(1 << 2)
-#घोषणा EN_DC2_SLEEP	(1 << 1)
-#घोषणा EN_VC_SLEEP	(1 << 0)
+#define EN_VPLL_SLEEP	(1 << 7)
+#define EN_VMMC_SLEEP	(1 << 6)
+#define EN_VAUX_SLEEP	(1 << 5)
+#define EN_VIO_SLEEP	(1 << 4)
+#define EN_VMEM_SLEEP	(1 << 3)
+#define EN_DC3_SLEEP	(1 << 2)
+#define EN_DC2_SLEEP	(1 << 1)
+#define EN_VC_SLEEP	(1 << 0)
 
-बाह्य पूर्णांक menelaus_set_regulator_sleep(पूर्णांक enable, u32 val);
+extern int menelaus_set_regulator_sleep(int enable, u32 val);
 
-#पूर्ण_अगर
+#endif

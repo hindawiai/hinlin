@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * export.c
  *
@@ -8,84 +7,84 @@
  * Copyright (C) 2002, 2005 Oracle.  All rights reserved.
  */
 
-#समावेश <linux/fs.h>
-#समावेश <linux/types.h>
+#include <linux/fs.h>
+#include <linux/types.h>
 
-#समावेश <cluster/masklog.h>
+#include <cluster/masklog.h>
 
-#समावेश "ocfs2.h"
+#include "ocfs2.h"
 
-#समावेश "alloc.h"
-#समावेश "dir.h"
-#समावेश "dlmglue.h"
-#समावेश "dcache.h"
-#समावेश "export.h"
-#समावेश "inode.h"
+#include "alloc.h"
+#include "dir.h"
+#include "dlmglue.h"
+#include "dcache.h"
+#include "export.h"
+#include "inode.h"
 
-#समावेश "buffer_head_io.h"
-#समावेश "suballoc.h"
-#समावेश "ocfs2_trace.h"
+#include "buffer_head_io.h"
+#include "suballoc.h"
+#include "ocfs2_trace.h"
 
-काष्ठा ocfs2_inode_handle
-अणु
+struct ocfs2_inode_handle
+{
 	u64 ih_blkno;
 	u32 ih_generation;
-पूर्ण;
+};
 
-अटल काष्ठा dentry *ocfs2_get_dentry(काष्ठा super_block *sb,
-		काष्ठा ocfs2_inode_handle *handle)
-अणु
-	काष्ठा inode *inode;
-	काष्ठा ocfs2_super *osb = OCFS2_SB(sb);
+static struct dentry *ocfs2_get_dentry(struct super_block *sb,
+		struct ocfs2_inode_handle *handle)
+{
+	struct inode *inode;
+	struct ocfs2_super *osb = OCFS2_SB(sb);
 	u64 blkno = handle->ih_blkno;
-	पूर्णांक status, set;
-	काष्ठा dentry *result;
+	int status, set;
+	struct dentry *result;
 
-	trace_ocfs2_get_dentry_begin(sb, handle, (अचिन्हित दीर्घ दीर्घ)blkno);
+	trace_ocfs2_get_dentry_begin(sb, handle, (unsigned long long)blkno);
 
-	अगर (blkno == 0) अणु
+	if (blkno == 0) {
 		result = ERR_PTR(-ESTALE);
-		जाओ bail;
-	पूर्ण
+		goto bail;
+	}
 
 	inode = ocfs2_ilookup(sb, blkno);
 	/*
 	 * If the inode exists in memory, we only need to check it's
 	 * generation number
 	 */
-	अगर (inode)
-		जाओ check_gen;
+	if (inode)
+		goto check_gen;
 
 	/*
 	 * This will synchronize us against ocfs2_delete_inode() on
 	 * all nodes
 	 */
 	status = ocfs2_nfs_sync_lock(osb, 1);
-	अगर (status < 0) अणु
+	if (status < 0) {
 		mlog(ML_ERROR, "getting nfs sync lock(EX) failed %d\n", status);
-		जाओ check_err;
-	पूर्ण
+		goto check_err;
+	}
 
 	status = ocfs2_test_inode_bit(osb, blkno, &set);
-	अगर (status < 0) अणु
-		अगर (status == -EINVAL) अणु
+	if (status < 0) {
+		if (status == -EINVAL) {
 			/*
-			 * The blkno NFS gave us करोesn't even show up
-			 * as an inode, we वापस -ESTALE to be
+			 * The blkno NFS gave us doesn't even show up
+			 * as an inode, we return -ESTALE to be
 			 * nice
 			 */
 			status = -ESTALE;
-		पूर्ण अन्यथा
+		} else
 			mlog(ML_ERROR, "test inode bit failed %d\n", status);
-		जाओ unlock_nfs_sync;
-	पूर्ण
+		goto unlock_nfs_sync;
+	}
 
 	trace_ocfs2_get_dentry_test_bit(status, set);
 	/* If the inode allocator bit is clear, this inode must be stale */
-	अगर (!set) अणु
+	if (!set) {
 		status = -ESTALE;
-		जाओ unlock_nfs_sync;
-	पूर्ण
+		goto unlock_nfs_sync;
+	}
 
 	inode = ocfs2_iget(osb, blkno, 0, 0);
 
@@ -93,88 +92,88 @@ unlock_nfs_sync:
 	ocfs2_nfs_sync_unlock(osb, 1);
 
 check_err:
-	अगर (status < 0) अणु
-		अगर (status == -ESTALE) अणु
-			trace_ocfs2_get_dentry_stale((अचिन्हित दीर्घ दीर्घ)blkno,
+	if (status < 0) {
+		if (status == -ESTALE) {
+			trace_ocfs2_get_dentry_stale((unsigned long long)blkno,
 						     handle->ih_generation);
-		पूर्ण
+		}
 		result = ERR_PTR(status);
-		जाओ bail;
-	पूर्ण
+		goto bail;
+	}
 
-	अगर (IS_ERR(inode)) अणु
-		mlog_त्रुटि_सं(PTR_ERR(inode));
+	if (IS_ERR(inode)) {
+		mlog_errno(PTR_ERR(inode));
 		result = ERR_CAST(inode);
-		जाओ bail;
-	पूर्ण
+		goto bail;
+	}
 
 check_gen:
-	अगर (handle->ih_generation != inode->i_generation) अणु
-		trace_ocfs2_get_dentry_generation((अचिन्हित दीर्घ दीर्घ)blkno,
+	if (handle->ih_generation != inode->i_generation) {
+		trace_ocfs2_get_dentry_generation((unsigned long long)blkno,
 						  handle->ih_generation,
 						  inode->i_generation);
 		iput(inode);
 		result = ERR_PTR(-ESTALE);
-		जाओ bail;
-	पूर्ण
+		goto bail;
+	}
 
 	result = d_obtain_alias(inode);
-	अगर (IS_ERR(result))
-		mlog_त्रुटि_सं(PTR_ERR(result));
+	if (IS_ERR(result))
+		mlog_errno(PTR_ERR(result));
 
 bail:
 	trace_ocfs2_get_dentry_end(result);
-	वापस result;
-पूर्ण
+	return result;
+}
 
-अटल काष्ठा dentry *ocfs2_get_parent(काष्ठा dentry *child)
-अणु
-	पूर्णांक status;
+static struct dentry *ocfs2_get_parent(struct dentry *child)
+{
+	int status;
 	u64 blkno;
-	काष्ठा dentry *parent;
-	काष्ठा inode *dir = d_inode(child);
-	पूर्णांक set;
+	struct dentry *parent;
+	struct inode *dir = d_inode(child);
+	int set;
 
 	trace_ocfs2_get_parent(child, child->d_name.len, child->d_name.name,
-			       (अचिन्हित दीर्घ दीर्घ)OCFS2_I(dir)->ip_blkno);
+			       (unsigned long long)OCFS2_I(dir)->ip_blkno);
 
 	status = ocfs2_nfs_sync_lock(OCFS2_SB(dir->i_sb), 1);
-	अगर (status < 0) अणु
+	if (status < 0) {
 		mlog(ML_ERROR, "getting nfs sync lock(EX) failed %d\n", status);
 		parent = ERR_PTR(status);
-		जाओ bail;
-	पूर्ण
+		goto bail;
+	}
 
-	status = ocfs2_inode_lock(dir, शून्य, 0);
-	अगर (status < 0) अणु
-		अगर (status != -ENOENT)
-			mlog_त्रुटि_सं(status);
+	status = ocfs2_inode_lock(dir, NULL, 0);
+	if (status < 0) {
+		if (status != -ENOENT)
+			mlog_errno(status);
 		parent = ERR_PTR(status);
-		जाओ unlock_nfs_sync;
-	पूर्ण
+		goto unlock_nfs_sync;
+	}
 
 	status = ocfs2_lookup_ino_from_name(dir, "..", 2, &blkno);
-	अगर (status < 0) अणु
+	if (status < 0) {
 		parent = ERR_PTR(-ENOENT);
-		जाओ bail_unlock;
-	पूर्ण
+		goto bail_unlock;
+	}
 
 	status = ocfs2_test_inode_bit(OCFS2_SB(dir->i_sb), blkno, &set);
-	अगर (status < 0) अणु
-		अगर (status == -EINVAL) अणु
+	if (status < 0) {
+		if (status == -EINVAL) {
 			status = -ESTALE;
-		पूर्ण अन्यथा
+		} else
 			mlog(ML_ERROR, "test inode bit failed %d\n", status);
 		parent = ERR_PTR(status);
-		जाओ bail_unlock;
-	पूर्ण
+		goto bail_unlock;
+	}
 
 	trace_ocfs2_get_dentry_test_bit(status, set);
-	अगर (!set) अणु
+	if (!set) {
 		status = -ESTALE;
 		parent = ERR_PTR(status);
-		जाओ bail_unlock;
-	पूर्ण
+		goto bail_unlock;
+	}
 
 	parent = d_obtain_alias(ocfs2_iget(OCFS2_SB(dir->i_sb), blkno, 0, 0));
 
@@ -187,46 +186,46 @@ unlock_nfs_sync:
 bail:
 	trace_ocfs2_get_parent_end(parent);
 
-	वापस parent;
-पूर्ण
+	return parent;
+}
 
-अटल पूर्णांक ocfs2_encode_fh(काष्ठा inode *inode, u32 *fh_in, पूर्णांक *max_len,
-			   काष्ठा inode *parent)
-अणु
-	पूर्णांक len = *max_len;
-	पूर्णांक type = 1;
+static int ocfs2_encode_fh(struct inode *inode, u32 *fh_in, int *max_len,
+			   struct inode *parent)
+{
+	int len = *max_len;
+	int type = 1;
 	u64 blkno;
 	u32 generation;
-	__le32 *fh = (__क्रमce __le32 *) fh_in;
+	__le32 *fh = (__force __le32 *) fh_in;
 
-#अगर_घोषित TRACE_HOOKS_ARE_NOT_BRAINDEAD_IN_YOUR_OPINION
-#त्रुटि "You go ahead and fix that mess, then.  Somehow"
+#ifdef TRACE_HOOKS_ARE_NOT_BRAINDEAD_IN_YOUR_OPINION
+#error "You go ahead and fix that mess, then.  Somehow"
 	trace_ocfs2_encode_fh_begin(dentry, dentry->d_name.len,
 				    dentry->d_name.name,
 				    fh, len, connectable);
-#पूर्ण_अगर
+#endif
 
-	अगर (parent && (len < 6)) अणु
+	if (parent && (len < 6)) {
 		*max_len = 6;
-		type = खाताID_INVALID;
-		जाओ bail;
-	पूर्ण अन्यथा अगर (len < 3) अणु
+		type = FILEID_INVALID;
+		goto bail;
+	} else if (len < 3) {
 		*max_len = 3;
-		type = खाताID_INVALID;
-		जाओ bail;
-	पूर्ण
+		type = FILEID_INVALID;
+		goto bail;
+	}
 
 	blkno = OCFS2_I(inode)->ip_blkno;
 	generation = inode->i_generation;
 
-	trace_ocfs2_encode_fh_self((अचिन्हित दीर्घ दीर्घ)blkno, generation);
+	trace_ocfs2_encode_fh_self((unsigned long long)blkno, generation);
 
 	len = 3;
 	fh[0] = cpu_to_le32((u32)(blkno >> 32));
 	fh[1] = cpu_to_le32((u32)(blkno & 0xffffffff));
 	fh[2] = cpu_to_le32(generation);
 
-	अगर (parent) अणु
+	if (parent) {
 		blkno = OCFS2_I(parent)->ip_blkno;
 		generation = parent->i_generation;
 
@@ -237,48 +236,48 @@ bail:
 		len = 6;
 		type = 2;
 
-		trace_ocfs2_encode_fh_parent((अचिन्हित दीर्घ दीर्घ)blkno,
+		trace_ocfs2_encode_fh_parent((unsigned long long)blkno,
 					     generation);
-	पूर्ण
+	}
 
 	*max_len = len;
 
 bail:
 	trace_ocfs2_encode_fh_type(type);
-	वापस type;
-पूर्ण
+	return type;
+}
 
-अटल काष्ठा dentry *ocfs2_fh_to_dentry(काष्ठा super_block *sb,
-		काष्ठा fid *fid, पूर्णांक fh_len, पूर्णांक fh_type)
-अणु
-	काष्ठा ocfs2_inode_handle handle;
+static struct dentry *ocfs2_fh_to_dentry(struct super_block *sb,
+		struct fid *fid, int fh_len, int fh_type)
+{
+	struct ocfs2_inode_handle handle;
 
-	अगर (fh_len < 3 || fh_type > 2)
-		वापस शून्य;
+	if (fh_len < 3 || fh_type > 2)
+		return NULL;
 
 	handle.ih_blkno = (u64)le32_to_cpu(fid->raw[0]) << 32;
 	handle.ih_blkno |= (u64)le32_to_cpu(fid->raw[1]);
 	handle.ih_generation = le32_to_cpu(fid->raw[2]);
-	वापस ocfs2_get_dentry(sb, &handle);
-पूर्ण
+	return ocfs2_get_dentry(sb, &handle);
+}
 
-अटल काष्ठा dentry *ocfs2_fh_to_parent(काष्ठा super_block *sb,
-		काष्ठा fid *fid, पूर्णांक fh_len, पूर्णांक fh_type)
-अणु
-	काष्ठा ocfs2_inode_handle parent;
+static struct dentry *ocfs2_fh_to_parent(struct super_block *sb,
+		struct fid *fid, int fh_len, int fh_type)
+{
+	struct ocfs2_inode_handle parent;
 
-	अगर (fh_type != 2 || fh_len < 6)
-		वापस शून्य;
+	if (fh_type != 2 || fh_len < 6)
+		return NULL;
 
 	parent.ih_blkno = (u64)le32_to_cpu(fid->raw[3]) << 32;
 	parent.ih_blkno |= (u64)le32_to_cpu(fid->raw[4]);
 	parent.ih_generation = le32_to_cpu(fid->raw[5]);
-	वापस ocfs2_get_dentry(sb, &parent);
-पूर्ण
+	return ocfs2_get_dentry(sb, &parent);
+}
 
-स्थिर काष्ठा export_operations ocfs2_export_ops = अणु
+const struct export_operations ocfs2_export_ops = {
 	.encode_fh	= ocfs2_encode_fh,
 	.fh_to_dentry	= ocfs2_fh_to_dentry,
 	.fh_to_parent	= ocfs2_fh_to_parent,
 	.get_parent	= ocfs2_get_parent,
-पूर्ण;
+};

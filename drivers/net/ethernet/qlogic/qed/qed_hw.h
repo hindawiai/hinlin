@@ -1,87 +1,86 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: (GPL-2.0-only OR BSD-3-Clause) */
+/* SPDX-License-Identifier: (GPL-2.0-only OR BSD-3-Clause) */
 /* QLogic qed NIC Driver
  * Copyright (c) 2015-2017  QLogic Corporation
  * Copyright (c) 2019-2020 Marvell International Ltd.
  */
 
-#अगर_अघोषित _QED_HW_H
-#घोषणा _QED_HW_H
+#ifndef _QED_HW_H
+#define _QED_HW_H
 
-#समावेश <linux/types.h>
-#समावेश <linux/bitops.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/माला.स>
-#समावेश "qed.h"
-#समावेश "qed_dev_api.h"
+#include <linux/types.h>
+#include <linux/bitops.h>
+#include <linux/slab.h>
+#include <linux/string.h>
+#include "qed.h"
+#include "qed_dev_api.h"
 
 /* Forward decleration */
-काष्ठा qed_ptt;
+struct qed_ptt;
 
-क्रमागत reserved_ptts अणु
+enum reserved_ptts {
 	RESERVED_PTT_EDIAG,
 	RESERVED_PTT_USER_SPACE,
 	RESERVED_PTT_MAIN,
 	RESERVED_PTT_DPC,
 	RESERVED_PTT_MAX
-पूर्ण;
+};
 
-क्रमागत _dmae_cmd_dst_mask अणु
+enum _dmae_cmd_dst_mask {
 	DMAE_CMD_DST_MASK_NONE	= 0,
 	DMAE_CMD_DST_MASK_PCIE	= 1,
 	DMAE_CMD_DST_MASK_GRC	= 2
-पूर्ण;
+};
 
-क्रमागत _dmae_cmd_src_mask अणु
+enum _dmae_cmd_src_mask {
 	DMAE_CMD_SRC_MASK_PCIE	= 0,
 	DMAE_CMD_SRC_MASK_GRC	= 1
-पूर्ण;
+};
 
-क्रमागत _dmae_cmd_crc_mask अणु
+enum _dmae_cmd_crc_mask {
 	DMAE_CMD_COMP_CRC_EN_MASK_NONE	= 0,
 	DMAE_CMD_COMP_CRC_EN_MASK_SET	= 1
-पूर्ण;
+};
 
-/* definitions क्रम DMA स्थिरants */
-#घोषणा DMAE_GO_VALUE   0x1
+/* definitions for DMA constants */
+#define DMAE_GO_VALUE   0x1
 
-#घोषणा DMAE_COMPLETION_VAL     0xD1AE
-#घोषणा DMAE_CMD_ENDIANITY      0x2
+#define DMAE_COMPLETION_VAL     0xD1AE
+#define DMAE_CMD_ENDIANITY      0x2
 
-#घोषणा DMAE_CMD_SIZE   14
-#घोषणा DMAE_CMD_SIZE_TO_FILL   (DMAE_CMD_SIZE - 5)
-#घोषणा DMAE_MIN_WAIT_TIME      0x2
-#घोषणा DMAE_MAX_CLIENTS        32
+#define DMAE_CMD_SIZE   14
+#define DMAE_CMD_SIZE_TO_FILL   (DMAE_CMD_SIZE - 5)
+#define DMAE_MIN_WAIT_TIME      0x2
+#define DMAE_MAX_CLIENTS        32
 
 /**
- * @brief qed_gtt_init - Initialize GTT winकरोws
+ * @brief qed_gtt_init - Initialize GTT windows
  *
  * @param p_hwfn
  */
-व्योम qed_gtt_init(काष्ठा qed_hwfn *p_hwfn);
+void qed_gtt_init(struct qed_hwfn *p_hwfn);
 
 /**
  * @brief qed_ptt_invalidate - Forces all ptt entries to be re-configured
  *
  * @param p_hwfn
  */
-व्योम qed_ptt_invalidate(काष्ठा qed_hwfn *p_hwfn);
+void qed_ptt_invalidate(struct qed_hwfn *p_hwfn);
 
 /**
  * @brief qed_ptt_pool_alloc - Allocate and initialize PTT pool
  *
  * @param p_hwfn
  *
- * @वापस काष्ठा _qed_status - success (0), negative - error.
+ * @return struct _qed_status - success (0), negative - error.
  */
-पूर्णांक qed_ptt_pool_alloc(काष्ठा qed_hwfn *p_hwfn);
+int qed_ptt_pool_alloc(struct qed_hwfn *p_hwfn);
 
 /**
- * @brief qed_ptt_pool_मुक्त -
+ * @brief qed_ptt_pool_free -
  *
  * @param p_hwfn
  */
-व्योम qed_ptt_pool_मुक्त(काष्ठा qed_hwfn *p_hwfn);
+void qed_ptt_pool_free(struct qed_hwfn *p_hwfn);
 
 /**
  * @brief qed_ptt_get_hw_addr - Get PTT's GRC/HW address
@@ -89,42 +88,42 @@
  * @param p_hwfn
  * @param p_ptt
  *
- * @वापस u32
+ * @return u32
  */
-u32 qed_ptt_get_hw_addr(काष्ठा qed_hwfn *p_hwfn,
-			काष्ठा qed_ptt *p_ptt);
+u32 qed_ptt_get_hw_addr(struct qed_hwfn *p_hwfn,
+			struct qed_ptt *p_ptt);
 
 /**
- * @brief qed_ptt_get_bar_addr - Get PPT's बाह्यal BAR address
+ * @brief qed_ptt_get_bar_addr - Get PPT's external BAR address
  *
  * @param p_hwfn
  * @param p_ptt
  *
- * @वापस u32
+ * @return u32
  */
-u32 qed_ptt_get_bar_addr(काष्ठा qed_ptt *p_ptt);
+u32 qed_ptt_get_bar_addr(struct qed_ptt *p_ptt);
 
 /**
- * @brief qed_ptt_set_win - Set PTT Winकरोw's GRC BAR address
+ * @brief qed_ptt_set_win - Set PTT Window's GRC BAR address
  *
  * @param p_hwfn
  * @param new_hw_addr
  * @param p_ptt
  */
-व्योम qed_ptt_set_win(काष्ठा qed_hwfn *p_hwfn,
-		     काष्ठा qed_ptt *p_ptt,
+void qed_ptt_set_win(struct qed_hwfn *p_hwfn,
+		     struct qed_ptt *p_ptt,
 		     u32 new_hw_addr);
 
 /**
- * @brief qed_get_reserved_ptt - Get a specअगरic reserved PTT
+ * @brief qed_get_reserved_ptt - Get a specific reserved PTT
  *
  * @param p_hwfn
  * @param ptt_idx
  *
- * @वापस काष्ठा qed_ptt *
+ * @return struct qed_ptt *
  */
-काष्ठा qed_ptt *qed_get_reserved_ptt(काष्ठा qed_hwfn *p_hwfn,
-				     क्रमागत reserved_ptts ptt_idx);
+struct qed_ptt *qed_get_reserved_ptt(struct qed_hwfn *p_hwfn,
+				     enum reserved_ptts ptt_idx);
 
 /**
  * @brief qed_wr - Write value to BAR using the given ptt
@@ -134,8 +133,8 @@ u32 qed_ptt_get_bar_addr(काष्ठा qed_ptt *p_ptt);
  * @param val
  * @param hw_addr
  */
-व्योम qed_wr(काष्ठा qed_hwfn *p_hwfn,
-	    काष्ठा qed_ptt *p_ptt,
+void qed_wr(struct qed_hwfn *p_hwfn,
+	    struct qed_ptt *p_ptt,
 	    u32 hw_addr,
 	    u32 val);
 
@@ -147,12 +146,12 @@ u32 qed_ptt_get_bar_addr(काष्ठा qed_ptt *p_ptt);
  * @param val
  * @param hw_addr
  */
-u32 qed_rd(काष्ठा qed_hwfn *p_hwfn,
-	   काष्ठा qed_ptt *p_ptt,
+u32 qed_rd(struct qed_hwfn *p_hwfn,
+	   struct qed_ptt *p_ptt,
 	   u32 hw_addr);
 
 /**
- * @brief qed_स_नकल_from - copy n bytes from BAR using the given
+ * @brief qed_memcpy_from - copy n bytes from BAR using the given
  *        ptt
  *
  * @param p_hwfn
@@ -161,14 +160,14 @@ u32 qed_rd(काष्ठा qed_hwfn *p_hwfn,
  * @param hw_addr
  * @param n
  */
-व्योम qed_स_नकल_from(काष्ठा qed_hwfn *p_hwfn,
-		     काष्ठा qed_ptt *p_ptt,
-		     व्योम *dest,
+void qed_memcpy_from(struct qed_hwfn *p_hwfn,
+		     struct qed_ptt *p_ptt,
+		     void *dest,
 		     u32 hw_addr,
-		     माप_प्रकार n);
+		     size_t n);
 
 /**
- * @brief qed_स_नकल_to - copy n bytes to BAR using the given
+ * @brief qed_memcpy_to - copy n bytes to BAR using the given
  *        ptt
  *
  * @param p_hwfn
@@ -177,36 +176,36 @@ u32 qed_rd(काष्ठा qed_hwfn *p_hwfn,
  * @param src
  * @param n
  */
-व्योम qed_स_नकल_to(काष्ठा qed_hwfn *p_hwfn,
-		   काष्ठा qed_ptt *p_ptt,
+void qed_memcpy_to(struct qed_hwfn *p_hwfn,
+		   struct qed_ptt *p_ptt,
 		   u32 hw_addr,
-		   व्योम *src,
-		   माप_प्रकार n);
+		   void *src,
+		   size_t n);
 /**
  * @brief qed_fid_pretend - pretend to another function when
- *        accessing the ptt winकरोw. There is no way to unpretend
+ *        accessing the ptt window. There is no way to unpretend
  *        a function. The only way to cancel a pretend is to
  *        pretend back to the original function.
  *
  * @param p_hwfn
  * @param p_ptt
- * @param fid - fid field of pxp_pretend काष्ठाure. Can contain
- *            either pf / vf, port/path fields are करोn't care.
+ * @param fid - fid field of pxp_pretend structure. Can contain
+ *            either pf / vf, port/path fields are don't care.
  */
-व्योम qed_fid_pretend(काष्ठा qed_hwfn *p_hwfn,
-		     काष्ठा qed_ptt *p_ptt,
+void qed_fid_pretend(struct qed_hwfn *p_hwfn,
+		     struct qed_ptt *p_ptt,
 		     u16 fid);
 
 /**
  * @brief qed_port_pretend - pretend to another port when
- *        accessing the ptt winकरोw
+ *        accessing the ptt window
  *
  * @param p_hwfn
  * @param p_ptt
  * @param port_id - the port to pretend to
  */
-व्योम qed_port_pretend(काष्ठा qed_hwfn *p_hwfn,
-		      काष्ठा qed_ptt *p_ptt,
+void qed_port_pretend(struct qed_hwfn *p_hwfn,
+		      struct qed_ptt *p_ptt,
 		      u8 port_id);
 
 /**
@@ -216,30 +215,30 @@ u32 qed_rd(काष्ठा qed_hwfn *p_hwfn,
  * @param p_hwfn
  * @param p_ptt
  */
-व्योम qed_port_unpretend(काष्ठा qed_hwfn *p_hwfn,
-			काष्ठा qed_ptt *p_ptt);
+void qed_port_unpretend(struct qed_hwfn *p_hwfn,
+			struct qed_ptt *p_ptt);
 
 /**
  * @brief qed_port_fid_pretend - pretend to another port and another function
- *        when accessing the ptt winकरोw
+ *        when accessing the ptt window
  *
  * @param p_hwfn
  * @param p_ptt
  * @param port_id - the port to pretend to
- * @param fid - fid field of pxp_pretend काष्ठाure. Can contain either pf / vf.
+ * @param fid - fid field of pxp_pretend structure. Can contain either pf / vf.
  */
-व्योम qed_port_fid_pretend(काष्ठा qed_hwfn *p_hwfn,
-			  काष्ठा qed_ptt *p_ptt, u8 port_id, u16 fid);
+void qed_port_fid_pretend(struct qed_hwfn *p_hwfn,
+			  struct qed_ptt *p_ptt, u8 port_id, u16 fid);
 
 /**
- * @brief qed_vfid_to_concrete - build a concrete FID क्रम a
+ * @brief qed_vfid_to_concrete - build a concrete FID for a
  *        given VF ID
  *
  * @param p_hwfn
  * @param p_ptt
  * @param vfid
  */
-u32 qed_vfid_to_concrete(काष्ठा qed_hwfn *p_hwfn, u8 vfid);
+u32 qed_vfid_to_concrete(struct qed_hwfn *p_hwfn, u8 vfid);
 
 /**
  * @brief qed_dmae_idx_to_go_cmd - map the idx to dmae cmd
@@ -249,61 +248,61 @@ u32 qed_vfid_to_concrete(काष्ठा qed_hwfn *p_hwfn, u8 vfid);
 u32 qed_dmae_idx_to_go_cmd(u8 idx);
 
 /**
- * @brief qed_dmae_info_alloc - Init the dmae_info काष्ठाure
+ * @brief qed_dmae_info_alloc - Init the dmae_info structure
  * which is part of p_hwfn.
  * @param p_hwfn
  */
-पूर्णांक qed_dmae_info_alloc(काष्ठा qed_hwfn *p_hwfn);
+int qed_dmae_info_alloc(struct qed_hwfn *p_hwfn);
 
 /**
- * @brief qed_dmae_info_मुक्त - Free the dmae_info काष्ठाure
+ * @brief qed_dmae_info_free - Free the dmae_info structure
  * which is part of p_hwfn
  *
  * @param p_hwfn
  */
-व्योम qed_dmae_info_मुक्त(काष्ठा qed_hwfn *p_hwfn);
+void qed_dmae_info_free(struct qed_hwfn *p_hwfn);
 
-जोड़ qed_qm_pq_params अणु
-	काष्ठा अणु
+union qed_qm_pq_params {
+	struct {
 		u8 q_idx;
-	पूर्ण iscsi;
+	} iscsi;
 
-	काष्ठा अणु
+	struct {
 		u8 tc;
-	पूर्ण	core;
+	}	core;
 
-	काष्ठा अणु
+	struct {
 		u8	is_vf;
 		u8	vf_id;
 		u8	tc;
-	पूर्ण	eth;
+	}	eth;
 
-	काष्ठा अणु
+	struct {
 		u8 dcqcn;
 		u8 qpid;	/* roce relative */
-	पूर्ण roce;
-पूर्ण;
+	} roce;
+};
 
-पूर्णांक qed_init_fw_data(काष्ठा qed_dev *cdev,
-		     स्थिर u8 *fw_data);
+int qed_init_fw_data(struct qed_dev *cdev,
+		     const u8 *fw_data);
 
-पूर्णांक qed_dmae_sanity(काष्ठा qed_hwfn *p_hwfn,
-		    काष्ठा qed_ptt *p_ptt, स्थिर अक्षर *phase);
+int qed_dmae_sanity(struct qed_hwfn *p_hwfn,
+		    struct qed_ptt *p_ptt, const char *phase);
 
-#घोषणा QED_HW_ERR_MAX_STR_SIZE 256
+#define QED_HW_ERR_MAX_STR_SIZE 256
 
 /**
- * @brief qed_hw_err_notअगरy - Notअगरy upper layer driver and management FW
+ * @brief qed_hw_err_notify - Notify upper layer driver and management FW
  *	about a HW error.
  *
  * @param p_hwfn
  * @param p_ptt
  * @param err_type
  * @param fmt - debug data buffer to send to the MFW
- * @param ... - buffer क्रमmat args
+ * @param ... - buffer format args
  */
-व्योम __म_लिखो(4, 5) __cold qed_hw_err_notअगरy(काष्ठा qed_hwfn *p_hwfn,
-					     काष्ठा qed_ptt *p_ptt,
-					     क्रमागत qed_hw_err_type err_type,
-					     स्थिर अक्षर *fmt, ...);
-#पूर्ण_अगर
+void __printf(4, 5) __cold qed_hw_err_notify(struct qed_hwfn *p_hwfn,
+					     struct qed_ptt *p_ptt,
+					     enum qed_hw_err_type err_type,
+					     const char *fmt, ...);
+#endif

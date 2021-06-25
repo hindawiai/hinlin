@@ -1,27 +1,26 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  *  TDA9950 Consumer Electronics Control driver
  *
  * The NXP TDA9950 implements the HDMI Consumer Electronics Control
- * पूर्णांकerface.  The host पूर्णांकerface is similar to a mailbox: the data
- * रेजिस्टरs starting at REG_CDR0 are written to send a command to the
- * पूर्णांकernal CPU, and replies are पढ़ो from these रेजिस्टरs.
+ * interface.  The host interface is similar to a mailbox: the data
+ * registers starting at REG_CDR0 are written to send a command to the
+ * internal CPU, and replies are read from these registers.
  *
- * As the data रेजिस्टरs represent a mailbox, they must be accessed
- * as a single I2C transaction.  See the TDA9950 data sheet क्रम details.
+ * As the data registers represent a mailbox, they must be accessed
+ * as a single I2C transaction.  See the TDA9950 data sheet for details.
  */
-#समावेश <linux/delay.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/module.h>
-#समावेश <linux/platक्रमm_data/tda9950.h>
-#समावेश <linux/slab.h>
-#समावेश <drm/drm_edid.h>
-#समावेश <media/cec.h>
-#समावेश <media/cec-notअगरier.h>
+#include <linux/delay.h>
+#include <linux/i2c.h>
+#include <linux/interrupt.h>
+#include <linux/module.h>
+#include <linux/platform_data/tda9950.h>
+#include <linux/slab.h>
+#include <drm/drm_edid.h>
+#include <media/cec.h>
+#include <media/cec-notifier.h>
 
-क्रमागत अणु
+enum {
 	REG_CSR = 0x00,
 	CSR_BUSY = BIT(7),
 	CSR_INT  = BIT(6),
@@ -58,30 +57,30 @@
 	CDR2_CNF_BAD_TIMING = 0x84,
 	CDR2_CNF_NACK_ADDR  = 0x85,
 	CDR2_CNF_NACK_DATA  = 0x86,
-पूर्ण;
+};
 
-काष्ठा tda9950_priv अणु
-	काष्ठा i2c_client *client;
-	काष्ठा device *hdmi;
-	काष्ठा cec_adapter *adap;
-	काष्ठा tda9950_glue *glue;
+struct tda9950_priv {
+	struct i2c_client *client;
+	struct device *hdmi;
+	struct cec_adapter *adap;
+	struct tda9950_glue *glue;
 	u16 addresses;
-	काष्ठा cec_msg rx_msg;
-	काष्ठा cec_notअगरier *notअगरy;
-	bool खोलो;
-पूर्ण;
+	struct cec_msg rx_msg;
+	struct cec_notifier *notify;
+	bool open;
+};
 
-अटल पूर्णांक tda9950_ग_लिखो_range(काष्ठा i2c_client *client, u8 addr, u8 *p, पूर्णांक cnt)
-अणु
-	काष्ठा i2c_msg msg;
+static int tda9950_write_range(struct i2c_client *client, u8 addr, u8 *p, int cnt)
+{
+	struct i2c_msg msg;
 	u8 buf[CEC_MAX_MSG_SIZE + 3];
-	पूर्णांक ret;
+	int ret;
 
-	अगर (WARN_ON(cnt > माप(buf) - 1))
-		वापस -EINVAL;
+	if (WARN_ON(cnt > sizeof(buf) - 1))
+		return -EINVAL;
 
 	buf[0] = addr;
-	स_नकल(buf + 1, p, cnt);
+	memcpy(buf + 1, p, cnt);
 
 	msg.addr = client->addr;
 	msg.flags = 0;
@@ -91,20 +90,20 @@
 	dev_dbg(&client->dev, "wr 0x%02x: %*ph\n", addr, cnt, p);
 
 	ret = i2c_transfer(client->adapter, &msg, 1);
-	अगर (ret < 0)
+	if (ret < 0)
 		dev_err(&client->dev, "Error %d writing to cec:0x%x\n", ret, addr);
-	वापस ret < 0 ? ret : 0;
-पूर्ण
+	return ret < 0 ? ret : 0;
+}
 
-अटल व्योम tda9950_ग_लिखो(काष्ठा i2c_client *client, u8 addr, u8 val)
-अणु
-	tda9950_ग_लिखो_range(client, addr, &val, 1);
-पूर्ण
+static void tda9950_write(struct i2c_client *client, u8 addr, u8 val)
+{
+	tda9950_write_range(client, addr, &val, 1);
+}
 
-अटल पूर्णांक tda9950_पढ़ो_range(काष्ठा i2c_client *client, u8 addr, u8 *p, पूर्णांक cnt)
-अणु
-	काष्ठा i2c_msg msg[2];
-	पूर्णांक ret;
+static int tda9950_read_range(struct i2c_client *client, u8 addr, u8 *p, int cnt)
+{
+	struct i2c_msg msg[2];
+	int ret;
 
 	msg[0].addr = client->addr;
 	msg[0].flags = 0;
@@ -116,295 +115,295 @@
 	msg[1].buf = p;
 
 	ret = i2c_transfer(client->adapter, msg, 2);
-	अगर (ret < 0)
+	if (ret < 0)
 		dev_err(&client->dev, "Error %d reading from cec:0x%x\n", ret, addr);
 
 	dev_dbg(&client->dev, "rd 0x%02x: %*ph\n", addr, cnt, p);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल u8 tda9950_पढ़ो(काष्ठा i2c_client *client, u8 addr)
-अणु
-	पूर्णांक ret;
+static u8 tda9950_read(struct i2c_client *client, u8 addr)
+{
+	int ret;
 	u8 val;
 
-	ret = tda9950_पढ़ो_range(client, addr, &val, 1);
-	अगर (ret < 0)
+	ret = tda9950_read_range(client, addr, &val, 1);
+	if (ret < 0)
 		val = 0;
 
-	वापस val;
-पूर्ण
+	return val;
+}
 
-अटल irqवापस_t tda9950_irq(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा tda9950_priv *priv = data;
-	अचिन्हित पूर्णांक tx_status;
+static irqreturn_t tda9950_irq(int irq, void *data)
+{
+	struct tda9950_priv *priv = data;
+	unsigned int tx_status;
 	u8 csr, cconr, buf[19];
 	u8 arb_lost_cnt, nack_cnt, err_cnt;
 
-	अगर (!priv->खोलो)
-		वापस IRQ_NONE;
+	if (!priv->open)
+		return IRQ_NONE;
 
-	csr = tda9950_पढ़ो(priv->client, REG_CSR);
-	अगर (!(csr & CSR_INT))
-		वापस IRQ_NONE;
+	csr = tda9950_read(priv->client, REG_CSR);
+	if (!(csr & CSR_INT))
+		return IRQ_NONE;
 
-	cconr = tda9950_पढ़ो(priv->client, REG_CCONR) & CCONR_RETRY_MASK;
+	cconr = tda9950_read(priv->client, REG_CCONR) & CCONR_RETRY_MASK;
 
-	tda9950_पढ़ो_range(priv->client, REG_CDR0, buf, माप(buf));
+	tda9950_read_range(priv->client, REG_CDR0, buf, sizeof(buf));
 
 	/*
 	 * This should never happen: the data sheet says that there will
-	 * always be a valid message अगर the पूर्णांकerrupt line is निश्चितed.
+	 * always be a valid message if the interrupt line is asserted.
 	 */
-	अगर (buf[0] == 0) अणु
+	if (buf[0] == 0) {
 		dev_warn(&priv->client->dev, "interrupt pending, but no message?\n");
-		वापस IRQ_NONE;
-	पूर्ण
+		return IRQ_NONE;
+	}
 
-	चयन (buf[1]) अणु
-	हाल CDR1_CNF: /* transmit result */
+	switch (buf[1]) {
+	case CDR1_CNF: /* transmit result */
 		arb_lost_cnt = nack_cnt = err_cnt = 0;
-		चयन (buf[2]) अणु
-		हाल CDR2_CNF_SUCCESS:
+		switch (buf[2]) {
+		case CDR2_CNF_SUCCESS:
 			tx_status = CEC_TX_STATUS_OK;
-			अवरोध;
+			break;
 
-		हाल CDR2_CNF_ARB_ERROR:
+		case CDR2_CNF_ARB_ERROR:
 			tx_status = CEC_TX_STATUS_ARB_LOST;
 			arb_lost_cnt = cconr;
-			अवरोध;
+			break;
 
-		हाल CDR2_CNF_NACK_ADDR:
+		case CDR2_CNF_NACK_ADDR:
 			tx_status = CEC_TX_STATUS_NACK;
 			nack_cnt = cconr;
-			अवरोध;
+			break;
 
-		शेष: /* some other error, refer to TDA9950 करोcs */
+		default: /* some other error, refer to TDA9950 docs */
 			dev_err(&priv->client->dev, "CNF reply error 0x%02x\n",
 				buf[2]);
 			tx_status = CEC_TX_STATUS_ERROR;
 			err_cnt = cconr;
-			अवरोध;
-		पूर्ण
-		/* TDA9950 executes all retries क्रम us */
-		अगर (tx_status != CEC_TX_STATUS_OK)
+			break;
+		}
+		/* TDA9950 executes all retries for us */
+		if (tx_status != CEC_TX_STATUS_OK)
 			tx_status |= CEC_TX_STATUS_MAX_RETRIES;
-		cec_transmit_करोne(priv->adap, tx_status, arb_lost_cnt,
+		cec_transmit_done(priv->adap, tx_status, arb_lost_cnt,
 				  nack_cnt, 0, err_cnt);
-		अवरोध;
+		break;
 
-	हाल CDR1_IND:
+	case CDR1_IND:
 		priv->rx_msg.len = buf[0] - 2;
-		अगर (priv->rx_msg.len > CEC_MAX_MSG_SIZE)
+		if (priv->rx_msg.len > CEC_MAX_MSG_SIZE)
 			priv->rx_msg.len = CEC_MAX_MSG_SIZE;
 
-		स_नकल(priv->rx_msg.msg, buf + 2, priv->rx_msg.len);
+		memcpy(priv->rx_msg.msg, buf + 2, priv->rx_msg.len);
 		cec_received_msg(priv->adap, &priv->rx_msg);
-		अवरोध;
+		break;
 
-	शेष: /* unknown */
+	default: /* unknown */
 		dev_err(&priv->client->dev, "unknown service id 0x%02x\n",
 			buf[1]);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक tda9950_cec_transmit(काष्ठा cec_adapter *adap, u8 attempts,
-				u32 संकेत_मुक्त_समय, काष्ठा cec_msg *msg)
-अणु
-	काष्ठा tda9950_priv *priv = adap->priv;
+static int tda9950_cec_transmit(struct cec_adapter *adap, u8 attempts,
+				u32 signal_free_time, struct cec_msg *msg)
+{
+	struct tda9950_priv *priv = adap->priv;
 	u8 buf[CEC_MAX_MSG_SIZE + 2];
 
 	buf[0] = 2 + msg->len;
 	buf[1] = CDR1_REQ;
-	स_नकल(buf + 2, msg->msg, msg->len);
+	memcpy(buf + 2, msg->msg, msg->len);
 
-	अगर (attempts > 5)
+	if (attempts > 5)
 		attempts = 5;
 
-	tda9950_ग_लिखो(priv->client, REG_CCONR, attempts);
+	tda9950_write(priv->client, REG_CCONR, attempts);
 
-	वापस tda9950_ग_लिखो_range(priv->client, REG_CDR0, buf, 2 + msg->len);
-पूर्ण
+	return tda9950_write_range(priv->client, REG_CDR0, buf, 2 + msg->len);
+}
 
-अटल पूर्णांक tda9950_cec_adap_log_addr(काष्ठा cec_adapter *adap, u8 addr)
-अणु
-	काष्ठा tda9950_priv *priv = adap->priv;
+static int tda9950_cec_adap_log_addr(struct cec_adapter *adap, u8 addr)
+{
+	struct tda9950_priv *priv = adap->priv;
 	u16 addresses;
 	u8 buf[2];
 
-	अगर (addr == CEC_LOG_ADDR_INVALID)
+	if (addr == CEC_LOG_ADDR_INVALID)
 		addresses = priv->addresses = 0;
-	अन्यथा
+	else
 		addresses = priv->addresses |= BIT(addr);
 
-	/* TDA9950 करोesn't want address 15 set */
+	/* TDA9950 doesn't want address 15 set */
 	addresses &= 0x7fff;
 	buf[0] = addresses >> 8;
 	buf[1] = addresses;
 
-	वापस tda9950_ग_लिखो_range(priv->client, REG_ACKH, buf, 2);
-पूर्ण
+	return tda9950_write_range(priv->client, REG_ACKH, buf, 2);
+}
 
 /*
  * When operating as part of the TDA998x, we need additional handling
- * to initialise and shut करोwn the TDA9950 part of the device.  These
- * two hooks are provided to allow the TDA998x code to perक्रमm those
+ * to initialise and shut down the TDA9950 part of the device.  These
+ * two hooks are provided to allow the TDA998x code to perform those
  * activities.
  */
-अटल पूर्णांक tda9950_glue_खोलो(काष्ठा tda9950_priv *priv)
-अणु
-	पूर्णांक ret = 0;
+static int tda9950_glue_open(struct tda9950_priv *priv)
+{
+	int ret = 0;
 
-	अगर (priv->glue && priv->glue->खोलो)
-		ret = priv->glue->खोलो(priv->glue->data);
+	if (priv->glue && priv->glue->open)
+		ret = priv->glue->open(priv->glue->data);
 
-	priv->खोलो = true;
+	priv->open = true;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम tda9950_glue_release(काष्ठा tda9950_priv *priv)
-अणु
-	priv->खोलो = false;
+static void tda9950_glue_release(struct tda9950_priv *priv)
+{
+	priv->open = false;
 
-	अगर (priv->glue && priv->glue->release)
+	if (priv->glue && priv->glue->release)
 		priv->glue->release(priv->glue->data);
-पूर्ण
+}
 
-अटल पूर्णांक tda9950_खोलो(काष्ठा tda9950_priv *priv)
-अणु
-	काष्ठा i2c_client *client = priv->client;
-	पूर्णांक ret;
+static int tda9950_open(struct tda9950_priv *priv)
+{
+	struct i2c_client *client = priv->client;
+	int ret;
 
-	ret = tda9950_glue_खोलो(priv);
-	अगर (ret)
-		वापस ret;
+	ret = tda9950_glue_open(priv);
+	if (ret)
+		return ret;
 
-	/* Reset the TDA9950, and रुको 250ms क्रम it to recover */
-	tda9950_ग_लिखो(client, REG_CCR, CCR_RESET);
+	/* Reset the TDA9950, and wait 250ms for it to recover */
+	tda9950_write(client, REG_CCR, CCR_RESET);
 	msleep(250);
 
 	tda9950_cec_adap_log_addr(priv->adap, CEC_LOG_ADDR_INVALID);
 
 	/* Start the command processor */
-	tda9950_ग_लिखो(client, REG_CCR, CCR_ON);
+	tda9950_write(client, REG_CCR, CCR_ON);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम tda9950_release(काष्ठा tda9950_priv *priv)
-अणु
-	काष्ठा i2c_client *client = priv->client;
-	पूर्णांक समयout = 50;
+static void tda9950_release(struct tda9950_priv *priv)
+{
+	struct i2c_client *client = priv->client;
+	int timeout = 50;
 	u8 csr;
 
 	/* Stop the command processor */
-	tda9950_ग_लिखो(client, REG_CCR, 0);
+	tda9950_write(client, REG_CCR, 0);
 
-	/* Wait up to .5s क्रम it to संकेत non-busy */
-	करो अणु
-		csr = tda9950_पढ़ो(client, REG_CSR);
-		अगर (!(csr & CSR_BUSY) || !--समयout)
-			अवरोध;
+	/* Wait up to .5s for it to signal non-busy */
+	do {
+		csr = tda9950_read(client, REG_CSR);
+		if (!(csr & CSR_BUSY) || !--timeout)
+			break;
 		msleep(10);
-	पूर्ण जबतक (1);
+	} while (1);
 
-	/* Warn the user that their IRQ may die अगर it's shared. */
-	अगर (csr & CSR_BUSY)
+	/* Warn the user that their IRQ may die if it's shared. */
+	if (csr & CSR_BUSY)
 		dev_warn(&client->dev, "command processor failed to stop, irq%d may die (csr=0x%02x)\n",
 			 client->irq, csr);
 
 	tda9950_glue_release(priv);
-पूर्ण
+}
 
-अटल पूर्णांक tda9950_cec_adap_enable(काष्ठा cec_adapter *adap, bool enable)
-अणु
-	काष्ठा tda9950_priv *priv = adap->priv;
+static int tda9950_cec_adap_enable(struct cec_adapter *adap, bool enable)
+{
+	struct tda9950_priv *priv = adap->priv;
 
-	अगर (!enable) अणु
+	if (!enable) {
 		tda9950_release(priv);
-		वापस 0;
-	पूर्ण अन्यथा अणु
-		वापस tda9950_खोलो(priv);
-	पूर्ण
-पूर्ण
+		return 0;
+	} else {
+		return tda9950_open(priv);
+	}
+}
 
-अटल स्थिर काष्ठा cec_adap_ops tda9950_cec_ops = अणु
+static const struct cec_adap_ops tda9950_cec_ops = {
 	.adap_enable = tda9950_cec_adap_enable,
 	.adap_log_addr = tda9950_cec_adap_log_addr,
 	.adap_transmit = tda9950_cec_transmit,
-पूर्ण;
+};
 
 /*
  * When operating as part of the TDA998x, we need to claim additional
  * resources.  These two hooks permit the management of those resources.
  */
-अटल व्योम tda9950_devm_glue_निकास(व्योम *data)
-अणु
-	काष्ठा tda9950_glue *glue = data;
+static void tda9950_devm_glue_exit(void *data)
+{
+	struct tda9950_glue *glue = data;
 
-	अगर (glue && glue->निकास)
-		glue->निकास(glue->data);
-पूर्ण
+	if (glue && glue->exit)
+		glue->exit(glue->data);
+}
 
-अटल पूर्णांक tda9950_devm_glue_init(काष्ठा device *dev, काष्ठा tda9950_glue *glue)
-अणु
-	पूर्णांक ret;
+static int tda9950_devm_glue_init(struct device *dev, struct tda9950_glue *glue)
+{
+	int ret;
 
-	अगर (glue && glue->init) अणु
+	if (glue && glue->init) {
 		ret = glue->init(glue->data);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	ret = devm_add_action(dev, tda9950_devm_glue_निकास, glue);
-	अगर (ret)
-		tda9950_devm_glue_निकास(glue);
+	ret = devm_add_action(dev, tda9950_devm_glue_exit, glue);
+	if (ret)
+		tda9950_devm_glue_exit(glue);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम tda9950_cec_del(व्योम *data)
-अणु
-	काष्ठा tda9950_priv *priv = data;
+static void tda9950_cec_del(void *data)
+{
+	struct tda9950_priv *priv = data;
 
 	cec_delete_adapter(priv->adap);
-पूर्ण
+}
 
-अटल पूर्णांक tda9950_probe(काष्ठा i2c_client *client,
-			 स्थिर काष्ठा i2c_device_id *id)
-अणु
-	काष्ठा tda9950_glue *glue = client->dev.platक्रमm_data;
-	काष्ठा device *dev = &client->dev;
-	काष्ठा tda9950_priv *priv;
-	अचिन्हित दीर्घ irqflags;
-	पूर्णांक ret;
+static int tda9950_probe(struct i2c_client *client,
+			 const struct i2c_device_id *id)
+{
+	struct tda9950_glue *glue = client->dev.platform_data;
+	struct device *dev = &client->dev;
+	struct tda9950_priv *priv;
+	unsigned long irqflags;
+	int ret;
 	u8 cvr;
 
 	/*
 	 * We must have I2C functionality: our multi-byte accesses
-	 * must be perक्रमmed as a single contiguous transaction.
+	 * must be performed as a single contiguous transaction.
 	 */
-	अगर (!i2c_check_functionality(client->adapter, I2C_FUNC_I2C)) अणु
+	if (!i2c_check_functionality(client->adapter, I2C_FUNC_I2C)) {
 		dev_err(&client->dev,
 			"adapter does not support I2C functionality\n");
-		वापस -ENXIO;
-	पूर्ण
+		return -ENXIO;
+	}
 
-	/* We must have an पूर्णांकerrupt to be functional. */
-	अगर (client->irq <= 0) अणु
+	/* We must have an interrupt to be functional. */
+	if (client->irq <= 0) {
 		dev_err(&client->dev, "driver requires an interrupt\n");
-		वापस -ENXIO;
-	पूर्ण
+		return -ENXIO;
+	}
 
-	priv = devm_kzalloc(dev, माप(*priv), GFP_KERNEL);
-	अगर (!priv)
-		वापस -ENOMEM;
+	priv = devm_kzalloc(dev, sizeof(*priv), GFP_KERNEL);
+	if (!priv)
+		return -ENOMEM;
 
 	priv->client = client;
 	priv->glue = glue;
@@ -414,34 +413,34 @@
 	/*
 	 * If we're part of a TDA998x, we want the class devices to be
 	 * associated with the HDMI Tx so we have a tight relationship
-	 * between the HDMI पूर्णांकerface and the CEC पूर्णांकerface.
+	 * between the HDMI interface and the CEC interface.
 	 */
 	priv->hdmi = dev;
-	अगर (glue && glue->parent)
+	if (glue && glue->parent)
 		priv->hdmi = glue->parent;
 
 	priv->adap = cec_allocate_adapter(&tda9950_cec_ops, priv, "tda9950",
 					  CEC_CAP_DEFAULTS |
 					  CEC_CAP_CONNECTOR_INFO,
 					  CEC_MAX_LOG_ADDRS);
-	अगर (IS_ERR(priv->adap))
-		वापस PTR_ERR(priv->adap);
+	if (IS_ERR(priv->adap))
+		return PTR_ERR(priv->adap);
 
 	ret = devm_add_action(dev, tda9950_cec_del, priv);
-	अगर (ret) अणु
+	if (ret) {
 		cec_delete_adapter(priv->adap);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	ret = tda9950_devm_glue_init(dev, glue);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	ret = tda9950_glue_खोलो(priv);
-	अगर (ret)
-		वापस ret;
+	ret = tda9950_glue_open(priv);
+	if (ret)
+		return ret;
 
-	cvr = tda9950_पढ़ो(client, REG_CVR);
+	cvr = tda9950_read(client, REG_CVR);
 
 	dev_info(&client->dev,
 		 "TDA9950 CEC interface, hardware version %u.%u\n",
@@ -450,59 +449,59 @@
 	tda9950_glue_release(priv);
 
 	irqflags = IRQF_TRIGGER_FALLING;
-	अगर (glue)
+	if (glue)
 		irqflags = glue->irq_flags;
 
-	ret = devm_request_thपढ़ोed_irq(dev, client->irq, शून्य, tda9950_irq,
+	ret = devm_request_threaded_irq(dev, client->irq, NULL, tda9950_irq,
 					irqflags | IRQF_SHARED | IRQF_ONESHOT,
 					dev_name(&client->dev), priv);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	priv->notअगरy = cec_notअगरier_cec_adap_रेजिस्टर(priv->hdmi, शून्य,
+	priv->notify = cec_notifier_cec_adap_register(priv->hdmi, NULL,
 						      priv->adap);
-	अगर (!priv->notअगरy)
-		वापस -ENOMEM;
+	if (!priv->notify)
+		return -ENOMEM;
 
-	ret = cec_रेजिस्टर_adapter(priv->adap, priv->hdmi);
-	अगर (ret < 0) अणु
-		cec_notअगरier_cec_adap_unरेजिस्टर(priv->notअगरy, priv->adap);
-		वापस ret;
-	पूर्ण
+	ret = cec_register_adapter(priv->adap, priv->hdmi);
+	if (ret < 0) {
+		cec_notifier_cec_adap_unregister(priv->notify, priv->adap);
+		return ret;
+	}
 
 	/*
-	 * CEC करोcumentation says we must not call cec_delete_adapter
-	 * after a successful call to cec_रेजिस्टर_adapter().
+	 * CEC documentation says we must not call cec_delete_adapter
+	 * after a successful call to cec_register_adapter().
 	 */
-	devm_हटाओ_action(dev, tda9950_cec_del, priv);
+	devm_remove_action(dev, tda9950_cec_del, priv);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tda9950_हटाओ(काष्ठा i2c_client *client)
-अणु
-	काष्ठा tda9950_priv *priv = i2c_get_clientdata(client);
+static int tda9950_remove(struct i2c_client *client)
+{
+	struct tda9950_priv *priv = i2c_get_clientdata(client);
 
-	cec_notअगरier_cec_adap_unरेजिस्टर(priv->notअगरy, priv->adap);
-	cec_unरेजिस्टर_adapter(priv->adap);
+	cec_notifier_cec_adap_unregister(priv->notify, priv->adap);
+	cec_unregister_adapter(priv->adap);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा i2c_device_id tda9950_ids[] = अणु
-	अणु "tda9950", 0 पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+static struct i2c_device_id tda9950_ids[] = {
+	{ "tda9950", 0 },
+	{ },
+};
 MODULE_DEVICE_TABLE(i2c, tda9950_ids);
 
-अटल काष्ठा i2c_driver tda9950_driver = अणु
+static struct i2c_driver tda9950_driver = {
 	.probe = tda9950_probe,
-	.हटाओ = tda9950_हटाओ,
-	.driver = अणु
+	.remove = tda9950_remove,
+	.driver = {
 		.name = "tda9950",
-	पूर्ण,
+	},
 	.id_table = tda9950_ids,
-पूर्ण;
+};
 
 module_i2c_driver(tda9950_driver);
 

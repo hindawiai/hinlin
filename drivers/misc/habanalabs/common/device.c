@@ -1,138 +1,137 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 
 /*
- * Copyright 2016-2019 HabanaLअसल, Ltd.
+ * Copyright 2016-2019 HabanaLabs, Ltd.
  * All Rights Reserved.
  */
 
-#घोषणा pr_fmt(fmt)			"habanalabs: " fmt
+#define pr_fmt(fmt)			"habanalabs: " fmt
 
-#समावेश "habanalabs.h"
+#include "habanalabs.h"
 
-#समावेश <linux/pci.h>
-#समावेश <linux/hwmon.h>
-#समावेश <uapi/misc/habanaद_असल.h>
+#include <linux/pci.h>
+#include <linux/hwmon.h>
+#include <uapi/misc/habanalabs.h>
 
-क्रमागत hl_device_status hl_device_status(काष्ठा hl_device *hdev)
-अणु
-	क्रमागत hl_device_status status;
+enum hl_device_status hl_device_status(struct hl_device *hdev)
+{
+	enum hl_device_status status;
 
-	अगर (atomic_पढ़ो(&hdev->in_reset))
+	if (atomic_read(&hdev->in_reset))
 		status = HL_DEVICE_STATUS_IN_RESET;
-	अन्यथा अगर (hdev->needs_reset)
+	else if (hdev->needs_reset)
 		status = HL_DEVICE_STATUS_NEEDS_RESET;
-	अन्यथा अगर (hdev->disabled)
+	else if (hdev->disabled)
 		status = HL_DEVICE_STATUS_MALFUNCTION;
-	अन्यथा
+	else
 		status = HL_DEVICE_STATUS_OPERATIONAL;
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
-bool hl_device_operational(काष्ठा hl_device *hdev,
-		क्रमागत hl_device_status *status)
-अणु
-	क्रमागत hl_device_status current_status;
+bool hl_device_operational(struct hl_device *hdev,
+		enum hl_device_status *status)
+{
+	enum hl_device_status current_status;
 
 	current_status = hl_device_status(hdev);
-	अगर (status)
+	if (status)
 		*status = current_status;
 
-	चयन (current_status) अणु
-	हाल HL_DEVICE_STATUS_IN_RESET:
-	हाल HL_DEVICE_STATUS_MALFUNCTION:
-	हाल HL_DEVICE_STATUS_NEEDS_RESET:
-		वापस false;
-	हाल HL_DEVICE_STATUS_OPERATIONAL:
-	शेष:
-		वापस true;
-	पूर्ण
-पूर्ण
+	switch (current_status) {
+	case HL_DEVICE_STATUS_IN_RESET:
+	case HL_DEVICE_STATUS_MALFUNCTION:
+	case HL_DEVICE_STATUS_NEEDS_RESET:
+		return false;
+	case HL_DEVICE_STATUS_OPERATIONAL:
+	default:
+		return true;
+	}
+}
 
-अटल व्योम hpriv_release(काष्ठा kref *ref)
-अणु
-	काष्ठा hl_fpriv *hpriv;
-	काष्ठा hl_device *hdev;
+static void hpriv_release(struct kref *ref)
+{
+	struct hl_fpriv *hpriv;
+	struct hl_device *hdev;
 
-	hpriv = container_of(ref, काष्ठा hl_fpriv, refcount);
+	hpriv = container_of(ref, struct hl_fpriv, refcount);
 
 	hdev = hpriv->hdev;
 
 	put_pid(hpriv->taskpid);
 
-	hl_debugfs_हटाओ_file(hpriv);
+	hl_debugfs_remove_file(hpriv);
 
 	mutex_destroy(&hpriv->restore_phase_mutex);
 
 	mutex_lock(&hdev->fpriv_list_lock);
 	list_del(&hpriv->dev_node);
-	hdev->compute_ctx = शून्य;
+	hdev->compute_ctx = NULL;
 	mutex_unlock(&hdev->fpriv_list_lock);
 
-	kमुक्त(hpriv);
+	kfree(hpriv);
 
-	अगर (hdev->reset_upon_device_release)
+	if (hdev->reset_upon_device_release)
 		hl_device_reset(hdev, 0);
-पूर्ण
+}
 
-व्योम hl_hpriv_get(काष्ठा hl_fpriv *hpriv)
-अणु
+void hl_hpriv_get(struct hl_fpriv *hpriv)
+{
 	kref_get(&hpriv->refcount);
-पूर्ण
+}
 
-पूर्णांक hl_hpriv_put(काष्ठा hl_fpriv *hpriv)
-अणु
-	वापस kref_put(&hpriv->refcount, hpriv_release);
-पूर्ण
+int hl_hpriv_put(struct hl_fpriv *hpriv)
+{
+	return kref_put(&hpriv->refcount, hpriv_release);
+}
 
 /*
- * hl_device_release - release function क्रम habanaद_असल device
+ * hl_device_release - release function for habanalabs device
  *
- * @inode: poपूर्णांकer to inode काष्ठाure
- * @filp: poपूर्णांकer to file काष्ठाure
+ * @inode: pointer to inode structure
+ * @filp: pointer to file structure
  *
- * Called when process बंदs an habanaद_असल device
+ * Called when process closes an habanalabs device
  */
-अटल पूर्णांक hl_device_release(काष्ठा inode *inode, काष्ठा file *filp)
-अणु
-	काष्ठा hl_fpriv *hpriv = filp->निजी_data;
-	काष्ठा hl_device *hdev = hpriv->hdev;
+static int hl_device_release(struct inode *inode, struct file *filp)
+{
+	struct hl_fpriv *hpriv = filp->private_data;
+	struct hl_device *hdev = hpriv->hdev;
 
-	filp->निजी_data = शून्य;
+	filp->private_data = NULL;
 
-	अगर (!hdev) अणु
+	if (!hdev) {
 		pr_crit("Closing FD after device was removed. Memory leak will occur and it is advised to reboot.\n");
 		put_pid(hpriv->taskpid);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	/* Each pending user पूर्णांकerrupt holds the user's context, hence we
-	 * must release them all beक्रमe calling hl_ctx_mgr_fini().
+	/* Each pending user interrupt holds the user's context, hence we
+	 * must release them all before calling hl_ctx_mgr_fini().
 	 */
-	hl_release_pending_user_पूर्णांकerrupts(hpriv->hdev);
+	hl_release_pending_user_interrupts(hpriv->hdev);
 
 	hl_cb_mgr_fini(hdev, &hpriv->cb_mgr);
 	hl_ctx_mgr_fini(hdev, &hpriv->ctx_mgr);
 
-	अगर (!hl_hpriv_put(hpriv))
+	if (!hl_hpriv_put(hpriv))
 		dev_warn(hdev->dev,
 			"Device is still in use because there are live CS and/or memory mappings\n");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक hl_device_release_ctrl(काष्ठा inode *inode, काष्ठा file *filp)
-अणु
-	काष्ठा hl_fpriv *hpriv = filp->निजी_data;
-	काष्ठा hl_device *hdev = hpriv->hdev;
+static int hl_device_release_ctrl(struct inode *inode, struct file *filp)
+{
+	struct hl_fpriv *hpriv = filp->private_data;
+	struct hl_device *hdev = hpriv->hdev;
 
-	filp->निजी_data = शून्य;
+	filp->private_data = NULL;
 
-	अगर (!hdev) अणु
+	if (!hdev) {
 		pr_err("Closing FD after device was removed\n");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	mutex_lock(&hdev->fpriv_list_lock);
 	list_del(&hpriv->dev_node);
@@ -140,91 +139,91 @@ bool hl_device_operational(काष्ठा hl_device *hdev,
 out:
 	put_pid(hpriv->taskpid);
 
-	kमुक्त(hpriv);
+	kfree(hpriv);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * hl_mmap - mmap function क्रम habanaद_असल device
+ * hl_mmap - mmap function for habanalabs device
  *
- * @*filp: poपूर्णांकer to file काष्ठाure
- * @*vma: poपूर्णांकer to vm_area_काष्ठा of the process
+ * @*filp: pointer to file structure
+ * @*vma: pointer to vm_area_struct of the process
  *
- * Called when process करोes an mmap on habanaद_असल device. Call the device's mmap
+ * Called when process does an mmap on habanalabs device. Call the device's mmap
  * function at the end of the common code.
  */
-अटल पूर्णांक hl_mmap(काष्ठा file *filp, काष्ठा vm_area_काष्ठा *vma)
-अणु
-	काष्ठा hl_fpriv *hpriv = filp->निजी_data;
-	काष्ठा hl_device *hdev = hpriv->hdev;
-	अचिन्हित दीर्घ vm_pgoff;
+static int hl_mmap(struct file *filp, struct vm_area_struct *vma)
+{
+	struct hl_fpriv *hpriv = filp->private_data;
+	struct hl_device *hdev = hpriv->hdev;
+	unsigned long vm_pgoff;
 
-	अगर (!hdev) अणु
+	if (!hdev) {
 		pr_err_ratelimited("Trying to mmap after device was removed! Please close FD\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	vm_pgoff = vma->vm_pgoff;
 	vma->vm_pgoff = HL_MMAP_OFFSET_VALUE_GET(vm_pgoff);
 
-	चयन (vm_pgoff & HL_MMAP_TYPE_MASK) अणु
-	हाल HL_MMAP_TYPE_CB:
-		वापस hl_cb_mmap(hpriv, vma);
+	switch (vm_pgoff & HL_MMAP_TYPE_MASK) {
+	case HL_MMAP_TYPE_CB:
+		return hl_cb_mmap(hpriv, vma);
 
-	हाल HL_MMAP_TYPE_BLOCK:
-		वापस hl_hw_block_mmap(hpriv, vma);
-	पूर्ण
+	case HL_MMAP_TYPE_BLOCK:
+		return hl_hw_block_mmap(hpriv, vma);
+	}
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल स्थिर काष्ठा file_operations hl_ops = अणु
+static const struct file_operations hl_ops = {
 	.owner = THIS_MODULE,
-	.खोलो = hl_device_खोलो,
+	.open = hl_device_open,
 	.release = hl_device_release,
 	.mmap = hl_mmap,
 	.unlocked_ioctl = hl_ioctl,
 	.compat_ioctl = hl_ioctl
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा file_operations hl_ctrl_ops = अणु
+static const struct file_operations hl_ctrl_ops = {
 	.owner = THIS_MODULE,
-	.खोलो = hl_device_खोलो_ctrl,
+	.open = hl_device_open_ctrl,
 	.release = hl_device_release_ctrl,
 	.unlocked_ioctl = hl_ioctl_control,
 	.compat_ioctl = hl_ioctl_control
-पूर्ण;
+};
 
-अटल व्योम device_release_func(काष्ठा device *dev)
-अणु
-	kमुक्त(dev);
-पूर्ण
+static void device_release_func(struct device *dev)
+{
+	kfree(dev);
+}
 
 /*
- * device_init_cdev - Initialize cdev and device क्रम habanaद_असल device
+ * device_init_cdev - Initialize cdev and device for habanalabs device
  *
- * @hdev: poपूर्णांकer to habanaद_असल device काष्ठाure
- * @hclass: poपूर्णांकer to the class object of the device
- * @minor: minor number of the specअगरic device
- * @fpos: file operations to install क्रम this device
- * @name: name of the device as it will appear in the fileप्रणाली
- * @cdev: poपूर्णांकer to the अक्षर device object that will be initialized
- * @dev: poपूर्णांकer to the device object that will be initialized
+ * @hdev: pointer to habanalabs device structure
+ * @hclass: pointer to the class object of the device
+ * @minor: minor number of the specific device
+ * @fpos: file operations to install for this device
+ * @name: name of the device as it will appear in the filesystem
+ * @cdev: pointer to the char device object that will be initialized
+ * @dev: pointer to the device object that will be initialized
  *
- * Initialize a cdev and a Linux device क्रम habanaद_असल's device.
+ * Initialize a cdev and a Linux device for habanalabs's device.
  */
-अटल पूर्णांक device_init_cdev(काष्ठा hl_device *hdev, काष्ठा class *hclass,
-				पूर्णांक minor, स्थिर काष्ठा file_operations *fops,
-				अक्षर *name, काष्ठा cdev *cdev,
-				काष्ठा device **dev)
-अणु
+static int device_init_cdev(struct hl_device *hdev, struct class *hclass,
+				int minor, const struct file_operations *fops,
+				char *name, struct cdev *cdev,
+				struct device **dev)
+{
 	cdev_init(cdev, fops);
 	cdev->owner = THIS_MODULE;
 
-	*dev = kzalloc(माप(**dev), GFP_KERNEL);
-	अगर (!*dev)
-		वापस -ENOMEM;
+	*dev = kzalloc(sizeof(**dev), GFP_KERNEL);
+	if (!*dev)
+		return -ENOMEM;
 
 	device_initialize(*dev);
 	(*dev)->devt = MKDEV(hdev->major, minor);
@@ -233,49 +232,49 @@ out:
 	dev_set_drvdata(*dev, hdev);
 	dev_set_name(*dev, "%s", name);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक device_cdev_sysfs_add(काष्ठा hl_device *hdev)
-अणु
-	पूर्णांक rc;
+static int device_cdev_sysfs_add(struct hl_device *hdev)
+{
+	int rc;
 
 	rc = cdev_device_add(&hdev->cdev, hdev->dev);
-	अगर (rc) अणु
+	if (rc) {
 		dev_err(hdev->dev,
 			"failed to add a char device to the system\n");
-		वापस rc;
-	पूर्ण
+		return rc;
+	}
 
 	rc = cdev_device_add(&hdev->cdev_ctrl, hdev->dev_ctrl);
-	अगर (rc) अणु
+	if (rc) {
 		dev_err(hdev->dev,
 			"failed to add a control char device to the system\n");
-		जाओ delete_cdev_device;
-	पूर्ण
+		goto delete_cdev_device;
+	}
 
-	/* hl_sysfs_init() must be करोne after adding the device to the प्रणाली */
+	/* hl_sysfs_init() must be done after adding the device to the system */
 	rc = hl_sysfs_init(hdev);
-	अगर (rc) अणु
+	if (rc) {
 		dev_err(hdev->dev, "failed to initialize sysfs\n");
-		जाओ delete_ctrl_cdev_device;
-	पूर्ण
+		goto delete_ctrl_cdev_device;
+	}
 
 	hdev->cdev_sysfs_created = true;
 
-	वापस 0;
+	return 0;
 
 delete_ctrl_cdev_device:
 	cdev_device_del(&hdev->cdev_ctrl, hdev->dev_ctrl);
 delete_cdev_device:
 	cdev_device_del(&hdev->cdev, hdev->dev);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल व्योम device_cdev_sysfs_del(काष्ठा hl_device *hdev)
-अणु
-	अगर (!hdev->cdev_sysfs_created)
-		जाओ put_devices;
+static void device_cdev_sysfs_del(struct hl_device *hdev)
+{
+	if (!hdev->cdev_sysfs_created)
+		goto put_devices;
 
 	hl_sysfs_fini(hdev);
 	cdev_device_del(&hdev->cdev_ctrl, hdev->dev_ctrl);
@@ -284,123 +283,123 @@ delete_cdev_device:
 put_devices:
 	put_device(hdev->dev);
 	put_device(hdev->dev_ctrl);
-पूर्ण
+}
 
-अटल व्योम device_hard_reset_pending(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा hl_device_reset_work *device_reset_work =
-		container_of(work, काष्ठा hl_device_reset_work,
+static void device_hard_reset_pending(struct work_struct *work)
+{
+	struct hl_device_reset_work *device_reset_work =
+		container_of(work, struct hl_device_reset_work,
 				reset_work.work);
-	काष्ठा hl_device *hdev = device_reset_work->hdev;
-	पूर्णांक rc;
+	struct hl_device *hdev = device_reset_work->hdev;
+	int rc;
 
 	rc = hl_device_reset(hdev, HL_RESET_HARD | HL_RESET_FROM_RESET_THREAD);
-	अगर ((rc == -EBUSY) && !hdev->device_fini_pending) अणु
+	if ((rc == -EBUSY) && !hdev->device_fini_pending) {
 		dev_info(hdev->dev,
 			"Could not reset device. will try again in %u seconds",
 			HL_PENDING_RESET_PER_SEC);
 
 		queue_delayed_work(device_reset_work->wq,
 			&device_reset_work->reset_work,
-			msecs_to_jअगरfies(HL_PENDING_RESET_PER_SEC * 1000));
-	पूर्ण
-पूर्ण
+			msecs_to_jiffies(HL_PENDING_RESET_PER_SEC * 1000));
+	}
+}
 
 /*
- * device_early_init - करो some early initialization क्रम the habanaद_असल device
+ * device_early_init - do some early initialization for the habanalabs device
  *
- * @hdev: poपूर्णांकer to habanaद_असल device काष्ठाure
+ * @hdev: pointer to habanalabs device structure
  *
- * Install the relevant function poपूर्णांकers and call the early_init function,
- * अगर such a function exists
+ * Install the relevant function pointers and call the early_init function,
+ * if such a function exists
  */
-अटल पूर्णांक device_early_init(काष्ठा hl_device *hdev)
-अणु
-	पूर्णांक i, rc;
-	अक्षर workq_name[32];
+static int device_early_init(struct hl_device *hdev)
+{
+	int i, rc;
+	char workq_name[32];
 
-	चयन (hdev->asic_type) अणु
-	हाल ASIC_GOYA:
+	switch (hdev->asic_type) {
+	case ASIC_GOYA:
 		goya_set_asic_funcs(hdev);
-		strscpy(hdev->asic_name, "GOYA", माप(hdev->asic_name));
-		अवरोध;
-	हाल ASIC_GAUDI:
+		strscpy(hdev->asic_name, "GOYA", sizeof(hdev->asic_name));
+		break;
+	case ASIC_GAUDI:
 		gaudi_set_asic_funcs(hdev);
-		strscpy(hdev->asic_name, "GAUDI", माप(hdev->asic_name));
-		अवरोध;
-	हाल ASIC_GAUDI_SEC:
+		strscpy(hdev->asic_name, "GAUDI", sizeof(hdev->asic_name));
+		break;
+	case ASIC_GAUDI_SEC:
 		gaudi_set_asic_funcs(hdev);
-		strscpy(hdev->asic_name, "GAUDI SEC", माप(hdev->asic_name));
-		अवरोध;
-	शेष:
+		strscpy(hdev->asic_name, "GAUDI SEC", sizeof(hdev->asic_name));
+		break;
+	default:
 		dev_err(hdev->dev, "Unrecognized ASIC type %d\n",
 			hdev->asic_type);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	rc = hdev->asic_funcs->early_init(hdev);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
 	rc = hl_asid_init(hdev);
-	अगर (rc)
-		जाओ early_fini;
+	if (rc)
+		goto early_fini;
 
-	अगर (hdev->asic_prop.completion_queues_count) अणु
-		hdev->cq_wq = kसुस्मृति(hdev->asic_prop.completion_queues_count,
-				माप(*hdev->cq_wq),
+	if (hdev->asic_prop.completion_queues_count) {
+		hdev->cq_wq = kcalloc(hdev->asic_prop.completion_queues_count,
+				sizeof(*hdev->cq_wq),
 				GFP_KERNEL);
-		अगर (!hdev->cq_wq) अणु
+		if (!hdev->cq_wq) {
 			rc = -ENOMEM;
-			जाओ asid_fini;
-		पूर्ण
-	पूर्ण
+			goto asid_fini;
+		}
+	}
 
-	क्रम (i = 0 ; i < hdev->asic_prop.completion_queues_count ; i++) अणु
-		snम_लिखो(workq_name, 32, "hl-free-jobs-%u", (u32) i);
-		hdev->cq_wq[i] = create_singlethपढ़ो_workqueue(workq_name);
-		अगर (hdev->cq_wq[i] == शून्य) अणु
+	for (i = 0 ; i < hdev->asic_prop.completion_queues_count ; i++) {
+		snprintf(workq_name, 32, "hl-free-jobs-%u", (u32) i);
+		hdev->cq_wq[i] = create_singlethread_workqueue(workq_name);
+		if (hdev->cq_wq[i] == NULL) {
 			dev_err(hdev->dev, "Failed to allocate CQ workqueue\n");
 			rc = -ENOMEM;
-			जाओ मुक्त_cq_wq;
-		पूर्ण
-	पूर्ण
+			goto free_cq_wq;
+		}
+	}
 
 	hdev->eq_wq = alloc_workqueue("hl-events", WQ_UNBOUND, 0);
-	अगर (hdev->eq_wq == शून्य) अणु
+	if (hdev->eq_wq == NULL) {
 		dev_err(hdev->dev, "Failed to allocate EQ workqueue\n");
 		rc = -ENOMEM;
-		जाओ मुक्त_cq_wq;
-	पूर्ण
+		goto free_cq_wq;
+	}
 
 	hdev->sob_reset_wq = alloc_workqueue("hl-sob-reset", WQ_UNBOUND, 0);
-	अगर (!hdev->sob_reset_wq) अणु
+	if (!hdev->sob_reset_wq) {
 		dev_err(hdev->dev,
 			"Failed to allocate SOB reset workqueue\n");
 		rc = -ENOMEM;
-		जाओ मुक्त_eq_wq;
-	पूर्ण
+		goto free_eq_wq;
+	}
 
-	hdev->hl_chip_info = kzalloc(माप(काष्ठा hwmon_chip_info),
+	hdev->hl_chip_info = kzalloc(sizeof(struct hwmon_chip_info),
 					GFP_KERNEL);
-	अगर (!hdev->hl_chip_info) अणु
+	if (!hdev->hl_chip_info) {
 		rc = -ENOMEM;
-		जाओ मुक्त_sob_reset_wq;
-	पूर्ण
+		goto free_sob_reset_wq;
+	}
 
-	rc = hl_mmu_अगर_set_funcs(hdev);
-	अगर (rc)
-		जाओ मुक्त_chip_info;
+	rc = hl_mmu_if_set_funcs(hdev);
+	if (rc)
+		goto free_chip_info;
 
 	hl_cb_mgr_init(&hdev->kernel_cb_mgr);
 
 	hdev->device_reset_work.wq =
-			create_singlethपढ़ो_workqueue("hl_device_reset");
-	अगर (!hdev->device_reset_work.wq) अणु
+			create_singlethread_workqueue("hl_device_reset");
+	if (!hdev->device_reset_work.wq) {
 		rc = -ENOMEM;
 		dev_err(hdev->dev, "Failed to create device reset WQ\n");
-		जाओ मुक्त_cb_mgr;
-	पूर्ण
+		goto free_cb_mgr;
+	}
 
 	INIT_DELAYED_WORK(&hdev->device_reset_work.reset_work,
 			device_hard_reset_pending);
@@ -415,39 +414,39 @@ put_devices:
 	mutex_init(&hdev->fpriv_list_lock);
 	atomic_set(&hdev->in_reset, 0);
 
-	वापस 0;
+	return 0;
 
-मुक्त_cb_mgr:
+free_cb_mgr:
 	hl_cb_mgr_fini(hdev, &hdev->kernel_cb_mgr);
-मुक्त_chip_info:
-	kमुक्त(hdev->hl_chip_info);
-मुक्त_sob_reset_wq:
+free_chip_info:
+	kfree(hdev->hl_chip_info);
+free_sob_reset_wq:
 	destroy_workqueue(hdev->sob_reset_wq);
-मुक्त_eq_wq:
+free_eq_wq:
 	destroy_workqueue(hdev->eq_wq);
-मुक्त_cq_wq:
-	क्रम (i = 0 ; i < hdev->asic_prop.completion_queues_count ; i++)
-		अगर (hdev->cq_wq[i])
+free_cq_wq:
+	for (i = 0 ; i < hdev->asic_prop.completion_queues_count ; i++)
+		if (hdev->cq_wq[i])
 			destroy_workqueue(hdev->cq_wq[i]);
-	kमुक्त(hdev->cq_wq);
+	kfree(hdev->cq_wq);
 asid_fini:
 	hl_asid_fini(hdev);
 early_fini:
-	अगर (hdev->asic_funcs->early_fini)
+	if (hdev->asic_funcs->early_fini)
 		hdev->asic_funcs->early_fini(hdev);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*
- * device_early_fini - finalize all that was करोne in device_early_init
+ * device_early_fini - finalize all that was done in device_early_init
  *
- * @hdev: poपूर्णांकer to habanaद_असल device काष्ठाure
+ * @hdev: pointer to habanalabs device structure
  *
  */
-अटल व्योम device_early_fini(काष्ठा hl_device *hdev)
-अणु
-	पूर्णांक i;
+static void device_early_fini(struct hl_device *hdev)
+{
+	int i;
 
 	mutex_destroy(&hdev->debug_lock);
 	mutex_destroy(&hdev->send_cpu_message_lock);
@@ -456,164 +455,164 @@ early_fini:
 
 	hl_cb_mgr_fini(hdev, &hdev->kernel_cb_mgr);
 
-	kमुक्त(hdev->hl_chip_info);
+	kfree(hdev->hl_chip_info);
 
 	destroy_workqueue(hdev->sob_reset_wq);
 	destroy_workqueue(hdev->eq_wq);
 	destroy_workqueue(hdev->device_reset_work.wq);
 
-	क्रम (i = 0 ; i < hdev->asic_prop.completion_queues_count ; i++)
+	for (i = 0 ; i < hdev->asic_prop.completion_queues_count ; i++)
 		destroy_workqueue(hdev->cq_wq[i]);
-	kमुक्त(hdev->cq_wq);
+	kfree(hdev->cq_wq);
 
 	hl_asid_fini(hdev);
 
-	अगर (hdev->asic_funcs->early_fini)
+	if (hdev->asic_funcs->early_fini)
 		hdev->asic_funcs->early_fini(hdev);
-पूर्ण
+}
 
-अटल व्योम set_freq_to_low_job(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा hl_device *hdev = container_of(work, काष्ठा hl_device,
+static void set_freq_to_low_job(struct work_struct *work)
+{
+	struct hl_device *hdev = container_of(work, struct hl_device,
 						work_freq.work);
 
 	mutex_lock(&hdev->fpriv_list_lock);
 
-	अगर (!hdev->compute_ctx)
+	if (!hdev->compute_ctx)
 		hl_device_set_frequency(hdev, PLL_LOW);
 
 	mutex_unlock(&hdev->fpriv_list_lock);
 
 	schedule_delayed_work(&hdev->work_freq,
-			usecs_to_jअगरfies(HL_PLL_LOW_JOB_FREQ_USEC));
-पूर्ण
+			usecs_to_jiffies(HL_PLL_LOW_JOB_FREQ_USEC));
+}
 
-अटल व्योम hl_device_heartbeat(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा hl_device *hdev = container_of(work, काष्ठा hl_device,
+static void hl_device_heartbeat(struct work_struct *work)
+{
+	struct hl_device *hdev = container_of(work, struct hl_device,
 						work_heartbeat.work);
 
-	अगर (!hl_device_operational(hdev, शून्य))
-		जाओ reschedule;
+	if (!hl_device_operational(hdev, NULL))
+		goto reschedule;
 
-	अगर (!hdev->asic_funcs->send_heartbeat(hdev))
-		जाओ reschedule;
+	if (!hdev->asic_funcs->send_heartbeat(hdev))
+		goto reschedule;
 
 	dev_err(hdev->dev, "Device heartbeat failed!\n");
 	hl_device_reset(hdev, HL_RESET_HARD | HL_RESET_HEARTBEAT);
 
-	वापस;
+	return;
 
 reschedule:
 	schedule_delayed_work(&hdev->work_heartbeat,
-			usecs_to_jअगरfies(HL_HEARTBEAT_PER_USEC));
-पूर्ण
+			usecs_to_jiffies(HL_HEARTBEAT_PER_USEC));
+}
 
 /*
- * device_late_init - करो late stuff initialization क्रम the habanaद_असल device
+ * device_late_init - do late stuff initialization for the habanalabs device
  *
- * @hdev: poपूर्णांकer to habanaद_असल device काष्ठाure
+ * @hdev: pointer to habanalabs device structure
  *
  * Do stuff that either needs the device H/W queues to be active or needs
  * to happen after all the rest of the initialization is finished
  */
-अटल पूर्णांक device_late_init(काष्ठा hl_device *hdev)
-अणु
-	पूर्णांक rc;
+static int device_late_init(struct hl_device *hdev)
+{
+	int rc;
 
-	अगर (hdev->asic_funcs->late_init) अणु
+	if (hdev->asic_funcs->late_init) {
 		rc = hdev->asic_funcs->late_init(hdev);
-		अगर (rc) अणु
+		if (rc) {
 			dev_err(hdev->dev,
 				"failed late initialization for the H/W\n");
-			वापस rc;
-		पूर्ण
-	पूर्ण
+			return rc;
+		}
+	}
 
 	hdev->high_pll = hdev->asic_prop.high_pll;
 
-	/* क्रमce setting to low frequency */
+	/* force setting to low frequency */
 	hdev->curr_pll_profile = PLL_LOW;
 
-	अगर (hdev->pm_mng_profile == PM_AUTO)
+	if (hdev->pm_mng_profile == PM_AUTO)
 		hdev->asic_funcs->set_pll_profile(hdev, PLL_LOW);
-	अन्यथा
+	else
 		hdev->asic_funcs->set_pll_profile(hdev, PLL_LAST);
 
 	INIT_DELAYED_WORK(&hdev->work_freq, set_freq_to_low_job);
 	schedule_delayed_work(&hdev->work_freq,
-	usecs_to_jअगरfies(HL_PLL_LOW_JOB_FREQ_USEC));
+	usecs_to_jiffies(HL_PLL_LOW_JOB_FREQ_USEC));
 
-	अगर (hdev->heartbeat) अणु
+	if (hdev->heartbeat) {
 		INIT_DELAYED_WORK(&hdev->work_heartbeat, hl_device_heartbeat);
 		schedule_delayed_work(&hdev->work_heartbeat,
-				usecs_to_jअगरfies(HL_HEARTBEAT_PER_USEC));
-	पूर्ण
+				usecs_to_jiffies(HL_HEARTBEAT_PER_USEC));
+	}
 
-	hdev->late_init_करोne = true;
+	hdev->late_init_done = true;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * device_late_fini - finalize all that was करोne in device_late_init
+ * device_late_fini - finalize all that was done in device_late_init
  *
- * @hdev: poपूर्णांकer to habanaद_असल device काष्ठाure
+ * @hdev: pointer to habanalabs device structure
  *
  */
-अटल व्योम device_late_fini(काष्ठा hl_device *hdev)
-अणु
-	अगर (!hdev->late_init_करोne)
-		वापस;
+static void device_late_fini(struct hl_device *hdev)
+{
+	if (!hdev->late_init_done)
+		return;
 
 	cancel_delayed_work_sync(&hdev->work_freq);
-	अगर (hdev->heartbeat)
+	if (hdev->heartbeat)
 		cancel_delayed_work_sync(&hdev->work_heartbeat);
 
-	अगर (hdev->asic_funcs->late_fini)
+	if (hdev->asic_funcs->late_fini)
 		hdev->asic_funcs->late_fini(hdev);
 
-	hdev->late_init_करोne = false;
-पूर्ण
+	hdev->late_init_done = false;
+}
 
-पूर्णांक hl_device_utilization(काष्ठा hl_device *hdev, u32 *utilization)
-अणु
-	u64 max_घातer, curr_घातer, dc_घातer, भागidend;
-	पूर्णांक rc;
+int hl_device_utilization(struct hl_device *hdev, u32 *utilization)
+{
+	u64 max_power, curr_power, dc_power, dividend;
+	int rc;
 
-	max_घातer = hdev->asic_prop.max_घातer_शेष;
-	dc_घातer = hdev->asic_prop.dc_घातer_शेष;
-	rc = hl_fw_cpucp_घातer_get(hdev, &curr_घातer);
+	max_power = hdev->asic_prop.max_power_default;
+	dc_power = hdev->asic_prop.dc_power_default;
+	rc = hl_fw_cpucp_power_get(hdev, &curr_power);
 
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
-	curr_घातer = clamp(curr_घातer, dc_घातer, max_घातer);
+	curr_power = clamp(curr_power, dc_power, max_power);
 
-	भागidend = (curr_घातer - dc_घातer) * 100;
-	*utilization = (u32) भाग_u64(भागidend, (max_घातer - dc_घातer));
+	dividend = (curr_power - dc_power) * 100;
+	*utilization = (u32) div_u64(dividend, (max_power - dc_power));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * hl_device_set_frequency - set the frequency of the device
  *
- * @hdev: poपूर्णांकer to habanaद_असल device काष्ठाure
+ * @hdev: pointer to habanalabs device structure
  * @freq: the new frequency value
  *
- * Change the frequency अगर needed. This function has no protection against
- * concurrency, thereक्रमe it is assumed that the calling function has रक्षित
- * itself against the हाल of calling this function from multiple thपढ़ोs with
- * dअगरferent values
+ * Change the frequency if needed. This function has no protection against
+ * concurrency, therefore it is assumed that the calling function has protected
+ * itself against the case of calling this function from multiple threads with
+ * different values
  *
- * Returns 0 अगर no change was करोne, otherwise वापसs 1
+ * Returns 0 if no change was done, otherwise returns 1
  */
-पूर्णांक hl_device_set_frequency(काष्ठा hl_device *hdev, क्रमागत hl_pll_frequency freq)
-अणु
-	अगर ((hdev->pm_mng_profile == PM_MANUAL) ||
+int hl_device_set_frequency(struct hl_device *hdev, enum hl_pll_frequency freq)
+{
+	if ((hdev->pm_mng_profile == PM_MANUAL) ||
 			(hdev->curr_pll_profile == freq))
-		वापस 0;
+		return 0;
 
 	dev_dbg(hdev->dev, "Changing device frequency to %s\n",
 		freq == PLL_HIGH ? "high" : "low");
@@ -622,71 +621,71 @@ reschedule:
 
 	hdev->curr_pll_profile = freq;
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-पूर्णांक hl_device_set_debug_mode(काष्ठा hl_device *hdev, bool enable)
-अणु
-	पूर्णांक rc = 0;
+int hl_device_set_debug_mode(struct hl_device *hdev, bool enable)
+{
+	int rc = 0;
 
 	mutex_lock(&hdev->debug_lock);
 
-	अगर (!enable) अणु
-		अगर (!hdev->in_debug) अणु
+	if (!enable) {
+		if (!hdev->in_debug) {
 			dev_err(hdev->dev,
 				"Failed to disable debug mode because device was not in debug mode\n");
 			rc = -EFAULT;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
-		अगर (!hdev->hard_reset_pending)
+		if (!hdev->hard_reset_pending)
 			hdev->asic_funcs->halt_coresight(hdev);
 
 		hdev->in_debug = 0;
 
-		अगर (!hdev->hard_reset_pending)
-			hdev->asic_funcs->set_घड़ी_gating(hdev);
+		if (!hdev->hard_reset_pending)
+			hdev->asic_funcs->set_clock_gating(hdev);
 
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (hdev->in_debug) अणु
+	if (hdev->in_debug) {
 		dev_err(hdev->dev,
 			"Failed to enable debug mode because device is already in debug mode\n");
 		rc = -EFAULT;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	hdev->asic_funcs->disable_घड़ी_gating(hdev);
+	hdev->asic_funcs->disable_clock_gating(hdev);
 	hdev->in_debug = 1;
 
 out:
 	mutex_unlock(&hdev->debug_lock);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*
  * hl_device_suspend - initiate device suspend
  *
- * @hdev: poपूर्णांकer to habanaद_असल device काष्ठाure
+ * @hdev: pointer to habanalabs device structure
  *
  * Puts the hw in the suspend state (all asics).
- * Returns 0 क्रम success or an error on failure.
+ * Returns 0 for success or an error on failure.
  * Called at driver suspend.
  */
-पूर्णांक hl_device_suspend(काष्ठा hl_device *hdev)
-अणु
-	पूर्णांक rc;
+int hl_device_suspend(struct hl_device *hdev)
+{
+	int rc;
 
 	pci_save_state(hdev->pdev);
 
 	/* Block future CS/VM/JOB completion operations */
 	rc = atomic_cmpxchg(&hdev->in_reset, 0, 1);
-	अगर (rc) अणु
+	if (rc) {
 		dev_err(hdev->dev, "Can't suspend while in reset\n");
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
 	/* This blocks all other stuff that is not blocked by in_reset */
 	hdev->disabled = true;
@@ -703,223 +702,223 @@ out:
 	mutex_unlock(&hdev->send_cpu_message_lock);
 
 	rc = hdev->asic_funcs->suspend(hdev);
-	अगर (rc)
+	if (rc)
 		dev_err(hdev->dev,
 			"Failed to disable PCI access of device CPU\n");
 
-	/* Shut करोwn the device */
+	/* Shut down the device */
 	pci_disable_device(hdev->pdev);
-	pci_set_घातer_state(hdev->pdev, PCI_D3hot);
+	pci_set_power_state(hdev->pdev, PCI_D3hot);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * hl_device_resume - initiate device resume
  *
- * @hdev: poपूर्णांकer to habanaद_असल device काष्ठाure
+ * @hdev: pointer to habanalabs device structure
  *
  * Bring the hw back to operating state (all asics).
- * Returns 0 क्रम success or an error on failure.
+ * Returns 0 for success or an error on failure.
  * Called at driver resume.
  */
-पूर्णांक hl_device_resume(काष्ठा hl_device *hdev)
-अणु
-	पूर्णांक rc;
+int hl_device_resume(struct hl_device *hdev)
+{
+	int rc;
 
-	pci_set_घातer_state(hdev->pdev, PCI_D0);
+	pci_set_power_state(hdev->pdev, PCI_D0);
 	pci_restore_state(hdev->pdev);
 	rc = pci_enable_device_mem(hdev->pdev);
-	अगर (rc) अणु
+	if (rc) {
 		dev_err(hdev->dev,
 			"Failed to enable PCI device in resume\n");
-		वापस rc;
-	पूर्ण
+		return rc;
+	}
 
 	pci_set_master(hdev->pdev);
 
 	rc = hdev->asic_funcs->resume(hdev);
-	अगर (rc) अणु
+	if (rc) {
 		dev_err(hdev->dev, "Failed to resume device after suspend\n");
-		जाओ disable_device;
-	पूर्ण
+		goto disable_device;
+	}
 
 
 	hdev->disabled = false;
 	atomic_set(&hdev->in_reset, 0);
 
 	rc = hl_device_reset(hdev, HL_RESET_HARD);
-	अगर (rc) अणु
+	if (rc) {
 		dev_err(hdev->dev, "Failed to reset device during resume\n");
-		जाओ disable_device;
-	पूर्ण
+		goto disable_device;
+	}
 
-	वापस 0;
+	return 0;
 
 disable_device:
 	pci_clear_master(hdev->pdev);
 	pci_disable_device(hdev->pdev);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक device_समाप्त_खोलो_processes(काष्ठा hl_device *hdev, u32 समयout)
-अणु
-	काष्ठा hl_fpriv	*hpriv;
-	काष्ठा task_काष्ठा *task = शून्य;
+static int device_kill_open_processes(struct hl_device *hdev, u32 timeout)
+{
+	struct hl_fpriv	*hpriv;
+	struct task_struct *task = NULL;
 	u32 pending_cnt;
 
 
-	/* Giving समय क्रम user to बंद FD, and क्रम processes that are inside
-	 * hl_device_खोलो to finish
+	/* Giving time for user to close FD, and for processes that are inside
+	 * hl_device_open to finish
 	 */
-	अगर (!list_empty(&hdev->fpriv_list))
+	if (!list_empty(&hdev->fpriv_list))
 		ssleep(1);
 
-	अगर (समयout) अणु
-		pending_cnt = समयout;
-	पूर्ण अन्यथा अणु
-		अगर (hdev->process_समाप्त_trial_cnt) अणु
-			/* Processes have been alपढ़ोy समाप्तed */
+	if (timeout) {
+		pending_cnt = timeout;
+	} else {
+		if (hdev->process_kill_trial_cnt) {
+			/* Processes have been already killed */
 			pending_cnt = 1;
-			जाओ रुको_क्रम_processes;
-		पूर्ण अन्यथा अणु
-			/* Wait a small period after process समाप्त */
+			goto wait_for_processes;
+		} else {
+			/* Wait a small period after process kill */
 			pending_cnt = HL_PENDING_RESET_PER_SEC;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	mutex_lock(&hdev->fpriv_list_lock);
 
-	/* This section must be रक्षित because we are dereferencing
-	 * poपूर्णांकers that are मुक्तd अगर the process निकासs
+	/* This section must be protected because we are dereferencing
+	 * pointers that are freed if the process exits
 	 */
-	list_क्रम_each_entry(hpriv, &hdev->fpriv_list, dev_node) अणु
+	list_for_each_entry(hpriv, &hdev->fpriv_list, dev_node) {
 		task = get_pid_task(hpriv->taskpid, PIDTYPE_PID);
-		अगर (task) अणु
+		if (task) {
 			dev_info(hdev->dev, "Killing user process pid=%d\n",
 				task_pid_nr(task));
 			send_sig(SIGKILL, task, 1);
 			usleep_range(1000, 10000);
 
-			put_task_काष्ठा(task);
-		पूर्ण
-	पूर्ण
+			put_task_struct(task);
+		}
+	}
 
 	mutex_unlock(&hdev->fpriv_list_lock);
 
 	/*
-	 * We समाप्तed the खोलो users, but that करोesn't mean they are बंदd.
-	 * It could be that they are running a दीर्घ cleanup phase in the driver
-	 * e.g. MMU unmappings, or running other दीर्घ tearकरोwn flow even beक्रमe
+	 * We killed the open users, but that doesn't mean they are closed.
+	 * It could be that they are running a long cleanup phase in the driver
+	 * e.g. MMU unmappings, or running other long teardown flow even before
 	 * our cleanup.
-	 * Thereक्रमe we need to रुको again to make sure they are बंदd beक्रमe
+	 * Therefore we need to wait again to make sure they are closed before
 	 * continuing with the reset.
 	 */
 
-रुको_क्रम_processes:
-	जबतक ((!list_empty(&hdev->fpriv_list)) && (pending_cnt)) अणु
+wait_for_processes:
+	while ((!list_empty(&hdev->fpriv_list)) && (pending_cnt)) {
 		dev_dbg(hdev->dev,
 			"Waiting for all unmap operations to finish before hard reset\n");
 
 		pending_cnt--;
 
 		ssleep(1);
-	पूर्ण
+	}
 
-	/* All processes निकासed successfully */
-	अगर (list_empty(&hdev->fpriv_list))
-		वापस 0;
+	/* All processes exited successfully */
+	if (list_empty(&hdev->fpriv_list))
+		return 0;
 
-	/* Give up रुकोing क्रम processes to निकास */
-	अगर (hdev->process_समाप्त_trial_cnt == HL_PENDING_RESET_MAX_TRIALS)
-		वापस -ETIME;
+	/* Give up waiting for processes to exit */
+	if (hdev->process_kill_trial_cnt == HL_PENDING_RESET_MAX_TRIALS)
+		return -ETIME;
 
-	hdev->process_समाप्त_trial_cnt++;
+	hdev->process_kill_trial_cnt++;
 
-	वापस -EBUSY;
-पूर्ण
+	return -EBUSY;
+}
 
-अटल व्योम device_disable_खोलो_processes(काष्ठा hl_device *hdev)
-अणु
-	काष्ठा hl_fpriv *hpriv;
+static void device_disable_open_processes(struct hl_device *hdev)
+{
+	struct hl_fpriv *hpriv;
 
 	mutex_lock(&hdev->fpriv_list_lock);
-	list_क्रम_each_entry(hpriv, &hdev->fpriv_list, dev_node)
-		hpriv->hdev = शून्य;
+	list_for_each_entry(hpriv, &hdev->fpriv_list, dev_node)
+		hpriv->hdev = NULL;
 	mutex_unlock(&hdev->fpriv_list_lock);
-पूर्ण
+}
 
 /*
  * hl_device_reset - reset the device
  *
- * @hdev: poपूर्णांकer to habanaद_असल device काष्ठाure
+ * @hdev: pointer to habanalabs device structure
  * @flags: reset flags.
  *
- * Block future CS and रुको क्रम pending CS to be enqueued
+ * Block future CS and wait for pending CS to be enqueued
  * Call ASIC H/W fini
  * Flush all completions
- * Re-initialize all पूर्णांकernal data काष्ठाures
+ * Re-initialize all internal data structures
  * Call ASIC H/W init, late_init
  * Test queues
  * Enable device
  *
- * Returns 0 क्रम success or an error on failure.
+ * Returns 0 for success or an error on failure.
  */
-पूर्णांक hl_device_reset(काष्ठा hl_device *hdev, u32 flags)
-अणु
-	u64 idle_mask[HL_BUSY_ENGINES_MASK_EXT_SIZE] = अणु0पूर्ण;
-	bool hard_reset, from_hard_reset_thपढ़ो;
-	पूर्णांक i, rc;
+int hl_device_reset(struct hl_device *hdev, u32 flags)
+{
+	u64 idle_mask[HL_BUSY_ENGINES_MASK_EXT_SIZE] = {0};
+	bool hard_reset, from_hard_reset_thread;
+	int i, rc;
 
-	अगर (!hdev->init_करोne) अणु
+	if (!hdev->init_done) {
 		dev_err(hdev->dev,
 			"Can't reset before initialization is done\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	hard_reset = (flags & HL_RESET_HARD) != 0;
-	from_hard_reset_thपढ़ो = (flags & HL_RESET_FROM_RESET_THREAD) != 0;
+	from_hard_reset_thread = (flags & HL_RESET_FROM_RESET_THREAD) != 0;
 
-	अगर ((!hard_reset) && (!hdev->supports_soft_reset)) अणु
+	if ((!hard_reset) && (!hdev->supports_soft_reset)) {
 		dev_dbg(hdev->dev, "Doing hard-reset instead of soft-reset\n");
 		hard_reset = true;
-	पूर्ण
+	}
 
-	/* Re-entry of reset thपढ़ो */
-	अगर (from_hard_reset_thपढ़ो && hdev->process_समाप्त_trial_cnt)
-		जाओ समाप्त_processes;
+	/* Re-entry of reset thread */
+	if (from_hard_reset_thread && hdev->process_kill_trial_cnt)
+		goto kill_processes;
 
 	/*
 	 * Prevent concurrency in this function - only one reset should be
-	 * करोne at any given समय. Only need to perक्रमm this अगर we didn't
-	 * get from the dedicated hard reset thपढ़ो
+	 * done at any given time. Only need to perform this if we didn't
+	 * get from the dedicated hard reset thread
 	 */
-	अगर (!from_hard_reset_thपढ़ो) अणु
+	if (!from_hard_reset_thread) {
 		/* Block future CS/VM/JOB completion operations */
 		rc = atomic_cmpxchg(&hdev->in_reset, 0, 1);
-		अगर (rc)
-			वापस 0;
+		if (rc)
+			return 0;
 
 		/*
-		 * अगर reset is due to heartbeat, device CPU is no responsive in
-		 * which हाल no poपूर्णांक sending PCI disable message to it
+		 * if reset is due to heartbeat, device CPU is no responsive in
+		 * which case no point sending PCI disable message to it
 		 */
-		अगर (hard_reset && !(flags & HL_RESET_HEARTBEAT)) अणु
+		if (hard_reset && !(flags & HL_RESET_HEARTBEAT)) {
 			/* Disable PCI access from device F/W so he won't send
-			 * us additional पूर्णांकerrupts. We disable MSI/MSI-X at
+			 * us additional interrupts. We disable MSI/MSI-X at
 			 * the halt_engines function and we can't have the F/W
-			 * sending us पूर्णांकerrupts after that. We need to disable
-			 * the access here because अगर the device is marked
-			 * disable, the message won't be send. Also, in हाल
+			 * sending us interrupts after that. We need to disable
+			 * the access here because if the device is marked
+			 * disable, the message won't be send. Also, in case
 			 * of heartbeat, the device CPU is marked as disable
 			 * so this message won't be sent
 			 */
-			अगर (hl_fw_send_pci_access_msg(hdev,
+			if (hl_fw_send_pci_access_msg(hdev,
 					CPUCP_PACKET_DISABLE_PCI_ACCESS))
 				dev_warn(hdev->dev,
 					"Failed to disable PCI access by F/W\n");
-		पूर्ण
+		}
 
 		/* This also blocks future CS/VM/JOB completion operations */
 		hdev->disabled = true;
@@ -930,43 +929,43 @@ disable_device:
 		hdev->asic_funcs->hw_queues_lock(hdev);
 		hdev->asic_funcs->hw_queues_unlock(hdev);
 
-		/* Flush anyone that is inside device खोलो */
+		/* Flush anyone that is inside device open */
 		mutex_lock(&hdev->fpriv_list_lock);
 		mutex_unlock(&hdev->fpriv_list_lock);
 
 		dev_err(hdev->dev, "Going to RESET device!\n");
-	पूर्ण
+	}
 
 again:
-	अगर ((hard_reset) && (!from_hard_reset_thपढ़ो)) अणु
+	if ((hard_reset) && (!from_hard_reset_thread)) {
 		hdev->hard_reset_pending = true;
 
-		hdev->process_समाप्त_trial_cnt = 0;
+		hdev->process_kill_trial_cnt = 0;
 
 		/*
-		 * Because the reset function can't run from पूर्णांकerrupt or
+		 * Because the reset function can't run from interrupt or
 		 * from heartbeat work, we need to call the reset function
 		 * from a dedicated work
 		 */
 		queue_delayed_work(hdev->device_reset_work.wq,
 			&hdev->device_reset_work.reset_work, 0);
 
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (hard_reset) अणु
+	if (hard_reset) {
 		device_late_fini(hdev);
 
 		/*
-		 * Now that the heartbeat thपढ़ो is बंदd, flush processes
+		 * Now that the heartbeat thread is closed, flush processes
 		 * which are sending messages to CPU
 		 */
 		mutex_lock(&hdev->send_cpu_message_lock);
 		mutex_unlock(&hdev->send_cpu_message_lock);
-	पूर्ण
+	}
 
 	/*
-	 * Halt the engines and disable पूर्णांकerrupts so we won't get any more
+	 * Halt the engines and disable interrupts so we won't get any more
 	 * completions from H/W and we won't have any accesses from the
 	 * H/W to the host machine
 	 */
@@ -975,346 +974,346 @@ again:
 	/* Go over all the queues, release all CS and their jobs */
 	hl_cs_rollback_all(hdev);
 
-	/* Release all pending user पूर्णांकerrupts, each pending user पूर्णांकerrupt
+	/* Release all pending user interrupts, each pending user interrupt
 	 * holds a reference to user context
 	 */
-	hl_release_pending_user_पूर्णांकerrupts(hdev);
+	hl_release_pending_user_interrupts(hdev);
 
-समाप्त_processes:
-	अगर (hard_reset) अणु
+kill_processes:
+	if (hard_reset) {
 		/* Kill processes here after CS rollback. This is because the
-		 * process can't really निकास until all its CSs are करोne, which
-		 * is what we करो in cs rollback
+		 * process can't really exit until all its CSs are done, which
+		 * is what we do in cs rollback
 		 */
-		rc = device_समाप्त_खोलो_processes(hdev, 0);
+		rc = device_kill_open_processes(hdev, 0);
 
-		अगर (rc == -EBUSY) अणु
-			अगर (hdev->device_fini_pending) अणु
+		if (rc == -EBUSY) {
+			if (hdev->device_fini_pending) {
 				dev_crit(hdev->dev,
 					"Failed to kill all open processes, stopping hard reset\n");
-				जाओ out_err;
-			पूर्ण
+				goto out_err;
+			}
 
-			/* संकेत reset thपढ़ो to reschedule */
-			वापस rc;
-		पूर्ण
+			/* signal reset thread to reschedule */
+			return rc;
+		}
 
-		अगर (rc) अणु
+		if (rc) {
 			dev_crit(hdev->dev,
 				"Failed to kill all open processes, stopping hard reset\n");
-			जाओ out_err;
-		पूर्ण
+			goto out_err;
+		}
 
-		/* Flush the Event queue workers to make sure no other thपढ़ो is
-		 * पढ़ोing or writing to रेजिस्टरs during the reset
+		/* Flush the Event queue workers to make sure no other thread is
+		 * reading or writing to registers during the reset
 		 */
 		flush_workqueue(hdev->eq_wq);
-	पूर्ण
+	}
 
-	/* Reset the H/W. It will be in idle state after this वापसs */
+	/* Reset the H/W. It will be in idle state after this returns */
 	hdev->asic_funcs->hw_fini(hdev, hard_reset);
 
-	अगर (hard_reset) अणु
+	if (hard_reset) {
 		/* Release kernel context */
-		अगर (hdev->kernel_ctx && hl_ctx_put(hdev->kernel_ctx) == 1)
-			hdev->kernel_ctx = शून्य;
+		if (hdev->kernel_ctx && hl_ctx_put(hdev->kernel_ctx) == 1)
+			hdev->kernel_ctx = NULL;
 		hl_vm_fini(hdev);
 		hl_mmu_fini(hdev);
 		hl_eq_reset(hdev, &hdev->event_queue);
-	पूर्ण
+	}
 
 	/* Re-initialize PI,CI to 0 in all queues (hw queue, cq) */
 	hl_hw_queue_reset(hdev, hard_reset);
-	क्रम (i = 0 ; i < hdev->asic_prop.completion_queues_count ; i++)
+	for (i = 0 ; i < hdev->asic_prop.completion_queues_count ; i++)
 		hl_cq_reset(hdev, &hdev->completion_queue[i]);
 
 	mutex_lock(&hdev->fpriv_list_lock);
 
-	/* Make sure the context चयन phase will run again */
-	अगर (hdev->compute_ctx) अणु
-		atomic_set(&hdev->compute_ctx->thपढ़ो_ctx_चयन_token, 1);
-		hdev->compute_ctx->thपढ़ो_ctx_चयन_रुको_token = 0;
-	पूर्ण
+	/* Make sure the context switch phase will run again */
+	if (hdev->compute_ctx) {
+		atomic_set(&hdev->compute_ctx->thread_ctx_switch_token, 1);
+		hdev->compute_ctx->thread_ctx_switch_wait_token = 0;
+	}
 
 	mutex_unlock(&hdev->fpriv_list_lock);
 
-	/* Finished tear-करोwn, starting to re-initialize */
+	/* Finished tear-down, starting to re-initialize */
 
-	अगर (hard_reset) अणु
+	if (hard_reset) {
 		hdev->device_cpu_disabled = false;
 		hdev->hard_reset_pending = false;
 
-		अगर (hdev->kernel_ctx) अणु
+		if (hdev->kernel_ctx) {
 			dev_crit(hdev->dev,
 				"kernel ctx was alive during hard reset, something is terribly wrong\n");
 			rc = -EBUSY;
-			जाओ out_err;
-		पूर्ण
+			goto out_err;
+		}
 
 		rc = hl_mmu_init(hdev);
-		अगर (rc) अणु
+		if (rc) {
 			dev_err(hdev->dev,
 				"Failed to initialize MMU S/W after hard reset\n");
-			जाओ out_err;
-		पूर्ण
+			goto out_err;
+		}
 
 		/* Allocate the kernel context */
-		hdev->kernel_ctx = kzalloc(माप(*hdev->kernel_ctx),
+		hdev->kernel_ctx = kzalloc(sizeof(*hdev->kernel_ctx),
 						GFP_KERNEL);
-		अगर (!hdev->kernel_ctx) अणु
+		if (!hdev->kernel_ctx) {
 			rc = -ENOMEM;
 			hl_mmu_fini(hdev);
-			जाओ out_err;
-		पूर्ण
+			goto out_err;
+		}
 
-		hdev->compute_ctx = शून्य;
+		hdev->compute_ctx = NULL;
 
 		rc = hl_ctx_init(hdev, hdev->kernel_ctx, true);
-		अगर (rc) अणु
+		if (rc) {
 			dev_err(hdev->dev,
 				"failed to init kernel ctx in hard reset\n");
-			kमुक्त(hdev->kernel_ctx);
-			hdev->kernel_ctx = शून्य;
+			kfree(hdev->kernel_ctx);
+			hdev->kernel_ctx = NULL;
 			hl_mmu_fini(hdev);
-			जाओ out_err;
-		पूर्ण
-	पूर्ण
+			goto out_err;
+		}
+	}
 
 	/* Device is now enabled as part of the initialization requires
-	 * communication with the device firmware to get inक्रमmation that
-	 * is required क्रम the initialization itself
+	 * communication with the device firmware to get information that
+	 * is required for the initialization itself
 	 */
 	hdev->disabled = false;
 
 	rc = hdev->asic_funcs->hw_init(hdev);
-	अगर (rc) अणु
+	if (rc) {
 		dev_err(hdev->dev,
 			"failed to initialize the H/W after reset\n");
-		जाओ out_err;
-	पूर्ण
+		goto out_err;
+	}
 
 	/* If device is not idle fail the reset process */
-	अगर (!hdev->asic_funcs->is_device_idle(hdev, idle_mask,
-			HL_BUSY_ENGINES_MASK_EXT_SIZE, शून्य)) अणु
+	if (!hdev->asic_funcs->is_device_idle(hdev, idle_mask,
+			HL_BUSY_ENGINES_MASK_EXT_SIZE, NULL)) {
 		dev_err(hdev->dev,
 			"device is not idle (mask %#llx %#llx) after reset\n",
 			idle_mask[0], idle_mask[1]);
 		rc = -EIO;
-		जाओ out_err;
-	पूर्ण
+		goto out_err;
+	}
 
 	/* Check that the communication with the device is working */
 	rc = hdev->asic_funcs->test_queues(hdev);
-	अगर (rc) अणु
+	if (rc) {
 		dev_err(hdev->dev,
 			"Failed to detect if device is alive after reset\n");
-		जाओ out_err;
-	पूर्ण
+		goto out_err;
+	}
 
-	अगर (hard_reset) अणु
+	if (hard_reset) {
 		rc = device_late_init(hdev);
-		अगर (rc) अणु
+		if (rc) {
 			dev_err(hdev->dev,
 				"Failed late init after hard reset\n");
-			जाओ out_err;
-		पूर्ण
+			goto out_err;
+		}
 
 		rc = hl_vm_init(hdev);
-		अगर (rc) अणु
+		if (rc) {
 			dev_err(hdev->dev,
 				"Failed to init memory module after hard reset\n");
-			जाओ out_err;
-		पूर्ण
+			goto out_err;
+		}
 
-		hl_set_max_घातer(hdev);
-	पूर्ण अन्यथा अणु
+		hl_set_max_power(hdev);
+	} else {
 		rc = hdev->asic_funcs->soft_reset_late_init(hdev);
-		अगर (rc) अणु
+		if (rc) {
 			dev_err(hdev->dev,
 				"Failed late init after soft reset\n");
-			जाओ out_err;
-		पूर्ण
-	पूर्ण
+			goto out_err;
+		}
+	}
 
 	atomic_set(&hdev->in_reset, 0);
 	hdev->needs_reset = false;
 
 	dev_notice(hdev->dev, "Successfully finished resetting the device\n");
 
-	अगर (hard_reset) अणु
+	if (hard_reset) {
 		hdev->hard_reset_cnt++;
 
-		/* After reset is करोne, we are पढ़ोy to receive events from
-		 * the F/W. We can't करो it beक्रमe because we will ignore events
-		 * and अगर those events are fatal, we won't know about it and
+		/* After reset is done, we are ready to receive events from
+		 * the F/W. We can't do it before because we will ignore events
+		 * and if those events are fatal, we won't know about it and
 		 * the device will be operational although it shouldn't be
 		 */
 		hdev->asic_funcs->enable_events_from_fw(hdev);
-	पूर्ण अन्यथा अणु
+	} else {
 		hdev->soft_reset_cnt++;
-	पूर्ण
+	}
 
-	वापस 0;
+	return 0;
 
 out_err:
 	hdev->disabled = true;
 
-	अगर (hard_reset) अणु
+	if (hard_reset) {
 		dev_err(hdev->dev,
 			"Failed to reset! Device is NOT usable\n");
 		hdev->hard_reset_cnt++;
-	पूर्ण अन्यथा अणु
+	} else {
 		dev_err(hdev->dev,
 			"Failed to do soft-reset, trying hard reset\n");
 		hdev->soft_reset_cnt++;
 		hard_reset = true;
-		जाओ again;
-	पूर्ण
+		goto again;
+	}
 
 	atomic_set(&hdev->in_reset, 0);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*
- * hl_device_init - मुख्य initialization function क्रम habanaद_असल device
+ * hl_device_init - main initialization function for habanalabs device
  *
- * @hdev: poपूर्णांकer to habanaद_असल device काष्ठाure
+ * @hdev: pointer to habanalabs device structure
  *
- * Allocate an id क्रम the device, करो early initialization and then call the
- * ASIC specअगरic initialization functions. Finally, create the cdev and the
+ * Allocate an id for the device, do early initialization and then call the
+ * ASIC specific initialization functions. Finally, create the cdev and the
  * Linux device to expose it to the user
  */
-पूर्णांक hl_device_init(काष्ठा hl_device *hdev, काष्ठा class *hclass)
-अणु
-	पूर्णांक i, rc, cq_cnt, user_पूर्णांकerrupt_cnt, cq_पढ़ोy_cnt;
-	अक्षर *name;
+int hl_device_init(struct hl_device *hdev, struct class *hclass)
+{
+	int i, rc, cq_cnt, user_interrupt_cnt, cq_ready_cnt;
+	char *name;
 	bool add_cdev_sysfs_on_err = false;
 
-	name = kaप्र_लिखो(GFP_KERNEL, "hl%d", hdev->id / 2);
-	अगर (!name) अणु
+	name = kasprintf(GFP_KERNEL, "hl%d", hdev->id / 2);
+	if (!name) {
 		rc = -ENOMEM;
-		जाओ out_disabled;
-	पूर्ण
+		goto out_disabled;
+	}
 
-	/* Initialize cdev and device काष्ठाures */
+	/* Initialize cdev and device structures */
 	rc = device_init_cdev(hdev, hclass, hdev->id, &hl_ops, name,
 				&hdev->cdev, &hdev->dev);
 
-	kमुक्त(name);
+	kfree(name);
 
-	अगर (rc)
-		जाओ out_disabled;
+	if (rc)
+		goto out_disabled;
 
-	name = kaप्र_लिखो(GFP_KERNEL, "hl_controlD%d", hdev->id / 2);
-	अगर (!name) अणु
+	name = kasprintf(GFP_KERNEL, "hl_controlD%d", hdev->id / 2);
+	if (!name) {
 		rc = -ENOMEM;
-		जाओ मुक्त_dev;
-	पूर्ण
+		goto free_dev;
+	}
 
-	/* Initialize cdev and device काष्ठाures क्रम control device */
+	/* Initialize cdev and device structures for control device */
 	rc = device_init_cdev(hdev, hclass, hdev->id_control, &hl_ctrl_ops,
 				name, &hdev->cdev_ctrl, &hdev->dev_ctrl);
 
-	kमुक्त(name);
+	kfree(name);
 
-	अगर (rc)
-		जाओ मुक्त_dev;
+	if (rc)
+		goto free_dev;
 
-	/* Initialize ASIC function poपूर्णांकers and perक्रमm early init */
+	/* Initialize ASIC function pointers and perform early init */
 	rc = device_early_init(hdev);
-	अगर (rc)
-		जाओ मुक्त_dev_ctrl;
+	if (rc)
+		goto free_dev_ctrl;
 
-	user_पूर्णांकerrupt_cnt = hdev->asic_prop.user_पूर्णांकerrupt_count;
+	user_interrupt_cnt = hdev->asic_prop.user_interrupt_count;
 
-	अगर (user_पूर्णांकerrupt_cnt) अणु
-		hdev->user_पूर्णांकerrupt = kसुस्मृति(user_पूर्णांकerrupt_cnt,
-				माप(*hdev->user_पूर्णांकerrupt),
+	if (user_interrupt_cnt) {
+		hdev->user_interrupt = kcalloc(user_interrupt_cnt,
+				sizeof(*hdev->user_interrupt),
 				GFP_KERNEL);
 
-		अगर (!hdev->user_पूर्णांकerrupt) अणु
+		if (!hdev->user_interrupt) {
 			rc = -ENOMEM;
-			जाओ early_fini;
-		पूर्ण
-	पूर्ण
+			goto early_fini;
+		}
+	}
 
 	/*
 	 * Start calling ASIC initialization. First S/W then H/W and finally
 	 * late init
 	 */
 	rc = hdev->asic_funcs->sw_init(hdev);
-	अगर (rc)
-		जाओ user_पूर्णांकerrupts_fini;
+	if (rc)
+		goto user_interrupts_fini;
 
 	/*
-	 * Initialize the H/W queues. Must be करोne beक्रमe hw_init, because
+	 * Initialize the H/W queues. Must be done before hw_init, because
 	 * there the addresses of the kernel queue are being written to the
-	 * रेजिस्टरs of the device
+	 * registers of the device
 	 */
 	rc = hl_hw_queues_create(hdev);
-	अगर (rc) अणु
+	if (rc) {
 		dev_err(hdev->dev, "failed to initialize kernel queues\n");
-		जाओ sw_fini;
-	पूर्ण
+		goto sw_fini;
+	}
 
 	cq_cnt = hdev->asic_prop.completion_queues_count;
 
 	/*
-	 * Initialize the completion queues. Must be करोne beक्रमe hw_init,
+	 * Initialize the completion queues. Must be done before hw_init,
 	 * because there the addresses of the completion queues are being
 	 * passed as arguments to request_irq
 	 */
-	अगर (cq_cnt) अणु
-		hdev->completion_queue = kसुस्मृति(cq_cnt,
-				माप(*hdev->completion_queue),
+	if (cq_cnt) {
+		hdev->completion_queue = kcalloc(cq_cnt,
+				sizeof(*hdev->completion_queue),
 				GFP_KERNEL);
 
-		अगर (!hdev->completion_queue) अणु
+		if (!hdev->completion_queue) {
 			dev_err(hdev->dev,
 				"failed to allocate completion queues\n");
 			rc = -ENOMEM;
-			जाओ hw_queues_destroy;
-		पूर्ण
-	पूर्ण
+			goto hw_queues_destroy;
+		}
+	}
 
-	क्रम (i = 0, cq_पढ़ोy_cnt = 0 ; i < cq_cnt ; i++, cq_पढ़ोy_cnt++) अणु
+	for (i = 0, cq_ready_cnt = 0 ; i < cq_cnt ; i++, cq_ready_cnt++) {
 		rc = hl_cq_init(hdev, &hdev->completion_queue[i],
-				hdev->asic_funcs->get_queue_id_क्रम_cq(hdev, i));
-		अगर (rc) अणु
+				hdev->asic_funcs->get_queue_id_for_cq(hdev, i));
+		if (rc) {
 			dev_err(hdev->dev,
 				"failed to initialize completion queue\n");
-			जाओ cq_fini;
-		पूर्ण
+			goto cq_fini;
+		}
 		hdev->completion_queue[i].cq_idx = i;
-	पूर्ण
+	}
 
 	/*
-	 * Initialize the event queue. Must be करोne beक्रमe hw_init,
+	 * Initialize the event queue. Must be done before hw_init,
 	 * because there the address of the event queue is being
 	 * passed as argument to request_irq
 	 */
 	rc = hl_eq_init(hdev, &hdev->event_queue);
-	अगर (rc) अणु
+	if (rc) {
 		dev_err(hdev->dev, "failed to initialize event queue\n");
-		जाओ cq_fini;
-	पूर्ण
+		goto cq_fini;
+	}
 
-	/* MMU S/W must be initialized beक्रमe kernel context is created */
+	/* MMU S/W must be initialized before kernel context is created */
 	rc = hl_mmu_init(hdev);
-	अगर (rc) अणु
+	if (rc) {
 		dev_err(hdev->dev, "Failed to initialize MMU S/W structures\n");
-		जाओ eq_fini;
-	पूर्ण
+		goto eq_fini;
+	}
 
 	/* Allocate the kernel context */
-	hdev->kernel_ctx = kzalloc(माप(*hdev->kernel_ctx), GFP_KERNEL);
-	अगर (!hdev->kernel_ctx) अणु
+	hdev->kernel_ctx = kzalloc(sizeof(*hdev->kernel_ctx), GFP_KERNEL);
+	if (!hdev->kernel_ctx) {
 		rc = -ENOMEM;
-		जाओ mmu_fini;
-	पूर्ण
+		goto mmu_fini;
+	}
 
-	hdev->compute_ctx = शून्य;
+	hdev->compute_ctx = NULL;
 
 	hl_debugfs_add_device(hdev);
 
@@ -1322,161 +1321,161 @@ out_err:
 	 * hl_debugfs_add_device.
 	 */
 	rc = hl_ctx_init(hdev, hdev->kernel_ctx, true);
-	अगर (rc) अणु
+	if (rc) {
 		dev_err(hdev->dev, "failed to initialize kernel context\n");
-		kमुक्त(hdev->kernel_ctx);
-		जाओ हटाओ_device_from_debugfs;
-	पूर्ण
+		kfree(hdev->kernel_ctx);
+		goto remove_device_from_debugfs;
+	}
 
 	rc = hl_cb_pool_init(hdev);
-	अगर (rc) अणु
+	if (rc) {
 		dev_err(hdev->dev, "failed to initialize CB pool\n");
-		जाओ release_ctx;
-	पूर्ण
+		goto release_ctx;
+	}
 
 	/*
-	 * From this poपूर्णांक, in हाल of an error, add अक्षर devices and create
+	 * From this point, in case of an error, add char devices and create
 	 * sysfs nodes as part of the error flow, to allow debugging.
 	 */
 	add_cdev_sysfs_on_err = true;
 
 	/* Device is now enabled as part of the initialization requires
-	 * communication with the device firmware to get inक्रमmation that
-	 * is required क्रम the initialization itself
+	 * communication with the device firmware to get information that
+	 * is required for the initialization itself
 	 */
 	hdev->disabled = false;
 
 	rc = hdev->asic_funcs->hw_init(hdev);
-	अगर (rc) अणु
+	if (rc) {
 		dev_err(hdev->dev, "failed to initialize the H/W\n");
 		rc = 0;
-		जाओ out_disabled;
-	पूर्ण
+		goto out_disabled;
+	}
 
 	/* Check that the communication with the device is working */
 	rc = hdev->asic_funcs->test_queues(hdev);
-	अगर (rc) अणु
+	if (rc) {
 		dev_err(hdev->dev, "Failed to detect if device is alive\n");
 		rc = 0;
-		जाओ out_disabled;
-	पूर्ण
+		goto out_disabled;
+	}
 
 	rc = device_late_init(hdev);
-	अगर (rc) अणु
+	if (rc) {
 		dev_err(hdev->dev, "Failed late initialization\n");
 		rc = 0;
-		जाओ out_disabled;
-	पूर्ण
+		goto out_disabled;
+	}
 
 	dev_info(hdev->dev, "Found %s device with %lluGB DRAM\n",
 		hdev->asic_name,
 		hdev->asic_prop.dram_size / 1024 / 1024 / 1024);
 
 	rc = hl_vm_init(hdev);
-	अगर (rc) अणु
+	if (rc) {
 		dev_err(hdev->dev, "Failed to initialize memory module\n");
 		rc = 0;
-		जाओ out_disabled;
-	पूर्ण
+		goto out_disabled;
+	}
 
 	/*
 	 * Expose devices and sysfs nodes to user.
-	 * From here there is no need to add अक्षर devices and create sysfs nodes
-	 * in हाल of an error.
+	 * From here there is no need to add char devices and create sysfs nodes
+	 * in case of an error.
 	 */
 	add_cdev_sysfs_on_err = false;
 	rc = device_cdev_sysfs_add(hdev);
-	अगर (rc) अणु
+	if (rc) {
 		dev_err(hdev->dev,
 			"Failed to add char devices and sysfs nodes\n");
 		rc = 0;
-		जाओ out_disabled;
-	पूर्ण
+		goto out_disabled;
+	}
 
-	/* Need to call this again because the max घातer might change,
-	 * depending on card type क्रम certain ASICs
+	/* Need to call this again because the max power might change,
+	 * depending on card type for certain ASICs
 	 */
-	hl_set_max_घातer(hdev);
+	hl_set_max_power(hdev);
 
 	/*
 	 * hl_hwmon_init() must be called after device_late_init(), because only
-	 * there we get the inक्रमmation from the device about which
+	 * there we get the information from the device about which
 	 * hwmon-related sensors the device supports.
-	 * Furthermore, it must be करोne after adding the device to the प्रणाली.
+	 * Furthermore, it must be done after adding the device to the system.
 	 */
 	rc = hl_hwmon_init(hdev);
-	अगर (rc) अणु
+	if (rc) {
 		dev_err(hdev->dev, "Failed to initialize hwmon\n");
 		rc = 0;
-		जाओ out_disabled;
-	पूर्ण
+		goto out_disabled;
+	}
 
 	dev_notice(hdev->dev,
 		"Successfully added device to habanalabs driver\n");
 
-	hdev->init_करोne = true;
+	hdev->init_done = true;
 
-	/* After initialization is करोne, we are पढ़ोy to receive events from
-	 * the F/W. We can't करो it beक्रमe because we will ignore events and अगर
+	/* After initialization is done, we are ready to receive events from
+	 * the F/W. We can't do it before because we will ignore events and if
 	 * those events are fatal, we won't know about it and the device will
 	 * be operational although it shouldn't be
 	 */
 	hdev->asic_funcs->enable_events_from_fw(hdev);
 
-	वापस 0;
+	return 0;
 
 release_ctx:
-	अगर (hl_ctx_put(hdev->kernel_ctx) != 1)
+	if (hl_ctx_put(hdev->kernel_ctx) != 1)
 		dev_err(hdev->dev,
 			"kernel ctx is still alive on initialization failure\n");
-हटाओ_device_from_debugfs:
-	hl_debugfs_हटाओ_device(hdev);
+remove_device_from_debugfs:
+	hl_debugfs_remove_device(hdev);
 mmu_fini:
 	hl_mmu_fini(hdev);
 eq_fini:
 	hl_eq_fini(hdev, &hdev->event_queue);
 cq_fini:
-	क्रम (i = 0 ; i < cq_पढ़ोy_cnt ; i++)
+	for (i = 0 ; i < cq_ready_cnt ; i++)
 		hl_cq_fini(hdev, &hdev->completion_queue[i]);
-	kमुक्त(hdev->completion_queue);
+	kfree(hdev->completion_queue);
 hw_queues_destroy:
 	hl_hw_queues_destroy(hdev);
 sw_fini:
 	hdev->asic_funcs->sw_fini(hdev);
-user_पूर्णांकerrupts_fini:
-	kमुक्त(hdev->user_पूर्णांकerrupt);
+user_interrupts_fini:
+	kfree(hdev->user_interrupt);
 early_fini:
 	device_early_fini(hdev);
-मुक्त_dev_ctrl:
+free_dev_ctrl:
 	put_device(hdev->dev_ctrl);
-मुक्त_dev:
+free_dev:
 	put_device(hdev->dev);
 out_disabled:
 	hdev->disabled = true;
-	अगर (add_cdev_sysfs_on_err)
+	if (add_cdev_sysfs_on_err)
 		device_cdev_sysfs_add(hdev);
-	अगर (hdev->pdev)
+	if (hdev->pdev)
 		dev_err(&hdev->pdev->dev,
 			"Failed to initialize hl%d. Device is NOT usable !\n",
 			hdev->id / 2);
-	अन्यथा
+	else
 		pr_err("Failed to initialize hl%d. Device is NOT usable !\n",
 			hdev->id / 2);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*
- * hl_device_fini - मुख्य tear-करोwn function क्रम habanaद_असल device
+ * hl_device_fini - main tear-down function for habanalabs device
  *
- * @hdev: poपूर्णांकer to habanaद_असल device काष्ठाure
+ * @hdev: pointer to habanalabs device structure
  *
  * Destroy the device, call ASIC fini functions and release the id
  */
-व्योम hl_device_fini(काष्ठा hl_device *hdev)
-अणु
-	kसमय_प्रकार समयout;
-	पूर्णांक i, rc;
+void hl_device_fini(struct hl_device *hdev)
+{
+	ktime_t timeout;
+	int i, rc;
 
 	dev_info(hdev->dev, "Removing device\n");
 
@@ -1485,30 +1484,30 @@ out_disabled:
 
 	/*
 	 * This function is competing with the reset function, so try to
-	 * take the reset atomic and अगर we are alपढ़ोy in middle of reset,
-	 * रुको until reset function is finished. Reset function is deचिन्हित
+	 * take the reset atomic and if we are already in middle of reset,
+	 * wait until reset function is finished. Reset function is designed
 	 * to always finish. However, in Gaudi, because of all the network
 	 * ports, the hard reset could take between 10-30 seconds
 	 */
 
-	समयout = kसमय_add_us(kसमय_get(),
+	timeout = ktime_add_us(ktime_get(),
 				HL_HARD_RESET_MAX_TIMEOUT * 1000 * 1000);
 	rc = atomic_cmpxchg(&hdev->in_reset, 0, 1);
-	जबतक (rc) अणु
+	while (rc) {
 		usleep_range(50, 200);
 		rc = atomic_cmpxchg(&hdev->in_reset, 0, 1);
-		अगर (kसमय_compare(kसमय_get(), समयout) > 0) अणु
+		if (ktime_compare(ktime_get(), timeout) > 0) {
 			dev_crit(hdev->dev,
 				"Failed to remove device because reset function did not finish\n");
-			वापस;
-		पूर्ण
-	पूर्ण
+			return;
+		}
+	}
 
 	/* Disable PCI access from device F/W so it won't send us additional
-	 * पूर्णांकerrupts. We disable MSI/MSI-X at the halt_engines function and we
-	 * can't have the F/W sending us पूर्णांकerrupts after that. We need to
-	 * disable the access here because अगर the device is marked disable, the
-	 * message won't be send. Also, in हाल of heartbeat, the device CPU is
+	 * interrupts. We disable MSI/MSI-X at the halt_engines function and we
+	 * can't have the F/W sending us interrupts after that. We need to
+	 * disable the access here because if the device is marked disable, the
+	 * message won't be send. Also, in case of heartbeat, the device CPU is
 	 * marked as disable so this message won't be sent
 	 */
 	hl_fw_send_pci_access_msg(hdev,	CPUCP_PACKET_DISABLE_PCI_ACCESS);
@@ -1522,7 +1521,7 @@ out_disabled:
 	hdev->asic_funcs->hw_queues_lock(hdev);
 	hdev->asic_funcs->hw_queues_unlock(hdev);
 
-	/* Flush anyone that is inside device खोलो */
+	/* Flush anyone that is inside device open */
 	mutex_lock(&hdev->fpriv_list_lock);
 	mutex_unlock(&hdev->fpriv_list_lock);
 
@@ -1533,7 +1532,7 @@ out_disabled:
 	device_late_fini(hdev);
 
 	/*
-	 * Halt the engines and disable पूर्णांकerrupts so we won't get any more
+	 * Halt the engines and disable interrupts so we won't get any more
 	 * completions from H/W and we won't have any accesses from the
 	 * H/W to the host machine
 	 */
@@ -1543,29 +1542,29 @@ out_disabled:
 	hl_cs_rollback_all(hdev);
 
 	/* Kill processes here after CS rollback. This is because the process
-	 * can't really निकास until all its CSs are करोne, which is what we
-	 * करो in cs rollback
+	 * can't really exit until all its CSs are done, which is what we
+	 * do in cs rollback
 	 */
 	dev_info(hdev->dev,
 		"Waiting for all processes to exit (timeout of %u seconds)",
 		HL_PENDING_RESET_LONG_SEC);
 
-	rc = device_समाप्त_खोलो_processes(hdev, HL_PENDING_RESET_LONG_SEC);
-	अगर (rc) अणु
+	rc = device_kill_open_processes(hdev, HL_PENDING_RESET_LONG_SEC);
+	if (rc) {
 		dev_crit(hdev->dev, "Failed to kill all open processes\n");
-		device_disable_खोलो_processes(hdev);
-	पूर्ण
+		device_disable_open_processes(hdev);
+	}
 
 	hl_cb_pool_fini(hdev);
 
-	/* Reset the H/W. It will be in idle state after this वापसs */
+	/* Reset the H/W. It will be in idle state after this returns */
 	hdev->asic_funcs->hw_fini(hdev, true);
 
 	/* Release kernel context */
-	अगर ((hdev->kernel_ctx) && (hl_ctx_put(hdev->kernel_ctx) != 1))
+	if ((hdev->kernel_ctx) && (hl_ctx_put(hdev->kernel_ctx) != 1))
 		dev_err(hdev->dev, "kernel ctx is still alive\n");
 
-	hl_debugfs_हटाओ_device(hdev);
+	hl_debugfs_remove_device(hdev);
 
 	hl_vm_fini(hdev);
 
@@ -1573,10 +1572,10 @@ out_disabled:
 
 	hl_eq_fini(hdev, &hdev->event_queue);
 
-	क्रम (i = 0 ; i < hdev->asic_prop.completion_queues_count ; i++)
+	for (i = 0 ; i < hdev->asic_prop.completion_queues_count ; i++)
 		hl_cq_fini(hdev, &hdev->completion_queue[i]);
-	kमुक्त(hdev->completion_queue);
-	kमुक्त(hdev->user_पूर्णांकerrupt);
+	kfree(hdev->completion_queue);
+	kfree(hdev->user_interrupt);
 
 	hl_hw_queues_destroy(hdev);
 
@@ -1589,37 +1588,37 @@ out_disabled:
 	device_cdev_sysfs_del(hdev);
 
 	pr_info("removed device successfully\n");
-पूर्ण
+}
 
 /*
- * MMIO रेजिस्टर access helper functions.
+ * MMIO register access helper functions.
  */
 
 /*
- * hl_rreg - Read an MMIO रेजिस्टर
+ * hl_rreg - Read an MMIO register
  *
- * @hdev: poपूर्णांकer to habanaद_असल device काष्ठाure
- * @reg: MMIO रेजिस्टर offset (in bytes)
+ * @hdev: pointer to habanalabs device structure
+ * @reg: MMIO register offset (in bytes)
  *
- * Returns the value of the MMIO रेजिस्टर we are asked to पढ़ो
+ * Returns the value of the MMIO register we are asked to read
  *
  */
-अंतरभूत u32 hl_rreg(काष्ठा hl_device *hdev, u32 reg)
-अणु
-	वापस पढ़ोl(hdev->rmmio + reg);
-पूर्ण
+inline u32 hl_rreg(struct hl_device *hdev, u32 reg)
+{
+	return readl(hdev->rmmio + reg);
+}
 
 /*
- * hl_wreg - Write to an MMIO रेजिस्टर
+ * hl_wreg - Write to an MMIO register
  *
- * @hdev: poपूर्णांकer to habanaद_असल device काष्ठाure
- * @reg: MMIO रेजिस्टर offset (in bytes)
+ * @hdev: pointer to habanalabs device structure
+ * @reg: MMIO register offset (in bytes)
  * @val: 32-bit value
  *
- * Writes the 32-bit value पूर्णांकo the MMIO रेजिस्टर
+ * Writes the 32-bit value into the MMIO register
  *
  */
-अंतरभूत व्योम hl_wreg(काष्ठा hl_device *hdev, u32 reg, u32 val)
-अणु
-	ग_लिखोl(val, hdev->rmmio + reg);
-पूर्ण
+inline void hl_wreg(struct hl_device *hdev, u32 reg, u32 val)
+{
+	writel(val, hdev->rmmio + reg);
+}

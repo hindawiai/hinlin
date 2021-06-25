@@ -1,25 +1,24 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Copyright (C) Fuzhou Rockchip Electronics Co.Ltd
  * Author:
  *      Sandy Huang <hjc@rock-chips.com>
  */
 
-#अगर_घोषित CONFIG_ROCKCHIP_RGB
-काष्ठा rockchip_rgb *rockchip_rgb_init(काष्ठा device *dev,
-				       काष्ठा drm_crtc *crtc,
-				       काष्ठा drm_device *drm_dev);
-व्योम rockchip_rgb_fini(काष्ठा rockchip_rgb *rgb);
-#अन्यथा
-अटल अंतरभूत काष्ठा rockchip_rgb *rockchip_rgb_init(काष्ठा device *dev,
-						     काष्ठा drm_crtc *crtc,
-						     काष्ठा drm_device *drm_dev)
-अणु
-	वापस शून्य;
-पूर्ण
+#ifdef CONFIG_ROCKCHIP_RGB
+struct rockchip_rgb *rockchip_rgb_init(struct device *dev,
+				       struct drm_crtc *crtc,
+				       struct drm_device *drm_dev);
+void rockchip_rgb_fini(struct rockchip_rgb *rgb);
+#else
+static inline struct rockchip_rgb *rockchip_rgb_init(struct device *dev,
+						     struct drm_crtc *crtc,
+						     struct drm_device *drm_dev)
+{
+	return NULL;
+}
 
-अटल अंतरभूत व्योम rockchip_rgb_fini(काष्ठा rockchip_rgb *rgb)
-अणु
-पूर्ण
-#पूर्ण_अगर
+static inline void rockchip_rgb_fini(struct rockchip_rgb *rgb)
+{
+}
+#endif

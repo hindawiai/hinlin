@@ -1,7 +1,6 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: MIT */
-#अगर_अघोषित __NVKM_SEC_H__
-#घोषणा __NVKM_SEC_H__
-#समावेश <engine/falcon.h>
-पूर्णांक g98_sec_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक inst, काष्ठा nvkm_engine **);
-#पूर्ण_अगर
+/* SPDX-License-Identifier: MIT */
+#ifndef __NVKM_SEC_H__
+#define __NVKM_SEC_H__
+#include <engine/falcon.h>
+int g98_sec_new(struct nvkm_device *, enum nvkm_subdev_type, int inst, struct nvkm_engine **);
+#endif

@@ -1,187 +1,186 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 //
-// max8998.c - mfd core driver क्रम the Maxim 8998
+// max8998.c - mfd core driver for the Maxim 8998
 //
 //  Copyright (C) 2009-2010 Samsung Electronics
 //  Kyungmin Park <kyungmin.park@samsung.com>
 //  Marek Szyprowski <m.szyprowski@samsung.com>
 
-#समावेश <linux/err.h>
-#समावेश <linux/init.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_irq.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <linux/mutex.h>
-#समावेश <linux/mfd/core.h>
-#समावेश <linux/mfd/max8998.h>
-#समावेश <linux/mfd/max8998-निजी.h>
+#include <linux/err.h>
+#include <linux/init.h>
+#include <linux/slab.h>
+#include <linux/i2c.h>
+#include <linux/interrupt.h>
+#include <linux/of.h>
+#include <linux/of_irq.h>
+#include <linux/pm_runtime.h>
+#include <linux/mutex.h>
+#include <linux/mfd/core.h>
+#include <linux/mfd/max8998.h>
+#include <linux/mfd/max8998-private.h>
 
-#घोषणा RTC_I2C_ADDR		(0x0c >> 1)
+#define RTC_I2C_ADDR		(0x0c >> 1)
 
-अटल स्थिर काष्ठा mfd_cell max8998_devs[] = अणु
-	अणु
+static const struct mfd_cell max8998_devs[] = {
+	{
 		.name = "max8998-pmic",
-	पूर्ण, अणु
+	}, {
 		.name = "max8998-rtc",
-	पूर्ण, अणु
+	}, {
 		.name = "max8998-battery",
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा mfd_cell lp3974_devs[] = अणु
-	अणु
+static const struct mfd_cell lp3974_devs[] = {
+	{
 		.name = "lp3974-pmic",
-	पूर्ण, अणु
+	}, {
 		.name = "lp3974-rtc",
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-पूर्णांक max8998_पढ़ो_reg(काष्ठा i2c_client *i2c, u8 reg, u8 *dest)
-अणु
-	काष्ठा max8998_dev *max8998 = i2c_get_clientdata(i2c);
-	पूर्णांक ret;
+int max8998_read_reg(struct i2c_client *i2c, u8 reg, u8 *dest)
+{
+	struct max8998_dev *max8998 = i2c_get_clientdata(i2c);
+	int ret;
 
 	mutex_lock(&max8998->iolock);
-	ret = i2c_smbus_पढ़ो_byte_data(i2c, reg);
+	ret = i2c_smbus_read_byte_data(i2c, reg);
 	mutex_unlock(&max8998->iolock);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	ret &= 0xff;
 	*dest = ret;
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL(max8998_पढ़ो_reg);
+	return 0;
+}
+EXPORT_SYMBOL(max8998_read_reg);
 
-पूर्णांक max8998_bulk_पढ़ो(काष्ठा i2c_client *i2c, u8 reg, पूर्णांक count, u8 *buf)
-अणु
-	काष्ठा max8998_dev *max8998 = i2c_get_clientdata(i2c);
-	पूर्णांक ret;
+int max8998_bulk_read(struct i2c_client *i2c, u8 reg, int count, u8 *buf)
+{
+	struct max8998_dev *max8998 = i2c_get_clientdata(i2c);
+	int ret;
 
 	mutex_lock(&max8998->iolock);
-	ret = i2c_smbus_पढ़ो_i2c_block_data(i2c, reg, count, buf);
+	ret = i2c_smbus_read_i2c_block_data(i2c, reg, count, buf);
 	mutex_unlock(&max8998->iolock);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL(max8998_bulk_पढ़ो);
+	return 0;
+}
+EXPORT_SYMBOL(max8998_bulk_read);
 
-पूर्णांक max8998_ग_लिखो_reg(काष्ठा i2c_client *i2c, u8 reg, u8 value)
-अणु
-	काष्ठा max8998_dev *max8998 = i2c_get_clientdata(i2c);
-	पूर्णांक ret;
+int max8998_write_reg(struct i2c_client *i2c, u8 reg, u8 value)
+{
+	struct max8998_dev *max8998 = i2c_get_clientdata(i2c);
+	int ret;
 
 	mutex_lock(&max8998->iolock);
-	ret = i2c_smbus_ग_लिखो_byte_data(i2c, reg, value);
+	ret = i2c_smbus_write_byte_data(i2c, reg, value);
 	mutex_unlock(&max8998->iolock);
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL(max8998_ग_लिखो_reg);
+	return ret;
+}
+EXPORT_SYMBOL(max8998_write_reg);
 
-पूर्णांक max8998_bulk_ग_लिखो(काष्ठा i2c_client *i2c, u8 reg, पूर्णांक count, u8 *buf)
-अणु
-	काष्ठा max8998_dev *max8998 = i2c_get_clientdata(i2c);
-	पूर्णांक ret;
+int max8998_bulk_write(struct i2c_client *i2c, u8 reg, int count, u8 *buf)
+{
+	struct max8998_dev *max8998 = i2c_get_clientdata(i2c);
+	int ret;
 
 	mutex_lock(&max8998->iolock);
-	ret = i2c_smbus_ग_लिखो_i2c_block_data(i2c, reg, count, buf);
+	ret = i2c_smbus_write_i2c_block_data(i2c, reg, count, buf);
 	mutex_unlock(&max8998->iolock);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL(max8998_bulk_ग_लिखो);
+	return 0;
+}
+EXPORT_SYMBOL(max8998_bulk_write);
 
-पूर्णांक max8998_update_reg(काष्ठा i2c_client *i2c, u8 reg, u8 val, u8 mask)
-अणु
-	काष्ठा max8998_dev *max8998 = i2c_get_clientdata(i2c);
-	पूर्णांक ret;
+int max8998_update_reg(struct i2c_client *i2c, u8 reg, u8 val, u8 mask)
+{
+	struct max8998_dev *max8998 = i2c_get_clientdata(i2c);
+	int ret;
 
 	mutex_lock(&max8998->iolock);
-	ret = i2c_smbus_पढ़ो_byte_data(i2c, reg);
-	अगर (ret >= 0) अणु
+	ret = i2c_smbus_read_byte_data(i2c, reg);
+	if (ret >= 0) {
 		u8 old_val = ret & 0xff;
 		u8 new_val = (val & mask) | (old_val & (~mask));
-		ret = i2c_smbus_ग_लिखो_byte_data(i2c, reg, new_val);
-	पूर्ण
+		ret = i2c_smbus_write_byte_data(i2c, reg, new_val);
+	}
 	mutex_unlock(&max8998->iolock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL(max8998_update_reg);
 
-#अगर_घोषित CONFIG_OF
-अटल स्थिर काष्ठा of_device_id max8998_dt_match[] = अणु
-	अणु .compatible = "maxim,max8998", .data = (व्योम *)TYPE_MAX8998 पूर्ण,
-	अणु .compatible = "national,lp3974", .data = (व्योम *)TYPE_LP3974 पूर्ण,
-	अणु .compatible = "ti,lp3974", .data = (व्योम *)TYPE_LP3974 पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
-#पूर्ण_अगर
+#ifdef CONFIG_OF
+static const struct of_device_id max8998_dt_match[] = {
+	{ .compatible = "maxim,max8998", .data = (void *)TYPE_MAX8998 },
+	{ .compatible = "national,lp3974", .data = (void *)TYPE_LP3974 },
+	{ .compatible = "ti,lp3974", .data = (void *)TYPE_LP3974 },
+	{},
+};
+#endif
 
 /*
- * Only the common platक्रमm data elements क्रम max8998 are parsed here from the
+ * Only the common platform data elements for max8998 are parsed here from the
  * device tree. Other sub-modules of max8998 such as pmic, rtc and others have
- * to parse their own platक्रमm data elements from device tree.
+ * to parse their own platform data elements from device tree.
  *
- * The max8998 platक्रमm data काष्ठाure is instantiated here and the drivers क्रम
- * the sub-modules need not instantiate another instance जबतक parsing their
- * platक्रमm data.
+ * The max8998 platform data structure is instantiated here and the drivers for
+ * the sub-modules need not instantiate another instance while parsing their
+ * platform data.
  */
-अटल काष्ठा max8998_platक्रमm_data *max8998_i2c_parse_dt_pdata(
-							काष्ठा device *dev)
-अणु
-	काष्ठा max8998_platक्रमm_data *pd;
+static struct max8998_platform_data *max8998_i2c_parse_dt_pdata(
+							struct device *dev)
+{
+	struct max8998_platform_data *pd;
 
-	pd = devm_kzalloc(dev, माप(*pd), GFP_KERNEL);
-	अगर (!pd)
-		वापस ERR_PTR(-ENOMEM);
+	pd = devm_kzalloc(dev, sizeof(*pd), GFP_KERNEL);
+	if (!pd)
+		return ERR_PTR(-ENOMEM);
 
 	pd->ono = irq_of_parse_and_map(dev->of_node, 1);
 
 	/*
-	 * ToDo: the 'wakeup' member in the platक्रमm data is more of a linux
-	 * specfic inक्रमmation. Hence, there is no binding क्रम that yet and
+	 * ToDo: the 'wakeup' member in the platform data is more of a linux
+	 * specfic information. Hence, there is no binding for that yet and
 	 * not parsed here.
 	 */
-	वापस pd;
-पूर्ण
+	return pd;
+}
 
-अटल अंतरभूत अचिन्हित दीर्घ max8998_i2c_get_driver_data(काष्ठा i2c_client *i2c,
-						स्थिर काष्ठा i2c_device_id *id)
-अणु
-	अगर (IS_ENABLED(CONFIG_OF) && i2c->dev.of_node) अणु
-		स्थिर काष्ठा of_device_id *match;
+static inline unsigned long max8998_i2c_get_driver_data(struct i2c_client *i2c,
+						const struct i2c_device_id *id)
+{
+	if (IS_ENABLED(CONFIG_OF) && i2c->dev.of_node) {
+		const struct of_device_id *match;
 		match = of_match_node(max8998_dt_match, i2c->dev.of_node);
-		वापस (अचिन्हित दीर्घ)match->data;
-	पूर्ण
+		return (unsigned long)match->data;
+	}
 
-	वापस id->driver_data;
-पूर्ण
+	return id->driver_data;
+}
 
-अटल पूर्णांक max8998_i2c_probe(काष्ठा i2c_client *i2c,
-			    स्थिर काष्ठा i2c_device_id *id)
-अणु
-	काष्ठा max8998_platक्रमm_data *pdata = dev_get_platdata(&i2c->dev);
-	काष्ठा max8998_dev *max8998;
-	पूर्णांक ret = 0;
+static int max8998_i2c_probe(struct i2c_client *i2c,
+			    const struct i2c_device_id *id)
+{
+	struct max8998_platform_data *pdata = dev_get_platdata(&i2c->dev);
+	struct max8998_dev *max8998;
+	int ret = 0;
 
-	max8998 = devm_kzalloc(&i2c->dev, माप(काष्ठा max8998_dev),
+	max8998 = devm_kzalloc(&i2c->dev, sizeof(struct max8998_dev),
 				GFP_KERNEL);
-	अगर (max8998 == शून्य)
-		वापस -ENOMEM;
+	if (max8998 == NULL)
+		return -ENOMEM;
 
-	अगर (IS_ENABLED(CONFIG_OF) && i2c->dev.of_node) अणु
+	if (IS_ENABLED(CONFIG_OF) && i2c->dev.of_node) {
 		pdata = max8998_i2c_parse_dt_pdata(&i2c->dev);
-		अगर (IS_ERR(pdata))
-			वापस PTR_ERR(pdata);
-	पूर्ण
+		if (IS_ERR(pdata))
+			return PTR_ERR(pdata);
+	}
 
 	i2c_set_clientdata(i2c, max8998);
 	max8998->dev = &i2c->dev;
@@ -189,90 +188,90 @@ EXPORT_SYMBOL(max8998_update_reg);
 	max8998->irq = i2c->irq;
 	max8998->type = max8998_i2c_get_driver_data(i2c, id);
 	max8998->pdata = pdata;
-	अगर (pdata) अणु
+	if (pdata) {
 		max8998->ono = pdata->ono;
 		max8998->irq_base = pdata->irq_base;
 		max8998->wakeup = pdata->wakeup;
-	पूर्ण
+	}
 	mutex_init(&max8998->iolock);
 
 	max8998->rtc = i2c_new_dummy_device(i2c->adapter, RTC_I2C_ADDR);
-	अगर (IS_ERR(max8998->rtc)) अणु
+	if (IS_ERR(max8998->rtc)) {
 		dev_err(&i2c->dev, "Failed to allocate I2C device for RTC\n");
-		वापस PTR_ERR(max8998->rtc);
-	पूर्ण
+		return PTR_ERR(max8998->rtc);
+	}
 	i2c_set_clientdata(max8998->rtc, max8998);
 
 	max8998_irq_init(max8998);
 
-	pm_runसमय_set_active(max8998->dev);
+	pm_runtime_set_active(max8998->dev);
 
-	चयन (max8998->type) अणु
-	हाल TYPE_LP3974:
+	switch (max8998->type) {
+	case TYPE_LP3974:
 		ret = mfd_add_devices(max8998->dev, -1,
 				      lp3974_devs, ARRAY_SIZE(lp3974_devs),
-				      शून्य, 0, शून्य);
-		अवरोध;
-	हाल TYPE_MAX8998:
+				      NULL, 0, NULL);
+		break;
+	case TYPE_MAX8998:
 		ret = mfd_add_devices(max8998->dev, -1,
 				      max8998_devs, ARRAY_SIZE(max8998_devs),
-				      शून्य, 0, शून्य);
-		अवरोध;
-	शेष:
+				      NULL, 0, NULL);
+		break;
+	default:
 		ret = -EINVAL;
-	पूर्ण
+	}
 
-	अगर (ret < 0)
-		जाओ err;
+	if (ret < 0)
+		goto err;
 
 	device_init_wakeup(max8998->dev, max8998->wakeup);
 
-	वापस ret;
+	return ret;
 
 err:
-	mfd_हटाओ_devices(max8998->dev);
-	max8998_irq_निकास(max8998);
-	i2c_unरेजिस्टर_device(max8998->rtc);
-	वापस ret;
-पूर्ण
+	mfd_remove_devices(max8998->dev);
+	max8998_irq_exit(max8998);
+	i2c_unregister_device(max8998->rtc);
+	return ret;
+}
 
-अटल स्थिर काष्ठा i2c_device_id max8998_i2c_id[] = अणु
-	अणु "max8998", TYPE_MAX8998 पूर्ण,
-	अणु "lp3974", TYPE_LP3974पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct i2c_device_id max8998_i2c_id[] = {
+	{ "max8998", TYPE_MAX8998 },
+	{ "lp3974", TYPE_LP3974},
+	{ }
+};
 
-अटल पूर्णांक max8998_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा i2c_client *i2c = to_i2c_client(dev);
-	काष्ठा max8998_dev *max8998 = i2c_get_clientdata(i2c);
+static int max8998_suspend(struct device *dev)
+{
+	struct i2c_client *i2c = to_i2c_client(dev);
+	struct max8998_dev *max8998 = i2c_get_clientdata(i2c);
 
-	अगर (device_may_wakeup(dev))
+	if (device_may_wakeup(dev))
 		irq_set_irq_wake(max8998->irq, 1);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक max8998_resume(काष्ठा device *dev)
-अणु
-	काष्ठा i2c_client *i2c = to_i2c_client(dev);
-	काष्ठा max8998_dev *max8998 = i2c_get_clientdata(i2c);
+static int max8998_resume(struct device *dev)
+{
+	struct i2c_client *i2c = to_i2c_client(dev);
+	struct max8998_dev *max8998 = i2c_get_clientdata(i2c);
 
-	अगर (device_may_wakeup(dev))
+	if (device_may_wakeup(dev))
 		irq_set_irq_wake(max8998->irq, 0);
 	/*
-	 * In LP3974, अगर IRQ रेजिस्टरs are not "read & clear"
-	 * when it's set during sleep, the पूर्णांकerrupt becomes
+	 * In LP3974, if IRQ registers are not "read & clear"
+	 * when it's set during sleep, the interrupt becomes
 	 * disabled.
 	 */
-	वापस max8998_irq_resume(i2c_get_clientdata(i2c));
-पूर्ण
+	return max8998_irq_resume(i2c_get_clientdata(i2c));
+}
 
-काष्ठा max8998_reg_dump अणु
+struct max8998_reg_dump {
 	u8	addr;
 	u8	val;
-पूर्ण;
-#घोषणा SAVE_ITEM(x)	अणु .addr = (x), .val = 0x0, पूर्ण
-अटल काष्ठा max8998_reg_dump max8998_dump[] = अणु
+};
+#define SAVE_ITEM(x)	{ .addr = (x), .val = 0x0, }
+static struct max8998_reg_dump max8998_dump[] = {
 	SAVE_ITEM(MAX8998_REG_IRQM1),
 	SAVE_ITEM(MAX8998_REG_IRQM2),
 	SAVE_ITEM(MAX8998_REG_IRQM3),
@@ -310,54 +309,54 @@ err:
 	SAVE_ITEM(MAX8998_REG_BKCHR),
 	SAVE_ITEM(MAX8998_REG_LBCNFG1),
 	SAVE_ITEM(MAX8998_REG_LBCNFG2),
-पूर्ण;
-/* Save रेजिस्टरs beक्रमe hibernation */
-अटल पूर्णांक max8998_मुक्तze(काष्ठा device *dev)
-अणु
-	काष्ठा i2c_client *i2c = to_i2c_client(dev);
-	पूर्णांक i;
+};
+/* Save registers before hibernation */
+static int max8998_freeze(struct device *dev)
+{
+	struct i2c_client *i2c = to_i2c_client(dev);
+	int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(max8998_dump); i++)
-		max8998_पढ़ो_reg(i2c, max8998_dump[i].addr,
+	for (i = 0; i < ARRAY_SIZE(max8998_dump); i++)
+		max8998_read_reg(i2c, max8998_dump[i].addr,
 				&max8998_dump[i].val);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Restore रेजिस्टरs after hibernation */
-अटल पूर्णांक max8998_restore(काष्ठा device *dev)
-अणु
-	काष्ठा i2c_client *i2c = to_i2c_client(dev);
-	पूर्णांक i;
+/* Restore registers after hibernation */
+static int max8998_restore(struct device *dev)
+{
+	struct i2c_client *i2c = to_i2c_client(dev);
+	int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(max8998_dump); i++)
-		max8998_ग_लिखो_reg(i2c, max8998_dump[i].addr,
+	for (i = 0; i < ARRAY_SIZE(max8998_dump); i++)
+		max8998_write_reg(i2c, max8998_dump[i].addr,
 				max8998_dump[i].val);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा dev_pm_ops max8998_pm = अणु
+static const struct dev_pm_ops max8998_pm = {
 	.suspend = max8998_suspend,
 	.resume = max8998_resume,
-	.मुक्तze = max8998_मुक्तze,
+	.freeze = max8998_freeze,
 	.restore = max8998_restore,
-पूर्ण;
+};
 
-अटल काष्ठा i2c_driver max8998_i2c_driver = अणु
-	.driver = अणु
+static struct i2c_driver max8998_i2c_driver = {
+	.driver = {
 		   .name = "max8998",
 		   .pm = &max8998_pm,
 		   .suppress_bind_attrs = true,
 		   .of_match_table = of_match_ptr(max8998_dt_match),
-	पूर्ण,
+	},
 	.probe = max8998_i2c_probe,
 	.id_table = max8998_i2c_id,
-पूर्ण;
+};
 
-अटल पूर्णांक __init max8998_i2c_init(व्योम)
-अणु
-	वापस i2c_add_driver(&max8998_i2c_driver);
-पूर्ण
-/* init early so consumer devices can complete प्रणाली boot */
+static int __init max8998_i2c_init(void)
+{
+	return i2c_add_driver(&max8998_i2c_driver);
+}
+/* init early so consumer devices can complete system boot */
 subsys_initcall(max8998_i2c_init);

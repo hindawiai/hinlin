@@ -1,14 +1,13 @@
-<शैली गुरु>
 /*
  * Copyright (C) 2015 Red Hat, Inc.
  * All Rights Reserved.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining
- * a copy of this software and associated करोcumentation files (the
+ * Permission is hereby granted, free of charge, to any person obtaining
+ * a copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modअगरy, merge, publish,
+ * without limitation the rights to use, copy, modify, merge, publish,
  * distribute, sublicense, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to करो so, subject to
+ * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
  *
  * The above copyright notice and this permission notice (including the
@@ -24,31 +23,31 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#समावेश <drm/drm_file.h>
-#समावेश <drm/drm_fourcc.h>
+#include <drm/drm_file.h>
+#include <drm/drm_fourcc.h>
 
-#समावेश "virtgpu_drv.h"
+#include "virtgpu_drv.h"
 
-अटल पूर्णांक virtio_gpu_gem_create(काष्ठा drm_file *file,
-				 काष्ठा drm_device *dev,
-				 काष्ठा virtio_gpu_object_params *params,
-				 काष्ठा drm_gem_object **obj_p,
-				 uपूर्णांक32_t *handle_p)
-अणु
-	काष्ठा virtio_gpu_device *vgdev = dev->dev_निजी;
-	काष्ठा virtio_gpu_object *obj;
-	पूर्णांक ret;
+static int virtio_gpu_gem_create(struct drm_file *file,
+				 struct drm_device *dev,
+				 struct virtio_gpu_object_params *params,
+				 struct drm_gem_object **obj_p,
+				 uint32_t *handle_p)
+{
+	struct virtio_gpu_device *vgdev = dev->dev_private;
+	struct virtio_gpu_object *obj;
+	int ret;
 	u32 handle;
 
-	ret = virtio_gpu_object_create(vgdev, params, &obj, शून्य);
-	अगर (ret < 0)
-		वापस ret;
+	ret = virtio_gpu_object_create(vgdev, params, &obj, NULL);
+	if (ret < 0)
+		return ret;
 
 	ret = drm_gem_handle_create(file, &obj->base.base, &handle);
-	अगर (ret) अणु
+	if (ret) {
 		drm_gem_object_release(&obj->base.base);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	*obj_p = &obj->base.base;
 
@@ -56,66 +55,66 @@
 	drm_gem_object_put(&obj->base.base);
 
 	*handle_p = handle;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक virtio_gpu_mode_dumb_create(काष्ठा drm_file *file_priv,
-				काष्ठा drm_device *dev,
-				काष्ठा drm_mode_create_dumb *args)
-अणु
-	काष्ठा drm_gem_object *gobj;
-	काष्ठा virtio_gpu_object_params params = अणु 0 पूर्ण;
-	पूर्णांक ret;
-	uपूर्णांक32_t pitch;
+int virtio_gpu_mode_dumb_create(struct drm_file *file_priv,
+				struct drm_device *dev,
+				struct drm_mode_create_dumb *args)
+{
+	struct drm_gem_object *gobj;
+	struct virtio_gpu_object_params params = { 0 };
+	int ret;
+	uint32_t pitch;
 
-	अगर (args->bpp != 32)
-		वापस -EINVAL;
+	if (args->bpp != 32)
+		return -EINVAL;
 
 	pitch = args->width * 4;
 	args->size = pitch * args->height;
 	args->size = ALIGN(args->size, PAGE_SIZE);
 
-	params.क्रमmat = virtio_gpu_translate_क्रमmat(DRM_FORMAT_HOST_XRGB8888);
+	params.format = virtio_gpu_translate_format(DRM_FORMAT_HOST_XRGB8888);
 	params.width = args->width;
 	params.height = args->height;
 	params.size = args->size;
 	params.dumb = true;
 	ret = virtio_gpu_gem_create(file_priv, dev, &params, &gobj,
 				    &args->handle);
-	अगर (ret)
-		जाओ fail;
+	if (ret)
+		goto fail;
 
 	args->pitch = pitch;
-	वापस ret;
+	return ret;
 
 fail:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक virtio_gpu_mode_dumb_mmap(काष्ठा drm_file *file_priv,
-			      काष्ठा drm_device *dev,
-			      uपूर्णांक32_t handle, uपूर्णांक64_t *offset_p)
-अणु
-	काष्ठा drm_gem_object *gobj;
+int virtio_gpu_mode_dumb_mmap(struct drm_file *file_priv,
+			      struct drm_device *dev,
+			      uint32_t handle, uint64_t *offset_p)
+{
+	struct drm_gem_object *gobj;
 
 	BUG_ON(!offset_p);
 	gobj = drm_gem_object_lookup(file_priv, handle);
-	अगर (gobj == शून्य)
-		वापस -ENOENT;
+	if (gobj == NULL)
+		return -ENOENT;
 	*offset_p = drm_vma_node_offset_addr(&gobj->vma_node);
 	drm_gem_object_put(gobj);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक virtio_gpu_gem_object_खोलो(काष्ठा drm_gem_object *obj,
-			       काष्ठा drm_file *file)
-अणु
-	काष्ठा virtio_gpu_device *vgdev = obj->dev->dev_निजी;
-	काष्ठा virtio_gpu_fpriv *vfpriv = file->driver_priv;
-	काष्ठा virtio_gpu_object_array *objs;
+int virtio_gpu_gem_object_open(struct drm_gem_object *obj,
+			       struct drm_file *file)
+{
+	struct virtio_gpu_device *vgdev = obj->dev->dev_private;
+	struct virtio_gpu_fpriv *vfpriv = file->driver_priv;
+	struct virtio_gpu_object_array *objs;
 
-	अगर (!vgdev->has_virgl_3d)
-		जाओ out_notअगरy;
+	if (!vgdev->has_virgl_3d)
+		goto out_notify;
 
 	/* the context might still be missing when the first ioctl is
 	 * DRM_IOCTL_MODE_CREATE_DUMB or DRM_IOCTL_PRIME_FD_TO_HANDLE
@@ -123,152 +122,152 @@ fail:
 	virtio_gpu_create_context(obj->dev, file);
 
 	objs = virtio_gpu_array_alloc(1);
-	अगर (!objs)
-		वापस -ENOMEM;
+	if (!objs)
+		return -ENOMEM;
 	virtio_gpu_array_add_obj(objs, obj);
 
 	virtio_gpu_cmd_context_attach_resource(vgdev, vfpriv->ctx_id,
 					       objs);
-out_notअगरy:
-	virtio_gpu_notअगरy(vgdev);
-	वापस 0;
-पूर्ण
+out_notify:
+	virtio_gpu_notify(vgdev);
+	return 0;
+}
 
-व्योम virtio_gpu_gem_object_बंद(काष्ठा drm_gem_object *obj,
-				 काष्ठा drm_file *file)
-अणु
-	काष्ठा virtio_gpu_device *vgdev = obj->dev->dev_निजी;
-	काष्ठा virtio_gpu_fpriv *vfpriv = file->driver_priv;
-	काष्ठा virtio_gpu_object_array *objs;
+void virtio_gpu_gem_object_close(struct drm_gem_object *obj,
+				 struct drm_file *file)
+{
+	struct virtio_gpu_device *vgdev = obj->dev->dev_private;
+	struct virtio_gpu_fpriv *vfpriv = file->driver_priv;
+	struct virtio_gpu_object_array *objs;
 
-	अगर (!vgdev->has_virgl_3d)
-		वापस;
+	if (!vgdev->has_virgl_3d)
+		return;
 
 	objs = virtio_gpu_array_alloc(1);
-	अगर (!objs)
-		वापस;
+	if (!objs)
+		return;
 	virtio_gpu_array_add_obj(objs, obj);
 
 	virtio_gpu_cmd_context_detach_resource(vgdev, vfpriv->ctx_id,
 					       objs);
-	virtio_gpu_notअगरy(vgdev);
-पूर्ण
+	virtio_gpu_notify(vgdev);
+}
 
-काष्ठा virtio_gpu_object_array *virtio_gpu_array_alloc(u32 nents)
-अणु
-	काष्ठा virtio_gpu_object_array *objs;
+struct virtio_gpu_object_array *virtio_gpu_array_alloc(u32 nents)
+{
+	struct virtio_gpu_object_array *objs;
 
-	objs = kदो_स्मृति(काष्ठा_size(objs, objs, nents), GFP_KERNEL);
-	अगर (!objs)
-		वापस शून्य;
+	objs = kmalloc(struct_size(objs, objs, nents), GFP_KERNEL);
+	if (!objs)
+		return NULL;
 
 	objs->nents = 0;
 	objs->total = nents;
-	वापस objs;
-पूर्ण
+	return objs;
+}
 
-अटल व्योम virtio_gpu_array_मुक्त(काष्ठा virtio_gpu_object_array *objs)
-अणु
-	kमुक्त(objs);
-पूर्ण
+static void virtio_gpu_array_free(struct virtio_gpu_object_array *objs)
+{
+	kfree(objs);
+}
 
-काष्ठा virtio_gpu_object_array*
-virtio_gpu_array_from_handles(काष्ठा drm_file *drm_file, u32 *handles, u32 nents)
-अणु
-	काष्ठा virtio_gpu_object_array *objs;
+struct virtio_gpu_object_array*
+virtio_gpu_array_from_handles(struct drm_file *drm_file, u32 *handles, u32 nents)
+{
+	struct virtio_gpu_object_array *objs;
 	u32 i;
 
 	objs = virtio_gpu_array_alloc(nents);
-	अगर (!objs)
-		वापस शून्य;
+	if (!objs)
+		return NULL;
 
-	क्रम (i = 0; i < nents; i++) अणु
+	for (i = 0; i < nents; i++) {
 		objs->objs[i] = drm_gem_object_lookup(drm_file, handles[i]);
-		अगर (!objs->objs[i]) अणु
+		if (!objs->objs[i]) {
 			objs->nents = i;
-			virtio_gpu_array_put_मुक्त(objs);
-			वापस शून्य;
-		पूर्ण
-	पूर्ण
+			virtio_gpu_array_put_free(objs);
+			return NULL;
+		}
+	}
 	objs->nents = i;
-	वापस objs;
-पूर्ण
+	return objs;
+}
 
-व्योम virtio_gpu_array_add_obj(काष्ठा virtio_gpu_object_array *objs,
-			      काष्ठा drm_gem_object *obj)
-अणु
-	अगर (WARN_ON_ONCE(objs->nents == objs->total))
-		वापस;
+void virtio_gpu_array_add_obj(struct virtio_gpu_object_array *objs,
+			      struct drm_gem_object *obj)
+{
+	if (WARN_ON_ONCE(objs->nents == objs->total))
+		return;
 
 	drm_gem_object_get(obj);
 	objs->objs[objs->nents] = obj;
 	objs->nents++;
-पूर्ण
+}
 
-पूर्णांक virtio_gpu_array_lock_resv(काष्ठा virtio_gpu_object_array *objs)
-अणु
-	पूर्णांक ret;
+int virtio_gpu_array_lock_resv(struct virtio_gpu_object_array *objs)
+{
+	int ret;
 
-	अगर (objs->nents == 1) अणु
-		ret = dma_resv_lock_पूर्णांकerruptible(objs->objs[0]->resv, शून्य);
-	पूर्ण अन्यथा अणु
+	if (objs->nents == 1) {
+		ret = dma_resv_lock_interruptible(objs->objs[0]->resv, NULL);
+	} else {
 		ret = drm_gem_lock_reservations(objs->objs, objs->nents,
 						&objs->ticket);
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 
-व्योम virtio_gpu_array_unlock_resv(काष्ठा virtio_gpu_object_array *objs)
-अणु
-	अगर (objs->nents == 1) अणु
+void virtio_gpu_array_unlock_resv(struct virtio_gpu_object_array *objs)
+{
+	if (objs->nents == 1) {
 		dma_resv_unlock(objs->objs[0]->resv);
-	पूर्ण अन्यथा अणु
+	} else {
 		drm_gem_unlock_reservations(objs->objs, objs->nents,
 					    &objs->ticket);
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम virtio_gpu_array_add_fence(काष्ठा virtio_gpu_object_array *objs,
-				काष्ठा dma_fence *fence)
-अणु
-	पूर्णांक i;
+void virtio_gpu_array_add_fence(struct virtio_gpu_object_array *objs,
+				struct dma_fence *fence)
+{
+	int i;
 
-	क्रम (i = 0; i < objs->nents; i++)
+	for (i = 0; i < objs->nents; i++)
 		dma_resv_add_excl_fence(objs->objs[i]->resv, fence);
-पूर्ण
+}
 
-व्योम virtio_gpu_array_put_मुक्त(काष्ठा virtio_gpu_object_array *objs)
-अणु
+void virtio_gpu_array_put_free(struct virtio_gpu_object_array *objs)
+{
 	u32 i;
 
-	क्रम (i = 0; i < objs->nents; i++)
+	for (i = 0; i < objs->nents; i++)
 		drm_gem_object_put(objs->objs[i]);
-	virtio_gpu_array_मुक्त(objs);
-पूर्ण
+	virtio_gpu_array_free(objs);
+}
 
-व्योम virtio_gpu_array_put_मुक्त_delayed(काष्ठा virtio_gpu_device *vgdev,
-				       काष्ठा virtio_gpu_object_array *objs)
-अणु
-	spin_lock(&vgdev->obj_मुक्त_lock);
-	list_add_tail(&objs->next, &vgdev->obj_मुक्त_list);
-	spin_unlock(&vgdev->obj_मुक्त_lock);
-	schedule_work(&vgdev->obj_मुक्त_work);
-पूर्ण
+void virtio_gpu_array_put_free_delayed(struct virtio_gpu_device *vgdev,
+				       struct virtio_gpu_object_array *objs)
+{
+	spin_lock(&vgdev->obj_free_lock);
+	list_add_tail(&objs->next, &vgdev->obj_free_list);
+	spin_unlock(&vgdev->obj_free_lock);
+	schedule_work(&vgdev->obj_free_work);
+}
 
-व्योम virtio_gpu_array_put_मुक्त_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा virtio_gpu_device *vgdev =
-		container_of(work, काष्ठा virtio_gpu_device, obj_मुक्त_work);
-	काष्ठा virtio_gpu_object_array *objs;
+void virtio_gpu_array_put_free_work(struct work_struct *work)
+{
+	struct virtio_gpu_device *vgdev =
+		container_of(work, struct virtio_gpu_device, obj_free_work);
+	struct virtio_gpu_object_array *objs;
 
-	spin_lock(&vgdev->obj_मुक्त_lock);
-	जबतक (!list_empty(&vgdev->obj_मुक्त_list)) अणु
-		objs = list_first_entry(&vgdev->obj_मुक्त_list,
-					काष्ठा virtio_gpu_object_array, next);
+	spin_lock(&vgdev->obj_free_lock);
+	while (!list_empty(&vgdev->obj_free_list)) {
+		objs = list_first_entry(&vgdev->obj_free_list,
+					struct virtio_gpu_object_array, next);
 		list_del(&objs->next);
-		spin_unlock(&vgdev->obj_मुक्त_lock);
-		virtio_gpu_array_put_मुक्त(objs);
-		spin_lock(&vgdev->obj_मुक्त_lock);
-	पूर्ण
-	spin_unlock(&vgdev->obj_मुक्त_lock);
-पूर्ण
+		spin_unlock(&vgdev->obj_free_lock);
+		virtio_gpu_array_put_free(objs);
+		spin_lock(&vgdev->obj_free_lock);
+	}
+	spin_unlock(&vgdev->obj_free_lock);
+}

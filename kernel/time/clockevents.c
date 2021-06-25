@@ -1,779 +1,778 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * This file contains functions which manage घड़ी event devices.
+ * This file contains functions which manage clock event devices.
  *
  * Copyright(C) 2005-2006, Thomas Gleixner <tglx@linutronix.de>
  * Copyright(C) 2005-2007, Red Hat, Inc., Ingo Molnar
  * Copyright(C) 2006-2007, Timesys Corp., Thomas Gleixner
  */
 
-#समावेश <linux/घड़ीchips.h>
-#समावेश <linux/hrसमयr.h>
-#समावेश <linux/init.h>
-#समावेश <linux/module.h>
-#समावेश <linux/smp.h>
-#समावेश <linux/device.h>
+#include <linux/clockchips.h>
+#include <linux/hrtimer.h>
+#include <linux/init.h>
+#include <linux/module.h>
+#include <linux/smp.h>
+#include <linux/device.h>
 
-#समावेश "tick-internal.h"
+#include "tick-internal.h"
 
-/* The रेजिस्टरed घड़ी event devices */
-अटल LIST_HEAD(घड़ीevent_devices);
-अटल LIST_HEAD(घड़ीevents_released);
-/* Protection क्रम the above */
-अटल DEFINE_RAW_SPINLOCK(घड़ीevents_lock);
-/* Protection क्रम unbind operations */
-अटल DEFINE_MUTEX(घड़ीevents_mutex);
+/* The registered clock event devices */
+static LIST_HEAD(clockevent_devices);
+static LIST_HEAD(clockevents_released);
+/* Protection for the above */
+static DEFINE_RAW_SPINLOCK(clockevents_lock);
+/* Protection for unbind operations */
+static DEFINE_MUTEX(clockevents_mutex);
 
-काष्ठा ce_unbind अणु
-	काष्ठा घड़ी_event_device *ce;
-	पूर्णांक res;
-पूर्ण;
+struct ce_unbind {
+	struct clock_event_device *ce;
+	int res;
+};
 
-अटल u64 cev_delta2ns(अचिन्हित दीर्घ latch, काष्ठा घड़ी_event_device *evt,
+static u64 cev_delta2ns(unsigned long latch, struct clock_event_device *evt,
 			bool ismax)
-अणु
-	u64 clc = (u64) latch << evt->shअगरt;
+{
+	u64 clc = (u64) latch << evt->shift;
 	u64 rnd;
 
-	अगर (WARN_ON(!evt->mult))
+	if (WARN_ON(!evt->mult))
 		evt->mult = 1;
 	rnd = (u64) evt->mult - 1;
 
 	/*
 	 * Upper bound sanity check. If the backwards conversion is
-	 * not equal latch, we know that the above shअगरt overflowed.
+	 * not equal latch, we know that the above shift overflowed.
 	 */
-	अगर ((clc >> evt->shअगरt) != (u64)latch)
+	if ((clc >> evt->shift) != (u64)latch)
 		clc = ~0ULL;
 
 	/*
 	 * Scaled math oddities:
 	 *
-	 * For mult <= (1 << shअगरt) we can safely add mult - 1 to
-	 * prevent पूर्णांकeger rounding loss. So the backwards conversion
+	 * For mult <= (1 << shift) we can safely add mult - 1 to
+	 * prevent integer rounding loss. So the backwards conversion
 	 * from nsec to device ticks will be correct.
 	 *
-	 * For mult > (1 << shअगरt), i.e. device frequency is > 1GHz we
+	 * For mult > (1 << shift), i.e. device frequency is > 1GHz we
 	 * need to be careful. Adding mult - 1 will result in a value
 	 * which when converted back to device ticks can be larger
-	 * than latch by up to (mult - 1) >> shअगरt. For the min_delta
+	 * than latch by up to (mult - 1) >> shift. For the min_delta
 	 * calculation we still want to apply this in order to stay
 	 * above the minimum device ticks limit. For the upper limit
 	 * we would end up with a latch value larger than the upper
 	 * limit of the device, so we omit the add to stay below the
 	 * device upper boundary.
 	 *
-	 * Also omit the add अगर it would overflow the u64 boundary.
+	 * Also omit the add if it would overflow the u64 boundary.
 	 */
-	अगर ((~0ULL - clc > rnd) &&
-	    (!ismax || evt->mult <= (1ULL << evt->shअगरt)))
+	if ((~0ULL - clc > rnd) &&
+	    (!ismax || evt->mult <= (1ULL << evt->shift)))
 		clc += rnd;
 
-	करो_भाग(clc, evt->mult);
+	do_div(clc, evt->mult);
 
-	/* Deltas less than 1usec are poपूर्णांकless noise */
-	वापस clc > 1000 ? clc : 1000;
-पूर्ण
+	/* Deltas less than 1usec are pointless noise */
+	return clc > 1000 ? clc : 1000;
+}
 
 /**
- * घड़ीevents_delta2ns - Convert a latch value (device ticks) to nanoseconds
+ * clockevents_delta2ns - Convert a latch value (device ticks) to nanoseconds
  * @latch:	value to convert
- * @evt:	poपूर्णांकer to घड़ी event device descriptor
+ * @evt:	pointer to clock event device descriptor
  *
- * Math helper, वापसs latch value converted to nanoseconds (bound checked)
+ * Math helper, returns latch value converted to nanoseconds (bound checked)
  */
-u64 घड़ीevent_delta2ns(अचिन्हित दीर्घ latch, काष्ठा घड़ी_event_device *evt)
-अणु
-	वापस cev_delta2ns(latch, evt, false);
-पूर्ण
-EXPORT_SYMBOL_GPL(घड़ीevent_delta2ns);
+u64 clockevent_delta2ns(unsigned long latch, struct clock_event_device *evt)
+{
+	return cev_delta2ns(latch, evt, false);
+}
+EXPORT_SYMBOL_GPL(clockevent_delta2ns);
 
-अटल पूर्णांक __घड़ीevents_चयन_state(काष्ठा घड़ी_event_device *dev,
-				      क्रमागत घड़ी_event_state state)
-अणु
-	अगर (dev->features & CLOCK_EVT_FEAT_DUMMY)
-		वापस 0;
+static int __clockevents_switch_state(struct clock_event_device *dev,
+				      enum clock_event_state state)
+{
+	if (dev->features & CLOCK_EVT_FEAT_DUMMY)
+		return 0;
 
-	/* Transition with new state-specअगरic callbacks */
-	चयन (state) अणु
-	हाल CLOCK_EVT_STATE_DETACHED:
-		/* The घड़ीevent device is getting replaced. Shut it करोwn. */
+	/* Transition with new state-specific callbacks */
+	switch (state) {
+	case CLOCK_EVT_STATE_DETACHED:
+		/* The clockevent device is getting replaced. Shut it down. */
 
-	हाल CLOCK_EVT_STATE_SHUTDOWN:
-		अगर (dev->set_state_shutकरोwn)
-			वापस dev->set_state_shutकरोwn(dev);
-		वापस 0;
+	case CLOCK_EVT_STATE_SHUTDOWN:
+		if (dev->set_state_shutdown)
+			return dev->set_state_shutdown(dev);
+		return 0;
 
-	हाल CLOCK_EVT_STATE_PERIODIC:
-		/* Core पूर्णांकernal bug */
-		अगर (!(dev->features & CLOCK_EVT_FEAT_PERIODIC))
-			वापस -ENOSYS;
-		अगर (dev->set_state_periodic)
-			वापस dev->set_state_periodic(dev);
-		वापस 0;
+	case CLOCK_EVT_STATE_PERIODIC:
+		/* Core internal bug */
+		if (!(dev->features & CLOCK_EVT_FEAT_PERIODIC))
+			return -ENOSYS;
+		if (dev->set_state_periodic)
+			return dev->set_state_periodic(dev);
+		return 0;
 
-	हाल CLOCK_EVT_STATE_ONESHOT:
-		/* Core पूर्णांकernal bug */
-		अगर (!(dev->features & CLOCK_EVT_FEAT_ONESHOT))
-			वापस -ENOSYS;
-		अगर (dev->set_state_oneshot)
-			वापस dev->set_state_oneshot(dev);
-		वापस 0;
+	case CLOCK_EVT_STATE_ONESHOT:
+		/* Core internal bug */
+		if (!(dev->features & CLOCK_EVT_FEAT_ONESHOT))
+			return -ENOSYS;
+		if (dev->set_state_oneshot)
+			return dev->set_state_oneshot(dev);
+		return 0;
 
-	हाल CLOCK_EVT_STATE_ONESHOT_STOPPED:
-		/* Core पूर्णांकernal bug */
-		अगर (WARN_ONCE(!घड़ीevent_state_oneshot(dev),
+	case CLOCK_EVT_STATE_ONESHOT_STOPPED:
+		/* Core internal bug */
+		if (WARN_ONCE(!clockevent_state_oneshot(dev),
 			      "Current state: %d\n",
-			      घड़ीevent_get_state(dev)))
-			वापस -EINVAL;
+			      clockevent_get_state(dev)))
+			return -EINVAL;
 
-		अगर (dev->set_state_oneshot_stopped)
-			वापस dev->set_state_oneshot_stopped(dev);
-		अन्यथा
-			वापस -ENOSYS;
+		if (dev->set_state_oneshot_stopped)
+			return dev->set_state_oneshot_stopped(dev);
+		else
+			return -ENOSYS;
 
-	शेष:
-		वापस -ENOSYS;
-	पूर्ण
-पूर्ण
+	default:
+		return -ENOSYS;
+	}
+}
 
 /**
- * घड़ीevents_चयन_state - set the operating state of a घड़ी event device
- * @dev:	device to modअगरy
+ * clockevents_switch_state - set the operating state of a clock event device
+ * @dev:	device to modify
  * @state:	new state
  *
- * Must be called with पूर्णांकerrupts disabled !
+ * Must be called with interrupts disabled !
  */
-व्योम घड़ीevents_चयन_state(काष्ठा घड़ी_event_device *dev,
-			      क्रमागत घड़ी_event_state state)
-अणु
-	अगर (घड़ीevent_get_state(dev) != state) अणु
-		अगर (__घड़ीevents_चयन_state(dev, state))
-			वापस;
+void clockevents_switch_state(struct clock_event_device *dev,
+			      enum clock_event_state state)
+{
+	if (clockevent_get_state(dev) != state) {
+		if (__clockevents_switch_state(dev, state))
+			return;
 
-		घड़ीevent_set_state(dev, state);
+		clockevent_set_state(dev, state);
 
 		/*
 		 * A nsec2cyc multiplicator of 0 is invalid and we'd crash
 		 * on it, so fix it up and emit a warning:
 		 */
-		अगर (घड़ीevent_state_oneshot(dev)) अणु
-			अगर (WARN_ON(!dev->mult))
+		if (clockevent_state_oneshot(dev)) {
+			if (WARN_ON(!dev->mult))
 				dev->mult = 1;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
 /**
- * घड़ीevents_shutकरोwn - shutकरोwn the device and clear next_event
- * @dev:	device to shutकरोwn
+ * clockevents_shutdown - shutdown the device and clear next_event
+ * @dev:	device to shutdown
  */
-व्योम घड़ीevents_shutकरोwn(काष्ठा घड़ी_event_device *dev)
-अणु
-	घड़ीevents_चयन_state(dev, CLOCK_EVT_STATE_SHUTDOWN);
+void clockevents_shutdown(struct clock_event_device *dev)
+{
+	clockevents_switch_state(dev, CLOCK_EVT_STATE_SHUTDOWN);
 	dev->next_event = KTIME_MAX;
-पूर्ण
+}
 
 /**
- * घड़ीevents_tick_resume -	Resume the tick device beक्रमe using it again
+ * clockevents_tick_resume -	Resume the tick device before using it again
  * @dev:			device to resume
  */
-पूर्णांक घड़ीevents_tick_resume(काष्ठा घड़ी_event_device *dev)
-अणु
-	पूर्णांक ret = 0;
+int clockevents_tick_resume(struct clock_event_device *dev)
+{
+	int ret = 0;
 
-	अगर (dev->tick_resume)
+	if (dev->tick_resume)
 		ret = dev->tick_resume(dev);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-#अगर_घोषित CONFIG_GENERIC_CLOCKEVENTS_MIN_ADJUST
+#ifdef CONFIG_GENERIC_CLOCKEVENTS_MIN_ADJUST
 
-/* Limit min_delta to a jअगरfie */
-#घोषणा MIN_DELTA_LIMIT		(NSEC_PER_SEC / HZ)
+/* Limit min_delta to a jiffie */
+#define MIN_DELTA_LIMIT		(NSEC_PER_SEC / HZ)
 
 /**
- * घड़ीevents_increase_min_delta - उठाओ minimum delta of a घड़ी event device
+ * clockevents_increase_min_delta - raise minimum delta of a clock event device
  * @dev:       device to increase the minimum delta
  *
  * Returns 0 on success, -ETIME when the minimum delta reached the limit.
  */
-अटल पूर्णांक घड़ीevents_increase_min_delta(काष्ठा घड़ी_event_device *dev)
-अणु
-	/* Nothing to करो अगर we alपढ़ोy reached the limit */
-	अगर (dev->min_delta_ns >= MIN_DELTA_LIMIT) अणु
-		prपूर्णांकk_deferred(KERN_WARNING
+static int clockevents_increase_min_delta(struct clock_event_device *dev)
+{
+	/* Nothing to do if we already reached the limit */
+	if (dev->min_delta_ns >= MIN_DELTA_LIMIT) {
+		printk_deferred(KERN_WARNING
 				"CE: Reprogramming failure. Giving up\n");
 		dev->next_event = KTIME_MAX;
-		वापस -ETIME;
-	पूर्ण
+		return -ETIME;
+	}
 
-	अगर (dev->min_delta_ns < 5000)
+	if (dev->min_delta_ns < 5000)
 		dev->min_delta_ns = 5000;
-	अन्यथा
+	else
 		dev->min_delta_ns += dev->min_delta_ns >> 1;
 
-	अगर (dev->min_delta_ns > MIN_DELTA_LIMIT)
+	if (dev->min_delta_ns > MIN_DELTA_LIMIT)
 		dev->min_delta_ns = MIN_DELTA_LIMIT;
 
-	prपूर्णांकk_deferred(KERN_WARNING
+	printk_deferred(KERN_WARNING
 			"CE: %s increased min_delta_ns to %llu nsec\n",
 			dev->name ? dev->name : "?",
-			(अचिन्हित दीर्घ दीर्घ) dev->min_delta_ns);
-	वापस 0;
-पूर्ण
+			(unsigned long long) dev->min_delta_ns);
+	return 0;
+}
 
 /**
- * घड़ीevents_program_min_delta - Set घड़ी event device to the minimum delay.
+ * clockevents_program_min_delta - Set clock event device to the minimum delay.
  * @dev:	device to program
  *
  * Returns 0 on success, -ETIME when the retry loop failed.
  */
-अटल पूर्णांक घड़ीevents_program_min_delta(काष्ठा घड़ी_event_device *dev)
-अणु
-	अचिन्हित दीर्घ दीर्घ clc;
-	पूर्णांक64_t delta;
-	पूर्णांक i;
+static int clockevents_program_min_delta(struct clock_event_device *dev)
+{
+	unsigned long long clc;
+	int64_t delta;
+	int i;
 
-	क्रम (i = 0;;) अणु
+	for (i = 0;;) {
 		delta = dev->min_delta_ns;
-		dev->next_event = kसमय_add_ns(kसमय_get(), delta);
+		dev->next_event = ktime_add_ns(ktime_get(), delta);
 
-		अगर (घड़ीevent_state_shutकरोwn(dev))
-			वापस 0;
+		if (clockevent_state_shutdown(dev))
+			return 0;
 
 		dev->retries++;
-		clc = ((अचिन्हित दीर्घ दीर्घ) delta * dev->mult) >> dev->shअगरt;
-		अगर (dev->set_next_event((अचिन्हित दीर्घ) clc, dev) == 0)
-			वापस 0;
+		clc = ((unsigned long long) delta * dev->mult) >> dev->shift;
+		if (dev->set_next_event((unsigned long) clc, dev) == 0)
+			return 0;
 
-		अगर (++i > 2) अणु
+		if (++i > 2) {
 			/*
-			 * We tried 3 बार to program the device with the
+			 * We tried 3 times to program the device with the
 			 * given min_delta_ns. Try to increase the minimum
-			 * delta, अगर that fails as well get out of here.
+			 * delta, if that fails as well get out of here.
 			 */
-			अगर (घड़ीevents_increase_min_delta(dev))
-				वापस -ETIME;
+			if (clockevents_increase_min_delta(dev))
+				return -ETIME;
 			i = 0;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-#अन्यथा  /* CONFIG_GENERIC_CLOCKEVENTS_MIN_ADJUST */
+#else  /* CONFIG_GENERIC_CLOCKEVENTS_MIN_ADJUST */
 
 /**
- * घड़ीevents_program_min_delta - Set घड़ी event device to the minimum delay.
+ * clockevents_program_min_delta - Set clock event device to the minimum delay.
  * @dev:	device to program
  *
  * Returns 0 on success, -ETIME when the retry loop failed.
  */
-अटल पूर्णांक घड़ीevents_program_min_delta(काष्ठा घड़ी_event_device *dev)
-अणु
-	अचिन्हित दीर्घ दीर्घ clc;
-	पूर्णांक64_t delta = 0;
-	पूर्णांक i;
+static int clockevents_program_min_delta(struct clock_event_device *dev)
+{
+	unsigned long long clc;
+	int64_t delta = 0;
+	int i;
 
-	क्रम (i = 0; i < 10; i++) अणु
+	for (i = 0; i < 10; i++) {
 		delta += dev->min_delta_ns;
-		dev->next_event = kसमय_add_ns(kसमय_get(), delta);
+		dev->next_event = ktime_add_ns(ktime_get(), delta);
 
-		अगर (घड़ीevent_state_shutकरोwn(dev))
-			वापस 0;
+		if (clockevent_state_shutdown(dev))
+			return 0;
 
 		dev->retries++;
-		clc = ((अचिन्हित दीर्घ दीर्घ) delta * dev->mult) >> dev->shअगरt;
-		अगर (dev->set_next_event((अचिन्हित दीर्घ) clc, dev) == 0)
-			वापस 0;
-	पूर्ण
-	वापस -ETIME;
-पूर्ण
+		clc = ((unsigned long long) delta * dev->mult) >> dev->shift;
+		if (dev->set_next_event((unsigned long) clc, dev) == 0)
+			return 0;
+	}
+	return -ETIME;
+}
 
-#पूर्ण_अगर /* CONFIG_GENERIC_CLOCKEVENTS_MIN_ADJUST */
+#endif /* CONFIG_GENERIC_CLOCKEVENTS_MIN_ADJUST */
 
 /**
- * घड़ीevents_program_event - Reprogram the घड़ी event device.
+ * clockevents_program_event - Reprogram the clock event device.
  * @dev:	device to program
- * @expires:	असलolute expiry समय (monotonic घड़ी)
- * @क्रमce:	program minimum delay अगर expires can not be set
+ * @expires:	absolute expiry time (monotonic clock)
+ * @force:	program minimum delay if expires can not be set
  *
  * Returns 0 on success, -ETIME when the event is in the past.
  */
-पूर्णांक घड़ीevents_program_event(काष्ठा घड़ी_event_device *dev, kसमय_प्रकार expires,
-			      bool क्रमce)
-अणु
-	अचिन्हित दीर्घ दीर्घ clc;
-	पूर्णांक64_t delta;
-	पूर्णांक rc;
+int clockevents_program_event(struct clock_event_device *dev, ktime_t expires,
+			      bool force)
+{
+	unsigned long long clc;
+	int64_t delta;
+	int rc;
 
-	अगर (WARN_ON_ONCE(expires < 0))
-		वापस -ETIME;
+	if (WARN_ON_ONCE(expires < 0))
+		return -ETIME;
 
 	dev->next_event = expires;
 
-	अगर (घड़ीevent_state_shutकरोwn(dev))
-		वापस 0;
+	if (clockevent_state_shutdown(dev))
+		return 0;
 
 	/* We must be in ONESHOT state here */
-	WARN_ONCE(!घड़ीevent_state_oneshot(dev), "Current state: %d\n",
-		  घड़ीevent_get_state(dev));
+	WARN_ONCE(!clockevent_state_oneshot(dev), "Current state: %d\n",
+		  clockevent_get_state(dev));
 
-	/* Shortcut क्रम घड़ीevent devices that can deal with kसमय. */
-	अगर (dev->features & CLOCK_EVT_FEAT_KTIME)
-		वापस dev->set_next_kसमय(expires, dev);
+	/* Shortcut for clockevent devices that can deal with ktime. */
+	if (dev->features & CLOCK_EVT_FEAT_KTIME)
+		return dev->set_next_ktime(expires, dev);
 
-	delta = kसमय_प्रकारo_ns(kसमय_sub(expires, kसमय_get()));
-	अगर (delta <= 0)
-		वापस क्रमce ? घड़ीevents_program_min_delta(dev) : -ETIME;
+	delta = ktime_to_ns(ktime_sub(expires, ktime_get()));
+	if (delta <= 0)
+		return force ? clockevents_program_min_delta(dev) : -ETIME;
 
-	delta = min(delta, (पूर्णांक64_t) dev->max_delta_ns);
-	delta = max(delta, (पूर्णांक64_t) dev->min_delta_ns);
+	delta = min(delta, (int64_t) dev->max_delta_ns);
+	delta = max(delta, (int64_t) dev->min_delta_ns);
 
-	clc = ((अचिन्हित दीर्घ दीर्घ) delta * dev->mult) >> dev->shअगरt;
-	rc = dev->set_next_event((अचिन्हित दीर्घ) clc, dev);
+	clc = ((unsigned long long) delta * dev->mult) >> dev->shift;
+	rc = dev->set_next_event((unsigned long) clc, dev);
 
-	वापस (rc && क्रमce) ? घड़ीevents_program_min_delta(dev) : rc;
-पूर्ण
+	return (rc && force) ? clockevents_program_min_delta(dev) : rc;
+}
 
 /*
- * Called after a notअगरy add to make devices available which were
- * released from the notअगरier call.
+ * Called after a notify add to make devices available which were
+ * released from the notifier call.
  */
-अटल व्योम घड़ीevents_notअगरy_released(व्योम)
-अणु
-	काष्ठा घड़ी_event_device *dev;
+static void clockevents_notify_released(void)
+{
+	struct clock_event_device *dev;
 
-	जबतक (!list_empty(&घड़ीevents_released)) अणु
-		dev = list_entry(घड़ीevents_released.next,
-				 काष्ठा घड़ी_event_device, list);
+	while (!list_empty(&clockevents_released)) {
+		dev = list_entry(clockevents_released.next,
+				 struct clock_event_device, list);
 		list_del(&dev->list);
-		list_add(&dev->list, &घड़ीevent_devices);
+		list_add(&dev->list, &clockevent_devices);
 		tick_check_new_device(dev);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
- * Try to install a replacement घड़ी event device
+ * Try to install a replacement clock event device
  */
-अटल पूर्णांक घड़ीevents_replace(काष्ठा घड़ी_event_device *ced)
-अणु
-	काष्ठा घड़ी_event_device *dev, *newdev = शून्य;
+static int clockevents_replace(struct clock_event_device *ced)
+{
+	struct clock_event_device *dev, *newdev = NULL;
 
-	list_क्रम_each_entry(dev, &घड़ीevent_devices, list) अणु
-		अगर (dev == ced || !घड़ीevent_state_detached(dev))
-			जारी;
+	list_for_each_entry(dev, &clockevent_devices, list) {
+		if (dev == ced || !clockevent_state_detached(dev))
+			continue;
 
-		अगर (!tick_check_replacement(newdev, dev))
-			जारी;
+		if (!tick_check_replacement(newdev, dev))
+			continue;
 
-		अगर (!try_module_get(dev->owner))
-			जारी;
+		if (!try_module_get(dev->owner))
+			continue;
 
-		अगर (newdev)
+		if (newdev)
 			module_put(newdev->owner);
 		newdev = dev;
-	पूर्ण
-	अगर (newdev) अणु
+	}
+	if (newdev) {
 		tick_install_replacement(newdev);
 		list_del_init(&ced->list);
-	पूर्ण
-	वापस newdev ? 0 : -EBUSY;
-पूर्ण
+	}
+	return newdev ? 0 : -EBUSY;
+}
 
 /*
- * Called with घड़ीevents_mutex and घड़ीevents_lock held
+ * Called with clockevents_mutex and clockevents_lock held
  */
-अटल पूर्णांक __घड़ीevents_try_unbind(काष्ठा घड़ी_event_device *ced, पूर्णांक cpu)
-अणु
+static int __clockevents_try_unbind(struct clock_event_device *ced, int cpu)
+{
 	/* Fast track. Device is unused */
-	अगर (घड़ीevent_state_detached(ced)) अणु
+	if (clockevent_state_detached(ced)) {
 		list_del_init(&ced->list);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	वापस ced == per_cpu(tick_cpu_device, cpu).evtdev ? -EAGAIN : -EBUSY;
-पूर्ण
+	return ced == per_cpu(tick_cpu_device, cpu).evtdev ? -EAGAIN : -EBUSY;
+}
 
 /*
  * SMP function call to unbind a device
  */
-अटल व्योम __घड़ीevents_unbind(व्योम *arg)
-अणु
-	काष्ठा ce_unbind *cu = arg;
-	पूर्णांक res;
+static void __clockevents_unbind(void *arg)
+{
+	struct ce_unbind *cu = arg;
+	int res;
 
-	raw_spin_lock(&घड़ीevents_lock);
-	res = __घड़ीevents_try_unbind(cu->ce, smp_processor_id());
-	अगर (res == -EAGAIN)
-		res = घड़ीevents_replace(cu->ce);
+	raw_spin_lock(&clockevents_lock);
+	res = __clockevents_try_unbind(cu->ce, smp_processor_id());
+	if (res == -EAGAIN)
+		res = clockevents_replace(cu->ce);
 	cu->res = res;
-	raw_spin_unlock(&घड़ीevents_lock);
-पूर्ण
+	raw_spin_unlock(&clockevents_lock);
+}
 
 /*
  * Issues smp function call to unbind a per cpu device. Called with
- * घड़ीevents_mutex held.
+ * clockevents_mutex held.
  */
-अटल पूर्णांक घड़ीevents_unbind(काष्ठा घड़ी_event_device *ced, पूर्णांक cpu)
-अणु
-	काष्ठा ce_unbind cu = अणु .ce = ced, .res = -ENODEV पूर्ण;
+static int clockevents_unbind(struct clock_event_device *ced, int cpu)
+{
+	struct ce_unbind cu = { .ce = ced, .res = -ENODEV };
 
-	smp_call_function_single(cpu, __घड़ीevents_unbind, &cu, 1);
-	वापस cu.res;
-पूर्ण
+	smp_call_function_single(cpu, __clockevents_unbind, &cu, 1);
+	return cu.res;
+}
 
 /*
- * Unbind a घड़ीevents device.
+ * Unbind a clockevents device.
  */
-पूर्णांक घड़ीevents_unbind_device(काष्ठा घड़ी_event_device *ced, पूर्णांक cpu)
-अणु
-	पूर्णांक ret;
+int clockevents_unbind_device(struct clock_event_device *ced, int cpu)
+{
+	int ret;
 
-	mutex_lock(&घड़ीevents_mutex);
-	ret = घड़ीevents_unbind(ced, cpu);
-	mutex_unlock(&घड़ीevents_mutex);
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(घड़ीevents_unbind_device);
+	mutex_lock(&clockevents_mutex);
+	ret = clockevents_unbind(ced, cpu);
+	mutex_unlock(&clockevents_mutex);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(clockevents_unbind_device);
 
 /**
- * घड़ीevents_रेजिस्टर_device - रेजिस्टर a घड़ी event device
- * @dev:	device to रेजिस्टर
+ * clockevents_register_device - register a clock event device
+ * @dev:	device to register
  */
-व्योम घड़ीevents_रेजिस्टर_device(काष्ठा घड़ी_event_device *dev)
-अणु
-	अचिन्हित दीर्घ flags;
+void clockevents_register_device(struct clock_event_device *dev)
+{
+	unsigned long flags;
 
 	/* Initialize state to DETACHED */
-	घड़ीevent_set_state(dev, CLOCK_EVT_STATE_DETACHED);
+	clockevent_set_state(dev, CLOCK_EVT_STATE_DETACHED);
 
-	अगर (!dev->cpumask) अणु
+	if (!dev->cpumask) {
 		WARN_ON(num_possible_cpus() > 1);
 		dev->cpumask = cpumask_of(smp_processor_id());
-	पूर्ण
+	}
 
-	अगर (dev->cpumask == cpu_all_mask) अणु
+	if (dev->cpumask == cpu_all_mask) {
 		WARN(1, "%s cpumask == cpu_all_mask, using cpu_possible_mask instead\n",
 		     dev->name);
 		dev->cpumask = cpu_possible_mask;
-	पूर्ण
+	}
 
-	raw_spin_lock_irqsave(&घड़ीevents_lock, flags);
+	raw_spin_lock_irqsave(&clockevents_lock, flags);
 
-	list_add(&dev->list, &घड़ीevent_devices);
+	list_add(&dev->list, &clockevent_devices);
 	tick_check_new_device(dev);
-	घड़ीevents_notअगरy_released();
+	clockevents_notify_released();
 
-	raw_spin_unlock_irqrestore(&घड़ीevents_lock, flags);
-पूर्ण
-EXPORT_SYMBOL_GPL(घड़ीevents_रेजिस्टर_device);
+	raw_spin_unlock_irqrestore(&clockevents_lock, flags);
+}
+EXPORT_SYMBOL_GPL(clockevents_register_device);
 
-अटल व्योम घड़ीevents_config(काष्ठा घड़ी_event_device *dev, u32 freq)
-अणु
+static void clockevents_config(struct clock_event_device *dev, u32 freq)
+{
 	u64 sec;
 
-	अगर (!(dev->features & CLOCK_EVT_FEAT_ONESHOT))
-		वापस;
+	if (!(dev->features & CLOCK_EVT_FEAT_ONESHOT))
+		return;
 
 	/*
 	 * Calculate the maximum number of seconds we can sleep. Limit
-	 * to 10 minutes क्रम hardware which can program more than
+	 * to 10 minutes for hardware which can program more than
 	 * 32bit ticks so we still get reasonable conversion values.
 	 */
 	sec = dev->max_delta_ticks;
-	करो_भाग(sec, freq);
-	अगर (!sec)
+	do_div(sec, freq);
+	if (!sec)
 		sec = 1;
-	अन्यथा अगर (sec > 600 && dev->max_delta_ticks > अच_पूर्णांक_उच्च)
+	else if (sec > 600 && dev->max_delta_ticks > UINT_MAX)
 		sec = 600;
 
-	घड़ीevents_calc_mult_shअगरt(dev, freq, sec);
+	clockevents_calc_mult_shift(dev, freq, sec);
 	dev->min_delta_ns = cev_delta2ns(dev->min_delta_ticks, dev, false);
 	dev->max_delta_ns = cev_delta2ns(dev->max_delta_ticks, dev, true);
-पूर्ण
+}
 
 /**
- * घड़ीevents_config_and_रेजिस्टर - Configure and रेजिस्टर a घड़ी event device
- * @dev:	device to रेजिस्टर
- * @freq:	The घड़ी frequency
- * @min_delta:	The minimum घड़ी ticks to program in oneshot mode
- * @max_delta:	The maximum घड़ी ticks to program in oneshot mode
+ * clockevents_config_and_register - Configure and register a clock event device
+ * @dev:	device to register
+ * @freq:	The clock frequency
+ * @min_delta:	The minimum clock ticks to program in oneshot mode
+ * @max_delta:	The maximum clock ticks to program in oneshot mode
  *
- * min/max_delta can be 0 क्रम devices which करो not support oneshot mode.
+ * min/max_delta can be 0 for devices which do not support oneshot mode.
  */
-व्योम घड़ीevents_config_and_रेजिस्टर(काष्ठा घड़ी_event_device *dev,
-				     u32 freq, अचिन्हित दीर्घ min_delta,
-				     अचिन्हित दीर्घ max_delta)
-अणु
+void clockevents_config_and_register(struct clock_event_device *dev,
+				     u32 freq, unsigned long min_delta,
+				     unsigned long max_delta)
+{
 	dev->min_delta_ticks = min_delta;
 	dev->max_delta_ticks = max_delta;
-	घड़ीevents_config(dev, freq);
-	घड़ीevents_रेजिस्टर_device(dev);
-पूर्ण
-EXPORT_SYMBOL_GPL(घड़ीevents_config_and_रेजिस्टर);
+	clockevents_config(dev, freq);
+	clockevents_register_device(dev);
+}
+EXPORT_SYMBOL_GPL(clockevents_config_and_register);
 
-पूर्णांक __घड़ीevents_update_freq(काष्ठा घड़ी_event_device *dev, u32 freq)
-अणु
-	घड़ीevents_config(dev, freq);
+int __clockevents_update_freq(struct clock_event_device *dev, u32 freq)
+{
+	clockevents_config(dev, freq);
 
-	अगर (घड़ीevent_state_oneshot(dev))
-		वापस घड़ीevents_program_event(dev, dev->next_event, false);
+	if (clockevent_state_oneshot(dev))
+		return clockevents_program_event(dev, dev->next_event, false);
 
-	अगर (घड़ीevent_state_periodic(dev))
-		वापस __घड़ीevents_चयन_state(dev, CLOCK_EVT_STATE_PERIODIC);
+	if (clockevent_state_periodic(dev))
+		return __clockevents_switch_state(dev, CLOCK_EVT_STATE_PERIODIC);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * घड़ीevents_update_freq - Update frequency and reprogram a घड़ी event device.
- * @dev:	device to modअगरy
+ * clockevents_update_freq - Update frequency and reprogram a clock event device.
+ * @dev:	device to modify
  * @freq:	new device frequency
  *
- * Reconfigure and reprogram a घड़ी event device in oneshot
- * mode. Must be called on the cpu क्रम which the device delivers per
- * cpu समयr events. If called क्रम the broadcast device the core takes
+ * Reconfigure and reprogram a clock event device in oneshot
+ * mode. Must be called on the cpu for which the device delivers per
+ * cpu timer events. If called for the broadcast device the core takes
  * care of serialization.
  *
  * Returns 0 on success, -ETIME when the event is in the past.
  */
-पूर्णांक घड़ीevents_update_freq(काष्ठा घड़ी_event_device *dev, u32 freq)
-अणु
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret;
+int clockevents_update_freq(struct clock_event_device *dev, u32 freq)
+{
+	unsigned long flags;
+	int ret;
 
 	local_irq_save(flags);
 	ret = tick_broadcast_update_freq(dev, freq);
-	अगर (ret == -ENODEV)
-		ret = __घड़ीevents_update_freq(dev, freq);
+	if (ret == -ENODEV)
+		ret = __clockevents_update_freq(dev, freq);
 	local_irq_restore(flags);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * Noop handler when we shut करोwn an event device
+ * Noop handler when we shut down an event device
  */
-व्योम घड़ीevents_handle_noop(काष्ठा घड़ी_event_device *dev)
-अणु
-पूर्ण
+void clockevents_handle_noop(struct clock_event_device *dev)
+{
+}
 
 /**
- * घड़ीevents_exchange_device - release and request घड़ी devices
- * @old:	device to release (can be शून्य)
- * @new:	device to request (can be शून्य)
+ * clockevents_exchange_device - release and request clock devices
+ * @old:	device to release (can be NULL)
+ * @new:	device to request (can be NULL)
  *
- * Called from various tick functions with घड़ीevents_lock held and
- * पूर्णांकerrupts disabled.
+ * Called from various tick functions with clockevents_lock held and
+ * interrupts disabled.
  */
-व्योम घड़ीevents_exchange_device(काष्ठा घड़ी_event_device *old,
-				 काष्ठा घड़ी_event_device *new)
-अणु
+void clockevents_exchange_device(struct clock_event_device *old,
+				 struct clock_event_device *new)
+{
 	/*
-	 * Caller releases a घड़ी event device. We queue it पूर्णांकo the
-	 * released list and करो a notअगरy add later.
+	 * Caller releases a clock event device. We queue it into the
+	 * released list and do a notify add later.
 	 */
-	अगर (old) अणु
+	if (old) {
 		module_put(old->owner);
-		घड़ीevents_चयन_state(old, CLOCK_EVT_STATE_DETACHED);
+		clockevents_switch_state(old, CLOCK_EVT_STATE_DETACHED);
 		list_del(&old->list);
-		list_add(&old->list, &घड़ीevents_released);
-	पूर्ण
+		list_add(&old->list, &clockevents_released);
+	}
 
-	अगर (new) अणु
-		BUG_ON(!घड़ीevent_state_detached(new));
-		घड़ीevents_shutकरोwn(new);
-	पूर्ण
-पूर्ण
+	if (new) {
+		BUG_ON(!clockevent_state_detached(new));
+		clockevents_shutdown(new);
+	}
+}
 
 /**
- * घड़ीevents_suspend - suspend घड़ी devices
+ * clockevents_suspend - suspend clock devices
  */
-व्योम घड़ीevents_suspend(व्योम)
-अणु
-	काष्ठा घड़ी_event_device *dev;
+void clockevents_suspend(void)
+{
+	struct clock_event_device *dev;
 
-	list_क्रम_each_entry_reverse(dev, &घड़ीevent_devices, list)
-		अगर (dev->suspend && !घड़ीevent_state_detached(dev))
+	list_for_each_entry_reverse(dev, &clockevent_devices, list)
+		if (dev->suspend && !clockevent_state_detached(dev))
 			dev->suspend(dev);
-पूर्ण
+}
 
 /**
- * घड़ीevents_resume - resume घड़ी devices
+ * clockevents_resume - resume clock devices
  */
-व्योम घड़ीevents_resume(व्योम)
-अणु
-	काष्ठा घड़ी_event_device *dev;
+void clockevents_resume(void)
+{
+	struct clock_event_device *dev;
 
-	list_क्रम_each_entry(dev, &घड़ीevent_devices, list)
-		अगर (dev->resume && !घड़ीevent_state_detached(dev))
+	list_for_each_entry(dev, &clockevent_devices, list)
+		if (dev->resume && !clockevent_state_detached(dev))
 			dev->resume(dev);
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_HOTPLUG_CPU
+#ifdef CONFIG_HOTPLUG_CPU
 
-# अगरdef CONFIG_GENERIC_CLOCKEVENTS_BROADCAST
+# ifdef CONFIG_GENERIC_CLOCKEVENTS_BROADCAST
 /**
  * tick_offline_cpu - Take CPU out of the broadcast mechanism
  * @cpu:	The outgoing CPU
  *
  * Called on the outgoing CPU after it took itself offline.
  */
-व्योम tick_offline_cpu(अचिन्हित पूर्णांक cpu)
-अणु
-	raw_spin_lock(&घड़ीevents_lock);
+void tick_offline_cpu(unsigned int cpu)
+{
+	raw_spin_lock(&clockevents_lock);
 	tick_broadcast_offline(cpu);
-	raw_spin_unlock(&घड़ीevents_lock);
-पूर्ण
-# endअगर
+	raw_spin_unlock(&clockevents_lock);
+}
+# endif
 
 /**
- * tick_cleanup_dead_cpu - Cleanup the tick and घड़ीevents of a dead cpu
+ * tick_cleanup_dead_cpu - Cleanup the tick and clockevents of a dead cpu
  */
-व्योम tick_cleanup_dead_cpu(पूर्णांक cpu)
-अणु
-	काष्ठा घड़ी_event_device *dev, *पंचांगp;
-	अचिन्हित दीर्घ flags;
+void tick_cleanup_dead_cpu(int cpu)
+{
+	struct clock_event_device *dev, *tmp;
+	unsigned long flags;
 
-	raw_spin_lock_irqsave(&घड़ीevents_lock, flags);
+	raw_spin_lock_irqsave(&clockevents_lock, flags);
 
-	tick_shutकरोwn(cpu);
+	tick_shutdown(cpu);
 	/*
-	 * Unरेजिस्टर the घड़ी event devices which were
-	 * released from the users in the notअगरy chain.
+	 * Unregister the clock event devices which were
+	 * released from the users in the notify chain.
 	 */
-	list_क्रम_each_entry_safe(dev, पंचांगp, &घड़ीevents_released, list)
+	list_for_each_entry_safe(dev, tmp, &clockevents_released, list)
 		list_del(&dev->list);
 	/*
 	 * Now check whether the CPU has left unused per cpu devices
 	 */
-	list_क्रम_each_entry_safe(dev, पंचांगp, &घड़ीevent_devices, list) अणु
-		अगर (cpumask_test_cpu(cpu, dev->cpumask) &&
+	list_for_each_entry_safe(dev, tmp, &clockevent_devices, list) {
+		if (cpumask_test_cpu(cpu, dev->cpumask) &&
 		    cpumask_weight(dev->cpumask) == 1 &&
-		    !tick_is_broadcast_device(dev)) अणु
-			BUG_ON(!घड़ीevent_state_detached(dev));
+		    !tick_is_broadcast_device(dev)) {
+			BUG_ON(!clockevent_state_detached(dev));
 			list_del(&dev->list);
-		पूर्ण
-	पूर्ण
-	raw_spin_unlock_irqrestore(&घड़ीevents_lock, flags);
-पूर्ण
-#पूर्ण_अगर
+		}
+	}
+	raw_spin_unlock_irqrestore(&clockevents_lock, flags);
+}
+#endif
 
-#अगर_घोषित CONFIG_SYSFS
-अटल काष्ठा bus_type घड़ीevents_subsys = अणु
+#ifdef CONFIG_SYSFS
+static struct bus_type clockevents_subsys = {
 	.name		= "clockevents",
 	.dev_name       = "clockevent",
-पूर्ण;
+};
 
-अटल DEFINE_PER_CPU(काष्ठा device, tick_percpu_dev);
-अटल काष्ठा tick_device *tick_get_tick_dev(काष्ठा device *dev);
+static DEFINE_PER_CPU(struct device, tick_percpu_dev);
+static struct tick_device *tick_get_tick_dev(struct device *dev);
 
-अटल sमाप_प्रकार sysfs_show_current_tick_dev(काष्ठा device *dev,
-					   काष्ठा device_attribute *attr,
-					   अक्षर *buf)
-अणु
-	काष्ठा tick_device *td;
-	sमाप_प्रकार count = 0;
+static ssize_t sysfs_show_current_tick_dev(struct device *dev,
+					   struct device_attribute *attr,
+					   char *buf)
+{
+	struct tick_device *td;
+	ssize_t count = 0;
 
-	raw_spin_lock_irq(&घड़ीevents_lock);
+	raw_spin_lock_irq(&clockevents_lock);
 	td = tick_get_tick_dev(dev);
-	अगर (td && td->evtdev)
-		count = snम_लिखो(buf, PAGE_SIZE, "%s\n", td->evtdev->name);
-	raw_spin_unlock_irq(&घड़ीevents_lock);
-	वापस count;
-पूर्ण
-अटल DEVICE_ATTR(current_device, 0444, sysfs_show_current_tick_dev, शून्य);
+	if (td && td->evtdev)
+		count = snprintf(buf, PAGE_SIZE, "%s\n", td->evtdev->name);
+	raw_spin_unlock_irq(&clockevents_lock);
+	return count;
+}
+static DEVICE_ATTR(current_device, 0444, sysfs_show_current_tick_dev, NULL);
 
-/* We करोn't support the abomination of removable broadcast devices */
-अटल sमाप_प्रकार sysfs_unbind_tick_dev(काष्ठा device *dev,
-				     काष्ठा device_attribute *attr,
-				     स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	अक्षर name[CS_NAME_LEN];
-	sमाप_प्रकार ret = sysfs_get_uname(buf, name, count);
-	काष्ठा घड़ी_event_device *ce;
+/* We don't support the abomination of removable broadcast devices */
+static ssize_t sysfs_unbind_tick_dev(struct device *dev,
+				     struct device_attribute *attr,
+				     const char *buf, size_t count)
+{
+	char name[CS_NAME_LEN];
+	ssize_t ret = sysfs_get_uname(buf, name, count);
+	struct clock_event_device *ce;
 
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	ret = -ENODEV;
-	mutex_lock(&घड़ीevents_mutex);
-	raw_spin_lock_irq(&घड़ीevents_lock);
-	list_क्रम_each_entry(ce, &घड़ीevent_devices, list) अणु
-		अगर (!म_भेद(ce->name, name)) अणु
-			ret = __घड़ीevents_try_unbind(ce, dev->id);
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	raw_spin_unlock_irq(&घड़ीevents_lock);
+	mutex_lock(&clockevents_mutex);
+	raw_spin_lock_irq(&clockevents_lock);
+	list_for_each_entry(ce, &clockevent_devices, list) {
+		if (!strcmp(ce->name, name)) {
+			ret = __clockevents_try_unbind(ce, dev->id);
+			break;
+		}
+	}
+	raw_spin_unlock_irq(&clockevents_lock);
 	/*
-	 * We hold घड़ीevents_mutex, so ce can't go away
+	 * We hold clockevents_mutex, so ce can't go away
 	 */
-	अगर (ret == -EAGAIN)
-		ret = घड़ीevents_unbind(ce, dev->id);
-	mutex_unlock(&घड़ीevents_mutex);
-	वापस ret ? ret : count;
-पूर्ण
-अटल DEVICE_ATTR(unbind_device, 0200, शून्य, sysfs_unbind_tick_dev);
+	if (ret == -EAGAIN)
+		ret = clockevents_unbind(ce, dev->id);
+	mutex_unlock(&clockevents_mutex);
+	return ret ? ret : count;
+}
+static DEVICE_ATTR(unbind_device, 0200, NULL, sysfs_unbind_tick_dev);
 
-#अगर_घोषित CONFIG_GENERIC_CLOCKEVENTS_BROADCAST
-अटल काष्ठा device tick_bc_dev = अणु
+#ifdef CONFIG_GENERIC_CLOCKEVENTS_BROADCAST
+static struct device tick_bc_dev = {
 	.init_name	= "broadcast",
 	.id		= 0,
-	.bus		= &घड़ीevents_subsys,
-पूर्ण;
+	.bus		= &clockevents_subsys,
+};
 
-अटल काष्ठा tick_device *tick_get_tick_dev(काष्ठा device *dev)
-अणु
-	वापस dev == &tick_bc_dev ? tick_get_broadcast_device() :
+static struct tick_device *tick_get_tick_dev(struct device *dev)
+{
+	return dev == &tick_bc_dev ? tick_get_broadcast_device() :
 		&per_cpu(tick_cpu_device, dev->id);
-पूर्ण
+}
 
-अटल __init पूर्णांक tick_broadcast_init_sysfs(व्योम)
-अणु
-	पूर्णांक err = device_रेजिस्टर(&tick_bc_dev);
+static __init int tick_broadcast_init_sysfs(void)
+{
+	int err = device_register(&tick_bc_dev);
 
-	अगर (!err)
+	if (!err)
 		err = device_create_file(&tick_bc_dev, &dev_attr_current_device);
-	वापस err;
-पूर्ण
-#अन्यथा
-अटल काष्ठा tick_device *tick_get_tick_dev(काष्ठा device *dev)
-अणु
-	वापस &per_cpu(tick_cpu_device, dev->id);
-पूर्ण
-अटल अंतरभूत पूर्णांक tick_broadcast_init_sysfs(व्योम) अणु वापस 0; पूर्ण
-#पूर्ण_अगर
+	return err;
+}
+#else
+static struct tick_device *tick_get_tick_dev(struct device *dev)
+{
+	return &per_cpu(tick_cpu_device, dev->id);
+}
+static inline int tick_broadcast_init_sysfs(void) { return 0; }
+#endif
 
-अटल पूर्णांक __init tick_init_sysfs(व्योम)
-अणु
-	पूर्णांक cpu;
+static int __init tick_init_sysfs(void)
+{
+	int cpu;
 
-	क्रम_each_possible_cpu(cpu) अणु
-		काष्ठा device *dev = &per_cpu(tick_percpu_dev, cpu);
-		पूर्णांक err;
+	for_each_possible_cpu(cpu) {
+		struct device *dev = &per_cpu(tick_percpu_dev, cpu);
+		int err;
 
 		dev->id = cpu;
-		dev->bus = &घड़ीevents_subsys;
-		err = device_रेजिस्टर(dev);
-		अगर (!err)
+		dev->bus = &clockevents_subsys;
+		err = device_register(dev);
+		if (!err)
 			err = device_create_file(dev, &dev_attr_current_device);
-		अगर (!err)
+		if (!err)
 			err = device_create_file(dev, &dev_attr_unbind_device);
-		अगर (err)
-			वापस err;
-	पूर्ण
-	वापस tick_broadcast_init_sysfs();
-पूर्ण
+		if (err)
+			return err;
+	}
+	return tick_broadcast_init_sysfs();
+}
 
-अटल पूर्णांक __init घड़ीevents_init_sysfs(व्योम)
-अणु
-	पूर्णांक err = subsys_प्रणाली_रेजिस्टर(&घड़ीevents_subsys, शून्य);
+static int __init clockevents_init_sysfs(void)
+{
+	int err = subsys_system_register(&clockevents_subsys, NULL);
 
-	अगर (!err)
+	if (!err)
 		err = tick_init_sysfs();
-	वापस err;
-पूर्ण
-device_initcall(घड़ीevents_init_sysfs);
-#पूर्ण_अगर /* SYSFS */
+	return err;
+}
+device_initcall(clockevents_init_sysfs);
+#endif /* SYSFS */

@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * iSCSI lib functions
  *
@@ -7,117 +6,117 @@
  * Copyright (C) 2004 - 2006 Mike Christie
  * Copyright (C) 2004 - 2005 Dmitry Yusupov
  * Copyright (C) 2004 - 2005 Alex Aizman
- * मुख्यtained by खोलो-iscsi@googlegroups.com
+ * maintained by open-iscsi@googlegroups.com
  */
-#समावेश <linux/types.h>
-#समावेश <linux/kfअगरo.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/log2.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/sched/संकेत.स>
-#समावेश <linux/module.h>
-#समावेश <यंत्र/unaligned.h>
-#समावेश <net/tcp.h>
-#समावेश <scsi/scsi_cmnd.h>
-#समावेश <scsi/scsi_device.h>
-#समावेश <scsi/scsi_eh.h>
-#समावेश <scsi/scsi_tcq.h>
-#समावेश <scsi/scsi_host.h>
-#समावेश <scsi/scsi.h>
-#समावेश <scsi/iscsi_proto.h>
-#समावेश <scsi/scsi_transport.h>
-#समावेश <scsi/scsi_transport_iscsi.h>
-#समावेश <scsi/libiscsi.h>
-#समावेश <trace/events/iscsi.h>
+#include <linux/types.h>
+#include <linux/kfifo.h>
+#include <linux/delay.h>
+#include <linux/log2.h>
+#include <linux/slab.h>
+#include <linux/sched/signal.h>
+#include <linux/module.h>
+#include <asm/unaligned.h>
+#include <net/tcp.h>
+#include <scsi/scsi_cmnd.h>
+#include <scsi/scsi_device.h>
+#include <scsi/scsi_eh.h>
+#include <scsi/scsi_tcq.h>
+#include <scsi/scsi_host.h>
+#include <scsi/scsi.h>
+#include <scsi/iscsi_proto.h>
+#include <scsi/scsi_transport.h>
+#include <scsi/scsi_transport_iscsi.h>
+#include <scsi/libiscsi.h>
+#include <trace/events/iscsi.h>
 
-अटल पूर्णांक iscsi_dbg_lib_conn;
-module_param_named(debug_libiscsi_conn, iscsi_dbg_lib_conn, पूर्णांक,
+static int iscsi_dbg_lib_conn;
+module_param_named(debug_libiscsi_conn, iscsi_dbg_lib_conn, int,
 		   S_IRUGO | S_IWUSR);
 MODULE_PARM_DESC(debug_libiscsi_conn,
 		 "Turn on debugging for connections in libiscsi module. "
 		 "Set to 1 to turn on, and zero to turn off. Default is off.");
 
-अटल पूर्णांक iscsi_dbg_lib_session;
-module_param_named(debug_libiscsi_session, iscsi_dbg_lib_session, पूर्णांक,
+static int iscsi_dbg_lib_session;
+module_param_named(debug_libiscsi_session, iscsi_dbg_lib_session, int,
 		   S_IRUGO | S_IWUSR);
 MODULE_PARM_DESC(debug_libiscsi_session,
 		 "Turn on debugging for sessions in libiscsi module. "
 		 "Set to 1 to turn on, and zero to turn off. Default is off.");
 
-अटल पूर्णांक iscsi_dbg_lib_eh;
-module_param_named(debug_libiscsi_eh, iscsi_dbg_lib_eh, पूर्णांक,
+static int iscsi_dbg_lib_eh;
+module_param_named(debug_libiscsi_eh, iscsi_dbg_lib_eh, int,
 		   S_IRUGO | S_IWUSR);
 MODULE_PARM_DESC(debug_libiscsi_eh,
 		 "Turn on debugging for error handling in libiscsi module. "
 		 "Set to 1 to turn on, and zero to turn off. Default is off.");
 
-#घोषणा ISCSI_DBG_CONN(_conn, dbg_fmt, arg...)			\
-	करो अणु							\
-		अगर (iscsi_dbg_lib_conn)				\
-			iscsi_conn_prपूर्णांकk(KERN_INFO, _conn,	\
+#define ISCSI_DBG_CONN(_conn, dbg_fmt, arg...)			\
+	do {							\
+		if (iscsi_dbg_lib_conn)				\
+			iscsi_conn_printk(KERN_INFO, _conn,	\
 					     "%s " dbg_fmt,	\
 					     __func__, ##arg);	\
 		iscsi_dbg_trace(trace_iscsi_dbg_conn,		\
 				&(_conn)->cls_conn->dev,	\
 				"%s " dbg_fmt, __func__, ##arg);\
-	पूर्ण जबतक (0);
+	} while (0);
 
-#घोषणा ISCSI_DBG_SESSION(_session, dbg_fmt, arg...)			\
-	करो अणु								\
-		अगर (iscsi_dbg_lib_session)				\
-			iscsi_session_prपूर्णांकk(KERN_INFO, _session,	\
+#define ISCSI_DBG_SESSION(_session, dbg_fmt, arg...)			\
+	do {								\
+		if (iscsi_dbg_lib_session)				\
+			iscsi_session_printk(KERN_INFO, _session,	\
 					     "%s " dbg_fmt,		\
 					     __func__, ##arg);		\
 		iscsi_dbg_trace(trace_iscsi_dbg_session, 		\
 				&(_session)->cls_session->dev,		\
 				"%s " dbg_fmt, __func__, ##arg);	\
-	पूर्ण जबतक (0);
+	} while (0);
 
-#घोषणा ISCSI_DBG_EH(_session, dbg_fmt, arg...)				\
-	करो अणु								\
-		अगर (iscsi_dbg_lib_eh)					\
-			iscsi_session_prपूर्णांकk(KERN_INFO, _session,	\
+#define ISCSI_DBG_EH(_session, dbg_fmt, arg...)				\
+	do {								\
+		if (iscsi_dbg_lib_eh)					\
+			iscsi_session_printk(KERN_INFO, _session,	\
 					     "%s " dbg_fmt,		\
 					     __func__, ##arg);		\
 		iscsi_dbg_trace(trace_iscsi_dbg_eh,			\
 				&(_session)->cls_session->dev,		\
 				"%s " dbg_fmt, __func__, ##arg);	\
-	पूर्ण जबतक (0);
+	} while (0);
 
-अंतरभूत व्योम iscsi_conn_queue_work(काष्ठा iscsi_conn *conn)
-अणु
-	काष्ठा Scsi_Host *shost = conn->session->host;
-	काष्ठा iscsi_host *ihost = shost_priv(shost);
+inline void iscsi_conn_queue_work(struct iscsi_conn *conn)
+{
+	struct Scsi_Host *shost = conn->session->host;
+	struct iscsi_host *ihost = shost_priv(shost);
 
-	अगर (ihost->workq)
+	if (ihost->workq)
 		queue_work(ihost->workq, &conn->xmitwork);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(iscsi_conn_queue_work);
 
-अटल व्योम __iscsi_update_cmdsn(काष्ठा iscsi_session *session,
-				 uपूर्णांक32_t exp_cmdsn, uपूर्णांक32_t max_cmdsn)
-अणु
+static void __iscsi_update_cmdsn(struct iscsi_session *session,
+				 uint32_t exp_cmdsn, uint32_t max_cmdsn)
+{
 	/*
-	 * standard specअगरies this check क्रम when to update expected and
+	 * standard specifies this check for when to update expected and
 	 * max sequence numbers
 	 */
-	अगर (iscsi_sna_lt(max_cmdsn, exp_cmdsn - 1))
-		वापस;
+	if (iscsi_sna_lt(max_cmdsn, exp_cmdsn - 1))
+		return;
 
-	अगर (exp_cmdsn != session->exp_cmdsn &&
+	if (exp_cmdsn != session->exp_cmdsn &&
 	    !iscsi_sna_lt(exp_cmdsn, session->exp_cmdsn))
 		session->exp_cmdsn = exp_cmdsn;
 
-	अगर (max_cmdsn != session->max_cmdsn &&
+	if (max_cmdsn != session->max_cmdsn &&
 	    !iscsi_sna_lt(max_cmdsn, session->max_cmdsn))
 		session->max_cmdsn = max_cmdsn;
-पूर्ण
+}
 
-व्योम iscsi_update_cmdsn(काष्ठा iscsi_session *session, काष्ठा iscsi_nopin *hdr)
-अणु
+void iscsi_update_cmdsn(struct iscsi_session *session, struct iscsi_nopin *hdr)
+{
 	__iscsi_update_cmdsn(session, be32_to_cpu(hdr->exp_cmdsn),
 			     be32_to_cpu(hdr->max_cmdsn));
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(iscsi_update_cmdsn);
 
 /**
@@ -132,15 +131,15 @@ EXPORT_SYMBOL_GPL(iscsi_update_cmdsn);
  *
  *	This function is called with connection lock taken.
  **/
-व्योम iscsi_prep_data_out_pdu(काष्ठा iscsi_task *task, काष्ठा iscsi_r2t_info *r2t,
-			   काष्ठा iscsi_data *hdr)
-अणु
-	काष्ठा iscsi_conn *conn = task->conn;
-	अचिन्हित पूर्णांक left = r2t->data_length - r2t->sent;
+void iscsi_prep_data_out_pdu(struct iscsi_task *task, struct iscsi_r2t_info *r2t,
+			   struct iscsi_data *hdr)
+{
+	struct iscsi_conn *conn = task->conn;
+	unsigned int left = r2t->data_length - r2t->sent;
 
-	task->hdr_len = माप(काष्ठा iscsi_data);
+	task->hdr_len = sizeof(struct iscsi_data);
 
-	स_रखो(hdr, 0, माप(काष्ठा iscsi_data));
+	memset(hdr, 0, sizeof(struct iscsi_data));
 	hdr->ttt = r2t->ttt;
 	hdr->datasn = cpu_to_be32(r2t->datasn);
 	r2t->datasn++;
@@ -149,218 +148,218 @@ EXPORT_SYMBOL_GPL(iscsi_update_cmdsn);
 	hdr->itt = task->hdr_itt;
 	hdr->exp_statsn = r2t->exp_statsn;
 	hdr->offset = cpu_to_be32(r2t->data_offset + r2t->sent);
-	अगर (left > conn->max_xmit_dlength) अणु
+	if (left > conn->max_xmit_dlength) {
 		hton24(hdr->dlength, conn->max_xmit_dlength);
 		r2t->data_count = conn->max_xmit_dlength;
 		hdr->flags = 0;
-	पूर्ण अन्यथा अणु
+	} else {
 		hton24(hdr->dlength, left);
 		r2t->data_count = left;
 		hdr->flags = ISCSI_FLAG_CMD_FINAL;
-	पूर्ण
+	}
 	conn->dataout_pdus_cnt++;
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(iscsi_prep_data_out_pdu);
 
-अटल पूर्णांक iscsi_add_hdr(काष्ठा iscsi_task *task, अचिन्हित len)
-अणु
-	अचिन्हित exp_len = task->hdr_len + len;
+static int iscsi_add_hdr(struct iscsi_task *task, unsigned len)
+{
+	unsigned exp_len = task->hdr_len + len;
 
-	अगर (exp_len > task->hdr_max) अणु
+	if (exp_len > task->hdr_max) {
 		WARN_ON(1);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	WARN_ON(len & (ISCSI_PAD_LEN - 1)); /* caller must pad the AHS */
 	task->hdr_len = exp_len;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * make an extended cdb AHS
  */
-अटल पूर्णांक iscsi_prep_ecdb_ahs(काष्ठा iscsi_task *task)
-अणु
-	काष्ठा scsi_cmnd *cmd = task->sc;
-	अचिन्हित rlen, pad_len;
-	अचिन्हित लघु ahslength;
-	काष्ठा iscsi_ecdb_ahdr *ecdb_ahdr;
-	पूर्णांक rc;
+static int iscsi_prep_ecdb_ahs(struct iscsi_task *task)
+{
+	struct scsi_cmnd *cmd = task->sc;
+	unsigned rlen, pad_len;
+	unsigned short ahslength;
+	struct iscsi_ecdb_ahdr *ecdb_ahdr;
+	int rc;
 
 	ecdb_ahdr = iscsi_next_hdr(task);
 	rlen = cmd->cmd_len - ISCSI_CDB_SIZE;
 
-	BUG_ON(rlen > माप(ecdb_ahdr->ecdb));
-	ahslength = rlen + माप(ecdb_ahdr->reserved);
+	BUG_ON(rlen > sizeof(ecdb_ahdr->ecdb));
+	ahslength = rlen + sizeof(ecdb_ahdr->reserved);
 
 	pad_len = iscsi_padding(rlen);
 
-	rc = iscsi_add_hdr(task, माप(ecdb_ahdr->ahslength) +
-	                   माप(ecdb_ahdr->ahstype) + ahslength + pad_len);
-	अगर (rc)
-		वापस rc;
+	rc = iscsi_add_hdr(task, sizeof(ecdb_ahdr->ahslength) +
+	                   sizeof(ecdb_ahdr->ahstype) + ahslength + pad_len);
+	if (rc)
+		return rc;
 
-	अगर (pad_len)
-		स_रखो(&ecdb_ahdr->ecdb[rlen], 0, pad_len);
+	if (pad_len)
+		memset(&ecdb_ahdr->ecdb[rlen], 0, pad_len);
 
 	ecdb_ahdr->ahslength = cpu_to_be16(ahslength);
 	ecdb_ahdr->ahstype = ISCSI_AHSTYPE_CDB;
 	ecdb_ahdr->reserved = 0;
-	स_नकल(ecdb_ahdr->ecdb, cmd->cmnd + ISCSI_CDB_SIZE, rlen);
+	memcpy(ecdb_ahdr->ecdb, cmd->cmnd + ISCSI_CDB_SIZE, rlen);
 
 	ISCSI_DBG_SESSION(task->conn->session,
 			  "iscsi_prep_ecdb_ahs: varlen_cdb_len %d "
 		          "rlen %d pad_len %d ahs_length %d iscsi_headers_size "
 		          "%u\n", cmd->cmd_len, rlen, pad_len, ahslength,
 		          task->hdr_len);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * iscsi_check_पंचांगf_restrictions - check अगर a task is affected by TMF
+ * iscsi_check_tmf_restrictions - check if a task is affected by TMF
  * @task: iscsi task
- * @opcode: opcode to check क्रम
+ * @opcode: opcode to check for
  *
- * During TMF a task has to be checked अगर it's affected.
+ * During TMF a task has to be checked if it's affected.
  * All unrelated I/O can be passed through, but I/O to the
  * affected LUN should be restricted.
  * If 'fast_abort' is set we won't be sending any I/O to the
  * affected LUN.
- * Otherwise the target is रुकोing क्रम all TTTs to be completed,
+ * Otherwise the target is waiting for all TTTs to be completed,
  * so we have to send all outstanding Data-Out PDUs to the target.
  */
-अटल पूर्णांक iscsi_check_पंचांगf_restrictions(काष्ठा iscsi_task *task, पूर्णांक opcode)
-अणु
-	काष्ठा iscsi_conn *conn = task->conn;
-	काष्ठा iscsi_पंचांग *पंचांगf = &conn->पंचांगhdr;
+static int iscsi_check_tmf_restrictions(struct iscsi_task *task, int opcode)
+{
+	struct iscsi_conn *conn = task->conn;
+	struct iscsi_tm *tmf = &conn->tmhdr;
 	u64 hdr_lun;
 
-	अगर (conn->पंचांगf_state == TMF_INITIAL)
-		वापस 0;
+	if (conn->tmf_state == TMF_INITIAL)
+		return 0;
 
-	अगर ((पंचांगf->opcode & ISCSI_OPCODE_MASK) != ISCSI_OP_SCSI_TMFUNC)
-		वापस 0;
+	if ((tmf->opcode & ISCSI_OPCODE_MASK) != ISCSI_OP_SCSI_TMFUNC)
+		return 0;
 
-	चयन (ISCSI_TM_FUNC_VALUE(पंचांगf)) अणु
-	हाल ISCSI_TM_FUNC_LOGICAL_UNIT_RESET:
+	switch (ISCSI_TM_FUNC_VALUE(tmf)) {
+	case ISCSI_TM_FUNC_LOGICAL_UNIT_RESET:
 		/*
-		 * Allow PDUs क्रम unrelated LUNs
+		 * Allow PDUs for unrelated LUNs
 		 */
-		hdr_lun = scsilun_to_पूर्णांक(&पंचांगf->lun);
-		अगर (hdr_lun != task->sc->device->lun)
-			वापस 0;
+		hdr_lun = scsilun_to_int(&tmf->lun);
+		if (hdr_lun != task->sc->device->lun)
+			return 0;
 		fallthrough;
-	हाल ISCSI_TM_FUNC_TARGET_WARM_RESET:
+	case ISCSI_TM_FUNC_TARGET_WARM_RESET:
 		/*
 		 * Fail all SCSI cmd PDUs
 		 */
-		अगर (opcode != ISCSI_OP_SCSI_DATA_OUT) अणु
-			iscsi_conn_prपूर्णांकk(KERN_INFO, conn,
+		if (opcode != ISCSI_OP_SCSI_DATA_OUT) {
+			iscsi_conn_printk(KERN_INFO, conn,
 					  "task [op %x itt "
 					  "0x%x/0x%x] "
 					  "rejected.\n",
 					  opcode, task->itt,
 					  task->hdr_itt);
-			वापस -EACCES;
-		पूर्ण
+			return -EACCES;
+		}
 		/*
 		 * And also all data-out PDUs in response to R2T
-		 * अगर fast_पात is set.
+		 * if fast_abort is set.
 		 */
-		अगर (conn->session->fast_पात) अणु
-			iscsi_conn_prपूर्णांकk(KERN_INFO, conn,
+		if (conn->session->fast_abort) {
+			iscsi_conn_printk(KERN_INFO, conn,
 					  "task [op %x itt "
 					  "0x%x/0x%x] fast abort.\n",
 					  opcode, task->itt,
 					  task->hdr_itt);
-			वापस -EACCES;
-		पूर्ण
-		अवरोध;
-	हाल ISCSI_TM_FUNC_ABORT_TASK:
+			return -EACCES;
+		}
+		break;
+	case ISCSI_TM_FUNC_ABORT_TASK:
 		/*
-		 * the caller has alपढ़ोy checked अगर the task
-		 * they want to पात was in the pending queue so अगर
-		 * we are here the cmd pdu has gone out alपढ़ोy, and
-		 * we will only hit this क्रम data-outs
+		 * the caller has already checked if the task
+		 * they want to abort was in the pending queue so if
+		 * we are here the cmd pdu has gone out already, and
+		 * we will only hit this for data-outs
 		 */
-		अगर (opcode == ISCSI_OP_SCSI_DATA_OUT &&
-		    task->hdr_itt == पंचांगf->rtt) अणु
+		if (opcode == ISCSI_OP_SCSI_DATA_OUT &&
+		    task->hdr_itt == tmf->rtt) {
 			ISCSI_DBG_SESSION(conn->session,
 					  "Preventing task %x/%x from sending "
 					  "data-out due to abort task in "
 					  "progress\n", task->itt,
 					  task->hdr_itt);
-			वापस -EACCES;
-		पूर्ण
-		अवरोध;
-	पूर्ण
+			return -EACCES;
+		}
+		break;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * iscsi_prep_scsi_cmd_pdu - prep iscsi scsi cmd pdu
  * @task: iscsi task
  *
- * Prep basic iSCSI PDU fields क्रम a scsi cmd pdu. The LLD should set
+ * Prep basic iSCSI PDU fields for a scsi cmd pdu. The LLD should set
  * fields like dlength or final based on how much data it sends
  */
-अटल पूर्णांक iscsi_prep_scsi_cmd_pdu(काष्ठा iscsi_task *task)
-अणु
-	काष्ठा iscsi_conn *conn = task->conn;
-	काष्ठा iscsi_session *session = conn->session;
-	काष्ठा scsi_cmnd *sc = task->sc;
-	काष्ठा iscsi_scsi_req *hdr;
-	अचिन्हित hdrlength, cmd_len, transfer_length;
+static int iscsi_prep_scsi_cmd_pdu(struct iscsi_task *task)
+{
+	struct iscsi_conn *conn = task->conn;
+	struct iscsi_session *session = conn->session;
+	struct scsi_cmnd *sc = task->sc;
+	struct iscsi_scsi_req *hdr;
+	unsigned hdrlength, cmd_len, transfer_length;
 	itt_t itt;
-	पूर्णांक rc;
+	int rc;
 
-	rc = iscsi_check_पंचांगf_restrictions(task, ISCSI_OP_SCSI_CMD);
-	अगर (rc)
-		वापस rc;
+	rc = iscsi_check_tmf_restrictions(task, ISCSI_OP_SCSI_CMD);
+	if (rc)
+		return rc;
 
-	अगर (conn->session->tt->alloc_pdu) अणु
+	if (conn->session->tt->alloc_pdu) {
 		rc = conn->session->tt->alloc_pdu(task, ISCSI_OP_SCSI_CMD);
-		अगर (rc)
-			वापस rc;
-	पूर्ण
-	hdr = (काष्ठा iscsi_scsi_req *)task->hdr;
+		if (rc)
+			return rc;
+	}
+	hdr = (struct iscsi_scsi_req *)task->hdr;
 	itt = hdr->itt;
-	स_रखो(hdr, 0, माप(*hdr));
+	memset(hdr, 0, sizeof(*hdr));
 
-	अगर (session->tt->parse_pdu_itt)
+	if (session->tt->parse_pdu_itt)
 		hdr->itt = task->hdr_itt = itt;
-	अन्यथा
+	else
 		hdr->itt = task->hdr_itt = build_itt(task->itt,
 						     task->conn->session->age);
 	task->hdr_len = 0;
-	rc = iscsi_add_hdr(task, माप(*hdr));
-	अगर (rc)
-		वापस rc;
+	rc = iscsi_add_hdr(task, sizeof(*hdr));
+	if (rc)
+		return rc;
 	hdr->opcode = ISCSI_OP_SCSI_CMD;
 	hdr->flags = ISCSI_ATTR_SIMPLE;
-	पूर्णांक_to_scsilun(sc->device->lun, &hdr->lun);
+	int_to_scsilun(sc->device->lun, &hdr->lun);
 	task->lun = hdr->lun;
 	hdr->exp_statsn = cpu_to_be32(conn->exp_statsn);
 	cmd_len = sc->cmd_len;
-	अगर (cmd_len < ISCSI_CDB_SIZE)
-		स_रखो(&hdr->cdb[cmd_len], 0, ISCSI_CDB_SIZE - cmd_len);
-	अन्यथा अगर (cmd_len > ISCSI_CDB_SIZE) अणु
+	if (cmd_len < ISCSI_CDB_SIZE)
+		memset(&hdr->cdb[cmd_len], 0, ISCSI_CDB_SIZE - cmd_len);
+	else if (cmd_len > ISCSI_CDB_SIZE) {
 		rc = iscsi_prep_ecdb_ahs(task);
-		अगर (rc)
-			वापस rc;
+		if (rc)
+			return rc;
 		cmd_len = ISCSI_CDB_SIZE;
-	पूर्ण
-	स_नकल(hdr->cdb, sc->cmnd, cmd_len);
+	}
+	memcpy(hdr->cdb, sc->cmnd, cmd_len);
 
 	task->imm_count = 0;
-	अगर (scsi_get_prot_op(sc) != SCSI_PROT_NORMAL)
-		task->रक्षित = true;
+	if (scsi_get_prot_op(sc) != SCSI_PROT_NORMAL)
+		task->protected = true;
 
 	transfer_length = scsi_transfer_length(sc);
 	hdr->data_length = cpu_to_be32(transfer_length);
-	अगर (sc->sc_data_direction == DMA_TO_DEVICE) अणु
-		काष्ठा iscsi_r2t_info *r2t = &task->unsol_r2t;
+	if (sc->sc_data_direction == DMA_TO_DEVICE) {
+		struct iscsi_r2t_info *r2t = &task->unsol_r2t;
 
 		hdr->flags |= ISCSI_FLAG_CMD_WRITE;
 		/*
@@ -377,41 +376,41 @@ EXPORT_SYMBOL_GPL(iscsi_prep_data_out_pdu);
 		 *
 		 *      pad_count       bytes to be sent as zero-padding
 		 */
-		स_रखो(r2t, 0, माप(*r2t));
+		memset(r2t, 0, sizeof(*r2t));
 
-		अगर (session->imm_data_en) अणु
-			अगर (transfer_length >= session->first_burst)
+		if (session->imm_data_en) {
+			if (transfer_length >= session->first_burst)
 				task->imm_count = min(session->first_burst,
 							conn->max_xmit_dlength);
-			अन्यथा
+			else
 				task->imm_count = min(transfer_length,
 						      conn->max_xmit_dlength);
 			hton24(hdr->dlength, task->imm_count);
-		पूर्ण अन्यथा
+		} else
 			zero_data(hdr->dlength);
 
-		अगर (!session->initial_r2t_en) अणु
+		if (!session->initial_r2t_en) {
 			r2t->data_length = min(session->first_burst,
 					       transfer_length) -
 					       task->imm_count;
 			r2t->data_offset = task->imm_count;
 			r2t->ttt = cpu_to_be32(ISCSI_RESERVED_TAG);
 			r2t->exp_statsn = cpu_to_be32(conn->exp_statsn);
-		पूर्ण
+		}
 
-		अगर (!task->unsol_r2t.data_length)
+		if (!task->unsol_r2t.data_length)
 			/* No unsolicit Data-Out's */
 			hdr->flags |= ISCSI_FLAG_CMD_FINAL;
-	पूर्ण अन्यथा अणु
+	} else {
 		hdr->flags |= ISCSI_FLAG_CMD_FINAL;
 		zero_data(hdr->dlength);
 
-		अगर (sc->sc_data_direction == DMA_FROM_DEVICE)
+		if (sc->sc_data_direction == DMA_FROM_DEVICE)
 			hdr->flags |= ISCSI_FLAG_CMD_READ;
-	पूर्ण
+	}
 
 	/* calculate size of additional header segments (AHSs) */
-	hdrlength = task->hdr_len - माप(*hdr);
+	hdrlength = task->hdr_len - sizeof(*hdr);
 
 	WARN_ON(hdrlength & (ISCSI_PAD_LEN-1));
 	hdrlength /= ISCSI_PAD_LEN;
@@ -420,8 +419,8 @@ EXPORT_SYMBOL_GPL(iscsi_prep_data_out_pdu);
 	hdr->hlength = hdrlength & 0xFF;
 	hdr->cmdsn = task->cmdsn = cpu_to_be32(session->cmdsn);
 
-	अगर (session->tt->init_task && session->tt->init_task(task))
-		वापस -EIO;
+	if (session->tt->init_task && session->tt->init_task(task))
+		return -EIO;
 
 	task->state = ISCSI_TASK_RUNNING;
 	session->cmdsn++;
@@ -434,72 +433,72 @@ EXPORT_SYMBOL_GPL(iscsi_prep_data_out_pdu);
 			  task->itt, transfer_length,
 			  session->cmdsn,
 			  session->max_cmdsn - session->exp_cmdsn + 1);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * iscsi_मुक्त_task - मुक्त a task
+ * iscsi_free_task - free a task
  * @task: iscsi cmd task
  *
  * Must be called with session back_lock.
- * This function वापसs the scsi command to scsi-ml or cleans
- * up mgmt tasks then वापसs the task to the pool.
+ * This function returns the scsi command to scsi-ml or cleans
+ * up mgmt tasks then returns the task to the pool.
  */
-अटल व्योम iscsi_मुक्त_task(काष्ठा iscsi_task *task)
-अणु
-	काष्ठा iscsi_conn *conn = task->conn;
-	काष्ठा iscsi_session *session = conn->session;
-	काष्ठा scsi_cmnd *sc = task->sc;
-	पूर्णांक oldstate = task->state;
+static void iscsi_free_task(struct iscsi_task *task)
+{
+	struct iscsi_conn *conn = task->conn;
+	struct iscsi_session *session = conn->session;
+	struct scsi_cmnd *sc = task->sc;
+	int oldstate = task->state;
 
 	ISCSI_DBG_SESSION(session, "freeing task itt 0x%x state %d sc %p\n",
 			  task->itt, task->state, task->sc);
 
 	session->tt->cleanup_task(task);
 	task->state = ISCSI_TASK_FREE;
-	task->sc = शून्य;
+	task->sc = NULL;
 	/*
-	 * login task is pपुनः_स्मृतिated so करो not मुक्त
+	 * login task is preallocated so do not free
 	 */
-	अगर (conn->login_task == task)
-		वापस;
+	if (conn->login_task == task)
+		return;
 
-	kfअगरo_in(&session->cmdpool.queue, (व्योम*)&task, माप(व्योम*));
+	kfifo_in(&session->cmdpool.queue, (void*)&task, sizeof(void*));
 
-	अगर (sc) अणु
-		/* SCSI eh reuses commands to verअगरy us */
-		sc->SCp.ptr = शून्य;
+	if (sc) {
+		/* SCSI eh reuses commands to verify us */
+		sc->SCp.ptr = NULL;
 		/*
-		 * queue command may call this to मुक्त the task, so
-		 * it will decide how to वापस sc to scsi-ml.
+		 * queue command may call this to free the task, so
+		 * it will decide how to return sc to scsi-ml.
 		 */
-		अगर (oldstate != ISCSI_TASK_REQUEUE_SCSIQ)
-			sc->scsi_करोne(sc);
-	पूर्ण
-पूर्ण
+		if (oldstate != ISCSI_TASK_REQUEUE_SCSIQ)
+			sc->scsi_done(sc);
+	}
+}
 
-व्योम __iscsi_get_task(काष्ठा iscsi_task *task)
-अणु
+void __iscsi_get_task(struct iscsi_task *task)
+{
 	refcount_inc(&task->refcount);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(__iscsi_get_task);
 
-व्योम __iscsi_put_task(काष्ठा iscsi_task *task)
-अणु
-	अगर (refcount_dec_and_test(&task->refcount))
-		iscsi_मुक्त_task(task);
-पूर्ण
+void __iscsi_put_task(struct iscsi_task *task)
+{
+	if (refcount_dec_and_test(&task->refcount))
+		iscsi_free_task(task);
+}
 EXPORT_SYMBOL_GPL(__iscsi_put_task);
 
-व्योम iscsi_put_task(काष्ठा iscsi_task *task)
-अणु
-	काष्ठा iscsi_session *session = task->conn->session;
+void iscsi_put_task(struct iscsi_task *task)
+{
+	struct iscsi_session *session = task->conn->session;
 
 	/* regular RX path uses back_lock */
 	spin_lock_bh(&session->back_lock);
 	__iscsi_put_task(task);
 	spin_unlock_bh(&session->back_lock);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(iscsi_put_task);
 
 /**
@@ -509,111 +508,111 @@ EXPORT_SYMBOL_GPL(iscsi_put_task);
  *
  * Must be called with session back_lock.
  */
-अटल व्योम iscsi_complete_task(काष्ठा iscsi_task *task, पूर्णांक state)
-अणु
-	काष्ठा iscsi_conn *conn = task->conn;
+static void iscsi_complete_task(struct iscsi_task *task, int state)
+{
+	struct iscsi_conn *conn = task->conn;
 
 	ISCSI_DBG_SESSION(conn->session,
 			  "complete task itt 0x%x state %d sc %p\n",
 			  task->itt, task->state, task->sc);
-	अगर (task->state == ISCSI_TASK_COMPLETED ||
+	if (task->state == ISCSI_TASK_COMPLETED ||
 	    task->state == ISCSI_TASK_ABRT_TMF ||
 	    task->state == ISCSI_TASK_ABRT_SESS_RECOV ||
 	    task->state == ISCSI_TASK_REQUEUE_SCSIQ)
-		वापस;
+		return;
 	WARN_ON_ONCE(task->state == ISCSI_TASK_FREE);
 	task->state = state;
 
-	अगर (READ_ONCE(conn->ping_task) == task)
-		WRITE_ONCE(conn->ping_task, शून्य);
+	if (READ_ONCE(conn->ping_task) == task)
+		WRITE_ONCE(conn->ping_task, NULL);
 
 	/* release get from queueing */
 	__iscsi_put_task(task);
-पूर्ण
+}
 
 /**
  * iscsi_complete_scsi_task - finish scsi task normally
- * @task: iscsi task क्रम scsi cmd
- * @exp_cmdsn: expected cmd sn in cpu क्रमmat
- * @max_cmdsn: max cmd sn in cpu क्रमmat
+ * @task: iscsi task for scsi cmd
+ * @exp_cmdsn: expected cmd sn in cpu format
+ * @max_cmdsn: max cmd sn in cpu format
  *
- * This is used when drivers करो not need or cannot perक्रमm
+ * This is used when drivers do not need or cannot perform
  * lower level pdu processing.
  *
  * Called with session back_lock
  */
-व्योम iscsi_complete_scsi_task(काष्ठा iscsi_task *task,
-			      uपूर्णांक32_t exp_cmdsn, uपूर्णांक32_t max_cmdsn)
-अणु
-	काष्ठा iscsi_conn *conn = task->conn;
+void iscsi_complete_scsi_task(struct iscsi_task *task,
+			      uint32_t exp_cmdsn, uint32_t max_cmdsn)
+{
+	struct iscsi_conn *conn = task->conn;
 
 	ISCSI_DBG_SESSION(conn->session, "[itt 0x%x]\n", task->itt);
 
-	conn->last_recv = jअगरfies;
+	conn->last_recv = jiffies;
 	__iscsi_update_cmdsn(conn->session, exp_cmdsn, max_cmdsn);
 	iscsi_complete_task(task, ISCSI_TASK_COMPLETED);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(iscsi_complete_scsi_task);
 
 /*
  * Must be called with back and frwd lock
  */
-अटल bool cleanup_queued_task(काष्ठा iscsi_task *task)
-अणु
-	काष्ठा iscsi_conn *conn = task->conn;
+static bool cleanup_queued_task(struct iscsi_task *task)
+{
+	struct iscsi_conn *conn = task->conn;
 	bool early_complete = false;
 
-	/* Bad target might have completed task जबतक it was still running */
-	अगर (task->state == ISCSI_TASK_COMPLETED)
+	/* Bad target might have completed task while it was still running */
+	if (task->state == ISCSI_TASK_COMPLETED)
 		early_complete = true;
 
-	अगर (!list_empty(&task->running)) अणु
+	if (!list_empty(&task->running)) {
 		list_del_init(&task->running);
 		/*
 		 * If it's on a list but still running, this could be from
 		 * a bad target sending a rsp early, cleanup from a TMF, or
 		 * session recovery.
 		 */
-		अगर (task->state == ISCSI_TASK_RUNNING ||
+		if (task->state == ISCSI_TASK_RUNNING ||
 		    task->state == ISCSI_TASK_COMPLETED)
 			__iscsi_put_task(task);
-	पूर्ण
+	}
 
-	अगर (conn->task == task) अणु
-		conn->task = शून्य;
+	if (conn->task == task) {
+		conn->task = NULL;
 		__iscsi_put_task(task);
-	पूर्ण
+	}
 
-	वापस early_complete;
-पूर्ण
+	return early_complete;
+}
 
 /*
- * session frwd lock must be held and अगर not called क्रम a task that is still
- * pending or from the xmit thपढ़ो, then xmit thपढ़ो must be suspended
+ * session frwd lock must be held and if not called for a task that is still
+ * pending or from the xmit thread, then xmit thread must be suspended
  */
-अटल व्योम fail_scsi_task(काष्ठा iscsi_task *task, पूर्णांक err)
-अणु
-	काष्ठा iscsi_conn *conn = task->conn;
-	काष्ठा scsi_cmnd *sc;
-	पूर्णांक state;
+static void fail_scsi_task(struct iscsi_task *task, int err)
+{
+	struct iscsi_conn *conn = task->conn;
+	struct scsi_cmnd *sc;
+	int state;
 
 	spin_lock_bh(&conn->session->back_lock);
-	अगर (cleanup_queued_task(task)) अणु
+	if (cleanup_queued_task(task)) {
 		spin_unlock_bh(&conn->session->back_lock);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (task->state == ISCSI_TASK_PENDING) अणु
+	if (task->state == ISCSI_TASK_PENDING) {
 		/*
-		 * cmd never made it to the xmit thपढ़ो, so we should not count
+		 * cmd never made it to the xmit thread, so we should not count
 		 * the cmd in the sequencing
 		 */
 		conn->session->queued_cmdsn--;
 		/* it was never sent so just complete like normal */
 		state = ISCSI_TASK_COMPLETED;
-	पूर्ण अन्यथा अगर (err == DID_TRANSPORT_DISRUPTED)
+	} else if (err == DID_TRANSPORT_DISRUPTED)
 		state = ISCSI_TASK_ABRT_SESS_RECOV;
-	अन्यथा
+	else
 		state = ISCSI_TASK_ABRT_TMF;
 
 	sc = task->sc;
@@ -621,176 +620,176 @@ EXPORT_SYMBOL_GPL(iscsi_complete_scsi_task);
 	scsi_set_resid(sc, scsi_bufflen(sc));
 	iscsi_complete_task(task, state);
 	spin_unlock_bh(&conn->session->back_lock);
-पूर्ण
+}
 
-अटल पूर्णांक iscsi_prep_mgmt_task(काष्ठा iscsi_conn *conn,
-				काष्ठा iscsi_task *task)
-अणु
-	काष्ठा iscsi_session *session = conn->session;
-	काष्ठा iscsi_hdr *hdr = task->hdr;
-	काष्ठा iscsi_nopout *nop = (काष्ठा iscsi_nopout *)hdr;
-	uपूर्णांक8_t opcode = hdr->opcode & ISCSI_OPCODE_MASK;
+static int iscsi_prep_mgmt_task(struct iscsi_conn *conn,
+				struct iscsi_task *task)
+{
+	struct iscsi_session *session = conn->session;
+	struct iscsi_hdr *hdr = task->hdr;
+	struct iscsi_nopout *nop = (struct iscsi_nopout *)hdr;
+	uint8_t opcode = hdr->opcode & ISCSI_OPCODE_MASK;
 
-	अगर (conn->session->state == ISCSI_STATE_LOGGING_OUT)
-		वापस -ENOTCONN;
+	if (conn->session->state == ISCSI_STATE_LOGGING_OUT)
+		return -ENOTCONN;
 
-	अगर (opcode != ISCSI_OP_LOGIN && opcode != ISCSI_OP_TEXT)
+	if (opcode != ISCSI_OP_LOGIN && opcode != ISCSI_OP_TEXT)
 		nop->exp_statsn = cpu_to_be32(conn->exp_statsn);
 	/*
-	 * pre-क्रमmat CmdSN क्रम outgoing PDU.
+	 * pre-format CmdSN for outgoing PDU.
 	 */
 	nop->cmdsn = cpu_to_be32(session->cmdsn);
-	अगर (hdr->itt != RESERVED_ITT) अणु
+	if (hdr->itt != RESERVED_ITT) {
 		/*
-		 * TODO: We always use immediate क्रम normal session pdus.
-		 * If we start to send पंचांगfs or nops as non-immediate then
-		 * we should start checking the cmdsn numbers क्रम mgmt tasks.
+		 * TODO: We always use immediate for normal session pdus.
+		 * If we start to send tmfs or nops as non-immediate then
+		 * we should start checking the cmdsn numbers for mgmt tasks.
 		 *
 		 * During discovery sessions iscsid sends TEXT as non immediate,
-		 * but we always only send one PDU at a समय.
+		 * but we always only send one PDU at a time.
 		 */
-		अगर (conn->c_stage == ISCSI_CONN_STARTED &&
-		    !(hdr->opcode & ISCSI_OP_IMMEDIATE)) अणु
+		if (conn->c_stage == ISCSI_CONN_STARTED &&
+		    !(hdr->opcode & ISCSI_OP_IMMEDIATE)) {
 			session->queued_cmdsn++;
 			session->cmdsn++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (session->tt->init_task && session->tt->init_task(task))
-		वापस -EIO;
+	if (session->tt->init_task && session->tt->init_task(task))
+		return -EIO;
 
-	अगर ((hdr->opcode & ISCSI_OPCODE_MASK) == ISCSI_OP_LOGOUT)
+	if ((hdr->opcode & ISCSI_OPCODE_MASK) == ISCSI_OP_LOGOUT)
 		session->state = ISCSI_STATE_LOGGING_OUT;
 
 	task->state = ISCSI_TASK_RUNNING;
 	ISCSI_DBG_SESSION(session, "mgmtpdu [op 0x%x hdr->itt 0x%x "
 			  "datalen %d]\n", hdr->opcode & ISCSI_OPCODE_MASK,
 			  hdr->itt, task->data_count);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा iscsi_task *
-__iscsi_conn_send_pdu(काष्ठा iscsi_conn *conn, काष्ठा iscsi_hdr *hdr,
-		      अक्षर *data, uपूर्णांक32_t data_size)
-अणु
-	काष्ठा iscsi_session *session = conn->session;
-	काष्ठा iscsi_host *ihost = shost_priv(session->host);
-	uपूर्णांक8_t opcode = hdr->opcode & ISCSI_OPCODE_MASK;
-	काष्ठा iscsi_task *task;
+static struct iscsi_task *
+__iscsi_conn_send_pdu(struct iscsi_conn *conn, struct iscsi_hdr *hdr,
+		      char *data, uint32_t data_size)
+{
+	struct iscsi_session *session = conn->session;
+	struct iscsi_host *ihost = shost_priv(session->host);
+	uint8_t opcode = hdr->opcode & ISCSI_OPCODE_MASK;
+	struct iscsi_task *task;
 	itt_t itt;
 
-	अगर (session->state == ISCSI_STATE_TERMINATE)
-		वापस शून्य;
+	if (session->state == ISCSI_STATE_TERMINATE)
+		return NULL;
 
-	अगर (opcode == ISCSI_OP_LOGIN || opcode == ISCSI_OP_TEXT) अणु
+	if (opcode == ISCSI_OP_LOGIN || opcode == ISCSI_OP_TEXT) {
 		/*
 		 * Login and Text are sent serially, in
 		 * request-followed-by-response sequence.
 		 * Same task can be used. Same ITT must be used.
-		 * Note that login_task is pपुनः_स्मृतिated at conn_create().
+		 * Note that login_task is preallocated at conn_create().
 		 */
-		अगर (conn->login_task->state != ISCSI_TASK_FREE) अणु
-			iscsi_conn_prपूर्णांकk(KERN_ERR, conn, "Login/Text in "
+		if (conn->login_task->state != ISCSI_TASK_FREE) {
+			iscsi_conn_printk(KERN_ERR, conn, "Login/Text in "
 					  "progress. Cannot start new task.\n");
-			वापस शून्य;
-		पूर्ण
+			return NULL;
+		}
 
-		अगर (data_size > ISCSI_DEF_MAX_RECV_SEG_LEN) अणु
-			iscsi_conn_prपूर्णांकk(KERN_ERR, conn, "Invalid buffer len of %u for login task. Max len is %u\n", data_size, ISCSI_DEF_MAX_RECV_SEG_LEN);
-			वापस शून्य;
-		पूर्ण
+		if (data_size > ISCSI_DEF_MAX_RECV_SEG_LEN) {
+			iscsi_conn_printk(KERN_ERR, conn, "Invalid buffer len of %u for login task. Max len is %u\n", data_size, ISCSI_DEF_MAX_RECV_SEG_LEN);
+			return NULL;
+		}
 
 		task = conn->login_task;
-	पूर्ण अन्यथा अणु
-		अगर (session->state != ISCSI_STATE_LOGGED_IN)
-			वापस शून्य;
+	} else {
+		if (session->state != ISCSI_STATE_LOGGED_IN)
+			return NULL;
 
-		अगर (data_size != 0) अणु
-			iscsi_conn_prपूर्णांकk(KERN_ERR, conn, "Can not send data buffer of len %u for op 0x%x\n", data_size, opcode);
-			वापस शून्य;
-		पूर्ण
+		if (data_size != 0) {
+			iscsi_conn_printk(KERN_ERR, conn, "Can not send data buffer of len %u for op 0x%x\n", data_size, opcode);
+			return NULL;
+		}
 
 		BUG_ON(conn->c_stage == ISCSI_CONN_INITIAL_STAGE);
 		BUG_ON(conn->c_stage == ISCSI_CONN_STOPPED);
 
-		अगर (!kfअगरo_out(&session->cmdpool.queue,
-				 (व्योम*)&task, माप(व्योम*)))
-			वापस शून्य;
-	पूर्ण
+		if (!kfifo_out(&session->cmdpool.queue,
+				 (void*)&task, sizeof(void*)))
+			return NULL;
+	}
 	/*
-	 * released in complete pdu क्रम task we expect a response क्रम, and
-	 * released by the lld when it has transmitted the task क्रम
-	 * pdus we करो not expect a response क्रम.
+	 * released in complete pdu for task we expect a response for, and
+	 * released by the lld when it has transmitted the task for
+	 * pdus we do not expect a response for.
 	 */
 	refcount_set(&task->refcount, 1);
 	task->conn = conn;
-	task->sc = शून्य;
+	task->sc = NULL;
 	INIT_LIST_HEAD(&task->running);
 	task->state = ISCSI_TASK_PENDING;
 
-	अगर (data_size) अणु
-		स_नकल(task->data, data, data_size);
+	if (data_size) {
+		memcpy(task->data, data, data_size);
 		task->data_count = data_size;
-	पूर्ण अन्यथा
+	} else
 		task->data_count = 0;
 
-	अगर (conn->session->tt->alloc_pdu) अणु
-		अगर (conn->session->tt->alloc_pdu(task, hdr->opcode)) अणु
-			iscsi_conn_prपूर्णांकk(KERN_ERR, conn, "Could not allocate "
+	if (conn->session->tt->alloc_pdu) {
+		if (conn->session->tt->alloc_pdu(task, hdr->opcode)) {
+			iscsi_conn_printk(KERN_ERR, conn, "Could not allocate "
 					 "pdu for mgmt task.\n");
-			जाओ मुक्त_task;
-		पूर्ण
-	पूर्ण
+			goto free_task;
+		}
+	}
 
 	itt = task->hdr->itt;
-	task->hdr_len = माप(काष्ठा iscsi_hdr);
-	स_नकल(task->hdr, hdr, माप(काष्ठा iscsi_hdr));
+	task->hdr_len = sizeof(struct iscsi_hdr);
+	memcpy(task->hdr, hdr, sizeof(struct iscsi_hdr));
 
-	अगर (hdr->itt != RESERVED_ITT) अणु
-		अगर (session->tt->parse_pdu_itt)
+	if (hdr->itt != RESERVED_ITT) {
+		if (session->tt->parse_pdu_itt)
 			task->hdr->itt = itt;
-		अन्यथा
+		else
 			task->hdr->itt = build_itt(task->itt,
 						   task->conn->session->age);
-	पूर्ण
+	}
 
-	अगर (unlikely(READ_ONCE(conn->ping_task) == INVALID_SCSI_TASK))
+	if (unlikely(READ_ONCE(conn->ping_task) == INVALID_SCSI_TASK))
 		WRITE_ONCE(conn->ping_task, task);
 
-	अगर (!ihost->workq) अणु
-		अगर (iscsi_prep_mgmt_task(conn, task))
-			जाओ मुक्त_task;
+	if (!ihost->workq) {
+		if (iscsi_prep_mgmt_task(conn, task))
+			goto free_task;
 
-		अगर (session->tt->xmit_task(task))
-			जाओ मुक्त_task;
-	पूर्ण अन्यथा अणु
+		if (session->tt->xmit_task(task))
+			goto free_task;
+	} else {
 		list_add_tail(&task->running, &conn->mgmtqueue);
 		iscsi_conn_queue_work(conn);
-	पूर्ण
+	}
 
-	वापस task;
+	return task;
 
-मुक्त_task:
+free_task:
 	/* regular RX path uses back_lock */
 	spin_lock(&session->back_lock);
 	__iscsi_put_task(task);
 	spin_unlock(&session->back_lock);
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-पूर्णांक iscsi_conn_send_pdu(काष्ठा iscsi_cls_conn *cls_conn, काष्ठा iscsi_hdr *hdr,
-			अक्षर *data, uपूर्णांक32_t data_size)
-अणु
-	काष्ठा iscsi_conn *conn = cls_conn->dd_data;
-	काष्ठा iscsi_session *session = conn->session;
-	पूर्णांक err = 0;
+int iscsi_conn_send_pdu(struct iscsi_cls_conn *cls_conn, struct iscsi_hdr *hdr,
+			char *data, uint32_t data_size)
+{
+	struct iscsi_conn *conn = cls_conn->dd_data;
+	struct iscsi_session *session = conn->session;
+	int err = 0;
 
 	spin_lock_bh(&session->frwd_lock);
-	अगर (!__iscsi_conn_send_pdu(conn, hdr, data, data_size))
+	if (!__iscsi_conn_send_pdu(conn, hdr, data, data_size))
 		err = -EPERM;
 	spin_unlock_bh(&session->frwd_lock);
-	वापस err;
-पूर्ण
+	return err;
+}
 EXPORT_SYMBOL_GPL(iscsi_conn_send_pdu);
 
 /**
@@ -804,20 +803,20 @@ EXPORT_SYMBOL_GPL(iscsi_conn_send_pdu);
  * iscsi_cmd_rsp sets up the scsi_cmnd fields based on the PDU and
  * then completes the command and task. called under back_lock
  **/
-अटल व्योम iscsi_scsi_cmd_rsp(काष्ठा iscsi_conn *conn, काष्ठा iscsi_hdr *hdr,
-			       काष्ठा iscsi_task *task, अक्षर *data,
-			       पूर्णांक datalen)
-अणु
-	काष्ठा iscsi_scsi_rsp *rhdr = (काष्ठा iscsi_scsi_rsp *)hdr;
-	काष्ठा iscsi_session *session = conn->session;
-	काष्ठा scsi_cmnd *sc = task->sc;
+static void iscsi_scsi_cmd_rsp(struct iscsi_conn *conn, struct iscsi_hdr *hdr,
+			       struct iscsi_task *task, char *data,
+			       int datalen)
+{
+	struct iscsi_scsi_rsp *rhdr = (struct iscsi_scsi_rsp *)hdr;
+	struct iscsi_session *session = conn->session;
+	struct scsi_cmnd *sc = task->sc;
 
-	iscsi_update_cmdsn(session, (काष्ठा iscsi_nopin*)rhdr);
+	iscsi_update_cmdsn(session, (struct iscsi_nopin*)rhdr);
 	conn->exp_statsn = be32_to_cpu(rhdr->statsn) + 1;
 
 	sc->result = (DID_OK << 16) | rhdr->cmd_status;
 
-	अगर (task->रक्षित) अणु
+	if (task->protected) {
 		sector_t sector;
 		u8 ascq;
 
@@ -829,69 +828,69 @@ EXPORT_SYMBOL_GPL(iscsi_conn_send_pdu);
 		BUG_ON(!session->tt->check_protection);
 
 		ascq = session->tt->check_protection(task, &sector);
-		अगर (ascq) अणु
+		if (ascq) {
 			sc->result = DRIVER_SENSE << 24 |
 				     SAM_STAT_CHECK_CONDITION;
 			scsi_build_sense_buffer(1, sc->sense_buffer,
 						ILLEGAL_REQUEST, 0x10, ascq);
-			scsi_set_sense_inक्रमmation(sc->sense_buffer,
+			scsi_set_sense_information(sc->sense_buffer,
 						   SCSI_SENSE_BUFFERSIZE,
 						   sector);
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 
-	अगर (rhdr->response != ISCSI_STATUS_CMD_COMPLETED) अणु
+	if (rhdr->response != ISCSI_STATUS_CMD_COMPLETED) {
 		sc->result = DID_ERROR << 16;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (rhdr->cmd_status == SAM_STAT_CHECK_CONDITION) अणु
-		uपूर्णांक16_t senselen;
+	if (rhdr->cmd_status == SAM_STAT_CHECK_CONDITION) {
+		uint16_t senselen;
 
-		अगर (datalen < 2) अणु
+		if (datalen < 2) {
 invalid_datalen:
-			iscsi_conn_prपूर्णांकk(KERN_ERR,  conn,
+			iscsi_conn_printk(KERN_ERR,  conn,
 					 "Got CHECK_CONDITION but invalid data "
 					 "buffer size of %d\n", datalen);
 			sc->result = DID_BAD_TARGET << 16;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		senselen = get_unaligned_be16(data);
-		अगर (datalen < senselen)
-			जाओ invalid_datalen;
+		if (datalen < senselen)
+			goto invalid_datalen;
 
-		स_नकल(sc->sense_buffer, data + 2,
-		       min_t(uपूर्णांक16_t, senselen, SCSI_SENSE_BUFFERSIZE));
+		memcpy(sc->sense_buffer, data + 2,
+		       min_t(uint16_t, senselen, SCSI_SENSE_BUFFERSIZE));
 		ISCSI_DBG_SESSION(session, "copied %d bytes of sense\n",
-				  min_t(uपूर्णांक16_t, senselen,
+				  min_t(uint16_t, senselen,
 				  SCSI_SENSE_BUFFERSIZE));
-	पूर्ण
+	}
 
-	अगर (rhdr->flags & (ISCSI_FLAG_CMD_BIDI_UNDERFLOW |
-			   ISCSI_FLAG_CMD_BIDI_OVERFLOW)) अणु
+	if (rhdr->flags & (ISCSI_FLAG_CMD_BIDI_UNDERFLOW |
+			   ISCSI_FLAG_CMD_BIDI_OVERFLOW)) {
 		sc->result = (DID_BAD_TARGET << 16) | rhdr->cmd_status;
-	पूर्ण
+	}
 
-	अगर (rhdr->flags & (ISCSI_FLAG_CMD_UNDERFLOW |
-	                   ISCSI_FLAG_CMD_OVERFLOW)) अणु
-		पूर्णांक res_count = be32_to_cpu(rhdr->residual_count);
+	if (rhdr->flags & (ISCSI_FLAG_CMD_UNDERFLOW |
+	                   ISCSI_FLAG_CMD_OVERFLOW)) {
+		int res_count = be32_to_cpu(rhdr->residual_count);
 
-		अगर (res_count > 0 &&
+		if (res_count > 0 &&
 		    (rhdr->flags & ISCSI_FLAG_CMD_OVERFLOW ||
 		     res_count <= scsi_bufflen(sc)))
-			/* ग_लिखो side क्रम bidi or uni-io set_resid */
+			/* write side for bidi or uni-io set_resid */
 			scsi_set_resid(sc, res_count);
-		अन्यथा
+		else
 			sc->result = (DID_BAD_TARGET << 16) | rhdr->cmd_status;
-	पूर्ण
+	}
 out:
 	ISCSI_DBG_SESSION(session, "cmd rsp done [sc %p res %d itt 0x%x]\n",
 			  sc, sc->result, task->itt);
 	conn->scsirsp_pdus_cnt++;
 	iscsi_complete_task(task, ISCSI_TASK_COMPLETED);
-पूर्ण
+}
 
 /**
  * iscsi_data_in_rsp - SCSI Data-In Response processing
@@ -902,167 +901,167 @@ out:
  * iscsi_data_in_rsp sets up the scsi_cmnd fields based on the data received
  * then completes the command and task. called under back_lock
  **/
-अटल व्योम
-iscsi_data_in_rsp(काष्ठा iscsi_conn *conn, काष्ठा iscsi_hdr *hdr,
-		  काष्ठा iscsi_task *task)
-अणु
-	काष्ठा iscsi_data_rsp *rhdr = (काष्ठा iscsi_data_rsp *)hdr;
-	काष्ठा scsi_cmnd *sc = task->sc;
+static void
+iscsi_data_in_rsp(struct iscsi_conn *conn, struct iscsi_hdr *hdr,
+		  struct iscsi_task *task)
+{
+	struct iscsi_data_rsp *rhdr = (struct iscsi_data_rsp *)hdr;
+	struct scsi_cmnd *sc = task->sc;
 
-	अगर (!(rhdr->flags & ISCSI_FLAG_DATA_STATUS))
-		वापस;
+	if (!(rhdr->flags & ISCSI_FLAG_DATA_STATUS))
+		return;
 
-	iscsi_update_cmdsn(conn->session, (काष्ठा iscsi_nopin *)hdr);
+	iscsi_update_cmdsn(conn->session, (struct iscsi_nopin *)hdr);
 	sc->result = (DID_OK << 16) | rhdr->cmd_status;
 	conn->exp_statsn = be32_to_cpu(rhdr->statsn) + 1;
-	अगर (rhdr->flags & (ISCSI_FLAG_DATA_UNDERFLOW |
-	                   ISCSI_FLAG_DATA_OVERFLOW)) अणु
-		पूर्णांक res_count = be32_to_cpu(rhdr->residual_count);
+	if (rhdr->flags & (ISCSI_FLAG_DATA_UNDERFLOW |
+	                   ISCSI_FLAG_DATA_OVERFLOW)) {
+		int res_count = be32_to_cpu(rhdr->residual_count);
 
-		अगर (res_count > 0 &&
+		if (res_count > 0 &&
 		    (rhdr->flags & ISCSI_FLAG_CMD_OVERFLOW ||
 		     res_count <= sc->sdb.length))
 			scsi_set_resid(sc, res_count);
-		अन्यथा
+		else
 			sc->result = (DID_BAD_TARGET << 16) | rhdr->cmd_status;
-	पूर्ण
+	}
 
 	ISCSI_DBG_SESSION(conn->session, "data in with status done "
 			  "[sc %p res %d itt 0x%x]\n",
 			  sc, sc->result, task->itt);
 	conn->scsirsp_pdus_cnt++;
 	iscsi_complete_task(task, ISCSI_TASK_COMPLETED);
-पूर्ण
+}
 
-अटल व्योम iscsi_पंचांगf_rsp(काष्ठा iscsi_conn *conn, काष्ठा iscsi_hdr *hdr)
-अणु
-	काष्ठा iscsi_पंचांग_rsp *पंचांगf = (काष्ठा iscsi_पंचांग_rsp *)hdr;
+static void iscsi_tmf_rsp(struct iscsi_conn *conn, struct iscsi_hdr *hdr)
+{
+	struct iscsi_tm_rsp *tmf = (struct iscsi_tm_rsp *)hdr;
 
 	conn->exp_statsn = be32_to_cpu(hdr->statsn) + 1;
-	conn->पंचांगfrsp_pdus_cnt++;
+	conn->tmfrsp_pdus_cnt++;
 
-	अगर (conn->पंचांगf_state != TMF_QUEUED)
-		वापस;
+	if (conn->tmf_state != TMF_QUEUED)
+		return;
 
-	अगर (पंचांगf->response == ISCSI_TMF_RSP_COMPLETE)
-		conn->पंचांगf_state = TMF_SUCCESS;
-	अन्यथा अगर (पंचांगf->response == ISCSI_TMF_RSP_NO_TASK)
-		conn->पंचांगf_state = TMF_NOT_FOUND;
-	अन्यथा
-		conn->पंचांगf_state = TMF_FAILED;
-	wake_up(&conn->ehरुको);
-पूर्ण
+	if (tmf->response == ISCSI_TMF_RSP_COMPLETE)
+		conn->tmf_state = TMF_SUCCESS;
+	else if (tmf->response == ISCSI_TMF_RSP_NO_TASK)
+		conn->tmf_state = TMF_NOT_FOUND;
+	else
+		conn->tmf_state = TMF_FAILED;
+	wake_up(&conn->ehwait);
+}
 
-अटल पूर्णांक iscsi_send_nopout(काष्ठा iscsi_conn *conn, काष्ठा iscsi_nopin *rhdr)
-अणु
-        काष्ठा iscsi_nopout hdr;
-	काष्ठा iscsi_task *task;
+static int iscsi_send_nopout(struct iscsi_conn *conn, struct iscsi_nopin *rhdr)
+{
+        struct iscsi_nopout hdr;
+	struct iscsi_task *task;
 
-	अगर (!rhdr) अणु
-		अगर (READ_ONCE(conn->ping_task))
-			वापस -EINVAL;
+	if (!rhdr) {
+		if (READ_ONCE(conn->ping_task))
+			return -EINVAL;
 		WRITE_ONCE(conn->ping_task, INVALID_SCSI_TASK);
-	पूर्ण
+	}
 
-	स_रखो(&hdr, 0, माप(काष्ठा iscsi_nopout));
+	memset(&hdr, 0, sizeof(struct iscsi_nopout));
 	hdr.opcode = ISCSI_OP_NOOP_OUT | ISCSI_OP_IMMEDIATE;
 	hdr.flags = ISCSI_FLAG_CMD_FINAL;
 
-	अगर (rhdr) अणु
+	if (rhdr) {
 		hdr.lun = rhdr->lun;
 		hdr.ttt = rhdr->ttt;
 		hdr.itt = RESERVED_ITT;
-	पूर्ण अन्यथा
+	} else
 		hdr.ttt = RESERVED_ITT;
 
-	task = __iscsi_conn_send_pdu(conn, (काष्ठा iscsi_hdr *)&hdr, शून्य, 0);
-	अगर (!task) अणु
-		अगर (!rhdr)
-			WRITE_ONCE(conn->ping_task, शून्य);
-		iscsi_conn_prपूर्णांकk(KERN_ERR, conn, "Could not send nopout\n");
-		वापस -EIO;
-	पूर्ण अन्यथा अगर (!rhdr) अणु
+	task = __iscsi_conn_send_pdu(conn, (struct iscsi_hdr *)&hdr, NULL, 0);
+	if (!task) {
+		if (!rhdr)
+			WRITE_ONCE(conn->ping_task, NULL);
+		iscsi_conn_printk(KERN_ERR, conn, "Could not send nopout\n");
+		return -EIO;
+	} else if (!rhdr) {
 		/* only track our nops */
-		conn->last_ping = jअगरfies;
-	पूर्ण
+		conn->last_ping = jiffies;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * iscsi_nop_out_rsp - SCSI NOP Response processing
  * @task: scsi command task
- * @nop: the nop काष्ठाure
+ * @nop: the nop structure
  * @data: where to put the data
  * @datalen: length of data
  *
  * iscsi_nop_out_rsp handles nop response from use or
  * from user space. called under back_lock
  **/
-अटल पूर्णांक iscsi_nop_out_rsp(काष्ठा iscsi_task *task,
-			     काष्ठा iscsi_nopin *nop, अक्षर *data, पूर्णांक datalen)
-अणु
-	काष्ठा iscsi_conn *conn = task->conn;
-	पूर्णांक rc = 0;
+static int iscsi_nop_out_rsp(struct iscsi_task *task,
+			     struct iscsi_nopin *nop, char *data, int datalen)
+{
+	struct iscsi_conn *conn = task->conn;
+	int rc = 0;
 
-	अगर (READ_ONCE(conn->ping_task) != task) अणु
+	if (READ_ONCE(conn->ping_task) != task) {
 		/*
 		 * If this is not in response to one of our
 		 * nops then it must be from userspace.
 		 */
-		अगर (iscsi_recv_pdu(conn->cls_conn, (काष्ठा iscsi_hdr *)nop,
+		if (iscsi_recv_pdu(conn->cls_conn, (struct iscsi_hdr *)nop,
 				   data, datalen))
 			rc = ISCSI_ERR_CONN_FAILED;
-	पूर्ण अन्यथा
-		mod_समयr(&conn->transport_समयr, jअगरfies + conn->recv_समयout);
+	} else
+		mod_timer(&conn->transport_timer, jiffies + conn->recv_timeout);
 	iscsi_complete_task(task, ISCSI_TASK_COMPLETED);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक iscsi_handle_reject(काष्ठा iscsi_conn *conn, काष्ठा iscsi_hdr *hdr,
-			       अक्षर *data, पूर्णांक datalen)
-अणु
-	काष्ठा iscsi_reject *reject = (काष्ठा iscsi_reject *)hdr;
-	काष्ठा iscsi_hdr rejected_pdu;
-	पूर्णांक opcode, rc = 0;
+static int iscsi_handle_reject(struct iscsi_conn *conn, struct iscsi_hdr *hdr,
+			       char *data, int datalen)
+{
+	struct iscsi_reject *reject = (struct iscsi_reject *)hdr;
+	struct iscsi_hdr rejected_pdu;
+	int opcode, rc = 0;
 
 	conn->exp_statsn = be32_to_cpu(reject->statsn) + 1;
 
-	अगर (ntoh24(reject->dlength) > datalen ||
-	    ntoh24(reject->dlength) < माप(काष्ठा iscsi_hdr)) अणु
-		iscsi_conn_prपूर्णांकk(KERN_ERR, conn, "Cannot handle rejected "
+	if (ntoh24(reject->dlength) > datalen ||
+	    ntoh24(reject->dlength) < sizeof(struct iscsi_hdr)) {
+		iscsi_conn_printk(KERN_ERR, conn, "Cannot handle rejected "
 				  "pdu. Invalid data length (pdu dlength "
 				  "%u, datalen %d\n", ntoh24(reject->dlength),
 				  datalen);
-		वापस ISCSI_ERR_PROTO;
-	पूर्ण
-	स_नकल(&rejected_pdu, data, माप(काष्ठा iscsi_hdr));
+		return ISCSI_ERR_PROTO;
+	}
+	memcpy(&rejected_pdu, data, sizeof(struct iscsi_hdr));
 	opcode = rejected_pdu.opcode & ISCSI_OPCODE_MASK;
 
-	चयन (reject->reason) अणु
-	हाल ISCSI_REASON_DATA_DIGEST_ERROR:
-		iscsi_conn_prपूर्णांकk(KERN_ERR, conn,
+	switch (reject->reason) {
+	case ISCSI_REASON_DATA_DIGEST_ERROR:
+		iscsi_conn_printk(KERN_ERR, conn,
 				  "pdu (op 0x%x itt 0x%x) rejected "
 				  "due to DataDigest error.\n",
 				  opcode, rejected_pdu.itt);
-		अवरोध;
-	हाल ISCSI_REASON_IMM_CMD_REJECT:
-		iscsi_conn_prपूर्णांकk(KERN_ERR, conn,
+		break;
+	case ISCSI_REASON_IMM_CMD_REJECT:
+		iscsi_conn_printk(KERN_ERR, conn,
 				  "pdu (op 0x%x itt 0x%x) rejected. Too many "
 				  "immediate commands.\n",
 				  opcode, rejected_pdu.itt);
 		/*
-		 * We only send one TMF at a समय so अगर the target could not
+		 * We only send one TMF at a time so if the target could not
 		 * handle it, then it should get fixed (RFC mandates that
 		 * a target can handle one immediate TMF per conn).
 		 *
-		 * For nops-outs, we could have sent more than one अगर
+		 * For nops-outs, we could have sent more than one if
 		 * the target is sending us lots of nop-ins
 		 */
-		अगर (opcode != ISCSI_OP_NOOP_OUT)
-			वापस 0;
+		if (opcode != ISCSI_OP_NOOP_OUT)
+			return 0;
 
-		अगर (rejected_pdu.itt == cpu_to_be32(ISCSI_RESERVED_TAG)) अणु
+		if (rejected_pdu.itt == cpu_to_be32(ISCSI_RESERVED_TAG)) {
 			/*
 			 * nop-out in response to target's nop-out rejected.
 			 * Just resend.
@@ -1071,64 +1070,64 @@ iscsi_data_in_rsp(काष्ठा iscsi_conn *conn, काष्ठा iscsi_
 			spin_unlock(&conn->session->back_lock);
 			spin_lock(&conn->session->frwd_lock);
 			iscsi_send_nopout(conn,
-					  (काष्ठा iscsi_nopin*)&rejected_pdu);
+					  (struct iscsi_nopin*)&rejected_pdu);
 			spin_unlock(&conn->session->frwd_lock);
 			spin_lock(&conn->session->back_lock);
-		पूर्ण अन्यथा अणु
-			काष्ठा iscsi_task *task;
+		} else {
+			struct iscsi_task *task;
 			/*
 			 * Our nop as ping got dropped. We know the target
 			 * and transport are ok so just clean up
 			 */
 			task = iscsi_itt_to_task(conn, rejected_pdu.itt);
-			अगर (!task) अणु
-				iscsi_conn_prपूर्णांकk(KERN_ERR, conn,
+			if (!task) {
+				iscsi_conn_printk(KERN_ERR, conn,
 						 "Invalid pdu reject. Could "
 						 "not lookup rejected task.\n");
 				rc = ISCSI_ERR_BAD_ITT;
-			पूर्ण अन्यथा
+			} else
 				rc = iscsi_nop_out_rsp(task,
-					(काष्ठा iscsi_nopin*)&rejected_pdu,
-					शून्य, 0);
-		पूर्ण
-		अवरोध;
-	शेष:
-		iscsi_conn_prपूर्णांकk(KERN_ERR, conn,
+					(struct iscsi_nopin*)&rejected_pdu,
+					NULL, 0);
+		}
+		break;
+	default:
+		iscsi_conn_printk(KERN_ERR, conn,
 				  "pdu (op 0x%x itt 0x%x) rejected. Reason "
 				  "code 0x%x\n", rejected_pdu.opcode,
 				  rejected_pdu.itt, reject->reason);
-		अवरोध;
-	पूर्ण
-	वापस rc;
-पूर्ण
+		break;
+	}
+	return rc;
+}
 
 /**
  * iscsi_itt_to_task - look up task by itt
  * @conn: iscsi connection
  * @itt: itt
  *
- * This should be used क्रम mgmt tasks like login and nops, or अगर
- * the LDD's itt space करोes not include the session age.
+ * This should be used for mgmt tasks like login and nops, or if
+ * the LDD's itt space does not include the session age.
  *
  * The session back_lock must be held.
  */
-काष्ठा iscsi_task *iscsi_itt_to_task(काष्ठा iscsi_conn *conn, itt_t itt)
-अणु
-	काष्ठा iscsi_session *session = conn->session;
-	पूर्णांक i;
+struct iscsi_task *iscsi_itt_to_task(struct iscsi_conn *conn, itt_t itt)
+{
+	struct iscsi_session *session = conn->session;
+	int i;
 
-	अगर (itt == RESERVED_ITT)
-		वापस शून्य;
+	if (itt == RESERVED_ITT)
+		return NULL;
 
-	अगर (session->tt->parse_pdu_itt)
-		session->tt->parse_pdu_itt(conn, itt, &i, शून्य);
-	अन्यथा
+	if (session->tt->parse_pdu_itt)
+		session->tt->parse_pdu_itt(conn, itt, &i, NULL);
+	else
 		i = get_itt(itt);
-	अगर (i >= session->cmds_max)
-		वापस शून्य;
+	if (i >= session->cmds_max)
+		return NULL;
 
-	वापस session->cmds[i];
-पूर्ण
+	return session->cmds[i];
+}
 EXPORT_SYMBOL_GPL(iscsi_itt_to_task);
 
 /**
@@ -1138,352 +1137,352 @@ EXPORT_SYMBOL_GPL(iscsi_itt_to_task);
  * @data: data buffer
  * @datalen: len of data buffer
  *
- * Completes pdu processing by मुक्तing any resources allocated at
- * queuecommand or send generic. session back_lock must be held and verअगरy
+ * Completes pdu processing by freeing any resources allocated at
+ * queuecommand or send generic. session back_lock must be held and verify
  * itt must have been called.
  */
-पूर्णांक __iscsi_complete_pdu(काष्ठा iscsi_conn *conn, काष्ठा iscsi_hdr *hdr,
-			 अक्षर *data, पूर्णांक datalen)
-अणु
-	काष्ठा iscsi_session *session = conn->session;
-	पूर्णांक opcode = hdr->opcode & ISCSI_OPCODE_MASK, rc = 0;
-	काष्ठा iscsi_task *task;
-	uपूर्णांक32_t itt;
+int __iscsi_complete_pdu(struct iscsi_conn *conn, struct iscsi_hdr *hdr,
+			 char *data, int datalen)
+{
+	struct iscsi_session *session = conn->session;
+	int opcode = hdr->opcode & ISCSI_OPCODE_MASK, rc = 0;
+	struct iscsi_task *task;
+	uint32_t itt;
 
-	conn->last_recv = jअगरfies;
-	rc = iscsi_verअगरy_itt(conn, hdr->itt);
-	अगर (rc)
-		वापस rc;
+	conn->last_recv = jiffies;
+	rc = iscsi_verify_itt(conn, hdr->itt);
+	if (rc)
+		return rc;
 
-	अगर (hdr->itt != RESERVED_ITT)
+	if (hdr->itt != RESERVED_ITT)
 		itt = get_itt(hdr->itt);
-	अन्यथा
+	else
 		itt = ~0U;
 
 	ISCSI_DBG_SESSION(session, "[op 0x%x cid %d itt 0x%x len %d]\n",
 			  opcode, conn->id, itt, datalen);
 
-	अगर (itt == ~0U) अणु
-		iscsi_update_cmdsn(session, (काष्ठा iscsi_nopin*)hdr);
+	if (itt == ~0U) {
+		iscsi_update_cmdsn(session, (struct iscsi_nopin*)hdr);
 
-		चयन(opcode) अणु
-		हाल ISCSI_OP_NOOP_IN:
-			अगर (datalen) अणु
+		switch(opcode) {
+		case ISCSI_OP_NOOP_IN:
+			if (datalen) {
 				rc = ISCSI_ERR_PROTO;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 
-			अगर (hdr->ttt == cpu_to_be32(ISCSI_RESERVED_TAG))
-				अवरोध;
+			if (hdr->ttt == cpu_to_be32(ISCSI_RESERVED_TAG))
+				break;
 
 			/* In RX path we are under back lock */
 			spin_unlock(&session->back_lock);
 			spin_lock(&session->frwd_lock);
-			iscsi_send_nopout(conn, (काष्ठा iscsi_nopin*)hdr);
+			iscsi_send_nopout(conn, (struct iscsi_nopin*)hdr);
 			spin_unlock(&session->frwd_lock);
 			spin_lock(&session->back_lock);
-			अवरोध;
-		हाल ISCSI_OP_REJECT:
+			break;
+		case ISCSI_OP_REJECT:
 			rc = iscsi_handle_reject(conn, hdr, data, datalen);
-			अवरोध;
-		हाल ISCSI_OP_ASYNC_EVENT:
+			break;
+		case ISCSI_OP_ASYNC_EVENT:
 			conn->exp_statsn = be32_to_cpu(hdr->statsn) + 1;
-			अगर (iscsi_recv_pdu(conn->cls_conn, hdr, data, datalen))
+			if (iscsi_recv_pdu(conn->cls_conn, hdr, data, datalen))
 				rc = ISCSI_ERR_CONN_FAILED;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			rc = ISCSI_ERR_BAD_OPCODE;
-			अवरोध;
-		पूर्ण
-		जाओ out;
-	पूर्ण
+			break;
+		}
+		goto out;
+	}
 
-	चयन(opcode) अणु
-	हाल ISCSI_OP_SCSI_CMD_RSP:
-	हाल ISCSI_OP_SCSI_DATA_IN:
+	switch(opcode) {
+	case ISCSI_OP_SCSI_CMD_RSP:
+	case ISCSI_OP_SCSI_DATA_IN:
 		task = iscsi_itt_to_ctask(conn, hdr->itt);
-		अगर (!task)
-			वापस ISCSI_ERR_BAD_ITT;
-		task->last_xfer = jअगरfies;
-		अवरोध;
-	हाल ISCSI_OP_R2T:
+		if (!task)
+			return ISCSI_ERR_BAD_ITT;
+		task->last_xfer = jiffies;
+		break;
+	case ISCSI_OP_R2T:
 		/*
-		 * LLD handles R2Ts अगर they need to.
+		 * LLD handles R2Ts if they need to.
 		 */
-		वापस 0;
-	हाल ISCSI_OP_LOGOUT_RSP:
-	हाल ISCSI_OP_LOGIN_RSP:
-	हाल ISCSI_OP_TEXT_RSP:
-	हाल ISCSI_OP_SCSI_TMFUNC_RSP:
-	हाल ISCSI_OP_NOOP_IN:
+		return 0;
+	case ISCSI_OP_LOGOUT_RSP:
+	case ISCSI_OP_LOGIN_RSP:
+	case ISCSI_OP_TEXT_RSP:
+	case ISCSI_OP_SCSI_TMFUNC_RSP:
+	case ISCSI_OP_NOOP_IN:
 		task = iscsi_itt_to_task(conn, hdr->itt);
-		अगर (!task)
-			वापस ISCSI_ERR_BAD_ITT;
-		अवरोध;
-	शेष:
-		वापस ISCSI_ERR_BAD_OPCODE;
-	पूर्ण
+		if (!task)
+			return ISCSI_ERR_BAD_ITT;
+		break;
+	default:
+		return ISCSI_ERR_BAD_OPCODE;
+	}
 
-	चयन(opcode) अणु
-	हाल ISCSI_OP_SCSI_CMD_RSP:
+	switch(opcode) {
+	case ISCSI_OP_SCSI_CMD_RSP:
 		iscsi_scsi_cmd_rsp(conn, hdr, task, data, datalen);
-		अवरोध;
-	हाल ISCSI_OP_SCSI_DATA_IN:
+		break;
+	case ISCSI_OP_SCSI_DATA_IN:
 		iscsi_data_in_rsp(conn, hdr, task);
-		अवरोध;
-	हाल ISCSI_OP_LOGOUT_RSP:
-		iscsi_update_cmdsn(session, (काष्ठा iscsi_nopin*)hdr);
-		अगर (datalen) अणु
+		break;
+	case ISCSI_OP_LOGOUT_RSP:
+		iscsi_update_cmdsn(session, (struct iscsi_nopin*)hdr);
+		if (datalen) {
 			rc = ISCSI_ERR_PROTO;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		conn->exp_statsn = be32_to_cpu(hdr->statsn) + 1;
-		जाओ recv_pdu;
-	हाल ISCSI_OP_LOGIN_RSP:
-	हाल ISCSI_OP_TEXT_RSP:
-		iscsi_update_cmdsn(session, (काष्ठा iscsi_nopin*)hdr);
+		goto recv_pdu;
+	case ISCSI_OP_LOGIN_RSP:
+	case ISCSI_OP_TEXT_RSP:
+		iscsi_update_cmdsn(session, (struct iscsi_nopin*)hdr);
 		/*
 		 * login related PDU's exp_statsn is handled in
 		 * userspace
 		 */
-		जाओ recv_pdu;
-	हाल ISCSI_OP_SCSI_TMFUNC_RSP:
-		iscsi_update_cmdsn(session, (काष्ठा iscsi_nopin*)hdr);
-		अगर (datalen) अणु
+		goto recv_pdu;
+	case ISCSI_OP_SCSI_TMFUNC_RSP:
+		iscsi_update_cmdsn(session, (struct iscsi_nopin*)hdr);
+		if (datalen) {
 			rc = ISCSI_ERR_PROTO;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		iscsi_पंचांगf_rsp(conn, hdr);
+		iscsi_tmf_rsp(conn, hdr);
 		iscsi_complete_task(task, ISCSI_TASK_COMPLETED);
-		अवरोध;
-	हाल ISCSI_OP_NOOP_IN:
-		iscsi_update_cmdsn(session, (काष्ठा iscsi_nopin*)hdr);
-		अगर (hdr->ttt != cpu_to_be32(ISCSI_RESERVED_TAG) || datalen) अणु
+		break;
+	case ISCSI_OP_NOOP_IN:
+		iscsi_update_cmdsn(session, (struct iscsi_nopin*)hdr);
+		if (hdr->ttt != cpu_to_be32(ISCSI_RESERVED_TAG) || datalen) {
 			rc = ISCSI_ERR_PROTO;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		conn->exp_statsn = be32_to_cpu(hdr->statsn) + 1;
 
-		rc = iscsi_nop_out_rsp(task, (काष्ठा iscsi_nopin*)hdr,
+		rc = iscsi_nop_out_rsp(task, (struct iscsi_nopin*)hdr,
 				       data, datalen);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		rc = ISCSI_ERR_BAD_OPCODE;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 out:
-	वापस rc;
+	return rc;
 recv_pdu:
-	अगर (iscsi_recv_pdu(conn->cls_conn, hdr, data, datalen))
+	if (iscsi_recv_pdu(conn->cls_conn, hdr, data, datalen))
 		rc = ISCSI_ERR_CONN_FAILED;
 	iscsi_complete_task(task, ISCSI_TASK_COMPLETED);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 EXPORT_SYMBOL_GPL(__iscsi_complete_pdu);
 
-पूर्णांक iscsi_complete_pdu(काष्ठा iscsi_conn *conn, काष्ठा iscsi_hdr *hdr,
-		       अक्षर *data, पूर्णांक datalen)
-अणु
-	पूर्णांक rc;
+int iscsi_complete_pdu(struct iscsi_conn *conn, struct iscsi_hdr *hdr,
+		       char *data, int datalen)
+{
+	int rc;
 
 	spin_lock(&conn->session->back_lock);
 	rc = __iscsi_complete_pdu(conn, hdr, data, datalen);
 	spin_unlock(&conn->session->back_lock);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 EXPORT_SYMBOL_GPL(iscsi_complete_pdu);
 
-पूर्णांक iscsi_verअगरy_itt(काष्ठा iscsi_conn *conn, itt_t itt)
-अणु
-	काष्ठा iscsi_session *session = conn->session;
-	पूर्णांक age = 0, i = 0;
+int iscsi_verify_itt(struct iscsi_conn *conn, itt_t itt)
+{
+	struct iscsi_session *session = conn->session;
+	int age = 0, i = 0;
 
-	अगर (itt == RESERVED_ITT)
-		वापस 0;
+	if (itt == RESERVED_ITT)
+		return 0;
 
-	अगर (session->tt->parse_pdu_itt)
+	if (session->tt->parse_pdu_itt)
 		session->tt->parse_pdu_itt(conn, itt, &i, &age);
-	अन्यथा अणु
+	else {
 		i = get_itt(itt);
-		age = ((__क्रमce u32)itt >> ISCSI_AGE_SHIFT) & ISCSI_AGE_MASK;
-	पूर्ण
+		age = ((__force u32)itt >> ISCSI_AGE_SHIFT) & ISCSI_AGE_MASK;
+	}
 
-	अगर (age != session->age) अणु
-		iscsi_conn_prपूर्णांकk(KERN_ERR, conn,
+	if (age != session->age) {
+		iscsi_conn_printk(KERN_ERR, conn,
 				  "received itt %x expected session age (%x)\n",
-				  (__क्रमce u32)itt, session->age);
-		वापस ISCSI_ERR_BAD_ITT;
-	पूर्ण
+				  (__force u32)itt, session->age);
+		return ISCSI_ERR_BAD_ITT;
+	}
 
-	अगर (i >= session->cmds_max) अणु
-		iscsi_conn_prपूर्णांकk(KERN_ERR, conn,
+	if (i >= session->cmds_max) {
+		iscsi_conn_printk(KERN_ERR, conn,
 				  "received invalid itt index %u (max cmds "
 				   "%u.\n", i, session->cmds_max);
-		वापस ISCSI_ERR_BAD_ITT;
-	पूर्ण
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(iscsi_verअगरy_itt);
+		return ISCSI_ERR_BAD_ITT;
+	}
+	return 0;
+}
+EXPORT_SYMBOL_GPL(iscsi_verify_itt);
 
 /**
  * iscsi_itt_to_ctask - look up ctask by itt
  * @conn: iscsi connection
  * @itt: itt
  *
- * This should be used क्रम cmd tasks.
+ * This should be used for cmd tasks.
  *
  * The session back_lock must be held.
  */
-काष्ठा iscsi_task *iscsi_itt_to_ctask(काष्ठा iscsi_conn *conn, itt_t itt)
-अणु
-	काष्ठा iscsi_task *task;
+struct iscsi_task *iscsi_itt_to_ctask(struct iscsi_conn *conn, itt_t itt)
+{
+	struct iscsi_task *task;
 
-	अगर (iscsi_verअगरy_itt(conn, itt))
-		वापस शून्य;
+	if (iscsi_verify_itt(conn, itt))
+		return NULL;
 
 	task = iscsi_itt_to_task(conn, itt);
-	अगर (!task || !task->sc)
-		वापस शून्य;
+	if (!task || !task->sc)
+		return NULL;
 
-	अगर (task->sc->SCp.phase != conn->session->age) अणु
-		iscsi_session_prपूर्णांकk(KERN_ERR, conn->session,
+	if (task->sc->SCp.phase != conn->session->age) {
+		iscsi_session_printk(KERN_ERR, conn->session,
 				  "task's session age %d, expected %d\n",
 				  task->sc->SCp.phase, conn->session->age);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	वापस task;
-पूर्ण
+	return task;
+}
 EXPORT_SYMBOL_GPL(iscsi_itt_to_ctask);
 
-व्योम iscsi_session_failure(काष्ठा iscsi_session *session,
-			   क्रमागत iscsi_err err)
-अणु
-	काष्ठा iscsi_conn *conn;
-	काष्ठा device *dev;
+void iscsi_session_failure(struct iscsi_session *session,
+			   enum iscsi_err err)
+{
+	struct iscsi_conn *conn;
+	struct device *dev;
 
 	spin_lock_bh(&session->frwd_lock);
 	conn = session->leadconn;
-	अगर (session->state == ISCSI_STATE_TERMINATE || !conn) अणु
+	if (session->state == ISCSI_STATE_TERMINATE || !conn) {
 		spin_unlock_bh(&session->frwd_lock);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	dev = get_device(&conn->cls_conn->dev);
 	spin_unlock_bh(&session->frwd_lock);
-	अगर (!dev)
-	        वापस;
+	if (!dev)
+	        return;
 	/*
-	 * अगर the host is being हटाओd bypass the connection
-	 * recovery initialization because we are going to समाप्त
+	 * if the host is being removed bypass the connection
+	 * recovery initialization because we are going to kill
 	 * the session.
 	 */
-	अगर (err == ISCSI_ERR_INVALID_HOST)
+	if (err == ISCSI_ERR_INVALID_HOST)
 		iscsi_conn_error_event(conn->cls_conn, err);
-	अन्यथा
+	else
 		iscsi_conn_failure(conn, err);
 	put_device(dev);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(iscsi_session_failure);
 
-व्योम iscsi_conn_failure(काष्ठा iscsi_conn *conn, क्रमागत iscsi_err err)
-अणु
-	काष्ठा iscsi_session *session = conn->session;
+void iscsi_conn_failure(struct iscsi_conn *conn, enum iscsi_err err)
+{
+	struct iscsi_session *session = conn->session;
 
 	spin_lock_bh(&session->frwd_lock);
-	अगर (session->state == ISCSI_STATE_FAILED) अणु
+	if (session->state == ISCSI_STATE_FAILED) {
 		spin_unlock_bh(&session->frwd_lock);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (conn->stop_stage == 0)
+	if (conn->stop_stage == 0)
 		session->state = ISCSI_STATE_FAILED;
 	spin_unlock_bh(&session->frwd_lock);
 
 	set_bit(ISCSI_SUSPEND_BIT, &conn->suspend_tx);
 	set_bit(ISCSI_SUSPEND_BIT, &conn->suspend_rx);
 	iscsi_conn_error_event(conn->cls_conn, err);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(iscsi_conn_failure);
 
-अटल पूर्णांक iscsi_check_cmdsn_winकरोw_बंदd(काष्ठा iscsi_conn *conn)
-अणु
-	काष्ठा iscsi_session *session = conn->session;
+static int iscsi_check_cmdsn_window_closed(struct iscsi_conn *conn)
+{
+	struct iscsi_session *session = conn->session;
 
 	/*
-	 * Check क्रम iSCSI winकरोw and take care of CmdSN wrap-around
+	 * Check for iSCSI window and take care of CmdSN wrap-around
 	 */
-	अगर (!iscsi_sna_lte(session->queued_cmdsn, session->max_cmdsn)) अणु
+	if (!iscsi_sna_lte(session->queued_cmdsn, session->max_cmdsn)) {
 		ISCSI_DBG_SESSION(session, "iSCSI CmdSN closed. ExpCmdSn "
 				  "%u MaxCmdSN %u CmdSN %u/%u\n",
 				  session->exp_cmdsn, session->max_cmdsn,
 				  session->cmdsn, session->queued_cmdsn);
-		वापस -ENOSPC;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return -ENOSPC;
+	}
+	return 0;
+}
 
-अटल पूर्णांक iscsi_xmit_task(काष्ठा iscsi_conn *conn, काष्ठा iscsi_task *task,
+static int iscsi_xmit_task(struct iscsi_conn *conn, struct iscsi_task *task,
 			   bool was_requeue)
-अणु
-	पूर्णांक rc;
+{
+	int rc;
 
 	spin_lock_bh(&conn->session->back_lock);
 
-	अगर (!conn->task) अणु
+	if (!conn->task) {
 		/* Take a ref so we can access it after xmit_task() */
 		__iscsi_get_task(task);
-	पूर्ण अन्यथा अणु
-		/* Alपढ़ोy have a ref from when we failed to send it last call */
-		conn->task = शून्य;
-	पूर्ण
+	} else {
+		/* Already have a ref from when we failed to send it last call */
+		conn->task = NULL;
+	}
 
 	/*
-	 * If this was a requeue क्रम a R2T we have an extra ref on the task in
-	 * हाल a bad target sends a cmd rsp beक्रमe we have handled the task.
+	 * If this was a requeue for a R2T we have an extra ref on the task in
+	 * case a bad target sends a cmd rsp before we have handled the task.
 	 */
-	अगर (was_requeue)
+	if (was_requeue)
 		__iscsi_put_task(task);
 
 	/*
-	 * Do this after dropping the extra ref because अगर this was a requeue
-	 * it's हटाओd from that list and cleanup_queued_task would miss it.
+	 * Do this after dropping the extra ref because if this was a requeue
+	 * it's removed from that list and cleanup_queued_task would miss it.
 	 */
-	अगर (test_bit(ISCSI_SUSPEND_BIT, &conn->suspend_tx)) अणु
+	if (test_bit(ISCSI_SUSPEND_BIT, &conn->suspend_tx)) {
 		/*
-		 * Save the task and ref in हाल we weren't cleaning up this
+		 * Save the task and ref in case we weren't cleaning up this
 		 * task and get woken up again.
 		 */
 		conn->task = task;
 		spin_unlock_bh(&conn->session->back_lock);
-		वापस -ENODATA;
-	पूर्ण
+		return -ENODATA;
+	}
 	spin_unlock_bh(&conn->session->back_lock);
 
 	spin_unlock_bh(&conn->session->frwd_lock);
 	rc = conn->session->tt->xmit_task(task);
 	spin_lock_bh(&conn->session->frwd_lock);
-	अगर (!rc) अणु
-		/* करोne with this task */
-		task->last_xfer = jअगरfies;
-	पूर्ण
+	if (!rc) {
+		/* done with this task */
+		task->last_xfer = jiffies;
+	}
 	/* regular RX path uses back_lock */
 	spin_lock(&conn->session->back_lock);
-	अगर (rc && task->state == ISCSI_TASK_RUNNING) अणु
+	if (rc && task->state == ISCSI_TASK_RUNNING) {
 		/*
-		 * get an extra ref that is released next समय we access it
+		 * get an extra ref that is released next time we access it
 		 * as conn->task above.
 		 */
 		__iscsi_get_task(task);
 		conn->task = task;
-	पूर्ण
+	}
 
 	__iscsi_put_task(task);
 	spin_unlock(&conn->session->back_lock);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /**
  * iscsi_requeue_task - requeue task to run from session workqueue
@@ -1491,173 +1490,173 @@ EXPORT_SYMBOL_GPL(iscsi_conn_failure);
  *
  * Callers must have taken a ref to the task that is going to be requeued.
  */
-व्योम iscsi_requeue_task(काष्ठा iscsi_task *task)
-अणु
-	काष्ठा iscsi_conn *conn = task->conn;
+void iscsi_requeue_task(struct iscsi_task *task)
+{
+	struct iscsi_conn *conn = task->conn;
 
 	/*
-	 * this may be on the requeue list alपढ़ोy अगर the xmit_task callout
-	 * is handling the r2ts जबतक we are adding new ones
+	 * this may be on the requeue list already if the xmit_task callout
+	 * is handling the r2ts while we are adding new ones
 	 */
 	spin_lock_bh(&conn->session->frwd_lock);
-	अगर (list_empty(&task->running)) अणु
+	if (list_empty(&task->running)) {
 		list_add_tail(&task->running, &conn->requeue);
-	पूर्ण अन्यथा अणु
+	} else {
 		/*
-		 * Don't need the extra ref since it's alपढ़ोy requeued and
+		 * Don't need the extra ref since it's already requeued and
 		 * has a ref.
 		 */
 		iscsi_put_task(task);
-	पूर्ण
+	}
 	iscsi_conn_queue_work(conn);
 	spin_unlock_bh(&conn->session->frwd_lock);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(iscsi_requeue_task);
 
 /**
- * iscsi_data_xmit - xmit any command पूर्णांकo the scheduled connection
+ * iscsi_data_xmit - xmit any command into the scheduled connection
  * @conn: iscsi connection
  *
  * Notes:
- *	The function can वापस -EAGAIN in which हाल the caller must
- *	re-schedule it again later or recover. '0' वापस code means
+ *	The function can return -EAGAIN in which case the caller must
+ *	re-schedule it again later or recover. '0' return code means
  *	successful xmit.
  **/
-अटल पूर्णांक iscsi_data_xmit(काष्ठा iscsi_conn *conn)
-अणु
-	काष्ठा iscsi_task *task;
-	पूर्णांक rc = 0;
+static int iscsi_data_xmit(struct iscsi_conn *conn)
+{
+	struct iscsi_task *task;
+	int rc = 0;
 
 	spin_lock_bh(&conn->session->frwd_lock);
-	अगर (test_bit(ISCSI_SUSPEND_BIT, &conn->suspend_tx)) अणु
+	if (test_bit(ISCSI_SUSPEND_BIT, &conn->suspend_tx)) {
 		ISCSI_DBG_SESSION(conn->session, "Tx suspended!\n");
 		spin_unlock_bh(&conn->session->frwd_lock);
-		वापस -ENODATA;
-	पूर्ण
+		return -ENODATA;
+	}
 
-	अगर (conn->task) अणु
+	if (conn->task) {
 		rc = iscsi_xmit_task(conn, conn->task, false);
-	        अगर (rc)
-		        जाओ करोne;
-	पूर्ण
+	        if (rc)
+		        goto done;
+	}
 
 	/*
-	 * process mgmt pdus like nops beक्रमe commands since we should
-	 * only have one nop-out as a ping from us and tarमाला_लो should not
+	 * process mgmt pdus like nops before commands since we should
+	 * only have one nop-out as a ping from us and targets should not
 	 * overflow us with nop-ins
 	 */
 check_mgmt:
-	जबतक (!list_empty(&conn->mgmtqueue)) अणु
-		task = list_entry(conn->mgmtqueue.next, काष्ठा iscsi_task,
+	while (!list_empty(&conn->mgmtqueue)) {
+		task = list_entry(conn->mgmtqueue.next, struct iscsi_task,
 				  running);
 		list_del_init(&task->running);
-		अगर (iscsi_prep_mgmt_task(conn, task)) अणु
+		if (iscsi_prep_mgmt_task(conn, task)) {
 			/* regular RX path uses back_lock */
 			spin_lock_bh(&conn->session->back_lock);
 			__iscsi_put_task(task);
 			spin_unlock_bh(&conn->session->back_lock);
-			जारी;
-		पूर्ण
+			continue;
+		}
 		rc = iscsi_xmit_task(conn, task, false);
-		अगर (rc)
-			जाओ करोne;
-	पूर्ण
+		if (rc)
+			goto done;
+	}
 
 	/* process pending command queue */
-	जबतक (!list_empty(&conn->cmdqueue)) अणु
-		task = list_entry(conn->cmdqueue.next, काष्ठा iscsi_task,
+	while (!list_empty(&conn->cmdqueue)) {
+		task = list_entry(conn->cmdqueue.next, struct iscsi_task,
 				  running);
 		list_del_init(&task->running);
-		अगर (conn->session->state == ISCSI_STATE_LOGGING_OUT) अणु
+		if (conn->session->state == ISCSI_STATE_LOGGING_OUT) {
 			fail_scsi_task(task, DID_IMM_RETRY);
-			जारी;
-		पूर्ण
+			continue;
+		}
 		rc = iscsi_prep_scsi_cmd_pdu(task);
-		अगर (rc) अणु
-			अगर (rc == -ENOMEM || rc == -EACCES)
+		if (rc) {
+			if (rc == -ENOMEM || rc == -EACCES)
 				fail_scsi_task(task, DID_IMM_RETRY);
-			अन्यथा
+			else
 				fail_scsi_task(task, DID_ABORT);
-			जारी;
-		पूर्ण
+			continue;
+		}
 		rc = iscsi_xmit_task(conn, task, false);
-		अगर (rc)
-			जाओ करोne;
+		if (rc)
+			goto done;
 		/*
 		 * we could continuously get new task requests so
-		 * we need to check the mgmt queue क्रम nops that need to
+		 * we need to check the mgmt queue for nops that need to
 		 * be sent to aviod starvation
 		 */
-		अगर (!list_empty(&conn->mgmtqueue))
-			जाओ check_mgmt;
-	पूर्ण
+		if (!list_empty(&conn->mgmtqueue))
+			goto check_mgmt;
+	}
 
-	जबतक (!list_empty(&conn->requeue)) अणु
+	while (!list_empty(&conn->requeue)) {
 		/*
-		 * we always करो fastlogout - conn stop code will clean up.
+		 * we always do fastlogout - conn stop code will clean up.
 		 */
-		अगर (conn->session->state == ISCSI_STATE_LOGGING_OUT)
-			अवरोध;
+		if (conn->session->state == ISCSI_STATE_LOGGING_OUT)
+			break;
 
-		task = list_entry(conn->requeue.next, काष्ठा iscsi_task,
+		task = list_entry(conn->requeue.next, struct iscsi_task,
 				  running);
 
-		अगर (iscsi_check_पंचांगf_restrictions(task, ISCSI_OP_SCSI_DATA_OUT))
-			अवरोध;
+		if (iscsi_check_tmf_restrictions(task, ISCSI_OP_SCSI_DATA_OUT))
+			break;
 
 		list_del_init(&task->running);
 		rc = iscsi_xmit_task(conn, task, true);
-		अगर (rc)
-			जाओ करोne;
-		अगर (!list_empty(&conn->mgmtqueue))
-			जाओ check_mgmt;
-	पूर्ण
+		if (rc)
+			goto done;
+		if (!list_empty(&conn->mgmtqueue))
+			goto check_mgmt;
+	}
 	spin_unlock_bh(&conn->session->frwd_lock);
-	वापस -ENODATA;
+	return -ENODATA;
 
-करोne:
+done:
 	spin_unlock_bh(&conn->session->frwd_lock);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल व्योम iscsi_xmitworker(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा iscsi_conn *conn =
-		container_of(work, काष्ठा iscsi_conn, xmitwork);
-	पूर्णांक rc;
+static void iscsi_xmitworker(struct work_struct *work)
+{
+	struct iscsi_conn *conn =
+		container_of(work, struct iscsi_conn, xmitwork);
+	int rc;
 	/*
 	 * serialize Xmit worker on a per-connection basis.
 	 */
-	करो अणु
+	do {
 		rc = iscsi_data_xmit(conn);
-	पूर्ण जबतक (rc >= 0 || rc == -EAGAIN);
-पूर्ण
+	} while (rc >= 0 || rc == -EAGAIN);
+}
 
-अटल अंतरभूत काष्ठा iscsi_task *iscsi_alloc_task(काष्ठा iscsi_conn *conn,
-						  काष्ठा scsi_cmnd *sc)
-अणु
-	काष्ठा iscsi_task *task;
+static inline struct iscsi_task *iscsi_alloc_task(struct iscsi_conn *conn,
+						  struct scsi_cmnd *sc)
+{
+	struct iscsi_task *task;
 
-	अगर (!kfअगरo_out(&conn->session->cmdpool.queue,
-			 (व्योम *) &task, माप(व्योम *)))
-		वापस शून्य;
+	if (!kfifo_out(&conn->session->cmdpool.queue,
+			 (void *) &task, sizeof(void *)))
+		return NULL;
 
 	sc->SCp.phase = conn->session->age;
-	sc->SCp.ptr = (अक्षर *) task;
+	sc->SCp.ptr = (char *) task;
 
 	refcount_set(&task->refcount, 1);
 	task->state = ISCSI_TASK_PENDING;
 	task->conn = conn;
 	task->sc = sc;
 	task->have_checked_conn = false;
-	task->last_समयout = jअगरfies;
-	task->last_xfer = jअगरfies;
-	task->रक्षित = false;
+	task->last_timeout = jiffies;
+	task->last_xfer = jiffies;
+	task->protected = false;
 	INIT_LIST_HEAD(&task->running);
-	वापस task;
-पूर्ण
+	return task;
+}
 
-क्रमागत अणु
+enum {
 	FAILURE_BAD_HOST = 1,
 	FAILURE_SESSION_FAILED,
 	FAILURE_SESSION_FREED,
@@ -1668,19 +1667,19 @@ check_mgmt:
 	FAILURE_SESSION_RECOVERY_TIMEOUT,
 	FAILURE_SESSION_LOGGING_OUT,
 	FAILURE_SESSION_NOT_READY,
-पूर्ण;
+};
 
-पूर्णांक iscsi_queuecommand(काष्ठा Scsi_Host *host, काष्ठा scsi_cmnd *sc)
-अणु
-	काष्ठा iscsi_cls_session *cls_session;
-	काष्ठा iscsi_host *ihost;
-	पूर्णांक reason = 0;
-	काष्ठा iscsi_session *session;
-	काष्ठा iscsi_conn *conn;
-	काष्ठा iscsi_task *task = शून्य;
+int iscsi_queuecommand(struct Scsi_Host *host, struct scsi_cmnd *sc)
+{
+	struct iscsi_cls_session *cls_session;
+	struct iscsi_host *ihost;
+	int reason = 0;
+	struct iscsi_session *session;
+	struct iscsi_conn *conn;
+	struct iscsi_task *task = NULL;
 
 	sc->result = 0;
-	sc->SCp.ptr = शून्य;
+	sc->SCp.ptr = NULL;
 
 	ihost = shost_priv(host);
 
@@ -1688,102 +1687,102 @@ check_mgmt:
 	session = cls_session->dd_data;
 	spin_lock_bh(&session->frwd_lock);
 
-	reason = iscsi_session_chkपढ़ोy(cls_session);
-	अगर (reason) अणु
+	reason = iscsi_session_chkready(cls_session);
+	if (reason) {
 		sc->result = reason;
-		जाओ fault;
-	पूर्ण
+		goto fault;
+	}
 
-	अगर (session->state != ISCSI_STATE_LOGGED_IN) अणु
+	if (session->state != ISCSI_STATE_LOGGED_IN) {
 		/*
 		 * to handle the race between when we set the recovery state
 		 * and block the session we requeue here (commands could
-		 * be entering our queuecommand जबतक a block is starting
+		 * be entering our queuecommand while a block is starting
 		 * up because the block code is not locked)
 		 */
-		चयन (session->state) अणु
-		हाल ISCSI_STATE_FAILED:
+		switch (session->state) {
+		case ISCSI_STATE_FAILED:
 			/*
-			 * cmds should fail during shutकरोwn, अगर the session
+			 * cmds should fail during shutdown, if the session
 			 * state is bad, allowing completion to happen
 			 */
-			अगर (unlikely(प्रणाली_state != SYSTEM_RUNNING)) अणु
+			if (unlikely(system_state != SYSTEM_RUNNING)) {
 				reason = FAILURE_SESSION_FAILED;
 				sc->result = DID_NO_CONNECT << 16;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 			fallthrough;
-		हाल ISCSI_STATE_IN_RECOVERY:
+		case ISCSI_STATE_IN_RECOVERY:
 			reason = FAILURE_SESSION_IN_RECOVERY;
 			sc->result = DID_IMM_RETRY << 16;
-			अवरोध;
-		हाल ISCSI_STATE_LOGGING_OUT:
+			break;
+		case ISCSI_STATE_LOGGING_OUT:
 			reason = FAILURE_SESSION_LOGGING_OUT;
 			sc->result = DID_IMM_RETRY << 16;
-			अवरोध;
-		हाल ISCSI_STATE_RECOVERY_FAILED:
+			break;
+		case ISCSI_STATE_RECOVERY_FAILED:
 			reason = FAILURE_SESSION_RECOVERY_TIMEOUT;
 			sc->result = DID_TRANSPORT_FAILFAST << 16;
-			अवरोध;
-		हाल ISCSI_STATE_TERMINATE:
+			break;
+		case ISCSI_STATE_TERMINATE:
 			reason = FAILURE_SESSION_TERMINATE;
 			sc->result = DID_NO_CONNECT << 16;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			reason = FAILURE_SESSION_FREED;
 			sc->result = DID_NO_CONNECT << 16;
-		पूर्ण
-		जाओ fault;
-	पूर्ण
+		}
+		goto fault;
+	}
 
 	conn = session->leadconn;
-	अगर (!conn) अणु
+	if (!conn) {
 		reason = FAILURE_SESSION_FREED;
 		sc->result = DID_NO_CONNECT << 16;
-		जाओ fault;
-	पूर्ण
+		goto fault;
+	}
 
-	अगर (test_bit(ISCSI_SUSPEND_BIT, &conn->suspend_tx)) अणु
+	if (test_bit(ISCSI_SUSPEND_BIT, &conn->suspend_tx)) {
 		reason = FAILURE_SESSION_IN_RECOVERY;
 		sc->result = DID_REQUEUE << 16;
-		जाओ fault;
-	पूर्ण
+		goto fault;
+	}
 
-	अगर (iscsi_check_cmdsn_winकरोw_बंदd(conn)) अणु
+	if (iscsi_check_cmdsn_window_closed(conn)) {
 		reason = FAILURE_WINDOW_CLOSED;
-		जाओ reject;
-	पूर्ण
+		goto reject;
+	}
 
 	task = iscsi_alloc_task(conn, sc);
-	अगर (!task) अणु
+	if (!task) {
 		reason = FAILURE_OOM;
-		जाओ reject;
-	पूर्ण
+		goto reject;
+	}
 
-	अगर (!ihost->workq) अणु
+	if (!ihost->workq) {
 		reason = iscsi_prep_scsi_cmd_pdu(task);
-		अगर (reason) अणु
-			अगर (reason == -ENOMEM ||  reason == -EACCES) अणु
+		if (reason) {
+			if (reason == -ENOMEM ||  reason == -EACCES) {
 				reason = FAILURE_OOM;
-				जाओ prepd_reject;
-			पूर्ण अन्यथा अणु
+				goto prepd_reject;
+			} else {
 				sc->result = DID_ABORT << 16;
-				जाओ prepd_fault;
-			पूर्ण
-		पूर्ण
-		अगर (session->tt->xmit_task(task)) अणु
+				goto prepd_fault;
+			}
+		}
+		if (session->tt->xmit_task(task)) {
 			session->cmdsn--;
 			reason = FAILURE_SESSION_NOT_READY;
-			जाओ prepd_reject;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			goto prepd_reject;
+		}
+	} else {
 		list_add_tail(&task->running, &conn->cmdqueue);
 		iscsi_conn_queue_work(conn);
-	पूर्ण
+	}
 
 	session->queued_cmdsn++;
 	spin_unlock_bh(&session->frwd_lock);
-	वापस 0;
+	return 0;
 
 prepd_reject:
 	spin_lock_bh(&session->back_lock);
@@ -1793,7 +1792,7 @@ reject:
 	spin_unlock_bh(&session->frwd_lock);
 	ISCSI_DBG_SESSION(session, "cmd 0x%x rejected (%d)\n",
 			  sc->cmnd[0], reason);
-	वापस SCSI_MLQUEUE_TARGET_BUSY;
+	return SCSI_MLQUEUE_TARGET_BUSY;
 
 prepd_fault:
 	spin_lock_bh(&session->back_lock);
@@ -1804,102 +1803,102 @@ fault:
 	ISCSI_DBG_SESSION(session, "iscsi: cmd 0x%x is not queued (%d)\n",
 			  sc->cmnd[0], reason);
 	scsi_set_resid(sc, scsi_bufflen(sc));
-	sc->scsi_करोne(sc);
-	वापस 0;
-पूर्ण
+	sc->scsi_done(sc);
+	return 0;
+}
 EXPORT_SYMBOL_GPL(iscsi_queuecommand);
 
-पूर्णांक iscsi_target_alloc(काष्ठा scsi_target *starget)
-अणु
-	काष्ठा iscsi_cls_session *cls_session = starget_to_session(starget);
-	काष्ठा iscsi_session *session = cls_session->dd_data;
+int iscsi_target_alloc(struct scsi_target *starget)
+{
+	struct iscsi_cls_session *cls_session = starget_to_session(starget);
+	struct iscsi_session *session = cls_session->dd_data;
 
 	starget->can_queue = session->scsi_cmds_max;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(iscsi_target_alloc);
 
-अटल व्योम iscsi_पंचांगf_समयकरोut(काष्ठा समयr_list *t)
-अणु
-	काष्ठा iscsi_conn *conn = from_समयr(conn, t, पंचांगf_समयr);
-	काष्ठा iscsi_session *session = conn->session;
+static void iscsi_tmf_timedout(struct timer_list *t)
+{
+	struct iscsi_conn *conn = from_timer(conn, t, tmf_timer);
+	struct iscsi_session *session = conn->session;
 
 	spin_lock(&session->frwd_lock);
-	अगर (conn->पंचांगf_state == TMF_QUEUED) अणु
-		conn->पंचांगf_state = TMF_TIMEDOUT;
+	if (conn->tmf_state == TMF_QUEUED) {
+		conn->tmf_state = TMF_TIMEDOUT;
 		ISCSI_DBG_EH(session, "tmf timedout\n");
-		/* unblock eh_पात() */
-		wake_up(&conn->ehरुको);
-	पूर्ण
+		/* unblock eh_abort() */
+		wake_up(&conn->ehwait);
+	}
 	spin_unlock(&session->frwd_lock);
-पूर्ण
+}
 
-अटल पूर्णांक iscsi_exec_task_mgmt_fn(काष्ठा iscsi_conn *conn,
-				   काष्ठा iscsi_पंचांग *hdr, पूर्णांक age,
-				   पूर्णांक समयout)
+static int iscsi_exec_task_mgmt_fn(struct iscsi_conn *conn,
+				   struct iscsi_tm *hdr, int age,
+				   int timeout)
 	__must_hold(&session->frwd_lock)
-अणु
-	काष्ठा iscsi_session *session = conn->session;
-	काष्ठा iscsi_task *task;
+{
+	struct iscsi_session *session = conn->session;
+	struct iscsi_task *task;
 
-	task = __iscsi_conn_send_pdu(conn, (काष्ठा iscsi_hdr *)hdr,
-				      शून्य, 0);
-	अगर (!task) अणु
+	task = __iscsi_conn_send_pdu(conn, (struct iscsi_hdr *)hdr,
+				      NULL, 0);
+	if (!task) {
 		spin_unlock_bh(&session->frwd_lock);
-		iscsi_conn_prपूर्णांकk(KERN_ERR, conn, "Could not send TMF.\n");
+		iscsi_conn_printk(KERN_ERR, conn, "Could not send TMF.\n");
 		iscsi_conn_failure(conn, ISCSI_ERR_CONN_FAILED);
 		spin_lock_bh(&session->frwd_lock);
-		वापस -EPERM;
-	पूर्ण
-	conn->पंचांगfcmd_pdus_cnt++;
-	conn->पंचांगf_समयr.expires = समयout * HZ + jअगरfies;
-	add_समयr(&conn->पंचांगf_समयr);
+		return -EPERM;
+	}
+	conn->tmfcmd_pdus_cnt++;
+	conn->tmf_timer.expires = timeout * HZ + jiffies;
+	add_timer(&conn->tmf_timer);
 	ISCSI_DBG_EH(session, "tmf set timeout\n");
 
 	spin_unlock_bh(&session->frwd_lock);
 	mutex_unlock(&session->eh_mutex);
 
 	/*
-	 * block eh thपढ़ो until:
+	 * block eh thread until:
 	 *
-	 * 1) पंचांगf response
-	 * 2) पंचांगf समयout
+	 * 1) tmf response
+	 * 2) tmf timeout
 	 * 3) session is terminated or restarted or userspace has
 	 * given up on recovery
 	 */
-	रुको_event_पूर्णांकerruptible(conn->ehरुको, age != session->age ||
+	wait_event_interruptible(conn->ehwait, age != session->age ||
 				 session->state != ISCSI_STATE_LOGGED_IN ||
-				 conn->पंचांगf_state != TMF_QUEUED);
-	अगर (संकेत_pending(current))
-		flush_संकेतs(current);
-	del_समयr_sync(&conn->पंचांगf_समयr);
+				 conn->tmf_state != TMF_QUEUED);
+	if (signal_pending(current))
+		flush_signals(current);
+	del_timer_sync(&conn->tmf_timer);
 
 	mutex_lock(&session->eh_mutex);
 	spin_lock_bh(&session->frwd_lock);
-	/* अगर the session drops it will clean up the task */
-	अगर (age != session->age ||
+	/* if the session drops it will clean up the task */
+	if (age != session->age ||
 	    session->state != ISCSI_STATE_LOGGED_IN)
-		वापस -ENOTCONN;
-	वापस 0;
-पूर्ण
+		return -ENOTCONN;
+	return 0;
+}
 
 /*
- * Fail commands. session frwd lock held and xmit thपढ़ो flushed.
+ * Fail commands. session frwd lock held and xmit thread flushed.
  */
-अटल व्योम fail_scsi_tasks(काष्ठा iscsi_conn *conn, u64 lun, पूर्णांक error)
-अणु
-	काष्ठा iscsi_session *session = conn->session;
-	काष्ठा iscsi_task *task;
-	पूर्णांक i;
+static void fail_scsi_tasks(struct iscsi_conn *conn, u64 lun, int error)
+{
+	struct iscsi_session *session = conn->session;
+	struct iscsi_task *task;
+	int i;
 
 	spin_lock_bh(&session->back_lock);
-	क्रम (i = 0; i < session->cmds_max; i++) अणु
+	for (i = 0; i < session->cmds_max; i++) {
 		task = session->cmds[i];
-		अगर (!task->sc || task->state == ISCSI_TASK_FREE)
-			जारी;
+		if (!task->sc || task->state == ISCSI_TASK_FREE)
+			continue;
 
-		अगर (lun != -1 && lun != task->sc->device->lun)
-			जारी;
+		if (lun != -1 && lun != task->sc->device->lun)
+			continue;
 
 		__iscsi_get_task(task);
 		spin_unlock_bh(&session->back_lock);
@@ -1914,28 +1913,28 @@ EXPORT_SYMBOL_GPL(iscsi_target_alloc);
 		spin_lock_bh(&session->frwd_lock);
 
 		spin_lock_bh(&session->back_lock);
-	पूर्ण
+	}
 
 	spin_unlock_bh(&session->back_lock);
-पूर्ण
+}
 
 /**
  * iscsi_suspend_queue - suspend iscsi_queuecommand
  * @conn: iscsi conn to stop queueing IO on
  *
- * This grअसल the session frwd_lock to make sure no one is in
+ * This grabs the session frwd_lock to make sure no one is in
  * xmit_task/queuecommand, and then sets suspend to prevent
  * new commands from being queued. This only needs to be called
  * by offload drivers that need to sync a path like ep disconnect
  * with the iscsi_queuecommand/xmit_task. To start IO again libiscsi
  * will call iscsi_start_tx and iscsi_unblock_session when in FFP.
  */
-व्योम iscsi_suspend_queue(काष्ठा iscsi_conn *conn)
-अणु
+void iscsi_suspend_queue(struct iscsi_conn *conn)
+{
 	spin_lock_bh(&conn->session->frwd_lock);
 	set_bit(ISCSI_SUSPEND_BIT, &conn->suspend_tx);
 	spin_unlock_bh(&conn->session->frwd_lock);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(iscsi_suspend_queue);
 
 /**
@@ -1943,50 +1942,50 @@ EXPORT_SYMBOL_GPL(iscsi_suspend_queue);
  * @conn: iscsi conn tp stop processing IO on.
  *
  * This function sets the suspend bit to prevent iscsi_data_xmit
- * from sending new IO, and अगर work is queued on the xmit thपढ़ो
- * it will रुको क्रम it to be completed.
+ * from sending new IO, and if work is queued on the xmit thread
+ * it will wait for it to be completed.
  */
-व्योम iscsi_suspend_tx(काष्ठा iscsi_conn *conn)
-अणु
-	काष्ठा Scsi_Host *shost = conn->session->host;
-	काष्ठा iscsi_host *ihost = shost_priv(shost);
+void iscsi_suspend_tx(struct iscsi_conn *conn)
+{
+	struct Scsi_Host *shost = conn->session->host;
+	struct iscsi_host *ihost = shost_priv(shost);
 
 	set_bit(ISCSI_SUSPEND_BIT, &conn->suspend_tx);
-	अगर (ihost->workq)
+	if (ihost->workq)
 		flush_workqueue(ihost->workq);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(iscsi_suspend_tx);
 
-अटल व्योम iscsi_start_tx(काष्ठा iscsi_conn *conn)
-अणु
+static void iscsi_start_tx(struct iscsi_conn *conn)
+{
 	clear_bit(ISCSI_SUSPEND_BIT, &conn->suspend_tx);
 	iscsi_conn_queue_work(conn);
-पूर्ण
+}
 
 /*
- * We want to make sure a ping is in flight. It has समयd out.
+ * We want to make sure a ping is in flight. It has timed out.
  * And we are not busy processing a pdu that is making
- * progress but got started beक्रमe the ping and is taking a जबतक
+ * progress but got started before the ping and is taking a while
  * to complete so the ping is just stuck behind it in a queue.
  */
-अटल पूर्णांक iscsi_has_ping_समयd_out(काष्ठा iscsi_conn *conn)
-अणु
-	अगर (READ_ONCE(conn->ping_task) &&
-	    समय_beक्रमe_eq(conn->last_recv + (conn->recv_समयout * HZ) +
-			   (conn->ping_समयout * HZ), jअगरfies))
-		वापस 1;
-	अन्यथा
-		वापस 0;
-पूर्ण
+static int iscsi_has_ping_timed_out(struct iscsi_conn *conn)
+{
+	if (READ_ONCE(conn->ping_task) &&
+	    time_before_eq(conn->last_recv + (conn->recv_timeout * HZ) +
+			   (conn->ping_timeout * HZ), jiffies))
+		return 1;
+	else
+		return 0;
+}
 
-क्रमागत blk_eh_समयr_वापस iscsi_eh_cmd_समयd_out(काष्ठा scsi_cmnd *sc)
-अणु
-	क्रमागत blk_eh_समयr_वापस rc = BLK_EH_DONE;
-	काष्ठा iscsi_task *task = शून्य, *running_task;
-	काष्ठा iscsi_cls_session *cls_session;
-	काष्ठा iscsi_session *session;
-	काष्ठा iscsi_conn *conn;
-	पूर्णांक i;
+enum blk_eh_timer_return iscsi_eh_cmd_timed_out(struct scsi_cmnd *sc)
+{
+	enum blk_eh_timer_return rc = BLK_EH_DONE;
+	struct iscsi_task *task = NULL, *running_task;
+	struct iscsi_cls_session *cls_session;
+	struct iscsi_session *session;
+	struct iscsi_conn *conn;
+	int i;
 
 	cls_session = starget_to_session(scsi_target(sc->device));
 	session = cls_session->dd_data;
@@ -1995,95 +1994,95 @@ EXPORT_SYMBOL_GPL(iscsi_suspend_tx);
 
 	spin_lock_bh(&session->frwd_lock);
 	spin_lock(&session->back_lock);
-	task = (काष्ठा iscsi_task *)sc->SCp.ptr;
-	अगर (!task) अणु
+	task = (struct iscsi_task *)sc->SCp.ptr;
+	if (!task) {
 		/*
 		 * Raced with completion. Blk layer has taken ownership
-		 * so let समयout code complete it now.
+		 * so let timeout code complete it now.
 		 */
 		rc = BLK_EH_DONE;
 		spin_unlock(&session->back_lock);
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 	__iscsi_get_task(task);
 	spin_unlock(&session->back_lock);
 
-	अगर (session->state != ISCSI_STATE_LOGGED_IN) अणु
+	if (session->state != ISCSI_STATE_LOGGED_IN) {
 		/*
-		 * During shutकरोwn, अगर session is prematurely disconnected,
+		 * During shutdown, if session is prematurely disconnected,
 		 * recovery won't happen and there will be hung cmds. Not
-		 * handling cmds would trigger EH, also bad in this हाल.
+		 * handling cmds would trigger EH, also bad in this case.
 		 * Instead, handle cmd, allow completion to happen and let
 		 * upper layer to deal with the result.
 		 */
-		अगर (unlikely(प्रणाली_state != SYSTEM_RUNNING)) अणु
+		if (unlikely(system_state != SYSTEM_RUNNING)) {
 			sc->result = DID_NO_CONNECT << 16;
 			ISCSI_DBG_EH(session, "sc on shutdown, handled\n");
 			rc = BLK_EH_DONE;
-			जाओ करोne;
-		पूर्ण
+			goto done;
+		}
 		/*
 		 * We are probably in the middle of iscsi recovery so let
 		 * that complete and handle the error.
 		 */
 		rc = BLK_EH_RESET_TIMER;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
 	conn = session->leadconn;
-	अगर (!conn) अणु
-		/* In the middle of shuting करोwn */
+	if (!conn) {
+		/* In the middle of shuting down */
 		rc = BLK_EH_RESET_TIMER;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
 	/*
 	 * If we have sent (at least queued to the network layer) a pdu or
-	 * recvd one क्रम the task since the last समयout ask क्रम
-	 * more समय. If on the next समयout we have not made progress
-	 * we can check अगर it is the task or connection when we send the
+	 * recvd one for the task since the last timeout ask for
+	 * more time. If on the next timeout we have not made progress
+	 * we can check if it is the task or connection when we send the
 	 * nop as a ping.
 	 */
-	अगर (समय_after(task->last_xfer, task->last_समयout)) अणु
+	if (time_after(task->last_xfer, task->last_timeout)) {
 		ISCSI_DBG_EH(session, "Command making progress. Asking "
 			     "scsi-ml for more time to complete. "
 			     "Last data xfer at %lu. Last timeout was at "
-			     "%lu\n.", task->last_xfer, task->last_समयout);
+			     "%lu\n.", task->last_xfer, task->last_timeout);
 		task->have_checked_conn = false;
 		rc = BLK_EH_RESET_TIMER;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	अगर (!conn->recv_समयout && !conn->ping_समयout)
-		जाओ करोne;
+	if (!conn->recv_timeout && !conn->ping_timeout)
+		goto done;
 	/*
-	 * अगर the ping समयकरोut then we are in the middle of cleaning up
+	 * if the ping timedout then we are in the middle of cleaning up
 	 * and can let the iscsi eh handle it
 	 */
-	अगर (iscsi_has_ping_समयd_out(conn)) अणु
+	if (iscsi_has_ping_timed_out(conn)) {
 		rc = BLK_EH_RESET_TIMER;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
 	spin_lock(&session->back_lock);
-	क्रम (i = 0; i < conn->session->cmds_max; i++) अणु
+	for (i = 0; i < conn->session->cmds_max; i++) {
 		running_task = conn->session->cmds[i];
-		अगर (!running_task->sc || running_task == task ||
+		if (!running_task->sc || running_task == task ||
 		     running_task->state != ISCSI_TASK_RUNNING)
-			जारी;
+			continue;
 
 		/*
-		 * Only check अगर cmds started beक्रमe this one have made
+		 * Only check if cmds started before this one have made
 		 * progress, or this could never fail
 		 */
-		अगर (समय_after(running_task->sc->jअगरfies_at_alloc,
-			       task->sc->jअगरfies_at_alloc))
-			जारी;
+		if (time_after(running_task->sc->jiffies_at_alloc,
+			       task->sc->jiffies_at_alloc))
+			continue;
 
-		अगर (समय_after(running_task->last_xfer, task->last_समयout)) अणु
+		if (time_after(running_task->last_xfer, task->last_timeout)) {
 			/*
 			 * This task has not made progress, but a task
-			 * started beक्रमe us has transferred data since
+			 * started before us has transferred data since
 			 * we started/last-checked. We could be queueing
 			 * too many tasks or the LU is bad.
 			 *
@@ -2097,110 +2096,110 @@ EXPORT_SYMBOL_GPL(iscsi_suspend_tx);
 				     "complete. Our last xfer vs running task "
 				     "last xfer %lu/%lu. Last check %lu.\n",
 				     task->last_xfer, running_task->last_xfer,
-				     task->last_समयout);
+				     task->last_timeout);
 			spin_unlock(&session->back_lock);
 			rc = BLK_EH_RESET_TIMER;
-			जाओ करोne;
-		पूर्ण
-	पूर्ण
+			goto done;
+		}
+	}
 	spin_unlock(&session->back_lock);
 
-	/* Assumes nop समयout is लघुer than scsi cmd समयout */
-	अगर (task->have_checked_conn)
-		जाओ करोne;
+	/* Assumes nop timeout is shorter than scsi cmd timeout */
+	if (task->have_checked_conn)
+		goto done;
 
 	/*
-	 * Checking the transport alपढ़ोy or nop from a cmd समयout still
+	 * Checking the transport already or nop from a cmd timeout still
 	 * running
 	 */
-	अगर (READ_ONCE(conn->ping_task)) अणु
+	if (READ_ONCE(conn->ping_task)) {
 		task->have_checked_conn = true;
 		rc = BLK_EH_RESET_TIMER;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	/* Make sure there is a transport check करोne */
-	iscsi_send_nopout(conn, शून्य);
+	/* Make sure there is a transport check done */
+	iscsi_send_nopout(conn, NULL);
 	task->have_checked_conn = true;
 	rc = BLK_EH_RESET_TIMER;
 
-करोne:
+done:
 	spin_unlock_bh(&session->frwd_lock);
 
-	अगर (task) अणु
-		task->last_समयout = jअगरfies;
+	if (task) {
+		task->last_timeout = jiffies;
 		iscsi_put_task(task);
-	पूर्ण
+	}
 	ISCSI_DBG_EH(session, "return %s\n", rc == BLK_EH_RESET_TIMER ?
 		     "timer reset" : "shutdown or nh");
-	वापस rc;
-पूर्ण
-EXPORT_SYMBOL_GPL(iscsi_eh_cmd_समयd_out);
+	return rc;
+}
+EXPORT_SYMBOL_GPL(iscsi_eh_cmd_timed_out);
 
-अटल व्योम iscsi_check_transport_समयouts(काष्ठा समयr_list *t)
-अणु
-	काष्ठा iscsi_conn *conn = from_समयr(conn, t, transport_समयr);
-	काष्ठा iscsi_session *session = conn->session;
-	अचिन्हित दीर्घ recv_समयout, next_समयout = 0, last_recv;
+static void iscsi_check_transport_timeouts(struct timer_list *t)
+{
+	struct iscsi_conn *conn = from_timer(conn, t, transport_timer);
+	struct iscsi_session *session = conn->session;
+	unsigned long recv_timeout, next_timeout = 0, last_recv;
 
 	spin_lock(&session->frwd_lock);
-	अगर (session->state != ISCSI_STATE_LOGGED_IN)
-		जाओ करोne;
+	if (session->state != ISCSI_STATE_LOGGED_IN)
+		goto done;
 
-	recv_समयout = conn->recv_समयout;
-	अगर (!recv_समयout)
-		जाओ करोne;
+	recv_timeout = conn->recv_timeout;
+	if (!recv_timeout)
+		goto done;
 
-	recv_समयout *= HZ;
+	recv_timeout *= HZ;
 	last_recv = conn->last_recv;
 
-	अगर (iscsi_has_ping_समयd_out(conn)) अणु
-		iscsi_conn_prपूर्णांकk(KERN_ERR, conn, "ping timeout of %d secs "
+	if (iscsi_has_ping_timed_out(conn)) {
+		iscsi_conn_printk(KERN_ERR, conn, "ping timeout of %d secs "
 				  "expired, recv timeout %d, last rx %lu, "
 				  "last ping %lu, now %lu\n",
-				  conn->ping_समयout, conn->recv_समयout,
-				  last_recv, conn->last_ping, jअगरfies);
+				  conn->ping_timeout, conn->recv_timeout,
+				  last_recv, conn->last_ping, jiffies);
 		spin_unlock(&session->frwd_lock);
 		iscsi_conn_failure(conn, ISCSI_ERR_NOP_TIMEDOUT);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (समय_beक्रमe_eq(last_recv + recv_समयout, jअगरfies)) अणु
+	if (time_before_eq(last_recv + recv_timeout, jiffies)) {
 		/* send a ping to try to provoke some traffic */
 		ISCSI_DBG_CONN(conn, "Sending nopout as ping\n");
-		अगर (iscsi_send_nopout(conn, शून्य))
-			next_समयout = jअगरfies + (1 * HZ);
-		अन्यथा
-			next_समयout = conn->last_ping + (conn->ping_समयout * HZ);
-	पूर्ण अन्यथा
-		next_समयout = last_recv + recv_समयout;
+		if (iscsi_send_nopout(conn, NULL))
+			next_timeout = jiffies + (1 * HZ);
+		else
+			next_timeout = conn->last_ping + (conn->ping_timeout * HZ);
+	} else
+		next_timeout = last_recv + recv_timeout;
 
-	ISCSI_DBG_CONN(conn, "Setting next tmo %lu\n", next_समयout);
-	mod_समयr(&conn->transport_समयr, next_समयout);
-करोne:
+	ISCSI_DBG_CONN(conn, "Setting next tmo %lu\n", next_timeout);
+	mod_timer(&conn->transport_timer, next_timeout);
+done:
 	spin_unlock(&session->frwd_lock);
-पूर्ण
+}
 
-अटल व्योम iscsi_prep_पात_task_pdu(काष्ठा iscsi_task *task,
-				      काष्ठा iscsi_पंचांग *hdr)
-अणु
-	स_रखो(hdr, 0, माप(*hdr));
+static void iscsi_prep_abort_task_pdu(struct iscsi_task *task,
+				      struct iscsi_tm *hdr)
+{
+	memset(hdr, 0, sizeof(*hdr));
 	hdr->opcode = ISCSI_OP_SCSI_TMFUNC | ISCSI_OP_IMMEDIATE;
 	hdr->flags = ISCSI_TM_FUNC_ABORT_TASK & ISCSI_FLAG_TM_FUNC_MASK;
 	hdr->flags |= ISCSI_FLAG_CMD_FINAL;
 	hdr->lun = task->lun;
 	hdr->rtt = task->hdr_itt;
 	hdr->refcmdsn = task->cmdsn;
-पूर्ण
+}
 
-पूर्णांक iscsi_eh_पात(काष्ठा scsi_cmnd *sc)
-अणु
-	काष्ठा iscsi_cls_session *cls_session;
-	काष्ठा iscsi_session *session;
-	काष्ठा iscsi_conn *conn;
-	काष्ठा iscsi_task *task;
-	काष्ठा iscsi_पंचांग *hdr;
-	पूर्णांक age;
+int iscsi_eh_abort(struct scsi_cmnd *sc)
+{
+	struct iscsi_cls_session *cls_session;
+	struct iscsi_session *session;
+	struct iscsi_conn *conn;
+	struct iscsi_task *task;
+	struct iscsi_tm *hdr;
+	int age;
 
 	cls_session = starget_to_session(scsi_target(sc->device));
 	session = cls_session->dd_data;
@@ -2210,103 +2209,103 @@ EXPORT_SYMBOL_GPL(iscsi_eh_cmd_समयd_out);
 	mutex_lock(&session->eh_mutex);
 	spin_lock_bh(&session->frwd_lock);
 	/*
-	 * अगर session was ISCSI_STATE_IN_RECOVERY then we may not have
+	 * if session was ISCSI_STATE_IN_RECOVERY then we may not have
 	 * got the command.
 	 */
-	अगर (!sc->SCp.ptr) अणु
+	if (!sc->SCp.ptr) {
 		ISCSI_DBG_EH(session, "sc never reached iscsi layer or "
 				      "it completed.\n");
 		spin_unlock_bh(&session->frwd_lock);
 		mutex_unlock(&session->eh_mutex);
-		वापस SUCCESS;
-	पूर्ण
+		return SUCCESS;
+	}
 
 	/*
 	 * If we are not logged in or we have started a new session
 	 * then let the host reset code handle this
 	 */
-	अगर (!session->leadconn || session->state != ISCSI_STATE_LOGGED_IN ||
-	    sc->SCp.phase != session->age) अणु
+	if (!session->leadconn || session->state != ISCSI_STATE_LOGGED_IN ||
+	    sc->SCp.phase != session->age) {
 		spin_unlock_bh(&session->frwd_lock);
 		mutex_unlock(&session->eh_mutex);
 		ISCSI_DBG_EH(session, "failing abort due to dropped "
 				  "session.\n");
-		वापस FAILED;
-	पूर्ण
+		return FAILED;
+	}
 
 	conn = session->leadconn;
-	conn->eh_पात_cnt++;
+	conn->eh_abort_cnt++;
 	age = session->age;
 
 	spin_lock(&session->back_lock);
-	task = (काष्ठा iscsi_task *)sc->SCp.ptr;
-	अगर (!task || !task->sc) अणु
-		/* task completed beक्रमe समय out */
+	task = (struct iscsi_task *)sc->SCp.ptr;
+	if (!task || !task->sc) {
+		/* task completed before time out */
 		ISCSI_DBG_EH(session, "sc completed while abort in progress\n");
 
 		spin_unlock(&session->back_lock);
 		spin_unlock_bh(&session->frwd_lock);
 		mutex_unlock(&session->eh_mutex);
-		वापस SUCCESS;
-	पूर्ण
+		return SUCCESS;
+	}
 	ISCSI_DBG_EH(session, "aborting [sc %p itt 0x%x]\n", sc, task->itt);
 	__iscsi_get_task(task);
 	spin_unlock(&session->back_lock);
 
-	अगर (task->state == ISCSI_TASK_PENDING) अणु
+	if (task->state == ISCSI_TASK_PENDING) {
 		fail_scsi_task(task, DID_ABORT);
-		जाओ success;
-	पूर्ण
+		goto success;
+	}
 
-	/* only have one पंचांगf outstanding at a समय */
-	अगर (conn->पंचांगf_state != TMF_INITIAL)
-		जाओ failed;
-	conn->पंचांगf_state = TMF_QUEUED;
+	/* only have one tmf outstanding at a time */
+	if (conn->tmf_state != TMF_INITIAL)
+		goto failed;
+	conn->tmf_state = TMF_QUEUED;
 
-	hdr = &conn->पंचांगhdr;
-	iscsi_prep_पात_task_pdu(task, hdr);
+	hdr = &conn->tmhdr;
+	iscsi_prep_abort_task_pdu(task, hdr);
 
-	अगर (iscsi_exec_task_mgmt_fn(conn, hdr, age, session->पात_समयout))
-		जाओ failed;
+	if (iscsi_exec_task_mgmt_fn(conn, hdr, age, session->abort_timeout))
+		goto failed;
 
-	चयन (conn->पंचांगf_state) अणु
-	हाल TMF_SUCCESS:
+	switch (conn->tmf_state) {
+	case TMF_SUCCESS:
 		spin_unlock_bh(&session->frwd_lock);
 		/*
-		 * stop tx side inहाल the target had sent a पात rsp but
+		 * stop tx side incase the target had sent a abort rsp but
 		 * the initiator was still writing out data.
 		 */
 		iscsi_suspend_tx(conn);
 		/*
-		 * we करो not stop the recv side because tarमाला_लो have been
-		 * good and have never sent us a successful पंचांगf response
-		 * then sent more data क्रम the cmd.
+		 * we do not stop the recv side because targets have been
+		 * good and have never sent us a successful tmf response
+		 * then sent more data for the cmd.
 		 */
 		spin_lock_bh(&session->frwd_lock);
 		fail_scsi_task(task, DID_ABORT);
-		conn->पंचांगf_state = TMF_INITIAL;
-		स_रखो(hdr, 0, माप(*hdr));
+		conn->tmf_state = TMF_INITIAL;
+		memset(hdr, 0, sizeof(*hdr));
 		spin_unlock_bh(&session->frwd_lock);
 		iscsi_start_tx(conn);
-		जाओ success_unlocked;
-	हाल TMF_TIMEDOUT:
+		goto success_unlocked;
+	case TMF_TIMEDOUT:
 		spin_unlock_bh(&session->frwd_lock);
 		iscsi_conn_failure(conn, ISCSI_ERR_SCSI_EH_SESSION_RST);
-		जाओ failed_unlocked;
-	हाल TMF_NOT_FOUND:
-		अगर (!sc->SCp.ptr) अणु
-			conn->पंचांगf_state = TMF_INITIAL;
-			स_रखो(hdr, 0, माप(*hdr));
-			/* task completed beक्रमe पंचांगf पात response */
+		goto failed_unlocked;
+	case TMF_NOT_FOUND:
+		if (!sc->SCp.ptr) {
+			conn->tmf_state = TMF_INITIAL;
+			memset(hdr, 0, sizeof(*hdr));
+			/* task completed before tmf abort response */
 			ISCSI_DBG_EH(session, "sc completed while abort	in "
 					      "progress\n");
-			जाओ success;
-		पूर्ण
+			goto success;
+		}
 		fallthrough;
-	शेष:
-		conn->पंचांगf_state = TMF_INITIAL;
-		जाओ failed;
-	पूर्ण
+	default:
+		conn->tmf_state = TMF_INITIAL;
+		goto failed;
+	}
 
 success:
 	spin_unlock_bh(&session->frwd_lock);
@@ -2315,7 +2314,7 @@ success_unlocked:
 		     sc, task->itt);
 	iscsi_put_task(task);
 	mutex_unlock(&session->eh_mutex);
-	वापस SUCCESS;
+	return SUCCESS;
 
 failed:
 	spin_unlock_bh(&session->frwd_lock);
@@ -2324,27 +2323,27 @@ failed_unlocked:
 		     task ? task->itt : 0);
 	iscsi_put_task(task);
 	mutex_unlock(&session->eh_mutex);
-	वापस FAILED;
-पूर्ण
-EXPORT_SYMBOL_GPL(iscsi_eh_पात);
+	return FAILED;
+}
+EXPORT_SYMBOL_GPL(iscsi_eh_abort);
 
-अटल व्योम iscsi_prep_lun_reset_pdu(काष्ठा scsi_cmnd *sc, काष्ठा iscsi_पंचांग *hdr)
-अणु
-	स_रखो(hdr, 0, माप(*hdr));
+static void iscsi_prep_lun_reset_pdu(struct scsi_cmnd *sc, struct iscsi_tm *hdr)
+{
+	memset(hdr, 0, sizeof(*hdr));
 	hdr->opcode = ISCSI_OP_SCSI_TMFUNC | ISCSI_OP_IMMEDIATE;
 	hdr->flags = ISCSI_TM_FUNC_LOGICAL_UNIT_RESET & ISCSI_FLAG_TM_FUNC_MASK;
 	hdr->flags |= ISCSI_FLAG_CMD_FINAL;
-	पूर्णांक_to_scsilun(sc->device->lun, &hdr->lun);
+	int_to_scsilun(sc->device->lun, &hdr->lun);
 	hdr->rtt = RESERVED_ITT;
-पूर्ण
+}
 
-पूर्णांक iscsi_eh_device_reset(काष्ठा scsi_cmnd *sc)
-अणु
-	काष्ठा iscsi_cls_session *cls_session;
-	काष्ठा iscsi_session *session;
-	काष्ठा iscsi_conn *conn;
-	काष्ठा iscsi_पंचांग *hdr;
-	पूर्णांक rc = FAILED;
+int iscsi_eh_device_reset(struct scsi_cmnd *sc)
+{
+	struct iscsi_cls_session *cls_session;
+	struct iscsi_session *session;
+	struct iscsi_conn *conn;
+	struct iscsi_tm *hdr;
+	int rc = FAILED;
 
 	cls_session = starget_to_session(scsi_target(sc->device));
 	session = cls_session->dd_data;
@@ -2355,38 +2354,38 @@ EXPORT_SYMBOL_GPL(iscsi_eh_पात);
 	mutex_lock(&session->eh_mutex);
 	spin_lock_bh(&session->frwd_lock);
 	/*
-	 * Just check अगर we are not logged in. We cannot check क्रम
+	 * Just check if we are not logged in. We cannot check for
 	 * the phase because the reset could come from a ioctl.
 	 */
-	अगर (!session->leadconn || session->state != ISCSI_STATE_LOGGED_IN)
-		जाओ unlock;
+	if (!session->leadconn || session->state != ISCSI_STATE_LOGGED_IN)
+		goto unlock;
 	conn = session->leadconn;
 
-	/* only have one पंचांगf outstanding at a समय */
-	अगर (conn->पंचांगf_state != TMF_INITIAL)
-		जाओ unlock;
-	conn->पंचांगf_state = TMF_QUEUED;
+	/* only have one tmf outstanding at a time */
+	if (conn->tmf_state != TMF_INITIAL)
+		goto unlock;
+	conn->tmf_state = TMF_QUEUED;
 
-	hdr = &conn->पंचांगhdr;
+	hdr = &conn->tmhdr;
 	iscsi_prep_lun_reset_pdu(sc, hdr);
 
-	अगर (iscsi_exec_task_mgmt_fn(conn, hdr, session->age,
-				    session->lu_reset_समयout)) अणु
+	if (iscsi_exec_task_mgmt_fn(conn, hdr, session->age,
+				    session->lu_reset_timeout)) {
 		rc = FAILED;
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
-	चयन (conn->पंचांगf_state) अणु
-	हाल TMF_SUCCESS:
-		अवरोध;
-	हाल TMF_TIMEDOUT:
+	switch (conn->tmf_state) {
+	case TMF_SUCCESS:
+		break;
+	case TMF_TIMEDOUT:
 		spin_unlock_bh(&session->frwd_lock);
 		iscsi_conn_failure(conn, ISCSI_ERR_SCSI_EH_SESSION_RST);
-		जाओ करोne;
-	शेष:
-		conn->पंचांगf_state = TMF_INITIAL;
-		जाओ unlock;
-	पूर्ण
+		goto done;
+	default:
+		conn->tmf_state = TMF_INITIAL;
+		goto unlock;
+	}
 
 	rc = SUCCESS;
 	spin_unlock_bh(&session->frwd_lock);
@@ -2394,50 +2393,50 @@ EXPORT_SYMBOL_GPL(iscsi_eh_पात);
 	iscsi_suspend_tx(conn);
 
 	spin_lock_bh(&session->frwd_lock);
-	स_रखो(hdr, 0, माप(*hdr));
+	memset(hdr, 0, sizeof(*hdr));
 	fail_scsi_tasks(conn, sc->device->lun, DID_ERROR);
-	conn->पंचांगf_state = TMF_INITIAL;
+	conn->tmf_state = TMF_INITIAL;
 	spin_unlock_bh(&session->frwd_lock);
 
 	iscsi_start_tx(conn);
-	जाओ करोne;
+	goto done;
 
 unlock:
 	spin_unlock_bh(&session->frwd_lock);
-करोne:
+done:
 	ISCSI_DBG_EH(session, "dev reset result = %s\n",
 		     rc == SUCCESS ? "SUCCESS" : "FAILED");
 	mutex_unlock(&session->eh_mutex);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 EXPORT_SYMBOL_GPL(iscsi_eh_device_reset);
 
-व्योम iscsi_session_recovery_समयकरोut(काष्ठा iscsi_cls_session *cls_session)
-अणु
-	काष्ठा iscsi_session *session = cls_session->dd_data;
+void iscsi_session_recovery_timedout(struct iscsi_cls_session *cls_session)
+{
+	struct iscsi_session *session = cls_session->dd_data;
 
 	spin_lock_bh(&session->frwd_lock);
-	अगर (session->state != ISCSI_STATE_LOGGED_IN) अणु
+	if (session->state != ISCSI_STATE_LOGGED_IN) {
 		session->state = ISCSI_STATE_RECOVERY_FAILED;
-		अगर (session->leadconn)
-			wake_up(&session->leadconn->ehरुको);
-	पूर्ण
+		if (session->leadconn)
+			wake_up(&session->leadconn->ehwait);
+	}
 	spin_unlock_bh(&session->frwd_lock);
-पूर्ण
-EXPORT_SYMBOL_GPL(iscsi_session_recovery_समयकरोut);
+}
+EXPORT_SYMBOL_GPL(iscsi_session_recovery_timedout);
 
 /**
  * iscsi_eh_session_reset - drop session and attempt relogin
  * @sc: scsi command
  *
- * This function will रुको क्रम a relogin, session termination from
- * userspace, or a recovery/replacement समयout.
+ * This function will wait for a relogin, session termination from
+ * userspace, or a recovery/replacement timeout.
  */
-पूर्णांक iscsi_eh_session_reset(काष्ठा scsi_cmnd *sc)
-अणु
-	काष्ठा iscsi_cls_session *cls_session;
-	काष्ठा iscsi_session *session;
-	काष्ठा iscsi_conn *conn;
+int iscsi_eh_session_reset(struct scsi_cmnd *sc)
+{
+	struct iscsi_cls_session *cls_session;
+	struct iscsi_session *session;
+	struct iscsi_conn *conn;
 
 	cls_session = starget_to_session(scsi_target(sc->device));
 	session = cls_session->dd_data;
@@ -2445,7 +2444,7 @@ EXPORT_SYMBOL_GPL(iscsi_session_recovery_समयकरोut);
 
 	mutex_lock(&session->eh_mutex);
 	spin_lock_bh(&session->frwd_lock);
-	अगर (session->state == ISCSI_STATE_TERMINATE) अणु
+	if (session->state == ISCSI_STATE_TERMINATE) {
 failed:
 		ISCSI_DBG_EH(session,
 			     "failing session reset: Could not log back into "
@@ -2453,47 +2452,47 @@ failed:
 			     session->age);
 		spin_unlock_bh(&session->frwd_lock);
 		mutex_unlock(&session->eh_mutex);
-		वापस FAILED;
-	पूर्ण
+		return FAILED;
+	}
 
 	spin_unlock_bh(&session->frwd_lock);
 	mutex_unlock(&session->eh_mutex);
 	/*
-	 * we drop the lock here but the leadconn cannot be destoyed जबतक
+	 * we drop the lock here but the leadconn cannot be destoyed while
 	 * we are in the scsi eh
 	 */
 	iscsi_conn_failure(conn, ISCSI_ERR_SCSI_EH_SESSION_RST);
 
 	ISCSI_DBG_EH(session, "wait for relogin\n");
-	रुको_event_पूर्णांकerruptible(conn->ehरुको,
+	wait_event_interruptible(conn->ehwait,
 				 session->state == ISCSI_STATE_TERMINATE ||
 				 session->state == ISCSI_STATE_LOGGED_IN ||
 				 session->state == ISCSI_STATE_RECOVERY_FAILED);
-	अगर (संकेत_pending(current))
-		flush_संकेतs(current);
+	if (signal_pending(current))
+		flush_signals(current);
 
 	mutex_lock(&session->eh_mutex);
 	spin_lock_bh(&session->frwd_lock);
-	अगर (session->state == ISCSI_STATE_LOGGED_IN) अणु
+	if (session->state == ISCSI_STATE_LOGGED_IN) {
 		ISCSI_DBG_EH(session,
 			     "session reset succeeded for %s,%s\n",
 			     session->targetname, conn->persistent_address);
-	पूर्ण अन्यथा
-		जाओ failed;
+	} else
+		goto failed;
 	spin_unlock_bh(&session->frwd_lock);
 	mutex_unlock(&session->eh_mutex);
-	वापस SUCCESS;
-पूर्ण
+	return SUCCESS;
+}
 EXPORT_SYMBOL_GPL(iscsi_eh_session_reset);
 
-अटल व्योम iscsi_prep_tgt_reset_pdu(काष्ठा scsi_cmnd *sc, काष्ठा iscsi_पंचांग *hdr)
-अणु
-	स_रखो(hdr, 0, माप(*hdr));
+static void iscsi_prep_tgt_reset_pdu(struct scsi_cmnd *sc, struct iscsi_tm *hdr)
+{
+	memset(hdr, 0, sizeof(*hdr));
 	hdr->opcode = ISCSI_OP_SCSI_TMFUNC | ISCSI_OP_IMMEDIATE;
 	hdr->flags = ISCSI_TM_FUNC_TARGET_WARM_RESET & ISCSI_FLAG_TM_FUNC_MASK;
 	hdr->flags |= ISCSI_FLAG_CMD_FINAL;
 	hdr->rtt = RESERVED_ITT;
-पूर्ण
+}
 
 /**
  * iscsi_eh_target_reset - reset target
@@ -2501,13 +2500,13 @@ EXPORT_SYMBOL_GPL(iscsi_eh_session_reset);
  *
  * This will attempt to send a warm target reset.
  */
-अटल पूर्णांक iscsi_eh_target_reset(काष्ठा scsi_cmnd *sc)
-अणु
-	काष्ठा iscsi_cls_session *cls_session;
-	काष्ठा iscsi_session *session;
-	काष्ठा iscsi_conn *conn;
-	काष्ठा iscsi_पंचांग *hdr;
-	पूर्णांक rc = FAILED;
+static int iscsi_eh_target_reset(struct scsi_cmnd *sc)
+{
+	struct iscsi_cls_session *cls_session;
+	struct iscsi_session *session;
+	struct iscsi_conn *conn;
+	struct iscsi_tm *hdr;
+	int rc = FAILED;
 
 	cls_session = starget_to_session(scsi_target(sc->device));
 	session = cls_session->dd_data;
@@ -2518,38 +2517,38 @@ EXPORT_SYMBOL_GPL(iscsi_eh_session_reset);
 	mutex_lock(&session->eh_mutex);
 	spin_lock_bh(&session->frwd_lock);
 	/*
-	 * Just check अगर we are not logged in. We cannot check क्रम
+	 * Just check if we are not logged in. We cannot check for
 	 * the phase because the reset could come from a ioctl.
 	 */
-	अगर (!session->leadconn || session->state != ISCSI_STATE_LOGGED_IN)
-		जाओ unlock;
+	if (!session->leadconn || session->state != ISCSI_STATE_LOGGED_IN)
+		goto unlock;
 	conn = session->leadconn;
 
-	/* only have one पंचांगf outstanding at a समय */
-	अगर (conn->पंचांगf_state != TMF_INITIAL)
-		जाओ unlock;
-	conn->पंचांगf_state = TMF_QUEUED;
+	/* only have one tmf outstanding at a time */
+	if (conn->tmf_state != TMF_INITIAL)
+		goto unlock;
+	conn->tmf_state = TMF_QUEUED;
 
-	hdr = &conn->पंचांगhdr;
+	hdr = &conn->tmhdr;
 	iscsi_prep_tgt_reset_pdu(sc, hdr);
 
-	अगर (iscsi_exec_task_mgmt_fn(conn, hdr, session->age,
-				    session->tgt_reset_समयout)) अणु
+	if (iscsi_exec_task_mgmt_fn(conn, hdr, session->age,
+				    session->tgt_reset_timeout)) {
 		rc = FAILED;
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
-	चयन (conn->पंचांगf_state) अणु
-	हाल TMF_SUCCESS:
-		अवरोध;
-	हाल TMF_TIMEDOUT:
+	switch (conn->tmf_state) {
+	case TMF_SUCCESS:
+		break;
+	case TMF_TIMEDOUT:
 		spin_unlock_bh(&session->frwd_lock);
 		iscsi_conn_failure(conn, ISCSI_ERR_SCSI_EH_SESSION_RST);
-		जाओ करोne;
-	शेष:
-		conn->पंचांगf_state = TMF_INITIAL;
-		जाओ unlock;
-	पूर्ण
+		goto done;
+	default:
+		conn->tmf_state = TMF_INITIAL;
+		goto unlock;
+	}
 
 	rc = SUCCESS;
 	spin_unlock_bh(&session->frwd_lock);
@@ -2557,22 +2556,22 @@ EXPORT_SYMBOL_GPL(iscsi_eh_session_reset);
 	iscsi_suspend_tx(conn);
 
 	spin_lock_bh(&session->frwd_lock);
-	स_रखो(hdr, 0, माप(*hdr));
+	memset(hdr, 0, sizeof(*hdr));
 	fail_scsi_tasks(conn, -1, DID_ERROR);
-	conn->पंचांगf_state = TMF_INITIAL;
+	conn->tmf_state = TMF_INITIAL;
 	spin_unlock_bh(&session->frwd_lock);
 
 	iscsi_start_tx(conn);
-	जाओ करोne;
+	goto done;
 
 unlock:
 	spin_unlock_bh(&session->frwd_lock);
-करोne:
+done:
 	ISCSI_DBG_EH(session, "tgt %s reset result = %s\n", session->targetname,
 		     rc == SUCCESS ? "SUCCESS" : "FAILED");
 	mutex_unlock(&session->eh_mutex);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /**
  * iscsi_eh_recover_target - reset target and possibly the session
@@ -2581,259 +2580,259 @@ unlock:
  * This will attempt to send a warm target reset. If that fails,
  * we will escalate to ERL0 session recovery.
  */
-पूर्णांक iscsi_eh_recover_target(काष्ठा scsi_cmnd *sc)
-अणु
-	पूर्णांक rc;
+int iscsi_eh_recover_target(struct scsi_cmnd *sc)
+{
+	int rc;
 
 	rc = iscsi_eh_target_reset(sc);
-	अगर (rc == FAILED)
+	if (rc == FAILED)
 		rc = iscsi_eh_session_reset(sc);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 EXPORT_SYMBOL_GPL(iscsi_eh_recover_target);
 
 /*
- * Pre-allocate a pool of @max items of @item_size. By शेष, the pool
- * should be accessed via kfअगरo_अणुget,putपूर्ण on q->queue.
- * Optionally, the caller can obtain the array of object poपूर्णांकers
- * by passing in a non-शून्य @items poपूर्णांकer
+ * Pre-allocate a pool of @max items of @item_size. By default, the pool
+ * should be accessed via kfifo_{get,put} on q->queue.
+ * Optionally, the caller can obtain the array of object pointers
+ * by passing in a non-NULL @items pointer
  */
-पूर्णांक
-iscsi_pool_init(काष्ठा iscsi_pool *q, पूर्णांक max, व्योम ***items, पूर्णांक item_size)
-अणु
-	पूर्णांक i, num_arrays = 1;
+int
+iscsi_pool_init(struct iscsi_pool *q, int max, void ***items, int item_size)
+{
+	int i, num_arrays = 1;
 
-	स_रखो(q, 0, माप(*q));
+	memset(q, 0, sizeof(*q));
 
 	q->max = max;
 
-	/* If the user passed an items poपूर्णांकer, he wants a copy of
+	/* If the user passed an items pointer, he wants a copy of
 	 * the array. */
-	अगर (items)
+	if (items)
 		num_arrays++;
-	q->pool = kvसुस्मृति(num_arrays * max, माप(व्योम *), GFP_KERNEL);
-	अगर (q->pool == शून्य)
-		वापस -ENOMEM;
+	q->pool = kvcalloc(num_arrays * max, sizeof(void *), GFP_KERNEL);
+	if (q->pool == NULL)
+		return -ENOMEM;
 
-	kfअगरo_init(&q->queue, (व्योम*)q->pool, max * माप(व्योम*));
+	kfifo_init(&q->queue, (void*)q->pool, max * sizeof(void*));
 
-	क्रम (i = 0; i < max; i++) अणु
+	for (i = 0; i < max; i++) {
 		q->pool[i] = kzalloc(item_size, GFP_KERNEL);
-		अगर (q->pool[i] == शून्य) अणु
+		if (q->pool[i] == NULL) {
 			q->max = i;
-			जाओ enomem;
-		पूर्ण
-		kfअगरo_in(&q->queue, (व्योम*)&q->pool[i], माप(व्योम*));
-	पूर्ण
+			goto enomem;
+		}
+		kfifo_in(&q->queue, (void*)&q->pool[i], sizeof(void*));
+	}
 
-	अगर (items) अणु
+	if (items) {
 		*items = q->pool + max;
-		स_नकल(*items, q->pool, max * माप(व्योम *));
-	पूर्ण
+		memcpy(*items, q->pool, max * sizeof(void *));
+	}
 
-	वापस 0;
+	return 0;
 
 enomem:
-	iscsi_pool_मुक्त(q);
-	वापस -ENOMEM;
-पूर्ण
+	iscsi_pool_free(q);
+	return -ENOMEM;
+}
 EXPORT_SYMBOL_GPL(iscsi_pool_init);
 
-व्योम iscsi_pool_मुक्त(काष्ठा iscsi_pool *q)
-अणु
-	पूर्णांक i;
+void iscsi_pool_free(struct iscsi_pool *q)
+{
+	int i;
 
-	क्रम (i = 0; i < q->max; i++)
-		kमुक्त(q->pool[i]);
-	kvमुक्त(q->pool);
-पूर्ण
-EXPORT_SYMBOL_GPL(iscsi_pool_मुक्त);
+	for (i = 0; i < q->max; i++)
+		kfree(q->pool[i]);
+	kvfree(q->pool);
+}
+EXPORT_SYMBOL_GPL(iscsi_pool_free);
 
-पूर्णांक iscsi_host_get_max_scsi_cmds(काष्ठा Scsi_Host *shost,
-				 uपूर्णांक16_t requested_cmds_max)
-अणु
-	पूर्णांक scsi_cmds, total_cmds = requested_cmds_max;
+int iscsi_host_get_max_scsi_cmds(struct Scsi_Host *shost,
+				 uint16_t requested_cmds_max)
+{
+	int scsi_cmds, total_cmds = requested_cmds_max;
 
 check:
-	अगर (!total_cmds)
+	if (!total_cmds)
 		total_cmds = ISCSI_DEF_XMIT_CMDS_MAX;
 	/*
-	 * The iscsi layer needs some tasks क्रम nop handling and पंचांगfs,
+	 * The iscsi layer needs some tasks for nop handling and tmfs,
 	 * so the cmds_max must at least be greater than ISCSI_MGMT_CMDS_MAX
-	 * + 1 command क्रम scsi IO.
+	 * + 1 command for scsi IO.
 	 */
-	अगर (total_cmds < ISCSI_TOTAL_CMDS_MIN) अणु
-		prपूर्णांकk(KERN_ERR "iscsi: invalid max cmds of %d. Must be a power of two that is at least %d.\n",
+	if (total_cmds < ISCSI_TOTAL_CMDS_MIN) {
+		printk(KERN_ERR "iscsi: invalid max cmds of %d. Must be a power of two that is at least %d.\n",
 		       total_cmds, ISCSI_TOTAL_CMDS_MIN);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (total_cmds > ISCSI_TOTAL_CMDS_MAX) अणु
-		prपूर्णांकk(KERN_INFO "iscsi: invalid max cmds of %d. Must be a power of 2 less than or equal to %d. Using %d.\n",
+	if (total_cmds > ISCSI_TOTAL_CMDS_MAX) {
+		printk(KERN_INFO "iscsi: invalid max cmds of %d. Must be a power of 2 less than or equal to %d. Using %d.\n",
 		       requested_cmds_max, ISCSI_TOTAL_CMDS_MAX,
 		       ISCSI_TOTAL_CMDS_MAX);
 		total_cmds = ISCSI_TOTAL_CMDS_MAX;
-	पूर्ण
+	}
 
-	अगर (!is_घातer_of_2(total_cmds)) अणु
-		total_cmds = roundकरोwn_घात_of_two(total_cmds);
-		अगर (total_cmds < ISCSI_TOTAL_CMDS_MIN) अणु
-			prपूर्णांकk(KERN_ERR "iscsi: invalid max cmds of %d. Must be a power of 2 greater than %d.\n", requested_cmds_max, ISCSI_TOTAL_CMDS_MIN);
-			वापस -EINVAL;
-		पूर्ण
+	if (!is_power_of_2(total_cmds)) {
+		total_cmds = rounddown_pow_of_two(total_cmds);
+		if (total_cmds < ISCSI_TOTAL_CMDS_MIN) {
+			printk(KERN_ERR "iscsi: invalid max cmds of %d. Must be a power of 2 greater than %d.\n", requested_cmds_max, ISCSI_TOTAL_CMDS_MIN);
+			return -EINVAL;
+		}
 
-		prपूर्णांकk(KERN_INFO "iscsi: invalid max cmds %d. Must be a power of 2. Rounding max cmds down to %d.\n",
+		printk(KERN_INFO "iscsi: invalid max cmds %d. Must be a power of 2. Rounding max cmds down to %d.\n",
 		       requested_cmds_max, total_cmds);
-	पूर्ण
+	}
 
 	scsi_cmds = total_cmds - ISCSI_MGMT_CMDS_MAX;
-	अगर (shost->can_queue && scsi_cmds > shost->can_queue) अणु
+	if (shost->can_queue && scsi_cmds > shost->can_queue) {
 		total_cmds = shost->can_queue;
 
-		prपूर्णांकk(KERN_INFO "iscsi: requested max cmds %u is higher than driver limit. Using driver limit %u\n",
+		printk(KERN_INFO "iscsi: requested max cmds %u is higher than driver limit. Using driver limit %u\n",
 		       requested_cmds_max, shost->can_queue);
-		जाओ check;
-	पूर्ण
+		goto check;
+	}
 
-	वापस scsi_cmds;
-पूर्ण
+	return scsi_cmds;
+}
 EXPORT_SYMBOL_GPL(iscsi_host_get_max_scsi_cmds);
 
 /**
- * iscsi_host_add - add host to प्रणाली
+ * iscsi_host_add - add host to system
  * @shost: scsi host
  * @pdev: parent device
  *
  * This should be called by partial offload and software iscsi drivers
- * to add a host to the प्रणाली.
+ * to add a host to the system.
  */
-पूर्णांक iscsi_host_add(काष्ठा Scsi_Host *shost, काष्ठा device *pdev)
-अणु
-	अगर (!shost->can_queue)
+int iscsi_host_add(struct Scsi_Host *shost, struct device *pdev)
+{
+	if (!shost->can_queue)
 		shost->can_queue = ISCSI_DEF_XMIT_CMDS_MAX;
 
-	अगर (!shost->cmd_per_lun)
+	if (!shost->cmd_per_lun)
 		shost->cmd_per_lun = ISCSI_DEF_CMD_PER_LUN;
 
-	वापस scsi_add_host(shost, pdev);
-पूर्ण
+	return scsi_add_host(shost, pdev);
+}
 EXPORT_SYMBOL_GPL(iscsi_host_add);
 
 /**
  * iscsi_host_alloc - allocate a host and driver data
- * @sht: scsi host ढाँचा
+ * @sht: scsi host template
  * @dd_data_size: driver host data size
- * @xmit_can_sleep: bool indicating अगर LLD will queue IO from a work queue
+ * @xmit_can_sleep: bool indicating if LLD will queue IO from a work queue
  *
  * This should be called by partial offload and software iscsi drivers.
- * To access the driver specअगरic memory use the iscsi_host_priv() macro.
+ * To access the driver specific memory use the iscsi_host_priv() macro.
  */
-काष्ठा Scsi_Host *iscsi_host_alloc(काष्ठा scsi_host_ढाँचा *sht,
-				   पूर्णांक dd_data_size, bool xmit_can_sleep)
-अणु
-	काष्ठा Scsi_Host *shost;
-	काष्ठा iscsi_host *ihost;
+struct Scsi_Host *iscsi_host_alloc(struct scsi_host_template *sht,
+				   int dd_data_size, bool xmit_can_sleep)
+{
+	struct Scsi_Host *shost;
+	struct iscsi_host *ihost;
 
-	shost = scsi_host_alloc(sht, माप(काष्ठा iscsi_host) + dd_data_size);
-	अगर (!shost)
-		वापस शून्य;
+	shost = scsi_host_alloc(sht, sizeof(struct iscsi_host) + dd_data_size);
+	if (!shost)
+		return NULL;
 	ihost = shost_priv(shost);
 
-	अगर (xmit_can_sleep) अणु
-		snम_लिखो(ihost->workq_name, माप(ihost->workq_name),
+	if (xmit_can_sleep) {
+		snprintf(ihost->workq_name, sizeof(ihost->workq_name),
 			"iscsi_q_%d", shost->host_no);
 		ihost->workq = alloc_workqueue("%s",
 			WQ_SYSFS | __WQ_LEGACY | WQ_MEM_RECLAIM | WQ_UNBOUND,
 			1, ihost->workq_name);
-		अगर (!ihost->workq)
-			जाओ मुक्त_host;
-	पूर्ण
+		if (!ihost->workq)
+			goto free_host;
+	}
 
 	spin_lock_init(&ihost->lock);
 	ihost->state = ISCSI_HOST_SETUP;
 	ihost->num_sessions = 0;
-	init_रुकोqueue_head(&ihost->session_removal_wq);
-	वापस shost;
+	init_waitqueue_head(&ihost->session_removal_wq);
+	return shost;
 
-मुक्त_host:
+free_host:
 	scsi_host_put(shost);
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 EXPORT_SYMBOL_GPL(iscsi_host_alloc);
 
-अटल व्योम iscsi_notअगरy_host_हटाओd(काष्ठा iscsi_cls_session *cls_session)
-अणु
+static void iscsi_notify_host_removed(struct iscsi_cls_session *cls_session)
+{
 	iscsi_session_failure(cls_session->dd_data, ISCSI_ERR_INVALID_HOST);
-पूर्ण
+}
 
 /**
- * iscsi_host_हटाओ - हटाओ host and sessions
+ * iscsi_host_remove - remove host and sessions
  * @shost: scsi host
  *
- * If there are any sessions left, this will initiate the removal and रुको
- * क्रम the completion.
+ * If there are any sessions left, this will initiate the removal and wait
+ * for the completion.
  */
-व्योम iscsi_host_हटाओ(काष्ठा Scsi_Host *shost)
-अणु
-	काष्ठा iscsi_host *ihost = shost_priv(shost);
-	अचिन्हित दीर्घ flags;
+void iscsi_host_remove(struct Scsi_Host *shost)
+{
+	struct iscsi_host *ihost = shost_priv(shost);
+	unsigned long flags;
 
 	spin_lock_irqsave(&ihost->lock, flags);
 	ihost->state = ISCSI_HOST_REMOVED;
 	spin_unlock_irqrestore(&ihost->lock, flags);
 
-	iscsi_host_क्रम_each_session(shost, iscsi_notअगरy_host_हटाओd);
-	रुको_event_पूर्णांकerruptible(ihost->session_removal_wq,
+	iscsi_host_for_each_session(shost, iscsi_notify_host_removed);
+	wait_event_interruptible(ihost->session_removal_wq,
 				 ihost->num_sessions == 0);
-	अगर (संकेत_pending(current))
-		flush_संकेतs(current);
+	if (signal_pending(current))
+		flush_signals(current);
 
-	scsi_हटाओ_host(shost);
-पूर्ण
-EXPORT_SYMBOL_GPL(iscsi_host_हटाओ);
+	scsi_remove_host(shost);
+}
+EXPORT_SYMBOL_GPL(iscsi_host_remove);
 
-व्योम iscsi_host_मुक्त(काष्ठा Scsi_Host *shost)
-अणु
-	काष्ठा iscsi_host *ihost = shost_priv(shost);
+void iscsi_host_free(struct Scsi_Host *shost)
+{
+	struct iscsi_host *ihost = shost_priv(shost);
 
-	अगर (ihost->workq)
+	if (ihost->workq)
 		destroy_workqueue(ihost->workq);
 
-	kमुक्त(ihost->netdev);
-	kमुक्त(ihost->hwaddress);
-	kमुक्त(ihost->initiatorname);
+	kfree(ihost->netdev);
+	kfree(ihost->hwaddress);
+	kfree(ihost->initiatorname);
 	scsi_host_put(shost);
-पूर्ण
-EXPORT_SYMBOL_GPL(iscsi_host_मुक्त);
+}
+EXPORT_SYMBOL_GPL(iscsi_host_free);
 
-अटल व्योम iscsi_host_dec_session_cnt(काष्ठा Scsi_Host *shost)
-अणु
-	काष्ठा iscsi_host *ihost = shost_priv(shost);
-	अचिन्हित दीर्घ flags;
+static void iscsi_host_dec_session_cnt(struct Scsi_Host *shost)
+{
+	struct iscsi_host *ihost = shost_priv(shost);
+	unsigned long flags;
 
 	shost = scsi_host_get(shost);
-	अगर (!shost) अणु
-		prपूर्णांकk(KERN_ERR "Invalid state. Cannot notify host removal "
+	if (!shost) {
+		printk(KERN_ERR "Invalid state. Cannot notify host removal "
 		      "of session teardown event because host already "
 		      "removed.\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	spin_lock_irqsave(&ihost->lock, flags);
 	ihost->num_sessions--;
-	अगर (ihost->num_sessions == 0)
+	if (ihost->num_sessions == 0)
 		wake_up(&ihost->session_removal_wq);
 	spin_unlock_irqrestore(&ihost->lock, flags);
 	scsi_host_put(shost);
-पूर्ण
+}
 
 /**
  * iscsi_session_setup - create iscsi cls session and host and session
- * @iscsit: iscsi transport ढाँचा
+ * @iscsit: iscsi transport template
  * @shost: scsi host
  * @cmds_max: session can queue
- * @dd_size: निजी driver data size, added to session allocation size
- * @cmd_task_size: LLD task निजी data size
+ * @dd_size: private driver data size, added to session allocation size
+ * @cmd_task_size: LLD task private data size
  * @initial_cmdsn: initial CmdSN
  * @id: target ID to add to this session
  *
@@ -2842,44 +2841,44 @@ EXPORT_SYMBOL_GPL(iscsi_host_मुक्त);
  *
  * Callers should set cmds_max to the largest total numer (mgmt + scsi) of
  * tasks they support. The iscsi layer reserves ISCSI_MGMT_CMDS_MAX tasks
- * क्रम nop handling and login/logout requests.
+ * for nop handling and login/logout requests.
  */
-काष्ठा iscsi_cls_session *
-iscsi_session_setup(काष्ठा iscsi_transport *iscsit, काष्ठा Scsi_Host *shost,
-		    uपूर्णांक16_t cmds_max, पूर्णांक dd_size, पूर्णांक cmd_task_size,
-		    uपूर्णांक32_t initial_cmdsn, अचिन्हित पूर्णांक id)
-अणु
-	काष्ठा iscsi_host *ihost = shost_priv(shost);
-	काष्ठा iscsi_session *session;
-	काष्ठा iscsi_cls_session *cls_session;
-	पूर्णांक cmd_i, scsi_cmds;
-	अचिन्हित दीर्घ flags;
+struct iscsi_cls_session *
+iscsi_session_setup(struct iscsi_transport *iscsit, struct Scsi_Host *shost,
+		    uint16_t cmds_max, int dd_size, int cmd_task_size,
+		    uint32_t initial_cmdsn, unsigned int id)
+{
+	struct iscsi_host *ihost = shost_priv(shost);
+	struct iscsi_session *session;
+	struct iscsi_cls_session *cls_session;
+	int cmd_i, scsi_cmds;
+	unsigned long flags;
 
 	spin_lock_irqsave(&ihost->lock, flags);
-	अगर (ihost->state == ISCSI_HOST_REMOVED) अणु
+	if (ihost->state == ISCSI_HOST_REMOVED) {
 		spin_unlock_irqrestore(&ihost->lock, flags);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 	ihost->num_sessions++;
 	spin_unlock_irqrestore(&ihost->lock, flags);
 
 	scsi_cmds = iscsi_host_get_max_scsi_cmds(shost, cmds_max);
-	अगर (scsi_cmds < 0)
-		जाओ dec_session_count;
+	if (scsi_cmds < 0)
+		goto dec_session_count;
 
 	cls_session = iscsi_alloc_session(shost, iscsit,
-					  माप(काष्ठा iscsi_session) +
+					  sizeof(struct iscsi_session) +
 					  dd_size);
-	अगर (!cls_session)
-		जाओ dec_session_count;
+	if (!cls_session)
+		goto dec_session_count;
 	session = cls_session->dd_data;
 	session->cls_session = cls_session;
 	session->host = shost;
 	session->state = ISCSI_STATE_FREE;
-	session->fast_पात = 1;
-	session->tgt_reset_समयout = 30;
-	session->lu_reset_समयout = 15;
-	session->पात_समयout = 10;
+	session->fast_abort = 1;
+	session->tgt_reset_timeout = 30;
+	session->lu_reset_timeout = 15;
+	session->abort_timeout = 10;
 	session->scsi_cmds_max = scsi_cmds;
 	session->cmds_max = scsi_cmds + ISCSI_MGMT_CMDS_MAX;
 	session->queued_cmdsn = session->cmdsn = initial_cmdsn;
@@ -2887,328 +2886,328 @@ iscsi_session_setup(काष्ठा iscsi_transport *iscsit, काष्ठ�
 	session->max_cmdsn = initial_cmdsn + 1;
 	session->max_r2t = 1;
 	session->tt = iscsit;
-	session->dd_data = cls_session->dd_data + माप(*session);
+	session->dd_data = cls_session->dd_data + sizeof(*session);
 
 	mutex_init(&session->eh_mutex);
 	spin_lock_init(&session->frwd_lock);
 	spin_lock_init(&session->back_lock);
 
 	/* initialize SCSI PDU commands pool */
-	अगर (iscsi_pool_init(&session->cmdpool, session->cmds_max,
-			    (व्योम***)&session->cmds,
-			    cmd_task_size + माप(काष्ठा iscsi_task)))
-		जाओ cmdpool_alloc_fail;
+	if (iscsi_pool_init(&session->cmdpool, session->cmds_max,
+			    (void***)&session->cmds,
+			    cmd_task_size + sizeof(struct iscsi_task)))
+		goto cmdpool_alloc_fail;
 
-	/* pre-क्रमmat cmds pool with ITT */
-	क्रम (cmd_i = 0; cmd_i < session->cmds_max; cmd_i++) अणु
-		काष्ठा iscsi_task *task = session->cmds[cmd_i];
+	/* pre-format cmds pool with ITT */
+	for (cmd_i = 0; cmd_i < session->cmds_max; cmd_i++) {
+		struct iscsi_task *task = session->cmds[cmd_i];
 
-		अगर (cmd_task_size)
+		if (cmd_task_size)
 			task->dd_data = &task[1];
 		task->itt = cmd_i;
 		task->state = ISCSI_TASK_FREE;
 		INIT_LIST_HEAD(&task->running);
-	पूर्ण
+	}
 
-	अगर (!try_module_get(iscsit->owner))
-		जाओ module_get_fail;
+	if (!try_module_get(iscsit->owner))
+		goto module_get_fail;
 
-	अगर (iscsi_add_session(cls_session, id))
-		जाओ cls_session_fail;
+	if (iscsi_add_session(cls_session, id))
+		goto cls_session_fail;
 
-	वापस cls_session;
+	return cls_session;
 
 cls_session_fail:
 	module_put(iscsit->owner);
 module_get_fail:
-	iscsi_pool_मुक्त(&session->cmdpool);
+	iscsi_pool_free(&session->cmdpool);
 cmdpool_alloc_fail:
-	iscsi_मुक्त_session(cls_session);
+	iscsi_free_session(cls_session);
 dec_session_count:
 	iscsi_host_dec_session_cnt(shost);
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 EXPORT_SYMBOL_GPL(iscsi_session_setup);
 
 /**
- * iscsi_session_tearकरोwn - destroy session, host, and cls_session
+ * iscsi_session_teardown - destroy session, host, and cls_session
  * @cls_session: iscsi session
  */
-व्योम iscsi_session_tearकरोwn(काष्ठा iscsi_cls_session *cls_session)
-अणु
-	काष्ठा iscsi_session *session = cls_session->dd_data;
-	काष्ठा module *owner = cls_session->transport->owner;
-	काष्ठा Scsi_Host *shost = session->host;
+void iscsi_session_teardown(struct iscsi_cls_session *cls_session)
+{
+	struct iscsi_session *session = cls_session->dd_data;
+	struct module *owner = cls_session->transport->owner;
+	struct Scsi_Host *shost = session->host;
 
-	iscsi_pool_मुक्त(&session->cmdpool);
+	iscsi_pool_free(&session->cmdpool);
 
-	iscsi_हटाओ_session(cls_session);
+	iscsi_remove_session(cls_session);
 
-	kमुक्त(session->password);
-	kमुक्त(session->password_in);
-	kमुक्त(session->username);
-	kमुक्त(session->username_in);
-	kमुक्त(session->targetname);
-	kमुक्त(session->targetalias);
-	kमुक्त(session->initiatorname);
-	kमुक्त(session->boot_root);
-	kमुक्त(session->boot_nic);
-	kमुक्त(session->boot_target);
-	kमुक्त(session->अगरacename);
-	kमुक्त(session->portal_type);
-	kमुक्त(session->discovery_parent_type);
+	kfree(session->password);
+	kfree(session->password_in);
+	kfree(session->username);
+	kfree(session->username_in);
+	kfree(session->targetname);
+	kfree(session->targetalias);
+	kfree(session->initiatorname);
+	kfree(session->boot_root);
+	kfree(session->boot_nic);
+	kfree(session->boot_target);
+	kfree(session->ifacename);
+	kfree(session->portal_type);
+	kfree(session->discovery_parent_type);
 
-	iscsi_मुक्त_session(cls_session);
+	iscsi_free_session(cls_session);
 
 	iscsi_host_dec_session_cnt(shost);
 	module_put(owner);
-पूर्ण
-EXPORT_SYMBOL_GPL(iscsi_session_tearकरोwn);
+}
+EXPORT_SYMBOL_GPL(iscsi_session_teardown);
 
 /**
  * iscsi_conn_setup - create iscsi_cls_conn and iscsi_conn
  * @cls_session: iscsi_cls_session
- * @dd_size: निजी driver data size
+ * @dd_size: private driver data size
  * @conn_idx: cid
  */
-काष्ठा iscsi_cls_conn *
-iscsi_conn_setup(काष्ठा iscsi_cls_session *cls_session, पूर्णांक dd_size,
-		 uपूर्णांक32_t conn_idx)
-अणु
-	काष्ठा iscsi_session *session = cls_session->dd_data;
-	काष्ठा iscsi_conn *conn;
-	काष्ठा iscsi_cls_conn *cls_conn;
-	अक्षर *data;
+struct iscsi_cls_conn *
+iscsi_conn_setup(struct iscsi_cls_session *cls_session, int dd_size,
+		 uint32_t conn_idx)
+{
+	struct iscsi_session *session = cls_session->dd_data;
+	struct iscsi_conn *conn;
+	struct iscsi_cls_conn *cls_conn;
+	char *data;
 
-	cls_conn = iscsi_create_conn(cls_session, माप(*conn) + dd_size,
+	cls_conn = iscsi_create_conn(cls_session, sizeof(*conn) + dd_size,
 				     conn_idx);
-	अगर (!cls_conn)
-		वापस शून्य;
+	if (!cls_conn)
+		return NULL;
 	conn = cls_conn->dd_data;
-	स_रखो(conn, 0, माप(*conn) + dd_size);
+	memset(conn, 0, sizeof(*conn) + dd_size);
 
-	conn->dd_data = cls_conn->dd_data + माप(*conn);
+	conn->dd_data = cls_conn->dd_data + sizeof(*conn);
 	conn->session = session;
 	conn->cls_conn = cls_conn;
 	conn->c_stage = ISCSI_CONN_INITIAL_STAGE;
 	conn->id = conn_idx;
 	conn->exp_statsn = 0;
-	conn->पंचांगf_state = TMF_INITIAL;
+	conn->tmf_state = TMF_INITIAL;
 
-	समयr_setup(&conn->transport_समयr, iscsi_check_transport_समयouts, 0);
+	timer_setup(&conn->transport_timer, iscsi_check_transport_timeouts, 0);
 
 	INIT_LIST_HEAD(&conn->mgmtqueue);
 	INIT_LIST_HEAD(&conn->cmdqueue);
 	INIT_LIST_HEAD(&conn->requeue);
 	INIT_WORK(&conn->xmitwork, iscsi_xmitworker);
 
-	/* allocate login_task used क्रम the login/text sequences */
+	/* allocate login_task used for the login/text sequences */
 	spin_lock_bh(&session->frwd_lock);
-	अगर (!kfअगरo_out(&session->cmdpool.queue,
-                         (व्योम*)&conn->login_task,
-			 माप(व्योम*))) अणु
+	if (!kfifo_out(&session->cmdpool.queue,
+                         (void*)&conn->login_task,
+			 sizeof(void*))) {
 		spin_unlock_bh(&session->frwd_lock);
-		जाओ login_task_alloc_fail;
-	पूर्ण
+		goto login_task_alloc_fail;
+	}
 	spin_unlock_bh(&session->frwd_lock);
 
-	data = (अक्षर *) __get_मुक्त_pages(GFP_KERNEL,
+	data = (char *) __get_free_pages(GFP_KERNEL,
 					 get_order(ISCSI_DEF_MAX_RECV_SEG_LEN));
-	अगर (!data)
-		जाओ login_task_data_alloc_fail;
+	if (!data)
+		goto login_task_data_alloc_fail;
 	conn->login_task->data = conn->data = data;
 
-	समयr_setup(&conn->पंचांगf_समयr, iscsi_पंचांगf_समयकरोut, 0);
-	init_रुकोqueue_head(&conn->ehरुको);
+	timer_setup(&conn->tmf_timer, iscsi_tmf_timedout, 0);
+	init_waitqueue_head(&conn->ehwait);
 
-	वापस cls_conn;
+	return cls_conn;
 
 login_task_data_alloc_fail:
-	kfअगरo_in(&session->cmdpool.queue, (व्योम*)&conn->login_task,
-		    माप(व्योम*));
+	kfifo_in(&session->cmdpool.queue, (void*)&conn->login_task,
+		    sizeof(void*));
 login_task_alloc_fail:
 	iscsi_destroy_conn(cls_conn);
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 EXPORT_SYMBOL_GPL(iscsi_conn_setup);
 
 /**
- * iscsi_conn_tearकरोwn - tearकरोwn iscsi connection
+ * iscsi_conn_teardown - teardown iscsi connection
  * @cls_conn: iscsi class connection
  *
- * TODO: we may need to make this पूर्णांकo a two step process
- * like scsi-mls हटाओ + put host
+ * TODO: we may need to make this into a two step process
+ * like scsi-mls remove + put host
  */
-व्योम iscsi_conn_tearकरोwn(काष्ठा iscsi_cls_conn *cls_conn)
-अणु
-	काष्ठा iscsi_conn *conn = cls_conn->dd_data;
-	काष्ठा iscsi_session *session = conn->session;
+void iscsi_conn_teardown(struct iscsi_cls_conn *cls_conn)
+{
+	struct iscsi_conn *conn = cls_conn->dd_data;
+	struct iscsi_session *session = conn->session;
 
-	del_समयr_sync(&conn->transport_समयr);
+	del_timer_sync(&conn->transport_timer);
 
 	mutex_lock(&session->eh_mutex);
 	spin_lock_bh(&session->frwd_lock);
 	conn->c_stage = ISCSI_CONN_CLEANUP_WAIT;
-	अगर (session->leadconn == conn) अणु
+	if (session->leadconn == conn) {
 		/*
 		 * leading connection? then give up on recovery.
 		 */
 		session->state = ISCSI_STATE_TERMINATE;
-		wake_up(&conn->ehरुको);
-	पूर्ण
+		wake_up(&conn->ehwait);
+	}
 	spin_unlock_bh(&session->frwd_lock);
 
-	/* flush queued up work because we मुक्त the connection below */
+	/* flush queued up work because we free the connection below */
 	iscsi_suspend_tx(conn);
 
 	spin_lock_bh(&session->frwd_lock);
-	मुक्त_pages((अचिन्हित दीर्घ) conn->data,
+	free_pages((unsigned long) conn->data,
 		   get_order(ISCSI_DEF_MAX_RECV_SEG_LEN));
-	kमुक्त(conn->persistent_address);
-	kमुक्त(conn->local_ipaddr);
+	kfree(conn->persistent_address);
+	kfree(conn->local_ipaddr);
 	/* regular RX path uses back_lock */
 	spin_lock_bh(&session->back_lock);
-	kfअगरo_in(&session->cmdpool.queue, (व्योम*)&conn->login_task,
-		    माप(व्योम*));
+	kfifo_in(&session->cmdpool.queue, (void*)&conn->login_task,
+		    sizeof(void*));
 	spin_unlock_bh(&session->back_lock);
-	अगर (session->leadconn == conn)
-		session->leadconn = शून्य;
+	if (session->leadconn == conn)
+		session->leadconn = NULL;
 	spin_unlock_bh(&session->frwd_lock);
 	mutex_unlock(&session->eh_mutex);
 
 	iscsi_destroy_conn(cls_conn);
-पूर्ण
-EXPORT_SYMBOL_GPL(iscsi_conn_tearकरोwn);
+}
+EXPORT_SYMBOL_GPL(iscsi_conn_teardown);
 
-पूर्णांक iscsi_conn_start(काष्ठा iscsi_cls_conn *cls_conn)
-अणु
-	काष्ठा iscsi_conn *conn = cls_conn->dd_data;
-	काष्ठा iscsi_session *session = conn->session;
+int iscsi_conn_start(struct iscsi_cls_conn *cls_conn)
+{
+	struct iscsi_conn *conn = cls_conn->dd_data;
+	struct iscsi_session *session = conn->session;
 
-	अगर (!session) अणु
-		iscsi_conn_prपूर्णांकk(KERN_ERR, conn,
+	if (!session) {
+		iscsi_conn_printk(KERN_ERR, conn,
 				  "can't start unbound connection\n");
-		वापस -EPERM;
-	पूर्ण
+		return -EPERM;
+	}
 
-	अगर ((session->imm_data_en || !session->initial_r2t_en) &&
-	     session->first_burst > session->max_burst) अणु
-		iscsi_conn_prपूर्णांकk(KERN_INFO, conn, "invalid burst lengths: "
+	if ((session->imm_data_en || !session->initial_r2t_en) &&
+	     session->first_burst > session->max_burst) {
+		iscsi_conn_printk(KERN_INFO, conn, "invalid burst lengths: "
 				  "first_burst %d max_burst %d\n",
 				  session->first_burst, session->max_burst);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (conn->ping_समयout && !conn->recv_समयout) अणु
-		iscsi_conn_prपूर्णांकk(KERN_ERR, conn, "invalid recv timeout of "
+	if (conn->ping_timeout && !conn->recv_timeout) {
+		iscsi_conn_printk(KERN_ERR, conn, "invalid recv timeout of "
 				  "zero. Using 5 seconds\n.");
-		conn->recv_समयout = 5;
-	पूर्ण
+		conn->recv_timeout = 5;
+	}
 
-	अगर (conn->recv_समयout && !conn->ping_समयout) अणु
-		iscsi_conn_prपूर्णांकk(KERN_ERR, conn, "invalid ping timeout of "
+	if (conn->recv_timeout && !conn->ping_timeout) {
+		iscsi_conn_printk(KERN_ERR, conn, "invalid ping timeout of "
 				  "zero. Using 5 seconds.\n");
-		conn->ping_समयout = 5;
-	पूर्ण
+		conn->ping_timeout = 5;
+	}
 
 	spin_lock_bh(&session->frwd_lock);
 	conn->c_stage = ISCSI_CONN_STARTED;
 	session->state = ISCSI_STATE_LOGGED_IN;
 	session->queued_cmdsn = session->cmdsn;
 
-	conn->last_recv = jअगरfies;
-	conn->last_ping = jअगरfies;
-	अगर (conn->recv_समयout && conn->ping_समयout)
-		mod_समयr(&conn->transport_समयr,
-			  jअगरfies + (conn->recv_समयout * HZ));
+	conn->last_recv = jiffies;
+	conn->last_ping = jiffies;
+	if (conn->recv_timeout && conn->ping_timeout)
+		mod_timer(&conn->transport_timer,
+			  jiffies + (conn->recv_timeout * HZ));
 
-	चयन(conn->stop_stage) अणु
-	हाल STOP_CONN_RECOVER:
+	switch(conn->stop_stage) {
+	case STOP_CONN_RECOVER:
 		/*
-		 * unblock eh_पात() अगर it is blocked. re-try all
+		 * unblock eh_abort() if it is blocked. re-try all
 		 * commands after successful recovery
 		 */
 		conn->stop_stage = 0;
-		conn->पंचांगf_state = TMF_INITIAL;
+		conn->tmf_state = TMF_INITIAL;
 		session->age++;
-		अगर (session->age == 16)
+		if (session->age == 16)
 			session->age = 0;
-		अवरोध;
-	हाल STOP_CONN_TERM:
+		break;
+	case STOP_CONN_TERM:
 		conn->stop_stage = 0;
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+		break;
+	default:
+		break;
+	}
 	spin_unlock_bh(&session->frwd_lock);
 
 	iscsi_unblock_session(session->cls_session);
-	wake_up(&conn->ehरुको);
-	वापस 0;
-पूर्ण
+	wake_up(&conn->ehwait);
+	return 0;
+}
 EXPORT_SYMBOL_GPL(iscsi_conn_start);
 
-अटल व्योम
-fail_mgmt_tasks(काष्ठा iscsi_session *session, काष्ठा iscsi_conn *conn)
-अणु
-	काष्ठा iscsi_task *task;
-	पूर्णांक i, state;
+static void
+fail_mgmt_tasks(struct iscsi_session *session, struct iscsi_conn *conn)
+{
+	struct iscsi_task *task;
+	int i, state;
 
-	क्रम (i = 0; i < conn->session->cmds_max; i++) अणु
+	for (i = 0; i < conn->session->cmds_max; i++) {
 		task = conn->session->cmds[i];
-		अगर (task->sc)
-			जारी;
+		if (task->sc)
+			continue;
 
-		अगर (task->state == ISCSI_TASK_FREE)
-			जारी;
+		if (task->state == ISCSI_TASK_FREE)
+			continue;
 
 		ISCSI_DBG_SESSION(conn->session,
 				  "failing mgmt itt 0x%x state %d\n",
 				  task->itt, task->state);
 
 		spin_lock_bh(&session->back_lock);
-		अगर (cleanup_queued_task(task)) अणु
+		if (cleanup_queued_task(task)) {
 			spin_unlock_bh(&session->back_lock);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		state = ISCSI_TASK_ABRT_SESS_RECOV;
-		अगर (task->state == ISCSI_TASK_PENDING)
+		if (task->state == ISCSI_TASK_PENDING)
 			state = ISCSI_TASK_COMPLETED;
 		iscsi_complete_task(task, state);
 		spin_unlock_bh(&session->back_lock);
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम iscsi_conn_stop(काष्ठा iscsi_cls_conn *cls_conn, पूर्णांक flag)
-अणु
-	काष्ठा iscsi_conn *conn = cls_conn->dd_data;
-	काष्ठा iscsi_session *session = conn->session;
-	पूर्णांक old_stop_stage;
+void iscsi_conn_stop(struct iscsi_cls_conn *cls_conn, int flag)
+{
+	struct iscsi_conn *conn = cls_conn->dd_data;
+	struct iscsi_session *session = conn->session;
+	int old_stop_stage;
 
 	mutex_lock(&session->eh_mutex);
 	spin_lock_bh(&session->frwd_lock);
-	अगर (conn->stop_stage == STOP_CONN_TERM) अणु
+	if (conn->stop_stage == STOP_CONN_TERM) {
 		spin_unlock_bh(&session->frwd_lock);
 		mutex_unlock(&session->eh_mutex);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/*
-	 * When this is called क्रम the in_login state, we only want to clean
-	 * up the login task and connection. We करो not need to block and set
+	 * When this is called for the in_login state, we only want to clean
+	 * up the login task and connection. We do not need to block and set
 	 * the recovery state again
 	 */
-	अगर (flag == STOP_CONN_TERM)
+	if (flag == STOP_CONN_TERM)
 		session->state = ISCSI_STATE_TERMINATE;
-	अन्यथा अगर (conn->stop_stage != STOP_CONN_RECOVER)
+	else if (conn->stop_stage != STOP_CONN_RECOVER)
 		session->state = ISCSI_STATE_IN_RECOVERY;
 
 	old_stop_stage = conn->stop_stage;
 	conn->stop_stage = flag;
 	spin_unlock_bh(&session->frwd_lock);
 
-	del_समयr_sync(&conn->transport_समयr);
+	del_timer_sync(&conn->transport_timer);
 	iscsi_suspend_tx(conn);
 
 	spin_lock_bh(&session->frwd_lock);
@@ -3216,20 +3215,20 @@ fail_mgmt_tasks(काष्ठा iscsi_session *session, काष्ठा is
 	spin_unlock_bh(&session->frwd_lock);
 
 	/*
-	 * क्रम connection level recovery we should not calculate
-	 * header digest. conn->hdr_size used क्रम optimization
+	 * for connection level recovery we should not calculate
+	 * header digest. conn->hdr_size used for optimization
 	 * in hdr_extract() and will be re-negotiated at
-	 * set_param() समय.
+	 * set_param() time.
 	 */
-	अगर (flag == STOP_CONN_RECOVER) अणु
+	if (flag == STOP_CONN_RECOVER) {
 		conn->hdrdgst_en = 0;
 		conn->datadgst_en = 0;
-		अगर (session->state == ISCSI_STATE_IN_RECOVERY &&
-		    old_stop_stage != STOP_CONN_RECOVER) अणु
+		if (session->state == ISCSI_STATE_IN_RECOVERY &&
+		    old_stop_stage != STOP_CONN_RECOVER) {
 			ISCSI_DBG_SESSION(session, "blocking session\n");
 			iscsi_block_session(session->cls_session);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/*
 	 * flush queues.
@@ -3237,25 +3236,25 @@ fail_mgmt_tasks(काष्ठा iscsi_session *session, काष्ठा is
 	spin_lock_bh(&session->frwd_lock);
 	fail_scsi_tasks(conn, -1, DID_TRANSPORT_DISRUPTED);
 	fail_mgmt_tasks(session, conn);
-	स_रखो(&conn->पंचांगhdr, 0, माप(conn->पंचांगhdr));
+	memset(&conn->tmhdr, 0, sizeof(conn->tmhdr));
 	spin_unlock_bh(&session->frwd_lock);
 	mutex_unlock(&session->eh_mutex);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(iscsi_conn_stop);
 
-पूर्णांक iscsi_conn_bind(काष्ठा iscsi_cls_session *cls_session,
-		    काष्ठा iscsi_cls_conn *cls_conn, पूर्णांक is_leading)
-अणु
-	काष्ठा iscsi_session *session = cls_session->dd_data;
-	काष्ठा iscsi_conn *conn = cls_conn->dd_data;
+int iscsi_conn_bind(struct iscsi_cls_session *cls_session,
+		    struct iscsi_cls_conn *cls_conn, int is_leading)
+{
+	struct iscsi_session *session = cls_session->dd_data;
+	struct iscsi_conn *conn = cls_conn->dd_data;
 
 	spin_lock_bh(&session->frwd_lock);
-	अगर (is_leading)
+	if (is_leading)
 		session->leadconn = conn;
 	spin_unlock_bh(&session->frwd_lock);
 
 	/*
-	 * The target could have reduced it's winकरोw size between logins, so
+	 * The target could have reduced it's window size between logins, so
 	 * we have to reset max/exp cmdsn so we can see the new values.
 	 */
 	spin_lock_bh(&session->back_lock);
@@ -3266,462 +3265,462 @@ EXPORT_SYMBOL_GPL(iscsi_conn_stop);
 	 */
 	clear_bit(ISCSI_SUSPEND_BIT, &conn->suspend_rx);
 	clear_bit(ISCSI_SUSPEND_BIT, &conn->suspend_tx);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(iscsi_conn_bind);
 
-पूर्णांक iscsi_चयन_str_param(अक्षर **param, अक्षर *new_val_buf)
-अणु
-	अक्षर *new_val;
+int iscsi_switch_str_param(char **param, char *new_val_buf)
+{
+	char *new_val;
 
-	अगर (*param) अणु
-		अगर (!म_भेद(*param, new_val_buf))
-			वापस 0;
-	पूर्ण
+	if (*param) {
+		if (!strcmp(*param, new_val_buf))
+			return 0;
+	}
 
 	new_val = kstrdup(new_val_buf, GFP_NOIO);
-	अगर (!new_val)
-		वापस -ENOMEM;
+	if (!new_val)
+		return -ENOMEM;
 
-	kमुक्त(*param);
+	kfree(*param);
 	*param = new_val;
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(iscsi_चयन_str_param);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(iscsi_switch_str_param);
 
-पूर्णांक iscsi_set_param(काष्ठा iscsi_cls_conn *cls_conn,
-		    क्रमागत iscsi_param param, अक्षर *buf, पूर्णांक buflen)
-अणु
-	काष्ठा iscsi_conn *conn = cls_conn->dd_data;
-	काष्ठा iscsi_session *session = conn->session;
-	पूर्णांक val;
+int iscsi_set_param(struct iscsi_cls_conn *cls_conn,
+		    enum iscsi_param param, char *buf, int buflen)
+{
+	struct iscsi_conn *conn = cls_conn->dd_data;
+	struct iscsi_session *session = conn->session;
+	int val;
 
-	चयन(param) अणु
-	हाल ISCSI_PARAM_FAST_ABORT:
-		माला_पूछो(buf, "%d", &session->fast_पात);
-		अवरोध;
-	हाल ISCSI_PARAM_ABORT_TMO:
-		माला_पूछो(buf, "%d", &session->पात_समयout);
-		अवरोध;
-	हाल ISCSI_PARAM_LU_RESET_TMO:
-		माला_पूछो(buf, "%d", &session->lu_reset_समयout);
-		अवरोध;
-	हाल ISCSI_PARAM_TGT_RESET_TMO:
-		माला_पूछो(buf, "%d", &session->tgt_reset_समयout);
-		अवरोध;
-	हाल ISCSI_PARAM_PING_TMO:
-		माला_पूछो(buf, "%d", &conn->ping_समयout);
-		अवरोध;
-	हाल ISCSI_PARAM_RECV_TMO:
-		माला_पूछो(buf, "%d", &conn->recv_समयout);
-		अवरोध;
-	हाल ISCSI_PARAM_MAX_RECV_DLENGTH:
-		माला_पूछो(buf, "%d", &conn->max_recv_dlength);
-		अवरोध;
-	हाल ISCSI_PARAM_MAX_XMIT_DLENGTH:
-		माला_पूछो(buf, "%d", &conn->max_xmit_dlength);
-		अवरोध;
-	हाल ISCSI_PARAM_HDRDGST_EN:
-		माला_पूछो(buf, "%d", &conn->hdrdgst_en);
-		अवरोध;
-	हाल ISCSI_PARAM_DATADGST_EN:
-		माला_पूछो(buf, "%d", &conn->datadgst_en);
-		अवरोध;
-	हाल ISCSI_PARAM_INITIAL_R2T_EN:
-		माला_पूछो(buf, "%d", &session->initial_r2t_en);
-		अवरोध;
-	हाल ISCSI_PARAM_MAX_R2T:
-		माला_पूछो(buf, "%hu", &session->max_r2t);
-		अवरोध;
-	हाल ISCSI_PARAM_IMM_DATA_EN:
-		माला_पूछो(buf, "%d", &session->imm_data_en);
-		अवरोध;
-	हाल ISCSI_PARAM_FIRST_BURST:
-		माला_पूछो(buf, "%d", &session->first_burst);
-		अवरोध;
-	हाल ISCSI_PARAM_MAX_BURST:
-		माला_पूछो(buf, "%d", &session->max_burst);
-		अवरोध;
-	हाल ISCSI_PARAM_PDU_INORDER_EN:
-		माला_पूछो(buf, "%d", &session->pdu_inorder_en);
-		अवरोध;
-	हाल ISCSI_PARAM_DATASEQ_INORDER_EN:
-		माला_पूछो(buf, "%d", &session->dataseq_inorder_en);
-		अवरोध;
-	हाल ISCSI_PARAM_ERL:
-		माला_पूछो(buf, "%d", &session->erl);
-		अवरोध;
-	हाल ISCSI_PARAM_EXP_STATSN:
-		माला_पूछो(buf, "%u", &conn->exp_statsn);
-		अवरोध;
-	हाल ISCSI_PARAM_USERNAME:
-		वापस iscsi_चयन_str_param(&session->username, buf);
-	हाल ISCSI_PARAM_USERNAME_IN:
-		वापस iscsi_चयन_str_param(&session->username_in, buf);
-	हाल ISCSI_PARAM_PASSWORD:
-		वापस iscsi_चयन_str_param(&session->password, buf);
-	हाल ISCSI_PARAM_PASSWORD_IN:
-		वापस iscsi_चयन_str_param(&session->password_in, buf);
-	हाल ISCSI_PARAM_TARGET_NAME:
-		वापस iscsi_चयन_str_param(&session->targetname, buf);
-	हाल ISCSI_PARAM_TARGET_ALIAS:
-		वापस iscsi_चयन_str_param(&session->targetalias, buf);
-	हाल ISCSI_PARAM_TPGT:
-		माला_पूछो(buf, "%d", &session->tpgt);
-		अवरोध;
-	हाल ISCSI_PARAM_PERSISTENT_PORT:
-		माला_पूछो(buf, "%d", &conn->persistent_port);
-		अवरोध;
-	हाल ISCSI_PARAM_PERSISTENT_ADDRESS:
-		वापस iscsi_चयन_str_param(&conn->persistent_address, buf);
-	हाल ISCSI_PARAM_IFACE_NAME:
-		वापस iscsi_चयन_str_param(&session->अगरacename, buf);
-	हाल ISCSI_PARAM_INITIATOR_NAME:
-		वापस iscsi_चयन_str_param(&session->initiatorname, buf);
-	हाल ISCSI_PARAM_BOOT_ROOT:
-		वापस iscsi_चयन_str_param(&session->boot_root, buf);
-	हाल ISCSI_PARAM_BOOT_NIC:
-		वापस iscsi_चयन_str_param(&session->boot_nic, buf);
-	हाल ISCSI_PARAM_BOOT_TARGET:
-		वापस iscsi_चयन_str_param(&session->boot_target, buf);
-	हाल ISCSI_PARAM_PORTAL_TYPE:
-		वापस iscsi_चयन_str_param(&session->portal_type, buf);
-	हाल ISCSI_PARAM_DISCOVERY_PARENT_TYPE:
-		वापस iscsi_चयन_str_param(&session->discovery_parent_type,
+	switch(param) {
+	case ISCSI_PARAM_FAST_ABORT:
+		sscanf(buf, "%d", &session->fast_abort);
+		break;
+	case ISCSI_PARAM_ABORT_TMO:
+		sscanf(buf, "%d", &session->abort_timeout);
+		break;
+	case ISCSI_PARAM_LU_RESET_TMO:
+		sscanf(buf, "%d", &session->lu_reset_timeout);
+		break;
+	case ISCSI_PARAM_TGT_RESET_TMO:
+		sscanf(buf, "%d", &session->tgt_reset_timeout);
+		break;
+	case ISCSI_PARAM_PING_TMO:
+		sscanf(buf, "%d", &conn->ping_timeout);
+		break;
+	case ISCSI_PARAM_RECV_TMO:
+		sscanf(buf, "%d", &conn->recv_timeout);
+		break;
+	case ISCSI_PARAM_MAX_RECV_DLENGTH:
+		sscanf(buf, "%d", &conn->max_recv_dlength);
+		break;
+	case ISCSI_PARAM_MAX_XMIT_DLENGTH:
+		sscanf(buf, "%d", &conn->max_xmit_dlength);
+		break;
+	case ISCSI_PARAM_HDRDGST_EN:
+		sscanf(buf, "%d", &conn->hdrdgst_en);
+		break;
+	case ISCSI_PARAM_DATADGST_EN:
+		sscanf(buf, "%d", &conn->datadgst_en);
+		break;
+	case ISCSI_PARAM_INITIAL_R2T_EN:
+		sscanf(buf, "%d", &session->initial_r2t_en);
+		break;
+	case ISCSI_PARAM_MAX_R2T:
+		sscanf(buf, "%hu", &session->max_r2t);
+		break;
+	case ISCSI_PARAM_IMM_DATA_EN:
+		sscanf(buf, "%d", &session->imm_data_en);
+		break;
+	case ISCSI_PARAM_FIRST_BURST:
+		sscanf(buf, "%d", &session->first_burst);
+		break;
+	case ISCSI_PARAM_MAX_BURST:
+		sscanf(buf, "%d", &session->max_burst);
+		break;
+	case ISCSI_PARAM_PDU_INORDER_EN:
+		sscanf(buf, "%d", &session->pdu_inorder_en);
+		break;
+	case ISCSI_PARAM_DATASEQ_INORDER_EN:
+		sscanf(buf, "%d", &session->dataseq_inorder_en);
+		break;
+	case ISCSI_PARAM_ERL:
+		sscanf(buf, "%d", &session->erl);
+		break;
+	case ISCSI_PARAM_EXP_STATSN:
+		sscanf(buf, "%u", &conn->exp_statsn);
+		break;
+	case ISCSI_PARAM_USERNAME:
+		return iscsi_switch_str_param(&session->username, buf);
+	case ISCSI_PARAM_USERNAME_IN:
+		return iscsi_switch_str_param(&session->username_in, buf);
+	case ISCSI_PARAM_PASSWORD:
+		return iscsi_switch_str_param(&session->password, buf);
+	case ISCSI_PARAM_PASSWORD_IN:
+		return iscsi_switch_str_param(&session->password_in, buf);
+	case ISCSI_PARAM_TARGET_NAME:
+		return iscsi_switch_str_param(&session->targetname, buf);
+	case ISCSI_PARAM_TARGET_ALIAS:
+		return iscsi_switch_str_param(&session->targetalias, buf);
+	case ISCSI_PARAM_TPGT:
+		sscanf(buf, "%d", &session->tpgt);
+		break;
+	case ISCSI_PARAM_PERSISTENT_PORT:
+		sscanf(buf, "%d", &conn->persistent_port);
+		break;
+	case ISCSI_PARAM_PERSISTENT_ADDRESS:
+		return iscsi_switch_str_param(&conn->persistent_address, buf);
+	case ISCSI_PARAM_IFACE_NAME:
+		return iscsi_switch_str_param(&session->ifacename, buf);
+	case ISCSI_PARAM_INITIATOR_NAME:
+		return iscsi_switch_str_param(&session->initiatorname, buf);
+	case ISCSI_PARAM_BOOT_ROOT:
+		return iscsi_switch_str_param(&session->boot_root, buf);
+	case ISCSI_PARAM_BOOT_NIC:
+		return iscsi_switch_str_param(&session->boot_nic, buf);
+	case ISCSI_PARAM_BOOT_TARGET:
+		return iscsi_switch_str_param(&session->boot_target, buf);
+	case ISCSI_PARAM_PORTAL_TYPE:
+		return iscsi_switch_str_param(&session->portal_type, buf);
+	case ISCSI_PARAM_DISCOVERY_PARENT_TYPE:
+		return iscsi_switch_str_param(&session->discovery_parent_type,
 					      buf);
-	हाल ISCSI_PARAM_DISCOVERY_SESS:
-		माला_पूछो(buf, "%d", &val);
+	case ISCSI_PARAM_DISCOVERY_SESS:
+		sscanf(buf, "%d", &val);
 		session->discovery_sess = !!val;
-		अवरोध;
-	हाल ISCSI_PARAM_LOCAL_IPADDR:
-		वापस iscsi_चयन_str_param(&conn->local_ipaddr, buf);
-	शेष:
-		वापस -ENOSYS;
-	पूर्ण
+		break;
+	case ISCSI_PARAM_LOCAL_IPADDR:
+		return iscsi_switch_str_param(&conn->local_ipaddr, buf);
+	default:
+		return -ENOSYS;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(iscsi_set_param);
 
-पूर्णांक iscsi_session_get_param(काष्ठा iscsi_cls_session *cls_session,
-			    क्रमागत iscsi_param param, अक्षर *buf)
-अणु
-	काष्ठा iscsi_session *session = cls_session->dd_data;
-	पूर्णांक len;
+int iscsi_session_get_param(struct iscsi_cls_session *cls_session,
+			    enum iscsi_param param, char *buf)
+{
+	struct iscsi_session *session = cls_session->dd_data;
+	int len;
 
-	चयन(param) अणु
-	हाल ISCSI_PARAM_FAST_ABORT:
-		len = sysfs_emit(buf, "%d\n", session->fast_पात);
-		अवरोध;
-	हाल ISCSI_PARAM_ABORT_TMO:
-		len = sysfs_emit(buf, "%d\n", session->पात_समयout);
-		अवरोध;
-	हाल ISCSI_PARAM_LU_RESET_TMO:
-		len = sysfs_emit(buf, "%d\n", session->lu_reset_समयout);
-		अवरोध;
-	हाल ISCSI_PARAM_TGT_RESET_TMO:
-		len = sysfs_emit(buf, "%d\n", session->tgt_reset_समयout);
-		अवरोध;
-	हाल ISCSI_PARAM_INITIAL_R2T_EN:
+	switch(param) {
+	case ISCSI_PARAM_FAST_ABORT:
+		len = sysfs_emit(buf, "%d\n", session->fast_abort);
+		break;
+	case ISCSI_PARAM_ABORT_TMO:
+		len = sysfs_emit(buf, "%d\n", session->abort_timeout);
+		break;
+	case ISCSI_PARAM_LU_RESET_TMO:
+		len = sysfs_emit(buf, "%d\n", session->lu_reset_timeout);
+		break;
+	case ISCSI_PARAM_TGT_RESET_TMO:
+		len = sysfs_emit(buf, "%d\n", session->tgt_reset_timeout);
+		break;
+	case ISCSI_PARAM_INITIAL_R2T_EN:
 		len = sysfs_emit(buf, "%d\n", session->initial_r2t_en);
-		अवरोध;
-	हाल ISCSI_PARAM_MAX_R2T:
+		break;
+	case ISCSI_PARAM_MAX_R2T:
 		len = sysfs_emit(buf, "%hu\n", session->max_r2t);
-		अवरोध;
-	हाल ISCSI_PARAM_IMM_DATA_EN:
+		break;
+	case ISCSI_PARAM_IMM_DATA_EN:
 		len = sysfs_emit(buf, "%d\n", session->imm_data_en);
-		अवरोध;
-	हाल ISCSI_PARAM_FIRST_BURST:
+		break;
+	case ISCSI_PARAM_FIRST_BURST:
 		len = sysfs_emit(buf, "%u\n", session->first_burst);
-		अवरोध;
-	हाल ISCSI_PARAM_MAX_BURST:
+		break;
+	case ISCSI_PARAM_MAX_BURST:
 		len = sysfs_emit(buf, "%u\n", session->max_burst);
-		अवरोध;
-	हाल ISCSI_PARAM_PDU_INORDER_EN:
+		break;
+	case ISCSI_PARAM_PDU_INORDER_EN:
 		len = sysfs_emit(buf, "%d\n", session->pdu_inorder_en);
-		अवरोध;
-	हाल ISCSI_PARAM_DATASEQ_INORDER_EN:
+		break;
+	case ISCSI_PARAM_DATASEQ_INORDER_EN:
 		len = sysfs_emit(buf, "%d\n", session->dataseq_inorder_en);
-		अवरोध;
-	हाल ISCSI_PARAM_DEF_TASKMGMT_TMO:
-		len = sysfs_emit(buf, "%d\n", session->def_taskmgmt_पंचांगo);
-		अवरोध;
-	हाल ISCSI_PARAM_ERL:
+		break;
+	case ISCSI_PARAM_DEF_TASKMGMT_TMO:
+		len = sysfs_emit(buf, "%d\n", session->def_taskmgmt_tmo);
+		break;
+	case ISCSI_PARAM_ERL:
 		len = sysfs_emit(buf, "%d\n", session->erl);
-		अवरोध;
-	हाल ISCSI_PARAM_TARGET_NAME:
+		break;
+	case ISCSI_PARAM_TARGET_NAME:
 		len = sysfs_emit(buf, "%s\n", session->targetname);
-		अवरोध;
-	हाल ISCSI_PARAM_TARGET_ALIAS:
+		break;
+	case ISCSI_PARAM_TARGET_ALIAS:
 		len = sysfs_emit(buf, "%s\n", session->targetalias);
-		अवरोध;
-	हाल ISCSI_PARAM_TPGT:
+		break;
+	case ISCSI_PARAM_TPGT:
 		len = sysfs_emit(buf, "%d\n", session->tpgt);
-		अवरोध;
-	हाल ISCSI_PARAM_USERNAME:
+		break;
+	case ISCSI_PARAM_USERNAME:
 		len = sysfs_emit(buf, "%s\n", session->username);
-		अवरोध;
-	हाल ISCSI_PARAM_USERNAME_IN:
+		break;
+	case ISCSI_PARAM_USERNAME_IN:
 		len = sysfs_emit(buf, "%s\n", session->username_in);
-		अवरोध;
-	हाल ISCSI_PARAM_PASSWORD:
+		break;
+	case ISCSI_PARAM_PASSWORD:
 		len = sysfs_emit(buf, "%s\n", session->password);
-		अवरोध;
-	हाल ISCSI_PARAM_PASSWORD_IN:
+		break;
+	case ISCSI_PARAM_PASSWORD_IN:
 		len = sysfs_emit(buf, "%s\n", session->password_in);
-		अवरोध;
-	हाल ISCSI_PARAM_IFACE_NAME:
-		len = sysfs_emit(buf, "%s\n", session->अगरacename);
-		अवरोध;
-	हाल ISCSI_PARAM_INITIATOR_NAME:
+		break;
+	case ISCSI_PARAM_IFACE_NAME:
+		len = sysfs_emit(buf, "%s\n", session->ifacename);
+		break;
+	case ISCSI_PARAM_INITIATOR_NAME:
 		len = sysfs_emit(buf, "%s\n", session->initiatorname);
-		अवरोध;
-	हाल ISCSI_PARAM_BOOT_ROOT:
+		break;
+	case ISCSI_PARAM_BOOT_ROOT:
 		len = sysfs_emit(buf, "%s\n", session->boot_root);
-		अवरोध;
-	हाल ISCSI_PARAM_BOOT_NIC:
+		break;
+	case ISCSI_PARAM_BOOT_NIC:
 		len = sysfs_emit(buf, "%s\n", session->boot_nic);
-		अवरोध;
-	हाल ISCSI_PARAM_BOOT_TARGET:
+		break;
+	case ISCSI_PARAM_BOOT_TARGET:
 		len = sysfs_emit(buf, "%s\n", session->boot_target);
-		अवरोध;
-	हाल ISCSI_PARAM_AUTO_SND_TGT_DISABLE:
-		len = sysfs_emit(buf, "%u\n", session->स्वतः_snd_tgt_disable);
-		अवरोध;
-	हाल ISCSI_PARAM_DISCOVERY_SESS:
+		break;
+	case ISCSI_PARAM_AUTO_SND_TGT_DISABLE:
+		len = sysfs_emit(buf, "%u\n", session->auto_snd_tgt_disable);
+		break;
+	case ISCSI_PARAM_DISCOVERY_SESS:
 		len = sysfs_emit(buf, "%u\n", session->discovery_sess);
-		अवरोध;
-	हाल ISCSI_PARAM_PORTAL_TYPE:
+		break;
+	case ISCSI_PARAM_PORTAL_TYPE:
 		len = sysfs_emit(buf, "%s\n", session->portal_type);
-		अवरोध;
-	हाल ISCSI_PARAM_CHAP_AUTH_EN:
+		break;
+	case ISCSI_PARAM_CHAP_AUTH_EN:
 		len = sysfs_emit(buf, "%u\n", session->chap_auth_en);
-		अवरोध;
-	हाल ISCSI_PARAM_DISCOVERY_LOGOUT_EN:
+		break;
+	case ISCSI_PARAM_DISCOVERY_LOGOUT_EN:
 		len = sysfs_emit(buf, "%u\n", session->discovery_logout_en);
-		अवरोध;
-	हाल ISCSI_PARAM_BIDI_CHAP_EN:
+		break;
+	case ISCSI_PARAM_BIDI_CHAP_EN:
 		len = sysfs_emit(buf, "%u\n", session->bidi_chap_en);
-		अवरोध;
-	हाल ISCSI_PARAM_DISCOVERY_AUTH_OPTIONAL:
+		break;
+	case ISCSI_PARAM_DISCOVERY_AUTH_OPTIONAL:
 		len = sysfs_emit(buf, "%u\n", session->discovery_auth_optional);
-		अवरोध;
-	हाल ISCSI_PARAM_DEF_TIME2WAIT:
-		len = sysfs_emit(buf, "%d\n", session->समय2रुको);
-		अवरोध;
-	हाल ISCSI_PARAM_DEF_TIME2RETAIN:
-		len = sysfs_emit(buf, "%d\n", session->समय2retain);
-		अवरोध;
-	हाल ISCSI_PARAM_TSID:
+		break;
+	case ISCSI_PARAM_DEF_TIME2WAIT:
+		len = sysfs_emit(buf, "%d\n", session->time2wait);
+		break;
+	case ISCSI_PARAM_DEF_TIME2RETAIN:
+		len = sysfs_emit(buf, "%d\n", session->time2retain);
+		break;
+	case ISCSI_PARAM_TSID:
 		len = sysfs_emit(buf, "%u\n", session->tsid);
-		अवरोध;
-	हाल ISCSI_PARAM_ISID:
+		break;
+	case ISCSI_PARAM_ISID:
 		len = sysfs_emit(buf, "%02x%02x%02x%02x%02x%02x\n",
 			      session->isid[0], session->isid[1],
 			      session->isid[2], session->isid[3],
 			      session->isid[4], session->isid[5]);
-		अवरोध;
-	हाल ISCSI_PARAM_DISCOVERY_PARENT_IDX:
+		break;
+	case ISCSI_PARAM_DISCOVERY_PARENT_IDX:
 		len = sysfs_emit(buf, "%u\n", session->discovery_parent_idx);
-		अवरोध;
-	हाल ISCSI_PARAM_DISCOVERY_PARENT_TYPE:
-		अगर (session->discovery_parent_type)
+		break;
+	case ISCSI_PARAM_DISCOVERY_PARENT_TYPE:
+		if (session->discovery_parent_type)
 			len = sysfs_emit(buf, "%s\n",
 				      session->discovery_parent_type);
-		अन्यथा
+		else
 			len = sysfs_emit(buf, "\n");
-		अवरोध;
-	शेष:
-		वापस -ENOSYS;
-	पूर्ण
+		break;
+	default:
+		return -ENOSYS;
+	}
 
-	वापस len;
-पूर्ण
+	return len;
+}
 EXPORT_SYMBOL_GPL(iscsi_session_get_param);
 
-पूर्णांक iscsi_conn_get_addr_param(काष्ठा sockaddr_storage *addr,
-			      क्रमागत iscsi_param param, अक्षर *buf)
-अणु
-	काष्ठा sockaddr_in6 *sin6 = शून्य;
-	काष्ठा sockaddr_in *sin = शून्य;
-	पूर्णांक len;
+int iscsi_conn_get_addr_param(struct sockaddr_storage *addr,
+			      enum iscsi_param param, char *buf)
+{
+	struct sockaddr_in6 *sin6 = NULL;
+	struct sockaddr_in *sin = NULL;
+	int len;
 
-	चयन (addr->ss_family) अणु
-	हाल AF_INET:
-		sin = (काष्ठा sockaddr_in *)addr;
-		अवरोध;
-	हाल AF_INET6:
-		sin6 = (काष्ठा sockaddr_in6 *)addr;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+	switch (addr->ss_family) {
+	case AF_INET:
+		sin = (struct sockaddr_in *)addr;
+		break;
+	case AF_INET6:
+		sin6 = (struct sockaddr_in6 *)addr;
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	चयन (param) अणु
-	हाल ISCSI_PARAM_CONN_ADDRESS:
-	हाल ISCSI_HOST_PARAM_IPADDRESS:
-		अगर (sin)
+	switch (param) {
+	case ISCSI_PARAM_CONN_ADDRESS:
+	case ISCSI_HOST_PARAM_IPADDRESS:
+		if (sin)
 			len = sysfs_emit(buf, "%pI4\n", &sin->sin_addr.s_addr);
-		अन्यथा
+		else
 			len = sysfs_emit(buf, "%pI6\n", &sin6->sin6_addr);
-		अवरोध;
-	हाल ISCSI_PARAM_CONN_PORT:
-	हाल ISCSI_PARAM_LOCAL_PORT:
-		अगर (sin)
+		break;
+	case ISCSI_PARAM_CONN_PORT:
+	case ISCSI_PARAM_LOCAL_PORT:
+		if (sin)
 			len = sysfs_emit(buf, "%hu\n", be16_to_cpu(sin->sin_port));
-		अन्यथा
+		else
 			len = sysfs_emit(buf, "%hu\n",
 				      be16_to_cpu(sin6->sin6_port));
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	वापस len;
-पूर्ण
+	return len;
+}
 EXPORT_SYMBOL_GPL(iscsi_conn_get_addr_param);
 
-पूर्णांक iscsi_conn_get_param(काष्ठा iscsi_cls_conn *cls_conn,
-			 क्रमागत iscsi_param param, अक्षर *buf)
-अणु
-	काष्ठा iscsi_conn *conn = cls_conn->dd_data;
-	पूर्णांक len;
+int iscsi_conn_get_param(struct iscsi_cls_conn *cls_conn,
+			 enum iscsi_param param, char *buf)
+{
+	struct iscsi_conn *conn = cls_conn->dd_data;
+	int len;
 
-	चयन(param) अणु
-	हाल ISCSI_PARAM_PING_TMO:
-		len = sysfs_emit(buf, "%u\n", conn->ping_समयout);
-		अवरोध;
-	हाल ISCSI_PARAM_RECV_TMO:
-		len = sysfs_emit(buf, "%u\n", conn->recv_समयout);
-		अवरोध;
-	हाल ISCSI_PARAM_MAX_RECV_DLENGTH:
+	switch(param) {
+	case ISCSI_PARAM_PING_TMO:
+		len = sysfs_emit(buf, "%u\n", conn->ping_timeout);
+		break;
+	case ISCSI_PARAM_RECV_TMO:
+		len = sysfs_emit(buf, "%u\n", conn->recv_timeout);
+		break;
+	case ISCSI_PARAM_MAX_RECV_DLENGTH:
 		len = sysfs_emit(buf, "%u\n", conn->max_recv_dlength);
-		अवरोध;
-	हाल ISCSI_PARAM_MAX_XMIT_DLENGTH:
+		break;
+	case ISCSI_PARAM_MAX_XMIT_DLENGTH:
 		len = sysfs_emit(buf, "%u\n", conn->max_xmit_dlength);
-		अवरोध;
-	हाल ISCSI_PARAM_HDRDGST_EN:
+		break;
+	case ISCSI_PARAM_HDRDGST_EN:
 		len = sysfs_emit(buf, "%d\n", conn->hdrdgst_en);
-		अवरोध;
-	हाल ISCSI_PARAM_DATADGST_EN:
+		break;
+	case ISCSI_PARAM_DATADGST_EN:
 		len = sysfs_emit(buf, "%d\n", conn->datadgst_en);
-		अवरोध;
-	हाल ISCSI_PARAM_IFMARKER_EN:
-		len = sysfs_emit(buf, "%d\n", conn->अगरmarker_en);
-		अवरोध;
-	हाल ISCSI_PARAM_OFMARKER_EN:
+		break;
+	case ISCSI_PARAM_IFMARKER_EN:
+		len = sysfs_emit(buf, "%d\n", conn->ifmarker_en);
+		break;
+	case ISCSI_PARAM_OFMARKER_EN:
 		len = sysfs_emit(buf, "%d\n", conn->ofmarker_en);
-		अवरोध;
-	हाल ISCSI_PARAM_EXP_STATSN:
+		break;
+	case ISCSI_PARAM_EXP_STATSN:
 		len = sysfs_emit(buf, "%u\n", conn->exp_statsn);
-		अवरोध;
-	हाल ISCSI_PARAM_PERSISTENT_PORT:
+		break;
+	case ISCSI_PARAM_PERSISTENT_PORT:
 		len = sysfs_emit(buf, "%d\n", conn->persistent_port);
-		अवरोध;
-	हाल ISCSI_PARAM_PERSISTENT_ADDRESS:
+		break;
+	case ISCSI_PARAM_PERSISTENT_ADDRESS:
 		len = sysfs_emit(buf, "%s\n", conn->persistent_address);
-		अवरोध;
-	हाल ISCSI_PARAM_STATSN:
+		break;
+	case ISCSI_PARAM_STATSN:
 		len = sysfs_emit(buf, "%u\n", conn->statsn);
-		अवरोध;
-	हाल ISCSI_PARAM_MAX_SEGMENT_SIZE:
+		break;
+	case ISCSI_PARAM_MAX_SEGMENT_SIZE:
 		len = sysfs_emit(buf, "%u\n", conn->max_segment_size);
-		अवरोध;
-	हाल ISCSI_PARAM_KEEPALIVE_TMO:
-		len = sysfs_emit(buf, "%u\n", conn->keepalive_पंचांगo);
-		अवरोध;
-	हाल ISCSI_PARAM_LOCAL_PORT:
+		break;
+	case ISCSI_PARAM_KEEPALIVE_TMO:
+		len = sysfs_emit(buf, "%u\n", conn->keepalive_tmo);
+		break;
+	case ISCSI_PARAM_LOCAL_PORT:
 		len = sysfs_emit(buf, "%u\n", conn->local_port);
-		अवरोध;
-	हाल ISCSI_PARAM_TCP_TIMESTAMP_STAT:
-		len = sysfs_emit(buf, "%u\n", conn->tcp_बारtamp_stat);
-		अवरोध;
-	हाल ISCSI_PARAM_TCP_NAGLE_DISABLE:
+		break;
+	case ISCSI_PARAM_TCP_TIMESTAMP_STAT:
+		len = sysfs_emit(buf, "%u\n", conn->tcp_timestamp_stat);
+		break;
+	case ISCSI_PARAM_TCP_NAGLE_DISABLE:
 		len = sysfs_emit(buf, "%u\n", conn->tcp_nagle_disable);
-		अवरोध;
-	हाल ISCSI_PARAM_TCP_WSF_DISABLE:
+		break;
+	case ISCSI_PARAM_TCP_WSF_DISABLE:
 		len = sysfs_emit(buf, "%u\n", conn->tcp_wsf_disable);
-		अवरोध;
-	हाल ISCSI_PARAM_TCP_TIMER_SCALE:
-		len = sysfs_emit(buf, "%u\n", conn->tcp_समयr_scale);
-		अवरोध;
-	हाल ISCSI_PARAM_TCP_TIMESTAMP_EN:
-		len = sysfs_emit(buf, "%u\n", conn->tcp_बारtamp_en);
-		अवरोध;
-	हाल ISCSI_PARAM_IP_FRAGMENT_DISABLE:
+		break;
+	case ISCSI_PARAM_TCP_TIMER_SCALE:
+		len = sysfs_emit(buf, "%u\n", conn->tcp_timer_scale);
+		break;
+	case ISCSI_PARAM_TCP_TIMESTAMP_EN:
+		len = sysfs_emit(buf, "%u\n", conn->tcp_timestamp_en);
+		break;
+	case ISCSI_PARAM_IP_FRAGMENT_DISABLE:
 		len = sysfs_emit(buf, "%u\n", conn->fragment_disable);
-		अवरोध;
-	हाल ISCSI_PARAM_IPV4_TOS:
+		break;
+	case ISCSI_PARAM_IPV4_TOS:
 		len = sysfs_emit(buf, "%u\n", conn->ipv4_tos);
-		अवरोध;
-	हाल ISCSI_PARAM_IPV6_TC:
+		break;
+	case ISCSI_PARAM_IPV6_TC:
 		len = sysfs_emit(buf, "%u\n", conn->ipv6_traffic_class);
-		अवरोध;
-	हाल ISCSI_PARAM_IPV6_FLOW_LABEL:
+		break;
+	case ISCSI_PARAM_IPV6_FLOW_LABEL:
 		len = sysfs_emit(buf, "%u\n", conn->ipv6_flow_label);
-		अवरोध;
-	हाल ISCSI_PARAM_IS_FW_ASSIGNED_IPV6:
-		len = sysfs_emit(buf, "%u\n", conn->is_fw_asचिन्हित_ipv6);
-		अवरोध;
-	हाल ISCSI_PARAM_TCP_XMIT_WSF:
+		break;
+	case ISCSI_PARAM_IS_FW_ASSIGNED_IPV6:
+		len = sysfs_emit(buf, "%u\n", conn->is_fw_assigned_ipv6);
+		break;
+	case ISCSI_PARAM_TCP_XMIT_WSF:
 		len = sysfs_emit(buf, "%u\n", conn->tcp_xmit_wsf);
-		अवरोध;
-	हाल ISCSI_PARAM_TCP_RECV_WSF:
+		break;
+	case ISCSI_PARAM_TCP_RECV_WSF:
 		len = sysfs_emit(buf, "%u\n", conn->tcp_recv_wsf);
-		अवरोध;
-	हाल ISCSI_PARAM_LOCAL_IPADDR:
+		break;
+	case ISCSI_PARAM_LOCAL_IPADDR:
 		len = sysfs_emit(buf, "%s\n", conn->local_ipaddr);
-		अवरोध;
-	शेष:
-		वापस -ENOSYS;
-	पूर्ण
+		break;
+	default:
+		return -ENOSYS;
+	}
 
-	वापस len;
-पूर्ण
+	return len;
+}
 EXPORT_SYMBOL_GPL(iscsi_conn_get_param);
 
-पूर्णांक iscsi_host_get_param(काष्ठा Scsi_Host *shost, क्रमागत iscsi_host_param param,
-			 अक्षर *buf)
-अणु
-	काष्ठा iscsi_host *ihost = shost_priv(shost);
-	पूर्णांक len;
+int iscsi_host_get_param(struct Scsi_Host *shost, enum iscsi_host_param param,
+			 char *buf)
+{
+	struct iscsi_host *ihost = shost_priv(shost);
+	int len;
 
-	चयन (param) अणु
-	हाल ISCSI_HOST_PARAM_NETDEV_NAME:
+	switch (param) {
+	case ISCSI_HOST_PARAM_NETDEV_NAME:
 		len = sysfs_emit(buf, "%s\n", ihost->netdev);
-		अवरोध;
-	हाल ISCSI_HOST_PARAM_HWADDRESS:
+		break;
+	case ISCSI_HOST_PARAM_HWADDRESS:
 		len = sysfs_emit(buf, "%s\n", ihost->hwaddress);
-		अवरोध;
-	हाल ISCSI_HOST_PARAM_INITIATOR_NAME:
+		break;
+	case ISCSI_HOST_PARAM_INITIATOR_NAME:
 		len = sysfs_emit(buf, "%s\n", ihost->initiatorname);
-		अवरोध;
-	शेष:
-		वापस -ENOSYS;
-	पूर्ण
+		break;
+	default:
+		return -ENOSYS;
+	}
 
-	वापस len;
-पूर्ण
+	return len;
+}
 EXPORT_SYMBOL_GPL(iscsi_host_get_param);
 
-पूर्णांक iscsi_host_set_param(काष्ठा Scsi_Host *shost, क्रमागत iscsi_host_param param,
-			 अक्षर *buf, पूर्णांक buflen)
-अणु
-	काष्ठा iscsi_host *ihost = shost_priv(shost);
+int iscsi_host_set_param(struct Scsi_Host *shost, enum iscsi_host_param param,
+			 char *buf, int buflen)
+{
+	struct iscsi_host *ihost = shost_priv(shost);
 
-	चयन (param) अणु
-	हाल ISCSI_HOST_PARAM_NETDEV_NAME:
-		वापस iscsi_चयन_str_param(&ihost->netdev, buf);
-	हाल ISCSI_HOST_PARAM_HWADDRESS:
-		वापस iscsi_चयन_str_param(&ihost->hwaddress, buf);
-	हाल ISCSI_HOST_PARAM_INITIATOR_NAME:
-		वापस iscsi_चयन_str_param(&ihost->initiatorname, buf);
-	शेष:
-		वापस -ENOSYS;
-	पूर्ण
+	switch (param) {
+	case ISCSI_HOST_PARAM_NETDEV_NAME:
+		return iscsi_switch_str_param(&ihost->netdev, buf);
+	case ISCSI_HOST_PARAM_HWADDRESS:
+		return iscsi_switch_str_param(&ihost->hwaddress, buf);
+	case ISCSI_HOST_PARAM_INITIATOR_NAME:
+		return iscsi_switch_str_param(&ihost->initiatorname, buf);
+	default:
+		return -ENOSYS;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(iscsi_host_set_param);
 
 MODULE_AUTHOR("Mike Christie");

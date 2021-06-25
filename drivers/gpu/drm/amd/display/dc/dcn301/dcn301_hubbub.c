@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
 * Copyright 2020 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,60 +22,60 @@
  * Authors: AMD
  *
  */
-#समावेश "dm_services.h"
-#समावेश "dcn301_hubbub.h"
-#समावेश "reg_helper.h"
+#include "dm_services.h"
+#include "dcn301_hubbub.h"
+#include "reg_helper.h"
 
-#घोषणा REG(reg)\
+#define REG(reg)\
 	hubbub1->regs->reg
-#घोषणा DC_LOGGER \
+#define DC_LOGGER \
 	hubbub1->base.ctx->logger
-#घोषणा CTX \
+#define CTX \
 	hubbub1->base.ctx
 
-#अघोषित FN
-#घोषणा FN(reg_name, field_name) \
-	hubbub1->shअगरts->field_name, hubbub1->masks->field_name
+#undef FN
+#define FN(reg_name, field_name) \
+	hubbub1->shifts->field_name, hubbub1->masks->field_name
 
-#घोषणा REG(reg)\
+#define REG(reg)\
 	hubbub1->regs->reg
 
-#घोषणा CTX \
+#define CTX \
 	hubbub1->base.ctx
 
-#अघोषित FN
-#घोषणा FN(reg_name, field_name) \
-	hubbub1->shअगरts->field_name, hubbub1->masks->field_name
+#undef FN
+#define FN(reg_name, field_name) \
+	hubbub1->shifts->field_name, hubbub1->masks->field_name
 
 
-अटल स्थिर काष्ठा hubbub_funcs hubbub301_funcs = अणु
+static const struct hubbub_funcs hubbub301_funcs = {
 	.update_dchub = hubbub2_update_dchub,
 	.init_dchub_sys_ctx = hubbub21_init_dchub,
 	.init_vm_ctx = hubbub2_init_vm_ctx,
 	.dcc_support_swizzle = hubbub3_dcc_support_swizzle,
-	.dcc_support_pixel_क्रमmat = hubbub2_dcc_support_pixel_क्रमmat,
+	.dcc_support_pixel_format = hubbub2_dcc_support_pixel_format,
 	.get_dcc_compression_cap = hubbub3_get_dcc_compression_cap,
-	.wm_पढ़ो_state = hubbub21_wm_पढ़ो_state,
+	.wm_read_state = hubbub21_wm_read_state,
 	.get_dchub_ref_freq = hubbub2_get_dchub_ref_freq,
 	.program_watermarks = hubbub3_program_watermarks,
 	.allow_self_refresh_control = hubbub1_allow_self_refresh_control,
 	.is_allow_self_refresh_enabled = hubbub1_is_allow_self_refresh_enabled,
-	.क्रमce_wm_propagate_to_pipes = hubbub3_क्रमce_wm_propagate_to_pipes,
-	.क्रमce_pstate_change_control = hubbub3_क्रमce_pstate_change_control,
-पूर्ण;
+	.force_wm_propagate_to_pipes = hubbub3_force_wm_propagate_to_pipes,
+	.force_pstate_change_control = hubbub3_force_pstate_change_control,
+};
 
-व्योम hubbub301_स्थिरruct(काष्ठा dcn20_hubbub *hubbub3,
-	काष्ठा dc_context *ctx,
-	स्थिर काष्ठा dcn_hubbub_रेजिस्टरs *hubbub_regs,
-	स्थिर काष्ठा dcn_hubbub_shअगरt *hubbub_shअगरt,
-	स्थिर काष्ठा dcn_hubbub_mask *hubbub_mask)
-अणु
+void hubbub301_construct(struct dcn20_hubbub *hubbub3,
+	struct dc_context *ctx,
+	const struct dcn_hubbub_registers *hubbub_regs,
+	const struct dcn_hubbub_shift *hubbub_shift,
+	const struct dcn_hubbub_mask *hubbub_mask)
+{
 	hubbub3->base.ctx = ctx;
 	hubbub3->base.funcs = &hubbub301_funcs;
 	hubbub3->regs = hubbub_regs;
-	hubbub3->shअगरts = hubbub_shअगरt;
+	hubbub3->shifts = hubbub_shift;
 	hubbub3->masks = hubbub_mask;
 
 	hubbub3->debug_test_index_pstate = 0xB;
-	hubbub3->detile_buf_size = 184 * 1024; /* 184KB क्रम DCN3 */
-पूर्ण
+	hubbub3->detile_buf_size = 184 * 1024; /* 184KB for DCN3 */
+}

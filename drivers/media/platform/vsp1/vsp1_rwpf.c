@@ -1,284 +1,283 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * vsp1_rwpf.c  --  R-Car VSP1 Read and Write Pixel Formatters
  *
  * Copyright (C) 2013-2014 Renesas Electronics Corporation
  *
- * Contact: Laurent Pinअक्षरt (laurent.pinअक्षरt@ideasonboard.com)
+ * Contact: Laurent Pinchart (laurent.pinchart@ideasonboard.com)
  */
 
-#समावेश <media/v4l2-subdev.h>
+#include <media/v4l2-subdev.h>
 
-#समावेश "vsp1.h"
-#समावेश "vsp1_rwpf.h"
-#समावेश "vsp1_video.h"
+#include "vsp1.h"
+#include "vsp1_rwpf.h"
+#include "vsp1_video.h"
 
-#घोषणा RWPF_MIN_WIDTH				1
-#घोषणा RWPF_MIN_HEIGHT				1
+#define RWPF_MIN_WIDTH				1
+#define RWPF_MIN_HEIGHT				1
 
-काष्ठा v4l2_rect *vsp1_rwpf_get_crop(काष्ठा vsp1_rwpf *rwpf,
-				     काष्ठा v4l2_subdev_pad_config *config)
-अणु
-	वापस v4l2_subdev_get_try_crop(&rwpf->entity.subdev, config,
+struct v4l2_rect *vsp1_rwpf_get_crop(struct vsp1_rwpf *rwpf,
+				     struct v4l2_subdev_pad_config *config)
+{
+	return v4l2_subdev_get_try_crop(&rwpf->entity.subdev, config,
 					RWPF_PAD_SINK);
-पूर्ण
+}
 
 /* -----------------------------------------------------------------------------
  * V4L2 Subdevice Pad Operations
  */
 
-अटल पूर्णांक vsp1_rwpf_क्रमागत_mbus_code(काष्ठा v4l2_subdev *subdev,
-				    काष्ठा v4l2_subdev_pad_config *cfg,
-				    काष्ठा v4l2_subdev_mbus_code_क्रमागत *code)
-अणु
-	अटल स्थिर अचिन्हित पूर्णांक codes[] = अणु
+static int vsp1_rwpf_enum_mbus_code(struct v4l2_subdev *subdev,
+				    struct v4l2_subdev_pad_config *cfg,
+				    struct v4l2_subdev_mbus_code_enum *code)
+{
+	static const unsigned int codes[] = {
 		MEDIA_BUS_FMT_ARGB8888_1X32,
 		MEDIA_BUS_FMT_AHSV8888_1X32,
 		MEDIA_BUS_FMT_AYUV8_1X32,
-	पूर्ण;
+	};
 
-	अगर (code->index >= ARRAY_SIZE(codes))
-		वापस -EINVAL;
+	if (code->index >= ARRAY_SIZE(codes))
+		return -EINVAL;
 
 	code->code = codes[code->index];
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक vsp1_rwpf_क्रमागत_frame_size(काष्ठा v4l2_subdev *subdev,
-				     काष्ठा v4l2_subdev_pad_config *cfg,
-				     काष्ठा v4l2_subdev_frame_size_क्रमागत *fse)
-अणु
-	काष्ठा vsp1_rwpf *rwpf = to_rwpf(subdev);
+static int vsp1_rwpf_enum_frame_size(struct v4l2_subdev *subdev,
+				     struct v4l2_subdev_pad_config *cfg,
+				     struct v4l2_subdev_frame_size_enum *fse)
+{
+	struct vsp1_rwpf *rwpf = to_rwpf(subdev);
 
-	वापस vsp1_subdev_क्रमागत_frame_size(subdev, cfg, fse, RWPF_MIN_WIDTH,
+	return vsp1_subdev_enum_frame_size(subdev, cfg, fse, RWPF_MIN_WIDTH,
 					   RWPF_MIN_HEIGHT, rwpf->max_width,
 					   rwpf->max_height);
-पूर्ण
+}
 
-अटल पूर्णांक vsp1_rwpf_set_क्रमmat(काष्ठा v4l2_subdev *subdev,
-				काष्ठा v4l2_subdev_pad_config *cfg,
-				काष्ठा v4l2_subdev_क्रमmat *fmt)
-अणु
-	काष्ठा vsp1_rwpf *rwpf = to_rwpf(subdev);
-	काष्ठा v4l2_subdev_pad_config *config;
-	काष्ठा v4l2_mbus_framefmt *क्रमmat;
-	पूर्णांक ret = 0;
+static int vsp1_rwpf_set_format(struct v4l2_subdev *subdev,
+				struct v4l2_subdev_pad_config *cfg,
+				struct v4l2_subdev_format *fmt)
+{
+	struct vsp1_rwpf *rwpf = to_rwpf(subdev);
+	struct v4l2_subdev_pad_config *config;
+	struct v4l2_mbus_framefmt *format;
+	int ret = 0;
 
 	mutex_lock(&rwpf->entity.lock);
 
 	config = vsp1_entity_get_pad_config(&rwpf->entity, cfg, fmt->which);
-	अगर (!config) अणु
+	if (!config) {
 		ret = -EINVAL;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	/* Default to YUV अगर the requested क्रमmat is not supported. */
-	अगर (fmt->क्रमmat.code != MEDIA_BUS_FMT_ARGB8888_1X32 &&
-	    fmt->क्रमmat.code != MEDIA_BUS_FMT_AHSV8888_1X32 &&
-	    fmt->क्रमmat.code != MEDIA_BUS_FMT_AYUV8_1X32)
-		fmt->क्रमmat.code = MEDIA_BUS_FMT_AYUV8_1X32;
+	/* Default to YUV if the requested format is not supported. */
+	if (fmt->format.code != MEDIA_BUS_FMT_ARGB8888_1X32 &&
+	    fmt->format.code != MEDIA_BUS_FMT_AHSV8888_1X32 &&
+	    fmt->format.code != MEDIA_BUS_FMT_AYUV8_1X32)
+		fmt->format.code = MEDIA_BUS_FMT_AYUV8_1X32;
 
-	क्रमmat = vsp1_entity_get_pad_क्रमmat(&rwpf->entity, config, fmt->pad);
+	format = vsp1_entity_get_pad_format(&rwpf->entity, config, fmt->pad);
 
-	अगर (fmt->pad == RWPF_PAD_SOURCE) अणु
+	if (fmt->pad == RWPF_PAD_SOURCE) {
 		/*
-		 * The RWPF perक्रमms क्रमmat conversion but can't scale, only the
-		 * क्रमmat code can be changed on the source pad.
+		 * The RWPF performs format conversion but can't scale, only the
+		 * format code can be changed on the source pad.
 		 */
-		क्रमmat->code = fmt->क्रमmat.code;
-		fmt->क्रमmat = *क्रमmat;
-		जाओ करोne;
-	पूर्ण
+		format->code = fmt->format.code;
+		fmt->format = *format;
+		goto done;
+	}
 
-	क्रमmat->code = fmt->क्रमmat.code;
-	क्रमmat->width = clamp_t(अचिन्हित पूर्णांक, fmt->क्रमmat.width,
+	format->code = fmt->format.code;
+	format->width = clamp_t(unsigned int, fmt->format.width,
 				RWPF_MIN_WIDTH, rwpf->max_width);
-	क्रमmat->height = clamp_t(अचिन्हित पूर्णांक, fmt->क्रमmat.height,
+	format->height = clamp_t(unsigned int, fmt->format.height,
 				 RWPF_MIN_HEIGHT, rwpf->max_height);
-	क्रमmat->field = V4L2_FIELD_NONE;
-	क्रमmat->colorspace = V4L2_COLORSPACE_SRGB;
+	format->field = V4L2_FIELD_NONE;
+	format->colorspace = V4L2_COLORSPACE_SRGB;
 
-	fmt->क्रमmat = *क्रमmat;
+	fmt->format = *format;
 
-	अगर (rwpf->entity.type == VSP1_ENTITY_RPF) अणु
-		काष्ठा v4l2_rect *crop;
+	if (rwpf->entity.type == VSP1_ENTITY_RPF) {
+		struct v4l2_rect *crop;
 
 		/* Update the sink crop rectangle. */
 		crop = vsp1_rwpf_get_crop(rwpf, config);
 		crop->left = 0;
 		crop->top = 0;
-		crop->width = fmt->क्रमmat.width;
-		crop->height = fmt->क्रमmat.height;
-	पूर्ण
+		crop->width = fmt->format.width;
+		crop->height = fmt->format.height;
+	}
 
-	/* Propagate the क्रमmat to the source pad. */
-	क्रमmat = vsp1_entity_get_pad_क्रमmat(&rwpf->entity, config,
+	/* Propagate the format to the source pad. */
+	format = vsp1_entity_get_pad_format(&rwpf->entity, config,
 					    RWPF_PAD_SOURCE);
-	*क्रमmat = fmt->क्रमmat;
+	*format = fmt->format;
 
-	अगर (rwpf->flip.rotate) अणु
-		क्रमmat->width = fmt->क्रमmat.height;
-		क्रमmat->height = fmt->क्रमmat.width;
-	पूर्ण
+	if (rwpf->flip.rotate) {
+		format->width = fmt->format.height;
+		format->height = fmt->format.width;
+	}
 
-करोne:
+done:
 	mutex_unlock(&rwpf->entity.lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक vsp1_rwpf_get_selection(काष्ठा v4l2_subdev *subdev,
-				   काष्ठा v4l2_subdev_pad_config *cfg,
-				   काष्ठा v4l2_subdev_selection *sel)
-अणु
-	काष्ठा vsp1_rwpf *rwpf = to_rwpf(subdev);
-	काष्ठा v4l2_subdev_pad_config *config;
-	काष्ठा v4l2_mbus_framefmt *क्रमmat;
-	पूर्णांक ret = 0;
+static int vsp1_rwpf_get_selection(struct v4l2_subdev *subdev,
+				   struct v4l2_subdev_pad_config *cfg,
+				   struct v4l2_subdev_selection *sel)
+{
+	struct vsp1_rwpf *rwpf = to_rwpf(subdev);
+	struct v4l2_subdev_pad_config *config;
+	struct v4l2_mbus_framefmt *format;
+	int ret = 0;
 
 	/*
 	 * Cropping is only supported on the RPF and is implemented on the sink
 	 * pad.
 	 */
-	अगर (rwpf->entity.type == VSP1_ENTITY_WPF || sel->pad != RWPF_PAD_SINK)
-		वापस -EINVAL;
+	if (rwpf->entity.type == VSP1_ENTITY_WPF || sel->pad != RWPF_PAD_SINK)
+		return -EINVAL;
 
 	mutex_lock(&rwpf->entity.lock);
 
 	config = vsp1_entity_get_pad_config(&rwpf->entity, cfg, sel->which);
-	अगर (!config) अणु
+	if (!config) {
 		ret = -EINVAL;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	चयन (sel->target) अणु
-	हाल V4L2_SEL_TGT_CROP:
+	switch (sel->target) {
+	case V4L2_SEL_TGT_CROP:
 		sel->r = *vsp1_rwpf_get_crop(rwpf, config);
-		अवरोध;
+		break;
 
-	हाल V4L2_SEL_TGT_CROP_BOUNDS:
-		क्रमmat = vsp1_entity_get_pad_क्रमmat(&rwpf->entity, config,
+	case V4L2_SEL_TGT_CROP_BOUNDS:
+		format = vsp1_entity_get_pad_format(&rwpf->entity, config,
 						    RWPF_PAD_SINK);
 		sel->r.left = 0;
 		sel->r.top = 0;
-		sel->r.width = क्रमmat->width;
-		sel->r.height = क्रमmat->height;
-		अवरोध;
+		sel->r.width = format->width;
+		sel->r.height = format->height;
+		break;
 
-	शेष:
+	default:
 		ret = -EINVAL;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-करोne:
+done:
 	mutex_unlock(&rwpf->entity.lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक vsp1_rwpf_set_selection(काष्ठा v4l2_subdev *subdev,
-				   काष्ठा v4l2_subdev_pad_config *cfg,
-				   काष्ठा v4l2_subdev_selection *sel)
-अणु
-	काष्ठा vsp1_rwpf *rwpf = to_rwpf(subdev);
-	काष्ठा v4l2_subdev_pad_config *config;
-	काष्ठा v4l2_mbus_framefmt *क्रमmat;
-	काष्ठा v4l2_rect *crop;
-	पूर्णांक ret = 0;
+static int vsp1_rwpf_set_selection(struct v4l2_subdev *subdev,
+				   struct v4l2_subdev_pad_config *cfg,
+				   struct v4l2_subdev_selection *sel)
+{
+	struct vsp1_rwpf *rwpf = to_rwpf(subdev);
+	struct v4l2_subdev_pad_config *config;
+	struct v4l2_mbus_framefmt *format;
+	struct v4l2_rect *crop;
+	int ret = 0;
 
 	/*
 	 * Cropping is only supported on the RPF and is implemented on the sink
 	 * pad.
 	 */
-	अगर (rwpf->entity.type == VSP1_ENTITY_WPF || sel->pad != RWPF_PAD_SINK)
-		वापस -EINVAL;
+	if (rwpf->entity.type == VSP1_ENTITY_WPF || sel->pad != RWPF_PAD_SINK)
+		return -EINVAL;
 
-	अगर (sel->target != V4L2_SEL_TGT_CROP)
-		वापस -EINVAL;
+	if (sel->target != V4L2_SEL_TGT_CROP)
+		return -EINVAL;
 
 	mutex_lock(&rwpf->entity.lock);
 
 	config = vsp1_entity_get_pad_config(&rwpf->entity, cfg, sel->which);
-	अगर (!config) अणु
+	if (!config) {
 		ret = -EINVAL;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
 	/* Make sure the crop rectangle is entirely contained in the image. */
-	क्रमmat = vsp1_entity_get_pad_क्रमmat(&rwpf->entity, config,
+	format = vsp1_entity_get_pad_format(&rwpf->entity, config,
 					    RWPF_PAD_SINK);
 
 	/*
-	 * Restrict the crop rectangle coordinates to multiples of 2 to aव्योम
-	 * shअगरting the color plane.
+	 * Restrict the crop rectangle coordinates to multiples of 2 to avoid
+	 * shifting the color plane.
 	 */
-	अगर (क्रमmat->code == MEDIA_BUS_FMT_AYUV8_1X32) अणु
+	if (format->code == MEDIA_BUS_FMT_AYUV8_1X32) {
 		sel->r.left = ALIGN(sel->r.left, 2);
 		sel->r.top = ALIGN(sel->r.top, 2);
-		sel->r.width = round_करोwn(sel->r.width, 2);
-		sel->r.height = round_करोwn(sel->r.height, 2);
-	पूर्ण
+		sel->r.width = round_down(sel->r.width, 2);
+		sel->r.height = round_down(sel->r.height, 2);
+	}
 
-	sel->r.left = min_t(अचिन्हित पूर्णांक, sel->r.left, क्रमmat->width - 2);
-	sel->r.top = min_t(अचिन्हित पूर्णांक, sel->r.top, क्रमmat->height - 2);
-	sel->r.width = min_t(अचिन्हित पूर्णांक, sel->r.width,
-			     क्रमmat->width - sel->r.left);
-	sel->r.height = min_t(अचिन्हित पूर्णांक, sel->r.height,
-			      क्रमmat->height - sel->r.top);
+	sel->r.left = min_t(unsigned int, sel->r.left, format->width - 2);
+	sel->r.top = min_t(unsigned int, sel->r.top, format->height - 2);
+	sel->r.width = min_t(unsigned int, sel->r.width,
+			     format->width - sel->r.left);
+	sel->r.height = min_t(unsigned int, sel->r.height,
+			      format->height - sel->r.top);
 
 	crop = vsp1_rwpf_get_crop(rwpf, config);
 	*crop = sel->r;
 
-	/* Propagate the क्रमmat to the source pad. */
-	क्रमmat = vsp1_entity_get_pad_क्रमmat(&rwpf->entity, config,
+	/* Propagate the format to the source pad. */
+	format = vsp1_entity_get_pad_format(&rwpf->entity, config,
 					    RWPF_PAD_SOURCE);
-	क्रमmat->width = crop->width;
-	क्रमmat->height = crop->height;
+	format->width = crop->width;
+	format->height = crop->height;
 
-करोne:
+done:
 	mutex_unlock(&rwpf->entity.lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-स्थिर काष्ठा v4l2_subdev_pad_ops vsp1_rwpf_pad_ops = अणु
+const struct v4l2_subdev_pad_ops vsp1_rwpf_pad_ops = {
 	.init_cfg = vsp1_entity_init_cfg,
-	.क्रमागत_mbus_code = vsp1_rwpf_क्रमागत_mbus_code,
-	.क्रमागत_frame_size = vsp1_rwpf_क्रमागत_frame_size,
-	.get_fmt = vsp1_subdev_get_pad_क्रमmat,
-	.set_fmt = vsp1_rwpf_set_क्रमmat,
+	.enum_mbus_code = vsp1_rwpf_enum_mbus_code,
+	.enum_frame_size = vsp1_rwpf_enum_frame_size,
+	.get_fmt = vsp1_subdev_get_pad_format,
+	.set_fmt = vsp1_rwpf_set_format,
 	.get_selection = vsp1_rwpf_get_selection,
 	.set_selection = vsp1_rwpf_set_selection,
-पूर्ण;
+};
 
 /* -----------------------------------------------------------------------------
  * Controls
  */
 
-अटल पूर्णांक vsp1_rwpf_s_ctrl(काष्ठा v4l2_ctrl *ctrl)
-अणु
-	काष्ठा vsp1_rwpf *rwpf =
-		container_of(ctrl->handler, काष्ठा vsp1_rwpf, ctrls);
+static int vsp1_rwpf_s_ctrl(struct v4l2_ctrl *ctrl)
+{
+	struct vsp1_rwpf *rwpf =
+		container_of(ctrl->handler, struct vsp1_rwpf, ctrls);
 
-	चयन (ctrl->id) अणु
-	हाल V4L2_CID_ALPHA_COMPONENT:
+	switch (ctrl->id) {
+	case V4L2_CID_ALPHA_COMPONENT:
 		rwpf->alpha = ctrl->val;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा v4l2_ctrl_ops vsp1_rwpf_ctrl_ops = अणु
+static const struct v4l2_ctrl_ops vsp1_rwpf_ctrl_ops = {
 	.s_ctrl = vsp1_rwpf_s_ctrl,
-पूर्ण;
+};
 
-पूर्णांक vsp1_rwpf_init_ctrls(काष्ठा vsp1_rwpf *rwpf, अचिन्हित पूर्णांक ncontrols)
-अणु
+int vsp1_rwpf_init_ctrls(struct vsp1_rwpf *rwpf, unsigned int ncontrols)
+{
 	v4l2_ctrl_handler_init(&rwpf->ctrls, ncontrols + 1);
 	v4l2_ctrl_new_std(&rwpf->ctrls, &vsp1_rwpf_ctrl_ops,
 			  V4L2_CID_ALPHA_COMPONENT, 0, 255, 1, 255);
 
 	rwpf->entity.subdev.ctrl_handler = &rwpf->ctrls;
 
-	वापस rwpf->ctrls.error;
-पूर्ण
+	return rwpf->ctrls.error;
+}

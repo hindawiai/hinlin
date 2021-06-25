@@ -1,173 +1,172 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _ASM_X86_PGTABLE_64_H
-#घोषणा _ASM_X86_PGTABLE_64_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _ASM_X86_PGTABLE_64_H
+#define _ASM_X86_PGTABLE_64_H
 
-#समावेश <linux/स्थिर.h>
-#समावेश <यंत्र/pgtable_64_types.h>
+#include <linux/const.h>
+#include <asm/pgtable_64_types.h>
 
-#अगर_अघोषित __ASSEMBLY__
+#ifndef __ASSEMBLY__
 
 /*
- * This file contains the functions and defines necessary to modअगरy and use
+ * This file contains the functions and defines necessary to modify and use
  * the x86-64 page table tree.
  */
-#समावेश <यंत्र/processor.h>
-#समावेश <linux/bitops.h>
-#समावेश <linux/thपढ़ोs.h>
-#समावेश <यंत्र/fixmap.h>
+#include <asm/processor.h>
+#include <linux/bitops.h>
+#include <linux/threads.h>
+#include <asm/fixmap.h>
 
-बाह्य p4d_t level4_kernel_pgt[512];
-बाह्य p4d_t level4_ident_pgt[512];
-बाह्य pud_t level3_kernel_pgt[512];
-बाह्य pud_t level3_ident_pgt[512];
-बाह्य pmd_t level2_kernel_pgt[512];
-बाह्य pmd_t level2_fixmap_pgt[512];
-बाह्य pmd_t level2_ident_pgt[512];
-बाह्य pte_t level1_fixmap_pgt[512 * FIXMAP_PMD_NUM];
-बाह्य pgd_t init_top_pgt[];
+extern p4d_t level4_kernel_pgt[512];
+extern p4d_t level4_ident_pgt[512];
+extern pud_t level3_kernel_pgt[512];
+extern pud_t level3_ident_pgt[512];
+extern pmd_t level2_kernel_pgt[512];
+extern pmd_t level2_fixmap_pgt[512];
+extern pmd_t level2_ident_pgt[512];
+extern pte_t level1_fixmap_pgt[512 * FIXMAP_PMD_NUM];
+extern pgd_t init_top_pgt[];
 
-#घोषणा swapper_pg_dir init_top_pgt
+#define swapper_pg_dir init_top_pgt
 
-बाह्य व्योम paging_init(व्योम);
-अटल अंतरभूत व्योम sync_initial_page_table(व्योम) अणु पूर्ण
+extern void paging_init(void);
+static inline void sync_initial_page_table(void) { }
 
-#घोषणा pte_ERROR(e)					\
+#define pte_ERROR(e)					\
 	pr_err("%s:%d: bad pte %p(%016lx)\n",		\
-	       __खाता__, __LINE__, &(e), pte_val(e))
-#घोषणा pmd_ERROR(e)					\
+	       __FILE__, __LINE__, &(e), pte_val(e))
+#define pmd_ERROR(e)					\
 	pr_err("%s:%d: bad pmd %p(%016lx)\n",		\
-	       __खाता__, __LINE__, &(e), pmd_val(e))
-#घोषणा pud_ERROR(e)					\
+	       __FILE__, __LINE__, &(e), pmd_val(e))
+#define pud_ERROR(e)					\
 	pr_err("%s:%d: bad pud %p(%016lx)\n",		\
-	       __खाता__, __LINE__, &(e), pud_val(e))
+	       __FILE__, __LINE__, &(e), pud_val(e))
 
-#अगर CONFIG_PGTABLE_LEVELS >= 5
-#घोषणा p4d_ERROR(e)					\
+#if CONFIG_PGTABLE_LEVELS >= 5
+#define p4d_ERROR(e)					\
 	pr_err("%s:%d: bad p4d %p(%016lx)\n",		\
-	       __खाता__, __LINE__, &(e), p4d_val(e))
-#पूर्ण_अगर
+	       __FILE__, __LINE__, &(e), p4d_val(e))
+#endif
 
-#घोषणा pgd_ERROR(e)					\
+#define pgd_ERROR(e)					\
 	pr_err("%s:%d: bad pgd %p(%016lx)\n",		\
-	       __खाता__, __LINE__, &(e), pgd_val(e))
+	       __FILE__, __LINE__, &(e), pgd_val(e))
 
-काष्ठा mm_काष्ठा;
+struct mm_struct;
 
-#घोषणा mm_p4d_folded mm_p4d_folded
-अटल अंतरभूत bool mm_p4d_folded(काष्ठा mm_काष्ठा *mm)
-अणु
-	वापस !pgtable_l5_enabled();
-पूर्ण
+#define mm_p4d_folded mm_p4d_folded
+static inline bool mm_p4d_folded(struct mm_struct *mm)
+{
+	return !pgtable_l5_enabled();
+}
 
-व्योम set_pte_vaddr_p4d(p4d_t *p4d_page, अचिन्हित दीर्घ vaddr, pte_t new_pte);
-व्योम set_pte_vaddr_pud(pud_t *pud_page, अचिन्हित दीर्घ vaddr, pte_t new_pte);
+void set_pte_vaddr_p4d(p4d_t *p4d_page, unsigned long vaddr, pte_t new_pte);
+void set_pte_vaddr_pud(pud_t *pud_page, unsigned long vaddr, pte_t new_pte);
 
-अटल अंतरभूत व्योम native_set_pte(pte_t *ptep, pte_t pte)
-अणु
+static inline void native_set_pte(pte_t *ptep, pte_t pte)
+{
 	WRITE_ONCE(*ptep, pte);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम native_pte_clear(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ addr,
+static inline void native_pte_clear(struct mm_struct *mm, unsigned long addr,
 				    pte_t *ptep)
-अणु
+{
 	native_set_pte(ptep, native_make_pte(0));
-पूर्ण
+}
 
-अटल अंतरभूत व्योम native_set_pte_atomic(pte_t *ptep, pte_t pte)
-अणु
+static inline void native_set_pte_atomic(pte_t *ptep, pte_t pte)
+{
 	native_set_pte(ptep, pte);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम native_set_pmd(pmd_t *pmdp, pmd_t pmd)
-अणु
+static inline void native_set_pmd(pmd_t *pmdp, pmd_t pmd)
+{
 	WRITE_ONCE(*pmdp, pmd);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम native_pmd_clear(pmd_t *pmd)
-अणु
+static inline void native_pmd_clear(pmd_t *pmd)
+{
 	native_set_pmd(pmd, native_make_pmd(0));
-पूर्ण
+}
 
-अटल अंतरभूत pte_t native_ptep_get_and_clear(pte_t *xp)
-अणु
-#अगर_घोषित CONFIG_SMP
-	वापस native_make_pte(xchg(&xp->pte, 0));
-#अन्यथा
+static inline pte_t native_ptep_get_and_clear(pte_t *xp)
+{
+#ifdef CONFIG_SMP
+	return native_make_pte(xchg(&xp->pte, 0));
+#else
 	/* native_local_ptep_get_and_clear,
 	   but duplicated because of cyclic dependency */
 	pte_t ret = *xp;
-	native_pte_clear(शून्य, 0, xp);
-	वापस ret;
-#पूर्ण_अगर
-पूर्ण
+	native_pte_clear(NULL, 0, xp);
+	return ret;
+#endif
+}
 
-अटल अंतरभूत pmd_t native_pmdp_get_and_clear(pmd_t *xp)
-अणु
-#अगर_घोषित CONFIG_SMP
-	वापस native_make_pmd(xchg(&xp->pmd, 0));
-#अन्यथा
+static inline pmd_t native_pmdp_get_and_clear(pmd_t *xp)
+{
+#ifdef CONFIG_SMP
+	return native_make_pmd(xchg(&xp->pmd, 0));
+#else
 	/* native_local_pmdp_get_and_clear,
 	   but duplicated because of cyclic dependency */
 	pmd_t ret = *xp;
 	native_pmd_clear(xp);
-	वापस ret;
-#पूर्ण_अगर
-पूर्ण
+	return ret;
+#endif
+}
 
-अटल अंतरभूत व्योम native_set_pud(pud_t *pudp, pud_t pud)
-अणु
+static inline void native_set_pud(pud_t *pudp, pud_t pud)
+{
 	WRITE_ONCE(*pudp, pud);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम native_pud_clear(pud_t *pud)
-अणु
+static inline void native_pud_clear(pud_t *pud)
+{
 	native_set_pud(pud, native_make_pud(0));
-पूर्ण
+}
 
-अटल अंतरभूत pud_t native_pudp_get_and_clear(pud_t *xp)
-अणु
-#अगर_घोषित CONFIG_SMP
-	वापस native_make_pud(xchg(&xp->pud, 0));
-#अन्यथा
+static inline pud_t native_pudp_get_and_clear(pud_t *xp)
+{
+#ifdef CONFIG_SMP
+	return native_make_pud(xchg(&xp->pud, 0));
+#else
 	/* native_local_pudp_get_and_clear,
 	 * but duplicated because of cyclic dependency
 	 */
 	pud_t ret = *xp;
 
 	native_pud_clear(xp);
-	वापस ret;
-#पूर्ण_अगर
-पूर्ण
+	return ret;
+#endif
+}
 
-अटल अंतरभूत व्योम native_set_p4d(p4d_t *p4dp, p4d_t p4d)
-अणु
+static inline void native_set_p4d(p4d_t *p4dp, p4d_t p4d)
+{
 	pgd_t pgd;
 
-	अगर (pgtable_l5_enabled() || !IS_ENABLED(CONFIG_PAGE_TABLE_ISOLATION)) अणु
+	if (pgtable_l5_enabled() || !IS_ENABLED(CONFIG_PAGE_TABLE_ISOLATION)) {
 		WRITE_ONCE(*p4dp, p4d);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	pgd = native_make_pgd(native_p4d_val(p4d));
 	pgd = pti_set_user_pgtbl((pgd_t *)p4dp, pgd);
 	WRITE_ONCE(*p4dp, native_make_p4d(native_pgd_val(pgd)));
-पूर्ण
+}
 
-अटल अंतरभूत व्योम native_p4d_clear(p4d_t *p4d)
-अणु
+static inline void native_p4d_clear(p4d_t *p4d)
+{
 	native_set_p4d(p4d, native_make_p4d(0));
-पूर्ण
+}
 
-अटल अंतरभूत व्योम native_set_pgd(pgd_t *pgdp, pgd_t pgd)
-अणु
+static inline void native_set_pgd(pgd_t *pgdp, pgd_t pgd)
+{
 	WRITE_ONCE(*pgdp, pti_set_user_pgtbl(pgdp, pgd));
-पूर्ण
+}
 
-अटल अंतरभूत व्योम native_pgd_clear(pgd_t *pgd)
-अणु
+static inline void native_pgd_clear(pgd_t *pgd)
+{
 	native_set_pgd(pgd, native_make_pgd(0));
-पूर्ण
+}
 
 /*
  * Conversion functions: convert a page and protection to a page entry,
@@ -189,20 +188,20 @@
  * |     ...            |SW3|SW2|SW1|G|L|D|A|CD|WT|U| W|P| <- bit names
  * | TYPE (59-63) | ~OFFSET (9-58)  |0|0|X|X| X| X|F|SD|0| <- swp entry
  *
- * G (8) is aliased and used as a PROT_NONE indicator क्रम
+ * G (8) is aliased and used as a PROT_NONE indicator for
  * !present ptes.  We need to start storing swap entries above
- * there.  We also need to aव्योम using A and D because of an
+ * there.  We also need to avoid using A and D because of an
  * erratum where they can be incorrectly set by hardware on
  * non-present PTEs.
  *
- * SD Bits 1-4 are not used in non-present क्रमmat and available क्रम
+ * SD Bits 1-4 are not used in non-present format and available for
  * special use described below:
  *
  * SD (1) in swp entry is used to store soft dirty bit, which helps us
  * remember soft dirty over page migration
  *
  * F (2) in swp entry is used to record when a pagetable is
- * ग_लिखोरक्षित by userfaultfd WP support.
+ * writeprotected by userfaultfd WP support.
  *
  * Bit 7 in swp entry should be 0 because pmd_present checks not only P,
  * but also L and G.
@@ -210,64 +209,64 @@
  * The offset is inverted by a binary not operation to make the high
  * physical bits set.
  */
-#घोषणा SWP_TYPE_BITS		5
+#define SWP_TYPE_BITS		5
 
-#घोषणा SWP_OFFSET_FIRST_BIT	(_PAGE_BIT_PROTNONE + 1)
+#define SWP_OFFSET_FIRST_BIT	(_PAGE_BIT_PROTNONE + 1)
 
-/* We always extract/encode the offset by shअगरting it all the way up, and then करोwn again */
-#घोषणा SWP_OFFSET_SHIFT	(SWP_OFFSET_FIRST_BIT+SWP_TYPE_BITS)
+/* We always extract/encode the offset by shifting it all the way up, and then down again */
+#define SWP_OFFSET_SHIFT	(SWP_OFFSET_FIRST_BIT+SWP_TYPE_BITS)
 
-#घोषणा MAX_SWAPखाताS_CHECK() BUILD_BUG_ON(MAX_SWAPखाताS_SHIFT > SWP_TYPE_BITS)
+#define MAX_SWAPFILES_CHECK() BUILD_BUG_ON(MAX_SWAPFILES_SHIFT > SWP_TYPE_BITS)
 
-/* Extract the high bits क्रम type */
-#घोषणा __swp_type(x) ((x).val >> (64 - SWP_TYPE_BITS))
+/* Extract the high bits for type */
+#define __swp_type(x) ((x).val >> (64 - SWP_TYPE_BITS))
 
-/* Shअगरt up (to get rid of type), then करोwn to get value */
-#घोषणा __swp_offset(x) (~(x).val << SWP_TYPE_BITS >> SWP_OFFSET_SHIFT)
+/* Shift up (to get rid of type), then down to get value */
+#define __swp_offset(x) (~(x).val << SWP_TYPE_BITS >> SWP_OFFSET_SHIFT)
 
 /*
- * Shअगरt the offset up "too far" by TYPE bits, then करोwn again
+ * Shift the offset up "too far" by TYPE bits, then down again
  * The offset is inverted by a binary not operation to make the high
  * physical bits set.
  */
-#घोषणा __swp_entry(type, offset) ((swp_entry_t) अणु \
-	(~(अचिन्हित दीर्घ)(offset) << SWP_OFFSET_SHIFT >> SWP_TYPE_BITS) \
-	| ((अचिन्हित दीर्घ)(type) << (64-SWP_TYPE_BITS)) पूर्ण)
+#define __swp_entry(type, offset) ((swp_entry_t) { \
+	(~(unsigned long)(offset) << SWP_OFFSET_SHIFT >> SWP_TYPE_BITS) \
+	| ((unsigned long)(type) << (64-SWP_TYPE_BITS)) })
 
-#घोषणा __pte_to_swp_entry(pte)		((swp_entry_t) अणु pte_val((pte)) पूर्ण)
-#घोषणा __pmd_to_swp_entry(pmd)		((swp_entry_t) अणु pmd_val((pmd)) पूर्ण)
-#घोषणा __swp_entry_to_pte(x)		((pte_t) अणु .pte = (x).val पूर्ण)
-#घोषणा __swp_entry_to_pmd(x)		((pmd_t) अणु .pmd = (x).val पूर्ण)
+#define __pte_to_swp_entry(pte)		((swp_entry_t) { pte_val((pte)) })
+#define __pmd_to_swp_entry(pmd)		((swp_entry_t) { pmd_val((pmd)) })
+#define __swp_entry_to_pte(x)		((pte_t) { .pte = (x).val })
+#define __swp_entry_to_pmd(x)		((pmd_t) { .pmd = (x).val })
 
-बाह्य पूर्णांक kern_addr_valid(अचिन्हित दीर्घ addr);
-बाह्य व्योम cleanup_highmap(व्योम);
+extern int kern_addr_valid(unsigned long addr);
+extern void cleanup_highmap(void);
 
-#घोषणा HAVE_ARCH_UNMAPPED_AREA
-#घोषणा HAVE_ARCH_UNMAPPED_AREA_TOPDOWN
+#define HAVE_ARCH_UNMAPPED_AREA
+#define HAVE_ARCH_UNMAPPED_AREA_TOPDOWN
 
-#घोषणा PAGE_AGP    PAGE_KERNEL_NOCACHE
-#घोषणा HAVE_PAGE_AGP 1
+#define PAGE_AGP    PAGE_KERNEL_NOCACHE
+#define HAVE_PAGE_AGP 1
 
 /* fs/proc/kcore.c */
-#घोषणा	kc_vaddr_to_offset(v) ((v) & __VIRTUAL_MASK)
-#घोषणा	kc_offset_to_vaddr(o) ((o) | ~__VIRTUAL_MASK)
+#define	kc_vaddr_to_offset(v) ((v) & __VIRTUAL_MASK)
+#define	kc_offset_to_vaddr(o) ((o) | ~__VIRTUAL_MASK)
 
-#घोषणा __HAVE_ARCH_PTE_SAME
+#define __HAVE_ARCH_PTE_SAME
 
-#घोषणा vmemmap ((काष्ठा page *)VMEMMAP_START)
+#define vmemmap ((struct page *)VMEMMAP_START)
 
-बाह्य व्योम init_extra_mapping_uc(अचिन्हित दीर्घ phys, अचिन्हित दीर्घ size);
-बाह्य व्योम init_extra_mapping_wb(अचिन्हित दीर्घ phys, अचिन्हित दीर्घ size);
+extern void init_extra_mapping_uc(unsigned long phys, unsigned long size);
+extern void init_extra_mapping_wb(unsigned long phys, unsigned long size);
 
-#घोषणा gup_fast_permitted gup_fast_permitted
-अटल अंतरभूत bool gup_fast_permitted(अचिन्हित दीर्घ start, अचिन्हित दीर्घ end)
-अणु
-	अगर (end >> __VIRTUAL_MASK_SHIFT)
-		वापस false;
-	वापस true;
-पूर्ण
+#define gup_fast_permitted gup_fast_permitted
+static inline bool gup_fast_permitted(unsigned long start, unsigned long end)
+{
+	if (end >> __VIRTUAL_MASK_SHIFT)
+		return false;
+	return true;
+}
 
-#समावेश <यंत्र/pgtable-invert.h>
+#include <asm/pgtable-invert.h>
 
-#पूर्ण_अगर /* !__ASSEMBLY__ */
-#पूर्ण_अगर /* _ASM_X86_PGTABLE_64_H */
+#endif /* !__ASSEMBLY__ */
+#endif /* _ASM_X86_PGTABLE_64_H */

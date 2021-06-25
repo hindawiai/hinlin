@@ -1,24 +1,23 @@
-<शैली गुरु>
 /*
  * Copyright (c) 2005-2006 Intel Corporation.  All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the मुख्य directory of this source tree, or the
+ * COPYING in the main directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary क्रमms, with or
- *     without modअगरication, are permitted provided that the following
+ *     Redistribution and use in source and binary forms, with or
+ *     without modification, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *	copyright notice, this list of conditions and the following
  *	disclaimer.
  *
- *      - Redistributions in binary क्रमm must reproduce the above
+ *      - Redistributions in binary form must reproduce the above
  *	copyright notice, this list of conditions and the following
- *	disclaimer in the करोcumentation and/or other materials
+ *	disclaimer in the documentation and/or other materials
  *	provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -31,207 +30,207 @@
  * SOFTWARE.
  */
 
-#समावेश <linux/completion.h>
-#समावेश <linux/file.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/poll.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/idr.h>
-#समावेश <linux/in.h>
-#समावेश <linux/in6.h>
-#समावेश <linux/miscdevice.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/sysctl.h>
-#समावेश <linux/module.h>
-#समावेश <linux/nsproxy.h>
+#include <linux/completion.h>
+#include <linux/file.h>
+#include <linux/mutex.h>
+#include <linux/poll.h>
+#include <linux/sched.h>
+#include <linux/idr.h>
+#include <linux/in.h>
+#include <linux/in6.h>
+#include <linux/miscdevice.h>
+#include <linux/slab.h>
+#include <linux/sysctl.h>
+#include <linux/module.h>
+#include <linux/nsproxy.h>
 
-#समावेश <linux/nospec.h>
+#include <linux/nospec.h>
 
-#समावेश <rdma/rdma_user_cm.h>
-#समावेश <rdma/ib_marshall.h>
-#समावेश <rdma/rdma_cm.h>
-#समावेश <rdma/rdma_cm_ib.h>
-#समावेश <rdma/ib_addr.h>
-#समावेश <rdma/ib.h>
-#समावेश <rdma/ib_cm.h>
-#समावेश <rdma/rdma_netlink.h>
-#समावेश "core_priv.h"
+#include <rdma/rdma_user_cm.h>
+#include <rdma/ib_marshall.h>
+#include <rdma/rdma_cm.h>
+#include <rdma/rdma_cm_ib.h>
+#include <rdma/ib_addr.h>
+#include <rdma/ib.h>
+#include <rdma/ib_cm.h>
+#include <rdma/rdma_netlink.h>
+#include "core_priv.h"
 
 MODULE_AUTHOR("Sean Hefty");
 MODULE_DESCRIPTION("RDMA Userspace Connection Manager Access");
 MODULE_LICENSE("Dual BSD/GPL");
 
-अटल अचिन्हित पूर्णांक max_backlog = 1024;
+static unsigned int max_backlog = 1024;
 
-अटल काष्ठा ctl_table_header *ucma_ctl_table_hdr;
-अटल काष्ठा ctl_table ucma_ctl_table[] = अणु
-	अणु
+static struct ctl_table_header *ucma_ctl_table_hdr;
+static struct ctl_table ucma_ctl_table[] = {
+	{
 		.procname	= "max_backlog",
 		.data		= &max_backlog,
-		.maxlen		= माप max_backlog,
+		.maxlen		= sizeof max_backlog,
 		.mode		= 0644,
-		.proc_handler	= proc_करोपूर्णांकvec,
-	पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+		.proc_handler	= proc_dointvec,
+	},
+	{ }
+};
 
-काष्ठा ucma_file अणु
-	काष्ठा mutex		mut;
-	काष्ठा file		*filp;
-	काष्ठा list_head	ctx_list;
-	काष्ठा list_head	event_list;
-	रुको_queue_head_t	poll_रुको;
-पूर्ण;
+struct ucma_file {
+	struct mutex		mut;
+	struct file		*filp;
+	struct list_head	ctx_list;
+	struct list_head	event_list;
+	wait_queue_head_t	poll_wait;
+};
 
-काष्ठा ucma_context अणु
+struct ucma_context {
 	u32			id;
-	काष्ठा completion	comp;
+	struct completion	comp;
 	refcount_t		ref;
-	पूर्णांक			events_reported;
+	int			events_reported;
 	atomic_t		backlog;
 
-	काष्ठा ucma_file	*file;
-	काष्ठा rdma_cm_id	*cm_id;
-	काष्ठा mutex		mutex;
+	struct ucma_file	*file;
+	struct rdma_cm_id	*cm_id;
+	struct mutex		mutex;
 	u64			uid;
 
-	काष्ठा list_head	list;
-	काष्ठा work_काष्ठा	बंद_work;
-पूर्ण;
+	struct list_head	list;
+	struct work_struct	close_work;
+};
 
-काष्ठा ucma_multicast अणु
-	काष्ठा ucma_context	*ctx;
+struct ucma_multicast {
+	struct ucma_context	*ctx;
 	u32			id;
-	पूर्णांक			events_reported;
+	int			events_reported;
 
 	u64			uid;
 	u8			join_state;
-	काष्ठा sockaddr_storage	addr;
-पूर्ण;
+	struct sockaddr_storage	addr;
+};
 
-काष्ठा ucma_event अणु
-	काष्ठा ucma_context	*ctx;
-	काष्ठा ucma_context	*conn_req_ctx;
-	काष्ठा ucma_multicast	*mc;
-	काष्ठा list_head	list;
-	काष्ठा rdma_ucm_event_resp resp;
-पूर्ण;
+struct ucma_event {
+	struct ucma_context	*ctx;
+	struct ucma_context	*conn_req_ctx;
+	struct ucma_multicast	*mc;
+	struct list_head	list;
+	struct rdma_ucm_event_resp resp;
+};
 
-अटल DEFINE_XARRAY_ALLOC(ctx_table);
-अटल DEFINE_XARRAY_ALLOC(multicast_table);
+static DEFINE_XARRAY_ALLOC(ctx_table);
+static DEFINE_XARRAY_ALLOC(multicast_table);
 
-अटल स्थिर काष्ठा file_operations ucma_fops;
-अटल पूर्णांक ucma_destroy_निजी_ctx(काष्ठा ucma_context *ctx);
+static const struct file_operations ucma_fops;
+static int ucma_destroy_private_ctx(struct ucma_context *ctx);
 
-अटल अंतरभूत काष्ठा ucma_context *_ucma_find_context(पूर्णांक id,
-						      काष्ठा ucma_file *file)
-अणु
-	काष्ठा ucma_context *ctx;
+static inline struct ucma_context *_ucma_find_context(int id,
+						      struct ucma_file *file)
+{
+	struct ucma_context *ctx;
 
 	ctx = xa_load(&ctx_table, id);
-	अगर (!ctx)
+	if (!ctx)
 		ctx = ERR_PTR(-ENOENT);
-	अन्यथा अगर (ctx->file != file)
+	else if (ctx->file != file)
 		ctx = ERR_PTR(-EINVAL);
-	वापस ctx;
-पूर्ण
+	return ctx;
+}
 
-अटल काष्ठा ucma_context *ucma_get_ctx(काष्ठा ucma_file *file, पूर्णांक id)
-अणु
-	काष्ठा ucma_context *ctx;
+static struct ucma_context *ucma_get_ctx(struct ucma_file *file, int id)
+{
+	struct ucma_context *ctx;
 
 	xa_lock(&ctx_table);
 	ctx = _ucma_find_context(id, file);
-	अगर (!IS_ERR(ctx))
-		अगर (!refcount_inc_not_zero(&ctx->ref))
+	if (!IS_ERR(ctx))
+		if (!refcount_inc_not_zero(&ctx->ref))
 			ctx = ERR_PTR(-ENXIO);
 	xa_unlock(&ctx_table);
-	वापस ctx;
-पूर्ण
+	return ctx;
+}
 
-अटल व्योम ucma_put_ctx(काष्ठा ucma_context *ctx)
-अणु
-	अगर (refcount_dec_and_test(&ctx->ref))
+static void ucma_put_ctx(struct ucma_context *ctx)
+{
+	if (refcount_dec_and_test(&ctx->ref))
 		complete(&ctx->comp);
-पूर्ण
+}
 
 /*
  * Same as ucm_get_ctx but requires that ->cm_id->device is valid, eg that the
  * CM_ID is bound.
  */
-अटल काष्ठा ucma_context *ucma_get_ctx_dev(काष्ठा ucma_file *file, पूर्णांक id)
-अणु
-	काष्ठा ucma_context *ctx = ucma_get_ctx(file, id);
+static struct ucma_context *ucma_get_ctx_dev(struct ucma_file *file, int id)
+{
+	struct ucma_context *ctx = ucma_get_ctx(file, id);
 
-	अगर (IS_ERR(ctx))
-		वापस ctx;
-	अगर (!ctx->cm_id->device) अणु
+	if (IS_ERR(ctx))
+		return ctx;
+	if (!ctx->cm_id->device) {
 		ucma_put_ctx(ctx);
-		वापस ERR_PTR(-EINVAL);
-	पूर्ण
-	वापस ctx;
-पूर्ण
+		return ERR_PTR(-EINVAL);
+	}
+	return ctx;
+}
 
-अटल व्योम ucma_बंद_id(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा ucma_context *ctx =  container_of(work, काष्ठा ucma_context, बंद_work);
+static void ucma_close_id(struct work_struct *work)
+{
+	struct ucma_context *ctx =  container_of(work, struct ucma_context, close_work);
 
-	/* once all inflight tasks are finished, we बंद all underlying
+	/* once all inflight tasks are finished, we close all underlying
 	 * resources. The context is still alive till its explicit destryoing
-	 * by its creator. This माला_दो back the xarray's reference.
+	 * by its creator. This puts back the xarray's reference.
 	 */
 	ucma_put_ctx(ctx);
-	रुको_क्रम_completion(&ctx->comp);
+	wait_for_completion(&ctx->comp);
 	/* No new events will be generated after destroying the id. */
 	rdma_destroy_id(ctx->cm_id);
 
 	/* Reading the cm_id without holding a positive ref is not allowed */
-	ctx->cm_id = शून्य;
-पूर्ण
+	ctx->cm_id = NULL;
+}
 
-अटल काष्ठा ucma_context *ucma_alloc_ctx(काष्ठा ucma_file *file)
-अणु
-	काष्ठा ucma_context *ctx;
+static struct ucma_context *ucma_alloc_ctx(struct ucma_file *file)
+{
+	struct ucma_context *ctx;
 
-	ctx = kzalloc(माप(*ctx), GFP_KERNEL);
-	अगर (!ctx)
-		वापस शून्य;
+	ctx = kzalloc(sizeof(*ctx), GFP_KERNEL);
+	if (!ctx)
+		return NULL;
 
-	INIT_WORK(&ctx->बंद_work, ucma_बंद_id);
+	INIT_WORK(&ctx->close_work, ucma_close_id);
 	init_completion(&ctx->comp);
-	/* So list_del() will work अगर we करोn't करो ucma_finish_ctx() */
+	/* So list_del() will work if we don't do ucma_finish_ctx() */
 	INIT_LIST_HEAD(&ctx->list);
 	ctx->file = file;
 	mutex_init(&ctx->mutex);
 
-	अगर (xa_alloc(&ctx_table, &ctx->id, शून्य, xa_limit_32b, GFP_KERNEL)) अणु
-		kमुक्त(ctx);
-		वापस शून्य;
-	पूर्ण
-	वापस ctx;
-पूर्ण
+	if (xa_alloc(&ctx_table, &ctx->id, NULL, xa_limit_32b, GFP_KERNEL)) {
+		kfree(ctx);
+		return NULL;
+	}
+	return ctx;
+}
 
-अटल व्योम ucma_set_ctx_cm_id(काष्ठा ucma_context *ctx,
-			       काष्ठा rdma_cm_id *cm_id)
-अणु
+static void ucma_set_ctx_cm_id(struct ucma_context *ctx,
+			       struct rdma_cm_id *cm_id)
+{
 	refcount_set(&ctx->ref, 1);
 	ctx->cm_id = cm_id;
-पूर्ण
+}
 
-अटल व्योम ucma_finish_ctx(काष्ठा ucma_context *ctx)
-अणु
-	lockdep_निश्चित_held(&ctx->file->mut);
+static void ucma_finish_ctx(struct ucma_context *ctx)
+{
+	lockdep_assert_held(&ctx->file->mut);
 	list_add_tail(&ctx->list, &ctx->file->ctx_list);
 	xa_store(&ctx_table, ctx->id, ctx, GFP_KERNEL);
-पूर्ण
+}
 
-अटल व्योम ucma_copy_conn_event(काष्ठा rdma_ucm_conn_param *dst,
-				 काष्ठा rdma_conn_param *src)
-अणु
-	अगर (src->निजी_data_len)
-		स_नकल(dst->निजी_data, src->निजी_data,
-		       src->निजी_data_len);
-	dst->निजी_data_len = src->निजी_data_len;
+static void ucma_copy_conn_event(struct rdma_ucm_conn_param *dst,
+				 struct rdma_conn_param *src)
+{
+	if (src->private_data_len)
+		memcpy(dst->private_data, src->private_data,
+		       src->private_data_len);
+	dst->private_data_len = src->private_data_len;
 	dst->responder_resources = src->responder_resources;
 	dst->initiator_depth = src->initiator_depth;
 	dst->flow_control = src->flow_control;
@@ -239,75 +238,75 @@ MODULE_LICENSE("Dual BSD/GPL");
 	dst->rnr_retry_count = src->rnr_retry_count;
 	dst->srq = src->srq;
 	dst->qp_num = src->qp_num;
-पूर्ण
+}
 
-अटल व्योम ucma_copy_ud_event(काष्ठा ib_device *device,
-			       काष्ठा rdma_ucm_ud_param *dst,
-			       काष्ठा rdma_ud_param *src)
-अणु
-	अगर (src->निजी_data_len)
-		स_नकल(dst->निजी_data, src->निजी_data,
-		       src->निजी_data_len);
-	dst->निजी_data_len = src->निजी_data_len;
+static void ucma_copy_ud_event(struct ib_device *device,
+			       struct rdma_ucm_ud_param *dst,
+			       struct rdma_ud_param *src)
+{
+	if (src->private_data_len)
+		memcpy(dst->private_data, src->private_data,
+		       src->private_data_len);
+	dst->private_data_len = src->private_data_len;
 	ib_copy_ah_attr_to_user(device, &dst->ah_attr, &src->ah_attr);
 	dst->qp_num = src->qp_num;
 	dst->qkey = src->qkey;
-पूर्ण
+}
 
-अटल काष्ठा ucma_event *ucma_create_uevent(काष्ठा ucma_context *ctx,
-					     काष्ठा rdma_cm_event *event)
-अणु
-	काष्ठा ucma_event *uevent;
+static struct ucma_event *ucma_create_uevent(struct ucma_context *ctx,
+					     struct rdma_cm_event *event)
+{
+	struct ucma_event *uevent;
 
-	uevent = kzalloc(माप(*uevent), GFP_KERNEL);
-	अगर (!uevent)
-		वापस शून्य;
+	uevent = kzalloc(sizeof(*uevent), GFP_KERNEL);
+	if (!uevent)
+		return NULL;
 
 	uevent->ctx = ctx;
-	चयन (event->event) अणु
-	हाल RDMA_CM_EVENT_MULTICAST_JOIN:
-	हाल RDMA_CM_EVENT_MULTICAST_ERROR:
-		uevent->mc = (काष्ठा ucma_multicast *)
-			     event->param.ud.निजी_data;
+	switch (event->event) {
+	case RDMA_CM_EVENT_MULTICAST_JOIN:
+	case RDMA_CM_EVENT_MULTICAST_ERROR:
+		uevent->mc = (struct ucma_multicast *)
+			     event->param.ud.private_data;
 		uevent->resp.uid = uevent->mc->uid;
 		uevent->resp.id = uevent->mc->id;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		uevent->resp.uid = ctx->uid;
 		uevent->resp.id = ctx->id;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 	uevent->resp.event = event->event;
 	uevent->resp.status = event->status;
-	अगर (ctx->cm_id->qp_type == IB_QPT_UD)
+	if (ctx->cm_id->qp_type == IB_QPT_UD)
 		ucma_copy_ud_event(ctx->cm_id->device, &uevent->resp.param.ud,
 				   &event->param.ud);
-	अन्यथा
+	else
 		ucma_copy_conn_event(&uevent->resp.param.conn,
 				     &event->param.conn);
 
-	uevent->resp.ece.venकरोr_id = event->ece.venकरोr_id;
+	uevent->resp.ece.vendor_id = event->ece.vendor_id;
 	uevent->resp.ece.attr_mod = event->ece.attr_mod;
-	वापस uevent;
-पूर्ण
+	return uevent;
+}
 
-अटल पूर्णांक ucma_connect_event_handler(काष्ठा rdma_cm_id *cm_id,
-				      काष्ठा rdma_cm_event *event)
-अणु
-	काष्ठा ucma_context *listen_ctx = cm_id->context;
-	काष्ठा ucma_context *ctx;
-	काष्ठा ucma_event *uevent;
+static int ucma_connect_event_handler(struct rdma_cm_id *cm_id,
+				      struct rdma_cm_event *event)
+{
+	struct ucma_context *listen_ctx = cm_id->context;
+	struct ucma_context *ctx;
+	struct ucma_event *uevent;
 
-	अगर (!atomic_add_unless(&listen_ctx->backlog, -1, 0))
-		वापस -ENOMEM;
+	if (!atomic_add_unless(&listen_ctx->backlog, -1, 0))
+		return -ENOMEM;
 	ctx = ucma_alloc_ctx(listen_ctx->file);
-	अगर (!ctx)
-		जाओ err_backlog;
+	if (!ctx)
+		goto err_backlog;
 	ucma_set_ctx_cm_id(ctx, cm_id);
 
 	uevent = ucma_create_uevent(listen_ctx, event);
-	अगर (!uevent)
-		जाओ err_alloc;
+	if (!uevent)
+		goto err_alloc;
 	uevent->conn_req_ctx = ctx;
 	uevent->resp.id = ctx->id;
 
@@ -317,724 +316,724 @@ MODULE_LICENSE("Dual BSD/GPL");
 	ucma_finish_ctx(ctx);
 	list_add_tail(&uevent->list, &ctx->file->event_list);
 	mutex_unlock(&ctx->file->mut);
-	wake_up_पूर्णांकerruptible(&ctx->file->poll_रुको);
-	वापस 0;
+	wake_up_interruptible(&ctx->file->poll_wait);
+	return 0;
 
 err_alloc:
-	ucma_destroy_निजी_ctx(ctx);
+	ucma_destroy_private_ctx(ctx);
 err_backlog:
 	atomic_inc(&listen_ctx->backlog);
 	/* Returning error causes the new ID to be destroyed */
-	वापस -ENOMEM;
-पूर्ण
+	return -ENOMEM;
+}
 
-अटल पूर्णांक ucma_event_handler(काष्ठा rdma_cm_id *cm_id,
-			      काष्ठा rdma_cm_event *event)
-अणु
-	काष्ठा ucma_event *uevent;
-	काष्ठा ucma_context *ctx = cm_id->context;
+static int ucma_event_handler(struct rdma_cm_id *cm_id,
+			      struct rdma_cm_event *event)
+{
+	struct ucma_event *uevent;
+	struct ucma_context *ctx = cm_id->context;
 
-	अगर (event->event == RDMA_CM_EVENT_CONNECT_REQUEST)
-		वापस ucma_connect_event_handler(cm_id, event);
+	if (event->event == RDMA_CM_EVENT_CONNECT_REQUEST)
+		return ucma_connect_event_handler(cm_id, event);
 
 	/*
-	 * We ignore events क्रम new connections until userspace has set their
-	 * context.  This can only happen अगर an error occurs on a new connection
-	 * beक्रमe the user accepts it.  This is okay, since the accept will just
-	 * fail later. However, we करो need to release the underlying HW
-	 * resources in हाल of a device removal event.
+	 * We ignore events for new connections until userspace has set their
+	 * context.  This can only happen if an error occurs on a new connection
+	 * before the user accepts it.  This is okay, since the accept will just
+	 * fail later. However, we do need to release the underlying HW
+	 * resources in case of a device removal event.
 	 */
-	अगर (ctx->uid) अणु
+	if (ctx->uid) {
 		uevent = ucma_create_uevent(ctx, event);
-		अगर (!uevent)
-			वापस 0;
+		if (!uevent)
+			return 0;
 
 		mutex_lock(&ctx->file->mut);
 		list_add_tail(&uevent->list, &ctx->file->event_list);
 		mutex_unlock(&ctx->file->mut);
-		wake_up_पूर्णांकerruptible(&ctx->file->poll_रुको);
-	पूर्ण
+		wake_up_interruptible(&ctx->file->poll_wait);
+	}
 
-	अगर (event->event == RDMA_CM_EVENT_DEVICE_REMOVAL) अणु
+	if (event->event == RDMA_CM_EVENT_DEVICE_REMOVAL) {
 		xa_lock(&ctx_table);
-		अगर (xa_load(&ctx_table, ctx->id) == ctx)
-			queue_work(प्रणाली_unbound_wq, &ctx->बंद_work);
+		if (xa_load(&ctx_table, ctx->id) == ctx)
+			queue_work(system_unbound_wq, &ctx->close_work);
 		xa_unlock(&ctx_table);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल sमाप_प्रकार ucma_get_event(काष्ठा ucma_file *file, स्थिर अक्षर __user *inbuf,
-			      पूर्णांक in_len, पूर्णांक out_len)
-अणु
-	काष्ठा rdma_ucm_get_event cmd;
-	काष्ठा ucma_event *uevent;
+static ssize_t ucma_get_event(struct ucma_file *file, const char __user *inbuf,
+			      int in_len, int out_len)
+{
+	struct rdma_ucm_get_event cmd;
+	struct ucma_event *uevent;
 
 	/*
-	 * Old 32 bit user space करोes not send the 4 byte padding in the
-	 * reserved field. We करोn't care, allow it to keep working.
+	 * Old 32 bit user space does not send the 4 byte padding in the
+	 * reserved field. We don't care, allow it to keep working.
 	 */
-	अगर (out_len < माप(uevent->resp) - माप(uevent->resp.reserved) -
-			      माप(uevent->resp.ece))
-		वापस -ENOSPC;
+	if (out_len < sizeof(uevent->resp) - sizeof(uevent->resp.reserved) -
+			      sizeof(uevent->resp.ece))
+		return -ENOSPC;
 
-	अगर (copy_from_user(&cmd, inbuf, माप(cmd)))
-		वापस -EFAULT;
+	if (copy_from_user(&cmd, inbuf, sizeof(cmd)))
+		return -EFAULT;
 
 	mutex_lock(&file->mut);
-	जबतक (list_empty(&file->event_list)) अणु
+	while (list_empty(&file->event_list)) {
 		mutex_unlock(&file->mut);
 
-		अगर (file->filp->f_flags & O_NONBLOCK)
-			वापस -EAGAIN;
+		if (file->filp->f_flags & O_NONBLOCK)
+			return -EAGAIN;
 
-		अगर (रुको_event_पूर्णांकerruptible(file->poll_रुको,
+		if (wait_event_interruptible(file->poll_wait,
 					     !list_empty(&file->event_list)))
-			वापस -ERESTARTSYS;
+			return -ERESTARTSYS;
 
 		mutex_lock(&file->mut);
-	पूर्ण
+	}
 
-	uevent = list_first_entry(&file->event_list, काष्ठा ucma_event, list);
+	uevent = list_first_entry(&file->event_list, struct ucma_event, list);
 
-	अगर (copy_to_user(u64_to_user_ptr(cmd.response),
+	if (copy_to_user(u64_to_user_ptr(cmd.response),
 			 &uevent->resp,
-			 min_t(माप_प्रकार, out_len, माप(uevent->resp)))) अणु
+			 min_t(size_t, out_len, sizeof(uevent->resp)))) {
 		mutex_unlock(&file->mut);
-		वापस -EFAULT;
-	पूर्ण
+		return -EFAULT;
+	}
 
 	list_del(&uevent->list);
 	uevent->ctx->events_reported++;
-	अगर (uevent->mc)
+	if (uevent->mc)
 		uevent->mc->events_reported++;
-	अगर (uevent->resp.event == RDMA_CM_EVENT_CONNECT_REQUEST)
+	if (uevent->resp.event == RDMA_CM_EVENT_CONNECT_REQUEST)
 		atomic_inc(&uevent->ctx->backlog);
 	mutex_unlock(&file->mut);
 
-	kमुक्त(uevent);
-	वापस 0;
-पूर्ण
+	kfree(uevent);
+	return 0;
+}
 
-अटल पूर्णांक ucma_get_qp_type(काष्ठा rdma_ucm_create_id *cmd, क्रमागत ib_qp_type *qp_type)
-अणु
-	चयन (cmd->ps) अणु
-	हाल RDMA_PS_TCP:
+static int ucma_get_qp_type(struct rdma_ucm_create_id *cmd, enum ib_qp_type *qp_type)
+{
+	switch (cmd->ps) {
+	case RDMA_PS_TCP:
 		*qp_type = IB_QPT_RC;
-		वापस 0;
-	हाल RDMA_PS_UDP:
-	हाल RDMA_PS_IPOIB:
+		return 0;
+	case RDMA_PS_UDP:
+	case RDMA_PS_IPOIB:
 		*qp_type = IB_QPT_UD;
-		वापस 0;
-	हाल RDMA_PS_IB:
+		return 0;
+	case RDMA_PS_IB:
 		*qp_type = cmd->qp_type;
-		वापस 0;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-पूर्ण
+		return 0;
+	default:
+		return -EINVAL;
+	}
+}
 
-अटल sमाप_प्रकार ucma_create_id(काष्ठा ucma_file *file, स्थिर अक्षर __user *inbuf,
-			      पूर्णांक in_len, पूर्णांक out_len)
-अणु
-	काष्ठा rdma_ucm_create_id cmd;
-	काष्ठा rdma_ucm_create_id_resp resp;
-	काष्ठा ucma_context *ctx;
-	काष्ठा rdma_cm_id *cm_id;
-	क्रमागत ib_qp_type qp_type;
-	पूर्णांक ret;
+static ssize_t ucma_create_id(struct ucma_file *file, const char __user *inbuf,
+			      int in_len, int out_len)
+{
+	struct rdma_ucm_create_id cmd;
+	struct rdma_ucm_create_id_resp resp;
+	struct ucma_context *ctx;
+	struct rdma_cm_id *cm_id;
+	enum ib_qp_type qp_type;
+	int ret;
 
-	अगर (out_len < माप(resp))
-		वापस -ENOSPC;
+	if (out_len < sizeof(resp))
+		return -ENOSPC;
 
-	अगर (copy_from_user(&cmd, inbuf, माप(cmd)))
-		वापस -EFAULT;
+	if (copy_from_user(&cmd, inbuf, sizeof(cmd)))
+		return -EFAULT;
 
 	ret = ucma_get_qp_type(&cmd, &qp_type);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ctx = ucma_alloc_ctx(file);
-	अगर (!ctx)
-		वापस -ENOMEM;
+	if (!ctx)
+		return -ENOMEM;
 
 	ctx->uid = cmd.uid;
 	cm_id = rdma_create_user_id(ucma_event_handler, ctx, cmd.ps, qp_type);
-	अगर (IS_ERR(cm_id)) अणु
+	if (IS_ERR(cm_id)) {
 		ret = PTR_ERR(cm_id);
-		जाओ err1;
-	पूर्ण
+		goto err1;
+	}
 	ucma_set_ctx_cm_id(ctx, cm_id);
 
 	resp.id = ctx->id;
-	अगर (copy_to_user(u64_to_user_ptr(cmd.response),
-			 &resp, माप(resp))) अणु
-		ucma_destroy_निजी_ctx(ctx);
-		वापस -EFAULT;
-	पूर्ण
+	if (copy_to_user(u64_to_user_ptr(cmd.response),
+			 &resp, sizeof(resp))) {
+		ucma_destroy_private_ctx(ctx);
+		return -EFAULT;
+	}
 
 	mutex_lock(&file->mut);
 	ucma_finish_ctx(ctx);
 	mutex_unlock(&file->mut);
-	वापस 0;
+	return 0;
 
 err1:
-	ucma_destroy_निजी_ctx(ctx);
-	वापस ret;
-पूर्ण
+	ucma_destroy_private_ctx(ctx);
+	return ret;
+}
 
-अटल व्योम ucma_cleanup_multicast(काष्ठा ucma_context *ctx)
-अणु
-	काष्ठा ucma_multicast *mc;
-	अचिन्हित दीर्घ index;
+static void ucma_cleanup_multicast(struct ucma_context *ctx)
+{
+	struct ucma_multicast *mc;
+	unsigned long index;
 
-	xa_क्रम_each(&multicast_table, index, mc) अणु
-		अगर (mc->ctx != ctx)
-			जारी;
+	xa_for_each(&multicast_table, index, mc) {
+		if (mc->ctx != ctx)
+			continue;
 		/*
-		 * At this poपूर्णांक mc->ctx->ref is 0 so the mc cannot leave the
-		 * lock on the पढ़ोer and this is enough serialization
+		 * At this point mc->ctx->ref is 0 so the mc cannot leave the
+		 * lock on the reader and this is enough serialization
 		 */
 		xa_erase(&multicast_table, index);
-		kमुक्त(mc);
-	पूर्ण
-पूर्ण
+		kfree(mc);
+	}
+}
 
-अटल व्योम ucma_cleanup_mc_events(काष्ठा ucma_multicast *mc)
-अणु
-	काष्ठा ucma_event *uevent, *पंचांगp;
+static void ucma_cleanup_mc_events(struct ucma_multicast *mc)
+{
+	struct ucma_event *uevent, *tmp;
 
 	rdma_lock_handler(mc->ctx->cm_id);
 	mutex_lock(&mc->ctx->file->mut);
-	list_क्रम_each_entry_safe(uevent, पंचांगp, &mc->ctx->file->event_list, list) अणु
-		अगर (uevent->mc != mc)
-			जारी;
+	list_for_each_entry_safe(uevent, tmp, &mc->ctx->file->event_list, list) {
+		if (uevent->mc != mc)
+			continue;
 
 		list_del(&uevent->list);
-		kमुक्त(uevent);
-	पूर्ण
+		kfree(uevent);
+	}
 	mutex_unlock(&mc->ctx->file->mut);
 	rdma_unlock_handler(mc->ctx->cm_id);
-पूर्ण
+}
 
-अटल पूर्णांक ucma_cleanup_ctx_events(काष्ठा ucma_context *ctx)
-अणु
-	पूर्णांक events_reported;
-	काष्ठा ucma_event *uevent, *पंचांगp;
+static int ucma_cleanup_ctx_events(struct ucma_context *ctx)
+{
+	int events_reported;
+	struct ucma_event *uevent, *tmp;
 	LIST_HEAD(list);
 
 	/* Cleanup events not yet reported to the user.*/
 	mutex_lock(&ctx->file->mut);
-	list_क्रम_each_entry_safe(uevent, पंचांगp, &ctx->file->event_list, list) अणु
-		अगर (uevent->ctx != ctx)
-			जारी;
+	list_for_each_entry_safe(uevent, tmp, &ctx->file->event_list, list) {
+		if (uevent->ctx != ctx)
+			continue;
 
-		अगर (uevent->resp.event == RDMA_CM_EVENT_CONNECT_REQUEST &&
+		if (uevent->resp.event == RDMA_CM_EVENT_CONNECT_REQUEST &&
 		    xa_cmpxchg(&ctx_table, uevent->conn_req_ctx->id,
 			       uevent->conn_req_ctx, XA_ZERO_ENTRY,
-			       GFP_KERNEL) == uevent->conn_req_ctx) अणु
+			       GFP_KERNEL) == uevent->conn_req_ctx) {
 			list_move_tail(&uevent->list, &list);
-			जारी;
-		पूर्ण
+			continue;
+		}
 		list_del(&uevent->list);
-		kमुक्त(uevent);
-	पूर्ण
+		kfree(uevent);
+	}
 	list_del(&ctx->list);
 	events_reported = ctx->events_reported;
 	mutex_unlock(&ctx->file->mut);
 
 	/*
 	 * If this was a listening ID then any connections spawned from it that
-	 * have not been delivered to userspace are cleaned up too. Must be करोne
+	 * have not been delivered to userspace are cleaned up too. Must be done
 	 * outside any locks.
 	 */
-	list_क्रम_each_entry_safe(uevent, पंचांगp, &list, list) अणु
-		ucma_destroy_निजी_ctx(uevent->conn_req_ctx);
-		kमुक्त(uevent);
-	पूर्ण
-	वापस events_reported;
-पूर्ण
+	list_for_each_entry_safe(uevent, tmp, &list, list) {
+		ucma_destroy_private_ctx(uevent->conn_req_ctx);
+		kfree(uevent);
+	}
+	return events_reported;
+}
 
 /*
  * When this is called the xarray must have a XA_ZERO_ENTRY in the ctx->id (ie
- * the ctx is not खुला to the user). This either because:
+ * the ctx is not public to the user). This either because:
  *  - ucma_finish_ctx() hasn't been called
- *  - xa_cmpxchg() succeed to हटाओ the entry (only one thपढ़ो can succeed)
+ *  - xa_cmpxchg() succeed to remove the entry (only one thread can succeed)
  */
-अटल पूर्णांक ucma_destroy_निजी_ctx(काष्ठा ucma_context *ctx)
-अणु
-	पूर्णांक events_reported;
+static int ucma_destroy_private_ctx(struct ucma_context *ctx)
+{
+	int events_reported;
 
 	/*
 	 * Destroy the underlying cm_id. New work queuing is prevented now by
 	 * the removal from the xarray. Once the work is cancled ref will either
 	 * be 0 because the work ran to completion and consumed the ref from the
 	 * xarray, or it will be positive because we still have the ref from the
-	 * xarray. This can also be 0 in हालs where cm_id was never set
+	 * xarray. This can also be 0 in cases where cm_id was never set
 	 */
-	cancel_work_sync(&ctx->बंद_work);
-	अगर (refcount_पढ़ो(&ctx->ref))
-		ucma_बंद_id(&ctx->बंद_work);
+	cancel_work_sync(&ctx->close_work);
+	if (refcount_read(&ctx->ref))
+		ucma_close_id(&ctx->close_work);
 
 	events_reported = ucma_cleanup_ctx_events(ctx);
 	ucma_cleanup_multicast(ctx);
 
-	WARN_ON(xa_cmpxchg(&ctx_table, ctx->id, XA_ZERO_ENTRY, शून्य,
-			   GFP_KERNEL) != शून्य);
+	WARN_ON(xa_cmpxchg(&ctx_table, ctx->id, XA_ZERO_ENTRY, NULL,
+			   GFP_KERNEL) != NULL);
 	mutex_destroy(&ctx->mutex);
-	kमुक्त(ctx);
-	वापस events_reported;
-पूर्ण
+	kfree(ctx);
+	return events_reported;
+}
 
-अटल sमाप_प्रकार ucma_destroy_id(काष्ठा ucma_file *file, स्थिर अक्षर __user *inbuf,
-			       पूर्णांक in_len, पूर्णांक out_len)
-अणु
-	काष्ठा rdma_ucm_destroy_id cmd;
-	काष्ठा rdma_ucm_destroy_id_resp resp;
-	काष्ठा ucma_context *ctx;
-	पूर्णांक ret = 0;
+static ssize_t ucma_destroy_id(struct ucma_file *file, const char __user *inbuf,
+			       int in_len, int out_len)
+{
+	struct rdma_ucm_destroy_id cmd;
+	struct rdma_ucm_destroy_id_resp resp;
+	struct ucma_context *ctx;
+	int ret = 0;
 
-	अगर (out_len < माप(resp))
-		वापस -ENOSPC;
+	if (out_len < sizeof(resp))
+		return -ENOSPC;
 
-	अगर (copy_from_user(&cmd, inbuf, माप(cmd)))
-		वापस -EFAULT;
+	if (copy_from_user(&cmd, inbuf, sizeof(cmd)))
+		return -EFAULT;
 
 	xa_lock(&ctx_table);
 	ctx = _ucma_find_context(cmd.id, file);
-	अगर (!IS_ERR(ctx)) अणु
-		अगर (__xa_cmpxchg(&ctx_table, ctx->id, ctx, XA_ZERO_ENTRY,
+	if (!IS_ERR(ctx)) {
+		if (__xa_cmpxchg(&ctx_table, ctx->id, ctx, XA_ZERO_ENTRY,
 				 GFP_KERNEL) != ctx)
 			ctx = ERR_PTR(-ENOENT);
-	पूर्ण
+	}
 	xa_unlock(&ctx_table);
 
-	अगर (IS_ERR(ctx))
-		वापस PTR_ERR(ctx);
+	if (IS_ERR(ctx))
+		return PTR_ERR(ctx);
 
-	resp.events_reported = ucma_destroy_निजी_ctx(ctx);
-	अगर (copy_to_user(u64_to_user_ptr(cmd.response),
-			 &resp, माप(resp)))
+	resp.events_reported = ucma_destroy_private_ctx(ctx);
+	if (copy_to_user(u64_to_user_ptr(cmd.response),
+			 &resp, sizeof(resp)))
 		ret = -EFAULT;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल sमाप_प्रकार ucma_bind_ip(काष्ठा ucma_file *file, स्थिर अक्षर __user *inbuf,
-			      पूर्णांक in_len, पूर्णांक out_len)
-अणु
-	काष्ठा rdma_ucm_bind_ip cmd;
-	काष्ठा ucma_context *ctx;
-	पूर्णांक ret;
+static ssize_t ucma_bind_ip(struct ucma_file *file, const char __user *inbuf,
+			      int in_len, int out_len)
+{
+	struct rdma_ucm_bind_ip cmd;
+	struct ucma_context *ctx;
+	int ret;
 
-	अगर (copy_from_user(&cmd, inbuf, माप(cmd)))
-		वापस -EFAULT;
+	if (copy_from_user(&cmd, inbuf, sizeof(cmd)))
+		return -EFAULT;
 
-	अगर (!rdma_addr_size_in6(&cmd.addr))
-		वापस -EINVAL;
+	if (!rdma_addr_size_in6(&cmd.addr))
+		return -EINVAL;
 
 	ctx = ucma_get_ctx(file, cmd.id);
-	अगर (IS_ERR(ctx))
-		वापस PTR_ERR(ctx);
+	if (IS_ERR(ctx))
+		return PTR_ERR(ctx);
 
 	mutex_lock(&ctx->mutex);
-	ret = rdma_bind_addr(ctx->cm_id, (काष्ठा sockaddr *) &cmd.addr);
+	ret = rdma_bind_addr(ctx->cm_id, (struct sockaddr *) &cmd.addr);
 	mutex_unlock(&ctx->mutex);
 
 	ucma_put_ctx(ctx);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल sमाप_प्रकार ucma_bind(काष्ठा ucma_file *file, स्थिर अक्षर __user *inbuf,
-			 पूर्णांक in_len, पूर्णांक out_len)
-अणु
-	काष्ठा rdma_ucm_bind cmd;
-	काष्ठा ucma_context *ctx;
-	पूर्णांक ret;
+static ssize_t ucma_bind(struct ucma_file *file, const char __user *inbuf,
+			 int in_len, int out_len)
+{
+	struct rdma_ucm_bind cmd;
+	struct ucma_context *ctx;
+	int ret;
 
-	अगर (copy_from_user(&cmd, inbuf, माप(cmd)))
-		वापस -EFAULT;
+	if (copy_from_user(&cmd, inbuf, sizeof(cmd)))
+		return -EFAULT;
 
-	अगर (cmd.reserved || !cmd.addr_size ||
+	if (cmd.reserved || !cmd.addr_size ||
 	    cmd.addr_size != rdma_addr_size_kss(&cmd.addr))
-		वापस -EINVAL;
+		return -EINVAL;
 
 	ctx = ucma_get_ctx(file, cmd.id);
-	अगर (IS_ERR(ctx))
-		वापस PTR_ERR(ctx);
+	if (IS_ERR(ctx))
+		return PTR_ERR(ctx);
 
 	mutex_lock(&ctx->mutex);
-	ret = rdma_bind_addr(ctx->cm_id, (काष्ठा sockaddr *) &cmd.addr);
+	ret = rdma_bind_addr(ctx->cm_id, (struct sockaddr *) &cmd.addr);
 	mutex_unlock(&ctx->mutex);
 	ucma_put_ctx(ctx);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल sमाप_प्रकार ucma_resolve_ip(काष्ठा ucma_file *file,
-			       स्थिर अक्षर __user *inbuf,
-			       पूर्णांक in_len, पूर्णांक out_len)
-अणु
-	काष्ठा rdma_ucm_resolve_ip cmd;
-	काष्ठा ucma_context *ctx;
-	पूर्णांक ret;
+static ssize_t ucma_resolve_ip(struct ucma_file *file,
+			       const char __user *inbuf,
+			       int in_len, int out_len)
+{
+	struct rdma_ucm_resolve_ip cmd;
+	struct ucma_context *ctx;
+	int ret;
 
-	अगर (copy_from_user(&cmd, inbuf, माप(cmd)))
-		वापस -EFAULT;
+	if (copy_from_user(&cmd, inbuf, sizeof(cmd)))
+		return -EFAULT;
 
-	अगर ((cmd.src_addr.sin6_family && !rdma_addr_size_in6(&cmd.src_addr)) ||
+	if ((cmd.src_addr.sin6_family && !rdma_addr_size_in6(&cmd.src_addr)) ||
 	    !rdma_addr_size_in6(&cmd.dst_addr))
-		वापस -EINVAL;
+		return -EINVAL;
 
 	ctx = ucma_get_ctx(file, cmd.id);
-	अगर (IS_ERR(ctx))
-		वापस PTR_ERR(ctx);
+	if (IS_ERR(ctx))
+		return PTR_ERR(ctx);
 
 	mutex_lock(&ctx->mutex);
-	ret = rdma_resolve_addr(ctx->cm_id, (काष्ठा sockaddr *) &cmd.src_addr,
-				(काष्ठा sockaddr *) &cmd.dst_addr, cmd.समयout_ms);
+	ret = rdma_resolve_addr(ctx->cm_id, (struct sockaddr *) &cmd.src_addr,
+				(struct sockaddr *) &cmd.dst_addr, cmd.timeout_ms);
 	mutex_unlock(&ctx->mutex);
 	ucma_put_ctx(ctx);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल sमाप_प्रकार ucma_resolve_addr(काष्ठा ucma_file *file,
-				 स्थिर अक्षर __user *inbuf,
-				 पूर्णांक in_len, पूर्णांक out_len)
-अणु
-	काष्ठा rdma_ucm_resolve_addr cmd;
-	काष्ठा ucma_context *ctx;
-	पूर्णांक ret;
+static ssize_t ucma_resolve_addr(struct ucma_file *file,
+				 const char __user *inbuf,
+				 int in_len, int out_len)
+{
+	struct rdma_ucm_resolve_addr cmd;
+	struct ucma_context *ctx;
+	int ret;
 
-	अगर (copy_from_user(&cmd, inbuf, माप(cmd)))
-		वापस -EFAULT;
+	if (copy_from_user(&cmd, inbuf, sizeof(cmd)))
+		return -EFAULT;
 
-	अगर (cmd.reserved ||
+	if (cmd.reserved ||
 	    (cmd.src_size && (cmd.src_size != rdma_addr_size_kss(&cmd.src_addr))) ||
 	    !cmd.dst_size || (cmd.dst_size != rdma_addr_size_kss(&cmd.dst_addr)))
-		वापस -EINVAL;
+		return -EINVAL;
 
 	ctx = ucma_get_ctx(file, cmd.id);
-	अगर (IS_ERR(ctx))
-		वापस PTR_ERR(ctx);
+	if (IS_ERR(ctx))
+		return PTR_ERR(ctx);
 
 	mutex_lock(&ctx->mutex);
-	ret = rdma_resolve_addr(ctx->cm_id, (काष्ठा sockaddr *) &cmd.src_addr,
-				(काष्ठा sockaddr *) &cmd.dst_addr, cmd.समयout_ms);
+	ret = rdma_resolve_addr(ctx->cm_id, (struct sockaddr *) &cmd.src_addr,
+				(struct sockaddr *) &cmd.dst_addr, cmd.timeout_ms);
 	mutex_unlock(&ctx->mutex);
 	ucma_put_ctx(ctx);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल sमाप_प्रकार ucma_resolve_route(काष्ठा ucma_file *file,
-				  स्थिर अक्षर __user *inbuf,
-				  पूर्णांक in_len, पूर्णांक out_len)
-अणु
-	काष्ठा rdma_ucm_resolve_route cmd;
-	काष्ठा ucma_context *ctx;
-	पूर्णांक ret;
+static ssize_t ucma_resolve_route(struct ucma_file *file,
+				  const char __user *inbuf,
+				  int in_len, int out_len)
+{
+	struct rdma_ucm_resolve_route cmd;
+	struct ucma_context *ctx;
+	int ret;
 
-	अगर (copy_from_user(&cmd, inbuf, माप(cmd)))
-		वापस -EFAULT;
+	if (copy_from_user(&cmd, inbuf, sizeof(cmd)))
+		return -EFAULT;
 
 	ctx = ucma_get_ctx_dev(file, cmd.id);
-	अगर (IS_ERR(ctx))
-		वापस PTR_ERR(ctx);
+	if (IS_ERR(ctx))
+		return PTR_ERR(ctx);
 
 	mutex_lock(&ctx->mutex);
-	ret = rdma_resolve_route(ctx->cm_id, cmd.समयout_ms);
+	ret = rdma_resolve_route(ctx->cm_id, cmd.timeout_ms);
 	mutex_unlock(&ctx->mutex);
 	ucma_put_ctx(ctx);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम ucma_copy_ib_route(काष्ठा rdma_ucm_query_route_resp *resp,
-			       काष्ठा rdma_route *route)
-अणु
-	काष्ठा rdma_dev_addr *dev_addr;
+static void ucma_copy_ib_route(struct rdma_ucm_query_route_resp *resp,
+			       struct rdma_route *route)
+{
+	struct rdma_dev_addr *dev_addr;
 
 	resp->num_paths = route->num_paths;
-	चयन (route->num_paths) अणु
-	हाल 0:
+	switch (route->num_paths) {
+	case 0:
 		dev_addr = &route->addr.dev_addr;
 		rdma_addr_get_dgid(dev_addr,
-				   (जोड़ ib_gid *) &resp->ib_route[0].dgid);
+				   (union ib_gid *) &resp->ib_route[0].dgid);
 		rdma_addr_get_sgid(dev_addr,
-				   (जोड़ ib_gid *) &resp->ib_route[0].sgid);
+				   (union ib_gid *) &resp->ib_route[0].sgid);
 		resp->ib_route[0].pkey = cpu_to_be16(ib_addr_get_pkey(dev_addr));
-		अवरोध;
-	हाल 2:
+		break;
+	case 2:
 		ib_copy_path_rec_to_user(&resp->ib_route[1],
 					 &route->path_rec[1]);
 		fallthrough;
-	हाल 1:
+	case 1:
 		ib_copy_path_rec_to_user(&resp->ib_route[0],
 					 &route->path_rec[0]);
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	default:
+		break;
+	}
+}
 
-अटल व्योम ucma_copy_iboe_route(काष्ठा rdma_ucm_query_route_resp *resp,
-				 काष्ठा rdma_route *route)
-अणु
+static void ucma_copy_iboe_route(struct rdma_ucm_query_route_resp *resp,
+				 struct rdma_route *route)
+{
 
 	resp->num_paths = route->num_paths;
-	चयन (route->num_paths) अणु
-	हाल 0:
-		rdma_ip2gid((काष्ठा sockaddr *)&route->addr.dst_addr,
-			    (जोड़ ib_gid *)&resp->ib_route[0].dgid);
-		rdma_ip2gid((काष्ठा sockaddr *)&route->addr.src_addr,
-			    (जोड़ ib_gid *)&resp->ib_route[0].sgid);
+	switch (route->num_paths) {
+	case 0:
+		rdma_ip2gid((struct sockaddr *)&route->addr.dst_addr,
+			    (union ib_gid *)&resp->ib_route[0].dgid);
+		rdma_ip2gid((struct sockaddr *)&route->addr.src_addr,
+			    (union ib_gid *)&resp->ib_route[0].sgid);
 		resp->ib_route[0].pkey = cpu_to_be16(0xffff);
-		अवरोध;
-	हाल 2:
+		break;
+	case 2:
 		ib_copy_path_rec_to_user(&resp->ib_route[1],
 					 &route->path_rec[1]);
 		fallthrough;
-	हाल 1:
+	case 1:
 		ib_copy_path_rec_to_user(&resp->ib_route[0],
 					 &route->path_rec[0]);
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	default:
+		break;
+	}
+}
 
-अटल व्योम ucma_copy_iw_route(काष्ठा rdma_ucm_query_route_resp *resp,
-			       काष्ठा rdma_route *route)
-अणु
-	काष्ठा rdma_dev_addr *dev_addr;
+static void ucma_copy_iw_route(struct rdma_ucm_query_route_resp *resp,
+			       struct rdma_route *route)
+{
+	struct rdma_dev_addr *dev_addr;
 
 	dev_addr = &route->addr.dev_addr;
-	rdma_addr_get_dgid(dev_addr, (जोड़ ib_gid *) &resp->ib_route[0].dgid);
-	rdma_addr_get_sgid(dev_addr, (जोड़ ib_gid *) &resp->ib_route[0].sgid);
-पूर्ण
+	rdma_addr_get_dgid(dev_addr, (union ib_gid *) &resp->ib_route[0].dgid);
+	rdma_addr_get_sgid(dev_addr, (union ib_gid *) &resp->ib_route[0].sgid);
+}
 
-अटल sमाप_प्रकार ucma_query_route(काष्ठा ucma_file *file,
-				स्थिर अक्षर __user *inbuf,
-				पूर्णांक in_len, पूर्णांक out_len)
-अणु
-	काष्ठा rdma_ucm_query cmd;
-	काष्ठा rdma_ucm_query_route_resp resp;
-	काष्ठा ucma_context *ctx;
-	काष्ठा sockaddr *addr;
-	पूर्णांक ret = 0;
+static ssize_t ucma_query_route(struct ucma_file *file,
+				const char __user *inbuf,
+				int in_len, int out_len)
+{
+	struct rdma_ucm_query cmd;
+	struct rdma_ucm_query_route_resp resp;
+	struct ucma_context *ctx;
+	struct sockaddr *addr;
+	int ret = 0;
 
-	अगर (out_len < दुरत्व(काष्ठा rdma_ucm_query_route_resp, ibdev_index))
-		वापस -ENOSPC;
+	if (out_len < offsetof(struct rdma_ucm_query_route_resp, ibdev_index))
+		return -ENOSPC;
 
-	अगर (copy_from_user(&cmd, inbuf, माप(cmd)))
-		वापस -EFAULT;
+	if (copy_from_user(&cmd, inbuf, sizeof(cmd)))
+		return -EFAULT;
 
 	ctx = ucma_get_ctx(file, cmd.id);
-	अगर (IS_ERR(ctx))
-		वापस PTR_ERR(ctx);
+	if (IS_ERR(ctx))
+		return PTR_ERR(ctx);
 
 	mutex_lock(&ctx->mutex);
-	स_रखो(&resp, 0, माप resp);
-	addr = (काष्ठा sockaddr *) &ctx->cm_id->route.addr.src_addr;
-	स_नकल(&resp.src_addr, addr, addr->sa_family == AF_INET ?
-				     माप(काष्ठा sockaddr_in) :
-				     माप(काष्ठा sockaddr_in6));
-	addr = (काष्ठा sockaddr *) &ctx->cm_id->route.addr.dst_addr;
-	स_नकल(&resp.dst_addr, addr, addr->sa_family == AF_INET ?
-				     माप(काष्ठा sockaddr_in) :
-				     माप(काष्ठा sockaddr_in6));
-	अगर (!ctx->cm_id->device)
-		जाओ out;
+	memset(&resp, 0, sizeof resp);
+	addr = (struct sockaddr *) &ctx->cm_id->route.addr.src_addr;
+	memcpy(&resp.src_addr, addr, addr->sa_family == AF_INET ?
+				     sizeof(struct sockaddr_in) :
+				     sizeof(struct sockaddr_in6));
+	addr = (struct sockaddr *) &ctx->cm_id->route.addr.dst_addr;
+	memcpy(&resp.dst_addr, addr, addr->sa_family == AF_INET ?
+				     sizeof(struct sockaddr_in) :
+				     sizeof(struct sockaddr_in6));
+	if (!ctx->cm_id->device)
+		goto out;
 
-	resp.node_guid = (__क्रमce __u64) ctx->cm_id->device->node_guid;
+	resp.node_guid = (__force __u64) ctx->cm_id->device->node_guid;
 	resp.ibdev_index = ctx->cm_id->device->index;
 	resp.port_num = ctx->cm_id->port_num;
 
-	अगर (rdma_cap_ib_sa(ctx->cm_id->device, ctx->cm_id->port_num))
+	if (rdma_cap_ib_sa(ctx->cm_id->device, ctx->cm_id->port_num))
 		ucma_copy_ib_route(&resp, &ctx->cm_id->route);
-	अन्यथा अगर (rdma_protocol_roce(ctx->cm_id->device, ctx->cm_id->port_num))
+	else if (rdma_protocol_roce(ctx->cm_id->device, ctx->cm_id->port_num))
 		ucma_copy_iboe_route(&resp, &ctx->cm_id->route);
-	अन्यथा अगर (rdma_protocol_iwarp(ctx->cm_id->device, ctx->cm_id->port_num))
+	else if (rdma_protocol_iwarp(ctx->cm_id->device, ctx->cm_id->port_num))
 		ucma_copy_iw_route(&resp, &ctx->cm_id->route);
 
 out:
 	mutex_unlock(&ctx->mutex);
-	अगर (copy_to_user(u64_to_user_ptr(cmd.response), &resp,
-			 min_t(माप_प्रकार, out_len, माप(resp))))
+	if (copy_to_user(u64_to_user_ptr(cmd.response), &resp,
+			 min_t(size_t, out_len, sizeof(resp))))
 		ret = -EFAULT;
 
 	ucma_put_ctx(ctx);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम ucma_query_device_addr(काष्ठा rdma_cm_id *cm_id,
-				   काष्ठा rdma_ucm_query_addr_resp *resp)
-अणु
-	अगर (!cm_id->device)
-		वापस;
+static void ucma_query_device_addr(struct rdma_cm_id *cm_id,
+				   struct rdma_ucm_query_addr_resp *resp)
+{
+	if (!cm_id->device)
+		return;
 
-	resp->node_guid = (__क्रमce __u64) cm_id->device->node_guid;
+	resp->node_guid = (__force __u64) cm_id->device->node_guid;
 	resp->ibdev_index = cm_id->device->index;
 	resp->port_num = cm_id->port_num;
-	resp->pkey = (__क्रमce __u16) cpu_to_be16(
+	resp->pkey = (__force __u16) cpu_to_be16(
 		     ib_addr_get_pkey(&cm_id->route.addr.dev_addr));
-पूर्ण
+}
 
-अटल sमाप_प्रकार ucma_query_addr(काष्ठा ucma_context *ctx,
-			       व्योम __user *response, पूर्णांक out_len)
-अणु
-	काष्ठा rdma_ucm_query_addr_resp resp;
-	काष्ठा sockaddr *addr;
-	पूर्णांक ret = 0;
+static ssize_t ucma_query_addr(struct ucma_context *ctx,
+			       void __user *response, int out_len)
+{
+	struct rdma_ucm_query_addr_resp resp;
+	struct sockaddr *addr;
+	int ret = 0;
 
-	अगर (out_len < दुरत्व(काष्ठा rdma_ucm_query_addr_resp, ibdev_index))
-		वापस -ENOSPC;
+	if (out_len < offsetof(struct rdma_ucm_query_addr_resp, ibdev_index))
+		return -ENOSPC;
 
-	स_रखो(&resp, 0, माप resp);
+	memset(&resp, 0, sizeof resp);
 
-	addr = (काष्ठा sockaddr *) &ctx->cm_id->route.addr.src_addr;
+	addr = (struct sockaddr *) &ctx->cm_id->route.addr.src_addr;
 	resp.src_size = rdma_addr_size(addr);
-	स_नकल(&resp.src_addr, addr, resp.src_size);
+	memcpy(&resp.src_addr, addr, resp.src_size);
 
-	addr = (काष्ठा sockaddr *) &ctx->cm_id->route.addr.dst_addr;
+	addr = (struct sockaddr *) &ctx->cm_id->route.addr.dst_addr;
 	resp.dst_size = rdma_addr_size(addr);
-	स_नकल(&resp.dst_addr, addr, resp.dst_size);
+	memcpy(&resp.dst_addr, addr, resp.dst_size);
 
 	ucma_query_device_addr(ctx->cm_id, &resp);
 
-	अगर (copy_to_user(response, &resp, min_t(माप_प्रकार, out_len, माप(resp))))
+	if (copy_to_user(response, &resp, min_t(size_t, out_len, sizeof(resp))))
 		ret = -EFAULT;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल sमाप_प्रकार ucma_query_path(काष्ठा ucma_context *ctx,
-			       व्योम __user *response, पूर्णांक out_len)
-अणु
-	काष्ठा rdma_ucm_query_path_resp *resp;
-	पूर्णांक i, ret = 0;
+static ssize_t ucma_query_path(struct ucma_context *ctx,
+			       void __user *response, int out_len)
+{
+	struct rdma_ucm_query_path_resp *resp;
+	int i, ret = 0;
 
-	अगर (out_len < माप(*resp))
-		वापस -ENOSPC;
+	if (out_len < sizeof(*resp))
+		return -ENOSPC;
 
 	resp = kzalloc(out_len, GFP_KERNEL);
-	अगर (!resp)
-		वापस -ENOMEM;
+	if (!resp)
+		return -ENOMEM;
 
 	resp->num_paths = ctx->cm_id->route.num_paths;
-	क्रम (i = 0, out_len -= माप(*resp);
-	     i < resp->num_paths && out_len > माप(काष्ठा ib_path_rec_data);
-	     i++, out_len -= माप(काष्ठा ib_path_rec_data)) अणु
-		काष्ठा sa_path_rec *rec = &ctx->cm_id->route.path_rec[i];
+	for (i = 0, out_len -= sizeof(*resp);
+	     i < resp->num_paths && out_len > sizeof(struct ib_path_rec_data);
+	     i++, out_len -= sizeof(struct ib_path_rec_data)) {
+		struct sa_path_rec *rec = &ctx->cm_id->route.path_rec[i];
 
 		resp->path_data[i].flags = IB_PATH_GMP | IB_PATH_PRIMARY |
-					   IB_PATH_BIसूचीECTIONAL;
-		अगर (rec->rec_type == SA_PATH_REC_TYPE_OPA) अणु
-			काष्ठा sa_path_rec ib;
+					   IB_PATH_BIDIRECTIONAL;
+		if (rec->rec_type == SA_PATH_REC_TYPE_OPA) {
+			struct sa_path_rec ib;
 
 			sa_convert_path_opa_to_ib(&ib, rec);
 			ib_sa_pack_path(&ib, &resp->path_data[i].path_rec);
 
-		पूर्ण अन्यथा अणु
+		} else {
 			ib_sa_pack_path(rec, &resp->path_data[i].path_rec);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (copy_to_user(response, resp, काष्ठा_size(resp, path_data, i)))
+	if (copy_to_user(response, resp, struct_size(resp, path_data, i)))
 		ret = -EFAULT;
 
-	kमुक्त(resp);
-	वापस ret;
-पूर्ण
+	kfree(resp);
+	return ret;
+}
 
-अटल sमाप_प्रकार ucma_query_gid(काष्ठा ucma_context *ctx,
-			      व्योम __user *response, पूर्णांक out_len)
-अणु
-	काष्ठा rdma_ucm_query_addr_resp resp;
-	काष्ठा sockaddr_ib *addr;
-	पूर्णांक ret = 0;
+static ssize_t ucma_query_gid(struct ucma_context *ctx,
+			      void __user *response, int out_len)
+{
+	struct rdma_ucm_query_addr_resp resp;
+	struct sockaddr_ib *addr;
+	int ret = 0;
 
-	अगर (out_len < दुरत्व(काष्ठा rdma_ucm_query_addr_resp, ibdev_index))
-		वापस -ENOSPC;
+	if (out_len < offsetof(struct rdma_ucm_query_addr_resp, ibdev_index))
+		return -ENOSPC;
 
-	स_रखो(&resp, 0, माप resp);
+	memset(&resp, 0, sizeof resp);
 
 	ucma_query_device_addr(ctx->cm_id, &resp);
 
-	addr = (काष्ठा sockaddr_ib *) &resp.src_addr;
-	resp.src_size = माप(*addr);
-	अगर (ctx->cm_id->route.addr.src_addr.ss_family == AF_IB) अणु
-		स_नकल(addr, &ctx->cm_id->route.addr.src_addr, resp.src_size);
-	पूर्ण अन्यथा अणु
+	addr = (struct sockaddr_ib *) &resp.src_addr;
+	resp.src_size = sizeof(*addr);
+	if (ctx->cm_id->route.addr.src_addr.ss_family == AF_IB) {
+		memcpy(addr, &ctx->cm_id->route.addr.src_addr, resp.src_size);
+	} else {
 		addr->sib_family = AF_IB;
-		addr->sib_pkey = (__क्रमce __be16) resp.pkey;
-		rdma_पढ़ो_gids(ctx->cm_id, (जोड़ ib_gid *)&addr->sib_addr,
-			       शून्य);
-		addr->sib_sid = rdma_get_service_id(ctx->cm_id, (काष्ठा sockaddr *)
+		addr->sib_pkey = (__force __be16) resp.pkey;
+		rdma_read_gids(ctx->cm_id, (union ib_gid *)&addr->sib_addr,
+			       NULL);
+		addr->sib_sid = rdma_get_service_id(ctx->cm_id, (struct sockaddr *)
 						    &ctx->cm_id->route.addr.src_addr);
-	पूर्ण
+	}
 
-	addr = (काष्ठा sockaddr_ib *) &resp.dst_addr;
-	resp.dst_size = माप(*addr);
-	अगर (ctx->cm_id->route.addr.dst_addr.ss_family == AF_IB) अणु
-		स_नकल(addr, &ctx->cm_id->route.addr.dst_addr, resp.dst_size);
-	पूर्ण अन्यथा अणु
+	addr = (struct sockaddr_ib *) &resp.dst_addr;
+	resp.dst_size = sizeof(*addr);
+	if (ctx->cm_id->route.addr.dst_addr.ss_family == AF_IB) {
+		memcpy(addr, &ctx->cm_id->route.addr.dst_addr, resp.dst_size);
+	} else {
 		addr->sib_family = AF_IB;
-		addr->sib_pkey = (__क्रमce __be16) resp.pkey;
-		rdma_पढ़ो_gids(ctx->cm_id, शून्य,
-			       (जोड़ ib_gid *)&addr->sib_addr);
-		addr->sib_sid = rdma_get_service_id(ctx->cm_id, (काष्ठा sockaddr *)
+		addr->sib_pkey = (__force __be16) resp.pkey;
+		rdma_read_gids(ctx->cm_id, NULL,
+			       (union ib_gid *)&addr->sib_addr);
+		addr->sib_sid = rdma_get_service_id(ctx->cm_id, (struct sockaddr *)
 						    &ctx->cm_id->route.addr.dst_addr);
-	पूर्ण
+	}
 
-	अगर (copy_to_user(response, &resp, min_t(माप_प्रकार, out_len, माप(resp))))
+	if (copy_to_user(response, &resp, min_t(size_t, out_len, sizeof(resp))))
 		ret = -EFAULT;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल sमाप_प्रकार ucma_query(काष्ठा ucma_file *file,
-			  स्थिर अक्षर __user *inbuf,
-			  पूर्णांक in_len, पूर्णांक out_len)
-अणु
-	काष्ठा rdma_ucm_query cmd;
-	काष्ठा ucma_context *ctx;
-	व्योम __user *response;
-	पूर्णांक ret;
+static ssize_t ucma_query(struct ucma_file *file,
+			  const char __user *inbuf,
+			  int in_len, int out_len)
+{
+	struct rdma_ucm_query cmd;
+	struct ucma_context *ctx;
+	void __user *response;
+	int ret;
 
-	अगर (copy_from_user(&cmd, inbuf, माप(cmd)))
-		वापस -EFAULT;
+	if (copy_from_user(&cmd, inbuf, sizeof(cmd)))
+		return -EFAULT;
 
 	response = u64_to_user_ptr(cmd.response);
 	ctx = ucma_get_ctx(file, cmd.id);
-	अगर (IS_ERR(ctx))
-		वापस PTR_ERR(ctx);
+	if (IS_ERR(ctx))
+		return PTR_ERR(ctx);
 
 	mutex_lock(&ctx->mutex);
-	चयन (cmd.option) अणु
-	हाल RDMA_USER_CM_QUERY_ADDR:
+	switch (cmd.option) {
+	case RDMA_USER_CM_QUERY_ADDR:
 		ret = ucma_query_addr(ctx, response, out_len);
-		अवरोध;
-	हाल RDMA_USER_CM_QUERY_PATH:
+		break;
+	case RDMA_USER_CM_QUERY_PATH:
 		ret = ucma_query_path(ctx, response, out_len);
-		अवरोध;
-	हाल RDMA_USER_CM_QUERY_GID:
+		break;
+	case RDMA_USER_CM_QUERY_GID:
 		ret = ucma_query_gid(ctx, response, out_len);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		ret = -ENOSYS;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 	mutex_unlock(&ctx->mutex);
 
 	ucma_put_ctx(ctx);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम ucma_copy_conn_param(काष्ठा rdma_cm_id *id,
-				 काष्ठा rdma_conn_param *dst,
-				 काष्ठा rdma_ucm_conn_param *src)
-अणु
-	dst->निजी_data = src->निजी_data;
-	dst->निजी_data_len = src->निजी_data_len;
+static void ucma_copy_conn_param(struct rdma_cm_id *id,
+				 struct rdma_conn_param *dst,
+				 struct rdma_ucm_conn_param *src)
+{
+	dst->private_data = src->private_data;
+	dst->private_data_len = src->private_data_len;
 	dst->responder_resources = src->responder_resources;
 	dst->initiator_depth = src->initiator_depth;
 	dst->flow_control = src->flow_control;
@@ -1043,59 +1042,59 @@ out:
 	dst->srq = src->srq;
 	dst->qp_num = src->qp_num & 0xFFFFFF;
 	dst->qkey = (id->route.addr.src_addr.ss_family == AF_IB) ? src->qkey : 0;
-पूर्ण
+}
 
-अटल sमाप_प्रकार ucma_connect(काष्ठा ucma_file *file, स्थिर अक्षर __user *inbuf,
-			    पूर्णांक in_len, पूर्णांक out_len)
-अणु
-	काष्ठा rdma_conn_param conn_param;
-	काष्ठा rdma_ucm_ece ece = अणुपूर्ण;
-	काष्ठा rdma_ucm_connect cmd;
-	काष्ठा ucma_context *ctx;
-	माप_प्रकार in_size;
-	पूर्णांक ret;
+static ssize_t ucma_connect(struct ucma_file *file, const char __user *inbuf,
+			    int in_len, int out_len)
+{
+	struct rdma_conn_param conn_param;
+	struct rdma_ucm_ece ece = {};
+	struct rdma_ucm_connect cmd;
+	struct ucma_context *ctx;
+	size_t in_size;
+	int ret;
 
-	अगर (in_len < दुरत्वend(typeof(cmd), reserved))
-		वापस -EINVAL;
-	in_size = min_t(माप_प्रकार, in_len, माप(cmd));
-	अगर (copy_from_user(&cmd, inbuf, in_size))
-		वापस -EFAULT;
+	if (in_len < offsetofend(typeof(cmd), reserved))
+		return -EINVAL;
+	in_size = min_t(size_t, in_len, sizeof(cmd));
+	if (copy_from_user(&cmd, inbuf, in_size))
+		return -EFAULT;
 
-	अगर (!cmd.conn_param.valid)
-		वापस -EINVAL;
+	if (!cmd.conn_param.valid)
+		return -EINVAL;
 
 	ctx = ucma_get_ctx_dev(file, cmd.id);
-	अगर (IS_ERR(ctx))
-		वापस PTR_ERR(ctx);
+	if (IS_ERR(ctx))
+		return PTR_ERR(ctx);
 
 	ucma_copy_conn_param(ctx->cm_id, &conn_param, &cmd.conn_param);
-	अगर (दुरत्वend(typeof(cmd), ece) <= in_size) अणु
-		ece.venकरोr_id = cmd.ece.venकरोr_id;
+	if (offsetofend(typeof(cmd), ece) <= in_size) {
+		ece.vendor_id = cmd.ece.vendor_id;
 		ece.attr_mod = cmd.ece.attr_mod;
-	पूर्ण
+	}
 
 	mutex_lock(&ctx->mutex);
 	ret = rdma_connect_ece(ctx->cm_id, &conn_param, &ece);
 	mutex_unlock(&ctx->mutex);
 	ucma_put_ctx(ctx);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल sमाप_प्रकार ucma_listen(काष्ठा ucma_file *file, स्थिर अक्षर __user *inbuf,
-			   पूर्णांक in_len, पूर्णांक out_len)
-अणु
-	काष्ठा rdma_ucm_listen cmd;
-	काष्ठा ucma_context *ctx;
-	पूर्णांक ret;
+static ssize_t ucma_listen(struct ucma_file *file, const char __user *inbuf,
+			   int in_len, int out_len)
+{
+	struct rdma_ucm_listen cmd;
+	struct ucma_context *ctx;
+	int ret;
 
-	अगर (copy_from_user(&cmd, inbuf, माप(cmd)))
-		वापस -EFAULT;
+	if (copy_from_user(&cmd, inbuf, sizeof(cmd)))
+		return -EFAULT;
 
 	ctx = ucma_get_ctx(file, cmd.id);
-	अगर (IS_ERR(ctx))
-		वापस PTR_ERR(ctx);
+	if (IS_ERR(ctx))
+		return PTR_ERR(ctx);
 
-	अगर (cmd.backlog <= 0 || cmd.backlog > max_backlog)
+	if (cmd.backlog <= 0 || cmd.backlog > max_backlog)
 		cmd.backlog = max_backlog;
 	atomic_set(&ctx->backlog, cmd.backlog);
 
@@ -1103,555 +1102,555 @@ out:
 	ret = rdma_listen(ctx->cm_id, cmd.backlog);
 	mutex_unlock(&ctx->mutex);
 	ucma_put_ctx(ctx);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल sमाप_प्रकार ucma_accept(काष्ठा ucma_file *file, स्थिर अक्षर __user *inbuf,
-			   पूर्णांक in_len, पूर्णांक out_len)
-अणु
-	काष्ठा rdma_ucm_accept cmd;
-	काष्ठा rdma_conn_param conn_param;
-	काष्ठा rdma_ucm_ece ece = अणुपूर्ण;
-	काष्ठा ucma_context *ctx;
-	माप_प्रकार in_size;
-	पूर्णांक ret;
+static ssize_t ucma_accept(struct ucma_file *file, const char __user *inbuf,
+			   int in_len, int out_len)
+{
+	struct rdma_ucm_accept cmd;
+	struct rdma_conn_param conn_param;
+	struct rdma_ucm_ece ece = {};
+	struct ucma_context *ctx;
+	size_t in_size;
+	int ret;
 
-	अगर (in_len < दुरत्वend(typeof(cmd), reserved))
-		वापस -EINVAL;
-	in_size = min_t(माप_प्रकार, in_len, माप(cmd));
-	अगर (copy_from_user(&cmd, inbuf, in_size))
-		वापस -EFAULT;
+	if (in_len < offsetofend(typeof(cmd), reserved))
+		return -EINVAL;
+	in_size = min_t(size_t, in_len, sizeof(cmd));
+	if (copy_from_user(&cmd, inbuf, in_size))
+		return -EFAULT;
 
 	ctx = ucma_get_ctx_dev(file, cmd.id);
-	अगर (IS_ERR(ctx))
-		वापस PTR_ERR(ctx);
+	if (IS_ERR(ctx))
+		return PTR_ERR(ctx);
 
-	अगर (दुरत्वend(typeof(cmd), ece) <= in_size) अणु
-		ece.venकरोr_id = cmd.ece.venकरोr_id;
+	if (offsetofend(typeof(cmd), ece) <= in_size) {
+		ece.vendor_id = cmd.ece.vendor_id;
 		ece.attr_mod = cmd.ece.attr_mod;
-	पूर्ण
+	}
 
-	अगर (cmd.conn_param.valid) अणु
+	if (cmd.conn_param.valid) {
 		ucma_copy_conn_param(ctx->cm_id, &conn_param, &cmd.conn_param);
 		mutex_lock(&ctx->mutex);
 		rdma_lock_handler(ctx->cm_id);
 		ret = rdma_accept_ece(ctx->cm_id, &conn_param, &ece);
-		अगर (!ret) अणु
+		if (!ret) {
 			/* The uid must be set atomically with the handler */
 			ctx->uid = cmd.uid;
-		पूर्ण
+		}
 		rdma_unlock_handler(ctx->cm_id);
 		mutex_unlock(&ctx->mutex);
-	पूर्ण अन्यथा अणु
+	} else {
 		mutex_lock(&ctx->mutex);
 		rdma_lock_handler(ctx->cm_id);
-		ret = rdma_accept_ece(ctx->cm_id, शून्य, &ece);
+		ret = rdma_accept_ece(ctx->cm_id, NULL, &ece);
 		rdma_unlock_handler(ctx->cm_id);
 		mutex_unlock(&ctx->mutex);
-	पूर्ण
+	}
 	ucma_put_ctx(ctx);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल sमाप_प्रकार ucma_reject(काष्ठा ucma_file *file, स्थिर अक्षर __user *inbuf,
-			   पूर्णांक in_len, पूर्णांक out_len)
-अणु
-	काष्ठा rdma_ucm_reject cmd;
-	काष्ठा ucma_context *ctx;
-	पूर्णांक ret;
+static ssize_t ucma_reject(struct ucma_file *file, const char __user *inbuf,
+			   int in_len, int out_len)
+{
+	struct rdma_ucm_reject cmd;
+	struct ucma_context *ctx;
+	int ret;
 
-	अगर (copy_from_user(&cmd, inbuf, माप(cmd)))
-		वापस -EFAULT;
+	if (copy_from_user(&cmd, inbuf, sizeof(cmd)))
+		return -EFAULT;
 
-	अगर (!cmd.reason)
+	if (!cmd.reason)
 		cmd.reason = IB_CM_REJ_CONSUMER_DEFINED;
 
-	चयन (cmd.reason) अणु
-	हाल IB_CM_REJ_CONSUMER_DEFINED:
-	हाल IB_CM_REJ_VENDOR_OPTION_NOT_SUPPORTED:
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+	switch (cmd.reason) {
+	case IB_CM_REJ_CONSUMER_DEFINED:
+	case IB_CM_REJ_VENDOR_OPTION_NOT_SUPPORTED:
+		break;
+	default:
+		return -EINVAL;
+	}
 
 	ctx = ucma_get_ctx_dev(file, cmd.id);
-	अगर (IS_ERR(ctx))
-		वापस PTR_ERR(ctx);
+	if (IS_ERR(ctx))
+		return PTR_ERR(ctx);
 
 	mutex_lock(&ctx->mutex);
-	ret = rdma_reject(ctx->cm_id, cmd.निजी_data, cmd.निजी_data_len,
+	ret = rdma_reject(ctx->cm_id, cmd.private_data, cmd.private_data_len,
 			  cmd.reason);
 	mutex_unlock(&ctx->mutex);
 	ucma_put_ctx(ctx);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल sमाप_प्रकार ucma_disconnect(काष्ठा ucma_file *file, स्थिर अक्षर __user *inbuf,
-			       पूर्णांक in_len, पूर्णांक out_len)
-अणु
-	काष्ठा rdma_ucm_disconnect cmd;
-	काष्ठा ucma_context *ctx;
-	पूर्णांक ret;
+static ssize_t ucma_disconnect(struct ucma_file *file, const char __user *inbuf,
+			       int in_len, int out_len)
+{
+	struct rdma_ucm_disconnect cmd;
+	struct ucma_context *ctx;
+	int ret;
 
-	अगर (copy_from_user(&cmd, inbuf, माप(cmd)))
-		वापस -EFAULT;
+	if (copy_from_user(&cmd, inbuf, sizeof(cmd)))
+		return -EFAULT;
 
 	ctx = ucma_get_ctx_dev(file, cmd.id);
-	अगर (IS_ERR(ctx))
-		वापस PTR_ERR(ctx);
+	if (IS_ERR(ctx))
+		return PTR_ERR(ctx);
 
 	mutex_lock(&ctx->mutex);
 	ret = rdma_disconnect(ctx->cm_id);
 	mutex_unlock(&ctx->mutex);
 	ucma_put_ctx(ctx);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल sमाप_प्रकार ucma_init_qp_attr(काष्ठा ucma_file *file,
-				 स्थिर अक्षर __user *inbuf,
-				 पूर्णांक in_len, पूर्णांक out_len)
-अणु
-	काष्ठा rdma_ucm_init_qp_attr cmd;
-	काष्ठा ib_uverbs_qp_attr resp;
-	काष्ठा ucma_context *ctx;
-	काष्ठा ib_qp_attr qp_attr;
-	पूर्णांक ret;
+static ssize_t ucma_init_qp_attr(struct ucma_file *file,
+				 const char __user *inbuf,
+				 int in_len, int out_len)
+{
+	struct rdma_ucm_init_qp_attr cmd;
+	struct ib_uverbs_qp_attr resp;
+	struct ucma_context *ctx;
+	struct ib_qp_attr qp_attr;
+	int ret;
 
-	अगर (out_len < माप(resp))
-		वापस -ENOSPC;
+	if (out_len < sizeof(resp))
+		return -ENOSPC;
 
-	अगर (copy_from_user(&cmd, inbuf, माप(cmd)))
-		वापस -EFAULT;
+	if (copy_from_user(&cmd, inbuf, sizeof(cmd)))
+		return -EFAULT;
 
-	अगर (cmd.qp_state > IB_QPS_ERR)
-		वापस -EINVAL;
+	if (cmd.qp_state > IB_QPS_ERR)
+		return -EINVAL;
 
 	ctx = ucma_get_ctx_dev(file, cmd.id);
-	अगर (IS_ERR(ctx))
-		वापस PTR_ERR(ctx);
+	if (IS_ERR(ctx))
+		return PTR_ERR(ctx);
 
 	resp.qp_attr_mask = 0;
-	स_रखो(&qp_attr, 0, माप qp_attr);
+	memset(&qp_attr, 0, sizeof qp_attr);
 	qp_attr.qp_state = cmd.qp_state;
 	mutex_lock(&ctx->mutex);
 	ret = rdma_init_qp_attr(ctx->cm_id, &qp_attr, &resp.qp_attr_mask);
 	mutex_unlock(&ctx->mutex);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
 	ib_copy_qp_attr_to_user(ctx->cm_id->device, &resp, &qp_attr);
-	अगर (copy_to_user(u64_to_user_ptr(cmd.response),
-			 &resp, माप(resp)))
+	if (copy_to_user(u64_to_user_ptr(cmd.response),
+			 &resp, sizeof(resp)))
 		ret = -EFAULT;
 
 out:
 	ucma_put_ctx(ctx);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक ucma_set_option_id(काष्ठा ucma_context *ctx, पूर्णांक optname,
-			      व्योम *optval, माप_प्रकार optlen)
-अणु
-	पूर्णांक ret = 0;
+static int ucma_set_option_id(struct ucma_context *ctx, int optname,
+			      void *optval, size_t optlen)
+{
+	int ret = 0;
 
-	चयन (optname) अणु
-	हाल RDMA_OPTION_ID_TOS:
-		अगर (optlen != माप(u8)) अणु
+	switch (optname) {
+	case RDMA_OPTION_ID_TOS:
+		if (optlen != sizeof(u8)) {
 			ret = -EINVAL;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		rdma_set_service_type(ctx->cm_id, *((u8 *) optval));
-		अवरोध;
-	हाल RDMA_OPTION_ID_REUSEADDR:
-		अगर (optlen != माप(पूर्णांक)) अणु
+		break;
+	case RDMA_OPTION_ID_REUSEADDR:
+		if (optlen != sizeof(int)) {
 			ret = -EINVAL;
-			अवरोध;
-		पूर्ण
-		ret = rdma_set_reuseaddr(ctx->cm_id, *((पूर्णांक *) optval) ? 1 : 0);
-		अवरोध;
-	हाल RDMA_OPTION_ID_AFONLY:
-		अगर (optlen != माप(पूर्णांक)) अणु
+			break;
+		}
+		ret = rdma_set_reuseaddr(ctx->cm_id, *((int *) optval) ? 1 : 0);
+		break;
+	case RDMA_OPTION_ID_AFONLY:
+		if (optlen != sizeof(int)) {
 			ret = -EINVAL;
-			अवरोध;
-		पूर्ण
-		ret = rdma_set_afonly(ctx->cm_id, *((पूर्णांक *) optval) ? 1 : 0);
-		अवरोध;
-	हाल RDMA_OPTION_ID_ACK_TIMEOUT:
-		अगर (optlen != माप(u8)) अणु
+			break;
+		}
+		ret = rdma_set_afonly(ctx->cm_id, *((int *) optval) ? 1 : 0);
+		break;
+	case RDMA_OPTION_ID_ACK_TIMEOUT:
+		if (optlen != sizeof(u8)) {
 			ret = -EINVAL;
-			अवरोध;
-		पूर्ण
-		ret = rdma_set_ack_समयout(ctx->cm_id, *((u8 *)optval));
-		अवरोध;
-	शेष:
+			break;
+		}
+		ret = rdma_set_ack_timeout(ctx->cm_id, *((u8 *)optval));
+		break;
+	default:
 		ret = -ENOSYS;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक ucma_set_ib_path(काष्ठा ucma_context *ctx,
-			    काष्ठा ib_path_rec_data *path_data, माप_प्रकार optlen)
-अणु
-	काष्ठा sa_path_rec sa_path;
-	काष्ठा rdma_cm_event event;
-	पूर्णांक ret;
+static int ucma_set_ib_path(struct ucma_context *ctx,
+			    struct ib_path_rec_data *path_data, size_t optlen)
+{
+	struct sa_path_rec sa_path;
+	struct rdma_cm_event event;
+	int ret;
 
-	अगर (optlen % माप(*path_data))
-		वापस -EINVAL;
+	if (optlen % sizeof(*path_data))
+		return -EINVAL;
 
-	क्रम (; optlen; optlen -= माप(*path_data), path_data++) अणु
-		अगर (path_data->flags == (IB_PATH_GMP | IB_PATH_PRIMARY |
-					 IB_PATH_BIसूचीECTIONAL))
-			अवरोध;
-	पूर्ण
+	for (; optlen; optlen -= sizeof(*path_data), path_data++) {
+		if (path_data->flags == (IB_PATH_GMP | IB_PATH_PRIMARY |
+					 IB_PATH_BIDIRECTIONAL))
+			break;
+	}
 
-	अगर (!optlen)
-		वापस -EINVAL;
+	if (!optlen)
+		return -EINVAL;
 
-	अगर (!ctx->cm_id->device)
-		वापस -EINVAL;
+	if (!ctx->cm_id->device)
+		return -EINVAL;
 
-	स_रखो(&sa_path, 0, माप(sa_path));
+	memset(&sa_path, 0, sizeof(sa_path));
 
 	sa_path.rec_type = SA_PATH_REC_TYPE_IB;
 	ib_sa_unpack_path(path_data->path_rec, &sa_path);
 
-	अगर (rdma_cap_opa_ah(ctx->cm_id->device, ctx->cm_id->port_num)) अणु
-		काष्ठा sa_path_rec opa;
+	if (rdma_cap_opa_ah(ctx->cm_id->device, ctx->cm_id->port_num)) {
+		struct sa_path_rec opa;
 
 		sa_convert_path_ib_to_opa(&opa, &sa_path);
 		mutex_lock(&ctx->mutex);
 		ret = rdma_set_ib_path(ctx->cm_id, &opa);
 		mutex_unlock(&ctx->mutex);
-	पूर्ण अन्यथा अणु
+	} else {
 		mutex_lock(&ctx->mutex);
 		ret = rdma_set_ib_path(ctx->cm_id, &sa_path);
 		mutex_unlock(&ctx->mutex);
-	पूर्ण
-	अगर (ret)
-		वापस ret;
+	}
+	if (ret)
+		return ret;
 
-	स_रखो(&event, 0, माप event);
+	memset(&event, 0, sizeof event);
 	event.event = RDMA_CM_EVENT_ROUTE_RESOLVED;
-	वापस ucma_event_handler(ctx->cm_id, &event);
-पूर्ण
+	return ucma_event_handler(ctx->cm_id, &event);
+}
 
-अटल पूर्णांक ucma_set_option_ib(काष्ठा ucma_context *ctx, पूर्णांक optname,
-			      व्योम *optval, माप_प्रकार optlen)
-अणु
-	पूर्णांक ret;
+static int ucma_set_option_ib(struct ucma_context *ctx, int optname,
+			      void *optval, size_t optlen)
+{
+	int ret;
 
-	चयन (optname) अणु
-	हाल RDMA_OPTION_IB_PATH:
+	switch (optname) {
+	case RDMA_OPTION_IB_PATH:
 		ret = ucma_set_ib_path(ctx, optval, optlen);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		ret = -ENOSYS;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक ucma_set_option_level(काष्ठा ucma_context *ctx, पूर्णांक level,
-				 पूर्णांक optname, व्योम *optval, माप_प्रकार optlen)
-अणु
-	पूर्णांक ret;
+static int ucma_set_option_level(struct ucma_context *ctx, int level,
+				 int optname, void *optval, size_t optlen)
+{
+	int ret;
 
-	चयन (level) अणु
-	हाल RDMA_OPTION_ID:
+	switch (level) {
+	case RDMA_OPTION_ID:
 		mutex_lock(&ctx->mutex);
 		ret = ucma_set_option_id(ctx, optname, optval, optlen);
 		mutex_unlock(&ctx->mutex);
-		अवरोध;
-	हाल RDMA_OPTION_IB:
+		break;
+	case RDMA_OPTION_IB:
 		ret = ucma_set_option_ib(ctx, optname, optval, optlen);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		ret = -ENOSYS;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल sमाप_प्रकार ucma_set_option(काष्ठा ucma_file *file, स्थिर अक्षर __user *inbuf,
-			       पूर्णांक in_len, पूर्णांक out_len)
-अणु
-	काष्ठा rdma_ucm_set_option cmd;
-	काष्ठा ucma_context *ctx;
-	व्योम *optval;
-	पूर्णांक ret;
+static ssize_t ucma_set_option(struct ucma_file *file, const char __user *inbuf,
+			       int in_len, int out_len)
+{
+	struct rdma_ucm_set_option cmd;
+	struct ucma_context *ctx;
+	void *optval;
+	int ret;
 
-	अगर (copy_from_user(&cmd, inbuf, माप(cmd)))
-		वापस -EFAULT;
+	if (copy_from_user(&cmd, inbuf, sizeof(cmd)))
+		return -EFAULT;
 
-	अगर (unlikely(cmd.optlen > KMALLOC_MAX_SIZE))
-		वापस -EINVAL;
+	if (unlikely(cmd.optlen > KMALLOC_MAX_SIZE))
+		return -EINVAL;
 
 	ctx = ucma_get_ctx(file, cmd.id);
-	अगर (IS_ERR(ctx))
-		वापस PTR_ERR(ctx);
+	if (IS_ERR(ctx))
+		return PTR_ERR(ctx);
 
 	optval = memdup_user(u64_to_user_ptr(cmd.optval),
 			     cmd.optlen);
-	अगर (IS_ERR(optval)) अणु
+	if (IS_ERR(optval)) {
 		ret = PTR_ERR(optval);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	ret = ucma_set_option_level(ctx, cmd.level, cmd.optname, optval,
 				    cmd.optlen);
-	kमुक्त(optval);
+	kfree(optval);
 
 out:
 	ucma_put_ctx(ctx);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल sमाप_प्रकार ucma_notअगरy(काष्ठा ucma_file *file, स्थिर अक्षर __user *inbuf,
-			   पूर्णांक in_len, पूर्णांक out_len)
-अणु
-	काष्ठा rdma_ucm_notअगरy cmd;
-	काष्ठा ucma_context *ctx;
-	पूर्णांक ret = -EINVAL;
+static ssize_t ucma_notify(struct ucma_file *file, const char __user *inbuf,
+			   int in_len, int out_len)
+{
+	struct rdma_ucm_notify cmd;
+	struct ucma_context *ctx;
+	int ret = -EINVAL;
 
-	अगर (copy_from_user(&cmd, inbuf, माप(cmd)))
-		वापस -EFAULT;
+	if (copy_from_user(&cmd, inbuf, sizeof(cmd)))
+		return -EFAULT;
 
 	ctx = ucma_get_ctx(file, cmd.id);
-	अगर (IS_ERR(ctx))
-		वापस PTR_ERR(ctx);
+	if (IS_ERR(ctx))
+		return PTR_ERR(ctx);
 
 	mutex_lock(&ctx->mutex);
-	अगर (ctx->cm_id->device)
-		ret = rdma_notअगरy(ctx->cm_id, (क्रमागत ib_event_type)cmd.event);
+	if (ctx->cm_id->device)
+		ret = rdma_notify(ctx->cm_id, (enum ib_event_type)cmd.event);
 	mutex_unlock(&ctx->mutex);
 
 	ucma_put_ctx(ctx);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल sमाप_प्रकार ucma_process_join(काष्ठा ucma_file *file,
-				 काष्ठा rdma_ucm_join_mcast *cmd,  पूर्णांक out_len)
-अणु
-	काष्ठा rdma_ucm_create_id_resp resp;
-	काष्ठा ucma_context *ctx;
-	काष्ठा ucma_multicast *mc;
-	काष्ठा sockaddr *addr;
-	पूर्णांक ret;
+static ssize_t ucma_process_join(struct ucma_file *file,
+				 struct rdma_ucm_join_mcast *cmd,  int out_len)
+{
+	struct rdma_ucm_create_id_resp resp;
+	struct ucma_context *ctx;
+	struct ucma_multicast *mc;
+	struct sockaddr *addr;
+	int ret;
 	u8 join_state;
 
-	अगर (out_len < माप(resp))
-		वापस -ENOSPC;
+	if (out_len < sizeof(resp))
+		return -ENOSPC;
 
-	addr = (काष्ठा sockaddr *) &cmd->addr;
-	अगर (cmd->addr_size != rdma_addr_size(addr))
-		वापस -EINVAL;
+	addr = (struct sockaddr *) &cmd->addr;
+	if (cmd->addr_size != rdma_addr_size(addr))
+		return -EINVAL;
 
-	अगर (cmd->join_flags == RDMA_MC_JOIN_FLAG_FULLMEMBER)
+	if (cmd->join_flags == RDMA_MC_JOIN_FLAG_FULLMEMBER)
 		join_state = BIT(FULLMEMBER_JOIN);
-	अन्यथा अगर (cmd->join_flags == RDMA_MC_JOIN_FLAG_SENDONLY_FULLMEMBER)
+	else if (cmd->join_flags == RDMA_MC_JOIN_FLAG_SENDONLY_FULLMEMBER)
 		join_state = BIT(SENDONLY_FULLMEMBER_JOIN);
-	अन्यथा
-		वापस -EINVAL;
+	else
+		return -EINVAL;
 
 	ctx = ucma_get_ctx_dev(file, cmd->id);
-	अगर (IS_ERR(ctx))
-		वापस PTR_ERR(ctx);
+	if (IS_ERR(ctx))
+		return PTR_ERR(ctx);
 
-	mc = kzalloc(माप(*mc), GFP_KERNEL);
-	अगर (!mc) अणु
+	mc = kzalloc(sizeof(*mc), GFP_KERNEL);
+	if (!mc) {
 		ret = -ENOMEM;
-		जाओ err_put_ctx;
-	पूर्ण
+		goto err_put_ctx;
+	}
 
 	mc->ctx = ctx;
 	mc->join_state = join_state;
 	mc->uid = cmd->uid;
-	स_नकल(&mc->addr, addr, cmd->addr_size);
+	memcpy(&mc->addr, addr, cmd->addr_size);
 
-	अगर (xa_alloc(&multicast_table, &mc->id, शून्य, xa_limit_32b,
-		     GFP_KERNEL)) अणु
+	if (xa_alloc(&multicast_table, &mc->id, NULL, xa_limit_32b,
+		     GFP_KERNEL)) {
 		ret = -ENOMEM;
-		जाओ err_मुक्त_mc;
-	पूर्ण
+		goto err_free_mc;
+	}
 
 	mutex_lock(&ctx->mutex);
-	ret = rdma_join_multicast(ctx->cm_id, (काष्ठा sockaddr *)&mc->addr,
+	ret = rdma_join_multicast(ctx->cm_id, (struct sockaddr *)&mc->addr,
 				  join_state, mc);
 	mutex_unlock(&ctx->mutex);
-	अगर (ret)
-		जाओ err_xa_erase;
+	if (ret)
+		goto err_xa_erase;
 
 	resp.id = mc->id;
-	अगर (copy_to_user(u64_to_user_ptr(cmd->response),
-			 &resp, माप(resp))) अणु
+	if (copy_to_user(u64_to_user_ptr(cmd->response),
+			 &resp, sizeof(resp))) {
 		ret = -EFAULT;
-		जाओ err_leave_multicast;
-	पूर्ण
+		goto err_leave_multicast;
+	}
 
 	xa_store(&multicast_table, mc->id, mc, 0);
 
 	ucma_put_ctx(ctx);
-	वापस 0;
+	return 0;
 
 err_leave_multicast:
 	mutex_lock(&ctx->mutex);
-	rdma_leave_multicast(ctx->cm_id, (काष्ठा sockaddr *) &mc->addr);
+	rdma_leave_multicast(ctx->cm_id, (struct sockaddr *) &mc->addr);
 	mutex_unlock(&ctx->mutex);
 	ucma_cleanup_mc_events(mc);
 err_xa_erase:
 	xa_erase(&multicast_table, mc->id);
-err_मुक्त_mc:
-	kमुक्त(mc);
+err_free_mc:
+	kfree(mc);
 err_put_ctx:
 	ucma_put_ctx(ctx);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल sमाप_प्रकार ucma_join_ip_multicast(काष्ठा ucma_file *file,
-				      स्थिर अक्षर __user *inbuf,
-				      पूर्णांक in_len, पूर्णांक out_len)
-अणु
-	काष्ठा rdma_ucm_join_ip_mcast cmd;
-	काष्ठा rdma_ucm_join_mcast join_cmd;
+static ssize_t ucma_join_ip_multicast(struct ucma_file *file,
+				      const char __user *inbuf,
+				      int in_len, int out_len)
+{
+	struct rdma_ucm_join_ip_mcast cmd;
+	struct rdma_ucm_join_mcast join_cmd;
 
-	अगर (copy_from_user(&cmd, inbuf, माप(cmd)))
-		वापस -EFAULT;
+	if (copy_from_user(&cmd, inbuf, sizeof(cmd)))
+		return -EFAULT;
 
 	join_cmd.response = cmd.response;
 	join_cmd.uid = cmd.uid;
 	join_cmd.id = cmd.id;
 	join_cmd.addr_size = rdma_addr_size_in6(&cmd.addr);
-	अगर (!join_cmd.addr_size)
-		वापस -EINVAL;
+	if (!join_cmd.addr_size)
+		return -EINVAL;
 
 	join_cmd.join_flags = RDMA_MC_JOIN_FLAG_FULLMEMBER;
-	स_नकल(&join_cmd.addr, &cmd.addr, join_cmd.addr_size);
+	memcpy(&join_cmd.addr, &cmd.addr, join_cmd.addr_size);
 
-	वापस ucma_process_join(file, &join_cmd, out_len);
-पूर्ण
+	return ucma_process_join(file, &join_cmd, out_len);
+}
 
-अटल sमाप_प्रकार ucma_join_multicast(काष्ठा ucma_file *file,
-				   स्थिर अक्षर __user *inbuf,
-				   पूर्णांक in_len, पूर्णांक out_len)
-अणु
-	काष्ठा rdma_ucm_join_mcast cmd;
+static ssize_t ucma_join_multicast(struct ucma_file *file,
+				   const char __user *inbuf,
+				   int in_len, int out_len)
+{
+	struct rdma_ucm_join_mcast cmd;
 
-	अगर (copy_from_user(&cmd, inbuf, माप(cmd)))
-		वापस -EFAULT;
+	if (copy_from_user(&cmd, inbuf, sizeof(cmd)))
+		return -EFAULT;
 
-	अगर (!rdma_addr_size_kss(&cmd.addr))
-		वापस -EINVAL;
+	if (!rdma_addr_size_kss(&cmd.addr))
+		return -EINVAL;
 
-	वापस ucma_process_join(file, &cmd, out_len);
-पूर्ण
+	return ucma_process_join(file, &cmd, out_len);
+}
 
-अटल sमाप_प्रकार ucma_leave_multicast(काष्ठा ucma_file *file,
-				    स्थिर अक्षर __user *inbuf,
-				    पूर्णांक in_len, पूर्णांक out_len)
-अणु
-	काष्ठा rdma_ucm_destroy_id cmd;
-	काष्ठा rdma_ucm_destroy_id_resp resp;
-	काष्ठा ucma_multicast *mc;
-	पूर्णांक ret = 0;
+static ssize_t ucma_leave_multicast(struct ucma_file *file,
+				    const char __user *inbuf,
+				    int in_len, int out_len)
+{
+	struct rdma_ucm_destroy_id cmd;
+	struct rdma_ucm_destroy_id_resp resp;
+	struct ucma_multicast *mc;
+	int ret = 0;
 
-	अगर (out_len < माप(resp))
-		वापस -ENOSPC;
+	if (out_len < sizeof(resp))
+		return -ENOSPC;
 
-	अगर (copy_from_user(&cmd, inbuf, माप(cmd)))
-		वापस -EFAULT;
+	if (copy_from_user(&cmd, inbuf, sizeof(cmd)))
+		return -EFAULT;
 
 	xa_lock(&multicast_table);
 	mc = xa_load(&multicast_table, cmd.id);
-	अगर (!mc)
+	if (!mc)
 		mc = ERR_PTR(-ENOENT);
-	अन्यथा अगर (READ_ONCE(mc->ctx->file) != file)
+	else if (READ_ONCE(mc->ctx->file) != file)
 		mc = ERR_PTR(-EINVAL);
-	अन्यथा अगर (!refcount_inc_not_zero(&mc->ctx->ref))
+	else if (!refcount_inc_not_zero(&mc->ctx->ref))
 		mc = ERR_PTR(-ENXIO);
-	अन्यथा
+	else
 		__xa_erase(&multicast_table, mc->id);
 	xa_unlock(&multicast_table);
 
-	अगर (IS_ERR(mc)) अणु
+	if (IS_ERR(mc)) {
 		ret = PTR_ERR(mc);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	mutex_lock(&mc->ctx->mutex);
-	rdma_leave_multicast(mc->ctx->cm_id, (काष्ठा sockaddr *) &mc->addr);
+	rdma_leave_multicast(mc->ctx->cm_id, (struct sockaddr *) &mc->addr);
 	mutex_unlock(&mc->ctx->mutex);
 
 	ucma_cleanup_mc_events(mc);
 
 	ucma_put_ctx(mc->ctx);
 	resp.events_reported = mc->events_reported;
-	kमुक्त(mc);
+	kfree(mc);
 
-	अगर (copy_to_user(u64_to_user_ptr(cmd.response),
-			 &resp, माप(resp)))
+	if (copy_to_user(u64_to_user_ptr(cmd.response),
+			 &resp, sizeof(resp)))
 		ret = -EFAULT;
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल sमाप_प्रकार ucma_migrate_id(काष्ठा ucma_file *new_file,
-			       स्थिर अक्षर __user *inbuf,
-			       पूर्णांक in_len, पूर्णांक out_len)
-अणु
-	काष्ठा rdma_ucm_migrate_id cmd;
-	काष्ठा rdma_ucm_migrate_resp resp;
-	काष्ठा ucma_event *uevent, *पंचांगp;
-	काष्ठा ucma_context *ctx;
+static ssize_t ucma_migrate_id(struct ucma_file *new_file,
+			       const char __user *inbuf,
+			       int in_len, int out_len)
+{
+	struct rdma_ucm_migrate_id cmd;
+	struct rdma_ucm_migrate_resp resp;
+	struct ucma_event *uevent, *tmp;
+	struct ucma_context *ctx;
 	LIST_HEAD(event_list);
-	काष्ठा fd f;
-	काष्ठा ucma_file *cur_file;
-	पूर्णांक ret = 0;
+	struct fd f;
+	struct ucma_file *cur_file;
+	int ret = 0;
 
-	अगर (copy_from_user(&cmd, inbuf, माप(cmd)))
-		वापस -EFAULT;
+	if (copy_from_user(&cmd, inbuf, sizeof(cmd)))
+		return -EFAULT;
 
-	/* Get current fd to protect against it being बंदd */
+	/* Get current fd to protect against it being closed */
 	f = fdget(cmd.fd);
-	अगर (!f.file)
-		वापस -ENOENT;
-	अगर (f.file->f_op != &ucma_fops) अणु
+	if (!f.file)
+		return -ENOENT;
+	if (f.file->f_op != &ucma_fops) {
 		ret = -EINVAL;
-		जाओ file_put;
-	पूर्ण
-	cur_file = f.file->निजी_data;
+		goto file_put;
+	}
+	cur_file = f.file->private_data;
 
-	/* Validate current fd and prevent deकाष्ठाion of id. */
+	/* Validate current fd and prevent destruction of id. */
 	ctx = ucma_get_ctx(cur_file, cmd.id);
-	अगर (IS_ERR(ctx)) अणु
+	if (IS_ERR(ctx)) {
 		ret = PTR_ERR(ctx);
-		जाओ file_put;
-	पूर्ण
+		goto file_put;
+	}
 
 	rdma_lock_handler(ctx->cm_id);
 	/*
 	 * ctx->file can only be changed under the handler & xa_lock. xa_load()
-	 * must be checked again to ensure the ctx hasn't begun deकाष्ठाion
+	 * must be checked again to ensure the ctx hasn't begun destruction
 	 * since the ucma_get_ctx().
 	 */
 	xa_lock(&ctx_table);
-	अगर (_ucma_find_context(cmd.id, cur_file) != ctx) अणु
+	if (_ucma_find_context(cmd.id, cur_file) != ctx) {
 		xa_unlock(&ctx_table);
 		ret = -ENOENT;
-		जाओ err_unlock;
-	पूर्ण
+		goto err_unlock;
+	}
 	ctx->file = new_file;
 	xa_unlock(&ctx_table);
 
 	mutex_lock(&cur_file->mut);
 	list_del(&ctx->list);
 	/*
-	 * At this poपूर्णांक lock_handler() prevents addition of new uevents क्रम
+	 * At this point lock_handler() prevents addition of new uevents for
 	 * this ctx.
 	 */
-	list_क्रम_each_entry_safe(uevent, पंचांगp, &cur_file->event_list, list)
-		अगर (uevent->ctx == ctx)
+	list_for_each_entry_safe(uevent, tmp, &cur_file->event_list, list)
+		if (uevent->ctx == ctx)
 			list_move_tail(&uevent->list, &event_list);
 	resp.events_reported = ctx->events_reported;
 	mutex_unlock(&cur_file->mut);
@@ -1661,8 +1660,8 @@ out:
 	list_splice_tail(&event_list, &new_file->event_list);
 	mutex_unlock(&new_file->mut);
 
-	अगर (copy_to_user(u64_to_user_ptr(cmd.response),
-			 &resp, माप(resp)))
+	if (copy_to_user(u64_to_user_ptr(cmd.response),
+			 &resp, sizeof(resp)))
 		ret = -EFAULT;
 
 err_unlock:
@@ -1670,12 +1669,12 @@ err_unlock:
 	ucma_put_ctx(ctx);
 file_put:
 	fdput(f);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल sमाप_प्रकार (*ucma_cmd_table[])(काष्ठा ucma_file *file,
-				   स्थिर अक्षर __user *inbuf,
-				   पूर्णांक in_len, पूर्णांक out_len) = अणु
+static ssize_t (*ucma_cmd_table[])(struct ucma_file *file,
+				   const char __user *inbuf,
+				   int in_len, int out_len) = {
 	[RDMA_USER_CM_CMD_CREATE_ID] 	 = ucma_create_id,
 	[RDMA_USER_CM_CMD_DESTROY_ID]	 = ucma_destroy_id,
 	[RDMA_USER_CM_CMD_BIND_IP]	 = ucma_bind_ip,
@@ -1689,9 +1688,9 @@ file_put:
 	[RDMA_USER_CM_CMD_DISCONNECT]	 = ucma_disconnect,
 	[RDMA_USER_CM_CMD_INIT_QP_ATTR]	 = ucma_init_qp_attr,
 	[RDMA_USER_CM_CMD_GET_EVENT]	 = ucma_get_event,
-	[RDMA_USER_CM_CMD_GET_OPTION]	 = शून्य,
+	[RDMA_USER_CM_CMD_GET_OPTION]	 = NULL,
 	[RDMA_USER_CM_CMD_SET_OPTION]	 = ucma_set_option,
-	[RDMA_USER_CM_CMD_NOTIFY]	 = ucma_notअगरy,
+	[RDMA_USER_CM_CMD_NOTIFY]	 = ucma_notify,
 	[RDMA_USER_CM_CMD_JOIN_IP_MCAST] = ucma_join_ip_multicast,
 	[RDMA_USER_CM_CMD_LEAVE_MCAST]	 = ucma_leave_multicast,
 	[RDMA_USER_CM_CMD_MIGRATE_ID]	 = ucma_migrate_id,
@@ -1699,188 +1698,188 @@ file_put:
 	[RDMA_USER_CM_CMD_BIND]		 = ucma_bind,
 	[RDMA_USER_CM_CMD_RESOLVE_ADDR]	 = ucma_resolve_addr,
 	[RDMA_USER_CM_CMD_JOIN_MCAST]	 = ucma_join_multicast
-पूर्ण;
+};
 
-अटल sमाप_प्रकार ucma_ग_लिखो(काष्ठा file *filp, स्थिर अक्षर __user *buf,
-			  माप_प्रकार len, loff_t *pos)
-अणु
-	काष्ठा ucma_file *file = filp->निजी_data;
-	काष्ठा rdma_ucm_cmd_hdr hdr;
-	sमाप_प्रकार ret;
+static ssize_t ucma_write(struct file *filp, const char __user *buf,
+			  size_t len, loff_t *pos)
+{
+	struct ucma_file *file = filp->private_data;
+	struct rdma_ucm_cmd_hdr hdr;
+	ssize_t ret;
 
-	अगर (!ib_safe_file_access(filp)) अणु
+	if (!ib_safe_file_access(filp)) {
 		pr_err_once("%s: process %d (%s) changed security contexts after opening file descriptor, this is not allowed.\n",
 			    __func__, task_tgid_vnr(current), current->comm);
-		वापस -EACCES;
-	पूर्ण
+		return -EACCES;
+	}
 
-	अगर (len < माप(hdr))
-		वापस -EINVAL;
+	if (len < sizeof(hdr))
+		return -EINVAL;
 
-	अगर (copy_from_user(&hdr, buf, माप(hdr)))
-		वापस -EFAULT;
+	if (copy_from_user(&hdr, buf, sizeof(hdr)))
+		return -EFAULT;
 
-	अगर (hdr.cmd >= ARRAY_SIZE(ucma_cmd_table))
-		वापस -EINVAL;
+	if (hdr.cmd >= ARRAY_SIZE(ucma_cmd_table))
+		return -EINVAL;
 	hdr.cmd = array_index_nospec(hdr.cmd, ARRAY_SIZE(ucma_cmd_table));
 
-	अगर (hdr.in + माप(hdr) > len)
-		वापस -EINVAL;
+	if (hdr.in + sizeof(hdr) > len)
+		return -EINVAL;
 
-	अगर (!ucma_cmd_table[hdr.cmd])
-		वापस -ENOSYS;
+	if (!ucma_cmd_table[hdr.cmd])
+		return -ENOSYS;
 
-	ret = ucma_cmd_table[hdr.cmd](file, buf + माप(hdr), hdr.in, hdr.out);
-	अगर (!ret)
+	ret = ucma_cmd_table[hdr.cmd](file, buf + sizeof(hdr), hdr.in, hdr.out);
+	if (!ret)
 		ret = len;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल __poll_t ucma_poll(काष्ठा file *filp, काष्ठा poll_table_काष्ठा *रुको)
-अणु
-	काष्ठा ucma_file *file = filp->निजी_data;
+static __poll_t ucma_poll(struct file *filp, struct poll_table_struct *wait)
+{
+	struct ucma_file *file = filp->private_data;
 	__poll_t mask = 0;
 
-	poll_रुको(filp, &file->poll_रुको, रुको);
+	poll_wait(filp, &file->poll_wait, wait);
 
-	अगर (!list_empty(&file->event_list))
+	if (!list_empty(&file->event_list))
 		mask = EPOLLIN | EPOLLRDNORM;
 
-	वापस mask;
-पूर्ण
+	return mask;
+}
 
 /*
- * ucma_खोलो() करोes not need the BKL:
+ * ucma_open() does not need the BKL:
  *
  *  - no global state is referred to;
  *  - there is no ioctl method to race against;
- *  - no further module initialization is required क्रम खोलो to work
- *    after the device is रेजिस्टरed.
+ *  - no further module initialization is required for open to work
+ *    after the device is registered.
  */
-अटल पूर्णांक ucma_खोलो(काष्ठा inode *inode, काष्ठा file *filp)
-अणु
-	काष्ठा ucma_file *file;
+static int ucma_open(struct inode *inode, struct file *filp)
+{
+	struct ucma_file *file;
 
-	file = kदो_स्मृति(माप *file, GFP_KERNEL);
-	अगर (!file)
-		वापस -ENOMEM;
+	file = kmalloc(sizeof *file, GFP_KERNEL);
+	if (!file)
+		return -ENOMEM;
 
 	INIT_LIST_HEAD(&file->event_list);
 	INIT_LIST_HEAD(&file->ctx_list);
-	init_रुकोqueue_head(&file->poll_रुको);
+	init_waitqueue_head(&file->poll_wait);
 	mutex_init(&file->mut);
 
-	filp->निजी_data = file;
+	filp->private_data = file;
 	file->filp = filp;
 
-	वापस stream_खोलो(inode, filp);
-पूर्ण
+	return stream_open(inode, filp);
+}
 
-अटल पूर्णांक ucma_बंद(काष्ठा inode *inode, काष्ठा file *filp)
-अणु
-	काष्ठा ucma_file *file = filp->निजी_data;
+static int ucma_close(struct inode *inode, struct file *filp)
+{
+	struct ucma_file *file = filp->private_data;
 
 	/*
-	 * All paths that touch ctx_list or ctx_list starting from ग_लिखो() are
+	 * All paths that touch ctx_list or ctx_list starting from write() are
 	 * prevented by this being a FD release function. The list_add_tail() in
 	 * ucma_connect_event_handler() can run concurrently, however it only
-	 * adds to the list *after* a listening ID. By only पढ़ोing the first of
-	 * the list, and relying on ucma_destroy_निजी_ctx() to block
+	 * adds to the list *after* a listening ID. By only reading the first of
+	 * the list, and relying on ucma_destroy_private_ctx() to block
 	 * ucma_connect_event_handler(), no additional locking is needed.
 	 */
-	जबतक (!list_empty(&file->ctx_list)) अणु
-		काष्ठा ucma_context *ctx = list_first_entry(
-			&file->ctx_list, काष्ठा ucma_context, list);
+	while (!list_empty(&file->ctx_list)) {
+		struct ucma_context *ctx = list_first_entry(
+			&file->ctx_list, struct ucma_context, list);
 
 		WARN_ON(xa_cmpxchg(&ctx_table, ctx->id, ctx, XA_ZERO_ENTRY,
 				   GFP_KERNEL) != ctx);
-		ucma_destroy_निजी_ctx(ctx);
-	पूर्ण
-	kमुक्त(file);
-	वापस 0;
-पूर्ण
+		ucma_destroy_private_ctx(ctx);
+	}
+	kfree(file);
+	return 0;
+}
 
-अटल स्थिर काष्ठा file_operations ucma_fops = अणु
+static const struct file_operations ucma_fops = {
 	.owner 	 = THIS_MODULE,
-	.खोलो 	 = ucma_खोलो,
-	.release = ucma_बंद,
-	.ग_लिखो	 = ucma_ग_लिखो,
+	.open 	 = ucma_open,
+	.release = ucma_close,
+	.write	 = ucma_write,
 	.poll    = ucma_poll,
 	.llseek	 = no_llseek,
-पूर्ण;
+};
 
-अटल काष्ठा miscdevice ucma_misc = अणु
+static struct miscdevice ucma_misc = {
 	.minor		= MISC_DYNAMIC_MINOR,
 	.name		= "rdma_cm",
 	.nodename	= "infiniband/rdma_cm",
 	.mode		= 0666,
 	.fops		= &ucma_fops,
-पूर्ण;
+};
 
-अटल पूर्णांक ucma_get_global_nl_info(काष्ठा ib_client_nl_info *res)
-अणु
+static int ucma_get_global_nl_info(struct ib_client_nl_info *res)
+{
 	res->abi = RDMA_USER_CM_ABI_VERSION;
 	res->cdev = ucma_misc.this_device;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा ib_client rdma_cma_client = अणु
+static struct ib_client rdma_cma_client = {
 	.name = "rdma_cm",
 	.get_global_nl_info = ucma_get_global_nl_info,
-पूर्ण;
+};
 MODULE_ALIAS_RDMA_CLIENT("rdma_cm");
 
-अटल sमाप_प्रकार show_abi_version(काष्ठा device *dev,
-				काष्ठा device_attribute *attr,
-				अक्षर *buf)
-अणु
-	वापस sysfs_emit(buf, "%d\n", RDMA_USER_CM_ABI_VERSION);
-पूर्ण
-अटल DEVICE_ATTR(abi_version, S_IRUGO, show_abi_version, शून्य);
+static ssize_t show_abi_version(struct device *dev,
+				struct device_attribute *attr,
+				char *buf)
+{
+	return sysfs_emit(buf, "%d\n", RDMA_USER_CM_ABI_VERSION);
+}
+static DEVICE_ATTR(abi_version, S_IRUGO, show_abi_version, NULL);
 
-अटल पूर्णांक __init ucma_init(व्योम)
-अणु
-	पूर्णांक ret;
+static int __init ucma_init(void)
+{
+	int ret;
 
-	ret = misc_रेजिस्टर(&ucma_misc);
-	अगर (ret)
-		वापस ret;
+	ret = misc_register(&ucma_misc);
+	if (ret)
+		return ret;
 
 	ret = device_create_file(ucma_misc.this_device, &dev_attr_abi_version);
-	अगर (ret) अणु
+	if (ret) {
 		pr_err("rdma_ucm: couldn't create abi_version attr\n");
-		जाओ err1;
-	पूर्ण
+		goto err1;
+	}
 
-	ucma_ctl_table_hdr = रेजिस्टर_net_sysctl(&init_net, "net/rdma_ucm", ucma_ctl_table);
-	अगर (!ucma_ctl_table_hdr) अणु
+	ucma_ctl_table_hdr = register_net_sysctl(&init_net, "net/rdma_ucm", ucma_ctl_table);
+	if (!ucma_ctl_table_hdr) {
 		pr_err("rdma_ucm: couldn't register sysctl paths\n");
 		ret = -ENOMEM;
-		जाओ err2;
-	पूर्ण
+		goto err2;
+	}
 
-	ret = ib_रेजिस्टर_client(&rdma_cma_client);
-	अगर (ret)
-		जाओ err3;
+	ret = ib_register_client(&rdma_cma_client);
+	if (ret)
+		goto err3;
 
-	वापस 0;
+	return 0;
 err3:
-	unरेजिस्टर_net_sysctl_table(ucma_ctl_table_hdr);
+	unregister_net_sysctl_table(ucma_ctl_table_hdr);
 err2:
-	device_हटाओ_file(ucma_misc.this_device, &dev_attr_abi_version);
+	device_remove_file(ucma_misc.this_device, &dev_attr_abi_version);
 err1:
-	misc_deरेजिस्टर(&ucma_misc);
-	वापस ret;
-पूर्ण
+	misc_deregister(&ucma_misc);
+	return ret;
+}
 
-अटल व्योम __निकास ucma_cleanup(व्योम)
-अणु
-	ib_unरेजिस्टर_client(&rdma_cma_client);
-	unरेजिस्टर_net_sysctl_table(ucma_ctl_table_hdr);
-	device_हटाओ_file(ucma_misc.this_device, &dev_attr_abi_version);
-	misc_deरेजिस्टर(&ucma_misc);
-पूर्ण
+static void __exit ucma_cleanup(void)
+{
+	ib_unregister_client(&rdma_cma_client);
+	unregister_net_sysctl_table(ucma_ctl_table_hdr);
+	device_remove_file(ucma_misc.this_device, &dev_attr_abi_version);
+	misc_deregister(&ucma_misc);
+}
 
 module_init(ucma_init);
-module_निकास(ucma_cleanup);
+module_exit(ucma_cleanup);

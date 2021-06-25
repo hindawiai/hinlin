@@ -1,35 +1,34 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __CPUPOWER_BITMASK__
-#घोषणा __CPUPOWER_BITMASK__
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __CPUPOWER_BITMASK__
+#define __CPUPOWER_BITMASK__
 
-/* Taken over from libbiपंचांगask, a project initiated from sgi:
+/* Taken over from libbitmask, a project initiated from sgi:
  * Url:            http://oss.sgi.com/projects/cpusets/
- * Unक्रमtunately it's not very widespपढ़ो, thereक्रमe relevant parts are
+ * Unfortunately it's not very widespread, therefore relevant parts are
  * pasted here.
  */
 
-काष्ठा biपंचांगask अणु
-	अचिन्हित पूर्णांक size;
-	अचिन्हित दीर्घ *maskp;
-पूर्ण;
+struct bitmask {
+	unsigned int size;
+	unsigned long *maskp;
+};
 
-काष्ठा biपंचांगask *biपंचांगask_alloc(अचिन्हित पूर्णांक n);
-व्योम biपंचांगask_मुक्त(काष्ठा biपंचांगask *bmp);
+struct bitmask *bitmask_alloc(unsigned int n);
+void bitmask_free(struct bitmask *bmp);
 
-काष्ठा biपंचांगask *biपंचांगask_setbit(काष्ठा biपंचांगask *bmp, अचिन्हित पूर्णांक i);
-काष्ठा biपंचांगask *biपंचांगask_setall(काष्ठा biपंचांगask *bmp);
-काष्ठा biपंचांगask *biपंचांगask_clearall(काष्ठा biपंचांगask *bmp);
+struct bitmask *bitmask_setbit(struct bitmask *bmp, unsigned int i);
+struct bitmask *bitmask_setall(struct bitmask *bmp);
+struct bitmask *bitmask_clearall(struct bitmask *bmp);
 
-अचिन्हित पूर्णांक biपंचांगask_first(स्थिर काष्ठा biपंचांगask *bmp);
-अचिन्हित पूर्णांक biपंचांगask_next(स्थिर काष्ठा biपंचांगask *bmp, अचिन्हित पूर्णांक i);
-अचिन्हित पूर्णांक biपंचांगask_last(स्थिर काष्ठा biपंचांगask *bmp);
-पूर्णांक biपंचांगask_isallclear(स्थिर काष्ठा biपंचांगask *bmp);
-पूर्णांक biपंचांगask_isbitset(स्थिर काष्ठा biपंचांगask *bmp, अचिन्हित पूर्णांक i);
+unsigned int bitmask_first(const struct bitmask *bmp);
+unsigned int bitmask_next(const struct bitmask *bmp, unsigned int i);
+unsigned int bitmask_last(const struct bitmask *bmp);
+int bitmask_isallclear(const struct bitmask *bmp);
+int bitmask_isbitset(const struct bitmask *bmp, unsigned int i);
 
-पूर्णांक biपंचांगask_parselist(स्थिर अक्षर *buf, काष्ठा biपंचांगask *bmp);
-पूर्णांक biपंचांगask_displaylist(अक्षर *buf, पूर्णांक len, स्थिर काष्ठा biपंचांगask *bmp);
+int bitmask_parselist(const char *buf, struct bitmask *bmp);
+int bitmask_displaylist(char *buf, int len, const struct bitmask *bmp);
 
 
 
-#पूर्ण_अगर /*__CPUPOWER_BITMASK__ */
+#endif /*__CPUPOWER_BITMASK__ */

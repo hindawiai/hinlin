@@ -1,55 +1,54 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * PCI driver क्रम the Intel SCU.
+ * PCI driver for the Intel SCU.
  *
  * Copyright (C) 2008-2010, 2015, 2020 Intel Corporation
- * Authors: Sreedhara DS (sreedhara.ds@पूर्णांकel.com)
- *	    Mika Westerberg <mika.westerberg@linux.पूर्णांकel.com>
+ * Authors: Sreedhara DS (sreedhara.ds@intel.com)
+ *	    Mika Westerberg <mika.westerberg@linux.intel.com>
  */
 
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/init.h>
-#समावेश <linux/pci.h>
+#include <linux/errno.h>
+#include <linux/init.h>
+#include <linux/pci.h>
 
-#समावेश <यंत्र/पूर्णांकel-mid.h>
-#समावेश <यंत्र/पूर्णांकel_scu_ipc.h>
+#include <asm/intel-mid.h>
+#include <asm/intel_scu_ipc.h>
 
-अटल पूर्णांक पूर्णांकel_scu_pci_probe(काष्ठा pci_dev *pdev,
-			       स्थिर काष्ठा pci_device_id *id)
-अणु
-	काष्ठा पूर्णांकel_scu_ipc_data scu_data = अणुपूर्ण;
-	काष्ठा पूर्णांकel_scu_ipc_dev *scu;
-	पूर्णांक ret;
+static int intel_scu_pci_probe(struct pci_dev *pdev,
+			       const struct pci_device_id *id)
+{
+	struct intel_scu_ipc_data scu_data = {};
+	struct intel_scu_ipc_dev *scu;
+	int ret;
 
 	ret = pcim_enable_device(pdev);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	scu_data.mem = pdev->resource[0];
 	scu_data.irq = pdev->irq;
 
-	scu = पूर्णांकel_scu_ipc_रेजिस्टर(&pdev->dev, &scu_data);
-	वापस PTR_ERR_OR_ZERO(scu);
-पूर्ण
+	scu = intel_scu_ipc_register(&pdev->dev, &scu_data);
+	return PTR_ERR_OR_ZERO(scu);
+}
 
-अटल स्थिर काष्ठा pci_device_id pci_ids[] = अणु
-	अणु PCI_VDEVICE(INTEL, 0x080e) पूर्ण,
-	अणु PCI_VDEVICE(INTEL, 0x08ea) पूर्ण,
-	अणु PCI_VDEVICE(INTEL, 0x0a94) पूर्ण,
-	अणु PCI_VDEVICE(INTEL, 0x11a0) पूर्ण,
-	अणु PCI_VDEVICE(INTEL, 0x1a94) पूर्ण,
-	अणु PCI_VDEVICE(INTEL, 0x5a94) पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct pci_device_id pci_ids[] = {
+	{ PCI_VDEVICE(INTEL, 0x080e) },
+	{ PCI_VDEVICE(INTEL, 0x08ea) },
+	{ PCI_VDEVICE(INTEL, 0x0a94) },
+	{ PCI_VDEVICE(INTEL, 0x11a0) },
+	{ PCI_VDEVICE(INTEL, 0x1a94) },
+	{ PCI_VDEVICE(INTEL, 0x5a94) },
+	{}
+};
 
-अटल काष्ठा pci_driver पूर्णांकel_scu_pci_driver = अणु
-	.driver = अणु
+static struct pci_driver intel_scu_pci_driver = {
+	.driver = {
 		.suppress_bind_attrs = true,
-	पूर्ण,
+	},
 	.name = "intel_scu",
 	.id_table = pci_ids,
-	.probe = पूर्णांकel_scu_pci_probe,
-पूर्ण;
+	.probe = intel_scu_pci_probe,
+};
 
-builtin_pci_driver(पूर्णांकel_scu_pci_driver);
+builtin_pci_driver(intel_scu_pci_driver);

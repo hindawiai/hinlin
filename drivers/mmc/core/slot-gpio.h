@@ -1,15 +1,14 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
   * Copyright (C) 2014 Linaro Ltd
  *
  * Author: Ulf Hansson <ulf.hansson@linaro.org>
  */
-#अगर_अघोषित _MMC_CORE_SLOTGPIO_H
-#घोषणा _MMC_CORE_SLOTGPIO_H
+#ifndef _MMC_CORE_SLOTGPIO_H
+#define _MMC_CORE_SLOTGPIO_H
 
-काष्ठा mmc_host;
+struct mmc_host;
 
-पूर्णांक mmc_gpio_alloc(काष्ठा mmc_host *host);
+int mmc_gpio_alloc(struct mmc_host *host);
 
-#पूर्ण_अगर
+#endif

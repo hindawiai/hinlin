@@ -1,477 +1,476 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright (C) 2012-2013 Samsung Electronics Co., Ltd.
  */
 
-#समावेश <linux/slab.h>
-#समावेश <यंत्र/unaligned.h>
-#समावेश <linux/buffer_head.h>
+#include <linux/slab.h>
+#include <asm/unaligned.h>
+#include <linux/buffer_head.h>
 
-#समावेश "exfat_raw.h"
-#समावेश "exfat_fs.h"
+#include "exfat_raw.h"
+#include "exfat_fs.h"
 
-अटल पूर्णांक exfat_mirror_bh(काष्ठा super_block *sb, sector_t sec,
-		काष्ठा buffer_head *bh)
-अणु
-	काष्ठा buffer_head *c_bh;
-	काष्ठा exfat_sb_info *sbi = EXFAT_SB(sb);
+static int exfat_mirror_bh(struct super_block *sb, sector_t sec,
+		struct buffer_head *bh)
+{
+	struct buffer_head *c_bh;
+	struct exfat_sb_info *sbi = EXFAT_SB(sb);
 	sector_t sec2;
-	पूर्णांक err = 0;
+	int err = 0;
 
-	अगर (sbi->FAT2_start_sector != sbi->FAT1_start_sector) अणु
+	if (sbi->FAT2_start_sector != sbi->FAT1_start_sector) {
 		sec2 = sec - sbi->FAT1_start_sector + sbi->FAT2_start_sector;
 		c_bh = sb_getblk(sb, sec2);
-		अगर (!c_bh)
-			वापस -ENOMEM;
-		स_नकल(c_bh->b_data, bh->b_data, sb->s_blocksize);
+		if (!c_bh)
+			return -ENOMEM;
+		memcpy(c_bh->b_data, bh->b_data, sb->s_blocksize);
 		set_buffer_uptodate(c_bh);
 		mark_buffer_dirty(c_bh);
-		अगर (sb->s_flags & SB_SYNCHRONOUS)
+		if (sb->s_flags & SB_SYNCHRONOUS)
 			err = sync_dirty_buffer(c_bh);
-		brअन्यथा(c_bh);
-	पूर्ण
+		brelse(c_bh);
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक __exfat_ent_get(काष्ठा super_block *sb, अचिन्हित पूर्णांक loc,
-		अचिन्हित पूर्णांक *content)
-अणु
-	अचिन्हित पूर्णांक off;
+static int __exfat_ent_get(struct super_block *sb, unsigned int loc,
+		unsigned int *content)
+{
+	unsigned int off;
 	sector_t sec;
-	काष्ठा buffer_head *bh;
+	struct buffer_head *bh;
 
 	sec = FAT_ENT_OFFSET_SECTOR(sb, loc);
 	off = FAT_ENT_OFFSET_BYTE_IN_SECTOR(sb, loc);
 
-	bh = sb_bपढ़ो(sb, sec);
-	अगर (!bh)
-		वापस -EIO;
+	bh = sb_bread(sb, sec);
+	if (!bh)
+		return -EIO;
 
 	*content = le32_to_cpu(*(__le32 *)(&bh->b_data[off]));
 
-	/* remap reserved clusters to simplअगरy code */
-	अगर (*content > EXFAT_BAD_CLUSTER)
-		*content = EXFAT_खातापूर्ण_CLUSTER;
+	/* remap reserved clusters to simplify code */
+	if (*content > EXFAT_BAD_CLUSTER)
+		*content = EXFAT_EOF_CLUSTER;
 
-	brअन्यथा(bh);
-	वापस 0;
-पूर्ण
+	brelse(bh);
+	return 0;
+}
 
-पूर्णांक exfat_ent_set(काष्ठा super_block *sb, अचिन्हित पूर्णांक loc,
-		अचिन्हित पूर्णांक content)
-अणु
-	अचिन्हित पूर्णांक off;
+int exfat_ent_set(struct super_block *sb, unsigned int loc,
+		unsigned int content)
+{
+	unsigned int off;
 	sector_t sec;
 	__le32 *fat_entry;
-	काष्ठा buffer_head *bh;
+	struct buffer_head *bh;
 
 	sec = FAT_ENT_OFFSET_SECTOR(sb, loc);
 	off = FAT_ENT_OFFSET_BYTE_IN_SECTOR(sb, loc);
 
-	bh = sb_bपढ़ो(sb, sec);
-	अगर (!bh)
-		वापस -EIO;
+	bh = sb_bread(sb, sec);
+	if (!bh)
+		return -EIO;
 
 	fat_entry = (__le32 *)&(bh->b_data[off]);
 	*fat_entry = cpu_to_le32(content);
 	exfat_update_bh(bh, sb->s_flags & SB_SYNCHRONOUS);
 	exfat_mirror_bh(sb, sec, bh);
-	brअन्यथा(bh);
-	वापस 0;
-पूर्ण
+	brelse(bh);
+	return 0;
+}
 
-अटल अंतरभूत bool is_valid_cluster(काष्ठा exfat_sb_info *sbi,
-		अचिन्हित पूर्णांक clus)
-अणु
-	अगर (clus < EXFAT_FIRST_CLUSTER || sbi->num_clusters <= clus)
-		वापस false;
-	वापस true;
-पूर्ण
+static inline bool is_valid_cluster(struct exfat_sb_info *sbi,
+		unsigned int clus)
+{
+	if (clus < EXFAT_FIRST_CLUSTER || sbi->num_clusters <= clus)
+		return false;
+	return true;
+}
 
-पूर्णांक exfat_ent_get(काष्ठा super_block *sb, अचिन्हित पूर्णांक loc,
-		अचिन्हित पूर्णांक *content)
-अणु
-	काष्ठा exfat_sb_info *sbi = EXFAT_SB(sb);
-	पूर्णांक err;
+int exfat_ent_get(struct super_block *sb, unsigned int loc,
+		unsigned int *content)
+{
+	struct exfat_sb_info *sbi = EXFAT_SB(sb);
+	int err;
 
-	अगर (!is_valid_cluster(sbi, loc)) अणु
+	if (!is_valid_cluster(sbi, loc)) {
 		exfat_fs_error(sb, "invalid access to FAT (entry 0x%08x)",
 			loc);
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
 	err = __exfat_ent_get(sb, loc, content);
-	अगर (err) अणु
+	if (err) {
 		exfat_fs_error(sb,
 			"failed to access to FAT (entry 0x%08x, err:%d)",
 			loc, err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	अगर (*content == EXFAT_FREE_CLUSTER) अणु
+	if (*content == EXFAT_FREE_CLUSTER) {
 		exfat_fs_error(sb,
 			"invalid access to FAT free cluster (entry 0x%08x)",
 			loc);
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	अगर (*content == EXFAT_BAD_CLUSTER) अणु
+	if (*content == EXFAT_BAD_CLUSTER) {
 		exfat_fs_error(sb,
 			"invalid access to FAT bad cluster (entry 0x%08x)",
 			loc);
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	अगर (*content != EXFAT_खातापूर्ण_CLUSTER && !is_valid_cluster(sbi, *content)) अणु
+	if (*content != EXFAT_EOF_CLUSTER && !is_valid_cluster(sbi, *content)) {
 		exfat_fs_error(sb,
 			"invalid access to FAT (entry 0x%08x) bogus content (0x%08x)",
 			loc, *content);
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक exfat_chain_cont_cluster(काष्ठा super_block *sb, अचिन्हित पूर्णांक chain,
-		अचिन्हित पूर्णांक len)
-अणु
-	अगर (!len)
-		वापस 0;
+int exfat_chain_cont_cluster(struct super_block *sb, unsigned int chain,
+		unsigned int len)
+{
+	if (!len)
+		return 0;
 
-	जबतक (len > 1) अणु
-		अगर (exfat_ent_set(sb, chain, chain + 1))
-			वापस -EIO;
+	while (len > 1) {
+		if (exfat_ent_set(sb, chain, chain + 1))
+			return -EIO;
 		chain++;
 		len--;
-	पूर्ण
+	}
 
-	अगर (exfat_ent_set(sb, chain, EXFAT_खातापूर्ण_CLUSTER))
-		वापस -EIO;
-	वापस 0;
-पूर्ण
+	if (exfat_ent_set(sb, chain, EXFAT_EOF_CLUSTER))
+		return -EIO;
+	return 0;
+}
 
-/* This function must be called with biपंचांगap_lock held */
-अटल पूर्णांक __exfat_मुक्त_cluster(काष्ठा inode *inode, काष्ठा exfat_chain *p_chain)
-अणु
-	काष्ठा super_block *sb = inode->i_sb;
-	काष्ठा exfat_sb_info *sbi = EXFAT_SB(sb);
-	पूर्णांक cur_cmap_i, next_cmap_i;
-	अचिन्हित पूर्णांक num_clusters = 0;
-	अचिन्हित पूर्णांक clu;
+/* This function must be called with bitmap_lock held */
+static int __exfat_free_cluster(struct inode *inode, struct exfat_chain *p_chain)
+{
+	struct super_block *sb = inode->i_sb;
+	struct exfat_sb_info *sbi = EXFAT_SB(sb);
+	int cur_cmap_i, next_cmap_i;
+	unsigned int num_clusters = 0;
+	unsigned int clu;
 
 	/* invalid cluster number */
-	अगर (p_chain->dir == EXFAT_FREE_CLUSTER ||
-	    p_chain->dir == EXFAT_खातापूर्ण_CLUSTER ||
+	if (p_chain->dir == EXFAT_FREE_CLUSTER ||
+	    p_chain->dir == EXFAT_EOF_CLUSTER ||
 	    p_chain->dir < EXFAT_FIRST_CLUSTER)
-		वापस 0;
+		return 0;
 
 	/* no cluster to truncate */
-	अगर (p_chain->size == 0)
-		वापस 0;
+	if (p_chain->size == 0)
+		return 0;
 
 	/* check cluster validation */
-	अगर (!is_valid_cluster(sbi, p_chain->dir)) अणु
+	if (!is_valid_cluster(sbi, p_chain->dir)) {
 		exfat_err(sb, "invalid start cluster (%u)", p_chain->dir);
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
 	clu = p_chain->dir;
 
 	cur_cmap_i = next_cmap_i =
 		BITMAP_OFFSET_SECTOR_INDEX(sb, CLUSTER_TO_BITMAP_ENT(clu));
 
-	अगर (p_chain->flags == ALLOC_NO_FAT_CHAIN) अणु
-		अचिन्हित पूर्णांक last_cluster = p_chain->dir + p_chain->size - 1;
-		करो अणु
+	if (p_chain->flags == ALLOC_NO_FAT_CHAIN) {
+		unsigned int last_cluster = p_chain->dir + p_chain->size - 1;
+		do {
 			bool sync = false;
 
-			अगर (clu < last_cluster)
+			if (clu < last_cluster)
 				next_cmap_i =
 				  BITMAP_OFFSET_SECTOR_INDEX(sb, CLUSTER_TO_BITMAP_ENT(clu+1));
 
-			/* flush biपंचांगap only अगर index would be changed or क्रम last cluster */
-			अगर (clu == last_cluster || cur_cmap_i != next_cmap_i) अणु
+			/* flush bitmap only if index would be changed or for last cluster */
+			if (clu == last_cluster || cur_cmap_i != next_cmap_i) {
 				sync = true;
 				cur_cmap_i = next_cmap_i;
-			पूर्ण
+			}
 
-			exfat_clear_biपंचांगap(inode, clu, (sync && IS_सूचीSYNC(inode)));
+			exfat_clear_bitmap(inode, clu, (sync && IS_DIRSYNC(inode)));
 			clu++;
 			num_clusters++;
-		पूर्ण जबतक (num_clusters < p_chain->size);
-	पूर्ण अन्यथा अणु
-		करो अणु
+		} while (num_clusters < p_chain->size);
+	} else {
+		do {
 			bool sync = false;
-			अचिन्हित पूर्णांक n_clu = clu;
-			पूर्णांक err = exfat_get_next_cluster(sb, &n_clu);
+			unsigned int n_clu = clu;
+			int err = exfat_get_next_cluster(sb, &n_clu);
 
-			अगर (err || n_clu == EXFAT_खातापूर्ण_CLUSTER)
+			if (err || n_clu == EXFAT_EOF_CLUSTER)
 				sync = true;
-			अन्यथा
+			else
 				next_cmap_i =
 				  BITMAP_OFFSET_SECTOR_INDEX(sb, CLUSTER_TO_BITMAP_ENT(n_clu));
 
-			अगर (cur_cmap_i != next_cmap_i) अणु
+			if (cur_cmap_i != next_cmap_i) {
 				sync = true;
 				cur_cmap_i = next_cmap_i;
-			पूर्ण
+			}
 
-			exfat_clear_biपंचांगap(inode, clu, (sync && IS_सूचीSYNC(inode)));
+			exfat_clear_bitmap(inode, clu, (sync && IS_DIRSYNC(inode)));
 			clu = n_clu;
 			num_clusters++;
 
-			अगर (err)
-				जाओ dec_used_clus;
-		पूर्ण जबतक (clu != EXFAT_खातापूर्ण_CLUSTER);
-	पूर्ण
+			if (err)
+				goto dec_used_clus;
+		} while (clu != EXFAT_EOF_CLUSTER);
+	}
 
 dec_used_clus:
 	sbi->used_clusters -= num_clusters;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक exfat_मुक्त_cluster(काष्ठा inode *inode, काष्ठा exfat_chain *p_chain)
-अणु
-	पूर्णांक ret = 0;
+int exfat_free_cluster(struct inode *inode, struct exfat_chain *p_chain)
+{
+	int ret = 0;
 
-	mutex_lock(&EXFAT_SB(inode->i_sb)->biपंचांगap_lock);
-	ret = __exfat_मुक्त_cluster(inode, p_chain);
-	mutex_unlock(&EXFAT_SB(inode->i_sb)->biपंचांगap_lock);
+	mutex_lock(&EXFAT_SB(inode->i_sb)->bitmap_lock);
+	ret = __exfat_free_cluster(inode, p_chain);
+	mutex_unlock(&EXFAT_SB(inode->i_sb)->bitmap_lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक exfat_find_last_cluster(काष्ठा super_block *sb, काष्ठा exfat_chain *p_chain,
-		अचिन्हित पूर्णांक *ret_clu)
-अणु
-	अचिन्हित पूर्णांक clu, next;
-	अचिन्हित पूर्णांक count = 0;
+int exfat_find_last_cluster(struct super_block *sb, struct exfat_chain *p_chain,
+		unsigned int *ret_clu)
+{
+	unsigned int clu, next;
+	unsigned int count = 0;
 
 	next = p_chain->dir;
-	अगर (p_chain->flags == ALLOC_NO_FAT_CHAIN) अणु
+	if (p_chain->flags == ALLOC_NO_FAT_CHAIN) {
 		*ret_clu = next + p_chain->size - 1;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	करो अणु
+	do {
 		count++;
 		clu = next;
-		अगर (exfat_ent_get(sb, clu, &next))
-			वापस -EIO;
-	पूर्ण जबतक (next != EXFAT_खातापूर्ण_CLUSTER);
+		if (exfat_ent_get(sb, clu, &next))
+			return -EIO;
+	} while (next != EXFAT_EOF_CLUSTER);
 
-	अगर (p_chain->size != count) अणु
+	if (p_chain->size != count) {
 		exfat_fs_error(sb,
 			"bogus directory size (clus : ondisk(%d) != counted(%d))",
 			p_chain->size, count);
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
 	*ret_clu = clu;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक exfat_zeroed_cluster(काष्ठा inode *dir, अचिन्हित पूर्णांक clu)
-अणु
-	काष्ठा super_block *sb = dir->i_sb;
-	काष्ठा exfat_sb_info *sbi = EXFAT_SB(sb);
-	काष्ठा buffer_head *bhs[MAX_BUF_PER_PAGE];
-	पूर्णांक nr_bhs = MAX_BUF_PER_PAGE;
+int exfat_zeroed_cluster(struct inode *dir, unsigned int clu)
+{
+	struct super_block *sb = dir->i_sb;
+	struct exfat_sb_info *sbi = EXFAT_SB(sb);
+	struct buffer_head *bhs[MAX_BUF_PER_PAGE];
+	int nr_bhs = MAX_BUF_PER_PAGE;
 	sector_t blknr, last_blknr;
-	पूर्णांक err, i, n;
+	int err, i, n;
 
 	blknr = exfat_cluster_to_sector(sbi, clu);
 	last_blknr = blknr + sbi->sect_per_clus;
 
-	अगर (last_blknr > sbi->num_sectors && sbi->num_sectors > 0) अणु
+	if (last_blknr > sbi->num_sectors && sbi->num_sectors > 0) {
 		exfat_fs_error_ratelimit(sb,
 			"%s: out of range(sect:%llu len:%u)",
-			__func__, (अचिन्हित दीर्घ दीर्घ)blknr,
+			__func__, (unsigned long long)blknr,
 			sbi->sect_per_clus);
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
 	/* Zeroing the unused blocks on this cluster */
-	जबतक (blknr < last_blknr) अणु
-		क्रम (n = 0; n < nr_bhs && blknr < last_blknr; n++, blknr++) अणु
+	while (blknr < last_blknr) {
+		for (n = 0; n < nr_bhs && blknr < last_blknr; n++, blknr++) {
 			bhs[n] = sb_getblk(sb, blknr);
-			अगर (!bhs[n]) अणु
+			if (!bhs[n]) {
 				err = -ENOMEM;
-				जाओ release_bhs;
-			पूर्ण
-			स_रखो(bhs[n]->b_data, 0, sb->s_blocksize);
-		पूर्ण
+				goto release_bhs;
+			}
+			memset(bhs[n]->b_data, 0, sb->s_blocksize);
+		}
 
-		err = exfat_update_bhs(bhs, n, IS_सूचीSYNC(dir));
-		अगर (err)
-			जाओ release_bhs;
+		err = exfat_update_bhs(bhs, n, IS_DIRSYNC(dir));
+		if (err)
+			goto release_bhs;
 
-		क्रम (i = 0; i < n; i++)
-			brअन्यथा(bhs[i]);
-	पूर्ण
-	वापस 0;
+		for (i = 0; i < n; i++)
+			brelse(bhs[i]);
+	}
+	return 0;
 
 release_bhs:
-	exfat_err(sb, "failed zeroed sect %llu\n", (अचिन्हित दीर्घ दीर्घ)blknr);
-	क्रम (i = 0; i < n; i++)
-		bक्रमget(bhs[i]);
-	वापस err;
-पूर्ण
+	exfat_err(sb, "failed zeroed sect %llu\n", (unsigned long long)blknr);
+	for (i = 0; i < n; i++)
+		bforget(bhs[i]);
+	return err;
+}
 
-पूर्णांक exfat_alloc_cluster(काष्ठा inode *inode, अचिन्हित पूर्णांक num_alloc,
-		काष्ठा exfat_chain *p_chain, bool sync_bmap)
-अणु
-	पूर्णांक ret = -ENOSPC;
-	अचिन्हित पूर्णांक num_clusters = 0, total_cnt;
-	अचिन्हित पूर्णांक hपूर्णांक_clu, new_clu, last_clu = EXFAT_खातापूर्ण_CLUSTER;
-	काष्ठा super_block *sb = inode->i_sb;
-	काष्ठा exfat_sb_info *sbi = EXFAT_SB(sb);
+int exfat_alloc_cluster(struct inode *inode, unsigned int num_alloc,
+		struct exfat_chain *p_chain, bool sync_bmap)
+{
+	int ret = -ENOSPC;
+	unsigned int num_clusters = 0, total_cnt;
+	unsigned int hint_clu, new_clu, last_clu = EXFAT_EOF_CLUSTER;
+	struct super_block *sb = inode->i_sb;
+	struct exfat_sb_info *sbi = EXFAT_SB(sb);
 
 	total_cnt = EXFAT_DATA_CLUSTER_COUNT(sbi);
 
-	अगर (unlikely(total_cnt < sbi->used_clusters)) अणु
+	if (unlikely(total_cnt < sbi->used_clusters)) {
 		exfat_fs_error_ratelimit(sb,
 			"%s: invalid used clusters(t:%u,u:%u)\n",
 			__func__, total_cnt, sbi->used_clusters);
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	अगर (num_alloc > total_cnt - sbi->used_clusters)
-		वापस -ENOSPC;
+	if (num_alloc > total_cnt - sbi->used_clusters)
+		return -ENOSPC;
 
-	mutex_lock(&sbi->biपंचांगap_lock);
+	mutex_lock(&sbi->bitmap_lock);
 
-	hपूर्णांक_clu = p_chain->dir;
+	hint_clu = p_chain->dir;
 	/* find new cluster */
-	अगर (hपूर्णांक_clu == EXFAT_खातापूर्ण_CLUSTER) अणु
-		अगर (sbi->clu_srch_ptr < EXFAT_FIRST_CLUSTER) अणु
+	if (hint_clu == EXFAT_EOF_CLUSTER) {
+		if (sbi->clu_srch_ptr < EXFAT_FIRST_CLUSTER) {
 			exfat_err(sb, "sbi->clu_srch_ptr is invalid (%u)\n",
 				  sbi->clu_srch_ptr);
 			sbi->clu_srch_ptr = EXFAT_FIRST_CLUSTER;
-		पूर्ण
+		}
 
-		hपूर्णांक_clu = exfat_find_मुक्त_biपंचांगap(sb, sbi->clu_srch_ptr);
-		अगर (hपूर्णांक_clu == EXFAT_खातापूर्ण_CLUSTER) अणु
+		hint_clu = exfat_find_free_bitmap(sb, sbi->clu_srch_ptr);
+		if (hint_clu == EXFAT_EOF_CLUSTER) {
 			ret = -ENOSPC;
-			जाओ unlock;
-		पूर्ण
-	पूर्ण
+			goto unlock;
+		}
+	}
 
 	/* check cluster validation */
-	अगर (!is_valid_cluster(sbi, hपूर्णांक_clu)) अणु
+	if (!is_valid_cluster(sbi, hint_clu)) {
 		exfat_err(sb, "hint_cluster is invalid (%u)",
-			hपूर्णांक_clu);
-		hपूर्णांक_clu = EXFAT_FIRST_CLUSTER;
-		अगर (p_chain->flags == ALLOC_NO_FAT_CHAIN) अणु
-			अगर (exfat_chain_cont_cluster(sb, p_chain->dir,
-					num_clusters)) अणु
+			hint_clu);
+		hint_clu = EXFAT_FIRST_CLUSTER;
+		if (p_chain->flags == ALLOC_NO_FAT_CHAIN) {
+			if (exfat_chain_cont_cluster(sb, p_chain->dir,
+					num_clusters)) {
 				ret = -EIO;
-				जाओ unlock;
-			पूर्ण
+				goto unlock;
+			}
 			p_chain->flags = ALLOC_FAT_CHAIN;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	p_chain->dir = EXFAT_खातापूर्ण_CLUSTER;
+	p_chain->dir = EXFAT_EOF_CLUSTER;
 
-	जबतक ((new_clu = exfat_find_मुक्त_biपंचांगap(sb, hपूर्णांक_clu)) !=
-	       EXFAT_खातापूर्ण_CLUSTER) अणु
-		अगर (new_clu != hपूर्णांक_clu &&
-		    p_chain->flags == ALLOC_NO_FAT_CHAIN) अणु
-			अगर (exfat_chain_cont_cluster(sb, p_chain->dir,
-					num_clusters)) अणु
+	while ((new_clu = exfat_find_free_bitmap(sb, hint_clu)) !=
+	       EXFAT_EOF_CLUSTER) {
+		if (new_clu != hint_clu &&
+		    p_chain->flags == ALLOC_NO_FAT_CHAIN) {
+			if (exfat_chain_cont_cluster(sb, p_chain->dir,
+					num_clusters)) {
 				ret = -EIO;
-				जाओ मुक्त_cluster;
-			पूर्ण
+				goto free_cluster;
+			}
 			p_chain->flags = ALLOC_FAT_CHAIN;
-		पूर्ण
+		}
 
-		/* update allocation biपंचांगap */
-		अगर (exfat_set_biपंचांगap(inode, new_clu, sync_bmap)) अणु
+		/* update allocation bitmap */
+		if (exfat_set_bitmap(inode, new_clu, sync_bmap)) {
 			ret = -EIO;
-			जाओ मुक्त_cluster;
-		पूर्ण
+			goto free_cluster;
+		}
 
 		num_clusters++;
 
 		/* update FAT table */
-		अगर (p_chain->flags == ALLOC_FAT_CHAIN) अणु
-			अगर (exfat_ent_set(sb, new_clu, EXFAT_खातापूर्ण_CLUSTER)) अणु
+		if (p_chain->flags == ALLOC_FAT_CHAIN) {
+			if (exfat_ent_set(sb, new_clu, EXFAT_EOF_CLUSTER)) {
 				ret = -EIO;
-				जाओ मुक्त_cluster;
-			पूर्ण
-		पूर्ण
+				goto free_cluster;
+			}
+		}
 
-		अगर (p_chain->dir == EXFAT_खातापूर्ण_CLUSTER) अणु
+		if (p_chain->dir == EXFAT_EOF_CLUSTER) {
 			p_chain->dir = new_clu;
-		पूर्ण अन्यथा अगर (p_chain->flags == ALLOC_FAT_CHAIN) अणु
-			अगर (exfat_ent_set(sb, last_clu, new_clu)) अणु
+		} else if (p_chain->flags == ALLOC_FAT_CHAIN) {
+			if (exfat_ent_set(sb, last_clu, new_clu)) {
 				ret = -EIO;
-				जाओ मुक्त_cluster;
-			पूर्ण
-		पूर्ण
+				goto free_cluster;
+			}
+		}
 		last_clu = new_clu;
 
-		अगर (--num_alloc == 0) अणु
-			sbi->clu_srch_ptr = hपूर्णांक_clu;
+		if (--num_alloc == 0) {
+			sbi->clu_srch_ptr = hint_clu;
 			sbi->used_clusters += num_clusters;
 
 			p_chain->size += num_clusters;
-			mutex_unlock(&sbi->biपंचांगap_lock);
-			वापस 0;
-		पूर्ण
+			mutex_unlock(&sbi->bitmap_lock);
+			return 0;
+		}
 
-		hपूर्णांक_clu = new_clu + 1;
-		अगर (hपूर्णांक_clu >= sbi->num_clusters) अणु
-			hपूर्णांक_clu = EXFAT_FIRST_CLUSTER;
+		hint_clu = new_clu + 1;
+		if (hint_clu >= sbi->num_clusters) {
+			hint_clu = EXFAT_FIRST_CLUSTER;
 
-			अगर (p_chain->flags == ALLOC_NO_FAT_CHAIN) अणु
-				अगर (exfat_chain_cont_cluster(sb, p_chain->dir,
-						num_clusters)) अणु
+			if (p_chain->flags == ALLOC_NO_FAT_CHAIN) {
+				if (exfat_chain_cont_cluster(sb, p_chain->dir,
+						num_clusters)) {
 					ret = -EIO;
-					जाओ मुक्त_cluster;
-				पूर्ण
+					goto free_cluster;
+				}
 				p_chain->flags = ALLOC_FAT_CHAIN;
-			पूर्ण
-		पूर्ण
-	पूर्ण
-मुक्त_cluster:
-	अगर (num_clusters)
-		__exfat_मुक्त_cluster(inode, p_chain);
+			}
+		}
+	}
+free_cluster:
+	if (num_clusters)
+		__exfat_free_cluster(inode, p_chain);
 unlock:
-	mutex_unlock(&sbi->biपंचांगap_lock);
-	वापस ret;
-पूर्ण
+	mutex_unlock(&sbi->bitmap_lock);
+	return ret;
+}
 
-पूर्णांक exfat_count_num_clusters(काष्ठा super_block *sb,
-		काष्ठा exfat_chain *p_chain, अचिन्हित पूर्णांक *ret_count)
-अणु
-	अचिन्हित पूर्णांक i, count;
-	अचिन्हित पूर्णांक clu;
-	काष्ठा exfat_sb_info *sbi = EXFAT_SB(sb);
+int exfat_count_num_clusters(struct super_block *sb,
+		struct exfat_chain *p_chain, unsigned int *ret_count)
+{
+	unsigned int i, count;
+	unsigned int clu;
+	struct exfat_sb_info *sbi = EXFAT_SB(sb);
 
-	अगर (!p_chain->dir || p_chain->dir == EXFAT_खातापूर्ण_CLUSTER) अणु
+	if (!p_chain->dir || p_chain->dir == EXFAT_EOF_CLUSTER) {
 		*ret_count = 0;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (p_chain->flags == ALLOC_NO_FAT_CHAIN) अणु
+	if (p_chain->flags == ALLOC_NO_FAT_CHAIN) {
 		*ret_count = p_chain->size;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	clu = p_chain->dir;
 	count = 0;
-	क्रम (i = EXFAT_FIRST_CLUSTER; i < sbi->num_clusters; i++) अणु
+	for (i = EXFAT_FIRST_CLUSTER; i < sbi->num_clusters; i++) {
 		count++;
-		अगर (exfat_ent_get(sb, clu, &clu))
-			वापस -EIO;
-		अगर (clu == EXFAT_खातापूर्ण_CLUSTER)
-			अवरोध;
-	पूर्ण
+		if (exfat_ent_get(sb, clu, &clu))
+			return -EIO;
+		if (clu == EXFAT_EOF_CLUSTER)
+			break;
+	}
 
 	*ret_count = count;
-	वापस 0;
-पूर्ण
+	return 0;
+}

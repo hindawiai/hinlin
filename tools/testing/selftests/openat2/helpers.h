@@ -1,107 +1,106 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Author: Aleksa Sarai <cyphar@cyphar.com>
  * Copyright (C) 2018-2019 SUSE LLC.
  */
 
-#अगर_अघोषित __RESOLVEAT_H__
-#घोषणा __RESOLVEAT_H__
+#ifndef __RESOLVEAT_H__
+#define __RESOLVEAT_H__
 
-#घोषणा _GNU_SOURCE
-#समावेश <मानक_निवेशt.h>
-#समावेश <त्रुटिसं.स>
-#समावेश <linux/types.h>
-#समावेश "../kselftest.h"
+#define _GNU_SOURCE
+#include <stdint.h>
+#include <errno.h>
+#include <linux/types.h>
+#include "../kselftest.h"
 
-#घोषणा ARRAY_LEN(X) (माप (X) / माप (*(X)))
-#घोषणा BUILD_BUG_ON(e) ((व्योम)(माप(काष्ठा अणु पूर्णांक:(-!!(e)); पूर्ण)))
+#define ARRAY_LEN(X) (sizeof (X) / sizeof (*(X)))
+#define BUILD_BUG_ON(e) ((void)(sizeof(struct { int:(-!!(e)); })))
 
-#अगर_अघोषित SYS_खोलोat2
-#अगर_अघोषित __NR_खोलोat2
-#घोषणा __NR_खोलोat2 437
-#पूर्ण_अगर /* __NR_खोलोat2 */
-#घोषणा SYS_खोलोat2 __NR_खोलोat2
-#पूर्ण_अगर /* SYS_खोलोat2 */
+#ifndef SYS_openat2
+#ifndef __NR_openat2
+#define __NR_openat2 437
+#endif /* __NR_openat2 */
+#define SYS_openat2 __NR_openat2
+#endif /* SYS_openat2 */
 
 /*
- * Arguments क्रम how खोलोat2(2) should खोलो the target path. If @resolve is
- * zero, then खोलोat2(2) operates very similarly to खोलोat(2).
+ * Arguments for how openat2(2) should open the target path. If @resolve is
+ * zero, then openat2(2) operates very similarly to openat(2).
  *
- * However, unlike खोलोat(2), unknown bits in @flags result in -EINVAL rather
- * than being silently ignored. @mode must be zero unless one of अणुO_CREAT,
- * O_TMPखातापूर्ण are set.
+ * However, unlike openat(2), unknown bits in @flags result in -EINVAL rather
+ * than being silently ignored. @mode must be zero unless one of {O_CREAT,
+ * O_TMPFILE} are set.
  *
  * @flags: O_* flags.
- * @mode: O_CREAT/O_TMPखाता file mode.
+ * @mode: O_CREAT/O_TMPFILE file mode.
  * @resolve: RESOLVE_* flags.
  */
-काष्ठा खोलो_how अणु
+struct open_how {
 	__u64 flags;
 	__u64 mode;
 	__u64 resolve;
-पूर्ण;
+};
 
-#घोषणा OPEN_HOW_SIZE_VER0	24 /* माप first published काष्ठा */
-#घोषणा OPEN_HOW_SIZE_LATEST	OPEN_HOW_SIZE_VER0
+#define OPEN_HOW_SIZE_VER0	24 /* sizeof first published struct */
+#define OPEN_HOW_SIZE_LATEST	OPEN_HOW_SIZE_VER0
 
-bool needs_खोलोat2(स्थिर काष्ठा खोलो_how *how);
+bool needs_openat2(const struct open_how *how);
 
-#अगर_अघोषित RESOLVE_IN_ROOT
-/* how->resolve flags क्रम खोलोat2(2). */
-#घोषणा RESOLVE_NO_XDEV		0x01 /* Block mount-poपूर्णांक crossings
+#ifndef RESOLVE_IN_ROOT
+/* how->resolve flags for openat2(2). */
+#define RESOLVE_NO_XDEV		0x01 /* Block mount-point crossings
 					(includes bind-mounts). */
-#घोषणा RESOLVE_NO_MAGICLINKS	0x02 /* Block traversal through procfs-style
+#define RESOLVE_NO_MAGICLINKS	0x02 /* Block traversal through procfs-style
 					"magic-links". */
-#घोषणा RESOLVE_NO_SYMLINKS	0x04 /* Block traversal through all symlinks
+#define RESOLVE_NO_SYMLINKS	0x04 /* Block traversal through all symlinks
 					(implies OEXT_NO_MAGICLINKS) */
-#घोषणा RESOLVE_BENEATH		0x08 /* Block "lexical" trickery like
-					"..", symlinks, and असलolute
+#define RESOLVE_BENEATH		0x08 /* Block "lexical" trickery like
+					"..", symlinks, and absolute
 					paths which escape the dirfd. */
-#घोषणा RESOLVE_IN_ROOT		0x10 /* Make all jumps to "/" and ".."
+#define RESOLVE_IN_ROOT		0x10 /* Make all jumps to "/" and ".."
 					be scoped inside the dirfd
 					(similar to chroot(2)). */
-#पूर्ण_अगर /* RESOLVE_IN_ROOT */
+#endif /* RESOLVE_IN_ROOT */
 
-#घोषणा E_func(func, ...)						\
-	करो अणु								\
-		अगर (func(__VA_ARGS__) < 0)				\
-			ksft_निकास_fail_msg("%s:%d %s failed\n", \
-					   __खाता__, __LINE__, #func);\
-	पूर्ण जबतक (0)
+#define E_func(func, ...)						\
+	do {								\
+		if (func(__VA_ARGS__) < 0)				\
+			ksft_exit_fail_msg("%s:%d %s failed\n", \
+					   __FILE__, __LINE__, #func);\
+	} while (0)
 
-#घोषणा E_aप्र_लिखो(...)		E_func(aप्र_लिखो,	__VA_ARGS__)
-#घोषणा E_chmod(...)		E_func(chmod,		__VA_ARGS__)
-#घोषणा E_dup2(...)		E_func(dup2,		__VA_ARGS__)
-#घोषणा E_fस_बदलो(...)		E_func(fस_बदलो,		__VA_ARGS__)
-#घोषणा E_ख_स्थितिat(...)		E_func(ख_स्थितिat,		__VA_ARGS__)
-#घोषणा E_समाप्त(...)		E_func(समाप्त,		__VA_ARGS__)
-#घोषणा E_सूची_गढ़ोat(...)		E_func(सूची_गढ़ोat,		__VA_ARGS__)
-#घोषणा E_mount(...)		E_func(mount,		__VA_ARGS__)
-#घोषणा E_prctl(...)		E_func(prctl,		__VA_ARGS__)
-#घोषणा E_पढ़ोlink(...)		E_func(पढ़ोlink,	__VA_ARGS__)
-#घोषणा E_setresuid(...)	E_func(setresuid,	__VA_ARGS__)
-#घोषणा E_symlinkat(...)	E_func(symlinkat,	__VA_ARGS__)
-#घोषणा E_touchat(...)		E_func(touchat,		__VA_ARGS__)
-#घोषणा E_unshare(...)		E_func(unshare,		__VA_ARGS__)
+#define E_asprintf(...)		E_func(asprintf,	__VA_ARGS__)
+#define E_chmod(...)		E_func(chmod,		__VA_ARGS__)
+#define E_dup2(...)		E_func(dup2,		__VA_ARGS__)
+#define E_fchdir(...)		E_func(fchdir,		__VA_ARGS__)
+#define E_fstatat(...)		E_func(fstatat,		__VA_ARGS__)
+#define E_kill(...)		E_func(kill,		__VA_ARGS__)
+#define E_mkdirat(...)		E_func(mkdirat,		__VA_ARGS__)
+#define E_mount(...)		E_func(mount,		__VA_ARGS__)
+#define E_prctl(...)		E_func(prctl,		__VA_ARGS__)
+#define E_readlink(...)		E_func(readlink,	__VA_ARGS__)
+#define E_setresuid(...)	E_func(setresuid,	__VA_ARGS__)
+#define E_symlinkat(...)	E_func(symlinkat,	__VA_ARGS__)
+#define E_touchat(...)		E_func(touchat,		__VA_ARGS__)
+#define E_unshare(...)		E_func(unshare,		__VA_ARGS__)
 
-#घोषणा E_निश्चित(expr, msg, ...)					\
-	करो अणु								\
-		अगर (!(expr))						\
-			ksft_निकास_fail_msg("ASSERT(%s:%d) failed (%s): " msg "\n", \
-					   __खाता__, __LINE__, #expr, ##__VA_ARGS__); \
-	पूर्ण जबतक (0)
+#define E_assert(expr, msg, ...)					\
+	do {								\
+		if (!(expr))						\
+			ksft_exit_fail_msg("ASSERT(%s:%d) failed (%s): " msg "\n", \
+					   __FILE__, __LINE__, #expr, ##__VA_ARGS__); \
+	} while (0)
 
-पूर्णांक raw_खोलोat2(पूर्णांक dfd, स्थिर अक्षर *path, व्योम *how, माप_प्रकार size);
-पूर्णांक sys_खोलोat2(पूर्णांक dfd, स्थिर अक्षर *path, काष्ठा खोलो_how *how);
-पूर्णांक sys_खोलोat(पूर्णांक dfd, स्थिर अक्षर *path, काष्ठा खोलो_how *how);
-पूर्णांक sys_नामat2(पूर्णांक olddirfd, स्थिर अक्षर *oldpath,
-		  पूर्णांक newdirfd, स्थिर अक्षर *newpath, अचिन्हित पूर्णांक flags);
+int raw_openat2(int dfd, const char *path, void *how, size_t size);
+int sys_openat2(int dfd, const char *path, struct open_how *how);
+int sys_openat(int dfd, const char *path, struct open_how *how);
+int sys_renameat2(int olddirfd, const char *oldpath,
+		  int newdirfd, const char *newpath, unsigned int flags);
 
-पूर्णांक touchat(पूर्णांक dfd, स्थिर अक्षर *path);
-अक्षर *fdपढ़ोlink(पूर्णांक fd);
-bool fdequal(पूर्णांक fd, पूर्णांक dfd, स्थिर अक्षर *path);
+int touchat(int dfd, const char *path);
+char *fdreadlink(int fd);
+bool fdequal(int fd, int dfd, const char *path);
 
-बाह्य bool खोलोat2_supported;
+extern bool openat2_supported;
 
-#पूर्ण_अगर /* __RESOLVEAT_H__ */
+#endif /* __RESOLVEAT_H__ */

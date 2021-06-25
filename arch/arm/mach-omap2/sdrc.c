@@ -1,144 +1,143 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * SMS/SDRC (SDRAM controller) common code क्रम OMAP2/3
+ * SMS/SDRC (SDRAM controller) common code for OMAP2/3
  *
  * Copyright (C) 2005, 2008 Texas Instruments Inc.
  * Copyright (C) 2005, 2008 Nokia Corporation
  *
  * Tony Lindgren <tony@atomide.com>
  * Paul Walmsley
- * Riअक्षरd Woodruff <r-woodruff2@ti.com>
+ * Richard Woodruff <r-woodruff2@ti.com>
  */
-#अघोषित DEBUG
+#undef DEBUG
 
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/device.h>
-#समावेश <linux/list.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/delay.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/पन.स>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/device.h>
+#include <linux/list.h>
+#include <linux/errno.h>
+#include <linux/delay.h>
+#include <linux/clk.h>
+#include <linux/io.h>
 
-#समावेश "common.h"
-#समावेश "clock.h"
-#समावेश "sdrc.h"
+#include "common.h"
+#include "clock.h"
+#include "sdrc.h"
 
-अटल काष्ठा omap_sdrc_params *sdrc_init_params_cs0, *sdrc_init_params_cs1;
+static struct omap_sdrc_params *sdrc_init_params_cs0, *sdrc_init_params_cs1;
 
-व्योम __iomem *omap2_sdrc_base;
-व्योम __iomem *omap2_sms_base;
+void __iomem *omap2_sdrc_base;
+void __iomem *omap2_sms_base;
 
-काष्ठा omap2_sms_regs अणु
+struct omap2_sms_regs {
 	u32	sms_sysconfig;
-पूर्ण;
+};
 
-अटल काष्ठा omap2_sms_regs sms_context;
+static struct omap2_sms_regs sms_context;
 
-/* SDRC_POWER रेजिस्टर bits */
-#घोषणा SDRC_POWER_EXTCLKDIS_SHIFT		3
-#घोषणा SDRC_POWER_PWDENA_SHIFT			2
-#घोषणा SDRC_POWER_PAGEPOLICY_SHIFT		0
+/* SDRC_POWER register bits */
+#define SDRC_POWER_EXTCLKDIS_SHIFT		3
+#define SDRC_POWER_PWDENA_SHIFT			2
+#define SDRC_POWER_PAGEPOLICY_SHIFT		0
 
 /**
- * omap2_sms_save_context - Save SMS रेजिस्टरs
+ * omap2_sms_save_context - Save SMS registers
  *
- * Save SMS रेजिस्टरs that need to be restored after off mode.
+ * Save SMS registers that need to be restored after off mode.
  */
-व्योम omap2_sms_save_context(व्योम)
-अणु
-	sms_context.sms_sysconfig = sms_पढ़ो_reg(SMS_SYSCONFIG);
-पूर्ण
+void omap2_sms_save_context(void)
+{
+	sms_context.sms_sysconfig = sms_read_reg(SMS_SYSCONFIG);
+}
 
 /**
- * omap2_sms_restore_context - Restore SMS रेजिस्टरs
+ * omap2_sms_restore_context - Restore SMS registers
  *
- * Restore SMS रेजिस्टरs that need to be Restored after off mode.
+ * Restore SMS registers that need to be Restored after off mode.
  */
-व्योम omap2_sms_restore_context(व्योम)
-अणु
-	sms_ग_लिखो_reg(sms_context.sms_sysconfig, SMS_SYSCONFIG);
-पूर्ण
+void omap2_sms_restore_context(void)
+{
+	sms_write_reg(sms_context.sms_sysconfig, SMS_SYSCONFIG);
+}
 
 /**
- * omap2_sdrc_get_params - वापस SDRC रेजिस्टर values क्रम a given घड़ी rate
- * @r: SDRC घड़ी rate (in Hz)
+ * omap2_sdrc_get_params - return SDRC register values for a given clock rate
+ * @r: SDRC clock rate (in Hz)
  * @sdrc_cs0: chip select 0 ram timings **
  * @sdrc_cs1: chip select 1 ram timings **
  *
- * Return pre-calculated values क्रम the SDRC_ACTIM_CTRLA,
- *  SDRC_ACTIM_CTRLB, SDRC_RFR_CTRL and SDRC_MR रेजिस्टरs in sdrc_cs[01]
- *  काष्ठाs,क्रम a given SDRC घड़ी rate 'r'.
+ * Return pre-calculated values for the SDRC_ACTIM_CTRLA,
+ *  SDRC_ACTIM_CTRLB, SDRC_RFR_CTRL and SDRC_MR registers in sdrc_cs[01]
+ *  structs,for a given SDRC clock rate 'r'.
  * These parameters control various timing delays in the SDRAM controller
- *  that are expressed in terms of the number of SDRC घड़ी cycles to
- *  रुको; hence the घड़ी rate dependency.
+ *  that are expressed in terms of the number of SDRC clock cycles to
+ *  wait; hence the clock rate dependency.
  *
- * Supports 2 dअगरferent timing parameters क्रम both chip selects.
+ * Supports 2 different timing parameters for both chip selects.
  *
  * Note 1: the sdrc_init_params_cs[01] must be sorted rate descending.
- * Note 2: If sdrc_init_params_cs_1 is not शून्य it must be of same size
+ * Note 2: If sdrc_init_params_cs_1 is not NULL it must be of same size
  *  as sdrc_init_params_cs_0.
  *
- * Fills in the काष्ठा omap_sdrc_params * क्रम each chip select.
+ * Fills in the struct omap_sdrc_params * for each chip select.
  * Returns 0 upon success or -1 upon failure.
  */
-पूर्णांक omap2_sdrc_get_params(अचिन्हित दीर्घ r,
-			  काष्ठा omap_sdrc_params **sdrc_cs0,
-			  काष्ठा omap_sdrc_params **sdrc_cs1)
-अणु
-	काष्ठा omap_sdrc_params *sp0, *sp1;
+int omap2_sdrc_get_params(unsigned long r,
+			  struct omap_sdrc_params **sdrc_cs0,
+			  struct omap_sdrc_params **sdrc_cs1)
+{
+	struct omap_sdrc_params *sp0, *sp1;
 
-	अगर (!sdrc_init_params_cs0)
-		वापस -1;
+	if (!sdrc_init_params_cs0)
+		return -1;
 
 	sp0 = sdrc_init_params_cs0;
 	sp1 = sdrc_init_params_cs1;
 
-	जबतक (sp0->rate && sp0->rate != r) अणु
+	while (sp0->rate && sp0->rate != r) {
 		sp0++;
-		अगर (sdrc_init_params_cs1)
+		if (sdrc_init_params_cs1)
 			sp1++;
-	पूर्ण
+	}
 
-	अगर (!sp0->rate)
-		वापस -1;
+	if (!sp0->rate)
+		return -1;
 
 	*sdrc_cs0 = sp0;
 	*sdrc_cs1 = sp1;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-व्योम __init omap2_set_globals_sdrc(व्योम __iomem *sdrc, व्योम __iomem *sms)
-अणु
+void __init omap2_set_globals_sdrc(void __iomem *sdrc, void __iomem *sms)
+{
 	omap2_sdrc_base = sdrc;
 	omap2_sms_base = sms;
-पूर्ण
+}
 
 /**
  * omap2_sdrc_init - initialize SMS, SDRC devices on boot
- * @sdrc_cs[01]: poपूर्णांकers to a null-terminated list of काष्ठा omap_sdrc_params
- *  Support क्रम 2 chip selects timings
+ * @sdrc_cs[01]: pointers to a null-terminated list of struct omap_sdrc_params
+ *  Support for 2 chip selects timings
  *
- * Turn on smart idle modes क्रम SDRAM scheduler and controller.
- * Program a known-good configuration क्रम the SDRC to deal with buggy
+ * Turn on smart idle modes for SDRAM scheduler and controller.
+ * Program a known-good configuration for the SDRC to deal with buggy
  * bootloaders.
  */
-व्योम __init omap2_sdrc_init(काष्ठा omap_sdrc_params *sdrc_cs0,
-			    काष्ठा omap_sdrc_params *sdrc_cs1)
-अणु
+void __init omap2_sdrc_init(struct omap_sdrc_params *sdrc_cs0,
+			    struct omap_sdrc_params *sdrc_cs1)
+{
 	u32 l;
 
-	l = sms_पढ़ो_reg(SMS_SYSCONFIG);
+	l = sms_read_reg(SMS_SYSCONFIG);
 	l &= ~(0x3 << 3);
 	l |= (0x2 << 3);
-	sms_ग_लिखो_reg(l, SMS_SYSCONFIG);
+	sms_write_reg(l, SMS_SYSCONFIG);
 
-	l = sdrc_पढ़ो_reg(SDRC_SYSCONFIG);
+	l = sdrc_read_reg(SDRC_SYSCONFIG);
 	l &= ~(0x3 << 3);
 	l |= (0x2 << 3);
-	sdrc_ग_लिखो_reg(l, SDRC_SYSCONFIG);
+	sdrc_write_reg(l, SDRC_SYSCONFIG);
 
 	sdrc_init_params_cs0 = sdrc_cs0;
 	sdrc_init_params_cs1 = sdrc_cs1;
@@ -146,10 +145,10 @@
 	/* XXX Enable SRFRONIDLEREQ here also? */
 	/*
 	 * PWDENA should not be set due to 34xx erratum 1.150 - PWDENA
-	 * can cause अक्रमom memory corruption
+	 * can cause random memory corruption
 	 */
 	l = (1 << SDRC_POWER_EXTCLKDIS_SHIFT) |
 		(1 << SDRC_POWER_PAGEPOLICY_SHIFT);
-	sdrc_ग_लिखो_reg(l, SDRC_POWER);
+	sdrc_write_reg(l, SDRC_POWER);
 	omap2_sms_save_context();
-पूर्ण
+}

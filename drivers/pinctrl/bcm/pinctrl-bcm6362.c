@@ -1,64 +1,63 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
- * Driver क्रम BCM6362 GPIO unit (pinctrl + GPIO)
+ * Driver for BCM6362 GPIO unit (pinctrl + GPIO)
  *
- * Copyright (C) 2021 थlvaro Fernथँndez Rojas <noltari@gmail.com>
+ * Copyright (C) 2021 Álvaro Fernández Rojas <noltari@gmail.com>
  * Copyright (C) 2016 Jonas Gorski <jonas.gorski@gmail.com>
  */
 
-#समावेश <linux/bits.h>
-#समावेश <linux/gpio/driver.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/of.h>
-#समावेश <linux/pinctrl/pinmux.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/regmap.h>
+#include <linux/bits.h>
+#include <linux/gpio/driver.h>
+#include <linux/kernel.h>
+#include <linux/of.h>
+#include <linux/pinctrl/pinmux.h>
+#include <linux/platform_device.h>
+#include <linux/regmap.h>
 
-#समावेश "../pinctrl-utils.h"
+#include "../pinctrl-utils.h"
 
-#समावेश "pinctrl-bcm63xx.h"
+#include "pinctrl-bcm63xx.h"
 
-#घोषणा BCM6362_BANK_GPIOS	32
-#घोषणा BCM6362_NUM_GPIOS	48
-#घोषणा BCM6362_NUM_LEDS	24
+#define BCM6362_BANK_GPIOS	32
+#define BCM6362_NUM_GPIOS	48
+#define BCM6362_NUM_LEDS	24
 
-#घोषणा BCM6362_LED_REG		0x10
-#घोषणा BCM6362_MODE_REG	0x18
-#घोषणा BCM6362_CTRL_REG	0x1c
-#घोषणा BCM6362_BASEMODE_REG	0x38
-#घोषणा  BASEMODE_न_अंकD		BIT(2)
+#define BCM6362_LED_REG		0x10
+#define BCM6362_MODE_REG	0x18
+#define BCM6362_CTRL_REG	0x1c
+#define BCM6362_BASEMODE_REG	0x38
+#define  BASEMODE_NAND		BIT(2)
 
-क्रमागत bcm6362_pinctrl_reg अणु
+enum bcm6362_pinctrl_reg {
 	BCM6362_LEDCTRL,
 	BCM6362_MODE,
 	BCM6362_CTRL,
 	BCM6362_BASEMODE,
-पूर्ण;
+};
 
-काष्ठा bcm6362_pingroup अणु
-	स्थिर अक्षर *name;
-	स्थिर अचिन्हित * स्थिर pins;
-	स्थिर अचिन्हित num_pins;
-पूर्ण;
+struct bcm6362_pingroup {
+	const char *name;
+	const unsigned * const pins;
+	const unsigned num_pins;
+};
 
-काष्ठा bcm6362_function अणु
-	स्थिर अक्षर *name;
-	स्थिर अक्षर * स्थिर *groups;
-	स्थिर अचिन्हित num_groups;
+struct bcm6362_function {
+	const char *name;
+	const char * const *groups;
+	const unsigned num_groups;
 
-	क्रमागत bcm6362_pinctrl_reg reg;
-	uपूर्णांक32_t basemode_mask;
-पूर्ण;
+	enum bcm6362_pinctrl_reg reg;
+	uint32_t basemode_mask;
+};
 
-#घोषणा BCM6362_PIN(a, b, mask)			\
-	अणु					\
+#define BCM6362_PIN(a, b, mask)			\
+	{					\
 		.number = a,			\
 		.name = b,			\
-		.drv_data = (व्योम *)(mask),	\
-	पूर्ण
+		.drv_data = (void *)(mask),	\
+	}
 
-अटल स्थिर काष्ठा pinctrl_pin_desc bcm6362_pins[] = अणु
+static const struct pinctrl_pin_desc bcm6362_pins[] = {
 	PINCTRL_PIN(0, "gpio0"),
 	PINCTRL_PIN(1, "gpio1"),
 	PINCTRL_PIN(2, "gpio2"),
@@ -67,26 +66,26 @@
 	PINCTRL_PIN(5, "gpio5"),
 	PINCTRL_PIN(6, "gpio6"),
 	PINCTRL_PIN(7, "gpio7"),
-	BCM6362_PIN(8, "gpio8", BASEMODE_न_अंकD),
+	BCM6362_PIN(8, "gpio8", BASEMODE_NAND),
 	PINCTRL_PIN(9, "gpio9"),
 	PINCTRL_PIN(10, "gpio10"),
 	PINCTRL_PIN(11, "gpio11"),
-	BCM6362_PIN(12, "gpio12", BASEMODE_न_अंकD),
-	BCM6362_PIN(13, "gpio13", BASEMODE_न_अंकD),
-	BCM6362_PIN(14, "gpio14", BASEMODE_न_अंकD),
-	BCM6362_PIN(15, "gpio15", BASEMODE_न_अंकD),
-	BCM6362_PIN(16, "gpio16", BASEMODE_न_अंकD),
-	BCM6362_PIN(17, "gpio17", BASEMODE_न_अंकD),
-	BCM6362_PIN(18, "gpio18", BASEMODE_न_अंकD),
-	BCM6362_PIN(19, "gpio19", BASEMODE_न_अंकD),
-	BCM6362_PIN(20, "gpio20", BASEMODE_न_अंकD),
-	BCM6362_PIN(21, "gpio21", BASEMODE_न_अंकD),
-	BCM6362_PIN(22, "gpio22", BASEMODE_न_अंकD),
-	BCM6362_PIN(23, "gpio23", BASEMODE_न_अंकD),
+	BCM6362_PIN(12, "gpio12", BASEMODE_NAND),
+	BCM6362_PIN(13, "gpio13", BASEMODE_NAND),
+	BCM6362_PIN(14, "gpio14", BASEMODE_NAND),
+	BCM6362_PIN(15, "gpio15", BASEMODE_NAND),
+	BCM6362_PIN(16, "gpio16", BASEMODE_NAND),
+	BCM6362_PIN(17, "gpio17", BASEMODE_NAND),
+	BCM6362_PIN(18, "gpio18", BASEMODE_NAND),
+	BCM6362_PIN(19, "gpio19", BASEMODE_NAND),
+	BCM6362_PIN(20, "gpio20", BASEMODE_NAND),
+	BCM6362_PIN(21, "gpio21", BASEMODE_NAND),
+	BCM6362_PIN(22, "gpio22", BASEMODE_NAND),
+	BCM6362_PIN(23, "gpio23", BASEMODE_NAND),
 	PINCTRL_PIN(24, "gpio24"),
 	PINCTRL_PIN(25, "gpio25"),
 	PINCTRL_PIN(26, "gpio26"),
-	BCM6362_PIN(27, "gpio27", BASEMODE_न_अंकD),
+	BCM6362_PIN(27, "gpio27", BASEMODE_NAND),
 	PINCTRL_PIN(28, "gpio28"),
 	PINCTRL_PIN(29, "gpio29"),
 	PINCTRL_PIN(30, "gpio30"),
@@ -107,70 +106,70 @@
 	PINCTRL_PIN(45, "gpio45"),
 	PINCTRL_PIN(46, "gpio46"),
 	PINCTRL_PIN(47, "gpio47"),
-पूर्ण;
+};
 
-अटल अचिन्हित gpio0_pins[] = अणु 0 पूर्ण;
-अटल अचिन्हित gpio1_pins[] = अणु 1 पूर्ण;
-अटल अचिन्हित gpio2_pins[] = अणु 2 पूर्ण;
-अटल अचिन्हित gpio3_pins[] = अणु 3 पूर्ण;
-अटल अचिन्हित gpio4_pins[] = अणु 4 पूर्ण;
-अटल अचिन्हित gpio5_pins[] = अणु 5 पूर्ण;
-अटल अचिन्हित gpio6_pins[] = अणु 6 पूर्ण;
-अटल अचिन्हित gpio7_pins[] = अणु 7 पूर्ण;
-अटल अचिन्हित gpio8_pins[] = अणु 8 पूर्ण;
-अटल अचिन्हित gpio9_pins[] = अणु 9 पूर्ण;
-अटल अचिन्हित gpio10_pins[] = अणु 10 पूर्ण;
-अटल अचिन्हित gpio11_pins[] = अणु 11 पूर्ण;
-अटल अचिन्हित gpio12_pins[] = अणु 12 पूर्ण;
-अटल अचिन्हित gpio13_pins[] = अणु 13 पूर्ण;
-अटल अचिन्हित gpio14_pins[] = अणु 14 पूर्ण;
-अटल अचिन्हित gpio15_pins[] = अणु 15 पूर्ण;
-अटल अचिन्हित gpio16_pins[] = अणु 16 पूर्ण;
-अटल अचिन्हित gpio17_pins[] = अणु 17 पूर्ण;
-अटल अचिन्हित gpio18_pins[] = अणु 18 पूर्ण;
-अटल अचिन्हित gpio19_pins[] = अणु 19 पूर्ण;
-अटल अचिन्हित gpio20_pins[] = अणु 20 पूर्ण;
-अटल अचिन्हित gpio21_pins[] = अणु 21 पूर्ण;
-अटल अचिन्हित gpio22_pins[] = अणु 22 पूर्ण;
-अटल अचिन्हित gpio23_pins[] = अणु 23 पूर्ण;
-अटल अचिन्हित gpio24_pins[] = अणु 24 पूर्ण;
-अटल अचिन्हित gpio25_pins[] = अणु 25 पूर्ण;
-अटल अचिन्हित gpio26_pins[] = अणु 26 पूर्ण;
-अटल अचिन्हित gpio27_pins[] = अणु 27 पूर्ण;
-अटल अचिन्हित gpio28_pins[] = अणु 28 पूर्ण;
-अटल अचिन्हित gpio29_pins[] = अणु 29 पूर्ण;
-अटल अचिन्हित gpio30_pins[] = अणु 30 पूर्ण;
-अटल अचिन्हित gpio31_pins[] = अणु 31 पूर्ण;
-अटल अचिन्हित gpio32_pins[] = अणु 32 पूर्ण;
-अटल अचिन्हित gpio33_pins[] = अणु 33 पूर्ण;
-अटल अचिन्हित gpio34_pins[] = अणु 34 पूर्ण;
-अटल अचिन्हित gpio35_pins[] = अणु 35 पूर्ण;
-अटल अचिन्हित gpio36_pins[] = अणु 36 पूर्ण;
-अटल अचिन्हित gpio37_pins[] = अणु 37 पूर्ण;
-अटल अचिन्हित gpio38_pins[] = अणु 38 पूर्ण;
-अटल अचिन्हित gpio39_pins[] = अणु 39 पूर्ण;
-अटल अचिन्हित gpio40_pins[] = अणु 40 पूर्ण;
-अटल अचिन्हित gpio41_pins[] = अणु 41 पूर्ण;
-अटल अचिन्हित gpio42_pins[] = अणु 42 पूर्ण;
-अटल अचिन्हित gpio43_pins[] = अणु 43 पूर्ण;
-अटल अचिन्हित gpio44_pins[] = अणु 44 पूर्ण;
-अटल अचिन्हित gpio45_pins[] = अणु 45 पूर्ण;
-अटल अचिन्हित gpio46_pins[] = अणु 46 पूर्ण;
-अटल अचिन्हित gpio47_pins[] = अणु 47 पूर्ण;
+static unsigned gpio0_pins[] = { 0 };
+static unsigned gpio1_pins[] = { 1 };
+static unsigned gpio2_pins[] = { 2 };
+static unsigned gpio3_pins[] = { 3 };
+static unsigned gpio4_pins[] = { 4 };
+static unsigned gpio5_pins[] = { 5 };
+static unsigned gpio6_pins[] = { 6 };
+static unsigned gpio7_pins[] = { 7 };
+static unsigned gpio8_pins[] = { 8 };
+static unsigned gpio9_pins[] = { 9 };
+static unsigned gpio10_pins[] = { 10 };
+static unsigned gpio11_pins[] = { 11 };
+static unsigned gpio12_pins[] = { 12 };
+static unsigned gpio13_pins[] = { 13 };
+static unsigned gpio14_pins[] = { 14 };
+static unsigned gpio15_pins[] = { 15 };
+static unsigned gpio16_pins[] = { 16 };
+static unsigned gpio17_pins[] = { 17 };
+static unsigned gpio18_pins[] = { 18 };
+static unsigned gpio19_pins[] = { 19 };
+static unsigned gpio20_pins[] = { 20 };
+static unsigned gpio21_pins[] = { 21 };
+static unsigned gpio22_pins[] = { 22 };
+static unsigned gpio23_pins[] = { 23 };
+static unsigned gpio24_pins[] = { 24 };
+static unsigned gpio25_pins[] = { 25 };
+static unsigned gpio26_pins[] = { 26 };
+static unsigned gpio27_pins[] = { 27 };
+static unsigned gpio28_pins[] = { 28 };
+static unsigned gpio29_pins[] = { 29 };
+static unsigned gpio30_pins[] = { 30 };
+static unsigned gpio31_pins[] = { 31 };
+static unsigned gpio32_pins[] = { 32 };
+static unsigned gpio33_pins[] = { 33 };
+static unsigned gpio34_pins[] = { 34 };
+static unsigned gpio35_pins[] = { 35 };
+static unsigned gpio36_pins[] = { 36 };
+static unsigned gpio37_pins[] = { 37 };
+static unsigned gpio38_pins[] = { 38 };
+static unsigned gpio39_pins[] = { 39 };
+static unsigned gpio40_pins[] = { 40 };
+static unsigned gpio41_pins[] = { 41 };
+static unsigned gpio42_pins[] = { 42 };
+static unsigned gpio43_pins[] = { 43 };
+static unsigned gpio44_pins[] = { 44 };
+static unsigned gpio45_pins[] = { 45 };
+static unsigned gpio46_pins[] = { 46 };
+static unsigned gpio47_pins[] = { 47 };
 
-अटल अचिन्हित nand_grp_pins[] = अणु
+static unsigned nand_grp_pins[] = {
 	8, 12, 13, 14, 15, 16, 17,
 	18, 19, 20, 21, 22, 23, 27,
-पूर्ण;
+};
 
-#घोषणा BCM6362_GROUP(n)				\
-	अणु						\
+#define BCM6362_GROUP(n)				\
+	{						\
 		.name = #n,				\
 		.pins = n##_pins,			\
 		.num_pins = ARRAY_SIZE(n##_pins),	\
-	पूर्ण
+	}
 
-अटल काष्ठा bcm6362_pingroup bcm6362_groups[] = अणु
+static struct bcm6362_pingroup bcm6362_groups[] = {
 	BCM6362_GROUP(gpio0),
 	BCM6362_GROUP(gpio1),
 	BCM6362_GROUP(gpio2),
@@ -220,9 +219,9 @@
 	BCM6362_GROUP(gpio46),
 	BCM6362_GROUP(gpio47),
 	BCM6362_GROUP(nand_grp),
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर led_groups[] = अणु
+static const char * const led_groups[] = {
 	"gpio0",
 	"gpio1",
 	"gpio2",
@@ -247,121 +246,121 @@
 	"gpio21",
 	"gpio22",
 	"gpio23",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर usb_device_led_groups[] = अणु
+static const char * const usb_device_led_groups[] = {
 	"gpio0",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर sys_irq_groups[] = अणु
+static const char * const sys_irq_groups[] = {
 	"gpio1",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर serial_led_clk_groups[] = अणु
+static const char * const serial_led_clk_groups[] = {
 	"gpio2",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर serial_led_data_groups[] = अणु
+static const char * const serial_led_data_groups[] = {
 	"gpio3",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर robosw_led_data_groups[] = अणु
+static const char * const robosw_led_data_groups[] = {
 	"gpio4",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर robosw_led_clk_groups[] = अणु
+static const char * const robosw_led_clk_groups[] = {
 	"gpio5",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर robosw_led0_groups[] = अणु
+static const char * const robosw_led0_groups[] = {
 	"gpio6",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर robosw_led1_groups[] = अणु
+static const char * const robosw_led1_groups[] = {
 	"gpio7",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर inet_led_groups[] = अणु
+static const char * const inet_led_groups[] = {
 	"gpio8",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर spi_cs2_groups[] = अणु
+static const char * const spi_cs2_groups[] = {
 	"gpio9",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर spi_cs3_groups[] = अणु
+static const char * const spi_cs3_groups[] = {
 	"gpio10",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर ntr_pulse_groups[] = अणु
+static const char * const ntr_pulse_groups[] = {
 	"gpio11",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर uart1_scts_groups[] = अणु
+static const char * const uart1_scts_groups[] = {
 	"gpio12",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर uart1_srts_groups[] = अणु
+static const char * const uart1_srts_groups[] = {
 	"gpio13",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर uart1_sdin_groups[] = अणु
+static const char * const uart1_sdin_groups[] = {
 	"gpio14",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर uart1_sकरोut_groups[] = अणु
+static const char * const uart1_sdout_groups[] = {
 	"gpio15",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर adsl_spi_miso_groups[] = अणु
+static const char * const adsl_spi_miso_groups[] = {
 	"gpio16",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर adsl_spi_mosi_groups[] = अणु
+static const char * const adsl_spi_mosi_groups[] = {
 	"gpio17",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर adsl_spi_clk_groups[] = अणु
+static const char * const adsl_spi_clk_groups[] = {
 	"gpio18",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर adsl_spi_cs_groups[] = अणु
+static const char * const adsl_spi_cs_groups[] = {
 	"gpio19",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर ephy0_led_groups[] = अणु
+static const char * const ephy0_led_groups[] = {
 	"gpio20",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर ephy1_led_groups[] = अणु
+static const char * const ephy1_led_groups[] = {
 	"gpio21",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर ephy2_led_groups[] = अणु
+static const char * const ephy2_led_groups[] = {
 	"gpio22",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर ephy3_led_groups[] = अणु
+static const char * const ephy3_led_groups[] = {
 	"gpio23",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर ext_irq0_groups[] = अणु
+static const char * const ext_irq0_groups[] = {
 	"gpio24",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर ext_irq1_groups[] = अणु
+static const char * const ext_irq1_groups[] = {
 	"gpio25",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर ext_irq2_groups[] = अणु
+static const char * const ext_irq2_groups[] = {
 	"gpio26",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर ext_irq3_groups[] = अणु
+static const char * const ext_irq3_groups[] = {
 	"gpio27",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर wअगरi_groups[] = अणु
+static const char * const wifi_groups[] = {
 	"gpio32",
 	"gpio33",
 	"gpio34",
@@ -378,46 +377,46 @@
 	"gpio45",
 	"gpio46",
 	"gpio47",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर nand_groups[] = अणु
+static const char * const nand_groups[] = {
 	"nand_grp",
-पूर्ण;
+};
 
-#घोषणा BCM6362_LED_FUN(n)				\
-	अणु						\
+#define BCM6362_LED_FUN(n)				\
+	{						\
 		.name = #n,				\
 		.groups = n##_groups,			\
 		.num_groups = ARRAY_SIZE(n##_groups),	\
 		.reg = BCM6362_LEDCTRL,			\
-	पूर्ण
+	}
 
-#घोषणा BCM6362_MODE_FUN(n)				\
-	अणु						\
+#define BCM6362_MODE_FUN(n)				\
+	{						\
 		.name = #n,				\
 		.groups = n##_groups,			\
 		.num_groups = ARRAY_SIZE(n##_groups),	\
 		.reg = BCM6362_MODE,			\
-	पूर्ण
+	}
 
-#घोषणा BCM6362_CTRL_FUN(n)				\
-	अणु						\
+#define BCM6362_CTRL_FUN(n)				\
+	{						\
 		.name = #n,				\
 		.groups = n##_groups,			\
 		.num_groups = ARRAY_SIZE(n##_groups),	\
 		.reg = BCM6362_CTRL,			\
-	पूर्ण
+	}
 
-#घोषणा BCM6362_BASEMODE_FUN(n, mask)			\
-	अणु						\
+#define BCM6362_BASEMODE_FUN(n, mask)			\
+	{						\
 		.name = #n,				\
 		.groups = n##_groups,			\
 		.num_groups = ARRAY_SIZE(n##_groups),	\
 		.reg = BCM6362_BASEMODE,		\
 		.basemode_mask = (mask),		\
-	पूर्ण
+	}
 
-अटल स्थिर काष्ठा bcm6362_function bcm6362_funcs[] = अणु
+static const struct bcm6362_function bcm6362_funcs[] = {
 	BCM6362_LED_FUN(led),
 	BCM6362_MODE_FUN(usb_device_led),
 	BCM6362_MODE_FUN(sys_irq),
@@ -434,7 +433,7 @@
 	BCM6362_MODE_FUN(uart1_scts),
 	BCM6362_MODE_FUN(uart1_srts),
 	BCM6362_MODE_FUN(uart1_sdin),
-	BCM6362_MODE_FUN(uart1_sकरोut),
+	BCM6362_MODE_FUN(uart1_sdout),
 	BCM6362_MODE_FUN(adsl_spi_miso),
 	BCM6362_MODE_FUN(adsl_spi_mosi),
 	BCM6362_MODE_FUN(adsl_spi_clk),
@@ -447,172 +446,172 @@
 	BCM6362_MODE_FUN(ext_irq1),
 	BCM6362_MODE_FUN(ext_irq2),
 	BCM6362_MODE_FUN(ext_irq3),
-	BCM6362_CTRL_FUN(wअगरi),
-	BCM6362_BASEMODE_FUN(nand, BASEMODE_न_अंकD),
-पूर्ण;
+	BCM6362_CTRL_FUN(wifi),
+	BCM6362_BASEMODE_FUN(nand, BASEMODE_NAND),
+};
 
-अटल पूर्णांक bcm6362_pinctrl_get_group_count(काष्ठा pinctrl_dev *pctldev)
-अणु
-	वापस ARRAY_SIZE(bcm6362_groups);
-पूर्ण
+static int bcm6362_pinctrl_get_group_count(struct pinctrl_dev *pctldev)
+{
+	return ARRAY_SIZE(bcm6362_groups);
+}
 
-अटल स्थिर अक्षर *bcm6362_pinctrl_get_group_name(काष्ठा pinctrl_dev *pctldev,
-						  अचिन्हित group)
-अणु
-	वापस bcm6362_groups[group].name;
-पूर्ण
+static const char *bcm6362_pinctrl_get_group_name(struct pinctrl_dev *pctldev,
+						  unsigned group)
+{
+	return bcm6362_groups[group].name;
+}
 
-अटल पूर्णांक bcm6362_pinctrl_get_group_pins(काष्ठा pinctrl_dev *pctldev,
-					  अचिन्हित group, स्थिर अचिन्हित **pins,
-					  अचिन्हित *num_pins)
-अणु
+static int bcm6362_pinctrl_get_group_pins(struct pinctrl_dev *pctldev,
+					  unsigned group, const unsigned **pins,
+					  unsigned *num_pins)
+{
 	*pins = bcm6362_groups[group].pins;
 	*num_pins = bcm6362_groups[group].num_pins;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक bcm6362_pinctrl_get_func_count(काष्ठा pinctrl_dev *pctldev)
-अणु
-	वापस ARRAY_SIZE(bcm6362_funcs);
-पूर्ण
+static int bcm6362_pinctrl_get_func_count(struct pinctrl_dev *pctldev)
+{
+	return ARRAY_SIZE(bcm6362_funcs);
+}
 
-अटल स्थिर अक्षर *bcm6362_pinctrl_get_func_name(काष्ठा pinctrl_dev *pctldev,
-						 अचिन्हित selector)
-अणु
-	वापस bcm6362_funcs[selector].name;
-पूर्ण
+static const char *bcm6362_pinctrl_get_func_name(struct pinctrl_dev *pctldev,
+						 unsigned selector)
+{
+	return bcm6362_funcs[selector].name;
+}
 
-अटल पूर्णांक bcm6362_pinctrl_get_groups(काष्ठा pinctrl_dev *pctldev,
-				      अचिन्हित selector,
-				      स्थिर अक्षर * स्थिर **groups,
-				      अचिन्हित * स्थिर num_groups)
-अणु
+static int bcm6362_pinctrl_get_groups(struct pinctrl_dev *pctldev,
+				      unsigned selector,
+				      const char * const **groups,
+				      unsigned * const num_groups)
+{
 	*groups = bcm6362_funcs[selector].groups;
 	*num_groups = bcm6362_funcs[selector].num_groups;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम bcm6362_set_gpio(काष्ठा bcm63xx_pinctrl *pc, अचिन्हित pin)
-अणु
-	स्थिर काष्ठा pinctrl_pin_desc *desc = &bcm6362_pins[pin];
-	अचिन्हित पूर्णांक basemode = (uपूर्णांकptr_t)desc->drv_data;
-	अचिन्हित पूर्णांक mask = bcm63xx_bank_pin(pin);
+static void bcm6362_set_gpio(struct bcm63xx_pinctrl *pc, unsigned pin)
+{
+	const struct pinctrl_pin_desc *desc = &bcm6362_pins[pin];
+	unsigned int basemode = (uintptr_t)desc->drv_data;
+	unsigned int mask = bcm63xx_bank_pin(pin);
 
-	अगर (basemode)
+	if (basemode)
 		regmap_update_bits(pc->regs, BCM6362_BASEMODE_REG, basemode, 0);
 
-	अगर (pin < BCM63XX_BANK_GPIOS) अणु
+	if (pin < BCM63XX_BANK_GPIOS) {
 		/* base mode 0 => gpio 1 => mux function */
 		regmap_update_bits(pc->regs, BCM6362_MODE_REG, mask, 0);
 
 		/* pins 0-23 might be muxed to led */
-		अगर (pin < BCM6362_NUM_LEDS)
+		if (pin < BCM6362_NUM_LEDS)
 			regmap_update_bits(pc->regs, BCM6362_LED_REG, mask, 0);
-	पूर्ण अन्यथा अणु
-		/* ctrl reg 0 => wअगरi function 1 => gpio */
+	} else {
+		/* ctrl reg 0 => wifi function 1 => gpio */
 		regmap_update_bits(pc->regs, BCM6362_CTRL_REG, mask, mask);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक bcm6362_pinctrl_set_mux(काष्ठा pinctrl_dev *pctldev,
-				   अचिन्हित selector, अचिन्हित group)
-अणु
-	काष्ठा bcm63xx_pinctrl *pc = pinctrl_dev_get_drvdata(pctldev);
-	स्थिर काष्ठा bcm6362_pingroup *pg = &bcm6362_groups[group];
-	स्थिर काष्ठा bcm6362_function *f = &bcm6362_funcs[selector];
-	अचिन्हित i;
-	अचिन्हित पूर्णांक reg;
-	अचिन्हित पूर्णांक val, mask;
+static int bcm6362_pinctrl_set_mux(struct pinctrl_dev *pctldev,
+				   unsigned selector, unsigned group)
+{
+	struct bcm63xx_pinctrl *pc = pinctrl_dev_get_drvdata(pctldev);
+	const struct bcm6362_pingroup *pg = &bcm6362_groups[group];
+	const struct bcm6362_function *f = &bcm6362_funcs[selector];
+	unsigned i;
+	unsigned int reg;
+	unsigned int val, mask;
 
-	क्रम (i = 0; i < pg->num_pins; i++)
+	for (i = 0; i < pg->num_pins; i++)
 		bcm6362_set_gpio(pc, pg->pins[i]);
 
-	चयन (f->reg) अणु
-	हाल BCM6362_LEDCTRL:
+	switch (f->reg) {
+	case BCM6362_LEDCTRL:
 		reg = BCM6362_LED_REG;
 		mask = BIT(pg->pins[0]);
 		val = BIT(pg->pins[0]);
-		अवरोध;
-	हाल BCM6362_MODE:
+		break;
+	case BCM6362_MODE:
 		reg = BCM6362_MODE_REG;
 		mask = BIT(pg->pins[0]);
 		val = BIT(pg->pins[0]);
-		अवरोध;
-	हाल BCM6362_CTRL:
+		break;
+	case BCM6362_CTRL:
 		reg = BCM6362_CTRL_REG;
 		mask = BIT(pg->pins[0]);
 		val = 0;
-		अवरोध;
-	हाल BCM6362_BASEMODE:
+		break;
+	case BCM6362_BASEMODE:
 		reg = BCM6362_BASEMODE_REG;
 		mask = f->basemode_mask;
 		val = f->basemode_mask;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		WARN_ON(1);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	regmap_update_bits(pc->regs, reg, mask, val);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक bcm6362_gpio_request_enable(काष्ठा pinctrl_dev *pctldev,
-				       काष्ठा pinctrl_gpio_range *range,
-				       अचिन्हित offset)
-अणु
-	काष्ठा bcm63xx_pinctrl *pc = pinctrl_dev_get_drvdata(pctldev);
+static int bcm6362_gpio_request_enable(struct pinctrl_dev *pctldev,
+				       struct pinctrl_gpio_range *range,
+				       unsigned offset)
+{
+	struct bcm63xx_pinctrl *pc = pinctrl_dev_get_drvdata(pctldev);
 
 	/* disable all functions using this pin */
 	bcm6362_set_gpio(pc, offset);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा pinctrl_ops bcm6362_pctl_ops = अणु
-	.dt_मुक्त_map = pinctrl_utils_मुक्त_map,
+static struct pinctrl_ops bcm6362_pctl_ops = {
+	.dt_free_map = pinctrl_utils_free_map,
 	.dt_node_to_map = pinconf_generic_dt_node_to_map_pin,
 	.get_group_name = bcm6362_pinctrl_get_group_name,
 	.get_group_pins = bcm6362_pinctrl_get_group_pins,
 	.get_groups_count = bcm6362_pinctrl_get_group_count,
-पूर्ण;
+};
 
-अटल काष्ठा pinmux_ops bcm6362_pmx_ops = अणु
+static struct pinmux_ops bcm6362_pmx_ops = {
 	.get_function_groups = bcm6362_pinctrl_get_groups,
 	.get_function_name = bcm6362_pinctrl_get_func_name,
 	.get_functions_count = bcm6362_pinctrl_get_func_count,
 	.gpio_request_enable = bcm6362_gpio_request_enable,
 	.set_mux = bcm6362_pinctrl_set_mux,
 	.strict = true,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा bcm63xx_pinctrl_soc bcm6362_soc = अणु
+static const struct bcm63xx_pinctrl_soc bcm6362_soc = {
 	.ngpios = BCM6362_NUM_GPIOS,
 	.npins = ARRAY_SIZE(bcm6362_pins),
 	.pctl_ops = &bcm6362_pctl_ops,
 	.pins = bcm6362_pins,
 	.pmx_ops = &bcm6362_pmx_ops,
-पूर्ण;
+};
 
-अटल पूर्णांक bcm6362_pinctrl_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	वापस bcm63xx_pinctrl_probe(pdev, &bcm6362_soc, शून्य);
-पूर्ण
+static int bcm6362_pinctrl_probe(struct platform_device *pdev)
+{
+	return bcm63xx_pinctrl_probe(pdev, &bcm6362_soc, NULL);
+}
 
-अटल स्थिर काष्ठा of_device_id bcm6362_pinctrl_match[] = अणु
-	अणु .compatible = "brcm,bcm6362-pinctrl", पूर्ण,
-	अणु /* sentinel */ पूर्ण
-पूर्ण;
+static const struct of_device_id bcm6362_pinctrl_match[] = {
+	{ .compatible = "brcm,bcm6362-pinctrl", },
+	{ /* sentinel */ }
+};
 
-अटल काष्ठा platक्रमm_driver bcm6362_pinctrl_driver = अणु
+static struct platform_driver bcm6362_pinctrl_driver = {
 	.probe = bcm6362_pinctrl_probe,
-	.driver = अणु
+	.driver = {
 		.name = "bcm6362-pinctrl",
 		.of_match_table = bcm6362_pinctrl_match,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-builtin_platक्रमm_driver(bcm6362_pinctrl_driver);
+builtin_platform_driver(bcm6362_pinctrl_driver);

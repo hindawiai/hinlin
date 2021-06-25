@@ -1,4 +1,3 @@
-<शैली गुरु>
 /*
  *  Fast C2P (Chunky-to-Planar) Conversion
  *
@@ -6,64 +5,64 @@
  *
  *  NOTES:
  *    - This code was inspired by Scout's C2P tutorial
- *    - It assumes to run on a big endian प्रणाली
+ *    - It assumes to run on a big endian system
  *
  *  This file is subject to the terms and conditions of the GNU General Public
- *  License. See the file COPYING in the मुख्य directory of this archive
- *  क्रम more details.
+ *  License. See the file COPYING in the main directory of this archive
+ *  for more details.
  */
 
-#समावेश <linux/build_bug.h>
+#include <linux/build_bug.h>
 
 
     /*
      *  Basic transpose step
      */
 
-अटल अंतरभूत व्योम _transp(u32 d[], अचिन्हित पूर्णांक i1, अचिन्हित पूर्णांक i2,
-			   अचिन्हित पूर्णांक shअगरt, u32 mask)
-अणु
-	u32 t = (d[i1] ^ (d[i2] >> shअगरt)) & mask;
+static inline void _transp(u32 d[], unsigned int i1, unsigned int i2,
+			   unsigned int shift, u32 mask)
+{
+	u32 t = (d[i1] ^ (d[i2] >> shift)) & mask;
 
 	d[i1] ^= t;
-	d[i2] ^= t << shअगरt;
-पूर्ण
+	d[i2] ^= t << shift;
+}
 
 
-अटल __always_अंतरभूत u32 get_mask(अचिन्हित पूर्णांक n)
-अणु
-	चयन (n) अणु
-	हाल 1:
-		वापस 0x55555555;
+static __always_inline u32 get_mask(unsigned int n)
+{
+	switch (n) {
+	case 1:
+		return 0x55555555;
 
-	हाल 2:
-		वापस 0x33333333;
+	case 2:
+		return 0x33333333;
 
-	हाल 4:
-		वापस 0x0f0f0f0f;
+	case 4:
+		return 0x0f0f0f0f;
 
-	हाल 8:
-		वापस 0x00ff00ff;
+	case 8:
+		return 0x00ff00ff;
 
-	हाल 16:
-		वापस 0x0000ffff;
-	पूर्ण
+	case 16:
+		return 0x0000ffff;
+	}
 
 	BUILD_BUG();
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
     /*
      *  Transpose operations on 8 32-bit words
      */
 
-अटल __always_अंतरभूत व्योम transp8(u32 d[], अचिन्हित पूर्णांक n, अचिन्हित पूर्णांक m)
-अणु
+static __always_inline void transp8(u32 d[], unsigned int n, unsigned int m)
+{
 	u32 mask = get_mask(n);
 
-	चयन (m) अणु
-	हाल 1:
+	switch (m) {
+	case 1:
 		/* First n x 1 block */
 		_transp(d, 0, 1, n, mask);
 		/* Second n x 1 block */
@@ -72,83 +71,83 @@
 		_transp(d, 4, 5, n, mask);
 		/* Fourth n x 1 block */
 		_transp(d, 6, 7, n, mask);
-		वापस;
+		return;
 
-	हाल 2:
+	case 2:
 		/* First n x 2 block */
 		_transp(d, 0, 2, n, mask);
 		_transp(d, 1, 3, n, mask);
 		/* Second n x 2 block */
 		_transp(d, 4, 6, n, mask);
 		_transp(d, 5, 7, n, mask);
-		वापस;
+		return;
 
-	हाल 4:
+	case 4:
 		/* Single n x 4 block */
 		_transp(d, 0, 4, n, mask);
 		_transp(d, 1, 5, n, mask);
 		_transp(d, 2, 6, n, mask);
 		_transp(d, 3, 7, n, mask);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	BUILD_BUG();
-पूर्ण
+}
 
 
     /*
      *  Transpose operations on 4 32-bit words
      */
 
-अटल __always_अंतरभूत व्योम transp4(u32 d[], अचिन्हित पूर्णांक n, अचिन्हित पूर्णांक m)
-अणु
+static __always_inline void transp4(u32 d[], unsigned int n, unsigned int m)
+{
 	u32 mask = get_mask(n);
 
-	चयन (m) अणु
-	हाल 1:
+	switch (m) {
+	case 1:
 		/* First n x 1 block */
 		_transp(d, 0, 1, n, mask);
 		/* Second n x 1 block */
 		_transp(d, 2, 3, n, mask);
-		वापस;
+		return;
 
-	हाल 2:
+	case 2:
 		/* Single n x 2 block */
 		_transp(d, 0, 2, n, mask);
 		_transp(d, 1, 3, n, mask);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	BUILD_BUG();
-पूर्ण
+}
 
 
     /*
      *  Transpose operations on 4 32-bit words (reverse order)
      */
 
-अटल __always_अंतरभूत व्योम transp4x(u32 d[], अचिन्हित पूर्णांक n, अचिन्हित पूर्णांक m)
-अणु
+static __always_inline void transp4x(u32 d[], unsigned int n, unsigned int m)
+{
 	u32 mask = get_mask(n);
 
-	चयन (m) अणु
-	हाल 2:
+	switch (m) {
+	case 2:
 		/* Single n x 2 block */
 		_transp(d, 2, 0, n, mask);
 		_transp(d, 3, 1, n, mask);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	BUILD_BUG();
-पूर्ण
+}
 
 
     /*
-     *  Compose two values, using a biपंचांगask as decision value
+     *  Compose two values, using a bitmask as decision value
      *  This is equivalent to (a & mask) | (b & ~mask)
      */
 
-अटल अंतरभूत u32 comp(u32 a, u32 b, u32 mask)
-अणु
-	वापस ((a ^ b) & mask) ^ b;
-पूर्ण
+static inline u32 comp(u32 a, u32 b, u32 mask)
+{
+	return ((a ^ b) & mask) ^ b;
+}

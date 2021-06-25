@@ -1,150 +1,149 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _LINUX_POLL_H
-#घोषणा _LINUX_POLL_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _LINUX_POLL_H
+#define _LINUX_POLL_H
 
 
-#समावेश <linux/compiler.h>
-#समावेश <linux/kसमय.स>
-#समावेश <linux/रुको.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/fs.h>
-#समावेश <linux/sysctl.h>
-#समावेश <linux/uaccess.h>
-#समावेश <uapi/linux/poll.h>
-#समावेश <uapi/linux/eventpoll.h>
+#include <linux/compiler.h>
+#include <linux/ktime.h>
+#include <linux/wait.h>
+#include <linux/string.h>
+#include <linux/fs.h>
+#include <linux/sysctl.h>
+#include <linux/uaccess.h>
+#include <uapi/linux/poll.h>
+#include <uapi/linux/eventpoll.h>
 
-बाह्य काष्ठा ctl_table epoll_table[]; /* क्रम sysctl */
-/* ~832 bytes of stack space used max in sys_select/sys_poll beक्रमe allocating
+extern struct ctl_table epoll_table[]; /* for sysctl */
+/* ~832 bytes of stack space used max in sys_select/sys_poll before allocating
    additional memory. */
-#अगर_घोषित __clang__
-#घोषणा MAX_STACK_ALLOC 768
-#अन्यथा
-#घोषणा MAX_STACK_ALLOC 832
-#पूर्ण_अगर
-#घोषणा FRONTEND_STACK_ALLOC	256
-#घोषणा SELECT_STACK_ALLOC	FRONTEND_STACK_ALLOC
-#घोषणा POLL_STACK_ALLOC	FRONTEND_STACK_ALLOC
-#घोषणा WQUEUES_STACK_ALLOC	(MAX_STACK_ALLOC - FRONTEND_STACK_ALLOC)
-#घोषणा N_INLINE_POLL_ENTRIES	(WQUEUES_STACK_ALLOC / माप(काष्ठा poll_table_entry))
+#ifdef __clang__
+#define MAX_STACK_ALLOC 768
+#else
+#define MAX_STACK_ALLOC 832
+#endif
+#define FRONTEND_STACK_ALLOC	256
+#define SELECT_STACK_ALLOC	FRONTEND_STACK_ALLOC
+#define POLL_STACK_ALLOC	FRONTEND_STACK_ALLOC
+#define WQUEUES_STACK_ALLOC	(MAX_STACK_ALLOC - FRONTEND_STACK_ALLOC)
+#define N_INLINE_POLL_ENTRIES	(WQUEUES_STACK_ALLOC / sizeof(struct poll_table_entry))
 
-#घोषणा DEFAULT_POLLMASK (EPOLLIN | EPOLLOUT | EPOLLRDNORM | EPOLLWRNORM)
+#define DEFAULT_POLLMASK (EPOLLIN | EPOLLOUT | EPOLLRDNORM | EPOLLWRNORM)
 
-काष्ठा poll_table_काष्ठा;
+struct poll_table_struct;
 
 /* 
- * काष्ठाures and helpers क्रम f_op->poll implementations
+ * structures and helpers for f_op->poll implementations
  */
-प्रकार व्योम (*poll_queue_proc)(काष्ठा file *, रुको_queue_head_t *, काष्ठा poll_table_काष्ठा *);
+typedef void (*poll_queue_proc)(struct file *, wait_queue_head_t *, struct poll_table_struct *);
 
 /*
- * Do not touch the काष्ठाure directly, use the access functions
- * poll_करोes_not_रुको() and poll_requested_events() instead.
+ * Do not touch the structure directly, use the access functions
+ * poll_does_not_wait() and poll_requested_events() instead.
  */
-प्रकार काष्ठा poll_table_काष्ठा अणु
+typedef struct poll_table_struct {
 	poll_queue_proc _qproc;
 	__poll_t _key;
-पूर्ण poll_table;
+} poll_table;
 
-अटल अंतरभूत व्योम poll_रुको(काष्ठा file * filp, रुको_queue_head_t * रुको_address, poll_table *p)
-अणु
-	अगर (p && p->_qproc && रुको_address)
-		p->_qproc(filp, रुको_address, p);
-पूर्ण
-
-/*
- * Return true अगर it is guaranteed that poll will not रुको. This is the हाल
- * अगर the poll() of another file descriptor in the set got an event, so there
- * is no need क्रम रुकोing.
- */
-अटल अंतरभूत bool poll_करोes_not_रुको(स्थिर poll_table *p)
-अणु
-	वापस p == शून्य || p->_qproc == शून्य;
-पूर्ण
+static inline void poll_wait(struct file * filp, wait_queue_head_t * wait_address, poll_table *p)
+{
+	if (p && p->_qproc && wait_address)
+		p->_qproc(filp, wait_address, p);
+}
 
 /*
- * Return the set of events that the application wants to poll क्रम.
- * This is useful क्रम drivers that need to know whether a DMA transfer has
- * to be started implicitly on poll(). You typically only want to करो that
- * अगर the application is actually polling क्रम POLLIN and/or POLLOUT.
+ * Return true if it is guaranteed that poll will not wait. This is the case
+ * if the poll() of another file descriptor in the set got an event, so there
+ * is no need for waiting.
  */
-अटल अंतरभूत __poll_t poll_requested_events(स्थिर poll_table *p)
-अणु
-	वापस p ? p->_key : ~(__poll_t)0;
-पूर्ण
+static inline bool poll_does_not_wait(const poll_table *p)
+{
+	return p == NULL || p->_qproc == NULL;
+}
 
-अटल अंतरभूत व्योम init_poll_funcptr(poll_table *pt, poll_queue_proc qproc)
-अणु
+/*
+ * Return the set of events that the application wants to poll for.
+ * This is useful for drivers that need to know whether a DMA transfer has
+ * to be started implicitly on poll(). You typically only want to do that
+ * if the application is actually polling for POLLIN and/or POLLOUT.
+ */
+static inline __poll_t poll_requested_events(const poll_table *p)
+{
+	return p ? p->_key : ~(__poll_t)0;
+}
+
+static inline void init_poll_funcptr(poll_table *pt, poll_queue_proc qproc)
+{
 	pt->_qproc = qproc;
 	pt->_key   = ~(__poll_t)0; /* all events enabled */
-पूर्ण
+}
 
-अटल अंतरभूत bool file_can_poll(काष्ठा file *file)
-अणु
-	वापस file->f_op->poll;
-पूर्ण
+static inline bool file_can_poll(struct file *file)
+{
+	return file->f_op->poll;
+}
 
-अटल अंतरभूत __poll_t vfs_poll(काष्ठा file *file, काष्ठा poll_table_काष्ठा *pt)
-अणु
-	अगर (unlikely(!file->f_op->poll))
-		वापस DEFAULT_POLLMASK;
-	वापस file->f_op->poll(file, pt);
-पूर्ण
+static inline __poll_t vfs_poll(struct file *file, struct poll_table_struct *pt)
+{
+	if (unlikely(!file->f_op->poll))
+		return DEFAULT_POLLMASK;
+	return file->f_op->poll(file, pt);
+}
 
-काष्ठा poll_table_entry अणु
-	काष्ठा file *filp;
+struct poll_table_entry {
+	struct file *filp;
 	__poll_t key;
-	रुको_queue_entry_t रुको;
-	रुको_queue_head_t *रुको_address;
-पूर्ण;
+	wait_queue_entry_t wait;
+	wait_queue_head_t *wait_address;
+};
 
 /*
- * Structures and helpers क्रम select/poll syscall
+ * Structures and helpers for select/poll syscall
  */
-काष्ठा poll_wqueues अणु
+struct poll_wqueues {
 	poll_table pt;
-	काष्ठा poll_table_page *table;
-	काष्ठा task_काष्ठा *polling_task;
-	पूर्णांक triggered;
-	पूर्णांक error;
-	पूर्णांक अंतरभूत_index;
-	काष्ठा poll_table_entry अंतरभूत_entries[N_INLINE_POLL_ENTRIES];
-पूर्ण;
+	struct poll_table_page *table;
+	struct task_struct *polling_task;
+	int triggered;
+	int error;
+	int inline_index;
+	struct poll_table_entry inline_entries[N_INLINE_POLL_ENTRIES];
+};
 
-बाह्य व्योम poll_initरुको(काष्ठा poll_wqueues *pwq);
-बाह्य व्योम poll_मुक्तरुको(काष्ठा poll_wqueues *pwq);
-बाह्य u64 select_estimate_accuracy(काष्ठा बारpec64 *tv);
+extern void poll_initwait(struct poll_wqueues *pwq);
+extern void poll_freewait(struct poll_wqueues *pwq);
+extern u64 select_estimate_accuracy(struct timespec64 *tv);
 
-#घोषणा MAX_INT64_SECONDS (((s64)(~((u64)0)>>1)/HZ)-1)
+#define MAX_INT64_SECONDS (((s64)(~((u64)0)>>1)/HZ)-1)
 
-बाह्य पूर्णांक core_sys_select(पूर्णांक n, fd_set __user *inp, fd_set __user *outp,
-			   fd_set __user *exp, काष्ठा बारpec64 *end_समय);
+extern int core_sys_select(int n, fd_set __user *inp, fd_set __user *outp,
+			   fd_set __user *exp, struct timespec64 *end_time);
 
-बाह्य पूर्णांक poll_select_set_समयout(काष्ठा बारpec64 *to, समय64_t sec,
-				   दीर्घ nsec);
+extern int poll_select_set_timeout(struct timespec64 *to, time64_t sec,
+				   long nsec);
 
-#घोषणा __MAP(v, from, to) \
+#define __MAP(v, from, to) \
 	(from < to ? (v & from) * (to/from) : (v & from) / (from/to))
 
-अटल अंतरभूत __u16 mangle_poll(__poll_t val)
-अणु
-	__u16 v = (__क्रमce __u16)val;
-#घोषणा M(X) __MAP(v, (__क्रमce __u16)EPOLL##X, POLL##X)
-	वापस M(IN) | M(OUT) | M(PRI) | M(ERR) | M(NVAL) |
+static inline __u16 mangle_poll(__poll_t val)
+{
+	__u16 v = (__force __u16)val;
+#define M(X) __MAP(v, (__force __u16)EPOLL##X, POLL##X)
+	return M(IN) | M(OUT) | M(PRI) | M(ERR) | M(NVAL) |
 		M(RDNORM) | M(RDBAND) | M(WRNORM) | M(WRBAND) |
 		M(HUP) | M(RDHUP) | M(MSG);
-#अघोषित M
-पूर्ण
+#undef M
+}
 
-अटल अंतरभूत __poll_t demangle_poll(u16 val)
-अणु
-#घोषणा M(X) (__क्रमce __poll_t)__MAP(val, POLL##X, (__क्रमce __u16)EPOLL##X)
-	वापस M(IN) | M(OUT) | M(PRI) | M(ERR) | M(NVAL) |
+static inline __poll_t demangle_poll(u16 val)
+{
+#define M(X) (__force __poll_t)__MAP(val, POLL##X, (__force __u16)EPOLL##X)
+	return M(IN) | M(OUT) | M(PRI) | M(ERR) | M(NVAL) |
 		M(RDNORM) | M(RDBAND) | M(WRNORM) | M(WRBAND) |
 		M(HUP) | M(RDHUP) | M(MSG);
-#अघोषित M
-पूर्ण
-#अघोषित __MAP
+#undef M
+}
+#undef __MAP
 
 
-#पूर्ण_अगर /* _LINUX_POLL_H */
+#endif /* _LINUX_POLL_H */

@@ -1,8 +1,7 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 
 /*
-    NetWinder Floating Poपूर्णांक Emulator
+    NetWinder Floating Point Emulator
     (c) Rebel.com, 1998-1999
     (c) Philip Blundell, 1998-1999
 
@@ -10,170 +9,170 @@
 
 */
 
-#समावेश "fpa11.h"
+#include "fpa11.h"
 
-#समावेश <linux/module.h>
-#समावेश <linux/moduleparam.h>
+#include <linux/module.h>
+#include <linux/moduleparam.h>
 
 /* XXX */
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/types.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/संकेत.स>
-#समावेश <linux/sched/संकेत.स>
-#समावेश <linux/init.h>
+#include <linux/errno.h>
+#include <linux/types.h>
+#include <linux/kernel.h>
+#include <linux/signal.h>
+#include <linux/sched/signal.h>
+#include <linux/init.h>
 
-#समावेश <यंत्र/thपढ़ो_notअगरy.h>
+#include <asm/thread_notify.h>
 
-#समावेश "softfloat.h"
-#समावेश "fpopcode.h"
-#समावेश "fpmodule.h"
-#समावेश "fpa11.inl"
+#include "softfloat.h"
+#include "fpopcode.h"
+#include "fpmodule.h"
+#include "fpa11.inl"
 
-/* kernel symbols required क्रम संकेत handling */
-#अगर_घोषित CONFIG_FPE_NWFPE_XP
-#घोषणा NWFPE_BITS "extended"
-#अन्यथा
-#घोषणा NWFPE_BITS "double"
-#पूर्ण_अगर
+/* kernel symbols required for signal handling */
+#ifdef CONFIG_FPE_NWFPE_XP
+#define NWFPE_BITS "extended"
+#else
+#define NWFPE_BITS "double"
+#endif
 
-#अगर_घोषित MODULE
-व्योम fp_send_sig(अचिन्हित दीर्घ sig, काष्ठा task_काष्ठा *p, पूर्णांक priv);
-#अन्यथा
-#घोषणा fp_send_sig	send_sig
-#घोषणा kern_fp_enter	fp_enter
+#ifdef MODULE
+void fp_send_sig(unsigned long sig, struct task_struct *p, int priv);
+#else
+#define fp_send_sig	send_sig
+#define kern_fp_enter	fp_enter
 
-बाह्य अक्षर fpe_type[];
-#पूर्ण_अगर
+extern char fpe_type[];
+#endif
 
-अटल पूर्णांक nwfpe_notअगरy(काष्ठा notअगरier_block *self, अचिन्हित दीर्घ cmd, व्योम *v)
-अणु
-	काष्ठा thपढ़ो_info *thपढ़ो = v;
+static int nwfpe_notify(struct notifier_block *self, unsigned long cmd, void *v)
+{
+	struct thread_info *thread = v;
 
-	अगर (cmd == THREAD_NOTIFY_FLUSH)
-		nwfpe_init_fpa(&thपढ़ो->fpstate);
+	if (cmd == THREAD_NOTIFY_FLUSH)
+		nwfpe_init_fpa(&thread->fpstate);
 
-	वापस NOTIFY_DONE;
-पूर्ण
+	return NOTIFY_DONE;
+}
 
-अटल काष्ठा notअगरier_block nwfpe_notअगरier_block = अणु
-	.notअगरier_call = nwfpe_notअगरy,
-पूर्ण;
+static struct notifier_block nwfpe_notifier_block = {
+	.notifier_call = nwfpe_notify,
+};
 
 /* kernel function prototypes required */
-व्योम fp_setup(व्योम);
+void fp_setup(void);
 
-/* बाह्यal declarations क्रम saved kernel symbols */
-बाह्य व्योम (*kern_fp_enter)(व्योम);
+/* external declarations for saved kernel symbols */
+extern void (*kern_fp_enter)(void);
 
-/* Original value of fp_enter from kernel beक्रमe patched by fpe_init. */
-अटल व्योम (*orig_fp_enter)(व्योम);
+/* Original value of fp_enter from kernel before patched by fpe_init. */
+static void (*orig_fp_enter)(void);
 
-/* क्रमward declarations */
-बाह्य व्योम nwfpe_enter(व्योम);
+/* forward declarations */
+extern void nwfpe_enter(void);
 
-अटल पूर्णांक __init fpe_init(व्योम)
-अणु
-	अगर (माप(FPA11) > माप(जोड़ fp_state)) अणु
+static int __init fpe_init(void)
+{
+	if (sizeof(FPA11) > sizeof(union fp_state)) {
 		pr_err("nwfpe: bad structure size\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (माप(FPREG) != 12) अणु
+	if (sizeof(FPREG) != 12) {
 		pr_err("nwfpe: bad register size\n");
-		वापस -EINVAL;
-	पूर्ण
-	अगर (fpe_type[0] && म_भेद(fpe_type, "nwfpe"))
-		वापस 0;
+		return -EINVAL;
+	}
+	if (fpe_type[0] && strcmp(fpe_type, "nwfpe"))
+		return 0;
 
-	/* Display title, version and copyright inक्रमmation. */
+	/* Display title, version and copyright information. */
 	pr_info("NetWinder Floating Point Emulator V0.97 ("
 	        NWFPE_BITS " precision)\n");
 
-	thपढ़ो_रेजिस्टर_notअगरier(&nwfpe_notअगरier_block);
+	thread_register_notifier(&nwfpe_notifier_block);
 
-	/* Save poपूर्णांकer to the old FP handler and then patch ourselves in */
+	/* Save pointer to the old FP handler and then patch ourselves in */
 	orig_fp_enter = kern_fp_enter;
 	kern_fp_enter = nwfpe_enter;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम __निकास fpe_निकास(व्योम)
-अणु
-	thपढ़ो_unरेजिस्टर_notअगरier(&nwfpe_notअगरier_block);
+static void __exit fpe_exit(void)
+{
+	thread_unregister_notifier(&nwfpe_notifier_block);
 	/* Restore the values we saved earlier. */
 	kern_fp_enter = orig_fp_enter;
-पूर्ण
+}
 
 /*
 ScottB:  November 4, 1998
 
-Moved this function out of softभग्न-specialize पूर्णांकo fpmodule.c.
-This effectively isolates all the changes required क्रम पूर्णांकegrating with the
-Linux kernel पूर्णांकo fpmodule.c.  Porting to NetBSD should only require modअगरying
-fpmodule.c to पूर्णांकegrate with the NetBSD kernel (I hope!).
+Moved this function out of softfloat-specialize into fpmodule.c.
+This effectively isolates all the changes required for integrating with the
+Linux kernel into fpmodule.c.  Porting to NetBSD should only require modifying
+fpmodule.c to integrate with the NetBSD kernel (I hope!).
 
-[1/1/99: Not quite true any more unक्रमtunately.  There is Linux-specअगरic
+[1/1/99: Not quite true any more unfortunately.  There is Linux-specific
 code to access data in user space in some other source files at the 
-moment (grep क्रम get_user / put_user calls).  --philb]
+moment (grep for get_user / put_user calls).  --philb]
 
-This function is called by the SoftFloat routines to उठाओ a भग्नing
-poपूर्णांक exception.  We check the trap enable byte in the FPSR, and उठाओ
-a संक_भ_त्रुटि exception अगर necessary.  If not the relevant bits in the 
-cumulative exceptions flag byte are set and we वापस.
+This function is called by the SoftFloat routines to raise a floating
+point exception.  We check the trap enable byte in the FPSR, and raise
+a SIGFPE exception if necessary.  If not the relevant bits in the 
+cumulative exceptions flag byte are set and we return.
 */
 
-#अगर_घोषित CONFIG_DEBUG_USER
-/* By शेष, ignore inexact errors as there are far too many of them to log */
-अटल पूर्णांक debug = ~BIT_IXC;
-#पूर्ण_अगर
+#ifdef CONFIG_DEBUG_USER
+/* By default, ignore inexact errors as there are far too many of them to log */
+static int debug = ~BIT_IXC;
+#endif
 
-व्योम भग्न_उठाओ(चिन्हित अक्षर flags)
-अणु
-	रेजिस्टर अचिन्हित पूर्णांक fpsr, cumulativeTraps;
+void float_raise(signed char flags)
+{
+	register unsigned int fpsr, cumulativeTraps;
 
-#अगर_घोषित CONFIG_DEBUG_USER
-	अगर (flags & debug)
- 		prपूर्णांकk(KERN_DEBUG
+#ifdef CONFIG_DEBUG_USER
+	if (flags & debug)
+ 		printk(KERN_DEBUG
 		       "NWFPE: %s[%d] takes exception %08x at %ps from %08lx\n",
 		       current->comm, current->pid, flags,
-		       __builtin_वापस_address(0), GET_USERREG()->ARM_pc);
-#पूर्ण_अगर
+		       __builtin_return_address(0), GET_USERREG()->ARM_pc);
+#endif
 
 	/* Read fpsr and initialize the cumulativeTraps.  */
-	fpsr = पढ़ोFPSR();
+	fpsr = readFPSR();
 	cumulativeTraps = 0;
 
 	/* For each type of exception, the cumulative trap exception bit is only
-	   set अगर the corresponding trap enable bit is not set.  */
-	अगर ((!(fpsr & BIT_IXE)) && (flags & BIT_IXC))
+	   set if the corresponding trap enable bit is not set.  */
+	if ((!(fpsr & BIT_IXE)) && (flags & BIT_IXC))
 		cumulativeTraps |= BIT_IXC;
-	अगर ((!(fpsr & BIT_UFE)) && (flags & BIT_UFC))
+	if ((!(fpsr & BIT_UFE)) && (flags & BIT_UFC))
 		cumulativeTraps |= BIT_UFC;
-	अगर ((!(fpsr & BIT_OFE)) && (flags & BIT_OFC))
+	if ((!(fpsr & BIT_OFE)) && (flags & BIT_OFC))
 		cumulativeTraps |= BIT_OFC;
-	अगर ((!(fpsr & BIT_DZE)) && (flags & BIT_DZC))
+	if ((!(fpsr & BIT_DZE)) && (flags & BIT_DZC))
 		cumulativeTraps |= BIT_DZC;
-	अगर ((!(fpsr & BIT_IOE)) && (flags & BIT_IOC))
+	if ((!(fpsr & BIT_IOE)) && (flags & BIT_IOC))
 		cumulativeTraps |= BIT_IOC;
 
 	/* Set the cumulative exceptions flags.  */
-	अगर (cumulativeTraps)
-		ग_लिखोFPSR(fpsr | cumulativeTraps);
+	if (cumulativeTraps)
+		writeFPSR(fpsr | cumulativeTraps);
 
-	/* Raise an exception अगर necessary.  */
-	अगर (fpsr & (flags << 16))
-		fp_send_sig(संक_भ_त्रुटि, current, 1);
-पूर्ण
+	/* Raise an exception if necessary.  */
+	if (fpsr & (flags << 16))
+		fp_send_sig(SIGFPE, current, 1);
+}
 
 module_init(fpe_init);
-module_निकास(fpe_निकास);
+module_exit(fpe_exit);
 
 MODULE_AUTHOR("Scott Bambrough <scottb@rebel.com>");
 MODULE_DESCRIPTION("NWFPE floating point emulator (" NWFPE_BITS " precision)");
 MODULE_LICENSE("GPL");
 
-#अगर_घोषित CONFIG_DEBUG_USER
-module_param(debug, पूर्णांक, 0644);
-#पूर्ण_अगर
+#ifdef CONFIG_DEBUG_USER
+module_param(debug, int, 0644);
+#endif

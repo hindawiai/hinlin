@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0
+// SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
 /******************************************************************************
  *
  * Module Name: cmfsize - Common get file size function
@@ -8,11 +7,11 @@
  *
  *****************************************************************************/
 
-#समावेश <acpi/acpi.h>
-#समावेश "accommon.h"
-#समावेश "acapps.h"
+#include <acpi/acpi.h>
+#include "accommon.h"
+#include "acapps.h"
 
-#घोषणा _COMPONENT          ACPI_TOOLS
+#define _COMPONENT          ACPI_TOOLS
 ACPI_MODULE_NAME("cmfsize")
 
 /*******************************************************************************
@@ -23,47 +22,47 @@ ACPI_MODULE_NAME("cmfsize")
  *
  * RETURN:      File Size. On error, -1 (ACPI_UINT32_MAX)
  *
- * DESCRIPTION: Get the size of a file. Uses seek-to-खातापूर्ण. File must be खोलो.
- *              Does not disturb the current file poपूर्णांकer.
+ * DESCRIPTION: Get the size of a file. Uses seek-to-EOF. File must be open.
+ *              Does not disturb the current file pointer.
  *
  ******************************************************************************/
-u32 cm_get_file_size(ACPI_खाता file)
-अणु
-	दीर्घ file_size;
-	दीर्घ current_offset;
+u32 cm_get_file_size(ACPI_FILE file)
+{
+	long file_size;
+	long current_offset;
 	acpi_status status;
 
-	/* Save the current file poपूर्णांकer, seek to खातापूर्ण to obtain file size */
+	/* Save the current file pointer, seek to EOF to obtain file size */
 
-	current_offset = ख_बताओ(file);
-	अगर (current_offset < 0) अणु
-		जाओ offset_error;
-	पूर्ण
+	current_offset = ftell(file);
+	if (current_offset < 0) {
+		goto offset_error;
+	}
 
-	status = ख_जाओ(file, 0, अंत_से);
-	अगर (ACPI_FAILURE(status)) अणु
-		जाओ seek_error;
-	पूर्ण
+	status = fseek(file, 0, SEEK_END);
+	if (ACPI_FAILURE(status)) {
+		goto seek_error;
+	}
 
-	file_size = ख_बताओ(file);
-	अगर (file_size < 0) अणु
-		जाओ offset_error;
-	पूर्ण
+	file_size = ftell(file);
+	if (file_size < 0) {
+		goto offset_error;
+	}
 
-	/* Restore original file poपूर्णांकer */
+	/* Restore original file pointer */
 
-	status = ख_जाओ(file, current_offset, शुरू_से);
-	अगर (ACPI_FAILURE(status)) अणु
-		जाओ seek_error;
-	पूर्ण
+	status = fseek(file, current_offset, SEEK_SET);
+	if (ACPI_FAILURE(status)) {
+		goto seek_error;
+	}
 
-	वापस ((u32)file_size);
+	return ((u32)file_size);
 
 offset_error:
-	ख_लिखो(मानक_त्रुटि, "Could not get file offset\n");
-	वापस (ACPI_UINT32_MAX);
+	fprintf(stderr, "Could not get file offset\n");
+	return (ACPI_UINT32_MAX);
 
 seek_error:
-	ख_लिखो(मानक_त्रुटि, "Could not set file offset\n");
-	वापस (ACPI_UINT32_MAX);
-पूर्ण
+	fprintf(stderr, "Could not set file offset\n");
+	return (ACPI_UINT32_MAX);
+}

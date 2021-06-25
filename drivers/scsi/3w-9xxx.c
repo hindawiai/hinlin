@@ -1,36 +1,35 @@
-<शैली गुरु>
 /*
-   3w-9xxx.c -- 3ware 9000 Storage Controller device driver क्रम Linux.
+   3w-9xxx.c -- 3ware 9000 Storage Controller device driver for Linux.
 
-   Written By: Adam Radक्रमd <aradक्रमd@gmail.com>
-   Modअगरications By: Tom Couch
+   Written By: Adam Radford <aradford@gmail.com>
+   Modifications By: Tom Couch
 
    Copyright (C) 2004-2009 Applied Micro Circuits Corporation.
    Copyright (C) 2010 LSI Corporation.
 
-   This program is मुक्त software; you can redistribute it and/or modअगरy
+   This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
    the Free Software Foundation; version 2 of the License.
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License क्रम more details.
+   GNU General Public License for more details.
 
    NO WARRANTY
    THE PROGRAM IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OR
    CONDITIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED INCLUDING, WITHOUT
    LIMITATION, ANY WARRANTIES OR CONDITIONS OF TITLE, NON-INFRINGEMENT,
    MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Each Recipient is
-   solely responsible क्रम determining the appropriateness of using and
+   solely responsible for determining the appropriateness of using and
    distributing the Program and assumes all risks associated with its
    exercise of rights under this Agreement, including but not limited to
    the risks and costs of program errors, damage to or loss of data,
-   programs or equipment, and unavailability or पूर्णांकerruption of operations.
+   programs or equipment, and unavailability or interruption of operations.
 
    DISCLAIMER OF LIABILITY
    NEITHER RECIPIENT NOR ANY CONTRIBUTORS SHALL HAVE ANY LIABILITY FOR ANY
-   सूचीECT, INसूचीECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+   DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
    DAMAGES (INCLUDING WITHOUT LIMITATION LOST PROFITS), HOWEVER CAUSED AND
    ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
    TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
@@ -38,75 +37,75 @@
    HEREUNDER, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGES
 
    You should have received a copy of the GNU General Public License
-   aदीर्घ with this program; अगर not, ग_लिखो to the Free Software
+   along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
    Bugs/Comments/Suggestions should be mailed to:
-   aradक्रमd@gmail.com
+   aradford@gmail.com
 
-   Note: This version of the driver करोes not contain a bundled firmware
+   Note: This version of the driver does not contain a bundled firmware
          image.
 
    History
    -------
-   2.26.02.000 - Driver cleanup क्रम kernel submission.
-   2.26.02.001 - Replace schedule_समयout() calls with msleep().
-   2.26.02.002 - Add support क्रम PAE mode.
+   2.26.02.000 - Driver cleanup for kernel submission.
+   2.26.02.001 - Replace schedule_timeout() calls with msleep().
+   2.26.02.002 - Add support for PAE mode.
                  Add lun support.
-                 Fix twa_हटाओ() to मुक्त irq handler/unरेजिस्टर_chrdev()
-                 beक्रमe shutting करोwn card.
+                 Fix twa_remove() to free irq handler/unregister_chrdev()
+                 before shutting down card.
                  Change to new 'change_queue_depth' api.
-                 Fix 'handled=1' ISR usage, हटाओ bogus IRQ check.
-                 Remove un-needed eh_पात handler.
-                 Add support क्रम embedded firmware error strings.
+                 Fix 'handled=1' ISR usage, remove bogus IRQ check.
+                 Remove un-needed eh_abort handler.
+                 Add support for embedded firmware error strings.
    2.26.02.003 - Correctly handle single sgl's with use_sg=1.
-   2.26.02.004 - Add support क्रम 9550SX controllers.
-   2.26.02.005 - Fix use_sg == 0 mapping on प्रणालीs with 4GB or higher.
-   2.26.02.006 - Fix 9550SX pchip reset समयout.
+   2.26.02.004 - Add support for 9550SX controllers.
+   2.26.02.005 - Fix use_sg == 0 mapping on systems with 4GB or higher.
+   2.26.02.006 - Fix 9550SX pchip reset timeout.
                  Add big endian support.
-   2.26.02.007 - Disable local पूर्णांकerrupts during kmap/unmap_atomic().
-   2.26.02.008 - Free irq handler in __twa_shutकरोwn().
+   2.26.02.007 - Disable local interrupts during kmap/unmap_atomic().
+   2.26.02.008 - Free irq handler in __twa_shutdown().
                  Serialize reset code.
-                 Add support क्रम 9650SE controllers.
-   2.26.02.009 - Fix dma mask setting to fallback to 32-bit अगर 64-bit fails.
-   2.26.02.010 - Add support क्रम 9690SA controllers.
+                 Add support for 9650SE controllers.
+   2.26.02.009 - Fix dma mask setting to fallback to 32-bit if 64-bit fails.
+   2.26.02.010 - Add support for 9690SA controllers.
    2.26.02.011 - Increase max AENs drained to 256.
                  Add MSI support and "use_msi" module parameter.
                  Fix bug in twa_get_param() on 4GB+.
-                 Use pci_resource_len() क्रम ioremap().
-   2.26.02.012 - Add घातer management support.
+                 Use pci_resource_len() for ioremap().
+   2.26.02.012 - Add power management support.
    2.26.02.013 - Fix bug in twa_load_sgl().
-   2.26.02.014 - Force 60 second समयout शेष.
+   2.26.02.014 - Force 60 second timeout default.
 */
 
-#समावेश <linux/module.h>
-#समावेश <linux/reboot.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/types.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/समय.स>
-#समावेश <linux/mutex.h>
-#समावेश <linux/slab.h>
-#समावेश <यंत्र/पन.स>
-#समावेश <यंत्र/irq.h>
-#समावेश <linux/uaccess.h>
-#समावेश <scsi/scsi.h>
-#समावेश <scsi/scsi_host.h>
-#समावेश <scsi/scsi_tcq.h>
-#समावेश <scsi/scsi_cmnd.h>
-#समावेश "3w-9xxx.h"
+#include <linux/module.h>
+#include <linux/reboot.h>
+#include <linux/spinlock.h>
+#include <linux/interrupt.h>
+#include <linux/moduleparam.h>
+#include <linux/errno.h>
+#include <linux/types.h>
+#include <linux/delay.h>
+#include <linux/pci.h>
+#include <linux/time.h>
+#include <linux/mutex.h>
+#include <linux/slab.h>
+#include <asm/io.h>
+#include <asm/irq.h>
+#include <linux/uaccess.h>
+#include <scsi/scsi.h>
+#include <scsi/scsi_host.h>
+#include <scsi/scsi_tcq.h>
+#include <scsi/scsi_cmnd.h>
+#include "3w-9xxx.h"
 
 /* Globals */
-#घोषणा TW_DRIVER_VERSION "2.26.02.014"
-अटल DEFINE_MUTEX(twa_chrdev_mutex);
-अटल TW_Device_Extension *twa_device_extension_list[TW_MAX_SLOT];
-अटल अचिन्हित पूर्णांक twa_device_extension_count;
-अटल पूर्णांक twa_major = -1;
-बाह्य काष्ठा समयzone sys_tz;
+#define TW_DRIVER_VERSION "2.26.02.014"
+static DEFINE_MUTEX(twa_chrdev_mutex);
+static TW_Device_Extension *twa_device_extension_list[TW_MAX_SLOT];
+static unsigned int twa_device_extension_count;
+static int twa_major = -1;
+extern struct timezone sys_tz;
 
 /* Module parameters */
 MODULE_AUTHOR ("LSI");
@@ -114,55 +113,55 @@ MODULE_DESCRIPTION ("3ware 9000 Storage Controller Linux Driver");
 MODULE_LICENSE("GPL");
 MODULE_VERSION(TW_DRIVER_VERSION);
 
-अटल पूर्णांक use_msi = 0;
-module_param(use_msi, पूर्णांक, S_IRUGO);
+static int use_msi = 0;
+module_param(use_msi, int, S_IRUGO);
 MODULE_PARM_DESC(use_msi, "Use Message Signaled Interrupts.  Default: 0");
 
 /* Function prototypes */
-अटल व्योम twa_aen_queue_event(TW_Device_Extension *tw_dev, TW_Command_Apache_Header *header);
-अटल पूर्णांक twa_aen_पढ़ो_queue(TW_Device_Extension *tw_dev, पूर्णांक request_id);
-अटल अक्षर *twa_aen_severity_lookup(अचिन्हित अक्षर severity_code);
-अटल व्योम twa_aen_sync_समय(TW_Device_Extension *tw_dev, पूर्णांक request_id);
-अटल दीर्घ twa_chrdev_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg);
-अटल पूर्णांक twa_chrdev_खोलो(काष्ठा inode *inode, काष्ठा file *file);
-अटल पूर्णांक twa_fill_sense(TW_Device_Extension *tw_dev, पूर्णांक request_id, पूर्णांक copy_sense, पूर्णांक prपूर्णांक_host);
-अटल व्योम twa_मुक्त_request_id(TW_Device_Extension *tw_dev,पूर्णांक request_id);
-अटल व्योम twa_get_request_id(TW_Device_Extension *tw_dev, पूर्णांक *request_id);
-अटल पूर्णांक twa_initconnection(TW_Device_Extension *tw_dev, पूर्णांक message_credits,
-			      u32 set_features, अचिन्हित लघु current_fw_srl,
-			      अचिन्हित लघु current_fw_arch_id,
-			      अचिन्हित लघु current_fw_branch,
-			      अचिन्हित लघु current_fw_build,
-			      अचिन्हित लघु *fw_on_ctlr_srl,
-			      अचिन्हित लघु *fw_on_ctlr_arch_id,
-			      अचिन्हित लघु *fw_on_ctlr_branch,
-			      अचिन्हित लघु *fw_on_ctlr_build,
+static void twa_aen_queue_event(TW_Device_Extension *tw_dev, TW_Command_Apache_Header *header);
+static int twa_aen_read_queue(TW_Device_Extension *tw_dev, int request_id);
+static char *twa_aen_severity_lookup(unsigned char severity_code);
+static void twa_aen_sync_time(TW_Device_Extension *tw_dev, int request_id);
+static long twa_chrdev_ioctl(struct file *file, unsigned int cmd, unsigned long arg);
+static int twa_chrdev_open(struct inode *inode, struct file *file);
+static int twa_fill_sense(TW_Device_Extension *tw_dev, int request_id, int copy_sense, int print_host);
+static void twa_free_request_id(TW_Device_Extension *tw_dev,int request_id);
+static void twa_get_request_id(TW_Device_Extension *tw_dev, int *request_id);
+static int twa_initconnection(TW_Device_Extension *tw_dev, int message_credits,
+			      u32 set_features, unsigned short current_fw_srl,
+			      unsigned short current_fw_arch_id,
+			      unsigned short current_fw_branch,
+			      unsigned short current_fw_build,
+			      unsigned short *fw_on_ctlr_srl,
+			      unsigned short *fw_on_ctlr_arch_id,
+			      unsigned short *fw_on_ctlr_branch,
+			      unsigned short *fw_on_ctlr_build,
 			      u32 *init_connect_result);
-अटल व्योम twa_load_sgl(TW_Device_Extension *tw_dev, TW_Command_Full *full_command_packet, पूर्णांक request_id, dma_addr_t dma_handle, पूर्णांक length);
-अटल पूर्णांक twa_poll_response(TW_Device_Extension *tw_dev, पूर्णांक request_id, पूर्णांक seconds);
-अटल पूर्णांक twa_poll_status_gone(TW_Device_Extension *tw_dev, u32 flag, पूर्णांक seconds);
-अटल पूर्णांक twa_post_command_packet(TW_Device_Extension *tw_dev, पूर्णांक request_id, अक्षर पूर्णांकernal);
-अटल पूर्णांक twa_reset_device_extension(TW_Device_Extension *tw_dev);
-अटल पूर्णांक twa_reset_sequence(TW_Device_Extension *tw_dev, पूर्णांक soft_reset);
-अटल पूर्णांक twa_scsiop_execute_scsi(TW_Device_Extension *tw_dev, पूर्णांक request_id,
-				   अचिन्हित अक्षर *cdb, पूर्णांक use_sg,
+static void twa_load_sgl(TW_Device_Extension *tw_dev, TW_Command_Full *full_command_packet, int request_id, dma_addr_t dma_handle, int length);
+static int twa_poll_response(TW_Device_Extension *tw_dev, int request_id, int seconds);
+static int twa_poll_status_gone(TW_Device_Extension *tw_dev, u32 flag, int seconds);
+static int twa_post_command_packet(TW_Device_Extension *tw_dev, int request_id, char internal);
+static int twa_reset_device_extension(TW_Device_Extension *tw_dev);
+static int twa_reset_sequence(TW_Device_Extension *tw_dev, int soft_reset);
+static int twa_scsiop_execute_scsi(TW_Device_Extension *tw_dev, int request_id,
+				   unsigned char *cdb, int use_sg,
 				   TW_SG_Entry *sglistarg);
-अटल व्योम twa_scsiop_execute_scsi_complete(TW_Device_Extension *tw_dev, पूर्णांक request_id);
-अटल अक्षर *twa_string_lookup(twa_message_type *table, अचिन्हित पूर्णांक aen_code);
+static void twa_scsiop_execute_scsi_complete(TW_Device_Extension *tw_dev, int request_id);
+static char *twa_string_lookup(twa_message_type *table, unsigned int aen_code);
 
 /* Functions */
 
 /* Show some statistics about the card */
-अटल sमाप_प्रकार twa_show_stats(काष्ठा device *dev,
-			      काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा Scsi_Host *host = class_to_shost(dev);
+static ssize_t twa_show_stats(struct device *dev,
+			      struct device_attribute *attr, char *buf)
+{
+	struct Scsi_Host *host = class_to_shost(dev);
 	TW_Device_Extension *tw_dev = (TW_Device_Extension *)host->hostdata;
-	अचिन्हित दीर्घ flags = 0;
-	sमाप_प्रकार len;
+	unsigned long flags = 0;
+	ssize_t len;
 
 	spin_lock_irqsave(tw_dev->host->host_lock, flags);
-	len = snम_लिखो(buf, PAGE_SIZE, "3w-9xxx Driver version: %s\n"
+	len = snprintf(buf, PAGE_SIZE, "3w-9xxx Driver version: %s\n"
 		       "Current commands posted:   %4d\n"
 		       "Max commands posted:       %4d\n"
 		       "Current pending commands:  %4d\n"
@@ -185,52 +184,52 @@ MODULE_PARM_DESC(use_msi, "Use Message Signaled Interrupts.  Default: 0");
 		       tw_dev->num_resets,
 		       tw_dev->aen_count);
 	spin_unlock_irqrestore(tw_dev->host->host_lock, flags);
-	वापस len;
-पूर्ण /* End twa_show_stats() */
+	return len;
+} /* End twa_show_stats() */
 
 /* Create sysfs 'stats' entry */
-अटल काष्ठा device_attribute twa_host_stats_attr = अणु
-	.attr = अणु
+static struct device_attribute twa_host_stats_attr = {
+	.attr = {
 		.name =		"stats",
 		.mode =		S_IRUGO,
-	पूर्ण,
+	},
 	.show = twa_show_stats
-पूर्ण;
+};
 
 /* Host attributes initializer */
-अटल काष्ठा device_attribute *twa_host_attrs[] = अणु
+static struct device_attribute *twa_host_attrs[] = {
 	&twa_host_stats_attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-/* File operations काष्ठा क्रम अक्षरacter device */
-अटल स्थिर काष्ठा file_operations twa_fops = अणु
+/* File operations struct for character device */
+static const struct file_operations twa_fops = {
 	.owner		= THIS_MODULE,
 	.unlocked_ioctl	= twa_chrdev_ioctl,
-	.खोलो		= twa_chrdev_खोलो,
-	.release	= शून्य,
+	.open		= twa_chrdev_open,
+	.release	= NULL,
 	.llseek		= noop_llseek,
-पूर्ण;
+};
 
 /*
- * The controllers use an अंतरभूत buffer instead of a mapped SGL क्रम small,
+ * The controllers use an inline buffer instead of a mapped SGL for small,
  * single entry buffers.  Note that we treat a zero-length transfer like
  * a mapped SGL.
  */
-अटल bool twa_command_mapped(काष्ठा scsi_cmnd *cmd)
-अणु
-	वापस scsi_sg_count(cmd) != 1 ||
+static bool twa_command_mapped(struct scsi_cmnd *cmd)
+{
+	return scsi_sg_count(cmd) != 1 ||
 		scsi_bufflen(cmd) >= TW_MIN_SGL_LENGTH;
-पूर्ण
+}
 
 /* This function will complete an aen request from the isr */
-अटल पूर्णांक twa_aen_complete(TW_Device_Extension *tw_dev, पूर्णांक request_id)
-अणु
+static int twa_aen_complete(TW_Device_Extension *tw_dev, int request_id)
+{
 	TW_Command_Full *full_command_packet;
 	TW_Command *command_packet;
 	TW_Command_Apache_Header *header;
-	अचिन्हित लघु aen;
-	पूर्णांक retval = 1;
+	unsigned short aen;
+	int retval = 1;
 
 	header = (TW_Command_Apache_Header *)tw_dev->generic_buffer_virt[request_id];
 	tw_dev->posted_request_count--;
@@ -238,96 +237,96 @@ MODULE_PARM_DESC(use_msi, "Use Message Signaled Interrupts.  Default: 0");
 	full_command_packet = tw_dev->command_packet_virt[request_id];
 	command_packet = &full_command_packet->command.oldcommand;
 
-	/* First check क्रम पूर्णांकernal completion of set param क्रम समय sync */
-	अगर (TW_OP_OUT(command_packet->opcode__sgloffset) == TW_OP_SET_PARAM) अणु
-		/* Keep पढ़ोing the queue in हाल there are more aen's */
-		अगर (twa_aen_पढ़ो_queue(tw_dev, request_id))
-			जाओ out2;
-		अन्यथा अणु
+	/* First check for internal completion of set param for time sync */
+	if (TW_OP_OUT(command_packet->opcode__sgloffset) == TW_OP_SET_PARAM) {
+		/* Keep reading the queue in case there are more aen's */
+		if (twa_aen_read_queue(tw_dev, request_id))
+			goto out2;
+		else {
 			retval = 0;
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 
-	चयन (aen) अणु
-	हाल TW_AEN_QUEUE_EMPTY:
-		/* Quit पढ़ोing the queue अगर this is the last one */
-		अवरोध;
-	हाल TW_AEN_SYNC_TIME_WITH_HOST:
-		twa_aen_sync_समय(tw_dev, request_id);
+	switch (aen) {
+	case TW_AEN_QUEUE_EMPTY:
+		/* Quit reading the queue if this is the last one */
+		break;
+	case TW_AEN_SYNC_TIME_WITH_HOST:
+		twa_aen_sync_time(tw_dev, request_id);
 		retval = 0;
-		जाओ out;
-	शेष:
+		goto out;
+	default:
 		twa_aen_queue_event(tw_dev, header);
 
-		/* If there are more aen's, keep पढ़ोing the queue */
-		अगर (twa_aen_पढ़ो_queue(tw_dev, request_id))
-			जाओ out2;
-		अन्यथा अणु
+		/* If there are more aen's, keep reading the queue */
+		if (twa_aen_read_queue(tw_dev, request_id))
+			goto out2;
+		else {
 			retval = 0;
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 	retval = 0;
 out2:
 	tw_dev->state[request_id] = TW_S_COMPLETED;
-	twa_मुक्त_request_id(tw_dev, request_id);
+	twa_free_request_id(tw_dev, request_id);
 	clear_bit(TW_IN_ATTENTION_LOOP, &tw_dev->flags);
 out:
-	वापस retval;
-पूर्ण /* End twa_aen_complete() */
+	return retval;
+} /* End twa_aen_complete() */
 
 /* This function will drain aen queue */
-अटल पूर्णांक twa_aen_drain_queue(TW_Device_Extension *tw_dev, पूर्णांक no_check_reset)
-अणु
-	पूर्णांक request_id = 0;
-	अचिन्हित अक्षर cdb[TW_MAX_CDB_LEN];
+static int twa_aen_drain_queue(TW_Device_Extension *tw_dev, int no_check_reset)
+{
+	int request_id = 0;
+	unsigned char cdb[TW_MAX_CDB_LEN];
 	TW_SG_Entry sglist[1];
-	पूर्णांक finished = 0, count = 0;
+	int finished = 0, count = 0;
 	TW_Command_Full *full_command_packet;
 	TW_Command_Apache_Header *header;
-	अचिन्हित लघु aen;
-	पूर्णांक first_reset = 0, queue = 0, retval = 1;
+	unsigned short aen;
+	int first_reset = 0, queue = 0, retval = 1;
 
-	अगर (no_check_reset)
+	if (no_check_reset)
 		first_reset = 0;
-	अन्यथा
+	else
 		first_reset = 1;
 
 	full_command_packet = tw_dev->command_packet_virt[request_id];
-	स_रखो(full_command_packet, 0, माप(TW_Command_Full));
+	memset(full_command_packet, 0, sizeof(TW_Command_Full));
 
 	/* Initialize cdb */
-	स_रखो(&cdb, 0, TW_MAX_CDB_LEN);
+	memset(&cdb, 0, TW_MAX_CDB_LEN);
 	cdb[0] = REQUEST_SENSE; /* opcode */
 	cdb[4] = TW_ALLOCATION_LENGTH; /* allocation length */
 
 	/* Initialize sglist */
-	स_रखो(&sglist, 0, माप(TW_SG_Entry));
+	memset(&sglist, 0, sizeof(TW_SG_Entry));
 	sglist[0].length = TW_SECTOR_SIZE;
 	sglist[0].address = tw_dev->generic_buffer_phys[request_id];
 
-	अगर (sglist[0].address & TW_ALIGNMENT_9000_SGL) अणु
+	if (sglist[0].address & TW_ALIGNMENT_9000_SGL) {
 		TW_PRINTK(tw_dev->host, TW_DRIVER, 0x1, "Found unaligned address during AEN drain");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	/* Mark पूर्णांकernal command */
-	tw_dev->srb[request_id] = शून्य;
+	/* Mark internal command */
+	tw_dev->srb[request_id] = NULL;
 
-	करो अणु
+	do {
 		/* Send command to the board */
-		अगर (twa_scsiop_execute_scsi(tw_dev, request_id, cdb, 1, sglist)) अणु
+		if (twa_scsiop_execute_scsi(tw_dev, request_id, cdb, 1, sglist)) {
 			TW_PRINTK(tw_dev->host, TW_DRIVER, 0x2, "Error posting request sense");
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
-		/* Now poll क्रम completion */
-		अगर (twa_poll_response(tw_dev, request_id, 30)) अणु
+		/* Now poll for completion */
+		if (twa_poll_response(tw_dev, request_id, 30)) {
 			TW_PRINTK(tw_dev->host, TW_DRIVER, 0x3, "No valid response while draining AEN queue");
 			tw_dev->posted_request_count--;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		tw_dev->posted_request_count--;
 		header = (TW_Command_Apache_Header *)tw_dev->generic_buffer_virt[request_id];
@@ -335,154 +334,154 @@ out:
 		queue = 0;
 		count++;
 
-		चयन (aen) अणु
-		हाल TW_AEN_QUEUE_EMPTY:
-			अगर (first_reset != 1)
-				जाओ out;
-			अन्यथा
+		switch (aen) {
+		case TW_AEN_QUEUE_EMPTY:
+			if (first_reset != 1)
+				goto out;
+			else
 				finished = 1;
-			अवरोध;
-		हाल TW_AEN_SOFT_RESET:
-			अगर (first_reset == 0)
+			break;
+		case TW_AEN_SOFT_RESET:
+			if (first_reset == 0)
 				first_reset = 1;
-			अन्यथा
+			else
 				queue = 1;
-			अवरोध;
-		हाल TW_AEN_SYNC_TIME_WITH_HOST:
-			अवरोध;
-		शेष:
+			break;
+		case TW_AEN_SYNC_TIME_WITH_HOST:
+			break;
+		default:
 			queue = 1;
-		पूर्ण
+		}
 
 		/* Now queue an event info */
-		अगर (queue)
+		if (queue)
 			twa_aen_queue_event(tw_dev, header);
-	पूर्ण जबतक ((finished == 0) && (count < TW_MAX_AEN_DRAIN));
+	} while ((finished == 0) && (count < TW_MAX_AEN_DRAIN));
 
-	अगर (count == TW_MAX_AEN_DRAIN)
-		जाओ out;
+	if (count == TW_MAX_AEN_DRAIN)
+		goto out;
 
 	retval = 0;
 out:
 	tw_dev->state[request_id] = TW_S_INITIAL;
-	वापस retval;
-पूर्ण /* End twa_aen_drain_queue() */
+	return retval;
+} /* End twa_aen_drain_queue() */
 
 /* This function will queue an event */
-अटल व्योम twa_aen_queue_event(TW_Device_Extension *tw_dev, TW_Command_Apache_Header *header)
-अणु
-	u32 local_समय;
+static void twa_aen_queue_event(TW_Device_Extension *tw_dev, TW_Command_Apache_Header *header)
+{
+	u32 local_time;
 	TW_Event *event;
-	अचिन्हित लघु aen;
-	अक्षर host[16];
-	अक्षर *error_str;
+	unsigned short aen;
+	char host[16];
+	char *error_str;
 
 	tw_dev->aen_count++;
 
 	/* Fill out event info */
 	event = tw_dev->event_queue[tw_dev->error_index];
 
-	/* Check क्रम clobber */
+	/* Check for clobber */
 	host[0] = '\0';
-	अगर (tw_dev->host) अणु
-		प्र_लिखो(host, " scsi%d:", tw_dev->host->host_no);
-		अगर (event->retrieved == TW_AEN_NOT_RETRIEVED)
+	if (tw_dev->host) {
+		sprintf(host, " scsi%d:", tw_dev->host->host_no);
+		if (event->retrieved == TW_AEN_NOT_RETRIEVED)
 			tw_dev->aen_clobber = 1;
-	पूर्ण
+	}
 
 	aen = le16_to_cpu(header->status_block.error);
-	स_रखो(event, 0, माप(TW_Event));
+	memset(event, 0, sizeof(TW_Event));
 
 	event->severity = TW_SEV_OUT(header->status_block.severity__reserved);
-	/* event->समय_stamp_sec overflows in y2106 */
-	local_समय = (u32)(kसमय_get_real_seconds() - (sys_tz.tz_minuteswest * 60));
-	event->समय_stamp_sec = local_समय;
+	/* event->time_stamp_sec overflows in y2106 */
+	local_time = (u32)(ktime_get_real_seconds() - (sys_tz.tz_minuteswest * 60));
+	event->time_stamp_sec = local_time;
 	event->aen_code = aen;
 	event->retrieved = TW_AEN_NOT_RETRIEVED;
 	event->sequence_id = tw_dev->error_sequence_id;
 	tw_dev->error_sequence_id++;
 
-	/* Check क्रम embedded error string */
-	error_str = &(header->err_specअगरic_desc[म_माप(header->err_specअगरic_desc)+1]);
+	/* Check for embedded error string */
+	error_str = &(header->err_specific_desc[strlen(header->err_specific_desc)+1]);
 
-	header->err_specअगरic_desc[माप(header->err_specअगरic_desc) - 1] = '\0';
-	event->parameter_len = म_माप(header->err_specअगरic_desc);
-	स_नकल(event->parameter_data, header->err_specअगरic_desc, event->parameter_len + (error_str[0] == '\0' ? 0 : (1 + म_माप(error_str))));
-	अगर (event->severity != TW_AEN_SEVERITY_DEBUG)
-		prपूर्णांकk(KERN_WARNING "3w-9xxx:%s AEN: %s (0x%02X:0x%04X): %s:%s.\n",
+	header->err_specific_desc[sizeof(header->err_specific_desc) - 1] = '\0';
+	event->parameter_len = strlen(header->err_specific_desc);
+	memcpy(event->parameter_data, header->err_specific_desc, event->parameter_len + (error_str[0] == '\0' ? 0 : (1 + strlen(error_str))));
+	if (event->severity != TW_AEN_SEVERITY_DEBUG)
+		printk(KERN_WARNING "3w-9xxx:%s AEN: %s (0x%02X:0x%04X): %s:%s.\n",
 		       host,
 		       twa_aen_severity_lookup(TW_SEV_OUT(header->status_block.severity__reserved)),
 		       TW_MESSAGE_SOURCE_CONTROLLER_EVENT, aen,
 		       error_str[0] == '\0' ? twa_string_lookup(twa_aen_table, aen) : error_str,
-		       header->err_specअगरic_desc);
-	अन्यथा
+		       header->err_specific_desc);
+	else
 		tw_dev->aen_count--;
 
-	अगर ((tw_dev->error_index + 1) == TW_Q_LENGTH)
+	if ((tw_dev->error_index + 1) == TW_Q_LENGTH)
 		tw_dev->event_queue_wrapped = 1;
 	tw_dev->error_index = (tw_dev->error_index + 1 ) % TW_Q_LENGTH;
-पूर्ण /* End twa_aen_queue_event() */
+} /* End twa_aen_queue_event() */
 
-/* This function will पढ़ो the aen queue from the isr */
-अटल पूर्णांक twa_aen_पढ़ो_queue(TW_Device_Extension *tw_dev, पूर्णांक request_id)
-अणु
-	अचिन्हित अक्षर cdb[TW_MAX_CDB_LEN];
+/* This function will read the aen queue from the isr */
+static int twa_aen_read_queue(TW_Device_Extension *tw_dev, int request_id)
+{
+	unsigned char cdb[TW_MAX_CDB_LEN];
 	TW_SG_Entry sglist[1];
 	TW_Command_Full *full_command_packet;
-	पूर्णांक retval = 1;
+	int retval = 1;
 
 	full_command_packet = tw_dev->command_packet_virt[request_id];
-	स_रखो(full_command_packet, 0, माप(TW_Command_Full));
+	memset(full_command_packet, 0, sizeof(TW_Command_Full));
 
 	/* Initialize cdb */
-	स_रखो(&cdb, 0, TW_MAX_CDB_LEN);
+	memset(&cdb, 0, TW_MAX_CDB_LEN);
 	cdb[0] = REQUEST_SENSE; /* opcode */
 	cdb[4] = TW_ALLOCATION_LENGTH; /* allocation length */
 
 	/* Initialize sglist */
-	स_रखो(&sglist, 0, माप(TW_SG_Entry));
+	memset(&sglist, 0, sizeof(TW_SG_Entry));
 	sglist[0].length = TW_SECTOR_SIZE;
 	sglist[0].address = tw_dev->generic_buffer_phys[request_id];
 
-	/* Mark पूर्णांकernal command */
-	tw_dev->srb[request_id] = शून्य;
+	/* Mark internal command */
+	tw_dev->srb[request_id] = NULL;
 
 	/* Now post the command packet */
-	अगर (twa_scsiop_execute_scsi(tw_dev, request_id, cdb, 1, sglist)) अणु
+	if (twa_scsiop_execute_scsi(tw_dev, request_id, cdb, 1, sglist)) {
 		TW_PRINTK(tw_dev->host, TW_DRIVER, 0x4, "Post failed while reading AEN queue");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	retval = 0;
 out:
-	वापस retval;
-पूर्ण /* End twa_aen_पढ़ो_queue() */
+	return retval;
+} /* End twa_aen_read_queue() */
 
 /* This function will look up an AEN severity string */
-अटल अक्षर *twa_aen_severity_lookup(अचिन्हित अक्षर severity_code)
-अणु
-	अक्षर *retval = शून्य;
+static char *twa_aen_severity_lookup(unsigned char severity_code)
+{
+	char *retval = NULL;
 
-	अगर ((severity_code < (अचिन्हित अक्षर) TW_AEN_SEVERITY_ERROR) ||
-	    (severity_code > (अचिन्हित अक्षर) TW_AEN_SEVERITY_DEBUG))
-		जाओ out;
+	if ((severity_code < (unsigned char) TW_AEN_SEVERITY_ERROR) ||
+	    (severity_code > (unsigned char) TW_AEN_SEVERITY_DEBUG))
+		goto out;
 
 	retval = twa_aen_severity_table[severity_code];
 out:
-	वापस retval;
-पूर्ण /* End twa_aen_severity_lookup() */
+	return retval;
+} /* End twa_aen_severity_lookup() */
 
-/* This function will sync firmware समय with the host समय */
-अटल व्योम twa_aen_sync_समय(TW_Device_Extension *tw_dev, पूर्णांक request_id)
-अणु
-	u32 schedulerसमय;
+/* This function will sync firmware time with the host time */
+static void twa_aen_sync_time(TW_Device_Extension *tw_dev, int request_id)
+{
+	u32 schedulertime;
 	TW_Command_Full *full_command_packet;
 	TW_Command *command_packet;
 	TW_Param_Apache *param;
-	समय64_t local_समय;
+	time64_t local_time;
 
 	/* Fill out the command packet */
 	full_command_packet = tw_dev->command_packet_virt[request_id];
-	स_रखो(full_command_packet, 0, माप(TW_Command_Full));
+	memset(full_command_packet, 0, sizeof(TW_Command_Full));
 	command_packet = &full_command_packet->command.oldcommand;
 	command_packet->opcode__sgloffset = TW_OPSGL_IN(2, TW_OP_SET_PARAM);
 	command_packet->request_id = request_id;
@@ -493,132 +492,132 @@ out:
 
 	/* Setup the param */
 	param = (TW_Param_Apache *)tw_dev->generic_buffer_virt[request_id];
-	स_रखो(param, 0, TW_SECTOR_SIZE);
-	param->table_id = cpu_to_le16(TW_TIMEKEEP_TABLE | 0x8000); /* Controller समय keep table */
+	memset(param, 0, TW_SECTOR_SIZE);
+	param->table_id = cpu_to_le16(TW_TIMEKEEP_TABLE | 0x8000); /* Controller time keep table */
 	param->parameter_id = cpu_to_le16(0x3); /* SchedulerTime */
 	param->parameter_size_bytes = cpu_to_le16(4);
 
-	/* Convert प्रणाली समय in UTC to local समय seconds since last
+	/* Convert system time in UTC to local time seconds since last
            Sunday 12:00AM */
-	local_समय = (kसमय_get_real_seconds() - (sys_tz.tz_minuteswest * 60));
-	भाग_u64_rem(local_समय - (3 * 86400), 604800, &schedulerसमय);
-	schedulerसमय = cpu_to_le32(schedulerसमय % 604800);
+	local_time = (ktime_get_real_seconds() - (sys_tz.tz_minuteswest * 60));
+	div_u64_rem(local_time - (3 * 86400), 604800, &schedulertime);
+	schedulertime = cpu_to_le32(schedulertime % 604800);
 
-	स_नकल(param->data, &schedulerसमय, माप(u32));
+	memcpy(param->data, &schedulertime, sizeof(u32));
 
-	/* Mark पूर्णांकernal command */
-	tw_dev->srb[request_id] = शून्य;
+	/* Mark internal command */
+	tw_dev->srb[request_id] = NULL;
 
 	/* Now post the command */
 	twa_post_command_packet(tw_dev, request_id, 1);
-पूर्ण /* End twa_aen_sync_समय() */
+} /* End twa_aen_sync_time() */
 
-/* This function will allocate memory and check अगर it is correctly aligned */
-अटल पूर्णांक twa_allocate_memory(TW_Device_Extension *tw_dev, पूर्णांक size, पूर्णांक which)
-अणु
-	पूर्णांक i;
+/* This function will allocate memory and check if it is correctly aligned */
+static int twa_allocate_memory(TW_Device_Extension *tw_dev, int size, int which)
+{
+	int i;
 	dma_addr_t dma_handle;
-	अचिन्हित दीर्घ *cpu_addr;
-	पूर्णांक retval = 1;
+	unsigned long *cpu_addr;
+	int retval = 1;
 
 	cpu_addr = dma_alloc_coherent(&tw_dev->tw_pci_dev->dev,
 			size * TW_Q_LENGTH, &dma_handle, GFP_KERNEL);
-	अगर (!cpu_addr) अणु
+	if (!cpu_addr) {
 		TW_PRINTK(tw_dev->host, TW_DRIVER, 0x5, "Memory allocation failed");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर ((अचिन्हित दीर्घ)cpu_addr % (TW_ALIGNMENT_9000)) अणु
+	if ((unsigned long)cpu_addr % (TW_ALIGNMENT_9000)) {
 		TW_PRINTK(tw_dev->host, TW_DRIVER, 0x6, "Failed to allocate correctly aligned memory");
-		dma_मुक्त_coherent(&tw_dev->tw_pci_dev->dev, size * TW_Q_LENGTH,
+		dma_free_coherent(&tw_dev->tw_pci_dev->dev, size * TW_Q_LENGTH,
 				cpu_addr, dma_handle);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	स_रखो(cpu_addr, 0, size*TW_Q_LENGTH);
+	memset(cpu_addr, 0, size*TW_Q_LENGTH);
 
-	क्रम (i = 0; i < TW_Q_LENGTH; i++) अणु
-		चयन(which) अणु
-		हाल 0:
+	for (i = 0; i < TW_Q_LENGTH; i++) {
+		switch(which) {
+		case 0:
 			tw_dev->command_packet_phys[i] = dma_handle+(i*size);
-			tw_dev->command_packet_virt[i] = (TW_Command_Full *)((अचिन्हित अक्षर *)cpu_addr + (i*size));
-			अवरोध;
-		हाल 1:
+			tw_dev->command_packet_virt[i] = (TW_Command_Full *)((unsigned char *)cpu_addr + (i*size));
+			break;
+		case 1:
 			tw_dev->generic_buffer_phys[i] = dma_handle+(i*size);
-			tw_dev->generic_buffer_virt[i] = (अचिन्हित दीर्घ *)((अचिन्हित अक्षर *)cpu_addr + (i*size));
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			tw_dev->generic_buffer_virt[i] = (unsigned long *)((unsigned char *)cpu_addr + (i*size));
+			break;
+		}
+	}
 	retval = 0;
 out:
-	वापस retval;
-पूर्ण /* End twa_allocate_memory() */
+	return retval;
+} /* End twa_allocate_memory() */
 
-/* This function will check the status रेजिस्टर क्रम unexpected bits */
-अटल पूर्णांक twa_check_bits(u32 status_reg_value)
-अणु
-	पूर्णांक retval = 1;
+/* This function will check the status register for unexpected bits */
+static int twa_check_bits(u32 status_reg_value)
+{
+	int retval = 1;
 
-	अगर ((status_reg_value & TW_STATUS_EXPECTED_BITS) != TW_STATUS_EXPECTED_BITS)
-		जाओ out;
-	अगर ((status_reg_value & TW_STATUS_UNEXPECTED_BITS) != 0)
-		जाओ out;
+	if ((status_reg_value & TW_STATUS_EXPECTED_BITS) != TW_STATUS_EXPECTED_BITS)
+		goto out;
+	if ((status_reg_value & TW_STATUS_UNEXPECTED_BITS) != 0)
+		goto out;
 
 	retval = 0;
 out:
-	वापस retval;
-पूर्ण /* End twa_check_bits() */
+	return retval;
+} /* End twa_check_bits() */
 
-/* This function will check the srl and decide अगर we are compatible  */
-अटल पूर्णांक twa_check_srl(TW_Device_Extension *tw_dev, पूर्णांक *flashed)
-अणु
-	पूर्णांक retval = 1;
-	अचिन्हित लघु fw_on_ctlr_srl = 0, fw_on_ctlr_arch_id = 0;
-	अचिन्हित लघु fw_on_ctlr_branch = 0, fw_on_ctlr_build = 0;
+/* This function will check the srl and decide if we are compatible  */
+static int twa_check_srl(TW_Device_Extension *tw_dev, int *flashed)
+{
+	int retval = 1;
+	unsigned short fw_on_ctlr_srl = 0, fw_on_ctlr_arch_id = 0;
+	unsigned short fw_on_ctlr_branch = 0, fw_on_ctlr_build = 0;
 	u32 init_connect_result = 0;
 
-	अगर (twa_initconnection(tw_dev, TW_INIT_MESSAGE_CREDITS,
+	if (twa_initconnection(tw_dev, TW_INIT_MESSAGE_CREDITS,
 			       TW_EXTENDED_INIT_CONNECT, TW_CURRENT_DRIVER_SRL,
 			       TW_9000_ARCH_ID, TW_CURRENT_DRIVER_BRANCH,
 			       TW_CURRENT_DRIVER_BUILD, &fw_on_ctlr_srl,
 			       &fw_on_ctlr_arch_id, &fw_on_ctlr_branch,
-			       &fw_on_ctlr_build, &init_connect_result)) अणु
+			       &fw_on_ctlr_build, &init_connect_result)) {
 		TW_PRINTK(tw_dev->host, TW_DRIVER, 0x7, "Initconnection failed while checking SRL");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	tw_dev->tw_compat_info.working_srl = fw_on_ctlr_srl;
 	tw_dev->tw_compat_info.working_branch = fw_on_ctlr_branch;
 	tw_dev->tw_compat_info.working_build = fw_on_ctlr_build;
 
 	/* Try base mode compatibility */
-	अगर (!(init_connect_result & TW_CTLR_FW_COMPATIBLE)) अणु
-		अगर (twa_initconnection(tw_dev, TW_INIT_MESSAGE_CREDITS,
+	if (!(init_connect_result & TW_CTLR_FW_COMPATIBLE)) {
+		if (twa_initconnection(tw_dev, TW_INIT_MESSAGE_CREDITS,
 				       TW_EXTENDED_INIT_CONNECT,
 				       TW_BASE_FW_SRL, TW_9000_ARCH_ID,
 				       TW_BASE_FW_BRANCH, TW_BASE_FW_BUILD,
 				       &fw_on_ctlr_srl, &fw_on_ctlr_arch_id,
 				       &fw_on_ctlr_branch, &fw_on_ctlr_build,
-				       &init_connect_result)) अणु
+				       &init_connect_result)) {
 			TW_PRINTK(tw_dev->host, TW_DRIVER, 0xa, "Initconnection (base mode) failed while checking SRL");
-			जाओ out;
-		पूर्ण
-		अगर (!(init_connect_result & TW_CTLR_FW_COMPATIBLE)) अणु
-			अगर (TW_CURRENT_DRIVER_SRL > fw_on_ctlr_srl) अणु
+			goto out;
+		}
+		if (!(init_connect_result & TW_CTLR_FW_COMPATIBLE)) {
+			if (TW_CURRENT_DRIVER_SRL > fw_on_ctlr_srl) {
 				TW_PRINTK(tw_dev->host, TW_DRIVER, 0x32, "Firmware and driver incompatibility: please upgrade firmware");
-			पूर्ण अन्यथा अणु
+			} else {
 				TW_PRINTK(tw_dev->host, TW_DRIVER, 0x33, "Firmware and driver incompatibility: please upgrade driver");
-			पूर्ण
-			जाओ out;
-		पूर्ण
+			}
+			goto out;
+		}
 		tw_dev->tw_compat_info.working_srl = TW_BASE_FW_SRL;
 		tw_dev->tw_compat_info.working_branch = TW_BASE_FW_BRANCH;
 		tw_dev->tw_compat_info.working_build = TW_BASE_FW_BUILD;
-	पूर्ण
+	}
 
-	/* Load rest of compatibility काष्ठा */
+	/* Load rest of compatibility struct */
 	strlcpy(tw_dev->tw_compat_info.driver_version, TW_DRIVER_VERSION,
-		माप(tw_dev->tw_compat_info.driver_version));
+		sizeof(tw_dev->tw_compat_info.driver_version));
 	tw_dev->tw_compat_info.driver_srl_high = TW_CURRENT_DRIVER_SRL;
 	tw_dev->tw_compat_info.driver_branch_high = TW_CURRENT_DRIVER_BRANCH;
 	tw_dev->tw_compat_info.driver_build_high = TW_CURRENT_DRIVER_BUILD;
@@ -631,440 +630,440 @@ out:
 
 	retval = 0;
 out:
-	वापस retval;
-पूर्ण /* End twa_check_srl() */
+	return retval;
+} /* End twa_check_srl() */
 
-/* This function handles ioctl क्रम the अक्षरacter device */
-अटल दीर्घ twa_chrdev_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
-अणु
-	काष्ठा inode *inode = file_inode(file);
-	दीर्घ समयout;
-	अचिन्हित दीर्घ *cpu_addr, data_buffer_length_adjusted = 0, flags = 0;
+/* This function handles ioctl for the character device */
+static long twa_chrdev_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
+{
+	struct inode *inode = file_inode(file);
+	long timeout;
+	unsigned long *cpu_addr, data_buffer_length_adjusted = 0, flags = 0;
 	dma_addr_t dma_handle;
-	पूर्णांक request_id = 0;
-	अचिन्हित पूर्णांक sequence_id = 0;
-	अचिन्हित अक्षर event_index, start_index;
+	int request_id = 0;
+	unsigned int sequence_id = 0;
+	unsigned char event_index, start_index;
 	TW_Ioctl_Driver_Command driver_command;
 	TW_Ioctl_Buf_Apache *tw_ioctl;
 	TW_Lock *tw_lock;
 	TW_Command_Full *full_command_packet;
 	TW_Compatibility_Info *tw_compat_info;
 	TW_Event *event;
-	kसमय_प्रकार current_समय;
+	ktime_t current_time;
 	TW_Device_Extension *tw_dev = twa_device_extension_list[iminor(inode)];
-	पूर्णांक retval = TW_IOCTL_ERROR_OS_EFAULT;
-	व्योम __user *argp = (व्योम __user *)arg;
+	int retval = TW_IOCTL_ERROR_OS_EFAULT;
+	void __user *argp = (void __user *)arg;
 
 	mutex_lock(&twa_chrdev_mutex);
 
-	/* Only let one of these through at a समय */
-	अगर (mutex_lock_पूर्णांकerruptible(&tw_dev->ioctl_lock)) अणु
+	/* Only let one of these through at a time */
+	if (mutex_lock_interruptible(&tw_dev->ioctl_lock)) {
 		retval = TW_IOCTL_ERROR_OS_EINTR;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	/* First copy करोwn the driver command */
-	अगर (copy_from_user(&driver_command, argp, माप(TW_Ioctl_Driver_Command)))
-		जाओ out2;
+	/* First copy down the driver command */
+	if (copy_from_user(&driver_command, argp, sizeof(TW_Ioctl_Driver_Command)))
+		goto out2;
 
 	/* Check data buffer size */
-	अगर (driver_command.buffer_length > TW_MAX_SECTORS * 2048) अणु
+	if (driver_command.buffer_length > TW_MAX_SECTORS * 2048) {
 		retval = TW_IOCTL_ERROR_OS_EINVAL;
-		जाओ out2;
-	पूर्ण
+		goto out2;
+	}
 
-	/* Hardware can only करो multiple of 512 byte transfers */
+	/* Hardware can only do multiple of 512 byte transfers */
 	data_buffer_length_adjusted = (driver_command.buffer_length + 511) & ~511;
 
 	/* Now allocate ioctl buf memory */
-	cpu_addr = dma_alloc_coherent(&tw_dev->tw_pci_dev->dev, data_buffer_length_adjusted+माप(TW_Ioctl_Buf_Apache) - 1, &dma_handle, GFP_KERNEL);
-	अगर (!cpu_addr) अणु
+	cpu_addr = dma_alloc_coherent(&tw_dev->tw_pci_dev->dev, data_buffer_length_adjusted+sizeof(TW_Ioctl_Buf_Apache) - 1, &dma_handle, GFP_KERNEL);
+	if (!cpu_addr) {
 		retval = TW_IOCTL_ERROR_OS_ENOMEM;
-		जाओ out2;
-	पूर्ण
+		goto out2;
+	}
 
 	tw_ioctl = (TW_Ioctl_Buf_Apache *)cpu_addr;
 
-	/* Now copy करोwn the entire ioctl */
-	अगर (copy_from_user(tw_ioctl, argp, driver_command.buffer_length + माप(TW_Ioctl_Buf_Apache) - 1))
-		जाओ out3;
+	/* Now copy down the entire ioctl */
+	if (copy_from_user(tw_ioctl, argp, driver_command.buffer_length + sizeof(TW_Ioctl_Buf_Apache) - 1))
+		goto out3;
 
-	/* See which ioctl we are करोing */
-	चयन (cmd) अणु
-	हाल TW_IOCTL_FIRMWARE_PASS_THROUGH:
+	/* See which ioctl we are doing */
+	switch (cmd) {
+	case TW_IOCTL_FIRMWARE_PASS_THROUGH:
 		spin_lock_irqsave(tw_dev->host->host_lock, flags);
 		twa_get_request_id(tw_dev, &request_id);
 
-		/* Flag पूर्णांकernal command */
-		tw_dev->srb[request_id] = शून्य;
+		/* Flag internal command */
+		tw_dev->srb[request_id] = NULL;
 
 		/* Flag chrdev ioctl */
 		tw_dev->chrdev_request_id = request_id;
 
 		full_command_packet = &tw_ioctl->firmware_command;
 
-		/* Load request id and sglist क्रम both command types */
+		/* Load request id and sglist for both command types */
 		twa_load_sgl(tw_dev, full_command_packet, request_id, dma_handle, data_buffer_length_adjusted);
 
-		स_नकल(tw_dev->command_packet_virt[request_id], &(tw_ioctl->firmware_command), माप(TW_Command_Full));
+		memcpy(tw_dev->command_packet_virt[request_id], &(tw_ioctl->firmware_command), sizeof(TW_Command_Full));
 
 		/* Now post the command packet to the controller */
 		twa_post_command_packet(tw_dev, request_id, 1);
 		spin_unlock_irqrestore(tw_dev->host->host_lock, flags);
 
-		समयout = TW_IOCTL_CHRDEV_TIMEOUT*HZ;
+		timeout = TW_IOCTL_CHRDEV_TIMEOUT*HZ;
 
-		/* Now रुको क्रम command to complete */
-		समयout = रुको_event_समयout(tw_dev->ioctl_wqueue, tw_dev->chrdev_request_id == TW_IOCTL_CHRDEV_FREE, समयout);
+		/* Now wait for command to complete */
+		timeout = wait_event_timeout(tw_dev->ioctl_wqueue, tw_dev->chrdev_request_id == TW_IOCTL_CHRDEV_FREE, timeout);
 
-		/* We समयd out, and didn't get an पूर्णांकerrupt */
-		अगर (tw_dev->chrdev_request_id != TW_IOCTL_CHRDEV_FREE) अणु
+		/* We timed out, and didn't get an interrupt */
+		if (tw_dev->chrdev_request_id != TW_IOCTL_CHRDEV_FREE) {
 			/* Now we need to reset the board */
-			prपूर्णांकk(KERN_WARNING "3w-9xxx: scsi%d: WARNING: (0x%02X:0x%04X): Character ioctl (0x%x) timed out, resetting card.\n",
+			printk(KERN_WARNING "3w-9xxx: scsi%d: WARNING: (0x%02X:0x%04X): Character ioctl (0x%x) timed out, resetting card.\n",
 			       tw_dev->host->host_no, TW_DRIVER, 0x37,
 			       cmd);
 			retval = TW_IOCTL_ERROR_OS_EIO;
 			twa_reset_device_extension(tw_dev);
-			जाओ out3;
-		पूर्ण
+			goto out3;
+		}
 
 		/* Now copy in the command packet response */
-		स_नकल(&(tw_ioctl->firmware_command), tw_dev->command_packet_virt[request_id], माप(TW_Command_Full));
+		memcpy(&(tw_ioctl->firmware_command), tw_dev->command_packet_virt[request_id], sizeof(TW_Command_Full));
 
 		/* Now complete the io */
 		spin_lock_irqsave(tw_dev->host->host_lock, flags);
 		tw_dev->posted_request_count--;
 		tw_dev->state[request_id] = TW_S_COMPLETED;
-		twa_मुक्त_request_id(tw_dev, request_id);
+		twa_free_request_id(tw_dev, request_id);
 		spin_unlock_irqrestore(tw_dev->host->host_lock, flags);
-		अवरोध;
-	हाल TW_IOCTL_GET_COMPATIBILITY_INFO:
+		break;
+	case TW_IOCTL_GET_COMPATIBILITY_INFO:
 		tw_ioctl->driver_command.status = 0;
-		/* Copy compatibility काष्ठा पूर्णांकo ioctl data buffer */
+		/* Copy compatibility struct into ioctl data buffer */
 		tw_compat_info = (TW_Compatibility_Info *)tw_ioctl->data_buffer;
-		स_नकल(tw_compat_info, &tw_dev->tw_compat_info, माप(TW_Compatibility_Info));
-		अवरोध;
-	हाल TW_IOCTL_GET_LAST_EVENT:
-		अगर (tw_dev->event_queue_wrapped) अणु
-			अगर (tw_dev->aen_clobber) अणु
+		memcpy(tw_compat_info, &tw_dev->tw_compat_info, sizeof(TW_Compatibility_Info));
+		break;
+	case TW_IOCTL_GET_LAST_EVENT:
+		if (tw_dev->event_queue_wrapped) {
+			if (tw_dev->aen_clobber) {
 				tw_ioctl->driver_command.status = TW_IOCTL_ERROR_STATUS_AEN_CLOBBER;
 				tw_dev->aen_clobber = 0;
-			पूर्ण अन्यथा
+			} else
 				tw_ioctl->driver_command.status = 0;
-		पूर्ण अन्यथा अणु
-			अगर (!tw_dev->error_index) अणु
+		} else {
+			if (!tw_dev->error_index) {
 				tw_ioctl->driver_command.status = TW_IOCTL_ERROR_STATUS_NO_MORE_EVENTS;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 			tw_ioctl->driver_command.status = 0;
-		पूर्ण
+		}
 		event_index = (tw_dev->error_index - 1 + TW_Q_LENGTH) % TW_Q_LENGTH;
-		स_नकल(tw_ioctl->data_buffer, tw_dev->event_queue[event_index], माप(TW_Event));
+		memcpy(tw_ioctl->data_buffer, tw_dev->event_queue[event_index], sizeof(TW_Event));
 		tw_dev->event_queue[event_index]->retrieved = TW_AEN_RETRIEVED;
-		अवरोध;
-	हाल TW_IOCTL_GET_FIRST_EVENT:
-		अगर (tw_dev->event_queue_wrapped) अणु
-			अगर (tw_dev->aen_clobber) अणु
+		break;
+	case TW_IOCTL_GET_FIRST_EVENT:
+		if (tw_dev->event_queue_wrapped) {
+			if (tw_dev->aen_clobber) {
 				tw_ioctl->driver_command.status = TW_IOCTL_ERROR_STATUS_AEN_CLOBBER;
 				tw_dev->aen_clobber = 0;
-			पूर्ण अन्यथा
+			} else
 				tw_ioctl->driver_command.status = 0;
 			event_index = tw_dev->error_index;
-		पूर्ण अन्यथा अणु
-			अगर (!tw_dev->error_index) अणु
+		} else {
+			if (!tw_dev->error_index) {
 				tw_ioctl->driver_command.status = TW_IOCTL_ERROR_STATUS_NO_MORE_EVENTS;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 			tw_ioctl->driver_command.status = 0;
 			event_index = 0;
-		पूर्ण
-		स_नकल(tw_ioctl->data_buffer, tw_dev->event_queue[event_index], माप(TW_Event));
+		}
+		memcpy(tw_ioctl->data_buffer, tw_dev->event_queue[event_index], sizeof(TW_Event));
 		tw_dev->event_queue[event_index]->retrieved = TW_AEN_RETRIEVED;
-		अवरोध;
-	हाल TW_IOCTL_GET_NEXT_EVENT:
+		break;
+	case TW_IOCTL_GET_NEXT_EVENT:
 		event = (TW_Event *)tw_ioctl->data_buffer;
 		sequence_id = event->sequence_id;
 		tw_ioctl->driver_command.status = 0;
 
-		अगर (tw_dev->event_queue_wrapped) अणु
-			अगर (tw_dev->aen_clobber) अणु
+		if (tw_dev->event_queue_wrapped) {
+			if (tw_dev->aen_clobber) {
 				tw_ioctl->driver_command.status = TW_IOCTL_ERROR_STATUS_AEN_CLOBBER;
 				tw_dev->aen_clobber = 0;
-			पूर्ण
+			}
 			start_index = tw_dev->error_index;
-		पूर्ण अन्यथा अणु
-			अगर (!tw_dev->error_index) अणु
+		} else {
+			if (!tw_dev->error_index) {
 				tw_ioctl->driver_command.status = TW_IOCTL_ERROR_STATUS_NO_MORE_EVENTS;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 			start_index = 0;
-		पूर्ण
+		}
 		event_index = (start_index + sequence_id - tw_dev->event_queue[start_index]->sequence_id + 1) % TW_Q_LENGTH;
 
-		अगर (!(tw_dev->event_queue[event_index]->sequence_id > sequence_id)) अणु
-			अगर (tw_ioctl->driver_command.status == TW_IOCTL_ERROR_STATUS_AEN_CLOBBER)
+		if (!(tw_dev->event_queue[event_index]->sequence_id > sequence_id)) {
+			if (tw_ioctl->driver_command.status == TW_IOCTL_ERROR_STATUS_AEN_CLOBBER)
 				tw_dev->aen_clobber = 1;
 			tw_ioctl->driver_command.status = TW_IOCTL_ERROR_STATUS_NO_MORE_EVENTS;
-			अवरोध;
-		पूर्ण
-		स_नकल(tw_ioctl->data_buffer, tw_dev->event_queue[event_index], माप(TW_Event));
+			break;
+		}
+		memcpy(tw_ioctl->data_buffer, tw_dev->event_queue[event_index], sizeof(TW_Event));
 		tw_dev->event_queue[event_index]->retrieved = TW_AEN_RETRIEVED;
-		अवरोध;
-	हाल TW_IOCTL_GET_PREVIOUS_EVENT:
+		break;
+	case TW_IOCTL_GET_PREVIOUS_EVENT:
 		event = (TW_Event *)tw_ioctl->data_buffer;
 		sequence_id = event->sequence_id;
 		tw_ioctl->driver_command.status = 0;
 
-		अगर (tw_dev->event_queue_wrapped) अणु
-			अगर (tw_dev->aen_clobber) अणु
+		if (tw_dev->event_queue_wrapped) {
+			if (tw_dev->aen_clobber) {
 				tw_ioctl->driver_command.status = TW_IOCTL_ERROR_STATUS_AEN_CLOBBER;
 				tw_dev->aen_clobber = 0;
-			पूर्ण
+			}
 			start_index = tw_dev->error_index;
-		पूर्ण अन्यथा अणु
-			अगर (!tw_dev->error_index) अणु
+		} else {
+			if (!tw_dev->error_index) {
 				tw_ioctl->driver_command.status = TW_IOCTL_ERROR_STATUS_NO_MORE_EVENTS;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 			start_index = 0;
-		पूर्ण
+		}
 		event_index = (start_index + sequence_id - tw_dev->event_queue[start_index]->sequence_id - 1) % TW_Q_LENGTH;
 
-		अगर (!(tw_dev->event_queue[event_index]->sequence_id < sequence_id)) अणु
-			अगर (tw_ioctl->driver_command.status == TW_IOCTL_ERROR_STATUS_AEN_CLOBBER)
+		if (!(tw_dev->event_queue[event_index]->sequence_id < sequence_id)) {
+			if (tw_ioctl->driver_command.status == TW_IOCTL_ERROR_STATUS_AEN_CLOBBER)
 				tw_dev->aen_clobber = 1;
 			tw_ioctl->driver_command.status = TW_IOCTL_ERROR_STATUS_NO_MORE_EVENTS;
-			अवरोध;
-		पूर्ण
-		स_नकल(tw_ioctl->data_buffer, tw_dev->event_queue[event_index], माप(TW_Event));
+			break;
+		}
+		memcpy(tw_ioctl->data_buffer, tw_dev->event_queue[event_index], sizeof(TW_Event));
 		tw_dev->event_queue[event_index]->retrieved = TW_AEN_RETRIEVED;
-		अवरोध;
-	हाल TW_IOCTL_GET_LOCK:
+		break;
+	case TW_IOCTL_GET_LOCK:
 		tw_lock = (TW_Lock *)tw_ioctl->data_buffer;
-		current_समय = kसमय_get();
+		current_time = ktime_get();
 
-		अगर ((tw_lock->क्रमce_flag == 1) || (tw_dev->ioctl_sem_lock == 0) ||
-		    kसमय_after(current_समय, tw_dev->ioctl_समय)) अणु
+		if ((tw_lock->force_flag == 1) || (tw_dev->ioctl_sem_lock == 0) ||
+		    ktime_after(current_time, tw_dev->ioctl_time)) {
 			tw_dev->ioctl_sem_lock = 1;
-			tw_dev->ioctl_समय = kसमय_add_ms(current_समय, tw_lock->समयout_msec);
+			tw_dev->ioctl_time = ktime_add_ms(current_time, tw_lock->timeout_msec);
 			tw_ioctl->driver_command.status = 0;
-			tw_lock->समय_reमुख्यing_msec = tw_lock->समयout_msec;
-		पूर्ण अन्यथा अणु
+			tw_lock->time_remaining_msec = tw_lock->timeout_msec;
+		} else {
 			tw_ioctl->driver_command.status = TW_IOCTL_ERROR_STATUS_LOCKED;
-			tw_lock->समय_reमुख्यing_msec = kसमय_ms_delta(tw_dev->ioctl_समय, current_समय);
-		पूर्ण
-		अवरोध;
-	हाल TW_IOCTL_RELEASE_LOCK:
-		अगर (tw_dev->ioctl_sem_lock == 1) अणु
+			tw_lock->time_remaining_msec = ktime_ms_delta(tw_dev->ioctl_time, current_time);
+		}
+		break;
+	case TW_IOCTL_RELEASE_LOCK:
+		if (tw_dev->ioctl_sem_lock == 1) {
 			tw_dev->ioctl_sem_lock = 0;
 			tw_ioctl->driver_command.status = 0;
-		पूर्ण अन्यथा अणु
+		} else {
 			tw_ioctl->driver_command.status = TW_IOCTL_ERROR_STATUS_NOT_LOCKED;
-		पूर्ण
-		अवरोध;
-	शेष:
+		}
+		break;
+	default:
 		retval = TW_IOCTL_ERROR_OS_ENOTTY;
-		जाओ out3;
-	पूर्ण
+		goto out3;
+	}
 
 	/* Now copy the entire response to userspace */
-	अगर (copy_to_user(argp, tw_ioctl, माप(TW_Ioctl_Buf_Apache) + driver_command.buffer_length - 1) == 0)
+	if (copy_to_user(argp, tw_ioctl, sizeof(TW_Ioctl_Buf_Apache) + driver_command.buffer_length - 1) == 0)
 		retval = 0;
 out3:
-	/* Now मुक्त ioctl buf memory */
-	dma_मुक्त_coherent(&tw_dev->tw_pci_dev->dev, data_buffer_length_adjusted+माप(TW_Ioctl_Buf_Apache) - 1, cpu_addr, dma_handle);
+	/* Now free ioctl buf memory */
+	dma_free_coherent(&tw_dev->tw_pci_dev->dev, data_buffer_length_adjusted+sizeof(TW_Ioctl_Buf_Apache) - 1, cpu_addr, dma_handle);
 out2:
 	mutex_unlock(&tw_dev->ioctl_lock);
 out:
 	mutex_unlock(&twa_chrdev_mutex);
-	वापस retval;
-पूर्ण /* End twa_chrdev_ioctl() */
+	return retval;
+} /* End twa_chrdev_ioctl() */
 
-/* This function handles खोलो क्रम the अक्षरacter device */
-/* NOTE that this function will race with हटाओ. */
-अटल पूर्णांक twa_chrdev_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	अचिन्हित पूर्णांक minor_number;
-	पूर्णांक retval = TW_IOCTL_ERROR_OS_ENODEV;
+/* This function handles open for the character device */
+/* NOTE that this function will race with remove. */
+static int twa_chrdev_open(struct inode *inode, struct file *file)
+{
+	unsigned int minor_number;
+	int retval = TW_IOCTL_ERROR_OS_ENODEV;
 
-	अगर (!capable(CAP_SYS_ADMIN)) अणु
+	if (!capable(CAP_SYS_ADMIN)) {
 		retval = -EACCES;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	minor_number = iminor(inode);
-	अगर (minor_number >= twa_device_extension_count)
-		जाओ out;
+	if (minor_number >= twa_device_extension_count)
+		goto out;
 	retval = 0;
 out:
-	वापस retval;
-पूर्ण /* End twa_chrdev_खोलो() */
+	return retval;
+} /* End twa_chrdev_open() */
 
-/* This function will prपूर्णांक पढ़ोable messages from status रेजिस्टर errors */
-अटल पूर्णांक twa_decode_bits(TW_Device_Extension *tw_dev, u32 status_reg_value)
-अणु
-	पूर्णांक retval = 1;
+/* This function will print readable messages from status register errors */
+static int twa_decode_bits(TW_Device_Extension *tw_dev, u32 status_reg_value)
+{
+	int retval = 1;
 
-	/* Check क्रम various error conditions and handle them appropriately */
-	अगर (status_reg_value & TW_STATUS_PCI_PARITY_ERROR) अणु
+	/* Check for various error conditions and handle them appropriately */
+	if (status_reg_value & TW_STATUS_PCI_PARITY_ERROR) {
 		TW_PRINTK(tw_dev->host, TW_DRIVER, 0xc, "PCI Parity Error: clearing");
-		ग_लिखोl(TW_CONTROL_CLEAR_PARITY_ERROR, TW_CONTROL_REG_ADDR(tw_dev));
-	पूर्ण
+		writel(TW_CONTROL_CLEAR_PARITY_ERROR, TW_CONTROL_REG_ADDR(tw_dev));
+	}
 
-	अगर (status_reg_value & TW_STATUS_PCI_ABORT) अणु
+	if (status_reg_value & TW_STATUS_PCI_ABORT) {
 		TW_PRINTK(tw_dev->host, TW_DRIVER, 0xd, "PCI Abort: clearing");
-		ग_लिखोl(TW_CONTROL_CLEAR_PCI_ABORT, TW_CONTROL_REG_ADDR(tw_dev));
-		pci_ग_लिखो_config_word(tw_dev->tw_pci_dev, PCI_STATUS, TW_PCI_CLEAR_PCI_ABORT);
-	पूर्ण
+		writel(TW_CONTROL_CLEAR_PCI_ABORT, TW_CONTROL_REG_ADDR(tw_dev));
+		pci_write_config_word(tw_dev->tw_pci_dev, PCI_STATUS, TW_PCI_CLEAR_PCI_ABORT);
+	}
 
-	अगर (status_reg_value & TW_STATUS_QUEUE_ERROR) अणु
-		अगर (((tw_dev->tw_pci_dev->device != PCI_DEVICE_ID_3WARE_9650SE) &&
+	if (status_reg_value & TW_STATUS_QUEUE_ERROR) {
+		if (((tw_dev->tw_pci_dev->device != PCI_DEVICE_ID_3WARE_9650SE) &&
 		     (tw_dev->tw_pci_dev->device != PCI_DEVICE_ID_3WARE_9690SA)) ||
 		    (!test_bit(TW_IN_RESET, &tw_dev->flags)))
 			TW_PRINTK(tw_dev->host, TW_DRIVER, 0xe, "Controller Queue Error: clearing");
-		ग_लिखोl(TW_CONTROL_CLEAR_QUEUE_ERROR, TW_CONTROL_REG_ADDR(tw_dev));
-	पूर्ण
+		writel(TW_CONTROL_CLEAR_QUEUE_ERROR, TW_CONTROL_REG_ADDR(tw_dev));
+	}
 
-	अगर (status_reg_value & TW_STATUS_MICROCONTROLLER_ERROR) अणु
-		अगर (tw_dev->reset_prपूर्णांक == 0) अणु
+	if (status_reg_value & TW_STATUS_MICROCONTROLLER_ERROR) {
+		if (tw_dev->reset_print == 0) {
 			TW_PRINTK(tw_dev->host, TW_DRIVER, 0x10, "Microcontroller Error: clearing");
-			tw_dev->reset_prपूर्णांक = 1;
-		पूर्ण
-		जाओ out;
-	पूर्ण
+			tw_dev->reset_print = 1;
+		}
+		goto out;
+	}
 	retval = 0;
 out:
-	वापस retval;
-पूर्ण /* End twa_decode_bits() */
+	return retval;
+} /* End twa_decode_bits() */
 
 /* This function will empty the response queue */
-अटल पूर्णांक twa_empty_response_queue(TW_Device_Extension *tw_dev)
-अणु
+static int twa_empty_response_queue(TW_Device_Extension *tw_dev)
+{
 	u32 status_reg_value;
-	पूर्णांक count = 0, retval = 1;
+	int count = 0, retval = 1;
 
-	status_reg_value = पढ़ोl(TW_STATUS_REG_ADDR(tw_dev));
+	status_reg_value = readl(TW_STATUS_REG_ADDR(tw_dev));
 
-	जबतक (((status_reg_value & TW_STATUS_RESPONSE_QUEUE_EMPTY) == 0) && (count < TW_MAX_RESPONSE_DRAIN)) अणु
-		पढ़ोl(TW_RESPONSE_QUEUE_REG_ADDR(tw_dev));
-		status_reg_value = पढ़ोl(TW_STATUS_REG_ADDR(tw_dev));
+	while (((status_reg_value & TW_STATUS_RESPONSE_QUEUE_EMPTY) == 0) && (count < TW_MAX_RESPONSE_DRAIN)) {
+		readl(TW_RESPONSE_QUEUE_REG_ADDR(tw_dev));
+		status_reg_value = readl(TW_STATUS_REG_ADDR(tw_dev));
 		count++;
-	पूर्ण
-	अगर (count == TW_MAX_RESPONSE_DRAIN)
-		जाओ out;
+	}
+	if (count == TW_MAX_RESPONSE_DRAIN)
+		goto out;
 
 	retval = 0;
 out:
-	वापस retval;
-पूर्ण /* End twa_empty_response_queue() */
+	return retval;
+} /* End twa_empty_response_queue() */
 
 /* This function will clear the pchip/response queue on 9550SX */
-अटल पूर्णांक twa_empty_response_queue_large(TW_Device_Extension *tw_dev)
-अणु
+static int twa_empty_response_queue_large(TW_Device_Extension *tw_dev)
+{
 	u32 response_que_value = 0;
-	अचिन्हित दीर्घ beक्रमe;
-	पूर्णांक retval = 1;
+	unsigned long before;
+	int retval = 1;
 
-	अगर (tw_dev->tw_pci_dev->device != PCI_DEVICE_ID_3WARE_9000) अणु
-		beक्रमe = jअगरfies;
-		जबतक ((response_que_value & TW_9550SX_DRAIN_COMPLETED) != TW_9550SX_DRAIN_COMPLETED) अणु
-			response_que_value = पढ़ोl(TW_RESPONSE_QUEUE_REG_ADDR_LARGE(tw_dev));
+	if (tw_dev->tw_pci_dev->device != PCI_DEVICE_ID_3WARE_9000) {
+		before = jiffies;
+		while ((response_que_value & TW_9550SX_DRAIN_COMPLETED) != TW_9550SX_DRAIN_COMPLETED) {
+			response_que_value = readl(TW_RESPONSE_QUEUE_REG_ADDR_LARGE(tw_dev));
 			msleep(1);
-			अगर (समय_after(jअगरfies, beक्रमe + HZ * 30))
-				जाओ out;
-		पूर्ण
-		/* P-chip settle समय */
+			if (time_after(jiffies, before + HZ * 30))
+				goto out;
+		}
+		/* P-chip settle time */
 		msleep(500);
 		retval = 0;
-	पूर्ण अन्यथा
+	} else
 		retval = 0;
 out:
-	वापस retval;
-पूर्ण /* End twa_empty_response_queue_large() */
+	return retval;
+} /* End twa_empty_response_queue_large() */
 
 /* This function passes sense keys from firmware to scsi layer */
-अटल पूर्णांक twa_fill_sense(TW_Device_Extension *tw_dev, पूर्णांक request_id, पूर्णांक copy_sense, पूर्णांक prपूर्णांक_host)
-अणु
+static int twa_fill_sense(TW_Device_Extension *tw_dev, int request_id, int copy_sense, int print_host)
+{
 	TW_Command_Full *full_command_packet;
-	अचिन्हित लघु error;
-	पूर्णांक retval = 1;
-	अक्षर *error_str;
+	unsigned short error;
+	int retval = 1;
+	char *error_str;
 
 	full_command_packet = tw_dev->command_packet_virt[request_id];
 
-	/* Check क्रम embedded error string */
-	error_str = &(full_command_packet->header.err_specअगरic_desc[म_माप(full_command_packet->header.err_specअगरic_desc) + 1]);
+	/* Check for embedded error string */
+	error_str = &(full_command_packet->header.err_specific_desc[strlen(full_command_packet->header.err_specific_desc) + 1]);
 
-	/* Don't prपूर्णांक error क्रम Logical unit not supported during rollcall */
+	/* Don't print error for Logical unit not supported during rollcall */
 	error = le16_to_cpu(full_command_packet->header.status_block.error);
-	अगर ((error != TW_ERROR_LOGICAL_UNIT_NOT_SUPPORTED) && (error != TW_ERROR_UNIT_OFFLINE)) अणु
-		अगर (prपूर्णांक_host)
-			prपूर्णांकk(KERN_WARNING "3w-9xxx: scsi%d: ERROR: (0x%02X:0x%04X): %s:%s.\n",
+	if ((error != TW_ERROR_LOGICAL_UNIT_NOT_SUPPORTED) && (error != TW_ERROR_UNIT_OFFLINE)) {
+		if (print_host)
+			printk(KERN_WARNING "3w-9xxx: scsi%d: ERROR: (0x%02X:0x%04X): %s:%s.\n",
 			       tw_dev->host->host_no,
 			       TW_MESSAGE_SOURCE_CONTROLLER_ERROR,
 			       full_command_packet->header.status_block.error,
 			       error_str[0] == '\0' ?
 			       twa_string_lookup(twa_error_table,
 						 full_command_packet->header.status_block.error) : error_str,
-			       full_command_packet->header.err_specअगरic_desc);
-		अन्यथा
-			prपूर्णांकk(KERN_WARNING "3w-9xxx: ERROR: (0x%02X:0x%04X): %s:%s.\n",
+			       full_command_packet->header.err_specific_desc);
+		else
+			printk(KERN_WARNING "3w-9xxx: ERROR: (0x%02X:0x%04X): %s:%s.\n",
 			       TW_MESSAGE_SOURCE_CONTROLLER_ERROR,
 			       full_command_packet->header.status_block.error,
 			       error_str[0] == '\0' ?
 			       twa_string_lookup(twa_error_table,
 						 full_command_packet->header.status_block.error) : error_str,
-			       full_command_packet->header.err_specअगरic_desc);
-	पूर्ण
+			       full_command_packet->header.err_specific_desc);
+	}
 
-	अगर (copy_sense) अणु
-		स_नकल(tw_dev->srb[request_id]->sense_buffer, full_command_packet->header.sense_data, TW_SENSE_DATA_LENGTH);
+	if (copy_sense) {
+		memcpy(tw_dev->srb[request_id]->sense_buffer, full_command_packet->header.sense_data, TW_SENSE_DATA_LENGTH);
 		tw_dev->srb[request_id]->result = (full_command_packet->command.newcommand.status << 1);
 		retval = TW_ISR_DONT_RESULT;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	retval = 0;
 out:
-	वापस retval;
-पूर्ण /* End twa_fill_sense() */
+	return retval;
+} /* End twa_fill_sense() */
 
-/* This function will मुक्त up device extension resources */
-अटल व्योम twa_मुक्त_device_extension(TW_Device_Extension *tw_dev)
-अणु
-	अगर (tw_dev->command_packet_virt[0])
-		dma_मुक्त_coherent(&tw_dev->tw_pci_dev->dev,
-				माप(TW_Command_Full) * TW_Q_LENGTH,
+/* This function will free up device extension resources */
+static void twa_free_device_extension(TW_Device_Extension *tw_dev)
+{
+	if (tw_dev->command_packet_virt[0])
+		dma_free_coherent(&tw_dev->tw_pci_dev->dev,
+				sizeof(TW_Command_Full) * TW_Q_LENGTH,
 				tw_dev->command_packet_virt[0],
 				tw_dev->command_packet_phys[0]);
 
-	अगर (tw_dev->generic_buffer_virt[0])
-		dma_मुक्त_coherent(&tw_dev->tw_pci_dev->dev,
+	if (tw_dev->generic_buffer_virt[0])
+		dma_free_coherent(&tw_dev->tw_pci_dev->dev,
 				TW_SECTOR_SIZE * TW_Q_LENGTH,
 				tw_dev->generic_buffer_virt[0],
 				tw_dev->generic_buffer_phys[0]);
 
-	kमुक्त(tw_dev->event_queue[0]);
-पूर्ण /* End twa_मुक्त_device_extension() */
+	kfree(tw_dev->event_queue[0]);
+} /* End twa_free_device_extension() */
 
-/* This function will मुक्त a request id */
-अटल व्योम twa_मुक्त_request_id(TW_Device_Extension *tw_dev, पूर्णांक request_id)
-अणु
-	tw_dev->मुक्त_queue[tw_dev->मुक्त_tail] = request_id;
+/* This function will free a request id */
+static void twa_free_request_id(TW_Device_Extension *tw_dev, int request_id)
+{
+	tw_dev->free_queue[tw_dev->free_tail] = request_id;
 	tw_dev->state[request_id] = TW_S_FINISHED;
-	tw_dev->मुक्त_tail = (tw_dev->मुक्त_tail + 1) % TW_Q_LENGTH;
-पूर्ण /* End twa_मुक्त_request_id() */
+	tw_dev->free_tail = (tw_dev->free_tail + 1) % TW_Q_LENGTH;
+} /* End twa_free_request_id() */
 
 /* This function will get parameter table entries from the firmware */
-अटल व्योम *twa_get_param(TW_Device_Extension *tw_dev, पूर्णांक request_id, पूर्णांक table_id, पूर्णांक parameter_id, पूर्णांक parameter_size_bytes)
-अणु
+static void *twa_get_param(TW_Device_Extension *tw_dev, int request_id, int table_id, int parameter_id, int parameter_size_bytes)
+{
 	TW_Command_Full *full_command_packet;
 	TW_Command *command_packet;
 	TW_Param_Apache *param;
-	व्योम *retval = शून्य;
+	void *retval = NULL;
 
 	/* Setup the command packet */
 	full_command_packet = tw_dev->command_packet_virt[request_id];
-	स_रखो(full_command_packet, 0, माप(TW_Command_Full));
+	memset(full_command_packet, 0, sizeof(TW_Command_Full));
 	command_packet = &full_command_packet->command.oldcommand;
 
 	command_packet->opcode__sgloffset = TW_OPSGL_IN(2, TW_OP_GET_PARAM);
@@ -1074,7 +1073,7 @@ out:
 
 	/* Now setup the param */
 	param = (TW_Param_Apache *)tw_dev->generic_buffer_virt[request_id];
-	स_रखो(param, 0, TW_SECTOR_SIZE);
+	memset(param, 0, TW_SECTOR_SIZE);
 	param->table_id = cpu_to_le16(table_id | 0x8000);
 	param->parameter_id = cpu_to_le16(parameter_id);
 	param->parameter_size_bytes = cpu_to_le16(parameter_size_bytes);
@@ -1085,45 +1084,45 @@ out:
 	/* Post the command packet to the board */
 	twa_post_command_packet(tw_dev, request_id, 1);
 
-	/* Poll क्रम completion */
-	अगर (twa_poll_response(tw_dev, request_id, 30))
+	/* Poll for completion */
+	if (twa_poll_response(tw_dev, request_id, 30))
 		TW_PRINTK(tw_dev->host, TW_DRIVER, 0x13, "No valid response during get param")
-	अन्यथा
-		retval = (व्योम *)&(param->data[0]);
+	else
+		retval = (void *)&(param->data[0]);
 
 	tw_dev->posted_request_count--;
 	tw_dev->state[request_id] = TW_S_INITIAL;
 
-	वापस retval;
-पूर्ण /* End twa_get_param() */
+	return retval;
+} /* End twa_get_param() */
 
 /* This function will assign an available request id */
-अटल व्योम twa_get_request_id(TW_Device_Extension *tw_dev, पूर्णांक *request_id)
-अणु
-	*request_id = tw_dev->मुक्त_queue[tw_dev->मुक्त_head];
-	tw_dev->मुक्त_head = (tw_dev->मुक्त_head + 1) % TW_Q_LENGTH;
+static void twa_get_request_id(TW_Device_Extension *tw_dev, int *request_id)
+{
+	*request_id = tw_dev->free_queue[tw_dev->free_head];
+	tw_dev->free_head = (tw_dev->free_head + 1) % TW_Q_LENGTH;
 	tw_dev->state[*request_id] = TW_S_STARTED;
-पूर्ण /* End twa_get_request_id() */
+} /* End twa_get_request_id() */
 
 /* This function will send an initconnection command to controller */
-अटल पूर्णांक twa_initconnection(TW_Device_Extension *tw_dev, पूर्णांक message_credits,
-			      u32 set_features, अचिन्हित लघु current_fw_srl,
-			      अचिन्हित लघु current_fw_arch_id,
-			      अचिन्हित लघु current_fw_branch,
-			      अचिन्हित लघु current_fw_build,
-			      अचिन्हित लघु *fw_on_ctlr_srl,
-			      अचिन्हित लघु *fw_on_ctlr_arch_id,
-			      अचिन्हित लघु *fw_on_ctlr_branch,
-			      अचिन्हित लघु *fw_on_ctlr_build,
+static int twa_initconnection(TW_Device_Extension *tw_dev, int message_credits,
+			      u32 set_features, unsigned short current_fw_srl,
+			      unsigned short current_fw_arch_id,
+			      unsigned short current_fw_branch,
+			      unsigned short current_fw_build,
+			      unsigned short *fw_on_ctlr_srl,
+			      unsigned short *fw_on_ctlr_arch_id,
+			      unsigned short *fw_on_ctlr_branch,
+			      unsigned short *fw_on_ctlr_build,
 			      u32 *init_connect_result)
-अणु
+{
 	TW_Command_Full *full_command_packet;
 	TW_Initconnect *tw_initconnect;
-	पूर्णांक request_id = 0, retval = 1;
+	int request_id = 0, retval = 1;
 
 	/* Initialize InitConnection command packet */
 	full_command_packet = tw_dev->command_packet_virt[request_id];
-	स_रखो(full_command_packet, 0, माप(TW_Command_Full));
+	memset(full_command_packet, 0, sizeof(TW_Command_Full));
 	full_command_packet->header.header_desc.size_header = 128;
 
 	tw_initconnect = (TW_Initconnect *)&full_command_packet->command.oldcommand;
@@ -1132,456 +1131,456 @@ out:
 	tw_initconnect->message_credits = cpu_to_le16(message_credits);
 	tw_initconnect->features = set_features;
 
-	/* Turn on 64-bit sgl support अगर we need to */
-	tw_initconnect->features |= माप(dma_addr_t) > 4 ? 1 : 0;
+	/* Turn on 64-bit sgl support if we need to */
+	tw_initconnect->features |= sizeof(dma_addr_t) > 4 ? 1 : 0;
 
 	tw_initconnect->features = cpu_to_le32(tw_initconnect->features);
 
-	अगर (set_features & TW_EXTENDED_INIT_CONNECT) अणु
+	if (set_features & TW_EXTENDED_INIT_CONNECT) {
 		tw_initconnect->size = TW_INIT_COMMAND_PACKET_SIZE_EXTENDED;
 		tw_initconnect->fw_srl = cpu_to_le16(current_fw_srl);
 		tw_initconnect->fw_arch_id = cpu_to_le16(current_fw_arch_id);
 		tw_initconnect->fw_branch = cpu_to_le16(current_fw_branch);
 		tw_initconnect->fw_build = cpu_to_le16(current_fw_build);
-	पूर्ण अन्यथा
+	} else
 		tw_initconnect->size = TW_INIT_COMMAND_PACKET_SIZE;
 
 	/* Send command packet to the board */
 	twa_post_command_packet(tw_dev, request_id, 1);
 
-	/* Poll क्रम completion */
-	अगर (twa_poll_response(tw_dev, request_id, 30)) अणु
+	/* Poll for completion */
+	if (twa_poll_response(tw_dev, request_id, 30)) {
 		TW_PRINTK(tw_dev->host, TW_DRIVER, 0x15, "No valid response during init connection");
-	पूर्ण अन्यथा अणु
-		अगर (set_features & TW_EXTENDED_INIT_CONNECT) अणु
+	} else {
+		if (set_features & TW_EXTENDED_INIT_CONNECT) {
 			*fw_on_ctlr_srl = le16_to_cpu(tw_initconnect->fw_srl);
 			*fw_on_ctlr_arch_id = le16_to_cpu(tw_initconnect->fw_arch_id);
 			*fw_on_ctlr_branch = le16_to_cpu(tw_initconnect->fw_branch);
 			*fw_on_ctlr_build = le16_to_cpu(tw_initconnect->fw_build);
 			*init_connect_result = le32_to_cpu(tw_initconnect->result);
-		पूर्ण
+		}
 		retval = 0;
-	पूर्ण
+	}
 
 	tw_dev->posted_request_count--;
 	tw_dev->state[request_id] = TW_S_INITIAL;
 
-	वापस retval;
-पूर्ण /* End twa_initconnection() */
+	return retval;
+} /* End twa_initconnection() */
 
 /* This function will initialize the fields of a device extension */
-अटल पूर्णांक twa_initialize_device_extension(TW_Device_Extension *tw_dev)
-अणु
-	पूर्णांक i, retval = 1;
+static int twa_initialize_device_extension(TW_Device_Extension *tw_dev)
+{
+	int i, retval = 1;
 
 	/* Initialize command packet buffers */
-	अगर (twa_allocate_memory(tw_dev, माप(TW_Command_Full), 0)) अणु
+	if (twa_allocate_memory(tw_dev, sizeof(TW_Command_Full), 0)) {
 		TW_PRINTK(tw_dev->host, TW_DRIVER, 0x16, "Command packet memory allocation failed");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/* Initialize generic buffer */
-	अगर (twa_allocate_memory(tw_dev, TW_SECTOR_SIZE, 1)) अणु
+	if (twa_allocate_memory(tw_dev, TW_SECTOR_SIZE, 1)) {
 		TW_PRINTK(tw_dev->host, TW_DRIVER, 0x17, "Generic memory allocation failed");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/* Allocate event info space */
-	tw_dev->event_queue[0] = kसुस्मृति(TW_Q_LENGTH, माप(TW_Event), GFP_KERNEL);
-	अगर (!tw_dev->event_queue[0]) अणु
+	tw_dev->event_queue[0] = kcalloc(TW_Q_LENGTH, sizeof(TW_Event), GFP_KERNEL);
+	if (!tw_dev->event_queue[0]) {
 		TW_PRINTK(tw_dev->host, TW_DRIVER, 0x18, "Event info memory allocation failed");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 
-	क्रम (i = 0; i < TW_Q_LENGTH; i++) अणु
-		tw_dev->event_queue[i] = (TW_Event *)((अचिन्हित अक्षर *)tw_dev->event_queue[0] + (i * माप(TW_Event)));
-		tw_dev->मुक्त_queue[i] = i;
+	for (i = 0; i < TW_Q_LENGTH; i++) {
+		tw_dev->event_queue[i] = (TW_Event *)((unsigned char *)tw_dev->event_queue[0] + (i * sizeof(TW_Event)));
+		tw_dev->free_queue[i] = i;
 		tw_dev->state[i] = TW_S_INITIAL;
-	पूर्ण
+	}
 
 	tw_dev->pending_head = TW_Q_START;
 	tw_dev->pending_tail = TW_Q_START;
-	tw_dev->मुक्त_head = TW_Q_START;
-	tw_dev->मुक्त_tail = TW_Q_START;
+	tw_dev->free_head = TW_Q_START;
+	tw_dev->free_tail = TW_Q_START;
 	tw_dev->error_sequence_id = 1;
 	tw_dev->chrdev_request_id = TW_IOCTL_CHRDEV_FREE;
 
 	mutex_init(&tw_dev->ioctl_lock);
-	init_रुकोqueue_head(&tw_dev->ioctl_wqueue);
+	init_waitqueue_head(&tw_dev->ioctl_wqueue);
 
 	retval = 0;
 out:
-	वापस retval;
-पूर्ण /* End twa_initialize_device_extension() */
+	return retval;
+} /* End twa_initialize_device_extension() */
 
-/* This function is the पूर्णांकerrupt service routine */
-अटल irqवापस_t twa_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_instance)
-अणु
-	पूर्णांक request_id, error = 0;
+/* This function is the interrupt service routine */
+static irqreturn_t twa_interrupt(int irq, void *dev_instance)
+{
+	int request_id, error = 0;
 	u32 status_reg_value;
 	TW_Response_Queue response_que;
 	TW_Command_Full *full_command_packet;
 	TW_Device_Extension *tw_dev = (TW_Device_Extension *)dev_instance;
-	पूर्णांक handled = 0;
+	int handled = 0;
 
 	/* Get the per adapter lock */
 	spin_lock(tw_dev->host->host_lock);
 
-	/* Read the रेजिस्टरs */
-	status_reg_value = पढ़ोl(TW_STATUS_REG_ADDR(tw_dev));
+	/* Read the registers */
+	status_reg_value = readl(TW_STATUS_REG_ADDR(tw_dev));
 
-	/* Check अगर this is our पूर्णांकerrupt, otherwise bail */
-	अगर (!(status_reg_value & TW_STATUS_VALID_INTERRUPT))
-		जाओ twa_पूर्णांकerrupt_bail;
+	/* Check if this is our interrupt, otherwise bail */
+	if (!(status_reg_value & TW_STATUS_VALID_INTERRUPT))
+		goto twa_interrupt_bail;
 
 	handled = 1;
 
 	/* If we are resetting, bail */
-	अगर (test_bit(TW_IN_RESET, &tw_dev->flags))
-		जाओ twa_पूर्णांकerrupt_bail;
+	if (test_bit(TW_IN_RESET, &tw_dev->flags))
+		goto twa_interrupt_bail;
 
-	/* Check controller क्रम errors */
-	अगर (twa_check_bits(status_reg_value)) अणु
-		अगर (twa_decode_bits(tw_dev, status_reg_value)) अणु
+	/* Check controller for errors */
+	if (twa_check_bits(status_reg_value)) {
+		if (twa_decode_bits(tw_dev, status_reg_value)) {
 			TW_CLEAR_ALL_INTERRUPTS(tw_dev);
-			जाओ twa_पूर्णांकerrupt_bail;
-		पूर्ण
-	पूर्ण
+			goto twa_interrupt_bail;
+		}
+	}
 
-	/* Handle host पूर्णांकerrupt */
-	अगर (status_reg_value & TW_STATUS_HOST_INTERRUPT)
+	/* Handle host interrupt */
+	if (status_reg_value & TW_STATUS_HOST_INTERRUPT)
 		TW_CLEAR_HOST_INTERRUPT(tw_dev);
 
-	/* Handle attention पूर्णांकerrupt */
-	अगर (status_reg_value & TW_STATUS_ATTENTION_INTERRUPT) अणु
+	/* Handle attention interrupt */
+	if (status_reg_value & TW_STATUS_ATTENTION_INTERRUPT) {
 		TW_CLEAR_ATTENTION_INTERRUPT(tw_dev);
-		अगर (!(test_and_set_bit(TW_IN_ATTENTION_LOOP, &tw_dev->flags))) अणु
+		if (!(test_and_set_bit(TW_IN_ATTENTION_LOOP, &tw_dev->flags))) {
 			twa_get_request_id(tw_dev, &request_id);
 
-			error = twa_aen_पढ़ो_queue(tw_dev, request_id);
-			अगर (error) अणु
+			error = twa_aen_read_queue(tw_dev, request_id);
+			if (error) {
 				tw_dev->state[request_id] = TW_S_COMPLETED;
-				twa_मुक्त_request_id(tw_dev, request_id);
+				twa_free_request_id(tw_dev, request_id);
 				clear_bit(TW_IN_ATTENTION_LOOP, &tw_dev->flags);
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
-	/* Handle command पूर्णांकerrupt */
-	अगर (status_reg_value & TW_STATUS_COMMAND_INTERRUPT) अणु
+	/* Handle command interrupt */
+	if (status_reg_value & TW_STATUS_COMMAND_INTERRUPT) {
 		TW_MASK_COMMAND_INTERRUPT(tw_dev);
 		/* Drain as many pending commands as we can */
-		जबतक (tw_dev->pending_request_count > 0) अणु
+		while (tw_dev->pending_request_count > 0) {
 			request_id = tw_dev->pending_queue[tw_dev->pending_head];
-			अगर (tw_dev->state[request_id] != TW_S_PENDING) अणु
+			if (tw_dev->state[request_id] != TW_S_PENDING) {
 				TW_PRINTK(tw_dev->host, TW_DRIVER, 0x19, "Found request id that wasn't pending");
 				TW_CLEAR_ALL_INTERRUPTS(tw_dev);
-				जाओ twa_पूर्णांकerrupt_bail;
-			पूर्ण
-			अगर (twa_post_command_packet(tw_dev, request_id, 1)==0) अणु
+				goto twa_interrupt_bail;
+			}
+			if (twa_post_command_packet(tw_dev, request_id, 1)==0) {
 				tw_dev->pending_head = (tw_dev->pending_head + 1) % TW_Q_LENGTH;
 				tw_dev->pending_request_count--;
-			पूर्ण अन्यथा अणु
-				/* If we get here, we will जारी re-posting on the next command पूर्णांकerrupt */
-				अवरोध;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			} else {
+				/* If we get here, we will continue re-posting on the next command interrupt */
+				break;
+			}
+		}
+	}
 
-	/* Handle response पूर्णांकerrupt */
-	अगर (status_reg_value & TW_STATUS_RESPONSE_INTERRUPT) अणु
+	/* Handle response interrupt */
+	if (status_reg_value & TW_STATUS_RESPONSE_INTERRUPT) {
 
 		/* Drain the response queue from the board */
-		जबतक ((status_reg_value & TW_STATUS_RESPONSE_QUEUE_EMPTY) == 0) अणु
+		while ((status_reg_value & TW_STATUS_RESPONSE_QUEUE_EMPTY) == 0) {
 			/* Complete the response */
-			response_que.value = पढ़ोl(TW_RESPONSE_QUEUE_REG_ADDR(tw_dev));
+			response_que.value = readl(TW_RESPONSE_QUEUE_REG_ADDR(tw_dev));
 			request_id = TW_RESID_OUT(response_que.response_id);
 			full_command_packet = tw_dev->command_packet_virt[request_id];
 			error = 0;
-			/* Check क्रम command packet errors */
-			अगर (full_command_packet->command.newcommand.status != 0) अणु
-				अगर (tw_dev->srb[request_id] != शून्य) अणु
+			/* Check for command packet errors */
+			if (full_command_packet->command.newcommand.status != 0) {
+				if (tw_dev->srb[request_id] != NULL) {
 					error = twa_fill_sense(tw_dev, request_id, 1, 1);
-				पूर्ण अन्यथा अणु
-					/* Skip ioctl error prपूर्णांकs */
-					अगर (request_id != tw_dev->chrdev_request_id) अणु
+				} else {
+					/* Skip ioctl error prints */
+					if (request_id != tw_dev->chrdev_request_id) {
 						error = twa_fill_sense(tw_dev, request_id, 0, 1);
-					पूर्ण
-				पूर्ण
-			पूर्ण
+					}
+				}
+			}
 
-			/* Check क्रम correct state */
-			अगर (tw_dev->state[request_id] != TW_S_POSTED) अणु
-				अगर (tw_dev->srb[request_id] != शून्य) अणु
+			/* Check for correct state */
+			if (tw_dev->state[request_id] != TW_S_POSTED) {
+				if (tw_dev->srb[request_id] != NULL) {
 					TW_PRINTK(tw_dev->host, TW_DRIVER, 0x1a, "Received a request id that wasn't posted");
 					TW_CLEAR_ALL_INTERRUPTS(tw_dev);
-					जाओ twa_पूर्णांकerrupt_bail;
-				पूर्ण
-			पूर्ण
+					goto twa_interrupt_bail;
+				}
+			}
 
-			/* Check क्रम पूर्णांकernal command completion */
-			अगर (tw_dev->srb[request_id] == शून्य) अणु
-				अगर (request_id != tw_dev->chrdev_request_id) अणु
-					अगर (twa_aen_complete(tw_dev, request_id))
+			/* Check for internal command completion */
+			if (tw_dev->srb[request_id] == NULL) {
+				if (request_id != tw_dev->chrdev_request_id) {
+					if (twa_aen_complete(tw_dev, request_id))
 						TW_PRINTK(tw_dev->host, TW_DRIVER, 0x1b, "Error completing AEN during attention interrupt");
-				पूर्ण अन्यथा अणु
+				} else {
 					tw_dev->chrdev_request_id = TW_IOCTL_CHRDEV_FREE;
 					wake_up(&tw_dev->ioctl_wqueue);
-				पूर्ण
-			पूर्ण अन्यथा अणु
-				काष्ठा scsi_cmnd *cmd;
+				}
+			} else {
+				struct scsi_cmnd *cmd;
 
 				cmd = tw_dev->srb[request_id];
 
 				twa_scsiop_execute_scsi_complete(tw_dev, request_id);
 				/* If no error command was a success */
-				अगर (error == 0) अणु
+				if (error == 0) {
 					cmd->result = (DID_OK << 16);
-				पूर्ण
+				}
 
 				/* If error, command failed */
-				अगर (error == 1) अणु
-					/* Ask क्रम a host reset */
+				if (error == 1) {
+					/* Ask for a host reset */
 					cmd->result = (DID_OK << 16) | (CHECK_CONDITION << 1);
-				पूर्ण
+				}
 
-				/* Report residual bytes क्रम single sgl */
-				अगर ((scsi_sg_count(cmd) <= 1) && (full_command_packet->command.newcommand.status == 0)) अणु
-					अगर (full_command_packet->command.newcommand.sg_list[0].length < scsi_bufflen(tw_dev->srb[request_id]))
+				/* Report residual bytes for single sgl */
+				if ((scsi_sg_count(cmd) <= 1) && (full_command_packet->command.newcommand.status == 0)) {
+					if (full_command_packet->command.newcommand.sg_list[0].length < scsi_bufflen(tw_dev->srb[request_id]))
 						scsi_set_resid(cmd, scsi_bufflen(cmd) - full_command_packet->command.newcommand.sg_list[0].length);
-				पूर्ण
+				}
 
 				/* Now complete the io */
-				अगर (twa_command_mapped(cmd))
+				if (twa_command_mapped(cmd))
 					scsi_dma_unmap(cmd);
-				cmd->scsi_करोne(cmd);
+				cmd->scsi_done(cmd);
 				tw_dev->state[request_id] = TW_S_COMPLETED;
-				twa_मुक्त_request_id(tw_dev, request_id);
+				twa_free_request_id(tw_dev, request_id);
 				tw_dev->posted_request_count--;
-			पूर्ण
+			}
 
-			/* Check क्रम valid status after each drain */
-			status_reg_value = पढ़ोl(TW_STATUS_REG_ADDR(tw_dev));
-			अगर (twa_check_bits(status_reg_value)) अणु
-				अगर (twa_decode_bits(tw_dev, status_reg_value)) अणु
+			/* Check for valid status after each drain */
+			status_reg_value = readl(TW_STATUS_REG_ADDR(tw_dev));
+			if (twa_check_bits(status_reg_value)) {
+				if (twa_decode_bits(tw_dev, status_reg_value)) {
 					TW_CLEAR_ALL_INTERRUPTS(tw_dev);
-					जाओ twa_पूर्णांकerrupt_bail;
-				पूर्ण
-			पूर्ण
-		पूर्ण
-	पूर्ण
+					goto twa_interrupt_bail;
+				}
+			}
+		}
+	}
 
-twa_पूर्णांकerrupt_bail:
+twa_interrupt_bail:
 	spin_unlock(tw_dev->host->host_lock);
-	वापस IRQ_RETVAL(handled);
-पूर्ण /* End twa_पूर्णांकerrupt() */
+	return IRQ_RETVAL(handled);
+} /* End twa_interrupt() */
 
-/* This function will load the request id and various sgls क्रम ioctls */
-अटल व्योम twa_load_sgl(TW_Device_Extension *tw_dev, TW_Command_Full *full_command_packet, पूर्णांक request_id, dma_addr_t dma_handle, पूर्णांक length)
-अणु
+/* This function will load the request id and various sgls for ioctls */
+static void twa_load_sgl(TW_Device_Extension *tw_dev, TW_Command_Full *full_command_packet, int request_id, dma_addr_t dma_handle, int length)
+{
 	TW_Command *oldcommand;
 	TW_Command_Apache *newcommand;
 	TW_SG_Entry *sgl;
-	अचिन्हित पूर्णांक pae = 0;
+	unsigned int pae = 0;
 
-	अगर ((माप(दीर्घ) < 8) && (माप(dma_addr_t) > 4))
+	if ((sizeof(long) < 8) && (sizeof(dma_addr_t) > 4))
 		pae = 1;
 
-	अगर (TW_OP_OUT(full_command_packet->command.newcommand.opcode__reserved) == TW_OP_EXECUTE_SCSI) अणु
+	if (TW_OP_OUT(full_command_packet->command.newcommand.opcode__reserved) == TW_OP_EXECUTE_SCSI) {
 		newcommand = &full_command_packet->command.newcommand;
 		newcommand->request_id__lunl =
 			cpu_to_le16(TW_REQ_LUN_IN(TW_LUN_OUT(newcommand->request_id__lunl), request_id));
-		अगर (length) अणु
-			newcommand->sg_list[0].address = TW_CPU_TO_SGL(dma_handle + माप(TW_Ioctl_Buf_Apache) - 1);
+		if (length) {
+			newcommand->sg_list[0].address = TW_CPU_TO_SGL(dma_handle + sizeof(TW_Ioctl_Buf_Apache) - 1);
 			newcommand->sg_list[0].length = cpu_to_le32(length);
-		पूर्ण
+		}
 		newcommand->sgl_entries__lunh =
 			cpu_to_le16(TW_REQ_LUN_IN(TW_LUN_OUT(newcommand->sgl_entries__lunh), length ? 1 : 0));
-	पूर्ण अन्यथा अणु
+	} else {
 		oldcommand = &full_command_packet->command.oldcommand;
 		oldcommand->request_id = request_id;
 
-		अगर (TW_SGL_OUT(oldcommand->opcode__sgloffset)) अणु
+		if (TW_SGL_OUT(oldcommand->opcode__sgloffset)) {
 			/* Load the sg list */
-			अगर (tw_dev->tw_pci_dev->device == PCI_DEVICE_ID_3WARE_9690SA)
-				sgl = (TW_SG_Entry *)((u32 *)oldcommand+oldcommand->size - (माप(TW_SG_Entry)/4) + pae);
-			अन्यथा
+			if (tw_dev->tw_pci_dev->device == PCI_DEVICE_ID_3WARE_9690SA)
+				sgl = (TW_SG_Entry *)((u32 *)oldcommand+oldcommand->size - (sizeof(TW_SG_Entry)/4) + pae);
+			else
 				sgl = (TW_SG_Entry *)((u32 *)oldcommand+TW_SGL_OUT(oldcommand->opcode__sgloffset));
-			sgl->address = TW_CPU_TO_SGL(dma_handle + माप(TW_Ioctl_Buf_Apache) - 1);
+			sgl->address = TW_CPU_TO_SGL(dma_handle + sizeof(TW_Ioctl_Buf_Apache) - 1);
 			sgl->length = cpu_to_le32(length);
 
 			oldcommand->size += pae;
-		पूर्ण
-	पूर्ण
-पूर्ण /* End twa_load_sgl() */
+		}
+	}
+} /* End twa_load_sgl() */
 
-/* This function will poll क्रम a response पूर्णांकerrupt of a request */
-अटल पूर्णांक twa_poll_response(TW_Device_Extension *tw_dev, पूर्णांक request_id, पूर्णांक seconds)
-अणु
-	पूर्णांक retval = 1, found = 0, response_request_id;
+/* This function will poll for a response interrupt of a request */
+static int twa_poll_response(TW_Device_Extension *tw_dev, int request_id, int seconds)
+{
+	int retval = 1, found = 0, response_request_id;
 	TW_Response_Queue response_queue;
 	TW_Command_Full *full_command_packet = tw_dev->command_packet_virt[request_id];
 
-	अगर (twa_poll_status_gone(tw_dev, TW_STATUS_RESPONSE_QUEUE_EMPTY, seconds) == 0) अणु
-		response_queue.value = पढ़ोl(TW_RESPONSE_QUEUE_REG_ADDR(tw_dev));
+	if (twa_poll_status_gone(tw_dev, TW_STATUS_RESPONSE_QUEUE_EMPTY, seconds) == 0) {
+		response_queue.value = readl(TW_RESPONSE_QUEUE_REG_ADDR(tw_dev));
 		response_request_id = TW_RESID_OUT(response_queue.response_id);
-		अगर (request_id != response_request_id) अणु
+		if (request_id != response_request_id) {
 			TW_PRINTK(tw_dev->host, TW_DRIVER, 0x1e, "Found unexpected request id while polling for response");
-			जाओ out;
-		पूर्ण
-		अगर (TW_OP_OUT(full_command_packet->command.newcommand.opcode__reserved) == TW_OP_EXECUTE_SCSI) अणु
-			अगर (full_command_packet->command.newcommand.status != 0) अणु
+			goto out;
+		}
+		if (TW_OP_OUT(full_command_packet->command.newcommand.opcode__reserved) == TW_OP_EXECUTE_SCSI) {
+			if (full_command_packet->command.newcommand.status != 0) {
 				/* bad response */
 				twa_fill_sense(tw_dev, request_id, 0, 0);
-				जाओ out;
-			पूर्ण
+				goto out;
+			}
 			found = 1;
-		पूर्ण अन्यथा अणु
-			अगर (full_command_packet->command.oldcommand.status != 0) अणु
+		} else {
+			if (full_command_packet->command.oldcommand.status != 0) {
 				/* bad response */
 				twa_fill_sense(tw_dev, request_id, 0, 0);
-				जाओ out;
-			पूर्ण
+				goto out;
+			}
 			found = 1;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (found)
+	if (found)
 		retval = 0;
 out:
-	वापस retval;
-पूर्ण /* End twa_poll_response() */
+	return retval;
+} /* End twa_poll_response() */
 
-/* This function will poll the status रेजिस्टर क्रम a flag */
-अटल पूर्णांक twa_poll_status(TW_Device_Extension *tw_dev, u32 flag, पूर्णांक seconds)
-अणु
+/* This function will poll the status register for a flag */
+static int twa_poll_status(TW_Device_Extension *tw_dev, u32 flag, int seconds)
+{
 	u32 status_reg_value;
-	अचिन्हित दीर्घ beक्रमe;
-	पूर्णांक retval = 1;
+	unsigned long before;
+	int retval = 1;
 
-	status_reg_value = पढ़ोl(TW_STATUS_REG_ADDR(tw_dev));
-	beक्रमe = jअगरfies;
+	status_reg_value = readl(TW_STATUS_REG_ADDR(tw_dev));
+	before = jiffies;
 
-	अगर (twa_check_bits(status_reg_value))
+	if (twa_check_bits(status_reg_value))
 		twa_decode_bits(tw_dev, status_reg_value);
 
-	जबतक ((status_reg_value & flag) != flag) अणु
-		status_reg_value = पढ़ोl(TW_STATUS_REG_ADDR(tw_dev));
+	while ((status_reg_value & flag) != flag) {
+		status_reg_value = readl(TW_STATUS_REG_ADDR(tw_dev));
 
-		अगर (twa_check_bits(status_reg_value))
+		if (twa_check_bits(status_reg_value))
 			twa_decode_bits(tw_dev, status_reg_value);
 
-		अगर (समय_after(jअगरfies, beक्रमe + HZ * seconds))
-			जाओ out;
+		if (time_after(jiffies, before + HZ * seconds))
+			goto out;
 
 		msleep(50);
-	पूर्ण
+	}
 	retval = 0;
 out:
-	वापस retval;
-पूर्ण /* End twa_poll_status() */
+	return retval;
+} /* End twa_poll_status() */
 
-/* This function will poll the status रेजिस्टर क्रम disappearance of a flag */
-अटल पूर्णांक twa_poll_status_gone(TW_Device_Extension *tw_dev, u32 flag, पूर्णांक seconds)
-अणु
+/* This function will poll the status register for disappearance of a flag */
+static int twa_poll_status_gone(TW_Device_Extension *tw_dev, u32 flag, int seconds)
+{
 	u32 status_reg_value;
-	अचिन्हित दीर्घ beक्रमe;
-	पूर्णांक retval = 1;
+	unsigned long before;
+	int retval = 1;
 
-	status_reg_value = पढ़ोl(TW_STATUS_REG_ADDR(tw_dev));
-	beक्रमe = jअगरfies;
+	status_reg_value = readl(TW_STATUS_REG_ADDR(tw_dev));
+	before = jiffies;
 
-	अगर (twa_check_bits(status_reg_value))
+	if (twa_check_bits(status_reg_value))
 		twa_decode_bits(tw_dev, status_reg_value);
 
-	जबतक ((status_reg_value & flag) != 0) अणु
-		status_reg_value = पढ़ोl(TW_STATUS_REG_ADDR(tw_dev));
-		अगर (twa_check_bits(status_reg_value))
+	while ((status_reg_value & flag) != 0) {
+		status_reg_value = readl(TW_STATUS_REG_ADDR(tw_dev));
+		if (twa_check_bits(status_reg_value))
 			twa_decode_bits(tw_dev, status_reg_value);
 
-		अगर (समय_after(jअगरfies, beक्रमe + HZ * seconds))
-			जाओ out;
+		if (time_after(jiffies, before + HZ * seconds))
+			goto out;
 
 		msleep(50);
-	पूर्ण
+	}
 	retval = 0;
 out:
-	वापस retval;
-पूर्ण /* End twa_poll_status_gone() */
+	return retval;
+} /* End twa_poll_status_gone() */
 
 /* This function will attempt to post a command packet to the board */
-अटल पूर्णांक twa_post_command_packet(TW_Device_Extension *tw_dev, पूर्णांक request_id, अक्षर पूर्णांकernal)
-अणु
+static int twa_post_command_packet(TW_Device_Extension *tw_dev, int request_id, char internal)
+{
 	u32 status_reg_value;
 	dma_addr_t command_que_value;
-	पूर्णांक retval = 1;
+	int retval = 1;
 
 	command_que_value = tw_dev->command_packet_phys[request_id];
 
-	/* For 9650SE ग_लिखो low 4 bytes first */
-	अगर ((tw_dev->tw_pci_dev->device == PCI_DEVICE_ID_3WARE_9650SE) ||
-	    (tw_dev->tw_pci_dev->device == PCI_DEVICE_ID_3WARE_9690SA)) अणु
+	/* For 9650SE write low 4 bytes first */
+	if ((tw_dev->tw_pci_dev->device == PCI_DEVICE_ID_3WARE_9650SE) ||
+	    (tw_dev->tw_pci_dev->device == PCI_DEVICE_ID_3WARE_9690SA)) {
 		command_que_value += TW_COMMAND_OFFSET;
-		ग_लिखोl((u32)command_que_value, TW_COMMAND_QUEUE_REG_ADDR_LARGE(tw_dev));
-	पूर्ण
+		writel((u32)command_que_value, TW_COMMAND_QUEUE_REG_ADDR_LARGE(tw_dev));
+	}
 
-	status_reg_value = पढ़ोl(TW_STATUS_REG_ADDR(tw_dev));
+	status_reg_value = readl(TW_STATUS_REG_ADDR(tw_dev));
 
-	अगर (twa_check_bits(status_reg_value))
+	if (twa_check_bits(status_reg_value))
 		twa_decode_bits(tw_dev, status_reg_value);
 
-	अगर (((tw_dev->pending_request_count > 0) && (tw_dev->state[request_id] != TW_S_PENDING)) || (status_reg_value & TW_STATUS_COMMAND_QUEUE_FULL)) अणु
+	if (((tw_dev->pending_request_count > 0) && (tw_dev->state[request_id] != TW_S_PENDING)) || (status_reg_value & TW_STATUS_COMMAND_QUEUE_FULL)) {
 
-		/* Only pend पूर्णांकernal driver commands */
-		अगर (!पूर्णांकernal) अणु
+		/* Only pend internal driver commands */
+		if (!internal) {
 			retval = SCSI_MLQUEUE_HOST_BUSY;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
-		/* Couldn't post the command packet, so we करो it later */
-		अगर (tw_dev->state[request_id] != TW_S_PENDING) अणु
+		/* Couldn't post the command packet, so we do it later */
+		if (tw_dev->state[request_id] != TW_S_PENDING) {
 			tw_dev->state[request_id] = TW_S_PENDING;
 			tw_dev->pending_request_count++;
-			अगर (tw_dev->pending_request_count > tw_dev->max_pending_request_count) अणु
+			if (tw_dev->pending_request_count > tw_dev->max_pending_request_count) {
 				tw_dev->max_pending_request_count = tw_dev->pending_request_count;
-			पूर्ण
+			}
 			tw_dev->pending_queue[tw_dev->pending_tail] = request_id;
 			tw_dev->pending_tail = (tw_dev->pending_tail + 1) % TW_Q_LENGTH;
-		पूर्ण
+		}
 		TW_UNMASK_COMMAND_INTERRUPT(tw_dev);
-		जाओ out;
-	पूर्ण अन्यथा अणु
-		अगर ((tw_dev->tw_pci_dev->device == PCI_DEVICE_ID_3WARE_9650SE) ||
-		    (tw_dev->tw_pci_dev->device == PCI_DEVICE_ID_3WARE_9690SA)) अणु
-			/* Now ग_लिखो upper 4 bytes */
-			ग_लिखोl((u32)((u64)command_que_value >> 32), TW_COMMAND_QUEUE_REG_ADDR_LARGE(tw_dev) + 0x4);
-		पूर्ण अन्यथा अणु
-			अगर (माप(dma_addr_t) > 4) अणु
+		goto out;
+	} else {
+		if ((tw_dev->tw_pci_dev->device == PCI_DEVICE_ID_3WARE_9650SE) ||
+		    (tw_dev->tw_pci_dev->device == PCI_DEVICE_ID_3WARE_9690SA)) {
+			/* Now write upper 4 bytes */
+			writel((u32)((u64)command_que_value >> 32), TW_COMMAND_QUEUE_REG_ADDR_LARGE(tw_dev) + 0x4);
+		} else {
+			if (sizeof(dma_addr_t) > 4) {
 				command_que_value += TW_COMMAND_OFFSET;
-				ग_लिखोl((u32)command_que_value, TW_COMMAND_QUEUE_REG_ADDR(tw_dev));
-				ग_लिखोl((u32)((u64)command_que_value >> 32), TW_COMMAND_QUEUE_REG_ADDR(tw_dev) + 0x4);
-			पूर्ण अन्यथा अणु
-				ग_लिखोl(TW_COMMAND_OFFSET + command_que_value, TW_COMMAND_QUEUE_REG_ADDR(tw_dev));
-			पूर्ण
-		पूर्ण
+				writel((u32)command_que_value, TW_COMMAND_QUEUE_REG_ADDR(tw_dev));
+				writel((u32)((u64)command_que_value >> 32), TW_COMMAND_QUEUE_REG_ADDR(tw_dev) + 0x4);
+			} else {
+				writel(TW_COMMAND_OFFSET + command_que_value, TW_COMMAND_QUEUE_REG_ADDR(tw_dev));
+			}
+		}
 		tw_dev->state[request_id] = TW_S_POSTED;
 		tw_dev->posted_request_count++;
-		अगर (tw_dev->posted_request_count > tw_dev->max_posted_request_count) अणु
+		if (tw_dev->posted_request_count > tw_dev->max_posted_request_count) {
 			tw_dev->max_posted_request_count = tw_dev->posted_request_count;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	retval = 0;
 out:
-	वापस retval;
-पूर्ण /* End twa_post_command_packet() */
+	return retval;
+} /* End twa_post_command_packet() */
 
 /* This function will reset a device extension */
-अटल पूर्णांक twa_reset_device_extension(TW_Device_Extension *tw_dev)
-अणु
-	पूर्णांक i = 0;
-	पूर्णांक retval = 1;
-	अचिन्हित दीर्घ flags = 0;
+static int twa_reset_device_extension(TW_Device_Extension *tw_dev)
+{
+	int i = 0;
+	int retval = 1;
+	unsigned long flags = 0;
 
 	set_bit(TW_IN_RESET, &tw_dev->flags);
 	TW_DISABLE_INTERRUPTS(tw_dev);
@@ -1589,38 +1588,38 @@ out:
 	spin_lock_irqsave(tw_dev->host->host_lock, flags);
 
 	/* Abort all requests that are in progress */
-	क्रम (i = 0; i < TW_Q_LENGTH; i++) अणु
-		अगर ((tw_dev->state[i] != TW_S_FINISHED) &&
+	for (i = 0; i < TW_Q_LENGTH; i++) {
+		if ((tw_dev->state[i] != TW_S_FINISHED) &&
 		    (tw_dev->state[i] != TW_S_INITIAL) &&
-		    (tw_dev->state[i] != TW_S_COMPLETED)) अणु
-			अगर (tw_dev->srb[i]) अणु
-				काष्ठा scsi_cmnd *cmd = tw_dev->srb[i];
+		    (tw_dev->state[i] != TW_S_COMPLETED)) {
+			if (tw_dev->srb[i]) {
+				struct scsi_cmnd *cmd = tw_dev->srb[i];
 
 				cmd->result = (DID_RESET << 16);
-				अगर (twa_command_mapped(cmd))
+				if (twa_command_mapped(cmd))
 					scsi_dma_unmap(cmd);
-				cmd->scsi_करोne(cmd);
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				cmd->scsi_done(cmd);
+			}
+		}
+	}
 
 	/* Reset queues and counts */
-	क्रम (i = 0; i < TW_Q_LENGTH; i++) अणु
-		tw_dev->मुक्त_queue[i] = i;
+	for (i = 0; i < TW_Q_LENGTH; i++) {
+		tw_dev->free_queue[i] = i;
 		tw_dev->state[i] = TW_S_INITIAL;
-	पूर्ण
-	tw_dev->मुक्त_head = TW_Q_START;
-	tw_dev->मुक्त_tail = TW_Q_START;
+	}
+	tw_dev->free_head = TW_Q_START;
+	tw_dev->free_tail = TW_Q_START;
 	tw_dev->posted_request_count = 0;
 	tw_dev->pending_request_count = 0;
 	tw_dev->pending_head = TW_Q_START;
 	tw_dev->pending_tail = TW_Q_START;
-	tw_dev->reset_prपूर्णांक = 0;
+	tw_dev->reset_print = 0;
 
 	spin_unlock_irqrestore(tw_dev->host->host_lock, flags);
 
-	अगर (twa_reset_sequence(tw_dev, 1))
-		जाओ out;
+	if (twa_reset_sequence(tw_dev, 1))
+		goto out;
 
 	TW_ENABLE_AND_CLEAR_INTERRUPTS(tw_dev);
 	clear_bit(TW_IN_RESET, &tw_dev->flags);
@@ -1628,106 +1627,106 @@ out:
 
 	retval = 0;
 out:
-	वापस retval;
-पूर्ण /* End twa_reset_device_extension() */
+	return retval;
+} /* End twa_reset_device_extension() */
 
 /* This function will reset a controller */
-अटल पूर्णांक twa_reset_sequence(TW_Device_Extension *tw_dev, पूर्णांक soft_reset)
-अणु
-	पूर्णांक tries = 0, retval = 1, flashed = 0, करो_soft_reset = soft_reset;
+static int twa_reset_sequence(TW_Device_Extension *tw_dev, int soft_reset)
+{
+	int tries = 0, retval = 1, flashed = 0, do_soft_reset = soft_reset;
 
-	जबतक (tries < TW_MAX_RESET_TRIES) अणु
-		अगर (करो_soft_reset) अणु
+	while (tries < TW_MAX_RESET_TRIES) {
+		if (do_soft_reset) {
 			TW_SOFT_RESET(tw_dev);
 			/* Clear pchip/response queue on 9550SX */
-			अगर (twa_empty_response_queue_large(tw_dev)) अणु
+			if (twa_empty_response_queue_large(tw_dev)) {
 				TW_PRINTK(tw_dev->host, TW_DRIVER, 0x36, "Response queue (large) empty failed during reset sequence");
-				करो_soft_reset = 1;
+				do_soft_reset = 1;
 				tries++;
-				जारी;
-			पूर्ण
-		पूर्ण
+				continue;
+			}
+		}
 
 		/* Make sure controller is in a good state */
-		अगर (twa_poll_status(tw_dev, TW_STATUS_MICROCONTROLLER_READY | (करो_soft_reset == 1 ? TW_STATUS_ATTENTION_INTERRUPT : 0), 60)) अणु
+		if (twa_poll_status(tw_dev, TW_STATUS_MICROCONTROLLER_READY | (do_soft_reset == 1 ? TW_STATUS_ATTENTION_INTERRUPT : 0), 60)) {
 			TW_PRINTK(tw_dev->host, TW_DRIVER, 0x1f, "Microcontroller not ready during reset sequence");
-			करो_soft_reset = 1;
+			do_soft_reset = 1;
 			tries++;
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		/* Empty response queue */
-		अगर (twa_empty_response_queue(tw_dev)) अणु
+		if (twa_empty_response_queue(tw_dev)) {
 			TW_PRINTK(tw_dev->host, TW_DRIVER, 0x20, "Response queue empty failed during reset sequence");
-			करो_soft_reset = 1;
+			do_soft_reset = 1;
 			tries++;
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		flashed = 0;
 
-		/* Check क्रम compatibility/flash */
-		अगर (twa_check_srl(tw_dev, &flashed)) अणु
+		/* Check for compatibility/flash */
+		if (twa_check_srl(tw_dev, &flashed)) {
 			TW_PRINTK(tw_dev->host, TW_DRIVER, 0x21, "Compatibility check failed during reset sequence");
-			करो_soft_reset = 1;
+			do_soft_reset = 1;
 			tries++;
-			जारी;
-		पूर्ण अन्यथा अणु
-			अगर (flashed) अणु
+			continue;
+		} else {
+			if (flashed) {
 				tries++;
-				जारी;
-			पूर्ण
-		पूर्ण
+				continue;
+			}
+		}
 
 		/* Drain the AEN queue */
-		अगर (twa_aen_drain_queue(tw_dev, soft_reset)) अणु
+		if (twa_aen_drain_queue(tw_dev, soft_reset)) {
 			TW_PRINTK(tw_dev->host, TW_DRIVER, 0x22, "AEN drain failed during reset sequence");
-			करो_soft_reset = 1;
+			do_soft_reset = 1;
 			tries++;
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		/* If we got here, controller is in a good state */
 		retval = 0;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 out:
-	वापस retval;
-पूर्ण /* End twa_reset_sequence() */
+	return retval;
+} /* End twa_reset_sequence() */
 
-/* This funciton वापसs unit geometry in cylinders/heads/sectors */
-अटल पूर्णांक twa_scsi_biosparam(काष्ठा scsi_device *sdev, काष्ठा block_device *bdev, sector_t capacity, पूर्णांक geom[])
-अणु
-	पूर्णांक heads, sectors, cylinders;
+/* This funciton returns unit geometry in cylinders/heads/sectors */
+static int twa_scsi_biosparam(struct scsi_device *sdev, struct block_device *bdev, sector_t capacity, int geom[])
+{
+	int heads, sectors, cylinders;
 
-	अगर (capacity >= 0x200000) अणु
+	if (capacity >= 0x200000) {
 		heads = 255;
 		sectors = 63;
-		cylinders = sector_भाग(capacity, heads * sectors);
-	पूर्ण अन्यथा अणु
+		cylinders = sector_div(capacity, heads * sectors);
+	} else {
 		heads = 64;
 		sectors = 32;
-		cylinders = sector_भाग(capacity, heads * sectors);
-	पूर्ण
+		cylinders = sector_div(capacity, heads * sectors);
+	}
 
 	geom[0] = heads;
 	geom[1] = sectors;
 	geom[2] = cylinders;
 
-	वापस 0;
-पूर्ण /* End twa_scsi_biosparam() */
+	return 0;
+} /* End twa_scsi_biosparam() */
 
 /* This is the new scsi eh reset function */
-अटल पूर्णांक twa_scsi_eh_reset(काष्ठा scsi_cmnd *SCpnt)
-अणु
-	TW_Device_Extension *tw_dev = शून्य;
-	पूर्णांक retval = FAILED;
+static int twa_scsi_eh_reset(struct scsi_cmnd *SCpnt)
+{
+	TW_Device_Extension *tw_dev = NULL;
+	int retval = FAILED;
 
 	tw_dev = (TW_Device_Extension *)SCpnt->device->host->hostdata;
 
 	tw_dev->num_resets++;
 
-	sdev_prपूर्णांकk(KERN_WARNING, SCpnt->device,
+	sdev_printk(KERN_WARNING, SCpnt->device,
 		"WARNING: (0x%02X:0x%04X): Command (0x%x) timed out, resetting card.\n",
 		TW_DRIVER, 0x2c, SCpnt->cmnd[0]);
 
@@ -1735,82 +1734,82 @@ out:
 	mutex_lock(&tw_dev->ioctl_lock);
 
 	/* Now reset the card and some of the device extension data */
-	अगर (twa_reset_device_extension(tw_dev)) अणु
+	if (twa_reset_device_extension(tw_dev)) {
 		TW_PRINTK(tw_dev->host, TW_DRIVER, 0x2b, "Controller reset failed during scsi host reset");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	retval = SUCCESS;
 out:
 	mutex_unlock(&tw_dev->ioctl_lock);
-	वापस retval;
-पूर्ण /* End twa_scsi_eh_reset() */
+	return retval;
+} /* End twa_scsi_eh_reset() */
 
-/* This is the मुख्य scsi queue function to handle scsi opcodes */
-अटल पूर्णांक twa_scsi_queue_lck(काष्ठा scsi_cmnd *SCpnt, व्योम (*करोne)(काष्ठा scsi_cmnd *))
-अणु
-	पूर्णांक request_id, retval;
+/* This is the main scsi queue function to handle scsi opcodes */
+static int twa_scsi_queue_lck(struct scsi_cmnd *SCpnt, void (*done)(struct scsi_cmnd *))
+{
+	int request_id, retval;
 	TW_Device_Extension *tw_dev = (TW_Device_Extension *)SCpnt->device->host->hostdata;
 
-	/* If we are resetting due to समयd out ioctl, report as busy */
-	अगर (test_bit(TW_IN_RESET, &tw_dev->flags)) अणु
+	/* If we are resetting due to timed out ioctl, report as busy */
+	if (test_bit(TW_IN_RESET, &tw_dev->flags)) {
 		retval = SCSI_MLQUEUE_HOST_BUSY;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	/* Check अगर this FW supports luns */
-	अगर ((SCpnt->device->lun != 0) && (tw_dev->tw_compat_info.working_srl < TW_FW_SRL_LUNS_SUPPORTED)) अणु
+	/* Check if this FW supports luns */
+	if ((SCpnt->device->lun != 0) && (tw_dev->tw_compat_info.working_srl < TW_FW_SRL_LUNS_SUPPORTED)) {
 		SCpnt->result = (DID_BAD_TARGET << 16);
-		करोne(SCpnt);
+		done(SCpnt);
 		retval = 0;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	/* Save करोne function पूर्णांकo scsi_cmnd काष्ठा */
-	SCpnt->scsi_करोne = करोne;
+	/* Save done function into scsi_cmnd struct */
+	SCpnt->scsi_done = done;
 
-	/* Get a मुक्त request id */
+	/* Get a free request id */
 	twa_get_request_id(tw_dev, &request_id);
 
-	/* Save the scsi command क्रम use by the ISR */
+	/* Save the scsi command for use by the ISR */
 	tw_dev->srb[request_id] = SCpnt;
 
-	retval = twa_scsiop_execute_scsi(tw_dev, request_id, शून्य, 0, शून्य);
-	चयन (retval) अणु
-	हाल SCSI_MLQUEUE_HOST_BUSY:
-		अगर (twa_command_mapped(SCpnt))
+	retval = twa_scsiop_execute_scsi(tw_dev, request_id, NULL, 0, NULL);
+	switch (retval) {
+	case SCSI_MLQUEUE_HOST_BUSY:
+		if (twa_command_mapped(SCpnt))
 			scsi_dma_unmap(SCpnt);
-		twa_मुक्त_request_id(tw_dev, request_id);
-		अवरोध;
-	हाल 1:
+		twa_free_request_id(tw_dev, request_id);
+		break;
+	case 1:
 		SCpnt->result = (DID_ERROR << 16);
-		अगर (twa_command_mapped(SCpnt))
+		if (twa_command_mapped(SCpnt))
 			scsi_dma_unmap(SCpnt);
-		करोne(SCpnt);
+		done(SCpnt);
 		tw_dev->state[request_id] = TW_S_COMPLETED;
-		twa_मुक्त_request_id(tw_dev, request_id);
+		twa_free_request_id(tw_dev, request_id);
 		retval = 0;
-	पूर्ण
+	}
 out:
-	वापस retval;
-पूर्ण /* End twa_scsi_queue() */
+	return retval;
+} /* End twa_scsi_queue() */
 
-अटल DEF_SCSI_QCMD(twa_scsi_queue)
+static DEF_SCSI_QCMD(twa_scsi_queue)
 
 /* This function hands scsi cdb's to the firmware */
-अटल पूर्णांक twa_scsiop_execute_scsi(TW_Device_Extension *tw_dev, पूर्णांक request_id,
-				   अचिन्हित अक्षर *cdb, पूर्णांक use_sg,
+static int twa_scsiop_execute_scsi(TW_Device_Extension *tw_dev, int request_id,
+				   unsigned char *cdb, int use_sg,
 				   TW_SG_Entry *sglistarg)
-अणु
+{
 	TW_Command_Full *full_command_packet;
 	TW_Command_Apache *command_packet;
 	u32 num_sectors = 0x0;
-	पूर्णांक i, sg_count;
-	काष्ठा scsi_cmnd *srb = शून्य;
-	काष्ठा scatterlist *sg;
-	पूर्णांक retval = 1;
+	int i, sg_count;
+	struct scsi_cmnd *srb = NULL;
+	struct scatterlist *sg;
+	int retval = 1;
 
-	अगर (tw_dev->srb[request_id])
+	if (tw_dev->srb[request_id])
 		srb = tw_dev->srb[request_id];
 
 	/* Initialize command packet */
@@ -1823,164 +1822,164 @@ out:
 	command_packet->status = 0;
 	command_packet->opcode__reserved = TW_OPRES_IN(0, TW_OP_EXECUTE_SCSI);
 
-	/* We क्रमced 16 byte cdb use earlier */
-	अगर (!cdb)
-		स_नकल(command_packet->cdb, srb->cmnd, TW_MAX_CDB_LEN);
-	अन्यथा
-		स_नकल(command_packet->cdb, cdb, TW_MAX_CDB_LEN);
+	/* We forced 16 byte cdb use earlier */
+	if (!cdb)
+		memcpy(command_packet->cdb, srb->cmnd, TW_MAX_CDB_LEN);
+	else
+		memcpy(command_packet->cdb, cdb, TW_MAX_CDB_LEN);
 
-	अगर (srb) अणु
+	if (srb) {
 		command_packet->unit = srb->device->id;
 		command_packet->request_id__lunl =
 			cpu_to_le16(TW_REQ_LUN_IN(srb->device->lun, request_id));
-	पूर्ण अन्यथा अणु
+	} else {
 		command_packet->request_id__lunl =
 			cpu_to_le16(TW_REQ_LUN_IN(0, request_id));
 		command_packet->unit = 0;
-	पूर्ण
+	}
 
 	command_packet->sgl_offset = 16;
 
-	अगर (!sglistarg) अणु
+	if (!sglistarg) {
 		/* Map sglist from scsi layer to cmd packet */
 
-		अगर (scsi_sg_count(srb)) अणु
-			अगर (!twa_command_mapped(srb)) अणु
-				अगर (srb->sc_data_direction == DMA_TO_DEVICE ||
-				    srb->sc_data_direction == DMA_BIसूचीECTIONAL)
+		if (scsi_sg_count(srb)) {
+			if (!twa_command_mapped(srb)) {
+				if (srb->sc_data_direction == DMA_TO_DEVICE ||
+				    srb->sc_data_direction == DMA_BIDIRECTIONAL)
 					scsi_sg_copy_to_buffer(srb,
 							       tw_dev->generic_buffer_virt[request_id],
 							       TW_SECTOR_SIZE);
 				command_packet->sg_list[0].address = TW_CPU_TO_SGL(tw_dev->generic_buffer_phys[request_id]);
 				command_packet->sg_list[0].length = cpu_to_le32(TW_MIN_SGL_LENGTH);
-			पूर्ण अन्यथा अणु
+			} else {
 				sg_count = scsi_dma_map(srb);
-				अगर (sg_count < 0)
-					जाओ out;
+				if (sg_count < 0)
+					goto out;
 
-				scsi_क्रम_each_sg(srb, sg, sg_count, i) अणु
+				scsi_for_each_sg(srb, sg, sg_count, i) {
 					command_packet->sg_list[i].address = TW_CPU_TO_SGL(sg_dma_address(sg));
 					command_packet->sg_list[i].length = cpu_to_le32(sg_dma_len(sg));
-					अगर (command_packet->sg_list[i].address & TW_CPU_TO_SGL(TW_ALIGNMENT_9000_SGL)) अणु
+					if (command_packet->sg_list[i].address & TW_CPU_TO_SGL(TW_ALIGNMENT_9000_SGL)) {
 						TW_PRINTK(tw_dev->host, TW_DRIVER, 0x2e, "Found unaligned sgl address during execute scsi");
-						जाओ out;
-					पूर्ण
-				पूर्ण
-			पूर्ण
+						goto out;
+					}
+				}
+			}
 			command_packet->sgl_entries__lunh = cpu_to_le16(TW_REQ_LUN_IN((srb->device->lun >> 4), scsi_sg_count(tw_dev->srb[request_id])));
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		/* Internal cdb post */
-		क्रम (i = 0; i < use_sg; i++) अणु
+		for (i = 0; i < use_sg; i++) {
 			command_packet->sg_list[i].address = TW_CPU_TO_SGL(sglistarg[i].address);
 			command_packet->sg_list[i].length = cpu_to_le32(sglistarg[i].length);
-			अगर (command_packet->sg_list[i].address & TW_CPU_TO_SGL(TW_ALIGNMENT_9000_SGL)) अणु
+			if (command_packet->sg_list[i].address & TW_CPU_TO_SGL(TW_ALIGNMENT_9000_SGL)) {
 				TW_PRINTK(tw_dev->host, TW_DRIVER, 0x2f, "Found unaligned sgl address during internal post");
-				जाओ out;
-			पूर्ण
-		पूर्ण
+				goto out;
+			}
+		}
 		command_packet->sgl_entries__lunh = cpu_to_le16(TW_REQ_LUN_IN(0, use_sg));
-	पूर्ण
+	}
 
-	अगर (srb) अणु
-		अगर (srb->cmnd[0] == READ_6 || srb->cmnd[0] == WRITE_6)
+	if (srb) {
+		if (srb->cmnd[0] == READ_6 || srb->cmnd[0] == WRITE_6)
 			num_sectors = (u32)srb->cmnd[4];
 
-		अगर (srb->cmnd[0] == READ_10 || srb->cmnd[0] == WRITE_10)
+		if (srb->cmnd[0] == READ_10 || srb->cmnd[0] == WRITE_10)
 			num_sectors = (u32)srb->cmnd[8] | ((u32)srb->cmnd[7] << 8);
-	पूर्ण
+	}
 
 	/* Update sector statistic */
 	tw_dev->sector_count = num_sectors;
-	अगर (tw_dev->sector_count > tw_dev->max_sector_count)
+	if (tw_dev->sector_count > tw_dev->max_sector_count)
 		tw_dev->max_sector_count = tw_dev->sector_count;
 
 	/* Update SG statistics */
-	अगर (srb) अणु
+	if (srb) {
 		tw_dev->sgl_entries = scsi_sg_count(tw_dev->srb[request_id]);
-		अगर (tw_dev->sgl_entries > tw_dev->max_sgl_entries)
+		if (tw_dev->sgl_entries > tw_dev->max_sgl_entries)
 			tw_dev->max_sgl_entries = tw_dev->sgl_entries;
-	पूर्ण
+	}
 
 	/* Now post the command to the board */
-	अगर (srb) अणु
+	if (srb) {
 		retval = twa_post_command_packet(tw_dev, request_id, 0);
-	पूर्ण अन्यथा अणु
+	} else {
 		twa_post_command_packet(tw_dev, request_id, 1);
 		retval = 0;
-	पूर्ण
+	}
 out:
-	वापस retval;
-पूर्ण /* End twa_scsiop_execute_scsi() */
+	return retval;
+} /* End twa_scsiop_execute_scsi() */
 
 /* This function completes an execute scsi operation */
-अटल व्योम twa_scsiop_execute_scsi_complete(TW_Device_Extension *tw_dev, पूर्णांक request_id)
-अणु
-	काष्ठा scsi_cmnd *cmd = tw_dev->srb[request_id];
+static void twa_scsiop_execute_scsi_complete(TW_Device_Extension *tw_dev, int request_id)
+{
+	struct scsi_cmnd *cmd = tw_dev->srb[request_id];
 
-	अगर (!twa_command_mapped(cmd) &&
+	if (!twa_command_mapped(cmd) &&
 	    (cmd->sc_data_direction == DMA_FROM_DEVICE ||
-	     cmd->sc_data_direction == DMA_BIसूचीECTIONAL)) अणु
-		अगर (scsi_sg_count(cmd) == 1) अणु
-			व्योम *buf = tw_dev->generic_buffer_virt[request_id];
+	     cmd->sc_data_direction == DMA_BIDIRECTIONAL)) {
+		if (scsi_sg_count(cmd) == 1) {
+			void *buf = tw_dev->generic_buffer_virt[request_id];
 
 			scsi_sg_copy_from_buffer(cmd, buf, TW_SECTOR_SIZE);
-		पूर्ण
-	पूर्ण
-पूर्ण /* End twa_scsiop_execute_scsi_complete() */
+		}
+	}
+} /* End twa_scsiop_execute_scsi_complete() */
 
-/* This function tells the controller to shut करोwn */
-अटल व्योम __twa_shutकरोwn(TW_Device_Extension *tw_dev)
-अणु
-	/* Disable पूर्णांकerrupts */
+/* This function tells the controller to shut down */
+static void __twa_shutdown(TW_Device_Extension *tw_dev)
+{
+	/* Disable interrupts */
 	TW_DISABLE_INTERRUPTS(tw_dev);
 
 	/* Free up the IRQ */
-	मुक्त_irq(tw_dev->tw_pci_dev->irq, tw_dev);
+	free_irq(tw_dev->tw_pci_dev->irq, tw_dev);
 
-	prपूर्णांकk(KERN_WARNING "3w-9xxx: Shutting down host %d.\n", tw_dev->host->host_no);
+	printk(KERN_WARNING "3w-9xxx: Shutting down host %d.\n", tw_dev->host->host_no);
 
-	/* Tell the card we are shutting करोwn */
-	अगर (twa_initconnection(tw_dev, 1, 0, 0, 0, 0, 0, शून्य, शून्य, शून्य, शून्य, शून्य)) अणु
+	/* Tell the card we are shutting down */
+	if (twa_initconnection(tw_dev, 1, 0, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL)) {
 		TW_PRINTK(tw_dev->host, TW_DRIVER, 0x31, "Connection shutdown failed");
-	पूर्ण अन्यथा अणु
-		prपूर्णांकk(KERN_WARNING "3w-9xxx: Shutdown complete.\n");
-	पूर्ण
+	} else {
+		printk(KERN_WARNING "3w-9xxx: Shutdown complete.\n");
+	}
 
-	/* Clear all पूर्णांकerrupts just beक्रमe निकास */
+	/* Clear all interrupts just before exit */
 	TW_CLEAR_ALL_INTERRUPTS(tw_dev);
-पूर्ण /* End __twa_shutकरोwn() */
+} /* End __twa_shutdown() */
 
-/* Wrapper क्रम __twa_shutकरोwn */
-अटल व्योम twa_shutकरोwn(काष्ठा pci_dev *pdev)
-अणु
-	काष्ठा Scsi_Host *host = pci_get_drvdata(pdev);
+/* Wrapper for __twa_shutdown */
+static void twa_shutdown(struct pci_dev *pdev)
+{
+	struct Scsi_Host *host = pci_get_drvdata(pdev);
 	TW_Device_Extension *tw_dev = (TW_Device_Extension *)host->hostdata;
 
-	__twa_shutकरोwn(tw_dev);
-पूर्ण /* End twa_shutकरोwn() */
+	__twa_shutdown(tw_dev);
+} /* End twa_shutdown() */
 
 /* This function will look up a string */
-अटल अक्षर *twa_string_lookup(twa_message_type *table, अचिन्हित पूर्णांक code)
-अणु
-	पूर्णांक index;
+static char *twa_string_lookup(twa_message_type *table, unsigned int code)
+{
+	int index;
 
-	क्रम (index = 0; ((code != table[index].code) &&
-		      (table[index].text != (अक्षर *)0)); index++);
-	वापस(table[index].text);
-पूर्ण /* End twa_string_lookup() */
+	for (index = 0; ((code != table[index].code) &&
+		      (table[index].text != (char *)0)); index++);
+	return(table[index].text);
+} /* End twa_string_lookup() */
 
-/* This function माला_लो called when a disk is coming on-line */
-अटल पूर्णांक twa_slave_configure(काष्ठा scsi_device *sdev)
-अणु
-	/* Force 60 second समयout */
-	blk_queue_rq_समयout(sdev->request_queue, 60 * HZ);
+/* This function gets called when a disk is coming on-line */
+static int twa_slave_configure(struct scsi_device *sdev)
+{
+	/* Force 60 second timeout */
+	blk_queue_rq_timeout(sdev->request_queue, 60 * HZ);
 
-	वापस 0;
-पूर्ण /* End twa_slave_configure() */
+	return 0;
+} /* End twa_slave_configure() */
 
-/* scsi_host_ढाँचा initializer */
-अटल काष्ठा scsi_host_ढाँचा driver_ढाँचा = अणु
+/* scsi_host_template initializer */
+static struct scsi_host_template driver_template = {
 	.module			= THIS_MODULE,
 	.name			= "3ware 9000 Storage Controller",
 	.queuecommand		= twa_scsi_queue,
@@ -1995,90 +1994,90 @@ out:
 	.cmd_per_lun		= TW_MAX_CMDS_PER_LUN,
 	.shost_attrs		= twa_host_attrs,
 	.emulated		= 1,
-	.no_ग_लिखो_same		= 1,
-पूर्ण;
+	.no_write_same		= 1,
+};
 
 /* This function will probe and initialize a card */
-अटल पूर्णांक twa_probe(काष्ठा pci_dev *pdev, स्थिर काष्ठा pci_device_id *dev_id)
-अणु
-	काष्ठा Scsi_Host *host = शून्य;
+static int twa_probe(struct pci_dev *pdev, const struct pci_device_id *dev_id)
+{
+	struct Scsi_Host *host = NULL;
 	TW_Device_Extension *tw_dev;
-	अचिन्हित दीर्घ mem_addr, mem_len;
-	पूर्णांक retval;
+	unsigned long mem_addr, mem_len;
+	int retval;
 
 	retval = pci_enable_device(pdev);
-	अगर (retval) अणु
+	if (retval) {
 		TW_PRINTK(host, TW_DRIVER, 0x34, "Failed to enable pci device");
-		जाओ out_disable_device;
-	पूर्ण
+		goto out_disable_device;
+	}
 
 	pci_set_master(pdev);
 	pci_try_set_mwi(pdev);
 
 	retval = dma_set_mask_and_coherent(&pdev->dev, DMA_BIT_MASK(64));
-	अगर (retval)
+	if (retval)
 		retval = dma_set_mask_and_coherent(&pdev->dev, DMA_BIT_MASK(32));
-	अगर (retval) अणु
+	if (retval) {
 		TW_PRINTK(host, TW_DRIVER, 0x23, "Failed to set dma mask");
 		retval = -ENODEV;
-		जाओ out_disable_device;
-	पूर्ण
+		goto out_disable_device;
+	}
 
-	host = scsi_host_alloc(&driver_ढाँचा, माप(TW_Device_Extension));
-	अगर (!host) अणु
+	host = scsi_host_alloc(&driver_template, sizeof(TW_Device_Extension));
+	if (!host) {
 		TW_PRINTK(host, TW_DRIVER, 0x24, "Failed to allocate memory for device extension");
 		retval = -ENOMEM;
-		जाओ out_disable_device;
-	पूर्ण
+		goto out_disable_device;
+	}
 	tw_dev = (TW_Device_Extension *)host->hostdata;
 
 	/* Save values to device extension */
 	tw_dev->host = host;
 	tw_dev->tw_pci_dev = pdev;
 
-	अगर (twa_initialize_device_extension(tw_dev)) अणु
+	if (twa_initialize_device_extension(tw_dev)) {
 		TW_PRINTK(tw_dev->host, TW_DRIVER, 0x25, "Failed to initialize device extension");
 		retval = -ENOMEM;
-		जाओ out_मुक्त_device_extension;
-	पूर्ण
+		goto out_free_device_extension;
+	}
 
 	/* Request IO regions */
 	retval = pci_request_regions(pdev, "3w-9xxx");
-	अगर (retval) अणु
+	if (retval) {
 		TW_PRINTK(tw_dev->host, TW_DRIVER, 0x26, "Failed to get mem region");
-		जाओ out_मुक्त_device_extension;
-	पूर्ण
+		goto out_free_device_extension;
+	}
 
-	अगर (pdev->device == PCI_DEVICE_ID_3WARE_9000) अणु
+	if (pdev->device == PCI_DEVICE_ID_3WARE_9000) {
 		mem_addr = pci_resource_start(pdev, 1);
 		mem_len = pci_resource_len(pdev, 1);
-	पूर्ण अन्यथा अणु
+	} else {
 		mem_addr = pci_resource_start(pdev, 2);
 		mem_len = pci_resource_len(pdev, 2);
-	पूर्ण
+	}
 
 	/* Save base address */
 	tw_dev->base_addr = ioremap(mem_addr, mem_len);
-	अगर (!tw_dev->base_addr) अणु
+	if (!tw_dev->base_addr) {
 		TW_PRINTK(tw_dev->host, TW_DRIVER, 0x35, "Failed to ioremap");
 		retval = -ENOMEM;
-		जाओ out_release_mem_region;
-	पूर्ण
+		goto out_release_mem_region;
+	}
 
-	/* Disable पूर्णांकerrupts on the card */
+	/* Disable interrupts on the card */
 	TW_DISABLE_INTERRUPTS(tw_dev);
 
 	/* Initialize the card */
-	अगर (twa_reset_sequence(tw_dev, 0)) अणु
+	if (twa_reset_sequence(tw_dev, 0)) {
 		retval = -ENOMEM;
-		जाओ out_iounmap;
-	पूर्ण
+		goto out_iounmap;
+	}
 
-	/* Set host specअगरic parameters */
-	अगर ((pdev->device == PCI_DEVICE_ID_3WARE_9650SE) ||
+	/* Set host specific parameters */
+	if ((pdev->device == PCI_DEVICE_ID_3WARE_9650SE) ||
 	    (pdev->device == PCI_DEVICE_ID_3WARE_9690SA))
 		host->max_id = TW_MAX_UNITS_9650SE;
-	अन्यथा
+	else
 		host->max_id = TW_MAX_UNITS;
 
 	host->max_cmd_len = TW_MAX_CDB_LEN;
@@ -2089,87 +2088,87 @@ out:
 
 	/* Register the card with the kernel SCSI layer */
 	retval = scsi_add_host(host, &pdev->dev);
-	अगर (retval) अणु
+	if (retval) {
 		TW_PRINTK(tw_dev->host, TW_DRIVER, 0x27, "scsi add host failed");
-		जाओ out_iounmap;
-	पूर्ण
+		goto out_iounmap;
+	}
 
 	pci_set_drvdata(pdev, host);
 
-	prपूर्णांकk(KERN_WARNING "3w-9xxx: scsi%d: Found a 3ware 9000 Storage Controller at 0x%lx, IRQ: %d.\n",
+	printk(KERN_WARNING "3w-9xxx: scsi%d: Found a 3ware 9000 Storage Controller at 0x%lx, IRQ: %d.\n",
 	       host->host_no, mem_addr, pdev->irq);
-	prपूर्णांकk(KERN_WARNING "3w-9xxx: scsi%d: Firmware %s, BIOS %s, Ports: %d.\n",
+	printk(KERN_WARNING "3w-9xxx: scsi%d: Firmware %s, BIOS %s, Ports: %d.\n",
 	       host->host_no,
-	       (अक्षर *)twa_get_param(tw_dev, 0, TW_VERSION_TABLE,
+	       (char *)twa_get_param(tw_dev, 0, TW_VERSION_TABLE,
 				     TW_PARAM_FWVER, TW_PARAM_FWVER_LENGTH),
-	       (अक्षर *)twa_get_param(tw_dev, 1, TW_VERSION_TABLE,
+	       (char *)twa_get_param(tw_dev, 1, TW_VERSION_TABLE,
 				     TW_PARAM_BIOSVER, TW_PARAM_BIOSVER_LENGTH),
-	       le32_to_cpu(*(पूर्णांक *)twa_get_param(tw_dev, 2, TW_INFORMATION_TABLE,
+	       le32_to_cpu(*(int *)twa_get_param(tw_dev, 2, TW_INFORMATION_TABLE,
 				     TW_PARAM_PORTCOUNT, TW_PARAM_PORTCOUNT_LENGTH)));
 
 	/* Try to enable MSI */
-	अगर (use_msi && (pdev->device != PCI_DEVICE_ID_3WARE_9000) &&
+	if (use_msi && (pdev->device != PCI_DEVICE_ID_3WARE_9000) &&
 	    !pci_enable_msi(pdev))
 		set_bit(TW_USING_MSI, &tw_dev->flags);
 
-	/* Now setup the पूर्णांकerrupt handler */
-	retval = request_irq(pdev->irq, twa_पूर्णांकerrupt, IRQF_SHARED, "3w-9xxx", tw_dev);
-	अगर (retval) अणु
+	/* Now setup the interrupt handler */
+	retval = request_irq(pdev->irq, twa_interrupt, IRQF_SHARED, "3w-9xxx", tw_dev);
+	if (retval) {
 		TW_PRINTK(tw_dev->host, TW_DRIVER, 0x30, "Error requesting IRQ");
-		जाओ out_हटाओ_host;
-	पूर्ण
+		goto out_remove_host;
+	}
 
 	twa_device_extension_list[twa_device_extension_count] = tw_dev;
 	twa_device_extension_count++;
 
-	/* Re-enable पूर्णांकerrupts on the card */
+	/* Re-enable interrupts on the card */
 	TW_ENABLE_AND_CLEAR_INTERRUPTS(tw_dev);
 
 	/* Finally, scan the host */
 	scsi_scan_host(host);
 
-	अगर (twa_major == -1) अणु
-		अगर ((twa_major = रेजिस्टर_chrdev (0, "twa", &twa_fops)) < 0)
+	if (twa_major == -1) {
+		if ((twa_major = register_chrdev (0, "twa", &twa_fops)) < 0)
 			TW_PRINTK(host, TW_DRIVER, 0x29, "Failed to register character device");
-	पूर्ण
-	वापस 0;
+	}
+	return 0;
 
-out_हटाओ_host:
-	अगर (test_bit(TW_USING_MSI, &tw_dev->flags))
+out_remove_host:
+	if (test_bit(TW_USING_MSI, &tw_dev->flags))
 		pci_disable_msi(pdev);
-	scsi_हटाओ_host(host);
+	scsi_remove_host(host);
 out_iounmap:
 	iounmap(tw_dev->base_addr);
 out_release_mem_region:
 	pci_release_regions(pdev);
-out_मुक्त_device_extension:
-	twa_मुक्त_device_extension(tw_dev);
+out_free_device_extension:
+	twa_free_device_extension(tw_dev);
 	scsi_host_put(host);
 out_disable_device:
 	pci_disable_device(pdev);
 
-	वापस retval;
-पूर्ण /* End twa_probe() */
+	return retval;
+} /* End twa_probe() */
 
-/* This function is called to हटाओ a device */
-अटल व्योम twa_हटाओ(काष्ठा pci_dev *pdev)
-अणु
-	काष्ठा Scsi_Host *host = pci_get_drvdata(pdev);
+/* This function is called to remove a device */
+static void twa_remove(struct pci_dev *pdev)
+{
+	struct Scsi_Host *host = pci_get_drvdata(pdev);
 	TW_Device_Extension *tw_dev = (TW_Device_Extension *)host->hostdata;
 
-	scsi_हटाओ_host(tw_dev->host);
+	scsi_remove_host(tw_dev->host);
 
-	/* Unरेजिस्टर अक्षरacter device */
-	अगर (twa_major >= 0) अणु
-		unरेजिस्टर_chrdev(twa_major, "twa");
+	/* Unregister character device */
+	if (twa_major >= 0) {
+		unregister_chrdev(twa_major, "twa");
 		twa_major = -1;
-	पूर्ण
+	}
 
-	/* Shutकरोwn the card */
-	__twa_shutकरोwn(tw_dev);
+	/* Shutdown the card */
+	__twa_shutdown(tw_dev);
 
-	/* Disable MSI अगर enabled */
-	अगर (test_bit(TW_USING_MSI, &tw_dev->flags))
+	/* Disable MSI if enabled */
+	if (test_bit(TW_USING_MSI, &tw_dev->flags))
 		pci_disable_msi(pdev);
 
 	/* Free IO remapping */
@@ -2179,130 +2178,130 @@ out_disable_device:
 	pci_release_regions(pdev);
 
 	/* Free up device extension resources */
-	twa_मुक्त_device_extension(tw_dev);
+	twa_free_device_extension(tw_dev);
 
 	scsi_host_put(tw_dev->host);
 	pci_disable_device(pdev);
 	twa_device_extension_count--;
-पूर्ण /* End twa_हटाओ() */
+} /* End twa_remove() */
 
 /* This function is called on PCI suspend */
-अटल पूर्णांक __maybe_unused twa_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा pci_dev *pdev = to_pci_dev(dev);
-	काष्ठा Scsi_Host *host = pci_get_drvdata(pdev);
+static int __maybe_unused twa_suspend(struct device *dev)
+{
+	struct pci_dev *pdev = to_pci_dev(dev);
+	struct Scsi_Host *host = pci_get_drvdata(pdev);
 	TW_Device_Extension *tw_dev = (TW_Device_Extension *)host->hostdata;
 
-	prपूर्णांकk(KERN_WARNING "3w-9xxx: Suspending host %d.\n", tw_dev->host->host_no);
+	printk(KERN_WARNING "3w-9xxx: Suspending host %d.\n", tw_dev->host->host_no);
 
 	TW_DISABLE_INTERRUPTS(tw_dev);
-	मुक्त_irq(tw_dev->tw_pci_dev->irq, tw_dev);
+	free_irq(tw_dev->tw_pci_dev->irq, tw_dev);
 
-	अगर (test_bit(TW_USING_MSI, &tw_dev->flags))
+	if (test_bit(TW_USING_MSI, &tw_dev->flags))
 		pci_disable_msi(pdev);
 
-	/* Tell the card we are shutting करोwn */
-	अगर (twa_initconnection(tw_dev, 1, 0, 0, 0, 0, 0, शून्य, शून्य, शून्य, शून्य, शून्य)) अणु
+	/* Tell the card we are shutting down */
+	if (twa_initconnection(tw_dev, 1, 0, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL)) {
 		TW_PRINTK(tw_dev->host, TW_DRIVER, 0x38, "Connection shutdown failed during suspend");
-	पूर्ण अन्यथा अणु
-		prपूर्णांकk(KERN_WARNING "3w-9xxx: Suspend complete.\n");
-	पूर्ण
+	} else {
+		printk(KERN_WARNING "3w-9xxx: Suspend complete.\n");
+	}
 	TW_CLEAR_ALL_INTERRUPTS(tw_dev);
 
-	वापस 0;
-पूर्ण /* End twa_suspend() */
+	return 0;
+} /* End twa_suspend() */
 
 /* This function is called on PCI resume */
-अटल पूर्णांक __maybe_unused twa_resume(काष्ठा device *dev)
-अणु
-	पूर्णांक retval = 0;
-	काष्ठा pci_dev *pdev = to_pci_dev(dev);
-	काष्ठा Scsi_Host *host = pci_get_drvdata(pdev);
+static int __maybe_unused twa_resume(struct device *dev)
+{
+	int retval = 0;
+	struct pci_dev *pdev = to_pci_dev(dev);
+	struct Scsi_Host *host = pci_get_drvdata(pdev);
 	TW_Device_Extension *tw_dev = (TW_Device_Extension *)host->hostdata;
 
-	prपूर्णांकk(KERN_WARNING "3w-9xxx: Resuming host %d.\n", tw_dev->host->host_no);
+	printk(KERN_WARNING "3w-9xxx: Resuming host %d.\n", tw_dev->host->host_no);
 
 	pci_try_set_mwi(pdev);
 
 	retval = dma_set_mask_and_coherent(&pdev->dev, DMA_BIT_MASK(64));
-	अगर (retval)
+	if (retval)
 		retval = dma_set_mask_and_coherent(&pdev->dev, DMA_BIT_MASK(32));
-	अगर (retval) अणु
+	if (retval) {
 		TW_PRINTK(host, TW_DRIVER, 0x40, "Failed to set dma mask during resume");
 		retval = -ENODEV;
-		जाओ out_disable_device;
-	पूर्ण
+		goto out_disable_device;
+	}
 
 	/* Initialize the card */
-	अगर (twa_reset_sequence(tw_dev, 0)) अणु
+	if (twa_reset_sequence(tw_dev, 0)) {
 		retval = -ENODEV;
-		जाओ out_disable_device;
-	पूर्ण
+		goto out_disable_device;
+	}
 
-	/* Now setup the पूर्णांकerrupt handler */
-	retval = request_irq(pdev->irq, twa_पूर्णांकerrupt, IRQF_SHARED, "3w-9xxx", tw_dev);
-	अगर (retval) अणु
+	/* Now setup the interrupt handler */
+	retval = request_irq(pdev->irq, twa_interrupt, IRQF_SHARED, "3w-9xxx", tw_dev);
+	if (retval) {
 		TW_PRINTK(tw_dev->host, TW_DRIVER, 0x42, "Error requesting IRQ during resume");
 		retval = -ENODEV;
-		जाओ out_disable_device;
-	पूर्ण
+		goto out_disable_device;
+	}
 
-	/* Now enable MSI अगर enabled */
-	अगर (test_bit(TW_USING_MSI, &tw_dev->flags))
+	/* Now enable MSI if enabled */
+	if (test_bit(TW_USING_MSI, &tw_dev->flags))
 		pci_enable_msi(pdev);
 
-	/* Re-enable पूर्णांकerrupts on the card */
+	/* Re-enable interrupts on the card */
 	TW_ENABLE_AND_CLEAR_INTERRUPTS(tw_dev);
 
-	prपूर्णांकk(KERN_WARNING "3w-9xxx: Resume complete.\n");
-	वापस 0;
+	printk(KERN_WARNING "3w-9xxx: Resume complete.\n");
+	return 0;
 
 out_disable_device:
-	scsi_हटाओ_host(host);
+	scsi_remove_host(host);
 
-	वापस retval;
-पूर्ण /* End twa_resume() */
+	return retval;
+} /* End twa_resume() */
 
 /* PCI Devices supported by this driver */
-अटल काष्ठा pci_device_id twa_pci_tbl[] = अणु
-	अणु PCI_VENDOR_ID_3WARE, PCI_DEVICE_ID_3WARE_9000,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0पूर्ण,
-	अणु PCI_VENDOR_ID_3WARE, PCI_DEVICE_ID_3WARE_9550SX,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0पूर्ण,
-	अणु PCI_VENDOR_ID_3WARE, PCI_DEVICE_ID_3WARE_9650SE,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0पूर्ण,
-	अणु PCI_VENDOR_ID_3WARE, PCI_DEVICE_ID_3WARE_9690SA,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static struct pci_device_id twa_pci_tbl[] = {
+	{ PCI_VENDOR_ID_3WARE, PCI_DEVICE_ID_3WARE_9000,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0},
+	{ PCI_VENDOR_ID_3WARE, PCI_DEVICE_ID_3WARE_9550SX,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0},
+	{ PCI_VENDOR_ID_3WARE, PCI_DEVICE_ID_3WARE_9650SE,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0},
+	{ PCI_VENDOR_ID_3WARE, PCI_DEVICE_ID_3WARE_9690SA,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0},
+	{ }
+};
 MODULE_DEVICE_TABLE(pci, twa_pci_tbl);
 
-अटल SIMPLE_DEV_PM_OPS(twa_pm_ops, twa_suspend, twa_resume);
+static SIMPLE_DEV_PM_OPS(twa_pm_ops, twa_suspend, twa_resume);
 
 /* pci_driver initializer */
-अटल काष्ठा pci_driver twa_driver = अणु
+static struct pci_driver twa_driver = {
 	.name		= "3w-9xxx",
 	.id_table	= twa_pci_tbl,
 	.probe		= twa_probe,
-	.हटाओ		= twa_हटाओ,
+	.remove		= twa_remove,
 	.driver.pm	= &twa_pm_ops,
-	.shutकरोwn	= twa_shutकरोwn
-पूर्ण;
+	.shutdown	= twa_shutdown
+};
 
 /* This function is called on driver initialization */
-अटल पूर्णांक __init twa_init(व्योम)
-अणु
-	prपूर्णांकk(KERN_WARNING "3ware 9000 Storage Controller device driver for Linux v%s.\n", TW_DRIVER_VERSION);
+static int __init twa_init(void)
+{
+	printk(KERN_WARNING "3ware 9000 Storage Controller device driver for Linux v%s.\n", TW_DRIVER_VERSION);
 
-	वापस pci_रेजिस्टर_driver(&twa_driver);
-पूर्ण /* End twa_init() */
+	return pci_register_driver(&twa_driver);
+} /* End twa_init() */
 
-/* This function is called on driver निकास */
-अटल व्योम __निकास twa_निकास(व्योम)
-अणु
-	pci_unरेजिस्टर_driver(&twa_driver);
-पूर्ण /* End twa_निकास() */
+/* This function is called on driver exit */
+static void __exit twa_exit(void)
+{
+	pci_unregister_driver(&twa_driver);
+} /* End twa_exit() */
 
 module_init(twa_init);
-module_निकास(twa_निकास);
+module_exit(twa_exit);
 

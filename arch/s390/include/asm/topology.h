@@ -1,102 +1,101 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _ASM_S390_TOPOLOGY_H
-#घोषणा _ASM_S390_TOPOLOGY_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _ASM_S390_TOPOLOGY_H
+#define _ASM_S390_TOPOLOGY_H
 
-#समावेश <linux/cpumask.h>
-#समावेश <यंत्र/numa.h>
+#include <linux/cpumask.h>
+#include <asm/numa.h>
 
-काष्ठा sysinfo_15_1_x;
-काष्ठा cpu;
+struct sysinfo_15_1_x;
+struct cpu;
 
-#अगर_घोषित CONFIG_SCHED_TOPOLOGY
+#ifdef CONFIG_SCHED_TOPOLOGY
 
-काष्ठा cpu_topology_s390 अणु
-	अचिन्हित लघु thपढ़ो_id;
-	अचिन्हित लघु core_id;
-	अचिन्हित लघु socket_id;
-	अचिन्हित लघु book_id;
-	अचिन्हित लघु drawer_id;
-	अचिन्हित लघु dedicated : 1;
-	पूर्णांक booted_cores;
-	cpumask_t thपढ़ो_mask;
+struct cpu_topology_s390 {
+	unsigned short thread_id;
+	unsigned short core_id;
+	unsigned short socket_id;
+	unsigned short book_id;
+	unsigned short drawer_id;
+	unsigned short dedicated : 1;
+	int booted_cores;
+	cpumask_t thread_mask;
 	cpumask_t core_mask;
 	cpumask_t book_mask;
 	cpumask_t drawer_mask;
-पूर्ण;
+};
 
-बाह्य काष्ठा cpu_topology_s390 cpu_topology[NR_CPUS];
+extern struct cpu_topology_s390 cpu_topology[NR_CPUS];
 
-#घोषणा topology_physical_package_id(cpu) (cpu_topology[cpu].socket_id)
-#घोषणा topology_thपढ़ो_id(cpu)		  (cpu_topology[cpu].thपढ़ो_id)
-#घोषणा topology_sibling_cpumask(cpu)	  (&cpu_topology[cpu].thपढ़ो_mask)
-#घोषणा topology_core_id(cpu)		  (cpu_topology[cpu].core_id)
-#घोषणा topology_core_cpumask(cpu)	  (&cpu_topology[cpu].core_mask)
-#घोषणा topology_book_id(cpu)		  (cpu_topology[cpu].book_id)
-#घोषणा topology_book_cpumask(cpu)	  (&cpu_topology[cpu].book_mask)
-#घोषणा topology_drawer_id(cpu)		  (cpu_topology[cpu].drawer_id)
-#घोषणा topology_drawer_cpumask(cpu)	  (&cpu_topology[cpu].drawer_mask)
-#घोषणा topology_cpu_dedicated(cpu)	  (cpu_topology[cpu].dedicated)
-#घोषणा topology_booted_cores(cpu)	  (cpu_topology[cpu].booted_cores)
+#define topology_physical_package_id(cpu) (cpu_topology[cpu].socket_id)
+#define topology_thread_id(cpu)		  (cpu_topology[cpu].thread_id)
+#define topology_sibling_cpumask(cpu)	  (&cpu_topology[cpu].thread_mask)
+#define topology_core_id(cpu)		  (cpu_topology[cpu].core_id)
+#define topology_core_cpumask(cpu)	  (&cpu_topology[cpu].core_mask)
+#define topology_book_id(cpu)		  (cpu_topology[cpu].book_id)
+#define topology_book_cpumask(cpu)	  (&cpu_topology[cpu].book_mask)
+#define topology_drawer_id(cpu)		  (cpu_topology[cpu].drawer_id)
+#define topology_drawer_cpumask(cpu)	  (&cpu_topology[cpu].drawer_mask)
+#define topology_cpu_dedicated(cpu)	  (cpu_topology[cpu].dedicated)
+#define topology_booted_cores(cpu)	  (cpu_topology[cpu].booted_cores)
 
-#घोषणा mc_capable() 1
+#define mc_capable() 1
 
-व्योम topology_init_early(व्योम);
-पूर्णांक topology_cpu_init(काष्ठा cpu *);
-पूर्णांक topology_set_cpu_management(पूर्णांक fc);
-व्योम topology_schedule_update(व्योम);
-व्योम store_topology(काष्ठा sysinfo_15_1_x *info);
-व्योम update_cpu_masks(व्योम);
-व्योम topology_expect_change(व्योम);
-स्थिर काष्ठा cpumask *cpu_coregroup_mask(पूर्णांक cpu);
+void topology_init_early(void);
+int topology_cpu_init(struct cpu *);
+int topology_set_cpu_management(int fc);
+void topology_schedule_update(void);
+void store_topology(struct sysinfo_15_1_x *info);
+void update_cpu_masks(void);
+void topology_expect_change(void);
+const struct cpumask *cpu_coregroup_mask(int cpu);
 
-#अन्यथा /* CONFIG_SCHED_TOPOLOGY */
+#else /* CONFIG_SCHED_TOPOLOGY */
 
-अटल अंतरभूत व्योम topology_init_early(व्योम) अणु पूर्ण
-अटल अंतरभूत व्योम topology_schedule_update(व्योम) अणु पूर्ण
-अटल अंतरभूत पूर्णांक topology_cpu_init(काष्ठा cpu *cpu) अणु वापस 0; पूर्ण
-अटल अंतरभूत पूर्णांक topology_cpu_dedicated(पूर्णांक cpu_nr) अणु वापस 0; पूर्ण
-अटल अंतरभूत पूर्णांक topology_booted_cores(पूर्णांक cpu_nr) अणु वापस 1; पूर्ण
-अटल अंतरभूत व्योम update_cpu_masks(व्योम) अणु पूर्ण
-अटल अंतरभूत व्योम topology_expect_change(व्योम) अणु पूर्ण
+static inline void topology_init_early(void) { }
+static inline void topology_schedule_update(void) { }
+static inline int topology_cpu_init(struct cpu *cpu) { return 0; }
+static inline int topology_cpu_dedicated(int cpu_nr) { return 0; }
+static inline int topology_booted_cores(int cpu_nr) { return 1; }
+static inline void update_cpu_masks(void) { }
+static inline void topology_expect_change(void) { }
 
-#पूर्ण_अगर /* CONFIG_SCHED_TOPOLOGY */
+#endif /* CONFIG_SCHED_TOPOLOGY */
 
-#घोषणा POLARIZATION_UNKNOWN	(-1)
-#घोषणा POLARIZATION_HRZ	(0)
-#घोषणा POLARIZATION_VL		(1)
-#घोषणा POLARIZATION_VM		(2)
-#घोषणा POLARIZATION_VH		(3)
+#define POLARIZATION_UNKNOWN	(-1)
+#define POLARIZATION_HRZ	(0)
+#define POLARIZATION_VL		(1)
+#define POLARIZATION_VM		(2)
+#define POLARIZATION_VH		(3)
 
-#घोषणा SD_BOOK_INIT	SD_CPU_INIT
+#define SD_BOOK_INIT	SD_CPU_INIT
 
-#अगर_घोषित CONFIG_NUMA
+#ifdef CONFIG_NUMA
 
-#घोषणा cpu_to_node cpu_to_node
-अटल अंतरभूत पूर्णांक cpu_to_node(पूर्णांक cpu)
-अणु
-	वापस 0;
-पूर्ण
+#define cpu_to_node cpu_to_node
+static inline int cpu_to_node(int cpu)
+{
+	return 0;
+}
 
-/* Returns a poपूर्णांकer to the cpumask of CPUs on node 'node'. */
-#घोषणा cpumask_of_node cpumask_of_node
-अटल अंतरभूत स्थिर काष्ठा cpumask *cpumask_of_node(पूर्णांक node)
-अणु
-	वापस cpu_possible_mask;
-पूर्ण
+/* Returns a pointer to the cpumask of CPUs on node 'node'. */
+#define cpumask_of_node cpumask_of_node
+static inline const struct cpumask *cpumask_of_node(int node)
+{
+	return cpu_possible_mask;
+}
 
-#घोषणा pcibus_to_node(bus) __pcibus_to_node(bus)
+#define pcibus_to_node(bus) __pcibus_to_node(bus)
 
-#अन्यथा /* !CONFIG_NUMA */
+#else /* !CONFIG_NUMA */
 
-#घोषणा numa_node_id numa_node_id
-अटल अंतरभूत पूर्णांक numa_node_id(व्योम)
-अणु
-	वापस 0;
-पूर्ण
+#define numa_node_id numa_node_id
+static inline int numa_node_id(void)
+{
+	return 0;
+}
 
-#पूर्ण_अगर /* CONFIG_NUMA */
+#endif /* CONFIG_NUMA */
 
-#समावेश <यंत्र-generic/topology.h>
+#include <asm-generic/topology.h>
 
-#पूर्ण_अगर /* _ASM_S390_TOPOLOGY_H */
+#endif /* _ASM_S390_TOPOLOGY_H */

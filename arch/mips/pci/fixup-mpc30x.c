@@ -1,37 +1,36 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- *  fixup-mpc30x.c, The Victor MP-C303/304 specअगरic PCI fixups.
+ *  fixup-mpc30x.c, The Victor MP-C303/304 specific PCI fixups.
  *
  *  Copyright (C) 2002,2004  Yoichi Yuasa <yuasa@linux-mips.org>
  */
-#समावेश <linux/init.h>
-#समावेश <linux/pci.h>
+#include <linux/init.h>
+#include <linux/pci.h>
 
-#समावेश <यंत्र/vr41xx/mpc30x.h>
+#include <asm/vr41xx/mpc30x.h>
 
-अटल स्थिर पूर्णांक पूर्णांकernal_func_irqs[] = अणु
+static const int internal_func_irqs[] = {
 	VRC4173_CASCADE_IRQ,
 	VRC4173_AC97_IRQ,
 	VRC4173_USB_IRQ,
-पूर्ण;
+};
 
-अटल स्थिर पूर्णांक irq_tab_mpc30x[] = अणु
+static const int irq_tab_mpc30x[] = {
  [12] = VRC4173_PCMCIA1_IRQ,
  [13] = VRC4173_PCMCIA2_IRQ,
  [29] = MQ200_IRQ,
-पूर्ण;
+};
 
-पूर्णांक pcibios_map_irq(स्थिर काष्ठा pci_dev *dev, u8 slot, u8 pin)
-अणु
-	अगर (slot == 30)
-		वापस पूर्णांकernal_func_irqs[PCI_FUNC(dev->devfn)];
+int pcibios_map_irq(const struct pci_dev *dev, u8 slot, u8 pin)
+{
+	if (slot == 30)
+		return internal_func_irqs[PCI_FUNC(dev->devfn)];
 
-	वापस irq_tab_mpc30x[slot];
-पूर्ण
+	return irq_tab_mpc30x[slot];
+}
 
-/* Do platक्रमm specअगरic device initialization at pci_enable_device() समय */
-पूर्णांक pcibios_plat_dev_init(काष्ठा pci_dev *dev)
-अणु
-	वापस 0;
-पूर्ण
+/* Do platform specific device initialization at pci_enable_device() time */
+int pcibios_plat_dev_init(struct pci_dev *dev)
+{
+	return 0;
+}

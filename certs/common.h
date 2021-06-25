@@ -1,10 +1,9 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 
-#अगर_अघोषित _CERT_COMMON_H
-#घोषणा _CERT_COMMON_H
+#ifndef _CERT_COMMON_H
+#define _CERT_COMMON_H
 
-पूर्णांक load_certअगरicate_list(स्थिर u8 cert_list[], स्थिर अचिन्हित दीर्घ list_size,
-			  स्थिर काष्ठा key *keyring);
+int load_certificate_list(const u8 cert_list[], const unsigned long list_size,
+			  const struct key *keyring);
 
-#पूर्ण_अगर
+#endif

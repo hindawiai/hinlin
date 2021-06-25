@@ -1,116 +1,115 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /* Siemens ID Mouse driver v0.6
 
   Copyright (C) 2004-5 by Florian 'Floe' Echtler  <echtler@fs.tum.de>
                       and Andreas  'ad'  Deresch <aderesch@fs.tum.de>
 
   Derived from the USB Skeleton driver 1.1,
-  Copyright (C) 2003 Greg Kroah-Harपंचांगan (greg@kroah.com)
+  Copyright (C) 2003 Greg Kroah-Hartman (greg@kroah.com)
 
-  Additional inक्रमmation provided by Martin Reising
+  Additional information provided by Martin Reising
   <Martin.Reising@natural-computing.de>
 
 */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/sched/संकेत.स>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/delay.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/module.h>
-#समावेश <linux/completion.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/usb.h>
+#include <linux/kernel.h>
+#include <linux/sched/signal.h>
+#include <linux/errno.h>
+#include <linux/delay.h>
+#include <linux/slab.h>
+#include <linux/module.h>
+#include <linux/completion.h>
+#include <linux/mutex.h>
+#include <linux/uaccess.h>
+#include <linux/usb.h>
 
-/* image स्थिरants */
-#घोषणा WIDTH 225
-#घोषणा HEIGHT 289
-#घोषणा HEADER "P5 225 289 255 "
-#घोषणा IMGSIZE ((WIDTH * HEIGHT) + माप(HEADER)-1)
+/* image constants */
+#define WIDTH 225
+#define HEIGHT 289
+#define HEADER "P5 225 289 255 "
+#define IMGSIZE ((WIDTH * HEIGHT) + sizeof(HEADER)-1)
 
-#घोषणा DRIVER_SHORT   "idmouse"
-#घोषणा DRIVER_AUTHOR  "Florian 'Floe' Echtler <echtler@fs.tum.de>"
-#घोषणा DRIVER_DESC    "Siemens ID Mouse FingerTIP Sensor Driver"
+#define DRIVER_SHORT   "idmouse"
+#define DRIVER_AUTHOR  "Florian 'Floe' Echtler <echtler@fs.tum.de>"
+#define DRIVER_DESC    "Siemens ID Mouse FingerTIP Sensor Driver"
 
-/* minor number क्रम misc USB devices */
-#घोषणा USB_IDMOUSE_MINOR_BASE 132
+/* minor number for misc USB devices */
+#define USB_IDMOUSE_MINOR_BASE 132
 
-/* venकरोr and device IDs */
-#घोषणा ID_SIEMENS 0x0681
-#घोषणा ID_IDMOUSE 0x0005
-#घोषणा ID_CHERRY  0x0010
+/* vendor and device IDs */
+#define ID_SIEMENS 0x0681
+#define ID_IDMOUSE 0x0005
+#define ID_CHERRY  0x0010
 
 /* device ID table */
-अटल स्थिर काष्ठा usb_device_id idmouse_table[] = अणु
-	अणुUSB_DEVICE(ID_SIEMENS, ID_IDMOUSE)पूर्ण, /* Siemens ID Mouse (Professional) */
-	अणुUSB_DEVICE(ID_SIEMENS, ID_CHERRY )पूर्ण, /* Cherry FingerTIP ID Board       */
-	अणुपूर्ण                                    /* terminating null entry          */
-पूर्ण;
+static const struct usb_device_id idmouse_table[] = {
+	{USB_DEVICE(ID_SIEMENS, ID_IDMOUSE)}, /* Siemens ID Mouse (Professional) */
+	{USB_DEVICE(ID_SIEMENS, ID_CHERRY )}, /* Cherry FingerTIP ID Board       */
+	{}                                    /* terminating null entry          */
+};
 
 /* sensor commands */
-#घोषणा FTIP_RESET   0x20
-#घोषणा FTIP_ACQUIRE 0x21
-#घोषणा FTIP_RELEASE 0x22
-#घोषणा FTIP_BLINK   0x23  /* LSB of value = blink pulse width */
-#घोषणा FTIP_SCROLL  0x24
+#define FTIP_RESET   0x20
+#define FTIP_ACQUIRE 0x21
+#define FTIP_RELEASE 0x22
+#define FTIP_BLINK   0x23  /* LSB of value = blink pulse width */
+#define FTIP_SCROLL  0x24
 
-#घोषणा ftip_command(dev, command, value, index) \
+#define ftip_command(dev, command, value, index) \
 	usb_control_msg(dev->udev, usb_sndctrlpipe(dev->udev, 0), command, \
-	USB_TYPE_VENDOR | USB_RECIP_ENDPOINT | USB_सूची_OUT, value, index, शून्य, 0, 1000)
+	USB_TYPE_VENDOR | USB_RECIP_ENDPOINT | USB_DIR_OUT, value, index, NULL, 0, 1000)
 
 MODULE_DEVICE_TABLE(usb, idmouse_table);
 
-/* काष्ठाure to hold all of our device specअगरic stuff */
-काष्ठा usb_idmouse अणु
+/* structure to hold all of our device specific stuff */
+struct usb_idmouse {
 
-	काष्ठा usb_device *udev; /* save off the usb device poपूर्णांकer */
-	काष्ठा usb_पूर्णांकerface *पूर्णांकerface; /* the पूर्णांकerface क्रम this device */
+	struct usb_device *udev; /* save off the usb device pointer */
+	struct usb_interface *interface; /* the interface for this device */
 
-	अचिन्हित अक्षर *bulk_in_buffer; /* the buffer to receive data */
-	माप_प्रकार bulk_in_size; /* the maximum bulk packet size */
-	माप_प्रकार orig_bi_size; /* same as above, but reported by the device */
-	__u8 bulk_in_endpoपूर्णांकAddr; /* the address of the bulk in endpoपूर्णांक */
+	unsigned char *bulk_in_buffer; /* the buffer to receive data */
+	size_t bulk_in_size; /* the maximum bulk packet size */
+	size_t orig_bi_size; /* same as above, but reported by the device */
+	__u8 bulk_in_endpointAddr; /* the address of the bulk in endpoint */
 
-	पूर्णांक खोलो; /* अगर the port is खोलो or not */
-	पूर्णांक present; /* अगर the device is not disconnected */
-	काष्ठा mutex lock; /* locks this काष्ठाure */
+	int open; /* if the port is open or not */
+	int present; /* if the device is not disconnected */
+	struct mutex lock; /* locks this structure */
 
-पूर्ण;
+};
 
 /* local function prototypes */
-अटल sमाप_प्रकार idmouse_पढ़ो(काष्ठा file *file, अक्षर __user *buffer,
-				माप_प्रकार count, loff_t * ppos);
+static ssize_t idmouse_read(struct file *file, char __user *buffer,
+				size_t count, loff_t * ppos);
 
-अटल पूर्णांक idmouse_खोलो(काष्ठा inode *inode, काष्ठा file *file);
-अटल पूर्णांक idmouse_release(काष्ठा inode *inode, काष्ठा file *file);
+static int idmouse_open(struct inode *inode, struct file *file);
+static int idmouse_release(struct inode *inode, struct file *file);
 
-अटल पूर्णांक idmouse_probe(काष्ठा usb_पूर्णांकerface *पूर्णांकerface,
-				स्थिर काष्ठा usb_device_id *id);
+static int idmouse_probe(struct usb_interface *interface,
+				const struct usb_device_id *id);
 
-अटल व्योम idmouse_disconnect(काष्ठा usb_पूर्णांकerface *पूर्णांकerface);
-अटल पूर्णांक idmouse_suspend(काष्ठा usb_पूर्णांकerface *पूर्णांकf, pm_message_t message);
-अटल पूर्णांक idmouse_resume(काष्ठा usb_पूर्णांकerface *पूर्णांकf);
+static void idmouse_disconnect(struct usb_interface *interface);
+static int idmouse_suspend(struct usb_interface *intf, pm_message_t message);
+static int idmouse_resume(struct usb_interface *intf);
 
-/* file operation poपूर्णांकers */
-अटल स्थिर काष्ठा file_operations idmouse_fops = अणु
+/* file operation pointers */
+static const struct file_operations idmouse_fops = {
 	.owner = THIS_MODULE,
-	.पढ़ो = idmouse_पढ़ो,
-	.खोलो = idmouse_खोलो,
+	.read = idmouse_read,
+	.open = idmouse_open,
 	.release = idmouse_release,
-	.llseek = शेष_llseek,
-पूर्ण;
+	.llseek = default_llseek,
+};
 
-/* class driver inक्रमmation */
-अटल काष्ठा usb_class_driver idmouse_class = अणु
+/* class driver information */
+static struct usb_class_driver idmouse_class = {
 	.name = "idmouse%d",
 	.fops = &idmouse_fops,
 	.minor_base = USB_IDMOUSE_MINOR_BASE,
-पूर्ण;
+};
 
-/* usb specअगरic object needed to रेजिस्टर this driver with the usb subप्रणाली */
-अटल काष्ठा usb_driver idmouse_driver = अणु
+/* usb specific object needed to register this driver with the usb subsystem */
+static struct usb_driver idmouse_driver = {
 	.name = DRIVER_SHORT,
 	.probe = idmouse_probe,
 	.disconnect = idmouse_disconnect,
@@ -118,287 +117,287 @@ MODULE_DEVICE_TABLE(usb, idmouse_table);
 	.resume = idmouse_resume,
 	.reset_resume = idmouse_resume,
 	.id_table = idmouse_table,
-	.supports_स्वतःsuspend = 1,
-पूर्ण;
+	.supports_autosuspend = 1,
+};
 
-अटल पूर्णांक idmouse_create_image(काष्ठा usb_idmouse *dev)
-अणु
-	पूर्णांक bytes_पढ़ो;
-	पूर्णांक bulk_पढ़ो;
-	पूर्णांक result;
+static int idmouse_create_image(struct usb_idmouse *dev)
+{
+	int bytes_read;
+	int bulk_read;
+	int result;
 
-	स_नकल(dev->bulk_in_buffer, HEADER, माप(HEADER)-1);
-	bytes_पढ़ो = माप(HEADER)-1;
+	memcpy(dev->bulk_in_buffer, HEADER, sizeof(HEADER)-1);
+	bytes_read = sizeof(HEADER)-1;
 
 	/* reset the device and set a fast blink rate */
 	result = ftip_command(dev, FTIP_RELEASE, 0, 0);
-	अगर (result < 0)
-		जाओ reset;
+	if (result < 0)
+		goto reset;
 	result = ftip_command(dev, FTIP_BLINK,   1, 0);
-	अगर (result < 0)
-		जाओ reset;
+	if (result < 0)
+		goto reset;
 
 	/* initialize the sensor - sending this command twice */
-	/* signअगरicantly reduces the rate of failed पढ़ोs     */
+	/* significantly reduces the rate of failed reads     */
 	result = ftip_command(dev, FTIP_ACQUIRE, 0, 0);
-	अगर (result < 0)
-		जाओ reset;
+	if (result < 0)
+		goto reset;
 	result = ftip_command(dev, FTIP_ACQUIRE, 0, 0);
-	अगर (result < 0)
-		जाओ reset;
+	if (result < 0)
+		goto reset;
 
-	/* start the पढ़ोout - sending this command twice */
+	/* start the readout - sending this command twice */
 	/* presumably enables the high dynamic range mode */
 	result = ftip_command(dev, FTIP_RESET,   0, 0);
-	अगर (result < 0)
-		जाओ reset;
+	if (result < 0)
+		goto reset;
 	result = ftip_command(dev, FTIP_RESET,   0, 0);
-	अगर (result < 0)
-		जाओ reset;
+	if (result < 0)
+		goto reset;
 
-	/* loop over a blocking bulk पढ़ो to get data from the device */
-	जबतक (bytes_पढ़ो < IMGSIZE) अणु
+	/* loop over a blocking bulk read to get data from the device */
+	while (bytes_read < IMGSIZE) {
 		result = usb_bulk_msg(dev->udev,
-				usb_rcvbulkpipe(dev->udev, dev->bulk_in_endpoपूर्णांकAddr),
-				dev->bulk_in_buffer + bytes_पढ़ो,
-				dev->bulk_in_size, &bulk_पढ़ो, 5000);
-		अगर (result < 0) अणु
+				usb_rcvbulkpipe(dev->udev, dev->bulk_in_endpointAddr),
+				dev->bulk_in_buffer + bytes_read,
+				dev->bulk_in_size, &bulk_read, 5000);
+		if (result < 0) {
 			/* Maybe this error was caused by the increased packet size? */
 			/* Reset to the original value and tell userspace to retry.  */
-			अगर (dev->bulk_in_size != dev->orig_bi_size) अणु
+			if (dev->bulk_in_size != dev->orig_bi_size) {
 				dev->bulk_in_size = dev->orig_bi_size;
 				result = -EAGAIN;
-			पूर्ण
-			अवरोध;
-		पूर्ण
-		अगर (संकेत_pending(current)) अणु
+			}
+			break;
+		}
+		if (signal_pending(current)) {
 			result = -EINTR;
-			अवरोध;
-		पूर्ण
-		bytes_पढ़ो += bulk_पढ़ो;
-	पूर्ण
+			break;
+		}
+		bytes_read += bulk_read;
+	}
 
 	/* reset the device */
 reset:
 	ftip_command(dev, FTIP_RELEASE, 0, 0);
 
-	/* check क्रम valid image */
+	/* check for valid image */
 	/* right border should be black (0x00) */
-	क्रम (bytes_पढ़ो = माप(HEADER)-1 + WIDTH-1; bytes_पढ़ो < IMGSIZE; bytes_पढ़ो += WIDTH)
-		अगर (dev->bulk_in_buffer[bytes_पढ़ो] != 0x00)
-			वापस -EAGAIN;
+	for (bytes_read = sizeof(HEADER)-1 + WIDTH-1; bytes_read < IMGSIZE; bytes_read += WIDTH)
+		if (dev->bulk_in_buffer[bytes_read] != 0x00)
+			return -EAGAIN;
 
 	/* lower border should be white (0xFF) */
-	क्रम (bytes_पढ़ो = IMGSIZE-WIDTH; bytes_पढ़ो < IMGSIZE-1; bytes_पढ़ो++)
-		अगर (dev->bulk_in_buffer[bytes_पढ़ो] != 0xFF)
-			वापस -EAGAIN;
+	for (bytes_read = IMGSIZE-WIDTH; bytes_read < IMGSIZE-1; bytes_read++)
+		if (dev->bulk_in_buffer[bytes_read] != 0xFF)
+			return -EAGAIN;
 
 	/* should be IMGSIZE == 65040 */
-	dev_dbg(&dev->पूर्णांकerface->dev, "read %d bytes fingerprint data\n",
-		bytes_पढ़ो);
-	वापस result;
-पूर्ण
+	dev_dbg(&dev->interface->dev, "read %d bytes fingerprint data\n",
+		bytes_read);
+	return result;
+}
 
-/* PM operations are nops as this driver करोes IO only during खोलो() */
-अटल पूर्णांक idmouse_suspend(काष्ठा usb_पूर्णांकerface *पूर्णांकf, pm_message_t message)
-अणु
-	वापस 0;
-पूर्ण
+/* PM operations are nops as this driver does IO only during open() */
+static int idmouse_suspend(struct usb_interface *intf, pm_message_t message)
+{
+	return 0;
+}
 
-अटल पूर्णांक idmouse_resume(काष्ठा usb_पूर्णांकerface *पूर्णांकf)
-अणु
-	वापस 0;
-पूर्ण
+static int idmouse_resume(struct usb_interface *intf)
+{
+	return 0;
+}
 
-अटल अंतरभूत व्योम idmouse_delete(काष्ठा usb_idmouse *dev)
-अणु
-	kमुक्त(dev->bulk_in_buffer);
-	kमुक्त(dev);
-पूर्ण
+static inline void idmouse_delete(struct usb_idmouse *dev)
+{
+	kfree(dev->bulk_in_buffer);
+	kfree(dev);
+}
 
-अटल पूर्णांक idmouse_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा usb_idmouse *dev;
-	काष्ठा usb_पूर्णांकerface *पूर्णांकerface;
-	पूर्णांक result;
+static int idmouse_open(struct inode *inode, struct file *file)
+{
+	struct usb_idmouse *dev;
+	struct usb_interface *interface;
+	int result;
 
-	/* get the पूर्णांकerface from minor number and driver inक्रमmation */
-	पूर्णांकerface = usb_find_पूर्णांकerface(&idmouse_driver, iminor(inode));
-	अगर (!पूर्णांकerface)
-		वापस -ENODEV;
+	/* get the interface from minor number and driver information */
+	interface = usb_find_interface(&idmouse_driver, iminor(inode));
+	if (!interface)
+		return -ENODEV;
 
-	/* get the device inक्रमmation block from the पूर्णांकerface */
-	dev = usb_get_पूर्णांकfdata(पूर्णांकerface);
-	अगर (!dev)
-		वापस -ENODEV;
+	/* get the device information block from the interface */
+	dev = usb_get_intfdata(interface);
+	if (!dev)
+		return -ENODEV;
 
 	/* lock this device */
 	mutex_lock(&dev->lock);
 
-	/* check अगर alपढ़ोy खोलो */
-	अगर (dev->खोलो) अणु
+	/* check if already open */
+	if (dev->open) {
 
-		/* alपढ़ोy खोलो, so fail */
+		/* already open, so fail */
 		result = -EBUSY;
 
-	पूर्ण अन्यथा अणु
+	} else {
 
-		/* create a new image and check क्रम success */
-		result = usb_स्वतःpm_get_पूर्णांकerface(पूर्णांकerface);
-		अगर (result)
-			जाओ error;
+		/* create a new image and check for success */
+		result = usb_autopm_get_interface(interface);
+		if (result)
+			goto error;
 		result = idmouse_create_image(dev);
-		usb_स्वतःpm_put_पूर्णांकerface(पूर्णांकerface);
-		अगर (result)
-			जाओ error;
+		usb_autopm_put_interface(interface);
+		if (result)
+			goto error;
 
-		/* increment our usage count क्रम the driver */
-		++dev->खोलो;
+		/* increment our usage count for the driver */
+		++dev->open;
 
-		/* save our object in the file's निजी काष्ठाure */
-		file->निजी_data = dev;
+		/* save our object in the file's private structure */
+		file->private_data = dev;
 
-	पूर्ण 
+	} 
 
 error:
 
 	/* unlock this device */
 	mutex_unlock(&dev->lock);
-	वापस result;
-पूर्ण
+	return result;
+}
 
-अटल पूर्णांक idmouse_release(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा usb_idmouse *dev;
+static int idmouse_release(struct inode *inode, struct file *file)
+{
+	struct usb_idmouse *dev;
 
-	dev = file->निजी_data;
+	dev = file->private_data;
 
-	अगर (dev == शून्य)
-		वापस -ENODEV;
+	if (dev == NULL)
+		return -ENODEV;
 
 	/* lock our device */
 	mutex_lock(&dev->lock);
 
-	--dev->खोलो;
+	--dev->open;
 
-	अगर (!dev->present) अणु
-		/* the device was unplugged beक्रमe the file was released */
+	if (!dev->present) {
+		/* the device was unplugged before the file was released */
 		mutex_unlock(&dev->lock);
 		idmouse_delete(dev);
-	पूर्ण अन्यथा अणु
+	} else {
 		mutex_unlock(&dev->lock);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल sमाप_प्रकार idmouse_पढ़ो(काष्ठा file *file, अक्षर __user *buffer, माप_प्रकार count,
+static ssize_t idmouse_read(struct file *file, char __user *buffer, size_t count,
 				loff_t * ppos)
-अणु
-	काष्ठा usb_idmouse *dev = file->निजी_data;
-	पूर्णांक result;
+{
+	struct usb_idmouse *dev = file->private_data;
+	int result;
 
 	/* lock this object */
 	mutex_lock(&dev->lock);
 
-	/* verअगरy that the device wasn't unplugged */
-	अगर (!dev->present) अणु
+	/* verify that the device wasn't unplugged */
+	if (!dev->present) {
 		mutex_unlock(&dev->lock);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	result = simple_पढ़ो_from_buffer(buffer, count, ppos,
+	result = simple_read_from_buffer(buffer, count, ppos,
 					dev->bulk_in_buffer, IMGSIZE);
 	/* unlock the device */
 	mutex_unlock(&dev->lock);
-	वापस result;
-पूर्ण
+	return result;
+}
 
-अटल पूर्णांक idmouse_probe(काष्ठा usb_पूर्णांकerface *पूर्णांकerface,
-				स्थिर काष्ठा usb_device_id *id)
-अणु
-	काष्ठा usb_device *udev = पूर्णांकerface_to_usbdev(पूर्णांकerface);
-	काष्ठा usb_idmouse *dev;
-	काष्ठा usb_host_पूर्णांकerface *अगरace_desc;
-	काष्ठा usb_endpoपूर्णांक_descriptor *endpoपूर्णांक;
-	पूर्णांक result;
+static int idmouse_probe(struct usb_interface *interface,
+				const struct usb_device_id *id)
+{
+	struct usb_device *udev = interface_to_usbdev(interface);
+	struct usb_idmouse *dev;
+	struct usb_host_interface *iface_desc;
+	struct usb_endpoint_descriptor *endpoint;
+	int result;
 
-	/* check अगर we have gotten the data or the hid पूर्णांकerface */
-	अगरace_desc = पूर्णांकerface->cur_altsetting;
-	अगर (अगरace_desc->desc.bInterfaceClass != 0x0A)
-		वापस -ENODEV;
+	/* check if we have gotten the data or the hid interface */
+	iface_desc = interface->cur_altsetting;
+	if (iface_desc->desc.bInterfaceClass != 0x0A)
+		return -ENODEV;
 
-	अगर (अगरace_desc->desc.bNumEndpoपूर्णांकs < 1)
-		वापस -ENODEV;
+	if (iface_desc->desc.bNumEndpoints < 1)
+		return -ENODEV;
 
-	/* allocate memory क्रम our device state and initialize it */
-	dev = kzalloc(माप(*dev), GFP_KERNEL);
-	अगर (dev == शून्य)
-		वापस -ENOMEM;
+	/* allocate memory for our device state and initialize it */
+	dev = kzalloc(sizeof(*dev), GFP_KERNEL);
+	if (dev == NULL)
+		return -ENOMEM;
 
 	mutex_init(&dev->lock);
 	dev->udev = udev;
-	dev->पूर्णांकerface = पूर्णांकerface;
+	dev->interface = interface;
 
-	/* set up the endpoपूर्णांक inक्रमmation - use only the first bulk-in endpoपूर्णांक */
-	result = usb_find_bulk_in_endpoपूर्णांक(अगरace_desc, &endpoपूर्णांक);
-	अगर (result) अणु
-		dev_err(&पूर्णांकerface->dev, "Unable to find bulk-in endpoint.\n");
+	/* set up the endpoint information - use only the first bulk-in endpoint */
+	result = usb_find_bulk_in_endpoint(iface_desc, &endpoint);
+	if (result) {
+		dev_err(&interface->dev, "Unable to find bulk-in endpoint.\n");
 		idmouse_delete(dev);
-		वापस result;
-	पूर्ण
+		return result;
+	}
 
-	dev->orig_bi_size = usb_endpoपूर्णांक_maxp(endpoपूर्णांक);
+	dev->orig_bi_size = usb_endpoint_maxp(endpoint);
 	dev->bulk_in_size = 0x200; /* works _much_ faster */
-	dev->bulk_in_endpoपूर्णांकAddr = endpoपूर्णांक->bEndpoपूर्णांकAddress;
-	dev->bulk_in_buffer = kदो_स्मृति(IMGSIZE + dev->bulk_in_size, GFP_KERNEL);
-	अगर (!dev->bulk_in_buffer) अणु
+	dev->bulk_in_endpointAddr = endpoint->bEndpointAddress;
+	dev->bulk_in_buffer = kmalloc(IMGSIZE + dev->bulk_in_size, GFP_KERNEL);
+	if (!dev->bulk_in_buffer) {
 		idmouse_delete(dev);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	/* allow device पढ़ो, ग_लिखो and ioctl */
+	/* allow device read, write and ioctl */
 	dev->present = 1;
 
-	/* we can रेजिस्टर the device now, as it is पढ़ोy */
-	usb_set_पूर्णांकfdata(पूर्णांकerface, dev);
-	result = usb_रेजिस्टर_dev(पूर्णांकerface, &idmouse_class);
-	अगर (result) अणु
-		/* something prevented us from रेजिस्टरing this device */
-		dev_err(&पूर्णांकerface->dev, "Unable to allocate minor number.\n");
+	/* we can register the device now, as it is ready */
+	usb_set_intfdata(interface, dev);
+	result = usb_register_dev(interface, &idmouse_class);
+	if (result) {
+		/* something prevented us from registering this device */
+		dev_err(&interface->dev, "Unable to allocate minor number.\n");
 		idmouse_delete(dev);
-		वापस result;
-	पूर्ण
+		return result;
+	}
 
 	/* be noisy */
-	dev_info(&पूर्णांकerface->dev,"%s now attached\n",DRIVER_DESC);
+	dev_info(&interface->dev,"%s now attached\n",DRIVER_DESC);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम idmouse_disconnect(काष्ठा usb_पूर्णांकerface *पूर्णांकerface)
-अणु
-	काष्ठा usb_idmouse *dev = usb_get_पूर्णांकfdata(पूर्णांकerface);
+static void idmouse_disconnect(struct usb_interface *interface)
+{
+	struct usb_idmouse *dev = usb_get_intfdata(interface);
 
 	/* give back our minor */
-	usb_deरेजिस्टर_dev(पूर्णांकerface, &idmouse_class);
+	usb_deregister_dev(interface, &idmouse_class);
 
 	/* lock the device */
 	mutex_lock(&dev->lock);
 
-	/* prevent device पढ़ो, ग_लिखो and ioctl */
+	/* prevent device read, write and ioctl */
 	dev->present = 0;
 
-	/* अगर the device is खोलोed, idmouse_release will clean this up */
-	अगर (!dev->खोलो) अणु
+	/* if the device is opened, idmouse_release will clean this up */
+	if (!dev->open) {
 		mutex_unlock(&dev->lock);
 		idmouse_delete(dev);
-	पूर्ण अन्यथा अणु
+	} else {
 		/* unlock */
 		mutex_unlock(&dev->lock);
-	पूर्ण
+	}
 
-	dev_info(&पूर्णांकerface->dev, "disconnected\n");
-पूर्ण
+	dev_info(&interface->dev, "disconnected\n");
+}
 
 module_usb_driver(idmouse_driver);
 

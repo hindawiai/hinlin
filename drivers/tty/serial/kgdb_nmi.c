@@ -1,341 +1,340 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * KGDB NMI serial console
  *
  * Copyright 2010 Google, Inc.
- *		  Arve Hjथचnnevथआg <arve@android.com>
+ *		  Arve Hjønnevåg <arve@android.com>
  *		  Colin Cross <ccross@android.com>
  * Copyright 2012 Linaro Ltd.
  *		  Anton Vorontsov <anton.vorontsov@linaro.org>
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/compiler.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/atomic.h>
-#समावेश <linux/console.h>
-#समावेश <linux/tty.h>
-#समावेश <linux/tty_driver.h>
-#समावेश <linux/tty_flip.h>
-#समावेश <linux/serial_core.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/hrसमयr.h>
-#समावेश <linux/tick.h>
-#समावेश <linux/kfअगरo.h>
-#समावेश <linux/kgdb.h>
-#समावेश <linux/kdb.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/compiler.h>
+#include <linux/slab.h>
+#include <linux/errno.h>
+#include <linux/atomic.h>
+#include <linux/console.h>
+#include <linux/tty.h>
+#include <linux/tty_driver.h>
+#include <linux/tty_flip.h>
+#include <linux/serial_core.h>
+#include <linux/interrupt.h>
+#include <linux/hrtimer.h>
+#include <linux/tick.h>
+#include <linux/kfifo.h>
+#include <linux/kgdb.h>
+#include <linux/kdb.h>
 
-अटल पूर्णांक kgdb_nmi_knock = 1;
-module_param_named(knock, kgdb_nmi_knock, पूर्णांक, 0600);
+static int kgdb_nmi_knock = 1;
+module_param_named(knock, kgdb_nmi_knock, int, 0600);
 MODULE_PARM_DESC(knock, "if set to 1 (default), the special '$3#33' command " \
 			"must be used to enter the debugger; when set to 0, " \
 			"hitting return key is enough to enter the debugger; " \
 			"when set to -1, the debugger is entered immediately " \
 			"upon NMI");
 
-अटल अक्षर *kgdb_nmi_magic = "$3#33";
-module_param_named(magic, kgdb_nmi_magic, अक्षरp, 0600);
+static char *kgdb_nmi_magic = "$3#33";
+module_param_named(magic, kgdb_nmi_magic, charp, 0600);
 MODULE_PARM_DESC(magic, "magic sequence to enter NMI debugger (default $3#33)");
 
-अटल atomic_t kgdb_nmi_num_पढ़ोers = ATOMIC_INIT(0);
+static atomic_t kgdb_nmi_num_readers = ATOMIC_INIT(0);
 
-अटल पूर्णांक kgdb_nmi_console_setup(काष्ठा console *co, अक्षर *options)
-अणु
+static int kgdb_nmi_console_setup(struct console *co, char *options)
+{
 	arch_kgdb_ops.enable_nmi(1);
 
 	/* The NMI console uses the dbg_io_ops to issue console messages. To
-	 * aव्योम duplicate messages during kdb sessions we must inक्रमm kdb's
-	 * I/O utilities that messages sent to the console will स्वतःmatically
+	 * avoid duplicate messages during kdb sessions we must inform kdb's
+	 * I/O utilities that messages sent to the console will automatically
 	 * be displayed on the dbg_io.
 	 */
 	dbg_io_ops->cons = co;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम kgdb_nmi_console_ग_लिखो(काष्ठा console *co, स्थिर अक्षर *s, uपूर्णांक c)
-अणु
-	पूर्णांक i;
+static void kgdb_nmi_console_write(struct console *co, const char *s, uint c)
+{
+	int i;
 
-	क्रम (i = 0; i < c; i++)
-		dbg_io_ops->ग_लिखो_अक्षर(s[i]);
-पूर्ण
+	for (i = 0; i < c; i++)
+		dbg_io_ops->write_char(s[i]);
+}
 
-अटल काष्ठा tty_driver *kgdb_nmi_tty_driver;
+static struct tty_driver *kgdb_nmi_tty_driver;
 
-अटल काष्ठा tty_driver *kgdb_nmi_console_device(काष्ठा console *co, पूर्णांक *idx)
-अणु
+static struct tty_driver *kgdb_nmi_console_device(struct console *co, int *idx)
+{
 	*idx = co->index;
-	वापस kgdb_nmi_tty_driver;
-पूर्ण
+	return kgdb_nmi_tty_driver;
+}
 
-अटल काष्ठा console kgdb_nmi_console = अणु
+static struct console kgdb_nmi_console = {
 	.name	= "ttyNMI",
 	.setup  = kgdb_nmi_console_setup,
-	.ग_लिखो	= kgdb_nmi_console_ग_लिखो,
+	.write	= kgdb_nmi_console_write,
 	.device	= kgdb_nmi_console_device,
 	.flags	= CON_PRINTBUFFER | CON_ANYTIME,
 	.index	= -1,
-पूर्ण;
+};
 
 /*
- * This is usually the maximum rate on debug ports. We make fअगरo large enough
+ * This is usually the maximum rate on debug ports. We make fifo large enough
  * to make copy-pasting to the terminal usable.
  */
-#घोषणा KGDB_NMI_BAUD		115200
-#घोषणा KGDB_NMI_FIFO_SIZE	roundup_घात_of_two(KGDB_NMI_BAUD / 8 / HZ)
+#define KGDB_NMI_BAUD		115200
+#define KGDB_NMI_FIFO_SIZE	roundup_pow_of_two(KGDB_NMI_BAUD / 8 / HZ)
 
-काष्ठा kgdb_nmi_tty_priv अणु
-	काष्ठा tty_port port;
-	काष्ठा समयr_list समयr;
-	STRUCT_KFIFO(अक्षर, KGDB_NMI_FIFO_SIZE) fअगरo;
-पूर्ण;
+struct kgdb_nmi_tty_priv {
+	struct tty_port port;
+	struct timer_list timer;
+	STRUCT_KFIFO(char, KGDB_NMI_FIFO_SIZE) fifo;
+};
 
-अटल काष्ठा tty_port *kgdb_nmi_port;
+static struct tty_port *kgdb_nmi_port;
 
-अटल व्योम kgdb_tty_recv(पूर्णांक ch)
-अणु
-	काष्ठा kgdb_nmi_tty_priv *priv;
-	अक्षर c = ch;
+static void kgdb_tty_recv(int ch)
+{
+	struct kgdb_nmi_tty_priv *priv;
+	char c = ch;
 
-	अगर (!kgdb_nmi_port || ch < 0)
-		वापस;
+	if (!kgdb_nmi_port || ch < 0)
+		return;
 	/*
 	 * Can't use port->tty->driver_data as tty might be not there. Timer
-	 * will check क्रम tty and will get the ref, but here we करोn't have to
-	 * करो that, and actually, we can't: we're in NMI context, no locks are
+	 * will check for tty and will get the ref, but here we don't have to
+	 * do that, and actually, we can't: we're in NMI context, no locks are
 	 * possible.
 	 */
-	priv = container_of(kgdb_nmi_port, काष्ठा kgdb_nmi_tty_priv, port);
-	kfअगरo_in(&priv->fअगरo, &c, 1);
-पूर्ण
+	priv = container_of(kgdb_nmi_port, struct kgdb_nmi_tty_priv, port);
+	kfifo_in(&priv->fifo, &c, 1);
+}
 
-अटल पूर्णांक kgdb_nmi_poll_one_knock(व्योम)
-अणु
-	अटल पूर्णांक n;
-	पूर्णांक c = -1;
-	स्थिर अक्षर *magic = kgdb_nmi_magic;
-	माप_प्रकार m = म_माप(magic);
-	bool prपूर्णांकch = false;
+static int kgdb_nmi_poll_one_knock(void)
+{
+	static int n;
+	int c = -1;
+	const char *magic = kgdb_nmi_magic;
+	size_t m = strlen(magic);
+	bool printch = false;
 
-	c = dbg_io_ops->पढ़ो_अक्षर();
-	अगर (c == NO_POLL_CHAR)
-		वापस c;
+	c = dbg_io_ops->read_char();
+	if (c == NO_POLL_CHAR)
+		return c;
 
-	अगर (!kgdb_nmi_knock && (c == '\r' || c == '\n')) अणु
-		वापस 1;
-	पूर्ण अन्यथा अगर (c == magic[n]) अणु
+	if (!kgdb_nmi_knock && (c == '\r' || c == '\n')) {
+		return 1;
+	} else if (c == magic[n]) {
 		n = (n + 1) % m;
-		अगर (!n)
-			वापस 1;
-		prपूर्णांकch = true;
-	पूर्ण अन्यथा अणु
+		if (!n)
+			return 1;
+		printch = true;
+	} else {
 		n = 0;
-	पूर्ण
+	}
 
-	अगर (atomic_पढ़ो(&kgdb_nmi_num_पढ़ोers)) अणु
+	if (atomic_read(&kgdb_nmi_num_readers)) {
 		kgdb_tty_recv(c);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (prपूर्णांकch) अणु
-		kdb_म_लिखो("%c", c);
-		वापस 0;
-	पूर्ण
+	if (printch) {
+		kdb_printf("%c", c);
+		return 0;
+	}
 
-	kdb_म_लिखो("\r%s %s to enter the debugger> %*s",
+	kdb_printf("\r%s %s to enter the debugger> %*s",
 		   kgdb_nmi_knock ? "Type" : "Hit",
-		   kgdb_nmi_knock ? magic  : "<return>", (पूर्णांक)m, "");
-	जबतक (m--)
-		kdb_म_लिखो("\b");
-	वापस 0;
-पूर्ण
+		   kgdb_nmi_knock ? magic  : "<return>", (int)m, "");
+	while (m--)
+		kdb_printf("\b");
+	return 0;
+}
 
 /**
- * kgdb_nmi_poll_knock - Check अगर it is समय to enter the debugger
+ * kgdb_nmi_poll_knock - Check if it is time to enter the debugger
  *
  * "Serial ports are often noisy, especially when muxed over another port (we
  * often use serial over the headset connector). Noise on the async command
- * line just causes अक्षरacters that are ignored, on a command line that blocked
+ * line just causes characters that are ignored, on a command line that blocked
  * execution noise would be catastrophic." -- Colin Cross
  *
  * So, this function implements KGDB/KDB knocking on the serial line: we won't
  * enter the debugger until we receive a known magic phrase (which is actually
  * "$3#33", known as "escape to KDB" command. There is also a relaxed variant
- * of knocking, i.e. just pressing the वापस key is enough to enter the
- * debugger. And अगर knocking is disabled, the function always वापसs 1.
+ * of knocking, i.e. just pressing the return key is enough to enter the
+ * debugger. And if knocking is disabled, the function always returns 1.
  */
-bool kgdb_nmi_poll_knock(व्योम)
-अणु
-	अगर (kgdb_nmi_knock < 0)
-		वापस true;
+bool kgdb_nmi_poll_knock(void)
+{
+	if (kgdb_nmi_knock < 0)
+		return true;
 
-	जबतक (1) अणु
-		पूर्णांक ret;
+	while (1) {
+		int ret;
 
 		ret = kgdb_nmi_poll_one_knock();
-		अगर (ret == NO_POLL_CHAR)
-			वापस false;
-		अन्यथा अगर (ret == 1)
-			अवरोध;
-	पूर्ण
-	वापस true;
-पूर्ण
+		if (ret == NO_POLL_CHAR)
+			return false;
+		else if (ret == 1)
+			break;
+	}
+	return true;
+}
 
 /*
- * The tasklet is cheap, it करोes not cause wakeups when reschedules itself,
- * instead it रुकोs क्रम the next tick.
+ * The tasklet is cheap, it does not cause wakeups when reschedules itself,
+ * instead it waits for the next tick.
  */
-अटल व्योम kgdb_nmi_tty_receiver(काष्ठा समयr_list *t)
-अणु
-	काष्ठा kgdb_nmi_tty_priv *priv = from_समयr(priv, t, समयr);
-	अक्षर ch;
+static void kgdb_nmi_tty_receiver(struct timer_list *t)
+{
+	struct kgdb_nmi_tty_priv *priv = from_timer(priv, t, timer);
+	char ch;
 
-	priv->समयr.expires = jअगरfies + (HZ/100);
-	add_समयr(&priv->समयr);
+	priv->timer.expires = jiffies + (HZ/100);
+	add_timer(&priv->timer);
 
-	अगर (likely(!atomic_पढ़ो(&kgdb_nmi_num_पढ़ोers) ||
-		   !kfअगरo_len(&priv->fअगरo)))
-		वापस;
+	if (likely(!atomic_read(&kgdb_nmi_num_readers) ||
+		   !kfifo_len(&priv->fifo)))
+		return;
 
-	जबतक (kfअगरo_out(&priv->fअगरo, &ch, 1))
-		tty_insert_flip_अक्षर(&priv->port, ch, TTY_NORMAL);
+	while (kfifo_out(&priv->fifo, &ch, 1))
+		tty_insert_flip_char(&priv->port, ch, TTY_NORMAL);
 	tty_flip_buffer_push(&priv->port);
-पूर्ण
+}
 
-अटल पूर्णांक kgdb_nmi_tty_activate(काष्ठा tty_port *port, काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा kgdb_nmi_tty_priv *priv =
-	    container_of(port, काष्ठा kgdb_nmi_tty_priv, port);
+static int kgdb_nmi_tty_activate(struct tty_port *port, struct tty_struct *tty)
+{
+	struct kgdb_nmi_tty_priv *priv =
+	    container_of(port, struct kgdb_nmi_tty_priv, port);
 
 	kgdb_nmi_port = port;
-	priv->समयr.expires = jअगरfies + (HZ/100);
-	add_समयr(&priv->समयr);
+	priv->timer.expires = jiffies + (HZ/100);
+	add_timer(&priv->timer);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम kgdb_nmi_tty_shutकरोwn(काष्ठा tty_port *port)
-अणु
-	काष्ठा kgdb_nmi_tty_priv *priv =
-	    container_of(port, काष्ठा kgdb_nmi_tty_priv, port);
+static void kgdb_nmi_tty_shutdown(struct tty_port *port)
+{
+	struct kgdb_nmi_tty_priv *priv =
+	    container_of(port, struct kgdb_nmi_tty_priv, port);
 
-	del_समयr(&priv->समयr);
-	kgdb_nmi_port = शून्य;
-पूर्ण
+	del_timer(&priv->timer);
+	kgdb_nmi_port = NULL;
+}
 
-अटल स्थिर काष्ठा tty_port_operations kgdb_nmi_tty_port_ops = अणु
+static const struct tty_port_operations kgdb_nmi_tty_port_ops = {
 	.activate	= kgdb_nmi_tty_activate,
-	.shutकरोwn	= kgdb_nmi_tty_shutकरोwn,
-पूर्ण;
+	.shutdown	= kgdb_nmi_tty_shutdown,
+};
 
-अटल पूर्णांक kgdb_nmi_tty_install(काष्ठा tty_driver *drv, काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा kgdb_nmi_tty_priv *priv;
-	पूर्णांक ret;
+static int kgdb_nmi_tty_install(struct tty_driver *drv, struct tty_struct *tty)
+{
+	struct kgdb_nmi_tty_priv *priv;
+	int ret;
 
-	priv = kzalloc(माप(*priv), GFP_KERNEL);
-	अगर (!priv)
-		वापस -ENOMEM;
+	priv = kzalloc(sizeof(*priv), GFP_KERNEL);
+	if (!priv)
+		return -ENOMEM;
 
-	INIT_KFIFO(priv->fअगरo);
-	समयr_setup(&priv->समयr, kgdb_nmi_tty_receiver, 0);
+	INIT_KFIFO(priv->fifo);
+	timer_setup(&priv->timer, kgdb_nmi_tty_receiver, 0);
 	tty_port_init(&priv->port);
 	priv->port.ops = &kgdb_nmi_tty_port_ops;
 	tty->driver_data = priv;
 
 	ret = tty_port_install(&priv->port, drv, tty);
-	अगर (ret) अणु
+	if (ret) {
 		pr_err("%s: can't install tty port: %d\n", __func__, ret);
-		जाओ err;
-	पूर्ण
-	वापस 0;
+		goto err;
+	}
+	return 0;
 err:
 	tty_port_destroy(&priv->port);
-	kमुक्त(priv);
-	वापस ret;
-पूर्ण
+	kfree(priv);
+	return ret;
+}
 
-अटल व्योम kgdb_nmi_tty_cleanup(काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा kgdb_nmi_tty_priv *priv = tty->driver_data;
+static void kgdb_nmi_tty_cleanup(struct tty_struct *tty)
+{
+	struct kgdb_nmi_tty_priv *priv = tty->driver_data;
 
-	tty->driver_data = शून्य;
+	tty->driver_data = NULL;
 	tty_port_destroy(&priv->port);
-	kमुक्त(priv);
-पूर्ण
+	kfree(priv);
+}
 
-अटल पूर्णांक kgdb_nmi_tty_खोलो(काष्ठा tty_काष्ठा *tty, काष्ठा file *file)
-अणु
-	काष्ठा kgdb_nmi_tty_priv *priv = tty->driver_data;
-	अचिन्हित पूर्णांक mode = file->f_flags & O_ACCMODE;
-	पूर्णांक ret;
+static int kgdb_nmi_tty_open(struct tty_struct *tty, struct file *file)
+{
+	struct kgdb_nmi_tty_priv *priv = tty->driver_data;
+	unsigned int mode = file->f_flags & O_ACCMODE;
+	int ret;
 
-	ret = tty_port_खोलो(&priv->port, tty, file);
-	अगर (!ret && (mode == O_RDONLY || mode == O_RDWR))
-		atomic_inc(&kgdb_nmi_num_पढ़ोers);
+	ret = tty_port_open(&priv->port, tty, file);
+	if (!ret && (mode == O_RDONLY || mode == O_RDWR))
+		atomic_inc(&kgdb_nmi_num_readers);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम kgdb_nmi_tty_बंद(काष्ठा tty_काष्ठा *tty, काष्ठा file *file)
-अणु
-	काष्ठा kgdb_nmi_tty_priv *priv = tty->driver_data;
-	अचिन्हित पूर्णांक mode = file->f_flags & O_ACCMODE;
+static void kgdb_nmi_tty_close(struct tty_struct *tty, struct file *file)
+{
+	struct kgdb_nmi_tty_priv *priv = tty->driver_data;
+	unsigned int mode = file->f_flags & O_ACCMODE;
 
-	अगर (mode == O_RDONLY || mode == O_RDWR)
-		atomic_dec(&kgdb_nmi_num_पढ़ोers);
+	if (mode == O_RDONLY || mode == O_RDWR)
+		atomic_dec(&kgdb_nmi_num_readers);
 
-	tty_port_बंद(&priv->port, tty, file);
-पूर्ण
+	tty_port_close(&priv->port, tty, file);
+}
 
-अटल व्योम kgdb_nmi_tty_hangup(काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा kgdb_nmi_tty_priv *priv = tty->driver_data;
+static void kgdb_nmi_tty_hangup(struct tty_struct *tty)
+{
+	struct kgdb_nmi_tty_priv *priv = tty->driver_data;
 
 	tty_port_hangup(&priv->port);
-पूर्ण
+}
 
-अटल पूर्णांक kgdb_nmi_tty_ग_लिखो_room(काष्ठा tty_काष्ठा *tty)
-अणु
-	/* Actually, we can handle any amount as we use polled ग_लिखोs. */
-	वापस 2048;
-पूर्ण
+static int kgdb_nmi_tty_write_room(struct tty_struct *tty)
+{
+	/* Actually, we can handle any amount as we use polled writes. */
+	return 2048;
+}
 
-अटल पूर्णांक kgdb_nmi_tty_ग_लिखो(काष्ठा tty_काष्ठा *tty, स्थिर unअक्षर *buf, पूर्णांक c)
-अणु
-	पूर्णांक i;
+static int kgdb_nmi_tty_write(struct tty_struct *tty, const unchar *buf, int c)
+{
+	int i;
 
-	क्रम (i = 0; i < c; i++)
-		dbg_io_ops->ग_लिखो_अक्षर(buf[i]);
-	वापस c;
-पूर्ण
+	for (i = 0; i < c; i++)
+		dbg_io_ops->write_char(buf[i]);
+	return c;
+}
 
-अटल स्थिर काष्ठा tty_operations kgdb_nmi_tty_ops = अणु
-	.खोलो		= kgdb_nmi_tty_खोलो,
-	.बंद		= kgdb_nmi_tty_बंद,
+static const struct tty_operations kgdb_nmi_tty_ops = {
+	.open		= kgdb_nmi_tty_open,
+	.close		= kgdb_nmi_tty_close,
 	.install	= kgdb_nmi_tty_install,
 	.cleanup	= kgdb_nmi_tty_cleanup,
 	.hangup		= kgdb_nmi_tty_hangup,
-	.ग_लिखो_room	= kgdb_nmi_tty_ग_लिखो_room,
-	.ग_लिखो		= kgdb_nmi_tty_ग_लिखो,
-पूर्ण;
+	.write_room	= kgdb_nmi_tty_write_room,
+	.write		= kgdb_nmi_tty_write,
+};
 
-पूर्णांक kgdb_रेजिस्टर_nmi_console(व्योम)
-अणु
-	पूर्णांक ret;
+int kgdb_register_nmi_console(void)
+{
+	int ret;
 
-	अगर (!arch_kgdb_ops.enable_nmi)
-		वापस 0;
+	if (!arch_kgdb_ops.enable_nmi)
+		return 0;
 
 	kgdb_nmi_tty_driver = alloc_tty_driver(1);
-	अगर (!kgdb_nmi_tty_driver) अणु
+	if (!kgdb_nmi_tty_driver) {
 		pr_err("%s: cannot allocate tty\n", __func__);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 	kgdb_nmi_tty_driver->driver_name	= "ttyNMI";
 	kgdb_nmi_tty_driver->name		= "ttyNMI";
 	kgdb_nmi_tty_driver->num		= 1;
@@ -347,36 +346,36 @@ err:
 				     KGDB_NMI_BAUD, KGDB_NMI_BAUD);
 	tty_set_operations(kgdb_nmi_tty_driver, &kgdb_nmi_tty_ops);
 
-	ret = tty_रेजिस्टर_driver(kgdb_nmi_tty_driver);
-	अगर (ret) अणु
+	ret = tty_register_driver(kgdb_nmi_tty_driver);
+	if (ret) {
 		pr_err("%s: can't register tty driver: %d\n", __func__, ret);
-		जाओ err_drv_reg;
-	पूर्ण
+		goto err_drv_reg;
+	}
 
-	रेजिस्टर_console(&kgdb_nmi_console);
+	register_console(&kgdb_nmi_console);
 
-	वापस 0;
+	return 0;
 err_drv_reg:
 	put_tty_driver(kgdb_nmi_tty_driver);
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(kgdb_रेजिस्टर_nmi_console);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(kgdb_register_nmi_console);
 
-पूर्णांक kgdb_unरेजिस्टर_nmi_console(व्योम)
-अणु
-	पूर्णांक ret;
+int kgdb_unregister_nmi_console(void)
+{
+	int ret;
 
-	अगर (!arch_kgdb_ops.enable_nmi)
-		वापस 0;
+	if (!arch_kgdb_ops.enable_nmi)
+		return 0;
 	arch_kgdb_ops.enable_nmi(0);
 
-	ret = unरेजिस्टर_console(&kgdb_nmi_console);
-	अगर (ret)
-		वापस ret;
+	ret = unregister_console(&kgdb_nmi_console);
+	if (ret)
+		return ret;
 
-	tty_unरेजिस्टर_driver(kgdb_nmi_tty_driver);
+	tty_unregister_driver(kgdb_nmi_tty_driver);
 	put_tty_driver(kgdb_nmi_tty_driver);
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(kgdb_unरेजिस्टर_nmi_console);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(kgdb_unregister_nmi_console);

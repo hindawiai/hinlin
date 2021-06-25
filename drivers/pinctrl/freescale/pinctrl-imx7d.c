@@ -1,21 +1,20 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 //
 // Freescale imx7d pinctrl driver
 //
-// Author: Anson Huang <Anson.Huang@मुक्तscale.com>
+// Author: Anson Huang <Anson.Huang@freescale.com>
 // Copyright (C) 2014-2015 Freescale Semiconductor, Inc.
 
-#समावेश <linux/err.h>
-#समावेश <linux/init.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/of.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/pinctrl/pinctrl.h>
+#include <linux/err.h>
+#include <linux/init.h>
+#include <linux/io.h>
+#include <linux/of.h>
+#include <linux/of_device.h>
+#include <linux/pinctrl/pinctrl.h>
 
-#समावेश "pinctrl-imx.h"
+#include "pinctrl-imx.h"
 
-क्रमागत imx7d_pads अणु
+enum imx7d_pads {
 	MX7D_PAD_RESERVE0 = 0,
 	MX7D_PAD_RESERVE1 = 1,
 	MX7D_PAD_RESERVE2 = 2,
@@ -171,9 +170,9 @@
 	MX7D_PAD_ENET1_RX_CLK = 152,
 	MX7D_PAD_ENET1_CRS = 153,
 	MX7D_PAD_ENET1_COL = 154,
-पूर्ण;
+};
 
-क्रमागत imx7d_lpsr_pads अणु
+enum imx7d_lpsr_pads {
 	MX7D_PAD_GPIO1_IO00 = 0,
 	MX7D_PAD_GPIO1_IO01 = 1,
 	MX7D_PAD_GPIO1_IO02 = 2,
@@ -182,10 +181,10 @@
 	MX7D_PAD_GPIO1_IO05 = 5,
 	MX7D_PAD_GPIO1_IO06 = 6,
 	MX7D_PAD_GPIO1_IO07 = 7,
-पूर्ण;
+};
 
-/* Pad names क्रम the pinmux subप्रणाली */
-अटल स्थिर काष्ठा pinctrl_pin_desc imx7d_pinctrl_pads[] = अणु
+/* Pad names for the pinmux subsystem */
+static const struct pinctrl_pin_desc imx7d_pinctrl_pads[] = {
 	IMX_PINCTRL_PIN(MX7D_PAD_RESERVE0),
 	IMX_PINCTRL_PIN(MX7D_PAD_RESERVE1),
 	IMX_PINCTRL_PIN(MX7D_PAD_RESERVE2),
@@ -341,10 +340,10 @@
 	IMX_PINCTRL_PIN(MX7D_PAD_ENET1_RX_CLK),
 	IMX_PINCTRL_PIN(MX7D_PAD_ENET1_CRS),
 	IMX_PINCTRL_PIN(MX7D_PAD_ENET1_COL),
-पूर्ण;
+};
 
-/* Pad names क्रम the pinmux subप्रणाली */
-अटल स्थिर काष्ठा pinctrl_pin_desc imx7d_lpsr_pinctrl_pads[] = अणु
+/* Pad names for the pinmux subsystem */
+static const struct pinctrl_pin_desc imx7d_lpsr_pinctrl_pads[] = {
 	IMX_PINCTRL_PIN(MX7D_PAD_GPIO1_IO00),
 	IMX_PINCTRL_PIN(MX7D_PAD_GPIO1_IO01),
 	IMX_PINCTRL_PIN(MX7D_PAD_GPIO1_IO02),
@@ -353,48 +352,48 @@
 	IMX_PINCTRL_PIN(MX7D_PAD_GPIO1_IO05),
 	IMX_PINCTRL_PIN(MX7D_PAD_GPIO1_IO06),
 	IMX_PINCTRL_PIN(MX7D_PAD_GPIO1_IO07),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा imx_pinctrl_soc_info imx7d_pinctrl_info = अणु
+static const struct imx_pinctrl_soc_info imx7d_pinctrl_info = {
 	.pins = imx7d_pinctrl_pads,
 	.npins = ARRAY_SIZE(imx7d_pinctrl_pads),
 	.gpr_compatible = "fsl,imx7d-iomuxc-gpr",
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा imx_pinctrl_soc_info imx7d_lpsr_pinctrl_info = अणु
+static const struct imx_pinctrl_soc_info imx7d_lpsr_pinctrl_info = {
 	.pins = imx7d_lpsr_pinctrl_pads,
 	.npins = ARRAY_SIZE(imx7d_lpsr_pinctrl_pads),
 	.flags = ZERO_OFFSET_VALID,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा of_device_id imx7d_pinctrl_of_match[] = अणु
-	अणु .compatible = "fsl,imx7d-iomuxc", .data = &imx7d_pinctrl_info, पूर्ण,
-	अणु .compatible = "fsl,imx7d-iomuxc-lpsr", .data = &imx7d_lpsr_pinctrl_info पूर्ण,
-	अणु /* sentinel */ पूर्ण
-पूर्ण;
+static const struct of_device_id imx7d_pinctrl_of_match[] = {
+	{ .compatible = "fsl,imx7d-iomuxc", .data = &imx7d_pinctrl_info, },
+	{ .compatible = "fsl,imx7d-iomuxc-lpsr", .data = &imx7d_lpsr_pinctrl_info },
+	{ /* sentinel */ }
+};
 
-अटल पूर्णांक imx7d_pinctrl_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	स्थिर काष्ठा imx_pinctrl_soc_info *pinctrl_info;
+static int imx7d_pinctrl_probe(struct platform_device *pdev)
+{
+	const struct imx_pinctrl_soc_info *pinctrl_info;
 
 	pinctrl_info = of_device_get_match_data(&pdev->dev);
-	अगर (!pinctrl_info)
-		वापस -ENODEV;
+	if (!pinctrl_info)
+		return -ENODEV;
 
-	वापस imx_pinctrl_probe(pdev, pinctrl_info);
-पूर्ण
+	return imx_pinctrl_probe(pdev, pinctrl_info);
+}
 
-अटल काष्ठा platक्रमm_driver imx7d_pinctrl_driver = अणु
-	.driver = अणु
+static struct platform_driver imx7d_pinctrl_driver = {
+	.driver = {
 		.name = "imx7d-pinctrl",
 		.of_match_table = imx7d_pinctrl_of_match,
 		.suppress_bind_attrs = true,
-	पूर्ण,
+	},
 	.probe = imx7d_pinctrl_probe,
-पूर्ण;
+};
 
-अटल पूर्णांक __init imx7d_pinctrl_init(व्योम)
-अणु
-	वापस platक्रमm_driver_रेजिस्टर(&imx7d_pinctrl_driver);
-पूर्ण
+static int __init imx7d_pinctrl_init(void)
+{
+	return platform_driver_register(&imx7d_pinctrl_driver);
+}
 arch_initcall(imx7d_pinctrl_init);

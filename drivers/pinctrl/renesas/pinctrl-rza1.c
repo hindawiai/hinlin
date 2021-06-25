@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Combined GPIO and pin controller support क्रम Renesas RZ/A1 (r7s72100) SoC
+ * Combined GPIO and pin controller support for Renesas RZ/A1 (r7s72100) SoC
  *
  * Copyright (C) 2017 Jacopo Mondi
  */
@@ -13,64 +12,64 @@
  * as RZ/A1H (r7s721000), RZ/A1M (r7s721010) and RZ/A1L (r7s721020).
  */
 
-#समावेश <linux/bitops.h>
-#समावेश <linux/err.h>
-#समावेश <linux/gpio/driver.h>
-#समावेश <linux/init.h>
-#समावेश <linux/ioport.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/pinctrl/pinconf-generic.h>
-#समावेश <linux/pinctrl/pinctrl.h>
-#समावेश <linux/pinctrl/pinmux.h>
-#समावेश <linux/slab.h>
+#include <linux/bitops.h>
+#include <linux/err.h>
+#include <linux/gpio/driver.h>
+#include <linux/init.h>
+#include <linux/ioport.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/of_address.h>
+#include <linux/of_device.h>
+#include <linux/pinctrl/pinconf-generic.h>
+#include <linux/pinctrl/pinctrl.h>
+#include <linux/pinctrl/pinmux.h>
+#include <linux/slab.h>
 
-#समावेश "../core.h"
-#समावेश "../devicetree.h"
-#समावेश "../pinconf.h"
-#समावेश "../pinmux.h"
+#include "../core.h"
+#include "../devicetree.h"
+#include "../pinconf.h"
+#include "../pinmux.h"
 
-#घोषणा DRIVER_NAME			"pinctrl-rza1"
+#define DRIVER_NAME			"pinctrl-rza1"
 
-#घोषणा RZA1_P_REG			0x0000
-#घोषणा RZA1_PPR_REG			0x0200
-#घोषणा RZA1_PM_REG			0x0300
-#घोषणा RZA1_PMC_REG			0x0400
-#घोषणा RZA1_PFC_REG			0x0500
-#घोषणा RZA1_PFCE_REG			0x0600
-#घोषणा RZA1_PFCEA_REG			0x0a00
-#घोषणा RZA1_PIBC_REG			0x4000
-#घोषणा RZA1_PBDC_REG			0x4100
-#घोषणा RZA1_PIPC_REG			0x4200
+#define RZA1_P_REG			0x0000
+#define RZA1_PPR_REG			0x0200
+#define RZA1_PM_REG			0x0300
+#define RZA1_PMC_REG			0x0400
+#define RZA1_PFC_REG			0x0500
+#define RZA1_PFCE_REG			0x0600
+#define RZA1_PFCEA_REG			0x0a00
+#define RZA1_PIBC_REG			0x4000
+#define RZA1_PBDC_REG			0x4100
+#define RZA1_PIPC_REG			0x4200
 
-#घोषणा RZA1_ADDR(mem, reg, port)	((mem) + (reg) + ((port) * 4))
+#define RZA1_ADDR(mem, reg, port)	((mem) + (reg) + ((port) * 4))
 
-#घोषणा RZA1_NPORTS			12
-#घोषणा RZA1_PINS_PER_PORT		16
-#घोषणा RZA1_NPINS			(RZA1_PINS_PER_PORT * RZA1_NPORTS)
-#घोषणा RZA1_PIN_ID_TO_PORT(id)		((id) / RZA1_PINS_PER_PORT)
-#घोषणा RZA1_PIN_ID_TO_PIN(id)		((id) % RZA1_PINS_PER_PORT)
+#define RZA1_NPORTS			12
+#define RZA1_PINS_PER_PORT		16
+#define RZA1_NPINS			(RZA1_PINS_PER_PORT * RZA1_NPORTS)
+#define RZA1_PIN_ID_TO_PORT(id)		((id) / RZA1_PINS_PER_PORT)
+#define RZA1_PIN_ID_TO_PIN(id)		((id) % RZA1_PINS_PER_PORT)
 
 /*
- * Use 16 lower bits [15:0] क्रम pin identअगरier
- * Use 16 higher bits [31:16] क्रम pin mux function
+ * Use 16 lower bits [15:0] for pin identifier
+ * Use 16 higher bits [31:16] for pin mux function
  */
-#घोषणा MUX_PIN_ID_MASK			GENMASK(15, 0)
-#घोषणा MUX_FUNC_MASK			GENMASK(31, 16)
+#define MUX_PIN_ID_MASK			GENMASK(15, 0)
+#define MUX_FUNC_MASK			GENMASK(31, 16)
 
-#घोषणा MUX_FUNC_OFFS			16
-#घोषणा MUX_FUNC(pinconf)		\
+#define MUX_FUNC_OFFS			16
+#define MUX_FUNC(pinconf)		\
 	((pinconf & MUX_FUNC_MASK) >> MUX_FUNC_OFFS)
-#घोषणा MUX_FUNC_PFC_MASK		BIT(0)
-#घोषणा MUX_FUNC_PFCE_MASK		BIT(1)
-#घोषणा MUX_FUNC_PFCEA_MASK		BIT(2)
+#define MUX_FUNC_PFC_MASK		BIT(0)
+#define MUX_FUNC_PFCE_MASK		BIT(1)
+#define MUX_FUNC_PFCEA_MASK		BIT(2)
 
 /* Pin mux flags */
-#घोषणा MUX_FLAGS_BIसूची			BIT(0)
-#घोषणा MUX_FLAGS_SWIO_INPUT		BIT(1)
-#घोषणा MUX_FLAGS_SWIO_OUTPUT		BIT(2)
+#define MUX_FLAGS_BIDIR			BIT(0)
+#define MUX_FLAGS_SWIO_INPUT		BIT(1)
+#define MUX_FLAGS_SWIO_OUTPUT		BIT(2)
 
 /* ----------------------------------------------------------------------------
  * RZ/A1 pinmux flags
@@ -79,489 +78,489 @@
 /*
  * rza1_bidir_pin - describe a single pin that needs bidir flag applied.
  */
-काष्ठा rza1_bidir_pin अणु
+struct rza1_bidir_pin {
 	u8 pin: 4;
 	u8 func: 4;
-पूर्ण;
+};
 
 /*
  * rza1_bidir_entry - describe a list of pins that needs bidir flag applied.
- *		      Each काष्ठा rza1_bidir_entry describes a port.
+ *		      Each struct rza1_bidir_entry describes a port.
  */
-काष्ठा rza1_bidir_entry अणु
-	स्थिर अचिन्हित पूर्णांक npins;
-	स्थिर काष्ठा rza1_bidir_pin *pins;
-पूर्ण;
+struct rza1_bidir_entry {
+	const unsigned int npins;
+	const struct rza1_bidir_pin *pins;
+};
 
 /*
  * rza1_swio_pin - describe a single pin that needs swio flag applied.
  */
-काष्ठा rza1_swio_pin अणु
+struct rza1_swio_pin {
 	u16 pin: 4;
 	u16 port: 4;
 	u16 func: 4;
 	u16 input: 1;
-पूर्ण;
+};
 
 /*
  * rza1_swio_entry - describe a list of pins that needs swio flag applied
  */
-काष्ठा rza1_swio_entry अणु
-	स्थिर अचिन्हित पूर्णांक npins;
-	स्थिर काष्ठा rza1_swio_pin *pins;
-पूर्ण;
+struct rza1_swio_entry {
+	const unsigned int npins;
+	const struct rza1_swio_pin *pins;
+};
 
 /*
  * rza1_pinmux_conf - group together bidir and swio pinmux flag tables
  */
-काष्ठा rza1_pinmux_conf अणु
-	स्थिर काष्ठा rza1_bidir_entry *bidir_entries;
-	स्थिर काष्ठा rza1_swio_entry *swio_entries;
-पूर्ण;
+struct rza1_pinmux_conf {
+	const struct rza1_bidir_entry *bidir_entries;
+	const struct rza1_swio_entry *swio_entries;
+};
 
 /* ----------------------------------------------------------------------------
  * RZ/A1H (r7s72100) pinmux flags
  */
 
-अटल स्थिर काष्ठा rza1_bidir_pin rza1h_bidir_pins_p1[] = अणु
-	अणु .pin = 0, .func = 1 पूर्ण,
-	अणु .pin = 1, .func = 1 पूर्ण,
-	अणु .pin = 2, .func = 1 पूर्ण,
-	अणु .pin = 3, .func = 1 पूर्ण,
-	अणु .pin = 4, .func = 1 पूर्ण,
-	अणु .pin = 5, .func = 1 पूर्ण,
-	अणु .pin = 6, .func = 1 पूर्ण,
-	अणु .pin = 7, .func = 1 पूर्ण,
-पूर्ण;
+static const struct rza1_bidir_pin rza1h_bidir_pins_p1[] = {
+	{ .pin = 0, .func = 1 },
+	{ .pin = 1, .func = 1 },
+	{ .pin = 2, .func = 1 },
+	{ .pin = 3, .func = 1 },
+	{ .pin = 4, .func = 1 },
+	{ .pin = 5, .func = 1 },
+	{ .pin = 6, .func = 1 },
+	{ .pin = 7, .func = 1 },
+};
 
-अटल स्थिर काष्ठा rza1_bidir_pin rza1h_bidir_pins_p2[] = अणु
-	अणु .pin = 0, .func = 1 पूर्ण,
-	अणु .pin = 1, .func = 1 पूर्ण,
-	अणु .pin = 2, .func = 1 पूर्ण,
-	अणु .pin = 3, .func = 1 पूर्ण,
-	अणु .pin = 4, .func = 1 पूर्ण,
-	अणु .pin = 0, .func = 4 पूर्ण,
-	अणु .pin = 1, .func = 4 पूर्ण,
-	अणु .pin = 2, .func = 4 पूर्ण,
-	अणु .pin = 3, .func = 4 पूर्ण,
-	अणु .pin = 5, .func = 1 पूर्ण,
-	अणु .pin = 6, .func = 1 पूर्ण,
-	अणु .pin = 7, .func = 1 पूर्ण,
-	अणु .pin = 8, .func = 1 पूर्ण,
-	अणु .pin = 9, .func = 1 पूर्ण,
-	अणु .pin = 10, .func = 1 पूर्ण,
-	अणु .pin = 11, .func = 1 पूर्ण,
-	अणु .pin = 12, .func = 1 पूर्ण,
-	अणु .pin = 13, .func = 1 पूर्ण,
-	अणु .pin = 14, .func = 1 पूर्ण,
-	अणु .pin = 15, .func = 1 पूर्ण,
-	अणु .pin = 12, .func = 4 पूर्ण,
-	अणु .pin = 13, .func = 4 पूर्ण,
-	अणु .pin = 14, .func = 4 पूर्ण,
-	अणु .pin = 15, .func = 4 पूर्ण,
-पूर्ण;
+static const struct rza1_bidir_pin rza1h_bidir_pins_p2[] = {
+	{ .pin = 0, .func = 1 },
+	{ .pin = 1, .func = 1 },
+	{ .pin = 2, .func = 1 },
+	{ .pin = 3, .func = 1 },
+	{ .pin = 4, .func = 1 },
+	{ .pin = 0, .func = 4 },
+	{ .pin = 1, .func = 4 },
+	{ .pin = 2, .func = 4 },
+	{ .pin = 3, .func = 4 },
+	{ .pin = 5, .func = 1 },
+	{ .pin = 6, .func = 1 },
+	{ .pin = 7, .func = 1 },
+	{ .pin = 8, .func = 1 },
+	{ .pin = 9, .func = 1 },
+	{ .pin = 10, .func = 1 },
+	{ .pin = 11, .func = 1 },
+	{ .pin = 12, .func = 1 },
+	{ .pin = 13, .func = 1 },
+	{ .pin = 14, .func = 1 },
+	{ .pin = 15, .func = 1 },
+	{ .pin = 12, .func = 4 },
+	{ .pin = 13, .func = 4 },
+	{ .pin = 14, .func = 4 },
+	{ .pin = 15, .func = 4 },
+};
 
-अटल स्थिर काष्ठा rza1_bidir_pin rza1h_bidir_pins_p3[] = अणु
-	अणु .pin = 3, .func = 2 पूर्ण,
-	अणु .pin = 10, .func = 7 पूर्ण,
-	अणु .pin = 11, .func = 7 पूर्ण,
-	अणु .pin = 13, .func = 7 पूर्ण,
-	अणु .pin = 14, .func = 7 पूर्ण,
-	अणु .pin = 15, .func = 7 पूर्ण,
-	अणु .pin = 10, .func = 8 पूर्ण,
-	अणु .pin = 11, .func = 8 पूर्ण,
-	अणु .pin = 13, .func = 8 पूर्ण,
-	अणु .pin = 14, .func = 8 पूर्ण,
-	अणु .pin = 15, .func = 8 पूर्ण,
-पूर्ण;
+static const struct rza1_bidir_pin rza1h_bidir_pins_p3[] = {
+	{ .pin = 3, .func = 2 },
+	{ .pin = 10, .func = 7 },
+	{ .pin = 11, .func = 7 },
+	{ .pin = 13, .func = 7 },
+	{ .pin = 14, .func = 7 },
+	{ .pin = 15, .func = 7 },
+	{ .pin = 10, .func = 8 },
+	{ .pin = 11, .func = 8 },
+	{ .pin = 13, .func = 8 },
+	{ .pin = 14, .func = 8 },
+	{ .pin = 15, .func = 8 },
+};
 
-अटल स्थिर काष्ठा rza1_bidir_pin rza1h_bidir_pins_p4[] = अणु
-	अणु .pin = 0, .func = 8 पूर्ण,
-	अणु .pin = 1, .func = 8 पूर्ण,
-	अणु .pin = 2, .func = 8 पूर्ण,
-	अणु .pin = 3, .func = 8 पूर्ण,
-	अणु .pin = 10, .func = 3 पूर्ण,
-	अणु .pin = 11, .func = 3 पूर्ण,
-	अणु .pin = 13, .func = 3 पूर्ण,
-	अणु .pin = 14, .func = 3 पूर्ण,
-	अणु .pin = 15, .func = 3 पूर्ण,
-	अणु .pin = 10, .func = 4 पूर्ण,
-	अणु .pin = 11, .func = 4 पूर्ण,
-	अणु .pin = 13, .func = 4 पूर्ण,
-	अणु .pin = 14, .func = 4 पूर्ण,
-	अणु .pin = 15, .func = 4 पूर्ण,
-	अणु .pin = 12, .func = 5 पूर्ण,
-	अणु .pin = 13, .func = 5 पूर्ण,
-	अणु .pin = 14, .func = 5 पूर्ण,
-	अणु .pin = 15, .func = 5 पूर्ण,
-पूर्ण;
+static const struct rza1_bidir_pin rza1h_bidir_pins_p4[] = {
+	{ .pin = 0, .func = 8 },
+	{ .pin = 1, .func = 8 },
+	{ .pin = 2, .func = 8 },
+	{ .pin = 3, .func = 8 },
+	{ .pin = 10, .func = 3 },
+	{ .pin = 11, .func = 3 },
+	{ .pin = 13, .func = 3 },
+	{ .pin = 14, .func = 3 },
+	{ .pin = 15, .func = 3 },
+	{ .pin = 10, .func = 4 },
+	{ .pin = 11, .func = 4 },
+	{ .pin = 13, .func = 4 },
+	{ .pin = 14, .func = 4 },
+	{ .pin = 15, .func = 4 },
+	{ .pin = 12, .func = 5 },
+	{ .pin = 13, .func = 5 },
+	{ .pin = 14, .func = 5 },
+	{ .pin = 15, .func = 5 },
+};
 
-अटल स्थिर काष्ठा rza1_bidir_pin rza1h_bidir_pins_p6[] = अणु
-	अणु .pin = 0, .func = 1 पूर्ण,
-	अणु .pin = 1, .func = 1 पूर्ण,
-	अणु .pin = 2, .func = 1 पूर्ण,
-	अणु .pin = 3, .func = 1 पूर्ण,
-	अणु .pin = 4, .func = 1 पूर्ण,
-	अणु .pin = 5, .func = 1 पूर्ण,
-	अणु .pin = 6, .func = 1 पूर्ण,
-	अणु .pin = 7, .func = 1 पूर्ण,
-	अणु .pin = 8, .func = 1 पूर्ण,
-	अणु .pin = 9, .func = 1 पूर्ण,
-	अणु .pin = 10, .func = 1 पूर्ण,
-	अणु .pin = 11, .func = 1 पूर्ण,
-	अणु .pin = 12, .func = 1 पूर्ण,
-	अणु .pin = 13, .func = 1 पूर्ण,
-	अणु .pin = 14, .func = 1 पूर्ण,
-	अणु .pin = 15, .func = 1 पूर्ण,
-पूर्ण;
+static const struct rza1_bidir_pin rza1h_bidir_pins_p6[] = {
+	{ .pin = 0, .func = 1 },
+	{ .pin = 1, .func = 1 },
+	{ .pin = 2, .func = 1 },
+	{ .pin = 3, .func = 1 },
+	{ .pin = 4, .func = 1 },
+	{ .pin = 5, .func = 1 },
+	{ .pin = 6, .func = 1 },
+	{ .pin = 7, .func = 1 },
+	{ .pin = 8, .func = 1 },
+	{ .pin = 9, .func = 1 },
+	{ .pin = 10, .func = 1 },
+	{ .pin = 11, .func = 1 },
+	{ .pin = 12, .func = 1 },
+	{ .pin = 13, .func = 1 },
+	{ .pin = 14, .func = 1 },
+	{ .pin = 15, .func = 1 },
+};
 
-अटल स्थिर काष्ठा rza1_bidir_pin rza1h_bidir_pins_p7[] = अणु
-	अणु .pin = 13, .func = 3 पूर्ण,
-पूर्ण;
+static const struct rza1_bidir_pin rza1h_bidir_pins_p7[] = {
+	{ .pin = 13, .func = 3 },
+};
 
-अटल स्थिर काष्ठा rza1_bidir_pin rza1h_bidir_pins_p8[] = अणु
-	अणु .pin = 8, .func = 3 पूर्ण,
-	अणु .pin = 9, .func = 3 पूर्ण,
-	अणु .pin = 10, .func = 3 पूर्ण,
-	अणु .pin = 11, .func = 3 पूर्ण,
-	अणु .pin = 14, .func = 2 पूर्ण,
-	अणु .pin = 15, .func = 2 पूर्ण,
-	अणु .pin = 14, .func = 3 पूर्ण,
-	अणु .pin = 15, .func = 3 पूर्ण,
-पूर्ण;
+static const struct rza1_bidir_pin rza1h_bidir_pins_p8[] = {
+	{ .pin = 8, .func = 3 },
+	{ .pin = 9, .func = 3 },
+	{ .pin = 10, .func = 3 },
+	{ .pin = 11, .func = 3 },
+	{ .pin = 14, .func = 2 },
+	{ .pin = 15, .func = 2 },
+	{ .pin = 14, .func = 3 },
+	{ .pin = 15, .func = 3 },
+};
 
-अटल स्थिर काष्ठा rza1_bidir_pin rza1h_bidir_pins_p9[] = अणु
-	अणु .pin = 0, .func = 2 पूर्ण,
-	अणु .pin = 1, .func = 2 पूर्ण,
-	अणु .pin = 4, .func = 2 पूर्ण,
-	अणु .pin = 5, .func = 2 पूर्ण,
-	अणु .pin = 6, .func = 2 पूर्ण,
-	अणु .pin = 7, .func = 2 पूर्ण,
-पूर्ण;
+static const struct rza1_bidir_pin rza1h_bidir_pins_p9[] = {
+	{ .pin = 0, .func = 2 },
+	{ .pin = 1, .func = 2 },
+	{ .pin = 4, .func = 2 },
+	{ .pin = 5, .func = 2 },
+	{ .pin = 6, .func = 2 },
+	{ .pin = 7, .func = 2 },
+};
 
-अटल स्थिर काष्ठा rza1_bidir_pin rza1h_bidir_pins_p11[] = अणु
-	अणु .pin = 6, .func = 2 पूर्ण,
-	अणु .pin = 7, .func = 2 पूर्ण,
-	अणु .pin = 9, .func = 2 पूर्ण,
-	अणु .pin = 6, .func = 4 पूर्ण,
-	अणु .pin = 7, .func = 4 पूर्ण,
-	अणु .pin = 9, .func = 4 पूर्ण,
-	अणु .pin = 10, .func = 2 पूर्ण,
-	अणु .pin = 11, .func = 2 पूर्ण,
-	अणु .pin = 10, .func = 4 पूर्ण,
-	अणु .pin = 11, .func = 4 पूर्ण,
-	अणु .pin = 12, .func = 4 पूर्ण,
-	अणु .pin = 13, .func = 4 पूर्ण,
-	अणु .pin = 14, .func = 4 पूर्ण,
-	अणु .pin = 15, .func = 4 पूर्ण,
-पूर्ण;
+static const struct rza1_bidir_pin rza1h_bidir_pins_p11[] = {
+	{ .pin = 6, .func = 2 },
+	{ .pin = 7, .func = 2 },
+	{ .pin = 9, .func = 2 },
+	{ .pin = 6, .func = 4 },
+	{ .pin = 7, .func = 4 },
+	{ .pin = 9, .func = 4 },
+	{ .pin = 10, .func = 2 },
+	{ .pin = 11, .func = 2 },
+	{ .pin = 10, .func = 4 },
+	{ .pin = 11, .func = 4 },
+	{ .pin = 12, .func = 4 },
+	{ .pin = 13, .func = 4 },
+	{ .pin = 14, .func = 4 },
+	{ .pin = 15, .func = 4 },
+};
 
-अटल स्थिर काष्ठा rza1_swio_pin rza1h_swio_pins[] = अणु
-	अणु .port = 2, .pin = 7, .func = 4, .input = 0 पूर्ण,
-	अणु .port = 2, .pin = 11, .func = 4, .input = 0 पूर्ण,
-	अणु .port = 3, .pin = 7, .func = 3, .input = 0 पूर्ण,
-	अणु .port = 3, .pin = 7, .func = 8, .input = 0 पूर्ण,
-	अणु .port = 4, .pin = 7, .func = 5, .input = 0 पूर्ण,
-	अणु .port = 4, .pin = 7, .func = 11, .input = 0 पूर्ण,
-	अणु .port = 4, .pin = 15, .func = 6, .input = 0 पूर्ण,
-	अणु .port = 5, .pin = 0, .func = 1, .input = 1 पूर्ण,
-	अणु .port = 5, .pin = 1, .func = 1, .input = 1 पूर्ण,
-	अणु .port = 5, .pin = 2, .func = 1, .input = 1 पूर्ण,
-	अणु .port = 5, .pin = 3, .func = 1, .input = 1 पूर्ण,
-	अणु .port = 5, .pin = 4, .func = 1, .input = 1 पूर्ण,
-	अणु .port = 5, .pin = 5, .func = 1, .input = 1 पूर्ण,
-	अणु .port = 5, .pin = 6, .func = 1, .input = 1 पूर्ण,
-	अणु .port = 5, .pin = 7, .func = 1, .input = 1 पूर्ण,
-	अणु .port = 7, .pin = 4, .func = 6, .input = 0 पूर्ण,
-	अणु .port = 7, .pin = 11, .func = 2, .input = 0 पूर्ण,
-	अणु .port = 8, .pin = 10, .func = 8, .input = 0 पूर्ण,
-	अणु .port = 10, .pin = 15, .func = 2, .input = 0 पूर्ण,
-पूर्ण;
+static const struct rza1_swio_pin rza1h_swio_pins[] = {
+	{ .port = 2, .pin = 7, .func = 4, .input = 0 },
+	{ .port = 2, .pin = 11, .func = 4, .input = 0 },
+	{ .port = 3, .pin = 7, .func = 3, .input = 0 },
+	{ .port = 3, .pin = 7, .func = 8, .input = 0 },
+	{ .port = 4, .pin = 7, .func = 5, .input = 0 },
+	{ .port = 4, .pin = 7, .func = 11, .input = 0 },
+	{ .port = 4, .pin = 15, .func = 6, .input = 0 },
+	{ .port = 5, .pin = 0, .func = 1, .input = 1 },
+	{ .port = 5, .pin = 1, .func = 1, .input = 1 },
+	{ .port = 5, .pin = 2, .func = 1, .input = 1 },
+	{ .port = 5, .pin = 3, .func = 1, .input = 1 },
+	{ .port = 5, .pin = 4, .func = 1, .input = 1 },
+	{ .port = 5, .pin = 5, .func = 1, .input = 1 },
+	{ .port = 5, .pin = 6, .func = 1, .input = 1 },
+	{ .port = 5, .pin = 7, .func = 1, .input = 1 },
+	{ .port = 7, .pin = 4, .func = 6, .input = 0 },
+	{ .port = 7, .pin = 11, .func = 2, .input = 0 },
+	{ .port = 8, .pin = 10, .func = 8, .input = 0 },
+	{ .port = 10, .pin = 15, .func = 2, .input = 0 },
+};
 
-अटल स्थिर काष्ठा rza1_bidir_entry rza1h_bidir_entries[RZA1_NPORTS] = अणु
-	[1] = अणु ARRAY_SIZE(rza1h_bidir_pins_p1), rza1h_bidir_pins_p1 पूर्ण,
-	[2] = अणु ARRAY_SIZE(rza1h_bidir_pins_p2), rza1h_bidir_pins_p2 पूर्ण,
-	[3] = अणु ARRAY_SIZE(rza1h_bidir_pins_p3), rza1h_bidir_pins_p3 पूर्ण,
-	[4] = अणु ARRAY_SIZE(rza1h_bidir_pins_p4), rza1h_bidir_pins_p4 पूर्ण,
-	[6] = अणु ARRAY_SIZE(rza1h_bidir_pins_p6), rza1h_bidir_pins_p6 पूर्ण,
-	[7] = अणु ARRAY_SIZE(rza1h_bidir_pins_p7), rza1h_bidir_pins_p7 पूर्ण,
-	[8] = अणु ARRAY_SIZE(rza1h_bidir_pins_p8), rza1h_bidir_pins_p8 पूर्ण,
-	[9] = अणु ARRAY_SIZE(rza1h_bidir_pins_p9), rza1h_bidir_pins_p9 पूर्ण,
-	[11] = अणु ARRAY_SIZE(rza1h_bidir_pins_p11), rza1h_bidir_pins_p11 पूर्ण,
-पूर्ण;
+static const struct rza1_bidir_entry rza1h_bidir_entries[RZA1_NPORTS] = {
+	[1] = { ARRAY_SIZE(rza1h_bidir_pins_p1), rza1h_bidir_pins_p1 },
+	[2] = { ARRAY_SIZE(rza1h_bidir_pins_p2), rza1h_bidir_pins_p2 },
+	[3] = { ARRAY_SIZE(rza1h_bidir_pins_p3), rza1h_bidir_pins_p3 },
+	[4] = { ARRAY_SIZE(rza1h_bidir_pins_p4), rza1h_bidir_pins_p4 },
+	[6] = { ARRAY_SIZE(rza1h_bidir_pins_p6), rza1h_bidir_pins_p6 },
+	[7] = { ARRAY_SIZE(rza1h_bidir_pins_p7), rza1h_bidir_pins_p7 },
+	[8] = { ARRAY_SIZE(rza1h_bidir_pins_p8), rza1h_bidir_pins_p8 },
+	[9] = { ARRAY_SIZE(rza1h_bidir_pins_p9), rza1h_bidir_pins_p9 },
+	[11] = { ARRAY_SIZE(rza1h_bidir_pins_p11), rza1h_bidir_pins_p11 },
+};
 
-अटल स्थिर काष्ठा rza1_swio_entry rza1h_swio_entries[] = अणु
-	[0] = अणु ARRAY_SIZE(rza1h_swio_pins), rza1h_swio_pins पूर्ण,
-पूर्ण;
+static const struct rza1_swio_entry rza1h_swio_entries[] = {
+	[0] = { ARRAY_SIZE(rza1h_swio_pins), rza1h_swio_pins },
+};
 
 /* RZ/A1H (r7s72100x) pinmux flags table */
-अटल स्थिर काष्ठा rza1_pinmux_conf rza1h_pmx_conf = अणु
+static const struct rza1_pinmux_conf rza1h_pmx_conf = {
 	.bidir_entries	= rza1h_bidir_entries,
 	.swio_entries	= rza1h_swio_entries,
-पूर्ण;
+};
 
 /* ----------------------------------------------------------------------------
  * RZ/A1L (r7s72102) pinmux flags
  */
 
-अटल स्थिर काष्ठा rza1_bidir_pin rza1l_bidir_pins_p1[] = अणु
-	अणु .pin = 0, .func = 1 पूर्ण,
-	अणु .pin = 1, .func = 1 पूर्ण,
-	अणु .pin = 2, .func = 1 पूर्ण,
-	अणु .pin = 3, .func = 1 पूर्ण,
-	अणु .pin = 4, .func = 1 पूर्ण,
-	अणु .pin = 5, .func = 1 पूर्ण,
-	अणु .pin = 6, .func = 1 पूर्ण,
-	अणु .pin = 7, .func = 1 पूर्ण,
-पूर्ण;
+static const struct rza1_bidir_pin rza1l_bidir_pins_p1[] = {
+	{ .pin = 0, .func = 1 },
+	{ .pin = 1, .func = 1 },
+	{ .pin = 2, .func = 1 },
+	{ .pin = 3, .func = 1 },
+	{ .pin = 4, .func = 1 },
+	{ .pin = 5, .func = 1 },
+	{ .pin = 6, .func = 1 },
+	{ .pin = 7, .func = 1 },
+};
 
-अटल स्थिर काष्ठा rza1_bidir_pin rza1l_bidir_pins_p3[] = अणु
-	अणु .pin = 0, .func = 2 पूर्ण,
-	अणु .pin = 1, .func = 2 पूर्ण,
-	अणु .pin = 2, .func = 2 पूर्ण,
-	अणु .pin = 4, .func = 2 पूर्ण,
-	अणु .pin = 5, .func = 2 पूर्ण,
-	अणु .pin = 10, .func = 2 पूर्ण,
-	अणु .pin = 11, .func = 2 पूर्ण,
-	अणु .pin = 12, .func = 2 पूर्ण,
-	अणु .pin = 13, .func = 2 पूर्ण,
-पूर्ण;
+static const struct rza1_bidir_pin rza1l_bidir_pins_p3[] = {
+	{ .pin = 0, .func = 2 },
+	{ .pin = 1, .func = 2 },
+	{ .pin = 2, .func = 2 },
+	{ .pin = 4, .func = 2 },
+	{ .pin = 5, .func = 2 },
+	{ .pin = 10, .func = 2 },
+	{ .pin = 11, .func = 2 },
+	{ .pin = 12, .func = 2 },
+	{ .pin = 13, .func = 2 },
+};
 
-अटल स्थिर काष्ठा rza1_bidir_pin rza1l_bidir_pins_p4[] = अणु
-	अणु .pin = 1, .func = 4 पूर्ण,
-	अणु .pin = 2, .func = 2 पूर्ण,
-	अणु .pin = 3, .func = 2 पूर्ण,
-	अणु .pin = 6, .func = 2 पूर्ण,
-	अणु .pin = 7, .func = 2 पूर्ण,
-पूर्ण;
+static const struct rza1_bidir_pin rza1l_bidir_pins_p4[] = {
+	{ .pin = 1, .func = 4 },
+	{ .pin = 2, .func = 2 },
+	{ .pin = 3, .func = 2 },
+	{ .pin = 6, .func = 2 },
+	{ .pin = 7, .func = 2 },
+};
 
-अटल स्थिर काष्ठा rza1_bidir_pin rza1l_bidir_pins_p5[] = अणु
-	अणु .pin = 0, .func = 1 पूर्ण,
-	अणु .pin = 1, .func = 1 पूर्ण,
-	अणु .pin = 2, .func = 1 पूर्ण,
-	अणु .pin = 3, .func = 1 पूर्ण,
-	अणु .pin = 4, .func = 1 पूर्ण,
-	अणु .pin = 5, .func = 1 पूर्ण,
-	अणु .pin = 6, .func = 1 पूर्ण,
-	अणु .pin = 7, .func = 1 पूर्ण,
-	अणु .pin = 8, .func = 1 पूर्ण,
-	अणु .pin = 9, .func = 1 पूर्ण,
-	अणु .pin = 10, .func = 1 पूर्ण,
-	अणु .pin = 11, .func = 1 पूर्ण,
-	अणु .pin = 12, .func = 1 पूर्ण,
-	अणु .pin = 13, .func = 1 पूर्ण,
-	अणु .pin = 14, .func = 1 पूर्ण,
-	अणु .pin = 15, .func = 1 पूर्ण,
-	अणु .pin = 0, .func = 2 पूर्ण,
-	अणु .pin = 1, .func = 2 पूर्ण,
-	अणु .pin = 2, .func = 2 पूर्ण,
-	अणु .pin = 3, .func = 2 पूर्ण,
-पूर्ण;
+static const struct rza1_bidir_pin rza1l_bidir_pins_p5[] = {
+	{ .pin = 0, .func = 1 },
+	{ .pin = 1, .func = 1 },
+	{ .pin = 2, .func = 1 },
+	{ .pin = 3, .func = 1 },
+	{ .pin = 4, .func = 1 },
+	{ .pin = 5, .func = 1 },
+	{ .pin = 6, .func = 1 },
+	{ .pin = 7, .func = 1 },
+	{ .pin = 8, .func = 1 },
+	{ .pin = 9, .func = 1 },
+	{ .pin = 10, .func = 1 },
+	{ .pin = 11, .func = 1 },
+	{ .pin = 12, .func = 1 },
+	{ .pin = 13, .func = 1 },
+	{ .pin = 14, .func = 1 },
+	{ .pin = 15, .func = 1 },
+	{ .pin = 0, .func = 2 },
+	{ .pin = 1, .func = 2 },
+	{ .pin = 2, .func = 2 },
+	{ .pin = 3, .func = 2 },
+};
 
-अटल स्थिर काष्ठा rza1_bidir_pin rza1l_bidir_pins_p6[] = अणु
-	अणु .pin = 0, .func = 1 पूर्ण,
-	अणु .pin = 1, .func = 1 पूर्ण,
-	अणु .pin = 2, .func = 1 पूर्ण,
-	अणु .pin = 3, .func = 1 पूर्ण,
-	अणु .pin = 4, .func = 1 पूर्ण,
-	अणु .pin = 5, .func = 1 पूर्ण,
-	अणु .pin = 6, .func = 1 पूर्ण,
-	अणु .pin = 7, .func = 1 पूर्ण,
-	अणु .pin = 8, .func = 1 पूर्ण,
-	अणु .pin = 9, .func = 1 पूर्ण,
-	अणु .pin = 10, .func = 1 पूर्ण,
-	अणु .pin = 11, .func = 1 पूर्ण,
-	अणु .pin = 12, .func = 1 पूर्ण,
-	अणु .pin = 13, .func = 1 पूर्ण,
-	अणु .pin = 14, .func = 1 पूर्ण,
-	अणु .pin = 15, .func = 1 पूर्ण,
-पूर्ण;
+static const struct rza1_bidir_pin rza1l_bidir_pins_p6[] = {
+	{ .pin = 0, .func = 1 },
+	{ .pin = 1, .func = 1 },
+	{ .pin = 2, .func = 1 },
+	{ .pin = 3, .func = 1 },
+	{ .pin = 4, .func = 1 },
+	{ .pin = 5, .func = 1 },
+	{ .pin = 6, .func = 1 },
+	{ .pin = 7, .func = 1 },
+	{ .pin = 8, .func = 1 },
+	{ .pin = 9, .func = 1 },
+	{ .pin = 10, .func = 1 },
+	{ .pin = 11, .func = 1 },
+	{ .pin = 12, .func = 1 },
+	{ .pin = 13, .func = 1 },
+	{ .pin = 14, .func = 1 },
+	{ .pin = 15, .func = 1 },
+};
 
-अटल स्थिर काष्ठा rza1_bidir_pin rza1l_bidir_pins_p7[] = अणु
-	अणु .pin = 2, .func = 2 पूर्ण,
-	अणु .pin = 3, .func = 2 पूर्ण,
-	अणु .pin = 5, .func = 2 पूर्ण,
-	अणु .pin = 6, .func = 2 पूर्ण,
-	अणु .pin = 7, .func = 2 पूर्ण,
-	अणु .pin = 2, .func = 3 पूर्ण,
-	अणु .pin = 3, .func = 3 पूर्ण,
-	अणु .pin = 5, .func = 3 पूर्ण,
-	अणु .pin = 6, .func = 3 पूर्ण,
-	अणु .pin = 7, .func = 3 पूर्ण,
-पूर्ण;
+static const struct rza1_bidir_pin rza1l_bidir_pins_p7[] = {
+	{ .pin = 2, .func = 2 },
+	{ .pin = 3, .func = 2 },
+	{ .pin = 5, .func = 2 },
+	{ .pin = 6, .func = 2 },
+	{ .pin = 7, .func = 2 },
+	{ .pin = 2, .func = 3 },
+	{ .pin = 3, .func = 3 },
+	{ .pin = 5, .func = 3 },
+	{ .pin = 6, .func = 3 },
+	{ .pin = 7, .func = 3 },
+};
 
-अटल स्थिर काष्ठा rza1_bidir_pin rza1l_bidir_pins_p9[] = अणु
-	अणु .pin = 1, .func = 2 पूर्ण,
-	अणु .pin = 0, .func = 3 पूर्ण,
-	अणु .pin = 1, .func = 3 पूर्ण,
-	अणु .pin = 3, .func = 3 पूर्ण,
-	अणु .pin = 4, .func = 3 पूर्ण,
-	अणु .pin = 5, .func = 3 पूर्ण,
-पूर्ण;
+static const struct rza1_bidir_pin rza1l_bidir_pins_p9[] = {
+	{ .pin = 1, .func = 2 },
+	{ .pin = 0, .func = 3 },
+	{ .pin = 1, .func = 3 },
+	{ .pin = 3, .func = 3 },
+	{ .pin = 4, .func = 3 },
+	{ .pin = 5, .func = 3 },
+};
 
-अटल स्थिर काष्ठा rza1_swio_pin rza1l_swio_pins[] = अणु
-	अणु .port = 2, .pin = 8, .func = 2, .input = 0 पूर्ण,
-	अणु .port = 5, .pin = 6, .func = 3, .input = 0 पूर्ण,
-	अणु .port = 6, .pin = 6, .func = 3, .input = 0 पूर्ण,
-	अणु .port = 6, .pin = 10, .func = 3, .input = 0 पूर्ण,
-	अणु .port = 7, .pin = 10, .func = 2, .input = 0 पूर्ण,
-	अणु .port = 8, .pin = 2, .func = 3, .input = 0 पूर्ण,
-पूर्ण;
+static const struct rza1_swio_pin rza1l_swio_pins[] = {
+	{ .port = 2, .pin = 8, .func = 2, .input = 0 },
+	{ .port = 5, .pin = 6, .func = 3, .input = 0 },
+	{ .port = 6, .pin = 6, .func = 3, .input = 0 },
+	{ .port = 6, .pin = 10, .func = 3, .input = 0 },
+	{ .port = 7, .pin = 10, .func = 2, .input = 0 },
+	{ .port = 8, .pin = 2, .func = 3, .input = 0 },
+};
 
-अटल स्थिर काष्ठा rza1_bidir_entry rza1l_bidir_entries[RZA1_NPORTS] = अणु
-	[1] = अणु ARRAY_SIZE(rza1l_bidir_pins_p1), rza1l_bidir_pins_p1 पूर्ण,
-	[3] = अणु ARRAY_SIZE(rza1l_bidir_pins_p3), rza1l_bidir_pins_p3 पूर्ण,
-	[4] = अणु ARRAY_SIZE(rza1l_bidir_pins_p4), rza1l_bidir_pins_p4 पूर्ण,
-	[5] = अणु ARRAY_SIZE(rza1l_bidir_pins_p4), rza1l_bidir_pins_p5 पूर्ण,
-	[6] = अणु ARRAY_SIZE(rza1l_bidir_pins_p6), rza1l_bidir_pins_p6 पूर्ण,
-	[7] = अणु ARRAY_SIZE(rza1l_bidir_pins_p7), rza1l_bidir_pins_p7 पूर्ण,
-	[9] = अणु ARRAY_SIZE(rza1l_bidir_pins_p9), rza1l_bidir_pins_p9 पूर्ण,
-पूर्ण;
+static const struct rza1_bidir_entry rza1l_bidir_entries[RZA1_NPORTS] = {
+	[1] = { ARRAY_SIZE(rza1l_bidir_pins_p1), rza1l_bidir_pins_p1 },
+	[3] = { ARRAY_SIZE(rza1l_bidir_pins_p3), rza1l_bidir_pins_p3 },
+	[4] = { ARRAY_SIZE(rza1l_bidir_pins_p4), rza1l_bidir_pins_p4 },
+	[5] = { ARRAY_SIZE(rza1l_bidir_pins_p4), rza1l_bidir_pins_p5 },
+	[6] = { ARRAY_SIZE(rza1l_bidir_pins_p6), rza1l_bidir_pins_p6 },
+	[7] = { ARRAY_SIZE(rza1l_bidir_pins_p7), rza1l_bidir_pins_p7 },
+	[9] = { ARRAY_SIZE(rza1l_bidir_pins_p9), rza1l_bidir_pins_p9 },
+};
 
-अटल स्थिर काष्ठा rza1_swio_entry rza1l_swio_entries[] = अणु
-	[0] = अणु ARRAY_SIZE(rza1l_swio_pins), rza1l_swio_pins पूर्ण,
-पूर्ण;
+static const struct rza1_swio_entry rza1l_swio_entries[] = {
+	[0] = { ARRAY_SIZE(rza1l_swio_pins), rza1l_swio_pins },
+};
 
 /* RZ/A1L (r7s72102x) pinmux flags table */
-अटल स्थिर काष्ठा rza1_pinmux_conf rza1l_pmx_conf = अणु
+static const struct rza1_pinmux_conf rza1l_pmx_conf = {
 	.bidir_entries	= rza1l_bidir_entries,
 	.swio_entries	= rza1l_swio_entries,
-पूर्ण;
+};
 
 /* ----------------------------------------------------------------------------
  * RZ/A1 types
  */
 /**
- * काष्ठा rza1_mux_conf - describes a pin multiplexing operation
+ * struct rza1_mux_conf - describes a pin multiplexing operation
  *
- * @id: the pin identअगरier from 0 to RZA1_NPINS
+ * @id: the pin identifier from 0 to RZA1_NPINS
  * @port: the port where pin sits on
  * @pin: pin id
  * @mux_func: alternate function id number
  * @mux_flags: alternate function flags
  * @value: output value to set the pin to
  */
-काष्ठा rza1_mux_conf अणु
+struct rza1_mux_conf {
 	u16 id;
 	u8 port;
 	u8 pin;
 	u8 mux_func;
 	u8 mux_flags;
 	u8 value;
-पूर्ण;
+};
 
 /**
- * काष्ठा rza1_port - describes a pin port
+ * struct rza1_port - describes a pin port
  *
- * This is mostly useful to lock रेजिस्टर ग_लिखोs per-bank and not globally.
+ * This is mostly useful to lock register writes per-bank and not globally.
  *
- * @lock: protect access to HW रेजिस्टरs
+ * @lock: protect access to HW registers
  * @id: port number
  * @base: logical address base
  * @pins: pins sitting on this port
  */
-काष्ठा rza1_port अणु
+struct rza1_port {
 	spinlock_t lock;
-	अचिन्हित पूर्णांक id;
-	व्योम __iomem *base;
-	काष्ठा pinctrl_pin_desc *pins;
-पूर्ण;
+	unsigned int id;
+	void __iomem *base;
+	struct pinctrl_pin_desc *pins;
+};
 
 /**
- * काष्ठा rza1_pinctrl - RZ pincontroller device
+ * struct rza1_pinctrl - RZ pincontroller device
  *
- * @dev: parent device काष्ठाure
+ * @dev: parent device structure
  * @mutex: protect [pinctrl|pinmux]_generic functions
  * @base: logical address base
  * @nport: number of pin controller ports
  * @ports: pin controller banks
- * @pins: pin array क्रम pinctrl core
- * @desc: pincontroller desc क्रम pinctrl core
+ * @pins: pin array for pinctrl core
+ * @desc: pincontroller desc for pinctrl core
  * @pctl: pinctrl device
- * @data: device specअगरic data
+ * @data: device specific data
  */
-काष्ठा rza1_pinctrl अणु
-	काष्ठा device *dev;
+struct rza1_pinctrl {
+	struct device *dev;
 
-	काष्ठा mutex mutex;
+	struct mutex mutex;
 
-	व्योम __iomem *base;
+	void __iomem *base;
 
-	अचिन्हित पूर्णांक nport;
-	काष्ठा rza1_port *ports;
+	unsigned int nport;
+	struct rza1_port *ports;
 
-	काष्ठा pinctrl_pin_desc *pins;
-	काष्ठा pinctrl_desc desc;
-	काष्ठा pinctrl_dev *pctl;
+	struct pinctrl_pin_desc *pins;
+	struct pinctrl_desc desc;
+	struct pinctrl_dev *pctl;
 
-	स्थिर व्योम *data;
-पूर्ण;
+	const void *data;
+};
 
 /* ----------------------------------------------------------------------------
  * RZ/A1 pinmux flags
  */
-अटल अंतरभूत bool rza1_pinmux_get_bidir(अचिन्हित पूर्णांक port,
-					 अचिन्हित पूर्णांक pin,
-					 अचिन्हित पूर्णांक func,
-					 स्थिर काष्ठा rza1_bidir_entry *table)
-अणु
-	स्थिर काष्ठा rza1_bidir_entry *entry = &table[port];
-	स्थिर काष्ठा rza1_bidir_pin *bidir_pin;
-	अचिन्हित पूर्णांक i;
+static inline bool rza1_pinmux_get_bidir(unsigned int port,
+					 unsigned int pin,
+					 unsigned int func,
+					 const struct rza1_bidir_entry *table)
+{
+	const struct rza1_bidir_entry *entry = &table[port];
+	const struct rza1_bidir_pin *bidir_pin;
+	unsigned int i;
 
-	क्रम (i = 0; i < entry->npins; ++i) अणु
+	for (i = 0; i < entry->npins; ++i) {
 		bidir_pin = &entry->pins[i];
-		अगर (bidir_pin->pin == pin && bidir_pin->func == func)
-			वापस true;
-	पूर्ण
+		if (bidir_pin->pin == pin && bidir_pin->func == func)
+			return true;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल अंतरभूत पूर्णांक rza1_pinmux_get_swio(अचिन्हित पूर्णांक port,
-				       अचिन्हित पूर्णांक pin,
-				       अचिन्हित पूर्णांक func,
-				       स्थिर काष्ठा rza1_swio_entry *table)
-अणु
-	स्थिर काष्ठा rza1_swio_pin *swio_pin;
-	अचिन्हित पूर्णांक i;
+static inline int rza1_pinmux_get_swio(unsigned int port,
+				       unsigned int pin,
+				       unsigned int func,
+				       const struct rza1_swio_entry *table)
+{
+	const struct rza1_swio_pin *swio_pin;
+	unsigned int i;
 
 
-	क्रम (i = 0; i < table->npins; ++i) अणु
+	for (i = 0; i < table->npins; ++i) {
 		swio_pin = &table->pins[i];
-		अगर (swio_pin->port == port && swio_pin->pin == pin &&
+		if (swio_pin->port == port && swio_pin->pin == pin &&
 		    swio_pin->func == func)
-			वापस swio_pin->input;
-	पूर्ण
+			return swio_pin->input;
+	}
 
-	वापस -ENOENT;
-पूर्ण
+	return -ENOENT;
+}
 
 /*
- * rza1_pinmux_get_flags() - वापस pinmux flags associated to a pin
+ * rza1_pinmux_get_flags() - return pinmux flags associated to a pin
  */
-अटल अचिन्हित पूर्णांक rza1_pinmux_get_flags(अचिन्हित पूर्णांक port, अचिन्हित पूर्णांक pin,
-					  अचिन्हित पूर्णांक func,
-					  काष्ठा rza1_pinctrl *rza1_pctl)
+static unsigned int rza1_pinmux_get_flags(unsigned int port, unsigned int pin,
+					  unsigned int func,
+					  struct rza1_pinctrl *rza1_pctl)
 
-अणु
-	स्थिर काष्ठा rza1_pinmux_conf *pmx_conf = rza1_pctl->data;
-	स्थिर काष्ठा rza1_bidir_entry *bidir_entries = pmx_conf->bidir_entries;
-	स्थिर काष्ठा rza1_swio_entry *swio_entries = pmx_conf->swio_entries;
-	अचिन्हित पूर्णांक pmx_flags = 0;
-	पूर्णांक ret;
+{
+	const struct rza1_pinmux_conf *pmx_conf = rza1_pctl->data;
+	const struct rza1_bidir_entry *bidir_entries = pmx_conf->bidir_entries;
+	const struct rza1_swio_entry *swio_entries = pmx_conf->swio_entries;
+	unsigned int pmx_flags = 0;
+	int ret;
 
-	अगर (rza1_pinmux_get_bidir(port, pin, func, bidir_entries))
-		pmx_flags |= MUX_FLAGS_BIसूची;
+	if (rza1_pinmux_get_bidir(port, pin, func, bidir_entries))
+		pmx_flags |= MUX_FLAGS_BIDIR;
 
 	ret = rza1_pinmux_get_swio(port, pin, func, swio_entries);
-	अगर (ret == 0)
+	if (ret == 0)
 		pmx_flags |= MUX_FLAGS_SWIO_OUTPUT;
-	अन्यथा अगर (ret > 0)
+	else if (ret > 0)
 		pmx_flags |= MUX_FLAGS_SWIO_INPUT;
 
-	वापस pmx_flags;
-पूर्ण
+	return pmx_flags;
+}
 
 /* ----------------------------------------------------------------------------
  * RZ/A1 SoC operations
@@ -569,44 +568,44 @@
 
 /*
  * rza1_set_bit() - un-locked set/clear a single bit in pin configuration
- *		    रेजिस्टरs
+ *		    registers
  */
-अटल अंतरभूत व्योम rza1_set_bit(काष्ठा rza1_port *port, अचिन्हित पूर्णांक reg,
-				अचिन्हित पूर्णांक bit, bool set)
-अणु
-	व्योम __iomem *mem = RZA1_ADDR(port->base, reg, port->id);
-	u16 val = ioपढ़ो16(mem);
+static inline void rza1_set_bit(struct rza1_port *port, unsigned int reg,
+				unsigned int bit, bool set)
+{
+	void __iomem *mem = RZA1_ADDR(port->base, reg, port->id);
+	u16 val = ioread16(mem);
 
-	अगर (set)
+	if (set)
 		val |= BIT(bit);
-	अन्यथा
+	else
 		val &= ~BIT(bit);
 
-	ioग_लिखो16(val, mem);
-पूर्ण
+	iowrite16(val, mem);
+}
 
-अटल अंतरभूत अचिन्हित पूर्णांक rza1_get_bit(काष्ठा rza1_port *port,
-					अचिन्हित पूर्णांक reg, अचिन्हित पूर्णांक bit)
-अणु
-	व्योम __iomem *mem = RZA1_ADDR(port->base, reg, port->id);
+static inline unsigned int rza1_get_bit(struct rza1_port *port,
+					unsigned int reg, unsigned int bit)
+{
+	void __iomem *mem = RZA1_ADDR(port->base, reg, port->id);
 
-	वापस ioपढ़ो16(mem) & BIT(bit);
-पूर्ण
+	return ioread16(mem) & BIT(bit);
+}
 
 /**
- * rza1_pin_reset() - reset a pin to शेष initial state
+ * rza1_pin_reset() - reset a pin to default initial state
  *
  * Reset pin state disabling input buffer and bi-directional control,
  * and configure it as input port.
  * Note that pin is now configured with direction as input but with input
- * buffer disabled. This implies the pin value cannot be पढ़ो in this state.
+ * buffer disabled. This implies the pin value cannot be read in this state.
  *
  * @port: port where pin sits on
  * @pin: pin offset
  */
-अटल व्योम rza1_pin_reset(काष्ठा rza1_port *port, अचिन्हित पूर्णांक pin)
-अणु
-	अचिन्हित दीर्घ irqflags;
+static void rza1_pin_reset(struct rza1_port *port, unsigned int pin)
+{
+	unsigned long irqflags;
 
 	spin_lock_irqsave(&port->lock, irqflags);
 	rza1_set_bit(port, RZA1_PIBC_REG, pin, 0);
@@ -616,51 +615,51 @@
 	rza1_set_bit(port, RZA1_PMC_REG, pin, 0);
 	rza1_set_bit(port, RZA1_PIPC_REG, pin, 0);
 	spin_unlock_irqrestore(&port->lock, irqflags);
-पूर्ण
+}
 
 /**
  * rza1_pin_set_direction() - set I/O direction on a pin in port mode
  *
- * When running in output port mode keep PBDC enabled to allow पढ़ोing the
+ * When running in output port mode keep PBDC enabled to allow reading the
  * pin value from PPR.
  *
  * @port: port where pin sits on
  * @pin: pin offset
  * @input: input enable/disable flag
  */
-अटल अंतरभूत व्योम rza1_pin_set_direction(काष्ठा rza1_port *port,
-					  अचिन्हित पूर्णांक pin, bool input)
-अणु
-	अचिन्हित दीर्घ irqflags;
+static inline void rza1_pin_set_direction(struct rza1_port *port,
+					  unsigned int pin, bool input)
+{
+	unsigned long irqflags;
 
 	spin_lock_irqsave(&port->lock, irqflags);
 
 	rza1_set_bit(port, RZA1_PIBC_REG, pin, 1);
-	अगर (input) अणु
+	if (input) {
 		rza1_set_bit(port, RZA1_PM_REG, pin, 1);
 		rza1_set_bit(port, RZA1_PBDC_REG, pin, 0);
-	पूर्ण अन्यथा अणु
+	} else {
 		rza1_set_bit(port, RZA1_PM_REG, pin, 0);
 		rza1_set_bit(port, RZA1_PBDC_REG, pin, 1);
-	पूर्ण
+	}
 
 	spin_unlock_irqrestore(&port->lock, irqflags);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम rza1_pin_set(काष्ठा rza1_port *port, अचिन्हित पूर्णांक pin,
-				अचिन्हित पूर्णांक value)
-अणु
-	अचिन्हित दीर्घ irqflags;
+static inline void rza1_pin_set(struct rza1_port *port, unsigned int pin,
+				unsigned int value)
+{
+	unsigned long irqflags;
 
 	spin_lock_irqsave(&port->lock, irqflags);
 	rza1_set_bit(port, RZA1_P_REG, pin, !!value);
 	spin_unlock_irqrestore(&port->lock, irqflags);
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक rza1_pin_get(काष्ठा rza1_port *port, अचिन्हित पूर्णांक pin)
-अणु
-	वापस rza1_get_bit(port, RZA1_PPR_REG, pin);
-पूर्ण
+static inline int rza1_pin_get(struct rza1_port *port, unsigned int pin)
+{
+	return rza1_get_bit(port, RZA1_PPR_REG, pin);
+}
 
 /**
  * rza1_pin_mux_single() - configure pin multiplexing on a single pin
@@ -668,11 +667,11 @@
  * @rza1_pctl: RZ/A1 pin controller device
  * @mux_conf: pin multiplexing descriptor
  */
-अटल पूर्णांक rza1_pin_mux_single(काष्ठा rza1_pinctrl *rza1_pctl,
-			       काष्ठा rza1_mux_conf *mux_conf)
-अणु
-	काष्ठा rza1_port *port = &rza1_pctl->ports[mux_conf->port];
-	अचिन्हित पूर्णांक pin = mux_conf->pin;
+static int rza1_pin_mux_single(struct rza1_pinctrl *rza1_pctl,
+			       struct rza1_mux_conf *mux_conf)
+{
+	struct rza1_port *port = &rza1_pctl->ports[mux_conf->port];
+	unsigned int pin = mux_conf->pin;
 	u8 mux_func = mux_conf->mux_func;
 	u8 mux_flags = mux_conf->mux_flags;
 	u8 mux_flags_from_table;
@@ -682,20 +681,20 @@
 	/* SWIO pinmux flags coming from DT are high precedence */
 	mux_flags_from_table = rza1_pinmux_get_flags(port->id, pin, mux_func,
 						     rza1_pctl);
-	अगर (mux_flags)
-		mux_flags |= (mux_flags_from_table & MUX_FLAGS_BIसूची);
-	अन्यथा
+	if (mux_flags)
+		mux_flags |= (mux_flags_from_table & MUX_FLAGS_BIDIR);
+	else
 		mux_flags = mux_flags_from_table;
 
-	अगर (mux_flags & MUX_FLAGS_BIसूची)
+	if (mux_flags & MUX_FLAGS_BIDIR)
 		rza1_set_bit(port, RZA1_PBDC_REG, pin, 1);
 
 	/*
 	 * Enable alternate function mode and select it.
 	 *
 	 * Be careful here: the pin mux sub-nodes in device tree
-	 * क्रमागतerate alternate functions from 1 to 8;
-	 * subtract 1 beक्रमe using macros to match रेजिस्टरs configuration
+	 * enumerate alternate functions from 1 to 8;
+	 * subtract 1 before using macros to match registers configuration
 	 * which expects numbers from 0 to 7 instead.
 	 *
 	 * ----------------------------------------------------
@@ -720,19 +719,19 @@
 	/*
 	 * All alternate functions except a few need PIPCn = 1.
 	 * If PIPCn has to stay disabled (SW IO mode), configure PMn according
-	 * to I/O direction specअगरied by pin configuration -after- PMC has been
+	 * to I/O direction specified by pin configuration -after- PMC has been
 	 * set to one.
 	 */
-	अगर (mux_flags & (MUX_FLAGS_SWIO_INPUT | MUX_FLAGS_SWIO_OUTPUT))
+	if (mux_flags & (MUX_FLAGS_SWIO_INPUT | MUX_FLAGS_SWIO_OUTPUT))
 		rza1_set_bit(port, RZA1_PM_REG, pin,
 			     mux_flags & MUX_FLAGS_SWIO_INPUT);
-	अन्यथा
+	else
 		rza1_set_bit(port, RZA1_PIPC_REG, pin, 1);
 
 	rza1_set_bit(port, RZA1_PMC_REG, pin, 1);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* ----------------------------------------------------------------------------
  * gpio operations
@@ -748,99 +747,99 @@
  * @chip: gpio chip where the gpio sits on
  * @gpio: gpio offset
  */
-अटल पूर्णांक rza1_gpio_request(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक gpio)
-अणु
-	काष्ठा rza1_port *port = gpiochip_get_data(chip);
+static int rza1_gpio_request(struct gpio_chip *chip, unsigned int gpio)
+{
+	struct rza1_port *port = gpiochip_get_data(chip);
 
 	rza1_pin_reset(port, gpio);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * rza1_gpio_disable_मुक्त() - reset a pin
+ * rza1_gpio_disable_free() - reset a pin
  *
- * Surprisingly, disable_मुक्त a gpio, is equivalent to request it.
- * Reset pin to port mode, with input buffer disabled. This overग_लिखोs all
+ * Surprisingly, disable_free a gpio, is equivalent to request it.
+ * Reset pin to port mode, with input buffer disabled. This overwrites all
  * port direction settings applied with set_direction
  *
  * @chip: gpio chip where the gpio sits on
  * @gpio: gpio offset
  */
-अटल व्योम rza1_gpio_मुक्त(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक gpio)
-अणु
-	काष्ठा rza1_port *port = gpiochip_get_data(chip);
+static void rza1_gpio_free(struct gpio_chip *chip, unsigned int gpio)
+{
+	struct rza1_port *port = gpiochip_get_data(chip);
 
 	rza1_pin_reset(port, gpio);
-पूर्ण
+}
 
-अटल पूर्णांक rza1_gpio_get_direction(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक gpio)
-अणु
-	काष्ठा rza1_port *port = gpiochip_get_data(chip);
+static int rza1_gpio_get_direction(struct gpio_chip *chip, unsigned int gpio)
+{
+	struct rza1_port *port = gpiochip_get_data(chip);
 
-	अगर (rza1_get_bit(port, RZA1_PM_REG, gpio))
-		वापस GPIO_LINE_सूचीECTION_IN;
+	if (rza1_get_bit(port, RZA1_PM_REG, gpio))
+		return GPIO_LINE_DIRECTION_IN;
 
-	वापस GPIO_LINE_सूचीECTION_OUT;
-पूर्ण
+	return GPIO_LINE_DIRECTION_OUT;
+}
 
-अटल पूर्णांक rza1_gpio_direction_input(काष्ठा gpio_chip *chip,
-				     अचिन्हित पूर्णांक gpio)
-अणु
-	काष्ठा rza1_port *port = gpiochip_get_data(chip);
+static int rza1_gpio_direction_input(struct gpio_chip *chip,
+				     unsigned int gpio)
+{
+	struct rza1_port *port = gpiochip_get_data(chip);
 
 	rza1_pin_set_direction(port, gpio, true);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rza1_gpio_direction_output(काष्ठा gpio_chip *chip,
-				      अचिन्हित पूर्णांक gpio,
-				      पूर्णांक value)
-अणु
-	काष्ठा rza1_port *port = gpiochip_get_data(chip);
+static int rza1_gpio_direction_output(struct gpio_chip *chip,
+				      unsigned int gpio,
+				      int value)
+{
+	struct rza1_port *port = gpiochip_get_data(chip);
 
-	/* Set value beक्रमe driving pin direction */
+	/* Set value before driving pin direction */
 	rza1_pin_set(port, gpio, value);
 	rza1_pin_set_direction(port, gpio, false);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * rza1_gpio_get() - पढ़ो a gpio pin value
+ * rza1_gpio_get() - read a gpio pin value
  *
- * Read gpio pin value through PPR रेजिस्टर.
- * Requires bi-directional mode to work when पढ़ोing the value of a pin
+ * Read gpio pin value through PPR register.
+ * Requires bi-directional mode to work when reading the value of a pin
  * in output mode
  *
  * @chip: gpio chip where the gpio sits on
  * @gpio: gpio offset
  */
-अटल पूर्णांक rza1_gpio_get(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक gpio)
-अणु
-	काष्ठा rza1_port *port = gpiochip_get_data(chip);
+static int rza1_gpio_get(struct gpio_chip *chip, unsigned int gpio)
+{
+	struct rza1_port *port = gpiochip_get_data(chip);
 
-	वापस rza1_pin_get(port, gpio);
-पूर्ण
+	return rza1_pin_get(port, gpio);
+}
 
-अटल व्योम rza1_gpio_set(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक gpio,
-			  पूर्णांक value)
-अणु
-	काष्ठा rza1_port *port = gpiochip_get_data(chip);
+static void rza1_gpio_set(struct gpio_chip *chip, unsigned int gpio,
+			  int value)
+{
+	struct rza1_port *port = gpiochip_get_data(chip);
 
 	rza1_pin_set(port, gpio, value);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा gpio_chip rza1_gpiochip_ढाँचा = अणु
+static const struct gpio_chip rza1_gpiochip_template = {
 	.request		= rza1_gpio_request,
-	.मुक्त			= rza1_gpio_मुक्त,
+	.free			= rza1_gpio_free,
 	.get_direction		= rza1_gpio_get_direction,
 	.direction_input	= rza1_gpio_direction_input,
 	.direction_output	= rza1_gpio_direction_output,
 	.get			= rza1_gpio_get,
 	.set			= rza1_gpio_set,
-पूर्ण;
+};
 /* ----------------------------------------------------------------------------
  * pinctrl operations
  */
@@ -851,29 +850,29 @@
  *
  * @np: device tree node to parse
  */
-अटल पूर्णांक rza1_dt_node_pin_count(काष्ठा device_node *np)
-अणु
-	काष्ठा device_node *child;
-	काष्ठा property *of_pins;
-	अचिन्हित पूर्णांक npins;
+static int rza1_dt_node_pin_count(struct device_node *np)
+{
+	struct device_node *child;
+	struct property *of_pins;
+	unsigned int npins;
 
-	of_pins = of_find_property(np, "pinmux", शून्य);
-	अगर (of_pins)
-		वापस of_pins->length / माप(u32);
+	of_pins = of_find_property(np, "pinmux", NULL);
+	if (of_pins)
+		return of_pins->length / sizeof(u32);
 
 	npins = 0;
-	क्रम_each_child_of_node(np, child) अणु
-		of_pins = of_find_property(child, "pinmux", शून्य);
-		अगर (!of_pins) अणु
+	for_each_child_of_node(np, child) {
+		of_pins = of_find_property(child, "pinmux", NULL);
+		if (!of_pins) {
 			of_node_put(child);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
-		npins += of_pins->length / माप(u32);
-	पूर्ण
+		npins += of_pins->length / sizeof(u32);
+	}
 
-	वापस npins;
-पूर्ण
+	return npins;
+}
 
 /**
  * rza1_parse_pmx_function() - parse a pin mux sub-node
@@ -883,27 +882,27 @@
  * @mux_confs: array of pin mux configurations to fill with parsed info
  * @grpins: array of pin ids to mux
  */
-अटल पूर्णांक rza1_parse_pinmux_node(काष्ठा rza1_pinctrl *rza1_pctl,
-				  काष्ठा device_node *np,
-				  काष्ठा rza1_mux_conf *mux_confs,
-				  अचिन्हित पूर्णांक *grpins)
-अणु
-	काष्ठा pinctrl_dev *pctldev = rza1_pctl->pctl;
-	अक्षर स्थिर *prop_name = "pinmux";
-	अचिन्हित दीर्घ *pin_configs;
-	अचिन्हित पूर्णांक npin_configs;
-	काष्ठा property *of_pins;
-	अचिन्हित पूर्णांक npins;
+static int rza1_parse_pinmux_node(struct rza1_pinctrl *rza1_pctl,
+				  struct device_node *np,
+				  struct rza1_mux_conf *mux_confs,
+				  unsigned int *grpins)
+{
+	struct pinctrl_dev *pctldev = rza1_pctl->pctl;
+	char const *prop_name = "pinmux";
+	unsigned long *pin_configs;
+	unsigned int npin_configs;
+	struct property *of_pins;
+	unsigned int npins;
 	u8 pinmux_flags;
-	अचिन्हित पूर्णांक i;
-	पूर्णांक ret;
+	unsigned int i;
+	int ret;
 
-	of_pins = of_find_property(np, prop_name, शून्य);
-	अगर (!of_pins) अणु
+	of_pins = of_find_property(np, prop_name, NULL);
+	if (!of_pins) {
 		dev_dbg(rza1_pctl->dev, "Missing %s property\n", prop_name);
-		वापस -ENOENT;
-	पूर्ण
-	npins = of_pins->length / माप(u32);
+		return -ENOENT;
+	}
+	npins = of_pins->length / sizeof(u32);
 
 	/*
 	 * Collect pin configuration properties: they apply to all pins in
@@ -911,43 +910,43 @@
 	 */
 	ret = pinconf_generic_parse_dt_config(np, pctldev, &pin_configs,
 					      &npin_configs);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(rza1_pctl->dev,
 			"Unable to parse pin configuration options for %pOFn\n",
 			np);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	/*
 	 * Create a mask with pinmux flags from pin configuration;
 	 * very few pins (TIOC[0-4][A|B|C|D] require SWIO direction
-	 * specअगरied in device tree.
+	 * specified in device tree.
 	 */
 	pinmux_flags = 0;
-	क्रम (i = 0; i < npin_configs && pinmux_flags == 0; i++)
-		चयन (pinconf_to_config_param(pin_configs[i])) अणु
-		हाल PIN_CONFIG_INPUT_ENABLE:
+	for (i = 0; i < npin_configs && pinmux_flags == 0; i++)
+		switch (pinconf_to_config_param(pin_configs[i])) {
+		case PIN_CONFIG_INPUT_ENABLE:
 			pinmux_flags |= MUX_FLAGS_SWIO_INPUT;
-			अवरोध;
-		हाल PIN_CONFIG_OUTPUT:	/* क्रम DT backwards compatibility */
-		हाल PIN_CONFIG_OUTPUT_ENABLE:
+			break;
+		case PIN_CONFIG_OUTPUT:	/* for DT backwards compatibility */
+		case PIN_CONFIG_OUTPUT_ENABLE:
 			pinmux_flags |= MUX_FLAGS_SWIO_OUTPUT;
-			अवरोध;
-		शेष:
-			अवरोध;
+			break;
+		default:
+			break;
 
-		पूर्ण
+		}
 
-	kमुक्त(pin_configs);
+	kfree(pin_configs);
 
 	/* Collect pin positions and their mux settings. */
-	क्रम (i = 0; i < npins; ++i) अणु
+	for (i = 0; i < npins; ++i) {
 		u32 of_pinconf;
-		काष्ठा rza1_mux_conf *mux_conf = &mux_confs[i];
+		struct rza1_mux_conf *mux_conf = &mux_confs[i];
 
-		ret = of_property_पढ़ो_u32_index(np, prop_name, i, &of_pinconf);
-		अगर (ret)
-			वापस ret;
+		ret = of_property_read_u32_index(np, prop_name, i, &of_pinconf);
+		if (ret)
+			return ret;
 
 		mux_conf->id		= of_pinconf & MUX_PIN_ID_MASK;
 		mux_conf->port		= RZA1_PIN_ID_TO_PORT(mux_conf->id);
@@ -955,88 +954,88 @@
 		mux_conf->mux_func	= MUX_FUNC(of_pinconf);
 		mux_conf->mux_flags	= pinmux_flags;
 
-		अगर (mux_conf->port >= RZA1_NPORTS ||
-		    mux_conf->pin >= RZA1_PINS_PER_PORT) अणु
+		if (mux_conf->port >= RZA1_NPORTS ||
+		    mux_conf->pin >= RZA1_PINS_PER_PORT) {
 			dev_err(rza1_pctl->dev,
 				"Wrong port %u pin %u for %s property\n",
 				mux_conf->port, mux_conf->pin, prop_name);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
 		grpins[i] = mux_conf->id;
-	पूर्ण
+	}
 
-	वापस npins;
-पूर्ण
+	return npins;
+}
 
 /**
  * rza1_dt_node_to_map() - map a pin mux node to a function/group
  *
- * Parse and रेजिस्टर a pin mux function.
+ * Parse and register a pin mux function.
  *
  * @pctldev: pin controller device
  * @np: device tree node to parse
- * @map: poपूर्णांकer to pin map (output)
+ * @map: pointer to pin map (output)
  * @num_maps: number of collected maps (output)
  */
-अटल पूर्णांक rza1_dt_node_to_map(काष्ठा pinctrl_dev *pctldev,
-			       काष्ठा device_node *np,
-			       काष्ठा pinctrl_map **map,
-			       अचिन्हित पूर्णांक *num_maps)
-अणु
-	काष्ठा rza1_pinctrl *rza1_pctl = pinctrl_dev_get_drvdata(pctldev);
-	काष्ठा rza1_mux_conf *mux_confs, *mux_conf;
-	अचिन्हित पूर्णांक *grpins, *grpin;
-	काष्ठा device_node *child;
-	स्थिर अक्षर *grpname;
-	स्थिर अक्षर **fngrps;
-	पूर्णांक ret, npins;
-	पूर्णांक gsel, fsel;
+static int rza1_dt_node_to_map(struct pinctrl_dev *pctldev,
+			       struct device_node *np,
+			       struct pinctrl_map **map,
+			       unsigned int *num_maps)
+{
+	struct rza1_pinctrl *rza1_pctl = pinctrl_dev_get_drvdata(pctldev);
+	struct rza1_mux_conf *mux_confs, *mux_conf;
+	unsigned int *grpins, *grpin;
+	struct device_node *child;
+	const char *grpname;
+	const char **fngrps;
+	int ret, npins;
+	int gsel, fsel;
 
 	npins = rza1_dt_node_pin_count(np);
-	अगर (npins < 0) अणु
+	if (npins < 0) {
 		dev_err(rza1_pctl->dev, "invalid pinmux node structure\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/*
 	 * Functions are made of 1 group only;
-	 * in fact, functions and groups are identical क्रम this pin controller
+	 * in fact, functions and groups are identical for this pin controller
 	 * except that functions carry an array of per-pin mux configuration
 	 * settings.
 	 */
-	mux_confs = devm_kसुस्मृति(rza1_pctl->dev, npins, माप(*mux_confs),
+	mux_confs = devm_kcalloc(rza1_pctl->dev, npins, sizeof(*mux_confs),
 				 GFP_KERNEL);
-	grpins = devm_kसुस्मृति(rza1_pctl->dev, npins, माप(*grpins),
+	grpins = devm_kcalloc(rza1_pctl->dev, npins, sizeof(*grpins),
 			      GFP_KERNEL);
-	fngrps = devm_kzalloc(rza1_pctl->dev, माप(*fngrps), GFP_KERNEL);
+	fngrps = devm_kzalloc(rza1_pctl->dev, sizeof(*fngrps), GFP_KERNEL);
 
-	अगर (!mux_confs || !grpins || !fngrps)
-		वापस -ENOMEM;
+	if (!mux_confs || !grpins || !fngrps)
+		return -ENOMEM;
 
 	/*
 	 * Parse the pinmux node.
-	 * If the node करोes not contain "pinmux" property (-ENOENT)
-	 * that property shall be specअगरied in all its children sub-nodes.
+	 * If the node does not contain "pinmux" property (-ENOENT)
+	 * that property shall be specified in all its children sub-nodes.
 	 */
 	mux_conf = &mux_confs[0];
 	grpin = &grpins[0];
 
 	ret = rza1_parse_pinmux_node(rza1_pctl, np, mux_conf, grpin);
-	अगर (ret == -ENOENT)
-		क्रम_each_child_of_node(np, child) अणु
+	if (ret == -ENOENT)
+		for_each_child_of_node(np, child) {
 			ret = rza1_parse_pinmux_node(rza1_pctl, child, mux_conf,
 						     grpin);
-			अगर (ret < 0) अणु
+			if (ret < 0) {
 				of_node_put(child);
-				वापस ret;
-			पूर्ण
+				return ret;
+			}
 
 			grpin += ret;
 			mux_conf += ret;
-		पूर्ण
-	अन्यथा अगर (ret < 0)
-		वापस ret;
+		}
+	else if (ret < 0)
+		return ret;
 
 	/* Register pin group and function name to pinctrl_generic */
 	grpname	= np->name;
@@ -1044,29 +1043,29 @@
 
 	mutex_lock(&rza1_pctl->mutex);
 	gsel = pinctrl_generic_add_group(pctldev, grpname, grpins, npins,
-					 शून्य);
-	अगर (gsel < 0) अणु
+					 NULL);
+	if (gsel < 0) {
 		mutex_unlock(&rza1_pctl->mutex);
-		वापस gsel;
-	पूर्ण
+		return gsel;
+	}
 
 	fsel = pinmux_generic_add_function(pctldev, grpname, fngrps, 1,
 					   mux_confs);
-	अगर (fsel < 0) अणु
+	if (fsel < 0) {
 		ret = fsel;
-		जाओ हटाओ_group;
-	पूर्ण
+		goto remove_group;
+	}
 
 	dev_info(rza1_pctl->dev, "Parsed function and group %s with %d pins\n",
 				 grpname, npins);
 
 	/* Create map where to retrieve function and mux settings from */
 	*num_maps = 0;
-	*map = kzalloc(माप(**map), GFP_KERNEL);
-	अगर (!*map) अणु
+	*map = kzalloc(sizeof(**map), GFP_KERNEL);
+	if (!*map) {
 		ret = -ENOMEM;
-		जाओ हटाओ_function;
-	पूर्ण
+		goto remove_function;
+	}
 
 	(*map)->type = PIN_MAP_TYPE_MUX_GROUP;
 	(*map)->data.mux.group = np->name;
@@ -1074,34 +1073,34 @@
 	*num_maps = 1;
 	mutex_unlock(&rza1_pctl->mutex);
 
-	वापस 0;
+	return 0;
 
-हटाओ_function:
-	pinmux_generic_हटाओ_function(pctldev, fsel);
+remove_function:
+	pinmux_generic_remove_function(pctldev, fsel);
 
-हटाओ_group:
-	pinctrl_generic_हटाओ_group(pctldev, gsel);
+remove_group:
+	pinctrl_generic_remove_group(pctldev, gsel);
 	mutex_unlock(&rza1_pctl->mutex);
 
 	dev_info(rza1_pctl->dev, "Unable to parse function and group %s\n",
 				 grpname);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम rza1_dt_मुक्त_map(काष्ठा pinctrl_dev *pctldev,
-			     काष्ठा pinctrl_map *map, अचिन्हित पूर्णांक num_maps)
-अणु
-	kमुक्त(map);
-पूर्ण
+static void rza1_dt_free_map(struct pinctrl_dev *pctldev,
+			     struct pinctrl_map *map, unsigned int num_maps)
+{
+	kfree(map);
+}
 
-अटल स्थिर काष्ठा pinctrl_ops rza1_pinctrl_ops = अणु
+static const struct pinctrl_ops rza1_pinctrl_ops = {
 	.get_groups_count	= pinctrl_generic_get_group_count,
 	.get_group_name		= pinctrl_generic_get_group_name,
 	.get_group_pins		= pinctrl_generic_get_group_pins,
 	.dt_node_to_map		= rza1_dt_node_to_map,
-	.dt_मुक्त_map		= rza1_dt_मुक्त_map,
-पूर्ण;
+	.dt_free_map		= rza1_dt_free_map,
+};
 
 /* ----------------------------------------------------------------------------
  * pinmux operations
@@ -1114,90 +1113,90 @@
  * @selector: function selector
  * @group: group selector
  */
-अटल पूर्णांक rza1_set_mux(काष्ठा pinctrl_dev *pctldev, अचिन्हित पूर्णांक selector,
-			   अचिन्हित पूर्णांक group)
-अणु
-	काष्ठा rza1_pinctrl *rza1_pctl = pinctrl_dev_get_drvdata(pctldev);
-	काष्ठा rza1_mux_conf *mux_confs;
-	काष्ठा function_desc *func;
-	काष्ठा group_desc *grp;
-	पूर्णांक i;
+static int rza1_set_mux(struct pinctrl_dev *pctldev, unsigned int selector,
+			   unsigned int group)
+{
+	struct rza1_pinctrl *rza1_pctl = pinctrl_dev_get_drvdata(pctldev);
+	struct rza1_mux_conf *mux_confs;
+	struct function_desc *func;
+	struct group_desc *grp;
+	int i;
 
 	grp = pinctrl_generic_get_group(pctldev, group);
-	अगर (!grp)
-		वापस -EINVAL;
+	if (!grp)
+		return -EINVAL;
 
 	func = pinmux_generic_get_function(pctldev, selector);
-	अगर (!func)
-		वापस -EINVAL;
+	if (!func)
+		return -EINVAL;
 
-	mux_confs = (काष्ठा rza1_mux_conf *)func->data;
-	क्रम (i = 0; i < grp->num_pins; ++i) अणु
-		पूर्णांक ret;
+	mux_confs = (struct rza1_mux_conf *)func->data;
+	for (i = 0; i < grp->num_pins; ++i) {
+		int ret;
 
 		ret = rza1_pin_mux_single(rza1_pctl, &mux_confs[i]);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा pinmux_ops rza1_pinmux_ops = अणु
+static const struct pinmux_ops rza1_pinmux_ops = {
 	.get_functions_count	= pinmux_generic_get_function_count,
 	.get_function_name	= pinmux_generic_get_function_name,
 	.get_function_groups	= pinmux_generic_get_function_groups,
 	.set_mux		= rza1_set_mux,
 	.strict			= true,
-पूर्ण;
+};
 
 /* ----------------------------------------------------------------------------
  * RZ/A1 pin controller driver operations
  */
 
-अटल अचिन्हित पूर्णांक rza1_count_gpio_chips(काष्ठा device_node *np)
-अणु
-	काष्ठा device_node *child;
-	अचिन्हित पूर्णांक count = 0;
+static unsigned int rza1_count_gpio_chips(struct device_node *np)
+{
+	struct device_node *child;
+	unsigned int count = 0;
 
-	क्रम_each_child_of_node(np, child) अणु
-		अगर (!of_property_पढ़ो_bool(child, "gpio-controller"))
-			जारी;
+	for_each_child_of_node(np, child) {
+		if (!of_property_read_bool(child, "gpio-controller"))
+			continue;
 
 		count++;
-	पूर्ण
+	}
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
 /**
- * rza1_parse_gpiochip() - parse and रेजिस्टर a gpio chip and pin range
+ * rza1_parse_gpiochip() - parse and register a gpio chip and pin range
  *
  * The gpio controller subnode shall provide a "gpio-ranges" list property as
- * defined by gpio device tree binding करोcumentation.
+ * defined by gpio device tree binding documentation.
  *
  * @rza1_pctl: RZ/A1 pin controller device
  * @np: of gpio-controller node
- * @chip: gpio chip to रेजिस्टर to gpiolib
- * @range: pin range to रेजिस्टर to pinctrl core
+ * @chip: gpio chip to register to gpiolib
+ * @range: pin range to register to pinctrl core
  */
-अटल पूर्णांक rza1_parse_gpiochip(काष्ठा rza1_pinctrl *rza1_pctl,
-			       काष्ठा device_node *np,
-			       काष्ठा gpio_chip *chip,
-			       काष्ठा pinctrl_gpio_range *range)
-अणु
-	स्थिर अक्षर *list_name = "gpio-ranges";
-	काष्ठा of_phandle_args of_args;
-	अचिन्हित पूर्णांक gpioport;
+static int rza1_parse_gpiochip(struct rza1_pinctrl *rza1_pctl,
+			       struct device_node *np,
+			       struct gpio_chip *chip,
+			       struct pinctrl_gpio_range *range)
+{
+	const char *list_name = "gpio-ranges";
+	struct of_phandle_args of_args;
+	unsigned int gpioport;
 	u32 pinctrl_base;
-	पूर्णांक ret;
+	int ret;
 
 	ret = of_parse_phandle_with_fixed_args(np, list_name, 3, 0, &of_args);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(rza1_pctl->dev, "Unable to parse %s list property\n",
 			list_name);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	/*
 	 * Find out on which port this gpio-chip maps to by inspecting the
@@ -1205,18 +1204,18 @@
 	 */
 	pinctrl_base = of_args.args[1];
 	gpioport = RZA1_PIN_ID_TO_PORT(pinctrl_base);
-	अगर (gpioport >= RZA1_NPORTS) अणु
+	if (gpioport >= RZA1_NPORTS) {
 		dev_err(rza1_pctl->dev,
 			"Invalid values in property %s\n", list_name);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	*chip		= rza1_gpiochip_ढाँचा;
+	*chip		= rza1_gpiochip_template;
 	chip->base	= -1;
-	chip->label	= devm_kaप्र_लिखो(rza1_pctl->dev, GFP_KERNEL, "%pOFn",
+	chip->label	= devm_kasprintf(rza1_pctl->dev, GFP_KERNEL, "%pOFn",
 					 np);
-	अगर (!chip->label)
-		वापस -ENOMEM;
+	if (!chip->label)
+		return -ENOMEM;
 
 	chip->ngpio	= of_args.args[2];
 	chip->of_node	= np;
@@ -1230,156 +1229,156 @@
 
 	ret = devm_gpiochip_add_data(rza1_pctl->dev, chip,
 				     &rza1_pctl->ports[gpioport]);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	pinctrl_add_gpio_range(rza1_pctl->pctl, range);
 
 	dev_dbg(rza1_pctl->dev, "Parsed gpiochip %s with %d pins\n",
 		chip->label, chip->ngpio);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * rza1_gpio_रेजिस्टर() - parse DT to collect gpio-chips and gpio-ranges
+ * rza1_gpio_register() - parse DT to collect gpio-chips and gpio-ranges
  *
  * @rza1_pctl: RZ/A1 pin controller device
  */
-अटल पूर्णांक rza1_gpio_रेजिस्टर(काष्ठा rza1_pinctrl *rza1_pctl)
-अणु
-	काष्ठा device_node *np = rza1_pctl->dev->of_node;
-	काष्ठा pinctrl_gpio_range *gpio_ranges;
-	काष्ठा gpio_chip *gpio_chips;
-	काष्ठा device_node *child;
-	अचिन्हित पूर्णांक ngpiochips;
-	अचिन्हित पूर्णांक i;
-	पूर्णांक ret;
+static int rza1_gpio_register(struct rza1_pinctrl *rza1_pctl)
+{
+	struct device_node *np = rza1_pctl->dev->of_node;
+	struct pinctrl_gpio_range *gpio_ranges;
+	struct gpio_chip *gpio_chips;
+	struct device_node *child;
+	unsigned int ngpiochips;
+	unsigned int i;
+	int ret;
 
 	ngpiochips = rza1_count_gpio_chips(np);
-	अगर (ngpiochips == 0) अणु
+	if (ngpiochips == 0) {
 		dev_dbg(rza1_pctl->dev, "No gpiochip registered\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	gpio_chips = devm_kसुस्मृति(rza1_pctl->dev, ngpiochips,
-				  माप(*gpio_chips), GFP_KERNEL);
-	gpio_ranges = devm_kसुस्मृति(rza1_pctl->dev, ngpiochips,
-				   माप(*gpio_ranges), GFP_KERNEL);
-	अगर (!gpio_chips || !gpio_ranges)
-		वापस -ENOMEM;
+	gpio_chips = devm_kcalloc(rza1_pctl->dev, ngpiochips,
+				  sizeof(*gpio_chips), GFP_KERNEL);
+	gpio_ranges = devm_kcalloc(rza1_pctl->dev, ngpiochips,
+				   sizeof(*gpio_ranges), GFP_KERNEL);
+	if (!gpio_chips || !gpio_ranges)
+		return -ENOMEM;
 
 	i = 0;
-	क्रम_each_child_of_node(np, child) अणु
-		अगर (!of_property_पढ़ो_bool(child, "gpio-controller"))
-			जारी;
+	for_each_child_of_node(np, child) {
+		if (!of_property_read_bool(child, "gpio-controller"))
+			continue;
 
 		ret = rza1_parse_gpiochip(rza1_pctl, child, &gpio_chips[i],
 					  &gpio_ranges[i]);
-		अगर (ret) अणु
+		if (ret) {
 			of_node_put(child);
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 
 		++i;
-	पूर्ण
+	}
 
 	dev_info(rza1_pctl->dev, "Registered %u gpio controllers\n", i);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * rza1_pinctrl_रेजिस्टर() - Enumerate pins, ports and gpiochips; रेजिस्टर
+ * rza1_pinctrl_register() - Enumerate pins, ports and gpiochips; register
  *			     them to pinctrl and gpio cores.
  *
  * @rza1_pctl: RZ/A1 pin controller device
  */
-अटल पूर्णांक rza1_pinctrl_रेजिस्टर(काष्ठा rza1_pinctrl *rza1_pctl)
-अणु
-	काष्ठा pinctrl_pin_desc *pins;
-	काष्ठा rza1_port *ports;
-	अचिन्हित पूर्णांक i;
-	पूर्णांक ret;
+static int rza1_pinctrl_register(struct rza1_pinctrl *rza1_pctl)
+{
+	struct pinctrl_pin_desc *pins;
+	struct rza1_port *ports;
+	unsigned int i;
+	int ret;
 
-	pins = devm_kसुस्मृति(rza1_pctl->dev, RZA1_NPINS, माप(*pins),
+	pins = devm_kcalloc(rza1_pctl->dev, RZA1_NPINS, sizeof(*pins),
 			    GFP_KERNEL);
-	ports = devm_kसुस्मृति(rza1_pctl->dev, RZA1_NPORTS, माप(*ports),
+	ports = devm_kcalloc(rza1_pctl->dev, RZA1_NPORTS, sizeof(*ports),
 			     GFP_KERNEL);
-	अगर (!pins || !ports)
-		वापस -ENOMEM;
+	if (!pins || !ports)
+		return -ENOMEM;
 
 	rza1_pctl->pins		= pins;
 	rza1_pctl->desc.pins	= pins;
 	rza1_pctl->desc.npins	= RZA1_NPINS;
 	rza1_pctl->ports	= ports;
 
-	क्रम (i = 0; i < RZA1_NPINS; ++i) अणु
-		अचिन्हित पूर्णांक pin = RZA1_PIN_ID_TO_PIN(i);
-		अचिन्हित पूर्णांक port = RZA1_PIN_ID_TO_PORT(i);
+	for (i = 0; i < RZA1_NPINS; ++i) {
+		unsigned int pin = RZA1_PIN_ID_TO_PIN(i);
+		unsigned int port = RZA1_PIN_ID_TO_PORT(i);
 
 		pins[i].number = i;
-		pins[i].name = devm_kaप्र_लिखो(rza1_pctl->dev, GFP_KERNEL,
+		pins[i].name = devm_kasprintf(rza1_pctl->dev, GFP_KERNEL,
 					      "P%u-%u", port, pin);
-		अगर (!pins[i].name)
-			वापस -ENOMEM;
+		if (!pins[i].name)
+			return -ENOMEM;
 
-		अगर (i % RZA1_PINS_PER_PORT == 0) अणु
+		if (i % RZA1_PINS_PER_PORT == 0) {
 			/*
 			 * Setup ports;
 			 * they provide per-port lock and logical base address.
 			 */
-			अचिन्हित पूर्णांक port_id = RZA1_PIN_ID_TO_PORT(i);
+			unsigned int port_id = RZA1_PIN_ID_TO_PORT(i);
 
 			ports[port_id].id	= port_id;
 			ports[port_id].base	= rza1_pctl->base;
 			ports[port_id].pins	= &pins[i];
 			spin_lock_init(&ports[port_id].lock);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	ret = devm_pinctrl_रेजिस्टर_and_init(rza1_pctl->dev, &rza1_pctl->desc,
+	ret = devm_pinctrl_register_and_init(rza1_pctl->dev, &rza1_pctl->desc,
 					     rza1_pctl, &rza1_pctl->pctl);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(rza1_pctl->dev,
 			"RZ/A1 pin controller registration failed\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	ret = pinctrl_enable(rza1_pctl->pctl);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(rza1_pctl->dev,
 			"RZ/A1 pin controller failed to start\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = rza1_gpio_रेजिस्टर(rza1_pctl);
-	अगर (ret) अणु
+	ret = rza1_gpio_register(rza1_pctl);
+	if (ret) {
 		dev_err(rza1_pctl->dev, "RZ/A1 GPIO registration failed\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rza1_pinctrl_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा rza1_pinctrl *rza1_pctl;
-	पूर्णांक ret;
+static int rza1_pinctrl_probe(struct platform_device *pdev)
+{
+	struct rza1_pinctrl *rza1_pctl;
+	int ret;
 
-	rza1_pctl = devm_kzalloc(&pdev->dev, माप(*rza1_pctl), GFP_KERNEL);
-	अगर (!rza1_pctl)
-		वापस -ENOMEM;
+	rza1_pctl = devm_kzalloc(&pdev->dev, sizeof(*rza1_pctl), GFP_KERNEL);
+	if (!rza1_pctl)
+		return -ENOMEM;
 
 	rza1_pctl->dev = &pdev->dev;
 
-	rza1_pctl->base = devm_platक्रमm_ioremap_resource(pdev, 0);
-	अगर (IS_ERR(rza1_pctl->base))
-		वापस PTR_ERR(rza1_pctl->base);
+	rza1_pctl->base = devm_platform_ioremap_resource(pdev, 0);
+	if (IS_ERR(rza1_pctl->base))
+		return PTR_ERR(rza1_pctl->base);
 
 	mutex_init(&rza1_pctl->mutex);
 
-	platक्रमm_set_drvdata(pdev, rza1_pctl);
+	platform_set_drvdata(pdev, rza1_pctl);
 
 	rza1_pctl->desc.name	= DRIVER_NAME;
 	rza1_pctl->desc.pctlops	= &rza1_pinctrl_ops;
@@ -1387,42 +1386,42 @@
 	rza1_pctl->desc.owner	= THIS_MODULE;
 	rza1_pctl->data		= of_device_get_match_data(&pdev->dev);
 
-	ret = rza1_pinctrl_रेजिस्टर(rza1_pctl);
-	अगर (ret)
-		वापस ret;
+	ret = rza1_pinctrl_register(rza1_pctl);
+	if (ret)
+		return ret;
 
 	dev_info(&pdev->dev,
 		 "RZ/A1 pin controller and gpio successfully registered\n");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id rza1_pinctrl_of_match[] = अणु
-	अणु
+static const struct of_device_id rza1_pinctrl_of_match[] = {
+	{
 		/* RZ/A1H, RZ/A1M */
 		.compatible	= "renesas,r7s72100-ports",
 		.data		= &rza1h_pmx_conf,
-	पूर्ण,
-	अणु
+	},
+	{
 		/* RZ/A1L */
 		.compatible	= "renesas,r7s72102-ports",
 		.data		= &rza1l_pmx_conf,
-	पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+	},
+	{ }
+};
 
-अटल काष्ठा platक्रमm_driver rza1_pinctrl_driver = अणु
-	.driver = अणु
+static struct platform_driver rza1_pinctrl_driver = {
+	.driver = {
 		.name = DRIVER_NAME,
 		.of_match_table = rza1_pinctrl_of_match,
-	पूर्ण,
+	},
 	.probe = rza1_pinctrl_probe,
-पूर्ण;
+};
 
-अटल पूर्णांक __init rza1_pinctrl_init(व्योम)
-अणु
-	वापस platक्रमm_driver_रेजिस्टर(&rza1_pinctrl_driver);
-पूर्ण
+static int __init rza1_pinctrl_init(void)
+{
+	return platform_driver_register(&rza1_pinctrl_driver);
+}
 core_initcall(rza1_pinctrl_init);
 
 MODULE_AUTHOR("Jacopo Mondi <jacopo+renesas@jmondi.org");

@@ -1,316 +1,315 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- *  sdricoh_cs.c - driver क्रम Ricoh Secure Digital Card Readers that can be
+ *  sdricoh_cs.c - driver for Ricoh Secure Digital Card Readers that can be
  *     found on some Ricoh RL5c476 II cardbus bridge
  *
- *  Copyright (C) 2006 - 2008 Sascha Sommer <saschasommer@मुक्तnet.de>
+ *  Copyright (C) 2006 - 2008 Sascha Sommer <saschasommer@freenet.de>
  */
 
 /*
-#घोषणा DEBUG
-#घोषणा VERBOSE_DEBUG
+#define DEBUG
+#define VERBOSE_DEBUG
 */
-#समावेश <linux/delay.h>
-#समावेश <linux/highस्मृति.स>
-#समावेश <linux/module.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/ioport.h>
-#समावेश <linux/iopoll.h>
-#समावेश <linux/scatterlist.h>
+#include <linux/delay.h>
+#include <linux/highmem.h>
+#include <linux/module.h>
+#include <linux/pci.h>
+#include <linux/ioport.h>
+#include <linux/iopoll.h>
+#include <linux/scatterlist.h>
 
-#समावेश <pcmcia/cistpl.h>
-#समावेश <pcmcia/ds.h>
-#समावेश <linux/पन.स>
+#include <pcmcia/cistpl.h>
+#include <pcmcia/ds.h>
+#include <linux/io.h>
 
-#समावेश <linux/mmc/host.h>
-#समावेश <linux/mmc/mmc.h>
+#include <linux/mmc/host.h>
+#include <linux/mmc/mmc.h>
 
-#घोषणा DRIVER_NAME "sdricoh_cs"
+#define DRIVER_NAME "sdricoh_cs"
 
-अटल अचिन्हित पूर्णांक चयनlocked;
+static unsigned int switchlocked;
 
 /* i/o region */
-#घोषणा SDRICOH_PCI_REGION 0
-#घोषणा SDRICOH_PCI_REGION_SIZE 0x1000
+#define SDRICOH_PCI_REGION 0
+#define SDRICOH_PCI_REGION_SIZE 0x1000
 
-/* रेजिस्टरs */
-#घोषणा R104_VERSION     0x104
-#घोषणा R200_CMD         0x200
-#घोषणा R204_CMD_ARG     0x204
-#घोषणा R208_DATAIO      0x208
-#घोषणा R20C_RESP        0x20c
-#घोषणा R21C_STATUS      0x21c
-#घोषणा R2E0_INIT        0x2e0
-#घोषणा R2E4_STATUS_RESP 0x2e4
-#घोषणा R2F0_RESET       0x2f0
-#घोषणा R224_MODE        0x224
-#घोषणा R226_BLOCKSIZE   0x226
-#घोषणा R228_POWER       0x228
-#घोषणा R230_DATA        0x230
+/* registers */
+#define R104_VERSION     0x104
+#define R200_CMD         0x200
+#define R204_CMD_ARG     0x204
+#define R208_DATAIO      0x208
+#define R20C_RESP        0x20c
+#define R21C_STATUS      0x21c
+#define R2E0_INIT        0x2e0
+#define R2E4_STATUS_RESP 0x2e4
+#define R2F0_RESET       0x2f0
+#define R224_MODE        0x224
+#define R226_BLOCKSIZE   0x226
+#define R228_POWER       0x228
+#define R230_DATA        0x230
 
-/* flags क्रम the R21C_STATUS रेजिस्टर */
-#घोषणा STATUS_CMD_FINISHED      0x00000001
-#घोषणा STATUS_TRANSFER_FINISHED 0x00000004
-#घोषणा STATUS_CARD_INSERTED     0x00000020
-#घोषणा STATUS_CARD_LOCKED       0x00000080
-#घोषणा STATUS_CMD_TIMEOUT       0x00400000
-#घोषणा STATUS_READY_TO_READ     0x01000000
-#घोषणा STATUS_READY_TO_WRITE    0x02000000
-#घोषणा STATUS_BUSY              0x40000000
+/* flags for the R21C_STATUS register */
+#define STATUS_CMD_FINISHED      0x00000001
+#define STATUS_TRANSFER_FINISHED 0x00000004
+#define STATUS_CARD_INSERTED     0x00000020
+#define STATUS_CARD_LOCKED       0x00000080
+#define STATUS_CMD_TIMEOUT       0x00400000
+#define STATUS_READY_TO_READ     0x01000000
+#define STATUS_READY_TO_WRITE    0x02000000
+#define STATUS_BUSY              0x40000000
 
-/* समयouts */
-#घोषणा SDRICOH_CMD_TIMEOUT_US	1000000
-#घोषणा SDRICOH_DATA_TIMEOUT_US	1000000
+/* timeouts */
+#define SDRICOH_CMD_TIMEOUT_US	1000000
+#define SDRICOH_DATA_TIMEOUT_US	1000000
 
 /* list of supported pcmcia devices */
-अटल स्थिर काष्ठा pcmcia_device_id pcmcia_ids[] = अणु
-	/* venकरोr and device strings followed by their crc32 hashes */
+static const struct pcmcia_device_id pcmcia_ids[] = {
+	/* vendor and device strings followed by their crc32 hashes */
 	PCMCIA_DEVICE_PROD_ID12("RICOH", "Bay1Controller", 0xd9f522ed,
 				0xc3901202),
 	PCMCIA_DEVICE_PROD_ID12("RICOH", "Bay Controller", 0xd9f522ed,
 				0xace80909),
-	PCMCIA_DEVICE_शून्य,
-पूर्ण;
+	PCMCIA_DEVICE_NULL,
+};
 
 MODULE_DEVICE_TABLE(pcmcia, pcmcia_ids);
 
 /* mmc privdata */
-काष्ठा sdricoh_host अणु
-	काष्ठा device *dev;
-	काष्ठा mmc_host *mmc;	/* MMC काष्ठाure */
-	अचिन्हित अक्षर __iomem *iobase;
-	काष्ठा pci_dev *pci_dev;
-	पूर्णांक app_cmd;
-पूर्ण;
+struct sdricoh_host {
+	struct device *dev;
+	struct mmc_host *mmc;	/* MMC structure */
+	unsigned char __iomem *iobase;
+	struct pci_dev *pci_dev;
+	int app_cmd;
+};
 
-/***************** रेजिस्टर i/o helper functions *****************************/
+/***************** register i/o helper functions *****************************/
 
-अटल अंतरभूत अचिन्हित पूर्णांक sdricoh_पढ़ोl(काष्ठा sdricoh_host *host,
-					 अचिन्हित पूर्णांक reg)
-अणु
-	अचिन्हित पूर्णांक value = पढ़ोl(host->iobase + reg);
+static inline unsigned int sdricoh_readl(struct sdricoh_host *host,
+					 unsigned int reg)
+{
+	unsigned int value = readl(host->iobase + reg);
 	dev_vdbg(host->dev, "rl %x 0x%x\n", reg, value);
-	वापस value;
-पूर्ण
+	return value;
+}
 
-अटल अंतरभूत व्योम sdricoh_ग_लिखोl(काष्ठा sdricoh_host *host, अचिन्हित पूर्णांक reg,
-				  अचिन्हित पूर्णांक value)
-अणु
-	ग_लिखोl(value, host->iobase + reg);
+static inline void sdricoh_writel(struct sdricoh_host *host, unsigned int reg,
+				  unsigned int value)
+{
+	writel(value, host->iobase + reg);
 	dev_vdbg(host->dev, "wl %x 0x%x\n", reg, value);
 
-पूर्ण
+}
 
-अटल अंतरभूत अचिन्हित पूर्णांक sdricoh_पढ़ोw(काष्ठा sdricoh_host *host,
-					 अचिन्हित पूर्णांक reg)
-अणु
-	अचिन्हित पूर्णांक value = पढ़ोw(host->iobase + reg);
+static inline unsigned int sdricoh_readw(struct sdricoh_host *host,
+					 unsigned int reg)
+{
+	unsigned int value = readw(host->iobase + reg);
 	dev_vdbg(host->dev, "rb %x 0x%x\n", reg, value);
-	वापस value;
-पूर्ण
+	return value;
+}
 
-अटल अंतरभूत व्योम sdricoh_ग_लिखोw(काष्ठा sdricoh_host *host, अचिन्हित पूर्णांक reg,
-					 अचिन्हित लघु value)
-अणु
-	ग_लिखोw(value, host->iobase + reg);
+static inline void sdricoh_writew(struct sdricoh_host *host, unsigned int reg,
+					 unsigned short value)
+{
+	writew(value, host->iobase + reg);
 	dev_vdbg(host->dev, "ww %x 0x%x\n", reg, value);
-पूर्ण
+}
 
-अटल अंतरभूत अचिन्हित पूर्णांक sdricoh_पढ़ोb(काष्ठा sdricoh_host *host,
-					 अचिन्हित पूर्णांक reg)
-अणु
-	अचिन्हित पूर्णांक value = पढ़ोb(host->iobase + reg);
+static inline unsigned int sdricoh_readb(struct sdricoh_host *host,
+					 unsigned int reg)
+{
+	unsigned int value = readb(host->iobase + reg);
 	dev_vdbg(host->dev, "rb %x 0x%x\n", reg, value);
-	वापस value;
-पूर्ण
+	return value;
+}
 
-अटल bool sdricoh_status_ok(काष्ठा sdricoh_host *host, अचिन्हित पूर्णांक status,
-			      अचिन्हित पूर्णांक wanted)
-अणु
-	sdricoh_ग_लिखोl(host, R2E4_STATUS_RESP, status);
-	वापस status & wanted;
-पूर्ण
+static bool sdricoh_status_ok(struct sdricoh_host *host, unsigned int status,
+			      unsigned int wanted)
+{
+	sdricoh_writel(host, R2E4_STATUS_RESP, status);
+	return status & wanted;
+}
 
-अटल पूर्णांक sdricoh_query_status(काष्ठा sdricoh_host *host, अचिन्हित पूर्णांक wanted)
-अणु
-	पूर्णांक ret;
-	अचिन्हित पूर्णांक status = 0;
-	काष्ठा device *dev = host->dev;
+static int sdricoh_query_status(struct sdricoh_host *host, unsigned int wanted)
+{
+	int ret;
+	unsigned int status = 0;
+	struct device *dev = host->dev;
 
-	ret = पढ़ो_poll_समयout(sdricoh_पढ़ोl, status,
+	ret = read_poll_timeout(sdricoh_readl, status,
 				sdricoh_status_ok(host, status, wanted),
 				32, SDRICOH_DATA_TIMEOUT_US, false,
 				host, R21C_STATUS);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "query_status: timeout waiting for %x\n", wanted);
-		वापस -ETIMEDOUT;
-	पूर्ण
+		return -ETIMEDOUT;
+	}
 
-	/* करो not करो this check in the loop as some commands fail otherwise */
-	अगर (status & 0x7F0000) अणु
+	/* do not do this check in the loop as some commands fail otherwise */
+	if (status & 0x7F0000) {
 		dev_err(dev, "waiting for status bit %x failed\n", wanted);
-		वापस -EINVAL;
-	पूर्ण
-	वापस 0;
+		return -EINVAL;
+	}
+	return 0;
 
-पूर्ण
+}
 
-अटल पूर्णांक sdricoh_mmc_cmd(काष्ठा sdricoh_host *host, काष्ठा mmc_command *cmd)
-अणु
-	अचिन्हित पूर्णांक status, समयout_us;
-	पूर्णांक ret;
-	अचिन्हित अक्षर opcode = cmd->opcode;
+static int sdricoh_mmc_cmd(struct sdricoh_host *host, struct mmc_command *cmd)
+{
+	unsigned int status, timeout_us;
+	int ret;
+	unsigned char opcode = cmd->opcode;
 
 	/* reset status reg? */
-	sdricoh_ग_लिखोl(host, R21C_STATUS, 0x18);
+	sdricoh_writel(host, R21C_STATUS, 0x18);
 
 	/* MMC_APP_CMDs need some special handling */
-	अगर (host->app_cmd) अणु
+	if (host->app_cmd) {
 		opcode |= 64;
 		host->app_cmd = 0;
-	पूर्ण अन्यथा अगर (opcode == MMC_APP_CMD)
+	} else if (opcode == MMC_APP_CMD)
 		host->app_cmd = 1;
 
 	/* fill parameters */
-	sdricoh_ग_लिखोl(host, R204_CMD_ARG, cmd->arg);
-	sdricoh_ग_लिखोl(host, R200_CMD, (0x10000 << 8) | opcode);
+	sdricoh_writel(host, R204_CMD_ARG, cmd->arg);
+	sdricoh_writel(host, R200_CMD, (0x10000 << 8) | opcode);
 
-	/* रुको क्रम command completion */
-	अगर (!opcode)
-		वापस 0;
+	/* wait for command completion */
+	if (!opcode)
+		return 0;
 
-	समयout_us = cmd->busy_समयout ? cmd->busy_समयout * 1000 :
+	timeout_us = cmd->busy_timeout ? cmd->busy_timeout * 1000 :
 		SDRICOH_CMD_TIMEOUT_US;
 
-	ret = पढ़ो_poll_समयout(sdricoh_पढ़ोl, status,
+	ret = read_poll_timeout(sdricoh_readl, status,
 			sdricoh_status_ok(host, status, STATUS_CMD_FINISHED),
-			32, समयout_us, false,
+			32, timeout_us, false,
 			host, R21C_STATUS);
 
 	/*
 	 * Don't check for timeout status in the loop, as it's not always reset
 	 * correctly.
 	 */
-	अगर (ret || status & STATUS_CMD_TIMEOUT)
-		वापस -ETIMEDOUT;
+	if (ret || status & STATUS_CMD_TIMEOUT)
+		return -ETIMEDOUT;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sdricoh_reset(काष्ठा sdricoh_host *host)
-अणु
+static int sdricoh_reset(struct sdricoh_host *host)
+{
 	dev_dbg(host->dev, "reset\n");
-	sdricoh_ग_लिखोl(host, R2F0_RESET, 0x10001);
-	sdricoh_ग_लिखोl(host, R2E0_INIT, 0x10000);
-	अगर (sdricoh_पढ़ोl(host, R2E0_INIT) != 0x10000)
-		वापस -EIO;
-	sdricoh_ग_लिखोl(host, R2E0_INIT, 0x10007);
+	sdricoh_writel(host, R2F0_RESET, 0x10001);
+	sdricoh_writel(host, R2E0_INIT, 0x10000);
+	if (sdricoh_readl(host, R2E0_INIT) != 0x10000)
+		return -EIO;
+	sdricoh_writel(host, R2E0_INIT, 0x10007);
 
-	sdricoh_ग_लिखोl(host, R224_MODE, 0x2000000);
-	sdricoh_ग_लिखोl(host, R228_POWER, 0xe0);
+	sdricoh_writel(host, R224_MODE, 0x2000000);
+	sdricoh_writel(host, R228_POWER, 0xe0);
 
 
-	/* status रेजिस्टर ? */
-	sdricoh_ग_लिखोl(host, R21C_STATUS, 0x18);
+	/* status register ? */
+	sdricoh_writel(host, R21C_STATUS, 0x18);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sdricoh_blockio(काष्ठा sdricoh_host *host, पूर्णांक पढ़ो,
-				u8 *buf, पूर्णांक len)
-अणु
-	पूर्णांक size;
+static int sdricoh_blockio(struct sdricoh_host *host, int read,
+				u8 *buf, int len)
+{
+	int size;
 	u32 data = 0;
-	/* रुको until the data is available */
-	अगर (पढ़ो) अणु
-		अगर (sdricoh_query_status(host, STATUS_READY_TO_READ))
-			वापस -ETIMEDOUT;
-		sdricoh_ग_लिखोl(host, R21C_STATUS, 0x18);
-		/* पढ़ो data */
-		जबतक (len) अणु
-			data = sdricoh_पढ़ोl(host, R230_DATA);
+	/* wait until the data is available */
+	if (read) {
+		if (sdricoh_query_status(host, STATUS_READY_TO_READ))
+			return -ETIMEDOUT;
+		sdricoh_writel(host, R21C_STATUS, 0x18);
+		/* read data */
+		while (len) {
+			data = sdricoh_readl(host, R230_DATA);
 			size = min(len, 4);
 			len -= size;
-			जबतक (size) अणु
+			while (size) {
 				*buf = data & 0xFF;
 				buf++;
 				data >>= 8;
 				size--;
-			पूर्ण
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		अगर (sdricoh_query_status(host, STATUS_READY_TO_WRITE))
-			वापस -ETIMEDOUT;
-		sdricoh_ग_लिखोl(host, R21C_STATUS, 0x18);
-		/* ग_लिखो data */
-		जबतक (len) अणु
+			}
+		}
+	} else {
+		if (sdricoh_query_status(host, STATUS_READY_TO_WRITE))
+			return -ETIMEDOUT;
+		sdricoh_writel(host, R21C_STATUS, 0x18);
+		/* write data */
+		while (len) {
 			size = min(len, 4);
 			len -= size;
-			जबतक (size) अणु
+			while (size) {
 				data >>= 8;
 				data |= (u32)*buf << 24;
 				buf++;
 				size--;
-			पूर्ण
-			sdricoh_ग_लिखोl(host, R230_DATA, data);
-		पूर्ण
-	पूर्ण
+			}
+			sdricoh_writel(host, R230_DATA, data);
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम sdricoh_request(काष्ठा mmc_host *mmc, काष्ठा mmc_request *mrq)
-अणु
-	काष्ठा sdricoh_host *host = mmc_priv(mmc);
-	काष्ठा mmc_command *cmd = mrq->cmd;
-	काष्ठा mmc_data *data = cmd->data;
-	काष्ठा device *dev = host->dev;
-	पूर्णांक i;
+static void sdricoh_request(struct mmc_host *mmc, struct mmc_request *mrq)
+{
+	struct sdricoh_host *host = mmc_priv(mmc);
+	struct mmc_command *cmd = mrq->cmd;
+	struct mmc_data *data = cmd->data;
+	struct device *dev = host->dev;
+	int i;
 
 	dev_dbg(dev, "=============================\n");
 	dev_dbg(dev, "sdricoh_request opcode=%i\n", cmd->opcode);
 
-	sdricoh_ग_लिखोl(host, R21C_STATUS, 0x18);
+	sdricoh_writel(host, R21C_STATUS, 0x18);
 
-	/* पढ़ो/ग_लिखो commands seem to require this */
-	अगर (data) अणु
-		sdricoh_ग_लिखोw(host, R226_BLOCKSIZE, data->blksz);
-		sdricoh_ग_लिखोl(host, R208_DATAIO, 0);
-	पूर्ण
+	/* read/write commands seem to require this */
+	if (data) {
+		sdricoh_writew(host, R226_BLOCKSIZE, data->blksz);
+		sdricoh_writel(host, R208_DATAIO, 0);
+	}
 
 	cmd->error = sdricoh_mmc_cmd(host, cmd);
 
-	/* पढ़ो response buffer */
-	अगर (cmd->flags & MMC_RSP_PRESENT) अणु
-		अगर (cmd->flags & MMC_RSP_136) अणु
-			/* CRC is stripped so we need to करो some shअगरting. */
-			क्रम (i = 0; i < 4; i++) अणु
+	/* read response buffer */
+	if (cmd->flags & MMC_RSP_PRESENT) {
+		if (cmd->flags & MMC_RSP_136) {
+			/* CRC is stripped so we need to do some shifting. */
+			for (i = 0; i < 4; i++) {
 				cmd->resp[i] =
-				    sdricoh_पढ़ोl(host,
+				    sdricoh_readl(host,
 						  R20C_RESP + (3 - i) * 4) << 8;
-				अगर (i != 3)
+				if (i != 3)
 					cmd->resp[i] |=
-					    sdricoh_पढ़ोb(host, R20C_RESP +
+					    sdricoh_readb(host, R20C_RESP +
 							  (3 - i) * 4 - 1);
-			पूर्ण
-		पूर्ण अन्यथा
-			cmd->resp[0] = sdricoh_पढ़ोl(host, R20C_RESP);
-	पूर्ण
+			}
+		} else
+			cmd->resp[0] = sdricoh_readl(host, R20C_RESP);
+	}
 
 	/* transfer data */
-	अगर (data && cmd->error == 0) अणु
+	if (data && cmd->error == 0) {
 		dev_dbg(dev, "transfer: blksz %i blocks %i sg_len %i "
 			"sg length %i\n", data->blksz, data->blocks,
 			data->sg_len, data->sg->length);
 
-		/* enter data पढ़ोing mode */
-		sdricoh_ग_लिखोl(host, R21C_STATUS, 0x837f031e);
-		क्रम (i = 0; i < data->blocks; i++) अणु
-			माप_प्रकार len = data->blksz;
+		/* enter data reading mode */
+		sdricoh_writel(host, R21C_STATUS, 0x837f031e);
+		for (i = 0; i < data->blocks; i++) {
+			size_t len = data->blksz;
 			u8 *buf;
-			काष्ठा page *page;
-			पूर्णांक result;
+			struct page *page;
+			int result;
 			page = sg_page(data->sg);
 
 			buf = kmap(page) + data->sg->offset + (len * i);
@@ -319,105 +318,105 @@ MODULE_DEVICE_TABLE(pcmcia, pcmcia_ids);
 					data->flags & MMC_DATA_READ, buf, len);
 			kunmap(page);
 			flush_dcache_page(page);
-			अगर (result) अणु
+			if (result) {
 				dev_err(dev, "sdricoh_request: cmd %i "
 					"block transfer failed\n", cmd->opcode);
 				cmd->error = result;
-				अवरोध;
-			पूर्ण अन्यथा
+				break;
+			} else
 				data->bytes_xfered += len;
-		पूर्ण
+		}
 
-		sdricoh_ग_लिखोl(host, R208_DATAIO, 1);
+		sdricoh_writel(host, R208_DATAIO, 1);
 
-		अगर (sdricoh_query_status(host, STATUS_TRANSFER_FINISHED)) अणु
+		if (sdricoh_query_status(host, STATUS_TRANSFER_FINISHED)) {
 			dev_err(dev, "sdricoh_request: transfer end error\n");
 			cmd->error = -EINVAL;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	/* FIXME check busy flag */
 
-	mmc_request_करोne(mmc, mrq);
+	mmc_request_done(mmc, mrq);
 	dev_dbg(dev, "=============================\n");
-पूर्ण
+}
 
-अटल व्योम sdricoh_set_ios(काष्ठा mmc_host *mmc, काष्ठा mmc_ios *ios)
-अणु
-	काष्ठा sdricoh_host *host = mmc_priv(mmc);
+static void sdricoh_set_ios(struct mmc_host *mmc, struct mmc_ios *ios)
+{
+	struct sdricoh_host *host = mmc_priv(mmc);
 	dev_dbg(host->dev, "set_ios\n");
 
-	अगर (ios->घातer_mode == MMC_POWER_ON) अणु
-		sdricoh_ग_लिखोl(host, R228_POWER, 0xc0e0);
+	if (ios->power_mode == MMC_POWER_ON) {
+		sdricoh_writel(host, R228_POWER, 0xc0e0);
 
-		अगर (ios->bus_width == MMC_BUS_WIDTH_4) अणु
-			sdricoh_ग_लिखोl(host, R224_MODE, 0x2000300);
-			sdricoh_ग_लिखोl(host, R228_POWER, 0x40e0);
-		पूर्ण अन्यथा अणु
-			sdricoh_ग_लिखोl(host, R224_MODE, 0x2000340);
-		पूर्ण
+		if (ios->bus_width == MMC_BUS_WIDTH_4) {
+			sdricoh_writel(host, R224_MODE, 0x2000300);
+			sdricoh_writel(host, R228_POWER, 0x40e0);
+		} else {
+			sdricoh_writel(host, R224_MODE, 0x2000340);
+		}
 
-	पूर्ण अन्यथा अगर (ios->घातer_mode == MMC_POWER_UP) अणु
-		sdricoh_ग_लिखोl(host, R224_MODE, 0x2000320);
-		sdricoh_ग_लिखोl(host, R228_POWER, 0xe0);
-	पूर्ण
-पूर्ण
+	} else if (ios->power_mode == MMC_POWER_UP) {
+		sdricoh_writel(host, R224_MODE, 0x2000320);
+		sdricoh_writel(host, R228_POWER, 0xe0);
+	}
+}
 
-अटल पूर्णांक sdricoh_get_ro(काष्ठा mmc_host *mmc)
-अणु
-	काष्ठा sdricoh_host *host = mmc_priv(mmc);
-	अचिन्हित पूर्णांक status;
+static int sdricoh_get_ro(struct mmc_host *mmc)
+{
+	struct sdricoh_host *host = mmc_priv(mmc);
+	unsigned int status;
 
-	status = sdricoh_पढ़ोl(host, R21C_STATUS);
-	sdricoh_ग_लिखोl(host, R2E4_STATUS_RESP, status);
+	status = sdricoh_readl(host, R21C_STATUS);
+	sdricoh_writel(host, R2E4_STATUS_RESP, status);
 
-	/* some notebooks seem to have the locked flag चयनed */
-	अगर (चयनlocked)
-		वापस !(status & STATUS_CARD_LOCKED);
+	/* some notebooks seem to have the locked flag switched */
+	if (switchlocked)
+		return !(status & STATUS_CARD_LOCKED);
 
-	वापस (status & STATUS_CARD_LOCKED);
-पूर्ण
+	return (status & STATUS_CARD_LOCKED);
+}
 
-अटल स्थिर काष्ठा mmc_host_ops sdricoh_ops = अणु
+static const struct mmc_host_ops sdricoh_ops = {
 	.request = sdricoh_request,
 	.set_ios = sdricoh_set_ios,
 	.get_ro = sdricoh_get_ro,
-पूर्ण;
+};
 
-/* initialize the control and रेजिस्टर it to the mmc framework */
-अटल पूर्णांक sdricoh_init_mmc(काष्ठा pci_dev *pci_dev,
-			    काष्ठा pcmcia_device *pcmcia_dev)
-अणु
-	पूर्णांक result;
-	व्योम __iomem *iobase;
-	काष्ठा mmc_host *mmc;
-	काष्ठा sdricoh_host *host;
-	काष्ठा device *dev = &pcmcia_dev->dev;
+/* initialize the control and register it to the mmc framework */
+static int sdricoh_init_mmc(struct pci_dev *pci_dev,
+			    struct pcmcia_device *pcmcia_dev)
+{
+	int result;
+	void __iomem *iobase;
+	struct mmc_host *mmc;
+	struct sdricoh_host *host;
+	struct device *dev = &pcmcia_dev->dev;
 	/* map iomem */
-	अगर (pci_resource_len(pci_dev, SDRICOH_PCI_REGION) !=
-	    SDRICOH_PCI_REGION_SIZE) अणु
+	if (pci_resource_len(pci_dev, SDRICOH_PCI_REGION) !=
+	    SDRICOH_PCI_REGION_SIZE) {
 		dev_dbg(dev, "unexpected pci resource len\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 	iobase =
 	    pci_iomap(pci_dev, SDRICOH_PCI_REGION, SDRICOH_PCI_REGION_SIZE);
-	अगर (!iobase) अणु
+	if (!iobase) {
 		dev_err(dev, "unable to map iobase\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 	/* check version? */
-	अगर (पढ़ोl(iobase + R104_VERSION) != 0x4000) अणु
+	if (readl(iobase + R104_VERSION) != 0x4000) {
 		dev_dbg(dev, "no supported mmc controller found\n");
 		result = -ENODEV;
-		जाओ unmap_io;
-	पूर्ण
+		goto unmap_io;
+	}
 	/* allocate privdata */
 	mmc = pcmcia_dev->priv =
-	    mmc_alloc_host(माप(काष्ठा sdricoh_host), &pcmcia_dev->dev);
-	अगर (!mmc) अणु
+	    mmc_alloc_host(sizeof(struct sdricoh_host), &pcmcia_dev->dev);
+	if (!mmc) {
 		dev_err(dev, "mmc_alloc_host failed\n");
 		result = -ENOMEM;
-		जाओ unmap_io;
-	पूर्ण
+		goto unmap_io;
+	}
 	host = mmc_priv(mmc);
 
 	host->iobase = iobase;
@@ -426,7 +425,7 @@ MODULE_DEVICE_TABLE(pcmcia, pcmcia_ids);
 
 	mmc->ops = &sdricoh_ops;
 
-	/* FIXME: frequency and voltage handling is करोne by the controller
+	/* FIXME: frequency and voltage handling is done by the controller
 	 */
 	mmc->f_min = 450000;
 	mmc->f_max = 24000000;
@@ -437,101 +436,101 @@ MODULE_DEVICE_TABLE(pcmcia, pcmcia_ids);
 	mmc->max_blk_size = 512;
 
 	/* reset the controller */
-	अगर (sdricoh_reset(host)) अणु
+	if (sdricoh_reset(host)) {
 		dev_dbg(dev, "could not reset\n");
 		result = -EIO;
-		जाओ मुक्त_host;
-	पूर्ण
+		goto free_host;
+	}
 
 	result = mmc_add_host(mmc);
 
-	अगर (!result) अणु
+	if (!result) {
 		dev_dbg(dev, "mmc host registered\n");
-		वापस 0;
-	पूर्ण
-मुक्त_host:
-	mmc_मुक्त_host(mmc);
+		return 0;
+	}
+free_host:
+	mmc_free_host(mmc);
 unmap_io:
 	pci_iounmap(pci_dev, iobase);
-	वापस result;
-पूर्ण
+	return result;
+}
 
-/* search क्रम supported mmc controllers */
-अटल पूर्णांक sdricoh_pcmcia_probe(काष्ठा pcmcia_device *pcmcia_dev)
-अणु
-	काष्ठा pci_dev *pci_dev = शून्य;
+/* search for supported mmc controllers */
+static int sdricoh_pcmcia_probe(struct pcmcia_device *pcmcia_dev)
+{
+	struct pci_dev *pci_dev = NULL;
 
 	dev_info(&pcmcia_dev->dev, "Searching MMC controller for pcmcia device"
 		" %s %s ...\n", pcmcia_dev->prod_id[0], pcmcia_dev->prod_id[1]);
 
 	/* search pci cardbus bridge that contains the mmc controller */
-	/* the io region is alपढ़ोy claimed by yenta_socket... */
-	जबतक ((pci_dev =
+	/* the io region is already claimed by yenta_socket... */
+	while ((pci_dev =
 		pci_get_device(PCI_VENDOR_ID_RICOH, PCI_DEVICE_ID_RICOH_RL5C476,
-			       pci_dev))) अणु
+			       pci_dev))) {
 		/* try to init the device */
-		अगर (!sdricoh_init_mmc(pci_dev, pcmcia_dev)) अणु
+		if (!sdricoh_init_mmc(pci_dev, pcmcia_dev)) {
 			dev_info(&pcmcia_dev->dev, "MMC controller found\n");
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 
-	पूर्ण
+	}
 	dev_err(&pcmcia_dev->dev, "No MMC controller was found.\n");
-	वापस -ENODEV;
-पूर्ण
+	return -ENODEV;
+}
 
-अटल व्योम sdricoh_pcmcia_detach(काष्ठा pcmcia_device *link)
-अणु
-	काष्ठा mmc_host *mmc = link->priv;
+static void sdricoh_pcmcia_detach(struct pcmcia_device *link)
+{
+	struct mmc_host *mmc = link->priv;
 
 	dev_dbg(&link->dev, "detach\n");
 
-	/* हटाओ mmc host */
-	अगर (mmc) अणु
-		काष्ठा sdricoh_host *host = mmc_priv(mmc);
-		mmc_हटाओ_host(mmc);
+	/* remove mmc host */
+	if (mmc) {
+		struct sdricoh_host *host = mmc_priv(mmc);
+		mmc_remove_host(mmc);
 		pci_iounmap(host->pci_dev, host->iobase);
 		pci_dev_put(host->pci_dev);
-		mmc_मुक्त_host(mmc);
-	पूर्ण
+		mmc_free_host(mmc);
+	}
 	pcmcia_disable_device(link);
 
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_PM
-अटल पूर्णांक sdricoh_pcmcia_suspend(काष्ठा pcmcia_device *link)
-अणु
+#ifdef CONFIG_PM
+static int sdricoh_pcmcia_suspend(struct pcmcia_device *link)
+{
 	dev_dbg(&link->dev, "suspend\n");
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sdricoh_pcmcia_resume(काष्ठा pcmcia_device *link)
-अणु
-	काष्ठा mmc_host *mmc = link->priv;
+static int sdricoh_pcmcia_resume(struct pcmcia_device *link)
+{
+	struct mmc_host *mmc = link->priv;
 	dev_dbg(&link->dev, "resume\n");
 	sdricoh_reset(mmc_priv(mmc));
-	वापस 0;
-पूर्ण
-#अन्यथा
-#घोषणा sdricoh_pcmcia_suspend शून्य
-#घोषणा sdricoh_pcmcia_resume शून्य
-#पूर्ण_अगर
+	return 0;
+}
+#else
+#define sdricoh_pcmcia_suspend NULL
+#define sdricoh_pcmcia_resume NULL
+#endif
 
-अटल काष्ठा pcmcia_driver sdricoh_driver = अणु
+static struct pcmcia_driver sdricoh_driver = {
 	.name = DRIVER_NAME,
 	.probe = sdricoh_pcmcia_probe,
-	.हटाओ = sdricoh_pcmcia_detach,
+	.remove = sdricoh_pcmcia_detach,
 	.id_table = pcmcia_ids,
 	.suspend = sdricoh_pcmcia_suspend,
 	.resume = sdricoh_pcmcia_resume,
-पूर्ण;
+};
 module_pcmcia_driver(sdricoh_driver);
 
-module_param(चयनlocked, uपूर्णांक, 0444);
+module_param(switchlocked, uint, 0444);
 
 MODULE_AUTHOR("Sascha Sommer <saschasommer@freenet.de>");
 MODULE_DESCRIPTION("Ricoh PCMCIA Secure Digital Interface driver");
 MODULE_LICENSE("GPL");
 
-MODULE_PARM_DESC(चयनlocked, "Switch the cards locked status."
+MODULE_PARM_DESC(switchlocked, "Switch the cards locked status."
 		"Use this when unlocked cards are shown readonly (default 0)");

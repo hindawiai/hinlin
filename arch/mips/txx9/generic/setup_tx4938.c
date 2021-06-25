@@ -1,4 +1,3 @@
-<शैली गुरु>
 /*
  * TX4938/4937 setup routines
  * Based on linux/arch/mips/txx9/rbtx4938/setup.c,
@@ -8,94 +7,94 @@
  * (C) Copyright TOSHIBA CORPORATION 2000-2001, 2004-2007
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the मुख्य directory of this archive
- * क्रम more details.
+ * License.  See the file "COPYING" in the main directory of this archive
+ * for more details.
  */
-#समावेश <linux/init.h>
-#समावेश <linux/ioport.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/param.h>
-#समावेश <linux/ptrace.h>
-#समावेश <linux/mtd/physmap.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/platक्रमm_data/txx9/ndfmc.h>
-#समावेश <यंत्र/reboot.h>
-#समावेश <यंत्र/traps.h>
-#समावेश <यंत्र/txx9irq.h>
-#समावेश <यंत्र/txx9पंचांगr.h>
-#समावेश <यंत्र/txx9pपन.स>
-#समावेश <यंत्र/txx9/generic.h>
-#समावेश <यंत्र/txx9/dmac.h>
-#समावेश <यंत्र/txx9/tx4938.h>
+#include <linux/init.h>
+#include <linux/ioport.h>
+#include <linux/delay.h>
+#include <linux/param.h>
+#include <linux/ptrace.h>
+#include <linux/mtd/physmap.h>
+#include <linux/platform_device.h>
+#include <linux/platform_data/txx9/ndfmc.h>
+#include <asm/reboot.h>
+#include <asm/traps.h>
+#include <asm/txx9irq.h>
+#include <asm/txx9tmr.h>
+#include <asm/txx9pio.h>
+#include <asm/txx9/generic.h>
+#include <asm/txx9/dmac.h>
+#include <asm/txx9/tx4938.h>
 
-अटल व्योम __init tx4938_wdr_init(व्योम)
-अणु
-	/* report watchकरोg reset status */
-	अगर (____raw_पढ़ोq(&tx4938_ccfgptr->ccfg) & TX4938_CCFG_WDRST)
+static void __init tx4938_wdr_init(void)
+{
+	/* report watchdog reset status */
+	if (____raw_readq(&tx4938_ccfgptr->ccfg) & TX4938_CCFG_WDRST)
 		pr_warn("Watchdog reset detected at 0x%lx\n",
-			पढ़ो_c0_errorepc());
+			read_c0_errorepc());
 	/* clear WatchDogReset (W1C) */
 	tx4938_ccfg_set(TX4938_CCFG_WDRST);
-	/* करो reset on watchकरोg */
+	/* do reset on watchdog */
 	tx4938_ccfg_set(TX4938_CCFG_WR);
-पूर्ण
+}
 
-व्योम __init tx4938_wdt_init(व्योम)
-अणु
+void __init tx4938_wdt_init(void)
+{
 	txx9_wdt_init(TX4938_TMR_REG(2) & 0xfffffffffULL);
-पूर्ण
+}
 
-अटल व्योम tx4938_machine_restart(अक्षर *command)
-अणु
+static void tx4938_machine_restart(char *command)
+{
 	local_irq_disable();
 	pr_emerg("Rebooting (with %s watchdog reset)...\n",
-		 (____raw_पढ़ोq(&tx4938_ccfgptr->ccfg) & TX4938_CCFG_WDREXEN) ?
+		 (____raw_readq(&tx4938_ccfgptr->ccfg) & TX4938_CCFG_WDREXEN) ?
 		 "external" : "internal");
-	/* clear watchकरोg status */
+	/* clear watchdog status */
 	tx4938_ccfg_set(TX4938_CCFG_WDRST);	/* W1C */
 	txx9_wdt_now(TX4938_TMR_REG(2) & 0xfffffffffULL);
-	जबतक (!(____raw_पढ़ोq(&tx4938_ccfgptr->ccfg) & TX4938_CCFG_WDRST))
+	while (!(____raw_readq(&tx4938_ccfgptr->ccfg) & TX4938_CCFG_WDRST))
 		;
 	mdelay(10);
-	अगर (____raw_पढ़ोq(&tx4938_ccfgptr->ccfg) & TX4938_CCFG_WDREXEN) अणु
+	if (____raw_readq(&tx4938_ccfgptr->ccfg) & TX4938_CCFG_WDREXEN) {
 		pr_emerg("Rebooting (with internal watchdog reset)...\n");
-		/* External WDRST failed.  Do पूर्णांकernal watchकरोg reset */
+		/* External WDRST failed.  Do internal watchdog reset */
 		tx4938_ccfg_clear(TX4938_CCFG_WDREXEN);
-	पूर्ण
+	}
 	/* fallback */
 	(*_machine_halt)();
-पूर्ण
+}
 
-व्योम show_रेजिस्टरs(काष्ठा pt_regs *regs);
-अटल पूर्णांक tx4938_be_handler(काष्ठा pt_regs *regs, पूर्णांक is_fixup)
-अणु
-	पूर्णांक data = regs->cp0_cause & 4;
+void show_registers(struct pt_regs *regs);
+static int tx4938_be_handler(struct pt_regs *regs, int is_fixup)
+{
+	int data = regs->cp0_cause & 4;
 	console_verbose();
 	pr_err("%cBE exception at %#lx\n", data ? 'D' : 'I', regs->cp0_epc);
 	pr_err("ccfg:%llx, toea:%llx\n",
-	       (अचिन्हित दीर्घ दीर्घ)____raw_पढ़ोq(&tx4938_ccfgptr->ccfg),
-	       (अचिन्हित दीर्घ दीर्घ)____raw_पढ़ोq(&tx4938_ccfgptr->toea));
-#अगर_घोषित CONFIG_PCI
+	       (unsigned long long)____raw_readq(&tx4938_ccfgptr->ccfg),
+	       (unsigned long long)____raw_readq(&tx4938_ccfgptr->toea));
+#ifdef CONFIG_PCI
 	tx4927_report_pcic_status();
-#पूर्ण_अगर
-	show_रेजिस्टरs(regs);
+#endif
+	show_registers(regs);
 	panic("BusError!");
-पूर्ण
-अटल व्योम __init tx4938_be_init(व्योम)
-अणु
+}
+static void __init tx4938_be_init(void)
+{
 	board_be_handler = tx4938_be_handler;
-पूर्ण
+}
 
-अटल काष्ठा resource tx4938_sdram_resource[4];
-अटल काष्ठा resource tx4938_sram_resource;
+static struct resource tx4938_sdram_resource[4];
+static struct resource tx4938_sram_resource;
 
-#घोषणा TX4938_SRAM_SIZE 0x800
+#define TX4938_SRAM_SIZE 0x800
 
-व्योम __init tx4938_setup(व्योम)
-अणु
-	पूर्णांक i;
-	__u32 भागmode;
-	अचिन्हित पूर्णांक cpuclk = 0;
+void __init tx4938_setup(void)
+{
+	int i;
+	__u32 divmode;
+	unsigned int cpuclk = 0;
 	u64 ccfg;
 
 	txx9_reg_res_init(TX4938_REV_PCODE(), TX4938_REG_BASE,
@@ -103,384 +102,384 @@
 	set_c0_config(TX49_CONF_CWFON);
 
 	/* SDRAMC,EBUSC are configured by PROM */
-	क्रम (i = 0; i < 8; i++) अणु
-		अगर (!(TX4938_EBUSC_CR(i) & 0x8))
-			जारी;	/* disabled */
-		txx9_ce_res[i].start = (अचिन्हित दीर्घ)TX4938_EBUSC_BA(i);
+	for (i = 0; i < 8; i++) {
+		if (!(TX4938_EBUSC_CR(i) & 0x8))
+			continue;	/* disabled */
+		txx9_ce_res[i].start = (unsigned long)TX4938_EBUSC_BA(i);
 		txx9_ce_res[i].end =
 			txx9_ce_res[i].start + TX4938_EBUSC_SIZE(i) - 1;
 		request_resource(&iomem_resource, &txx9_ce_res[i]);
-	पूर्ण
+	}
 
-	/* घड़ीs */
-	ccfg = ____raw_पढ़ोq(&tx4938_ccfgptr->ccfg);
-	अगर (txx9_master_घड़ी) अणु
-		/* calculate gbus_घड़ी and cpu_घड़ी from master_घड़ी */
-		भागmode = (__u32)ccfg & TX4938_CCFG_DIVMODE_MASK;
-		चयन (भागmode) अणु
-		हाल TX4938_CCFG_DIVMODE_8:
-		हाल TX4938_CCFG_DIVMODE_10:
-		हाल TX4938_CCFG_DIVMODE_12:
-		हाल TX4938_CCFG_DIVMODE_16:
-		हाल TX4938_CCFG_DIVMODE_18:
-			txx9_gbus_घड़ी = txx9_master_घड़ी * 4; अवरोध;
-		शेष:
-			txx9_gbus_घड़ी = txx9_master_घड़ी;
-		पूर्ण
-		चयन (भागmode) अणु
-		हाल TX4938_CCFG_DIVMODE_2:
-		हाल TX4938_CCFG_DIVMODE_8:
-			cpuclk = txx9_gbus_घड़ी * 2; अवरोध;
-		हाल TX4938_CCFG_DIVMODE_2_5:
-		हाल TX4938_CCFG_DIVMODE_10:
-			cpuclk = txx9_gbus_घड़ी * 5 / 2; अवरोध;
-		हाल TX4938_CCFG_DIVMODE_3:
-		हाल TX4938_CCFG_DIVMODE_12:
-			cpuclk = txx9_gbus_घड़ी * 3; अवरोध;
-		हाल TX4938_CCFG_DIVMODE_4:
-		हाल TX4938_CCFG_DIVMODE_16:
-			cpuclk = txx9_gbus_घड़ी * 4; अवरोध;
-		हाल TX4938_CCFG_DIVMODE_4_5:
-		हाल TX4938_CCFG_DIVMODE_18:
-			cpuclk = txx9_gbus_घड़ी * 9 / 2; अवरोध;
-		पूर्ण
-		txx9_cpu_घड़ी = cpuclk;
-	पूर्ण अन्यथा अणु
-		अगर (txx9_cpu_घड़ी == 0)
-			txx9_cpu_घड़ी = 300000000;	/* 300MHz */
-		/* calculate gbus_घड़ी and master_घड़ी from cpu_घड़ी */
-		cpuclk = txx9_cpu_घड़ी;
-		भागmode = (__u32)ccfg & TX4938_CCFG_DIVMODE_MASK;
-		चयन (भागmode) अणु
-		हाल TX4938_CCFG_DIVMODE_2:
-		हाल TX4938_CCFG_DIVMODE_8:
-			txx9_gbus_घड़ी = cpuclk / 2; अवरोध;
-		हाल TX4938_CCFG_DIVMODE_2_5:
-		हाल TX4938_CCFG_DIVMODE_10:
-			txx9_gbus_घड़ी = cpuclk * 2 / 5; अवरोध;
-		हाल TX4938_CCFG_DIVMODE_3:
-		हाल TX4938_CCFG_DIVMODE_12:
-			txx9_gbus_घड़ी = cpuclk / 3; अवरोध;
-		हाल TX4938_CCFG_DIVMODE_4:
-		हाल TX4938_CCFG_DIVMODE_16:
-			txx9_gbus_घड़ी = cpuclk / 4; अवरोध;
-		हाल TX4938_CCFG_DIVMODE_4_5:
-		हाल TX4938_CCFG_DIVMODE_18:
-			txx9_gbus_घड़ी = cpuclk * 2 / 9; अवरोध;
-		पूर्ण
-		चयन (भागmode) अणु
-		हाल TX4938_CCFG_DIVMODE_8:
-		हाल TX4938_CCFG_DIVMODE_10:
-		हाल TX4938_CCFG_DIVMODE_12:
-		हाल TX4938_CCFG_DIVMODE_16:
-		हाल TX4938_CCFG_DIVMODE_18:
-			txx9_master_घड़ी = txx9_gbus_घड़ी / 4; अवरोध;
-		शेष:
-			txx9_master_घड़ी = txx9_gbus_घड़ी;
-		पूर्ण
-	पूर्ण
-	/* change शेष value to udelay/mdelay take reasonable समय */
-	loops_per_jअगरfy = txx9_cpu_घड़ी / HZ / 2;
+	/* clocks */
+	ccfg = ____raw_readq(&tx4938_ccfgptr->ccfg);
+	if (txx9_master_clock) {
+		/* calculate gbus_clock and cpu_clock from master_clock */
+		divmode = (__u32)ccfg & TX4938_CCFG_DIVMODE_MASK;
+		switch (divmode) {
+		case TX4938_CCFG_DIVMODE_8:
+		case TX4938_CCFG_DIVMODE_10:
+		case TX4938_CCFG_DIVMODE_12:
+		case TX4938_CCFG_DIVMODE_16:
+		case TX4938_CCFG_DIVMODE_18:
+			txx9_gbus_clock = txx9_master_clock * 4; break;
+		default:
+			txx9_gbus_clock = txx9_master_clock;
+		}
+		switch (divmode) {
+		case TX4938_CCFG_DIVMODE_2:
+		case TX4938_CCFG_DIVMODE_8:
+			cpuclk = txx9_gbus_clock * 2; break;
+		case TX4938_CCFG_DIVMODE_2_5:
+		case TX4938_CCFG_DIVMODE_10:
+			cpuclk = txx9_gbus_clock * 5 / 2; break;
+		case TX4938_CCFG_DIVMODE_3:
+		case TX4938_CCFG_DIVMODE_12:
+			cpuclk = txx9_gbus_clock * 3; break;
+		case TX4938_CCFG_DIVMODE_4:
+		case TX4938_CCFG_DIVMODE_16:
+			cpuclk = txx9_gbus_clock * 4; break;
+		case TX4938_CCFG_DIVMODE_4_5:
+		case TX4938_CCFG_DIVMODE_18:
+			cpuclk = txx9_gbus_clock * 9 / 2; break;
+		}
+		txx9_cpu_clock = cpuclk;
+	} else {
+		if (txx9_cpu_clock == 0)
+			txx9_cpu_clock = 300000000;	/* 300MHz */
+		/* calculate gbus_clock and master_clock from cpu_clock */
+		cpuclk = txx9_cpu_clock;
+		divmode = (__u32)ccfg & TX4938_CCFG_DIVMODE_MASK;
+		switch (divmode) {
+		case TX4938_CCFG_DIVMODE_2:
+		case TX4938_CCFG_DIVMODE_8:
+			txx9_gbus_clock = cpuclk / 2; break;
+		case TX4938_CCFG_DIVMODE_2_5:
+		case TX4938_CCFG_DIVMODE_10:
+			txx9_gbus_clock = cpuclk * 2 / 5; break;
+		case TX4938_CCFG_DIVMODE_3:
+		case TX4938_CCFG_DIVMODE_12:
+			txx9_gbus_clock = cpuclk / 3; break;
+		case TX4938_CCFG_DIVMODE_4:
+		case TX4938_CCFG_DIVMODE_16:
+			txx9_gbus_clock = cpuclk / 4; break;
+		case TX4938_CCFG_DIVMODE_4_5:
+		case TX4938_CCFG_DIVMODE_18:
+			txx9_gbus_clock = cpuclk * 2 / 9; break;
+		}
+		switch (divmode) {
+		case TX4938_CCFG_DIVMODE_8:
+		case TX4938_CCFG_DIVMODE_10:
+		case TX4938_CCFG_DIVMODE_12:
+		case TX4938_CCFG_DIVMODE_16:
+		case TX4938_CCFG_DIVMODE_18:
+			txx9_master_clock = txx9_gbus_clock / 4; break;
+		default:
+			txx9_master_clock = txx9_gbus_clock;
+		}
+	}
+	/* change default value to udelay/mdelay take reasonable time */
+	loops_per_jiffy = txx9_cpu_clock / HZ / 2;
 
 	/* CCFG */
 	tx4938_wdr_init();
 	/* clear BusErrorOnWrite flag (W1C) */
 	tx4938_ccfg_set(TX4938_CCFG_BEOW);
 	/* enable Timeout BusError */
-	अगर (txx9_ccfg_toeon)
+	if (txx9_ccfg_toeon)
 		tx4938_ccfg_set(TX4938_CCFG_TOE);
 
 	/* DMA selection */
 	txx9_clear64(&tx4938_ccfgptr->pcfg, TX4938_PCFG_DMASEL_ALL);
 
-	/* Use बाह्यal घड़ी क्रम बाह्यal arbiter */
-	अगर (!(____raw_पढ़ोq(&tx4938_ccfgptr->ccfg) & TX4938_CCFG_PCIARB))
+	/* Use external clock for external arbiter */
+	if (!(____raw_readq(&tx4938_ccfgptr->ccfg) & TX4938_CCFG_PCIARB))
 		txx9_clear64(&tx4938_ccfgptr->pcfg, TX4938_PCFG_PCICLKEN_ALL);
 
 	pr_info("%s -- %dMHz(M%dMHz) CRIR:%08x CCFG:%llx PCFG:%llx\n",
 		txx9_pcode_str, (cpuclk + 500000) / 1000000,
-		(txx9_master_घड़ी + 500000) / 1000000,
-		(__u32)____raw_पढ़ोq(&tx4938_ccfgptr->crir),
-		____raw_पढ़ोq(&tx4938_ccfgptr->ccfg),
-		____raw_पढ़ोq(&tx4938_ccfgptr->pcfg));
+		(txx9_master_clock + 500000) / 1000000,
+		(__u32)____raw_readq(&tx4938_ccfgptr->crir),
+		____raw_readq(&tx4938_ccfgptr->ccfg),
+		____raw_readq(&tx4938_ccfgptr->pcfg));
 
 	pr_info("%s SDRAMC --", txx9_pcode_str);
-	क्रम (i = 0; i < 4; i++) अणु
+	for (i = 0; i < 4; i++) {
 		__u64 cr = TX4938_SDRAMC_CR(i);
-		अचिन्हित दीर्घ base, size;
-		अगर (!((__u32)cr & 0x00000400))
-			जारी;	/* disabled */
-		base = (अचिन्हित दीर्घ)(cr >> 49) << 21;
-		size = (((अचिन्हित दीर्घ)(cr >> 33) & 0x7fff) + 1) << 21;
+		unsigned long base, size;
+		if (!((__u32)cr & 0x00000400))
+			continue;	/* disabled */
+		base = (unsigned long)(cr >> 49) << 21;
+		size = (((unsigned long)(cr >> 33) & 0x7fff) + 1) << 21;
 		pr_cont(" CR%d:%016llx", i, cr);
 		tx4938_sdram_resource[i].name = "SDRAM";
 		tx4938_sdram_resource[i].start = base;
 		tx4938_sdram_resource[i].end = base + size - 1;
 		tx4938_sdram_resource[i].flags = IORESOURCE_MEM;
 		request_resource(&iomem_resource, &tx4938_sdram_resource[i]);
-	पूर्ण
-	pr_cont(" TR:%09llx\n", ____raw_पढ़ोq(&tx4938_sdramcptr->tr));
+	}
+	pr_cont(" TR:%09llx\n", ____raw_readq(&tx4938_sdramcptr->tr));
 
 	/* SRAM */
-	अगर (txx9_pcode == 0x4938 && ____raw_पढ़ोq(&tx4938_sramcptr->cr) & 1) अणु
-		अचिन्हित पूर्णांक size = TX4938_SRAM_SIZE;
+	if (txx9_pcode == 0x4938 && ____raw_readq(&tx4938_sramcptr->cr) & 1) {
+		unsigned int size = TX4938_SRAM_SIZE;
 		tx4938_sram_resource.name = "SRAM";
 		tx4938_sram_resource.start =
-			(____raw_पढ़ोq(&tx4938_sramcptr->cr) >> (39-11))
+			(____raw_readq(&tx4938_sramcptr->cr) >> (39-11))
 			& ~(size - 1);
 		tx4938_sram_resource.end =
 			tx4938_sram_resource.start + TX4938_SRAM_SIZE - 1;
 		tx4938_sram_resource.flags = IORESOURCE_MEM;
 		request_resource(&iomem_resource, &tx4938_sram_resource);
-	पूर्ण
+	}
 
 	/* TMR */
-	/* disable all समयrs */
-	क्रम (i = 0; i < TX4938_NR_TMR; i++)
-		txx9_पंचांगr_init(TX4938_TMR_REG(i) & 0xfffffffffULL);
+	/* disable all timers */
+	for (i = 0; i < TX4938_NR_TMR; i++)
+		txx9_tmr_init(TX4938_TMR_REG(i) & 0xfffffffffULL);
 
 	/* PIO */
-	__raw_ग_लिखोl(0, &tx4938_pioptr->maskcpu);
-	__raw_ग_लिखोl(0, &tx4938_pioptr->maskext);
+	__raw_writel(0, &tx4938_pioptr->maskcpu);
+	__raw_writel(0, &tx4938_pioptr->maskext);
 
-	अगर (txx9_pcode == 0x4938) अणु
-		__u64 pcfg = ____raw_पढ़ोq(&tx4938_ccfgptr->pcfg);
+	if (txx9_pcode == 0x4938) {
+		__u64 pcfg = ____raw_readq(&tx4938_ccfgptr->pcfg);
 		/* set PCIC1 reset */
 		txx9_set64(&tx4938_ccfgptr->clkctr, TX4938_CLKCTR_PCIC1RST);
-		अगर (pcfg & (TX4938_PCFG_ETH0_SEL | TX4938_PCFG_ETH1_SEL)) अणु
-			mdelay(1);	/* at least 128 cpu घड़ी */
+		if (pcfg & (TX4938_PCFG_ETH0_SEL | TX4938_PCFG_ETH1_SEL)) {
+			mdelay(1);	/* at least 128 cpu clock */
 			/* clear PCIC1 reset */
 			txx9_clear64(&tx4938_ccfgptr->clkctr,
 				     TX4938_CLKCTR_PCIC1RST);
-		पूर्ण अन्यथा अणु
+		} else {
 			pr_info("%s: stop PCIC1\n", txx9_pcode_str);
 			/* stop PCIC1 */
 			txx9_set64(&tx4938_ccfgptr->clkctr,
 				   TX4938_CLKCTR_PCIC1CKD);
-		पूर्ण
-		अगर (!(pcfg & TX4938_PCFG_ETH0_SEL)) अणु
+		}
+		if (!(pcfg & TX4938_PCFG_ETH0_SEL)) {
 			pr_info("%s: stop ETH0\n", txx9_pcode_str);
 			txx9_set64(&tx4938_ccfgptr->clkctr,
 				   TX4938_CLKCTR_ETH0RST);
 			txx9_set64(&tx4938_ccfgptr->clkctr,
 				   TX4938_CLKCTR_ETH0CKD);
-		पूर्ण
-		अगर (!(pcfg & TX4938_PCFG_ETH1_SEL)) अणु
+		}
+		if (!(pcfg & TX4938_PCFG_ETH1_SEL)) {
 			pr_info("%s: stop ETH1\n", txx9_pcode_str);
 			txx9_set64(&tx4938_ccfgptr->clkctr,
 				   TX4938_CLKCTR_ETH1RST);
 			txx9_set64(&tx4938_ccfgptr->clkctr,
 				   TX4938_CLKCTR_ETH1CKD);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	_machine_restart = tx4938_machine_restart;
 	board_be_init = tx4938_be_init;
-पूर्ण
+}
 
-व्योम __init tx4938_समय_init(अचिन्हित पूर्णांक पंचांगrnr)
-अणु
-	अगर (____raw_पढ़ोq(&tx4938_ccfgptr->ccfg) & TX4938_CCFG_TINTDIS)
-		txx9_घड़ीevent_init(TX4938_TMR_REG(पंचांगrnr) & 0xfffffffffULL,
-				     TXX9_IRQ_BASE + TX4938_IR_TMR(पंचांगrnr),
+void __init tx4938_time_init(unsigned int tmrnr)
+{
+	if (____raw_readq(&tx4938_ccfgptr->ccfg) & TX4938_CCFG_TINTDIS)
+		txx9_clockevent_init(TX4938_TMR_REG(tmrnr) & 0xfffffffffULL,
+				     TXX9_IRQ_BASE + TX4938_IR_TMR(tmrnr),
 				     TXX9_IMCLK);
-पूर्ण
+}
 
-व्योम __init tx4938_sio_init(अचिन्हित पूर्णांक sclk, अचिन्हित पूर्णांक cts_mask)
-अणु
-	पूर्णांक i;
-	अचिन्हित पूर्णांक ch_mask = 0;
+void __init tx4938_sio_init(unsigned int sclk, unsigned int cts_mask)
+{
+	int i;
+	unsigned int ch_mask = 0;
 
-	अगर (__raw_पढ़ोq(&tx4938_ccfgptr->pcfg) & TX4938_PCFG_ETH0_SEL)
+	if (__raw_readq(&tx4938_ccfgptr->pcfg) & TX4938_PCFG_ETH0_SEL)
 		ch_mask |= 1 << 1; /* disable SIO1 by PCFG setting */
-	क्रम (i = 0; i < 2; i++) अणु
-		अगर ((1 << i) & ch_mask)
-			जारी;
+	for (i = 0; i < 2; i++) {
+		if ((1 << i) & ch_mask)
+			continue;
 		txx9_sio_init(TX4938_SIO_REG(i) & 0xfffffffffULL,
 			      TXX9_IRQ_BASE + TX4938_IR_SIO(i),
 			      i, sclk, (1 << i) & cts_mask);
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम __init tx4938_spi_init(पूर्णांक busid)
-अणु
+void __init tx4938_spi_init(int busid)
+{
 	txx9_spi_init(busid, TX4938_SPI_REG & 0xfffffffffULL,
 		      TXX9_IRQ_BASE + TX4938_IR_SPI);
-पूर्ण
+}
 
-व्योम __init tx4938_ethaddr_init(अचिन्हित अक्षर *addr0, अचिन्हित अक्षर *addr1)
-अणु
-	u64 pcfg = __raw_पढ़ोq(&tx4938_ccfgptr->pcfg);
+void __init tx4938_ethaddr_init(unsigned char *addr0, unsigned char *addr1)
+{
+	u64 pcfg = __raw_readq(&tx4938_ccfgptr->pcfg);
 
-	अगर (addr0 && (pcfg & TX4938_PCFG_ETH0_SEL))
+	if (addr0 && (pcfg & TX4938_PCFG_ETH0_SEL))
 		txx9_ethaddr_init(TXX9_IRQ_BASE + TX4938_IR_ETH0, addr0);
-	अगर (addr1 && (pcfg & TX4938_PCFG_ETH1_SEL))
+	if (addr1 && (pcfg & TX4938_PCFG_ETH1_SEL))
 		txx9_ethaddr_init(TXX9_IRQ_BASE + TX4938_IR_ETH1, addr1);
-पूर्ण
+}
 
-व्योम __init tx4938_mtd_init(पूर्णांक ch)
-अणु
-	काष्ठा physmap_flash_data pdata = अणु
+void __init tx4938_mtd_init(int ch)
+{
+	struct physmap_flash_data pdata = {
 		.width = TX4938_EBUSC_WIDTH(ch) / 8,
-	पूर्ण;
-	अचिन्हित दीर्घ start = txx9_ce_res[ch].start;
-	अचिन्हित दीर्घ size = txx9_ce_res[ch].end - start + 1;
+	};
+	unsigned long start = txx9_ce_res[ch].start;
+	unsigned long size = txx9_ce_res[ch].end - start + 1;
 
-	अगर (!(TX4938_EBUSC_CR(ch) & 0x8))
-		वापस; /* disabled */
+	if (!(TX4938_EBUSC_CR(ch) & 0x8))
+		return; /* disabled */
 	txx9_physmap_flash_init(ch, start, size, &pdata);
-पूर्ण
+}
 
-व्योम __init tx4938_ata_init(अचिन्हित पूर्णांक irq, अचिन्हित पूर्णांक shअगरt, पूर्णांक tune)
-अणु
-	काष्ठा platक्रमm_device *pdev;
-	काष्ठा resource res[] = अणु
-		अणु
+void __init tx4938_ata_init(unsigned int irq, unsigned int shift, int tune)
+{
+	struct platform_device *pdev;
+	struct resource res[] = {
+		{
 			/* .start and .end are filled in later */
 			.flags = IORESOURCE_MEM,
-		पूर्ण, अणु
+		}, {
 			.start = irq,
 			.flags = IORESOURCE_IRQ,
-		पूर्ण,
-	पूर्ण;
-	काष्ठा tx4938ide_platक्रमm_info pdata = अणु
-		.ioport_shअगरt = shअगरt,
+		},
+	};
+	struct tx4938ide_platform_info pdata = {
+		.ioport_shift = shift,
 		/*
-		 * The IDE driver should not change bus timings अगर other ISA
+		 * The IDE driver should not change bus timings if other ISA
 		 * devices existed.
 		 */
-		.gbus_घड़ी = tune ? txx9_gbus_घड़ी : 0,
-	पूर्ण;
+		.gbus_clock = tune ? txx9_gbus_clock : 0,
+	};
 	u64 ebccr;
-	पूर्णांक i;
+	int i;
 
-	अगर ((__raw_पढ़ोq(&tx4938_ccfgptr->pcfg) &
+	if ((__raw_readq(&tx4938_ccfgptr->pcfg) &
 	     (TX4938_PCFG_ATA_SEL | TX4938_PCFG_NDF_SEL))
 	    != TX4938_PCFG_ATA_SEL)
-		वापस;
-	क्रम (i = 0; i < 8; i++) अणु
+		return;
+	for (i = 0; i < 8; i++) {
 		/* check EBCCRn.ISA, EBCCRn.BSZ, EBCCRn.ME */
-		ebccr = __raw_पढ़ोq(&tx4938_ebuscptr->cr[i]);
-		अगर ((ebccr & 0x00f00008) == 0x00e00008)
-			अवरोध;
-	पूर्ण
-	अगर (i == 8)
-		वापस;
+		ebccr = __raw_readq(&tx4938_ebuscptr->cr[i]);
+		if ((ebccr & 0x00f00008) == 0x00e00008)
+			break;
+	}
+	if (i == 8)
+		return;
 	pdata.ebus_ch = i;
 	res[0].start = ((ebccr >> 48) << 20) + 0x10000;
 	res[0].end = res[0].start + 0x20000 - 1;
-	pdev = platक्रमm_device_alloc("tx4938ide", -1);
-	अगर (!pdev ||
-	    platक्रमm_device_add_resources(pdev, res, ARRAY_SIZE(res)) ||
-	    platक्रमm_device_add_data(pdev, &pdata, माप(pdata)) ||
-	    platक्रमm_device_add(pdev))
-		platक्रमm_device_put(pdev);
-पूर्ण
+	pdev = platform_device_alloc("tx4938ide", -1);
+	if (!pdev ||
+	    platform_device_add_resources(pdev, res, ARRAY_SIZE(res)) ||
+	    platform_device_add_data(pdev, &pdata, sizeof(pdata)) ||
+	    platform_device_add(pdev))
+		platform_device_put(pdev);
+}
 
-व्योम __init tx4938_ndfmc_init(अचिन्हित पूर्णांक hold, अचिन्हित पूर्णांक spw)
-अणु
-	काष्ठा txx9ndfmc_platक्रमm_data plat_data = अणु
-		.shअगरt = 1,
-		.gbus_घड़ी = txx9_gbus_घड़ी,
+void __init tx4938_ndfmc_init(unsigned int hold, unsigned int spw)
+{
+	struct txx9ndfmc_platform_data plat_data = {
+		.shift = 1,
+		.gbus_clock = txx9_gbus_clock,
 		.hold = hold,
 		.spw = spw,
 		.ch_mask = 1,
-	पूर्ण;
-	अचिन्हित दीर्घ baseaddr = TX4938_NDFMC_REG & 0xfffffffffULL;
+	};
+	unsigned long baseaddr = TX4938_NDFMC_REG & 0xfffffffffULL;
 
-#अगर_घोषित __BIG_ENDIAN
+#ifdef __BIG_ENDIAN
 	baseaddr += 4;
-#पूर्ण_अगर
-	अगर ((__raw_पढ़ोq(&tx4938_ccfgptr->pcfg) &
+#endif
+	if ((__raw_readq(&tx4938_ccfgptr->pcfg) &
 	     (TX4938_PCFG_ATA_SEL|TX4938_PCFG_ISA_SEL|TX4938_PCFG_NDF_SEL)) ==
 	    TX4938_PCFG_NDF_SEL)
 		txx9_ndfmc_init(baseaddr, &plat_data);
-पूर्ण
+}
 
-व्योम __init tx4938_dmac_init(पूर्णांक स_नकल_chan0, पूर्णांक स_नकल_chan1)
-अणु
-	काष्ठा txx9dmac_platक्रमm_data plat_data = अणु
+void __init tx4938_dmac_init(int memcpy_chan0, int memcpy_chan1)
+{
+	struct txx9dmac_platform_data plat_data = {
 		.have_64bit_regs = true,
-	पूर्ण;
-	पूर्णांक i;
+	};
+	int i;
 
-	क्रम (i = 0; i < 2; i++) अणु
-		plat_data.स_नकल_chan = i ? स_नकल_chan1 : स_नकल_chan0;
+	for (i = 0; i < 2; i++) {
+		plat_data.memcpy_chan = i ? memcpy_chan1 : memcpy_chan0;
 		txx9_dmac_init(i, TX4938_DMA_REG(i) & 0xfffffffffULL,
 			       TXX9_IRQ_BASE + TX4938_IR_DMA(i, 0),
 			       &plat_data);
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम __init tx4938_aclc_init(व्योम)
-अणु
-	u64 pcfg = __raw_पढ़ोq(&tx4938_ccfgptr->pcfg);
+void __init tx4938_aclc_init(void)
+{
+	u64 pcfg = __raw_readq(&tx4938_ccfgptr->pcfg);
 
-	अगर ((pcfg & TX4938_PCFG_SEL2) &&
+	if ((pcfg & TX4938_PCFG_SEL2) &&
 	    !(pcfg & TX4938_PCFG_ETH0_SEL))
 		txx9_aclc_init(TX4938_ACLC_REG & 0xfffffffffULL,
 			       TXX9_IRQ_BASE + TX4938_IR_ACLC,
 			       1, 0, 1);
-पूर्ण
+}
 
-व्योम __init tx4938_sramc_init(व्योम)
-अणु
-	अगर (tx4938_sram_resource.start)
+void __init tx4938_sramc_init(void)
+{
+	if (tx4938_sram_resource.start)
 		txx9_sramc_init(&tx4938_sram_resource);
-पूर्ण
+}
 
-अटल व्योम __init tx4938_stop_unused_modules(व्योम)
-अणु
+static void __init tx4938_stop_unused_modules(void)
+{
 	__u64 pcfg, rst = 0, ckd = 0;
-	अक्षर buf[128];
+	char buf[128];
 
 	buf[0] = '\0';
 	local_irq_disable();
-	pcfg = ____raw_पढ़ोq(&tx4938_ccfgptr->pcfg);
-	चयन (txx9_pcode) अणु
-	हाल 0x4937:
-		अगर (!(pcfg & TX4938_PCFG_SEL2)) अणु
+	pcfg = ____raw_readq(&tx4938_ccfgptr->pcfg);
+	switch (txx9_pcode) {
+	case 0x4937:
+		if (!(pcfg & TX4938_PCFG_SEL2)) {
 			rst |= TX4938_CLKCTR_ACLRST;
 			ckd |= TX4938_CLKCTR_ACLCKD;
-			म_जोड़ो(buf, " ACLC");
-		पूर्ण
-		अवरोध;
-	हाल 0x4938:
-		अगर (!(pcfg & TX4938_PCFG_SEL2) ||
-		    (pcfg & TX4938_PCFG_ETH0_SEL)) अणु
+			strcat(buf, " ACLC");
+		}
+		break;
+	case 0x4938:
+		if (!(pcfg & TX4938_PCFG_SEL2) ||
+		    (pcfg & TX4938_PCFG_ETH0_SEL)) {
 			rst |= TX4938_CLKCTR_ACLRST;
 			ckd |= TX4938_CLKCTR_ACLCKD;
-			म_जोड़ो(buf, " ACLC");
-		पूर्ण
-		अगर ((pcfg &
+			strcat(buf, " ACLC");
+		}
+		if ((pcfg &
 		     (TX4938_PCFG_ATA_SEL | TX4938_PCFG_ISA_SEL |
 		      TX4938_PCFG_NDF_SEL))
-		    != TX4938_PCFG_NDF_SEL) अणु
+		    != TX4938_PCFG_NDF_SEL) {
 			rst |= TX4938_CLKCTR_NDFRST;
 			ckd |= TX4938_CLKCTR_NDFCKD;
-			म_जोड़ो(buf, " NDFMC");
-		पूर्ण
-		अगर (!(pcfg & TX4938_PCFG_SPI_SEL)) अणु
+			strcat(buf, " NDFMC");
+		}
+		if (!(pcfg & TX4938_PCFG_SPI_SEL)) {
 			rst |= TX4938_CLKCTR_SPIRST;
 			ckd |= TX4938_CLKCTR_SPICKD;
-			म_जोड़ो(buf, " SPI");
-		पूर्ण
-		अवरोध;
-	पूर्ण
-	अगर (rst | ckd) अणु
+			strcat(buf, " SPI");
+		}
+		break;
+	}
+	if (rst | ckd) {
 		txx9_set64(&tx4938_ccfgptr->clkctr, rst);
 		txx9_set64(&tx4938_ccfgptr->clkctr, ckd);
-	पूर्ण
+	}
 	local_irq_enable();
-	अगर (buf[0])
+	if (buf[0])
 		pr_info("%s: stop%s\n", txx9_pcode_str, buf);
-पूर्ण
+}
 
-अटल पूर्णांक __init tx4938_late_init(व्योम)
-अणु
-	अगर (txx9_pcode != 0x4937 && txx9_pcode != 0x4938)
-		वापस -ENODEV;
+static int __init tx4938_late_init(void)
+{
+	if (txx9_pcode != 0x4937 && txx9_pcode != 0x4938)
+		return -ENODEV;
 	tx4938_stop_unused_modules();
-	वापस 0;
-पूर्ण
+	return 0;
+}
 late_initcall(tx4938_late_init);

@@ -1,61 +1,60 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
 * Portions of this file
 * Copyright(c) 2016-2017 Intel Deutschland GmbH
 * Copyright (C) 2018 - 2020 Intel Corporation
 */
 
-#अगर !defined(__MAC80211_DRIVER_TRACE) || defined(TRACE_HEADER_MULTI_READ)
-#घोषणा __MAC80211_DRIVER_TRACE
+#if !defined(__MAC80211_DRIVER_TRACE) || defined(TRACE_HEADER_MULTI_READ)
+#define __MAC80211_DRIVER_TRACE
 
-#समावेश <linux/tracepoपूर्णांक.h>
-#समावेश <net/mac80211.h>
-#समावेश "ieee80211_i.h"
+#include <linux/tracepoint.h>
+#include <net/mac80211.h>
+#include "ieee80211_i.h"
 
-#अघोषित TRACE_SYSTEM
-#घोषणा TRACE_SYSTEM mac80211
+#undef TRACE_SYSTEM
+#define TRACE_SYSTEM mac80211
 
-#घोषणा MAXNAME		32
-#घोषणा LOCAL_ENTRY	__array(अक्षर, wiphy_name, 32)
-#घोषणा LOCAL_ASSIGN	strlcpy(__entry->wiphy_name, wiphy_name(local->hw.wiphy), MAXNAME)
-#घोषणा LOCAL_PR_FMT	"%s"
-#घोषणा LOCAL_PR_ARG	__entry->wiphy_name
+#define MAXNAME		32
+#define LOCAL_ENTRY	__array(char, wiphy_name, 32)
+#define LOCAL_ASSIGN	strlcpy(__entry->wiphy_name, wiphy_name(local->hw.wiphy), MAXNAME)
+#define LOCAL_PR_FMT	"%s"
+#define LOCAL_PR_ARG	__entry->wiphy_name
 
-#घोषणा STA_ENTRY	__array(अक्षर, sta_addr, ETH_ALEN)
-#घोषणा STA_ASSIGN	(sta ? स_नकल(__entry->sta_addr, sta->addr, ETH_ALEN) : \
+#define STA_ENTRY	__array(char, sta_addr, ETH_ALEN)
+#define STA_ASSIGN	(sta ? memcpy(__entry->sta_addr, sta->addr, ETH_ALEN) : \
 				eth_zero_addr(__entry->sta_addr))
-#घोषणा STA_NAMED_ASSIGN(s)	स_नकल(__entry->sta_addr, (s)->addr, ETH_ALEN)
-#घोषणा STA_PR_FMT	" sta:%pM"
-#घोषणा STA_PR_ARG	__entry->sta_addr
+#define STA_NAMED_ASSIGN(s)	memcpy(__entry->sta_addr, (s)->addr, ETH_ALEN)
+#define STA_PR_FMT	" sta:%pM"
+#define STA_PR_ARG	__entry->sta_addr
 
-#घोषणा VIF_ENTRY	__field(क्रमागत nl80211_अगरtype, vअगर_type) __field(व्योम *, sdata)	\
+#define VIF_ENTRY	__field(enum nl80211_iftype, vif_type) __field(void *, sdata)	\
 			__field(bool, p2p)						\
-			__string(vअगर_name, sdata->name)
-#घोषणा VIF_ASSIGN	__entry->vअगर_type = sdata->vअगर.type; __entry->sdata = sdata;	\
-			__entry->p2p = sdata->vअगर.p2p;					\
-			__assign_str(vअगर_name, sdata->name)
-#घोषणा VIF_PR_FMT	" vif:%s(%d%s)"
-#घोषणा VIF_PR_ARG	__get_str(vअगर_name), __entry->vअगर_type, __entry->p2p ? "/p2p" : ""
+			__string(vif_name, sdata->name)
+#define VIF_ASSIGN	__entry->vif_type = sdata->vif.type; __entry->sdata = sdata;	\
+			__entry->p2p = sdata->vif.p2p;					\
+			__assign_str(vif_name, sdata->name)
+#define VIF_PR_FMT	" vif:%s(%d%s)"
+#define VIF_PR_ARG	__get_str(vif_name), __entry->vif_type, __entry->p2p ? "/p2p" : ""
 
-#घोषणा CHANDEF_ENTRY	__field(u32, control_freq)					\
+#define CHANDEF_ENTRY	__field(u32, control_freq)					\
 			__field(u32, freq_offset)					\
 			__field(u32, chan_width)					\
 			__field(u32, center_freq1)					\
 			__field(u32, freq1_offset)					\
 			__field(u32, center_freq2)
-#घोषणा CHANDEF_ASSIGN(c)							\
+#define CHANDEF_ASSIGN(c)							\
 			__entry->control_freq = (c) ? ((c)->chan ? (c)->chan->center_freq : 0) : 0;	\
 			__entry->freq_offset = (c) ? ((c)->chan ? (c)->chan->freq_offset : 0) : 0;	\
 			__entry->chan_width = (c) ? (c)->width : 0;			\
 			__entry->center_freq1 = (c) ? (c)->center_freq1 : 0;		\
 			__entry->freq1_offset = (c) ? (c)->freq1_offset : 0;		\
 			__entry->center_freq2 = (c) ? (c)->center_freq2 : 0;
-#घोषणा CHANDEF_PR_FMT	" control:%d.%03d MHz width:%d center: %d.%03d/%d MHz"
-#घोषणा CHANDEF_PR_ARG	__entry->control_freq, __entry->freq_offset, __entry->chan_width, \
+#define CHANDEF_PR_FMT	" control:%d.%03d MHz width:%d center: %d.%03d/%d MHz"
+#define CHANDEF_PR_ARG	__entry->control_freq, __entry->freq_offset, __entry->chan_width, \
 			__entry->center_freq1, __entry->freq1_offset, __entry->center_freq2
 
-#घोषणा MIN_CHANDEF_ENTRY								\
+#define MIN_CHANDEF_ENTRY								\
 			__field(u32, min_control_freq)					\
 			__field(u32, min_freq_offset)					\
 			__field(u32, min_chan_width)					\
@@ -63,69 +62,69 @@
 			__field(u32, min_freq1_offset)					\
 			__field(u32, min_center_freq2)
 
-#घोषणा MIN_CHANDEF_ASSIGN(c)								\
+#define MIN_CHANDEF_ASSIGN(c)								\
 			__entry->min_control_freq = (c)->chan ? (c)->chan->center_freq : 0;	\
 			__entry->min_freq_offset = (c)->chan ? (c)->chan->freq_offset : 0;	\
 			__entry->min_chan_width = (c)->width;				\
 			__entry->min_center_freq1 = (c)->center_freq1;			\
 			__entry->freq1_offset = (c)->freq1_offset;			\
 			__entry->min_center_freq2 = (c)->center_freq2;
-#घोषणा MIN_CHANDEF_PR_FMT	" min_control:%d.%03d MHz min_width:%d min_center: %d.%03d/%d MHz"
-#घोषणा MIN_CHANDEF_PR_ARG	__entry->min_control_freq, __entry->min_freq_offset,	\
+#define MIN_CHANDEF_PR_FMT	" min_control:%d.%03d MHz min_width:%d min_center: %d.%03d/%d MHz"
+#define MIN_CHANDEF_PR_ARG	__entry->min_control_freq, __entry->min_freq_offset,	\
 			__entry->min_chan_width,					\
 			__entry->min_center_freq1, __entry->min_freq1_offset,		\
 			__entry->min_center_freq2
 
-#घोषणा CHANCTX_ENTRY	CHANDEF_ENTRY							\
+#define CHANCTX_ENTRY	CHANDEF_ENTRY							\
 			MIN_CHANDEF_ENTRY						\
-			__field(u8, rx_chains_अटल)					\
+			__field(u8, rx_chains_static)					\
 			__field(u8, rx_chains_dynamic)
-#घोषणा CHANCTX_ASSIGN	CHANDEF_ASSIGN(&ctx->conf.def)					\
+#define CHANCTX_ASSIGN	CHANDEF_ASSIGN(&ctx->conf.def)					\
 			MIN_CHANDEF_ASSIGN(&ctx->conf.min_def)				\
-			__entry->rx_chains_अटल = ctx->conf.rx_chains_अटल;		\
+			__entry->rx_chains_static = ctx->conf.rx_chains_static;		\
 			__entry->rx_chains_dynamic = ctx->conf.rx_chains_dynamic
-#घोषणा CHANCTX_PR_FMT	CHANDEF_PR_FMT MIN_CHANDEF_PR_FMT " chains:%d/%d"
-#घोषणा CHANCTX_PR_ARG	CHANDEF_PR_ARG,	MIN_CHANDEF_PR_ARG,				\
-			__entry->rx_chains_अटल, __entry->rx_chains_dynamic
+#define CHANCTX_PR_FMT	CHANDEF_PR_FMT MIN_CHANDEF_PR_FMT " chains:%d/%d"
+#define CHANCTX_PR_ARG	CHANDEF_PR_ARG,	MIN_CHANDEF_PR_ARG,				\
+			__entry->rx_chains_static, __entry->rx_chains_dynamic
 
-#घोषणा KEY_ENTRY	__field(u32, cipher)						\
+#define KEY_ENTRY	__field(u32, cipher)						\
 			__field(u8, hw_key_idx)						\
 			__field(u8, flags)						\
 			__field(s8, keyidx)
-#घोषणा KEY_ASSIGN(k)	__entry->cipher = (k)->cipher;					\
+#define KEY_ASSIGN(k)	__entry->cipher = (k)->cipher;					\
 			__entry->flags = (k)->flags;					\
 			__entry->keyidx = (k)->keyidx;					\
 			__entry->hw_key_idx = (k)->hw_key_idx;
-#घोषणा KEY_PR_FMT	" cipher:0x%x, flags=%#x, keyidx=%d, hw_key_idx=%d"
-#घोषणा KEY_PR_ARG	__entry->cipher, __entry->flags, __entry->keyidx, __entry->hw_key_idx
+#define KEY_PR_FMT	" cipher:0x%x, flags=%#x, keyidx=%d, hw_key_idx=%d"
+#define KEY_PR_ARG	__entry->cipher, __entry->flags, __entry->keyidx, __entry->hw_key_idx
 
-#घोषणा AMPDU_ACTION_ENTRY	__field(क्रमागत ieee80211_ampdu_mlme_action,		\
+#define AMPDU_ACTION_ENTRY	__field(enum ieee80211_ampdu_mlme_action,		\
 					ieee80211_ampdu_mlme_action)			\
 				STA_ENTRY						\
 				__field(u16, tid)					\
 				__field(u16, ssn)					\
 				__field(u16, buf_size)					\
 				__field(bool, amsdu)					\
-				__field(u16, समयout)					\
+				__field(u16, timeout)					\
 				__field(u16, action)
-#घोषणा AMPDU_ACTION_ASSIGN	STA_NAMED_ASSIGN(params->sta);				\
+#define AMPDU_ACTION_ASSIGN	STA_NAMED_ASSIGN(params->sta);				\
 				__entry->tid = params->tid;				\
 				__entry->ssn = params->ssn;				\
 				__entry->buf_size = params->buf_size;			\
 				__entry->amsdu = params->amsdu;				\
-				__entry->समयout = params->समयout;			\
+				__entry->timeout = params->timeout;			\
 				__entry->action = params->action;
-#घोषणा AMPDU_ACTION_PR_FMT	STA_PR_FMT " tid %d, ssn %d, buf_size %u, amsdu %d, timeout %d action %d"
-#घोषणा AMPDU_ACTION_PR_ARG	STA_PR_ARG, __entry->tid, __entry->ssn,			\
-				__entry->buf_size, __entry->amsdu, __entry->समयout,	\
+#define AMPDU_ACTION_PR_FMT	STA_PR_FMT " tid %d, ssn %d, buf_size %u, amsdu %d, timeout %d action %d"
+#define AMPDU_ACTION_PR_ARG	STA_PR_ARG, __entry->tid, __entry->ssn,			\
+				__entry->buf_size, __entry->amsdu, __entry->timeout,	\
 				__entry->action
 
 /*
- * Tracing क्रम driver callbacks.
+ * Tracing for driver callbacks.
  */
 
 DECLARE_EVENT_CLASS(local_only_evt,
-	TP_PROTO(काष्ठा ieee80211_local *local),
+	TP_PROTO(struct ieee80211_local *local),
 	TP_ARGS(local),
 	TP_STRUCT__entry(
 		LOCAL_ENTRY
@@ -133,34 +132,34 @@ DECLARE_EVENT_CLASS(local_only_evt,
 	TP_fast_assign(
 		LOCAL_ASSIGN;
 	),
-	TP_prपूर्णांकk(LOCAL_PR_FMT, LOCAL_PR_ARG)
+	TP_printk(LOCAL_PR_FMT, LOCAL_PR_ARG)
 );
 
 DECLARE_EVENT_CLASS(local_sdata_addr_evt,
-	TP_PROTO(काष्ठा ieee80211_local *local,
-		 काष्ठा ieee80211_sub_अगर_data *sdata),
+	TP_PROTO(struct ieee80211_local *local,
+		 struct ieee80211_sub_if_data *sdata),
 	TP_ARGS(local, sdata),
 
 	TP_STRUCT__entry(
 		LOCAL_ENTRY
 		VIF_ENTRY
-		__array(अक्षर, addr, ETH_ALEN)
+		__array(char, addr, ETH_ALEN)
 	),
 
 	TP_fast_assign(
 		LOCAL_ASSIGN;
 		VIF_ASSIGN;
-		स_नकल(__entry->addr, sdata->vअगर.addr, ETH_ALEN);
+		memcpy(__entry->addr, sdata->vif.addr, ETH_ALEN);
 	),
 
-	TP_prपूर्णांकk(
+	TP_printk(
 		LOCAL_PR_FMT  VIF_PR_FMT " addr:%pM",
 		LOCAL_PR_ARG, VIF_PR_ARG, __entry->addr
 	)
 );
 
 DECLARE_EVENT_CLASS(local_u32_evt,
-	TP_PROTO(काष्ठा ieee80211_local *local, u32 value),
+	TP_PROTO(struct ieee80211_local *local, u32 value),
 	TP_ARGS(local, value),
 
 	TP_STRUCT__entry(
@@ -173,15 +172,15 @@ DECLARE_EVENT_CLASS(local_u32_evt,
 		__entry->value = value;
 	),
 
-	TP_prपूर्णांकk(
+	TP_printk(
 		LOCAL_PR_FMT " value:%d",
 		LOCAL_PR_ARG, __entry->value
 	)
 );
 
 DECLARE_EVENT_CLASS(local_sdata_evt,
-	TP_PROTO(काष्ठा ieee80211_local *local,
-		 काष्ठा ieee80211_sub_अगर_data *sdata),
+	TP_PROTO(struct ieee80211_local *local,
+		 struct ieee80211_sub_if_data *sdata),
 	TP_ARGS(local, sdata),
 
 	TP_STRUCT__entry(
@@ -194,33 +193,33 @@ DECLARE_EVENT_CLASS(local_sdata_evt,
 		VIF_ASSIGN;
 	),
 
-	TP_prपूर्णांकk(
+	TP_printk(
 		LOCAL_PR_FMT VIF_PR_FMT,
 		LOCAL_PR_ARG, VIF_PR_ARG
 	)
 );
 
-DEFINE_EVENT(local_only_evt, drv_वापस_व्योम,
-	TP_PROTO(काष्ठा ieee80211_local *local),
+DEFINE_EVENT(local_only_evt, drv_return_void,
+	TP_PROTO(struct ieee80211_local *local),
 	TP_ARGS(local)
 );
 
-TRACE_EVENT(drv_वापस_पूर्णांक,
-	TP_PROTO(काष्ठा ieee80211_local *local, पूर्णांक ret),
+TRACE_EVENT(drv_return_int,
+	TP_PROTO(struct ieee80211_local *local, int ret),
 	TP_ARGS(local, ret),
 	TP_STRUCT__entry(
 		LOCAL_ENTRY
-		__field(पूर्णांक, ret)
+		__field(int, ret)
 	),
 	TP_fast_assign(
 		LOCAL_ASSIGN;
 		__entry->ret = ret;
 	),
-	TP_prपूर्णांकk(LOCAL_PR_FMT " - %d", LOCAL_PR_ARG, __entry->ret)
+	TP_printk(LOCAL_PR_FMT " - %d", LOCAL_PR_ARG, __entry->ret)
 );
 
-TRACE_EVENT(drv_वापस_bool,
-	TP_PROTO(काष्ठा ieee80211_local *local, bool ret),
+TRACE_EVENT(drv_return_bool,
+	TP_PROTO(struct ieee80211_local *local, bool ret),
 	TP_ARGS(local, ret),
 	TP_STRUCT__entry(
 		LOCAL_ENTRY
@@ -230,12 +229,12 @@ TRACE_EVENT(drv_वापस_bool,
 		LOCAL_ASSIGN;
 		__entry->ret = ret;
 	),
-	TP_prपूर्णांकk(LOCAL_PR_FMT " - %s", LOCAL_PR_ARG, (__entry->ret) ?
+	TP_printk(LOCAL_PR_FMT " - %s", LOCAL_PR_ARG, (__entry->ret) ?
 		  "true" : "false")
 );
 
-TRACE_EVENT(drv_वापस_u32,
-	TP_PROTO(काष्ठा ieee80211_local *local, u32 ret),
+TRACE_EVENT(drv_return_u32,
+	TP_PROTO(struct ieee80211_local *local, u32 ret),
 	TP_ARGS(local, ret),
 	TP_STRUCT__entry(
 		LOCAL_ENTRY
@@ -245,11 +244,11 @@ TRACE_EVENT(drv_वापस_u32,
 		LOCAL_ASSIGN;
 		__entry->ret = ret;
 	),
-	TP_prपूर्णांकk(LOCAL_PR_FMT " - %u", LOCAL_PR_ARG, __entry->ret)
+	TP_printk(LOCAL_PR_FMT " - %u", LOCAL_PR_ARG, __entry->ret)
 );
 
-TRACE_EVENT(drv_वापस_u64,
-	TP_PROTO(काष्ठा ieee80211_local *local, u64 ret),
+TRACE_EVENT(drv_return_u64,
+	TP_PROTO(struct ieee80211_local *local, u64 ret),
 	TP_ARGS(local, ret),
 	TP_STRUCT__entry(
 		LOCAL_ENTRY
@@ -259,41 +258,41 @@ TRACE_EVENT(drv_वापस_u64,
 		LOCAL_ASSIGN;
 		__entry->ret = ret;
 	),
-	TP_prपूर्णांकk(LOCAL_PR_FMT " - %llu", LOCAL_PR_ARG, __entry->ret)
+	TP_printk(LOCAL_PR_FMT " - %llu", LOCAL_PR_ARG, __entry->ret)
 );
 
 DEFINE_EVENT(local_only_evt, drv_start,
-	TP_PROTO(काष्ठा ieee80211_local *local),
+	TP_PROTO(struct ieee80211_local *local),
 	TP_ARGS(local)
 );
 
 DEFINE_EVENT(local_u32_evt, drv_get_et_strings,
-	     TP_PROTO(काष्ठा ieee80211_local *local, u32 sset),
+	     TP_PROTO(struct ieee80211_local *local, u32 sset),
 	     TP_ARGS(local, sset)
 );
 
 DEFINE_EVENT(local_u32_evt, drv_get_et_sset_count,
-	     TP_PROTO(काष्ठा ieee80211_local *local, u32 sset),
+	     TP_PROTO(struct ieee80211_local *local, u32 sset),
 	     TP_ARGS(local, sset)
 );
 
 DEFINE_EVENT(local_only_evt, drv_get_et_stats,
-	     TP_PROTO(काष्ठा ieee80211_local *local),
+	     TP_PROTO(struct ieee80211_local *local),
 	     TP_ARGS(local)
 );
 
 DEFINE_EVENT(local_only_evt, drv_suspend,
-	TP_PROTO(काष्ठा ieee80211_local *local),
+	TP_PROTO(struct ieee80211_local *local),
 	TP_ARGS(local)
 );
 
 DEFINE_EVENT(local_only_evt, drv_resume,
-	TP_PROTO(काष्ठा ieee80211_local *local),
+	TP_PROTO(struct ieee80211_local *local),
 	TP_ARGS(local)
 );
 
 TRACE_EVENT(drv_set_wakeup,
-	TP_PROTO(काष्ठा ieee80211_local *local, bool enabled),
+	TP_PROTO(struct ieee80211_local *local, bool enabled),
 	TP_ARGS(local, enabled),
 	TP_STRUCT__entry(
 		LOCAL_ENTRY
@@ -303,24 +302,24 @@ TRACE_EVENT(drv_set_wakeup,
 		LOCAL_ASSIGN;
 		__entry->enabled = enabled;
 	),
-	TP_prपूर्णांकk(LOCAL_PR_FMT " enabled:%d", LOCAL_PR_ARG, __entry->enabled)
+	TP_printk(LOCAL_PR_FMT " enabled:%d", LOCAL_PR_ARG, __entry->enabled)
 );
 
 DEFINE_EVENT(local_only_evt, drv_stop,
-	TP_PROTO(काष्ठा ieee80211_local *local),
+	TP_PROTO(struct ieee80211_local *local),
 	TP_ARGS(local)
 );
 
-DEFINE_EVENT(local_sdata_addr_evt, drv_add_पूर्णांकerface,
-	TP_PROTO(काष्ठा ieee80211_local *local,
-		 काष्ठा ieee80211_sub_अगर_data *sdata),
+DEFINE_EVENT(local_sdata_addr_evt, drv_add_interface,
+	TP_PROTO(struct ieee80211_local *local,
+		 struct ieee80211_sub_if_data *sdata),
 	TP_ARGS(local, sdata)
 );
 
-TRACE_EVENT(drv_change_पूर्णांकerface,
-	TP_PROTO(काष्ठा ieee80211_local *local,
-		 काष्ठा ieee80211_sub_अगर_data *sdata,
-		 क्रमागत nl80211_अगरtype type, bool p2p),
+TRACE_EVENT(drv_change_interface,
+	TP_PROTO(struct ieee80211_local *local,
+		 struct ieee80211_sub_if_data *sdata,
+		 enum nl80211_iftype type, bool p2p),
 
 	TP_ARGS(local, sdata, type, p2p),
 
@@ -338,21 +337,21 @@ TRACE_EVENT(drv_change_पूर्णांकerface,
 		__entry->new_p2p = p2p;
 	),
 
-	TP_prपूर्णांकk(
+	TP_printk(
 		LOCAL_PR_FMT  VIF_PR_FMT " new type:%d%s",
 		LOCAL_PR_ARG, VIF_PR_ARG, __entry->new_type,
 		__entry->new_p2p ? "/p2p" : ""
 	)
 );
 
-DEFINE_EVENT(local_sdata_addr_evt, drv_हटाओ_पूर्णांकerface,
-	TP_PROTO(काष्ठा ieee80211_local *local,
-		 काष्ठा ieee80211_sub_अगर_data *sdata),
+DEFINE_EVENT(local_sdata_addr_evt, drv_remove_interface,
+	TP_PROTO(struct ieee80211_local *local,
+		 struct ieee80211_sub_if_data *sdata),
 	TP_ARGS(local, sdata)
 );
 
 TRACE_EVENT(drv_config,
-	TP_PROTO(काष्ठा ieee80211_local *local,
+	TP_PROTO(struct ieee80211_local *local,
 		 u32 changed),
 
 	TP_ARGS(local, changed),
@@ -361,40 +360,40 @@ TRACE_EVENT(drv_config,
 		LOCAL_ENTRY
 		__field(u32, changed)
 		__field(u32, flags)
-		__field(पूर्णांक, घातer_level)
-		__field(पूर्णांक, dynamic_ps_समयout)
-		__field(u16, listen_पूर्णांकerval)
-		__field(u8, दीर्घ_frame_max_tx_count)
-		__field(u8, लघु_frame_max_tx_count)
+		__field(int, power_level)
+		__field(int, dynamic_ps_timeout)
+		__field(u16, listen_interval)
+		__field(u8, long_frame_max_tx_count)
+		__field(u8, short_frame_max_tx_count)
 		CHANDEF_ENTRY
-		__field(पूर्णांक, smps)
+		__field(int, smps)
 	),
 
 	TP_fast_assign(
 		LOCAL_ASSIGN;
 		__entry->changed = changed;
 		__entry->flags = local->hw.conf.flags;
-		__entry->घातer_level = local->hw.conf.घातer_level;
-		__entry->dynamic_ps_समयout = local->hw.conf.dynamic_ps_समयout;
-		__entry->listen_पूर्णांकerval = local->hw.conf.listen_पूर्णांकerval;
-		__entry->दीर्घ_frame_max_tx_count =
-			local->hw.conf.दीर्घ_frame_max_tx_count;
-		__entry->लघु_frame_max_tx_count =
-			local->hw.conf.लघु_frame_max_tx_count;
+		__entry->power_level = local->hw.conf.power_level;
+		__entry->dynamic_ps_timeout = local->hw.conf.dynamic_ps_timeout;
+		__entry->listen_interval = local->hw.conf.listen_interval;
+		__entry->long_frame_max_tx_count =
+			local->hw.conf.long_frame_max_tx_count;
+		__entry->short_frame_max_tx_count =
+			local->hw.conf.short_frame_max_tx_count;
 		CHANDEF_ASSIGN(&local->hw.conf.chandef)
 		__entry->smps = local->hw.conf.smps_mode;
 	),
 
-	TP_prपूर्णांकk(
+	TP_printk(
 		LOCAL_PR_FMT " ch:%#x" CHANDEF_PR_FMT,
 		LOCAL_PR_ARG, __entry->changed, CHANDEF_PR_ARG
 	)
 );
 
 TRACE_EVENT(drv_bss_info_changed,
-	TP_PROTO(काष्ठा ieee80211_local *local,
-		 काष्ठा ieee80211_sub_अगर_data *sdata,
-		 काष्ठा ieee80211_bss_conf *info,
+	TP_PROTO(struct ieee80211_local *local,
+		 struct ieee80211_sub_if_data *sdata,
+		 struct ieee80211_bss_conf *info,
 		 u32 changed),
 
 	TP_ARGS(local, sdata, info, changed),
@@ -408,17 +407,17 @@ TRACE_EVENT(drv_bss_info_changed,
 		__field(bool, ibss_creator)
 		__field(u16, aid)
 		__field(bool, cts)
-		__field(bool, लघुpre)
-		__field(bool, लघुslot)
+		__field(bool, shortpre)
+		__field(bool, shortslot)
 		__field(bool, enable_beacon)
 		__field(u8, dtimper)
-		__field(u16, bcnपूर्णांक)
+		__field(u16, bcnint)
 		__field(u16, assoc_cap)
 		__field(u64, sync_tsf)
 		__field(u32, sync_device_ts)
 		__field(u8, sync_dtim_count)
 		__field(u32, basic_rates)
-		__array(पूर्णांक, mcast_rate, NUM_NL80211_BANDS)
+		__array(int, mcast_rate, NUM_NL80211_BANDS)
 		__field(u16, ht_operation_mode)
 		__field(s32, cqm_rssi_thold)
 		__field(s32, cqm_rssi_hyst)
@@ -429,14 +428,14 @@ TRACE_EVENT(drv_bss_info_changed,
 				info->arp_addr_cnt > IEEE80211_BSS_ARP_ADDR_LIST_LEN ?
 					IEEE80211_BSS_ARP_ADDR_LIST_LEN :
 					info->arp_addr_cnt)
-		__field(पूर्णांक, arp_addr_cnt)
+		__field(int, arp_addr_cnt)
 		__field(bool, qos)
 		__field(bool, idle)
 		__field(bool, ps)
 		__dynamic_array(u8, ssid, info->ssid_len)
 		__field(bool, hidden_ssid)
-		__field(पूर्णांक, txघातer)
-		__field(u8, p2p_oppps_ctwinकरोw)
+		__field(int, txpower)
+		__field(u8, p2p_oppps_ctwindow)
 	),
 
 	TP_fast_assign(
@@ -447,19 +446,19 @@ TRACE_EVENT(drv_bss_info_changed,
 		__entry->assoc = info->assoc;
 		__entry->ibss_joined = info->ibss_joined;
 		__entry->ibss_creator = info->ibss_creator;
-		__entry->लघुpre = info->use_लघु_preamble;
+		__entry->shortpre = info->use_short_preamble;
 		__entry->cts = info->use_cts_prot;
-		__entry->लघुslot = info->use_लघु_slot;
+		__entry->shortslot = info->use_short_slot;
 		__entry->enable_beacon = info->enable_beacon;
 		__entry->dtimper = info->dtim_period;
-		__entry->bcnपूर्णांक = info->beacon_पूर्णांक;
+		__entry->bcnint = info->beacon_int;
 		__entry->assoc_cap = info->assoc_capability;
 		__entry->sync_tsf = info->sync_tsf;
 		__entry->sync_device_ts = info->sync_device_ts;
 		__entry->sync_dtim_count = info->sync_dtim_count;
 		__entry->basic_rates = info->basic_rates;
-		स_नकल(__entry->mcast_rate, info->mcast_rate,
-		       माप(__entry->mcast_rate));
+		memcpy(__entry->mcast_rate, info->mcast_rate,
+		       sizeof(__entry->mcast_rate));
 		__entry->ht_operation_mode = info->ht_operation_mode;
 		__entry->cqm_rssi_thold = info->cqm_rssi_thold;
 		__entry->cqm_rssi_hyst = info->cqm_rssi_hyst;
@@ -467,33 +466,33 @@ TRACE_EVENT(drv_bss_info_changed,
 		__entry->channel_cfreq1 = info->chandef.center_freq1;
 		__entry->channel_cfreq1_offset = info->chandef.freq1_offset;
 		__entry->arp_addr_cnt = info->arp_addr_cnt;
-		स_नकल(__get_dynamic_array(arp_addr_list), info->arp_addr_list,
-		       माप(u32) * (info->arp_addr_cnt > IEEE80211_BSS_ARP_ADDR_LIST_LEN ?
+		memcpy(__get_dynamic_array(arp_addr_list), info->arp_addr_list,
+		       sizeof(u32) * (info->arp_addr_cnt > IEEE80211_BSS_ARP_ADDR_LIST_LEN ?
 					IEEE80211_BSS_ARP_ADDR_LIST_LEN :
 					info->arp_addr_cnt));
 		__entry->qos = info->qos;
 		__entry->idle = info->idle;
 		__entry->ps = info->ps;
-		स_नकल(__get_dynamic_array(ssid), info->ssid, info->ssid_len);
+		memcpy(__get_dynamic_array(ssid), info->ssid, info->ssid_len);
 		__entry->hidden_ssid = info->hidden_ssid;
-		__entry->txघातer = info->txघातer;
-		__entry->p2p_oppps_ctwinकरोw = info->p2p_noa_attr.oppps_ctwinकरोw;
+		__entry->txpower = info->txpower;
+		__entry->p2p_oppps_ctwindow = info->p2p_noa_attr.oppps_ctwindow;
 	),
 
-	TP_prपूर्णांकk(
+	TP_printk(
 		LOCAL_PR_FMT  VIF_PR_FMT " changed:%#x",
 		LOCAL_PR_ARG, VIF_PR_ARG, __entry->changed
 	)
 );
 
 TRACE_EVENT(drv_prepare_multicast,
-	TP_PROTO(काष्ठा ieee80211_local *local, पूर्णांक mc_count),
+	TP_PROTO(struct ieee80211_local *local, int mc_count),
 
 	TP_ARGS(local, mc_count),
 
 	TP_STRUCT__entry(
 		LOCAL_ENTRY
-		__field(पूर्णांक, mc_count)
+		__field(int, mc_count)
 	),
 
 	TP_fast_assign(
@@ -501,24 +500,24 @@ TRACE_EVENT(drv_prepare_multicast,
 		__entry->mc_count = mc_count;
 	),
 
-	TP_prपूर्णांकk(
+	TP_printk(
 		LOCAL_PR_FMT " prepare mc (%d)",
 		LOCAL_PR_ARG, __entry->mc_count
 	)
 );
 
 TRACE_EVENT(drv_configure_filter,
-	TP_PROTO(काष्ठा ieee80211_local *local,
-		 अचिन्हित पूर्णांक changed_flags,
-		 अचिन्हित पूर्णांक *total_flags,
+	TP_PROTO(struct ieee80211_local *local,
+		 unsigned int changed_flags,
+		 unsigned int *total_flags,
 		 u64 multicast),
 
 	TP_ARGS(local, changed_flags, total_flags, multicast),
 
 	TP_STRUCT__entry(
 		LOCAL_ENTRY
-		__field(अचिन्हित पूर्णांक, changed)
-		__field(अचिन्हित पूर्णांक, total)
+		__field(unsigned int, changed)
+		__field(unsigned int, total)
 		__field(u64, multicast)
 	),
 
@@ -529,25 +528,25 @@ TRACE_EVENT(drv_configure_filter,
 		__entry->multicast = multicast;
 	),
 
-	TP_prपूर्णांकk(
+	TP_printk(
 		LOCAL_PR_FMT " changed:%#x total:%#x",
 		LOCAL_PR_ARG, __entry->changed, __entry->total
 	)
 );
 
-TRACE_EVENT(drv_config_अगरace_filter,
-	TP_PROTO(काष्ठा ieee80211_local *local,
-		 काष्ठा ieee80211_sub_अगर_data *sdata,
-		 अचिन्हित पूर्णांक filter_flags,
-		 अचिन्हित पूर्णांक changed_flags),
+TRACE_EVENT(drv_config_iface_filter,
+	TP_PROTO(struct ieee80211_local *local,
+		 struct ieee80211_sub_if_data *sdata,
+		 unsigned int filter_flags,
+		 unsigned int changed_flags),
 
 	TP_ARGS(local, sdata, filter_flags, changed_flags),
 
 	TP_STRUCT__entry(
 		LOCAL_ENTRY
 		VIF_ENTRY
-		__field(अचिन्हित पूर्णांक, filter_flags)
-		__field(अचिन्हित पूर्णांक, changed_flags)
+		__field(unsigned int, filter_flags)
+		__field(unsigned int, changed_flags)
 	),
 
 	TP_fast_assign(
@@ -557,7 +556,7 @@ TRACE_EVENT(drv_config_अगरace_filter,
 		__entry->changed_flags = changed_flags;
 	),
 
-	TP_prपूर्णांकk(
+	TP_printk(
 		LOCAL_PR_FMT VIF_PR_FMT
 		" filter_flags: %#x changed_flags: %#x",
 		LOCAL_PR_ARG, VIF_PR_ARG, __entry->filter_flags,
@@ -566,8 +565,8 @@ TRACE_EVENT(drv_config_अगरace_filter,
 );
 
 TRACE_EVENT(drv_set_tim,
-	TP_PROTO(काष्ठा ieee80211_local *local,
-		 काष्ठा ieee80211_sta *sta, bool set),
+	TP_PROTO(struct ieee80211_local *local,
+		 struct ieee80211_sta *sta, bool set),
 
 	TP_ARGS(local, sta, set),
 
@@ -583,17 +582,17 @@ TRACE_EVENT(drv_set_tim,
 		__entry->set = set;
 	),
 
-	TP_prपूर्णांकk(
+	TP_printk(
 		LOCAL_PR_FMT STA_PR_FMT " set:%d",
 		LOCAL_PR_ARG, STA_PR_ARG, __entry->set
 	)
 );
 
 TRACE_EVENT(drv_set_key,
-	TP_PROTO(काष्ठा ieee80211_local *local,
-		 क्रमागत set_key_cmd cmd, काष्ठा ieee80211_sub_अगर_data *sdata,
-		 काष्ठा ieee80211_sta *sta,
-		 काष्ठा ieee80211_key_conf *key),
+	TP_PROTO(struct ieee80211_local *local,
+		 enum set_key_cmd cmd, struct ieee80211_sub_if_data *sdata,
+		 struct ieee80211_sta *sta,
+		 struct ieee80211_key_conf *key),
 
 	TP_ARGS(local, cmd, sdata, sta, key),
 
@@ -611,17 +610,17 @@ TRACE_EVENT(drv_set_key,
 		KEY_ASSIGN(key);
 	),
 
-	TP_prपूर्णांकk(
+	TP_printk(
 		LOCAL_PR_FMT  VIF_PR_FMT  STA_PR_FMT KEY_PR_FMT,
 		LOCAL_PR_ARG, VIF_PR_ARG, STA_PR_ARG, KEY_PR_ARG
 	)
 );
 
 TRACE_EVENT(drv_update_tkip_key,
-	TP_PROTO(काष्ठा ieee80211_local *local,
-		 काष्ठा ieee80211_sub_अगर_data *sdata,
-		 काष्ठा ieee80211_key_conf *conf,
-		 काष्ठा ieee80211_sta *sta, u32 iv32),
+	TP_PROTO(struct ieee80211_local *local,
+		 struct ieee80211_sub_if_data *sdata,
+		 struct ieee80211_key_conf *conf,
+		 struct ieee80211_sta *sta, u32 iv32),
 
 	TP_ARGS(local, sdata, conf, sta, iv32),
 
@@ -639,99 +638,99 @@ TRACE_EVENT(drv_update_tkip_key,
 		__entry->iv32 = iv32;
 	),
 
-	TP_prपूर्णांकk(
+	TP_printk(
 		LOCAL_PR_FMT VIF_PR_FMT STA_PR_FMT " iv32:%#x",
 		LOCAL_PR_ARG, VIF_PR_ARG, STA_PR_ARG, __entry->iv32
 	)
 );
 
 DEFINE_EVENT(local_sdata_evt, drv_hw_scan,
-	TP_PROTO(काष्ठा ieee80211_local *local,
-		 काष्ठा ieee80211_sub_अगर_data *sdata),
+	TP_PROTO(struct ieee80211_local *local,
+		 struct ieee80211_sub_if_data *sdata),
 	TP_ARGS(local, sdata)
 );
 
 DEFINE_EVENT(local_sdata_evt, drv_cancel_hw_scan,
-	TP_PROTO(काष्ठा ieee80211_local *local,
-		 काष्ठा ieee80211_sub_अगर_data *sdata),
+	TP_PROTO(struct ieee80211_local *local,
+		 struct ieee80211_sub_if_data *sdata),
 	TP_ARGS(local, sdata)
 );
 
 DEFINE_EVENT(local_sdata_evt, drv_sched_scan_start,
-	TP_PROTO(काष्ठा ieee80211_local *local,
-		 काष्ठा ieee80211_sub_अगर_data *sdata),
+	TP_PROTO(struct ieee80211_local *local,
+		 struct ieee80211_sub_if_data *sdata),
 	TP_ARGS(local, sdata)
 );
 
 DEFINE_EVENT(local_sdata_evt, drv_sched_scan_stop,
-	TP_PROTO(काष्ठा ieee80211_local *local,
-		 काष्ठा ieee80211_sub_अगर_data *sdata),
+	TP_PROTO(struct ieee80211_local *local,
+		 struct ieee80211_sub_if_data *sdata),
 	TP_ARGS(local, sdata)
 );
 
 TRACE_EVENT(drv_sw_scan_start,
-	TP_PROTO(काष्ठा ieee80211_local *local,
-		 काष्ठा ieee80211_sub_अगर_data *sdata,
-		 स्थिर u8 *mac_addr),
+	TP_PROTO(struct ieee80211_local *local,
+		 struct ieee80211_sub_if_data *sdata,
+		 const u8 *mac_addr),
 
 	TP_ARGS(local, sdata, mac_addr),
 
 	TP_STRUCT__entry(
 		LOCAL_ENTRY
 		VIF_ENTRY
-		__array(अक्षर, mac_addr, ETH_ALEN)
+		__array(char, mac_addr, ETH_ALEN)
 	),
 
 	TP_fast_assign(
 		LOCAL_ASSIGN;
 		VIF_ASSIGN;
-		स_नकल(__entry->mac_addr, mac_addr, ETH_ALEN);
+		memcpy(__entry->mac_addr, mac_addr, ETH_ALEN);
 	),
 
-	TP_prपूर्णांकk(LOCAL_PR_FMT ", " VIF_PR_FMT ", addr:%pM",
+	TP_printk(LOCAL_PR_FMT ", " VIF_PR_FMT ", addr:%pM",
 		  LOCAL_PR_ARG, VIF_PR_ARG, __entry->mac_addr)
 );
 
 DEFINE_EVENT(local_sdata_evt, drv_sw_scan_complete,
-	TP_PROTO(काष्ठा ieee80211_local *local,
-		 काष्ठा ieee80211_sub_अगर_data *sdata),
+	TP_PROTO(struct ieee80211_local *local,
+		 struct ieee80211_sub_if_data *sdata),
 	TP_ARGS(local, sdata)
 );
 
 TRACE_EVENT(drv_get_stats,
-	TP_PROTO(काष्ठा ieee80211_local *local,
-		 काष्ठा ieee80211_low_level_stats *stats,
-		 पूर्णांक ret),
+	TP_PROTO(struct ieee80211_local *local,
+		 struct ieee80211_low_level_stats *stats,
+		 int ret),
 
 	TP_ARGS(local, stats, ret),
 
 	TP_STRUCT__entry(
 		LOCAL_ENTRY
-		__field(पूर्णांक, ret)
-		__field(अचिन्हित पूर्णांक, ackfail)
-		__field(अचिन्हित पूर्णांक, rtsfail)
-		__field(अचिन्हित पूर्णांक, fcserr)
-		__field(अचिन्हित पूर्णांक, rtssucc)
+		__field(int, ret)
+		__field(unsigned int, ackfail)
+		__field(unsigned int, rtsfail)
+		__field(unsigned int, fcserr)
+		__field(unsigned int, rtssucc)
 	),
 
 	TP_fast_assign(
 		LOCAL_ASSIGN;
 		__entry->ret = ret;
-		__entry->ackfail = stats->करोt11ACKFailureCount;
-		__entry->rtsfail = stats->करोt11RTSFailureCount;
-		__entry->fcserr = stats->करोt11FCSErrorCount;
-		__entry->rtssucc = stats->करोt11RTSSuccessCount;
+		__entry->ackfail = stats->dot11ACKFailureCount;
+		__entry->rtsfail = stats->dot11RTSFailureCount;
+		__entry->fcserr = stats->dot11FCSErrorCount;
+		__entry->rtssucc = stats->dot11RTSSuccessCount;
 	),
 
-	TP_prपूर्णांकk(
+	TP_printk(
 		LOCAL_PR_FMT " ret:%d",
 		LOCAL_PR_ARG, __entry->ret
 	)
 );
 
 TRACE_EVENT(drv_get_key_seq,
-	TP_PROTO(काष्ठा ieee80211_local *local,
-		 काष्ठा ieee80211_key_conf *key),
+	TP_PROTO(struct ieee80211_local *local,
+		 struct ieee80211_key_conf *key),
 
 	TP_ARGS(local, key),
 
@@ -745,24 +744,24 @@ TRACE_EVENT(drv_get_key_seq,
 		KEY_ASSIGN(key);
 	),
 
-	TP_prपूर्णांकk(
+	TP_printk(
 		LOCAL_PR_FMT KEY_PR_FMT,
 		LOCAL_PR_ARG, KEY_PR_ARG
 	)
 );
 
 DEFINE_EVENT(local_u32_evt, drv_set_frag_threshold,
-	TP_PROTO(काष्ठा ieee80211_local *local, u32 value),
+	TP_PROTO(struct ieee80211_local *local, u32 value),
 	TP_ARGS(local, value)
 );
 
 DEFINE_EVENT(local_u32_evt, drv_set_rts_threshold,
-	TP_PROTO(काष्ठा ieee80211_local *local, u32 value),
+	TP_PROTO(struct ieee80211_local *local, u32 value),
 	TP_ARGS(local, value)
 );
 
 TRACE_EVENT(drv_set_coverage_class,
-	TP_PROTO(काष्ठा ieee80211_local *local, s16 value),
+	TP_PROTO(struct ieee80211_local *local, s16 value),
 
 	TP_ARGS(local, value),
 
@@ -776,17 +775,17 @@ TRACE_EVENT(drv_set_coverage_class,
 		__entry->value = value;
 	),
 
-	TP_prपूर्णांकk(
+	TP_printk(
 		LOCAL_PR_FMT " value:%d",
 		LOCAL_PR_ARG, __entry->value
 	)
 );
 
-TRACE_EVENT(drv_sta_notअगरy,
-	TP_PROTO(काष्ठा ieee80211_local *local,
-		 काष्ठा ieee80211_sub_अगर_data *sdata,
-		 क्रमागत sta_notअगरy_cmd cmd,
-		 काष्ठा ieee80211_sta *sta),
+TRACE_EVENT(drv_sta_notify,
+	TP_PROTO(struct ieee80211_local *local,
+		 struct ieee80211_sub_if_data *sdata,
+		 enum sta_notify_cmd cmd,
+		 struct ieee80211_sta *sta),
 
 	TP_ARGS(local, sdata, cmd, sta),
 
@@ -804,18 +803,18 @@ TRACE_EVENT(drv_sta_notअगरy,
 		__entry->cmd = cmd;
 	),
 
-	TP_prपूर्णांकk(
+	TP_printk(
 		LOCAL_PR_FMT  VIF_PR_FMT  STA_PR_FMT " cmd:%d",
 		LOCAL_PR_ARG, VIF_PR_ARG, STA_PR_ARG, __entry->cmd
 	)
 );
 
 TRACE_EVENT(drv_sta_state,
-	TP_PROTO(काष्ठा ieee80211_local *local,
-		 काष्ठा ieee80211_sub_अगर_data *sdata,
-		 काष्ठा ieee80211_sta *sta,
-		 क्रमागत ieee80211_sta_state old_state,
-		 क्रमागत ieee80211_sta_state new_state),
+	TP_PROTO(struct ieee80211_local *local,
+		 struct ieee80211_sub_if_data *sdata,
+		 struct ieee80211_sta *sta,
+		 enum ieee80211_sta_state old_state,
+		 enum ieee80211_sta_state new_state),
 
 	TP_ARGS(local, sdata, sta, old_state, new_state),
 
@@ -835,7 +834,7 @@ TRACE_EVENT(drv_sta_state,
 		__entry->new_state = new_state;
 	),
 
-	TP_prपूर्णांकk(
+	TP_printk(
 		LOCAL_PR_FMT  VIF_PR_FMT  STA_PR_FMT " state: %d->%d",
 		LOCAL_PR_ARG, VIF_PR_ARG, STA_PR_ARG,
 		__entry->old_state, __entry->new_state
@@ -843,9 +842,9 @@ TRACE_EVENT(drv_sta_state,
 );
 
 TRACE_EVENT(drv_sta_set_txpwr,
-	TP_PROTO(काष्ठा ieee80211_local *local,
-		 काष्ठा ieee80211_sub_अगर_data *sdata,
-		 काष्ठा ieee80211_sta *sta),
+	TP_PROTO(struct ieee80211_local *local,
+		 struct ieee80211_sub_if_data *sdata,
+		 struct ieee80211_sta *sta),
 
 	TP_ARGS(local, sdata, sta),
 
@@ -861,11 +860,11 @@ TRACE_EVENT(drv_sta_set_txpwr,
 		LOCAL_ASSIGN;
 		VIF_ASSIGN;
 		STA_ASSIGN;
-		__entry->txpwr = sta->txpwr.घातer;
+		__entry->txpwr = sta->txpwr.power;
 		__entry->type = sta->txpwr.type;
 	),
 
-	TP_prपूर्णांकk(
+	TP_printk(
 		LOCAL_PR_FMT  VIF_PR_FMT  STA_PR_FMT " txpwr: %d type %d",
 		LOCAL_PR_ARG, VIF_PR_ARG, STA_PR_ARG,
 		__entry->txpwr,  __entry->type
@@ -873,9 +872,9 @@ TRACE_EVENT(drv_sta_set_txpwr,
 );
 
 TRACE_EVENT(drv_sta_rc_update,
-	TP_PROTO(काष्ठा ieee80211_local *local,
-		 काष्ठा ieee80211_sub_अगर_data *sdata,
-		 काष्ठा ieee80211_sta *sta,
+	TP_PROTO(struct ieee80211_local *local,
+		 struct ieee80211_sub_if_data *sdata,
+		 struct ieee80211_sta *sta,
 		 u32 changed),
 
 	TP_ARGS(local, sdata, sta, changed),
@@ -894,16 +893,16 @@ TRACE_EVENT(drv_sta_rc_update,
 		__entry->changed = changed;
 	),
 
-	TP_prपूर्णांकk(
+	TP_printk(
 		LOCAL_PR_FMT  VIF_PR_FMT  STA_PR_FMT " changed: 0x%x",
 		LOCAL_PR_ARG, VIF_PR_ARG, STA_PR_ARG, __entry->changed
 	)
 );
 
 DECLARE_EVENT_CLASS(sta_event,
-	TP_PROTO(काष्ठा ieee80211_local *local,
-		 काष्ठा ieee80211_sub_अगर_data *sdata,
-		 काष्ठा ieee80211_sta *sta),
+	TP_PROTO(struct ieee80211_local *local,
+		 struct ieee80211_sub_if_data *sdata,
+		 struct ieee80211_sta *sta),
 
 	TP_ARGS(local, sdata, sta),
 
@@ -919,58 +918,58 @@ DECLARE_EVENT_CLASS(sta_event,
 		STA_ASSIGN;
 	),
 
-	TP_prपूर्णांकk(
+	TP_printk(
 		LOCAL_PR_FMT  VIF_PR_FMT  STA_PR_FMT,
 		LOCAL_PR_ARG, VIF_PR_ARG, STA_PR_ARG
 	)
 );
 
 DEFINE_EVENT(sta_event, drv_sta_statistics,
-	TP_PROTO(काष्ठा ieee80211_local *local,
-		 काष्ठा ieee80211_sub_अगर_data *sdata,
-		 काष्ठा ieee80211_sta *sta),
+	TP_PROTO(struct ieee80211_local *local,
+		 struct ieee80211_sub_if_data *sdata,
+		 struct ieee80211_sta *sta),
 	TP_ARGS(local, sdata, sta)
 );
 
 DEFINE_EVENT(sta_event, drv_sta_add,
-	TP_PROTO(काष्ठा ieee80211_local *local,
-		 काष्ठा ieee80211_sub_अगर_data *sdata,
-		 काष्ठा ieee80211_sta *sta),
+	TP_PROTO(struct ieee80211_local *local,
+		 struct ieee80211_sub_if_data *sdata,
+		 struct ieee80211_sta *sta),
 	TP_ARGS(local, sdata, sta)
 );
 
-DEFINE_EVENT(sta_event, drv_sta_हटाओ,
-	TP_PROTO(काष्ठा ieee80211_local *local,
-		 काष्ठा ieee80211_sub_अगर_data *sdata,
-		 काष्ठा ieee80211_sta *sta),
+DEFINE_EVENT(sta_event, drv_sta_remove,
+	TP_PROTO(struct ieee80211_local *local,
+		 struct ieee80211_sub_if_data *sdata,
+		 struct ieee80211_sta *sta),
 	TP_ARGS(local, sdata, sta)
 );
 
-DEFINE_EVENT(sta_event, drv_sta_pre_rcu_हटाओ,
-	TP_PROTO(काष्ठा ieee80211_local *local,
-		 काष्ठा ieee80211_sub_अगर_data *sdata,
-		 काष्ठा ieee80211_sta *sta),
+DEFINE_EVENT(sta_event, drv_sta_pre_rcu_remove,
+	TP_PROTO(struct ieee80211_local *local,
+		 struct ieee80211_sub_if_data *sdata,
+		 struct ieee80211_sta *sta),
 	TP_ARGS(local, sdata, sta)
 );
 
 DEFINE_EVENT(sta_event, drv_sync_rx_queues,
-	TP_PROTO(काष्ठा ieee80211_local *local,
-		 काष्ठा ieee80211_sub_अगर_data *sdata,
-		 काष्ठा ieee80211_sta *sta),
+	TP_PROTO(struct ieee80211_local *local,
+		 struct ieee80211_sub_if_data *sdata,
+		 struct ieee80211_sta *sta),
 	TP_ARGS(local, sdata, sta)
 );
 
 DEFINE_EVENT(sta_event, drv_sta_rate_tbl_update,
-	TP_PROTO(काष्ठा ieee80211_local *local,
-		 काष्ठा ieee80211_sub_अगर_data *sdata,
-		 काष्ठा ieee80211_sta *sta),
+	TP_PROTO(struct ieee80211_local *local,
+		 struct ieee80211_sub_if_data *sdata,
+		 struct ieee80211_sta *sta),
 	TP_ARGS(local, sdata, sta)
 );
 
 TRACE_EVENT(drv_conf_tx,
-	TP_PROTO(काष्ठा ieee80211_local *local,
-		 काष्ठा ieee80211_sub_अगर_data *sdata,
-		 u16 ac, स्थिर काष्ठा ieee80211_tx_queue_params *params),
+	TP_PROTO(struct ieee80211_local *local,
+		 struct ieee80211_sub_if_data *sdata,
+		 u16 ac, const struct ieee80211_tx_queue_params *params),
 
 	TP_ARGS(local, sdata, ac, params),
 
@@ -981,7 +980,7 @@ TRACE_EVENT(drv_conf_tx,
 		__field(u16, txop)
 		__field(u16, cw_min)
 		__field(u16, cw_max)
-		__field(u8, aअगरs)
+		__field(u8, aifs)
 		__field(bool, uapsd)
 	),
 
@@ -992,25 +991,25 @@ TRACE_EVENT(drv_conf_tx,
 		__entry->txop = params->txop;
 		__entry->cw_max = params->cw_max;
 		__entry->cw_min = params->cw_min;
-		__entry->aअगरs = params->aअगरs;
+		__entry->aifs = params->aifs;
 		__entry->uapsd = params->uapsd;
 	),
 
-	TP_prपूर्णांकk(
+	TP_printk(
 		LOCAL_PR_FMT  VIF_PR_FMT  " AC:%d",
 		LOCAL_PR_ARG, VIF_PR_ARG, __entry->ac
 	)
 );
 
 DEFINE_EVENT(local_sdata_evt, drv_get_tsf,
-	TP_PROTO(काष्ठा ieee80211_local *local,
-		 काष्ठा ieee80211_sub_अगर_data *sdata),
+	TP_PROTO(struct ieee80211_local *local,
+		 struct ieee80211_sub_if_data *sdata),
 	TP_ARGS(local, sdata)
 );
 
 TRACE_EVENT(drv_set_tsf,
-	TP_PROTO(काष्ठा ieee80211_local *local,
-		 काष्ठा ieee80211_sub_अगर_data *sdata,
+	TP_PROTO(struct ieee80211_local *local,
+		 struct ieee80211_sub_if_data *sdata,
 		 u64 tsf),
 
 	TP_ARGS(local, sdata, tsf),
@@ -1027,15 +1026,15 @@ TRACE_EVENT(drv_set_tsf,
 		__entry->tsf = tsf;
 	),
 
-	TP_prपूर्णांकk(
+	TP_printk(
 		LOCAL_PR_FMT  VIF_PR_FMT  " tsf:%llu",
-		LOCAL_PR_ARG, VIF_PR_ARG, (अचिन्हित दीर्घ दीर्घ)__entry->tsf
+		LOCAL_PR_ARG, VIF_PR_ARG, (unsigned long long)__entry->tsf
 	)
 );
 
 TRACE_EVENT(drv_offset_tsf,
-	TP_PROTO(काष्ठा ieee80211_local *local,
-		 काष्ठा ieee80211_sub_अगर_data *sdata,
+	TP_PROTO(struct ieee80211_local *local,
+		 struct ieee80211_sub_if_data *sdata,
 		 s64 offset),
 
 	TP_ARGS(local, sdata, offset),
@@ -1052,28 +1051,28 @@ TRACE_EVENT(drv_offset_tsf,
 		__entry->tsf_offset = offset;
 	),
 
-	TP_prपूर्णांकk(
+	TP_printk(
 		LOCAL_PR_FMT  VIF_PR_FMT  " tsf offset:%lld",
 		LOCAL_PR_ARG, VIF_PR_ARG,
-		(अचिन्हित दीर्घ दीर्घ)__entry->tsf_offset
+		(unsigned long long)__entry->tsf_offset
 	)
 );
 
 DEFINE_EVENT(local_sdata_evt, drv_reset_tsf,
-	TP_PROTO(काष्ठा ieee80211_local *local,
-		 काष्ठा ieee80211_sub_अगर_data *sdata),
+	TP_PROTO(struct ieee80211_local *local,
+		 struct ieee80211_sub_if_data *sdata),
 	TP_ARGS(local, sdata)
 );
 
 DEFINE_EVENT(local_only_evt, drv_tx_last_beacon,
-	TP_PROTO(काष्ठा ieee80211_local *local),
+	TP_PROTO(struct ieee80211_local *local),
 	TP_ARGS(local)
 );
 
 TRACE_EVENT(drv_ampdu_action,
-	TP_PROTO(काष्ठा ieee80211_local *local,
-		 काष्ठा ieee80211_sub_अगर_data *sdata,
-		 काष्ठा ieee80211_ampdu_params *params),
+	TP_PROTO(struct ieee80211_local *local,
+		 struct ieee80211_sub_if_data *sdata,
+		 struct ieee80211_ampdu_params *params),
 
 	TP_ARGS(local, sdata, params),
 
@@ -1089,21 +1088,21 @@ TRACE_EVENT(drv_ampdu_action,
 		AMPDU_ACTION_ASSIGN;
 	),
 
-	TP_prपूर्णांकk(
+	TP_printk(
 		LOCAL_PR_FMT VIF_PR_FMT AMPDU_ACTION_PR_FMT,
 		LOCAL_PR_ARG, VIF_PR_ARG, AMPDU_ACTION_PR_ARG
 	)
 );
 
 TRACE_EVENT(drv_get_survey,
-	TP_PROTO(काष्ठा ieee80211_local *local, पूर्णांक _idx,
-		 काष्ठा survey_info *survey),
+	TP_PROTO(struct ieee80211_local *local, int _idx,
+		 struct survey_info *survey),
 
 	TP_ARGS(local, _idx, survey),
 
 	TP_STRUCT__entry(
 		LOCAL_ENTRY
-		__field(पूर्णांक, idx)
+		__field(int, idx)
 	),
 
 	TP_fast_assign(
@@ -1111,14 +1110,14 @@ TRACE_EVENT(drv_get_survey,
 		__entry->idx = _idx;
 	),
 
-	TP_prपूर्णांकk(
+	TP_printk(
 		LOCAL_PR_FMT " idx:%d",
 		LOCAL_PR_ARG, __entry->idx
 	)
 );
 
 TRACE_EVENT(drv_flush,
-	TP_PROTO(काष्ठा ieee80211_local *local,
+	TP_PROTO(struct ieee80211_local *local,
 		 u32 queues, bool drop),
 
 	TP_ARGS(local, queues, drop),
@@ -1135,25 +1134,25 @@ TRACE_EVENT(drv_flush,
 		__entry->queues = queues;
 	),
 
-	TP_prपूर्णांकk(
+	TP_printk(
 		LOCAL_PR_FMT " queues:0x%x drop:%d",
 		LOCAL_PR_ARG, __entry->queues, __entry->drop
 	)
 );
 
-TRACE_EVENT(drv_channel_चयन,
-	TP_PROTO(काष्ठा ieee80211_local *local,
-		 काष्ठा ieee80211_sub_अगर_data *sdata,
-		 काष्ठा ieee80211_channel_चयन *ch_चयन),
+TRACE_EVENT(drv_channel_switch,
+	TP_PROTO(struct ieee80211_local *local,
+		 struct ieee80211_sub_if_data *sdata,
+		 struct ieee80211_channel_switch *ch_switch),
 
-	TP_ARGS(local, sdata, ch_चयन),
+	TP_ARGS(local, sdata, ch_switch),
 
 	TP_STRUCT__entry(
 		LOCAL_ENTRY
 		VIF_ENTRY
 		CHANDEF_ENTRY
-		__field(u64, बारtamp)
-		__field(u32, device_बारtamp)
+		__field(u64, timestamp)
+		__field(u32, device_timestamp)
 		__field(bool, block_tx)
 		__field(u8, count)
 	),
@@ -1161,21 +1160,21 @@ TRACE_EVENT(drv_channel_चयन,
 	TP_fast_assign(
 		LOCAL_ASSIGN;
 		VIF_ASSIGN;
-		CHANDEF_ASSIGN(&ch_चयन->chandef)
-		__entry->बारtamp = ch_चयन->बारtamp;
-		__entry->device_बारtamp = ch_चयन->device_बारtamp;
-		__entry->block_tx = ch_चयन->block_tx;
-		__entry->count = ch_चयन->count;
+		CHANDEF_ASSIGN(&ch_switch->chandef)
+		__entry->timestamp = ch_switch->timestamp;
+		__entry->device_timestamp = ch_switch->device_timestamp;
+		__entry->block_tx = ch_switch->block_tx;
+		__entry->count = ch_switch->count;
 	),
 
-	TP_prपूर्णांकk(
+	TP_printk(
 		LOCAL_PR_FMT VIF_PR_FMT " new " CHANDEF_PR_FMT " count:%d",
 		LOCAL_PR_ARG, VIF_PR_ARG, CHANDEF_PR_ARG, __entry->count
 	)
 );
 
 TRACE_EVENT(drv_set_antenna,
-	TP_PROTO(काष्ठा ieee80211_local *local, u32 tx_ant, u32 rx_ant, पूर्णांक ret),
+	TP_PROTO(struct ieee80211_local *local, u32 tx_ant, u32 rx_ant, int ret),
 
 	TP_ARGS(local, tx_ant, rx_ant, ret),
 
@@ -1183,7 +1182,7 @@ TRACE_EVENT(drv_set_antenna,
 		LOCAL_ENTRY
 		__field(u32, tx_ant)
 		__field(u32, rx_ant)
-		__field(पूर्णांक, ret)
+		__field(int, ret)
 	),
 
 	TP_fast_assign(
@@ -1193,14 +1192,14 @@ TRACE_EVENT(drv_set_antenna,
 		__entry->ret = ret;
 	),
 
-	TP_prपूर्णांकk(
+	TP_printk(
 		LOCAL_PR_FMT " tx_ant:%d rx_ant:%d ret:%d",
 		LOCAL_PR_ARG, __entry->tx_ant, __entry->rx_ant, __entry->ret
 	)
 );
 
 TRACE_EVENT(drv_get_antenna,
-	TP_PROTO(काष्ठा ieee80211_local *local, u32 tx_ant, u32 rx_ant, पूर्णांक ret),
+	TP_PROTO(struct ieee80211_local *local, u32 tx_ant, u32 rx_ant, int ret),
 
 	TP_ARGS(local, tx_ant, rx_ant, ret),
 
@@ -1208,7 +1207,7 @@ TRACE_EVENT(drv_get_antenna,
 		LOCAL_ENTRY
 		__field(u32, tx_ant)
 		__field(u32, rx_ant)
-		__field(पूर्णांक, ret)
+		__field(int, ret)
 	),
 
 	TP_fast_assign(
@@ -1218,27 +1217,27 @@ TRACE_EVENT(drv_get_antenna,
 		__entry->ret = ret;
 	),
 
-	TP_prपूर्णांकk(
+	TP_printk(
 		LOCAL_PR_FMT " tx_ant:%d rx_ant:%d ret:%d",
 		LOCAL_PR_ARG, __entry->tx_ant, __entry->rx_ant, __entry->ret
 	)
 );
 
-TRACE_EVENT(drv_reमुख्य_on_channel,
-	TP_PROTO(काष्ठा ieee80211_local *local,
-		 काष्ठा ieee80211_sub_अगर_data *sdata,
-		 काष्ठा ieee80211_channel *chan,
-		 अचिन्हित पूर्णांक duration,
-		 क्रमागत ieee80211_roc_type type),
+TRACE_EVENT(drv_remain_on_channel,
+	TP_PROTO(struct ieee80211_local *local,
+		 struct ieee80211_sub_if_data *sdata,
+		 struct ieee80211_channel *chan,
+		 unsigned int duration,
+		 enum ieee80211_roc_type type),
 
 	TP_ARGS(local, sdata, chan, duration, type),
 
 	TP_STRUCT__entry(
 		LOCAL_ENTRY
 		VIF_ENTRY
-		__field(पूर्णांक, center_freq)
-		__field(पूर्णांक, freq_offset)
-		__field(अचिन्हित पूर्णांक, duration)
+		__field(int, center_freq)
+		__field(int, freq_offset)
+		__field(unsigned int, duration)
 		__field(u32, type)
 	),
 
@@ -1251,7 +1250,7 @@ TRACE_EVENT(drv_reमुख्य_on_channel,
 		__entry->type = type;
 	),
 
-	TP_prपूर्णांकk(
+	TP_printk(
 		LOCAL_PR_FMT  VIF_PR_FMT " freq:%d.%03dMHz duration:%dms type=%d",
 		LOCAL_PR_ARG, VIF_PR_ARG,
 		__entry->center_freq, __entry->freq_offset,
@@ -1259,14 +1258,14 @@ TRACE_EVENT(drv_reमुख्य_on_channel,
 	)
 );
 
-DEFINE_EVENT(local_sdata_evt, drv_cancel_reमुख्य_on_channel,
-	TP_PROTO(काष्ठा ieee80211_local *local,
-		 काष्ठा ieee80211_sub_अगर_data *sdata),
+DEFINE_EVENT(local_sdata_evt, drv_cancel_remain_on_channel,
+	TP_PROTO(struct ieee80211_local *local,
+		 struct ieee80211_sub_if_data *sdata),
 	TP_ARGS(local, sdata)
 );
 
 TRACE_EVENT(drv_set_ringparam,
-	TP_PROTO(काष्ठा ieee80211_local *local, u32 tx, u32 rx),
+	TP_PROTO(struct ieee80211_local *local, u32 tx, u32 rx),
 
 	TP_ARGS(local, tx, rx),
 
@@ -1282,14 +1281,14 @@ TRACE_EVENT(drv_set_ringparam,
 		__entry->rx = rx;
 	),
 
-	TP_prपूर्णांकk(
+	TP_printk(
 		LOCAL_PR_FMT " tx:%d rx %d",
 		LOCAL_PR_ARG, __entry->tx, __entry->rx
 	)
 );
 
 TRACE_EVENT(drv_get_ringparam,
-	TP_PROTO(काष्ठा ieee80211_local *local, u32 *tx, u32 *tx_max,
+	TP_PROTO(struct ieee80211_local *local, u32 *tx, u32 *tx_max,
 		 u32 *rx, u32 *rx_max),
 
 	TP_ARGS(local, tx, tx_max, rx, rx_max),
@@ -1310,7 +1309,7 @@ TRACE_EVENT(drv_get_ringparam,
 		__entry->rx_max = *rx_max;
 	),
 
-	TP_prपूर्णांकk(
+	TP_printk(
 		LOCAL_PR_FMT " tx:%d tx_max %d rx %d rx_max %d",
 		LOCAL_PR_ARG,
 		__entry->tx, __entry->tx_max, __entry->rx, __entry->rx_max
@@ -1318,19 +1317,19 @@ TRACE_EVENT(drv_get_ringparam,
 );
 
 DEFINE_EVENT(local_only_evt, drv_tx_frames_pending,
-	TP_PROTO(काष्ठा ieee80211_local *local),
+	TP_PROTO(struct ieee80211_local *local),
 	TP_ARGS(local)
 );
 
-DEFINE_EVENT(local_only_evt, drv_offchannel_tx_cancel_रुको,
-	TP_PROTO(काष्ठा ieee80211_local *local),
+DEFINE_EVENT(local_only_evt, drv_offchannel_tx_cancel_wait,
+	TP_PROTO(struct ieee80211_local *local),
 	TP_ARGS(local)
 );
 
 TRACE_EVENT(drv_set_bitrate_mask,
-	TP_PROTO(काष्ठा ieee80211_local *local,
-		 काष्ठा ieee80211_sub_अगर_data *sdata,
-		 स्थिर काष्ठा cfg80211_bitrate_mask *mask),
+	TP_PROTO(struct ieee80211_local *local,
+		 struct ieee80211_sub_if_data *sdata,
+		 const struct cfg80211_bitrate_mask *mask),
 
 	TP_ARGS(local, sdata, mask),
 
@@ -1348,16 +1347,16 @@ TRACE_EVENT(drv_set_bitrate_mask,
 		__entry->legacy_5g = mask->control[NL80211_BAND_5GHZ].legacy;
 	),
 
-	TP_prपूर्णांकk(
+	TP_printk(
 		LOCAL_PR_FMT  VIF_PR_FMT " 2G Mask:0x%x 5G Mask:0x%x",
 		LOCAL_PR_ARG, VIF_PR_ARG, __entry->legacy_2g, __entry->legacy_5g
 	)
 );
 
 TRACE_EVENT(drv_set_rekey_data,
-	TP_PROTO(काष्ठा ieee80211_local *local,
-		 काष्ठा ieee80211_sub_अगर_data *sdata,
-		 काष्ठा cfg80211_gtk_rekey_data *data),
+	TP_PROTO(struct ieee80211_local *local,
+		 struct ieee80211_sub_if_data *sdata,
+		 struct cfg80211_gtk_rekey_data *data),
 
 	TP_ARGS(local, sdata, data),
 
@@ -1372,20 +1371,20 @@ TRACE_EVENT(drv_set_rekey_data,
 	TP_fast_assign(
 		LOCAL_ASSIGN;
 		VIF_ASSIGN;
-		स_नकल(__entry->kek, data->kek, NL80211_KEK_LEN);
-		स_नकल(__entry->kck, data->kck, NL80211_KCK_LEN);
-		स_नकल(__entry->replay_ctr, data->replay_ctr,
+		memcpy(__entry->kek, data->kek, NL80211_KEK_LEN);
+		memcpy(__entry->kck, data->kck, NL80211_KCK_LEN);
+		memcpy(__entry->replay_ctr, data->replay_ctr,
 		       NL80211_REPLAY_CTR_LEN);
 	),
 
-	TP_prपूर्णांकk(LOCAL_PR_FMT VIF_PR_FMT,
+	TP_printk(LOCAL_PR_FMT VIF_PR_FMT,
 		  LOCAL_PR_ARG, VIF_PR_ARG)
 );
 
 TRACE_EVENT(drv_event_callback,
-	TP_PROTO(काष्ठा ieee80211_local *local,
-		 काष्ठा ieee80211_sub_अगर_data *sdata,
-		 स्थिर काष्ठा ieee80211_event *_event),
+	TP_PROTO(struct ieee80211_local *local,
+		 struct ieee80211_sub_if_data *sdata,
+		 const struct ieee80211_event *_event),
 
 	TP_ARGS(local, sdata, _event),
 
@@ -1401,17 +1400,17 @@ TRACE_EVENT(drv_event_callback,
 		__entry->type = _event->type;
 	),
 
-	TP_prपूर्णांकk(
+	TP_printk(
 		LOCAL_PR_FMT VIF_PR_FMT " event:%d",
 		LOCAL_PR_ARG, VIF_PR_ARG, __entry->type
 	)
 );
 
 DECLARE_EVENT_CLASS(release_evt,
-	TP_PROTO(काष्ठा ieee80211_local *local,
-		 काष्ठा ieee80211_sta *sta,
-		 u16 tids, पूर्णांक num_frames,
-		 क्रमागत ieee80211_frame_release_type reason,
+	TP_PROTO(struct ieee80211_local *local,
+		 struct ieee80211_sta *sta,
+		 u16 tids, int num_frames,
+		 enum ieee80211_frame_release_type reason,
 		 bool more_data),
 
 	TP_ARGS(local, sta, tids, num_frames, reason, more_data),
@@ -1420,8 +1419,8 @@ DECLARE_EVENT_CLASS(release_evt,
 		LOCAL_ENTRY
 		STA_ENTRY
 		__field(u16, tids)
-		__field(पूर्णांक, num_frames)
-		__field(पूर्णांक, reason)
+		__field(int, num_frames)
+		__field(int, reason)
 		__field(bool, more_data)
 	),
 
@@ -1434,7 +1433,7 @@ DECLARE_EVENT_CLASS(release_evt,
 		__entry->more_data = more_data;
 	),
 
-	TP_prपूर्णांकk(
+	TP_printk(
 		LOCAL_PR_FMT STA_PR_FMT
 		" TIDs:0x%.4x frames:%d reason:%d more:%d",
 		LOCAL_PR_ARG, STA_PR_ARG, __entry->tids, __entry->num_frames,
@@ -1443,28 +1442,28 @@ DECLARE_EVENT_CLASS(release_evt,
 );
 
 DEFINE_EVENT(release_evt, drv_release_buffered_frames,
-	TP_PROTO(काष्ठा ieee80211_local *local,
-		 काष्ठा ieee80211_sta *sta,
-		 u16 tids, पूर्णांक num_frames,
-		 क्रमागत ieee80211_frame_release_type reason,
+	TP_PROTO(struct ieee80211_local *local,
+		 struct ieee80211_sta *sta,
+		 u16 tids, int num_frames,
+		 enum ieee80211_frame_release_type reason,
 		 bool more_data),
 
 	TP_ARGS(local, sta, tids, num_frames, reason, more_data)
 );
 
 DEFINE_EVENT(release_evt, drv_allow_buffered_frames,
-	TP_PROTO(काष्ठा ieee80211_local *local,
-		 काष्ठा ieee80211_sta *sta,
-		 u16 tids, पूर्णांक num_frames,
-		 क्रमागत ieee80211_frame_release_type reason,
+	TP_PROTO(struct ieee80211_local *local,
+		 struct ieee80211_sta *sta,
+		 u16 tids, int num_frames,
+		 enum ieee80211_frame_release_type reason,
 		 bool more_data),
 
 	TP_ARGS(local, sta, tids, num_frames, reason, more_data)
 );
 
 TRACE_EVENT(drv_mgd_prepare_tx,
-	TP_PROTO(काष्ठा ieee80211_local *local,
-		 काष्ठा ieee80211_sub_अगर_data *sdata,
+	TP_PROTO(struct ieee80211_local *local,
+		 struct ieee80211_sub_if_data *sdata,
 		 u16 duration),
 
 	TP_ARGS(local, sdata, duration),
@@ -1481,22 +1480,22 @@ TRACE_EVENT(drv_mgd_prepare_tx,
 		__entry->duration = duration;
 	),
 
-	TP_prपूर्णांकk(
+	TP_printk(
 		LOCAL_PR_FMT VIF_PR_FMT " duration: %u",
 		LOCAL_PR_ARG, VIF_PR_ARG, __entry->duration
 	)
 );
 
 DEFINE_EVENT(local_sdata_evt, drv_mgd_protect_tdls_discover,
-	TP_PROTO(काष्ठा ieee80211_local *local,
-		 काष्ठा ieee80211_sub_अगर_data *sdata),
+	TP_PROTO(struct ieee80211_local *local,
+		 struct ieee80211_sub_if_data *sdata),
 
 	TP_ARGS(local, sdata)
 );
 
 DECLARE_EVENT_CLASS(local_chanctx,
-	TP_PROTO(काष्ठा ieee80211_local *local,
-		 काष्ठा ieee80211_chanctx *ctx),
+	TP_PROTO(struct ieee80211_local *local,
+		 struct ieee80211_chanctx *ctx),
 
 	TP_ARGS(local, ctx),
 
@@ -1510,27 +1509,27 @@ DECLARE_EVENT_CLASS(local_chanctx,
 		CHANCTX_ASSIGN;
 	),
 
-	TP_prपूर्णांकk(
+	TP_printk(
 		LOCAL_PR_FMT CHANCTX_PR_FMT,
 		LOCAL_PR_ARG, CHANCTX_PR_ARG
 	)
 );
 
 DEFINE_EVENT(local_chanctx, drv_add_chanctx,
-	TP_PROTO(काष्ठा ieee80211_local *local,
-		 काष्ठा ieee80211_chanctx *ctx),
+	TP_PROTO(struct ieee80211_local *local,
+		 struct ieee80211_chanctx *ctx),
 	TP_ARGS(local, ctx)
 );
 
-DEFINE_EVENT(local_chanctx, drv_हटाओ_chanctx,
-	TP_PROTO(काष्ठा ieee80211_local *local,
-		 काष्ठा ieee80211_chanctx *ctx),
+DEFINE_EVENT(local_chanctx, drv_remove_chanctx,
+	TP_PROTO(struct ieee80211_local *local,
+		 struct ieee80211_chanctx *ctx),
 	TP_ARGS(local, ctx)
 );
 
 TRACE_EVENT(drv_change_chanctx,
-	TP_PROTO(काष्ठा ieee80211_local *local,
-		 काष्ठा ieee80211_chanctx *ctx,
+	TP_PROTO(struct ieee80211_local *local,
+		 struct ieee80211_chanctx *ctx,
 		 u32 changed),
 
 	TP_ARGS(local, ctx, changed),
@@ -1547,73 +1546,73 @@ TRACE_EVENT(drv_change_chanctx,
 		__entry->changed = changed;
 	),
 
-	TP_prपूर्णांकk(
+	TP_printk(
 		LOCAL_PR_FMT CHANCTX_PR_FMT " changed:%#x",
 		LOCAL_PR_ARG, CHANCTX_PR_ARG, __entry->changed
 	)
 );
 
-#अगर !defined(__TRACE_VIF_ENTRY)
-#घोषणा __TRACE_VIF_ENTRY
-काष्ठा trace_vअगर_entry अणु
-	क्रमागत nl80211_अगरtype vअगर_type;
+#if !defined(__TRACE_VIF_ENTRY)
+#define __TRACE_VIF_ENTRY
+struct trace_vif_entry {
+	enum nl80211_iftype vif_type;
 	bool p2p;
-	अक्षर vअगर_name[IFNAMSIZ];
-पूर्ण __packed;
+	char vif_name[IFNAMSIZ];
+} __packed;
 
-काष्ठा trace_chandef_entry अणु
+struct trace_chandef_entry {
 	u32 control_freq;
 	u32 freq_offset;
 	u32 chan_width;
 	u32 center_freq1;
 	u32 freq1_offset;
 	u32 center_freq2;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा trace_चयन_entry अणु
-	काष्ठा trace_vअगर_entry vअगर;
-	काष्ठा trace_chandef_entry old_chandef;
-	काष्ठा trace_chandef_entry new_chandef;
-पूर्ण __packed;
+struct trace_switch_entry {
+	struct trace_vif_entry vif;
+	struct trace_chandef_entry old_chandef;
+	struct trace_chandef_entry new_chandef;
+} __packed;
 
-#घोषणा SWITCH_ENTRY_ASSIGN(to, from) local_vअगरs[i].to = vअगरs[i].from
-#पूर्ण_अगर
+#define SWITCH_ENTRY_ASSIGN(to, from) local_vifs[i].to = vifs[i].from
+#endif
 
-TRACE_EVENT(drv_चयन_vअगर_chanctx,
-	TP_PROTO(काष्ठा ieee80211_local *local,
-		 काष्ठा ieee80211_vअगर_chanctx_चयन *vअगरs,
-		 पूर्णांक n_vअगरs, क्रमागत ieee80211_chanctx_चयन_mode mode),
-	    TP_ARGS(local, vअगरs, n_vअगरs, mode),
+TRACE_EVENT(drv_switch_vif_chanctx,
+	TP_PROTO(struct ieee80211_local *local,
+		 struct ieee80211_vif_chanctx_switch *vifs,
+		 int n_vifs, enum ieee80211_chanctx_switch_mode mode),
+	    TP_ARGS(local, vifs, n_vifs, mode),
 
 	TP_STRUCT__entry(
 		LOCAL_ENTRY
-		__field(पूर्णांक, n_vअगरs)
+		__field(int, n_vifs)
 		__field(u32, mode)
-		__dynamic_array(u8, vअगरs,
-				माप(काष्ठा trace_चयन_entry) * n_vअगरs)
+		__dynamic_array(u8, vifs,
+				sizeof(struct trace_switch_entry) * n_vifs)
 	),
 
 	TP_fast_assign(
 		LOCAL_ASSIGN;
-		__entry->n_vअगरs = n_vअगरs;
+		__entry->n_vifs = n_vifs;
 		__entry->mode = mode;
-		अणु
-			काष्ठा trace_चयन_entry *local_vअगरs =
-				__get_dynamic_array(vअगरs);
-			पूर्णांक i;
+		{
+			struct trace_switch_entry *local_vifs =
+				__get_dynamic_array(vifs);
+			int i;
 
-			क्रम (i = 0; i < n_vअगरs; i++) अणु
-				काष्ठा ieee80211_sub_अगर_data *sdata;
+			for (i = 0; i < n_vifs; i++) {
+				struct ieee80211_sub_if_data *sdata;
 
-				sdata = container_of(vअगरs[i].vअगर,
-						काष्ठा ieee80211_sub_अगर_data,
-						vअगर);
+				sdata = container_of(vifs[i].vif,
+						struct ieee80211_sub_if_data,
+						vif);
 
-				SWITCH_ENTRY_ASSIGN(vअगर.vअगर_type, vअगर->type);
-				SWITCH_ENTRY_ASSIGN(vअगर.p2p, vअगर->p2p);
-				म_नकलन(local_vअगरs[i].vअगर.vअगर_name,
+				SWITCH_ENTRY_ASSIGN(vif.vif_type, vif->type);
+				SWITCH_ENTRY_ASSIGN(vif.p2p, vif->p2p);
+				strncpy(local_vifs[i].vif.vif_name,
 					sdata->name,
-					माप(local_vअगरs[i].vअगर.vअगर_name));
+					sizeof(local_vifs[i].vif.vif_name));
 				SWITCH_ENTRY_ASSIGN(old_chandef.control_freq,
 						old_ctx->def.chan->center_freq);
 				SWITCH_ENTRY_ASSIGN(old_chandef.freq_offset,
@@ -1638,20 +1637,20 @@ TRACE_EVENT(drv_चयन_vअगर_chanctx,
 						    new_ctx->def.freq1_offset);
 				SWITCH_ENTRY_ASSIGN(new_chandef.center_freq2,
 						    new_ctx->def.center_freq2);
-			पूर्ण
-		पूर्ण
+			}
+		}
 	),
 
-	TP_prपूर्णांकk(
+	TP_printk(
 		LOCAL_PR_FMT " n_vifs:%d mode:%d",
-		LOCAL_PR_ARG, __entry->n_vअगरs, __entry->mode
+		LOCAL_PR_ARG, __entry->n_vifs, __entry->mode
 	)
 );
 
 DECLARE_EVENT_CLASS(local_sdata_chanctx,
-	TP_PROTO(काष्ठा ieee80211_local *local,
-		 काष्ठा ieee80211_sub_अगर_data *sdata,
-		 काष्ठा ieee80211_chanctx *ctx),
+	TP_PROTO(struct ieee80211_local *local,
+		 struct ieee80211_sub_if_data *sdata,
+		 struct ieee80211_chanctx *ctx),
 
 	TP_ARGS(local, sdata, ctx),
 
@@ -1667,30 +1666,30 @@ DECLARE_EVENT_CLASS(local_sdata_chanctx,
 		CHANCTX_ASSIGN;
 	),
 
-	TP_prपूर्णांकk(
+	TP_printk(
 		LOCAL_PR_FMT VIF_PR_FMT CHANCTX_PR_FMT,
 		LOCAL_PR_ARG, VIF_PR_ARG, CHANCTX_PR_ARG
 	)
 );
 
-DEFINE_EVENT(local_sdata_chanctx, drv_assign_vअगर_chanctx,
-	TP_PROTO(काष्ठा ieee80211_local *local,
-		 काष्ठा ieee80211_sub_अगर_data *sdata,
-		 काष्ठा ieee80211_chanctx *ctx),
+DEFINE_EVENT(local_sdata_chanctx, drv_assign_vif_chanctx,
+	TP_PROTO(struct ieee80211_local *local,
+		 struct ieee80211_sub_if_data *sdata,
+		 struct ieee80211_chanctx *ctx),
 	TP_ARGS(local, sdata, ctx)
 );
 
-DEFINE_EVENT(local_sdata_chanctx, drv_unassign_vअगर_chanctx,
-	TP_PROTO(काष्ठा ieee80211_local *local,
-		 काष्ठा ieee80211_sub_अगर_data *sdata,
-		 काष्ठा ieee80211_chanctx *ctx),
+DEFINE_EVENT(local_sdata_chanctx, drv_unassign_vif_chanctx,
+	TP_PROTO(struct ieee80211_local *local,
+		 struct ieee80211_sub_if_data *sdata,
+		 struct ieee80211_chanctx *ctx),
 	TP_ARGS(local, sdata, ctx)
 );
 
 TRACE_EVENT(drv_start_ap,
-	TP_PROTO(काष्ठा ieee80211_local *local,
-		 काष्ठा ieee80211_sub_अगर_data *sdata,
-		 काष्ठा ieee80211_bss_conf *info),
+	TP_PROTO(struct ieee80211_local *local,
+		 struct ieee80211_sub_if_data *sdata,
+		 struct ieee80211_bss_conf *info),
 
 	TP_ARGS(local, sdata, info),
 
@@ -1698,7 +1697,7 @@ TRACE_EVENT(drv_start_ap,
 		LOCAL_ENTRY
 		VIF_ENTRY
 		__field(u8, dtimper)
-		__field(u16, bcnपूर्णांक)
+		__field(u16, bcnint)
 		__dynamic_array(u8, ssid, info->ssid_len)
 		__field(bool, hidden_ssid)
 	),
@@ -1707,26 +1706,26 @@ TRACE_EVENT(drv_start_ap,
 		LOCAL_ASSIGN;
 		VIF_ASSIGN;
 		__entry->dtimper = info->dtim_period;
-		__entry->bcnपूर्णांक = info->beacon_पूर्णांक;
-		स_नकल(__get_dynamic_array(ssid), info->ssid, info->ssid_len);
+		__entry->bcnint = info->beacon_int;
+		memcpy(__get_dynamic_array(ssid), info->ssid, info->ssid_len);
 		__entry->hidden_ssid = info->hidden_ssid;
 	),
 
-	TP_prपूर्णांकk(
+	TP_printk(
 		LOCAL_PR_FMT  VIF_PR_FMT,
 		LOCAL_PR_ARG, VIF_PR_ARG
 	)
 );
 
 DEFINE_EVENT(local_sdata_evt, drv_stop_ap,
-	TP_PROTO(काष्ठा ieee80211_local *local,
-		 काष्ठा ieee80211_sub_अगर_data *sdata),
+	TP_PROTO(struct ieee80211_local *local,
+		 struct ieee80211_sub_if_data *sdata),
 	TP_ARGS(local, sdata)
 );
 
 TRACE_EVENT(drv_reconfig_complete,
-	TP_PROTO(काष्ठा ieee80211_local *local,
-		 क्रमागत ieee80211_reconfig_type reconfig_type),
+	TP_PROTO(struct ieee80211_local *local,
+		 enum ieee80211_reconfig_type reconfig_type),
 	TP_ARGS(local, reconfig_type),
 
 	TP_STRUCT__entry(
@@ -1739,25 +1738,25 @@ TRACE_EVENT(drv_reconfig_complete,
 		__entry->reconfig_type = reconfig_type;
 	),
 
-	TP_prपूर्णांकk(
+	TP_printk(
 		LOCAL_PR_FMT  " reconfig_type:%d",
 		LOCAL_PR_ARG, __entry->reconfig_type
 	)
 
 );
 
-#अगर IS_ENABLED(CONFIG_IPV6)
+#if IS_ENABLED(CONFIG_IPV6)
 DEFINE_EVENT(local_sdata_evt, drv_ipv6_addr_change,
-	TP_PROTO(काष्ठा ieee80211_local *local,
-		 काष्ठा ieee80211_sub_अगर_data *sdata),
+	TP_PROTO(struct ieee80211_local *local,
+		 struct ieee80211_sub_if_data *sdata),
 	TP_ARGS(local, sdata)
 );
-#पूर्ण_अगर
+#endif
 
 TRACE_EVENT(drv_join_ibss,
-	TP_PROTO(काष्ठा ieee80211_local *local,
-		 काष्ठा ieee80211_sub_अगर_data *sdata,
-		 काष्ठा ieee80211_bss_conf *info),
+	TP_PROTO(struct ieee80211_local *local,
+		 struct ieee80211_sub_if_data *sdata,
+		 struct ieee80211_bss_conf *info),
 
 	TP_ARGS(local, sdata, info),
 
@@ -1765,7 +1764,7 @@ TRACE_EVENT(drv_join_ibss,
 		LOCAL_ENTRY
 		VIF_ENTRY
 		__field(u8, dtimper)
-		__field(u16, bcnपूर्णांक)
+		__field(u16, bcnint)
 		__dynamic_array(u8, ssid, info->ssid_len)
 	),
 
@@ -1773,24 +1772,24 @@ TRACE_EVENT(drv_join_ibss,
 		LOCAL_ASSIGN;
 		VIF_ASSIGN;
 		__entry->dtimper = info->dtim_period;
-		__entry->bcnपूर्णांक = info->beacon_पूर्णांक;
-		स_नकल(__get_dynamic_array(ssid), info->ssid, info->ssid_len);
+		__entry->bcnint = info->beacon_int;
+		memcpy(__get_dynamic_array(ssid), info->ssid, info->ssid_len);
 	),
 
-	TP_prपूर्णांकk(
+	TP_printk(
 		LOCAL_PR_FMT  VIF_PR_FMT,
 		LOCAL_PR_ARG, VIF_PR_ARG
 	)
 );
 
 DEFINE_EVENT(local_sdata_evt, drv_leave_ibss,
-	TP_PROTO(काष्ठा ieee80211_local *local,
-		 काष्ठा ieee80211_sub_अगर_data *sdata),
+	TP_PROTO(struct ieee80211_local *local,
+		 struct ieee80211_sub_if_data *sdata),
 	TP_ARGS(local, sdata)
 );
 
 TRACE_EVENT(drv_get_expected_throughput,
-	TP_PROTO(काष्ठा ieee80211_sta *sta),
+	TP_PROTO(struct ieee80211_sta *sta),
 
 	TP_ARGS(sta),
 
@@ -1802,15 +1801,15 @@ TRACE_EVENT(drv_get_expected_throughput,
 		STA_ASSIGN;
 	),
 
-	TP_prपूर्णांकk(
+	TP_printk(
 		STA_PR_FMT, STA_PR_ARG
 	)
 );
 
 TRACE_EVENT(drv_start_nan,
-	TP_PROTO(काष्ठा ieee80211_local *local,
-		 काष्ठा ieee80211_sub_अगर_data *sdata,
-		 काष्ठा cfg80211_nan_conf *conf),
+	TP_PROTO(struct ieee80211_local *local,
+		 struct ieee80211_sub_if_data *sdata,
+		 struct cfg80211_nan_conf *conf),
 
 	TP_ARGS(local, sdata, conf),
 	TP_STRUCT__entry(
@@ -1827,7 +1826,7 @@ TRACE_EVENT(drv_start_nan,
 		__entry->bands = conf->bands;
 	),
 
-	TP_prपूर्णांकk(
+	TP_printk(
 		LOCAL_PR_FMT  VIF_PR_FMT
 		", master preference: %u, bands: 0x%0x",
 		LOCAL_PR_ARG, VIF_PR_ARG, __entry->master_pref,
@@ -1836,8 +1835,8 @@ TRACE_EVENT(drv_start_nan,
 );
 
 TRACE_EVENT(drv_stop_nan,
-	TP_PROTO(काष्ठा ieee80211_local *local,
-		 काष्ठा ieee80211_sub_अगर_data *sdata),
+	TP_PROTO(struct ieee80211_local *local,
+		 struct ieee80211_sub_if_data *sdata),
 
 	TP_ARGS(local, sdata),
 
@@ -1851,16 +1850,16 @@ TRACE_EVENT(drv_stop_nan,
 		VIF_ASSIGN;
 	),
 
-	TP_prपूर्णांकk(
+	TP_printk(
 		LOCAL_PR_FMT  VIF_PR_FMT,
 		LOCAL_PR_ARG, VIF_PR_ARG
 	)
 );
 
 TRACE_EVENT(drv_nan_change_conf,
-	TP_PROTO(काष्ठा ieee80211_local *local,
-		 काष्ठा ieee80211_sub_अगर_data *sdata,
-		 काष्ठा cfg80211_nan_conf *conf,
+	TP_PROTO(struct ieee80211_local *local,
+		 struct ieee80211_sub_if_data *sdata,
+		 struct cfg80211_nan_conf *conf,
 		 u32 changes),
 
 	TP_ARGS(local, sdata, conf, changes),
@@ -1880,7 +1879,7 @@ TRACE_EVENT(drv_nan_change_conf,
 		__entry->changes = changes;
 	),
 
-	TP_prपूर्णांकk(
+	TP_printk(
 		LOCAL_PR_FMT  VIF_PR_FMT
 		", master preference: %u, bands: 0x%0x, changes: 0x%x",
 		LOCAL_PR_ARG, VIF_PR_ARG, __entry->master_pref,
@@ -1889,9 +1888,9 @@ TRACE_EVENT(drv_nan_change_conf,
 );
 
 TRACE_EVENT(drv_add_nan_func,
-	TP_PROTO(काष्ठा ieee80211_local *local,
-		 काष्ठा ieee80211_sub_अगर_data *sdata,
-		 स्थिर काष्ठा cfg80211_nan_func *func),
+	TP_PROTO(struct ieee80211_local *local,
+		 struct ieee80211_sub_if_data *sdata,
+		 const struct cfg80211_nan_func *func),
 
 	TP_ARGS(local, sdata, func),
 	TP_STRUCT__entry(
@@ -1908,7 +1907,7 @@ TRACE_EVENT(drv_add_nan_func,
 		__entry->inst_id = func->instance_id;
 	),
 
-	TP_prपूर्णांकk(
+	TP_printk(
 		LOCAL_PR_FMT  VIF_PR_FMT
 		", type: %u, inst_id: %u",
 		LOCAL_PR_ARG, VIF_PR_ARG, __entry->type, __entry->inst_id
@@ -1916,8 +1915,8 @@ TRACE_EVENT(drv_add_nan_func,
 );
 
 TRACE_EVENT(drv_del_nan_func,
-	TP_PROTO(काष्ठा ieee80211_local *local,
-		 काष्ठा ieee80211_sub_अगर_data *sdata,
+	TP_PROTO(struct ieee80211_local *local,
+		 struct ieee80211_sub_if_data *sdata,
 		 u8 instance_id),
 
 	TP_ARGS(local, sdata, instance_id),
@@ -1933,7 +1932,7 @@ TRACE_EVENT(drv_del_nan_func,
 		__entry->instance_id = instance_id;
 	),
 
-	TP_prपूर्णांकk(
+	TP_printk(
 		LOCAL_PR_FMT  VIF_PR_FMT
 		", instance_id: %u",
 		LOCAL_PR_ARG, VIF_PR_ARG, __entry->instance_id
@@ -1941,23 +1940,23 @@ TRACE_EVENT(drv_del_nan_func,
 );
 
 DEFINE_EVENT(local_sdata_evt, drv_start_pmsr,
-	TP_PROTO(काष्ठा ieee80211_local *local,
-		 काष्ठा ieee80211_sub_अगर_data *sdata),
+	TP_PROTO(struct ieee80211_local *local,
+		 struct ieee80211_sub_if_data *sdata),
 	TP_ARGS(local, sdata)
 );
 
-DEFINE_EVENT(local_sdata_evt, drv_पात_pmsr,
-	TP_PROTO(काष्ठा ieee80211_local *local,
-		 काष्ठा ieee80211_sub_अगर_data *sdata),
+DEFINE_EVENT(local_sdata_evt, drv_abort_pmsr,
+	TP_PROTO(struct ieee80211_local *local,
+		 struct ieee80211_sub_if_data *sdata),
 	TP_ARGS(local, sdata)
 );
 
 /*
- * Tracing क्रम API calls that drivers call.
+ * Tracing for API calls that drivers call.
  */
 
 TRACE_EVENT(api_start_tx_ba_session,
-	TP_PROTO(काष्ठा ieee80211_sta *sta, u16 tid),
+	TP_PROTO(struct ieee80211_sta *sta, u16 tid),
 
 	TP_ARGS(sta, tid),
 
@@ -1971,14 +1970,14 @@ TRACE_EVENT(api_start_tx_ba_session,
 		__entry->tid = tid;
 	),
 
-	TP_prपूर्णांकk(
+	TP_printk(
 		STA_PR_FMT " tid:%d",
 		STA_PR_ARG, __entry->tid
 	)
 );
 
 TRACE_EVENT(api_start_tx_ba_cb,
-	TP_PROTO(काष्ठा ieee80211_sub_अगर_data *sdata, स्थिर u8 *ra, u16 tid),
+	TP_PROTO(struct ieee80211_sub_if_data *sdata, const u8 *ra, u16 tid),
 
 	TP_ARGS(sdata, ra, tid),
 
@@ -1990,18 +1989,18 @@ TRACE_EVENT(api_start_tx_ba_cb,
 
 	TP_fast_assign(
 		VIF_ASSIGN;
-		स_नकल(__entry->ra, ra, ETH_ALEN);
+		memcpy(__entry->ra, ra, ETH_ALEN);
 		__entry->tid = tid;
 	),
 
-	TP_prपूर्णांकk(
+	TP_printk(
 		VIF_PR_FMT " ra:%pM tid:%d",
 		VIF_PR_ARG, __entry->ra, __entry->tid
 	)
 );
 
 TRACE_EVENT(api_stop_tx_ba_session,
-	TP_PROTO(काष्ठा ieee80211_sta *sta, u16 tid),
+	TP_PROTO(struct ieee80211_sta *sta, u16 tid),
 
 	TP_ARGS(sta, tid),
 
@@ -2015,14 +2014,14 @@ TRACE_EVENT(api_stop_tx_ba_session,
 		__entry->tid = tid;
 	),
 
-	TP_prपूर्णांकk(
+	TP_printk(
 		STA_PR_FMT " tid:%d",
 		STA_PR_ARG, __entry->tid
 	)
 );
 
 TRACE_EVENT(api_stop_tx_ba_cb,
-	TP_PROTO(काष्ठा ieee80211_sub_अगर_data *sdata, स्थिर u8 *ra, u16 tid),
+	TP_PROTO(struct ieee80211_sub_if_data *sdata, const u8 *ra, u16 tid),
 
 	TP_ARGS(sdata, ra, tid),
 
@@ -2034,23 +2033,23 @@ TRACE_EVENT(api_stop_tx_ba_cb,
 
 	TP_fast_assign(
 		VIF_ASSIGN;
-		स_नकल(__entry->ra, ra, ETH_ALEN);
+		memcpy(__entry->ra, ra, ETH_ALEN);
 		__entry->tid = tid;
 	),
 
-	TP_prपूर्णांकk(
+	TP_printk(
 		VIF_PR_FMT " ra:%pM tid:%d",
 		VIF_PR_ARG, __entry->ra, __entry->tid
 	)
 );
 
 DEFINE_EVENT(local_only_evt, api_restart_hw,
-	TP_PROTO(काष्ठा ieee80211_local *local),
+	TP_PROTO(struct ieee80211_local *local),
 	TP_ARGS(local)
 );
 
 TRACE_EVENT(api_beacon_loss,
-	TP_PROTO(काष्ठा ieee80211_sub_अगर_data *sdata),
+	TP_PROTO(struct ieee80211_sub_if_data *sdata),
 
 	TP_ARGS(sdata),
 
@@ -2062,14 +2061,14 @@ TRACE_EVENT(api_beacon_loss,
 		VIF_ASSIGN;
 	),
 
-	TP_prपूर्णांकk(
+	TP_printk(
 		VIF_PR_FMT,
 		VIF_PR_ARG
 	)
 );
 
 TRACE_EVENT(api_connection_loss,
-	TP_PROTO(काष्ठा ieee80211_sub_अगर_data *sdata),
+	TP_PROTO(struct ieee80211_sub_if_data *sdata),
 
 	TP_ARGS(sdata),
 
@@ -2081,20 +2080,20 @@ TRACE_EVENT(api_connection_loss,
 		VIF_ASSIGN;
 	),
 
-	TP_prपूर्णांकk(
+	TP_printk(
 		VIF_PR_FMT,
 		VIF_PR_ARG
 	)
 );
 
 TRACE_EVENT(api_disconnect,
-	TP_PROTO(काष्ठा ieee80211_sub_अगर_data *sdata, bool reconnect),
+	TP_PROTO(struct ieee80211_sub_if_data *sdata, bool reconnect),
 
 	TP_ARGS(sdata, reconnect),
 
 	TP_STRUCT__entry(
 		VIF_ENTRY
-		__field(पूर्णांक, reconnect)
+		__field(int, reconnect)
 	),
 
 	TP_fast_assign(
@@ -2102,15 +2101,15 @@ TRACE_EVENT(api_disconnect,
 		__entry->reconnect = reconnect;
 	),
 
-	TP_prपूर्णांकk(
+	TP_printk(
 		VIF_PR_FMT " reconnect:%d",
 		VIF_PR_ARG, __entry->reconnect
 	)
 );
 
-TRACE_EVENT(api_cqm_rssi_notअगरy,
-	TP_PROTO(काष्ठा ieee80211_sub_अगर_data *sdata,
-		 क्रमागत nl80211_cqm_rssi_threshold_event rssi_event,
+TRACE_EVENT(api_cqm_rssi_notify,
+	TP_PROTO(struct ieee80211_sub_if_data *sdata,
+		 enum nl80211_cqm_rssi_threshold_event rssi_event,
 		 s32 rssi_level),
 
 	TP_ARGS(sdata, rssi_event, rssi_level),
@@ -2127,41 +2126,41 @@ TRACE_EVENT(api_cqm_rssi_notअगरy,
 		__entry->rssi_level = rssi_level;
 	),
 
-	TP_prपूर्णांकk(
+	TP_printk(
 		VIF_PR_FMT " event:%d rssi:%d",
 		VIF_PR_ARG, __entry->rssi_event, __entry->rssi_level
 	)
 );
 
-DEFINE_EVENT(local_sdata_evt, api_cqm_beacon_loss_notअगरy,
-	TP_PROTO(काष्ठा ieee80211_local *local,
-		 काष्ठा ieee80211_sub_अगर_data *sdata),
+DEFINE_EVENT(local_sdata_evt, api_cqm_beacon_loss_notify,
+	TP_PROTO(struct ieee80211_local *local,
+		 struct ieee80211_sub_if_data *sdata),
 	TP_ARGS(local, sdata)
 );
 
 TRACE_EVENT(api_scan_completed,
-	TP_PROTO(काष्ठा ieee80211_local *local, bool पातed),
+	TP_PROTO(struct ieee80211_local *local, bool aborted),
 
-	TP_ARGS(local, पातed),
+	TP_ARGS(local, aborted),
 
 	TP_STRUCT__entry(
 		LOCAL_ENTRY
-		__field(bool, पातed)
+		__field(bool, aborted)
 	),
 
 	TP_fast_assign(
 		LOCAL_ASSIGN;
-		__entry->पातed = पातed;
+		__entry->aborted = aborted;
 	),
 
-	TP_prपूर्णांकk(
+	TP_printk(
 		LOCAL_PR_FMT " aborted:%d",
-		LOCAL_PR_ARG, __entry->पातed
+		LOCAL_PR_ARG, __entry->aborted
 	)
 );
 
 TRACE_EVENT(api_sched_scan_results,
-	TP_PROTO(काष्ठा ieee80211_local *local),
+	TP_PROTO(struct ieee80211_local *local),
 
 	TP_ARGS(local),
 
@@ -2173,13 +2172,13 @@ TRACE_EVENT(api_sched_scan_results,
 		LOCAL_ASSIGN;
 	),
 
-	TP_prपूर्णांकk(
+	TP_printk(
 		LOCAL_PR_FMT, LOCAL_PR_ARG
 	)
 );
 
 TRACE_EVENT(api_sched_scan_stopped,
-	TP_PROTO(काष्ठा ieee80211_local *local),
+	TP_PROTO(struct ieee80211_local *local),
 
 	TP_ARGS(local),
 
@@ -2191,14 +2190,14 @@ TRACE_EVENT(api_sched_scan_stopped,
 		LOCAL_ASSIGN;
 	),
 
-	TP_prपूर्णांकk(
+	TP_printk(
 		LOCAL_PR_FMT, LOCAL_PR_ARG
 	)
 );
 
 TRACE_EVENT(api_sta_block_awake,
-	TP_PROTO(काष्ठा ieee80211_local *local,
-		 काष्ठा ieee80211_sta *sta, bool block),
+	TP_PROTO(struct ieee80211_local *local,
+		 struct ieee80211_sta *sta, bool block),
 
 	TP_ARGS(local, sta, block),
 
@@ -2214,14 +2213,14 @@ TRACE_EVENT(api_sta_block_awake,
 		__entry->block = block;
 	),
 
-	TP_prपूर्णांकk(
+	TP_printk(
 		LOCAL_PR_FMT STA_PR_FMT " block:%d",
 		LOCAL_PR_ARG, STA_PR_ARG, __entry->block
 	)
 );
 
-TRACE_EVENT(api_chचयन_करोne,
-	TP_PROTO(काष्ठा ieee80211_sub_अगर_data *sdata, bool success),
+TRACE_EVENT(api_chswitch_done,
+	TP_PROTO(struct ieee80211_sub_if_data *sdata, bool success),
 
 	TP_ARGS(sdata, success),
 
@@ -2235,25 +2234,25 @@ TRACE_EVENT(api_chचयन_करोne,
 		__entry->success = success;
 	),
 
-	TP_prपूर्णांकk(
+	TP_printk(
 		VIF_PR_FMT " success=%d",
 		VIF_PR_ARG, __entry->success
 	)
 );
 
-DEFINE_EVENT(local_only_evt, api_पढ़ोy_on_channel,
-	TP_PROTO(काष्ठा ieee80211_local *local),
+DEFINE_EVENT(local_only_evt, api_ready_on_channel,
+	TP_PROTO(struct ieee80211_local *local),
 	TP_ARGS(local)
 );
 
-DEFINE_EVENT(local_only_evt, api_reमुख्य_on_channel_expired,
-	TP_PROTO(काष्ठा ieee80211_local *local),
+DEFINE_EVENT(local_only_evt, api_remain_on_channel_expired,
+	TP_PROTO(struct ieee80211_local *local),
 	TP_ARGS(local)
 );
 
-TRACE_EVENT(api_gtk_rekey_notअगरy,
-	TP_PROTO(काष्ठा ieee80211_sub_अगर_data *sdata,
-		 स्थिर u8 *bssid, स्थिर u8 *replay_ctr),
+TRACE_EVENT(api_gtk_rekey_notify,
+	TP_PROTO(struct ieee80211_sub_if_data *sdata,
+		 const u8 *bssid, const u8 *replay_ctr),
 
 	TP_ARGS(sdata, bssid, replay_ctr),
 
@@ -2265,23 +2264,23 @@ TRACE_EVENT(api_gtk_rekey_notअगरy,
 
 	TP_fast_assign(
 		VIF_ASSIGN;
-		स_नकल(__entry->bssid, bssid, ETH_ALEN);
-		स_नकल(__entry->replay_ctr, replay_ctr, NL80211_REPLAY_CTR_LEN);
+		memcpy(__entry->bssid, bssid, ETH_ALEN);
+		memcpy(__entry->replay_ctr, replay_ctr, NL80211_REPLAY_CTR_LEN);
 	),
 
-	TP_prपूर्णांकk(VIF_PR_FMT, VIF_PR_ARG)
+	TP_printk(VIF_PR_FMT, VIF_PR_ARG)
 );
 
 TRACE_EVENT(api_enable_rssi_reports,
-	TP_PROTO(काष्ठा ieee80211_sub_अगर_data *sdata,
-		 पूर्णांक rssi_min_thold, पूर्णांक rssi_max_thold),
+	TP_PROTO(struct ieee80211_sub_if_data *sdata,
+		 int rssi_min_thold, int rssi_max_thold),
 
 	TP_ARGS(sdata, rssi_min_thold, rssi_max_thold),
 
 	TP_STRUCT__entry(
 		VIF_ENTRY
-		__field(पूर्णांक, rssi_min_thold)
-		__field(पूर्णांक, rssi_max_thold)
+		__field(int, rssi_min_thold)
+		__field(int, rssi_max_thold)
 	),
 
 	TP_fast_assign(
@@ -2290,15 +2289,15 @@ TRACE_EVENT(api_enable_rssi_reports,
 		__entry->rssi_max_thold = rssi_max_thold;
 	),
 
-	TP_prपूर्णांकk(
+	TP_printk(
 		VIF_PR_FMT " rssi_min_thold =%d, rssi_max_thold = %d",
 		VIF_PR_ARG, __entry->rssi_min_thold, __entry->rssi_max_thold
 	)
 );
 
 TRACE_EVENT(api_eosp,
-	TP_PROTO(काष्ठा ieee80211_local *local,
-		 काष्ठा ieee80211_sta *sta),
+	TP_PROTO(struct ieee80211_local *local,
+		 struct ieee80211_sta *sta),
 
 	TP_ARGS(local, sta),
 
@@ -2312,15 +2311,15 @@ TRACE_EVENT(api_eosp,
 		STA_ASSIGN;
 	),
 
-	TP_prपूर्णांकk(
+	TP_printk(
 		LOCAL_PR_FMT STA_PR_FMT,
 		LOCAL_PR_ARG, STA_PR_ARG
 	)
 );
 
 TRACE_EVENT(api_send_eosp_nullfunc,
-	TP_PROTO(काष्ठा ieee80211_local *local,
-		 काष्ठा ieee80211_sta *sta,
+	TP_PROTO(struct ieee80211_local *local,
+		 struct ieee80211_sta *sta,
 		 u8 tid),
 
 	TP_ARGS(local, sta, tid),
@@ -2337,15 +2336,15 @@ TRACE_EVENT(api_send_eosp_nullfunc,
 		__entry->tid = tid;
 	),
 
-	TP_prपूर्णांकk(
+	TP_printk(
 		LOCAL_PR_FMT STA_PR_FMT " tid:%d",
 		LOCAL_PR_ARG, STA_PR_ARG, __entry->tid
 	)
 );
 
 TRACE_EVENT(api_sta_set_buffered,
-	TP_PROTO(काष्ठा ieee80211_local *local,
-		 काष्ठा ieee80211_sta *sta,
+	TP_PROTO(struct ieee80211_local *local,
+		 struct ieee80211_sta *sta,
 		 u8 tid, bool buffered),
 
 	TP_ARGS(local, sta, tid, buffered),
@@ -2364,20 +2363,20 @@ TRACE_EVENT(api_sta_set_buffered,
 		__entry->buffered = buffered;
 	),
 
-	TP_prपूर्णांकk(
+	TP_printk(
 		LOCAL_PR_FMT STA_PR_FMT " tid:%d buffered:%d",
 		LOCAL_PR_ARG, STA_PR_ARG, __entry->tid, __entry->buffered
 	)
 );
 
 /*
- * Tracing क्रम पूर्णांकernal functions
+ * Tracing for internal functions
  * (which may also be called in response to driver calls)
  */
 
 TRACE_EVENT(wake_queue,
-	TP_PROTO(काष्ठा ieee80211_local *local, u16 queue,
-		 क्रमागत queue_stop_reason reason),
+	TP_PROTO(struct ieee80211_local *local, u16 queue,
+		 enum queue_stop_reason reason),
 
 	TP_ARGS(local, queue, reason),
 
@@ -2393,15 +2392,15 @@ TRACE_EVENT(wake_queue,
 		__entry->reason = reason;
 	),
 
-	TP_prपूर्णांकk(
+	TP_printk(
 		LOCAL_PR_FMT " queue:%d, reason:%d",
 		LOCAL_PR_ARG, __entry->queue, __entry->reason
 	)
 );
 
 TRACE_EVENT(stop_queue,
-	TP_PROTO(काष्ठा ieee80211_local *local, u16 queue,
-		 क्रमागत queue_stop_reason reason),
+	TP_PROTO(struct ieee80211_local *local, u16 queue,
+		 enum queue_stop_reason reason),
 
 	TP_ARGS(local, queue, reason),
 
@@ -2417,23 +2416,23 @@ TRACE_EVENT(stop_queue,
 		__entry->reason = reason;
 	),
 
-	TP_prपूर्णांकk(
+	TP_printk(
 		LOCAL_PR_FMT " queue:%d, reason:%d",
 		LOCAL_PR_ARG, __entry->queue, __entry->reason
 	)
 );
 
-TRACE_EVENT(drv_set_शेष_unicast_key,
-	TP_PROTO(काष्ठा ieee80211_local *local,
-		 काष्ठा ieee80211_sub_अगर_data *sdata,
-		 पूर्णांक key_idx),
+TRACE_EVENT(drv_set_default_unicast_key,
+	TP_PROTO(struct ieee80211_local *local,
+		 struct ieee80211_sub_if_data *sdata,
+		 int key_idx),
 
 	TP_ARGS(local, sdata, key_idx),
 
 	TP_STRUCT__entry(
 		LOCAL_ENTRY
 		VIF_ENTRY
-		__field(पूर्णांक, key_idx)
+		__field(int, key_idx)
 	),
 
 	TP_fast_assign(
@@ -2442,12 +2441,12 @@ TRACE_EVENT(drv_set_शेष_unicast_key,
 		__entry->key_idx = key_idx;
 	),
 
-	TP_prपूर्णांकk(LOCAL_PR_FMT VIF_PR_FMT " key_idx:%d",
+	TP_printk(LOCAL_PR_FMT VIF_PR_FMT " key_idx:%d",
 		  LOCAL_PR_ARG, VIF_PR_ARG, __entry->key_idx)
 );
 
 TRACE_EVENT(api_radar_detected,
-	TP_PROTO(काष्ठा ieee80211_local *local),
+	TP_PROTO(struct ieee80211_local *local),
 
 	TP_ARGS(local),
 
@@ -2459,16 +2458,16 @@ TRACE_EVENT(api_radar_detected,
 		LOCAL_ASSIGN;
 	),
 
-	TP_prपूर्णांकk(
+	TP_printk(
 		LOCAL_PR_FMT " radar detected",
 		LOCAL_PR_ARG
 	)
 );
 
-TRACE_EVENT(drv_channel_चयन_beacon,
-	TP_PROTO(काष्ठा ieee80211_local *local,
-		 काष्ठा ieee80211_sub_अगर_data *sdata,
-		 काष्ठा cfg80211_chan_def *chandef),
+TRACE_EVENT(drv_channel_switch_beacon,
+	TP_PROTO(struct ieee80211_local *local,
+		 struct ieee80211_sub_if_data *sdata,
+		 struct cfg80211_chan_def *chandef),
 
 	TP_ARGS(local, sdata, chandef),
 
@@ -2484,25 +2483,25 @@ TRACE_EVENT(drv_channel_चयन_beacon,
 		CHANDEF_ASSIGN(chandef);
 	),
 
-	TP_prपूर्णांकk(
+	TP_printk(
 		LOCAL_PR_FMT VIF_PR_FMT " channel switch to " CHANDEF_PR_FMT,
 		LOCAL_PR_ARG, VIF_PR_ARG, CHANDEF_PR_ARG
 	)
 );
 
-TRACE_EVENT(drv_pre_channel_चयन,
-	TP_PROTO(काष्ठा ieee80211_local *local,
-		 काष्ठा ieee80211_sub_अगर_data *sdata,
-		 काष्ठा ieee80211_channel_चयन *ch_चयन),
+TRACE_EVENT(drv_pre_channel_switch,
+	TP_PROTO(struct ieee80211_local *local,
+		 struct ieee80211_sub_if_data *sdata,
+		 struct ieee80211_channel_switch *ch_switch),
 
-	TP_ARGS(local, sdata, ch_चयन),
+	TP_ARGS(local, sdata, ch_switch),
 
 	TP_STRUCT__entry(
 		LOCAL_ENTRY
 		VIF_ENTRY
 		CHANDEF_ENTRY
-		__field(u64, बारtamp)
-		__field(u32, device_बारtamp)
+		__field(u64, timestamp)
+		__field(u32, device_timestamp)
 		__field(bool, block_tx)
 		__field(u8, count)
 	),
@@ -2510,46 +2509,46 @@ TRACE_EVENT(drv_pre_channel_चयन,
 	TP_fast_assign(
 		LOCAL_ASSIGN;
 		VIF_ASSIGN;
-		CHANDEF_ASSIGN(&ch_चयन->chandef)
-		__entry->बारtamp = ch_चयन->बारtamp;
-		__entry->device_बारtamp = ch_चयन->device_बारtamp;
-		__entry->block_tx = ch_चयन->block_tx;
-		__entry->count = ch_चयन->count;
+		CHANDEF_ASSIGN(&ch_switch->chandef)
+		__entry->timestamp = ch_switch->timestamp;
+		__entry->device_timestamp = ch_switch->device_timestamp;
+		__entry->block_tx = ch_switch->block_tx;
+		__entry->count = ch_switch->count;
 	),
 
-	TP_prपूर्णांकk(
+	TP_printk(
 		LOCAL_PR_FMT VIF_PR_FMT " prepare channel switch to "
 		CHANDEF_PR_FMT  " count:%d block_tx:%d timestamp:%llu",
 		LOCAL_PR_ARG, VIF_PR_ARG, CHANDEF_PR_ARG, __entry->count,
-		__entry->block_tx, __entry->बारtamp
+		__entry->block_tx, __entry->timestamp
 	)
 );
 
-DEFINE_EVENT(local_sdata_evt, drv_post_channel_चयन,
-	     TP_PROTO(काष्ठा ieee80211_local *local,
-		      काष्ठा ieee80211_sub_अगर_data *sdata),
+DEFINE_EVENT(local_sdata_evt, drv_post_channel_switch,
+	     TP_PROTO(struct ieee80211_local *local,
+		      struct ieee80211_sub_if_data *sdata),
 	     TP_ARGS(local, sdata)
 );
 
-DEFINE_EVENT(local_sdata_evt, drv_पात_channel_चयन,
-	     TP_PROTO(काष्ठा ieee80211_local *local,
-		      काष्ठा ieee80211_sub_अगर_data *sdata),
+DEFINE_EVENT(local_sdata_evt, drv_abort_channel_switch,
+	     TP_PROTO(struct ieee80211_local *local,
+		      struct ieee80211_sub_if_data *sdata),
 	     TP_ARGS(local, sdata)
 );
 
-TRACE_EVENT(drv_channel_चयन_rx_beacon,
-	TP_PROTO(काष्ठा ieee80211_local *local,
-		 काष्ठा ieee80211_sub_अगर_data *sdata,
-		 काष्ठा ieee80211_channel_चयन *ch_चयन),
+TRACE_EVENT(drv_channel_switch_rx_beacon,
+	TP_PROTO(struct ieee80211_local *local,
+		 struct ieee80211_sub_if_data *sdata,
+		 struct ieee80211_channel_switch *ch_switch),
 
-	TP_ARGS(local, sdata, ch_चयन),
+	TP_ARGS(local, sdata, ch_switch),
 
 	TP_STRUCT__entry(
 		LOCAL_ENTRY
 		VIF_ENTRY
 		CHANDEF_ENTRY
-		__field(u64, बारtamp)
-		__field(u32, device_बारtamp)
+		__field(u64, timestamp)
+		__field(u32, device_timestamp)
 		__field(bool, block_tx)
 		__field(u8, count)
 	),
@@ -2557,34 +2556,34 @@ TRACE_EVENT(drv_channel_चयन_rx_beacon,
 	TP_fast_assign(
 		LOCAL_ASSIGN;
 		VIF_ASSIGN;
-		CHANDEF_ASSIGN(&ch_चयन->chandef)
-		__entry->बारtamp = ch_चयन->बारtamp;
-		__entry->device_बारtamp = ch_चयन->device_बारtamp;
-		__entry->block_tx = ch_चयन->block_tx;
-		__entry->count = ch_चयन->count;
+		CHANDEF_ASSIGN(&ch_switch->chandef)
+		__entry->timestamp = ch_switch->timestamp;
+		__entry->device_timestamp = ch_switch->device_timestamp;
+		__entry->block_tx = ch_switch->block_tx;
+		__entry->count = ch_switch->count;
 	),
 
-	TP_prपूर्णांकk(
+	TP_printk(
 		LOCAL_PR_FMT VIF_PR_FMT
 		" received a channel switch beacon to "
 		CHANDEF_PR_FMT  " count:%d block_tx:%d timestamp:%llu",
 		LOCAL_PR_ARG, VIF_PR_ARG, CHANDEF_PR_ARG, __entry->count,
-		__entry->block_tx, __entry->बारtamp
+		__entry->block_tx, __entry->timestamp
 	)
 );
 
-TRACE_EVENT(drv_get_txघातer,
-	TP_PROTO(काष्ठा ieee80211_local *local,
-		 काष्ठा ieee80211_sub_अगर_data *sdata,
-		 पूर्णांक dbm, पूर्णांक ret),
+TRACE_EVENT(drv_get_txpower,
+	TP_PROTO(struct ieee80211_local *local,
+		 struct ieee80211_sub_if_data *sdata,
+		 int dbm, int ret),
 
 	TP_ARGS(local, sdata, dbm, ret),
 
 	TP_STRUCT__entry(
 		LOCAL_ENTRY
 		VIF_ENTRY
-		__field(पूर्णांक, dbm)
-		__field(पूर्णांक, ret)
+		__field(int, dbm)
+		__field(int, ret)
 	),
 
 	TP_fast_assign(
@@ -2594,17 +2593,17 @@ TRACE_EVENT(drv_get_txघातer,
 		__entry->ret = ret;
 	),
 
-	TP_prपूर्णांकk(
+	TP_printk(
 		LOCAL_PR_FMT VIF_PR_FMT " dbm:%d ret:%d",
 		LOCAL_PR_ARG, VIF_PR_ARG, __entry->dbm, __entry->ret
 	)
 );
 
-TRACE_EVENT(drv_tdls_channel_चयन,
-	TP_PROTO(काष्ठा ieee80211_local *local,
-		 काष्ठा ieee80211_sub_अगर_data *sdata,
-		 काष्ठा ieee80211_sta *sta, u8 oper_class,
-		 काष्ठा cfg80211_chan_def *chandef),
+TRACE_EVENT(drv_tdls_channel_switch,
+	TP_PROTO(struct ieee80211_local *local,
+		 struct ieee80211_sub_if_data *sdata,
+		 struct ieee80211_sta *sta, u8 oper_class,
+		 struct cfg80211_chan_def *chandef),
 
 	TP_ARGS(local, sdata, sta, oper_class, chandef),
 
@@ -2624,7 +2623,7 @@ TRACE_EVENT(drv_tdls_channel_चयन,
 		CHANDEF_ASSIGN(chandef)
 	),
 
-	TP_prपूर्णांकk(
+	TP_printk(
 		LOCAL_PR_FMT VIF_PR_FMT " tdls channel switch to"
 		CHANDEF_PR_FMT  " oper_class:%d " STA_PR_FMT,
 		LOCAL_PR_ARG, VIF_PR_ARG, CHANDEF_PR_ARG, __entry->oper_class,
@@ -2632,10 +2631,10 @@ TRACE_EVENT(drv_tdls_channel_चयन,
 	)
 );
 
-TRACE_EVENT(drv_tdls_cancel_channel_चयन,
-	TP_PROTO(काष्ठा ieee80211_local *local,
-		 काष्ठा ieee80211_sub_अगर_data *sdata,
-		 काष्ठा ieee80211_sta *sta),
+TRACE_EVENT(drv_tdls_cancel_channel_switch,
+	TP_PROTO(struct ieee80211_local *local,
+		 struct ieee80211_sub_if_data *sdata,
+		 struct ieee80211_sta *sta),
 
 	TP_ARGS(local, sdata, sta),
 
@@ -2651,17 +2650,17 @@ TRACE_EVENT(drv_tdls_cancel_channel_चयन,
 		STA_ASSIGN;
 	),
 
-	TP_prपूर्णांकk(
+	TP_printk(
 		LOCAL_PR_FMT VIF_PR_FMT
 		" tdls cancel channel switch with " STA_PR_FMT,
 		LOCAL_PR_ARG, VIF_PR_ARG, STA_PR_ARG
 	)
 );
 
-TRACE_EVENT(drv_tdls_recv_channel_चयन,
-	TP_PROTO(काष्ठा ieee80211_local *local,
-		 काष्ठा ieee80211_sub_अगर_data *sdata,
-		 काष्ठा ieee80211_tdls_ch_sw_params *params),
+TRACE_EVENT(drv_tdls_recv_channel_switch,
+	TP_PROTO(struct ieee80211_local *local,
+		 struct ieee80211_sub_if_data *sdata,
+		 struct ieee80211_tdls_ch_sw_params *params),
 
 	TP_ARGS(local, sdata, params),
 
@@ -2673,9 +2672,9 @@ TRACE_EVENT(drv_tdls_recv_channel_चयन,
 		CHANDEF_ENTRY
 		__field(u32, status)
 		__field(bool, peer_initiator)
-		__field(u32, बारtamp)
-		__field(u16, चयन_समय)
-		__field(u16, चयन_समयout)
+		__field(u32, timestamp)
+		__field(u16, switch_time)
+		__field(u16, switch_timeout)
 	),
 
 	TP_fast_assign(
@@ -2686,26 +2685,26 @@ TRACE_EVENT(drv_tdls_recv_channel_चयन,
 		__entry->peer_initiator = params->sta->tdls_initiator;
 		__entry->action_code = params->action_code;
 		__entry->status = params->status;
-		__entry->बारtamp = params->बारtamp;
-		__entry->चयन_समय = params->चयन_समय;
-		__entry->चयन_समयout = params->चयन_समयout;
+		__entry->timestamp = params->timestamp;
+		__entry->switch_time = params->switch_time;
+		__entry->switch_timeout = params->switch_timeout;
 	),
 
-	TP_prपूर्णांकk(
+	TP_printk(
 		LOCAL_PR_FMT VIF_PR_FMT " received tdls channel switch packet"
 		" action:%d status:%d time:%d switch time:%d switch"
 		" timeout:%d initiator: %d chan:" CHANDEF_PR_FMT STA_PR_FMT,
 		LOCAL_PR_ARG, VIF_PR_ARG, __entry->action_code, __entry->status,
-		__entry->बारtamp, __entry->चयन_समय,
-		__entry->चयन_समयout, __entry->peer_initiator,
+		__entry->timestamp, __entry->switch_time,
+		__entry->switch_timeout, __entry->peer_initiator,
 		CHANDEF_PR_ARG, STA_PR_ARG
 	)
 );
 
 TRACE_EVENT(drv_wake_tx_queue,
-	TP_PROTO(काष्ठा ieee80211_local *local,
-		 काष्ठा ieee80211_sub_अगर_data *sdata,
-		 काष्ठा txq_info *txq),
+	TP_PROTO(struct ieee80211_local *local,
+		 struct ieee80211_sub_if_data *sdata,
+		 struct txq_info *txq),
 
 	TP_ARGS(local, sdata, txq),
 
@@ -2718,7 +2717,7 @@ TRACE_EVENT(drv_wake_tx_queue,
 	),
 
 	TP_fast_assign(
-		काष्ठा ieee80211_sta *sta = txq->txq.sta;
+		struct ieee80211_sta *sta = txq->txq.sta;
 
 		LOCAL_ASSIGN;
 		VIF_ASSIGN;
@@ -2727,18 +2726,18 @@ TRACE_EVENT(drv_wake_tx_queue,
 		__entry->tid = txq->txq.tid;
 	),
 
-	TP_prपूर्णांकk(
+	TP_printk(
 		LOCAL_PR_FMT  VIF_PR_FMT  STA_PR_FMT " ac:%d tid:%d",
 		LOCAL_PR_ARG, VIF_PR_ARG, STA_PR_ARG, __entry->ac, __entry->tid
 	)
 );
 
-TRACE_EVENT(drv_get_fपंचांग_responder_stats,
-	TP_PROTO(काष्ठा ieee80211_local *local,
-		 काष्ठा ieee80211_sub_अगर_data *sdata,
-		 काष्ठा cfg80211_fपंचांग_responder_stats *fपंचांग_stats),
+TRACE_EVENT(drv_get_ftm_responder_stats,
+	TP_PROTO(struct ieee80211_local *local,
+		 struct ieee80211_sub_if_data *sdata,
+		 struct cfg80211_ftm_responder_stats *ftm_stats),
 
-	TP_ARGS(local, sdata, fपंचांग_stats),
+	TP_ARGS(local, sdata, ftm_stats),
 
 	TP_STRUCT__entry(
 		LOCAL_ENTRY
@@ -2750,22 +2749,22 @@ TRACE_EVENT(drv_get_fपंचांग_responder_stats,
 		VIF_ASSIGN;
 	),
 
-	TP_prपूर्णांकk(
+	TP_printk(
 		LOCAL_PR_FMT VIF_PR_FMT,
 		LOCAL_PR_ARG, VIF_PR_ARG
 	)
 );
 
-DEFINE_EVENT(local_sdata_addr_evt, drv_update_vअगर_offload,
-	TP_PROTO(काष्ठा ieee80211_local *local,
-		 काष्ठा ieee80211_sub_अगर_data *sdata),
+DEFINE_EVENT(local_sdata_addr_evt, drv_update_vif_offload,
+	TP_PROTO(struct ieee80211_local *local,
+		 struct ieee80211_sub_if_data *sdata),
 	TP_ARGS(local, sdata)
 );
 
 DECLARE_EVENT_CLASS(sta_flag_evt,
-	TP_PROTO(काष्ठा ieee80211_local *local,
-		 काष्ठा ieee80211_sub_अगर_data *sdata,
-		 काष्ठा ieee80211_sta *sta, bool enabled),
+	TP_PROTO(struct ieee80211_local *local,
+		 struct ieee80211_sub_if_data *sdata,
+		 struct ieee80211_sta *sta, bool enabled),
 
 	TP_ARGS(local, sdata, sta, enabled),
 
@@ -2783,32 +2782,32 @@ DECLARE_EVENT_CLASS(sta_flag_evt,
 		__entry->enabled = enabled;
 	),
 
-	TP_prपूर्णांकk(
+	TP_printk(
 		LOCAL_PR_FMT  VIF_PR_FMT  STA_PR_FMT " enabled:%d",
 		LOCAL_PR_ARG, VIF_PR_ARG, STA_PR_ARG, __entry->enabled
 	)
 );
 
 DEFINE_EVENT(sta_flag_evt, drv_sta_set_4addr,
-	TP_PROTO(काष्ठा ieee80211_local *local,
-		 काष्ठा ieee80211_sub_अगर_data *sdata,
-		 काष्ठा ieee80211_sta *sta, bool enabled),
+	TP_PROTO(struct ieee80211_local *local,
+		 struct ieee80211_sub_if_data *sdata,
+		 struct ieee80211_sta *sta, bool enabled),
 
 	TP_ARGS(local, sdata, sta, enabled)
 );
 
 DEFINE_EVENT(sta_flag_evt, drv_sta_set_decap_offload,
-	TP_PROTO(काष्ठा ieee80211_local *local,
-		 काष्ठा ieee80211_sub_अगर_data *sdata,
-		 काष्ठा ieee80211_sta *sta, bool enabled),
+	TP_PROTO(struct ieee80211_local *local,
+		 struct ieee80211_sub_if_data *sdata,
+		 struct ieee80211_sta *sta, bool enabled),
 
 	TP_ARGS(local, sdata, sta, enabled)
 );
 
-#पूर्ण_अगर /* !__MAC80211_DRIVER_TRACE || TRACE_HEADER_MULTI_READ */
+#endif /* !__MAC80211_DRIVER_TRACE || TRACE_HEADER_MULTI_READ */
 
-#अघोषित TRACE_INCLUDE_PATH
-#घोषणा TRACE_INCLUDE_PATH .
-#अघोषित TRACE_INCLUDE_खाता
-#घोषणा TRACE_INCLUDE_खाता trace
-#समावेश <trace/define_trace.h>
+#undef TRACE_INCLUDE_PATH
+#define TRACE_INCLUDE_PATH .
+#undef TRACE_INCLUDE_FILE
+#define TRACE_INCLUDE_FILE trace
+#include <trace/define_trace.h>

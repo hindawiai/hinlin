@@ -1,41 +1,40 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-// Copyright (C) 2018 Hangzhou C-SKY Microप्रणालीs co.,ltd.
+// SPDX-License-Identifier: GPL-2.0
+// Copyright (C) 2018 Hangzhou C-SKY Microsystems co.,ltd.
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/ptrace.h>
+#include <linux/kernel.h>
+#include <linux/uaccess.h>
+#include <linux/ptrace.h>
 
-अटल पूर्णांक align_kern_enable = 1;
-अटल पूर्णांक align_usr_enable = 1;
-अटल पूर्णांक align_kern_count = 0;
-अटल पूर्णांक align_usr_count = 0;
+static int align_kern_enable = 1;
+static int align_usr_enable = 1;
+static int align_kern_count = 0;
+static int align_usr_count = 0;
 
-अटल अंतरभूत uपूर्णांक32_t get_ptreg(काष्ठा pt_regs *regs, uपूर्णांक32_t rx)
-अणु
-	वापस rx == 15 ? regs->lr : *((uपूर्णांक32_t *)&(regs->a0) - 2 + rx);
-पूर्ण
+static inline uint32_t get_ptreg(struct pt_regs *regs, uint32_t rx)
+{
+	return rx == 15 ? regs->lr : *((uint32_t *)&(regs->a0) - 2 + rx);
+}
 
-अटल अंतरभूत व्योम put_ptreg(काष्ठा pt_regs *regs, uपूर्णांक32_t rx, uपूर्णांक32_t val)
-अणु
-	अगर (rx == 15)
+static inline void put_ptreg(struct pt_regs *regs, uint32_t rx, uint32_t val)
+{
+	if (rx == 15)
 		regs->lr = val;
-	अन्यथा
-		*((uपूर्णांक32_t *)&(regs->a0) - 2 + rx) = val;
-पूर्ण
+	else
+		*((uint32_t *)&(regs->a0) - 2 + rx) = val;
+}
 
 /*
  * Get byte-value from addr and set it to *valp.
  *
- * Success: वापस 0
- * Failure: वापस 1
+ * Success: return 0
+ * Failure: return 1
  */
-अटल पूर्णांक ldb_यंत्र(uपूर्णांक32_t addr, uपूर्णांक32_t *valp)
-अणु
-	uपूर्णांक32_t val;
-	पूर्णांक err;
+static int ldb_asm(uint32_t addr, uint32_t *valp)
+{
+	uint32_t val;
+	int err;
 
-	यंत्र अस्थिर (
+	asm volatile (
 		"movi	%0, 0\n"
 		"1:\n"
 		"ldb	%1, (%2)\n"
@@ -54,20 +53,20 @@
 
 	*valp = val;
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /*
  * Put byte-value to addr.
  *
- * Success: वापस 0
- * Failure: वापस 1
+ * Success: return 0
+ * Failure: return 1
  */
-अटल पूर्णांक stb_यंत्र(uपूर्णांक32_t addr, uपूर्णांक32_t val)
-अणु
-	पूर्णांक err;
+static int stb_asm(uint32_t addr, uint32_t val)
+{
+	int err;
 
-	यंत्र अस्थिर (
+	asm volatile (
 		"movi	%0, 0\n"
 		"1:\n"
 		"stb	%1, (%2)\n"
@@ -84,80 +83,80 @@
 		: "r"(val), "r" (addr)
 	);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /*
  * Get half-word from [rx + imm]
  *
- * Success: वापस 0
- * Failure: वापस 1
+ * Success: return 0
+ * Failure: return 1
  */
-अटल पूर्णांक ldh_c(काष्ठा pt_regs *regs, uपूर्णांक32_t rz, uपूर्णांक32_t addr)
-अणु
-	uपूर्णांक32_t byte0, byte1;
+static int ldh_c(struct pt_regs *regs, uint32_t rz, uint32_t addr)
+{
+	uint32_t byte0, byte1;
 
-	अगर (ldb_यंत्र(addr, &byte0))
-		वापस 1;
+	if (ldb_asm(addr, &byte0))
+		return 1;
 	addr += 1;
-	अगर (ldb_यंत्र(addr, &byte1))
-		वापस 1;
+	if (ldb_asm(addr, &byte1))
+		return 1;
 
 	byte0 |= byte1 << 8;
 	put_ptreg(regs, rz, byte0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Store half-word to [rx + imm]
  *
- * Success: वापस 0
- * Failure: वापस 1
+ * Success: return 0
+ * Failure: return 1
  */
-अटल पूर्णांक sth_c(काष्ठा pt_regs *regs, uपूर्णांक32_t rz, uपूर्णांक32_t addr)
-अणु
-	uपूर्णांक32_t byte0, byte1;
+static int sth_c(struct pt_regs *regs, uint32_t rz, uint32_t addr)
+{
+	uint32_t byte0, byte1;
 
 	byte0 = byte1 = get_ptreg(regs, rz);
 
 	byte0 &= 0xff;
 
-	अगर (stb_यंत्र(addr, byte0))
-		वापस 1;
+	if (stb_asm(addr, byte0))
+		return 1;
 
 	addr += 1;
 	byte1 = (byte1 >> 8) & 0xff;
-	अगर (stb_यंत्र(addr, byte1))
-		वापस 1;
+	if (stb_asm(addr, byte1))
+		return 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Get word from [rx + imm]
  *
- * Success: वापस 0
- * Failure: वापस 1
+ * Success: return 0
+ * Failure: return 1
  */
-अटल पूर्णांक ldw_c(काष्ठा pt_regs *regs, uपूर्णांक32_t rz, uपूर्णांक32_t addr)
-अणु
-	uपूर्णांक32_t byte0, byte1, byte2, byte3;
+static int ldw_c(struct pt_regs *regs, uint32_t rz, uint32_t addr)
+{
+	uint32_t byte0, byte1, byte2, byte3;
 
-	अगर (ldb_यंत्र(addr, &byte0))
-		वापस 1;
-
-	addr += 1;
-	अगर (ldb_यंत्र(addr, &byte1))
-		वापस 1;
+	if (ldb_asm(addr, &byte0))
+		return 1;
 
 	addr += 1;
-	अगर (ldb_यंत्र(addr, &byte2))
-		वापस 1;
+	if (ldb_asm(addr, &byte1))
+		return 1;
 
 	addr += 1;
-	अगर (ldb_यंत्र(addr, &byte3))
-		वापस 1;
+	if (ldb_asm(addr, &byte2))
+		return 1;
+
+	addr += 1;
+	if (ldb_asm(addr, &byte3))
+		return 1;
 
 	byte0 |= byte1 << 8;
 	byte0 |= byte2 << 16;
@@ -165,191 +164,191 @@
 
 	put_ptreg(regs, rz, byte0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Store word to [rx + imm]
  *
- * Success: वापस 0
- * Failure: वापस 1
+ * Success: return 0
+ * Failure: return 1
  */
-अटल पूर्णांक stw_c(काष्ठा pt_regs *regs, uपूर्णांक32_t rz, uपूर्णांक32_t addr)
-अणु
-	uपूर्णांक32_t byte0, byte1, byte2, byte3;
+static int stw_c(struct pt_regs *regs, uint32_t rz, uint32_t addr)
+{
+	uint32_t byte0, byte1, byte2, byte3;
 
 	byte0 = byte1 = byte2 = byte3 = get_ptreg(regs, rz);
 
 	byte0 &= 0xff;
 
-	अगर (stb_यंत्र(addr, byte0))
-		वापस 1;
+	if (stb_asm(addr, byte0))
+		return 1;
 
 	addr += 1;
 	byte1 = (byte1 >> 8) & 0xff;
-	अगर (stb_यंत्र(addr, byte1))
-		वापस 1;
+	if (stb_asm(addr, byte1))
+		return 1;
 
 	addr += 1;
 	byte2 = (byte2 >> 16) & 0xff;
-	अगर (stb_यंत्र(addr, byte2))
-		वापस 1;
+	if (stb_asm(addr, byte2))
+		return 1;
 
 	addr += 1;
 	byte3 = (byte3 >> 24) & 0xff;
-	अगर (stb_यंत्र(addr, byte3))
-		वापस 1;
+	if (stb_asm(addr, byte3))
+		return 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-बाह्य पूर्णांक fixup_exception(काष्ठा pt_regs *regs);
+extern int fixup_exception(struct pt_regs *regs);
 
-#घोषणा OP_LDH 0xc000
-#घोषणा OP_STH 0xd000
-#घोषणा OP_LDW 0x8000
-#घोषणा OP_STW 0x9000
+#define OP_LDH 0xc000
+#define OP_STH 0xd000
+#define OP_LDW 0x8000
+#define OP_STW 0x9000
 
-व्योम csky_alignment(काष्ठा pt_regs *regs)
-अणु
-	पूर्णांक ret;
-	uपूर्णांक16_t पंचांगp;
-	uपूर्णांक32_t opcode = 0;
-	uपूर्णांक32_t rx     = 0;
-	uपूर्णांक32_t rz     = 0;
-	uपूर्णांक32_t imm    = 0;
-	uपूर्णांक32_t addr   = 0;
+void csky_alignment(struct pt_regs *regs)
+{
+	int ret;
+	uint16_t tmp;
+	uint32_t opcode = 0;
+	uint32_t rx     = 0;
+	uint32_t rz     = 0;
+	uint32_t imm    = 0;
+	uint32_t addr   = 0;
 
-	अगर (!user_mode(regs))
-		जाओ kernel_area;
+	if (!user_mode(regs))
+		goto kernel_area;
 
-	अगर (!align_usr_enable) अणु
+	if (!align_usr_enable) {
 		pr_err("%s user disabled.\n", __func__);
-		जाओ bad_area;
-	पूर्ण
+		goto bad_area;
+	}
 
 	align_usr_count++;
 
-	ret = get_user(पंचांगp, (uपूर्णांक16_t *)inकाष्ठाion_poपूर्णांकer(regs));
-	अगर (ret) अणु
+	ret = get_user(tmp, (uint16_t *)instruction_pointer(regs));
+	if (ret) {
 		pr_err("%s get_user failed.\n", __func__);
-		जाओ bad_area;
-	पूर्ण
+		goto bad_area;
+	}
 
-	जाओ good_area;
+	goto good_area;
 
 kernel_area:
-	अगर (!align_kern_enable) अणु
+	if (!align_kern_enable) {
 		pr_err("%s kernel disabled.\n", __func__);
-		जाओ bad_area;
-	पूर्ण
+		goto bad_area;
+	}
 
 	align_kern_count++;
 
-	पंचांगp = *(uपूर्णांक16_t *)inकाष्ठाion_poपूर्णांकer(regs);
+	tmp = *(uint16_t *)instruction_pointer(regs);
 
 good_area:
-	opcode = (uपूर्णांक32_t)पंचांगp;
+	opcode = (uint32_t)tmp;
 
 	rx  = opcode & 0xf;
 	imm = (opcode >> 4) & 0xf;
 	rz  = (opcode >> 8) & 0xf;
 	opcode &= 0xf000;
 
-	अगर (rx == 0 || rx == 1 || rz == 0 || rz == 1)
-		जाओ bad_area;
+	if (rx == 0 || rx == 1 || rz == 0 || rz == 1)
+		goto bad_area;
 
-	चयन (opcode) अणु
-	हाल OP_LDH:
+	switch (opcode) {
+	case OP_LDH:
 		addr = get_ptreg(regs, rx) + (imm << 1);
 		ret = ldh_c(regs, rz, addr);
-		अवरोध;
-	हाल OP_LDW:
+		break;
+	case OP_LDW:
 		addr = get_ptreg(regs, rx) + (imm << 2);
 		ret = ldw_c(regs, rz, addr);
-		अवरोध;
-	हाल OP_STH:
+		break;
+	case OP_STH:
 		addr = get_ptreg(regs, rx) + (imm << 1);
 		ret = sth_c(regs, rz, addr);
-		अवरोध;
-	हाल OP_STW:
+		break;
+	case OP_STW:
 		addr = get_ptreg(regs, rx) + (imm << 2);
 		ret = stw_c(regs, rz, addr);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	अगर (ret)
-		जाओ bad_area;
+	if (ret)
+		goto bad_area;
 
 	regs->pc += 2;
 
-	वापस;
+	return;
 
 bad_area:
-	अगर (!user_mode(regs)) अणु
-		अगर (fixup_exception(regs))
-			वापस;
+	if (!user_mode(regs)) {
+		if (fixup_exception(regs))
+			return;
 
 		bust_spinlocks(1);
 		pr_alert("%s opcode: %x, rz: %d, rx: %d, imm: %d, addr: %x.\n",
 				__func__, opcode, rz, rx, imm, addr);
 		show_regs(regs);
 		bust_spinlocks(0);
-		करो_निकास(SIGKILL);
-	पूर्ण
+		do_exit(SIGKILL);
+	}
 
-	क्रमce_sig_fault(SIGBUS, BUS_ADRALN, (व्योम __user *)addr);
-पूर्ण
+	force_sig_fault(SIGBUS, BUS_ADRALN, (void __user *)addr);
+}
 
-अटल काष्ठा ctl_table alignment_tbl[5] = अणु
-	अणु
+static struct ctl_table alignment_tbl[5] = {
+	{
 		.procname = "kernel_enable",
 		.data = &align_kern_enable,
-		.maxlen = माप(align_kern_enable),
+		.maxlen = sizeof(align_kern_enable),
 		.mode = 0666,
-		.proc_handler = &proc_करोपूर्णांकvec
-	पूर्ण,
-	अणु
+		.proc_handler = &proc_dointvec
+	},
+	{
 		.procname = "user_enable",
 		.data = &align_usr_enable,
-		.maxlen = माप(align_usr_enable),
+		.maxlen = sizeof(align_usr_enable),
 		.mode = 0666,
-		.proc_handler = &proc_करोपूर्णांकvec
-	पूर्ण,
-	अणु
+		.proc_handler = &proc_dointvec
+	},
+	{
 		.procname = "kernel_count",
 		.data = &align_kern_count,
-		.maxlen = माप(align_kern_count),
+		.maxlen = sizeof(align_kern_count),
 		.mode = 0666,
-		.proc_handler = &proc_करोपूर्णांकvec
-	पूर्ण,
-	अणु
+		.proc_handler = &proc_dointvec
+	},
+	{
 		.procname = "user_count",
 		.data = &align_usr_count,
-		.maxlen = माप(align_usr_count),
+		.maxlen = sizeof(align_usr_count),
 		.mode = 0666,
-		.proc_handler = &proc_करोपूर्णांकvec
-	पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+		.proc_handler = &proc_dointvec
+	},
+	{}
+};
 
-अटल काष्ठा ctl_table sysctl_table[2] = अणु
-	अणु
+static struct ctl_table sysctl_table[2] = {
+	{
 	 .procname = "csky_alignment",
 	 .mode = 0555,
-	 .child = alignment_tblपूर्ण,
-	अणुपूर्ण
-पूर्ण;
+	 .child = alignment_tbl},
+	{}
+};
 
-अटल काष्ठा ctl_path sysctl_path[2] = अणु
-	अणु.procname = "csky"पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static struct ctl_path sysctl_path[2] = {
+	{.procname = "csky"},
+	{}
+};
 
-अटल पूर्णांक __init csky_alignment_init(व्योम)
-अणु
-	रेजिस्टर_sysctl_paths(sysctl_path, sysctl_table);
-	वापस 0;
-पूर्ण
+static int __init csky_alignment_init(void)
+{
+	register_sysctl_paths(sysctl_path, sysctl_table);
+	return 0;
+}
 
 arch_initcall(csky_alignment_init);

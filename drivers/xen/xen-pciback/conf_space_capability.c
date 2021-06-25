@@ -1,297 +1,296 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * PCI Backend - Handles the भव fields found on the capability lists
+ * PCI Backend - Handles the virtual fields found on the capability lists
  *               in the configuration space.
  *
  * Author: Ryan Wilson <hap9@epoch.ncsc.mil>
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/pci.h>
-#समावेश "pciback.h"
-#समावेश "conf_space.h"
+#include <linux/kernel.h>
+#include <linux/pci.h>
+#include "pciback.h"
+#include "conf_space.h"
 
-अटल LIST_HEAD(capabilities);
-काष्ठा xen_pcibk_config_capability अणु
-	काष्ठा list_head cap_list;
+static LIST_HEAD(capabilities);
+struct xen_pcibk_config_capability {
+	struct list_head cap_list;
 
-	पूर्णांक capability;
+	int capability;
 
 	/* If the device has the capability found above, add these fields */
-	स्थिर काष्ठा config_field *fields;
-पूर्ण;
+	const struct config_field *fields;
+};
 
-अटल स्थिर काष्ठा config_field caplist_header[] = अणु
-	अणु
+static const struct config_field caplist_header[] = {
+	{
 	 .offset    = PCI_CAP_LIST_ID,
 	 .size      = 2, /* encompass PCI_CAP_LIST_ID & PCI_CAP_LIST_NEXT */
-	 .u.w.पढ़ो  = xen_pcibk_पढ़ो_config_word,
-	 .u.w.ग_लिखो = शून्य,
-	पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+	 .u.w.read  = xen_pcibk_read_config_word,
+	 .u.w.write = NULL,
+	},
+	{}
+};
 
-अटल अंतरभूत व्योम रेजिस्टर_capability(काष्ठा xen_pcibk_config_capability *cap)
-अणु
+static inline void register_capability(struct xen_pcibk_config_capability *cap)
+{
 	list_add_tail(&cap->cap_list, &capabilities);
-पूर्ण
+}
 
-पूर्णांक xen_pcibk_config_capability_add_fields(काष्ठा pci_dev *dev)
-अणु
-	पूर्णांक err = 0;
-	काष्ठा xen_pcibk_config_capability *cap;
-	पूर्णांक cap_offset;
+int xen_pcibk_config_capability_add_fields(struct pci_dev *dev)
+{
+	int err = 0;
+	struct xen_pcibk_config_capability *cap;
+	int cap_offset;
 
-	list_क्रम_each_entry(cap, &capabilities, cap_list) अणु
+	list_for_each_entry(cap, &capabilities, cap_list) {
 		cap_offset = pci_find_capability(dev, cap->capability);
-		अगर (cap_offset) अणु
+		if (cap_offset) {
 			dev_dbg(&dev->dev, "Found capability 0x%x at 0x%x\n",
 				cap->capability, cap_offset);
 
 			err = xen_pcibk_config_add_fields_offset(dev,
 							       caplist_header,
 							       cap_offset);
-			अगर (err)
-				जाओ out;
+			if (err)
+				goto out;
 			err = xen_pcibk_config_add_fields_offset(dev,
 							       cap->fields,
 							       cap_offset);
-			अगर (err)
-				जाओ out;
-		पूर्ण
-	पूर्ण
+			if (err)
+				goto out;
+		}
+	}
 
 out:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक vpd_address_ग_लिखो(काष्ठा pci_dev *dev, पूर्णांक offset, u16 value,
-			     व्योम *data)
-अणु
-	/* Disallow ग_लिखोs to the vital product data */
-	अगर (value & PCI_VPD_ADDR_F)
-		वापस PCIBIOS_SET_FAILED;
-	अन्यथा
-		वापस pci_ग_लिखो_config_word(dev, offset, value);
-पूर्ण
+static int vpd_address_write(struct pci_dev *dev, int offset, u16 value,
+			     void *data)
+{
+	/* Disallow writes to the vital product data */
+	if (value & PCI_VPD_ADDR_F)
+		return PCIBIOS_SET_FAILED;
+	else
+		return pci_write_config_word(dev, offset, value);
+}
 
-अटल स्थिर काष्ठा config_field caplist_vpd[] = अणु
-	अणु
+static const struct config_field caplist_vpd[] = {
+	{
 	 .offset    = PCI_VPD_ADDR,
 	 .size      = 2,
-	 .u.w.पढ़ो  = xen_pcibk_पढ़ो_config_word,
-	 .u.w.ग_लिखो = vpd_address_ग_लिखो,
-	 पूर्ण,
-	अणु
+	 .u.w.read  = xen_pcibk_read_config_word,
+	 .u.w.write = vpd_address_write,
+	 },
+	{
 	 .offset     = PCI_VPD_DATA,
 	 .size       = 4,
-	 .u.dw.पढ़ो  = xen_pcibk_पढ़ो_config_dword,
-	 .u.dw.ग_लिखो = शून्य,
-	 पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+	 .u.dw.read  = xen_pcibk_read_config_dword,
+	 .u.dw.write = NULL,
+	 },
+	{}
+};
 
-अटल पूर्णांक pm_caps_पढ़ो(काष्ठा pci_dev *dev, पूर्णांक offset, u16 *value,
-			व्योम *data)
-अणु
-	पूर्णांक err;
+static int pm_caps_read(struct pci_dev *dev, int offset, u16 *value,
+			void *data)
+{
+	int err;
 	u16 real_value;
 
-	err = pci_पढ़ो_config_word(dev, offset, &real_value);
-	अगर (err)
-		जाओ out;
+	err = pci_read_config_word(dev, offset, &real_value);
+	if (err)
+		goto out;
 
 	*value = real_value & ~PCI_PM_CAP_PME_MASK;
 
 out:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-/* PM_OK_BITS specअगरies the bits that the driver करोमुख्य is allowed to change.
+/* PM_OK_BITS specifies the bits that the driver domain is allowed to change.
  * Can't allow driver domain to enable PMEs - they're shared */
-#घोषणा PM_OK_BITS (PCI_PM_CTRL_PME_STATUS|PCI_PM_CTRL_DATA_SEL_MASK)
+#define PM_OK_BITS (PCI_PM_CTRL_PME_STATUS|PCI_PM_CTRL_DATA_SEL_MASK)
 
-अटल पूर्णांक pm_ctrl_ग_लिखो(काष्ठा pci_dev *dev, पूर्णांक offset, u16 new_value,
-			 व्योम *data)
-अणु
-	पूर्णांक err;
+static int pm_ctrl_write(struct pci_dev *dev, int offset, u16 new_value,
+			 void *data)
+{
+	int err;
 	u16 old_value;
-	pci_घातer_t new_state;
+	pci_power_t new_state;
 
-	err = pci_पढ़ो_config_word(dev, offset, &old_value);
-	अगर (err)
-		जाओ out;
+	err = pci_read_config_word(dev, offset, &old_value);
+	if (err)
+		goto out;
 
-	new_state = (pci_घातer_t)(new_value & PCI_PM_CTRL_STATE_MASK);
+	new_state = (pci_power_t)(new_value & PCI_PM_CTRL_STATE_MASK);
 
 	new_value &= PM_OK_BITS;
-	अगर ((old_value & PM_OK_BITS) != new_value) अणु
+	if ((old_value & PM_OK_BITS) != new_value) {
 		new_value = (old_value & ~PM_OK_BITS) | new_value;
-		err = pci_ग_लिखो_config_word(dev, offset, new_value);
-		अगर (err)
-			जाओ out;
-	पूर्ण
+		err = pci_write_config_word(dev, offset, new_value);
+		if (err)
+			goto out;
+	}
 
-	/* Let pci core handle the घातer management change */
+	/* Let pci core handle the power management change */
 	dev_dbg(&dev->dev, "set power state to %x\n", new_state);
-	err = pci_set_घातer_state(dev, new_state);
-	अगर (err) अणु
+	err = pci_set_power_state(dev, new_state);
+	if (err) {
 		err = PCIBIOS_SET_FAILED;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
  out:
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /* Ensure PMEs are disabled */
-अटल व्योम *pm_ctrl_init(काष्ठा pci_dev *dev, पूर्णांक offset)
-अणु
-	पूर्णांक err;
+static void *pm_ctrl_init(struct pci_dev *dev, int offset)
+{
+	int err;
 	u16 value;
 
-	err = pci_पढ़ो_config_word(dev, offset, &value);
-	अगर (err)
-		जाओ out;
+	err = pci_read_config_word(dev, offset, &value);
+	if (err)
+		goto out;
 
-	अगर (value & PCI_PM_CTRL_PME_ENABLE) अणु
+	if (value & PCI_PM_CTRL_PME_ENABLE) {
 		value &= ~PCI_PM_CTRL_PME_ENABLE;
-		err = pci_ग_लिखो_config_word(dev, offset, value);
-	पूर्ण
+		err = pci_write_config_word(dev, offset, value);
+	}
 
 out:
-	वापस ERR_PTR(err);
-पूर्ण
+	return ERR_PTR(err);
+}
 
-अटल स्थिर काष्ठा config_field caplist_pm[] = अणु
-	अणु
+static const struct config_field caplist_pm[] = {
+	{
 		.offset     = PCI_PM_PMC,
 		.size       = 2,
-		.u.w.पढ़ो   = pm_caps_पढ़ो,
-	पूर्ण,
-	अणु
+		.u.w.read   = pm_caps_read,
+	},
+	{
 		.offset     = PCI_PM_CTRL,
 		.size       = 2,
 		.init       = pm_ctrl_init,
-		.u.w.पढ़ो   = xen_pcibk_पढ़ो_config_word,
-		.u.w.ग_लिखो  = pm_ctrl_ग_लिखो,
-	पूर्ण,
-	अणु
+		.u.w.read   = xen_pcibk_read_config_word,
+		.u.w.write  = pm_ctrl_write,
+	},
+	{
 		.offset     = PCI_PM_PPB_EXTENSIONS,
 		.size       = 1,
-		.u.b.पढ़ो   = xen_pcibk_पढ़ो_config_byte,
-	पूर्ण,
-	अणु
+		.u.b.read   = xen_pcibk_read_config_byte,
+	},
+	{
 		.offset     = PCI_PM_DATA_REGISTER,
 		.size       = 1,
-		.u.b.पढ़ो   = xen_pcibk_पढ़ो_config_byte,
-	पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+		.u.b.read   = xen_pcibk_read_config_byte,
+	},
+	{}
+};
 
-अटल काष्ठा msi_msix_field_config अणु
-	u16          enable_bit; /* bit क्रम enabling MSI/MSI-X */
-	अचिन्हित पूर्णांक पूर्णांक_type;   /* पूर्णांकerrupt type क्रम exclusiveness check */
-पूर्ण msi_field_config = अणु
+static struct msi_msix_field_config {
+	u16          enable_bit; /* bit for enabling MSI/MSI-X */
+	unsigned int int_type;   /* interrupt type for exclusiveness check */
+} msi_field_config = {
 	.enable_bit	= PCI_MSI_FLAGS_ENABLE,
-	.पूर्णांक_type	= INTERRUPT_TYPE_MSI,
-पूर्ण, msix_field_config = अणु
+	.int_type	= INTERRUPT_TYPE_MSI,
+}, msix_field_config = {
 	.enable_bit	= PCI_MSIX_FLAGS_ENABLE,
-	.पूर्णांक_type	= INTERRUPT_TYPE_MSIX,
-पूर्ण;
+	.int_type	= INTERRUPT_TYPE_MSIX,
+};
 
-अटल व्योम *msi_field_init(काष्ठा pci_dev *dev, पूर्णांक offset)
-अणु
-	वापस &msi_field_config;
-पूर्ण
+static void *msi_field_init(struct pci_dev *dev, int offset)
+{
+	return &msi_field_config;
+}
 
-अटल व्योम *msix_field_init(काष्ठा pci_dev *dev, पूर्णांक offset)
-अणु
-	वापस &msix_field_config;
-पूर्ण
+static void *msix_field_init(struct pci_dev *dev, int offset)
+{
+	return &msix_field_config;
+}
 
-अटल पूर्णांक msi_msix_flags_ग_लिखो(काष्ठा pci_dev *dev, पूर्णांक offset, u16 new_value,
-				व्योम *data)
-अणु
-	पूर्णांक err;
+static int msi_msix_flags_write(struct pci_dev *dev, int offset, u16 new_value,
+				void *data)
+{
+	int err;
 	u16 old_value;
-	स्थिर काष्ठा msi_msix_field_config *field_config = data;
-	स्थिर काष्ठा xen_pcibk_dev_data *dev_data = pci_get_drvdata(dev);
+	const struct msi_msix_field_config *field_config = data;
+	const struct xen_pcibk_dev_data *dev_data = pci_get_drvdata(dev);
 
-	अगर (xen_pcibk_permissive || dev_data->permissive)
-		जाओ ग_लिखो;
+	if (xen_pcibk_permissive || dev_data->permissive)
+		goto write;
 
-	err = pci_पढ़ो_config_word(dev, offset, &old_value);
-	अगर (err)
-		वापस err;
+	err = pci_read_config_word(dev, offset, &old_value);
+	if (err)
+		return err;
 
-	अगर (new_value == old_value)
-		वापस 0;
+	if (new_value == old_value)
+		return 0;
 
-	अगर (!dev_data->allow_पूर्णांकerrupt_control ||
+	if (!dev_data->allow_interrupt_control ||
 	    (new_value ^ old_value) & ~field_config->enable_bit)
-		वापस PCIBIOS_SET_FAILED;
+		return PCIBIOS_SET_FAILED;
 
-	अगर (new_value & field_config->enable_bit) अणु
-		/* करोn't allow enabling together with other पूर्णांकerrupt types */
-		पूर्णांक पूर्णांक_type = xen_pcibk_get_पूर्णांकerrupt_type(dev);
+	if (new_value & field_config->enable_bit) {
+		/* don't allow enabling together with other interrupt types */
+		int int_type = xen_pcibk_get_interrupt_type(dev);
 
-		अगर (पूर्णांक_type == INTERRUPT_TYPE_NONE ||
-		    पूर्णांक_type == field_config->पूर्णांक_type)
-			जाओ ग_लिखो;
-		वापस PCIBIOS_SET_FAILED;
-	पूर्ण
+		if (int_type == INTERRUPT_TYPE_NONE ||
+		    int_type == field_config->int_type)
+			goto write;
+		return PCIBIOS_SET_FAILED;
+	}
 
-ग_लिखो:
-	वापस pci_ग_लिखो_config_word(dev, offset, new_value);
-पूर्ण
+write:
+	return pci_write_config_word(dev, offset, new_value);
+}
 
-अटल स्थिर काष्ठा config_field caplist_msix[] = अणु
-	अणु
+static const struct config_field caplist_msix[] = {
+	{
 		.offset    = PCI_MSIX_FLAGS,
 		.size      = 2,
 		.init      = msix_field_init,
-		.u.w.पढ़ो  = xen_pcibk_पढ़ो_config_word,
-		.u.w.ग_लिखो = msi_msix_flags_ग_लिखो,
-	पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+		.u.w.read  = xen_pcibk_read_config_word,
+		.u.w.write = msi_msix_flags_write,
+	},
+	{}
+};
 
-अटल स्थिर काष्ठा config_field caplist_msi[] = अणु
-	अणु
+static const struct config_field caplist_msi[] = {
+	{
 		.offset    = PCI_MSI_FLAGS,
 		.size      = 2,
 		.init      = msi_field_init,
-		.u.w.पढ़ो  = xen_pcibk_पढ़ो_config_word,
-		.u.w.ग_लिखो = msi_msix_flags_ग_लिखो,
-	पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+		.u.w.read  = xen_pcibk_read_config_word,
+		.u.w.write = msi_msix_flags_write,
+	},
+	{}
+};
 
-अटल काष्ठा xen_pcibk_config_capability xen_pcibk_config_capability_pm = अणु
+static struct xen_pcibk_config_capability xen_pcibk_config_capability_pm = {
 	.capability = PCI_CAP_ID_PM,
 	.fields = caplist_pm,
-पूर्ण;
-अटल काष्ठा xen_pcibk_config_capability xen_pcibk_config_capability_vpd = अणु
+};
+static struct xen_pcibk_config_capability xen_pcibk_config_capability_vpd = {
 	.capability = PCI_CAP_ID_VPD,
 	.fields = caplist_vpd,
-पूर्ण;
-अटल काष्ठा xen_pcibk_config_capability xen_pcibk_config_capability_msi = अणु
+};
+static struct xen_pcibk_config_capability xen_pcibk_config_capability_msi = {
 	.capability = PCI_CAP_ID_MSI,
 	.fields = caplist_msi,
-पूर्ण;
-अटल काष्ठा xen_pcibk_config_capability xen_pcibk_config_capability_msix = अणु
+};
+static struct xen_pcibk_config_capability xen_pcibk_config_capability_msix = {
 	.capability = PCI_CAP_ID_MSIX,
 	.fields = caplist_msix,
-पूर्ण;
+};
 
-पूर्णांक xen_pcibk_config_capability_init(व्योम)
-अणु
-	रेजिस्टर_capability(&xen_pcibk_config_capability_vpd);
-	रेजिस्टर_capability(&xen_pcibk_config_capability_pm);
-	रेजिस्टर_capability(&xen_pcibk_config_capability_msi);
-	रेजिस्टर_capability(&xen_pcibk_config_capability_msix);
+int xen_pcibk_config_capability_init(void)
+{
+	register_capability(&xen_pcibk_config_capability_vpd);
+	register_capability(&xen_pcibk_config_capability_pm);
+	register_capability(&xen_pcibk_config_capability_msi);
+	register_capability(&xen_pcibk_config_capability_msix);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

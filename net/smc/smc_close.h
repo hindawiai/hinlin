@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Shared Memory Communications over RDMA (SMC-R) and RoCE
  *
@@ -10,22 +9,22 @@
  * Author(s):  Ursula Braun <ubraun@linux.vnet.ibm.com>
  */
 
-#अगर_अघोषित SMC_CLOSE_H
-#घोषणा SMC_CLOSE_H
+#ifndef SMC_CLOSE_H
+#define SMC_CLOSE_H
 
-#समावेश <linux/workqueue.h>
+#include <linux/workqueue.h>
 
-#समावेश "smc.h"
+#include "smc.h"
 
-#घोषणा SMC_MAX_STREAM_WAIT_TIMEOUT		(2 * HZ)
-#घोषणा SMC_CLOSE_SOCK_PUT_DELAY		HZ
+#define SMC_MAX_STREAM_WAIT_TIMEOUT		(2 * HZ)
+#define SMC_CLOSE_SOCK_PUT_DELAY		HZ
 
-व्योम smc_बंद_wake_tx_prepared(काष्ठा smc_sock *smc);
-पूर्णांक smc_बंद_active(काष्ठा smc_sock *smc);
-पूर्णांक smc_बंद_shutकरोwn_ग_लिखो(काष्ठा smc_sock *smc);
-व्योम smc_बंद_init(काष्ठा smc_sock *smc);
-व्योम smc_clcsock_release(काष्ठा smc_sock *smc);
-पूर्णांक smc_बंद_पात(काष्ठा smc_connection *conn);
-व्योम smc_बंद_active_पात(काष्ठा smc_sock *smc);
+void smc_close_wake_tx_prepared(struct smc_sock *smc);
+int smc_close_active(struct smc_sock *smc);
+int smc_close_shutdown_write(struct smc_sock *smc);
+void smc_close_init(struct smc_sock *smc);
+void smc_clcsock_release(struct smc_sock *smc);
+int smc_close_abort(struct smc_connection *conn);
+void smc_close_active_abort(struct smc_sock *smc);
 
-#पूर्ण_अगर /* SMC_CLOSE_H */
+#endif /* SMC_CLOSE_H */

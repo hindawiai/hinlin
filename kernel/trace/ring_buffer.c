@@ -1,77 +1,76 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Generic ring buffer
  *
  * Copyright (C) 2008 Steven Rostedt <srostedt@redhat.com>
  */
-#समावेश <linux/trace_recursion.h>
-#समावेश <linux/trace_events.h>
-#समावेश <linux/ring_buffer.h>
-#समावेश <linux/trace_घड़ी.h>
-#समावेश <linux/sched/घड़ी.h>
-#समावेश <linux/trace_seq.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/irq_work.h>
-#समावेश <linux/security.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/hardirq.h>
-#समावेश <linux/kthपढ़ो.h>	/* क्रम self test */
-#समावेश <linux/module.h>
-#समावेश <linux/percpu.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/init.h>
-#समावेश <linux/hash.h>
-#समावेश <linux/list.h>
-#समावेश <linux/cpu.h>
-#समावेश <linux/oom.h>
+#include <linux/trace_recursion.h>
+#include <linux/trace_events.h>
+#include <linux/ring_buffer.h>
+#include <linux/trace_clock.h>
+#include <linux/sched/clock.h>
+#include <linux/trace_seq.h>
+#include <linux/spinlock.h>
+#include <linux/irq_work.h>
+#include <linux/security.h>
+#include <linux/uaccess.h>
+#include <linux/hardirq.h>
+#include <linux/kthread.h>	/* for self test */
+#include <linux/module.h>
+#include <linux/percpu.h>
+#include <linux/mutex.h>
+#include <linux/delay.h>
+#include <linux/slab.h>
+#include <linux/init.h>
+#include <linux/hash.h>
+#include <linux/list.h>
+#include <linux/cpu.h>
+#include <linux/oom.h>
 
-#समावेश <यंत्र/local.h>
+#include <asm/local.h>
 
-अटल व्योम update_pages_handler(काष्ठा work_काष्ठा *work);
+static void update_pages_handler(struct work_struct *work);
 
 /*
  * The ring buffer header is special. We must manually up keep it.
  */
-पूर्णांक ring_buffer_prपूर्णांक_entry_header(काष्ठा trace_seq *s)
-अणु
-	trace_seq_माला_दो(s, "# compressed entry header\n");
-	trace_seq_माला_दो(s, "\ttype_len    :    5 bits\n");
-	trace_seq_माला_दो(s, "\ttime_delta  :   27 bits\n");
-	trace_seq_माला_दो(s, "\tarray       :   32 bits\n");
-	trace_seq_अ_दो(s, '\n');
-	trace_seq_म_लिखो(s, "\tpadding     : type == %d\n",
+int ring_buffer_print_entry_header(struct trace_seq *s)
+{
+	trace_seq_puts(s, "# compressed entry header\n");
+	trace_seq_puts(s, "\ttype_len    :    5 bits\n");
+	trace_seq_puts(s, "\ttime_delta  :   27 bits\n");
+	trace_seq_puts(s, "\tarray       :   32 bits\n");
+	trace_seq_putc(s, '\n');
+	trace_seq_printf(s, "\tpadding     : type == %d\n",
 			 RINGBUF_TYPE_PADDING);
-	trace_seq_म_लिखो(s, "\ttime_extend : type == %d\n",
+	trace_seq_printf(s, "\ttime_extend : type == %d\n",
 			 RINGBUF_TYPE_TIME_EXTEND);
-	trace_seq_म_लिखो(s, "\ttime_stamp : type == %d\n",
+	trace_seq_printf(s, "\ttime_stamp : type == %d\n",
 			 RINGBUF_TYPE_TIME_STAMP);
-	trace_seq_म_लिखो(s, "\tdata max type_len  == %d\n",
+	trace_seq_printf(s, "\tdata max type_len  == %d\n",
 			 RINGBUF_TYPE_DATA_TYPE_LEN_MAX);
 
-	वापस !trace_seq_has_overflowed(s);
-पूर्ण
+	return !trace_seq_has_overflowed(s);
+}
 
 /*
  * The ring buffer is made up of a list of pages. A separate list of pages is
- * allocated क्रम each CPU. A ग_लिखोr may only ग_लिखो to a buffer that is
- * associated with the CPU it is currently executing on.  A पढ़ोer may पढ़ो
+ * allocated for each CPU. A writer may only write to a buffer that is
+ * associated with the CPU it is currently executing on.  A reader may read
  * from any per cpu buffer.
  *
- * The पढ़ोer is special. For each per cpu buffer, the पढ़ोer has its own
- * पढ़ोer page. When a पढ़ोer has पढ़ो the entire पढ़ोer page, this पढ़ोer
+ * The reader is special. For each per cpu buffer, the reader has its own
+ * reader page. When a reader has read the entire reader page, this reader
  * page is swapped with another page in the ring buffer.
  *
- * Now, as दीर्घ as the ग_लिखोr is off the पढ़ोer page, the पढ़ोer can करो what
- * ever it wants with that page. The ग_लिखोr will never ग_लिखो to that page
- * again (as दीर्घ as it is out of the ring buffer).
+ * Now, as long as the writer is off the reader page, the reader can do what
+ * ever it wants with that page. The writer will never write to that page
+ * again (as long as it is out of the ring buffer).
  *
  * Here's some silly ASCII art.
  *
  *   +------+
- *   |पढ़ोer|          RING BUFFER
+ *   |reader|          RING BUFFER
  *   |page  |
  *   +------+        +---+   +---+   +---+
  *                   |   |-->|   |-->|   |
@@ -82,7 +81,7 @@
  *
  *
  *   +------+
- *   |पढ़ोer|          RING BUFFER
+ *   |reader|          RING BUFFER
  *   |page  |------------------v
  *   +------+        +---+   +---+   +---+
  *                   |   |-->|   |-->|   |
@@ -93,7 +92,7 @@
  *
  *
  *   +------+
- *   |पढ़ोer|          RING BUFFER
+ *   |reader|          RING BUFFER
  *   |page  |------------------v
  *   +------+        +---+   +---+   +---+
  *      ^            |   |-->|   |-->|   |
@@ -114,394 +113,394 @@
  *      +------------------------------+
  *
  *
- * After we make this swap, the पढ़ोer can hand this page off to the splice
- * code and be करोne with it. It can even allocate a new page अगर it needs to
- * and swap that पूर्णांकo the ring buffer.
+ * After we make this swap, the reader can hand this page off to the splice
+ * code and be done with it. It can even allocate a new page if it needs to
+ * and swap that into the ring buffer.
  *
  * We will be using cmpxchg soon to make all this lockless.
  *
  */
 
-/* Used क्रम inभागidual buffers (after the counter) */
-#घोषणा RB_BUFFER_OFF		(1 << 20)
+/* Used for individual buffers (after the counter) */
+#define RB_BUFFER_OFF		(1 << 20)
 
-#घोषणा BUF_PAGE_HDR_SIZE दुरत्व(काष्ठा buffer_data_page, data)
+#define BUF_PAGE_HDR_SIZE offsetof(struct buffer_data_page, data)
 
-#घोषणा RB_EVNT_HDR_SIZE (दुरत्व(काष्ठा ring_buffer_event, array))
-#घोषणा RB_ALIGNMENT		4U
-#घोषणा RB_MAX_SMALL_DATA	(RB_ALIGNMENT * RINGBUF_TYPE_DATA_TYPE_LEN_MAX)
-#घोषणा RB_EVNT_MIN_SIZE	8U	/* two 32bit words */
+#define RB_EVNT_HDR_SIZE (offsetof(struct ring_buffer_event, array))
+#define RB_ALIGNMENT		4U
+#define RB_MAX_SMALL_DATA	(RB_ALIGNMENT * RINGBUF_TYPE_DATA_TYPE_LEN_MAX)
+#define RB_EVNT_MIN_SIZE	8U	/* two 32bit words */
 
-#अगर_अघोषित CONFIG_HAVE_64BIT_ALIGNED_ACCESS
+#ifndef CONFIG_HAVE_64BIT_ALIGNED_ACCESS
 # define RB_FORCE_8BYTE_ALIGNMENT	0
 # define RB_ARCH_ALIGNMENT		RB_ALIGNMENT
-#अन्यथा
+#else
 # define RB_FORCE_8BYTE_ALIGNMENT	1
 # define RB_ARCH_ALIGNMENT		8U
-#पूर्ण_अगर
+#endif
 
-#घोषणा RB_ALIGN_DATA		__aligned(RB_ARCH_ALIGNMENT)
+#define RB_ALIGN_DATA		__aligned(RB_ARCH_ALIGNMENT)
 
-/* define RINGBUF_TYPE_DATA क्रम 'case RINGBUF_TYPE_DATA:' */
-#घोषणा RINGBUF_TYPE_DATA 0 ... RINGBUF_TYPE_DATA_TYPE_LEN_MAX
+/* define RINGBUF_TYPE_DATA for 'case RINGBUF_TYPE_DATA:' */
+#define RINGBUF_TYPE_DATA 0 ... RINGBUF_TYPE_DATA_TYPE_LEN_MAX
 
-क्रमागत अणु
+enum {
 	RB_LEN_TIME_EXTEND = 8,
 	RB_LEN_TIME_STAMP =  8,
-पूर्ण;
+};
 
-#घोषणा skip_समय_extend(event) \
-	((काष्ठा ring_buffer_event *)((अक्षर *)event + RB_LEN_TIME_EXTEND))
+#define skip_time_extend(event) \
+	((struct ring_buffer_event *)((char *)event + RB_LEN_TIME_EXTEND))
 
-#घोषणा extended_समय(event) \
+#define extended_time(event) \
 	(event->type_len >= RINGBUF_TYPE_TIME_EXTEND)
 
-अटल अंतरभूत पूर्णांक rb_null_event(काष्ठा ring_buffer_event *event)
-अणु
-	वापस event->type_len == RINGBUF_TYPE_PADDING && !event->समय_delta;
-पूर्ण
+static inline int rb_null_event(struct ring_buffer_event *event)
+{
+	return event->type_len == RINGBUF_TYPE_PADDING && !event->time_delta;
+}
 
-अटल व्योम rb_event_set_padding(काष्ठा ring_buffer_event *event)
-अणु
-	/* padding has a शून्य समय_delta */
+static void rb_event_set_padding(struct ring_buffer_event *event)
+{
+	/* padding has a NULL time_delta */
 	event->type_len = RINGBUF_TYPE_PADDING;
-	event->समय_delta = 0;
-पूर्ण
+	event->time_delta = 0;
+}
 
-अटल अचिन्हित
-rb_event_data_length(काष्ठा ring_buffer_event *event)
-अणु
-	अचिन्हित length;
+static unsigned
+rb_event_data_length(struct ring_buffer_event *event)
+{
+	unsigned length;
 
-	अगर (event->type_len)
+	if (event->type_len)
 		length = event->type_len * RB_ALIGNMENT;
-	अन्यथा
+	else
 		length = event->array[0];
-	वापस length + RB_EVNT_HDR_SIZE;
-पूर्ण
+	return length + RB_EVNT_HDR_SIZE;
+}
 
 /*
- * Return the length of the given event. Will वापस
- * the length of the समय extend अगर the event is a
- * समय extend.
+ * Return the length of the given event. Will return
+ * the length of the time extend if the event is a
+ * time extend.
  */
-अटल अंतरभूत अचिन्हित
-rb_event_length(काष्ठा ring_buffer_event *event)
-अणु
-	चयन (event->type_len) अणु
-	हाल RINGBUF_TYPE_PADDING:
-		अगर (rb_null_event(event))
+static inline unsigned
+rb_event_length(struct ring_buffer_event *event)
+{
+	switch (event->type_len) {
+	case RINGBUF_TYPE_PADDING:
+		if (rb_null_event(event))
 			/* undefined */
-			वापस -1;
-		वापस  event->array[0] + RB_EVNT_HDR_SIZE;
+			return -1;
+		return  event->array[0] + RB_EVNT_HDR_SIZE;
 
-	हाल RINGBUF_TYPE_TIME_EXTEND:
-		वापस RB_LEN_TIME_EXTEND;
+	case RINGBUF_TYPE_TIME_EXTEND:
+		return RB_LEN_TIME_EXTEND;
 
-	हाल RINGBUF_TYPE_TIME_STAMP:
-		वापस RB_LEN_TIME_STAMP;
+	case RINGBUF_TYPE_TIME_STAMP:
+		return RB_LEN_TIME_STAMP;
 
-	हाल RINGBUF_TYPE_DATA:
-		वापस rb_event_data_length(event);
-	शेष:
+	case RINGBUF_TYPE_DATA:
+		return rb_event_data_length(event);
+	default:
 		WARN_ON_ONCE(1);
-	पूर्ण
+	}
 	/* not hit */
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Return total length of समय extend and data,
- *   or just the event length क्रम all other events.
+ * Return total length of time extend and data,
+ *   or just the event length for all other events.
  */
-अटल अंतरभूत अचिन्हित
-rb_event_ts_length(काष्ठा ring_buffer_event *event)
-अणु
-	अचिन्हित len = 0;
+static inline unsigned
+rb_event_ts_length(struct ring_buffer_event *event)
+{
+	unsigned len = 0;
 
-	अगर (extended_समय(event)) अणु
-		/* समय extends include the data event after it */
+	if (extended_time(event)) {
+		/* time extends include the data event after it */
 		len = RB_LEN_TIME_EXTEND;
-		event = skip_समय_extend(event);
-	पूर्ण
-	वापस len + rb_event_length(event);
-पूर्ण
+		event = skip_time_extend(event);
+	}
+	return len + rb_event_length(event);
+}
 
 /**
- * ring_buffer_event_length - वापस the length of the event
+ * ring_buffer_event_length - return the length of the event
  * @event: the event to get the length of
  *
  * Returns the size of the data load of a data event.
  * If the event is something other than a data event, it
- * वापसs the size of the event itself. With the exception
- * of a TIME EXTEND, where it still वापसs the size of the
+ * returns the size of the event itself. With the exception
+ * of a TIME EXTEND, where it still returns the size of the
  * data load of the data event after it.
  */
-अचिन्हित ring_buffer_event_length(काष्ठा ring_buffer_event *event)
-अणु
-	अचिन्हित length;
+unsigned ring_buffer_event_length(struct ring_buffer_event *event)
+{
+	unsigned length;
 
-	अगर (extended_समय(event))
-		event = skip_समय_extend(event);
+	if (extended_time(event))
+		event = skip_time_extend(event);
 
 	length = rb_event_length(event);
-	अगर (event->type_len > RINGBUF_TYPE_DATA_TYPE_LEN_MAX)
-		वापस length;
+	if (event->type_len > RINGBUF_TYPE_DATA_TYPE_LEN_MAX)
+		return length;
 	length -= RB_EVNT_HDR_SIZE;
-	अगर (length > RB_MAX_SMALL_DATA + माप(event->array[0]))
-                length -= माप(event->array[0]);
-	वापस length;
-पूर्ण
+	if (length > RB_MAX_SMALL_DATA + sizeof(event->array[0]))
+                length -= sizeof(event->array[0]);
+	return length;
+}
 EXPORT_SYMBOL_GPL(ring_buffer_event_length);
 
-/* अंतरभूत क्रम ring buffer fast paths */
-अटल __always_अंतरभूत व्योम *
-rb_event_data(काष्ठा ring_buffer_event *event)
-अणु
-	अगर (extended_समय(event))
-		event = skip_समय_extend(event);
+/* inline for ring buffer fast paths */
+static __always_inline void *
+rb_event_data(struct ring_buffer_event *event)
+{
+	if (extended_time(event))
+		event = skip_time_extend(event);
 	WARN_ON_ONCE(event->type_len > RINGBUF_TYPE_DATA_TYPE_LEN_MAX);
 	/* If length is in len field, then array[0] has the data */
-	अगर (event->type_len)
-		वापस (व्योम *)&event->array[0];
+	if (event->type_len)
+		return (void *)&event->array[0];
 	/* Otherwise length is in array[0] and array[1] has the data */
-	वापस (व्योम *)&event->array[1];
-पूर्ण
+	return (void *)&event->array[1];
+}
 
 /**
- * ring_buffer_event_data - वापस the data of the event
+ * ring_buffer_event_data - return the data of the event
  * @event: the event to get the data from
  */
-व्योम *ring_buffer_event_data(काष्ठा ring_buffer_event *event)
-अणु
-	वापस rb_event_data(event);
-पूर्ण
+void *ring_buffer_event_data(struct ring_buffer_event *event)
+{
+	return rb_event_data(event);
+}
 EXPORT_SYMBOL_GPL(ring_buffer_event_data);
 
-#घोषणा क्रम_each_buffer_cpu(buffer, cpu)		\
-	क्रम_each_cpu(cpu, buffer->cpumask)
+#define for_each_buffer_cpu(buffer, cpu)		\
+	for_each_cpu(cpu, buffer->cpumask)
 
-#घोषणा क्रम_each_online_buffer_cpu(buffer, cpu)		\
-	क्रम_each_cpu_and(cpu, buffer->cpumask, cpu_online_mask)
+#define for_each_online_buffer_cpu(buffer, cpu)		\
+	for_each_cpu_and(cpu, buffer->cpumask, cpu_online_mask)
 
-#घोषणा TS_SHIFT	27
-#घोषणा TS_MASK		((1ULL << TS_SHIFT) - 1)
-#घोषणा TS_DELTA_TEST	(~TS_MASK)
+#define TS_SHIFT	27
+#define TS_MASK		((1ULL << TS_SHIFT) - 1)
+#define TS_DELTA_TEST	(~TS_MASK)
 
-अटल u64 rb_event_समय_stamp(काष्ठा ring_buffer_event *event)
-अणु
+static u64 rb_event_time_stamp(struct ring_buffer_event *event)
+{
 	u64 ts;
 
 	ts = event->array[0];
 	ts <<= TS_SHIFT;
-	ts += event->समय_delta;
+	ts += event->time_delta;
 
-	वापस ts;
-पूर्ण
+	return ts;
+}
 
 /* Flag when events were overwritten */
-#घोषणा RB_MISSED_EVENTS	(1 << 31)
+#define RB_MISSED_EVENTS	(1 << 31)
 /* Missed count stored at end */
-#घोषणा RB_MISSED_STORED	(1 << 30)
+#define RB_MISSED_STORED	(1 << 30)
 
-काष्ठा buffer_data_page अणु
-	u64		 समय_stamp;	/* page समय stamp */
-	local_t		 commit;	/* ग_लिखो committed index */
-	अचिन्हित अक्षर	 data[] RB_ALIGN_DATA;	/* data of buffer page */
-पूर्ण;
+struct buffer_data_page {
+	u64		 time_stamp;	/* page time stamp */
+	local_t		 commit;	/* write committed index */
+	unsigned char	 data[] RB_ALIGN_DATA;	/* data of buffer page */
+};
 
 /*
  * Note, the buffer_page list must be first. The buffer pages
  * are allocated in cache lines, which means that each buffer
  * page will be at the beginning of a cache line, and thus
- * the least signअगरicant bits will be zero. We use this to
- * add flags in the list काष्ठा poपूर्णांकers, to make the ring buffer
+ * the least significant bits will be zero. We use this to
+ * add flags in the list struct pointers, to make the ring buffer
  * lockless.
  */
-काष्ठा buffer_page अणु
-	काष्ठा list_head list;		/* list of buffer pages */
-	local_t		 ग_लिखो;		/* index क्रम next ग_लिखो */
-	अचिन्हित	 पढ़ो;		/* index क्रम next पढ़ो */
+struct buffer_page {
+	struct list_head list;		/* list of buffer pages */
+	local_t		 write;		/* index for next write */
+	unsigned	 read;		/* index for next read */
 	local_t		 entries;	/* entries on this page */
-	अचिन्हित दीर्घ	 real_end;	/* real end of data */
-	काष्ठा buffer_data_page *page;	/* Actual data page */
-पूर्ण;
+	unsigned long	 real_end;	/* real end of data */
+	struct buffer_data_page *page;	/* Actual data page */
+};
 
 /*
- * The buffer page counters, ग_लिखो and entries, must be reset
+ * The buffer page counters, write and entries, must be reset
  * atomically when crossing page boundaries. To synchronize this
- * update, two counters are inserted पूर्णांकo the number. One is
- * the actual counter क्रम the ग_लिखो position or count on the page.
+ * update, two counters are inserted into the number. One is
+ * the actual counter for the write position or count on the page.
  *
- * The other is a counter of updaters. Beक्रमe an update happens
+ * The other is a counter of updaters. Before an update happens
  * the update partition of the counter is incremented. This will
  * allow the updater to update the counter atomically.
  *
  * The counter is 20 bits, and the state data is 12.
  */
-#घोषणा RB_WRITE_MASK		0xfffff
-#घोषणा RB_WRITE_INTCNT		(1 << 20)
+#define RB_WRITE_MASK		0xfffff
+#define RB_WRITE_INTCNT		(1 << 20)
 
-अटल व्योम rb_init_page(काष्ठा buffer_data_page *bpage)
-अणु
+static void rb_init_page(struct buffer_data_page *bpage)
+{
 	local_set(&bpage->commit, 0);
-पूर्ण
+}
 
 /*
- * Also stolen from mm/slob.c. Thanks to Mathieu Desnoyers क्रम poपूर्णांकing
+ * Also stolen from mm/slob.c. Thanks to Mathieu Desnoyers for pointing
  * this issue out.
  */
-अटल व्योम मुक्त_buffer_page(काष्ठा buffer_page *bpage)
-अणु
-	मुक्त_page((अचिन्हित दीर्घ)bpage->page);
-	kमुक्त(bpage);
-पूर्ण
+static void free_buffer_page(struct buffer_page *bpage)
+{
+	free_page((unsigned long)bpage->page);
+	kfree(bpage);
+}
 
 /*
- * We need to fit the समय_stamp delta पूर्णांकo 27 bits.
+ * We need to fit the time_stamp delta into 27 bits.
  */
-अटल अंतरभूत पूर्णांक test_समय_stamp(u64 delta)
-अणु
-	अगर (delta & TS_DELTA_TEST)
-		वापस 1;
-	वापस 0;
-पूर्ण
+static inline int test_time_stamp(u64 delta)
+{
+	if (delta & TS_DELTA_TEST)
+		return 1;
+	return 0;
+}
 
-#घोषणा BUF_PAGE_SIZE (PAGE_SIZE - BUF_PAGE_HDR_SIZE)
+#define BUF_PAGE_SIZE (PAGE_SIZE - BUF_PAGE_HDR_SIZE)
 
 /* Max payload is BUF_PAGE_SIZE - header (8bytes) */
-#घोषणा BUF_MAX_DATA_SIZE (BUF_PAGE_SIZE - (माप(u32) * 2))
+#define BUF_MAX_DATA_SIZE (BUF_PAGE_SIZE - (sizeof(u32) * 2))
 
-पूर्णांक ring_buffer_prपूर्णांक_page_header(काष्ठा trace_seq *s)
-अणु
-	काष्ठा buffer_data_page field;
+int ring_buffer_print_page_header(struct trace_seq *s)
+{
+	struct buffer_data_page field;
 
-	trace_seq_म_लिखो(s, "\tfield: u64 timestamp;\t"
+	trace_seq_printf(s, "\tfield: u64 timestamp;\t"
 			 "offset:0;\tsize:%u;\tsigned:%u;\n",
-			 (अचिन्हित पूर्णांक)माप(field.समय_stamp),
-			 (अचिन्हित पूर्णांक)is_चिन्हित_type(u64));
+			 (unsigned int)sizeof(field.time_stamp),
+			 (unsigned int)is_signed_type(u64));
 
-	trace_seq_म_लिखो(s, "\tfield: local_t commit;\t"
+	trace_seq_printf(s, "\tfield: local_t commit;\t"
 			 "offset:%u;\tsize:%u;\tsigned:%u;\n",
-			 (अचिन्हित पूर्णांक)दुरत्व(typeof(field), commit),
-			 (अचिन्हित पूर्णांक)माप(field.commit),
-			 (अचिन्हित पूर्णांक)is_चिन्हित_type(दीर्घ));
+			 (unsigned int)offsetof(typeof(field), commit),
+			 (unsigned int)sizeof(field.commit),
+			 (unsigned int)is_signed_type(long));
 
-	trace_seq_म_लिखो(s, "\tfield: int overwrite;\t"
+	trace_seq_printf(s, "\tfield: int overwrite;\t"
 			 "offset:%u;\tsize:%u;\tsigned:%u;\n",
-			 (अचिन्हित पूर्णांक)दुरत्व(typeof(field), commit),
+			 (unsigned int)offsetof(typeof(field), commit),
 			 1,
-			 (अचिन्हित पूर्णांक)is_चिन्हित_type(दीर्घ));
+			 (unsigned int)is_signed_type(long));
 
-	trace_seq_म_लिखो(s, "\tfield: char data;\t"
+	trace_seq_printf(s, "\tfield: char data;\t"
 			 "offset:%u;\tsize:%u;\tsigned:%u;\n",
-			 (अचिन्हित पूर्णांक)दुरत्व(typeof(field), data),
-			 (अचिन्हित पूर्णांक)BUF_PAGE_SIZE,
-			 (अचिन्हित पूर्णांक)is_चिन्हित_type(अक्षर));
+			 (unsigned int)offsetof(typeof(field), data),
+			 (unsigned int)BUF_PAGE_SIZE,
+			 (unsigned int)is_signed_type(char));
 
-	वापस !trace_seq_has_overflowed(s);
-पूर्ण
+	return !trace_seq_has_overflowed(s);
+}
 
-काष्ठा rb_irq_work अणु
-	काष्ठा irq_work			work;
-	रुको_queue_head_t		रुकोers;
-	रुको_queue_head_t		full_रुकोers;
-	bool				रुकोers_pending;
-	bool				full_रुकोers_pending;
+struct rb_irq_work {
+	struct irq_work			work;
+	wait_queue_head_t		waiters;
+	wait_queue_head_t		full_waiters;
+	bool				waiters_pending;
+	bool				full_waiters_pending;
 	bool				wakeup_full;
-पूर्ण;
+};
 
 /*
  * Structure to hold event state and handle nested events.
  */
-काष्ठा rb_event_info अणु
+struct rb_event_info {
 	u64			ts;
 	u64			delta;
-	u64			beक्रमe;
+	u64			before;
 	u64			after;
-	अचिन्हित दीर्घ		length;
-	काष्ठा buffer_page	*tail_page;
-	पूर्णांक			add_बारtamp;
-पूर्ण;
+	unsigned long		length;
+	struct buffer_page	*tail_page;
+	int			add_timestamp;
+};
 
 /*
- * Used क्रम the add_बारtamp
+ * Used for the add_timestamp
  *  NONE
- *  EXTEND - wants a समय extend
- *  ABSOLUTE - the buffer requests all events to have असलolute समय stamps
- *  FORCE - क्रमce a full समय stamp.
+ *  EXTEND - wants a time extend
+ *  ABSOLUTE - the buffer requests all events to have absolute time stamps
+ *  FORCE - force a full time stamp.
  */
-क्रमागत अणु
+enum {
 	RB_ADD_STAMP_NONE		= 0,
 	RB_ADD_STAMP_EXTEND		= BIT(1),
 	RB_ADD_STAMP_ABSOLUTE		= BIT(2),
 	RB_ADD_STAMP_FORCE		= BIT(3)
-पूर्ण;
+};
 /*
- * Used क्रम which event context the event is in.
+ * Used for which event context the event is in.
  *  TRANSITION = 0
  *  NMI     = 1
  *  IRQ     = 2
  *  SOFTIRQ = 3
  *  NORMAL  = 4
  *
- * See trace_recursive_lock() comment below क्रम more details.
+ * See trace_recursive_lock() comment below for more details.
  */
-क्रमागत अणु
+enum {
 	RB_CTX_TRANSITION,
 	RB_CTX_NMI,
 	RB_CTX_IRQ,
 	RB_CTX_SOFTIRQ,
 	RB_CTX_NORMAL,
 	RB_CTX_MAX
-पूर्ण;
+};
 
-#अगर BITS_PER_LONG == 32
-#घोषणा RB_TIME_32
-#पूर्ण_अगर
+#if BITS_PER_LONG == 32
+#define RB_TIME_32
+#endif
 
 /* To test on 64 bit machines */
-//#घोषणा RB_TIME_32
+//#define RB_TIME_32
 
-#अगर_घोषित RB_TIME_32
+#ifdef RB_TIME_32
 
-काष्ठा rb_समय_काष्ठा अणु
+struct rb_time_struct {
 	local_t		cnt;
 	local_t		top;
 	local_t		bottom;
-पूर्ण;
-#अन्यथा
-#समावेश <यंत्र/local64.h>
-काष्ठा rb_समय_काष्ठा अणु
-	local64_t	समय;
-पूर्ण;
-#पूर्ण_अगर
-प्रकार काष्ठा rb_समय_काष्ठा rb_समय_प्रकार;
+};
+#else
+#include <asm/local64.h>
+struct rb_time_struct {
+	local64_t	time;
+};
+#endif
+typedef struct rb_time_struct rb_time_t;
 
-#घोषणा MAX_NEST	5
+#define MAX_NEST	5
 
 /*
  * head_page == tail_page && head == tail then buffer is empty.
  */
-काष्ठा ring_buffer_per_cpu अणु
-	पूर्णांक				cpu;
+struct ring_buffer_per_cpu {
+	int				cpu;
 	atomic_t			record_disabled;
 	atomic_t			resize_disabled;
-	काष्ठा trace_buffer	*buffer;
-	raw_spinlock_t			पढ़ोer_lock;	/* serialize पढ़ोers */
+	struct trace_buffer	*buffer;
+	raw_spinlock_t			reader_lock;	/* serialize readers */
 	arch_spinlock_t			lock;
-	काष्ठा lock_class_key		lock_key;
-	काष्ठा buffer_data_page		*मुक्त_page;
-	अचिन्हित दीर्घ			nr_pages;
-	अचिन्हित पूर्णांक			current_context;
-	काष्ठा list_head		*pages;
-	काष्ठा buffer_page		*head_page;	/* पढ़ो from head */
-	काष्ठा buffer_page		*tail_page;	/* ग_लिखो to tail */
-	काष्ठा buffer_page		*commit_page;	/* committed pages */
-	काष्ठा buffer_page		*पढ़ोer_page;
-	अचिन्हित दीर्घ			lost_events;
-	अचिन्हित दीर्घ			last_overrun;
-	अचिन्हित दीर्घ			nest;
+	struct lock_class_key		lock_key;
+	struct buffer_data_page		*free_page;
+	unsigned long			nr_pages;
+	unsigned int			current_context;
+	struct list_head		*pages;
+	struct buffer_page		*head_page;	/* read from head */
+	struct buffer_page		*tail_page;	/* write to tail */
+	struct buffer_page		*commit_page;	/* committed pages */
+	struct buffer_page		*reader_page;
+	unsigned long			lost_events;
+	unsigned long			last_overrun;
+	unsigned long			nest;
 	local_t				entries_bytes;
 	local_t				entries;
 	local_t				overrun;
@@ -510,331 +509,331 @@ EXPORT_SYMBOL_GPL(ring_buffer_event_data);
 	local_t				committing;
 	local_t				commits;
 	local_t				pages_touched;
-	local_t				pages_पढ़ो;
-	दीर्घ				last_pages_touch;
-	माप_प्रकार				लघुest_full;
-	अचिन्हित दीर्घ			पढ़ो;
-	अचिन्हित दीर्घ			पढ़ो_bytes;
-	rb_समय_प्रकार			ग_लिखो_stamp;
-	rb_समय_प्रकार			beक्रमe_stamp;
+	local_t				pages_read;
+	long				last_pages_touch;
+	size_t				shortest_full;
+	unsigned long			read;
+	unsigned long			read_bytes;
+	rb_time_t			write_stamp;
+	rb_time_t			before_stamp;
 	u64				event_stamp[MAX_NEST];
-	u64				पढ़ो_stamp;
-	/* ring buffer pages to update, > 0 to add, < 0 to हटाओ */
-	दीर्घ				nr_pages_to_update;
-	काष्ठा list_head		new_pages; /* new pages to add */
-	काष्ठा work_काष्ठा		update_pages_work;
-	काष्ठा completion		update_करोne;
+	u64				read_stamp;
+	/* ring buffer pages to update, > 0 to add, < 0 to remove */
+	long				nr_pages_to_update;
+	struct list_head		new_pages; /* new pages to add */
+	struct work_struct		update_pages_work;
+	struct completion		update_done;
 
-	काष्ठा rb_irq_work		irq_work;
-पूर्ण;
+	struct rb_irq_work		irq_work;
+};
 
-काष्ठा trace_buffer अणु
-	अचिन्हित			flags;
-	पूर्णांक				cpus;
+struct trace_buffer {
+	unsigned			flags;
+	int				cpus;
 	atomic_t			record_disabled;
 	cpumask_var_t			cpumask;
 
-	काष्ठा lock_class_key		*पढ़ोer_lock_key;
+	struct lock_class_key		*reader_lock_key;
 
-	काष्ठा mutex			mutex;
+	struct mutex			mutex;
 
-	काष्ठा ring_buffer_per_cpu	**buffers;
+	struct ring_buffer_per_cpu	**buffers;
 
-	काष्ठा hlist_node		node;
-	u64				(*घड़ी)(व्योम);
+	struct hlist_node		node;
+	u64				(*clock)(void);
 
-	काष्ठा rb_irq_work		irq_work;
-	bool				समय_stamp_असल;
-पूर्ण;
+	struct rb_irq_work		irq_work;
+	bool				time_stamp_abs;
+};
 
-काष्ठा ring_buffer_iter अणु
-	काष्ठा ring_buffer_per_cpu	*cpu_buffer;
-	अचिन्हित दीर्घ			head;
-	अचिन्हित दीर्घ			next_event;
-	काष्ठा buffer_page		*head_page;
-	काष्ठा buffer_page		*cache_पढ़ोer_page;
-	अचिन्हित दीर्घ			cache_पढ़ो;
-	u64				पढ़ो_stamp;
+struct ring_buffer_iter {
+	struct ring_buffer_per_cpu	*cpu_buffer;
+	unsigned long			head;
+	unsigned long			next_event;
+	struct buffer_page		*head_page;
+	struct buffer_page		*cache_reader_page;
+	unsigned long			cache_read;
+	u64				read_stamp;
 	u64				page_stamp;
-	काष्ठा ring_buffer_event	*event;
-	पूर्णांक				missed_events;
-पूर्ण;
+	struct ring_buffer_event	*event;
+	int				missed_events;
+};
 
-#अगर_घोषित RB_TIME_32
+#ifdef RB_TIME_32
 
 /*
  * On 32 bit machines, local64_t is very expensive. As the ring
- * buffer करोesn't need all the features of a true 64 bit atomic,
+ * buffer doesn't need all the features of a true 64 bit atomic,
  * on 32 bit, it uses these functions (64 still uses local64_t).
  *
- * For the ring buffer, 64 bit required operations क्रम the समय is
+ * For the ring buffer, 64 bit required operations for the time is
  * the following:
  *
  *  - Only need 59 bits (uses 60 to make it even).
- *  - Reads may fail अगर it पूर्णांकerrupted a modअगरication of the समय stamp.
- *      It will succeed अगर it did not पूर्णांकerrupt another ग_लिखो even अगर
- *      the पढ़ो itself is पूर्णांकerrupted by a ग_लिखो.
- *      It वापसs whether it was successful or not.
+ *  - Reads may fail if it interrupted a modification of the time stamp.
+ *      It will succeed if it did not interrupt another write even if
+ *      the read itself is interrupted by a write.
+ *      It returns whether it was successful or not.
  *
- *  - Writes always succeed and will overग_लिखो other ग_लिखोs and ग_लिखोs
- *      that were करोne by events पूर्णांकerrupting the current ग_लिखो.
+ *  - Writes always succeed and will overwrite other writes and writes
+ *      that were done by events interrupting the current write.
  *
- *  - A ग_लिखो followed by a पढ़ो of the same समय stamp will always succeed,
+ *  - A write followed by a read of the same time stamp will always succeed,
  *      but may not contain the same value.
  *
- *  - A cmpxchg will fail अगर it पूर्णांकerrupted another ग_लिखो or cmpxchg.
+ *  - A cmpxchg will fail if it interrupted another write or cmpxchg.
  *      Other than that, it acts like a normal cmpxchg.
  *
- * The 60 bit समय stamp is broken up by 30 bits in a top and bottom half
- *  (bottom being the least signअगरicant 30 bits of the 60 bit समय stamp).
+ * The 60 bit time stamp is broken up by 30 bits in a top and bottom half
+ *  (bottom being the least significant 30 bits of the 60 bit time stamp).
  *
- * The two most signअगरicant bits of each half holds a 2 bit counter (0-3).
+ * The two most significant bits of each half holds a 2 bit counter (0-3).
  * Each update will increment this counter by one.
- * When पढ़ोing the top and bottom, अगर the two counter bits match then the
+ * When reading the top and bottom, if the two counter bits match then the
  *  top and bottom together make a valid 60 bit number.
  */
-#घोषणा RB_TIME_SHIFT	30
-#घोषणा RB_TIME_VAL_MASK ((1 << RB_TIME_SHIFT) - 1)
+#define RB_TIME_SHIFT	30
+#define RB_TIME_VAL_MASK ((1 << RB_TIME_SHIFT) - 1)
 
-अटल अंतरभूत पूर्णांक rb_समय_cnt(अचिन्हित दीर्घ val)
-अणु
-	वापस (val >> RB_TIME_SHIFT) & 3;
-पूर्ण
+static inline int rb_time_cnt(unsigned long val)
+{
+	return (val >> RB_TIME_SHIFT) & 3;
+}
 
-अटल अंतरभूत u64 rb_समय_val(अचिन्हित दीर्घ top, अचिन्हित दीर्घ bottom)
-अणु
+static inline u64 rb_time_val(unsigned long top, unsigned long bottom)
+{
 	u64 val;
 
 	val = top & RB_TIME_VAL_MASK;
 	val <<= RB_TIME_SHIFT;
 	val |= bottom & RB_TIME_VAL_MASK;
 
-	वापस val;
-पूर्ण
+	return val;
+}
 
-अटल अंतरभूत bool __rb_समय_पढ़ो(rb_समय_प्रकार *t, u64 *ret, अचिन्हित दीर्घ *cnt)
-अणु
-	अचिन्हित दीर्घ top, bottom;
-	अचिन्हित दीर्घ c;
+static inline bool __rb_time_read(rb_time_t *t, u64 *ret, unsigned long *cnt)
+{
+	unsigned long top, bottom;
+	unsigned long c;
 
 	/*
-	 * If the पढ़ो is पूर्णांकerrupted by a ग_लिखो, then the cnt will
-	 * be dअगरferent. Loop until both top and bottom have been पढ़ो
-	 * without पूर्णांकerruption.
+	 * If the read is interrupted by a write, then the cnt will
+	 * be different. Loop until both top and bottom have been read
+	 * without interruption.
 	 */
-	करो अणु
-		c = local_पढ़ो(&t->cnt);
-		top = local_पढ़ो(&t->top);
-		bottom = local_पढ़ो(&t->bottom);
-	पूर्ण जबतक (c != local_पढ़ो(&t->cnt));
+	do {
+		c = local_read(&t->cnt);
+		top = local_read(&t->top);
+		bottom = local_read(&t->bottom);
+	} while (c != local_read(&t->cnt));
 
-	*cnt = rb_समय_cnt(top);
+	*cnt = rb_time_cnt(top);
 
-	/* If top and bottom counts करोn't match, this पूर्णांकerrupted a ग_लिखो */
-	अगर (*cnt != rb_समय_cnt(bottom))
-		वापस false;
+	/* If top and bottom counts don't match, this interrupted a write */
+	if (*cnt != rb_time_cnt(bottom))
+		return false;
 
-	*ret = rb_समय_val(top, bottom);
-	वापस true;
-पूर्ण
+	*ret = rb_time_val(top, bottom);
+	return true;
+}
 
-अटल bool rb_समय_पढ़ो(rb_समय_प्रकार *t, u64 *ret)
-अणु
-	अचिन्हित दीर्घ cnt;
+static bool rb_time_read(rb_time_t *t, u64 *ret)
+{
+	unsigned long cnt;
 
-	वापस __rb_समय_पढ़ो(t, ret, &cnt);
-पूर्ण
+	return __rb_time_read(t, ret, &cnt);
+}
 
-अटल अंतरभूत अचिन्हित दीर्घ rb_समय_val_cnt(अचिन्हित दीर्घ val, अचिन्हित दीर्घ cnt)
-अणु
-	वापस (val & RB_TIME_VAL_MASK) | ((cnt & 3) << RB_TIME_SHIFT);
-पूर्ण
+static inline unsigned long rb_time_val_cnt(unsigned long val, unsigned long cnt)
+{
+	return (val & RB_TIME_VAL_MASK) | ((cnt & 3) << RB_TIME_SHIFT);
+}
 
-अटल अंतरभूत व्योम rb_समय_split(u64 val, अचिन्हित दीर्घ *top, अचिन्हित दीर्घ *bottom)
-अणु
-	*top = (अचिन्हित दीर्घ)((val >> RB_TIME_SHIFT) & RB_TIME_VAL_MASK);
-	*bottom = (अचिन्हित दीर्घ)(val & RB_TIME_VAL_MASK);
-पूर्ण
+static inline void rb_time_split(u64 val, unsigned long *top, unsigned long *bottom)
+{
+	*top = (unsigned long)((val >> RB_TIME_SHIFT) & RB_TIME_VAL_MASK);
+	*bottom = (unsigned long)(val & RB_TIME_VAL_MASK);
+}
 
-अटल अंतरभूत व्योम rb_समय_val_set(local_t *t, अचिन्हित दीर्घ val, अचिन्हित दीर्घ cnt)
-अणु
-	val = rb_समय_val_cnt(val, cnt);
+static inline void rb_time_val_set(local_t *t, unsigned long val, unsigned long cnt)
+{
+	val = rb_time_val_cnt(val, cnt);
 	local_set(t, val);
-पूर्ण
+}
 
-अटल व्योम rb_समय_set(rb_समय_प्रकार *t, u64 val)
-अणु
-	अचिन्हित दीर्घ cnt, top, bottom;
+static void rb_time_set(rb_time_t *t, u64 val)
+{
+	unsigned long cnt, top, bottom;
 
-	rb_समय_split(val, &top, &bottom);
+	rb_time_split(val, &top, &bottom);
 
-	/* Writes always succeed with a valid number even अगर it माला_लो पूर्णांकerrupted. */
-	करो अणु
-		cnt = local_inc_वापस(&t->cnt);
-		rb_समय_val_set(&t->top, top, cnt);
-		rb_समय_val_set(&t->bottom, bottom, cnt);
-	पूर्ण जबतक (cnt != local_पढ़ो(&t->cnt));
-पूर्ण
+	/* Writes always succeed with a valid number even if it gets interrupted. */
+	do {
+		cnt = local_inc_return(&t->cnt);
+		rb_time_val_set(&t->top, top, cnt);
+		rb_time_val_set(&t->bottom, bottom, cnt);
+	} while (cnt != local_read(&t->cnt));
+}
 
-अटल अंतरभूत bool
-rb_समय_पढ़ो_cmpxchg(local_t *l, अचिन्हित दीर्घ expect, अचिन्हित दीर्घ set)
-अणु
-	अचिन्हित दीर्घ ret;
+static inline bool
+rb_time_read_cmpxchg(local_t *l, unsigned long expect, unsigned long set)
+{
+	unsigned long ret;
 
 	ret = local_cmpxchg(l, expect, set);
-	वापस ret == expect;
-पूर्ण
+	return ret == expect;
+}
 
-अटल पूर्णांक rb_समय_cmpxchg(rb_समय_प्रकार *t, u64 expect, u64 set)
-अणु
-	अचिन्हित दीर्घ cnt, top, bottom;
-	अचिन्हित दीर्घ cnt2, top2, bottom2;
+static int rb_time_cmpxchg(rb_time_t *t, u64 expect, u64 set)
+{
+	unsigned long cnt, top, bottom;
+	unsigned long cnt2, top2, bottom2;
 	u64 val;
 
-	/* The cmpxchg always fails अगर it पूर्णांकerrupted an update */
-	 अगर (!__rb_समय_पढ़ो(t, &val, &cnt2))
-		 वापस false;
+	/* The cmpxchg always fails if it interrupted an update */
+	 if (!__rb_time_read(t, &val, &cnt2))
+		 return false;
 
-	 अगर (val != expect)
-		 वापस false;
+	 if (val != expect)
+		 return false;
 
-	 cnt = local_पढ़ो(&t->cnt);
-	 अगर ((cnt & 3) != cnt2)
-		 वापस false;
+	 cnt = local_read(&t->cnt);
+	 if ((cnt & 3) != cnt2)
+		 return false;
 
 	 cnt2 = cnt + 1;
 
-	 rb_समय_split(val, &top, &bottom);
-	 top = rb_समय_val_cnt(top, cnt);
-	 bottom = rb_समय_val_cnt(bottom, cnt);
+	 rb_time_split(val, &top, &bottom);
+	 top = rb_time_val_cnt(top, cnt);
+	 bottom = rb_time_val_cnt(bottom, cnt);
 
-	 rb_समय_split(set, &top2, &bottom2);
-	 top2 = rb_समय_val_cnt(top2, cnt2);
-	 bottom2 = rb_समय_val_cnt(bottom2, cnt2);
+	 rb_time_split(set, &top2, &bottom2);
+	 top2 = rb_time_val_cnt(top2, cnt2);
+	 bottom2 = rb_time_val_cnt(bottom2, cnt2);
 
-	अगर (!rb_समय_पढ़ो_cmpxchg(&t->cnt, cnt, cnt2))
-		वापस false;
-	अगर (!rb_समय_पढ़ो_cmpxchg(&t->top, top, top2))
-		वापस false;
-	अगर (!rb_समय_पढ़ो_cmpxchg(&t->bottom, bottom, bottom2))
-		वापस false;
-	वापस true;
-पूर्ण
+	if (!rb_time_read_cmpxchg(&t->cnt, cnt, cnt2))
+		return false;
+	if (!rb_time_read_cmpxchg(&t->top, top, top2))
+		return false;
+	if (!rb_time_read_cmpxchg(&t->bottom, bottom, bottom2))
+		return false;
+	return true;
+}
 
-#अन्यथा /* 64 bits */
+#else /* 64 bits */
 
 /* local64_t always succeeds */
 
-अटल अंतरभूत bool rb_समय_पढ़ो(rb_समय_प्रकार *t, u64 *ret)
-अणु
-	*ret = local64_पढ़ो(&t->समय);
-	वापस true;
-पूर्ण
-अटल व्योम rb_समय_set(rb_समय_प्रकार *t, u64 val)
-अणु
-	local64_set(&t->समय, val);
-पूर्ण
+static inline bool rb_time_read(rb_time_t *t, u64 *ret)
+{
+	*ret = local64_read(&t->time);
+	return true;
+}
+static void rb_time_set(rb_time_t *t, u64 val)
+{
+	local64_set(&t->time, val);
+}
 
-अटल bool rb_समय_cmpxchg(rb_समय_प्रकार *t, u64 expect, u64 set)
-अणु
+static bool rb_time_cmpxchg(rb_time_t *t, u64 expect, u64 set)
+{
 	u64 val;
-	val = local64_cmpxchg(&t->समय, expect, set);
-	वापस val == expect;
-पूर्ण
-#पूर्ण_अगर
+	val = local64_cmpxchg(&t->time, expect, set);
+	return val == expect;
+}
+#endif
 
 /*
  * Enable this to make sure that the event passed to
- * ring_buffer_event_समय_stamp() is not committed and also
+ * ring_buffer_event_time_stamp() is not committed and also
  * is on the buffer that it passed in.
  */
-//#घोषणा RB_VERIFY_EVENT
-#अगर_घोषित RB_VERIFY_EVENT
-अटल काष्ठा list_head *rb_list_head(काष्ठा list_head *list);
-अटल व्योम verअगरy_event(काष्ठा ring_buffer_per_cpu *cpu_buffer,
-			 व्योम *event)
-अणु
-	काष्ठा buffer_page *page = cpu_buffer->commit_page;
-	काष्ठा buffer_page *tail_page = READ_ONCE(cpu_buffer->tail_page);
-	काष्ठा list_head *next;
-	दीर्घ commit, ग_लिखो;
-	अचिन्हित दीर्घ addr = (अचिन्हित दीर्घ)event;
-	bool करोne = false;
-	पूर्णांक stop = 0;
+//#define RB_VERIFY_EVENT
+#ifdef RB_VERIFY_EVENT
+static struct list_head *rb_list_head(struct list_head *list);
+static void verify_event(struct ring_buffer_per_cpu *cpu_buffer,
+			 void *event)
+{
+	struct buffer_page *page = cpu_buffer->commit_page;
+	struct buffer_page *tail_page = READ_ONCE(cpu_buffer->tail_page);
+	struct list_head *next;
+	long commit, write;
+	unsigned long addr = (unsigned long)event;
+	bool done = false;
+	int stop = 0;
 
 	/* Make sure the event exists and is not committed yet */
-	करो अणु
-		अगर (page == tail_page || WARN_ON_ONCE(stop++ > 100))
-			करोne = true;
-		commit = local_पढ़ो(&page->page->commit);
-		ग_लिखो = local_पढ़ो(&page->ग_लिखो);
-		अगर (addr >= (अचिन्हित दीर्घ)&page->page->data[commit] &&
-		    addr < (अचिन्हित दीर्घ)&page->page->data[ग_लिखो])
-			वापस;
+	do {
+		if (page == tail_page || WARN_ON_ONCE(stop++ > 100))
+			done = true;
+		commit = local_read(&page->page->commit);
+		write = local_read(&page->write);
+		if (addr >= (unsigned long)&page->page->data[commit] &&
+		    addr < (unsigned long)&page->page->data[write])
+			return;
 
 		next = rb_list_head(page->list.next);
-		page = list_entry(next, काष्ठा buffer_page, list);
-	पूर्ण जबतक (!करोne);
+		page = list_entry(next, struct buffer_page, list);
+	} while (!done);
 	WARN_ON_ONCE(1);
-पूर्ण
-#अन्यथा
-अटल अंतरभूत व्योम verअगरy_event(काष्ठा ring_buffer_per_cpu *cpu_buffer,
-			 व्योम *event)
-अणु
-पूर्ण
-#पूर्ण_अगर
+}
+#else
+static inline void verify_event(struct ring_buffer_per_cpu *cpu_buffer,
+			 void *event)
+{
+}
+#endif
 
 
-अटल अंतरभूत u64 rb_समय_stamp(काष्ठा trace_buffer *buffer);
+static inline u64 rb_time_stamp(struct trace_buffer *buffer);
 
 /**
- * ring_buffer_event_समय_stamp - वापस the event's current समय stamp
+ * ring_buffer_event_time_stamp - return the event's current time stamp
  * @buffer: The buffer that the event is on
- * @event: the event to get the समय stamp of
+ * @event: the event to get the time stamp of
  *
- * Note, this must be called after @event is reserved, and beक्रमe it is
+ * Note, this must be called after @event is reserved, and before it is
  * committed to the ring buffer. And must be called from the same
  * context where the event was reserved (normal, softirq, irq, etc).
  *
- * Returns the समय stamp associated with the current event.
- * If the event has an extended समय stamp, then that is used as
- * the समय stamp to वापस.
- * In the highly unlikely हाल that the event was nested more than
- * the max nesting, then the ग_लिखो_stamp of the buffer is वापसed,
- * otherwise  current समय is वापसed, but that really neither of
- * the last two हालs should ever happen.
+ * Returns the time stamp associated with the current event.
+ * If the event has an extended time stamp, then that is used as
+ * the time stamp to return.
+ * In the highly unlikely case that the event was nested more than
+ * the max nesting, then the write_stamp of the buffer is returned,
+ * otherwise  current time is returned, but that really neither of
+ * the last two cases should ever happen.
  */
-u64 ring_buffer_event_समय_stamp(काष्ठा trace_buffer *buffer,
-				 काष्ठा ring_buffer_event *event)
-अणु
-	काष्ठा ring_buffer_per_cpu *cpu_buffer = buffer->buffers[smp_processor_id()];
-	अचिन्हित पूर्णांक nest;
+u64 ring_buffer_event_time_stamp(struct trace_buffer *buffer,
+				 struct ring_buffer_event *event)
+{
+	struct ring_buffer_per_cpu *cpu_buffer = buffer->buffers[smp_processor_id()];
+	unsigned int nest;
 	u64 ts;
 
-	/* If the event includes an असलolute समय, then just use that */
-	अगर (event->type_len == RINGBUF_TYPE_TIME_STAMP)
-		वापस rb_event_समय_stamp(event);
+	/* If the event includes an absolute time, then just use that */
+	if (event->type_len == RINGBUF_TYPE_TIME_STAMP)
+		return rb_event_time_stamp(event);
 
-	nest = local_पढ़ो(&cpu_buffer->committing);
-	verअगरy_event(cpu_buffer, event);
-	अगर (WARN_ON_ONCE(!nest))
-		जाओ fail;
+	nest = local_read(&cpu_buffer->committing);
+	verify_event(cpu_buffer, event);
+	if (WARN_ON_ONCE(!nest))
+		goto fail;
 
-	/* Read the current saved nesting level समय stamp */
-	अगर (likely(--nest < MAX_NEST))
-		वापस cpu_buffer->event_stamp[nest];
+	/* Read the current saved nesting level time stamp */
+	if (likely(--nest < MAX_NEST))
+		return cpu_buffer->event_stamp[nest];
 
-	/* Shouldn't happen, warn अगर it करोes */
+	/* Shouldn't happen, warn if it does */
 	WARN_ONCE(1, "nest (%d) greater than max", nest);
 
  fail:
 	/* Can only fail on 32 bit */
-	अगर (!rb_समय_पढ़ो(&cpu_buffer->ग_लिखो_stamp, &ts))
-		/* Screw it, just पढ़ो the current समय */
-		ts = rb_समय_stamp(cpu_buffer->buffer);
+	if (!rb_time_read(&cpu_buffer->write_stamp, &ts))
+		/* Screw it, just read the current time */
+		ts = rb_time_stamp(cpu_buffer->buffer);
 
-	वापस ts;
-पूर्ण
+	return ts;
+}
 
 /**
  * ring_buffer_nr_pages - get the number of buffer pages in the ring buffer
@@ -843,10 +842,10 @@ u64 ring_buffer_event_समय_stamp(काष्ठा trace_buffer *buffer,
  *
  * Returns the number of pages used by a per_cpu buffer of the ring buffer.
  */
-माप_प्रकार ring_buffer_nr_pages(काष्ठा trace_buffer *buffer, पूर्णांक cpu)
-अणु
-	वापस buffer->buffers[cpu]->nr_pages;
-पूर्ण
+size_t ring_buffer_nr_pages(struct trace_buffer *buffer, int cpu)
+{
+	return buffer->buffers[cpu]->nr_pages;
+}
 
 /**
  * ring_buffer_nr_pages_dirty - get the number of used pages in the ring buffer
@@ -855,291 +854,291 @@ u64 ring_buffer_event_समय_stamp(काष्ठा trace_buffer *buffer,
  *
  * Returns the number of pages that have content in the ring buffer.
  */
-माप_प्रकार ring_buffer_nr_dirty_pages(काष्ठा trace_buffer *buffer, पूर्णांक cpu)
-अणु
-	माप_प्रकार पढ़ो;
-	माप_प्रकार cnt;
+size_t ring_buffer_nr_dirty_pages(struct trace_buffer *buffer, int cpu)
+{
+	size_t read;
+	size_t cnt;
 
-	पढ़ो = local_पढ़ो(&buffer->buffers[cpu]->pages_पढ़ो);
-	cnt = local_पढ़ो(&buffer->buffers[cpu]->pages_touched);
-	/* The पढ़ोer can पढ़ो an empty page, but not more than that */
-	अगर (cnt < पढ़ो) अणु
-		WARN_ON_ONCE(पढ़ो > cnt + 1);
-		वापस 0;
-	पूर्ण
+	read = local_read(&buffer->buffers[cpu]->pages_read);
+	cnt = local_read(&buffer->buffers[cpu]->pages_touched);
+	/* The reader can read an empty page, but not more than that */
+	if (cnt < read) {
+		WARN_ON_ONCE(read > cnt + 1);
+		return 0;
+	}
 
-	वापस cnt - पढ़ो;
-पूर्ण
+	return cnt - read;
+}
 
 /*
- * rb_wake_up_रुकोers - wake up tasks रुकोing क्रम ring buffer input
+ * rb_wake_up_waiters - wake up tasks waiting for ring buffer input
  *
  * Schedules a delayed work to wake up any task that is blocked on the
- * ring buffer रुकोers queue.
+ * ring buffer waiters queue.
  */
-अटल व्योम rb_wake_up_रुकोers(काष्ठा irq_work *work)
-अणु
-	काष्ठा rb_irq_work *rbwork = container_of(work, काष्ठा rb_irq_work, work);
+static void rb_wake_up_waiters(struct irq_work *work)
+{
+	struct rb_irq_work *rbwork = container_of(work, struct rb_irq_work, work);
 
-	wake_up_all(&rbwork->रुकोers);
-	अगर (rbwork->wakeup_full) अणु
+	wake_up_all(&rbwork->waiters);
+	if (rbwork->wakeup_full) {
 		rbwork->wakeup_full = false;
-		wake_up_all(&rbwork->full_रुकोers);
-	पूर्ण
-पूर्ण
+		wake_up_all(&rbwork->full_waiters);
+	}
+}
 
 /**
- * ring_buffer_रुको - रुको क्रम input to the ring buffer
- * @buffer: buffer to रुको on
- * @cpu: the cpu buffer to रुको on
- * @full: रुको until the percentage of pages are available, अगर @cpu != RING_BUFFER_ALL_CPUS
+ * ring_buffer_wait - wait for input to the ring buffer
+ * @buffer: buffer to wait on
+ * @cpu: the cpu buffer to wait on
+ * @full: wait until the percentage of pages are available, if @cpu != RING_BUFFER_ALL_CPUS
  *
  * If @cpu == RING_BUFFER_ALL_CPUS then the task will wake up as soon
  * as data is added to any of the @buffer's cpu buffers. Otherwise
- * it will रुको क्रम data to be added to a specअगरic cpu buffer.
+ * it will wait for data to be added to a specific cpu buffer.
  */
-पूर्णांक ring_buffer_रुको(काष्ठा trace_buffer *buffer, पूर्णांक cpu, पूर्णांक full)
-अणु
-	काष्ठा ring_buffer_per_cpu *cpu_buffer;
-	DEFINE_WAIT(रुको);
-	काष्ठा rb_irq_work *work;
-	पूर्णांक ret = 0;
+int ring_buffer_wait(struct trace_buffer *buffer, int cpu, int full)
+{
+	struct ring_buffer_per_cpu *cpu_buffer;
+	DEFINE_WAIT(wait);
+	struct rb_irq_work *work;
+	int ret = 0;
 
 	/*
-	 * Depending on what the caller is रुकोing क्रम, either any
-	 * data in any cpu buffer, or a specअगरic buffer, put the
-	 * caller on the appropriate रुको queue.
+	 * Depending on what the caller is waiting for, either any
+	 * data in any cpu buffer, or a specific buffer, put the
+	 * caller on the appropriate wait queue.
 	 */
-	अगर (cpu == RING_BUFFER_ALL_CPUS) अणु
+	if (cpu == RING_BUFFER_ALL_CPUS) {
 		work = &buffer->irq_work;
-		/* Full only makes sense on per cpu पढ़ोs */
+		/* Full only makes sense on per cpu reads */
 		full = 0;
-	पूर्ण अन्यथा अणु
-		अगर (!cpumask_test_cpu(cpu, buffer->cpumask))
-			वापस -ENODEV;
+	} else {
+		if (!cpumask_test_cpu(cpu, buffer->cpumask))
+			return -ENODEV;
 		cpu_buffer = buffer->buffers[cpu];
 		work = &cpu_buffer->irq_work;
-	पूर्ण
+	}
 
 
-	जबतक (true) अणु
-		अगर (full)
-			prepare_to_रुको(&work->full_रुकोers, &रुको, TASK_INTERRUPTIBLE);
-		अन्यथा
-			prepare_to_रुको(&work->रुकोers, &रुको, TASK_INTERRUPTIBLE);
+	while (true) {
+		if (full)
+			prepare_to_wait(&work->full_waiters, &wait, TASK_INTERRUPTIBLE);
+		else
+			prepare_to_wait(&work->waiters, &wait, TASK_INTERRUPTIBLE);
 
 		/*
 		 * The events can happen in critical sections where
 		 * checking a work queue can cause deadlocks.
 		 * After adding a task to the queue, this flag is set
-		 * only to notअगरy events to try to wake up the queue
+		 * only to notify events to try to wake up the queue
 		 * using irq_work.
 		 *
-		 * We करोn't clear it even अगर the buffer is no दीर्घer
+		 * We don't clear it even if the buffer is no longer
 		 * empty. The flag only causes the next event to run
-		 * irq_work to करो the work queue wake up. The worse
-		 * that can happen अगर we race with !trace_empty() is that
+		 * irq_work to do the work queue wake up. The worse
+		 * that can happen if we race with !trace_empty() is that
 		 * an event will cause an irq_work to try to wake up
 		 * an empty queue.
 		 *
 		 * There's no reason to protect this flag either, as
-		 * the work queue and irq_work logic will करो the necessary
-		 * synchronization क्रम the wake ups. The only thing
+		 * the work queue and irq_work logic will do the necessary
+		 * synchronization for the wake ups. The only thing
 		 * that is necessary is that the wake up happens after
-		 * a task has been queued. It's OK क्रम spurious wake ups.
+		 * a task has been queued. It's OK for spurious wake ups.
 		 */
-		अगर (full)
-			work->full_रुकोers_pending = true;
-		अन्यथा
-			work->रुकोers_pending = true;
+		if (full)
+			work->full_waiters_pending = true;
+		else
+			work->waiters_pending = true;
 
-		अगर (संकेत_pending(current)) अणु
+		if (signal_pending(current)) {
 			ret = -EINTR;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (cpu == RING_BUFFER_ALL_CPUS && !ring_buffer_empty(buffer))
-			अवरोध;
+		if (cpu == RING_BUFFER_ALL_CPUS && !ring_buffer_empty(buffer))
+			break;
 
-		अगर (cpu != RING_BUFFER_ALL_CPUS &&
-		    !ring_buffer_empty_cpu(buffer, cpu)) अणु
-			अचिन्हित दीर्घ flags;
+		if (cpu != RING_BUFFER_ALL_CPUS &&
+		    !ring_buffer_empty_cpu(buffer, cpu)) {
+			unsigned long flags;
 			bool pagebusy;
-			माप_प्रकार nr_pages;
-			माप_प्रकार dirty;
+			size_t nr_pages;
+			size_t dirty;
 
-			अगर (!full)
-				अवरोध;
+			if (!full)
+				break;
 
-			raw_spin_lock_irqsave(&cpu_buffer->पढ़ोer_lock, flags);
-			pagebusy = cpu_buffer->पढ़ोer_page == cpu_buffer->commit_page;
+			raw_spin_lock_irqsave(&cpu_buffer->reader_lock, flags);
+			pagebusy = cpu_buffer->reader_page == cpu_buffer->commit_page;
 			nr_pages = cpu_buffer->nr_pages;
 			dirty = ring_buffer_nr_dirty_pages(buffer, cpu);
-			अगर (!cpu_buffer->लघुest_full ||
-			    cpu_buffer->लघुest_full < full)
-				cpu_buffer->लघुest_full = full;
-			raw_spin_unlock_irqrestore(&cpu_buffer->पढ़ोer_lock, flags);
-			अगर (!pagebusy &&
+			if (!cpu_buffer->shortest_full ||
+			    cpu_buffer->shortest_full < full)
+				cpu_buffer->shortest_full = full;
+			raw_spin_unlock_irqrestore(&cpu_buffer->reader_lock, flags);
+			if (!pagebusy &&
 			    (!nr_pages || (dirty * 100) > full * nr_pages))
-				अवरोध;
-		पूर्ण
+				break;
+		}
 
 		schedule();
-	पूर्ण
+	}
 
-	अगर (full)
-		finish_रुको(&work->full_रुकोers, &रुको);
-	अन्यथा
-		finish_रुको(&work->रुकोers, &रुको);
+	if (full)
+		finish_wait(&work->full_waiters, &wait);
+	else
+		finish_wait(&work->waiters, &wait);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * ring_buffer_poll_रुको - poll on buffer input
- * @buffer: buffer to रुको on
- * @cpu: the cpu buffer to रुको on
+ * ring_buffer_poll_wait - poll on buffer input
+ * @buffer: buffer to wait on
+ * @cpu: the cpu buffer to wait on
  * @filp: the file descriptor
  * @poll_table: The poll descriptor
  *
  * If @cpu == RING_BUFFER_ALL_CPUS then the task will wake up as soon
  * as data is added to any of the @buffer's cpu buffers. Otherwise
- * it will रुको क्रम data to be added to a specअगरic cpu buffer.
+ * it will wait for data to be added to a specific cpu buffer.
  *
- * Returns EPOLLIN | EPOLLRDNORM अगर data exists in the buffers,
+ * Returns EPOLLIN | EPOLLRDNORM if data exists in the buffers,
  * zero otherwise.
  */
-__poll_t ring_buffer_poll_रुको(काष्ठा trace_buffer *buffer, पूर्णांक cpu,
-			  काष्ठा file *filp, poll_table *poll_table)
-अणु
-	काष्ठा ring_buffer_per_cpu *cpu_buffer;
-	काष्ठा rb_irq_work *work;
+__poll_t ring_buffer_poll_wait(struct trace_buffer *buffer, int cpu,
+			  struct file *filp, poll_table *poll_table)
+{
+	struct ring_buffer_per_cpu *cpu_buffer;
+	struct rb_irq_work *work;
 
-	अगर (cpu == RING_BUFFER_ALL_CPUS)
+	if (cpu == RING_BUFFER_ALL_CPUS)
 		work = &buffer->irq_work;
-	अन्यथा अणु
-		अगर (!cpumask_test_cpu(cpu, buffer->cpumask))
-			वापस -EINVAL;
+	else {
+		if (!cpumask_test_cpu(cpu, buffer->cpumask))
+			return -EINVAL;
 
 		cpu_buffer = buffer->buffers[cpu];
 		work = &cpu_buffer->irq_work;
-	पूर्ण
+	}
 
-	poll_रुको(filp, &work->रुकोers, poll_table);
-	work->रुकोers_pending = true;
+	poll_wait(filp, &work->waiters, poll_table);
+	work->waiters_pending = true;
 	/*
-	 * There's a tight race between setting the रुकोers_pending and
-	 * checking अगर the ring buffer is empty.  Once the रुकोers_pending bit
+	 * There's a tight race between setting the waiters_pending and
+	 * checking if the ring buffer is empty.  Once the waiters_pending bit
 	 * is set, the next event will wake the task up, but we can get stuck
-	 * अगर there's only a single event in.
+	 * if there's only a single event in.
 	 *
-	 * FIXME: Ideally, we need a memory barrier on the ग_लिखोr side as well,
+	 * FIXME: Ideally, we need a memory barrier on the writer side as well,
 	 * but adding a memory barrier to all events will cause too much of a
-	 * perक्रमmance hit in the fast path.  We only need a memory barrier when
+	 * performance hit in the fast path.  We only need a memory barrier when
 	 * the buffer goes from empty to having content.  But as this race is
-	 * extremely small, and it's not a problem अगर another event comes in, we
+	 * extremely small, and it's not a problem if another event comes in, we
 	 * will fix it later.
 	 */
 	smp_mb();
 
-	अगर ((cpu == RING_BUFFER_ALL_CPUS && !ring_buffer_empty(buffer)) ||
+	if ((cpu == RING_BUFFER_ALL_CPUS && !ring_buffer_empty(buffer)) ||
 	    (cpu != RING_BUFFER_ALL_CPUS && !ring_buffer_empty_cpu(buffer, cpu)))
-		वापस EPOLLIN | EPOLLRDNORM;
-	वापस 0;
-पूर्ण
+		return EPOLLIN | EPOLLRDNORM;
+	return 0;
+}
 
 /* buffer may be either ring_buffer or ring_buffer_per_cpu */
-#घोषणा RB_WARN_ON(b, cond)						\
-	(अणु								\
-		पूर्णांक _____ret = unlikely(cond);				\
-		अगर (_____ret) अणु						\
-			अगर (__same_type(*(b), काष्ठा ring_buffer_per_cpu)) अणु \
-				काष्ठा ring_buffer_per_cpu *__b =	\
-					(व्योम *)b;			\
+#define RB_WARN_ON(b, cond)						\
+	({								\
+		int _____ret = unlikely(cond);				\
+		if (_____ret) {						\
+			if (__same_type(*(b), struct ring_buffer_per_cpu)) { \
+				struct ring_buffer_per_cpu *__b =	\
+					(void *)b;			\
 				atomic_inc(&__b->buffer->record_disabled); \
-			पूर्ण अन्यथा						\
+			} else						\
 				atomic_inc(&b->record_disabled);	\
 			WARN_ON(1);					\
-		पूर्ण							\
+		}							\
 		_____ret;						\
-	पूर्ण)
+	})
 
-/* Up this अगर you want to test the TIME_EXTENTS and normalization */
-#घोषणा DEBUG_SHIFT 0
+/* Up this if you want to test the TIME_EXTENTS and normalization */
+#define DEBUG_SHIFT 0
 
-अटल अंतरभूत u64 rb_समय_stamp(काष्ठा trace_buffer *buffer)
-अणु
+static inline u64 rb_time_stamp(struct trace_buffer *buffer)
+{
 	u64 ts;
 
 	/* Skip retpolines :-( */
-	अगर (IS_ENABLED(CONFIG_RETPOLINE) && likely(buffer->घड़ी == trace_घड़ी_local))
-		ts = trace_घड़ी_local();
-	अन्यथा
-		ts = buffer->घड़ी();
+	if (IS_ENABLED(CONFIG_RETPOLINE) && likely(buffer->clock == trace_clock_local))
+		ts = trace_clock_local();
+	else
+		ts = buffer->clock();
 
-	/* shअगरt to debug/test normalization and TIME_EXTENTS */
-	वापस ts << DEBUG_SHIFT;
-पूर्ण
+	/* shift to debug/test normalization and TIME_EXTENTS */
+	return ts << DEBUG_SHIFT;
+}
 
-u64 ring_buffer_समय_stamp(काष्ठा trace_buffer *buffer)
-अणु
-	u64 समय;
+u64 ring_buffer_time_stamp(struct trace_buffer *buffer)
+{
+	u64 time;
 
 	preempt_disable_notrace();
-	समय = rb_समय_stamp(buffer);
+	time = rb_time_stamp(buffer);
 	preempt_enable_notrace();
 
-	वापस समय;
-पूर्ण
-EXPORT_SYMBOL_GPL(ring_buffer_समय_stamp);
+	return time;
+}
+EXPORT_SYMBOL_GPL(ring_buffer_time_stamp);
 
-व्योम ring_buffer_normalize_समय_stamp(काष्ठा trace_buffer *buffer,
-				      पूर्णांक cpu, u64 *ts)
-अणु
+void ring_buffer_normalize_time_stamp(struct trace_buffer *buffer,
+				      int cpu, u64 *ts)
+{
 	/* Just stupid testing the normalize function and deltas */
 	*ts >>= DEBUG_SHIFT;
-पूर्ण
-EXPORT_SYMBOL_GPL(ring_buffer_normalize_समय_stamp);
+}
+EXPORT_SYMBOL_GPL(ring_buffer_normalize_time_stamp);
 
 /*
  * Making the ring buffer lockless makes things tricky.
- * Although ग_लिखोs only happen on the CPU that they are on,
- * and they only need to worry about पूर्णांकerrupts. Reads can
+ * Although writes only happen on the CPU that they are on,
+ * and they only need to worry about interrupts. Reads can
  * happen on any CPU.
  *
- * The पढ़ोer page is always off the ring buffer, but when the
- * पढ़ोer finishes with a page, it needs to swap its page with
- * a new one from the buffer. The पढ़ोer needs to take from
- * the head (ग_लिखोs go to the tail). But अगर a ग_लिखोr is in overग_लिखो
- * mode and wraps, it must push the head page क्रमward.
+ * The reader page is always off the ring buffer, but when the
+ * reader finishes with a page, it needs to swap its page with
+ * a new one from the buffer. The reader needs to take from
+ * the head (writes go to the tail). But if a writer is in overwrite
+ * mode and wraps, it must push the head page forward.
  *
  * Here lies the problem.
  *
- * The पढ़ोer must be careful to replace only the head page, and
+ * The reader must be careful to replace only the head page, and
  * not another one. As described at the top of the file in the
- * ASCII art, the पढ़ोer sets its old page to poपूर्णांक to the next
- * page after head. It then sets the page after head to poपूर्णांक to
- * the old पढ़ोer page. But अगर the ग_लिखोr moves the head page
- * during this operation, the पढ़ोer could end up with the tail.
+ * ASCII art, the reader sets its old page to point to the next
+ * page after head. It then sets the page after head to point to
+ * the old reader page. But if the writer moves the head page
+ * during this operation, the reader could end up with the tail.
  *
- * We use cmpxchg to help prevent this race. We also करो something
- * special with the page beक्रमe head. We set the LSB to 1.
+ * We use cmpxchg to help prevent this race. We also do something
+ * special with the page before head. We set the LSB to 1.
  *
- * When the ग_लिखोr must push the page क्रमward, it will clear the
- * bit that poपूर्णांकs to the head page, move the head, and then set
- * the bit that poपूर्णांकs to the new head page.
+ * When the writer must push the page forward, it will clear the
+ * bit that points to the head page, move the head, and then set
+ * the bit that points to the new head page.
  *
- * We also करोn't want an पूर्णांकerrupt coming in and moving the head
- * page on another ग_लिखोr. Thus we use the second LSB to catch
+ * We also don't want an interrupt coming in and moving the head
+ * page on another writer. Thus we use the second LSB to catch
  * that too. Thus:
  *
  * head->list->prev->next        bit 1          bit 0
  *                              -------        -------
  * Normal page                     0              0
- * Poपूर्णांकs to head page             0              1
+ * Points to head page             0              1
  * New head page                   1              0
  *
- * Note we can not trust the prev poपूर्णांकer of the head page, because:
+ * Note we can not trust the prev pointer of the head page, because:
  *
  * +----+       +-----+        +-----+
  * |    |------>|  T  |---X--->|  N  |
@@ -1151,292 +1150,292 @@ EXPORT_SYMBOL_GPL(ring_buffer_normalize_समय_stamp);
  *              |     |<-----------+
  *              +-----+
  *
- * Key:  ---X-->  HEAD flag set in poपूर्णांकer
+ * Key:  ---X-->  HEAD flag set in pointer
  *         T      Tail page
  *         R      Reader page
  *         N      Next page
  *
  * (see __rb_reserve_next() to see where this happens)
  *
- *  What the above shows is that the पढ़ोer just swapped out
- *  the पढ़ोer page with a page in the buffer, but beक्रमe it
- *  could make the new header poपूर्णांक back to the new page added
- *  it was preempted by a ग_लिखोr. The ग_लिखोr moved क्रमward onto
- *  the new page added by the पढ़ोer and is about to move क्रमward
+ *  What the above shows is that the reader just swapped out
+ *  the reader page with a page in the buffer, but before it
+ *  could make the new header point back to the new page added
+ *  it was preempted by a writer. The writer moved forward onto
+ *  the new page added by the reader and is about to move forward
  *  again.
  *
- *  You can see, it is legitimate क्रम the previous poपूर्णांकer of
- *  the head (or any page) not to poपूर्णांक back to itself. But only
+ *  You can see, it is legitimate for the previous pointer of
+ *  the head (or any page) not to point back to itself. But only
  *  temporarily.
  */
 
-#घोषणा RB_PAGE_NORMAL		0UL
-#घोषणा RB_PAGE_HEAD		1UL
-#घोषणा RB_PAGE_UPDATE		2UL
+#define RB_PAGE_NORMAL		0UL
+#define RB_PAGE_HEAD		1UL
+#define RB_PAGE_UPDATE		2UL
 
 
-#घोषणा RB_FLAG_MASK		3UL
+#define RB_FLAG_MASK		3UL
 
 /* PAGE_MOVED is not part of the mask */
-#घोषणा RB_PAGE_MOVED		4UL
+#define RB_PAGE_MOVED		4UL
 
 /*
- * rb_list_head - हटाओ any bit
+ * rb_list_head - remove any bit
  */
-अटल काष्ठा list_head *rb_list_head(काष्ठा list_head *list)
-अणु
-	अचिन्हित दीर्घ val = (अचिन्हित दीर्घ)list;
+static struct list_head *rb_list_head(struct list_head *list)
+{
+	unsigned long val = (unsigned long)list;
 
-	वापस (काष्ठा list_head *)(val & ~RB_FLAG_MASK);
-पूर्ण
+	return (struct list_head *)(val & ~RB_FLAG_MASK);
+}
 
 /*
- * rb_is_head_page - test अगर the given page is the head page
+ * rb_is_head_page - test if the given page is the head page
  *
- * Because the पढ़ोer may move the head_page poपूर्णांकer, we can
- * not trust what the head page is (it may be poपूर्णांकing to
- * the पढ़ोer page). But अगर the next page is a header page,
+ * Because the reader may move the head_page pointer, we can
+ * not trust what the head page is (it may be pointing to
+ * the reader page). But if the next page is a header page,
  * its flags will be non zero.
  */
-अटल अंतरभूत पूर्णांक
-rb_is_head_page(काष्ठा buffer_page *page, काष्ठा list_head *list)
-अणु
-	अचिन्हित दीर्घ val;
+static inline int
+rb_is_head_page(struct buffer_page *page, struct list_head *list)
+{
+	unsigned long val;
 
-	val = (अचिन्हित दीर्घ)list->next;
+	val = (unsigned long)list->next;
 
-	अगर ((val & ~RB_FLAG_MASK) != (अचिन्हित दीर्घ)&page->list)
-		वापस RB_PAGE_MOVED;
+	if ((val & ~RB_FLAG_MASK) != (unsigned long)&page->list)
+		return RB_PAGE_MOVED;
 
-	वापस val & RB_FLAG_MASK;
-पूर्ण
+	return val & RB_FLAG_MASK;
+}
 
 /*
- * rb_is_पढ़ोer_page
+ * rb_is_reader_page
  *
- * The unique thing about the पढ़ोer page, is that, अगर the
- * ग_लिखोr is ever on it, the previous poपूर्णांकer never poपूर्णांकs
- * back to the पढ़ोer page.
+ * The unique thing about the reader page, is that, if the
+ * writer is ever on it, the previous pointer never points
+ * back to the reader page.
  */
-अटल bool rb_is_पढ़ोer_page(काष्ठा buffer_page *page)
-अणु
-	काष्ठा list_head *list = page->list.prev;
+static bool rb_is_reader_page(struct buffer_page *page)
+{
+	struct list_head *list = page->list.prev;
 
-	वापस rb_list_head(list->next) != &page->list;
-पूर्ण
+	return rb_list_head(list->next) != &page->list;
+}
 
 /*
- * rb_set_list_to_head - set a list_head to be poपूर्णांकing to head.
+ * rb_set_list_to_head - set a list_head to be pointing to head.
  */
-अटल व्योम rb_set_list_to_head(काष्ठा list_head *list)
-अणु
-	अचिन्हित दीर्घ *ptr;
+static void rb_set_list_to_head(struct list_head *list)
+{
+	unsigned long *ptr;
 
-	ptr = (अचिन्हित दीर्घ *)&list->next;
+	ptr = (unsigned long *)&list->next;
 	*ptr |= RB_PAGE_HEAD;
 	*ptr &= ~RB_PAGE_UPDATE;
-पूर्ण
+}
 
 /*
  * rb_head_page_activate - sets up head page
  */
-अटल व्योम rb_head_page_activate(काष्ठा ring_buffer_per_cpu *cpu_buffer)
-अणु
-	काष्ठा buffer_page *head;
+static void rb_head_page_activate(struct ring_buffer_per_cpu *cpu_buffer)
+{
+	struct buffer_page *head;
 
 	head = cpu_buffer->head_page;
-	अगर (!head)
-		वापस;
+	if (!head)
+		return;
 
 	/*
-	 * Set the previous list poपूर्णांकer to have the HEAD flag.
+	 * Set the previous list pointer to have the HEAD flag.
 	 */
 	rb_set_list_to_head(head->list.prev);
-पूर्ण
+}
 
-अटल व्योम rb_list_head_clear(काष्ठा list_head *list)
-अणु
-	अचिन्हित दीर्घ *ptr = (अचिन्हित दीर्घ *)&list->next;
+static void rb_list_head_clear(struct list_head *list)
+{
+	unsigned long *ptr = (unsigned long *)&list->next;
 
 	*ptr &= ~RB_FLAG_MASK;
-पूर्ण
+}
 
 /*
- * rb_head_page_deactivate - clears head page ptr (क्रम मुक्त list)
+ * rb_head_page_deactivate - clears head page ptr (for free list)
  */
-अटल व्योम
-rb_head_page_deactivate(काष्ठा ring_buffer_per_cpu *cpu_buffer)
-अणु
-	काष्ठा list_head *hd;
+static void
+rb_head_page_deactivate(struct ring_buffer_per_cpu *cpu_buffer)
+{
+	struct list_head *hd;
 
-	/* Go through the whole list and clear any poपूर्णांकers found. */
+	/* Go through the whole list and clear any pointers found. */
 	rb_list_head_clear(cpu_buffer->pages);
 
-	list_क्रम_each(hd, cpu_buffer->pages)
+	list_for_each(hd, cpu_buffer->pages)
 		rb_list_head_clear(hd);
-पूर्ण
+}
 
-अटल पूर्णांक rb_head_page_set(काष्ठा ring_buffer_per_cpu *cpu_buffer,
-			    काष्ठा buffer_page *head,
-			    काष्ठा buffer_page *prev,
-			    पूर्णांक old_flag, पूर्णांक new_flag)
-अणु
-	काष्ठा list_head *list;
-	अचिन्हित दीर्घ val = (अचिन्हित दीर्घ)&head->list;
-	अचिन्हित दीर्घ ret;
+static int rb_head_page_set(struct ring_buffer_per_cpu *cpu_buffer,
+			    struct buffer_page *head,
+			    struct buffer_page *prev,
+			    int old_flag, int new_flag)
+{
+	struct list_head *list;
+	unsigned long val = (unsigned long)&head->list;
+	unsigned long ret;
 
 	list = &prev->list;
 
 	val &= ~RB_FLAG_MASK;
 
-	ret = cmpxchg((अचिन्हित दीर्घ *)&list->next,
+	ret = cmpxchg((unsigned long *)&list->next,
 		      val | old_flag, val | new_flag);
 
-	/* check अगर the पढ़ोer took the page */
-	अगर ((ret & ~RB_FLAG_MASK) != val)
-		वापस RB_PAGE_MOVED;
+	/* check if the reader took the page */
+	if ((ret & ~RB_FLAG_MASK) != val)
+		return RB_PAGE_MOVED;
 
-	वापस ret & RB_FLAG_MASK;
-पूर्ण
+	return ret & RB_FLAG_MASK;
+}
 
-अटल पूर्णांक rb_head_page_set_update(काष्ठा ring_buffer_per_cpu *cpu_buffer,
-				   काष्ठा buffer_page *head,
-				   काष्ठा buffer_page *prev,
-				   पूर्णांक old_flag)
-अणु
-	वापस rb_head_page_set(cpu_buffer, head, prev,
+static int rb_head_page_set_update(struct ring_buffer_per_cpu *cpu_buffer,
+				   struct buffer_page *head,
+				   struct buffer_page *prev,
+				   int old_flag)
+{
+	return rb_head_page_set(cpu_buffer, head, prev,
 				old_flag, RB_PAGE_UPDATE);
-पूर्ण
+}
 
-अटल पूर्णांक rb_head_page_set_head(काष्ठा ring_buffer_per_cpu *cpu_buffer,
-				 काष्ठा buffer_page *head,
-				 काष्ठा buffer_page *prev,
-				 पूर्णांक old_flag)
-अणु
-	वापस rb_head_page_set(cpu_buffer, head, prev,
+static int rb_head_page_set_head(struct ring_buffer_per_cpu *cpu_buffer,
+				 struct buffer_page *head,
+				 struct buffer_page *prev,
+				 int old_flag)
+{
+	return rb_head_page_set(cpu_buffer, head, prev,
 				old_flag, RB_PAGE_HEAD);
-पूर्ण
+}
 
-अटल पूर्णांक rb_head_page_set_normal(काष्ठा ring_buffer_per_cpu *cpu_buffer,
-				   काष्ठा buffer_page *head,
-				   काष्ठा buffer_page *prev,
-				   पूर्णांक old_flag)
-अणु
-	वापस rb_head_page_set(cpu_buffer, head, prev,
+static int rb_head_page_set_normal(struct ring_buffer_per_cpu *cpu_buffer,
+				   struct buffer_page *head,
+				   struct buffer_page *prev,
+				   int old_flag)
+{
+	return rb_head_page_set(cpu_buffer, head, prev,
 				old_flag, RB_PAGE_NORMAL);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम rb_inc_page(काष्ठा buffer_page **bpage)
-अणु
-	काष्ठा list_head *p = rb_list_head((*bpage)->list.next);
+static inline void rb_inc_page(struct buffer_page **bpage)
+{
+	struct list_head *p = rb_list_head((*bpage)->list.next);
 
-	*bpage = list_entry(p, काष्ठा buffer_page, list);
-पूर्ण
+	*bpage = list_entry(p, struct buffer_page, list);
+}
 
-अटल काष्ठा buffer_page *
-rb_set_head_page(काष्ठा ring_buffer_per_cpu *cpu_buffer)
-अणु
-	काष्ठा buffer_page *head;
-	काष्ठा buffer_page *page;
-	काष्ठा list_head *list;
-	पूर्णांक i;
+static struct buffer_page *
+rb_set_head_page(struct ring_buffer_per_cpu *cpu_buffer)
+{
+	struct buffer_page *head;
+	struct buffer_page *page;
+	struct list_head *list;
+	int i;
 
-	अगर (RB_WARN_ON(cpu_buffer, !cpu_buffer->head_page))
-		वापस शून्य;
+	if (RB_WARN_ON(cpu_buffer, !cpu_buffer->head_page))
+		return NULL;
 
 	/* sanity check */
 	list = cpu_buffer->pages;
-	अगर (RB_WARN_ON(cpu_buffer, rb_list_head(list->prev->next) != list))
-		वापस शून्य;
+	if (RB_WARN_ON(cpu_buffer, rb_list_head(list->prev->next) != list))
+		return NULL;
 
 	page = head = cpu_buffer->head_page;
 	/*
-	 * It is possible that the ग_लिखोr moves the header behind
+	 * It is possible that the writer moves the header behind
 	 * where we started, and we miss in one loop.
-	 * A second loop should grab the header, but we'll करो
+	 * A second loop should grab the header, but we'll do
 	 * three loops just because I'm paranoid.
 	 */
-	क्रम (i = 0; i < 3; i++) अणु
-		करो अणु
-			अगर (rb_is_head_page(page, page->list.prev)) अणु
+	for (i = 0; i < 3; i++) {
+		do {
+			if (rb_is_head_page(page, page->list.prev)) {
 				cpu_buffer->head_page = page;
-				वापस page;
-			पूर्ण
+				return page;
+			}
 			rb_inc_page(&page);
-		पूर्ण जबतक (page != head);
-	पूर्ण
+		} while (page != head);
+	}
 
 	RB_WARN_ON(cpu_buffer, 1);
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल पूर्णांक rb_head_page_replace(काष्ठा buffer_page *old,
-				काष्ठा buffer_page *new)
-अणु
-	अचिन्हित दीर्घ *ptr = (अचिन्हित दीर्घ *)&old->list.prev->next;
-	अचिन्हित दीर्घ val;
-	अचिन्हित दीर्घ ret;
+static int rb_head_page_replace(struct buffer_page *old,
+				struct buffer_page *new)
+{
+	unsigned long *ptr = (unsigned long *)&old->list.prev->next;
+	unsigned long val;
+	unsigned long ret;
 
 	val = *ptr & ~RB_FLAG_MASK;
 	val |= RB_PAGE_HEAD;
 
-	ret = cmpxchg(ptr, val, (अचिन्हित दीर्घ)&new->list);
+	ret = cmpxchg(ptr, val, (unsigned long)&new->list);
 
-	वापस ret == val;
-पूर्ण
+	return ret == val;
+}
 
 /*
- * rb_tail_page_update - move the tail page क्रमward
+ * rb_tail_page_update - move the tail page forward
  */
-अटल व्योम rb_tail_page_update(काष्ठा ring_buffer_per_cpu *cpu_buffer,
-			       काष्ठा buffer_page *tail_page,
-			       काष्ठा buffer_page *next_page)
-अणु
-	अचिन्हित दीर्घ old_entries;
-	अचिन्हित दीर्घ old_ग_लिखो;
+static void rb_tail_page_update(struct ring_buffer_per_cpu *cpu_buffer,
+			       struct buffer_page *tail_page,
+			       struct buffer_page *next_page)
+{
+	unsigned long old_entries;
+	unsigned long old_write;
 
 	/*
-	 * The tail page now needs to be moved क्रमward.
+	 * The tail page now needs to be moved forward.
 	 *
 	 * We need to reset the tail page, but without messing
-	 * with possible erasing of data brought in by पूर्णांकerrupts
+	 * with possible erasing of data brought in by interrupts
 	 * that have moved the tail page and are currently on it.
 	 *
-	 * We add a counter to the ग_लिखो field to denote this.
+	 * We add a counter to the write field to denote this.
 	 */
-	old_ग_लिखो = local_add_वापस(RB_WRITE_INTCNT, &next_page->ग_लिखो);
-	old_entries = local_add_वापस(RB_WRITE_INTCNT, &next_page->entries);
+	old_write = local_add_return(RB_WRITE_INTCNT, &next_page->write);
+	old_entries = local_add_return(RB_WRITE_INTCNT, &next_page->entries);
 
 	local_inc(&cpu_buffer->pages_touched);
 	/*
-	 * Just make sure we have seen our old_ग_लिखो and synchronize
-	 * with any पूर्णांकerrupts that come in.
+	 * Just make sure we have seen our old_write and synchronize
+	 * with any interrupts that come in.
 	 */
 	barrier();
 
 	/*
 	 * If the tail page is still the same as what we think
 	 * it is, then it is up to us to update the tail
-	 * poपूर्णांकer.
+	 * pointer.
 	 */
-	अगर (tail_page == READ_ONCE(cpu_buffer->tail_page)) अणु
-		/* Zero the ग_लिखो counter */
-		अचिन्हित दीर्घ val = old_ग_लिखो & ~RB_WRITE_MASK;
-		अचिन्हित दीर्घ eval = old_entries & ~RB_WRITE_MASK;
+	if (tail_page == READ_ONCE(cpu_buffer->tail_page)) {
+		/* Zero the write counter */
+		unsigned long val = old_write & ~RB_WRITE_MASK;
+		unsigned long eval = old_entries & ~RB_WRITE_MASK;
 
 		/*
-		 * This will only succeed अगर an पूर्णांकerrupt did
-		 * not come in and change it. In which हाल, we
-		 * करो not want to modअगरy it.
+		 * This will only succeed if an interrupt did
+		 * not come in and change it. In which case, we
+		 * do not want to modify it.
 		 *
-		 * We add (व्योम) to let the compiler know that we करो not care
-		 * about the वापस value of these functions. We use the
-		 * cmpxchg to only update अगर an पूर्णांकerrupt did not alपढ़ोy
-		 * करो it क्रम us. If the cmpxchg fails, we करोn't care.
+		 * We add (void) to let the compiler know that we do not care
+		 * about the return value of these functions. We use the
+		 * cmpxchg to only update if an interrupt did not already
+		 * do it for us. If the cmpxchg fails, we don't care.
 		 */
-		(व्योम)local_cmpxchg(&next_page->ग_लिखो, old_ग_लिखो, val);
-		(व्योम)local_cmpxchg(&next_page->entries, old_entries, eval);
+		(void)local_cmpxchg(&next_page->write, old_write, val);
+		(void)local_cmpxchg(&next_page->entries, old_entries, eval);
 
 		/*
 		 * No need to worry about races with clearing out the commit.
@@ -1445,164 +1444,164 @@ rb_set_head_page(काष्ठा ring_buffer_per_cpu *cpu_buffer)
 		 */
 		local_set(&next_page->page->commit, 0);
 
-		/* Again, either we update tail_page or an पूर्णांकerrupt करोes */
-		(व्योम)cmpxchg(&cpu_buffer->tail_page, tail_page, next_page);
-	पूर्ण
-पूर्ण
+		/* Again, either we update tail_page or an interrupt does */
+		(void)cmpxchg(&cpu_buffer->tail_page, tail_page, next_page);
+	}
+}
 
-अटल पूर्णांक rb_check_bpage(काष्ठा ring_buffer_per_cpu *cpu_buffer,
-			  काष्ठा buffer_page *bpage)
-अणु
-	अचिन्हित दीर्घ val = (अचिन्हित दीर्घ)bpage;
+static int rb_check_bpage(struct ring_buffer_per_cpu *cpu_buffer,
+			  struct buffer_page *bpage)
+{
+	unsigned long val = (unsigned long)bpage;
 
-	अगर (RB_WARN_ON(cpu_buffer, val & RB_FLAG_MASK))
-		वापस 1;
+	if (RB_WARN_ON(cpu_buffer, val & RB_FLAG_MASK))
+		return 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * rb_check_list - make sure a poपूर्णांकer to a list has the last bits zero
+ * rb_check_list - make sure a pointer to a list has the last bits zero
  */
-अटल पूर्णांक rb_check_list(काष्ठा ring_buffer_per_cpu *cpu_buffer,
-			 काष्ठा list_head *list)
-अणु
-	अगर (RB_WARN_ON(cpu_buffer, rb_list_head(list->prev) != list->prev))
-		वापस 1;
-	अगर (RB_WARN_ON(cpu_buffer, rb_list_head(list->next) != list->next))
-		वापस 1;
-	वापस 0;
-पूर्ण
+static int rb_check_list(struct ring_buffer_per_cpu *cpu_buffer,
+			 struct list_head *list)
+{
+	if (RB_WARN_ON(cpu_buffer, rb_list_head(list->prev) != list->prev))
+		return 1;
+	if (RB_WARN_ON(cpu_buffer, rb_list_head(list->next) != list->next))
+		return 1;
+	return 0;
+}
 
 /**
- * rb_check_pages - पूर्णांकegrity check of buffer pages
+ * rb_check_pages - integrity check of buffer pages
  * @cpu_buffer: CPU buffer with pages to test
  *
  * As a safety measure we check to make sure the data pages have not
  * been corrupted.
  */
-अटल पूर्णांक rb_check_pages(काष्ठा ring_buffer_per_cpu *cpu_buffer)
-अणु
-	काष्ठा list_head *head = cpu_buffer->pages;
-	काष्ठा buffer_page *bpage, *पंचांगp;
+static int rb_check_pages(struct ring_buffer_per_cpu *cpu_buffer)
+{
+	struct list_head *head = cpu_buffer->pages;
+	struct buffer_page *bpage, *tmp;
 
-	/* Reset the head page अगर it exists */
-	अगर (cpu_buffer->head_page)
+	/* Reset the head page if it exists */
+	if (cpu_buffer->head_page)
 		rb_set_head_page(cpu_buffer);
 
 	rb_head_page_deactivate(cpu_buffer);
 
-	अगर (RB_WARN_ON(cpu_buffer, head->next->prev != head))
-		वापस -1;
-	अगर (RB_WARN_ON(cpu_buffer, head->prev->next != head))
-		वापस -1;
+	if (RB_WARN_ON(cpu_buffer, head->next->prev != head))
+		return -1;
+	if (RB_WARN_ON(cpu_buffer, head->prev->next != head))
+		return -1;
 
-	अगर (rb_check_list(cpu_buffer, head))
-		वापस -1;
+	if (rb_check_list(cpu_buffer, head))
+		return -1;
 
-	list_क्रम_each_entry_safe(bpage, पंचांगp, head, list) अणु
-		अगर (RB_WARN_ON(cpu_buffer,
+	list_for_each_entry_safe(bpage, tmp, head, list) {
+		if (RB_WARN_ON(cpu_buffer,
 			       bpage->list.next->prev != &bpage->list))
-			वापस -1;
-		अगर (RB_WARN_ON(cpu_buffer,
+			return -1;
+		if (RB_WARN_ON(cpu_buffer,
 			       bpage->list.prev->next != &bpage->list))
-			वापस -1;
-		अगर (rb_check_list(cpu_buffer, &bpage->list))
-			वापस -1;
-	पूर्ण
+			return -1;
+		if (rb_check_list(cpu_buffer, &bpage->list))
+			return -1;
+	}
 
 	rb_head_page_activate(cpu_buffer);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __rb_allocate_pages(काष्ठा ring_buffer_per_cpu *cpu_buffer,
-		दीर्घ nr_pages, काष्ठा list_head *pages)
-अणु
-	काष्ठा buffer_page *bpage, *पंचांगp;
-	bool user_thपढ़ो = current->mm != शून्य;
+static int __rb_allocate_pages(struct ring_buffer_per_cpu *cpu_buffer,
+		long nr_pages, struct list_head *pages)
+{
+	struct buffer_page *bpage, *tmp;
+	bool user_thread = current->mm != NULL;
 	gfp_t mflags;
-	दीर्घ i;
+	long i;
 
 	/*
-	 * Check अगर the available memory is there first.
+	 * Check if the available memory is there first.
 	 * Note, si_mem_available() only gives us a rough estimate of available
-	 * memory. It may not be accurate. But we करोn't care, we just want
-	 * to prevent करोing any allocation when it is obvious that it is
+	 * memory. It may not be accurate. But we don't care, we just want
+	 * to prevent doing any allocation when it is obvious that it is
 	 * not going to succeed.
 	 */
 	i = si_mem_available();
-	अगर (i < nr_pages)
-		वापस -ENOMEM;
+	if (i < nr_pages)
+		return -ENOMEM;
 
 	/*
 	 * __GFP_RETRY_MAYFAIL flag makes sure that the allocation fails
-	 * gracefully without invoking oom-समाप्तer and the प्रणाली is not
+	 * gracefully without invoking oom-killer and the system is not
 	 * destabilized.
 	 */
 	mflags = GFP_KERNEL | __GFP_RETRY_MAYFAIL;
 
 	/*
-	 * If a user thपढ़ो allocates too much, and si_mem_available()
+	 * If a user thread allocates too much, and si_mem_available()
 	 * reports there's enough memory, even though there is not.
-	 * Make sure the OOM समाप्तer समाप्तs this thपढ़ो. This can happen
-	 * even with RETRY_MAYFAIL because another task may be करोing
+	 * Make sure the OOM killer kills this thread. This can happen
+	 * even with RETRY_MAYFAIL because another task may be doing
 	 * an allocation after this task has taken all memory.
-	 * This is the task the OOM समाप्तer needs to take out during this
-	 * loop, even अगर it was triggered by an allocation somewhere अन्यथा.
+	 * This is the task the OOM killer needs to take out during this
+	 * loop, even if it was triggered by an allocation somewhere else.
 	 */
-	अगर (user_thपढ़ो)
+	if (user_thread)
 		set_current_oom_origin();
-	क्रम (i = 0; i < nr_pages; i++) अणु
-		काष्ठा page *page;
+	for (i = 0; i < nr_pages; i++) {
+		struct page *page;
 
-		bpage = kzalloc_node(ALIGN(माप(*bpage), cache_line_size()),
+		bpage = kzalloc_node(ALIGN(sizeof(*bpage), cache_line_size()),
 				    mflags, cpu_to_node(cpu_buffer->cpu));
-		अगर (!bpage)
-			जाओ मुक्त_pages;
+		if (!bpage)
+			goto free_pages;
 
 		rb_check_bpage(cpu_buffer, bpage);
 
 		list_add(&bpage->list, pages);
 
 		page = alloc_pages_node(cpu_to_node(cpu_buffer->cpu), mflags, 0);
-		अगर (!page)
-			जाओ मुक्त_pages;
+		if (!page)
+			goto free_pages;
 		bpage->page = page_address(page);
 		rb_init_page(bpage->page);
 
-		अगर (user_thपढ़ो && fatal_संकेत_pending(current))
-			जाओ मुक्त_pages;
-	पूर्ण
-	अगर (user_thपढ़ो)
+		if (user_thread && fatal_signal_pending(current))
+			goto free_pages;
+	}
+	if (user_thread)
 		clear_current_oom_origin();
 
-	वापस 0;
+	return 0;
 
-मुक्त_pages:
-	list_क्रम_each_entry_safe(bpage, पंचांगp, pages, list) अणु
+free_pages:
+	list_for_each_entry_safe(bpage, tmp, pages, list) {
 		list_del_init(&bpage->list);
-		मुक्त_buffer_page(bpage);
-	पूर्ण
-	अगर (user_thपढ़ो)
+		free_buffer_page(bpage);
+	}
+	if (user_thread)
 		clear_current_oom_origin();
 
-	वापस -ENOMEM;
-पूर्ण
+	return -ENOMEM;
+}
 
-अटल पूर्णांक rb_allocate_pages(काष्ठा ring_buffer_per_cpu *cpu_buffer,
-			     अचिन्हित दीर्घ nr_pages)
-अणु
+static int rb_allocate_pages(struct ring_buffer_per_cpu *cpu_buffer,
+			     unsigned long nr_pages)
+{
 	LIST_HEAD(pages);
 
 	WARN_ON(!nr_pages);
 
-	अगर (__rb_allocate_pages(cpu_buffer, nr_pages, &pages))
-		वापस -ENOMEM;
+	if (__rb_allocate_pages(cpu_buffer, nr_pages, &pages))
+		return -ENOMEM;
 
 	/*
-	 * The ring buffer page list is a circular list that करोes not
-	 * start and end with a list head. All page list items poपूर्णांक to
+	 * The ring buffer page list is a circular list that does not
+	 * start and end with a list head. All page list items point to
 	 * other pages.
 	 */
 	cpu_buffer->pages = pages.next;
@@ -1612,429 +1611,429 @@ rb_set_head_page(काष्ठा ring_buffer_per_cpu *cpu_buffer)
 
 	rb_check_pages(cpu_buffer);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा ring_buffer_per_cpu *
-rb_allocate_cpu_buffer(काष्ठा trace_buffer *buffer, दीर्घ nr_pages, पूर्णांक cpu)
-अणु
-	काष्ठा ring_buffer_per_cpu *cpu_buffer;
-	काष्ठा buffer_page *bpage;
-	काष्ठा page *page;
-	पूर्णांक ret;
+static struct ring_buffer_per_cpu *
+rb_allocate_cpu_buffer(struct trace_buffer *buffer, long nr_pages, int cpu)
+{
+	struct ring_buffer_per_cpu *cpu_buffer;
+	struct buffer_page *bpage;
+	struct page *page;
+	int ret;
 
-	cpu_buffer = kzalloc_node(ALIGN(माप(*cpu_buffer), cache_line_size()),
+	cpu_buffer = kzalloc_node(ALIGN(sizeof(*cpu_buffer), cache_line_size()),
 				  GFP_KERNEL, cpu_to_node(cpu));
-	अगर (!cpu_buffer)
-		वापस शून्य;
+	if (!cpu_buffer)
+		return NULL;
 
 	cpu_buffer->cpu = cpu;
 	cpu_buffer->buffer = buffer;
-	raw_spin_lock_init(&cpu_buffer->पढ़ोer_lock);
-	lockdep_set_class(&cpu_buffer->पढ़ोer_lock, buffer->पढ़ोer_lock_key);
+	raw_spin_lock_init(&cpu_buffer->reader_lock);
+	lockdep_set_class(&cpu_buffer->reader_lock, buffer->reader_lock_key);
 	cpu_buffer->lock = (arch_spinlock_t)__ARCH_SPIN_LOCK_UNLOCKED;
 	INIT_WORK(&cpu_buffer->update_pages_work, update_pages_handler);
-	init_completion(&cpu_buffer->update_करोne);
-	init_irq_work(&cpu_buffer->irq_work.work, rb_wake_up_रुकोers);
-	init_रुकोqueue_head(&cpu_buffer->irq_work.रुकोers);
-	init_रुकोqueue_head(&cpu_buffer->irq_work.full_रुकोers);
+	init_completion(&cpu_buffer->update_done);
+	init_irq_work(&cpu_buffer->irq_work.work, rb_wake_up_waiters);
+	init_waitqueue_head(&cpu_buffer->irq_work.waiters);
+	init_waitqueue_head(&cpu_buffer->irq_work.full_waiters);
 
-	bpage = kzalloc_node(ALIGN(माप(*bpage), cache_line_size()),
+	bpage = kzalloc_node(ALIGN(sizeof(*bpage), cache_line_size()),
 			    GFP_KERNEL, cpu_to_node(cpu));
-	अगर (!bpage)
-		जाओ fail_मुक्त_buffer;
+	if (!bpage)
+		goto fail_free_buffer;
 
 	rb_check_bpage(cpu_buffer, bpage);
 
-	cpu_buffer->पढ़ोer_page = bpage;
+	cpu_buffer->reader_page = bpage;
 	page = alloc_pages_node(cpu_to_node(cpu), GFP_KERNEL, 0);
-	अगर (!page)
-		जाओ fail_मुक्त_पढ़ोer;
+	if (!page)
+		goto fail_free_reader;
 	bpage->page = page_address(page);
 	rb_init_page(bpage->page);
 
-	INIT_LIST_HEAD(&cpu_buffer->पढ़ोer_page->list);
+	INIT_LIST_HEAD(&cpu_buffer->reader_page->list);
 	INIT_LIST_HEAD(&cpu_buffer->new_pages);
 
 	ret = rb_allocate_pages(cpu_buffer, nr_pages);
-	अगर (ret < 0)
-		जाओ fail_मुक्त_पढ़ोer;
+	if (ret < 0)
+		goto fail_free_reader;
 
 	cpu_buffer->head_page
-		= list_entry(cpu_buffer->pages, काष्ठा buffer_page, list);
+		= list_entry(cpu_buffer->pages, struct buffer_page, list);
 	cpu_buffer->tail_page = cpu_buffer->commit_page = cpu_buffer->head_page;
 
 	rb_head_page_activate(cpu_buffer);
 
-	वापस cpu_buffer;
+	return cpu_buffer;
 
- fail_मुक्त_पढ़ोer:
-	मुक्त_buffer_page(cpu_buffer->पढ़ोer_page);
+ fail_free_reader:
+	free_buffer_page(cpu_buffer->reader_page);
 
- fail_मुक्त_buffer:
-	kमुक्त(cpu_buffer);
-	वापस शून्य;
-पूर्ण
+ fail_free_buffer:
+	kfree(cpu_buffer);
+	return NULL;
+}
 
-अटल व्योम rb_मुक्त_cpu_buffer(काष्ठा ring_buffer_per_cpu *cpu_buffer)
-अणु
-	काष्ठा list_head *head = cpu_buffer->pages;
-	काष्ठा buffer_page *bpage, *पंचांगp;
+static void rb_free_cpu_buffer(struct ring_buffer_per_cpu *cpu_buffer)
+{
+	struct list_head *head = cpu_buffer->pages;
+	struct buffer_page *bpage, *tmp;
 
-	मुक्त_buffer_page(cpu_buffer->पढ़ोer_page);
+	free_buffer_page(cpu_buffer->reader_page);
 
 	rb_head_page_deactivate(cpu_buffer);
 
-	अगर (head) अणु
-		list_क्रम_each_entry_safe(bpage, पंचांगp, head, list) अणु
+	if (head) {
+		list_for_each_entry_safe(bpage, tmp, head, list) {
 			list_del_init(&bpage->list);
-			मुक्त_buffer_page(bpage);
-		पूर्ण
-		bpage = list_entry(head, काष्ठा buffer_page, list);
-		मुक्त_buffer_page(bpage);
-	पूर्ण
+			free_buffer_page(bpage);
+		}
+		bpage = list_entry(head, struct buffer_page, list);
+		free_buffer_page(bpage);
+	}
 
-	kमुक्त(cpu_buffer);
-पूर्ण
+	kfree(cpu_buffer);
+}
 
 /**
  * __ring_buffer_alloc - allocate a new ring_buffer
  * @size: the size in bytes per cpu that is needed.
- * @flags: attributes to set क्रम the ring buffer.
- * @key: ring buffer पढ़ोer_lock_key.
+ * @flags: attributes to set for the ring buffer.
+ * @key: ring buffer reader_lock_key.
  *
  * Currently the only flag that is available is the RB_FL_OVERWRITE
- * flag. This flag means that the buffer will overग_लिखो old data
+ * flag. This flag means that the buffer will overwrite old data
  * when the buffer wraps. If this flag is not set, the buffer will
  * drop data when the tail hits the head.
  */
-काष्ठा trace_buffer *__ring_buffer_alloc(अचिन्हित दीर्घ size, अचिन्हित flags,
-					काष्ठा lock_class_key *key)
-अणु
-	काष्ठा trace_buffer *buffer;
-	दीर्घ nr_pages;
-	पूर्णांक bsize;
-	पूर्णांक cpu;
-	पूर्णांक ret;
+struct trace_buffer *__ring_buffer_alloc(unsigned long size, unsigned flags,
+					struct lock_class_key *key)
+{
+	struct trace_buffer *buffer;
+	long nr_pages;
+	int bsize;
+	int cpu;
+	int ret;
 
 	/* keep it in its own cache line */
-	buffer = kzalloc(ALIGN(माप(*buffer), cache_line_size()),
+	buffer = kzalloc(ALIGN(sizeof(*buffer), cache_line_size()),
 			 GFP_KERNEL);
-	अगर (!buffer)
-		वापस शून्य;
+	if (!buffer)
+		return NULL;
 
-	अगर (!zalloc_cpumask_var(&buffer->cpumask, GFP_KERNEL))
-		जाओ fail_मुक्त_buffer;
+	if (!zalloc_cpumask_var(&buffer->cpumask, GFP_KERNEL))
+		goto fail_free_buffer;
 
 	nr_pages = DIV_ROUND_UP(size, BUF_PAGE_SIZE);
 	buffer->flags = flags;
-	buffer->घड़ी = trace_घड़ी_local;
-	buffer->पढ़ोer_lock_key = key;
+	buffer->clock = trace_clock_local;
+	buffer->reader_lock_key = key;
 
-	init_irq_work(&buffer->irq_work.work, rb_wake_up_रुकोers);
-	init_रुकोqueue_head(&buffer->irq_work.रुकोers);
+	init_irq_work(&buffer->irq_work.work, rb_wake_up_waiters);
+	init_waitqueue_head(&buffer->irq_work.waiters);
 
 	/* need at least two pages */
-	अगर (nr_pages < 2)
+	if (nr_pages < 2)
 		nr_pages = 2;
 
 	buffer->cpus = nr_cpu_ids;
 
-	bsize = माप(व्योम *) * nr_cpu_ids;
+	bsize = sizeof(void *) * nr_cpu_ids;
 	buffer->buffers = kzalloc(ALIGN(bsize, cache_line_size()),
 				  GFP_KERNEL);
-	अगर (!buffer->buffers)
-		जाओ fail_मुक्त_cpumask;
+	if (!buffer->buffers)
+		goto fail_free_cpumask;
 
 	cpu = raw_smp_processor_id();
 	cpumask_set_cpu(cpu, buffer->cpumask);
 	buffer->buffers[cpu] = rb_allocate_cpu_buffer(buffer, nr_pages, cpu);
-	अगर (!buffer->buffers[cpu])
-		जाओ fail_मुक्त_buffers;
+	if (!buffer->buffers[cpu])
+		goto fail_free_buffers;
 
 	ret = cpuhp_state_add_instance(CPUHP_TRACE_RB_PREPARE, &buffer->node);
-	अगर (ret < 0)
-		जाओ fail_मुक्त_buffers;
+	if (ret < 0)
+		goto fail_free_buffers;
 
 	mutex_init(&buffer->mutex);
 
-	वापस buffer;
+	return buffer;
 
- fail_मुक्त_buffers:
-	क्रम_each_buffer_cpu(buffer, cpu) अणु
-		अगर (buffer->buffers[cpu])
-			rb_मुक्त_cpu_buffer(buffer->buffers[cpu]);
-	पूर्ण
-	kमुक्त(buffer->buffers);
+ fail_free_buffers:
+	for_each_buffer_cpu(buffer, cpu) {
+		if (buffer->buffers[cpu])
+			rb_free_cpu_buffer(buffer->buffers[cpu]);
+	}
+	kfree(buffer->buffers);
 
- fail_मुक्त_cpumask:
-	मुक्त_cpumask_var(buffer->cpumask);
+ fail_free_cpumask:
+	free_cpumask_var(buffer->cpumask);
 
- fail_मुक्त_buffer:
-	kमुक्त(buffer);
-	वापस शून्य;
-पूर्ण
+ fail_free_buffer:
+	kfree(buffer);
+	return NULL;
+}
 EXPORT_SYMBOL_GPL(__ring_buffer_alloc);
 
 /**
- * ring_buffer_मुक्त - मुक्त a ring buffer.
- * @buffer: the buffer to मुक्त.
+ * ring_buffer_free - free a ring buffer.
+ * @buffer: the buffer to free.
  */
-व्योम
-ring_buffer_मुक्त(काष्ठा trace_buffer *buffer)
-अणु
-	पूर्णांक cpu;
+void
+ring_buffer_free(struct trace_buffer *buffer)
+{
+	int cpu;
 
-	cpuhp_state_हटाओ_instance(CPUHP_TRACE_RB_PREPARE, &buffer->node);
+	cpuhp_state_remove_instance(CPUHP_TRACE_RB_PREPARE, &buffer->node);
 
-	क्रम_each_buffer_cpu(buffer, cpu)
-		rb_मुक्त_cpu_buffer(buffer->buffers[cpu]);
+	for_each_buffer_cpu(buffer, cpu)
+		rb_free_cpu_buffer(buffer->buffers[cpu]);
 
-	kमुक्त(buffer->buffers);
-	मुक्त_cpumask_var(buffer->cpumask);
+	kfree(buffer->buffers);
+	free_cpumask_var(buffer->cpumask);
 
-	kमुक्त(buffer);
-पूर्ण
-EXPORT_SYMBOL_GPL(ring_buffer_मुक्त);
+	kfree(buffer);
+}
+EXPORT_SYMBOL_GPL(ring_buffer_free);
 
-व्योम ring_buffer_set_घड़ी(काष्ठा trace_buffer *buffer,
-			   u64 (*घड़ी)(व्योम))
-अणु
-	buffer->घड़ी = घड़ी;
-पूर्ण
+void ring_buffer_set_clock(struct trace_buffer *buffer,
+			   u64 (*clock)(void))
+{
+	buffer->clock = clock;
+}
 
-व्योम ring_buffer_set_समय_stamp_असल(काष्ठा trace_buffer *buffer, bool असल)
-अणु
-	buffer->समय_stamp_असल = असल;
-पूर्ण
+void ring_buffer_set_time_stamp_abs(struct trace_buffer *buffer, bool abs)
+{
+	buffer->time_stamp_abs = abs;
+}
 
-bool ring_buffer_समय_stamp_असल(काष्ठा trace_buffer *buffer)
-अणु
-	वापस buffer->समय_stamp_असल;
-पूर्ण
+bool ring_buffer_time_stamp_abs(struct trace_buffer *buffer)
+{
+	return buffer->time_stamp_abs;
+}
 
-अटल व्योम rb_reset_cpu(काष्ठा ring_buffer_per_cpu *cpu_buffer);
+static void rb_reset_cpu(struct ring_buffer_per_cpu *cpu_buffer);
 
-अटल अंतरभूत अचिन्हित दीर्घ rb_page_entries(काष्ठा buffer_page *bpage)
-अणु
-	वापस local_पढ़ो(&bpage->entries) & RB_WRITE_MASK;
-पूर्ण
+static inline unsigned long rb_page_entries(struct buffer_page *bpage)
+{
+	return local_read(&bpage->entries) & RB_WRITE_MASK;
+}
 
-अटल अंतरभूत अचिन्हित दीर्घ rb_page_ग_लिखो(काष्ठा buffer_page *bpage)
-अणु
-	वापस local_पढ़ो(&bpage->ग_लिखो) & RB_WRITE_MASK;
-पूर्ण
+static inline unsigned long rb_page_write(struct buffer_page *bpage)
+{
+	return local_read(&bpage->write) & RB_WRITE_MASK;
+}
 
-अटल पूर्णांक
-rb_हटाओ_pages(काष्ठा ring_buffer_per_cpu *cpu_buffer, अचिन्हित दीर्घ nr_pages)
-अणु
-	काष्ठा list_head *tail_page, *to_हटाओ, *next_page;
-	काष्ठा buffer_page *to_हटाओ_page, *पंचांगp_iter_page;
-	काष्ठा buffer_page *last_page, *first_page;
-	अचिन्हित दीर्घ nr_हटाओd;
-	अचिन्हित दीर्घ head_bit;
-	पूर्णांक page_entries;
+static int
+rb_remove_pages(struct ring_buffer_per_cpu *cpu_buffer, unsigned long nr_pages)
+{
+	struct list_head *tail_page, *to_remove, *next_page;
+	struct buffer_page *to_remove_page, *tmp_iter_page;
+	struct buffer_page *last_page, *first_page;
+	unsigned long nr_removed;
+	unsigned long head_bit;
+	int page_entries;
 
 	head_bit = 0;
 
-	raw_spin_lock_irq(&cpu_buffer->पढ़ोer_lock);
+	raw_spin_lock_irq(&cpu_buffer->reader_lock);
 	atomic_inc(&cpu_buffer->record_disabled);
 	/*
-	 * We करोn't race with the पढ़ोers since we have acquired the पढ़ोer
-	 * lock. We also करोn't race with ग_लिखोrs after disabling recording.
+	 * We don't race with the readers since we have acquired the reader
+	 * lock. We also don't race with writers after disabling recording.
 	 * This makes it easy to figure out the first and the last page to be
-	 * हटाओd from the list. We unlink all the pages in between including
-	 * the first and last pages. This is करोne in a busy loop so that we
+	 * removed from the list. We unlink all the pages in between including
+	 * the first and last pages. This is done in a busy loop so that we
 	 * lose the least number of traces.
-	 * The pages are मुक्तd after we restart recording and unlock पढ़ोers.
+	 * The pages are freed after we restart recording and unlock readers.
 	 */
 	tail_page = &cpu_buffer->tail_page->list;
 
 	/*
-	 * tail page might be on पढ़ोer page, we हटाओ the next page
+	 * tail page might be on reader page, we remove the next page
 	 * from the ring buffer
 	 */
-	अगर (cpu_buffer->tail_page == cpu_buffer->पढ़ोer_page)
+	if (cpu_buffer->tail_page == cpu_buffer->reader_page)
 		tail_page = rb_list_head(tail_page->next);
-	to_हटाओ = tail_page;
+	to_remove = tail_page;
 
-	/* start of pages to हटाओ */
-	first_page = list_entry(rb_list_head(to_हटाओ->next),
-				काष्ठा buffer_page, list);
+	/* start of pages to remove */
+	first_page = list_entry(rb_list_head(to_remove->next),
+				struct buffer_page, list);
 
-	क्रम (nr_हटाओd = 0; nr_हटाओd < nr_pages; nr_हटाओd++) अणु
-		to_हटाओ = rb_list_head(to_हटाओ)->next;
-		head_bit |= (अचिन्हित दीर्घ)to_हटाओ & RB_PAGE_HEAD;
-	पूर्ण
+	for (nr_removed = 0; nr_removed < nr_pages; nr_removed++) {
+		to_remove = rb_list_head(to_remove)->next;
+		head_bit |= (unsigned long)to_remove & RB_PAGE_HEAD;
+	}
 
-	next_page = rb_list_head(to_हटाओ)->next;
+	next_page = rb_list_head(to_remove)->next;
 
 	/*
-	 * Now we हटाओ all pages between tail_page and next_page.
-	 * Make sure that we have head_bit value preserved क्रम the
+	 * Now we remove all pages between tail_page and next_page.
+	 * Make sure that we have head_bit value preserved for the
 	 * next page
 	 */
-	tail_page->next = (काष्ठा list_head *)((अचिन्हित दीर्घ)next_page |
+	tail_page->next = (struct list_head *)((unsigned long)next_page |
 						head_bit);
 	next_page = rb_list_head(next_page);
 	next_page->prev = tail_page;
 
-	/* make sure pages poपूर्णांकs to a valid page in the ring buffer */
+	/* make sure pages points to a valid page in the ring buffer */
 	cpu_buffer->pages = next_page;
 
 	/* update head page */
-	अगर (head_bit)
+	if (head_bit)
 		cpu_buffer->head_page = list_entry(next_page,
-						काष्ठा buffer_page, list);
+						struct buffer_page, list);
 
 	/*
-	 * change पढ़ो poपूर्णांकer to make sure any पढ़ो iterators reset
+	 * change read pointer to make sure any read iterators reset
 	 * themselves
 	 */
-	cpu_buffer->पढ़ो = 0;
+	cpu_buffer->read = 0;
 
-	/* pages are हटाओd, resume tracing and then मुक्त the pages */
+	/* pages are removed, resume tracing and then free the pages */
 	atomic_dec(&cpu_buffer->record_disabled);
-	raw_spin_unlock_irq(&cpu_buffer->पढ़ोer_lock);
+	raw_spin_unlock_irq(&cpu_buffer->reader_lock);
 
 	RB_WARN_ON(cpu_buffer, list_empty(cpu_buffer->pages));
 
-	/* last buffer page to हटाओ */
-	last_page = list_entry(rb_list_head(to_हटाओ), काष्ठा buffer_page,
+	/* last buffer page to remove */
+	last_page = list_entry(rb_list_head(to_remove), struct buffer_page,
 				list);
-	पंचांगp_iter_page = first_page;
+	tmp_iter_page = first_page;
 
-	करो अणु
+	do {
 		cond_resched();
 
-		to_हटाओ_page = पंचांगp_iter_page;
-		rb_inc_page(&पंचांगp_iter_page);
+		to_remove_page = tmp_iter_page;
+		rb_inc_page(&tmp_iter_page);
 
 		/* update the counters */
-		page_entries = rb_page_entries(to_हटाओ_page);
-		अगर (page_entries) अणु
+		page_entries = rb_page_entries(to_remove_page);
+		if (page_entries) {
 			/*
 			 * If something was added to this page, it was full
 			 * since it is not the tail page. So we deduct the
 			 * bytes consumed in ring buffer from here.
-			 * Increment overrun to account क्रम the lost events.
+			 * Increment overrun to account for the lost events.
 			 */
 			local_add(page_entries, &cpu_buffer->overrun);
 			local_sub(BUF_PAGE_SIZE, &cpu_buffer->entries_bytes);
-		पूर्ण
+		}
 
 		/*
-		 * We have alपढ़ोy हटाओd references to this list item, just
-		 * मुक्त up the buffer_page and its page
+		 * We have already removed references to this list item, just
+		 * free up the buffer_page and its page
 		 */
-		मुक्त_buffer_page(to_हटाओ_page);
-		nr_हटाओd--;
+		free_buffer_page(to_remove_page);
+		nr_removed--;
 
-	पूर्ण जबतक (to_हटाओ_page != last_page);
+	} while (to_remove_page != last_page);
 
-	RB_WARN_ON(cpu_buffer, nr_हटाओd);
+	RB_WARN_ON(cpu_buffer, nr_removed);
 
-	वापस nr_हटाओd == 0;
-पूर्ण
+	return nr_removed == 0;
+}
 
-अटल पूर्णांक
-rb_insert_pages(काष्ठा ring_buffer_per_cpu *cpu_buffer)
-अणु
-	काष्ठा list_head *pages = &cpu_buffer->new_pages;
-	पूर्णांक retries, success;
+static int
+rb_insert_pages(struct ring_buffer_per_cpu *cpu_buffer)
+{
+	struct list_head *pages = &cpu_buffer->new_pages;
+	int retries, success;
 
-	raw_spin_lock_irq(&cpu_buffer->पढ़ोer_lock);
+	raw_spin_lock_irq(&cpu_buffer->reader_lock);
 	/*
-	 * We are holding the पढ़ोer lock, so the पढ़ोer page won't be swapped
-	 * in the ring buffer. Now we are racing with the ग_लिखोr trying to
+	 * We are holding the reader lock, so the reader page won't be swapped
+	 * in the ring buffer. Now we are racing with the writer trying to
 	 * move head page and the tail page.
-	 * We are going to adapt the पढ़ोer page update process where:
+	 * We are going to adapt the reader page update process where:
 	 * 1. We first splice the start and end of list of new pages between
 	 *    the head page and its previous page.
-	 * 2. We cmpxchg the prev_page->next to poपूर्णांक from head page to the
+	 * 2. We cmpxchg the prev_page->next to point from head page to the
 	 *    start of new pages list.
 	 * 3. Finally, we update the head->prev to the end of new list.
 	 *
-	 * We will try this process 10 बार, to make sure that we करोn't keep
+	 * We will try this process 10 times, to make sure that we don't keep
 	 * spinning.
 	 */
 	retries = 10;
 	success = 0;
-	जबतक (retries--) अणु
-		काष्ठा list_head *head_page, *prev_page, *r;
-		काष्ठा list_head *last_page, *first_page;
-		काष्ठा list_head *head_page_with_bit;
+	while (retries--) {
+		struct list_head *head_page, *prev_page, *r;
+		struct list_head *last_page, *first_page;
+		struct list_head *head_page_with_bit;
 
 		head_page = &rb_set_head_page(cpu_buffer)->list;
-		अगर (!head_page)
-			अवरोध;
+		if (!head_page)
+			break;
 		prev_page = head_page->prev;
 
 		first_page = pages->next;
 		last_page  = pages->prev;
 
-		head_page_with_bit = (काष्ठा list_head *)
-				     ((अचिन्हित दीर्घ)head_page | RB_PAGE_HEAD);
+		head_page_with_bit = (struct list_head *)
+				     ((unsigned long)head_page | RB_PAGE_HEAD);
 
 		last_page->next = head_page_with_bit;
 		first_page->prev = prev_page;
 
 		r = cmpxchg(&prev_page->next, head_page_with_bit, first_page);
 
-		अगर (r == head_page_with_bit) अणु
+		if (r == head_page_with_bit) {
 			/*
-			 * yay, we replaced the page poपूर्णांकer to our new list,
+			 * yay, we replaced the page pointer to our new list,
 			 * now, we just have to update to head page's prev
-			 * poपूर्णांकer to poपूर्णांक to end of list
+			 * pointer to point to end of list
 			 */
 			head_page->prev = last_page;
 			success = 1;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	अगर (success)
+	if (success)
 		INIT_LIST_HEAD(pages);
 	/*
 	 * If we weren't successful in adding in new pages, warn and stop
 	 * tracing
 	 */
 	RB_WARN_ON(cpu_buffer, !success);
-	raw_spin_unlock_irq(&cpu_buffer->पढ़ोer_lock);
+	raw_spin_unlock_irq(&cpu_buffer->reader_lock);
 
-	/* मुक्त pages अगर they weren't inserted */
-	अगर (!success) अणु
-		काष्ठा buffer_page *bpage, *पंचांगp;
-		list_क्रम_each_entry_safe(bpage, पंचांगp, &cpu_buffer->new_pages,
-					 list) अणु
+	/* free pages if they weren't inserted */
+	if (!success) {
+		struct buffer_page *bpage, *tmp;
+		list_for_each_entry_safe(bpage, tmp, &cpu_buffer->new_pages,
+					 list) {
 			list_del_init(&bpage->list);
-			मुक्त_buffer_page(bpage);
-		पूर्ण
-	पूर्ण
-	वापस success;
-पूर्ण
+			free_buffer_page(bpage);
+		}
+	}
+	return success;
+}
 
-अटल व्योम rb_update_pages(काष्ठा ring_buffer_per_cpu *cpu_buffer)
-अणु
-	पूर्णांक success;
+static void rb_update_pages(struct ring_buffer_per_cpu *cpu_buffer)
+{
+	int success;
 
-	अगर (cpu_buffer->nr_pages_to_update > 0)
+	if (cpu_buffer->nr_pages_to_update > 0)
 		success = rb_insert_pages(cpu_buffer);
-	अन्यथा
-		success = rb_हटाओ_pages(cpu_buffer,
+	else
+		success = rb_remove_pages(cpu_buffer,
 					-cpu_buffer->nr_pages_to_update);
 
-	अगर (success)
+	if (success)
 		cpu_buffer->nr_pages += cpu_buffer->nr_pages_to_update;
-पूर्ण
+}
 
-अटल व्योम update_pages_handler(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा ring_buffer_per_cpu *cpu_buffer = container_of(work,
-			काष्ठा ring_buffer_per_cpu, update_pages_work);
+static void update_pages_handler(struct work_struct *work)
+{
+	struct ring_buffer_per_cpu *cpu_buffer = container_of(work,
+			struct ring_buffer_per_cpu, update_pages_work);
 	rb_update_pages(cpu_buffer);
-	complete(&cpu_buffer->update_करोne);
-पूर्ण
+	complete(&cpu_buffer->update_done);
+}
 
 /**
  * ring_buffer_resize - resize the ring buffer
@@ -2046,71 +2045,71 @@ rb_insert_pages(काष्ठा ring_buffer_per_cpu *cpu_buffer)
  *
  * Returns 0 on success and < 0 on failure.
  */
-पूर्णांक ring_buffer_resize(काष्ठा trace_buffer *buffer, अचिन्हित दीर्घ size,
-			पूर्णांक cpu_id)
-अणु
-	काष्ठा ring_buffer_per_cpu *cpu_buffer;
-	अचिन्हित दीर्घ nr_pages;
-	पूर्णांक cpu, err;
+int ring_buffer_resize(struct trace_buffer *buffer, unsigned long size,
+			int cpu_id)
+{
+	struct ring_buffer_per_cpu *cpu_buffer;
+	unsigned long nr_pages;
+	int cpu, err;
 
 	/*
 	 * Always succeed at resizing a non-existent buffer:
 	 */
-	अगर (!buffer)
-		वापस 0;
+	if (!buffer)
+		return 0;
 
 	/* Make sure the requested buffer exists */
-	अगर (cpu_id != RING_BUFFER_ALL_CPUS &&
+	if (cpu_id != RING_BUFFER_ALL_CPUS &&
 	    !cpumask_test_cpu(cpu_id, buffer->cpumask))
-		वापस 0;
+		return 0;
 
 	nr_pages = DIV_ROUND_UP(size, BUF_PAGE_SIZE);
 
 	/* we need a minimum of two pages */
-	अगर (nr_pages < 2)
+	if (nr_pages < 2)
 		nr_pages = 2;
 
-	/* prevent another thपढ़ो from changing buffer sizes */
+	/* prevent another thread from changing buffer sizes */
 	mutex_lock(&buffer->mutex);
 
 
-	अगर (cpu_id == RING_BUFFER_ALL_CPUS) अणु
+	if (cpu_id == RING_BUFFER_ALL_CPUS) {
 		/*
-		 * Don't succeed अगर resizing is disabled, as a पढ़ोer might be
-		 * manipulating the ring buffer and is expecting a sane state जबतक
+		 * Don't succeed if resizing is disabled, as a reader might be
+		 * manipulating the ring buffer and is expecting a sane state while
 		 * this is true.
 		 */
-		क्रम_each_buffer_cpu(buffer, cpu) अणु
+		for_each_buffer_cpu(buffer, cpu) {
 			cpu_buffer = buffer->buffers[cpu];
-			अगर (atomic_पढ़ो(&cpu_buffer->resize_disabled)) अणु
+			if (atomic_read(&cpu_buffer->resize_disabled)) {
 				err = -EBUSY;
-				जाओ out_err_unlock;
-			पूर्ण
-		पूर्ण
+				goto out_err_unlock;
+			}
+		}
 
 		/* calculate the pages to update */
-		क्रम_each_buffer_cpu(buffer, cpu) अणु
+		for_each_buffer_cpu(buffer, cpu) {
 			cpu_buffer = buffer->buffers[cpu];
 
 			cpu_buffer->nr_pages_to_update = nr_pages -
 							cpu_buffer->nr_pages;
 			/*
-			 * nothing more to करो क्रम removing pages or no update
+			 * nothing more to do for removing pages or no update
 			 */
-			अगर (cpu_buffer->nr_pages_to_update <= 0)
-				जारी;
+			if (cpu_buffer->nr_pages_to_update <= 0)
+				continue;
 			/*
 			 * to add pages, make sure all new pages can be
 			 * allocated without receiving ENOMEM
 			 */
 			INIT_LIST_HEAD(&cpu_buffer->new_pages);
-			अगर (__rb_allocate_pages(cpu_buffer, cpu_buffer->nr_pages_to_update,
-						&cpu_buffer->new_pages)) अणु
-				/* not enough memory क्रम new pages */
+			if (__rb_allocate_pages(cpu_buffer, cpu_buffer->nr_pages_to_update,
+						&cpu_buffer->new_pages)) {
+				/* not enough memory for new pages */
 				err = -ENOMEM;
-				जाओ out_err;
-			पूर्ण
-		पूर्ण
+				goto out_err;
+			}
+		}
 
 		get_online_cpus();
 		/*
@@ -2118,165 +2117,165 @@ rb_insert_pages(काष्ठा ring_buffer_per_cpu *cpu_buffer)
 		 * We can't schedule on offline CPUs, but it's not necessary
 		 * since we can change their buffer sizes without any race.
 		 */
-		क्रम_each_buffer_cpu(buffer, cpu) अणु
+		for_each_buffer_cpu(buffer, cpu) {
 			cpu_buffer = buffer->buffers[cpu];
-			अगर (!cpu_buffer->nr_pages_to_update)
-				जारी;
+			if (!cpu_buffer->nr_pages_to_update)
+				continue;
 
 			/* Can't run something on an offline CPU. */
-			अगर (!cpu_online(cpu)) अणु
+			if (!cpu_online(cpu)) {
 				rb_update_pages(cpu_buffer);
 				cpu_buffer->nr_pages_to_update = 0;
-			पूर्ण अन्यथा अणु
+			} else {
 				schedule_work_on(cpu,
 						&cpu_buffer->update_pages_work);
-			पूर्ण
-		पूर्ण
+			}
+		}
 
-		/* रुको क्रम all the updates to complete */
-		क्रम_each_buffer_cpu(buffer, cpu) अणु
+		/* wait for all the updates to complete */
+		for_each_buffer_cpu(buffer, cpu) {
 			cpu_buffer = buffer->buffers[cpu];
-			अगर (!cpu_buffer->nr_pages_to_update)
-				जारी;
+			if (!cpu_buffer->nr_pages_to_update)
+				continue;
 
-			अगर (cpu_online(cpu))
-				रुको_क्रम_completion(&cpu_buffer->update_करोne);
+			if (cpu_online(cpu))
+				wait_for_completion(&cpu_buffer->update_done);
 			cpu_buffer->nr_pages_to_update = 0;
-		पूर्ण
+		}
 
 		put_online_cpus();
-	पूर्ण अन्यथा अणु
+	} else {
 		cpu_buffer = buffer->buffers[cpu_id];
 
-		अगर (nr_pages == cpu_buffer->nr_pages)
-			जाओ out;
+		if (nr_pages == cpu_buffer->nr_pages)
+			goto out;
 
 		/*
-		 * Don't succeed अगर resizing is disabled, as a पढ़ोer might be
-		 * manipulating the ring buffer and is expecting a sane state जबतक
+		 * Don't succeed if resizing is disabled, as a reader might be
+		 * manipulating the ring buffer and is expecting a sane state while
 		 * this is true.
 		 */
-		अगर (atomic_पढ़ो(&cpu_buffer->resize_disabled)) अणु
+		if (atomic_read(&cpu_buffer->resize_disabled)) {
 			err = -EBUSY;
-			जाओ out_err_unlock;
-		पूर्ण
+			goto out_err_unlock;
+		}
 
 		cpu_buffer->nr_pages_to_update = nr_pages -
 						cpu_buffer->nr_pages;
 
 		INIT_LIST_HEAD(&cpu_buffer->new_pages);
-		अगर (cpu_buffer->nr_pages_to_update > 0 &&
+		if (cpu_buffer->nr_pages_to_update > 0 &&
 			__rb_allocate_pages(cpu_buffer, cpu_buffer->nr_pages_to_update,
-					    &cpu_buffer->new_pages)) अणु
+					    &cpu_buffer->new_pages)) {
 			err = -ENOMEM;
-			जाओ out_err;
-		पूर्ण
+			goto out_err;
+		}
 
 		get_online_cpus();
 
 		/* Can't run something on an offline CPU. */
-		अगर (!cpu_online(cpu_id))
+		if (!cpu_online(cpu_id))
 			rb_update_pages(cpu_buffer);
-		अन्यथा अणु
+		else {
 			schedule_work_on(cpu_id,
 					 &cpu_buffer->update_pages_work);
-			रुको_क्रम_completion(&cpu_buffer->update_करोne);
-		पूर्ण
+			wait_for_completion(&cpu_buffer->update_done);
+		}
 
 		cpu_buffer->nr_pages_to_update = 0;
 		put_online_cpus();
-	पूर्ण
+	}
 
  out:
 	/*
 	 * The ring buffer resize can happen with the ring buffer
 	 * enabled, so that the update disturbs the tracing as little
-	 * as possible. But अगर the buffer is disabled, we करो not need
-	 * to worry about that, and we can take the समय to verअगरy
+	 * as possible. But if the buffer is disabled, we do not need
+	 * to worry about that, and we can take the time to verify
 	 * that the buffer is not corrupt.
 	 */
-	अगर (atomic_पढ़ो(&buffer->record_disabled)) अणु
+	if (atomic_read(&buffer->record_disabled)) {
 		atomic_inc(&buffer->record_disabled);
 		/*
 		 * Even though the buffer was disabled, we must make sure
-		 * that it is truly disabled beक्रमe calling rb_check_pages.
+		 * that it is truly disabled before calling rb_check_pages.
 		 * There could have been a race between checking
 		 * record_disable and incrementing it.
 		 */
 		synchronize_rcu();
-		क्रम_each_buffer_cpu(buffer, cpu) अणु
+		for_each_buffer_cpu(buffer, cpu) {
 			cpu_buffer = buffer->buffers[cpu];
 			rb_check_pages(cpu_buffer);
-		पूर्ण
+		}
 		atomic_dec(&buffer->record_disabled);
-	पूर्ण
+	}
 
 	mutex_unlock(&buffer->mutex);
-	वापस 0;
+	return 0;
 
  out_err:
-	क्रम_each_buffer_cpu(buffer, cpu) अणु
-		काष्ठा buffer_page *bpage, *पंचांगp;
+	for_each_buffer_cpu(buffer, cpu) {
+		struct buffer_page *bpage, *tmp;
 
 		cpu_buffer = buffer->buffers[cpu];
 		cpu_buffer->nr_pages_to_update = 0;
 
-		अगर (list_empty(&cpu_buffer->new_pages))
-			जारी;
+		if (list_empty(&cpu_buffer->new_pages))
+			continue;
 
-		list_क्रम_each_entry_safe(bpage, पंचांगp, &cpu_buffer->new_pages,
-					list) अणु
+		list_for_each_entry_safe(bpage, tmp, &cpu_buffer->new_pages,
+					list) {
 			list_del_init(&bpage->list);
-			मुक्त_buffer_page(bpage);
-		पूर्ण
-	पूर्ण
+			free_buffer_page(bpage);
+		}
+	}
  out_err_unlock:
 	mutex_unlock(&buffer->mutex);
-	वापस err;
-पूर्ण
+	return err;
+}
 EXPORT_SYMBOL_GPL(ring_buffer_resize);
 
-व्योम ring_buffer_change_overग_लिखो(काष्ठा trace_buffer *buffer, पूर्णांक val)
-अणु
+void ring_buffer_change_overwrite(struct trace_buffer *buffer, int val)
+{
 	mutex_lock(&buffer->mutex);
-	अगर (val)
+	if (val)
 		buffer->flags |= RB_FL_OVERWRITE;
-	अन्यथा
+	else
 		buffer->flags &= ~RB_FL_OVERWRITE;
 	mutex_unlock(&buffer->mutex);
-पूर्ण
-EXPORT_SYMBOL_GPL(ring_buffer_change_overग_लिखो);
+}
+EXPORT_SYMBOL_GPL(ring_buffer_change_overwrite);
 
-अटल __always_अंतरभूत व्योम *__rb_page_index(काष्ठा buffer_page *bpage, अचिन्हित index)
-अणु
-	वापस bpage->page->data + index;
-पूर्ण
+static __always_inline void *__rb_page_index(struct buffer_page *bpage, unsigned index)
+{
+	return bpage->page->data + index;
+}
 
-अटल __always_अंतरभूत काष्ठा ring_buffer_event *
-rb_पढ़ोer_event(काष्ठा ring_buffer_per_cpu *cpu_buffer)
-अणु
-	वापस __rb_page_index(cpu_buffer->पढ़ोer_page,
-			       cpu_buffer->पढ़ोer_page->पढ़ो);
-पूर्ण
+static __always_inline struct ring_buffer_event *
+rb_reader_event(struct ring_buffer_per_cpu *cpu_buffer)
+{
+	return __rb_page_index(cpu_buffer->reader_page,
+			       cpu_buffer->reader_page->read);
+}
 
-अटल __always_अंतरभूत अचिन्हित rb_page_commit(काष्ठा buffer_page *bpage)
-अणु
-	वापस local_पढ़ो(&bpage->page->commit);
-पूर्ण
+static __always_inline unsigned rb_page_commit(struct buffer_page *bpage)
+{
+	return local_read(&bpage->page->commit);
+}
 
-अटल काष्ठा ring_buffer_event *
-rb_iter_head_event(काष्ठा ring_buffer_iter *iter)
-अणु
-	काष्ठा ring_buffer_event *event;
-	काष्ठा buffer_page *iter_head_page = iter->head_page;
-	अचिन्हित दीर्घ commit;
-	अचिन्हित length;
+static struct ring_buffer_event *
+rb_iter_head_event(struct ring_buffer_iter *iter)
+{
+	struct ring_buffer_event *event;
+	struct buffer_page *iter_head_page = iter->head_page;
+	unsigned long commit;
+	unsigned length;
 
-	अगर (iter->head != iter->next_event)
-		वापस iter->event;
+	if (iter->head != iter->next_event)
+		return iter->event;
 
 	/*
-	 * When the ग_लिखोr goes across pages, it issues a cmpxchg which
+	 * When the writer goes across pages, it issues a cmpxchg which
 	 * is a mb(), which will synchronize with the rmb here.
 	 * (see rb_tail_page_update() and __rb_reserve_next())
 	 */
@@ -2286,118 +2285,118 @@ rb_iter_head_event(काष्ठा ring_buffer_iter *iter)
 	length = rb_event_length(event);
 
 	/*
-	 * READ_ONCE() करोesn't work on functions and we don't want the
-	 * compiler करोing any crazy optimizations with length.
+	 * READ_ONCE() doesn't work on functions and we don't want the
+	 * compiler doing any crazy optimizations with length.
 	 */
 	barrier();
 
-	अगर ((iter->head + length) > commit || length > BUF_MAX_DATA_SIZE)
-		/* Writer corrupted the पढ़ो? */
-		जाओ reset;
+	if ((iter->head + length) > commit || length > BUF_MAX_DATA_SIZE)
+		/* Writer corrupted the read? */
+		goto reset;
 
-	स_नकल(iter->event, event, length);
+	memcpy(iter->event, event, length);
 	/*
 	 * If the page stamp is still the same after this rmb() then the
-	 * event was safely copied without the ग_लिखोr entering the page.
+	 * event was safely copied without the writer entering the page.
 	 */
 	smp_rmb();
 
-	/* Make sure the page didn't change since we पढ़ो this */
-	अगर (iter->page_stamp != iter_head_page->page->समय_stamp ||
+	/* Make sure the page didn't change since we read this */
+	if (iter->page_stamp != iter_head_page->page->time_stamp ||
 	    commit > rb_page_commit(iter_head_page))
-		जाओ reset;
+		goto reset;
 
 	iter->next_event = iter->head + length;
-	वापस iter->event;
+	return iter->event;
  reset:
 	/* Reset to the beginning */
-	iter->page_stamp = iter->पढ़ो_stamp = iter->head_page->page->समय_stamp;
+	iter->page_stamp = iter->read_stamp = iter->head_page->page->time_stamp;
 	iter->head = 0;
 	iter->next_event = 0;
 	iter->missed_events = 1;
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
 /* Size is determined by what has been committed */
-अटल __always_अंतरभूत अचिन्हित rb_page_size(काष्ठा buffer_page *bpage)
-अणु
-	वापस rb_page_commit(bpage);
-पूर्ण
+static __always_inline unsigned rb_page_size(struct buffer_page *bpage)
+{
+	return rb_page_commit(bpage);
+}
 
-अटल __always_अंतरभूत अचिन्हित
-rb_commit_index(काष्ठा ring_buffer_per_cpu *cpu_buffer)
-अणु
-	वापस rb_page_commit(cpu_buffer->commit_page);
-पूर्ण
+static __always_inline unsigned
+rb_commit_index(struct ring_buffer_per_cpu *cpu_buffer)
+{
+	return rb_page_commit(cpu_buffer->commit_page);
+}
 
-अटल __always_अंतरभूत अचिन्हित
-rb_event_index(काष्ठा ring_buffer_event *event)
-अणु
-	अचिन्हित दीर्घ addr = (अचिन्हित दीर्घ)event;
+static __always_inline unsigned
+rb_event_index(struct ring_buffer_event *event)
+{
+	unsigned long addr = (unsigned long)event;
 
-	वापस (addr & ~PAGE_MASK) - BUF_PAGE_HDR_SIZE;
-पूर्ण
+	return (addr & ~PAGE_MASK) - BUF_PAGE_HDR_SIZE;
+}
 
-अटल व्योम rb_inc_iter(काष्ठा ring_buffer_iter *iter)
-अणु
-	काष्ठा ring_buffer_per_cpu *cpu_buffer = iter->cpu_buffer;
+static void rb_inc_iter(struct ring_buffer_iter *iter)
+{
+	struct ring_buffer_per_cpu *cpu_buffer = iter->cpu_buffer;
 
 	/*
-	 * The iterator could be on the पढ़ोer page (it starts there).
-	 * But the head could have moved, since the पढ़ोer was
-	 * found. Check क्रम this हाल and assign the iterator
+	 * The iterator could be on the reader page (it starts there).
+	 * But the head could have moved, since the reader was
+	 * found. Check for this case and assign the iterator
 	 * to the head page instead of next.
 	 */
-	अगर (iter->head_page == cpu_buffer->पढ़ोer_page)
+	if (iter->head_page == cpu_buffer->reader_page)
 		iter->head_page = rb_set_head_page(cpu_buffer);
-	अन्यथा
+	else
 		rb_inc_page(&iter->head_page);
 
-	iter->page_stamp = iter->पढ़ो_stamp = iter->head_page->page->समय_stamp;
+	iter->page_stamp = iter->read_stamp = iter->head_page->page->time_stamp;
 	iter->head = 0;
 	iter->next_event = 0;
-पूर्ण
+}
 
 /*
- * rb_handle_head_page - ग_लिखोr hit the head page
+ * rb_handle_head_page - writer hit the head page
  *
  * Returns: +1 to retry page
- *           0 to जारी
+ *           0 to continue
  *          -1 on error
  */
-अटल पूर्णांक
-rb_handle_head_page(काष्ठा ring_buffer_per_cpu *cpu_buffer,
-		    काष्ठा buffer_page *tail_page,
-		    काष्ठा buffer_page *next_page)
-अणु
-	काष्ठा buffer_page *new_head;
-	पूर्णांक entries;
-	पूर्णांक type;
-	पूर्णांक ret;
+static int
+rb_handle_head_page(struct ring_buffer_per_cpu *cpu_buffer,
+		    struct buffer_page *tail_page,
+		    struct buffer_page *next_page)
+{
+	struct buffer_page *new_head;
+	int entries;
+	int type;
+	int ret;
 
 	entries = rb_page_entries(next_page);
 
 	/*
 	 * The hard part is here. We need to move the head
-	 * क्रमward, and protect against both पढ़ोers on
-	 * other CPUs and ग_लिखोrs coming in via पूर्णांकerrupts.
+	 * forward, and protect against both readers on
+	 * other CPUs and writers coming in via interrupts.
 	 */
 	type = rb_head_page_set_update(cpu_buffer, next_page, tail_page,
 				       RB_PAGE_HEAD);
 
 	/*
 	 * type can be one of four:
-	 *  NORMAL - an पूर्णांकerrupt alपढ़ोy moved it क्रम us
+	 *  NORMAL - an interrupt already moved it for us
 	 *  HEAD   - we are the first to get here.
-	 *  UPDATE - we are the पूर्णांकerrupt पूर्णांकerrupting
+	 *  UPDATE - we are the interrupt interrupting
 	 *           a current move.
-	 *  MOVED  - a पढ़ोer on another CPU moved the next
-	 *           poपूर्णांकer to its पढ़ोer page. Give up
+	 *  MOVED  - a reader on another CPU moved the next
+	 *           pointer to its reader page. Give up
 	 *           and try again.
 	 */
 
-	चयन (type) अणु
-	हाल RB_PAGE_HEAD:
+	switch (type) {
+	case RB_PAGE_HEAD:
 		/*
 		 * We changed the head to UPDATE, thus
 		 * it is our responsibility to update
@@ -2411,46 +2410,46 @@ rb_handle_head_page(काष्ठा ring_buffer_per_cpu *cpu_buffer,
 		 * tail page.
 		 */
 
-		/* still more to करो */
-		अवरोध;
+		/* still more to do */
+		break;
 
-	हाल RB_PAGE_UPDATE:
+	case RB_PAGE_UPDATE:
 		/*
-		 * This is an पूर्णांकerrupt that पूर्णांकerrupt the
-		 * previous update. Still more to करो.
+		 * This is an interrupt that interrupt the
+		 * previous update. Still more to do.
 		 */
-		अवरोध;
-	हाल RB_PAGE_NORMAL:
+		break;
+	case RB_PAGE_NORMAL:
 		/*
-		 * An पूर्णांकerrupt came in beक्रमe the update
-		 * and processed this क्रम us.
-		 * Nothing left to करो.
+		 * An interrupt came in before the update
+		 * and processed this for us.
+		 * Nothing left to do.
 		 */
-		वापस 1;
-	हाल RB_PAGE_MOVED:
+		return 1;
+	case RB_PAGE_MOVED:
 		/*
-		 * The पढ़ोer is on another CPU and just did
+		 * The reader is on another CPU and just did
 		 * a swap with our next_page.
 		 * Try again.
 		 */
-		वापस 1;
-	शेष:
+		return 1;
+	default:
 		RB_WARN_ON(cpu_buffer, 1); /* WTF??? */
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
 	/*
-	 * Now that we are here, the old head poपूर्णांकer is
-	 * set to UPDATE. This will keep the पढ़ोer from
-	 * swapping the head page with the पढ़ोer page.
-	 * The पढ़ोer (on another CPU) will spin till
+	 * Now that we are here, the old head pointer is
+	 * set to UPDATE. This will keep the reader from
+	 * swapping the head page with the reader page.
+	 * The reader (on another CPU) will spin till
 	 * we are finished.
 	 *
-	 * We just need to protect against पूर्णांकerrupts
-	 * करोing the job. We will set the next poपूर्णांकer
-	 * to HEAD. After that, we set the old poपूर्णांकer
-	 * to NORMAL, but only अगर it was HEAD beक्रमe.
-	 * otherwise we are an पूर्णांकerrupt, and only
+	 * We just need to protect against interrupts
+	 * doing the job. We will set the next pointer
+	 * to HEAD. After that, we set the old pointer
+	 * to NORMAL, but only if it was HEAD before.
+	 * otherwise we are an interrupt, and only
 	 * want the outer most commit to reset it.
 	 */
 	new_head = next_page;
@@ -2460,221 +2459,221 @@ rb_handle_head_page(काष्ठा ring_buffer_per_cpu *cpu_buffer,
 				    RB_PAGE_NORMAL);
 
 	/*
-	 * Valid वापसs are:
-	 *  HEAD   - an पूर्णांकerrupt came in and alपढ़ोy set it.
+	 * Valid returns are:
+	 *  HEAD   - an interrupt came in and already set it.
 	 *  NORMAL - One of two things:
 	 *            1) We really set it.
-	 *            2) A bunch of पूर्णांकerrupts came in and moved
-	 *               the page क्रमward again.
+	 *            2) A bunch of interrupts came in and moved
+	 *               the page forward again.
 	 */
-	चयन (ret) अणु
-	हाल RB_PAGE_HEAD:
-	हाल RB_PAGE_NORMAL:
+	switch (ret) {
+	case RB_PAGE_HEAD:
+	case RB_PAGE_NORMAL:
 		/* OK */
-		अवरोध;
-	शेष:
+		break;
+	default:
 		RB_WARN_ON(cpu_buffer, 1);
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
 	/*
-	 * It is possible that an पूर्णांकerrupt came in,
-	 * set the head up, then more पूर्णांकerrupts came in
+	 * It is possible that an interrupt came in,
+	 * set the head up, then more interrupts came in
 	 * and moved it again. When we get back here,
 	 * the page would have been set to NORMAL but we
 	 * just set it back to HEAD.
 	 *
-	 * How करो you detect this? Well, अगर that happened
+	 * How do you detect this? Well, if that happened
 	 * the tail page would have moved.
 	 */
-	अगर (ret == RB_PAGE_NORMAL) अणु
-		काष्ठा buffer_page *buffer_tail_page;
+	if (ret == RB_PAGE_NORMAL) {
+		struct buffer_page *buffer_tail_page;
 
 		buffer_tail_page = READ_ONCE(cpu_buffer->tail_page);
 		/*
 		 * If the tail had moved passed next, then we need
-		 * to reset the poपूर्णांकer.
+		 * to reset the pointer.
 		 */
-		अगर (buffer_tail_page != tail_page &&
+		if (buffer_tail_page != tail_page &&
 		    buffer_tail_page != next_page)
 			rb_head_page_set_normal(cpu_buffer, new_head,
 						next_page,
 						RB_PAGE_HEAD);
-	पूर्ण
+	}
 
 	/*
 	 * If this was the outer most commit (the one that
-	 * changed the original poपूर्णांकer from HEAD to UPDATE),
+	 * changed the original pointer from HEAD to UPDATE),
 	 * then it is up to us to reset it to NORMAL.
 	 */
-	अगर (type == RB_PAGE_HEAD) अणु
+	if (type == RB_PAGE_HEAD) {
 		ret = rb_head_page_set_normal(cpu_buffer, next_page,
 					      tail_page,
 					      RB_PAGE_UPDATE);
-		अगर (RB_WARN_ON(cpu_buffer,
+		if (RB_WARN_ON(cpu_buffer,
 			       ret != RB_PAGE_UPDATE))
-			वापस -1;
-	पूर्ण
+			return -1;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत व्योम
-rb_reset_tail(काष्ठा ring_buffer_per_cpu *cpu_buffer,
-	      अचिन्हित दीर्घ tail, काष्ठा rb_event_info *info)
-अणु
-	काष्ठा buffer_page *tail_page = info->tail_page;
-	काष्ठा ring_buffer_event *event;
-	अचिन्हित दीर्घ length = info->length;
+static inline void
+rb_reset_tail(struct ring_buffer_per_cpu *cpu_buffer,
+	      unsigned long tail, struct rb_event_info *info)
+{
+	struct buffer_page *tail_page = info->tail_page;
+	struct ring_buffer_event *event;
+	unsigned long length = info->length;
 
 	/*
 	 * Only the event that crossed the page boundary
 	 * must fill the old tail_page with padding.
 	 */
-	अगर (tail >= BUF_PAGE_SIZE) अणु
+	if (tail >= BUF_PAGE_SIZE) {
 		/*
 		 * If the page was filled, then we still need
 		 * to update the real_end. Reset it to zero
-		 * and the पढ़ोer will ignore it.
+		 * and the reader will ignore it.
 		 */
-		अगर (tail == BUF_PAGE_SIZE)
+		if (tail == BUF_PAGE_SIZE)
 			tail_page->real_end = 0;
 
-		local_sub(length, &tail_page->ग_लिखो);
-		वापस;
-	पूर्ण
+		local_sub(length, &tail_page->write);
+		return;
+	}
 
 	event = __rb_page_index(tail_page, tail);
 
-	/* account क्रम padding bytes */
+	/* account for padding bytes */
 	local_add(BUF_PAGE_SIZE - tail, &cpu_buffer->entries_bytes);
 
 	/*
 	 * Save the original length to the meta data.
-	 * This will be used by the पढ़ोer to add lost event
+	 * This will be used by the reader to add lost event
 	 * counter.
 	 */
 	tail_page->real_end = tail;
 
 	/*
 	 * If this event is bigger than the minimum size, then
-	 * we need to be careful that we करोn't subtract the
-	 * ग_लिखो counter enough to allow another ग_लिखोr to slip
+	 * we need to be careful that we don't subtract the
+	 * write counter enough to allow another writer to slip
 	 * in on this page.
 	 * We put in a discarded commit instead, to make sure
 	 * that this space is not used again.
 	 *
-	 * If we are less than the minimum size, we करोn't need to
+	 * If we are less than the minimum size, we don't need to
 	 * worry about it.
 	 */
-	अगर (tail > (BUF_PAGE_SIZE - RB_EVNT_MIN_SIZE)) अणु
-		/* No room क्रम any events */
+	if (tail > (BUF_PAGE_SIZE - RB_EVNT_MIN_SIZE)) {
+		/* No room for any events */
 
 		/* Mark the rest of the page with padding */
 		rb_event_set_padding(event);
 
-		/* Set the ग_लिखो back to the previous setting */
-		local_sub(length, &tail_page->ग_लिखो);
-		वापस;
-	पूर्ण
+		/* Set the write back to the previous setting */
+		local_sub(length, &tail_page->write);
+		return;
+	}
 
 	/* Put in a discarded event */
 	event->array[0] = (BUF_PAGE_SIZE - tail) - RB_EVNT_HDR_SIZE;
 	event->type_len = RINGBUF_TYPE_PADDING;
-	/* समय delta must be non zero */
-	event->समय_delta = 1;
+	/* time delta must be non zero */
+	event->time_delta = 1;
 
-	/* Set ग_लिखो to end of buffer */
+	/* Set write to end of buffer */
 	length = (tail + length) - BUF_PAGE_SIZE;
-	local_sub(length, &tail_page->ग_लिखो);
-पूर्ण
+	local_sub(length, &tail_page->write);
+}
 
-अटल अंतरभूत व्योम rb_end_commit(काष्ठा ring_buffer_per_cpu *cpu_buffer);
+static inline void rb_end_commit(struct ring_buffer_per_cpu *cpu_buffer);
 
 /*
- * This is the slow path, क्रमce gcc not to अंतरभूत it.
+ * This is the slow path, force gcc not to inline it.
  */
-अटल noअंतरभूत काष्ठा ring_buffer_event *
-rb_move_tail(काष्ठा ring_buffer_per_cpu *cpu_buffer,
-	     अचिन्हित दीर्घ tail, काष्ठा rb_event_info *info)
-अणु
-	काष्ठा buffer_page *tail_page = info->tail_page;
-	काष्ठा buffer_page *commit_page = cpu_buffer->commit_page;
-	काष्ठा trace_buffer *buffer = cpu_buffer->buffer;
-	काष्ठा buffer_page *next_page;
-	पूर्णांक ret;
+static noinline struct ring_buffer_event *
+rb_move_tail(struct ring_buffer_per_cpu *cpu_buffer,
+	     unsigned long tail, struct rb_event_info *info)
+{
+	struct buffer_page *tail_page = info->tail_page;
+	struct buffer_page *commit_page = cpu_buffer->commit_page;
+	struct trace_buffer *buffer = cpu_buffer->buffer;
+	struct buffer_page *next_page;
+	int ret;
 
 	next_page = tail_page;
 
 	rb_inc_page(&next_page);
 
 	/*
-	 * If क्रम some reason, we had an पूर्णांकerrupt storm that made
+	 * If for some reason, we had an interrupt storm that made
 	 * it all the way around the buffer, bail, and warn
 	 * about it.
 	 */
-	अगर (unlikely(next_page == commit_page)) अणु
+	if (unlikely(next_page == commit_page)) {
 		local_inc(&cpu_buffer->commit_overrun);
-		जाओ out_reset;
-	पूर्ण
+		goto out_reset;
+	}
 
 	/*
 	 * This is where the fun begins!
 	 *
-	 * We are fighting against races between a पढ़ोer that
-	 * could be on another CPU trying to swap its पढ़ोer
+	 * We are fighting against races between a reader that
+	 * could be on another CPU trying to swap its reader
 	 * page with the buffer head.
 	 *
-	 * We are also fighting against पूर्णांकerrupts coming in and
+	 * We are also fighting against interrupts coming in and
 	 * moving the head or tail on us as well.
 	 *
 	 * If the next page is the head page then we have filled
 	 * the buffer, unless the commit page is still on the
-	 * पढ़ोer page.
+	 * reader page.
 	 */
-	अगर (rb_is_head_page(next_page, &tail_page->list)) अणु
+	if (rb_is_head_page(next_page, &tail_page->list)) {
 
 		/*
-		 * If the commit is not on the पढ़ोer page, then
+		 * If the commit is not on the reader page, then
 		 * move the header page.
 		 */
-		अगर (!rb_is_पढ़ोer_page(cpu_buffer->commit_page)) अणु
+		if (!rb_is_reader_page(cpu_buffer->commit_page)) {
 			/*
-			 * If we are not in overग_लिखो mode,
+			 * If we are not in overwrite mode,
 			 * this is easy, just stop here.
 			 */
-			अगर (!(buffer->flags & RB_FL_OVERWRITE)) अणु
+			if (!(buffer->flags & RB_FL_OVERWRITE)) {
 				local_inc(&cpu_buffer->dropped_events);
-				जाओ out_reset;
-			पूर्ण
+				goto out_reset;
+			}
 
 			ret = rb_handle_head_page(cpu_buffer,
 						  tail_page,
 						  next_page);
-			अगर (ret < 0)
-				जाओ out_reset;
-			अगर (ret)
-				जाओ out_again;
-		पूर्ण अन्यथा अणु
+			if (ret < 0)
+				goto out_reset;
+			if (ret)
+				goto out_again;
+		} else {
 			/*
 			 * We need to be careful here too. The
-			 * commit page could still be on the पढ़ोer
+			 * commit page could still be on the reader
 			 * page. We could have a small buffer, and
 			 * have filled up the buffer with events
-			 * from पूर्णांकerrupts and such, and wrapped.
+			 * from interrupts and such, and wrapped.
 			 *
-			 * Note, अगर the tail page is also on the
-			 * पढ़ोer_page, we let it move out.
+			 * Note, if the tail page is also on the
+			 * reader_page, we let it move out.
 			 */
-			अगर (unlikely((cpu_buffer->commit_page !=
+			if (unlikely((cpu_buffer->commit_page !=
 				      cpu_buffer->tail_page) &&
 				     (cpu_buffer->commit_page ==
-				      cpu_buffer->पढ़ोer_page))) अणु
+				      cpu_buffer->reader_page))) {
 				local_inc(&cpu_buffer->commit_overrun);
-				जाओ out_reset;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				goto out_reset;
+			}
+		}
+	}
 
 	rb_tail_page_update(cpu_buffer, tail_page, next_page);
 
@@ -2682,102 +2681,102 @@ rb_move_tail(काष्ठा ring_buffer_per_cpu *cpu_buffer,
 
 	rb_reset_tail(cpu_buffer, tail, info);
 
-	/* Commit what we have क्रम now. */
+	/* Commit what we have for now. */
 	rb_end_commit(cpu_buffer);
 	/* rb_end_commit() decs committing */
 	local_inc(&cpu_buffer->committing);
 
 	/* fail and let the caller try again */
-	वापस ERR_PTR(-EAGAIN);
+	return ERR_PTR(-EAGAIN);
 
  out_reset:
-	/* reset ग_लिखो */
+	/* reset write */
 	rb_reset_tail(cpu_buffer, tail, info);
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
 /* Slow path */
-अटल काष्ठा ring_buffer_event *
-rb_add_समय_stamp(काष्ठा ring_buffer_event *event, u64 delta, bool असल)
-अणु
-	अगर (असल)
+static struct ring_buffer_event *
+rb_add_time_stamp(struct ring_buffer_event *event, u64 delta, bool abs)
+{
+	if (abs)
 		event->type_len = RINGBUF_TYPE_TIME_STAMP;
-	अन्यथा
+	else
 		event->type_len = RINGBUF_TYPE_TIME_EXTEND;
 
 	/* Not the first event on the page, or not delta? */
-	अगर (असल || rb_event_index(event)) अणु
-		event->समय_delta = delta & TS_MASK;
+	if (abs || rb_event_index(event)) {
+		event->time_delta = delta & TS_MASK;
 		event->array[0] = delta >> TS_SHIFT;
-	पूर्ण अन्यथा अणु
+	} else {
 		/* nope, just zero it */
-		event->समय_delta = 0;
+		event->time_delta = 0;
 		event->array[0] = 0;
-	पूर्ण
+	}
 
-	वापस skip_समय_extend(event);
-पूर्ण
+	return skip_time_extend(event);
+}
 
-#अगर_अघोषित CONFIG_HAVE_UNSTABLE_SCHED_CLOCK
-अटल अंतरभूत bool sched_घड़ी_stable(व्योम)
-अणु
-	वापस true;
-पूर्ण
-#पूर्ण_अगर
+#ifndef CONFIG_HAVE_UNSTABLE_SCHED_CLOCK
+static inline bool sched_clock_stable(void)
+{
+	return true;
+}
+#endif
 
-अटल व्योम
-rb_check_बारtamp(काष्ठा ring_buffer_per_cpu *cpu_buffer,
-		   काष्ठा rb_event_info *info)
-अणु
-	u64 ग_लिखो_stamp;
+static void
+rb_check_timestamp(struct ring_buffer_per_cpu *cpu_buffer,
+		   struct rb_event_info *info)
+{
+	u64 write_stamp;
 
 	WARN_ONCE(1, "Delta way too big! %llu ts=%llu before=%llu after=%llu write stamp=%llu\n%s",
-		  (अचिन्हित दीर्घ दीर्घ)info->delta,
-		  (अचिन्हित दीर्घ दीर्घ)info->ts,
-		  (अचिन्हित दीर्घ दीर्घ)info->beक्रमe,
-		  (अचिन्हित दीर्घ दीर्घ)info->after,
-		  (अचिन्हित दीर्घ दीर्घ)(rb_समय_पढ़ो(&cpu_buffer->ग_लिखो_stamp, &ग_लिखो_stamp) ? ग_लिखो_stamp : 0),
-		  sched_घड़ी_stable() ? "" :
+		  (unsigned long long)info->delta,
+		  (unsigned long long)info->ts,
+		  (unsigned long long)info->before,
+		  (unsigned long long)info->after,
+		  (unsigned long long)(rb_time_read(&cpu_buffer->write_stamp, &write_stamp) ? write_stamp : 0),
+		  sched_clock_stable() ? "" :
 		  "If you just came from a suspend/resume,\n"
 		  "please switch to the trace global clock:\n"
 		  "  echo global > /sys/kernel/debug/tracing/trace_clock\n"
 		  "or add trace_clock=global to the kernel command line\n");
-पूर्ण
+}
 
-अटल व्योम rb_add_बारtamp(काष्ठा ring_buffer_per_cpu *cpu_buffer,
-				      काष्ठा ring_buffer_event **event,
-				      काष्ठा rb_event_info *info,
+static void rb_add_timestamp(struct ring_buffer_per_cpu *cpu_buffer,
+				      struct ring_buffer_event **event,
+				      struct rb_event_info *info,
 				      u64 *delta,
-				      अचिन्हित पूर्णांक *length)
-अणु
-	bool असल = info->add_बारtamp &
+				      unsigned int *length)
+{
+	bool abs = info->add_timestamp &
 		(RB_ADD_STAMP_FORCE | RB_ADD_STAMP_ABSOLUTE);
 
-	अगर (unlikely(info->delta > (1ULL << 59))) अणु
-		/* did the घड़ी go backwards */
-		अगर (info->beक्रमe == info->after && info->beक्रमe > info->ts) अणु
-			/* not पूर्णांकerrupted */
-			अटल पूर्णांक once;
+	if (unlikely(info->delta > (1ULL << 59))) {
+		/* did the clock go backwards */
+		if (info->before == info->after && info->before > info->ts) {
+			/* not interrupted */
+			static int once;
 
 			/*
 			 * This is possible with a recalibrating of the TSC.
 			 * Do not produce a call stack, but just report it.
 			 */
-			अगर (!once) अणु
+			if (!once) {
 				once++;
 				pr_warn("Ring buffer clock went backwards: %llu -> %llu\n",
-					info->beक्रमe, info->ts);
-			पूर्ण
-		पूर्ण अन्यथा
-			rb_check_बारtamp(cpu_buffer, info);
-		अगर (!असल)
+					info->before, info->ts);
+			}
+		} else
+			rb_check_timestamp(cpu_buffer, info);
+		if (!abs)
 			info->delta = 0;
-	पूर्ण
-	*event = rb_add_समय_stamp(*event, info->delta, असल);
+	}
+	*event = rb_add_time_stamp(*event, info->delta, abs);
 	*length -= RB_LEN_TIME_EXTEND;
 	*delta = 0;
-पूर्ण
+}
 
 /**
  * rb_update_event - update event type and data
@@ -2787,330 +2786,330 @@ rb_check_बारtamp(काष्ठा ring_buffer_per_cpu *cpu_buffer,
  *
  * Update the type and data fields of the @event. The length
  * is the actual size that is written to the ring buffer,
- * and with this, we can determine what to place पूर्णांकo the
+ * and with this, we can determine what to place into the
  * data field.
  */
-अटल व्योम
-rb_update_event(काष्ठा ring_buffer_per_cpu *cpu_buffer,
-		काष्ठा ring_buffer_event *event,
-		काष्ठा rb_event_info *info)
-अणु
-	अचिन्हित length = info->length;
+static void
+rb_update_event(struct ring_buffer_per_cpu *cpu_buffer,
+		struct ring_buffer_event *event,
+		struct rb_event_info *info)
+{
+	unsigned length = info->length;
 	u64 delta = info->delta;
-	अचिन्हित पूर्णांक nest = local_पढ़ो(&cpu_buffer->committing) - 1;
+	unsigned int nest = local_read(&cpu_buffer->committing) - 1;
 
-	अगर (!WARN_ON_ONCE(nest >= MAX_NEST))
+	if (!WARN_ON_ONCE(nest >= MAX_NEST))
 		cpu_buffer->event_stamp[nest] = info->ts;
 
 	/*
-	 * If we need to add a बारtamp, then we
+	 * If we need to add a timestamp, then we
 	 * add it to the start of the reserved space.
 	 */
-	अगर (unlikely(info->add_बारtamp))
-		rb_add_बारtamp(cpu_buffer, &event, info, &delta, &length);
+	if (unlikely(info->add_timestamp))
+		rb_add_timestamp(cpu_buffer, &event, info, &delta, &length);
 
-	event->समय_delta = delta;
+	event->time_delta = delta;
 	length -= RB_EVNT_HDR_SIZE;
-	अगर (length > RB_MAX_SMALL_DATA || RB_FORCE_8BYTE_ALIGNMENT) अणु
+	if (length > RB_MAX_SMALL_DATA || RB_FORCE_8BYTE_ALIGNMENT) {
 		event->type_len = 0;
 		event->array[0] = length;
-	पूर्ण अन्यथा
+	} else
 		event->type_len = DIV_ROUND_UP(length, RB_ALIGNMENT);
-पूर्ण
+}
 
-अटल अचिन्हित rb_calculate_event_length(अचिन्हित length)
-अणु
-	काष्ठा ring_buffer_event event; /* Used only क्रम माप array */
+static unsigned rb_calculate_event_length(unsigned length)
+{
+	struct ring_buffer_event event; /* Used only for sizeof array */
 
 	/* zero length can cause confusions */
-	अगर (!length)
+	if (!length)
 		length++;
 
-	अगर (length > RB_MAX_SMALL_DATA || RB_FORCE_8BYTE_ALIGNMENT)
-		length += माप(event.array[0]);
+	if (length > RB_MAX_SMALL_DATA || RB_FORCE_8BYTE_ALIGNMENT)
+		length += sizeof(event.array[0]);
 
 	length += RB_EVNT_HDR_SIZE;
 	length = ALIGN(length, RB_ARCH_ALIGNMENT);
 
 	/*
-	 * In हाल the समय delta is larger than the 27 bits क्रम it
-	 * in the header, we need to add a बारtamp. If another
+	 * In case the time delta is larger than the 27 bits for it
+	 * in the header, we need to add a timestamp. If another
 	 * event comes in when trying to discard this one to increase
-	 * the length, then the बारtamp will be added in the allocated
+	 * the length, then the timestamp will be added in the allocated
 	 * space of this event. If length is bigger than the size needed
-	 * क्रम the TIME_EXTEND, then padding has to be used. The events
+	 * for the TIME_EXTEND, then padding has to be used. The events
 	 * length must be either RB_LEN_TIME_EXTEND, or greater than or equal
-	 * to RB_LEN_TIME_EXTEND + 8, as 8 is the minimum size क्रम padding.
-	 * As length is a multiple of 4, we only need to worry अगर it
+	 * to RB_LEN_TIME_EXTEND + 8, as 8 is the minimum size for padding.
+	 * As length is a multiple of 4, we only need to worry if it
 	 * is 12 (RB_LEN_TIME_EXTEND + 4).
 	 */
-	अगर (length == RB_LEN_TIME_EXTEND + RB_ALIGNMENT)
+	if (length == RB_LEN_TIME_EXTEND + RB_ALIGNMENT)
 		length += RB_ALIGNMENT;
 
-	वापस length;
-पूर्ण
+	return length;
+}
 
-अटल u64 rb_समय_delta(काष्ठा ring_buffer_event *event)
-अणु
-	चयन (event->type_len) अणु
-	हाल RINGBUF_TYPE_PADDING:
-		वापस 0;
+static u64 rb_time_delta(struct ring_buffer_event *event)
+{
+	switch (event->type_len) {
+	case RINGBUF_TYPE_PADDING:
+		return 0;
 
-	हाल RINGBUF_TYPE_TIME_EXTEND:
-		वापस rb_event_समय_stamp(event);
+	case RINGBUF_TYPE_TIME_EXTEND:
+		return rb_event_time_stamp(event);
 
-	हाल RINGBUF_TYPE_TIME_STAMP:
-		वापस 0;
+	case RINGBUF_TYPE_TIME_STAMP:
+		return 0;
 
-	हाल RINGBUF_TYPE_DATA:
-		वापस event->समय_delta;
-	शेष:
-		वापस 0;
-	पूर्ण
-पूर्ण
+	case RINGBUF_TYPE_DATA:
+		return event->time_delta;
+	default:
+		return 0;
+	}
+}
 
-अटल अंतरभूत पूर्णांक
-rb_try_to_discard(काष्ठा ring_buffer_per_cpu *cpu_buffer,
-		  काष्ठा ring_buffer_event *event)
-अणु
-	अचिन्हित दीर्घ new_index, old_index;
-	काष्ठा buffer_page *bpage;
-	अचिन्हित दीर्घ index;
-	अचिन्हित दीर्घ addr;
-	u64 ग_लिखो_stamp;
+static inline int
+rb_try_to_discard(struct ring_buffer_per_cpu *cpu_buffer,
+		  struct ring_buffer_event *event)
+{
+	unsigned long new_index, old_index;
+	struct buffer_page *bpage;
+	unsigned long index;
+	unsigned long addr;
+	u64 write_stamp;
 	u64 delta;
 
 	new_index = rb_event_index(event);
 	old_index = new_index + rb_event_ts_length(event);
-	addr = (अचिन्हित दीर्घ)event;
+	addr = (unsigned long)event;
 	addr &= PAGE_MASK;
 
 	bpage = READ_ONCE(cpu_buffer->tail_page);
 
-	delta = rb_समय_delta(event);
+	delta = rb_time_delta(event);
 
-	अगर (!rb_समय_पढ़ो(&cpu_buffer->ग_लिखो_stamp, &ग_लिखो_stamp))
-		वापस 0;
+	if (!rb_time_read(&cpu_buffer->write_stamp, &write_stamp))
+		return 0;
 
-	/* Make sure the ग_लिखो stamp is पढ़ो beक्रमe testing the location */
+	/* Make sure the write stamp is read before testing the location */
 	barrier();
 
-	अगर (bpage->page == (व्योम *)addr && rb_page_ग_लिखो(bpage) == old_index) अणु
-		अचिन्हित दीर्घ ग_लिखो_mask =
-			local_पढ़ो(&bpage->ग_लिखो) & ~RB_WRITE_MASK;
-		अचिन्हित दीर्घ event_length = rb_event_length(event);
+	if (bpage->page == (void *)addr && rb_page_write(bpage) == old_index) {
+		unsigned long write_mask =
+			local_read(&bpage->write) & ~RB_WRITE_MASK;
+		unsigned long event_length = rb_event_length(event);
 
 		/* Something came in, can't discard */
-		अगर (!rb_समय_cmpxchg(&cpu_buffer->ग_लिखो_stamp,
-				       ग_लिखो_stamp, ग_लिखो_stamp - delta))
-			वापस 0;
+		if (!rb_time_cmpxchg(&cpu_buffer->write_stamp,
+				       write_stamp, write_stamp - delta))
+			return 0;
 
 		/*
-		 * It's possible that the event समय delta is zero
-		 * (has the same समय stamp as the previous event)
-		 * in which हाल ग_लिखो_stamp and beक्रमe_stamp could
-		 * be the same. In such a हाल, क्रमce beक्रमe_stamp
-		 * to be dअगरferent than ग_लिखो_stamp. It करोesn't
-		 * matter what it is, as दीर्घ as its dअगरferent.
+		 * It's possible that the event time delta is zero
+		 * (has the same time stamp as the previous event)
+		 * in which case write_stamp and before_stamp could
+		 * be the same. In such a case, force before_stamp
+		 * to be different than write_stamp. It doesn't
+		 * matter what it is, as long as its different.
 		 */
-		अगर (!delta)
-			rb_समय_set(&cpu_buffer->beक्रमe_stamp, 0);
+		if (!delta)
+			rb_time_set(&cpu_buffer->before_stamp, 0);
 
 		/*
 		 * If an event were to come in now, it would see that the
-		 * ग_लिखो_stamp and the beक्रमe_stamp are dअगरferent, and assume
-		 * that this event just added itself beक्रमe updating
-		 * the ग_लिखो stamp. The पूर्णांकerrupting event will fix the
-		 * ग_लिखो stamp क्रम us, and use the beक्रमe stamp as its delta.
+		 * write_stamp and the before_stamp are different, and assume
+		 * that this event just added itself before updating
+		 * the write stamp. The interrupting event will fix the
+		 * write stamp for us, and use the before stamp as its delta.
 		 */
 
 		/*
 		 * This is on the tail page. It is possible that
-		 * a ग_लिखो could come in and move the tail page
-		 * and ग_लिखो to the next page. That is fine
-		 * because we just लघुen what is on this page.
+		 * a write could come in and move the tail page
+		 * and write to the next page. That is fine
+		 * because we just shorten what is on this page.
 		 */
-		old_index += ग_लिखो_mask;
-		new_index += ग_लिखो_mask;
-		index = local_cmpxchg(&bpage->ग_लिखो, old_index, new_index);
-		अगर (index == old_index) अणु
+		old_index += write_mask;
+		new_index += write_mask;
+		index = local_cmpxchg(&bpage->write, old_index, new_index);
+		if (index == old_index) {
 			/* update counters */
 			local_sub(event_length, &cpu_buffer->entries_bytes);
-			वापस 1;
-		पूर्ण
-	पूर्ण
+			return 1;
+		}
+	}
 
 	/* could not discard */
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम rb_start_commit(काष्ठा ring_buffer_per_cpu *cpu_buffer)
-अणु
+static void rb_start_commit(struct ring_buffer_per_cpu *cpu_buffer)
+{
 	local_inc(&cpu_buffer->committing);
 	local_inc(&cpu_buffer->commits);
-पूर्ण
+}
 
-अटल __always_अंतरभूत व्योम
-rb_set_commit_to_ग_लिखो(काष्ठा ring_buffer_per_cpu *cpu_buffer)
-अणु
-	अचिन्हित दीर्घ max_count;
+static __always_inline void
+rb_set_commit_to_write(struct ring_buffer_per_cpu *cpu_buffer)
+{
+	unsigned long max_count;
 
 	/*
-	 * We only race with पूर्णांकerrupts and NMIs on this CPU.
+	 * We only race with interrupts and NMIs on this CPU.
 	 * If we own the commit event, then we can commit
-	 * all others that पूर्णांकerrupted us, since the पूर्णांकerruptions
-	 * are in stack क्रमmat (they finish beक्रमe they come
-	 * back to us). This allows us to करो a simple loop to
+	 * all others that interrupted us, since the interruptions
+	 * are in stack format (they finish before they come
+	 * back to us). This allows us to do a simple loop to
 	 * assign the commit to the tail.
 	 */
  again:
 	max_count = cpu_buffer->nr_pages * 100;
 
-	जबतक (cpu_buffer->commit_page != READ_ONCE(cpu_buffer->tail_page)) अणु
-		अगर (RB_WARN_ON(cpu_buffer, !(--max_count)))
-			वापस;
-		अगर (RB_WARN_ON(cpu_buffer,
-			       rb_is_पढ़ोer_page(cpu_buffer->tail_page)))
-			वापस;
+	while (cpu_buffer->commit_page != READ_ONCE(cpu_buffer->tail_page)) {
+		if (RB_WARN_ON(cpu_buffer, !(--max_count)))
+			return;
+		if (RB_WARN_ON(cpu_buffer,
+			       rb_is_reader_page(cpu_buffer->tail_page)))
+			return;
 		local_set(&cpu_buffer->commit_page->page->commit,
-			  rb_page_ग_लिखो(cpu_buffer->commit_page));
+			  rb_page_write(cpu_buffer->commit_page));
 		rb_inc_page(&cpu_buffer->commit_page);
 		/* add barrier to keep gcc from optimizing too much */
 		barrier();
-	पूर्ण
-	जबतक (rb_commit_index(cpu_buffer) !=
-	       rb_page_ग_लिखो(cpu_buffer->commit_page)) अणु
+	}
+	while (rb_commit_index(cpu_buffer) !=
+	       rb_page_write(cpu_buffer->commit_page)) {
 
 		local_set(&cpu_buffer->commit_page->page->commit,
-			  rb_page_ग_लिखो(cpu_buffer->commit_page));
+			  rb_page_write(cpu_buffer->commit_page));
 		RB_WARN_ON(cpu_buffer,
-			   local_पढ़ो(&cpu_buffer->commit_page->page->commit) &
+			   local_read(&cpu_buffer->commit_page->page->commit) &
 			   ~RB_WRITE_MASK);
 		barrier();
-	पूर्ण
+	}
 
 	/* again, keep gcc from optimizing */
 	barrier();
 
 	/*
-	 * If an पूर्णांकerrupt came in just after the first जबतक loop
-	 * and pushed the tail page क्रमward, we will be left with
-	 * a dangling commit that will never go क्रमward.
+	 * If an interrupt came in just after the first while loop
+	 * and pushed the tail page forward, we will be left with
+	 * a dangling commit that will never go forward.
 	 */
-	अगर (unlikely(cpu_buffer->commit_page != READ_ONCE(cpu_buffer->tail_page)))
-		जाओ again;
-पूर्ण
+	if (unlikely(cpu_buffer->commit_page != READ_ONCE(cpu_buffer->tail_page)))
+		goto again;
+}
 
-अटल __always_अंतरभूत व्योम rb_end_commit(काष्ठा ring_buffer_per_cpu *cpu_buffer)
-अणु
-	अचिन्हित दीर्घ commits;
+static __always_inline void rb_end_commit(struct ring_buffer_per_cpu *cpu_buffer)
+{
+	unsigned long commits;
 
-	अगर (RB_WARN_ON(cpu_buffer,
-		       !local_पढ़ो(&cpu_buffer->committing)))
-		वापस;
+	if (RB_WARN_ON(cpu_buffer,
+		       !local_read(&cpu_buffer->committing)))
+		return;
 
  again:
-	commits = local_पढ़ो(&cpu_buffer->commits);
-	/* synchronize with पूर्णांकerrupts */
+	commits = local_read(&cpu_buffer->commits);
+	/* synchronize with interrupts */
 	barrier();
-	अगर (local_पढ़ो(&cpu_buffer->committing) == 1)
-		rb_set_commit_to_ग_लिखो(cpu_buffer);
+	if (local_read(&cpu_buffer->committing) == 1)
+		rb_set_commit_to_write(cpu_buffer);
 
 	local_dec(&cpu_buffer->committing);
 
-	/* synchronize with पूर्णांकerrupts */
+	/* synchronize with interrupts */
 	barrier();
 
 	/*
-	 * Need to account क्रम पूर्णांकerrupts coming in between the
+	 * Need to account for interrupts coming in between the
 	 * updating of the commit page and the clearing of the
 	 * committing counter.
 	 */
-	अगर (unlikely(local_पढ़ो(&cpu_buffer->commits) != commits) &&
-	    !local_पढ़ो(&cpu_buffer->committing)) अणु
+	if (unlikely(local_read(&cpu_buffer->commits) != commits) &&
+	    !local_read(&cpu_buffer->committing)) {
 		local_inc(&cpu_buffer->committing);
-		जाओ again;
-	पूर्ण
-पूर्ण
+		goto again;
+	}
+}
 
-अटल अंतरभूत व्योम rb_event_discard(काष्ठा ring_buffer_event *event)
-अणु
-	अगर (extended_समय(event))
-		event = skip_समय_extend(event);
+static inline void rb_event_discard(struct ring_buffer_event *event)
+{
+	if (extended_time(event))
+		event = skip_time_extend(event);
 
-	/* array[0] holds the actual length क्रम the discarded event */
+	/* array[0] holds the actual length for the discarded event */
 	event->array[0] = rb_event_data_length(event) - RB_EVNT_HDR_SIZE;
 	event->type_len = RINGBUF_TYPE_PADDING;
-	/* समय delta must be non zero */
-	अगर (!event->समय_delta)
-		event->समय_delta = 1;
-पूर्ण
+	/* time delta must be non zero */
+	if (!event->time_delta)
+		event->time_delta = 1;
+}
 
-अटल व्योम rb_commit(काष्ठा ring_buffer_per_cpu *cpu_buffer,
-		      काष्ठा ring_buffer_event *event)
-अणु
+static void rb_commit(struct ring_buffer_per_cpu *cpu_buffer,
+		      struct ring_buffer_event *event)
+{
 	local_inc(&cpu_buffer->entries);
 	rb_end_commit(cpu_buffer);
-पूर्ण
+}
 
-अटल __always_अंतरभूत व्योम
-rb_wakeups(काष्ठा trace_buffer *buffer, काष्ठा ring_buffer_per_cpu *cpu_buffer)
-अणु
-	माप_प्रकार nr_pages;
-	माप_प्रकार dirty;
-	माप_प्रकार full;
+static __always_inline void
+rb_wakeups(struct trace_buffer *buffer, struct ring_buffer_per_cpu *cpu_buffer)
+{
+	size_t nr_pages;
+	size_t dirty;
+	size_t full;
 
-	अगर (buffer->irq_work.रुकोers_pending) अणु
-		buffer->irq_work.रुकोers_pending = false;
+	if (buffer->irq_work.waiters_pending) {
+		buffer->irq_work.waiters_pending = false;
 		/* irq_work_queue() supplies it's own memory barriers */
 		irq_work_queue(&buffer->irq_work.work);
-	पूर्ण
+	}
 
-	अगर (cpu_buffer->irq_work.रुकोers_pending) अणु
-		cpu_buffer->irq_work.रुकोers_pending = false;
+	if (cpu_buffer->irq_work.waiters_pending) {
+		cpu_buffer->irq_work.waiters_pending = false;
 		/* irq_work_queue() supplies it's own memory barriers */
 		irq_work_queue(&cpu_buffer->irq_work.work);
-	पूर्ण
+	}
 
-	अगर (cpu_buffer->last_pages_touch == local_पढ़ो(&cpu_buffer->pages_touched))
-		वापस;
+	if (cpu_buffer->last_pages_touch == local_read(&cpu_buffer->pages_touched))
+		return;
 
-	अगर (cpu_buffer->पढ़ोer_page == cpu_buffer->commit_page)
-		वापस;
+	if (cpu_buffer->reader_page == cpu_buffer->commit_page)
+		return;
 
-	अगर (!cpu_buffer->irq_work.full_रुकोers_pending)
-		वापस;
+	if (!cpu_buffer->irq_work.full_waiters_pending)
+		return;
 
-	cpu_buffer->last_pages_touch = local_पढ़ो(&cpu_buffer->pages_touched);
+	cpu_buffer->last_pages_touch = local_read(&cpu_buffer->pages_touched);
 
-	full = cpu_buffer->लघुest_full;
+	full = cpu_buffer->shortest_full;
 	nr_pages = cpu_buffer->nr_pages;
 	dirty = ring_buffer_nr_dirty_pages(buffer, cpu_buffer->cpu);
-	अगर (full && nr_pages && (dirty * 100) <= full * nr_pages)
-		वापस;
+	if (full && nr_pages && (dirty * 100) <= full * nr_pages)
+		return;
 
 	cpu_buffer->irq_work.wakeup_full = true;
-	cpu_buffer->irq_work.full_रुकोers_pending = false;
+	cpu_buffer->irq_work.full_waiters_pending = false;
 	/* irq_work_queue() supplies it's own memory barriers */
 	irq_work_queue(&cpu_buffer->irq_work.work);
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_RING_BUFFER_RECORD_RECURSION
-# define करो_ring_buffer_record_recursion()	\
-	करो_ftrace_record_recursion(_THIS_IP_, _RET_IP_)
-#अन्यथा
-# define करो_ring_buffer_record_recursion() करो अणु पूर्ण जबतक (0)
-#पूर्ण_अगर
+#ifdef CONFIG_RING_BUFFER_RECORD_RECURSION
+# define do_ring_buffer_record_recursion()	\
+	do_ftrace_record_recursion(_THIS_IP_, _RET_IP_)
+#else
+# define do_ring_buffer_record_recursion() do { } while (0)
+#endif
 
 /*
- * The lock and unlock are करोne within a preempt disable section.
- * The current_context per_cpu variable can only be modअगरied
+ * The lock and unlock are done within a preempt disable section.
+ * The current_context per_cpu variable can only be modified
  * by the current task between lock and unlock. But it can
- * be modअगरied more than once via an पूर्णांकerrupt. To pass this
- * inक्रमmation from the lock to the unlock without having to
- * access the 'in_interrupt()' functions again (which करो show
+ * be modified more than once via an interrupt. To pass this
+ * information from the lock to the unlock without having to
+ * access the 'in_interrupt()' functions again (which do show
  * a bit of overhead in something as critical as function tracing,
- * we use a biपंचांगask trick.
+ * we use a bitmask trick.
  *
  *  bit 1 =  NMI context
  *  bit 2 =  IRQ context
@@ -3122,10 +3121,10 @@ rb_wakeups(काष्ठा trace_buffer *buffer, काष्ठा ring_buff
  * context.
  *
  * When the context is determined, the corresponding bit is
- * checked and set (अगर it was set, then a recursion of that context
+ * checked and set (if it was set, then a recursion of that context
  * happened).
  *
- * On unlock, we need to clear this bit. To करो so, just subtract
+ * On unlock, we need to clear this bit. To do so, just subtract
  * 1 from the current_context and AND it to itself.
  *
  * (binary)
@@ -3135,137 +3134,137 @@ rb_wakeups(काष्ठा trace_buffer *buffer, काष्ठा ring_buff
  *  1010 - 1 = 1001
  *  1010 & 1001 = 1000 (clearing bit 1)
  *
- * The least signअगरicant bit can be cleared this way, and it
+ * The least significant bit can be cleared this way, and it
  * just so happens that it is the same bit corresponding to
  * the current context.
  *
- * Now the TRANSITION bit अवरोधs the above slightly. The TRANSITION bit
- * is set when a recursion is detected at the current context, and अगर
- * the TRANSITION bit is alपढ़ोy set, it will fail the recursion.
+ * Now the TRANSITION bit breaks the above slightly. The TRANSITION bit
+ * is set when a recursion is detected at the current context, and if
+ * the TRANSITION bit is already set, it will fail the recursion.
  * This is needed because there's a lag between the changing of
- * पूर्णांकerrupt context and updating the preempt count. In this हाल,
+ * interrupt context and updating the preempt count. In this case,
  * a false positive will be found. To handle this, one extra recursion
- * is allowed, and this is करोne by the TRANSITION bit. If the TRANSITION
- * bit is alपढ़ोy set, then it is considered a recursion and the function
- * ends. Otherwise, the TRANSITION bit is set, and that bit is वापसed.
+ * is allowed, and this is done by the TRANSITION bit. If the TRANSITION
+ * bit is already set, then it is considered a recursion and the function
+ * ends. Otherwise, the TRANSITION bit is set, and that bit is returned.
  *
  * On the trace_recursive_unlock(), the TRANSITION bit will be the first
- * to be cleared. Even अगर it wasn't the context that set it. That is,
- * अगर an पूर्णांकerrupt comes in जबतक NORMAL bit is set and the ring buffer
- * is called beक्रमe preempt_count() is updated, since the check will
+ * to be cleared. Even if it wasn't the context that set it. That is,
+ * if an interrupt comes in while NORMAL bit is set and the ring buffer
+ * is called before preempt_count() is updated, since the check will
  * be on the NORMAL bit, the TRANSITION bit will then be set. If an
  * NMI then comes in, it will set the NMI bit, but when the NMI code
- * करोes the trace_recursive_unlock() it will clear the TRANSITION bit
- * and leave the NMI bit set. But this is fine, because the पूर्णांकerrupt
+ * does the trace_recursive_unlock() it will clear the TRANSITION bit
+ * and leave the NMI bit set. But this is fine, because the interrupt
  * code that set the TRANSITION bit will then clear the NMI bit when it
  * calls trace_recursive_unlock(). If another NMI comes in, it will
- * set the TRANSITION bit and जारी.
+ * set the TRANSITION bit and continue.
  *
  * Note: The TRANSITION bit only handles a single transition between context.
  */
 
-अटल __always_अंतरभूत पूर्णांक
-trace_recursive_lock(काष्ठा ring_buffer_per_cpu *cpu_buffer)
-अणु
-	अचिन्हित पूर्णांक val = cpu_buffer->current_context;
-	अचिन्हित दीर्घ pc = preempt_count();
-	पूर्णांक bit;
+static __always_inline int
+trace_recursive_lock(struct ring_buffer_per_cpu *cpu_buffer)
+{
+	unsigned int val = cpu_buffer->current_context;
+	unsigned long pc = preempt_count();
+	int bit;
 
-	अगर (!(pc & (NMI_MASK | HARसूचीQ_MASK | SOFTIRQ_OFFSET)))
+	if (!(pc & (NMI_MASK | HARDIRQ_MASK | SOFTIRQ_OFFSET)))
 		bit = RB_CTX_NORMAL;
-	अन्यथा
+	else
 		bit = pc & NMI_MASK ? RB_CTX_NMI :
-			pc & HARसूचीQ_MASK ? RB_CTX_IRQ : RB_CTX_SOFTIRQ;
+			pc & HARDIRQ_MASK ? RB_CTX_IRQ : RB_CTX_SOFTIRQ;
 
-	अगर (unlikely(val & (1 << (bit + cpu_buffer->nest)))) अणु
+	if (unlikely(val & (1 << (bit + cpu_buffer->nest)))) {
 		/*
 		 * It is possible that this was called by transitioning
-		 * between पूर्णांकerrupt context, and preempt_count() has not
-		 * been updated yet. In this हाल, use the TRANSITION bit.
+		 * between interrupt context, and preempt_count() has not
+		 * been updated yet. In this case, use the TRANSITION bit.
 		 */
 		bit = RB_CTX_TRANSITION;
-		अगर (val & (1 << (bit + cpu_buffer->nest))) अणु
-			करो_ring_buffer_record_recursion();
-			वापस 1;
-		पूर्ण
-	पूर्ण
+		if (val & (1 << (bit + cpu_buffer->nest))) {
+			do_ring_buffer_record_recursion();
+			return 1;
+		}
+	}
 
 	val |= (1 << (bit + cpu_buffer->nest));
 	cpu_buffer->current_context = val;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल __always_अंतरभूत व्योम
-trace_recursive_unlock(काष्ठा ring_buffer_per_cpu *cpu_buffer)
-अणु
+static __always_inline void
+trace_recursive_unlock(struct ring_buffer_per_cpu *cpu_buffer)
+{
 	cpu_buffer->current_context &=
 		cpu_buffer->current_context - (1 << cpu_buffer->nest);
-पूर्ण
+}
 
 /* The recursive locking above uses 5 bits */
-#घोषणा NESTED_BITS 5
+#define NESTED_BITS 5
 
 /**
- * ring_buffer_nest_start - Allow to trace जबतक nested
- * @buffer: The ring buffer to modअगरy
+ * ring_buffer_nest_start - Allow to trace while nested
+ * @buffer: The ring buffer to modify
  *
  * The ring buffer has a safety mechanism to prevent recursion.
- * But there may be a हाल where a trace needs to be करोne जबतक
- * tracing something अन्यथा. In this हाल, calling this function
+ * But there may be a case where a trace needs to be done while
+ * tracing something else. In this case, calling this function
  * will allow this function to nest within a currently active
  * ring_buffer_lock_reserve().
  *
- * Call this function beक्रमe calling another ring_buffer_lock_reserve() and
+ * Call this function before calling another ring_buffer_lock_reserve() and
  * call ring_buffer_nest_end() after the nested ring_buffer_unlock_commit().
  */
-व्योम ring_buffer_nest_start(काष्ठा trace_buffer *buffer)
-अणु
-	काष्ठा ring_buffer_per_cpu *cpu_buffer;
-	पूर्णांक cpu;
+void ring_buffer_nest_start(struct trace_buffer *buffer)
+{
+	struct ring_buffer_per_cpu *cpu_buffer;
+	int cpu;
 
 	/* Enabled by ring_buffer_nest_end() */
 	preempt_disable_notrace();
 	cpu = raw_smp_processor_id();
 	cpu_buffer = buffer->buffers[cpu];
-	/* This is the shअगरt value क्रम the above recursive locking */
+	/* This is the shift value for the above recursive locking */
 	cpu_buffer->nest += NESTED_BITS;
-पूर्ण
+}
 
 /**
- * ring_buffer_nest_end - Allow to trace जबतक nested
- * @buffer: The ring buffer to modअगरy
+ * ring_buffer_nest_end - Allow to trace while nested
+ * @buffer: The ring buffer to modify
  *
  * Must be called after ring_buffer_nest_start() and after the
  * ring_buffer_unlock_commit().
  */
-व्योम ring_buffer_nest_end(काष्ठा trace_buffer *buffer)
-अणु
-	काष्ठा ring_buffer_per_cpu *cpu_buffer;
-	पूर्णांक cpu;
+void ring_buffer_nest_end(struct trace_buffer *buffer)
+{
+	struct ring_buffer_per_cpu *cpu_buffer;
+	int cpu;
 
 	/* disabled by ring_buffer_nest_start() */
 	cpu = raw_smp_processor_id();
 	cpu_buffer = buffer->buffers[cpu];
-	/* This is the shअगरt value क्रम the above recursive locking */
+	/* This is the shift value for the above recursive locking */
 	cpu_buffer->nest -= NESTED_BITS;
 	preempt_enable_notrace();
-पूर्ण
+}
 
 /**
  * ring_buffer_unlock_commit - commit a reserved
  * @buffer: The buffer to commit to
- * @event: The event poपूर्णांकer to commit.
+ * @event: The event pointer to commit.
  *
  * This commits the data to the ring buffer, and releases any locks held.
  *
  * Must be paired with ring_buffer_lock_reserve.
  */
-पूर्णांक ring_buffer_unlock_commit(काष्ठा trace_buffer *buffer,
-			      काष्ठा ring_buffer_event *event)
-अणु
-	काष्ठा ring_buffer_per_cpu *cpu_buffer;
-	पूर्णांक cpu = raw_smp_processor_id();
+int ring_buffer_unlock_commit(struct trace_buffer *buffer,
+			      struct ring_buffer_event *event)
+{
+	struct ring_buffer_per_cpu *cpu_buffer;
+	int cpu = raw_smp_processor_id();
 
 	cpu_buffer = buffer->buffers[cpu];
 
@@ -3277,291 +3276,291 @@ trace_recursive_unlock(काष्ठा ring_buffer_per_cpu *cpu_buffer)
 
 	preempt_enable_notrace();
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(ring_buffer_unlock_commit);
 
 /* Special value to validate all deltas on a page. */
-#घोषणा CHECK_FULL_PAGE		1L
+#define CHECK_FULL_PAGE		1L
 
-#अगर_घोषित CONFIG_RING_BUFFER_VALIDATE_TIME_DELTAS
-अटल व्योम dump_buffer_page(काष्ठा buffer_data_page *bpage,
-			     काष्ठा rb_event_info *info,
-			     अचिन्हित दीर्घ tail)
-अणु
-	काष्ठा ring_buffer_event *event;
+#ifdef CONFIG_RING_BUFFER_VALIDATE_TIME_DELTAS
+static void dump_buffer_page(struct buffer_data_page *bpage,
+			     struct rb_event_info *info,
+			     unsigned long tail)
+{
+	struct ring_buffer_event *event;
 	u64 ts, delta;
-	पूर्णांक e;
+	int e;
 
-	ts = bpage->समय_stamp;
+	ts = bpage->time_stamp;
 	pr_warn("  [%lld] PAGE TIME STAMP\n", ts);
 
-	क्रम (e = 0; e < tail; e += rb_event_length(event)) अणु
+	for (e = 0; e < tail; e += rb_event_length(event)) {
 
-		event = (काष्ठा ring_buffer_event *)(bpage->data + e);
+		event = (struct ring_buffer_event *)(bpage->data + e);
 
-		चयन (event->type_len) अणु
+		switch (event->type_len) {
 
-		हाल RINGBUF_TYPE_TIME_EXTEND:
-			delta = rb_event_समय_stamp(event);
+		case RINGBUF_TYPE_TIME_EXTEND:
+			delta = rb_event_time_stamp(event);
 			ts += delta;
 			pr_warn("  [%lld] delta:%lld TIME EXTEND\n", ts, delta);
-			अवरोध;
+			break;
 
-		हाल RINGBUF_TYPE_TIME_STAMP:
-			delta = rb_event_समय_stamp(event);
+		case RINGBUF_TYPE_TIME_STAMP:
+			delta = rb_event_time_stamp(event);
 			ts = delta;
 			pr_warn("  [%lld] absolute:%lld TIME STAMP\n", ts, delta);
-			अवरोध;
+			break;
 
-		हाल RINGBUF_TYPE_PADDING:
-			ts += event->समय_delta;
-			pr_warn("  [%lld] delta:%d PADDING\n", ts, event->समय_delta);
-			अवरोध;
+		case RINGBUF_TYPE_PADDING:
+			ts += event->time_delta;
+			pr_warn("  [%lld] delta:%d PADDING\n", ts, event->time_delta);
+			break;
 
-		हाल RINGBUF_TYPE_DATA:
-			ts += event->समय_delta;
-			pr_warn("  [%lld] delta:%d\n", ts, event->समय_delta);
-			अवरोध;
+		case RINGBUF_TYPE_DATA:
+			ts += event->time_delta;
+			pr_warn("  [%lld] delta:%d\n", ts, event->time_delta);
+			break;
 
-		शेष:
-			अवरोध;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		default:
+			break;
+		}
+	}
+}
 
-अटल DEFINE_PER_CPU(atomic_t, checking);
-अटल atomic_t ts_dump;
+static DEFINE_PER_CPU(atomic_t, checking);
+static atomic_t ts_dump;
 
 /*
- * Check अगर the current event समय stamp matches the deltas on
+ * Check if the current event time stamp matches the deltas on
  * the buffer page.
  */
-अटल व्योम check_buffer(काष्ठा ring_buffer_per_cpu *cpu_buffer,
-			 काष्ठा rb_event_info *info,
-			 अचिन्हित दीर्घ tail)
-अणु
-	काष्ठा ring_buffer_event *event;
-	काष्ठा buffer_data_page *bpage;
+static void check_buffer(struct ring_buffer_per_cpu *cpu_buffer,
+			 struct rb_event_info *info,
+			 unsigned long tail)
+{
+	struct ring_buffer_event *event;
+	struct buffer_data_page *bpage;
 	u64 ts, delta;
 	bool full = false;
-	पूर्णांक e;
+	int e;
 
 	bpage = info->tail_page->page;
 
-	अगर (tail == CHECK_FULL_PAGE) अणु
+	if (tail == CHECK_FULL_PAGE) {
 		full = true;
-		tail = local_पढ़ो(&bpage->commit);
-	पूर्ण अन्यथा अगर (info->add_बारtamp &
-		   (RB_ADD_STAMP_FORCE | RB_ADD_STAMP_ABSOLUTE)) अणु
-		/* Ignore events with असलolute समय stamps */
-		वापस;
-	पूर्ण
+		tail = local_read(&bpage->commit);
+	} else if (info->add_timestamp &
+		   (RB_ADD_STAMP_FORCE | RB_ADD_STAMP_ABSOLUTE)) {
+		/* Ignore events with absolute time stamps */
+		return;
+	}
 
 	/*
 	 * Do not check the first event (skip possible extends too).
-	 * Also करो not check अगर previous events have not been committed.
+	 * Also do not check if previous events have not been committed.
 	 */
-	अगर (tail <= 8 || tail > local_पढ़ो(&bpage->commit))
-		वापस;
+	if (tail <= 8 || tail > local_read(&bpage->commit))
+		return;
 
 	/*
-	 * If this पूर्णांकerrupted another event, 
+	 * If this interrupted another event, 
 	 */
-	अगर (atomic_inc_वापस(this_cpu_ptr(&checking)) != 1)
-		जाओ out;
+	if (atomic_inc_return(this_cpu_ptr(&checking)) != 1)
+		goto out;
 
-	ts = bpage->समय_stamp;
+	ts = bpage->time_stamp;
 
-	क्रम (e = 0; e < tail; e += rb_event_length(event)) अणु
+	for (e = 0; e < tail; e += rb_event_length(event)) {
 
-		event = (काष्ठा ring_buffer_event *)(bpage->data + e);
+		event = (struct ring_buffer_event *)(bpage->data + e);
 
-		चयन (event->type_len) अणु
+		switch (event->type_len) {
 
-		हाल RINGBUF_TYPE_TIME_EXTEND:
-			delta = rb_event_समय_stamp(event);
+		case RINGBUF_TYPE_TIME_EXTEND:
+			delta = rb_event_time_stamp(event);
 			ts += delta;
-			अवरोध;
+			break;
 
-		हाल RINGBUF_TYPE_TIME_STAMP:
-			delta = rb_event_समय_stamp(event);
+		case RINGBUF_TYPE_TIME_STAMP:
+			delta = rb_event_time_stamp(event);
 			ts = delta;
-			अवरोध;
+			break;
 
-		हाल RINGBUF_TYPE_PADDING:
-			अगर (event->समय_delta == 1)
-				अवरोध;
+		case RINGBUF_TYPE_PADDING:
+			if (event->time_delta == 1)
+				break;
 			/* fall through */
-		हाल RINGBUF_TYPE_DATA:
-			ts += event->समय_delta;
-			अवरोध;
+		case RINGBUF_TYPE_DATA:
+			ts += event->time_delta;
+			break;
 
-		शेष:
+		default:
 			RB_WARN_ON(cpu_buffer, 1);
-		पूर्ण
-	पूर्ण
-	अगर ((full && ts > info->ts) ||
-	    (!full && ts + info->delta != info->ts)) अणु
+		}
+	}
+	if ((full && ts > info->ts) ||
+	    (!full && ts + info->delta != info->ts)) {
 		/* If another report is happening, ignore this one */
-		अगर (atomic_inc_वापस(&ts_dump) != 1) अणु
+		if (atomic_inc_return(&ts_dump) != 1) {
 			atomic_dec(&ts_dump);
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		atomic_inc(&cpu_buffer->record_disabled);
-		/* There's some हालs in boot up that this can happen */
-		WARN_ON_ONCE(प्रणाली_state != SYSTEM_BOOTING);
+		/* There's some cases in boot up that this can happen */
+		WARN_ON_ONCE(system_state != SYSTEM_BOOTING);
 		pr_warn("[CPU: %d]TIME DOES NOT MATCH expected:%lld actual:%lld delta:%lld before:%lld after:%lld%s\n",
 			cpu_buffer->cpu,
 			ts + info->delta, info->ts, info->delta,
-			info->beक्रमe, info->after,
+			info->before, info->after,
 			full ? " (full)" : "");
 		dump_buffer_page(bpage, info, tail);
 		atomic_dec(&ts_dump);
 		/* Do not re-enable checking */
-		वापस;
-	पूर्ण
+		return;
+	}
 out:
 	atomic_dec(this_cpu_ptr(&checking));
-पूर्ण
-#अन्यथा
-अटल अंतरभूत व्योम check_buffer(काष्ठा ring_buffer_per_cpu *cpu_buffer,
-			 काष्ठा rb_event_info *info,
-			 अचिन्हित दीर्घ tail)
-अणु
-पूर्ण
-#पूर्ण_अगर /* CONFIG_RING_BUFFER_VALIDATE_TIME_DELTAS */
+}
+#else
+static inline void check_buffer(struct ring_buffer_per_cpu *cpu_buffer,
+			 struct rb_event_info *info,
+			 unsigned long tail)
+{
+}
+#endif /* CONFIG_RING_BUFFER_VALIDATE_TIME_DELTAS */
 
-अटल काष्ठा ring_buffer_event *
-__rb_reserve_next(काष्ठा ring_buffer_per_cpu *cpu_buffer,
-		  काष्ठा rb_event_info *info)
-अणु
-	काष्ठा ring_buffer_event *event;
-	काष्ठा buffer_page *tail_page;
-	अचिन्हित दीर्घ tail, ग_लिखो, w;
+static struct ring_buffer_event *
+__rb_reserve_next(struct ring_buffer_per_cpu *cpu_buffer,
+		  struct rb_event_info *info)
+{
+	struct ring_buffer_event *event;
+	struct buffer_page *tail_page;
+	unsigned long tail, write, w;
 	bool a_ok;
 	bool b_ok;
 
 	/* Don't let the compiler play games with cpu_buffer->tail_page */
 	tail_page = info->tail_page = READ_ONCE(cpu_buffer->tail_page);
 
- /*A*/	w = local_पढ़ो(&tail_page->ग_लिखो) & RB_WRITE_MASK;
+ /*A*/	w = local_read(&tail_page->write) & RB_WRITE_MASK;
 	barrier();
-	b_ok = rb_समय_पढ़ो(&cpu_buffer->beक्रमe_stamp, &info->beक्रमe);
-	a_ok = rb_समय_पढ़ो(&cpu_buffer->ग_लिखो_stamp, &info->after);
+	b_ok = rb_time_read(&cpu_buffer->before_stamp, &info->before);
+	a_ok = rb_time_read(&cpu_buffer->write_stamp, &info->after);
 	barrier();
-	info->ts = rb_समय_stamp(cpu_buffer->buffer);
+	info->ts = rb_time_stamp(cpu_buffer->buffer);
 
-	अगर ((info->add_बारtamp & RB_ADD_STAMP_ABSOLUTE)) अणु
+	if ((info->add_timestamp & RB_ADD_STAMP_ABSOLUTE)) {
 		info->delta = info->ts;
-	पूर्ण अन्यथा अणु
+	} else {
 		/*
-		 * If पूर्णांकerrupting an event समय update, we may need an
-		 * असलolute बारtamp.
-		 * Don't bother अगर this is the start of a new page (w == 0).
+		 * If interrupting an event time update, we may need an
+		 * absolute timestamp.
+		 * Don't bother if this is the start of a new page (w == 0).
 		 */
-		अगर (unlikely(!a_ok || !b_ok || (info->beक्रमe != info->after && w))) अणु
-			info->add_बारtamp |= RB_ADD_STAMP_FORCE | RB_ADD_STAMP_EXTEND;
+		if (unlikely(!a_ok || !b_ok || (info->before != info->after && w))) {
+			info->add_timestamp |= RB_ADD_STAMP_FORCE | RB_ADD_STAMP_EXTEND;
 			info->length += RB_LEN_TIME_EXTEND;
-		पूर्ण अन्यथा अणु
+		} else {
 			info->delta = info->ts - info->after;
-			अगर (unlikely(test_समय_stamp(info->delta))) अणु
-				info->add_बारtamp |= RB_ADD_STAMP_EXTEND;
+			if (unlikely(test_time_stamp(info->delta))) {
+				info->add_timestamp |= RB_ADD_STAMP_EXTEND;
 				info->length += RB_LEN_TIME_EXTEND;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
- /*B*/	rb_समय_set(&cpu_buffer->beक्रमe_stamp, info->ts);
+ /*B*/	rb_time_set(&cpu_buffer->before_stamp, info->ts);
 
- /*C*/	ग_लिखो = local_add_वापस(info->length, &tail_page->ग_लिखो);
+ /*C*/	write = local_add_return(info->length, &tail_page->write);
 
-	/* set ग_लिखो to only the index of the ग_लिखो */
-	ग_लिखो &= RB_WRITE_MASK;
+	/* set write to only the index of the write */
+	write &= RB_WRITE_MASK;
 
-	tail = ग_लिखो - info->length;
+	tail = write - info->length;
 
-	/* See अगर we shot pass the end of this buffer page */
-	अगर (unlikely(ग_लिखो > BUF_PAGE_SIZE)) अणु
-		/* beक्रमe and after may now dअगरferent, fix it up*/
-		b_ok = rb_समय_पढ़ो(&cpu_buffer->beक्रमe_stamp, &info->beक्रमe);
-		a_ok = rb_समय_पढ़ो(&cpu_buffer->ग_लिखो_stamp, &info->after);
-		अगर (a_ok && b_ok && info->beक्रमe != info->after)
-			(व्योम)rb_समय_cmpxchg(&cpu_buffer->beक्रमe_stamp,
-					      info->beक्रमe, info->after);
-		अगर (a_ok && b_ok)
+	/* See if we shot pass the end of this buffer page */
+	if (unlikely(write > BUF_PAGE_SIZE)) {
+		/* before and after may now different, fix it up*/
+		b_ok = rb_time_read(&cpu_buffer->before_stamp, &info->before);
+		a_ok = rb_time_read(&cpu_buffer->write_stamp, &info->after);
+		if (a_ok && b_ok && info->before != info->after)
+			(void)rb_time_cmpxchg(&cpu_buffer->before_stamp,
+					      info->before, info->after);
+		if (a_ok && b_ok)
 			check_buffer(cpu_buffer, info, CHECK_FULL_PAGE);
-		वापस rb_move_tail(cpu_buffer, tail, info);
-	पूर्ण
+		return rb_move_tail(cpu_buffer, tail, info);
+	}
 
-	अगर (likely(tail == w)) अणु
-		u64 save_beक्रमe;
+	if (likely(tail == w)) {
+		u64 save_before;
 		bool s_ok;
 
-		/* Nothing पूर्णांकerrupted us between A and C */
- /*D*/		rb_समय_set(&cpu_buffer->ग_लिखो_stamp, info->ts);
+		/* Nothing interrupted us between A and C */
+ /*D*/		rb_time_set(&cpu_buffer->write_stamp, info->ts);
 		barrier();
- /*E*/		s_ok = rb_समय_पढ़ो(&cpu_buffer->beक्रमe_stamp, &save_beक्रमe);
+ /*E*/		s_ok = rb_time_read(&cpu_buffer->before_stamp, &save_before);
 		RB_WARN_ON(cpu_buffer, !s_ok);
-		अगर (likely(!(info->add_बारtamp &
+		if (likely(!(info->add_timestamp &
 			     (RB_ADD_STAMP_FORCE | RB_ADD_STAMP_ABSOLUTE))))
-			/* This did not पूर्णांकerrupt any समय update */
+			/* This did not interrupt any time update */
 			info->delta = info->ts - info->after;
-		अन्यथा
-			/* Just use full बारtamp क्रम पूर्णांकerrupting event */
+		else
+			/* Just use full timestamp for interrupting event */
 			info->delta = info->ts;
 		barrier();
 		check_buffer(cpu_buffer, info, tail);
-		अगर (unlikely(info->ts != save_beक्रमe)) अणु
+		if (unlikely(info->ts != save_before)) {
 			/* SLOW PATH - Interrupted between C and E */
 
-			a_ok = rb_समय_पढ़ो(&cpu_buffer->ग_लिखो_stamp, &info->after);
+			a_ok = rb_time_read(&cpu_buffer->write_stamp, &info->after);
 			RB_WARN_ON(cpu_buffer, !a_ok);
 
-			/* Write stamp must only go क्रमward */
-			अगर (save_beक्रमe > info->after) अणु
+			/* Write stamp must only go forward */
+			if (save_before > info->after) {
 				/*
-				 * We करो not care about the result, only that
-				 * it माला_लो updated atomically.
+				 * We do not care about the result, only that
+				 * it gets updated atomically.
 				 */
-				(व्योम)rb_समय_cmpxchg(&cpu_buffer->ग_लिखो_stamp,
-						      info->after, save_beक्रमe);
-			पूर्ण
-		पूर्ण
-	पूर्ण अन्यथा अणु
+				(void)rb_time_cmpxchg(&cpu_buffer->write_stamp,
+						      info->after, save_before);
+			}
+		}
+	} else {
 		u64 ts;
 		/* SLOW PATH - Interrupted between A and C */
-		a_ok = rb_समय_पढ़ो(&cpu_buffer->ग_लिखो_stamp, &info->after);
-		/* Was पूर्णांकerrupted beक्रमe here, ग_लिखो_stamp must be valid */
+		a_ok = rb_time_read(&cpu_buffer->write_stamp, &info->after);
+		/* Was interrupted before here, write_stamp must be valid */
 		RB_WARN_ON(cpu_buffer, !a_ok);
-		ts = rb_समय_stamp(cpu_buffer->buffer);
+		ts = rb_time_stamp(cpu_buffer->buffer);
 		barrier();
- /*E*/		अगर (ग_लिखो == (local_पढ़ो(&tail_page->ग_लिखो) & RB_WRITE_MASK) &&
+ /*E*/		if (write == (local_read(&tail_page->write) & RB_WRITE_MASK) &&
 		    info->after < ts &&
-		    rb_समय_cmpxchg(&cpu_buffer->ग_लिखो_stamp,
-				    info->after, ts)) अणु
+		    rb_time_cmpxchg(&cpu_buffer->write_stamp,
+				    info->after, ts)) {
 			/* Nothing came after this event between C and E */
 			info->delta = ts - info->after;
-		पूर्ण अन्यथा अणु
+		} else {
 			/*
 			 * Interrupted between C and E:
-			 * Lost the previous events समय stamp. Just set the
-			 * delta to zero, and this will be the same समय as
-			 * the event this event पूर्णांकerrupted. And the events that
+			 * Lost the previous events time stamp. Just set the
+			 * delta to zero, and this will be the same time as
+			 * the event this event interrupted. And the events that
 			 * came after this will still be correct (as they would
 			 * have built their delta on the previous event.
 			 */
 			info->delta = 0;
-		पूर्ण
+		}
 		info->ts = ts;
-		info->add_बारtamp &= ~RB_ADD_STAMP_FORCE;
-	पूर्ण
+		info->add_timestamp &= ~RB_ADD_STAMP_FORCE;
+	}
 
 	/*
 	 * If this is the first commit on the page, then it has the same
-	 * बारtamp as the page itself.
+	 * timestamp as the page itself.
 	 */
-	अगर (unlikely(!tail && !(info->add_बारtamp &
+	if (unlikely(!tail && !(info->add_timestamp &
 				(RB_ADD_STAMP_FORCE | RB_ADD_STAMP_ABSOLUTE))))
 		info->delta = 0;
 
@@ -3574,84 +3573,84 @@ __rb_reserve_next(काष्ठा ring_buffer_per_cpu *cpu_buffer,
 
 	/*
 	 * If this is the first commit on the page, then update
-	 * its बारtamp.
+	 * its timestamp.
 	 */
-	अगर (unlikely(!tail))
-		tail_page->page->समय_stamp = info->ts;
+	if (unlikely(!tail))
+		tail_page->page->time_stamp = info->ts;
 
-	/* account क्रम these added bytes */
+	/* account for these added bytes */
 	local_add(info->length, &cpu_buffer->entries_bytes);
 
-	वापस event;
-पूर्ण
+	return event;
+}
 
-अटल __always_अंतरभूत काष्ठा ring_buffer_event *
-rb_reserve_next_event(काष्ठा trace_buffer *buffer,
-		      काष्ठा ring_buffer_per_cpu *cpu_buffer,
-		      अचिन्हित दीर्घ length)
-अणु
-	काष्ठा ring_buffer_event *event;
-	काष्ठा rb_event_info info;
-	पूर्णांक nr_loops = 0;
-	पूर्णांक add_ts_शेष;
+static __always_inline struct ring_buffer_event *
+rb_reserve_next_event(struct trace_buffer *buffer,
+		      struct ring_buffer_per_cpu *cpu_buffer,
+		      unsigned long length)
+{
+	struct ring_buffer_event *event;
+	struct rb_event_info info;
+	int nr_loops = 0;
+	int add_ts_default;
 
 	rb_start_commit(cpu_buffer);
 	/* The commit page can not change after this */
 
-#अगर_घोषित CONFIG_RING_BUFFER_ALLOW_SWAP
+#ifdef CONFIG_RING_BUFFER_ALLOW_SWAP
 	/*
 	 * Due to the ability to swap a cpu buffer from a buffer
-	 * it is possible it was swapped beक्रमe we committed.
-	 * (committing stops a swap). We check क्रम it here and
-	 * अगर it happened, we have to fail the ग_लिखो.
+	 * it is possible it was swapped before we committed.
+	 * (committing stops a swap). We check for it here and
+	 * if it happened, we have to fail the write.
 	 */
 	barrier();
-	अगर (unlikely(READ_ONCE(cpu_buffer->buffer) != buffer)) अणु
+	if (unlikely(READ_ONCE(cpu_buffer->buffer) != buffer)) {
 		local_dec(&cpu_buffer->committing);
 		local_dec(&cpu_buffer->commits);
-		वापस शून्य;
-	पूर्ण
-#पूर्ण_अगर
+		return NULL;
+	}
+#endif
 
 	info.length = rb_calculate_event_length(length);
 
-	अगर (ring_buffer_समय_stamp_असल(cpu_buffer->buffer)) अणु
-		add_ts_शेष = RB_ADD_STAMP_ABSOLUTE;
+	if (ring_buffer_time_stamp_abs(cpu_buffer->buffer)) {
+		add_ts_default = RB_ADD_STAMP_ABSOLUTE;
 		info.length += RB_LEN_TIME_EXTEND;
-	पूर्ण अन्यथा अणु
-		add_ts_शेष = RB_ADD_STAMP_NONE;
-	पूर्ण
+	} else {
+		add_ts_default = RB_ADD_STAMP_NONE;
+	}
 
  again:
-	info.add_बारtamp = add_ts_शेष;
+	info.add_timestamp = add_ts_default;
 	info.delta = 0;
 
 	/*
-	 * We allow क्रम पूर्णांकerrupts to reenter here and करो a trace.
-	 * If one करोes, it will cause this original code to loop
-	 * back here. Even with heavy पूर्णांकerrupts happening, this
-	 * should only happen a few बार in a row. If this happens
-	 * 1000 बार in a row, there must be either an पूर्णांकerrupt
+	 * We allow for interrupts to reenter here and do a trace.
+	 * If one does, it will cause this original code to loop
+	 * back here. Even with heavy interrupts happening, this
+	 * should only happen a few times in a row. If this happens
+	 * 1000 times in a row, there must be either an interrupt
 	 * storm or we have something buggy.
 	 * Bail!
 	 */
-	अगर (RB_WARN_ON(cpu_buffer, ++nr_loops > 1000))
-		जाओ out_fail;
+	if (RB_WARN_ON(cpu_buffer, ++nr_loops > 1000))
+		goto out_fail;
 
 	event = __rb_reserve_next(cpu_buffer, &info);
 
-	अगर (unlikely(PTR_ERR(event) == -EAGAIN)) अणु
-		अगर (info.add_बारtamp & (RB_ADD_STAMP_FORCE | RB_ADD_STAMP_EXTEND))
+	if (unlikely(PTR_ERR(event) == -EAGAIN)) {
+		if (info.add_timestamp & (RB_ADD_STAMP_FORCE | RB_ADD_STAMP_EXTEND))
 			info.length -= RB_LEN_TIME_EXTEND;
-		जाओ again;
-	पूर्ण
+		goto again;
+	}
 
-	अगर (likely(event))
-		वापस event;
+	if (likely(event))
+		return event;
  out_fail:
 	rb_end_commit(cpu_buffer);
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
 /**
  * ring_buffer_lock_reserve - reserve a part of the buffer
@@ -3659,122 +3658,122 @@ rb_reserve_next_event(काष्ठा trace_buffer *buffer,
  * @length: the length of the data to reserve (excluding event header)
  *
  * Returns a reserved event on the ring buffer to copy directly to.
- * The user of this पूर्णांकerface will need to get the body to ग_लिखो पूर्णांकo
- * and can use the ring_buffer_event_data() पूर्णांकerface.
+ * The user of this interface will need to get the body to write into
+ * and can use the ring_buffer_event_data() interface.
  *
  * The length is the length of the data needed, not the event length
  * which also includes the event header.
  *
- * Must be paired with ring_buffer_unlock_commit, unless शून्य is वापसed.
- * If शून्य is वापसed, then nothing has been allocated or locked.
+ * Must be paired with ring_buffer_unlock_commit, unless NULL is returned.
+ * If NULL is returned, then nothing has been allocated or locked.
  */
-काष्ठा ring_buffer_event *
-ring_buffer_lock_reserve(काष्ठा trace_buffer *buffer, अचिन्हित दीर्घ length)
-अणु
-	काष्ठा ring_buffer_per_cpu *cpu_buffer;
-	काष्ठा ring_buffer_event *event;
-	पूर्णांक cpu;
+struct ring_buffer_event *
+ring_buffer_lock_reserve(struct trace_buffer *buffer, unsigned long length)
+{
+	struct ring_buffer_per_cpu *cpu_buffer;
+	struct ring_buffer_event *event;
+	int cpu;
 
-	/* If we are tracing schedule, we करोn't want to recurse */
+	/* If we are tracing schedule, we don't want to recurse */
 	preempt_disable_notrace();
 
-	अगर (unlikely(atomic_पढ़ो(&buffer->record_disabled)))
-		जाओ out;
+	if (unlikely(atomic_read(&buffer->record_disabled)))
+		goto out;
 
 	cpu = raw_smp_processor_id();
 
-	अगर (unlikely(!cpumask_test_cpu(cpu, buffer->cpumask)))
-		जाओ out;
+	if (unlikely(!cpumask_test_cpu(cpu, buffer->cpumask)))
+		goto out;
 
 	cpu_buffer = buffer->buffers[cpu];
 
-	अगर (unlikely(atomic_पढ़ो(&cpu_buffer->record_disabled)))
-		जाओ out;
+	if (unlikely(atomic_read(&cpu_buffer->record_disabled)))
+		goto out;
 
-	अगर (unlikely(length > BUF_MAX_DATA_SIZE))
-		जाओ out;
+	if (unlikely(length > BUF_MAX_DATA_SIZE))
+		goto out;
 
-	अगर (unlikely(trace_recursive_lock(cpu_buffer)))
-		जाओ out;
+	if (unlikely(trace_recursive_lock(cpu_buffer)))
+		goto out;
 
 	event = rb_reserve_next_event(buffer, cpu_buffer, length);
-	अगर (!event)
-		जाओ out_unlock;
+	if (!event)
+		goto out_unlock;
 
-	वापस event;
+	return event;
 
  out_unlock:
 	trace_recursive_unlock(cpu_buffer);
  out:
 	preempt_enable_notrace();
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 EXPORT_SYMBOL_GPL(ring_buffer_lock_reserve);
 
 /*
  * Decrement the entries to the page that an event is on.
- * The event करोes not even need to exist, only the poपूर्णांकer
- * to the page it is on. This may only be called beक्रमe the commit
+ * The event does not even need to exist, only the pointer
+ * to the page it is on. This may only be called before the commit
  * takes place.
  */
-अटल अंतरभूत व्योम
-rb_decrement_entry(काष्ठा ring_buffer_per_cpu *cpu_buffer,
-		   काष्ठा ring_buffer_event *event)
-अणु
-	अचिन्हित दीर्घ addr = (अचिन्हित दीर्घ)event;
-	काष्ठा buffer_page *bpage = cpu_buffer->commit_page;
-	काष्ठा buffer_page *start;
+static inline void
+rb_decrement_entry(struct ring_buffer_per_cpu *cpu_buffer,
+		   struct ring_buffer_event *event)
+{
+	unsigned long addr = (unsigned long)event;
+	struct buffer_page *bpage = cpu_buffer->commit_page;
+	struct buffer_page *start;
 
 	addr &= PAGE_MASK;
 
-	/* Do the likely हाल first */
-	अगर (likely(bpage->page == (व्योम *)addr)) अणु
+	/* Do the likely case first */
+	if (likely(bpage->page == (void *)addr)) {
 		local_dec(&bpage->entries);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/*
-	 * Because the commit page may be on the पढ़ोer page we
+	 * Because the commit page may be on the reader page we
 	 * start with the next page and check the end loop there.
 	 */
 	rb_inc_page(&bpage);
 	start = bpage;
-	करो अणु
-		अगर (bpage->page == (व्योम *)addr) अणु
+	do {
+		if (bpage->page == (void *)addr) {
 			local_dec(&bpage->entries);
-			वापस;
-		पूर्ण
+			return;
+		}
 		rb_inc_page(&bpage);
-	पूर्ण जबतक (bpage != start);
+	} while (bpage != start);
 
 	/* commit not part of this buffer?? */
 	RB_WARN_ON(cpu_buffer, 1);
-पूर्ण
+}
 
 /**
  * ring_buffer_discard_commit - discard an event that has not been committed
  * @buffer: the ring buffer
  * @event: non committed event to discard
  *
- * Someबार an event that is in the ring buffer needs to be ignored.
+ * Sometimes an event that is in the ring buffer needs to be ignored.
  * This function lets the user discard an event in the ring buffer
- * and then that event will not be पढ़ो later.
+ * and then that event will not be read later.
  *
- * This function only works अगर it is called beक्रमe the item has been
- * committed. It will try to मुक्त the event from the ring buffer
- * अगर another event has not been added behind it.
+ * This function only works if it is called before the item has been
+ * committed. It will try to free the event from the ring buffer
+ * if another event has not been added behind it.
  *
  * If another event has been added behind it, it will set the event
- * up as discarded, and perक्रमm the commit.
+ * up as discarded, and perform the commit.
  *
- * If this function is called, करो not call ring_buffer_unlock_commit on
+ * If this function is called, do not call ring_buffer_unlock_commit on
  * the event.
  */
-व्योम ring_buffer_discard_commit(काष्ठा trace_buffer *buffer,
-				काष्ठा ring_buffer_event *event)
-अणु
-	काष्ठा ring_buffer_per_cpu *cpu_buffer;
-	पूर्णांक cpu;
+void ring_buffer_discard_commit(struct trace_buffer *buffer,
+				struct ring_buffer_event *event)
+{
+	struct ring_buffer_per_cpu *cpu_buffer;
+	int cpu;
 
 	/* The event is discarded regardless */
 	rb_event_discard(event);
@@ -3783,15 +3782,15 @@ rb_decrement_entry(काष्ठा ring_buffer_per_cpu *cpu_buffer,
 	cpu_buffer = buffer->buffers[cpu];
 
 	/*
-	 * This must only be called अगर the event has not been
+	 * This must only be called if the event has not been
 	 * committed yet. Thus we can assume that preemption
 	 * is still disabled.
 	 */
-	RB_WARN_ON(buffer, !local_पढ़ो(&cpu_buffer->committing));
+	RB_WARN_ON(buffer, !local_read(&cpu_buffer->committing));
 
 	rb_decrement_entry(cpu_buffer, event);
-	अगर (rb_try_to_discard(cpu_buffer, event))
-		जाओ out;
+	if (rb_try_to_discard(cpu_buffer, event))
+		goto out;
 
  out:
 	rb_end_commit(cpu_buffer);
@@ -3800,60 +3799,60 @@ rb_decrement_entry(काष्ठा ring_buffer_per_cpu *cpu_buffer,
 
 	preempt_enable_notrace();
 
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(ring_buffer_discard_commit);
 
 /**
- * ring_buffer_ग_लिखो - ग_लिखो data to the buffer without reserving
- * @buffer: The ring buffer to ग_लिखो to.
+ * ring_buffer_write - write data to the buffer without reserving
+ * @buffer: The ring buffer to write to.
  * @length: The length of the data being written (excluding the event header)
- * @data: The data to ग_लिखो to the buffer.
+ * @data: The data to write to the buffer.
  *
  * This is like ring_buffer_lock_reserve and ring_buffer_unlock_commit as
- * one function. If you alपढ़ोy have the data to ग_लिखो to the buffer, it
+ * one function. If you already have the data to write to the buffer, it
  * may be easier to simply call this function.
  *
  * Note, like ring_buffer_lock_reserve, the length is the length of the data
  * and not the length of the event which would hold the header.
  */
-पूर्णांक ring_buffer_ग_लिखो(काष्ठा trace_buffer *buffer,
-		      अचिन्हित दीर्घ length,
-		      व्योम *data)
-अणु
-	काष्ठा ring_buffer_per_cpu *cpu_buffer;
-	काष्ठा ring_buffer_event *event;
-	व्योम *body;
-	पूर्णांक ret = -EBUSY;
-	पूर्णांक cpu;
+int ring_buffer_write(struct trace_buffer *buffer,
+		      unsigned long length,
+		      void *data)
+{
+	struct ring_buffer_per_cpu *cpu_buffer;
+	struct ring_buffer_event *event;
+	void *body;
+	int ret = -EBUSY;
+	int cpu;
 
 	preempt_disable_notrace();
 
-	अगर (atomic_पढ़ो(&buffer->record_disabled))
-		जाओ out;
+	if (atomic_read(&buffer->record_disabled))
+		goto out;
 
 	cpu = raw_smp_processor_id();
 
-	अगर (!cpumask_test_cpu(cpu, buffer->cpumask))
-		जाओ out;
+	if (!cpumask_test_cpu(cpu, buffer->cpumask))
+		goto out;
 
 	cpu_buffer = buffer->buffers[cpu];
 
-	अगर (atomic_पढ़ो(&cpu_buffer->record_disabled))
-		जाओ out;
+	if (atomic_read(&cpu_buffer->record_disabled))
+		goto out;
 
-	अगर (length > BUF_MAX_DATA_SIZE)
-		जाओ out;
+	if (length > BUF_MAX_DATA_SIZE)
+		goto out;
 
-	अगर (unlikely(trace_recursive_lock(cpu_buffer)))
-		जाओ out;
+	if (unlikely(trace_recursive_lock(cpu_buffer)))
+		goto out;
 
 	event = rb_reserve_next_event(buffer, cpu_buffer, length);
-	अगर (!event)
-		जाओ out_unlock;
+	if (!event)
+		goto out_unlock;
 
 	body = rb_event_data(event);
 
-	स_नकल(body, data, length);
+	memcpy(body, data, length);
 
 	rb_commit(cpu_buffer, event);
 
@@ -3867,233 +3866,233 @@ EXPORT_SYMBOL_GPL(ring_buffer_discard_commit);
  out:
 	preempt_enable_notrace();
 
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(ring_buffer_ग_लिखो);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(ring_buffer_write);
 
-अटल bool rb_per_cpu_empty(काष्ठा ring_buffer_per_cpu *cpu_buffer)
-अणु
-	काष्ठा buffer_page *पढ़ोer = cpu_buffer->पढ़ोer_page;
-	काष्ठा buffer_page *head = rb_set_head_page(cpu_buffer);
-	काष्ठा buffer_page *commit = cpu_buffer->commit_page;
+static bool rb_per_cpu_empty(struct ring_buffer_per_cpu *cpu_buffer)
+{
+	struct buffer_page *reader = cpu_buffer->reader_page;
+	struct buffer_page *head = rb_set_head_page(cpu_buffer);
+	struct buffer_page *commit = cpu_buffer->commit_page;
 
-	/* In हाल of error, head will be शून्य */
-	अगर (unlikely(!head))
-		वापस true;
+	/* In case of error, head will be NULL */
+	if (unlikely(!head))
+		return true;
 
-	वापस पढ़ोer->पढ़ो == rb_page_commit(पढ़ोer) &&
-		(commit == पढ़ोer ||
+	return reader->read == rb_page_commit(reader) &&
+		(commit == reader ||
 		 (commit == head &&
-		  head->पढ़ो == rb_page_commit(commit)));
-पूर्ण
+		  head->read == rb_page_commit(commit)));
+}
 
 /**
- * ring_buffer_record_disable - stop all ग_लिखोs पूर्णांकo the buffer
- * @buffer: The ring buffer to stop ग_लिखोs to.
+ * ring_buffer_record_disable - stop all writes into the buffer
+ * @buffer: The ring buffer to stop writes to.
  *
- * This prevents all ग_लिखोs to the buffer. Any attempt to ग_लिखो
- * to the buffer after this will fail and वापस शून्य.
+ * This prevents all writes to the buffer. Any attempt to write
+ * to the buffer after this will fail and return NULL.
  *
  * The caller should call synchronize_rcu() after this.
  */
-व्योम ring_buffer_record_disable(काष्ठा trace_buffer *buffer)
-अणु
+void ring_buffer_record_disable(struct trace_buffer *buffer)
+{
 	atomic_inc(&buffer->record_disabled);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(ring_buffer_record_disable);
 
 /**
- * ring_buffer_record_enable - enable ग_लिखोs to the buffer
- * @buffer: The ring buffer to enable ग_लिखोs
+ * ring_buffer_record_enable - enable writes to the buffer
+ * @buffer: The ring buffer to enable writes
  *
  * Note, multiple disables will need the same number of enables
  * to truly enable the writing (much like preempt_disable).
  */
-व्योम ring_buffer_record_enable(काष्ठा trace_buffer *buffer)
-अणु
+void ring_buffer_record_enable(struct trace_buffer *buffer)
+{
 	atomic_dec(&buffer->record_disabled);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(ring_buffer_record_enable);
 
 /**
- * ring_buffer_record_off - stop all ग_लिखोs पूर्णांकo the buffer
- * @buffer: The ring buffer to stop ग_लिखोs to.
+ * ring_buffer_record_off - stop all writes into the buffer
+ * @buffer: The ring buffer to stop writes to.
  *
- * This prevents all ग_लिखोs to the buffer. Any attempt to ग_लिखो
- * to the buffer after this will fail and वापस शून्य.
+ * This prevents all writes to the buffer. Any attempt to write
+ * to the buffer after this will fail and return NULL.
  *
- * This is dअगरferent than ring_buffer_record_disable() as
- * it works like an on/off चयन, where as the disable() version
+ * This is different than ring_buffer_record_disable() as
+ * it works like an on/off switch, where as the disable() version
  * must be paired with a enable().
  */
-व्योम ring_buffer_record_off(काष्ठा trace_buffer *buffer)
-अणु
-	अचिन्हित पूर्णांक rd;
-	अचिन्हित पूर्णांक new_rd;
+void ring_buffer_record_off(struct trace_buffer *buffer)
+{
+	unsigned int rd;
+	unsigned int new_rd;
 
-	करो अणु
-		rd = atomic_पढ़ो(&buffer->record_disabled);
+	do {
+		rd = atomic_read(&buffer->record_disabled);
 		new_rd = rd | RB_BUFFER_OFF;
-	पूर्ण जबतक (atomic_cmpxchg(&buffer->record_disabled, rd, new_rd) != rd);
-पूर्ण
+	} while (atomic_cmpxchg(&buffer->record_disabled, rd, new_rd) != rd);
+}
 EXPORT_SYMBOL_GPL(ring_buffer_record_off);
 
 /**
- * ring_buffer_record_on - restart ग_लिखोs पूर्णांकo the buffer
- * @buffer: The ring buffer to start ग_लिखोs to.
+ * ring_buffer_record_on - restart writes into the buffer
+ * @buffer: The ring buffer to start writes to.
  *
- * This enables all ग_लिखोs to the buffer that was disabled by
+ * This enables all writes to the buffer that was disabled by
  * ring_buffer_record_off().
  *
- * This is dअगरferent than ring_buffer_record_enable() as
- * it works like an on/off चयन, where as the enable() version
+ * This is different than ring_buffer_record_enable() as
+ * it works like an on/off switch, where as the enable() version
  * must be paired with a disable().
  */
-व्योम ring_buffer_record_on(काष्ठा trace_buffer *buffer)
-अणु
-	अचिन्हित पूर्णांक rd;
-	अचिन्हित पूर्णांक new_rd;
+void ring_buffer_record_on(struct trace_buffer *buffer)
+{
+	unsigned int rd;
+	unsigned int new_rd;
 
-	करो अणु
-		rd = atomic_पढ़ो(&buffer->record_disabled);
+	do {
+		rd = atomic_read(&buffer->record_disabled);
 		new_rd = rd & ~RB_BUFFER_OFF;
-	पूर्ण जबतक (atomic_cmpxchg(&buffer->record_disabled, rd, new_rd) != rd);
-पूर्ण
+	} while (atomic_cmpxchg(&buffer->record_disabled, rd, new_rd) != rd);
+}
 EXPORT_SYMBOL_GPL(ring_buffer_record_on);
 
 /**
- * ring_buffer_record_is_on - वापस true अगर the ring buffer can ग_लिखो
- * @buffer: The ring buffer to see अगर ग_लिखो is enabled
+ * ring_buffer_record_is_on - return true if the ring buffer can write
+ * @buffer: The ring buffer to see if write is enabled
  *
- * Returns true अगर the ring buffer is in a state that it accepts ग_लिखोs.
+ * Returns true if the ring buffer is in a state that it accepts writes.
  */
-bool ring_buffer_record_is_on(काष्ठा trace_buffer *buffer)
-अणु
-	वापस !atomic_पढ़ो(&buffer->record_disabled);
-पूर्ण
+bool ring_buffer_record_is_on(struct trace_buffer *buffer)
+{
+	return !atomic_read(&buffer->record_disabled);
+}
 
 /**
- * ring_buffer_record_is_set_on - वापस true अगर the ring buffer is set writable
- * @buffer: The ring buffer to see अगर ग_लिखो is set enabled
+ * ring_buffer_record_is_set_on - return true if the ring buffer is set writable
+ * @buffer: The ring buffer to see if write is set enabled
  *
- * Returns true अगर the ring buffer is set writable by ring_buffer_record_on().
- * Note that this करोes NOT mean it is in a writable state.
+ * Returns true if the ring buffer is set writable by ring_buffer_record_on().
+ * Note that this does NOT mean it is in a writable state.
  *
- * It may वापस true when the ring buffer has been disabled by
+ * It may return true when the ring buffer has been disabled by
  * ring_buffer_record_disable(), as that is a temporary disabling of
  * the ring buffer.
  */
-bool ring_buffer_record_is_set_on(काष्ठा trace_buffer *buffer)
-अणु
-	वापस !(atomic_पढ़ो(&buffer->record_disabled) & RB_BUFFER_OFF);
-पूर्ण
+bool ring_buffer_record_is_set_on(struct trace_buffer *buffer)
+{
+	return !(atomic_read(&buffer->record_disabled) & RB_BUFFER_OFF);
+}
 
 /**
- * ring_buffer_record_disable_cpu - stop all ग_लिखोs पूर्णांकo the cpu_buffer
- * @buffer: The ring buffer to stop ग_लिखोs to.
+ * ring_buffer_record_disable_cpu - stop all writes into the cpu_buffer
+ * @buffer: The ring buffer to stop writes to.
  * @cpu: The CPU buffer to stop
  *
- * This prevents all ग_लिखोs to the buffer. Any attempt to ग_लिखो
- * to the buffer after this will fail and वापस शून्य.
+ * This prevents all writes to the buffer. Any attempt to write
+ * to the buffer after this will fail and return NULL.
  *
  * The caller should call synchronize_rcu() after this.
  */
-व्योम ring_buffer_record_disable_cpu(काष्ठा trace_buffer *buffer, पूर्णांक cpu)
-अणु
-	काष्ठा ring_buffer_per_cpu *cpu_buffer;
+void ring_buffer_record_disable_cpu(struct trace_buffer *buffer, int cpu)
+{
+	struct ring_buffer_per_cpu *cpu_buffer;
 
-	अगर (!cpumask_test_cpu(cpu, buffer->cpumask))
-		वापस;
+	if (!cpumask_test_cpu(cpu, buffer->cpumask))
+		return;
 
 	cpu_buffer = buffer->buffers[cpu];
 	atomic_inc(&cpu_buffer->record_disabled);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(ring_buffer_record_disable_cpu);
 
 /**
- * ring_buffer_record_enable_cpu - enable ग_लिखोs to the buffer
- * @buffer: The ring buffer to enable ग_लिखोs
+ * ring_buffer_record_enable_cpu - enable writes to the buffer
+ * @buffer: The ring buffer to enable writes
  * @cpu: The CPU to enable.
  *
  * Note, multiple disables will need the same number of enables
  * to truly enable the writing (much like preempt_disable).
  */
-व्योम ring_buffer_record_enable_cpu(काष्ठा trace_buffer *buffer, पूर्णांक cpu)
-अणु
-	काष्ठा ring_buffer_per_cpu *cpu_buffer;
+void ring_buffer_record_enable_cpu(struct trace_buffer *buffer, int cpu)
+{
+	struct ring_buffer_per_cpu *cpu_buffer;
 
-	अगर (!cpumask_test_cpu(cpu, buffer->cpumask))
-		वापस;
+	if (!cpumask_test_cpu(cpu, buffer->cpumask))
+		return;
 
 	cpu_buffer = buffer->buffers[cpu];
 	atomic_dec(&cpu_buffer->record_disabled);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(ring_buffer_record_enable_cpu);
 
 /*
  * The total entries in the ring buffer is the running counter
- * of entries entered पूर्णांकo the ring buffer, minus the sum of
- * the entries पढ़ो from the ring buffer and the number of
+ * of entries entered into the ring buffer, minus the sum of
+ * the entries read from the ring buffer and the number of
  * entries that were overwritten.
  */
-अटल अंतरभूत अचिन्हित दीर्घ
-rb_num_of_entries(काष्ठा ring_buffer_per_cpu *cpu_buffer)
-अणु
-	वापस local_पढ़ो(&cpu_buffer->entries) -
-		(local_पढ़ो(&cpu_buffer->overrun) + cpu_buffer->पढ़ो);
-पूर्ण
+static inline unsigned long
+rb_num_of_entries(struct ring_buffer_per_cpu *cpu_buffer)
+{
+	return local_read(&cpu_buffer->entries) -
+		(local_read(&cpu_buffer->overrun) + cpu_buffer->read);
+}
 
 /**
- * ring_buffer_oldest_event_ts - get the oldest event बारtamp from the buffer
+ * ring_buffer_oldest_event_ts - get the oldest event timestamp from the buffer
  * @buffer: The ring buffer
- * @cpu: The per CPU buffer to पढ़ो from.
+ * @cpu: The per CPU buffer to read from.
  */
-u64 ring_buffer_oldest_event_ts(काष्ठा trace_buffer *buffer, पूर्णांक cpu)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा ring_buffer_per_cpu *cpu_buffer;
-	काष्ठा buffer_page *bpage;
+u64 ring_buffer_oldest_event_ts(struct trace_buffer *buffer, int cpu)
+{
+	unsigned long flags;
+	struct ring_buffer_per_cpu *cpu_buffer;
+	struct buffer_page *bpage;
 	u64 ret = 0;
 
-	अगर (!cpumask_test_cpu(cpu, buffer->cpumask))
-		वापस 0;
+	if (!cpumask_test_cpu(cpu, buffer->cpumask))
+		return 0;
 
 	cpu_buffer = buffer->buffers[cpu];
-	raw_spin_lock_irqsave(&cpu_buffer->पढ़ोer_lock, flags);
+	raw_spin_lock_irqsave(&cpu_buffer->reader_lock, flags);
 	/*
-	 * अगर the tail is on पढ़ोer_page, oldest समय stamp is on the पढ़ोer
+	 * if the tail is on reader_page, oldest time stamp is on the reader
 	 * page
 	 */
-	अगर (cpu_buffer->tail_page == cpu_buffer->पढ़ोer_page)
-		bpage = cpu_buffer->पढ़ोer_page;
-	अन्यथा
+	if (cpu_buffer->tail_page == cpu_buffer->reader_page)
+		bpage = cpu_buffer->reader_page;
+	else
 		bpage = rb_set_head_page(cpu_buffer);
-	अगर (bpage)
-		ret = bpage->page->समय_stamp;
-	raw_spin_unlock_irqrestore(&cpu_buffer->पढ़ोer_lock, flags);
+	if (bpage)
+		ret = bpage->page->time_stamp;
+	raw_spin_unlock_irqrestore(&cpu_buffer->reader_lock, flags);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(ring_buffer_oldest_event_ts);
 
 /**
  * ring_buffer_bytes_cpu - get the number of bytes consumed in a cpu buffer
  * @buffer: The ring buffer
- * @cpu: The per CPU buffer to पढ़ो from.
+ * @cpu: The per CPU buffer to read from.
  */
-अचिन्हित दीर्घ ring_buffer_bytes_cpu(काष्ठा trace_buffer *buffer, पूर्णांक cpu)
-अणु
-	काष्ठा ring_buffer_per_cpu *cpu_buffer;
-	अचिन्हित दीर्घ ret;
+unsigned long ring_buffer_bytes_cpu(struct trace_buffer *buffer, int cpu)
+{
+	struct ring_buffer_per_cpu *cpu_buffer;
+	unsigned long ret;
 
-	अगर (!cpumask_test_cpu(cpu, buffer->cpumask))
-		वापस 0;
+	if (!cpumask_test_cpu(cpu, buffer->cpumask))
+		return 0;
 
 	cpu_buffer = buffer->buffers[cpu];
-	ret = local_पढ़ो(&cpu_buffer->entries_bytes) - cpu_buffer->पढ़ो_bytes;
+	ret = local_read(&cpu_buffer->entries_bytes) - cpu_buffer->read_bytes;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(ring_buffer_bytes_cpu);
 
 /**
@@ -4101,102 +4100,102 @@ EXPORT_SYMBOL_GPL(ring_buffer_bytes_cpu);
  * @buffer: The ring buffer
  * @cpu: The per CPU buffer to get the entries from.
  */
-अचिन्हित दीर्घ ring_buffer_entries_cpu(काष्ठा trace_buffer *buffer, पूर्णांक cpu)
-अणु
-	काष्ठा ring_buffer_per_cpu *cpu_buffer;
+unsigned long ring_buffer_entries_cpu(struct trace_buffer *buffer, int cpu)
+{
+	struct ring_buffer_per_cpu *cpu_buffer;
 
-	अगर (!cpumask_test_cpu(cpu, buffer->cpumask))
-		वापस 0;
+	if (!cpumask_test_cpu(cpu, buffer->cpumask))
+		return 0;
 
 	cpu_buffer = buffer->buffers[cpu];
 
-	वापस rb_num_of_entries(cpu_buffer);
-पूर्ण
+	return rb_num_of_entries(cpu_buffer);
+}
 EXPORT_SYMBOL_GPL(ring_buffer_entries_cpu);
 
 /**
  * ring_buffer_overrun_cpu - get the number of overruns caused by the ring
- * buffer wrapping around (only अगर RB_FL_OVERWRITE is on).
+ * buffer wrapping around (only if RB_FL_OVERWRITE is on).
  * @buffer: The ring buffer
  * @cpu: The per CPU buffer to get the number of overruns from
  */
-अचिन्हित दीर्घ ring_buffer_overrun_cpu(काष्ठा trace_buffer *buffer, पूर्णांक cpu)
-अणु
-	काष्ठा ring_buffer_per_cpu *cpu_buffer;
-	अचिन्हित दीर्घ ret;
+unsigned long ring_buffer_overrun_cpu(struct trace_buffer *buffer, int cpu)
+{
+	struct ring_buffer_per_cpu *cpu_buffer;
+	unsigned long ret;
 
-	अगर (!cpumask_test_cpu(cpu, buffer->cpumask))
-		वापस 0;
+	if (!cpumask_test_cpu(cpu, buffer->cpumask))
+		return 0;
 
 	cpu_buffer = buffer->buffers[cpu];
-	ret = local_पढ़ो(&cpu_buffer->overrun);
+	ret = local_read(&cpu_buffer->overrun);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(ring_buffer_overrun_cpu);
 
 /**
  * ring_buffer_commit_overrun_cpu - get the number of overruns caused by
- * commits failing due to the buffer wrapping around जबतक there are uncommitted
- * events, such as during an पूर्णांकerrupt storm.
+ * commits failing due to the buffer wrapping around while there are uncommitted
+ * events, such as during an interrupt storm.
  * @buffer: The ring buffer
  * @cpu: The per CPU buffer to get the number of overruns from
  */
-अचिन्हित दीर्घ
-ring_buffer_commit_overrun_cpu(काष्ठा trace_buffer *buffer, पूर्णांक cpu)
-अणु
-	काष्ठा ring_buffer_per_cpu *cpu_buffer;
-	अचिन्हित दीर्घ ret;
+unsigned long
+ring_buffer_commit_overrun_cpu(struct trace_buffer *buffer, int cpu)
+{
+	struct ring_buffer_per_cpu *cpu_buffer;
+	unsigned long ret;
 
-	अगर (!cpumask_test_cpu(cpu, buffer->cpumask))
-		वापस 0;
+	if (!cpumask_test_cpu(cpu, buffer->cpumask))
+		return 0;
 
 	cpu_buffer = buffer->buffers[cpu];
-	ret = local_पढ़ो(&cpu_buffer->commit_overrun);
+	ret = local_read(&cpu_buffer->commit_overrun);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(ring_buffer_commit_overrun_cpu);
 
 /**
  * ring_buffer_dropped_events_cpu - get the number of dropped events caused by
- * the ring buffer filling up (only अगर RB_FL_OVERWRITE is off).
+ * the ring buffer filling up (only if RB_FL_OVERWRITE is off).
  * @buffer: The ring buffer
  * @cpu: The per CPU buffer to get the number of overruns from
  */
-अचिन्हित दीर्घ
-ring_buffer_dropped_events_cpu(काष्ठा trace_buffer *buffer, पूर्णांक cpu)
-अणु
-	काष्ठा ring_buffer_per_cpu *cpu_buffer;
-	अचिन्हित दीर्घ ret;
+unsigned long
+ring_buffer_dropped_events_cpu(struct trace_buffer *buffer, int cpu)
+{
+	struct ring_buffer_per_cpu *cpu_buffer;
+	unsigned long ret;
 
-	अगर (!cpumask_test_cpu(cpu, buffer->cpumask))
-		वापस 0;
+	if (!cpumask_test_cpu(cpu, buffer->cpumask))
+		return 0;
 
 	cpu_buffer = buffer->buffers[cpu];
-	ret = local_पढ़ो(&cpu_buffer->dropped_events);
+	ret = local_read(&cpu_buffer->dropped_events);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(ring_buffer_dropped_events_cpu);
 
 /**
- * ring_buffer_पढ़ो_events_cpu - get the number of events successfully पढ़ो
+ * ring_buffer_read_events_cpu - get the number of events successfully read
  * @buffer: The ring buffer
- * @cpu: The per CPU buffer to get the number of events पढ़ो
+ * @cpu: The per CPU buffer to get the number of events read
  */
-अचिन्हित दीर्घ
-ring_buffer_पढ़ो_events_cpu(काष्ठा trace_buffer *buffer, पूर्णांक cpu)
-अणु
-	काष्ठा ring_buffer_per_cpu *cpu_buffer;
+unsigned long
+ring_buffer_read_events_cpu(struct trace_buffer *buffer, int cpu)
+{
+	struct ring_buffer_per_cpu *cpu_buffer;
 
-	अगर (!cpumask_test_cpu(cpu, buffer->cpumask))
-		वापस 0;
+	if (!cpumask_test_cpu(cpu, buffer->cpumask))
+		return 0;
 
 	cpu_buffer = buffer->buffers[cpu];
-	वापस cpu_buffer->पढ़ो;
-पूर्ण
-EXPORT_SYMBOL_GPL(ring_buffer_पढ़ो_events_cpu);
+	return cpu_buffer->read;
+}
+EXPORT_SYMBOL_GPL(ring_buffer_read_events_cpu);
 
 /**
  * ring_buffer_entries - get the number of entries in a buffer
@@ -4205,20 +4204,20 @@ EXPORT_SYMBOL_GPL(ring_buffer_पढ़ो_events_cpu);
  * Returns the total number of entries in the ring buffer
  * (all CPU entries)
  */
-अचिन्हित दीर्घ ring_buffer_entries(काष्ठा trace_buffer *buffer)
-अणु
-	काष्ठा ring_buffer_per_cpu *cpu_buffer;
-	अचिन्हित दीर्घ entries = 0;
-	पूर्णांक cpu;
+unsigned long ring_buffer_entries(struct trace_buffer *buffer)
+{
+	struct ring_buffer_per_cpu *cpu_buffer;
+	unsigned long entries = 0;
+	int cpu;
 
-	/* अगर you care about this being correct, lock the buffer */
-	क्रम_each_buffer_cpu(buffer, cpu) अणु
+	/* if you care about this being correct, lock the buffer */
+	for_each_buffer_cpu(buffer, cpu) {
 		cpu_buffer = buffer->buffers[cpu];
 		entries += rb_num_of_entries(cpu_buffer);
-	पूर्ण
+	}
 
-	वापस entries;
-पूर्ण
+	return entries;
+}
 EXPORT_SYMBOL_GPL(ring_buffer_entries);
 
 /**
@@ -4228,42 +4227,42 @@ EXPORT_SYMBOL_GPL(ring_buffer_entries);
  * Returns the total number of overruns in the ring buffer
  * (all CPU entries)
  */
-अचिन्हित दीर्घ ring_buffer_overruns(काष्ठा trace_buffer *buffer)
-अणु
-	काष्ठा ring_buffer_per_cpu *cpu_buffer;
-	अचिन्हित दीर्घ overruns = 0;
-	पूर्णांक cpu;
+unsigned long ring_buffer_overruns(struct trace_buffer *buffer)
+{
+	struct ring_buffer_per_cpu *cpu_buffer;
+	unsigned long overruns = 0;
+	int cpu;
 
-	/* अगर you care about this being correct, lock the buffer */
-	क्रम_each_buffer_cpu(buffer, cpu) अणु
+	/* if you care about this being correct, lock the buffer */
+	for_each_buffer_cpu(buffer, cpu) {
 		cpu_buffer = buffer->buffers[cpu];
-		overruns += local_पढ़ो(&cpu_buffer->overrun);
-	पूर्ण
+		overruns += local_read(&cpu_buffer->overrun);
+	}
 
-	वापस overruns;
-पूर्ण
+	return overruns;
+}
 EXPORT_SYMBOL_GPL(ring_buffer_overruns);
 
-अटल व्योम rb_iter_reset(काष्ठा ring_buffer_iter *iter)
-अणु
-	काष्ठा ring_buffer_per_cpu *cpu_buffer = iter->cpu_buffer;
+static void rb_iter_reset(struct ring_buffer_iter *iter)
+{
+	struct ring_buffer_per_cpu *cpu_buffer = iter->cpu_buffer;
 
 	/* Iterator usage is expected to have record disabled */
-	iter->head_page = cpu_buffer->पढ़ोer_page;
-	iter->head = cpu_buffer->पढ़ोer_page->पढ़ो;
+	iter->head_page = cpu_buffer->reader_page;
+	iter->head = cpu_buffer->reader_page->read;
 	iter->next_event = iter->head;
 
-	iter->cache_पढ़ोer_page = iter->head_page;
-	iter->cache_पढ़ो = cpu_buffer->पढ़ो;
+	iter->cache_reader_page = iter->head_page;
+	iter->cache_read = cpu_buffer->read;
 
-	अगर (iter->head) अणु
-		iter->पढ़ो_stamp = cpu_buffer->पढ़ो_stamp;
-		iter->page_stamp = cpu_buffer->पढ़ोer_page->page->समय_stamp;
-	पूर्ण अन्यथा अणु
-		iter->पढ़ो_stamp = iter->head_page->page->समय_stamp;
-		iter->page_stamp = iter->पढ़ो_stamp;
-	पूर्ण
-पूर्ण
+	if (iter->head) {
+		iter->read_stamp = cpu_buffer->read_stamp;
+		iter->page_stamp = cpu_buffer->reader_page->page->time_stamp;
+	} else {
+		iter->read_stamp = iter->head_page->page->time_stamp;
+		iter->page_stamp = iter->read_stamp;
+	}
+}
 
 /**
  * ring_buffer_iter_reset - reset an iterator
@@ -4272,138 +4271,138 @@ EXPORT_SYMBOL_GPL(ring_buffer_overruns);
  * Resets the iterator, so that it will start from the beginning
  * again.
  */
-व्योम ring_buffer_iter_reset(काष्ठा ring_buffer_iter *iter)
-अणु
-	काष्ठा ring_buffer_per_cpu *cpu_buffer;
-	अचिन्हित दीर्घ flags;
+void ring_buffer_iter_reset(struct ring_buffer_iter *iter)
+{
+	struct ring_buffer_per_cpu *cpu_buffer;
+	unsigned long flags;
 
-	अगर (!iter)
-		वापस;
+	if (!iter)
+		return;
 
 	cpu_buffer = iter->cpu_buffer;
 
-	raw_spin_lock_irqsave(&cpu_buffer->पढ़ोer_lock, flags);
+	raw_spin_lock_irqsave(&cpu_buffer->reader_lock, flags);
 	rb_iter_reset(iter);
-	raw_spin_unlock_irqrestore(&cpu_buffer->पढ़ोer_lock, flags);
-पूर्ण
+	raw_spin_unlock_irqrestore(&cpu_buffer->reader_lock, flags);
+}
 EXPORT_SYMBOL_GPL(ring_buffer_iter_reset);
 
 /**
- * ring_buffer_iter_empty - check अगर an iterator has no more to पढ़ो
+ * ring_buffer_iter_empty - check if an iterator has no more to read
  * @iter: The iterator to check
  */
-पूर्णांक ring_buffer_iter_empty(काष्ठा ring_buffer_iter *iter)
-अणु
-	काष्ठा ring_buffer_per_cpu *cpu_buffer;
-	काष्ठा buffer_page *पढ़ोer;
-	काष्ठा buffer_page *head_page;
-	काष्ठा buffer_page *commit_page;
-	काष्ठा buffer_page *curr_commit_page;
-	अचिन्हित commit;
+int ring_buffer_iter_empty(struct ring_buffer_iter *iter)
+{
+	struct ring_buffer_per_cpu *cpu_buffer;
+	struct buffer_page *reader;
+	struct buffer_page *head_page;
+	struct buffer_page *commit_page;
+	struct buffer_page *curr_commit_page;
+	unsigned commit;
 	u64 curr_commit_ts;
 	u64 commit_ts;
 
 	cpu_buffer = iter->cpu_buffer;
-	पढ़ोer = cpu_buffer->पढ़ोer_page;
+	reader = cpu_buffer->reader_page;
 	head_page = cpu_buffer->head_page;
 	commit_page = cpu_buffer->commit_page;
-	commit_ts = commit_page->page->समय_stamp;
+	commit_ts = commit_page->page->time_stamp;
 
 	/*
-	 * When the ग_लिखोr goes across pages, it issues a cmpxchg which
+	 * When the writer goes across pages, it issues a cmpxchg which
 	 * is a mb(), which will synchronize with the rmb here.
 	 * (see rb_tail_page_update())
 	 */
 	smp_rmb();
 	commit = rb_page_commit(commit_page);
-	/* We want to make sure that the commit page करोesn't change */
+	/* We want to make sure that the commit page doesn't change */
 	smp_rmb();
 
 	/* Make sure commit page didn't change */
 	curr_commit_page = READ_ONCE(cpu_buffer->commit_page);
-	curr_commit_ts = READ_ONCE(curr_commit_page->page->समय_stamp);
+	curr_commit_ts = READ_ONCE(curr_commit_page->page->time_stamp);
 
 	/* If the commit page changed, then there's more data */
-	अगर (curr_commit_page != commit_page ||
+	if (curr_commit_page != commit_page ||
 	    curr_commit_ts != commit_ts)
-		वापस 0;
+		return 0;
 
-	/* Still racy, as it may वापस a false positive, but that's OK */
-	वापस ((iter->head_page == commit_page && iter->head >= commit) ||
-		(iter->head_page == पढ़ोer && commit_page == head_page &&
-		 head_page->पढ़ो == commit &&
-		 iter->head == rb_page_commit(cpu_buffer->पढ़ोer_page)));
-पूर्ण
+	/* Still racy, as it may return a false positive, but that's OK */
+	return ((iter->head_page == commit_page && iter->head >= commit) ||
+		(iter->head_page == reader && commit_page == head_page &&
+		 head_page->read == commit &&
+		 iter->head == rb_page_commit(cpu_buffer->reader_page)));
+}
 EXPORT_SYMBOL_GPL(ring_buffer_iter_empty);
 
-अटल व्योम
-rb_update_पढ़ो_stamp(काष्ठा ring_buffer_per_cpu *cpu_buffer,
-		     काष्ठा ring_buffer_event *event)
-अणु
+static void
+rb_update_read_stamp(struct ring_buffer_per_cpu *cpu_buffer,
+		     struct ring_buffer_event *event)
+{
 	u64 delta;
 
-	चयन (event->type_len) अणु
-	हाल RINGBUF_TYPE_PADDING:
-		वापस;
+	switch (event->type_len) {
+	case RINGBUF_TYPE_PADDING:
+		return;
 
-	हाल RINGBUF_TYPE_TIME_EXTEND:
-		delta = rb_event_समय_stamp(event);
-		cpu_buffer->पढ़ो_stamp += delta;
-		वापस;
+	case RINGBUF_TYPE_TIME_EXTEND:
+		delta = rb_event_time_stamp(event);
+		cpu_buffer->read_stamp += delta;
+		return;
 
-	हाल RINGBUF_TYPE_TIME_STAMP:
-		delta = rb_event_समय_stamp(event);
-		cpu_buffer->पढ़ो_stamp = delta;
-		वापस;
+	case RINGBUF_TYPE_TIME_STAMP:
+		delta = rb_event_time_stamp(event);
+		cpu_buffer->read_stamp = delta;
+		return;
 
-	हाल RINGBUF_TYPE_DATA:
-		cpu_buffer->पढ़ो_stamp += event->समय_delta;
-		वापस;
+	case RINGBUF_TYPE_DATA:
+		cpu_buffer->read_stamp += event->time_delta;
+		return;
 
-	शेष:
+	default:
 		RB_WARN_ON(cpu_buffer, 1);
-	पूर्ण
-	वापस;
-पूर्ण
+	}
+	return;
+}
 
-अटल व्योम
-rb_update_iter_पढ़ो_stamp(काष्ठा ring_buffer_iter *iter,
-			  काष्ठा ring_buffer_event *event)
-अणु
+static void
+rb_update_iter_read_stamp(struct ring_buffer_iter *iter,
+			  struct ring_buffer_event *event)
+{
 	u64 delta;
 
-	चयन (event->type_len) अणु
-	हाल RINGBUF_TYPE_PADDING:
-		वापस;
+	switch (event->type_len) {
+	case RINGBUF_TYPE_PADDING:
+		return;
 
-	हाल RINGBUF_TYPE_TIME_EXTEND:
-		delta = rb_event_समय_stamp(event);
-		iter->पढ़ो_stamp += delta;
-		वापस;
+	case RINGBUF_TYPE_TIME_EXTEND:
+		delta = rb_event_time_stamp(event);
+		iter->read_stamp += delta;
+		return;
 
-	हाल RINGBUF_TYPE_TIME_STAMP:
-		delta = rb_event_समय_stamp(event);
-		iter->पढ़ो_stamp = delta;
-		वापस;
+	case RINGBUF_TYPE_TIME_STAMP:
+		delta = rb_event_time_stamp(event);
+		iter->read_stamp = delta;
+		return;
 
-	हाल RINGBUF_TYPE_DATA:
-		iter->पढ़ो_stamp += event->समय_delta;
-		वापस;
+	case RINGBUF_TYPE_DATA:
+		iter->read_stamp += event->time_delta;
+		return;
 
-	शेष:
+	default:
 		RB_WARN_ON(iter->cpu_buffer, 1);
-	पूर्ण
-	वापस;
-पूर्ण
+	}
+	return;
+}
 
-अटल काष्ठा buffer_page *
-rb_get_पढ़ोer_page(काष्ठा ring_buffer_per_cpu *cpu_buffer)
-अणु
-	काष्ठा buffer_page *पढ़ोer = शून्य;
-	अचिन्हित दीर्घ overग_लिखो;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक nr_loops = 0;
-	पूर्णांक ret;
+static struct buffer_page *
+rb_get_reader_page(struct ring_buffer_per_cpu *cpu_buffer)
+{
+	struct buffer_page *reader = NULL;
+	unsigned long overwrite;
+	unsigned long flags;
+	int nr_loops = 0;
+	int ret;
 
 	local_irq_save(flags);
 	arch_spin_lock(&cpu_buffer->lock);
@@ -4411,543 +4410,543 @@ rb_get_पढ़ोer_page(काष्ठा ring_buffer_per_cpu *cpu_buffer)
  again:
 	/*
 	 * This should normally only loop twice. But because the
-	 * start of the पढ़ोer inserts an empty page, it causes
-	 * a हाल where we will loop three बार. There should be no
-	 * reason to loop four बार (that I know of).
+	 * start of the reader inserts an empty page, it causes
+	 * a case where we will loop three times. There should be no
+	 * reason to loop four times (that I know of).
 	 */
-	अगर (RB_WARN_ON(cpu_buffer, ++nr_loops > 3)) अणु
-		पढ़ोer = शून्य;
-		जाओ out;
-	पूर्ण
+	if (RB_WARN_ON(cpu_buffer, ++nr_loops > 3)) {
+		reader = NULL;
+		goto out;
+	}
 
-	पढ़ोer = cpu_buffer->पढ़ोer_page;
+	reader = cpu_buffer->reader_page;
 
-	/* If there's more to पढ़ो, वापस this page */
-	अगर (cpu_buffer->पढ़ोer_page->पढ़ो < rb_page_size(पढ़ोer))
-		जाओ out;
+	/* If there's more to read, return this page */
+	if (cpu_buffer->reader_page->read < rb_page_size(reader))
+		goto out;
 
 	/* Never should we have an index greater than the size */
-	अगर (RB_WARN_ON(cpu_buffer,
-		       cpu_buffer->पढ़ोer_page->पढ़ो > rb_page_size(पढ़ोer)))
-		जाओ out;
+	if (RB_WARN_ON(cpu_buffer,
+		       cpu_buffer->reader_page->read > rb_page_size(reader)))
+		goto out;
 
-	/* check अगर we caught up to the tail */
-	पढ़ोer = शून्य;
-	अगर (cpu_buffer->commit_page == cpu_buffer->पढ़ोer_page)
-		जाओ out;
+	/* check if we caught up to the tail */
+	reader = NULL;
+	if (cpu_buffer->commit_page == cpu_buffer->reader_page)
+		goto out;
 
-	/* Don't bother swapping अगर the ring buffer is empty */
-	अगर (rb_num_of_entries(cpu_buffer) == 0)
-		जाओ out;
+	/* Don't bother swapping if the ring buffer is empty */
+	if (rb_num_of_entries(cpu_buffer) == 0)
+		goto out;
 
 	/*
-	 * Reset the पढ़ोer page to size zero.
+	 * Reset the reader page to size zero.
 	 */
-	local_set(&cpu_buffer->पढ़ोer_page->ग_लिखो, 0);
-	local_set(&cpu_buffer->पढ़ोer_page->entries, 0);
-	local_set(&cpu_buffer->पढ़ोer_page->page->commit, 0);
-	cpu_buffer->पढ़ोer_page->real_end = 0;
+	local_set(&cpu_buffer->reader_page->write, 0);
+	local_set(&cpu_buffer->reader_page->entries, 0);
+	local_set(&cpu_buffer->reader_page->page->commit, 0);
+	cpu_buffer->reader_page->real_end = 0;
 
  spin:
 	/*
-	 * Splice the empty पढ़ोer page पूर्णांकo the list around the head.
+	 * Splice the empty reader page into the list around the head.
 	 */
-	पढ़ोer = rb_set_head_page(cpu_buffer);
-	अगर (!पढ़ोer)
-		जाओ out;
-	cpu_buffer->पढ़ोer_page->list.next = rb_list_head(पढ़ोer->list.next);
-	cpu_buffer->पढ़ोer_page->list.prev = पढ़ोer->list.prev;
+	reader = rb_set_head_page(cpu_buffer);
+	if (!reader)
+		goto out;
+	cpu_buffer->reader_page->list.next = rb_list_head(reader->list.next);
+	cpu_buffer->reader_page->list.prev = reader->list.prev;
 
 	/*
-	 * cpu_buffer->pages just needs to poपूर्णांक to the buffer, it
-	 *  has no specअगरic buffer page to poपूर्णांक to. Lets move it out
-	 *  of our way so we करोn't accidentally swap it.
+	 * cpu_buffer->pages just needs to point to the buffer, it
+	 *  has no specific buffer page to point to. Lets move it out
+	 *  of our way so we don't accidentally swap it.
 	 */
-	cpu_buffer->pages = पढ़ोer->list.prev;
+	cpu_buffer->pages = reader->list.prev;
 
-	/* The पढ़ोer page will be poपूर्णांकing to the new head */
-	rb_set_list_to_head(&cpu_buffer->पढ़ोer_page->list);
+	/* The reader page will be pointing to the new head */
+	rb_set_list_to_head(&cpu_buffer->reader_page->list);
 
 	/*
-	 * We want to make sure we पढ़ो the overruns after we set up our
-	 * poपूर्णांकers to the next object. The ग_लिखोr side करोes a
-	 * cmpxchg to cross pages which acts as the mb on the ग_लिखोr
-	 * side. Note, the पढ़ोer will स्थिरantly fail the swap
-	 * जबतक the ग_लिखोr is updating the poपूर्णांकers, so this
-	 * guarantees that the overग_लिखो recorded here is the one we
+	 * We want to make sure we read the overruns after we set up our
+	 * pointers to the next object. The writer side does a
+	 * cmpxchg to cross pages which acts as the mb on the writer
+	 * side. Note, the reader will constantly fail the swap
+	 * while the writer is updating the pointers, so this
+	 * guarantees that the overwrite recorded here is the one we
 	 * want to compare with the last_overrun.
 	 */
 	smp_mb();
-	overग_लिखो = local_पढ़ो(&(cpu_buffer->overrun));
+	overwrite = local_read(&(cpu_buffer->overrun));
 
 	/*
 	 * Here's the tricky part.
 	 *
-	 * We need to move the poपूर्णांकer past the header page.
-	 * But we can only करो that अगर a ग_लिखोr is not currently
-	 * moving it. The page beक्रमe the header page has the
-	 * flag bit '1' set अगर it is poपूर्णांकing to the page we want.
-	 * but अगर the ग_लिखोr is in the process of moving it
+	 * We need to move the pointer past the header page.
+	 * But we can only do that if a writer is not currently
+	 * moving it. The page before the header page has the
+	 * flag bit '1' set if it is pointing to the page we want.
+	 * but if the writer is in the process of moving it
 	 * than it will be '2' or already moved '0'.
 	 */
 
-	ret = rb_head_page_replace(पढ़ोer, cpu_buffer->पढ़ोer_page);
+	ret = rb_head_page_replace(reader, cpu_buffer->reader_page);
 
 	/*
 	 * If we did not convert it, then we must try again.
 	 */
-	अगर (!ret)
-		जाओ spin;
+	if (!ret)
+		goto spin;
 
 	/*
 	 * Yay! We succeeded in replacing the page.
 	 *
-	 * Now make the new head poपूर्णांक back to the पढ़ोer page.
+	 * Now make the new head point back to the reader page.
 	 */
-	rb_list_head(पढ़ोer->list.next)->prev = &cpu_buffer->पढ़ोer_page->list;
+	rb_list_head(reader->list.next)->prev = &cpu_buffer->reader_page->list;
 	rb_inc_page(&cpu_buffer->head_page);
 
-	local_inc(&cpu_buffer->pages_पढ़ो);
+	local_inc(&cpu_buffer->pages_read);
 
-	/* Finally update the पढ़ोer page to the new head */
-	cpu_buffer->पढ़ोer_page = पढ़ोer;
-	cpu_buffer->पढ़ोer_page->पढ़ो = 0;
+	/* Finally update the reader page to the new head */
+	cpu_buffer->reader_page = reader;
+	cpu_buffer->reader_page->read = 0;
 
-	अगर (overग_लिखो != cpu_buffer->last_overrun) अणु
-		cpu_buffer->lost_events = overग_लिखो - cpu_buffer->last_overrun;
-		cpu_buffer->last_overrun = overग_लिखो;
-	पूर्ण
+	if (overwrite != cpu_buffer->last_overrun) {
+		cpu_buffer->lost_events = overwrite - cpu_buffer->last_overrun;
+		cpu_buffer->last_overrun = overwrite;
+	}
 
-	जाओ again;
+	goto again;
 
  out:
-	/* Update the पढ़ो_stamp on the first event */
-	अगर (पढ़ोer && पढ़ोer->पढ़ो == 0)
-		cpu_buffer->पढ़ो_stamp = पढ़ोer->page->समय_stamp;
+	/* Update the read_stamp on the first event */
+	if (reader && reader->read == 0)
+		cpu_buffer->read_stamp = reader->page->time_stamp;
 
 	arch_spin_unlock(&cpu_buffer->lock);
 	local_irq_restore(flags);
 
-	वापस पढ़ोer;
-पूर्ण
+	return reader;
+}
 
-अटल व्योम rb_advance_पढ़ोer(काष्ठा ring_buffer_per_cpu *cpu_buffer)
-अणु
-	काष्ठा ring_buffer_event *event;
-	काष्ठा buffer_page *पढ़ोer;
-	अचिन्हित length;
+static void rb_advance_reader(struct ring_buffer_per_cpu *cpu_buffer)
+{
+	struct ring_buffer_event *event;
+	struct buffer_page *reader;
+	unsigned length;
 
-	पढ़ोer = rb_get_पढ़ोer_page(cpu_buffer);
+	reader = rb_get_reader_page(cpu_buffer);
 
 	/* This function should not be called when buffer is empty */
-	अगर (RB_WARN_ON(cpu_buffer, !पढ़ोer))
-		वापस;
+	if (RB_WARN_ON(cpu_buffer, !reader))
+		return;
 
-	event = rb_पढ़ोer_event(cpu_buffer);
+	event = rb_reader_event(cpu_buffer);
 
-	अगर (event->type_len <= RINGBUF_TYPE_DATA_TYPE_LEN_MAX)
-		cpu_buffer->पढ़ो++;
+	if (event->type_len <= RINGBUF_TYPE_DATA_TYPE_LEN_MAX)
+		cpu_buffer->read++;
 
-	rb_update_पढ़ो_stamp(cpu_buffer, event);
+	rb_update_read_stamp(cpu_buffer, event);
 
 	length = rb_event_length(event);
-	cpu_buffer->पढ़ोer_page->पढ़ो += length;
-पूर्ण
+	cpu_buffer->reader_page->read += length;
+}
 
-अटल व्योम rb_advance_iter(काष्ठा ring_buffer_iter *iter)
-अणु
-	काष्ठा ring_buffer_per_cpu *cpu_buffer;
+static void rb_advance_iter(struct ring_buffer_iter *iter)
+{
+	struct ring_buffer_per_cpu *cpu_buffer;
 
 	cpu_buffer = iter->cpu_buffer;
 
 	/* If head == next_event then we need to jump to the next event */
-	अगर (iter->head == iter->next_event) अणु
-		/* If the event माला_लो overwritten again, there's nothing to करो */
-		अगर (rb_iter_head_event(iter) == शून्य)
-			वापस;
-	पूर्ण
+	if (iter->head == iter->next_event) {
+		/* If the event gets overwritten again, there's nothing to do */
+		if (rb_iter_head_event(iter) == NULL)
+			return;
+	}
 
 	iter->head = iter->next_event;
 
 	/*
-	 * Check अगर we are at the end of the buffer.
+	 * Check if we are at the end of the buffer.
 	 */
-	अगर (iter->next_event >= rb_page_size(iter->head_page)) अणु
+	if (iter->next_event >= rb_page_size(iter->head_page)) {
 		/* discarded commits can make the page empty */
-		अगर (iter->head_page == cpu_buffer->commit_page)
-			वापस;
+		if (iter->head_page == cpu_buffer->commit_page)
+			return;
 		rb_inc_iter(iter);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	rb_update_iter_पढ़ो_stamp(iter, iter->event);
-पूर्ण
+	rb_update_iter_read_stamp(iter, iter->event);
+}
 
-अटल पूर्णांक rb_lost_events(काष्ठा ring_buffer_per_cpu *cpu_buffer)
-अणु
-	वापस cpu_buffer->lost_events;
-पूर्ण
+static int rb_lost_events(struct ring_buffer_per_cpu *cpu_buffer)
+{
+	return cpu_buffer->lost_events;
+}
 
-अटल काष्ठा ring_buffer_event *
-rb_buffer_peek(काष्ठा ring_buffer_per_cpu *cpu_buffer, u64 *ts,
-	       अचिन्हित दीर्घ *lost_events)
-अणु
-	काष्ठा ring_buffer_event *event;
-	काष्ठा buffer_page *पढ़ोer;
-	पूर्णांक nr_loops = 0;
+static struct ring_buffer_event *
+rb_buffer_peek(struct ring_buffer_per_cpu *cpu_buffer, u64 *ts,
+	       unsigned long *lost_events)
+{
+	struct ring_buffer_event *event;
+	struct buffer_page *reader;
+	int nr_loops = 0;
 
-	अगर (ts)
+	if (ts)
 		*ts = 0;
  again:
 	/*
-	 * We repeat when a समय extend is encountered.
-	 * Since the समय extend is always attached to a data event,
+	 * We repeat when a time extend is encountered.
+	 * Since the time extend is always attached to a data event,
 	 * we should never loop more than once.
 	 * (We never hit the following condition more than twice).
 	 */
-	अगर (RB_WARN_ON(cpu_buffer, ++nr_loops > 2))
-		वापस शून्य;
+	if (RB_WARN_ON(cpu_buffer, ++nr_loops > 2))
+		return NULL;
 
-	पढ़ोer = rb_get_पढ़ोer_page(cpu_buffer);
-	अगर (!पढ़ोer)
-		वापस शून्य;
+	reader = rb_get_reader_page(cpu_buffer);
+	if (!reader)
+		return NULL;
 
-	event = rb_पढ़ोer_event(cpu_buffer);
+	event = rb_reader_event(cpu_buffer);
 
-	चयन (event->type_len) अणु
-	हाल RINGBUF_TYPE_PADDING:
-		अगर (rb_null_event(event))
+	switch (event->type_len) {
+	case RINGBUF_TYPE_PADDING:
+		if (rb_null_event(event))
 			RB_WARN_ON(cpu_buffer, 1);
 		/*
-		 * Because the ग_लिखोr could be discarding every
+		 * Because the writer could be discarding every
 		 * event it creates (which would probably be bad)
-		 * अगर we were to go back to "again" then we may never
+		 * if we were to go back to "again" then we may never
 		 * catch up, and will trigger the warn on, or lock
 		 * the box. Return the padding, and we will release
 		 * the current locks, and try again.
 		 */
-		वापस event;
+		return event;
 
-	हाल RINGBUF_TYPE_TIME_EXTEND:
+	case RINGBUF_TYPE_TIME_EXTEND:
 		/* Internal data, OK to advance */
-		rb_advance_पढ़ोer(cpu_buffer);
-		जाओ again;
+		rb_advance_reader(cpu_buffer);
+		goto again;
 
-	हाल RINGBUF_TYPE_TIME_STAMP:
-		अगर (ts) अणु
-			*ts = rb_event_समय_stamp(event);
-			ring_buffer_normalize_समय_stamp(cpu_buffer->buffer,
+	case RINGBUF_TYPE_TIME_STAMP:
+		if (ts) {
+			*ts = rb_event_time_stamp(event);
+			ring_buffer_normalize_time_stamp(cpu_buffer->buffer,
 							 cpu_buffer->cpu, ts);
-		पूर्ण
+		}
 		/* Internal data, OK to advance */
-		rb_advance_पढ़ोer(cpu_buffer);
-		जाओ again;
+		rb_advance_reader(cpu_buffer);
+		goto again;
 
-	हाल RINGBUF_TYPE_DATA:
-		अगर (ts && !(*ts)) अणु
-			*ts = cpu_buffer->पढ़ो_stamp + event->समय_delta;
-			ring_buffer_normalize_समय_stamp(cpu_buffer->buffer,
+	case RINGBUF_TYPE_DATA:
+		if (ts && !(*ts)) {
+			*ts = cpu_buffer->read_stamp + event->time_delta;
+			ring_buffer_normalize_time_stamp(cpu_buffer->buffer,
 							 cpu_buffer->cpu, ts);
-		पूर्ण
-		अगर (lost_events)
+		}
+		if (lost_events)
 			*lost_events = rb_lost_events(cpu_buffer);
-		वापस event;
+		return event;
 
-	शेष:
+	default:
 		RB_WARN_ON(cpu_buffer, 1);
-	पूर्ण
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 EXPORT_SYMBOL_GPL(ring_buffer_peek);
 
-अटल काष्ठा ring_buffer_event *
-rb_iter_peek(काष्ठा ring_buffer_iter *iter, u64 *ts)
-अणु
-	काष्ठा trace_buffer *buffer;
-	काष्ठा ring_buffer_per_cpu *cpu_buffer;
-	काष्ठा ring_buffer_event *event;
-	पूर्णांक nr_loops = 0;
+static struct ring_buffer_event *
+rb_iter_peek(struct ring_buffer_iter *iter, u64 *ts)
+{
+	struct trace_buffer *buffer;
+	struct ring_buffer_per_cpu *cpu_buffer;
+	struct ring_buffer_event *event;
+	int nr_loops = 0;
 
-	अगर (ts)
+	if (ts)
 		*ts = 0;
 
 	cpu_buffer = iter->cpu_buffer;
 	buffer = cpu_buffer->buffer;
 
 	/*
-	 * Check अगर someone perक्रमmed a consuming पढ़ो to
-	 * the buffer. A consuming पढ़ो invalidates the iterator
-	 * and we need to reset the iterator in this हाल.
+	 * Check if someone performed a consuming read to
+	 * the buffer. A consuming read invalidates the iterator
+	 * and we need to reset the iterator in this case.
 	 */
-	अगर (unlikely(iter->cache_पढ़ो != cpu_buffer->पढ़ो ||
-		     iter->cache_पढ़ोer_page != cpu_buffer->पढ़ोer_page))
+	if (unlikely(iter->cache_read != cpu_buffer->read ||
+		     iter->cache_reader_page != cpu_buffer->reader_page))
 		rb_iter_reset(iter);
 
  again:
-	अगर (ring_buffer_iter_empty(iter))
-		वापस शून्य;
+	if (ring_buffer_iter_empty(iter))
+		return NULL;
 
 	/*
-	 * As the ग_लिखोr can mess with what the iterator is trying
-	 * to पढ़ो, just give up अगर we fail to get an event after
-	 * three tries. The iterator is not as reliable when पढ़ोing
-	 * the ring buffer with an active ग_लिखो as the consumer is.
-	 * Do not warn अगर the three failures is reached.
+	 * As the writer can mess with what the iterator is trying
+	 * to read, just give up if we fail to get an event after
+	 * three tries. The iterator is not as reliable when reading
+	 * the ring buffer with an active write as the consumer is.
+	 * Do not warn if the three failures is reached.
 	 */
-	अगर (++nr_loops > 3)
-		वापस शून्य;
+	if (++nr_loops > 3)
+		return NULL;
 
-	अगर (rb_per_cpu_empty(cpu_buffer))
-		वापस शून्य;
+	if (rb_per_cpu_empty(cpu_buffer))
+		return NULL;
 
-	अगर (iter->head >= rb_page_size(iter->head_page)) अणु
+	if (iter->head >= rb_page_size(iter->head_page)) {
 		rb_inc_iter(iter);
-		जाओ again;
-	पूर्ण
+		goto again;
+	}
 
 	event = rb_iter_head_event(iter);
-	अगर (!event)
-		जाओ again;
+	if (!event)
+		goto again;
 
-	चयन (event->type_len) अणु
-	हाल RINGBUF_TYPE_PADDING:
-		अगर (rb_null_event(event)) अणु
+	switch (event->type_len) {
+	case RINGBUF_TYPE_PADDING:
+		if (rb_null_event(event)) {
 			rb_inc_iter(iter);
-			जाओ again;
-		पूर्ण
+			goto again;
+		}
 		rb_advance_iter(iter);
-		वापस event;
+		return event;
 
-	हाल RINGBUF_TYPE_TIME_EXTEND:
+	case RINGBUF_TYPE_TIME_EXTEND:
 		/* Internal data, OK to advance */
 		rb_advance_iter(iter);
-		जाओ again;
+		goto again;
 
-	हाल RINGBUF_TYPE_TIME_STAMP:
-		अगर (ts) अणु
-			*ts = rb_event_समय_stamp(event);
-			ring_buffer_normalize_समय_stamp(cpu_buffer->buffer,
+	case RINGBUF_TYPE_TIME_STAMP:
+		if (ts) {
+			*ts = rb_event_time_stamp(event);
+			ring_buffer_normalize_time_stamp(cpu_buffer->buffer,
 							 cpu_buffer->cpu, ts);
-		पूर्ण
+		}
 		/* Internal data, OK to advance */
 		rb_advance_iter(iter);
-		जाओ again;
+		goto again;
 
-	हाल RINGBUF_TYPE_DATA:
-		अगर (ts && !(*ts)) अणु
-			*ts = iter->पढ़ो_stamp + event->समय_delta;
-			ring_buffer_normalize_समय_stamp(buffer,
+	case RINGBUF_TYPE_DATA:
+		if (ts && !(*ts)) {
+			*ts = iter->read_stamp + event->time_delta;
+			ring_buffer_normalize_time_stamp(buffer,
 							 cpu_buffer->cpu, ts);
-		पूर्ण
-		वापस event;
+		}
+		return event;
 
-	शेष:
+	default:
 		RB_WARN_ON(cpu_buffer, 1);
-	पूर्ण
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 EXPORT_SYMBOL_GPL(ring_buffer_iter_peek);
 
-अटल अंतरभूत bool rb_पढ़ोer_lock(काष्ठा ring_buffer_per_cpu *cpu_buffer)
-अणु
-	अगर (likely(!in_nmi())) अणु
-		raw_spin_lock(&cpu_buffer->पढ़ोer_lock);
-		वापस true;
-	पूर्ण
+static inline bool rb_reader_lock(struct ring_buffer_per_cpu *cpu_buffer)
+{
+	if (likely(!in_nmi())) {
+		raw_spin_lock(&cpu_buffer->reader_lock);
+		return true;
+	}
 
 	/*
 	 * If an NMI die dumps out the content of the ring buffer
-	 * trylock must be used to prevent a deadlock अगर the NMI
+	 * trylock must be used to prevent a deadlock if the NMI
 	 * preempted a task that holds the ring buffer locks. If
-	 * we get the lock then all is fine, अगर not, then जारी
-	 * to करो the पढ़ो, but this can corrupt the ring buffer,
-	 * so it must be permanently disabled from future ग_लिखोs.
+	 * we get the lock then all is fine, if not, then continue
+	 * to do the read, but this can corrupt the ring buffer,
+	 * so it must be permanently disabled from future writes.
 	 * Reading from NMI is a oneshot deal.
 	 */
-	अगर (raw_spin_trylock(&cpu_buffer->पढ़ोer_lock))
-		वापस true;
+	if (raw_spin_trylock(&cpu_buffer->reader_lock))
+		return true;
 
 	/* Continue without locking, but disable the ring buffer */
 	atomic_inc(&cpu_buffer->record_disabled);
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल अंतरभूत व्योम
-rb_पढ़ोer_unlock(काष्ठा ring_buffer_per_cpu *cpu_buffer, bool locked)
-अणु
-	अगर (likely(locked))
-		raw_spin_unlock(&cpu_buffer->पढ़ोer_lock);
-	वापस;
-पूर्ण
+static inline void
+rb_reader_unlock(struct ring_buffer_per_cpu *cpu_buffer, bool locked)
+{
+	if (likely(locked))
+		raw_spin_unlock(&cpu_buffer->reader_lock);
+	return;
+}
 
 /**
- * ring_buffer_peek - peek at the next event to be पढ़ो
- * @buffer: The ring buffer to पढ़ो
+ * ring_buffer_peek - peek at the next event to be read
+ * @buffer: The ring buffer to read
  * @cpu: The cpu to peak at
- * @ts: The बारtamp counter of this event.
- * @lost_events: a variable to store अगर events were lost (may be शून्य)
+ * @ts: The timestamp counter of this event.
+ * @lost_events: a variable to store if events were lost (may be NULL)
  *
- * This will वापस the event that will be पढ़ो next, but करोes
+ * This will return the event that will be read next, but does
  * not consume the data.
  */
-काष्ठा ring_buffer_event *
-ring_buffer_peek(काष्ठा trace_buffer *buffer, पूर्णांक cpu, u64 *ts,
-		 अचिन्हित दीर्घ *lost_events)
-अणु
-	काष्ठा ring_buffer_per_cpu *cpu_buffer = buffer->buffers[cpu];
-	काष्ठा ring_buffer_event *event;
-	अचिन्हित दीर्घ flags;
-	bool करोlock;
+struct ring_buffer_event *
+ring_buffer_peek(struct trace_buffer *buffer, int cpu, u64 *ts,
+		 unsigned long *lost_events)
+{
+	struct ring_buffer_per_cpu *cpu_buffer = buffer->buffers[cpu];
+	struct ring_buffer_event *event;
+	unsigned long flags;
+	bool dolock;
 
-	अगर (!cpumask_test_cpu(cpu, buffer->cpumask))
-		वापस शून्य;
+	if (!cpumask_test_cpu(cpu, buffer->cpumask))
+		return NULL;
 
  again:
 	local_irq_save(flags);
-	करोlock = rb_पढ़ोer_lock(cpu_buffer);
+	dolock = rb_reader_lock(cpu_buffer);
 	event = rb_buffer_peek(cpu_buffer, ts, lost_events);
-	अगर (event && event->type_len == RINGBUF_TYPE_PADDING)
-		rb_advance_पढ़ोer(cpu_buffer);
-	rb_पढ़ोer_unlock(cpu_buffer, करोlock);
+	if (event && event->type_len == RINGBUF_TYPE_PADDING)
+		rb_advance_reader(cpu_buffer);
+	rb_reader_unlock(cpu_buffer, dolock);
 	local_irq_restore(flags);
 
-	अगर (event && event->type_len == RINGBUF_TYPE_PADDING)
-		जाओ again;
+	if (event && event->type_len == RINGBUF_TYPE_PADDING)
+		goto again;
 
-	वापस event;
-पूर्ण
+	return event;
+}
 
-/** ring_buffer_iter_dropped - report अगर there are dropped events
+/** ring_buffer_iter_dropped - report if there are dropped events
  * @iter: The ring buffer iterator
  *
- * Returns true अगर there was dropped events since the last peek.
+ * Returns true if there was dropped events since the last peek.
  */
-bool ring_buffer_iter_dropped(काष्ठा ring_buffer_iter *iter)
-अणु
+bool ring_buffer_iter_dropped(struct ring_buffer_iter *iter)
+{
 	bool ret = iter->missed_events != 0;
 
 	iter->missed_events = 0;
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(ring_buffer_iter_dropped);
 
 /**
- * ring_buffer_iter_peek - peek at the next event to be पढ़ो
+ * ring_buffer_iter_peek - peek at the next event to be read
  * @iter: The ring buffer iterator
- * @ts: The बारtamp counter of this event.
+ * @ts: The timestamp counter of this event.
  *
- * This will वापस the event that will be पढ़ो next, but करोes
+ * This will return the event that will be read next, but does
  * not increment the iterator.
  */
-काष्ठा ring_buffer_event *
-ring_buffer_iter_peek(काष्ठा ring_buffer_iter *iter, u64 *ts)
-अणु
-	काष्ठा ring_buffer_per_cpu *cpu_buffer = iter->cpu_buffer;
-	काष्ठा ring_buffer_event *event;
-	अचिन्हित दीर्घ flags;
+struct ring_buffer_event *
+ring_buffer_iter_peek(struct ring_buffer_iter *iter, u64 *ts)
+{
+	struct ring_buffer_per_cpu *cpu_buffer = iter->cpu_buffer;
+	struct ring_buffer_event *event;
+	unsigned long flags;
 
  again:
-	raw_spin_lock_irqsave(&cpu_buffer->पढ़ोer_lock, flags);
+	raw_spin_lock_irqsave(&cpu_buffer->reader_lock, flags);
 	event = rb_iter_peek(iter, ts);
-	raw_spin_unlock_irqrestore(&cpu_buffer->पढ़ोer_lock, flags);
+	raw_spin_unlock_irqrestore(&cpu_buffer->reader_lock, flags);
 
-	अगर (event && event->type_len == RINGBUF_TYPE_PADDING)
-		जाओ again;
+	if (event && event->type_len == RINGBUF_TYPE_PADDING)
+		goto again;
 
-	वापस event;
-पूर्ण
+	return event;
+}
 
 /**
- * ring_buffer_consume - वापस an event and consume it
+ * ring_buffer_consume - return an event and consume it
  * @buffer: The ring buffer to get the next event from
- * @cpu: the cpu to पढ़ो the buffer from
- * @ts: a variable to store the बारtamp (may be शून्य)
- * @lost_events: a variable to store अगर events were lost (may be शून्य)
+ * @cpu: the cpu to read the buffer from
+ * @ts: a variable to store the timestamp (may be NULL)
+ * @lost_events: a variable to store if events were lost (may be NULL)
  *
  * Returns the next event in the ring buffer, and that event is consumed.
- * Meaning, that sequential पढ़ोs will keep वापसing a dअगरferent event,
- * and eventually empty the ring buffer अगर the producer is slower.
+ * Meaning, that sequential reads will keep returning a different event,
+ * and eventually empty the ring buffer if the producer is slower.
  */
-काष्ठा ring_buffer_event *
-ring_buffer_consume(काष्ठा trace_buffer *buffer, पूर्णांक cpu, u64 *ts,
-		    अचिन्हित दीर्घ *lost_events)
-अणु
-	काष्ठा ring_buffer_per_cpu *cpu_buffer;
-	काष्ठा ring_buffer_event *event = शून्य;
-	अचिन्हित दीर्घ flags;
-	bool करोlock;
+struct ring_buffer_event *
+ring_buffer_consume(struct trace_buffer *buffer, int cpu, u64 *ts,
+		    unsigned long *lost_events)
+{
+	struct ring_buffer_per_cpu *cpu_buffer;
+	struct ring_buffer_event *event = NULL;
+	unsigned long flags;
+	bool dolock;
 
  again:
 	/* might be called in atomic */
 	preempt_disable();
 
-	अगर (!cpumask_test_cpu(cpu, buffer->cpumask))
-		जाओ out;
+	if (!cpumask_test_cpu(cpu, buffer->cpumask))
+		goto out;
 
 	cpu_buffer = buffer->buffers[cpu];
 	local_irq_save(flags);
-	करोlock = rb_पढ़ोer_lock(cpu_buffer);
+	dolock = rb_reader_lock(cpu_buffer);
 
 	event = rb_buffer_peek(cpu_buffer, ts, lost_events);
-	अगर (event) अणु
+	if (event) {
 		cpu_buffer->lost_events = 0;
-		rb_advance_पढ़ोer(cpu_buffer);
-	पूर्ण
+		rb_advance_reader(cpu_buffer);
+	}
 
-	rb_पढ़ोer_unlock(cpu_buffer, करोlock);
+	rb_reader_unlock(cpu_buffer, dolock);
 	local_irq_restore(flags);
 
  out:
 	preempt_enable();
 
-	अगर (event && event->type_len == RINGBUF_TYPE_PADDING)
-		जाओ again;
+	if (event && event->type_len == RINGBUF_TYPE_PADDING)
+		goto again;
 
-	वापस event;
-पूर्ण
+	return event;
+}
 EXPORT_SYMBOL_GPL(ring_buffer_consume);
 
 /**
- * ring_buffer_पढ़ो_prepare - Prepare क्रम a non consuming पढ़ो of the buffer
- * @buffer: The ring buffer to पढ़ो from
+ * ring_buffer_read_prepare - Prepare for a non consuming read of the buffer
+ * @buffer: The ring buffer to read from
  * @cpu: The cpu buffer to iterate over
- * @flags: gfp flags to use क्रम memory allocation
+ * @flags: gfp flags to use for memory allocation
  *
- * This perक्रमms the initial preparations necessary to iterate
+ * This performs the initial preparations necessary to iterate
  * through the buffer.  Memory is allocated, buffer recording
- * is disabled, and the iterator poपूर्णांकer is वापसed to the caller.
+ * is disabled, and the iterator pointer is returned to the caller.
  *
- * Disabling buffer recording prevents the पढ़ोing from being
- * corrupted. This is not a consuming पढ़ो, so a producer is not
+ * Disabling buffer recording prevents the reading from being
+ * corrupted. This is not a consuming read, so a producer is not
  * expected.
  *
- * After a sequence of ring_buffer_पढ़ो_prepare calls, the user is
- * expected to make at least one call to ring_buffer_पढ़ो_prepare_sync.
- * Afterwards, ring_buffer_पढ़ो_start is invoked to get things going
- * क्रम real.
+ * After a sequence of ring_buffer_read_prepare calls, the user is
+ * expected to make at least one call to ring_buffer_read_prepare_sync.
+ * Afterwards, ring_buffer_read_start is invoked to get things going
+ * for real.
  *
- * This overall must be paired with ring_buffer_पढ़ो_finish.
+ * This overall must be paired with ring_buffer_read_finish.
  */
-काष्ठा ring_buffer_iter *
-ring_buffer_पढ़ो_prepare(काष्ठा trace_buffer *buffer, पूर्णांक cpu, gfp_t flags)
-अणु
-	काष्ठा ring_buffer_per_cpu *cpu_buffer;
-	काष्ठा ring_buffer_iter *iter;
+struct ring_buffer_iter *
+ring_buffer_read_prepare(struct trace_buffer *buffer, int cpu, gfp_t flags)
+{
+	struct ring_buffer_per_cpu *cpu_buffer;
+	struct ring_buffer_iter *iter;
 
-	अगर (!cpumask_test_cpu(cpu, buffer->cpumask))
-		वापस शून्य;
+	if (!cpumask_test_cpu(cpu, buffer->cpumask))
+		return NULL;
 
-	iter = kzalloc(माप(*iter), flags);
-	अगर (!iter)
-		वापस शून्य;
+	iter = kzalloc(sizeof(*iter), flags);
+	if (!iter)
+		return NULL;
 
-	iter->event = kदो_स्मृति(BUF_MAX_DATA_SIZE, flags);
-	अगर (!iter->event) अणु
-		kमुक्त(iter);
-		वापस शून्य;
-	पूर्ण
+	iter->event = kmalloc(BUF_MAX_DATA_SIZE, flags);
+	if (!iter->event) {
+		kfree(iter);
+		return NULL;
+	}
 
 	cpu_buffer = buffer->buffers[cpu];
 
@@ -4955,145 +4954,145 @@ ring_buffer_पढ़ो_prepare(काष्ठा trace_buffer *buffer, पू
 
 	atomic_inc(&cpu_buffer->resize_disabled);
 
-	वापस iter;
-पूर्ण
-EXPORT_SYMBOL_GPL(ring_buffer_पढ़ो_prepare);
+	return iter;
+}
+EXPORT_SYMBOL_GPL(ring_buffer_read_prepare);
 
 /**
- * ring_buffer_पढ़ो_prepare_sync - Synchronize a set of prepare calls
+ * ring_buffer_read_prepare_sync - Synchronize a set of prepare calls
  *
- * All previously invoked ring_buffer_पढ़ो_prepare calls to prepare
- * iterators will be synchronized.  Afterwards, पढ़ो_buffer_पढ़ो_start
+ * All previously invoked ring_buffer_read_prepare calls to prepare
+ * iterators will be synchronized.  Afterwards, read_buffer_read_start
  * calls on those iterators are allowed.
  */
-व्योम
-ring_buffer_पढ़ो_prepare_sync(व्योम)
-अणु
+void
+ring_buffer_read_prepare_sync(void)
+{
 	synchronize_rcu();
-पूर्ण
-EXPORT_SYMBOL_GPL(ring_buffer_पढ़ो_prepare_sync);
+}
+EXPORT_SYMBOL_GPL(ring_buffer_read_prepare_sync);
 
 /**
- * ring_buffer_पढ़ो_start - start a non consuming पढ़ो of the buffer
- * @iter: The iterator वापसed by ring_buffer_पढ़ो_prepare
+ * ring_buffer_read_start - start a non consuming read of the buffer
+ * @iter: The iterator returned by ring_buffer_read_prepare
  *
  * This finalizes the startup of an iteration through the buffer.
- * The iterator comes from a call to ring_buffer_पढ़ो_prepare and
- * an पूर्णांकervening ring_buffer_पढ़ो_prepare_sync must have been
- * perक्रमmed.
+ * The iterator comes from a call to ring_buffer_read_prepare and
+ * an intervening ring_buffer_read_prepare_sync must have been
+ * performed.
  *
- * Must be paired with ring_buffer_पढ़ो_finish.
+ * Must be paired with ring_buffer_read_finish.
  */
-व्योम
-ring_buffer_पढ़ो_start(काष्ठा ring_buffer_iter *iter)
-अणु
-	काष्ठा ring_buffer_per_cpu *cpu_buffer;
-	अचिन्हित दीर्घ flags;
+void
+ring_buffer_read_start(struct ring_buffer_iter *iter)
+{
+	struct ring_buffer_per_cpu *cpu_buffer;
+	unsigned long flags;
 
-	अगर (!iter)
-		वापस;
+	if (!iter)
+		return;
 
 	cpu_buffer = iter->cpu_buffer;
 
-	raw_spin_lock_irqsave(&cpu_buffer->पढ़ोer_lock, flags);
+	raw_spin_lock_irqsave(&cpu_buffer->reader_lock, flags);
 	arch_spin_lock(&cpu_buffer->lock);
 	rb_iter_reset(iter);
 	arch_spin_unlock(&cpu_buffer->lock);
-	raw_spin_unlock_irqrestore(&cpu_buffer->पढ़ोer_lock, flags);
-पूर्ण
-EXPORT_SYMBOL_GPL(ring_buffer_पढ़ो_start);
+	raw_spin_unlock_irqrestore(&cpu_buffer->reader_lock, flags);
+}
+EXPORT_SYMBOL_GPL(ring_buffer_read_start);
 
 /**
- * ring_buffer_पढ़ो_finish - finish पढ़ोing the iterator of the buffer
+ * ring_buffer_read_finish - finish reading the iterator of the buffer
  * @iter: The iterator retrieved by ring_buffer_start
  *
- * This re-enables the recording to the buffer, and मुक्तs the
+ * This re-enables the recording to the buffer, and frees the
  * iterator.
  */
-व्योम
-ring_buffer_पढ़ो_finish(काष्ठा ring_buffer_iter *iter)
-अणु
-	काष्ठा ring_buffer_per_cpu *cpu_buffer = iter->cpu_buffer;
-	अचिन्हित दीर्घ flags;
+void
+ring_buffer_read_finish(struct ring_buffer_iter *iter)
+{
+	struct ring_buffer_per_cpu *cpu_buffer = iter->cpu_buffer;
+	unsigned long flags;
 
 	/*
 	 * Ring buffer is disabled from recording, here's a good place
-	 * to check the पूर्णांकegrity of the ring buffer.
-	 * Must prevent पढ़ोers from trying to पढ़ो, as the check
-	 * clears the HEAD page and पढ़ोers require it.
+	 * to check the integrity of the ring buffer.
+	 * Must prevent readers from trying to read, as the check
+	 * clears the HEAD page and readers require it.
 	 */
-	raw_spin_lock_irqsave(&cpu_buffer->पढ़ोer_lock, flags);
+	raw_spin_lock_irqsave(&cpu_buffer->reader_lock, flags);
 	rb_check_pages(cpu_buffer);
-	raw_spin_unlock_irqrestore(&cpu_buffer->पढ़ोer_lock, flags);
+	raw_spin_unlock_irqrestore(&cpu_buffer->reader_lock, flags);
 
 	atomic_dec(&cpu_buffer->resize_disabled);
-	kमुक्त(iter->event);
-	kमुक्त(iter);
-पूर्ण
-EXPORT_SYMBOL_GPL(ring_buffer_पढ़ो_finish);
+	kfree(iter->event);
+	kfree(iter);
+}
+EXPORT_SYMBOL_GPL(ring_buffer_read_finish);
 
 /**
  * ring_buffer_iter_advance - advance the iterator to the next location
  * @iter: The ring buffer iterator
  *
- * Move the location of the iterator such that the next पढ़ो will
+ * Move the location of the iterator such that the next read will
  * be the next location of the iterator.
  */
-व्योम ring_buffer_iter_advance(काष्ठा ring_buffer_iter *iter)
-अणु
-	काष्ठा ring_buffer_per_cpu *cpu_buffer = iter->cpu_buffer;
-	अचिन्हित दीर्घ flags;
+void ring_buffer_iter_advance(struct ring_buffer_iter *iter)
+{
+	struct ring_buffer_per_cpu *cpu_buffer = iter->cpu_buffer;
+	unsigned long flags;
 
-	raw_spin_lock_irqsave(&cpu_buffer->पढ़ोer_lock, flags);
+	raw_spin_lock_irqsave(&cpu_buffer->reader_lock, flags);
 
 	rb_advance_iter(iter);
 
-	raw_spin_unlock_irqrestore(&cpu_buffer->पढ़ोer_lock, flags);
-पूर्ण
+	raw_spin_unlock_irqrestore(&cpu_buffer->reader_lock, flags);
+}
 EXPORT_SYMBOL_GPL(ring_buffer_iter_advance);
 
 /**
- * ring_buffer_size - वापस the size of the ring buffer (in bytes)
+ * ring_buffer_size - return the size of the ring buffer (in bytes)
  * @buffer: The ring buffer.
  * @cpu: The CPU to get ring buffer size from.
  */
-अचिन्हित दीर्घ ring_buffer_size(काष्ठा trace_buffer *buffer, पूर्णांक cpu)
-अणु
+unsigned long ring_buffer_size(struct trace_buffer *buffer, int cpu)
+{
 	/*
-	 * Earlier, this method वापसed
+	 * Earlier, this method returned
 	 *	BUF_PAGE_SIZE * buffer->nr_pages
-	 * Since the nr_pages field is now हटाओd, we have converted this to
-	 * वापस the per cpu buffer value.
+	 * Since the nr_pages field is now removed, we have converted this to
+	 * return the per cpu buffer value.
 	 */
-	अगर (!cpumask_test_cpu(cpu, buffer->cpumask))
-		वापस 0;
+	if (!cpumask_test_cpu(cpu, buffer->cpumask))
+		return 0;
 
-	वापस BUF_PAGE_SIZE * buffer->buffers[cpu]->nr_pages;
-पूर्ण
+	return BUF_PAGE_SIZE * buffer->buffers[cpu]->nr_pages;
+}
 EXPORT_SYMBOL_GPL(ring_buffer_size);
 
-अटल व्योम
-rb_reset_cpu(काष्ठा ring_buffer_per_cpu *cpu_buffer)
-अणु
+static void
+rb_reset_cpu(struct ring_buffer_per_cpu *cpu_buffer)
+{
 	rb_head_page_deactivate(cpu_buffer);
 
 	cpu_buffer->head_page
-		= list_entry(cpu_buffer->pages, काष्ठा buffer_page, list);
-	local_set(&cpu_buffer->head_page->ग_लिखो, 0);
+		= list_entry(cpu_buffer->pages, struct buffer_page, list);
+	local_set(&cpu_buffer->head_page->write, 0);
 	local_set(&cpu_buffer->head_page->entries, 0);
 	local_set(&cpu_buffer->head_page->page->commit, 0);
 
-	cpu_buffer->head_page->पढ़ो = 0;
+	cpu_buffer->head_page->read = 0;
 
 	cpu_buffer->tail_page = cpu_buffer->head_page;
 	cpu_buffer->commit_page = cpu_buffer->head_page;
 
-	INIT_LIST_HEAD(&cpu_buffer->पढ़ोer_page->list);
+	INIT_LIST_HEAD(&cpu_buffer->reader_page->list);
 	INIT_LIST_HEAD(&cpu_buffer->new_pages);
-	local_set(&cpu_buffer->पढ़ोer_page->ग_लिखो, 0);
-	local_set(&cpu_buffer->पढ़ोer_page->entries, 0);
-	local_set(&cpu_buffer->पढ़ोer_page->page->commit, 0);
-	cpu_buffer->पढ़ोer_page->पढ़ो = 0;
+	local_set(&cpu_buffer->reader_page->write, 0);
+	local_set(&cpu_buffer->reader_page->entries, 0);
+	local_set(&cpu_buffer->reader_page->page->commit, 0);
+	cpu_buffer->reader_page->read = 0;
 
 	local_set(&cpu_buffer->entries_bytes, 0);
 	local_set(&cpu_buffer->overrun, 0);
@@ -5103,32 +5102,32 @@ rb_reset_cpu(काष्ठा ring_buffer_per_cpu *cpu_buffer)
 	local_set(&cpu_buffer->committing, 0);
 	local_set(&cpu_buffer->commits, 0);
 	local_set(&cpu_buffer->pages_touched, 0);
-	local_set(&cpu_buffer->pages_पढ़ो, 0);
+	local_set(&cpu_buffer->pages_read, 0);
 	cpu_buffer->last_pages_touch = 0;
-	cpu_buffer->लघुest_full = 0;
-	cpu_buffer->पढ़ो = 0;
-	cpu_buffer->पढ़ो_bytes = 0;
+	cpu_buffer->shortest_full = 0;
+	cpu_buffer->read = 0;
+	cpu_buffer->read_bytes = 0;
 
-	rb_समय_set(&cpu_buffer->ग_लिखो_stamp, 0);
-	rb_समय_set(&cpu_buffer->beक्रमe_stamp, 0);
+	rb_time_set(&cpu_buffer->write_stamp, 0);
+	rb_time_set(&cpu_buffer->before_stamp, 0);
 
-	स_रखो(cpu_buffer->event_stamp, 0, माप(cpu_buffer->event_stamp));
+	memset(cpu_buffer->event_stamp, 0, sizeof(cpu_buffer->event_stamp));
 
 	cpu_buffer->lost_events = 0;
 	cpu_buffer->last_overrun = 0;
 
 	rb_head_page_activate(cpu_buffer);
-पूर्ण
+}
 
-/* Must have disabled the cpu buffer then करोne a synchronize_rcu */
-अटल व्योम reset_disabled_cpu_buffer(काष्ठा ring_buffer_per_cpu *cpu_buffer)
-अणु
-	अचिन्हित दीर्घ flags;
+/* Must have disabled the cpu buffer then done a synchronize_rcu */
+static void reset_disabled_cpu_buffer(struct ring_buffer_per_cpu *cpu_buffer)
+{
+	unsigned long flags;
 
-	raw_spin_lock_irqsave(&cpu_buffer->पढ़ोer_lock, flags);
+	raw_spin_lock_irqsave(&cpu_buffer->reader_lock, flags);
 
-	अगर (RB_WARN_ON(cpu_buffer, local_पढ़ो(&cpu_buffer->committing)))
-		जाओ out;
+	if (RB_WARN_ON(cpu_buffer, local_read(&cpu_buffer->committing)))
+		goto out;
 
 	arch_spin_lock(&cpu_buffer->lock);
 
@@ -5137,22 +5136,22 @@ rb_reset_cpu(काष्ठा ring_buffer_per_cpu *cpu_buffer)
 	arch_spin_unlock(&cpu_buffer->lock);
 
  out:
-	raw_spin_unlock_irqrestore(&cpu_buffer->पढ़ोer_lock, flags);
-पूर्ण
+	raw_spin_unlock_irqrestore(&cpu_buffer->reader_lock, flags);
+}
 
 /**
  * ring_buffer_reset_cpu - reset a ring buffer per CPU buffer
  * @buffer: The ring buffer to reset a per cpu buffer of
  * @cpu: The CPU buffer to be reset
  */
-व्योम ring_buffer_reset_cpu(काष्ठा trace_buffer *buffer, पूर्णांक cpu)
-अणु
-	काष्ठा ring_buffer_per_cpu *cpu_buffer = buffer->buffers[cpu];
+void ring_buffer_reset_cpu(struct trace_buffer *buffer, int cpu)
+{
+	struct ring_buffer_per_cpu *cpu_buffer = buffer->buffers[cpu];
 
-	अगर (!cpumask_test_cpu(cpu, buffer->cpumask))
-		वापस;
+	if (!cpumask_test_cpu(cpu, buffer->cpumask))
+		return;
 
-	/* prevent another thपढ़ो from changing buffer sizes */
+	/* prevent another thread from changing buffer sizes */
 	mutex_lock(&buffer->mutex);
 
 	atomic_inc(&cpu_buffer->resize_disabled);
@@ -5167,7 +5166,7 @@ rb_reset_cpu(काष्ठा ring_buffer_per_cpu *cpu_buffer)
 	atomic_dec(&cpu_buffer->resize_disabled);
 
 	mutex_unlock(&buffer->mutex);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(ring_buffer_reset_cpu);
 
 /**
@@ -5175,93 +5174,93 @@ EXPORT_SYMBOL_GPL(ring_buffer_reset_cpu);
  * @buffer: The ring buffer to reset a per cpu buffer of
  * @cpu: The CPU buffer to be reset
  */
-व्योम ring_buffer_reset_online_cpus(काष्ठा trace_buffer *buffer)
-अणु
-	काष्ठा ring_buffer_per_cpu *cpu_buffer;
-	पूर्णांक cpu;
+void ring_buffer_reset_online_cpus(struct trace_buffer *buffer)
+{
+	struct ring_buffer_per_cpu *cpu_buffer;
+	int cpu;
 
-	/* prevent another thपढ़ो from changing buffer sizes */
+	/* prevent another thread from changing buffer sizes */
 	mutex_lock(&buffer->mutex);
 
-	क्रम_each_online_buffer_cpu(buffer, cpu) अणु
+	for_each_online_buffer_cpu(buffer, cpu) {
 		cpu_buffer = buffer->buffers[cpu];
 
 		atomic_inc(&cpu_buffer->resize_disabled);
 		atomic_inc(&cpu_buffer->record_disabled);
-	पूर्ण
+	}
 
 	/* Make sure all commits have finished */
 	synchronize_rcu();
 
-	क्रम_each_online_buffer_cpu(buffer, cpu) अणु
+	for_each_online_buffer_cpu(buffer, cpu) {
 		cpu_buffer = buffer->buffers[cpu];
 
 		reset_disabled_cpu_buffer(cpu_buffer);
 
 		atomic_dec(&cpu_buffer->record_disabled);
 		atomic_dec(&cpu_buffer->resize_disabled);
-	पूर्ण
+	}
 
 	mutex_unlock(&buffer->mutex);
-पूर्ण
+}
 
 /**
  * ring_buffer_reset - reset a ring buffer
  * @buffer: The ring buffer to reset all cpu buffers
  */
-व्योम ring_buffer_reset(काष्ठा trace_buffer *buffer)
-अणु
-	काष्ठा ring_buffer_per_cpu *cpu_buffer;
-	पूर्णांक cpu;
+void ring_buffer_reset(struct trace_buffer *buffer)
+{
+	struct ring_buffer_per_cpu *cpu_buffer;
+	int cpu;
 
-	क्रम_each_buffer_cpu(buffer, cpu) अणु
+	for_each_buffer_cpu(buffer, cpu) {
 		cpu_buffer = buffer->buffers[cpu];
 
 		atomic_inc(&cpu_buffer->resize_disabled);
 		atomic_inc(&cpu_buffer->record_disabled);
-	पूर्ण
+	}
 
 	/* Make sure all commits have finished */
 	synchronize_rcu();
 
-	क्रम_each_buffer_cpu(buffer, cpu) अणु
+	for_each_buffer_cpu(buffer, cpu) {
 		cpu_buffer = buffer->buffers[cpu];
 
 		reset_disabled_cpu_buffer(cpu_buffer);
 
 		atomic_dec(&cpu_buffer->record_disabled);
 		atomic_dec(&cpu_buffer->resize_disabled);
-	पूर्ण
-पूर्ण
+	}
+}
 EXPORT_SYMBOL_GPL(ring_buffer_reset);
 
 /**
  * rind_buffer_empty - is the ring buffer empty?
  * @buffer: The ring buffer to test
  */
-bool ring_buffer_empty(काष्ठा trace_buffer *buffer)
-अणु
-	काष्ठा ring_buffer_per_cpu *cpu_buffer;
-	अचिन्हित दीर्घ flags;
-	bool करोlock;
-	पूर्णांक cpu;
-	पूर्णांक ret;
+bool ring_buffer_empty(struct trace_buffer *buffer)
+{
+	struct ring_buffer_per_cpu *cpu_buffer;
+	unsigned long flags;
+	bool dolock;
+	int cpu;
+	int ret;
 
-	/* yes this is racy, but अगर you करोn't like the race, lock the buffer */
-	क्रम_each_buffer_cpu(buffer, cpu) अणु
+	/* yes this is racy, but if you don't like the race, lock the buffer */
+	for_each_buffer_cpu(buffer, cpu) {
 		cpu_buffer = buffer->buffers[cpu];
 		local_irq_save(flags);
-		करोlock = rb_पढ़ोer_lock(cpu_buffer);
+		dolock = rb_reader_lock(cpu_buffer);
 		ret = rb_per_cpu_empty(cpu_buffer);
-		rb_पढ़ोer_unlock(cpu_buffer, करोlock);
+		rb_reader_unlock(cpu_buffer, dolock);
 		local_irq_restore(flags);
 
-		अगर (!ret)
-			वापस false;
-	पूर्ण
+		if (!ret)
+			return false;
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 EXPORT_SYMBOL_GPL(ring_buffer_empty);
 
 /**
@@ -5269,73 +5268,73 @@ EXPORT_SYMBOL_GPL(ring_buffer_empty);
  * @buffer: The ring buffer
  * @cpu: The CPU buffer to test
  */
-bool ring_buffer_empty_cpu(काष्ठा trace_buffer *buffer, पूर्णांक cpu)
-अणु
-	काष्ठा ring_buffer_per_cpu *cpu_buffer;
-	अचिन्हित दीर्घ flags;
-	bool करोlock;
-	पूर्णांक ret;
+bool ring_buffer_empty_cpu(struct trace_buffer *buffer, int cpu)
+{
+	struct ring_buffer_per_cpu *cpu_buffer;
+	unsigned long flags;
+	bool dolock;
+	int ret;
 
-	अगर (!cpumask_test_cpu(cpu, buffer->cpumask))
-		वापस true;
+	if (!cpumask_test_cpu(cpu, buffer->cpumask))
+		return true;
 
 	cpu_buffer = buffer->buffers[cpu];
 	local_irq_save(flags);
-	करोlock = rb_पढ़ोer_lock(cpu_buffer);
+	dolock = rb_reader_lock(cpu_buffer);
 	ret = rb_per_cpu_empty(cpu_buffer);
-	rb_पढ़ोer_unlock(cpu_buffer, करोlock);
+	rb_reader_unlock(cpu_buffer, dolock);
 	local_irq_restore(flags);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(ring_buffer_empty_cpu);
 
-#अगर_घोषित CONFIG_RING_BUFFER_ALLOW_SWAP
+#ifdef CONFIG_RING_BUFFER_ALLOW_SWAP
 /**
  * ring_buffer_swap_cpu - swap a CPU buffer between two ring buffers
  * @buffer_a: One buffer to swap with
  * @buffer_b: The other buffer to swap with
  * @cpu: the CPU of the buffers to swap
  *
- * This function is useful क्रम tracers that want to take a "snapshot"
+ * This function is useful for tracers that want to take a "snapshot"
  * of a CPU buffer and has another back up buffer lying around.
  * it is expected that the tracer handles the cpu buffer not being
  * used at the moment.
  */
-पूर्णांक ring_buffer_swap_cpu(काष्ठा trace_buffer *buffer_a,
-			 काष्ठा trace_buffer *buffer_b, पूर्णांक cpu)
-अणु
-	काष्ठा ring_buffer_per_cpu *cpu_buffer_a;
-	काष्ठा ring_buffer_per_cpu *cpu_buffer_b;
-	पूर्णांक ret = -EINVAL;
+int ring_buffer_swap_cpu(struct trace_buffer *buffer_a,
+			 struct trace_buffer *buffer_b, int cpu)
+{
+	struct ring_buffer_per_cpu *cpu_buffer_a;
+	struct ring_buffer_per_cpu *cpu_buffer_b;
+	int ret = -EINVAL;
 
-	अगर (!cpumask_test_cpu(cpu, buffer_a->cpumask) ||
+	if (!cpumask_test_cpu(cpu, buffer_a->cpumask) ||
 	    !cpumask_test_cpu(cpu, buffer_b->cpumask))
-		जाओ out;
+		goto out;
 
 	cpu_buffer_a = buffer_a->buffers[cpu];
 	cpu_buffer_b = buffer_b->buffers[cpu];
 
 	/* At least make sure the two buffers are somewhat the same */
-	अगर (cpu_buffer_a->nr_pages != cpu_buffer_b->nr_pages)
-		जाओ out;
+	if (cpu_buffer_a->nr_pages != cpu_buffer_b->nr_pages)
+		goto out;
 
 	ret = -EAGAIN;
 
-	अगर (atomic_पढ़ो(&buffer_a->record_disabled))
-		जाओ out;
+	if (atomic_read(&buffer_a->record_disabled))
+		goto out;
 
-	अगर (atomic_पढ़ो(&buffer_b->record_disabled))
-		जाओ out;
+	if (atomic_read(&buffer_b->record_disabled))
+		goto out;
 
-	अगर (atomic_पढ़ो(&cpu_buffer_a->record_disabled))
-		जाओ out;
+	if (atomic_read(&cpu_buffer_a->record_disabled))
+		goto out;
 
-	अगर (atomic_पढ़ो(&cpu_buffer_b->record_disabled))
-		जाओ out;
+	if (atomic_read(&cpu_buffer_b->record_disabled))
+		goto out;
 
 	/*
-	 * We can't करो a synchronize_rcu here because this
+	 * We can't do a synchronize_rcu here because this
 	 * function can be called in atomic context.
 	 * Normally this will be called from the same CPU as cpu.
 	 * If not it's up to the caller to protect this.
@@ -5344,10 +5343,10 @@ EXPORT_SYMBOL_GPL(ring_buffer_empty_cpu);
 	atomic_inc(&cpu_buffer_b->record_disabled);
 
 	ret = -EBUSY;
-	अगर (local_पढ़ो(&cpu_buffer_a->committing))
-		जाओ out_dec;
-	अगर (local_पढ़ो(&cpu_buffer_b->committing))
-		जाओ out_dec;
+	if (local_read(&cpu_buffer_a->committing))
+		goto out_dec;
+	if (local_read(&cpu_buffer_b->committing))
+		goto out_dec;
 
 	buffer_a->buffers[cpu] = cpu_buffer_b;
 	buffer_b->buffers[cpu] = cpu_buffer_a;
@@ -5361,591 +5360,591 @@ out_dec:
 	atomic_dec(&cpu_buffer_a->record_disabled);
 	atomic_dec(&cpu_buffer_b->record_disabled);
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(ring_buffer_swap_cpu);
-#पूर्ण_अगर /* CONFIG_RING_BUFFER_ALLOW_SWAP */
+#endif /* CONFIG_RING_BUFFER_ALLOW_SWAP */
 
 /**
- * ring_buffer_alloc_पढ़ो_page - allocate a page to पढ़ो from buffer
- * @buffer: the buffer to allocate क्रम.
+ * ring_buffer_alloc_read_page - allocate a page to read from buffer
+ * @buffer: the buffer to allocate for.
  * @cpu: the cpu buffer to allocate.
  *
- * This function is used in conjunction with ring_buffer_पढ़ो_page.
- * When पढ़ोing a full page from the ring buffer, these functions
+ * This function is used in conjunction with ring_buffer_read_page.
+ * When reading a full page from the ring buffer, these functions
  * can be used to speed up the process. The calling function should
  * allocate a few pages first with this function. Then when it
  * needs to get pages from the ring buffer, it passes the result
- * of this function पूर्णांकo ring_buffer_पढ़ो_page, which will swap
- * the page that was allocated, with the पढ़ो page of the buffer.
+ * of this function into ring_buffer_read_page, which will swap
+ * the page that was allocated, with the read page of the buffer.
  *
  * Returns:
  *  The page allocated, or ERR_PTR
  */
-व्योम *ring_buffer_alloc_पढ़ो_page(काष्ठा trace_buffer *buffer, पूर्णांक cpu)
-अणु
-	काष्ठा ring_buffer_per_cpu *cpu_buffer;
-	काष्ठा buffer_data_page *bpage = शून्य;
-	अचिन्हित दीर्घ flags;
-	काष्ठा page *page;
+void *ring_buffer_alloc_read_page(struct trace_buffer *buffer, int cpu)
+{
+	struct ring_buffer_per_cpu *cpu_buffer;
+	struct buffer_data_page *bpage = NULL;
+	unsigned long flags;
+	struct page *page;
 
-	अगर (!cpumask_test_cpu(cpu, buffer->cpumask))
-		वापस ERR_PTR(-ENODEV);
+	if (!cpumask_test_cpu(cpu, buffer->cpumask))
+		return ERR_PTR(-ENODEV);
 
 	cpu_buffer = buffer->buffers[cpu];
 	local_irq_save(flags);
 	arch_spin_lock(&cpu_buffer->lock);
 
-	अगर (cpu_buffer->मुक्त_page) अणु
-		bpage = cpu_buffer->मुक्त_page;
-		cpu_buffer->मुक्त_page = शून्य;
-	पूर्ण
+	if (cpu_buffer->free_page) {
+		bpage = cpu_buffer->free_page;
+		cpu_buffer->free_page = NULL;
+	}
 
 	arch_spin_unlock(&cpu_buffer->lock);
 	local_irq_restore(flags);
 
-	अगर (bpage)
-		जाओ out;
+	if (bpage)
+		goto out;
 
 	page = alloc_pages_node(cpu_to_node(cpu),
 				GFP_KERNEL | __GFP_NORETRY, 0);
-	अगर (!page)
-		वापस ERR_PTR(-ENOMEM);
+	if (!page)
+		return ERR_PTR(-ENOMEM);
 
 	bpage = page_address(page);
 
  out:
 	rb_init_page(bpage);
 
-	वापस bpage;
-पूर्ण
-EXPORT_SYMBOL_GPL(ring_buffer_alloc_पढ़ो_page);
+	return bpage;
+}
+EXPORT_SYMBOL_GPL(ring_buffer_alloc_read_page);
 
 /**
- * ring_buffer_मुक्त_पढ़ो_page - मुक्त an allocated पढ़ो page
- * @buffer: the buffer the page was allocate क्रम
+ * ring_buffer_free_read_page - free an allocated read page
+ * @buffer: the buffer the page was allocate for
  * @cpu: the cpu buffer the page came from
- * @data: the page to मुक्त
+ * @data: the page to free
  *
- * Free a page allocated from ring_buffer_alloc_पढ़ो_page.
+ * Free a page allocated from ring_buffer_alloc_read_page.
  */
-व्योम ring_buffer_मुक्त_पढ़ो_page(काष्ठा trace_buffer *buffer, पूर्णांक cpu, व्योम *data)
-अणु
-	काष्ठा ring_buffer_per_cpu *cpu_buffer = buffer->buffers[cpu];
-	काष्ठा buffer_data_page *bpage = data;
-	काष्ठा page *page = virt_to_page(bpage);
-	अचिन्हित दीर्घ flags;
+void ring_buffer_free_read_page(struct trace_buffer *buffer, int cpu, void *data)
+{
+	struct ring_buffer_per_cpu *cpu_buffer = buffer->buffers[cpu];
+	struct buffer_data_page *bpage = data;
+	struct page *page = virt_to_page(bpage);
+	unsigned long flags;
 
-	/* If the page is still in use someplace अन्यथा, we can't reuse it */
-	अगर (page_ref_count(page) > 1)
-		जाओ out;
+	/* If the page is still in use someplace else, we can't reuse it */
+	if (page_ref_count(page) > 1)
+		goto out;
 
 	local_irq_save(flags);
 	arch_spin_lock(&cpu_buffer->lock);
 
-	अगर (!cpu_buffer->मुक्त_page) अणु
-		cpu_buffer->मुक्त_page = bpage;
-		bpage = शून्य;
-	पूर्ण
+	if (!cpu_buffer->free_page) {
+		cpu_buffer->free_page = bpage;
+		bpage = NULL;
+	}
 
 	arch_spin_unlock(&cpu_buffer->lock);
 	local_irq_restore(flags);
 
  out:
-	मुक्त_page((अचिन्हित दीर्घ)bpage);
-पूर्ण
-EXPORT_SYMBOL_GPL(ring_buffer_मुक्त_पढ़ो_page);
+	free_page((unsigned long)bpage);
+}
+EXPORT_SYMBOL_GPL(ring_buffer_free_read_page);
 
 /**
- * ring_buffer_पढ़ो_page - extract a page from the ring buffer
+ * ring_buffer_read_page - extract a page from the ring buffer
  * @buffer: buffer to extract from
- * @data_page: the page to use allocated from ring_buffer_alloc_पढ़ो_page
+ * @data_page: the page to use allocated from ring_buffer_alloc_read_page
  * @len: amount to extract
  * @cpu: the cpu of the buffer to extract
  * @full: should the extraction only happen when the page is full.
  *
  * This function will pull out a page from the ring buffer and consume it.
- * @data_page must be the address of the variable that was वापसed
- * from ring_buffer_alloc_पढ़ो_page. This is because the page might be used
+ * @data_page must be the address of the variable that was returned
+ * from ring_buffer_alloc_read_page. This is because the page might be used
  * to swap with a page in the ring buffer.
  *
- * क्रम example:
- *	rpage = ring_buffer_alloc_पढ़ो_page(buffer, cpu);
- *	अगर (IS_ERR(rpage))
- *		वापस PTR_ERR(rpage);
- *	ret = ring_buffer_पढ़ो_page(buffer, &rpage, len, cpu, 0);
- *	अगर (ret >= 0)
+ * for example:
+ *	rpage = ring_buffer_alloc_read_page(buffer, cpu);
+ *	if (IS_ERR(rpage))
+ *		return PTR_ERR(rpage);
+ *	ret = ring_buffer_read_page(buffer, &rpage, len, cpu, 0);
+ *	if (ret >= 0)
  *		process_page(rpage, ret);
  *
- * When @full is set, the function will not वापस true unless
- * the ग_लिखोr is off the पढ़ोer page.
+ * When @full is set, the function will not return true unless
+ * the writer is off the reader page.
  *
  * Note: it is up to the calling functions to handle sleeps and wakeups.
  *  The ring buffer can be used anywhere in the kernel and can not
  *  blindly call wake_up. The layer that uses the ring buffer must be
- *  responsible क्रम that.
+ *  responsible for that.
  *
  * Returns:
- *  >=0 अगर data has been transferred, वापसs the offset of consumed data.
- *  <0 अगर no data has been transferred.
+ *  >=0 if data has been transferred, returns the offset of consumed data.
+ *  <0 if no data has been transferred.
  */
-पूर्णांक ring_buffer_पढ़ो_page(काष्ठा trace_buffer *buffer,
-			  व्योम **data_page, माप_प्रकार len, पूर्णांक cpu, पूर्णांक full)
-अणु
-	काष्ठा ring_buffer_per_cpu *cpu_buffer = buffer->buffers[cpu];
-	काष्ठा ring_buffer_event *event;
-	काष्ठा buffer_data_page *bpage;
-	काष्ठा buffer_page *पढ़ोer;
-	अचिन्हित दीर्घ missed_events;
-	अचिन्हित दीर्घ flags;
-	अचिन्हित पूर्णांक commit;
-	अचिन्हित पूर्णांक पढ़ो;
-	u64 save_बारtamp;
-	पूर्णांक ret = -1;
+int ring_buffer_read_page(struct trace_buffer *buffer,
+			  void **data_page, size_t len, int cpu, int full)
+{
+	struct ring_buffer_per_cpu *cpu_buffer = buffer->buffers[cpu];
+	struct ring_buffer_event *event;
+	struct buffer_data_page *bpage;
+	struct buffer_page *reader;
+	unsigned long missed_events;
+	unsigned long flags;
+	unsigned int commit;
+	unsigned int read;
+	u64 save_timestamp;
+	int ret = -1;
 
-	अगर (!cpumask_test_cpu(cpu, buffer->cpumask))
-		जाओ out;
+	if (!cpumask_test_cpu(cpu, buffer->cpumask))
+		goto out;
 
 	/*
 	 * If len is not big enough to hold the page header, then
 	 * we can not copy anything.
 	 */
-	अगर (len <= BUF_PAGE_HDR_SIZE)
-		जाओ out;
+	if (len <= BUF_PAGE_HDR_SIZE)
+		goto out;
 
 	len -= BUF_PAGE_HDR_SIZE;
 
-	अगर (!data_page)
-		जाओ out;
+	if (!data_page)
+		goto out;
 
 	bpage = *data_page;
-	अगर (!bpage)
-		जाओ out;
+	if (!bpage)
+		goto out;
 
-	raw_spin_lock_irqsave(&cpu_buffer->पढ़ोer_lock, flags);
+	raw_spin_lock_irqsave(&cpu_buffer->reader_lock, flags);
 
-	पढ़ोer = rb_get_पढ़ोer_page(cpu_buffer);
-	अगर (!पढ़ोer)
-		जाओ out_unlock;
+	reader = rb_get_reader_page(cpu_buffer);
+	if (!reader)
+		goto out_unlock;
 
-	event = rb_पढ़ोer_event(cpu_buffer);
+	event = rb_reader_event(cpu_buffer);
 
-	पढ़ो = पढ़ोer->पढ़ो;
-	commit = rb_page_commit(पढ़ोer);
+	read = reader->read;
+	commit = rb_page_commit(reader);
 
-	/* Check अगर any events were dropped */
+	/* Check if any events were dropped */
 	missed_events = cpu_buffer->lost_events;
 
 	/*
-	 * If this page has been partially पढ़ो or
-	 * अगर len is not big enough to पढ़ो the rest of the page or
-	 * a ग_लिखोr is still on the page, then
+	 * If this page has been partially read or
+	 * if len is not big enough to read the rest of the page or
+	 * a writer is still on the page, then
 	 * we must copy the data from the page to the buffer.
 	 * Otherwise, we can simply swap the page with the one passed in.
 	 */
-	अगर (पढ़ो || (len < (commit - पढ़ो)) ||
-	    cpu_buffer->पढ़ोer_page == cpu_buffer->commit_page) अणु
-		काष्ठा buffer_data_page *rpage = cpu_buffer->पढ़ोer_page->page;
-		अचिन्हित पूर्णांक rpos = पढ़ो;
-		अचिन्हित पूर्णांक pos = 0;
-		अचिन्हित पूर्णांक size;
+	if (read || (len < (commit - read)) ||
+	    cpu_buffer->reader_page == cpu_buffer->commit_page) {
+		struct buffer_data_page *rpage = cpu_buffer->reader_page->page;
+		unsigned int rpos = read;
+		unsigned int pos = 0;
+		unsigned int size;
 
-		अगर (full)
-			जाओ out_unlock;
+		if (full)
+			goto out_unlock;
 
-		अगर (len > (commit - पढ़ो))
-			len = (commit - पढ़ो);
+		if (len > (commit - read))
+			len = (commit - read);
 
-		/* Always keep the समय extend and data together */
+		/* Always keep the time extend and data together */
 		size = rb_event_ts_length(event);
 
-		अगर (len < size)
-			जाओ out_unlock;
+		if (len < size)
+			goto out_unlock;
 
-		/* save the current बारtamp, since the user will need it */
-		save_बारtamp = cpu_buffer->पढ़ो_stamp;
+		/* save the current timestamp, since the user will need it */
+		save_timestamp = cpu_buffer->read_stamp;
 
-		/* Need to copy one event at a समय */
-		करो अणु
+		/* Need to copy one event at a time */
+		do {
 			/* We need the size of one event, because
-			 * rb_advance_पढ़ोer only advances by one event,
+			 * rb_advance_reader only advances by one event,
 			 * whereas rb_event_ts_length may include the size of
 			 * one or two events.
-			 * We have alपढ़ोy ensured there's enough space अगर this
-			 * is a समय extend. */
+			 * We have already ensured there's enough space if this
+			 * is a time extend. */
 			size = rb_event_length(event);
-			स_नकल(bpage->data + pos, rpage->data + rpos, size);
+			memcpy(bpage->data + pos, rpage->data + rpos, size);
 
 			len -= size;
 
-			rb_advance_पढ़ोer(cpu_buffer);
-			rpos = पढ़ोer->पढ़ो;
+			rb_advance_reader(cpu_buffer);
+			rpos = reader->read;
 			pos += size;
 
-			अगर (rpos >= commit)
-				अवरोध;
+			if (rpos >= commit)
+				break;
 
-			event = rb_पढ़ोer_event(cpu_buffer);
-			/* Always keep the समय extend and data together */
+			event = rb_reader_event(cpu_buffer);
+			/* Always keep the time extend and data together */
 			size = rb_event_ts_length(event);
-		पूर्ण जबतक (len >= size);
+		} while (len >= size);
 
 		/* update bpage */
 		local_set(&bpage->commit, pos);
-		bpage->समय_stamp = save_बारtamp;
+		bpage->time_stamp = save_timestamp;
 
 		/* we copied everything to the beginning */
-		पढ़ो = 0;
-	पूर्ण अन्यथा अणु
+		read = 0;
+	} else {
 		/* update the entry counter */
-		cpu_buffer->पढ़ो += rb_page_entries(पढ़ोer);
-		cpu_buffer->पढ़ो_bytes += BUF_PAGE_SIZE;
+		cpu_buffer->read += rb_page_entries(reader);
+		cpu_buffer->read_bytes += BUF_PAGE_SIZE;
 
 		/* swap the pages */
 		rb_init_page(bpage);
-		bpage = पढ़ोer->page;
-		पढ़ोer->page = *data_page;
-		local_set(&पढ़ोer->ग_लिखो, 0);
-		local_set(&पढ़ोer->entries, 0);
-		पढ़ोer->पढ़ो = 0;
+		bpage = reader->page;
+		reader->page = *data_page;
+		local_set(&reader->write, 0);
+		local_set(&reader->entries, 0);
+		reader->read = 0;
 		*data_page = bpage;
 
 		/*
-		 * Use the real_end क्रम the data size,
+		 * Use the real_end for the data size,
 		 * This gives us a chance to store the lost events
 		 * on the page.
 		 */
-		अगर (पढ़ोer->real_end)
-			local_set(&bpage->commit, पढ़ोer->real_end);
-	पूर्ण
-	ret = पढ़ो;
+		if (reader->real_end)
+			local_set(&bpage->commit, reader->real_end);
+	}
+	ret = read;
 
 	cpu_buffer->lost_events = 0;
 
-	commit = local_पढ़ो(&bpage->commit);
+	commit = local_read(&bpage->commit);
 	/*
-	 * Set a flag in the commit field अगर we lost events
+	 * Set a flag in the commit field if we lost events
 	 */
-	अगर (missed_events) अणु
+	if (missed_events) {
 		/* If there is room at the end of the page to save the
 		 * missed events, then record it there.
 		 */
-		अगर (BUF_PAGE_SIZE - commit >= माप(missed_events)) अणु
-			स_नकल(&bpage->data[commit], &missed_events,
-			       माप(missed_events));
+		if (BUF_PAGE_SIZE - commit >= sizeof(missed_events)) {
+			memcpy(&bpage->data[commit], &missed_events,
+			       sizeof(missed_events));
 			local_add(RB_MISSED_STORED, &bpage->commit);
-			commit += माप(missed_events);
-		पूर्ण
+			commit += sizeof(missed_events);
+		}
 		local_add(RB_MISSED_EVENTS, &bpage->commit);
-	पूर्ण
+	}
 
 	/*
 	 * This page may be off to user land. Zero it out here.
 	 */
-	अगर (commit < BUF_PAGE_SIZE)
-		स_रखो(&bpage->data[commit], 0, BUF_PAGE_SIZE - commit);
+	if (commit < BUF_PAGE_SIZE)
+		memset(&bpage->data[commit], 0, BUF_PAGE_SIZE - commit);
 
  out_unlock:
-	raw_spin_unlock_irqrestore(&cpu_buffer->पढ़ोer_lock, flags);
+	raw_spin_unlock_irqrestore(&cpu_buffer->reader_lock, flags);
 
  out:
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(ring_buffer_पढ़ो_page);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(ring_buffer_read_page);
 
 /*
- * We only allocate new buffers, never मुक्त them अगर the CPU goes करोwn.
- * If we were to मुक्त the buffer, then the user would lose any trace that was in
+ * We only allocate new buffers, never free them if the CPU goes down.
+ * If we were to free the buffer, then the user would lose any trace that was in
  * the buffer.
  */
-पूर्णांक trace_rb_cpu_prepare(अचिन्हित पूर्णांक cpu, काष्ठा hlist_node *node)
-अणु
-	काष्ठा trace_buffer *buffer;
-	दीर्घ nr_pages_same;
-	पूर्णांक cpu_i;
-	अचिन्हित दीर्घ nr_pages;
+int trace_rb_cpu_prepare(unsigned int cpu, struct hlist_node *node)
+{
+	struct trace_buffer *buffer;
+	long nr_pages_same;
+	int cpu_i;
+	unsigned long nr_pages;
 
-	buffer = container_of(node, काष्ठा trace_buffer, node);
-	अगर (cpumask_test_cpu(cpu, buffer->cpumask))
-		वापस 0;
+	buffer = container_of(node, struct trace_buffer, node);
+	if (cpumask_test_cpu(cpu, buffer->cpumask))
+		return 0;
 
 	nr_pages = 0;
 	nr_pages_same = 1;
-	/* check अगर all cpu sizes are same */
-	क्रम_each_buffer_cpu(buffer, cpu_i) अणु
+	/* check if all cpu sizes are same */
+	for_each_buffer_cpu(buffer, cpu_i) {
 		/* fill in the size from first enabled cpu */
-		अगर (nr_pages == 0)
+		if (nr_pages == 0)
 			nr_pages = buffer->buffers[cpu_i]->nr_pages;
-		अगर (nr_pages != buffer->buffers[cpu_i]->nr_pages) अणु
+		if (nr_pages != buffer->buffers[cpu_i]->nr_pages) {
 			nr_pages_same = 0;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 	/* allocate minimum pages, user can later expand it */
-	अगर (!nr_pages_same)
+	if (!nr_pages_same)
 		nr_pages = 2;
 	buffer->buffers[cpu] =
 		rb_allocate_cpu_buffer(buffer, nr_pages, cpu);
-	अगर (!buffer->buffers[cpu]) अणु
+	if (!buffer->buffers[cpu]) {
 		WARN(1, "failed to allocate ring buffer on CPU %u\n",
 		     cpu);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 	smp_wmb();
 	cpumask_set_cpu(cpu, buffer->cpumask);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_RING_BUFFER_STARTUP_TEST
+#ifdef CONFIG_RING_BUFFER_STARTUP_TEST
 /*
- * This is a basic पूर्णांकegrity check of the ring buffer.
+ * This is a basic integrity check of the ring buffer.
  * Late in the boot cycle this test will run when configured in.
- * It will kick off a thपढ़ो per CPU that will go पूर्णांकo a loop
+ * It will kick off a thread per CPU that will go into a loop
  * writing to the per cpu ring buffer various sizes of data.
  * Some of the data will be large items, some small.
  *
- * Another thपढ़ो is created that goes पूर्णांकo a spin, sending out
- * IPIs to the other CPUs to also ग_लिखो पूर्णांकo the ring buffer.
+ * Another thread is created that goes into a spin, sending out
+ * IPIs to the other CPUs to also write into the ring buffer.
  * this is to test the nesting ability of the buffer.
  *
  * Basic stats are recorded and reported. If something in the
  * ring buffer should happen that's not expected, a big warning
  * is displayed and all ring buffers are disabled.
  */
-अटल काष्ठा task_काष्ठा *rb_thपढ़ोs[NR_CPUS] __initdata;
+static struct task_struct *rb_threads[NR_CPUS] __initdata;
 
-काष्ठा rb_test_data अणु
-	काष्ठा trace_buffer *buffer;
-	अचिन्हित दीर्घ		events;
-	अचिन्हित दीर्घ		bytes_written;
-	अचिन्हित दीर्घ		bytes_alloc;
-	अचिन्हित दीर्घ		bytes_dropped;
-	अचिन्हित दीर्घ		events_nested;
-	अचिन्हित दीर्घ		bytes_written_nested;
-	अचिन्हित दीर्घ		bytes_alloc_nested;
-	अचिन्हित दीर्घ		bytes_dropped_nested;
-	पूर्णांक			min_size_nested;
-	पूर्णांक			max_size_nested;
-	पूर्णांक			max_size;
-	पूर्णांक			min_size;
-	पूर्णांक			cpu;
-	पूर्णांक			cnt;
-पूर्ण;
+struct rb_test_data {
+	struct trace_buffer *buffer;
+	unsigned long		events;
+	unsigned long		bytes_written;
+	unsigned long		bytes_alloc;
+	unsigned long		bytes_dropped;
+	unsigned long		events_nested;
+	unsigned long		bytes_written_nested;
+	unsigned long		bytes_alloc_nested;
+	unsigned long		bytes_dropped_nested;
+	int			min_size_nested;
+	int			max_size_nested;
+	int			max_size;
+	int			min_size;
+	int			cpu;
+	int			cnt;
+};
 
-अटल काष्ठा rb_test_data rb_data[NR_CPUS] __initdata;
+static struct rb_test_data rb_data[NR_CPUS] __initdata;
 
 /* 1 meg per cpu */
-#घोषणा RB_TEST_BUFFER_SIZE	1048576
+#define RB_TEST_BUFFER_SIZE	1048576
 
-अटल अक्षर rb_string[] __initdata =
+static char rb_string[] __initdata =
 	"abcdefghijklmnopqrstuvwxyz1234567890!@#$%^&*()?+\\"
 	"?+|:';\",.<>/?abcdefghijklmnopqrstuvwxyz1234567890"
 	"!@#$%^&*()?+\\?+|:';\",.<>/?abcdefghijklmnopqrstuv";
 
-अटल bool rb_test_started __initdata;
+static bool rb_test_started __initdata;
 
-काष्ठा rb_item अणु
-	पूर्णांक size;
-	अक्षर str[];
-पूर्ण;
+struct rb_item {
+	int size;
+	char str[];
+};
 
-अटल __init पूर्णांक rb_ग_लिखो_something(काष्ठा rb_test_data *data, bool nested)
-अणु
-	काष्ठा ring_buffer_event *event;
-	काष्ठा rb_item *item;
+static __init int rb_write_something(struct rb_test_data *data, bool nested)
+{
+	struct ring_buffer_event *event;
+	struct rb_item *item;
 	bool started;
-	पूर्णांक event_len;
-	पूर्णांक size;
-	पूर्णांक len;
-	पूर्णांक cnt;
+	int event_len;
+	int size;
+	int len;
+	int cnt;
 
-	/* Have nested ग_लिखोs dअगरferent that what is written */
+	/* Have nested writes different that what is written */
 	cnt = data->cnt + (nested ? 27 : 0);
 
 	/* Multiply cnt by ~e, to make some unique increment */
-	size = (cnt * 68 / 25) % (माप(rb_string) - 1);
+	size = (cnt * 68 / 25) % (sizeof(rb_string) - 1);
 
-	len = size + माप(काष्ठा rb_item);
+	len = size + sizeof(struct rb_item);
 
 	started = rb_test_started;
-	/* पढ़ो rb_test_started beक्रमe checking buffer enabled */
+	/* read rb_test_started before checking buffer enabled */
 	smp_rmb();
 
 	event = ring_buffer_lock_reserve(data->buffer, len);
-	अगर (!event) अणु
-		/* Ignore dropped events beक्रमe test starts. */
-		अगर (started) अणु
-			अगर (nested)
+	if (!event) {
+		/* Ignore dropped events before test starts. */
+		if (started) {
+			if (nested)
 				data->bytes_dropped += len;
-			अन्यथा
+			else
 				data->bytes_dropped_nested += len;
-		पूर्ण
-		वापस len;
-	पूर्ण
+		}
+		return len;
+	}
 
 	event_len = ring_buffer_event_length(event);
 
-	अगर (RB_WARN_ON(data->buffer, event_len < len))
-		जाओ out;
+	if (RB_WARN_ON(data->buffer, event_len < len))
+		goto out;
 
 	item = ring_buffer_event_data(event);
 	item->size = size;
-	स_नकल(item->str, rb_string, size);
+	memcpy(item->str, rb_string, size);
 
-	अगर (nested) अणु
+	if (nested) {
 		data->bytes_alloc_nested += event_len;
 		data->bytes_written_nested += len;
 		data->events_nested++;
-		अगर (!data->min_size_nested || len < data->min_size_nested)
+		if (!data->min_size_nested || len < data->min_size_nested)
 			data->min_size_nested = len;
-		अगर (len > data->max_size_nested)
+		if (len > data->max_size_nested)
 			data->max_size_nested = len;
-	पूर्ण अन्यथा अणु
+	} else {
 		data->bytes_alloc += event_len;
 		data->bytes_written += len;
 		data->events++;
-		अगर (!data->min_size || len < data->min_size)
+		if (!data->min_size || len < data->min_size)
 			data->max_size = len;
-		अगर (len > data->max_size)
+		if (len > data->max_size)
 			data->max_size = len;
-	पूर्ण
+	}
 
  out:
 	ring_buffer_unlock_commit(data->buffer, event);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल __init पूर्णांक rb_test(व्योम *arg)
-अणु
-	काष्ठा rb_test_data *data = arg;
+static __init int rb_test(void *arg)
+{
+	struct rb_test_data *data = arg;
 
-	जबतक (!kthपढ़ो_should_stop()) अणु
-		rb_ग_लिखो_something(data, false);
+	while (!kthread_should_stop()) {
+		rb_write_something(data, false);
 		data->cnt++;
 
 		set_current_state(TASK_INTERRUPTIBLE);
 		/* Now sleep between a min of 100-300us and a max of 1ms */
 		usleep_range(((data->cnt % 3) + 1) * 100, 1000);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल __init व्योम rb_ipi(व्योम *ignore)
-अणु
-	काष्ठा rb_test_data *data;
-	पूर्णांक cpu = smp_processor_id();
+static __init void rb_ipi(void *ignore)
+{
+	struct rb_test_data *data;
+	int cpu = smp_processor_id();
 
 	data = &rb_data[cpu];
-	rb_ग_लिखो_something(data, true);
-पूर्ण
+	rb_write_something(data, true);
+}
 
-अटल __init पूर्णांक rb_hammer_test(व्योम *arg)
-अणु
-	जबतक (!kthपढ़ो_should_stop()) अणु
+static __init int rb_hammer_test(void *arg)
+{
+	while (!kthread_should_stop()) {
 
-		/* Send an IPI to all cpus to ग_लिखो data! */
-		smp_call_function(rb_ipi, शून्य, 1);
-		/* No sleep, but क्रम non preempt, let others run */
+		/* Send an IPI to all cpus to write data! */
+		smp_call_function(rb_ipi, NULL, 1);
+		/* No sleep, but for non preempt, let others run */
 		schedule();
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल __init पूर्णांक test_ringbuffer(व्योम)
-अणु
-	काष्ठा task_काष्ठा *rb_hammer;
-	काष्ठा trace_buffer *buffer;
-	पूर्णांक cpu;
-	पूर्णांक ret = 0;
+static __init int test_ringbuffer(void)
+{
+	struct task_struct *rb_hammer;
+	struct trace_buffer *buffer;
+	int cpu;
+	int ret = 0;
 
-	अगर (security_locked_करोwn(LOCKDOWN_TRACEFS)) अणु
+	if (security_locked_down(LOCKDOWN_TRACEFS)) {
 		pr_warn("Lockdown is enabled, skipping ring buffer tests\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	pr_info("Running ring buffer tests...\n");
 
 	buffer = ring_buffer_alloc(RB_TEST_BUFFER_SIZE, RB_FL_OVERWRITE);
-	अगर (WARN_ON(!buffer))
-		वापस 0;
+	if (WARN_ON(!buffer))
+		return 0;
 
-	/* Disable buffer so that thपढ़ोs can't ग_लिखो to it yet */
+	/* Disable buffer so that threads can't write to it yet */
 	ring_buffer_record_off(buffer);
 
-	क्रम_each_online_cpu(cpu) अणु
+	for_each_online_cpu(cpu) {
 		rb_data[cpu].buffer = buffer;
 		rb_data[cpu].cpu = cpu;
 		rb_data[cpu].cnt = cpu;
-		rb_thपढ़ोs[cpu] = kthपढ़ो_create(rb_test, &rb_data[cpu],
+		rb_threads[cpu] = kthread_create(rb_test, &rb_data[cpu],
 						 "rbtester/%d", cpu);
-		अगर (WARN_ON(IS_ERR(rb_thपढ़ोs[cpu]))) अणु
+		if (WARN_ON(IS_ERR(rb_threads[cpu]))) {
 			pr_cont("FAILED\n");
-			ret = PTR_ERR(rb_thपढ़ोs[cpu]);
-			जाओ out_मुक्त;
-		पूर्ण
+			ret = PTR_ERR(rb_threads[cpu]);
+			goto out_free;
+		}
 
-		kthपढ़ो_bind(rb_thपढ़ोs[cpu], cpu);
- 		wake_up_process(rb_thपढ़ोs[cpu]);
-	पूर्ण
+		kthread_bind(rb_threads[cpu], cpu);
+ 		wake_up_process(rb_threads[cpu]);
+	}
 
 	/* Now create the rb hammer! */
-	rb_hammer = kthपढ़ो_run(rb_hammer_test, शून्य, "rbhammer");
-	अगर (WARN_ON(IS_ERR(rb_hammer))) अणु
+	rb_hammer = kthread_run(rb_hammer_test, NULL, "rbhammer");
+	if (WARN_ON(IS_ERR(rb_hammer))) {
 		pr_cont("FAILED\n");
 		ret = PTR_ERR(rb_hammer);
-		जाओ out_मुक्त;
-	पूर्ण
+		goto out_free;
+	}
 
 	ring_buffer_record_on(buffer);
 	/*
-	 * Show buffer is enabled beक्रमe setting rb_test_started.
-	 * Yes there's a small race winकरोw where events could be
-	 * dropped and the thपढ़ो wont catch it. But when a ring
-	 * buffer माला_लो enabled, there will always be some kind of
-	 * delay beक्रमe other CPUs see it. Thus, we करोn't care about
+	 * Show buffer is enabled before setting rb_test_started.
+	 * Yes there's a small race window where events could be
+	 * dropped and the thread wont catch it. But when a ring
+	 * buffer gets enabled, there will always be some kind of
+	 * delay before other CPUs see it. Thus, we don't care about
 	 * those dropped events. We care about events dropped after
-	 * the thपढ़ोs see that the buffer is active.
+	 * the threads see that the buffer is active.
 	 */
 	smp_wmb();
 	rb_test_started = true;
 
 	set_current_state(TASK_INTERRUPTIBLE);
-	/* Just run क्रम 10 seconds */;
-	schedule_समयout(10 * HZ);
+	/* Just run for 10 seconds */;
+	schedule_timeout(10 * HZ);
 
-	kthपढ़ो_stop(rb_hammer);
+	kthread_stop(rb_hammer);
 
- out_मुक्त:
-	क्रम_each_online_cpu(cpu) अणु
-		अगर (!rb_thपढ़ोs[cpu])
-			अवरोध;
-		kthपढ़ो_stop(rb_thपढ़ोs[cpu]);
-	पूर्ण
-	अगर (ret) अणु
-		ring_buffer_मुक्त(buffer);
-		वापस ret;
-	पूर्ण
+ out_free:
+	for_each_online_cpu(cpu) {
+		if (!rb_threads[cpu])
+			break;
+		kthread_stop(rb_threads[cpu]);
+	}
+	if (ret) {
+		ring_buffer_free(buffer);
+		return ret;
+	}
 
 	/* Report! */
 	pr_info("finished\n");
-	क्रम_each_online_cpu(cpu) अणु
-		काष्ठा ring_buffer_event *event;
-		काष्ठा rb_test_data *data = &rb_data[cpu];
-		काष्ठा rb_item *item;
-		अचिन्हित दीर्घ total_events;
-		अचिन्हित दीर्घ total_dropped;
-		अचिन्हित दीर्घ total_written;
-		अचिन्हित दीर्घ total_alloc;
-		अचिन्हित दीर्घ total_पढ़ो = 0;
-		अचिन्हित दीर्घ total_size = 0;
-		अचिन्हित दीर्घ total_len = 0;
-		अचिन्हित दीर्घ total_lost = 0;
-		अचिन्हित दीर्घ lost;
-		पूर्णांक big_event_size;
-		पूर्णांक small_event_size;
+	for_each_online_cpu(cpu) {
+		struct ring_buffer_event *event;
+		struct rb_test_data *data = &rb_data[cpu];
+		struct rb_item *item;
+		unsigned long total_events;
+		unsigned long total_dropped;
+		unsigned long total_written;
+		unsigned long total_alloc;
+		unsigned long total_read = 0;
+		unsigned long total_size = 0;
+		unsigned long total_len = 0;
+		unsigned long total_lost = 0;
+		unsigned long lost;
+		int big_event_size;
+		int small_event_size;
 
 		ret = -1;
 
@@ -5965,55 +5964,55 @@ EXPORT_SYMBOL_GPL(ring_buffer_पढ़ो_page);
 		pr_info("       biggest event:    %d\n", big_event_size);
 		pr_info("      smallest event:    %d\n", small_event_size);
 
-		अगर (RB_WARN_ON(buffer, total_dropped))
-			अवरोध;
+		if (RB_WARN_ON(buffer, total_dropped))
+			break;
 
 		ret = 0;
 
-		जबतक ((event = ring_buffer_consume(buffer, cpu, शून्य, &lost))) अणु
+		while ((event = ring_buffer_consume(buffer, cpu, NULL, &lost))) {
 			total_lost += lost;
 			item = ring_buffer_event_data(event);
 			total_len += ring_buffer_event_length(event);
-			total_size += item->size + माप(काष्ठा rb_item);
-			अगर (स_भेद(&item->str[0], rb_string, item->size) != 0) अणु
+			total_size += item->size + sizeof(struct rb_item);
+			if (memcmp(&item->str[0], rb_string, item->size) != 0) {
 				pr_info("FAILED!\n");
 				pr_info("buffer had: %.*s\n", item->size, item->str);
 				pr_info("expected:   %.*s\n", item->size, rb_string);
 				RB_WARN_ON(buffer, 1);
 				ret = -1;
-				अवरोध;
-			पूर्ण
-			total_पढ़ो++;
-		पूर्ण
-		अगर (ret)
-			अवरोध;
+				break;
+			}
+			total_read++;
+		}
+		if (ret)
+			break;
 
 		ret = -1;
 
-		pr_info("         read events:   %ld\n", total_पढ़ो);
+		pr_info("         read events:   %ld\n", total_read);
 		pr_info("         lost events:   %ld\n", total_lost);
-		pr_info("        total events:   %ld\n", total_lost + total_पढ़ो);
+		pr_info("        total events:   %ld\n", total_lost + total_read);
 		pr_info("  recorded len bytes:   %ld\n", total_len);
 		pr_info(" recorded size bytes:   %ld\n", total_size);
-		अगर (total_lost)
+		if (total_lost)
 			pr_info(" With dropped events, record len and size may not match\n"
 				" alloced and written from above\n");
-		अगर (!total_lost) अणु
-			अगर (RB_WARN_ON(buffer, total_len != total_alloc ||
+		if (!total_lost) {
+			if (RB_WARN_ON(buffer, total_len != total_alloc ||
 				       total_size != total_written))
-				अवरोध;
-		पूर्ण
-		अगर (RB_WARN_ON(buffer, total_lost + total_पढ़ो != total_events))
-			अवरोध;
+				break;
+		}
+		if (RB_WARN_ON(buffer, total_lost + total_read != total_events))
+			break;
 
 		ret = 0;
-	पूर्ण
-	अगर (!ret)
+	}
+	if (!ret)
 		pr_info("Ring buffer PASSED!\n");
 
-	ring_buffer_मुक्त(buffer);
-	वापस 0;
-पूर्ण
+	ring_buffer_free(buffer);
+	return 0;
+}
 
 late_initcall(test_ringbuffer);
-#पूर्ण_अगर /* CONFIG_RING_BUFFER_STARTUP_TEST */
+#endif /* CONFIG_RING_BUFFER_STARTUP_TEST */

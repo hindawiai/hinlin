@@ -1,34 +1,33 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <linux/kernel.h>
-#समावेश <linux/init.h>
-#समावेश <linux/types.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/sh_पूर्णांकc.h>
+// SPDX-License-Identifier: GPL-2.0
+#include <linux/kernel.h>
+#include <linux/init.h>
+#include <linux/types.h>
+#include <linux/pci.h>
+#include <linux/sh_intc.h>
 
-पूर्णांक pcibios_map_platक्रमm_irq(स्थिर काष्ठा pci_dev *dev, u8 slot, u8 pin)
-अणु
-	पूर्णांक irq;
+int pcibios_map_platform_irq(const struct pci_dev *dev, u8 slot, u8 pin)
+{
+	int irq;
 
-	अगर (dev->bus->number == 0) अणु
-		चयन (slot) अणु
-		हाल 4: वापस evt2irq(0x2a0);	/* eth0       */
-		हाल 8: वापस evt2irq(0x2a0);	/* eth1       */
-		हाल 6: वापस evt2irq(0x240);	/* PCI bridge */
-		शेष:
-			prपूर्णांकk(KERN_ERR "PCI: Bad IRQ mapping request "
+	if (dev->bus->number == 0) {
+		switch (slot) {
+		case 4: return evt2irq(0x2a0);	/* eth0       */
+		case 8: return evt2irq(0x2a0);	/* eth1       */
+		case 6: return evt2irq(0x240);	/* PCI bridge */
+		default:
+			printk(KERN_ERR "PCI: Bad IRQ mapping request "
 					"for slot %d\n", slot);
-			वापस evt2irq(0x240);
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		चयन (pin) अणु
-		हाल 0:   irq =  evt2irq(0x240); अवरोध;
-		हाल 1:   irq =  evt2irq(0x240); अवरोध;
-		हाल 2:   irq =  evt2irq(0x240); अवरोध;
-		हाल 3:   irq =  evt2irq(0x240); अवरोध;
-		हाल 4:   irq =  evt2irq(0x240); अवरोध;
-		शेष:  irq = -1; अवरोध;
-		पूर्ण
-	पूर्ण
-	वापस irq;
-पूर्ण
+			return evt2irq(0x240);
+		}
+	} else {
+		switch (pin) {
+		case 0:   irq =  evt2irq(0x240); break;
+		case 1:   irq =  evt2irq(0x240); break;
+		case 2:   irq =  evt2irq(0x240); break;
+		case 3:   irq =  evt2irq(0x240); break;
+		case 4:   irq =  evt2irq(0x240); break;
+		default:  irq = -1; break;
+		}
+	}
+	return irq;
+}

@@ -1,252 +1,251 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 
-#समावेश <linux/delay.h>
-#समावेश <linux/firmware.h>
-#समावेश <linux/module.h>
+#include <linux/delay.h>
+#include <linux/firmware.h>
+#include <linux/module.h>
 
-#समावेश "ast_drv.h"
+#include "ast_drv.h"
 
 MODULE_FIRMWARE("ast_dp501_fw.bin");
 
-अटल व्योम ast_release_firmware(व्योम *data)
-अणु
-	काष्ठा ast_निजी *ast = data;
+static void ast_release_firmware(void *data)
+{
+	struct ast_private *ast = data;
 
 	release_firmware(ast->dp501_fw);
-	ast->dp501_fw = शून्य;
-पूर्ण
+	ast->dp501_fw = NULL;
+}
 
-अटल पूर्णांक ast_load_dp501_microcode(काष्ठा drm_device *dev)
-अणु
-	काष्ठा ast_निजी *ast = to_ast_निजी(dev);
-	पूर्णांक ret;
+static int ast_load_dp501_microcode(struct drm_device *dev)
+{
+	struct ast_private *ast = to_ast_private(dev);
+	int ret;
 
 	ret = request_firmware(&ast->dp501_fw, "ast_dp501_fw.bin", dev->dev);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस devm_add_action_or_reset(dev->dev, ast_release_firmware, ast);
-पूर्ण
+	return devm_add_action_or_reset(dev->dev, ast_release_firmware, ast);
+}
 
-अटल व्योम send_ack(काष्ठा ast_निजी *ast)
-अणु
+static void send_ack(struct ast_private *ast)
+{
 	u8 sendack;
 	sendack = ast_get_index_reg_mask(ast, AST_IO_CRTC_PORT, 0x9b, 0xff);
 	sendack |= 0x80;
 	ast_set_index_reg_mask(ast, AST_IO_CRTC_PORT, 0x9b, 0x00, sendack);
-पूर्ण
+}
 
-अटल व्योम send_nack(काष्ठा ast_निजी *ast)
-अणु
+static void send_nack(struct ast_private *ast)
+{
 	u8 sendack;
 	sendack = ast_get_index_reg_mask(ast, AST_IO_CRTC_PORT, 0x9b, 0xff);
 	sendack &= ~0x80;
 	ast_set_index_reg_mask(ast, AST_IO_CRTC_PORT, 0x9b, 0x00, sendack);
-पूर्ण
+}
 
-अटल bool रुको_ack(काष्ठा ast_निजी *ast)
-अणु
-	u8 रुकोack;
+static bool wait_ack(struct ast_private *ast)
+{
+	u8 waitack;
 	u32 retry = 0;
-	करो अणु
-		रुकोack = ast_get_index_reg_mask(ast, AST_IO_CRTC_PORT, 0xd2, 0xff);
-		रुकोack &= 0x80;
+	do {
+		waitack = ast_get_index_reg_mask(ast, AST_IO_CRTC_PORT, 0xd2, 0xff);
+		waitack &= 0x80;
 		udelay(100);
-	पूर्ण जबतक ((!रुकोack) && (retry++ < 1000));
+	} while ((!waitack) && (retry++ < 1000));
 
-	अगर (retry < 1000)
-		वापस true;
-	अन्यथा
-		वापस false;
-पूर्ण
+	if (retry < 1000)
+		return true;
+	else
+		return false;
+}
 
-अटल bool रुको_nack(काष्ठा ast_निजी *ast)
-अणु
-	u8 रुकोack;
+static bool wait_nack(struct ast_private *ast)
+{
+	u8 waitack;
 	u32 retry = 0;
-	करो अणु
-		रुकोack = ast_get_index_reg_mask(ast, AST_IO_CRTC_PORT, 0xd2, 0xff);
-		रुकोack &= 0x80;
+	do {
+		waitack = ast_get_index_reg_mask(ast, AST_IO_CRTC_PORT, 0xd2, 0xff);
+		waitack &= 0x80;
 		udelay(100);
-	पूर्ण जबतक ((रुकोack) && (retry++ < 1000));
+	} while ((waitack) && (retry++ < 1000));
 
-	अगर (retry < 1000)
-		वापस true;
-	अन्यथा
-		वापस false;
-पूर्ण
+	if (retry < 1000)
+		return true;
+	else
+		return false;
+}
 
-अटल व्योम set_cmd_trigger(काष्ठा ast_निजी *ast)
-अणु
+static void set_cmd_trigger(struct ast_private *ast)
+{
 	ast_set_index_reg_mask(ast, AST_IO_CRTC_PORT, 0x9b, ~0x40, 0x40);
-पूर्ण
+}
 
-अटल व्योम clear_cmd_trigger(काष्ठा ast_निजी *ast)
-अणु
+static void clear_cmd_trigger(struct ast_private *ast)
+{
 	ast_set_index_reg_mask(ast, AST_IO_CRTC_PORT, 0x9b, ~0x40, 0x00);
-पूर्ण
+}
 
-#अगर 0
-अटल bool रुको_fw_पढ़ोy(काष्ठा ast_निजी *ast)
-अणु
-	u8 रुकोपढ़ोy;
+#if 0
+static bool wait_fw_ready(struct ast_private *ast)
+{
+	u8 waitready;
 	u32 retry = 0;
-	करो अणु
-		रुकोपढ़ोy = ast_get_index_reg_mask(ast, AST_IO_CRTC_PORT, 0xd2, 0xff);
-		रुकोपढ़ोy &= 0x40;
+	do {
+		waitready = ast_get_index_reg_mask(ast, AST_IO_CRTC_PORT, 0xd2, 0xff);
+		waitready &= 0x40;
 		udelay(100);
-	पूर्ण जबतक ((!रुकोपढ़ोy) && (retry++ < 1000));
+	} while ((!waitready) && (retry++ < 1000));
 
-	अगर (retry < 1000)
-		वापस true;
-	अन्यथा
-		वापस false;
-पूर्ण
-#पूर्ण_अगर
+	if (retry < 1000)
+		return true;
+	else
+		return false;
+}
+#endif
 
-अटल bool ast_ग_लिखो_cmd(काष्ठा drm_device *dev, u8 data)
-अणु
-	काष्ठा ast_निजी *ast = to_ast_निजी(dev);
-	पूर्णांक retry = 0;
-	अगर (रुको_nack(ast)) अणु
+static bool ast_write_cmd(struct drm_device *dev, u8 data)
+{
+	struct ast_private *ast = to_ast_private(dev);
+	int retry = 0;
+	if (wait_nack(ast)) {
 		send_nack(ast);
 		ast_set_index_reg_mask(ast, AST_IO_CRTC_PORT, 0x9a, 0x00, data);
 		send_ack(ast);
 		set_cmd_trigger(ast);
-		करो अणु
-			अगर (रुको_ack(ast)) अणु
+		do {
+			if (wait_ack(ast)) {
 				clear_cmd_trigger(ast);
 				send_nack(ast);
-				वापस true;
-			पूर्ण
-		पूर्ण जबतक (retry++ < 100);
-	पूर्ण
+				return true;
+			}
+		} while (retry++ < 100);
+	}
 	clear_cmd_trigger(ast);
 	send_nack(ast);
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल bool ast_ग_लिखो_data(काष्ठा drm_device *dev, u8 data)
-अणु
-	काष्ठा ast_निजी *ast = to_ast_निजी(dev);
+static bool ast_write_data(struct drm_device *dev, u8 data)
+{
+	struct ast_private *ast = to_ast_private(dev);
 
-	अगर (रुको_nack(ast)) अणु
+	if (wait_nack(ast)) {
 		send_nack(ast);
 		ast_set_index_reg_mask(ast, AST_IO_CRTC_PORT, 0x9a, 0x00, data);
 		send_ack(ast);
-		अगर (रुको_ack(ast)) अणु
+		if (wait_ack(ast)) {
 			send_nack(ast);
-			वापस true;
-		पूर्ण
-	पूर्ण
+			return true;
+		}
+	}
 	send_nack(ast);
-	वापस false;
-पूर्ण
+	return false;
+}
 
-#अगर 0
-अटल bool ast_पढ़ो_data(काष्ठा drm_device *dev, u8 *data)
-अणु
-	काष्ठा ast_निजी *ast = to_ast_निजी(dev);
-	u8 पंचांगp;
+#if 0
+static bool ast_read_data(struct drm_device *dev, u8 *data)
+{
+	struct ast_private *ast = to_ast_private(dev);
+	u8 tmp;
 
 	*data = 0;
 
-	अगर (रुको_ack(ast) == false)
-		वापस false;
-	पंचांगp = ast_get_index_reg_mask(ast, AST_IO_CRTC_PORT, 0xd3, 0xff);
-	*data = पंचांगp;
-	अगर (रुको_nack(ast) == false) अणु
+	if (wait_ack(ast) == false)
+		return false;
+	tmp = ast_get_index_reg_mask(ast, AST_IO_CRTC_PORT, 0xd3, 0xff);
+	*data = tmp;
+	if (wait_nack(ast) == false) {
 		send_nack(ast);
-		वापस false;
-	पूर्ण
+		return false;
+	}
 	send_nack(ast);
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल व्योम clear_cmd(काष्ठा ast_निजी *ast)
-अणु
+static void clear_cmd(struct ast_private *ast)
+{
 	send_nack(ast);
 	ast_set_index_reg_mask(ast, AST_IO_CRTC_PORT, 0x9a, 0x00, 0x00);
-पूर्ण
-#पूर्ण_अगर
+}
+#endif
 
-व्योम ast_set_dp501_video_output(काष्ठा drm_device *dev, u8 mode)
-अणु
-	ast_ग_लिखो_cmd(dev, 0x40);
-	ast_ग_लिखो_data(dev, mode);
+void ast_set_dp501_video_output(struct drm_device *dev, u8 mode)
+{
+	ast_write_cmd(dev, 0x40);
+	ast_write_data(dev, mode);
 
 	msleep(10);
-पूर्ण
+}
 
-अटल u32 get_fw_base(काष्ठा ast_निजी *ast)
-अणु
-	वापस ast_mindwm(ast, 0x1e6e2104) & 0x7fffffff;
-पूर्ण
+static u32 get_fw_base(struct ast_private *ast)
+{
+	return ast_mindwm(ast, 0x1e6e2104) & 0x7fffffff;
+}
 
-bool ast_backup_fw(काष्ठा drm_device *dev, u8 *addr, u32 size)
-अणु
-	काष्ठा ast_निजी *ast = to_ast_निजी(dev);
+bool ast_backup_fw(struct drm_device *dev, u8 *addr, u32 size)
+{
+	struct ast_private *ast = to_ast_private(dev);
 	u32 i, data;
 	u32 boot_address;
 
 	data = ast_mindwm(ast, 0x1e6e2100) & 0x01;
-	अगर (data) अणु
+	if (data) {
 		boot_address = get_fw_base(ast);
-		क्रम (i = 0; i < size; i += 4)
+		for (i = 0; i < size; i += 4)
 			*(u32 *)(addr + i) = ast_mindwm(ast, boot_address + i);
-		वापस true;
-	पूर्ण
-	वापस false;
-पूर्ण
+		return true;
+	}
+	return false;
+}
 
-अटल bool ast_launch_m68k(काष्ठा drm_device *dev)
-अणु
-	काष्ठा ast_निजी *ast = to_ast_निजी(dev);
+static bool ast_launch_m68k(struct drm_device *dev)
+{
+	struct ast_private *ast = to_ast_private(dev);
 	u32 i, data, len = 0;
 	u32 boot_address;
-	u8 *fw_addr = शून्य;
+	u8 *fw_addr = NULL;
 	u8 jreg;
 
 	data = ast_mindwm(ast, 0x1e6e2100) & 0x01;
-	अगर (!data) अणु
+	if (!data) {
 
-		अगर (ast->dp501_fw_addr) अणु
+		if (ast->dp501_fw_addr) {
 			fw_addr = ast->dp501_fw_addr;
 			len = 32*1024;
-		पूर्ण अन्यथा अणु
-			अगर (!ast->dp501_fw &&
+		} else {
+			if (!ast->dp501_fw &&
 			    ast_load_dp501_microcode(dev) < 0)
-				वापस false;
+				return false;
 
 			fw_addr = (u8 *)ast->dp501_fw->data;
 			len = ast->dp501_fw->size;
-		पूर्ण
+		}
 		/* Get BootAddress */
 		ast_moutdwm(ast, 0x1e6e2000, 0x1688a8a8);
 		data = ast_mindwm(ast, 0x1e6e0004);
-		चयन (data & 0x03) अणु
-		हाल 0:
+		switch (data & 0x03) {
+		case 0:
 			boot_address = 0x44000000;
-			अवरोध;
-		शेष:
-		हाल 1:
+			break;
+		default:
+		case 1:
 			boot_address = 0x48000000;
-			अवरोध;
-		हाल 2:
+			break;
+		case 2:
 			boot_address = 0x50000000;
-			अवरोध;
-		हाल 3:
+			break;
+		case 3:
 			boot_address = 0x60000000;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		boot_address -= 0x200000; /* -2MB */
 
 		/* copy image to buffer */
-		क्रम (i = 0; i < len; i += 4) अणु
+		for (i = 0; i < len; i += 4) {
 			data = *(u32 *)(fw_addr + i);
 			ast_moutdwm(ast, boot_address + i, data);
-		पूर्ण
+		}
 
 		/* Init SCU */
 		ast_moutdwm(ast, 0x1e6e2000, 0x1688a8a8);
@@ -263,13 +262,13 @@ bool ast_backup_fw(काष्ठा drm_device *dev, u8 *addr, u32 size)
 		jreg = ast_get_index_reg_mask(ast, AST_IO_CRTC_PORT, 0x99, 0xfc); /* D[1:0]: Reserved Video Buffer */
 		jreg |= 0x02;
 		ast_set_index_reg(ast, AST_IO_CRTC_PORT, 0x99, jreg);
-	पूर्ण
-	वापस true;
-पूर्ण
+	}
+	return true;
+}
 
-u8 ast_get_dp501_max_clk(काष्ठा drm_device *dev)
-अणु
-	काष्ठा ast_निजी *ast = to_ast_निजी(dev);
+u8 ast_get_dp501_max_clk(struct drm_device *dev)
+{
+	struct ast_private *ast = to_ast_private(dev);
 	u32 boot_address, offset, data;
 	u8 linkcap[4], linkrate, linklanes, maxclk = 0xff;
 
@@ -278,26 +277,26 @@ u8 ast_get_dp501_max_clk(काष्ठा drm_device *dev)
 	/* validate FW version */
 	offset = 0xf000;
 	data = ast_mindwm(ast, boot_address + offset);
-	अगर ((data & 0xf0) != 0x10) /* version: 1x */
-		वापस maxclk;
+	if ((data & 0xf0) != 0x10) /* version: 1x */
+		return maxclk;
 
 	/* Read Link Capability */
 	offset  = 0xf014;
 	*(u32 *)linkcap = ast_mindwm(ast, boot_address + offset);
-	अगर (linkcap[2] == 0) अणु
+	if (linkcap[2] == 0) {
 		linkrate = linkcap[0];
 		linklanes = linkcap[1];
 		data = (linkrate == 0x0a) ? (90 * linklanes) : (54 * linklanes);
-		अगर (data > 0xff)
+		if (data > 0xff)
 			data = 0xff;
 		maxclk = (u8)data;
-	पूर्ण
-	वापस maxclk;
-पूर्ण
+	}
+	return maxclk;
+}
 
-bool ast_dp501_पढ़ो_edid(काष्ठा drm_device *dev, u8 *ediddata)
-अणु
-	काष्ठा ast_निजी *ast = to_ast_निजी(dev);
+bool ast_dp501_read_edid(struct drm_device *dev, u8 *ediddata)
+{
+	struct ast_private *ast = to_ast_private(dev);
 	u32 i, boot_address, offset, data;
 
 	boot_address = get_fw_base(ast);
@@ -305,147 +304,147 @@ bool ast_dp501_पढ़ो_edid(काष्ठा drm_device *dev, u8 *ediddat
 	/* validate FW version */
 	offset = 0xf000;
 	data = ast_mindwm(ast, boot_address + offset);
-	अगर ((data & 0xf0) != 0x10)
-		वापस false;
+	if ((data & 0xf0) != 0x10)
+		return false;
 
 	/* validate PnP Monitor */
 	offset = 0xf010;
 	data = ast_mindwm(ast, boot_address + offset);
-	अगर (!(data & 0x01))
-		वापस false;
+	if (!(data & 0x01))
+		return false;
 
 	/* Read EDID */
 	offset = 0xf020;
-	क्रम (i = 0; i < 128; i += 4) अणु
+	for (i = 0; i < 128; i += 4) {
 		data = ast_mindwm(ast, boot_address + offset + i);
 		*(u32 *)(ediddata + i) = data;
-	पूर्ण
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल bool ast_init_dvo(काष्ठा drm_device *dev)
-अणु
-	काष्ठा ast_निजी *ast = to_ast_निजी(dev);
+static bool ast_init_dvo(struct drm_device *dev)
+{
+	struct ast_private *ast = to_ast_private(dev);
 	u8 jreg;
 	u32 data;
-	ast_ग_लिखो32(ast, 0xf004, 0x1e6e0000);
-	ast_ग_लिखो32(ast, 0xf000, 0x1);
-	ast_ग_लिखो32(ast, 0x12000, 0x1688a8a8);
+	ast_write32(ast, 0xf004, 0x1e6e0000);
+	ast_write32(ast, 0xf000, 0x1);
+	ast_write32(ast, 0x12000, 0x1688a8a8);
 
 	jreg = ast_get_index_reg_mask(ast, AST_IO_CRTC_PORT, 0xd0, 0xff);
-	अगर (!(jreg & 0x80)) अणु
+	if (!(jreg & 0x80)) {
 		/* Init SCU DVO Settings */
-		data = ast_पढ़ो32(ast, 0x12008);
+		data = ast_read32(ast, 0x12008);
 		/* delay phase */
 		data &= 0xfffff8ff;
 		data |= 0x00000500;
-		ast_ग_लिखो32(ast, 0x12008, data);
+		ast_write32(ast, 0x12008, data);
 
-		अगर (ast->chip == AST2300) अणु
-			data = ast_पढ़ो32(ast, 0x12084);
-			/* multi-pins क्रम DVO single-edge */
+		if (ast->chip == AST2300) {
+			data = ast_read32(ast, 0x12084);
+			/* multi-pins for DVO single-edge */
 			data |= 0xfffe0000;
-			ast_ग_लिखो32(ast, 0x12084, data);
+			ast_write32(ast, 0x12084, data);
 
-			data = ast_पढ़ो32(ast, 0x12088);
-			/* multi-pins क्रम DVO single-edge */
+			data = ast_read32(ast, 0x12088);
+			/* multi-pins for DVO single-edge */
 			data |= 0x000fffff;
-			ast_ग_लिखो32(ast, 0x12088, data);
+			ast_write32(ast, 0x12088, data);
 
-			data = ast_पढ़ो32(ast, 0x12090);
-			/* multi-pins क्रम DVO single-edge */
+			data = ast_read32(ast, 0x12090);
+			/* multi-pins for DVO single-edge */
 			data &= 0xffffffcf;
 			data |= 0x00000020;
-			ast_ग_लिखो32(ast, 0x12090, data);
-		पूर्ण अन्यथा अणु /* AST2400 */
-			data = ast_पढ़ो32(ast, 0x12088);
-			/* multi-pins क्रम DVO single-edge */
+			ast_write32(ast, 0x12090, data);
+		} else { /* AST2400 */
+			data = ast_read32(ast, 0x12088);
+			/* multi-pins for DVO single-edge */
 			data |= 0x30000000;
-			ast_ग_लिखो32(ast, 0x12088, data);
+			ast_write32(ast, 0x12088, data);
 
-			data = ast_पढ़ो32(ast, 0x1208c);
-			/* multi-pins क्रम DVO single-edge */
+			data = ast_read32(ast, 0x1208c);
+			/* multi-pins for DVO single-edge */
 			data |= 0x000000cf;
-			ast_ग_लिखो32(ast, 0x1208c, data);
+			ast_write32(ast, 0x1208c, data);
 
-			data = ast_पढ़ो32(ast, 0x120a4);
-			/* multi-pins क्रम DVO single-edge */
+			data = ast_read32(ast, 0x120a4);
+			/* multi-pins for DVO single-edge */
 			data |= 0xffff0000;
-			ast_ग_लिखो32(ast, 0x120a4, data);
+			ast_write32(ast, 0x120a4, data);
 
-			data = ast_पढ़ो32(ast, 0x120a8);
-			/* multi-pins क्रम DVO single-edge */
+			data = ast_read32(ast, 0x120a8);
+			/* multi-pins for DVO single-edge */
 			data |= 0x0000000f;
-			ast_ग_लिखो32(ast, 0x120a8, data);
+			ast_write32(ast, 0x120a8, data);
 
-			data = ast_पढ़ो32(ast, 0x12094);
-			/* multi-pins क्रम DVO single-edge */
+			data = ast_read32(ast, 0x12094);
+			/* multi-pins for DVO single-edge */
 			data |= 0x00000002;
-			ast_ग_लिखो32(ast, 0x12094, data);
-		पूर्ण
-	पूर्ण
+			ast_write32(ast, 0x12094, data);
+		}
+	}
 
 	/* Force to DVO */
-	data = ast_पढ़ो32(ast, 0x1202c);
+	data = ast_read32(ast, 0x1202c);
 	data &= 0xfffbffff;
-	ast_ग_लिखो32(ast, 0x1202c, data);
+	ast_write32(ast, 0x1202c, data);
 
 	/* Init VGA DVO Settings */
 	ast_set_index_reg_mask(ast, AST_IO_CRTC_PORT, 0xa3, 0xcf, 0x80);
-	वापस true;
-पूर्ण
+	return true;
+}
 
 
-अटल व्योम ast_init_analog(काष्ठा drm_device *dev)
-अणु
-	काष्ठा ast_निजी *ast = to_ast_निजी(dev);
+static void ast_init_analog(struct drm_device *dev)
+{
+	struct ast_private *ast = to_ast_private(dev);
 	u32 data;
 
 	/*
 	 * Set DAC source to VGA mode in SCU2C via the P2A
 	 * bridge. First configure the P2U to target the SCU
-	 * in हाल it isn't at this stage.
+	 * in case it isn't at this stage.
 	 */
-	ast_ग_लिखो32(ast, 0xf004, 0x1e6e0000);
-	ast_ग_लिखो32(ast, 0xf000, 0x1);
+	ast_write32(ast, 0xf004, 0x1e6e0000);
+	ast_write32(ast, 0xf000, 0x1);
 
 	/* Then unlock the SCU with the magic password */
-	ast_ग_लिखो32(ast, 0x12000, 0x1688a8a8);
-	ast_ग_लिखो32(ast, 0x12000, 0x1688a8a8);
-	ast_ग_लिखो32(ast, 0x12000, 0x1688a8a8);
+	ast_write32(ast, 0x12000, 0x1688a8a8);
+	ast_write32(ast, 0x12000, 0x1688a8a8);
+	ast_write32(ast, 0x12000, 0x1688a8a8);
 
 	/* Finally, clear bits [17:16] of SCU2c */
-	data = ast_पढ़ो32(ast, 0x1202c);
+	data = ast_read32(ast, 0x1202c);
 	data &= 0xfffcffff;
-	ast_ग_लिखो32(ast, 0, data);
+	ast_write32(ast, 0, data);
 
 	/* Disable DVO */
 	ast_set_index_reg_mask(ast, AST_IO_CRTC_PORT, 0xa3, 0xcf, 0x00);
-पूर्ण
+}
 
-व्योम ast_init_3rdtx(काष्ठा drm_device *dev)
-अणु
-	काष्ठा ast_निजी *ast = to_ast_निजी(dev);
+void ast_init_3rdtx(struct drm_device *dev)
+{
+	struct ast_private *ast = to_ast_private(dev);
 	u8 jreg;
 
-	अगर (ast->chip == AST2300 || ast->chip == AST2400) अणु
+	if (ast->chip == AST2300 || ast->chip == AST2400) {
 		jreg = ast_get_index_reg_mask(ast, AST_IO_CRTC_PORT, 0xd1, 0xff);
-		चयन (jreg & 0x0e) अणु
-		हाल 0x04:
+		switch (jreg & 0x0e) {
+		case 0x04:
 			ast_init_dvo(dev);
-			अवरोध;
-		हाल 0x08:
+			break;
+		case 0x08:
 			ast_launch_m68k(dev);
-			अवरोध;
-		हाल 0x0c:
+			break;
+		case 0x0c:
 			ast_init_dvo(dev);
-			अवरोध;
-		शेष:
-			अगर (ast->tx_chip_type == AST_TX_SIL164)
+			break;
+		default:
+			if (ast->tx_chip_type == AST_TX_SIL164)
 				ast_init_dvo(dev);
-			अन्यथा
+			else
 				ast_init_analog(dev);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}

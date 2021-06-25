@@ -1,8 +1,7 @@
-<शैली गुरु>
 /*
  * arch/arm/plat-spear/include/plat/pl080.h
  *
- * DMAC pl080 definitions क्रम SPEAr platक्रमm
+ * DMAC pl080 definitions for SPEAr platform
  *
  * Copyright (C) 2012 ST Microelectronics
  * Viresh Kumar <vireshk@kernel.org>
@@ -12,11 +11,11 @@
  * warranty of any kind, whether express or implied.
  */
 
-#अगर_अघोषित __PLAT_PL080_H
-#घोषणा __PLAT_PL080_H
+#ifndef __PLAT_PL080_H
+#define __PLAT_PL080_H
 
-काष्ठा pl08x_channel_data;
-पूर्णांक pl080_get_संकेत(स्थिर काष्ठा pl08x_channel_data *cd);
-व्योम pl080_put_संकेत(स्थिर काष्ठा pl08x_channel_data *cd, पूर्णांक संकेत);
+struct pl08x_channel_data;
+int pl080_get_signal(const struct pl08x_channel_data *cd);
+void pl080_put_signal(const struct pl08x_channel_data *cd, int signal);
 
-#पूर्ण_अगर /* __PLAT_PL080_H */
+#endif /* __PLAT_PL080_H */

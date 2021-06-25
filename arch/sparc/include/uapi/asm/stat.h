@@ -1,109 +1,108 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
-#अगर_अघोषित __SPARC_STAT_H
-#घोषणा __SPARC_STAT_H
+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+#ifndef __SPARC_STAT_H
+#define __SPARC_STAT_H
 
-#समावेश <linux/types.h>
+#include <linux/types.h>
 
-#अगर defined(__sparc__) && defined(__arch64__)
+#if defined(__sparc__) && defined(__arch64__)
 /* 64 bit sparc */
-काष्ठा stat अणु
-	अचिन्हित पूर्णांक st_dev;
+struct stat {
+	unsigned int st_dev;
 	ino_t   st_ino;
 	mode_t  st_mode;
-	लघु   st_nlink;
+	short   st_nlink;
 	uid_t   st_uid;
 	gid_t   st_gid;
-	अचिन्हित पूर्णांक st_rdev;
-	दीर्घ    st_size;
-	दीर्घ    st_aसमय;
-	दीर्घ    st_mसमय;
-	दीर्घ    st_स_समय;
-	दीर्घ    st_blksize;
-	दीर्घ    st_blocks;
-	अचिन्हित दीर्घ  __unused4[2];
-पूर्ण;
+	unsigned int st_rdev;
+	long    st_size;
+	long    st_atime;
+	long    st_mtime;
+	long    st_ctime;
+	long    st_blksize;
+	long    st_blocks;
+	unsigned long  __unused4[2];
+};
 
-काष्ठा stat64 अणु
-	अचिन्हित दीर्घ	st_dev;
-	अचिन्हित दीर्घ	st_ino;
-	अचिन्हित दीर्घ	st_nlink;
+struct stat64 {
+	unsigned long	st_dev;
+	unsigned long	st_ino;
+	unsigned long	st_nlink;
 
-	अचिन्हित पूर्णांक	st_mode;
-	अचिन्हित पूर्णांक	st_uid;
-	अचिन्हित पूर्णांक	st_gid;
-	अचिन्हित पूर्णांक	__pad0;
+	unsigned int	st_mode;
+	unsigned int	st_uid;
+	unsigned int	st_gid;
+	unsigned int	__pad0;
 
-	अचिन्हित दीर्घ	st_rdev;
-	दीर्घ		st_size;
-	दीर्घ		st_blksize;
-	दीर्घ		st_blocks;
+	unsigned long	st_rdev;
+	long		st_size;
+	long		st_blksize;
+	long		st_blocks;
 
-	अचिन्हित दीर्घ	st_aसमय;
-	अचिन्हित दीर्घ	st_aसमय_nsec;
-	अचिन्हित दीर्घ	st_mसमय;
-	अचिन्हित दीर्घ	st_mसमय_nsec;
-	अचिन्हित दीर्घ	st_स_समय;
-	अचिन्हित दीर्घ	st_स_समय_nsec;
-	दीर्घ		__unused[3];
-पूर्ण;
+	unsigned long	st_atime;
+	unsigned long	st_atime_nsec;
+	unsigned long	st_mtime;
+	unsigned long	st_mtime_nsec;
+	unsigned long	st_ctime;
+	unsigned long	st_ctime_nsec;
+	long		__unused[3];
+};
 
-#अन्यथा
+#else
 /* 32 bit sparc */
-काष्ठा stat अणु
-	अचिन्हित लघु	st_dev;
+struct stat {
+	unsigned short	st_dev;
 	ino_t		st_ino;
 	mode_t		st_mode;
-	लघु		st_nlink;
-	अचिन्हित लघु	st_uid;
-	अचिन्हित लघु	st_gid;
-	अचिन्हित लघु	st_rdev;
-	दीर्घ		st_size;
-	दीर्घ		st_aसमय;
-	अचिन्हित दीर्घ	st_aसमय_nsec;
-	दीर्घ		st_mसमय;
-	अचिन्हित दीर्घ	st_mसमय_nsec;
-	दीर्घ		st_स_समय;
-	अचिन्हित दीर्घ	st_स_समय_nsec;
-	दीर्घ		st_blksize;
-	दीर्घ		st_blocks;
-	अचिन्हित दीर्घ	__unused4[2];
-पूर्ण;
+	short		st_nlink;
+	unsigned short	st_uid;
+	unsigned short	st_gid;
+	unsigned short	st_rdev;
+	long		st_size;
+	long		st_atime;
+	unsigned long	st_atime_nsec;
+	long		st_mtime;
+	unsigned long	st_mtime_nsec;
+	long		st_ctime;
+	unsigned long	st_ctime_nsec;
+	long		st_blksize;
+	long		st_blocks;
+	unsigned long	__unused4[2];
+};
 
-#घोषणा STAT_HAVE_NSEC 1
+#define STAT_HAVE_NSEC 1
 
-काष्ठा stat64 अणु
-	अचिन्हित दीर्घ दीर्घ st_dev;
+struct stat64 {
+	unsigned long long st_dev;
 
-	अचिन्हित दीर्घ दीर्घ st_ino;
+	unsigned long long st_ino;
 
-	अचिन्हित पूर्णांक	st_mode;
-	अचिन्हित पूर्णांक	st_nlink;
+	unsigned int	st_mode;
+	unsigned int	st_nlink;
 
-	अचिन्हित पूर्णांक	st_uid;
-	अचिन्हित पूर्णांक	st_gid;
+	unsigned int	st_uid;
+	unsigned int	st_gid;
 
-	अचिन्हित दीर्घ दीर्घ st_rdev;
+	unsigned long long st_rdev;
 
-	अचिन्हित अक्षर	__pad3[8];
+	unsigned char	__pad3[8];
 
-	दीर्घ दीर्घ	st_size;
-	अचिन्हित पूर्णांक	st_blksize;
+	long long	st_size;
+	unsigned int	st_blksize;
 
-	अचिन्हित अक्षर	__pad4[8];
-	अचिन्हित पूर्णांक	st_blocks;
+	unsigned char	__pad4[8];
+	unsigned int	st_blocks;
 
-	अचिन्हित पूर्णांक	st_aसमय;
-	अचिन्हित पूर्णांक	st_aसमय_nsec;
+	unsigned int	st_atime;
+	unsigned int	st_atime_nsec;
 
-	अचिन्हित पूर्णांक	st_mसमय;
-	अचिन्हित पूर्णांक	st_mसमय_nsec;
+	unsigned int	st_mtime;
+	unsigned int	st_mtime_nsec;
 
-	अचिन्हित पूर्णांक	st_स_समय;
-	अचिन्हित पूर्णांक	st_स_समय_nsec;
+	unsigned int	st_ctime;
+	unsigned int	st_ctime_nsec;
 
-	अचिन्हित पूर्णांक	__unused4;
-	अचिन्हित पूर्णांक	__unused5;
-पूर्ण;
-#पूर्ण_अगर /* defined(__sparc__) && defined(__arch64__) */
-#पूर्ण_अगर /* __SPARC_STAT_H */
+	unsigned int	__unused4;
+	unsigned int	__unused5;
+};
+#endif /* defined(__sparc__) && defined(__arch64__) */
+#endif /* __SPARC_STAT_H */

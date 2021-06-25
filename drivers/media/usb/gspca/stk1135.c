@@ -1,29 +1,28 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Syntek STK1135 subdriver
  *
  * Copyright (c) 2013 Ondrej Zary
  *
  * Based on Syntekdriver (stk11xx) by Nicolas VIVIEN:
- *   http://syntekdriver.sourceक्रमge.net
+ *   http://syntekdriver.sourceforge.net
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#घोषणा MODULE_NAME "stk1135"
+#define MODULE_NAME "stk1135"
 
-#समावेश "gspca.h"
-#समावेश "stk1135.h"
+#include "gspca.h"
+#include "stk1135.h"
 
 MODULE_AUTHOR("Ondrej Zary");
 MODULE_DESCRIPTION("Syntek STK1135 USB Camera Driver");
 MODULE_LICENSE("GPL");
 
 
-/* specअगरic webcam descriptor */
-काष्ठा sd अणु
-	काष्ठा gspca_dev gspca_dev;	/* !! must be the first item */
+/* specific webcam descriptor */
+struct sd {
+	struct gspca_dev gspca_dev;	/* !! must be the first item */
 
 	u8 pkt_seq;
 	u8 sensor_page;
@@ -31,29 +30,29 @@ MODULE_LICENSE("GPL");
 	bool flip_status;
 	u8 flip_debounce;
 
-	काष्ठा v4l2_ctrl *hflip;
-	काष्ठा v4l2_ctrl *vflip;
-पूर्ण;
+	struct v4l2_ctrl *hflip;
+	struct v4l2_ctrl *vflip;
+};
 
-अटल स्थिर काष्ठा v4l2_pix_क्रमmat stk1135_modes[] = अणु
-	/* शेष mode (this driver supports variable resolution) */
-	अणु640, 480, V4L2_PIX_FMT_SBGGR8, V4L2_FIELD_NONE,
+static const struct v4l2_pix_format stk1135_modes[] = {
+	/* default mode (this driver supports variable resolution) */
+	{640, 480, V4L2_PIX_FMT_SBGGR8, V4L2_FIELD_NONE,
 		.bytesperline = 640,
 		.sizeimage = 640 * 480,
-		.colorspace = V4L2_COLORSPACE_SRGBपूर्ण,
-पूर्ण;
+		.colorspace = V4L2_COLORSPACE_SRGB},
+};
 
-/* -- पढ़ो a रेजिस्टर -- */
-अटल u8 reg_r(काष्ठा gspca_dev *gspca_dev, u16 index)
-अणु
-	काष्ठा usb_device *dev = gspca_dev->dev;
-	पूर्णांक ret;
+/* -- read a register -- */
+static u8 reg_r(struct gspca_dev *gspca_dev, u16 index)
+{
+	struct usb_device *dev = gspca_dev->dev;
+	int ret;
 
-	अगर (gspca_dev->usb_err < 0)
-		वापस 0;
+	if (gspca_dev->usb_err < 0)
+		return 0;
 	ret = usb_control_msg(dev, usb_rcvctrlpipe(dev, 0),
 			0x00,
-			USB_सूची_IN | USB_TYPE_VENDOR | USB_RECIP_DEVICE,
+			USB_DIR_IN | USB_TYPE_VENDOR | USB_RECIP_DEVICE,
 			0x00,
 			index,
 			gspca_dev->usb_buf, 1,
@@ -61,285 +60,285 @@ MODULE_LICENSE("GPL");
 
 	gspca_dbg(gspca_dev, D_USBI, "reg_r 0x%x=0x%02x\n",
 		  index, gspca_dev->usb_buf[0]);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		pr_err("reg_r 0x%x err %d\n", index, ret);
 		gspca_dev->usb_err = ret;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	वापस gspca_dev->usb_buf[0];
-पूर्ण
+	return gspca_dev->usb_buf[0];
+}
 
-/* -- ग_लिखो a रेजिस्टर -- */
-अटल व्योम reg_w(काष्ठा gspca_dev *gspca_dev, u16 index, u8 val)
-अणु
-	पूर्णांक ret;
-	काष्ठा usb_device *dev = gspca_dev->dev;
+/* -- write a register -- */
+static void reg_w(struct gspca_dev *gspca_dev, u16 index, u8 val)
+{
+	int ret;
+	struct usb_device *dev = gspca_dev->dev;
 
-	अगर (gspca_dev->usb_err < 0)
-		वापस;
+	if (gspca_dev->usb_err < 0)
+		return;
 	ret = usb_control_msg(dev, usb_sndctrlpipe(dev, 0),
 			0x01,
-			USB_सूची_OUT | USB_TYPE_VENDOR | USB_RECIP_DEVICE,
+			USB_DIR_OUT | USB_TYPE_VENDOR | USB_RECIP_DEVICE,
 			val,
 			index,
-			शून्य,
+			NULL,
 			0,
 			500);
 	gspca_dbg(gspca_dev, D_USBO, "reg_w 0x%x:=0x%02x\n", index, val);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		pr_err("reg_w 0x%x err %d\n", index, ret);
 		gspca_dev->usb_err = ret;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम reg_w_mask(काष्ठा gspca_dev *gspca_dev, u16 index, u8 val, u8 mask)
-अणु
+static void reg_w_mask(struct gspca_dev *gspca_dev, u16 index, u8 val, u8 mask)
+{
 	val = (reg_r(gspca_dev, index) & ~mask) | (val & mask);
 	reg_w(gspca_dev, index, val);
-पूर्ण
+}
 
-/* this function is called at probe समय */
-अटल पूर्णांक sd_config(काष्ठा gspca_dev *gspca_dev,
-			स्थिर काष्ठा usb_device_id *id)
-अणु
+/* this function is called at probe time */
+static int sd_config(struct gspca_dev *gspca_dev,
+			const struct usb_device_id *id)
+{
 	gspca_dev->cam.cam_mode = stk1135_modes;
 	gspca_dev->cam.nmodes = ARRAY_SIZE(stk1135_modes);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक stk1135_serial_रुको_पढ़ोy(काष्ठा gspca_dev *gspca_dev)
-अणु
-	पूर्णांक i = 0;
+static int stk1135_serial_wait_ready(struct gspca_dev *gspca_dev)
+{
+	int i = 0;
 	u8 val;
 
-	करो अणु
+	do {
 		val = reg_r(gspca_dev, STK1135_REG_SICTL + 1);
-		अगर (i++ > 500) अणु /* maximum retry count */
+		if (i++ > 500) { /* maximum retry count */
 			pr_err("serial bus timeout: status=0x%02x\n", val);
-			वापस -1;
-		पूर्ण
-	/* repeat अगर BUSY or WRITE/READ not finished */
-	पूर्ण जबतक ((val & 0x10) || !(val & 0x05));
+			return -1;
+		}
+	/* repeat if BUSY or WRITE/READ not finished */
+	} while ((val & 0x10) || !(val & 0x05));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल u8 sensor_पढ़ो_8(काष्ठा gspca_dev *gspca_dev, u8 addr)
-अणु
+static u8 sensor_read_8(struct gspca_dev *gspca_dev, u8 addr)
+{
 	reg_w(gspca_dev, STK1135_REG_SBUSR, addr);
-	/* begin पढ़ो */
+	/* begin read */
 	reg_w(gspca_dev, STK1135_REG_SICTL, 0x20);
-	/* रुको until finished */
-	अगर (stk1135_serial_रुको_पढ़ोy(gspca_dev)) अणु
+	/* wait until finished */
+	if (stk1135_serial_wait_ready(gspca_dev)) {
 		pr_err("Sensor read failed\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	वापस reg_r(gspca_dev, STK1135_REG_SBUSR + 1);
-पूर्ण
+	return reg_r(gspca_dev, STK1135_REG_SBUSR + 1);
+}
 
-अटल u16 sensor_पढ़ो_16(काष्ठा gspca_dev *gspca_dev, u8 addr)
-अणु
-	वापस (sensor_पढ़ो_8(gspca_dev, addr) << 8) |
-		sensor_पढ़ो_8(gspca_dev, 0xf1);
-पूर्ण
+static u16 sensor_read_16(struct gspca_dev *gspca_dev, u8 addr)
+{
+	return (sensor_read_8(gspca_dev, addr) << 8) |
+		sensor_read_8(gspca_dev, 0xf1);
+}
 
-अटल व्योम sensor_ग_लिखो_8(काष्ठा gspca_dev *gspca_dev, u8 addr, u8 data)
-अणु
-	/* load address and data रेजिस्टरs */
+static void sensor_write_8(struct gspca_dev *gspca_dev, u8 addr, u8 data)
+{
+	/* load address and data registers */
 	reg_w(gspca_dev, STK1135_REG_SBUSW, addr);
 	reg_w(gspca_dev, STK1135_REG_SBUSW + 1, data);
-	/* begin ग_लिखो */
+	/* begin write */
 	reg_w(gspca_dev, STK1135_REG_SICTL, 0x01);
-	/* रुको until finished */
-	अगर (stk1135_serial_रुको_पढ़ोy(gspca_dev)) अणु
+	/* wait until finished */
+	if (stk1135_serial_wait_ready(gspca_dev)) {
 		pr_err("Sensor write failed\n");
-		वापस;
-	पूर्ण
-पूर्ण
+		return;
+	}
+}
 
-अटल व्योम sensor_ग_लिखो_16(काष्ठा gspca_dev *gspca_dev, u8 addr, u16 data)
-अणु
-	sensor_ग_लिखो_8(gspca_dev, addr, data >> 8);
-	sensor_ग_लिखो_8(gspca_dev, 0xf1, data & 0xff);
-पूर्ण
+static void sensor_write_16(struct gspca_dev *gspca_dev, u8 addr, u16 data)
+{
+	sensor_write_8(gspca_dev, addr, data >> 8);
+	sensor_write_8(gspca_dev, 0xf1, data & 0xff);
+}
 
-अटल व्योम sensor_set_page(काष्ठा gspca_dev *gspca_dev, u8 page)
-अणु
-	काष्ठा sd *sd = (काष्ठा sd *) gspca_dev;
+static void sensor_set_page(struct gspca_dev *gspca_dev, u8 page)
+{
+	struct sd *sd = (struct sd *) gspca_dev;
 
-	अगर (page != sd->sensor_page) अणु
-		sensor_ग_लिखो_16(gspca_dev, 0xf0, page);
+	if (page != sd->sensor_page) {
+		sensor_write_16(gspca_dev, 0xf0, page);
 		sd->sensor_page = page;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल u16 sensor_पढ़ो(काष्ठा gspca_dev *gspca_dev, u16 reg)
-अणु
+static u16 sensor_read(struct gspca_dev *gspca_dev, u16 reg)
+{
 	sensor_set_page(gspca_dev, reg >> 8);
-	वापस sensor_पढ़ो_16(gspca_dev, reg & 0xff);
-पूर्ण
+	return sensor_read_16(gspca_dev, reg & 0xff);
+}
 
-अटल व्योम sensor_ग_लिखो(काष्ठा gspca_dev *gspca_dev, u16 reg, u16 val)
-अणु
+static void sensor_write(struct gspca_dev *gspca_dev, u16 reg, u16 val)
+{
 	sensor_set_page(gspca_dev, reg >> 8);
-	sensor_ग_लिखो_16(gspca_dev, reg & 0xff, val);
-पूर्ण
+	sensor_write_16(gspca_dev, reg & 0xff, val);
+}
 
-अटल व्योम sensor_ग_लिखो_mask(काष्ठा gspca_dev *gspca_dev,
+static void sensor_write_mask(struct gspca_dev *gspca_dev,
 			u16 reg, u16 val, u16 mask)
-अणु
-	val = (sensor_पढ़ो(gspca_dev, reg) & ~mask) | (val & mask);
-	sensor_ग_लिखो(gspca_dev, reg, val);
-पूर्ण
+{
+	val = (sensor_read(gspca_dev, reg) & ~mask) | (val & mask);
+	sensor_write(gspca_dev, reg, val);
+}
 
-काष्ठा sensor_val अणु
+struct sensor_val {
 	u16 reg;
 	u16 val;
-पूर्ण;
+};
 
 /* configure MT9M112 sensor */
-अटल व्योम stk1135_configure_mt9m112(काष्ठा gspca_dev *gspca_dev)
-अणु
-	अटल स्थिर काष्ठा sensor_val cfg[] = अणु
+static void stk1135_configure_mt9m112(struct gspca_dev *gspca_dev)
+{
+	static const struct sensor_val cfg[] = {
 		/* restart&reset, chip enable, reserved */
-		अणु 0x00d, 0x000b पूर्ण, अणु 0x00d, 0x0008 पूर्ण, अणु 0x035, 0x0022 पूर्ण,
+		{ 0x00d, 0x000b }, { 0x00d, 0x0008 }, { 0x035, 0x0022 },
 		/* mode ctl: AWB on, AE both, clip aper corr, defect corr, AE */
-		अणु 0x106, 0x700e पूर्ण,
+		{ 0x106, 0x700e },
 
-		अणु 0x2dd, 0x18e0 पूर्ण, /* B-R thresholds, */
+		{ 0x2dd, 0x18e0 }, /* B-R thresholds, */
 
 		/* AWB */
-		अणु 0x21f, 0x0180 पूर्ण, /* Cb and Cr limits */
-		अणु 0x220, 0xc814 पूर्ण, अणु 0x221, 0x8080 पूर्ण, /* lum limits, RGB gain */
-		अणु 0x222, 0xa078 पूर्ण, अणु 0x223, 0xa078 पूर्ण, /* R, B limit */
-		अणु 0x224, 0x5f20 पूर्ण, अणु 0x228, 0xea02 पूर्ण, /* mtx adj lim, adv ctl */
-		अणु 0x229, 0x867a पूर्ण, /* wide gates */
+		{ 0x21f, 0x0180 }, /* Cb and Cr limits */
+		{ 0x220, 0xc814 }, { 0x221, 0x8080 }, /* lum limits, RGB gain */
+		{ 0x222, 0xa078 }, { 0x223, 0xa078 }, /* R, B limit */
+		{ 0x224, 0x5f20 }, { 0x228, 0xea02 }, /* mtx adj lim, adv ctl */
+		{ 0x229, 0x867a }, /* wide gates */
 
 		/* Color correction */
 		/* imager gains base, delta, delta signs */
-		अणु 0x25e, 0x594c पूर्ण, अणु 0x25f, 0x4d51 पूर्ण, अणु 0x260, 0x0002 पूर्ण,
+		{ 0x25e, 0x594c }, { 0x25f, 0x4d51 }, { 0x260, 0x0002 },
 		/* AWB adv ctl 2, gain offs */
-		अणु 0x2ef, 0x0008 पूर्ण, अणु 0x2f2, 0x0000 पूर्ण,
+		{ 0x2ef, 0x0008 }, { 0x2f2, 0x0000 },
 		/* base matrix signs, scale K1-5, K6-9 */
-		अणु 0x202, 0x00ee पूर्ण, अणु 0x203, 0x3923 पूर्ण, अणु 0x204, 0x0724 पूर्ण,
+		{ 0x202, 0x00ee }, { 0x203, 0x3923 }, { 0x204, 0x0724 },
 		/* base matrix coef */
-		अणु 0x209, 0x00cd पूर्ण, अणु 0x20a, 0x0093 पूर्ण, अणु 0x20b, 0x0004 पूर्ण,/*K1-3*/
-		अणु 0x20c, 0x005c पूर्ण, अणु 0x20d, 0x00d9 पूर्ण, अणु 0x20e, 0x0053 पूर्ण,/*K4-6*/
-		अणु 0x20f, 0x0008 पूर्ण, अणु 0x210, 0x0091 पूर्ण, अणु 0x211, 0x00cf पूर्ण,/*K7-9*/
-		अणु 0x215, 0x0000 पूर्ण, /* delta mtx signs */
+		{ 0x209, 0x00cd }, { 0x20a, 0x0093 }, { 0x20b, 0x0004 },/*K1-3*/
+		{ 0x20c, 0x005c }, { 0x20d, 0x00d9 }, { 0x20e, 0x0053 },/*K4-6*/
+		{ 0x20f, 0x0008 }, { 0x210, 0x0091 }, { 0x211, 0x00cf },/*K7-9*/
+		{ 0x215, 0x0000 }, /* delta mtx signs */
 		/* delta matrix coef */
-		अणु 0x216, 0x0000 पूर्ण, अणु 0x217, 0x0000 पूर्ण, अणु 0x218, 0x0000 पूर्ण,/*D1-3*/
-		अणु 0x219, 0x0000 पूर्ण, अणु 0x21a, 0x0000 पूर्ण, अणु 0x21b, 0x0000 पूर्ण,/*D4-6*/
-		अणु 0x21c, 0x0000 पूर्ण, अणु 0x21d, 0x0000 पूर्ण, अणु 0x21e, 0x0000 पूर्ण,/*D7-9*/
+		{ 0x216, 0x0000 }, { 0x217, 0x0000 }, { 0x218, 0x0000 },/*D1-3*/
+		{ 0x219, 0x0000 }, { 0x21a, 0x0000 }, { 0x21b, 0x0000 },/*D4-6*/
+		{ 0x21c, 0x0000 }, { 0x21d, 0x0000 }, { 0x21e, 0x0000 },/*D7-9*/
 		/* enable & disable manual WB to apply color corr. settings */
-		अणु 0x106, 0xf00e पूर्ण, अणु 0x106, 0x700e पूर्ण,
+		{ 0x106, 0xf00e }, { 0x106, 0x700e },
 
 		/* Lens shading correction */
-		अणु 0x180, 0x0007 पूर्ण, /* control */
+		{ 0x180, 0x0007 }, /* control */
 		/* vertical knee 0, 2+1, 4+3 */
-		अणु 0x181, 0xde13 पूर्ण, अणु 0x182, 0xebe2 पूर्ण, अणु 0x183, 0x00f6 पूर्ण, /* R */
-		अणु 0x184, 0xe114 पूर्ण, अणु 0x185, 0xeadd पूर्ण, अणु 0x186, 0xfdf6 पूर्ण, /* G */
-		अणु 0x187, 0xe511 पूर्ण, अणु 0x188, 0xede6 पूर्ण, अणु 0x189, 0xfbf7 पूर्ण, /* B */
+		{ 0x181, 0xde13 }, { 0x182, 0xebe2 }, { 0x183, 0x00f6 }, /* R */
+		{ 0x184, 0xe114 }, { 0x185, 0xeadd }, { 0x186, 0xfdf6 }, /* G */
+		{ 0x187, 0xe511 }, { 0x188, 0xede6 }, { 0x189, 0xfbf7 }, /* B */
 		/* horizontal knee 0, 2+1, 4+3, 5 */
-		अणु 0x18a, 0xd613 पूर्ण, अणु 0x18b, 0xedec पूर्ण, /* R .. */
-		अणु 0x18c, 0xf9f2 पूर्ण, अणु 0x18d, 0x0000 पूर्ण, /* .. R */
-		अणु 0x18e, 0xd815 पूर्ण, अणु 0x18f, 0xe9ea पूर्ण, /* G .. */
-		अणु 0x190, 0xf9f1 पूर्ण, अणु 0x191, 0x0002 पूर्ण, /* .. G */
-		अणु 0x192, 0xde10 पूर्ण, अणु 0x193, 0xefef पूर्ण, /* B .. */
-		अणु 0x194, 0xfbf4 पूर्ण, अणु 0x195, 0x0002 पूर्ण, /* .. B */
+		{ 0x18a, 0xd613 }, { 0x18b, 0xedec }, /* R .. */
+		{ 0x18c, 0xf9f2 }, { 0x18d, 0x0000 }, /* .. R */
+		{ 0x18e, 0xd815 }, { 0x18f, 0xe9ea }, /* G .. */
+		{ 0x190, 0xf9f1 }, { 0x191, 0x0002 }, /* .. G */
+		{ 0x192, 0xde10 }, { 0x193, 0xefef }, /* B .. */
+		{ 0x194, 0xfbf4 }, { 0x195, 0x0002 }, /* .. B */
 		/* vertical knee 6+5, 8+7 */
-		अणु 0x1b6, 0x0e06 पूर्ण, अणु 0x1b7, 0x2713 पूर्ण, /* R */
-		अणु 0x1b8, 0x1106 पूर्ण, अणु 0x1b9, 0x2713 पूर्ण, /* G */
-		अणु 0x1ba, 0x0c03 पूर्ण, अणु 0x1bb, 0x2a0f पूर्ण, /* B */
+		{ 0x1b6, 0x0e06 }, { 0x1b7, 0x2713 }, /* R */
+		{ 0x1b8, 0x1106 }, { 0x1b9, 0x2713 }, /* G */
+		{ 0x1ba, 0x0c03 }, { 0x1bb, 0x2a0f }, /* B */
 		/* horizontal knee 7+6, 9+8, 10 */
-		अणु 0x1bc, 0x1208 पूर्ण, अणु 0x1bd, 0x1a16 पूर्ण, अणु 0x1be, 0x0022 पूर्ण, /* R */
-		अणु 0x1bf, 0x150a पूर्ण, अणु 0x1c0, 0x1c1a पूर्ण, अणु 0x1c1, 0x002d पूर्ण, /* G */
-		अणु 0x1c2, 0x1109 पूर्ण, अणु 0x1c3, 0x1414 पूर्ण, अणु 0x1c4, 0x002a पूर्ण, /* B */
-		अणु 0x106, 0x740e पूर्ण, /* enable lens shading correction */
+		{ 0x1bc, 0x1208 }, { 0x1bd, 0x1a16 }, { 0x1be, 0x0022 }, /* R */
+		{ 0x1bf, 0x150a }, { 0x1c0, 0x1c1a }, { 0x1c1, 0x002d }, /* G */
+		{ 0x1c2, 0x1109 }, { 0x1c3, 0x1414 }, { 0x1c4, 0x002a }, /* B */
+		{ 0x106, 0x740e }, /* enable lens shading correction */
 
 		/* Gamma correction - context A */
-		अणु 0x153, 0x0b03 पूर्ण, अणु 0x154, 0x4722 पूर्ण, अणु 0x155, 0xac82 पूर्ण,
-		अणु 0x156, 0xdac7 पूर्ण, अणु 0x157, 0xf5e9 पूर्ण, अणु 0x158, 0xff00 पूर्ण,
+		{ 0x153, 0x0b03 }, { 0x154, 0x4722 }, { 0x155, 0xac82 },
+		{ 0x156, 0xdac7 }, { 0x157, 0xf5e9 }, { 0x158, 0xff00 },
 		/* Gamma correction - context B */
-		अणु 0x1dc, 0x0b03 पूर्ण, अणु 0x1dd, 0x4722 पूर्ण, अणु 0x1de, 0xac82 पूर्ण,
-		अणु 0x1df, 0xdac7 पूर्ण, अणु 0x1e0, 0xf5e9 पूर्ण, अणु 0x1e1, 0xff00 पूर्ण,
+		{ 0x1dc, 0x0b03 }, { 0x1dd, 0x4722 }, { 0x1de, 0xac82 },
+		{ 0x1df, 0xdac7 }, { 0x1e0, 0xf5e9 }, { 0x1e1, 0xff00 },
 
-		/* output क्रमmat: RGB, invert output pixघड़ी, output bayer */
-		अणु 0x13a, 0x4300 पूर्ण, अणु 0x19b, 0x4300 पूर्ण, /* क्रम context A, B */
-		अणु 0x108, 0x0180 पूर्ण, /* क्रमmat control - enable bayer row flip */
+		/* output format: RGB, invert output pixclock, output bayer */
+		{ 0x13a, 0x4300 }, { 0x19b, 0x4300 }, /* for context A, B */
+		{ 0x108, 0x0180 }, /* format control - enable bayer row flip */
 
-		अणु 0x22f, 0xd100 पूर्ण, अणु 0x29c, 0xd100 पूर्ण, /* AE A, B */
+		{ 0x22f, 0xd100 }, { 0x29c, 0xd100 }, /* AE A, B */
 
-		/* शेष prg conf, prg ctl - by 0x2d2, prg advance - PA1 */
-		अणु 0x2d2, 0x0000 पूर्ण, अणु 0x2cc, 0x0004 पूर्ण, अणु 0x2cb, 0x0001 पूर्ण,
+		/* default prg conf, prg ctl - by 0x2d2, prg advance - PA1 */
+		{ 0x2d2, 0x0000 }, { 0x2cc, 0x0004 }, { 0x2cb, 0x0001 },
 
-		अणु 0x22e, 0x0c3c पूर्ण, अणु 0x267, 0x1010 पूर्ण, /* AE tgt ctl, gain lim */
+		{ 0x22e, 0x0c3c }, { 0x267, 0x1010 }, /* AE tgt ctl, gain lim */
 
 		/* PLL */
-		अणु 0x065, 0xa000 पूर्ण, /* clk ctl - enable PLL (clear bit 14) */
-		अणु 0x066, 0x2003 पूर्ण, अणु 0x067, 0x0501 पूर्ण, /* PLL M=128, N=3, P=1 */
-		अणु 0x065, 0x2000 पूर्ण, /* disable PLL bypass (clear bit 15) */
+		{ 0x065, 0xa000 }, /* clk ctl - enable PLL (clear bit 14) */
+		{ 0x066, 0x2003 }, { 0x067, 0x0501 }, /* PLL M=128, N=3, P=1 */
+		{ 0x065, 0x2000 }, /* disable PLL bypass (clear bit 15) */
 
-		अणु 0x005, 0x01b8 पूर्ण, अणु 0x007, 0x00d8 पूर्ण, /* horiz blanking B, A */
+		{ 0x005, 0x01b8 }, { 0x007, 0x00d8 }, /* horiz blanking B, A */
 
 		/* AE line size, shutter delay limit */
-		अणु 0x239, 0x06c0 पूर्ण, अणु 0x23b, 0x040e पूर्ण, /* क्रम context A */
-		अणु 0x23a, 0x06c0 पूर्ण, अणु 0x23c, 0x0564 पूर्ण, /* क्रम context B */
+		{ 0x239, 0x06c0 }, { 0x23b, 0x040e }, /* for context A */
+		{ 0x23a, 0x06c0 }, { 0x23c, 0x0564 }, /* for context B */
 		/* shutter width basis 60Hz, 50Hz */
-		अणु 0x257, 0x0208 पूर्ण, अणु 0x258, 0x0271 पूर्ण, /* क्रम context A */
-		अणु 0x259, 0x0209 पूर्ण, अणु 0x25a, 0x0271 पूर्ण, /* क्रम context B */
+		{ 0x257, 0x0208 }, { 0x258, 0x0271 }, /* for context A */
+		{ 0x259, 0x0209 }, { 0x25a, 0x0271 }, /* for context B */
 
-		अणु 0x25c, 0x120d पूर्ण, अणु 0x25d, 0x1712 पूर्ण, /* flicker 60Hz, 50Hz */
-		अणु 0x264, 0x5e1c पूर्ण, /* reserved */
+		{ 0x25c, 0x120d }, { 0x25d, 0x1712 }, /* flicker 60Hz, 50Hz */
+		{ 0x264, 0x5e1c }, /* reserved */
 		/* flicker, AE gain limits, gain zone limits */
-		अणु 0x25b, 0x0003 पूर्ण, अणु 0x236, 0x7810 पूर्ण, अणु 0x237, 0x8304 पूर्ण,
+		{ 0x25b, 0x0003 }, { 0x236, 0x7810 }, { 0x237, 0x8304 },
 
-		अणु 0x008, 0x0021 पूर्ण, /* vert blanking A */
-	पूर्ण;
-	पूर्णांक i;
+		{ 0x008, 0x0021 }, /* vert blanking A */
+	};
+	int i;
 	u16 width, height;
 
-	क्रम (i = 0; i < ARRAY_SIZE(cfg); i++)
-		sensor_ग_लिखो(gspca_dev, cfg[i].reg, cfg[i].val);
+	for (i = 0; i < ARRAY_SIZE(cfg); i++)
+		sensor_write(gspca_dev, cfg[i].reg, cfg[i].val);
 
 	/* set output size */
 	width = gspca_dev->pixfmt.width;
 	height = gspca_dev->pixfmt.height;
-	अगर (width <= 640 && height <= 512) अणु /* context A (half पढ़ोout speed)*/
-		sensor_ग_लिखो(gspca_dev, 0x1a7, width);
-		sensor_ग_लिखो(gspca_dev, 0x1aa, height);
-		/* set पढ़ो mode context A */
-		sensor_ग_लिखो(gspca_dev, 0x0c8, 0x0000);
-		/* set resize, पढ़ो mode, vblank, hblank context A */
-		sensor_ग_लिखो(gspca_dev, 0x2c8, 0x0000);
-	पूर्ण अन्यथा अणु /* context B (full पढ़ोout speed) */
-		sensor_ग_लिखो(gspca_dev, 0x1a1, width);
-		sensor_ग_लिखो(gspca_dev, 0x1a4, height);
-		/* set पढ़ो mode context B */
-		sensor_ग_लिखो(gspca_dev, 0x0c8, 0x0008);
-		/* set resize, पढ़ो mode, vblank, hblank context B */
-		sensor_ग_लिखो(gspca_dev, 0x2c8, 0x040b);
-	पूर्ण
-पूर्ण
+	if (width <= 640 && height <= 512) { /* context A (half readout speed)*/
+		sensor_write(gspca_dev, 0x1a7, width);
+		sensor_write(gspca_dev, 0x1aa, height);
+		/* set read mode context A */
+		sensor_write(gspca_dev, 0x0c8, 0x0000);
+		/* set resize, read mode, vblank, hblank context A */
+		sensor_write(gspca_dev, 0x2c8, 0x0000);
+	} else { /* context B (full readout speed) */
+		sensor_write(gspca_dev, 0x1a1, width);
+		sensor_write(gspca_dev, 0x1a4, height);
+		/* set read mode context B */
+		sensor_write(gspca_dev, 0x0c8, 0x0008);
+		/* set resize, read mode, vblank, hblank context B */
+		sensor_write(gspca_dev, 0x2c8, 0x040b);
+	}
+}
 
-अटल व्योम stk1135_configure_घड़ी(काष्ठा gspca_dev *gspca_dev)
-अणु
+static void stk1135_configure_clock(struct gspca_dev *gspca_dev)
+{
 	/* configure SCLKOUT */
 	reg_w(gspca_dev, STK1135_REG_TMGEN, 0x12);
-	/* set 1 घड़ी per pixel */
-	/* and positive edge घड़ीed pulse high when pixel counter = 0 */
+	/* set 1 clock per pixel */
+	/* and positive edge clocked pulse high when pixel counter = 0 */
 	reg_w(gspca_dev, STK1135_REG_TCP1 + 0, 0x41);
 	reg_w(gspca_dev, STK1135_REG_TCP1 + 1, 0x00);
 	reg_w(gspca_dev, STK1135_REG_TCP1 + 2, 0x00);
 	reg_w(gspca_dev, STK1135_REG_TCP1 + 3, 0x00);
 
-	/* enable CLKOUT क्रम sensor */
+	/* enable CLKOUT for sensor */
 	reg_w(gspca_dev, STK1135_REG_SENSO + 0, 0x10);
-	/* disable STOP घड़ी */
+	/* disable STOP clock */
 	reg_w(gspca_dev, STK1135_REG_SENSO + 1, 0x00);
-	/* set lower 8 bits of PLL feedback भागider */
+	/* set lower 8 bits of PLL feedback divider */
 	reg_w(gspca_dev, STK1135_REG_SENSO + 3, 0x07);
 	/* set other PLL parameters */
 	reg_w(gspca_dev, STK1135_REG_PLLFD, 0x06);
@@ -348,15 +347,15 @@ MODULE_LICENSE("GPL");
 	/* enable PLL */
 	reg_w(gspca_dev, STK1135_REG_SENSO + 2, 0x04);
 
-	/* set serial पूर्णांकerface घड़ी भागider (30MHz/0x1f*16+2) = 60240 kHz) */
+	/* set serial interface clock divider (30MHz/0x1f*16+2) = 60240 kHz) */
 	reg_w(gspca_dev, STK1135_REG_SICTL + 2, 0x1f);
 
-	/* रुको a जबतक क्रम sensor to catch up */
+	/* wait a while for sensor to catch up */
 	udelay(1000);
-पूर्ण
+}
 
-अटल व्योम stk1135_camera_disable(काष्ठा gspca_dev *gspca_dev)
-अणु
+static void stk1135_camera_disable(struct gspca_dev *gspca_dev)
+{
 	/* set capture end Y position to 0 */
 	reg_w(gspca_dev, STK1135_REG_CIEPO + 2, 0x00);
 	reg_w(gspca_dev, STK1135_REG_CIEPO + 3, 0x00);
@@ -364,79 +363,79 @@ MODULE_LICENSE("GPL");
 	reg_w_mask(gspca_dev, STK1135_REG_SCTRL, 0x00, 0x80);
 
 	/* enable sensor standby and diasble chip enable */
-	sensor_ग_लिखो_mask(gspca_dev, 0x00d, 0x0004, 0x000c);
+	sensor_write_mask(gspca_dev, 0x00d, 0x0004, 0x000c);
 
 	/* disable PLL */
 	reg_w_mask(gspca_dev, STK1135_REG_SENSO + 2, 0x00, 0x01);
 	/* disable timing generator */
 	reg_w(gspca_dev, STK1135_REG_TMGEN, 0x00);
-	/* enable STOP घड़ी */
+	/* enable STOP clock */
 	reg_w(gspca_dev, STK1135_REG_SENSO + 1, 0x20);
-	/* disable CLKOUT क्रम sensor */
+	/* disable CLKOUT for sensor */
 	reg_w(gspca_dev, STK1135_REG_SENSO, 0x00);
 
 	/* disable sensor (GPIO5) and enable GPIO0,3,6 (?) - sensor standby? */
 	reg_w(gspca_dev, STK1135_REG_GCTRL, 0x49);
-पूर्ण
+}
 
-/* this function is called at probe and resume समय */
-अटल पूर्णांक sd_init(काष्ठा gspca_dev *gspca_dev)
-अणु
+/* this function is called at probe and resume time */
+static int sd_init(struct gspca_dev *gspca_dev)
+{
 	u16 sensor_id;
-	अक्षर *sensor_name;
-	काष्ठा sd *sd = (काष्ठा sd *) gspca_dev;
+	char *sensor_name;
+	struct sd *sd = (struct sd *) gspca_dev;
 
 	/* set GPIO3,4,5,6 direction to output */
 	reg_w(gspca_dev, STK1135_REG_GCTRL + 2, 0x78);
 	/* enable sensor (GPIO5) */
 	reg_w(gspca_dev, STK1135_REG_GCTRL, (1 << 5));
-	/* disable ROM पूर्णांकerface */
+	/* disable ROM interface */
 	reg_w(gspca_dev, STK1135_REG_GCTRL + 3, 0x80);
-	/* enable पूर्णांकerrupts from GPIO8 (flip sensor) and GPIO9 (???) */
+	/* enable interrupts from GPIO8 (flip sensor) and GPIO9 (???) */
 	reg_w(gspca_dev, STK1135_REG_ICTRL + 1, 0x00);
 	reg_w(gspca_dev, STK1135_REG_ICTRL + 3, 0x03);
 	/* enable remote wakeup from GPIO9 (???) */
 	reg_w(gspca_dev, STK1135_REG_RMCTL + 1, 0x00);
 	reg_w(gspca_dev, STK1135_REG_RMCTL + 3, 0x02);
 
-	/* reset serial पूर्णांकerface */
+	/* reset serial interface */
 	reg_w(gspca_dev, STK1135_REG_SICTL, 0x80);
 	reg_w(gspca_dev, STK1135_REG_SICTL, 0x00);
 	/* set sensor address */
 	reg_w(gspca_dev, STK1135_REG_SICTL + 3, 0xba);
-	/* disable alt 2-wire serial पूर्णांकerface */
+	/* disable alt 2-wire serial interface */
 	reg_w(gspca_dev, STK1135_REG_ASIC + 3, 0x00);
 
-	stk1135_configure_घड़ी(gspca_dev);
+	stk1135_configure_clock(gspca_dev);
 
-	/* पढ़ो sensor ID */
+	/* read sensor ID */
 	sd->sensor_page = 0xff;
-	sensor_id = sensor_पढ़ो(gspca_dev, 0x000);
+	sensor_id = sensor_read(gspca_dev, 0x000);
 
-	चयन (sensor_id) अणु
-	हाल 0x148c:
+	switch (sensor_id) {
+	case 0x148c:
 		sensor_name = "MT9M112";
-		अवरोध;
-	शेष:
+		break;
+	default:
 		sensor_name = "unknown";
-	पूर्ण
+	}
 	pr_info("Detected sensor type %s (0x%x)\n", sensor_name, sensor_id);
 
 	stk1135_camera_disable(gspca_dev);
 
-	वापस gspca_dev->usb_err;
-पूर्ण
+	return gspca_dev->usb_err;
+}
 
 /* -- start the camera -- */
-अटल पूर्णांक sd_start(काष्ठा gspca_dev *gspca_dev)
-अणु
-	काष्ठा sd *sd = (काष्ठा sd *) gspca_dev;
+static int sd_start(struct gspca_dev *gspca_dev)
+{
+	struct sd *sd = (struct sd *) gspca_dev;
 	u16 width, height;
 
 	/* enable sensor (GPIO5) */
 	reg_w(gspca_dev, STK1135_REG_GCTRL, (1 << 5));
 
-	stk1135_configure_घड़ी(gspca_dev);
+	stk1135_configure_clock(gspca_dev);
 
 	/* set capture start position X = 0, Y = 0 */
 	reg_w(gspca_dev, STK1135_REG_CISPO + 0, 0x00);
@@ -460,135 +459,135 @@ MODULE_LICENSE("GPL");
 	/* enable capture */
 	reg_w_mask(gspca_dev, STK1135_REG_SCTRL, 0x80, 0x80);
 
-	अगर (gspca_dev->usb_err >= 0)
+	if (gspca_dev->usb_err >= 0)
 		gspca_dbg(gspca_dev, D_STREAM, "camera started alt: 0x%02x\n",
 			  gspca_dev->alt);
 
 	sd->pkt_seq = 0;
 
-	वापस gspca_dev->usb_err;
-पूर्ण
+	return gspca_dev->usb_err;
+}
 
-अटल व्योम sd_stopN(काष्ठा gspca_dev *gspca_dev)
-अणु
-	काष्ठा usb_device *dev = gspca_dev->dev;
+static void sd_stopN(struct gspca_dev *gspca_dev)
+{
+	struct usb_device *dev = gspca_dev->dev;
 
-	usb_set_पूर्णांकerface(dev, gspca_dev->अगरace, 0);
+	usb_set_interface(dev, gspca_dev->iface, 0);
 
 	stk1135_camera_disable(gspca_dev);
 
 	gspca_dbg(gspca_dev, D_STREAM, "camera stopped\n");
-पूर्ण
+}
 
-अटल व्योम sd_pkt_scan(काष्ठा gspca_dev *gspca_dev,
+static void sd_pkt_scan(struct gspca_dev *gspca_dev,
 			u8 *data,			/* isoc packet */
-			पूर्णांक len)			/* iso packet length */
-अणु
-	काष्ठा sd *sd = (काष्ठा sd *) gspca_dev;
-	पूर्णांक skip = माप(काष्ठा stk1135_pkt_header);
+			int len)			/* iso packet length */
+{
+	struct sd *sd = (struct sd *) gspca_dev;
+	int skip = sizeof(struct stk1135_pkt_header);
 	bool flip;
-	क्रमागत gspca_packet_type pkt_type = INTER_PACKET;
-	काष्ठा stk1135_pkt_header *hdr = (व्योम *)data;
+	enum gspca_packet_type pkt_type = INTER_PACKET;
+	struct stk1135_pkt_header *hdr = (void *)data;
 	u8 seq;
 
-	अगर (len < 4) अणु
+	if (len < 4) {
 		gspca_dbg(gspca_dev, D_PACK, "received short packet (less than 4 bytes)\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/* GPIO 8 is flip sensor (1 = normal position, 0 = flipped to back) */
 	flip = !(le16_to_cpu(hdr->gpio) & (1 << 8));
-	/* it's a चयन, needs software debounce */
-	अगर (sd->flip_status != flip)
+	/* it's a switch, needs software debounce */
+	if (sd->flip_status != flip)
 		sd->flip_debounce++;
-	अन्यथा
+	else
 		sd->flip_debounce = 0;
 
 	/* check sequence number (not present in new frame packets) */
-	अगर (!(hdr->flags & STK1135_HDR_FRAME_START)) अणु
+	if (!(hdr->flags & STK1135_HDR_FRAME_START)) {
 		seq = hdr->seq & STK1135_HDR_SEQ_MASK;
-		अगर (seq != sd->pkt_seq) अणु
+		if (seq != sd->pkt_seq) {
 			gspca_dbg(gspca_dev, D_PACK, "received out-of-sequence packet\n");
 			/* resync sequence and discard packet */
 			sd->pkt_seq = seq;
 			gspca_dev->last_packet_type = DISCARD_PACKET;
-			वापस;
-		पूर्ण
-	पूर्ण
+			return;
+		}
+	}
 	sd->pkt_seq++;
-	अगर (sd->pkt_seq > STK1135_HDR_SEQ_MASK)
+	if (sd->pkt_seq > STK1135_HDR_SEQ_MASK)
 		sd->pkt_seq = 0;
 
-	अगर (len == माप(काष्ठा stk1135_pkt_header))
-		वापस;
+	if (len == sizeof(struct stk1135_pkt_header))
+		return;
 
-	अगर (hdr->flags & STK1135_HDR_FRAME_START) अणु /* new frame */
-		skip = 8;	/* the header is दीर्घer */
+	if (hdr->flags & STK1135_HDR_FRAME_START) { /* new frame */
+		skip = 8;	/* the header is longer */
 		gspca_frame_add(gspca_dev, LAST_PACKET, data, 0);
 		pkt_type = FIRST_PACKET;
-	पूर्ण
+	}
 	gspca_frame_add(gspca_dev, pkt_type, data + skip, len - skip);
-पूर्ण
+}
 
-अटल व्योम sethflip(काष्ठा gspca_dev *gspca_dev, s32 val)
-अणु
-	काष्ठा sd *sd = (काष्ठा sd *) gspca_dev;
+static void sethflip(struct gspca_dev *gspca_dev, s32 val)
+{
+	struct sd *sd = (struct sd *) gspca_dev;
 
-	अगर (sd->flip_status)
+	if (sd->flip_status)
 		val = !val;
-	sensor_ग_लिखो_mask(gspca_dev, 0x020, val ? 0x0002 : 0x0000 , 0x0002);
-पूर्ण
+	sensor_write_mask(gspca_dev, 0x020, val ? 0x0002 : 0x0000 , 0x0002);
+}
 
-अटल व्योम setvflip(काष्ठा gspca_dev *gspca_dev, s32 val)
-अणु
-	काष्ठा sd *sd = (काष्ठा sd *) gspca_dev;
+static void setvflip(struct gspca_dev *gspca_dev, s32 val)
+{
+	struct sd *sd = (struct sd *) gspca_dev;
 
-	अगर (sd->flip_status)
+	if (sd->flip_status)
 		val = !val;
-	sensor_ग_लिखो_mask(gspca_dev, 0x020, val ? 0x0001 : 0x0000 , 0x0001);
-पूर्ण
+	sensor_write_mask(gspca_dev, 0x020, val ? 0x0001 : 0x0000 , 0x0001);
+}
 
-अटल व्योम stk1135_dq_callback(काष्ठा gspca_dev *gspca_dev)
-अणु
-	काष्ठा sd *sd = (काष्ठा sd *) gspca_dev;
+static void stk1135_dq_callback(struct gspca_dev *gspca_dev)
+{
+	struct sd *sd = (struct sd *) gspca_dev;
 
-	अगर (sd->flip_debounce > 100) अणु
+	if (sd->flip_debounce > 100) {
 		sd->flip_status = !sd->flip_status;
 		sethflip(gspca_dev, v4l2_ctrl_g_ctrl(sd->hflip));
 		setvflip(gspca_dev, v4l2_ctrl_g_ctrl(sd->vflip));
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक sd_s_ctrl(काष्ठा v4l2_ctrl *ctrl)
-अणु
-	काष्ठा gspca_dev *gspca_dev =
-		container_of(ctrl->handler, काष्ठा gspca_dev, ctrl_handler);
+static int sd_s_ctrl(struct v4l2_ctrl *ctrl)
+{
+	struct gspca_dev *gspca_dev =
+		container_of(ctrl->handler, struct gspca_dev, ctrl_handler);
 
 	gspca_dev->usb_err = 0;
 
-	अगर (!gspca_dev->streaming)
-		वापस 0;
+	if (!gspca_dev->streaming)
+		return 0;
 
-	चयन (ctrl->id) अणु
-	हाल V4L2_CID_HFLIP:
+	switch (ctrl->id) {
+	case V4L2_CID_HFLIP:
 		sethflip(gspca_dev, ctrl->val);
-		अवरोध;
-	हाल V4L2_CID_VFLIP:
+		break;
+	case V4L2_CID_VFLIP:
 		setvflip(gspca_dev, ctrl->val);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस gspca_dev->usb_err;
-पूर्ण
+	return gspca_dev->usb_err;
+}
 
-अटल स्थिर काष्ठा v4l2_ctrl_ops sd_ctrl_ops = अणु
+static const struct v4l2_ctrl_ops sd_ctrl_ops = {
 	.s_ctrl = sd_s_ctrl,
-पूर्ण;
+};
 
-अटल पूर्णांक sd_init_controls(काष्ठा gspca_dev *gspca_dev)
-अणु
-	काष्ठा sd *sd = (काष्ठा sd *) gspca_dev;
-	काष्ठा v4l2_ctrl_handler *hdl = &gspca_dev->ctrl_handler;
+static int sd_init_controls(struct gspca_dev *gspca_dev)
+{
+	struct sd *sd = (struct sd *) gspca_dev;
+	struct v4l2_ctrl_handler *hdl = &gspca_dev->ctrl_handler;
 
 	gspca_dev->vdev.ctrl_handler = hdl;
 	v4l2_ctrl_handler_init(hdl, 2);
@@ -597,15 +596,15 @@ MODULE_LICENSE("GPL");
 	sd->vflip = v4l2_ctrl_new_std(hdl, &sd_ctrl_ops,
 			V4L2_CID_VFLIP, 0, 1, 1, 0);
 
-	अगर (hdl->error) अणु
+	if (hdl->error) {
 		pr_err("Could not initialize controls\n");
-		वापस hdl->error;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return hdl->error;
+	}
+	return 0;
+}
 
-अटल व्योम stk1135_try_fmt(काष्ठा gspca_dev *gspca_dev, काष्ठा v4l2_क्रमmat *fmt)
-अणु
+static void stk1135_try_fmt(struct gspca_dev *gspca_dev, struct v4l2_format *fmt)
+{
 	fmt->fmt.pix.width = clamp(fmt->fmt.pix.width, 32U, 1280U);
 	fmt->fmt.pix.height = clamp(fmt->fmt.pix.height, 32U, 1024U);
 	/* round up to even numbers */
@@ -614,13 +613,13 @@ MODULE_LICENSE("GPL");
 
 	fmt->fmt.pix.bytesperline = fmt->fmt.pix.width;
 	fmt->fmt.pix.sizeimage = fmt->fmt.pix.width * fmt->fmt.pix.height;
-पूर्ण
+}
 
-अटल पूर्णांक stk1135_क्रमागत_framesizes(काष्ठा gspca_dev *gspca_dev,
-			काष्ठा v4l2_frmsizeक्रमागत *fsize)
-अणु
-	अगर (fsize->index != 0 || fsize->pixel_क्रमmat != V4L2_PIX_FMT_SBGGR8)
-		वापस -EINVAL;
+static int stk1135_enum_framesizes(struct gspca_dev *gspca_dev,
+			struct v4l2_frmsizeenum *fsize)
+{
+	if (fsize->index != 0 || fsize->pixel_format != V4L2_PIX_FMT_SBGGR8)
+		return -EINVAL;
 
 	fsize->type = V4L2_FRMSIZE_TYPE_STEPWISE;
 	fsize->stepwise.min_width = 32;
@@ -630,11 +629,11 @@ MODULE_LICENSE("GPL");
 	fsize->stepwise.step_width = 2;
 	fsize->stepwise.step_height = 2;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* sub-driver description */
-अटल स्थिर काष्ठा sd_desc sd_desc = अणु
+static const struct sd_desc sd_desc = {
 	.name = MODULE_NAME,
 	.config = sd_config,
 	.init = sd_init,
@@ -644,34 +643,34 @@ MODULE_LICENSE("GPL");
 	.pkt_scan = sd_pkt_scan,
 	.dq_callback = stk1135_dq_callback,
 	.try_fmt = stk1135_try_fmt,
-	.क्रमागत_framesizes = stk1135_क्रमागत_framesizes,
-पूर्ण;
+	.enum_framesizes = stk1135_enum_framesizes,
+};
 
 /* -- module initialisation -- */
-अटल स्थिर काष्ठा usb_device_id device_table[] = अणु
-	अणुUSB_DEVICE(0x174f, 0x6a31)पूर्ण,	/* ASUS laptop, MT9M112 sensor */
-	अणुपूर्ण
-पूर्ण;
+static const struct usb_device_id device_table[] = {
+	{USB_DEVICE(0x174f, 0x6a31)},	/* ASUS laptop, MT9M112 sensor */
+	{}
+};
 MODULE_DEVICE_TABLE(usb, device_table);
 
 /* -- device connect -- */
-अटल पूर्णांक sd_probe(काष्ठा usb_पूर्णांकerface *पूर्णांकf,
-			स्थिर काष्ठा usb_device_id *id)
-अणु
-	वापस gspca_dev_probe(पूर्णांकf, id, &sd_desc, माप(काष्ठा sd),
+static int sd_probe(struct usb_interface *intf,
+			const struct usb_device_id *id)
+{
+	return gspca_dev_probe(intf, id, &sd_desc, sizeof(struct sd),
 				THIS_MODULE);
-पूर्ण
+}
 
-अटल काष्ठा usb_driver sd_driver = अणु
+static struct usb_driver sd_driver = {
 	.name = MODULE_NAME,
 	.id_table = device_table,
 	.probe = sd_probe,
 	.disconnect = gspca_disconnect,
-#अगर_घोषित CONFIG_PM
+#ifdef CONFIG_PM
 	.suspend = gspca_suspend,
 	.resume = gspca_resume,
 	.reset_resume = gspca_resume,
-#पूर्ण_अगर
-पूर्ण;
+#endif
+};
 
 module_usb_driver(sd_driver);

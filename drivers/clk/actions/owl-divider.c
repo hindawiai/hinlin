@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 //
-// OWL भागider घड़ी driver
+// OWL divider clock driver
 //
 // Copyright (c) 2014 Actions Semi Inc.
 // Author: David Liu <liuwei@actions-semi.com>
@@ -9,87 +8,87 @@
 // Copyright (c) 2018 Linaro Ltd.
 // Author: Manivannan Sadhasivam <manivannan.sadhasivam@linaro.org>
 
-#समावेश <linux/clk-provider.h>
-#समावेश <linux/regmap.h>
+#include <linux/clk-provider.h>
+#include <linux/regmap.h>
 
-#समावेश "owl-divider.h"
+#include "owl-divider.h"
 
-दीर्घ owl_भागider_helper_round_rate(काष्ठा owl_clk_common *common,
-				स्थिर काष्ठा owl_भागider_hw *भाग_hw,
-				अचिन्हित दीर्घ rate,
-				अचिन्हित दीर्घ *parent_rate)
-अणु
-	वापस भागider_round_rate(&common->hw, rate, parent_rate,
-				  भाग_hw->table, भाग_hw->width,
-				  भाग_hw->भाग_flags);
-पूर्ण
+long owl_divider_helper_round_rate(struct owl_clk_common *common,
+				const struct owl_divider_hw *div_hw,
+				unsigned long rate,
+				unsigned long *parent_rate)
+{
+	return divider_round_rate(&common->hw, rate, parent_rate,
+				  div_hw->table, div_hw->width,
+				  div_hw->div_flags);
+}
 
-अटल दीर्घ owl_भागider_round_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
-				अचिन्हित दीर्घ *parent_rate)
-अणु
-	काष्ठा owl_भागider *भाग = hw_to_owl_भागider(hw);
+static long owl_divider_round_rate(struct clk_hw *hw, unsigned long rate,
+				unsigned long *parent_rate)
+{
+	struct owl_divider *div = hw_to_owl_divider(hw);
 
-	वापस owl_भागider_helper_round_rate(&भाग->common, &भाग->भाग_hw,
+	return owl_divider_helper_round_rate(&div->common, &div->div_hw,
 					     rate, parent_rate);
-पूर्ण
+}
 
-अचिन्हित दीर्घ owl_भागider_helper_recalc_rate(काष्ठा owl_clk_common *common,
-					 स्थिर काष्ठा owl_भागider_hw *भाग_hw,
-					 अचिन्हित दीर्घ parent_rate)
-अणु
-	अचिन्हित दीर्घ val;
-	अचिन्हित पूर्णांक reg;
+unsigned long owl_divider_helper_recalc_rate(struct owl_clk_common *common,
+					 const struct owl_divider_hw *div_hw,
+					 unsigned long parent_rate)
+{
+	unsigned long val;
+	unsigned int reg;
 
-	regmap_पढ़ो(common->regmap, भाग_hw->reg, &reg);
-	val = reg >> भाग_hw->shअगरt;
-	val &= (1 << भाग_hw->width) - 1;
+	regmap_read(common->regmap, div_hw->reg, &reg);
+	val = reg >> div_hw->shift;
+	val &= (1 << div_hw->width) - 1;
 
-	वापस भागider_recalc_rate(&common->hw, parent_rate,
-				   val, भाग_hw->table,
-				   भाग_hw->भाग_flags,
-				   भाग_hw->width);
-पूर्ण
+	return divider_recalc_rate(&common->hw, parent_rate,
+				   val, div_hw->table,
+				   div_hw->div_flags,
+				   div_hw->width);
+}
 
-अटल अचिन्हित दीर्घ owl_भागider_recalc_rate(काष्ठा clk_hw *hw,
-					  अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा owl_भागider *भाग = hw_to_owl_भागider(hw);
+static unsigned long owl_divider_recalc_rate(struct clk_hw *hw,
+					  unsigned long parent_rate)
+{
+	struct owl_divider *div = hw_to_owl_divider(hw);
 
-	वापस owl_भागider_helper_recalc_rate(&भाग->common,
-					      &भाग->भाग_hw, parent_rate);
-पूर्ण
+	return owl_divider_helper_recalc_rate(&div->common,
+					      &div->div_hw, parent_rate);
+}
 
-पूर्णांक owl_भागider_helper_set_rate(स्थिर काष्ठा owl_clk_common *common,
-				स्थिर काष्ठा owl_भागider_hw *भाग_hw,
-				अचिन्हित दीर्घ rate,
-				अचिन्हित दीर्घ parent_rate)
-अणु
-	अचिन्हित दीर्घ val;
-	अचिन्हित पूर्णांक reg;
+int owl_divider_helper_set_rate(const struct owl_clk_common *common,
+				const struct owl_divider_hw *div_hw,
+				unsigned long rate,
+				unsigned long parent_rate)
+{
+	unsigned long val;
+	unsigned int reg;
 
-	val = भागider_get_val(rate, parent_rate, भाग_hw->table,
-			      भाग_hw->width, 0);
+	val = divider_get_val(rate, parent_rate, div_hw->table,
+			      div_hw->width, 0);
 
-	regmap_पढ़ो(common->regmap, भाग_hw->reg, &reg);
-	reg &= ~GENMASK(भाग_hw->width + भाग_hw->shअगरt - 1, भाग_hw->shअगरt);
+	regmap_read(common->regmap, div_hw->reg, &reg);
+	reg &= ~GENMASK(div_hw->width + div_hw->shift - 1, div_hw->shift);
 
-	regmap_ग_लिखो(common->regmap, भाग_hw->reg,
-			  reg | (val << भाग_hw->shअगरt));
+	regmap_write(common->regmap, div_hw->reg,
+			  reg | (val << div_hw->shift));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक owl_भागider_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
-				अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा owl_भागider *भाग = hw_to_owl_भागider(hw);
+static int owl_divider_set_rate(struct clk_hw *hw, unsigned long rate,
+				unsigned long parent_rate)
+{
+	struct owl_divider *div = hw_to_owl_divider(hw);
 
-	वापस owl_भागider_helper_set_rate(&भाग->common, &भाग->भाग_hw,
+	return owl_divider_helper_set_rate(&div->common, &div->div_hw,
 					rate, parent_rate);
-पूर्ण
+}
 
-स्थिर काष्ठा clk_ops owl_भागider_ops = अणु
-	.recalc_rate = owl_भागider_recalc_rate,
-	.round_rate = owl_भागider_round_rate,
-	.set_rate = owl_भागider_set_rate,
-पूर्ण;
+const struct clk_ops owl_divider_ops = {
+	.recalc_rate = owl_divider_recalc_rate,
+	.round_rate = owl_divider_round_rate,
+	.set_rate = owl_divider_set_rate,
+};

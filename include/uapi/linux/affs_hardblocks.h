@@ -1,13 +1,12 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
-#अगर_अघोषित	AFFS_HARDBLOCKS_H
-#घोषणा	AFFS_HARDBLOCKS_H
+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+#ifndef	AFFS_HARDBLOCKS_H
+#define	AFFS_HARDBLOCKS_H
 
-#समावेश <linux/types.h>
+#include <linux/types.h>
 
-/* Just the needed definitions क्रम the RDB of an Amiga HD. */
+/* Just the needed definitions for the RDB of an Amiga HD. */
 
-काष्ठा RigidDiskBlock अणु
+struct RigidDiskBlock {
 	__u32	rdb_ID;
 	__be32	rdb_SummedLongs;
 	__s32	rdb_ChkSum;
@@ -37,18 +36,18 @@
 	__u32	rdb_AutoParkSeconds;
 	__u32	rdb_HighRDSKBlock;
 	__u32	rdb_Reserved4;
-	अक्षर	rdb_DiskVenकरोr[8];
-	अक्षर	rdb_DiskProduct[16];
-	अक्षर	rdb_DiskRevision[4];
-	अक्षर	rdb_ControllerVenकरोr[8];
-	अक्षर	rdb_ControllerProduct[16];
-	अक्षर	rdb_ControllerRevision[4];
+	char	rdb_DiskVendor[8];
+	char	rdb_DiskProduct[16];
+	char	rdb_DiskRevision[4];
+	char	rdb_ControllerVendor[8];
+	char	rdb_ControllerProduct[16];
+	char	rdb_ControllerRevision[4];
 	__u32	rdb_Reserved5[10];
-पूर्ण;
+};
 
-#घोषणा	IDNAME_RIGIDDISK	0x5244534B	/* "RDSK" */
+#define	IDNAME_RIGIDDISK	0x5244534B	/* "RDSK" */
 
-काष्ठा PartitionBlock अणु
+struct PartitionBlock {
 	__be32	pb_ID;
 	__be32	pb_SummedLongs;
 	__s32	pb_ChkSum;
@@ -61,10 +60,10 @@
 	__u32	pb_Reserved2[15];
 	__be32	pb_Environment[17];
 	__u32	pb_EReserved[15];
-पूर्ण;
+};
 
-#घोषणा	IDNAME_PARTITION	0x50415254	/* "PART" */
+#define	IDNAME_PARTITION	0x50415254	/* "PART" */
 
-#घोषणा RDB_ALLOCATION_LIMIT	16
+#define RDB_ALLOCATION_LIMIT	16
 
-#पूर्ण_अगर	/* AFFS_HARDBLOCKS_H */
+#endif	/* AFFS_HARDBLOCKS_H */

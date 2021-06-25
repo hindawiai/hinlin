@@ -1,148 +1,147 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <मानककोष.स>
-#समावेश <माला.स>
-#समावेश <sys/types.h>
-#समावेश <unistd.h>
-#समावेश <sys/prctl.h>
-#समावेश "tests.h"
-#समावेश "thread_map.h"
-#समावेश "debug.h"
-#समावेश "event.h"
-#समावेश "util/synthetic-events.h"
-#समावेश <linux/zभाग.स>
-#समावेश <perf/event.h>
+// SPDX-License-Identifier: GPL-2.0
+#include <stdlib.h>
+#include <string.h>
+#include <sys/types.h>
+#include <unistd.h>
+#include <sys/prctl.h>
+#include "tests.h"
+#include "thread_map.h"
+#include "debug.h"
+#include "event.h"
+#include "util/synthetic-events.h"
+#include <linux/zalloc.h>
+#include <perf/event.h>
 
-काष्ठा perf_sample;
-काष्ठा perf_tool;
-काष्ठा machine;
+struct perf_sample;
+struct perf_tool;
+struct machine;
 
-#घोषणा NAME	(स्थिर अक्षर *) "perf"
-#घोषणा NAMEUL	(अचिन्हित दीर्घ) NAME
+#define NAME	(const char *) "perf"
+#define NAMEUL	(unsigned long) NAME
 
-पूर्णांक test__thपढ़ो_map(काष्ठा test *test __maybe_unused, पूर्णांक subtest __maybe_unused)
-अणु
-	काष्ठा perf_thपढ़ो_map *map;
+int test__thread_map(struct test *test __maybe_unused, int subtest __maybe_unused)
+{
+	struct perf_thread_map *map;
 
 	TEST_ASSERT_VAL("failed to set process name",
 			!prctl(PR_SET_NAME, NAMEUL, 0, 0, 0));
 
 	/* test map on current pid */
-	map = thपढ़ो_map__new_by_pid(getpid());
+	map = thread_map__new_by_pid(getpid());
 	TEST_ASSERT_VAL("failed to alloc map", map);
 
-	thपढ़ो_map__पढ़ो_comms(map);
+	thread_map__read_comms(map);
 
 	TEST_ASSERT_VAL("wrong nr", map->nr == 1);
 	TEST_ASSERT_VAL("wrong pid",
-			perf_thपढ़ो_map__pid(map, 0) == getpid());
+			perf_thread_map__pid(map, 0) == getpid());
 	TEST_ASSERT_VAL("wrong comm",
-			perf_thपढ़ो_map__comm(map, 0) &&
-			!म_भेद(perf_thपढ़ो_map__comm(map, 0), NAME));
+			perf_thread_map__comm(map, 0) &&
+			!strcmp(perf_thread_map__comm(map, 0), NAME));
 	TEST_ASSERT_VAL("wrong refcnt",
-			refcount_पढ़ो(&map->refcnt) == 1);
-	perf_thपढ़ो_map__put(map);
+			refcount_read(&map->refcnt) == 1);
+	perf_thread_map__put(map);
 
 	/* test dummy pid */
-	map = perf_thपढ़ो_map__new_dummy();
+	map = perf_thread_map__new_dummy();
 	TEST_ASSERT_VAL("failed to alloc map", map);
 
-	thपढ़ो_map__पढ़ो_comms(map);
+	thread_map__read_comms(map);
 
 	TEST_ASSERT_VAL("wrong nr", map->nr == 1);
-	TEST_ASSERT_VAL("wrong pid", perf_thपढ़ो_map__pid(map, 0) == -1);
+	TEST_ASSERT_VAL("wrong pid", perf_thread_map__pid(map, 0) == -1);
 	TEST_ASSERT_VAL("wrong comm",
-			perf_thपढ़ो_map__comm(map, 0) &&
-			!म_भेद(perf_thपढ़ो_map__comm(map, 0), "dummy"));
+			perf_thread_map__comm(map, 0) &&
+			!strcmp(perf_thread_map__comm(map, 0), "dummy"));
 	TEST_ASSERT_VAL("wrong refcnt",
-			refcount_पढ़ो(&map->refcnt) == 1);
-	perf_thपढ़ो_map__put(map);
-	वापस 0;
-पूर्ण
+			refcount_read(&map->refcnt) == 1);
+	perf_thread_map__put(map);
+	return 0;
+}
 
-अटल पूर्णांक process_event(काष्ठा perf_tool *tool __maybe_unused,
-			 जोड़ perf_event *event,
-			 काष्ठा perf_sample *sample __maybe_unused,
-			 काष्ठा machine *machine __maybe_unused)
-अणु
-	काष्ठा perf_record_thपढ़ो_map *map = &event->thपढ़ो_map;
-	काष्ठा perf_thपढ़ो_map *thपढ़ोs;
+static int process_event(struct perf_tool *tool __maybe_unused,
+			 union perf_event *event,
+			 struct perf_sample *sample __maybe_unused,
+			 struct machine *machine __maybe_unused)
+{
+	struct perf_record_thread_map *map = &event->thread_map;
+	struct perf_thread_map *threads;
 
 	TEST_ASSERT_VAL("wrong nr",   map->nr == 1);
 	TEST_ASSERT_VAL("wrong pid",  map->entries[0].pid == (u64) getpid());
-	TEST_ASSERT_VAL("wrong comm", !म_भेद(map->entries[0].comm, NAME));
+	TEST_ASSERT_VAL("wrong comm", !strcmp(map->entries[0].comm, NAME));
 
-	thपढ़ोs = thपढ़ो_map__new_event(&event->thपढ़ो_map);
-	TEST_ASSERT_VAL("failed to alloc map", thपढ़ोs);
+	threads = thread_map__new_event(&event->thread_map);
+	TEST_ASSERT_VAL("failed to alloc map", threads);
 
-	TEST_ASSERT_VAL("wrong nr", thपढ़ोs->nr == 1);
+	TEST_ASSERT_VAL("wrong nr", threads->nr == 1);
 	TEST_ASSERT_VAL("wrong pid",
-			perf_thपढ़ो_map__pid(thपढ़ोs, 0) == getpid());
+			perf_thread_map__pid(threads, 0) == getpid());
 	TEST_ASSERT_VAL("wrong comm",
-			perf_thपढ़ो_map__comm(thपढ़ोs, 0) &&
-			!म_भेद(perf_thपढ़ो_map__comm(thपढ़ोs, 0), NAME));
+			perf_thread_map__comm(threads, 0) &&
+			!strcmp(perf_thread_map__comm(threads, 0), NAME));
 	TEST_ASSERT_VAL("wrong refcnt",
-			refcount_पढ़ो(&thपढ़ोs->refcnt) == 1);
-	perf_thपढ़ो_map__put(thपढ़ोs);
-	वापस 0;
-पूर्ण
+			refcount_read(&threads->refcnt) == 1);
+	perf_thread_map__put(threads);
+	return 0;
+}
 
-पूर्णांक test__thपढ़ो_map_synthesize(काष्ठा test *test __maybe_unused, पूर्णांक subtest __maybe_unused)
-अणु
-	काष्ठा perf_thपढ़ो_map *thपढ़ोs;
+int test__thread_map_synthesize(struct test *test __maybe_unused, int subtest __maybe_unused)
+{
+	struct perf_thread_map *threads;
 
 	TEST_ASSERT_VAL("failed to set process name",
 			!prctl(PR_SET_NAME, NAMEUL, 0, 0, 0));
 
 	/* test map on current pid */
-	thपढ़ोs = thपढ़ो_map__new_by_pid(getpid());
-	TEST_ASSERT_VAL("failed to alloc map", thपढ़ोs);
+	threads = thread_map__new_by_pid(getpid());
+	TEST_ASSERT_VAL("failed to alloc map", threads);
 
-	thपढ़ो_map__पढ़ो_comms(thपढ़ोs);
+	thread_map__read_comms(threads);
 
 	TEST_ASSERT_VAL("failed to synthesize map",
-		!perf_event__syntheमाप_प्रकारhपढ़ो_map2(शून्य, thपढ़ोs, process_event, शून्य));
+		!perf_event__synthesize_thread_map2(NULL, threads, process_event, NULL));
 
-	perf_thपढ़ो_map__put(thपढ़ोs);
-	वापस 0;
-पूर्ण
+	perf_thread_map__put(threads);
+	return 0;
+}
 
-पूर्णांक test__thपढ़ो_map_हटाओ(काष्ठा test *test __maybe_unused, पूर्णांक subtest __maybe_unused)
-अणु
-	काष्ठा perf_thपढ़ो_map *thपढ़ोs;
-	अक्षर *str;
+int test__thread_map_remove(struct test *test __maybe_unused, int subtest __maybe_unused)
+{
+	struct perf_thread_map *threads;
+	char *str;
 
 	TEST_ASSERT_VAL("failed to allocate map string",
-			aप्र_लिखो(&str, "%d,%d", getpid(), getppid()) >= 0);
+			asprintf(&str, "%d,%d", getpid(), getppid()) >= 0);
 
-	thपढ़ोs = thपढ़ो_map__new_str(str, शून्य, 0, false);
-	मुक्त(str);
+	threads = thread_map__new_str(str, NULL, 0, false);
+	free(str);
 
 	TEST_ASSERT_VAL("failed to allocate thread_map",
-			thपढ़ोs);
+			threads);
 
-	अगर (verbose > 0)
-		thपढ़ो_map__ख_लिखो(thपढ़ोs, मानक_त्रुटि);
-
-	TEST_ASSERT_VAL("failed to remove thread",
-			!thपढ़ो_map__हटाओ(thपढ़ोs, 0));
-
-	TEST_ASSERT_VAL("thread_map count != 1", thपढ़ोs->nr == 1);
-
-	अगर (verbose > 0)
-		thपढ़ो_map__ख_लिखो(thपढ़ोs, मानक_त्रुटि);
+	if (verbose > 0)
+		thread_map__fprintf(threads, stderr);
 
 	TEST_ASSERT_VAL("failed to remove thread",
-			!thपढ़ो_map__हटाओ(thपढ़ोs, 0));
+			!thread_map__remove(threads, 0));
 
-	TEST_ASSERT_VAL("thread_map count != 0", thपढ़ोs->nr == 0);
+	TEST_ASSERT_VAL("thread_map count != 1", threads->nr == 1);
 
-	अगर (verbose > 0)
-		thपढ़ो_map__ख_लिखो(thपढ़ोs, मानक_त्रुटि);
+	if (verbose > 0)
+		thread_map__fprintf(threads, stderr);
+
+	TEST_ASSERT_VAL("failed to remove thread",
+			!thread_map__remove(threads, 0));
+
+	TEST_ASSERT_VAL("thread_map count != 0", threads->nr == 0);
+
+	if (verbose > 0)
+		thread_map__fprintf(threads, stderr);
 
 	TEST_ASSERT_VAL("failed to not remove thread",
-			thपढ़ो_map__हटाओ(thपढ़ोs, 0));
+			thread_map__remove(threads, 0));
 
-	perf_thपढ़ो_map__put(thपढ़ोs);
-	वापस 0;
-पूर्ण
+	perf_thread_map__put(threads);
+	return 0;
+}

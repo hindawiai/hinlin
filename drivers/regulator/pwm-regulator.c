@@ -1,232 +1,231 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Regulator driver क्रम PWM Regulators
+ * Regulator driver for PWM Regulators
  *
  * Copyright (C) 2014 - STMicroelectronics Inc.
  *
  * Author: Lee Jones <lee.jones@linaro.org>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/init.h>
-#समावेश <linux/err.h>
-#समावेश <linux/regulator/driver.h>
-#समावेश <linux/regulator/machine.h>
-#समावेश <linux/regulator/of_regulator.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/pwm.h>
-#समावेश <linux/gpio/consumer.h>
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/err.h>
+#include <linux/regulator/driver.h>
+#include <linux/regulator/machine.h>
+#include <linux/regulator/of_regulator.h>
+#include <linux/of.h>
+#include <linux/of_device.h>
+#include <linux/pwm.h>
+#include <linux/gpio/consumer.h>
 
-काष्ठा pwm_continuous_reg_data अणु
-	अचिन्हित पूर्णांक min_uV_dutycycle;
-	अचिन्हित पूर्णांक max_uV_dutycycle;
-	अचिन्हित पूर्णांक dutycycle_unit;
-पूर्ण;
+struct pwm_continuous_reg_data {
+	unsigned int min_uV_dutycycle;
+	unsigned int max_uV_dutycycle;
+	unsigned int dutycycle_unit;
+};
 
-काष्ठा pwm_regulator_data अणु
+struct pwm_regulator_data {
 	/*  Shared */
-	काष्ठा pwm_device *pwm;
+	struct pwm_device *pwm;
 
 	/* Voltage table */
-	काष्ठा pwm_voltages *duty_cycle_table;
+	struct pwm_voltages *duty_cycle_table;
 
 	/* Continuous mode info */
-	काष्ठा pwm_continuous_reg_data continuous;
+	struct pwm_continuous_reg_data continuous;
 
 	/* regulator descriptor */
-	काष्ठा regulator_desc desc;
+	struct regulator_desc desc;
 
-	पूर्णांक state;
+	int state;
 
 	/* Enable GPIO */
-	काष्ठा gpio_desc *enb_gpio;
-पूर्ण;
+	struct gpio_desc *enb_gpio;
+};
 
-काष्ठा pwm_voltages अणु
-	अचिन्हित पूर्णांक uV;
-	अचिन्हित पूर्णांक dutycycle;
-पूर्ण;
+struct pwm_voltages {
+	unsigned int uV;
+	unsigned int dutycycle;
+};
 
 /*
  * Voltage table call-backs
  */
-अटल व्योम pwm_regulator_init_state(काष्ठा regulator_dev *rdev)
-अणु
-	काष्ठा pwm_regulator_data *drvdata = rdev_get_drvdata(rdev);
-	काष्ठा pwm_state pwm_state;
-	अचिन्हित पूर्णांक dutycycle;
-	पूर्णांक i;
+static void pwm_regulator_init_state(struct regulator_dev *rdev)
+{
+	struct pwm_regulator_data *drvdata = rdev_get_drvdata(rdev);
+	struct pwm_state pwm_state;
+	unsigned int dutycycle;
+	int i;
 
 	pwm_get_state(drvdata->pwm, &pwm_state);
 	dutycycle = pwm_get_relative_duty_cycle(&pwm_state, 100);
 
-	क्रम (i = 0; i < rdev->desc->n_voltages; i++) अणु
-		अगर (dutycycle == drvdata->duty_cycle_table[i].dutycycle) अणु
+	for (i = 0; i < rdev->desc->n_voltages; i++) {
+		if (dutycycle == drvdata->duty_cycle_table[i].dutycycle) {
 			drvdata->state = i;
-			वापस;
-		पूर्ण
-	पूर्ण
-पूर्ण
+			return;
+		}
+	}
+}
 
-अटल पूर्णांक pwm_regulator_get_voltage_sel(काष्ठा regulator_dev *rdev)
-अणु
-	काष्ठा pwm_regulator_data *drvdata = rdev_get_drvdata(rdev);
+static int pwm_regulator_get_voltage_sel(struct regulator_dev *rdev)
+{
+	struct pwm_regulator_data *drvdata = rdev_get_drvdata(rdev);
 
-	अगर (drvdata->state < 0)
+	if (drvdata->state < 0)
 		pwm_regulator_init_state(rdev);
 
-	वापस drvdata->state;
-पूर्ण
+	return drvdata->state;
+}
 
-अटल पूर्णांक pwm_regulator_set_voltage_sel(काष्ठा regulator_dev *rdev,
-					 अचिन्हित selector)
-अणु
-	काष्ठा pwm_regulator_data *drvdata = rdev_get_drvdata(rdev);
-	काष्ठा pwm_state pstate;
-	पूर्णांक ret;
+static int pwm_regulator_set_voltage_sel(struct regulator_dev *rdev,
+					 unsigned selector)
+{
+	struct pwm_regulator_data *drvdata = rdev_get_drvdata(rdev);
+	struct pwm_state pstate;
+	int ret;
 
 	pwm_init_state(drvdata->pwm, &pstate);
 	pwm_set_relative_duty_cycle(&pstate,
 			drvdata->duty_cycle_table[selector].dutycycle, 100);
 
 	ret = pwm_apply_state(drvdata->pwm, &pstate);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&rdev->dev, "Failed to configure PWM: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	drvdata->state = selector;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक pwm_regulator_list_voltage(काष्ठा regulator_dev *rdev,
-				      अचिन्हित selector)
-अणु
-	काष्ठा pwm_regulator_data *drvdata = rdev_get_drvdata(rdev);
+static int pwm_regulator_list_voltage(struct regulator_dev *rdev,
+				      unsigned selector)
+{
+	struct pwm_regulator_data *drvdata = rdev_get_drvdata(rdev);
 
-	अगर (selector >= rdev->desc->n_voltages)
-		वापस -EINVAL;
+	if (selector >= rdev->desc->n_voltages)
+		return -EINVAL;
 
-	वापस drvdata->duty_cycle_table[selector].uV;
-पूर्ण
+	return drvdata->duty_cycle_table[selector].uV;
+}
 
-अटल पूर्णांक pwm_regulator_enable(काष्ठा regulator_dev *dev)
-अणु
-	काष्ठा pwm_regulator_data *drvdata = rdev_get_drvdata(dev);
+static int pwm_regulator_enable(struct regulator_dev *dev)
+{
+	struct pwm_regulator_data *drvdata = rdev_get_drvdata(dev);
 
 	gpiod_set_value_cansleep(drvdata->enb_gpio, 1);
 
-	वापस pwm_enable(drvdata->pwm);
-पूर्ण
+	return pwm_enable(drvdata->pwm);
+}
 
-अटल पूर्णांक pwm_regulator_disable(काष्ठा regulator_dev *dev)
-अणु
-	काष्ठा pwm_regulator_data *drvdata = rdev_get_drvdata(dev);
+static int pwm_regulator_disable(struct regulator_dev *dev)
+{
+	struct pwm_regulator_data *drvdata = rdev_get_drvdata(dev);
 
 	pwm_disable(drvdata->pwm);
 
 	gpiod_set_value_cansleep(drvdata->enb_gpio, 0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक pwm_regulator_is_enabled(काष्ठा regulator_dev *dev)
-अणु
-	काष्ठा pwm_regulator_data *drvdata = rdev_get_drvdata(dev);
+static int pwm_regulator_is_enabled(struct regulator_dev *dev)
+{
+	struct pwm_regulator_data *drvdata = rdev_get_drvdata(dev);
 
-	अगर (drvdata->enb_gpio && !gpiod_get_value_cansleep(drvdata->enb_gpio))
-		वापस false;
+	if (drvdata->enb_gpio && !gpiod_get_value_cansleep(drvdata->enb_gpio))
+		return false;
 
-	वापस pwm_is_enabled(drvdata->pwm);
-पूर्ण
+	return pwm_is_enabled(drvdata->pwm);
+}
 
-अटल पूर्णांक pwm_regulator_get_voltage(काष्ठा regulator_dev *rdev)
-अणु
-	काष्ठा pwm_regulator_data *drvdata = rdev_get_drvdata(rdev);
-	अचिन्हित पूर्णांक min_uV_duty = drvdata->continuous.min_uV_dutycycle;
-	अचिन्हित पूर्णांक max_uV_duty = drvdata->continuous.max_uV_dutycycle;
-	अचिन्हित पूर्णांक duty_unit = drvdata->continuous.dutycycle_unit;
-	पूर्णांक min_uV = rdev->स्थिरraपूर्णांकs->min_uV;
-	पूर्णांक max_uV = rdev->स्थिरraपूर्णांकs->max_uV;
-	पूर्णांक dअगरf_uV = max_uV - min_uV;
-	काष्ठा pwm_state pstate;
-	अचिन्हित पूर्णांक dअगरf_duty;
-	अचिन्हित पूर्णांक voltage;
+static int pwm_regulator_get_voltage(struct regulator_dev *rdev)
+{
+	struct pwm_regulator_data *drvdata = rdev_get_drvdata(rdev);
+	unsigned int min_uV_duty = drvdata->continuous.min_uV_dutycycle;
+	unsigned int max_uV_duty = drvdata->continuous.max_uV_dutycycle;
+	unsigned int duty_unit = drvdata->continuous.dutycycle_unit;
+	int min_uV = rdev->constraints->min_uV;
+	int max_uV = rdev->constraints->max_uV;
+	int diff_uV = max_uV - min_uV;
+	struct pwm_state pstate;
+	unsigned int diff_duty;
+	unsigned int voltage;
 
 	pwm_get_state(drvdata->pwm, &pstate);
 
 	voltage = pwm_get_relative_duty_cycle(&pstate, duty_unit);
 
 	/*
-	 * The dutycycle क्रम min_uV might be greater than the one क्रम max_uV.
+	 * The dutycycle for min_uV might be greater than the one for max_uV.
 	 * This is happening when the user needs an inversed polarity, but the
-	 * PWM device करोes not support inversing it in hardware.
+	 * PWM device does not support inversing it in hardware.
 	 */
-	अगर (max_uV_duty < min_uV_duty) अणु
+	if (max_uV_duty < min_uV_duty) {
 		voltage = min_uV_duty - voltage;
-		dअगरf_duty = min_uV_duty - max_uV_duty;
-	पूर्ण अन्यथा अणु
+		diff_duty = min_uV_duty - max_uV_duty;
+	} else {
 		voltage = voltage - min_uV_duty;
-		dअगरf_duty = max_uV_duty - min_uV_duty;
-	पूर्ण
+		diff_duty = max_uV_duty - min_uV_duty;
+	}
 
-	voltage = DIV_ROUND_CLOSEST_ULL((u64)voltage * dअगरf_uV, dअगरf_duty);
+	voltage = DIV_ROUND_CLOSEST_ULL((u64)voltage * diff_uV, diff_duty);
 
-	वापस voltage + min_uV;
-पूर्ण
+	return voltage + min_uV;
+}
 
-अटल पूर्णांक pwm_regulator_set_voltage(काष्ठा regulator_dev *rdev,
-				     पूर्णांक req_min_uV, पूर्णांक req_max_uV,
-				     अचिन्हित पूर्णांक *selector)
-अणु
-	काष्ठा pwm_regulator_data *drvdata = rdev_get_drvdata(rdev);
-	अचिन्हित पूर्णांक min_uV_duty = drvdata->continuous.min_uV_dutycycle;
-	अचिन्हित पूर्णांक max_uV_duty = drvdata->continuous.max_uV_dutycycle;
-	अचिन्हित पूर्णांक duty_unit = drvdata->continuous.dutycycle_unit;
-	पूर्णांक min_uV = rdev->स्थिरraपूर्णांकs->min_uV;
-	पूर्णांक max_uV = rdev->स्थिरraपूर्णांकs->max_uV;
-	पूर्णांक dअगरf_uV = max_uV - min_uV;
-	काष्ठा pwm_state pstate;
-	अचिन्हित पूर्णांक dअगरf_duty;
-	अचिन्हित पूर्णांक dutycycle;
-	पूर्णांक ret;
+static int pwm_regulator_set_voltage(struct regulator_dev *rdev,
+				     int req_min_uV, int req_max_uV,
+				     unsigned int *selector)
+{
+	struct pwm_regulator_data *drvdata = rdev_get_drvdata(rdev);
+	unsigned int min_uV_duty = drvdata->continuous.min_uV_dutycycle;
+	unsigned int max_uV_duty = drvdata->continuous.max_uV_dutycycle;
+	unsigned int duty_unit = drvdata->continuous.dutycycle_unit;
+	int min_uV = rdev->constraints->min_uV;
+	int max_uV = rdev->constraints->max_uV;
+	int diff_uV = max_uV - min_uV;
+	struct pwm_state pstate;
+	unsigned int diff_duty;
+	unsigned int dutycycle;
+	int ret;
 
 	pwm_init_state(drvdata->pwm, &pstate);
 
 	/*
-	 * The dutycycle क्रम min_uV might be greater than the one क्रम max_uV.
+	 * The dutycycle for min_uV might be greater than the one for max_uV.
 	 * This is happening when the user needs an inversed polarity, but the
-	 * PWM device करोes not support inversing it in hardware.
+	 * PWM device does not support inversing it in hardware.
 	 */
-	अगर (max_uV_duty < min_uV_duty)
-		dअगरf_duty = min_uV_duty - max_uV_duty;
-	अन्यथा
-		dअगरf_duty = max_uV_duty - min_uV_duty;
+	if (max_uV_duty < min_uV_duty)
+		diff_duty = min_uV_duty - max_uV_duty;
+	else
+		diff_duty = max_uV_duty - min_uV_duty;
 
 	dutycycle = DIV_ROUND_CLOSEST_ULL((u64)(req_min_uV - min_uV) *
-					  dअगरf_duty,
-					  dअगरf_uV);
+					  diff_duty,
+					  diff_uV);
 
-	अगर (max_uV_duty < min_uV_duty)
+	if (max_uV_duty < min_uV_duty)
 		dutycycle = min_uV_duty - dutycycle;
-	अन्यथा
+	else
 		dutycycle = min_uV_duty + dutycycle;
 
 	pwm_set_relative_duty_cycle(&pstate, dutycycle, duty_unit);
 
 	ret = pwm_apply_state(drvdata->pwm, &pstate);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&rdev->dev, "Failed to configure PWM: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा regulator_ops pwm_regulator_voltage_table_ops = अणु
+static const struct regulator_ops pwm_regulator_voltage_table_ops = {
 	.set_voltage_sel = pwm_regulator_set_voltage_sel,
 	.get_voltage_sel = pwm_regulator_get_voltage_sel,
 	.list_voltage    = pwm_regulator_list_voltage,
@@ -234,178 +233,178 @@
 	.enable          = pwm_regulator_enable,
 	.disable         = pwm_regulator_disable,
 	.is_enabled      = pwm_regulator_is_enabled,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा regulator_ops pwm_regulator_voltage_continuous_ops = अणु
+static const struct regulator_ops pwm_regulator_voltage_continuous_ops = {
 	.get_voltage = pwm_regulator_get_voltage,
 	.set_voltage = pwm_regulator_set_voltage,
 	.enable          = pwm_regulator_enable,
 	.disable         = pwm_regulator_disable,
 	.is_enabled      = pwm_regulator_is_enabled,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा regulator_desc pwm_regulator_desc = अणु
+static const struct regulator_desc pwm_regulator_desc = {
 	.name		= "pwm-regulator",
 	.type		= REGULATOR_VOLTAGE,
 	.owner		= THIS_MODULE,
 	.supply_name    = "pwm",
-पूर्ण;
+};
 
-अटल पूर्णांक pwm_regulator_init_table(काष्ठा platक्रमm_device *pdev,
-				    काष्ठा pwm_regulator_data *drvdata)
-अणु
-	काष्ठा device_node *np = pdev->dev.of_node;
-	काष्ठा pwm_voltages *duty_cycle_table;
-	अचिन्हित पूर्णांक length = 0;
-	पूर्णांक ret;
+static int pwm_regulator_init_table(struct platform_device *pdev,
+				    struct pwm_regulator_data *drvdata)
+{
+	struct device_node *np = pdev->dev.of_node;
+	struct pwm_voltages *duty_cycle_table;
+	unsigned int length = 0;
+	int ret;
 
 	of_find_property(np, "voltage-table", &length);
 
-	अगर ((length < माप(*duty_cycle_table)) ||
-	    (length % माप(*duty_cycle_table))) अणु
+	if ((length < sizeof(*duty_cycle_table)) ||
+	    (length % sizeof(*duty_cycle_table))) {
 		dev_err(&pdev->dev, "voltage-table length(%d) is invalid\n",
 			length);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	duty_cycle_table = devm_kzalloc(&pdev->dev, length, GFP_KERNEL);
-	अगर (!duty_cycle_table)
-		वापस -ENOMEM;
+	if (!duty_cycle_table)
+		return -ENOMEM;
 
-	ret = of_property_पढ़ो_u32_array(np, "voltage-table",
+	ret = of_property_read_u32_array(np, "voltage-table",
 					 (u32 *)duty_cycle_table,
-					 length / माप(u32));
-	अगर (ret) अणु
+					 length / sizeof(u32));
+	if (ret) {
 		dev_err(&pdev->dev, "Failed to read voltage-table: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	drvdata->state			= -ENOTRECOVERABLE;
 	drvdata->duty_cycle_table	= duty_cycle_table;
 	drvdata->desc.ops = &pwm_regulator_voltage_table_ops;
-	drvdata->desc.n_voltages	= length / माप(*duty_cycle_table);
+	drvdata->desc.n_voltages	= length / sizeof(*duty_cycle_table);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक pwm_regulator_init_continuous(काष्ठा platक्रमm_device *pdev,
-					 काष्ठा pwm_regulator_data *drvdata)
-अणु
-	u32 dutycycle_range[2] = अणु 0, 100 पूर्ण;
+static int pwm_regulator_init_continuous(struct platform_device *pdev,
+					 struct pwm_regulator_data *drvdata)
+{
+	u32 dutycycle_range[2] = { 0, 100 };
 	u32 dutycycle_unit = 100;
 
 	drvdata->desc.ops = &pwm_regulator_voltage_continuous_ops;
 	drvdata->desc.continuous_voltage_range = true;
 
-	of_property_पढ़ो_u32_array(pdev->dev.of_node,
+	of_property_read_u32_array(pdev->dev.of_node,
 				   "pwm-dutycycle-range",
 				   dutycycle_range, 2);
-	of_property_पढ़ो_u32(pdev->dev.of_node, "pwm-dutycycle-unit",
+	of_property_read_u32(pdev->dev.of_node, "pwm-dutycycle-unit",
 			     &dutycycle_unit);
 
-	अगर (dutycycle_range[0] > dutycycle_unit ||
+	if (dutycycle_range[0] > dutycycle_unit ||
 	    dutycycle_range[1] > dutycycle_unit)
-		वापस -EINVAL;
+		return -EINVAL;
 
 	drvdata->continuous.dutycycle_unit = dutycycle_unit;
 	drvdata->continuous.min_uV_dutycycle = dutycycle_range[0];
 	drvdata->continuous.max_uV_dutycycle = dutycycle_range[1];
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक pwm_regulator_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	स्थिर काष्ठा regulator_init_data *init_data;
-	काष्ठा pwm_regulator_data *drvdata;
-	काष्ठा regulator_dev *regulator;
-	काष्ठा regulator_config config = अणु पूर्ण;
-	काष्ठा device_node *np = pdev->dev.of_node;
-	क्रमागत gpiod_flags gpio_flags;
-	पूर्णांक ret;
+static int pwm_regulator_probe(struct platform_device *pdev)
+{
+	const struct regulator_init_data *init_data;
+	struct pwm_regulator_data *drvdata;
+	struct regulator_dev *regulator;
+	struct regulator_config config = { };
+	struct device_node *np = pdev->dev.of_node;
+	enum gpiod_flags gpio_flags;
+	int ret;
 
-	अगर (!np) अणु
+	if (!np) {
 		dev_err(&pdev->dev, "Device Tree node missing\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	drvdata = devm_kzalloc(&pdev->dev, माप(*drvdata), GFP_KERNEL);
-	अगर (!drvdata)
-		वापस -ENOMEM;
+	drvdata = devm_kzalloc(&pdev->dev, sizeof(*drvdata), GFP_KERNEL);
+	if (!drvdata)
+		return -ENOMEM;
 
-	स_नकल(&drvdata->desc, &pwm_regulator_desc, माप(drvdata->desc));
+	memcpy(&drvdata->desc, &pwm_regulator_desc, sizeof(drvdata->desc));
 
-	अगर (of_find_property(np, "voltage-table", शून्य))
+	if (of_find_property(np, "voltage-table", NULL))
 		ret = pwm_regulator_init_table(pdev, drvdata);
-	अन्यथा
+	else
 		ret = pwm_regulator_init_continuous(pdev, drvdata);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	init_data = of_get_regulator_init_data(&pdev->dev, np,
 					       &drvdata->desc);
-	अगर (!init_data)
-		वापस -ENOMEM;
+	if (!init_data)
+		return -ENOMEM;
 
 	config.of_node = np;
 	config.dev = &pdev->dev;
 	config.driver_data = drvdata;
 	config.init_data = init_data;
 
-	drvdata->pwm = devm_pwm_get(&pdev->dev, शून्य);
-	अगर (IS_ERR(drvdata->pwm)) अणु
+	drvdata->pwm = devm_pwm_get(&pdev->dev, NULL);
+	if (IS_ERR(drvdata->pwm)) {
 		ret = PTR_ERR(drvdata->pwm);
-		अगर (ret == -EPROBE_DEFER)
+		if (ret == -EPROBE_DEFER)
 			dev_dbg(&pdev->dev,
 				"Failed to get PWM, deferring probe\n");
-		अन्यथा
+		else
 			dev_err(&pdev->dev, "Failed to get PWM: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	अगर (init_data->स्थिरraपूर्णांकs.boot_on || init_data->स्थिरraपूर्णांकs.always_on)
+	if (init_data->constraints.boot_on || init_data->constraints.always_on)
 		gpio_flags = GPIOD_OUT_HIGH;
-	अन्यथा
+	else
 		gpio_flags = GPIOD_OUT_LOW;
 	drvdata->enb_gpio = devm_gpiod_get_optional(&pdev->dev, "enable",
 						    gpio_flags);
-	अगर (IS_ERR(drvdata->enb_gpio)) अणु
+	if (IS_ERR(drvdata->enb_gpio)) {
 		ret = PTR_ERR(drvdata->enb_gpio);
 		dev_err(&pdev->dev, "Failed to get enable GPIO: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	ret = pwm_adjust_config(drvdata->pwm);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	regulator = devm_regulator_रेजिस्टर(&pdev->dev,
+	regulator = devm_regulator_register(&pdev->dev,
 					    &drvdata->desc, &config);
-	अगर (IS_ERR(regulator)) अणु
+	if (IS_ERR(regulator)) {
 		ret = PTR_ERR(regulator);
 		dev_err(&pdev->dev, "Failed to register regulator %s: %d\n",
 			drvdata->desc.name, ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id __maybe_unused pwm_of_match[] = अणु
-	अणु .compatible = "pwm-regulator" पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+static const struct of_device_id __maybe_unused pwm_of_match[] = {
+	{ .compatible = "pwm-regulator" },
+	{ },
+};
 MODULE_DEVICE_TABLE(of, pwm_of_match);
 
-अटल काष्ठा platक्रमm_driver pwm_regulator_driver = अणु
-	.driver = अणु
+static struct platform_driver pwm_regulator_driver = {
+	.driver = {
 		.name		= "pwm-regulator",
 		.of_match_table = of_match_ptr(pwm_of_match),
-	पूर्ण,
+	},
 	.probe = pwm_regulator_probe,
-पूर्ण;
+};
 
-module_platक्रमm_driver(pwm_regulator_driver);
+module_platform_driver(pwm_regulator_driver);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Lee Jones <lee.jones@linaro.org>");

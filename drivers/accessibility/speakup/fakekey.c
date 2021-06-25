@@ -1,88 +1,87 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /* fakekey.c
- * Functions क्रम simulating keypresses.
+ * Functions for simulating keypresses.
  *
  * Copyright (C) 2010 the Speakup Team
  */
-#समावेश <linux/types.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/preempt.h>
-#समावेश <linux/percpu.h>
-#समावेश <linux/input.h>
+#include <linux/types.h>
+#include <linux/slab.h>
+#include <linux/preempt.h>
+#include <linux/percpu.h>
+#include <linux/input.h>
 
-#समावेश "speakup.h"
+#include "speakup.h"
 
-#घोषणा PRESSED 1
-#घोषणा RELEASED 0
+#define PRESSED 1
+#define RELEASED 0
 
-अटल DEFINE_PER_CPU(पूर्णांक, reporting_keystroke);
+static DEFINE_PER_CPU(int, reporting_keystroke);
 
-अटल काष्ठा input_dev *virt_keyboard;
+static struct input_dev *virt_keyboard;
 
-पूर्णांक speakup_add_भव_keyboard(व्योम)
-अणु
-	पूर्णांक err;
+int speakup_add_virtual_keyboard(void)
+{
+	int err;
 
 	virt_keyboard = input_allocate_device();
 
-	अगर (!virt_keyboard)
-		वापस -ENOMEM;
+	if (!virt_keyboard)
+		return -ENOMEM;
 
 	virt_keyboard->name = "Speakup";
 	virt_keyboard->id.bustype = BUS_VIRTUAL;
 	virt_keyboard->phys = "speakup/input0";
-	virt_keyboard->dev.parent = शून्य;
+	virt_keyboard->dev.parent = NULL;
 
 	__set_bit(EV_KEY, virt_keyboard->evbit);
 	__set_bit(KEY_DOWN, virt_keyboard->keybit);
 
-	err = input_रेजिस्टर_device(virt_keyboard);
-	अगर (err) अणु
-		input_मुक्त_device(virt_keyboard);
-		virt_keyboard = शून्य;
-	पूर्ण
+	err = input_register_device(virt_keyboard);
+	if (err) {
+		input_free_device(virt_keyboard);
+		virt_keyboard = NULL;
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-व्योम speakup_हटाओ_भव_keyboard(व्योम)
-अणु
-	अगर (virt_keyboard) अणु
-		input_unरेजिस्टर_device(virt_keyboard);
-		virt_keyboard = शून्य;
-	पूर्ण
-पूर्ण
+void speakup_remove_virtual_keyboard(void)
+{
+	if (virt_keyboard) {
+		input_unregister_device(virt_keyboard);
+		virt_keyboard = NULL;
+	}
+}
 
 /*
- * Send a simulated करोwn-arrow to the application.
+ * Send a simulated down-arrow to the application.
  */
-व्योम speakup_fake_करोwn_arrow(व्योम)
-अणु
-	अचिन्हित दीर्घ flags;
+void speakup_fake_down_arrow(void)
+{
+	unsigned long flags;
 
-	/* disable keyboard पूर्णांकerrupts */
+	/* disable keyboard interrupts */
 	local_irq_save(flags);
-	/* करोn't change CPU */
+	/* don't change CPU */
 	preempt_disable();
 
-	__this_cpu_ग_लिखो(reporting_keystroke, true);
+	__this_cpu_write(reporting_keystroke, true);
 	input_report_key(virt_keyboard, KEY_DOWN, PRESSED);
 	input_report_key(virt_keyboard, KEY_DOWN, RELEASED);
 	input_sync(virt_keyboard);
-	__this_cpu_ग_लिखो(reporting_keystroke, false);
+	__this_cpu_write(reporting_keystroke, false);
 
 	/* reenable preemption */
 	preempt_enable();
-	/* reenable keyboard पूर्णांकerrupts */
+	/* reenable keyboard interrupts */
 	local_irq_restore(flags);
-पूर्ण
+}
 
 /*
  * Are we handling a simulated keypress on the current CPU?
  * Returns a boolean.
  */
-bool speakup_fake_key_pressed(व्योम)
-अणु
-	वापस this_cpu_पढ़ो(reporting_keystroke);
-पूर्ण
+bool speakup_fake_key_pressed(void)
+{
+	return this_cpu_read(reporting_keystroke);
+}

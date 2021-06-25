@@ -1,22 +1,21 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
- * quota.h - Defines क्रम NTFS kernel quota ($Quota) handling.  Part of the
+ * quota.h - Defines for NTFS kernel quota ($Quota) handling.  Part of the
  *	     Linux-NTFS project.
  *
  * Copyright (c) 2004 Anton Altaparmakov
  */
 
-#अगर_अघोषित _LINUX_NTFS_QUOTA_H
-#घोषणा _LINUX_NTFS_QUOTA_H
+#ifndef _LINUX_NTFS_QUOTA_H
+#define _LINUX_NTFS_QUOTA_H
 
-#अगर_घोषित NTFS_RW
+#ifdef NTFS_RW
 
-#समावेश "types.h"
-#समावेश "volume.h"
+#include "types.h"
+#include "volume.h"
 
-बाह्य bool ntfs_mark_quotas_out_of_date(ntfs_volume *vol);
+extern bool ntfs_mark_quotas_out_of_date(ntfs_volume *vol);
 
-#पूर्ण_अगर /* NTFS_RW */
+#endif /* NTFS_RW */
 
-#पूर्ण_अगर /* _LINUX_NTFS_QUOTA_H */
+#endif /* _LINUX_NTFS_QUOTA_H */

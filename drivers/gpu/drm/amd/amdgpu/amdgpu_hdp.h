@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2020 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,21 +20,21 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  *
  */
-#अगर_अघोषित __AMDGPU_HDP_H__
-#घोषणा __AMDGPU_HDP_H__
+#ifndef __AMDGPU_HDP_H__
+#define __AMDGPU_HDP_H__
 
-काष्ठा amdgpu_hdp_funcs अणु
-	व्योम (*flush_hdp)(काष्ठा amdgpu_device *adev, काष्ठा amdgpu_ring *ring);
-	व्योम (*invalidate_hdp)(काष्ठा amdgpu_device *adev,
-			       काष्ठा amdgpu_ring *ring);
-	व्योम (*reset_ras_error_count)(काष्ठा amdgpu_device *adev);
-	व्योम (*update_घड़ी_gating)(काष्ठा amdgpu_device *adev, bool enable);
-	व्योम (*get_घड़ी_gating_state)(काष्ठा amdgpu_device *adev, u32 *flags);
-	व्योम (*init_रेजिस्टरs)(काष्ठा amdgpu_device *adev);
-पूर्ण;
+struct amdgpu_hdp_funcs {
+	void (*flush_hdp)(struct amdgpu_device *adev, struct amdgpu_ring *ring);
+	void (*invalidate_hdp)(struct amdgpu_device *adev,
+			       struct amdgpu_ring *ring);
+	void (*reset_ras_error_count)(struct amdgpu_device *adev);
+	void (*update_clock_gating)(struct amdgpu_device *adev, bool enable);
+	void (*get_clock_gating_state)(struct amdgpu_device *adev, u32 *flags);
+	void (*init_registers)(struct amdgpu_device *adev);
+};
 
-काष्ठा amdgpu_hdp अणु
-	स्थिर काष्ठा amdgpu_hdp_funcs		*funcs;
-पूर्ण;
+struct amdgpu_hdp {
+	const struct amdgpu_hdp_funcs		*funcs;
+};
 
-#पूर्ण_अगर /* __AMDGPU_HDP_H__ */
+#endif /* __AMDGPU_HDP_H__ */

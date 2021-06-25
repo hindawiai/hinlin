@@ -1,38 +1,37 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Network Service Header
  *
  * Copyright (c) 2017 Red Hat, Inc. -- Jiri Benc <jbenc@redhat.com>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/skbuff.h>
-#समावेश <net/nsh.h>
-#समावेश <net/tun_proto.h>
+#include <linux/module.h>
+#include <linux/netdevice.h>
+#include <linux/skbuff.h>
+#include <net/nsh.h>
+#include <net/tun_proto.h>
 
-पूर्णांक nsh_push(काष्ठा sk_buff *skb, स्थिर काष्ठा nshhdr *pushed_nh)
-अणु
-	काष्ठा nshhdr *nh;
-	माप_प्रकार length = nsh_hdr_len(pushed_nh);
+int nsh_push(struct sk_buff *skb, const struct nshhdr *pushed_nh)
+{
+	struct nshhdr *nh;
+	size_t length = nsh_hdr_len(pushed_nh);
 	u8 next_proto;
 
-	अगर (skb->mac_len) अणु
+	if (skb->mac_len) {
 		next_proto = TUN_P_ETHERNET;
-	पूर्ण अन्यथा अणु
+	} else {
 		next_proto = tun_p_from_eth_p(skb->protocol);
-		अगर (!next_proto)
-			वापस -EAFNOSUPPORT;
-	पूर्ण
+		if (!next_proto)
+			return -EAFNOSUPPORT;
+	}
 
 	/* Add the NSH header */
-	अगर (skb_cow_head(skb, length) < 0)
-		वापस -ENOMEM;
+	if (skb_cow_head(skb, length) < 0)
+		return -ENOMEM;
 
 	skb_push(skb, length);
-	nh = (काष्ठा nshhdr *)(skb->data);
-	स_नकल(nh, pushed_nh, length);
+	nh = (struct nshhdr *)(skb->data);
+	memcpy(nh, pushed_nh, length);
 	nh->np = next_proto;
 	skb_postpush_rcsum(skb, nh, length);
 
@@ -41,28 +40,28 @@
 	skb_reset_network_header(skb);
 	skb_reset_mac_len(skb);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(nsh_push);
 
-पूर्णांक nsh_pop(काष्ठा sk_buff *skb)
-अणु
-	काष्ठा nshhdr *nh;
-	माप_प्रकार length;
+int nsh_pop(struct sk_buff *skb)
+{
+	struct nshhdr *nh;
+	size_t length;
 	__be16 inner_proto;
 
-	अगर (!pskb_may_pull(skb, NSH_BASE_HDR_LEN))
-		वापस -ENOMEM;
-	nh = (काष्ठा nshhdr *)(skb->data);
+	if (!pskb_may_pull(skb, NSH_BASE_HDR_LEN))
+		return -ENOMEM;
+	nh = (struct nshhdr *)(skb->data);
 	length = nsh_hdr_len(nh);
-	अगर (length < NSH_BASE_HDR_LEN)
-		वापस -EINVAL;
+	if (length < NSH_BASE_HDR_LEN)
+		return -EINVAL;
 	inner_proto = tun_p_to_eth_p(nh->np);
-	अगर (!pskb_may_pull(skb, length))
-		वापस -ENOMEM;
+	if (!pskb_may_pull(skb, length))
+		return -ENOMEM;
 
-	अगर (!inner_proto)
-		वापस -EAFNOSUPPORT;
+	if (!inner_proto)
+		return -EAFNOSUPPORT;
 
 	skb_pull_rcsum(skb, length);
 	skb_reset_mac_header(skb);
@@ -70,34 +69,34 @@ EXPORT_SYMBOL_GPL(nsh_push);
 	skb_reset_mac_len(skb);
 	skb->protocol = inner_proto;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(nsh_pop);
 
-अटल काष्ठा sk_buff *nsh_gso_segment(काष्ठा sk_buff *skb,
+static struct sk_buff *nsh_gso_segment(struct sk_buff *skb,
 				       netdev_features_t features)
-अणु
-	काष्ठा sk_buff *segs = ERR_PTR(-EINVAL);
-	अचिन्हित पूर्णांक nsh_len, mac_len;
+{
+	struct sk_buff *segs = ERR_PTR(-EINVAL);
+	unsigned int nsh_len, mac_len;
 	__be16 proto;
-	पूर्णांक nhoff;
+	int nhoff;
 
 	skb_reset_network_header(skb);
 
 	nhoff = skb->network_header - skb->mac_header;
 	mac_len = skb->mac_len;
 
-	अगर (unlikely(!pskb_may_pull(skb, NSH_BASE_HDR_LEN)))
-		जाओ out;
+	if (unlikely(!pskb_may_pull(skb, NSH_BASE_HDR_LEN)))
+		goto out;
 	nsh_len = nsh_hdr_len(nsh_hdr(skb));
-	अगर (nsh_len < NSH_BASE_HDR_LEN)
-		जाओ out;
-	अगर (unlikely(!pskb_may_pull(skb, nsh_len)))
-		जाओ out;
+	if (nsh_len < NSH_BASE_HDR_LEN)
+		goto out;
+	if (unlikely(!pskb_may_pull(skb, nsh_len)))
+		goto out;
 
 	proto = tun_p_to_eth_p(nsh_hdr(skb)->np);
-	अगर (!proto)
-		जाओ out;
+	if (!proto)
+		goto out;
 
 	__skb_pull(skb, nsh_len);
 
@@ -107,46 +106,46 @@ EXPORT_SYMBOL_GPL(nsh_pop);
 
 	features &= NETIF_F_SG;
 	segs = skb_mac_gso_segment(skb, features);
-	अगर (IS_ERR_OR_शून्य(segs)) अणु
+	if (IS_ERR_OR_NULL(segs)) {
 		skb_gso_error_unwind(skb, htons(ETH_P_NSH), nsh_len,
 				     skb->network_header - nhoff,
 				     mac_len);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	क्रम (skb = segs; skb; skb = skb->next) अणु
+	for (skb = segs; skb; skb = skb->next) {
 		skb->protocol = htons(ETH_P_NSH);
 		__skb_push(skb, nsh_len);
 		skb_set_mac_header(skb, -nhoff);
 		skb->network_header = skb->mac_header + mac_len;
 		skb->mac_len = mac_len;
-	पूर्ण
+	}
 
 out:
-	वापस segs;
-पूर्ण
+	return segs;
+}
 
-अटल काष्ठा packet_offload nsh_packet_offload __पढ़ो_mostly = अणु
+static struct packet_offload nsh_packet_offload __read_mostly = {
 	.type = htons(ETH_P_NSH),
 	.priority = 15,
-	.callbacks = अणु
+	.callbacks = {
 		.gso_segment = nsh_gso_segment,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक __init nsh_init_module(व्योम)
-अणु
+static int __init nsh_init_module(void)
+{
 	dev_add_offload(&nsh_packet_offload);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम __निकास nsh_cleanup_module(व्योम)
-अणु
-	dev_हटाओ_offload(&nsh_packet_offload);
-पूर्ण
+static void __exit nsh_cleanup_module(void)
+{
+	dev_remove_offload(&nsh_packet_offload);
+}
 
 module_init(nsh_init_module);
-module_निकास(nsh_cleanup_module);
+module_exit(nsh_cleanup_module);
 
 MODULE_AUTHOR("Jiri Benc <jbenc@redhat.com>");
 MODULE_DESCRIPTION("NSH protocol");

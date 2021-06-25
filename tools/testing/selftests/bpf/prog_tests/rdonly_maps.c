@@ -1,93 +1,92 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <test_progs.h>
+// SPDX-License-Identifier: GPL-2.0
+#include <test_progs.h>
 
-काष्ठा bss अणु
-	अचिन्हित did_run;
-	अचिन्हित iters;
-	अचिन्हित sum;
-पूर्ण;
+struct bss {
+	unsigned did_run;
+	unsigned iters;
+	unsigned sum;
+};
 
-काष्ठा rकरोnly_map_subtest अणु
-	स्थिर अक्षर *subtest_name;
-	स्थिर अक्षर *prog_name;
-	अचिन्हित exp_iters;
-	अचिन्हित exp_sum;
-पूर्ण;
+struct rdonly_map_subtest {
+	const char *subtest_name;
+	const char *prog_name;
+	unsigned exp_iters;
+	unsigned exp_sum;
+};
 
-व्योम test_rकरोnly_maps(व्योम)
-अणु
-	स्थिर अक्षर *file = "test_rdonly_maps.o";
-	काष्ठा rकरोnly_map_subtest subtests[] = अणु
-		अणु "skip loop", "skip_loop", 0, 0 पूर्ण,
-		अणु "part loop", "part_loop", 3, 2 + 3 + 4 पूर्ण,
-		अणु "full loop", "full_loop", 4, 2 + 3 + 4 + 5 पूर्ण,
-	पूर्ण;
-	पूर्णांक i, err, zero = 0, duration = 0;
-	काष्ठा bpf_link *link = शून्य;
-	काष्ठा bpf_program *prog;
-	काष्ठा bpf_map *bss_map;
-	काष्ठा bpf_object *obj;
-	काष्ठा bss bss;
+void test_rdonly_maps(void)
+{
+	const char *file = "test_rdonly_maps.o";
+	struct rdonly_map_subtest subtests[] = {
+		{ "skip loop", "skip_loop", 0, 0 },
+		{ "part loop", "part_loop", 3, 2 + 3 + 4 },
+		{ "full loop", "full_loop", 4, 2 + 3 + 4 + 5 },
+	};
+	int i, err, zero = 0, duration = 0;
+	struct bpf_link *link = NULL;
+	struct bpf_program *prog;
+	struct bpf_map *bss_map;
+	struct bpf_object *obj;
+	struct bss bss;
 
-	obj = bpf_object__खोलो_file(file, शून्य);
-	अगर (CHECK(IS_ERR(obj), "obj_open", "err %ld\n", PTR_ERR(obj)))
-		वापस;
+	obj = bpf_object__open_file(file, NULL);
+	if (CHECK(IS_ERR(obj), "obj_open", "err %ld\n", PTR_ERR(obj)))
+		return;
 
 	err = bpf_object__load(obj);
-	अगर (CHECK(err, "obj_load", "err %d errno %d\n", err, त्रुटि_सं))
-		जाओ cleanup;
+	if (CHECK(err, "obj_load", "err %d errno %d\n", err, errno))
+		goto cleanup;
 
 	bss_map = bpf_object__find_map_by_name(obj, "test_rdo.bss");
-	अगर (CHECK(!bss_map, "find_bss_map", "failed\n"))
-		जाओ cleanup;
+	if (CHECK(!bss_map, "find_bss_map", "failed\n"))
+		goto cleanup;
 
-	क्रम (i = 0; i < ARRAY_SIZE(subtests); i++) अणु
-		स्थिर काष्ठा rकरोnly_map_subtest *t = &subtests[i];
+	for (i = 0; i < ARRAY_SIZE(subtests); i++) {
+		const struct rdonly_map_subtest *t = &subtests[i];
 
-		अगर (!test__start_subtest(t->subtest_name))
-			जारी;
+		if (!test__start_subtest(t->subtest_name))
+			continue;
 
 		prog = bpf_object__find_program_by_name(obj, t->prog_name);
-		अगर (CHECK(!prog, "find_prog", "prog '%s' not found\n",
+		if (CHECK(!prog, "find_prog", "prog '%s' not found\n",
 			  t->prog_name))
-			जाओ cleanup;
+			goto cleanup;
 
-		स_रखो(&bss, 0, माप(bss));
+		memset(&bss, 0, sizeof(bss));
 		err = bpf_map_update_elem(bpf_map__fd(bss_map), &zero, &bss, 0);
-		अगर (CHECK(err, "set_bss", "failed to set bss data: %d\n", err))
-			जाओ cleanup;
+		if (CHECK(err, "set_bss", "failed to set bss data: %d\n", err))
+			goto cleanup;
 
-		link = bpf_program__attach_raw_tracepoपूर्णांक(prog, "sys_enter");
-		अगर (CHECK(IS_ERR(link), "attach_prog", "prog '%s', err %ld\n",
-			  t->prog_name, PTR_ERR(link))) अणु
-			link = शून्य;
-			जाओ cleanup;
-		पूर्ण
+		link = bpf_program__attach_raw_tracepoint(prog, "sys_enter");
+		if (CHECK(IS_ERR(link), "attach_prog", "prog '%s', err %ld\n",
+			  t->prog_name, PTR_ERR(link))) {
+			link = NULL;
+			goto cleanup;
+		}
 
 		/* trigger probe */
 		usleep(1);
 
 		bpf_link__destroy(link);
-		link = शून्य;
+		link = NULL;
 
 		err = bpf_map_lookup_elem(bpf_map__fd(bss_map), &zero, &bss);
-		अगर (CHECK(err, "get_bss", "failed to get bss data: %d\n", err))
-			जाओ cleanup;
-		अगर (CHECK(bss.did_run == 0, "check_run",
+		if (CHECK(err, "get_bss", "failed to get bss data: %d\n", err))
+			goto cleanup;
+		if (CHECK(bss.did_run == 0, "check_run",
 			  "prog '%s' didn't run?\n", t->prog_name))
-			जाओ cleanup;
-		अगर (CHECK(bss.iters != t->exp_iters, "check_iters",
+			goto cleanup;
+		if (CHECK(bss.iters != t->exp_iters, "check_iters",
 			  "prog '%s' iters: %d, expected: %d\n",
 			  t->prog_name, bss.iters, t->exp_iters))
-			जाओ cleanup;
-		अगर (CHECK(bss.sum != t->exp_sum, "check_sum",
+			goto cleanup;
+		if (CHECK(bss.sum != t->exp_sum, "check_sum",
 			  "prog '%s' sum: %d, expected: %d\n",
 			  t->prog_name, bss.sum, t->exp_sum))
-			जाओ cleanup;
-	पूर्ण
+			goto cleanup;
+	}
 
 cleanup:
 	bpf_link__destroy(link);
-	bpf_object__बंद(obj);
-पूर्ण
+	bpf_object__close(obj);
+}

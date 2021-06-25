@@ -1,171 +1,170 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (C) 2012 Texas Instruments
  * Author: Rob Clark <robdclark@gmail.com>
  */
 
-#अगर_अघोषित __TILCDC_DRV_H__
-#घोषणा __TILCDC_DRV_H__
+#ifndef __TILCDC_DRV_H__
+#define __TILCDC_DRV_H__
 
-#समावेश <linux/cpufreq.h>
-#समावेश <linux/irqवापस.h>
+#include <linux/cpufreq.h>
+#include <linux/irqreturn.h>
 
-#समावेश <drm/drm_prपूर्णांक.h>
+#include <drm/drm_print.h>
 
-काष्ठा clk;
-काष्ठा workqueue_काष्ठा;
+struct clk;
+struct workqueue_struct;
 
-काष्ठा drm_connector;
-काष्ठा drm_connector_helper_funcs;
-काष्ठा drm_crtc;
-काष्ठा drm_device;
-काष्ठा drm_display_mode;
-काष्ठा drm_encoder;
-काष्ठा drm_framebuffer;
-काष्ठा drm_minor;
-काष्ठा drm_pending_vblank_event;
-काष्ठा drm_plane;
+struct drm_connector;
+struct drm_connector_helper_funcs;
+struct drm_crtc;
+struct drm_device;
+struct drm_display_mode;
+struct drm_encoder;
+struct drm_framebuffer;
+struct drm_minor;
+struct drm_pending_vblank_event;
+struct drm_plane;
 
-/* Defaulting to pixel घड़ी defined on AM335x */
-#घोषणा TILCDC_DEFAULT_MAX_PIXELCLOCK  126000
-/* Maximum display width क्रम LCDC V1 */
-#घोषणा TILCDC_DEFAULT_MAX_WIDTH_V1  1024
-/* ... and क्रम LCDC V2 found on AM335x: */
-#घोषणा TILCDC_DEFAULT_MAX_WIDTH_V2  2048
+/* Defaulting to pixel clock defined on AM335x */
+#define TILCDC_DEFAULT_MAX_PIXELCLOCK  126000
+/* Maximum display width for LCDC V1 */
+#define TILCDC_DEFAULT_MAX_WIDTH_V1  1024
+/* ... and for LCDC V2 found on AM335x: */
+#define TILCDC_DEFAULT_MAX_WIDTH_V2  2048
 /*
  * This may need some tweaking, but want to allow at least 1280x1024@60
  * with optimized DDR & EMIF settings tweaked 1920x1080@24 appears to
  * be supportable
  */
-#घोषणा TILCDC_DEFAULT_MAX_BANDWIDTH  (1280*1024*60)
+#define TILCDC_DEFAULT_MAX_BANDWIDTH  (1280*1024*60)
 
 
-काष्ठा tilcdc_drm_निजी अणु
-	व्योम __iomem *mmio;
+struct tilcdc_drm_private {
+	void __iomem *mmio;
 
-	काष्ठा clk *clk;         /* functional घड़ी */
-	पूर्णांक rev;                 /* IP revision */
+	struct clk *clk;         /* functional clock */
+	int rev;                 /* IP revision */
 
-	/* करोn't attempt resolutions w/ higher W * H * Hz: */
-	uपूर्णांक32_t max_bandwidth;
+	/* don't attempt resolutions w/ higher W * H * Hz: */
+	uint32_t max_bandwidth;
 	/*
 	 * Pixel Clock will be restricted to some value as
 	 * defined in the device datasheet measured in KHz
 	 */
-	uपूर्णांक32_t max_pixelघड़ी;
+	uint32_t max_pixelclock;
 	/*
 	 * Max allowable width is limited on a per device basis
 	 * measured in pixels
 	 */
-	uपूर्णांक32_t max_width;
+	uint32_t max_width;
 
-	/* Supported pixel क्रमmats */
-	स्थिर uपूर्णांक32_t *pixelक्रमmats;
-	uपूर्णांक32_t num_pixelक्रमmats;
+	/* Supported pixel formats */
+	const uint32_t *pixelformats;
+	uint32_t num_pixelformats;
 
-#अगर_घोषित CONFIG_CPU_FREQ
-	काष्ठा notअगरier_block freq_transition;
-#पूर्ण_अगर
+#ifdef CONFIG_CPU_FREQ
+	struct notifier_block freq_transition;
+#endif
 
-	काष्ठा workqueue_काष्ठा *wq;
+	struct workqueue_struct *wq;
 
-	काष्ठा drm_crtc *crtc;
+	struct drm_crtc *crtc;
 
-	अचिन्हित पूर्णांक num_encoders;
-	काष्ठा drm_encoder *encoders[8];
+	unsigned int num_encoders;
+	struct drm_encoder *encoders[8];
 
-	अचिन्हित पूर्णांक num_connectors;
-	काष्ठा drm_connector *connectors[8];
+	unsigned int num_connectors;
+	struct drm_connector *connectors[8];
 
-	काष्ठा drm_encoder *बाह्यal_encoder;
-	काष्ठा drm_connector *बाह्यal_connector;
+	struct drm_encoder *external_encoder;
+	struct drm_connector *external_connector;
 
-	bool is_रेजिस्टरed;
+	bool is_registered;
 	bool is_componentized;
-पूर्ण;
+};
 
-/* Sub-module क्रम display.  Since we करोn't know at compile समय what panels
- * or display adapter(s) might be present (क्रम ex, off chip dvi/tfp410,
- * hdmi encoder, various lcd panels), the connector/encoder(s) are split पूर्णांकo
+/* Sub-module for display.  Since we don't know at compile time what panels
+ * or display adapter(s) might be present (for ex, off chip dvi/tfp410,
+ * hdmi encoder, various lcd panels), the connector/encoder(s) are split into
  * separate drivers.  If they are probed and found to be present, they
- * रेजिस्टर themselves with tilcdc_रेजिस्टर_module().
+ * register themselves with tilcdc_register_module().
  */
-काष्ठा tilcdc_module;
+struct tilcdc_module;
 
-काष्ठा tilcdc_module_ops अणु
+struct tilcdc_module_ops {
 	/* create appropriate encoders/connectors: */
-	पूर्णांक (*modeset_init)(काष्ठा tilcdc_module *mod, काष्ठा drm_device *dev);
-#अगर_घोषित CONFIG_DEBUG_FS
-	/* create debugfs nodes (can be शून्य): */
-	पूर्णांक (*debugfs_init)(काष्ठा tilcdc_module *mod, काष्ठा drm_minor *minor);
-#पूर्ण_अगर
-पूर्ण;
+	int (*modeset_init)(struct tilcdc_module *mod, struct drm_device *dev);
+#ifdef CONFIG_DEBUG_FS
+	/* create debugfs nodes (can be NULL): */
+	int (*debugfs_init)(struct tilcdc_module *mod, struct drm_minor *minor);
+#endif
+};
 
-काष्ठा tilcdc_module अणु
-	स्थिर अक्षर *name;
-	काष्ठा list_head list;
-	स्थिर काष्ठा tilcdc_module_ops *funcs;
-पूर्ण;
+struct tilcdc_module {
+	const char *name;
+	struct list_head list;
+	const struct tilcdc_module_ops *funcs;
+};
 
-व्योम tilcdc_module_init(काष्ठा tilcdc_module *mod, स्थिर अक्षर *name,
-		स्थिर काष्ठा tilcdc_module_ops *funcs);
-व्योम tilcdc_module_cleanup(काष्ठा tilcdc_module *mod);
+void tilcdc_module_init(struct tilcdc_module *mod, const char *name,
+		const struct tilcdc_module_ops *funcs);
+void tilcdc_module_cleanup(struct tilcdc_module *mod);
 
 /* Panel config that needs to be set in the crtc, but is not coming from
  * the mode timings.  The display module is expected to call
  * tilcdc_crtc_set_panel_info() to set this during modeset.
  */
-काष्ठा tilcdc_panel_info अणु
+struct tilcdc_panel_info {
 
 	/* AC Bias Pin Frequency */
-	uपूर्णांक32_t ac_bias;
+	uint32_t ac_bias;
 
 	/* AC Bias Pin Transitions per Interrupt */
-	uपूर्णांक32_t ac_bias_पूर्णांकrpt;
+	uint32_t ac_bias_intrpt;
 
 	/* DMA burst size */
-	uपूर्णांक32_t dma_burst_sz;
+	uint32_t dma_burst_sz;
 
 	/* Bits per pixel */
-	uपूर्णांक32_t bpp;
+	uint32_t bpp;
 
 	/* FIFO DMA Request Delay */
-	uपूर्णांक32_t fdd;
+	uint32_t fdd;
 
-	/* TFT Alternative Signal Mapping (Only क्रम active) */
+	/* TFT Alternative Signal Mapping (Only for active) */
 	bool tft_alt_mode;
 
-	/* Invert pixel घड़ी */
+	/* Invert pixel clock */
 	bool invert_pxl_clk;
 
 	/* Horizontal and Vertical Sync Edge: 0=rising 1=falling */
-	uपूर्णांक32_t sync_edge;
+	uint32_t sync_edge;
 
 	/* Horizontal and Vertical Sync: Control: 0=ignore */
-	uपूर्णांक32_t sync_ctrl;
+	uint32_t sync_ctrl;
 
 	/* Raster Data Order Select: 1=Most-to-least 0=Least-to-most */
-	uपूर्णांक32_t raster_order;
+	uint32_t raster_order;
 
 	/* DMA FIFO threshold */
-	uपूर्णांक32_t fअगरo_th;
-पूर्ण;
+	uint32_t fifo_th;
+};
 
-#घोषणा DBG(fmt, ...) DRM_DEBUG(fmt"\n", ##__VA_ARGS__)
+#define DBG(fmt, ...) DRM_DEBUG(fmt"\n", ##__VA_ARGS__)
 
-पूर्णांक tilcdc_crtc_create(काष्ठा drm_device *dev);
-irqवापस_t tilcdc_crtc_irq(काष्ठा drm_crtc *crtc);
-व्योम tilcdc_crtc_update_clk(काष्ठा drm_crtc *crtc);
-व्योम tilcdc_crtc_set_panel_info(काष्ठा drm_crtc *crtc,
-		स्थिर काष्ठा tilcdc_panel_info *info);
-व्योम tilcdc_crtc_set_simulate_vesa_sync(काष्ठा drm_crtc *crtc,
+int tilcdc_crtc_create(struct drm_device *dev);
+irqreturn_t tilcdc_crtc_irq(struct drm_crtc *crtc);
+void tilcdc_crtc_update_clk(struct drm_crtc *crtc);
+void tilcdc_crtc_set_panel_info(struct drm_crtc *crtc,
+		const struct tilcdc_panel_info *info);
+void tilcdc_crtc_set_simulate_vesa_sync(struct drm_crtc *crtc,
 					bool simulate_vesa_sync);
-व्योम tilcdc_crtc_shutकरोwn(काष्ठा drm_crtc *crtc);
-पूर्णांक tilcdc_crtc_update_fb(काष्ठा drm_crtc *crtc,
-		काष्ठा drm_framebuffer *fb,
-		काष्ठा drm_pending_vblank_event *event);
+void tilcdc_crtc_shutdown(struct drm_crtc *crtc);
+int tilcdc_crtc_update_fb(struct drm_crtc *crtc,
+		struct drm_framebuffer *fb,
+		struct drm_pending_vblank_event *event);
 
-पूर्णांक tilcdc_plane_init(काष्ठा drm_device *dev, काष्ठा drm_plane *plane);
+int tilcdc_plane_init(struct drm_device *dev, struct drm_plane *plane);
 
-#पूर्ण_अगर /* __TILCDC_DRV_H__ */
+#endif /* __TILCDC_DRV_H__ */

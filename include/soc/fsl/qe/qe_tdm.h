@@ -1,64 +1,63 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
- * Internal header file क्रम QE TDM mode routines.
+ * Internal header file for QE TDM mode routines.
  *
  * Copyright (C) 2016 Freescale Semiconductor, Inc. All rights reserved.
  *
  * Authors:	Zhao Qiang <qiang.zhao@nxp.com>
  */
 
-#अगर_अघोषित _QE_TDM_H_
-#घोषणा _QE_TDM_H_
+#ifndef _QE_TDM_H_
+#define _QE_TDM_H_
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/list.h>
+#include <linux/kernel.h>
+#include <linux/list.h>
 
-#समावेश <soc/fsl/qe/immap_qe.h>
-#समावेश <soc/fsl/qe/qe.h>
+#include <soc/fsl/qe/immap_qe.h>
+#include <soc/fsl/qe/qe.h>
 
-#समावेश <soc/fsl/qe/ucc.h>
-#समावेश <soc/fsl/qe/ucc_fast.h>
+#include <soc/fsl/qe/ucc.h>
+#include <soc/fsl/qe/ucc_fast.h>
 
 /* SI RAM entries */
-#घोषणा SIR_LAST	0x0001
-#घोषणा SIR_BYTE	0x0002
-#घोषणा SIR_CNT(x)	((x) << 2)
-#घोषणा SIR_CSEL(x)	((x) << 5)
-#घोषणा SIR_SGS		0x0200
-#घोषणा SIR_SWTR	0x4000
-#घोषणा SIR_MCC		0x8000
-#घोषणा SIR_IDLE	0
+#define SIR_LAST	0x0001
+#define SIR_BYTE	0x0002
+#define SIR_CNT(x)	((x) << 2)
+#define SIR_CSEL(x)	((x) << 5)
+#define SIR_SGS		0x0200
+#define SIR_SWTR	0x4000
+#define SIR_MCC		0x8000
+#define SIR_IDLE	0
 
 /* SIxMR fields */
-#घोषणा SIMR_SAD(x) ((x) << 12)
-#घोषणा SIMR_SDM_NORMAL	0x0000
-#घोषणा SIMR_SDM_INTERNAL_LOOPBACK	0x0800
-#घोषणा SIMR_SDM_MASK	0x0c00
-#घोषणा SIMR_CRT	0x0040
-#घोषणा SIMR_SL		0x0020
-#घोषणा SIMR_CE		0x0010
-#घोषणा SIMR_FE		0x0008
-#घोषणा SIMR_GM		0x0004
-#घोषणा SIMR_TFSD(n)	(n)
-#घोषणा SIMR_RFSD(n)	((n) << 8)
+#define SIMR_SAD(x) ((x) << 12)
+#define SIMR_SDM_NORMAL	0x0000
+#define SIMR_SDM_INTERNAL_LOOPBACK	0x0800
+#define SIMR_SDM_MASK	0x0c00
+#define SIMR_CRT	0x0040
+#define SIMR_SL		0x0020
+#define SIMR_CE		0x0010
+#define SIMR_FE		0x0008
+#define SIMR_GM		0x0004
+#define SIMR_TFSD(n)	(n)
+#define SIMR_RFSD(n)	((n) << 8)
 
-क्रमागत tdm_ts_t अणु
+enum tdm_ts_t {
 	TDM_TX_TS,
 	TDM_RX_TS
-पूर्ण;
+};
 
-क्रमागत tdm_framer_t अणु
+enum tdm_framer_t {
 	TDM_FRAMER_T1,
 	TDM_FRAMER_E1
-पूर्ण;
+};
 
-क्रमागत tdm_mode_t अणु
+enum tdm_mode_t {
 	TDM_INTERNAL_LOOPBACK,
 	TDM_NORMAL
-पूर्ण;
+};
 
-काष्ठा si_mode_info अणु
+struct si_mode_info {
 	u8 simr_rfsd;
 	u8 simr_tfsd;
 	u8 simr_crt;
@@ -66,26 +65,26 @@
 	u8 simr_ce;
 	u8 simr_fe;
 	u8 simr_gm;
-पूर्ण;
+};
 
-काष्ठा ucc_tdm_info अणु
-	काष्ठा ucc_fast_info uf_info;
-	काष्ठा si_mode_info si_info;
-पूर्ण;
+struct ucc_tdm_info {
+	struct ucc_fast_info uf_info;
+	struct si_mode_info si_info;
+};
 
-काष्ठा ucc_tdm अणु
-	u16 tdm_port;		/* port क्रम this tdm:TDMA,TDMB */
+struct ucc_tdm {
+	u16 tdm_port;		/* port for this tdm:TDMA,TDMB */
 	u32 siram_entry_id;
 	u16 __iomem *siram;
-	काष्ठा si1 __iomem *si_regs;
-	क्रमागत tdm_framer_t tdm_framer_type;
-	क्रमागत tdm_mode_t tdm_mode;
-	u8 num_of_ts;		/* the number of बारlots in this tdm frame */
-	u32 tx_ts_mask;		/* tx समय slot mask */
-	u32 rx_ts_mask;		/* rx समय slot mask */
-पूर्ण;
+	struct si1 __iomem *si_regs;
+	enum tdm_framer_t tdm_framer_type;
+	enum tdm_mode_t tdm_mode;
+	u8 num_of_ts;		/* the number of timeslots in this tdm frame */
+	u32 tx_ts_mask;		/* tx time slot mask */
+	u32 rx_ts_mask;		/* rx time slot mask */
+};
 
-पूर्णांक ucc_of_parse_tdm(काष्ठा device_node *np, काष्ठा ucc_tdm *utdm,
-		     काष्ठा ucc_tdm_info *ut_info);
-व्योम ucc_tdm_init(काष्ठा ucc_tdm *utdm, काष्ठा ucc_tdm_info *ut_info);
-#पूर्ण_अगर
+int ucc_of_parse_tdm(struct device_node *np, struct ucc_tdm *utdm,
+		     struct ucc_tdm_info *ut_info);
+void ucc_tdm_init(struct ucc_tdm *utdm, struct ucc_tdm_info *ut_info);
+#endif

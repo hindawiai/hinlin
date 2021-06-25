@@ -1,119 +1,118 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * CPU kernel entry/निकास control
+ * CPU kernel entry/exit control
  *
  * Copyright (C) 2013 ARM Ltd.
  */
 
-#समावेश <linux/acpi.h>
-#समावेश <linux/cache.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/of.h>
-#समावेश <linux/माला.स>
-#समावेश <यंत्र/acpi.h>
-#समावेश <यंत्र/cpu_ops.h>
-#समावेश <यंत्र/smp_plat.h>
+#include <linux/acpi.h>
+#include <linux/cache.h>
+#include <linux/errno.h>
+#include <linux/of.h>
+#include <linux/string.h>
+#include <asm/acpi.h>
+#include <asm/cpu_ops.h>
+#include <asm/smp_plat.h>
 
-बाह्य स्थिर काष्ठा cpu_operations smp_spin_table_ops;
-#अगर_घोषित CONFIG_ARM64_ACPI_PARKING_PROTOCOL
-बाह्य स्थिर काष्ठा cpu_operations acpi_parking_protocol_ops;
-#पूर्ण_अगर
-बाह्य स्थिर काष्ठा cpu_operations cpu_psci_ops;
+extern const struct cpu_operations smp_spin_table_ops;
+#ifdef CONFIG_ARM64_ACPI_PARKING_PROTOCOL
+extern const struct cpu_operations acpi_parking_protocol_ops;
+#endif
+extern const struct cpu_operations cpu_psci_ops;
 
-अटल स्थिर काष्ठा cpu_operations *cpu_ops[NR_CPUS] __ro_after_init;
+static const struct cpu_operations *cpu_ops[NR_CPUS] __ro_after_init;
 
-अटल स्थिर काष्ठा cpu_operations *स्थिर dt_supported_cpu_ops[] __initस्थिर = अणु
+static const struct cpu_operations *const dt_supported_cpu_ops[] __initconst = {
 	&smp_spin_table_ops,
 	&cpu_psci_ops,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल स्थिर काष्ठा cpu_operations *स्थिर acpi_supported_cpu_ops[] __initस्थिर = अणु
-#अगर_घोषित CONFIG_ARM64_ACPI_PARKING_PROTOCOL
+static const struct cpu_operations *const acpi_supported_cpu_ops[] __initconst = {
+#ifdef CONFIG_ARM64_ACPI_PARKING_PROTOCOL
 	&acpi_parking_protocol_ops,
-#पूर्ण_अगर
+#endif
 	&cpu_psci_ops,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल स्थिर काष्ठा cpu_operations * __init cpu_get_ops(स्थिर अक्षर *name)
-अणु
-	स्थिर काष्ठा cpu_operations *स्थिर *ops;
+static const struct cpu_operations * __init cpu_get_ops(const char *name)
+{
+	const struct cpu_operations *const *ops;
 
 	ops = acpi_disabled ? dt_supported_cpu_ops : acpi_supported_cpu_ops;
 
-	जबतक (*ops) अणु
-		अगर (!म_भेद(name, (*ops)->name))
-			वापस *ops;
+	while (*ops) {
+		if (!strcmp(name, (*ops)->name))
+			return *ops;
 
 		ops++;
-	पूर्ण
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल स्थिर अक्षर *__init cpu_पढ़ो_enable_method(पूर्णांक cpu)
-अणु
-	स्थिर अक्षर *enable_method;
+static const char *__init cpu_read_enable_method(int cpu)
+{
+	const char *enable_method;
 
-	अगर (acpi_disabled) अणु
-		काष्ठा device_node *dn = of_get_cpu_node(cpu, शून्य);
+	if (acpi_disabled) {
+		struct device_node *dn = of_get_cpu_node(cpu, NULL);
 
-		अगर (!dn) अणु
-			अगर (!cpu)
+		if (!dn) {
+			if (!cpu)
 				pr_err("Failed to find device node for boot cpu\n");
-			वापस शून्य;
-		पूर्ण
+			return NULL;
+		}
 
-		enable_method = of_get_property(dn, "enable-method", शून्य);
-		अगर (!enable_method) अणु
+		enable_method = of_get_property(dn, "enable-method", NULL);
+		if (!enable_method) {
 			/*
 			 * The boot CPU may not have an enable method (e.g.
-			 * when spin-table is used क्रम secondaries).
+			 * when spin-table is used for secondaries).
 			 * Don't warn spuriously.
 			 */
-			अगर (cpu != 0)
+			if (cpu != 0)
 				pr_err("%pOF: missing enable-method property\n",
 					dn);
-		पूर्ण
+		}
 		of_node_put(dn);
-	पूर्ण अन्यथा अणु
+	} else {
 		enable_method = acpi_get_enable_method(cpu);
-		अगर (!enable_method) अणु
+		if (!enable_method) {
 			/*
-			 * In ACPI प्रणालीs the boot CPU करोes not require
-			 * checking the enable method since क्रम some
+			 * In ACPI systems the boot CPU does not require
+			 * checking the enable method since for some
 			 * boot protocol (ie parking protocol) it need not
 			 * be initialized. Don't warn spuriously.
 			 */
-			अगर (cpu != 0)
+			if (cpu != 0)
 				pr_err("Unsupported ACPI enable-method\n");
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस enable_method;
-पूर्ण
+	return enable_method;
+}
 /*
  * Read a cpu's enable method and record it in cpu_ops.
  */
-पूर्णांक __init init_cpu_ops(पूर्णांक cpu)
-अणु
-	स्थिर अक्षर *enable_method = cpu_पढ़ो_enable_method(cpu);
+int __init init_cpu_ops(int cpu)
+{
+	const char *enable_method = cpu_read_enable_method(cpu);
 
-	अगर (!enable_method)
-		वापस -ENODEV;
+	if (!enable_method)
+		return -ENODEV;
 
 	cpu_ops[cpu] = cpu_get_ops(enable_method);
-	अगर (!cpu_ops[cpu]) अणु
+	if (!cpu_ops[cpu]) {
 		pr_warn("Unsupported enable-method: %s\n", enable_method);
-		वापस -EOPNOTSUPP;
-	पूर्ण
+		return -EOPNOTSUPP;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-स्थिर काष्ठा cpu_operations *get_cpu_ops(पूर्णांक cpu)
-अणु
-	वापस cpu_ops[cpu];
-पूर्ण
+const struct cpu_operations *get_cpu_ops(int cpu)
+{
+	return cpu_ops[cpu];
+}

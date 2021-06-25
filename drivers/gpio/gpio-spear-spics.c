@@ -1,6 +1,5 @@
-<शैली गुरु>
 /*
- * SPEAr platक्रमm SPI chipselect असलtraction over gpiolib
+ * SPEAr platform SPI chipselect abstraction over gpiolib
  *
  * Copyright (C) 2012 ST Microelectronics
  * Shiraz Hashim <shiraz.linux.kernel@gmail.com>
@@ -10,151 +9,151 @@
  * warranty of any kind, whether express or implied.
  */
 
-#समावेश <linux/err.h>
-#समावेश <linux/gpio/driver.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/init.h>
-#समावेश <linux/of.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/types.h>
+#include <linux/err.h>
+#include <linux/gpio/driver.h>
+#include <linux/io.h>
+#include <linux/init.h>
+#include <linux/of.h>
+#include <linux/platform_device.h>
+#include <linux/types.h>
 
 /* maximum chipselects */
-#घोषणा NUM_OF_GPIO	4
+#define NUM_OF_GPIO	4
 
 /*
  * Provision is available on some SPEAr SoCs to control ARM PL022 spi cs
- * through प्रणाली रेजिस्टरs. This रेजिस्टर lies outside spi (pl022)
- * address space पूर्णांकo प्रणाली रेजिस्टरs.
+ * through system registers. This register lies outside spi (pl022)
+ * address space into system registers.
  *
- * It provides control क्रम spi chip select lines so that any chipselect
+ * It provides control for spi chip select lines so that any chipselect
  * (out of 4 possible chipselects in pl022) can be made low to select
  * the particular slave.
  */
 
 /**
- * काष्ठा spear_spics - represents spi chip select control
+ * struct spear_spics - represents spi chip select control
  * @base: base address
- * @perip_cfg: configuration रेजिस्टर
+ * @perip_cfg: configuration register
  * @sw_enable_bit: bit to enable s/w control over chipselects
  * @cs_value_bit: bit to program high or low chipselect
  * @cs_enable_mask: mask to select bits required to select chipselect
- * @cs_enable_shअगरt: bit pos of cs_enable_mask
+ * @cs_enable_shift: bit pos of cs_enable_mask
  * @use_count: use count of a spi controller cs lines
  * @last_off: stores last offset caller of set_value()
- * @chip: gpio_chip असलtraction
+ * @chip: gpio_chip abstraction
  */
-काष्ठा spear_spics अणु
-	व्योम __iomem		*base;
+struct spear_spics {
+	void __iomem		*base;
 	u32			perip_cfg;
 	u32			sw_enable_bit;
 	u32			cs_value_bit;
 	u32			cs_enable_mask;
-	u32			cs_enable_shअगरt;
-	अचिन्हित दीर्घ		use_count;
-	पूर्णांक			last_off;
-	काष्ठा gpio_chip	chip;
-पूर्ण;
+	u32			cs_enable_shift;
+	unsigned long		use_count;
+	int			last_off;
+	struct gpio_chip	chip;
+};
 
-/* gpio framework specअगरic routines */
-अटल पूर्णांक spics_get_value(काष्ठा gpio_chip *chip, अचिन्हित offset)
-अणु
-	वापस -ENXIO;
-पूर्ण
+/* gpio framework specific routines */
+static int spics_get_value(struct gpio_chip *chip, unsigned offset)
+{
+	return -ENXIO;
+}
 
-अटल व्योम spics_set_value(काष्ठा gpio_chip *chip, अचिन्हित offset, पूर्णांक value)
-अणु
-	काष्ठा spear_spics *spics = gpiochip_get_data(chip);
-	u32 पंचांगp;
+static void spics_set_value(struct gpio_chip *chip, unsigned offset, int value)
+{
+	struct spear_spics *spics = gpiochip_get_data(chip);
+	u32 tmp;
 
-	/* select chip select from रेजिस्टर */
-	पंचांगp = पढ़ोl_relaxed(spics->base + spics->perip_cfg);
-	अगर (spics->last_off != offset) अणु
+	/* select chip select from register */
+	tmp = readl_relaxed(spics->base + spics->perip_cfg);
+	if (spics->last_off != offset) {
 		spics->last_off = offset;
-		पंचांगp &= ~(spics->cs_enable_mask << spics->cs_enable_shअगरt);
-		पंचांगp |= offset << spics->cs_enable_shअगरt;
-	पूर्ण
+		tmp &= ~(spics->cs_enable_mask << spics->cs_enable_shift);
+		tmp |= offset << spics->cs_enable_shift;
+	}
 
 	/* toggle chip select line */
-	पंचांगp &= ~(0x1 << spics->cs_value_bit);
-	पंचांगp |= value << spics->cs_value_bit;
-	ग_लिखोl_relaxed(पंचांगp, spics->base + spics->perip_cfg);
-पूर्ण
+	tmp &= ~(0x1 << spics->cs_value_bit);
+	tmp |= value << spics->cs_value_bit;
+	writel_relaxed(tmp, spics->base + spics->perip_cfg);
+}
 
-अटल पूर्णांक spics_direction_input(काष्ठा gpio_chip *chip, अचिन्हित offset)
-अणु
-	वापस -ENXIO;
-पूर्ण
+static int spics_direction_input(struct gpio_chip *chip, unsigned offset)
+{
+	return -ENXIO;
+}
 
-अटल पूर्णांक spics_direction_output(काष्ठा gpio_chip *chip, अचिन्हित offset,
-		पूर्णांक value)
-अणु
+static int spics_direction_output(struct gpio_chip *chip, unsigned offset,
+		int value)
+{
 	spics_set_value(chip, offset, value);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक spics_request(काष्ठा gpio_chip *chip, अचिन्हित offset)
-अणु
-	काष्ठा spear_spics *spics = gpiochip_get_data(chip);
-	u32 पंचांगp;
+static int spics_request(struct gpio_chip *chip, unsigned offset)
+{
+	struct spear_spics *spics = gpiochip_get_data(chip);
+	u32 tmp;
 
-	अगर (!spics->use_count++) अणु
-		पंचांगp = पढ़ोl_relaxed(spics->base + spics->perip_cfg);
-		पंचांगp |= 0x1 << spics->sw_enable_bit;
-		पंचांगp |= 0x1 << spics->cs_value_bit;
-		ग_लिखोl_relaxed(पंचांगp, spics->base + spics->perip_cfg);
-	पूर्ण
+	if (!spics->use_count++) {
+		tmp = readl_relaxed(spics->base + spics->perip_cfg);
+		tmp |= 0x1 << spics->sw_enable_bit;
+		tmp |= 0x1 << spics->cs_value_bit;
+		writel_relaxed(tmp, spics->base + spics->perip_cfg);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम spics_मुक्त(काष्ठा gpio_chip *chip, अचिन्हित offset)
-अणु
-	काष्ठा spear_spics *spics = gpiochip_get_data(chip);
-	u32 पंचांगp;
+static void spics_free(struct gpio_chip *chip, unsigned offset)
+{
+	struct spear_spics *spics = gpiochip_get_data(chip);
+	u32 tmp;
 
-	अगर (!--spics->use_count) अणु
-		पंचांगp = पढ़ोl_relaxed(spics->base + spics->perip_cfg);
-		पंचांगp &= ~(0x1 << spics->sw_enable_bit);
-		ग_लिखोl_relaxed(पंचांगp, spics->base + spics->perip_cfg);
-	पूर्ण
-पूर्ण
+	if (!--spics->use_count) {
+		tmp = readl_relaxed(spics->base + spics->perip_cfg);
+		tmp &= ~(0x1 << spics->sw_enable_bit);
+		writel_relaxed(tmp, spics->base + spics->perip_cfg);
+	}
+}
 
-अटल पूर्णांक spics_gpio_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device_node *np = pdev->dev.of_node;
-	काष्ठा spear_spics *spics;
-	पूर्णांक ret;
+static int spics_gpio_probe(struct platform_device *pdev)
+{
+	struct device_node *np = pdev->dev.of_node;
+	struct spear_spics *spics;
+	int ret;
 
-	spics = devm_kzalloc(&pdev->dev, माप(*spics), GFP_KERNEL);
-	अगर (!spics)
-		वापस -ENOMEM;
+	spics = devm_kzalloc(&pdev->dev, sizeof(*spics), GFP_KERNEL);
+	if (!spics)
+		return -ENOMEM;
 
-	spics->base = devm_platक्रमm_ioremap_resource(pdev, 0);
-	अगर (IS_ERR(spics->base))
-		वापस PTR_ERR(spics->base);
+	spics->base = devm_platform_ioremap_resource(pdev, 0);
+	if (IS_ERR(spics->base))
+		return PTR_ERR(spics->base);
 
-	अगर (of_property_पढ़ो_u32(np, "st-spics,peripcfg-reg",
+	if (of_property_read_u32(np, "st-spics,peripcfg-reg",
 				&spics->perip_cfg))
-		जाओ err_dt_data;
-	अगर (of_property_पढ़ो_u32(np, "st-spics,sw-enable-bit",
+		goto err_dt_data;
+	if (of_property_read_u32(np, "st-spics,sw-enable-bit",
 				&spics->sw_enable_bit))
-		जाओ err_dt_data;
-	अगर (of_property_पढ़ो_u32(np, "st-spics,cs-value-bit",
+		goto err_dt_data;
+	if (of_property_read_u32(np, "st-spics,cs-value-bit",
 				&spics->cs_value_bit))
-		जाओ err_dt_data;
-	अगर (of_property_पढ़ो_u32(np, "st-spics,cs-enable-mask",
+		goto err_dt_data;
+	if (of_property_read_u32(np, "st-spics,cs-enable-mask",
 				&spics->cs_enable_mask))
-		जाओ err_dt_data;
-	अगर (of_property_पढ़ो_u32(np, "st-spics,cs-enable-shift",
-				&spics->cs_enable_shअगरt))
-		जाओ err_dt_data;
+		goto err_dt_data;
+	if (of_property_read_u32(np, "st-spics,cs-enable-shift",
+				&spics->cs_enable_shift))
+		goto err_dt_data;
 
-	platक्रमm_set_drvdata(pdev, spics);
+	platform_set_drvdata(pdev, spics);
 
 	spics->chip.ngpio = NUM_OF_GPIO;
 	spics->chip.base = -1;
 	spics->chip.request = spics_request;
-	spics->chip.मुक्त = spics_मुक्त;
+	spics->chip.free = spics_free;
 	spics->chip.direction_input = spics_direction_input;
 	spics->chip.direction_output = spics_direction_output;
 	spics->chip.get = spics_get_value;
@@ -165,34 +164,34 @@
 	spics->last_off = -1;
 
 	ret = devm_gpiochip_add_data(&pdev->dev, &spics->chip, spics);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&pdev->dev, "unable to add gpio chip\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	dev_info(&pdev->dev, "spear spics registered\n");
-	वापस 0;
+	return 0;
 
 err_dt_data:
 	dev_err(&pdev->dev, "DT probe failed\n");
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल स्थिर काष्ठा of_device_id spics_gpio_of_match[] = अणु
-	अणु .compatible = "st,spear-spics-gpio" पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct of_device_id spics_gpio_of_match[] = {
+	{ .compatible = "st,spear-spics-gpio" },
+	{}
+};
 
-अटल काष्ठा platक्रमm_driver spics_gpio_driver = अणु
+static struct platform_driver spics_gpio_driver = {
 	.probe = spics_gpio_probe,
-	.driver = अणु
+	.driver = {
 		.name = "spear-spics-gpio",
 		.of_match_table = spics_gpio_of_match,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक __init spics_gpio_init(व्योम)
-अणु
-	वापस platक्रमm_driver_रेजिस्टर(&spics_gpio_driver);
-पूर्ण
+static int __init spics_gpio_init(void)
+{
+	return platform_driver_register(&spics_gpio_driver);
+}
 subsys_initcall(spics_gpio_init);

@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Author(s)......: Holger Smolinski <Holger.Smolinski@de.ibm.com>
  *		    Horst Hummel <Horst.Hummel@de.ibm.com>
@@ -8,467 +7,467 @@
  * Bugreports.to..: <Linux390@de.ibm.com>
  * Copyright IBM Corp. 1999, 2001
  *
- * i/o controls क्रम the dasd driver.
+ * i/o controls for the dasd driver.
  */
 
-#घोषणा KMSG_COMPONENT "dasd"
+#define KMSG_COMPONENT "dasd"
 
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/compat.h>
-#समावेश <linux/major.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/blkpg.h>
-#समावेश <linux/slab.h>
-#समावेश <यंत्र/ccwdev.h>
-#समावेश <यंत्र/schid.h>
-#समावेश <यंत्र/cmb.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/dasd_mod.h>
+#include <linux/interrupt.h>
+#include <linux/compat.h>
+#include <linux/major.h>
+#include <linux/fs.h>
+#include <linux/blkpg.h>
+#include <linux/slab.h>
+#include <asm/ccwdev.h>
+#include <asm/schid.h>
+#include <asm/cmb.h>
+#include <linux/uaccess.h>
+#include <linux/dasd_mod.h>
 
 /* This is ugly... */
-#घोषणा PRINTK_HEADER "dasd_ioctl:"
+#define PRINTK_HEADER "dasd_ioctl:"
 
-#समावेश "dasd_int.h"
+#include "dasd_int.h"
 
 
-अटल पूर्णांक
-dasd_ioctl_api_version(व्योम __user *argp)
-अणु
-	पूर्णांक ver = DASD_API_VERSION;
-	वापस put_user(ver, (पूर्णांक __user *)argp);
-पूर्ण
+static int
+dasd_ioctl_api_version(void __user *argp)
+{
+	int ver = DASD_API_VERSION;
+	return put_user(ver, (int __user *)argp);
+}
 
 /*
  * Enable device.
  * used by dasdfmt after BIODASDDISABLE to retrigger blocksize detection
  */
-अटल पूर्णांक
-dasd_ioctl_enable(काष्ठा block_device *bdev)
-अणु
-	काष्ठा dasd_device *base;
+static int
+dasd_ioctl_enable(struct block_device *bdev)
+{
+	struct dasd_device *base;
 
-	अगर (!capable(CAP_SYS_ADMIN))
-		वापस -EACCES;
+	if (!capable(CAP_SYS_ADMIN))
+		return -EACCES;
 
 	base = dasd_device_from_gendisk(bdev->bd_disk);
-	अगर (!base)
-		वापस -ENODEV;
+	if (!base)
+		return -ENODEV;
 
 	dasd_enable_device(base);
 	dasd_put_device(base);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Disable device.
  * Used by dasdfmt. Disable I/O operations but allow ioctls.
  */
-अटल पूर्णांक
-dasd_ioctl_disable(काष्ठा block_device *bdev)
-अणु
-	काष्ठा dasd_device *base;
+static int
+dasd_ioctl_disable(struct block_device *bdev)
+{
+	struct dasd_device *base;
 
-	अगर (!capable(CAP_SYS_ADMIN))
-		वापस -EACCES;
+	if (!capable(CAP_SYS_ADMIN))
+		return -EACCES;
 
 	base = dasd_device_from_gendisk(bdev->bd_disk);
-	अगर (!base)
-		वापस -ENODEV;
+	if (!base)
+		return -ENODEV;
 	/*
-	 * Man this is sick. We करोn't करो a real disable but only करोwngrade
+	 * Man this is sick. We don't do a real disable but only downgrade
 	 * the device to DASD_STATE_BASIC. The reason is that dasdfmt uses
 	 * BIODASDDISABLE to disable accesses to the device via the block
-	 * device layer but it still wants to करो i/o on the device by
-	 * using the BIODASDFMT ioctl. Thereक्रमe the correct state क्रम the
-	 * device is DASD_STATE_BASIC that allows to करो basic i/o.
+	 * device layer but it still wants to do i/o on the device by
+	 * using the BIODASDFMT ioctl. Therefore the correct state for the
+	 * device is DASD_STATE_BASIC that allows to do basic i/o.
 	 */
 	dasd_set_target_state(base, DASD_STATE_BASIC);
 	/*
-	 * Set i_size to zero, since पढ़ो, ग_लिखो, etc. check against this
+	 * Set i_size to zero, since read, write, etc. check against this
 	 * value.
 	 */
 	set_capacity(bdev->bd_disk, 0);
 	dasd_put_device(base);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Quiesce device.
  */
-अटल पूर्णांक dasd_ioctl_quiesce(काष्ठा dasd_block *block)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा dasd_device *base;
+static int dasd_ioctl_quiesce(struct dasd_block *block)
+{
+	unsigned long flags;
+	struct dasd_device *base;
 
 	base = block->base;
-	अगर (!capable (CAP_SYS_ADMIN))
-		वापस -EACCES;
+	if (!capable (CAP_SYS_ADMIN))
+		return -EACCES;
 
 	pr_info("%s: The DASD has been put in the quiesce "
 		"state\n", dev_name(&base->cdev->dev));
 	spin_lock_irqsave(get_ccwdev_lock(base->cdev), flags);
 	dasd_device_set_stop_bits(base, DASD_STOPPED_QUIESCE);
 	spin_unlock_irqrestore(get_ccwdev_lock(base->cdev), flags);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
 /*
  * Resume device.
  */
-अटल पूर्णांक dasd_ioctl_resume(काष्ठा dasd_block *block)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा dasd_device *base;
+static int dasd_ioctl_resume(struct dasd_block *block)
+{
+	unsigned long flags;
+	struct dasd_device *base;
 
 	base = block->base;
-	अगर (!capable (CAP_SYS_ADMIN))
-		वापस -EACCES;
+	if (!capable (CAP_SYS_ADMIN))
+		return -EACCES;
 
 	pr_info("%s: I/O operations have been resumed "
 		"on the DASD\n", dev_name(&base->cdev->dev));
 	spin_lock_irqsave(get_ccwdev_lock(base->cdev), flags);
-	dasd_device_हटाओ_stop_bits(base, DASD_STOPPED_QUIESCE);
+	dasd_device_remove_stop_bits(base, DASD_STOPPED_QUIESCE);
 	spin_unlock_irqrestore(get_ccwdev_lock(base->cdev), flags);
 
 	dasd_schedule_block_bh(block);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Abort all failfast I/O on a device.
  */
-अटल पूर्णांक dasd_ioctl_पातio(काष्ठा dasd_block *block)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा dasd_device *base;
-	काष्ठा dasd_ccw_req *cqr, *n;
+static int dasd_ioctl_abortio(struct dasd_block *block)
+{
+	unsigned long flags;
+	struct dasd_device *base;
+	struct dasd_ccw_req *cqr, *n;
 
 	base = block->base;
-	अगर (!capable(CAP_SYS_ADMIN))
-		वापस -EACCES;
+	if (!capable(CAP_SYS_ADMIN))
+		return -EACCES;
 
-	अगर (test_and_set_bit(DASD_FLAG_ABORTALL, &base->flags))
-		वापस 0;
+	if (test_and_set_bit(DASD_FLAG_ABORTALL, &base->flags))
+		return 0;
 	DBF_DEV_EVENT(DBF_NOTICE, base, "%s", "abortall flag set");
 
 	spin_lock_irqsave(&block->request_queue_lock, flags);
 	spin_lock(&block->queue_lock);
-	list_क्रम_each_entry_safe(cqr, n, &block->ccw_queue, blocklist) अणु
-		अगर (test_bit(DASD_CQR_FLAGS_FAILFAST, &cqr->flags) &&
+	list_for_each_entry_safe(cqr, n, &block->ccw_queue, blocklist) {
+		if (test_bit(DASD_CQR_FLAGS_FAILFAST, &cqr->flags) &&
 		    cqr->callback_data &&
 		    cqr->callback_data != DASD_SLEEPON_START_TAG &&
-		    cqr->callback_data != DASD_SLEEPON_END_TAG) अणु
+		    cqr->callback_data != DASD_SLEEPON_END_TAG) {
 			spin_unlock(&block->queue_lock);
-			blk_पात_request(cqr->callback_data);
+			blk_abort_request(cqr->callback_data);
 			spin_lock(&block->queue_lock);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	spin_unlock(&block->queue_lock);
 	spin_unlock_irqrestore(&block->request_queue_lock, flags);
 
 	dasd_schedule_block_bh(block);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Allow I/O on a device
  */
-अटल पूर्णांक dasd_ioctl_allowio(काष्ठा dasd_block *block)
-अणु
-	काष्ठा dasd_device *base;
+static int dasd_ioctl_allowio(struct dasd_block *block)
+{
+	struct dasd_device *base;
 
 	base = block->base;
-	अगर (!capable(CAP_SYS_ADMIN))
-		वापस -EACCES;
+	if (!capable(CAP_SYS_ADMIN))
+		return -EACCES;
 
-	अगर (test_and_clear_bit(DASD_FLAG_ABORTALL, &base->flags))
+	if (test_and_clear_bit(DASD_FLAG_ABORTALL, &base->flags))
 		DBF_DEV_EVENT(DBF_NOTICE, base, "%s", "abortall flag unset");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * perक्रमms क्रमmatting of _device_ according to _fdata_
- * Note: The discipline's क्रमmat_function is assumed to deliver क्रमmatting
- * commands to क्रमmat multiple units of the device. In terms of the ECKD
- * devices this means CCWs are generated to क्रमmat multiple tracks.
+ * performs formatting of _device_ according to _fdata_
+ * Note: The discipline's format_function is assumed to deliver formatting
+ * commands to format multiple units of the device. In terms of the ECKD
+ * devices this means CCWs are generated to format multiple tracks.
  */
-अटल पूर्णांक
-dasd_क्रमmat(काष्ठा dasd_block *block, काष्ठा क्रमmat_data_t *fdata)
-अणु
-	काष्ठा dasd_device *base;
-	पूर्णांक rc;
+static int
+dasd_format(struct dasd_block *block, struct format_data_t *fdata)
+{
+	struct dasd_device *base;
+	int rc;
 
 	base = block->base;
-	अगर (base->discipline->क्रमmat_device == शून्य)
-		वापस -EPERM;
+	if (base->discipline->format_device == NULL)
+		return -EPERM;
 
-	अगर (base->state != DASD_STATE_BASIC) अणु
+	if (base->state != DASD_STATE_BASIC) {
 		pr_warn("%s: The DASD cannot be formatted while it is enabled\n",
 			dev_name(&base->cdev->dev));
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
 	DBF_DEV_EVENT(DBF_NOTICE, base,
 		      "formatting units %u to %u (%u B blocks) flags %u",
 		      fdata->start_unit,
-		      fdata->stop_unit, fdata->blksize, fdata->पूर्णांकensity);
+		      fdata->stop_unit, fdata->blksize, fdata->intensity);
 
-	/* Since dasdfmt keeps the device खोलो after it was disabled,
-	 * there still exists an inode क्रम this device.
+	/* Since dasdfmt keeps the device open after it was disabled,
+	 * there still exists an inode for this device.
 	 * We must update i_blkbits, otherwise we might get errors when
 	 * enabling the device later.
 	 */
-	अगर (fdata->start_unit == 0) अणु
+	if (fdata->start_unit == 0) {
 		block->gdp->part0->bd_inode->i_blkbits =
 			blksize_bits(fdata->blksize);
-	पूर्ण
+	}
 
-	rc = base->discipline->क्रमmat_device(base, fdata, 1);
-	अगर (rc == -EAGAIN)
-		rc = base->discipline->क्रमmat_device(base, fdata, 0);
+	rc = base->discipline->format_device(base, fdata, 1);
+	if (rc == -EAGAIN)
+		rc = base->discipline->format_device(base, fdata, 0);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक dasd_check_क्रमmat(काष्ठा dasd_block *block,
-			     काष्ठा क्रमmat_check_t *cdata)
-अणु
-	काष्ठा dasd_device *base;
-	पूर्णांक rc;
+static int dasd_check_format(struct dasd_block *block,
+			     struct format_check_t *cdata)
+{
+	struct dasd_device *base;
+	int rc;
 
 	base = block->base;
-	अगर (!base->discipline->check_device_क्रमmat)
-		वापस -ENOTTY;
+	if (!base->discipline->check_device_format)
+		return -ENOTTY;
 
-	rc = base->discipline->check_device_क्रमmat(base, cdata, 1);
-	अगर (rc == -EAGAIN)
-		rc = base->discipline->check_device_क्रमmat(base, cdata, 0);
+	rc = base->discipline->check_device_format(base, cdata, 1);
+	if (rc == -EAGAIN)
+		rc = base->discipline->check_device_format(base, cdata, 0);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*
  * Format device.
  */
-अटल पूर्णांक
-dasd_ioctl_क्रमmat(काष्ठा block_device *bdev, व्योम __user *argp)
-अणु
-	काष्ठा dasd_device *base;
-	काष्ठा क्रमmat_data_t fdata;
-	पूर्णांक rc;
+static int
+dasd_ioctl_format(struct block_device *bdev, void __user *argp)
+{
+	struct dasd_device *base;
+	struct format_data_t fdata;
+	int rc;
 
-	अगर (!capable(CAP_SYS_ADMIN))
-		वापस -EACCES;
-	अगर (!argp)
-		वापस -EINVAL;
+	if (!capable(CAP_SYS_ADMIN))
+		return -EACCES;
+	if (!argp)
+		return -EINVAL;
 	base = dasd_device_from_gendisk(bdev->bd_disk);
-	अगर (!base)
-		वापस -ENODEV;
-	अगर (base->features & DASD_FEATURE_READONLY ||
-	    test_bit(DASD_FLAG_DEVICE_RO, &base->flags)) अणु
+	if (!base)
+		return -ENODEV;
+	if (base->features & DASD_FEATURE_READONLY ||
+	    test_bit(DASD_FLAG_DEVICE_RO, &base->flags)) {
 		dasd_put_device(base);
-		वापस -EROFS;
-	पूर्ण
-	अगर (copy_from_user(&fdata, argp, माप(काष्ठा क्रमmat_data_t))) अणु
+		return -EROFS;
+	}
+	if (copy_from_user(&fdata, argp, sizeof(struct format_data_t))) {
 		dasd_put_device(base);
-		वापस -EFAULT;
-	पूर्ण
-	अगर (bdev_is_partition(bdev)) अणु
+		return -EFAULT;
+	}
+	if (bdev_is_partition(bdev)) {
 		pr_warn("%s: The specified DASD is a partition and cannot be formatted\n",
 			dev_name(&base->cdev->dev));
 		dasd_put_device(base);
-		वापस -EINVAL;
-	पूर्ण
-	rc = dasd_क्रमmat(base->block, &fdata);
+		return -EINVAL;
+	}
+	rc = dasd_format(base->block, &fdata);
 	dasd_put_device(base);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*
- * Check device क्रमmat
+ * Check device format
  */
-अटल पूर्णांक dasd_ioctl_check_क्रमmat(काष्ठा block_device *bdev, व्योम __user *argp)
-अणु
-	काष्ठा क्रमmat_check_t cdata;
-	काष्ठा dasd_device *base;
-	पूर्णांक rc = 0;
+static int dasd_ioctl_check_format(struct block_device *bdev, void __user *argp)
+{
+	struct format_check_t cdata;
+	struct dasd_device *base;
+	int rc = 0;
 
-	अगर (!argp)
-		वापस -EINVAL;
+	if (!argp)
+		return -EINVAL;
 
 	base = dasd_device_from_gendisk(bdev->bd_disk);
-	अगर (!base)
-		वापस -ENODEV;
-	अगर (bdev_is_partition(bdev)) अणु
+	if (!base)
+		return -ENODEV;
+	if (bdev_is_partition(bdev)) {
 		pr_warn("%s: The specified DASD is a partition and cannot be checked\n",
 			dev_name(&base->cdev->dev));
 		rc = -EINVAL;
-		जाओ out_err;
-	पूर्ण
+		goto out_err;
+	}
 
-	अगर (copy_from_user(&cdata, argp, माप(cdata))) अणु
+	if (copy_from_user(&cdata, argp, sizeof(cdata))) {
 		rc = -EFAULT;
-		जाओ out_err;
-	पूर्ण
+		goto out_err;
+	}
 
-	rc = dasd_check_क्रमmat(base->block, &cdata);
-	अगर (rc)
-		जाओ out_err;
+	rc = dasd_check_format(base->block, &cdata);
+	if (rc)
+		goto out_err;
 
-	अगर (copy_to_user(argp, &cdata, माप(cdata)))
+	if (copy_to_user(argp, &cdata, sizeof(cdata)))
 		rc = -EFAULT;
 
 out_err:
 	dasd_put_device(base);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक dasd_release_space(काष्ठा dasd_device *device,
-			      काष्ठा क्रमmat_data_t *rdata)
-अणु
-	अगर (!device->discipline->is_ese && !device->discipline->is_ese(device))
-		वापस -ENOTSUPP;
-	अगर (!device->discipline->release_space)
-		वापस -ENOTSUPP;
+static int dasd_release_space(struct dasd_device *device,
+			      struct format_data_t *rdata)
+{
+	if (!device->discipline->is_ese && !device->discipline->is_ese(device))
+		return -ENOTSUPP;
+	if (!device->discipline->release_space)
+		return -ENOTSUPP;
 
-	वापस device->discipline->release_space(device, rdata);
-पूर्ण
+	return device->discipline->release_space(device, rdata);
+}
 
 /*
  * Release allocated space
  */
-अटल पूर्णांक dasd_ioctl_release_space(काष्ठा block_device *bdev, व्योम __user *argp)
-अणु
-	काष्ठा क्रमmat_data_t rdata;
-	काष्ठा dasd_device *base;
-	पूर्णांक rc = 0;
+static int dasd_ioctl_release_space(struct block_device *bdev, void __user *argp)
+{
+	struct format_data_t rdata;
+	struct dasd_device *base;
+	int rc = 0;
 
-	अगर (!capable(CAP_SYS_ADMIN))
-		वापस -EACCES;
-	अगर (!argp)
-		वापस -EINVAL;
+	if (!capable(CAP_SYS_ADMIN))
+		return -EACCES;
+	if (!argp)
+		return -EINVAL;
 
 	base = dasd_device_from_gendisk(bdev->bd_disk);
-	अगर (!base)
-		वापस -ENODEV;
-	अगर (base->features & DASD_FEATURE_READONLY ||
-	    test_bit(DASD_FLAG_DEVICE_RO, &base->flags)) अणु
+	if (!base)
+		return -ENODEV;
+	if (base->features & DASD_FEATURE_READONLY ||
+	    test_bit(DASD_FLAG_DEVICE_RO, &base->flags)) {
 		rc = -EROFS;
-		जाओ out_err;
-	पूर्ण
-	अगर (bdev_is_partition(bdev)) अणु
+		goto out_err;
+	}
+	if (bdev_is_partition(bdev)) {
 		pr_warn("%s: The specified DASD is a partition and tracks cannot be released\n",
 			dev_name(&base->cdev->dev));
 		rc = -EINVAL;
-		जाओ out_err;
-	पूर्ण
+		goto out_err;
+	}
 
-	अगर (copy_from_user(&rdata, argp, माप(rdata))) अणु
+	if (copy_from_user(&rdata, argp, sizeof(rdata))) {
 		rc = -EFAULT;
-		जाओ out_err;
-	पूर्ण
+		goto out_err;
+	}
 
 	rc = dasd_release_space(base, &rdata);
 
 out_err:
 	dasd_put_device(base);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-#अगर_घोषित CONFIG_DASD_PROखाता
+#ifdef CONFIG_DASD_PROFILE
 /*
- * Reset device profile inक्रमmation
+ * Reset device profile information
  */
-अटल पूर्णांक dasd_ioctl_reset_profile(काष्ठा dasd_block *block)
-अणु
+static int dasd_ioctl_reset_profile(struct dasd_block *block)
+{
 	dasd_profile_reset(&block->profile);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Return device profile inक्रमmation
+ * Return device profile information
  */
-अटल पूर्णांक dasd_ioctl_पढ़ो_profile(काष्ठा dasd_block *block, व्योम __user *argp)
-अणु
-	काष्ठा dasd_profile_info_t *data;
-	पूर्णांक rc = 0;
+static int dasd_ioctl_read_profile(struct dasd_block *block, void __user *argp)
+{
+	struct dasd_profile_info_t *data;
+	int rc = 0;
 
-	data = kदो_स्मृति(माप(*data), GFP_KERNEL);
-	अगर (!data)
-		वापस -ENOMEM;
+	data = kmalloc(sizeof(*data), GFP_KERNEL);
+	if (!data)
+		return -ENOMEM;
 
 	spin_lock_bh(&block->profile.lock);
-	अगर (block->profile.data) अणु
+	if (block->profile.data) {
 		data->dasd_io_reqs = block->profile.data->dasd_io_reqs;
 		data->dasd_io_sects = block->profile.data->dasd_io_sects;
-		स_नकल(data->dasd_io_secs, block->profile.data->dasd_io_secs,
-		       माप(data->dasd_io_secs));
-		स_नकल(data->dasd_io_बार, block->profile.data->dasd_io_बार,
-		       माप(data->dasd_io_बार));
-		स_नकल(data->dasd_io_timps, block->profile.data->dasd_io_timps,
-		       माप(data->dasd_io_timps));
-		स_नकल(data->dasd_io_समय1, block->profile.data->dasd_io_समय1,
-		       माप(data->dasd_io_समय1));
-		स_नकल(data->dasd_io_समय2, block->profile.data->dasd_io_समय2,
-		       माप(data->dasd_io_समय2));
-		स_नकल(data->dasd_io_समय2ps,
-		       block->profile.data->dasd_io_समय2ps,
-		       माप(data->dasd_io_समय2ps));
-		स_नकल(data->dasd_io_समय3, block->profile.data->dasd_io_समय3,
-		       माप(data->dasd_io_समय3));
-		स_नकल(data->dasd_io_nr_req,
+		memcpy(data->dasd_io_secs, block->profile.data->dasd_io_secs,
+		       sizeof(data->dasd_io_secs));
+		memcpy(data->dasd_io_times, block->profile.data->dasd_io_times,
+		       sizeof(data->dasd_io_times));
+		memcpy(data->dasd_io_timps, block->profile.data->dasd_io_timps,
+		       sizeof(data->dasd_io_timps));
+		memcpy(data->dasd_io_time1, block->profile.data->dasd_io_time1,
+		       sizeof(data->dasd_io_time1));
+		memcpy(data->dasd_io_time2, block->profile.data->dasd_io_time2,
+		       sizeof(data->dasd_io_time2));
+		memcpy(data->dasd_io_time2ps,
+		       block->profile.data->dasd_io_time2ps,
+		       sizeof(data->dasd_io_time2ps));
+		memcpy(data->dasd_io_time3, block->profile.data->dasd_io_time3,
+		       sizeof(data->dasd_io_time3));
+		memcpy(data->dasd_io_nr_req,
 		       block->profile.data->dasd_io_nr_req,
-		       माप(data->dasd_io_nr_req));
+		       sizeof(data->dasd_io_nr_req));
 		spin_unlock_bh(&block->profile.lock);
-	पूर्ण अन्यथा अणु
+	} else {
 		spin_unlock_bh(&block->profile.lock);
 		rc = -EIO;
-		जाओ out;
-	पूर्ण
-	अगर (copy_to_user(argp, data, माप(*data)))
+		goto out;
+	}
+	if (copy_to_user(argp, data, sizeof(*data)))
 		rc = -EFAULT;
 out:
-	kमुक्त(data);
-	वापस rc;
-पूर्ण
-#अन्यथा
-अटल पूर्णांक dasd_ioctl_reset_profile(काष्ठा dasd_block *block)
-अणु
-	वापस -ENOTTY;
-पूर्ण
+	kfree(data);
+	return rc;
+}
+#else
+static int dasd_ioctl_reset_profile(struct dasd_block *block)
+{
+	return -ENOTTY;
+}
 
-अटल पूर्णांक dasd_ioctl_पढ़ो_profile(काष्ठा dasd_block *block, व्योम __user *argp)
-अणु
-	वापस -ENOTTY;
-पूर्ण
-#पूर्ण_अगर
+static int dasd_ioctl_read_profile(struct dasd_block *block, void __user *argp)
+{
+	return -ENOTTY;
+}
+#endif
 
 /*
- * Return dasd inक्रमmation. Used क्रम BIODASDINFO and BIODASDINFO2.
+ * Return dasd information. Used for BIODASDINFO and BIODASDINFO2.
  */
-अटल पूर्णांक __dasd_ioctl_inक्रमmation(काष्ठा dasd_block *block,
-		काष्ठा dasd_inक्रमmation2_t *dasd_info)
-अणु
-	काष्ठा subchannel_id sch_id;
-	काष्ठा ccw_dev_id dev_id;
-	काष्ठा dasd_device *base;
-	काष्ठा ccw_device *cdev;
-	काष्ठा list_head *l;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक rc;
+static int __dasd_ioctl_information(struct dasd_block *block,
+		struct dasd_information2_t *dasd_info)
+{
+	struct subchannel_id sch_id;
+	struct ccw_dev_id dev_id;
+	struct dasd_device *base;
+	struct ccw_device *cdev;
+	struct list_head *l;
+	unsigned long flags;
+	int rc;
 
 	base = block->base;
-	अगर (!base->discipline || !base->discipline->fill_info)
-		वापस -EINVAL;
+	if (!base->discipline || !base->discipline->fill_info)
+		return -EINVAL;
 
 	rc = base->discipline->fill_info(base, dasd_info);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
 	cdev = base->cdev;
 	ccw_device_get_id(cdev, &dev_id);
@@ -482,203 +481,203 @@ out:
 	dasd_info->dev_model = cdev->id.dev_model;
 	dasd_info->status = base->state;
 	/*
-	 * The खोलो_count is increased क्रम every खोलोer, that includes
+	 * The open_count is increased for every opener, that includes
 	 * the blkdev_get in dasd_scan_partitions.
 	 * This must be hidden from user-space.
 	 */
-	dasd_info->खोलो_count = atomic_पढ़ो(&block->खोलो_count);
-	अगर (!block->bdev)
-		dasd_info->खोलो_count++;
+	dasd_info->open_count = atomic_read(&block->open_count);
+	if (!block->bdev)
+		dasd_info->open_count++;
 
 	/*
-	 * check अगर device is really क्रमmatted
-	 * LDL / CDL was वापसed by 'fill_info'
+	 * check if device is really formatted
+	 * LDL / CDL was returned by 'fill_info'
 	 */
-	अगर ((base->state < DASD_STATE_READY) ||
+	if ((base->state < DASD_STATE_READY) ||
 	    (dasd_check_blocksize(block->bp_block)))
-		dasd_info->क्रमmat = DASD_FORMAT_NONE;
+		dasd_info->format = DASD_FORMAT_NONE;
 
 	dasd_info->features |=
 		((base->features & DASD_FEATURE_READONLY) != 0);
 
-	स_नकल(dasd_info->type, base->discipline->name, 4);
+	memcpy(dasd_info->type, base->discipline->name, 4);
 
 	spin_lock_irqsave(&block->queue_lock, flags);
-	list_क्रम_each(l, &base->ccw_queue)
+	list_for_each(l, &base->ccw_queue)
 		dasd_info->chanq_len++;
 	spin_unlock_irqrestore(&block->queue_lock, flags);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dasd_ioctl_inक्रमmation(काष्ठा dasd_block *block, व्योम __user *argp,
-		माप_प्रकार copy_size)
-अणु
-	काष्ठा dasd_inक्रमmation2_t *dasd_info;
-	पूर्णांक error;
+static int dasd_ioctl_information(struct dasd_block *block, void __user *argp,
+		size_t copy_size)
+{
+	struct dasd_information2_t *dasd_info;
+	int error;
 
-	dasd_info = kzalloc(माप(*dasd_info), GFP_KERNEL);
-	अगर (!dasd_info)
-		वापस -ENOMEM;
+	dasd_info = kzalloc(sizeof(*dasd_info), GFP_KERNEL);
+	if (!dasd_info)
+		return -ENOMEM;
 
-	error = __dasd_ioctl_inक्रमmation(block, dasd_info);
-	अगर (!error && copy_to_user(argp, dasd_info, copy_size))
+	error = __dasd_ioctl_information(block, dasd_info);
+	if (!error && copy_to_user(argp, dasd_info, copy_size))
 		error = -EFAULT;
-	kमुक्त(dasd_info);
-	वापस error;
-पूर्ण
+	kfree(dasd_info);
+	return error;
+}
 
 /*
- * Set पढ़ो only
+ * Set read only
  */
-पूर्णांक dasd_set_पढ़ो_only(काष्ठा block_device *bdev, bool ro)
-अणु
-	काष्ठा dasd_device *base;
-	पूर्णांक rc;
+int dasd_set_read_only(struct block_device *bdev, bool ro)
+{
+	struct dasd_device *base;
+	int rc;
 
-	/* करो not manipulate hardware state क्रम partitions */
-	अगर (bdev_is_partition(bdev))
-		वापस 0;
+	/* do not manipulate hardware state for partitions */
+	if (bdev_is_partition(bdev))
+		return 0;
 
 	base = dasd_device_from_gendisk(bdev->bd_disk);
-	अगर (!base)
-		वापस -ENODEV;
-	अगर (!ro && test_bit(DASD_FLAG_DEVICE_RO, &base->flags))
+	if (!base)
+		return -ENODEV;
+	if (!ro && test_bit(DASD_FLAG_DEVICE_RO, &base->flags))
 		rc = -EROFS;
-	अन्यथा
+	else
 		rc = dasd_set_feature(base->cdev, DASD_FEATURE_READONLY, ro);
 	dasd_put_device(base);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक dasd_ioctl_पढ़ोall_cmb(काष्ठा dasd_block *block, अचिन्हित पूर्णांक cmd,
-				  काष्ठा cmbdata __user *argp)
-अणु
-	माप_प्रकार size = _IOC_SIZE(cmd);
-	काष्ठा cmbdata data;
-	पूर्णांक ret;
+static int dasd_ioctl_readall_cmb(struct dasd_block *block, unsigned int cmd,
+				  struct cmbdata __user *argp)
+{
+	size_t size = _IOC_SIZE(cmd);
+	struct cmbdata data;
+	int ret;
 
-	ret = cmf_पढ़ोall(block->base->cdev, &data);
-	अगर (!ret && copy_to_user(argp, &data, min(size, माप(*argp))))
-		वापस -EFAULT;
-	वापस ret;
-पूर्ण
+	ret = cmf_readall(block->base->cdev, &data);
+	if (!ret && copy_to_user(argp, &data, min(size, sizeof(*argp))))
+		return -EFAULT;
+	return ret;
+}
 
-पूर्णांक dasd_ioctl(काष्ठा block_device *bdev, भ_शेषe_t mode,
-	       अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
-अणु
-	काष्ठा dasd_block *block;
-	काष्ठा dasd_device *base;
-	व्योम __user *argp;
-	पूर्णांक rc;
+int dasd_ioctl(struct block_device *bdev, fmode_t mode,
+	       unsigned int cmd, unsigned long arg)
+{
+	struct dasd_block *block;
+	struct dasd_device *base;
+	void __user *argp;
+	int rc;
 
-	अगर (is_compat_task())
+	if (is_compat_task())
 		argp = compat_ptr(arg);
-	अन्यथा
-		argp = (व्योम __user *)arg;
+	else
+		argp = (void __user *)arg;
 
-	अगर ((_IOC_सूची(cmd) != _IOC_NONE) && !arg) अणु
+	if ((_IOC_DIR(cmd) != _IOC_NONE) && !arg) {
 		PRINT_DEBUG("empty data ptr");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	base = dasd_device_from_gendisk(bdev->bd_disk);
-	अगर (!base)
-		वापस -ENODEV;
+	if (!base)
+		return -ENODEV;
 	block = base->block;
 	rc = 0;
-	चयन (cmd) अणु
-	हाल BIODASDDISABLE:
+	switch (cmd) {
+	case BIODASDDISABLE:
 		rc = dasd_ioctl_disable(bdev);
-		अवरोध;
-	हाल BIODASDENABLE:
+		break;
+	case BIODASDENABLE:
 		rc = dasd_ioctl_enable(bdev);
-		अवरोध;
-	हाल BIODASDQUIESCE:
+		break;
+	case BIODASDQUIESCE:
 		rc = dasd_ioctl_quiesce(block);
-		अवरोध;
-	हाल BIODASDRESUME:
+		break;
+	case BIODASDRESUME:
 		rc = dasd_ioctl_resume(block);
-		अवरोध;
-	हाल BIODASDABORTIO:
-		rc = dasd_ioctl_पातio(block);
-		अवरोध;
-	हाल BIODASDALLOWIO:
+		break;
+	case BIODASDABORTIO:
+		rc = dasd_ioctl_abortio(block);
+		break;
+	case BIODASDALLOWIO:
 		rc = dasd_ioctl_allowio(block);
-		अवरोध;
-	हाल BIODASDFMT:
-		rc = dasd_ioctl_क्रमmat(bdev, argp);
-		अवरोध;
-	हाल BIODASDCHECKFMT:
-		rc = dasd_ioctl_check_क्रमmat(bdev, argp);
-		अवरोध;
-	हाल BIODASDINFO:
-		rc = dasd_ioctl_inक्रमmation(block, argp,
-				माप(काष्ठा dasd_inक्रमmation_t));
-		अवरोध;
-	हाल BIODASDINFO2:
-		rc = dasd_ioctl_inक्रमmation(block, argp,
-				माप(काष्ठा dasd_inक्रमmation2_t));
-		अवरोध;
-	हाल BIODASDPRRD:
-		rc = dasd_ioctl_पढ़ो_profile(block, argp);
-		अवरोध;
-	हाल BIODASDPRRST:
+		break;
+	case BIODASDFMT:
+		rc = dasd_ioctl_format(bdev, argp);
+		break;
+	case BIODASDCHECKFMT:
+		rc = dasd_ioctl_check_format(bdev, argp);
+		break;
+	case BIODASDINFO:
+		rc = dasd_ioctl_information(block, argp,
+				sizeof(struct dasd_information_t));
+		break;
+	case BIODASDINFO2:
+		rc = dasd_ioctl_information(block, argp,
+				sizeof(struct dasd_information2_t));
+		break;
+	case BIODASDPRRD:
+		rc = dasd_ioctl_read_profile(block, argp);
+		break;
+	case BIODASDPRRST:
 		rc = dasd_ioctl_reset_profile(block);
-		अवरोध;
-	हाल DASDAPIVER:
+		break;
+	case DASDAPIVER:
 		rc = dasd_ioctl_api_version(argp);
-		अवरोध;
-	हाल BIODASDCMFENABLE:
+		break;
+	case BIODASDCMFENABLE:
 		rc = enable_cmf(base->cdev);
-		अवरोध;
-	हाल BIODASDCMFDISABLE:
+		break;
+	case BIODASDCMFDISABLE:
 		rc = disable_cmf(base->cdev);
-		अवरोध;
-	हाल BIODASDREADALLCMB:
-		rc = dasd_ioctl_पढ़ोall_cmb(block, cmd, argp);
-		अवरोध;
-	हाल BIODASDRAS:
+		break;
+	case BIODASDREADALLCMB:
+		rc = dasd_ioctl_readall_cmb(block, cmd, argp);
+		break;
+	case BIODASDRAS:
 		rc = dasd_ioctl_release_space(bdev, argp);
-		अवरोध;
-	शेष:
-		/* अगर the discipline has an ioctl method try it. */
+		break;
+	default:
+		/* if the discipline has an ioctl method try it. */
 		rc = -ENOTTY;
-		अगर (base->discipline->ioctl)
+		if (base->discipline->ioctl)
 			rc = base->discipline->ioctl(block, cmd, argp);
-	पूर्ण
+	}
 	dasd_put_device(base);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 
 /**
- * dasd_biodasdinfo() - fill out the dasd inक्रमmation काष्ठाure
- * @disk [in]: poपूर्णांकer to gendisk काष्ठाure that references a DASD
- * @info [out]: poपूर्णांकer to the dasd_inक्रमmation2_t काष्ठाure
+ * dasd_biodasdinfo() - fill out the dasd information structure
+ * @disk [in]: pointer to gendisk structure that references a DASD
+ * @info [out]: pointer to the dasd_information2_t structure
  *
- * Provide access to DASD specअगरic inक्रमmation.
- * The gendisk काष्ठाure is checked अगर it beदीर्घs to the DASD driver by
- * comparing the gendisk->fops poपूर्णांकer.
- * If it करोes not beदीर्घ to the DASD driver -EINVAL is वापसed.
- * Otherwise the provided dasd_inक्रमmation2_t काष्ठाure is filled out.
+ * Provide access to DASD specific information.
+ * The gendisk structure is checked if it belongs to the DASD driver by
+ * comparing the gendisk->fops pointer.
+ * If it does not belong to the DASD driver -EINVAL is returned.
+ * Otherwise the provided dasd_information2_t structure is filled out.
  *
  * Returns:
  *   %0 on success and a negative error value on failure.
  */
-पूर्णांक dasd_biodasdinfo(काष्ठा gendisk *disk, काष्ठा dasd_inक्रमmation2_t *info)
-अणु
-	काष्ठा dasd_device *base;
-	पूर्णांक error;
+int dasd_biodasdinfo(struct gendisk *disk, struct dasd_information2_t *info)
+{
+	struct dasd_device *base;
+	int error;
 
-	अगर (disk->fops != &dasd_device_operations)
-		वापस -EINVAL;
+	if (disk->fops != &dasd_device_operations)
+		return -EINVAL;
 
 	base = dasd_device_from_gendisk(disk);
-	अगर (!base)
-		वापस -ENODEV;
-	error = __dasd_ioctl_inक्रमmation(base->block, info);
+	if (!base)
+		return -ENODEV;
+	error = __dasd_ioctl_information(base->block, info);
 	dasd_put_device(base);
-	वापस error;
-पूर्ण
+	return error;
+}
 /* export that symbol_get in partition detection is possible */
 EXPORT_SYMBOL_GPL(dasd_biodasdinfo);

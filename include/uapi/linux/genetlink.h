@@ -1,44 +1,43 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
-#अगर_अघोषित _UAPI__LINUX_GENERIC_NETLINK_H
-#घोषणा _UAPI__LINUX_GENERIC_NETLINK_H
+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+#ifndef _UAPI__LINUX_GENERIC_NETLINK_H
+#define _UAPI__LINUX_GENERIC_NETLINK_H
 
-#समावेश <linux/types.h>
-#समावेश <linux/netlink.h>
+#include <linux/types.h>
+#include <linux/netlink.h>
 
-#घोषणा GENL_NAMSIZ	16	/* length of family name */
+#define GENL_NAMSIZ	16	/* length of family name */
 
-#घोषणा GENL_MIN_ID	NLMSG_MIN_TYPE
-#घोषणा GENL_MAX_ID	1023
+#define GENL_MIN_ID	NLMSG_MIN_TYPE
+#define GENL_MAX_ID	1023
 
-काष्ठा genlmsghdr अणु
+struct genlmsghdr {
 	__u8	cmd;
 	__u8	version;
 	__u16	reserved;
-पूर्ण;
+};
 
-#घोषणा GENL_HDRLEN	NLMSG_ALIGN(माप(काष्ठा genlmsghdr))
+#define GENL_HDRLEN	NLMSG_ALIGN(sizeof(struct genlmsghdr))
 
-#घोषणा GENL_ADMIN_PERM		0x01
-#घोषणा GENL_CMD_CAP_DO		0x02
-#घोषणा GENL_CMD_CAP_DUMP	0x04
-#घोषणा GENL_CMD_CAP_HASPOL	0x08
-#घोषणा GENL_UNS_ADMIN_PERM	0x10
+#define GENL_ADMIN_PERM		0x01
+#define GENL_CMD_CAP_DO		0x02
+#define GENL_CMD_CAP_DUMP	0x04
+#define GENL_CMD_CAP_HASPOL	0x08
+#define GENL_UNS_ADMIN_PERM	0x10
 
 /*
- * List of reserved अटल generic netlink identअगरiers:
+ * List of reserved static generic netlink identifiers:
  */
-#घोषणा GENL_ID_CTRL		NLMSG_MIN_TYPE
-#घोषणा GENL_ID_VFS_DQUOT	(NLMSG_MIN_TYPE + 1)
-#घोषणा GENL_ID_PMCRAID		(NLMSG_MIN_TYPE + 2)
+#define GENL_ID_CTRL		NLMSG_MIN_TYPE
+#define GENL_ID_VFS_DQUOT	(NLMSG_MIN_TYPE + 1)
+#define GENL_ID_PMCRAID		(NLMSG_MIN_TYPE + 2)
 /* must be last reserved + 1 */
-#घोषणा GENL_START_ALLOC	(NLMSG_MIN_TYPE + 3)
+#define GENL_START_ALLOC	(NLMSG_MIN_TYPE + 3)
 
 /**************************************************************************
  * Controller
  **************************************************************************/
 
-क्रमागत अणु
+enum {
 	CTRL_CMD_UNSPEC,
 	CTRL_CMD_NEWFAMILY,
 	CTRL_CMD_DELFAMILY,
@@ -51,11 +50,11 @@
 	CTRL_CMD_GETMCAST_GRP, /* unused */
 	CTRL_CMD_GETPOLICY,
 	__CTRL_CMD_MAX,
-पूर्ण;
+};
 
-#घोषणा CTRL_CMD_MAX (__CTRL_CMD_MAX - 1)
+#define CTRL_CMD_MAX (__CTRL_CMD_MAX - 1)
 
-क्रमागत अणु
+enum {
 	CTRL_ATTR_UNSPEC,
 	CTRL_ATTR_FAMILY_ID,
 	CTRL_ATTR_FAMILY_NAME,
@@ -68,36 +67,36 @@
 	CTRL_ATTR_OP_POLICY,
 	CTRL_ATTR_OP,
 	__CTRL_ATTR_MAX,
-पूर्ण;
+};
 
-#घोषणा CTRL_ATTR_MAX (__CTRL_ATTR_MAX - 1)
+#define CTRL_ATTR_MAX (__CTRL_ATTR_MAX - 1)
 
-क्रमागत अणु
+enum {
 	CTRL_ATTR_OP_UNSPEC,
 	CTRL_ATTR_OP_ID,
 	CTRL_ATTR_OP_FLAGS,
 	__CTRL_ATTR_OP_MAX,
-पूर्ण;
+};
 
-#घोषणा CTRL_ATTR_OP_MAX (__CTRL_ATTR_OP_MAX - 1)
+#define CTRL_ATTR_OP_MAX (__CTRL_ATTR_OP_MAX - 1)
 
-क्रमागत अणु
+enum {
 	CTRL_ATTR_MCAST_GRP_UNSPEC,
 	CTRL_ATTR_MCAST_GRP_NAME,
 	CTRL_ATTR_MCAST_GRP_ID,
 	__CTRL_ATTR_MCAST_GRP_MAX,
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	CTRL_ATTR_POLICY_UNSPEC,
 	CTRL_ATTR_POLICY_DO,
 	CTRL_ATTR_POLICY_DUMP,
 
 	__CTRL_ATTR_POLICY_DUMP_MAX,
 	CTRL_ATTR_POLICY_DUMP_MAX = __CTRL_ATTR_POLICY_DUMP_MAX - 1
-पूर्ण;
+};
 
-#घोषणा CTRL_ATTR_MCAST_GRP_MAX (__CTRL_ATTR_MCAST_GRP_MAX - 1)
+#define CTRL_ATTR_MCAST_GRP_MAX (__CTRL_ATTR_MCAST_GRP_MAX - 1)
 
 
-#पूर्ण_अगर /* _UAPI__LINUX_GENERIC_NETLINK_H */
+#endif /* _UAPI__LINUX_GENERIC_NETLINK_H */

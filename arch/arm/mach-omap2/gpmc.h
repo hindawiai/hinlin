@@ -1,11 +1,10 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * General-Purpose Memory Controller क्रम OMAP2
+ * General-Purpose Memory Controller for OMAP2
  *
  * Copyright (C) 2005-2006 Nokia Corporation
  *
- * Do not include this file in any new code, this will get हटाओd
+ * Do not include this file in any new code, this will get removed
  * once omap3 boots in device tree only mode.
  */
-#समावेश <linux/omap-gpmc.h>
+#include <linux/omap-gpmc.h>

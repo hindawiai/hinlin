@@ -1,44 +1,43 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0
+// SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
 /*******************************************************************************
  *
- * Module Name: hwregs - Read/ग_लिखो access functions क्रम the various ACPI
- *                       control and status रेजिस्टरs.
+ * Module Name: hwregs - Read/write access functions for the various ACPI
+ *                       control and status registers.
  *
  ******************************************************************************/
 
-#समावेश <acpi/acpi.h>
-#समावेश "accommon.h"
-#समावेश "acevents.h"
+#include <acpi/acpi.h>
+#include "accommon.h"
+#include "acevents.h"
 
-#घोषणा _COMPONENT          ACPI_HARDWARE
+#define _COMPONENT          ACPI_HARDWARE
 ACPI_MODULE_NAME("hwregs")
 
-#अगर (!ACPI_REDUCED_HARDWARE)
+#if (!ACPI_REDUCED_HARDWARE)
 /* Local Prototypes */
-अटल u8
+static u8
 acpi_hw_get_access_bit_width(u64 address,
-			     काष्ठा acpi_generic_address *reg,
+			     struct acpi_generic_address *reg,
 			     u8 max_bit_width);
 
-अटल acpi_status
-acpi_hw_पढ़ो_multiple(u32 *value,
-		      काष्ठा acpi_generic_address *रेजिस्टर_a,
-		      काष्ठा acpi_generic_address *रेजिस्टर_b);
+static acpi_status
+acpi_hw_read_multiple(u32 *value,
+		      struct acpi_generic_address *register_a,
+		      struct acpi_generic_address *register_b);
 
-अटल acpi_status
-acpi_hw_ग_लिखो_multiple(u32 value,
-		       काष्ठा acpi_generic_address *रेजिस्टर_a,
-		       काष्ठा acpi_generic_address *रेजिस्टर_b);
+static acpi_status
+acpi_hw_write_multiple(u32 value,
+		       struct acpi_generic_address *register_a,
+		       struct acpi_generic_address *register_b);
 
-#पूर्ण_अगर				/* !ACPI_REDUCED_HARDWARE */
+#endif				/* !ACPI_REDUCED_HARDWARE */
 
 /******************************************************************************
  *
  * FUNCTION:    acpi_hw_get_access_bit_width
  *
- * PARAMETERS:  address             - GAS रेजिस्टर address
- *              reg                 - GAS रेजिस्टर काष्ठाure
+ * PARAMETERS:  address             - GAS register address
+ *              reg                 - GAS register structure
  *              max_bit_width       - Max bit_width supported (32 or 64)
  *
  * RETURN:      Status
@@ -47,154 +46,154 @@ acpi_hw_ग_लिखो_multiple(u32 value,
  *
  ******************************************************************************/
 
-अटल u8
+static u8
 acpi_hw_get_access_bit_width(u64 address,
-			     काष्ठा acpi_generic_address *reg, u8 max_bit_width)
-अणु
+			     struct acpi_generic_address *reg, u8 max_bit_width)
+{
 	u8 access_bit_width;
 
 	/*
-	 * GAS क्रमmat "register", used by FADT:
-	 *  1. Detected अगर bit_offset is 0 and bit_width is 8/16/32/64;
-	 *  2. access_size field is ignored and bit_width field is used क्रम
+	 * GAS format "register", used by FADT:
+	 *  1. Detected if bit_offset is 0 and bit_width is 8/16/32/64;
+	 *  2. access_size field is ignored and bit_width field is used for
 	 *     determining the boundary of the IO accesses.
-	 * GAS क्रमmat "region", used by APEI रेजिस्टरs:
-	 *  1. Detected अगर bit_offset is not 0 or bit_width is not 8/16/32/64;
-	 *  2. access_size field is used क्रम determining the boundary of the
+	 * GAS format "region", used by APEI registers:
+	 *  1. Detected if bit_offset is not 0 or bit_width is not 8/16/32/64;
+	 *  2. access_size field is used for determining the boundary of the
 	 *     IO accesses;
 	 *  3. bit_offset/bit_width fields are used to describe the "region".
 	 *
 	 * Note: This algorithm assumes that the "Address" fields should always
 	 *       contain aligned values.
 	 */
-	अगर (!reg->bit_offset && reg->bit_width &&
+	if (!reg->bit_offset && reg->bit_width &&
 	    ACPI_IS_POWER_OF_TWO(reg->bit_width) &&
-	    ACPI_IS_ALIGNED(reg->bit_width, 8)) अणु
+	    ACPI_IS_ALIGNED(reg->bit_width, 8)) {
 		access_bit_width = reg->bit_width;
-	पूर्ण अन्यथा अगर (reg->access_width) अणु
+	} else if (reg->access_width) {
 		access_bit_width = ACPI_ACCESS_BIT_WIDTH(reg->access_width);
-	पूर्ण अन्यथा अणु
+	} else {
 		access_bit_width =
 		    ACPI_ROUND_UP_POWER_OF_TWO_8(reg->bit_offset +
 						 reg->bit_width);
-		अगर (access_bit_width <= 8) अणु
+		if (access_bit_width <= 8) {
 			access_bit_width = 8;
-		पूर्ण अन्यथा अणु
-			जबतक (!ACPI_IS_ALIGNED(address, access_bit_width >> 3)) अणु
+		} else {
+			while (!ACPI_IS_ALIGNED(address, access_bit_width >> 3)) {
 				access_bit_width >>= 1;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
 	/* Maximum IO port access bit width is 32 */
 
-	अगर (reg->space_id == ACPI_ADR_SPACE_SYSTEM_IO) अणु
+	if (reg->space_id == ACPI_ADR_SPACE_SYSTEM_IO) {
 		max_bit_width = 32;
-	पूर्ण
+	}
 
 	/*
 	 * Return access width according to the requested maximum access bit width,
-	 * as the caller should know the क्रमmat of the रेजिस्टर and may enक्रमce
+	 * as the caller should know the format of the register and may enforce
 	 * a 32-bit accesses.
 	 */
-	अगर (access_bit_width < max_bit_width) अणु
-		वापस (access_bit_width);
-	पूर्ण
-	वापस (max_bit_width);
-पूर्ण
+	if (access_bit_width < max_bit_width) {
+		return (access_bit_width);
+	}
+	return (max_bit_width);
+}
 
 /******************************************************************************
  *
- * FUNCTION:    acpi_hw_validate_रेजिस्टर
+ * FUNCTION:    acpi_hw_validate_register
  *
- * PARAMETERS:  reg                 - GAS रेजिस्टर काष्ठाure
+ * PARAMETERS:  reg                 - GAS register structure
  *              max_bit_width       - Max bit_width supported (32 or 64)
- *              address             - Poपूर्णांकer to where the gas->address
- *                                    is वापसed
+ *              address             - Pointer to where the gas->address
+ *                                    is returned
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Validate the contents of a GAS रेजिस्टर. Checks the GAS
- *              poपूर्णांकer, Address, space_id, bit_width, and bit_offset.
+ * DESCRIPTION: Validate the contents of a GAS register. Checks the GAS
+ *              pointer, Address, space_id, bit_width, and bit_offset.
  *
  ******************************************************************************/
 
 acpi_status
-acpi_hw_validate_रेजिस्टर(काष्ठा acpi_generic_address *reg,
+acpi_hw_validate_register(struct acpi_generic_address *reg,
 			  u8 max_bit_width, u64 *address)
-अणु
+{
 	u8 bit_width;
 	u8 access_width;
 
-	/* Must have a valid poपूर्णांकer to a GAS काष्ठाure */
+	/* Must have a valid pointer to a GAS structure */
 
-	अगर (!reg) अणु
-		वापस (AE_BAD_PARAMETER);
-	पूर्ण
+	if (!reg) {
+		return (AE_BAD_PARAMETER);
+	}
 
 	/*
 	 * Copy the target address. This handles possible alignment issues.
 	 * Address must not be null. A null address also indicates an optional
-	 * ACPI रेजिस्टर that is not supported, so no error message.
+	 * ACPI register that is not supported, so no error message.
 	 */
 	ACPI_MOVE_64_TO_64(address, &reg->address);
-	अगर (!(*address)) अणु
-		वापस (AE_BAD_ADDRESS);
-	पूर्ण
+	if (!(*address)) {
+		return (AE_BAD_ADDRESS);
+	}
 
 	/* Validate the space_ID */
 
-	अगर ((reg->space_id != ACPI_ADR_SPACE_SYSTEM_MEMORY) &&
-	    (reg->space_id != ACPI_ADR_SPACE_SYSTEM_IO)) अणु
+	if ((reg->space_id != ACPI_ADR_SPACE_SYSTEM_MEMORY) &&
+	    (reg->space_id != ACPI_ADR_SPACE_SYSTEM_IO)) {
 		ACPI_ERROR((AE_INFO,
 			    "Unsupported address space: 0x%X", reg->space_id));
-		वापस (AE_SUPPORT);
-	पूर्ण
+		return (AE_SUPPORT);
+	}
 
 	/* Validate the access_width */
 
-	अगर (reg->access_width > 4) अणु
+	if (reg->access_width > 4) {
 		ACPI_ERROR((AE_INFO,
 			    "Unsupported register access width: 0x%X",
 			    reg->access_width));
-		वापस (AE_SUPPORT);
-	पूर्ण
+		return (AE_SUPPORT);
+	}
 
-	/* Validate the bit_width, convert access_width पूर्णांकo number of bits */
+	/* Validate the bit_width, convert access_width into number of bits */
 
 	access_width =
 	    acpi_hw_get_access_bit_width(*address, reg, max_bit_width);
 	bit_width =
 	    ACPI_ROUND_UP(reg->bit_offset + reg->bit_width, access_width);
-	अगर (max_bit_width < bit_width) अणु
+	if (max_bit_width < bit_width) {
 		ACPI_WARNING((AE_INFO,
 			      "Requested bit width 0x%X is smaller than register bit width 0x%X",
 			      max_bit_width, bit_width));
-		वापस (AE_SUPPORT);
-	पूर्ण
+		return (AE_SUPPORT);
+	}
 
-	वापस (AE_OK);
-पूर्ण
+	return (AE_OK);
+}
 
 /******************************************************************************
  *
- * FUNCTION:    acpi_hw_पढ़ो
+ * FUNCTION:    acpi_hw_read
  *
- * PARAMETERS:  value               - Where the value is वापसed
- *              reg                 - GAS रेजिस्टर काष्ठाure
+ * PARAMETERS:  value               - Where the value is returned
+ *              reg                 - GAS register structure
  *
  * RETURN:      Status
  *
  * DESCRIPTION: Read from either memory or IO space. This is a 64-bit max
- *              version of acpi_पढ़ो.
+ *              version of acpi_read.
  *
- * LIMITATIONS: <These limitations also apply to acpi_hw_ग_लिखो>
- *      space_ID must be प्रणाली_memory or प्रणाली_IO.
+ * LIMITATIONS: <These limitations also apply to acpi_hw_write>
+ *      space_ID must be system_memory or system_IO.
  *
  ******************************************************************************/
 
-acpi_status acpi_hw_पढ़ो(u64 *value, काष्ठा acpi_generic_address *reg)
-अणु
+acpi_status acpi_hw_read(u64 *value, struct acpi_generic_address *reg)
+{
 	u64 address;
 	u8 access_width;
 	u32 bit_width;
@@ -204,18 +203,18 @@ acpi_status acpi_hw_पढ़ो(u64 *value, काष्ठा acpi_generic_add
 	u8 index;
 	acpi_status status;
 
-	ACPI_FUNCTION_NAME(hw_पढ़ो);
+	ACPI_FUNCTION_NAME(hw_read);
 
-	/* Validate contents of the GAS रेजिस्टर */
+	/* Validate contents of the GAS register */
 
-	status = acpi_hw_validate_रेजिस्टर(reg, 64, &address);
-	अगर (ACPI_FAILURE(status)) अणु
-		वापस (status);
-	पूर्ण
+	status = acpi_hw_validate_register(reg, 64, &address);
+	if (ACPI_FAILURE(status)) {
+		return (status);
+	}
 
 	/*
-	 * Initialize entire 64-bit वापस value to zero, convert access_width
-	 * पूर्णांकo number of bits based
+	 * Initialize entire 64-bit return value to zero, convert access_width
+	 * into number of bits based
 	 */
 	*value = 0;
 	access_width = acpi_hw_get_access_bit_width(address, reg, 64);
@@ -224,25 +223,25 @@ acpi_status acpi_hw_पढ़ो(u64 *value, काष्ठा acpi_generic_add
 
 	/*
 	 * Two address spaces supported: Memory or IO. PCI_Config is
-	 * not supported here because the GAS काष्ठाure is insufficient
+	 * not supported here because the GAS structure is insufficient
 	 */
 	index = 0;
-	जबतक (bit_width) अणु
-		अगर (bit_offset >= access_width) अणु
+	while (bit_width) {
+		if (bit_offset >= access_width) {
 			value64 = 0;
 			bit_offset -= access_width;
-		पूर्ण अन्यथा अणु
-			अगर (reg->space_id == ACPI_ADR_SPACE_SYSTEM_MEMORY) अणु
+		} else {
+			if (reg->space_id == ACPI_ADR_SPACE_SYSTEM_MEMORY) {
 				status =
-				    acpi_os_पढ़ो_memory((acpi_physical_address)
+				    acpi_os_read_memory((acpi_physical_address)
 							address +
 							index *
 							ACPI_DIV_8
 							(access_width),
 							&value64, access_width);
-			पूर्ण अन्यथा अणु	/* ACPI_ADR_SPACE_SYSTEM_IO, validated earlier */
+			} else {	/* ACPI_ADR_SPACE_SYSTEM_IO, validated earlier */
 
-				status = acpi_hw_पढ़ो_port((acpi_io_address)
+				status = acpi_hw_read_port((acpi_io_address)
 							   address +
 							   index *
 							   ACPI_DIV_8
@@ -250,12 +249,12 @@ acpi_status acpi_hw_पढ़ो(u64 *value, काष्ठा acpi_generic_add
 							   &value32,
 							   access_width);
 				value64 = (u64)value32;
-			पूर्ण
-		पूर्ण
+			}
+		}
 
 		/*
-		 * Use offset style bit ग_लिखोs because "Index * AccessWidth" is
-		 * ensured to be less than 64-bits by acpi_hw_validate_रेजिस्टर().
+		 * Use offset style bit writes because "Index * AccessWidth" is
+		 * ensured to be less than 64-bits by acpi_hw_validate_register().
 		 */
 		ACPI_SET_BITS(value, index * access_width,
 			      ACPI_MASK_BITS_ABOVE_64(access_width), value64);
@@ -263,7 +262,7 @@ acpi_status acpi_hw_पढ़ो(u64 *value, काष्ठा acpi_generic_add
 		bit_width -=
 		    bit_width > access_width ? access_width : bit_width;
 		index++;
-	पूर्ण
+	}
 
 	ACPI_DEBUG_PRINT((ACPI_DB_IO,
 			  "Read:  %8.8X%8.8X width %2d from %8.8X%8.8X (%s)\n",
@@ -271,25 +270,25 @@ acpi_status acpi_hw_पढ़ो(u64 *value, काष्ठा acpi_generic_add
 			  ACPI_FORMAT_UINT64(address),
 			  acpi_ut_get_region_name(reg->space_id)));
 
-	वापस (status);
-पूर्ण
+	return (status);
+}
 
 /******************************************************************************
  *
- * FUNCTION:    acpi_hw_ग_लिखो
+ * FUNCTION:    acpi_hw_write
  *
  * PARAMETERS:  value               - Value to be written
- *              reg                 - GAS रेजिस्टर काष्ठाure
+ *              reg                 - GAS register structure
  *
  * RETURN:      Status
  *
  * DESCRIPTION: Write to either memory or IO space. This is a 64-bit max
- *              version of acpi_ग_लिखो.
+ *              version of acpi_write.
  *
  ******************************************************************************/
 
-acpi_status acpi_hw_ग_लिखो(u64 value, काष्ठा acpi_generic_address *reg)
-अणु
+acpi_status acpi_hw_write(u64 value, struct acpi_generic_address *reg)
+{
 	u64 address;
 	u8 access_width;
 	u32 bit_width;
@@ -298,16 +297,16 @@ acpi_status acpi_hw_ग_लिखो(u64 value, काष्ठा acpi_generic_
 	u8 index;
 	acpi_status status;
 
-	ACPI_FUNCTION_NAME(hw_ग_लिखो);
+	ACPI_FUNCTION_NAME(hw_write);
 
-	/* Validate contents of the GAS रेजिस्टर */
+	/* Validate contents of the GAS register */
 
-	status = acpi_hw_validate_रेजिस्टर(reg, 64, &address);
-	अगर (ACPI_FAILURE(status)) अणु
-		वापस (status);
-	पूर्ण
+	status = acpi_hw_validate_register(reg, 64, &address);
+	if (ACPI_FAILURE(status)) {
+		return (status);
+	}
 
-	/* Convert access_width पूर्णांकo number of bits based */
+	/* Convert access_width into number of bits based */
 
 	access_width = acpi_hw_get_access_bit_width(address, reg, 64);
 	bit_width = reg->bit_offset + reg->bit_width;
@@ -315,48 +314,48 @@ acpi_status acpi_hw_ग_लिखो(u64 value, काष्ठा acpi_generic_
 
 	/*
 	 * Two address spaces supported: Memory or IO. PCI_Config is
-	 * not supported here because the GAS काष्ठाure is insufficient
+	 * not supported here because the GAS structure is insufficient
 	 */
 	index = 0;
-	जबतक (bit_width) अणु
+	while (bit_width) {
 		/*
-		 * Use offset style bit पढ़ोs because "Index * AccessWidth" is
-		 * ensured to be less than 64-bits by acpi_hw_validate_रेजिस्टर().
+		 * Use offset style bit reads because "Index * AccessWidth" is
+		 * ensured to be less than 64-bits by acpi_hw_validate_register().
 		 */
 		value64 = ACPI_GET_BITS(&value, index * access_width,
 					ACPI_MASK_BITS_ABOVE_64(access_width));
 
-		अगर (bit_offset >= access_width) अणु
+		if (bit_offset >= access_width) {
 			bit_offset -= access_width;
-		पूर्ण अन्यथा अणु
-			अगर (reg->space_id == ACPI_ADR_SPACE_SYSTEM_MEMORY) अणु
+		} else {
+			if (reg->space_id == ACPI_ADR_SPACE_SYSTEM_MEMORY) {
 				status =
-				    acpi_os_ग_लिखो_memory((acpi_physical_address)
+				    acpi_os_write_memory((acpi_physical_address)
 							 address +
 							 index *
 							 ACPI_DIV_8
 							 (access_width),
 							 value64, access_width);
-			पूर्ण अन्यथा अणु	/* ACPI_ADR_SPACE_SYSTEM_IO, validated earlier */
+			} else {	/* ACPI_ADR_SPACE_SYSTEM_IO, validated earlier */
 
-				status = acpi_hw_ग_लिखो_port((acpi_io_address)
+				status = acpi_hw_write_port((acpi_io_address)
 							    address +
 							    index *
 							    ACPI_DIV_8
 							    (access_width),
 							    (u32)value64,
 							    access_width);
-			पूर्ण
-		पूर्ण
+			}
+		}
 
 		/*
 		 * Index * access_width is ensured to be less than 32-bits by
-		 * acpi_hw_validate_रेजिस्टर().
+		 * acpi_hw_validate_register().
 		 */
 		bit_width -=
 		    bit_width > access_width ? access_width : bit_width;
 		index++;
-	पूर्ण
+	}
 
 	ACPI_DEBUG_PRINT((ACPI_DB_IO,
 			  "Wrote: %8.8X%8.8X width %2d   to %8.8X%8.8X (%s)\n",
@@ -364,10 +363,10 @@ acpi_status acpi_hw_ग_लिखो(u64 value, काष्ठा acpi_generic_
 			  ACPI_FORMAT_UINT64(address),
 			  acpi_ut_get_region_name(reg->space_id)));
 
-	वापस (status);
-पूर्ण
+	return (status);
+}
 
-#अगर (!ACPI_REDUCED_HARDWARE)
+#if (!ACPI_REDUCED_HARDWARE)
 /*******************************************************************************
  *
  * FUNCTION:    acpi_hw_clear_acpi_status
@@ -380,8 +379,8 @@ acpi_status acpi_hw_ग_लिखो(u64 value, काष्ठा acpi_generic_
  *
  ******************************************************************************/
 
-acpi_status acpi_hw_clear_acpi_status(व्योम)
-अणु
+acpi_status acpi_hw_clear_acpi_status(void)
+{
 	acpi_status status;
 	acpi_cpu_flags lock_flags = 0;
 
@@ -395,409 +394,409 @@ acpi_status acpi_hw_clear_acpi_status(व्योम)
 
 	/* Clear the fixed events in PM1 A/B */
 
-	status = acpi_hw_रेजिस्टर_ग_लिखो(ACPI_REGISTER_PM1_STATUS,
+	status = acpi_hw_register_write(ACPI_REGISTER_PM1_STATUS,
 					ACPI_BITMASK_ALL_FIXED_STATUS);
 
 	acpi_os_release_raw_lock(acpi_gbl_hardware_lock, lock_flags);
 
-	अगर (ACPI_FAILURE(status)) अणु
-		जाओ निकास;
-	पूर्ण
+	if (ACPI_FAILURE(status)) {
+		goto exit;
+	}
 
-	/* Clear the GPE Bits in all GPE रेजिस्टरs in all GPE blocks */
+	/* Clear the GPE Bits in all GPE registers in all GPE blocks */
 
-	status = acpi_ev_walk_gpe_list(acpi_hw_clear_gpe_block, शून्य);
+	status = acpi_ev_walk_gpe_list(acpi_hw_clear_gpe_block, NULL);
 
-निकास:
-	वापस_ACPI_STATUS(status);
-पूर्ण
+exit:
+	return_ACPI_STATUS(status);
+}
 
 /*******************************************************************************
  *
- * FUNCTION:    acpi_hw_get_bit_रेजिस्टर_info
+ * FUNCTION:    acpi_hw_get_bit_register_info
  *
- * PARAMETERS:  रेजिस्टर_id         - Index of ACPI Register to access
+ * PARAMETERS:  register_id         - Index of ACPI Register to access
  *
- * RETURN:      The biपंचांगask to be used when accessing the रेजिस्टर
+ * RETURN:      The bitmask to be used when accessing the register
  *
- * DESCRIPTION: Map रेजिस्टर_id पूर्णांकo a रेजिस्टर biपंचांगask.
+ * DESCRIPTION: Map register_id into a register bitmask.
  *
  ******************************************************************************/
 
-काष्ठा acpi_bit_रेजिस्टर_info *acpi_hw_get_bit_रेजिस्टर_info(u32 रेजिस्टर_id)
-अणु
+struct acpi_bit_register_info *acpi_hw_get_bit_register_info(u32 register_id)
+{
 	ACPI_FUNCTION_ENTRY();
 
-	अगर (रेजिस्टर_id > ACPI_BITREG_MAX) अणु
+	if (register_id > ACPI_BITREG_MAX) {
 		ACPI_ERROR((AE_INFO, "Invalid BitRegister ID: 0x%X",
-			    रेजिस्टर_id));
-		वापस (शून्य);
-	पूर्ण
+			    register_id));
+		return (NULL);
+	}
 
-	वापस (&acpi_gbl_bit_रेजिस्टर_info[रेजिस्टर_id]);
-पूर्ण
+	return (&acpi_gbl_bit_register_info[register_id]);
+}
 
 /******************************************************************************
  *
- * FUNCTION:    acpi_hw_ग_लिखो_pm1_control
+ * FUNCTION:    acpi_hw_write_pm1_control
  *
  * PARAMETERS:  pm1a_control        - Value to be written to PM1A control
  *              pm1b_control        - Value to be written to PM1B control
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Write the PM1 A/B control रेजिस्टरs. These रेजिस्टरs are
- *              dअगरferent than than the PM1 A/B status and enable रेजिस्टरs
- *              in that dअगरferent values can be written to the A/B रेजिस्टरs.
- *              Most notably, the SLP_TYP bits can be dअगरferent, as per the
- *              values वापसed from the _Sx predefined methods.
+ * DESCRIPTION: Write the PM1 A/B control registers. These registers are
+ *              different than than the PM1 A/B status and enable registers
+ *              in that different values can be written to the A/B registers.
+ *              Most notably, the SLP_TYP bits can be different, as per the
+ *              values returned from the _Sx predefined methods.
  *
  ******************************************************************************/
 
-acpi_status acpi_hw_ग_लिखो_pm1_control(u32 pm1a_control, u32 pm1b_control)
-अणु
+acpi_status acpi_hw_write_pm1_control(u32 pm1a_control, u32 pm1b_control)
+{
 	acpi_status status;
 
-	ACPI_FUNCTION_TRACE(hw_ग_लिखो_pm1_control);
+	ACPI_FUNCTION_TRACE(hw_write_pm1_control);
 
 	status =
-	    acpi_hw_ग_लिखो(pm1a_control, &acpi_gbl_FADT.xpm1a_control_block);
-	अगर (ACPI_FAILURE(status)) अणु
-		वापस_ACPI_STATUS(status);
-	पूर्ण
+	    acpi_hw_write(pm1a_control, &acpi_gbl_FADT.xpm1a_control_block);
+	if (ACPI_FAILURE(status)) {
+		return_ACPI_STATUS(status);
+	}
 
-	अगर (acpi_gbl_FADT.xpm1b_control_block.address) अणु
+	if (acpi_gbl_FADT.xpm1b_control_block.address) {
 		status =
-		    acpi_hw_ग_लिखो(pm1b_control,
+		    acpi_hw_write(pm1b_control,
 				  &acpi_gbl_FADT.xpm1b_control_block);
-	पूर्ण
-	वापस_ACPI_STATUS(status);
-पूर्ण
+	}
+	return_ACPI_STATUS(status);
+}
 
 /******************************************************************************
  *
- * FUNCTION:    acpi_hw_रेजिस्टर_पढ़ो
+ * FUNCTION:    acpi_hw_register_read
  *
- * PARAMETERS:  रेजिस्टर_id         - ACPI Register ID
- *              वापस_value        - Where the रेजिस्टर value is वापसed
+ * PARAMETERS:  register_id         - ACPI Register ID
+ *              return_value        - Where the register value is returned
  *
- * RETURN:      Status and the value पढ़ो.
+ * RETURN:      Status and the value read.
  *
- * DESCRIPTION: Read from the specअगरied ACPI रेजिस्टर
+ * DESCRIPTION: Read from the specified ACPI register
  *
  ******************************************************************************/
-acpi_status acpi_hw_रेजिस्टर_पढ़ो(u32 रेजिस्टर_id, u32 *वापस_value)
-अणु
+acpi_status acpi_hw_register_read(u32 register_id, u32 *return_value)
+{
 	u32 value = 0;
 	u64 value64;
 	acpi_status status;
 
-	ACPI_FUNCTION_TRACE(hw_रेजिस्टर_पढ़ो);
+	ACPI_FUNCTION_TRACE(hw_register_read);
 
-	चयन (रेजिस्टर_id) अणु
-	हाल ACPI_REGISTER_PM1_STATUS:	/* PM1 A/B: 16-bit access each */
+	switch (register_id) {
+	case ACPI_REGISTER_PM1_STATUS:	/* PM1 A/B: 16-bit access each */
 
-		status = acpi_hw_पढ़ो_multiple(&value,
+		status = acpi_hw_read_multiple(&value,
 					       &acpi_gbl_xpm1a_status,
 					       &acpi_gbl_xpm1b_status);
-		अवरोध;
+		break;
 
-	हाल ACPI_REGISTER_PM1_ENABLE:	/* PM1 A/B: 16-bit access each */
+	case ACPI_REGISTER_PM1_ENABLE:	/* PM1 A/B: 16-bit access each */
 
-		status = acpi_hw_पढ़ो_multiple(&value,
+		status = acpi_hw_read_multiple(&value,
 					       &acpi_gbl_xpm1a_enable,
 					       &acpi_gbl_xpm1b_enable);
-		अवरोध;
+		break;
 
-	हाल ACPI_REGISTER_PM1_CONTROL:	/* PM1 A/B: 16-bit access each */
+	case ACPI_REGISTER_PM1_CONTROL:	/* PM1 A/B: 16-bit access each */
 
-		status = acpi_hw_पढ़ो_multiple(&value,
+		status = acpi_hw_read_multiple(&value,
 					       &acpi_gbl_FADT.
 					       xpm1a_control_block,
 					       &acpi_gbl_FADT.
 					       xpm1b_control_block);
 
 		/*
-		 * Zero the ग_लिखो-only bits. From the ACPI specअगरication, "Hardware
-		 * Write-Only Bits": "Upon पढ़ोs to रेजिस्टरs with ग_लिखो-only bits,
-		 * software masks out all ग_लिखो-only bits."
+		 * Zero the write-only bits. From the ACPI specification, "Hardware
+		 * Write-Only Bits": "Upon reads to registers with write-only bits,
+		 * software masks out all write-only bits."
 		 */
 		value &= ~ACPI_PM1_CONTROL_WRITEONLY_BITS;
-		अवरोध;
+		break;
 
-	हाल ACPI_REGISTER_PM2_CONTROL:	/* 8-bit access */
-
-		status =
-		    acpi_hw_पढ़ो(&value64, &acpi_gbl_FADT.xpm2_control_block);
-		अगर (ACPI_SUCCESS(status)) अणु
-			value = (u32)value64;
-		पूर्ण
-		अवरोध;
-
-	हाल ACPI_REGISTER_PM_TIMER:	/* 32-bit access */
-
-		status = acpi_hw_पढ़ो(&value64, &acpi_gbl_FADT.xpm_समयr_block);
-		अगर (ACPI_SUCCESS(status)) अणु
-			value = (u32)value64;
-		पूर्ण
-
-		अवरोध;
-
-	हाल ACPI_REGISTER_SMI_COMMAND_BLOCK:	/* 8-bit access */
+	case ACPI_REGISTER_PM2_CONTROL:	/* 8-bit access */
 
 		status =
-		    acpi_hw_पढ़ो_port(acpi_gbl_FADT.smi_command, &value, 8);
-		अवरोध;
+		    acpi_hw_read(&value64, &acpi_gbl_FADT.xpm2_control_block);
+		if (ACPI_SUCCESS(status)) {
+			value = (u32)value64;
+		}
+		break;
 
-	शेष:
+	case ACPI_REGISTER_PM_TIMER:	/* 32-bit access */
 
-		ACPI_ERROR((AE_INFO, "Unknown Register ID: 0x%X", रेजिस्टर_id));
+		status = acpi_hw_read(&value64, &acpi_gbl_FADT.xpm_timer_block);
+		if (ACPI_SUCCESS(status)) {
+			value = (u32)value64;
+		}
+
+		break;
+
+	case ACPI_REGISTER_SMI_COMMAND_BLOCK:	/* 8-bit access */
+
+		status =
+		    acpi_hw_read_port(acpi_gbl_FADT.smi_command, &value, 8);
+		break;
+
+	default:
+
+		ACPI_ERROR((AE_INFO, "Unknown Register ID: 0x%X", register_id));
 		status = AE_BAD_PARAMETER;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	अगर (ACPI_SUCCESS(status)) अणु
-		*वापस_value = (u32)value;
-	पूर्ण
+	if (ACPI_SUCCESS(status)) {
+		*return_value = (u32)value;
+	}
 
-	वापस_ACPI_STATUS(status);
-पूर्ण
+	return_ACPI_STATUS(status);
+}
 
 /******************************************************************************
  *
- * FUNCTION:    acpi_hw_रेजिस्टर_ग_लिखो
+ * FUNCTION:    acpi_hw_register_write
  *
- * PARAMETERS:  रेजिस्टर_id         - ACPI Register ID
- *              value               - The value to ग_लिखो
+ * PARAMETERS:  register_id         - ACPI Register ID
+ *              value               - The value to write
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Write to the specअगरied ACPI रेजिस्टर
+ * DESCRIPTION: Write to the specified ACPI register
  *
- * NOTE: In accordance with the ACPI specअगरication, this function स्वतःmatically
+ * NOTE: In accordance with the ACPI specification, this function automatically
  * preserves the value of the following bits, meaning that these bits cannot be
- * changed via this पूर्णांकerface:
+ * changed via this interface:
  *
  * PM1_CONTROL[0] = SCI_EN
  * PM1_CONTROL[9]
  * PM1_STATUS[11]
  *
  * ACPI References:
- * 1) Hardware Ignored Bits: When software ग_लिखोs to a रेजिस्टर with ignored
+ * 1) Hardware Ignored Bits: When software writes to a register with ignored
  *      bit fields, it preserves the ignored bit fields
  * 2) SCI_EN: OSPM always preserves this bit position
  *
  ******************************************************************************/
 
-acpi_status acpi_hw_रेजिस्टर_ग_लिखो(u32 रेजिस्टर_id, u32 value)
-अणु
+acpi_status acpi_hw_register_write(u32 register_id, u32 value)
+{
 	acpi_status status;
-	u32 पढ़ो_value;
-	u64 पढ़ो_value64;
+	u32 read_value;
+	u64 read_value64;
 
-	ACPI_FUNCTION_TRACE(hw_रेजिस्टर_ग_लिखो);
+	ACPI_FUNCTION_TRACE(hw_register_write);
 
-	चयन (रेजिस्टर_id) अणु
-	हाल ACPI_REGISTER_PM1_STATUS:	/* PM1 A/B: 16-bit access each */
+	switch (register_id) {
+	case ACPI_REGISTER_PM1_STATUS:	/* PM1 A/B: 16-bit access each */
 		/*
 		 * Handle the "ignored" bit in PM1 Status. According to the ACPI
-		 * specअगरication, ignored bits are to be preserved when writing.
-		 * Normally, this would mean a पढ़ो/modअगरy/ग_लिखो sequence. However,
-		 * preserving a bit in the status रेजिस्टर is dअगरferent. Writing a
+		 * specification, ignored bits are to be preserved when writing.
+		 * Normally, this would mean a read/modify/write sequence. However,
+		 * preserving a bit in the status register is different. Writing a
 		 * one clears the status, and writing a zero preserves the status.
-		 * Thereक्रमe, we must always ग_लिखो zero to the ignored bit.
+		 * Therefore, we must always write zero to the ignored bit.
 		 *
-		 * This behavior is clarअगरied in the ACPI 4.0 specअगरication.
+		 * This behavior is clarified in the ACPI 4.0 specification.
 		 */
 		value &= ~ACPI_PM1_STATUS_PRESERVED_BITS;
 
-		status = acpi_hw_ग_लिखो_multiple(value,
+		status = acpi_hw_write_multiple(value,
 						&acpi_gbl_xpm1a_status,
 						&acpi_gbl_xpm1b_status);
-		अवरोध;
+		break;
 
-	हाल ACPI_REGISTER_PM1_ENABLE:	/* PM1 A/B: 16-bit access each */
+	case ACPI_REGISTER_PM1_ENABLE:	/* PM1 A/B: 16-bit access each */
 
-		status = acpi_hw_ग_लिखो_multiple(value,
+		status = acpi_hw_write_multiple(value,
 						&acpi_gbl_xpm1a_enable,
 						&acpi_gbl_xpm1b_enable);
-		अवरोध;
+		break;
 
-	हाल ACPI_REGISTER_PM1_CONTROL:	/* PM1 A/B: 16-bit access each */
+	case ACPI_REGISTER_PM1_CONTROL:	/* PM1 A/B: 16-bit access each */
 		/*
-		 * Perक्रमm a पढ़ो first to preserve certain bits (per ACPI spec)
+		 * Perform a read first to preserve certain bits (per ACPI spec)
 		 * Note: This includes SCI_EN, we never want to change this bit
 		 */
-		status = acpi_hw_पढ़ो_multiple(&पढ़ो_value,
+		status = acpi_hw_read_multiple(&read_value,
 					       &acpi_gbl_FADT.
 					       xpm1a_control_block,
 					       &acpi_gbl_FADT.
 					       xpm1b_control_block);
-		अगर (ACPI_FAILURE(status)) अणु
-			जाओ निकास;
-		पूर्ण
+		if (ACPI_FAILURE(status)) {
+			goto exit;
+		}
 
 		/* Insert the bits to be preserved */
 
 		ACPI_INSERT_BITS(value, ACPI_PM1_CONTROL_PRESERVED_BITS,
-				 पढ़ो_value);
+				 read_value);
 
-		/* Now we can ग_लिखो the data */
+		/* Now we can write the data */
 
-		status = acpi_hw_ग_लिखो_multiple(value,
+		status = acpi_hw_write_multiple(value,
 						&acpi_gbl_FADT.
 						xpm1a_control_block,
 						&acpi_gbl_FADT.
 						xpm1b_control_block);
-		अवरोध;
+		break;
 
-	हाल ACPI_REGISTER_PM2_CONTROL:	/* 8-bit access */
+	case ACPI_REGISTER_PM2_CONTROL:	/* 8-bit access */
 		/*
-		 * For control रेजिस्टरs, all reserved bits must be preserved,
+		 * For control registers, all reserved bits must be preserved,
 		 * as per the ACPI spec.
 		 */
 		status =
-		    acpi_hw_पढ़ो(&पढ़ो_value64,
+		    acpi_hw_read(&read_value64,
 				 &acpi_gbl_FADT.xpm2_control_block);
-		अगर (ACPI_FAILURE(status)) अणु
-			जाओ निकास;
-		पूर्ण
-		पढ़ो_value = (u32)पढ़ो_value64;
+		if (ACPI_FAILURE(status)) {
+			goto exit;
+		}
+		read_value = (u32)read_value64;
 
 		/* Insert the bits to be preserved */
 
 		ACPI_INSERT_BITS(value, ACPI_PM2_CONTROL_PRESERVED_BITS,
-				 पढ़ो_value);
+				 read_value);
 
 		status =
-		    acpi_hw_ग_लिखो(value, &acpi_gbl_FADT.xpm2_control_block);
-		अवरोध;
+		    acpi_hw_write(value, &acpi_gbl_FADT.xpm2_control_block);
+		break;
 
-	हाल ACPI_REGISTER_PM_TIMER:	/* 32-bit access */
+	case ACPI_REGISTER_PM_TIMER:	/* 32-bit access */
 
-		status = acpi_hw_ग_लिखो(value, &acpi_gbl_FADT.xpm_समयr_block);
-		अवरोध;
+		status = acpi_hw_write(value, &acpi_gbl_FADT.xpm_timer_block);
+		break;
 
-	हाल ACPI_REGISTER_SMI_COMMAND_BLOCK:	/* 8-bit access */
+	case ACPI_REGISTER_SMI_COMMAND_BLOCK:	/* 8-bit access */
 
 		/* SMI_CMD is currently always in IO space */
 
 		status =
-		    acpi_hw_ग_लिखो_port(acpi_gbl_FADT.smi_command, value, 8);
-		अवरोध;
+		    acpi_hw_write_port(acpi_gbl_FADT.smi_command, value, 8);
+		break;
 
-	शेष:
+	default:
 
-		ACPI_ERROR((AE_INFO, "Unknown Register ID: 0x%X", रेजिस्टर_id));
+		ACPI_ERROR((AE_INFO, "Unknown Register ID: 0x%X", register_id));
 		status = AE_BAD_PARAMETER;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-निकास:
-	वापस_ACPI_STATUS(status);
-पूर्ण
+exit:
+	return_ACPI_STATUS(status);
+}
 
 /******************************************************************************
  *
- * FUNCTION:    acpi_hw_पढ़ो_multiple
+ * FUNCTION:    acpi_hw_read_multiple
  *
- * PARAMETERS:  value               - Where the रेजिस्टर value is वापसed
- *              रेजिस्टर_a           - First ACPI रेजिस्टर (required)
- *              रेजिस्टर_b           - Second ACPI रेजिस्टर (optional)
+ * PARAMETERS:  value               - Where the register value is returned
+ *              register_a           - First ACPI register (required)
+ *              register_b           - Second ACPI register (optional)
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Read from the specअगरied two-part ACPI रेजिस्टर (such as PM1 A/B)
+ * DESCRIPTION: Read from the specified two-part ACPI register (such as PM1 A/B)
  *
  ******************************************************************************/
 
-अटल acpi_status
-acpi_hw_पढ़ो_multiple(u32 *value,
-		      काष्ठा acpi_generic_address *रेजिस्टर_a,
-		      काष्ठा acpi_generic_address *रेजिस्टर_b)
-अणु
+static acpi_status
+acpi_hw_read_multiple(u32 *value,
+		      struct acpi_generic_address *register_a,
+		      struct acpi_generic_address *register_b)
+{
 	u32 value_a = 0;
 	u32 value_b = 0;
 	u64 value64;
 	acpi_status status;
 
-	/* The first रेजिस्टर is always required */
+	/* The first register is always required */
 
-	status = acpi_hw_पढ़ो(&value64, रेजिस्टर_a);
-	अगर (ACPI_FAILURE(status)) अणु
-		वापस (status);
-	पूर्ण
+	status = acpi_hw_read(&value64, register_a);
+	if (ACPI_FAILURE(status)) {
+		return (status);
+	}
 	value_a = (u32)value64;
 
-	/* Second रेजिस्टर is optional */
+	/* Second register is optional */
 
-	अगर (रेजिस्टर_b->address) अणु
-		status = acpi_hw_पढ़ो(&value64, रेजिस्टर_b);
-		अगर (ACPI_FAILURE(status)) अणु
-			वापस (status);
-		पूर्ण
+	if (register_b->address) {
+		status = acpi_hw_read(&value64, register_b);
+		if (ACPI_FAILURE(status)) {
+			return (status);
+		}
 		value_b = (u32)value64;
-	पूर्ण
+	}
 
 	/*
-	 * OR the two वापस values together. No shअगरting or masking is necessary,
-	 * because of how the PM1 रेजिस्टरs are defined in the ACPI specअगरication:
+	 * OR the two return values together. No shifting or masking is necessary,
+	 * because of how the PM1 registers are defined in the ACPI specification:
 	 *
-	 * "Although the bits can be split between the two रेजिस्टर blocks (each
-	 * रेजिस्टर block has a unique poपूर्णांकer within the FADT), the bit positions
-	 * are मुख्यtained. The रेजिस्टर block with unimplemented bits (that is,
-	 * those implemented in the other रेजिस्टर block) always वापसs zeros,
-	 * and ग_लिखोs have no side effects"
+	 * "Although the bits can be split between the two register blocks (each
+	 * register block has a unique pointer within the FADT), the bit positions
+	 * are maintained. The register block with unimplemented bits (that is,
+	 * those implemented in the other register block) always returns zeros,
+	 * and writes have no side effects"
 	 */
 	*value = (value_a | value_b);
-	वापस (AE_OK);
-पूर्ण
+	return (AE_OK);
+}
 
 /******************************************************************************
  *
- * FUNCTION:    acpi_hw_ग_लिखो_multiple
+ * FUNCTION:    acpi_hw_write_multiple
  *
- * PARAMETERS:  value               - The value to ग_लिखो
- *              रेजिस्टर_a           - First ACPI रेजिस्टर (required)
- *              रेजिस्टर_b           - Second ACPI रेजिस्टर (optional)
+ * PARAMETERS:  value               - The value to write
+ *              register_a           - First ACPI register (required)
+ *              register_b           - Second ACPI register (optional)
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Write to the specअगरied two-part ACPI रेजिस्टर (such as PM1 A/B)
+ * DESCRIPTION: Write to the specified two-part ACPI register (such as PM1 A/B)
  *
  ******************************************************************************/
 
-अटल acpi_status
-acpi_hw_ग_लिखो_multiple(u32 value,
-		       काष्ठा acpi_generic_address *रेजिस्टर_a,
-		       काष्ठा acpi_generic_address *रेजिस्टर_b)
-अणु
+static acpi_status
+acpi_hw_write_multiple(u32 value,
+		       struct acpi_generic_address *register_a,
+		       struct acpi_generic_address *register_b)
+{
 	acpi_status status;
 
-	/* The first रेजिस्टर is always required */
+	/* The first register is always required */
 
-	status = acpi_hw_ग_लिखो(value, रेजिस्टर_a);
-	अगर (ACPI_FAILURE(status)) अणु
-		वापस (status);
-	पूर्ण
+	status = acpi_hw_write(value, register_a);
+	if (ACPI_FAILURE(status)) {
+		return (status);
+	}
 
 	/*
-	 * Second रेजिस्टर is optional
+	 * Second register is optional
 	 *
-	 * No bit shअगरting or clearing is necessary, because of how the PM1
-	 * रेजिस्टरs are defined in the ACPI specअगरication:
+	 * No bit shifting or clearing is necessary, because of how the PM1
+	 * registers are defined in the ACPI specification:
 	 *
-	 * "Although the bits can be split between the two रेजिस्टर blocks (each
-	 * रेजिस्टर block has a unique poपूर्णांकer within the FADT), the bit positions
-	 * are मुख्यtained. The रेजिस्टर block with unimplemented bits (that is,
-	 * those implemented in the other रेजिस्टर block) always वापसs zeros,
-	 * and ग_लिखोs have no side effects"
+	 * "Although the bits can be split between the two register blocks (each
+	 * register block has a unique pointer within the FADT), the bit positions
+	 * are maintained. The register block with unimplemented bits (that is,
+	 * those implemented in the other register block) always returns zeros,
+	 * and writes have no side effects"
 	 */
-	अगर (रेजिस्टर_b->address) अणु
-		status = acpi_hw_ग_लिखो(value, रेजिस्टर_b);
-	पूर्ण
+	if (register_b->address) {
+		status = acpi_hw_write(value, register_b);
+	}
 
-	वापस (status);
-पूर्ण
+	return (status);
+}
 
-#पूर्ण_अगर				/* !ACPI_REDUCED_HARDWARE */
+#endif				/* !ACPI_REDUCED_HARDWARE */

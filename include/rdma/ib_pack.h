@@ -1,16 +1,15 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 OR Linux-OpenIB */
+/* SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB */
 /*
  * Copyright (c) 2004 Topspin Corporation.  All rights reserved.
  */
 
-#अगर_अघोषित IB_PACK_H
-#घोषणा IB_PACK_H
+#ifndef IB_PACK_H
+#define IB_PACK_H
 
-#समावेश <rdma/ib_verbs.h>
-#समावेश <uapi/linux/अगर_ether.h>
+#include <rdma/ib_verbs.h>
+#include <uapi/linux/if_ether.h>
 
-क्रमागत अणु
+enum {
 	IB_LRH_BYTES		= 8,
 	IB_ETH_BYTES		= 14,
 	IB_VLAN_BYTES		= 4,
@@ -22,45 +21,45 @@
 	IB_EXT_ATOMICETH_BYTES	= 28,
 	IB_EXT_XRC_BYTES	= 4,
 	IB_ICRC_BYTES		= 4
-पूर्ण;
+};
 
-काष्ठा ib_field अणु
-	माप_प्रकार काष्ठा_offset_bytes;
-	माप_प्रकार काष्ठा_size_bytes;
-	पूर्णांक    offset_words;
-	पूर्णांक    offset_bits;
-	पूर्णांक    size_bits;
-	अक्षर  *field_name;
-पूर्ण;
+struct ib_field {
+	size_t struct_offset_bytes;
+	size_t struct_size_bytes;
+	int    offset_words;
+	int    offset_bits;
+	int    size_bits;
+	char  *field_name;
+};
 
-#घोषणा RESERVED \
+#define RESERVED \
 	.field_name          = "reserved"
 
 /*
- * This macro cleans up the definitions of स्थिरants क्रम BTH opcodes.
- * It is used to define स्थिरants such as IB_OPCODE_UD_SEND_ONLY,
+ * This macro cleans up the definitions of constants for BTH opcodes.
+ * It is used to define constants such as IB_OPCODE_UD_SEND_ONLY,
  * which becomes IB_OPCODE_UD + IB_OPCODE_SEND_ONLY, and this gives
  * the correct value.
  *
- * In लघु, user code should use the स्थिरants defined using the
- * macro rather than worrying about adding together other स्थिरants.
+ * In short, user code should use the constants defined using the
+ * macro rather than worrying about adding together other constants.
 */
-#घोषणा IB_OPCODE(transport, op) \
+#define IB_OPCODE(transport, op) \
 	IB_OPCODE_ ## transport ## _ ## op = \
 		IB_OPCODE_ ## transport + IB_OPCODE_ ## op
 
-क्रमागत अणु
-	/* transport types -- just used to define real स्थिरants */
+enum {
+	/* transport types -- just used to define real constants */
 	IB_OPCODE_RC                                = 0x00,
 	IB_OPCODE_UC                                = 0x20,
 	IB_OPCODE_RD                                = 0x40,
 	IB_OPCODE_UD                                = 0x60,
 	/* per IBTA 1.3 vol 1 Table 38, A10.3.2 */
 	IB_OPCODE_CNP                               = 0x80,
-	/* Manufacturer specअगरic */
+	/* Manufacturer specific */
 	IB_OPCODE_MSP                               = 0xe0,
 
-	/* operations -- just used to define real स्थिरants */
+	/* operations -- just used to define real constants */
 	IB_OPCODE_SEND_FIRST                        = 0x00,
 	IB_OPCODE_SEND_MIDDLE                       = 0x01,
 	IB_OPCODE_SEND_LAST                         = 0x02,
@@ -86,8 +85,8 @@
 	IB_OPCODE_SEND_LAST_WITH_INVALIDATE         = 0x16,
 	IB_OPCODE_SEND_ONLY_WITH_INVALIDATE         = 0x17,
 
-	/* real स्थिरants follow -- see comment about above IB_OPCODE()
-	   macro क्रम more details */
+	/* real constants follow -- see comment about above IB_OPCODE()
+	   macro for more details */
 
 	/* RC */
 	IB_OPCODE(RC, SEND_FIRST),
@@ -154,37 +153,37 @@
 	/* UD */
 	IB_OPCODE(UD, SEND_ONLY),
 	IB_OPCODE(UD, SEND_ONLY_WITH_IMMEDIATE)
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	IB_LNH_RAW        = 0,
 	IB_LNH_IP         = 1,
 	IB_LNH_IBA_LOCAL  = 2,
 	IB_LNH_IBA_GLOBAL = 3
-पूर्ण;
+};
 
-काष्ठा ib_unpacked_lrh अणु
-	u8        भव_lane;
+struct ib_unpacked_lrh {
+	u8        virtual_lane;
 	u8        link_version;
 	u8        service_level;
 	u8        link_next_header;
 	__be16    destination_lid;
 	__be16    packet_length;
 	__be16    source_lid;
-पूर्ण;
+};
 
-काष्ठा ib_unpacked_grh अणु
+struct ib_unpacked_grh {
 	u8    	     ip_version;
 	u8    	     traffic_class;
 	__be32 	     flow_label;
 	__be16       payload_length;
 	u8    	     next_header;
 	u8    	     hop_limit;
-	जोड़ ib_gid source_gid;
-	जोड़ ib_gid destination_gid;
-पूर्ण;
+	union ib_gid source_gid;
+	union ib_gid destination_gid;
+};
 
-काष्ठा ib_unpacked_bth अणु
+struct ib_unpacked_bth {
 	u8           opcode;
 	u8           solicited_event;
 	u8           mig_req;
@@ -194,22 +193,22 @@
 	__be32       destination_qpn;
 	u8           ack_req;
 	__be32       psn;
-पूर्ण;
+};
 
-काष्ठा ib_unpacked_deth अणु
+struct ib_unpacked_deth {
 	__be32       qkey;
 	__be32       source_qpn;
-पूर्ण;
+};
 
-काष्ठा ib_unpacked_eth अणु
+struct ib_unpacked_eth {
 	u8	dmac_h[4];
 	u8	dmac_l[2];
 	u8	smac_h[2];
 	u8	smac_l[4];
 	__be16	type;
-पूर्ण;
+};
 
-काष्ठा ib_unpacked_ip4 अणु
+struct ib_unpacked_ip4 {
 	u8	ver;
 	u8	hdr_len;
 	u8	tos;
@@ -221,65 +220,65 @@
 	__sum16	check;
 	__be32	saddr;
 	__be32	daddr;
-पूर्ण;
+};
 
-काष्ठा ib_unpacked_udp अणु
+struct ib_unpacked_udp {
 	__be16	sport;
 	__be16	dport;
 	__be16	length;
 	__be16	csum;
-पूर्ण;
+};
 
-काष्ठा ib_unpacked_vlan अणु
+struct ib_unpacked_vlan {
 	__be16  tag;
 	__be16  type;
-पूर्ण;
+};
 
-काष्ठा ib_ud_header अणु
-	पूर्णांक                     lrh_present;
-	काष्ठा ib_unpacked_lrh  lrh;
-	पूर्णांक			eth_present;
-	काष्ठा ib_unpacked_eth	eth;
-	पूर्णांक                     vlan_present;
-	काष्ठा ib_unpacked_vlan vlan;
-	पूर्णांक			grh_present;
-	काष्ठा ib_unpacked_grh	grh;
-	पूर्णांक			ipv4_present;
-	काष्ठा ib_unpacked_ip4	ip4;
-	पूर्णांक			udp_present;
-	काष्ठा ib_unpacked_udp	udp;
-	काष्ठा ib_unpacked_bth	bth;
-	काष्ठा ib_unpacked_deth deth;
-	पूर्णांक			immediate_present;
+struct ib_ud_header {
+	int                     lrh_present;
+	struct ib_unpacked_lrh  lrh;
+	int			eth_present;
+	struct ib_unpacked_eth	eth;
+	int                     vlan_present;
+	struct ib_unpacked_vlan vlan;
+	int			grh_present;
+	struct ib_unpacked_grh	grh;
+	int			ipv4_present;
+	struct ib_unpacked_ip4	ip4;
+	int			udp_present;
+	struct ib_unpacked_udp	udp;
+	struct ib_unpacked_bth	bth;
+	struct ib_unpacked_deth deth;
+	int			immediate_present;
 	__be32			immediate_data;
-पूर्ण;
+};
 
-व्योम ib_pack(स्थिर काष्ठा ib_field        *desc,
-	     पूर्णांक                           desc_len,
-	     व्योम                         *काष्ठाure,
-	     व्योम                         *buf);
+void ib_pack(const struct ib_field        *desc,
+	     int                           desc_len,
+	     void                         *structure,
+	     void                         *buf);
 
-व्योम ib_unpack(स्थिर काष्ठा ib_field        *desc,
-	       पूर्णांक                           desc_len,
-	       व्योम                         *buf,
-	       व्योम                         *काष्ठाure);
+void ib_unpack(const struct ib_field        *desc,
+	       int                           desc_len,
+	       void                         *buf,
+	       void                         *structure);
 
-__sum16 ib_ud_ip4_csum(काष्ठा ib_ud_header *header);
+__sum16 ib_ud_ip4_csum(struct ib_ud_header *header);
 
-पूर्णांक ib_ud_header_init(पूर्णांक		    payload_bytes,
-		      पूर्णांक		    lrh_present,
-		      पूर्णांक		    eth_present,
-		      पूर्णांक		    vlan_present,
-		      पूर्णांक		    grh_present,
-		      पूर्णांक		    ip_version,
-		      पूर्णांक		    udp_present,
-		      पूर्णांक		    immediate_present,
-		      काष्ठा ib_ud_header *header);
+int ib_ud_header_init(int		    payload_bytes,
+		      int		    lrh_present,
+		      int		    eth_present,
+		      int		    vlan_present,
+		      int		    grh_present,
+		      int		    ip_version,
+		      int		    udp_present,
+		      int		    immediate_present,
+		      struct ib_ud_header *header);
 
-पूर्णांक ib_ud_header_pack(काष्ठा ib_ud_header *header,
-		      व्योम                *buf);
+int ib_ud_header_pack(struct ib_ud_header *header,
+		      void                *buf);
 
-पूर्णांक ib_ud_header_unpack(व्योम                *buf,
-			काष्ठा ib_ud_header *header);
+int ib_ud_header_unpack(void                *buf,
+			struct ib_ud_header *header);
 
-#पूर्ण_अगर /* IB_PACK_H */
+#endif /* IB_PACK_H */

@@ -1,7 +1,6 @@
-<शैली गुरु>
-अणु
+{
 	"subtraction bounds (map value) variant 1",
-	.insns = अणु
+	.insns = {
 	BPF_ST_MEM(BPF_DW, BPF_REG_10, -8, 0),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
@@ -19,14 +18,14 @@
 	BPF_EXIT_INSN(),
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
-	.fixup_map_hash_8b = अणु 3 पूर्ण,
+	},
+	.fixup_map_hash_8b = { 3 },
 	.errstr = "R0 max value is outside of the allowed memory range",
 	.result = REJECT,
-पूर्ण,
-अणु
+},
+{
 	"subtraction bounds (map value) variant 2",
-	.insns = अणु
+	.insns = {
 	BPF_ST_MEM(BPF_DW, BPF_REG_10, -8, 0),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
@@ -43,15 +42,15 @@
 	BPF_EXIT_INSN(),
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
-	.fixup_map_hash_8b = अणु 3 पूर्ण,
+	},
+	.fixup_map_hash_8b = { 3 },
 	.errstr = "R0 min value is negative, either use unsigned index or do a if (index >=0) check.",
 	.errstr_unpriv = "R1 has unknown scalar with mixed signed bounds",
 	.result = REJECT,
-पूर्ण,
-अणु
+},
+{
 	"check subtraction on pointers for unpriv",
-	.insns = अणु
+	.insns = {
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_LD_MAP_FD(BPF_REG_ARG1, 0),
 	BPF_MOV64_REG(BPF_REG_ARG2, BPF_REG_FP),
@@ -70,15 +69,15 @@
 	BPF_STX_MEM(BPF_DW, BPF_REG_0, BPF_REG_9, 0),
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
-	.fixup_map_hash_8b = अणु 1, 9 पूर्ण,
+	},
+	.fixup_map_hash_8b = { 1, 9 },
 	.result = ACCEPT,
 	.result_unpriv = REJECT,
 	.errstr_unpriv = "R9 pointer -= pointer prohibited",
-पूर्ण,
-अणु
+},
+{
 	"bounds check based on zero-extended MOV",
-	.insns = अणु
+	.insns = {
 	BPF_ST_MEM(BPF_DW, BPF_REG_10, -8, 0),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
@@ -93,16 +92,16 @@
 	BPF_ALU64_REG(BPF_ADD, BPF_REG_0, BPF_REG_2),
 	/* access at offset 0 */
 	BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_0, 0),
-	/* निकास */
+	/* exit */
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
-	.fixup_map_hash_8b = अणु 3 पूर्ण,
+	},
+	.fixup_map_hash_8b = { 3 },
 	.result = ACCEPT
-पूर्ण,
-अणु
+},
+{
 	"bounds check based on sign-extended MOV. test1",
-	.insns = अणु
+	.insns = {
 	BPF_ST_MEM(BPF_DW, BPF_REG_10, -8, 0),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
@@ -113,21 +112,21 @@
 	BPF_MOV64_IMM(BPF_REG_2, 0xffffffff),
 	/* r2 = 0xffff'ffff */
 	BPF_ALU64_IMM(BPF_RSH, BPF_REG_2, 32),
-	/* r0 = <oob poपूर्णांकer> */
+	/* r0 = <oob pointer> */
 	BPF_ALU64_REG(BPF_ADD, BPF_REG_0, BPF_REG_2),
-	/* access to OOB poपूर्णांकer */
+	/* access to OOB pointer */
 	BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_0, 0),
-	/* निकास */
+	/* exit */
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
-	.fixup_map_hash_8b = अणु 3 पूर्ण,
+	},
+	.fixup_map_hash_8b = { 3 },
 	.errstr = "map_value pointer and 4294967295",
 	.result = REJECT
-पूर्ण,
-अणु
+},
+{
 	"bounds check based on sign-extended MOV. test2",
-	.insns = अणु
+	.insns = {
 	BPF_ST_MEM(BPF_DW, BPF_REG_10, -8, 0),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
@@ -138,23 +137,23 @@
 	BPF_MOV64_IMM(BPF_REG_2, 0xffffffff),
 	/* r2 = 0xfff'ffff */
 	BPF_ALU64_IMM(BPF_RSH, BPF_REG_2, 36),
-	/* r0 = <oob poपूर्णांकer> */
+	/* r0 = <oob pointer> */
 	BPF_ALU64_REG(BPF_ADD, BPF_REG_0, BPF_REG_2),
-	/* access to OOB poपूर्णांकer */
+	/* access to OOB pointer */
 	BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_0, 0),
-	/* निकास */
+	/* exit */
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
-	.fixup_map_hash_8b = अणु 3 पूर्ण,
+	},
+	.fixup_map_hash_8b = { 3 },
 	.errstr = "R0 min value is outside of the allowed memory range",
 	.result = REJECT
-पूर्ण,
-अणु
+},
+{
 	"bounds check based on reg_off + var_off + insn_off. test1",
-	.insns = अणु
+	.insns = {
 	BPF_LDX_MEM(BPF_W, BPF_REG_6, BPF_REG_1,
-		    दुरत्व(काष्ठा __sk_buff, mark)),
+		    offsetof(struct __sk_buff, mark)),
 	BPF_ST_MEM(BPF_DW, BPF_REG_10, -8, 0),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
@@ -168,17 +167,17 @@
 	BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_0, 3),
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
-	.fixup_map_hash_8b = अणु 4 पूर्ण,
+	},
+	.fixup_map_hash_8b = { 4 },
 	.errstr = "value_size=8 off=1073741825",
 	.result = REJECT,
 	.prog_type = BPF_PROG_TYPE_SCHED_CLS,
-पूर्ण,
-अणु
+},
+{
 	"bounds check based on reg_off + var_off + insn_off. test2",
-	.insns = अणु
+	.insns = {
 	BPF_LDX_MEM(BPF_W, BPF_REG_6, BPF_REG_1,
-		    दुरत्व(काष्ठा __sk_buff, mark)),
+		    offsetof(struct __sk_buff, mark)),
 	BPF_ST_MEM(BPF_DW, BPF_REG_10, -8, 0),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
@@ -192,15 +191,15 @@
 	BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_0, 3),
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
-	.fixup_map_hash_8b = अणु 4 पूर्ण,
+	},
+	.fixup_map_hash_8b = { 4 },
 	.errstr = "value 1073741823",
 	.result = REJECT,
 	.prog_type = BPF_PROG_TYPE_SCHED_CLS,
-पूर्ण,
-अणु
+},
+{
 	"bounds check after truncation of non-boundary-crossing range",
-	.insns = अणु
+	.insns = {
 	BPF_ST_MEM(BPF_DW, BPF_REG_10, -8, 0),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
@@ -224,16 +223,16 @@
 	BPF_ALU64_REG(BPF_ADD, BPF_REG_0, BPF_REG_1),
 	/* access at offset 0 */
 	BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_0, 0),
-	/* निकास */
+	/* exit */
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
-	.fixup_map_hash_8b = अणु 3 पूर्ण,
+	},
+	.fixup_map_hash_8b = { 3 },
 	.result = ACCEPT
-पूर्ण,
-अणु
+},
+{
 	"bounds check after truncation of boundary-crossing range (1)",
-	.insns = अणु
+	.insns = {
 	BPF_ST_MEM(BPF_DW, BPF_REG_10, -8, 0),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
@@ -254,20 +253,20 @@
 	 *      [0xffff'ffff'0000'0080, 0xffff'ffff'ffff'ffff]
 	 */
 	BPF_ALU64_IMM(BPF_SUB, BPF_REG_1, 0xffffff80 >> 1),
-	/* error on OOB poपूर्णांकer computation */
+	/* error on OOB pointer computation */
 	BPF_ALU64_REG(BPF_ADD, BPF_REG_0, BPF_REG_1),
-	/* निकास */
+	/* exit */
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
-	.fixup_map_hash_8b = अणु 3 पूर्ण,
+	},
+	.fixup_map_hash_8b = { 3 },
 	/* not actually fully unbounded, but the bound is very high */
 	.errstr = "value -4294967168 makes map_value pointer be out of bounds",
 	.result = REJECT,
-पूर्ण,
-अणु
+},
+{
 	"bounds check after truncation of boundary-crossing range (2)",
-	.insns = अणु
+	.insns = {
 	BPF_ST_MEM(BPF_DW, BPF_REG_10, -8, 0),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
@@ -281,7 +280,7 @@
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_1, 0xffffff80 >> 1),
 	/* r1 = [0xffff'ff80, 0xffff'ffff] or
 	 *      [0x0000'0000, 0x0000'007f]
-	 * dअगरference to previous test: truncation via MOV32
+	 * difference to previous test: truncation via MOV32
 	 * instead of ALU32.
 	 */
 	BPF_MOV32_REG(BPF_REG_1, BPF_REG_1),
@@ -290,19 +289,19 @@
 	 *      [0xffff'ffff'0000'0080, 0xffff'ffff'ffff'ffff]
 	 */
 	BPF_ALU64_IMM(BPF_SUB, BPF_REG_1, 0xffffff80 >> 1),
-	/* error on OOB poपूर्णांकer computation */
+	/* error on OOB pointer computation */
 	BPF_ALU64_REG(BPF_ADD, BPF_REG_0, BPF_REG_1),
-	/* निकास */
+	/* exit */
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
-	.fixup_map_hash_8b = अणु 3 पूर्ण,
+	},
+	.fixup_map_hash_8b = { 3 },
 	.errstr = "value -4294967168 makes map_value pointer be out of bounds",
 	.result = REJECT,
-पूर्ण,
-अणु
+},
+{
 	"bounds check after wrapping 32-bit addition",
-	.insns = अणु
+	.insns = {
 	BPF_ST_MEM(BPF_DW, BPF_REG_10, -8, 0),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
@@ -319,16 +318,16 @@
 	BPF_ALU64_REG(BPF_ADD, BPF_REG_0, BPF_REG_1),
 	/* access at offset 0 */
 	BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_0, 0),
-	/* निकास */
+	/* exit */
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
-	.fixup_map_hash_8b = अणु 3 पूर्ण,
+	},
+	.fixup_map_hash_8b = { 3 },
 	.result = ACCEPT
-पूर्ण,
-अणु
+},
+{
 	"bounds check after shift with oversized count operand",
-	.insns = अणु
+	.insns = {
 	BPF_ST_MEM(BPF_DW, BPF_REG_10, -8, 0),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
@@ -341,21 +340,21 @@
 	BPF_ALU32_REG(BPF_LSH, BPF_REG_1, BPF_REG_2),
 	/* r1 = [0x0000, 0xffff] */
 	BPF_ALU64_IMM(BPF_AND, BPF_REG_1, 0xffff),
-	/* computes unknown poपूर्णांकer, potentially OOB */
+	/* computes unknown pointer, potentially OOB */
 	BPF_ALU64_REG(BPF_ADD, BPF_REG_0, BPF_REG_1),
 	/* potentially OOB access */
 	BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_0, 0),
-	/* निकास */
+	/* exit */
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
-	.fixup_map_hash_8b = अणु 3 पूर्ण,
+	},
+	.fixup_map_hash_8b = { 3 },
 	.errstr = "R0 max value is outside of the allowed memory range",
 	.result = REJECT
-पूर्ण,
-अणु
+},
+{
 	"bounds check after right shift of maybe-negative number",
-	.insns = अणु
+	.insns = {
 	BPF_ST_MEM(BPF_DW, BPF_REG_10, -8, 0),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
@@ -370,21 +369,21 @@
 	BPF_ALU64_IMM(BPF_RSH, BPF_REG_1, 8),
 	/* r1 = 0 or 0xffff'ffff'ffff */
 	BPF_ALU64_IMM(BPF_RSH, BPF_REG_1, 8),
-	/* computes unknown poपूर्णांकer, potentially OOB */
+	/* computes unknown pointer, potentially OOB */
 	BPF_ALU64_REG(BPF_ADD, BPF_REG_0, BPF_REG_1),
 	/* potentially OOB access */
 	BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_0, 0),
-	/* निकास */
+	/* exit */
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
-	.fixup_map_hash_8b = अणु 3 पूर्ण,
+	},
+	.fixup_map_hash_8b = { 3 },
 	.errstr = "R0 unbounded memory access",
 	.result = REJECT
-पूर्ण,
-अणु
+},
+{
 	"bounds check after 32-bit right shift with 64-bit input",
-	.insns = अणु
+	.insns = {
 	BPF_ST_MEM(BPF_DW, BPF_REG_10, -8, 0),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
@@ -399,19 +398,19 @@
 	BPF_ALU32_IMM(BPF_RSH, BPF_REG_1, 31),
 	/* r1 = 0xffff'fffe (NOT 0!) */
 	BPF_ALU32_IMM(BPF_SUB, BPF_REG_1, 2),
-	/* error on computing OOB poपूर्णांकer */
+	/* error on computing OOB pointer */
 	BPF_ALU64_REG(BPF_ADD, BPF_REG_0, BPF_REG_1),
-	/* निकास */
+	/* exit */
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
-	.fixup_map_hash_8b = अणु 3 पूर्ण,
+	},
+	.fixup_map_hash_8b = { 3 },
 	.errstr = "math between map_value pointer and 4294967294 is not allowed",
 	.result = REJECT,
-पूर्ण,
-अणु
+},
+{
 	"bounds check map access with off+size signed 32bit overflow. test1",
-	.insns = अणु
+	.insns = {
 	BPF_ST_MEM(BPF_DW, BPF_REG_10, -8, 0),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
@@ -423,14 +422,14 @@
 	BPF_LDX_MEM(BPF_DW, BPF_REG_0, BPF_REG_0, 0),
 	BPF_JMP_A(0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
-	.fixup_map_hash_8b = अणु 3 पूर्ण,
+	},
+	.fixup_map_hash_8b = { 3 },
 	.errstr = "map_value pointer and 2147483646",
 	.result = REJECT
-पूर्ण,
-अणु
+},
+{
 	"bounds check map access with off+size signed 32bit overflow. test2",
-	.insns = अणु
+	.insns = {
 	BPF_ST_MEM(BPF_DW, BPF_REG_10, -8, 0),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
@@ -444,15 +443,15 @@
 	BPF_LDX_MEM(BPF_DW, BPF_REG_0, BPF_REG_0, 0),
 	BPF_JMP_A(0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
-	.fixup_map_hash_8b = अणु 3 पूर्ण,
+	},
+	.fixup_map_hash_8b = { 3 },
 	.errstr = "pointer offset 1073741822",
 	.errstr_unpriv = "R0 pointer arithmetic of map value goes out of range",
 	.result = REJECT
-पूर्ण,
-अणु
+},
+{
 	"bounds check map access with off+size signed 32bit overflow. test3",
-	.insns = अणु
+	.insns = {
 	BPF_ST_MEM(BPF_DW, BPF_REG_10, -8, 0),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
@@ -465,15 +464,15 @@
 	BPF_LDX_MEM(BPF_DW, BPF_REG_0, BPF_REG_0, 2),
 	BPF_JMP_A(0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
-	.fixup_map_hash_8b = अणु 3 पूर्ण,
+	},
+	.fixup_map_hash_8b = { 3 },
 	.errstr = "pointer offset -1073741822",
 	.errstr_unpriv = "R0 pointer arithmetic of map value goes out of range",
 	.result = REJECT
-पूर्ण,
-अणु
+},
+{
 	"bounds check map access with off+size signed 32bit overflow. test4",
-	.insns = अणु
+	.insns = {
 	BPF_ST_MEM(BPF_DW, BPF_REG_10, -8, 0),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
@@ -487,14 +486,14 @@
 	BPF_LDX_MEM(BPF_DW, BPF_REG_0, BPF_REG_0, 2),
 	BPF_JMP_A(0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
-	.fixup_map_hash_8b = अणु 3 पूर्ण,
+	},
+	.fixup_map_hash_8b = { 3 },
 	.errstr = "map_value pointer and 1000000000000",
 	.result = REJECT
-पूर्ण,
-अणु
+},
+{
 	"bounds check mixed 32bit and 64bit arithmetic. test1",
-	.insns = अणु
+	.insns = {
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_MOV64_IMM(BPF_REG_1, -1),
 	BPF_ALU64_IMM(BPF_LSH, BPF_REG_1, 32),
@@ -505,17 +504,17 @@
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_1, 1),
 	BPF_JMP32_IMM(BPF_JGT, BPF_REG_1, 2, 1),
 	BPF_JMP_A(1),
-	/* invalid ldx अगर bounds are lost above */
+	/* invalid ldx if bounds are lost above */
 	BPF_LDX_MEM(BPF_DW, BPF_REG_0, BPF_REG_0, -1),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.errstr_unpriv = "R0 invalid mem access 'inv'",
 	.result_unpriv = REJECT,
 	.result = ACCEPT
-पूर्ण,
-अणु
+},
+{
 	"bounds check mixed 32bit and 64bit arithmetic. test2",
-	.insns = अणु
+	.insns = {
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_MOV64_IMM(BPF_REG_1, -1),
 	BPF_ALU64_IMM(BPF_LSH, BPF_REG_1, 32),
@@ -527,21 +526,21 @@
 	/* check ALU32 op zero extends 64bit bounds */
 	BPF_JMP_REG(BPF_JGT, BPF_REG_1, BPF_REG_2, 1),
 	BPF_JMP_A(1),
-	/* invalid ldx अगर bounds are lost above */
+	/* invalid ldx if bounds are lost above */
 	BPF_LDX_MEM(BPF_DW, BPF_REG_0, BPF_REG_0, -1),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.errstr_unpriv = "R0 invalid mem access 'inv'",
 	.result_unpriv = REJECT,
 	.result = ACCEPT
-पूर्ण,
-अणु
+},
+{
 	"assigning 32bit bounds to 64bit for wA = 0, wB = wA",
-	.insns = अणु
+	.insns = {
 	BPF_LDX_MEM(BPF_W, BPF_REG_8, BPF_REG_1,
-		    दुरत्व(काष्ठा __sk_buff, data_end)),
+		    offsetof(struct __sk_buff, data_end)),
 	BPF_LDX_MEM(BPF_W, BPF_REG_7, BPF_REG_1,
-		    दुरत्व(काष्ठा __sk_buff, data)),
+		    offsetof(struct __sk_buff, data)),
 	BPF_MOV32_IMM(BPF_REG_9, 0),
 	BPF_MOV32_REG(BPF_REG_2, BPF_REG_9),
 	BPF_MOV64_REG(BPF_REG_6, BPF_REG_7),
@@ -552,14 +551,14 @@
 	BPF_LDX_MEM(BPF_W, BPF_REG_5, BPF_REG_6, 0),
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.prog_type = BPF_PROG_TYPE_SCHED_CLS,
 	.result = ACCEPT,
 	.flags = F_NEEDS_EFFICIENT_UNALIGNED_ACCESS,
-पूर्ण,
-अणु
+},
+{
 	"bounds check for reg = 0, reg xor 1",
-	.insns = अणु
+	.insns = {
 	BPF_ST_MEM(BPF_DW, BPF_REG_10, -8, 0),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
@@ -573,15 +572,15 @@
 	BPF_LDX_MEM(BPF_DW, BPF_REG_0, BPF_REG_0, 8),
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.errstr_unpriv = "R0 min value is outside of the allowed memory range",
 	.result_unpriv = REJECT,
-	.fixup_map_hash_8b = अणु 3 पूर्ण,
+	.fixup_map_hash_8b = { 3 },
 	.result = ACCEPT,
-पूर्ण,
-अणु
+},
+{
 	"bounds check for reg32 = 0, reg32 xor 1",
-	.insns = अणु
+	.insns = {
 	BPF_ST_MEM(BPF_DW, BPF_REG_10, -8, 0),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
@@ -595,15 +594,15 @@
 	BPF_LDX_MEM(BPF_DW, BPF_REG_0, BPF_REG_0, 8),
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.errstr_unpriv = "R0 min value is outside of the allowed memory range",
 	.result_unpriv = REJECT,
-	.fixup_map_hash_8b = अणु 3 पूर्ण,
+	.fixup_map_hash_8b = { 3 },
 	.result = ACCEPT,
-पूर्ण,
-अणु
+},
+{
 	"bounds check for reg = 2, reg xor 3",
-	.insns = अणु
+	.insns = {
 	BPF_ST_MEM(BPF_DW, BPF_REG_10, -8, 0),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
@@ -617,15 +616,15 @@
 	BPF_LDX_MEM(BPF_DW, BPF_REG_0, BPF_REG_0, 8),
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.errstr_unpriv = "R0 min value is outside of the allowed memory range",
 	.result_unpriv = REJECT,
-	.fixup_map_hash_8b = अणु 3 पूर्ण,
+	.fixup_map_hash_8b = { 3 },
 	.result = ACCEPT,
-पूर्ण,
-अणु
+},
+{
 	"bounds check for reg = any, reg xor 3",
-	.insns = अणु
+	.insns = {
 	BPF_ST_MEM(BPF_DW, BPF_REG_10, -8, 0),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
@@ -639,15 +638,15 @@
 	BPF_LDX_MEM(BPF_DW, BPF_REG_0, BPF_REG_0, 8),
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
-	.fixup_map_hash_8b = अणु 3 पूर्ण,
+	},
+	.fixup_map_hash_8b = { 3 },
 	.result = REJECT,
 	.errstr = "invalid access to map value",
 	.errstr_unpriv = "invalid access to map value",
-पूर्ण,
-अणु
+},
+{
 	"bounds check for reg32 = any, reg32 xor 3",
-	.insns = अणु
+	.insns = {
 	BPF_ST_MEM(BPF_DW, BPF_REG_10, -8, 0),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
@@ -661,15 +660,15 @@
 	BPF_LDX_MEM(BPF_DW, BPF_REG_0, BPF_REG_0, 8),
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
-	.fixup_map_hash_8b = अणु 3 पूर्ण,
+	},
+	.fixup_map_hash_8b = { 3 },
 	.result = REJECT,
 	.errstr = "invalid access to map value",
 	.errstr_unpriv = "invalid access to map value",
-पूर्ण,
-अणु
+},
+{
 	"bounds check for reg > 0, reg xor 3",
-	.insns = अणु
+	.insns = {
 	BPF_ST_MEM(BPF_DW, BPF_REG_10, -8, 0),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
@@ -684,15 +683,15 @@
 	BPF_LDX_MEM(BPF_DW, BPF_REG_0, BPF_REG_0, 8),
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.errstr_unpriv = "R0 min value is outside of the allowed memory range",
 	.result_unpriv = REJECT,
-	.fixup_map_hash_8b = अणु 3 पूर्ण,
+	.fixup_map_hash_8b = { 3 },
 	.result = ACCEPT,
-पूर्ण,
-अणु
+},
+{
 	"bounds check for reg32 > 0, reg32 xor 3",
-	.insns = अणु
+	.insns = {
 	BPF_ST_MEM(BPF_DW, BPF_REG_10, -8, 0),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
@@ -707,15 +706,15 @@
 	BPF_LDX_MEM(BPF_DW, BPF_REG_0, BPF_REG_0, 8),
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.errstr_unpriv = "R0 min value is outside of the allowed memory range",
 	.result_unpriv = REJECT,
-	.fixup_map_hash_8b = अणु 3 पूर्ण,
+	.fixup_map_hash_8b = { 3 },
 	.result = ACCEPT,
-पूर्ण,
-अणु
+},
+{
 	"bounds checks after 32-bit truncation. test 1",
-	.insns = अणु
+	.insns = {
 	BPF_ST_MEM(BPF_DW, BPF_REG_10, -8, 0),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
@@ -728,15 +727,15 @@
 	BPF_JMP_IMM(BPF_JGT, BPF_REG_1, 0x7fffffff, 1),
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
-	.fixup_map_hash_8b = अणु 3 पूर्ण,
+	},
+	.fixup_map_hash_8b = { 3 },
 	.errstr_unpriv = "R0 leaks addr",
 	.result_unpriv = REJECT,
 	.result = ACCEPT,
-पूर्ण,
-अणु
+},
+{
 	"bounds checks after 32-bit truncation. test 2",
-	.insns = अणु
+	.insns = {
 	BPF_ST_MEM(BPF_DW, BPF_REG_10, -8, 0),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
@@ -748,9 +747,9 @@
 	BPF_JMP32_IMM(BPF_JSLT, BPF_REG_1, 0, 1),
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
-	.fixup_map_hash_8b = अणु 3 पूर्ण,
+	},
+	.fixup_map_hash_8b = { 3 },
 	.errstr_unpriv = "R0 leaks addr",
 	.result_unpriv = REJECT,
 	.result = ACCEPT,
-पूर्ण,
+},

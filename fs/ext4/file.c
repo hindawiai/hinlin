@@ -1,11 +1,10 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  *  linux/fs/ext4/file.c
  *
  * Copyright (C) 1992, 1993, 1994, 1995
  * Remy Card (card@masi.ibp.fr)
- * Laborम_से_पre MASI - Institut Blaise Pascal
+ * Laboratoire MASI - Institut Blaise Pascal
  * Universite Pierre et Marie Curie (Paris VI)
  *
  *  from
@@ -16,145 +15,145 @@
  *
  *  ext4 fs regular file handling primitives
  *
- *  64-bit file support on 64-bit platक्रमms by Jakub Jelinek
+ *  64-bit file support on 64-bit platforms by Jakub Jelinek
  *	(jj@sunsite.ms.mff.cuni.cz)
  */
 
-#समावेश <linux/समय.स>
-#समावेश <linux/fs.h>
-#समावेश <linux/iomap.h>
-#समावेश <linux/mount.h>
-#समावेश <linux/path.h>
-#समावेश <linux/dax.h>
-#समावेश <linux/quotaops.h>
-#समावेश <linux/pagevec.h>
-#समावेश <linux/uपन.स>
-#समावेश <linux/mman.h>
-#समावेश <linux/backing-dev.h>
-#समावेश "ext4.h"
-#समावेश "ext4_jbd2.h"
-#समावेश "xattr.h"
-#समावेश "acl.h"
-#समावेश "truncate.h"
+#include <linux/time.h>
+#include <linux/fs.h>
+#include <linux/iomap.h>
+#include <linux/mount.h>
+#include <linux/path.h>
+#include <linux/dax.h>
+#include <linux/quotaops.h>
+#include <linux/pagevec.h>
+#include <linux/uio.h>
+#include <linux/mman.h>
+#include <linux/backing-dev.h>
+#include "ext4.h"
+#include "ext4_jbd2.h"
+#include "xattr.h"
+#include "acl.h"
+#include "truncate.h"
 
-अटल bool ext4_dio_supported(काष्ठा inode *inode)
-अणु
-	अगर (IS_ENABLED(CONFIG_FS_ENCRYPTION) && IS_ENCRYPTED(inode))
-		वापस false;
-	अगर (fsverity_active(inode))
-		वापस false;
-	अगर (ext4_should_journal_data(inode))
-		वापस false;
-	अगर (ext4_has_अंतरभूत_data(inode))
-		वापस false;
-	वापस true;
-पूर्ण
+static bool ext4_dio_supported(struct inode *inode)
+{
+	if (IS_ENABLED(CONFIG_FS_ENCRYPTION) && IS_ENCRYPTED(inode))
+		return false;
+	if (fsverity_active(inode))
+		return false;
+	if (ext4_should_journal_data(inode))
+		return false;
+	if (ext4_has_inline_data(inode))
+		return false;
+	return true;
+}
 
-अटल sमाप_प्रकार ext4_dio_पढ़ो_iter(काष्ठा kiocb *iocb, काष्ठा iov_iter *to)
-अणु
-	sमाप_प्रकार ret;
-	काष्ठा inode *inode = file_inode(iocb->ki_filp);
+static ssize_t ext4_dio_read_iter(struct kiocb *iocb, struct iov_iter *to)
+{
+	ssize_t ret;
+	struct inode *inode = file_inode(iocb->ki_filp);
 
-	अगर (iocb->ki_flags & IOCB_NOWAIT) अणु
-		अगर (!inode_trylock_shared(inode))
-			वापस -EAGAIN;
-	पूर्ण अन्यथा अणु
+	if (iocb->ki_flags & IOCB_NOWAIT) {
+		if (!inode_trylock_shared(inode))
+			return -EAGAIN;
+	} else {
 		inode_lock_shared(inode);
-	पूर्ण
+	}
 
-	अगर (!ext4_dio_supported(inode)) अणु
+	if (!ext4_dio_supported(inode)) {
 		inode_unlock_shared(inode);
 		/*
-		 * Fallback to buffered I/O अगर the operation being perक्रमmed on
-		 * the inode is not supported by direct I/O. The IOCB_सूचीECT
+		 * Fallback to buffered I/O if the operation being performed on
+		 * the inode is not supported by direct I/O. The IOCB_DIRECT
 		 * flag needs to be cleared here in order to ensure that the
-		 * direct I/O path within generic_file_पढ़ो_iter() is not
+		 * direct I/O path within generic_file_read_iter() is not
 		 * taken.
 		 */
-		iocb->ki_flags &= ~IOCB_सूचीECT;
-		वापस generic_file_पढ़ो_iter(iocb, to);
-	पूर्ण
+		iocb->ki_flags &= ~IOCB_DIRECT;
+		return generic_file_read_iter(iocb, to);
+	}
 
-	ret = iomap_dio_rw(iocb, to, &ext4_iomap_ops, शून्य, 0);
+	ret = iomap_dio_rw(iocb, to, &ext4_iomap_ops, NULL, 0);
 	inode_unlock_shared(inode);
 
 	file_accessed(iocb->ki_filp);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-#अगर_घोषित CONFIG_FS_DAX
-अटल sमाप_प्रकार ext4_dax_पढ़ो_iter(काष्ठा kiocb *iocb, काष्ठा iov_iter *to)
-अणु
-	काष्ठा inode *inode = file_inode(iocb->ki_filp);
-	sमाप_प्रकार ret;
+#ifdef CONFIG_FS_DAX
+static ssize_t ext4_dax_read_iter(struct kiocb *iocb, struct iov_iter *to)
+{
+	struct inode *inode = file_inode(iocb->ki_filp);
+	ssize_t ret;
 
-	अगर (iocb->ki_flags & IOCB_NOWAIT) अणु
-		अगर (!inode_trylock_shared(inode))
-			वापस -EAGAIN;
-	पूर्ण अन्यथा अणु
+	if (iocb->ki_flags & IOCB_NOWAIT) {
+		if (!inode_trylock_shared(inode))
+			return -EAGAIN;
+	} else {
 		inode_lock_shared(inode);
-	पूर्ण
+	}
 	/*
-	 * Recheck under inode lock - at this poपूर्णांक we are sure it cannot
+	 * Recheck under inode lock - at this point we are sure it cannot
 	 * change anymore
 	 */
-	अगर (!IS_DAX(inode)) अणु
+	if (!IS_DAX(inode)) {
 		inode_unlock_shared(inode);
-		/* Fallback to buffered IO in हाल we cannot support DAX */
-		वापस generic_file_पढ़ो_iter(iocb, to);
-	पूर्ण
+		/* Fallback to buffered IO in case we cannot support DAX */
+		return generic_file_read_iter(iocb, to);
+	}
 	ret = dax_iomap_rw(iocb, to, &ext4_iomap_ops);
 	inode_unlock_shared(inode);
 
 	file_accessed(iocb->ki_filp);
-	वापस ret;
-पूर्ण
-#पूर्ण_अगर
+	return ret;
+}
+#endif
 
-अटल sमाप_प्रकार ext4_file_पढ़ो_iter(काष्ठा kiocb *iocb, काष्ठा iov_iter *to)
-अणु
-	काष्ठा inode *inode = file_inode(iocb->ki_filp);
+static ssize_t ext4_file_read_iter(struct kiocb *iocb, struct iov_iter *to)
+{
+	struct inode *inode = file_inode(iocb->ki_filp);
 
-	अगर (unlikely(ext4_क्रमced_shutकरोwn(EXT4_SB(inode->i_sb))))
-		वापस -EIO;
+	if (unlikely(ext4_forced_shutdown(EXT4_SB(inode->i_sb))))
+		return -EIO;
 
-	अगर (!iov_iter_count(to))
-		वापस 0; /* skip aसमय */
+	if (!iov_iter_count(to))
+		return 0; /* skip atime */
 
-#अगर_घोषित CONFIG_FS_DAX
-	अगर (IS_DAX(inode))
-		वापस ext4_dax_पढ़ो_iter(iocb, to);
-#पूर्ण_अगर
-	अगर (iocb->ki_flags & IOCB_सूचीECT)
-		वापस ext4_dio_पढ़ो_iter(iocb, to);
+#ifdef CONFIG_FS_DAX
+	if (IS_DAX(inode))
+		return ext4_dax_read_iter(iocb, to);
+#endif
+	if (iocb->ki_flags & IOCB_DIRECT)
+		return ext4_dio_read_iter(iocb, to);
 
-	वापस generic_file_पढ़ो_iter(iocb, to);
-पूर्ण
+	return generic_file_read_iter(iocb, to);
+}
 
 /*
- * Called when an inode is released. Note that this is dअगरferent
- * from ext4_file_खोलो: खोलो माला_लो called at every खोलो, but release
- * माला_लो called only when /all/ the files are बंदd.
+ * Called when an inode is released. Note that this is different
+ * from ext4_file_open: open gets called at every open, but release
+ * gets called only when /all/ the files are closed.
  */
-अटल पूर्णांक ext4_release_file(काष्ठा inode *inode, काष्ठा file *filp)
-अणु
-	अगर (ext4_test_inode_state(inode, EXT4_STATE_DA_ALLOC_CLOSE)) अणु
+static int ext4_release_file(struct inode *inode, struct file *filp)
+{
+	if (ext4_test_inode_state(inode, EXT4_STATE_DA_ALLOC_CLOSE)) {
 		ext4_alloc_da_blocks(inode);
 		ext4_clear_inode_state(inode, EXT4_STATE_DA_ALLOC_CLOSE);
-	पूर्ण
-	/* अगर we are the last ग_लिखोr on the inode, drop the block reservation */
-	अगर ((filp->f_mode & FMODE_WRITE) &&
-			(atomic_पढ़ो(&inode->i_ग_लिखोcount) == 1) &&
-			!EXT4_I(inode)->i_reserved_data_blocks) अणु
-		करोwn_ग_लिखो(&EXT4_I(inode)->i_data_sem);
-		ext4_discard_pपुनः_स्मृतिations(inode, 0);
-		up_ग_लिखो(&EXT4_I(inode)->i_data_sem);
-	पूर्ण
-	अगर (is_dx(inode) && filp->निजी_data)
-		ext4_htree_मुक्त_dir_info(filp->निजी_data);
+	}
+	/* if we are the last writer on the inode, drop the block reservation */
+	if ((filp->f_mode & FMODE_WRITE) &&
+			(atomic_read(&inode->i_writecount) == 1) &&
+			!EXT4_I(inode)->i_reserved_data_blocks) {
+		down_write(&EXT4_I(inode)->i_data_sem);
+		ext4_discard_preallocations(inode, 0);
+		up_write(&EXT4_I(inode)->i_data_sem);
+	}
+	if (is_dx(inode) && filp->private_data)
+		ext4_htree_free_dir_info(filp->private_data);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * This tests whether the IO in question is block-aligned or not.
@@ -162,321 +161,321 @@
  * are converted to written only after the IO is complete.  Until they are
  * mapped, these blocks appear as holes, so dio_zero_block() will assume that
  * it needs to zero out portions of the start and/or end block.  If 2 AIO
- * thपढ़ोs are at work on the same unwritten block, they must be synchronized
- * or one thपढ़ो will zero the other's data, causing corruption.
+ * threads are at work on the same unwritten block, they must be synchronized
+ * or one thread will zero the other's data, causing corruption.
  */
-अटल bool
-ext4_unaligned_io(काष्ठा inode *inode, काष्ठा iov_iter *from, loff_t pos)
-अणु
-	काष्ठा super_block *sb = inode->i_sb;
-	अचिन्हित दीर्घ blockmask = sb->s_blocksize - 1;
+static bool
+ext4_unaligned_io(struct inode *inode, struct iov_iter *from, loff_t pos)
+{
+	struct super_block *sb = inode->i_sb;
+	unsigned long blockmask = sb->s_blocksize - 1;
 
-	अगर ((pos | iov_iter_alignment(from)) & blockmask)
-		वापस true;
+	if ((pos | iov_iter_alignment(from)) & blockmask)
+		return true;
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल bool
-ext4_extending_io(काष्ठा inode *inode, loff_t offset, माप_प्रकार len)
-अणु
-	अगर (offset + len > i_size_पढ़ो(inode) ||
+static bool
+ext4_extending_io(struct inode *inode, loff_t offset, size_t len)
+{
+	if (offset + len > i_size_read(inode) ||
 	    offset + len > EXT4_I(inode)->i_disksize)
-		वापस true;
-	वापस false;
-पूर्ण
+		return true;
+	return false;
+}
 
 /* Is IO overwriting allocated and initialized blocks? */
-अटल bool ext4_overग_लिखो_io(काष्ठा inode *inode, loff_t pos, loff_t len)
-अणु
-	काष्ठा ext4_map_blocks map;
-	अचिन्हित पूर्णांक blkbits = inode->i_blkbits;
-	पूर्णांक err, blklen;
+static bool ext4_overwrite_io(struct inode *inode, loff_t pos, loff_t len)
+{
+	struct ext4_map_blocks map;
+	unsigned int blkbits = inode->i_blkbits;
+	int err, blklen;
 
-	अगर (pos + len > i_size_पढ़ो(inode))
-		वापस false;
+	if (pos + len > i_size_read(inode))
+		return false;
 
 	map.m_lblk = pos >> blkbits;
 	map.m_len = EXT4_MAX_BLOCKS(len, pos, blkbits);
 	blklen = map.m_len;
 
-	err = ext4_map_blocks(शून्य, inode, &map, 0);
+	err = ext4_map_blocks(NULL, inode, &map, 0);
 	/*
-	 * 'err==len' means that all of the blocks have been pपुनः_स्मृतिated,
+	 * 'err==len' means that all of the blocks have been preallocated,
 	 * regardless of whether they have been initialized or not. To exclude
 	 * unwritten extents, we need to check m_flags.
 	 */
-	वापस err == blklen && (map.m_flags & EXT4_MAP_MAPPED);
-पूर्ण
+	return err == blklen && (map.m_flags & EXT4_MAP_MAPPED);
+}
 
-अटल sमाप_प्रकार ext4_generic_ग_लिखो_checks(काष्ठा kiocb *iocb,
-					 काष्ठा iov_iter *from)
-अणु
-	काष्ठा inode *inode = file_inode(iocb->ki_filp);
-	sमाप_प्रकार ret;
+static ssize_t ext4_generic_write_checks(struct kiocb *iocb,
+					 struct iov_iter *from)
+{
+	struct inode *inode = file_inode(iocb->ki_filp);
+	ssize_t ret;
 
-	अगर (unlikely(IS_IMMUTABLE(inode)))
-		वापस -EPERM;
+	if (unlikely(IS_IMMUTABLE(inode)))
+		return -EPERM;
 
-	ret = generic_ग_लिखो_checks(iocb, from);
-	अगर (ret <= 0)
-		वापस ret;
+	ret = generic_write_checks(iocb, from);
+	if (ret <= 0)
+		return ret;
 
 	/*
-	 * If we have encountered a biपंचांगap-क्रमmat file, the size limit
-	 * is smaller than s_maxbytes, which is क्रम extent-mapped files.
+	 * If we have encountered a bitmap-format file, the size limit
+	 * is smaller than s_maxbytes, which is for extent-mapped files.
 	 */
-	अगर (!(ext4_test_inode_flag(inode, EXT4_INODE_EXTENTS))) अणु
-		काष्ठा ext4_sb_info *sbi = EXT4_SB(inode->i_sb);
+	if (!(ext4_test_inode_flag(inode, EXT4_INODE_EXTENTS))) {
+		struct ext4_sb_info *sbi = EXT4_SB(inode->i_sb);
 
-		अगर (iocb->ki_pos >= sbi->s_biपंचांगap_maxbytes)
-			वापस -EFBIG;
-		iov_iter_truncate(from, sbi->s_biपंचांगap_maxbytes - iocb->ki_pos);
-	पूर्ण
+		if (iocb->ki_pos >= sbi->s_bitmap_maxbytes)
+			return -EFBIG;
+		iov_iter_truncate(from, sbi->s_bitmap_maxbytes - iocb->ki_pos);
+	}
 
-	वापस iov_iter_count(from);
-पूर्ण
+	return iov_iter_count(from);
+}
 
-अटल sमाप_प्रकार ext4_ग_लिखो_checks(काष्ठा kiocb *iocb, काष्ठा iov_iter *from)
-अणु
-	sमाप_प्रकार ret, count;
+static ssize_t ext4_write_checks(struct kiocb *iocb, struct iov_iter *from)
+{
+	ssize_t ret, count;
 
-	count = ext4_generic_ग_लिखो_checks(iocb, from);
-	अगर (count <= 0)
-		वापस count;
+	count = ext4_generic_write_checks(iocb, from);
+	if (count <= 0)
+		return count;
 
-	ret = file_modअगरied(iocb->ki_filp);
-	अगर (ret)
-		वापस ret;
-	वापस count;
-पूर्ण
+	ret = file_modified(iocb->ki_filp);
+	if (ret)
+		return ret;
+	return count;
+}
 
-अटल sमाप_प्रकार ext4_buffered_ग_लिखो_iter(काष्ठा kiocb *iocb,
-					काष्ठा iov_iter *from)
-अणु
-	sमाप_प्रकार ret;
-	काष्ठा inode *inode = file_inode(iocb->ki_filp);
+static ssize_t ext4_buffered_write_iter(struct kiocb *iocb,
+					struct iov_iter *from)
+{
+	ssize_t ret;
+	struct inode *inode = file_inode(iocb->ki_filp);
 
-	अगर (iocb->ki_flags & IOCB_NOWAIT)
-		वापस -EOPNOTSUPP;
+	if (iocb->ki_flags & IOCB_NOWAIT)
+		return -EOPNOTSUPP;
 
 	ext4_fc_start_update(inode);
 	inode_lock(inode);
-	ret = ext4_ग_लिखो_checks(iocb, from);
-	अगर (ret <= 0)
-		जाओ out;
+	ret = ext4_write_checks(iocb, from);
+	if (ret <= 0)
+		goto out;
 
 	current->backing_dev_info = inode_to_bdi(inode);
-	ret = generic_perक्रमm_ग_लिखो(iocb->ki_filp, from, iocb->ki_pos);
-	current->backing_dev_info = शून्य;
+	ret = generic_perform_write(iocb->ki_filp, from, iocb->ki_pos);
+	current->backing_dev_info = NULL;
 
 out:
 	inode_unlock(inode);
 	ext4_fc_stop_update(inode);
-	अगर (likely(ret > 0)) अणु
+	if (likely(ret > 0)) {
 		iocb->ki_pos += ret;
-		ret = generic_ग_लिखो_sync(iocb, ret);
-	पूर्ण
+		ret = generic_write_sync(iocb, ret);
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल sमाप_प्रकार ext4_handle_inode_extension(काष्ठा inode *inode, loff_t offset,
-					   sमाप_प्रकार written, माप_प्रकार count)
-अणु
+static ssize_t ext4_handle_inode_extension(struct inode *inode, loff_t offset,
+					   ssize_t written, size_t count)
+{
 	handle_t *handle;
 	bool truncate = false;
 	u8 blkbits = inode->i_blkbits;
 	ext4_lblk_t written_blk, end_blk;
-	पूर्णांक ret;
+	int ret;
 
 	/*
 	 * Note that EXT4_I(inode)->i_disksize can get extended up to
-	 * inode->i_size जबतक the I/O was running due to ग_लिखोback of delalloc
+	 * inode->i_size while the I/O was running due to writeback of delalloc
 	 * blocks. But, the code in ext4_iomap_alloc() is careful to use
-	 * zeroed/unwritten extents अगर this is possible; thus we won't leave
-	 * uninitialized blocks in a file even अगर we didn't succeed in writing
-	 * as much as we पूर्णांकended.
+	 * zeroed/unwritten extents if this is possible; thus we won't leave
+	 * uninitialized blocks in a file even if we didn't succeed in writing
+	 * as much as we intended.
 	 */
-	WARN_ON_ONCE(i_size_पढ़ो(inode) < EXT4_I(inode)->i_disksize);
-	अगर (offset + count <= EXT4_I(inode)->i_disksize) अणु
+	WARN_ON_ONCE(i_size_read(inode) < EXT4_I(inode)->i_disksize);
+	if (offset + count <= EXT4_I(inode)->i_disksize) {
 		/*
-		 * We need to ensure that the inode is हटाओd from the orphan
-		 * list अगर it has been added prematurely, due to ग_लिखोback of
+		 * We need to ensure that the inode is removed from the orphan
+		 * list if it has been added prematurely, due to writeback of
 		 * delalloc blocks.
 		 */
-		अगर (!list_empty(&EXT4_I(inode)->i_orphan) && inode->i_nlink) अणु
+		if (!list_empty(&EXT4_I(inode)->i_orphan) && inode->i_nlink) {
 			handle = ext4_journal_start(inode, EXT4_HT_INODE, 2);
 
-			अगर (IS_ERR(handle)) अणु
-				ext4_orphan_del(शून्य, inode);
-				वापस PTR_ERR(handle);
-			पूर्ण
+			if (IS_ERR(handle)) {
+				ext4_orphan_del(NULL, inode);
+				return PTR_ERR(handle);
+			}
 
 			ext4_orphan_del(handle, inode);
 			ext4_journal_stop(handle);
-		पूर्ण
+		}
 
-		वापस written;
-	पूर्ण
+		return written;
+	}
 
-	अगर (written < 0)
-		जाओ truncate;
+	if (written < 0)
+		goto truncate;
 
 	handle = ext4_journal_start(inode, EXT4_HT_INODE, 2);
-	अगर (IS_ERR(handle)) अणु
+	if (IS_ERR(handle)) {
 		written = PTR_ERR(handle);
-		जाओ truncate;
-	पूर्ण
+		goto truncate;
+	}
 
-	अगर (ext4_update_inode_size(inode, offset + written)) अणु
+	if (ext4_update_inode_size(inode, offset + written)) {
 		ret = ext4_mark_inode_dirty(handle, inode);
-		अगर (unlikely(ret)) अणु
+		if (unlikely(ret)) {
 			written = ret;
 			ext4_journal_stop(handle);
-			जाओ truncate;
-		पूर्ण
-	पूर्ण
+			goto truncate;
+		}
+	}
 
 	/*
-	 * We may need to truncate allocated but not written blocks beyond खातापूर्ण.
+	 * We may need to truncate allocated but not written blocks beyond EOF.
 	 */
 	written_blk = ALIGN(offset + written, 1 << blkbits);
 	end_blk = ALIGN(offset + count, 1 << blkbits);
-	अगर (written_blk < end_blk && ext4_can_truncate(inode))
+	if (written_blk < end_blk && ext4_can_truncate(inode))
 		truncate = true;
 
 	/*
-	 * Remove the inode from the orphan list अगर it has been extended and
+	 * Remove the inode from the orphan list if it has been extended and
 	 * everything went OK.
 	 */
-	अगर (!truncate && inode->i_nlink)
+	if (!truncate && inode->i_nlink)
 		ext4_orphan_del(handle, inode);
 	ext4_journal_stop(handle);
 
-	अगर (truncate) अणु
+	if (truncate) {
 truncate:
-		ext4_truncate_failed_ग_लिखो(inode);
+		ext4_truncate_failed_write(inode);
 		/*
 		 * If the truncate operation failed early, then the inode may
-		 * still be on the orphan list. In that हाल, we need to try
-		 * हटाओ the inode from the in-memory linked list.
+		 * still be on the orphan list. In that case, we need to try
+		 * remove the inode from the in-memory linked list.
 		 */
-		अगर (inode->i_nlink)
-			ext4_orphan_del(शून्य, inode);
-	पूर्ण
+		if (inode->i_nlink)
+			ext4_orphan_del(NULL, inode);
+	}
 
-	वापस written;
-पूर्ण
+	return written;
+}
 
-अटल पूर्णांक ext4_dio_ग_लिखो_end_io(काष्ठा kiocb *iocb, sमाप_प्रकार size,
-				 पूर्णांक error, अचिन्हित पूर्णांक flags)
-अणु
+static int ext4_dio_write_end_io(struct kiocb *iocb, ssize_t size,
+				 int error, unsigned int flags)
+{
 	loff_t pos = iocb->ki_pos;
-	काष्ठा inode *inode = file_inode(iocb->ki_filp);
+	struct inode *inode = file_inode(iocb->ki_filp);
 
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
-	अगर (size && flags & IOMAP_DIO_UNWRITTEN) अणु
-		error = ext4_convert_unwritten_extents(शून्य, inode, pos, size);
-		अगर (error < 0)
-			वापस error;
-	पूर्ण
+	if (size && flags & IOMAP_DIO_UNWRITTEN) {
+		error = ext4_convert_unwritten_extents(NULL, inode, pos, size);
+		if (error < 0)
+			return error;
+	}
 	/*
-	 * If we are extending the file, we have to update i_size here beक्रमe
-	 * page cache माला_लो invalidated in iomap_dio_rw(). Otherwise racing
-	 * buffered पढ़ोs could zero out too much from page cache pages. Update
-	 * of on-disk size will happen later in ext4_dio_ग_लिखो_iter() where
-	 * we have enough inक्रमmation to also perक्रमm orphan list handling etc.
-	 * Note that we perक्रमm all extending ग_लिखोs synchronously under
-	 * i_rwsem held exclusively so i_size update is safe here in that हाल.
-	 * If the ग_लिखो was not extending, we cannot see pos > i_size here
-	 * because operations reducing i_size like truncate रुको क्रम all
-	 * outstanding DIO beक्रमe updating i_size.
+	 * If we are extending the file, we have to update i_size here before
+	 * page cache gets invalidated in iomap_dio_rw(). Otherwise racing
+	 * buffered reads could zero out too much from page cache pages. Update
+	 * of on-disk size will happen later in ext4_dio_write_iter() where
+	 * we have enough information to also perform orphan list handling etc.
+	 * Note that we perform all extending writes synchronously under
+	 * i_rwsem held exclusively so i_size update is safe here in that case.
+	 * If the write was not extending, we cannot see pos > i_size here
+	 * because operations reducing i_size like truncate wait for all
+	 * outstanding DIO before updating i_size.
 	 */
 	pos += size;
-	अगर (pos > i_size_पढ़ो(inode))
-		i_size_ग_लिखो(inode, pos);
+	if (pos > i_size_read(inode))
+		i_size_write(inode, pos);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा iomap_dio_ops ext4_dio_ग_लिखो_ops = अणु
-	.end_io = ext4_dio_ग_लिखो_end_io,
-पूर्ण;
+static const struct iomap_dio_ops ext4_dio_write_ops = {
+	.end_io = ext4_dio_write_end_io,
+};
 
 /*
- * The पूर्णांकention here is to start with shared lock acquired then see अगर any
+ * The intention here is to start with shared lock acquired then see if any
  * condition requires an exclusive inode lock. If yes, then we restart the
  * whole operation by releasing the shared lock and acquiring exclusive lock.
  *
  * - For unaligned_io we never take shared lock as it may cause data corruption
- *   when two unaligned IO tries to modअगरy the same block e.g. जबतक zeroing.
+ *   when two unaligned IO tries to modify the same block e.g. while zeroing.
  *
- * - For extending ग_लिखोs हाल we करोn't take the shared lock, since it requires
+ * - For extending writes case we don't take the shared lock, since it requires
  *   updating inode i_disksize and/or orphan handling with exclusive lock.
  *
- * - shared locking will only be true mostly with overग_लिखोs. Otherwise we will
- *   चयन to exclusive i_rwsem lock.
+ * - shared locking will only be true mostly with overwrites. Otherwise we will
+ *   switch to exclusive i_rwsem lock.
  */
-अटल sमाप_प्रकार ext4_dio_ग_लिखो_checks(काष्ठा kiocb *iocb, काष्ठा iov_iter *from,
+static ssize_t ext4_dio_write_checks(struct kiocb *iocb, struct iov_iter *from,
 				     bool *ilock_shared, bool *extend)
-अणु
-	काष्ठा file *file = iocb->ki_filp;
-	काष्ठा inode *inode = file_inode(file);
+{
+	struct file *file = iocb->ki_filp;
+	struct inode *inode = file_inode(file);
 	loff_t offset;
-	माप_प्रकार count;
-	sमाप_प्रकार ret;
+	size_t count;
+	ssize_t ret;
 
 restart:
-	ret = ext4_generic_ग_लिखो_checks(iocb, from);
-	अगर (ret <= 0)
-		जाओ out;
+	ret = ext4_generic_write_checks(iocb, from);
+	if (ret <= 0)
+		goto out;
 
 	offset = iocb->ki_pos;
 	count = ret;
-	अगर (ext4_extending_io(inode, offset, count))
+	if (ext4_extending_io(inode, offset, count))
 		*extend = true;
 	/*
-	 * Determine whether the IO operation will overग_लिखो allocated
+	 * Determine whether the IO operation will overwrite allocated
 	 * and initialized blocks.
-	 * We need exclusive i_rwsem क्रम changing security info
-	 * in file_modअगरied().
+	 * We need exclusive i_rwsem for changing security info
+	 * in file_modified().
 	 */
-	अगर (*ilock_shared && (!IS_NOSEC(inode) || *extend ||
-	     !ext4_overग_लिखो_io(inode, offset, count))) अणु
-		अगर (iocb->ki_flags & IOCB_NOWAIT) अणु
+	if (*ilock_shared && (!IS_NOSEC(inode) || *extend ||
+	     !ext4_overwrite_io(inode, offset, count))) {
+		if (iocb->ki_flags & IOCB_NOWAIT) {
 			ret = -EAGAIN;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		inode_unlock_shared(inode);
 		*ilock_shared = false;
 		inode_lock(inode);
-		जाओ restart;
-	पूर्ण
+		goto restart;
+	}
 
-	ret = file_modअगरied(file);
-	अगर (ret < 0)
-		जाओ out;
+	ret = file_modified(file);
+	if (ret < 0)
+		goto out;
 
-	वापस count;
+	return count;
 out:
-	अगर (*ilock_shared)
+	if (*ilock_shared)
 		inode_unlock_shared(inode);
-	अन्यथा
+	else
 		inode_unlock(inode);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल sमाप_प्रकार ext4_dio_ग_लिखो_iter(काष्ठा kiocb *iocb, काष्ठा iov_iter *from)
-अणु
-	sमाप_प्रकार ret;
+static ssize_t ext4_dio_write_iter(struct kiocb *iocb, struct iov_iter *from)
+{
+	ssize_t ret;
 	handle_t *handle;
-	काष्ठा inode *inode = file_inode(iocb->ki_filp);
+	struct inode *inode = file_inode(iocb->ki_filp);
 	loff_t offset = iocb->ki_pos;
-	माप_प्रकार count = iov_iter_count(from);
-	स्थिर काष्ठा iomap_ops *iomap_ops = &ext4_iomap_ops;
+	size_t count = iov_iter_count(from);
+	const struct iomap_ops *iomap_ops = &ext4_iomap_ops;
 	bool extend = false, unaligned_io = false;
 	bool ilock_shared = true;
 
@@ -484,51 +483,51 @@ out:
 	 * We initially start with shared inode lock unless it is
 	 * unaligned IO which needs exclusive lock anyways.
 	 */
-	अगर (ext4_unaligned_io(inode, from, offset)) अणु
+	if (ext4_unaligned_io(inode, from, offset)) {
 		unaligned_io = true;
 		ilock_shared = false;
-	पूर्ण
+	}
 	/*
-	 * Quick check here without any i_rwsem lock to see अगर it is extending
-	 * IO. A more reliable check is करोne in ext4_dio_ग_लिखो_checks() with
+	 * Quick check here without any i_rwsem lock to see if it is extending
+	 * IO. A more reliable check is done in ext4_dio_write_checks() with
 	 * proper locking in place.
 	 */
-	अगर (offset + count > i_size_पढ़ो(inode))
+	if (offset + count > i_size_read(inode))
 		ilock_shared = false;
 
-	अगर (iocb->ki_flags & IOCB_NOWAIT) अणु
-		अगर (ilock_shared) अणु
-			अगर (!inode_trylock_shared(inode))
-				वापस -EAGAIN;
-		पूर्ण अन्यथा अणु
-			अगर (!inode_trylock(inode))
-				वापस -EAGAIN;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		अगर (ilock_shared)
+	if (iocb->ki_flags & IOCB_NOWAIT) {
+		if (ilock_shared) {
+			if (!inode_trylock_shared(inode))
+				return -EAGAIN;
+		} else {
+			if (!inode_trylock(inode))
+				return -EAGAIN;
+		}
+	} else {
+		if (ilock_shared)
 			inode_lock_shared(inode);
-		अन्यथा
+		else
 			inode_lock(inode);
-	पूर्ण
+	}
 
-	/* Fallback to buffered I/O अगर the inode करोes not support direct I/O. */
-	अगर (!ext4_dio_supported(inode)) अणु
-		अगर (ilock_shared)
+	/* Fallback to buffered I/O if the inode does not support direct I/O. */
+	if (!ext4_dio_supported(inode)) {
+		if (ilock_shared)
 			inode_unlock_shared(inode);
-		अन्यथा
+		else
 			inode_unlock(inode);
-		वापस ext4_buffered_ग_लिखो_iter(iocb, from);
-	पूर्ण
+		return ext4_buffered_write_iter(iocb, from);
+	}
 
-	ret = ext4_dio_ग_लिखो_checks(iocb, from, &ilock_shared, &extend);
-	अगर (ret <= 0)
-		वापस ret;
+	ret = ext4_dio_write_checks(iocb, from, &ilock_shared, &extend);
+	if (ret <= 0)
+		return ret;
 
-	/* अगर we're going to block and IOCB_NOWAIT is set, वापस -EAGAIN */
-	अगर ((iocb->ki_flags & IOCB_NOWAIT) && (unaligned_io || extend)) अणु
+	/* if we're going to block and IOCB_NOWAIT is set, return -EAGAIN */
+	if ((iocb->ki_flags & IOCB_NOWAIT) && (unaligned_io || extend)) {
 		ret = -EAGAIN;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	offset = iocb->ki_pos;
 	count = ret;
@@ -538,399 +537,399 @@ out:
 	 * of partial blocks of two competing unaligned IOs can result in data
 	 * corruption.
 	 *
-	 * So we make sure we करोn't allow any unaligned IO in flight.
-	 * For IOs where we need not रुको (like unaligned non-AIO DIO),
-	 * below inode_dio_रुको() may anyway become a no-op, since we start
+	 * So we make sure we don't allow any unaligned IO in flight.
+	 * For IOs where we need not wait (like unaligned non-AIO DIO),
+	 * below inode_dio_wait() may anyway become a no-op, since we start
 	 * with exclusive lock.
 	 */
-	अगर (unaligned_io)
-		inode_dio_रुको(inode);
+	if (unaligned_io)
+		inode_dio_wait(inode);
 
-	अगर (extend) अणु
+	if (extend) {
 		handle = ext4_journal_start(inode, EXT4_HT_INODE, 2);
-		अगर (IS_ERR(handle)) अणु
+		if (IS_ERR(handle)) {
 			ret = PTR_ERR(handle);
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		ext4_fc_start_update(inode);
 		ret = ext4_orphan_add(handle, inode);
 		ext4_fc_stop_update(inode);
-		अगर (ret) अणु
+		if (ret) {
 			ext4_journal_stop(handle);
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		ext4_journal_stop(handle);
-	पूर्ण
+	}
 
-	अगर (ilock_shared)
-		iomap_ops = &ext4_iomap_overग_लिखो_ops;
-	ret = iomap_dio_rw(iocb, from, iomap_ops, &ext4_dio_ग_लिखो_ops,
+	if (ilock_shared)
+		iomap_ops = &ext4_iomap_overwrite_ops;
+	ret = iomap_dio_rw(iocb, from, iomap_ops, &ext4_dio_write_ops,
 			   (unaligned_io || extend) ? IOMAP_DIO_FORCE_WAIT : 0);
-	अगर (ret == -ENOTBLK)
+	if (ret == -ENOTBLK)
 		ret = 0;
 
-	अगर (extend)
+	if (extend)
 		ret = ext4_handle_inode_extension(inode, offset, ret, count);
 
 out:
-	अगर (ilock_shared)
+	if (ilock_shared)
 		inode_unlock_shared(inode);
-	अन्यथा
+	else
 		inode_unlock(inode);
 
-	अगर (ret >= 0 && iov_iter_count(from)) अणु
-		sमाप_प्रकार err;
+	if (ret >= 0 && iov_iter_count(from)) {
+		ssize_t err;
 		loff_t endbyte;
 
 		offset = iocb->ki_pos;
-		err = ext4_buffered_ग_लिखो_iter(iocb, from);
-		अगर (err < 0)
-			वापस err;
+		err = ext4_buffered_write_iter(iocb, from);
+		if (err < 0)
+			return err;
 
 		/*
-		 * We need to ensure that the pages within the page cache क्रम
+		 * We need to ensure that the pages within the page cache for
 		 * the range covered by this I/O are written to disk and
 		 * invalidated. This is in attempt to preserve the expected
-		 * direct I/O semantics in the हाल we fallback to buffered I/O
+		 * direct I/O semantics in the case we fallback to buffered I/O
 		 * to complete off the I/O request.
 		 */
 		ret += err;
 		endbyte = offset + err - 1;
-		err = filemap_ग_लिखो_and_रुको_range(iocb->ki_filp->f_mapping,
+		err = filemap_write_and_wait_range(iocb->ki_filp->f_mapping,
 						   offset, endbyte);
-		अगर (!err)
+		if (!err)
 			invalidate_mapping_pages(iocb->ki_filp->f_mapping,
 						 offset >> PAGE_SHIFT,
 						 endbyte >> PAGE_SHIFT);
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-#अगर_घोषित CONFIG_FS_DAX
-अटल sमाप_प्रकार
-ext4_dax_ग_लिखो_iter(काष्ठा kiocb *iocb, काष्ठा iov_iter *from)
-अणु
-	sमाप_प्रकार ret;
-	माप_प्रकार count;
+#ifdef CONFIG_FS_DAX
+static ssize_t
+ext4_dax_write_iter(struct kiocb *iocb, struct iov_iter *from)
+{
+	ssize_t ret;
+	size_t count;
 	loff_t offset;
 	handle_t *handle;
 	bool extend = false;
-	काष्ठा inode *inode = file_inode(iocb->ki_filp);
+	struct inode *inode = file_inode(iocb->ki_filp);
 
-	अगर (iocb->ki_flags & IOCB_NOWAIT) अणु
-		अगर (!inode_trylock(inode))
-			वापस -EAGAIN;
-	पूर्ण अन्यथा अणु
+	if (iocb->ki_flags & IOCB_NOWAIT) {
+		if (!inode_trylock(inode))
+			return -EAGAIN;
+	} else {
 		inode_lock(inode);
-	पूर्ण
+	}
 
-	ret = ext4_ग_लिखो_checks(iocb, from);
-	अगर (ret <= 0)
-		जाओ out;
+	ret = ext4_write_checks(iocb, from);
+	if (ret <= 0)
+		goto out;
 
 	offset = iocb->ki_pos;
 	count = iov_iter_count(from);
 
-	अगर (offset + count > EXT4_I(inode)->i_disksize) अणु
+	if (offset + count > EXT4_I(inode)->i_disksize) {
 		handle = ext4_journal_start(inode, EXT4_HT_INODE, 2);
-		अगर (IS_ERR(handle)) अणु
+		if (IS_ERR(handle)) {
 			ret = PTR_ERR(handle);
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		ret = ext4_orphan_add(handle, inode);
-		अगर (ret) अणु
+		if (ret) {
 			ext4_journal_stop(handle);
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		extend = true;
 		ext4_journal_stop(handle);
-	पूर्ण
+	}
 
 	ret = dax_iomap_rw(iocb, from, &ext4_iomap_ops);
 
-	अगर (extend)
+	if (extend)
 		ret = ext4_handle_inode_extension(inode, offset, ret, count);
 out:
 	inode_unlock(inode);
-	अगर (ret > 0)
-		ret = generic_ग_लिखो_sync(iocb, ret);
-	वापस ret;
-पूर्ण
-#पूर्ण_अगर
+	if (ret > 0)
+		ret = generic_write_sync(iocb, ret);
+	return ret;
+}
+#endif
 
-अटल sमाप_प्रकार
-ext4_file_ग_लिखो_iter(काष्ठा kiocb *iocb, काष्ठा iov_iter *from)
-अणु
-	काष्ठा inode *inode = file_inode(iocb->ki_filp);
+static ssize_t
+ext4_file_write_iter(struct kiocb *iocb, struct iov_iter *from)
+{
+	struct inode *inode = file_inode(iocb->ki_filp);
 
-	अगर (unlikely(ext4_क्रमced_shutकरोwn(EXT4_SB(inode->i_sb))))
-		वापस -EIO;
+	if (unlikely(ext4_forced_shutdown(EXT4_SB(inode->i_sb))))
+		return -EIO;
 
-#अगर_घोषित CONFIG_FS_DAX
-	अगर (IS_DAX(inode))
-		वापस ext4_dax_ग_लिखो_iter(iocb, from);
-#पूर्ण_अगर
-	अगर (iocb->ki_flags & IOCB_सूचीECT)
-		वापस ext4_dio_ग_लिखो_iter(iocb, from);
-	अन्यथा
-		वापस ext4_buffered_ग_लिखो_iter(iocb, from);
-पूर्ण
+#ifdef CONFIG_FS_DAX
+	if (IS_DAX(inode))
+		return ext4_dax_write_iter(iocb, from);
+#endif
+	if (iocb->ki_flags & IOCB_DIRECT)
+		return ext4_dio_write_iter(iocb, from);
+	else
+		return ext4_buffered_write_iter(iocb, from);
+}
 
-#अगर_घोषित CONFIG_FS_DAX
-अटल vm_fault_t ext4_dax_huge_fault(काष्ठा vm_fault *vmf,
-		क्रमागत page_entry_size pe_size)
-अणु
-	पूर्णांक error = 0;
+#ifdef CONFIG_FS_DAX
+static vm_fault_t ext4_dax_huge_fault(struct vm_fault *vmf,
+		enum page_entry_size pe_size)
+{
+	int error = 0;
 	vm_fault_t result;
-	पूर्णांक retries = 0;
-	handle_t *handle = शून्य;
-	काष्ठा inode *inode = file_inode(vmf->vma->vm_file);
-	काष्ठा super_block *sb = inode->i_sb;
+	int retries = 0;
+	handle_t *handle = NULL;
+	struct inode *inode = file_inode(vmf->vma->vm_file);
+	struct super_block *sb = inode->i_sb;
 
 	/*
-	 * We have to distinguish real ग_लिखोs from ग_लिखोs which will result in a
-	 * COW page; COW ग_लिखोs should *not* poke the journal (the file will not
-	 * be changed). Doing so would cause unपूर्णांकended failures when mounted
-	 * पढ़ो-only.
+	 * We have to distinguish real writes from writes which will result in a
+	 * COW page; COW writes should *not* poke the journal (the file will not
+	 * be changed). Doing so would cause unintended failures when mounted
+	 * read-only.
 	 *
-	 * We check क्रम VM_SHARED rather than vmf->cow_page since the latter is
-	 * unset क्रम pe_size != PE_SIZE_PTE (i.e. only in करो_cow_fault); क्रम
+	 * We check for VM_SHARED rather than vmf->cow_page since the latter is
+	 * unset for pe_size != PE_SIZE_PTE (i.e. only in do_cow_fault); for
 	 * other sizes, dax_iomap_fault will handle splitting / fallback so that
 	 * we eventually come back with a COW page.
 	 */
-	bool ग_लिखो = (vmf->flags & FAULT_FLAG_WRITE) &&
+	bool write = (vmf->flags & FAULT_FLAG_WRITE) &&
 		(vmf->vma->vm_flags & VM_SHARED);
 	pfn_t pfn;
 
-	अगर (ग_लिखो) अणु
+	if (write) {
 		sb_start_pagefault(sb);
-		file_update_समय(vmf->vma->vm_file);
-		करोwn_पढ़ो(&EXT4_I(inode)->i_mmap_sem);
+		file_update_time(vmf->vma->vm_file);
+		down_read(&EXT4_I(inode)->i_mmap_sem);
 retry:
 		handle = ext4_journal_start_sb(sb, EXT4_HT_WRITE_PAGE,
 					       EXT4_DATA_TRANS_BLOCKS(sb));
-		अगर (IS_ERR(handle)) अणु
-			up_पढ़ो(&EXT4_I(inode)->i_mmap_sem);
+		if (IS_ERR(handle)) {
+			up_read(&EXT4_I(inode)->i_mmap_sem);
 			sb_end_pagefault(sb);
-			वापस VM_FAULT_SIGBUS;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		करोwn_पढ़ो(&EXT4_I(inode)->i_mmap_sem);
-	पूर्ण
+			return VM_FAULT_SIGBUS;
+		}
+	} else {
+		down_read(&EXT4_I(inode)->i_mmap_sem);
+	}
 	result = dax_iomap_fault(vmf, pe_size, &pfn, &error, &ext4_iomap_ops);
-	अगर (ग_लिखो) अणु
+	if (write) {
 		ext4_journal_stop(handle);
 
-		अगर ((result & VM_FAULT_ERROR) && error == -ENOSPC &&
+		if ((result & VM_FAULT_ERROR) && error == -ENOSPC &&
 		    ext4_should_retry_alloc(sb, &retries))
-			जाओ retry;
+			goto retry;
 		/* Handling synchronous page fault? */
-		अगर (result & VM_FAULT_NEEDDSYNC)
+		if (result & VM_FAULT_NEEDDSYNC)
 			result = dax_finish_sync_fault(vmf, pe_size, pfn);
-		up_पढ़ो(&EXT4_I(inode)->i_mmap_sem);
+		up_read(&EXT4_I(inode)->i_mmap_sem);
 		sb_end_pagefault(sb);
-	पूर्ण अन्यथा अणु
-		up_पढ़ो(&EXT4_I(inode)->i_mmap_sem);
-	पूर्ण
+	} else {
+		up_read(&EXT4_I(inode)->i_mmap_sem);
+	}
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
-अटल vm_fault_t ext4_dax_fault(काष्ठा vm_fault *vmf)
-अणु
-	वापस ext4_dax_huge_fault(vmf, PE_SIZE_PTE);
-पूर्ण
+static vm_fault_t ext4_dax_fault(struct vm_fault *vmf)
+{
+	return ext4_dax_huge_fault(vmf, PE_SIZE_PTE);
+}
 
-अटल स्थिर काष्ठा vm_operations_काष्ठा ext4_dax_vm_ops = अणु
+static const struct vm_operations_struct ext4_dax_vm_ops = {
 	.fault		= ext4_dax_fault,
 	.huge_fault	= ext4_dax_huge_fault,
-	.page_mkग_लिखो	= ext4_dax_fault,
-	.pfn_mkग_लिखो	= ext4_dax_fault,
-पूर्ण;
-#अन्यथा
-#घोषणा ext4_dax_vm_ops	ext4_file_vm_ops
-#पूर्ण_अगर
+	.page_mkwrite	= ext4_dax_fault,
+	.pfn_mkwrite	= ext4_dax_fault,
+};
+#else
+#define ext4_dax_vm_ops	ext4_file_vm_ops
+#endif
 
-अटल स्थिर काष्ठा vm_operations_काष्ठा ext4_file_vm_ops = अणु
+static const struct vm_operations_struct ext4_file_vm_ops = {
 	.fault		= ext4_filemap_fault,
 	.map_pages	= filemap_map_pages,
-	.page_mkग_लिखो   = ext4_page_mkग_लिखो,
-पूर्ण;
+	.page_mkwrite   = ext4_page_mkwrite,
+};
 
-अटल पूर्णांक ext4_file_mmap(काष्ठा file *file, काष्ठा vm_area_काष्ठा *vma)
-अणु
-	काष्ठा inode *inode = file->f_mapping->host;
-	काष्ठा ext4_sb_info *sbi = EXT4_SB(inode->i_sb);
-	काष्ठा dax_device *dax_dev = sbi->s_daxdev;
+static int ext4_file_mmap(struct file *file, struct vm_area_struct *vma)
+{
+	struct inode *inode = file->f_mapping->host;
+	struct ext4_sb_info *sbi = EXT4_SB(inode->i_sb);
+	struct dax_device *dax_dev = sbi->s_daxdev;
 
-	अगर (unlikely(ext4_क्रमced_shutकरोwn(sbi)))
-		वापस -EIO;
+	if (unlikely(ext4_forced_shutdown(sbi)))
+		return -EIO;
 
 	/*
-	 * We करोn't support synchronous mappings क्रम non-DAX files and
-	 * क्रम DAX files अगर underneath dax_device is not synchronous.
+	 * We don't support synchronous mappings for non-DAX files and
+	 * for DAX files if underneath dax_device is not synchronous.
 	 */
-	अगर (!daxdev_mapping_supported(vma, dax_dev))
-		वापस -EOPNOTSUPP;
+	if (!daxdev_mapping_supported(vma, dax_dev))
+		return -EOPNOTSUPP;
 
 	file_accessed(file);
-	अगर (IS_DAX(file_inode(file))) अणु
+	if (IS_DAX(file_inode(file))) {
 		vma->vm_ops = &ext4_dax_vm_ops;
 		vma->vm_flags |= VM_HUGEPAGE;
-	पूर्ण अन्यथा अणु
+	} else {
 		vma->vm_ops = &ext4_file_vm_ops;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल पूर्णांक ext4_sample_last_mounted(काष्ठा super_block *sb,
-				    काष्ठा vfsmount *mnt)
-अणु
-	काष्ठा ext4_sb_info *sbi = EXT4_SB(sb);
-	काष्ठा path path;
-	अक्षर buf[64], *cp;
+static int ext4_sample_last_mounted(struct super_block *sb,
+				    struct vfsmount *mnt)
+{
+	struct ext4_sb_info *sbi = EXT4_SB(sb);
+	struct path path;
+	char buf[64], *cp;
 	handle_t *handle;
-	पूर्णांक err;
+	int err;
 
-	अगर (likely(ext4_test_mount_flag(sb, EXT4_MF_MNTसूची_SAMPLED)))
-		वापस 0;
+	if (likely(ext4_test_mount_flag(sb, EXT4_MF_MNTDIR_SAMPLED)))
+		return 0;
 
-	अगर (sb_rकरोnly(sb) || !sb_start_पूर्णांकग_लिखो_trylock(sb))
-		वापस 0;
+	if (sb_rdonly(sb) || !sb_start_intwrite_trylock(sb))
+		return 0;
 
-	ext4_set_mount_flag(sb, EXT4_MF_MNTसूची_SAMPLED);
+	ext4_set_mount_flag(sb, EXT4_MF_MNTDIR_SAMPLED);
 	/*
-	 * Sample where the fileप्रणाली has been mounted and
-	 * store it in the superblock क्रम sysadmin convenience
+	 * Sample where the filesystem has been mounted and
+	 * store it in the superblock for sysadmin convenience
 	 * when trying to sort through large numbers of block
-	 * devices or fileप्रणाली images.
+	 * devices or filesystem images.
 	 */
-	स_रखो(buf, 0, माप(buf));
+	memset(buf, 0, sizeof(buf));
 	path.mnt = mnt;
 	path.dentry = mnt->mnt_root;
-	cp = d_path(&path, buf, माप(buf));
+	cp = d_path(&path, buf, sizeof(buf));
 	err = 0;
-	अगर (IS_ERR(cp))
-		जाओ out;
+	if (IS_ERR(cp))
+		goto out;
 
 	handle = ext4_journal_start_sb(sb, EXT4_HT_MISC, 1);
 	err = PTR_ERR(handle);
-	अगर (IS_ERR(handle))
-		जाओ out;
+	if (IS_ERR(handle))
+		goto out;
 	BUFFER_TRACE(sbi->s_sbh, "get_write_access");
-	err = ext4_journal_get_ग_लिखो_access(handle, sbi->s_sbh);
-	अगर (err)
-		जाओ out_journal;
+	err = ext4_journal_get_write_access(handle, sbi->s_sbh);
+	if (err)
+		goto out_journal;
 	lock_buffer(sbi->s_sbh);
-	म_नकलन(sbi->s_es->s_last_mounted, cp,
-		माप(sbi->s_es->s_last_mounted));
+	strncpy(sbi->s_es->s_last_mounted, cp,
+		sizeof(sbi->s_es->s_last_mounted));
 	ext4_superblock_csum_set(sb);
 	unlock_buffer(sbi->s_sbh);
-	ext4_handle_dirty_metadata(handle, शून्य, sbi->s_sbh);
+	ext4_handle_dirty_metadata(handle, NULL, sbi->s_sbh);
 out_journal:
 	ext4_journal_stop(handle);
 out:
-	sb_end_पूर्णांकग_लिखो(sb);
-	वापस err;
-पूर्ण
+	sb_end_intwrite(sb);
+	return err;
+}
 
-अटल पूर्णांक ext4_file_खोलो(काष्ठा inode *inode, काष्ठा file *filp)
-अणु
-	पूर्णांक ret;
+static int ext4_file_open(struct inode *inode, struct file *filp)
+{
+	int ret;
 
-	अगर (unlikely(ext4_क्रमced_shutकरोwn(EXT4_SB(inode->i_sb))))
-		वापस -EIO;
+	if (unlikely(ext4_forced_shutdown(EXT4_SB(inode->i_sb))))
+		return -EIO;
 
 	ret = ext4_sample_last_mounted(inode->i_sb, filp->f_path.mnt);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	ret = fscrypt_file_खोलो(inode, filp);
-	अगर (ret)
-		वापस ret;
+	ret = fscrypt_file_open(inode, filp);
+	if (ret)
+		return ret;
 
-	ret = fsverity_file_खोलो(inode, filp);
-	अगर (ret)
-		वापस ret;
+	ret = fsverity_file_open(inode, filp);
+	if (ret)
+		return ret;
 
 	/*
-	 * Set up the jbd2_inode अगर we are खोलोing the inode क्रम
+	 * Set up the jbd2_inode if we are opening the inode for
 	 * writing and the journal is present
 	 */
-	अगर (filp->f_mode & FMODE_WRITE) अणु
+	if (filp->f_mode & FMODE_WRITE) {
 		ret = ext4_inode_attach_jinode(inode);
-		अगर (ret < 0)
-			वापस ret;
-	पूर्ण
+		if (ret < 0)
+			return ret;
+	}
 
 	filp->f_mode |= FMODE_NOWAIT | FMODE_BUF_RASYNC;
-	वापस dquot_file_खोलो(inode, filp);
-पूर्ण
+	return dquot_file_open(inode, filp);
+}
 
 /*
  * ext4_llseek() handles both block-mapped and extent-mapped maxbytes values
  * by calling generic_file_llseek_size() with the appropriate maxbytes
- * value क्रम each.
+ * value for each.
  */
-loff_t ext4_llseek(काष्ठा file *file, loff_t offset, पूर्णांक whence)
-अणु
-	काष्ठा inode *inode = file->f_mapping->host;
+loff_t ext4_llseek(struct file *file, loff_t offset, int whence)
+{
+	struct inode *inode = file->f_mapping->host;
 	loff_t maxbytes;
 
-	अगर (!(ext4_test_inode_flag(inode, EXT4_INODE_EXTENTS)))
-		maxbytes = EXT4_SB(inode->i_sb)->s_biपंचांगap_maxbytes;
-	अन्यथा
+	if (!(ext4_test_inode_flag(inode, EXT4_INODE_EXTENTS)))
+		maxbytes = EXT4_SB(inode->i_sb)->s_bitmap_maxbytes;
+	else
 		maxbytes = inode->i_sb->s_maxbytes;
 
-	चयन (whence) अणु
-	शेष:
-		वापस generic_file_llseek_size(file, offset, whence,
-						maxbytes, i_size_पढ़ो(inode));
-	हाल SEEK_HOLE:
+	switch (whence) {
+	default:
+		return generic_file_llseek_size(file, offset, whence,
+						maxbytes, i_size_read(inode));
+	case SEEK_HOLE:
 		inode_lock_shared(inode);
 		offset = iomap_seek_hole(inode, offset,
 					 &ext4_iomap_report_ops);
 		inode_unlock_shared(inode);
-		अवरोध;
-	हाल SEEK_DATA:
+		break;
+	case SEEK_DATA:
 		inode_lock_shared(inode);
 		offset = iomap_seek_data(inode, offset,
 					 &ext4_iomap_report_ops);
 		inode_unlock_shared(inode);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	अगर (offset < 0)
-		वापस offset;
-	वापस vfs_setpos(file, offset, maxbytes);
-पूर्ण
+	if (offset < 0)
+		return offset;
+	return vfs_setpos(file, offset, maxbytes);
+}
 
-स्थिर काष्ठा file_operations ext4_file_operations = अणु
+const struct file_operations ext4_file_operations = {
 	.llseek		= ext4_llseek,
-	.पढ़ो_iter	= ext4_file_पढ़ो_iter,
-	.ग_लिखो_iter	= ext4_file_ग_लिखो_iter,
+	.read_iter	= ext4_file_read_iter,
+	.write_iter	= ext4_file_write_iter,
 	.iopoll		= iomap_dio_iopoll,
 	.unlocked_ioctl = ext4_ioctl,
-#अगर_घोषित CONFIG_COMPAT
+#ifdef CONFIG_COMPAT
 	.compat_ioctl	= ext4_compat_ioctl,
-#पूर्ण_अगर
+#endif
 	.mmap		= ext4_file_mmap,
 	.mmap_supported_flags = MAP_SYNC,
-	.खोलो		= ext4_file_खोलो,
+	.open		= ext4_file_open,
 	.release	= ext4_release_file,
 	.fsync		= ext4_sync_file,
 	.get_unmapped_area = thp_get_unmapped_area,
-	.splice_पढ़ो	= generic_file_splice_पढ़ो,
-	.splice_ग_लिखो	= iter_file_splice_ग_लिखो,
+	.splice_read	= generic_file_splice_read,
+	.splice_write	= iter_file_splice_write,
 	.fallocate	= ext4_fallocate,
-पूर्ण;
+};
 
-स्थिर काष्ठा inode_operations ext4_file_inode_operations = अणु
+const struct inode_operations ext4_file_inode_operations = {
 	.setattr	= ext4_setattr,
 	.getattr	= ext4_file_getattr,
 	.listxattr	= ext4_listxattr,
@@ -939,5 +938,5 @@ loff_t ext4_llseek(काष्ठा file *file, loff_t offset, पूर्ण
 	.fiemap		= ext4_fiemap,
 	.fileattr_get	= ext4_fileattr_get,
 	.fileattr_set	= ext4_fileattr_set,
-पूर्ण;
+};
 

@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * User space memory access functions
  *
@@ -11,35 +10,35 @@
  *              Copyright (C) 1996, 1997, 1998 by Ralf Baechle
  *     and i386 version.
  */
-#अगर_अघोषित __ASM_SH_UACCESS_32_H
-#घोषणा __ASM_SH_UACCESS_32_H
+#ifndef __ASM_SH_UACCESS_32_H
+#define __ASM_SH_UACCESS_32_H
 
-#घोषणा __get_user_size(x,ptr,size,retval)			\
-करो अणु								\
+#define __get_user_size(x,ptr,size,retval)			\
+do {								\
 	retval = 0;						\
-	चयन (size) अणु						\
-	हाल 1:							\
-		__get_user_यंत्र(x, ptr, retval, "b");		\
-		अवरोध;						\
-	हाल 2:							\
-		__get_user_यंत्र(x, ptr, retval, "w");		\
-		अवरोध;						\
-	हाल 4:							\
-		__get_user_यंत्र(x, ptr, retval, "l");		\
-		अवरोध;						\
-	हाल 8:							\
+	switch (size) {						\
+	case 1:							\
+		__get_user_asm(x, ptr, retval, "b");		\
+		break;						\
+	case 2:							\
+		__get_user_asm(x, ptr, retval, "w");		\
+		break;						\
+	case 4:							\
+		__get_user_asm(x, ptr, retval, "l");		\
+		break;						\
+	case 8:							\
 		__get_user_u64(x, ptr, retval);			\
-		अवरोध;						\
-	शेष:						\
+		break;						\
+	default:						\
 		__get_user_unknown();				\
-		अवरोध;						\
-	पूर्ण							\
-पूर्ण जबतक (0)
+		break;						\
+	}							\
+} while (0)
 
-#अगर_घोषित CONFIG_MMU
-#घोषणा __get_user_यंत्र(x, addr, err, insn) \
-(अणु \
-__यंत्र__ __अस्थिर__( \
+#ifdef CONFIG_MMU
+#define __get_user_asm(x, addr, err, insn) \
+({ \
+__asm__ __volatile__( \
 	"1:\n\t" \
 	"mov." insn "	%2, %1\n\t" \
 	"2:\n" \
@@ -56,24 +55,24 @@ __यंत्र__ __अस्थिर__( \
 	".long	1b, 3b\n\t" \
 	".previous" \
 	:"=&r" (err), "=&r" (x) \
-	:"m" (__m(addr)), "i" (-EFAULT), "0" (err)); पूर्ण)
-#अन्यथा
-#घोषणा __get_user_यंत्र(x, addr, err, insn)		\
-करो अणु							\
-	__यंत्र__ __अस्थिर__ (				\
+	:"m" (__m(addr)), "i" (-EFAULT), "0" (err)); })
+#else
+#define __get_user_asm(x, addr, err, insn)		\
+do {							\
+	__asm__ __volatile__ (				\
 		"mov." insn "	%1, %0\n\t"		\
 		: "=&r" (x)				\
 		: "m" (__m(addr))			\
 	);						\
-पूर्ण जबतक (0)
-#पूर्ण_अगर /* CONFIG_MMU */
+} while (0)
+#endif /* CONFIG_MMU */
 
-बाह्य व्योम __get_user_unknown(व्योम);
+extern void __get_user_unknown(void);
 
-#अगर defined(CONFIG_CPU_LITTLE_ENDIAN)
-#घोषणा __get_user_u64(x, addr, err) \
-(अणु \
-__यंत्र__ __अस्थिर__( \
+#if defined(CONFIG_CPU_LITTLE_ENDIAN)
+#define __get_user_u64(x, addr, err) \
+({ \
+__asm__ __volatile__( \
 	"1:\n\t" \
 	"mov.l	%2,%R1\n\t" \
 	"mov.l	%T2,%S1\n\t" \
@@ -93,11 +92,11 @@ __यंत्र__ __अस्थिर__( \
 	".long	1b + 2, 3b\n\t" \
 	".previous" \
 	:"=&r" (err), "=&r" (x) \
-	:"m" (__m(addr)), "i" (-EFAULT), "0" (err)); पूर्ण)
-#अन्यथा
-#घोषणा __get_user_u64(x, addr, err) \
-(अणु \
-__यंत्र__ __अस्थिर__( \
+	:"m" (__m(addr)), "i" (-EFAULT), "0" (err)); })
+#else
+#define __get_user_u64(x, addr, err) \
+({ \
+__asm__ __volatile__( \
 	"1:\n\t" \
 	"mov.l	%2,%S1\n\t" \
 	"mov.l	%T2,%R1\n\t" \
@@ -117,34 +116,34 @@ __यंत्र__ __अस्थिर__( \
 	".long	1b + 2, 3b\n\t" \
 	".previous" \
 	:"=&r" (err), "=&r" (x) \
-	:"m" (__m(addr)), "i" (-EFAULT), "0" (err)); पूर्ण)
-#पूर्ण_अगर
+	:"m" (__m(addr)), "i" (-EFAULT), "0" (err)); })
+#endif
 
-#घोषणा __put_user_size(x,ptr,size,retval)		\
-करो अणु							\
+#define __put_user_size(x,ptr,size,retval)		\
+do {							\
 	retval = 0;					\
-	चयन (size) अणु					\
-	हाल 1:						\
-		__put_user_यंत्र(x, ptr, retval, "b");	\
-		अवरोध;					\
-	हाल 2:						\
-		__put_user_यंत्र(x, ptr, retval, "w");	\
-		अवरोध;					\
-	हाल 4:						\
-		__put_user_यंत्र(x, ptr, retval, "l");	\
-		अवरोध;					\
-	हाल 8:						\
+	switch (size) {					\
+	case 1:						\
+		__put_user_asm(x, ptr, retval, "b");	\
+		break;					\
+	case 2:						\
+		__put_user_asm(x, ptr, retval, "w");	\
+		break;					\
+	case 4:						\
+		__put_user_asm(x, ptr, retval, "l");	\
+		break;					\
+	case 8:						\
 		__put_user_u64(x, ptr, retval);		\
-		अवरोध;					\
-	शेष:					\
+		break;					\
+	default:					\
 		__put_user_unknown();			\
-	पूर्ण						\
-पूर्ण जबतक (0)
+	}						\
+} while (0)
 
-#अगर_घोषित CONFIG_MMU
-#घोषणा __put_user_यंत्र(x, addr, err, insn)			\
-करो अणु								\
-	__यंत्र__ __अस्थिर__ (					\
+#ifdef CONFIG_MMU
+#define __put_user_asm(x, addr, err, insn)			\
+do {								\
+	__asm__ __volatile__ (					\
 		"1:\n\t"					\
 		"mov." insn "	%1, %2\n\t"			\
 		"2:\n"						\
@@ -164,23 +163,23 @@ __यंत्र__ __अस्थिर__( \
 		  "0" (err)					\
 		: "memory"					\
 	);							\
-पूर्ण जबतक (0)
-#अन्यथा
-#घोषणा __put_user_यंत्र(x, addr, err, insn)		\
-करो अणु							\
-	__यंत्र__ __अस्थिर__ (				\
+} while (0)
+#else
+#define __put_user_asm(x, addr, err, insn)		\
+do {							\
+	__asm__ __volatile__ (				\
 		"mov." insn "	%0, %1\n\t"		\
-		: /* no outमाला_दो */			\
+		: /* no outputs */			\
 		: "r" (x), "m" (__m(addr))		\
 		: "memory"				\
 	);						\
-पूर्ण जबतक (0)
-#पूर्ण_अगर /* CONFIG_MMU */
+} while (0)
+#endif /* CONFIG_MMU */
 
-#अगर defined(CONFIG_CPU_LITTLE_ENDIAN)
-#घोषणा __put_user_u64(val,addr,retval) \
-(अणु \
-__यंत्र__ __अस्थिर__( \
+#if defined(CONFIG_CPU_LITTLE_ENDIAN)
+#define __put_user_u64(val,addr,retval) \
+({ \
+__asm__ __volatile__( \
 	"1:\n\t" \
 	"mov.l	%R1,%2\n\t" \
 	"mov.l	%S1,%T2\n\t" \
@@ -198,11 +197,11 @@ __यंत्र__ __अस्थिर__( \
 	".previous" \
 	: "=r" (retval) \
 	: "r" (val), "m" (__m(addr)), "i" (-EFAULT), "0" (retval) \
-        : "memory"); पूर्ण)
-#अन्यथा
-#घोषणा __put_user_u64(val,addr,retval) \
-(अणु \
-__यंत्र__ __अस्थिर__( \
+        : "memory"); })
+#else
+#define __put_user_u64(val,addr,retval) \
+({ \
+__asm__ __volatile__( \
 	"1:\n\t" \
 	"mov.l	%S1,%2\n\t" \
 	"mov.l	%R1,%T2\n\t" \
@@ -220,9 +219,9 @@ __यंत्र__ __अस्थिर__( \
 	".previous" \
 	: "=r" (retval) \
 	: "r" (val), "m" (__m(addr)), "i" (-EFAULT), "0" (retval) \
-        : "memory"); पूर्ण)
-#पूर्ण_अगर
+        : "memory"); })
+#endif
 
-बाह्य व्योम __put_user_unknown(व्योम);
+extern void __put_user_unknown(void);
 
-#पूर्ण_अगर /* __ASM_SH_UACCESS_32_H */
+#endif /* __ASM_SH_UACCESS_32_H */

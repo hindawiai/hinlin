@@ -1,15 +1,14 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * Infineon TUA9001 silicon tuner driver
  *
  * Copyright (C) 2009 Antti Palosaari <crope@iki.fi>
  */
 
-#अगर_अघोषित TUA9001_H
-#घोषणा TUA9001_H
+#ifndef TUA9001_H
+#define TUA9001_H
 
-#समावेश <media/dvb_frontend.h>
+#include <media/dvb_frontend.h>
 
 /*
  * I2C address
@@ -17,12 +16,12 @@
  */
 
 /**
- * काष्ठा tua9001_platक्रमm_data - Platक्रमm data क्रम the tua9001 driver
+ * struct tua9001_platform_data - Platform data for the tua9001 driver
  * @dvb_frontend: DVB frontend.
  */
-काष्ठा tua9001_platक्रमm_data अणु
-	काष्ठा dvb_frontend *dvb_frontend;
-पूर्ण;
+struct tua9001_platform_data {
+	struct dvb_frontend *dvb_frontend;
+};
 
 /*
  * TUA9001 I/O PINs:
@@ -40,8 +39,8 @@
  * 1 = RX enabled (chip tuned)
  */
 
-#घोषणा TUA9001_CMD_CEN     0
-#घोषणा TUA9001_CMD_RESETN  1
-#घोषणा TUA9001_CMD_RXEN    2
+#define TUA9001_CMD_CEN     0
+#define TUA9001_CMD_RESETN  1
+#define TUA9001_CMD_RXEN    2
 
-#पूर्ण_अगर
+#endif

@@ -1,86 +1,85 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /* Copyright (c) 2014      Protonic Holland,
  *                         David Jander
  * Copyright (C) 2014-2017 Pengutronix,
  *                         Marc Kleine-Budde <kernel@pengutronix.de>
  */
 
-#समावेश <linux/can/dev.h>
-#समावेश <linux/can/rx-offload.h>
+#include <linux/can/dev.h>
+#include <linux/can/rx-offload.h>
 
-काष्ठा can_rx_offload_cb अणु
-	u32 बारtamp;
-पूर्ण;
+struct can_rx_offload_cb {
+	u32 timestamp;
+};
 
-अटल अंतरभूत काष्ठा can_rx_offload_cb *
-can_rx_offload_get_cb(काष्ठा sk_buff *skb)
-अणु
-	BUILD_BUG_ON(माप(काष्ठा can_rx_offload_cb) > माप(skb->cb));
+static inline struct can_rx_offload_cb *
+can_rx_offload_get_cb(struct sk_buff *skb)
+{
+	BUILD_BUG_ON(sizeof(struct can_rx_offload_cb) > sizeof(skb->cb));
 
-	वापस (काष्ठा can_rx_offload_cb *)skb->cb;
-पूर्ण
+	return (struct can_rx_offload_cb *)skb->cb;
+}
 
-अटल अंतरभूत bool
-can_rx_offload_le(काष्ठा can_rx_offload *offload,
-		  अचिन्हित पूर्णांक a, अचिन्हित पूर्णांक b)
-अणु
-	अगर (offload->inc)
-		वापस a <= b;
-	अन्यथा
-		वापस a >= b;
-पूर्ण
+static inline bool
+can_rx_offload_le(struct can_rx_offload *offload,
+		  unsigned int a, unsigned int b)
+{
+	if (offload->inc)
+		return a <= b;
+	else
+		return a >= b;
+}
 
-अटल अंतरभूत अचिन्हित पूर्णांक
-can_rx_offload_inc(काष्ठा can_rx_offload *offload, अचिन्हित पूर्णांक *val)
-अणु
-	अगर (offload->inc)
-		वापस (*val)++;
-	अन्यथा
-		वापस (*val)--;
-पूर्ण
+static inline unsigned int
+can_rx_offload_inc(struct can_rx_offload *offload, unsigned int *val)
+{
+	if (offload->inc)
+		return (*val)++;
+	else
+		return (*val)--;
+}
 
-अटल पूर्णांक can_rx_offload_napi_poll(काष्ठा napi_काष्ठा *napi, पूर्णांक quota)
-अणु
-	काष्ठा can_rx_offload *offload = container_of(napi,
-						      काष्ठा can_rx_offload,
+static int can_rx_offload_napi_poll(struct napi_struct *napi, int quota)
+{
+	struct can_rx_offload *offload = container_of(napi,
+						      struct can_rx_offload,
 						      napi);
-	काष्ठा net_device *dev = offload->dev;
-	काष्ठा net_device_stats *stats = &dev->stats;
-	काष्ठा sk_buff *skb;
-	पूर्णांक work_करोne = 0;
+	struct net_device *dev = offload->dev;
+	struct net_device_stats *stats = &dev->stats;
+	struct sk_buff *skb;
+	int work_done = 0;
 
-	जबतक ((work_करोne < quota) &&
-	       (skb = skb_dequeue(&offload->skb_queue))) अणु
-		काष्ठा can_frame *cf = (काष्ठा can_frame *)skb->data;
+	while ((work_done < quota) &&
+	       (skb = skb_dequeue(&offload->skb_queue))) {
+		struct can_frame *cf = (struct can_frame *)skb->data;
 
-		work_करोne++;
+		work_done++;
 		stats->rx_packets++;
 		stats->rx_bytes += cf->len;
-		netअगर_receive_skb(skb);
-	पूर्ण
+		netif_receive_skb(skb);
+	}
 
-	अगर (work_करोne < quota) अणु
-		napi_complete_करोne(napi, work_करोne);
+	if (work_done < quota) {
+		napi_complete_done(napi, work_done);
 
-		/* Check अगर there was another पूर्णांकerrupt */
-		अगर (!skb_queue_empty(&offload->skb_queue))
+		/* Check if there was another interrupt */
+		if (!skb_queue_empty(&offload->skb_queue))
 			napi_reschedule(&offload->napi);
-	पूर्ण
+	}
 
 	can_led_event(offload->dev, CAN_LED_EVENT_RX);
 
-	वापस work_करोne;
-पूर्ण
+	return work_done;
+}
 
-अटल अंतरभूत व्योम
-__skb_queue_add_sort(काष्ठा sk_buff_head *head, काष्ठा sk_buff *new,
-		     पूर्णांक (*compare)(काष्ठा sk_buff *a, काष्ठा sk_buff *b))
-अणु
-	काष्ठा sk_buff *pos, *insert = शून्य;
+static inline void
+__skb_queue_add_sort(struct sk_buff_head *head, struct sk_buff *new,
+		     int (*compare)(struct sk_buff *a, struct sk_buff *b))
+{
+	struct sk_buff *pos, *insert = NULL;
 
-	skb_queue_reverse_walk(head, pos) अणु
-		स्थिर काष्ठा can_rx_offload_cb *cb_pos, *cb_new;
+	skb_queue_reverse_walk(head, pos) {
+		const struct can_rx_offload_cb *cb_pos, *cb_new;
 
 		cb_pos = can_rx_offload_get_cb(pos);
 		cb_new = can_rx_offload_get_cb(new);
@@ -88,115 +87,115 @@ __skb_queue_add_sort(काष्ठा sk_buff_head *head, काष्ठा s
 		netdev_dbg(new->dev,
 			   "%s: pos=0x%08x, new=0x%08x, diff=%10d, queue_len=%d\n",
 			   __func__,
-			   cb_pos->बारtamp, cb_new->बारtamp,
-			   cb_new->बारtamp - cb_pos->बारtamp,
+			   cb_pos->timestamp, cb_new->timestamp,
+			   cb_new->timestamp - cb_pos->timestamp,
 			   skb_queue_len(head));
 
-		अगर (compare(pos, new) < 0)
-			जारी;
+		if (compare(pos, new) < 0)
+			continue;
 		insert = pos;
-		अवरोध;
-	पूर्ण
-	अगर (!insert)
+		break;
+	}
+	if (!insert)
 		__skb_queue_head(head, new);
-	अन्यथा
+	else
 		__skb_queue_after(head, insert, new);
-पूर्ण
+}
 
-अटल पूर्णांक can_rx_offload_compare(काष्ठा sk_buff *a, काष्ठा sk_buff *b)
-अणु
-	स्थिर काष्ठा can_rx_offload_cb *cb_a, *cb_b;
+static int can_rx_offload_compare(struct sk_buff *a, struct sk_buff *b)
+{
+	const struct can_rx_offload_cb *cb_a, *cb_b;
 
 	cb_a = can_rx_offload_get_cb(a);
 	cb_b = can_rx_offload_get_cb(b);
 
-	/* Subtract two u32 and वापस result as पूर्णांक, to keep
-	 * dअगरference steady around the u32 overflow.
+	/* Subtract two u32 and return result as int, to keep
+	 * difference steady around the u32 overflow.
 	 */
-	वापस cb_b->बारtamp - cb_a->बारtamp;
-पूर्ण
+	return cb_b->timestamp - cb_a->timestamp;
+}
 
 /**
  * can_rx_offload_offload_one() - Read one CAN frame from HW
- * @offload: poपूर्णांकer to rx_offload context
- * @n: number of mailbox to पढ़ो
+ * @offload: pointer to rx_offload context
+ * @n: number of mailbox to read
  *
- * The task of this function is to पढ़ो a CAN frame from mailbox @n
- * from the device and वापस the mailbox's content as a काष्ठा
+ * The task of this function is to read a CAN frame from mailbox @n
+ * from the device and return the mailbox's content as a struct
  * sk_buff.
  *
- * If the काष्ठा can_rx_offload::skb_queue exceeds the maximal queue
- * length (काष्ठा can_rx_offload::skb_queue_len_max) or no skb can be
- * allocated, the mailbox contents is discarded by पढ़ोing it पूर्णांकo an
- * overflow buffer. This way the mailbox is marked as मुक्त by the
+ * If the struct can_rx_offload::skb_queue exceeds the maximal queue
+ * length (struct can_rx_offload::skb_queue_len_max) or no skb can be
+ * allocated, the mailbox contents is discarded by reading it into an
+ * overflow buffer. This way the mailbox is marked as free by the
  * driver.
  *
- * Return: A poपूर्णांकer to skb containing the CAN frame on success.
+ * Return: A pointer to skb containing the CAN frame on success.
  *
- *         शून्य अगर the mailbox @n is empty.
+ *         NULL if the mailbox @n is empty.
  *
- *         ERR_PTR() in हाल of an error
+ *         ERR_PTR() in case of an error
  */
-अटल काष्ठा sk_buff *
-can_rx_offload_offload_one(काष्ठा can_rx_offload *offload, अचिन्हित पूर्णांक n)
-अणु
-	काष्ठा sk_buff *skb;
-	काष्ठा can_rx_offload_cb *cb;
+static struct sk_buff *
+can_rx_offload_offload_one(struct can_rx_offload *offload, unsigned int n)
+{
+	struct sk_buff *skb;
+	struct can_rx_offload_cb *cb;
 	bool drop = false;
-	u32 बारtamp;
+	u32 timestamp;
 
 	/* If queue is full drop frame */
-	अगर (unlikely(skb_queue_len(&offload->skb_queue) >
+	if (unlikely(skb_queue_len(&offload->skb_queue) >
 		     offload->skb_queue_len_max))
 		drop = true;
 
-	skb = offload->mailbox_पढ़ो(offload, n, &बारtamp, drop);
+	skb = offload->mailbox_read(offload, n, &timestamp, drop);
 	/* Mailbox was empty. */
-	अगर (unlikely(!skb))
-		वापस शून्य;
+	if (unlikely(!skb))
+		return NULL;
 
-	/* There was a problem पढ़ोing the mailbox, propagate
+	/* There was a problem reading the mailbox, propagate
 	 * error value.
 	 */
-	अगर (IS_ERR(skb)) अणु
+	if (IS_ERR(skb)) {
 		offload->dev->stats.rx_dropped++;
-		offload->dev->stats.rx_fअगरo_errors++;
+		offload->dev->stats.rx_fifo_errors++;
 
-		वापस skb;
-	पूर्ण
+		return skb;
+	}
 
-	/* Mailbox was पढ़ो. */
+	/* Mailbox was read. */
 	cb = can_rx_offload_get_cb(skb);
-	cb->बारtamp = बारtamp;
+	cb->timestamp = timestamp;
 
-	वापस skb;
-पूर्ण
+	return skb;
+}
 
-पूर्णांक can_rx_offload_irq_offload_बारtamp(काष्ठा can_rx_offload *offload,
+int can_rx_offload_irq_offload_timestamp(struct can_rx_offload *offload,
 					 u64 pending)
-अणु
-	काष्ठा sk_buff_head skb_queue;
-	अचिन्हित पूर्णांक i;
+{
+	struct sk_buff_head skb_queue;
+	unsigned int i;
 
 	__skb_queue_head_init(&skb_queue);
 
-	क्रम (i = offload->mb_first;
+	for (i = offload->mb_first;
 	     can_rx_offload_le(offload, i, offload->mb_last);
-	     can_rx_offload_inc(offload, &i)) अणु
-		काष्ठा sk_buff *skb;
+	     can_rx_offload_inc(offload, &i)) {
+		struct sk_buff *skb;
 
-		अगर (!(pending & BIT_ULL(i)))
-			जारी;
+		if (!(pending & BIT_ULL(i)))
+			continue;
 
 		skb = can_rx_offload_offload_one(offload, i);
-		अगर (IS_ERR_OR_शून्य(skb))
-			जारी;
+		if (IS_ERR_OR_NULL(skb))
+			continue;
 
 		__skb_queue_add_sort(&skb_queue, skb, can_rx_offload_compare);
-	पूर्ण
+	}
 
-	अगर (!skb_queue_empty(&skb_queue)) अणु
-		अचिन्हित दीर्घ flags;
+	if (!skb_queue_empty(&skb_queue)) {
+		unsigned long flags;
 		u32 queue_len;
 
 		spin_lock_irqsave(&offload->skb_queue.lock, flags);
@@ -204,54 +203,54 @@ can_rx_offload_offload_one(काष्ठा can_rx_offload *offload, अचि
 		spin_unlock_irqrestore(&offload->skb_queue.lock, flags);
 
 		queue_len = skb_queue_len(&offload->skb_queue);
-		अगर (queue_len > offload->skb_queue_len_max / 8)
+		if (queue_len > offload->skb_queue_len_max / 8)
 			netdev_dbg(offload->dev, "%s: queue_len=%d\n",
 				   __func__, queue_len);
 
 		can_rx_offload_schedule(offload);
-	पूर्ण
+	}
 
-	वापस skb_queue_len(&skb_queue);
-पूर्ण
-EXPORT_SYMBOL_GPL(can_rx_offload_irq_offload_बारtamp);
+	return skb_queue_len(&skb_queue);
+}
+EXPORT_SYMBOL_GPL(can_rx_offload_irq_offload_timestamp);
 
-पूर्णांक can_rx_offload_irq_offload_fअगरo(काष्ठा can_rx_offload *offload)
-अणु
-	काष्ठा sk_buff *skb;
-	पूर्णांक received = 0;
+int can_rx_offload_irq_offload_fifo(struct can_rx_offload *offload)
+{
+	struct sk_buff *skb;
+	int received = 0;
 
-	जबतक (1) अणु
+	while (1) {
 		skb = can_rx_offload_offload_one(offload, 0);
-		अगर (IS_ERR(skb))
-			जारी;
-		अगर (!skb)
-			अवरोध;
+		if (IS_ERR(skb))
+			continue;
+		if (!skb)
+			break;
 
 		skb_queue_tail(&offload->skb_queue, skb);
 		received++;
-	पूर्ण
+	}
 
-	अगर (received)
+	if (received)
 		can_rx_offload_schedule(offload);
 
-	वापस received;
-पूर्ण
-EXPORT_SYMBOL_GPL(can_rx_offload_irq_offload_fअगरo);
+	return received;
+}
+EXPORT_SYMBOL_GPL(can_rx_offload_irq_offload_fifo);
 
-पूर्णांक can_rx_offload_queue_sorted(काष्ठा can_rx_offload *offload,
-				काष्ठा sk_buff *skb, u32 बारtamp)
-अणु
-	काष्ठा can_rx_offload_cb *cb;
-	अचिन्हित दीर्घ flags;
+int can_rx_offload_queue_sorted(struct can_rx_offload *offload,
+				struct sk_buff *skb, u32 timestamp)
+{
+	struct can_rx_offload_cb *cb;
+	unsigned long flags;
 
-	अगर (skb_queue_len(&offload->skb_queue) >
-	    offload->skb_queue_len_max) अणु
-		dev_kमुक्त_skb_any(skb);
-		वापस -ENOBUFS;
-	पूर्ण
+	if (skb_queue_len(&offload->skb_queue) >
+	    offload->skb_queue_len_max) {
+		dev_kfree_skb_any(skb);
+		return -ENOBUFS;
+	}
 
 	cb = can_rx_offload_get_cb(skb);
-	cb->बारtamp = बारtamp;
+	cb->timestamp = timestamp;
 
 	spin_lock_irqsave(&offload->skb_queue.lock, flags);
 	__skb_queue_add_sort(&offload->skb_queue, skb, can_rx_offload_compare);
@@ -259,120 +258,120 @@ EXPORT_SYMBOL_GPL(can_rx_offload_irq_offload_fअगरo);
 
 	can_rx_offload_schedule(offload);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(can_rx_offload_queue_sorted);
 
-अचिन्हित पूर्णांक can_rx_offload_get_echo_skb(काष्ठा can_rx_offload *offload,
-					 अचिन्हित पूर्णांक idx, u32 बारtamp,
-					 अचिन्हित पूर्णांक *frame_len_ptr)
-अणु
-	काष्ठा net_device *dev = offload->dev;
-	काष्ठा net_device_stats *stats = &dev->stats;
-	काष्ठा sk_buff *skb;
+unsigned int can_rx_offload_get_echo_skb(struct can_rx_offload *offload,
+					 unsigned int idx, u32 timestamp,
+					 unsigned int *frame_len_ptr)
+{
+	struct net_device *dev = offload->dev;
+	struct net_device_stats *stats = &dev->stats;
+	struct sk_buff *skb;
 	u8 len;
-	पूर्णांक err;
+	int err;
 
 	skb = __can_get_echo_skb(dev, idx, &len, frame_len_ptr);
-	अगर (!skb)
-		वापस 0;
+	if (!skb)
+		return 0;
 
-	err = can_rx_offload_queue_sorted(offload, skb, बारtamp);
-	अगर (err) अणु
+	err = can_rx_offload_queue_sorted(offload, skb, timestamp);
+	if (err) {
 		stats->rx_errors++;
-		stats->tx_fअगरo_errors++;
-	पूर्ण
+		stats->tx_fifo_errors++;
+	}
 
-	वापस len;
-पूर्ण
+	return len;
+}
 EXPORT_SYMBOL_GPL(can_rx_offload_get_echo_skb);
 
-पूर्णांक can_rx_offload_queue_tail(काष्ठा can_rx_offload *offload,
-			      काष्ठा sk_buff *skb)
-अणु
-	अगर (skb_queue_len(&offload->skb_queue) >
-	    offload->skb_queue_len_max) अणु
-		dev_kमुक्त_skb_any(skb);
-		वापस -ENOBUFS;
-	पूर्ण
+int can_rx_offload_queue_tail(struct can_rx_offload *offload,
+			      struct sk_buff *skb)
+{
+	if (skb_queue_len(&offload->skb_queue) >
+	    offload->skb_queue_len_max) {
+		dev_kfree_skb_any(skb);
+		return -ENOBUFS;
+	}
 
 	skb_queue_tail(&offload->skb_queue, skb);
 	can_rx_offload_schedule(offload);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(can_rx_offload_queue_tail);
 
-अटल पूर्णांक can_rx_offload_init_queue(काष्ठा net_device *dev,
-				     काष्ठा can_rx_offload *offload,
-				     अचिन्हित पूर्णांक weight)
-अणु
+static int can_rx_offload_init_queue(struct net_device *dev,
+				     struct can_rx_offload *offload,
+				     unsigned int weight)
+{
 	offload->dev = dev;
 
-	/* Limit queue len to 4x the weight (rounted to next घातer of two) */
+	/* Limit queue len to 4x the weight (rounted to next power of two) */
 	offload->skb_queue_len_max = 2 << fls(weight);
 	offload->skb_queue_len_max *= 4;
 	skb_queue_head_init(&offload->skb_queue);
 
-	netअगर_napi_add(dev, &offload->napi, can_rx_offload_napi_poll, weight);
+	netif_napi_add(dev, &offload->napi, can_rx_offload_napi_poll, weight);
 
 	dev_dbg(dev->dev.parent, "%s: skb_queue_len_max=%d\n",
 		__func__, offload->skb_queue_len_max);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक can_rx_offload_add_बारtamp(काष्ठा net_device *dev,
-				 काष्ठा can_rx_offload *offload)
-अणु
-	अचिन्हित पूर्णांक weight;
+int can_rx_offload_add_timestamp(struct net_device *dev,
+				 struct can_rx_offload *offload)
+{
+	unsigned int weight;
 
-	अगर (offload->mb_first > BITS_PER_LONG_LONG ||
-	    offload->mb_last > BITS_PER_LONG_LONG || !offload->mailbox_पढ़ो)
-		वापस -EINVAL;
+	if (offload->mb_first > BITS_PER_LONG_LONG ||
+	    offload->mb_last > BITS_PER_LONG_LONG || !offload->mailbox_read)
+		return -EINVAL;
 
-	अगर (offload->mb_first < offload->mb_last) अणु
+	if (offload->mb_first < offload->mb_last) {
 		offload->inc = true;
 		weight = offload->mb_last - offload->mb_first;
-	पूर्ण अन्यथा अणु
+	} else {
 		offload->inc = false;
 		weight = offload->mb_first - offload->mb_last;
-	पूर्ण
+	}
 
-	वापस can_rx_offload_init_queue(dev, offload, weight);
-पूर्ण
-EXPORT_SYMBOL_GPL(can_rx_offload_add_बारtamp);
+	return can_rx_offload_init_queue(dev, offload, weight);
+}
+EXPORT_SYMBOL_GPL(can_rx_offload_add_timestamp);
 
-पूर्णांक can_rx_offload_add_fअगरo(काष्ठा net_device *dev,
-			    काष्ठा can_rx_offload *offload, अचिन्हित पूर्णांक weight)
-अणु
-	अगर (!offload->mailbox_पढ़ो)
-		वापस -EINVAL;
+int can_rx_offload_add_fifo(struct net_device *dev,
+			    struct can_rx_offload *offload, unsigned int weight)
+{
+	if (!offload->mailbox_read)
+		return -EINVAL;
 
-	वापस can_rx_offload_init_queue(dev, offload, weight);
-पूर्ण
-EXPORT_SYMBOL_GPL(can_rx_offload_add_fअगरo);
+	return can_rx_offload_init_queue(dev, offload, weight);
+}
+EXPORT_SYMBOL_GPL(can_rx_offload_add_fifo);
 
-पूर्णांक can_rx_offload_add_manual(काष्ठा net_device *dev,
-			      काष्ठा can_rx_offload *offload,
-			      अचिन्हित पूर्णांक weight)
-अणु
-	अगर (offload->mailbox_पढ़ो)
-		वापस -EINVAL;
+int can_rx_offload_add_manual(struct net_device *dev,
+			      struct can_rx_offload *offload,
+			      unsigned int weight)
+{
+	if (offload->mailbox_read)
+		return -EINVAL;
 
-	वापस can_rx_offload_init_queue(dev, offload, weight);
-पूर्ण
+	return can_rx_offload_init_queue(dev, offload, weight);
+}
 EXPORT_SYMBOL_GPL(can_rx_offload_add_manual);
 
-व्योम can_rx_offload_enable(काष्ठा can_rx_offload *offload)
-अणु
+void can_rx_offload_enable(struct can_rx_offload *offload)
+{
 	napi_enable(&offload->napi);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(can_rx_offload_enable);
 
-व्योम can_rx_offload_del(काष्ठा can_rx_offload *offload)
-अणु
-	netअगर_napi_del(&offload->napi);
+void can_rx_offload_del(struct can_rx_offload *offload)
+{
+	netif_napi_del(&offload->napi);
 	skb_queue_purge(&offload->skb_queue);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(can_rx_offload_del);

@@ -1,15 +1,14 @@
-<शैली गुरु>
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
  * Copyright 2009 Jerome Glisse.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -27,205 +26,205 @@
  *          Jerome Glisse
  */
 
-#समावेश <linux/pci.h>
-#समावेश <linux/vदो_स्मृति.h>
+#include <linux/pci.h>
+#include <linux/vmalloc.h>
 
-#समावेश <drm/radeon_drm.h>
-#अगर_घोषित CONFIG_X86
-#समावेश <यंत्र/set_memory.h>
-#पूर्ण_अगर
-#समावेश "radeon.h"
+#include <drm/radeon_drm.h>
+#ifdef CONFIG_X86
+#include <asm/set_memory.h>
+#endif
+#include "radeon.h"
 
 /*
  * GART
  * The GART (Graphics Aperture Remapping Table) is an aperture
- * in the GPU's address space.  System pages can be mapped पूर्णांकo
+ * in the GPU's address space.  System pages can be mapped into
  * the aperture and look like contiguous pages from the GPU's
  * perspective.  A page table maps the pages in the aperture
- * to the actual backing pages in प्रणाली memory.
+ * to the actual backing pages in system memory.
  *
- * Radeon GPUs support both an पूर्णांकernal GART, as described above,
+ * Radeon GPUs support both an internal GART, as described above,
  * and AGP.  AGP works similarly, but the GART table is configured
- * and मुख्यtained by the northbridge rather than the driver.
+ * and maintained by the northbridge rather than the driver.
  * Radeon hw has a separate AGP aperture that is programmed to
- * poपूर्णांक to the AGP aperture provided by the northbridge and the
+ * point to the AGP aperture provided by the northbridge and the
  * requests are passed through to the northbridge aperture.
- * Both AGP and पूर्णांकernal GART can be used at the same समय, however
+ * Both AGP and internal GART can be used at the same time, however
  * that is not currently supported by the driver.
  *
- * This file handles the common पूर्णांकernal GART management.
+ * This file handles the common internal GART management.
  */
 
 /*
  * Common GART table functions.
  */
 /**
- * radeon_gart_table_ram_alloc - allocate प्रणाली ram क्रम gart page table
+ * radeon_gart_table_ram_alloc - allocate system ram for gart page table
  *
- * @rdev: radeon_device poपूर्णांकer
+ * @rdev: radeon_device pointer
  *
- * Allocate प्रणाली memory क्रम GART page table
+ * Allocate system memory for GART page table
  * (r1xx-r3xx, non-pcie r4xx, rs400).  These asics require the
- * gart table to be in प्रणाली memory.
- * Returns 0 क्रम success, -ENOMEM क्रम failure.
+ * gart table to be in system memory.
+ * Returns 0 for success, -ENOMEM for failure.
  */
-पूर्णांक radeon_gart_table_ram_alloc(काष्ठा radeon_device *rdev)
-अणु
-	व्योम *ptr;
+int radeon_gart_table_ram_alloc(struct radeon_device *rdev)
+{
+	void *ptr;
 
 	ptr = dma_alloc_coherent(&rdev->pdev->dev, rdev->gart.table_size,
 				 &rdev->gart.table_addr, GFP_KERNEL);
-	अगर (ptr == शून्य) अणु
-		वापस -ENOMEM;
-	पूर्ण
-#अगर_घोषित CONFIG_X86
-	अगर (rdev->family == CHIP_RS400 || rdev->family == CHIP_RS480 ||
-	    rdev->family == CHIP_RS690 || rdev->family == CHIP_RS740) अणु
-		set_memory_uc((अचिन्हित दीर्घ)ptr,
+	if (ptr == NULL) {
+		return -ENOMEM;
+	}
+#ifdef CONFIG_X86
+	if (rdev->family == CHIP_RS400 || rdev->family == CHIP_RS480 ||
+	    rdev->family == CHIP_RS690 || rdev->family == CHIP_RS740) {
+		set_memory_uc((unsigned long)ptr,
 			      rdev->gart.table_size >> PAGE_SHIFT);
-	पूर्ण
-#पूर्ण_अगर
+	}
+#endif
 	rdev->gart.ptr = ptr;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * radeon_gart_table_ram_मुक्त - मुक्त प्रणाली ram क्रम gart page table
+ * radeon_gart_table_ram_free - free system ram for gart page table
  *
- * @rdev: radeon_device poपूर्णांकer
+ * @rdev: radeon_device pointer
  *
- * Free प्रणाली memory क्रम GART page table
+ * Free system memory for GART page table
  * (r1xx-r3xx, non-pcie r4xx, rs400).  These asics require the
- * gart table to be in प्रणाली memory.
+ * gart table to be in system memory.
  */
-व्योम radeon_gart_table_ram_मुक्त(काष्ठा radeon_device *rdev)
-अणु
-	अगर (rdev->gart.ptr == शून्य) अणु
-		वापस;
-	पूर्ण
-#अगर_घोषित CONFIG_X86
-	अगर (rdev->family == CHIP_RS400 || rdev->family == CHIP_RS480 ||
-	    rdev->family == CHIP_RS690 || rdev->family == CHIP_RS740) अणु
-		set_memory_wb((अचिन्हित दीर्घ)rdev->gart.ptr,
+void radeon_gart_table_ram_free(struct radeon_device *rdev)
+{
+	if (rdev->gart.ptr == NULL) {
+		return;
+	}
+#ifdef CONFIG_X86
+	if (rdev->family == CHIP_RS400 || rdev->family == CHIP_RS480 ||
+	    rdev->family == CHIP_RS690 || rdev->family == CHIP_RS740) {
+		set_memory_wb((unsigned long)rdev->gart.ptr,
 			      rdev->gart.table_size >> PAGE_SHIFT);
-	पूर्ण
-#पूर्ण_अगर
-	dma_मुक्त_coherent(&rdev->pdev->dev, rdev->gart.table_size,
-			  (व्योम *)rdev->gart.ptr, rdev->gart.table_addr);
-	rdev->gart.ptr = शून्य;
+	}
+#endif
+	dma_free_coherent(&rdev->pdev->dev, rdev->gart.table_size,
+			  (void *)rdev->gart.ptr, rdev->gart.table_addr);
+	rdev->gart.ptr = NULL;
 	rdev->gart.table_addr = 0;
-पूर्ण
+}
 
 /**
- * radeon_gart_table_vram_alloc - allocate vram क्रम gart page table
+ * radeon_gart_table_vram_alloc - allocate vram for gart page table
  *
- * @rdev: radeon_device poपूर्णांकer
+ * @rdev: radeon_device pointer
  *
- * Allocate video memory क्रम GART page table
+ * Allocate video memory for GART page table
  * (pcie r4xx, r5xx+).  These asics require the
  * gart table to be in video memory.
- * Returns 0 क्रम success, error क्रम failure.
+ * Returns 0 for success, error for failure.
  */
-पूर्णांक radeon_gart_table_vram_alloc(काष्ठा radeon_device *rdev)
-अणु
-	पूर्णांक r;
+int radeon_gart_table_vram_alloc(struct radeon_device *rdev)
+{
+	int r;
 
-	अगर (rdev->gart.robj == शून्य) अणु
+	if (rdev->gart.robj == NULL) {
 		r = radeon_bo_create(rdev, rdev->gart.table_size,
 				     PAGE_SIZE, true, RADEON_GEM_DOMAIN_VRAM,
-				     0, शून्य, शून्य, &rdev->gart.robj);
-		अगर (r) अणु
-			वापस r;
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+				     0, NULL, NULL, &rdev->gart.robj);
+		if (r) {
+			return r;
+		}
+	}
+	return 0;
+}
 
 /**
  * radeon_gart_table_vram_pin - pin gart page table in vram
  *
- * @rdev: radeon_device poपूर्णांकer
+ * @rdev: radeon_device pointer
  *
  * Pin the GART page table in vram so it will not be moved
  * by the memory manager (pcie r4xx, r5xx+).  These asics require the
  * gart table to be in video memory.
- * Returns 0 क्रम success, error क्रम failure.
+ * Returns 0 for success, error for failure.
  */
-पूर्णांक radeon_gart_table_vram_pin(काष्ठा radeon_device *rdev)
-अणु
-	uपूर्णांक64_t gpu_addr;
-	पूर्णांक r;
+int radeon_gart_table_vram_pin(struct radeon_device *rdev)
+{
+	uint64_t gpu_addr;
+	int r;
 
 	r = radeon_bo_reserve(rdev->gart.robj, false);
-	अगर (unlikely(r != 0))
-		वापस r;
+	if (unlikely(r != 0))
+		return r;
 	r = radeon_bo_pin(rdev->gart.robj,
 				RADEON_GEM_DOMAIN_VRAM, &gpu_addr);
-	अगर (r) अणु
+	if (r) {
 		radeon_bo_unreserve(rdev->gart.robj);
-		वापस r;
-	पूर्ण
+		return r;
+	}
 	r = radeon_bo_kmap(rdev->gart.robj, &rdev->gart.ptr);
-	अगर (r)
+	if (r)
 		radeon_bo_unpin(rdev->gart.robj);
 	radeon_bo_unreserve(rdev->gart.robj);
 	rdev->gart.table_addr = gpu_addr;
 
-	अगर (!r) अणु
-		पूर्णांक i;
+	if (!r) {
+		int i;
 
-		/* We might have dropped some GART table updates जबतक it wasn't
+		/* We might have dropped some GART table updates while it wasn't
 		 * mapped, restore all entries
 		 */
-		क्रम (i = 0; i < rdev->gart.num_gpu_pages; i++)
+		for (i = 0; i < rdev->gart.num_gpu_pages; i++)
 			radeon_gart_set_page(rdev, i, rdev->gart.pages_entry[i]);
 		mb();
 		radeon_gart_tlb_flush(rdev);
-	पूर्ण
+	}
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
 /**
  * radeon_gart_table_vram_unpin - unpin gart page table in vram
  *
- * @rdev: radeon_device poपूर्णांकer
+ * @rdev: radeon_device pointer
  *
  * Unpin the GART page table in vram (pcie r4xx, r5xx+).
  * These asics require the gart table to be in video memory.
  */
-व्योम radeon_gart_table_vram_unpin(काष्ठा radeon_device *rdev)
-अणु
-	पूर्णांक r;
+void radeon_gart_table_vram_unpin(struct radeon_device *rdev)
+{
+	int r;
 
-	अगर (rdev->gart.robj == शून्य) अणु
-		वापस;
-	पूर्ण
+	if (rdev->gart.robj == NULL) {
+		return;
+	}
 	r = radeon_bo_reserve(rdev->gart.robj, false);
-	अगर (likely(r == 0)) अणु
+	if (likely(r == 0)) {
 		radeon_bo_kunmap(rdev->gart.robj);
 		radeon_bo_unpin(rdev->gart.robj);
 		radeon_bo_unreserve(rdev->gart.robj);
-		rdev->gart.ptr = शून्य;
-	पूर्ण
-पूर्ण
+		rdev->gart.ptr = NULL;
+	}
+}
 
 /**
- * radeon_gart_table_vram_मुक्त - मुक्त gart page table vram
+ * radeon_gart_table_vram_free - free gart page table vram
  *
- * @rdev: radeon_device poपूर्णांकer
+ * @rdev: radeon_device pointer
  *
- * Free the video memory used क्रम the GART page table
+ * Free the video memory used for the GART page table
  * (pcie r4xx, r5xx+).  These asics require the gart table to
  * be in video memory.
  */
-व्योम radeon_gart_table_vram_मुक्त(काष्ठा radeon_device *rdev)
-अणु
-	अगर (rdev->gart.robj == शून्य) अणु
-		वापस;
-	पूर्ण
+void radeon_gart_table_vram_free(struct radeon_device *rdev)
+{
+	if (rdev->gart.robj == NULL) {
+		return;
+	}
 	radeon_bo_unref(&rdev->gart.robj);
-पूर्ण
+}
 
 /*
  * Common gart functions.
@@ -233,49 +232,49 @@
 /**
  * radeon_gart_unbind - unbind pages from the gart page table
  *
- * @rdev: radeon_device poपूर्णांकer
- * @offset: offset पूर्णांकo the GPU's gart aperture
+ * @rdev: radeon_device pointer
+ * @offset: offset into the GPU's gart aperture
  * @pages: number of pages to unbind
  *
  * Unbinds the requested pages from the gart page table and
  * replaces them with the dummy page (all asics).
  */
-व्योम radeon_gart_unbind(काष्ठा radeon_device *rdev, अचिन्हित offset,
-			पूर्णांक pages)
-अणु
-	अचिन्हित t;
-	अचिन्हित p;
-	पूर्णांक i, j;
+void radeon_gart_unbind(struct radeon_device *rdev, unsigned offset,
+			int pages)
+{
+	unsigned t;
+	unsigned p;
+	int i, j;
 
-	अगर (!rdev->gart.पढ़ोy) अणु
+	if (!rdev->gart.ready) {
 		WARN(1, "trying to unbind memory from uninitialized GART !\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 	t = offset / RADEON_GPU_PAGE_SIZE;
 	p = t / (PAGE_SIZE / RADEON_GPU_PAGE_SIZE);
-	क्रम (i = 0; i < pages; i++, p++) अणु
-		अगर (rdev->gart.pages[p]) अणु
-			rdev->gart.pages[p] = शून्य;
-			क्रम (j = 0; j < (PAGE_SIZE / RADEON_GPU_PAGE_SIZE); j++, t++) अणु
+	for (i = 0; i < pages; i++, p++) {
+		if (rdev->gart.pages[p]) {
+			rdev->gart.pages[p] = NULL;
+			for (j = 0; j < (PAGE_SIZE / RADEON_GPU_PAGE_SIZE); j++, t++) {
 				rdev->gart.pages_entry[t] = rdev->dummy_page.entry;
-				अगर (rdev->gart.ptr) अणु
+				if (rdev->gart.ptr) {
 					radeon_gart_set_page(rdev, t,
 							     rdev->dummy_page.entry);
-				पूर्ण
-			पूर्ण
-		पूर्ण
-	पूर्ण
-	अगर (rdev->gart.ptr) अणु
+				}
+			}
+		}
+	}
+	if (rdev->gart.ptr) {
 		mb();
 		radeon_gart_tlb_flush(rdev);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
- * radeon_gart_bind - bind pages पूर्णांकo the gart page table
+ * radeon_gart_bind - bind pages into the gart page table
  *
- * @rdev: radeon_device poपूर्णांकer
- * @offset: offset पूर्णांकo the GPU's gart aperture
+ * @rdev: radeon_device pointer
+ * @offset: offset into the GPU's gart aperture
  * @pages: number of pages to bind
  * @pagelist: pages to bind
  * @dma_addr: DMA addresses of pages
@@ -283,109 +282,109 @@
  *
  * Binds the requested pages to the gart page table
  * (all asics).
- * Returns 0 क्रम success, -EINVAL क्रम failure.
+ * Returns 0 for success, -EINVAL for failure.
  */
-पूर्णांक radeon_gart_bind(काष्ठा radeon_device *rdev, अचिन्हित offset,
-		     पूर्णांक pages, काष्ठा page **pagelist, dma_addr_t *dma_addr,
-		     uपूर्णांक32_t flags)
-अणु
-	अचिन्हित t;
-	अचिन्हित p;
-	uपूर्णांक64_t page_base, page_entry;
-	पूर्णांक i, j;
+int radeon_gart_bind(struct radeon_device *rdev, unsigned offset,
+		     int pages, struct page **pagelist, dma_addr_t *dma_addr,
+		     uint32_t flags)
+{
+	unsigned t;
+	unsigned p;
+	uint64_t page_base, page_entry;
+	int i, j;
 
-	अगर (!rdev->gart.पढ़ोy) अणु
+	if (!rdev->gart.ready) {
 		WARN(1, "trying to bind memory to uninitialized GART !\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	t = offset / RADEON_GPU_PAGE_SIZE;
 	p = t / (PAGE_SIZE / RADEON_GPU_PAGE_SIZE);
 
-	क्रम (i = 0; i < pages; i++, p++) अणु
+	for (i = 0; i < pages; i++, p++) {
 		rdev->gart.pages[p] = pagelist ? pagelist[i] :
 			rdev->dummy_page.page;
 		page_base = dma_addr[i];
-		क्रम (j = 0; j < (PAGE_SIZE / RADEON_GPU_PAGE_SIZE); j++, t++) अणु
+		for (j = 0; j < (PAGE_SIZE / RADEON_GPU_PAGE_SIZE); j++, t++) {
 			page_entry = radeon_gart_get_page_entry(page_base, flags);
 			rdev->gart.pages_entry[t] = page_entry;
-			अगर (rdev->gart.ptr) अणु
+			if (rdev->gart.ptr) {
 				radeon_gart_set_page(rdev, t, page_entry);
-			पूर्ण
+			}
 			page_base += RADEON_GPU_PAGE_SIZE;
-		पूर्ण
-	पूर्ण
-	अगर (rdev->gart.ptr) अणु
+		}
+	}
+	if (rdev->gart.ptr) {
 		mb();
 		radeon_gart_tlb_flush(rdev);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
 /**
- * radeon_gart_init - init the driver info क्रम managing the gart
+ * radeon_gart_init - init the driver info for managing the gart
  *
- * @rdev: radeon_device poपूर्णांकer
+ * @rdev: radeon_device pointer
  *
  * Allocate the dummy page and init the gart driver info (all asics).
- * Returns 0 क्रम success, error क्रम failure.
+ * Returns 0 for success, error for failure.
  */
-पूर्णांक radeon_gart_init(काष्ठा radeon_device *rdev)
-अणु
-	पूर्णांक r, i;
+int radeon_gart_init(struct radeon_device *rdev)
+{
+	int r, i;
 
-	अगर (rdev->gart.pages) अणु
-		वापस 0;
-	पूर्ण
+	if (rdev->gart.pages) {
+		return 0;
+	}
 	/* We need PAGE_SIZE >= RADEON_GPU_PAGE_SIZE */
-	अगर (PAGE_SIZE < RADEON_GPU_PAGE_SIZE) अणु
+	if (PAGE_SIZE < RADEON_GPU_PAGE_SIZE) {
 		DRM_ERROR("Page size is smaller than GPU page size!\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	r = radeon_dummy_page_init(rdev);
-	अगर (r)
-		वापस r;
+	if (r)
+		return r;
 	/* Compute table size */
 	rdev->gart.num_cpu_pages = rdev->mc.gtt_size / PAGE_SIZE;
 	rdev->gart.num_gpu_pages = rdev->mc.gtt_size / RADEON_GPU_PAGE_SIZE;
 	DRM_INFO("GART: num cpu pages %u, num gpu pages %u\n",
 		 rdev->gart.num_cpu_pages, rdev->gart.num_gpu_pages);
 	/* Allocate pages table */
-	rdev->gart.pages = vzalloc(array_size(माप(व्योम *),
+	rdev->gart.pages = vzalloc(array_size(sizeof(void *),
 				   rdev->gart.num_cpu_pages));
-	अगर (rdev->gart.pages == शून्य) अणु
+	if (rdev->gart.pages == NULL) {
 		radeon_gart_fini(rdev);
-		वापस -ENOMEM;
-	पूर्ण
-	rdev->gart.pages_entry = vदो_स्मृति(array_size(माप(uपूर्णांक64_t),
+		return -ENOMEM;
+	}
+	rdev->gart.pages_entry = vmalloc(array_size(sizeof(uint64_t),
 						    rdev->gart.num_gpu_pages));
-	अगर (rdev->gart.pages_entry == शून्य) अणु
+	if (rdev->gart.pages_entry == NULL) {
 		radeon_gart_fini(rdev);
-		वापस -ENOMEM;
-	पूर्ण
-	/* set GART entry to poपूर्णांक to the dummy page by शेष */
-	क्रम (i = 0; i < rdev->gart.num_gpu_pages; i++)
+		return -ENOMEM;
+	}
+	/* set GART entry to point to the dummy page by default */
+	for (i = 0; i < rdev->gart.num_gpu_pages; i++)
 		rdev->gart.pages_entry[i] = rdev->dummy_page.entry;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * radeon_gart_fini - tear करोwn the driver info क्रम managing the gart
+ * radeon_gart_fini - tear down the driver info for managing the gart
  *
- * @rdev: radeon_device poपूर्णांकer
+ * @rdev: radeon_device pointer
  *
- * Tear करोwn the gart driver info and मुक्त the dummy page (all asics).
+ * Tear down the gart driver info and free the dummy page (all asics).
  */
-व्योम radeon_gart_fini(काष्ठा radeon_device *rdev)
-अणु
-	अगर (rdev->gart.पढ़ोy) अणु
+void radeon_gart_fini(struct radeon_device *rdev)
+{
+	if (rdev->gart.ready) {
 		/* unbind pages */
 		radeon_gart_unbind(rdev, 0, rdev->gart.num_cpu_pages);
-	पूर्ण
-	rdev->gart.पढ़ोy = false;
-	vमुक्त(rdev->gart.pages);
-	vमुक्त(rdev->gart.pages_entry);
-	rdev->gart.pages = शून्य;
-	rdev->gart.pages_entry = शून्य;
+	}
+	rdev->gart.ready = false;
+	vfree(rdev->gart.pages);
+	vfree(rdev->gart.pages_entry);
+	rdev->gart.pages = NULL;
+	rdev->gart.pages_entry = NULL;
 
 	radeon_dummy_page_fini(rdev);
-पूर्ण
+}

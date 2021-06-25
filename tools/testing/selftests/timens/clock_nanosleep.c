@@ -1,141 +1,140 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#घोषणा _GNU_SOURCE
-#समावेश <sched.h>
+// SPDX-License-Identifier: GPL-2.0
+#define _GNU_SOURCE
+#include <sched.h>
 
-#समावेश <sys/समयrfd.h>
-#समावेश <sys/syscall.h>
-#समावेश <समय.स>
-#समावेश <unistd.h>
-#समावेश <मानककोष.स>
-#समावेश <मानकपन.स>
-#समावेश <मानक_निवेशt.h>
-#समावेश <pthपढ़ो.h>
-#समावेश <संकेत.स>
-#समावेश <माला.स>
+#include <sys/timerfd.h>
+#include <sys/syscall.h>
+#include <time.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <stdint.h>
+#include <pthread.h>
+#include <signal.h>
+#include <string.h>
 
-#समावेश "log.h"
-#समावेश "timens.h"
+#include "log.h"
+#include "timens.h"
 
-व्योम test_sig(पूर्णांक sig)
-अणु
-	अगर (sig == SIGUSR2)
-		pthपढ़ो_निकास(शून्य);
-पूर्ण
+void test_sig(int sig)
+{
+	if (sig == SIGUSR2)
+		pthread_exit(NULL);
+}
 
-काष्ठा thपढ़ो_args अणु
-	काष्ठा बारpec *now, *rem;
-	pthपढ़ो_mutex_t *lock;
-	पूर्णांक घड़ीid;
-	पूर्णांक असल;
-पूर्ण;
+struct thread_args {
+	struct timespec *now, *rem;
+	pthread_mutex_t *lock;
+	int clockid;
+	int abs;
+};
 
-व्योम *call_nanosleep(व्योम *_args)
-अणु
-	काष्ठा thपढ़ो_args *args = _args;
+void *call_nanosleep(void *_args)
+{
+	struct thread_args *args = _args;
 
-	घड़ी_nanosleep(args->घड़ीid, args->असल ? TIMER_ABSTIME : 0, args->now, args->rem);
-	pthपढ़ो_mutex_unlock(args->lock);
-	वापस शून्य;
-पूर्ण
+	clock_nanosleep(args->clockid, args->abs ? TIMER_ABSTIME : 0, args->now, args->rem);
+	pthread_mutex_unlock(args->lock);
+	return NULL;
+}
 
-पूर्णांक run_test(पूर्णांक घड़ीid, पूर्णांक असल)
-अणु
-	काष्ठा बारpec now = अणुपूर्ण, rem;
-	काष्ठा thपढ़ो_args args = अणु .now = &now, .rem = &rem, .घड़ीid = घड़ीidपूर्ण;
-	काष्ठा बारpec start;
-	pthपढ़ो_mutex_t lock;
-	pthपढ़ो_t thपढ़ो;
-	पूर्णांक j, ok, ret;
+int run_test(int clockid, int abs)
+{
+	struct timespec now = {}, rem;
+	struct thread_args args = { .now = &now, .rem = &rem, .clockid = clockid};
+	struct timespec start;
+	pthread_mutex_t lock;
+	pthread_t thread;
+	int j, ok, ret;
 
-	संकेत(SIGUSR1, test_sig);
-	संकेत(SIGUSR2, test_sig);
+	signal(SIGUSR1, test_sig);
+	signal(SIGUSR2, test_sig);
 
-	pthपढ़ो_mutex_init(&lock, शून्य);
-	pthपढ़ो_mutex_lock(&lock);
+	pthread_mutex_init(&lock, NULL);
+	pthread_mutex_lock(&lock);
 
-	अगर (घड़ी_समय_लो(घड़ीid, &start) == -1) अणु
-		अगर (त्रुटि_सं == EINVAL && check_skip(घड़ीid))
-			वापस 0;
-		वापस pr_लिखो_त्रुटि("clock_gettime");
-	पूर्ण
+	if (clock_gettime(clockid, &start) == -1) {
+		if (errno == EINVAL && check_skip(clockid))
+			return 0;
+		return pr_perror("clock_gettime");
+	}
 
 
-	अगर (असल) अणु
+	if (abs) {
 		now.tv_sec = start.tv_sec;
 		now.tv_nsec = start.tv_nsec;
-	पूर्ण
+	}
 
 	now.tv_sec += 3600;
-	args.असल = असल;
+	args.abs = abs;
 	args.lock = &lock;
-	ret = pthपढ़ो_create(&thपढ़ो, शून्य, call_nanosleep, &args);
-	अगर (ret != 0) अणु
-		pr_err("Unable to create a thread: %s", म_त्रुटि(ret));
-		वापस 1;
-	पूर्ण
+	ret = pthread_create(&thread, NULL, call_nanosleep, &args);
+	if (ret != 0) {
+		pr_err("Unable to create a thread: %s", strerror(ret));
+		return 1;
+	}
 
-	/* Wait when the thपढ़ो will call घड़ी_nanosleep(). */
+	/* Wait when the thread will call clock_nanosleep(). */
 	ok = 0;
-	क्रम (j = 0; j < 8; j++) अणु
-		/* The maximum समयout is about 5 seconds. */
+	for (j = 0; j < 8; j++) {
+		/* The maximum timeout is about 5 seconds. */
 		usleep(10000 << j);
 
-		/* Try to पूर्णांकerrupt घड़ी_nanosleep(). */
-		pthपढ़ो_समाप्त(thपढ़ो, SIGUSR1);
+		/* Try to interrupt clock_nanosleep(). */
+		pthread_kill(thread, SIGUSR1);
 
 		usleep(10000 << j);
-		/* Check whether घड़ी_nanosleep() has been पूर्णांकerrupted or not. */
-		अगर (pthपढ़ो_mutex_trylock(&lock) == 0) अणु
+		/* Check whether clock_nanosleep() has been interrupted or not. */
+		if (pthread_mutex_trylock(&lock) == 0) {
 			/**/
 			ok = 1;
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	अगर (!ok)
-		pthपढ़ो_समाप्त(thपढ़ो, SIGUSR2);
-	pthपढ़ो_join(thपढ़ो, शून्य);
-	pthपढ़ो_mutex_destroy(&lock);
+			break;
+		}
+	}
+	if (!ok)
+		pthread_kill(thread, SIGUSR2);
+	pthread_join(thread, NULL);
+	pthread_mutex_destroy(&lock);
 
-	अगर (!ok) अणु
-		ksft_test_result_pass("clockid: %d abs:%d timeout\n", घड़ीid, असल);
-		वापस 1;
-	पूर्ण
+	if (!ok) {
+		ksft_test_result_pass("clockid: %d abs:%d timeout\n", clockid, abs);
+		return 1;
+	}
 
-	अगर (rem.tv_sec < 3300 || rem.tv_sec > 3900) अणु
+	if (rem.tv_sec < 3300 || rem.tv_sec > 3900) {
 		pr_fail("clockid: %d abs: %d remain: %ld\n",
-			घड़ीid, असल, rem.tv_sec);
-		वापस 1;
-	पूर्ण
-	ksft_test_result_pass("clockid: %d abs:%d\n", घड़ीid, असल);
+			clockid, abs, rem.tv_sec);
+		return 1;
+	}
+	ksft_test_result_pass("clockid: %d abs:%d\n", clockid, abs);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक मुख्य(पूर्णांक argc, अक्षर *argv[])
-अणु
-	पूर्णांक ret, nsfd;
+int main(int argc, char *argv[])
+{
+	int ret, nsfd;
 
 	nscheck();
 
 	ksft_set_plan(4);
 
-	check_supported_समयrs();
+	check_supported_timers();
 
-	अगर (unshare_समयns())
-		वापस 1;
+	if (unshare_timens())
+		return 1;
 
-	अगर (_समय_रखो(CLOCK_MONOTONIC, 7 * 24 * 3600))
-		वापस 1;
-	अगर (_समय_रखो(CLOCK_BOOTTIME, 9 * 24 * 3600))
-		वापस 1;
+	if (_settime(CLOCK_MONOTONIC, 7 * 24 * 3600))
+		return 1;
+	if (_settime(CLOCK_BOOTTIME, 9 * 24 * 3600))
+		return 1;
 
-	nsfd = खोलो("/proc/self/ns/time_for_children", O_RDONLY);
-	अगर (nsfd < 0)
-		वापस pr_लिखो_त्रुटि("Unable to open timens_for_children");
+	nsfd = open("/proc/self/ns/time_for_children", O_RDONLY);
+	if (nsfd < 0)
+		return pr_perror("Unable to open timens_for_children");
 
-	अगर (setns(nsfd, CLONE_NEWTIME))
-		वापस pr_लिखो_त्रुटि("Unable to set timens");
+	if (setns(nsfd, CLONE_NEWTIME))
+		return pr_perror("Unable to set timens");
 
 	ret = 0;
 	ret |= run_test(CLOCK_MONOTONIC, 0);
@@ -143,8 +142,8 @@
 	ret |= run_test(CLOCK_BOOTTIME_ALARM, 0);
 	ret |= run_test(CLOCK_BOOTTIME_ALARM, 1);
 
-	अगर (ret)
-		ksft_निकास_fail();
-	ksft_निकास_pass();
-	वापस ret;
-पूर्ण
+	if (ret)
+		ksft_exit_fail();
+	ksft_exit_pass();
+	return ret;
+}

@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (c) 2006 Simtec Electronics
  *	http://armlinux.simtec.co.uk/
@@ -8,12 +7,12 @@
  * S3C24XX - LEDs GPIO connector
 */
 
-#अगर_अघोषित __LEDS_S3C24XX_H
-#घोषणा __LEDS_S3C24XX_H
+#ifndef __LEDS_S3C24XX_H
+#define __LEDS_S3C24XX_H
 
-काष्ठा s3c24xx_led_platdata अणु
-	अक्षर			*name;
-	अक्षर			*def_trigger;
-पूर्ण;
+struct s3c24xx_led_platdata {
+	char			*name;
+	char			*def_trigger;
+};
 
-#पूर्ण_अगर /* __LEDS_S3C24XX_H */
+#endif /* __LEDS_S3C24XX_H */

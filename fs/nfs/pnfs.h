@@ -1,925 +1,924 @@
-<शैली गुरु>
 /*
- *  pNFS client data काष्ठाures.
+ *  pNFS client data structures.
  *
  *  Copyright (c) 2002
  *  The Regents of the University of Michigan
  *  All Rights Reserved
  *
- *  Dean Hildebअक्रम <dhildebz@umich.edu>
+ *  Dean Hildebrand <dhildebz@umich.edu>
  *
  *  Permission is granted to use, copy, create derivative works, and
- *  redistribute this software and such derivative works क्रम any purpose,
- *  so दीर्घ as the name of the University of Michigan is not used in
- *  any advertising or खुलाity pertaining to the use or distribution
- *  of this software without specअगरic, written prior authorization. If
- *  the above copyright notice or any other identअगरication of the
+ *  redistribute this software and such derivative works for any purpose,
+ *  so long as the name of the University of Michigan is not used in
+ *  any advertising or publicity pertaining to the use or distribution
+ *  of this software without specific, written prior authorization. If
+ *  the above copyright notice or any other identification of the
  *  University of Michigan is included in any copy of any portion of
  *  this software, then the disclaimer below must also be included.
  *
  *  This software is provided as is, without representation or warranty
  *  of any kind either express or implied, including without limitation
- *  the implied warranties of merchantability, fitness क्रम a particular
+ *  the implied warranties of merchantability, fitness for a particular
  *  purpose, or noninfringement.  The Regents of the University of
- *  Michigan shall not be liable क्रम any damages, including special,
+ *  Michigan shall not be liable for any damages, including special,
  *  indirect, incidental, or consequential damages, with respect to any
  *  claim arising out of or in connection with the use of the software,
- *  even अगर it has been or is hereafter advised of the possibility of
+ *  even if it has been or is hereafter advised of the possibility of
  *  such damages.
  */
 
-#अगर_अघोषित FS_NFS_PNFS_H
-#घोषणा FS_NFS_PNFS_H
+#ifndef FS_NFS_PNFS_H
+#define FS_NFS_PNFS_H
 
-#समावेश <linux/refcount.h>
-#समावेश <linux/nfs_fs.h>
-#समावेश <linux/nfs_page.h>
-#समावेश <linux/workqueue.h>
+#include <linux/refcount.h>
+#include <linux/nfs_fs.h>
+#include <linux/nfs_page.h>
+#include <linux/workqueue.h>
 
-काष्ठा nfs4_खोलोdata;
+struct nfs4_opendata;
 
-क्रमागत अणु
-	NFS_LSEG_VALID = 0,	/* cleared when lseg is recalled/वापसed */
+enum {
+	NFS_LSEG_VALID = 0,	/* cleared when lseg is recalled/returned */
 	NFS_LSEG_ROC,		/* roc bit received from server */
-	NFS_LSEG_LAYOUTCOMMIT,	/* layoutcommit bit set क्रम layoutcommit */
-	NFS_LSEG_LAYOUTRETURN,	/* layoutवापस bit set क्रम layoutवापस */
-	NFS_LSEG_UNAVAILABLE,	/* unavailable bit set क्रम temporary problem */
-पूर्ण;
+	NFS_LSEG_LAYOUTCOMMIT,	/* layoutcommit bit set for layoutcommit */
+	NFS_LSEG_LAYOUTRETURN,	/* layoutreturn bit set for layoutreturn */
+	NFS_LSEG_UNAVAILABLE,	/* unavailable bit set for temporary problem */
+};
 
-/* Inभागidual ip address */
-काष्ठा nfs4_pnfs_ds_addr अणु
-	काष्ठा sockaddr_storage	da_addr;
-	माप_प्रकार			da_addrlen;
-	काष्ठा list_head	da_node;  /* nfs4_pnfs_dev_hlist dev_dslist */
-	अक्षर			*da_remotestr;	/* human पढ़ोable addr+port */
-	स्थिर अक्षर		*da_netid;
-	पूर्णांक			da_transport;
-पूर्ण;
+/* Individual ip address */
+struct nfs4_pnfs_ds_addr {
+	struct sockaddr_storage	da_addr;
+	size_t			da_addrlen;
+	struct list_head	da_node;  /* nfs4_pnfs_dev_hlist dev_dslist */
+	char			*da_remotestr;	/* human readable addr+port */
+	const char		*da_netid;
+	int			da_transport;
+};
 
-काष्ठा nfs4_pnfs_ds अणु
-	काष्ठा list_head	ds_node;  /* nfs4_pnfs_dev_hlist dev_dslist */
-	अक्षर			*ds_remotestr;	/* comma sep list of addrs */
-	काष्ठा list_head	ds_addrs;
-	काष्ठा nfs_client	*ds_clp;
+struct nfs4_pnfs_ds {
+	struct list_head	ds_node;  /* nfs4_pnfs_dev_hlist dev_dslist */
+	char			*ds_remotestr;	/* comma sep list of addrs */
+	struct list_head	ds_addrs;
+	struct nfs_client	*ds_clp;
 	refcount_t		ds_count;
-	अचिन्हित दीर्घ		ds_state;
-#घोषणा NFS4DS_CONNECTING	0	/* ds is establishing connection */
-पूर्ण;
+	unsigned long		ds_state;
+#define NFS4DS_CONNECTING	0	/* ds is establishing connection */
+};
 
-काष्ठा pnfs_layout_segment अणु
-	काष्ठा list_head pls_list;
-	काष्ठा list_head pls_lc_list;
-	काष्ठा list_head pls_commits;
-	काष्ठा pnfs_layout_range pls_range;
+struct pnfs_layout_segment {
+	struct list_head pls_list;
+	struct list_head pls_lc_list;
+	struct list_head pls_commits;
+	struct pnfs_layout_range pls_range;
 	refcount_t pls_refcount;
 	u32 pls_seq;
-	अचिन्हित दीर्घ pls_flags;
-	काष्ठा pnfs_layout_hdr *pls_layout;
-पूर्ण;
+	unsigned long pls_flags;
+	struct pnfs_layout_hdr *pls_layout;
+};
 
-क्रमागत pnfs_try_status अणु
+enum pnfs_try_status {
 	PNFS_ATTEMPTED     = 0,
 	PNFS_NOT_ATTEMPTED = 1,
 	PNFS_TRY_AGAIN     = 2,
-पूर्ण;
+};
 
-/* error codes क्रम पूर्णांकernal use */
-#घोषणा NFS4ERR_RESET_TO_MDS   12001
-#घोषणा NFS4ERR_RESET_TO_PNFS  12002
+/* error codes for internal use */
+#define NFS4ERR_RESET_TO_MDS   12001
+#define NFS4ERR_RESET_TO_PNFS  12002
 
-#अगर_घोषित CONFIG_NFS_V4_1
+#ifdef CONFIG_NFS_V4_1
 
-#घोषणा LAYOUT_NFSV4_1_MODULE_PREFIX "nfs-layouttype4"
+#define LAYOUT_NFSV4_1_MODULE_PREFIX "nfs-layouttype4"
 
 /*
- * Default data server connection समयout and retrans vaules.
- * Set by module parameters dataserver_समयo and dataserver_retrans.
+ * Default data server connection timeout and retrans vaules.
+ * Set by module parameters dataserver_timeo and dataserver_retrans.
  */
-#घोषणा NFS4_DEF_DS_TIMEO   600 /* in tenths of a second */
-#घोषणा NFS4_DEF_DS_RETRANS 5
-#घोषणा PNFS_DEVICE_RETRY_TIMEOUT (120*HZ)
+#define NFS4_DEF_DS_TIMEO   600 /* in tenths of a second */
+#define NFS4_DEF_DS_RETRANS 5
+#define PNFS_DEVICE_RETRY_TIMEOUT (120*HZ)
 
-क्रमागत अणु
+enum {
 	NFS_LAYOUT_RO_FAILED = 0,	/* get ro layout failed stop trying */
 	NFS_LAYOUT_RW_FAILED,		/* get rw layout failed stop trying */
 	NFS_LAYOUT_BULK_RECALL,		/* bulk recall affecting layout */
-	NFS_LAYOUT_RETURN,		/* layoutवापस in progress */
-	NFS_LAYOUT_RETURN_LOCK,		/* Serialise layoutवापस */
+	NFS_LAYOUT_RETURN,		/* layoutreturn in progress */
+	NFS_LAYOUT_RETURN_LOCK,		/* Serialise layoutreturn */
 	NFS_LAYOUT_RETURN_REQUESTED,	/* Return this layout ASAP */
 	NFS_LAYOUT_INVALID_STID,	/* layout stateid id is invalid */
 	NFS_LAYOUT_FIRST_LAYOUTGET,	/* Serialize first layoutget */
-	NFS_LAYOUT_INODE_FREEING,	/* The inode is being मुक्तd */
+	NFS_LAYOUT_INODE_FREEING,	/* The inode is being freed */
 	NFS_LAYOUT_HASHED,		/* The layout visible */
-पूर्ण;
+};
 
-क्रमागत layoutdriver_policy_flags अणु
-	/* Should the pNFS client commit and वापस the layout upon truncate to
+enum layoutdriver_policy_flags {
+	/* Should the pNFS client commit and return the layout upon truncate to
 	 * a smaller size */
 	PNFS_LAYOUTRET_ON_SETATTR	= 1 << 0,
 	PNFS_LAYOUTRET_ON_ERROR		= 1 << 1,
 	PNFS_READ_WHOLE_PAGE		= 1 << 2,
 	PNFS_LAYOUTGET_ON_OPEN		= 1 << 3,
-पूर्ण;
+};
 
-काष्ठा nfs4_deviceid_node;
+struct nfs4_deviceid_node;
 
-/* Per-layout driver specअगरic registration काष्ठाure */
-काष्ठा pnfs_layoutdriver_type अणु
-	काष्ठा list_head pnfs_tblid;
-	स्थिर u32 id;
-	स्थिर अक्षर *name;
-	काष्ठा module *owner;
-	अचिन्हित flags;
-	अचिन्हित max_deviceinfo_size;
-	अचिन्हित max_layoutget_response;
+/* Per-layout driver specific registration structure */
+struct pnfs_layoutdriver_type {
+	struct list_head pnfs_tblid;
+	const u32 id;
+	const char *name;
+	struct module *owner;
+	unsigned flags;
+	unsigned max_deviceinfo_size;
+	unsigned max_layoutget_response;
 
-	पूर्णांक (*set_layoutdriver) (काष्ठा nfs_server *, स्थिर काष्ठा nfs_fh *);
-	पूर्णांक (*clear_layoutdriver) (काष्ठा nfs_server *);
+	int (*set_layoutdriver) (struct nfs_server *, const struct nfs_fh *);
+	int (*clear_layoutdriver) (struct nfs_server *);
 
-	काष्ठा pnfs_layout_hdr * (*alloc_layout_hdr) (काष्ठा inode *inode, gfp_t gfp_flags);
-	व्योम (*मुक्त_layout_hdr) (काष्ठा pnfs_layout_hdr *);
+	struct pnfs_layout_hdr * (*alloc_layout_hdr) (struct inode *inode, gfp_t gfp_flags);
+	void (*free_layout_hdr) (struct pnfs_layout_hdr *);
 
-	काष्ठा pnfs_layout_segment * (*alloc_lseg) (काष्ठा pnfs_layout_hdr *layoutid, काष्ठा nfs4_layoutget_res *lgr, gfp_t gfp_flags);
-	व्योम (*मुक्त_lseg) (काष्ठा pnfs_layout_segment *lseg);
-	व्योम (*add_lseg) (काष्ठा pnfs_layout_hdr *layoutid,
-			काष्ठा pnfs_layout_segment *lseg,
-			काष्ठा list_head *मुक्त_me);
+	struct pnfs_layout_segment * (*alloc_lseg) (struct pnfs_layout_hdr *layoutid, struct nfs4_layoutget_res *lgr, gfp_t gfp_flags);
+	void (*free_lseg) (struct pnfs_layout_segment *lseg);
+	void (*add_lseg) (struct pnfs_layout_hdr *layoutid,
+			struct pnfs_layout_segment *lseg,
+			struct list_head *free_me);
 
-	व्योम (*वापस_range) (काष्ठा pnfs_layout_hdr *lo,
-			      काष्ठा pnfs_layout_range *range);
+	void (*return_range) (struct pnfs_layout_hdr *lo,
+			      struct pnfs_layout_range *range);
 
-	/* test क्रम nfs page cache coalescing */
-	स्थिर काष्ठा nfs_pageio_ops *pg_पढ़ो_ops;
-	स्थिर काष्ठा nfs_pageio_ops *pg_ग_लिखो_ops;
+	/* test for nfs page cache coalescing */
+	const struct nfs_pageio_ops *pg_read_ops;
+	const struct nfs_pageio_ops *pg_write_ops;
 
-	काष्ठा pnfs_ds_commit_info *(*get_ds_info) (काष्ठा inode *inode);
+	struct pnfs_ds_commit_info *(*get_ds_info) (struct inode *inode);
 
-	पूर्णांक (*sync)(काष्ठा inode *inode, bool datasync);
+	int (*sync)(struct inode *inode, bool datasync);
 
 	/*
 	 * Return PNFS_ATTEMPTED to indicate the layout code has attempted
-	 * I/O, अन्यथा वापस PNFS_NOT_ATTEMPTED to fall back to normal NFS
+	 * I/O, else return PNFS_NOT_ATTEMPTED to fall back to normal NFS
 	 */
-	क्रमागत pnfs_try_status (*पढ़ो_pagelist)(काष्ठा nfs_pgio_header *);
-	क्रमागत pnfs_try_status (*ग_लिखो_pagelist)(काष्ठा nfs_pgio_header *, पूर्णांक);
+	enum pnfs_try_status (*read_pagelist)(struct nfs_pgio_header *);
+	enum pnfs_try_status (*write_pagelist)(struct nfs_pgio_header *, int);
 
-	व्योम (*मुक्त_deviceid_node) (काष्ठा nfs4_deviceid_node *);
-	काष्ठा nfs4_deviceid_node * (*alloc_deviceid_node)
-			(काष्ठा nfs_server *server, काष्ठा pnfs_device *pdev,
+	void (*free_deviceid_node) (struct nfs4_deviceid_node *);
+	struct nfs4_deviceid_node * (*alloc_deviceid_node)
+			(struct nfs_server *server, struct pnfs_device *pdev,
 			gfp_t gfp_flags);
 
-	पूर्णांक (*prepare_layoutवापस) (काष्ठा nfs4_layoutवापस_args *);
+	int (*prepare_layoutreturn) (struct nfs4_layoutreturn_args *);
 
-	व्योम (*cleanup_layoutcommit) (काष्ठा nfs4_layoutcommit_data *data);
-	पूर्णांक (*prepare_layoutcommit) (काष्ठा nfs4_layoutcommit_args *args);
-	पूर्णांक (*prepare_layoutstats) (काष्ठा nfs42_layoutstat_args *args);
-पूर्ण;
+	void (*cleanup_layoutcommit) (struct nfs4_layoutcommit_data *data);
+	int (*prepare_layoutcommit) (struct nfs4_layoutcommit_args *args);
+	int (*prepare_layoutstats) (struct nfs42_layoutstat_args *args);
+};
 
-काष्ठा pnfs_commit_ops अणु
-	व्योम (*setup_ds_info)(काष्ठा pnfs_ds_commit_info *,
-			      काष्ठा pnfs_layout_segment *);
-	व्योम (*release_ds_info)(काष्ठा pnfs_ds_commit_info *,
-				काष्ठा inode *inode);
-	पूर्णांक (*commit_pagelist)(काष्ठा inode *inode,
-			       काष्ठा list_head *mds_pages,
-			       पूर्णांक how,
-			       काष्ठा nfs_commit_info *cinfo);
-	व्योम (*mark_request_commit) (काष्ठा nfs_page *req,
-				     काष्ठा pnfs_layout_segment *lseg,
-				     काष्ठा nfs_commit_info *cinfo,
+struct pnfs_commit_ops {
+	void (*setup_ds_info)(struct pnfs_ds_commit_info *,
+			      struct pnfs_layout_segment *);
+	void (*release_ds_info)(struct pnfs_ds_commit_info *,
+				struct inode *inode);
+	int (*commit_pagelist)(struct inode *inode,
+			       struct list_head *mds_pages,
+			       int how,
+			       struct nfs_commit_info *cinfo);
+	void (*mark_request_commit) (struct nfs_page *req,
+				     struct pnfs_layout_segment *lseg,
+				     struct nfs_commit_info *cinfo,
 				     u32 ds_commit_idx);
-	व्योम (*clear_request_commit) (काष्ठा nfs_page *req,
-				      काष्ठा nfs_commit_info *cinfo);
-	पूर्णांक (*scan_commit_lists) (काष्ठा nfs_commit_info *cinfo,
-				  पूर्णांक max);
-	व्योम (*recover_commit_reqs) (काष्ठा list_head *list,
-				     काष्ठा nfs_commit_info *cinfo);
-	काष्ठा nfs_page * (*search_commit_reqs)(काष्ठा nfs_commit_info *cinfo,
-						काष्ठा page *page);
-पूर्ण;
+	void (*clear_request_commit) (struct nfs_page *req,
+				      struct nfs_commit_info *cinfo);
+	int (*scan_commit_lists) (struct nfs_commit_info *cinfo,
+				  int max);
+	void (*recover_commit_reqs) (struct list_head *list,
+				     struct nfs_commit_info *cinfo);
+	struct nfs_page * (*search_commit_reqs)(struct nfs_commit_info *cinfo,
+						struct page *page);
+};
 
-काष्ठा pnfs_layout_hdr अणु
+struct pnfs_layout_hdr {
 	refcount_t		plh_refcount;
 	atomic_t		plh_outstanding; /* number of RPCs out */
-	काष्ठा list_head	plh_layouts;   /* other client layouts */
-	काष्ठा list_head	plh_bulk_destroy;
-	काष्ठा list_head	plh_segs;      /* layout segments list */
-	काष्ठा list_head	plh_वापस_segs; /* invalid layout segments */
-	अचिन्हित दीर्घ		plh_block_lमाला_लो; /* block LAYOUTGET अगर >0 */
-	अचिन्हित दीर्घ		plh_retry_बारtamp;
-	अचिन्हित दीर्घ		plh_flags;
+	struct list_head	plh_layouts;   /* other client layouts */
+	struct list_head	plh_bulk_destroy;
+	struct list_head	plh_segs;      /* layout segments list */
+	struct list_head	plh_return_segs; /* invalid layout segments */
+	unsigned long		plh_block_lgets; /* block LAYOUTGET if >0 */
+	unsigned long		plh_retry_timestamp;
+	unsigned long		plh_flags;
 	nfs4_stateid		plh_stateid;
 	u32			plh_barrier; /* ignore lower seqids */
-	u32			plh_वापस_seq;
-	क्रमागत pnfs_iomode	plh_वापस_iomode;
-	loff_t			plh_lwb; /* last ग_लिखो byte क्रम layoutcommit */
-	स्थिर काष्ठा cred	*plh_lc_cred; /* layoutcommit cred */
-	काष्ठा inode		*plh_inode;
-	काष्ठा rcu_head		plh_rcu;
-पूर्ण;
+	u32			plh_return_seq;
+	enum pnfs_iomode	plh_return_iomode;
+	loff_t			plh_lwb; /* last write byte for layoutcommit */
+	const struct cred	*plh_lc_cred; /* layoutcommit cred */
+	struct inode		*plh_inode;
+	struct rcu_head		plh_rcu;
+};
 
-काष्ठा pnfs_device अणु
-	काष्ठा nfs4_deviceid dev_id;
-	अचिन्हित पूर्णांक  layout_type;
-	अचिन्हित पूर्णांक  mincount;
-	अचिन्हित पूर्णांक  maxcount;	/* gdia_maxcount */
-	काष्ठा page **pages;
-	अचिन्हित पूर्णांक  pgbase;
-	अचिन्हित पूर्णांक  pglen;	/* reply buffer length */
-	अचिन्हित अक्षर nocache : 1;/* May not be cached */
-पूर्ण;
+struct pnfs_device {
+	struct nfs4_deviceid dev_id;
+	unsigned int  layout_type;
+	unsigned int  mincount;
+	unsigned int  maxcount;	/* gdia_maxcount */
+	struct page **pages;
+	unsigned int  pgbase;
+	unsigned int  pglen;	/* reply buffer length */
+	unsigned char nocache : 1;/* May not be cached */
+};
 
-#घोषणा NFS4_PNFS_GETDEVLIST_MAXNUM 16
+#define NFS4_PNFS_GETDEVLIST_MAXNUM 16
 
-काष्ठा pnfs_devicelist अणु
-	अचिन्हित पूर्णांक		eof;
-	अचिन्हित पूर्णांक		num_devs;
-	काष्ठा nfs4_deviceid	dev_id[NFS4_PNFS_GETDEVLIST_MAXNUM];
-पूर्ण;
+struct pnfs_devicelist {
+	unsigned int		eof;
+	unsigned int		num_devs;
+	struct nfs4_deviceid	dev_id[NFS4_PNFS_GETDEVLIST_MAXNUM];
+};
 
-बाह्य पूर्णांक pnfs_रेजिस्टर_layoutdriver(काष्ठा pnfs_layoutdriver_type *);
-बाह्य व्योम pnfs_unरेजिस्टर_layoutdriver(काष्ठा pnfs_layoutdriver_type *);
+extern int pnfs_register_layoutdriver(struct pnfs_layoutdriver_type *);
+extern void pnfs_unregister_layoutdriver(struct pnfs_layoutdriver_type *);
 
 /* nfs4proc.c */
-बाह्य माप_प्रकार max_response_pages(काष्ठा nfs_server *server);
-बाह्य पूर्णांक nfs4_proc_getdeviceinfo(काष्ठा nfs_server *server,
-				   काष्ठा pnfs_device *dev,
-				   स्थिर काष्ठा cred *cred);
-बाह्य काष्ठा pnfs_layout_segment* nfs4_proc_layoutget(काष्ठा nfs4_layoutget *lgp, दीर्घ *समयout);
-बाह्य पूर्णांक nfs4_proc_layoutवापस(काष्ठा nfs4_layoutवापस *lrp, bool sync);
+extern size_t max_response_pages(struct nfs_server *server);
+extern int nfs4_proc_getdeviceinfo(struct nfs_server *server,
+				   struct pnfs_device *dev,
+				   const struct cred *cred);
+extern struct pnfs_layout_segment* nfs4_proc_layoutget(struct nfs4_layoutget *lgp, long *timeout);
+extern int nfs4_proc_layoutreturn(struct nfs4_layoutreturn *lrp, bool sync);
 
 /* pnfs.c */
-व्योम pnfs_get_layout_hdr(काष्ठा pnfs_layout_hdr *lo);
-व्योम pnfs_put_lseg(काष्ठा pnfs_layout_segment *lseg);
+void pnfs_get_layout_hdr(struct pnfs_layout_hdr *lo);
+void pnfs_put_lseg(struct pnfs_layout_segment *lseg);
 
-व्योम set_pnfs_layoutdriver(काष्ठा nfs_server *, स्थिर काष्ठा nfs_fh *, काष्ठा nfs_fsinfo *);
-व्योम unset_pnfs_layoutdriver(काष्ठा nfs_server *);
-व्योम pnfs_generic_pg_check_layout(काष्ठा nfs_pageio_descriptor *pgio);
-व्योम pnfs_generic_pg_check_range(काष्ठा nfs_pageio_descriptor *pgio, काष्ठा nfs_page *req);
-व्योम pnfs_generic_pg_init_पढ़ो(काष्ठा nfs_pageio_descriptor *, काष्ठा nfs_page *);
-पूर्णांक pnfs_generic_pg_पढ़ोpages(काष्ठा nfs_pageio_descriptor *desc);
-व्योम pnfs_generic_pg_init_ग_लिखो(काष्ठा nfs_pageio_descriptor *pgio,
-			        काष्ठा nfs_page *req, u64 wb_size);
-व्योम pnfs_generic_pg_cleanup(काष्ठा nfs_pageio_descriptor *);
-पूर्णांक pnfs_generic_pg_ग_लिखोpages(काष्ठा nfs_pageio_descriptor *desc);
-माप_प्रकार pnfs_generic_pg_test(काष्ठा nfs_pageio_descriptor *pgio,
-			    काष्ठा nfs_page *prev, काष्ठा nfs_page *req);
-व्योम pnfs_set_lo_fail(काष्ठा pnfs_layout_segment *lseg);
-काष्ठा pnfs_layout_segment *pnfs_layout_process(काष्ठा nfs4_layoutget *lgp);
-व्योम pnfs_layoutget_मुक्त(काष्ठा nfs4_layoutget *lgp);
-व्योम pnfs_मुक्त_lseg_list(काष्ठा list_head *पंचांगp_list);
-व्योम pnfs_destroy_layout(काष्ठा nfs_inode *);
-व्योम pnfs_destroy_layout_final(काष्ठा nfs_inode *);
-व्योम pnfs_destroy_all_layouts(काष्ठा nfs_client *);
-पूर्णांक pnfs_destroy_layouts_byfsid(काष्ठा nfs_client *clp,
-		काष्ठा nfs_fsid *fsid,
+void set_pnfs_layoutdriver(struct nfs_server *, const struct nfs_fh *, struct nfs_fsinfo *);
+void unset_pnfs_layoutdriver(struct nfs_server *);
+void pnfs_generic_pg_check_layout(struct nfs_pageio_descriptor *pgio);
+void pnfs_generic_pg_check_range(struct nfs_pageio_descriptor *pgio, struct nfs_page *req);
+void pnfs_generic_pg_init_read(struct nfs_pageio_descriptor *, struct nfs_page *);
+int pnfs_generic_pg_readpages(struct nfs_pageio_descriptor *desc);
+void pnfs_generic_pg_init_write(struct nfs_pageio_descriptor *pgio,
+			        struct nfs_page *req, u64 wb_size);
+void pnfs_generic_pg_cleanup(struct nfs_pageio_descriptor *);
+int pnfs_generic_pg_writepages(struct nfs_pageio_descriptor *desc);
+size_t pnfs_generic_pg_test(struct nfs_pageio_descriptor *pgio,
+			    struct nfs_page *prev, struct nfs_page *req);
+void pnfs_set_lo_fail(struct pnfs_layout_segment *lseg);
+struct pnfs_layout_segment *pnfs_layout_process(struct nfs4_layoutget *lgp);
+void pnfs_layoutget_free(struct nfs4_layoutget *lgp);
+void pnfs_free_lseg_list(struct list_head *tmp_list);
+void pnfs_destroy_layout(struct nfs_inode *);
+void pnfs_destroy_layout_final(struct nfs_inode *);
+void pnfs_destroy_all_layouts(struct nfs_client *);
+int pnfs_destroy_layouts_byfsid(struct nfs_client *clp,
+		struct nfs_fsid *fsid,
 		bool is_recall);
-पूर्णांक pnfs_destroy_layouts_byclid(काष्ठा nfs_client *clp,
+int pnfs_destroy_layouts_byclid(struct nfs_client *clp,
 		bool is_recall);
 bool nfs4_layout_refresh_old_stateid(nfs4_stateid *dst,
-		काष्ठा pnfs_layout_range *dst_range,
-		काष्ठा inode *inode);
-व्योम pnfs_put_layout_hdr(काष्ठा pnfs_layout_hdr *lo);
-व्योम pnfs_set_layout_stateid(काष्ठा pnfs_layout_hdr *lo,
-			     स्थिर nfs4_stateid *new,
-			     स्थिर काष्ठा cred *cred,
+		struct pnfs_layout_range *dst_range,
+		struct inode *inode);
+void pnfs_put_layout_hdr(struct pnfs_layout_hdr *lo);
+void pnfs_set_layout_stateid(struct pnfs_layout_hdr *lo,
+			     const nfs4_stateid *new,
+			     const struct cred *cred,
 			     bool update_barrier);
-पूर्णांक pnfs_mark_matching_lsegs_invalid(काष्ठा pnfs_layout_hdr *lo,
-				काष्ठा list_head *पंचांगp_list,
-				स्थिर काष्ठा pnfs_layout_range *recall_range,
+int pnfs_mark_matching_lsegs_invalid(struct pnfs_layout_hdr *lo,
+				struct list_head *tmp_list,
+				const struct pnfs_layout_range *recall_range,
 				u32 seq);
-पूर्णांक pnfs_mark_matching_lsegs_वापस(काष्ठा pnfs_layout_hdr *lo,
-				काष्ठा list_head *पंचांगp_list,
-				स्थिर काष्ठा pnfs_layout_range *recall_range,
+int pnfs_mark_matching_lsegs_return(struct pnfs_layout_hdr *lo,
+				struct list_head *tmp_list,
+				const struct pnfs_layout_range *recall_range,
 				u32 seq);
-पूर्णांक pnfs_mark_layout_stateid_invalid(काष्ठा pnfs_layout_hdr *lo,
-		काष्ठा list_head *lseg_list);
-bool pnfs_roc(काष्ठा inode *ino,
-		काष्ठा nfs4_layoutवापस_args *args,
-		काष्ठा nfs4_layoutवापस_res *res,
-		स्थिर काष्ठा cred *cred);
-पूर्णांक pnfs_roc_करोne(काष्ठा rpc_task *task, काष्ठा nfs4_layoutवापस_args **argpp,
-		  काष्ठा nfs4_layoutवापस_res **respp, पूर्णांक *ret);
-व्योम pnfs_roc_release(काष्ठा nfs4_layoutवापस_args *args,
-		काष्ठा nfs4_layoutवापस_res *res,
-		पूर्णांक ret);
-bool pnfs_रुको_on_layoutवापस(काष्ठा inode *ino, काष्ठा rpc_task *task);
-व्योम pnfs_set_layoutcommit(काष्ठा inode *, काष्ठा pnfs_layout_segment *, loff_t);
-व्योम pnfs_cleanup_layoutcommit(काष्ठा nfs4_layoutcommit_data *data);
-पूर्णांक pnfs_layoutcommit_inode(काष्ठा inode *inode, bool sync);
-पूर्णांक pnfs_generic_sync(काष्ठा inode *inode, bool datasync);
-पूर्णांक pnfs_nfs_generic_sync(काष्ठा inode *inode, bool datasync);
-पूर्णांक _pnfs_वापस_layout(काष्ठा inode *);
-पूर्णांक pnfs_commit_and_वापस_layout(काष्ठा inode *);
-व्योम pnfs_ld_ग_लिखो_करोne(काष्ठा nfs_pgio_header *);
-व्योम pnfs_ld_पढ़ो_करोne(काष्ठा nfs_pgio_header *);
-व्योम pnfs_पढ़ो_resend_pnfs(काष्ठा nfs_pgio_header *, अचिन्हित पूर्णांक mirror_idx);
-काष्ठा pnfs_layout_segment *pnfs_update_layout(काष्ठा inode *ino,
-					       काष्ठा nfs_खोलो_context *ctx,
+int pnfs_mark_layout_stateid_invalid(struct pnfs_layout_hdr *lo,
+		struct list_head *lseg_list);
+bool pnfs_roc(struct inode *ino,
+		struct nfs4_layoutreturn_args *args,
+		struct nfs4_layoutreturn_res *res,
+		const struct cred *cred);
+int pnfs_roc_done(struct rpc_task *task, struct nfs4_layoutreturn_args **argpp,
+		  struct nfs4_layoutreturn_res **respp, int *ret);
+void pnfs_roc_release(struct nfs4_layoutreturn_args *args,
+		struct nfs4_layoutreturn_res *res,
+		int ret);
+bool pnfs_wait_on_layoutreturn(struct inode *ino, struct rpc_task *task);
+void pnfs_set_layoutcommit(struct inode *, struct pnfs_layout_segment *, loff_t);
+void pnfs_cleanup_layoutcommit(struct nfs4_layoutcommit_data *data);
+int pnfs_layoutcommit_inode(struct inode *inode, bool sync);
+int pnfs_generic_sync(struct inode *inode, bool datasync);
+int pnfs_nfs_generic_sync(struct inode *inode, bool datasync);
+int _pnfs_return_layout(struct inode *);
+int pnfs_commit_and_return_layout(struct inode *);
+void pnfs_ld_write_done(struct nfs_pgio_header *);
+void pnfs_ld_read_done(struct nfs_pgio_header *);
+void pnfs_read_resend_pnfs(struct nfs_pgio_header *, unsigned int mirror_idx);
+struct pnfs_layout_segment *pnfs_update_layout(struct inode *ino,
+					       struct nfs_open_context *ctx,
 					       loff_t pos,
 					       u64 count,
-					       क्रमागत pnfs_iomode iomode,
+					       enum pnfs_iomode iomode,
 					       bool strict_iomode,
 					       gfp_t gfp_flags);
-व्योम pnfs_layoutवापस_मुक्त_lsegs(काष्ठा pnfs_layout_hdr *lo,
-		स्थिर nfs4_stateid *arg_stateid,
-		स्थिर काष्ठा pnfs_layout_range *range,
-		स्थिर nfs4_stateid *stateid);
+void pnfs_layoutreturn_free_lsegs(struct pnfs_layout_hdr *lo,
+		const nfs4_stateid *arg_stateid,
+		const struct pnfs_layout_range *range,
+		const nfs4_stateid *stateid);
 
-व्योम pnfs_generic_layout_insert_lseg(काष्ठा pnfs_layout_hdr *lo,
-		   काष्ठा pnfs_layout_segment *lseg,
-		   bool (*is_after)(स्थिर काष्ठा pnfs_layout_range *lseg_range,
-			   स्थिर काष्ठा pnfs_layout_range *old),
-		   bool (*करो_merge)(काष्ठा pnfs_layout_segment *lseg,
-			   काष्ठा pnfs_layout_segment *old),
-		   काष्ठा list_head *मुक्त_me);
+void pnfs_generic_layout_insert_lseg(struct pnfs_layout_hdr *lo,
+		   struct pnfs_layout_segment *lseg,
+		   bool (*is_after)(const struct pnfs_layout_range *lseg_range,
+			   const struct pnfs_layout_range *old),
+		   bool (*do_merge)(struct pnfs_layout_segment *lseg,
+			   struct pnfs_layout_segment *old),
+		   struct list_head *free_me);
 
-व्योम nfs4_deviceid_mark_client_invalid(काष्ठा nfs_client *clp);
-पूर्णांक pnfs_पढ़ो_करोne_resend_to_mds(काष्ठा nfs_pgio_header *);
-पूर्णांक pnfs_ग_लिखो_करोne_resend_to_mds(काष्ठा nfs_pgio_header *);
-काष्ठा nfs4_threshold *pnfs_mdsthreshold_alloc(व्योम);
-व्योम pnfs_error_mark_layout_क्रम_वापस(काष्ठा inode *inode,
-				       काष्ठा pnfs_layout_segment *lseg);
-व्योम pnfs_layout_वापस_unused_byclid(काष्ठा nfs_client *clp,
-				      क्रमागत pnfs_iomode iomode);
+void nfs4_deviceid_mark_client_invalid(struct nfs_client *clp);
+int pnfs_read_done_resend_to_mds(struct nfs_pgio_header *);
+int pnfs_write_done_resend_to_mds(struct nfs_pgio_header *);
+struct nfs4_threshold *pnfs_mdsthreshold_alloc(void);
+void pnfs_error_mark_layout_for_return(struct inode *inode,
+				       struct pnfs_layout_segment *lseg);
+void pnfs_layout_return_unused_byclid(struct nfs_client *clp,
+				      enum pnfs_iomode iomode);
 
 /* nfs4_deviceid_flags */
-क्रमागत अणु
+enum {
 	NFS_DEVICEID_INVALID = 0,       /* set when MDS clientid recalled */
 	NFS_DEVICEID_UNAVAILABLE,	/* device temporarily unavailable */
 	NFS_DEVICEID_NOCACHE,		/* device may not be cached */
-पूर्ण;
+};
 
 /* pnfs_dev.c */
-काष्ठा nfs4_deviceid_node अणु
-	काष्ठा hlist_node		node;
-	काष्ठा hlist_node		पंचांगpnode;
-	स्थिर काष्ठा pnfs_layoutdriver_type *ld;
-	स्थिर काष्ठा nfs_client		*nfs_client;
-	अचिन्हित दीर्घ 			flags;
-	अचिन्हित दीर्घ			बारtamp_unavailable;
-	काष्ठा nfs4_deviceid		deviceid;
-	काष्ठा rcu_head			rcu;
+struct nfs4_deviceid_node {
+	struct hlist_node		node;
+	struct hlist_node		tmpnode;
+	const struct pnfs_layoutdriver_type *ld;
+	const struct nfs_client		*nfs_client;
+	unsigned long 			flags;
+	unsigned long			timestamp_unavailable;
+	struct nfs4_deviceid		deviceid;
+	struct rcu_head			rcu;
 	atomic_t			ref;
-पूर्ण;
+};
 
-काष्ठा nfs4_deviceid_node *
-nfs4_find_get_deviceid(काष्ठा nfs_server *server,
-		स्थिर काष्ठा nfs4_deviceid *id, स्थिर काष्ठा cred *cred,
+struct nfs4_deviceid_node *
+nfs4_find_get_deviceid(struct nfs_server *server,
+		const struct nfs4_deviceid *id, const struct cred *cred,
 		gfp_t gfp_mask);
-व्योम nfs4_delete_deviceid(स्थिर काष्ठा pnfs_layoutdriver_type *, स्थिर काष्ठा nfs_client *, स्थिर काष्ठा nfs4_deviceid *);
-व्योम nfs4_init_deviceid_node(काष्ठा nfs4_deviceid_node *, काष्ठा nfs_server *,
-			     स्थिर काष्ठा nfs4_deviceid *);
-bool nfs4_put_deviceid_node(काष्ठा nfs4_deviceid_node *);
-व्योम nfs4_mark_deviceid_available(काष्ठा nfs4_deviceid_node *node);
-व्योम nfs4_mark_deviceid_unavailable(काष्ठा nfs4_deviceid_node *node);
-bool nfs4_test_deviceid_unavailable(काष्ठा nfs4_deviceid_node *node);
-व्योम nfs4_deviceid_purge_client(स्थिर काष्ठा nfs_client *);
+void nfs4_delete_deviceid(const struct pnfs_layoutdriver_type *, const struct nfs_client *, const struct nfs4_deviceid *);
+void nfs4_init_deviceid_node(struct nfs4_deviceid_node *, struct nfs_server *,
+			     const struct nfs4_deviceid *);
+bool nfs4_put_deviceid_node(struct nfs4_deviceid_node *);
+void nfs4_mark_deviceid_available(struct nfs4_deviceid_node *node);
+void nfs4_mark_deviceid_unavailable(struct nfs4_deviceid_node *node);
+bool nfs4_test_deviceid_unavailable(struct nfs4_deviceid_node *node);
+void nfs4_deviceid_purge_client(const struct nfs_client *);
 
 /* pnfs_nfs.c */
-काष्ठा pnfs_commit_array *pnfs_alloc_commit_array(माप_प्रकार n, gfp_t gfp_flags);
-व्योम pnfs_मुक्त_commit_array(काष्ठा pnfs_commit_array *p);
-काष्ठा pnfs_commit_array *pnfs_add_commit_array(काष्ठा pnfs_ds_commit_info *,
-						काष्ठा pnfs_commit_array *,
-						काष्ठा pnfs_layout_segment *);
+struct pnfs_commit_array *pnfs_alloc_commit_array(size_t n, gfp_t gfp_flags);
+void pnfs_free_commit_array(struct pnfs_commit_array *p);
+struct pnfs_commit_array *pnfs_add_commit_array(struct pnfs_ds_commit_info *,
+						struct pnfs_commit_array *,
+						struct pnfs_layout_segment *);
 
-व्योम pnfs_generic_ds_cinfo_release_lseg(काष्ठा pnfs_ds_commit_info *fl_cinfo,
-		काष्ठा pnfs_layout_segment *lseg);
-व्योम pnfs_generic_ds_cinfo_destroy(काष्ठा pnfs_ds_commit_info *fl_cinfo);
+void pnfs_generic_ds_cinfo_release_lseg(struct pnfs_ds_commit_info *fl_cinfo,
+		struct pnfs_layout_segment *lseg);
+void pnfs_generic_ds_cinfo_destroy(struct pnfs_ds_commit_info *fl_cinfo);
 
-व्योम pnfs_generic_clear_request_commit(काष्ठा nfs_page *req,
-				       काष्ठा nfs_commit_info *cinfo);
-व्योम pnfs_generic_commit_release(व्योम *calldata);
-व्योम pnfs_generic_prepare_to_resend_ग_लिखोs(काष्ठा nfs_commit_data *data);
-व्योम pnfs_generic_rw_release(व्योम *data);
-व्योम pnfs_generic_recover_commit_reqs(काष्ठा list_head *dst,
-				      काष्ठा nfs_commit_info *cinfo);
-काष्ठा nfs_page *pnfs_generic_search_commit_reqs(काष्ठा nfs_commit_info *cinfo,
-						 काष्ठा page *page);
-पूर्णांक pnfs_generic_commit_pagelist(काष्ठा inode *inode,
-				 काष्ठा list_head *mds_pages,
-				 पूर्णांक how,
-				 काष्ठा nfs_commit_info *cinfo,
-				 पूर्णांक (*initiate_commit)(काष्ठा nfs_commit_data *data,
-							पूर्णांक how));
-पूर्णांक pnfs_generic_scan_commit_lists(काष्ठा nfs_commit_info *cinfo, पूर्णांक max);
-व्योम pnfs_generic_ग_लिखो_commit_करोne(काष्ठा rpc_task *task, व्योम *data);
-व्योम nfs4_pnfs_ds_put(काष्ठा nfs4_pnfs_ds *ds);
-काष्ठा nfs4_pnfs_ds *nfs4_pnfs_ds_add(काष्ठा list_head *dsaddrs,
+void pnfs_generic_clear_request_commit(struct nfs_page *req,
+				       struct nfs_commit_info *cinfo);
+void pnfs_generic_commit_release(void *calldata);
+void pnfs_generic_prepare_to_resend_writes(struct nfs_commit_data *data);
+void pnfs_generic_rw_release(void *data);
+void pnfs_generic_recover_commit_reqs(struct list_head *dst,
+				      struct nfs_commit_info *cinfo);
+struct nfs_page *pnfs_generic_search_commit_reqs(struct nfs_commit_info *cinfo,
+						 struct page *page);
+int pnfs_generic_commit_pagelist(struct inode *inode,
+				 struct list_head *mds_pages,
+				 int how,
+				 struct nfs_commit_info *cinfo,
+				 int (*initiate_commit)(struct nfs_commit_data *data,
+							int how));
+int pnfs_generic_scan_commit_lists(struct nfs_commit_info *cinfo, int max);
+void pnfs_generic_write_commit_done(struct rpc_task *task, void *data);
+void nfs4_pnfs_ds_put(struct nfs4_pnfs_ds *ds);
+struct nfs4_pnfs_ds *nfs4_pnfs_ds_add(struct list_head *dsaddrs,
 				      gfp_t gfp_flags);
-व्योम nfs4_pnfs_v3_ds_connect_unload(व्योम);
-पूर्णांक nfs4_pnfs_ds_connect(काष्ठा nfs_server *mds_srv, काष्ठा nfs4_pnfs_ds *ds,
-			  काष्ठा nfs4_deviceid_node *devid, अचिन्हित पूर्णांक समयo,
-			  अचिन्हित पूर्णांक retrans, u32 version, u32 minor_version);
-काष्ठा nfs4_pnfs_ds_addr *nfs4_decode_mp_ds_addr(काष्ठा net *net,
-						 काष्ठा xdr_stream *xdr,
+void nfs4_pnfs_v3_ds_connect_unload(void);
+int nfs4_pnfs_ds_connect(struct nfs_server *mds_srv, struct nfs4_pnfs_ds *ds,
+			  struct nfs4_deviceid_node *devid, unsigned int timeo,
+			  unsigned int retrans, u32 version, u32 minor_version);
+struct nfs4_pnfs_ds_addr *nfs4_decode_mp_ds_addr(struct net *net,
+						 struct xdr_stream *xdr,
 						 gfp_t gfp_flags);
-व्योम pnfs_layout_mark_request_commit(काष्ठा nfs_page *req,
-				     काष्ठा pnfs_layout_segment *lseg,
-				     काष्ठा nfs_commit_info *cinfo,
+void pnfs_layout_mark_request_commit(struct nfs_page *req,
+				     struct pnfs_layout_segment *lseg,
+				     struct nfs_commit_info *cinfo,
 				     u32 ds_commit_idx);
-व्योम pnfs_lgखोलो_prepare(काष्ठा nfs4_खोलोdata *data,
-			 काष्ठा nfs_खोलो_context *ctx);
-व्योम pnfs_parse_lgखोलो(काष्ठा inode *ino, काष्ठा nfs4_layoutget *lgp,
-		       काष्ठा nfs_खोलो_context *ctx);
-व्योम nfs4_lgखोलो_release(काष्ठा nfs4_layoutget *lgp);
+void pnfs_lgopen_prepare(struct nfs4_opendata *data,
+			 struct nfs_open_context *ctx);
+void pnfs_parse_lgopen(struct inode *ino, struct nfs4_layoutget *lgp,
+		       struct nfs_open_context *ctx);
+void nfs4_lgopen_release(struct nfs4_layoutget *lgp);
 
-अटल अंतरभूत bool nfs_have_layout(काष्ठा inode *inode)
-अणु
-	वापस NFS_I(inode)->layout != शून्य;
-पूर्ण
+static inline bool nfs_have_layout(struct inode *inode)
+{
+	return NFS_I(inode)->layout != NULL;
+}
 
-अटल अंतरभूत bool pnfs_layout_is_valid(स्थिर काष्ठा pnfs_layout_hdr *lo)
-अणु
-	वापस test_bit(NFS_LAYOUT_INVALID_STID, &lo->plh_flags) == 0;
-पूर्ण
+static inline bool pnfs_layout_is_valid(const struct pnfs_layout_hdr *lo)
+{
+	return test_bit(NFS_LAYOUT_INVALID_STID, &lo->plh_flags) == 0;
+}
 
-अटल अंतरभूत काष्ठा nfs4_deviceid_node *
-nfs4_get_deviceid(काष्ठा nfs4_deviceid_node *d)
-अणु
+static inline struct nfs4_deviceid_node *
+nfs4_get_deviceid(struct nfs4_deviceid_node *d)
+{
 	atomic_inc(&d->ref);
-	वापस d;
-पूर्ण
+	return d;
+}
 
-अटल अंतरभूत काष्ठा pnfs_layout_segment *
-pnfs_get_lseg(काष्ठा pnfs_layout_segment *lseg)
-अणु
-	अगर (lseg) अणु
+static inline struct pnfs_layout_segment *
+pnfs_get_lseg(struct pnfs_layout_segment *lseg)
+{
+	if (lseg) {
 		refcount_inc(&lseg->pls_refcount);
 		smp_mb__after_atomic();
-	पूर्ण
-	वापस lseg;
-पूर्ण
+	}
+	return lseg;
+}
 
-अटल अंतरभूत bool
-pnfs_is_valid_lseg(काष्ठा pnfs_layout_segment *lseg)
-अणु
-	वापस test_bit(NFS_LSEG_VALID, &lseg->pls_flags) != 0;
-पूर्ण
+static inline bool
+pnfs_is_valid_lseg(struct pnfs_layout_segment *lseg)
+{
+	return test_bit(NFS_LSEG_VALID, &lseg->pls_flags) != 0;
+}
 
-/* Return true अगर a layout driver is being used क्रम this mountpoपूर्णांक */
-अटल अंतरभूत पूर्णांक pnfs_enabled_sb(काष्ठा nfs_server *nfss)
-अणु
-	वापस nfss->pnfs_curr_ld != शून्य;
-पूर्ण
+/* Return true if a layout driver is being used for this mountpoint */
+static inline int pnfs_enabled_sb(struct nfs_server *nfss)
+{
+	return nfss->pnfs_curr_ld != NULL;
+}
 
-अटल अंतरभूत पूर्णांक
-pnfs_commit_list(काष्ठा inode *inode, काष्ठा list_head *mds_pages, पूर्णांक how,
-		 काष्ठा nfs_commit_info *cinfo)
-अणु
-	काष्ठा pnfs_ds_commit_info *fl_cinfo = cinfo->ds;
+static inline int
+pnfs_commit_list(struct inode *inode, struct list_head *mds_pages, int how,
+		 struct nfs_commit_info *cinfo)
+{
+	struct pnfs_ds_commit_info *fl_cinfo = cinfo->ds;
 
-	अगर (fl_cinfo == शून्य || fl_cinfo->ncommitting == 0)
-		वापस PNFS_NOT_ATTEMPTED;
-	वापस fl_cinfo->ops->commit_pagelist(inode, mds_pages, how, cinfo);
-पूर्ण
+	if (fl_cinfo == NULL || fl_cinfo->ncommitting == 0)
+		return PNFS_NOT_ATTEMPTED;
+	return fl_cinfo->ops->commit_pagelist(inode, mds_pages, how, cinfo);
+}
 
-अटल अंतरभूत काष्ठा pnfs_ds_commit_info *
-pnfs_get_ds_info(काष्ठा inode *inode)
-अणु
-	काष्ठा pnfs_layoutdriver_type *ld = NFS_SERVER(inode)->pnfs_curr_ld;
+static inline struct pnfs_ds_commit_info *
+pnfs_get_ds_info(struct inode *inode)
+{
+	struct pnfs_layoutdriver_type *ld = NFS_SERVER(inode)->pnfs_curr_ld;
 
-	अगर (ld == शून्य || ld->get_ds_info == शून्य)
-		वापस शून्य;
-	वापस ld->get_ds_info(inode);
-पूर्ण
+	if (ld == NULL || ld->get_ds_info == NULL)
+		return NULL;
+	return ld->get_ds_info(inode);
+}
 
-अटल अंतरभूत व्योम
-pnfs_init_ds_commit_info_ops(काष्ठा pnfs_ds_commit_info *fl_cinfo, काष्ठा inode *inode)
-अणु
-	काष्ठा pnfs_ds_commit_info *inode_cinfo = pnfs_get_ds_info(inode);
-	अगर (inode_cinfo != शून्य)
+static inline void
+pnfs_init_ds_commit_info_ops(struct pnfs_ds_commit_info *fl_cinfo, struct inode *inode)
+{
+	struct pnfs_ds_commit_info *inode_cinfo = pnfs_get_ds_info(inode);
+	if (inode_cinfo != NULL)
 		fl_cinfo->ops = inode_cinfo->ops;
-पूर्ण
+}
 
-अटल अंतरभूत व्योम
-pnfs_init_ds_commit_info(काष्ठा pnfs_ds_commit_info *fl_cinfo)
-अणु
+static inline void
+pnfs_init_ds_commit_info(struct pnfs_ds_commit_info *fl_cinfo)
+{
 	INIT_LIST_HEAD(&fl_cinfo->commits);
-	fl_cinfo->ops = शून्य;
-पूर्ण
+	fl_cinfo->ops = NULL;
+}
 
-अटल अंतरभूत व्योम
-pnfs_release_ds_info(काष्ठा pnfs_ds_commit_info *fl_cinfo, काष्ठा inode *inode)
-अणु
-	अगर (fl_cinfo->ops != शून्य && fl_cinfo->ops->release_ds_info != शून्य)
+static inline void
+pnfs_release_ds_info(struct pnfs_ds_commit_info *fl_cinfo, struct inode *inode)
+{
+	if (fl_cinfo->ops != NULL && fl_cinfo->ops->release_ds_info != NULL)
 		fl_cinfo->ops->release_ds_info(fl_cinfo, inode);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम
-pnfs_generic_mark_devid_invalid(काष्ठा nfs4_deviceid_node *node)
-अणु
+static inline void
+pnfs_generic_mark_devid_invalid(struct nfs4_deviceid_node *node)
+{
 	set_bit(NFS_DEVICEID_INVALID, &node->flags);
-पूर्ण
+}
 
-अटल अंतरभूत bool
-pnfs_mark_request_commit(काष्ठा nfs_page *req, काष्ठा pnfs_layout_segment *lseg,
-			 काष्ठा nfs_commit_info *cinfo, u32 ds_commit_idx)
-अणु
-	काष्ठा pnfs_ds_commit_info *fl_cinfo = cinfo->ds;
+static inline bool
+pnfs_mark_request_commit(struct nfs_page *req, struct pnfs_layout_segment *lseg,
+			 struct nfs_commit_info *cinfo, u32 ds_commit_idx)
+{
+	struct pnfs_ds_commit_info *fl_cinfo = cinfo->ds;
 
-	अगर (!lseg || !fl_cinfo->ops->mark_request_commit)
-		वापस false;
+	if (!lseg || !fl_cinfo->ops->mark_request_commit)
+		return false;
 	fl_cinfo->ops->mark_request_commit(req, lseg, cinfo, ds_commit_idx);
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल अंतरभूत bool
-pnfs_clear_request_commit(काष्ठा nfs_page *req, काष्ठा nfs_commit_info *cinfo)
-अणु
-	काष्ठा pnfs_ds_commit_info *fl_cinfo = cinfo->ds;
+static inline bool
+pnfs_clear_request_commit(struct nfs_page *req, struct nfs_commit_info *cinfo)
+{
+	struct pnfs_ds_commit_info *fl_cinfo = cinfo->ds;
 
-	अगर (!fl_cinfo || !fl_cinfo->ops || !fl_cinfo->ops->clear_request_commit)
-		वापस false;
+	if (!fl_cinfo || !fl_cinfo->ops || !fl_cinfo->ops->clear_request_commit)
+		return false;
 	fl_cinfo->ops->clear_request_commit(req, cinfo);
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल अंतरभूत पूर्णांक
-pnfs_scan_commit_lists(काष्ठा inode *inode, काष्ठा nfs_commit_info *cinfo,
-		       पूर्णांक max)
-अणु
-	काष्ठा pnfs_ds_commit_info *fl_cinfo = cinfo->ds;
+static inline int
+pnfs_scan_commit_lists(struct inode *inode, struct nfs_commit_info *cinfo,
+		       int max)
+{
+	struct pnfs_ds_commit_info *fl_cinfo = cinfo->ds;
 
-	अगर (!fl_cinfo || fl_cinfo->nwritten == 0)
-		वापस 0;
-	वापस fl_cinfo->ops->scan_commit_lists(cinfo, max);
-पूर्ण
+	if (!fl_cinfo || fl_cinfo->nwritten == 0)
+		return 0;
+	return fl_cinfo->ops->scan_commit_lists(cinfo, max);
+}
 
-अटल अंतरभूत व्योम
-pnfs_recover_commit_reqs(काष्ठा list_head *head, काष्ठा nfs_commit_info *cinfo)
-अणु
-	काष्ठा pnfs_ds_commit_info *fl_cinfo = cinfo->ds;
+static inline void
+pnfs_recover_commit_reqs(struct list_head *head, struct nfs_commit_info *cinfo)
+{
+	struct pnfs_ds_commit_info *fl_cinfo = cinfo->ds;
 
-	अगर (fl_cinfo && fl_cinfo->nwritten != 0)
+	if (fl_cinfo && fl_cinfo->nwritten != 0)
 		fl_cinfo->ops->recover_commit_reqs(head, cinfo);
-पूर्ण
+}
 
-अटल अंतरभूत काष्ठा nfs_page *
-pnfs_search_commit_reqs(काष्ठा inode *inode, काष्ठा nfs_commit_info *cinfo,
-			काष्ठा page *page)
-अणु
-	काष्ठा pnfs_ds_commit_info *fl_cinfo = cinfo->ds;
+static inline struct nfs_page *
+pnfs_search_commit_reqs(struct inode *inode, struct nfs_commit_info *cinfo,
+			struct page *page)
+{
+	struct pnfs_ds_commit_info *fl_cinfo = cinfo->ds;
 
-	अगर (!fl_cinfo->ops || !fl_cinfo->ops->search_commit_reqs)
-		वापस शून्य;
-	वापस fl_cinfo->ops->search_commit_reqs(cinfo, page);
-पूर्ण
+	if (!fl_cinfo->ops || !fl_cinfo->ops->search_commit_reqs)
+		return NULL;
+	return fl_cinfo->ops->search_commit_reqs(cinfo, page);
+}
 
-/* Should the pNFS client commit and वापस the layout upon a setattr */
-अटल अंतरभूत bool
-pnfs_ld_layoutret_on_setattr(काष्ठा inode *inode)
-अणु
-	अगर (!pnfs_enabled_sb(NFS_SERVER(inode)))
-		वापस false;
-	वापस NFS_SERVER(inode)->pnfs_curr_ld->flags &
+/* Should the pNFS client commit and return the layout upon a setattr */
+static inline bool
+pnfs_ld_layoutret_on_setattr(struct inode *inode)
+{
+	if (!pnfs_enabled_sb(NFS_SERVER(inode)))
+		return false;
+	return NFS_SERVER(inode)->pnfs_curr_ld->flags &
 		PNFS_LAYOUTRET_ON_SETATTR;
-पूर्ण
+}
 
-अटल अंतरभूत bool
-pnfs_ld_पढ़ो_whole_page(काष्ठा inode *inode)
-अणु
-	अगर (!pnfs_enabled_sb(NFS_SERVER(inode)))
-		वापस false;
-	वापस NFS_SERVER(inode)->pnfs_curr_ld->flags & PNFS_READ_WHOLE_PAGE;
-पूर्ण
+static inline bool
+pnfs_ld_read_whole_page(struct inode *inode)
+{
+	if (!pnfs_enabled_sb(NFS_SERVER(inode)))
+		return false;
+	return NFS_SERVER(inode)->pnfs_curr_ld->flags & PNFS_READ_WHOLE_PAGE;
+}
 
-अटल अंतरभूत पूर्णांक
-pnfs_sync_inode(काष्ठा inode *inode, bool datasync)
-अणु
-	अगर (!pnfs_enabled_sb(NFS_SERVER(inode)))
-		वापस 0;
-	वापस NFS_SERVER(inode)->pnfs_curr_ld->sync(inode, datasync);
-पूर्ण
+static inline int
+pnfs_sync_inode(struct inode *inode, bool datasync)
+{
+	if (!pnfs_enabled_sb(NFS_SERVER(inode)))
+		return 0;
+	return NFS_SERVER(inode)->pnfs_curr_ld->sync(inode, datasync);
+}
 
-अटल अंतरभूत bool
-pnfs_layoutcommit_outstanding(काष्ठा inode *inode)
-अणु
-	काष्ठा nfs_inode *nfsi = NFS_I(inode);
+static inline bool
+pnfs_layoutcommit_outstanding(struct inode *inode)
+{
+	struct nfs_inode *nfsi = NFS_I(inode);
 
-	वापस test_bit(NFS_INO_LAYOUTCOMMIT, &nfsi->flags) != 0 ||
+	return test_bit(NFS_INO_LAYOUTCOMMIT, &nfsi->flags) != 0 ||
 		test_bit(NFS_INO_LAYOUTCOMMITTING, &nfsi->flags) != 0;
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक pnfs_वापस_layout(काष्ठा inode *ino)
-अणु
-	काष्ठा nfs_inode *nfsi = NFS_I(ino);
-	काष्ठा nfs_server *nfss = NFS_SERVER(ino);
+static inline int pnfs_return_layout(struct inode *ino)
+{
+	struct nfs_inode *nfsi = NFS_I(ino);
+	struct nfs_server *nfss = NFS_SERVER(ino);
 
-	अगर (pnfs_enabled_sb(nfss) && nfsi->layout) अणु
+	if (pnfs_enabled_sb(nfss) && nfsi->layout) {
 		set_bit(NFS_LAYOUT_RETURN_REQUESTED, &nfsi->layout->plh_flags);
-		वापस _pnfs_वापस_layout(ino);
-	पूर्ण
+		return _pnfs_return_layout(ino);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत bool
-pnfs_use_threshold(काष्ठा nfs4_threshold **dst, काष्ठा nfs4_threshold *src,
-		   काष्ठा nfs_server *nfss)
-अणु
-	वापस (dst && src && src->bm != 0 && nfss->pnfs_curr_ld &&
+static inline bool
+pnfs_use_threshold(struct nfs4_threshold **dst, struct nfs4_threshold *src,
+		   struct nfs_server *nfss)
+{
+	return (dst && src && src->bm != 0 && nfss->pnfs_curr_ld &&
 					nfss->pnfs_curr_ld->id == src->l_type);
-पूर्ण
+}
 
-अटल अंतरभूत u64
+static inline u64
 pnfs_calc_offset_end(u64 offset, u64 len)
-अणु
-	अगर (len == NFS4_MAX_UINT64 || len >= NFS4_MAX_UINT64 - offset)
-		वापस NFS4_MAX_UINT64;
-	वापस offset + len - 1;
-पूर्ण
+{
+	if (len == NFS4_MAX_UINT64 || len >= NFS4_MAX_UINT64 - offset)
+		return NFS4_MAX_UINT64;
+	return offset + len - 1;
+}
 
-अटल अंतरभूत u64
+static inline u64
 pnfs_calc_offset_length(u64 offset, u64 end)
-अणु
-	अगर (end == NFS4_MAX_UINT64 || end <= offset)
-		वापस NFS4_MAX_UINT64;
-	वापस 1 + end - offset;
-पूर्ण
+{
+	if (end == NFS4_MAX_UINT64 || end <= offset)
+		return NFS4_MAX_UINT64;
+	return 1 + end - offset;
+}
 
-अटल अंतरभूत व्योम
-pnfs_copy_range(काष्ठा pnfs_layout_range *dst,
-		स्थिर काष्ठा pnfs_layout_range *src)
-अणु
-	स_नकल(dst, src, माप(*dst));
-पूर्ण
+static inline void
+pnfs_copy_range(struct pnfs_layout_range *dst,
+		const struct pnfs_layout_range *src)
+{
+	memcpy(dst, src, sizeof(*dst));
+}
 
-अटल अंतरभूत u64
+static inline u64
 pnfs_end_offset(u64 start, u64 len)
-अणु
-	अगर (NFS4_MAX_UINT64 - start <= len)
-		वापस NFS4_MAX_UINT64;
-	वापस start + len;
-पूर्ण
+{
+	if (NFS4_MAX_UINT64 - start <= len)
+		return NFS4_MAX_UINT64;
+	return start + len;
+}
 
 /*
- * Are 2 ranges पूर्णांकersecting?
+ * Are 2 ranges intersecting?
  *   start1                             end1
  *   [----------------------------------)
  *                                start2           end2
  *                                [----------------)
  */
-अटल अंतरभूत bool
-pnfs_is_range_पूर्णांकersecting(u64 start1, u64 end1, u64 start2, u64 end2)
-अणु
-	वापस (end1 == NFS4_MAX_UINT64 || start2 < end1) &&
+static inline bool
+pnfs_is_range_intersecting(u64 start1, u64 end1, u64 start2, u64 end2)
+{
+	return (end1 == NFS4_MAX_UINT64 || start2 < end1) &&
 		(end2 == NFS4_MAX_UINT64 || start1 < end2);
-पूर्ण
+}
 
-अटल अंतरभूत bool
-pnfs_lseg_range_पूर्णांकersecting(स्थिर काष्ठा pnfs_layout_range *l1,
-		स्थिर काष्ठा pnfs_layout_range *l2)
-अणु
+static inline bool
+pnfs_lseg_range_intersecting(const struct pnfs_layout_range *l1,
+		const struct pnfs_layout_range *l2)
+{
 	u64 end1 = pnfs_end_offset(l1->offset, l1->length);
 	u64 end2 = pnfs_end_offset(l2->offset, l2->length);
 
-	वापस pnfs_is_range_पूर्णांकersecting(l1->offset, end1, l2->offset, end2);
-पूर्ण
+	return pnfs_is_range_intersecting(l1->offset, end1, l2->offset, end2);
+}
 
-अटल अंतरभूत bool
-pnfs_lseg_request_पूर्णांकersecting(काष्ठा pnfs_layout_segment *lseg, काष्ठा nfs_page *req)
-अणु
+static inline bool
+pnfs_lseg_request_intersecting(struct pnfs_layout_segment *lseg, struct nfs_page *req)
+{
 	u64 seg_last = pnfs_end_offset(lseg->pls_range.offset, lseg->pls_range.length);
 	u64 req_last = req_offset(req) + req->wb_bytes;
 
-	वापस pnfs_is_range_पूर्णांकersecting(lseg->pls_range.offset, seg_last,
+	return pnfs_is_range_intersecting(lseg->pls_range.offset, seg_last,
 				req_offset(req), req_last);
-पूर्ण
+}
 
-बाह्य अचिन्हित पूर्णांक layoutstats_समयr;
+extern unsigned int layoutstats_timer;
 
-#अगर_घोषित NFS_DEBUG
-व्योम nfs4_prपूर्णांक_deviceid(स्थिर काष्ठा nfs4_deviceid *dev_id);
-#अन्यथा
-अटल अंतरभूत व्योम nfs4_prपूर्णांक_deviceid(स्थिर काष्ठा nfs4_deviceid *dev_id)
-अणु
-पूर्ण
+#ifdef NFS_DEBUG
+void nfs4_print_deviceid(const struct nfs4_deviceid *dev_id);
+#else
+static inline void nfs4_print_deviceid(const struct nfs4_deviceid *dev_id)
+{
+}
 
-#पूर्ण_अगर /* NFS_DEBUG */
-#अन्यथा  /* CONFIG_NFS_V4_1 */
+#endif /* NFS_DEBUG */
+#else  /* CONFIG_NFS_V4_1 */
 
-अटल अंतरभूत bool nfs_have_layout(काष्ठा inode *inode)
-अणु
-	वापस false;
-पूर्ण
+static inline bool nfs_have_layout(struct inode *inode)
+{
+	return false;
+}
 
-अटल अंतरभूत व्योम pnfs_destroy_all_layouts(काष्ठा nfs_client *clp)
-अणु
-पूर्ण
+static inline void pnfs_destroy_all_layouts(struct nfs_client *clp)
+{
+}
 
-अटल अंतरभूत व्योम pnfs_destroy_layout(काष्ठा nfs_inode *nfsi)
-अणु
-पूर्ण
+static inline void pnfs_destroy_layout(struct nfs_inode *nfsi)
+{
+}
 
-अटल अंतरभूत व्योम pnfs_destroy_layout_final(काष्ठा nfs_inode *nfsi)
-अणु
-पूर्ण
+static inline void pnfs_destroy_layout_final(struct nfs_inode *nfsi)
+{
+}
 
-अटल अंतरभूत काष्ठा pnfs_layout_segment *
-pnfs_get_lseg(काष्ठा pnfs_layout_segment *lseg)
-अणु
-	वापस शून्य;
-पूर्ण
+static inline struct pnfs_layout_segment *
+pnfs_get_lseg(struct pnfs_layout_segment *lseg)
+{
+	return NULL;
+}
 
-अटल अंतरभूत व्योम pnfs_put_lseg(काष्ठा pnfs_layout_segment *lseg)
-अणु
-पूर्ण
+static inline void pnfs_put_lseg(struct pnfs_layout_segment *lseg)
+{
+}
 
-अटल अंतरभूत पूर्णांक pnfs_वापस_layout(काष्ठा inode *ino)
-अणु
-	वापस 0;
-पूर्ण
+static inline int pnfs_return_layout(struct inode *ino)
+{
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक pnfs_commit_and_वापस_layout(काष्ठा inode *inode)
-अणु
-	वापस 0;
-पूर्ण
+static inline int pnfs_commit_and_return_layout(struct inode *inode)
+{
+	return 0;
+}
 
-अटल अंतरभूत bool
-pnfs_ld_layoutret_on_setattr(काष्ठा inode *inode)
-अणु
-	वापस false;
-पूर्ण
+static inline bool
+pnfs_ld_layoutret_on_setattr(struct inode *inode)
+{
+	return false;
+}
 
-अटल अंतरभूत bool
-pnfs_ld_पढ़ो_whole_page(काष्ठा inode *inode)
-अणु
-	वापस false;
-पूर्ण
+static inline bool
+pnfs_ld_read_whole_page(struct inode *inode)
+{
+	return false;
+}
 
-अटल अंतरभूत पूर्णांक
-pnfs_sync_inode(काष्ठा inode *inode, bool datasync)
-अणु
-	वापस 0;
-पूर्ण
+static inline int
+pnfs_sync_inode(struct inode *inode, bool datasync)
+{
+	return 0;
+}
 
-अटल अंतरभूत bool
-pnfs_layoutcommit_outstanding(काष्ठा inode *inode)
-अणु
-	वापस false;
-पूर्ण
+static inline bool
+pnfs_layoutcommit_outstanding(struct inode *inode)
+{
+	return false;
+}
 
 
-अटल अंतरभूत bool
-pnfs_roc(काष्ठा inode *ino,
-		काष्ठा nfs4_layoutवापस_args *args,
-		काष्ठा nfs4_layoutवापस_res *res,
-		स्थिर काष्ठा cred *cred)
-अणु
-	वापस false;
-पूर्ण
+static inline bool
+pnfs_roc(struct inode *ino,
+		struct nfs4_layoutreturn_args *args,
+		struct nfs4_layoutreturn_res *res,
+		const struct cred *cred)
+{
+	return false;
+}
 
-अटल अंतरभूत पूर्णांक
-pnfs_roc_करोne(काष्ठा rpc_task *task,
-		काष्ठा nfs4_layoutवापस_args **argpp,
-		काष्ठा nfs4_layoutवापस_res **respp,
-		पूर्णांक *ret)
-अणु
-	वापस 0;
-पूर्ण
+static inline int
+pnfs_roc_done(struct rpc_task *task,
+		struct nfs4_layoutreturn_args **argpp,
+		struct nfs4_layoutreturn_res **respp,
+		int *ret)
+{
+	return 0;
+}
 
-अटल अंतरभूत व्योम
-pnfs_roc_release(काष्ठा nfs4_layoutवापस_args *args,
-		काष्ठा nfs4_layoutवापस_res *res,
-		पूर्णांक ret)
-अणु
-पूर्ण
+static inline void
+pnfs_roc_release(struct nfs4_layoutreturn_args *args,
+		struct nfs4_layoutreturn_res *res,
+		int ret)
+{
+}
 
-अटल अंतरभूत bool
-pnfs_रुको_on_layoutवापस(काष्ठा inode *ino, काष्ठा rpc_task *task)
-अणु
-	वापस false;
-पूर्ण
+static inline bool
+pnfs_wait_on_layoutreturn(struct inode *ino, struct rpc_task *task)
+{
+	return false;
+}
 
-अटल अंतरभूत व्योम set_pnfs_layoutdriver(काष्ठा nfs_server *s,
-					 स्थिर काष्ठा nfs_fh *mntfh,
-					 काष्ठा nfs_fsinfo *fsinfo)
-अणु
-पूर्ण
+static inline void set_pnfs_layoutdriver(struct nfs_server *s,
+					 const struct nfs_fh *mntfh,
+					 struct nfs_fsinfo *fsinfo)
+{
+}
 
-अटल अंतरभूत व्योम unset_pnfs_layoutdriver(काष्ठा nfs_server *s)
-अणु
-पूर्ण
+static inline void unset_pnfs_layoutdriver(struct nfs_server *s)
+{
+}
 
-अटल अंतरभूत पूर्णांक
-pnfs_commit_list(काष्ठा inode *inode, काष्ठा list_head *mds_pages, पूर्णांक how,
-		 काष्ठा nfs_commit_info *cinfo)
-अणु
-	वापस PNFS_NOT_ATTEMPTED;
-पूर्ण
+static inline int
+pnfs_commit_list(struct inode *inode, struct list_head *mds_pages, int how,
+		 struct nfs_commit_info *cinfo)
+{
+	return PNFS_NOT_ATTEMPTED;
+}
 
-अटल अंतरभूत काष्ठा pnfs_ds_commit_info *
-pnfs_get_ds_info(काष्ठा inode *inode)
-अणु
-	वापस शून्य;
-पूर्ण
+static inline struct pnfs_ds_commit_info *
+pnfs_get_ds_info(struct inode *inode)
+{
+	return NULL;
+}
 
-अटल अंतरभूत व्योम
-pnfs_init_ds_commit_info_ops(काष्ठा pnfs_ds_commit_info *fl_cinfo, काष्ठा inode *inode)
-अणु
-पूर्ण
+static inline void
+pnfs_init_ds_commit_info_ops(struct pnfs_ds_commit_info *fl_cinfo, struct inode *inode)
+{
+}
 
-अटल अंतरभूत व्योम
-pnfs_init_ds_commit_info(काष्ठा pnfs_ds_commit_info *fl_cinfo)
-अणु
-पूर्ण
+static inline void
+pnfs_init_ds_commit_info(struct pnfs_ds_commit_info *fl_cinfo)
+{
+}
 
-अटल अंतरभूत व्योम
-pnfs_release_ds_info(काष्ठा pnfs_ds_commit_info *fl_cinfo, काष्ठा inode *inode)
-अणु
-पूर्ण
+static inline void
+pnfs_release_ds_info(struct pnfs_ds_commit_info *fl_cinfo, struct inode *inode)
+{
+}
 
-अटल अंतरभूत bool
-pnfs_mark_request_commit(काष्ठा nfs_page *req, काष्ठा pnfs_layout_segment *lseg,
-			 काष्ठा nfs_commit_info *cinfo, u32 ds_commit_idx)
-अणु
-	वापस false;
-पूर्ण
+static inline bool
+pnfs_mark_request_commit(struct nfs_page *req, struct pnfs_layout_segment *lseg,
+			 struct nfs_commit_info *cinfo, u32 ds_commit_idx)
+{
+	return false;
+}
 
-अटल अंतरभूत bool
-pnfs_clear_request_commit(काष्ठा nfs_page *req, काष्ठा nfs_commit_info *cinfo)
-अणु
-	वापस false;
-पूर्ण
+static inline bool
+pnfs_clear_request_commit(struct nfs_page *req, struct nfs_commit_info *cinfo)
+{
+	return false;
+}
 
-अटल अंतरभूत पूर्णांक
-pnfs_scan_commit_lists(काष्ठा inode *inode, काष्ठा nfs_commit_info *cinfo,
-		       पूर्णांक max)
-अणु
-	वापस 0;
-पूर्ण
+static inline int
+pnfs_scan_commit_lists(struct inode *inode, struct nfs_commit_info *cinfo,
+		       int max)
+{
+	return 0;
+}
 
-अटल अंतरभूत व्योम
-pnfs_recover_commit_reqs(काष्ठा list_head *head, काष्ठा nfs_commit_info *cinfo)
-अणु
-पूर्ण
+static inline void
+pnfs_recover_commit_reqs(struct list_head *head, struct nfs_commit_info *cinfo)
+{
+}
 
-अटल अंतरभूत काष्ठा nfs_page *
-pnfs_search_commit_reqs(काष्ठा inode *inode, काष्ठा nfs_commit_info *cinfo,
-			काष्ठा page *page)
-अणु
-	वापस शून्य;
-पूर्ण
+static inline struct nfs_page *
+pnfs_search_commit_reqs(struct inode *inode, struct nfs_commit_info *cinfo,
+			struct page *page)
+{
+	return NULL;
+}
 
-अटल अंतरभूत पूर्णांक pnfs_layoutcommit_inode(काष्ठा inode *inode, bool sync)
-अणु
-	वापस 0;
-पूर्ण
+static inline int pnfs_layoutcommit_inode(struct inode *inode, bool sync)
+{
+	return 0;
+}
 
-अटल अंतरभूत bool
-pnfs_use_threshold(काष्ठा nfs4_threshold **dst, काष्ठा nfs4_threshold *src,
-		   काष्ठा nfs_server *nfss)
-अणु
-	वापस false;
-पूर्ण
+static inline bool
+pnfs_use_threshold(struct nfs4_threshold **dst, struct nfs4_threshold *src,
+		   struct nfs_server *nfss)
+{
+	return false;
+}
 
-अटल अंतरभूत काष्ठा nfs4_threshold *pnfs_mdsthreshold_alloc(व्योम)
-अणु
-	वापस शून्य;
-पूर्ण
+static inline struct nfs4_threshold *pnfs_mdsthreshold_alloc(void)
+{
+	return NULL;
+}
 
-अटल अंतरभूत व्योम nfs4_pnfs_v3_ds_connect_unload(व्योम)
-अणु
-पूर्ण
+static inline void nfs4_pnfs_v3_ds_connect_unload(void)
+{
+}
 
-अटल अंतरभूत bool nfs4_layout_refresh_old_stateid(nfs4_stateid *dst,
-		काष्ठा pnfs_layout_range *dst_range,
-		काष्ठा inode *inode)
-अणु
-	वापस false;
-पूर्ण
+static inline bool nfs4_layout_refresh_old_stateid(nfs4_stateid *dst,
+		struct pnfs_layout_range *dst_range,
+		struct inode *inode)
+{
+	return false;
+}
 
-अटल अंतरभूत व्योम pnfs_lgखोलो_prepare(काष्ठा nfs4_खोलोdata *data,
-		काष्ठा nfs_खोलो_context *ctx)
-अणु
-पूर्ण
+static inline void pnfs_lgopen_prepare(struct nfs4_opendata *data,
+		struct nfs_open_context *ctx)
+{
+}
 
-अटल अंतरभूत व्योम pnfs_parse_lgखोलो(काष्ठा inode *ino,
-		काष्ठा nfs4_layoutget *lgp,
-		काष्ठा nfs_खोलो_context *ctx)
-अणु
-पूर्ण
+static inline void pnfs_parse_lgopen(struct inode *ino,
+		struct nfs4_layoutget *lgp,
+		struct nfs_open_context *ctx)
+{
+}
 
-अटल अंतरभूत व्योम nfs4_lgखोलो_release(काष्ठा nfs4_layoutget *lgp)
-अणु
-पूर्ण
+static inline void nfs4_lgopen_release(struct nfs4_layoutget *lgp)
+{
+}
 
-अटल अंतरभूत bool pnfs_layout_is_valid(स्थिर काष्ठा pnfs_layout_hdr *lo)
-अणु
-	वापस false;
-पूर्ण
+static inline bool pnfs_layout_is_valid(const struct pnfs_layout_hdr *lo)
+{
+	return false;
+}
 
-#पूर्ण_अगर /* CONFIG_NFS_V4_1 */
+#endif /* CONFIG_NFS_V4_1 */
 
-#अगर IS_ENABLED(CONFIG_NFS_V4_2)
-पूर्णांक pnfs_report_layoutstat(काष्ठा inode *inode, gfp_t gfp_flags);
-#अन्यथा
-अटल अंतरभूत पूर्णांक
-pnfs_report_layoutstat(काष्ठा inode *inode, gfp_t gfp_flags)
-अणु
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+#if IS_ENABLED(CONFIG_NFS_V4_2)
+int pnfs_report_layoutstat(struct inode *inode, gfp_t gfp_flags);
+#else
+static inline int
+pnfs_report_layoutstat(struct inode *inode, gfp_t gfp_flags)
+{
+	return 0;
+}
+#endif
 
-#पूर्ण_अगर /* FS_NFS_PNFS_H */
+#endif /* FS_NFS_PNFS_H */

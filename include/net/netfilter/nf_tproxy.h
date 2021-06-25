@@ -1,91 +1,90 @@
-<शैली गुरु>
-#अगर_अघोषित _NF_TPROXY_H_
-#घोषणा _NF_TPROXY_H_
+#ifndef _NF_TPROXY_H_
+#define _NF_TPROXY_H_
 
-#समावेश <net/tcp.h>
+#include <net/tcp.h>
 
-क्रमागत nf_tproxy_lookup_t अणु
+enum nf_tproxy_lookup_t {
 	 NF_TPROXY_LOOKUP_LISTENER,
 	 NF_TPROXY_LOOKUP_ESTABLISHED,
-पूर्ण;
+};
 
-अटल अंतरभूत bool nf_tproxy_sk_is_transparent(काष्ठा sock *sk)
-अणु
-	अगर (inet_sk_transparent(sk))
-		वापस true;
+static inline bool nf_tproxy_sk_is_transparent(struct sock *sk)
+{
+	if (inet_sk_transparent(sk))
+		return true;
 
 	sock_gen_put(sk);
-	वापस false;
-पूर्ण
+	return false;
+}
 
 /* assign a socket to the skb -- consumes sk */
-अटल अंतरभूत व्योम nf_tproxy_assign_sock(काष्ठा sk_buff *skb, काष्ठा sock *sk)
-अणु
+static inline void nf_tproxy_assign_sock(struct sk_buff *skb, struct sock *sk)
+{
 	skb_orphan(skb);
 	skb->sk = sk;
-	skb->deकाष्ठाor = sock_edemux;
-पूर्ण
+	skb->destructor = sock_edemux;
+}
 
-__be32 nf_tproxy_laddr4(काष्ठा sk_buff *skb, __be32 user_laddr, __be32 daddr);
+__be32 nf_tproxy_laddr4(struct sk_buff *skb, __be32 user_laddr, __be32 daddr);
 
 /**
- * nf_tproxy_handle_समय_रुको4 - handle IPv4 TCP TIME_WAIT reखोलो redirections
+ * nf_tproxy_handle_time_wait4 - handle IPv4 TCP TIME_WAIT reopen redirections
  * @skb:	The skb being processed.
  * @laddr:	IPv4 address to redirect to or zero.
  * @lport:	TCP port to redirect to or zero.
  * @sk:		The TIME_WAIT TCP socket found by the lookup.
  *
  * We have to handle SYN packets arriving to TIME_WAIT sockets
- * dअगरferently: instead of reखोलोing the connection we should rather
- * redirect the new connection to the proxy अगर there's a listener
+ * differently: instead of reopening the connection we should rather
+ * redirect the new connection to the proxy if there's a listener
  * socket present.
  *
- * nf_tproxy_handle_समय_रुको4() consumes the socket reference passed in.
+ * nf_tproxy_handle_time_wait4() consumes the socket reference passed in.
  *
- * Returns the listener socket अगर there's one, the TIME_WAIT socket अगर
- * no such listener is found, or शून्य अगर the TCP header is incomplete.
+ * Returns the listener socket if there's one, the TIME_WAIT socket if
+ * no such listener is found, or NULL if the TCP header is incomplete.
  */
-काष्ठा sock *
-nf_tproxy_handle_समय_रुको4(काष्ठा net *net, काष्ठा sk_buff *skb,
-			    __be32 laddr, __be16 lport, काष्ठा sock *sk);
+struct sock *
+nf_tproxy_handle_time_wait4(struct net *net, struct sk_buff *skb,
+			    __be32 laddr, __be16 lport, struct sock *sk);
 
 /*
- * This is used when the user wants to पूर्णांकercept a connection matching
- * an explicit iptables rule. In this हाल the sockets are assumed
+ * This is used when the user wants to intercept a connection matching
+ * an explicit iptables rule. In this case the sockets are assumed
  * matching in preference order:
  *
- *   - match: अगर there's a fully established connection matching the
- *     _packet_ tuple, it is वापसed, assuming the redirection
- *     alपढ़ोy took place and we process a packet beदीर्घing to an
+ *   - match: if there's a fully established connection matching the
+ *     _packet_ tuple, it is returned, assuming the redirection
+ *     already took place and we process a packet belonging to an
  *     established connection
  *
- *   - match: अगर there's a listening socket matching the redirection
- *     (e.g. on-port & on-ip of the connection), it is वापसed,
- *     regardless अगर it was bound to 0.0.0.0 or an explicit
- *     address. The reasoning is that अगर there's an explicit rule, it
- *     करोes not really matter अगर the listener is bound to an पूर्णांकerface
- *     or to 0. The user alपढ़ोy stated that he wants redirection
+ *   - match: if there's a listening socket matching the redirection
+ *     (e.g. on-port & on-ip of the connection), it is returned,
+ *     regardless if it was bound to 0.0.0.0 or an explicit
+ *     address. The reasoning is that if there's an explicit rule, it
+ *     does not really matter if the listener is bound to an interface
+ *     or to 0. The user already stated that he wants redirection
  *     (since he added the rule).
  *
  * Please note that there's an overlap between what a TPROXY target
- * and a socket match will match. Normally अगर you have both rules the
+ * and a socket match will match. Normally if you have both rules the
  * "socket" match will be the first one, effectively all packets
- * beदीर्घing to established connections going through that one.
+ * belonging to established connections going through that one.
  */
-काष्ठा sock *
-nf_tproxy_get_sock_v4(काष्ठा net *net, काष्ठा sk_buff *skb,
-		      स्थिर u8 protocol,
-		      स्थिर __be32 saddr, स्थिर __be32 daddr,
-		      स्थिर __be16 sport, स्थिर __be16 dport,
-		      स्थिर काष्ठा net_device *in,
-		      स्थिर क्रमागत nf_tproxy_lookup_t lookup_type);
+struct sock *
+nf_tproxy_get_sock_v4(struct net *net, struct sk_buff *skb,
+		      const u8 protocol,
+		      const __be32 saddr, const __be32 daddr,
+		      const __be16 sport, const __be16 dport,
+		      const struct net_device *in,
+		      const enum nf_tproxy_lookup_t lookup_type);
 
-स्थिर काष्ठा in6_addr *
-nf_tproxy_laddr6(काष्ठा sk_buff *skb, स्थिर काष्ठा in6_addr *user_laddr,
-		 स्थिर काष्ठा in6_addr *daddr);
+const struct in6_addr *
+nf_tproxy_laddr6(struct sk_buff *skb, const struct in6_addr *user_laddr,
+		 const struct in6_addr *daddr);
 
 /**
- * nf_tproxy_handle_समय_रुको6 - handle IPv6 TCP TIME_WAIT reखोलो redirections
+ * nf_tproxy_handle_time_wait6 - handle IPv6 TCP TIME_WAIT reopen redirections
  * @skb:	The skb being processed.
  * @tproto:	Transport protocol.
  * @thoff:	Transport protocol header offset.
@@ -95,28 +94,28 @@ nf_tproxy_laddr6(काष्ठा sk_buff *skb, स्थिर काष्�
  * @sk:		The TIME_WAIT TCP socket found by the lookup.
  *
  * We have to handle SYN packets arriving to TIME_WAIT sockets
- * dअगरferently: instead of reखोलोing the connection we should rather
- * redirect the new connection to the proxy अगर there's a listener
+ * differently: instead of reopening the connection we should rather
+ * redirect the new connection to the proxy if there's a listener
  * socket present.
  *
- * nf_tproxy_handle_समय_रुको6() consumes the socket reference passed in.
+ * nf_tproxy_handle_time_wait6() consumes the socket reference passed in.
  *
- * Returns the listener socket अगर there's one, the TIME_WAIT socket अगर
- * no such listener is found, or शून्य अगर the TCP header is incomplete.
+ * Returns the listener socket if there's one, the TIME_WAIT socket if
+ * no such listener is found, or NULL if the TCP header is incomplete.
  */
-काष्ठा sock *
-nf_tproxy_handle_समय_रुको6(काष्ठा sk_buff *skb, पूर्णांक tproto, पूर्णांक thoff,
-			    काष्ठा net *net,
-			    स्थिर काष्ठा in6_addr *laddr,
-			    स्थिर __be16 lport,
-			    काष्ठा sock *sk);
+struct sock *
+nf_tproxy_handle_time_wait6(struct sk_buff *skb, int tproto, int thoff,
+			    struct net *net,
+			    const struct in6_addr *laddr,
+			    const __be16 lport,
+			    struct sock *sk);
 
-काष्ठा sock *
-nf_tproxy_get_sock_v6(काष्ठा net *net, काष्ठा sk_buff *skb, पूर्णांक thoff,
-		      स्थिर u8 protocol,
-		      स्थिर काष्ठा in6_addr *saddr, स्थिर काष्ठा in6_addr *daddr,
-		      स्थिर __be16 sport, स्थिर __be16 dport,
-		      स्थिर काष्ठा net_device *in,
-		      स्थिर क्रमागत nf_tproxy_lookup_t lookup_type);
+struct sock *
+nf_tproxy_get_sock_v6(struct net *net, struct sk_buff *skb, int thoff,
+		      const u8 protocol,
+		      const struct in6_addr *saddr, const struct in6_addr *daddr,
+		      const __be16 sport, const __be16 dport,
+		      const struct net_device *in,
+		      const enum nf_tproxy_lookup_t lookup_type);
 
-#पूर्ण_अगर /* _NF_TPROXY_H_ */
+#endif /* _NF_TPROXY_H_ */

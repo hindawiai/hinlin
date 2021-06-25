@@ -1,51 +1,50 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * security/tomoyo/common.c
  *
  * Copyright (C) 2005-2011  NTT DATA CORPORATION
  */
 
-#समावेश <linux/uaccess.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/security.h>
-#समावेश "common.h"
+#include <linux/uaccess.h>
+#include <linux/slab.h>
+#include <linux/security.h>
+#include "common.h"
 
-/* String table क्रम operation mode. */
-स्थिर अक्षर * स्थिर tomoyo_mode[TOMOYO_CONFIG_MAX_MODE] = अणु
+/* String table for operation mode. */
+const char * const tomoyo_mode[TOMOYO_CONFIG_MAX_MODE] = {
 	[TOMOYO_CONFIG_DISABLED]   = "disabled",
 	[TOMOYO_CONFIG_LEARNING]   = "learning",
 	[TOMOYO_CONFIG_PERMISSIVE] = "permissive",
 	[TOMOYO_CONFIG_ENFORCING]  = "enforcing"
-पूर्ण;
+};
 
-/* String table क्रम /sys/kernel/security/tomoyo/profile */
-स्थिर अक्षर * स्थिर tomoyo_mac_keywords[TOMOYO_MAX_MAC_INDEX
-				       + TOMOYO_MAX_MAC_CATEGORY_INDEX] = अणु
+/* String table for /sys/kernel/security/tomoyo/profile */
+const char * const tomoyo_mac_keywords[TOMOYO_MAX_MAC_INDEX
+				       + TOMOYO_MAX_MAC_CATEGORY_INDEX] = {
 	/* CONFIG::file group */
-	[TOMOYO_MAC_खाता_EXECUTE]    = "execute",
-	[TOMOYO_MAC_खाता_OPEN]       = "open",
-	[TOMOYO_MAC_खाता_CREATE]     = "create",
-	[TOMOYO_MAC_खाता_UNLINK]     = "unlink",
-	[TOMOYO_MAC_खाता_GETATTR]    = "getattr",
-	[TOMOYO_MAC_खाता_MKसूची]      = "mkdir",
-	[TOMOYO_MAC_खाता_RMसूची]      = "rmdir",
-	[TOMOYO_MAC_खाता_MKFIFO]     = "mkfifo",
-	[TOMOYO_MAC_खाता_MKSOCK]     = "mksock",
-	[TOMOYO_MAC_खाता_TRUNCATE]   = "truncate",
-	[TOMOYO_MAC_खाता_SYMLINK]    = "symlink",
-	[TOMOYO_MAC_खाता_MKBLOCK]    = "mkblock",
-	[TOMOYO_MAC_खाता_MKCHAR]     = "mkchar",
-	[TOMOYO_MAC_खाता_LINK]       = "link",
-	[TOMOYO_MAC_खाता_RENAME]     = "rename",
-	[TOMOYO_MAC_खाता_CHMOD]      = "chmod",
-	[TOMOYO_MAC_खाता_CHOWN]      = "chown",
-	[TOMOYO_MAC_खाता_CHGRP]      = "chgrp",
-	[TOMOYO_MAC_खाता_IOCTL]      = "ioctl",
-	[TOMOYO_MAC_खाता_CHROOT]     = "chroot",
-	[TOMOYO_MAC_खाता_MOUNT]      = "mount",
-	[TOMOYO_MAC_खाता_UMOUNT]     = "unmount",
-	[TOMOYO_MAC_खाता_PIVOT_ROOT] = "pivot_root",
+	[TOMOYO_MAC_FILE_EXECUTE]    = "execute",
+	[TOMOYO_MAC_FILE_OPEN]       = "open",
+	[TOMOYO_MAC_FILE_CREATE]     = "create",
+	[TOMOYO_MAC_FILE_UNLINK]     = "unlink",
+	[TOMOYO_MAC_FILE_GETATTR]    = "getattr",
+	[TOMOYO_MAC_FILE_MKDIR]      = "mkdir",
+	[TOMOYO_MAC_FILE_RMDIR]      = "rmdir",
+	[TOMOYO_MAC_FILE_MKFIFO]     = "mkfifo",
+	[TOMOYO_MAC_FILE_MKSOCK]     = "mksock",
+	[TOMOYO_MAC_FILE_TRUNCATE]   = "truncate",
+	[TOMOYO_MAC_FILE_SYMLINK]    = "symlink",
+	[TOMOYO_MAC_FILE_MKBLOCK]    = "mkblock",
+	[TOMOYO_MAC_FILE_MKCHAR]     = "mkchar",
+	[TOMOYO_MAC_FILE_LINK]       = "link",
+	[TOMOYO_MAC_FILE_RENAME]     = "rename",
+	[TOMOYO_MAC_FILE_CHMOD]      = "chmod",
+	[TOMOYO_MAC_FILE_CHOWN]      = "chown",
+	[TOMOYO_MAC_FILE_CHGRP]      = "chgrp",
+	[TOMOYO_MAC_FILE_IOCTL]      = "ioctl",
+	[TOMOYO_MAC_FILE_CHROOT]     = "chroot",
+	[TOMOYO_MAC_FILE_MOUNT]      = "mount",
+	[TOMOYO_MAC_FILE_UMOUNT]     = "unmount",
+	[TOMOYO_MAC_FILE_PIVOT_ROOT] = "pivot_root",
 	/* CONFIG::network group */
 	[TOMOYO_MAC_NETWORK_INET_STREAM_BIND]       = "inet_stream_bind",
 	[TOMOYO_MAC_NETWORK_INET_STREAM_LISTEN]     = "inet_stream_listen",
@@ -65,13 +64,13 @@
 	/* CONFIG::misc group */
 	[TOMOYO_MAC_ENVIRON] = "env",
 	/* CONFIG group */
-	[TOMOYO_MAX_MAC_INDEX + TOMOYO_MAC_CATEGORY_खाता] = "file",
+	[TOMOYO_MAX_MAC_INDEX + TOMOYO_MAC_CATEGORY_FILE] = "file",
 	[TOMOYO_MAX_MAC_INDEX + TOMOYO_MAC_CATEGORY_NETWORK] = "network",
 	[TOMOYO_MAX_MAC_INDEX + TOMOYO_MAC_CATEGORY_MISC] = "misc",
-पूर्ण;
+};
 
-/* String table क्रम conditions. */
-स्थिर अक्षर * स्थिर tomoyo_condition_keyword[TOMOYO_MAX_CONDITION_KEYWORD] = अणु
+/* String table for conditions. */
+const char * const tomoyo_condition_keyword[TOMOYO_MAX_CONDITION_KEYWORD] = {
 	[TOMOYO_TASK_UID]             = "task.uid",
 	[TOMOYO_TASK_EUID]            = "task.euid",
 	[TOMOYO_TASK_SUID]            = "task.suid",
@@ -86,9 +85,9 @@
 	[TOMOYO_EXEC_ENVC]            = "exec.envc",
 	[TOMOYO_TYPE_IS_SOCKET]       = "socket",
 	[TOMOYO_TYPE_IS_SYMLINK]      = "symlink",
-	[TOMOYO_TYPE_IS_खाता]         = "file",
+	[TOMOYO_TYPE_IS_FILE]         = "file",
 	[TOMOYO_TYPE_IS_BLOCK_DEV]    = "block",
-	[TOMOYO_TYPE_IS_सूचीECTORY]    = "directory",
+	[TOMOYO_TYPE_IS_DIRECTORY]    = "directory",
 	[TOMOYO_TYPE_IS_CHAR_DEV]     = "char",
 	[TOMOYO_TYPE_IS_FIFO]         = "fifo",
 	[TOMOYO_MODE_SETUID]          = "setuid",
@@ -131,47 +130,47 @@
 	[TOMOYO_PATH2_PARENT_GID]     = "path2.parent.gid",
 	[TOMOYO_PATH2_PARENT_INO]     = "path2.parent.ino",
 	[TOMOYO_PATH2_PARENT_PERM]    = "path2.parent.perm",
-पूर्ण;
+};
 
-/* String table क्रम PREFERENCE keyword. */
-अटल स्थिर अक्षर * स्थिर tomoyo_pref_keywords[TOMOYO_MAX_PREF] = अणु
+/* String table for PREFERENCE keyword. */
+static const char * const tomoyo_pref_keywords[TOMOYO_MAX_PREF] = {
 	[TOMOYO_PREF_MAX_AUDIT_LOG]      = "max_audit_log",
 	[TOMOYO_PREF_MAX_LEARNING_ENTRY] = "max_learning_entry",
-पूर्ण;
+};
 
-/* String table क्रम path operation. */
-स्थिर अक्षर * स्थिर tomoyo_path_keyword[TOMOYO_MAX_PATH_OPERATION] = अणु
+/* String table for path operation. */
+const char * const tomoyo_path_keyword[TOMOYO_MAX_PATH_OPERATION] = {
 	[TOMOYO_TYPE_EXECUTE]    = "execute",
 	[TOMOYO_TYPE_READ]       = "read",
 	[TOMOYO_TYPE_WRITE]      = "write",
 	[TOMOYO_TYPE_APPEND]     = "append",
 	[TOMOYO_TYPE_UNLINK]     = "unlink",
 	[TOMOYO_TYPE_GETATTR]    = "getattr",
-	[TOMOYO_TYPE_RMसूची]      = "rmdir",
+	[TOMOYO_TYPE_RMDIR]      = "rmdir",
 	[TOMOYO_TYPE_TRUNCATE]   = "truncate",
 	[TOMOYO_TYPE_SYMLINK]    = "symlink",
 	[TOMOYO_TYPE_CHROOT]     = "chroot",
 	[TOMOYO_TYPE_UMOUNT]     = "unmount",
-पूर्ण;
+};
 
-/* String table क्रम socket's operation. */
-स्थिर अक्षर * स्थिर tomoyo_socket_keyword[TOMOYO_MAX_NETWORK_OPERATION] = अणु
+/* String table for socket's operation. */
+const char * const tomoyo_socket_keyword[TOMOYO_MAX_NETWORK_OPERATION] = {
 	[TOMOYO_NETWORK_BIND]    = "bind",
 	[TOMOYO_NETWORK_LISTEN]  = "listen",
 	[TOMOYO_NETWORK_CONNECT] = "connect",
 	[TOMOYO_NETWORK_SEND]    = "send",
-पूर्ण;
+};
 
-/* String table क्रम categories. */
-अटल स्थिर अक्षर * स्थिर tomoyo_category_keywords
-[TOMOYO_MAX_MAC_CATEGORY_INDEX] = अणु
-	[TOMOYO_MAC_CATEGORY_खाता]    = "file",
+/* String table for categories. */
+static const char * const tomoyo_category_keywords
+[TOMOYO_MAX_MAC_CATEGORY_INDEX] = {
+	[TOMOYO_MAC_CATEGORY_FILE]    = "file",
 	[TOMOYO_MAC_CATEGORY_NETWORK] = "network",
 	[TOMOYO_MAC_CATEGORY_MISC]    = "misc",
-पूर्ण;
+};
 
 /* Permit policy management by non-root user? */
-अटल bool tomoyo_manage_by_non_root;
+static bool tomoyo_manage_by_non_root;
 
 /* Utility functions. */
 
@@ -180,1797 +179,1797 @@
  *
  * @value: Bool value.
  */
-स्थिर अक्षर *tomoyo_yesno(स्थिर अचिन्हित पूर्णांक value)
-अणु
-	वापस value ? "yes" : "no";
-पूर्ण
+const char *tomoyo_yesno(const unsigned int value)
+{
+	return value ? "yes" : "no";
+}
 
 /**
- * tomoyo_addम_लिखो - म_जोड़न()-like-snम_लिखो().
+ * tomoyo_addprintf - strncat()-like-snprintf().
  *
- * @buffer: Buffer to ग_लिखो to. Must be '\0'-terminated.
+ * @buffer: Buffer to write to. Must be '\0'-terminated.
  * @len:    Size of @buffer.
- * @fmt:    The म_लिखो()'s क्रमmat string, followed by parameters.
+ * @fmt:    The printf()'s format string, followed by parameters.
  *
  * Returns nothing.
  */
-अटल व्योम tomoyo_addम_लिखो(अक्षर *buffer, पूर्णांक len, स्थिर अक्षर *fmt, ...)
-अणु
-	बहु_सूची args;
-	स्थिर पूर्णांक pos = म_माप(buffer);
+static void tomoyo_addprintf(char *buffer, int len, const char *fmt, ...)
+{
+	va_list args;
+	const int pos = strlen(buffer);
 
-	बहु_शुरू(args, fmt);
-	vsnम_लिखो(buffer + pos, len - pos - 1, fmt, args);
-	बहु_पूर्ण(args);
-पूर्ण
+	va_start(args, fmt);
+	vsnprintf(buffer + pos, len - pos - 1, fmt, args);
+	va_end(args);
+}
 
 /**
  * tomoyo_flush - Flush queued string to userspace's buffer.
  *
- * @head:   Poपूर्णांकer to "struct tomoyo_io_buffer".
+ * @head:   Pointer to "struct tomoyo_io_buffer".
  *
- * Returns true अगर all data was flushed, false otherwise.
+ * Returns true if all data was flushed, false otherwise.
  */
-अटल bool tomoyo_flush(काष्ठा tomoyo_io_buffer *head)
-अणु
-	जबतक (head->r.w_pos) अणु
-		स्थिर अक्षर *w = head->r.w[0];
-		माप_प्रकार len = म_माप(w);
+static bool tomoyo_flush(struct tomoyo_io_buffer *head)
+{
+	while (head->r.w_pos) {
+		const char *w = head->r.w[0];
+		size_t len = strlen(w);
 
-		अगर (len) अणु
-			अगर (len > head->पढ़ो_user_buf_avail)
-				len = head->पढ़ो_user_buf_avail;
-			अगर (!len)
-				वापस false;
-			अगर (copy_to_user(head->पढ़ो_user_buf, w, len))
-				वापस false;
-			head->पढ़ो_user_buf_avail -= len;
-			head->पढ़ो_user_buf += len;
+		if (len) {
+			if (len > head->read_user_buf_avail)
+				len = head->read_user_buf_avail;
+			if (!len)
+				return false;
+			if (copy_to_user(head->read_user_buf, w, len))
+				return false;
+			head->read_user_buf_avail -= len;
+			head->read_user_buf += len;
 			w += len;
-		पूर्ण
+		}
 		head->r.w[0] = w;
-		अगर (*w)
-			वापस false;
-		/* Add '\0' क्रम audit logs and query. */
-		अगर (head->poll) अणु
-			अगर (!head->पढ़ो_user_buf_avail ||
-			    copy_to_user(head->पढ़ो_user_buf, "", 1))
-				वापस false;
-			head->पढ़ो_user_buf_avail--;
-			head->पढ़ो_user_buf++;
-		पूर्ण
+		if (*w)
+			return false;
+		/* Add '\0' for audit logs and query. */
+		if (head->poll) {
+			if (!head->read_user_buf_avail ||
+			    copy_to_user(head->read_user_buf, "", 1))
+				return false;
+			head->read_user_buf_avail--;
+			head->read_user_buf++;
+		}
 		head->r.w_pos--;
-		क्रम (len = 0; len < head->r.w_pos; len++)
+		for (len = 0; len < head->r.w_pos; len++)
 			head->r.w[len] = head->r.w[len + 1];
-	पूर्ण
+	}
 	head->r.avail = 0;
-	वापस true;
-पूर्ण
+	return true;
+}
 
 /**
- * tomoyo_set_string - Queue string to "struct tomoyo_io_buffer" काष्ठाure.
+ * tomoyo_set_string - Queue string to "struct tomoyo_io_buffer" structure.
  *
- * @head:   Poपूर्णांकer to "struct tomoyo_io_buffer".
- * @string: String to prपूर्णांक.
+ * @head:   Pointer to "struct tomoyo_io_buffer".
+ * @string: String to print.
  *
- * Note that @string has to be kept valid until @head is kमुक्त()d.
- * This means that अक्षर[] allocated on stack memory cannot be passed to
- * this function. Use tomoyo_io_म_लिखो() क्रम अक्षर[] allocated on stack memory.
+ * Note that @string has to be kept valid until @head is kfree()d.
+ * This means that char[] allocated on stack memory cannot be passed to
+ * this function. Use tomoyo_io_printf() for char[] allocated on stack memory.
  */
-अटल व्योम tomoyo_set_string(काष्ठा tomoyo_io_buffer *head, स्थिर अक्षर *string)
-अणु
-	अगर (head->r.w_pos < TOMOYO_MAX_IO_READ_QUEUE) अणु
+static void tomoyo_set_string(struct tomoyo_io_buffer *head, const char *string)
+{
+	if (head->r.w_pos < TOMOYO_MAX_IO_READ_QUEUE) {
 		head->r.w[head->r.w_pos++] = string;
 		tomoyo_flush(head);
-	पूर्ण अन्यथा
+	} else
 		WARN_ON(1);
-पूर्ण
+}
 
-अटल व्योम tomoyo_io_म_लिखो(काष्ठा tomoyo_io_buffer *head, स्थिर अक्षर *fmt,
-			     ...) __म_लिखो(2, 3);
+static void tomoyo_io_printf(struct tomoyo_io_buffer *head, const char *fmt,
+			     ...) __printf(2, 3);
 
 /**
- * tomoyo_io_म_लिखो - म_लिखो() to "struct tomoyo_io_buffer" काष्ठाure.
+ * tomoyo_io_printf - printf() to "struct tomoyo_io_buffer" structure.
  *
- * @head: Poपूर्णांकer to "struct tomoyo_io_buffer".
- * @fmt:  The म_लिखो()'s क्रमmat string, followed by parameters.
+ * @head: Pointer to "struct tomoyo_io_buffer".
+ * @fmt:  The printf()'s format string, followed by parameters.
  */
-अटल व्योम tomoyo_io_म_लिखो(काष्ठा tomoyo_io_buffer *head, स्थिर अक्षर *fmt,
+static void tomoyo_io_printf(struct tomoyo_io_buffer *head, const char *fmt,
 			     ...)
-अणु
-	बहु_सूची args;
-	माप_प्रकार len;
-	माप_प्रकार pos = head->r.avail;
-	पूर्णांक size = head->पढ़ोbuf_size - pos;
+{
+	va_list args;
+	size_t len;
+	size_t pos = head->r.avail;
+	int size = head->readbuf_size - pos;
 
-	अगर (size <= 0)
-		वापस;
-	बहु_शुरू(args, fmt);
-	len = vsnम_लिखो(head->पढ़ो_buf + pos, size, fmt, args) + 1;
-	बहु_पूर्ण(args);
-	अगर (pos + len >= head->पढ़ोbuf_size) अणु
+	if (size <= 0)
+		return;
+	va_start(args, fmt);
+	len = vsnprintf(head->read_buf + pos, size, fmt, args) + 1;
+	va_end(args);
+	if (pos + len >= head->readbuf_size) {
 		WARN_ON(1);
-		वापस;
-	पूर्ण
+		return;
+	}
 	head->r.avail += len;
-	tomoyo_set_string(head, head->पढ़ो_buf + pos);
-पूर्ण
+	tomoyo_set_string(head, head->read_buf + pos);
+}
 
 /**
- * tomoyo_set_space - Put a space to "struct tomoyo_io_buffer" काष्ठाure.
+ * tomoyo_set_space - Put a space to "struct tomoyo_io_buffer" structure.
  *
- * @head: Poपूर्णांकer to "struct tomoyo_io_buffer".
+ * @head: Pointer to "struct tomoyo_io_buffer".
  *
  * Returns nothing.
  */
-अटल व्योम tomoyo_set_space(काष्ठा tomoyo_io_buffer *head)
-अणु
+static void tomoyo_set_space(struct tomoyo_io_buffer *head)
+{
 	tomoyo_set_string(head, " ");
-पूर्ण
+}
 
 /**
- * tomoyo_set_lf - Put a line feed to "struct tomoyo_io_buffer" काष्ठाure.
+ * tomoyo_set_lf - Put a line feed to "struct tomoyo_io_buffer" structure.
  *
- * @head: Poपूर्णांकer to "struct tomoyo_io_buffer".
+ * @head: Pointer to "struct tomoyo_io_buffer".
  *
  * Returns nothing.
  */
-अटल bool tomoyo_set_lf(काष्ठा tomoyo_io_buffer *head)
-अणु
+static bool tomoyo_set_lf(struct tomoyo_io_buffer *head)
+{
 	tomoyo_set_string(head, "\n");
-	वापस !head->r.w_pos;
-पूर्ण
+	return !head->r.w_pos;
+}
 
 /**
- * tomoyo_set_slash - Put a shash to "struct tomoyo_io_buffer" काष्ठाure.
+ * tomoyo_set_slash - Put a shash to "struct tomoyo_io_buffer" structure.
  *
- * @head: Poपूर्णांकer to "struct tomoyo_io_buffer".
+ * @head: Pointer to "struct tomoyo_io_buffer".
  *
  * Returns nothing.
  */
-अटल व्योम tomoyo_set_slash(काष्ठा tomoyo_io_buffer *head)
-अणु
+static void tomoyo_set_slash(struct tomoyo_io_buffer *head)
+{
 	tomoyo_set_string(head, "/");
-पूर्ण
+}
 
 /* List of namespaces. */
 LIST_HEAD(tomoyo_namespace_list);
-/* True अगर namespace other than tomoyo_kernel_namespace is defined. */
-अटल bool tomoyo_namespace_enabled;
+/* True if namespace other than tomoyo_kernel_namespace is defined. */
+static bool tomoyo_namespace_enabled;
 
 /**
  * tomoyo_init_policy_namespace - Initialize namespace.
  *
- * @ns: Poपूर्णांकer to "struct tomoyo_policy_namespace".
+ * @ns: Pointer to "struct tomoyo_policy_namespace".
  *
  * Returns nothing.
  */
-व्योम tomoyo_init_policy_namespace(काष्ठा tomoyo_policy_namespace *ns)
-अणु
-	अचिन्हित पूर्णांक idx;
+void tomoyo_init_policy_namespace(struct tomoyo_policy_namespace *ns)
+{
+	unsigned int idx;
 
-	क्रम (idx = 0; idx < TOMOYO_MAX_ACL_GROUPS; idx++)
+	for (idx = 0; idx < TOMOYO_MAX_ACL_GROUPS; idx++)
 		INIT_LIST_HEAD(&ns->acl_group[idx]);
-	क्रम (idx = 0; idx < TOMOYO_MAX_GROUP; idx++)
+	for (idx = 0; idx < TOMOYO_MAX_GROUP; idx++)
 		INIT_LIST_HEAD(&ns->group_list[idx]);
-	क्रम (idx = 0; idx < TOMOYO_MAX_POLICY; idx++)
+	for (idx = 0; idx < TOMOYO_MAX_POLICY; idx++)
 		INIT_LIST_HEAD(&ns->policy_list[idx]);
 	ns->profile_version = 20150505;
 	tomoyo_namespace_enabled = !list_empty(&tomoyo_namespace_list);
 	list_add_tail_rcu(&ns->namespace_list, &tomoyo_namespace_list);
-पूर्ण
+}
 
 /**
- * tomoyo_prपूर्णांक_namespace - Prपूर्णांक namespace header.
+ * tomoyo_print_namespace - Print namespace header.
  *
- * @head: Poपूर्णांकer to "struct tomoyo_io_buffer".
+ * @head: Pointer to "struct tomoyo_io_buffer".
  *
  * Returns nothing.
  */
-अटल व्योम tomoyo_prपूर्णांक_namespace(काष्ठा tomoyo_io_buffer *head)
-अणु
-	अगर (!tomoyo_namespace_enabled)
-		वापस;
+static void tomoyo_print_namespace(struct tomoyo_io_buffer *head)
+{
+	if (!tomoyo_namespace_enabled)
+		return;
 	tomoyo_set_string(head,
 			  container_of(head->r.ns,
-				       काष्ठा tomoyo_policy_namespace,
+				       struct tomoyo_policy_namespace,
 				       namespace_list)->name);
 	tomoyo_set_space(head);
-पूर्ण
+}
 
 /**
- * tomoyo_prपूर्णांक_name_जोड़ - Prपूर्णांक a tomoyo_name_जोड़.
+ * tomoyo_print_name_union - Print a tomoyo_name_union.
  *
- * @head: Poपूर्णांकer to "struct tomoyo_io_buffer".
- * @ptr:  Poपूर्णांकer to "struct tomoyo_name_union".
+ * @head: Pointer to "struct tomoyo_io_buffer".
+ * @ptr:  Pointer to "struct tomoyo_name_union".
  */
-अटल व्योम tomoyo_prपूर्णांक_name_जोड़(काष्ठा tomoyo_io_buffer *head,
-				    स्थिर काष्ठा tomoyo_name_जोड़ *ptr)
-अणु
+static void tomoyo_print_name_union(struct tomoyo_io_buffer *head,
+				    const struct tomoyo_name_union *ptr)
+{
 	tomoyo_set_space(head);
-	अगर (ptr->group) अणु
+	if (ptr->group) {
 		tomoyo_set_string(head, "@");
 		tomoyo_set_string(head, ptr->group->group_name->name);
-	पूर्ण अन्यथा अणु
+	} else {
 		tomoyo_set_string(head, ptr->filename->name);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
- * tomoyo_prपूर्णांक_name_जोड़_quoted - Prपूर्णांक a tomoyo_name_जोड़ with a quote.
+ * tomoyo_print_name_union_quoted - Print a tomoyo_name_union with a quote.
  *
- * @head: Poपूर्णांकer to "struct tomoyo_io_buffer".
- * @ptr:  Poपूर्णांकer to "struct tomoyo_name_union".
+ * @head: Pointer to "struct tomoyo_io_buffer".
+ * @ptr:  Pointer to "struct tomoyo_name_union".
  *
  * Returns nothing.
  */
-अटल व्योम tomoyo_prपूर्णांक_name_जोड़_quoted(काष्ठा tomoyo_io_buffer *head,
-					   स्थिर काष्ठा tomoyo_name_जोड़ *ptr)
-अणु
-	अगर (ptr->group) अणु
+static void tomoyo_print_name_union_quoted(struct tomoyo_io_buffer *head,
+					   const struct tomoyo_name_union *ptr)
+{
+	if (ptr->group) {
 		tomoyo_set_string(head, "@");
 		tomoyo_set_string(head, ptr->group->group_name->name);
-	पूर्ण अन्यथा अणु
+	} else {
 		tomoyo_set_string(head, "\"");
 		tomoyo_set_string(head, ptr->filename->name);
 		tomoyo_set_string(head, "\"");
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
- * tomoyo_prपूर्णांक_number_जोड़_nospace - Prपूर्णांक a tomoyo_number_जोड़ without a space.
+ * tomoyo_print_number_union_nospace - Print a tomoyo_number_union without a space.
  *
- * @head: Poपूर्णांकer to "struct tomoyo_io_buffer".
- * @ptr:  Poपूर्णांकer to "struct tomoyo_number_union".
+ * @head: Pointer to "struct tomoyo_io_buffer".
+ * @ptr:  Pointer to "struct tomoyo_number_union".
  *
  * Returns nothing.
  */
-अटल व्योम tomoyo_prपूर्णांक_number_जोड़_nospace
-(काष्ठा tomoyo_io_buffer *head, स्थिर काष्ठा tomoyo_number_जोड़ *ptr)
-अणु
-	अगर (ptr->group) अणु
+static void tomoyo_print_number_union_nospace
+(struct tomoyo_io_buffer *head, const struct tomoyo_number_union *ptr)
+{
+	if (ptr->group) {
 		tomoyo_set_string(head, "@");
 		tomoyo_set_string(head, ptr->group->group_name->name);
-	पूर्ण अन्यथा अणु
-		पूर्णांक i;
-		अचिन्हित दीर्घ min = ptr->values[0];
-		स्थिर अचिन्हित दीर्घ max = ptr->values[1];
+	} else {
+		int i;
+		unsigned long min = ptr->values[0];
+		const unsigned long max = ptr->values[1];
 		u8 min_type = ptr->value_type[0];
-		स्थिर u8 max_type = ptr->value_type[1];
-		अक्षर buffer[128];
+		const u8 max_type = ptr->value_type[1];
+		char buffer[128];
 
 		buffer[0] = '\0';
-		क्रम (i = 0; i < 2; i++) अणु
-			चयन (min_type) अणु
-			हाल TOMOYO_VALUE_TYPE_HEXADECIMAL:
-				tomoyo_addम_लिखो(buffer, माप(buffer),
+		for (i = 0; i < 2; i++) {
+			switch (min_type) {
+			case TOMOYO_VALUE_TYPE_HEXADECIMAL:
+				tomoyo_addprintf(buffer, sizeof(buffer),
 						 "0x%lX", min);
-				अवरोध;
-			हाल TOMOYO_VALUE_TYPE_OCTAL:
-				tomoyo_addम_लिखो(buffer, माप(buffer),
+				break;
+			case TOMOYO_VALUE_TYPE_OCTAL:
+				tomoyo_addprintf(buffer, sizeof(buffer),
 						 "0%lo", min);
-				अवरोध;
-			शेष:
-				tomoyo_addम_लिखो(buffer, माप(buffer), "%lu",
+				break;
+			default:
+				tomoyo_addprintf(buffer, sizeof(buffer), "%lu",
 						 min);
-				अवरोध;
-			पूर्ण
-			अगर (min == max && min_type == max_type)
-				अवरोध;
-			tomoyo_addम_लिखो(buffer, माप(buffer), "-");
+				break;
+			}
+			if (min == max && min_type == max_type)
+				break;
+			tomoyo_addprintf(buffer, sizeof(buffer), "-");
 			min_type = max_type;
 			min = max;
-		पूर्ण
-		tomoyo_io_म_लिखो(head, "%s", buffer);
-	पूर्ण
-पूर्ण
+		}
+		tomoyo_io_printf(head, "%s", buffer);
+	}
+}
 
 /**
- * tomoyo_prपूर्णांक_number_जोड़ - Prपूर्णांक a tomoyo_number_जोड़.
+ * tomoyo_print_number_union - Print a tomoyo_number_union.
  *
- * @head: Poपूर्णांकer to "struct tomoyo_io_buffer".
- * @ptr:  Poपूर्णांकer to "struct tomoyo_number_union".
+ * @head: Pointer to "struct tomoyo_io_buffer".
+ * @ptr:  Pointer to "struct tomoyo_number_union".
  *
  * Returns nothing.
  */
-अटल व्योम tomoyo_prपूर्णांक_number_जोड़(काष्ठा tomoyo_io_buffer *head,
-				      स्थिर काष्ठा tomoyo_number_जोड़ *ptr)
-अणु
+static void tomoyo_print_number_union(struct tomoyo_io_buffer *head,
+				      const struct tomoyo_number_union *ptr)
+{
 	tomoyo_set_space(head);
-	tomoyo_prपूर्णांक_number_जोड़_nospace(head, ptr);
-पूर्ण
+	tomoyo_print_number_union_nospace(head, ptr);
+}
 
 /**
  * tomoyo_assign_profile - Create a new profile.
  *
- * @ns:      Poपूर्णांकer to "struct tomoyo_policy_namespace".
+ * @ns:      Pointer to "struct tomoyo_policy_namespace".
  * @profile: Profile number to create.
  *
- * Returns poपूर्णांकer to "struct tomoyo_profile" on success, शून्य otherwise.
+ * Returns pointer to "struct tomoyo_profile" on success, NULL otherwise.
  */
-अटल काष्ठा tomoyo_profile *tomoyo_assign_profile
-(काष्ठा tomoyo_policy_namespace *ns, स्थिर अचिन्हित पूर्णांक profile)
-अणु
-	काष्ठा tomoyo_profile *ptr;
-	काष्ठा tomoyo_profile *entry;
+static struct tomoyo_profile *tomoyo_assign_profile
+(struct tomoyo_policy_namespace *ns, const unsigned int profile)
+{
+	struct tomoyo_profile *ptr;
+	struct tomoyo_profile *entry;
 
-	अगर (profile >= TOMOYO_MAX_PROखाताS)
-		वापस शून्य;
+	if (profile >= TOMOYO_MAX_PROFILES)
+		return NULL;
 	ptr = ns->profile_ptr[profile];
-	अगर (ptr)
-		वापस ptr;
-	entry = kzalloc(माप(*entry), GFP_NOFS | __GFP_NOWARN);
-	अगर (mutex_lock_पूर्णांकerruptible(&tomoyo_policy_lock))
-		जाओ out;
+	if (ptr)
+		return ptr;
+	entry = kzalloc(sizeof(*entry), GFP_NOFS | __GFP_NOWARN);
+	if (mutex_lock_interruptible(&tomoyo_policy_lock))
+		goto out;
 	ptr = ns->profile_ptr[profile];
-	अगर (!ptr && tomoyo_memory_ok(entry)) अणु
+	if (!ptr && tomoyo_memory_ok(entry)) {
 		ptr = entry;
-		ptr->शेष_config = TOMOYO_CONFIG_DISABLED |
+		ptr->default_config = TOMOYO_CONFIG_DISABLED |
 			TOMOYO_CONFIG_WANT_GRANT_LOG |
 			TOMOYO_CONFIG_WANT_REJECT_LOG;
-		स_रखो(ptr->config, TOMOYO_CONFIG_USE_DEFAULT,
-		       माप(ptr->config));
+		memset(ptr->config, TOMOYO_CONFIG_USE_DEFAULT,
+		       sizeof(ptr->config));
 		ptr->pref[TOMOYO_PREF_MAX_AUDIT_LOG] =
 			CONFIG_SECURITY_TOMOYO_MAX_AUDIT_LOG;
 		ptr->pref[TOMOYO_PREF_MAX_LEARNING_ENTRY] =
 			CONFIG_SECURITY_TOMOYO_MAX_ACCEPT_ENTRY;
-		mb(); /* Aव्योम out-of-order execution. */
+		mb(); /* Avoid out-of-order execution. */
 		ns->profile_ptr[profile] = ptr;
-		entry = शून्य;
-	पूर्ण
+		entry = NULL;
+	}
 	mutex_unlock(&tomoyo_policy_lock);
  out:
-	kमुक्त(entry);
-	वापस ptr;
-पूर्ण
+	kfree(entry);
+	return ptr;
+}
 
 /**
  * tomoyo_profile - Find a profile.
  *
- * @ns:      Poपूर्णांकer to "struct tomoyo_policy_namespace".
+ * @ns:      Pointer to "struct tomoyo_policy_namespace".
  * @profile: Profile number to find.
  *
- * Returns poपूर्णांकer to "struct tomoyo_profile".
+ * Returns pointer to "struct tomoyo_profile".
  */
-काष्ठा tomoyo_profile *tomoyo_profile(स्थिर काष्ठा tomoyo_policy_namespace *ns,
-				      स्थिर u8 profile)
-अणु
-	अटल काष्ठा tomoyo_profile tomoyo_null_profile;
-	काष्ठा tomoyo_profile *ptr = ns->profile_ptr[profile];
+struct tomoyo_profile *tomoyo_profile(const struct tomoyo_policy_namespace *ns,
+				      const u8 profile)
+{
+	static struct tomoyo_profile tomoyo_null_profile;
+	struct tomoyo_profile *ptr = ns->profile_ptr[profile];
 
-	अगर (!ptr)
+	if (!ptr)
 		ptr = &tomoyo_null_profile;
-	वापस ptr;
-पूर्ण
+	return ptr;
+}
 
 /**
- * tomoyo_find_yesno - Find values क्रम specअगरied keyword.
+ * tomoyo_find_yesno - Find values for specified keyword.
  *
  * @string: String to check.
  * @find:   Name of keyword.
  *
- * Returns 1 अगर "@find=yes" was found, 0 अगर "@find=no" was found, -1 otherwise.
+ * Returns 1 if "@find=yes" was found, 0 if "@find=no" was found, -1 otherwise.
  */
-अटल s8 tomoyo_find_yesno(स्थिर अक्षर *string, स्थिर अक्षर *find)
-अणु
-	स्थिर अक्षर *cp = म_माला(string, find);
+static s8 tomoyo_find_yesno(const char *string, const char *find)
+{
+	const char *cp = strstr(string, find);
 
-	अगर (cp) अणु
-		cp += म_माप(find);
-		अगर (!म_भेदन(cp, "=yes", 4))
-			वापस 1;
-		अन्यथा अगर (!म_भेदन(cp, "=no", 3))
-			वापस 0;
-	पूर्ण
-	वापस -1;
-पूर्ण
+	if (cp) {
+		cp += strlen(find);
+		if (!strncmp(cp, "=yes", 4))
+			return 1;
+		else if (!strncmp(cp, "=no", 3))
+			return 0;
+	}
+	return -1;
+}
 
 /**
- * tomoyo_set_uपूर्णांक - Set value क्रम specअगरied preference.
+ * tomoyo_set_uint - Set value for specified preference.
  *
- * @i:      Poपूर्णांकer to "unsigned int".
+ * @i:      Pointer to "unsigned int".
  * @string: String to check.
  * @find:   Name of keyword.
  *
  * Returns nothing.
  */
-अटल व्योम tomoyo_set_uपूर्णांक(अचिन्हित पूर्णांक *i, स्थिर अक्षर *string,
-			    स्थिर अक्षर *find)
-अणु
-	स्थिर अक्षर *cp = म_माला(string, find);
+static void tomoyo_set_uint(unsigned int *i, const char *string,
+			    const char *find)
+{
+	const char *cp = strstr(string, find);
 
-	अगर (cp)
-		माला_पूछो(cp + म_माप(find), "=%u", i);
-पूर्ण
+	if (cp)
+		sscanf(cp + strlen(find), "=%u", i);
+}
 
 /**
- * tomoyo_set_mode - Set mode क्रम specअगरied profile.
+ * tomoyo_set_mode - Set mode for specified profile.
  *
  * @name:    Name of functionality.
- * @value:   Mode क्रम @name.
- * @profile: Poपूर्णांकer to "struct tomoyo_profile".
+ * @value:   Mode for @name.
+ * @profile: Pointer to "struct tomoyo_profile".
  *
  * Returns 0 on success, negative value otherwise.
  */
-अटल पूर्णांक tomoyo_set_mode(अक्षर *name, स्थिर अक्षर *value,
-			   काष्ठा tomoyo_profile *profile)
-अणु
+static int tomoyo_set_mode(char *name, const char *value,
+			   struct tomoyo_profile *profile)
+{
 	u8 i;
 	u8 config;
 
-	अगर (!म_भेद(name, "CONFIG")) अणु
+	if (!strcmp(name, "CONFIG")) {
 		i = TOMOYO_MAX_MAC_INDEX + TOMOYO_MAX_MAC_CATEGORY_INDEX;
-		config = profile->शेष_config;
-	पूर्ण अन्यथा अगर (tomoyo_str_starts(&name, "CONFIG::")) अणु
+		config = profile->default_config;
+	} else if (tomoyo_str_starts(&name, "CONFIG::")) {
 		config = 0;
-		क्रम (i = 0; i < TOMOYO_MAX_MAC_INDEX
-			     + TOMOYO_MAX_MAC_CATEGORY_INDEX; i++) अणु
-			पूर्णांक len = 0;
+		for (i = 0; i < TOMOYO_MAX_MAC_INDEX
+			     + TOMOYO_MAX_MAC_CATEGORY_INDEX; i++) {
+			int len = 0;
 
-			अगर (i < TOMOYO_MAX_MAC_INDEX) अणु
-				स्थिर u8 c = tomoyo_index2category[i];
-				स्थिर अक्षर *category =
+			if (i < TOMOYO_MAX_MAC_INDEX) {
+				const u8 c = tomoyo_index2category[i];
+				const char *category =
 					tomoyo_category_keywords[c];
 
-				len = म_माप(category);
-				अगर (म_भेदन(name, category, len) ||
+				len = strlen(category);
+				if (strncmp(name, category, len) ||
 				    name[len++] != ':' || name[len++] != ':')
-					जारी;
-			पूर्ण
-			अगर (म_भेद(name + len, tomoyo_mac_keywords[i]))
-				जारी;
+					continue;
+			}
+			if (strcmp(name + len, tomoyo_mac_keywords[i]))
+				continue;
 			config = profile->config[i];
-			अवरोध;
-		पूर्ण
-		अगर (i == TOMOYO_MAX_MAC_INDEX + TOMOYO_MAX_MAC_CATEGORY_INDEX)
-			वापस -EINVAL;
-	पूर्ण अन्यथा अणु
-		वापस -EINVAL;
-	पूर्ण
-	अगर (म_माला(value, "use_default")) अणु
+			break;
+		}
+		if (i == TOMOYO_MAX_MAC_INDEX + TOMOYO_MAX_MAC_CATEGORY_INDEX)
+			return -EINVAL;
+	} else {
+		return -EINVAL;
+	}
+	if (strstr(value, "use_default")) {
 		config = TOMOYO_CONFIG_USE_DEFAULT;
-	पूर्ण अन्यथा अणु
+	} else {
 		u8 mode;
 
-		क्रम (mode = 0; mode < 4; mode++)
-			अगर (म_माला(value, tomoyo_mode[mode]))
+		for (mode = 0; mode < 4; mode++)
+			if (strstr(value, tomoyo_mode[mode]))
 				/*
 				 * Update lower 3 bits in order to distinguish
 				 * 'config' from 'TOMOYO_CONFIG_USE_DEFAULT'.
 				 */
 				config = (config & ~7) | mode;
-		अगर (config != TOMOYO_CONFIG_USE_DEFAULT) अणु
-			चयन (tomoyo_find_yesno(value, "grant_log")) अणु
-			हाल 1:
+		if (config != TOMOYO_CONFIG_USE_DEFAULT) {
+			switch (tomoyo_find_yesno(value, "grant_log")) {
+			case 1:
 				config |= TOMOYO_CONFIG_WANT_GRANT_LOG;
-				अवरोध;
-			हाल 0:
+				break;
+			case 0:
 				config &= ~TOMOYO_CONFIG_WANT_GRANT_LOG;
-				अवरोध;
-			पूर्ण
-			चयन (tomoyo_find_yesno(value, "reject_log")) अणु
-			हाल 1:
+				break;
+			}
+			switch (tomoyo_find_yesno(value, "reject_log")) {
+			case 1:
 				config |= TOMOYO_CONFIG_WANT_REJECT_LOG;
-				अवरोध;
-			हाल 0:
+				break;
+			case 0:
 				config &= ~TOMOYO_CONFIG_WANT_REJECT_LOG;
-				अवरोध;
-			पूर्ण
-		पूर्ण
-	पूर्ण
-	अगर (i < TOMOYO_MAX_MAC_INDEX + TOMOYO_MAX_MAC_CATEGORY_INDEX)
+				break;
+			}
+		}
+	}
+	if (i < TOMOYO_MAX_MAC_INDEX + TOMOYO_MAX_MAC_CATEGORY_INDEX)
 		profile->config[i] = config;
-	अन्यथा अगर (config != TOMOYO_CONFIG_USE_DEFAULT)
-		profile->शेष_config = config;
-	वापस 0;
-पूर्ण
+	else if (config != TOMOYO_CONFIG_USE_DEFAULT)
+		profile->default_config = config;
+	return 0;
+}
 
 /**
- * tomoyo_ग_लिखो_profile - Write profile table.
+ * tomoyo_write_profile - Write profile table.
  *
- * @head: Poपूर्णांकer to "struct tomoyo_io_buffer".
+ * @head: Pointer to "struct tomoyo_io_buffer".
  *
  * Returns 0 on success, negative value otherwise.
  */
-अटल पूर्णांक tomoyo_ग_लिखो_profile(काष्ठा tomoyo_io_buffer *head)
-अणु
-	अक्षर *data = head->ग_लिखो_buf;
-	अचिन्हित पूर्णांक i;
-	अक्षर *cp;
-	काष्ठा tomoyo_profile *profile;
+static int tomoyo_write_profile(struct tomoyo_io_buffer *head)
+{
+	char *data = head->write_buf;
+	unsigned int i;
+	char *cp;
+	struct tomoyo_profile *profile;
 
-	अगर (माला_पूछो(data, "PROFILE_VERSION=%u", &head->w.ns->profile_version)
+	if (sscanf(data, "PROFILE_VERSION=%u", &head->w.ns->profile_version)
 	    == 1)
-		वापस 0;
-	i = simple_म_से_अदीर्घ(data, &cp, 10);
-	अगर (*cp != '-')
-		वापस -EINVAL;
+		return 0;
+	i = simple_strtoul(data, &cp, 10);
+	if (*cp != '-')
+		return -EINVAL;
 	data = cp + 1;
 	profile = tomoyo_assign_profile(head->w.ns, i);
-	अगर (!profile)
-		वापस -EINVAL;
-	cp = म_अक्षर(data, '=');
-	अगर (!cp)
-		वापस -EINVAL;
+	if (!profile)
+		return -EINVAL;
+	cp = strchr(data, '=');
+	if (!cp)
+		return -EINVAL;
 	*cp++ = '\0';
-	अगर (!म_भेद(data, "COMMENT")) अणु
-		अटल DEFINE_SPINLOCK(lock);
-		स्थिर काष्ठा tomoyo_path_info *new_comment
+	if (!strcmp(data, "COMMENT")) {
+		static DEFINE_SPINLOCK(lock);
+		const struct tomoyo_path_info *new_comment
 			= tomoyo_get_name(cp);
-		स्थिर काष्ठा tomoyo_path_info *old_comment;
+		const struct tomoyo_path_info *old_comment;
 
-		अगर (!new_comment)
-			वापस -ENOMEM;
+		if (!new_comment)
+			return -ENOMEM;
 		spin_lock(&lock);
 		old_comment = profile->comment;
 		profile->comment = new_comment;
 		spin_unlock(&lock);
 		tomoyo_put_name(old_comment);
-		वापस 0;
-	पूर्ण
-	अगर (!म_भेद(data, "PREFERENCE")) अणु
-		क्रम (i = 0; i < TOMOYO_MAX_PREF; i++)
-			tomoyo_set_uपूर्णांक(&profile->pref[i], cp,
+		return 0;
+	}
+	if (!strcmp(data, "PREFERENCE")) {
+		for (i = 0; i < TOMOYO_MAX_PREF; i++)
+			tomoyo_set_uint(&profile->pref[i], cp,
 					tomoyo_pref_keywords[i]);
-		वापस 0;
-	पूर्ण
-	वापस tomoyo_set_mode(data, cp, profile);
-पूर्ण
+		return 0;
+	}
+	return tomoyo_set_mode(data, cp, profile);
+}
 
 /**
- * tomoyo_prपूर्णांक_config - Prपूर्णांक mode क्रम specअगरied functionality.
+ * tomoyo_print_config - Print mode for specified functionality.
  *
- * @head:   Poपूर्णांकer to "struct tomoyo_io_buffer".
- * @config: Mode क्रम that functionality.
+ * @head:   Pointer to "struct tomoyo_io_buffer".
+ * @config: Mode for that functionality.
  *
  * Returns nothing.
  *
- * Caller prपूर्णांकs functionality's name.
+ * Caller prints functionality's name.
  */
-अटल व्योम tomoyo_prपूर्णांक_config(काष्ठा tomoyo_io_buffer *head, स्थिर u8 config)
-अणु
-	tomoyo_io_म_लिखो(head, "={ mode=%s grant_log=%s reject_log=%s }\n",
+static void tomoyo_print_config(struct tomoyo_io_buffer *head, const u8 config)
+{
+	tomoyo_io_printf(head, "={ mode=%s grant_log=%s reject_log=%s }\n",
 			 tomoyo_mode[config & 3],
 			 tomoyo_yesno(config & TOMOYO_CONFIG_WANT_GRANT_LOG),
 			 tomoyo_yesno(config & TOMOYO_CONFIG_WANT_REJECT_LOG));
-पूर्ण
+}
 
 /**
- * tomoyo_पढ़ो_profile - Read profile table.
+ * tomoyo_read_profile - Read profile table.
  *
- * @head: Poपूर्णांकer to "struct tomoyo_io_buffer".
+ * @head: Pointer to "struct tomoyo_io_buffer".
  *
  * Returns nothing.
  */
-अटल व्योम tomoyo_पढ़ो_profile(काष्ठा tomoyo_io_buffer *head)
-अणु
+static void tomoyo_read_profile(struct tomoyo_io_buffer *head)
+{
 	u8 index;
-	काष्ठा tomoyo_policy_namespace *ns =
+	struct tomoyo_policy_namespace *ns =
 		container_of(head->r.ns, typeof(*ns), namespace_list);
-	स्थिर काष्ठा tomoyo_profile *profile;
+	const struct tomoyo_profile *profile;
 
-	अगर (head->r.eof)
-		वापस;
+	if (head->r.eof)
+		return;
  next:
 	index = head->r.index;
 	profile = ns->profile_ptr[index];
-	चयन (head->r.step) अणु
-	हाल 0:
-		tomoyo_prपूर्णांक_namespace(head);
-		tomoyo_io_म_लिखो(head, "PROFILE_VERSION=%u\n",
+	switch (head->r.step) {
+	case 0:
+		tomoyo_print_namespace(head);
+		tomoyo_io_printf(head, "PROFILE_VERSION=%u\n",
 				 ns->profile_version);
 		head->r.step++;
-		अवरोध;
-	हाल 1:
-		क्रम ( ; head->r.index < TOMOYO_MAX_PROखाताS;
+		break;
+	case 1:
+		for ( ; head->r.index < TOMOYO_MAX_PROFILES;
 		      head->r.index++)
-			अगर (ns->profile_ptr[head->r.index])
-				अवरोध;
-		अगर (head->r.index == TOMOYO_MAX_PROखाताS) अणु
+			if (ns->profile_ptr[head->r.index])
+				break;
+		if (head->r.index == TOMOYO_MAX_PROFILES) {
 			head->r.eof = true;
-			वापस;
-		पूर्ण
+			return;
+		}
 		head->r.step++;
-		अवरोध;
-	हाल 2:
-		अणु
+		break;
+	case 2:
+		{
 			u8 i;
-			स्थिर काष्ठा tomoyo_path_info *comment =
+			const struct tomoyo_path_info *comment =
 				profile->comment;
 
-			tomoyo_prपूर्णांक_namespace(head);
-			tomoyo_io_म_लिखो(head, "%u-COMMENT=", index);
+			tomoyo_print_namespace(head);
+			tomoyo_io_printf(head, "%u-COMMENT=", index);
 			tomoyo_set_string(head, comment ? comment->name : "");
 			tomoyo_set_lf(head);
-			tomoyo_prपूर्णांक_namespace(head);
-			tomoyo_io_म_लिखो(head, "%u-PREFERENCE={ ", index);
-			क्रम (i = 0; i < TOMOYO_MAX_PREF; i++)
-				tomoyo_io_म_लिखो(head, "%s=%u ",
+			tomoyo_print_namespace(head);
+			tomoyo_io_printf(head, "%u-PREFERENCE={ ", index);
+			for (i = 0; i < TOMOYO_MAX_PREF; i++)
+				tomoyo_io_printf(head, "%s=%u ",
 						 tomoyo_pref_keywords[i],
 						 profile->pref[i]);
 			tomoyo_set_string(head, "}\n");
 			head->r.step++;
-		पूर्ण
-		अवरोध;
-	हाल 3:
-		अणु
-			tomoyo_prपूर्णांक_namespace(head);
-			tomoyo_io_म_लिखो(head, "%u-%s", index, "CONFIG");
-			tomoyo_prपूर्णांक_config(head, profile->शेष_config);
+		}
+		break;
+	case 3:
+		{
+			tomoyo_print_namespace(head);
+			tomoyo_io_printf(head, "%u-%s", index, "CONFIG");
+			tomoyo_print_config(head, profile->default_config);
 			head->r.bit = 0;
 			head->r.step++;
-		पूर्ण
-		अवरोध;
-	हाल 4:
-		क्रम ( ; head->r.bit < TOMOYO_MAX_MAC_INDEX
-			      + TOMOYO_MAX_MAC_CATEGORY_INDEX; head->r.bit++) अणु
-			स्थिर u8 i = head->r.bit;
-			स्थिर u8 config = profile->config[i];
+		}
+		break;
+	case 4:
+		for ( ; head->r.bit < TOMOYO_MAX_MAC_INDEX
+			      + TOMOYO_MAX_MAC_CATEGORY_INDEX; head->r.bit++) {
+			const u8 i = head->r.bit;
+			const u8 config = profile->config[i];
 
-			अगर (config == TOMOYO_CONFIG_USE_DEFAULT)
-				जारी;
-			tomoyo_prपूर्णांक_namespace(head);
-			अगर (i < TOMOYO_MAX_MAC_INDEX)
-				tomoyo_io_म_लिखो(head, "%u-CONFIG::%s::%s",
+			if (config == TOMOYO_CONFIG_USE_DEFAULT)
+				continue;
+			tomoyo_print_namespace(head);
+			if (i < TOMOYO_MAX_MAC_INDEX)
+				tomoyo_io_printf(head, "%u-CONFIG::%s::%s",
 						 index,
 						 tomoyo_category_keywords
 						 [tomoyo_index2category[i]],
 						 tomoyo_mac_keywords[i]);
-			अन्यथा
-				tomoyo_io_म_लिखो(head, "%u-CONFIG::%s", index,
+			else
+				tomoyo_io_printf(head, "%u-CONFIG::%s", index,
 						 tomoyo_mac_keywords[i]);
-			tomoyo_prपूर्णांक_config(head, config);
+			tomoyo_print_config(head, config);
 			head->r.bit++;
-			अवरोध;
-		पूर्ण
-		अगर (head->r.bit == TOMOYO_MAX_MAC_INDEX
-		    + TOMOYO_MAX_MAC_CATEGORY_INDEX) अणु
+			break;
+		}
+		if (head->r.bit == TOMOYO_MAX_MAC_INDEX
+		    + TOMOYO_MAX_MAC_CATEGORY_INDEX) {
 			head->r.index++;
 			head->r.step = 1;
-		पूर्ण
-		अवरोध;
-	पूर्ण
-	अगर (tomoyo_flush(head))
-		जाओ next;
-पूर्ण
+		}
+		break;
+	}
+	if (tomoyo_flush(head))
+		goto next;
+}
 
 /**
- * tomoyo_same_manager - Check क्रम duplicated "struct tomoyo_manager" entry.
+ * tomoyo_same_manager - Check for duplicated "struct tomoyo_manager" entry.
  *
- * @a: Poपूर्णांकer to "struct tomoyo_acl_head".
- * @b: Poपूर्णांकer to "struct tomoyo_acl_head".
+ * @a: Pointer to "struct tomoyo_acl_head".
+ * @b: Pointer to "struct tomoyo_acl_head".
  *
- * Returns true अगर @a == @b, false otherwise.
+ * Returns true if @a == @b, false otherwise.
  */
-अटल bool tomoyo_same_manager(स्थिर काष्ठा tomoyo_acl_head *a,
-				स्थिर काष्ठा tomoyo_acl_head *b)
-अणु
-	वापस container_of(a, काष्ठा tomoyo_manager, head)->manager ==
-		container_of(b, काष्ठा tomoyo_manager, head)->manager;
-पूर्ण
+static bool tomoyo_same_manager(const struct tomoyo_acl_head *a,
+				const struct tomoyo_acl_head *b)
+{
+	return container_of(a, struct tomoyo_manager, head)->manager ==
+		container_of(b, struct tomoyo_manager, head)->manager;
+}
 
 /**
  * tomoyo_update_manager_entry - Add a manager entry.
  *
- * @manager:   The path to manager or the करोमुख्यnamme.
- * @is_delete: True अगर it is a delete request.
+ * @manager:   The path to manager or the domainnamme.
+ * @is_delete: True if it is a delete request.
  *
  * Returns 0 on success, negative value otherwise.
  *
- * Caller holds tomoyo_पढ़ो_lock().
+ * Caller holds tomoyo_read_lock().
  */
-अटल पूर्णांक tomoyo_update_manager_entry(स्थिर अक्षर *manager,
-				       स्थिर bool is_delete)
-अणु
-	काष्ठा tomoyo_manager e = अणु पूर्ण;
-	काष्ठा tomoyo_acl_param param = अणु
+static int tomoyo_update_manager_entry(const char *manager,
+				       const bool is_delete)
+{
+	struct tomoyo_manager e = { };
+	struct tomoyo_acl_param param = {
 		/* .ns = &tomoyo_kernel_namespace, */
 		.is_delete = is_delete,
 		.list = &tomoyo_kernel_namespace.policy_list[TOMOYO_ID_MANAGER],
-	पूर्ण;
-	पूर्णांक error = is_delete ? -ENOENT : -ENOMEM;
+	};
+	int error = is_delete ? -ENOENT : -ENOMEM;
 
-	अगर (!tomoyo_correct_करोमुख्य(manager) &&
+	if (!tomoyo_correct_domain(manager) &&
 	    !tomoyo_correct_word(manager))
-		वापस -EINVAL;
+		return -EINVAL;
 	e.manager = tomoyo_get_name(manager);
-	अगर (e.manager) अणु
-		error = tomoyo_update_policy(&e.head, माप(e), &param,
+	if (e.manager) {
+		error = tomoyo_update_policy(&e.head, sizeof(e), &param,
 					     tomoyo_same_manager);
 		tomoyo_put_name(e.manager);
-	पूर्ण
-	वापस error;
-पूर्ण
+	}
+	return error;
+}
 
 /**
- * tomoyo_ग_लिखो_manager - Write manager policy.
+ * tomoyo_write_manager - Write manager policy.
  *
- * @head: Poपूर्णांकer to "struct tomoyo_io_buffer".
+ * @head: Pointer to "struct tomoyo_io_buffer".
  *
  * Returns 0 on success, negative value otherwise.
  *
- * Caller holds tomoyo_पढ़ो_lock().
+ * Caller holds tomoyo_read_lock().
  */
-अटल पूर्णांक tomoyo_ग_लिखो_manager(काष्ठा tomoyo_io_buffer *head)
-अणु
-	अक्षर *data = head->ग_लिखो_buf;
+static int tomoyo_write_manager(struct tomoyo_io_buffer *head)
+{
+	char *data = head->write_buf;
 
-	अगर (!म_भेद(data, "manage_by_non_root")) अणु
+	if (!strcmp(data, "manage_by_non_root")) {
 		tomoyo_manage_by_non_root = !head->w.is_delete;
-		वापस 0;
-	पूर्ण
-	वापस tomoyo_update_manager_entry(data, head->w.is_delete);
-पूर्ण
+		return 0;
+	}
+	return tomoyo_update_manager_entry(data, head->w.is_delete);
+}
 
 /**
- * tomoyo_पढ़ो_manager - Read manager policy.
+ * tomoyo_read_manager - Read manager policy.
  *
- * @head: Poपूर्णांकer to "struct tomoyo_io_buffer".
+ * @head: Pointer to "struct tomoyo_io_buffer".
  *
- * Caller holds tomoyo_पढ़ो_lock().
+ * Caller holds tomoyo_read_lock().
  */
-अटल व्योम tomoyo_पढ़ो_manager(काष्ठा tomoyo_io_buffer *head)
-अणु
-	अगर (head->r.eof)
-		वापस;
-	list_क्रम_each_cookie(head->r.acl, &tomoyo_kernel_namespace.policy_list[TOMOYO_ID_MANAGER]) अणु
-		काष्ठा tomoyo_manager *ptr =
+static void tomoyo_read_manager(struct tomoyo_io_buffer *head)
+{
+	if (head->r.eof)
+		return;
+	list_for_each_cookie(head->r.acl, &tomoyo_kernel_namespace.policy_list[TOMOYO_ID_MANAGER]) {
+		struct tomoyo_manager *ptr =
 			list_entry(head->r.acl, typeof(*ptr), head.list);
 
-		अगर (ptr->head.is_deleted)
-			जारी;
-		अगर (!tomoyo_flush(head))
-			वापस;
+		if (ptr->head.is_deleted)
+			continue;
+		if (!tomoyo_flush(head))
+			return;
 		tomoyo_set_string(head, ptr->manager->name);
 		tomoyo_set_lf(head);
-	पूर्ण
+	}
 	head->r.eof = true;
-पूर्ण
+}
 
 /**
  * tomoyo_manager - Check whether the current process is a policy manager.
  *
- * Returns true अगर the current process is permitted to modअगरy policy
- * via /sys/kernel/security/tomoyo/ पूर्णांकerface.
+ * Returns true if the current process is permitted to modify policy
+ * via /sys/kernel/security/tomoyo/ interface.
  *
- * Caller holds tomoyo_पढ़ो_lock().
+ * Caller holds tomoyo_read_lock().
  */
-अटल bool tomoyo_manager(व्योम)
-अणु
-	काष्ठा tomoyo_manager *ptr;
-	स्थिर अक्षर *exe;
-	स्थिर काष्ठा task_काष्ठा *task = current;
-	स्थिर काष्ठा tomoyo_path_info *करोमुख्यname = tomoyo_करोमुख्य()->करोमुख्यname;
+static bool tomoyo_manager(void)
+{
+	struct tomoyo_manager *ptr;
+	const char *exe;
+	const struct task_struct *task = current;
+	const struct tomoyo_path_info *domainname = tomoyo_domain()->domainname;
 	bool found = IS_ENABLED(CONFIG_SECURITY_TOMOYO_INSECURE_BUILTIN_SETTING);
 
-	अगर (!tomoyo_policy_loaded)
-		वापस true;
-	अगर (!tomoyo_manage_by_non_root &&
+	if (!tomoyo_policy_loaded)
+		return true;
+	if (!tomoyo_manage_by_non_root &&
 	    (!uid_eq(task->cred->uid,  GLOBAL_ROOT_UID) ||
 	     !uid_eq(task->cred->euid, GLOBAL_ROOT_UID)))
-		वापस false;
+		return false;
 	exe = tomoyo_get_exe();
-	अगर (!exe)
-		वापस false;
-	list_क्रम_each_entry_rcu(ptr, &tomoyo_kernel_namespace.policy_list[TOMOYO_ID_MANAGER], head.list,
-				srcu_पढ़ो_lock_held(&tomoyo_ss)) अणु
-		अगर (!ptr->head.is_deleted &&
-		    (!tomoyo_pathcmp(करोमुख्यname, ptr->manager) ||
-		     !म_भेद(exe, ptr->manager->name))) अणु
+	if (!exe)
+		return false;
+	list_for_each_entry_rcu(ptr, &tomoyo_kernel_namespace.policy_list[TOMOYO_ID_MANAGER], head.list,
+				srcu_read_lock_held(&tomoyo_ss)) {
+		if (!ptr->head.is_deleted &&
+		    (!tomoyo_pathcmp(domainname, ptr->manager) ||
+		     !strcmp(exe, ptr->manager->name))) {
 			found = true;
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	अगर (!found) अणु /* Reduce error messages. */
-		अटल pid_t last_pid;
-		स्थिर pid_t pid = current->pid;
+			break;
+		}
+	}
+	if (!found) { /* Reduce error messages. */
+		static pid_t last_pid;
+		const pid_t pid = current->pid;
 
-		अगर (last_pid != pid) अणु
+		if (last_pid != pid) {
 			pr_warn("%s ( %s ) is not permitted to update policies.\n",
-				करोमुख्यname->name, exe);
+				domainname->name, exe);
 			last_pid = pid;
-		पूर्ण
-	पूर्ण
-	kमुक्त(exe);
-	वापस found;
-पूर्ण
+		}
+	}
+	kfree(exe);
+	return found;
+}
 
-अटल काष्ठा tomoyo_करोमुख्य_info *tomoyo_find_करोमुख्य_by_qid
-(अचिन्हित पूर्णांक serial);
+static struct tomoyo_domain_info *tomoyo_find_domain_by_qid
+(unsigned int serial);
 
 /**
- * tomoyo_select_करोमुख्य - Parse select command.
+ * tomoyo_select_domain - Parse select command.
  *
- * @head: Poपूर्णांकer to "struct tomoyo_io_buffer".
+ * @head: Pointer to "struct tomoyo_io_buffer".
  * @data: String to parse.
  *
  * Returns true on success, false otherwise.
  *
- * Caller holds tomoyo_पढ़ो_lock().
+ * Caller holds tomoyo_read_lock().
  */
-अटल bool tomoyo_select_करोमुख्य(काष्ठा tomoyo_io_buffer *head,
-				 स्थिर अक्षर *data)
-अणु
-	अचिन्हित पूर्णांक pid;
-	काष्ठा tomoyo_करोमुख्य_info *करोमुख्य = शून्य;
+static bool tomoyo_select_domain(struct tomoyo_io_buffer *head,
+				 const char *data)
+{
+	unsigned int pid;
+	struct tomoyo_domain_info *domain = NULL;
 	bool global_pid = false;
 
-	अगर (म_भेदन(data, "select ", 7))
-		वापस false;
+	if (strncmp(data, "select ", 7))
+		return false;
 	data += 7;
-	अगर (माला_पूछो(data, "pid=%u", &pid) == 1 ||
-	    (global_pid = true, माला_पूछो(data, "global-pid=%u", &pid) == 1)) अणु
-		काष्ठा task_काष्ठा *p;
+	if (sscanf(data, "pid=%u", &pid) == 1 ||
+	    (global_pid = true, sscanf(data, "global-pid=%u", &pid) == 1)) {
+		struct task_struct *p;
 
-		rcu_पढ़ो_lock();
-		अगर (global_pid)
+		rcu_read_lock();
+		if (global_pid)
 			p = find_task_by_pid_ns(pid, &init_pid_ns);
-		अन्यथा
+		else
 			p = find_task_by_vpid(pid);
-		अगर (p)
-			करोमुख्य = tomoyo_task(p)->करोमुख्य_info;
-		rcu_पढ़ो_unlock();
-	पूर्ण अन्यथा अगर (!म_भेदन(data, "domain=", 7)) अणु
-		अगर (tomoyo_करोमुख्य_def(data + 7))
-			करोमुख्य = tomoyo_find_करोमुख्य(data + 7);
-	पूर्ण अन्यथा अगर (माला_पूछो(data, "Q=%u", &pid) == 1) अणु
-		करोमुख्य = tomoyo_find_करोमुख्य_by_qid(pid);
-	पूर्ण अन्यथा
-		वापस false;
-	head->w.करोमुख्य = करोमुख्य;
-	/* Accessing पढ़ो_buf is safe because head->io_sem is held. */
-	अगर (!head->पढ़ो_buf)
-		वापस true; /* Do nothing अगर खोलो(O_WRONLY). */
-	स_रखो(&head->r, 0, माप(head->r));
-	head->r.prपूर्णांक_this_करोमुख्य_only = true;
-	अगर (करोमुख्य)
-		head->r.करोमुख्य = &करोमुख्य->list;
-	अन्यथा
+		if (p)
+			domain = tomoyo_task(p)->domain_info;
+		rcu_read_unlock();
+	} else if (!strncmp(data, "domain=", 7)) {
+		if (tomoyo_domain_def(data + 7))
+			domain = tomoyo_find_domain(data + 7);
+	} else if (sscanf(data, "Q=%u", &pid) == 1) {
+		domain = tomoyo_find_domain_by_qid(pid);
+	} else
+		return false;
+	head->w.domain = domain;
+	/* Accessing read_buf is safe because head->io_sem is held. */
+	if (!head->read_buf)
+		return true; /* Do nothing if open(O_WRONLY). */
+	memset(&head->r, 0, sizeof(head->r));
+	head->r.print_this_domain_only = true;
+	if (domain)
+		head->r.domain = &domain->list;
+	else
 		head->r.eof = true;
-	tomoyo_io_म_लिखो(head, "# select %s\n", data);
-	अगर (करोमुख्य && करोमुख्य->is_deleted)
-		tomoyo_io_म_लिखो(head, "# This is a deleted domain.\n");
-	वापस true;
-पूर्ण
+	tomoyo_io_printf(head, "# select %s\n", data);
+	if (domain && domain->is_deleted)
+		tomoyo_io_printf(head, "# This is a deleted domain.\n");
+	return true;
+}
 
 /**
- * tomoyo_same_task_acl - Check क्रम duplicated "struct tomoyo_task_acl" entry.
+ * tomoyo_same_task_acl - Check for duplicated "struct tomoyo_task_acl" entry.
  *
- * @a: Poपूर्णांकer to "struct tomoyo_acl_info".
- * @b: Poपूर्णांकer to "struct tomoyo_acl_info".
+ * @a: Pointer to "struct tomoyo_acl_info".
+ * @b: Pointer to "struct tomoyo_acl_info".
  *
- * Returns true अगर @a == @b, false otherwise.
+ * Returns true if @a == @b, false otherwise.
  */
-अटल bool tomoyo_same_task_acl(स्थिर काष्ठा tomoyo_acl_info *a,
-				 स्थिर काष्ठा tomoyo_acl_info *b)
-अणु
-	स्थिर काष्ठा tomoyo_task_acl *p1 = container_of(a, typeof(*p1), head);
-	स्थिर काष्ठा tomoyo_task_acl *p2 = container_of(b, typeof(*p2), head);
+static bool tomoyo_same_task_acl(const struct tomoyo_acl_info *a,
+				 const struct tomoyo_acl_info *b)
+{
+	const struct tomoyo_task_acl *p1 = container_of(a, typeof(*p1), head);
+	const struct tomoyo_task_acl *p2 = container_of(b, typeof(*p2), head);
 
-	वापस p1->करोमुख्यname == p2->करोमुख्यname;
-पूर्ण
+	return p1->domainname == p2->domainname;
+}
 
 /**
- * tomoyo_ग_लिखो_task - Update task related list.
+ * tomoyo_write_task - Update task related list.
  *
- * @param: Poपूर्णांकer to "struct tomoyo_acl_param".
+ * @param: Pointer to "struct tomoyo_acl_param".
  *
  * Returns 0 on success, negative value otherwise.
  *
- * Caller holds tomoyo_पढ़ो_lock().
+ * Caller holds tomoyo_read_lock().
  */
-अटल पूर्णांक tomoyo_ग_लिखो_task(काष्ठा tomoyo_acl_param *param)
-अणु
-	पूर्णांक error = -EINVAL;
+static int tomoyo_write_task(struct tomoyo_acl_param *param)
+{
+	int error = -EINVAL;
 
-	अगर (tomoyo_str_starts(&param->data, "manual_domain_transition ")) अणु
-		काष्ठा tomoyo_task_acl e = अणु
+	if (tomoyo_str_starts(&param->data, "manual_domain_transition ")) {
+		struct tomoyo_task_acl e = {
 			.head.type = TOMOYO_TYPE_MANUAL_TASK_ACL,
-			.करोमुख्यname = tomoyo_get_करोमुख्यname(param),
-		पूर्ण;
+			.domainname = tomoyo_get_domainname(param),
+		};
 
-		अगर (e.करोमुख्यname)
-			error = tomoyo_update_करोमुख्य(&e.head, माप(e), param,
+		if (e.domainname)
+			error = tomoyo_update_domain(&e.head, sizeof(e), param,
 						     tomoyo_same_task_acl,
-						     शून्य);
-		tomoyo_put_name(e.करोमुख्यname);
-	पूर्ण
-	वापस error;
-पूर्ण
+						     NULL);
+		tomoyo_put_name(e.domainname);
+	}
+	return error;
+}
 
 /**
- * tomoyo_delete_करोमुख्य - Delete a करोमुख्य.
+ * tomoyo_delete_domain - Delete a domain.
  *
- * @करोमुख्यname: The name of करोमुख्य.
+ * @domainname: The name of domain.
  *
  * Returns 0 on success, negative value otherwise.
  *
- * Caller holds tomoyo_पढ़ो_lock().
+ * Caller holds tomoyo_read_lock().
  */
-अटल पूर्णांक tomoyo_delete_करोमुख्य(अक्षर *करोमुख्यname)
-अणु
-	काष्ठा tomoyo_करोमुख्य_info *करोमुख्य;
-	काष्ठा tomoyo_path_info name;
+static int tomoyo_delete_domain(char *domainname)
+{
+	struct tomoyo_domain_info *domain;
+	struct tomoyo_path_info name;
 
-	name.name = करोमुख्यname;
+	name.name = domainname;
 	tomoyo_fill_path_info(&name);
-	अगर (mutex_lock_पूर्णांकerruptible(&tomoyo_policy_lock))
-		वापस -EINTR;
-	/* Is there an active करोमुख्य? */
-	list_क्रम_each_entry_rcu(करोमुख्य, &tomoyo_करोमुख्य_list, list,
-				srcu_पढ़ो_lock_held(&tomoyo_ss)) अणु
-		/* Never delete tomoyo_kernel_करोमुख्य */
-		अगर (करोमुख्य == &tomoyo_kernel_करोमुख्य)
-			जारी;
-		अगर (करोमुख्य->is_deleted ||
-		    tomoyo_pathcmp(करोमुख्य->करोमुख्यname, &name))
-			जारी;
-		करोमुख्य->is_deleted = true;
-		अवरोध;
-	पूर्ण
+	if (mutex_lock_interruptible(&tomoyo_policy_lock))
+		return -EINTR;
+	/* Is there an active domain? */
+	list_for_each_entry_rcu(domain, &tomoyo_domain_list, list,
+				srcu_read_lock_held(&tomoyo_ss)) {
+		/* Never delete tomoyo_kernel_domain */
+		if (domain == &tomoyo_kernel_domain)
+			continue;
+		if (domain->is_deleted ||
+		    tomoyo_pathcmp(domain->domainname, &name))
+			continue;
+		domain->is_deleted = true;
+		break;
+	}
 	mutex_unlock(&tomoyo_policy_lock);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * tomoyo_ग_लिखो_करोमुख्य2 - Write करोमुख्य policy.
+ * tomoyo_write_domain2 - Write domain policy.
  *
- * @ns:        Poपूर्णांकer to "struct tomoyo_policy_namespace".
- * @list:      Poपूर्णांकer to "struct list_head".
- * @data:      Policy to be पूर्णांकerpreted.
- * @is_delete: True अगर it is a delete request.
+ * @ns:        Pointer to "struct tomoyo_policy_namespace".
+ * @list:      Pointer to "struct list_head".
+ * @data:      Policy to be interpreted.
+ * @is_delete: True if it is a delete request.
  *
  * Returns 0 on success, negative value otherwise.
  *
- * Caller holds tomoyo_पढ़ो_lock().
+ * Caller holds tomoyo_read_lock().
  */
-अटल पूर्णांक tomoyo_ग_लिखो_करोमुख्य2(काष्ठा tomoyo_policy_namespace *ns,
-				काष्ठा list_head *list, अक्षर *data,
-				स्थिर bool is_delete)
-अणु
-	काष्ठा tomoyo_acl_param param = अणु
+static int tomoyo_write_domain2(struct tomoyo_policy_namespace *ns,
+				struct list_head *list, char *data,
+				const bool is_delete)
+{
+	struct tomoyo_acl_param param = {
 		.ns = ns,
 		.list = list,
 		.data = data,
 		.is_delete = is_delete,
-	पूर्ण;
-	अटल स्थिर काष्ठा अणु
-		स्थिर अक्षर *keyword;
-		पूर्णांक (*ग_लिखो)(काष्ठा tomoyo_acl_param *param);
-	पूर्ण tomoyo_callback[5] = अणु
-		अणु "file ", tomoyo_ग_लिखो_file पूर्ण,
-		अणु "network inet ", tomoyo_ग_लिखो_inet_network पूर्ण,
-		अणु "network unix ", tomoyo_ग_लिखो_unix_network पूर्ण,
-		अणु "misc ", tomoyo_ग_लिखो_misc पूर्ण,
-		अणु "task ", tomoyo_ग_लिखो_task पूर्ण,
-	पूर्ण;
+	};
+	static const struct {
+		const char *keyword;
+		int (*write)(struct tomoyo_acl_param *param);
+	} tomoyo_callback[5] = {
+		{ "file ", tomoyo_write_file },
+		{ "network inet ", tomoyo_write_inet_network },
+		{ "network unix ", tomoyo_write_unix_network },
+		{ "misc ", tomoyo_write_misc },
+		{ "task ", tomoyo_write_task },
+	};
 	u8 i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(tomoyo_callback); i++) अणु
-		अगर (!tomoyo_str_starts(&param.data,
+	for (i = 0; i < ARRAY_SIZE(tomoyo_callback); i++) {
+		if (!tomoyo_str_starts(&param.data,
 				       tomoyo_callback[i].keyword))
-			जारी;
-		वापस tomoyo_callback[i].ग_लिखो(&param);
-	पूर्ण
-	वापस -EINVAL;
-पूर्ण
+			continue;
+		return tomoyo_callback[i].write(&param);
+	}
+	return -EINVAL;
+}
 
-/* String table क्रम करोमुख्य flags. */
-स्थिर अक्षर * स्थिर tomoyo_dअगर[TOMOYO_MAX_DOMAIN_INFO_FLAGS] = अणु
+/* String table for domain flags. */
+const char * const tomoyo_dif[TOMOYO_MAX_DOMAIN_INFO_FLAGS] = {
 	[TOMOYO_DIF_QUOTA_WARNED]      = "quota_exceeded\n",
 	[TOMOYO_DIF_TRANSITION_FAILED] = "transition_failed\n",
-पूर्ण;
+};
 
 /**
- * tomoyo_ग_लिखो_करोमुख्य - Write करोमुख्य policy.
+ * tomoyo_write_domain - Write domain policy.
  *
- * @head: Poपूर्णांकer to "struct tomoyo_io_buffer".
+ * @head: Pointer to "struct tomoyo_io_buffer".
  *
  * Returns 0 on success, negative value otherwise.
  *
- * Caller holds tomoyo_पढ़ो_lock().
+ * Caller holds tomoyo_read_lock().
  */
-अटल पूर्णांक tomoyo_ग_लिखो_करोमुख्य(काष्ठा tomoyo_io_buffer *head)
-अणु
-	अक्षर *data = head->ग_लिखो_buf;
-	काष्ठा tomoyo_policy_namespace *ns;
-	काष्ठा tomoyo_करोमुख्य_info *करोमुख्य = head->w.करोमुख्य;
-	स्थिर bool is_delete = head->w.is_delete;
+static int tomoyo_write_domain(struct tomoyo_io_buffer *head)
+{
+	char *data = head->write_buf;
+	struct tomoyo_policy_namespace *ns;
+	struct tomoyo_domain_info *domain = head->w.domain;
+	const bool is_delete = head->w.is_delete;
 	bool is_select = !is_delete && tomoyo_str_starts(&data, "select ");
-	अचिन्हित पूर्णांक idx;
+	unsigned int idx;
 
-	अगर (*data == '<') अणु
-		पूर्णांक ret = 0;
+	if (*data == '<') {
+		int ret = 0;
 
-		करोमुख्य = शून्य;
-		अगर (is_delete)
-			ret = tomoyo_delete_करोमुख्य(data);
-		अन्यथा अगर (is_select)
-			करोमुख्य = tomoyo_find_करोमुख्य(data);
-		अन्यथा
-			करोमुख्य = tomoyo_assign_करोमुख्य(data, false);
-		head->w.करोमुख्य = करोमुख्य;
-		वापस ret;
-	पूर्ण
-	अगर (!करोमुख्य)
-		वापस -EINVAL;
-	ns = करोमुख्य->ns;
-	अगर (माला_पूछो(data, "use_profile %u", &idx) == 1
-	    && idx < TOMOYO_MAX_PROखाताS) अणु
-		अगर (!tomoyo_policy_loaded || ns->profile_ptr[idx])
-			अगर (!is_delete)
-				करोमुख्य->profile = (u8) idx;
-		वापस 0;
-	पूर्ण
-	अगर (माला_पूछो(data, "use_group %u\n", &idx) == 1
-	    && idx < TOMOYO_MAX_ACL_GROUPS) अणु
-		अगर (!is_delete)
-			set_bit(idx, करोमुख्य->group);
-		अन्यथा
-			clear_bit(idx, करोमुख्य->group);
-		वापस 0;
-	पूर्ण
-	क्रम (idx = 0; idx < TOMOYO_MAX_DOMAIN_INFO_FLAGS; idx++) अणु
-		स्थिर अक्षर *cp = tomoyo_dअगर[idx];
+		domain = NULL;
+		if (is_delete)
+			ret = tomoyo_delete_domain(data);
+		else if (is_select)
+			domain = tomoyo_find_domain(data);
+		else
+			domain = tomoyo_assign_domain(data, false);
+		head->w.domain = domain;
+		return ret;
+	}
+	if (!domain)
+		return -EINVAL;
+	ns = domain->ns;
+	if (sscanf(data, "use_profile %u", &idx) == 1
+	    && idx < TOMOYO_MAX_PROFILES) {
+		if (!tomoyo_policy_loaded || ns->profile_ptr[idx])
+			if (!is_delete)
+				domain->profile = (u8) idx;
+		return 0;
+	}
+	if (sscanf(data, "use_group %u\n", &idx) == 1
+	    && idx < TOMOYO_MAX_ACL_GROUPS) {
+		if (!is_delete)
+			set_bit(idx, domain->group);
+		else
+			clear_bit(idx, domain->group);
+		return 0;
+	}
+	for (idx = 0; idx < TOMOYO_MAX_DOMAIN_INFO_FLAGS; idx++) {
+		const char *cp = tomoyo_dif[idx];
 
-		अगर (म_भेदन(data, cp, म_माप(cp) - 1))
-			जारी;
-		करोमुख्य->flags[idx] = !is_delete;
-		वापस 0;
-	पूर्ण
-	वापस tomoyo_ग_लिखो_करोमुख्य2(ns, &करोमुख्य->acl_info_list, data,
+		if (strncmp(data, cp, strlen(cp) - 1))
+			continue;
+		domain->flags[idx] = !is_delete;
+		return 0;
+	}
+	return tomoyo_write_domain2(ns, &domain->acl_info_list, data,
 				    is_delete);
-पूर्ण
+}
 
 /**
- * tomoyo_prपूर्णांक_condition - Prपूर्णांक condition part.
+ * tomoyo_print_condition - Print condition part.
  *
- * @head: Poपूर्णांकer to "struct tomoyo_io_buffer".
- * @cond: Poपूर्णांकer to "struct tomoyo_condition".
+ * @head: Pointer to "struct tomoyo_io_buffer".
+ * @cond: Pointer to "struct tomoyo_condition".
  *
  * Returns true on success, false otherwise.
  */
-अटल bool tomoyo_prपूर्णांक_condition(काष्ठा tomoyo_io_buffer *head,
-				   स्थिर काष्ठा tomoyo_condition *cond)
-अणु
-	चयन (head->r.cond_step) अणु
-	हाल 0:
+static bool tomoyo_print_condition(struct tomoyo_io_buffer *head,
+				   const struct tomoyo_condition *cond)
+{
+	switch (head->r.cond_step) {
+	case 0:
 		head->r.cond_index = 0;
 		head->r.cond_step++;
-		अगर (cond->transit) अणु
+		if (cond->transit) {
 			tomoyo_set_space(head);
 			tomoyo_set_string(head, cond->transit->name);
-		पूर्ण
+		}
 		fallthrough;
-	हाल 1:
-		अणु
-			स्थिर u16 condc = cond->condc;
-			स्थिर काष्ठा tomoyo_condition_element *condp =
+	case 1:
+		{
+			const u16 condc = cond->condc;
+			const struct tomoyo_condition_element *condp =
 				(typeof(condp)) (cond + 1);
-			स्थिर काष्ठा tomoyo_number_जोड़ *numbers_p =
+			const struct tomoyo_number_union *numbers_p =
 				(typeof(numbers_p)) (condp + condc);
-			स्थिर काष्ठा tomoyo_name_जोड़ *names_p =
+			const struct tomoyo_name_union *names_p =
 				(typeof(names_p))
 				(numbers_p + cond->numbers_count);
-			स्थिर काष्ठा tomoyo_argv *argv =
+			const struct tomoyo_argv *argv =
 				(typeof(argv)) (names_p + cond->names_count);
-			स्थिर काष्ठा tomoyo_envp *envp =
+			const struct tomoyo_envp *envp =
 				(typeof(envp)) (argv + cond->argc);
 			u16 skip;
 
-			क्रम (skip = 0; skip < head->r.cond_index; skip++) अणु
-				स्थिर u8 left = condp->left;
-				स्थिर u8 right = condp->right;
+			for (skip = 0; skip < head->r.cond_index; skip++) {
+				const u8 left = condp->left;
+				const u8 right = condp->right;
 
 				condp++;
-				चयन (left) अणु
-				हाल TOMOYO_ARGV_ENTRY:
+				switch (left) {
+				case TOMOYO_ARGV_ENTRY:
 					argv++;
-					जारी;
-				हाल TOMOYO_ENVP_ENTRY:
+					continue;
+				case TOMOYO_ENVP_ENTRY:
 					envp++;
-					जारी;
-				हाल TOMOYO_NUMBER_UNION:
+					continue;
+				case TOMOYO_NUMBER_UNION:
 					numbers_p++;
-					अवरोध;
-				पूर्ण
-				चयन (right) अणु
-				हाल TOMOYO_NAME_UNION:
+					break;
+				}
+				switch (right) {
+				case TOMOYO_NAME_UNION:
 					names_p++;
-					अवरोध;
-				हाल TOMOYO_NUMBER_UNION:
+					break;
+				case TOMOYO_NUMBER_UNION:
 					numbers_p++;
-					अवरोध;
-				पूर्ण
-			पूर्ण
-			जबतक (head->r.cond_index < condc) अणु
-				स्थिर u8 match = condp->equals;
-				स्थिर u8 left = condp->left;
-				स्थिर u8 right = condp->right;
+					break;
+				}
+			}
+			while (head->r.cond_index < condc) {
+				const u8 match = condp->equals;
+				const u8 left = condp->left;
+				const u8 right = condp->right;
 
-				अगर (!tomoyo_flush(head))
-					वापस false;
+				if (!tomoyo_flush(head))
+					return false;
 				condp++;
 				head->r.cond_index++;
 				tomoyo_set_space(head);
-				चयन (left) अणु
-				हाल TOMOYO_ARGV_ENTRY:
-					tomoyo_io_म_लिखो(head,
+				switch (left) {
+				case TOMOYO_ARGV_ENTRY:
+					tomoyo_io_printf(head,
 							 "exec.argv[%lu]%s=\"",
 							 argv->index, argv->is_not ? "!" : "");
 					tomoyo_set_string(head,
 							  argv->value->name);
 					tomoyo_set_string(head, "\"");
 					argv++;
-					जारी;
-				हाल TOMOYO_ENVP_ENTRY:
+					continue;
+				case TOMOYO_ENVP_ENTRY:
 					tomoyo_set_string(head,
 							  "exec.envp[\"");
 					tomoyo_set_string(head,
 							  envp->name->name);
-					tomoyo_io_म_लिखो(head, "\"]%s=", envp->is_not ? "!" : "");
-					अगर (envp->value) अणु
+					tomoyo_io_printf(head, "\"]%s=", envp->is_not ? "!" : "");
+					if (envp->value) {
 						tomoyo_set_string(head, "\"");
 						tomoyo_set_string(head, envp->value->name);
 						tomoyo_set_string(head, "\"");
-					पूर्ण अन्यथा अणु
+					} else {
 						tomoyo_set_string(head,
 								  "NULL");
-					पूर्ण
+					}
 					envp++;
-					जारी;
-				हाल TOMOYO_NUMBER_UNION:
-					tomoyo_prपूर्णांक_number_जोड़_nospace
+					continue;
+				case TOMOYO_NUMBER_UNION:
+					tomoyo_print_number_union_nospace
 						(head, numbers_p++);
-					अवरोध;
-				शेष:
+					break;
+				default:
 					tomoyo_set_string(head,
 					       tomoyo_condition_keyword[left]);
-					अवरोध;
-				पूर्ण
+					break;
+				}
 				tomoyo_set_string(head, match ? "=" : "!=");
-				चयन (right) अणु
-				हाल TOMOYO_NAME_UNION:
-					tomoyo_prपूर्णांक_name_जोड़_quoted
+				switch (right) {
+				case TOMOYO_NAME_UNION:
+					tomoyo_print_name_union_quoted
 						(head, names_p++);
-					अवरोध;
-				हाल TOMOYO_NUMBER_UNION:
-					tomoyo_prपूर्णांक_number_जोड़_nospace
+					break;
+				case TOMOYO_NUMBER_UNION:
+					tomoyo_print_number_union_nospace
 						(head, numbers_p++);
-					अवरोध;
-				शेष:
+					break;
+				default:
 					tomoyo_set_string(head,
 					  tomoyo_condition_keyword[right]);
-					अवरोध;
-				पूर्ण
-			पूर्ण
-		पूर्ण
+					break;
+				}
+			}
+		}
 		head->r.cond_step++;
 		fallthrough;
-	हाल 2:
-		अगर (!tomoyo_flush(head))
-			अवरोध;
+	case 2:
+		if (!tomoyo_flush(head))
+			break;
 		head->r.cond_step++;
 		fallthrough;
-	हाल 3:
-		अगर (cond->grant_log != TOMOYO_GRANTLOG_AUTO)
-			tomoyo_io_म_लिखो(head, " grant_log=%s",
+	case 3:
+		if (cond->grant_log != TOMOYO_GRANTLOG_AUTO)
+			tomoyo_io_printf(head, " grant_log=%s",
 					 tomoyo_yesno(cond->grant_log ==
 						      TOMOYO_GRANTLOG_YES));
 		tomoyo_set_lf(head);
-		वापस true;
-	पूर्ण
-	वापस false;
-पूर्ण
+		return true;
+	}
+	return false;
+}
 
 /**
- * tomoyo_set_group - Prपूर्णांक "acl_group " header keyword and category name.
+ * tomoyo_set_group - Print "acl_group " header keyword and category name.
  *
- * @head:     Poपूर्णांकer to "struct tomoyo_io_buffer".
+ * @head:     Pointer to "struct tomoyo_io_buffer".
  * @category: Category name.
  *
  * Returns nothing.
  */
-अटल व्योम tomoyo_set_group(काष्ठा tomoyo_io_buffer *head,
-			     स्थिर अक्षर *category)
-अणु
-	अगर (head->type == TOMOYO_EXCEPTIONPOLICY) अणु
-		tomoyo_prपूर्णांक_namespace(head);
-		tomoyo_io_म_लिखो(head, "acl_group %u ",
+static void tomoyo_set_group(struct tomoyo_io_buffer *head,
+			     const char *category)
+{
+	if (head->type == TOMOYO_EXCEPTIONPOLICY) {
+		tomoyo_print_namespace(head);
+		tomoyo_io_printf(head, "acl_group %u ",
 				 head->r.acl_group_index);
-	पूर्ण
+	}
 	tomoyo_set_string(head, category);
-पूर्ण
+}
 
 /**
- * tomoyo_prपूर्णांक_entry - Prपूर्णांक an ACL entry.
+ * tomoyo_print_entry - Print an ACL entry.
  *
- * @head: Poपूर्णांकer to "struct tomoyo_io_buffer".
- * @acl:  Poपूर्णांकer to an ACL entry.
+ * @head: Pointer to "struct tomoyo_io_buffer".
+ * @acl:  Pointer to an ACL entry.
  *
  * Returns true on success, false otherwise.
  */
-अटल bool tomoyo_prपूर्णांक_entry(काष्ठा tomoyo_io_buffer *head,
-			       काष्ठा tomoyo_acl_info *acl)
-अणु
-	स्थिर u8 acl_type = acl->type;
+static bool tomoyo_print_entry(struct tomoyo_io_buffer *head,
+			       struct tomoyo_acl_info *acl)
+{
+	const u8 acl_type = acl->type;
 	bool first = true;
 	u8 bit;
 
-	अगर (head->r.prपूर्णांक_cond_part)
-		जाओ prपूर्णांक_cond_part;
-	अगर (acl->is_deleted)
-		वापस true;
-	अगर (!tomoyo_flush(head))
-		वापस false;
-	अन्यथा अगर (acl_type == TOMOYO_TYPE_PATH_ACL) अणु
-		काष्ठा tomoyo_path_acl *ptr =
+	if (head->r.print_cond_part)
+		goto print_cond_part;
+	if (acl->is_deleted)
+		return true;
+	if (!tomoyo_flush(head))
+		return false;
+	else if (acl_type == TOMOYO_TYPE_PATH_ACL) {
+		struct tomoyo_path_acl *ptr =
 			container_of(acl, typeof(*ptr), head);
-		स्थिर u16 perm = ptr->perm;
+		const u16 perm = ptr->perm;
 
-		क्रम (bit = 0; bit < TOMOYO_MAX_PATH_OPERATION; bit++) अणु
-			अगर (!(perm & (1 << bit)))
-				जारी;
-			अगर (head->r.prपूर्णांक_transition_related_only &&
+		for (bit = 0; bit < TOMOYO_MAX_PATH_OPERATION; bit++) {
+			if (!(perm & (1 << bit)))
+				continue;
+			if (head->r.print_transition_related_only &&
 			    bit != TOMOYO_TYPE_EXECUTE)
-				जारी;
-			अगर (first) अणु
+				continue;
+			if (first) {
 				tomoyo_set_group(head, "file ");
 				first = false;
-			पूर्ण अन्यथा अणु
+			} else {
 				tomoyo_set_slash(head);
-			पूर्ण
+			}
 			tomoyo_set_string(head, tomoyo_path_keyword[bit]);
-		पूर्ण
-		अगर (first)
-			वापस true;
-		tomoyo_prपूर्णांक_name_जोड़(head, &ptr->name);
-	पूर्ण अन्यथा अगर (acl_type == TOMOYO_TYPE_MANUAL_TASK_ACL) अणु
-		काष्ठा tomoyo_task_acl *ptr =
+		}
+		if (first)
+			return true;
+		tomoyo_print_name_union(head, &ptr->name);
+	} else if (acl_type == TOMOYO_TYPE_MANUAL_TASK_ACL) {
+		struct tomoyo_task_acl *ptr =
 			container_of(acl, typeof(*ptr), head);
 
 		tomoyo_set_group(head, "task ");
 		tomoyo_set_string(head, "manual_domain_transition ");
-		tomoyo_set_string(head, ptr->करोमुख्यname->name);
-	पूर्ण अन्यथा अगर (head->r.prपूर्णांक_transition_related_only) अणु
-		वापस true;
-	पूर्ण अन्यथा अगर (acl_type == TOMOYO_TYPE_PATH2_ACL) अणु
-		काष्ठा tomoyo_path2_acl *ptr =
+		tomoyo_set_string(head, ptr->domainname->name);
+	} else if (head->r.print_transition_related_only) {
+		return true;
+	} else if (acl_type == TOMOYO_TYPE_PATH2_ACL) {
+		struct tomoyo_path2_acl *ptr =
 			container_of(acl, typeof(*ptr), head);
-		स्थिर u8 perm = ptr->perm;
+		const u8 perm = ptr->perm;
 
-		क्रम (bit = 0; bit < TOMOYO_MAX_PATH2_OPERATION; bit++) अणु
-			अगर (!(perm & (1 << bit)))
-				जारी;
-			अगर (first) अणु
+		for (bit = 0; bit < TOMOYO_MAX_PATH2_OPERATION; bit++) {
+			if (!(perm & (1 << bit)))
+				continue;
+			if (first) {
 				tomoyo_set_group(head, "file ");
 				first = false;
-			पूर्ण अन्यथा अणु
+			} else {
 				tomoyo_set_slash(head);
-			पूर्ण
+			}
 			tomoyo_set_string(head, tomoyo_mac_keywords
 					  [tomoyo_pp2mac[bit]]);
-		पूर्ण
-		अगर (first)
-			वापस true;
-		tomoyo_prपूर्णांक_name_जोड़(head, &ptr->name1);
-		tomoyo_prपूर्णांक_name_जोड़(head, &ptr->name2);
-	पूर्ण अन्यथा अगर (acl_type == TOMOYO_TYPE_PATH_NUMBER_ACL) अणु
-		काष्ठा tomoyo_path_number_acl *ptr =
+		}
+		if (first)
+			return true;
+		tomoyo_print_name_union(head, &ptr->name1);
+		tomoyo_print_name_union(head, &ptr->name2);
+	} else if (acl_type == TOMOYO_TYPE_PATH_NUMBER_ACL) {
+		struct tomoyo_path_number_acl *ptr =
 			container_of(acl, typeof(*ptr), head);
-		स्थिर u8 perm = ptr->perm;
+		const u8 perm = ptr->perm;
 
-		क्रम (bit = 0; bit < TOMOYO_MAX_PATH_NUMBER_OPERATION; bit++) अणु
-			अगर (!(perm & (1 << bit)))
-				जारी;
-			अगर (first) अणु
+		for (bit = 0; bit < TOMOYO_MAX_PATH_NUMBER_OPERATION; bit++) {
+			if (!(perm & (1 << bit)))
+				continue;
+			if (first) {
 				tomoyo_set_group(head, "file ");
 				first = false;
-			पूर्ण अन्यथा अणु
+			} else {
 				tomoyo_set_slash(head);
-			पूर्ण
+			}
 			tomoyo_set_string(head, tomoyo_mac_keywords
 					  [tomoyo_pn2mac[bit]]);
-		पूर्ण
-		अगर (first)
-			वापस true;
-		tomoyo_prपूर्णांक_name_जोड़(head, &ptr->name);
-		tomoyo_prपूर्णांक_number_जोड़(head, &ptr->number);
-	पूर्ण अन्यथा अगर (acl_type == TOMOYO_TYPE_MKDEV_ACL) अणु
-		काष्ठा tomoyo_mkdev_acl *ptr =
+		}
+		if (first)
+			return true;
+		tomoyo_print_name_union(head, &ptr->name);
+		tomoyo_print_number_union(head, &ptr->number);
+	} else if (acl_type == TOMOYO_TYPE_MKDEV_ACL) {
+		struct tomoyo_mkdev_acl *ptr =
 			container_of(acl, typeof(*ptr), head);
-		स्थिर u8 perm = ptr->perm;
+		const u8 perm = ptr->perm;
 
-		क्रम (bit = 0; bit < TOMOYO_MAX_MKDEV_OPERATION; bit++) अणु
-			अगर (!(perm & (1 << bit)))
-				जारी;
-			अगर (first) अणु
+		for (bit = 0; bit < TOMOYO_MAX_MKDEV_OPERATION; bit++) {
+			if (!(perm & (1 << bit)))
+				continue;
+			if (first) {
 				tomoyo_set_group(head, "file ");
 				first = false;
-			पूर्ण अन्यथा अणु
+			} else {
 				tomoyo_set_slash(head);
-			पूर्ण
+			}
 			tomoyo_set_string(head, tomoyo_mac_keywords
 					  [tomoyo_pnnn2mac[bit]]);
-		पूर्ण
-		अगर (first)
-			वापस true;
-		tomoyo_prपूर्णांक_name_जोड़(head, &ptr->name);
-		tomoyo_prपूर्णांक_number_जोड़(head, &ptr->mode);
-		tomoyo_prपूर्णांक_number_जोड़(head, &ptr->major);
-		tomoyo_prपूर्णांक_number_जोड़(head, &ptr->minor);
-	पूर्ण अन्यथा अगर (acl_type == TOMOYO_TYPE_INET_ACL) अणु
-		काष्ठा tomoyo_inet_acl *ptr =
+		}
+		if (first)
+			return true;
+		tomoyo_print_name_union(head, &ptr->name);
+		tomoyo_print_number_union(head, &ptr->mode);
+		tomoyo_print_number_union(head, &ptr->major);
+		tomoyo_print_number_union(head, &ptr->minor);
+	} else if (acl_type == TOMOYO_TYPE_INET_ACL) {
+		struct tomoyo_inet_acl *ptr =
 			container_of(acl, typeof(*ptr), head);
-		स्थिर u8 perm = ptr->perm;
+		const u8 perm = ptr->perm;
 
-		क्रम (bit = 0; bit < TOMOYO_MAX_NETWORK_OPERATION; bit++) अणु
-			अगर (!(perm & (1 << bit)))
-				जारी;
-			अगर (first) अणु
+		for (bit = 0; bit < TOMOYO_MAX_NETWORK_OPERATION; bit++) {
+			if (!(perm & (1 << bit)))
+				continue;
+			if (first) {
 				tomoyo_set_group(head, "network inet ");
 				tomoyo_set_string(head, tomoyo_proto_keyword
 						  [ptr->protocol]);
 				tomoyo_set_space(head);
 				first = false;
-			पूर्ण अन्यथा अणु
+			} else {
 				tomoyo_set_slash(head);
-			पूर्ण
+			}
 			tomoyo_set_string(head, tomoyo_socket_keyword[bit]);
-		पूर्ण
-		अगर (first)
-			वापस true;
+		}
+		if (first)
+			return true;
 		tomoyo_set_space(head);
-		अगर (ptr->address.group) अणु
+		if (ptr->address.group) {
 			tomoyo_set_string(head, "@");
 			tomoyo_set_string(head, ptr->address.group->group_name
 					  ->name);
-		पूर्ण अन्यथा अणु
-			अक्षर buf[128];
+		} else {
+			char buf[128];
 
-			tomoyo_prपूर्णांक_ip(buf, माप(buf), &ptr->address);
-			tomoyo_io_म_लिखो(head, "%s", buf);
-		पूर्ण
-		tomoyo_prपूर्णांक_number_जोड़(head, &ptr->port);
-	पूर्ण अन्यथा अगर (acl_type == TOMOYO_TYPE_UNIX_ACL) अणु
-		काष्ठा tomoyo_unix_acl *ptr =
+			tomoyo_print_ip(buf, sizeof(buf), &ptr->address);
+			tomoyo_io_printf(head, "%s", buf);
+		}
+		tomoyo_print_number_union(head, &ptr->port);
+	} else if (acl_type == TOMOYO_TYPE_UNIX_ACL) {
+		struct tomoyo_unix_acl *ptr =
 			container_of(acl, typeof(*ptr), head);
-		स्थिर u8 perm = ptr->perm;
+		const u8 perm = ptr->perm;
 
-		क्रम (bit = 0; bit < TOMOYO_MAX_NETWORK_OPERATION; bit++) अणु
-			अगर (!(perm & (1 << bit)))
-				जारी;
-			अगर (first) अणु
+		for (bit = 0; bit < TOMOYO_MAX_NETWORK_OPERATION; bit++) {
+			if (!(perm & (1 << bit)))
+				continue;
+			if (first) {
 				tomoyo_set_group(head, "network unix ");
 				tomoyo_set_string(head, tomoyo_proto_keyword
 						  [ptr->protocol]);
 				tomoyo_set_space(head);
 				first = false;
-			पूर्ण अन्यथा अणु
+			} else {
 				tomoyo_set_slash(head);
-			पूर्ण
+			}
 			tomoyo_set_string(head, tomoyo_socket_keyword[bit]);
-		पूर्ण
-		अगर (first)
-			वापस true;
-		tomoyo_prपूर्णांक_name_जोड़(head, &ptr->name);
-	पूर्ण अन्यथा अगर (acl_type == TOMOYO_TYPE_MOUNT_ACL) अणु
-		काष्ठा tomoyo_mount_acl *ptr =
+		}
+		if (first)
+			return true;
+		tomoyo_print_name_union(head, &ptr->name);
+	} else if (acl_type == TOMOYO_TYPE_MOUNT_ACL) {
+		struct tomoyo_mount_acl *ptr =
 			container_of(acl, typeof(*ptr), head);
 
 		tomoyo_set_group(head, "file mount");
-		tomoyo_prपूर्णांक_name_जोड़(head, &ptr->dev_name);
-		tomoyo_prपूर्णांक_name_जोड़(head, &ptr->dir_name);
-		tomoyo_prपूर्णांक_name_जोड़(head, &ptr->fs_type);
-		tomoyo_prपूर्णांक_number_जोड़(head, &ptr->flags);
-	पूर्ण अन्यथा अगर (acl_type == TOMOYO_TYPE_ENV_ACL) अणु
-		काष्ठा tomoyo_env_acl *ptr =
+		tomoyo_print_name_union(head, &ptr->dev_name);
+		tomoyo_print_name_union(head, &ptr->dir_name);
+		tomoyo_print_name_union(head, &ptr->fs_type);
+		tomoyo_print_number_union(head, &ptr->flags);
+	} else if (acl_type == TOMOYO_TYPE_ENV_ACL) {
+		struct tomoyo_env_acl *ptr =
 			container_of(acl, typeof(*ptr), head);
 
 		tomoyo_set_group(head, "misc env ");
 		tomoyo_set_string(head, ptr->env->name);
-	पूर्ण
-	अगर (acl->cond) अणु
-		head->r.prपूर्णांक_cond_part = true;
+	}
+	if (acl->cond) {
+		head->r.print_cond_part = true;
 		head->r.cond_step = 0;
-		अगर (!tomoyo_flush(head))
-			वापस false;
-prपूर्णांक_cond_part:
-		अगर (!tomoyo_prपूर्णांक_condition(head, acl->cond))
-			वापस false;
-		head->r.prपूर्णांक_cond_part = false;
-	पूर्ण अन्यथा अणु
+		if (!tomoyo_flush(head))
+			return false;
+print_cond_part:
+		if (!tomoyo_print_condition(head, acl->cond))
+			return false;
+		head->r.print_cond_part = false;
+	} else {
 		tomoyo_set_lf(head);
-	पूर्ण
-	वापस true;
-पूर्ण
+	}
+	return true;
+}
 
 /**
- * tomoyo_पढ़ो_करोमुख्य2 - Read करोमुख्य policy.
+ * tomoyo_read_domain2 - Read domain policy.
  *
- * @head: Poपूर्णांकer to "struct tomoyo_io_buffer".
- * @list: Poपूर्णांकer to "struct list_head".
+ * @head: Pointer to "struct tomoyo_io_buffer".
+ * @list: Pointer to "struct list_head".
  *
- * Caller holds tomoyo_पढ़ो_lock().
+ * Caller holds tomoyo_read_lock().
  *
  * Returns true on success, false otherwise.
  */
-अटल bool tomoyo_पढ़ो_करोमुख्य2(काष्ठा tomoyo_io_buffer *head,
-				काष्ठा list_head *list)
-अणु
-	list_क्रम_each_cookie(head->r.acl, list) अणु
-		काष्ठा tomoyo_acl_info *ptr =
+static bool tomoyo_read_domain2(struct tomoyo_io_buffer *head,
+				struct list_head *list)
+{
+	list_for_each_cookie(head->r.acl, list) {
+		struct tomoyo_acl_info *ptr =
 			list_entry(head->r.acl, typeof(*ptr), list);
 
-		अगर (!tomoyo_prपूर्णांक_entry(head, ptr))
-			वापस false;
-	पूर्ण
-	head->r.acl = शून्य;
-	वापस true;
-पूर्ण
+		if (!tomoyo_print_entry(head, ptr))
+			return false;
+	}
+	head->r.acl = NULL;
+	return true;
+}
 
 /**
- * tomoyo_पढ़ो_करोमुख्य - Read करोमुख्य policy.
+ * tomoyo_read_domain - Read domain policy.
  *
- * @head: Poपूर्णांकer to "struct tomoyo_io_buffer".
+ * @head: Pointer to "struct tomoyo_io_buffer".
  *
- * Caller holds tomoyo_पढ़ो_lock().
+ * Caller holds tomoyo_read_lock().
  */
-अटल व्योम tomoyo_पढ़ो_करोमुख्य(काष्ठा tomoyo_io_buffer *head)
-अणु
-	अगर (head->r.eof)
-		वापस;
-	list_क्रम_each_cookie(head->r.करोमुख्य, &tomoyo_करोमुख्य_list) अणु
-		काष्ठा tomoyo_करोमुख्य_info *करोमुख्य =
-			list_entry(head->r.करोमुख्य, typeof(*करोमुख्य), list);
+static void tomoyo_read_domain(struct tomoyo_io_buffer *head)
+{
+	if (head->r.eof)
+		return;
+	list_for_each_cookie(head->r.domain, &tomoyo_domain_list) {
+		struct tomoyo_domain_info *domain =
+			list_entry(head->r.domain, typeof(*domain), list);
 		u8 i;
 
-		चयन (head->r.step) अणु
-		हाल 0:
-			अगर (करोमुख्य->is_deleted &&
-			    !head->r.prपूर्णांक_this_करोमुख्य_only)
-				जारी;
-			/* Prपूर्णांक करोमुख्यname and flags. */
-			tomoyo_set_string(head, करोमुख्य->करोमुख्यname->name);
+		switch (head->r.step) {
+		case 0:
+			if (domain->is_deleted &&
+			    !head->r.print_this_domain_only)
+				continue;
+			/* Print domainname and flags. */
+			tomoyo_set_string(head, domain->domainname->name);
 			tomoyo_set_lf(head);
-			tomoyo_io_म_लिखो(head, "use_profile %u\n",
-					 करोमुख्य->profile);
-			क्रम (i = 0; i < TOMOYO_MAX_DOMAIN_INFO_FLAGS; i++)
-				अगर (करोमुख्य->flags[i])
-					tomoyo_set_string(head, tomoyo_dअगर[i]);
+			tomoyo_io_printf(head, "use_profile %u\n",
+					 domain->profile);
+			for (i = 0; i < TOMOYO_MAX_DOMAIN_INFO_FLAGS; i++)
+				if (domain->flags[i])
+					tomoyo_set_string(head, tomoyo_dif[i]);
 			head->r.index = 0;
 			head->r.step++;
 			fallthrough;
-		हाल 1:
-			जबतक (head->r.index < TOMOYO_MAX_ACL_GROUPS) अणु
+		case 1:
+			while (head->r.index < TOMOYO_MAX_ACL_GROUPS) {
 				i = head->r.index++;
-				अगर (!test_bit(i, करोमुख्य->group))
-					जारी;
-				tomoyo_io_म_लिखो(head, "use_group %u\n", i);
-				अगर (!tomoyo_flush(head))
-					वापस;
-			पूर्ण
+				if (!test_bit(i, domain->group))
+					continue;
+				tomoyo_io_printf(head, "use_group %u\n", i);
+				if (!tomoyo_flush(head))
+					return;
+			}
 			head->r.index = 0;
 			head->r.step++;
 			tomoyo_set_lf(head);
 			fallthrough;
-		हाल 2:
-			अगर (!tomoyo_पढ़ो_करोमुख्य2(head, &करोमुख्य->acl_info_list))
-				वापस;
+		case 2:
+			if (!tomoyo_read_domain2(head, &domain->acl_info_list))
+				return;
 			head->r.step++;
-			अगर (!tomoyo_set_lf(head))
-				वापस;
+			if (!tomoyo_set_lf(head))
+				return;
 			fallthrough;
-		हाल 3:
+		case 3:
 			head->r.step = 0;
-			अगर (head->r.prपूर्णांक_this_करोमुख्य_only)
-				जाओ करोne;
-		पूर्ण
-	पूर्ण
- करोne:
+			if (head->r.print_this_domain_only)
+				goto done;
+		}
+	}
+ done:
 	head->r.eof = true;
-पूर्ण
+}
 
 /**
- * tomoyo_ग_लिखो_pid: Specअगरy PID to obtain करोमुख्यname.
+ * tomoyo_write_pid: Specify PID to obtain domainname.
  *
- * @head: Poपूर्णांकer to "struct tomoyo_io_buffer".
+ * @head: Pointer to "struct tomoyo_io_buffer".
  *
  * Returns 0.
  */
-अटल पूर्णांक tomoyo_ग_लिखो_pid(काष्ठा tomoyo_io_buffer *head)
-अणु
+static int tomoyo_write_pid(struct tomoyo_io_buffer *head)
+{
 	head->r.eof = false;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * tomoyo_पढ़ो_pid - Get करोमुख्यname of the specअगरied PID.
+ * tomoyo_read_pid - Get domainname of the specified PID.
  *
- * @head: Poपूर्णांकer to "struct tomoyo_io_buffer".
+ * @head: Pointer to "struct tomoyo_io_buffer".
  *
- * Returns the करोमुख्यname which the specअगरied PID is in on success,
+ * Returns the domainname which the specified PID is in on success,
  * empty string otherwise.
- * The PID is specअगरied by tomoyo_ग_लिखो_pid() so that the user can obtain
- * using पढ़ो()/ग_लिखो() पूर्णांकerface rather than sysctl() पूर्णांकerface.
+ * The PID is specified by tomoyo_write_pid() so that the user can obtain
+ * using read()/write() interface rather than sysctl() interface.
  */
-अटल व्योम tomoyo_पढ़ो_pid(काष्ठा tomoyo_io_buffer *head)
-अणु
-	अक्षर *buf = head->ग_लिखो_buf;
+static void tomoyo_read_pid(struct tomoyo_io_buffer *head)
+{
+	char *buf = head->write_buf;
 	bool global_pid = false;
-	अचिन्हित पूर्णांक pid;
-	काष्ठा task_काष्ठा *p;
-	काष्ठा tomoyo_करोमुख्य_info *करोमुख्य = शून्य;
+	unsigned int pid;
+	struct task_struct *p;
+	struct tomoyo_domain_info *domain = NULL;
 
-	/* Accessing ग_लिखो_buf is safe because head->io_sem is held. */
-	अगर (!buf) अणु
+	/* Accessing write_buf is safe because head->io_sem is held. */
+	if (!buf) {
 		head->r.eof = true;
-		वापस; /* Do nothing अगर खोलो(O_RDONLY). */
-	पूर्ण
-	अगर (head->r.w_pos || head->r.eof)
-		वापस;
+		return; /* Do nothing if open(O_RDONLY). */
+	}
+	if (head->r.w_pos || head->r.eof)
+		return;
 	head->r.eof = true;
-	अगर (tomoyo_str_starts(&buf, "global-pid "))
+	if (tomoyo_str_starts(&buf, "global-pid "))
 		global_pid = true;
-	अगर (kstrtouपूर्णांक(buf, 10, &pid))
-		वापस;
-	rcu_पढ़ो_lock();
-	अगर (global_pid)
+	if (kstrtouint(buf, 10, &pid))
+		return;
+	rcu_read_lock();
+	if (global_pid)
 		p = find_task_by_pid_ns(pid, &init_pid_ns);
-	अन्यथा
+	else
 		p = find_task_by_vpid(pid);
-	अगर (p)
-		करोमुख्य = tomoyo_task(p)->करोमुख्य_info;
-	rcu_पढ़ो_unlock();
-	अगर (!करोमुख्य)
-		वापस;
-	tomoyo_io_म_लिखो(head, "%u %u ", pid, करोमुख्य->profile);
-	tomoyo_set_string(head, करोमुख्य->करोमुख्यname->name);
-पूर्ण
+	if (p)
+		domain = tomoyo_task(p)->domain_info;
+	rcu_read_unlock();
+	if (!domain)
+		return;
+	tomoyo_io_printf(head, "%u %u ", pid, domain->profile);
+	tomoyo_set_string(head, domain->domainname->name);
+}
 
-/* String table क्रम करोमुख्य transition control keywords. */
-अटल स्थिर अक्षर *tomoyo_transition_type[TOMOYO_MAX_TRANSITION_TYPE] = अणु
+/* String table for domain transition control keywords. */
+static const char *tomoyo_transition_type[TOMOYO_MAX_TRANSITION_TYPE] = {
 	[TOMOYO_TRANSITION_CONTROL_NO_RESET]      = "no_reset_domain ",
 	[TOMOYO_TRANSITION_CONTROL_RESET]         = "reset_domain ",
 	[TOMOYO_TRANSITION_CONTROL_NO_INITIALIZE] = "no_initialize_domain ",
 	[TOMOYO_TRANSITION_CONTROL_INITIALIZE]    = "initialize_domain ",
 	[TOMOYO_TRANSITION_CONTROL_NO_KEEP]       = "no_keep_domain ",
 	[TOMOYO_TRANSITION_CONTROL_KEEP]          = "keep_domain ",
-पूर्ण;
+};
 
-/* String table क्रम grouping keywords. */
-अटल स्थिर अक्षर *tomoyo_group_name[TOMOYO_MAX_GROUP] = अणु
+/* String table for grouping keywords. */
+static const char *tomoyo_group_name[TOMOYO_MAX_GROUP] = {
 	[TOMOYO_PATH_GROUP]    = "path_group ",
 	[TOMOYO_NUMBER_GROUP]  = "number_group ",
 	[TOMOYO_ADDRESS_GROUP] = "address_group ",
-पूर्ण;
+};
 
 /**
- * tomoyo_ग_लिखो_exception - Write exception policy.
+ * tomoyo_write_exception - Write exception policy.
  *
- * @head: Poपूर्णांकer to "struct tomoyo_io_buffer".
+ * @head: Pointer to "struct tomoyo_io_buffer".
  *
  * Returns 0 on success, negative value otherwise.
  *
- * Caller holds tomoyo_पढ़ो_lock().
+ * Caller holds tomoyo_read_lock().
  */
-अटल पूर्णांक tomoyo_ग_लिखो_exception(काष्ठा tomoyo_io_buffer *head)
-अणु
-	स्थिर bool is_delete = head->w.is_delete;
-	काष्ठा tomoyo_acl_param param = अणु
+static int tomoyo_write_exception(struct tomoyo_io_buffer *head)
+{
+	const bool is_delete = head->w.is_delete;
+	struct tomoyo_acl_param param = {
 		.ns = head->w.ns,
 		.is_delete = is_delete,
-		.data = head->ग_लिखो_buf,
-	पूर्ण;
+		.data = head->write_buf,
+	};
 	u8 i;
 
-	अगर (tomoyo_str_starts(&param.data, "aggregator "))
-		वापस tomoyo_ग_लिखो_aggregator(&param);
-	क्रम (i = 0; i < TOMOYO_MAX_TRANSITION_TYPE; i++)
-		अगर (tomoyo_str_starts(&param.data, tomoyo_transition_type[i]))
-			वापस tomoyo_ग_लिखो_transition_control(&param, i);
-	क्रम (i = 0; i < TOMOYO_MAX_GROUP; i++)
-		अगर (tomoyo_str_starts(&param.data, tomoyo_group_name[i]))
-			वापस tomoyo_ग_लिखो_group(&param, i);
-	अगर (tomoyo_str_starts(&param.data, "acl_group ")) अणु
-		अचिन्हित पूर्णांक group;
-		अक्षर *data;
+	if (tomoyo_str_starts(&param.data, "aggregator "))
+		return tomoyo_write_aggregator(&param);
+	for (i = 0; i < TOMOYO_MAX_TRANSITION_TYPE; i++)
+		if (tomoyo_str_starts(&param.data, tomoyo_transition_type[i]))
+			return tomoyo_write_transition_control(&param, i);
+	for (i = 0; i < TOMOYO_MAX_GROUP; i++)
+		if (tomoyo_str_starts(&param.data, tomoyo_group_name[i]))
+			return tomoyo_write_group(&param, i);
+	if (tomoyo_str_starts(&param.data, "acl_group ")) {
+		unsigned int group;
+		char *data;
 
-		group = simple_म_से_अदीर्घ(param.data, &data, 10);
-		अगर (group < TOMOYO_MAX_ACL_GROUPS && *data++ == ' ')
-			वापस tomoyo_ग_लिखो_करोमुख्य2
+		group = simple_strtoul(param.data, &data, 10);
+		if (group < TOMOYO_MAX_ACL_GROUPS && *data++ == ' ')
+			return tomoyo_write_domain2
 				(head->w.ns, &head->w.ns->acl_group[group],
 				 data, is_delete);
-	पूर्ण
-	वापस -EINVAL;
-पूर्ण
+	}
+	return -EINVAL;
+}
 
 /**
- * tomoyo_पढ़ो_group - Read "struct tomoyo_path_group"/"struct tomoyo_number_group"/"struct tomoyo_address_group" list.
+ * tomoyo_read_group - Read "struct tomoyo_path_group"/"struct tomoyo_number_group"/"struct tomoyo_address_group" list.
  *
- * @head: Poपूर्णांकer to "struct tomoyo_io_buffer".
+ * @head: Pointer to "struct tomoyo_io_buffer".
  * @idx:  Index number.
  *
  * Returns true on success, false otherwise.
  *
- * Caller holds tomoyo_पढ़ो_lock().
+ * Caller holds tomoyo_read_lock().
  */
-अटल bool tomoyo_पढ़ो_group(काष्ठा tomoyo_io_buffer *head, स्थिर पूर्णांक idx)
-अणु
-	काष्ठा tomoyo_policy_namespace *ns =
+static bool tomoyo_read_group(struct tomoyo_io_buffer *head, const int idx)
+{
+	struct tomoyo_policy_namespace *ns =
 		container_of(head->r.ns, typeof(*ns), namespace_list);
-	काष्ठा list_head *list = &ns->group_list[idx];
+	struct list_head *list = &ns->group_list[idx];
 
-	list_क्रम_each_cookie(head->r.group, list) अणु
-		काष्ठा tomoyo_group *group =
+	list_for_each_cookie(head->r.group, list) {
+		struct tomoyo_group *group =
 			list_entry(head->r.group, typeof(*group), head.list);
 
-		list_क्रम_each_cookie(head->r.acl, &group->member_list) अणु
-			काष्ठा tomoyo_acl_head *ptr =
+		list_for_each_cookie(head->r.acl, &group->member_list) {
+			struct tomoyo_acl_head *ptr =
 				list_entry(head->r.acl, typeof(*ptr), list);
 
-			अगर (ptr->is_deleted)
-				जारी;
-			अगर (!tomoyo_flush(head))
-				वापस false;
-			tomoyo_prपूर्णांक_namespace(head);
+			if (ptr->is_deleted)
+				continue;
+			if (!tomoyo_flush(head))
+				return false;
+			tomoyo_print_namespace(head);
 			tomoyo_set_string(head, tomoyo_group_name[idx]);
 			tomoyo_set_string(head, group->group_name->name);
-			अगर (idx == TOMOYO_PATH_GROUP) अणु
+			if (idx == TOMOYO_PATH_GROUP) {
 				tomoyo_set_space(head);
 				tomoyo_set_string(head, container_of
-					       (ptr, काष्ठा tomoyo_path_group,
+					       (ptr, struct tomoyo_path_group,
 						head)->member_name->name);
-			पूर्ण अन्यथा अगर (idx == TOMOYO_NUMBER_GROUP) अणु
-				tomoyo_prपूर्णांक_number_जोड़(head, &container_of
+			} else if (idx == TOMOYO_NUMBER_GROUP) {
+				tomoyo_print_number_union(head, &container_of
 							  (ptr,
-						   काष्ठा tomoyo_number_group,
+						   struct tomoyo_number_group,
 							   head)->number);
-			पूर्ण अन्यथा अगर (idx == TOMOYO_ADDRESS_GROUP) अणु
-				अक्षर buffer[128];
-				काष्ठा tomoyo_address_group *member =
+			} else if (idx == TOMOYO_ADDRESS_GROUP) {
+				char buffer[128];
+				struct tomoyo_address_group *member =
 					container_of(ptr, typeof(*member),
 						     head);
 
-				tomoyo_prपूर्णांक_ip(buffer, माप(buffer),
+				tomoyo_print_ip(buffer, sizeof(buffer),
 						&member->address);
-				tomoyo_io_म_लिखो(head, " %s", buffer);
-			पूर्ण
+				tomoyo_io_printf(head, " %s", buffer);
+			}
 			tomoyo_set_lf(head);
-		पूर्ण
-		head->r.acl = शून्य;
-	पूर्ण
-	head->r.group = शून्य;
-	वापस true;
-पूर्ण
+		}
+		head->r.acl = NULL;
+	}
+	head->r.group = NULL;
+	return true;
+}
 
 /**
- * tomoyo_पढ़ो_policy - Read "struct tomoyo_..._entry" list.
+ * tomoyo_read_policy - Read "struct tomoyo_..._entry" list.
  *
- * @head: Poपूर्णांकer to "struct tomoyo_io_buffer".
+ * @head: Pointer to "struct tomoyo_io_buffer".
  * @idx:  Index number.
  *
  * Returns true on success, false otherwise.
  *
- * Caller holds tomoyo_पढ़ो_lock().
+ * Caller holds tomoyo_read_lock().
  */
-अटल bool tomoyo_पढ़ो_policy(काष्ठा tomoyo_io_buffer *head, स्थिर पूर्णांक idx)
-अणु
-	काष्ठा tomoyo_policy_namespace *ns =
+static bool tomoyo_read_policy(struct tomoyo_io_buffer *head, const int idx)
+{
+	struct tomoyo_policy_namespace *ns =
 		container_of(head->r.ns, typeof(*ns), namespace_list);
-	काष्ठा list_head *list = &ns->policy_list[idx];
+	struct list_head *list = &ns->policy_list[idx];
 
-	list_क्रम_each_cookie(head->r.acl, list) अणु
-		काष्ठा tomoyo_acl_head *acl =
+	list_for_each_cookie(head->r.acl, list) {
+		struct tomoyo_acl_head *acl =
 			container_of(head->r.acl, typeof(*acl), list);
-		अगर (acl->is_deleted)
-			जारी;
-		अगर (!tomoyo_flush(head))
-			वापस false;
-		चयन (idx) अणु
-		हाल TOMOYO_ID_TRANSITION_CONTROL:
-			अणु
-				काष्ठा tomoyo_transition_control *ptr =
+		if (acl->is_deleted)
+			continue;
+		if (!tomoyo_flush(head))
+			return false;
+		switch (idx) {
+		case TOMOYO_ID_TRANSITION_CONTROL:
+			{
+				struct tomoyo_transition_control *ptr =
 					container_of(acl, typeof(*ptr), head);
 
-				tomoyo_prपूर्णांक_namespace(head);
+				tomoyo_print_namespace(head);
 				tomoyo_set_string(head, tomoyo_transition_type
 						  [ptr->type]);
 				tomoyo_set_string(head, ptr->program ?
 						  ptr->program->name : "any");
 				tomoyo_set_string(head, " from ");
-				tomoyo_set_string(head, ptr->करोमुख्यname ?
-						  ptr->करोमुख्यname->name :
+				tomoyo_set_string(head, ptr->domainname ?
+						  ptr->domainname->name :
 						  "any");
-			पूर्ण
-			अवरोध;
-		हाल TOMOYO_ID_AGGREGATOR:
-			अणु
-				काष्ठा tomoyo_aggregator *ptr =
+			}
+			break;
+		case TOMOYO_ID_AGGREGATOR:
+			{
+				struct tomoyo_aggregator *ptr =
 					container_of(acl, typeof(*ptr), head);
 
-				tomoyo_prपूर्णांक_namespace(head);
+				tomoyo_print_namespace(head);
 				tomoyo_set_string(head, "aggregator ");
 				tomoyo_set_string(head,
 						  ptr->original_name->name);
 				tomoyo_set_space(head);
 				tomoyo_set_string(head,
 					       ptr->aggregated_name->name);
-			पूर्ण
-			अवरोध;
-		शेष:
-			जारी;
-		पूर्ण
+			}
+			break;
+		default:
+			continue;
+		}
 		tomoyo_set_lf(head);
-	पूर्ण
-	head->r.acl = शून्य;
-	वापस true;
-पूर्ण
+	}
+	head->r.acl = NULL;
+	return true;
+}
 
 /**
- * tomoyo_पढ़ो_exception - Read exception policy.
+ * tomoyo_read_exception - Read exception policy.
  *
- * @head: Poपूर्णांकer to "struct tomoyo_io_buffer".
+ * @head: Pointer to "struct tomoyo_io_buffer".
  *
- * Caller holds tomoyo_पढ़ो_lock().
+ * Caller holds tomoyo_read_lock().
  */
-अटल व्योम tomoyo_पढ़ो_exception(काष्ठा tomoyo_io_buffer *head)
-अणु
-	काष्ठा tomoyo_policy_namespace *ns =
+static void tomoyo_read_exception(struct tomoyo_io_buffer *head)
+{
+	struct tomoyo_policy_namespace *ns =
 		container_of(head->r.ns, typeof(*ns), namespace_list);
 
-	अगर (head->r.eof)
-		वापस;
-	जबतक (head->r.step < TOMOYO_MAX_POLICY &&
-	       tomoyo_पढ़ो_policy(head, head->r.step))
+	if (head->r.eof)
+		return;
+	while (head->r.step < TOMOYO_MAX_POLICY &&
+	       tomoyo_read_policy(head, head->r.step))
 		head->r.step++;
-	अगर (head->r.step < TOMOYO_MAX_POLICY)
-		वापस;
-	जबतक (head->r.step < TOMOYO_MAX_POLICY + TOMOYO_MAX_GROUP &&
-	       tomoyo_पढ़ो_group(head, head->r.step - TOMOYO_MAX_POLICY))
+	if (head->r.step < TOMOYO_MAX_POLICY)
+		return;
+	while (head->r.step < TOMOYO_MAX_POLICY + TOMOYO_MAX_GROUP &&
+	       tomoyo_read_group(head, head->r.step - TOMOYO_MAX_POLICY))
 		head->r.step++;
-	अगर (head->r.step < TOMOYO_MAX_POLICY + TOMOYO_MAX_GROUP)
-		वापस;
-	जबतक (head->r.step < TOMOYO_MAX_POLICY + TOMOYO_MAX_GROUP
-	       + TOMOYO_MAX_ACL_GROUPS) अणु
+	if (head->r.step < TOMOYO_MAX_POLICY + TOMOYO_MAX_GROUP)
+		return;
+	while (head->r.step < TOMOYO_MAX_POLICY + TOMOYO_MAX_GROUP
+	       + TOMOYO_MAX_ACL_GROUPS) {
 		head->r.acl_group_index = head->r.step - TOMOYO_MAX_POLICY
 			- TOMOYO_MAX_GROUP;
-		अगर (!tomoyo_पढ़ो_करोमुख्य2(head, &ns->acl_group
+		if (!tomoyo_read_domain2(head, &ns->acl_group
 					 [head->r.acl_group_index]))
-			वापस;
+			return;
 		head->r.step++;
-	पूर्ण
+	}
 	head->r.eof = true;
-पूर्ण
+}
 
-/* Wait queue क्रम kernel -> userspace notअगरication. */
-अटल DECLARE_WAIT_QUEUE_HEAD(tomoyo_query_रुको);
-/* Wait queue क्रम userspace -> kernel notअगरication. */
-अटल DECLARE_WAIT_QUEUE_HEAD(tomoyo_answer_रुको);
+/* Wait queue for kernel -> userspace notification. */
+static DECLARE_WAIT_QUEUE_HEAD(tomoyo_query_wait);
+/* Wait queue for userspace -> kernel notification. */
+static DECLARE_WAIT_QUEUE_HEAD(tomoyo_answer_wait);
 
-/* Structure क्रम query. */
-काष्ठा tomoyo_query अणु
-	काष्ठा list_head list;
-	काष्ठा tomoyo_करोमुख्य_info *करोमुख्य;
-	अक्षर *query;
-	माप_प्रकार query_len;
-	अचिन्हित पूर्णांक serial;
-	u8 समयr;
+/* Structure for query. */
+struct tomoyo_query {
+	struct list_head list;
+	struct tomoyo_domain_info *domain;
+	char *query;
+	size_t query_len;
+	unsigned int serial;
+	u8 timer;
 	u8 answer;
 	u8 retry;
-पूर्ण;
+};
 
-/* The list क्रम "struct tomoyo_query". */
-अटल LIST_HEAD(tomoyo_query_list);
+/* The list for "struct tomoyo_query". */
+static LIST_HEAD(tomoyo_query_list);
 
-/* Lock क्रम manipulating tomoyo_query_list. */
-अटल DEFINE_SPINLOCK(tomoyo_query_list_lock);
+/* Lock for manipulating tomoyo_query_list. */
+static DEFINE_SPINLOCK(tomoyo_query_list_lock);
 
 /*
  * Number of "struct file" referring /sys/kernel/security/tomoyo/query
- * पूर्णांकerface.
+ * interface.
  */
-अटल atomic_t tomoyo_query_observers = ATOMIC_INIT(0);
+static atomic_t tomoyo_query_observers = ATOMIC_INIT(0);
 
 /**
  * tomoyo_truncate - Truncate a line.
@@ -1979,902 +1978,902 @@ prपूर्णांक_cond_part:
  *
  * Returns length of truncated @str.
  */
-अटल पूर्णांक tomoyo_truncate(अक्षर *str)
-अणु
-	अक्षर *start = str;
+static int tomoyo_truncate(char *str)
+{
+	char *start = str;
 
-	जबतक (*(अचिन्हित अक्षर *) str > (अचिन्हित अक्षर) ' ')
+	while (*(unsigned char *) str > (unsigned char) ' ')
 		str++;
 	*str = '\0';
-	वापस म_माप(start) + 1;
-पूर्ण
+	return strlen(start) + 1;
+}
 
 /**
- * tomoyo_add_entry - Add an ACL to current thपढ़ो's करोमुख्य. Used by learning mode.
+ * tomoyo_add_entry - Add an ACL to current thread's domain. Used by learning mode.
  *
- * @करोमुख्य: Poपूर्णांकer to "struct tomoyo_domain_info".
+ * @domain: Pointer to "struct tomoyo_domain_info".
  * @header: Lines containing ACL.
  *
  * Returns nothing.
  */
-अटल व्योम tomoyo_add_entry(काष्ठा tomoyo_करोमुख्य_info *करोमुख्य, अक्षर *header)
-अणु
-	अक्षर *buffer;
-	अक्षर *realpath = शून्य;
-	अक्षर *argv0 = शून्य;
-	अक्षर *symlink = शून्य;
-	अक्षर *cp = म_अक्षर(header, '\n');
-	पूर्णांक len;
+static void tomoyo_add_entry(struct tomoyo_domain_info *domain, char *header)
+{
+	char *buffer;
+	char *realpath = NULL;
+	char *argv0 = NULL;
+	char *symlink = NULL;
+	char *cp = strchr(header, '\n');
+	int len;
 
-	अगर (!cp)
-		वापस;
-	cp = म_अक्षर(cp + 1, '\n');
-	अगर (!cp)
-		वापस;
+	if (!cp)
+		return;
+	cp = strchr(cp + 1, '\n');
+	if (!cp)
+		return;
 	*cp++ = '\0';
-	len = म_माप(cp) + 1;
-	/* म_माला() will वापस शून्य अगर ordering is wrong. */
-	अगर (*cp == 'f') अणु
-		argv0 = म_माला(header, " argv[]={ \"");
-		अगर (argv0) अणु
+	len = strlen(cp) + 1;
+	/* strstr() will return NULL if ordering is wrong. */
+	if (*cp == 'f') {
+		argv0 = strstr(header, " argv[]={ \"");
+		if (argv0) {
 			argv0 += 10;
 			len += tomoyo_truncate(argv0) + 14;
-		पूर्ण
-		realpath = म_माला(header, " exec={ realpath=\"");
-		अगर (realpath) अणु
+		}
+		realpath = strstr(header, " exec={ realpath=\"");
+		if (realpath) {
 			realpath += 8;
 			len += tomoyo_truncate(realpath) + 6;
-		पूर्ण
-		symlink = म_माला(header, " symlink.target=\"");
-		अगर (symlink)
+		}
+		symlink = strstr(header, " symlink.target=\"");
+		if (symlink)
 			len += tomoyo_truncate(symlink + 1) + 1;
-	पूर्ण
-	buffer = kदो_स्मृति(len, GFP_NOFS);
-	अगर (!buffer)
-		वापस;
-	snम_लिखो(buffer, len - 1, "%s", cp);
-	अगर (realpath)
-		tomoyo_addम_लिखो(buffer, len, " exec.%s", realpath);
-	अगर (argv0)
-		tomoyo_addम_लिखो(buffer, len, " exec.argv[0]=%s", argv0);
-	अगर (symlink)
-		tomoyo_addम_लिखो(buffer, len, "%s", symlink);
+	}
+	buffer = kmalloc(len, GFP_NOFS);
+	if (!buffer)
+		return;
+	snprintf(buffer, len - 1, "%s", cp);
+	if (realpath)
+		tomoyo_addprintf(buffer, len, " exec.%s", realpath);
+	if (argv0)
+		tomoyo_addprintf(buffer, len, " exec.argv[0]=%s", argv0);
+	if (symlink)
+		tomoyo_addprintf(buffer, len, "%s", symlink);
 	tomoyo_normalize_line(buffer);
-	अगर (!tomoyo_ग_लिखो_करोमुख्य2(करोमुख्य->ns, &करोमुख्य->acl_info_list, buffer,
+	if (!tomoyo_write_domain2(domain->ns, &domain->acl_info_list, buffer,
 				  false))
 		tomoyo_update_stat(TOMOYO_STAT_POLICY_UPDATES);
-	kमुक्त(buffer);
-पूर्ण
+	kfree(buffer);
+}
 
 /**
- * tomoyo_supervisor - Ask क्रम the supervisor's decision.
+ * tomoyo_supervisor - Ask for the supervisor's decision.
  *
- * @r:   Poपूर्णांकer to "struct tomoyo_request_info".
- * @fmt: The म_लिखो()'s क्रमmat string, followed by parameters.
+ * @r:   Pointer to "struct tomoyo_request_info".
+ * @fmt: The printf()'s format string, followed by parameters.
  *
- * Returns 0 अगर the supervisor decided to permit the access request which
- * violated the policy in enक्रमcing mode, TOMOYO_RETRY_REQUEST अगर the
+ * Returns 0 if the supervisor decided to permit the access request which
+ * violated the policy in enforcing mode, TOMOYO_RETRY_REQUEST if the
  * supervisor decided to retry the access request which violated the policy in
- * enक्रमcing mode, 0 अगर it is not in enक्रमcing mode, -EPERM otherwise.
+ * enforcing mode, 0 if it is not in enforcing mode, -EPERM otherwise.
  */
-पूर्णांक tomoyo_supervisor(काष्ठा tomoyo_request_info *r, स्थिर अक्षर *fmt, ...)
-अणु
-	बहु_सूची args;
-	पूर्णांक error;
-	पूर्णांक len;
-	अटल अचिन्हित पूर्णांक tomoyo_serial;
-	काष्ठा tomoyo_query entry = अणु पूर्ण;
+int tomoyo_supervisor(struct tomoyo_request_info *r, const char *fmt, ...)
+{
+	va_list args;
+	int error;
+	int len;
+	static unsigned int tomoyo_serial;
+	struct tomoyo_query entry = { };
 	bool quota_exceeded = false;
 
-	बहु_शुरू(args, fmt);
-	len = vsnम_लिखो((अक्षर *) &len, 1, fmt, args) + 1;
-	बहु_पूर्ण(args);
+	va_start(args, fmt);
+	len = vsnprintf((char *) &len, 1, fmt, args) + 1;
+	va_end(args);
 	/* Write /sys/kernel/security/tomoyo/audit. */
-	बहु_शुरू(args, fmt);
-	tomoyo_ग_लिखो_log2(r, len, fmt, args);
-	बहु_पूर्ण(args);
-	/* Nothing more to करो अगर granted. */
-	अगर (r->granted)
-		वापस 0;
-	अगर (r->mode)
+	va_start(args, fmt);
+	tomoyo_write_log2(r, len, fmt, args);
+	va_end(args);
+	/* Nothing more to do if granted. */
+	if (r->granted)
+		return 0;
+	if (r->mode)
 		tomoyo_update_stat(r->mode);
-	चयन (r->mode) अणु
-	हाल TOMOYO_CONFIG_ENFORCING:
+	switch (r->mode) {
+	case TOMOYO_CONFIG_ENFORCING:
 		error = -EPERM;
-		अगर (atomic_पढ़ो(&tomoyo_query_observers))
-			अवरोध;
-		जाओ out;
-	हाल TOMOYO_CONFIG_LEARNING:
+		if (atomic_read(&tomoyo_query_observers))
+			break;
+		goto out;
+	case TOMOYO_CONFIG_LEARNING:
 		error = 0;
 		/* Check max_learning_entry parameter. */
-		अगर (tomoyo_करोमुख्य_quota_is_ok(r))
-			अवरोध;
+		if (tomoyo_domain_quota_is_ok(r))
+			break;
 		fallthrough;
-	शेष:
-		वापस 0;
-	पूर्ण
+	default:
+		return 0;
+	}
 	/* Get message. */
-	बहु_शुरू(args, fmt);
+	va_start(args, fmt);
 	entry.query = tomoyo_init_log(r, len, fmt, args);
-	बहु_पूर्ण(args);
-	अगर (!entry.query)
-		जाओ out;
-	entry.query_len = म_माप(entry.query) + 1;
-	अगर (!error) अणु
-		tomoyo_add_entry(r->करोमुख्य, entry.query);
-		जाओ out;
-	पूर्ण
+	va_end(args);
+	if (!entry.query)
+		goto out;
+	entry.query_len = strlen(entry.query) + 1;
+	if (!error) {
+		tomoyo_add_entry(r->domain, entry.query);
+		goto out;
+	}
 	len = tomoyo_round2(entry.query_len);
-	entry.करोमुख्य = r->करोमुख्य;
+	entry.domain = r->domain;
 	spin_lock(&tomoyo_query_list_lock);
-	अगर (tomoyo_memory_quota[TOMOYO_MEMORY_QUERY] &&
+	if (tomoyo_memory_quota[TOMOYO_MEMORY_QUERY] &&
 	    tomoyo_memory_used[TOMOYO_MEMORY_QUERY] + len
-	    >= tomoyo_memory_quota[TOMOYO_MEMORY_QUERY]) अणु
+	    >= tomoyo_memory_quota[TOMOYO_MEMORY_QUERY]) {
 		quota_exceeded = true;
-	पूर्ण अन्यथा अणु
+	} else {
 		entry.serial = tomoyo_serial++;
 		entry.retry = r->retry;
 		tomoyo_memory_used[TOMOYO_MEMORY_QUERY] += len;
 		list_add_tail(&entry.list, &tomoyo_query_list);
-	पूर्ण
+	}
 	spin_unlock(&tomoyo_query_list_lock);
-	अगर (quota_exceeded)
-		जाओ out;
-	/* Give 10 seconds क्रम supervisor's opinion. */
-	जबतक (entry.समयr < 10) अणु
-		wake_up_all(&tomoyo_query_रुको);
-		अगर (रुको_event_पूर्णांकerruptible_समयout
-		    (tomoyo_answer_रुको, entry.answer ||
-		     !atomic_पढ़ो(&tomoyo_query_observers), HZ))
-			अवरोध;
-		entry.समयr++;
-	पूर्ण
+	if (quota_exceeded)
+		goto out;
+	/* Give 10 seconds for supervisor's opinion. */
+	while (entry.timer < 10) {
+		wake_up_all(&tomoyo_query_wait);
+		if (wait_event_interruptible_timeout
+		    (tomoyo_answer_wait, entry.answer ||
+		     !atomic_read(&tomoyo_query_observers), HZ))
+			break;
+		entry.timer++;
+	}
 	spin_lock(&tomoyo_query_list_lock);
 	list_del(&entry.list);
 	tomoyo_memory_used[TOMOYO_MEMORY_QUERY] -= len;
 	spin_unlock(&tomoyo_query_list_lock);
-	चयन (entry.answer) अणु
-	हाल 3: /* Asked to retry by administrator. */
+	switch (entry.answer) {
+	case 3: /* Asked to retry by administrator. */
 		error = TOMOYO_RETRY_REQUEST;
 		r->retry++;
-		अवरोध;
-	हाल 1:
+		break;
+	case 1:
 		/* Granted by administrator. */
 		error = 0;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		/* Timed out or rejected by administrator. */
-		अवरोध;
-	पूर्ण
+		break;
+	}
 out:
-	kमुक्त(entry.query);
-	वापस error;
-पूर्ण
+	kfree(entry.query);
+	return error;
+}
 
 /**
- * tomoyo_find_करोमुख्य_by_qid - Get करोमुख्य by query id.
+ * tomoyo_find_domain_by_qid - Get domain by query id.
  *
- * @serial: Query ID asचिन्हित by tomoyo_supervisor().
+ * @serial: Query ID assigned by tomoyo_supervisor().
  *
- * Returns poपूर्णांकer to "struct tomoyo_domain_info" अगर found, शून्य otherwise.
+ * Returns pointer to "struct tomoyo_domain_info" if found, NULL otherwise.
  */
-अटल काष्ठा tomoyo_करोमुख्य_info *tomoyo_find_करोमुख्य_by_qid
-(अचिन्हित पूर्णांक serial)
-अणु
-	काष्ठा tomoyo_query *ptr;
-	काष्ठा tomoyo_करोमुख्य_info *करोमुख्य = शून्य;
+static struct tomoyo_domain_info *tomoyo_find_domain_by_qid
+(unsigned int serial)
+{
+	struct tomoyo_query *ptr;
+	struct tomoyo_domain_info *domain = NULL;
 
 	spin_lock(&tomoyo_query_list_lock);
-	list_क्रम_each_entry(ptr, &tomoyo_query_list, list) अणु
-		अगर (ptr->serial != serial)
-			जारी;
-		करोमुख्य = ptr->करोमुख्य;
-		अवरोध;
-	पूर्ण
+	list_for_each_entry(ptr, &tomoyo_query_list, list) {
+		if (ptr->serial != serial)
+			continue;
+		domain = ptr->domain;
+		break;
+	}
 	spin_unlock(&tomoyo_query_list_lock);
-	वापस करोमुख्य;
-पूर्ण
+	return domain;
+}
 
 /**
- * tomoyo_poll_query - poll() क्रम /sys/kernel/security/tomoyo/query.
+ * tomoyo_poll_query - poll() for /sys/kernel/security/tomoyo/query.
  *
- * @file: Poपूर्णांकer to "struct file".
- * @रुको: Poपूर्णांकer to "poll_table".
+ * @file: Pointer to "struct file".
+ * @wait: Pointer to "poll_table".
  *
- * Returns EPOLLIN | EPOLLRDNORM when पढ़ोy to पढ़ो, 0 otherwise.
+ * Returns EPOLLIN | EPOLLRDNORM when ready to read, 0 otherwise.
  *
- * Waits क्रम access requests which violated policy in enक्रमcing mode.
+ * Waits for access requests which violated policy in enforcing mode.
  */
-अटल __poll_t tomoyo_poll_query(काष्ठा file *file, poll_table *रुको)
-अणु
-	अगर (!list_empty(&tomoyo_query_list))
-		वापस EPOLLIN | EPOLLRDNORM;
-	poll_रुको(file, &tomoyo_query_रुको, रुको);
-	अगर (!list_empty(&tomoyo_query_list))
-		वापस EPOLLIN | EPOLLRDNORM;
-	वापस 0;
-पूर्ण
+static __poll_t tomoyo_poll_query(struct file *file, poll_table *wait)
+{
+	if (!list_empty(&tomoyo_query_list))
+		return EPOLLIN | EPOLLRDNORM;
+	poll_wait(file, &tomoyo_query_wait, wait);
+	if (!list_empty(&tomoyo_query_list))
+		return EPOLLIN | EPOLLRDNORM;
+	return 0;
+}
 
 /**
- * tomoyo_पढ़ो_query - Read access requests which violated policy in enक्रमcing mode.
+ * tomoyo_read_query - Read access requests which violated policy in enforcing mode.
  *
- * @head: Poपूर्णांकer to "struct tomoyo_io_buffer".
+ * @head: Pointer to "struct tomoyo_io_buffer".
  */
-अटल व्योम tomoyo_पढ़ो_query(काष्ठा tomoyo_io_buffer *head)
-अणु
-	काष्ठा list_head *पंचांगp;
-	अचिन्हित पूर्णांक pos = 0;
-	माप_प्रकार len = 0;
-	अक्षर *buf;
+static void tomoyo_read_query(struct tomoyo_io_buffer *head)
+{
+	struct list_head *tmp;
+	unsigned int pos = 0;
+	size_t len = 0;
+	char *buf;
 
-	अगर (head->r.w_pos)
-		वापस;
-	kमुक्त(head->पढ़ो_buf);
-	head->पढ़ो_buf = शून्य;
+	if (head->r.w_pos)
+		return;
+	kfree(head->read_buf);
+	head->read_buf = NULL;
 	spin_lock(&tomoyo_query_list_lock);
-	list_क्रम_each(पंचांगp, &tomoyo_query_list) अणु
-		काष्ठा tomoyo_query *ptr = list_entry(पंचांगp, typeof(*ptr), list);
+	list_for_each(tmp, &tomoyo_query_list) {
+		struct tomoyo_query *ptr = list_entry(tmp, typeof(*ptr), list);
 
-		अगर (pos++ != head->r.query_index)
-			जारी;
+		if (pos++ != head->r.query_index)
+			continue;
 		len = ptr->query_len;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 	spin_unlock(&tomoyo_query_list_lock);
-	अगर (!len) अणु
+	if (!len) {
 		head->r.query_index = 0;
-		वापस;
-	पूर्ण
+		return;
+	}
 	buf = kzalloc(len + 32, GFP_NOFS);
-	अगर (!buf)
-		वापस;
+	if (!buf)
+		return;
 	pos = 0;
 	spin_lock(&tomoyo_query_list_lock);
-	list_क्रम_each(पंचांगp, &tomoyo_query_list) अणु
-		काष्ठा tomoyo_query *ptr = list_entry(पंचांगp, typeof(*ptr), list);
+	list_for_each(tmp, &tomoyo_query_list) {
+		struct tomoyo_query *ptr = list_entry(tmp, typeof(*ptr), list);
 
-		अगर (pos++ != head->r.query_index)
-			जारी;
+		if (pos++ != head->r.query_index)
+			continue;
 		/*
 		 * Some query can be skipped because tomoyo_query_list
-		 * can change, but I करोn't care.
+		 * can change, but I don't care.
 		 */
-		अगर (len == ptr->query_len)
-			snम_लिखो(buf, len + 31, "Q%u-%hu\n%s", ptr->serial,
+		if (len == ptr->query_len)
+			snprintf(buf, len + 31, "Q%u-%hu\n%s", ptr->serial,
 				 ptr->retry, ptr->query);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 	spin_unlock(&tomoyo_query_list_lock);
-	अगर (buf[0]) अणु
-		head->पढ़ो_buf = buf;
+	if (buf[0]) {
+		head->read_buf = buf;
 		head->r.w[head->r.w_pos++] = buf;
 		head->r.query_index++;
-	पूर्ण अन्यथा अणु
-		kमुक्त(buf);
-	पूर्ण
-पूर्ण
+	} else {
+		kfree(buf);
+	}
+}
 
 /**
- * tomoyo_ग_लिखो_answer - Write the supervisor's decision.
+ * tomoyo_write_answer - Write the supervisor's decision.
  *
- * @head: Poपूर्णांकer to "struct tomoyo_io_buffer".
+ * @head: Pointer to "struct tomoyo_io_buffer".
  *
  * Returns 0 on success, -EINVAL otherwise.
  */
-अटल पूर्णांक tomoyo_ग_लिखो_answer(काष्ठा tomoyo_io_buffer *head)
-अणु
-	अक्षर *data = head->ग_लिखो_buf;
-	काष्ठा list_head *पंचांगp;
-	अचिन्हित पूर्णांक serial;
-	अचिन्हित पूर्णांक answer;
+static int tomoyo_write_answer(struct tomoyo_io_buffer *head)
+{
+	char *data = head->write_buf;
+	struct list_head *tmp;
+	unsigned int serial;
+	unsigned int answer;
 
 	spin_lock(&tomoyo_query_list_lock);
-	list_क्रम_each(पंचांगp, &tomoyo_query_list) अणु
-		काष्ठा tomoyo_query *ptr = list_entry(पंचांगp, typeof(*ptr), list);
+	list_for_each(tmp, &tomoyo_query_list) {
+		struct tomoyo_query *ptr = list_entry(tmp, typeof(*ptr), list);
 
-		ptr->समयr = 0;
-	पूर्ण
+		ptr->timer = 0;
+	}
 	spin_unlock(&tomoyo_query_list_lock);
-	अगर (माला_पूछो(data, "A%u=%u", &serial, &answer) != 2)
-		वापस -EINVAL;
+	if (sscanf(data, "A%u=%u", &serial, &answer) != 2)
+		return -EINVAL;
 	spin_lock(&tomoyo_query_list_lock);
-	list_क्रम_each(पंचांगp, &tomoyo_query_list) अणु
-		काष्ठा tomoyo_query *ptr = list_entry(पंचांगp, typeof(*ptr), list);
+	list_for_each(tmp, &tomoyo_query_list) {
+		struct tomoyo_query *ptr = list_entry(tmp, typeof(*ptr), list);
 
-		अगर (ptr->serial != serial)
-			जारी;
+		if (ptr->serial != serial)
+			continue;
 		ptr->answer = answer;
 		/* Remove from tomoyo_query_list. */
-		अगर (ptr->answer)
+		if (ptr->answer)
 			list_del_init(&ptr->list);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 	spin_unlock(&tomoyo_query_list_lock);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * tomoyo_पढ़ो_version: Get version.
+ * tomoyo_read_version: Get version.
  *
- * @head: Poपूर्णांकer to "struct tomoyo_io_buffer".
+ * @head: Pointer to "struct tomoyo_io_buffer".
  *
- * Returns version inक्रमmation.
+ * Returns version information.
  */
-अटल व्योम tomoyo_पढ़ो_version(काष्ठा tomoyo_io_buffer *head)
-अणु
-	अगर (!head->r.eof) अणु
-		tomoyo_io_म_लिखो(head, "2.6.0");
+static void tomoyo_read_version(struct tomoyo_io_buffer *head)
+{
+	if (!head->r.eof) {
+		tomoyo_io_printf(head, "2.6.0");
 		head->r.eof = true;
-	पूर्ण
-पूर्ण
+	}
+}
 
-/* String table क्रम /sys/kernel/security/tomoyo/stat पूर्णांकerface. */
-अटल स्थिर अक्षर * स्थिर tomoyo_policy_headers[TOMOYO_MAX_POLICY_STAT] = अणु
+/* String table for /sys/kernel/security/tomoyo/stat interface. */
+static const char * const tomoyo_policy_headers[TOMOYO_MAX_POLICY_STAT] = {
 	[TOMOYO_STAT_POLICY_UPDATES]    = "update:",
 	[TOMOYO_STAT_POLICY_LEARNING]   = "violation in learning mode:",
 	[TOMOYO_STAT_POLICY_PERMISSIVE] = "violation in permissive mode:",
 	[TOMOYO_STAT_POLICY_ENFORCING]  = "violation in enforcing mode:",
-पूर्ण;
+};
 
-/* String table क्रम /sys/kernel/security/tomoyo/stat पूर्णांकerface. */
-अटल स्थिर अक्षर * स्थिर tomoyo_memory_headers[TOMOYO_MAX_MEMORY_STAT] = अणु
+/* String table for /sys/kernel/security/tomoyo/stat interface. */
+static const char * const tomoyo_memory_headers[TOMOYO_MAX_MEMORY_STAT] = {
 	[TOMOYO_MEMORY_POLICY] = "policy:",
 	[TOMOYO_MEMORY_AUDIT]  = "audit log:",
 	[TOMOYO_MEMORY_QUERY]  = "query message:",
-पूर्ण;
+};
 
-/* Counter क्रम number of updates. */
-अटल atomic_t tomoyo_stat_updated[TOMOYO_MAX_POLICY_STAT];
-/* Timestamp counter क्रम last updated. */
-अटल समय64_t tomoyo_stat_modअगरied[TOMOYO_MAX_POLICY_STAT];
+/* Counter for number of updates. */
+static atomic_t tomoyo_stat_updated[TOMOYO_MAX_POLICY_STAT];
+/* Timestamp counter for last updated. */
+static time64_t tomoyo_stat_modified[TOMOYO_MAX_POLICY_STAT];
 
 /**
  * tomoyo_update_stat - Update statistic counters.
  *
- * @index: Index क्रम policy type.
+ * @index: Index for policy type.
  *
  * Returns nothing.
  */
-व्योम tomoyo_update_stat(स्थिर u8 index)
-अणु
+void tomoyo_update_stat(const u8 index)
+{
 	atomic_inc(&tomoyo_stat_updated[index]);
-	tomoyo_stat_modअगरied[index] = kसमय_get_real_seconds();
-पूर्ण
+	tomoyo_stat_modified[index] = ktime_get_real_seconds();
+}
 
 /**
- * tomoyo_पढ़ो_stat - Read statistic data.
+ * tomoyo_read_stat - Read statistic data.
  *
- * @head: Poपूर्णांकer to "struct tomoyo_io_buffer".
+ * @head: Pointer to "struct tomoyo_io_buffer".
  *
  * Returns nothing.
  */
-अटल व्योम tomoyo_पढ़ो_stat(काष्ठा tomoyo_io_buffer *head)
-अणु
+static void tomoyo_read_stat(struct tomoyo_io_buffer *head)
+{
 	u8 i;
-	अचिन्हित पूर्णांक total = 0;
+	unsigned int total = 0;
 
-	अगर (head->r.eof)
-		वापस;
-	क्रम (i = 0; i < TOMOYO_MAX_POLICY_STAT; i++) अणु
-		tomoyo_io_म_लिखो(head, "Policy %-30s %10u",
+	if (head->r.eof)
+		return;
+	for (i = 0; i < TOMOYO_MAX_POLICY_STAT; i++) {
+		tomoyo_io_printf(head, "Policy %-30s %10u",
 				 tomoyo_policy_headers[i],
-				 atomic_पढ़ो(&tomoyo_stat_updated[i]));
-		अगर (tomoyo_stat_modअगरied[i]) अणु
-			काष्ठा tomoyo_समय stamp;
+				 atomic_read(&tomoyo_stat_updated[i]));
+		if (tomoyo_stat_modified[i]) {
+			struct tomoyo_time stamp;
 
-			tomoyo_convert_समय(tomoyo_stat_modअगरied[i], &stamp);
-			tomoyo_io_म_लिखो(head, " (Last: %04u/%02u/%02u %02u:%02u:%02u)",
+			tomoyo_convert_time(tomoyo_stat_modified[i], &stamp);
+			tomoyo_io_printf(head, " (Last: %04u/%02u/%02u %02u:%02u:%02u)",
 					 stamp.year, stamp.month, stamp.day,
 					 stamp.hour, stamp.min, stamp.sec);
-		पूर्ण
+		}
 		tomoyo_set_lf(head);
-	पूर्ण
-	क्रम (i = 0; i < TOMOYO_MAX_MEMORY_STAT; i++) अणु
-		अचिन्हित पूर्णांक used = tomoyo_memory_used[i];
+	}
+	for (i = 0; i < TOMOYO_MAX_MEMORY_STAT; i++) {
+		unsigned int used = tomoyo_memory_used[i];
 
 		total += used;
-		tomoyo_io_म_लिखो(head, "Memory used by %-22s %10u",
+		tomoyo_io_printf(head, "Memory used by %-22s %10u",
 				 tomoyo_memory_headers[i], used);
 		used = tomoyo_memory_quota[i];
-		अगर (used)
-			tomoyo_io_म_लिखो(head, " (Quota: %10u)", used);
+		if (used)
+			tomoyo_io_printf(head, " (Quota: %10u)", used);
 		tomoyo_set_lf(head);
-	पूर्ण
-	tomoyo_io_म_लिखो(head, "Total memory used:                    %10u\n",
+	}
+	tomoyo_io_printf(head, "Total memory used:                    %10u\n",
 			 total);
 	head->r.eof = true;
-पूर्ण
+}
 
 /**
- * tomoyo_ग_लिखो_stat - Set memory quota.
+ * tomoyo_write_stat - Set memory quota.
  *
- * @head: Poपूर्णांकer to "struct tomoyo_io_buffer".
+ * @head: Pointer to "struct tomoyo_io_buffer".
  *
  * Returns 0.
  */
-अटल पूर्णांक tomoyo_ग_लिखो_stat(काष्ठा tomoyo_io_buffer *head)
-अणु
-	अक्षर *data = head->ग_लिखो_buf;
+static int tomoyo_write_stat(struct tomoyo_io_buffer *head)
+{
+	char *data = head->write_buf;
 	u8 i;
 
-	अगर (tomoyo_str_starts(&data, "Memory used by "))
-		क्रम (i = 0; i < TOMOYO_MAX_MEMORY_STAT; i++)
-			अगर (tomoyo_str_starts(&data, tomoyo_memory_headers[i]))
-				माला_पूछो(data, "%u", &tomoyo_memory_quota[i]);
-	वापस 0;
-पूर्ण
+	if (tomoyo_str_starts(&data, "Memory used by "))
+		for (i = 0; i < TOMOYO_MAX_MEMORY_STAT; i++)
+			if (tomoyo_str_starts(&data, tomoyo_memory_headers[i]))
+				sscanf(data, "%u", &tomoyo_memory_quota[i]);
+	return 0;
+}
 
 /**
- * tomoyo_खोलो_control - खोलो() क्रम /sys/kernel/security/tomoyo/ पूर्णांकerface.
+ * tomoyo_open_control - open() for /sys/kernel/security/tomoyo/ interface.
  *
- * @type: Type of पूर्णांकerface.
- * @file: Poपूर्णांकer to "struct file".
+ * @type: Type of interface.
+ * @file: Pointer to "struct file".
  *
  * Returns 0 on success, negative value otherwise.
  */
-पूर्णांक tomoyo_खोलो_control(स्थिर u8 type, काष्ठा file *file)
-अणु
-	काष्ठा tomoyo_io_buffer *head = kzalloc(माप(*head), GFP_NOFS);
+int tomoyo_open_control(const u8 type, struct file *file)
+{
+	struct tomoyo_io_buffer *head = kzalloc(sizeof(*head), GFP_NOFS);
 
-	अगर (!head)
-		वापस -ENOMEM;
+	if (!head)
+		return -ENOMEM;
 	mutex_init(&head->io_sem);
 	head->type = type;
-	चयन (type) अणु
-	हाल TOMOYO_DOMAINPOLICY:
-		/* /sys/kernel/security/tomoyo/करोमुख्य_policy */
-		head->ग_लिखो = tomoyo_ग_लिखो_करोमुख्य;
-		head->पढ़ो = tomoyo_पढ़ो_करोमुख्य;
-		अवरोध;
-	हाल TOMOYO_EXCEPTIONPOLICY:
+	switch (type) {
+	case TOMOYO_DOMAINPOLICY:
+		/* /sys/kernel/security/tomoyo/domain_policy */
+		head->write = tomoyo_write_domain;
+		head->read = tomoyo_read_domain;
+		break;
+	case TOMOYO_EXCEPTIONPOLICY:
 		/* /sys/kernel/security/tomoyo/exception_policy */
-		head->ग_लिखो = tomoyo_ग_लिखो_exception;
-		head->पढ़ो = tomoyo_पढ़ो_exception;
-		अवरोध;
-	हाल TOMOYO_AUDIT:
+		head->write = tomoyo_write_exception;
+		head->read = tomoyo_read_exception;
+		break;
+	case TOMOYO_AUDIT:
 		/* /sys/kernel/security/tomoyo/audit */
 		head->poll = tomoyo_poll_log;
-		head->पढ़ो = tomoyo_पढ़ो_log;
-		अवरोध;
-	हाल TOMOYO_PROCESS_STATUS:
+		head->read = tomoyo_read_log;
+		break;
+	case TOMOYO_PROCESS_STATUS:
 		/* /sys/kernel/security/tomoyo/.process_status */
-		head->ग_लिखो = tomoyo_ग_लिखो_pid;
-		head->पढ़ो = tomoyo_पढ़ो_pid;
-		अवरोध;
-	हाल TOMOYO_VERSION:
+		head->write = tomoyo_write_pid;
+		head->read = tomoyo_read_pid;
+		break;
+	case TOMOYO_VERSION:
 		/* /sys/kernel/security/tomoyo/version */
-		head->पढ़ो = tomoyo_पढ़ो_version;
-		head->पढ़ोbuf_size = 128;
-		अवरोध;
-	हाल TOMOYO_STAT:
+		head->read = tomoyo_read_version;
+		head->readbuf_size = 128;
+		break;
+	case TOMOYO_STAT:
 		/* /sys/kernel/security/tomoyo/stat */
-		head->ग_लिखो = tomoyo_ग_लिखो_stat;
-		head->पढ़ो = tomoyo_पढ़ो_stat;
-		head->पढ़ोbuf_size = 1024;
-		अवरोध;
-	हाल TOMOYO_PROखाता:
+		head->write = tomoyo_write_stat;
+		head->read = tomoyo_read_stat;
+		head->readbuf_size = 1024;
+		break;
+	case TOMOYO_PROFILE:
 		/* /sys/kernel/security/tomoyo/profile */
-		head->ग_लिखो = tomoyo_ग_लिखो_profile;
-		head->पढ़ो = tomoyo_पढ़ो_profile;
-		अवरोध;
-	हाल TOMOYO_QUERY: /* /sys/kernel/security/tomoyo/query */
+		head->write = tomoyo_write_profile;
+		head->read = tomoyo_read_profile;
+		break;
+	case TOMOYO_QUERY: /* /sys/kernel/security/tomoyo/query */
 		head->poll = tomoyo_poll_query;
-		head->ग_लिखो = tomoyo_ग_लिखो_answer;
-		head->पढ़ो = tomoyo_पढ़ो_query;
-		अवरोध;
-	हाल TOMOYO_MANAGER:
+		head->write = tomoyo_write_answer;
+		head->read = tomoyo_read_query;
+		break;
+	case TOMOYO_MANAGER:
 		/* /sys/kernel/security/tomoyo/manager */
-		head->ग_लिखो = tomoyo_ग_लिखो_manager;
-		head->पढ़ो = tomoyo_पढ़ो_manager;
-		अवरोध;
-	पूर्ण
-	अगर (!(file->f_mode & FMODE_READ)) अणु
+		head->write = tomoyo_write_manager;
+		head->read = tomoyo_read_manager;
+		break;
+	}
+	if (!(file->f_mode & FMODE_READ)) {
 		/*
-		 * No need to allocate पढ़ो_buf since it is not खोलोed
-		 * क्रम पढ़ोing.
+		 * No need to allocate read_buf since it is not opened
+		 * for reading.
 		 */
-		head->पढ़ो = शून्य;
-		head->poll = शून्य;
-	पूर्ण अन्यथा अगर (!head->poll) अणु
-		/* Don't allocate पढ़ो_buf क्रम poll() access. */
-		अगर (!head->पढ़ोbuf_size)
-			head->पढ़ोbuf_size = 4096 * 2;
-		head->पढ़ो_buf = kzalloc(head->पढ़ोbuf_size, GFP_NOFS);
-		अगर (!head->पढ़ो_buf) अणु
-			kमुक्त(head);
-			वापस -ENOMEM;
-		पूर्ण
-	पूर्ण
-	अगर (!(file->f_mode & FMODE_WRITE)) अणु
+		head->read = NULL;
+		head->poll = NULL;
+	} else if (!head->poll) {
+		/* Don't allocate read_buf for poll() access. */
+		if (!head->readbuf_size)
+			head->readbuf_size = 4096 * 2;
+		head->read_buf = kzalloc(head->readbuf_size, GFP_NOFS);
+		if (!head->read_buf) {
+			kfree(head);
+			return -ENOMEM;
+		}
+	}
+	if (!(file->f_mode & FMODE_WRITE)) {
 		/*
-		 * No need to allocate ग_लिखो_buf since it is not खोलोed
-		 * क्रम writing.
+		 * No need to allocate write_buf since it is not opened
+		 * for writing.
 		 */
-		head->ग_लिखो = शून्य;
-	पूर्ण अन्यथा अगर (head->ग_लिखो) अणु
-		head->ग_लिखोbuf_size = 4096 * 2;
-		head->ग_लिखो_buf = kzalloc(head->ग_लिखोbuf_size, GFP_NOFS);
-		अगर (!head->ग_लिखो_buf) अणु
-			kमुक्त(head->पढ़ो_buf);
-			kमुक्त(head);
-			वापस -ENOMEM;
-		पूर्ण
-	पूर्ण
+		head->write = NULL;
+	} else if (head->write) {
+		head->writebuf_size = 4096 * 2;
+		head->write_buf = kzalloc(head->writebuf_size, GFP_NOFS);
+		if (!head->write_buf) {
+			kfree(head->read_buf);
+			kfree(head);
+			return -ENOMEM;
+		}
+	}
 	/*
 	 * If the file is /sys/kernel/security/tomoyo/query , increment the
 	 * observer counter.
-	 * The obserber counter is used by tomoyo_supervisor() to see अगर
+	 * The obserber counter is used by tomoyo_supervisor() to see if
 	 * there is some process monitoring /sys/kernel/security/tomoyo/query.
 	 */
-	अगर (type == TOMOYO_QUERY)
+	if (type == TOMOYO_QUERY)
 		atomic_inc(&tomoyo_query_observers);
-	file->निजी_data = head;
-	tomoyo_notअगरy_gc(head, true);
-	वापस 0;
-पूर्ण
+	file->private_data = head;
+	tomoyo_notify_gc(head, true);
+	return 0;
+}
 
 /**
- * tomoyo_poll_control - poll() क्रम /sys/kernel/security/tomoyo/ पूर्णांकerface.
+ * tomoyo_poll_control - poll() for /sys/kernel/security/tomoyo/ interface.
  *
- * @file: Poपूर्णांकer to "struct file".
- * @रुको: Poपूर्णांकer to "poll_table". Maybe शून्य.
+ * @file: Pointer to "struct file".
+ * @wait: Pointer to "poll_table". Maybe NULL.
  *
- * Returns EPOLLIN | EPOLLRDNORM | EPOLLOUT | EPOLLWRNORM अगर पढ़ोy to पढ़ो/ग_लिखो,
+ * Returns EPOLLIN | EPOLLRDNORM | EPOLLOUT | EPOLLWRNORM if ready to read/write,
  * EPOLLOUT | EPOLLWRNORM otherwise.
  */
-__poll_t tomoyo_poll_control(काष्ठा file *file, poll_table *रुको)
-अणु
-	काष्ठा tomoyo_io_buffer *head = file->निजी_data;
+__poll_t tomoyo_poll_control(struct file *file, poll_table *wait)
+{
+	struct tomoyo_io_buffer *head = file->private_data;
 
-	अगर (head->poll)
-		वापस head->poll(file, रुको) | EPOLLOUT | EPOLLWRNORM;
-	वापस EPOLLIN | EPOLLRDNORM | EPOLLOUT | EPOLLWRNORM;
-पूर्ण
+	if (head->poll)
+		return head->poll(file, wait) | EPOLLOUT | EPOLLWRNORM;
+	return EPOLLIN | EPOLLRDNORM | EPOLLOUT | EPOLLWRNORM;
+}
 
 /**
- * tomoyo_set_namespace_cursor - Set namespace to पढ़ो.
+ * tomoyo_set_namespace_cursor - Set namespace to read.
  *
- * @head: Poपूर्णांकer to "struct tomoyo_io_buffer".
+ * @head: Pointer to "struct tomoyo_io_buffer".
  *
  * Returns nothing.
  */
-अटल अंतरभूत व्योम tomoyo_set_namespace_cursor(काष्ठा tomoyo_io_buffer *head)
-अणु
-	काष्ठा list_head *ns;
+static inline void tomoyo_set_namespace_cursor(struct tomoyo_io_buffer *head)
+{
+	struct list_head *ns;
 
-	अगर (head->type != TOMOYO_EXCEPTIONPOLICY &&
-	    head->type != TOMOYO_PROखाता)
-		वापस;
+	if (head->type != TOMOYO_EXCEPTIONPOLICY &&
+	    head->type != TOMOYO_PROFILE)
+		return;
 	/*
-	 * If this is the first पढ़ो, or पढ़ोing previous namespace finished
-	 * and has more namespaces to पढ़ो, update the namespace cursor.
+	 * If this is the first read, or reading previous namespace finished
+	 * and has more namespaces to read, update the namespace cursor.
 	 */
 	ns = head->r.ns;
-	अगर (!ns || (head->r.eof && ns->next != &tomoyo_namespace_list)) अणु
-		/* Clearing is OK because tomoyo_flush() वापसed true. */
-		स_रखो(&head->r, 0, माप(head->r));
+	if (!ns || (head->r.eof && ns->next != &tomoyo_namespace_list)) {
+		/* Clearing is OK because tomoyo_flush() returned true. */
+		memset(&head->r, 0, sizeof(head->r));
 		head->r.ns = ns ? ns->next : tomoyo_namespace_list.next;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
- * tomoyo_has_more_namespace - Check क्रम unपढ़ो namespaces.
+ * tomoyo_has_more_namespace - Check for unread namespaces.
  *
- * @head: Poपूर्णांकer to "struct tomoyo_io_buffer".
+ * @head: Pointer to "struct tomoyo_io_buffer".
  *
- * Returns true अगर we have more entries to prपूर्णांक, false otherwise.
+ * Returns true if we have more entries to print, false otherwise.
  */
-अटल अंतरभूत bool tomoyo_has_more_namespace(काष्ठा tomoyo_io_buffer *head)
-अणु
-	वापस (head->type == TOMOYO_EXCEPTIONPOLICY ||
-		head->type == TOMOYO_PROखाता) && head->r.eof &&
+static inline bool tomoyo_has_more_namespace(struct tomoyo_io_buffer *head)
+{
+	return (head->type == TOMOYO_EXCEPTIONPOLICY ||
+		head->type == TOMOYO_PROFILE) && head->r.eof &&
 		head->r.ns->next != &tomoyo_namespace_list;
-पूर्ण
+}
 
 /**
- * tomoyo_पढ़ो_control - पढ़ो() क्रम /sys/kernel/security/tomoyo/ पूर्णांकerface.
+ * tomoyo_read_control - read() for /sys/kernel/security/tomoyo/ interface.
  *
- * @head:       Poपूर्णांकer to "struct tomoyo_io_buffer".
- * @buffer:     Poपूर्णांकer to buffer to ग_लिखो to.
+ * @head:       Pointer to "struct tomoyo_io_buffer".
+ * @buffer:     Pointer to buffer to write to.
  * @buffer_len: Size of @buffer.
  *
- * Returns bytes पढ़ो on success, negative value otherwise.
+ * Returns bytes read on success, negative value otherwise.
  */
-sमाप_प्रकार tomoyo_पढ़ो_control(काष्ठा tomoyo_io_buffer *head, अक्षर __user *buffer,
-			    स्थिर पूर्णांक buffer_len)
-अणु
-	पूर्णांक len;
-	पूर्णांक idx;
+ssize_t tomoyo_read_control(struct tomoyo_io_buffer *head, char __user *buffer,
+			    const int buffer_len)
+{
+	int len;
+	int idx;
 
-	अगर (!head->पढ़ो)
-		वापस -EINVAL;
-	अगर (mutex_lock_पूर्णांकerruptible(&head->io_sem))
-		वापस -EINTR;
-	head->पढ़ो_user_buf = buffer;
-	head->पढ़ो_user_buf_avail = buffer_len;
-	idx = tomoyo_पढ़ो_lock();
-	अगर (tomoyo_flush(head))
+	if (!head->read)
+		return -EINVAL;
+	if (mutex_lock_interruptible(&head->io_sem))
+		return -EINTR;
+	head->read_user_buf = buffer;
+	head->read_user_buf_avail = buffer_len;
+	idx = tomoyo_read_lock();
+	if (tomoyo_flush(head))
 		/* Call the policy handler. */
-		करो अणु
+		do {
 			tomoyo_set_namespace_cursor(head);
-			head->पढ़ो(head);
-		पूर्ण जबतक (tomoyo_flush(head) &&
+			head->read(head);
+		} while (tomoyo_flush(head) &&
 			 tomoyo_has_more_namespace(head));
-	tomoyo_पढ़ो_unlock(idx);
-	len = head->पढ़ो_user_buf - buffer;
+	tomoyo_read_unlock(idx);
+	len = head->read_user_buf - buffer;
 	mutex_unlock(&head->io_sem);
-	वापस len;
-पूर्ण
+	return len;
+}
 
 /**
  * tomoyo_parse_policy - Parse a policy line.
  *
- * @head: Poपूर्णांकer to "struct tomoyo_io_buffer".
+ * @head: Pointer to "struct tomoyo_io_buffer".
  * @line: Line to parse.
  *
  * Returns 0 on success, negative value otherwise.
  *
- * Caller holds tomoyo_पढ़ो_lock().
+ * Caller holds tomoyo_read_lock().
  */
-अटल पूर्णांक tomoyo_parse_policy(काष्ठा tomoyo_io_buffer *head, अक्षर *line)
-अणु
+static int tomoyo_parse_policy(struct tomoyo_io_buffer *head, char *line)
+{
 	/* Delete request? */
-	head->w.is_delete = !म_भेदन(line, "delete ", 7);
-	अगर (head->w.is_delete)
-		स_हटाओ(line, line + 7, म_माप(line + 7) + 1);
+	head->w.is_delete = !strncmp(line, "delete ", 7);
+	if (head->w.is_delete)
+		memmove(line, line + 7, strlen(line + 7) + 1);
 	/* Selecting namespace to update. */
-	अगर (head->type == TOMOYO_EXCEPTIONPOLICY ||
-	    head->type == TOMOYO_PROखाता) अणु
-		अगर (*line == '<') अणु
-			अक्षर *cp = म_अक्षर(line, ' ');
+	if (head->type == TOMOYO_EXCEPTIONPOLICY ||
+	    head->type == TOMOYO_PROFILE) {
+		if (*line == '<') {
+			char *cp = strchr(line, ' ');
 
-			अगर (cp) अणु
+			if (cp) {
 				*cp++ = '\0';
 				head->w.ns = tomoyo_assign_namespace(line);
-				स_हटाओ(line, cp, म_माप(cp) + 1);
-			पूर्ण अन्यथा
-				head->w.ns = शून्य;
-		पूर्ण अन्यथा
+				memmove(line, cp, strlen(cp) + 1);
+			} else
+				head->w.ns = NULL;
+		} else
 			head->w.ns = &tomoyo_kernel_namespace;
-		/* Don't allow updating अगर namespace is invalid. */
-		अगर (!head->w.ns)
-			वापस -ENOENT;
-	पूर्ण
+		/* Don't allow updating if namespace is invalid. */
+		if (!head->w.ns)
+			return -ENOENT;
+	}
 	/* Do the update. */
-	वापस head->ग_लिखो(head);
-पूर्ण
+	return head->write(head);
+}
 
 /**
- * tomoyo_ग_लिखो_control - ग_लिखो() क्रम /sys/kernel/security/tomoyo/ पूर्णांकerface.
+ * tomoyo_write_control - write() for /sys/kernel/security/tomoyo/ interface.
  *
- * @head:       Poपूर्णांकer to "struct tomoyo_io_buffer".
- * @buffer:     Poपूर्णांकer to buffer to पढ़ो from.
+ * @head:       Pointer to "struct tomoyo_io_buffer".
+ * @buffer:     Pointer to buffer to read from.
  * @buffer_len: Size of @buffer.
  *
  * Returns @buffer_len on success, negative value otherwise.
  */
-sमाप_प्रकार tomoyo_ग_लिखो_control(काष्ठा tomoyo_io_buffer *head,
-			     स्थिर अक्षर __user *buffer, स्थिर पूर्णांक buffer_len)
-अणु
-	पूर्णांक error = buffer_len;
-	माप_प्रकार avail_len = buffer_len;
-	अक्षर *cp0 = head->ग_लिखो_buf;
-	पूर्णांक idx;
+ssize_t tomoyo_write_control(struct tomoyo_io_buffer *head,
+			     const char __user *buffer, const int buffer_len)
+{
+	int error = buffer_len;
+	size_t avail_len = buffer_len;
+	char *cp0 = head->write_buf;
+	int idx;
 
-	अगर (!head->ग_लिखो)
-		वापस -EINVAL;
-	अगर (mutex_lock_पूर्णांकerruptible(&head->io_sem))
-		वापस -EINTR;
-	head->पढ़ो_user_buf_avail = 0;
-	idx = tomoyo_पढ़ो_lock();
+	if (!head->write)
+		return -EINVAL;
+	if (mutex_lock_interruptible(&head->io_sem))
+		return -EINTR;
+	head->read_user_buf_avail = 0;
+	idx = tomoyo_read_lock();
 	/* Read a line and dispatch it to the policy handler. */
-	जबतक (avail_len > 0) अणु
-		अक्षर c;
+	while (avail_len > 0) {
+		char c;
 
-		अगर (head->w.avail >= head->ग_लिखोbuf_size - 1) अणु
-			स्थिर पूर्णांक len = head->ग_लिखोbuf_size * 2;
-			अक्षर *cp = kzalloc(len, GFP_NOFS);
+		if (head->w.avail >= head->writebuf_size - 1) {
+			const int len = head->writebuf_size * 2;
+			char *cp = kzalloc(len, GFP_NOFS);
 
-			अगर (!cp) अणु
+			if (!cp) {
 				error = -ENOMEM;
-				अवरोध;
-			पूर्ण
-			स_हटाओ(cp, cp0, head->w.avail);
-			kमुक्त(cp0);
-			head->ग_लिखो_buf = cp;
+				break;
+			}
+			memmove(cp, cp0, head->w.avail);
+			kfree(cp0);
+			head->write_buf = cp;
 			cp0 = cp;
-			head->ग_लिखोbuf_size = len;
-		पूर्ण
-		अगर (get_user(c, buffer)) अणु
+			head->writebuf_size = len;
+		}
+		if (get_user(c, buffer)) {
 			error = -EFAULT;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		buffer++;
 		avail_len--;
 		cp0[head->w.avail++] = c;
-		अगर (c != '\n')
-			जारी;
+		if (c != '\n')
+			continue;
 		cp0[head->w.avail - 1] = '\0';
 		head->w.avail = 0;
 		tomoyo_normalize_line(cp0);
-		अगर (!म_भेद(cp0, "reset")) अणु
+		if (!strcmp(cp0, "reset")) {
 			head->w.ns = &tomoyo_kernel_namespace;
-			head->w.करोमुख्य = शून्य;
-			स_रखो(&head->r, 0, माप(head->r));
-			जारी;
-		पूर्ण
+			head->w.domain = NULL;
+			memset(&head->r, 0, sizeof(head->r));
+			continue;
+		}
 		/* Don't allow updating policies by non manager programs. */
-		चयन (head->type) अणु
-		हाल TOMOYO_PROCESS_STATUS:
-			/* This करोes not ग_लिखो anything. */
-			अवरोध;
-		हाल TOMOYO_DOMAINPOLICY:
-			अगर (tomoyo_select_करोमुख्य(head, cp0))
-				जारी;
+		switch (head->type) {
+		case TOMOYO_PROCESS_STATUS:
+			/* This does not write anything. */
+			break;
+		case TOMOYO_DOMAINPOLICY:
+			if (tomoyo_select_domain(head, cp0))
+				continue;
 			fallthrough;
-		हाल TOMOYO_EXCEPTIONPOLICY:
-			अगर (!म_भेद(cp0, "select transition_only")) अणु
-				head->r.prपूर्णांक_transition_related_only = true;
-				जारी;
-			पूर्ण
+		case TOMOYO_EXCEPTIONPOLICY:
+			if (!strcmp(cp0, "select transition_only")) {
+				head->r.print_transition_related_only = true;
+				continue;
+			}
 			fallthrough;
-		शेष:
-			अगर (!tomoyo_manager()) अणु
+		default:
+			if (!tomoyo_manager()) {
 				error = -EPERM;
-				जाओ out;
-			पूर्ण
-		पूर्ण
-		चयन (tomoyo_parse_policy(head, cp0)) अणु
-		हाल -EPERM:
+				goto out;
+			}
+		}
+		switch (tomoyo_parse_policy(head, cp0)) {
+		case -EPERM:
 			error = -EPERM;
-			जाओ out;
-		हाल 0:
-			चयन (head->type) अणु
-			हाल TOMOYO_DOMAINPOLICY:
-			हाल TOMOYO_EXCEPTIONPOLICY:
-			हाल TOMOYO_STAT:
-			हाल TOMOYO_PROखाता:
-			हाल TOMOYO_MANAGER:
+			goto out;
+		case 0:
+			switch (head->type) {
+			case TOMOYO_DOMAINPOLICY:
+			case TOMOYO_EXCEPTIONPOLICY:
+			case TOMOYO_STAT:
+			case TOMOYO_PROFILE:
+			case TOMOYO_MANAGER:
 				tomoyo_update_stat(TOMOYO_STAT_POLICY_UPDATES);
-				अवरोध;
-			शेष:
-				अवरोध;
-			पूर्ण
-			अवरोध;
-		पूर्ण
-	पूर्ण
+				break;
+			default:
+				break;
+			}
+			break;
+		}
+	}
 out:
-	tomoyo_पढ़ो_unlock(idx);
+	tomoyo_read_unlock(idx);
 	mutex_unlock(&head->io_sem);
-	वापस error;
-पूर्ण
+	return error;
+}
 
 /**
- * tomoyo_बंद_control - बंद() क्रम /sys/kernel/security/tomoyo/ पूर्णांकerface.
+ * tomoyo_close_control - close() for /sys/kernel/security/tomoyo/ interface.
  *
- * @head: Poपूर्णांकer to "struct tomoyo_io_buffer".
+ * @head: Pointer to "struct tomoyo_io_buffer".
  */
-व्योम tomoyo_बंद_control(काष्ठा tomoyo_io_buffer *head)
-अणु
+void tomoyo_close_control(struct tomoyo_io_buffer *head)
+{
 	/*
 	 * If the file is /sys/kernel/security/tomoyo/query , decrement the
 	 * observer counter.
 	 */
-	अगर (head->type == TOMOYO_QUERY &&
+	if (head->type == TOMOYO_QUERY &&
 	    atomic_dec_and_test(&tomoyo_query_observers))
-		wake_up_all(&tomoyo_answer_रुको);
-	tomoyo_notअगरy_gc(head, false);
-पूर्ण
+		wake_up_all(&tomoyo_answer_wait);
+	tomoyo_notify_gc(head, false);
+}
 
 /**
- * tomoyo_check_profile - Check all profiles currently asचिन्हित to करोमुख्यs are defined.
+ * tomoyo_check_profile - Check all profiles currently assigned to domains are defined.
  */
-व्योम tomoyo_check_profile(व्योम)
-अणु
-	काष्ठा tomoyo_करोमुख्य_info *करोमुख्य;
-	स्थिर पूर्णांक idx = tomoyo_पढ़ो_lock();
+void tomoyo_check_profile(void)
+{
+	struct tomoyo_domain_info *domain;
+	const int idx = tomoyo_read_lock();
 
 	tomoyo_policy_loaded = true;
 	pr_info("TOMOYO: 2.6.0\n");
-	list_क्रम_each_entry_rcu(करोमुख्य, &tomoyo_करोमुख्य_list, list,
-				srcu_पढ़ो_lock_held(&tomoyo_ss)) अणु
-		स्थिर u8 profile = करोमुख्य->profile;
-		काष्ठा tomoyo_policy_namespace *ns = करोमुख्य->ns;
+	list_for_each_entry_rcu(domain, &tomoyo_domain_list, list,
+				srcu_read_lock_held(&tomoyo_ss)) {
+		const u8 profile = domain->profile;
+		struct tomoyo_policy_namespace *ns = domain->ns;
 
-		अगर (ns->profile_version == 20110903) अणु
+		if (ns->profile_version == 20110903) {
 			pr_info_once("Converting profile version from %u to %u.\n",
 				     20110903, 20150505);
 			ns->profile_version = 20150505;
-		पूर्ण
-		अगर (ns->profile_version != 20150505)
+		}
+		if (ns->profile_version != 20150505)
 			pr_err("Profile version %u is not supported.\n",
 			       ns->profile_version);
-		अन्यथा अगर (!ns->profile_ptr[profile])
+		else if (!ns->profile_ptr[profile])
 			pr_err("Profile %u (used by '%s') is not defined.\n",
-			       profile, करोमुख्य->करोमुख्यname->name);
-		अन्यथा
-			जारी;
+			       profile, domain->domainname->name);
+		else
+			continue;
 		pr_err("Userland tools for TOMOYO 2.6 must be installed and policy must be initialized.\n");
 		pr_err("Please see https://tomoyo.osdn.jp/2.6/ for more information.\n");
 		panic("STOP!");
-	पूर्ण
-	tomoyo_पढ़ो_unlock(idx);
+	}
+	tomoyo_read_unlock(idx);
 	pr_info("Mandatory Access Control activated.\n");
-पूर्ण
+}
 
 /**
  * tomoyo_load_builtin_policy - Load built-in policy.
  *
  * Returns nothing.
  */
-व्योम __init tomoyo_load_builtin_policy(व्योम)
-अणु
-#अगर_घोषित CONFIG_SECURITY_TOMOYO_INSECURE_BUILTIN_SETTING
-	अटल अक्षर tomoyo_builtin_profile[] __initdata =
+void __init tomoyo_load_builtin_policy(void)
+{
+#ifdef CONFIG_SECURITY_TOMOYO_INSECURE_BUILTIN_SETTING
+	static char tomoyo_builtin_profile[] __initdata =
 		"PROFILE_VERSION=20150505\n"
 		"0-CONFIG={ mode=learning grant_log=no reject_log=yes }\n";
-	अटल अक्षर tomoyo_builtin_exception_policy[] __initdata =
+	static char tomoyo_builtin_exception_policy[] __initdata =
 		"aggregator proc:/self/exe /proc/self/exe\n";
-	अटल अक्षर tomoyo_builtin_करोमुख्य_policy[] __initdata = "";
-	अटल अक्षर tomoyo_builtin_manager[] __initdata = "";
-	अटल अक्षर tomoyo_builtin_stat[] __initdata = "";
-#अन्यथा
+	static char tomoyo_builtin_domain_policy[] __initdata = "";
+	static char tomoyo_builtin_manager[] __initdata = "";
+	static char tomoyo_builtin_stat[] __initdata = "";
+#else
 	/*
 	 * This include file is manually created and contains built-in policy
 	 * named "tomoyo_builtin_profile", "tomoyo_builtin_exception_policy",
 	 * "tomoyo_builtin_domain_policy", "tomoyo_builtin_manager",
-	 * "tomoyo_builtin_stat" in the क्रमm of "static char [] __initdata".
+	 * "tomoyo_builtin_stat" in the form of "static char [] __initdata".
 	 */
-#समावेश "builtin-policy.h"
-#पूर्ण_अगर
+#include "builtin-policy.h"
+#endif
 	u8 i;
-	स्थिर पूर्णांक idx = tomoyo_पढ़ो_lock();
+	const int idx = tomoyo_read_lock();
 
-	क्रम (i = 0; i < 5; i++) अणु
-		काष्ठा tomoyo_io_buffer head = अणु पूर्ण;
-		अक्षर *start = "";
+	for (i = 0; i < 5; i++) {
+		struct tomoyo_io_buffer head = { };
+		char *start = "";
 
-		चयन (i) अणु
-		हाल 0:
+		switch (i) {
+		case 0:
 			start = tomoyo_builtin_profile;
-			head.type = TOMOYO_PROखाता;
-			head.ग_लिखो = tomoyo_ग_लिखो_profile;
-			अवरोध;
-		हाल 1:
+			head.type = TOMOYO_PROFILE;
+			head.write = tomoyo_write_profile;
+			break;
+		case 1:
 			start = tomoyo_builtin_exception_policy;
 			head.type = TOMOYO_EXCEPTIONPOLICY;
-			head.ग_लिखो = tomoyo_ग_लिखो_exception;
-			अवरोध;
-		हाल 2:
-			start = tomoyo_builtin_करोमुख्य_policy;
+			head.write = tomoyo_write_exception;
+			break;
+		case 2:
+			start = tomoyo_builtin_domain_policy;
 			head.type = TOMOYO_DOMAINPOLICY;
-			head.ग_लिखो = tomoyo_ग_लिखो_करोमुख्य;
-			अवरोध;
-		हाल 3:
+			head.write = tomoyo_write_domain;
+			break;
+		case 3:
 			start = tomoyo_builtin_manager;
 			head.type = TOMOYO_MANAGER;
-			head.ग_लिखो = tomoyo_ग_लिखो_manager;
-			अवरोध;
-		हाल 4:
+			head.write = tomoyo_write_manager;
+			break;
+		case 4:
 			start = tomoyo_builtin_stat;
 			head.type = TOMOYO_STAT;
-			head.ग_लिखो = tomoyo_ग_लिखो_stat;
-			अवरोध;
-		पूर्ण
-		जबतक (1) अणु
-			अक्षर *end = म_अक्षर(start, '\n');
+			head.write = tomoyo_write_stat;
+			break;
+		}
+		while (1) {
+			char *end = strchr(start, '\n');
 
-			अगर (!end)
-				अवरोध;
+			if (!end)
+				break;
 			*end = '\0';
 			tomoyo_normalize_line(start);
-			head.ग_लिखो_buf = start;
+			head.write_buf = start;
 			tomoyo_parse_policy(&head, start);
 			start = end + 1;
-		पूर्ण
-	पूर्ण
-	tomoyo_पढ़ो_unlock(idx);
-#अगर_घोषित CONFIG_SECURITY_TOMOYO_OMIT_USERSPACE_LOADER
+		}
+	}
+	tomoyo_read_unlock(idx);
+#ifdef CONFIG_SECURITY_TOMOYO_OMIT_USERSPACE_LOADER
 	tomoyo_check_profile();
-#पूर्ण_अगर
-पूर्ण
+#endif
+}

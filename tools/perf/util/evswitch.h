@@ -1,32 +1,31 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
-// Copyright (C) 2019, Red Hat Inc, Arnalकरो Carvalho de Melo <acme@redhat.com>
-#अगर_अघोषित __PERF_EVSWITCH_H
-#घोषणा __PERF_EVSWITCH_H 1
+// SPDX-License-Identifier: GPL-2.0-only
+// Copyright (C) 2019, Red Hat Inc, Arnaldo Carvalho de Melo <acme@redhat.com>
+#ifndef __PERF_EVSWITCH_H
+#define __PERF_EVSWITCH_H 1
 
-#समावेश <stdbool.h>
-#समावेश <मानकपन.स>
+#include <stdbool.h>
+#include <stdio.h>
 
-काष्ठा evsel;
-काष्ठा evlist;
+struct evsel;
+struct evlist;
 
-काष्ठा evचयन अणु
-	काष्ठा evsel *on, *off;
-	स्थिर अक्षर   *on_name, *off_name;
+struct evswitch {
+	struct evsel *on, *off;
+	const char   *on_name, *off_name;
 	bool	     discarding;
 	bool	     show_on_off_events;
-पूर्ण;
+};
 
-पूर्णांक evचयन__init(काष्ठा evचयन *evचयन, काष्ठा evlist *evlist, खाता *fp);
+int evswitch__init(struct evswitch *evswitch, struct evlist *evlist, FILE *fp);
 
-bool evचयन__discard(काष्ठा evचयन *evचयन, काष्ठा evsel *evsel);
+bool evswitch__discard(struct evswitch *evswitch, struct evsel *evsel);
 
-#घोषणा OPTS_EVSWITCH(evचयन)								  \
-	OPT_STRING(0, "switch-on", &(evचयन)->on_name,				  \
+#define OPTS_EVSWITCH(evswitch)								  \
+	OPT_STRING(0, "switch-on", &(evswitch)->on_name,				  \
 		   "event", "Consider events after the ocurrence of this event"),	  \
-	OPT_STRING(0, "switch-off", &(evचयन)->off_name,				  \
+	OPT_STRING(0, "switch-off", &(evswitch)->off_name,				  \
 		   "event", "Stop considering events after the ocurrence of this event"), \
-	OPT_BOOLEAN(0, "show-on-off-events", &(evचयन)->show_on_off_events,		  \
+	OPT_BOOLEAN(0, "show-on-off-events", &(evswitch)->show_on_off_events,		  \
 		    "Show the on/off switch events, used with --switch-on and --switch-off")
 
-#पूर्ण_अगर /* __PERF_EVSWITCH_H */
+#endif /* __PERF_EVSWITCH_H */

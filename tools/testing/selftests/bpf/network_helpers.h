@@ -1,47 +1,46 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __NETWORK_HELPERS_H
-#घोषणा __NETWORK_HELPERS_H
-#समावेश <sys/socket.h>
-#समावेश <sys/types.h>
-#समावेश <linux/types.h>
-प्रकार __u16 __sum16;
-#समावेश <linux/अगर_ether.h>
-#समावेश <linux/अगर_packet.h>
-#समावेश <linux/ip.h>
-#समावेश <linux/ipv6.h>
-#समावेश <netinet/tcp.h>
-#समावेश <bpf/bpf_endian.h>
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __NETWORK_HELPERS_H
+#define __NETWORK_HELPERS_H
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <linux/types.h>
+typedef __u16 __sum16;
+#include <linux/if_ether.h>
+#include <linux/if_packet.h>
+#include <linux/ip.h>
+#include <linux/ipv6.h>
+#include <netinet/tcp.h>
+#include <bpf/bpf_endian.h>
 
-#घोषणा MAGIC_VAL 0x1234
-#घोषणा NUM_ITER 100000
-#घोषणा VIP_NUM 5
-#घोषणा MAGIC_BYTES 123
+#define MAGIC_VAL 0x1234
+#define NUM_ITER 100000
+#define VIP_NUM 5
+#define MAGIC_BYTES 123
 
 /* ipv4 test vector */
-काष्ठा ipv4_packet अणु
-	काष्ठा ethhdr eth;
-	काष्ठा iphdr iph;
-	काष्ठा tcphdr tcp;
-पूर्ण __packed;
-बाह्य काष्ठा ipv4_packet pkt_v4;
+struct ipv4_packet {
+	struct ethhdr eth;
+	struct iphdr iph;
+	struct tcphdr tcp;
+} __packed;
+extern struct ipv4_packet pkt_v4;
 
 /* ipv6 test vector */
-काष्ठा ipv6_packet अणु
-	काष्ठा ethhdr eth;
-	काष्ठा ipv6hdr iph;
-	काष्ठा tcphdr tcp;
-पूर्ण __packed;
-बाह्य काष्ठा ipv6_packet pkt_v6;
+struct ipv6_packet {
+	struct ethhdr eth;
+	struct ipv6hdr iph;
+	struct tcphdr tcp;
+} __packed;
+extern struct ipv6_packet pkt_v6;
 
-पूर्णांक समय_रखोo(पूर्णांक fd, पूर्णांक समयout_ms);
-पूर्णांक start_server(पूर्णांक family, पूर्णांक type, स्थिर अक्षर *addr, __u16 port,
-		 पूर्णांक समयout_ms);
-पूर्णांक connect_to_fd(पूर्णांक server_fd, पूर्णांक समयout_ms);
-पूर्णांक connect_fd_to_fd(पूर्णांक client_fd, पूर्णांक server_fd, पूर्णांक समयout_ms);
-पूर्णांक fastखोलो_connect(पूर्णांक server_fd, स्थिर अक्षर *data, अचिन्हित पूर्णांक data_len,
-		     पूर्णांक समयout_ms);
-पूर्णांक make_sockaddr(पूर्णांक family, स्थिर अक्षर *addr_str, __u16 port,
-		  काष्ठा sockaddr_storage *addr, socklen_t *len);
+int settimeo(int fd, int timeout_ms);
+int start_server(int family, int type, const char *addr, __u16 port,
+		 int timeout_ms);
+int connect_to_fd(int server_fd, int timeout_ms);
+int connect_fd_to_fd(int client_fd, int server_fd, int timeout_ms);
+int fastopen_connect(int server_fd, const char *data, unsigned int data_len,
+		     int timeout_ms);
+int make_sockaddr(int family, const char *addr_str, __u16 port,
+		  struct sockaddr_storage *addr, socklen_t *len);
 
-#पूर्ण_अगर
+#endif

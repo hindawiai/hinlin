@@ -1,32 +1,31 @@
-<शैली गुरु>
 /*
  * Copyright (C) 2011 Red Hat, Inc.
  *
  * This file is released under the GPL.
  */
 
-#अगर_अघोषित DM_BTREE_INTERNAL_H
-#घोषणा DM_BTREE_INTERNAL_H
+#ifndef DM_BTREE_INTERNAL_H
+#define DM_BTREE_INTERNAL_H
 
-#समावेश "dm-btree.h"
+#include "dm-btree.h"
 
 /*----------------------------------------------------------------*/
 
 /*
- * We'll need 2 accessor functions क्रम n->csum and n->blocknr
- * to support dm-btree-spine.c in that हाल.
+ * We'll need 2 accessor functions for n->csum and n->blocknr
+ * to support dm-btree-spine.c in that case.
  */
 
-क्रमागत node_flags अणु
+enum node_flags {
 	INTERNAL_NODE = 1,
 	LEAF_NODE = 1 << 1
-पूर्ण;
+};
 
 /*
- * Every btree node begins with this काष्ठाure.  Make sure it's a multiple
+ * Every btree node begins with this structure.  Make sure it's a multiple
  * of 8-bytes in size, otherwise the 64bit keys will be mis-aligned.
  */
-काष्ठा node_header अणु
+struct node_header {
 	__le32 csum;
 	__le32 flags;
 	__le64 blocknr; /* Block this node is supposed to live in. */
@@ -35,114 +34,114 @@
 	__le32 max_entries;
 	__le32 value_size;
 	__le32 padding;
-पूर्ण __attribute__((packed, aligned(8)));
+} __attribute__((packed, aligned(8)));
 
-काष्ठा btree_node अणु
-	काष्ठा node_header header;
+struct btree_node {
+	struct node_header header;
 	__le64 keys[];
-पूर्ण __attribute__((packed, aligned(8)));
+} __attribute__((packed, aligned(8)));
 
 
 /*
  * Locks a block using the btree node validator.
  */
-पूर्णांक bn_पढ़ो_lock(काष्ठा dm_btree_info *info, dm_block_t b,
-		 काष्ठा dm_block **result);
+int bn_read_lock(struct dm_btree_info *info, dm_block_t b,
+		 struct dm_block **result);
 
-व्योम inc_children(काष्ठा dm_transaction_manager *पंचांग, काष्ठा btree_node *n,
-		  काष्ठा dm_btree_value_type *vt);
+void inc_children(struct dm_transaction_manager *tm, struct btree_node *n,
+		  struct dm_btree_value_type *vt);
 
-पूर्णांक new_block(काष्ठा dm_btree_info *info, काष्ठा dm_block **result);
-व्योम unlock_block(काष्ठा dm_btree_info *info, काष्ठा dm_block *b);
+int new_block(struct dm_btree_info *info, struct dm_block **result);
+void unlock_block(struct dm_btree_info *info, struct dm_block *b);
 
 /*
- * Spines keep track of the rolling locks.  There are 2 variants, पढ़ो-only
- * and one that uses shaकरोwing.  These are separate काष्ठाs to allow the
- * type checker to spot misuse, क्रम example accidentally calling पढ़ो_lock
- * on a shaकरोw spine.
+ * Spines keep track of the rolling locks.  There are 2 variants, read-only
+ * and one that uses shadowing.  These are separate structs to allow the
+ * type checker to spot misuse, for example accidentally calling read_lock
+ * on a shadow spine.
  */
-काष्ठा ro_spine अणु
-	काष्ठा dm_btree_info *info;
+struct ro_spine {
+	struct dm_btree_info *info;
 
-	पूर्णांक count;
-	काष्ठा dm_block *nodes[2];
-पूर्ण;
+	int count;
+	struct dm_block *nodes[2];
+};
 
-व्योम init_ro_spine(काष्ठा ro_spine *s, काष्ठा dm_btree_info *info);
-व्योम निकास_ro_spine(काष्ठा ro_spine *s);
-पूर्णांक ro_step(काष्ठा ro_spine *s, dm_block_t new_child);
-व्योम ro_pop(काष्ठा ro_spine *s);
-काष्ठा btree_node *ro_node(काष्ठा ro_spine *s);
+void init_ro_spine(struct ro_spine *s, struct dm_btree_info *info);
+void exit_ro_spine(struct ro_spine *s);
+int ro_step(struct ro_spine *s, dm_block_t new_child);
+void ro_pop(struct ro_spine *s);
+struct btree_node *ro_node(struct ro_spine *s);
 
-काष्ठा shaकरोw_spine अणु
-	काष्ठा dm_btree_info *info;
+struct shadow_spine {
+	struct dm_btree_info *info;
 
-	पूर्णांक count;
-	काष्ठा dm_block *nodes[2];
+	int count;
+	struct dm_block *nodes[2];
 
 	dm_block_t root;
-पूर्ण;
+};
 
-व्योम init_shaकरोw_spine(काष्ठा shaकरोw_spine *s, काष्ठा dm_btree_info *info);
-व्योम निकास_shaकरोw_spine(काष्ठा shaकरोw_spine *s);
+void init_shadow_spine(struct shadow_spine *s, struct dm_btree_info *info);
+void exit_shadow_spine(struct shadow_spine *s);
 
-पूर्णांक shaकरोw_step(काष्ठा shaकरोw_spine *s, dm_block_t b,
-		काष्ठा dm_btree_value_type *vt);
-
-/*
- * The spine must have at least one entry beक्रमe calling this.
- */
-काष्ठा dm_block *shaकरोw_current(काष्ठा shaकरोw_spine *s);
+int shadow_step(struct shadow_spine *s, dm_block_t b,
+		struct dm_btree_value_type *vt);
 
 /*
- * The spine must have at least two entries beक्रमe calling this.
+ * The spine must have at least one entry before calling this.
  */
-काष्ठा dm_block *shaकरोw_parent(काष्ठा shaकरोw_spine *s);
-
-पूर्णांक shaकरोw_has_parent(काष्ठा shaकरोw_spine *s);
-
-dm_block_t shaकरोw_root(काष्ठा shaकरोw_spine *s);
+struct dm_block *shadow_current(struct shadow_spine *s);
 
 /*
- * Some अंतरभूतs.
+ * The spine must have at least two entries before calling this.
  */
-अटल अंतरभूत __le64 *key_ptr(काष्ठा btree_node *n, uपूर्णांक32_t index)
-अणु
-	वापस n->keys + index;
-पूर्ण
+struct dm_block *shadow_parent(struct shadow_spine *s);
 
-अटल अंतरभूत व्योम *value_base(काष्ठा btree_node *n)
-अणु
-	वापस &n->keys[le32_to_cpu(n->header.max_entries)];
-पूर्ण
+int shadow_has_parent(struct shadow_spine *s);
 
-अटल अंतरभूत व्योम *value_ptr(काष्ठा btree_node *n, uपूर्णांक32_t index)
-अणु
-	uपूर्णांक32_t value_size = le32_to_cpu(n->header.value_size);
-	वापस value_base(n) + (value_size * index);
-पूर्ण
+dm_block_t shadow_root(struct shadow_spine *s);
 
 /*
- * Assumes the values are suitably-aligned and converts to core क्रमmat.
+ * Some inlines.
  */
-अटल अंतरभूत uपूर्णांक64_t value64(काष्ठा btree_node *n, uपूर्णांक32_t index)
-अणु
+static inline __le64 *key_ptr(struct btree_node *n, uint32_t index)
+{
+	return n->keys + index;
+}
+
+static inline void *value_base(struct btree_node *n)
+{
+	return &n->keys[le32_to_cpu(n->header.max_entries)];
+}
+
+static inline void *value_ptr(struct btree_node *n, uint32_t index)
+{
+	uint32_t value_size = le32_to_cpu(n->header.value_size);
+	return value_base(n) + (value_size * index);
+}
+
+/*
+ * Assumes the values are suitably-aligned and converts to core format.
+ */
+static inline uint64_t value64(struct btree_node *n, uint32_t index)
+{
 	__le64 *values_le = value_base(n);
 
-	वापस le64_to_cpu(values_le[index]);
-पूर्ण
+	return le64_to_cpu(values_le[index]);
+}
 
 /*
- * Searching क्रम a key within a single node.
+ * Searching for a key within a single node.
  */
-पूर्णांक lower_bound(काष्ठा btree_node *n, uपूर्णांक64_t key);
+int lower_bound(struct btree_node *n, uint64_t key);
 
-बाह्य काष्ठा dm_block_validator btree_node_validator;
+extern struct dm_block_validator btree_node_validator;
 
 /*
- * Value type क्रम upper levels of multi-level btrees.
+ * Value type for upper levels of multi-level btrees.
  */
-बाह्य व्योम init_le64_type(काष्ठा dm_transaction_manager *पंचांग,
-			   काष्ठा dm_btree_value_type *vt);
+extern void init_le64_type(struct dm_transaction_manager *tm,
+			   struct dm_btree_value_type *vt);
 
-#पूर्ण_अगर	/* DM_BTREE_INTERNAL_H */
+#endif	/* DM_BTREE_INTERNAL_H */

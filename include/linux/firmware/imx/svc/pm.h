@@ -1,27 +1,26 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0+ */
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * Copyright (C) 2016 Freescale Semiconductor, Inc.
  * Copyright 2017-2018 NXP
  *
- * Header file containing the खुला API क्रम the System Controller (SC)
- * Power Management (PM) function. This includes functions क्रम घातer state
- * control, घड़ी control, reset control, and wake-up event control.
+ * Header file containing the public API for the System Controller (SC)
+ * Power Management (PM) function. This includes functions for power state
+ * control, clock control, reset control, and wake-up event control.
  *
  * PM_SVC (SVC) Power Management Service
  *
- * Module क्रम the Power Management (PM) service.
+ * Module for the Power Management (PM) service.
  */
 
-#अगर_अघोषित _SC_PM_API_H
-#घोषणा _SC_PM_API_H
+#ifndef _SC_PM_API_H
+#define _SC_PM_API_H
 
-#समावेश <linux/firmware/imx/sci.h>
+#include <linux/firmware/imx/sci.h>
 
 /*
  * This type is used to indicate RPC PM function calls.
  */
-क्रमागत imx_sc_pm_func अणु
+enum imx_sc_pm_func {
 	IMX_SC_PM_FUNC_UNKNOWN = 0,
 	IMX_SC_PM_FUNC_SET_SYS_POWER_MODE = 19,
 	IMX_SC_PM_FUNC_SET_PARTITION_POWER_MODE = 1,
@@ -42,45 +41,45 @@
 	IMX_SC_PM_FUNC_REBOOT = 9,
 	IMX_SC_PM_FUNC_REBOOT_PARTITION = 12,
 	IMX_SC_PM_FUNC_CPU_START = 11,
-पूर्ण;
+};
 
 /*
- * Defines क्रम ALL parameters
+ * Defines for ALL parameters
  */
-#घोषणा IMX_SC_PM_CLK_ALL		UINT8_MAX	/* All घड़ीs */
+#define IMX_SC_PM_CLK_ALL		UINT8_MAX	/* All clocks */
 
 /*
- * Defines क्रम SC PM Power Mode
+ * Defines for SC PM Power Mode
  */
-#घोषणा IMX_SC_PM_PW_MODE_OFF	0	/* Power off */
-#घोषणा IMX_SC_PM_PW_MODE_STBY	1	/* Power in standby */
-#घोषणा IMX_SC_PM_PW_MODE_LP	2	/* Power in low-घातer */
-#घोषणा IMX_SC_PM_PW_MODE_ON	3	/* Power on */
+#define IMX_SC_PM_PW_MODE_OFF	0	/* Power off */
+#define IMX_SC_PM_PW_MODE_STBY	1	/* Power in standby */
+#define IMX_SC_PM_PW_MODE_LP	2	/* Power in low-power */
+#define IMX_SC_PM_PW_MODE_ON	3	/* Power on */
 
 /*
- * Defines क्रम SC PM CLK
+ * Defines for SC PM CLK
  */
-#घोषणा IMX_SC_PM_CLK_SLV_BUS	0	/* Slave bus घड़ी */
-#घोषणा IMX_SC_PM_CLK_MST_BUS	1	/* Master bus घड़ी */
-#घोषणा IMX_SC_PM_CLK_PER	2	/* Peripheral घड़ी */
-#घोषणा IMX_SC_PM_CLK_PHY	3	/* Phy घड़ी */
-#घोषणा IMX_SC_PM_CLK_MISC	4	/* Misc घड़ी */
-#घोषणा IMX_SC_PM_CLK_MISC0	0	/* Misc 0 घड़ी */
-#घोषणा IMX_SC_PM_CLK_MISC1	1	/* Misc 1 घड़ी */
-#घोषणा IMX_SC_PM_CLK_MISC2	2	/* Misc 2 घड़ी */
-#घोषणा IMX_SC_PM_CLK_MISC3	3	/* Misc 3 घड़ी */
-#घोषणा IMX_SC_PM_CLK_MISC4	4	/* Misc 4 घड़ी */
-#घोषणा IMX_SC_PM_CLK_CPU	2	/* CPU घड़ी */
-#घोषणा IMX_SC_PM_CLK_PLL	4	/* PLL */
-#घोषणा IMX_SC_PM_CLK_BYPASS	4	/* Bypass घड़ी */
+#define IMX_SC_PM_CLK_SLV_BUS	0	/* Slave bus clock */
+#define IMX_SC_PM_CLK_MST_BUS	1	/* Master bus clock */
+#define IMX_SC_PM_CLK_PER	2	/* Peripheral clock */
+#define IMX_SC_PM_CLK_PHY	3	/* Phy clock */
+#define IMX_SC_PM_CLK_MISC	4	/* Misc clock */
+#define IMX_SC_PM_CLK_MISC0	0	/* Misc 0 clock */
+#define IMX_SC_PM_CLK_MISC1	1	/* Misc 1 clock */
+#define IMX_SC_PM_CLK_MISC2	2	/* Misc 2 clock */
+#define IMX_SC_PM_CLK_MISC3	3	/* Misc 3 clock */
+#define IMX_SC_PM_CLK_MISC4	4	/* Misc 4 clock */
+#define IMX_SC_PM_CLK_CPU	2	/* CPU clock */
+#define IMX_SC_PM_CLK_PLL	4	/* PLL */
+#define IMX_SC_PM_CLK_BYPASS	4	/* Bypass clock */
 
 /*
- * Defines क्रम SC PM CLK Parent
+ * Defines for SC PM CLK Parent
  */
-#घोषणा IMX_SC_PM_PARENT_XTAL	0	/* Parent is XTAL. */
-#घोषणा IMX_SC_PM_PARENT_PLL0	1	/* Parent is PLL0 */
-#घोषणा IMX_SC_PM_PARENT_PLL1	2	/* Parent is PLL1 or PLL0/2 */
-#घोषणा IMX_SC_PM_PARENT_PLL2	3	/* Parent in PLL2 or PLL0/4 */
-#घोषणा IMX_SC_PM_PARENT_BYPS	4	/* Parent is a bypass घड़ी. */
+#define IMX_SC_PM_PARENT_XTAL	0	/* Parent is XTAL. */
+#define IMX_SC_PM_PARENT_PLL0	1	/* Parent is PLL0 */
+#define IMX_SC_PM_PARENT_PLL1	2	/* Parent is PLL1 or PLL0/2 */
+#define IMX_SC_PM_PARENT_PLL2	3	/* Parent in PLL2 or PLL0/4 */
+#define IMX_SC_PM_PARENT_BYPS	4	/* Parent is a bypass clock. */
 
-#पूर्ण_अगर /* _SC_PM_API_H */
+#endif /* _SC_PM_API_H */

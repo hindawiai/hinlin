@@ -1,121 +1,120 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /**
  * Copyright(c) 2016-20 Intel Corporation.
  *
- * Contains the software defined data काष्ठाures क्रम enclaves.
+ * Contains the software defined data structures for enclaves.
  */
-#अगर_अघोषित _X86_ENCL_H
-#घोषणा _X86_ENCL_H
+#ifndef _X86_ENCL_H
+#define _X86_ENCL_H
 
-#समावेश <linux/cpumask.h>
-#समावेश <linux/kref.h>
-#समावेश <linux/list.h>
-#समावेश <linux/mm_types.h>
-#समावेश <linux/mmu_notअगरier.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/notअगरier.h>
-#समावेश <linux/srcu.h>
-#समावेश <linux/workqueue.h>
-#समावेश <linux/xarray.h>
-#समावेश "sgx.h"
+#include <linux/cpumask.h>
+#include <linux/kref.h>
+#include <linux/list.h>
+#include <linux/mm_types.h>
+#include <linux/mmu_notifier.h>
+#include <linux/mutex.h>
+#include <linux/notifier.h>
+#include <linux/srcu.h>
+#include <linux/workqueue.h>
+#include <linux/xarray.h>
+#include "sgx.h"
 
 /* 'desc' bits holding the offset in the VA (version array) page. */
-#घोषणा SGX_ENCL_PAGE_VA_OFFSET_MASK	GENMASK_ULL(11, 3)
+#define SGX_ENCL_PAGE_VA_OFFSET_MASK	GENMASK_ULL(11, 3)
 
 /* 'desc' bit marking that the page is being reclaimed. */
-#घोषणा SGX_ENCL_PAGE_BEING_RECLAIMED	BIT(3)
+#define SGX_ENCL_PAGE_BEING_RECLAIMED	BIT(3)
 
-काष्ठा sgx_encl_page अणु
-	अचिन्हित दीर्घ desc;
-	अचिन्हित दीर्घ vm_max_prot_bits;
-	काष्ठा sgx_epc_page *epc_page;
-	काष्ठा sgx_encl *encl;
-	काष्ठा sgx_va_page *va_page;
-पूर्ण;
+struct sgx_encl_page {
+	unsigned long desc;
+	unsigned long vm_max_prot_bits;
+	struct sgx_epc_page *epc_page;
+	struct sgx_encl *encl;
+	struct sgx_va_page *va_page;
+};
 
-क्रमागत sgx_encl_flags अणु
+enum sgx_encl_flags {
 	SGX_ENCL_IOCTL		= BIT(0),
 	SGX_ENCL_DEBUG		= BIT(1),
 	SGX_ENCL_CREATED	= BIT(2),
 	SGX_ENCL_INITIALIZED	= BIT(3),
-पूर्ण;
+};
 
-काष्ठा sgx_encl_mm अणु
-	काष्ठा sgx_encl *encl;
-	काष्ठा mm_काष्ठा *mm;
-	काष्ठा list_head list;
-	काष्ठा mmu_notअगरier mmu_notअगरier;
-पूर्ण;
+struct sgx_encl_mm {
+	struct sgx_encl *encl;
+	struct mm_struct *mm;
+	struct list_head list;
+	struct mmu_notifier mmu_notifier;
+};
 
-काष्ठा sgx_encl अणु
-	अचिन्हित दीर्घ base;
-	अचिन्हित दीर्घ size;
-	अचिन्हित दीर्घ flags;
-	अचिन्हित पूर्णांक page_cnt;
-	अचिन्हित पूर्णांक secs_child_cnt;
-	काष्ठा mutex lock;
-	काष्ठा xarray page_array;
-	काष्ठा sgx_encl_page secs;
-	अचिन्हित दीर्घ attributes;
-	अचिन्हित दीर्घ attributes_mask;
+struct sgx_encl {
+	unsigned long base;
+	unsigned long size;
+	unsigned long flags;
+	unsigned int page_cnt;
+	unsigned int secs_child_cnt;
+	struct mutex lock;
+	struct xarray page_array;
+	struct sgx_encl_page secs;
+	unsigned long attributes;
+	unsigned long attributes_mask;
 
 	cpumask_t cpumask;
-	काष्ठा file *backing;
-	काष्ठा kref refcount;
-	काष्ठा list_head va_pages;
-	अचिन्हित दीर्घ mm_list_version;
-	काष्ठा list_head mm_list;
+	struct file *backing;
+	struct kref refcount;
+	struct list_head va_pages;
+	unsigned long mm_list_version;
+	struct list_head mm_list;
 	spinlock_t mm_lock;
-	काष्ठा srcu_काष्ठा srcu;
-पूर्ण;
+	struct srcu_struct srcu;
+};
 
-#घोषणा SGX_VA_SLOT_COUNT 512
+#define SGX_VA_SLOT_COUNT 512
 
-काष्ठा sgx_va_page अणु
-	काष्ठा sgx_epc_page *epc_page;
+struct sgx_va_page {
+	struct sgx_epc_page *epc_page;
 	DECLARE_BITMAP(slots, SGX_VA_SLOT_COUNT);
-	काष्ठा list_head list;
-पूर्ण;
+	struct list_head list;
+};
 
-काष्ठा sgx_backing अणु
+struct sgx_backing {
 	pgoff_t page_index;
-	काष्ठा page *contents;
-	काष्ठा page *pcmd;
-	अचिन्हित दीर्घ pcmd_offset;
-पूर्ण;
+	struct page *contents;
+	struct page *pcmd;
+	unsigned long pcmd_offset;
+};
 
-बाह्य स्थिर काष्ठा vm_operations_काष्ठा sgx_vm_ops;
+extern const struct vm_operations_struct sgx_vm_ops;
 
-अटल अंतरभूत पूर्णांक sgx_encl_find(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ addr,
-				काष्ठा vm_area_काष्ठा **vma)
-अणु
-	काष्ठा vm_area_काष्ठा *result;
+static inline int sgx_encl_find(struct mm_struct *mm, unsigned long addr,
+				struct vm_area_struct **vma)
+{
+	struct vm_area_struct *result;
 
 	result = find_vma(mm, addr);
-	अगर (!result || result->vm_ops != &sgx_vm_ops || addr < result->vm_start)
-		वापस -EINVAL;
+	if (!result || result->vm_ops != &sgx_vm_ops || addr < result->vm_start)
+		return -EINVAL;
 
 	*vma = result;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक sgx_encl_may_map(काष्ठा sgx_encl *encl, अचिन्हित दीर्घ start,
-		     अचिन्हित दीर्घ end, अचिन्हित दीर्घ vm_flags);
+int sgx_encl_may_map(struct sgx_encl *encl, unsigned long start,
+		     unsigned long end, unsigned long vm_flags);
 
-व्योम sgx_encl_release(काष्ठा kref *ref);
-पूर्णांक sgx_encl_mm_add(काष्ठा sgx_encl *encl, काष्ठा mm_काष्ठा *mm);
-पूर्णांक sgx_encl_get_backing(काष्ठा sgx_encl *encl, अचिन्हित दीर्घ page_index,
-			 काष्ठा sgx_backing *backing);
-व्योम sgx_encl_put_backing(काष्ठा sgx_backing *backing, bool करो_ग_लिखो);
-पूर्णांक sgx_encl_test_and_clear_young(काष्ठा mm_काष्ठा *mm,
-				  काष्ठा sgx_encl_page *page);
+void sgx_encl_release(struct kref *ref);
+int sgx_encl_mm_add(struct sgx_encl *encl, struct mm_struct *mm);
+int sgx_encl_get_backing(struct sgx_encl *encl, unsigned long page_index,
+			 struct sgx_backing *backing);
+void sgx_encl_put_backing(struct sgx_backing *backing, bool do_write);
+int sgx_encl_test_and_clear_young(struct mm_struct *mm,
+				  struct sgx_encl_page *page);
 
-काष्ठा sgx_epc_page *sgx_alloc_va_page(व्योम);
-अचिन्हित पूर्णांक sgx_alloc_va_slot(काष्ठा sgx_va_page *va_page);
-व्योम sgx_मुक्त_va_slot(काष्ठा sgx_va_page *va_page, अचिन्हित पूर्णांक offset);
-bool sgx_va_page_full(काष्ठा sgx_va_page *va_page);
-व्योम sgx_encl_मुक्त_epc_page(काष्ठा sgx_epc_page *page);
+struct sgx_epc_page *sgx_alloc_va_page(void);
+unsigned int sgx_alloc_va_slot(struct sgx_va_page *va_page);
+void sgx_free_va_slot(struct sgx_va_page *va_page, unsigned int offset);
+bool sgx_va_page_full(struct sgx_va_page *va_page);
+void sgx_encl_free_epc_page(struct sgx_epc_page *page);
 
-#पूर्ण_अगर /* _X86_ENCL_H */
+#endif /* _X86_ENCL_H */

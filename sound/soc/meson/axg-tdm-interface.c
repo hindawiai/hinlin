@@ -1,570 +1,569 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: (GPL-2.0 OR MIT)
+// SPDX-License-Identifier: (GPL-2.0 OR MIT)
 //
 // Copyright (c) 2018 BayLibre, SAS.
 // Author: Jerome Brunet <jbrunet@baylibre.com>
 
-#समावेश <linux/clk.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of_platक्रमm.h>
-#समावेश <sound/pcm_params.h>
-#समावेश <sound/soc.h>
-#समावेश <sound/soc-dai.h>
+#include <linux/clk.h>
+#include <linux/module.h>
+#include <linux/of_platform.h>
+#include <sound/pcm_params.h>
+#include <sound/soc.h>
+#include <sound/soc-dai.h>
 
-#समावेश "axg-tdm.h"
+#include "axg-tdm.h"
 
-क्रमागत अणु
+enum {
 	TDM_IFACE_PAD,
 	TDM_IFACE_LOOPBACK,
-पूर्ण;
+};
 
-अटल अचिन्हित पूर्णांक axg_tdm_slots_total(u32 *mask)
-अणु
-	अचिन्हित पूर्णांक slots = 0;
-	पूर्णांक i;
+static unsigned int axg_tdm_slots_total(u32 *mask)
+{
+	unsigned int slots = 0;
+	int i;
 
-	अगर (!mask)
-		वापस 0;
+	if (!mask)
+		return 0;
 
 	/* Count the total number of slots provided by all 4 lanes */
-	क्रम (i = 0; i < AXG_TDM_NUM_LANES; i++)
+	for (i = 0; i < AXG_TDM_NUM_LANES; i++)
 		slots += hweight32(mask[i]);
 
-	वापस slots;
-पूर्ण
+	return slots;
+}
 
-पूर्णांक axg_tdm_set_tdm_slots(काष्ठा snd_soc_dai *dai, u32 *tx_mask,
-			  u32 *rx_mask, अचिन्हित पूर्णांक slots,
-			  अचिन्हित पूर्णांक slot_width)
-अणु
-	काष्ठा axg_tdm_अगरace *अगरace = snd_soc_dai_get_drvdata(dai);
-	काष्ठा axg_tdm_stream *tx = (काष्ठा axg_tdm_stream *)
+int axg_tdm_set_tdm_slots(struct snd_soc_dai *dai, u32 *tx_mask,
+			  u32 *rx_mask, unsigned int slots,
+			  unsigned int slot_width)
+{
+	struct axg_tdm_iface *iface = snd_soc_dai_get_drvdata(dai);
+	struct axg_tdm_stream *tx = (struct axg_tdm_stream *)
 		dai->playback_dma_data;
-	काष्ठा axg_tdm_stream *rx = (काष्ठा axg_tdm_stream *)
+	struct axg_tdm_stream *rx = (struct axg_tdm_stream *)
 		dai->capture_dma_data;
-	अचिन्हित पूर्णांक tx_slots, rx_slots;
-	अचिन्हित पूर्णांक fmt = 0;
+	unsigned int tx_slots, rx_slots;
+	unsigned int fmt = 0;
 
 	tx_slots = axg_tdm_slots_total(tx_mask);
 	rx_slots = axg_tdm_slots_total(rx_mask);
 
-	/* We should at least have a slot क्रम a valid पूर्णांकerface */
-	अगर (!tx_slots && !rx_slots) अणु
+	/* We should at least have a slot for a valid interface */
+	if (!tx_slots && !rx_slots) {
 		dev_err(dai->dev, "interface has no slot\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगरace->slots = slots;
+	iface->slots = slots;
 
-	चयन (slot_width) अणु
-	हाल 0:
+	switch (slot_width) {
+	case 0:
 		slot_width = 32;
 		fallthrough;
-	हाल 32:
+	case 32:
 		fmt |= SNDRV_PCM_FMTBIT_S32_LE;
 		fallthrough;
-	हाल 24:
+	case 24:
 		fmt |= SNDRV_PCM_FMTBIT_S24_LE;
 		fmt |= SNDRV_PCM_FMTBIT_S20_LE;
 		fallthrough;
-	हाल 16:
+	case 16:
 		fmt |= SNDRV_PCM_FMTBIT_S16_LE;
 		fallthrough;
-	हाल 8:
+	case 8:
 		fmt |= SNDRV_PCM_FMTBIT_S8;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		dev_err(dai->dev, "unsupported slot width: %d\n", slot_width);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगरace->slot_width = slot_width;
+	iface->slot_width = slot_width;
 
-	/* Amend the dai driver and let dpcm merge करो its job */
-	अगर (tx) अणु
+	/* Amend the dai driver and let dpcm merge do its job */
+	if (tx) {
 		tx->mask = tx_mask;
 		dai->driver->playback.channels_max = tx_slots;
-		dai->driver->playback.क्रमmats = fmt;
-	पूर्ण
+		dai->driver->playback.formats = fmt;
+	}
 
-	अगर (rx) अणु
+	if (rx) {
 		rx->mask = rx_mask;
 		dai->driver->capture.channels_max = rx_slots;
-		dai->driver->capture.क्रमmats = fmt;
-	पूर्ण
+		dai->driver->capture.formats = fmt;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(axg_tdm_set_tdm_slots);
 
-अटल पूर्णांक axg_tdm_अगरace_set_sysclk(काष्ठा snd_soc_dai *dai, पूर्णांक clk_id,
-				    अचिन्हित पूर्णांक freq, पूर्णांक dir)
-अणु
-	काष्ठा axg_tdm_अगरace *अगरace = snd_soc_dai_get_drvdata(dai);
-	पूर्णांक ret = -ENOTSUPP;
+static int axg_tdm_iface_set_sysclk(struct snd_soc_dai *dai, int clk_id,
+				    unsigned int freq, int dir)
+{
+	struct axg_tdm_iface *iface = snd_soc_dai_get_drvdata(dai);
+	int ret = -ENOTSUPP;
 
-	अगर (dir == SND_SOC_CLOCK_OUT && clk_id == 0) अणु
-		अगर (!अगरace->mclk) अणु
+	if (dir == SND_SOC_CLOCK_OUT && clk_id == 0) {
+		if (!iface->mclk) {
 			dev_warn(dai->dev, "master clock not provided\n");
-		पूर्ण अन्यथा अणु
-			ret = clk_set_rate(अगरace->mclk, freq);
-			अगर (!ret)
-				अगरace->mclk_rate = freq;
-		पूर्ण
-	पूर्ण
+		} else {
+			ret = clk_set_rate(iface->mclk, freq);
+			if (!ret)
+				iface->mclk_rate = freq;
+		}
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक axg_tdm_अगरace_set_fmt(काष्ठा snd_soc_dai *dai, अचिन्हित पूर्णांक fmt)
-अणु
-	काष्ठा axg_tdm_अगरace *अगरace = snd_soc_dai_get_drvdata(dai);
+static int axg_tdm_iface_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
+{
+	struct axg_tdm_iface *iface = snd_soc_dai_get_drvdata(dai);
 
-	चयन (fmt & SND_SOC_DAIFMT_MASTER_MASK) अणु
-	हाल SND_SOC_DAIFMT_CBS_CFS:
-		अगर (!अगरace->mclk) अणु
+	switch (fmt & SND_SOC_DAIFMT_MASTER_MASK) {
+	case SND_SOC_DAIFMT_CBS_CFS:
+		if (!iface->mclk) {
 			dev_err(dai->dev, "cpu clock master: mclk missing\n");
-			वापस -ENODEV;
-		पूर्ण
-		अवरोध;
+			return -ENODEV;
+		}
+		break;
 
-	हाल SND_SOC_DAIFMT_CBM_CFM:
-		अवरोध;
+	case SND_SOC_DAIFMT_CBM_CFM:
+		break;
 
-	हाल SND_SOC_DAIFMT_CBS_CFM:
-	हाल SND_SOC_DAIFMT_CBM_CFS:
+	case SND_SOC_DAIFMT_CBS_CFM:
+	case SND_SOC_DAIFMT_CBM_CFS:
 		dev_err(dai->dev, "only CBS_CFS and CBM_CFM are supported\n");
 		fallthrough;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+	default:
+		return -EINVAL;
+	}
 
-	अगरace->fmt = fmt;
-	वापस 0;
-पूर्ण
+	iface->fmt = fmt;
+	return 0;
+}
 
-अटल पूर्णांक axg_tdm_अगरace_startup(काष्ठा snd_pcm_substream *substream,
-				 काष्ठा snd_soc_dai *dai)
-अणु
-	काष्ठा axg_tdm_अगरace *अगरace = snd_soc_dai_get_drvdata(dai);
-	काष्ठा axg_tdm_stream *ts =
+static int axg_tdm_iface_startup(struct snd_pcm_substream *substream,
+				 struct snd_soc_dai *dai)
+{
+	struct axg_tdm_iface *iface = snd_soc_dai_get_drvdata(dai);
+	struct axg_tdm_stream *ts =
 		snd_soc_dai_get_dma_data(dai, substream);
-	पूर्णांक ret;
+	int ret;
 
-	अगर (!axg_tdm_slots_total(ts->mask)) अणु
+	if (!axg_tdm_slots_total(ts->mask)) {
 		dev_err(dai->dev, "interface has not slots\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/* Apply component wide rate symmetry */
-	अगर (snd_soc_component_active(dai->component)) अणु
-		ret = snd_pcm_hw_स्थिरraपूर्णांक_single(substream->runसमय,
+	if (snd_soc_component_active(dai->component)) {
+		ret = snd_pcm_hw_constraint_single(substream->runtime,
 						   SNDRV_PCM_HW_PARAM_RATE,
-						   अगरace->rate);
-		अगर (ret < 0) अणु
+						   iface->rate);
+		if (ret < 0) {
 			dev_err(dai->dev,
 				"can't set iface rate constraint\n");
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक axg_tdm_अगरace_set_stream(काष्ठा snd_pcm_substream *substream,
-				    काष्ठा snd_pcm_hw_params *params,
-				    काष्ठा snd_soc_dai *dai)
-अणु
-	काष्ठा axg_tdm_अगरace *अगरace = snd_soc_dai_get_drvdata(dai);
-	काष्ठा axg_tdm_stream *ts = snd_soc_dai_get_dma_data(dai, substream);
-	अचिन्हित पूर्णांक channels = params_channels(params);
-	अचिन्हित पूर्णांक width = params_width(params);
+static int axg_tdm_iface_set_stream(struct snd_pcm_substream *substream,
+				    struct snd_pcm_hw_params *params,
+				    struct snd_soc_dai *dai)
+{
+	struct axg_tdm_iface *iface = snd_soc_dai_get_drvdata(dai);
+	struct axg_tdm_stream *ts = snd_soc_dai_get_dma_data(dai, substream);
+	unsigned int channels = params_channels(params);
+	unsigned int width = params_width(params);
 
-	/* Save rate and sample_bits क्रम component symmetry */
-	अगरace->rate = params_rate(params);
+	/* Save rate and sample_bits for component symmetry */
+	iface->rate = params_rate(params);
 
-	/* Make sure this पूर्णांकerface can cope with the stream */
-	अगर (axg_tdm_slots_total(ts->mask) < channels) अणु
+	/* Make sure this interface can cope with the stream */
+	if (axg_tdm_slots_total(ts->mask) < channels) {
 		dev_err(dai->dev, "not enough slots for channels\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (अगरace->slot_width < width) अणु
+	if (iface->slot_width < width) {
 		dev_err(dai->dev, "incompatible slots width for stream\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	/* Save the parameter क्रम tdmout/tdmin widमाला_लो */
+	/* Save the parameter for tdmout/tdmin widgets */
 	ts->physical_width = params_physical_width(params);
 	ts->width = params_width(params);
 	ts->channels = params_channels(params);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक axg_tdm_अगरace_set_lrclk(काष्ठा snd_soc_dai *dai,
-				   काष्ठा snd_pcm_hw_params *params)
-अणु
-	काष्ठा axg_tdm_अगरace *अगरace = snd_soc_dai_get_drvdata(dai);
-	अचिन्हित पूर्णांक ratio_num;
-	पूर्णांक ret;
+static int axg_tdm_iface_set_lrclk(struct snd_soc_dai *dai,
+				   struct snd_pcm_hw_params *params)
+{
+	struct axg_tdm_iface *iface = snd_soc_dai_get_drvdata(dai);
+	unsigned int ratio_num;
+	int ret;
 
-	ret = clk_set_rate(अगरace->lrclk, params_rate(params));
-	अगर (ret) अणु
+	ret = clk_set_rate(iface->lrclk, params_rate(params));
+	if (ret) {
 		dev_err(dai->dev, "setting sample clock failed: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	चयन (अगरace->fmt & SND_SOC_DAIFMT_FORMAT_MASK) अणु
-	हाल SND_SOC_DAIFMT_I2S:
-	हाल SND_SOC_DAIFMT_LEFT_J:
-	हाल SND_SOC_DAIFMT_RIGHT_J:
+	switch (iface->fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
+	case SND_SOC_DAIFMT_I2S:
+	case SND_SOC_DAIFMT_LEFT_J:
+	case SND_SOC_DAIFMT_RIGHT_J:
 		/* 50% duty cycle ratio */
 		ratio_num = 1;
-		अवरोध;
+		break;
 
-	हाल SND_SOC_DAIFMT_DSP_A:
-	हाल SND_SOC_DAIFMT_DSP_B:
+	case SND_SOC_DAIFMT_DSP_A:
+	case SND_SOC_DAIFMT_DSP_B:
 		/*
 		 * A zero duty cycle ratio will result in setting the mininum
-		 * ratio possible which, क्रम this घड़ी, is 1 cycle of the
-		 * parent bclk घड़ी high and the rest low, This is exactly
+		 * ratio possible which, for this clock, is 1 cycle of the
+		 * parent bclk clock high and the rest low, This is exactly
 		 * what we want here.
 		 */
 		ratio_num = 0;
-		अवरोध;
+		break;
 
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+	default:
+		return -EINVAL;
+	}
 
-	ret = clk_set_duty_cycle(अगरace->lrclk, ratio_num, 2);
-	अगर (ret) अणु
+	ret = clk_set_duty_cycle(iface->lrclk, ratio_num, 2);
+	if (ret) {
 		dev_err(dai->dev,
 			"setting sample clock duty cycle failed: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	/* Set sample घड़ी inversion */
-	ret = clk_set_phase(अगरace->lrclk,
-			    axg_tdm_lrclk_invert(अगरace->fmt) ? 180 : 0);
-	अगर (ret) अणु
+	/* Set sample clock inversion */
+	ret = clk_set_phase(iface->lrclk,
+			    axg_tdm_lrclk_invert(iface->fmt) ? 180 : 0);
+	if (ret) {
 		dev_err(dai->dev,
 			"setting sample clock phase failed: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक axg_tdm_अगरace_set_sclk(काष्ठा snd_soc_dai *dai,
-				  काष्ठा snd_pcm_hw_params *params)
-अणु
-	काष्ठा axg_tdm_अगरace *अगरace = snd_soc_dai_get_drvdata(dai);
-	अचिन्हित दीर्घ srate;
-	पूर्णांक ret;
+static int axg_tdm_iface_set_sclk(struct snd_soc_dai *dai,
+				  struct snd_pcm_hw_params *params)
+{
+	struct axg_tdm_iface *iface = snd_soc_dai_get_drvdata(dai);
+	unsigned long srate;
+	int ret;
 
-	srate = अगरace->slots * अगरace->slot_width * params_rate(params);
+	srate = iface->slots * iface->slot_width * params_rate(params);
 
-	अगर (!अगरace->mclk_rate) अणु
-		/* If no specअगरic mclk is requested, शेष to bit घड़ी * 4 */
-		clk_set_rate(अगरace->mclk, 4 * srate);
-	पूर्ण अन्यथा अणु
-		/* Check अगर we can actually get the bit घड़ी from mclk */
-		अगर (अगरace->mclk_rate % srate) अणु
+	if (!iface->mclk_rate) {
+		/* If no specific mclk is requested, default to bit clock * 4 */
+		clk_set_rate(iface->mclk, 4 * srate);
+	} else {
+		/* Check if we can actually get the bit clock from mclk */
+		if (iface->mclk_rate % srate) {
 			dev_err(dai->dev,
 				"can't derive sclk %lu from mclk %lu\n",
-				srate, अगरace->mclk_rate);
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+				srate, iface->mclk_rate);
+			return -EINVAL;
+		}
+	}
 
-	ret = clk_set_rate(अगरace->sclk, srate);
-	अगर (ret) अणु
+	ret = clk_set_rate(iface->sclk, srate);
+	if (ret) {
 		dev_err(dai->dev, "setting bit clock failed: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	/* Set the bit घड़ी inversion */
-	ret = clk_set_phase(अगरace->sclk,
-			    axg_tdm_sclk_invert(अगरace->fmt) ? 0 : 180);
-	अगर (ret) अणु
+	/* Set the bit clock inversion */
+	ret = clk_set_phase(iface->sclk,
+			    axg_tdm_sclk_invert(iface->fmt) ? 0 : 180);
+	if (ret) {
 		dev_err(dai->dev, "setting bit clock phase failed: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक axg_tdm_अगरace_hw_params(काष्ठा snd_pcm_substream *substream,
-				   काष्ठा snd_pcm_hw_params *params,
-				   काष्ठा snd_soc_dai *dai)
-अणु
-	काष्ठा axg_tdm_अगरace *अगरace = snd_soc_dai_get_drvdata(dai);
-	पूर्णांक ret;
+static int axg_tdm_iface_hw_params(struct snd_pcm_substream *substream,
+				   struct snd_pcm_hw_params *params,
+				   struct snd_soc_dai *dai)
+{
+	struct axg_tdm_iface *iface = snd_soc_dai_get_drvdata(dai);
+	int ret;
 
-	चयन (अगरace->fmt & SND_SOC_DAIFMT_FORMAT_MASK) अणु
-	हाल SND_SOC_DAIFMT_I2S:
-	हाल SND_SOC_DAIFMT_LEFT_J:
-	हाल SND_SOC_DAIFMT_RIGHT_J:
-		अगर (अगरace->slots > 2) अणु
+	switch (iface->fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
+	case SND_SOC_DAIFMT_I2S:
+	case SND_SOC_DAIFMT_LEFT_J:
+	case SND_SOC_DAIFMT_RIGHT_J:
+		if (iface->slots > 2) {
 			dev_err(dai->dev, "bad slot number for format: %d\n",
-				अगरace->slots);
-			वापस -EINVAL;
-		पूर्ण
-		अवरोध;
+				iface->slots);
+			return -EINVAL;
+		}
+		break;
 
-	हाल SND_SOC_DAIFMT_DSP_A:
-	हाल SND_SOC_DAIFMT_DSP_B:
-		अवरोध;
+	case SND_SOC_DAIFMT_DSP_A:
+	case SND_SOC_DAIFMT_DSP_B:
+		break;
 
-	शेष:
+	default:
 		dev_err(dai->dev, "unsupported dai format\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	ret = axg_tdm_अगरace_set_stream(substream, params, dai);
-	अगर (ret)
-		वापस ret;
+	ret = axg_tdm_iface_set_stream(substream, params, dai);
+	if (ret)
+		return ret;
 
-	अगर ((अगरace->fmt & SND_SOC_DAIFMT_MASTER_MASK) ==
-	    SND_SOC_DAIFMT_CBS_CFS) अणु
-		ret = axg_tdm_अगरace_set_sclk(dai, params);
-		अगर (ret)
-			वापस ret;
+	if ((iface->fmt & SND_SOC_DAIFMT_MASTER_MASK) ==
+	    SND_SOC_DAIFMT_CBS_CFS) {
+		ret = axg_tdm_iface_set_sclk(dai, params);
+		if (ret)
+			return ret;
 
-		ret = axg_tdm_अगरace_set_lrclk(dai, params);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		ret = axg_tdm_iface_set_lrclk(dai, params);
+		if (ret)
+			return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक axg_tdm_अगरace_hw_मुक्त(काष्ठा snd_pcm_substream *substream,
-				 काष्ठा snd_soc_dai *dai)
-अणु
-	काष्ठा axg_tdm_stream *ts = snd_soc_dai_get_dma_data(dai, substream);
+static int axg_tdm_iface_hw_free(struct snd_pcm_substream *substream,
+				 struct snd_soc_dai *dai)
+{
+	struct axg_tdm_stream *ts = snd_soc_dai_get_dma_data(dai, substream);
 
-	/* Stop all attached क्रमmatters */
+	/* Stop all attached formatters */
 	axg_tdm_stream_stop(ts);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक axg_tdm_अगरace_prepare(काष्ठा snd_pcm_substream *substream,
-				 काष्ठा snd_soc_dai *dai)
-अणु
-	काष्ठा axg_tdm_stream *ts = snd_soc_dai_get_dma_data(dai, substream);
+static int axg_tdm_iface_prepare(struct snd_pcm_substream *substream,
+				 struct snd_soc_dai *dai)
+{
+	struct axg_tdm_stream *ts = snd_soc_dai_get_dma_data(dai, substream);
 
-	/* Force all attached क्रमmatters to update */
-	वापस axg_tdm_stream_reset(ts);
-पूर्ण
+	/* Force all attached formatters to update */
+	return axg_tdm_stream_reset(ts);
+}
 
-अटल पूर्णांक axg_tdm_अगरace_हटाओ_dai(काष्ठा snd_soc_dai *dai)
-अणु
-	अगर (dai->capture_dma_data)
-		axg_tdm_stream_मुक्त(dai->capture_dma_data);
+static int axg_tdm_iface_remove_dai(struct snd_soc_dai *dai)
+{
+	if (dai->capture_dma_data)
+		axg_tdm_stream_free(dai->capture_dma_data);
 
-	अगर (dai->playback_dma_data)
-		axg_tdm_stream_मुक्त(dai->playback_dma_data);
+	if (dai->playback_dma_data)
+		axg_tdm_stream_free(dai->playback_dma_data);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक axg_tdm_अगरace_probe_dai(काष्ठा snd_soc_dai *dai)
-अणु
-	काष्ठा axg_tdm_अगरace *अगरace = snd_soc_dai_get_drvdata(dai);
+static int axg_tdm_iface_probe_dai(struct snd_soc_dai *dai)
+{
+	struct axg_tdm_iface *iface = snd_soc_dai_get_drvdata(dai);
 
-	अगर (dai->capture_widget) अणु
-		dai->capture_dma_data = axg_tdm_stream_alloc(अगरace);
-		अगर (!dai->capture_dma_data)
-			वापस -ENOMEM;
-	पूर्ण
+	if (dai->capture_widget) {
+		dai->capture_dma_data = axg_tdm_stream_alloc(iface);
+		if (!dai->capture_dma_data)
+			return -ENOMEM;
+	}
 
-	अगर (dai->playback_widget) अणु
-		dai->playback_dma_data = axg_tdm_stream_alloc(अगरace);
-		अगर (!dai->playback_dma_data) अणु
-			axg_tdm_अगरace_हटाओ_dai(dai);
-			वापस -ENOMEM;
-		पूर्ण
-	पूर्ण
+	if (dai->playback_widget) {
+		dai->playback_dma_data = axg_tdm_stream_alloc(iface);
+		if (!dai->playback_dma_data) {
+			axg_tdm_iface_remove_dai(dai);
+			return -ENOMEM;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा snd_soc_dai_ops axg_tdm_अगरace_ops = अणु
-	.set_sysclk	= axg_tdm_अगरace_set_sysclk,
-	.set_fmt	= axg_tdm_अगरace_set_fmt,
-	.startup	= axg_tdm_अगरace_startup,
-	.hw_params	= axg_tdm_अगरace_hw_params,
-	.prepare	= axg_tdm_अगरace_prepare,
-	.hw_मुक्त	= axg_tdm_अगरace_hw_मुक्त,
-पूर्ण;
+static const struct snd_soc_dai_ops axg_tdm_iface_ops = {
+	.set_sysclk	= axg_tdm_iface_set_sysclk,
+	.set_fmt	= axg_tdm_iface_set_fmt,
+	.startup	= axg_tdm_iface_startup,
+	.hw_params	= axg_tdm_iface_hw_params,
+	.prepare	= axg_tdm_iface_prepare,
+	.hw_free	= axg_tdm_iface_hw_free,
+};
 
 /* TDM Backend DAIs */
-अटल स्थिर काष्ठा snd_soc_dai_driver axg_tdm_अगरace_dai_drv[] = अणु
-	[TDM_IFACE_PAD] = अणु
+static const struct snd_soc_dai_driver axg_tdm_iface_dai_drv[] = {
+	[TDM_IFACE_PAD] = {
 		.name = "TDM Pad",
-		.playback = अणु
+		.playback = {
 			.stream_name	= "Playback",
 			.channels_min	= 1,
 			.channels_max	= AXG_TDM_CHANNEL_MAX,
 			.rates		= AXG_TDM_RATES,
-			.क्रमmats	= AXG_TDM_FORMATS,
-		पूर्ण,
-		.capture = अणु
+			.formats	= AXG_TDM_FORMATS,
+		},
+		.capture = {
 			.stream_name	= "Capture",
 			.channels_min	= 1,
 			.channels_max	= AXG_TDM_CHANNEL_MAX,
 			.rates		= AXG_TDM_RATES,
-			.क्रमmats	= AXG_TDM_FORMATS,
-		पूर्ण,
+			.formats	= AXG_TDM_FORMATS,
+		},
 		.id = TDM_IFACE_PAD,
-		.ops = &axg_tdm_अगरace_ops,
-		.probe = axg_tdm_अगरace_probe_dai,
-		.हटाओ = axg_tdm_अगरace_हटाओ_dai,
-	पूर्ण,
-	[TDM_IFACE_LOOPBACK] = अणु
+		.ops = &axg_tdm_iface_ops,
+		.probe = axg_tdm_iface_probe_dai,
+		.remove = axg_tdm_iface_remove_dai,
+	},
+	[TDM_IFACE_LOOPBACK] = {
 		.name = "TDM Loopback",
-		.capture = अणु
+		.capture = {
 			.stream_name	= "Loopback",
 			.channels_min	= 1,
 			.channels_max	= AXG_TDM_CHANNEL_MAX,
 			.rates		= AXG_TDM_RATES,
-			.क्रमmats	= AXG_TDM_FORMATS,
-		पूर्ण,
+			.formats	= AXG_TDM_FORMATS,
+		},
 		.id = TDM_IFACE_LOOPBACK,
-		.ops = &axg_tdm_अगरace_ops,
-		.probe = axg_tdm_अगरace_probe_dai,
-		.हटाओ = axg_tdm_अगरace_हटाओ_dai,
-	पूर्ण,
-पूर्ण;
+		.ops = &axg_tdm_iface_ops,
+		.probe = axg_tdm_iface_probe_dai,
+		.remove = axg_tdm_iface_remove_dai,
+	},
+};
 
-अटल पूर्णांक axg_tdm_अगरace_set_bias_level(काष्ठा snd_soc_component *component,
-					क्रमागत snd_soc_bias_level level)
-अणु
-	काष्ठा axg_tdm_अगरace *अगरace = snd_soc_component_get_drvdata(component);
-	क्रमागत snd_soc_bias_level now =
+static int axg_tdm_iface_set_bias_level(struct snd_soc_component *component,
+					enum snd_soc_bias_level level)
+{
+	struct axg_tdm_iface *iface = snd_soc_component_get_drvdata(component);
+	enum snd_soc_bias_level now =
 		snd_soc_component_get_bias_level(component);
-	पूर्णांक ret = 0;
+	int ret = 0;
 
-	चयन (level) अणु
-	हाल SND_SOC_BIAS_PREPARE:
-		अगर (now == SND_SOC_BIAS_STANDBY)
-			ret = clk_prepare_enable(अगरace->mclk);
-		अवरोध;
+	switch (level) {
+	case SND_SOC_BIAS_PREPARE:
+		if (now == SND_SOC_BIAS_STANDBY)
+			ret = clk_prepare_enable(iface->mclk);
+		break;
 
-	हाल SND_SOC_BIAS_STANDBY:
-		अगर (now == SND_SOC_BIAS_PREPARE)
-			clk_disable_unprepare(अगरace->mclk);
-		अवरोध;
+	case SND_SOC_BIAS_STANDBY:
+		if (now == SND_SOC_BIAS_PREPARE)
+			clk_disable_unprepare(iface->mclk);
+		break;
 
-	हाल SND_SOC_BIAS_OFF:
-	हाल SND_SOC_BIAS_ON:
-		अवरोध;
-	पूर्ण
+	case SND_SOC_BIAS_OFF:
+	case SND_SOC_BIAS_ON:
+		break;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा snd_soc_dapm_widget axg_tdm_अगरace_dapm_widमाला_लो[] = अणु
+static const struct snd_soc_dapm_widget axg_tdm_iface_dapm_widgets[] = {
 	SND_SOC_DAPM_SIGGEN("Playback Signal"),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा snd_soc_dapm_route axg_tdm_अगरace_dapm_routes[] = अणु
-	अणु "Loopback", शून्य, "Playback Signal" पूर्ण,
-पूर्ण;
+static const struct snd_soc_dapm_route axg_tdm_iface_dapm_routes[] = {
+	{ "Loopback", NULL, "Playback Signal" },
+};
 
-अटल स्थिर काष्ठा snd_soc_component_driver axg_tdm_अगरace_component_drv = अणु
-	.dapm_widमाला_लो		= axg_tdm_अगरace_dapm_widमाला_लो,
-	.num_dapm_widमाला_लो	= ARRAY_SIZE(axg_tdm_अगरace_dapm_widमाला_लो),
-	.dapm_routes		= axg_tdm_अगरace_dapm_routes,
-	.num_dapm_routes	= ARRAY_SIZE(axg_tdm_अगरace_dapm_routes),
-	.set_bias_level		= axg_tdm_अगरace_set_bias_level,
-पूर्ण;
+static const struct snd_soc_component_driver axg_tdm_iface_component_drv = {
+	.dapm_widgets		= axg_tdm_iface_dapm_widgets,
+	.num_dapm_widgets	= ARRAY_SIZE(axg_tdm_iface_dapm_widgets),
+	.dapm_routes		= axg_tdm_iface_dapm_routes,
+	.num_dapm_routes	= ARRAY_SIZE(axg_tdm_iface_dapm_routes),
+	.set_bias_level		= axg_tdm_iface_set_bias_level,
+};
 
-अटल स्थिर काष्ठा of_device_id axg_tdm_अगरace_of_match[] = अणु
-	अणु .compatible = "amlogic,axg-tdm-iface", पूर्ण,
-	अणुपूर्ण
-पूर्ण;
-MODULE_DEVICE_TABLE(of, axg_tdm_अगरace_of_match);
+static const struct of_device_id axg_tdm_iface_of_match[] = {
+	{ .compatible = "amlogic,axg-tdm-iface", },
+	{}
+};
+MODULE_DEVICE_TABLE(of, axg_tdm_iface_of_match);
 
-अटल पूर्णांक axg_tdm_अगरace_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा snd_soc_dai_driver *dai_drv;
-	काष्ठा axg_tdm_अगरace *अगरace;
-	पूर्णांक ret, i;
+static int axg_tdm_iface_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	struct snd_soc_dai_driver *dai_drv;
+	struct axg_tdm_iface *iface;
+	int ret, i;
 
-	अगरace = devm_kzalloc(dev, माप(*अगरace), GFP_KERNEL);
-	अगर (!अगरace)
-		वापस -ENOMEM;
-	platक्रमm_set_drvdata(pdev, अगरace);
+	iface = devm_kzalloc(dev, sizeof(*iface), GFP_KERNEL);
+	if (!iface)
+		return -ENOMEM;
+	platform_set_drvdata(pdev, iface);
 
 	/*
 	 * Duplicate dai driver: depending on the slot masks configuration
 	 * We'll change the number of channel provided by DAI stream, so dpcm
-	 * channel merge can be करोne properly
+	 * channel merge can be done properly
 	 */
-	dai_drv = devm_kसुस्मृति(dev, ARRAY_SIZE(axg_tdm_अगरace_dai_drv),
-			       माप(*dai_drv), GFP_KERNEL);
-	अगर (!dai_drv)
-		वापस -ENOMEM;
+	dai_drv = devm_kcalloc(dev, ARRAY_SIZE(axg_tdm_iface_dai_drv),
+			       sizeof(*dai_drv), GFP_KERNEL);
+	if (!dai_drv)
+		return -ENOMEM;
 
-	क्रम (i = 0; i < ARRAY_SIZE(axg_tdm_अगरace_dai_drv); i++)
-		स_नकल(&dai_drv[i], &axg_tdm_अगरace_dai_drv[i],
-		       माप(*dai_drv));
+	for (i = 0; i < ARRAY_SIZE(axg_tdm_iface_dai_drv); i++)
+		memcpy(&dai_drv[i], &axg_tdm_iface_dai_drv[i],
+		       sizeof(*dai_drv));
 
-	/* Bit घड़ी provided on the pad */
-	अगरace->sclk = devm_clk_get(dev, "sclk");
-	अगर (IS_ERR(अगरace->sclk)) अणु
-		ret = PTR_ERR(अगरace->sclk);
-		अगर (ret != -EPROBE_DEFER)
+	/* Bit clock provided on the pad */
+	iface->sclk = devm_clk_get(dev, "sclk");
+	if (IS_ERR(iface->sclk)) {
+		ret = PTR_ERR(iface->sclk);
+		if (ret != -EPROBE_DEFER)
 			dev_err(dev, "failed to get sclk: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	/* Sample घड़ी provided on the pad */
-	अगरace->lrclk = devm_clk_get(dev, "lrclk");
-	अगर (IS_ERR(अगरace->lrclk)) अणु
-		ret = PTR_ERR(अगरace->lrclk);
-		अगर (ret != -EPROBE_DEFER)
+	/* Sample clock provided on the pad */
+	iface->lrclk = devm_clk_get(dev, "lrclk");
+	if (IS_ERR(iface->lrclk)) {
+		ret = PTR_ERR(iface->lrclk);
+		if (ret != -EPROBE_DEFER)
 			dev_err(dev, "failed to get lrclk: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	/*
 	 * mclk maybe be missing when the cpu dai is in slave mode and
-	 * the codec करोes not require it to provide a master घड़ी.
-	 * At this poपूर्णांक, ignore the error अगर mclk is missing. We'll
-	 * throw an error अगर the cpu dai is master and mclk is missing
+	 * the codec does not require it to provide a master clock.
+	 * At this point, ignore the error if mclk is missing. We'll
+	 * throw an error if the cpu dai is master and mclk is missing
 	 */
-	अगरace->mclk = devm_clk_get(dev, "mclk");
-	अगर (IS_ERR(अगरace->mclk)) अणु
-		ret = PTR_ERR(अगरace->mclk);
-		अगर (ret == -ENOENT) अणु
-			अगरace->mclk = शून्य;
-		पूर्ण अन्यथा अणु
-			अगर (ret != -EPROBE_DEFER)
+	iface->mclk = devm_clk_get(dev, "mclk");
+	if (IS_ERR(iface->mclk)) {
+		ret = PTR_ERR(iface->mclk);
+		if (ret == -ENOENT) {
+			iface->mclk = NULL;
+		} else {
+			if (ret != -EPROBE_DEFER)
 				dev_err(dev, "failed to get mclk: %d\n", ret);
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
-	वापस devm_snd_soc_रेजिस्टर_component(dev,
-					&axg_tdm_अगरace_component_drv, dai_drv,
-					ARRAY_SIZE(axg_tdm_अगरace_dai_drv));
-पूर्ण
+	return devm_snd_soc_register_component(dev,
+					&axg_tdm_iface_component_drv, dai_drv,
+					ARRAY_SIZE(axg_tdm_iface_dai_drv));
+}
 
-अटल काष्ठा platक्रमm_driver axg_tdm_अगरace_pdrv = अणु
-	.probe = axg_tdm_अगरace_probe,
-	.driver = अणु
+static struct platform_driver axg_tdm_iface_pdrv = {
+	.probe = axg_tdm_iface_probe,
+	.driver = {
 		.name = "axg-tdm-iface",
-		.of_match_table = axg_tdm_अगरace_of_match,
-	पूर्ण,
-पूर्ण;
-module_platक्रमm_driver(axg_tdm_अगरace_pdrv);
+		.of_match_table = axg_tdm_iface_of_match,
+	},
+};
+module_platform_driver(axg_tdm_iface_pdrv);
 
 MODULE_DESCRIPTION("Amlogic AXG TDM interface driver");
 MODULE_AUTHOR("Jerome Brunet <jbrunet@baylibre.com>");

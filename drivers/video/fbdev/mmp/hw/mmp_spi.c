@@ -1,168 +1,167 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * linux/drivers/video/mmp/hw/mmp_spi.c
- * using the spi in LCD controler क्रम commands send
+ * using the spi in LCD controler for commands send
  *
  * Copyright (C) 2012 Marvell Technology Group Ltd.
  * Authors:  Guoqing Li <ligq@marvell.com>
  *          Lisa Du <cldu@marvell.com>
  *          Zhou Zhu <zzhu3@marvell.com>
  */
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/delay.h>
-#समावेश <linux/err.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/spi/spi.h>
-#समावेश "mmp_ctrl.h"
+#include <linux/errno.h>
+#include <linux/delay.h>
+#include <linux/err.h>
+#include <linux/io.h>
+#include <linux/spi/spi.h>
+#include "mmp_ctrl.h"
 
 /**
- * spi_ग_लिखो - ग_लिखो command to the SPI port
+ * spi_write - write command to the SPI port
  * @spi:  the SPI device.
- * @data: can be 8/16/32-bit, MSB justअगरied data to ग_लिखो.
+ * @data: can be 8/16/32-bit, MSB justified data to write.
  *
  * Wait bus transfer complete IRQ.
- * The caller is expected to perक्रमm the necessary locking.
+ * The caller is expected to perform the necessary locking.
  *
  * Returns:
- *   %-ETIMEDOUT	समयout occurred
+ *   %-ETIMEDOUT	timeout occurred
  *   0			success
  */
-अटल अंतरभूत पूर्णांक lcd_spi_ग_लिखो(काष्ठा spi_device *spi, u32 data)
-अणु
-	पूर्णांक समयout = 100000, isr, ret = 0;
-	u32 पंचांगp;
-	व्योम __iomem *reg_base = (व्योम __iomem *)
-		*(व्योम **)spi_master_get_devdata(spi->master);
+static inline int lcd_spi_write(struct spi_device *spi, u32 data)
+{
+	int timeout = 100000, isr, ret = 0;
+	u32 tmp;
+	void __iomem *reg_base = (void __iomem *)
+		*(void **)spi_master_get_devdata(spi->master);
 
 	/* clear ISR */
-	ग_लिखोl_relaxed(~SPI_IRQ_MASK, reg_base + SPU_IRQ_ISR);
+	writel_relaxed(~SPI_IRQ_MASK, reg_base + SPU_IRQ_ISR);
 
-	चयन (spi->bits_per_word) अणु
-	हाल 8:
-		ग_लिखोl_relaxed((u8)data, reg_base + LCD_SPU_SPI_TXDATA);
-		अवरोध;
-	हाल 16:
-		ग_लिखोl_relaxed((u16)data, reg_base + LCD_SPU_SPI_TXDATA);
-		अवरोध;
-	हाल 32:
-		ग_लिखोl_relaxed((u32)data, reg_base + LCD_SPU_SPI_TXDATA);
-		अवरोध;
-	शेष:
+	switch (spi->bits_per_word) {
+	case 8:
+		writel_relaxed((u8)data, reg_base + LCD_SPU_SPI_TXDATA);
+		break;
+	case 16:
+		writel_relaxed((u16)data, reg_base + LCD_SPU_SPI_TXDATA);
+		break;
+	case 32:
+		writel_relaxed((u32)data, reg_base + LCD_SPU_SPI_TXDATA);
+		break;
+	default:
 		dev_err(&spi->dev, "Wrong spi bit length\n");
-	पूर्ण
+	}
 
 	/* SPI start to send command */
-	पंचांगp = पढ़ोl_relaxed(reg_base + LCD_SPU_SPI_CTRL);
-	पंचांगp &= ~CFG_SPI_START_MASK;
-	पंचांगp |= CFG_SPI_START(1);
-	ग_लिखोl(पंचांगp, reg_base + LCD_SPU_SPI_CTRL);
+	tmp = readl_relaxed(reg_base + LCD_SPU_SPI_CTRL);
+	tmp &= ~CFG_SPI_START_MASK;
+	tmp |= CFG_SPI_START(1);
+	writel(tmp, reg_base + LCD_SPU_SPI_CTRL);
 
-	isr = पढ़ोl_relaxed(reg_base + SPU_IRQ_ISR);
-	जबतक (!(isr & SPI_IRQ_ENA_MASK)) अणु
+	isr = readl_relaxed(reg_base + SPU_IRQ_ISR);
+	while (!(isr & SPI_IRQ_ENA_MASK)) {
 		udelay(100);
-		isr = पढ़ोl_relaxed(reg_base + SPU_IRQ_ISR);
-		अगर (!--समयout) अणु
+		isr = readl_relaxed(reg_base + SPU_IRQ_ISR);
+		if (!--timeout) {
 			ret = -ETIMEDOUT;
 			dev_err(&spi->dev, "spi cmd send time out\n");
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	पंचांगp = पढ़ोl_relaxed(reg_base + LCD_SPU_SPI_CTRL);
-	पंचांगp &= ~CFG_SPI_START_MASK;
-	पंचांगp |= CFG_SPI_START(0);
-	ग_लिखोl_relaxed(पंचांगp, reg_base + LCD_SPU_SPI_CTRL);
+	tmp = readl_relaxed(reg_base + LCD_SPU_SPI_CTRL);
+	tmp &= ~CFG_SPI_START_MASK;
+	tmp |= CFG_SPI_START(0);
+	writel_relaxed(tmp, reg_base + LCD_SPU_SPI_CTRL);
 
-	ग_लिखोl_relaxed(~SPI_IRQ_MASK, reg_base + SPU_IRQ_ISR);
+	writel_relaxed(~SPI_IRQ_MASK, reg_base + SPU_IRQ_ISR);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक lcd_spi_setup(काष्ठा spi_device *spi)
-अणु
-	व्योम __iomem *reg_base = (व्योम __iomem *)
-		*(व्योम **)spi_master_get_devdata(spi->master);
-	u32 पंचांगp;
+static int lcd_spi_setup(struct spi_device *spi)
+{
+	void __iomem *reg_base = (void __iomem *)
+		*(void **)spi_master_get_devdata(spi->master);
+	u32 tmp;
 
-	पंचांगp = CFG_SCLKCNT(16) |
+	tmp = CFG_SCLKCNT(16) |
 		CFG_TXBITS(spi->bits_per_word) |
 		CFG_SPI_SEL(1) | CFG_SPI_ENA(1) |
 		CFG_SPI_3W4WB(1);
-	ग_लिखोl(पंचांगp, reg_base + LCD_SPU_SPI_CTRL);
+	writel(tmp, reg_base + LCD_SPU_SPI_CTRL);
 
 	/*
-	 * After set mode it need a समय to pull up the spi singals,
-	 * or it would cause the wrong waveक्रमm when send spi command,
+	 * After set mode it need a time to pull up the spi singals,
+	 * or it would cause the wrong waveform when send spi command,
 	 * especially on pxa910h
 	 */
-	पंचांगp = पढ़ोl_relaxed(reg_base + SPU_IOPAD_CONTROL);
-	अगर ((पंचांगp & CFG_IOPADMODE_MASK) != IOPAD_DUMB18SPI)
-		ग_लिखोl_relaxed(IOPAD_DUMB18SPI |
-			(पंचांगp & ~CFG_IOPADMODE_MASK),
+	tmp = readl_relaxed(reg_base + SPU_IOPAD_CONTROL);
+	if ((tmp & CFG_IOPADMODE_MASK) != IOPAD_DUMB18SPI)
+		writel_relaxed(IOPAD_DUMB18SPI |
+			(tmp & ~CFG_IOPADMODE_MASK),
 			reg_base + SPU_IOPAD_CONTROL);
 	udelay(20);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक lcd_spi_one_transfer(काष्ठा spi_device *spi, काष्ठा spi_message *m)
-अणु
-	काष्ठा spi_transfer *t;
-	पूर्णांक i;
+static int lcd_spi_one_transfer(struct spi_device *spi, struct spi_message *m)
+{
+	struct spi_transfer *t;
+	int i;
 
-	list_क्रम_each_entry(t, &m->transfers, transfer_list) अणु
-		चयन (spi->bits_per_word) अणु
-		हाल 8:
-			क्रम (i = 0; i < t->len; i++)
-				lcd_spi_ग_लिखो(spi, ((u8 *)t->tx_buf)[i]);
-			अवरोध;
-		हाल 16:
-			क्रम (i = 0; i < t->len/2; i++)
-				lcd_spi_ग_लिखो(spi, ((u16 *)t->tx_buf)[i]);
-			अवरोध;
-		हाल 32:
-			क्रम (i = 0; i < t->len/4; i++)
-				lcd_spi_ग_लिखो(spi, ((u32 *)t->tx_buf)[i]);
-			अवरोध;
-		शेष:
+	list_for_each_entry(t, &m->transfers, transfer_list) {
+		switch (spi->bits_per_word) {
+		case 8:
+			for (i = 0; i < t->len; i++)
+				lcd_spi_write(spi, ((u8 *)t->tx_buf)[i]);
+			break;
+		case 16:
+			for (i = 0; i < t->len/2; i++)
+				lcd_spi_write(spi, ((u16 *)t->tx_buf)[i]);
+			break;
+		case 32:
+			for (i = 0; i < t->len/4; i++)
+				lcd_spi_write(spi, ((u32 *)t->tx_buf)[i]);
+			break;
+		default:
 			dev_err(&spi->dev, "Wrong spi bit length\n");
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	m->status = 0;
-	अगर (m->complete)
+	if (m->complete)
 		m->complete(m->context);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक lcd_spi_रेजिस्टर(काष्ठा mmphw_ctrl *ctrl)
-अणु
-	काष्ठा spi_master *master;
-	व्योम **p_regbase;
-	पूर्णांक err;
+int lcd_spi_register(struct mmphw_ctrl *ctrl)
+{
+	struct spi_master *master;
+	void **p_regbase;
+	int err;
 
-	master = spi_alloc_master(ctrl->dev, माप(व्योम *));
-	अगर (!master) अणु
+	master = spi_alloc_master(ctrl->dev, sizeof(void *));
+	if (!master) {
 		dev_err(ctrl->dev, "unable to allocate SPI master\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 	p_regbase = spi_master_get_devdata(master);
-	*p_regbase = (व्योम __क्रमce *)ctrl->reg_base;
+	*p_regbase = (void __force *)ctrl->reg_base;
 
-	/* set bus num to 5 to aव्योम conflict with other spi hosts */
+	/* set bus num to 5 to avoid conflict with other spi hosts */
 	master->bus_num = 5;
 	master->num_chipselect = 1;
 	master->setup = lcd_spi_setup;
 	master->transfer = lcd_spi_one_transfer;
 
-	err = spi_रेजिस्टर_master(master);
-	अगर (err < 0) अणु
+	err = spi_register_master(master);
+	if (err < 0) {
 		dev_err(ctrl->dev, "unable to register SPI master\n");
 		spi_master_put(master);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	dev_info(&master->dev, "registered\n");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2014 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,65 +21,65 @@
  *
  */
 
-#अगर_अघोषित KFD_KERNEL_QUEUE_H_
-#घोषणा KFD_KERNEL_QUEUE_H_
+#ifndef KFD_KERNEL_QUEUE_H_
+#define KFD_KERNEL_QUEUE_H_
 
-#समावेश <linux/list.h>
-#समावेश <linux/types.h>
-#समावेश "kfd_priv.h"
+#include <linux/list.h>
+#include <linux/types.h>
+#include "kfd_priv.h"
 
 /**
- * kq_acquire_packet_buffer: Returns a poपूर्णांकer to the location in the kernel
- * queue ring buffer where the calling function can ग_लिखो its packet. It is
- * Guaranteed that there is enough space क्रम that packet. It also updates the
- * pending ग_लिखो poपूर्णांकer to that location so subsequent calls to
- * acquire_packet_buffer will get a correct ग_लिखो poपूर्णांकer
+ * kq_acquire_packet_buffer: Returns a pointer to the location in the kernel
+ * queue ring buffer where the calling function can write its packet. It is
+ * Guaranteed that there is enough space for that packet. It also updates the
+ * pending write pointer to that location so subsequent calls to
+ * acquire_packet_buffer will get a correct write pointer
  *
- * kq_submit_packet: Update the ग_लिखो poपूर्णांकer and करोorbell of a kernel queue.
+ * kq_submit_packet: Update the write pointer and doorbell of a kernel queue.
  *
- * kq_rollback_packet: This routine is called अगर we failed to build an acquired
- * packet क्रम some reason. It just overग_लिखोs the pending wptr with the current
+ * kq_rollback_packet: This routine is called if we failed to build an acquired
+ * packet for some reason. It just overwrites the pending wptr with the current
  * one
  *
  */
 
-पूर्णांक kq_acquire_packet_buffer(काष्ठा kernel_queue *kq,
-				माप_प्रकार packet_size_in_dwords,
-				अचिन्हित पूर्णांक **buffer_ptr);
-व्योम kq_submit_packet(काष्ठा kernel_queue *kq);
-व्योम kq_rollback_packet(काष्ठा kernel_queue *kq);
+int kq_acquire_packet_buffer(struct kernel_queue *kq,
+				size_t packet_size_in_dwords,
+				unsigned int **buffer_ptr);
+void kq_submit_packet(struct kernel_queue *kq);
+void kq_rollback_packet(struct kernel_queue *kq);
 
 
-काष्ठा kernel_queue अणु
+struct kernel_queue {
 	/* data */
-	काष्ठा kfd_dev		*dev;
-	काष्ठा mqd_manager	*mqd_mgr;
-	काष्ठा queue		*queue;
-	uपूर्णांक64_t		pending_wptr64;
-	uपूर्णांक32_t		pending_wptr;
-	अचिन्हित पूर्णांक		nop_packet;
+	struct kfd_dev		*dev;
+	struct mqd_manager	*mqd_mgr;
+	struct queue		*queue;
+	uint64_t		pending_wptr64;
+	uint32_t		pending_wptr;
+	unsigned int		nop_packet;
 
-	काष्ठा kfd_mem_obj	*rptr_mem;
-	uपूर्णांक32_t		*rptr_kernel;
-	uपूर्णांक64_t		rptr_gpu_addr;
-	काष्ठा kfd_mem_obj	*wptr_mem;
-	जोड़ अणु
-		uपूर्णांक64_t	*wptr64_kernel;
-		uपूर्णांक32_t	*wptr_kernel;
-	पूर्ण;
-	uपूर्णांक64_t		wptr_gpu_addr;
-	काष्ठा kfd_mem_obj	*pq;
-	uपूर्णांक64_t		pq_gpu_addr;
-	uपूर्णांक32_t		*pq_kernel_addr;
-	काष्ठा kfd_mem_obj	*eop_mem;
-	uपूर्णांक64_t		eop_gpu_addr;
-	uपूर्णांक32_t		*eop_kernel_addr;
+	struct kfd_mem_obj	*rptr_mem;
+	uint32_t		*rptr_kernel;
+	uint64_t		rptr_gpu_addr;
+	struct kfd_mem_obj	*wptr_mem;
+	union {
+		uint64_t	*wptr64_kernel;
+		uint32_t	*wptr_kernel;
+	};
+	uint64_t		wptr_gpu_addr;
+	struct kfd_mem_obj	*pq;
+	uint64_t		pq_gpu_addr;
+	uint32_t		*pq_kernel_addr;
+	struct kfd_mem_obj	*eop_mem;
+	uint64_t		eop_gpu_addr;
+	uint32_t		*eop_kernel_addr;
 
-	काष्ठा kfd_mem_obj	*fence_mem_obj;
-	uपूर्णांक64_t		fence_gpu_addr;
-	व्योम			*fence_kernel_address;
+	struct kfd_mem_obj	*fence_mem_obj;
+	uint64_t		fence_gpu_addr;
+	void			*fence_kernel_address;
 
-	काष्ठा list_head	list;
-पूर्ण;
+	struct list_head	list;
+};
 
-#पूर्ण_अगर /* KFD_KERNEL_QUEUE_H_ */
+#endif /* KFD_KERNEL_QUEUE_H_ */

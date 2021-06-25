@@ -1,109 +1,108 @@
-<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the मुख्य directory of this archive
- * क्रम more details.
+ * License.  See the file "COPYING" in the main directory of this archive
+ * for more details.
  *
  * Copyright (C) 2004-2016 Cavium, Inc.
  */
 
-#समावेश <linux/of_address.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/irqकरोमुख्य.h>
-#समावेश <linux/bitops.h>
-#समावेश <linux/of_irq.h>
-#समावेश <linux/percpu.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/smp.h>
-#समावेश <linux/of.h>
+#include <linux/of_address.h>
+#include <linux/interrupt.h>
+#include <linux/irqdomain.h>
+#include <linux/bitops.h>
+#include <linux/of_irq.h>
+#include <linux/percpu.h>
+#include <linux/slab.h>
+#include <linux/irq.h>
+#include <linux/smp.h>
+#include <linux/of.h>
 
-#समावेश <यंत्र/octeon/octeon.h>
-#समावेश <यंत्र/octeon/cvmx-ciu2-defs.h>
-#समावेश <यंत्र/octeon/cvmx-ciu3-defs.h>
+#include <asm/octeon/octeon.h>
+#include <asm/octeon/cvmx-ciu2-defs.h>
+#include <asm/octeon/cvmx-ciu3-defs.h>
 
-अटल DEFINE_PER_CPU(अचिन्हित दीर्घ, octeon_irq_ciu0_en_mirror);
-अटल DEFINE_PER_CPU(अचिन्हित दीर्घ, octeon_irq_ciu1_en_mirror);
-अटल DEFINE_PER_CPU(raw_spinlock_t, octeon_irq_ciu_spinlock);
-अटल DEFINE_PER_CPU(अचिन्हित पूर्णांक, octeon_irq_ciu3_idt_ip2);
+static DEFINE_PER_CPU(unsigned long, octeon_irq_ciu0_en_mirror);
+static DEFINE_PER_CPU(unsigned long, octeon_irq_ciu1_en_mirror);
+static DEFINE_PER_CPU(raw_spinlock_t, octeon_irq_ciu_spinlock);
+static DEFINE_PER_CPU(unsigned int, octeon_irq_ciu3_idt_ip2);
 
-अटल DEFINE_PER_CPU(अचिन्हित पूर्णांक, octeon_irq_ciu3_idt_ip3);
-अटल DEFINE_PER_CPU(काष्ठा octeon_ciu3_info *, octeon_ciu3_info);
-#घोषणा CIU3_MBOX_PER_CORE 10
+static DEFINE_PER_CPU(unsigned int, octeon_irq_ciu3_idt_ip3);
+static DEFINE_PER_CPU(struct octeon_ciu3_info *, octeon_ciu3_info);
+#define CIU3_MBOX_PER_CORE 10
 
 /*
- * The 8 most signअगरicant bits of the पूर्णांकsn identअगरy the पूर्णांकerrupt major block.
- * Each major block might use its own पूर्णांकerrupt करोमुख्य. Thus 256 करोमुख्यs are
+ * The 8 most significant bits of the intsn identify the interrupt major block.
+ * Each major block might use its own interrupt domain. Thus 256 domains are
  * needed.
  */
-#घोषणा MAX_CIU3_DOMAINS		256
+#define MAX_CIU3_DOMAINS		256
 
-प्रकार irq_hw_number_t (*octeon_ciu3_पूर्णांकsn2hw_t)(काष्ठा irq_करोमुख्य *, अचिन्हित पूर्णांक);
+typedef irq_hw_number_t (*octeon_ciu3_intsn2hw_t)(struct irq_domain *, unsigned int);
 
-/* Inक्रमmation क्रम each ciu3 in the प्रणाली */
-काष्ठा octeon_ciu3_info अणु
+/* Information for each ciu3 in the system */
+struct octeon_ciu3_info {
 	u64			ciu3_addr;
-	पूर्णांक			node;
-	काष्ठा irq_करोमुख्य	*करोमुख्य[MAX_CIU3_DOMAINS];
-	octeon_ciu3_पूर्णांकsn2hw_t	पूर्णांकsn2hw[MAX_CIU3_DOMAINS];
-पूर्ण;
+	int			node;
+	struct irq_domain	*domain[MAX_CIU3_DOMAINS];
+	octeon_ciu3_intsn2hw_t	intsn2hw[MAX_CIU3_DOMAINS];
+};
 
-/* Each ciu3 in the प्रणाली uses its own data (one ciu3 per node) */
-अटल काष्ठा octeon_ciu3_info	*octeon_ciu3_info_per_node[4];
+/* Each ciu3 in the system uses its own data (one ciu3 per node) */
+static struct octeon_ciu3_info	*octeon_ciu3_info_per_node[4];
 
-काष्ठा octeon_irq_ciu_करोमुख्य_data अणु
-	पूर्णांक num_sum;  /* number of sum रेजिस्टरs (2 or 3). */
-पूर्ण;
+struct octeon_irq_ciu_domain_data {
+	int num_sum;  /* number of sum registers (2 or 3). */
+};
 
 /* Register offsets from ciu3_addr */
-#घोषणा CIU3_CONST		0x220
-#घोषणा CIU3_IDT_CTL(_idt)	((_idt) * 8 + 0x110000)
-#घोषणा CIU3_IDT_PP(_idt, _idx)	((_idt) * 32 + (_idx) * 8 + 0x120000)
-#घोषणा CIU3_IDT_IO(_idt)	((_idt) * 8 + 0x130000)
-#घोषणा CIU3_DEST_PP_INT(_pp_ip) ((_pp_ip) * 8 + 0x200000)
-#घोषणा CIU3_DEST_IO_INT(_io)	((_io) * 8 + 0x210000)
-#घोषणा CIU3_ISC_CTL(_पूर्णांकsn)	((_पूर्णांकsn) * 8 + 0x80000000)
-#घोषणा CIU3_ISC_W1C(_पूर्णांकsn)	((_पूर्णांकsn) * 8 + 0x90000000)
-#घोषणा CIU3_ISC_W1S(_पूर्णांकsn)	((_पूर्णांकsn) * 8 + 0xa0000000)
+#define CIU3_CONST		0x220
+#define CIU3_IDT_CTL(_idt)	((_idt) * 8 + 0x110000)
+#define CIU3_IDT_PP(_idt, _idx)	((_idt) * 32 + (_idx) * 8 + 0x120000)
+#define CIU3_IDT_IO(_idt)	((_idt) * 8 + 0x130000)
+#define CIU3_DEST_PP_INT(_pp_ip) ((_pp_ip) * 8 + 0x200000)
+#define CIU3_DEST_IO_INT(_io)	((_io) * 8 + 0x210000)
+#define CIU3_ISC_CTL(_intsn)	((_intsn) * 8 + 0x80000000)
+#define CIU3_ISC_W1C(_intsn)	((_intsn) * 8 + 0x90000000)
+#define CIU3_ISC_W1S(_intsn)	((_intsn) * 8 + 0xa0000000)
 
-अटल __पढ़ो_mostly पूर्णांक octeon_irq_ciu_to_irq[8][64];
+static __read_mostly int octeon_irq_ciu_to_irq[8][64];
 
-काष्ठा octeon_ciu_chip_data अणु
-	जोड़ अणु
-		काष्ठा अणु		/* only used क्रम ciu3 */
+struct octeon_ciu_chip_data {
+	union {
+		struct {		/* only used for ciu3 */
 			u64 ciu3_addr;
-			अचिन्हित पूर्णांक पूर्णांकsn;
-		पूर्ण;
-		काष्ठा अणु		/* only used क्रम ciu/ciu2 */
+			unsigned int intsn;
+		};
+		struct {		/* only used for ciu/ciu2 */
 			u8 line;
 			u8 bit;
-		पूर्ण;
-	पूर्ण;
-	पूर्णांक gpio_line;
-	पूर्णांक current_cpu;	/* Next CPU expected to take this irq */
-	पूर्णांक ciu_node; /* NUMA node number of the CIU */
-पूर्ण;
+		};
+	};
+	int gpio_line;
+	int current_cpu;	/* Next CPU expected to take this irq */
+	int ciu_node; /* NUMA node number of the CIU */
+};
 
-काष्ठा octeon_core_chip_data अणु
-	काष्ठा mutex core_irq_mutex;
+struct octeon_core_chip_data {
+	struct mutex core_irq_mutex;
 	bool current_en;
 	bool desired_en;
 	u8 bit;
-पूर्ण;
+};
 
-#घोषणा MIPS_CORE_IRQ_LINES 8
+#define MIPS_CORE_IRQ_LINES 8
 
-अटल काष्ठा octeon_core_chip_data octeon_irq_core_chip_data[MIPS_CORE_IRQ_LINES];
+static struct octeon_core_chip_data octeon_irq_core_chip_data[MIPS_CORE_IRQ_LINES];
 
-अटल पूर्णांक octeon_irq_set_ciu_mapping(पूर्णांक irq, पूर्णांक line, पूर्णांक bit, पूर्णांक gpio_line,
-				      काष्ठा irq_chip *chip,
+static int octeon_irq_set_ciu_mapping(int irq, int line, int bit, int gpio_line,
+				      struct irq_chip *chip,
 				      irq_flow_handler_t handler)
-अणु
-	काष्ठा octeon_ciu_chip_data *cd;
+{
+	struct octeon_ciu_chip_data *cd;
 
-	cd = kzalloc(माप(*cd), GFP_KERNEL);
-	अगर (!cd)
-		वापस -ENOMEM;
+	cd = kzalloc(sizeof(*cd), GFP_KERNEL);
+	if (!cd)
+		return -ENOMEM;
 
 	irq_set_chip_and_handler(irq, chip, handler);
 
@@ -113,119 +112,119 @@
 
 	irq_set_chip_data(irq, cd);
 	octeon_irq_ciu_to_irq[line][bit] = irq;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम octeon_irq_मुक्त_cd(काष्ठा irq_करोमुख्य *d, अचिन्हित पूर्णांक irq)
-अणु
-	काष्ठा irq_data *data = irq_get_irq_data(irq);
-	काष्ठा octeon_ciu_chip_data *cd = irq_data_get_irq_chip_data(data);
+static void octeon_irq_free_cd(struct irq_domain *d, unsigned int irq)
+{
+	struct irq_data *data = irq_get_irq_data(irq);
+	struct octeon_ciu_chip_data *cd = irq_data_get_irq_chip_data(data);
 
-	irq_set_chip_data(irq, शून्य);
-	kमुक्त(cd);
-पूर्ण
+	irq_set_chip_data(irq, NULL);
+	kfree(cd);
+}
 
-अटल पूर्णांक octeon_irq_क्रमce_ciu_mapping(काष्ठा irq_करोमुख्य *करोमुख्य,
-					पूर्णांक irq, पूर्णांक line, पूर्णांक bit)
-अणु
-	वापस irq_करोमुख्य_associate(करोमुख्य, irq, line << 6 | bit);
-पूर्ण
+static int octeon_irq_force_ciu_mapping(struct irq_domain *domain,
+					int irq, int line, int bit)
+{
+	return irq_domain_associate(domain, irq, line << 6 | bit);
+}
 
-अटल पूर्णांक octeon_coreid_क्रम_cpu(पूर्णांक cpu)
-अणु
-#अगर_घोषित CONFIG_SMP
-	वापस cpu_logical_map(cpu);
-#अन्यथा
-	वापस cvmx_get_core_num();
-#पूर्ण_अगर
-पूर्ण
+static int octeon_coreid_for_cpu(int cpu)
+{
+#ifdef CONFIG_SMP
+	return cpu_logical_map(cpu);
+#else
+	return cvmx_get_core_num();
+#endif
+}
 
-अटल पूर्णांक octeon_cpu_क्रम_coreid(पूर्णांक coreid)
-अणु
-#अगर_घोषित CONFIG_SMP
-	वापस cpu_number_map(coreid);
-#अन्यथा
-	वापस smp_processor_id();
-#पूर्ण_अगर
-पूर्ण
+static int octeon_cpu_for_coreid(int coreid)
+{
+#ifdef CONFIG_SMP
+	return cpu_number_map(coreid);
+#else
+	return smp_processor_id();
+#endif
+}
 
-अटल व्योम octeon_irq_core_ack(काष्ठा irq_data *data)
-अणु
-	काष्ठा octeon_core_chip_data *cd = irq_data_get_irq_chip_data(data);
-	अचिन्हित पूर्णांक bit = cd->bit;
+static void octeon_irq_core_ack(struct irq_data *data)
+{
+	struct octeon_core_chip_data *cd = irq_data_get_irq_chip_data(data);
+	unsigned int bit = cd->bit;
 
 	/*
-	 * We करोn't need to disable IRQs to make these atomic since
-	 * they are alपढ़ोy disabled earlier in the low level
-	 * पूर्णांकerrupt code.
+	 * We don't need to disable IRQs to make these atomic since
+	 * they are already disabled earlier in the low level
+	 * interrupt code.
 	 */
 	clear_c0_status(0x100 << bit);
-	/* The two user पूर्णांकerrupts must be cleared manually. */
-	अगर (bit < 2)
+	/* The two user interrupts must be cleared manually. */
+	if (bit < 2)
 		clear_c0_cause(0x100 << bit);
-पूर्ण
+}
 
-अटल व्योम octeon_irq_core_eoi(काष्ठा irq_data *data)
-अणु
-	काष्ठा octeon_core_chip_data *cd = irq_data_get_irq_chip_data(data);
+static void octeon_irq_core_eoi(struct irq_data *data)
+{
+	struct octeon_core_chip_data *cd = irq_data_get_irq_chip_data(data);
 
 	/*
-	 * We करोn't need to disable IRQs to make these atomic since
-	 * they are alपढ़ोy disabled earlier in the low level
-	 * पूर्णांकerrupt code.
+	 * We don't need to disable IRQs to make these atomic since
+	 * they are already disabled earlier in the low level
+	 * interrupt code.
 	 */
 	set_c0_status(0x100 << cd->bit);
-पूर्ण
+}
 
-अटल व्योम octeon_irq_core_set_enable_local(व्योम *arg)
-अणु
-	काष्ठा irq_data *data = arg;
-	काष्ठा octeon_core_chip_data *cd = irq_data_get_irq_chip_data(data);
-	अचिन्हित पूर्णांक mask = 0x100 << cd->bit;
+static void octeon_irq_core_set_enable_local(void *arg)
+{
+	struct irq_data *data = arg;
+	struct octeon_core_chip_data *cd = irq_data_get_irq_chip_data(data);
+	unsigned int mask = 0x100 << cd->bit;
 
 	/*
-	 * Interrupts are alपढ़ोy disabled, so these are atomic.
+	 * Interrupts are already disabled, so these are atomic.
 	 */
-	अगर (cd->desired_en)
+	if (cd->desired_en)
 		set_c0_status(mask);
-	अन्यथा
+	else
 		clear_c0_status(mask);
 
-पूर्ण
+}
 
-अटल व्योम octeon_irq_core_disable(काष्ठा irq_data *data)
-अणु
-	काष्ठा octeon_core_chip_data *cd = irq_data_get_irq_chip_data(data);
+static void octeon_irq_core_disable(struct irq_data *data)
+{
+	struct octeon_core_chip_data *cd = irq_data_get_irq_chip_data(data);
 	cd->desired_en = false;
-पूर्ण
+}
 
-अटल व्योम octeon_irq_core_enable(काष्ठा irq_data *data)
-अणु
-	काष्ठा octeon_core_chip_data *cd = irq_data_get_irq_chip_data(data);
+static void octeon_irq_core_enable(struct irq_data *data)
+{
+	struct octeon_core_chip_data *cd = irq_data_get_irq_chip_data(data);
 	cd->desired_en = true;
-पूर्ण
+}
 
-अटल व्योम octeon_irq_core_bus_lock(काष्ठा irq_data *data)
-अणु
-	काष्ठा octeon_core_chip_data *cd = irq_data_get_irq_chip_data(data);
+static void octeon_irq_core_bus_lock(struct irq_data *data)
+{
+	struct octeon_core_chip_data *cd = irq_data_get_irq_chip_data(data);
 
 	mutex_lock(&cd->core_irq_mutex);
-पूर्ण
+}
 
-अटल व्योम octeon_irq_core_bus_sync_unlock(काष्ठा irq_data *data)
-अणु
-	काष्ठा octeon_core_chip_data *cd = irq_data_get_irq_chip_data(data);
+static void octeon_irq_core_bus_sync_unlock(struct irq_data *data)
+{
+	struct octeon_core_chip_data *cd = irq_data_get_irq_chip_data(data);
 
-	अगर (cd->desired_en != cd->current_en) अणु
+	if (cd->desired_en != cd->current_en) {
 		on_each_cpu(octeon_irq_core_set_enable_local, data, 1);
 
 		cd->current_en = cd->desired_en;
-	पूर्ण
+	}
 
 	mutex_unlock(&cd->core_irq_mutex);
-पूर्ण
+}
 
-अटल काष्ठा irq_chip octeon_irq_chip_core = अणु
+static struct irq_chip octeon_irq_chip_core = {
 	.name = "Core",
 	.irq_enable = octeon_irq_core_enable,
 	.irq_disable = octeon_irq_core_disable,
@@ -237,15 +236,15 @@
 	.irq_cpu_online = octeon_irq_core_eoi,
 	.irq_cpu_offline = octeon_irq_core_ack,
 	.flags = IRQCHIP_ONOFFLINE_ENABLED,
-पूर्ण;
+};
 
-अटल व्योम __init octeon_irq_init_core(व्योम)
-अणु
-	पूर्णांक i;
-	पूर्णांक irq;
-	काष्ठा octeon_core_chip_data *cd;
+static void __init octeon_irq_init_core(void)
+{
+	int i;
+	int irq;
+	struct octeon_core_chip_data *cd;
 
-	क्रम (i = 0; i < MIPS_CORE_IRQ_LINES; i++) अणु
+	for (i = 0; i < MIPS_CORE_IRQ_LINES; i++) {
 		cd = &octeon_irq_core_chip_data[i];
 		cd->current_en = false;
 		cd->desired_en = false;
@@ -256,214 +255,214 @@
 		irq_set_chip_data(irq, cd);
 		irq_set_chip_and_handler(irq, &octeon_irq_chip_core,
 					 handle_percpu_irq);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक next_cpu_क्रम_irq(काष्ठा irq_data *data)
-अणु
+static int next_cpu_for_irq(struct irq_data *data)
+{
 
-#अगर_घोषित CONFIG_SMP
-	पूर्णांक cpu;
-	काष्ठा cpumask *mask = irq_data_get_affinity_mask(data);
-	पूर्णांक weight = cpumask_weight(mask);
-	काष्ठा octeon_ciu_chip_data *cd = irq_data_get_irq_chip_data(data);
+#ifdef CONFIG_SMP
+	int cpu;
+	struct cpumask *mask = irq_data_get_affinity_mask(data);
+	int weight = cpumask_weight(mask);
+	struct octeon_ciu_chip_data *cd = irq_data_get_irq_chip_data(data);
 
-	अगर (weight > 1) अणु
+	if (weight > 1) {
 		cpu = cd->current_cpu;
-		क्रम (;;) अणु
+		for (;;) {
 			cpu = cpumask_next(cpu, mask);
-			अगर (cpu >= nr_cpu_ids) अणु
+			if (cpu >= nr_cpu_ids) {
 				cpu = -1;
-				जारी;
-			पूर्ण अन्यथा अगर (cpumask_test_cpu(cpu, cpu_online_mask)) अणु
-				अवरोध;
-			पूर्ण
-		पूर्ण
-	पूर्ण अन्यथा अगर (weight == 1) अणु
+				continue;
+			} else if (cpumask_test_cpu(cpu, cpu_online_mask)) {
+				break;
+			}
+		}
+	} else if (weight == 1) {
 		cpu = cpumask_first(mask);
-	पूर्ण अन्यथा अणु
+	} else {
 		cpu = smp_processor_id();
-	पूर्ण
+	}
 	cd->current_cpu = cpu;
-	वापस cpu;
-#अन्यथा
-	वापस smp_processor_id();
-#पूर्ण_अगर
-पूर्ण
+	return cpu;
+#else
+	return smp_processor_id();
+#endif
+}
 
-अटल व्योम octeon_irq_ciu_enable(काष्ठा irq_data *data)
-अणु
-	पूर्णांक cpu = next_cpu_क्रम_irq(data);
-	पूर्णांक coreid = octeon_coreid_क्रम_cpu(cpu);
-	अचिन्हित दीर्घ *pen;
-	अचिन्हित दीर्घ flags;
-	काष्ठा octeon_ciu_chip_data *cd;
+static void octeon_irq_ciu_enable(struct irq_data *data)
+{
+	int cpu = next_cpu_for_irq(data);
+	int coreid = octeon_coreid_for_cpu(cpu);
+	unsigned long *pen;
+	unsigned long flags;
+	struct octeon_ciu_chip_data *cd;
 	raw_spinlock_t *lock = &per_cpu(octeon_irq_ciu_spinlock, cpu);
 
 	cd = irq_data_get_irq_chip_data(data);
 
 	raw_spin_lock_irqsave(lock, flags);
-	अगर (cd->line == 0) अणु
+	if (cd->line == 0) {
 		pen = &per_cpu(octeon_irq_ciu0_en_mirror, cpu);
 		__set_bit(cd->bit, pen);
 		/*
-		 * Must be visible to octeon_irq_ipअणु2,3पूर्ण_ciu() beक्रमe
+		 * Must be visible to octeon_irq_ip{2,3}_ciu() before
 		 * enabling the irq.
 		 */
 		wmb();
-		cvmx_ग_लिखो_csr(CVMX_CIU_INTX_EN0(coreid * 2), *pen);
-	पूर्ण अन्यथा अणु
+		cvmx_write_csr(CVMX_CIU_INTX_EN0(coreid * 2), *pen);
+	} else {
 		pen = &per_cpu(octeon_irq_ciu1_en_mirror, cpu);
 		__set_bit(cd->bit, pen);
 		/*
-		 * Must be visible to octeon_irq_ipअणु2,3पूर्ण_ciu() beक्रमe
+		 * Must be visible to octeon_irq_ip{2,3}_ciu() before
 		 * enabling the irq.
 		 */
 		wmb();
-		cvmx_ग_लिखो_csr(CVMX_CIU_INTX_EN1(coreid * 2 + 1), *pen);
-	पूर्ण
+		cvmx_write_csr(CVMX_CIU_INTX_EN1(coreid * 2 + 1), *pen);
+	}
 	raw_spin_unlock_irqrestore(lock, flags);
-पूर्ण
+}
 
-अटल व्योम octeon_irq_ciu_enable_local(काष्ठा irq_data *data)
-अणु
-	अचिन्हित दीर्घ *pen;
-	अचिन्हित दीर्घ flags;
-	काष्ठा octeon_ciu_chip_data *cd;
+static void octeon_irq_ciu_enable_local(struct irq_data *data)
+{
+	unsigned long *pen;
+	unsigned long flags;
+	struct octeon_ciu_chip_data *cd;
 	raw_spinlock_t *lock = this_cpu_ptr(&octeon_irq_ciu_spinlock);
 
 	cd = irq_data_get_irq_chip_data(data);
 
 	raw_spin_lock_irqsave(lock, flags);
-	अगर (cd->line == 0) अणु
+	if (cd->line == 0) {
 		pen = this_cpu_ptr(&octeon_irq_ciu0_en_mirror);
 		__set_bit(cd->bit, pen);
 		/*
-		 * Must be visible to octeon_irq_ipअणु2,3पूर्ण_ciu() beक्रमe
+		 * Must be visible to octeon_irq_ip{2,3}_ciu() before
 		 * enabling the irq.
 		 */
 		wmb();
-		cvmx_ग_लिखो_csr(CVMX_CIU_INTX_EN0(cvmx_get_core_num() * 2), *pen);
-	पूर्ण अन्यथा अणु
+		cvmx_write_csr(CVMX_CIU_INTX_EN0(cvmx_get_core_num() * 2), *pen);
+	} else {
 		pen = this_cpu_ptr(&octeon_irq_ciu1_en_mirror);
 		__set_bit(cd->bit, pen);
 		/*
-		 * Must be visible to octeon_irq_ipअणु2,3पूर्ण_ciu() beक्रमe
+		 * Must be visible to octeon_irq_ip{2,3}_ciu() before
 		 * enabling the irq.
 		 */
 		wmb();
-		cvmx_ग_लिखो_csr(CVMX_CIU_INTX_EN1(cvmx_get_core_num() * 2 + 1), *pen);
-	पूर्ण
+		cvmx_write_csr(CVMX_CIU_INTX_EN1(cvmx_get_core_num() * 2 + 1), *pen);
+	}
 	raw_spin_unlock_irqrestore(lock, flags);
-पूर्ण
+}
 
-अटल व्योम octeon_irq_ciu_disable_local(काष्ठा irq_data *data)
-अणु
-	अचिन्हित दीर्घ *pen;
-	अचिन्हित दीर्घ flags;
-	काष्ठा octeon_ciu_chip_data *cd;
+static void octeon_irq_ciu_disable_local(struct irq_data *data)
+{
+	unsigned long *pen;
+	unsigned long flags;
+	struct octeon_ciu_chip_data *cd;
 	raw_spinlock_t *lock = this_cpu_ptr(&octeon_irq_ciu_spinlock);
 
 	cd = irq_data_get_irq_chip_data(data);
 
 	raw_spin_lock_irqsave(lock, flags);
-	अगर (cd->line == 0) अणु
+	if (cd->line == 0) {
 		pen = this_cpu_ptr(&octeon_irq_ciu0_en_mirror);
 		__clear_bit(cd->bit, pen);
 		/*
-		 * Must be visible to octeon_irq_ipअणु2,3पूर्ण_ciu() beक्रमe
+		 * Must be visible to octeon_irq_ip{2,3}_ciu() before
 		 * enabling the irq.
 		 */
 		wmb();
-		cvmx_ग_लिखो_csr(CVMX_CIU_INTX_EN0(cvmx_get_core_num() * 2), *pen);
-	पूर्ण अन्यथा अणु
+		cvmx_write_csr(CVMX_CIU_INTX_EN0(cvmx_get_core_num() * 2), *pen);
+	} else {
 		pen = this_cpu_ptr(&octeon_irq_ciu1_en_mirror);
 		__clear_bit(cd->bit, pen);
 		/*
-		 * Must be visible to octeon_irq_ipअणु2,3पूर्ण_ciu() beक्रमe
+		 * Must be visible to octeon_irq_ip{2,3}_ciu() before
 		 * enabling the irq.
 		 */
 		wmb();
-		cvmx_ग_लिखो_csr(CVMX_CIU_INTX_EN1(cvmx_get_core_num() * 2 + 1), *pen);
-	पूर्ण
+		cvmx_write_csr(CVMX_CIU_INTX_EN1(cvmx_get_core_num() * 2 + 1), *pen);
+	}
 	raw_spin_unlock_irqrestore(lock, flags);
-पूर्ण
+}
 
-अटल व्योम octeon_irq_ciu_disable_all(काष्ठा irq_data *data)
-अणु
-	अचिन्हित दीर्घ flags;
-	अचिन्हित दीर्घ *pen;
-	पूर्णांक cpu;
-	काष्ठा octeon_ciu_chip_data *cd;
+static void octeon_irq_ciu_disable_all(struct irq_data *data)
+{
+	unsigned long flags;
+	unsigned long *pen;
+	int cpu;
+	struct octeon_ciu_chip_data *cd;
 	raw_spinlock_t *lock;
 
 	cd = irq_data_get_irq_chip_data(data);
 
-	क्रम_each_online_cpu(cpu) अणु
-		पूर्णांक coreid = octeon_coreid_क्रम_cpu(cpu);
+	for_each_online_cpu(cpu) {
+		int coreid = octeon_coreid_for_cpu(cpu);
 		lock = &per_cpu(octeon_irq_ciu_spinlock, cpu);
-		अगर (cd->line == 0)
+		if (cd->line == 0)
 			pen = &per_cpu(octeon_irq_ciu0_en_mirror, cpu);
-		अन्यथा
+		else
 			pen = &per_cpu(octeon_irq_ciu1_en_mirror, cpu);
 
 		raw_spin_lock_irqsave(lock, flags);
 		__clear_bit(cd->bit, pen);
 		/*
-		 * Must be visible to octeon_irq_ipअणु2,3पूर्ण_ciu() beक्रमe
+		 * Must be visible to octeon_irq_ip{2,3}_ciu() before
 		 * enabling the irq.
 		 */
 		wmb();
-		अगर (cd->line == 0)
-			cvmx_ग_लिखो_csr(CVMX_CIU_INTX_EN0(coreid * 2), *pen);
-		अन्यथा
-			cvmx_ग_लिखो_csr(CVMX_CIU_INTX_EN1(coreid * 2 + 1), *pen);
+		if (cd->line == 0)
+			cvmx_write_csr(CVMX_CIU_INTX_EN0(coreid * 2), *pen);
+		else
+			cvmx_write_csr(CVMX_CIU_INTX_EN1(coreid * 2 + 1), *pen);
 		raw_spin_unlock_irqrestore(lock, flags);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम octeon_irq_ciu_enable_all(काष्ठा irq_data *data)
-अणु
-	अचिन्हित दीर्घ flags;
-	अचिन्हित दीर्घ *pen;
-	पूर्णांक cpu;
-	काष्ठा octeon_ciu_chip_data *cd;
+static void octeon_irq_ciu_enable_all(struct irq_data *data)
+{
+	unsigned long flags;
+	unsigned long *pen;
+	int cpu;
+	struct octeon_ciu_chip_data *cd;
 	raw_spinlock_t *lock;
 
 	cd = irq_data_get_irq_chip_data(data);
 
-	क्रम_each_online_cpu(cpu) अणु
-		पूर्णांक coreid = octeon_coreid_क्रम_cpu(cpu);
+	for_each_online_cpu(cpu) {
+		int coreid = octeon_coreid_for_cpu(cpu);
 		lock = &per_cpu(octeon_irq_ciu_spinlock, cpu);
-		अगर (cd->line == 0)
+		if (cd->line == 0)
 			pen = &per_cpu(octeon_irq_ciu0_en_mirror, cpu);
-		अन्यथा
+		else
 			pen = &per_cpu(octeon_irq_ciu1_en_mirror, cpu);
 
 		raw_spin_lock_irqsave(lock, flags);
 		__set_bit(cd->bit, pen);
 		/*
-		 * Must be visible to octeon_irq_ipअणु2,3पूर्ण_ciu() beक्रमe
+		 * Must be visible to octeon_irq_ip{2,3}_ciu() before
 		 * enabling the irq.
 		 */
 		wmb();
-		अगर (cd->line == 0)
-			cvmx_ग_लिखो_csr(CVMX_CIU_INTX_EN0(coreid * 2), *pen);
-		अन्यथा
-			cvmx_ग_लिखो_csr(CVMX_CIU_INTX_EN1(coreid * 2 + 1), *pen);
+		if (cd->line == 0)
+			cvmx_write_csr(CVMX_CIU_INTX_EN0(coreid * 2), *pen);
+		else
+			cvmx_write_csr(CVMX_CIU_INTX_EN1(coreid * 2 + 1), *pen);
 		raw_spin_unlock_irqrestore(lock, flags);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
- * Enable the irq on the next core in the affinity set क्रम chips that
- * have the EN*_W1अणुS,Cपूर्ण रेजिस्टरs.
+ * Enable the irq on the next core in the affinity set for chips that
+ * have the EN*_W1{S,C} registers.
  */
-अटल व्योम octeon_irq_ciu_enable_v2(काष्ठा irq_data *data)
-अणु
+static void octeon_irq_ciu_enable_v2(struct irq_data *data)
+{
 	u64 mask;
-	पूर्णांक cpu = next_cpu_क्रम_irq(data);
-	काष्ठा octeon_ciu_chip_data *cd;
+	int cpu = next_cpu_for_irq(data);
+	struct octeon_ciu_chip_data *cd;
 
 	cd = irq_data_get_irq_chip_data(data);
 	mask = 1ull << (cd->bit);
@@ -472,541 +471,541 @@
 	 * Called under the desc lock, so these should never get out
 	 * of sync.
 	 */
-	अगर (cd->line == 0) अणु
-		पूर्णांक index = octeon_coreid_क्रम_cpu(cpu) * 2;
+	if (cd->line == 0) {
+		int index = octeon_coreid_for_cpu(cpu) * 2;
 		set_bit(cd->bit, &per_cpu(octeon_irq_ciu0_en_mirror, cpu));
-		cvmx_ग_लिखो_csr(CVMX_CIU_INTX_EN0_W1S(index), mask);
-	पूर्ण अन्यथा अणु
-		पूर्णांक index = octeon_coreid_क्रम_cpu(cpu) * 2 + 1;
+		cvmx_write_csr(CVMX_CIU_INTX_EN0_W1S(index), mask);
+	} else {
+		int index = octeon_coreid_for_cpu(cpu) * 2 + 1;
 		set_bit(cd->bit, &per_cpu(octeon_irq_ciu1_en_mirror, cpu));
-		cvmx_ग_लिखो_csr(CVMX_CIU_INTX_EN1_W1S(index), mask);
-	पूर्ण
-पूर्ण
+		cvmx_write_csr(CVMX_CIU_INTX_EN1_W1S(index), mask);
+	}
+}
 
 /*
- * Enable the irq in the sum2 रेजिस्टरs.
+ * Enable the irq in the sum2 registers.
  */
-अटल व्योम octeon_irq_ciu_enable_sum2(काष्ठा irq_data *data)
-अणु
+static void octeon_irq_ciu_enable_sum2(struct irq_data *data)
+{
 	u64 mask;
-	पूर्णांक cpu = next_cpu_क्रम_irq(data);
-	पूर्णांक index = octeon_coreid_क्रम_cpu(cpu);
-	काष्ठा octeon_ciu_chip_data *cd;
+	int cpu = next_cpu_for_irq(data);
+	int index = octeon_coreid_for_cpu(cpu);
+	struct octeon_ciu_chip_data *cd;
 
 	cd = irq_data_get_irq_chip_data(data);
 	mask = 1ull << (cd->bit);
 
-	cvmx_ग_लिखो_csr(CVMX_CIU_EN2_PPX_IP4_W1S(index), mask);
-पूर्ण
+	cvmx_write_csr(CVMX_CIU_EN2_PPX_IP4_W1S(index), mask);
+}
 
 /*
- * Disable the irq in the sum2 रेजिस्टरs.
+ * Disable the irq in the sum2 registers.
  */
-अटल व्योम octeon_irq_ciu_disable_local_sum2(काष्ठा irq_data *data)
-अणु
+static void octeon_irq_ciu_disable_local_sum2(struct irq_data *data)
+{
 	u64 mask;
-	पूर्णांक cpu = next_cpu_क्रम_irq(data);
-	पूर्णांक index = octeon_coreid_क्रम_cpu(cpu);
-	काष्ठा octeon_ciu_chip_data *cd;
+	int cpu = next_cpu_for_irq(data);
+	int index = octeon_coreid_for_cpu(cpu);
+	struct octeon_ciu_chip_data *cd;
 
 	cd = irq_data_get_irq_chip_data(data);
 	mask = 1ull << (cd->bit);
 
-	cvmx_ग_लिखो_csr(CVMX_CIU_EN2_PPX_IP4_W1C(index), mask);
-पूर्ण
+	cvmx_write_csr(CVMX_CIU_EN2_PPX_IP4_W1C(index), mask);
+}
 
-अटल व्योम octeon_irq_ciu_ack_sum2(काष्ठा irq_data *data)
-अणु
+static void octeon_irq_ciu_ack_sum2(struct irq_data *data)
+{
 	u64 mask;
-	पूर्णांक cpu = next_cpu_क्रम_irq(data);
-	पूर्णांक index = octeon_coreid_क्रम_cpu(cpu);
-	काष्ठा octeon_ciu_chip_data *cd;
+	int cpu = next_cpu_for_irq(data);
+	int index = octeon_coreid_for_cpu(cpu);
+	struct octeon_ciu_chip_data *cd;
 
 	cd = irq_data_get_irq_chip_data(data);
 	mask = 1ull << (cd->bit);
 
-	cvmx_ग_लिखो_csr(CVMX_CIU_SUM2_PPX_IP4(index), mask);
-पूर्ण
+	cvmx_write_csr(CVMX_CIU_SUM2_PPX_IP4(index), mask);
+}
 
-अटल व्योम octeon_irq_ciu_disable_all_sum2(काष्ठा irq_data *data)
-अणु
-	पूर्णांक cpu;
-	काष्ठा octeon_ciu_chip_data *cd;
+static void octeon_irq_ciu_disable_all_sum2(struct irq_data *data)
+{
+	int cpu;
+	struct octeon_ciu_chip_data *cd;
 	u64 mask;
 
 	cd = irq_data_get_irq_chip_data(data);
 	mask = 1ull << (cd->bit);
 
-	क्रम_each_online_cpu(cpu) अणु
-		पूर्णांक coreid = octeon_coreid_क्रम_cpu(cpu);
+	for_each_online_cpu(cpu) {
+		int coreid = octeon_coreid_for_cpu(cpu);
 
-		cvmx_ग_लिखो_csr(CVMX_CIU_EN2_PPX_IP4_W1C(coreid), mask);
-	पूर्ण
-पूर्ण
+		cvmx_write_csr(CVMX_CIU_EN2_PPX_IP4_W1C(coreid), mask);
+	}
+}
 
 /*
- * Enable the irq on the current CPU क्रम chips that
- * have the EN*_W1अणुS,Cपूर्ण रेजिस्टरs.
+ * Enable the irq on the current CPU for chips that
+ * have the EN*_W1{S,C} registers.
  */
-अटल व्योम octeon_irq_ciu_enable_local_v2(काष्ठा irq_data *data)
-अणु
+static void octeon_irq_ciu_enable_local_v2(struct irq_data *data)
+{
 	u64 mask;
-	काष्ठा octeon_ciu_chip_data *cd;
+	struct octeon_ciu_chip_data *cd;
 
 	cd = irq_data_get_irq_chip_data(data);
 	mask = 1ull << (cd->bit);
 
-	अगर (cd->line == 0) अणु
-		पूर्णांक index = cvmx_get_core_num() * 2;
+	if (cd->line == 0) {
+		int index = cvmx_get_core_num() * 2;
 		set_bit(cd->bit, this_cpu_ptr(&octeon_irq_ciu0_en_mirror));
-		cvmx_ग_लिखो_csr(CVMX_CIU_INTX_EN0_W1S(index), mask);
-	पूर्ण अन्यथा अणु
-		पूर्णांक index = cvmx_get_core_num() * 2 + 1;
+		cvmx_write_csr(CVMX_CIU_INTX_EN0_W1S(index), mask);
+	} else {
+		int index = cvmx_get_core_num() * 2 + 1;
 		set_bit(cd->bit, this_cpu_ptr(&octeon_irq_ciu1_en_mirror));
-		cvmx_ग_लिखो_csr(CVMX_CIU_INTX_EN1_W1S(index), mask);
-	पूर्ण
-पूर्ण
+		cvmx_write_csr(CVMX_CIU_INTX_EN1_W1S(index), mask);
+	}
+}
 
-अटल व्योम octeon_irq_ciu_disable_local_v2(काष्ठा irq_data *data)
-अणु
+static void octeon_irq_ciu_disable_local_v2(struct irq_data *data)
+{
 	u64 mask;
-	काष्ठा octeon_ciu_chip_data *cd;
+	struct octeon_ciu_chip_data *cd;
 
 	cd = irq_data_get_irq_chip_data(data);
 	mask = 1ull << (cd->bit);
 
-	अगर (cd->line == 0) अणु
-		पूर्णांक index = cvmx_get_core_num() * 2;
+	if (cd->line == 0) {
+		int index = cvmx_get_core_num() * 2;
 		clear_bit(cd->bit, this_cpu_ptr(&octeon_irq_ciu0_en_mirror));
-		cvmx_ग_लिखो_csr(CVMX_CIU_INTX_EN0_W1C(index), mask);
-	पूर्ण अन्यथा अणु
-		पूर्णांक index = cvmx_get_core_num() * 2 + 1;
+		cvmx_write_csr(CVMX_CIU_INTX_EN0_W1C(index), mask);
+	} else {
+		int index = cvmx_get_core_num() * 2 + 1;
 		clear_bit(cd->bit, this_cpu_ptr(&octeon_irq_ciu1_en_mirror));
-		cvmx_ग_लिखो_csr(CVMX_CIU_INTX_EN1_W1C(index), mask);
-	पूर्ण
-पूर्ण
+		cvmx_write_csr(CVMX_CIU_INTX_EN1_W1C(index), mask);
+	}
+}
 
 /*
  * Write to the W1C bit in CVMX_CIU_INTX_SUM0 to clear the irq.
  */
-अटल व्योम octeon_irq_ciu_ack(काष्ठा irq_data *data)
-अणु
+static void octeon_irq_ciu_ack(struct irq_data *data)
+{
 	u64 mask;
-	काष्ठा octeon_ciu_chip_data *cd;
+	struct octeon_ciu_chip_data *cd;
 
 	cd = irq_data_get_irq_chip_data(data);
 	mask = 1ull << (cd->bit);
 
-	अगर (cd->line == 0) अणु
-		पूर्णांक index = cvmx_get_core_num() * 2;
-		cvmx_ग_लिखो_csr(CVMX_CIU_INTX_SUM0(index), mask);
-	पूर्ण अन्यथा अणु
-		cvmx_ग_लिखो_csr(CVMX_CIU_INT_SUM1, mask);
-	पूर्ण
-पूर्ण
+	if (cd->line == 0) {
+		int index = cvmx_get_core_num() * 2;
+		cvmx_write_csr(CVMX_CIU_INTX_SUM0(index), mask);
+	} else {
+		cvmx_write_csr(CVMX_CIU_INT_SUM1, mask);
+	}
+}
 
 /*
- * Disable the irq on the all cores क्रम chips that have the EN*_W1अणुS,Cपूर्ण
- * रेजिस्टरs.
+ * Disable the irq on the all cores for chips that have the EN*_W1{S,C}
+ * registers.
  */
-अटल व्योम octeon_irq_ciu_disable_all_v2(काष्ठा irq_data *data)
-अणु
-	पूर्णांक cpu;
+static void octeon_irq_ciu_disable_all_v2(struct irq_data *data)
+{
+	int cpu;
 	u64 mask;
-	काष्ठा octeon_ciu_chip_data *cd;
+	struct octeon_ciu_chip_data *cd;
 
 	cd = irq_data_get_irq_chip_data(data);
 	mask = 1ull << (cd->bit);
 
-	अगर (cd->line == 0) अणु
-		क्रम_each_online_cpu(cpu) अणु
-			पूर्णांक index = octeon_coreid_क्रम_cpu(cpu) * 2;
+	if (cd->line == 0) {
+		for_each_online_cpu(cpu) {
+			int index = octeon_coreid_for_cpu(cpu) * 2;
 			clear_bit(cd->bit,
 				&per_cpu(octeon_irq_ciu0_en_mirror, cpu));
-			cvmx_ग_लिखो_csr(CVMX_CIU_INTX_EN0_W1C(index), mask);
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		क्रम_each_online_cpu(cpu) अणु
-			पूर्णांक index = octeon_coreid_क्रम_cpu(cpu) * 2 + 1;
+			cvmx_write_csr(CVMX_CIU_INTX_EN0_W1C(index), mask);
+		}
+	} else {
+		for_each_online_cpu(cpu) {
+			int index = octeon_coreid_for_cpu(cpu) * 2 + 1;
 			clear_bit(cd->bit,
 				&per_cpu(octeon_irq_ciu1_en_mirror, cpu));
-			cvmx_ग_लिखो_csr(CVMX_CIU_INTX_EN1_W1C(index), mask);
-		पूर्ण
-	पूर्ण
-पूर्ण
+			cvmx_write_csr(CVMX_CIU_INTX_EN1_W1C(index), mask);
+		}
+	}
+}
 
 /*
- * Enable the irq on the all cores क्रम chips that have the EN*_W1अणुS,Cपूर्ण
- * रेजिस्टरs.
+ * Enable the irq on the all cores for chips that have the EN*_W1{S,C}
+ * registers.
  */
-अटल व्योम octeon_irq_ciu_enable_all_v2(काष्ठा irq_data *data)
-अणु
-	पूर्णांक cpu;
+static void octeon_irq_ciu_enable_all_v2(struct irq_data *data)
+{
+	int cpu;
 	u64 mask;
-	काष्ठा octeon_ciu_chip_data *cd;
+	struct octeon_ciu_chip_data *cd;
 
 	cd = irq_data_get_irq_chip_data(data);
 	mask = 1ull << (cd->bit);
 
-	अगर (cd->line == 0) अणु
-		क्रम_each_online_cpu(cpu) अणु
-			पूर्णांक index = octeon_coreid_क्रम_cpu(cpu) * 2;
+	if (cd->line == 0) {
+		for_each_online_cpu(cpu) {
+			int index = octeon_coreid_for_cpu(cpu) * 2;
 			set_bit(cd->bit,
 				&per_cpu(octeon_irq_ciu0_en_mirror, cpu));
-			cvmx_ग_लिखो_csr(CVMX_CIU_INTX_EN0_W1S(index), mask);
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		क्रम_each_online_cpu(cpu) अणु
-			पूर्णांक index = octeon_coreid_क्रम_cpu(cpu) * 2 + 1;
+			cvmx_write_csr(CVMX_CIU_INTX_EN0_W1S(index), mask);
+		}
+	} else {
+		for_each_online_cpu(cpu) {
+			int index = octeon_coreid_for_cpu(cpu) * 2 + 1;
 			set_bit(cd->bit,
 				&per_cpu(octeon_irq_ciu1_en_mirror, cpu));
-			cvmx_ग_लिखो_csr(CVMX_CIU_INTX_EN1_W1S(index), mask);
-		पूर्ण
-	पूर्ण
-पूर्ण
+			cvmx_write_csr(CVMX_CIU_INTX_EN1_W1S(index), mask);
+		}
+	}
+}
 
-अटल पूर्णांक octeon_irq_ciu_set_type(काष्ठा irq_data *data, अचिन्हित पूर्णांक t)
-अणु
+static int octeon_irq_ciu_set_type(struct irq_data *data, unsigned int t)
+{
 	irqd_set_trigger_type(data, t);
 
-	अगर (t & IRQ_TYPE_EDGE_BOTH)
+	if (t & IRQ_TYPE_EDGE_BOTH)
 		irq_set_handler_locked(data, handle_edge_irq);
-	अन्यथा
+	else
 		irq_set_handler_locked(data, handle_level_irq);
 
-	वापस IRQ_SET_MASK_OK;
-पूर्ण
+	return IRQ_SET_MASK_OK;
+}
 
-अटल व्योम octeon_irq_gpio_setup(काष्ठा irq_data *data)
-अणु
-	जोड़ cvmx_gpio_bit_cfgx cfg;
-	काष्ठा octeon_ciu_chip_data *cd;
+static void octeon_irq_gpio_setup(struct irq_data *data)
+{
+	union cvmx_gpio_bit_cfgx cfg;
+	struct octeon_ciu_chip_data *cd;
 	u32 t = irqd_get_trigger_type(data);
 
 	cd = irq_data_get_irq_chip_data(data);
 
 	cfg.u64 = 0;
-	cfg.s.पूर्णांक_en = 1;
-	cfg.s.पूर्णांक_type = (t & IRQ_TYPE_EDGE_BOTH) != 0;
+	cfg.s.int_en = 1;
+	cfg.s.int_type = (t & IRQ_TYPE_EDGE_BOTH) != 0;
 	cfg.s.rx_xor = (t & (IRQ_TYPE_LEVEL_LOW | IRQ_TYPE_EDGE_FALLING)) != 0;
 
 	/* 140 nS glitch filter*/
 	cfg.s.fil_cnt = 7;
 	cfg.s.fil_sel = 3;
 
-	cvmx_ग_लिखो_csr(CVMX_GPIO_BIT_CFGX(cd->gpio_line), cfg.u64);
-पूर्ण
+	cvmx_write_csr(CVMX_GPIO_BIT_CFGX(cd->gpio_line), cfg.u64);
+}
 
-अटल व्योम octeon_irq_ciu_enable_gpio_v2(काष्ठा irq_data *data)
-अणु
+static void octeon_irq_ciu_enable_gpio_v2(struct irq_data *data)
+{
 	octeon_irq_gpio_setup(data);
 	octeon_irq_ciu_enable_v2(data);
-पूर्ण
+}
 
-अटल व्योम octeon_irq_ciu_enable_gpio(काष्ठा irq_data *data)
-अणु
+static void octeon_irq_ciu_enable_gpio(struct irq_data *data)
+{
 	octeon_irq_gpio_setup(data);
 	octeon_irq_ciu_enable(data);
-पूर्ण
+}
 
-अटल पूर्णांक octeon_irq_ciu_gpio_set_type(काष्ठा irq_data *data, अचिन्हित पूर्णांक t)
-अणु
+static int octeon_irq_ciu_gpio_set_type(struct irq_data *data, unsigned int t)
+{
 	irqd_set_trigger_type(data, t);
 	octeon_irq_gpio_setup(data);
 
-	अगर (t & IRQ_TYPE_EDGE_BOTH)
+	if (t & IRQ_TYPE_EDGE_BOTH)
 		irq_set_handler_locked(data, handle_edge_irq);
-	अन्यथा
+	else
 		irq_set_handler_locked(data, handle_level_irq);
 
-	वापस IRQ_SET_MASK_OK;
-पूर्ण
+	return IRQ_SET_MASK_OK;
+}
 
-अटल व्योम octeon_irq_ciu_disable_gpio_v2(काष्ठा irq_data *data)
-अणु
-	काष्ठा octeon_ciu_chip_data *cd;
+static void octeon_irq_ciu_disable_gpio_v2(struct irq_data *data)
+{
+	struct octeon_ciu_chip_data *cd;
 
 	cd = irq_data_get_irq_chip_data(data);
-	cvmx_ग_लिखो_csr(CVMX_GPIO_BIT_CFGX(cd->gpio_line), 0);
+	cvmx_write_csr(CVMX_GPIO_BIT_CFGX(cd->gpio_line), 0);
 
 	octeon_irq_ciu_disable_all_v2(data);
-पूर्ण
+}
 
-अटल व्योम octeon_irq_ciu_disable_gpio(काष्ठा irq_data *data)
-अणु
-	काष्ठा octeon_ciu_chip_data *cd;
+static void octeon_irq_ciu_disable_gpio(struct irq_data *data)
+{
+	struct octeon_ciu_chip_data *cd;
 
 	cd = irq_data_get_irq_chip_data(data);
-	cvmx_ग_लिखो_csr(CVMX_GPIO_BIT_CFGX(cd->gpio_line), 0);
+	cvmx_write_csr(CVMX_GPIO_BIT_CFGX(cd->gpio_line), 0);
 
 	octeon_irq_ciu_disable_all(data);
-पूर्ण
+}
 
-अटल व्योम octeon_irq_ciu_gpio_ack(काष्ठा irq_data *data)
-अणु
-	काष्ठा octeon_ciu_chip_data *cd;
+static void octeon_irq_ciu_gpio_ack(struct irq_data *data)
+{
+	struct octeon_ciu_chip_data *cd;
 	u64 mask;
 
 	cd = irq_data_get_irq_chip_data(data);
 	mask = 1ull << (cd->gpio_line);
 
-	cvmx_ग_लिखो_csr(CVMX_GPIO_INT_CLR, mask);
-पूर्ण
+	cvmx_write_csr(CVMX_GPIO_INT_CLR, mask);
+}
 
-#अगर_घोषित CONFIG_SMP
+#ifdef CONFIG_SMP
 
-अटल व्योम octeon_irq_cpu_offline_ciu(काष्ठा irq_data *data)
-अणु
-	पूर्णांक cpu = smp_processor_id();
+static void octeon_irq_cpu_offline_ciu(struct irq_data *data)
+{
+	int cpu = smp_processor_id();
 	cpumask_t new_affinity;
-	काष्ठा cpumask *mask = irq_data_get_affinity_mask(data);
+	struct cpumask *mask = irq_data_get_affinity_mask(data);
 
-	अगर (!cpumask_test_cpu(cpu, mask))
-		वापस;
+	if (!cpumask_test_cpu(cpu, mask))
+		return;
 
-	अगर (cpumask_weight(mask) > 1) अणु
+	if (cpumask_weight(mask) > 1) {
 		/*
-		 * It has multi CPU affinity, just हटाओ this CPU
+		 * It has multi CPU affinity, just remove this CPU
 		 * from the affinity set.
 		 */
 		cpumask_copy(&new_affinity, mask);
 		cpumask_clear_cpu(cpu, &new_affinity);
-	पूर्ण अन्यथा अणु
+	} else {
 		/* Otherwise, put it on lowest numbered online CPU. */
 		cpumask_clear(&new_affinity);
 		cpumask_set_cpu(cpumask_first(cpu_online_mask), &new_affinity);
-	पूर्ण
+	}
 	irq_set_affinity_locked(data, &new_affinity, false);
-पूर्ण
+}
 
-अटल पूर्णांक octeon_irq_ciu_set_affinity(काष्ठा irq_data *data,
-				       स्थिर काष्ठा cpumask *dest, bool क्रमce)
-अणु
-	पूर्णांक cpu;
+static int octeon_irq_ciu_set_affinity(struct irq_data *data,
+				       const struct cpumask *dest, bool force)
+{
+	int cpu;
 	bool enable_one = !irqd_irq_disabled(data) && !irqd_irq_masked(data);
-	अचिन्हित दीर्घ flags;
-	काष्ठा octeon_ciu_chip_data *cd;
-	अचिन्हित दीर्घ *pen;
+	unsigned long flags;
+	struct octeon_ciu_chip_data *cd;
+	unsigned long *pen;
 	raw_spinlock_t *lock;
 
 	cd = irq_data_get_irq_chip_data(data);
 
 	/*
 	 * For non-v2 CIU, we will allow only single CPU affinity.
-	 * This हटाओs the need to करो locking in the .ack/.eoi
+	 * This removes the need to do locking in the .ack/.eoi
 	 * functions.
 	 */
-	अगर (cpumask_weight(dest) != 1)
-		वापस -EINVAL;
+	if (cpumask_weight(dest) != 1)
+		return -EINVAL;
 
-	अगर (!enable_one)
-		वापस 0;
+	if (!enable_one)
+		return 0;
 
 
-	क्रम_each_online_cpu(cpu) अणु
-		पूर्णांक coreid = octeon_coreid_क्रम_cpu(cpu);
+	for_each_online_cpu(cpu) {
+		int coreid = octeon_coreid_for_cpu(cpu);
 
 		lock = &per_cpu(octeon_irq_ciu_spinlock, cpu);
 		raw_spin_lock_irqsave(lock, flags);
 
-		अगर (cd->line == 0)
+		if (cd->line == 0)
 			pen = &per_cpu(octeon_irq_ciu0_en_mirror, cpu);
-		अन्यथा
+		else
 			pen = &per_cpu(octeon_irq_ciu1_en_mirror, cpu);
 
-		अगर (cpumask_test_cpu(cpu, dest) && enable_one) अणु
+		if (cpumask_test_cpu(cpu, dest) && enable_one) {
 			enable_one = false;
 			__set_bit(cd->bit, pen);
-		पूर्ण अन्यथा अणु
+		} else {
 			__clear_bit(cd->bit, pen);
-		पूर्ण
+		}
 		/*
-		 * Must be visible to octeon_irq_ipअणु2,3पूर्ण_ciu() beक्रमe
+		 * Must be visible to octeon_irq_ip{2,3}_ciu() before
 		 * enabling the irq.
 		 */
 		wmb();
 
-		अगर (cd->line == 0)
-			cvmx_ग_लिखो_csr(CVMX_CIU_INTX_EN0(coreid * 2), *pen);
-		अन्यथा
-			cvmx_ग_लिखो_csr(CVMX_CIU_INTX_EN1(coreid * 2 + 1), *pen);
+		if (cd->line == 0)
+			cvmx_write_csr(CVMX_CIU_INTX_EN0(coreid * 2), *pen);
+		else
+			cvmx_write_csr(CVMX_CIU_INTX_EN1(coreid * 2 + 1), *pen);
 
 		raw_spin_unlock_irqrestore(lock, flags);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
 /*
- * Set affinity क्रम the irq क्रम chips that have the EN*_W1अणुS,Cपूर्ण
- * रेजिस्टरs.
+ * Set affinity for the irq for chips that have the EN*_W1{S,C}
+ * registers.
  */
-अटल पूर्णांक octeon_irq_ciu_set_affinity_v2(काष्ठा irq_data *data,
-					  स्थिर काष्ठा cpumask *dest,
-					  bool क्रमce)
-अणु
-	पूर्णांक cpu;
+static int octeon_irq_ciu_set_affinity_v2(struct irq_data *data,
+					  const struct cpumask *dest,
+					  bool force)
+{
+	int cpu;
 	bool enable_one = !irqd_irq_disabled(data) && !irqd_irq_masked(data);
 	u64 mask;
-	काष्ठा octeon_ciu_chip_data *cd;
+	struct octeon_ciu_chip_data *cd;
 
-	अगर (!enable_one)
-		वापस 0;
+	if (!enable_one)
+		return 0;
 
 	cd = irq_data_get_irq_chip_data(data);
 	mask = 1ull << cd->bit;
 
-	अगर (cd->line == 0) अणु
-		क्रम_each_online_cpu(cpu) अणु
-			अचिन्हित दीर्घ *pen = &per_cpu(octeon_irq_ciu0_en_mirror, cpu);
-			पूर्णांक index = octeon_coreid_क्रम_cpu(cpu) * 2;
-			अगर (cpumask_test_cpu(cpu, dest) && enable_one) अणु
+	if (cd->line == 0) {
+		for_each_online_cpu(cpu) {
+			unsigned long *pen = &per_cpu(octeon_irq_ciu0_en_mirror, cpu);
+			int index = octeon_coreid_for_cpu(cpu) * 2;
+			if (cpumask_test_cpu(cpu, dest) && enable_one) {
 				enable_one = false;
 				set_bit(cd->bit, pen);
-				cvmx_ग_लिखो_csr(CVMX_CIU_INTX_EN0_W1S(index), mask);
-			पूर्ण अन्यथा अणु
+				cvmx_write_csr(CVMX_CIU_INTX_EN0_W1S(index), mask);
+			} else {
 				clear_bit(cd->bit, pen);
-				cvmx_ग_लिखो_csr(CVMX_CIU_INTX_EN0_W1C(index), mask);
-			पूर्ण
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		क्रम_each_online_cpu(cpu) अणु
-			अचिन्हित दीर्घ *pen = &per_cpu(octeon_irq_ciu1_en_mirror, cpu);
-			पूर्णांक index = octeon_coreid_क्रम_cpu(cpu) * 2 + 1;
-			अगर (cpumask_test_cpu(cpu, dest) && enable_one) अणु
+				cvmx_write_csr(CVMX_CIU_INTX_EN0_W1C(index), mask);
+			}
+		}
+	} else {
+		for_each_online_cpu(cpu) {
+			unsigned long *pen = &per_cpu(octeon_irq_ciu1_en_mirror, cpu);
+			int index = octeon_coreid_for_cpu(cpu) * 2 + 1;
+			if (cpumask_test_cpu(cpu, dest) && enable_one) {
 				enable_one = false;
 				set_bit(cd->bit, pen);
-				cvmx_ग_लिखो_csr(CVMX_CIU_INTX_EN1_W1S(index), mask);
-			पूर्ण अन्यथा अणु
+				cvmx_write_csr(CVMX_CIU_INTX_EN1_W1S(index), mask);
+			} else {
 				clear_bit(cd->bit, pen);
-				cvmx_ग_लिखो_csr(CVMX_CIU_INTX_EN1_W1C(index), mask);
-			पूर्ण
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+				cvmx_write_csr(CVMX_CIU_INTX_EN1_W1C(index), mask);
+			}
+		}
+	}
+	return 0;
+}
 
-अटल पूर्णांक octeon_irq_ciu_set_affinity_sum2(काष्ठा irq_data *data,
-					    स्थिर काष्ठा cpumask *dest,
-					    bool क्रमce)
-अणु
-	पूर्णांक cpu;
+static int octeon_irq_ciu_set_affinity_sum2(struct irq_data *data,
+					    const struct cpumask *dest,
+					    bool force)
+{
+	int cpu;
 	bool enable_one = !irqd_irq_disabled(data) && !irqd_irq_masked(data);
 	u64 mask;
-	काष्ठा octeon_ciu_chip_data *cd;
+	struct octeon_ciu_chip_data *cd;
 
-	अगर (!enable_one)
-		वापस 0;
+	if (!enable_one)
+		return 0;
 
 	cd = irq_data_get_irq_chip_data(data);
 	mask = 1ull << cd->bit;
 
-	क्रम_each_online_cpu(cpu) अणु
-		पूर्णांक index = octeon_coreid_क्रम_cpu(cpu);
+	for_each_online_cpu(cpu) {
+		int index = octeon_coreid_for_cpu(cpu);
 
-		अगर (cpumask_test_cpu(cpu, dest) && enable_one) अणु
+		if (cpumask_test_cpu(cpu, dest) && enable_one) {
 			enable_one = false;
-			cvmx_ग_लिखो_csr(CVMX_CIU_EN2_PPX_IP4_W1S(index), mask);
-		पूर्ण अन्यथा अणु
-			cvmx_ग_लिखो_csr(CVMX_CIU_EN2_PPX_IP4_W1C(index), mask);
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+			cvmx_write_csr(CVMX_CIU_EN2_PPX_IP4_W1S(index), mask);
+		} else {
+			cvmx_write_csr(CVMX_CIU_EN2_PPX_IP4_W1C(index), mask);
+		}
+	}
+	return 0;
+}
+#endif
 
-अटल अचिन्हित पूर्णांक edge_startup(काष्ठा irq_data *data)
-अणु
+static unsigned int edge_startup(struct irq_data *data)
+{
 	/* ack any pending edge-irq at startup, so there is
 	 * an _edge_ to fire on when the event reappears.
 	 */
 	data->chip->irq_ack(data);
 	data->chip->irq_enable(data);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Newer octeon chips have support क्रम lockless CIU operation.
+ * Newer octeon chips have support for lockless CIU operation.
  */
-अटल काष्ठा irq_chip octeon_irq_chip_ciu_v2 = अणु
+static struct irq_chip octeon_irq_chip_ciu_v2 = {
 	.name = "CIU",
 	.irq_enable = octeon_irq_ciu_enable_v2,
 	.irq_disable = octeon_irq_ciu_disable_all_v2,
 	.irq_mask = octeon_irq_ciu_disable_local_v2,
 	.irq_unmask = octeon_irq_ciu_enable_v2,
-#अगर_घोषित CONFIG_SMP
+#ifdef CONFIG_SMP
 	.irq_set_affinity = octeon_irq_ciu_set_affinity_v2,
 	.irq_cpu_offline = octeon_irq_cpu_offline_ciu,
-#पूर्ण_अगर
-पूर्ण;
+#endif
+};
 
-अटल काष्ठा irq_chip octeon_irq_chip_ciu_v2_edge = अणु
+static struct irq_chip octeon_irq_chip_ciu_v2_edge = {
 	.name = "CIU",
 	.irq_enable = octeon_irq_ciu_enable_v2,
 	.irq_disable = octeon_irq_ciu_disable_all_v2,
 	.irq_ack = octeon_irq_ciu_ack,
 	.irq_mask = octeon_irq_ciu_disable_local_v2,
 	.irq_unmask = octeon_irq_ciu_enable_v2,
-#अगर_घोषित CONFIG_SMP
+#ifdef CONFIG_SMP
 	.irq_set_affinity = octeon_irq_ciu_set_affinity_v2,
 	.irq_cpu_offline = octeon_irq_cpu_offline_ciu,
-#पूर्ण_अगर
-पूर्ण;
+#endif
+};
 
 /*
- * Newer octeon chips have support क्रम lockless CIU operation.
+ * Newer octeon chips have support for lockless CIU operation.
  */
-अटल काष्ठा irq_chip octeon_irq_chip_ciu_sum2 = अणु
+static struct irq_chip octeon_irq_chip_ciu_sum2 = {
 	.name = "CIU",
 	.irq_enable = octeon_irq_ciu_enable_sum2,
 	.irq_disable = octeon_irq_ciu_disable_all_sum2,
 	.irq_mask = octeon_irq_ciu_disable_local_sum2,
 	.irq_unmask = octeon_irq_ciu_enable_sum2,
-#अगर_घोषित CONFIG_SMP
+#ifdef CONFIG_SMP
 	.irq_set_affinity = octeon_irq_ciu_set_affinity_sum2,
 	.irq_cpu_offline = octeon_irq_cpu_offline_ciu,
-#पूर्ण_अगर
-पूर्ण;
+#endif
+};
 
-अटल काष्ठा irq_chip octeon_irq_chip_ciu_sum2_edge = अणु
+static struct irq_chip octeon_irq_chip_ciu_sum2_edge = {
 	.name = "CIU",
 	.irq_enable = octeon_irq_ciu_enable_sum2,
 	.irq_disable = octeon_irq_ciu_disable_all_sum2,
 	.irq_ack = octeon_irq_ciu_ack_sum2,
 	.irq_mask = octeon_irq_ciu_disable_local_sum2,
 	.irq_unmask = octeon_irq_ciu_enable_sum2,
-#अगर_घोषित CONFIG_SMP
+#ifdef CONFIG_SMP
 	.irq_set_affinity = octeon_irq_ciu_set_affinity_sum2,
 	.irq_cpu_offline = octeon_irq_cpu_offline_ciu,
-#पूर्ण_अगर
-पूर्ण;
+#endif
+};
 
-अटल काष्ठा irq_chip octeon_irq_chip_ciu = अणु
+static struct irq_chip octeon_irq_chip_ciu = {
 	.name = "CIU",
 	.irq_enable = octeon_irq_ciu_enable,
 	.irq_disable = octeon_irq_ciu_disable_all,
 	.irq_mask = octeon_irq_ciu_disable_local,
 	.irq_unmask = octeon_irq_ciu_enable,
-#अगर_घोषित CONFIG_SMP
+#ifdef CONFIG_SMP
 	.irq_set_affinity = octeon_irq_ciu_set_affinity,
 	.irq_cpu_offline = octeon_irq_cpu_offline_ciu,
-#पूर्ण_अगर
-पूर्ण;
+#endif
+};
 
-अटल काष्ठा irq_chip octeon_irq_chip_ciu_edge = अणु
+static struct irq_chip octeon_irq_chip_ciu_edge = {
 	.name = "CIU",
 	.irq_enable = octeon_irq_ciu_enable,
 	.irq_disable = octeon_irq_ciu_disable_all,
 	.irq_ack = octeon_irq_ciu_ack,
 	.irq_mask = octeon_irq_ciu_disable_local,
 	.irq_unmask = octeon_irq_ciu_enable,
-#अगर_घोषित CONFIG_SMP
+#ifdef CONFIG_SMP
 	.irq_set_affinity = octeon_irq_ciu_set_affinity,
 	.irq_cpu_offline = octeon_irq_cpu_offline_ciu,
-#पूर्ण_अगर
-पूर्ण;
+#endif
+};
 
-/* The mbox versions करोn't करो any affinity or round-robin. */
-अटल काष्ठा irq_chip octeon_irq_chip_ciu_mbox_v2 = अणु
+/* The mbox versions don't do any affinity or round-robin. */
+static struct irq_chip octeon_irq_chip_ciu_mbox_v2 = {
 	.name = "CIU-M",
 	.irq_enable = octeon_irq_ciu_enable_all_v2,
 	.irq_disable = octeon_irq_ciu_disable_all_v2,
@@ -1016,9 +1015,9 @@
 	.irq_cpu_online = octeon_irq_ciu_enable_local_v2,
 	.irq_cpu_offline = octeon_irq_ciu_disable_local_v2,
 	.flags = IRQCHIP_ONOFFLINE_ENABLED,
-पूर्ण;
+};
 
-अटल काष्ठा irq_chip octeon_irq_chip_ciu_mbox = अणु
+static struct irq_chip octeon_irq_chip_ciu_mbox = {
 	.name = "CIU-M",
 	.irq_enable = octeon_irq_ciu_enable_all,
 	.irq_disable = octeon_irq_ciu_disable_all,
@@ -1028,9 +1027,9 @@
 	.irq_cpu_online = octeon_irq_ciu_enable_local,
 	.irq_cpu_offline = octeon_irq_ciu_disable_local,
 	.flags = IRQCHIP_ONOFFLINE_ENABLED,
-पूर्ण;
+};
 
-अटल काष्ठा irq_chip octeon_irq_chip_ciu_gpio_v2 = अणु
+static struct irq_chip octeon_irq_chip_ciu_gpio_v2 = {
 	.name = "CIU-GPIO",
 	.irq_enable = octeon_irq_ciu_enable_gpio_v2,
 	.irq_disable = octeon_irq_ciu_disable_gpio_v2,
@@ -1038,14 +1037,14 @@
 	.irq_mask = octeon_irq_ciu_disable_local_v2,
 	.irq_unmask = octeon_irq_ciu_enable_v2,
 	.irq_set_type = octeon_irq_ciu_gpio_set_type,
-#अगर_घोषित CONFIG_SMP
+#ifdef CONFIG_SMP
 	.irq_set_affinity = octeon_irq_ciu_set_affinity_v2,
 	.irq_cpu_offline = octeon_irq_cpu_offline_ciu,
-#पूर्ण_अगर
+#endif
 	.flags = IRQCHIP_SET_TYPE_MASKED,
-पूर्ण;
+};
 
-अटल काष्ठा irq_chip octeon_irq_chip_ciu_gpio = अणु
+static struct irq_chip octeon_irq_chip_ciu_gpio = {
 	.name = "CIU-GPIO",
 	.irq_enable = octeon_irq_ciu_enable_gpio,
 	.irq_disable = octeon_irq_ciu_disable_gpio,
@@ -1053,587 +1052,587 @@
 	.irq_unmask = octeon_irq_ciu_enable,
 	.irq_ack = octeon_irq_ciu_gpio_ack,
 	.irq_set_type = octeon_irq_ciu_gpio_set_type,
-#अगर_घोषित CONFIG_SMP
+#ifdef CONFIG_SMP
 	.irq_set_affinity = octeon_irq_ciu_set_affinity,
 	.irq_cpu_offline = octeon_irq_cpu_offline_ciu,
-#पूर्ण_अगर
+#endif
 	.flags = IRQCHIP_SET_TYPE_MASKED,
-पूर्ण;
+};
 
 /*
- * Watchकरोg पूर्णांकerrupts are special.  They are associated with a single
+ * Watchdog interrupts are special.  They are associated with a single
  * core, so we hardwire the affinity to that core.
  */
-अटल व्योम octeon_irq_ciu_wd_enable(काष्ठा irq_data *data)
-अणु
-	अचिन्हित दीर्घ flags;
-	अचिन्हित दीर्घ *pen;
-	पूर्णांक coreid = data->irq - OCTEON_IRQ_WDOG0;	/* Bit 0-63 of EN1 */
-	पूर्णांक cpu = octeon_cpu_क्रम_coreid(coreid);
+static void octeon_irq_ciu_wd_enable(struct irq_data *data)
+{
+	unsigned long flags;
+	unsigned long *pen;
+	int coreid = data->irq - OCTEON_IRQ_WDOG0;	/* Bit 0-63 of EN1 */
+	int cpu = octeon_cpu_for_coreid(coreid);
 	raw_spinlock_t *lock = &per_cpu(octeon_irq_ciu_spinlock, cpu);
 
 	raw_spin_lock_irqsave(lock, flags);
 	pen = &per_cpu(octeon_irq_ciu1_en_mirror, cpu);
 	__set_bit(coreid, pen);
 	/*
-	 * Must be visible to octeon_irq_ipअणु2,3पूर्ण_ciu() beक्रमe enabling
+	 * Must be visible to octeon_irq_ip{2,3}_ciu() before enabling
 	 * the irq.
 	 */
 	wmb();
-	cvmx_ग_लिखो_csr(CVMX_CIU_INTX_EN1(coreid * 2 + 1), *pen);
+	cvmx_write_csr(CVMX_CIU_INTX_EN1(coreid * 2 + 1), *pen);
 	raw_spin_unlock_irqrestore(lock, flags);
-पूर्ण
+}
 
 /*
- * Watchकरोg पूर्णांकerrupts are special.  They are associated with a single
+ * Watchdog interrupts are special.  They are associated with a single
  * core, so we hardwire the affinity to that core.
  */
-अटल व्योम octeon_irq_ciu1_wd_enable_v2(काष्ठा irq_data *data)
-अणु
-	पूर्णांक coreid = data->irq - OCTEON_IRQ_WDOG0;
-	पूर्णांक cpu = octeon_cpu_क्रम_coreid(coreid);
+static void octeon_irq_ciu1_wd_enable_v2(struct irq_data *data)
+{
+	int coreid = data->irq - OCTEON_IRQ_WDOG0;
+	int cpu = octeon_cpu_for_coreid(coreid);
 
 	set_bit(coreid, &per_cpu(octeon_irq_ciu1_en_mirror, cpu));
-	cvmx_ग_लिखो_csr(CVMX_CIU_INTX_EN1_W1S(coreid * 2 + 1), 1ull << coreid);
-पूर्ण
+	cvmx_write_csr(CVMX_CIU_INTX_EN1_W1S(coreid * 2 + 1), 1ull << coreid);
+}
 
 
-अटल काष्ठा irq_chip octeon_irq_chip_ciu_wd_v2 = अणु
+static struct irq_chip octeon_irq_chip_ciu_wd_v2 = {
 	.name = "CIU-W",
 	.irq_enable = octeon_irq_ciu1_wd_enable_v2,
 	.irq_disable = octeon_irq_ciu_disable_all_v2,
 	.irq_mask = octeon_irq_ciu_disable_local_v2,
 	.irq_unmask = octeon_irq_ciu_enable_local_v2,
-पूर्ण;
+};
 
-अटल काष्ठा irq_chip octeon_irq_chip_ciu_wd = अणु
+static struct irq_chip octeon_irq_chip_ciu_wd = {
 	.name = "CIU-W",
 	.irq_enable = octeon_irq_ciu_wd_enable,
 	.irq_disable = octeon_irq_ciu_disable_all,
 	.irq_mask = octeon_irq_ciu_disable_local,
 	.irq_unmask = octeon_irq_ciu_enable_local,
-पूर्ण;
+};
 
-अटल bool octeon_irq_ciu_is_edge(अचिन्हित पूर्णांक line, अचिन्हित पूर्णांक bit)
-अणु
+static bool octeon_irq_ciu_is_edge(unsigned int line, unsigned int bit)
+{
 	bool edge = false;
 
-	अगर (line == 0)
-		चयन (bit) अणु
-		हाल 48 ... 49: /* GMX DRP */
-		हाल 50: /* IPD_DRP */
-		हाल 52 ... 55: /* Timers */
-		हाल 58: /* MPI */
+	if (line == 0)
+		switch (bit) {
+		case 48 ... 49: /* GMX DRP */
+		case 50: /* IPD_DRP */
+		case 52 ... 55: /* Timers */
+		case 58: /* MPI */
 			edge = true;
-			अवरोध;
-		शेष:
-			अवरोध;
-		पूर्ण
-	अन्यथा /* line == 1 */
-		चयन (bit) अणु
-		हाल 47: /* PTP */
+			break;
+		default:
+			break;
+		}
+	else /* line == 1 */
+		switch (bit) {
+		case 47: /* PTP */
 			edge = true;
-			अवरोध;
-		शेष:
-			अवरोध;
-		पूर्ण
-	वापस edge;
-पूर्ण
+			break;
+		default:
+			break;
+		}
+	return edge;
+}
 
-काष्ठा octeon_irq_gpio_करोमुख्य_data अणु
-	अचिन्हित पूर्णांक base_hwirq;
-पूर्ण;
+struct octeon_irq_gpio_domain_data {
+	unsigned int base_hwirq;
+};
 
-अटल पूर्णांक octeon_irq_gpio_xlat(काष्ठा irq_करोमुख्य *d,
-				काष्ठा device_node *node,
-				स्थिर u32 *पूर्णांकspec,
-				अचिन्हित पूर्णांक पूर्णांकsize,
-				अचिन्हित दीर्घ *out_hwirq,
-				अचिन्हित पूर्णांक *out_type)
-अणु
-	अचिन्हित पूर्णांक type;
-	अचिन्हित पूर्णांक pin;
-	अचिन्हित पूर्णांक trigger;
+static int octeon_irq_gpio_xlat(struct irq_domain *d,
+				struct device_node *node,
+				const u32 *intspec,
+				unsigned int intsize,
+				unsigned long *out_hwirq,
+				unsigned int *out_type)
+{
+	unsigned int type;
+	unsigned int pin;
+	unsigned int trigger;
 
-	अगर (irq_करोमुख्य_get_of_node(d) != node)
-		वापस -EINVAL;
+	if (irq_domain_get_of_node(d) != node)
+		return -EINVAL;
 
-	अगर (पूर्णांकsize < 2)
-		वापस -EINVAL;
+	if (intsize < 2)
+		return -EINVAL;
 
-	pin = पूर्णांकspec[0];
-	अगर (pin >= 16)
-		वापस -EINVAL;
+	pin = intspec[0];
+	if (pin >= 16)
+		return -EINVAL;
 
-	trigger = पूर्णांकspec[1];
+	trigger = intspec[1];
 
-	चयन (trigger) अणु
-	हाल 1:
+	switch (trigger) {
+	case 1:
 		type = IRQ_TYPE_EDGE_RISING;
-		अवरोध;
-	हाल 2:
+		break;
+	case 2:
 		type = IRQ_TYPE_EDGE_FALLING;
-		अवरोध;
-	हाल 4:
+		break;
+	case 4:
 		type = IRQ_TYPE_LEVEL_HIGH;
-		अवरोध;
-	हाल 8:
+		break;
+	case 8:
 		type = IRQ_TYPE_LEVEL_LOW;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		pr_err("Error: (%pOFn) Invalid irq trigger specification: %x\n",
 		       node,
 		       trigger);
 		type = IRQ_TYPE_LEVEL_LOW;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 	*out_type = type;
 	*out_hwirq = pin;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक octeon_irq_ciu_xlat(काष्ठा irq_करोमुख्य *d,
-			       काष्ठा device_node *node,
-			       स्थिर u32 *पूर्णांकspec,
-			       अचिन्हित पूर्णांक पूर्णांकsize,
-			       अचिन्हित दीर्घ *out_hwirq,
-			       अचिन्हित पूर्णांक *out_type)
-अणु
-	अचिन्हित पूर्णांक ciu, bit;
-	काष्ठा octeon_irq_ciu_करोमुख्य_data *dd = d->host_data;
+static int octeon_irq_ciu_xlat(struct irq_domain *d,
+			       struct device_node *node,
+			       const u32 *intspec,
+			       unsigned int intsize,
+			       unsigned long *out_hwirq,
+			       unsigned int *out_type)
+{
+	unsigned int ciu, bit;
+	struct octeon_irq_ciu_domain_data *dd = d->host_data;
 
-	ciu = पूर्णांकspec[0];
-	bit = पूर्णांकspec[1];
+	ciu = intspec[0];
+	bit = intspec[1];
 
-	अगर (ciu >= dd->num_sum || bit > 63)
-		वापस -EINVAL;
+	if (ciu >= dd->num_sum || bit > 63)
+		return -EINVAL;
 
 	*out_hwirq = (ciu << 6) | bit;
 	*out_type = 0;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा irq_chip *octeon_irq_ciu_chip;
-अटल काष्ठा irq_chip *octeon_irq_ciu_chip_edge;
-अटल काष्ठा irq_chip *octeon_irq_gpio_chip;
+static struct irq_chip *octeon_irq_ciu_chip;
+static struct irq_chip *octeon_irq_ciu_chip_edge;
+static struct irq_chip *octeon_irq_gpio_chip;
 
-अटल पूर्णांक octeon_irq_ciu_map(काष्ठा irq_करोमुख्य *d,
-			      अचिन्हित पूर्णांक virq, irq_hw_number_t hw)
-अणु
-	पूर्णांक rv;
-	अचिन्हित पूर्णांक line = hw >> 6;
-	अचिन्हित पूर्णांक bit = hw & 63;
-	काष्ठा octeon_irq_ciu_करोमुख्य_data *dd = d->host_data;
+static int octeon_irq_ciu_map(struct irq_domain *d,
+			      unsigned int virq, irq_hw_number_t hw)
+{
+	int rv;
+	unsigned int line = hw >> 6;
+	unsigned int bit = hw & 63;
+	struct octeon_irq_ciu_domain_data *dd = d->host_data;
 
-	अगर (line >= dd->num_sum || octeon_irq_ciu_to_irq[line][bit] != 0)
-		वापस -EINVAL;
+	if (line >= dd->num_sum || octeon_irq_ciu_to_irq[line][bit] != 0)
+		return -EINVAL;
 
-	अगर (line == 2) अणु
-		अगर (octeon_irq_ciu_is_edge(line, bit))
+	if (line == 2) {
+		if (octeon_irq_ciu_is_edge(line, bit))
 			rv = octeon_irq_set_ciu_mapping(virq, line, bit, 0,
 				&octeon_irq_chip_ciu_sum2_edge,
 				handle_edge_irq);
-		अन्यथा
+		else
 			rv = octeon_irq_set_ciu_mapping(virq, line, bit, 0,
 				&octeon_irq_chip_ciu_sum2,
 				handle_level_irq);
-	पूर्ण अन्यथा अणु
-		अगर (octeon_irq_ciu_is_edge(line, bit))
+	} else {
+		if (octeon_irq_ciu_is_edge(line, bit))
 			rv = octeon_irq_set_ciu_mapping(virq, line, bit, 0,
 				octeon_irq_ciu_chip_edge,
 				handle_edge_irq);
-		अन्यथा
+		else
 			rv = octeon_irq_set_ciu_mapping(virq, line, bit, 0,
 				octeon_irq_ciu_chip,
 				handle_level_irq);
-	पूर्ण
-	वापस rv;
-पूर्ण
+	}
+	return rv;
+}
 
-अटल पूर्णांक octeon_irq_gpio_map(काष्ठा irq_करोमुख्य *d,
-			       अचिन्हित पूर्णांक virq, irq_hw_number_t hw)
-अणु
-	काष्ठा octeon_irq_gpio_करोमुख्य_data *gpiod = d->host_data;
-	अचिन्हित पूर्णांक line, bit;
-	पूर्णांक r;
+static int octeon_irq_gpio_map(struct irq_domain *d,
+			       unsigned int virq, irq_hw_number_t hw)
+{
+	struct octeon_irq_gpio_domain_data *gpiod = d->host_data;
+	unsigned int line, bit;
+	int r;
 
 	line = (hw + gpiod->base_hwirq) >> 6;
 	bit = (hw + gpiod->base_hwirq) & 63;
-	अगर (line >= ARRAY_SIZE(octeon_irq_ciu_to_irq) ||
+	if (line >= ARRAY_SIZE(octeon_irq_ciu_to_irq) ||
 		octeon_irq_ciu_to_irq[line][bit] != 0)
-		वापस -EINVAL;
+		return -EINVAL;
 
 	/*
-	 * Default to handle_level_irq. If the DT contains a dअगरferent
+	 * Default to handle_level_irq. If the DT contains a different
 	 * trigger type, it will call the irq_set_type callback and
-	 * the handler माला_लो updated.
+	 * the handler gets updated.
 	 */
 	r = octeon_irq_set_ciu_mapping(virq, line, bit, hw,
 				       octeon_irq_gpio_chip, handle_level_irq);
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल काष्ठा irq_करोमुख्य_ops octeon_irq_करोमुख्य_ciu_ops = अणु
+static struct irq_domain_ops octeon_irq_domain_ciu_ops = {
 	.map = octeon_irq_ciu_map,
-	.unmap = octeon_irq_मुक्त_cd,
+	.unmap = octeon_irq_free_cd,
 	.xlate = octeon_irq_ciu_xlat,
-पूर्ण;
+};
 
-अटल काष्ठा irq_करोमुख्य_ops octeon_irq_करोमुख्य_gpio_ops = अणु
+static struct irq_domain_ops octeon_irq_domain_gpio_ops = {
 	.map = octeon_irq_gpio_map,
-	.unmap = octeon_irq_मुक्त_cd,
+	.unmap = octeon_irq_free_cd,
 	.xlate = octeon_irq_gpio_xlat,
-पूर्ण;
+};
 
-अटल व्योम octeon_irq_ip2_ciu(व्योम)
-अणु
-	स्थिर अचिन्हित दीर्घ core_id = cvmx_get_core_num();
-	u64 ciu_sum = cvmx_पढ़ो_csr(CVMX_CIU_INTX_SUM0(core_id * 2));
+static void octeon_irq_ip2_ciu(void)
+{
+	const unsigned long core_id = cvmx_get_core_num();
+	u64 ciu_sum = cvmx_read_csr(CVMX_CIU_INTX_SUM0(core_id * 2));
 
-	ciu_sum &= __this_cpu_पढ़ो(octeon_irq_ciu0_en_mirror);
-	अगर (likely(ciu_sum)) अणु
-		पूर्णांक bit = fls64(ciu_sum) - 1;
-		पूर्णांक irq = octeon_irq_ciu_to_irq[0][bit];
-		अगर (likely(irq))
-			करो_IRQ(irq);
-		अन्यथा
-			spurious_पूर्णांकerrupt();
-	पूर्ण अन्यथा अणु
-		spurious_पूर्णांकerrupt();
-	पूर्ण
-पूर्ण
+	ciu_sum &= __this_cpu_read(octeon_irq_ciu0_en_mirror);
+	if (likely(ciu_sum)) {
+		int bit = fls64(ciu_sum) - 1;
+		int irq = octeon_irq_ciu_to_irq[0][bit];
+		if (likely(irq))
+			do_IRQ(irq);
+		else
+			spurious_interrupt();
+	} else {
+		spurious_interrupt();
+	}
+}
 
-अटल व्योम octeon_irq_ip3_ciu(व्योम)
-अणु
-	u64 ciu_sum = cvmx_पढ़ो_csr(CVMX_CIU_INT_SUM1);
+static void octeon_irq_ip3_ciu(void)
+{
+	u64 ciu_sum = cvmx_read_csr(CVMX_CIU_INT_SUM1);
 
-	ciu_sum &= __this_cpu_पढ़ो(octeon_irq_ciu1_en_mirror);
-	अगर (likely(ciu_sum)) अणु
-		पूर्णांक bit = fls64(ciu_sum) - 1;
-		पूर्णांक irq = octeon_irq_ciu_to_irq[1][bit];
-		अगर (likely(irq))
-			करो_IRQ(irq);
-		अन्यथा
-			spurious_पूर्णांकerrupt();
-	पूर्ण अन्यथा अणु
-		spurious_पूर्णांकerrupt();
-	पूर्ण
-पूर्ण
+	ciu_sum &= __this_cpu_read(octeon_irq_ciu1_en_mirror);
+	if (likely(ciu_sum)) {
+		int bit = fls64(ciu_sum) - 1;
+		int irq = octeon_irq_ciu_to_irq[1][bit];
+		if (likely(irq))
+			do_IRQ(irq);
+		else
+			spurious_interrupt();
+	} else {
+		spurious_interrupt();
+	}
+}
 
-अटल व्योम octeon_irq_ip4_ciu(व्योम)
-अणु
-	पूर्णांक coreid = cvmx_get_core_num();
-	u64 ciu_sum = cvmx_पढ़ो_csr(CVMX_CIU_SUM2_PPX_IP4(coreid));
-	u64 ciu_en = cvmx_पढ़ो_csr(CVMX_CIU_EN2_PPX_IP4(coreid));
+static void octeon_irq_ip4_ciu(void)
+{
+	int coreid = cvmx_get_core_num();
+	u64 ciu_sum = cvmx_read_csr(CVMX_CIU_SUM2_PPX_IP4(coreid));
+	u64 ciu_en = cvmx_read_csr(CVMX_CIU_EN2_PPX_IP4(coreid));
 
 	ciu_sum &= ciu_en;
-	अगर (likely(ciu_sum)) अणु
-		पूर्णांक bit = fls64(ciu_sum) - 1;
-		पूर्णांक irq = octeon_irq_ciu_to_irq[2][bit];
+	if (likely(ciu_sum)) {
+		int bit = fls64(ciu_sum) - 1;
+		int irq = octeon_irq_ciu_to_irq[2][bit];
 
-		अगर (likely(irq))
-			करो_IRQ(irq);
-		अन्यथा
-			spurious_पूर्णांकerrupt();
-	पूर्ण अन्यथा अणु
-		spurious_पूर्णांकerrupt();
-	पूर्ण
-पूर्ण
+		if (likely(irq))
+			do_IRQ(irq);
+		else
+			spurious_interrupt();
+	} else {
+		spurious_interrupt();
+	}
+}
 
-अटल bool octeon_irq_use_ip4;
+static bool octeon_irq_use_ip4;
 
-अटल व्योम octeon_irq_local_enable_ip4(व्योम *arg)
-अणु
+static void octeon_irq_local_enable_ip4(void *arg)
+{
 	set_c0_status(STATUSF_IP4);
-पूर्ण
+}
 
-अटल व्योम octeon_irq_ip4_mask(व्योम)
-अणु
+static void octeon_irq_ip4_mask(void)
+{
 	clear_c0_status(STATUSF_IP4);
-	spurious_पूर्णांकerrupt();
-पूर्ण
+	spurious_interrupt();
+}
 
-अटल व्योम (*octeon_irq_ip2)(व्योम);
-अटल व्योम (*octeon_irq_ip3)(व्योम);
-अटल व्योम (*octeon_irq_ip4)(व्योम);
+static void (*octeon_irq_ip2)(void);
+static void (*octeon_irq_ip3)(void);
+static void (*octeon_irq_ip4)(void);
 
-व्योम (*octeon_irq_setup_secondary)(व्योम);
+void (*octeon_irq_setup_secondary)(void);
 
-व्योम octeon_irq_set_ip4_handler(octeon_irq_ip4_handler_t h)
-अणु
+void octeon_irq_set_ip4_handler(octeon_irq_ip4_handler_t h)
+{
 	octeon_irq_ip4 = h;
 	octeon_irq_use_ip4 = true;
-	on_each_cpu(octeon_irq_local_enable_ip4, शून्य, 1);
-पूर्ण
+	on_each_cpu(octeon_irq_local_enable_ip4, NULL, 1);
+}
 
-अटल व्योम octeon_irq_percpu_enable(व्योम)
-अणु
+static void octeon_irq_percpu_enable(void)
+{
 	irq_cpu_online();
-पूर्ण
+}
 
-अटल व्योम octeon_irq_init_ciu_percpu(व्योम)
-अणु
-	पूर्णांक coreid = cvmx_get_core_num();
+static void octeon_irq_init_ciu_percpu(void)
+{
+	int coreid = cvmx_get_core_num();
 
 
-	__this_cpu_ग_लिखो(octeon_irq_ciu0_en_mirror, 0);
-	__this_cpu_ग_लिखो(octeon_irq_ciu1_en_mirror, 0);
+	__this_cpu_write(octeon_irq_ciu0_en_mirror, 0);
+	__this_cpu_write(octeon_irq_ciu1_en_mirror, 0);
 	wmb();
 	raw_spin_lock_init(this_cpu_ptr(&octeon_irq_ciu_spinlock));
 	/*
 	 * Disable All CIU Interrupts. The ones we need will be
-	 * enabled later.  Read the SUM रेजिस्टर so we know the ग_लिखो
+	 * enabled later.  Read the SUM register so we know the write
 	 * completed.
 	 */
-	cvmx_ग_लिखो_csr(CVMX_CIU_INTX_EN0((coreid * 2)), 0);
-	cvmx_ग_लिखो_csr(CVMX_CIU_INTX_EN0((coreid * 2 + 1)), 0);
-	cvmx_ग_लिखो_csr(CVMX_CIU_INTX_EN1((coreid * 2)), 0);
-	cvmx_ग_लिखो_csr(CVMX_CIU_INTX_EN1((coreid * 2 + 1)), 0);
-	cvmx_पढ़ो_csr(CVMX_CIU_INTX_SUM0((coreid * 2)));
-पूर्ण
+	cvmx_write_csr(CVMX_CIU_INTX_EN0((coreid * 2)), 0);
+	cvmx_write_csr(CVMX_CIU_INTX_EN0((coreid * 2 + 1)), 0);
+	cvmx_write_csr(CVMX_CIU_INTX_EN1((coreid * 2)), 0);
+	cvmx_write_csr(CVMX_CIU_INTX_EN1((coreid * 2 + 1)), 0);
+	cvmx_read_csr(CVMX_CIU_INTX_SUM0((coreid * 2)));
+}
 
-अटल व्योम octeon_irq_init_ciu2_percpu(व्योम)
-अणु
+static void octeon_irq_init_ciu2_percpu(void)
+{
 	u64 regx, ipx;
-	पूर्णांक coreid = cvmx_get_core_num();
+	int coreid = cvmx_get_core_num();
 	u64 base = CVMX_CIU2_EN_PPX_IP2_WRKQ(coreid);
 
 	/*
 	 * Disable All CIU2 Interrupts. The ones we need will be
-	 * enabled later.  Read the SUM रेजिस्टर so we know the ग_लिखो
+	 * enabled later.  Read the SUM register so we know the write
 	 * completed.
 	 *
-	 * There are 9 रेजिस्टरs and 3 IPX levels with strides 0x1000
+	 * There are 9 registers and 3 IPX levels with strides 0x1000
 	 * and 0x200 respectivly.  Use loops to clear them.
 	 */
-	क्रम (regx = 0; regx <= 0x8000; regx += 0x1000) अणु
-		क्रम (ipx = 0; ipx <= 0x400; ipx += 0x200)
-			cvmx_ग_लिखो_csr(base + regx + ipx, 0);
-	पूर्ण
+	for (regx = 0; regx <= 0x8000; regx += 0x1000) {
+		for (ipx = 0; ipx <= 0x400; ipx += 0x200)
+			cvmx_write_csr(base + regx + ipx, 0);
+	}
 
-	cvmx_पढ़ो_csr(CVMX_CIU2_SUM_PPX_IP2(coreid));
-पूर्ण
+	cvmx_read_csr(CVMX_CIU2_SUM_PPX_IP2(coreid));
+}
 
-अटल व्योम octeon_irq_setup_secondary_ciu(व्योम)
-अणु
+static void octeon_irq_setup_secondary_ciu(void)
+{
 	octeon_irq_init_ciu_percpu();
 	octeon_irq_percpu_enable();
 
 	/* Enable the CIU lines */
 	set_c0_status(STATUSF_IP3 | STATUSF_IP2);
-	अगर (octeon_irq_use_ip4)
+	if (octeon_irq_use_ip4)
 		set_c0_status(STATUSF_IP4);
-	अन्यथा
+	else
 		clear_c0_status(STATUSF_IP4);
-पूर्ण
+}
 
-अटल व्योम octeon_irq_setup_secondary_ciu2(व्योम)
-अणु
+static void octeon_irq_setup_secondary_ciu2(void)
+{
 	octeon_irq_init_ciu2_percpu();
 	octeon_irq_percpu_enable();
 
 	/* Enable the CIU lines */
 	set_c0_status(STATUSF_IP3 | STATUSF_IP2);
-	अगर (octeon_irq_use_ip4)
+	if (octeon_irq_use_ip4)
 		set_c0_status(STATUSF_IP4);
-	अन्यथा
+	else
 		clear_c0_status(STATUSF_IP4);
-पूर्ण
+}
 
-अटल पूर्णांक __init octeon_irq_init_ciu(
-	काष्ठा device_node *ciu_node, काष्ठा device_node *parent)
-अणु
-	पूर्णांक i, r;
-	काष्ठा irq_chip *chip;
-	काष्ठा irq_chip *chip_edge;
-	काष्ठा irq_chip *chip_mbox;
-	काष्ठा irq_chip *chip_wd;
-	काष्ठा irq_करोमुख्य *ciu_करोमुख्य = शून्य;
-	काष्ठा octeon_irq_ciu_करोमुख्य_data *dd;
+static int __init octeon_irq_init_ciu(
+	struct device_node *ciu_node, struct device_node *parent)
+{
+	int i, r;
+	struct irq_chip *chip;
+	struct irq_chip *chip_edge;
+	struct irq_chip *chip_mbox;
+	struct irq_chip *chip_wd;
+	struct irq_domain *ciu_domain = NULL;
+	struct octeon_irq_ciu_domain_data *dd;
 
-	dd = kzalloc(माप(*dd), GFP_KERNEL);
-	अगर (!dd)
-		वापस -ENOMEM;
+	dd = kzalloc(sizeof(*dd), GFP_KERNEL);
+	if (!dd)
+		return -ENOMEM;
 
 	octeon_irq_init_ciu_percpu();
 	octeon_irq_setup_secondary = octeon_irq_setup_secondary_ciu;
 
 	octeon_irq_ip2 = octeon_irq_ip2_ciu;
 	octeon_irq_ip3 = octeon_irq_ip3_ciu;
-	अगर ((OCTEON_IS_OCTEON2() || OCTEON_IS_OCTEON3())
-		&& !OCTEON_IS_MODEL(OCTEON_CN63XX)) अणु
+	if ((OCTEON_IS_OCTEON2() || OCTEON_IS_OCTEON3())
+		&& !OCTEON_IS_MODEL(OCTEON_CN63XX)) {
 		octeon_irq_ip4 =  octeon_irq_ip4_ciu;
 		dd->num_sum = 3;
 		octeon_irq_use_ip4 = true;
-	पूर्ण अन्यथा अणु
+	} else {
 		octeon_irq_ip4 = octeon_irq_ip4_mask;
 		dd->num_sum = 2;
 		octeon_irq_use_ip4 = false;
-	पूर्ण
-	अगर (OCTEON_IS_MODEL(OCTEON_CN58XX_PASS2_X) ||
+	}
+	if (OCTEON_IS_MODEL(OCTEON_CN58XX_PASS2_X) ||
 	    OCTEON_IS_MODEL(OCTEON_CN56XX_PASS2_X) ||
 	    OCTEON_IS_MODEL(OCTEON_CN52XX_PASS2_X) ||
-	    OCTEON_IS_OCTEON2() || OCTEON_IS_OCTEON3()) अणु
+	    OCTEON_IS_OCTEON2() || OCTEON_IS_OCTEON3()) {
 		chip = &octeon_irq_chip_ciu_v2;
 		chip_edge = &octeon_irq_chip_ciu_v2_edge;
 		chip_mbox = &octeon_irq_chip_ciu_mbox_v2;
 		chip_wd = &octeon_irq_chip_ciu_wd_v2;
 		octeon_irq_gpio_chip = &octeon_irq_chip_ciu_gpio_v2;
-	पूर्ण अन्यथा अणु
+	} else {
 		chip = &octeon_irq_chip_ciu;
 		chip_edge = &octeon_irq_chip_ciu_edge;
 		chip_mbox = &octeon_irq_chip_ciu_mbox;
 		chip_wd = &octeon_irq_chip_ciu_wd;
 		octeon_irq_gpio_chip = &octeon_irq_chip_ciu_gpio;
-	पूर्ण
+	}
 	octeon_irq_ciu_chip = chip;
 	octeon_irq_ciu_chip_edge = chip_edge;
 
-	/* Mips पूर्णांकernal */
+	/* Mips internal */
 	octeon_irq_init_core();
 
-	ciu_करोमुख्य = irq_करोमुख्य_add_tree(
-		ciu_node, &octeon_irq_करोमुख्य_ciu_ops, dd);
-	irq_set_शेष_host(ciu_करोमुख्य);
+	ciu_domain = irq_domain_add_tree(
+		ciu_node, &octeon_irq_domain_ciu_ops, dd);
+	irq_set_default_host(ciu_domain);
 
 	/* CIU_0 */
-	क्रम (i = 0; i < 16; i++) अणु
-		r = octeon_irq_क्रमce_ciu_mapping(
-			ciu_करोमुख्य, i + OCTEON_IRQ_WORKQ0, 0, i + 0);
-		अगर (r)
-			जाओ err;
-	पूर्ण
+	for (i = 0; i < 16; i++) {
+		r = octeon_irq_force_ciu_mapping(
+			ciu_domain, i + OCTEON_IRQ_WORKQ0, 0, i + 0);
+		if (r)
+			goto err;
+	}
 
 	r = irq_alloc_desc_at(OCTEON_IRQ_MBOX0, -1);
-	अगर (r < 0) अणु
+	if (r < 0) {
 		pr_err("Failed to allocate desc for %s\n", "OCTEON_IRQ_MBOX0");
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 	r = octeon_irq_set_ciu_mapping(
 		OCTEON_IRQ_MBOX0, 0, 32, 0, chip_mbox, handle_percpu_irq);
-	अगर (r)
-		जाओ err;
+	if (r)
+		goto err;
 	r = irq_alloc_desc_at(OCTEON_IRQ_MBOX1, -1);
-	अगर (r < 0) अणु
+	if (r < 0) {
 		pr_err("Failed to allocate desc for %s\n", "OCTEON_IRQ_MBOX1");
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 	r = octeon_irq_set_ciu_mapping(
 		OCTEON_IRQ_MBOX1, 0, 33, 0, chip_mbox, handle_percpu_irq);
-	अगर (r)
-		जाओ err;
+	if (r)
+		goto err;
 
-	क्रम (i = 0; i < 4; i++) अणु
-		r = octeon_irq_क्रमce_ciu_mapping(
-			ciu_करोमुख्य, i + OCTEON_IRQ_PCI_INT0, 0, i + 36);
-		अगर (r)
-			जाओ err;
-	पूर्ण
-	क्रम (i = 0; i < 4; i++) अणु
-		r = octeon_irq_क्रमce_ciu_mapping(
-			ciu_करोमुख्य, i + OCTEON_IRQ_PCI_MSI0, 0, i + 40);
-		अगर (r)
-			जाओ err;
-	पूर्ण
+	for (i = 0; i < 4; i++) {
+		r = octeon_irq_force_ciu_mapping(
+			ciu_domain, i + OCTEON_IRQ_PCI_INT0, 0, i + 36);
+		if (r)
+			goto err;
+	}
+	for (i = 0; i < 4; i++) {
+		r = octeon_irq_force_ciu_mapping(
+			ciu_domain, i + OCTEON_IRQ_PCI_MSI0, 0, i + 40);
+		if (r)
+			goto err;
+	}
 
-	r = octeon_irq_क्रमce_ciu_mapping(ciu_करोमुख्य, OCTEON_IRQ_TWSI, 0, 45);
-	अगर (r)
-		जाओ err;
+	r = octeon_irq_force_ciu_mapping(ciu_domain, OCTEON_IRQ_TWSI, 0, 45);
+	if (r)
+		goto err;
 
-	r = octeon_irq_क्रमce_ciu_mapping(ciu_करोमुख्य, OCTEON_IRQ_RML, 0, 46);
-	अगर (r)
-		जाओ err;
+	r = octeon_irq_force_ciu_mapping(ciu_domain, OCTEON_IRQ_RML, 0, 46);
+	if (r)
+		goto err;
 
-	क्रम (i = 0; i < 4; i++) अणु
-		r = octeon_irq_क्रमce_ciu_mapping(
-			ciu_करोमुख्य, i + OCTEON_IRQ_TIMER0, 0, i + 52);
-		अगर (r)
-			जाओ err;
-	पूर्ण
+	for (i = 0; i < 4; i++) {
+		r = octeon_irq_force_ciu_mapping(
+			ciu_domain, i + OCTEON_IRQ_TIMER0, 0, i + 52);
+		if (r)
+			goto err;
+	}
 
-	r = octeon_irq_क्रमce_ciu_mapping(ciu_करोमुख्य, OCTEON_IRQ_TWSI2, 0, 59);
-	अगर (r)
-		जाओ err;
+	r = octeon_irq_force_ciu_mapping(ciu_domain, OCTEON_IRQ_TWSI2, 0, 59);
+	if (r)
+		goto err;
 
 	r = irq_alloc_descs(OCTEON_IRQ_WDOG0, OCTEON_IRQ_WDOG0, 16, -1);
-	अगर (r < 0) अणु
+	if (r < 0) {
 		pr_err("Failed to allocate desc for %s\n", "OCTEON_IRQ_WDOGx");
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 	/* CIU_1 */
-	क्रम (i = 0; i < 16; i++) अणु
+	for (i = 0; i < 16; i++) {
 		r = octeon_irq_set_ciu_mapping(
 			i + OCTEON_IRQ_WDOG0, 1, i + 0, 0, chip_wd,
 			handle_level_irq);
-		अगर (r)
-			जाओ err;
-	पूर्ण
+		if (r)
+			goto err;
+	}
 
 	/* Enable the CIU lines */
 	set_c0_status(STATUSF_IP3 | STATUSF_IP2);
-	अगर (octeon_irq_use_ip4)
+	if (octeon_irq_use_ip4)
 		set_c0_status(STATUSF_IP4);
-	अन्यथा
+	else
 		clear_c0_status(STATUSF_IP4);
 
-	वापस 0;
+	return 0;
 err:
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल पूर्णांक __init octeon_irq_init_gpio(
-	काष्ठा device_node *gpio_node, काष्ठा device_node *parent)
-अणु
-	काष्ठा octeon_irq_gpio_करोमुख्य_data *gpiod;
-	u32 पूर्णांकerrupt_cells;
-	अचिन्हित पूर्णांक base_hwirq;
-	पूर्णांक r;
+static int __init octeon_irq_init_gpio(
+	struct device_node *gpio_node, struct device_node *parent)
+{
+	struct octeon_irq_gpio_domain_data *gpiod;
+	u32 interrupt_cells;
+	unsigned int base_hwirq;
+	int r;
 
-	r = of_property_पढ़ो_u32(parent, "#interrupt-cells", &पूर्णांकerrupt_cells);
-	अगर (r)
-		वापस r;
+	r = of_property_read_u32(parent, "#interrupt-cells", &interrupt_cells);
+	if (r)
+		return r;
 
-	अगर (पूर्णांकerrupt_cells == 1) अणु
+	if (interrupt_cells == 1) {
 		u32 v;
 
-		r = of_property_पढ़ो_u32_index(gpio_node, "interrupts", 0, &v);
-		अगर (r) अणु
+		r = of_property_read_u32_index(gpio_node, "interrupts", 0, &v);
+		if (r) {
 			pr_warn("No \"interrupts\" property.\n");
-			वापस r;
-		पूर्ण
+			return r;
+		}
 		base_hwirq = v;
-	पूर्ण अन्यथा अगर (पूर्णांकerrupt_cells == 2) अणु
+	} else if (interrupt_cells == 2) {
 		u32 v0, v1;
 
-		r = of_property_पढ़ो_u32_index(gpio_node, "interrupts", 0, &v0);
-		अगर (r) अणु
+		r = of_property_read_u32_index(gpio_node, "interrupts", 0, &v0);
+		if (r) {
 			pr_warn("No \"interrupts\" property.\n");
-			वापस r;
-		पूर्ण
-		r = of_property_पढ़ो_u32_index(gpio_node, "interrupts", 1, &v1);
-		अगर (r) अणु
+			return r;
+		}
+		r = of_property_read_u32_index(gpio_node, "interrupts", 1, &v1);
+		if (r) {
 			pr_warn("No \"interrupts\" property.\n");
-			वापस r;
-		पूर्ण
+			return r;
+		}
 		base_hwirq = (v0 << 6) | v1;
-	पूर्ण अन्यथा अणु
+	} else {
 		pr_warn("Bad \"#interrupt-cells\" property: %u\n",
-			पूर्णांकerrupt_cells);
-		वापस -EINVAL;
-	पूर्ण
+			interrupt_cells);
+		return -EINVAL;
+	}
 
-	gpiod = kzalloc(माप(*gpiod), GFP_KERNEL);
-	अगर (gpiod) अणु
-		/* gpio करोमुख्य host_data is the base hwirq number. */
+	gpiod = kzalloc(sizeof(*gpiod), GFP_KERNEL);
+	if (gpiod) {
+		/* gpio domain host_data is the base hwirq number. */
 		gpiod->base_hwirq = base_hwirq;
-		irq_करोमुख्य_add_linear(
-			gpio_node, 16, &octeon_irq_करोमुख्य_gpio_ops, gpiod);
-	पूर्ण अन्यथा अणु
+		irq_domain_add_linear(
+			gpio_node, 16, &octeon_irq_domain_gpio_ops, gpiod);
+	} else {
 		pr_warn("Cannot allocate memory for GPIO irq_domain.\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	/*
 	 * Clear the OF_POPULATED flag that was set by of_irq_init()
@@ -1641,234 +1640,234 @@ err:
 	 */
 	of_node_clear_flag(gpio_node, OF_POPULATED);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 /*
- * Watchकरोg पूर्णांकerrupts are special.  They are associated with a single
+ * Watchdog interrupts are special.  They are associated with a single
  * core, so we hardwire the affinity to that core.
  */
-अटल व्योम octeon_irq_ciu2_wd_enable(काष्ठा irq_data *data)
-अणु
+static void octeon_irq_ciu2_wd_enable(struct irq_data *data)
+{
 	u64 mask;
 	u64 en_addr;
-	पूर्णांक coreid = data->irq - OCTEON_IRQ_WDOG0;
-	काष्ठा octeon_ciu_chip_data *cd;
+	int coreid = data->irq - OCTEON_IRQ_WDOG0;
+	struct octeon_ciu_chip_data *cd;
 
 	cd = irq_data_get_irq_chip_data(data);
 	mask = 1ull << (cd->bit);
 
 	en_addr = CVMX_CIU2_EN_PPX_IP2_WRKQ_W1S(coreid) +
 		(0x1000ull * cd->line);
-	cvmx_ग_लिखो_csr(en_addr, mask);
+	cvmx_write_csr(en_addr, mask);
 
-पूर्ण
+}
 
-अटल व्योम octeon_irq_ciu2_enable(काष्ठा irq_data *data)
-अणु
+static void octeon_irq_ciu2_enable(struct irq_data *data)
+{
 	u64 mask;
 	u64 en_addr;
-	पूर्णांक cpu = next_cpu_क्रम_irq(data);
-	पूर्णांक coreid = octeon_coreid_क्रम_cpu(cpu);
-	काष्ठा octeon_ciu_chip_data *cd;
+	int cpu = next_cpu_for_irq(data);
+	int coreid = octeon_coreid_for_cpu(cpu);
+	struct octeon_ciu_chip_data *cd;
 
 	cd = irq_data_get_irq_chip_data(data);
 	mask = 1ull << (cd->bit);
 
 	en_addr = CVMX_CIU2_EN_PPX_IP2_WRKQ_W1S(coreid) +
 		(0x1000ull * cd->line);
-	cvmx_ग_लिखो_csr(en_addr, mask);
-पूर्ण
+	cvmx_write_csr(en_addr, mask);
+}
 
-अटल व्योम octeon_irq_ciu2_enable_local(काष्ठा irq_data *data)
-अणु
+static void octeon_irq_ciu2_enable_local(struct irq_data *data)
+{
 	u64 mask;
 	u64 en_addr;
-	पूर्णांक coreid = cvmx_get_core_num();
-	काष्ठा octeon_ciu_chip_data *cd;
+	int coreid = cvmx_get_core_num();
+	struct octeon_ciu_chip_data *cd;
 
 	cd = irq_data_get_irq_chip_data(data);
 	mask = 1ull << (cd->bit);
 
 	en_addr = CVMX_CIU2_EN_PPX_IP2_WRKQ_W1S(coreid) +
 		(0x1000ull * cd->line);
-	cvmx_ग_लिखो_csr(en_addr, mask);
+	cvmx_write_csr(en_addr, mask);
 
-पूर्ण
+}
 
-अटल व्योम octeon_irq_ciu2_disable_local(काष्ठा irq_data *data)
-अणु
+static void octeon_irq_ciu2_disable_local(struct irq_data *data)
+{
 	u64 mask;
 	u64 en_addr;
-	पूर्णांक coreid = cvmx_get_core_num();
-	काष्ठा octeon_ciu_chip_data *cd;
+	int coreid = cvmx_get_core_num();
+	struct octeon_ciu_chip_data *cd;
 
 	cd = irq_data_get_irq_chip_data(data);
 	mask = 1ull << (cd->bit);
 
 	en_addr = CVMX_CIU2_EN_PPX_IP2_WRKQ_W1C(coreid) +
 		(0x1000ull * cd->line);
-	cvmx_ग_लिखो_csr(en_addr, mask);
+	cvmx_write_csr(en_addr, mask);
 
-पूर्ण
+}
 
-अटल व्योम octeon_irq_ciu2_ack(काष्ठा irq_data *data)
-अणु
+static void octeon_irq_ciu2_ack(struct irq_data *data)
+{
 	u64 mask;
 	u64 en_addr;
-	पूर्णांक coreid = cvmx_get_core_num();
-	काष्ठा octeon_ciu_chip_data *cd;
+	int coreid = cvmx_get_core_num();
+	struct octeon_ciu_chip_data *cd;
 
 	cd = irq_data_get_irq_chip_data(data);
 	mask = 1ull << (cd->bit);
 
 	en_addr = CVMX_CIU2_RAW_PPX_IP2_WRKQ(coreid) + (0x1000ull * cd->line);
-	cvmx_ग_लिखो_csr(en_addr, mask);
+	cvmx_write_csr(en_addr, mask);
 
-पूर्ण
+}
 
-अटल व्योम octeon_irq_ciu2_disable_all(काष्ठा irq_data *data)
-अणु
-	पूर्णांक cpu;
+static void octeon_irq_ciu2_disable_all(struct irq_data *data)
+{
+	int cpu;
 	u64 mask;
-	काष्ठा octeon_ciu_chip_data *cd;
+	struct octeon_ciu_chip_data *cd;
 
 	cd = irq_data_get_irq_chip_data(data);
 	mask = 1ull << (cd->bit);
 
-	क्रम_each_online_cpu(cpu) अणु
+	for_each_online_cpu(cpu) {
 		u64 en_addr = CVMX_CIU2_EN_PPX_IP2_WRKQ_W1C(
-			octeon_coreid_क्रम_cpu(cpu)) + (0x1000ull * cd->line);
-		cvmx_ग_लिखो_csr(en_addr, mask);
-	पूर्ण
-पूर्ण
+			octeon_coreid_for_cpu(cpu)) + (0x1000ull * cd->line);
+		cvmx_write_csr(en_addr, mask);
+	}
+}
 
-अटल व्योम octeon_irq_ciu2_mbox_enable_all(काष्ठा irq_data *data)
-अणु
-	पूर्णांक cpu;
+static void octeon_irq_ciu2_mbox_enable_all(struct irq_data *data)
+{
+	int cpu;
 	u64 mask;
 
 	mask = 1ull << (data->irq - OCTEON_IRQ_MBOX0);
 
-	क्रम_each_online_cpu(cpu) अणु
+	for_each_online_cpu(cpu) {
 		u64 en_addr = CVMX_CIU2_EN_PPX_IP3_MBOX_W1S(
-			octeon_coreid_क्रम_cpu(cpu));
-		cvmx_ग_लिखो_csr(en_addr, mask);
-	पूर्ण
-पूर्ण
+			octeon_coreid_for_cpu(cpu));
+		cvmx_write_csr(en_addr, mask);
+	}
+}
 
-अटल व्योम octeon_irq_ciu2_mbox_disable_all(काष्ठा irq_data *data)
-अणु
-	पूर्णांक cpu;
+static void octeon_irq_ciu2_mbox_disable_all(struct irq_data *data)
+{
+	int cpu;
 	u64 mask;
 
 	mask = 1ull << (data->irq - OCTEON_IRQ_MBOX0);
 
-	क्रम_each_online_cpu(cpu) अणु
+	for_each_online_cpu(cpu) {
 		u64 en_addr = CVMX_CIU2_EN_PPX_IP3_MBOX_W1C(
-			octeon_coreid_क्रम_cpu(cpu));
-		cvmx_ग_लिखो_csr(en_addr, mask);
-	पूर्ण
-पूर्ण
+			octeon_coreid_for_cpu(cpu));
+		cvmx_write_csr(en_addr, mask);
+	}
+}
 
-अटल व्योम octeon_irq_ciu2_mbox_enable_local(काष्ठा irq_data *data)
-अणु
+static void octeon_irq_ciu2_mbox_enable_local(struct irq_data *data)
+{
 	u64 mask;
 	u64 en_addr;
-	पूर्णांक coreid = cvmx_get_core_num();
+	int coreid = cvmx_get_core_num();
 
 	mask = 1ull << (data->irq - OCTEON_IRQ_MBOX0);
 	en_addr = CVMX_CIU2_EN_PPX_IP3_MBOX_W1S(coreid);
-	cvmx_ग_लिखो_csr(en_addr, mask);
-पूर्ण
+	cvmx_write_csr(en_addr, mask);
+}
 
-अटल व्योम octeon_irq_ciu2_mbox_disable_local(काष्ठा irq_data *data)
-अणु
+static void octeon_irq_ciu2_mbox_disable_local(struct irq_data *data)
+{
 	u64 mask;
 	u64 en_addr;
-	पूर्णांक coreid = cvmx_get_core_num();
+	int coreid = cvmx_get_core_num();
 
 	mask = 1ull << (data->irq - OCTEON_IRQ_MBOX0);
 	en_addr = CVMX_CIU2_EN_PPX_IP3_MBOX_W1C(coreid);
-	cvmx_ग_लिखो_csr(en_addr, mask);
-पूर्ण
+	cvmx_write_csr(en_addr, mask);
+}
 
-#अगर_घोषित CONFIG_SMP
-अटल पूर्णांक octeon_irq_ciu2_set_affinity(काष्ठा irq_data *data,
-					स्थिर काष्ठा cpumask *dest, bool क्रमce)
-अणु
-	पूर्णांक cpu;
+#ifdef CONFIG_SMP
+static int octeon_irq_ciu2_set_affinity(struct irq_data *data,
+					const struct cpumask *dest, bool force)
+{
+	int cpu;
 	bool enable_one = !irqd_irq_disabled(data) && !irqd_irq_masked(data);
 	u64 mask;
-	काष्ठा octeon_ciu_chip_data *cd;
+	struct octeon_ciu_chip_data *cd;
 
-	अगर (!enable_one)
-		वापस 0;
+	if (!enable_one)
+		return 0;
 
 	cd = irq_data_get_irq_chip_data(data);
 	mask = 1ull << cd->bit;
 
-	क्रम_each_online_cpu(cpu) अणु
+	for_each_online_cpu(cpu) {
 		u64 en_addr;
-		अगर (cpumask_test_cpu(cpu, dest) && enable_one) अणु
+		if (cpumask_test_cpu(cpu, dest) && enable_one) {
 			enable_one = false;
 			en_addr = CVMX_CIU2_EN_PPX_IP2_WRKQ_W1S(
-				octeon_coreid_क्रम_cpu(cpu)) +
+				octeon_coreid_for_cpu(cpu)) +
 				(0x1000ull * cd->line);
-		पूर्ण अन्यथा अणु
+		} else {
 			en_addr = CVMX_CIU2_EN_PPX_IP2_WRKQ_W1C(
-				octeon_coreid_क्रम_cpu(cpu)) +
+				octeon_coreid_for_cpu(cpu)) +
 				(0x1000ull * cd->line);
-		पूर्ण
-		cvmx_ग_लिखो_csr(en_addr, mask);
-	पूर्ण
+		}
+		cvmx_write_csr(en_addr, mask);
+	}
 
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+	return 0;
+}
+#endif
 
-अटल व्योम octeon_irq_ciu2_enable_gpio(काष्ठा irq_data *data)
-अणु
+static void octeon_irq_ciu2_enable_gpio(struct irq_data *data)
+{
 	octeon_irq_gpio_setup(data);
 	octeon_irq_ciu2_enable(data);
-पूर्ण
+}
 
-अटल व्योम octeon_irq_ciu2_disable_gpio(काष्ठा irq_data *data)
-अणु
-	काष्ठा octeon_ciu_chip_data *cd;
+static void octeon_irq_ciu2_disable_gpio(struct irq_data *data)
+{
+	struct octeon_ciu_chip_data *cd;
 
 	cd = irq_data_get_irq_chip_data(data);
 
-	cvmx_ग_लिखो_csr(CVMX_GPIO_BIT_CFGX(cd->gpio_line), 0);
+	cvmx_write_csr(CVMX_GPIO_BIT_CFGX(cd->gpio_line), 0);
 
 	octeon_irq_ciu2_disable_all(data);
-पूर्ण
+}
 
-अटल काष्ठा irq_chip octeon_irq_chip_ciu2 = अणु
+static struct irq_chip octeon_irq_chip_ciu2 = {
 	.name = "CIU2-E",
 	.irq_enable = octeon_irq_ciu2_enable,
 	.irq_disable = octeon_irq_ciu2_disable_all,
 	.irq_mask = octeon_irq_ciu2_disable_local,
 	.irq_unmask = octeon_irq_ciu2_enable,
-#अगर_घोषित CONFIG_SMP
+#ifdef CONFIG_SMP
 	.irq_set_affinity = octeon_irq_ciu2_set_affinity,
 	.irq_cpu_offline = octeon_irq_cpu_offline_ciu,
-#पूर्ण_अगर
-पूर्ण;
+#endif
+};
 
-अटल काष्ठा irq_chip octeon_irq_chip_ciu2_edge = अणु
+static struct irq_chip octeon_irq_chip_ciu2_edge = {
 	.name = "CIU2-E",
 	.irq_enable = octeon_irq_ciu2_enable,
 	.irq_disable = octeon_irq_ciu2_disable_all,
 	.irq_ack = octeon_irq_ciu2_ack,
 	.irq_mask = octeon_irq_ciu2_disable_local,
 	.irq_unmask = octeon_irq_ciu2_enable,
-#अगर_घोषित CONFIG_SMP
+#ifdef CONFIG_SMP
 	.irq_set_affinity = octeon_irq_ciu2_set_affinity,
 	.irq_cpu_offline = octeon_irq_cpu_offline_ciu,
-#पूर्ण_अगर
-पूर्ण;
+#endif
+};
 
-अटल काष्ठा irq_chip octeon_irq_chip_ciu2_mbox = अणु
+static struct irq_chip octeon_irq_chip_ciu2_mbox = {
 	.name = "CIU2-M",
 	.irq_enable = octeon_irq_ciu2_mbox_enable_all,
 	.irq_disable = octeon_irq_ciu2_mbox_disable_all,
@@ -1878,17 +1877,17 @@ err:
 	.irq_cpu_online = octeon_irq_ciu2_mbox_enable_local,
 	.irq_cpu_offline = octeon_irq_ciu2_mbox_disable_local,
 	.flags = IRQCHIP_ONOFFLINE_ENABLED,
-पूर्ण;
+};
 
-अटल काष्ठा irq_chip octeon_irq_chip_ciu2_wd = अणु
+static struct irq_chip octeon_irq_chip_ciu2_wd = {
 	.name = "CIU2-W",
 	.irq_enable = octeon_irq_ciu2_wd_enable,
 	.irq_disable = octeon_irq_ciu2_disable_all,
 	.irq_mask = octeon_irq_ciu2_disable_local,
 	.irq_unmask = octeon_irq_ciu2_enable_local,
-पूर्ण;
+};
 
-अटल काष्ठा irq_chip octeon_irq_chip_ciu2_gpio = अणु
+static struct irq_chip octeon_irq_chip_ciu2_gpio = {
 	.name = "CIU-GPIO",
 	.irq_enable = octeon_irq_ciu2_enable_gpio,
 	.irq_disable = octeon_irq_ciu2_disable_gpio,
@@ -1896,163 +1895,163 @@ err:
 	.irq_mask = octeon_irq_ciu2_disable_local,
 	.irq_unmask = octeon_irq_ciu2_enable,
 	.irq_set_type = octeon_irq_ciu_gpio_set_type,
-#अगर_घोषित CONFIG_SMP
+#ifdef CONFIG_SMP
 	.irq_set_affinity = octeon_irq_ciu2_set_affinity,
 	.irq_cpu_offline = octeon_irq_cpu_offline_ciu,
-#पूर्ण_अगर
+#endif
 	.flags = IRQCHIP_SET_TYPE_MASKED,
-पूर्ण;
+};
 
-अटल पूर्णांक octeon_irq_ciu2_xlat(काष्ठा irq_करोमुख्य *d,
-				काष्ठा device_node *node,
-				स्थिर u32 *पूर्णांकspec,
-				अचिन्हित पूर्णांक पूर्णांकsize,
-				अचिन्हित दीर्घ *out_hwirq,
-				अचिन्हित पूर्णांक *out_type)
-अणु
-	अचिन्हित पूर्णांक ciu, bit;
+static int octeon_irq_ciu2_xlat(struct irq_domain *d,
+				struct device_node *node,
+				const u32 *intspec,
+				unsigned int intsize,
+				unsigned long *out_hwirq,
+				unsigned int *out_type)
+{
+	unsigned int ciu, bit;
 
-	ciu = पूर्णांकspec[0];
-	bit = पूर्णांकspec[1];
+	ciu = intspec[0];
+	bit = intspec[1];
 
 	*out_hwirq = (ciu << 6) | bit;
 	*out_type = 0;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल bool octeon_irq_ciu2_is_edge(अचिन्हित पूर्णांक line, अचिन्हित पूर्णांक bit)
-अणु
+static bool octeon_irq_ciu2_is_edge(unsigned int line, unsigned int bit)
+{
 	bool edge = false;
 
-	अगर (line == 3) /* MIO */
-		चयन (bit) अणु
-		हाल 2:	 /* IPD_DRP */
-		हाल 8 ... 11: /* Timers */
-		हाल 48: /* PTP */
+	if (line == 3) /* MIO */
+		switch (bit) {
+		case 2:	 /* IPD_DRP */
+		case 8 ... 11: /* Timers */
+		case 48: /* PTP */
 			edge = true;
-			अवरोध;
-		शेष:
-			अवरोध;
-		पूर्ण
-	अन्यथा अगर (line == 6) /* PKT */
-		चयन (bit) अणु
-		हाल 52 ... 53: /* ILK_DRP */
-		हाल 8 ... 12:	/* GMX_DRP */
+			break;
+		default:
+			break;
+		}
+	else if (line == 6) /* PKT */
+		switch (bit) {
+		case 52 ... 53: /* ILK_DRP */
+		case 8 ... 12:	/* GMX_DRP */
 			edge = true;
-			अवरोध;
-		शेष:
-			अवरोध;
-		पूर्ण
-	वापस edge;
-पूर्ण
+			break;
+		default:
+			break;
+		}
+	return edge;
+}
 
-अटल पूर्णांक octeon_irq_ciu2_map(काष्ठा irq_करोमुख्य *d,
-			       अचिन्हित पूर्णांक virq, irq_hw_number_t hw)
-अणु
-	अचिन्हित पूर्णांक line = hw >> 6;
-	अचिन्हित पूर्णांक bit = hw & 63;
+static int octeon_irq_ciu2_map(struct irq_domain *d,
+			       unsigned int virq, irq_hw_number_t hw)
+{
+	unsigned int line = hw >> 6;
+	unsigned int bit = hw & 63;
 
 	/*
-	 * Don't map irq अगर it is reserved क्रम GPIO.
+	 * Don't map irq if it is reserved for GPIO.
 	 * (Line 7 are the GPIO lines.)
 	 */
-	अगर (line == 7)
-		वापस 0;
+	if (line == 7)
+		return 0;
 
-	अगर (line > 7 || octeon_irq_ciu_to_irq[line][bit] != 0)
-		वापस -EINVAL;
+	if (line > 7 || octeon_irq_ciu_to_irq[line][bit] != 0)
+		return -EINVAL;
 
-	अगर (octeon_irq_ciu2_is_edge(line, bit))
+	if (octeon_irq_ciu2_is_edge(line, bit))
 		octeon_irq_set_ciu_mapping(virq, line, bit, 0,
 					   &octeon_irq_chip_ciu2_edge,
 					   handle_edge_irq);
-	अन्यथा
+	else
 		octeon_irq_set_ciu_mapping(virq, line, bit, 0,
 					   &octeon_irq_chip_ciu2,
 					   handle_level_irq);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा irq_करोमुख्य_ops octeon_irq_करोमुख्य_ciu2_ops = अणु
+static struct irq_domain_ops octeon_irq_domain_ciu2_ops = {
 	.map = octeon_irq_ciu2_map,
-	.unmap = octeon_irq_मुक्त_cd,
+	.unmap = octeon_irq_free_cd,
 	.xlate = octeon_irq_ciu2_xlat,
-पूर्ण;
+};
 
-अटल व्योम octeon_irq_ciu2(व्योम)
-अणु
-	पूर्णांक line;
-	पूर्णांक bit;
-	पूर्णांक irq;
+static void octeon_irq_ciu2(void)
+{
+	int line;
+	int bit;
+	int irq;
 	u64 src_reg, src, sum;
-	स्थिर अचिन्हित दीर्घ core_id = cvmx_get_core_num();
+	const unsigned long core_id = cvmx_get_core_num();
 
-	sum = cvmx_पढ़ो_csr(CVMX_CIU2_SUM_PPX_IP2(core_id)) & 0xfful;
+	sum = cvmx_read_csr(CVMX_CIU2_SUM_PPX_IP2(core_id)) & 0xfful;
 
-	अगर (unlikely(!sum))
-		जाओ spurious;
+	if (unlikely(!sum))
+		goto spurious;
 
 	line = fls64(sum) - 1;
 	src_reg = CVMX_CIU2_SRC_PPX_IP2_WRKQ(core_id) + (0x1000 * line);
-	src = cvmx_पढ़ो_csr(src_reg);
+	src = cvmx_read_csr(src_reg);
 
-	अगर (unlikely(!src))
-		जाओ spurious;
+	if (unlikely(!src))
+		goto spurious;
 
 	bit = fls64(src) - 1;
 	irq = octeon_irq_ciu_to_irq[line][bit];
-	अगर (unlikely(!irq))
-		जाओ spurious;
+	if (unlikely(!irq))
+		goto spurious;
 
-	करो_IRQ(irq);
-	जाओ out;
+	do_IRQ(irq);
+	goto out;
 
 spurious:
-	spurious_पूर्णांकerrupt();
+	spurious_interrupt();
 out:
-	/* CN68XX pass 1.x has an errata that accessing the ACK रेजिस्टरs
-		can stop पूर्णांकerrupts from propagating */
-	अगर (OCTEON_IS_MODEL(OCTEON_CN68XX))
-		cvmx_पढ़ो_csr(CVMX_CIU2_INTR_CIU_READY);
-	अन्यथा
-		cvmx_पढ़ो_csr(CVMX_CIU2_ACK_PPX_IP2(core_id));
-	वापस;
-पूर्ण
+	/* CN68XX pass 1.x has an errata that accessing the ACK registers
+		can stop interrupts from propagating */
+	if (OCTEON_IS_MODEL(OCTEON_CN68XX))
+		cvmx_read_csr(CVMX_CIU2_INTR_CIU_READY);
+	else
+		cvmx_read_csr(CVMX_CIU2_ACK_PPX_IP2(core_id));
+	return;
+}
 
-अटल व्योम octeon_irq_ciu2_mbox(व्योम)
-अणु
-	पूर्णांक line;
+static void octeon_irq_ciu2_mbox(void)
+{
+	int line;
 
-	स्थिर अचिन्हित दीर्घ core_id = cvmx_get_core_num();
-	u64 sum = cvmx_पढ़ो_csr(CVMX_CIU2_SUM_PPX_IP3(core_id)) >> 60;
+	const unsigned long core_id = cvmx_get_core_num();
+	u64 sum = cvmx_read_csr(CVMX_CIU2_SUM_PPX_IP3(core_id)) >> 60;
 
-	अगर (unlikely(!sum))
-		जाओ spurious;
+	if (unlikely(!sum))
+		goto spurious;
 
 	line = fls64(sum) - 1;
 
-	करो_IRQ(OCTEON_IRQ_MBOX0 + line);
-	जाओ out;
+	do_IRQ(OCTEON_IRQ_MBOX0 + line);
+	goto out;
 
 spurious:
-	spurious_पूर्णांकerrupt();
+	spurious_interrupt();
 out:
-	/* CN68XX pass 1.x has an errata that accessing the ACK रेजिस्टरs
-		can stop पूर्णांकerrupts from propagating */
-	अगर (OCTEON_IS_MODEL(OCTEON_CN68XX))
-		cvmx_पढ़ो_csr(CVMX_CIU2_INTR_CIU_READY);
-	अन्यथा
-		cvmx_पढ़ो_csr(CVMX_CIU2_ACK_PPX_IP3(core_id));
-	वापस;
-पूर्ण
+	/* CN68XX pass 1.x has an errata that accessing the ACK registers
+		can stop interrupts from propagating */
+	if (OCTEON_IS_MODEL(OCTEON_CN68XX))
+		cvmx_read_csr(CVMX_CIU2_INTR_CIU_READY);
+	else
+		cvmx_read_csr(CVMX_CIU2_ACK_PPX_IP3(core_id));
+	return;
+}
 
-अटल पूर्णांक __init octeon_irq_init_ciu2(
-	काष्ठा device_node *ciu_node, काष्ठा device_node *parent)
-अणु
-	अचिन्हित पूर्णांक i, r;
-	काष्ठा irq_करोमुख्य *ciu_करोमुख्य = शून्य;
+static int __init octeon_irq_init_ciu2(
+	struct device_node *ciu_node, struct device_node *parent)
+{
+	unsigned int i, r;
+	struct irq_domain *ciu_domain = NULL;
 
 	octeon_irq_init_ciu2_percpu();
 	octeon_irq_setup_secondary = octeon_irq_setup_secondary_ciu2;
@@ -2062,48 +2061,48 @@ out:
 	octeon_irq_ip3 = octeon_irq_ciu2_mbox;
 	octeon_irq_ip4 = octeon_irq_ip4_mask;
 
-	/* Mips पूर्णांकernal */
+	/* Mips internal */
 	octeon_irq_init_core();
 
-	ciu_करोमुख्य = irq_करोमुख्य_add_tree(
-		ciu_node, &octeon_irq_करोमुख्य_ciu2_ops, शून्य);
-	irq_set_शेष_host(ciu_करोमुख्य);
+	ciu_domain = irq_domain_add_tree(
+		ciu_node, &octeon_irq_domain_ciu2_ops, NULL);
+	irq_set_default_host(ciu_domain);
 
 	/* CUI2 */
-	क्रम (i = 0; i < 64; i++) अणु
-		r = octeon_irq_क्रमce_ciu_mapping(
-			ciu_करोमुख्य, i + OCTEON_IRQ_WORKQ0, 0, i);
-		अगर (r)
-			जाओ err;
-	पूर्ण
+	for (i = 0; i < 64; i++) {
+		r = octeon_irq_force_ciu_mapping(
+			ciu_domain, i + OCTEON_IRQ_WORKQ0, 0, i);
+		if (r)
+			goto err;
+	}
 
-	क्रम (i = 0; i < 32; i++) अणु
+	for (i = 0; i < 32; i++) {
 		r = octeon_irq_set_ciu_mapping(i + OCTEON_IRQ_WDOG0, 1, i, 0,
 			&octeon_irq_chip_ciu2_wd, handle_level_irq);
-		अगर (r)
-			जाओ err;
-	पूर्ण
+		if (r)
+			goto err;
+	}
 
-	क्रम (i = 0; i < 4; i++) अणु
-		r = octeon_irq_क्रमce_ciu_mapping(
-			ciu_करोमुख्य, i + OCTEON_IRQ_TIMER0, 3, i + 8);
-		अगर (r)
-			जाओ err;
-	पूर्ण
+	for (i = 0; i < 4; i++) {
+		r = octeon_irq_force_ciu_mapping(
+			ciu_domain, i + OCTEON_IRQ_TIMER0, 3, i + 8);
+		if (r)
+			goto err;
+	}
 
-	क्रम (i = 0; i < 4; i++) अणु
-		r = octeon_irq_क्रमce_ciu_mapping(
-			ciu_करोमुख्य, i + OCTEON_IRQ_PCI_INT0, 4, i);
-		अगर (r)
-			जाओ err;
-	पूर्ण
+	for (i = 0; i < 4; i++) {
+		r = octeon_irq_force_ciu_mapping(
+			ciu_domain, i + OCTEON_IRQ_PCI_INT0, 4, i);
+		if (r)
+			goto err;
+	}
 
-	क्रम (i = 0; i < 4; i++) अणु
-		r = octeon_irq_क्रमce_ciu_mapping(
-			ciu_करोमुख्य, i + OCTEON_IRQ_PCI_MSI0, 4, i + 8);
-		अगर (r)
-			जाओ err;
-	पूर्ण
+	for (i = 0; i < 4; i++) {
+		r = octeon_irq_force_ciu_mapping(
+			ciu_domain, i + OCTEON_IRQ_PCI_MSI0, 4, i + 8);
+		if (r)
+			goto err;
+	}
 
 	irq_set_chip_and_handler(OCTEON_IRQ_MBOX0, &octeon_irq_chip_ciu2_mbox, handle_percpu_irq);
 	irq_set_chip_and_handler(OCTEON_IRQ_MBOX1, &octeon_irq_chip_ciu2_mbox, handle_percpu_irq);
@@ -2113,110 +2112,110 @@ out:
 	/* Enable the CIU lines */
 	set_c0_status(STATUSF_IP3 | STATUSF_IP2);
 	clear_c0_status(STATUSF_IP4);
-	वापस 0;
+	return 0;
 err:
-	वापस r;
-पूर्ण
+	return r;
+}
 
-काष्ठा octeon_irq_cib_host_data अणु
+struct octeon_irq_cib_host_data {
 	raw_spinlock_t lock;
 	u64 raw_reg;
 	u64 en_reg;
-	पूर्णांक max_bits;
-पूर्ण;
+	int max_bits;
+};
 
-काष्ठा octeon_irq_cib_chip_data अणु
-	काष्ठा octeon_irq_cib_host_data *host_data;
-	पूर्णांक bit;
-पूर्ण;
+struct octeon_irq_cib_chip_data {
+	struct octeon_irq_cib_host_data *host_data;
+	int bit;
+};
 
-अटल व्योम octeon_irq_cib_enable(काष्ठा irq_data *data)
-अणु
-	अचिन्हित दीर्घ flags;
+static void octeon_irq_cib_enable(struct irq_data *data)
+{
+	unsigned long flags;
 	u64 en;
-	काष्ठा octeon_irq_cib_chip_data *cd = irq_data_get_irq_chip_data(data);
-	काष्ठा octeon_irq_cib_host_data *host_data = cd->host_data;
+	struct octeon_irq_cib_chip_data *cd = irq_data_get_irq_chip_data(data);
+	struct octeon_irq_cib_host_data *host_data = cd->host_data;
 
 	raw_spin_lock_irqsave(&host_data->lock, flags);
-	en = cvmx_पढ़ो_csr(host_data->en_reg);
+	en = cvmx_read_csr(host_data->en_reg);
 	en |= 1ull << cd->bit;
-	cvmx_ग_लिखो_csr(host_data->en_reg, en);
+	cvmx_write_csr(host_data->en_reg, en);
 	raw_spin_unlock_irqrestore(&host_data->lock, flags);
-पूर्ण
+}
 
-अटल व्योम octeon_irq_cib_disable(काष्ठा irq_data *data)
-अणु
-	अचिन्हित दीर्घ flags;
+static void octeon_irq_cib_disable(struct irq_data *data)
+{
+	unsigned long flags;
 	u64 en;
-	काष्ठा octeon_irq_cib_chip_data *cd = irq_data_get_irq_chip_data(data);
-	काष्ठा octeon_irq_cib_host_data *host_data = cd->host_data;
+	struct octeon_irq_cib_chip_data *cd = irq_data_get_irq_chip_data(data);
+	struct octeon_irq_cib_host_data *host_data = cd->host_data;
 
 	raw_spin_lock_irqsave(&host_data->lock, flags);
-	en = cvmx_पढ़ो_csr(host_data->en_reg);
+	en = cvmx_read_csr(host_data->en_reg);
 	en &= ~(1ull << cd->bit);
-	cvmx_ग_लिखो_csr(host_data->en_reg, en);
+	cvmx_write_csr(host_data->en_reg, en);
 	raw_spin_unlock_irqrestore(&host_data->lock, flags);
-पूर्ण
+}
 
-अटल पूर्णांक octeon_irq_cib_set_type(काष्ठा irq_data *data, अचिन्हित पूर्णांक t)
-अणु
+static int octeon_irq_cib_set_type(struct irq_data *data, unsigned int t)
+{
 	irqd_set_trigger_type(data, t);
-	वापस IRQ_SET_MASK_OK;
-पूर्ण
+	return IRQ_SET_MASK_OK;
+}
 
-अटल काष्ठा irq_chip octeon_irq_chip_cib = अणु
+static struct irq_chip octeon_irq_chip_cib = {
 	.name = "CIB",
 	.irq_enable = octeon_irq_cib_enable,
 	.irq_disable = octeon_irq_cib_disable,
 	.irq_mask = octeon_irq_cib_disable,
 	.irq_unmask = octeon_irq_cib_enable,
 	.irq_set_type = octeon_irq_cib_set_type,
-पूर्ण;
+};
 
-अटल पूर्णांक octeon_irq_cib_xlat(काष्ठा irq_करोमुख्य *d,
-				   काष्ठा device_node *node,
-				   स्थिर u32 *पूर्णांकspec,
-				   अचिन्हित पूर्णांक पूर्णांकsize,
-				   अचिन्हित दीर्घ *out_hwirq,
-				   अचिन्हित पूर्णांक *out_type)
-अणु
-	अचिन्हित पूर्णांक type = 0;
+static int octeon_irq_cib_xlat(struct irq_domain *d,
+				   struct device_node *node,
+				   const u32 *intspec,
+				   unsigned int intsize,
+				   unsigned long *out_hwirq,
+				   unsigned int *out_type)
+{
+	unsigned int type = 0;
 
-	अगर (पूर्णांकsize == 2)
-		type = पूर्णांकspec[1];
+	if (intsize == 2)
+		type = intspec[1];
 
-	चयन (type) अणु
-	हाल 0: /* unofficial value, but we might as well let it work. */
-	हाल 4: /* official value क्रम level triggering. */
+	switch (type) {
+	case 0: /* unofficial value, but we might as well let it work. */
+	case 4: /* official value for level triggering. */
 		*out_type = IRQ_TYPE_LEVEL_HIGH;
-		अवरोध;
-	हाल 1: /* official value क्रम edge triggering. */
+		break;
+	case 1: /* official value for edge triggering. */
 		*out_type = IRQ_TYPE_EDGE_RISING;
-		अवरोध;
-	शेष: /* Nothing अन्यथा is acceptable. */
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default: /* Nothing else is acceptable. */
+		return -EINVAL;
+	}
 
-	*out_hwirq = पूर्णांकspec[0];
+	*out_hwirq = intspec[0];
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक octeon_irq_cib_map(काष्ठा irq_करोमुख्य *d,
-			      अचिन्हित पूर्णांक virq, irq_hw_number_t hw)
-अणु
-	काष्ठा octeon_irq_cib_host_data *host_data = d->host_data;
-	काष्ठा octeon_irq_cib_chip_data *cd;
+static int octeon_irq_cib_map(struct irq_domain *d,
+			      unsigned int virq, irq_hw_number_t hw)
+{
+	struct octeon_irq_cib_host_data *host_data = d->host_data;
+	struct octeon_irq_cib_chip_data *cd;
 
-	अगर (hw >= host_data->max_bits) अणु
+	if (hw >= host_data->max_bits) {
 		pr_err("ERROR: %s mapping %u is too big!\n",
-		       irq_करोमुख्य_get_of_node(d)->name, (अचिन्हित)hw);
-		वापस -EINVAL;
-	पूर्ण
+		       irq_domain_get_of_node(d)->name, (unsigned)hw);
+		return -EINVAL;
+	}
 
-	cd = kzalloc(माप(*cd), GFP_KERNEL);
-	अगर (!cd)
-		वापस -ENOMEM;
+	cd = kzalloc(sizeof(*cd), GFP_KERNEL);
+	if (!cd)
+		return -ENOMEM;
 
 	cd->host_data = host_data;
 	cd->bit = hw;
@@ -2224,264 +2223,264 @@ err:
 	irq_set_chip_and_handler(virq, &octeon_irq_chip_cib,
 				 handle_simple_irq);
 	irq_set_chip_data(virq, cd);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा irq_करोमुख्य_ops octeon_irq_करोमुख्य_cib_ops = अणु
+static struct irq_domain_ops octeon_irq_domain_cib_ops = {
 	.map = octeon_irq_cib_map,
-	.unmap = octeon_irq_मुक्त_cd,
+	.unmap = octeon_irq_free_cd,
 	.xlate = octeon_irq_cib_xlat,
-पूर्ण;
+};
 
 /* Chain to real handler. */
-अटल irqवापस_t octeon_irq_cib_handler(पूर्णांक my_irq, व्योम *data)
-अणु
+static irqreturn_t octeon_irq_cib_handler(int my_irq, void *data)
+{
 	u64 en;
 	u64 raw;
 	u64 bits;
-	पूर्णांक i;
-	पूर्णांक irq;
-	काष्ठा irq_करोमुख्य *cib_करोमुख्य = data;
-	काष्ठा octeon_irq_cib_host_data *host_data = cib_करोमुख्य->host_data;
+	int i;
+	int irq;
+	struct irq_domain *cib_domain = data;
+	struct octeon_irq_cib_host_data *host_data = cib_domain->host_data;
 
-	en = cvmx_पढ़ो_csr(host_data->en_reg);
-	raw = cvmx_पढ़ो_csr(host_data->raw_reg);
+	en = cvmx_read_csr(host_data->en_reg);
+	raw = cvmx_read_csr(host_data->raw_reg);
 
 	bits = en & raw;
 
-	क्रम (i = 0; i < host_data->max_bits; i++) अणु
-		अगर ((bits & 1ull << i) == 0)
-			जारी;
-		irq = irq_find_mapping(cib_करोमुख्य, i);
-		अगर (!irq) अणु
-			अचिन्हित दीर्घ flags;
+	for (i = 0; i < host_data->max_bits; i++) {
+		if ((bits & 1ull << i) == 0)
+			continue;
+		irq = irq_find_mapping(cib_domain, i);
+		if (!irq) {
+			unsigned long flags;
 
 			pr_err("ERROR: CIB bit %d@%llx IRQ unhandled, disabling\n",
 				i, host_data->raw_reg);
 			raw_spin_lock_irqsave(&host_data->lock, flags);
-			en = cvmx_पढ़ो_csr(host_data->en_reg);
+			en = cvmx_read_csr(host_data->en_reg);
 			en &= ~(1ull << i);
-			cvmx_ग_लिखो_csr(host_data->en_reg, en);
-			cvmx_ग_लिखो_csr(host_data->raw_reg, 1ull << i);
+			cvmx_write_csr(host_data->en_reg, en);
+			cvmx_write_csr(host_data->raw_reg, 1ull << i);
 			raw_spin_unlock_irqrestore(&host_data->lock, flags);
-		पूर्ण अन्यथा अणु
-			काष्ठा irq_desc *desc = irq_to_desc(irq);
-			काष्ठा irq_data *irq_data = irq_desc_get_irq_data(desc);
+		} else {
+			struct irq_desc *desc = irq_to_desc(irq);
+			struct irq_data *irq_data = irq_desc_get_irq_data(desc);
 			/* If edge, acknowledge the bit we will be sending. */
-			अगर (irqd_get_trigger_type(irq_data) &
+			if (irqd_get_trigger_type(irq_data) &
 				IRQ_TYPE_EDGE_BOTH)
-				cvmx_ग_लिखो_csr(host_data->raw_reg, 1ull << i);
+				cvmx_write_csr(host_data->raw_reg, 1ull << i);
 			generic_handle_irq_desc(desc);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक __init octeon_irq_init_cib(काष्ठा device_node *ciu_node,
-				      काष्ठा device_node *parent)
-अणु
-	स्थिर __be32 *addr;
+static int __init octeon_irq_init_cib(struct device_node *ciu_node,
+				      struct device_node *parent)
+{
+	const __be32 *addr;
 	u32 val;
-	काष्ठा octeon_irq_cib_host_data *host_data;
-	पूर्णांक parent_irq;
-	पूर्णांक r;
-	काष्ठा irq_करोमुख्य *cib_करोमुख्य;
+	struct octeon_irq_cib_host_data *host_data;
+	int parent_irq;
+	int r;
+	struct irq_domain *cib_domain;
 
 	parent_irq = irq_of_parse_and_map(ciu_node, 0);
-	अगर (!parent_irq) अणु
+	if (!parent_irq) {
 		pr_err("ERROR: Couldn't acquire parent_irq for %pOFn\n",
 			ciu_node);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	host_data = kzalloc(माप(*host_data), GFP_KERNEL);
-	अगर (!host_data)
-		वापस -ENOMEM;
+	host_data = kzalloc(sizeof(*host_data), GFP_KERNEL);
+	if (!host_data)
+		return -ENOMEM;
 	raw_spin_lock_init(&host_data->lock);
 
-	addr = of_get_address(ciu_node, 0, शून्य, शून्य);
-	अगर (!addr) अणु
+	addr = of_get_address(ciu_node, 0, NULL, NULL);
+	if (!addr) {
 		pr_err("ERROR: Couldn't acquire reg(0) %pOFn\n", ciu_node);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	host_data->raw_reg = (u64)phys_to_virt(
 		of_translate_address(ciu_node, addr));
 
-	addr = of_get_address(ciu_node, 1, शून्य, शून्य);
-	अगर (!addr) अणु
+	addr = of_get_address(ciu_node, 1, NULL, NULL);
+	if (!addr) {
 		pr_err("ERROR: Couldn't acquire reg(1) %pOFn\n", ciu_node);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	host_data->en_reg = (u64)phys_to_virt(
 		of_translate_address(ciu_node, addr));
 
-	r = of_property_पढ़ो_u32(ciu_node, "cavium,max-bits", &val);
-	अगर (r) अणु
+	r = of_property_read_u32(ciu_node, "cavium,max-bits", &val);
+	if (r) {
 		pr_err("ERROR: Couldn't read cavium,max-bits from %pOFn\n",
 			ciu_node);
-		वापस r;
-	पूर्ण
+		return r;
+	}
 	host_data->max_bits = val;
 
-	cib_करोमुख्य = irq_करोमुख्य_add_linear(ciu_node, host_data->max_bits,
-					   &octeon_irq_करोमुख्य_cib_ops,
+	cib_domain = irq_domain_add_linear(ciu_node, host_data->max_bits,
+					   &octeon_irq_domain_cib_ops,
 					   host_data);
-	अगर (!cib_करोमुख्य) अणु
+	if (!cib_domain) {
 		pr_err("ERROR: Couldn't irq_domain_add_linear()\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	cvmx_ग_लिखो_csr(host_data->en_reg, 0); /* disable all IRQs */
-	cvmx_ग_लिखो_csr(host_data->raw_reg, ~0); /* ack any outstanding */
+	cvmx_write_csr(host_data->en_reg, 0); /* disable all IRQs */
+	cvmx_write_csr(host_data->raw_reg, ~0); /* ack any outstanding */
 
 	r = request_irq(parent_irq, octeon_irq_cib_handler,
-			IRQF_NO_THREAD, "cib", cib_करोमुख्य);
-	अगर (r) अणु
+			IRQF_NO_THREAD, "cib", cib_domain);
+	if (r) {
 		pr_err("request_irq cib failed %d\n", r);
-		वापस r;
-	पूर्ण
+		return r;
+	}
 	pr_info("CIB interrupt controller probed: %llx %d\n",
 		host_data->raw_reg, host_data->max_bits);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक octeon_irq_ciu3_xlat(काष्ठा irq_करोमुख्य *d,
-			 काष्ठा device_node *node,
-			 स्थिर u32 *पूर्णांकspec,
-			 अचिन्हित पूर्णांक पूर्णांकsize,
-			 अचिन्हित दीर्घ *out_hwirq,
-			 अचिन्हित पूर्णांक *out_type)
-अणु
-	काष्ठा octeon_ciu3_info *ciu3_info = d->host_data;
-	अचिन्हित पूर्णांक hwirq, type, पूर्णांकsn_major;
-	जोड़ cvmx_ciu3_iscx_ctl isc;
+int octeon_irq_ciu3_xlat(struct irq_domain *d,
+			 struct device_node *node,
+			 const u32 *intspec,
+			 unsigned int intsize,
+			 unsigned long *out_hwirq,
+			 unsigned int *out_type)
+{
+	struct octeon_ciu3_info *ciu3_info = d->host_data;
+	unsigned int hwirq, type, intsn_major;
+	union cvmx_ciu3_iscx_ctl isc;
 
-	अगर (पूर्णांकsize < 2)
-		वापस -EINVAL;
-	hwirq = पूर्णांकspec[0];
-	type = पूर्णांकspec[1];
+	if (intsize < 2)
+		return -EINVAL;
+	hwirq = intspec[0];
+	type = intspec[1];
 
-	अगर (hwirq >= (1 << 20))
-		वापस -EINVAL;
+	if (hwirq >= (1 << 20))
+		return -EINVAL;
 
-	पूर्णांकsn_major = hwirq >> 12;
-	चयन (पूर्णांकsn_major) अणु
-	हाल 0x04: /* Software handled separately. */
-		वापस -EINVAL;
-	शेष:
-		अवरोध;
-	पूर्ण
+	intsn_major = hwirq >> 12;
+	switch (intsn_major) {
+	case 0x04: /* Software handled separately. */
+		return -EINVAL;
+	default:
+		break;
+	}
 
-	isc.u64 =  cvmx_पढ़ो_csr(ciu3_info->ciu3_addr + CIU3_ISC_CTL(hwirq));
-	अगर (!isc.s.imp)
-		वापस -EINVAL;
+	isc.u64 =  cvmx_read_csr(ciu3_info->ciu3_addr + CIU3_ISC_CTL(hwirq));
+	if (!isc.s.imp)
+		return -EINVAL;
 
-	चयन (type) अणु
-	हाल 4: /* official value क्रम level triggering. */
+	switch (type) {
+	case 4: /* official value for level triggering. */
 		*out_type = IRQ_TYPE_LEVEL_HIGH;
-		अवरोध;
-	हाल 0: /* unofficial value, but we might as well let it work. */
-	हाल 1: /* official value क्रम edge triggering. */
+		break;
+	case 0: /* unofficial value, but we might as well let it work. */
+	case 1: /* official value for edge triggering. */
 		*out_type = IRQ_TYPE_EDGE_RISING;
-		अवरोध;
-	शेष: /* Nothing अन्यथा is acceptable. */
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default: /* Nothing else is acceptable. */
+		return -EINVAL;
+	}
 
 	*out_hwirq = hwirq;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम octeon_irq_ciu3_enable(काष्ठा irq_data *data)
-अणु
-	पूर्णांक cpu;
-	जोड़ cvmx_ciu3_iscx_ctl isc_ctl;
-	जोड़ cvmx_ciu3_iscx_w1c isc_w1c;
+void octeon_irq_ciu3_enable(struct irq_data *data)
+{
+	int cpu;
+	union cvmx_ciu3_iscx_ctl isc_ctl;
+	union cvmx_ciu3_iscx_w1c isc_w1c;
 	u64 isc_ctl_addr;
 
-	काष्ठा octeon_ciu_chip_data *cd;
+	struct octeon_ciu_chip_data *cd;
 
-	cpu = next_cpu_क्रम_irq(data);
+	cpu = next_cpu_for_irq(data);
 
 	cd = irq_data_get_irq_chip_data(data);
 
 	isc_w1c.u64 = 0;
 	isc_w1c.s.en = 1;
-	cvmx_ग_लिखो_csr(cd->ciu3_addr + CIU3_ISC_W1C(cd->पूर्णांकsn), isc_w1c.u64);
+	cvmx_write_csr(cd->ciu3_addr + CIU3_ISC_W1C(cd->intsn), isc_w1c.u64);
 
-	isc_ctl_addr = cd->ciu3_addr + CIU3_ISC_CTL(cd->पूर्णांकsn);
+	isc_ctl_addr = cd->ciu3_addr + CIU3_ISC_CTL(cd->intsn);
 	isc_ctl.u64 = 0;
 	isc_ctl.s.en = 1;
 	isc_ctl.s.idt = per_cpu(octeon_irq_ciu3_idt_ip2, cpu);
-	cvmx_ग_लिखो_csr(isc_ctl_addr, isc_ctl.u64);
-	cvmx_पढ़ो_csr(isc_ctl_addr);
-पूर्ण
+	cvmx_write_csr(isc_ctl_addr, isc_ctl.u64);
+	cvmx_read_csr(isc_ctl_addr);
+}
 
-व्योम octeon_irq_ciu3_disable(काष्ठा irq_data *data)
-अणु
+void octeon_irq_ciu3_disable(struct irq_data *data)
+{
 	u64 isc_ctl_addr;
-	जोड़ cvmx_ciu3_iscx_w1c isc_w1c;
+	union cvmx_ciu3_iscx_w1c isc_w1c;
 
-	काष्ठा octeon_ciu_chip_data *cd;
+	struct octeon_ciu_chip_data *cd;
 
 	cd = irq_data_get_irq_chip_data(data);
 
 	isc_w1c.u64 = 0;
 	isc_w1c.s.en = 1;
 
-	isc_ctl_addr = cd->ciu3_addr + CIU3_ISC_CTL(cd->पूर्णांकsn);
-	cvmx_ग_लिखो_csr(cd->ciu3_addr + CIU3_ISC_W1C(cd->पूर्णांकsn), isc_w1c.u64);
-	cvmx_ग_लिखो_csr(isc_ctl_addr, 0);
-	cvmx_पढ़ो_csr(isc_ctl_addr);
-पूर्ण
+	isc_ctl_addr = cd->ciu3_addr + CIU3_ISC_CTL(cd->intsn);
+	cvmx_write_csr(cd->ciu3_addr + CIU3_ISC_W1C(cd->intsn), isc_w1c.u64);
+	cvmx_write_csr(isc_ctl_addr, 0);
+	cvmx_read_csr(isc_ctl_addr);
+}
 
-व्योम octeon_irq_ciu3_ack(काष्ठा irq_data *data)
-अणु
+void octeon_irq_ciu3_ack(struct irq_data *data)
+{
 	u64 isc_w1c_addr;
-	जोड़ cvmx_ciu3_iscx_w1c isc_w1c;
-	काष्ठा octeon_ciu_chip_data *cd;
+	union cvmx_ciu3_iscx_w1c isc_w1c;
+	struct octeon_ciu_chip_data *cd;
 	u32 trigger_type = irqd_get_trigger_type(data);
 
 	/*
-	 * We use a single irq_chip, so we have to करो nothing to ack a
-	 * level पूर्णांकerrupt.
+	 * We use a single irq_chip, so we have to do nothing to ack a
+	 * level interrupt.
 	 */
-	अगर (!(trigger_type & IRQ_TYPE_EDGE_BOTH))
-		वापस;
+	if (!(trigger_type & IRQ_TYPE_EDGE_BOTH))
+		return;
 
 	cd = irq_data_get_irq_chip_data(data);
 
 	isc_w1c.u64 = 0;
 	isc_w1c.s.raw = 1;
 
-	isc_w1c_addr = cd->ciu3_addr + CIU3_ISC_W1C(cd->पूर्णांकsn);
-	cvmx_ग_लिखो_csr(isc_w1c_addr, isc_w1c.u64);
-	cvmx_पढ़ो_csr(isc_w1c_addr);
-पूर्ण
+	isc_w1c_addr = cd->ciu3_addr + CIU3_ISC_W1C(cd->intsn);
+	cvmx_write_csr(isc_w1c_addr, isc_w1c.u64);
+	cvmx_read_csr(isc_w1c_addr);
+}
 
-व्योम octeon_irq_ciu3_mask(काष्ठा irq_data *data)
-अणु
-	जोड़ cvmx_ciu3_iscx_w1c isc_w1c;
+void octeon_irq_ciu3_mask(struct irq_data *data)
+{
+	union cvmx_ciu3_iscx_w1c isc_w1c;
 	u64 isc_w1c_addr;
-	काष्ठा octeon_ciu_chip_data *cd;
+	struct octeon_ciu_chip_data *cd;
 
 	cd = irq_data_get_irq_chip_data(data);
 
 	isc_w1c.u64 = 0;
 	isc_w1c.s.en = 1;
 
-	isc_w1c_addr = cd->ciu3_addr + CIU3_ISC_W1C(cd->पूर्णांकsn);
-	cvmx_ग_लिखो_csr(isc_w1c_addr, isc_w1c.u64);
-	cvmx_पढ़ो_csr(isc_w1c_addr);
-पूर्ण
+	isc_w1c_addr = cd->ciu3_addr + CIU3_ISC_W1C(cd->intsn);
+	cvmx_write_csr(isc_w1c_addr, isc_w1c.u64);
+	cvmx_read_csr(isc_w1c_addr);
+}
 
-व्योम octeon_irq_ciu3_mask_ack(काष्ठा irq_data *data)
-अणु
-	जोड़ cvmx_ciu3_iscx_w1c isc_w1c;
+void octeon_irq_ciu3_mask_ack(struct irq_data *data)
+{
+	union cvmx_ciu3_iscx_w1c isc_w1c;
 	u64 isc_w1c_addr;
-	काष्ठा octeon_ciu_chip_data *cd;
+	struct octeon_ciu_chip_data *cd;
 	u32 trigger_type = irqd_get_trigger_type(data);
 
 	cd = irq_data_get_irq_chip_data(data);
@@ -2491,55 +2490,55 @@ err:
 
 	/*
 	 * We use a single irq_chip, so only ack an edge (!level)
-	 * पूर्णांकerrupt.
+	 * interrupt.
 	 */
-	अगर (trigger_type & IRQ_TYPE_EDGE_BOTH)
+	if (trigger_type & IRQ_TYPE_EDGE_BOTH)
 		isc_w1c.s.raw = 1;
 
-	isc_w1c_addr = cd->ciu3_addr + CIU3_ISC_W1C(cd->पूर्णांकsn);
-	cvmx_ग_लिखो_csr(isc_w1c_addr, isc_w1c.u64);
-	cvmx_पढ़ो_csr(isc_w1c_addr);
-पूर्ण
+	isc_w1c_addr = cd->ciu3_addr + CIU3_ISC_W1C(cd->intsn);
+	cvmx_write_csr(isc_w1c_addr, isc_w1c.u64);
+	cvmx_read_csr(isc_w1c_addr);
+}
 
-#अगर_घोषित CONFIG_SMP
-अटल पूर्णांक octeon_irq_ciu3_set_affinity(काष्ठा irq_data *data,
-					स्थिर काष्ठा cpumask *dest, bool क्रमce)
-अणु
-	जोड़ cvmx_ciu3_iscx_ctl isc_ctl;
-	जोड़ cvmx_ciu3_iscx_w1c isc_w1c;
+#ifdef CONFIG_SMP
+static int octeon_irq_ciu3_set_affinity(struct irq_data *data,
+					const struct cpumask *dest, bool force)
+{
+	union cvmx_ciu3_iscx_ctl isc_ctl;
+	union cvmx_ciu3_iscx_w1c isc_w1c;
 	u64 isc_ctl_addr;
-	पूर्णांक cpu;
+	int cpu;
 	bool enable_one = !irqd_irq_disabled(data) && !irqd_irq_masked(data);
-	काष्ठा octeon_ciu_chip_data *cd = irq_data_get_irq_chip_data(data);
+	struct octeon_ciu_chip_data *cd = irq_data_get_irq_chip_data(data);
 
-	अगर (!cpumask_subset(dest, cpumask_of_node(cd->ciu_node)))
-		वापस -EINVAL;
+	if (!cpumask_subset(dest, cpumask_of_node(cd->ciu_node)))
+		return -EINVAL;
 
-	अगर (!enable_one)
-		वापस IRQ_SET_MASK_OK;
+	if (!enable_one)
+		return IRQ_SET_MASK_OK;
 
 	cd = irq_data_get_irq_chip_data(data);
 	cpu = cpumask_first(dest);
-	अगर (cpu >= nr_cpu_ids)
+	if (cpu >= nr_cpu_ids)
 		cpu = smp_processor_id();
 	cd->current_cpu = cpu;
 
 	isc_w1c.u64 = 0;
 	isc_w1c.s.en = 1;
-	cvmx_ग_लिखो_csr(cd->ciu3_addr + CIU3_ISC_W1C(cd->पूर्णांकsn), isc_w1c.u64);
+	cvmx_write_csr(cd->ciu3_addr + CIU3_ISC_W1C(cd->intsn), isc_w1c.u64);
 
-	isc_ctl_addr = cd->ciu3_addr + CIU3_ISC_CTL(cd->पूर्णांकsn);
+	isc_ctl_addr = cd->ciu3_addr + CIU3_ISC_CTL(cd->intsn);
 	isc_ctl.u64 = 0;
 	isc_ctl.s.en = 1;
 	isc_ctl.s.idt = per_cpu(octeon_irq_ciu3_idt_ip2, cpu);
-	cvmx_ग_लिखो_csr(isc_ctl_addr, isc_ctl.u64);
-	cvmx_पढ़ो_csr(isc_ctl_addr);
+	cvmx_write_csr(isc_ctl_addr, isc_ctl.u64);
+	cvmx_read_csr(isc_ctl_addr);
 
-	वापस IRQ_SET_MASK_OK;
-पूर्ण
-#पूर्ण_अगर
+	return IRQ_SET_MASK_OK;
+}
+#endif
 
-अटल काष्ठा irq_chip octeon_irq_chip_ciu3 = अणु
+static struct irq_chip octeon_irq_chip_ciu3 = {
 	.name = "CIU3",
 	.irq_startup = edge_startup,
 	.irq_enable = octeon_irq_ciu3_enable,
@@ -2549,248 +2548,248 @@ err:
 	.irq_mask_ack = octeon_irq_ciu3_mask_ack,
 	.irq_unmask = octeon_irq_ciu3_enable,
 	.irq_set_type = octeon_irq_ciu_set_type,
-#अगर_घोषित CONFIG_SMP
+#ifdef CONFIG_SMP
 	.irq_set_affinity = octeon_irq_ciu3_set_affinity,
 	.irq_cpu_offline = octeon_irq_cpu_offline_ciu,
-#पूर्ण_अगर
-पूर्ण;
+#endif
+};
 
-पूर्णांक octeon_irq_ciu3_mapx(काष्ठा irq_करोमुख्य *d, अचिन्हित पूर्णांक virq,
-			 irq_hw_number_t hw, काष्ठा irq_chip *chip)
-अणु
-	काष्ठा octeon_ciu3_info *ciu3_info = d->host_data;
-	काष्ठा octeon_ciu_chip_data *cd = kzalloc_node(माप(*cd), GFP_KERNEL,
+int octeon_irq_ciu3_mapx(struct irq_domain *d, unsigned int virq,
+			 irq_hw_number_t hw, struct irq_chip *chip)
+{
+	struct octeon_ciu3_info *ciu3_info = d->host_data;
+	struct octeon_ciu_chip_data *cd = kzalloc_node(sizeof(*cd), GFP_KERNEL,
 						       ciu3_info->node);
-	अगर (!cd)
-		वापस -ENOMEM;
-	cd->पूर्णांकsn = hw;
+	if (!cd)
+		return -ENOMEM;
+	cd->intsn = hw;
 	cd->current_cpu = -1;
 	cd->ciu3_addr = ciu3_info->ciu3_addr;
 	cd->ciu_node = ciu3_info->node;
 	irq_set_chip_and_handler(virq, chip, handle_edge_irq);
 	irq_set_chip_data(virq, cd);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक octeon_irq_ciu3_map(काष्ठा irq_करोमुख्य *d,
-			       अचिन्हित पूर्णांक virq, irq_hw_number_t hw)
-अणु
-	वापस octeon_irq_ciu3_mapx(d, virq, hw, &octeon_irq_chip_ciu3);
-पूर्ण
+static int octeon_irq_ciu3_map(struct irq_domain *d,
+			       unsigned int virq, irq_hw_number_t hw)
+{
+	return octeon_irq_ciu3_mapx(d, virq, hw, &octeon_irq_chip_ciu3);
+}
 
-अटल काष्ठा irq_करोमुख्य_ops octeon_dflt_करोमुख्य_ciu3_ops = अणु
+static struct irq_domain_ops octeon_dflt_domain_ciu3_ops = {
 	.map = octeon_irq_ciu3_map,
-	.unmap = octeon_irq_मुक्त_cd,
+	.unmap = octeon_irq_free_cd,
 	.xlate = octeon_irq_ciu3_xlat,
-पूर्ण;
+};
 
-अटल व्योम octeon_irq_ciu3_ip2(व्योम)
-अणु
-	जोड़ cvmx_ciu3_destx_pp_पूर्णांक dest_pp_पूर्णांक;
-	काष्ठा octeon_ciu3_info *ciu3_info;
+static void octeon_irq_ciu3_ip2(void)
+{
+	union cvmx_ciu3_destx_pp_int dest_pp_int;
+	struct octeon_ciu3_info *ciu3_info;
 	u64 ciu3_addr;
 
-	ciu3_info = __this_cpu_पढ़ो(octeon_ciu3_info);
+	ciu3_info = __this_cpu_read(octeon_ciu3_info);
 	ciu3_addr = ciu3_info->ciu3_addr;
 
-	dest_pp_पूर्णांक.u64 = cvmx_पढ़ो_csr(ciu3_addr + CIU3_DEST_PP_INT(3 * cvmx_get_local_core_num()));
+	dest_pp_int.u64 = cvmx_read_csr(ciu3_addr + CIU3_DEST_PP_INT(3 * cvmx_get_local_core_num()));
 
-	अगर (likely(dest_pp_पूर्णांक.s.पूर्णांकr)) अणु
-		irq_hw_number_t पूर्णांकsn = dest_pp_पूर्णांक.s.पूर्णांकsn;
+	if (likely(dest_pp_int.s.intr)) {
+		irq_hw_number_t intsn = dest_pp_int.s.intsn;
 		irq_hw_number_t hw;
-		काष्ठा irq_करोमुख्य *करोमुख्य;
-		/* Get the करोमुख्य to use from the major block */
-		पूर्णांक block = पूर्णांकsn >> 12;
-		पूर्णांक ret;
+		struct irq_domain *domain;
+		/* Get the domain to use from the major block */
+		int block = intsn >> 12;
+		int ret;
 
-		करोमुख्य = ciu3_info->करोमुख्य[block];
-		अगर (ciu3_info->पूर्णांकsn2hw[block])
-			hw = ciu3_info->पूर्णांकsn2hw[block](करोमुख्य, पूर्णांकsn);
-		अन्यथा
-			hw = पूर्णांकsn;
+		domain = ciu3_info->domain[block];
+		if (ciu3_info->intsn2hw[block])
+			hw = ciu3_info->intsn2hw[block](domain, intsn);
+		else
+			hw = intsn;
 
-		ret = handle_करोमुख्य_irq(करोमुख्य, hw, शून्य);
-		अगर (ret < 0) अणु
-			जोड़ cvmx_ciu3_iscx_w1c isc_w1c;
-			u64 isc_w1c_addr = ciu3_addr + CIU3_ISC_W1C(पूर्णांकsn);
+		ret = handle_domain_irq(domain, hw, NULL);
+		if (ret < 0) {
+			union cvmx_ciu3_iscx_w1c isc_w1c;
+			u64 isc_w1c_addr = ciu3_addr + CIU3_ISC_W1C(intsn);
 
 			isc_w1c.u64 = 0;
 			isc_w1c.s.en = 1;
-			cvmx_ग_लिखो_csr(isc_w1c_addr, isc_w1c.u64);
-			cvmx_पढ़ो_csr(isc_w1c_addr);
-			spurious_पूर्णांकerrupt();
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		spurious_पूर्णांकerrupt();
-	पूर्ण
-पूर्ण
+			cvmx_write_csr(isc_w1c_addr, isc_w1c.u64);
+			cvmx_read_csr(isc_w1c_addr);
+			spurious_interrupt();
+		}
+	} else {
+		spurious_interrupt();
+	}
+}
 
 /*
  * 10 mbox per core starting from zero.
  * Base mbox is core * 10
  */
-अटल अचिन्हित पूर्णांक octeon_irq_ciu3_base_mbox_पूर्णांकsn(पूर्णांक core)
-अणु
+static unsigned int octeon_irq_ciu3_base_mbox_intsn(int core)
+{
 	/* SW (mbox) are 0x04 in bits 12..19 */
-	वापस 0x04000 + CIU3_MBOX_PER_CORE * core;
-पूर्ण
+	return 0x04000 + CIU3_MBOX_PER_CORE * core;
+}
 
-अटल अचिन्हित पूर्णांक octeon_irq_ciu3_mbox_पूर्णांकsn_क्रम_core(पूर्णांक core, अचिन्हित पूर्णांक mbox)
-अणु
-	वापस octeon_irq_ciu3_base_mbox_पूर्णांकsn(core) + mbox;
-पूर्ण
+static unsigned int octeon_irq_ciu3_mbox_intsn_for_core(int core, unsigned int mbox)
+{
+	return octeon_irq_ciu3_base_mbox_intsn(core) + mbox;
+}
 
-अटल अचिन्हित पूर्णांक octeon_irq_ciu3_mbox_पूर्णांकsn_क्रम_cpu(पूर्णांक cpu, अचिन्हित पूर्णांक mbox)
-अणु
-	पूर्णांक local_core = octeon_coreid_क्रम_cpu(cpu) & 0x3f;
+static unsigned int octeon_irq_ciu3_mbox_intsn_for_cpu(int cpu, unsigned int mbox)
+{
+	int local_core = octeon_coreid_for_cpu(cpu) & 0x3f;
 
-	वापस octeon_irq_ciu3_mbox_पूर्णांकsn_क्रम_core(local_core, mbox);
-पूर्ण
+	return octeon_irq_ciu3_mbox_intsn_for_core(local_core, mbox);
+}
 
-अटल व्योम octeon_irq_ciu3_mbox(व्योम)
-अणु
-	जोड़ cvmx_ciu3_destx_pp_पूर्णांक dest_pp_पूर्णांक;
-	काष्ठा octeon_ciu3_info *ciu3_info;
+static void octeon_irq_ciu3_mbox(void)
+{
+	union cvmx_ciu3_destx_pp_int dest_pp_int;
+	struct octeon_ciu3_info *ciu3_info;
 	u64 ciu3_addr;
-	पूर्णांक core = cvmx_get_local_core_num();
+	int core = cvmx_get_local_core_num();
 
-	ciu3_info = __this_cpu_पढ़ो(octeon_ciu3_info);
+	ciu3_info = __this_cpu_read(octeon_ciu3_info);
 	ciu3_addr = ciu3_info->ciu3_addr;
 
-	dest_pp_पूर्णांक.u64 = cvmx_पढ़ो_csr(ciu3_addr + CIU3_DEST_PP_INT(1 + 3 * core));
+	dest_pp_int.u64 = cvmx_read_csr(ciu3_addr + CIU3_DEST_PP_INT(1 + 3 * core));
 
-	अगर (likely(dest_pp_पूर्णांक.s.पूर्णांकr)) अणु
-		irq_hw_number_t पूर्णांकsn = dest_pp_पूर्णांक.s.पूर्णांकsn;
-		पूर्णांक mbox = पूर्णांकsn - octeon_irq_ciu3_base_mbox_पूर्णांकsn(core);
+	if (likely(dest_pp_int.s.intr)) {
+		irq_hw_number_t intsn = dest_pp_int.s.intsn;
+		int mbox = intsn - octeon_irq_ciu3_base_mbox_intsn(core);
 
-		अगर (likely(mbox >= 0 && mbox < CIU3_MBOX_PER_CORE)) अणु
-			करो_IRQ(mbox + OCTEON_IRQ_MBOX0);
-		पूर्ण अन्यथा अणु
-			जोड़ cvmx_ciu3_iscx_w1c isc_w1c;
-			u64 isc_w1c_addr = ciu3_addr + CIU3_ISC_W1C(पूर्णांकsn);
+		if (likely(mbox >= 0 && mbox < CIU3_MBOX_PER_CORE)) {
+			do_IRQ(mbox + OCTEON_IRQ_MBOX0);
+		} else {
+			union cvmx_ciu3_iscx_w1c isc_w1c;
+			u64 isc_w1c_addr = ciu3_addr + CIU3_ISC_W1C(intsn);
 
 			isc_w1c.u64 = 0;
 			isc_w1c.s.en = 1;
-			cvmx_ग_लिखो_csr(isc_w1c_addr, isc_w1c.u64);
-			cvmx_पढ़ो_csr(isc_w1c_addr);
-			spurious_पूर्णांकerrupt();
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		spurious_पूर्णांकerrupt();
-	पूर्ण
-पूर्ण
+			cvmx_write_csr(isc_w1c_addr, isc_w1c.u64);
+			cvmx_read_csr(isc_w1c_addr);
+			spurious_interrupt();
+		}
+	} else {
+		spurious_interrupt();
+	}
+}
 
-व्योम octeon_ciu3_mbox_send(पूर्णांक cpu, अचिन्हित पूर्णांक mbox)
-अणु
-	काष्ठा octeon_ciu3_info *ciu3_info;
-	अचिन्हित पूर्णांक पूर्णांकsn;
-	जोड़ cvmx_ciu3_iscx_w1s isc_w1s;
+void octeon_ciu3_mbox_send(int cpu, unsigned int mbox)
+{
+	struct octeon_ciu3_info *ciu3_info;
+	unsigned int intsn;
+	union cvmx_ciu3_iscx_w1s isc_w1s;
 	u64 isc_w1s_addr;
 
-	अगर (WARN_ON_ONCE(mbox >= CIU3_MBOX_PER_CORE))
-		वापस;
+	if (WARN_ON_ONCE(mbox >= CIU3_MBOX_PER_CORE))
+		return;
 
-	पूर्णांकsn = octeon_irq_ciu3_mbox_पूर्णांकsn_क्रम_cpu(cpu, mbox);
+	intsn = octeon_irq_ciu3_mbox_intsn_for_cpu(cpu, mbox);
 	ciu3_info = per_cpu(octeon_ciu3_info, cpu);
-	isc_w1s_addr = ciu3_info->ciu3_addr + CIU3_ISC_W1S(पूर्णांकsn);
+	isc_w1s_addr = ciu3_info->ciu3_addr + CIU3_ISC_W1S(intsn);
 
 	isc_w1s.u64 = 0;
 	isc_w1s.s.raw = 1;
 
-	cvmx_ग_लिखो_csr(isc_w1s_addr, isc_w1s.u64);
-	cvmx_पढ़ो_csr(isc_w1s_addr);
-पूर्ण
+	cvmx_write_csr(isc_w1s_addr, isc_w1s.u64);
+	cvmx_read_csr(isc_w1s_addr);
+}
 
-अटल व्योम octeon_irq_ciu3_mbox_set_enable(काष्ठा irq_data *data, पूर्णांक cpu, bool en)
-अणु
-	काष्ठा octeon_ciu3_info *ciu3_info;
-	अचिन्हित पूर्णांक पूर्णांकsn;
+static void octeon_irq_ciu3_mbox_set_enable(struct irq_data *data, int cpu, bool en)
+{
+	struct octeon_ciu3_info *ciu3_info;
+	unsigned int intsn;
 	u64 isc_ctl_addr, isc_w1c_addr;
-	जोड़ cvmx_ciu3_iscx_ctl isc_ctl;
-	अचिन्हित पूर्णांक mbox = data->irq - OCTEON_IRQ_MBOX0;
+	union cvmx_ciu3_iscx_ctl isc_ctl;
+	unsigned int mbox = data->irq - OCTEON_IRQ_MBOX0;
 
-	पूर्णांकsn = octeon_irq_ciu3_mbox_पूर्णांकsn_क्रम_cpu(cpu, mbox);
+	intsn = octeon_irq_ciu3_mbox_intsn_for_cpu(cpu, mbox);
 	ciu3_info = per_cpu(octeon_ciu3_info, cpu);
-	isc_w1c_addr = ciu3_info->ciu3_addr + CIU3_ISC_W1C(पूर्णांकsn);
-	isc_ctl_addr = ciu3_info->ciu3_addr + CIU3_ISC_CTL(पूर्णांकsn);
+	isc_w1c_addr = ciu3_info->ciu3_addr + CIU3_ISC_W1C(intsn);
+	isc_ctl_addr = ciu3_info->ciu3_addr + CIU3_ISC_CTL(intsn);
 
 	isc_ctl.u64 = 0;
 	isc_ctl.s.en = 1;
 
-	cvmx_ग_लिखो_csr(isc_w1c_addr, isc_ctl.u64);
-	cvmx_ग_लिखो_csr(isc_ctl_addr, 0);
-	अगर (en) अणु
-		अचिन्हित पूर्णांक idt = per_cpu(octeon_irq_ciu3_idt_ip3, cpu);
+	cvmx_write_csr(isc_w1c_addr, isc_ctl.u64);
+	cvmx_write_csr(isc_ctl_addr, 0);
+	if (en) {
+		unsigned int idt = per_cpu(octeon_irq_ciu3_idt_ip3, cpu);
 
 		isc_ctl.u64 = 0;
 		isc_ctl.s.en = 1;
 		isc_ctl.s.idt = idt;
-		cvmx_ग_लिखो_csr(isc_ctl_addr, isc_ctl.u64);
-	पूर्ण
-	cvmx_पढ़ो_csr(isc_ctl_addr);
-पूर्ण
+		cvmx_write_csr(isc_ctl_addr, isc_ctl.u64);
+	}
+	cvmx_read_csr(isc_ctl_addr);
+}
 
-अटल व्योम octeon_irq_ciu3_mbox_enable(काष्ठा irq_data *data)
-अणु
-	पूर्णांक cpu;
-	अचिन्हित पूर्णांक mbox = data->irq - OCTEON_IRQ_MBOX0;
+static void octeon_irq_ciu3_mbox_enable(struct irq_data *data)
+{
+	int cpu;
+	unsigned int mbox = data->irq - OCTEON_IRQ_MBOX0;
 
 	WARN_ON(mbox >= CIU3_MBOX_PER_CORE);
 
-	क्रम_each_online_cpu(cpu)
+	for_each_online_cpu(cpu)
 		octeon_irq_ciu3_mbox_set_enable(data, cpu, true);
-पूर्ण
+}
 
-अटल व्योम octeon_irq_ciu3_mbox_disable(काष्ठा irq_data *data)
-अणु
-	पूर्णांक cpu;
-	अचिन्हित पूर्णांक mbox = data->irq - OCTEON_IRQ_MBOX0;
+static void octeon_irq_ciu3_mbox_disable(struct irq_data *data)
+{
+	int cpu;
+	unsigned int mbox = data->irq - OCTEON_IRQ_MBOX0;
 
 	WARN_ON(mbox >= CIU3_MBOX_PER_CORE);
 
-	क्रम_each_online_cpu(cpu)
+	for_each_online_cpu(cpu)
 		octeon_irq_ciu3_mbox_set_enable(data, cpu, false);
-पूर्ण
+}
 
-अटल व्योम octeon_irq_ciu3_mbox_ack(काष्ठा irq_data *data)
-अणु
-	काष्ठा octeon_ciu3_info *ciu3_info;
-	अचिन्हित पूर्णांक पूर्णांकsn;
+static void octeon_irq_ciu3_mbox_ack(struct irq_data *data)
+{
+	struct octeon_ciu3_info *ciu3_info;
+	unsigned int intsn;
 	u64 isc_w1c_addr;
-	जोड़ cvmx_ciu3_iscx_w1c isc_w1c;
-	अचिन्हित पूर्णांक mbox = data->irq - OCTEON_IRQ_MBOX0;
+	union cvmx_ciu3_iscx_w1c isc_w1c;
+	unsigned int mbox = data->irq - OCTEON_IRQ_MBOX0;
 
-	पूर्णांकsn = octeon_irq_ciu3_mbox_पूर्णांकsn_क्रम_core(cvmx_get_local_core_num(), mbox);
+	intsn = octeon_irq_ciu3_mbox_intsn_for_core(cvmx_get_local_core_num(), mbox);
 
 	isc_w1c.u64 = 0;
 	isc_w1c.s.raw = 1;
 
-	ciu3_info = __this_cpu_पढ़ो(octeon_ciu3_info);
-	isc_w1c_addr = ciu3_info->ciu3_addr + CIU3_ISC_W1C(पूर्णांकsn);
-	cvmx_ग_लिखो_csr(isc_w1c_addr, isc_w1c.u64);
-	cvmx_पढ़ो_csr(isc_w1c_addr);
-पूर्ण
+	ciu3_info = __this_cpu_read(octeon_ciu3_info);
+	isc_w1c_addr = ciu3_info->ciu3_addr + CIU3_ISC_W1C(intsn);
+	cvmx_write_csr(isc_w1c_addr, isc_w1c.u64);
+	cvmx_read_csr(isc_w1c_addr);
+}
 
-अटल व्योम octeon_irq_ciu3_mbox_cpu_online(काष्ठा irq_data *data)
-अणु
+static void octeon_irq_ciu3_mbox_cpu_online(struct irq_data *data)
+{
 	octeon_irq_ciu3_mbox_set_enable(data, smp_processor_id(), true);
-पूर्ण
+}
 
-अटल व्योम octeon_irq_ciu3_mbox_cpu_offline(काष्ठा irq_data *data)
-अणु
+static void octeon_irq_ciu3_mbox_cpu_offline(struct irq_data *data)
+{
 	octeon_irq_ciu3_mbox_set_enable(data, smp_processor_id(), false);
-पूर्ण
+}
 
-अटल पूर्णांक octeon_irq_ciu3_alloc_resources(काष्ठा octeon_ciu3_info *ciu3_info)
-अणु
+static int octeon_irq_ciu3_alloc_resources(struct octeon_ciu3_info *ciu3_info)
+{
 	u64 b = ciu3_info->ciu3_addr;
-	पूर्णांक idt_ip2, idt_ip3, idt_ip4;
-	पूर्णांक unused_idt2;
-	पूर्णांक core = cvmx_get_local_core_num();
-	पूर्णांक i;
+	int idt_ip2, idt_ip3, idt_ip4;
+	int unused_idt2;
+	int core = cvmx_get_local_core_num();
+	int i;
 
-	__this_cpu_ग_लिखो(octeon_ciu3_info, ciu3_info);
+	__this_cpu_write(octeon_ciu3_info, ciu3_info);
 
 	/*
 	 * 4 idt per core starting from 1 because zero is reserved.
@@ -2800,41 +2799,41 @@ err:
 	idt_ip3 = core * 4 + 2;
 	idt_ip4 = core * 4 + 3;
 	unused_idt2 = core * 4 + 4;
-	__this_cpu_ग_लिखो(octeon_irq_ciu3_idt_ip2, idt_ip2);
-	__this_cpu_ग_लिखो(octeon_irq_ciu3_idt_ip3, idt_ip3);
+	__this_cpu_write(octeon_irq_ciu3_idt_ip2, idt_ip2);
+	__this_cpu_write(octeon_irq_ciu3_idt_ip3, idt_ip3);
 
-	/* ip2 पूर्णांकerrupts क्रम this CPU */
-	cvmx_ग_लिखो_csr(b + CIU3_IDT_CTL(idt_ip2), 0);
-	cvmx_ग_लिखो_csr(b + CIU3_IDT_PP(idt_ip2, 0), 1ull << core);
-	cvmx_ग_लिखो_csr(b + CIU3_IDT_IO(idt_ip2), 0);
+	/* ip2 interrupts for this CPU */
+	cvmx_write_csr(b + CIU3_IDT_CTL(idt_ip2), 0);
+	cvmx_write_csr(b + CIU3_IDT_PP(idt_ip2, 0), 1ull << core);
+	cvmx_write_csr(b + CIU3_IDT_IO(idt_ip2), 0);
 
-	/* ip3 पूर्णांकerrupts क्रम this CPU */
-	cvmx_ग_लिखो_csr(b + CIU3_IDT_CTL(idt_ip3), 1);
-	cvmx_ग_लिखो_csr(b + CIU3_IDT_PP(idt_ip3, 0), 1ull << core);
-	cvmx_ग_लिखो_csr(b + CIU3_IDT_IO(idt_ip3), 0);
+	/* ip3 interrupts for this CPU */
+	cvmx_write_csr(b + CIU3_IDT_CTL(idt_ip3), 1);
+	cvmx_write_csr(b + CIU3_IDT_PP(idt_ip3, 0), 1ull << core);
+	cvmx_write_csr(b + CIU3_IDT_IO(idt_ip3), 0);
 
-	/* ip4 पूर्णांकerrupts क्रम this CPU */
-	cvmx_ग_लिखो_csr(b + CIU3_IDT_CTL(idt_ip4), 2);
-	cvmx_ग_लिखो_csr(b + CIU3_IDT_PP(idt_ip4, 0), 0);
-	cvmx_ग_लिखो_csr(b + CIU3_IDT_IO(idt_ip4), 0);
+	/* ip4 interrupts for this CPU */
+	cvmx_write_csr(b + CIU3_IDT_CTL(idt_ip4), 2);
+	cvmx_write_csr(b + CIU3_IDT_PP(idt_ip4, 0), 0);
+	cvmx_write_csr(b + CIU3_IDT_IO(idt_ip4), 0);
 
-	cvmx_ग_लिखो_csr(b + CIU3_IDT_CTL(unused_idt2), 0);
-	cvmx_ग_लिखो_csr(b + CIU3_IDT_PP(unused_idt2, 0), 0);
-	cvmx_ग_लिखो_csr(b + CIU3_IDT_IO(unused_idt2), 0);
+	cvmx_write_csr(b + CIU3_IDT_CTL(unused_idt2), 0);
+	cvmx_write_csr(b + CIU3_IDT_PP(unused_idt2, 0), 0);
+	cvmx_write_csr(b + CIU3_IDT_IO(unused_idt2), 0);
 
-	क्रम (i = 0; i < CIU3_MBOX_PER_CORE; i++) अणु
-		अचिन्हित पूर्णांक पूर्णांकsn = octeon_irq_ciu3_mbox_पूर्णांकsn_क्रम_core(core, i);
+	for (i = 0; i < CIU3_MBOX_PER_CORE; i++) {
+		unsigned int intsn = octeon_irq_ciu3_mbox_intsn_for_core(core, i);
 
-		cvmx_ग_लिखो_csr(b + CIU3_ISC_W1C(पूर्णांकsn), 2);
-		cvmx_ग_लिखो_csr(b + CIU3_ISC_CTL(पूर्णांकsn), 0);
-	पूर्ण
+		cvmx_write_csr(b + CIU3_ISC_W1C(intsn), 2);
+		cvmx_write_csr(b + CIU3_ISC_CTL(intsn), 0);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम octeon_irq_setup_secondary_ciu3(व्योम)
-अणु
-	काष्ठा octeon_ciu3_info *ciu3_info;
+static void octeon_irq_setup_secondary_ciu3(void)
+{
+	struct octeon_ciu3_info *ciu3_info;
 
 	ciu3_info = octeon_ciu3_info_per_node[cvmx_get_node_num()];
 	octeon_irq_ciu3_alloc_resources(ciu3_info);
@@ -2842,13 +2841,13 @@ err:
 
 	/* Enable the CIU lines */
 	set_c0_status(STATUSF_IP3 | STATUSF_IP2);
-	अगर (octeon_irq_use_ip4)
+	if (octeon_irq_use_ip4)
 		set_c0_status(STATUSF_IP4);
-	अन्यथा
+	else
 		clear_c0_status(STATUSF_IP4);
-पूर्ण
+}
 
-अटल काष्ठा irq_chip octeon_irq_chip_ciu3_mbox = अणु
+static struct irq_chip octeon_irq_chip_ciu3_mbox = {
 	.name = "CIU3-M",
 	.irq_enable = octeon_irq_ciu3_mbox_enable,
 	.irq_disable = octeon_irq_ciu3_mbox_disable,
@@ -2857,28 +2856,28 @@ err:
 	.irq_cpu_online = octeon_irq_ciu3_mbox_cpu_online,
 	.irq_cpu_offline = octeon_irq_ciu3_mbox_cpu_offline,
 	.flags = IRQCHIP_ONOFFLINE_ENABLED,
-पूर्ण;
+};
 
-अटल पूर्णांक __init octeon_irq_init_ciu3(काष्ठा device_node *ciu_node,
-				       काष्ठा device_node *parent)
-अणु
-	पूर्णांक i;
-	पूर्णांक node;
-	काष्ठा irq_करोमुख्य *करोमुख्य;
-	काष्ठा octeon_ciu3_info *ciu3_info;
-	स्थिर __be32 *zero_addr;
+static int __init octeon_irq_init_ciu3(struct device_node *ciu_node,
+				       struct device_node *parent)
+{
+	int i;
+	int node;
+	struct irq_domain *domain;
+	struct octeon_ciu3_info *ciu3_info;
+	const __be32 *zero_addr;
 	u64 base_addr;
-	जोड़ cvmx_ciu3_स्थिर स्थिरs;
+	union cvmx_ciu3_const consts;
 
 	node = 0; /* of_node_to_nid(ciu_node); */
-	ciu3_info = kzalloc_node(माप(*ciu3_info), GFP_KERNEL, node);
+	ciu3_info = kzalloc_node(sizeof(*ciu3_info), GFP_KERNEL, node);
 
-	अगर (!ciu3_info)
-		वापस -ENOMEM;
+	if (!ciu3_info)
+		return -ENOMEM;
 
-	zero_addr = of_get_address(ciu_node, 0, शून्य, शून्य);
-	अगर (WARN_ON(!zero_addr))
-		वापस -EINVAL;
+	zero_addr = of_get_address(ciu_node, 0, NULL, NULL);
+	if (WARN_ON(!zero_addr))
+		return -EINVAL;
 
 	base_addr = of_translate_address(ciu_node, zero_addr);
 	base_addr = (u64)phys_to_virt(base_addr);
@@ -2886,7 +2885,7 @@ err:
 	ciu3_info->ciu3_addr = base_addr;
 	ciu3_info->node = node;
 
-	स्थिरs.u64 = cvmx_पढ़ो_csr(base_addr + CIU3_CONST);
+	consts.u64 = cvmx_read_csr(base_addr + CIU3_CONST);
 
 	octeon_irq_setup_secondary = octeon_irq_setup_secondary_ciu3;
 
@@ -2894,102 +2893,102 @@ err:
 	octeon_irq_ip3 = octeon_irq_ciu3_mbox;
 	octeon_irq_ip4 = octeon_irq_ip4_mask;
 
-	अगर (node == cvmx_get_node_num()) अणु
-		/* Mips पूर्णांकernal */
+	if (node == cvmx_get_node_num()) {
+		/* Mips internal */
 		octeon_irq_init_core();
 
-		/* Only करो per CPU things अगर it is the CIU of the boot node. */
+		/* Only do per CPU things if it is the CIU of the boot node. */
 		i = irq_alloc_descs_from(OCTEON_IRQ_MBOX0, 8, node);
 		WARN_ON(i < 0);
 
-		क्रम (i = 0; i < 8; i++)
+		for (i = 0; i < 8; i++)
 			irq_set_chip_and_handler(i + OCTEON_IRQ_MBOX0,
 						 &octeon_irq_chip_ciu3_mbox, handle_percpu_irq);
-	पूर्ण
+	}
 
 	/*
-	 * Initialize all करोमुख्यs to use the शेष करोमुख्य. Specअगरic major
-	 * blocks will overग_लिखो the शेष करोमुख्य as needed.
+	 * Initialize all domains to use the default domain. Specific major
+	 * blocks will overwrite the default domain as needed.
 	 */
-	करोमुख्य = irq_करोमुख्य_add_tree(ciu_node, &octeon_dflt_करोमुख्य_ciu3_ops,
+	domain = irq_domain_add_tree(ciu_node, &octeon_dflt_domain_ciu3_ops,
 				     ciu3_info);
-	क्रम (i = 0; i < MAX_CIU3_DOMAINS; i++)
-		ciu3_info->करोमुख्य[i] = करोमुख्य;
+	for (i = 0; i < MAX_CIU3_DOMAINS; i++)
+		ciu3_info->domain[i] = domain;
 
 	octeon_ciu3_info_per_node[node] = ciu3_info;
 
-	अगर (node == cvmx_get_node_num()) अणु
-		/* Only करो per CPU things अगर it is the CIU of the boot node. */
+	if (node == cvmx_get_node_num()) {
+		/* Only do per CPU things if it is the CIU of the boot node. */
 		octeon_irq_ciu3_alloc_resources(ciu3_info);
-		अगर (node == 0)
-			irq_set_शेष_host(करोमुख्य);
+		if (node == 0)
+			irq_set_default_host(domain);
 
 		octeon_irq_use_ip4 = false;
 		/* Enable the CIU lines */
 		set_c0_status(STATUSF_IP2 | STATUSF_IP3);
 		clear_c0_status(STATUSF_IP4);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा of_device_id ciu_types[] __initdata = अणु
-	अणु.compatible = "cavium,octeon-3860-ciu", .data = octeon_irq_init_ciuपूर्ण,
-	अणु.compatible = "cavium,octeon-3860-gpio", .data = octeon_irq_init_gpioपूर्ण,
-	अणु.compatible = "cavium,octeon-6880-ciu2", .data = octeon_irq_init_ciu2पूर्ण,
-	अणु.compatible = "cavium,octeon-7890-ciu3", .data = octeon_irq_init_ciu3पूर्ण,
-	अणु.compatible = "cavium,octeon-7130-cib", .data = octeon_irq_init_cibपूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static struct of_device_id ciu_types[] __initdata = {
+	{.compatible = "cavium,octeon-3860-ciu", .data = octeon_irq_init_ciu},
+	{.compatible = "cavium,octeon-3860-gpio", .data = octeon_irq_init_gpio},
+	{.compatible = "cavium,octeon-6880-ciu2", .data = octeon_irq_init_ciu2},
+	{.compatible = "cavium,octeon-7890-ciu3", .data = octeon_irq_init_ciu3},
+	{.compatible = "cavium,octeon-7130-cib", .data = octeon_irq_init_cib},
+	{}
+};
 
-व्योम __init arch_init_irq(व्योम)
-अणु
-#अगर_घोषित CONFIG_SMP
-	/* Set the शेष affinity to the boot cpu. */
-	cpumask_clear(irq_शेष_affinity);
-	cpumask_set_cpu(smp_processor_id(), irq_शेष_affinity);
-#पूर्ण_अगर
+void __init arch_init_irq(void)
+{
+#ifdef CONFIG_SMP
+	/* Set the default affinity to the boot cpu. */
+	cpumask_clear(irq_default_affinity);
+	cpumask_set_cpu(smp_processor_id(), irq_default_affinity);
+#endif
 	of_irq_init(ciu_types);
-पूर्ण
+}
 
-यंत्रlinkage व्योम plat_irq_dispatch(व्योम)
-अणु
-	अचिन्हित दीर्घ cop0_cause;
-	अचिन्हित दीर्घ cop0_status;
+asmlinkage void plat_irq_dispatch(void)
+{
+	unsigned long cop0_cause;
+	unsigned long cop0_status;
 
-	जबतक (1) अणु
-		cop0_cause = पढ़ो_c0_cause();
-		cop0_status = पढ़ो_c0_status();
+	while (1) {
+		cop0_cause = read_c0_cause();
+		cop0_status = read_c0_status();
 		cop0_cause &= cop0_status;
 		cop0_cause &= ST0_IM;
 
-		अगर (cop0_cause & STATUSF_IP2)
+		if (cop0_cause & STATUSF_IP2)
 			octeon_irq_ip2();
-		अन्यथा अगर (cop0_cause & STATUSF_IP3)
+		else if (cop0_cause & STATUSF_IP3)
 			octeon_irq_ip3();
-		अन्यथा अगर (cop0_cause & STATUSF_IP4)
+		else if (cop0_cause & STATUSF_IP4)
 			octeon_irq_ip4();
-		अन्यथा अगर (cop0_cause)
-			करो_IRQ(fls(cop0_cause) - 9 + MIPS_CPU_IRQ_BASE);
-		अन्यथा
-			अवरोध;
-	पूर्ण
-पूर्ण
+		else if (cop0_cause)
+			do_IRQ(fls(cop0_cause) - 9 + MIPS_CPU_IRQ_BASE);
+		else
+			break;
+	}
+}
 
-#अगर_घोषित CONFIG_HOTPLUG_CPU
+#ifdef CONFIG_HOTPLUG_CPU
 
-व्योम octeon_fixup_irqs(व्योम)
-अणु
+void octeon_fixup_irqs(void)
+{
 	irq_cpu_offline();
-पूर्ण
+}
 
-#पूर्ण_अगर /* CONFIG_HOTPLUG_CPU */
+#endif /* CONFIG_HOTPLUG_CPU */
 
-काष्ठा irq_करोमुख्य *octeon_irq_get_block_करोमुख्य(पूर्णांक node, uपूर्णांक8_t block)
-अणु
-	काष्ठा octeon_ciu3_info *ciu3_info;
+struct irq_domain *octeon_irq_get_block_domain(int node, uint8_t block)
+{
+	struct octeon_ciu3_info *ciu3_info;
 
 	ciu3_info = octeon_ciu3_info_per_node[node & CVMX_NODE_MASK];
-	वापस ciu3_info->करोमुख्य[block];
-पूर्ण
-EXPORT_SYMBOL(octeon_irq_get_block_करोमुख्य);
+	return ciu3_info->domain[block];
+}
+EXPORT_SYMBOL(octeon_irq_get_block_domain);

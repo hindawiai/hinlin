@@ -1,21 +1,20 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * HID Sensors Driver
  * Copyright (c) 2012, Intel Corporation.
  */
-#अगर_अघोषित _HID_SENSOR_TRIGGER_H
-#घोषणा _HID_SENSOR_TRIGGER_H
+#ifndef _HID_SENSOR_TRIGGER_H
+#define _HID_SENSOR_TRIGGER_H
 
-#समावेश <linux/pm.h>
-#समावेश <linux/pm_runसमय.स>
+#include <linux/pm.h>
+#include <linux/pm_runtime.h>
 
-बाह्य स्थिर काष्ठा dev_pm_ops hid_sensor_pm_ops;
+extern const struct dev_pm_ops hid_sensor_pm_ops;
 
-पूर्णांक hid_sensor_setup_trigger(काष्ठा iio_dev *indio_dev, स्थिर अक्षर *name,
-				काष्ठा hid_sensor_common *attrb);
-व्योम hid_sensor_हटाओ_trigger(काष्ठा iio_dev *indio_dev,
-			       काष्ठा hid_sensor_common *attrb);
-पूर्णांक hid_sensor_घातer_state(काष्ठा hid_sensor_common *st, bool state);
+int hid_sensor_setup_trigger(struct iio_dev *indio_dev, const char *name,
+				struct hid_sensor_common *attrb);
+void hid_sensor_remove_trigger(struct iio_dev *indio_dev,
+			       struct hid_sensor_common *attrb);
+int hid_sensor_power_state(struct hid_sensor_common *st, bool state);
 
-#पूर्ण_अगर
+#endif

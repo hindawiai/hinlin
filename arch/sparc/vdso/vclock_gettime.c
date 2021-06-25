@@ -1,42 +1,41 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright 2006 Andi Kleen, SUSE Lअसल.
+ * Copyright 2006 Andi Kleen, SUSE Labs.
  *
- * Fast user context implementation of घड़ी_समय_लो, समय_लोofday, and समय.
+ * Fast user context implementation of clock_gettime, gettimeofday, and time.
  *
- * The code should have no पूर्णांकernal unresolved relocations.
- * Check with पढ़ोelf after changing.
- * Also alternative() करोesn't work.
+ * The code should have no internal unresolved relocations.
+ * Check with readelf after changing.
+ * Also alternative() doesn't work.
  */
 /*
  * Copyright (c) 2017 Oracle and/or its affiliates. All rights reserved.
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/समय.स>
-#समावेश <linux/माला.स>
-#समावेश <यंत्र/पन.स>
-#समावेश <यंत्र/unistd.h>
-#समावेश <यंत्र/समयx.h>
-#समावेश <यंत्र/घड़ीsource.h>
-#समावेश <यंत्र/vvar.h>
+#include <linux/kernel.h>
+#include <linux/time.h>
+#include <linux/string.h>
+#include <asm/io.h>
+#include <asm/unistd.h>
+#include <asm/timex.h>
+#include <asm/clocksource.h>
+#include <asm/vvar.h>
 
-#अगर_घोषित	CONFIG_SPARC64
-#घोषणा SYSCALL_STRING							\
+#ifdef	CONFIG_SPARC64
+#define SYSCALL_STRING							\
 	"ta	0x6d;"							\
 	"bcs,a	1f;"							\
 	" sub	%%g0, %%o0, %%o0;"					\
 	"1:"
-#अन्यथा
-#घोषणा SYSCALL_STRING							\
+#else
+#define SYSCALL_STRING							\
 	"ta	0x10;"							\
 	"bcs,a	1f;"							\
 	" sub	%%g0, %%o0, %%o0;"					\
 	"1:"
-#पूर्ण_अगर
+#endif
 
-#घोषणा SYSCALL_CLOBBERS						\
+#define SYSCALL_CLOBBERS						\
 	"f0", "f1", "f2", "f3", "f4", "f5", "f6", "f7",			\
 	"f8", "f9", "f10", "f11", "f12", "f13", "f14", "f15",		\
 	"f16", "f17", "f18", "f19", "f20", "f21", "f22", "f23",		\
@@ -46,329 +45,329 @@
 	"cc", "memory"
 
 /*
- * Compute the vvar page's address in the process address space, and वापस it
- * as a poपूर्णांकer to the vvar_data.
+ * Compute the vvar page's address in the process address space, and return it
+ * as a pointer to the vvar_data.
  */
-notrace अटल __always_अंतरभूत काष्ठा vvar_data *get_vvar_data(व्योम)
-अणु
-	अचिन्हित दीर्घ ret;
+notrace static __always_inline struct vvar_data *get_vvar_data(void)
+{
+	unsigned long ret;
 
 	/*
 	 * vdso data page is the first vDSO page so grab the PC
 	 * and move up a page to get to the data page.
 	 */
-	__यंत्र__("rd %%pc, %0" : "=r" (ret));
+	__asm__("rd %%pc, %0" : "=r" (ret));
 	ret &= ~(8192 - 1);
 	ret -= 8192;
 
-	वापस (काष्ठा vvar_data *) ret;
-पूर्ण
+	return (struct vvar_data *) ret;
+}
 
-notrace अटल दीर्घ vdso_fallback_समय_लो(दीर्घ घड़ी, काष्ठा __kernel_old_बारpec *ts)
-अणु
-	रेजिस्टर दीर्घ num __यंत्र__("g1") = __NR_घड़ी_समय_लो;
-	रेजिस्टर दीर्घ o0 __यंत्र__("o0") = घड़ी;
-	रेजिस्टर दीर्घ o1 __यंत्र__("o1") = (दीर्घ) ts;
+notrace static long vdso_fallback_gettime(long clock, struct __kernel_old_timespec *ts)
+{
+	register long num __asm__("g1") = __NR_clock_gettime;
+	register long o0 __asm__("o0") = clock;
+	register long o1 __asm__("o1") = (long) ts;
 
-	__यंत्र__ __अस्थिर__(SYSCALL_STRING : "=r" (o0) : "r" (num),
+	__asm__ __volatile__(SYSCALL_STRING : "=r" (o0) : "r" (num),
 			     "0" (o0), "r" (o1) : SYSCALL_CLOBBERS);
-	वापस o0;
-पूर्ण
+	return o0;
+}
 
-notrace अटल दीर्घ vdso_fallback_समय_लोofday(काष्ठा __kernel_old_समयval *tv, काष्ठा समयzone *tz)
-अणु
-	रेजिस्टर दीर्घ num __यंत्र__("g1") = __NR_समय_लोofday;
-	रेजिस्टर दीर्घ o0 __यंत्र__("o0") = (दीर्घ) tv;
-	रेजिस्टर दीर्घ o1 __यंत्र__("o1") = (दीर्घ) tz;
+notrace static long vdso_fallback_gettimeofday(struct __kernel_old_timeval *tv, struct timezone *tz)
+{
+	register long num __asm__("g1") = __NR_gettimeofday;
+	register long o0 __asm__("o0") = (long) tv;
+	register long o1 __asm__("o1") = (long) tz;
 
-	__यंत्र__ __अस्थिर__(SYSCALL_STRING : "=r" (o0) : "r" (num),
+	__asm__ __volatile__(SYSCALL_STRING : "=r" (o0) : "r" (num),
 			     "0" (o0), "r" (o1) : SYSCALL_CLOBBERS);
-	वापस o0;
-पूर्ण
+	return o0;
+}
 
-#अगर_घोषित	CONFIG_SPARC64
-notrace अटल __always_अंतरभूत u64 vपढ़ो_tick(व्योम)
-अणु
+#ifdef	CONFIG_SPARC64
+notrace static __always_inline u64 vread_tick(void)
+{
 	u64	ret;
 
-	__यंत्र__ __अस्थिर__("rd %%tick, %0" : "=r" (ret));
-	वापस ret;
-पूर्ण
+	__asm__ __volatile__("rd %%tick, %0" : "=r" (ret));
+	return ret;
+}
 
-notrace अटल __always_अंतरभूत u64 vपढ़ो_tick_stick(व्योम)
-अणु
+notrace static __always_inline u64 vread_tick_stick(void)
+{
 	u64	ret;
 
-	__यंत्र__ __अस्थिर__("rd %%asr24, %0" : "=r" (ret));
-	वापस ret;
-पूर्ण
-#अन्यथा
-notrace अटल __always_अंतरभूत u64 vपढ़ो_tick(व्योम)
-अणु
-	रेजिस्टर अचिन्हित दीर्घ दीर्घ ret यंत्र("o4");
+	__asm__ __volatile__("rd %%asr24, %0" : "=r" (ret));
+	return ret;
+}
+#else
+notrace static __always_inline u64 vread_tick(void)
+{
+	register unsigned long long ret asm("o4");
 
-	__यंत्र__ __अस्थिर__("rd %%tick, %L0\n\t"
+	__asm__ __volatile__("rd %%tick, %L0\n\t"
 			     "srlx %L0, 32, %H0"
 			     : "=r" (ret));
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-notrace अटल __always_अंतरभूत u64 vपढ़ो_tick_stick(व्योम)
-अणु
-	रेजिस्टर अचिन्हित दीर्घ दीर्घ ret यंत्र("o4");
+notrace static __always_inline u64 vread_tick_stick(void)
+{
+	register unsigned long long ret asm("o4");
 
-	__यंत्र__ __अस्थिर__("rd %%asr24, %L0\n\t"
+	__asm__ __volatile__("rd %%asr24, %L0\n\t"
 			     "srlx %L0, 32, %H0"
 			     : "=r" (ret));
-	वापस ret;
-पूर्ण
-#पूर्ण_अगर
+	return ret;
+}
+#endif
 
-notrace अटल __always_अंतरभूत u64 vमाला_लोns(काष्ठा vvar_data *vvar)
-अणु
+notrace static __always_inline u64 vgetsns(struct vvar_data *vvar)
+{
 	u64 v;
 	u64 cycles;
 
-	cycles = vपढ़ो_tick();
-	v = (cycles - vvar->घड़ी.cycle_last) & vvar->घड़ी.mask;
-	वापस v * vvar->घड़ी.mult;
-पूर्ण
+	cycles = vread_tick();
+	v = (cycles - vvar->clock.cycle_last) & vvar->clock.mask;
+	return v * vvar->clock.mult;
+}
 
-notrace अटल __always_अंतरभूत u64 vमाला_लोns_stick(काष्ठा vvar_data *vvar)
-अणु
+notrace static __always_inline u64 vgetsns_stick(struct vvar_data *vvar)
+{
 	u64 v;
 	u64 cycles;
 
-	cycles = vपढ़ो_tick_stick();
-	v = (cycles - vvar->घड़ी.cycle_last) & vvar->घड़ी.mask;
-	वापस v * vvar->घड़ी.mult;
-पूर्ण
+	cycles = vread_tick_stick();
+	v = (cycles - vvar->clock.cycle_last) & vvar->clock.mask;
+	return v * vvar->clock.mult;
+}
 
-notrace अटल __always_अंतरभूत पूर्णांक करो_realसमय(काष्ठा vvar_data *vvar,
-					       काष्ठा __kernel_old_बारpec *ts)
-अणु
-	अचिन्हित दीर्घ seq;
+notrace static __always_inline int do_realtime(struct vvar_data *vvar,
+					       struct __kernel_old_timespec *ts)
+{
+	unsigned long seq;
 	u64 ns;
 
-	करो अणु
-		seq = vvar_पढ़ो_begin(vvar);
-		ts->tv_sec = vvar->wall_समय_sec;
-		ns = vvar->wall_समय_snsec;
-		ns += vमाला_लोns(vvar);
-		ns >>= vvar->घड़ी.shअगरt;
-	पूर्ण जबतक (unlikely(vvar_पढ़ो_retry(vvar, seq)));
+	do {
+		seq = vvar_read_begin(vvar);
+		ts->tv_sec = vvar->wall_time_sec;
+		ns = vvar->wall_time_snsec;
+		ns += vgetsns(vvar);
+		ns >>= vvar->clock.shift;
+	} while (unlikely(vvar_read_retry(vvar, seq)));
 
-	ts->tv_sec += __iter_भाग_u64_rem(ns, NSEC_PER_SEC, &ns);
+	ts->tv_sec += __iter_div_u64_rem(ns, NSEC_PER_SEC, &ns);
 	ts->tv_nsec = ns;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-notrace अटल __always_अंतरभूत पूर्णांक करो_realसमय_stick(काष्ठा vvar_data *vvar,
-						     काष्ठा __kernel_old_बारpec *ts)
-अणु
-	अचिन्हित दीर्घ seq;
+notrace static __always_inline int do_realtime_stick(struct vvar_data *vvar,
+						     struct __kernel_old_timespec *ts)
+{
+	unsigned long seq;
 	u64 ns;
 
-	करो अणु
-		seq = vvar_पढ़ो_begin(vvar);
-		ts->tv_sec = vvar->wall_समय_sec;
-		ns = vvar->wall_समय_snsec;
-		ns += vमाला_लोns_stick(vvar);
-		ns >>= vvar->घड़ी.shअगरt;
-	पूर्ण जबतक (unlikely(vvar_पढ़ो_retry(vvar, seq)));
+	do {
+		seq = vvar_read_begin(vvar);
+		ts->tv_sec = vvar->wall_time_sec;
+		ns = vvar->wall_time_snsec;
+		ns += vgetsns_stick(vvar);
+		ns >>= vvar->clock.shift;
+	} while (unlikely(vvar_read_retry(vvar, seq)));
 
-	ts->tv_sec += __iter_भाग_u64_rem(ns, NSEC_PER_SEC, &ns);
+	ts->tv_sec += __iter_div_u64_rem(ns, NSEC_PER_SEC, &ns);
 	ts->tv_nsec = ns;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-notrace अटल __always_अंतरभूत पूर्णांक करो_monotonic(काष्ठा vvar_data *vvar,
-						काष्ठा __kernel_old_बारpec *ts)
-अणु
-	अचिन्हित दीर्घ seq;
+notrace static __always_inline int do_monotonic(struct vvar_data *vvar,
+						struct __kernel_old_timespec *ts)
+{
+	unsigned long seq;
 	u64 ns;
 
-	करो अणु
-		seq = vvar_पढ़ो_begin(vvar);
-		ts->tv_sec = vvar->monotonic_समय_sec;
-		ns = vvar->monotonic_समय_snsec;
-		ns += vमाला_लोns(vvar);
-		ns >>= vvar->घड़ी.shअगरt;
-	पूर्ण जबतक (unlikely(vvar_पढ़ो_retry(vvar, seq)));
+	do {
+		seq = vvar_read_begin(vvar);
+		ts->tv_sec = vvar->monotonic_time_sec;
+		ns = vvar->monotonic_time_snsec;
+		ns += vgetsns(vvar);
+		ns >>= vvar->clock.shift;
+	} while (unlikely(vvar_read_retry(vvar, seq)));
 
-	ts->tv_sec += __iter_भाग_u64_rem(ns, NSEC_PER_SEC, &ns);
+	ts->tv_sec += __iter_div_u64_rem(ns, NSEC_PER_SEC, &ns);
 	ts->tv_nsec = ns;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-notrace अटल __always_अंतरभूत पूर्णांक करो_monotonic_stick(काष्ठा vvar_data *vvar,
-						      काष्ठा __kernel_old_बारpec *ts)
-अणु
-	अचिन्हित दीर्घ seq;
+notrace static __always_inline int do_monotonic_stick(struct vvar_data *vvar,
+						      struct __kernel_old_timespec *ts)
+{
+	unsigned long seq;
 	u64 ns;
 
-	करो अणु
-		seq = vvar_पढ़ो_begin(vvar);
-		ts->tv_sec = vvar->monotonic_समय_sec;
-		ns = vvar->monotonic_समय_snsec;
-		ns += vमाला_लोns_stick(vvar);
-		ns >>= vvar->घड़ी.shअगरt;
-	पूर्ण जबतक (unlikely(vvar_पढ़ो_retry(vvar, seq)));
+	do {
+		seq = vvar_read_begin(vvar);
+		ts->tv_sec = vvar->monotonic_time_sec;
+		ns = vvar->monotonic_time_snsec;
+		ns += vgetsns_stick(vvar);
+		ns >>= vvar->clock.shift;
+	} while (unlikely(vvar_read_retry(vvar, seq)));
 
-	ts->tv_sec += __iter_भाग_u64_rem(ns, NSEC_PER_SEC, &ns);
+	ts->tv_sec += __iter_div_u64_rem(ns, NSEC_PER_SEC, &ns);
 	ts->tv_nsec = ns;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-notrace अटल पूर्णांक करो_realसमय_coarse(काष्ठा vvar_data *vvar,
-				      काष्ठा __kernel_old_बारpec *ts)
-अणु
-	अचिन्हित दीर्घ seq;
+notrace static int do_realtime_coarse(struct vvar_data *vvar,
+				      struct __kernel_old_timespec *ts)
+{
+	unsigned long seq;
 
-	करो अणु
-		seq = vvar_पढ़ो_begin(vvar);
-		ts->tv_sec = vvar->wall_समय_coarse_sec;
-		ts->tv_nsec = vvar->wall_समय_coarse_nsec;
-	पूर्ण जबतक (unlikely(vvar_पढ़ो_retry(vvar, seq)));
-	वापस 0;
-पूर्ण
+	do {
+		seq = vvar_read_begin(vvar);
+		ts->tv_sec = vvar->wall_time_coarse_sec;
+		ts->tv_nsec = vvar->wall_time_coarse_nsec;
+	} while (unlikely(vvar_read_retry(vvar, seq)));
+	return 0;
+}
 
-notrace अटल पूर्णांक करो_monotonic_coarse(काष्ठा vvar_data *vvar,
-				       काष्ठा __kernel_old_बारpec *ts)
-अणु
-	अचिन्हित दीर्घ seq;
+notrace static int do_monotonic_coarse(struct vvar_data *vvar,
+				       struct __kernel_old_timespec *ts)
+{
+	unsigned long seq;
 
-	करो अणु
-		seq = vvar_पढ़ो_begin(vvar);
-		ts->tv_sec = vvar->monotonic_समय_coarse_sec;
-		ts->tv_nsec = vvar->monotonic_समय_coarse_nsec;
-	पूर्ण जबतक (unlikely(vvar_पढ़ो_retry(vvar, seq)));
+	do {
+		seq = vvar_read_begin(vvar);
+		ts->tv_sec = vvar->monotonic_time_coarse_sec;
+		ts->tv_nsec = vvar->monotonic_time_coarse_nsec;
+	} while (unlikely(vvar_read_retry(vvar, seq)));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-notrace पूर्णांक
-__vdso_घड़ी_समय_लो(घड़ीid_t घड़ी, काष्ठा __kernel_old_बारpec *ts)
-अणु
-	काष्ठा vvar_data *vvd = get_vvar_data();
+notrace int
+__vdso_clock_gettime(clockid_t clock, struct __kernel_old_timespec *ts)
+{
+	struct vvar_data *vvd = get_vvar_data();
 
-	चयन (घड़ी) अणु
-	हाल CLOCK_REALTIME:
-		अगर (unlikely(vvd->vघड़ी_mode == VCLOCK_NONE))
-			अवरोध;
-		वापस करो_realसमय(vvd, ts);
-	हाल CLOCK_MONOTONIC:
-		अगर (unlikely(vvd->vघड़ी_mode == VCLOCK_NONE))
-			अवरोध;
-		वापस करो_monotonic(vvd, ts);
-	हाल CLOCK_REALTIME_COARSE:
-		वापस करो_realसमय_coarse(vvd, ts);
-	हाल CLOCK_MONOTONIC_COARSE:
-		वापस करो_monotonic_coarse(vvd, ts);
-	पूर्ण
+	switch (clock) {
+	case CLOCK_REALTIME:
+		if (unlikely(vvd->vclock_mode == VCLOCK_NONE))
+			break;
+		return do_realtime(vvd, ts);
+	case CLOCK_MONOTONIC:
+		if (unlikely(vvd->vclock_mode == VCLOCK_NONE))
+			break;
+		return do_monotonic(vvd, ts);
+	case CLOCK_REALTIME_COARSE:
+		return do_realtime_coarse(vvd, ts);
+	case CLOCK_MONOTONIC_COARSE:
+		return do_monotonic_coarse(vvd, ts);
+	}
 	/*
-	 * Unknown घड़ी ID ? Fall back to the syscall.
+	 * Unknown clock ID ? Fall back to the syscall.
 	 */
-	वापस vdso_fallback_समय_लो(घड़ी, ts);
-पूर्ण
-पूर्णांक
-घड़ी_समय_लो(घड़ीid_t, काष्ठा __kernel_old_बारpec *)
+	return vdso_fallback_gettime(clock, ts);
+}
+int
+clock_gettime(clockid_t, struct __kernel_old_timespec *)
 	__attribute__((weak, alias("__vdso_clock_gettime")));
 
-notrace पूर्णांक
-__vdso_घड़ी_समय_लो_stick(घड़ीid_t घड़ी, काष्ठा __kernel_old_बारpec *ts)
-अणु
-	काष्ठा vvar_data *vvd = get_vvar_data();
+notrace int
+__vdso_clock_gettime_stick(clockid_t clock, struct __kernel_old_timespec *ts)
+{
+	struct vvar_data *vvd = get_vvar_data();
 
-	चयन (घड़ी) अणु
-	हाल CLOCK_REALTIME:
-		अगर (unlikely(vvd->vघड़ी_mode == VCLOCK_NONE))
-			अवरोध;
-		वापस करो_realसमय_stick(vvd, ts);
-	हाल CLOCK_MONOTONIC:
-		अगर (unlikely(vvd->vघड़ी_mode == VCLOCK_NONE))
-			अवरोध;
-		वापस करो_monotonic_stick(vvd, ts);
-	हाल CLOCK_REALTIME_COARSE:
-		वापस करो_realसमय_coarse(vvd, ts);
-	हाल CLOCK_MONOTONIC_COARSE:
-		वापस करो_monotonic_coarse(vvd, ts);
-	पूर्ण
+	switch (clock) {
+	case CLOCK_REALTIME:
+		if (unlikely(vvd->vclock_mode == VCLOCK_NONE))
+			break;
+		return do_realtime_stick(vvd, ts);
+	case CLOCK_MONOTONIC:
+		if (unlikely(vvd->vclock_mode == VCLOCK_NONE))
+			break;
+		return do_monotonic_stick(vvd, ts);
+	case CLOCK_REALTIME_COARSE:
+		return do_realtime_coarse(vvd, ts);
+	case CLOCK_MONOTONIC_COARSE:
+		return do_monotonic_coarse(vvd, ts);
+	}
 	/*
-	 * Unknown घड़ी ID ? Fall back to the syscall.
+	 * Unknown clock ID ? Fall back to the syscall.
 	 */
-	वापस vdso_fallback_समय_लो(घड़ी, ts);
-पूर्ण
+	return vdso_fallback_gettime(clock, ts);
+}
 
-notrace पूर्णांक
-__vdso_समय_लोofday(काष्ठा __kernel_old_समयval *tv, काष्ठा समयzone *tz)
-अणु
-	काष्ठा vvar_data *vvd = get_vvar_data();
+notrace int
+__vdso_gettimeofday(struct __kernel_old_timeval *tv, struct timezone *tz)
+{
+	struct vvar_data *vvd = get_vvar_data();
 
-	अगर (likely(vvd->vघड़ी_mode != VCLOCK_NONE)) अणु
-		अगर (likely(tv != शून्य)) अणु
-			जोड़ tstv_t अणु
-				काष्ठा __kernel_old_बारpec ts;
-				काष्ठा __kernel_old_समयval tv;
-			पूर्ण *tstv = (जोड़ tstv_t *) tv;
-			करो_realसमय(vvd, &tstv->ts);
+	if (likely(vvd->vclock_mode != VCLOCK_NONE)) {
+		if (likely(tv != NULL)) {
+			union tstv_t {
+				struct __kernel_old_timespec ts;
+				struct __kernel_old_timeval tv;
+			} *tstv = (union tstv_t *) tv;
+			do_realtime(vvd, &tstv->ts);
 			/*
-			 * Assign beक्रमe भागiding to ensure that the भागision is
-			 * करोne in the type of tv_usec, not tv_nsec.
+			 * Assign before dividing to ensure that the division is
+			 * done in the type of tv_usec, not tv_nsec.
 			 *
 			 * There cannot be > 1 billion usec in a second:
-			 * करो_realसमय() has alपढ़ोy distributed such overflow
-			 * पूर्णांकo tv_sec.  So we can assign it to an पूर्णांक safely.
+			 * do_realtime() has already distributed such overflow
+			 * into tv_sec.  So we can assign it to an int safely.
 			 */
 			tstv->tv.tv_usec = tstv->ts.tv_nsec;
 			tstv->tv.tv_usec /= 1000;
-		पूर्ण
-		अगर (unlikely(tz != शून्य)) अणु
-			/* Aव्योम स_नकल. Some old compilers fail to अंतरभूत it */
+		}
+		if (unlikely(tz != NULL)) {
+			/* Avoid memcpy. Some old compilers fail to inline it */
 			tz->tz_minuteswest = vvd->tz_minuteswest;
-			tz->tz_dstसमय = vvd->tz_dstसमय;
-		पूर्ण
-		वापस 0;
-	पूर्ण
-	वापस vdso_fallback_समय_लोofday(tv, tz);
-पूर्ण
-पूर्णांक
-समय_लोofday(काष्ठा __kernel_old_समयval *, काष्ठा समयzone *)
+			tz->tz_dsttime = vvd->tz_dsttime;
+		}
+		return 0;
+	}
+	return vdso_fallback_gettimeofday(tv, tz);
+}
+int
+gettimeofday(struct __kernel_old_timeval *, struct timezone *)
 	__attribute__((weak, alias("__vdso_gettimeofday")));
 
-notrace पूर्णांक
-__vdso_समय_लोofday_stick(काष्ठा __kernel_old_समयval *tv, काष्ठा समयzone *tz)
-अणु
-	काष्ठा vvar_data *vvd = get_vvar_data();
+notrace int
+__vdso_gettimeofday_stick(struct __kernel_old_timeval *tv, struct timezone *tz)
+{
+	struct vvar_data *vvd = get_vvar_data();
 
-	अगर (likely(vvd->vघड़ी_mode != VCLOCK_NONE)) अणु
-		अगर (likely(tv != शून्य)) अणु
-			जोड़ tstv_t अणु
-				काष्ठा __kernel_old_बारpec ts;
-				काष्ठा __kernel_old_समयval tv;
-			पूर्ण *tstv = (जोड़ tstv_t *) tv;
-			करो_realसमय_stick(vvd, &tstv->ts);
+	if (likely(vvd->vclock_mode != VCLOCK_NONE)) {
+		if (likely(tv != NULL)) {
+			union tstv_t {
+				struct __kernel_old_timespec ts;
+				struct __kernel_old_timeval tv;
+			} *tstv = (union tstv_t *) tv;
+			do_realtime_stick(vvd, &tstv->ts);
 			/*
-			 * Assign beक्रमe भागiding to ensure that the भागision is
-			 * करोne in the type of tv_usec, not tv_nsec.
+			 * Assign before dividing to ensure that the division is
+			 * done in the type of tv_usec, not tv_nsec.
 			 *
 			 * There cannot be > 1 billion usec in a second:
-			 * करो_realसमय() has alपढ़ोy distributed such overflow
-			 * पूर्णांकo tv_sec.  So we can assign it to an पूर्णांक safely.
+			 * do_realtime() has already distributed such overflow
+			 * into tv_sec.  So we can assign it to an int safely.
 			 */
 			tstv->tv.tv_usec = tstv->ts.tv_nsec;
 			tstv->tv.tv_usec /= 1000;
-		पूर्ण
-		अगर (unlikely(tz != शून्य)) अणु
-			/* Aव्योम स_नकल. Some old compilers fail to अंतरभूत it */
+		}
+		if (unlikely(tz != NULL)) {
+			/* Avoid memcpy. Some old compilers fail to inline it */
 			tz->tz_minuteswest = vvd->tz_minuteswest;
-			tz->tz_dstसमय = vvd->tz_dstसमय;
-		पूर्ण
-		वापस 0;
-	पूर्ण
-	वापस vdso_fallback_समय_लोofday(tv, tz);
-पूर्ण
+			tz->tz_dsttime = vvd->tz_dsttime;
+		}
+		return 0;
+	}
+	return vdso_fallback_gettimeofday(tv, tz);
+}

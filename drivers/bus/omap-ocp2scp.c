@@ -1,50 +1,49 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * omap-ocp2scp.c - transक्रमm ocp पूर्णांकerface protocol to scp protocol
+ * omap-ocp2scp.c - transform ocp interface protocol to scp protocol
  *
  * Copyright (C) 2012 Texas Instruments Incorporated - http://www.ti.com
  * Author: Kishon Vijay Abraham I <kishon@ti.com>
  */
 
-#समावेश <linux/पन.स>
-#समावेश <linux/module.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/err.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <linux/of.h>
-#समावेश <linux/of_platक्रमm.h>
+#include <linux/io.h>
+#include <linux/module.h>
+#include <linux/platform_device.h>
+#include <linux/err.h>
+#include <linux/pm_runtime.h>
+#include <linux/of.h>
+#include <linux/of_platform.h>
 
-#घोषणा OCP2SCP_TIMING 0x18
-#घोषणा SYNC2_MASK 0xf
+#define OCP2SCP_TIMING 0x18
+#define SYNC2_MASK 0xf
 
-अटल पूर्णांक ocp2scp_हटाओ_devices(काष्ठा device *dev, व्योम *c)
-अणु
-	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(dev);
+static int ocp2scp_remove_devices(struct device *dev, void *c)
+{
+	struct platform_device *pdev = to_platform_device(dev);
 
-	platक्रमm_device_unरेजिस्टर(pdev);
+	platform_device_unregister(pdev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक omap_ocp2scp_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	पूर्णांक ret;
+static int omap_ocp2scp_probe(struct platform_device *pdev)
+{
+	int ret;
 	u32 reg;
-	व्योम __iomem *regs;
-	काष्ठा resource *res;
-	काष्ठा device_node *np = pdev->dev.of_node;
+	void __iomem *regs;
+	struct resource *res;
+	struct device_node *np = pdev->dev.of_node;
 
-	अगर (np) अणु
-		ret = of_platक्रमm_populate(np, शून्य, शून्य, &pdev->dev);
-		अगर (ret) अणु
+	if (np) {
+		ret = of_platform_populate(np, NULL, NULL, &pdev->dev);
+		if (ret) {
 			dev_err(&pdev->dev,
 			    "failed to add resources for ocp2scp child\n");
-			जाओ err0;
-		पूर्ण
-	पूर्ण
+			goto err0;
+		}
+	}
 
-	pm_runसमय_enable(&pdev->dev);
+	pm_runtime_enable(&pdev->dev);
 	/*
 	 * As per AM572x TRM: http://www.ti.com/lit/ug/spruhz6/spruhz6.pdf
 	 * under section 26.3.2.2, table 26-26 OCP2SCP TIMING Caution;
@@ -58,60 +57,60 @@
 	 * Read path of OCP2SCP is not working properly due to low reset value
 	 * of SYNC2 parameter in OCP2SCP. Suggested reset value is 0x6 or more.
 	 */
-	अगर (!of_device_is_compatible(np, "ti,am437x-ocp2scp")) अणु
-		res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	if (!of_device_is_compatible(np, "ti,am437x-ocp2scp")) {
+		res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 		regs = devm_ioremap_resource(&pdev->dev, res);
-		अगर (IS_ERR(regs)) अणु
+		if (IS_ERR(regs)) {
 			ret = PTR_ERR(regs);
-			जाओ err1;
-		पूर्ण
+			goto err1;
+		}
 
-		pm_runसमय_get_sync(&pdev->dev);
-		reg = पढ़ोl_relaxed(regs + OCP2SCP_TIMING);
+		pm_runtime_get_sync(&pdev->dev);
+		reg = readl_relaxed(regs + OCP2SCP_TIMING);
 		reg &= ~(SYNC2_MASK);
 		reg |= 0x6;
-		ग_लिखोl_relaxed(reg, regs + OCP2SCP_TIMING);
-		pm_runसमय_put_sync(&pdev->dev);
-	पूर्ण
+		writel_relaxed(reg, regs + OCP2SCP_TIMING);
+		pm_runtime_put_sync(&pdev->dev);
+	}
 
-	वापस 0;
+	return 0;
 
 err1:
-	pm_runसमय_disable(&pdev->dev);
+	pm_runtime_disable(&pdev->dev);
 
 err0:
-	device_क्रम_each_child(&pdev->dev, शून्य, ocp2scp_हटाओ_devices);
+	device_for_each_child(&pdev->dev, NULL, ocp2scp_remove_devices);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक omap_ocp2scp_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	pm_runसमय_disable(&pdev->dev);
-	device_क्रम_each_child(&pdev->dev, शून्य, ocp2scp_हटाओ_devices);
+static int omap_ocp2scp_remove(struct platform_device *pdev)
+{
+	pm_runtime_disable(&pdev->dev);
+	device_for_each_child(&pdev->dev, NULL, ocp2scp_remove_devices);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_OF
-अटल स्थिर काष्ठा of_device_id omap_ocp2scp_id_table[] = अणु
-	अणु .compatible = "ti,omap-ocp2scp" पूर्ण,
-	अणु .compatible = "ti,am437x-ocp2scp" पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+#ifdef CONFIG_OF
+static const struct of_device_id omap_ocp2scp_id_table[] = {
+	{ .compatible = "ti,omap-ocp2scp" },
+	{ .compatible = "ti,am437x-ocp2scp" },
+	{}
+};
 MODULE_DEVICE_TABLE(of, omap_ocp2scp_id_table);
-#पूर्ण_अगर
+#endif
 
-अटल काष्ठा platक्रमm_driver omap_ocp2scp_driver = अणु
+static struct platform_driver omap_ocp2scp_driver = {
 	.probe		= omap_ocp2scp_probe,
-	.हटाओ		= omap_ocp2scp_हटाओ,
-	.driver		= अणु
+	.remove		= omap_ocp2scp_remove,
+	.driver		= {
 		.name	= "omap-ocp2scp",
 		.of_match_table = of_match_ptr(omap_ocp2scp_id_table),
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver(omap_ocp2scp_driver);
+module_platform_driver(omap_ocp2scp_driver);
 
 MODULE_ALIAS("platform:omap-ocp2scp");
 MODULE_AUTHOR("Texas Instruments Inc.");

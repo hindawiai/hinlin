@@ -1,224 +1,223 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * GPIO based MDIO bitbang driver.
  * Supports OpenFirmware.
  *
  * Copyright (c) 2008 CSE Semaphore Belgium.
- *  by Laurent Pinअक्षरt <laurentp@cse-semaphore.com>
+ *  by Laurent Pinchart <laurentp@cse-semaphore.com>
  *
  * Copyright (C) 2008, Paulius Zaleckas <paulius.zaleckas@teltonika.lt>
  *
  * Based on earlier work by
  *
  * Copyright (c) 2003 Intracom S.A.
- *  by Pantelis Antoniou <panto@पूर्णांकracom.gr>
+ *  by Pantelis Antoniou <panto@intracom.gr>
  *
  * 2005 (c) MontaVista Software, Inc.
  * Vitaly Bordug <vbordug@ru.mvista.com>
  */
 
-#समावेश <linux/gpio/consumer.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/mdio-bitbang.h>
-#समावेश <linux/mdio-gpपन.स>
-#समावेश <linux/module.h>
-#समावेश <linux/of_mdपन.स>
-#समावेश <linux/platक्रमm_data/mdio-gpपन.स>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/slab.h>
+#include <linux/gpio/consumer.h>
+#include <linux/interrupt.h>
+#include <linux/mdio-bitbang.h>
+#include <linux/mdio-gpio.h>
+#include <linux/module.h>
+#include <linux/of_mdio.h>
+#include <linux/platform_data/mdio-gpio.h>
+#include <linux/platform_device.h>
+#include <linux/slab.h>
 
-काष्ठा mdio_gpio_info अणु
-	काष्ठा mdiobb_ctrl ctrl;
-	काष्ठा gpio_desc *mdc, *mdio, *mकरो;
-पूर्ण;
+struct mdio_gpio_info {
+	struct mdiobb_ctrl ctrl;
+	struct gpio_desc *mdc, *mdio, *mdo;
+};
 
-अटल पूर्णांक mdio_gpio_get_data(काष्ठा device *dev,
-			      काष्ठा mdio_gpio_info *bitbang)
-अणु
-	bitbang->mdc = devm_gpiod_get_index(dev, शून्य, MDIO_GPIO_MDC,
+static int mdio_gpio_get_data(struct device *dev,
+			      struct mdio_gpio_info *bitbang)
+{
+	bitbang->mdc = devm_gpiod_get_index(dev, NULL, MDIO_GPIO_MDC,
 					    GPIOD_OUT_LOW);
-	अगर (IS_ERR(bitbang->mdc))
-		वापस PTR_ERR(bitbang->mdc);
+	if (IS_ERR(bitbang->mdc))
+		return PTR_ERR(bitbang->mdc);
 
-	bitbang->mdio = devm_gpiod_get_index(dev, शून्य, MDIO_GPIO_MDIO,
+	bitbang->mdio = devm_gpiod_get_index(dev, NULL, MDIO_GPIO_MDIO,
 					     GPIOD_IN);
-	अगर (IS_ERR(bitbang->mdio))
-		वापस PTR_ERR(bitbang->mdio);
+	if (IS_ERR(bitbang->mdio))
+		return PTR_ERR(bitbang->mdio);
 
-	bitbang->mकरो = devm_gpiod_get_index_optional(dev, शून्य, MDIO_GPIO_MDO,
+	bitbang->mdo = devm_gpiod_get_index_optional(dev, NULL, MDIO_GPIO_MDO,
 						     GPIOD_OUT_LOW);
-	वापस PTR_ERR_OR_ZERO(bitbang->mकरो);
-पूर्ण
+	return PTR_ERR_OR_ZERO(bitbang->mdo);
+}
 
-अटल व्योम mdio_dir(काष्ठा mdiobb_ctrl *ctrl, पूर्णांक dir)
-अणु
-	काष्ठा mdio_gpio_info *bitbang =
-		container_of(ctrl, काष्ठा mdio_gpio_info, ctrl);
+static void mdio_dir(struct mdiobb_ctrl *ctrl, int dir)
+{
+	struct mdio_gpio_info *bitbang =
+		container_of(ctrl, struct mdio_gpio_info, ctrl);
 
-	अगर (bitbang->mकरो) अणु
+	if (bitbang->mdo) {
 		/* Separate output pin. Always set its value to high
 		 * when changing direction. If direction is input,
 		 * assume the pin serves as pull-up. If direction is
-		 * output, the शेष value is high.
+		 * output, the default value is high.
 		 */
-		gpiod_set_value_cansleep(bitbang->mकरो, 1);
-		वापस;
-	पूर्ण
+		gpiod_set_value_cansleep(bitbang->mdo, 1);
+		return;
+	}
 
-	अगर (dir)
+	if (dir)
 		gpiod_direction_output(bitbang->mdio, 1);
-	अन्यथा
+	else
 		gpiod_direction_input(bitbang->mdio);
-पूर्ण
+}
 
-अटल पूर्णांक mdio_get(काष्ठा mdiobb_ctrl *ctrl)
-अणु
-	काष्ठा mdio_gpio_info *bitbang =
-		container_of(ctrl, काष्ठा mdio_gpio_info, ctrl);
+static int mdio_get(struct mdiobb_ctrl *ctrl)
+{
+	struct mdio_gpio_info *bitbang =
+		container_of(ctrl, struct mdio_gpio_info, ctrl);
 
-	वापस gpiod_get_value_cansleep(bitbang->mdio);
-पूर्ण
+	return gpiod_get_value_cansleep(bitbang->mdio);
+}
 
-अटल व्योम mdio_set(काष्ठा mdiobb_ctrl *ctrl, पूर्णांक what)
-अणु
-	काष्ठा mdio_gpio_info *bitbang =
-		container_of(ctrl, काष्ठा mdio_gpio_info, ctrl);
+static void mdio_set(struct mdiobb_ctrl *ctrl, int what)
+{
+	struct mdio_gpio_info *bitbang =
+		container_of(ctrl, struct mdio_gpio_info, ctrl);
 
-	अगर (bitbang->mकरो)
-		gpiod_set_value_cansleep(bitbang->mकरो, what);
-	अन्यथा
+	if (bitbang->mdo)
+		gpiod_set_value_cansleep(bitbang->mdo, what);
+	else
 		gpiod_set_value_cansleep(bitbang->mdio, what);
-पूर्ण
+}
 
-अटल व्योम mdc_set(काष्ठा mdiobb_ctrl *ctrl, पूर्णांक what)
-अणु
-	काष्ठा mdio_gpio_info *bitbang =
-		container_of(ctrl, काष्ठा mdio_gpio_info, ctrl);
+static void mdc_set(struct mdiobb_ctrl *ctrl, int what)
+{
+	struct mdio_gpio_info *bitbang =
+		container_of(ctrl, struct mdio_gpio_info, ctrl);
 
 	gpiod_set_value_cansleep(bitbang->mdc, what);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा mdiobb_ops mdio_gpio_ops = अणु
+static const struct mdiobb_ops mdio_gpio_ops = {
 	.owner = THIS_MODULE,
 	.set_mdc = mdc_set,
 	.set_mdio_dir = mdio_dir,
 	.set_mdio_data = mdio_set,
 	.get_mdio_data = mdio_get,
-पूर्ण;
+};
 
-अटल काष्ठा mii_bus *mdio_gpio_bus_init(काष्ठा device *dev,
-					  काष्ठा mdio_gpio_info *bitbang,
-					  पूर्णांक bus_id)
-अणु
-	काष्ठा mdio_gpio_platक्रमm_data *pdata = dev_get_platdata(dev);
-	काष्ठा mii_bus *new_bus;
+static struct mii_bus *mdio_gpio_bus_init(struct device *dev,
+					  struct mdio_gpio_info *bitbang,
+					  int bus_id)
+{
+	struct mdio_gpio_platform_data *pdata = dev_get_platdata(dev);
+	struct mii_bus *new_bus;
 
 	bitbang->ctrl.ops = &mdio_gpio_ops;
 
 	new_bus = alloc_mdio_bitbang(&bitbang->ctrl);
-	अगर (!new_bus)
-		वापस शून्य;
+	if (!new_bus)
+		return NULL;
 
 	new_bus->name = "GPIO Bitbanged MDIO";
 	new_bus->parent = dev;
 
-	अगर (bus_id != -1)
-		snम_लिखो(new_bus->id, MII_BUS_ID_SIZE, "gpio-%x", bus_id);
-	अन्यथा
-		म_नकलन(new_bus->id, "gpio", MII_BUS_ID_SIZE);
+	if (bus_id != -1)
+		snprintf(new_bus->id, MII_BUS_ID_SIZE, "gpio-%x", bus_id);
+	else
+		strncpy(new_bus->id, "gpio", MII_BUS_ID_SIZE);
 
-	अगर (pdata) अणु
+	if (pdata) {
 		new_bus->phy_mask = pdata->phy_mask;
 		new_bus->phy_ignore_ta_mask = pdata->phy_ignore_ta_mask;
-	पूर्ण
+	}
 
-	अगर (dev->of_node &&
-	    of_device_is_compatible(dev->of_node, "microchip,mdio-smi0")) अणु
-		bitbang->ctrl.op_c22_पढ़ो = 0;
-		bitbang->ctrl.op_c22_ग_लिखो = 0;
+	if (dev->of_node &&
+	    of_device_is_compatible(dev->of_node, "microchip,mdio-smi0")) {
+		bitbang->ctrl.op_c22_read = 0;
+		bitbang->ctrl.op_c22_write = 0;
 		bitbang->ctrl.override_op_c22 = 1;
-	पूर्ण
+	}
 
 	dev_set_drvdata(dev, new_bus);
 
-	वापस new_bus;
-पूर्ण
+	return new_bus;
+}
 
-अटल व्योम mdio_gpio_bus_deinit(काष्ठा device *dev)
-अणु
-	काष्ठा mii_bus *bus = dev_get_drvdata(dev);
+static void mdio_gpio_bus_deinit(struct device *dev)
+{
+	struct mii_bus *bus = dev_get_drvdata(dev);
 
-	मुक्त_mdio_bitbang(bus);
-पूर्ण
+	free_mdio_bitbang(bus);
+}
 
-अटल व्योम mdio_gpio_bus_destroy(काष्ठा device *dev)
-अणु
-	काष्ठा mii_bus *bus = dev_get_drvdata(dev);
+static void mdio_gpio_bus_destroy(struct device *dev)
+{
+	struct mii_bus *bus = dev_get_drvdata(dev);
 
-	mdiobus_unरेजिस्टर(bus);
+	mdiobus_unregister(bus);
 	mdio_gpio_bus_deinit(dev);
-पूर्ण
+}
 
-अटल पूर्णांक mdio_gpio_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा mdio_gpio_info *bitbang;
-	काष्ठा mii_bus *new_bus;
-	पूर्णांक ret, bus_id;
+static int mdio_gpio_probe(struct platform_device *pdev)
+{
+	struct mdio_gpio_info *bitbang;
+	struct mii_bus *new_bus;
+	int ret, bus_id;
 
-	bitbang = devm_kzalloc(&pdev->dev, माप(*bitbang), GFP_KERNEL);
-	अगर (!bitbang)
-		वापस -ENOMEM;
+	bitbang = devm_kzalloc(&pdev->dev, sizeof(*bitbang), GFP_KERNEL);
+	if (!bitbang)
+		return -ENOMEM;
 
 	ret = mdio_gpio_get_data(&pdev->dev, bitbang);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (pdev->dev.of_node) अणु
+	if (pdev->dev.of_node) {
 		bus_id = of_alias_get_id(pdev->dev.of_node, "mdio-gpio");
-		अगर (bus_id < 0) अणु
+		if (bus_id < 0) {
 			dev_warn(&pdev->dev, "failed to get alias id\n");
 			bus_id = 0;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		bus_id = pdev->id;
-	पूर्ण
+	}
 
 	new_bus = mdio_gpio_bus_init(&pdev->dev, bitbang, bus_id);
-	अगर (!new_bus)
-		वापस -ENODEV;
+	if (!new_bus)
+		return -ENODEV;
 
-	ret = of_mdiobus_रेजिस्टर(new_bus, pdev->dev.of_node);
-	अगर (ret)
+	ret = of_mdiobus_register(new_bus, pdev->dev.of_node);
+	if (ret)
 		mdio_gpio_bus_deinit(&pdev->dev);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक mdio_gpio_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
+static int mdio_gpio_remove(struct platform_device *pdev)
+{
 	mdio_gpio_bus_destroy(&pdev->dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id mdio_gpio_of_match[] = अणु
-	अणु .compatible = "virtual,mdio-gpio", पूर्ण,
-	अणु .compatible = "microchip,mdio-smi0" पूर्ण,
-	अणु /* sentinel */ पूर्ण
-पूर्ण;
+static const struct of_device_id mdio_gpio_of_match[] = {
+	{ .compatible = "virtual,mdio-gpio", },
+	{ .compatible = "microchip,mdio-smi0" },
+	{ /* sentinel */ }
+};
 MODULE_DEVICE_TABLE(of, mdio_gpio_of_match);
 
-अटल काष्ठा platक्रमm_driver mdio_gpio_driver = अणु
+static struct platform_driver mdio_gpio_driver = {
 	.probe = mdio_gpio_probe,
-	.हटाओ = mdio_gpio_हटाओ,
-	.driver		= अणु
+	.remove = mdio_gpio_remove,
+	.driver		= {
 		.name	= "mdio-gpio",
 		.of_match_table = mdio_gpio_of_match,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver(mdio_gpio_driver);
+module_platform_driver(mdio_gpio_driver);
 
 MODULE_ALIAS("platform:mdio-gpio");
 MODULE_AUTHOR("Laurent Pinchart, Paulius Zaleckas");

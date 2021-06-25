@@ -1,181 +1,180 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _LINUX_VIRTIO_NET_H
-#घोषणा _LINUX_VIRTIO_NET_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _LINUX_VIRTIO_NET_H
+#define _LINUX_VIRTIO_NET_H
 
-#समावेश <linux/अगर_vlan.h>
-#समावेश <uapi/linux/tcp.h>
-#समावेश <uapi/linux/udp.h>
-#समावेश <uapi/linux/virtio_net.h>
+#include <linux/if_vlan.h>
+#include <uapi/linux/tcp.h>
+#include <uapi/linux/udp.h>
+#include <uapi/linux/virtio_net.h>
 
-अटल अंतरभूत पूर्णांक virtio_net_hdr_set_proto(काष्ठा sk_buff *skb,
-					   स्थिर काष्ठा virtio_net_hdr *hdr)
-अणु
-	चयन (hdr->gso_type & ~VIRTIO_NET_HDR_GSO_ECN) अणु
-	हाल VIRTIO_NET_HDR_GSO_TCPV4:
-	हाल VIRTIO_NET_HDR_GSO_UDP:
+static inline int virtio_net_hdr_set_proto(struct sk_buff *skb,
+					   const struct virtio_net_hdr *hdr)
+{
+	switch (hdr->gso_type & ~VIRTIO_NET_HDR_GSO_ECN) {
+	case VIRTIO_NET_HDR_GSO_TCPV4:
+	case VIRTIO_NET_HDR_GSO_UDP:
 		skb->protocol = cpu_to_be16(ETH_P_IP);
-		अवरोध;
-	हाल VIRTIO_NET_HDR_GSO_TCPV6:
+		break;
+	case VIRTIO_NET_HDR_GSO_TCPV6:
 		skb->protocol = cpu_to_be16(ETH_P_IPV6);
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक virtio_net_hdr_to_skb(काष्ठा sk_buff *skb,
-					स्थिर काष्ठा virtio_net_hdr *hdr,
+static inline int virtio_net_hdr_to_skb(struct sk_buff *skb,
+					const struct virtio_net_hdr *hdr,
 					bool little_endian)
-अणु
-	अचिन्हित पूर्णांक gso_type = 0;
-	अचिन्हित पूर्णांक thlen = 0;
-	अचिन्हित पूर्णांक p_off = 0;
-	अचिन्हित पूर्णांक ip_proto;
+{
+	unsigned int gso_type = 0;
+	unsigned int thlen = 0;
+	unsigned int p_off = 0;
+	unsigned int ip_proto;
 
-	अगर (hdr->gso_type != VIRTIO_NET_HDR_GSO_NONE) अणु
-		चयन (hdr->gso_type & ~VIRTIO_NET_HDR_GSO_ECN) अणु
-		हाल VIRTIO_NET_HDR_GSO_TCPV4:
+	if (hdr->gso_type != VIRTIO_NET_HDR_GSO_NONE) {
+		switch (hdr->gso_type & ~VIRTIO_NET_HDR_GSO_ECN) {
+		case VIRTIO_NET_HDR_GSO_TCPV4:
 			gso_type = SKB_GSO_TCPV4;
 			ip_proto = IPPROTO_TCP;
-			thlen = माप(काष्ठा tcphdr);
-			अवरोध;
-		हाल VIRTIO_NET_HDR_GSO_TCPV6:
+			thlen = sizeof(struct tcphdr);
+			break;
+		case VIRTIO_NET_HDR_GSO_TCPV6:
 			gso_type = SKB_GSO_TCPV6;
 			ip_proto = IPPROTO_TCP;
-			thlen = माप(काष्ठा tcphdr);
-			अवरोध;
-		हाल VIRTIO_NET_HDR_GSO_UDP:
+			thlen = sizeof(struct tcphdr);
+			break;
+		case VIRTIO_NET_HDR_GSO_UDP:
 			gso_type = SKB_GSO_UDP;
 			ip_proto = IPPROTO_UDP;
-			thlen = माप(काष्ठा udphdr);
-			अवरोध;
-		शेष:
-			वापस -EINVAL;
-		पूर्ण
+			thlen = sizeof(struct udphdr);
+			break;
+		default:
+			return -EINVAL;
+		}
 
-		अगर (hdr->gso_type & VIRTIO_NET_HDR_GSO_ECN)
+		if (hdr->gso_type & VIRTIO_NET_HDR_GSO_ECN)
 			gso_type |= SKB_GSO_TCP_ECN;
 
-		अगर (hdr->gso_size == 0)
-			वापस -EINVAL;
-	पूर्ण
+		if (hdr->gso_size == 0)
+			return -EINVAL;
+	}
 
 	skb_reset_mac_header(skb);
 
-	अगर (hdr->flags & VIRTIO_NET_HDR_F_NEEDS_CSUM) अणु
+	if (hdr->flags & VIRTIO_NET_HDR_F_NEEDS_CSUM) {
 		u32 start = __virtio16_to_cpu(little_endian, hdr->csum_start);
 		u32 off = __virtio16_to_cpu(little_endian, hdr->csum_offset);
-		u32 needed = start + max_t(u32, thlen, off + माप(__sum16));
+		u32 needed = start + max_t(u32, thlen, off + sizeof(__sum16));
 
-		अगर (!pskb_may_pull(skb, needed))
-			वापस -EINVAL;
+		if (!pskb_may_pull(skb, needed))
+			return -EINVAL;
 
-		अगर (!skb_partial_csum_set(skb, start, off))
-			वापस -EINVAL;
+		if (!skb_partial_csum_set(skb, start, off))
+			return -EINVAL;
 
 		p_off = skb_transport_offset(skb) + thlen;
-		अगर (!pskb_may_pull(skb, p_off))
-			वापस -EINVAL;
-	पूर्ण अन्यथा अणु
-		/* gso packets without NEEDS_CSUM करो not set transport_offset.
-		 * probe and drop अगर करोes not match one of the above types.
+		if (!pskb_may_pull(skb, p_off))
+			return -EINVAL;
+	} else {
+		/* gso packets without NEEDS_CSUM do not set transport_offset.
+		 * probe and drop if does not match one of the above types.
 		 */
-		अगर (gso_type && skb->network_header) अणु
-			काष्ठा flow_keys_basic keys;
+		if (gso_type && skb->network_header) {
+			struct flow_keys_basic keys;
 
-			अगर (!skb->protocol) अणु
+			if (!skb->protocol) {
 				__be16 protocol = dev_parse_header_protocol(skb);
 
 				virtio_net_hdr_set_proto(skb, hdr);
-				अगर (protocol && protocol != skb->protocol)
-					वापस -EINVAL;
-			पूर्ण
+				if (protocol && protocol != skb->protocol)
+					return -EINVAL;
+			}
 retry:
-			अगर (!skb_flow_dissect_flow_keys_basic(शून्य, skb, &keys,
-							      शून्य, 0, 0, 0,
-							      0)) अणु
-				/* UFO करोes not specअगरy ipv4 or 6: try both */
-				अगर (gso_type & SKB_GSO_UDP &&
-				    skb->protocol == htons(ETH_P_IP)) अणु
+			if (!skb_flow_dissect_flow_keys_basic(NULL, skb, &keys,
+							      NULL, 0, 0, 0,
+							      0)) {
+				/* UFO does not specify ipv4 or 6: try both */
+				if (gso_type & SKB_GSO_UDP &&
+				    skb->protocol == htons(ETH_P_IP)) {
 					skb->protocol = htons(ETH_P_IPV6);
-					जाओ retry;
-				पूर्ण
-				वापस -EINVAL;
-			पूर्ण
+					goto retry;
+				}
+				return -EINVAL;
+			}
 
 			p_off = keys.control.thoff + thlen;
-			अगर (!pskb_may_pull(skb, p_off) ||
+			if (!pskb_may_pull(skb, p_off) ||
 			    keys.basic.ip_proto != ip_proto)
-				वापस -EINVAL;
+				return -EINVAL;
 
 			skb_set_transport_header(skb, keys.control.thoff);
-		पूर्ण अन्यथा अगर (gso_type) अणु
+		} else if (gso_type) {
 			p_off = thlen;
-			अगर (!pskb_may_pull(skb, p_off))
-				वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			if (!pskb_may_pull(skb, p_off))
+				return -EINVAL;
+		}
+	}
 
-	अगर (hdr->gso_type != VIRTIO_NET_HDR_GSO_NONE) अणु
+	if (hdr->gso_type != VIRTIO_NET_HDR_GSO_NONE) {
 		u16 gso_size = __virtio16_to_cpu(little_endian, hdr->gso_size);
-		काष्ठा skb_shared_info *shinfo = skb_shinfo(skb);
+		struct skb_shared_info *shinfo = skb_shinfo(skb);
 
 		/* Too small packets are not really GSO ones. */
-		अगर (skb->len - p_off > gso_size) अणु
+		if (skb->len - p_off > gso_size) {
 			shinfo->gso_size = gso_size;
 			shinfo->gso_type = gso_type;
 
 			/* Header must be checked, and gso_segs computed. */
 			shinfo->gso_type |= SKB_GSO_DODGY;
 			shinfo->gso_segs = 0;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक virtio_net_hdr_from_skb(स्थिर काष्ठा sk_buff *skb,
-					  काष्ठा virtio_net_hdr *hdr,
+static inline int virtio_net_hdr_from_skb(const struct sk_buff *skb,
+					  struct virtio_net_hdr *hdr,
 					  bool little_endian,
 					  bool has_data_valid,
-					  पूर्णांक vlan_hlen)
-अणु
-	स_रखो(hdr, 0, माप(*hdr));   /* no info leak */
+					  int vlan_hlen)
+{
+	memset(hdr, 0, sizeof(*hdr));   /* no info leak */
 
-	अगर (skb_is_gso(skb)) अणु
-		काष्ठा skb_shared_info *sinfo = skb_shinfo(skb);
+	if (skb_is_gso(skb)) {
+		struct skb_shared_info *sinfo = skb_shinfo(skb);
 
-		/* This is a hपूर्णांक as to how much should be linear. */
+		/* This is a hint as to how much should be linear. */
 		hdr->hdr_len = __cpu_to_virtio16(little_endian,
 						 skb_headlen(skb));
 		hdr->gso_size = __cpu_to_virtio16(little_endian,
 						  sinfo->gso_size);
-		अगर (sinfo->gso_type & SKB_GSO_TCPV4)
+		if (sinfo->gso_type & SKB_GSO_TCPV4)
 			hdr->gso_type = VIRTIO_NET_HDR_GSO_TCPV4;
-		अन्यथा अगर (sinfo->gso_type & SKB_GSO_TCPV6)
+		else if (sinfo->gso_type & SKB_GSO_TCPV6)
 			hdr->gso_type = VIRTIO_NET_HDR_GSO_TCPV6;
-		अन्यथा
-			वापस -EINVAL;
-		अगर (sinfo->gso_type & SKB_GSO_TCP_ECN)
+		else
+			return -EINVAL;
+		if (sinfo->gso_type & SKB_GSO_TCP_ECN)
 			hdr->gso_type |= VIRTIO_NET_HDR_GSO_ECN;
-	पूर्ण अन्यथा
+	} else
 		hdr->gso_type = VIRTIO_NET_HDR_GSO_NONE;
 
-	अगर (skb->ip_summed == CHECKSUM_PARTIAL) अणु
+	if (skb->ip_summed == CHECKSUM_PARTIAL) {
 		hdr->flags = VIRTIO_NET_HDR_F_NEEDS_CSUM;
 		hdr->csum_start = __cpu_to_virtio16(little_endian,
 			skb_checksum_start_offset(skb) + vlan_hlen);
 		hdr->csum_offset = __cpu_to_virtio16(little_endian,
 				skb->csum_offset);
-	पूर्ण अन्यथा अगर (has_data_valid &&
-		   skb->ip_summed == CHECKSUM_UNNECESSARY) अणु
+	} else if (has_data_valid &&
+		   skb->ip_summed == CHECKSUM_UNNECESSARY) {
 		hdr->flags = VIRTIO_NET_HDR_F_DATA_VALID;
-	पूर्ण /* अन्यथा everything is zero */
+	} /* else everything is zero */
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#पूर्ण_अगर /* _LINUX_VIRTIO_NET_H */
+#endif /* _LINUX_VIRTIO_NET_H */

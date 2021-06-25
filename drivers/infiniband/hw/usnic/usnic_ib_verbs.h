@@ -1,24 +1,23 @@
-<शैली गुरु>
 /*
  * Copyright (c) 2013, Cisco Systems, Inc. All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the मुख्य directory of this source tree, or the
+ * COPYING in the main directory of this source tree, or the
  * BSD license below:
  *
- *     Redistribution and use in source and binary क्रमms, with or
- *     without modअगरication, are permitted provided that the following
+ *     Redistribution and use in source and binary forms, with or
+ *     without modification, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary क्रमm must reproduce the above
+ *      - Redistributions in binary form must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the करोcumentation and/or other materials
+ *        disclaimer in the documentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -32,40 +31,40 @@
  *
  */
 
-#अगर_अघोषित USNIC_IB_VERBS_H_
-#घोषणा USNIC_IB_VERBS_H_
+#ifndef USNIC_IB_VERBS_H_
+#define USNIC_IB_VERBS_H_
 
-#समावेश "usnic_ib.h"
+#include "usnic_ib.h"
 
-क्रमागत rdma_link_layer usnic_ib_port_link_layer(काष्ठा ib_device *device,
+enum rdma_link_layer usnic_ib_port_link_layer(struct ib_device *device,
 					      u32 port_num);
-पूर्णांक usnic_ib_query_device(काष्ठा ib_device *ibdev,
-				काष्ठा ib_device_attr *props,
-			  काष्ठा ib_udata *uhw);
-पूर्णांक usnic_ib_query_port(काष्ठा ib_device *ibdev, u32 port,
-				काष्ठा ib_port_attr *props);
-पूर्णांक usnic_ib_query_qp(काष्ठा ib_qp *qp, काष्ठा ib_qp_attr *qp_attr,
-				पूर्णांक qp_attr_mask,
-				काष्ठा ib_qp_init_attr *qp_init_attr);
-पूर्णांक usnic_ib_query_gid(काष्ठा ib_device *ibdev, u32 port, पूर्णांक index,
-				जोड़ ib_gid *gid);
-पूर्णांक usnic_ib_alloc_pd(काष्ठा ib_pd *ibpd, काष्ठा ib_udata *udata);
-पूर्णांक usnic_ib_dealloc_pd(काष्ठा ib_pd *pd, काष्ठा ib_udata *udata);
-काष्ठा ib_qp *usnic_ib_create_qp(काष्ठा ib_pd *pd,
-					काष्ठा ib_qp_init_attr *init_attr,
-					काष्ठा ib_udata *udata);
-पूर्णांक usnic_ib_destroy_qp(काष्ठा ib_qp *qp, काष्ठा ib_udata *udata);
-पूर्णांक usnic_ib_modअगरy_qp(काष्ठा ib_qp *ibqp, काष्ठा ib_qp_attr *attr,
-				पूर्णांक attr_mask, काष्ठा ib_udata *udata);
-पूर्णांक usnic_ib_create_cq(काष्ठा ib_cq *ibcq, स्थिर काष्ठा ib_cq_init_attr *attr,
-		       काष्ठा ib_udata *udata);
-पूर्णांक usnic_ib_destroy_cq(काष्ठा ib_cq *cq, काष्ठा ib_udata *udata);
-काष्ठा ib_mr *usnic_ib_reg_mr(काष्ठा ib_pd *pd, u64 start, u64 length,
-				u64 virt_addr, पूर्णांक access_flags,
-				काष्ठा ib_udata *udata);
-पूर्णांक usnic_ib_dereg_mr(काष्ठा ib_mr *ibmr, काष्ठा ib_udata *udata);
-पूर्णांक usnic_ib_alloc_ucontext(काष्ठा ib_ucontext *uctx, काष्ठा ib_udata *udata);
-व्योम usnic_ib_dealloc_ucontext(काष्ठा ib_ucontext *ibcontext);
-पूर्णांक usnic_ib_mmap(काष्ठा ib_ucontext *context,
-			काष्ठा vm_area_काष्ठा *vma);
-#पूर्ण_अगर /* !USNIC_IB_VERBS_H */
+int usnic_ib_query_device(struct ib_device *ibdev,
+				struct ib_device_attr *props,
+			  struct ib_udata *uhw);
+int usnic_ib_query_port(struct ib_device *ibdev, u32 port,
+				struct ib_port_attr *props);
+int usnic_ib_query_qp(struct ib_qp *qp, struct ib_qp_attr *qp_attr,
+				int qp_attr_mask,
+				struct ib_qp_init_attr *qp_init_attr);
+int usnic_ib_query_gid(struct ib_device *ibdev, u32 port, int index,
+				union ib_gid *gid);
+int usnic_ib_alloc_pd(struct ib_pd *ibpd, struct ib_udata *udata);
+int usnic_ib_dealloc_pd(struct ib_pd *pd, struct ib_udata *udata);
+struct ib_qp *usnic_ib_create_qp(struct ib_pd *pd,
+					struct ib_qp_init_attr *init_attr,
+					struct ib_udata *udata);
+int usnic_ib_destroy_qp(struct ib_qp *qp, struct ib_udata *udata);
+int usnic_ib_modify_qp(struct ib_qp *ibqp, struct ib_qp_attr *attr,
+				int attr_mask, struct ib_udata *udata);
+int usnic_ib_create_cq(struct ib_cq *ibcq, const struct ib_cq_init_attr *attr,
+		       struct ib_udata *udata);
+int usnic_ib_destroy_cq(struct ib_cq *cq, struct ib_udata *udata);
+struct ib_mr *usnic_ib_reg_mr(struct ib_pd *pd, u64 start, u64 length,
+				u64 virt_addr, int access_flags,
+				struct ib_udata *udata);
+int usnic_ib_dereg_mr(struct ib_mr *ibmr, struct ib_udata *udata);
+int usnic_ib_alloc_ucontext(struct ib_ucontext *uctx, struct ib_udata *udata);
+void usnic_ib_dealloc_ucontext(struct ib_ucontext *ibcontext);
+int usnic_ib_mmap(struct ib_ucontext *context,
+			struct vm_area_struct *vma);
+#endif /* !USNIC_IB_VERBS_H */

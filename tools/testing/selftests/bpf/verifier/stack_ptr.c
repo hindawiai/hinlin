@@ -1,249 +1,248 @@
-<शैली गुरु>
-अणु
+{
 	"PTR_TO_STACK store/load",
-	.insns = अणु
+	.insns = {
 	BPF_MOV64_REG(BPF_REG_1, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_1, -10),
 	BPF_ST_MEM(BPF_DW, BPF_REG_1, 2, 0xfaceb00c),
 	BPF_LDX_MEM(BPF_DW, BPF_REG_0, BPF_REG_1, 2),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.result = ACCEPT,
 	.retval = 0xfaceb00c,
-पूर्ण,
-अणु
+},
+{
 	"PTR_TO_STACK store/load - bad alignment on off",
-	.insns = अणु
+	.insns = {
 	BPF_MOV64_REG(BPF_REG_1, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_1, -8),
 	BPF_ST_MEM(BPF_DW, BPF_REG_1, 2, 0xfaceb00c),
 	BPF_LDX_MEM(BPF_DW, BPF_REG_0, BPF_REG_1, 2),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.result = REJECT,
 	.errstr = "misaligned stack access off (0x0; 0x0)+-8+2 size 8",
-पूर्ण,
-अणु
+},
+{
 	"PTR_TO_STACK store/load - bad alignment on reg",
-	.insns = अणु
+	.insns = {
 	BPF_MOV64_REG(BPF_REG_1, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_1, -10),
 	BPF_ST_MEM(BPF_DW, BPF_REG_1, 8, 0xfaceb00c),
 	BPF_LDX_MEM(BPF_DW, BPF_REG_0, BPF_REG_1, 8),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.result = REJECT,
 	.errstr = "misaligned stack access off (0x0; 0x0)+-10+8 size 8",
-पूर्ण,
-अणु
+},
+{
 	"PTR_TO_STACK store/load - out of bounds low",
-	.insns = अणु
+	.insns = {
 	BPF_MOV64_REG(BPF_REG_1, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_1, -80000),
 	BPF_ST_MEM(BPF_DW, BPF_REG_1, 8, 0xfaceb00c),
 	BPF_LDX_MEM(BPF_DW, BPF_REG_0, BPF_REG_1, 8),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.result = REJECT,
 	.errstr = "invalid write to stack R1 off=-79992 size=8",
 	.errstr_unpriv = "R1 stack pointer arithmetic goes out of range",
-पूर्ण,
-अणु
+},
+{
 	"PTR_TO_STACK store/load - out of bounds high",
-	.insns = अणु
+	.insns = {
 	BPF_MOV64_REG(BPF_REG_1, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_1, -8),
 	BPF_ST_MEM(BPF_DW, BPF_REG_1, 8, 0xfaceb00c),
 	BPF_LDX_MEM(BPF_DW, BPF_REG_0, BPF_REG_1, 8),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.result = REJECT,
 	.errstr = "invalid write to stack R1 off=0 size=8",
-पूर्ण,
-अणु
+},
+{
 	"PTR_TO_STACK check high 1",
-	.insns = अणु
+	.insns = {
 	BPF_MOV64_REG(BPF_REG_1, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_1, -1),
 	BPF_ST_MEM(BPF_B, BPF_REG_1, 0, 42),
 	BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_1, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.result = ACCEPT,
 	.retval = 42,
-पूर्ण,
-अणु
+},
+{
 	"PTR_TO_STACK check high 2",
-	.insns = अणु
+	.insns = {
 	BPF_MOV64_REG(BPF_REG_1, BPF_REG_10),
 	BPF_ST_MEM(BPF_B, BPF_REG_1, -1, 42),
 	BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_1, -1),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.result = ACCEPT,
 	.retval = 42,
-पूर्ण,
-अणु
+},
+{
 	"PTR_TO_STACK check high 3",
-	.insns = अणु
+	.insns = {
 	BPF_MOV64_REG(BPF_REG_1, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_1, 0),
 	BPF_ST_MEM(BPF_B, BPF_REG_1, -1, 42),
 	BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_1, -1),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.errstr_unpriv = "R1 stack pointer arithmetic goes out of range",
 	.result_unpriv = REJECT,
 	.result = ACCEPT,
 	.retval = 42,
-पूर्ण,
-अणु
+},
+{
 	"PTR_TO_STACK check high 4",
-	.insns = अणु
+	.insns = {
 	BPF_MOV64_REG(BPF_REG_1, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_1, 0),
 	BPF_ST_MEM(BPF_B, BPF_REG_1, 0, 42),
 	BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_1, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.errstr_unpriv = "R1 stack pointer arithmetic goes out of range",
 	.errstr = "invalid write to stack R1 off=0 size=1",
 	.result = REJECT,
-पूर्ण,
-अणु
+},
+{
 	"PTR_TO_STACK check high 5",
-	.insns = अणु
+	.insns = {
 	BPF_MOV64_REG(BPF_REG_1, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_1, (1 << 29) - 1),
 	BPF_ST_MEM(BPF_B, BPF_REG_1, 0, 42),
 	BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_1, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.result = REJECT,
 	.errstr_unpriv = "R1 stack pointer arithmetic goes out of range",
 	.errstr = "invalid write to stack R1",
-पूर्ण,
-अणु
+},
+{
 	"PTR_TO_STACK check high 6",
-	.insns = अणु
+	.insns = {
 	BPF_MOV64_REG(BPF_REG_1, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_1, (1 << 29) - 1),
-	BPF_ST_MEM(BPF_B, BPF_REG_1, लघु_उच्च, 42),
-	BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_1, लघु_उच्च),
+	BPF_ST_MEM(BPF_B, BPF_REG_1, SHRT_MAX, 42),
+	BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_1, SHRT_MAX),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.result = REJECT,
 	.errstr_unpriv = "R1 stack pointer arithmetic goes out of range",
 	.errstr = "invalid write to stack",
-पूर्ण,
-अणु
+},
+{
 	"PTR_TO_STACK check high 7",
-	.insns = अणु
+	.insns = {
 	BPF_MOV64_REG(BPF_REG_1, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_1, (1 << 29) - 1),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_1, (1 << 29) - 1),
-	BPF_ST_MEM(BPF_B, BPF_REG_1, लघु_उच्च, 42),
-	BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_1, लघु_उच्च),
+	BPF_ST_MEM(BPF_B, BPF_REG_1, SHRT_MAX, 42),
+	BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_1, SHRT_MAX),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.result = REJECT,
 	.errstr_unpriv = "R1 stack pointer arithmetic goes out of range",
 	.errstr = "fp pointer offset",
-पूर्ण,
-अणु
+},
+{
 	"PTR_TO_STACK check low 1",
-	.insns = अणु
+	.insns = {
 	BPF_MOV64_REG(BPF_REG_1, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_1, -512),
 	BPF_ST_MEM(BPF_B, BPF_REG_1, 0, 42),
 	BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_1, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.result = ACCEPT,
 	.retval = 42,
-पूर्ण,
-अणु
+},
+{
 	"PTR_TO_STACK check low 2",
-	.insns = अणु
+	.insns = {
 	BPF_MOV64_REG(BPF_REG_1, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_1, -513),
 	BPF_ST_MEM(BPF_B, BPF_REG_1, 1, 42),
 	BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_1, 1),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.result_unpriv = REJECT,
 	.errstr_unpriv = "R1 stack pointer arithmetic goes out of range",
 	.result = ACCEPT,
 	.retval = 42,
-पूर्ण,
-अणु
+},
+{
 	"PTR_TO_STACK check low 3",
-	.insns = अणु
+	.insns = {
 	BPF_MOV64_REG(BPF_REG_1, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_1, -513),
 	BPF_ST_MEM(BPF_B, BPF_REG_1, 0, 42),
 	BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_1, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.errstr_unpriv = "R1 stack pointer arithmetic goes out of range",
 	.errstr = "invalid write to stack R1 off=-513 size=1",
 	.result = REJECT,
-पूर्ण,
-अणु
+},
+{
 	"PTR_TO_STACK check low 4",
-	.insns = अणु
+	.insns = {
 	BPF_MOV64_REG(BPF_REG_1, BPF_REG_10),
-	BPF_ALU64_IMM(BPF_ADD, BPF_REG_1, पूर्णांक_न्यून),
+	BPF_ALU64_IMM(BPF_ADD, BPF_REG_1, INT_MIN),
 	BPF_ST_MEM(BPF_B, BPF_REG_1, 0, 42),
 	BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_1, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.result = REJECT,
 	.errstr = "math between fp pointer",
-पूर्ण,
-अणु
+},
+{
 	"PTR_TO_STACK check low 5",
-	.insns = अणु
+	.insns = {
 	BPF_MOV64_REG(BPF_REG_1, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_1, -((1 << 29) - 1)),
 	BPF_ST_MEM(BPF_B, BPF_REG_1, 0, 42),
 	BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_1, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.result = REJECT,
 	.errstr_unpriv = "R1 stack pointer arithmetic goes out of range",
 	.errstr = "invalid write to stack",
-पूर्ण,
-अणु
+},
+{
 	"PTR_TO_STACK check low 6",
-	.insns = अणु
+	.insns = {
 	BPF_MOV64_REG(BPF_REG_1, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_1, -((1 << 29) - 1)),
-	BPF_ST_MEM(BPF_B, BPF_REG_1, लघु_न्यून, 42),
-	BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_1, लघु_न्यून),
+	BPF_ST_MEM(BPF_B, BPF_REG_1, SHRT_MIN, 42),
+	BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_1, SHRT_MIN),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.result = REJECT,
 	.errstr = "invalid write to stack",
 	.errstr_unpriv = "R1 stack pointer arithmetic goes out of range",
-पूर्ण,
-अणु
+},
+{
 	"PTR_TO_STACK check low 7",
-	.insns = अणु
+	.insns = {
 	BPF_MOV64_REG(BPF_REG_1, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_1, -((1 << 29) - 1)),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_1, -((1 << 29) - 1)),
-	BPF_ST_MEM(BPF_B, BPF_REG_1, लघु_न्यून, 42),
-	BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_1, लघु_न्यून),
+	BPF_ST_MEM(BPF_B, BPF_REG_1, SHRT_MIN, 42),
+	BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_1, SHRT_MIN),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.result = REJECT,
 	.errstr_unpriv = "R1 stack pointer arithmetic goes out of range",
 	.errstr = "fp pointer offset",
-पूर्ण,
-अणु
+},
+{
 	"PTR_TO_STACK mixed reg/k, 1",
-	.insns = अणु
+	.insns = {
 	BPF_MOV64_REG(BPF_REG_1, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_1, -3),
 	BPF_MOV64_IMM(BPF_REG_2, -3),
@@ -251,13 +250,13 @@
 	BPF_ST_MEM(BPF_B, BPF_REG_1, 0, 42),
 	BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_1, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.result = ACCEPT,
 	.retval = 42,
-पूर्ण,
-अणु
+},
+{
 	"PTR_TO_STACK mixed reg/k, 2",
-	.insns = अणु
+	.insns = {
 	BPF_ST_MEM(BPF_DW, BPF_REG_10, -8, 0),
 	BPF_ST_MEM(BPF_DW, BPF_REG_10, -16, 0),
 	BPF_MOV64_REG(BPF_REG_1, BPF_REG_10),
@@ -268,13 +267,13 @@
 	BPF_MOV64_REG(BPF_REG_5, BPF_REG_10),
 	BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_5, -6),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.result = ACCEPT,
 	.retval = 42,
-पूर्ण,
-अणु
+},
+{
 	"PTR_TO_STACK mixed reg/k, 3",
-	.insns = अणु
+	.insns = {
 	BPF_MOV64_REG(BPF_REG_1, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_1, -3),
 	BPF_MOV64_IMM(BPF_REG_2, -3),
@@ -282,26 +281,26 @@
 	BPF_ST_MEM(BPF_B, BPF_REG_1, 0, 42),
 	BPF_MOV64_REG(BPF_REG_0, BPF_REG_2),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.result = ACCEPT,
 	.retval = -3,
-पूर्ण,
-अणु
+},
+{
 	"PTR_TO_STACK reg",
-	.insns = अणु
+	.insns = {
 	BPF_MOV64_REG(BPF_REG_1, BPF_REG_10),
 	BPF_MOV64_IMM(BPF_REG_2, -3),
 	BPF_ALU64_REG(BPF_ADD, BPF_REG_1, BPF_REG_2),
 	BPF_ST_MEM(BPF_B, BPF_REG_1, 0, 42),
 	BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_1, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.result = ACCEPT,
 	.retval = 42,
-पूर्ण,
-अणु
+},
+{
 	"stack pointer arithmetic",
-	.insns = अणु
+	.insns = {
 	BPF_MOV64_IMM(BPF_REG_1, 4),
 	BPF_JMP_IMM(BPF_JA, 0, 0, 0),
 	BPF_MOV64_REG(BPF_REG_7, BPF_REG_10),
@@ -315,13 +314,13 @@
 	BPF_ST_MEM(0, BPF_REG_2, 4, 0),
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.result = ACCEPT,
-पूर्ण,
-अणु
+},
+{
 	"store PTR_TO_STACK in R10 to array map using BPF_B",
-	.insns = अणु
-	/* Load poपूर्णांकer to map. */
+	.insns = {
+	/* Load pointer to map. */
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
 	BPF_ST_MEM(BPF_DW, BPF_REG_2, 0, 0),
@@ -333,7 +332,7 @@
 	BPF_MOV64_REG(BPF_REG_1, BPF_REG_0),
 	/* Copy R10 to R9. */
 	BPF_MOV64_REG(BPF_REG_9, BPF_REG_10),
-	/* Pollute other रेजिस्टरs with unaligned values. */
+	/* Pollute other registers with unaligned values. */
 	BPF_MOV64_IMM(BPF_REG_2, -1),
 	BPF_MOV64_IMM(BPF_REG_3, -1),
 	BPF_MOV64_IMM(BPF_REG_4, -1),
@@ -341,20 +340,20 @@
 	BPF_MOV64_IMM(BPF_REG_6, -1),
 	BPF_MOV64_IMM(BPF_REG_7, -1),
 	BPF_MOV64_IMM(BPF_REG_8, -1),
-	/* Store both R9 and R10 with BPF_B and पढ़ो back. */
+	/* Store both R9 and R10 with BPF_B and read back. */
 	BPF_STX_MEM(BPF_B, BPF_REG_1, BPF_REG_10, 0),
 	BPF_LDX_MEM(BPF_B, BPF_REG_2, BPF_REG_1, 0),
 	BPF_STX_MEM(BPF_B, BPF_REG_1, BPF_REG_9, 0),
 	BPF_LDX_MEM(BPF_B, BPF_REG_3, BPF_REG_1, 0),
-	/* Should पढ़ो back as same value. */
+	/* Should read back as same value. */
 	BPF_JMP_REG(BPF_JEQ, BPF_REG_2, BPF_REG_3, 2),
 	BPF_MOV64_IMM(BPF_REG_0, 1),
 	BPF_EXIT_INSN(),
 	BPF_MOV64_IMM(BPF_REG_0, 42),
 	BPF_EXIT_INSN(),
-	पूर्ण,
-	.fixup_map_array_48b = अणु 3 पूर्ण,
+	},
+	.fixup_map_array_48b = { 3 },
 	.result = ACCEPT,
 	.retval = 42,
 	.prog_type = BPF_PROG_TYPE_SCHED_CLS,
-पूर्ण,
+},

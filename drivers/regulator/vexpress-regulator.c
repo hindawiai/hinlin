@@ -1,58 +1,57 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 //
 // Copyright (C) 2012 ARM Limited
 
-#घोषणा DRVNAME "vexpress-regulator"
-#घोषणा pr_fmt(fmt) DRVNAME ": " fmt
+#define DRVNAME "vexpress-regulator"
+#define pr_fmt(fmt) DRVNAME ": " fmt
 
-#समावेश <linux/device.h>
-#समावेश <linux/err.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/regulator/driver.h>
-#समावेश <linux/regulator/machine.h>
-#समावेश <linux/regulator/of_regulator.h>
-#समावेश <linux/vexpress.h>
+#include <linux/device.h>
+#include <linux/err.h>
+#include <linux/module.h>
+#include <linux/of_device.h>
+#include <linux/regulator/driver.h>
+#include <linux/regulator/machine.h>
+#include <linux/regulator/of_regulator.h>
+#include <linux/vexpress.h>
 
-अटल पूर्णांक vexpress_regulator_get_voltage(काष्ठा regulator_dev *regdev)
-अणु
-	अचिन्हित पूर्णांक uV;
-	पूर्णांक err = regmap_पढ़ो(regdev->regmap, 0, &uV);
+static int vexpress_regulator_get_voltage(struct regulator_dev *regdev)
+{
+	unsigned int uV;
+	int err = regmap_read(regdev->regmap, 0, &uV);
 
-	वापस err ? err : uV;
-पूर्ण
+	return err ? err : uV;
+}
 
-अटल पूर्णांक vexpress_regulator_set_voltage(काष्ठा regulator_dev *regdev,
-		पूर्णांक min_uV, पूर्णांक max_uV, अचिन्हित *selector)
-अणु
-	वापस regmap_ग_लिखो(regdev->regmap, 0, min_uV);
-पूर्ण
+static int vexpress_regulator_set_voltage(struct regulator_dev *regdev,
+		int min_uV, int max_uV, unsigned *selector)
+{
+	return regmap_write(regdev->regmap, 0, min_uV);
+}
 
-अटल स्थिर काष्ठा regulator_ops vexpress_regulator_ops_ro = अणु
+static const struct regulator_ops vexpress_regulator_ops_ro = {
 	.get_voltage = vexpress_regulator_get_voltage,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा regulator_ops vexpress_regulator_ops = अणु
+static const struct regulator_ops vexpress_regulator_ops = {
 	.get_voltage = vexpress_regulator_get_voltage,
 	.set_voltage = vexpress_regulator_set_voltage,
-पूर्ण;
+};
 
-अटल पूर्णांक vexpress_regulator_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा regulator_desc *desc;
-	काष्ठा regulator_init_data *init_data;
-	काष्ठा regulator_config config = अणु पूर्ण;
-	काष्ठा regulator_dev *rdev;
-	काष्ठा regmap *regmap;
+static int vexpress_regulator_probe(struct platform_device *pdev)
+{
+	struct regulator_desc *desc;
+	struct regulator_init_data *init_data;
+	struct regulator_config config = { };
+	struct regulator_dev *rdev;
+	struct regmap *regmap;
 
-	desc = devm_kzalloc(&pdev->dev, माप(*desc), GFP_KERNEL);
-	अगर (!desc)
-		वापस -ENOMEM;
+	desc = devm_kzalloc(&pdev->dev, sizeof(*desc), GFP_KERNEL);
+	if (!desc)
+		return -ENOMEM;
 
 	regmap = devm_regmap_init_vexpress_config(&pdev->dev);
-	अगर (IS_ERR(regmap))
-		वापस PTR_ERR(regmap);
+	if (IS_ERR(regmap))
+		return PTR_ERR(regmap);
 
 	desc->name = dev_name(&pdev->dev);
 	desc->type = REGULATOR_VOLTAGE;
@@ -61,13 +60,13 @@
 
 	init_data = of_get_regulator_init_data(&pdev->dev, pdev->dev.of_node,
 					       desc);
-	अगर (!init_data)
-		वापस -EINVAL;
+	if (!init_data)
+		return -EINVAL;
 
-	init_data->स्थिरraपूर्णांकs.apply_uV = 0;
-	अगर (init_data->स्थिरraपूर्णांकs.min_uV && init_data->स्थिरraपूर्णांकs.max_uV)
+	init_data->constraints.apply_uV = 0;
+	if (init_data->constraints.min_uV && init_data->constraints.max_uV)
 		desc->ops = &vexpress_regulator_ops;
-	अन्यथा
+	else
 		desc->ops = &vexpress_regulator_ops_ro;
 
 	config.regmap = regmap;
@@ -75,25 +74,25 @@
 	config.init_data = init_data;
 	config.of_node = pdev->dev.of_node;
 
-	rdev = devm_regulator_रेजिस्टर(&pdev->dev, desc, &config);
-	वापस PTR_ERR_OR_ZERO(rdev);
-पूर्ण
+	rdev = devm_regulator_register(&pdev->dev, desc, &config);
+	return PTR_ERR_OR_ZERO(rdev);
+}
 
-अटल स्थिर काष्ठा of_device_id vexpress_regulator_of_match[] = अणु
-	अणु .compatible = "arm,vexpress-volt", पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct of_device_id vexpress_regulator_of_match[] = {
+	{ .compatible = "arm,vexpress-volt", },
+	{ }
+};
 MODULE_DEVICE_TABLE(of, vexpress_regulator_of_match);
 
-अटल काष्ठा platक्रमm_driver vexpress_regulator_driver = अणु
+static struct platform_driver vexpress_regulator_driver = {
 	.probe = vexpress_regulator_probe,
-	.driver	= अणु
+	.driver	= {
 		.name = DRVNAME,
 		.of_match_table = vexpress_regulator_of_match,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver(vexpress_regulator_driver);
+module_platform_driver(vexpress_regulator_driver);
 
 MODULE_AUTHOR("Pawel Moll <pawel.moll@arm.com>");
 MODULE_DESCRIPTION("Versatile Express regulator");

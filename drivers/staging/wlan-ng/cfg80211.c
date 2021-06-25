@@ -1,253 +1,252 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-/* cfg80211 Interface क्रम prism2_usb module */
-#समावेश "hfa384x.h"
-#समावेश "prism2mgmt.h"
+// SPDX-License-Identifier: GPL-2.0
+/* cfg80211 Interface for prism2_usb module */
+#include "hfa384x.h"
+#include "prism2mgmt.h"
 
 /* Prism2 channel/frequency/bitrate declarations */
-अटल स्थिर काष्ठा ieee80211_channel prism2_channels[] = अणु
-	अणु .center_freq = 2412 पूर्ण,
-	अणु .center_freq = 2417 पूर्ण,
-	अणु .center_freq = 2422 पूर्ण,
-	अणु .center_freq = 2427 पूर्ण,
-	अणु .center_freq = 2432 पूर्ण,
-	अणु .center_freq = 2437 पूर्ण,
-	अणु .center_freq = 2442 पूर्ण,
-	अणु .center_freq = 2447 पूर्ण,
-	अणु .center_freq = 2452 पूर्ण,
-	अणु .center_freq = 2457 पूर्ण,
-	अणु .center_freq = 2462 पूर्ण,
-	अणु .center_freq = 2467 पूर्ण,
-	अणु .center_freq = 2472 पूर्ण,
-	अणु .center_freq = 2484 पूर्ण,
-पूर्ण;
+static const struct ieee80211_channel prism2_channels[] = {
+	{ .center_freq = 2412 },
+	{ .center_freq = 2417 },
+	{ .center_freq = 2422 },
+	{ .center_freq = 2427 },
+	{ .center_freq = 2432 },
+	{ .center_freq = 2437 },
+	{ .center_freq = 2442 },
+	{ .center_freq = 2447 },
+	{ .center_freq = 2452 },
+	{ .center_freq = 2457 },
+	{ .center_freq = 2462 },
+	{ .center_freq = 2467 },
+	{ .center_freq = 2472 },
+	{ .center_freq = 2484 },
+};
 
-अटल स्थिर काष्ठा ieee80211_rate prism2_rates[] = अणु
-	अणु .bitrate = 10 पूर्ण,
-	अणु .bitrate = 20 पूर्ण,
-	अणु .bitrate = 55 पूर्ण,
-	अणु .bitrate = 110 पूर्ण
-पूर्ण;
+static const struct ieee80211_rate prism2_rates[] = {
+	{ .bitrate = 10 },
+	{ .bitrate = 20 },
+	{ .bitrate = 55 },
+	{ .bitrate = 110 }
+};
 
-#घोषणा PRISM2_NUM_CIPHER_SUITES 2
-अटल स्थिर u32 prism2_cipher_suites[PRISM2_NUM_CIPHER_SUITES] = अणु
+#define PRISM2_NUM_CIPHER_SUITES 2
+static const u32 prism2_cipher_suites[PRISM2_NUM_CIPHER_SUITES] = {
 	WLAN_CIPHER_SUITE_WEP40,
 	WLAN_CIPHER_SUITE_WEP104
-पूर्ण;
+};
 
-/* prism2 device निजी data */
-काष्ठा prism2_wiphy_निजी अणु
-	काष्ठा wlandevice *wlandev;
+/* prism2 device private data */
+struct prism2_wiphy_private {
+	struct wlandevice *wlandev;
 
-	काष्ठा ieee80211_supported_band band;
-	काष्ठा ieee80211_channel channels[ARRAY_SIZE(prism2_channels)];
-	काष्ठा ieee80211_rate rates[ARRAY_SIZE(prism2_rates)];
+	struct ieee80211_supported_band band;
+	struct ieee80211_channel channels[ARRAY_SIZE(prism2_channels)];
+	struct ieee80211_rate rates[ARRAY_SIZE(prism2_rates)];
 
-	काष्ठा cfg80211_scan_request *scan_request;
-पूर्ण;
+	struct cfg80211_scan_request *scan_request;
+};
 
-अटल स्थिर व्योम * स्थिर prism2_wiphy_privid = &prism2_wiphy_privid;
+static const void * const prism2_wiphy_privid = &prism2_wiphy_privid;
 
 /* Helper Functions */
-अटल पूर्णांक prism2_result2err(पूर्णांक prism2_result)
-अणु
-	पूर्णांक err = 0;
+static int prism2_result2err(int prism2_result)
+{
+	int err = 0;
 
-	चयन (prism2_result) अणु
-	हाल P80211ENUM_resultcode_invalid_parameters:
+	switch (prism2_result) {
+	case P80211ENUM_resultcode_invalid_parameters:
 		err = -EINVAL;
-		अवरोध;
-	हाल P80211ENUM_resultcode_implementation_failure:
+		break;
+	case P80211ENUM_resultcode_implementation_failure:
 		err = -EIO;
-		अवरोध;
-	हाल P80211ENUM_resultcode_not_supported:
+		break;
+	case P80211ENUM_resultcode_not_supported:
 		err = -EOPNOTSUPP;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		err = 0;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक prism2_करोmibset_uपूर्णांक32(काष्ठा wlandevice *wlandev,
+static int prism2_domibset_uint32(struct wlandevice *wlandev,
 				  u32 did, u32 data)
-अणु
-	काष्ठा p80211msg_करोt11req_mibset msg;
-	काष्ठा p80211item_uपूर्णांक32 *mibitem =
-			(काष्ठा p80211item_uपूर्णांक32 *)&msg.mibattribute.data;
+{
+	struct p80211msg_dot11req_mibset msg;
+	struct p80211item_uint32 *mibitem =
+			(struct p80211item_uint32 *)&msg.mibattribute.data;
 
 	msg.msgcode = DIDMSG_DOT11REQ_MIBSET;
 	mibitem->did = did;
 	mibitem->data = data;
 
-	वापस p80211req_करोrequest(wlandev, (u8 *)&msg);
-पूर्ण
+	return p80211req_dorequest(wlandev, (u8 *)&msg);
+}
 
-अटल पूर्णांक prism2_करोmibset_pstr32(काष्ठा wlandevice *wlandev,
-				  u32 did, u8 len, स्थिर u8 *data)
-अणु
-	काष्ठा p80211msg_करोt11req_mibset msg;
-	काष्ठा p80211item_pstr32 *mibitem =
-			(काष्ठा p80211item_pstr32 *)&msg.mibattribute.data;
+static int prism2_domibset_pstr32(struct wlandevice *wlandev,
+				  u32 did, u8 len, const u8 *data)
+{
+	struct p80211msg_dot11req_mibset msg;
+	struct p80211item_pstr32 *mibitem =
+			(struct p80211item_pstr32 *)&msg.mibattribute.data;
 
 	msg.msgcode = DIDMSG_DOT11REQ_MIBSET;
 	mibitem->did = did;
 	mibitem->data.len = len;
-	स_नकल(mibitem->data.data, data, len);
+	memcpy(mibitem->data.data, data, len);
 
-	वापस p80211req_करोrequest(wlandev, (u8 *)&msg);
-पूर्ण
+	return p80211req_dorequest(wlandev, (u8 *)&msg);
+}
 
-/* The पूर्णांकerface functions, called by the cfg80211 layer */
-अटल पूर्णांक prism2_change_भव_पूर्णांकf(काष्ठा wiphy *wiphy,
-				      काष्ठा net_device *dev,
-				      क्रमागत nl80211_अगरtype type,
-				      काष्ठा vअगर_params *params)
-अणु
-	काष्ठा wlandevice *wlandev = dev->ml_priv;
+/* The interface functions, called by the cfg80211 layer */
+static int prism2_change_virtual_intf(struct wiphy *wiphy,
+				      struct net_device *dev,
+				      enum nl80211_iftype type,
+				      struct vif_params *params)
+{
+	struct wlandevice *wlandev = dev->ml_priv;
 	u32 data;
-	पूर्णांक result;
-	पूर्णांक err = 0;
+	int result;
+	int err = 0;
 
-	चयन (type) अणु
-	हाल NL80211_IFTYPE_ADHOC:
-		अगर (wlandev->macmode == WLAN_MACMODE_IBSS_STA)
-			जाओ निकास;
+	switch (type) {
+	case NL80211_IFTYPE_ADHOC:
+		if (wlandev->macmode == WLAN_MACMODE_IBSS_STA)
+			goto exit;
 		wlandev->macmode = WLAN_MACMODE_IBSS_STA;
 		data = 0;
-		अवरोध;
-	हाल NL80211_IFTYPE_STATION:
-		अगर (wlandev->macmode == WLAN_MACMODE_ESS_STA)
-			जाओ निकास;
+		break;
+	case NL80211_IFTYPE_STATION:
+		if (wlandev->macmode == WLAN_MACMODE_ESS_STA)
+			goto exit;
 		wlandev->macmode = WLAN_MACMODE_ESS_STA;
 		data = 1;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		netdev_warn(dev, "Operation mode: %d not support\n", type);
-		वापस -EOPNOTSUPP;
-	पूर्ण
+		return -EOPNOTSUPP;
+	}
 
 	/* Set Operation mode to the PORT TYPE RID */
-	result = prism2_करोmibset_uपूर्णांक32(wlandev,
+	result = prism2_domibset_uint32(wlandev,
 					DIDMIB_P2_STATIC_CNFPORTTYPE,
 					data);
 
-	अगर (result)
+	if (result)
 		err = -EFAULT;
 
-	dev->ieee80211_ptr->अगरtype = type;
+	dev->ieee80211_ptr->iftype = type;
 
-निकास:
-	वापस err;
-पूर्ण
+exit:
+	return err;
+}
 
-अटल पूर्णांक prism2_add_key(काष्ठा wiphy *wiphy, काष्ठा net_device *dev,
-			  u8 key_index, bool pairwise, स्थिर u8 *mac_addr,
-			  काष्ठा key_params *params)
-अणु
-	काष्ठा wlandevice *wlandev = dev->ml_priv;
+static int prism2_add_key(struct wiphy *wiphy, struct net_device *dev,
+			  u8 key_index, bool pairwise, const u8 *mac_addr,
+			  struct key_params *params)
+{
+	struct wlandevice *wlandev = dev->ml_priv;
 	u32 did;
 
-	अगर (key_index >= NUM_WEPKEYS)
-		वापस -EINVAL;
+	if (key_index >= NUM_WEPKEYS)
+		return -EINVAL;
 
-	अगर (params->cipher != WLAN_CIPHER_SUITE_WEP40 &&
-	    params->cipher != WLAN_CIPHER_SUITE_WEP104) अणु
+	if (params->cipher != WLAN_CIPHER_SUITE_WEP40 &&
+	    params->cipher != WLAN_CIPHER_SUITE_WEP104) {
 		pr_debug("Unsupported cipher suite\n");
-		वापस -EFAULT;
-	पूर्ण
+		return -EFAULT;
+	}
 
-	अगर (prism2_करोmibset_uपूर्णांक32(wlandev,
+	if (prism2_domibset_uint32(wlandev,
 				   DIDMIB_DOT11SMT_PRIVACYTABLE_WEPDEFAULTKEYID,
 				   key_index))
-		वापस -EFAULT;
+		return -EFAULT;
 
 	/* send key to driver */
-	did = didmib_करोt11smt_wepशेषkeystable_key(key_index + 1);
+	did = didmib_dot11smt_wepdefaultkeystable_key(key_index + 1);
 
-	अगर (prism2_करोmibset_pstr32(wlandev, did, params->key_len, params->key))
-		वापस -EFAULT;
-	वापस 0;
-पूर्ण
+	if (prism2_domibset_pstr32(wlandev, did, params->key_len, params->key))
+		return -EFAULT;
+	return 0;
+}
 
-अटल पूर्णांक prism2_get_key(काष्ठा wiphy *wiphy, काष्ठा net_device *dev,
+static int prism2_get_key(struct wiphy *wiphy, struct net_device *dev,
 			  u8 key_index, bool pairwise,
-			  स्थिर u8 *mac_addr, व्योम *cookie,
-			  व्योम (*callback)(व्योम *cookie, काष्ठा key_params*))
-अणु
-	काष्ठा wlandevice *wlandev = dev->ml_priv;
-	काष्ठा key_params params;
-	पूर्णांक len;
+			  const u8 *mac_addr, void *cookie,
+			  void (*callback)(void *cookie, struct key_params*))
+{
+	struct wlandevice *wlandev = dev->ml_priv;
+	struct key_params params;
+	int len;
 
-	अगर (key_index >= NUM_WEPKEYS)
-		वापस -EINVAL;
+	if (key_index >= NUM_WEPKEYS)
+		return -EINVAL;
 
 	len = wlandev->wep_keylens[key_index];
-	स_रखो(&params, 0, माप(params));
+	memset(&params, 0, sizeof(params));
 
-	अगर (len == 13)
+	if (len == 13)
 		params.cipher = WLAN_CIPHER_SUITE_WEP104;
-	अन्यथा अगर (len == 5)
+	else if (len == 5)
 		params.cipher = WLAN_CIPHER_SUITE_WEP104;
-	अन्यथा
-		वापस -ENOENT;
+	else
+		return -ENOENT;
 	params.key_len = len;
 	params.key = wlandev->wep_keys[key_index];
 	params.seq_len = 0;
 
 	callback(cookie, &params);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक prism2_del_key(काष्ठा wiphy *wiphy, काष्ठा net_device *dev,
-			  u8 key_index, bool pairwise, स्थिर u8 *mac_addr)
-अणु
-	काष्ठा wlandevice *wlandev = dev->ml_priv;
+static int prism2_del_key(struct wiphy *wiphy, struct net_device *dev,
+			  u8 key_index, bool pairwise, const u8 *mac_addr)
+{
+	struct wlandevice *wlandev = dev->ml_priv;
 	u32 did;
-	पूर्णांक err = 0;
-	पूर्णांक result = 0;
+	int err = 0;
+	int result = 0;
 
 	/* There is no direct way in the hardware (AFAIK) of removing
 	 * a key, so we will cheat by setting the key to a bogus value
 	 */
 
-	अगर (key_index >= NUM_WEPKEYS)
-		वापस -EINVAL;
+	if (key_index >= NUM_WEPKEYS)
+		return -EINVAL;
 
 	/* send key to driver */
-	did = didmib_करोt11smt_wepशेषkeystable_key(key_index + 1);
-	result = prism2_करोmibset_pstr32(wlandev, did, 13, "0000000000000");
+	did = didmib_dot11smt_wepdefaultkeystable_key(key_index + 1);
+	result = prism2_domibset_pstr32(wlandev, did, 13, "0000000000000");
 
-	अगर (result)
+	if (result)
 		err = -EFAULT;
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक prism2_set_शेष_key(काष्ठा wiphy *wiphy, काष्ठा net_device *dev,
+static int prism2_set_default_key(struct wiphy *wiphy, struct net_device *dev,
 				  u8 key_index, bool unicast, bool multicast)
-अणु
-	काष्ठा wlandevice *wlandev = dev->ml_priv;
+{
+	struct wlandevice *wlandev = dev->ml_priv;
 
-	वापस  prism2_करोmibset_uपूर्णांक32(wlandev,
+	return  prism2_domibset_uint32(wlandev,
 				       DIDMIB_DOT11SMT_PRIVACYTABLE_WEPDEFAULTKEYID,
 				       key_index);
-पूर्ण
+}
 
-अटल पूर्णांक prism2_get_station(काष्ठा wiphy *wiphy, काष्ठा net_device *dev,
-			      स्थिर u8 *mac, काष्ठा station_info *sinfo)
-अणु
-	काष्ठा wlandevice *wlandev = dev->ml_priv;
-	काष्ठा p80211msg_lnxreq_commsquality quality;
-	पूर्णांक result;
+static int prism2_get_station(struct wiphy *wiphy, struct net_device *dev,
+			      const u8 *mac, struct station_info *sinfo)
+{
+	struct wlandevice *wlandev = dev->ml_priv;
+	struct p80211msg_lnxreq_commsquality quality;
+	int result;
 
-	स_रखो(sinfo, 0, माप(*sinfo));
+	memset(sinfo, 0, sizeof(*sinfo));
 
-	अगर (!wlandev || (wlandev->msdstate != WLAN_MSD_RUNNING))
-		वापस -EOPNOTSUPP;
+	if (!wlandev || (wlandev->msdstate != WLAN_MSD_RUNNING))
+		return -EOPNOTSUPP;
 
 	/* build request message */
 	quality.msgcode = DIDMSG_LNXREQ_COMMSQUALITY;
@@ -255,73 +254,73 @@
 	quality.dbm.status = P80211ENUM_msgitem_status_data_ok;
 
 	/* send message to nsd */
-	अगर (!wlandev->mlmerequest)
-		वापस -EOPNOTSUPP;
+	if (!wlandev->mlmerequest)
+		return -EOPNOTSUPP;
 
-	result = wlandev->mlmerequest(wlandev, (काष्ठा p80211msg *)&quality);
+	result = wlandev->mlmerequest(wlandev, (struct p80211msg *)&quality);
 
-	अगर (result == 0) अणु
+	if (result == 0) {
 		sinfo->txrate.legacy = quality.txrate.data;
 		sinfo->filled |= BIT_ULL(NL80211_STA_INFO_TX_BITRATE);
-		sinfo->संकेत = quality.level.data;
+		sinfo->signal = quality.level.data;
 		sinfo->filled |= BIT_ULL(NL80211_STA_INFO_SIGNAL);
-	पूर्ण
+	}
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
-अटल पूर्णांक prism2_scan(काष्ठा wiphy *wiphy,
-		       काष्ठा cfg80211_scan_request *request)
-अणु
-	काष्ठा net_device *dev;
-	काष्ठा prism2_wiphy_निजी *priv = wiphy_priv(wiphy);
-	काष्ठा wlandevice *wlandev;
-	काष्ठा p80211msg_करोt11req_scan msg1;
-	काष्ठा p80211msg_करोt11req_scan_results msg2;
-	काष्ठा cfg80211_bss *bss;
-	काष्ठा cfg80211_scan_info info = अणुपूर्ण;
+static int prism2_scan(struct wiphy *wiphy,
+		       struct cfg80211_scan_request *request)
+{
+	struct net_device *dev;
+	struct prism2_wiphy_private *priv = wiphy_priv(wiphy);
+	struct wlandevice *wlandev;
+	struct p80211msg_dot11req_scan msg1;
+	struct p80211msg_dot11req_scan_results msg2;
+	struct cfg80211_bss *bss;
+	struct cfg80211_scan_info info = {};
 
-	पूर्णांक result;
-	पूर्णांक err = 0;
-	पूर्णांक numbss = 0;
-	पूर्णांक i = 0;
+	int result;
+	int err = 0;
+	int numbss = 0;
+	int i = 0;
 	u8 ie_buf[46];
-	पूर्णांक ie_len;
+	int ie_len;
 
-	अगर (!request)
-		वापस -EINVAL;
+	if (!request)
+		return -EINVAL;
 
 	dev = request->wdev->netdev;
 	wlandev = dev->ml_priv;
 
-	अगर (priv->scan_request && priv->scan_request != request)
-		वापस -EBUSY;
+	if (priv->scan_request && priv->scan_request != request)
+		return -EBUSY;
 
-	अगर (wlandev->macmode == WLAN_MACMODE_ESS_AP) अणु
+	if (wlandev->macmode == WLAN_MACMODE_ESS_AP) {
 		netdev_err(dev, "Can't scan in AP mode\n");
-		वापस -EOPNOTSUPP;
-	पूर्ण
+		return -EOPNOTSUPP;
+	}
 
 	priv->scan_request = request;
 
-	स_रखो(&msg1, 0x00, माप(msg1));
+	memset(&msg1, 0x00, sizeof(msg1));
 	msg1.msgcode = DIDMSG_DOT11REQ_SCAN;
 	msg1.bsstype.data = P80211ENUM_bsstype_any;
 
-	स_रखो(&msg1.bssid.data.data, 0xFF, माप(msg1.bssid.data.data));
+	memset(&msg1.bssid.data.data, 0xFF, sizeof(msg1.bssid.data.data));
 	msg1.bssid.data.len = 6;
 
-	अगर (request->n_ssids > 0) अणु
+	if (request->n_ssids > 0) {
 		msg1.scantype.data = P80211ENUM_scantype_active;
 		msg1.ssid.data.len = request->ssids->ssid_len;
-		स_नकल(msg1.ssid.data.data,
+		memcpy(msg1.ssid.data.data,
 		       request->ssids->ssid, request->ssids->ssid_len);
-	पूर्ण अन्यथा अणु
+	} else {
 		msg1.scantype.data = 0;
-	पूर्ण
+	}
 	msg1.probedelay.data = 0;
 
-	क्रम (i = 0;
+	for (i = 0;
 		(i < request->n_channels) && i < ARRAY_SIZE(prism2_channels);
 		i++)
 		msg1.channellist.data.data[i] =
@@ -329,334 +328,334 @@
 				request->channels[i]->center_freq);
 	msg1.channellist.data.len = request->n_channels;
 
-	msg1.maxchannelसमय.data = 250;
-	msg1.minchannelसमय.data = 200;
+	msg1.maxchanneltime.data = 250;
+	msg1.minchanneltime.data = 200;
 
-	result = p80211req_करोrequest(wlandev, (u8 *)&msg1);
-	अगर (result) अणु
+	result = p80211req_dorequest(wlandev, (u8 *)&msg1);
+	if (result) {
 		err = prism2_result2err(msg1.resultcode.data);
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 	/* Now retrieve scan results */
 	numbss = msg1.numbss.data;
 
-	क्रम (i = 0; i < numbss; i++) अणु
-		पूर्णांक freq;
+	for (i = 0; i < numbss; i++) {
+		int freq;
 
-		स_रखो(&msg2, 0, माप(msg2));
+		memset(&msg2, 0, sizeof(msg2));
 		msg2.msgcode = DIDMSG_DOT11REQ_SCAN_RESULTS;
 		msg2.bssindex.data = i;
 
-		result = p80211req_करोrequest(wlandev, (u8 *)&msg2);
-		अगर ((result != 0) ||
-		    (msg2.resultcode.data != P80211ENUM_resultcode_success)) अणु
-			अवरोध;
-		पूर्ण
+		result = p80211req_dorequest(wlandev, (u8 *)&msg2);
+		if ((result != 0) ||
+		    (msg2.resultcode.data != P80211ENUM_resultcode_success)) {
+			break;
+		}
 
 		ie_buf[0] = WLAN_EID_SSID;
 		ie_buf[1] = msg2.ssid.data.len;
 		ie_len = ie_buf[1] + 2;
-		स_नकल(&ie_buf[2], &msg2.ssid.data.data, msg2.ssid.data.len);
+		memcpy(&ie_buf[2], &msg2.ssid.data.data, msg2.ssid.data.len);
 		freq = ieee80211_channel_to_frequency(msg2.dschannel.data,
 						      NL80211_BAND_2GHZ);
-		bss = cfg80211_inक्रमm_bss(wiphy,
+		bss = cfg80211_inform_bss(wiphy,
 					  ieee80211_get_channel(wiphy, freq),
 					  CFG80211_BSS_FTYPE_UNKNOWN,
-					  (स्थिर u8 *)&msg2.bssid.data.data,
-					  msg2.बारtamp.data, msg2.capinfo.data,
+					  (const u8 *)&msg2.bssid.data.data,
+					  msg2.timestamp.data, msg2.capinfo.data,
 					  msg2.beaconperiod.data,
 					  ie_buf,
 					  ie_len,
-					  (msg2.संकेत.data - 65536) * 100, /* Conversion to चिन्हित type */
+					  (msg2.signal.data - 65536) * 100, /* Conversion to signed type */
 					  GFP_KERNEL);
 
-		अगर (!bss) अणु
+		if (!bss) {
 			err = -ENOMEM;
-			जाओ निकास;
-		पूर्ण
+			goto exit;
+		}
 
 		cfg80211_put_bss(wiphy, bss);
-	पूर्ण
+	}
 
-	अगर (result)
+	if (result)
 		err = prism2_result2err(msg2.resultcode.data);
 
-निकास:
-	info.पातed = !!(err);
-	cfg80211_scan_करोne(request, &info);
-	priv->scan_request = शून्य;
-	वापस err;
-पूर्ण
+exit:
+	info.aborted = !!(err);
+	cfg80211_scan_done(request, &info);
+	priv->scan_request = NULL;
+	return err;
+}
 
-अटल पूर्णांक prism2_set_wiphy_params(काष्ठा wiphy *wiphy, u32 changed)
-अणु
-	काष्ठा prism2_wiphy_निजी *priv = wiphy_priv(wiphy);
-	काष्ठा wlandevice *wlandev = priv->wlandev;
+static int prism2_set_wiphy_params(struct wiphy *wiphy, u32 changed)
+{
+	struct prism2_wiphy_private *priv = wiphy_priv(wiphy);
+	struct wlandevice *wlandev = priv->wlandev;
 	u32 data;
-	पूर्णांक result;
-	पूर्णांक err = 0;
+	int result;
+	int err = 0;
 
-	अगर (changed & WIPHY_PARAM_RTS_THRESHOLD) अणु
-		अगर (wiphy->rts_threshold == -1)
+	if (changed & WIPHY_PARAM_RTS_THRESHOLD) {
+		if (wiphy->rts_threshold == -1)
 			data = 2347;
-		अन्यथा
+		else
 			data = wiphy->rts_threshold;
 
-		result = prism2_करोmibset_uपूर्णांक32(wlandev,
+		result = prism2_domibset_uint32(wlandev,
 						DIDMIB_DOT11MAC_OPERATIONTABLE_RTSTHRESHOLD,
 						data);
-		अगर (result) अणु
+		if (result) {
 			err = -EFAULT;
-			जाओ निकास;
-		पूर्ण
-	पूर्ण
+			goto exit;
+		}
+	}
 
-	अगर (changed & WIPHY_PARAM_FRAG_THRESHOLD) अणु
-		अगर (wiphy->frag_threshold == -1)
+	if (changed & WIPHY_PARAM_FRAG_THRESHOLD) {
+		if (wiphy->frag_threshold == -1)
 			data = 2346;
-		अन्यथा
+		else
 			data = wiphy->frag_threshold;
 
-		result = prism2_करोmibset_uपूर्णांक32(wlandev,
+		result = prism2_domibset_uint32(wlandev,
 						DIDMIB_DOT11MAC_OPERATIONTABLE_FRAGMENTATIONTHRESHOLD,
 						data);
-		अगर (result) अणु
+		if (result) {
 			err = -EFAULT;
-			जाओ निकास;
-		पूर्ण
-	पूर्ण
+			goto exit;
+		}
+	}
 
-निकास:
-	वापस err;
-पूर्ण
+exit:
+	return err;
+}
 
-अटल पूर्णांक prism2_connect(काष्ठा wiphy *wiphy, काष्ठा net_device *dev,
-			  काष्ठा cfg80211_connect_params *sme)
-अणु
-	काष्ठा wlandevice *wlandev = dev->ml_priv;
-	काष्ठा ieee80211_channel *channel = sme->channel;
-	काष्ठा p80211msg_lnxreq_स्वतःjoin msg_join;
+static int prism2_connect(struct wiphy *wiphy, struct net_device *dev,
+			  struct cfg80211_connect_params *sme)
+{
+	struct wlandevice *wlandev = dev->ml_priv;
+	struct ieee80211_channel *channel = sme->channel;
+	struct p80211msg_lnxreq_autojoin msg_join;
 	u32 did;
-	पूर्णांक length = sme->ssid_len;
-	पूर्णांक chan = -1;
-	पूर्णांक is_wep = (sme->crypto.cipher_group == WLAN_CIPHER_SUITE_WEP40) ||
+	int length = sme->ssid_len;
+	int chan = -1;
+	int is_wep = (sme->crypto.cipher_group == WLAN_CIPHER_SUITE_WEP40) ||
 	    (sme->crypto.cipher_group == WLAN_CIPHER_SUITE_WEP104);
-	पूर्णांक result;
-	पूर्णांक err = 0;
+	int result;
+	int err = 0;
 
 	/* Set the channel */
-	अगर (channel) अणु
+	if (channel) {
 		chan = ieee80211_frequency_to_channel(channel->center_freq);
-		result = prism2_करोmibset_uपूर्णांक32(wlandev,
+		result = prism2_domibset_uint32(wlandev,
 						DIDMIB_DOT11PHY_DSSSTABLE_CURRENTCHANNEL,
 						chan);
-		अगर (result)
-			जाओ निकास;
-	पूर्ण
+		if (result)
+			goto exit;
+	}
 
 	/* Set the authorization */
-	अगर ((sme->auth_type == NL80211_AUTHTYPE_OPEN_SYSTEM) ||
+	if ((sme->auth_type == NL80211_AUTHTYPE_OPEN_SYSTEM) ||
 	    ((sme->auth_type == NL80211_AUTHTYPE_AUTOMATIC) && !is_wep))
-		msg_join.authtype.data = P80211ENUM_authalg_खोलोप्रणाली;
-	अन्यथा अगर ((sme->auth_type == NL80211_AUTHTYPE_SHARED_KEY) ||
+		msg_join.authtype.data = P80211ENUM_authalg_opensystem;
+	else if ((sme->auth_type == NL80211_AUTHTYPE_SHARED_KEY) ||
 		 ((sme->auth_type == NL80211_AUTHTYPE_AUTOMATIC) && is_wep))
 		msg_join.authtype.data = P80211ENUM_authalg_sharedkey;
-	अन्यथा
+	else
 		netdev_warn(dev,
 			    "Unhandled authorisation type for connect (%d)\n",
 			    sme->auth_type);
 
 	/* Set the encryption - we only support wep */
-	अगर (is_wep) अणु
-		अगर (sme->key) अणु
-			अगर (sme->key_idx >= NUM_WEPKEYS)
-				वापस -EINVAL;
+	if (is_wep) {
+		if (sme->key) {
+			if (sme->key_idx >= NUM_WEPKEYS)
+				return -EINVAL;
 
-			result = prism2_करोmibset_uपूर्णांक32(wlandev,
+			result = prism2_domibset_uint32(wlandev,
 				DIDMIB_DOT11SMT_PRIVACYTABLE_WEPDEFAULTKEYID,
 				sme->key_idx);
-			अगर (result)
-				जाओ निकास;
+			if (result)
+				goto exit;
 
 			/* send key to driver */
-			did = didmib_करोt11smt_wepशेषkeystable_key(
+			did = didmib_dot11smt_wepdefaultkeystable_key(
 					sme->key_idx + 1);
-			result = prism2_करोmibset_pstr32(wlandev,
+			result = prism2_domibset_pstr32(wlandev,
 							did, sme->key_len,
 							(u8 *)sme->key);
-			अगर (result)
-				जाओ निकास;
-		पूर्ण
+			if (result)
+				goto exit;
+		}
 
 		/* Assume we should set privacy invoked and exclude unencrypted
 		 * We could possible use sme->privacy here, but the assumption
 		 * seems reasonable anyways
 		 */
-		result = prism2_करोmibset_uपूर्णांक32(wlandev,
+		result = prism2_domibset_uint32(wlandev,
 						DIDMIB_DOT11SMT_PRIVACYTABLE_PRIVACYINVOKED,
 						P80211ENUM_truth_true);
-		अगर (result)
-			जाओ निकास;
+		if (result)
+			goto exit;
 
-		result = prism2_करोmibset_uपूर्णांक32(wlandev,
+		result = prism2_domibset_uint32(wlandev,
 						DIDMIB_DOT11SMT_PRIVACYTABLE_EXCLUDEUNENCRYPTED,
 						P80211ENUM_truth_true);
-		अगर (result)
-			जाओ निकास;
+		if (result)
+			goto exit;
 
-	पूर्ण अन्यथा अणु
+	} else {
 		/* Assume we should unset privacy invoked
 		 * and exclude unencrypted
 		 */
-		result = prism2_करोmibset_uपूर्णांक32(wlandev,
+		result = prism2_domibset_uint32(wlandev,
 						DIDMIB_DOT11SMT_PRIVACYTABLE_PRIVACYINVOKED,
 						P80211ENUM_truth_false);
-		अगर (result)
-			जाओ निकास;
+		if (result)
+			goto exit;
 
-		result = prism2_करोmibset_uपूर्णांक32(wlandev,
+		result = prism2_domibset_uint32(wlandev,
 						DIDMIB_DOT11SMT_PRIVACYTABLE_EXCLUDEUNENCRYPTED,
 						P80211ENUM_truth_false);
-		अगर (result)
-			जाओ निकास;
-	पूर्ण
+		if (result)
+			goto exit;
+	}
 
-	/* Now करो the actual join. Note there is no way that I can
-	 * see to request a specअगरic bssid
+	/* Now do the actual join. Note there is no way that I can
+	 * see to request a specific bssid
 	 */
 	msg_join.msgcode = DIDMSG_LNXREQ_AUTOJOIN;
 
-	स_नकल(msg_join.ssid.data.data, sme->ssid, length);
+	memcpy(msg_join.ssid.data.data, sme->ssid, length);
 	msg_join.ssid.data.len = length;
 
-	result = p80211req_करोrequest(wlandev, (u8 *)&msg_join);
+	result = p80211req_dorequest(wlandev, (u8 *)&msg_join);
 
-निकास:
-	अगर (result)
+exit:
+	if (result)
 		err = -EFAULT;
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक prism2_disconnect(काष्ठा wiphy *wiphy, काष्ठा net_device *dev,
+static int prism2_disconnect(struct wiphy *wiphy, struct net_device *dev,
 			     u16 reason_code)
-अणु
-	काष्ठा wlandevice *wlandev = dev->ml_priv;
-	काष्ठा p80211msg_lnxreq_स्वतःjoin msg_join;
-	पूर्णांक result;
-	पूर्णांक err = 0;
+{
+	struct wlandevice *wlandev = dev->ml_priv;
+	struct p80211msg_lnxreq_autojoin msg_join;
+	int result;
+	int err = 0;
 
 	/* Do a join, with a bogus ssid. Thats the only way I can think of */
 	msg_join.msgcode = DIDMSG_LNXREQ_AUTOJOIN;
 
-	स_नकल(msg_join.ssid.data.data, "---", 3);
+	memcpy(msg_join.ssid.data.data, "---", 3);
 	msg_join.ssid.data.len = 3;
 
-	result = p80211req_करोrequest(wlandev, (u8 *)&msg_join);
+	result = p80211req_dorequest(wlandev, (u8 *)&msg_join);
 
-	अगर (result)
+	if (result)
 		err = -EFAULT;
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक prism2_join_ibss(काष्ठा wiphy *wiphy, काष्ठा net_device *dev,
-			    काष्ठा cfg80211_ibss_params *params)
-अणु
-	वापस -EOPNOTSUPP;
-पूर्ण
+static int prism2_join_ibss(struct wiphy *wiphy, struct net_device *dev,
+			    struct cfg80211_ibss_params *params)
+{
+	return -EOPNOTSUPP;
+}
 
-अटल पूर्णांक prism2_leave_ibss(काष्ठा wiphy *wiphy, काष्ठा net_device *dev)
-अणु
-	वापस -EOPNOTSUPP;
-पूर्ण
+static int prism2_leave_ibss(struct wiphy *wiphy, struct net_device *dev)
+{
+	return -EOPNOTSUPP;
+}
 
-अटल पूर्णांक prism2_set_tx_घातer(काष्ठा wiphy *wiphy, काष्ठा wireless_dev *wdev,
-			       क्रमागत nl80211_tx_घातer_setting type, पूर्णांक mbm)
-अणु
-	काष्ठा prism2_wiphy_निजी *priv = wiphy_priv(wiphy);
-	काष्ठा wlandevice *wlandev = priv->wlandev;
+static int prism2_set_tx_power(struct wiphy *wiphy, struct wireless_dev *wdev,
+			       enum nl80211_tx_power_setting type, int mbm)
+{
+	struct prism2_wiphy_private *priv = wiphy_priv(wiphy);
+	struct wlandevice *wlandev = priv->wlandev;
 	u32 data;
-	पूर्णांक result;
-	पूर्णांक err = 0;
+	int result;
+	int err = 0;
 
-	अगर (type == NL80211_TX_POWER_AUTOMATIC)
+	if (type == NL80211_TX_POWER_AUTOMATIC)
 		data = 30;
-	अन्यथा
+	else
 		data = MBM_TO_DBM(mbm);
 
-	result = prism2_करोmibset_uपूर्णांक32(wlandev,
+	result = prism2_domibset_uint32(wlandev,
 		DIDMIB_DOT11PHY_TXPOWERTABLE_CURRENTTXPOWERLEVEL,
 		data);
 
-	अगर (result) अणु
+	if (result) {
 		err = -EFAULT;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
-निकास:
-	वापस err;
-पूर्ण
+exit:
+	return err;
+}
 
-अटल पूर्णांक prism2_get_tx_घातer(काष्ठा wiphy *wiphy, काष्ठा wireless_dev *wdev,
-			       पूर्णांक *dbm)
-अणु
-	काष्ठा prism2_wiphy_निजी *priv = wiphy_priv(wiphy);
-	काष्ठा wlandevice *wlandev = priv->wlandev;
-	काष्ठा p80211msg_करोt11req_mibget msg;
-	काष्ठा p80211item_uपूर्णांक32 *mibitem;
-	पूर्णांक result;
-	पूर्णांक err = 0;
+static int prism2_get_tx_power(struct wiphy *wiphy, struct wireless_dev *wdev,
+			       int *dbm)
+{
+	struct prism2_wiphy_private *priv = wiphy_priv(wiphy);
+	struct wlandevice *wlandev = priv->wlandev;
+	struct p80211msg_dot11req_mibget msg;
+	struct p80211item_uint32 *mibitem;
+	int result;
+	int err = 0;
 
-	mibitem = (काष्ठा p80211item_uपूर्णांक32 *)&msg.mibattribute.data;
+	mibitem = (struct p80211item_uint32 *)&msg.mibattribute.data;
 	msg.msgcode = DIDMSG_DOT11REQ_MIBGET;
 	mibitem->did = DIDMIB_DOT11PHY_TXPOWERTABLE_CURRENTTXPOWERLEVEL;
 
-	result = p80211req_करोrequest(wlandev, (u8 *)&msg);
+	result = p80211req_dorequest(wlandev, (u8 *)&msg);
 
-	अगर (result) अणु
+	if (result) {
 		err = -EFAULT;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
 	*dbm = mibitem->data;
 
-निकास:
-	वापस err;
-पूर्ण
+exit:
+	return err;
+}
 
 /* Interface callback functions, passing data back up to the cfg80211 layer */
-व्योम prism2_connect_result(काष्ठा wlandevice *wlandev, u8 failed)
-अणु
+void prism2_connect_result(struct wlandevice *wlandev, u8 failed)
+{
 	u16 status = failed ?
 		     WLAN_STATUS_UNSPECIFIED_FAILURE : WLAN_STATUS_SUCCESS;
 
 	cfg80211_connect_result(wlandev->netdev, wlandev->bssid,
-				शून्य, 0, शून्य, 0, status, GFP_KERNEL);
-पूर्ण
+				NULL, 0, NULL, 0, status, GFP_KERNEL);
+}
 
-व्योम prism2_disconnected(काष्ठा wlandevice *wlandev)
-अणु
-	cfg80211_disconnected(wlandev->netdev, 0, शून्य,
+void prism2_disconnected(struct wlandevice *wlandev)
+{
+	cfg80211_disconnected(wlandev->netdev, 0, NULL,
 			      0, false, GFP_KERNEL);
-पूर्ण
+}
 
-व्योम prism2_roamed(काष्ठा wlandevice *wlandev)
-अणु
-	काष्ठा cfg80211_roam_info roam_info = अणु
+void prism2_roamed(struct wlandevice *wlandev)
+{
+	struct cfg80211_roam_info roam_info = {
 		.bssid = wlandev->bssid,
-	पूर्ण;
+	};
 
 	cfg80211_roamed(wlandev->netdev, &roam_info, GFP_KERNEL);
-पूर्ण
+}
 
-/* Structures क्रम declaring wiphy पूर्णांकerface */
-अटल स्थिर काष्ठा cfg80211_ops prism2_usb_cfg_ops = अणु
-	.change_भव_पूर्णांकf = prism2_change_भव_पूर्णांकf,
+/* Structures for declaring wiphy interface */
+static const struct cfg80211_ops prism2_usb_cfg_ops = {
+	.change_virtual_intf = prism2_change_virtual_intf,
 	.add_key = prism2_add_key,
 	.get_key = prism2_get_key,
 	.del_key = prism2_del_key,
-	.set_शेष_key = prism2_set_शेष_key,
+	.set_default_key = prism2_set_default_key,
 	.get_station = prism2_get_station,
 	.scan = prism2_scan,
 	.set_wiphy_params = prism2_set_wiphy_params,
@@ -664,25 +663,25 @@
 	.disconnect = prism2_disconnect,
 	.join_ibss = prism2_join_ibss,
 	.leave_ibss = prism2_leave_ibss,
-	.set_tx_घातer = prism2_set_tx_घातer,
-	.get_tx_घातer = prism2_get_tx_घातer,
-पूर्ण;
+	.set_tx_power = prism2_set_tx_power,
+	.get_tx_power = prism2_get_tx_power,
+};
 
-/* Functions to create/मुक्त wiphy पूर्णांकerface */
-अटल काष्ठा wiphy *wlan_create_wiphy(काष्ठा device *dev,
-				       काष्ठा wlandevice *wlandev)
-अणु
-	काष्ठा wiphy *wiphy;
-	काष्ठा prism2_wiphy_निजी *priv;
+/* Functions to create/free wiphy interface */
+static struct wiphy *wlan_create_wiphy(struct device *dev,
+				       struct wlandevice *wlandev)
+{
+	struct wiphy *wiphy;
+	struct prism2_wiphy_private *priv;
 
-	wiphy = wiphy_new(&prism2_usb_cfg_ops, माप(*priv));
-	अगर (!wiphy)
-		वापस शून्य;
+	wiphy = wiphy_new(&prism2_usb_cfg_ops, sizeof(*priv));
+	if (!wiphy)
+		return NULL;
 
 	priv = wiphy_priv(wiphy);
 	priv->wlandev = wlandev;
-	स_नकल(priv->channels, prism2_channels, माप(prism2_channels));
-	स_नकल(priv->rates, prism2_rates, माप(prism2_rates));
+	memcpy(priv->channels, prism2_channels, sizeof(prism2_channels));
+	memcpy(priv->rates, prism2_rates, sizeof(prism2_rates));
 	priv->band.channels = priv->channels;
 	priv->band.n_channels = ARRAY_SIZE(prism2_channels);
 	priv->band.bitrates = priv->rates;
@@ -694,22 +693,22 @@
 	set_wiphy_dev(wiphy, dev);
 	wiphy->privid = prism2_wiphy_privid;
 	wiphy->max_scan_ssids = 1;
-	wiphy->पूर्णांकerface_modes = BIT(NL80211_IFTYPE_STATION)
+	wiphy->interface_modes = BIT(NL80211_IFTYPE_STATION)
 				 | BIT(NL80211_IFTYPE_ADHOC);
-	wiphy->संकेत_type = CFG80211_SIGNAL_TYPE_MBM;
+	wiphy->signal_type = CFG80211_SIGNAL_TYPE_MBM;
 	wiphy->n_cipher_suites = PRISM2_NUM_CIPHER_SUITES;
 	wiphy->cipher_suites = prism2_cipher_suites;
 
-	अगर (wiphy_रेजिस्टर(wiphy) < 0) अणु
-		wiphy_मुक्त(wiphy);
-		वापस शून्य;
-	पूर्ण
+	if (wiphy_register(wiphy) < 0) {
+		wiphy_free(wiphy);
+		return NULL;
+	}
 
-	वापस wiphy;
-पूर्ण
+	return wiphy;
+}
 
-अटल व्योम wlan_मुक्त_wiphy(काष्ठा wiphy *wiphy)
-अणु
-	wiphy_unरेजिस्टर(wiphy);
-	wiphy_मुक्त(wiphy);
-पूर्ण
+static void wlan_free_wiphy(struct wiphy *wiphy)
+{
+	wiphy_unregister(wiphy);
+	wiphy_free(wiphy);
+}

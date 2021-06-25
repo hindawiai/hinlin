@@ -1,449 +1,448 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: (GPL-2.0 OR MIT)
-/* Google भव Ethernet (gve) driver
+// SPDX-License-Identifier: (GPL-2.0 OR MIT)
+/* Google virtual Ethernet (gve) driver
  *
  * Copyright (C) 2015-2019 Google, Inc.
  */
 
-#समावेश "gve.h"
-#समावेश "gve_adminq.h"
-#समावेश <linux/ip.h>
-#समावेश <linux/tcp.h>
-#समावेश <linux/vदो_स्मृति.h>
-#समावेश <linux/skbuff.h>
+#include "gve.h"
+#include "gve_adminq.h"
+#include <linux/ip.h>
+#include <linux/tcp.h>
+#include <linux/vmalloc.h>
+#include <linux/skbuff.h>
 
-अटल अंतरभूत व्योम gve_tx_put_करोorbell(काष्ठा gve_priv *priv,
-				       काष्ठा gve_queue_resources *q_resources,
+static inline void gve_tx_put_doorbell(struct gve_priv *priv,
+				       struct gve_queue_resources *q_resources,
 				       u32 val)
-अणु
-	ioग_लिखो32be(val, &priv->db_bar2[be32_to_cpu(q_resources->db_index)]);
-पूर्ण
+{
+	iowrite32be(val, &priv->db_bar2[be32_to_cpu(q_resources->db_index)]);
+}
 
 /* gvnic can only transmit from a Registered Segment.
- * We copy skb payloads पूर्णांकo the रेजिस्टरed segment beक्रमe writing Tx
- * descriptors and ringing the Tx करोorbell.
+ * We copy skb payloads into the registered segment before writing Tx
+ * descriptors and ringing the Tx doorbell.
  *
- * gve_tx_fअगरo_* manages the Registered Segment as a FIFO - clients must
- * मुक्त allocations in the order they were allocated.
+ * gve_tx_fifo_* manages the Registered Segment as a FIFO - clients must
+ * free allocations in the order they were allocated.
  */
 
-अटल पूर्णांक gve_tx_fअगरo_init(काष्ठा gve_priv *priv, काष्ठा gve_tx_fअगरo *fअगरo)
-अणु
-	fअगरo->base = vmap(fअगरo->qpl->pages, fअगरo->qpl->num_entries, VM_MAP,
+static int gve_tx_fifo_init(struct gve_priv *priv, struct gve_tx_fifo *fifo)
+{
+	fifo->base = vmap(fifo->qpl->pages, fifo->qpl->num_entries, VM_MAP,
 			  PAGE_KERNEL);
-	अगर (unlikely(!fअगरo->base)) अणु
-		netअगर_err(priv, drv, priv->dev, "Failed to vmap fifo, qpl_id = %d\n",
-			  fअगरo->qpl->id);
-		वापस -ENOMEM;
-	पूर्ण
+	if (unlikely(!fifo->base)) {
+		netif_err(priv, drv, priv->dev, "Failed to vmap fifo, qpl_id = %d\n",
+			  fifo->qpl->id);
+		return -ENOMEM;
+	}
 
-	fअगरo->size = fअगरo->qpl->num_entries * PAGE_SIZE;
-	atomic_set(&fअगरo->available, fअगरo->size);
-	fअगरo->head = 0;
-	वापस 0;
-पूर्ण
+	fifo->size = fifo->qpl->num_entries * PAGE_SIZE;
+	atomic_set(&fifo->available, fifo->size);
+	fifo->head = 0;
+	return 0;
+}
 
-अटल व्योम gve_tx_fअगरo_release(काष्ठा gve_priv *priv, काष्ठा gve_tx_fअगरo *fअगरo)
-अणु
-	WARN(atomic_पढ़ो(&fअगरo->available) != fअगरo->size,
+static void gve_tx_fifo_release(struct gve_priv *priv, struct gve_tx_fifo *fifo)
+{
+	WARN(atomic_read(&fifo->available) != fifo->size,
 	     "Releasing non-empty fifo");
 
-	vunmap(fअगरo->base);
-पूर्ण
+	vunmap(fifo->base);
+}
 
-अटल पूर्णांक gve_tx_fअगरo_pad_alloc_one_frag(काष्ठा gve_tx_fअगरo *fअगरo,
-					  माप_प्रकार bytes)
-अणु
-	वापस (fअगरo->head + bytes < fअगरo->size) ? 0 : fअगरo->size - fअगरo->head;
-पूर्ण
+static int gve_tx_fifo_pad_alloc_one_frag(struct gve_tx_fifo *fifo,
+					  size_t bytes)
+{
+	return (fifo->head + bytes < fifo->size) ? 0 : fifo->size - fifo->head;
+}
 
-अटल bool gve_tx_fअगरo_can_alloc(काष्ठा gve_tx_fअगरo *fअगरo, माप_प्रकार bytes)
-अणु
-	वापस (atomic_पढ़ो(&fअगरo->available) <= bytes) ? false : true;
-पूर्ण
+static bool gve_tx_fifo_can_alloc(struct gve_tx_fifo *fifo, size_t bytes)
+{
+	return (atomic_read(&fifo->available) <= bytes) ? false : true;
+}
 
-/* gve_tx_alloc_fअगरo - Allocate fragment(s) from Tx FIFO
- * @fअगरo: FIFO to allocate from
+/* gve_tx_alloc_fifo - Allocate fragment(s) from Tx FIFO
+ * @fifo: FIFO to allocate from
  * @bytes: Allocation size
  * @iov: Scatter-gather elements to fill with allocation fragment base/len
  *
  * Returns number of valid elements in iov[] or negative on error.
  *
- * Allocations from a given FIFO must be बाह्यally synchronized but concurrent
- * allocation and मुक्तs are allowed.
+ * Allocations from a given FIFO must be externally synchronized but concurrent
+ * allocation and frees are allowed.
  */
-अटल पूर्णांक gve_tx_alloc_fअगरo(काष्ठा gve_tx_fअगरo *fअगरo, माप_प्रकार bytes,
-			     काष्ठा gve_tx_iovec iov[2])
-अणु
-	माप_प्रकार overflow, padding;
+static int gve_tx_alloc_fifo(struct gve_tx_fifo *fifo, size_t bytes,
+			     struct gve_tx_iovec iov[2])
+{
+	size_t overflow, padding;
 	u32 aligned_head;
-	पूर्णांक nfrags = 0;
+	int nfrags = 0;
 
-	अगर (!bytes)
-		वापस 0;
+	if (!bytes)
+		return 0;
 
-	/* This check happens beक्रमe we know how much padding is needed to
-	 * align to a cacheline boundary क्रम the payload, but that is fine,
+	/* This check happens before we know how much padding is needed to
+	 * align to a cacheline boundary for the payload, but that is fine,
 	 * because the FIFO head always start aligned, and the FIFO's boundaries
-	 * are aligned, so अगर there is space क्रम the data, there is space क्रम
+	 * are aligned, so if there is space for the data, there is space for
 	 * the padding to the next alignment.
 	 */
-	WARN(!gve_tx_fअगरo_can_alloc(fअगरo, bytes),
+	WARN(!gve_tx_fifo_can_alloc(fifo, bytes),
 	     "Reached %s when there's not enough space in the fifo", __func__);
 
 	nfrags++;
 
-	iov[0].iov_offset = fअगरo->head;
+	iov[0].iov_offset = fifo->head;
 	iov[0].iov_len = bytes;
-	fअगरo->head += bytes;
+	fifo->head += bytes;
 
-	अगर (fअगरo->head > fअगरo->size) अणु
+	if (fifo->head > fifo->size) {
 		/* If the allocation did not fit in the tail fragment of the
 		 * FIFO, also use the head fragment.
 		 */
 		nfrags++;
-		overflow = fअगरo->head - fअगरo->size;
+		overflow = fifo->head - fifo->size;
 		iov[0].iov_len -= overflow;
-		iov[1].iov_offset = 0;	/* Start of fअगरo*/
+		iov[1].iov_offset = 0;	/* Start of fifo*/
 		iov[1].iov_len = overflow;
 
-		fअगरo->head = overflow;
-	पूर्ण
+		fifo->head = overflow;
+	}
 
 	/* Re-align to a cacheline boundary */
-	aligned_head = L1_CACHE_ALIGN(fअगरo->head);
-	padding = aligned_head - fअगरo->head;
+	aligned_head = L1_CACHE_ALIGN(fifo->head);
+	padding = aligned_head - fifo->head;
 	iov[nfrags - 1].iov_padding = padding;
-	atomic_sub(bytes + padding, &fअगरo->available);
-	fअगरo->head = aligned_head;
+	atomic_sub(bytes + padding, &fifo->available);
+	fifo->head = aligned_head;
 
-	अगर (fअगरo->head == fअगरo->size)
-		fअगरo->head = 0;
+	if (fifo->head == fifo->size)
+		fifo->head = 0;
 
-	वापस nfrags;
-पूर्ण
+	return nfrags;
+}
 
-/* gve_tx_मुक्त_fअगरo - Return space to Tx FIFO
- * @fअगरo: FIFO to वापस fragments to
- * @bytes: Bytes to मुक्त
+/* gve_tx_free_fifo - Return space to Tx FIFO
+ * @fifo: FIFO to return fragments to
+ * @bytes: Bytes to free
  */
-अटल व्योम gve_tx_मुक्त_fअगरo(काष्ठा gve_tx_fअगरo *fअगरo, माप_प्रकार bytes)
-अणु
-	atomic_add(bytes, &fअगरo->available);
-पूर्ण
+static void gve_tx_free_fifo(struct gve_tx_fifo *fifo, size_t bytes)
+{
+	atomic_add(bytes, &fifo->available);
+}
 
-अटल व्योम gve_tx_हटाओ_from_block(काष्ठा gve_priv *priv, पूर्णांक queue_idx)
-अणु
-	काष्ठा gve_notअगरy_block *block =
+static void gve_tx_remove_from_block(struct gve_priv *priv, int queue_idx)
+{
+	struct gve_notify_block *block =
 			&priv->ntfy_blocks[gve_tx_idx_to_ntfy(priv, queue_idx)];
 
-	block->tx = शून्य;
-पूर्ण
+	block->tx = NULL;
+}
 
-अटल पूर्णांक gve_clean_tx_करोne(काष्ठा gve_priv *priv, काष्ठा gve_tx_ring *tx,
-			     u32 to_करो, bool try_to_wake);
+static int gve_clean_tx_done(struct gve_priv *priv, struct gve_tx_ring *tx,
+			     u32 to_do, bool try_to_wake);
 
-अटल व्योम gve_tx_मुक्त_ring(काष्ठा gve_priv *priv, पूर्णांक idx)
-अणु
-	काष्ठा gve_tx_ring *tx = &priv->tx[idx];
-	काष्ठा device *hdev = &priv->pdev->dev;
-	माप_प्रकार bytes;
+static void gve_tx_free_ring(struct gve_priv *priv, int idx)
+{
+	struct gve_tx_ring *tx = &priv->tx[idx];
+	struct device *hdev = &priv->pdev->dev;
+	size_t bytes;
 	u32 slots;
 
-	gve_tx_हटाओ_from_block(priv, idx);
+	gve_tx_remove_from_block(priv, idx);
 	slots = tx->mask + 1;
-	gve_clean_tx_करोne(priv, tx, tx->req, false);
+	gve_clean_tx_done(priv, tx, tx->req, false);
 	netdev_tx_reset_queue(tx->netdev_txq);
 
-	dma_मुक्त_coherent(hdev, माप(*tx->q_resources),
+	dma_free_coherent(hdev, sizeof(*tx->q_resources),
 			  tx->q_resources, tx->q_resources_bus);
-	tx->q_resources = शून्य;
+	tx->q_resources = NULL;
 
-	अगर (!tx->raw_addressing) अणु
-		gve_tx_fअगरo_release(priv, &tx->tx_fअगरo);
-		gve_unassign_qpl(priv, tx->tx_fअगरo.qpl->id);
-		tx->tx_fअगरo.qpl = शून्य;
-	पूर्ण
+	if (!tx->raw_addressing) {
+		gve_tx_fifo_release(priv, &tx->tx_fifo);
+		gve_unassign_qpl(priv, tx->tx_fifo.qpl->id);
+		tx->tx_fifo.qpl = NULL;
+	}
 
-	bytes = माप(*tx->desc) * slots;
-	dma_मुक्त_coherent(hdev, bytes, tx->desc, tx->bus);
-	tx->desc = शून्य;
+	bytes = sizeof(*tx->desc) * slots;
+	dma_free_coherent(hdev, bytes, tx->desc, tx->bus);
+	tx->desc = NULL;
 
-	vमुक्त(tx->info);
-	tx->info = शून्य;
+	vfree(tx->info);
+	tx->info = NULL;
 
-	netअगर_dbg(priv, drv, priv->dev, "freed tx queue %d\n", idx);
-पूर्ण
+	netif_dbg(priv, drv, priv->dev, "freed tx queue %d\n", idx);
+}
 
-अटल व्योम gve_tx_add_to_block(काष्ठा gve_priv *priv, पूर्णांक queue_idx)
-अणु
-	पूर्णांक ntfy_idx = gve_tx_idx_to_ntfy(priv, queue_idx);
-	काष्ठा gve_notअगरy_block *block = &priv->ntfy_blocks[ntfy_idx];
-	काष्ठा gve_tx_ring *tx = &priv->tx[queue_idx];
+static void gve_tx_add_to_block(struct gve_priv *priv, int queue_idx)
+{
+	int ntfy_idx = gve_tx_idx_to_ntfy(priv, queue_idx);
+	struct gve_notify_block *block = &priv->ntfy_blocks[ntfy_idx];
+	struct gve_tx_ring *tx = &priv->tx[queue_idx];
 
 	block->tx = tx;
 	tx->ntfy_id = ntfy_idx;
-पूर्ण
+}
 
-अटल पूर्णांक gve_tx_alloc_ring(काष्ठा gve_priv *priv, पूर्णांक idx)
-अणु
-	काष्ठा gve_tx_ring *tx = &priv->tx[idx];
-	काष्ठा device *hdev = &priv->pdev->dev;
+static int gve_tx_alloc_ring(struct gve_priv *priv, int idx)
+{
+	struct gve_tx_ring *tx = &priv->tx[idx];
+	struct device *hdev = &priv->pdev->dev;
 	u32 slots = priv->tx_desc_cnt;
-	माप_प्रकार bytes;
+	size_t bytes;
 
 	/* Make sure everything is zeroed to start */
-	स_रखो(tx, 0, माप(*tx));
+	memset(tx, 0, sizeof(*tx));
 	tx->q_num = idx;
 
 	tx->mask = slots - 1;
 
 	/* alloc metadata */
-	tx->info = vzalloc(माप(*tx->info) * slots);
-	अगर (!tx->info)
-		वापस -ENOMEM;
+	tx->info = vzalloc(sizeof(*tx->info) * slots);
+	if (!tx->info)
+		return -ENOMEM;
 
 	/* alloc tx queue */
-	bytes = माप(*tx->desc) * slots;
+	bytes = sizeof(*tx->desc) * slots;
 	tx->desc = dma_alloc_coherent(hdev, bytes, &tx->bus, GFP_KERNEL);
-	अगर (!tx->desc)
-		जाओ पात_with_info;
+	if (!tx->desc)
+		goto abort_with_info;
 
 	tx->raw_addressing = priv->raw_addressing;
 	tx->dev = &priv->pdev->dev;
-	अगर (!tx->raw_addressing) अणु
-		tx->tx_fअगरo.qpl = gve_assign_tx_qpl(priv);
-		अगर (!tx->tx_fअगरo.qpl)
-			जाओ पात_with_desc;
+	if (!tx->raw_addressing) {
+		tx->tx_fifo.qpl = gve_assign_tx_qpl(priv);
+		if (!tx->tx_fifo.qpl)
+			goto abort_with_desc;
 		/* map Tx FIFO */
-		अगर (gve_tx_fअगरo_init(priv, &tx->tx_fअगरo))
-			जाओ पात_with_qpl;
-	पूर्ण
+		if (gve_tx_fifo_init(priv, &tx->tx_fifo))
+			goto abort_with_qpl;
+	}
 
 	tx->q_resources =
 		dma_alloc_coherent(hdev,
-				   माप(*tx->q_resources),
+				   sizeof(*tx->q_resources),
 				   &tx->q_resources_bus,
 				   GFP_KERNEL);
-	अगर (!tx->q_resources)
-		जाओ पात_with_fअगरo;
+	if (!tx->q_resources)
+		goto abort_with_fifo;
 
-	netअगर_dbg(priv, drv, priv->dev, "tx[%d]->bus=%lx\n", idx,
-		  (अचिन्हित दीर्घ)tx->bus);
+	netif_dbg(priv, drv, priv->dev, "tx[%d]->bus=%lx\n", idx,
+		  (unsigned long)tx->bus);
 	tx->netdev_txq = netdev_get_tx_queue(priv->dev, idx);
 	gve_tx_add_to_block(priv, idx);
 
-	वापस 0;
+	return 0;
 
-पात_with_fअगरo:
-	अगर (!tx->raw_addressing)
-		gve_tx_fअगरo_release(priv, &tx->tx_fअगरo);
-पात_with_qpl:
-	अगर (!tx->raw_addressing)
-		gve_unassign_qpl(priv, tx->tx_fअगरo.qpl->id);
-पात_with_desc:
-	dma_मुक्त_coherent(hdev, bytes, tx->desc, tx->bus);
-	tx->desc = शून्य;
-पात_with_info:
-	vमुक्त(tx->info);
-	tx->info = शून्य;
-	वापस -ENOMEM;
-पूर्ण
+abort_with_fifo:
+	if (!tx->raw_addressing)
+		gve_tx_fifo_release(priv, &tx->tx_fifo);
+abort_with_qpl:
+	if (!tx->raw_addressing)
+		gve_unassign_qpl(priv, tx->tx_fifo.qpl->id);
+abort_with_desc:
+	dma_free_coherent(hdev, bytes, tx->desc, tx->bus);
+	tx->desc = NULL;
+abort_with_info:
+	vfree(tx->info);
+	tx->info = NULL;
+	return -ENOMEM;
+}
 
-पूर्णांक gve_tx_alloc_rings(काष्ठा gve_priv *priv)
-अणु
-	पूर्णांक err = 0;
-	पूर्णांक i;
+int gve_tx_alloc_rings(struct gve_priv *priv)
+{
+	int err = 0;
+	int i;
 
-	क्रम (i = 0; i < priv->tx_cfg.num_queues; i++) अणु
+	for (i = 0; i < priv->tx_cfg.num_queues; i++) {
 		err = gve_tx_alloc_ring(priv, i);
-		अगर (err) अणु
-			netअगर_err(priv, drv, priv->dev,
+		if (err) {
+			netif_err(priv, drv, priv->dev,
 				  "Failed to alloc tx ring=%d: err=%d\n",
 				  i, err);
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	/* Unallocate अगर there was an error */
-	अगर (err) अणु
-		पूर्णांक j;
+			break;
+		}
+	}
+	/* Unallocate if there was an error */
+	if (err) {
+		int j;
 
-		क्रम (j = 0; j < i; j++)
-			gve_tx_मुक्त_ring(priv, j);
-	पूर्ण
-	वापस err;
-पूर्ण
+		for (j = 0; j < i; j++)
+			gve_tx_free_ring(priv, j);
+	}
+	return err;
+}
 
-व्योम gve_tx_मुक्त_rings(काष्ठा gve_priv *priv)
-अणु
-	पूर्णांक i;
+void gve_tx_free_rings(struct gve_priv *priv)
+{
+	int i;
 
-	क्रम (i = 0; i < priv->tx_cfg.num_queues; i++)
-		gve_tx_मुक्त_ring(priv, i);
-पूर्ण
+	for (i = 0; i < priv->tx_cfg.num_queues; i++)
+		gve_tx_free_ring(priv, i);
+}
 
 /* gve_tx_avail - Calculates the number of slots available in the ring
  * @tx: tx ring to check
  *
  * Returns the number of slots available
  *
- * The capacity of the queue is mask + 1. We करोn't need to reserve an entry.
+ * The capacity of the queue is mask + 1. We don't need to reserve an entry.
  **/
-अटल अंतरभूत u32 gve_tx_avail(काष्ठा gve_tx_ring *tx)
-अणु
-	वापस tx->mask + 1 - (tx->req - tx->करोne);
-पूर्ण
+static inline u32 gve_tx_avail(struct gve_tx_ring *tx)
+{
+	return tx->mask + 1 - (tx->req - tx->done);
+}
 
-अटल अंतरभूत पूर्णांक gve_skb_fअगरo_bytes_required(काष्ठा gve_tx_ring *tx,
-					      काष्ठा sk_buff *skb)
-अणु
-	पूर्णांक pad_bytes, align_hdr_pad;
-	पूर्णांक bytes;
-	पूर्णांक hlen;
+static inline int gve_skb_fifo_bytes_required(struct gve_tx_ring *tx,
+					      struct sk_buff *skb)
+{
+	int pad_bytes, align_hdr_pad;
+	int bytes;
+	int hlen;
 
 	hlen = skb_is_gso(skb) ? skb_checksum_start_offset(skb) +
 				 tcp_hdrlen(skb) : skb_headlen(skb);
 
-	pad_bytes = gve_tx_fअगरo_pad_alloc_one_frag(&tx->tx_fअगरo,
+	pad_bytes = gve_tx_fifo_pad_alloc_one_frag(&tx->tx_fifo,
 						   hlen);
-	/* We need to take पूर्णांकo account the header alignment padding. */
+	/* We need to take into account the header alignment padding. */
 	align_hdr_pad = L1_CACHE_ALIGN(hlen) - hlen;
 	bytes = align_hdr_pad + pad_bytes + skb->len;
 
-	वापस bytes;
-पूर्ण
+	return bytes;
+}
 
-/* The most descriptors we could need is MAX_SKB_FRAGS + 3 : 1 क्रम each skb frag,
- * +1 क्रम the skb linear portion, +1 क्रम when tcp hdr needs to be in separate descriptor,
- * and +1 अगर the payload wraps to the beginning of the FIFO.
+/* The most descriptors we could need is MAX_SKB_FRAGS + 3 : 1 for each skb frag,
+ * +1 for the skb linear portion, +1 for when tcp hdr needs to be in separate descriptor,
+ * and +1 if the payload wraps to the beginning of the FIFO.
  */
-#घोषणा MAX_TX_DESC_NEEDED	(MAX_SKB_FRAGS + 3)
-अटल व्योम gve_tx_unmap_buf(काष्ठा device *dev, काष्ठा gve_tx_buffer_state *info)
-अणु
-	अगर (info->skb) अणु
+#define MAX_TX_DESC_NEEDED	(MAX_SKB_FRAGS + 3)
+static void gve_tx_unmap_buf(struct device *dev, struct gve_tx_buffer_state *info)
+{
+	if (info->skb) {
 		dma_unmap_single(dev, dma_unmap_addr(&info->buf, dma),
 				 dma_unmap_len(&info->buf, len),
 				 DMA_TO_DEVICE);
 		dma_unmap_len_set(&info->buf, len, 0);
-	पूर्ण अन्यथा अणु
+	} else {
 		dma_unmap_page(dev, dma_unmap_addr(&info->buf, dma),
 			       dma_unmap_len(&info->buf, len),
 			       DMA_TO_DEVICE);
 		dma_unmap_len_set(&info->buf, len, 0);
-	पूर्ण
-पूर्ण
+	}
+}
 
-/* Check अगर sufficient resources (descriptor ring space, FIFO space) are
+/* Check if sufficient resources (descriptor ring space, FIFO space) are
  * available to transmit the given number of bytes.
  */
-अटल अंतरभूत bool gve_can_tx(काष्ठा gve_tx_ring *tx, पूर्णांक bytes_required)
-अणु
+static inline bool gve_can_tx(struct gve_tx_ring *tx, int bytes_required)
+{
 	bool can_alloc = true;
 
-	अगर (!tx->raw_addressing)
-		can_alloc = gve_tx_fअगरo_can_alloc(&tx->tx_fअगरo, bytes_required);
+	if (!tx->raw_addressing)
+		can_alloc = gve_tx_fifo_can_alloc(&tx->tx_fifo, bytes_required);
 
-	वापस (gve_tx_avail(tx) >= MAX_TX_DESC_NEEDED && can_alloc);
-पूर्ण
+	return (gve_tx_avail(tx) >= MAX_TX_DESC_NEEDED && can_alloc);
+}
 
-/* Stops the queue अगर the skb cannot be transmitted. */
-अटल पूर्णांक gve_maybe_stop_tx(काष्ठा gve_tx_ring *tx, काष्ठा sk_buff *skb)
-अणु
-	पूर्णांक bytes_required = 0;
+/* Stops the queue if the skb cannot be transmitted. */
+static int gve_maybe_stop_tx(struct gve_tx_ring *tx, struct sk_buff *skb)
+{
+	int bytes_required = 0;
 
-	अगर (!tx->raw_addressing)
-		bytes_required = gve_skb_fअगरo_bytes_required(tx, skb);
+	if (!tx->raw_addressing)
+		bytes_required = gve_skb_fifo_bytes_required(tx, skb);
 
-	अगर (likely(gve_can_tx(tx, bytes_required)))
-		वापस 0;
+	if (likely(gve_can_tx(tx, bytes_required)))
+		return 0;
 
 	/* No space, so stop the queue */
 	tx->stop_queue++;
-	netअगर_tx_stop_queue(tx->netdev_txq);
-	smp_mb();	/* sync with restarting queue in gve_clean_tx_करोne() */
+	netif_tx_stop_queue(tx->netdev_txq);
+	smp_mb();	/* sync with restarting queue in gve_clean_tx_done() */
 
-	/* Now check क्रम resources again, in हाल gve_clean_tx_करोne() मुक्तd
+	/* Now check for resources again, in case gve_clean_tx_done() freed
 	 * resources after we checked and we stopped the queue after
-	 * gve_clean_tx_करोne() checked.
+	 * gve_clean_tx_done() checked.
 	 *
-	 * gve_maybe_stop_tx()			gve_clean_tx_करोne()
+	 * gve_maybe_stop_tx()			gve_clean_tx_done()
 	 *   nsegs/can_alloc test failed
-	 *					  gve_tx_मुक्त_fअगरo()
-	 *					  अगर (tx queue stopped)
-	 *					    netअगर_tx_queue_wake()
-	 *   netअगर_tx_stop_queue()
-	 *   Need to check again क्रम space here!
+	 *					  gve_tx_free_fifo()
+	 *					  if (tx queue stopped)
+	 *					    netif_tx_queue_wake()
+	 *   netif_tx_stop_queue()
+	 *   Need to check again for space here!
 	 */
-	अगर (likely(!gve_can_tx(tx, bytes_required)))
-		वापस -EBUSY;
+	if (likely(!gve_can_tx(tx, bytes_required)))
+		return -EBUSY;
 
-	netअगर_tx_start_queue(tx->netdev_txq);
+	netif_tx_start_queue(tx->netdev_txq);
 	tx->wake_queue++;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम gve_tx_fill_pkt_desc(जोड़ gve_tx_desc *pkt_desc,
-				 काष्ठा sk_buff *skb, bool is_gso,
-				 पूर्णांक l4_hdr_offset, u32 desc_cnt,
+static void gve_tx_fill_pkt_desc(union gve_tx_desc *pkt_desc,
+				 struct sk_buff *skb, bool is_gso,
+				 int l4_hdr_offset, u32 desc_cnt,
 				 u16 hlen, u64 addr)
-अणु
+{
 	/* l4_hdr_offset and csum_offset are in units of 16-bit words */
-	अगर (is_gso) अणु
+	if (is_gso) {
 		pkt_desc->pkt.type_flags = GVE_TXD_TSO | GVE_TXF_L4CSUM;
 		pkt_desc->pkt.l4_csum_offset = skb->csum_offset >> 1;
 		pkt_desc->pkt.l4_hdr_offset = l4_hdr_offset >> 1;
-	पूर्ण अन्यथा अगर (likely(skb->ip_summed == CHECKSUM_PARTIAL)) अणु
+	} else if (likely(skb->ip_summed == CHECKSUM_PARTIAL)) {
 		pkt_desc->pkt.type_flags = GVE_TXD_STD | GVE_TXF_L4CSUM;
 		pkt_desc->pkt.l4_csum_offset = skb->csum_offset >> 1;
 		pkt_desc->pkt.l4_hdr_offset = l4_hdr_offset >> 1;
-	पूर्ण अन्यथा अणु
+	} else {
 		pkt_desc->pkt.type_flags = GVE_TXD_STD;
 		pkt_desc->pkt.l4_csum_offset = 0;
 		pkt_desc->pkt.l4_hdr_offset = 0;
-	पूर्ण
+	}
 	pkt_desc->pkt.desc_cnt = desc_cnt;
 	pkt_desc->pkt.len = cpu_to_be16(skb->len);
 	pkt_desc->pkt.seg_len = cpu_to_be16(hlen);
 	pkt_desc->pkt.seg_addr = cpu_to_be64(addr);
-पूर्ण
+}
 
-अटल व्योम gve_tx_fill_seg_desc(जोड़ gve_tx_desc *seg_desc,
-				 काष्ठा sk_buff *skb, bool is_gso,
+static void gve_tx_fill_seg_desc(union gve_tx_desc *seg_desc,
+				 struct sk_buff *skb, bool is_gso,
 				 u16 len, u64 addr)
-अणु
+{
 	seg_desc->seg.type_flags = GVE_TXD_SEG;
-	अगर (is_gso) अणु
-		अगर (skb_is_gso_v6(skb))
+	if (is_gso) {
+		if (skb_is_gso_v6(skb))
 			seg_desc->seg.type_flags |= GVE_TXSF_IPV6;
 		seg_desc->seg.l3_offset = skb_network_offset(skb) >> 1;
 		seg_desc->seg.mss = cpu_to_be16(skb_shinfo(skb)->gso_size);
-	पूर्ण
+	}
 	seg_desc->seg.seg_len = cpu_to_be16(len);
 	seg_desc->seg.seg_addr = cpu_to_be64(addr);
-पूर्ण
+}
 
-अटल व्योम gve_dma_sync_क्रम_device(काष्ठा device *dev, dma_addr_t *page_buses,
+static void gve_dma_sync_for_device(struct device *dev, dma_addr_t *page_buses,
 				    u64 iov_offset, u64 iov_len)
-अणु
+{
 	u64 last_page = (iov_offset + iov_len - 1) / PAGE_SIZE;
 	u64 first_page = iov_offset / PAGE_SIZE;
 	u64 page;
 
-	क्रम (page = first_page; page <= last_page; page++)
-		dma_sync_single_क्रम_device(dev, page_buses[page], PAGE_SIZE, DMA_TO_DEVICE);
-पूर्ण
+	for (page = first_page; page <= last_page; page++)
+		dma_sync_single_for_device(dev, page_buses[page], PAGE_SIZE, DMA_TO_DEVICE);
+}
 
-अटल पूर्णांक gve_tx_add_skb_copy(काष्ठा gve_priv *priv, काष्ठा gve_tx_ring *tx, काष्ठा sk_buff *skb)
-अणु
-	पूर्णांक pad_bytes, hlen, hdr_nfrags, payload_nfrags, l4_hdr_offset;
-	जोड़ gve_tx_desc *pkt_desc, *seg_desc;
-	काष्ठा gve_tx_buffer_state *info;
+static int gve_tx_add_skb_copy(struct gve_priv *priv, struct gve_tx_ring *tx, struct sk_buff *skb)
+{
+	int pad_bytes, hlen, hdr_nfrags, payload_nfrags, l4_hdr_offset;
+	union gve_tx_desc *pkt_desc, *seg_desc;
+	struct gve_tx_buffer_state *info;
 	bool is_gso = skb_is_gso(skb);
 	u32 idx = tx->req & tx->mask;
-	पूर्णांक payload_iov = 2;
-	पूर्णांक copy_offset;
+	int payload_iov = 2;
+	int copy_offset;
 	u32 next_idx;
-	पूर्णांक i;
+	int i;
 
 	info = &tx->info[idx];
 	pkt_desc = &tx->desc[idx];
@@ -458,14 +457,14 @@
 			skb_headlen(skb);
 
 	info->skb =  skb;
-	/* We करोn't want to split the header, so अगर necessary, pad to the end
-	 * of the fअगरo and then put the header at the beginning of the fअगरo.
+	/* We don't want to split the header, so if necessary, pad to the end
+	 * of the fifo and then put the header at the beginning of the fifo.
 	 */
-	pad_bytes = gve_tx_fअगरo_pad_alloc_one_frag(&tx->tx_fअगरo, hlen);
-	hdr_nfrags = gve_tx_alloc_fअगरo(&tx->tx_fअगरo, hlen + pad_bytes,
+	pad_bytes = gve_tx_fifo_pad_alloc_one_frag(&tx->tx_fifo, hlen);
+	hdr_nfrags = gve_tx_alloc_fifo(&tx->tx_fifo, hlen + pad_bytes,
 				       &info->iov[0]);
 	WARN(!hdr_nfrags, "hdr_nfrags should never be 0!");
-	payload_nfrags = gve_tx_alloc_fअगरo(&tx->tx_fअगरo, skb->len - hlen,
+	payload_nfrags = gve_tx_alloc_fifo(&tx->tx_fifo, skb->len - hlen,
 					   &info->iov[payload_iov]);
 
 	gve_tx_fill_pkt_desc(pkt_desc, skb, is_gso, l4_hdr_offset,
@@ -473,14 +472,14 @@
 			     info->iov[hdr_nfrags - 1].iov_offset);
 
 	skb_copy_bits(skb, 0,
-		      tx->tx_fअगरo.base + info->iov[hdr_nfrags - 1].iov_offset,
+		      tx->tx_fifo.base + info->iov[hdr_nfrags - 1].iov_offset,
 		      hlen);
-	gve_dma_sync_क्रम_device(&priv->pdev->dev, tx->tx_fअगरo.qpl->page_buses,
+	gve_dma_sync_for_device(&priv->pdev->dev, tx->tx_fifo.qpl->page_buses,
 				info->iov[hdr_nfrags - 1].iov_offset,
 				info->iov[hdr_nfrags - 1].iov_len);
 	copy_offset = hlen;
 
-	क्रम (i = payload_iov; i < payload_nfrags + payload_iov; i++) अणु
+	for (i = payload_iov; i < payload_nfrags + payload_iov; i++) {
 		next_idx = (tx->req + 1 + i - payload_iov) & tx->mask;
 		seg_desc = &tx->desc[next_idx];
 
@@ -489,30 +488,30 @@
 				     info->iov[i].iov_offset);
 
 		skb_copy_bits(skb, copy_offset,
-			      tx->tx_fअगरo.base + info->iov[i].iov_offset,
+			      tx->tx_fifo.base + info->iov[i].iov_offset,
 			      info->iov[i].iov_len);
-		gve_dma_sync_क्रम_device(&priv->pdev->dev, tx->tx_fअगरo.qpl->page_buses,
+		gve_dma_sync_for_device(&priv->pdev->dev, tx->tx_fifo.qpl->page_buses,
 					info->iov[i].iov_offset,
 					info->iov[i].iov_len);
 		copy_offset += info->iov[i].iov_len;
-	पूर्ण
+	}
 
-	वापस 1 + payload_nfrags;
-पूर्ण
+	return 1 + payload_nfrags;
+}
 
-अटल पूर्णांक gve_tx_add_skb_no_copy(काष्ठा gve_priv *priv, काष्ठा gve_tx_ring *tx,
-				  काष्ठा sk_buff *skb)
-अणु
-	स्थिर काष्ठा skb_shared_info *shinfo = skb_shinfo(skb);
-	पूर्णांक hlen, payload_nfrags, l4_hdr_offset;
-	जोड़ gve_tx_desc *pkt_desc, *seg_desc;
-	काष्ठा gve_tx_buffer_state *info;
+static int gve_tx_add_skb_no_copy(struct gve_priv *priv, struct gve_tx_ring *tx,
+				  struct sk_buff *skb)
+{
+	const struct skb_shared_info *shinfo = skb_shinfo(skb);
+	int hlen, payload_nfrags, l4_hdr_offset;
+	union gve_tx_desc *pkt_desc, *seg_desc;
+	struct gve_tx_buffer_state *info;
 	bool is_gso = skb_is_gso(skb);
 	u32 idx = tx->req & tx->mask;
-	काष्ठा gve_tx_dma_buf *buf;
+	struct gve_tx_dma_buf *buf;
 	u64 addr;
 	u32 len;
-	पूर्णांक i;
+	int i;
 
 	info = &tx->info[idx];
 	pkt_desc = &tx->desc[idx];
@@ -529,16 +528,16 @@
 	info->skb =  skb;
 
 	addr = dma_map_single(tx->dev, skb->data, len, DMA_TO_DEVICE);
-	अगर (unlikely(dma_mapping_error(tx->dev, addr))) अणु
+	if (unlikely(dma_mapping_error(tx->dev, addr))) {
 		tx->dma_mapping_error++;
-		जाओ drop;
-	पूर्ण
+		goto drop;
+	}
 	buf = &info->buf;
 	dma_unmap_len_set(buf, len, len);
 	dma_unmap_addr_set(buf, dma, addr);
 
 	payload_nfrags = shinfo->nr_frags;
-	अगर (hlen < len) अणु
+	if (hlen < len) {
 		/* For gso the rest of the linear portion of the skb needs to
 		 * be in its own descriptor.
 		 */
@@ -551,179 +550,179 @@
 		idx = (tx->req + 1) & tx->mask;
 		seg_desc = &tx->desc[idx];
 		gve_tx_fill_seg_desc(seg_desc, skb, is_gso, len, addr);
-	पूर्ण अन्यथा अणु
+	} else {
 		gve_tx_fill_pkt_desc(pkt_desc, skb, is_gso, l4_hdr_offset,
 				     1 + payload_nfrags, hlen, addr);
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < shinfo->nr_frags; i++) अणु
-		स्थिर skb_frag_t *frag = &shinfo->frags[i];
+	for (i = 0; i < shinfo->nr_frags; i++) {
+		const skb_frag_t *frag = &shinfo->frags[i];
 
 		idx = (idx + 1) & tx->mask;
 		seg_desc = &tx->desc[idx];
 		len = skb_frag_size(frag);
 		addr = skb_frag_dma_map(tx->dev, frag, 0, len, DMA_TO_DEVICE);
-		अगर (unlikely(dma_mapping_error(tx->dev, addr))) अणु
+		if (unlikely(dma_mapping_error(tx->dev, addr))) {
 			tx->dma_mapping_error++;
-			जाओ unmap_drop;
-		पूर्ण
+			goto unmap_drop;
+		}
 		buf = &tx->info[idx].buf;
-		tx->info[idx].skb = शून्य;
+		tx->info[idx].skb = NULL;
 		dma_unmap_len_set(buf, len, len);
 		dma_unmap_addr_set(buf, dma, addr);
 
 		gve_tx_fill_seg_desc(seg_desc, skb, is_gso, len, addr);
-	पूर्ण
+	}
 
-	वापस 1 + payload_nfrags;
+	return 1 + payload_nfrags;
 
 unmap_drop:
 	i += (payload_nfrags == shinfo->nr_frags ? 1 : 2);
-	जबतक (i--) अणु
+	while (i--) {
 		idx--;
 		gve_tx_unmap_buf(tx->dev, &tx->info[idx & tx->mask]);
-	पूर्ण
+	}
 drop:
 	tx->dropped_pkt++;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-netdev_tx_t gve_tx(काष्ठा sk_buff *skb, काष्ठा net_device *dev)
-अणु
-	काष्ठा gve_priv *priv = netdev_priv(dev);
-	काष्ठा gve_tx_ring *tx;
-	पूर्णांक nsegs;
+netdev_tx_t gve_tx(struct sk_buff *skb, struct net_device *dev)
+{
+	struct gve_priv *priv = netdev_priv(dev);
+	struct gve_tx_ring *tx;
+	int nsegs;
 
 	WARN(skb_get_queue_mapping(skb) >= priv->tx_cfg.num_queues,
 	     "skb queue index out of range");
 	tx = &priv->tx[skb_get_queue_mapping(skb)];
-	अगर (unlikely(gve_maybe_stop_tx(tx, skb))) अणु
-		/* We need to ring the txq करोorbell -- we have stopped the Tx
-		 * queue क्रम want of resources, but prior calls to gve_tx()
-		 * may have added descriptors without ringing the करोorbell.
+	if (unlikely(gve_maybe_stop_tx(tx, skb))) {
+		/* We need to ring the txq doorbell -- we have stopped the Tx
+		 * queue for want of resources, but prior calls to gve_tx()
+		 * may have added descriptors without ringing the doorbell.
 		 */
 
-		gve_tx_put_करोorbell(priv, tx->q_resources, tx->req);
-		वापस NETDEV_TX_BUSY;
-	पूर्ण
-	अगर (tx->raw_addressing)
+		gve_tx_put_doorbell(priv, tx->q_resources, tx->req);
+		return NETDEV_TX_BUSY;
+	}
+	if (tx->raw_addressing)
 		nsegs = gve_tx_add_skb_no_copy(priv, tx, skb);
-	अन्यथा
+	else
 		nsegs = gve_tx_add_skb_copy(priv, tx, skb);
 
 	/* If the packet is getting sent, we need to update the skb */
-	अगर (nsegs) अणु
+	if (nsegs) {
 		netdev_tx_sent_queue(tx->netdev_txq, skb->len);
-		skb_tx_बारtamp(skb);
+		skb_tx_timestamp(skb);
 		tx->req += nsegs;
-	पूर्ण अन्यथा अणु
-		dev_kमुक्त_skb_any(skb);
-	पूर्ण
+	} else {
+		dev_kfree_skb_any(skb);
+	}
 
-	अगर (!netअगर_xmit_stopped(tx->netdev_txq) && netdev_xmit_more())
-		वापस NETDEV_TX_OK;
+	if (!netif_xmit_stopped(tx->netdev_txq) && netdev_xmit_more())
+		return NETDEV_TX_OK;
 
-	/* Give packets to NIC. Even अगर this packet failed to send the करोorbell
+	/* Give packets to NIC. Even if this packet failed to send the doorbell
 	 * might need to be rung because of xmit_more.
 	 */
-	gve_tx_put_करोorbell(priv, tx->q_resources, tx->req);
-	वापस NETDEV_TX_OK;
-पूर्ण
+	gve_tx_put_doorbell(priv, tx->q_resources, tx->req);
+	return NETDEV_TX_OK;
+}
 
-#घोषणा GVE_TX_START_THRESH	PAGE_SIZE
+#define GVE_TX_START_THRESH	PAGE_SIZE
 
-अटल पूर्णांक gve_clean_tx_करोne(काष्ठा gve_priv *priv, काष्ठा gve_tx_ring *tx,
-			     u32 to_करो, bool try_to_wake)
-अणु
-	काष्ठा gve_tx_buffer_state *info;
+static int gve_clean_tx_done(struct gve_priv *priv, struct gve_tx_ring *tx,
+			     u32 to_do, bool try_to_wake)
+{
+	struct gve_tx_buffer_state *info;
 	u64 pkts = 0, bytes = 0;
-	माप_प्रकार space_मुक्तd = 0;
-	काष्ठा sk_buff *skb;
-	पूर्णांक i, j;
+	size_t space_freed = 0;
+	struct sk_buff *skb;
+	int i, j;
 	u32 idx;
 
-	क्रम (j = 0; j < to_करो; j++) अणु
-		idx = tx->करोne & tx->mask;
-		netअगर_info(priv, tx_करोne, priv->dev,
+	for (j = 0; j < to_do; j++) {
+		idx = tx->done & tx->mask;
+		netif_info(priv, tx_done, priv->dev,
 			   "[%d] %s: idx=%d (req=%u done=%u)\n",
-			   tx->q_num, __func__, idx, tx->req, tx->करोne);
+			   tx->q_num, __func__, idx, tx->req, tx->done);
 		info = &tx->info[idx];
 		skb = info->skb;
 
 		/* Unmap the buffer */
-		अगर (tx->raw_addressing)
+		if (tx->raw_addressing)
 			gve_tx_unmap_buf(tx->dev, info);
-		tx->करोne++;
-		/* Mark as मुक्त */
-		अगर (skb) अणु
-			info->skb = शून्य;
+		tx->done++;
+		/* Mark as free */
+		if (skb) {
+			info->skb = NULL;
 			bytes += skb->len;
 			pkts++;
 			dev_consume_skb_any(skb);
-			अगर (tx->raw_addressing)
-				जारी;
-			/* FIFO मुक्त */
-			क्रम (i = 0; i < ARRAY_SIZE(info->iov); i++) अणु
-				space_मुक्तd += info->iov[i].iov_len + info->iov[i].iov_padding;
+			if (tx->raw_addressing)
+				continue;
+			/* FIFO free */
+			for (i = 0; i < ARRAY_SIZE(info->iov); i++) {
+				space_freed += info->iov[i].iov_len + info->iov[i].iov_padding;
 				info->iov[i].iov_len = 0;
 				info->iov[i].iov_padding = 0;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
-	अगर (!tx->raw_addressing)
-		gve_tx_मुक्त_fअगरo(&tx->tx_fअगरo, space_मुक्तd);
+	if (!tx->raw_addressing)
+		gve_tx_free_fifo(&tx->tx_fifo, space_freed);
 	u64_stats_update_begin(&tx->statss);
-	tx->bytes_करोne += bytes;
-	tx->pkt_करोne += pkts;
+	tx->bytes_done += bytes;
+	tx->pkt_done += pkts;
 	u64_stats_update_end(&tx->statss);
 	netdev_tx_completed_queue(tx->netdev_txq, pkts, bytes);
 
-	/* start the queue अगर we've stopped it */
-#अगर_अघोषित CONFIG_BQL
-	/* Make sure that the करोorbells are synced */
+	/* start the queue if we've stopped it */
+#ifndef CONFIG_BQL
+	/* Make sure that the doorbells are synced */
 	smp_mb();
-#पूर्ण_अगर
-	अगर (try_to_wake && netअगर_tx_queue_stopped(tx->netdev_txq) &&
-	    likely(gve_can_tx(tx, GVE_TX_START_THRESH))) अणु
+#endif
+	if (try_to_wake && netif_tx_queue_stopped(tx->netdev_txq) &&
+	    likely(gve_can_tx(tx, GVE_TX_START_THRESH))) {
 		tx->wake_queue++;
-		netअगर_tx_wake_queue(tx->netdev_txq);
-	पूर्ण
+		netif_tx_wake_queue(tx->netdev_txq);
+	}
 
-	वापस pkts;
-पूर्ण
+	return pkts;
+}
 
-__be32 gve_tx_load_event_counter(काष्ठा gve_priv *priv,
-				 काष्ठा gve_tx_ring *tx)
-अणु
+__be32 gve_tx_load_event_counter(struct gve_priv *priv,
+				 struct gve_tx_ring *tx)
+{
 	u32 counter_index = be32_to_cpu((tx->q_resources->counter_index));
 
-	वापस READ_ONCE(priv->counter_array[counter_index]);
-पूर्ण
+	return READ_ONCE(priv->counter_array[counter_index]);
+}
 
-bool gve_tx_poll(काष्ठा gve_notअगरy_block *block, पूर्णांक budget)
-अणु
-	काष्ठा gve_priv *priv = block->priv;
-	काष्ठा gve_tx_ring *tx = block->tx;
+bool gve_tx_poll(struct gve_notify_block *block, int budget)
+{
+	struct gve_priv *priv = block->priv;
+	struct gve_tx_ring *tx = block->tx;
 	bool repoll = false;
-	u32 nic_करोne;
-	u32 to_करो;
+	u32 nic_done;
+	u32 to_do;
 
-	/* If budget is 0, करो all the work */
-	अगर (budget == 0)
-		budget = पूर्णांक_उच्च;
+	/* If budget is 0, do all the work */
+	if (budget == 0)
+		budget = INT_MAX;
 
-	/* Find out how much work there is to be करोne */
-	tx->last_nic_करोne = gve_tx_load_event_counter(priv, tx);
-	nic_करोne = be32_to_cpu(tx->last_nic_करोne);
-	अगर (budget > 0) अणु
+	/* Find out how much work there is to be done */
+	tx->last_nic_done = gve_tx_load_event_counter(priv, tx);
+	nic_done = be32_to_cpu(tx->last_nic_done);
+	if (budget > 0) {
 		/* Do as much work as we have that the budget will
 		 * allow
 		 */
-		to_करो = min_t(u32, (nic_करोne - tx->करोne), budget);
-		gve_clean_tx_करोne(priv, tx, to_करो, true);
-	पूर्ण
+		to_do = min_t(u32, (nic_done - tx->done), budget);
+		gve_clean_tx_done(priv, tx, to_do, true);
+	}
 	/* If we still have work we want to repoll */
-	repoll |= (nic_करोne != tx->करोne);
-	वापस repoll;
-पूर्ण
+	repoll |= (nic_done != tx->done);
+	return repoll;
+}

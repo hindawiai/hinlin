@@ -1,55 +1,54 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /* Copyright (C) B.A.T.M.A.N. contributors:
  *
  * Marek Lindner, Simon Wunderlich
  */
 
-#अगर_अघोषित _NET_BATMAN_ADV_HARD_INTERFACE_H_
-#घोषणा _NET_BATMAN_ADV_HARD_INTERFACE_H_
+#ifndef _NET_BATMAN_ADV_HARD_INTERFACE_H_
+#define _NET_BATMAN_ADV_HARD_INTERFACE_H_
 
-#समावेश "main.h"
+#include "main.h"
 
-#समावेश <linux/compiler.h>
-#समावेश <linux/kref.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/notअगरier.h>
-#समावेश <linux/rcupdate.h>
-#समावेश <linux/मानकघोष.स>
-#समावेश <linux/types.h>
-#समावेश <net/net_namespace.h>
+#include <linux/compiler.h>
+#include <linux/kref.h>
+#include <linux/netdevice.h>
+#include <linux/notifier.h>
+#include <linux/rcupdate.h>
+#include <linux/stddef.h>
+#include <linux/types.h>
+#include <net/net_namespace.h>
 
 /**
- * क्रमागत batadv_hard_अगर_state - State of a hard पूर्णांकerface
+ * enum batadv_hard_if_state - State of a hard interface
  */
-क्रमागत batadv_hard_अगर_state अणु
+enum batadv_hard_if_state {
 	/**
-	 * @BATADV_IF_NOT_IN_USE: पूर्णांकerface is not used as slave पूर्णांकerface of a
-	 * baपंचांगan-adv soft पूर्णांकerface
+	 * @BATADV_IF_NOT_IN_USE: interface is not used as slave interface of a
+	 * batman-adv soft interface
 	 */
 	BATADV_IF_NOT_IN_USE,
 
 	/**
-	 * @BATADV_IF_TO_BE_REMOVED: पूर्णांकerface will be हटाओd from soft
-	 * पूर्णांकerface
+	 * @BATADV_IF_TO_BE_REMOVED: interface will be removed from soft
+	 * interface
 	 */
 	BATADV_IF_TO_BE_REMOVED,
 
-	/** @BATADV_IF_INACTIVE: पूर्णांकerface is deactivated */
+	/** @BATADV_IF_INACTIVE: interface is deactivated */
 	BATADV_IF_INACTIVE,
 
-	/** @BATADV_IF_ACTIVE: पूर्णांकerface is used */
+	/** @BATADV_IF_ACTIVE: interface is used */
 	BATADV_IF_ACTIVE,
 
-	/** @BATADV_IF_TO_BE_ACTIVATED: पूर्णांकerface is getting activated */
+	/** @BATADV_IF_TO_BE_ACTIVATED: interface is getting activated */
 	BATADV_IF_TO_BE_ACTIVATED,
-पूर्ण;
+};
 
 /**
- * क्रमागत batadv_hard_अगर_bcast - broadcast aव्योमance options
+ * enum batadv_hard_if_bcast - broadcast avoidance options
  */
-क्रमागत batadv_hard_अगर_bcast अणु
-	/** @BATADV_HARDIF_BCAST_OK: Do broadcast on according hard पूर्णांकerface */
+enum batadv_hard_if_bcast {
+	/** @BATADV_HARDIF_BCAST_OK: Do broadcast on according hard interface */
 	BATADV_HARDIF_BCAST_OK = 0,
 
 	/**
@@ -66,56 +65,56 @@
 
 	/** @BATADV_HARDIF_BCAST_DUPORIG: There is just the originator */
 	BATADV_HARDIF_BCAST_DUPORIG,
-पूर्ण;
+};
 
-बाह्य काष्ठा notअगरier_block batadv_hard_अगर_notअगरier;
+extern struct notifier_block batadv_hard_if_notifier;
 
-काष्ठा net_device *batadv_get_real_netdev(काष्ठा net_device *net_device);
-bool batadv_is_cfg80211_hardअगर(काष्ठा batadv_hard_अगरace *hard_अगरace);
-bool batadv_is_wअगरi_hardअगर(काष्ठा batadv_hard_अगरace *hard_अगरace);
-काष्ठा batadv_hard_अगरace*
-batadv_hardअगर_get_by_netdev(स्थिर काष्ठा net_device *net_dev);
-पूर्णांक batadv_hardअगर_enable_पूर्णांकerface(काष्ठा batadv_hard_अगरace *hard_अगरace,
-				   काष्ठा net *net, स्थिर अक्षर *अगरace_name);
-व्योम batadv_hardअगर_disable_पूर्णांकerface(काष्ठा batadv_hard_अगरace *hard_अगरace);
-पूर्णांक batadv_hardअगर_min_mtu(काष्ठा net_device *soft_अगरace);
-व्योम batadv_update_min_mtu(काष्ठा net_device *soft_अगरace);
-व्योम batadv_hardअगर_release(काष्ठा kref *ref);
-पूर्णांक batadv_hardअगर_no_broadcast(काष्ठा batadv_hard_अगरace *अगर_outgoing,
+struct net_device *batadv_get_real_netdev(struct net_device *net_device);
+bool batadv_is_cfg80211_hardif(struct batadv_hard_iface *hard_iface);
+bool batadv_is_wifi_hardif(struct batadv_hard_iface *hard_iface);
+struct batadv_hard_iface*
+batadv_hardif_get_by_netdev(const struct net_device *net_dev);
+int batadv_hardif_enable_interface(struct batadv_hard_iface *hard_iface,
+				   struct net *net, const char *iface_name);
+void batadv_hardif_disable_interface(struct batadv_hard_iface *hard_iface);
+int batadv_hardif_min_mtu(struct net_device *soft_iface);
+void batadv_update_min_mtu(struct net_device *soft_iface);
+void batadv_hardif_release(struct kref *ref);
+int batadv_hardif_no_broadcast(struct batadv_hard_iface *if_outgoing,
 			       u8 *orig_addr, u8 *orig_neigh);
 
 /**
- * batadv_hardअगर_put() - decrement the hard पूर्णांकerface refcounter and possibly
+ * batadv_hardif_put() - decrement the hard interface refcounter and possibly
  *  release it
- * @hard_अगरace: the hard पूर्णांकerface to मुक्त
+ * @hard_iface: the hard interface to free
  */
-अटल अंतरभूत व्योम batadv_hardअगर_put(काष्ठा batadv_hard_अगरace *hard_अगरace)
-अणु
-	kref_put(&hard_अगरace->refcount, batadv_hardअगर_release);
-पूर्ण
+static inline void batadv_hardif_put(struct batadv_hard_iface *hard_iface)
+{
+	kref_put(&hard_iface->refcount, batadv_hardif_release);
+}
 
 /**
- * batadv_primary_अगर_get_selected() - Get reference to primary पूर्णांकerface
- * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
+ * batadv_primary_if_get_selected() - Get reference to primary interface
+ * @bat_priv: the bat priv with all the soft interface information
  *
- * Return: primary पूर्णांकerface (with increased refcnt), otherwise शून्य
+ * Return: primary interface (with increased refcnt), otherwise NULL
  */
-अटल अंतरभूत काष्ठा batadv_hard_अगरace *
-batadv_primary_अगर_get_selected(काष्ठा batadv_priv *bat_priv)
-अणु
-	काष्ठा batadv_hard_अगरace *hard_अगरace;
+static inline struct batadv_hard_iface *
+batadv_primary_if_get_selected(struct batadv_priv *bat_priv)
+{
+	struct batadv_hard_iface *hard_iface;
 
-	rcu_पढ़ो_lock();
-	hard_अगरace = rcu_dereference(bat_priv->primary_अगर);
-	अगर (!hard_अगरace)
-		जाओ out;
+	rcu_read_lock();
+	hard_iface = rcu_dereference(bat_priv->primary_if);
+	if (!hard_iface)
+		goto out;
 
-	अगर (!kref_get_unless_zero(&hard_अगरace->refcount))
-		hard_अगरace = शून्य;
+	if (!kref_get_unless_zero(&hard_iface->refcount))
+		hard_iface = NULL;
 
 out:
-	rcu_पढ़ो_unlock();
-	वापस hard_अगरace;
-पूर्ण
+	rcu_read_unlock();
+	return hard_iface;
+}
 
-#पूर्ण_अगर /* _NET_BATMAN_ADV_HARD_INTERFACE_H_ */
+#endif /* _NET_BATMAN_ADV_HARD_INTERFACE_H_ */

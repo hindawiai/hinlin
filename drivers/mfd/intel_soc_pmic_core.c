@@ -1,75 +1,74 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Intel SoC PMIC MFD Driver
  *
  * Copyright (C) 2013, 2014 Intel Corporation. All rights reserved.
  *
- * Author: Yang, Bin <bin.yang@पूर्णांकel.com>
- * Author: Zhu, Lejun <lejun.zhu@linux.पूर्णांकel.com>
+ * Author: Yang, Bin <bin.yang@intel.com>
+ * Author: Zhu, Lejun <lejun.zhu@linux.intel.com>
  */
 
-#समावेश <linux/acpi.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/module.h>
-#समावेश <linux/mfd/core.h>
-#समावेश <linux/mfd/पूर्णांकel_soc_pmic.h>
-#समावेश <linux/pwm.h>
-#समावेश <linux/regmap.h>
+#include <linux/acpi.h>
+#include <linux/i2c.h>
+#include <linux/interrupt.h>
+#include <linux/module.h>
+#include <linux/mfd/core.h>
+#include <linux/mfd/intel_soc_pmic.h>
+#include <linux/pwm.h>
+#include <linux/regmap.h>
 
-#समावेश "intel_soc_pmic_core.h"
+#include "intel_soc_pmic_core.h"
 
-/* Crystal Cove PMIC shares same ACPI ID between dअगरferent platक्रमms */
-#घोषणा BYT_CRC_HRV		2
-#घोषणा CHT_CRC_HRV		3
+/* Crystal Cove PMIC shares same ACPI ID between different platforms */
+#define BYT_CRC_HRV		2
+#define CHT_CRC_HRV		3
 
 /* PWM consumed by the Intel GFX */
-अटल काष्ठा pwm_lookup crc_pwm_lookup[] = अणु
+static struct pwm_lookup crc_pwm_lookup[] = {
 	PWM_LOOKUP("crystal_cove_pwm", 0, "0000:00:02.0", "pwm_pmic_backlight", 0, PWM_POLARITY_NORMAL),
-पूर्ण;
+};
 
-अटल पूर्णांक पूर्णांकel_soc_pmic_i2c_probe(काष्ठा i2c_client *i2c,
-				    स्थिर काष्ठा i2c_device_id *i2c_id)
-अणु
-	काष्ठा device *dev = &i2c->dev;
-	काष्ठा पूर्णांकel_soc_pmic_config *config;
-	काष्ठा पूर्णांकel_soc_pmic *pmic;
-	अचिन्हित दीर्घ दीर्घ hrv;
+static int intel_soc_pmic_i2c_probe(struct i2c_client *i2c,
+				    const struct i2c_device_id *i2c_id)
+{
+	struct device *dev = &i2c->dev;
+	struct intel_soc_pmic_config *config;
+	struct intel_soc_pmic *pmic;
+	unsigned long long hrv;
 	acpi_status status;
-	पूर्णांक ret;
+	int ret;
 
 	/*
-	 * There are 2 dअगरferent Crystal Cove PMICs a Bay Trail and Cherry
-	 * Trail version, use _HRV to dअगरferentiate between the 2.
+	 * There are 2 different Crystal Cove PMICs a Bay Trail and Cherry
+	 * Trail version, use _HRV to differentiate between the 2.
 	 */
-	status = acpi_evaluate_पूर्णांकeger(ACPI_HANDLE(dev), "_HRV", शून्य, &hrv);
-	अगर (ACPI_FAILURE(status)) अणु
+	status = acpi_evaluate_integer(ACPI_HANDLE(dev), "_HRV", NULL, &hrv);
+	if (ACPI_FAILURE(status)) {
 		dev_err(dev, "Failed to get PMIC hardware revision\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	चयन (hrv) अणु
-	हाल BYT_CRC_HRV:
-		config = &पूर्णांकel_soc_pmic_config_byt_crc;
-		अवरोध;
-	हाल CHT_CRC_HRV:
-		config = &पूर्णांकel_soc_pmic_config_cht_crc;
-		अवरोध;
-	शेष:
+	switch (hrv) {
+	case BYT_CRC_HRV:
+		config = &intel_soc_pmic_config_byt_crc;
+		break;
+	case CHT_CRC_HRV:
+		config = &intel_soc_pmic_config_cht_crc;
+		break;
+	default:
 		dev_warn(dev, "Unknown hardware rev %llu, assuming BYT\n", hrv);
-		config = &पूर्णांकel_soc_pmic_config_byt_crc;
-	पूर्ण
+		config = &intel_soc_pmic_config_byt_crc;
+	}
 
-	pmic = devm_kzalloc(dev, माप(*pmic), GFP_KERNEL);
-	अगर (!pmic)
-		वापस -ENOMEM;
+	pmic = devm_kzalloc(dev, sizeof(*pmic), GFP_KERNEL);
+	if (!pmic)
+		return -ENOMEM;
 
 	dev_set_drvdata(dev, pmic);
 
 	pmic->regmap = devm_regmap_init_i2c(i2c, config->regmap_config);
-	अगर (IS_ERR(pmic->regmap))
-		वापस PTR_ERR(pmic->regmap);
+	if (IS_ERR(pmic->regmap))
+		return PTR_ERR(pmic->regmap);
 
 	pmic->irq = i2c->irq;
 
@@ -77,101 +76,101 @@
 				  config->irq_flags | IRQF_ONESHOT,
 				  0, config->irq_chip,
 				  &pmic->irq_chip_data);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = enable_irq_wake(pmic->irq);
-	अगर (ret)
+	if (ret)
 		dev_warn(dev, "Can't enable IRQ as wake source: %d\n", ret);
 
-	/* Add lookup table क्रम crc-pwm */
+	/* Add lookup table for crc-pwm */
 	pwm_add_table(crc_pwm_lookup, ARRAY_SIZE(crc_pwm_lookup));
 
 	ret = mfd_add_devices(dev, -1, config->cell_dev,
-			      config->n_cell_devs, शून्य, 0,
-			      regmap_irq_get_करोमुख्य(pmic->irq_chip_data));
-	अगर (ret)
-		जाओ err_del_irq_chip;
+			      config->n_cell_devs, NULL, 0,
+			      regmap_irq_get_domain(pmic->irq_chip_data));
+	if (ret)
+		goto err_del_irq_chip;
 
-	वापस 0;
+	return 0;
 
 err_del_irq_chip:
 	regmap_del_irq_chip(pmic->irq, pmic->irq_chip_data);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक पूर्णांकel_soc_pmic_i2c_हटाओ(काष्ठा i2c_client *i2c)
-अणु
-	काष्ठा पूर्णांकel_soc_pmic *pmic = dev_get_drvdata(&i2c->dev);
+static int intel_soc_pmic_i2c_remove(struct i2c_client *i2c)
+{
+	struct intel_soc_pmic *pmic = dev_get_drvdata(&i2c->dev);
 
 	regmap_del_irq_chip(pmic->irq, pmic->irq_chip_data);
 
-	/* हटाओ crc-pwm lookup table */
-	pwm_हटाओ_table(crc_pwm_lookup, ARRAY_SIZE(crc_pwm_lookup));
+	/* remove crc-pwm lookup table */
+	pwm_remove_table(crc_pwm_lookup, ARRAY_SIZE(crc_pwm_lookup));
 
-	mfd_हटाओ_devices(&i2c->dev);
+	mfd_remove_devices(&i2c->dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम पूर्णांकel_soc_pmic_shutकरोwn(काष्ठा i2c_client *i2c)
-अणु
-	काष्ठा पूर्णांकel_soc_pmic *pmic = dev_get_drvdata(&i2c->dev);
-
-	disable_irq(pmic->irq);
-
-	वापस;
-पूर्ण
-
-#अगर defined(CONFIG_PM_SLEEP)
-अटल पूर्णांक पूर्णांकel_soc_pmic_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा पूर्णांकel_soc_pmic *pmic = dev_get_drvdata(dev);
+static void intel_soc_pmic_shutdown(struct i2c_client *i2c)
+{
+	struct intel_soc_pmic *pmic = dev_get_drvdata(&i2c->dev);
 
 	disable_irq(pmic->irq);
 
-	वापस 0;
-पूर्ण
+	return;
+}
 
-अटल पूर्णांक पूर्णांकel_soc_pmic_resume(काष्ठा device *dev)
-अणु
-	काष्ठा पूर्णांकel_soc_pmic *pmic = dev_get_drvdata(dev);
+#if defined(CONFIG_PM_SLEEP)
+static int intel_soc_pmic_suspend(struct device *dev)
+{
+	struct intel_soc_pmic *pmic = dev_get_drvdata(dev);
+
+	disable_irq(pmic->irq);
+
+	return 0;
+}
+
+static int intel_soc_pmic_resume(struct device *dev)
+{
+	struct intel_soc_pmic *pmic = dev_get_drvdata(dev);
 
 	enable_irq(pmic->irq);
 
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+	return 0;
+}
+#endif
 
-अटल SIMPLE_DEV_PM_OPS(पूर्णांकel_soc_pmic_pm_ops, पूर्णांकel_soc_pmic_suspend,
-			 पूर्णांकel_soc_pmic_resume);
+static SIMPLE_DEV_PM_OPS(intel_soc_pmic_pm_ops, intel_soc_pmic_suspend,
+			 intel_soc_pmic_resume);
 
-अटल स्थिर काष्ठा i2c_device_id पूर्णांकel_soc_pmic_i2c_id[] = अणु
-	अणु पूर्ण
-पूर्ण;
-MODULE_DEVICE_TABLE(i2c, पूर्णांकel_soc_pmic_i2c_id);
+static const struct i2c_device_id intel_soc_pmic_i2c_id[] = {
+	{ }
+};
+MODULE_DEVICE_TABLE(i2c, intel_soc_pmic_i2c_id);
 
-#अगर defined(CONFIG_ACPI)
-अटल स्थिर काष्ठा acpi_device_id पूर्णांकel_soc_pmic_acpi_match[] = अणु
-	अणु "INT33FD" पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
-MODULE_DEVICE_TABLE(acpi, पूर्णांकel_soc_pmic_acpi_match);
-#पूर्ण_अगर
+#if defined(CONFIG_ACPI)
+static const struct acpi_device_id intel_soc_pmic_acpi_match[] = {
+	{ "INT33FD" },
+	{ },
+};
+MODULE_DEVICE_TABLE(acpi, intel_soc_pmic_acpi_match);
+#endif
 
-अटल काष्ठा i2c_driver पूर्णांकel_soc_pmic_i2c_driver = अणु
-	.driver = अणु
+static struct i2c_driver intel_soc_pmic_i2c_driver = {
+	.driver = {
 		.name = "intel_soc_pmic_i2c",
-		.pm = &पूर्णांकel_soc_pmic_pm_ops,
-		.acpi_match_table = ACPI_PTR(पूर्णांकel_soc_pmic_acpi_match),
-	पूर्ण,
-	.probe = पूर्णांकel_soc_pmic_i2c_probe,
-	.हटाओ = पूर्णांकel_soc_pmic_i2c_हटाओ,
-	.id_table = पूर्णांकel_soc_pmic_i2c_id,
-	.shutकरोwn = पूर्णांकel_soc_pmic_shutकरोwn,
-पूर्ण;
+		.pm = &intel_soc_pmic_pm_ops,
+		.acpi_match_table = ACPI_PTR(intel_soc_pmic_acpi_match),
+	},
+	.probe = intel_soc_pmic_i2c_probe,
+	.remove = intel_soc_pmic_i2c_remove,
+	.id_table = intel_soc_pmic_i2c_id,
+	.shutdown = intel_soc_pmic_shutdown,
+};
 
-module_i2c_driver(पूर्णांकel_soc_pmic_i2c_driver);
+module_i2c_driver(intel_soc_pmic_i2c_driver);
 
 MODULE_DESCRIPTION("I2C driver for Intel SoC PMIC");
 MODULE_LICENSE("GPL v2");

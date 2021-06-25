@@ -1,782 +1,781 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  *  acpi_thermal.c - ACPI Thermal Zone Driver ($Revision: 41 $)
  *
- *  Copyright (C) 2001, 2002 Andy Grover <andrew.grover@पूर्णांकel.com>
- *  Copyright (C) 2001, 2002 Paul Diefenbaugh <paul.s.diefenbaugh@पूर्णांकel.com>
+ *  Copyright (C) 2001, 2002 Andy Grover <andrew.grover@intel.com>
+ *  Copyright (C) 2001, 2002 Paul Diefenbaugh <paul.s.diefenbaugh@intel.com>
  *
  *  This driver fully implements the ACPI thermal policy as described in the
- *  ACPI 2.0 Specअगरication.
+ *  ACPI 2.0 Specification.
  *
  *  TBD: 1. Implement passive cooling hysteresis.
- *       2. Enhance passive cooling (CPU) states/limit पूर्णांकerface to support
+ *       2. Enhance passive cooling (CPU) states/limit interface to support
  *          concepts of 'multiple limiters', upper/lower limits, etc.
  */
 
-#घोषणा pr_fmt(fmt) "ACPI: thermal: " fmt
+#define pr_fmt(fmt) "ACPI: thermal: " fmt
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/dmi.h>
-#समावेश <linux/init.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/types.h>
-#समावेश <linux/jअगरfies.h>
-#समावेश <linux/kmod.h>
-#समावेश <linux/reboot.h>
-#समावेश <linux/device.h>
-#समावेश <linux/thermal.h>
-#समावेश <linux/acpi.h>
-#समावेश <linux/workqueue.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/units.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/dmi.h>
+#include <linux/init.h>
+#include <linux/slab.h>
+#include <linux/types.h>
+#include <linux/jiffies.h>
+#include <linux/kmod.h>
+#include <linux/reboot.h>
+#include <linux/device.h>
+#include <linux/thermal.h>
+#include <linux/acpi.h>
+#include <linux/workqueue.h>
+#include <linux/uaccess.h>
+#include <linux/units.h>
 
-#घोषणा ACPI_THERMAL_CLASS		"thermal_zone"
-#घोषणा ACPI_THERMAL_DEVICE_NAME	"Thermal Zone"
-#घोषणा ACPI_THERMAL_NOTIFY_TEMPERATURE	0x80
-#घोषणा ACPI_THERMAL_NOTIFY_THRESHOLDS	0x81
-#घोषणा ACPI_THERMAL_NOTIFY_DEVICES	0x82
-#घोषणा ACPI_THERMAL_NOTIFY_CRITICAL	0xF0
-#घोषणा ACPI_THERMAL_NOTIFY_HOT		0xF1
-#घोषणा ACPI_THERMAL_MODE_ACTIVE	0x00
+#define ACPI_THERMAL_CLASS		"thermal_zone"
+#define ACPI_THERMAL_DEVICE_NAME	"Thermal Zone"
+#define ACPI_THERMAL_NOTIFY_TEMPERATURE	0x80
+#define ACPI_THERMAL_NOTIFY_THRESHOLDS	0x81
+#define ACPI_THERMAL_NOTIFY_DEVICES	0x82
+#define ACPI_THERMAL_NOTIFY_CRITICAL	0xF0
+#define ACPI_THERMAL_NOTIFY_HOT		0xF1
+#define ACPI_THERMAL_MODE_ACTIVE	0x00
 
-#घोषणा ACPI_THERMAL_MAX_ACTIVE	10
-#घोषणा ACPI_THERMAL_MAX_LIMIT_STR_LEN 65
+#define ACPI_THERMAL_MAX_ACTIVE	10
+#define ACPI_THERMAL_MAX_LIMIT_STR_LEN 65
 
 MODULE_AUTHOR("Paul Diefenbaugh");
 MODULE_DESCRIPTION("ACPI Thermal Zone Driver");
 MODULE_LICENSE("GPL");
 
-अटल पूर्णांक act;
-module_param(act, पूर्णांक, 0644);
+static int act;
+module_param(act, int, 0644);
 MODULE_PARM_DESC(act, "Disable or override all lowest active trip points.");
 
-अटल पूर्णांक crt;
-module_param(crt, पूर्णांक, 0644);
+static int crt;
+module_param(crt, int, 0644);
 MODULE_PARM_DESC(crt, "Disable or lower all critical trip points.");
 
-अटल पूर्णांक tzp;
-module_param(tzp, पूर्णांक, 0444);
+static int tzp;
+module_param(tzp, int, 0444);
 MODULE_PARM_DESC(tzp, "Thermal zone polling frequency, in 1/10 seconds.");
 
-अटल पूर्णांक nocrt;
-module_param(nocrt, पूर्णांक, 0);
+static int nocrt;
+module_param(nocrt, int, 0);
 MODULE_PARM_DESC(nocrt, "Set to take no action upon ACPI thermal zone critical trips points.");
 
-अटल पूर्णांक off;
-module_param(off, पूर्णांक, 0);
+static int off;
+module_param(off, int, 0);
 MODULE_PARM_DESC(off, "Set to disable ACPI thermal support.");
 
-अटल पूर्णांक psv;
-module_param(psv, पूर्णांक, 0644);
+static int psv;
+module_param(psv, int, 0644);
 MODULE_PARM_DESC(psv, "Disable or override all passive trip points.");
 
-अटल काष्ठा workqueue_काष्ठा *acpi_thermal_pm_queue;
+static struct workqueue_struct *acpi_thermal_pm_queue;
 
-अटल पूर्णांक acpi_thermal_add(काष्ठा acpi_device *device);
-अटल पूर्णांक acpi_thermal_हटाओ(काष्ठा acpi_device *device);
-अटल व्योम acpi_thermal_notअगरy(काष्ठा acpi_device *device, u32 event);
+static int acpi_thermal_add(struct acpi_device *device);
+static int acpi_thermal_remove(struct acpi_device *device);
+static void acpi_thermal_notify(struct acpi_device *device, u32 event);
 
-अटल स्थिर काष्ठा acpi_device_id  thermal_device_ids[] = अणु
-	अणुACPI_THERMAL_HID, 0पूर्ण,
-	अणु"", 0पूर्ण,
-पूर्ण;
+static const struct acpi_device_id  thermal_device_ids[] = {
+	{ACPI_THERMAL_HID, 0},
+	{"", 0},
+};
 MODULE_DEVICE_TABLE(acpi, thermal_device_ids);
 
-#अगर_घोषित CONFIG_PM_SLEEP
-अटल पूर्णांक acpi_thermal_suspend(काष्ठा device *dev);
-अटल पूर्णांक acpi_thermal_resume(काष्ठा device *dev);
-#अन्यथा
-#घोषणा acpi_thermal_suspend शून्य
-#घोषणा acpi_thermal_resume शून्य
-#पूर्ण_अगर
-अटल SIMPLE_DEV_PM_OPS(acpi_thermal_pm, acpi_thermal_suspend, acpi_thermal_resume);
+#ifdef CONFIG_PM_SLEEP
+static int acpi_thermal_suspend(struct device *dev);
+static int acpi_thermal_resume(struct device *dev);
+#else
+#define acpi_thermal_suspend NULL
+#define acpi_thermal_resume NULL
+#endif
+static SIMPLE_DEV_PM_OPS(acpi_thermal_pm, acpi_thermal_suspend, acpi_thermal_resume);
 
-अटल काष्ठा acpi_driver acpi_thermal_driver = अणु
+static struct acpi_driver acpi_thermal_driver = {
 	.name = "thermal",
 	.class = ACPI_THERMAL_CLASS,
 	.ids = thermal_device_ids,
-	.ops = अणु
+	.ops = {
 		.add = acpi_thermal_add,
-		.हटाओ = acpi_thermal_हटाओ,
-		.notअगरy = acpi_thermal_notअगरy,
-		पूर्ण,
+		.remove = acpi_thermal_remove,
+		.notify = acpi_thermal_notify,
+		},
 	.drv.pm = &acpi_thermal_pm,
-पूर्ण;
+};
 
-काष्ठा acpi_thermal_state अणु
+struct acpi_thermal_state {
 	u8 critical:1;
 	u8 hot:1;
 	u8 passive:1;
 	u8 active:1;
 	u8 reserved:4;
-	पूर्णांक active_index;
-पूर्ण;
+	int active_index;
+};
 
-काष्ठा acpi_thermal_state_flags अणु
+struct acpi_thermal_state_flags {
 	u8 valid:1;
 	u8 enabled:1;
 	u8 reserved:6;
-पूर्ण;
+};
 
-काष्ठा acpi_thermal_critical अणु
-	काष्ठा acpi_thermal_state_flags flags;
-	अचिन्हित दीर्घ temperature;
-पूर्ण;
+struct acpi_thermal_critical {
+	struct acpi_thermal_state_flags flags;
+	unsigned long temperature;
+};
 
-काष्ठा acpi_thermal_hot अणु
-	काष्ठा acpi_thermal_state_flags flags;
-	अचिन्हित दीर्घ temperature;
-पूर्ण;
+struct acpi_thermal_hot {
+	struct acpi_thermal_state_flags flags;
+	unsigned long temperature;
+};
 
-काष्ठा acpi_thermal_passive अणु
-	काष्ठा acpi_thermal_state_flags flags;
-	अचिन्हित दीर्घ temperature;
-	अचिन्हित दीर्घ tc1;
-	अचिन्हित दीर्घ tc2;
-	अचिन्हित दीर्घ tsp;
-	काष्ठा acpi_handle_list devices;
-पूर्ण;
+struct acpi_thermal_passive {
+	struct acpi_thermal_state_flags flags;
+	unsigned long temperature;
+	unsigned long tc1;
+	unsigned long tc2;
+	unsigned long tsp;
+	struct acpi_handle_list devices;
+};
 
-काष्ठा acpi_thermal_active अणु
-	काष्ठा acpi_thermal_state_flags flags;
-	अचिन्हित दीर्घ temperature;
-	काष्ठा acpi_handle_list devices;
-पूर्ण;
+struct acpi_thermal_active {
+	struct acpi_thermal_state_flags flags;
+	unsigned long temperature;
+	struct acpi_handle_list devices;
+};
 
-काष्ठा acpi_thermal_trips अणु
-	काष्ठा acpi_thermal_critical critical;
-	काष्ठा acpi_thermal_hot hot;
-	काष्ठा acpi_thermal_passive passive;
-	काष्ठा acpi_thermal_active active[ACPI_THERMAL_MAX_ACTIVE];
-पूर्ण;
+struct acpi_thermal_trips {
+	struct acpi_thermal_critical critical;
+	struct acpi_thermal_hot hot;
+	struct acpi_thermal_passive passive;
+	struct acpi_thermal_active active[ACPI_THERMAL_MAX_ACTIVE];
+};
 
-काष्ठा acpi_thermal_flags अणु
+struct acpi_thermal_flags {
 	u8 cooling_mode:1;	/* _SCP */
 	u8 devices:1;		/* _TZD */
 	u8 reserved:6;
-पूर्ण;
+};
 
-काष्ठा acpi_thermal अणु
-	काष्ठा acpi_device * device;
+struct acpi_thermal {
+	struct acpi_device * device;
 	acpi_bus_id name;
-	अचिन्हित दीर्घ temperature;
-	अचिन्हित दीर्घ last_temperature;
-	अचिन्हित दीर्घ polling_frequency;
-	अस्थिर u8 zombie;
-	काष्ठा acpi_thermal_flags flags;
-	काष्ठा acpi_thermal_state state;
-	काष्ठा acpi_thermal_trips trips;
-	काष्ठा acpi_handle_list devices;
-	काष्ठा thermal_zone_device *thermal_zone;
-	पूर्णांक kelvin_offset;	/* in millidegrees */
-	काष्ठा work_काष्ठा thermal_check_work;
-	काष्ठा mutex thermal_check_lock;
+	unsigned long temperature;
+	unsigned long last_temperature;
+	unsigned long polling_frequency;
+	volatile u8 zombie;
+	struct acpi_thermal_flags flags;
+	struct acpi_thermal_state state;
+	struct acpi_thermal_trips trips;
+	struct acpi_handle_list devices;
+	struct thermal_zone_device *thermal_zone;
+	int kelvin_offset;	/* in millidegrees */
+	struct work_struct thermal_check_work;
+	struct mutex thermal_check_lock;
 	refcount_t thermal_check_count;
-पूर्ण;
+};
 
 /* --------------------------------------------------------------------------
                              Thermal Zone Management
    -------------------------------------------------------------------------- */
 
-अटल पूर्णांक acpi_thermal_get_temperature(काष्ठा acpi_thermal *tz)
-अणु
+static int acpi_thermal_get_temperature(struct acpi_thermal *tz)
+{
 	acpi_status status = AE_OK;
-	अचिन्हित दीर्घ दीर्घ पंचांगp;
+	unsigned long long tmp;
 
-	अगर (!tz)
-		वापस -EINVAL;
+	if (!tz)
+		return -EINVAL;
 
 	tz->last_temperature = tz->temperature;
 
-	status = acpi_evaluate_पूर्णांकeger(tz->device->handle, "_TMP", शून्य, &पंचांगp);
-	अगर (ACPI_FAILURE(status))
-		वापस -ENODEV;
+	status = acpi_evaluate_integer(tz->device->handle, "_TMP", NULL, &tmp);
+	if (ACPI_FAILURE(status))
+		return -ENODEV;
 
-	tz->temperature = पंचांगp;
+	tz->temperature = tmp;
 
 	acpi_handle_debug(tz->device->handle, "Temperature is %lu dK\n",
 			  tz->temperature);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक acpi_thermal_get_polling_frequency(काष्ठा acpi_thermal *tz)
-अणु
+static int acpi_thermal_get_polling_frequency(struct acpi_thermal *tz)
+{
 	acpi_status status = AE_OK;
-	अचिन्हित दीर्घ दीर्घ पंचांगp;
+	unsigned long long tmp;
 
-	अगर (!tz)
-		वापस -EINVAL;
+	if (!tz)
+		return -EINVAL;
 
-	status = acpi_evaluate_पूर्णांकeger(tz->device->handle, "_TZP", शून्य, &पंचांगp);
-	अगर (ACPI_FAILURE(status))
-		वापस -ENODEV;
+	status = acpi_evaluate_integer(tz->device->handle, "_TZP", NULL, &tmp);
+	if (ACPI_FAILURE(status))
+		return -ENODEV;
 
-	tz->polling_frequency = पंचांगp;
+	tz->polling_frequency = tmp;
 	acpi_handle_debug(tz->device->handle, "Polling frequency is %lu dS\n",
 			  tz->polling_frequency);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक acpi_thermal_set_cooling_mode(काष्ठा acpi_thermal *tz, पूर्णांक mode)
-अणु
-	अगर (!tz)
-		वापस -EINVAL;
+static int acpi_thermal_set_cooling_mode(struct acpi_thermal *tz, int mode)
+{
+	if (!tz)
+		return -EINVAL;
 
-	अगर (ACPI_FAILURE(acpi_execute_simple_method(tz->device->handle,
+	if (ACPI_FAILURE(acpi_execute_simple_method(tz->device->handle,
 						    "_SCP", mode)))
-		वापस -ENODEV;
+		return -ENODEV;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#घोषणा ACPI_TRIPS_CRITICAL	0x01
-#घोषणा ACPI_TRIPS_HOT		0x02
-#घोषणा ACPI_TRIPS_PASSIVE	0x04
-#घोषणा ACPI_TRIPS_ACTIVE	0x08
-#घोषणा ACPI_TRIPS_DEVICES	0x10
+#define ACPI_TRIPS_CRITICAL	0x01
+#define ACPI_TRIPS_HOT		0x02
+#define ACPI_TRIPS_PASSIVE	0x04
+#define ACPI_TRIPS_ACTIVE	0x08
+#define ACPI_TRIPS_DEVICES	0x10
 
-#घोषणा ACPI_TRIPS_REFRESH_THRESHOLDS	(ACPI_TRIPS_PASSIVE | ACPI_TRIPS_ACTIVE)
-#घोषणा ACPI_TRIPS_REFRESH_DEVICES	ACPI_TRIPS_DEVICES
+#define ACPI_TRIPS_REFRESH_THRESHOLDS	(ACPI_TRIPS_PASSIVE | ACPI_TRIPS_ACTIVE)
+#define ACPI_TRIPS_REFRESH_DEVICES	ACPI_TRIPS_DEVICES
 
-#घोषणा ACPI_TRIPS_INIT      (ACPI_TRIPS_CRITICAL | ACPI_TRIPS_HOT |	\
+#define ACPI_TRIPS_INIT      (ACPI_TRIPS_CRITICAL | ACPI_TRIPS_HOT |	\
 			      ACPI_TRIPS_PASSIVE | ACPI_TRIPS_ACTIVE |	\
 			      ACPI_TRIPS_DEVICES)
 
 /*
- * This exception is thrown out in two हालs:
- * 1.An invalid trip poपूर्णांक becomes invalid or a valid trip poपूर्णांक becomes invalid
+ * This exception is thrown out in two cases:
+ * 1.An invalid trip point becomes invalid or a valid trip point becomes invalid
  *   when re-evaluating the AML code.
  * 2.TODO: Devices listed in _PSL, _ALx, _TZD may change.
  *   We need to re-bind the cooling devices of a thermal zone when this occurs.
  */
-#घोषणा ACPI_THERMAL_TRIPS_EXCEPTION(flags, tz, str)	\
-करो अणु	\
-	अगर (flags != ACPI_TRIPS_INIT)	\
+#define ACPI_THERMAL_TRIPS_EXCEPTION(flags, tz, str)	\
+do {	\
+	if (flags != ACPI_TRIPS_INIT)	\
 		acpi_handle_info(tz->device->handle,	\
 		"ACPI thermal trip point %s changed\n"	\
 		"Please report to linux-acpi@vger.kernel.org\n", str); \
-पूर्ण जबतक (0)
+} while (0)
 
-अटल पूर्णांक acpi_thermal_trips_update(काष्ठा acpi_thermal *tz, पूर्णांक flag)
-अणु
+static int acpi_thermal_trips_update(struct acpi_thermal *tz, int flag)
+{
 	acpi_status status = AE_OK;
-	अचिन्हित दीर्घ दीर्घ पंचांगp;
-	काष्ठा acpi_handle_list devices;
-	पूर्णांक valid = 0;
-	पूर्णांक i;
+	unsigned long long tmp;
+	struct acpi_handle_list devices;
+	int valid = 0;
+	int i;
 
-	/* Critical Shutकरोwn */
-	अगर (flag & ACPI_TRIPS_CRITICAL) अणु
-		status = acpi_evaluate_पूर्णांकeger(tz->device->handle,
-				"_CRT", शून्य, &पंचांगp);
-		tz->trips.critical.temperature = पंचांगp;
+	/* Critical Shutdown */
+	if (flag & ACPI_TRIPS_CRITICAL) {
+		status = acpi_evaluate_integer(tz->device->handle,
+				"_CRT", NULL, &tmp);
+		tz->trips.critical.temperature = tmp;
 		/*
-		 * Treat मुक्तzing temperatures as invalid as well; some
-		 * BIOSes वापस really low values and cause reboots at startup.
-		 * Below zero (Celsius) values clearly aren't right क्रम sure..
+		 * Treat freezing temperatures as invalid as well; some
+		 * BIOSes return really low values and cause reboots at startup.
+		 * Below zero (Celsius) values clearly aren't right for sure..
 		 * ... so lets discard those as invalid.
 		 */
-		अगर (ACPI_FAILURE(status)) अणु
+		if (ACPI_FAILURE(status)) {
 			tz->trips.critical.flags.valid = 0;
 			acpi_handle_debug(tz->device->handle,
 					  "No critical threshold\n");
-		पूर्ण अन्यथा अगर (पंचांगp <= 2732) अणु
+		} else if (tmp <= 2732) {
 			pr_info(FW_BUG "Invalid critical threshold (%llu)\n",
-				पंचांगp);
+				tmp);
 			tz->trips.critical.flags.valid = 0;
-		पूर्ण अन्यथा अणु
+		} else {
 			tz->trips.critical.flags.valid = 1;
 			acpi_handle_debug(tz->device->handle,
 					  "Found critical threshold [%lu]\n",
 					  tz->trips.critical.temperature);
-		पूर्ण
-		अगर (tz->trips.critical.flags.valid == 1) अणु
-			अगर (crt == -1) अणु
+		}
+		if (tz->trips.critical.flags.valid == 1) {
+			if (crt == -1) {
 				tz->trips.critical.flags.valid = 0;
-			पूर्ण अन्यथा अगर (crt > 0) अणु
-				अचिन्हित दीर्घ crt_k = celsius_to_deci_kelvin(crt);
+			} else if (crt > 0) {
+				unsigned long crt_k = celsius_to_deci_kelvin(crt);
 
 				/*
 				 * Allow override critical threshold
 				 */
-				अगर (crt_k > tz->trips.critical.temperature)
+				if (crt_k > tz->trips.critical.temperature)
 					pr_info("Critical threshold %d C\n", crt);
 
 				tz->trips.critical.temperature = crt_k;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
 	/* Critical Sleep (optional) */
-	अगर (flag & ACPI_TRIPS_HOT) अणु
-		status = acpi_evaluate_पूर्णांकeger(tz->device->handle,
-				"_HOT", शून्य, &पंचांगp);
-		अगर (ACPI_FAILURE(status)) अणु
+	if (flag & ACPI_TRIPS_HOT) {
+		status = acpi_evaluate_integer(tz->device->handle,
+				"_HOT", NULL, &tmp);
+		if (ACPI_FAILURE(status)) {
 			tz->trips.hot.flags.valid = 0;
 			acpi_handle_debug(tz->device->handle,
 					  "No hot threshold\n");
-		पूर्ण अन्यथा अणु
-			tz->trips.hot.temperature = पंचांगp;
+		} else {
+			tz->trips.hot.temperature = tmp;
 			tz->trips.hot.flags.valid = 1;
 			acpi_handle_debug(tz->device->handle,
 					  "Found hot threshold [%lu]\n",
 					  tz->trips.hot.temperature);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/* Passive (optional) */
-	अगर (((flag & ACPI_TRIPS_PASSIVE) && tz->trips.passive.flags.valid) ||
-		(flag == ACPI_TRIPS_INIT)) अणु
+	if (((flag & ACPI_TRIPS_PASSIVE) && tz->trips.passive.flags.valid) ||
+		(flag == ACPI_TRIPS_INIT)) {
 		valid = tz->trips.passive.flags.valid;
-		अगर (psv == -1) अणु
+		if (psv == -1) {
 			status = AE_SUPPORT;
-		पूर्ण अन्यथा अगर (psv > 0) अणु
-			पंचांगp = celsius_to_deci_kelvin(psv);
+		} else if (psv > 0) {
+			tmp = celsius_to_deci_kelvin(psv);
 			status = AE_OK;
-		पूर्ण अन्यथा अणु
-			status = acpi_evaluate_पूर्णांकeger(tz->device->handle,
-				"_PSV", शून्य, &पंचांगp);
-		पूर्ण
+		} else {
+			status = acpi_evaluate_integer(tz->device->handle,
+				"_PSV", NULL, &tmp);
+		}
 
-		अगर (ACPI_FAILURE(status))
+		if (ACPI_FAILURE(status))
 			tz->trips.passive.flags.valid = 0;
-		अन्यथा अणु
-			tz->trips.passive.temperature = पंचांगp;
+		else {
+			tz->trips.passive.temperature = tmp;
 			tz->trips.passive.flags.valid = 1;
-			अगर (flag == ACPI_TRIPS_INIT) अणु
-				status = acpi_evaluate_पूर्णांकeger(
+			if (flag == ACPI_TRIPS_INIT) {
+				status = acpi_evaluate_integer(
 						tz->device->handle, "_TC1",
-						शून्य, &पंचांगp);
-				अगर (ACPI_FAILURE(status))
+						NULL, &tmp);
+				if (ACPI_FAILURE(status))
 					tz->trips.passive.flags.valid = 0;
-				अन्यथा
-					tz->trips.passive.tc1 = पंचांगp;
-				status = acpi_evaluate_पूर्णांकeger(
+				else
+					tz->trips.passive.tc1 = tmp;
+				status = acpi_evaluate_integer(
 						tz->device->handle, "_TC2",
-						शून्य, &पंचांगp);
-				अगर (ACPI_FAILURE(status))
+						NULL, &tmp);
+				if (ACPI_FAILURE(status))
 					tz->trips.passive.flags.valid = 0;
-				अन्यथा
-					tz->trips.passive.tc2 = पंचांगp;
-				status = acpi_evaluate_पूर्णांकeger(
+				else
+					tz->trips.passive.tc2 = tmp;
+				status = acpi_evaluate_integer(
 						tz->device->handle, "_TSP",
-						शून्य, &पंचांगp);
-				अगर (ACPI_FAILURE(status))
+						NULL, &tmp);
+				if (ACPI_FAILURE(status))
 					tz->trips.passive.flags.valid = 0;
-				अन्यथा
-					tz->trips.passive.tsp = पंचांगp;
-			पूर्ण
-		पूर्ण
-	पूर्ण
-	अगर ((flag & ACPI_TRIPS_DEVICES) && tz->trips.passive.flags.valid) अणु
-		स_रखो(&devices, 0, माप(काष्ठा acpi_handle_list));
+				else
+					tz->trips.passive.tsp = tmp;
+			}
+		}
+	}
+	if ((flag & ACPI_TRIPS_DEVICES) && tz->trips.passive.flags.valid) {
+		memset(&devices, 0, sizeof(struct acpi_handle_list));
 		status = acpi_evaluate_reference(tz->device->handle, "_PSL",
-							शून्य, &devices);
-		अगर (ACPI_FAILURE(status)) अणु
+							NULL, &devices);
+		if (ACPI_FAILURE(status)) {
 			acpi_handle_info(tz->device->handle,
 					 "Invalid passive threshold\n");
 			tz->trips.passive.flags.valid = 0;
-		पूर्ण
-		अन्यथा
+		}
+		else
 			tz->trips.passive.flags.valid = 1;
 
-		अगर (स_भेद(&tz->trips.passive.devices, &devices,
-				माप(काष्ठा acpi_handle_list))) अणु
-			स_नकल(&tz->trips.passive.devices, &devices,
-				माप(काष्ठा acpi_handle_list));
+		if (memcmp(&tz->trips.passive.devices, &devices,
+				sizeof(struct acpi_handle_list))) {
+			memcpy(&tz->trips.passive.devices, &devices,
+				sizeof(struct acpi_handle_list));
 			ACPI_THERMAL_TRIPS_EXCEPTION(flag, tz, "device");
-		पूर्ण
-	पूर्ण
-	अगर ((flag & ACPI_TRIPS_PASSIVE) || (flag & ACPI_TRIPS_DEVICES)) अणु
-		अगर (valid != tz->trips.passive.flags.valid)
+		}
+	}
+	if ((flag & ACPI_TRIPS_PASSIVE) || (flag & ACPI_TRIPS_DEVICES)) {
+		if (valid != tz->trips.passive.flags.valid)
 				ACPI_THERMAL_TRIPS_EXCEPTION(flag, tz, "state");
-	पूर्ण
+	}
 
 	/* Active (optional) */
-	क्रम (i = 0; i < ACPI_THERMAL_MAX_ACTIVE; i++) अणु
-		अक्षर name[5] = अणु '_', 'A', 'C', ('0' + i), '\0' पूर्ण;
+	for (i = 0; i < ACPI_THERMAL_MAX_ACTIVE; i++) {
+		char name[5] = { '_', 'A', 'C', ('0' + i), '\0' };
 		valid = tz->trips.active[i].flags.valid;
 
-		अगर (act == -1)
-			अवरोध; /* disable all active trip poपूर्णांकs */
+		if (act == -1)
+			break; /* disable all active trip points */
 
-		अगर ((flag == ACPI_TRIPS_INIT) || ((flag & ACPI_TRIPS_ACTIVE) &&
-			tz->trips.active[i].flags.valid)) अणु
-			status = acpi_evaluate_पूर्णांकeger(tz->device->handle,
-							name, शून्य, &पंचांगp);
-			अगर (ACPI_FAILURE(status)) अणु
+		if ((flag == ACPI_TRIPS_INIT) || ((flag & ACPI_TRIPS_ACTIVE) &&
+			tz->trips.active[i].flags.valid)) {
+			status = acpi_evaluate_integer(tz->device->handle,
+							name, NULL, &tmp);
+			if (ACPI_FAILURE(status)) {
 				tz->trips.active[i].flags.valid = 0;
-				अगर (i == 0)
-					अवरोध;
-				अगर (act <= 0)
-					अवरोध;
-				अगर (i == 1)
+				if (i == 0)
+					break;
+				if (act <= 0)
+					break;
+				if (i == 1)
 					tz->trips.active[0].temperature =
 						celsius_to_deci_kelvin(act);
-				अन्यथा
+				else
 					/*
 					 * Don't allow override higher than
-					 * the next higher trip poपूर्णांक
+					 * the next higher trip point
 					 */
 					tz->trips.active[i - 1].temperature =
 						(tz->trips.active[i - 2].temperature <
 						celsius_to_deci_kelvin(act) ?
 						tz->trips.active[i - 2].temperature :
 						celsius_to_deci_kelvin(act));
-				अवरोध;
-			पूर्ण अन्यथा अणु
-				tz->trips.active[i].temperature = पंचांगp;
+				break;
+			} else {
+				tz->trips.active[i].temperature = tmp;
 				tz->trips.active[i].flags.valid = 1;
-			पूर्ण
-		पूर्ण
+			}
+		}
 
 		name[2] = 'L';
-		अगर ((flag & ACPI_TRIPS_DEVICES) && tz->trips.active[i].flags.valid ) अणु
-			स_रखो(&devices, 0, माप(काष्ठा acpi_handle_list));
+		if ((flag & ACPI_TRIPS_DEVICES) && tz->trips.active[i].flags.valid ) {
+			memset(&devices, 0, sizeof(struct acpi_handle_list));
 			status = acpi_evaluate_reference(tz->device->handle,
-						name, शून्य, &devices);
-			अगर (ACPI_FAILURE(status)) अणु
+						name, NULL, &devices);
+			if (ACPI_FAILURE(status)) {
 				acpi_handle_info(tz->device->handle,
 						 "Invalid active%d threshold\n", i);
 				tz->trips.active[i].flags.valid = 0;
-			पूर्ण
-			अन्यथा
+			}
+			else
 				tz->trips.active[i].flags.valid = 1;
 
-			अगर (स_भेद(&tz->trips.active[i].devices, &devices,
-					माप(काष्ठा acpi_handle_list))) अणु
-				स_नकल(&tz->trips.active[i].devices, &devices,
-					माप(काष्ठा acpi_handle_list));
+			if (memcmp(&tz->trips.active[i].devices, &devices,
+					sizeof(struct acpi_handle_list))) {
+				memcpy(&tz->trips.active[i].devices, &devices,
+					sizeof(struct acpi_handle_list));
 				ACPI_THERMAL_TRIPS_EXCEPTION(flag, tz, "device");
-			पूर्ण
-		पूर्ण
-		अगर ((flag & ACPI_TRIPS_ACTIVE) || (flag & ACPI_TRIPS_DEVICES))
-			अगर (valid != tz->trips.active[i].flags.valid)
+			}
+		}
+		if ((flag & ACPI_TRIPS_ACTIVE) || (flag & ACPI_TRIPS_DEVICES))
+			if (valid != tz->trips.active[i].flags.valid)
 				ACPI_THERMAL_TRIPS_EXCEPTION(flag, tz, "state");
 
-		अगर (!tz->trips.active[i].flags.valid)
-			अवरोध;
-	पूर्ण
+		if (!tz->trips.active[i].flags.valid)
+			break;
+	}
 
-	अगर (flag & ACPI_TRIPS_DEVICES) अणु
-		स_रखो(&devices, 0, माप(devices));
+	if (flag & ACPI_TRIPS_DEVICES) {
+		memset(&devices, 0, sizeof(devices));
 		status = acpi_evaluate_reference(tz->device->handle, "_TZD",
-						शून्य, &devices);
-		अगर (ACPI_SUCCESS(status)
-		    && स_भेद(&tz->devices, &devices, माप(devices))) अणु
+						NULL, &devices);
+		if (ACPI_SUCCESS(status)
+		    && memcmp(&tz->devices, &devices, sizeof(devices))) {
 			tz->devices = devices;
 			ACPI_THERMAL_TRIPS_EXCEPTION(flag, tz, "device");
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक acpi_thermal_get_trip_poपूर्णांकs(काष्ठा acpi_thermal *tz)
-अणु
-	पूर्णांक i, valid, ret = acpi_thermal_trips_update(tz, ACPI_TRIPS_INIT);
+static int acpi_thermal_get_trip_points(struct acpi_thermal *tz)
+{
+	int i, valid, ret = acpi_thermal_trips_update(tz, ACPI_TRIPS_INIT);
 
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	valid = tz->trips.critical.flags.valid |
 		tz->trips.hot.flags.valid |
 		tz->trips.passive.flags.valid;
 
-	क्रम (i = 0; i < ACPI_THERMAL_MAX_ACTIVE; i++)
+	for (i = 0; i < ACPI_THERMAL_MAX_ACTIVE; i++)
 		valid |= tz->trips.active[i].flags.valid;
 
-	अगर (!valid) अणु
+	if (!valid) {
 		pr_warn(FW_BUG "No valid trip found\n");
-		वापस -ENODEV;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return -ENODEV;
+	}
+	return 0;
+}
 
-/* sys I/F क्रम generic thermal sysfs support */
+/* sys I/F for generic thermal sysfs support */
 
-अटल पूर्णांक thermal_get_temp(काष्ठा thermal_zone_device *thermal, पूर्णांक *temp)
-अणु
-	काष्ठा acpi_thermal *tz = thermal->devdata;
-	पूर्णांक result;
+static int thermal_get_temp(struct thermal_zone_device *thermal, int *temp)
+{
+	struct acpi_thermal *tz = thermal->devdata;
+	int result;
 
-	अगर (!tz)
-		वापस -EINVAL;
+	if (!tz)
+		return -EINVAL;
 
 	result = acpi_thermal_get_temperature(tz);
-	अगर (result)
-		वापस result;
+	if (result)
+		return result;
 
 	*temp = deci_kelvin_to_millicelsius_with_offset(tz->temperature,
 							tz->kelvin_offset);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक thermal_get_trip_type(काष्ठा thermal_zone_device *thermal,
-				 पूर्णांक trip, क्रमागत thermal_trip_type *type)
-अणु
-	काष्ठा acpi_thermal *tz = thermal->devdata;
-	पूर्णांक i;
+static int thermal_get_trip_type(struct thermal_zone_device *thermal,
+				 int trip, enum thermal_trip_type *type)
+{
+	struct acpi_thermal *tz = thermal->devdata;
+	int i;
 
-	अगर (!tz || trip < 0)
-		वापस -EINVAL;
+	if (!tz || trip < 0)
+		return -EINVAL;
 
-	अगर (tz->trips.critical.flags.valid) अणु
-		अगर (!trip) अणु
+	if (tz->trips.critical.flags.valid) {
+		if (!trip) {
 			*type = THERMAL_TRIP_CRITICAL;
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 		trip--;
-	पूर्ण
+	}
 
-	अगर (tz->trips.hot.flags.valid) अणु
-		अगर (!trip) अणु
+	if (tz->trips.hot.flags.valid) {
+		if (!trip) {
 			*type = THERMAL_TRIP_HOT;
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 		trip--;
-	पूर्ण
+	}
 
-	अगर (tz->trips.passive.flags.valid) अणु
-		अगर (!trip) अणु
+	if (tz->trips.passive.flags.valid) {
+		if (!trip) {
 			*type = THERMAL_TRIP_PASSIVE;
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 		trip--;
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < ACPI_THERMAL_MAX_ACTIVE &&
-		tz->trips.active[i].flags.valid; i++) अणु
-		अगर (!trip) अणु
+	for (i = 0; i < ACPI_THERMAL_MAX_ACTIVE &&
+		tz->trips.active[i].flags.valid; i++) {
+		if (!trip) {
 			*type = THERMAL_TRIP_ACTIVE;
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 		trip--;
-	पूर्ण
+	}
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल पूर्णांक thermal_get_trip_temp(काष्ठा thermal_zone_device *thermal,
-				 पूर्णांक trip, पूर्णांक *temp)
-अणु
-	काष्ठा acpi_thermal *tz = thermal->devdata;
-	पूर्णांक i;
+static int thermal_get_trip_temp(struct thermal_zone_device *thermal,
+				 int trip, int *temp)
+{
+	struct acpi_thermal *tz = thermal->devdata;
+	int i;
 
-	अगर (!tz || trip < 0)
-		वापस -EINVAL;
+	if (!tz || trip < 0)
+		return -EINVAL;
 
-	अगर (tz->trips.critical.flags.valid) अणु
-		अगर (!trip) अणु
+	if (tz->trips.critical.flags.valid) {
+		if (!trip) {
 			*temp = deci_kelvin_to_millicelsius_with_offset(
 				tz->trips.critical.temperature,
 				tz->kelvin_offset);
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 		trip--;
-	पूर्ण
+	}
 
-	अगर (tz->trips.hot.flags.valid) अणु
-		अगर (!trip) अणु
+	if (tz->trips.hot.flags.valid) {
+		if (!trip) {
 			*temp = deci_kelvin_to_millicelsius_with_offset(
 				tz->trips.hot.temperature,
 				tz->kelvin_offset);
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 		trip--;
-	पूर्ण
+	}
 
-	अगर (tz->trips.passive.flags.valid) अणु
-		अगर (!trip) अणु
+	if (tz->trips.passive.flags.valid) {
+		if (!trip) {
 			*temp = deci_kelvin_to_millicelsius_with_offset(
 				tz->trips.passive.temperature,
 				tz->kelvin_offset);
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 		trip--;
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < ACPI_THERMAL_MAX_ACTIVE &&
-		tz->trips.active[i].flags.valid; i++) अणु
-		अगर (!trip) अणु
+	for (i = 0; i < ACPI_THERMAL_MAX_ACTIVE &&
+		tz->trips.active[i].flags.valid; i++) {
+		if (!trip) {
 			*temp = deci_kelvin_to_millicelsius_with_offset(
 				tz->trips.active[i].temperature,
 				tz->kelvin_offset);
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 		trip--;
-	पूर्ण
+	}
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल पूर्णांक thermal_get_crit_temp(काष्ठा thermal_zone_device *thermal,
-				पूर्णांक *temperature)
-अणु
-	काष्ठा acpi_thermal *tz = thermal->devdata;
+static int thermal_get_crit_temp(struct thermal_zone_device *thermal,
+				int *temperature)
+{
+	struct acpi_thermal *tz = thermal->devdata;
 
-	अगर (tz->trips.critical.flags.valid) अणु
+	if (tz->trips.critical.flags.valid) {
 		*temperature = deci_kelvin_to_millicelsius_with_offset(
 				tz->trips.critical.temperature,
 				tz->kelvin_offset);
-		वापस 0;
-	पूर्ण अन्यथा
-		वापस -EINVAL;
-पूर्ण
+		return 0;
+	} else
+		return -EINVAL;
+}
 
-अटल पूर्णांक thermal_get_trend(काष्ठा thermal_zone_device *thermal,
-				पूर्णांक trip, क्रमागत thermal_trend *trend)
-अणु
-	काष्ठा acpi_thermal *tz = thermal->devdata;
-	क्रमागत thermal_trip_type type;
-	पूर्णांक i;
+static int thermal_get_trend(struct thermal_zone_device *thermal,
+				int trip, enum thermal_trend *trend)
+{
+	struct acpi_thermal *tz = thermal->devdata;
+	enum thermal_trip_type type;
+	int i;
 
-	अगर (thermal_get_trip_type(thermal, trip, &type))
-		वापस -EINVAL;
+	if (thermal_get_trip_type(thermal, trip, &type))
+		return -EINVAL;
 
-	अगर (type == THERMAL_TRIP_ACTIVE) अणु
-		पूर्णांक trip_temp;
-		पूर्णांक temp = deci_kelvin_to_millicelsius_with_offset(
+	if (type == THERMAL_TRIP_ACTIVE) {
+		int trip_temp;
+		int temp = deci_kelvin_to_millicelsius_with_offset(
 					tz->temperature, tz->kelvin_offset);
-		अगर (thermal_get_trip_temp(thermal, trip, &trip_temp))
-			वापस -EINVAL;
+		if (thermal_get_trip_temp(thermal, trip, &trip_temp))
+			return -EINVAL;
 
-		अगर (temp > trip_temp) अणु
+		if (temp > trip_temp) {
 			*trend = THERMAL_TREND_RAISING;
-			वापस 0;
-		पूर्ण अन्यथा अणु
-			/* Fall back on शेष trend */
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return 0;
+		} else {
+			/* Fall back on default trend */
+			return -EINVAL;
+		}
+	}
 
 	/*
-	 * tz->temperature has alपढ़ोy been updated by generic thermal layer,
-	 * beक्रमe this callback being invoked
+	 * tz->temperature has already been updated by generic thermal layer,
+	 * before this callback being invoked
 	 */
 	i = (tz->trips.passive.tc1 * (tz->temperature - tz->last_temperature))
 		+ (tz->trips.passive.tc2
 		* (tz->temperature - tz->trips.passive.temperature));
 
-	अगर (i > 0)
+	if (i > 0)
 		*trend = THERMAL_TREND_RAISING;
-	अन्यथा अगर (i < 0)
+	else if (i < 0)
 		*trend = THERMAL_TREND_DROPPING;
-	अन्यथा
+	else
 		*trend = THERMAL_TREND_STABLE;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम acpi_thermal_zone_device_hot(काष्ठा thermal_zone_device *thermal)
-अणु
-	काष्ठा acpi_thermal *tz = thermal->devdata;
+static void acpi_thermal_zone_device_hot(struct thermal_zone_device *thermal)
+{
+	struct acpi_thermal *tz = thermal->devdata;
 
 	acpi_bus_generate_netlink_event(tz->device->pnp.device_class,
 					dev_name(&tz->device->dev),
 					ACPI_THERMAL_NOTIFY_HOT, 1);
-पूर्ण
+}
 
-अटल व्योम acpi_thermal_zone_device_critical(काष्ठा thermal_zone_device *thermal)
-अणु
-	काष्ठा acpi_thermal *tz = thermal->devdata;
+static void acpi_thermal_zone_device_critical(struct thermal_zone_device *thermal)
+{
+	struct acpi_thermal *tz = thermal->devdata;
 
 	acpi_bus_generate_netlink_event(tz->device->pnp.device_class,
 					dev_name(&tz->device->dev),
 					ACPI_THERMAL_NOTIFY_CRITICAL, 1);
 
 	thermal_zone_device_critical(thermal);
-पूर्ण
+}
 
-अटल पूर्णांक acpi_thermal_cooling_device_cb(काष्ठा thermal_zone_device *thermal,
-					काष्ठा thermal_cooling_device *cdev,
+static int acpi_thermal_cooling_device_cb(struct thermal_zone_device *thermal,
+					struct thermal_cooling_device *cdev,
 					bool bind)
-अणु
-	काष्ठा acpi_device *device = cdev->devdata;
-	काष्ठा acpi_thermal *tz = thermal->devdata;
-	काष्ठा acpi_device *dev;
+{
+	struct acpi_device *device = cdev->devdata;
+	struct acpi_thermal *tz = thermal->devdata;
+	struct acpi_device *dev;
 	acpi_status status;
 	acpi_handle handle;
-	पूर्णांक i;
-	पूर्णांक j;
-	पूर्णांक trip = -1;
-	पूर्णांक result = 0;
+	int i;
+	int j;
+	int trip = -1;
+	int result = 0;
 
-	अगर (tz->trips.critical.flags.valid)
+	if (tz->trips.critical.flags.valid)
 		trip++;
 
-	अगर (tz->trips.hot.flags.valid)
+	if (tz->trips.hot.flags.valid)
 		trip++;
 
-	अगर (tz->trips.passive.flags.valid) अणु
+	if (tz->trips.passive.flags.valid) {
 		trip++;
-		क्रम (i = 0; i < tz->trips.passive.devices.count;
-		    i++) अणु
+		for (i = 0; i < tz->trips.passive.devices.count;
+		    i++) {
 			handle = tz->trips.passive.devices.handles[i];
 			status = acpi_bus_get_device(handle, &dev);
-			अगर (ACPI_FAILURE(status) || dev != device)
-				जारी;
-			अगर (bind)
+			if (ACPI_FAILURE(status) || dev != device)
+				continue;
+			if (bind)
 				result =
 					thermal_zone_bind_cooling_device
 					(thermal, trip, cdev,
 					 THERMAL_NO_LIMIT, THERMAL_NO_LIMIT,
 					 THERMAL_WEIGHT_DEFAULT);
-			अन्यथा
+			else
 				result =
 					thermal_zone_unbind_cooling_device
 					(thermal, trip, cdev);
-			अगर (result)
-				जाओ failed;
-		पूर्ण
-	पूर्ण
+			if (result)
+				goto failed;
+		}
+	}
 
-	क्रम (i = 0; i < ACPI_THERMAL_MAX_ACTIVE; i++) अणु
-		अगर (!tz->trips.active[i].flags.valid)
-			अवरोध;
+	for (i = 0; i < ACPI_THERMAL_MAX_ACTIVE; i++) {
+		if (!tz->trips.active[i].flags.valid)
+			break;
 		trip++;
-		क्रम (j = 0;
+		for (j = 0;
 		    j < tz->trips.active[i].devices.count;
-		    j++) अणु
+		    j++) {
 			handle = tz->trips.active[i].devices.handles[j];
 			status = acpi_bus_get_device(handle, &dev);
-			अगर (ACPI_FAILURE(status) || dev != device)
-				जारी;
-			अगर (bind)
+			if (ACPI_FAILURE(status) || dev != device)
+				continue;
+			if (bind)
 				result = thermal_zone_bind_cooling_device
 					(thermal, trip, cdev,
 					 THERMAL_NO_LIMIT, THERMAL_NO_LIMIT,
 					 THERMAL_WEIGHT_DEFAULT);
-			अन्यथा
+			else
 				result = thermal_zone_unbind_cooling_device
 					(thermal, trip, cdev);
-			अगर (result)
-				जाओ failed;
-		पूर्ण
-	पूर्ण
+			if (result)
+				goto failed;
+		}
+	}
 
 failed:
-	वापस result;
-पूर्ण
+	return result;
+}
 
-अटल पूर्णांक
-acpi_thermal_bind_cooling_device(काष्ठा thermal_zone_device *thermal,
-					काष्ठा thermal_cooling_device *cdev)
-अणु
-	वापस acpi_thermal_cooling_device_cb(thermal, cdev, true);
-पूर्ण
+static int
+acpi_thermal_bind_cooling_device(struct thermal_zone_device *thermal,
+					struct thermal_cooling_device *cdev)
+{
+	return acpi_thermal_cooling_device_cb(thermal, cdev, true);
+}
 
-अटल पूर्णांक
-acpi_thermal_unbind_cooling_device(काष्ठा thermal_zone_device *thermal,
-					काष्ठा thermal_cooling_device *cdev)
-अणु
-	वापस acpi_thermal_cooling_device_cb(thermal, cdev, false);
-पूर्ण
+static int
+acpi_thermal_unbind_cooling_device(struct thermal_zone_device *thermal,
+					struct thermal_cooling_device *cdev)
+{
+	return acpi_thermal_cooling_device_cb(thermal, cdev, false);
+}
 
-अटल काष्ठा thermal_zone_device_ops acpi_thermal_zone_ops = अणु
+static struct thermal_zone_device_ops acpi_thermal_zone_ops = {
 	.bind = acpi_thermal_bind_cooling_device,
 	.unbind	= acpi_thermal_unbind_cooling_device,
 	.get_temp = thermal_get_temp,
@@ -786,195 +785,195 @@ acpi_thermal_unbind_cooling_device(काष्ठा thermal_zone_device *therm
 	.get_trend = thermal_get_trend,
 	.hot = acpi_thermal_zone_device_hot,
 	.critical = acpi_thermal_zone_device_critical,
-पूर्ण;
+};
 
-अटल पूर्णांक acpi_thermal_रेजिस्टर_thermal_zone(काष्ठा acpi_thermal *tz)
-अणु
-	पूर्णांक trips = 0;
-	पूर्णांक result;
+static int acpi_thermal_register_thermal_zone(struct acpi_thermal *tz)
+{
+	int trips = 0;
+	int result;
 	acpi_status status;
-	पूर्णांक i;
+	int i;
 
-	अगर (tz->trips.critical.flags.valid)
+	if (tz->trips.critical.flags.valid)
 		trips++;
 
-	अगर (tz->trips.hot.flags.valid)
+	if (tz->trips.hot.flags.valid)
 		trips++;
 
-	अगर (tz->trips.passive.flags.valid)
+	if (tz->trips.passive.flags.valid)
 		trips++;
 
-	क्रम (i = 0; i < ACPI_THERMAL_MAX_ACTIVE &&
+	for (i = 0; i < ACPI_THERMAL_MAX_ACTIVE &&
 			tz->trips.active[i].flags.valid; i++, trips++);
 
-	अगर (tz->trips.passive.flags.valid)
+	if (tz->trips.passive.flags.valid)
 		tz->thermal_zone =
-			thermal_zone_device_रेजिस्टर("acpitz", trips, 0, tz,
-						&acpi_thermal_zone_ops, शून्य,
+			thermal_zone_device_register("acpitz", trips, 0, tz,
+						&acpi_thermal_zone_ops, NULL,
 						     tz->trips.passive.tsp*100,
 						     tz->polling_frequency*100);
-	अन्यथा
+	else
 		tz->thermal_zone =
-			thermal_zone_device_रेजिस्टर("acpitz", trips, 0, tz,
-						&acpi_thermal_zone_ops, शून्य,
+			thermal_zone_device_register("acpitz", trips, 0, tz,
+						&acpi_thermal_zone_ops, NULL,
 						0, tz->polling_frequency*100);
-	अगर (IS_ERR(tz->thermal_zone))
-		वापस -ENODEV;
+	if (IS_ERR(tz->thermal_zone))
+		return -ENODEV;
 
 	result = sysfs_create_link(&tz->device->dev.kobj,
 				   &tz->thermal_zone->device.kobj, "thermal_zone");
-	अगर (result)
-		जाओ unरेजिस्टर_tzd;
+	if (result)
+		goto unregister_tzd;
 
 	result = sysfs_create_link(&tz->thermal_zone->device.kobj,
 				   &tz->device->dev.kobj, "device");
-	अगर (result)
-		जाओ हटाओ_tz_link;
+	if (result)
+		goto remove_tz_link;
 
-	status =  acpi_bus_attach_निजी_data(tz->device->handle,
+	status =  acpi_bus_attach_private_data(tz->device->handle,
 					       tz->thermal_zone);
-	अगर (ACPI_FAILURE(status)) अणु
+	if (ACPI_FAILURE(status)) {
 		result = -ENODEV;
-		जाओ हटाओ_dev_link;
-	पूर्ण
+		goto remove_dev_link;
+	}
 
 	result = thermal_zone_device_enable(tz->thermal_zone);
-	अगर (result)
-		जाओ acpi_bus_detach;
+	if (result)
+		goto acpi_bus_detach;
 
 	dev_info(&tz->device->dev, "registered as thermal_zone%d\n",
 		 tz->thermal_zone->id);
 
-	वापस 0;
+	return 0;
 
 acpi_bus_detach:
-	acpi_bus_detach_निजी_data(tz->device->handle);
-हटाओ_dev_link:
-	sysfs_हटाओ_link(&tz->thermal_zone->device.kobj, "device");
-हटाओ_tz_link:
-	sysfs_हटाओ_link(&tz->device->dev.kobj, "thermal_zone");
-unरेजिस्टर_tzd:
-	thermal_zone_device_unरेजिस्टर(tz->thermal_zone);
+	acpi_bus_detach_private_data(tz->device->handle);
+remove_dev_link:
+	sysfs_remove_link(&tz->thermal_zone->device.kobj, "device");
+remove_tz_link:
+	sysfs_remove_link(&tz->device->dev.kobj, "thermal_zone");
+unregister_tzd:
+	thermal_zone_device_unregister(tz->thermal_zone);
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
-अटल व्योम acpi_thermal_unरेजिस्टर_thermal_zone(काष्ठा acpi_thermal *tz)
-अणु
-	sysfs_हटाओ_link(&tz->device->dev.kobj, "thermal_zone");
-	sysfs_हटाओ_link(&tz->thermal_zone->device.kobj, "device");
-	thermal_zone_device_unरेजिस्टर(tz->thermal_zone);
-	tz->thermal_zone = शून्य;
-	acpi_bus_detach_निजी_data(tz->device->handle);
-पूर्ण
+static void acpi_thermal_unregister_thermal_zone(struct acpi_thermal *tz)
+{
+	sysfs_remove_link(&tz->device->dev.kobj, "thermal_zone");
+	sysfs_remove_link(&tz->thermal_zone->device.kobj, "device");
+	thermal_zone_device_unregister(tz->thermal_zone);
+	tz->thermal_zone = NULL;
+	acpi_bus_detach_private_data(tz->device->handle);
+}
 
 
 /* --------------------------------------------------------------------------
                                  Driver Interface
    -------------------------------------------------------------------------- */
 
-अटल व्योम acpi_queue_thermal_check(काष्ठा acpi_thermal *tz)
-अणु
-	अगर (!work_pending(&tz->thermal_check_work))
+static void acpi_queue_thermal_check(struct acpi_thermal *tz)
+{
+	if (!work_pending(&tz->thermal_check_work))
 		queue_work(acpi_thermal_pm_queue, &tz->thermal_check_work);
-पूर्ण
+}
 
-अटल व्योम acpi_thermal_notअगरy(काष्ठा acpi_device *device, u32 event)
-अणु
-	काष्ठा acpi_thermal *tz = acpi_driver_data(device);
+static void acpi_thermal_notify(struct acpi_device *device, u32 event)
+{
+	struct acpi_thermal *tz = acpi_driver_data(device);
 
 
-	अगर (!tz)
-		वापस;
+	if (!tz)
+		return;
 
-	चयन (event) अणु
-	हाल ACPI_THERMAL_NOTIFY_TEMPERATURE:
+	switch (event) {
+	case ACPI_THERMAL_NOTIFY_TEMPERATURE:
 		acpi_queue_thermal_check(tz);
-		अवरोध;
-	हाल ACPI_THERMAL_NOTIFY_THRESHOLDS:
+		break;
+	case ACPI_THERMAL_NOTIFY_THRESHOLDS:
 		acpi_thermal_trips_update(tz, ACPI_TRIPS_REFRESH_THRESHOLDS);
 		acpi_queue_thermal_check(tz);
 		acpi_bus_generate_netlink_event(device->pnp.device_class,
 						  dev_name(&device->dev), event, 0);
-		अवरोध;
-	हाल ACPI_THERMAL_NOTIFY_DEVICES:
+		break;
+	case ACPI_THERMAL_NOTIFY_DEVICES:
 		acpi_thermal_trips_update(tz, ACPI_TRIPS_REFRESH_DEVICES);
 		acpi_queue_thermal_check(tz);
 		acpi_bus_generate_netlink_event(device->pnp.device_class,
 						  dev_name(&device->dev), event, 0);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		acpi_handle_debug(device->handle, "Unsupported event [0x%x]\n",
 				  event);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
 /*
- * On some platक्रमms, the AML code has dependency about
+ * On some platforms, the AML code has dependency about
  * the evaluating order of _TMP and _CRT/_HOT/_PSV/_ACx.
  * 1. On HP Pavilion G4-1016tx, _TMP must be invoked after
- *    /_CRT/_HOT/_PSV/_ACx, or अन्यथा प्रणाली will be घातer off.
- * 2. On HP Compaq 6715b/6715s, the वापस value of _PSV is 0
- *    अगर _TMP has never been evaluated.
+ *    /_CRT/_HOT/_PSV/_ACx, or else system will be power off.
+ * 2. On HP Compaq 6715b/6715s, the return value of _PSV is 0
+ *    if _TMP has never been evaluated.
  *
  * As this dependency is totally transparent to OS, evaluate
  * all of them once, in the order of _CRT/_HOT/_PSV/_ACx,
- * _TMP, beक्रमe they are actually used.
+ * _TMP, before they are actually used.
  */
-अटल व्योम acpi_thermal_aml_dependency_fix(काष्ठा acpi_thermal *tz)
-अणु
+static void acpi_thermal_aml_dependency_fix(struct acpi_thermal *tz)
+{
 	acpi_handle handle = tz->device->handle;
-	अचिन्हित दीर्घ दीर्घ value;
-	पूर्णांक i;
+	unsigned long long value;
+	int i;
 
-	acpi_evaluate_पूर्णांकeger(handle, "_CRT", शून्य, &value);
-	acpi_evaluate_पूर्णांकeger(handle, "_HOT", शून्य, &value);
-	acpi_evaluate_पूर्णांकeger(handle, "_PSV", शून्य, &value);
-	क्रम (i = 0; i < ACPI_THERMAL_MAX_ACTIVE; i++) अणु
-		अक्षर name[5] = अणु '_', 'A', 'C', ('0' + i), '\0' पूर्ण;
+	acpi_evaluate_integer(handle, "_CRT", NULL, &value);
+	acpi_evaluate_integer(handle, "_HOT", NULL, &value);
+	acpi_evaluate_integer(handle, "_PSV", NULL, &value);
+	for (i = 0; i < ACPI_THERMAL_MAX_ACTIVE; i++) {
+		char name[5] = { '_', 'A', 'C', ('0' + i), '\0' };
 		acpi_status status;
 
-		status = acpi_evaluate_पूर्णांकeger(handle, name, शून्य, &value);
-		अगर (status == AE_NOT_FOUND)
-			अवरोध;
-	पूर्ण
-	acpi_evaluate_पूर्णांकeger(handle, "_TMP", शून्य, &value);
-पूर्ण
+		status = acpi_evaluate_integer(handle, name, NULL, &value);
+		if (status == AE_NOT_FOUND)
+			break;
+	}
+	acpi_evaluate_integer(handle, "_TMP", NULL, &value);
+}
 
-अटल पूर्णांक acpi_thermal_get_info(काष्ठा acpi_thermal *tz)
-अणु
-	पूर्णांक result = 0;
+static int acpi_thermal_get_info(struct acpi_thermal *tz)
+{
+	int result = 0;
 
 
-	अगर (!tz)
-		वापस -EINVAL;
+	if (!tz)
+		return -EINVAL;
 
 	acpi_thermal_aml_dependency_fix(tz);
 
-	/* Get trip poपूर्णांकs [_CRT, _PSV, etc.] (required) */
-	result = acpi_thermal_get_trip_poपूर्णांकs(tz);
-	अगर (result)
-		वापस result;
+	/* Get trip points [_CRT, _PSV, etc.] (required) */
+	result = acpi_thermal_get_trip_points(tz);
+	if (result)
+		return result;
 
 	/* Get temperature [_TMP] (required) */
 	result = acpi_thermal_get_temperature(tz);
-	अगर (result)
-		वापस result;
+	if (result)
+		return result;
 
-	/* Set the cooling mode [_SCP] to active cooling (शेष) */
+	/* Set the cooling mode [_SCP] to active cooling (default) */
 	result = acpi_thermal_set_cooling_mode(tz, ACPI_THERMAL_MODE_ACTIVE);
-	अगर (!result)
+	if (!result)
 		tz->flags.cooling_mode = 1;
 
-	/* Get शेष polling frequency [_TZP] (optional) */
-	अगर (tzp)
+	/* Get default polling frequency [_TZP] (optional) */
+	if (tzp)
 		tz->polling_frequency = tzp;
-	अन्यथा
+	else
 		acpi_thermal_get_polling_frequency(tz);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * The exact offset between Kelvin and degree Celsius is 273.15. However ACPI
@@ -983,33 +982,33 @@ unरेजिस्टर_tzd:
  * 273.2. Try to find out which one is being used, to present the most
  * accurate and visually appealing number.
  *
- * The heuristic below should work क्रम all ACPI thermal zones which have a
- * critical trip poपूर्णांक with a value being a multiple of 0.5 degree Celsius.
+ * The heuristic below should work for all ACPI thermal zones which have a
+ * critical trip point with a value being a multiple of 0.5 degree Celsius.
  */
-अटल व्योम acpi_thermal_guess_offset(काष्ठा acpi_thermal *tz)
-अणु
-	अगर (tz->trips.critical.flags.valid &&
+static void acpi_thermal_guess_offset(struct acpi_thermal *tz)
+{
+	if (tz->trips.critical.flags.valid &&
 	    (tz->trips.critical.temperature % 5) == 1)
 		tz->kelvin_offset = 273100;
-	अन्यथा
+	else
 		tz->kelvin_offset = 273200;
-पूर्ण
+}
 
-अटल व्योम acpi_thermal_check_fn(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा acpi_thermal *tz = container_of(work, काष्ठा acpi_thermal,
+static void acpi_thermal_check_fn(struct work_struct *work)
+{
+	struct acpi_thermal *tz = container_of(work, struct acpi_thermal,
 					       thermal_check_work);
 
 	/*
 	 * In general, it is not sufficient to check the pending bit, because
 	 * subsequent instances of this function may be queued after one of them
-	 * has started running (e.g. अगर _TMP sleeps).  Aव्योम bailing out अगर just
-	 * one of them is running, though, because it may have करोne the actual
-	 * check some समय ago, so allow at least one of them to block on the
-	 * mutex जबतक another one is running the update.
+	 * has started running (e.g. if _TMP sleeps).  Avoid bailing out if just
+	 * one of them is running, though, because it may have done the actual
+	 * check some time ago, so allow at least one of them to block on the
+	 * mutex while another one is running the update.
 	 */
-	अगर (!refcount_dec_not_one(&tz->thermal_check_count))
-		वापस;
+	if (!refcount_dec_not_one(&tz->thermal_check_count))
+		return;
 
 	mutex_lock(&tz->thermal_check_lock);
 
@@ -1018,36 +1017,36 @@ unरेजिस्टर_tzd:
 	refcount_inc(&tz->thermal_check_count);
 
 	mutex_unlock(&tz->thermal_check_lock);
-पूर्ण
+}
 
-अटल पूर्णांक acpi_thermal_add(काष्ठा acpi_device *device)
-अणु
-	पूर्णांक result = 0;
-	काष्ठा acpi_thermal *tz = शून्य;
+static int acpi_thermal_add(struct acpi_device *device)
+{
+	int result = 0;
+	struct acpi_thermal *tz = NULL;
 
 
-	अगर (!device)
-		वापस -EINVAL;
+	if (!device)
+		return -EINVAL;
 
-	tz = kzalloc(माप(काष्ठा acpi_thermal), GFP_KERNEL);
-	अगर (!tz)
-		वापस -ENOMEM;
+	tz = kzalloc(sizeof(struct acpi_thermal), GFP_KERNEL);
+	if (!tz)
+		return -ENOMEM;
 
 	tz->device = device;
-	म_नकल(tz->name, device->pnp.bus_id);
-	म_नकल(acpi_device_name(device), ACPI_THERMAL_DEVICE_NAME);
-	म_नकल(acpi_device_class(device), ACPI_THERMAL_CLASS);
+	strcpy(tz->name, device->pnp.bus_id);
+	strcpy(acpi_device_name(device), ACPI_THERMAL_DEVICE_NAME);
+	strcpy(acpi_device_class(device), ACPI_THERMAL_CLASS);
 	device->driver_data = tz;
 
 	result = acpi_thermal_get_info(tz);
-	अगर (result)
-		जाओ मुक्त_memory;
+	if (result)
+		goto free_memory;
 
 	acpi_thermal_guess_offset(tz);
 
-	result = acpi_thermal_रेजिस्टर_thermal_zone(tz);
-	अगर (result)
-		जाओ मुक्त_memory;
+	result = acpi_thermal_register_thermal_zone(tz);
+	if (result)
+		goto free_memory;
 
 	refcount_set(&tz->thermal_check_count, 3);
 	mutex_init(&tz->thermal_check_lock);
@@ -1055,180 +1054,180 @@ unरेजिस्टर_tzd:
 
 	pr_info("%s [%s] (%ld C)\n", acpi_device_name(device),
 		acpi_device_bid(device), deci_kelvin_to_celsius(tz->temperature));
-	जाओ end;
+	goto end;
 
-मुक्त_memory:
-	kमुक्त(tz);
+free_memory:
+	kfree(tz);
 end:
-	वापस result;
-पूर्ण
+	return result;
+}
 
-अटल पूर्णांक acpi_thermal_हटाओ(काष्ठा acpi_device *device)
-अणु
-	काष्ठा acpi_thermal *tz = शून्य;
+static int acpi_thermal_remove(struct acpi_device *device)
+{
+	struct acpi_thermal *tz = NULL;
 
-	अगर (!device || !acpi_driver_data(device))
-		वापस -EINVAL;
+	if (!device || !acpi_driver_data(device))
+		return -EINVAL;
 
 	flush_workqueue(acpi_thermal_pm_queue);
 	tz = acpi_driver_data(device);
 
-	acpi_thermal_unरेजिस्टर_thermal_zone(tz);
-	kमुक्त(tz);
-	वापस 0;
-पूर्ण
+	acpi_thermal_unregister_thermal_zone(tz);
+	kfree(tz);
+	return 0;
+}
 
-#अगर_घोषित CONFIG_PM_SLEEP
-अटल पूर्णांक acpi_thermal_suspend(काष्ठा device *dev)
-अणु
-	/* Make sure the previously queued thermal check work has been करोne */
+#ifdef CONFIG_PM_SLEEP
+static int acpi_thermal_suspend(struct device *dev)
+{
+	/* Make sure the previously queued thermal check work has been done */
 	flush_workqueue(acpi_thermal_pm_queue);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक acpi_thermal_resume(काष्ठा device *dev)
-अणु
-	काष्ठा acpi_thermal *tz;
-	पूर्णांक i, j, घातer_state, result;
+static int acpi_thermal_resume(struct device *dev)
+{
+	struct acpi_thermal *tz;
+	int i, j, power_state, result;
 
-	अगर (!dev)
-		वापस -EINVAL;
+	if (!dev)
+		return -EINVAL;
 
 	tz = acpi_driver_data(to_acpi_device(dev));
-	अगर (!tz)
-		वापस -EINVAL;
+	if (!tz)
+		return -EINVAL;
 
-	क्रम (i = 0; i < ACPI_THERMAL_MAX_ACTIVE; i++) अणु
-		अगर (!(&tz->trips.active[i]))
-			अवरोध;
-		अगर (!tz->trips.active[i].flags.valid)
-			अवरोध;
+	for (i = 0; i < ACPI_THERMAL_MAX_ACTIVE; i++) {
+		if (!(&tz->trips.active[i]))
+			break;
+		if (!tz->trips.active[i].flags.valid)
+			break;
 		tz->trips.active[i].flags.enabled = 1;
-		क्रम (j = 0; j < tz->trips.active[i].devices.count; j++) अणु
-			result = acpi_bus_update_घातer(
+		for (j = 0; j < tz->trips.active[i].devices.count; j++) {
+			result = acpi_bus_update_power(
 					tz->trips.active[i].devices.handles[j],
-					&घातer_state);
-			अगर (result || (घातer_state != ACPI_STATE_D0)) अणु
+					&power_state);
+			if (result || (power_state != ACPI_STATE_D0)) {
 				tz->trips.active[i].flags.enabled = 0;
-				अवरोध;
-			पूर्ण
-		पूर्ण
+				break;
+			}
+		}
 		tz->state.active |= tz->trips.active[i].flags.enabled;
-	पूर्ण
+	}
 
 	acpi_queue_thermal_check(tz);
 
-	वापस AE_OK;
-पूर्ण
-#पूर्ण_अगर
+	return AE_OK;
+}
+#endif
 
-अटल पूर्णांक thermal_act(स्थिर काष्ठा dmi_प्रणाली_id *d) अणु
+static int thermal_act(const struct dmi_system_id *d) {
 
-	अगर (act == 0) अणु
+	if (act == 0) {
 		pr_notice("%s detected: disabling all active thermal trip points\n",
 			  d->ident);
 		act = -1;
-	पूर्ण
-	वापस 0;
-पूर्ण
-अटल पूर्णांक thermal_nocrt(स्थिर काष्ठा dmi_प्रणाली_id *d) अणु
+	}
+	return 0;
+}
+static int thermal_nocrt(const struct dmi_system_id *d) {
 
 	pr_notice("%s detected: disabling all critical thermal trip point actions.\n",
 		  d->ident);
 	nocrt = 1;
-	वापस 0;
-पूर्ण
-अटल पूर्णांक thermal_tzp(स्थिर काष्ठा dmi_प्रणाली_id *d) अणु
+	return 0;
+}
+static int thermal_tzp(const struct dmi_system_id *d) {
 
-	अगर (tzp == 0) अणु
+	if (tzp == 0) {
 		pr_notice("%s detected: enabling thermal zone polling\n",
 			  d->ident);
 		tzp = 300;	/* 300 dS = 30 Seconds */
-	पूर्ण
-	वापस 0;
-पूर्ण
-अटल पूर्णांक thermal_psv(स्थिर काष्ठा dmi_प्रणाली_id *d) अणु
+	}
+	return 0;
+}
+static int thermal_psv(const struct dmi_system_id *d) {
 
-	अगर (psv == 0) अणु
+	if (psv == 0) {
 		pr_notice("%s detected: disabling all passive thermal trip points\n",
 			  d->ident);
 		psv = -1;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल स्थिर काष्ठा dmi_प्रणाली_id thermal_dmi_table[] __initस्थिर = अणु
+static const struct dmi_system_id thermal_dmi_table[] __initconst = {
 	/*
 	 * Award BIOS on this AOpen makes thermal control almost worthless.
 	 * http://bugzilla.kernel.org/show_bug.cgi?id=8842
 	 */
-	अणु
+	{
 	 .callback = thermal_act,
 	 .ident = "AOpen i915GMm-HFS",
-	 .matches = अणु
+	 .matches = {
 		DMI_MATCH(DMI_BOARD_VENDOR, "AOpen"),
 		DMI_MATCH(DMI_BOARD_NAME, "i915GMm-HFS"),
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 	 .callback = thermal_psv,
 	 .ident = "AOpen i915GMm-HFS",
-	 .matches = अणु
+	 .matches = {
 		DMI_MATCH(DMI_BOARD_VENDOR, "AOpen"),
 		DMI_MATCH(DMI_BOARD_NAME, "i915GMm-HFS"),
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 	 .callback = thermal_tzp,
 	 .ident = "AOpen i915GMm-HFS",
-	 .matches = अणु
+	 .matches = {
 		DMI_MATCH(DMI_BOARD_VENDOR, "AOpen"),
 		DMI_MATCH(DMI_BOARD_NAME, "i915GMm-HFS"),
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 	 .callback = thermal_nocrt,
 	 .ident = "Gigabyte GA-7ZX",
-	 .matches = अणु
+	 .matches = {
 		DMI_MATCH(DMI_BOARD_VENDOR, "Gigabyte Technology Co., Ltd."),
 		DMI_MATCH(DMI_BOARD_NAME, "7ZX"),
-		पूर्ण,
-	पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+		},
+	},
+	{}
+};
 
-अटल पूर्णांक __init acpi_thermal_init(व्योम)
-अणु
-	पूर्णांक result = 0;
+static int __init acpi_thermal_init(void)
+{
+	int result = 0;
 
-	dmi_check_प्रणाली(thermal_dmi_table);
+	dmi_check_system(thermal_dmi_table);
 
-	अगर (off) अणु
+	if (off) {
 		pr_notice("thermal control disabled\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	acpi_thermal_pm_queue = alloc_workqueue("acpi_thermal_pm",
 						WQ_HIGHPRI | WQ_MEM_RECLAIM, 0);
-	अगर (!acpi_thermal_pm_queue)
-		वापस -ENODEV;
+	if (!acpi_thermal_pm_queue)
+		return -ENODEV;
 
-	result = acpi_bus_रेजिस्टर_driver(&acpi_thermal_driver);
-	अगर (result < 0) अणु
+	result = acpi_bus_register_driver(&acpi_thermal_driver);
+	if (result < 0) {
 		destroy_workqueue(acpi_thermal_pm_queue);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम __निकास acpi_thermal_निकास(व्योम)
-अणु
-	acpi_bus_unरेजिस्टर_driver(&acpi_thermal_driver);
+static void __exit acpi_thermal_exit(void)
+{
+	acpi_bus_unregister_driver(&acpi_thermal_driver);
 	destroy_workqueue(acpi_thermal_pm_queue);
 
-	वापस;
-पूर्ण
+	return;
+}
 
 module_init(acpi_thermal_init);
-module_निकास(acpi_thermal_निकास);
+module_exit(acpi_thermal_exit);

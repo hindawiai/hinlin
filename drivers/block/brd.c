@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Ram backed block device driver.
  *
@@ -10,26 +9,26 @@
  * of their respective owners.
  */
 
-#समावेश <linux/init.h>
-#समावेश <linux/initrd.h>
-#समावेश <linux/module.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/major.h>
-#समावेश <linux/blkdev.h>
-#समावेश <linux/bपन.स>
-#समावेश <linux/highस्मृति.स>
-#समावेश <linux/mutex.h>
-#समावेश <linux/pagemap.h>
-#समावेश <linux/radix-tree.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/backing-dev.h>
-#समावेश <linux/debugfs.h>
+#include <linux/init.h>
+#include <linux/initrd.h>
+#include <linux/module.h>
+#include <linux/moduleparam.h>
+#include <linux/major.h>
+#include <linux/blkdev.h>
+#include <linux/bio.h>
+#include <linux/highmem.h>
+#include <linux/mutex.h>
+#include <linux/pagemap.h>
+#include <linux/radix-tree.h>
+#include <linux/fs.h>
+#include <linux/slab.h>
+#include <linux/backing-dev.h>
+#include <linux/debugfs.h>
 
-#समावेश <linux/uaccess.h>
+#include <linux/uaccess.h>
 
-#घोषणा PAGE_SECTORS_SHIFT	(PAGE_SHIFT - SECTOR_SHIFT)
-#घोषणा PAGE_SECTORS		(1 << PAGE_SECTORS_SHIFT)
+#define PAGE_SECTORS_SHIFT	(PAGE_SHIFT - SECTOR_SHIFT)
+#define PAGE_SECTORS		(1 << PAGE_SECTORS_SHIFT)
 
 /*
  * Each block ramdisk device has a radix_tree brd_pages of pages that stores
@@ -38,180 +37,180 @@
  * with, the kernel's pagecache or buffer cache (which sit above our block
  * device).
  */
-काष्ठा brd_device अणु
-	पूर्णांक		brd_number;
+struct brd_device {
+	int		brd_number;
 
-	काष्ठा request_queue	*brd_queue;
-	काष्ठा gendisk		*brd_disk;
-	काष्ठा list_head	brd_list;
+	struct request_queue	*brd_queue;
+	struct gendisk		*brd_disk;
+	struct list_head	brd_list;
 
 	/*
 	 * Backing store of pages and lock to protect it. This is the contents
 	 * of the block device.
 	 */
 	spinlock_t		brd_lock;
-	काष्ठा radix_tree_root	brd_pages;
+	struct radix_tree_root	brd_pages;
 	u64			brd_nr_pages;
-पूर्ण;
+};
 
 /*
- * Look up and वापस a brd's page क्रम a given sector.
+ * Look up and return a brd's page for a given sector.
  */
-अटल काष्ठा page *brd_lookup_page(काष्ठा brd_device *brd, sector_t sector)
-अणु
+static struct page *brd_lookup_page(struct brd_device *brd, sector_t sector)
+{
 	pgoff_t idx;
-	काष्ठा page *page;
+	struct page *page;
 
 	/*
-	 * The page lअगरeसमय is रक्षित by the fact that we have खोलोed the
+	 * The page lifetime is protected by the fact that we have opened the
 	 * device node -- brd pages will never be deleted under us, so we
-	 * करोn't need any further locking or refcounting.
+	 * don't need any further locking or refcounting.
 	 *
-	 * This is strictly true क्रम the radix-tree nodes as well (ie. we
-	 * करोn't actually need the rcu_पढ़ो_lock()), however that is not a
-	 * करोcumented feature of the radix-tree API so it is better to be
-	 * safe here (we करोn't have total exclusion from radix tree updates
+	 * This is strictly true for the radix-tree nodes as well (ie. we
+	 * don't actually need the rcu_read_lock()), however that is not a
+	 * documented feature of the radix-tree API so it is better to be
+	 * safe here (we don't have total exclusion from radix tree updates
 	 * here, only deletes).
 	 */
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	idx = sector >> PAGE_SECTORS_SHIFT; /* sector to page index */
 	page = radix_tree_lookup(&brd->brd_pages, idx);
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 
 	BUG_ON(page && page->index != idx);
 
-	वापस page;
-पूर्ण
+	return page;
+}
 
 /*
- * Look up and वापस a brd's page क्रम a given sector.
- * If one करोes not exist, allocate an empty page, and insert that. Then
- * वापस it.
+ * Look up and return a brd's page for a given sector.
+ * If one does not exist, allocate an empty page, and insert that. Then
+ * return it.
  */
-अटल काष्ठा page *brd_insert_page(काष्ठा brd_device *brd, sector_t sector)
-अणु
+static struct page *brd_insert_page(struct brd_device *brd, sector_t sector)
+{
 	pgoff_t idx;
-	काष्ठा page *page;
+	struct page *page;
 	gfp_t gfp_flags;
 
 	page = brd_lookup_page(brd, sector);
-	अगर (page)
-		वापस page;
+	if (page)
+		return page;
 
 	/*
-	 * Must use NOIO because we करोn't want to recurse back पूर्णांकo the
-	 * block or fileप्रणाली layers from page reclaim.
+	 * Must use NOIO because we don't want to recurse back into the
+	 * block or filesystem layers from page reclaim.
 	 */
 	gfp_flags = GFP_NOIO | __GFP_ZERO | __GFP_HIGHMEM;
 	page = alloc_page(gfp_flags);
-	अगर (!page)
-		वापस शून्य;
+	if (!page)
+		return NULL;
 
-	अगर (radix_tree_preload(GFP_NOIO)) अणु
-		__मुक्त_page(page);
-		वापस शून्य;
-	पूर्ण
+	if (radix_tree_preload(GFP_NOIO)) {
+		__free_page(page);
+		return NULL;
+	}
 
 	spin_lock(&brd->brd_lock);
 	idx = sector >> PAGE_SECTORS_SHIFT;
 	page->index = idx;
-	अगर (radix_tree_insert(&brd->brd_pages, idx, page)) अणु
-		__मुक्त_page(page);
+	if (radix_tree_insert(&brd->brd_pages, idx, page)) {
+		__free_page(page);
 		page = radix_tree_lookup(&brd->brd_pages, idx);
 		BUG_ON(!page);
 		BUG_ON(page->index != idx);
-	पूर्ण अन्यथा अणु
+	} else {
 		brd->brd_nr_pages++;
-	पूर्ण
+	}
 	spin_unlock(&brd->brd_lock);
 
 	radix_tree_preload_end();
 
-	वापस page;
-पूर्ण
+	return page;
+}
 
 /*
  * Free all backing store pages and radix tree. This must only be called when
  * there are no other users of the device.
  */
-#घोषणा FREE_BATCH 16
-अटल व्योम brd_मुक्त_pages(काष्ठा brd_device *brd)
-अणु
-	अचिन्हित दीर्घ pos = 0;
-	काष्ठा page *pages[FREE_BATCH];
-	पूर्णांक nr_pages;
+#define FREE_BATCH 16
+static void brd_free_pages(struct brd_device *brd)
+{
+	unsigned long pos = 0;
+	struct page *pages[FREE_BATCH];
+	int nr_pages;
 
-	करो अणु
-		पूर्णांक i;
+	do {
+		int i;
 
 		nr_pages = radix_tree_gang_lookup(&brd->brd_pages,
-				(व्योम **)pages, pos, FREE_BATCH);
+				(void **)pages, pos, FREE_BATCH);
 
-		क्रम (i = 0; i < nr_pages; i++) अणु
-			व्योम *ret;
+		for (i = 0; i < nr_pages; i++) {
+			void *ret;
 
 			BUG_ON(pages[i]->index < pos);
 			pos = pages[i]->index;
 			ret = radix_tree_delete(&brd->brd_pages, pos);
 			BUG_ON(!ret || ret != pages[i]);
-			__मुक्त_page(pages[i]);
-		पूर्ण
+			__free_page(pages[i]);
+		}
 
 		pos++;
 
 		/*
-		 * It takes 3.4 seconds to हटाओ 80GiB ramdisk.
-		 * So, we need cond_resched to aव्योम stalling the CPU.
+		 * It takes 3.4 seconds to remove 80GiB ramdisk.
+		 * So, we need cond_resched to avoid stalling the CPU.
 		 */
 		cond_resched();
 
 		/*
-		 * This assumes radix_tree_gang_lookup always वापसs as
+		 * This assumes radix_tree_gang_lookup always returns as
 		 * many pages as possible. If the radix-tree code changes,
 		 * so will this have to.
 		 */
-	पूर्ण जबतक (nr_pages == FREE_BATCH);
-पूर्ण
+	} while (nr_pages == FREE_BATCH);
+}
 
 /*
- * copy_to_brd_setup must be called beक्रमe copy_to_brd. It may sleep.
+ * copy_to_brd_setup must be called before copy_to_brd. It may sleep.
  */
-अटल पूर्णांक copy_to_brd_setup(काष्ठा brd_device *brd, sector_t sector, माप_प्रकार n)
-अणु
-	अचिन्हित पूर्णांक offset = (sector & (PAGE_SECTORS-1)) << SECTOR_SHIFT;
-	माप_प्रकार copy;
+static int copy_to_brd_setup(struct brd_device *brd, sector_t sector, size_t n)
+{
+	unsigned int offset = (sector & (PAGE_SECTORS-1)) << SECTOR_SHIFT;
+	size_t copy;
 
-	copy = min_t(माप_प्रकार, n, PAGE_SIZE - offset);
-	अगर (!brd_insert_page(brd, sector))
-		वापस -ENOSPC;
-	अगर (copy < n) अणु
+	copy = min_t(size_t, n, PAGE_SIZE - offset);
+	if (!brd_insert_page(brd, sector))
+		return -ENOSPC;
+	if (copy < n) {
 		sector += copy >> SECTOR_SHIFT;
-		अगर (!brd_insert_page(brd, sector))
-			वापस -ENOSPC;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		if (!brd_insert_page(brd, sector))
+			return -ENOSPC;
+	}
+	return 0;
+}
 
 /*
  * Copy n bytes from src to the brd starting at sector. Does not sleep.
  */
-अटल व्योम copy_to_brd(काष्ठा brd_device *brd, स्थिर व्योम *src,
-			sector_t sector, माप_प्रकार n)
-अणु
-	काष्ठा page *page;
-	व्योम *dst;
-	अचिन्हित पूर्णांक offset = (sector & (PAGE_SECTORS-1)) << SECTOR_SHIFT;
-	माप_प्रकार copy;
+static void copy_to_brd(struct brd_device *brd, const void *src,
+			sector_t sector, size_t n)
+{
+	struct page *page;
+	void *dst;
+	unsigned int offset = (sector & (PAGE_SECTORS-1)) << SECTOR_SHIFT;
+	size_t copy;
 
-	copy = min_t(माप_प्रकार, n, PAGE_SIZE - offset);
+	copy = min_t(size_t, n, PAGE_SIZE - offset);
 	page = brd_lookup_page(brd, sector);
 	BUG_ON(!page);
 
 	dst = kmap_atomic(page);
-	स_नकल(dst + offset, src, copy);
+	memcpy(dst + offset, src, copy);
 	kunmap_atomic(dst);
 
-	अगर (copy < n) अणु
+	if (copy < n) {
 		src += copy;
 		sector += copy >> SECTOR_SHIFT;
 		copy = n - copy;
@@ -219,196 +218,196 @@
 		BUG_ON(!page);
 
 		dst = kmap_atomic(page);
-		स_नकल(dst, src, copy);
+		memcpy(dst, src, copy);
 		kunmap_atomic(dst);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
  * Copy n bytes to dst from the brd starting at sector. Does not sleep.
  */
-अटल व्योम copy_from_brd(व्योम *dst, काष्ठा brd_device *brd,
-			sector_t sector, माप_प्रकार n)
-अणु
-	काष्ठा page *page;
-	व्योम *src;
-	अचिन्हित पूर्णांक offset = (sector & (PAGE_SECTORS-1)) << SECTOR_SHIFT;
-	माप_प्रकार copy;
+static void copy_from_brd(void *dst, struct brd_device *brd,
+			sector_t sector, size_t n)
+{
+	struct page *page;
+	void *src;
+	unsigned int offset = (sector & (PAGE_SECTORS-1)) << SECTOR_SHIFT;
+	size_t copy;
 
-	copy = min_t(माप_प्रकार, n, PAGE_SIZE - offset);
+	copy = min_t(size_t, n, PAGE_SIZE - offset);
 	page = brd_lookup_page(brd, sector);
-	अगर (page) अणु
+	if (page) {
 		src = kmap_atomic(page);
-		स_नकल(dst, src + offset, copy);
+		memcpy(dst, src + offset, copy);
 		kunmap_atomic(src);
-	पूर्ण अन्यथा
-		स_रखो(dst, 0, copy);
+	} else
+		memset(dst, 0, copy);
 
-	अगर (copy < n) अणु
+	if (copy < n) {
 		dst += copy;
 		sector += copy >> SECTOR_SHIFT;
 		copy = n - copy;
 		page = brd_lookup_page(brd, sector);
-		अगर (page) अणु
+		if (page) {
 			src = kmap_atomic(page);
-			स_नकल(dst, src, copy);
+			memcpy(dst, src, copy);
 			kunmap_atomic(src);
-		पूर्ण अन्यथा
-			स_रखो(dst, 0, copy);
-	पूर्ण
-पूर्ण
+		} else
+			memset(dst, 0, copy);
+	}
+}
 
 /*
  * Process a single bvec of a bio.
  */
-अटल पूर्णांक brd_करो_bvec(काष्ठा brd_device *brd, काष्ठा page *page,
-			अचिन्हित पूर्णांक len, अचिन्हित पूर्णांक off, अचिन्हित पूर्णांक op,
+static int brd_do_bvec(struct brd_device *brd, struct page *page,
+			unsigned int len, unsigned int off, unsigned int op,
 			sector_t sector)
-अणु
-	व्योम *mem;
-	पूर्णांक err = 0;
+{
+	void *mem;
+	int err = 0;
 
-	अगर (op_is_ग_लिखो(op)) अणु
+	if (op_is_write(op)) {
 		err = copy_to_brd_setup(brd, sector, len);
-		अगर (err)
-			जाओ out;
-	पूर्ण
+		if (err)
+			goto out;
+	}
 
 	mem = kmap_atomic(page);
-	अगर (!op_is_ग_लिखो(op)) अणु
+	if (!op_is_write(op)) {
 		copy_from_brd(mem + off, brd, sector, len);
 		flush_dcache_page(page);
-	पूर्ण अन्यथा अणु
+	} else {
 		flush_dcache_page(page);
 		copy_to_brd(brd, mem + off, sector, len);
-	पूर्ण
+	}
 	kunmap_atomic(mem);
 
 out:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल blk_qc_t brd_submit_bio(काष्ठा bio *bio)
-अणु
-	काष्ठा brd_device *brd = bio->bi_bdev->bd_disk->निजी_data;
+static blk_qc_t brd_submit_bio(struct bio *bio)
+{
+	struct brd_device *brd = bio->bi_bdev->bd_disk->private_data;
 	sector_t sector = bio->bi_iter.bi_sector;
-	काष्ठा bio_vec bvec;
-	काष्ठा bvec_iter iter;
+	struct bio_vec bvec;
+	struct bvec_iter iter;
 
-	bio_क्रम_each_segment(bvec, bio, iter) अणु
-		अचिन्हित पूर्णांक len = bvec.bv_len;
-		पूर्णांक err;
+	bio_for_each_segment(bvec, bio, iter) {
+		unsigned int len = bvec.bv_len;
+		int err;
 
 		/* Don't support un-aligned buffer */
 		WARN_ON_ONCE((bvec.bv_offset & (SECTOR_SIZE - 1)) ||
 				(len & (SECTOR_SIZE - 1)));
 
-		err = brd_करो_bvec(brd, bvec.bv_page, len, bvec.bv_offset,
+		err = brd_do_bvec(brd, bvec.bv_page, len, bvec.bv_offset,
 				  bio_op(bio), sector);
-		अगर (err)
-			जाओ io_error;
+		if (err)
+			goto io_error;
 		sector += len >> SECTOR_SHIFT;
-	पूर्ण
+	}
 
 	bio_endio(bio);
-	वापस BLK_QC_T_NONE;
+	return BLK_QC_T_NONE;
 io_error:
 	bio_io_error(bio);
-	वापस BLK_QC_T_NONE;
-पूर्ण
+	return BLK_QC_T_NONE;
+}
 
-अटल पूर्णांक brd_rw_page(काष्ठा block_device *bdev, sector_t sector,
-		       काष्ठा page *page, अचिन्हित पूर्णांक op)
-अणु
-	काष्ठा brd_device *brd = bdev->bd_disk->निजी_data;
-	पूर्णांक err;
+static int brd_rw_page(struct block_device *bdev, sector_t sector,
+		       struct page *page, unsigned int op)
+{
+	struct brd_device *brd = bdev->bd_disk->private_data;
+	int err;
 
-	अगर (PageTransHuge(page))
-		वापस -ENOTSUPP;
-	err = brd_करो_bvec(brd, page, PAGE_SIZE, 0, op, sector);
-	page_endio(page, op_is_ग_लिखो(op), err);
-	वापस err;
-पूर्ण
+	if (PageTransHuge(page))
+		return -ENOTSUPP;
+	err = brd_do_bvec(brd, page, PAGE_SIZE, 0, op, sector);
+	page_endio(page, op_is_write(op), err);
+	return err;
+}
 
-अटल स्थिर काष्ठा block_device_operations brd_fops = अणु
+static const struct block_device_operations brd_fops = {
 	.owner =		THIS_MODULE,
 	.submit_bio =		brd_submit_bio,
 	.rw_page =		brd_rw_page,
-पूर्ण;
+};
 
 /*
- * And now the modules code and kernel पूर्णांकerface.
+ * And now the modules code and kernel interface.
  */
-अटल पूर्णांक rd_nr = CONFIG_BLK_DEV_RAM_COUNT;
-module_param(rd_nr, पूर्णांक, 0444);
+static int rd_nr = CONFIG_BLK_DEV_RAM_COUNT;
+module_param(rd_nr, int, 0444);
 MODULE_PARM_DESC(rd_nr, "Maximum number of brd devices");
 
-अचिन्हित दीर्घ rd_size = CONFIG_BLK_DEV_RAM_SIZE;
-module_param(rd_size, uदीर्घ, 0444);
+unsigned long rd_size = CONFIG_BLK_DEV_RAM_SIZE;
+module_param(rd_size, ulong, 0444);
 MODULE_PARM_DESC(rd_size, "Size of each RAM disk in kbytes.");
 
-अटल पूर्णांक max_part = 1;
-module_param(max_part, पूर्णांक, 0444);
+static int max_part = 1;
+module_param(max_part, int, 0444);
 MODULE_PARM_DESC(max_part, "Num Minors to reserve between devices");
 
 MODULE_LICENSE("GPL");
 MODULE_ALIAS_BLOCKDEV_MAJOR(RAMDISK_MAJOR);
 MODULE_ALIAS("rd");
 
-#अगर_अघोषित MODULE
+#ifndef MODULE
 /* Legacy boot options - nonmodular */
-अटल पूर्णांक __init ramdisk_size(अक्षर *str)
-अणु
-	rd_size = simple_म_से_दीर्घ(str, शून्य, 0);
-	वापस 1;
-पूर्ण
+static int __init ramdisk_size(char *str)
+{
+	rd_size = simple_strtol(str, NULL, 0);
+	return 1;
+}
 __setup("ramdisk_size=", ramdisk_size);
-#पूर्ण_अगर
+#endif
 
 /*
  * The device scheme is derived from loop.c. Keep them in synch where possible
  * (should share code eventually).
  */
-अटल LIST_HEAD(brd_devices);
-अटल DEFINE_MUTEX(brd_devices_mutex);
-अटल काष्ठा dentry *brd_debugfs_dir;
+static LIST_HEAD(brd_devices);
+static DEFINE_MUTEX(brd_devices_mutex);
+static struct dentry *brd_debugfs_dir;
 
-अटल काष्ठा brd_device *brd_alloc(पूर्णांक i)
-अणु
-	काष्ठा brd_device *brd;
-	काष्ठा gendisk *disk;
-	अक्षर buf[DISK_NAME_LEN];
+static struct brd_device *brd_alloc(int i)
+{
+	struct brd_device *brd;
+	struct gendisk *disk;
+	char buf[DISK_NAME_LEN];
 
-	brd = kzalloc(माप(*brd), GFP_KERNEL);
-	अगर (!brd)
-		जाओ out;
+	brd = kzalloc(sizeof(*brd), GFP_KERNEL);
+	if (!brd)
+		goto out;
 	brd->brd_number		= i;
 	spin_lock_init(&brd->brd_lock);
 	INIT_RADIX_TREE(&brd->brd_pages, GFP_ATOMIC);
 
 	brd->brd_queue = blk_alloc_queue(NUMA_NO_NODE);
-	अगर (!brd->brd_queue)
-		जाओ out_मुक्त_dev;
+	if (!brd->brd_queue)
+		goto out_free_dev;
 
-	snम_लिखो(buf, DISK_NAME_LEN, "ram%d", i);
-	अगर (!IS_ERR_OR_शून्य(brd_debugfs_dir))
+	snprintf(buf, DISK_NAME_LEN, "ram%d", i);
+	if (!IS_ERR_OR_NULL(brd_debugfs_dir))
 		debugfs_create_u64(buf, 0444, brd_debugfs_dir,
 				&brd->brd_nr_pages);
 
 	/* This is so fdisk will align partitions on 4k, because of
-	 * direct_access API needing 4k alignment, वापसing a PFN
+	 * direct_access API needing 4k alignment, returning a PFN
 	 * (This is only a problem on very small devices <= 4M,
 	 *  otherwise fdisk will align on 1M. Regardless this call
 	 *  is harmless)
 	 */
 	blk_queue_physical_block_size(brd->brd_queue, PAGE_SIZE);
 	disk = brd->brd_disk = alloc_disk(max_part);
-	अगर (!disk)
-		जाओ out_मुक्त_queue;
+	if (!disk)
+		goto out_free_queue;
 	disk->major		= RAMDISK_MAJOR;
 	disk->first_minor	= i * max_part;
 	disk->fops		= &brd_fops;
-	disk->निजी_data	= brd;
+	disk->private_data	= brd;
 	disk->flags		= GENHD_FL_EXT_DEVT;
 	strlcpy(disk->disk_name, buf, DISK_NAME_LEN);
 	set_capacity(disk, rd_size * 2);
@@ -417,150 +416,150 @@ __setup("ramdisk_size=", ramdisk_size);
 	blk_queue_flag_set(QUEUE_FLAG_NONROT, brd->brd_queue);
 	blk_queue_flag_clear(QUEUE_FLAG_ADD_RANDOM, brd->brd_queue);
 
-	वापस brd;
+	return brd;
 
-out_मुक्त_queue:
+out_free_queue:
 	blk_cleanup_queue(brd->brd_queue);
-out_मुक्त_dev:
-	kमुक्त(brd);
+out_free_dev:
+	kfree(brd);
 out:
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल व्योम brd_मुक्त(काष्ठा brd_device *brd)
-अणु
+static void brd_free(struct brd_device *brd)
+{
 	put_disk(brd->brd_disk);
 	blk_cleanup_queue(brd->brd_queue);
-	brd_मुक्त_pages(brd);
-	kमुक्त(brd);
-पूर्ण
+	brd_free_pages(brd);
+	kfree(brd);
+}
 
-अटल व्योम brd_probe(dev_t dev)
-अणु
-	काष्ठा brd_device *brd;
-	पूर्णांक i = MINOR(dev) / max_part;
+static void brd_probe(dev_t dev)
+{
+	struct brd_device *brd;
+	int i = MINOR(dev) / max_part;
 
 	mutex_lock(&brd_devices_mutex);
-	list_क्रम_each_entry(brd, &brd_devices, brd_list) अणु
-		अगर (brd->brd_number == i)
-			जाओ out_unlock;
-	पूर्ण
+	list_for_each_entry(brd, &brd_devices, brd_list) {
+		if (brd->brd_number == i)
+			goto out_unlock;
+	}
 
 	brd = brd_alloc(i);
-	अगर (brd) अणु
+	if (brd) {
 		brd->brd_disk->queue = brd->brd_queue;
 		add_disk(brd->brd_disk);
 		list_add_tail(&brd->brd_list, &brd_devices);
-	पूर्ण
+	}
 
 out_unlock:
 	mutex_unlock(&brd_devices_mutex);
-पूर्ण
+}
 
-अटल व्योम brd_del_one(काष्ठा brd_device *brd)
-अणु
+static void brd_del_one(struct brd_device *brd)
+{
 	list_del(&brd->brd_list);
 	del_gendisk(brd->brd_disk);
-	brd_मुक्त(brd);
-पूर्ण
+	brd_free(brd);
+}
 
-अटल अंतरभूत व्योम brd_check_and_reset_par(व्योम)
-अणु
-	अगर (unlikely(!max_part))
+static inline void brd_check_and_reset_par(void)
+{
+	if (unlikely(!max_part))
 		max_part = 1;
 
 	/*
-	 * make sure 'max_part' can be भागided exactly by (1U << MINORBITS),
+	 * make sure 'max_part' can be divided exactly by (1U << MINORBITS),
 	 * otherwise, it is possiable to get same dev_t when adding partitions.
 	 */
-	अगर ((1U << MINORBITS) % max_part != 0)
+	if ((1U << MINORBITS) % max_part != 0)
 		max_part = 1UL << fls(max_part);
 
-	अगर (max_part > DISK_MAX_PARTS) अणु
+	if (max_part > DISK_MAX_PARTS) {
 		pr_info("brd: max_part can't be larger than %d, reset max_part = %d.\n",
 			DISK_MAX_PARTS, DISK_MAX_PARTS);
 		max_part = DISK_MAX_PARTS;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक __init brd_init(व्योम)
-अणु
-	काष्ठा brd_device *brd, *next;
-	पूर्णांक i;
+static int __init brd_init(void)
+{
+	struct brd_device *brd, *next;
+	int i;
 
 	/*
 	 * brd module now has a feature to instantiate underlying device
-	 * काष्ठाure on-demand, provided that there is an access dev node.
+	 * structure on-demand, provided that there is an access dev node.
 	 *
-	 * (1) अगर rd_nr is specअगरied, create that many upfront. अन्यथा
-	 *     it शेषs to CONFIG_BLK_DEV_RAM_COUNT
+	 * (1) if rd_nr is specified, create that many upfront. else
+	 *     it defaults to CONFIG_BLK_DEV_RAM_COUNT
 	 * (2) User can further extend brd devices by create dev node themselves
-	 *     and have kernel स्वतःmatically instantiate actual device
+	 *     and have kernel automatically instantiate actual device
 	 *     on-demand. Example:
 	 *		mknod /path/devnod_name b 1 X	# 1 is the rd major
 	 *		fdisk -l /path/devnod_name
-	 *	If (X / max_part) was not alपढ़ोy created it will be created
+	 *	If (X / max_part) was not already created it will be created
 	 *	dynamically.
 	 */
 
-	अगर (__रेजिस्टर_blkdev(RAMDISK_MAJOR, "ramdisk", brd_probe))
-		वापस -EIO;
+	if (__register_blkdev(RAMDISK_MAJOR, "ramdisk", brd_probe))
+		return -EIO;
 
 	brd_check_and_reset_par();
 
-	brd_debugfs_dir = debugfs_create_dir("ramdisk_pages", शून्य);
+	brd_debugfs_dir = debugfs_create_dir("ramdisk_pages", NULL);
 
 	mutex_lock(&brd_devices_mutex);
-	क्रम (i = 0; i < rd_nr; i++) अणु
+	for (i = 0; i < rd_nr; i++) {
 		brd = brd_alloc(i);
-		अगर (!brd)
-			जाओ out_मुक्त;
+		if (!brd)
+			goto out_free;
 		list_add_tail(&brd->brd_list, &brd_devices);
-	पूर्ण
+	}
 
-	/* poपूर्णांक of no वापस */
+	/* point of no return */
 
-	list_क्रम_each_entry(brd, &brd_devices, brd_list) अणु
+	list_for_each_entry(brd, &brd_devices, brd_list) {
 		/*
-		 * associate with queue just beक्रमe adding disk क्रम
-		 * aव्योमing to mess up failure path
+		 * associate with queue just before adding disk for
+		 * avoiding to mess up failure path
 		 */
 		brd->brd_disk->queue = brd->brd_queue;
 		add_disk(brd->brd_disk);
-	पूर्ण
+	}
 	mutex_unlock(&brd_devices_mutex);
 
 	pr_info("brd: module loaded\n");
-	वापस 0;
+	return 0;
 
-out_मुक्त:
-	debugfs_हटाओ_recursive(brd_debugfs_dir);
+out_free:
+	debugfs_remove_recursive(brd_debugfs_dir);
 
-	list_क्रम_each_entry_safe(brd, next, &brd_devices, brd_list) अणु
+	list_for_each_entry_safe(brd, next, &brd_devices, brd_list) {
 		list_del(&brd->brd_list);
-		brd_मुक्त(brd);
-	पूर्ण
+		brd_free(brd);
+	}
 	mutex_unlock(&brd_devices_mutex);
-	unरेजिस्टर_blkdev(RAMDISK_MAJOR, "ramdisk");
+	unregister_blkdev(RAMDISK_MAJOR, "ramdisk");
 
 	pr_info("brd: module NOT loaded !!!\n");
-	वापस -ENOMEM;
-पूर्ण
+	return -ENOMEM;
+}
 
-अटल व्योम __निकास brd_निकास(व्योम)
-अणु
-	काष्ठा brd_device *brd, *next;
+static void __exit brd_exit(void)
+{
+	struct brd_device *brd, *next;
 
-	debugfs_हटाओ_recursive(brd_debugfs_dir);
+	debugfs_remove_recursive(brd_debugfs_dir);
 
-	list_क्रम_each_entry_safe(brd, next, &brd_devices, brd_list)
+	list_for_each_entry_safe(brd, next, &brd_devices, brd_list)
 		brd_del_one(brd);
 
-	unरेजिस्टर_blkdev(RAMDISK_MAJOR, "ramdisk");
+	unregister_blkdev(RAMDISK_MAJOR, "ramdisk");
 
 	pr_info("brd: module unloaded\n");
-पूर्ण
+}
 
 module_init(brd_init);
-module_निकास(brd_निकास);
+module_exit(brd_exit);
 

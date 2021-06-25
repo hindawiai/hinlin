@@ -1,117 +1,116 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * arch/sh/kernel/cpu/sh4a/घड़ी-sh7763.c
+ * arch/sh/kernel/cpu/sh4a/clock-sh7763.c
  *
- * SH7763 support क्रम the घड़ी framework
+ * SH7763 support for the clock framework
  *
  *  Copyright (C) 2005  Paul Mundt
  *  Copyright (C) 2007  Yoshihiro Shimoda
  */
-#समावेश <linux/init.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/clkdev.h>
-#समावेश <यंत्र/घड़ी.h>
-#समावेश <यंत्र/freq.h>
-#समावेश <यंत्र/पन.स>
+#include <linux/init.h>
+#include <linux/kernel.h>
+#include <linux/io.h>
+#include <linux/clkdev.h>
+#include <asm/clock.h>
+#include <asm/freq.h>
+#include <asm/io.h>
 
-अटल पूर्णांक bfc_भागisors[] = अणु 1, 1, 1, 8, 1, 1, 1, 1 पूर्ण;
-अटल पूर्णांक p0fc_भागisors[] = अणु 1, 1, 1, 8, 1, 1, 1, 1 पूर्ण;
-अटल पूर्णांक cfc_भागisors[] = अणु 1, 1, 4, 1, 1, 1, 1, 1 पूर्ण;
+static int bfc_divisors[] = { 1, 1, 1, 8, 1, 1, 1, 1 };
+static int p0fc_divisors[] = { 1, 1, 1, 8, 1, 1, 1, 1 };
+static int cfc_divisors[] = { 1, 1, 4, 1, 1, 1, 1, 1 };
 
-अटल व्योम master_clk_init(काष्ठा clk *clk)
-अणु
-	clk->rate *= p0fc_भागisors[(__raw_पढ़ोl(FRQCR) >> 4) & 0x07];
-पूर्ण
+static void master_clk_init(struct clk *clk)
+{
+	clk->rate *= p0fc_divisors[(__raw_readl(FRQCR) >> 4) & 0x07];
+}
 
-अटल काष्ठा sh_clk_ops sh7763_master_clk_ops = अणु
+static struct sh_clk_ops sh7763_master_clk_ops = {
 	.init		= master_clk_init,
-पूर्ण;
+};
 
-अटल अचिन्हित दीर्घ module_clk_recalc(काष्ठा clk *clk)
-अणु
-	पूर्णांक idx = ((__raw_पढ़ोl(FRQCR) >> 4) & 0x07);
-	वापस clk->parent->rate / p0fc_भागisors[idx];
-पूर्ण
+static unsigned long module_clk_recalc(struct clk *clk)
+{
+	int idx = ((__raw_readl(FRQCR) >> 4) & 0x07);
+	return clk->parent->rate / p0fc_divisors[idx];
+}
 
-अटल काष्ठा sh_clk_ops sh7763_module_clk_ops = अणु
+static struct sh_clk_ops sh7763_module_clk_ops = {
 	.recalc		= module_clk_recalc,
-पूर्ण;
+};
 
-अटल अचिन्हित दीर्घ bus_clk_recalc(काष्ठा clk *clk)
-अणु
-	पूर्णांक idx = ((__raw_पढ़ोl(FRQCR) >> 16) & 0x07);
-	वापस clk->parent->rate / bfc_भागisors[idx];
-पूर्ण
+static unsigned long bus_clk_recalc(struct clk *clk)
+{
+	int idx = ((__raw_readl(FRQCR) >> 16) & 0x07);
+	return clk->parent->rate / bfc_divisors[idx];
+}
 
-अटल काष्ठा sh_clk_ops sh7763_bus_clk_ops = अणु
+static struct sh_clk_ops sh7763_bus_clk_ops = {
 	.recalc		= bus_clk_recalc,
-पूर्ण;
+};
 
-अटल काष्ठा sh_clk_ops sh7763_cpu_clk_ops = अणु
+static struct sh_clk_ops sh7763_cpu_clk_ops = {
 	.recalc		= followparent_recalc,
-पूर्ण;
+};
 
-अटल काष्ठा sh_clk_ops *sh7763_clk_ops[] = अणु
+static struct sh_clk_ops *sh7763_clk_ops[] = {
 	&sh7763_master_clk_ops,
 	&sh7763_module_clk_ops,
 	&sh7763_bus_clk_ops,
 	&sh7763_cpu_clk_ops,
-पूर्ण;
+};
 
-व्योम __init arch_init_clk_ops(काष्ठा sh_clk_ops **ops, पूर्णांक idx)
-अणु
-	अगर (idx < ARRAY_SIZE(sh7763_clk_ops))
+void __init arch_init_clk_ops(struct sh_clk_ops **ops, int idx)
+{
+	if (idx < ARRAY_SIZE(sh7763_clk_ops))
 		*ops = sh7763_clk_ops[idx];
-पूर्ण
+}
 
-अटल अचिन्हित दीर्घ shyway_clk_recalc(काष्ठा clk *clk)
-अणु
-	पूर्णांक idx = ((__raw_पढ़ोl(FRQCR) >> 20) & 0x07);
-	वापस clk->parent->rate / cfc_भागisors[idx];
-पूर्ण
+static unsigned long shyway_clk_recalc(struct clk *clk)
+{
+	int idx = ((__raw_readl(FRQCR) >> 20) & 0x07);
+	return clk->parent->rate / cfc_divisors[idx];
+}
 
-अटल काष्ठा sh_clk_ops sh7763_shyway_clk_ops = अणु
+static struct sh_clk_ops sh7763_shyway_clk_ops = {
 	.recalc		= shyway_clk_recalc,
-पूर्ण;
+};
 
-अटल काष्ठा clk sh7763_shyway_clk = अणु
+static struct clk sh7763_shyway_clk = {
 	.flags		= CLK_ENABLE_ON_INIT,
 	.ops		= &sh7763_shyway_clk_ops,
-पूर्ण;
+};
 
 /*
- * Additional SH7763-specअगरic on-chip घड़ीs that aren't alपढ़ोy part of the
- * घड़ी framework
+ * Additional SH7763-specific on-chip clocks that aren't already part of the
+ * clock framework
  */
-अटल काष्ठा clk *sh7763_onchip_घड़ीs[] = अणु
+static struct clk *sh7763_onchip_clocks[] = {
 	&sh7763_shyway_clk,
-पूर्ण;
+};
 
-अटल काष्ठा clk_lookup lookups[] = अणु
-	/* मुख्य घड़ीs */
+static struct clk_lookup lookups[] = {
+	/* main clocks */
 	CLKDEV_CON_ID("shyway_clk", &sh7763_shyway_clk),
-पूर्ण;
+};
 
-पूर्णांक __init arch_clk_init(व्योम)
-अणु
-	काष्ठा clk *clk;
-	पूर्णांक i, ret = 0;
+int __init arch_clk_init(void)
+{
+	struct clk *clk;
+	int i, ret = 0;
 
 	cpg_clk_init();
 
-	clk = clk_get(शून्य, "master_clk");
-	क्रम (i = 0; i < ARRAY_SIZE(sh7763_onchip_घड़ीs); i++) अणु
-		काष्ठा clk *clkp = sh7763_onchip_घड़ीs[i];
+	clk = clk_get(NULL, "master_clk");
+	for (i = 0; i < ARRAY_SIZE(sh7763_onchip_clocks); i++) {
+		struct clk *clkp = sh7763_onchip_clocks[i];
 
 		clkp->parent = clk;
-		ret |= clk_रेजिस्टर(clkp);
-	पूर्ण
+		ret |= clk_register(clkp);
+	}
 
 	clk_put(clk);
 
 	clkdev_add_table(lookups, ARRAY_SIZE(lookups));
 
-	वापस ret;
-पूर्ण
+	return ret;
+}

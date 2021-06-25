@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * STMicroelectronics gyroscopes driver
  *
@@ -8,37 +7,37 @@
  * Denis Ciocca <denis.ciocca@st.com>
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/types.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/iio/iपन.स>
-#समावेश <linux/iio/sysfs.h>
-#समावेश <linux/iio/trigger.h>
-#समावेश <linux/iio/buffer.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/errno.h>
+#include <linux/types.h>
+#include <linux/interrupt.h>
+#include <linux/i2c.h>
+#include <linux/irq.h>
+#include <linux/delay.h>
+#include <linux/iio/iio.h>
+#include <linux/iio/sysfs.h>
+#include <linux/iio/trigger.h>
+#include <linux/iio/buffer.h>
 
-#समावेश <linux/iio/common/st_sensors.h>
-#समावेश "st_gyro.h"
+#include <linux/iio/common/st_sensors.h>
+#include "st_gyro.h"
 
-#घोषणा ST_GYRO_NUMBER_DATA_CHANNELS		3
+#define ST_GYRO_NUMBER_DATA_CHANNELS		3
 
 /* DEFAULT VALUE FOR SENSORS */
-#घोषणा ST_GYRO_DEFAULT_OUT_X_L_ADDR		0x28
-#घोषणा ST_GYRO_DEFAULT_OUT_Y_L_ADDR		0x2a
-#घोषणा ST_GYRO_DEFAULT_OUT_Z_L_ADDR		0x2c
+#define ST_GYRO_DEFAULT_OUT_X_L_ADDR		0x28
+#define ST_GYRO_DEFAULT_OUT_Y_L_ADDR		0x2a
+#define ST_GYRO_DEFAULT_OUT_Z_L_ADDR		0x2c
 
 /* FULLSCALE */
-#घोषणा ST_GYRO_FS_AVL_245DPS			245
-#घोषणा ST_GYRO_FS_AVL_250DPS			250
-#घोषणा ST_GYRO_FS_AVL_500DPS			500
-#घोषणा ST_GYRO_FS_AVL_2000DPS			2000
+#define ST_GYRO_FS_AVL_245DPS			245
+#define ST_GYRO_FS_AVL_250DPS			250
+#define ST_GYRO_FS_AVL_500DPS			500
+#define ST_GYRO_FS_AVL_2000DPS			2000
 
-अटल स्थिर काष्ठा iio_chan_spec st_gyro_16bit_channels[] = अणु
+static const struct iio_chan_spec st_gyro_16bit_channels[] = {
 	ST_SENSORS_LSM_CHANNELS(IIO_ANGL_VEL,
 			BIT(IIO_CHAN_INFO_RAW) | BIT(IIO_CHAN_INFO_SCALE),
 			ST_SENSORS_SCAN_X, 1, IIO_MOD_X, 's', IIO_LE, 16, 16,
@@ -52,428 +51,428 @@
 			ST_SENSORS_SCAN_Z, 1, IIO_MOD_Z, 's', IIO_LE, 16, 16,
 			ST_GYRO_DEFAULT_OUT_Z_L_ADDR),
 	IIO_CHAN_SOFT_TIMESTAMP(3)
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा st_sensor_settings st_gyro_sensors_settings[] = अणु
-	अणु
+static const struct st_sensor_settings st_gyro_sensors_settings[] = {
+	{
 		.wai = 0xd3,
 		.wai_addr = ST_SENSORS_DEFAULT_WAI_ADDRESS,
-		.sensors_supported = अणु
+		.sensors_supported = {
 			[0] = L3G4200D_GYRO_DEV_NAME,
 			[1] = LSM330DL_GYRO_DEV_NAME,
-		पूर्ण,
-		.ch = (काष्ठा iio_chan_spec *)st_gyro_16bit_channels,
-		.odr = अणु
+		},
+		.ch = (struct iio_chan_spec *)st_gyro_16bit_channels,
+		.odr = {
 			.addr = 0x20,
 			.mask = 0xc0,
-			.odr_avl = अणु
-				अणु .hz = 100, .value = 0x00, पूर्ण,
-				अणु .hz = 200, .value = 0x01, पूर्ण,
-				अणु .hz = 400, .value = 0x02, पूर्ण,
-				अणु .hz = 800, .value = 0x03, पूर्ण,
-			पूर्ण,
-		पूर्ण,
-		.pw = अणु
+			.odr_avl = {
+				{ .hz = 100, .value = 0x00, },
+				{ .hz = 200, .value = 0x01, },
+				{ .hz = 400, .value = 0x02, },
+				{ .hz = 800, .value = 0x03, },
+			},
+		},
+		.pw = {
 			.addr = 0x20,
 			.mask = 0x08,
 			.value_on = ST_SENSORS_DEFAULT_POWER_ON_VALUE,
 			.value_off = ST_SENSORS_DEFAULT_POWER_OFF_VALUE,
-		पूर्ण,
-		.enable_axis = अणु
+		},
+		.enable_axis = {
 			.addr = ST_SENSORS_DEFAULT_AXIS_ADDR,
 			.mask = ST_SENSORS_DEFAULT_AXIS_MASK,
-		पूर्ण,
-		.fs = अणु
+		},
+		.fs = {
 			.addr = 0x23,
 			.mask = 0x30,
-			.fs_avl = अणु
-				[0] = अणु
+			.fs_avl = {
+				[0] = {
 					.num = ST_GYRO_FS_AVL_250DPS,
 					.value = 0x00,
 					.gain = IIO_DEGREE_TO_RAD(8750),
-				पूर्ण,
-				[1] = अणु
+				},
+				[1] = {
 					.num = ST_GYRO_FS_AVL_500DPS,
 					.value = 0x01,
 					.gain = IIO_DEGREE_TO_RAD(17500),
-				पूर्ण,
-				[2] = अणु
+				},
+				[2] = {
 					.num = ST_GYRO_FS_AVL_2000DPS,
 					.value = 0x02,
 					.gain = IIO_DEGREE_TO_RAD(70000),
-				पूर्ण,
-			पूर्ण,
-		पूर्ण,
-		.bdu = अणु
+				},
+			},
+		},
+		.bdu = {
 			.addr = 0x23,
 			.mask = 0x80,
-		पूर्ण,
-		.drdy_irq = अणु
-			.पूर्णांक2 = अणु
+		},
+		.drdy_irq = {
+			.int2 = {
 				.addr = 0x22,
 				.mask = 0x08,
-			पूर्ण,
+			},
 			/*
-			 * The sensor has IHL (active low) and खोलो
-			 * drain settings, but only क्रम INT1 and not
-			 * क्रम the DRDY line on INT2.
+			 * The sensor has IHL (active low) and open
+			 * drain settings, but only for INT1 and not
+			 * for the DRDY line on INT2.
 			 */
-			.stat_drdy = अणु
+			.stat_drdy = {
 				.addr = ST_SENSORS_DEFAULT_STAT_ADDR,
 				.mask = 0x07,
-			पूर्ण,
-		पूर्ण,
-		.sim = अणु
+			},
+		},
+		.sim = {
 			.addr = 0x23,
 			.value = BIT(0),
-		पूर्ण,
-		.multi_पढ़ो_bit = true,
-		.booसमय = 2,
-	पूर्ण,
-	अणु
+		},
+		.multi_read_bit = true,
+		.bootime = 2,
+	},
+	{
 		.wai = 0xd4,
 		.wai_addr = ST_SENSORS_DEFAULT_WAI_ADDRESS,
-		.sensors_supported = अणु
+		.sensors_supported = {
 			[0] = L3GD20_GYRO_DEV_NAME,
 			[1] = LSM330D_GYRO_DEV_NAME,
 			[2] = LSM330DLC_GYRO_DEV_NAME,
 			[3] = L3G4IS_GYRO_DEV_NAME,
 			[4] = LSM330_GYRO_DEV_NAME,
-		पूर्ण,
-		.ch = (काष्ठा iio_chan_spec *)st_gyro_16bit_channels,
-		.odr = अणु
+		},
+		.ch = (struct iio_chan_spec *)st_gyro_16bit_channels,
+		.odr = {
 			.addr = 0x20,
 			.mask = 0xc0,
-			.odr_avl = अणु
-				अणु .hz = 95, .value = 0x00, पूर्ण,
-				अणु .hz = 190, .value = 0x01, पूर्ण,
-				अणु .hz = 380, .value = 0x02, पूर्ण,
-				अणु .hz = 760, .value = 0x03, पूर्ण,
-			पूर्ण,
-		पूर्ण,
-		.pw = अणु
+			.odr_avl = {
+				{ .hz = 95, .value = 0x00, },
+				{ .hz = 190, .value = 0x01, },
+				{ .hz = 380, .value = 0x02, },
+				{ .hz = 760, .value = 0x03, },
+			},
+		},
+		.pw = {
 			.addr = 0x20,
 			.mask = 0x08,
 			.value_on = ST_SENSORS_DEFAULT_POWER_ON_VALUE,
 			.value_off = ST_SENSORS_DEFAULT_POWER_OFF_VALUE,
-		पूर्ण,
-		.enable_axis = अणु
+		},
+		.enable_axis = {
 			.addr = ST_SENSORS_DEFAULT_AXIS_ADDR,
 			.mask = ST_SENSORS_DEFAULT_AXIS_MASK,
-		पूर्ण,
-		.fs = अणु
+		},
+		.fs = {
 			.addr = 0x23,
 			.mask = 0x30,
-			.fs_avl = अणु
-				[0] = अणु
+			.fs_avl = {
+				[0] = {
 					.num = ST_GYRO_FS_AVL_250DPS,
 					.value = 0x00,
 					.gain = IIO_DEGREE_TO_RAD(8750),
-				पूर्ण,
-				[1] = अणु
+				},
+				[1] = {
 					.num = ST_GYRO_FS_AVL_500DPS,
 					.value = 0x01,
 					.gain = IIO_DEGREE_TO_RAD(17500),
-				पूर्ण,
-				[2] = अणु
+				},
+				[2] = {
 					.num = ST_GYRO_FS_AVL_2000DPS,
 					.value = 0x02,
 					.gain = IIO_DEGREE_TO_RAD(70000),
-				पूर्ण,
-			पूर्ण,
-		पूर्ण,
-		.bdu = अणु
+				},
+			},
+		},
+		.bdu = {
 			.addr = 0x23,
 			.mask = 0x80,
-		पूर्ण,
-		.drdy_irq = अणु
-			.पूर्णांक2 = अणु
+		},
+		.drdy_irq = {
+			.int2 = {
 				.addr = 0x22,
 				.mask = 0x08,
-			पूर्ण,
+			},
 			/*
-			 * The sensor has IHL (active low) and खोलो
-			 * drain settings, but only क्रम INT1 and not
-			 * क्रम the DRDY line on INT2.
+			 * The sensor has IHL (active low) and open
+			 * drain settings, but only for INT1 and not
+			 * for the DRDY line on INT2.
 			 */
-			.stat_drdy = अणु
+			.stat_drdy = {
 				.addr = ST_SENSORS_DEFAULT_STAT_ADDR,
 				.mask = 0x07,
-			पूर्ण,
-		पूर्ण,
-		.sim = अणु
+			},
+		},
+		.sim = {
 			.addr = 0x23,
 			.value = BIT(0),
-		पूर्ण,
-		.multi_पढ़ो_bit = true,
-		.booसमय = 2,
-	पूर्ण,
-	अणु
+		},
+		.multi_read_bit = true,
+		.bootime = 2,
+	},
+	{
 		.wai = 0xd4,
 		.wai_addr = ST_SENSORS_DEFAULT_WAI_ADDRESS,
-		.sensors_supported = अणु
+		.sensors_supported = {
 			[0] = LSM9DS0_GYRO_DEV_NAME,
-		पूर्ण,
-		.ch = (काष्ठा iio_chan_spec *)st_gyro_16bit_channels,
-		.odr = अणु
+		},
+		.ch = (struct iio_chan_spec *)st_gyro_16bit_channels,
+		.odr = {
 			.addr = 0x20,
 			.mask = GENMASK(7, 6),
-			.odr_avl = अणु
-				अणु .hz = 95, .value = 0x00, पूर्ण,
-				अणु .hz = 190, .value = 0x01, पूर्ण,
-				अणु .hz = 380, .value = 0x02, पूर्ण,
-				अणु .hz = 760, .value = 0x03, पूर्ण,
-			पूर्ण,
-		पूर्ण,
-		.pw = अणु
+			.odr_avl = {
+				{ .hz = 95, .value = 0x00, },
+				{ .hz = 190, .value = 0x01, },
+				{ .hz = 380, .value = 0x02, },
+				{ .hz = 760, .value = 0x03, },
+			},
+		},
+		.pw = {
 			.addr = 0x20,
 			.mask = BIT(3),
 			.value_on = ST_SENSORS_DEFAULT_POWER_ON_VALUE,
 			.value_off = ST_SENSORS_DEFAULT_POWER_OFF_VALUE,
-		पूर्ण,
-		.enable_axis = अणु
+		},
+		.enable_axis = {
 			.addr = ST_SENSORS_DEFAULT_AXIS_ADDR,
 			.mask = ST_SENSORS_DEFAULT_AXIS_MASK,
-		पूर्ण,
-		.fs = अणु
+		},
+		.fs = {
 			.addr = 0x23,
 			.mask = GENMASK(5, 4),
-			.fs_avl = अणु
-				[0] = अणु
+			.fs_avl = {
+				[0] = {
 					.num = ST_GYRO_FS_AVL_245DPS,
 					.value = 0x00,
 					.gain = IIO_DEGREE_TO_RAD(8750),
-				पूर्ण,
-				[1] = अणु
+				},
+				[1] = {
 					.num = ST_GYRO_FS_AVL_500DPS,
 					.value = 0x01,
 					.gain = IIO_DEGREE_TO_RAD(17500),
-				पूर्ण,
-				[2] = अणु
+				},
+				[2] = {
 					.num = ST_GYRO_FS_AVL_2000DPS,
 					.value = 0x02,
 					.gain = IIO_DEGREE_TO_RAD(70000),
-				पूर्ण,
-			पूर्ण,
-		पूर्ण,
-		.bdu = अणु
+				},
+			},
+		},
+		.bdu = {
 			.addr = 0x23,
 			.mask = BIT(7),
-		पूर्ण,
-		.drdy_irq = अणु
-			.पूर्णांक2 = अणु
+		},
+		.drdy_irq = {
+			.int2 = {
 				.addr = 0x22,
 				.mask = BIT(3),
-			पूर्ण,
+			},
 			/*
-			 * The sensor has IHL (active low) and खोलो
-			 * drain settings, but only क्रम INT1 and not
-			 * क्रम the DRDY line on INT2.
+			 * The sensor has IHL (active low) and open
+			 * drain settings, but only for INT1 and not
+			 * for the DRDY line on INT2.
 			 */
-			.stat_drdy = अणु
+			.stat_drdy = {
 				.addr = ST_SENSORS_DEFAULT_STAT_ADDR,
 				.mask = GENMASK(2, 0),
-			पूर्ण,
-		पूर्ण,
-		.sim = अणु
+			},
+		},
+		.sim = {
 			.addr = 0x23,
 			.value = BIT(0),
-		पूर्ण,
-		.multi_पढ़ो_bit = true,
-		.booसमय = 2,
-	पूर्ण,
-	अणु
+		},
+		.multi_read_bit = true,
+		.bootime = 2,
+	},
+	{
 		.wai = 0xd7,
 		.wai_addr = ST_SENSORS_DEFAULT_WAI_ADDRESS,
-		.sensors_supported = अणु
+		.sensors_supported = {
 			[0] = L3GD20H_GYRO_DEV_NAME,
-		पूर्ण,
-		.ch = (काष्ठा iio_chan_spec *)st_gyro_16bit_channels,
-		.odr = अणु
+		},
+		.ch = (struct iio_chan_spec *)st_gyro_16bit_channels,
+		.odr = {
 			.addr = 0x20,
 			.mask = 0xc0,
-			.odr_avl = अणु
-				अणु .hz = 100, .value = 0x00, पूर्ण,
-				अणु .hz = 200, .value = 0x01, पूर्ण,
-				अणु .hz = 400, .value = 0x02, पूर्ण,
-				अणु .hz = 800, .value = 0x03, पूर्ण,
-			पूर्ण,
-		पूर्ण,
-		.pw = अणु
+			.odr_avl = {
+				{ .hz = 100, .value = 0x00, },
+				{ .hz = 200, .value = 0x01, },
+				{ .hz = 400, .value = 0x02, },
+				{ .hz = 800, .value = 0x03, },
+			},
+		},
+		.pw = {
 			.addr = 0x20,
 			.mask = 0x08,
 			.value_on = ST_SENSORS_DEFAULT_POWER_ON_VALUE,
 			.value_off = ST_SENSORS_DEFAULT_POWER_OFF_VALUE,
-		पूर्ण,
-		.enable_axis = अणु
+		},
+		.enable_axis = {
 			.addr = ST_SENSORS_DEFAULT_AXIS_ADDR,
 			.mask = ST_SENSORS_DEFAULT_AXIS_MASK,
-		पूर्ण,
-		.fs = अणु
+		},
+		.fs = {
 			.addr = 0x23,
 			.mask = 0x30,
-			.fs_avl = अणु
-				[0] = अणु
+			.fs_avl = {
+				[0] = {
 					.num = ST_GYRO_FS_AVL_245DPS,
 					.value = 0x00,
 					.gain = IIO_DEGREE_TO_RAD(8750),
-				पूर्ण,
-				[1] = अणु
+				},
+				[1] = {
 					.num = ST_GYRO_FS_AVL_500DPS,
 					.value = 0x01,
 					.gain = IIO_DEGREE_TO_RAD(17500),
-				पूर्ण,
-				[2] = अणु
+				},
+				[2] = {
 					.num = ST_GYRO_FS_AVL_2000DPS,
 					.value = 0x02,
 					.gain = IIO_DEGREE_TO_RAD(70000),
-				पूर्ण,
-			पूर्ण,
-		पूर्ण,
-		.bdu = अणु
+				},
+			},
+		},
+		.bdu = {
 			.addr = 0x23,
 			.mask = 0x80,
-		पूर्ण,
-		.drdy_irq = अणु
-			.पूर्णांक2 = अणु
+		},
+		.drdy_irq = {
+			.int2 = {
 				.addr = 0x22,
 				.mask = 0x08,
-			पूर्ण,
+			},
 			/*
-			 * The sensor has IHL (active low) and खोलो
-			 * drain settings, but only क्रम INT1 and not
-			 * क्रम the DRDY line on INT2.
+			 * The sensor has IHL (active low) and open
+			 * drain settings, but only for INT1 and not
+			 * for the DRDY line on INT2.
 			 */
-			.stat_drdy = अणु
+			.stat_drdy = {
 				.addr = ST_SENSORS_DEFAULT_STAT_ADDR,
 				.mask = 0x07,
-			पूर्ण,
-		पूर्ण,
-		.sim = अणु
+			},
+		},
+		.sim = {
 			.addr = 0x23,
 			.value = BIT(0),
-		पूर्ण,
-		.multi_पढ़ो_bit = true,
-		.booसमय = 2,
-	पूर्ण,
-पूर्ण;
+		},
+		.multi_read_bit = true,
+		.bootime = 2,
+	},
+};
 
-अटल पूर्णांक st_gyro_पढ़ो_raw(काष्ठा iio_dev *indio_dev,
-			काष्ठा iio_chan_spec स्थिर *ch, पूर्णांक *val,
-							पूर्णांक *val2, दीर्घ mask)
-अणु
-	पूर्णांक err;
-	काष्ठा st_sensor_data *gdata = iio_priv(indio_dev);
+static int st_gyro_read_raw(struct iio_dev *indio_dev,
+			struct iio_chan_spec const *ch, int *val,
+							int *val2, long mask)
+{
+	int err;
+	struct st_sensor_data *gdata = iio_priv(indio_dev);
 
-	चयन (mask) अणु
-	हाल IIO_CHAN_INFO_RAW:
-		err = st_sensors_पढ़ो_info_raw(indio_dev, ch, val);
-		अगर (err < 0)
-			जाओ पढ़ो_error;
+	switch (mask) {
+	case IIO_CHAN_INFO_RAW:
+		err = st_sensors_read_info_raw(indio_dev, ch, val);
+		if (err < 0)
+			goto read_error;
 
-		वापस IIO_VAL_INT;
-	हाल IIO_CHAN_INFO_SCALE:
+		return IIO_VAL_INT;
+	case IIO_CHAN_INFO_SCALE:
 		*val = 0;
 		*val2 = gdata->current_fullscale->gain;
-		वापस IIO_VAL_INT_PLUS_MICRO;
-	हाल IIO_CHAN_INFO_SAMP_FREQ:
+		return IIO_VAL_INT_PLUS_MICRO;
+	case IIO_CHAN_INFO_SAMP_FREQ:
 		*val = gdata->odr;
-		वापस IIO_VAL_INT;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		return IIO_VAL_INT;
+	default:
+		return -EINVAL;
+	}
 
-पढ़ो_error:
-	वापस err;
-पूर्ण
+read_error:
+	return err;
+}
 
-अटल पूर्णांक st_gyro_ग_लिखो_raw(काष्ठा iio_dev *indio_dev,
-		काष्ठा iio_chan_spec स्थिर *chan, पूर्णांक val, पूर्णांक val2, दीर्घ mask)
-अणु
-	पूर्णांक err;
+static int st_gyro_write_raw(struct iio_dev *indio_dev,
+		struct iio_chan_spec const *chan, int val, int val2, long mask)
+{
+	int err;
 
-	चयन (mask) अणु
-	हाल IIO_CHAN_INFO_SCALE:
+	switch (mask) {
+	case IIO_CHAN_INFO_SCALE:
 		err = st_sensors_set_fullscale_by_gain(indio_dev, val2);
-		अवरोध;
-	हाल IIO_CHAN_INFO_SAMP_FREQ:
-		अगर (val2)
-			वापस -EINVAL;
+		break;
+	case IIO_CHAN_INFO_SAMP_FREQ:
+		if (val2)
+			return -EINVAL;
 		mutex_lock(&indio_dev->mlock);
 		err = st_sensors_set_odr(indio_dev, val);
 		mutex_unlock(&indio_dev->mlock);
-		वापस err;
-	शेष:
+		return err;
+	default:
 		err = -EINVAL;
-	पूर्ण
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल ST_SENSORS_DEV_ATTR_SAMP_FREQ_AVAIL();
-अटल ST_SENSORS_DEV_ATTR_SCALE_AVAIL(in_anglvel_scale_available);
+static ST_SENSORS_DEV_ATTR_SAMP_FREQ_AVAIL();
+static ST_SENSORS_DEV_ATTR_SCALE_AVAIL(in_anglvel_scale_available);
 
-अटल काष्ठा attribute *st_gyro_attributes[] = अणु
+static struct attribute *st_gyro_attributes[] = {
 	&iio_dev_attr_sampling_frequency_available.dev_attr.attr,
 	&iio_dev_attr_in_anglvel_scale_available.dev_attr.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल स्थिर काष्ठा attribute_group st_gyro_attribute_group = अणु
+static const struct attribute_group st_gyro_attribute_group = {
 	.attrs = st_gyro_attributes,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा iio_info gyro_info = अणु
+static const struct iio_info gyro_info = {
 	.attrs = &st_gyro_attribute_group,
-	.पढ़ो_raw = &st_gyro_पढ़ो_raw,
-	.ग_लिखो_raw = &st_gyro_ग_लिखो_raw,
+	.read_raw = &st_gyro_read_raw,
+	.write_raw = &st_gyro_write_raw,
 	.debugfs_reg_access = &st_sensors_debugfs_reg_access,
-पूर्ण;
+};
 
-#अगर_घोषित CONFIG_IIO_TRIGGER
-अटल स्थिर काष्ठा iio_trigger_ops st_gyro_trigger_ops = अणु
+#ifdef CONFIG_IIO_TRIGGER
+static const struct iio_trigger_ops st_gyro_trigger_ops = {
 	.set_trigger_state = ST_GYRO_TRIGGER_SET_STATE,
 	.validate_device = st_sensors_validate_device,
-पूर्ण;
-#घोषणा ST_GYRO_TRIGGER_OPS (&st_gyro_trigger_ops)
-#अन्यथा
-#घोषणा ST_GYRO_TRIGGER_OPS शून्य
-#पूर्ण_अगर
+};
+#define ST_GYRO_TRIGGER_OPS (&st_gyro_trigger_ops)
+#else
+#define ST_GYRO_TRIGGER_OPS NULL
+#endif
 
 /*
  * st_gyro_get_settings() - get sensor settings from device name
  * @name: device name buffer reference.
  *
- * Return: valid reference on success, शून्य otherwise.
+ * Return: valid reference on success, NULL otherwise.
  */
-स्थिर काष्ठा st_sensor_settings *st_gyro_get_settings(स्थिर अक्षर *name)
-अणु
-	पूर्णांक index = st_sensors_get_settings_index(name,
+const struct st_sensor_settings *st_gyro_get_settings(const char *name)
+{
+	int index = st_sensors_get_settings_index(name,
 					st_gyro_sensors_settings,
 					ARRAY_SIZE(st_gyro_sensors_settings));
-	अगर (index < 0)
-		वापस शून्य;
+	if (index < 0)
+		return NULL;
 
-	वापस &st_gyro_sensors_settings[index];
-पूर्ण
+	return &st_gyro_sensors_settings[index];
+}
 EXPORT_SYMBOL(st_gyro_get_settings);
 
-पूर्णांक st_gyro_common_probe(काष्ठा iio_dev *indio_dev)
-अणु
-	काष्ठा st_sensor_data *gdata = iio_priv(indio_dev);
-	काष्ठा st_sensors_platक्रमm_data *pdata;
-	पूर्णांक err;
+int st_gyro_common_probe(struct iio_dev *indio_dev)
+{
+	struct st_sensor_data *gdata = iio_priv(indio_dev);
+	struct st_sensors_platform_data *pdata;
+	int err;
 
-	indio_dev->modes = INDIO_सूचीECT_MODE;
+	indio_dev->modes = INDIO_DIRECT_MODE;
 	indio_dev->info = &gyro_info;
 
-	err = st_sensors_घातer_enable(indio_dev);
-	अगर (err)
-		वापस err;
+	err = st_sensors_power_enable(indio_dev);
+	if (err)
+		return err;
 
-	err = st_sensors_verअगरy_id(indio_dev);
-	अगर (err < 0)
-		जाओ st_gyro_घातer_off;
+	err = st_sensors_verify_id(indio_dev);
+	if (err < 0)
+		goto st_gyro_power_off;
 
 	gdata->num_data_channels = ST_GYRO_NUMBER_DATA_CHANNELS;
 	indio_dev->channels = gdata->sensor_settings->ch;
@@ -482,57 +481,57 @@ EXPORT_SYMBOL(st_gyro_get_settings);
 	gdata->current_fullscale = &gdata->sensor_settings->fs.fs_avl[0];
 	gdata->odr = gdata->sensor_settings->odr.odr_avl[0].hz;
 
-	pdata = (काष्ठा st_sensors_platक्रमm_data *)&gyro_pdata;
+	pdata = (struct st_sensors_platform_data *)&gyro_pdata;
 
 	err = st_sensors_init_sensor(indio_dev, pdata);
-	अगर (err < 0)
-		जाओ st_gyro_घातer_off;
+	if (err < 0)
+		goto st_gyro_power_off;
 
 	err = st_gyro_allocate_ring(indio_dev);
-	अगर (err < 0)
-		जाओ st_gyro_घातer_off;
+	if (err < 0)
+		goto st_gyro_power_off;
 
-	अगर (gdata->irq > 0) अणु
+	if (gdata->irq > 0) {
 		err = st_sensors_allocate_trigger(indio_dev,
 						  ST_GYRO_TRIGGER_OPS);
-		अगर (err < 0)
-			जाओ st_gyro_probe_trigger_error;
-	पूर्ण
+		if (err < 0)
+			goto st_gyro_probe_trigger_error;
+	}
 
-	err = iio_device_रेजिस्टर(indio_dev);
-	अगर (err)
-		जाओ st_gyro_device_रेजिस्टर_error;
+	err = iio_device_register(indio_dev);
+	if (err)
+		goto st_gyro_device_register_error;
 
 	dev_info(&indio_dev->dev, "registered gyroscope %s\n",
 		 indio_dev->name);
 
-	वापस 0;
+	return 0;
 
-st_gyro_device_रेजिस्टर_error:
-	अगर (gdata->irq > 0)
+st_gyro_device_register_error:
+	if (gdata->irq > 0)
 		st_sensors_deallocate_trigger(indio_dev);
 st_gyro_probe_trigger_error:
 	st_gyro_deallocate_ring(indio_dev);
-st_gyro_घातer_off:
-	st_sensors_घातer_disable(indio_dev);
+st_gyro_power_off:
+	st_sensors_power_disable(indio_dev);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 EXPORT_SYMBOL(st_gyro_common_probe);
 
-व्योम st_gyro_common_हटाओ(काष्ठा iio_dev *indio_dev)
-अणु
-	काष्ठा st_sensor_data *gdata = iio_priv(indio_dev);
+void st_gyro_common_remove(struct iio_dev *indio_dev)
+{
+	struct st_sensor_data *gdata = iio_priv(indio_dev);
 
-	st_sensors_घातer_disable(indio_dev);
+	st_sensors_power_disable(indio_dev);
 
-	iio_device_unरेजिस्टर(indio_dev);
-	अगर (gdata->irq > 0)
+	iio_device_unregister(indio_dev);
+	if (gdata->irq > 0)
 		st_sensors_deallocate_trigger(indio_dev);
 
 	st_gyro_deallocate_ring(indio_dev);
-पूर्ण
-EXPORT_SYMBOL(st_gyro_common_हटाओ);
+}
+EXPORT_SYMBOL(st_gyro_common_remove);
 
 MODULE_AUTHOR("Denis Ciocca <denis.ciocca@st.com>");
 MODULE_DESCRIPTION("STMicroelectronics gyroscopes driver");

@@ -1,249 +1,248 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * Copyright Gavin Shan, IBM Corporation 2016.
  */
 
-#अगर_अघोषित __NCSI_PKT_H__
-#घोषणा __NCSI_PKT_H__
+#ifndef __NCSI_PKT_H__
+#define __NCSI_PKT_H__
 
-काष्ठा ncsi_pkt_hdr अणु
-	अचिन्हित अक्षर mc_id;        /* Management controller ID */
-	अचिन्हित अक्षर revision;     /* NCSI version - 0x01      */
-	अचिन्हित अक्षर reserved;     /* Reserved                 */
-	अचिन्हित अक्षर id;           /* Packet sequence number   */
-	अचिन्हित अक्षर type;         /* Packet type              */
-	अचिन्हित अक्षर channel;      /* Network controller ID    */
+struct ncsi_pkt_hdr {
+	unsigned char mc_id;        /* Management controller ID */
+	unsigned char revision;     /* NCSI version - 0x01      */
+	unsigned char reserved;     /* Reserved                 */
+	unsigned char id;           /* Packet sequence number   */
+	unsigned char type;         /* Packet type              */
+	unsigned char channel;      /* Network controller ID    */
 	__be16        length;       /* Payload length           */
 	__be32        reserved1[2]; /* Reserved                 */
-पूर्ण;
+};
 
-काष्ठा ncsi_cmd_pkt_hdr अणु
-	काष्ठा ncsi_pkt_hdr common; /* Common NCSI packet header */
-पूर्ण;
+struct ncsi_cmd_pkt_hdr {
+	struct ncsi_pkt_hdr common; /* Common NCSI packet header */
+};
 
-काष्ठा ncsi_rsp_pkt_hdr अणु
-	काष्ठा ncsi_pkt_hdr common; /* Common NCSI packet header */
+struct ncsi_rsp_pkt_hdr {
+	struct ncsi_pkt_hdr common; /* Common NCSI packet header */
 	__be16              code;   /* Response code             */
 	__be16              reason; /* Response reason           */
-पूर्ण;
+};
 
-काष्ठा ncsi_aen_pkt_hdr अणु
-	काष्ठा ncsi_pkt_hdr common;       /* Common NCSI packet header */
-	अचिन्हित अक्षर       reserved2[3]; /* Reserved                  */
-	अचिन्हित अक्षर       type;         /* AEN packet type           */
-पूर्ण;
+struct ncsi_aen_pkt_hdr {
+	struct ncsi_pkt_hdr common;       /* Common NCSI packet header */
+	unsigned char       reserved2[3]; /* Reserved                  */
+	unsigned char       type;         /* AEN packet type           */
+};
 
 /* NCSI common command packet */
-काष्ठा ncsi_cmd_pkt अणु
-	काष्ठा ncsi_cmd_pkt_hdr cmd;      /* Command header */
+struct ncsi_cmd_pkt {
+	struct ncsi_cmd_pkt_hdr cmd;      /* Command header */
 	__be32                  checksum; /* Checksum       */
-	अचिन्हित अक्षर           pad[26];
-पूर्ण;
+	unsigned char           pad[26];
+};
 
-काष्ठा ncsi_rsp_pkt अणु
-	काष्ठा ncsi_rsp_pkt_hdr rsp;      /* Response header */
+struct ncsi_rsp_pkt {
+	struct ncsi_rsp_pkt_hdr rsp;      /* Response header */
 	__be32                  checksum; /* Checksum        */
-	अचिन्हित अक्षर           pad[22];
-पूर्ण;
+	unsigned char           pad[22];
+};
 
 /* Select Package */
-काष्ठा ncsi_cmd_sp_pkt अणु
-	काष्ठा ncsi_cmd_pkt_hdr cmd;            /* Command header */
-	अचिन्हित अक्षर           reserved[3];    /* Reserved       */
-	अचिन्हित अक्षर           hw_arbitration; /* HW arbitration */
+struct ncsi_cmd_sp_pkt {
+	struct ncsi_cmd_pkt_hdr cmd;            /* Command header */
+	unsigned char           reserved[3];    /* Reserved       */
+	unsigned char           hw_arbitration; /* HW arbitration */
 	__be32                  checksum;       /* Checksum       */
-	अचिन्हित अक्षर           pad[22];
-पूर्ण;
+	unsigned char           pad[22];
+};
 
 /* Disable Channel */
-काष्ठा ncsi_cmd_dc_pkt अणु
-	काष्ठा ncsi_cmd_pkt_hdr cmd;         /* Command header  */
-	अचिन्हित अक्षर           reserved[3]; /* Reserved        */
-	अचिन्हित अक्षर           ald;         /* Allow link करोwn */
+struct ncsi_cmd_dc_pkt {
+	struct ncsi_cmd_pkt_hdr cmd;         /* Command header  */
+	unsigned char           reserved[3]; /* Reserved        */
+	unsigned char           ald;         /* Allow link down */
 	__be32                  checksum;    /* Checksum        */
-	अचिन्हित अक्षर           pad[22];
-पूर्ण;
+	unsigned char           pad[22];
+};
 
 /* Reset Channel */
-काष्ठा ncsi_cmd_rc_pkt अणु
-	काष्ठा ncsi_cmd_pkt_hdr cmd;      /* Command header */
+struct ncsi_cmd_rc_pkt {
+	struct ncsi_cmd_pkt_hdr cmd;      /* Command header */
 	__be32                  reserved; /* Reserved       */
 	__be32                  checksum; /* Checksum       */
-	अचिन्हित अक्षर           pad[22];
-पूर्ण;
+	unsigned char           pad[22];
+};
 
 /* AEN Enable */
-काष्ठा ncsi_cmd_ae_pkt अणु
-	काष्ठा ncsi_cmd_pkt_hdr cmd;         /* Command header   */
-	अचिन्हित अक्षर           reserved[3]; /* Reserved         */
-	अचिन्हित अक्षर           mc_id;       /* MC ID            */
+struct ncsi_cmd_ae_pkt {
+	struct ncsi_cmd_pkt_hdr cmd;         /* Command header   */
+	unsigned char           reserved[3]; /* Reserved         */
+	unsigned char           mc_id;       /* MC ID            */
 	__be32                  mode;        /* AEN working mode */
 	__be32                  checksum;    /* Checksum         */
-	अचिन्हित अक्षर           pad[18];
-पूर्ण;
+	unsigned char           pad[18];
+};
 
 /* Set Link */
-काष्ठा ncsi_cmd_sl_pkt अणु
-	काष्ठा ncsi_cmd_pkt_hdr cmd;      /* Command header    */
+struct ncsi_cmd_sl_pkt {
+	struct ncsi_cmd_pkt_hdr cmd;      /* Command header    */
 	__be32                  mode;     /* Link working mode */
 	__be32                  oem_mode; /* OEM link mode     */
 	__be32                  checksum; /* Checksum          */
-	अचिन्हित अक्षर           pad[18];
-पूर्ण;
+	unsigned char           pad[18];
+};
 
 /* Set VLAN Filter */
-काष्ठा ncsi_cmd_svf_pkt अणु
-	काष्ठा ncsi_cmd_pkt_hdr cmd;       /* Command header    */
+struct ncsi_cmd_svf_pkt {
+	struct ncsi_cmd_pkt_hdr cmd;       /* Command header    */
 	__be16                  reserved;  /* Reserved          */
 	__be16                  vlan;      /* VLAN ID           */
 	__be16                  reserved1; /* Reserved          */
-	अचिन्हित अक्षर           index;     /* VLAN table index  */
-	अचिन्हित अक्षर           enable;    /* Enable or disable */
+	unsigned char           index;     /* VLAN table index  */
+	unsigned char           enable;    /* Enable or disable */
 	__be32                  checksum;  /* Checksum          */
-	अचिन्हित अक्षर           pad[18];
-पूर्ण;
+	unsigned char           pad[18];
+};
 
 /* Enable VLAN */
-काष्ठा ncsi_cmd_ev_pkt अणु
-	काष्ठा ncsi_cmd_pkt_hdr cmd;         /* Command header   */
-	अचिन्हित अक्षर           reserved[3]; /* Reserved         */
-	अचिन्हित अक्षर           mode;        /* VLAN filter mode */
+struct ncsi_cmd_ev_pkt {
+	struct ncsi_cmd_pkt_hdr cmd;         /* Command header   */
+	unsigned char           reserved[3]; /* Reserved         */
+	unsigned char           mode;        /* VLAN filter mode */
 	__be32                  checksum;    /* Checksum         */
-	अचिन्हित अक्षर           pad[22];
-पूर्ण;
+	unsigned char           pad[22];
+};
 
 /* Set MAC Address */
-काष्ठा ncsi_cmd_sma_pkt अणु
-	काष्ठा ncsi_cmd_pkt_hdr cmd;      /* Command header          */
-	अचिन्हित अक्षर           mac[6];   /* MAC address             */
-	अचिन्हित अक्षर           index;    /* MAC table index         */
-	अचिन्हित अक्षर           at_e;     /* Addr type and operation */
+struct ncsi_cmd_sma_pkt {
+	struct ncsi_cmd_pkt_hdr cmd;      /* Command header          */
+	unsigned char           mac[6];   /* MAC address             */
+	unsigned char           index;    /* MAC table index         */
+	unsigned char           at_e;     /* Addr type and operation */
 	__be32                  checksum; /* Checksum                */
-	अचिन्हित अक्षर           pad[18];
-पूर्ण;
+	unsigned char           pad[18];
+};
 
 /* Enable Broadcast Filter */
-काष्ठा ncsi_cmd_ebf_pkt अणु
-	काष्ठा ncsi_cmd_pkt_hdr cmd;      /* Command header */
+struct ncsi_cmd_ebf_pkt {
+	struct ncsi_cmd_pkt_hdr cmd;      /* Command header */
 	__be32                  mode;     /* Filter mode    */
 	__be32                  checksum; /* Checksum       */
-	अचिन्हित अक्षर           pad[22];
-पूर्ण;
+	unsigned char           pad[22];
+};
 
 /* Enable Global Multicast Filter */
-काष्ठा ncsi_cmd_egmf_pkt अणु
-	काष्ठा ncsi_cmd_pkt_hdr cmd;      /* Command header */
+struct ncsi_cmd_egmf_pkt {
+	struct ncsi_cmd_pkt_hdr cmd;      /* Command header */
 	__be32                  mode;     /* Global MC mode */
 	__be32                  checksum; /* Checksum       */
-	अचिन्हित अक्षर           pad[22];
-पूर्ण;
+	unsigned char           pad[22];
+};
 
 /* Set NCSI Flow Control */
-काष्ठा ncsi_cmd_snfc_pkt अणु
-	काष्ठा ncsi_cmd_pkt_hdr cmd;         /* Command header    */
-	अचिन्हित अक्षर           reserved[3]; /* Reserved          */
-	अचिन्हित अक्षर           mode;        /* Flow control mode */
+struct ncsi_cmd_snfc_pkt {
+	struct ncsi_cmd_pkt_hdr cmd;         /* Command header    */
+	unsigned char           reserved[3]; /* Reserved          */
+	unsigned char           mode;        /* Flow control mode */
 	__be32                  checksum;    /* Checksum          */
-	अचिन्हित अक्षर           pad[22];
-पूर्ण;
+	unsigned char           pad[22];
+};
 
-/* OEM Request Command as per NCSI Specअगरication */
-काष्ठा ncsi_cmd_oem_pkt अणु
-	काष्ठा ncsi_cmd_pkt_hdr cmd;         /* Command header    */
+/* OEM Request Command as per NCSI Specification */
+struct ncsi_cmd_oem_pkt {
+	struct ncsi_cmd_pkt_hdr cmd;         /* Command header    */
 	__be32                  mfr_id;      /* Manufacture ID    */
-	अचिन्हित अक्षर           data[];      /* OEM Payload Data  */
-पूर्ण;
+	unsigned char           data[];      /* OEM Payload Data  */
+};
 
-/* OEM Response Packet as per NCSI Specअगरication */
-काष्ठा ncsi_rsp_oem_pkt अणु
-	काष्ठा ncsi_rsp_pkt_hdr rsp;         /* Command header    */
+/* OEM Response Packet as per NCSI Specification */
+struct ncsi_rsp_oem_pkt {
+	struct ncsi_rsp_pkt_hdr rsp;         /* Command header    */
 	__be32                  mfr_id;      /* Manufacture ID    */
-	अचिन्हित अक्षर           data[];      /* Payload data      */
-पूर्ण;
+	unsigned char           data[];      /* Payload data      */
+};
 
 /* Mellanox Response Data */
-काष्ठा ncsi_rsp_oem_mlx_pkt अणु
-	अचिन्हित अक्षर           cmd_rev;     /* Command Revision  */
-	अचिन्हित अक्षर           cmd;         /* Command ID        */
-	अचिन्हित अक्षर           param;       /* Parameter         */
-	अचिन्हित अक्षर           optional;    /* Optional data     */
-	अचिन्हित अक्षर           data[];      /* Data              */
-पूर्ण;
+struct ncsi_rsp_oem_mlx_pkt {
+	unsigned char           cmd_rev;     /* Command Revision  */
+	unsigned char           cmd;         /* Command ID        */
+	unsigned char           param;       /* Parameter         */
+	unsigned char           optional;    /* Optional data     */
+	unsigned char           data[];      /* Data              */
+};
 
 /* Broadcom Response Data */
-काष्ठा ncsi_rsp_oem_bcm_pkt अणु
-	अचिन्हित अक्षर           ver;         /* Payload Version   */
-	अचिन्हित अक्षर           type;        /* OEM Command type  */
+struct ncsi_rsp_oem_bcm_pkt {
+	unsigned char           ver;         /* Payload Version   */
+	unsigned char           type;        /* OEM Command type  */
 	__be16                  len;         /* Payload Length    */
-	अचिन्हित अक्षर           data[];      /* Cmd specअगरic Data */
-पूर्ण;
+	unsigned char           data[];      /* Cmd specific Data */
+};
 
 /* Get Link Status */
-काष्ठा ncsi_rsp_gls_pkt अणु
-	काष्ठा ncsi_rsp_pkt_hdr rsp;        /* Response header   */
+struct ncsi_rsp_gls_pkt {
+	struct ncsi_rsp_pkt_hdr rsp;        /* Response header   */
 	__be32                  status;     /* Link status       */
 	__be32                  other;      /* Other indications */
 	__be32                  oem_status; /* OEM link status   */
 	__be32                  checksum;
-	अचिन्हित अक्षर           pad[10];
-पूर्ण;
+	unsigned char           pad[10];
+};
 
 /* Get Version ID */
-काष्ठा ncsi_rsp_gvi_pkt अणु
-	काष्ठा ncsi_rsp_pkt_hdr rsp;          /* Response header */
+struct ncsi_rsp_gvi_pkt {
+	struct ncsi_rsp_pkt_hdr rsp;          /* Response header */
 	__be32                  ncsi_version; /* NCSI version    */
-	अचिन्हित अक्षर           reserved[3];  /* Reserved        */
-	अचिन्हित अक्षर           alpha2;       /* NCSI version    */
-	अचिन्हित अक्षर           fw_name[12];  /* f/w name string */
+	unsigned char           reserved[3];  /* Reserved        */
+	unsigned char           alpha2;       /* NCSI version    */
+	unsigned char           fw_name[12];  /* f/w name string */
 	__be32                  fw_version;   /* f/w version     */
 	__be16                  pci_ids[4];   /* PCI IDs         */
 	__be32                  mf_id;        /* Manufacture ID  */
 	__be32                  checksum;
-पूर्ण;
+};
 
 /* Get Capabilities */
-काष्ठा ncsi_rsp_gc_pkt अणु
-	काष्ठा ncsi_rsp_pkt_hdr rsp;         /* Response header   */
+struct ncsi_rsp_gc_pkt {
+	struct ncsi_rsp_pkt_hdr rsp;         /* Response header   */
 	__be32                  cap;         /* Capabilities      */
 	__be32                  bc_cap;      /* Broadcast cap     */
 	__be32                  mc_cap;      /* Multicast cap     */
 	__be32                  buf_cap;     /* Buffering cap     */
 	__be32                  aen_cap;     /* AEN cap           */
-	अचिन्हित अक्षर           vlan_cnt;    /* VLAN filter count */
-	अचिन्हित अक्षर           mixed_cnt;   /* Mix filter count  */
-	अचिन्हित अक्षर           mc_cnt;      /* MC filter count   */
-	अचिन्हित अक्षर           uc_cnt;      /* UC filter count   */
-	अचिन्हित अक्षर           reserved[2]; /* Reserved          */
-	अचिन्हित अक्षर           vlan_mode;   /* VLAN mode         */
-	अचिन्हित अक्षर           channel_cnt; /* Channel count     */
+	unsigned char           vlan_cnt;    /* VLAN filter count */
+	unsigned char           mixed_cnt;   /* Mix filter count  */
+	unsigned char           mc_cnt;      /* MC filter count   */
+	unsigned char           uc_cnt;      /* UC filter count   */
+	unsigned char           reserved[2]; /* Reserved          */
+	unsigned char           vlan_mode;   /* VLAN mode         */
+	unsigned char           channel_cnt; /* Channel count     */
 	__be32                  checksum;    /* Checksum          */
-पूर्ण;
+};
 
 /* Get Parameters */
-काष्ठा ncsi_rsp_gp_pkt अणु
-	काष्ठा ncsi_rsp_pkt_hdr rsp;          /* Response header       */
-	अचिन्हित अक्षर           mac_cnt;      /* Number of MAC addr    */
-	अचिन्हित अक्षर           reserved[2];  /* Reserved              */
-	अचिन्हित अक्षर           mac_enable;   /* MAC addr enable flags */
-	अचिन्हित अक्षर           vlan_cnt;     /* VLAN tag count        */
-	अचिन्हित अक्षर           reserved1;    /* Reserved              */
+struct ncsi_rsp_gp_pkt {
+	struct ncsi_rsp_pkt_hdr rsp;          /* Response header       */
+	unsigned char           mac_cnt;      /* Number of MAC addr    */
+	unsigned char           reserved[2];  /* Reserved              */
+	unsigned char           mac_enable;   /* MAC addr enable flags */
+	unsigned char           vlan_cnt;     /* VLAN tag count        */
+	unsigned char           reserved1;    /* Reserved              */
 	__be16                  vlan_enable;  /* VLAN tag enable flags */
 	__be32                  link_mode;    /* Link setting          */
 	__be32                  bc_mode;      /* BC filter mode        */
 	__be32                  valid_modes;  /* Valid mode parameters */
-	अचिन्हित अक्षर           vlan_mode;    /* VLAN mode             */
-	अचिन्हित अक्षर           fc_mode;      /* Flow control mode     */
-	अचिन्हित अक्षर           reserved2[2]; /* Reserved              */
+	unsigned char           vlan_mode;    /* VLAN mode             */
+	unsigned char           fc_mode;      /* Flow control mode     */
+	unsigned char           reserved2[2]; /* Reserved              */
 	__be32                  aen_mode;     /* AEN mode              */
-	अचिन्हित अक्षर           mac[6];       /* Supported MAC addr    */
+	unsigned char           mac[6];       /* Supported MAC addr    */
 	__be16                  vlan;         /* Supported VLAN tags   */
 	__be32                  checksum;     /* Checksum              */
-पूर्ण;
+};
 
 /* Get Controller Packet Statistics */
-काष्ठा ncsi_rsp_gcps_pkt अणु
-	काष्ठा ncsi_rsp_pkt_hdr rsp;            /* Response header            */
+struct ncsi_rsp_gcps_pkt {
+	struct ncsi_rsp_pkt_hdr rsp;            /* Response header            */
 	__be32                  cnt_hi;         /* Counter cleared            */
 	__be32                  cnt_lo;         /* Counter cleared            */
 	__be32                  rx_bytes;       /* Rx bytes                   */
@@ -259,10 +258,10 @@
 	__be32                  false_carrier;  /* False carrier detection    */
 	__be32                  runt_pkts;      /* Rx runt packets            */
 	__be32                  jabber_pkts;    /* Rx jabber packets          */
-	__be32                  rx_छोड़ो_xon;   /* Rx छोड़ो XON frames        */
-	__be32                  rx_छोड़ो_xoff;  /* Rx XOFF frames             */
-	__be32                  tx_छोड़ो_xon;   /* Tx XON frames              */
-	__be32                  tx_छोड़ो_xoff;  /* Tx XOFF frames             */
+	__be32                  rx_pause_xon;   /* Rx pause XON frames        */
+	__be32                  rx_pause_xoff;  /* Rx XOFF frames             */
+	__be32                  tx_pause_xon;   /* Tx XON frames              */
+	__be32                  tx_pause_xoff;  /* Tx XOFF frames             */
 	__be32                  tx_s_collision; /* Single collision frames    */
 	__be32                  tx_m_collision; /* Multiple collision frames  */
 	__be32                  l_collision;    /* Late collision frames      */
@@ -286,11 +285,11 @@
 	__be32                  rx_runt_pkts;   /* Rx error runt packets      */
 	__be32                  rx_jabber_pkts; /* Rx error jabber packets    */
 	__be32                  checksum;       /* Checksum                   */
-पूर्ण;
+};
 
 /* Get NCSI Statistics */
-काष्ठा ncsi_rsp_gns_pkt अणु
-	काष्ठा ncsi_rsp_pkt_hdr rsp;           /* Response header         */
+struct ncsi_rsp_gns_pkt {
+	struct ncsi_rsp_pkt_hdr rsp;           /* Response header         */
 	__be32                  rx_cmds;       /* Rx NCSI commands        */
 	__be32                  dropped_cmds;  /* Dropped commands        */
 	__be32                  cmd_type_errs; /* Command type errors     */
@@ -299,11 +298,11 @@
 	__be32                  tx_pkts;       /* Tx NCSI packets         */
 	__be32                  tx_aen_pkts;   /* Tx AEN packets          */
 	__be32                  checksum;      /* Checksum                */
-पूर्ण;
+};
 
 /* Get NCSI Pass-through Statistics */
-काष्ठा ncsi_rsp_gnpts_pkt अणु
-	काष्ठा ncsi_rsp_pkt_hdr rsp;            /* Response header     */
+struct ncsi_rsp_gnpts_pkt {
+	struct ncsi_rsp_pkt_hdr rsp;            /* Response header     */
 	__be32                  tx_pkts;        /* Tx packets          */
 	__be32                  tx_dropped;     /* Tx dropped packets  */
 	__be32                  tx_channel_err; /* Tx channel errors   */
@@ -314,135 +313,135 @@
 	__be32                  rx_us_err;      /* Rx undersize errors */
 	__be32                  rx_os_err;      /* Rx oversize errors  */
 	__be32                  checksum;       /* Checksum            */
-पूर्ण;
+};
 
 /* Get package status */
-काष्ठा ncsi_rsp_gps_pkt अणु
-	काष्ठा ncsi_rsp_pkt_hdr rsp;      /* Response header             */
+struct ncsi_rsp_gps_pkt {
+	struct ncsi_rsp_pkt_hdr rsp;      /* Response header             */
 	__be32                  status;   /* Hardware arbitration status */
 	__be32                  checksum;
-पूर्ण;
+};
 
 /* Get package UUID */
-काष्ठा ncsi_rsp_gpuuid_pkt अणु
-	काष्ठा ncsi_rsp_pkt_hdr rsp;      /* Response header */
-	अचिन्हित अक्षर           uuid[16]; /* UUID            */
+struct ncsi_rsp_gpuuid_pkt {
+	struct ncsi_rsp_pkt_hdr rsp;      /* Response header */
+	unsigned char           uuid[16]; /* UUID            */
 	__be32                  checksum;
-पूर्ण;
+};
 
 /* AEN: Link State Change */
-काष्ठा ncsi_aen_lsc_pkt अणु
-	काष्ठा ncsi_aen_pkt_hdr aen;        /* AEN header      */
+struct ncsi_aen_lsc_pkt {
+	struct ncsi_aen_pkt_hdr aen;        /* AEN header      */
 	__be32                  status;     /* Link status     */
 	__be32                  oem_status; /* OEM link status */
 	__be32                  checksum;   /* Checksum        */
-	अचिन्हित अक्षर           pad[14];
-पूर्ण;
+	unsigned char           pad[14];
+};
 
 /* AEN: Configuration Required */
-काष्ठा ncsi_aen_cr_pkt अणु
-	काष्ठा ncsi_aen_pkt_hdr aen;      /* AEN header */
+struct ncsi_aen_cr_pkt {
+	struct ncsi_aen_pkt_hdr aen;      /* AEN header */
 	__be32                  checksum; /* Checksum   */
-	अचिन्हित अक्षर           pad[22];
-पूर्ण;
+	unsigned char           pad[22];
+};
 
 /* AEN: Host Network Controller Driver Status Change */
-काष्ठा ncsi_aen_hncdsc_pkt अणु
-	काष्ठा ncsi_aen_pkt_hdr aen;      /* AEN header */
+struct ncsi_aen_hncdsc_pkt {
+	struct ncsi_aen_pkt_hdr aen;      /* AEN header */
 	__be32                  status;   /* Status     */
 	__be32                  checksum; /* Checksum   */
-	अचिन्हित अक्षर           pad[18];
-पूर्ण;
+	unsigned char           pad[18];
+};
 
 /* NCSI packet revision */
-#घोषणा NCSI_PKT_REVISION	0x01
+#define NCSI_PKT_REVISION	0x01
 
 /* NCSI packet commands */
-#घोषणा NCSI_PKT_CMD_CIS	0x00 /* Clear Initial State              */
-#घोषणा NCSI_PKT_CMD_SP		0x01 /* Select Package                   */
-#घोषणा NCSI_PKT_CMD_DP		0x02 /* Deselect Package                 */
-#घोषणा NCSI_PKT_CMD_EC		0x03 /* Enable Channel                   */
-#घोषणा NCSI_PKT_CMD_DC		0x04 /* Disable Channel                  */
-#घोषणा NCSI_PKT_CMD_RC		0x05 /* Reset Channel                    */
-#घोषणा NCSI_PKT_CMD_ECNT	0x06 /* Enable Channel Network Tx        */
-#घोषणा NCSI_PKT_CMD_DCNT	0x07 /* Disable Channel Network Tx       */
-#घोषणा NCSI_PKT_CMD_AE		0x08 /* AEN Enable                       */
-#घोषणा NCSI_PKT_CMD_SL		0x09 /* Set Link                         */
-#घोषणा NCSI_PKT_CMD_GLS	0x0a /* Get Link                         */
-#घोषणा NCSI_PKT_CMD_SVF	0x0b /* Set VLAN Filter                  */
-#घोषणा NCSI_PKT_CMD_EV		0x0c /* Enable VLAN                      */
-#घोषणा NCSI_PKT_CMD_DV		0x0d /* Disable VLAN                     */
-#घोषणा NCSI_PKT_CMD_SMA	0x0e /* Set MAC address                  */
-#घोषणा NCSI_PKT_CMD_EBF	0x10 /* Enable Broadcast Filter          */
-#घोषणा NCSI_PKT_CMD_DBF	0x11 /* Disable Broadcast Filter         */
-#घोषणा NCSI_PKT_CMD_EGMF	0x12 /* Enable Global Multicast Filter   */
-#घोषणा NCSI_PKT_CMD_DGMF	0x13 /* Disable Global Multicast Filter  */
-#घोषणा NCSI_PKT_CMD_SNFC	0x14 /* Set NCSI Flow Control            */
-#घोषणा NCSI_PKT_CMD_GVI	0x15 /* Get Version ID                   */
-#घोषणा NCSI_PKT_CMD_GC		0x16 /* Get Capabilities                 */
-#घोषणा NCSI_PKT_CMD_GP		0x17 /* Get Parameters                   */
-#घोषणा NCSI_PKT_CMD_GCPS	0x18 /* Get Controller Packet Statistics */
-#घोषणा NCSI_PKT_CMD_GNS	0x19 /* Get NCSI Statistics              */
-#घोषणा NCSI_PKT_CMD_GNPTS	0x1a /* Get NCSI Pass-throu Statistics   */
-#घोषणा NCSI_PKT_CMD_GPS	0x1b /* Get package status               */
-#घोषणा NCSI_PKT_CMD_OEM	0x50 /* OEM                              */
-#घोषणा NCSI_PKT_CMD_PLDM	0x51 /* PLDM request over NCSI over RBT  */
-#घोषणा NCSI_PKT_CMD_GPUUID	0x52 /* Get package UUID                 */
-#घोषणा NCSI_PKT_CMD_QPNPR	0x56 /* Query Pending NC PLDM request */
-#घोषणा NCSI_PKT_CMD_SNPR	0x57 /* Send NC PLDM Reply  */
+#define NCSI_PKT_CMD_CIS	0x00 /* Clear Initial State              */
+#define NCSI_PKT_CMD_SP		0x01 /* Select Package                   */
+#define NCSI_PKT_CMD_DP		0x02 /* Deselect Package                 */
+#define NCSI_PKT_CMD_EC		0x03 /* Enable Channel                   */
+#define NCSI_PKT_CMD_DC		0x04 /* Disable Channel                  */
+#define NCSI_PKT_CMD_RC		0x05 /* Reset Channel                    */
+#define NCSI_PKT_CMD_ECNT	0x06 /* Enable Channel Network Tx        */
+#define NCSI_PKT_CMD_DCNT	0x07 /* Disable Channel Network Tx       */
+#define NCSI_PKT_CMD_AE		0x08 /* AEN Enable                       */
+#define NCSI_PKT_CMD_SL		0x09 /* Set Link                         */
+#define NCSI_PKT_CMD_GLS	0x0a /* Get Link                         */
+#define NCSI_PKT_CMD_SVF	0x0b /* Set VLAN Filter                  */
+#define NCSI_PKT_CMD_EV		0x0c /* Enable VLAN                      */
+#define NCSI_PKT_CMD_DV		0x0d /* Disable VLAN                     */
+#define NCSI_PKT_CMD_SMA	0x0e /* Set MAC address                  */
+#define NCSI_PKT_CMD_EBF	0x10 /* Enable Broadcast Filter          */
+#define NCSI_PKT_CMD_DBF	0x11 /* Disable Broadcast Filter         */
+#define NCSI_PKT_CMD_EGMF	0x12 /* Enable Global Multicast Filter   */
+#define NCSI_PKT_CMD_DGMF	0x13 /* Disable Global Multicast Filter  */
+#define NCSI_PKT_CMD_SNFC	0x14 /* Set NCSI Flow Control            */
+#define NCSI_PKT_CMD_GVI	0x15 /* Get Version ID                   */
+#define NCSI_PKT_CMD_GC		0x16 /* Get Capabilities                 */
+#define NCSI_PKT_CMD_GP		0x17 /* Get Parameters                   */
+#define NCSI_PKT_CMD_GCPS	0x18 /* Get Controller Packet Statistics */
+#define NCSI_PKT_CMD_GNS	0x19 /* Get NCSI Statistics              */
+#define NCSI_PKT_CMD_GNPTS	0x1a /* Get NCSI Pass-throu Statistics   */
+#define NCSI_PKT_CMD_GPS	0x1b /* Get package status               */
+#define NCSI_PKT_CMD_OEM	0x50 /* OEM                              */
+#define NCSI_PKT_CMD_PLDM	0x51 /* PLDM request over NCSI over RBT  */
+#define NCSI_PKT_CMD_GPUUID	0x52 /* Get package UUID                 */
+#define NCSI_PKT_CMD_QPNPR	0x56 /* Query Pending NC PLDM request */
+#define NCSI_PKT_CMD_SNPR	0x57 /* Send NC PLDM Reply  */
 
 
 /* NCSI packet responses */
-#घोषणा NCSI_PKT_RSP_CIS	(NCSI_PKT_CMD_CIS    + 0x80)
-#घोषणा NCSI_PKT_RSP_SP		(NCSI_PKT_CMD_SP     + 0x80)
-#घोषणा NCSI_PKT_RSP_DP		(NCSI_PKT_CMD_DP     + 0x80)
-#घोषणा NCSI_PKT_RSP_EC		(NCSI_PKT_CMD_EC     + 0x80)
-#घोषणा NCSI_PKT_RSP_DC		(NCSI_PKT_CMD_DC     + 0x80)
-#घोषणा NCSI_PKT_RSP_RC		(NCSI_PKT_CMD_RC     + 0x80)
-#घोषणा NCSI_PKT_RSP_ECNT	(NCSI_PKT_CMD_ECNT   + 0x80)
-#घोषणा NCSI_PKT_RSP_DCNT	(NCSI_PKT_CMD_DCNT   + 0x80)
-#घोषणा NCSI_PKT_RSP_AE		(NCSI_PKT_CMD_AE     + 0x80)
-#घोषणा NCSI_PKT_RSP_SL		(NCSI_PKT_CMD_SL     + 0x80)
-#घोषणा NCSI_PKT_RSP_GLS	(NCSI_PKT_CMD_GLS    + 0x80)
-#घोषणा NCSI_PKT_RSP_SVF	(NCSI_PKT_CMD_SVF    + 0x80)
-#घोषणा NCSI_PKT_RSP_EV		(NCSI_PKT_CMD_EV     + 0x80)
-#घोषणा NCSI_PKT_RSP_DV		(NCSI_PKT_CMD_DV     + 0x80)
-#घोषणा NCSI_PKT_RSP_SMA	(NCSI_PKT_CMD_SMA    + 0x80)
-#घोषणा NCSI_PKT_RSP_EBF	(NCSI_PKT_CMD_EBF    + 0x80)
-#घोषणा NCSI_PKT_RSP_DBF	(NCSI_PKT_CMD_DBF    + 0x80)
-#घोषणा NCSI_PKT_RSP_EGMF	(NCSI_PKT_CMD_EGMF   + 0x80)
-#घोषणा NCSI_PKT_RSP_DGMF	(NCSI_PKT_CMD_DGMF   + 0x80)
-#घोषणा NCSI_PKT_RSP_SNFC	(NCSI_PKT_CMD_SNFC   + 0x80)
-#घोषणा NCSI_PKT_RSP_GVI	(NCSI_PKT_CMD_GVI    + 0x80)
-#घोषणा NCSI_PKT_RSP_GC		(NCSI_PKT_CMD_GC     + 0x80)
-#घोषणा NCSI_PKT_RSP_GP		(NCSI_PKT_CMD_GP     + 0x80)
-#घोषणा NCSI_PKT_RSP_GCPS	(NCSI_PKT_CMD_GCPS   + 0x80)
-#घोषणा NCSI_PKT_RSP_GNS	(NCSI_PKT_CMD_GNS    + 0x80)
-#घोषणा NCSI_PKT_RSP_GNPTS	(NCSI_PKT_CMD_GNPTS  + 0x80)
-#घोषणा NCSI_PKT_RSP_GPS	(NCSI_PKT_CMD_GPS    + 0x80)
-#घोषणा NCSI_PKT_RSP_OEM	(NCSI_PKT_CMD_OEM    + 0x80)
-#घोषणा NCSI_PKT_RSP_PLDM	(NCSI_PKT_CMD_PLDM   + 0x80)
-#घोषणा NCSI_PKT_RSP_GPUUID	(NCSI_PKT_CMD_GPUUID + 0x80)
-#घोषणा NCSI_PKT_RSP_QPNPR	(NCSI_PKT_CMD_QPNPR   + 0x80)
-#घोषणा NCSI_PKT_RSP_SNPR	(NCSI_PKT_CMD_SNPR   + 0x80)
+#define NCSI_PKT_RSP_CIS	(NCSI_PKT_CMD_CIS    + 0x80)
+#define NCSI_PKT_RSP_SP		(NCSI_PKT_CMD_SP     + 0x80)
+#define NCSI_PKT_RSP_DP		(NCSI_PKT_CMD_DP     + 0x80)
+#define NCSI_PKT_RSP_EC		(NCSI_PKT_CMD_EC     + 0x80)
+#define NCSI_PKT_RSP_DC		(NCSI_PKT_CMD_DC     + 0x80)
+#define NCSI_PKT_RSP_RC		(NCSI_PKT_CMD_RC     + 0x80)
+#define NCSI_PKT_RSP_ECNT	(NCSI_PKT_CMD_ECNT   + 0x80)
+#define NCSI_PKT_RSP_DCNT	(NCSI_PKT_CMD_DCNT   + 0x80)
+#define NCSI_PKT_RSP_AE		(NCSI_PKT_CMD_AE     + 0x80)
+#define NCSI_PKT_RSP_SL		(NCSI_PKT_CMD_SL     + 0x80)
+#define NCSI_PKT_RSP_GLS	(NCSI_PKT_CMD_GLS    + 0x80)
+#define NCSI_PKT_RSP_SVF	(NCSI_PKT_CMD_SVF    + 0x80)
+#define NCSI_PKT_RSP_EV		(NCSI_PKT_CMD_EV     + 0x80)
+#define NCSI_PKT_RSP_DV		(NCSI_PKT_CMD_DV     + 0x80)
+#define NCSI_PKT_RSP_SMA	(NCSI_PKT_CMD_SMA    + 0x80)
+#define NCSI_PKT_RSP_EBF	(NCSI_PKT_CMD_EBF    + 0x80)
+#define NCSI_PKT_RSP_DBF	(NCSI_PKT_CMD_DBF    + 0x80)
+#define NCSI_PKT_RSP_EGMF	(NCSI_PKT_CMD_EGMF   + 0x80)
+#define NCSI_PKT_RSP_DGMF	(NCSI_PKT_CMD_DGMF   + 0x80)
+#define NCSI_PKT_RSP_SNFC	(NCSI_PKT_CMD_SNFC   + 0x80)
+#define NCSI_PKT_RSP_GVI	(NCSI_PKT_CMD_GVI    + 0x80)
+#define NCSI_PKT_RSP_GC		(NCSI_PKT_CMD_GC     + 0x80)
+#define NCSI_PKT_RSP_GP		(NCSI_PKT_CMD_GP     + 0x80)
+#define NCSI_PKT_RSP_GCPS	(NCSI_PKT_CMD_GCPS   + 0x80)
+#define NCSI_PKT_RSP_GNS	(NCSI_PKT_CMD_GNS    + 0x80)
+#define NCSI_PKT_RSP_GNPTS	(NCSI_PKT_CMD_GNPTS  + 0x80)
+#define NCSI_PKT_RSP_GPS	(NCSI_PKT_CMD_GPS    + 0x80)
+#define NCSI_PKT_RSP_OEM	(NCSI_PKT_CMD_OEM    + 0x80)
+#define NCSI_PKT_RSP_PLDM	(NCSI_PKT_CMD_PLDM   + 0x80)
+#define NCSI_PKT_RSP_GPUUID	(NCSI_PKT_CMD_GPUUID + 0x80)
+#define NCSI_PKT_RSP_QPNPR	(NCSI_PKT_CMD_QPNPR   + 0x80)
+#define NCSI_PKT_RSP_SNPR	(NCSI_PKT_CMD_SNPR   + 0x80)
 
 /* NCSI response code/reason */
-#घोषणा NCSI_PKT_RSP_C_COMPLETED	0x0000 /* Command Completed        */
-#घोषणा NCSI_PKT_RSP_C_FAILED		0x0001 /* Command Failed           */
-#घोषणा NCSI_PKT_RSP_C_UNAVAILABLE	0x0002 /* Command Unavailable      */
-#घोषणा NCSI_PKT_RSP_C_UNSUPPORTED	0x0003 /* Command Unsupported      */
-#घोषणा NCSI_PKT_RSP_R_NO_ERROR		0x0000 /* No Error                 */
-#घोषणा NCSI_PKT_RSP_R_INTERFACE	0x0001 /* Interface not पढ़ोy      */
-#घोषणा NCSI_PKT_RSP_R_PARAM		0x0002 /* Invalid Parameter        */
-#घोषणा NCSI_PKT_RSP_R_CHANNEL		0x0003 /* Channel not Ready        */
-#घोषणा NCSI_PKT_RSP_R_PACKAGE		0x0004 /* Package not Ready        */
-#घोषणा NCSI_PKT_RSP_R_LENGTH		0x0005 /* Invalid payload length   */
-#घोषणा NCSI_PKT_RSP_R_UNKNOWN		0x7fff /* Command type unsupported */
+#define NCSI_PKT_RSP_C_COMPLETED	0x0000 /* Command Completed        */
+#define NCSI_PKT_RSP_C_FAILED		0x0001 /* Command Failed           */
+#define NCSI_PKT_RSP_C_UNAVAILABLE	0x0002 /* Command Unavailable      */
+#define NCSI_PKT_RSP_C_UNSUPPORTED	0x0003 /* Command Unsupported      */
+#define NCSI_PKT_RSP_R_NO_ERROR		0x0000 /* No Error                 */
+#define NCSI_PKT_RSP_R_INTERFACE	0x0001 /* Interface not ready      */
+#define NCSI_PKT_RSP_R_PARAM		0x0002 /* Invalid Parameter        */
+#define NCSI_PKT_RSP_R_CHANNEL		0x0003 /* Channel not Ready        */
+#define NCSI_PKT_RSP_R_PACKAGE		0x0004 /* Package not Ready        */
+#define NCSI_PKT_RSP_R_LENGTH		0x0005 /* Invalid payload length   */
+#define NCSI_PKT_RSP_R_UNKNOWN		0x7fff /* Command type unsupported */
 
 /* NCSI AEN packet type */
-#घोषणा NCSI_PKT_AEN		0xFF /* AEN Packet               */
-#घोषणा NCSI_PKT_AEN_LSC	0x00 /* Link status change       */
-#घोषणा NCSI_PKT_AEN_CR		0x01 /* Configuration required   */
-#घोषणा NCSI_PKT_AEN_HNCDSC	0x02 /* HNC driver status change */
+#define NCSI_PKT_AEN		0xFF /* AEN Packet               */
+#define NCSI_PKT_AEN_LSC	0x00 /* Link status change       */
+#define NCSI_PKT_AEN_CR		0x01 /* Configuration required   */
+#define NCSI_PKT_AEN_HNCDSC	0x02 /* HNC driver status change */
 
-#पूर्ण_अगर /* __NCSI_PKT_H__ */
+#endif /* __NCSI_PKT_H__ */

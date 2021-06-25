@@ -1,135 +1,134 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * drivers/net/phy/ste10Xp.c
  *
- * Driver क्रम STMicroelectronics STe10Xp PHYs
+ * Driver for STMicroelectronics STe10Xp PHYs
  *
  * Author: Giuseppe Cavallaro <peppe.cavallaro@st.com>
  *
  * Copyright (c) 2008 STMicroelectronics Limited
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/init.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/ethtool.h>
-#समावेश <linux/mii.h>
-#समावेश <linux/phy.h>
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/sched.h>
+#include <linux/kernel.h>
+#include <linux/moduleparam.h>
+#include <linux/interrupt.h>
+#include <linux/netdevice.h>
+#include <linux/ethtool.h>
+#include <linux/mii.h>
+#include <linux/phy.h>
 
-#घोषणा MII_XCIIS   	0x11	/* Configuration Info IRQ & Status Reg */
-#घोषणा MII_XIE     	0x12	/* Interrupt Enable Register */
-#घोषणा MII_XIE_DEFAULT_MASK 0x0070 /* ANE complete, Remote Fault, Link Down */
+#define MII_XCIIS   	0x11	/* Configuration Info IRQ & Status Reg */
+#define MII_XIE     	0x12	/* Interrupt Enable Register */
+#define MII_XIE_DEFAULT_MASK 0x0070 /* ANE complete, Remote Fault, Link Down */
 
-#घोषणा STE101P_PHY_ID		0x00061c50
-#घोषणा STE100P_PHY_ID       	0x1c040011
+#define STE101P_PHY_ID		0x00061c50
+#define STE100P_PHY_ID       	0x1c040011
 
-अटल पूर्णांक ste10Xp_config_init(काष्ठा phy_device *phydev)
-अणु
-	पूर्णांक value, err;
+static int ste10Xp_config_init(struct phy_device *phydev)
+{
+	int value, err;
 
 	/* Software Reset PHY */
-	value = phy_पढ़ो(phydev, MII_BMCR);
-	अगर (value < 0)
-		वापस value;
+	value = phy_read(phydev, MII_BMCR);
+	if (value < 0)
+		return value;
 
 	value |= BMCR_RESET;
-	err = phy_ग_लिखो(phydev, MII_BMCR, value);
-	अगर (err < 0)
-		वापस err;
+	err = phy_write(phydev, MII_BMCR, value);
+	if (err < 0)
+		return err;
 
-	करो अणु
-		value = phy_पढ़ो(phydev, MII_BMCR);
-	पूर्ण जबतक (value & BMCR_RESET);
+	do {
+		value = phy_read(phydev, MII_BMCR);
+	} while (value & BMCR_RESET);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ste10Xp_ack_पूर्णांकerrupt(काष्ठा phy_device *phydev)
-अणु
-	पूर्णांक err = phy_पढ़ो(phydev, MII_XCIIS);
+static int ste10Xp_ack_interrupt(struct phy_device *phydev)
+{
+	int err = phy_read(phydev, MII_XCIIS);
 
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ste10Xp_config_पूर्णांकr(काष्ठा phy_device *phydev)
-अणु
-	पूर्णांक err;
+static int ste10Xp_config_intr(struct phy_device *phydev)
+{
+	int err;
 
-	अगर (phydev->पूर्णांकerrupts == PHY_INTERRUPT_ENABLED) अणु
-		/* clear any pending पूर्णांकerrupts */
-		err = ste10Xp_ack_पूर्णांकerrupt(phydev);
-		अगर (err)
-			वापस err;
+	if (phydev->interrupts == PHY_INTERRUPT_ENABLED) {
+		/* clear any pending interrupts */
+		err = ste10Xp_ack_interrupt(phydev);
+		if (err)
+			return err;
 
-		/* Enable all STe101P पूर्णांकerrupts (PR12) */
-		err = phy_ग_लिखो(phydev, MII_XIE, MII_XIE_DEFAULT_MASK);
-	पूर्ण अन्यथा अणु
-		err = phy_ग_लिखो(phydev, MII_XIE, 0);
-		अगर (err)
-			वापस err;
+		/* Enable all STe101P interrupts (PR12) */
+		err = phy_write(phydev, MII_XIE, MII_XIE_DEFAULT_MASK);
+	} else {
+		err = phy_write(phydev, MII_XIE, 0);
+		if (err)
+			return err;
 
-		err = ste10Xp_ack_पूर्णांकerrupt(phydev);
-	पूर्ण
+		err = ste10Xp_ack_interrupt(phydev);
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल irqवापस_t ste10Xp_handle_पूर्णांकerrupt(काष्ठा phy_device *phydev)
-अणु
-	पूर्णांक irq_status;
+static irqreturn_t ste10Xp_handle_interrupt(struct phy_device *phydev)
+{
+	int irq_status;
 
-	irq_status = phy_पढ़ो(phydev, MII_XCIIS);
-	अगर (irq_status < 0) अणु
+	irq_status = phy_read(phydev, MII_XCIIS);
+	if (irq_status < 0) {
 		phy_error(phydev);
-		वापस IRQ_NONE;
-	पूर्ण
+		return IRQ_NONE;
+	}
 
-	अगर (!(irq_status & MII_XIE_DEFAULT_MASK))
-		वापस IRQ_NONE;
+	if (!(irq_status & MII_XIE_DEFAULT_MASK))
+		return IRQ_NONE;
 
 	phy_trigger_machine(phydev);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल काष्ठा phy_driver ste10xp_pdriver[] = अणु
-अणु
+static struct phy_driver ste10xp_pdriver[] = {
+{
 	.phy_id = STE101P_PHY_ID,
 	.phy_id_mask = 0xfffffff0,
 	.name = "STe101p",
 	/* PHY_BASIC_FEATURES */
 	.config_init = ste10Xp_config_init,
-	.config_पूर्णांकr = ste10Xp_config_पूर्णांकr,
-	.handle_पूर्णांकerrupt = ste10Xp_handle_पूर्णांकerrupt,
+	.config_intr = ste10Xp_config_intr,
+	.handle_interrupt = ste10Xp_handle_interrupt,
 	.suspend = genphy_suspend,
 	.resume = genphy_resume,
-पूर्ण, अणु
+}, {
 	.phy_id = STE100P_PHY_ID,
 	.phy_id_mask = 0xffffffff,
 	.name = "STe100p",
 	/* PHY_BASIC_FEATURES */
 	.config_init = ste10Xp_config_init,
-	.config_पूर्णांकr = ste10Xp_config_पूर्णांकr,
-	.handle_पूर्णांकerrupt = ste10Xp_handle_पूर्णांकerrupt,
+	.config_intr = ste10Xp_config_intr,
+	.handle_interrupt = ste10Xp_handle_interrupt,
 	.suspend = genphy_suspend,
 	.resume = genphy_resume,
-पूर्ण पूर्ण;
+} };
 
 module_phy_driver(ste10xp_pdriver);
 
-अटल काष्ठा mdio_device_id __maybe_unused ste10Xp_tbl[] = अणु
-	अणु STE101P_PHY_ID, 0xfffffff0 पूर्ण,
-	अणु STE100P_PHY_ID, 0xffffffff पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static struct mdio_device_id __maybe_unused ste10Xp_tbl[] = {
+	{ STE101P_PHY_ID, 0xfffffff0 },
+	{ STE100P_PHY_ID, 0xffffffff },
+	{ }
+};
 
 MODULE_DEVICE_TABLE(mdio, ste10Xp_tbl);
 

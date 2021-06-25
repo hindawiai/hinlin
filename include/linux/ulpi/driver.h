@@ -1,66 +1,65 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __LINUX_ULPI_DRIVER_H
-#घोषणा __LINUX_ULPI_DRIVER_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __LINUX_ULPI_DRIVER_H
+#define __LINUX_ULPI_DRIVER_H
 
-#समावेश <linux/mod_devicetable.h>
+#include <linux/mod_devicetable.h>
 
-#समावेश <linux/device.h>
+#include <linux/device.h>
 
-काष्ठा ulpi_ops;
+struct ulpi_ops;
 
 /**
- * काष्ठा ulpi - describes ULPI PHY device
- * @id: venकरोr and product ids क्रम ULPI device
+ * struct ulpi - describes ULPI PHY device
+ * @id: vendor and product ids for ULPI device
  * @ops: I/O access
- * @dev: device पूर्णांकerface
+ * @dev: device interface
  */
-काष्ठा ulpi अणु
-	काष्ठा ulpi_device_id id;
-	स्थिर काष्ठा ulpi_ops *ops;
-	काष्ठा device dev;
-पूर्ण;
+struct ulpi {
+	struct ulpi_device_id id;
+	const struct ulpi_ops *ops;
+	struct device dev;
+};
 
-#घोषणा to_ulpi_dev(d) container_of(d, काष्ठा ulpi, dev)
+#define to_ulpi_dev(d) container_of(d, struct ulpi, dev)
 
-अटल अंतरभूत व्योम ulpi_set_drvdata(काष्ठा ulpi *ulpi, व्योम *data)
-अणु
+static inline void ulpi_set_drvdata(struct ulpi *ulpi, void *data)
+{
 	dev_set_drvdata(&ulpi->dev, data);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम *ulpi_get_drvdata(काष्ठा ulpi *ulpi)
-अणु
-	वापस dev_get_drvdata(&ulpi->dev);
-पूर्ण
+static inline void *ulpi_get_drvdata(struct ulpi *ulpi)
+{
+	return dev_get_drvdata(&ulpi->dev);
+}
 
 /**
- * काष्ठा ulpi_driver - describes a ULPI PHY driver
- * @id_table: array of device identअगरiers supported by this driver
+ * struct ulpi_driver - describes a ULPI PHY driver
+ * @id_table: array of device identifiers supported by this driver
  * @probe: binds this driver to ULPI device
- * @हटाओ: unbinds this driver from ULPI device
+ * @remove: unbinds this driver from ULPI device
  * @driver: the name and owner members must be initialized by the drivers
  */
-काष्ठा ulpi_driver अणु
-	स्थिर काष्ठा ulpi_device_id *id_table;
-	पूर्णांक (*probe)(काष्ठा ulpi *ulpi);
-	व्योम (*हटाओ)(काष्ठा ulpi *ulpi);
-	काष्ठा device_driver driver;
-पूर्ण;
+struct ulpi_driver {
+	const struct ulpi_device_id *id_table;
+	int (*probe)(struct ulpi *ulpi);
+	void (*remove)(struct ulpi *ulpi);
+	struct device_driver driver;
+};
 
-#घोषणा to_ulpi_driver(d) container_of(d, काष्ठा ulpi_driver, driver)
+#define to_ulpi_driver(d) container_of(d, struct ulpi_driver, driver)
 
 /*
- * use a macro to aव्योम include chaining to get THIS_MODULE
+ * use a macro to avoid include chaining to get THIS_MODULE
  */
-#घोषणा ulpi_रेजिस्टर_driver(drv) __ulpi_रेजिस्टर_driver(drv, THIS_MODULE)
-पूर्णांक __ulpi_रेजिस्टर_driver(काष्ठा ulpi_driver *drv, काष्ठा module *module);
-व्योम ulpi_unरेजिस्टर_driver(काष्ठा ulpi_driver *drv);
+#define ulpi_register_driver(drv) __ulpi_register_driver(drv, THIS_MODULE)
+int __ulpi_register_driver(struct ulpi_driver *drv, struct module *module);
+void ulpi_unregister_driver(struct ulpi_driver *drv);
 
-#घोषणा module_ulpi_driver(__ulpi_driver) \
-	module_driver(__ulpi_driver, ulpi_रेजिस्टर_driver, \
-		      ulpi_unरेजिस्टर_driver)
+#define module_ulpi_driver(__ulpi_driver) \
+	module_driver(__ulpi_driver, ulpi_register_driver, \
+		      ulpi_unregister_driver)
 
-पूर्णांक ulpi_पढ़ो(काष्ठा ulpi *ulpi, u8 addr);
-पूर्णांक ulpi_ग_लिखो(काष्ठा ulpi *ulpi, u8 addr, u8 val);
+int ulpi_read(struct ulpi *ulpi, u8 addr);
+int ulpi_write(struct ulpi *ulpi, u8 addr, u8 val);
 
-#पूर्ण_अगर /* __LINUX_ULPI_DRIVER_H */
+#endif /* __LINUX_ULPI_DRIVER_H */

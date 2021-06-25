@@ -1,144 +1,143 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Driver क्रम FPGA Management Engine (FME) Partial Reconfiguration
+ * Driver for FPGA Management Engine (FME) Partial Reconfiguration
  *
  * Copyright (C) 2017-2018 Intel Corporation, Inc.
  *
  * Authors:
- *   Kang Luwei <luwei.kang@पूर्णांकel.com>
- *   Xiao Guangrong <guangrong.xiao@linux.पूर्णांकel.com>
- *   Wu Hao <hao.wu@पूर्णांकel.com>
- *   Joseph Grecco <joe.grecco@पूर्णांकel.com>
- *   Enno Luebbers <enno.luebbers@पूर्णांकel.com>
- *   Tim Whisonant <tim.whisonant@पूर्णांकel.com>
- *   Ananda Ravuri <ananda.ravuri@पूर्णांकel.com>
- *   Christopher Rauer <christopher.rauer@पूर्णांकel.com>
- *   Henry Mitchel <henry.mitchel@पूर्णांकel.com>
+ *   Kang Luwei <luwei.kang@intel.com>
+ *   Xiao Guangrong <guangrong.xiao@linux.intel.com>
+ *   Wu Hao <hao.wu@intel.com>
+ *   Joseph Grecco <joe.grecco@intel.com>
+ *   Enno Luebbers <enno.luebbers@intel.com>
+ *   Tim Whisonant <tim.whisonant@intel.com>
+ *   Ananda Ravuri <ananda.ravuri@intel.com>
+ *   Christopher Rauer <christopher.rauer@intel.com>
+ *   Henry Mitchel <henry.mitchel@intel.com>
  */
 
-#समावेश <linux/types.h>
-#समावेश <linux/device.h>
-#समावेश <linux/vदो_स्मृति.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/fpga/fpga-mgr.h>
-#समावेश <linux/fpga/fpga-bridge.h>
-#समावेश <linux/fpga/fpga-region.h>
-#समावेश <linux/fpga-dfl.h>
+#include <linux/types.h>
+#include <linux/device.h>
+#include <linux/vmalloc.h>
+#include <linux/uaccess.h>
+#include <linux/fpga/fpga-mgr.h>
+#include <linux/fpga/fpga-bridge.h>
+#include <linux/fpga/fpga-region.h>
+#include <linux/fpga-dfl.h>
 
-#समावेश "dfl.h"
-#समावेश "dfl-fme.h"
-#समावेश "dfl-fme-pr.h"
+#include "dfl.h"
+#include "dfl-fme.h"
+#include "dfl-fme-pr.h"
 
-अटल काष्ठा dfl_fme_region *
-dfl_fme_region_find_by_port_id(काष्ठा dfl_fme *fme, पूर्णांक port_id)
-अणु
-	काष्ठा dfl_fme_region *fme_region;
+static struct dfl_fme_region *
+dfl_fme_region_find_by_port_id(struct dfl_fme *fme, int port_id)
+{
+	struct dfl_fme_region *fme_region;
 
-	list_क्रम_each_entry(fme_region, &fme->region_list, node)
-		अगर (fme_region->port_id == port_id)
-			वापस fme_region;
+	list_for_each_entry(fme_region, &fme->region_list, node)
+		if (fme_region->port_id == port_id)
+			return fme_region;
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल पूर्णांक dfl_fme_region_match(काष्ठा device *dev, स्थिर व्योम *data)
-अणु
-	वापस dev->parent == data;
-पूर्ण
+static int dfl_fme_region_match(struct device *dev, const void *data)
+{
+	return dev->parent == data;
+}
 
-अटल काष्ठा fpga_region *dfl_fme_region_find(काष्ठा dfl_fme *fme, पूर्णांक port_id)
-अणु
-	काष्ठा dfl_fme_region *fme_region;
-	काष्ठा fpga_region *region;
+static struct fpga_region *dfl_fme_region_find(struct dfl_fme *fme, int port_id)
+{
+	struct dfl_fme_region *fme_region;
+	struct fpga_region *region;
 
 	fme_region = dfl_fme_region_find_by_port_id(fme, port_id);
-	अगर (!fme_region)
-		वापस शून्य;
+	if (!fme_region)
+		return NULL;
 
-	region = fpga_region_class_find(शून्य, &fme_region->region->dev,
+	region = fpga_region_class_find(NULL, &fme_region->region->dev,
 					dfl_fme_region_match);
-	अगर (!region)
-		वापस शून्य;
+	if (!region)
+		return NULL;
 
-	वापस region;
-पूर्ण
+	return region;
+}
 
-अटल पूर्णांक fme_pr(काष्ठा platक्रमm_device *pdev, अचिन्हित दीर्घ arg)
-अणु
-	काष्ठा dfl_feature_platक्रमm_data *pdata = dev_get_platdata(&pdev->dev);
-	व्योम __user *argp = (व्योम __user *)arg;
-	काष्ठा dfl_fpga_fme_port_pr port_pr;
-	काष्ठा fpga_image_info *info;
-	काष्ठा fpga_region *region;
-	व्योम __iomem *fme_hdr;
-	काष्ठा dfl_fme *fme;
-	अचिन्हित दीर्घ minsz;
-	व्योम *buf = शून्य;
-	माप_प्रकार length;
-	पूर्णांक ret = 0;
+static int fme_pr(struct platform_device *pdev, unsigned long arg)
+{
+	struct dfl_feature_platform_data *pdata = dev_get_platdata(&pdev->dev);
+	void __user *argp = (void __user *)arg;
+	struct dfl_fpga_fme_port_pr port_pr;
+	struct fpga_image_info *info;
+	struct fpga_region *region;
+	void __iomem *fme_hdr;
+	struct dfl_fme *fme;
+	unsigned long minsz;
+	void *buf = NULL;
+	size_t length;
+	int ret = 0;
 	u64 v;
 
-	minsz = दुरत्वend(काष्ठा dfl_fpga_fme_port_pr, buffer_address);
+	minsz = offsetofend(struct dfl_fpga_fme_port_pr, buffer_address);
 
-	अगर (copy_from_user(&port_pr, argp, minsz))
-		वापस -EFAULT;
+	if (copy_from_user(&port_pr, argp, minsz))
+		return -EFAULT;
 
-	अगर (port_pr.argsz < minsz || port_pr.flags)
-		वापस -EINVAL;
+	if (port_pr.argsz < minsz || port_pr.flags)
+		return -EINVAL;
 
 	/* get fme header region */
 	fme_hdr = dfl_get_feature_ioaddr_by_id(&pdev->dev,
 					       FME_FEATURE_ID_HEADER);
 
 	/* check port id */
-	v = पढ़ोq(fme_hdr + FME_HDR_CAP);
-	अगर (port_pr.port_id >= FIELD_GET(FME_CAP_NUM_PORTS, v)) अणु
+	v = readq(fme_hdr + FME_HDR_CAP);
+	if (port_pr.port_id >= FIELD_GET(FME_CAP_NUM_PORTS, v)) {
 		dev_dbg(&pdev->dev, "port number more than maximum\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/*
 	 * align PR buffer per PR bandwidth, as HW ignores the extra padding
-	 * data स्वतःmatically.
+	 * data automatically.
 	 */
 	length = ALIGN(port_pr.buffer_size, 4);
 
-	buf = vदो_स्मृति(length);
-	अगर (!buf)
-		वापस -ENOMEM;
+	buf = vmalloc(length);
+	if (!buf)
+		return -ENOMEM;
 
-	अगर (copy_from_user(buf,
-			   (व्योम __user *)(अचिन्हित दीर्घ)port_pr.buffer_address,
-			   port_pr.buffer_size)) अणु
+	if (copy_from_user(buf,
+			   (void __user *)(unsigned long)port_pr.buffer_address,
+			   port_pr.buffer_size)) {
 		ret = -EFAULT;
-		जाओ मुक्त_निकास;
-	पूर्ण
+		goto free_exit;
+	}
 
-	/* prepare fpga_image_info क्रम PR */
+	/* prepare fpga_image_info for PR */
 	info = fpga_image_info_alloc(&pdev->dev);
-	अगर (!info) अणु
+	if (!info) {
 		ret = -ENOMEM;
-		जाओ मुक्त_निकास;
-	पूर्ण
+		goto free_exit;
+	}
 
 	info->flags |= FPGA_MGR_PARTIAL_RECONFIG;
 
 	mutex_lock(&pdata->lock);
-	fme = dfl_fpga_pdata_get_निजी(pdata);
-	/* fme device has been unरेजिस्टरed. */
-	अगर (!fme) अणु
+	fme = dfl_fpga_pdata_get_private(pdata);
+	/* fme device has been unregistered. */
+	if (!fme) {
 		ret = -EINVAL;
-		जाओ unlock_निकास;
-	पूर्ण
+		goto unlock_exit;
+	}
 
 	region = dfl_fme_region_find(fme, port_pr.port_id);
-	अगर (!region) अणु
+	if (!region) {
 		ret = -EINVAL;
-		जाओ unlock_निकास;
-	पूर्ण
+		goto unlock_exit;
+	}
 
-	fpga_image_info_मुक्त(region->info);
+	fpga_image_info_free(region->info);
 
 	info->buf = buf;
 	info->count = length;
@@ -152,281 +151,281 @@ dfl_fme_region_find_by_port_id(काष्ठा dfl_fme *fme, पूर्ण�
 	 * reenabling the bridge to clear things out between accleration runs.
 	 * so no need to hold the bridges after partial reconfiguration.
 	 */
-	अगर (region->get_bridges)
+	if (region->get_bridges)
 		fpga_bridges_put(&region->bridge_list);
 
 	put_device(&region->dev);
-unlock_निकास:
+unlock_exit:
 	mutex_unlock(&pdata->lock);
-मुक्त_निकास:
-	vमुक्त(buf);
-	वापस ret;
-पूर्ण
+free_exit:
+	vfree(buf);
+	return ret;
+}
 
 /**
- * dfl_fme_create_mgr - create fpga mgr platक्रमm device as child device
+ * dfl_fme_create_mgr - create fpga mgr platform device as child device
  *
- * @pdata: fme platक्रमm_device's pdata
+ * @pdata: fme platform_device's pdata
  *
- * Return: mgr platक्रमm device अगर successful, and error code otherwise.
+ * Return: mgr platform device if successful, and error code otherwise.
  */
-अटल काष्ठा platक्रमm_device *
-dfl_fme_create_mgr(काष्ठा dfl_feature_platक्रमm_data *pdata,
-		   काष्ठा dfl_feature *feature)
-अणु
-	काष्ठा platक्रमm_device *mgr, *fme = pdata->dev;
-	काष्ठा dfl_fme_mgr_pdata mgr_pdata;
-	पूर्णांक ret = -ENOMEM;
+static struct platform_device *
+dfl_fme_create_mgr(struct dfl_feature_platform_data *pdata,
+		   struct dfl_feature *feature)
+{
+	struct platform_device *mgr, *fme = pdata->dev;
+	struct dfl_fme_mgr_pdata mgr_pdata;
+	int ret = -ENOMEM;
 
-	अगर (!feature->ioaddr)
-		वापस ERR_PTR(-ENODEV);
+	if (!feature->ioaddr)
+		return ERR_PTR(-ENODEV);
 
 	mgr_pdata.ioaddr = feature->ioaddr;
 
 	/*
-	 * Each FME has only one fpga-mgr, so allocate platक्रमm device using
-	 * the same FME platक्रमm device id.
+	 * Each FME has only one fpga-mgr, so allocate platform device using
+	 * the same FME platform device id.
 	 */
-	mgr = platक्रमm_device_alloc(DFL_FPGA_FME_MGR, fme->id);
-	अगर (!mgr)
-		वापस ERR_PTR(ret);
+	mgr = platform_device_alloc(DFL_FPGA_FME_MGR, fme->id);
+	if (!mgr)
+		return ERR_PTR(ret);
 
 	mgr->dev.parent = &fme->dev;
 
-	ret = platक्रमm_device_add_data(mgr, &mgr_pdata, माप(mgr_pdata));
-	अगर (ret)
-		जाओ create_mgr_err;
+	ret = platform_device_add_data(mgr, &mgr_pdata, sizeof(mgr_pdata));
+	if (ret)
+		goto create_mgr_err;
 
-	ret = platक्रमm_device_add(mgr);
-	अगर (ret)
-		जाओ create_mgr_err;
+	ret = platform_device_add(mgr);
+	if (ret)
+		goto create_mgr_err;
 
-	वापस mgr;
+	return mgr;
 
 create_mgr_err:
-	platक्रमm_device_put(mgr);
-	वापस ERR_PTR(ret);
-पूर्ण
+	platform_device_put(mgr);
+	return ERR_PTR(ret);
+}
 
 /**
- * dfl_fme_destroy_mgr - destroy fpga mgr platक्रमm device
- * @pdata: fme platक्रमm device's pdata
+ * dfl_fme_destroy_mgr - destroy fpga mgr platform device
+ * @pdata: fme platform device's pdata
  */
-अटल व्योम dfl_fme_destroy_mgr(काष्ठा dfl_feature_platक्रमm_data *pdata)
-अणु
-	काष्ठा dfl_fme *priv = dfl_fpga_pdata_get_निजी(pdata);
+static void dfl_fme_destroy_mgr(struct dfl_feature_platform_data *pdata)
+{
+	struct dfl_fme *priv = dfl_fpga_pdata_get_private(pdata);
 
-	platक्रमm_device_unरेजिस्टर(priv->mgr);
-पूर्ण
+	platform_device_unregister(priv->mgr);
+}
 
 /**
- * dfl_fme_create_bridge - create fme fpga bridge platक्रमm device as child
+ * dfl_fme_create_bridge - create fme fpga bridge platform device as child
  *
- * @pdata: fme platक्रमm device's pdata
- * @port_id: port id क्रम the bridge to be created.
+ * @pdata: fme platform device's pdata
+ * @port_id: port id for the bridge to be created.
  *
- * Return: bridge platक्रमm device अगर successful, and error code otherwise.
+ * Return: bridge platform device if successful, and error code otherwise.
  */
-अटल काष्ठा dfl_fme_bridge *
-dfl_fme_create_bridge(काष्ठा dfl_feature_platक्रमm_data *pdata, पूर्णांक port_id)
-अणु
-	काष्ठा device *dev = &pdata->dev->dev;
-	काष्ठा dfl_fme_br_pdata br_pdata;
-	काष्ठा dfl_fme_bridge *fme_br;
-	पूर्णांक ret = -ENOMEM;
+static struct dfl_fme_bridge *
+dfl_fme_create_bridge(struct dfl_feature_platform_data *pdata, int port_id)
+{
+	struct device *dev = &pdata->dev->dev;
+	struct dfl_fme_br_pdata br_pdata;
+	struct dfl_fme_bridge *fme_br;
+	int ret = -ENOMEM;
 
-	fme_br = devm_kzalloc(dev, माप(*fme_br), GFP_KERNEL);
-	अगर (!fme_br)
-		वापस ERR_PTR(ret);
+	fme_br = devm_kzalloc(dev, sizeof(*fme_br), GFP_KERNEL);
+	if (!fme_br)
+		return ERR_PTR(ret);
 
 	br_pdata.cdev = pdata->dfl_cdev;
 	br_pdata.port_id = port_id;
 
-	fme_br->br = platक्रमm_device_alloc(DFL_FPGA_FME_BRIDGE,
+	fme_br->br = platform_device_alloc(DFL_FPGA_FME_BRIDGE,
 					   PLATFORM_DEVID_AUTO);
-	अगर (!fme_br->br)
-		वापस ERR_PTR(ret);
+	if (!fme_br->br)
+		return ERR_PTR(ret);
 
 	fme_br->br->dev.parent = dev;
 
-	ret = platक्रमm_device_add_data(fme_br->br, &br_pdata, माप(br_pdata));
-	अगर (ret)
-		जाओ create_br_err;
+	ret = platform_device_add_data(fme_br->br, &br_pdata, sizeof(br_pdata));
+	if (ret)
+		goto create_br_err;
 
-	ret = platक्रमm_device_add(fme_br->br);
-	अगर (ret)
-		जाओ create_br_err;
+	ret = platform_device_add(fme_br->br);
+	if (ret)
+		goto create_br_err;
 
-	वापस fme_br;
+	return fme_br;
 
 create_br_err:
-	platक्रमm_device_put(fme_br->br);
-	वापस ERR_PTR(ret);
-पूर्ण
+	platform_device_put(fme_br->br);
+	return ERR_PTR(ret);
+}
 
 /**
- * dfl_fme_destroy_bridge - destroy fpga bridge platक्रमm device
+ * dfl_fme_destroy_bridge - destroy fpga bridge platform device
  * @fme_br: fme bridge to destroy
  */
-अटल व्योम dfl_fme_destroy_bridge(काष्ठा dfl_fme_bridge *fme_br)
-अणु
-	platक्रमm_device_unरेजिस्टर(fme_br->br);
-पूर्ण
+static void dfl_fme_destroy_bridge(struct dfl_fme_bridge *fme_br)
+{
+	platform_device_unregister(fme_br->br);
+}
 
 /**
- * dfl_fme_destroy_bridge - destroy all fpga bridge platक्रमm device
- * @pdata: fme platक्रमm device's pdata
+ * dfl_fme_destroy_bridge - destroy all fpga bridge platform device
+ * @pdata: fme platform device's pdata
  */
-अटल व्योम dfl_fme_destroy_bridges(काष्ठा dfl_feature_platक्रमm_data *pdata)
-अणु
-	काष्ठा dfl_fme *priv = dfl_fpga_pdata_get_निजी(pdata);
-	काष्ठा dfl_fme_bridge *fbridge, *पंचांगp;
+static void dfl_fme_destroy_bridges(struct dfl_feature_platform_data *pdata)
+{
+	struct dfl_fme *priv = dfl_fpga_pdata_get_private(pdata);
+	struct dfl_fme_bridge *fbridge, *tmp;
 
-	list_क्रम_each_entry_safe(fbridge, पंचांगp, &priv->bridge_list, node) अणु
+	list_for_each_entry_safe(fbridge, tmp, &priv->bridge_list, node) {
 		list_del(&fbridge->node);
 		dfl_fme_destroy_bridge(fbridge);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
- * dfl_fme_create_region - create fpga region platक्रमm device as child
+ * dfl_fme_create_region - create fpga region platform device as child
  *
- * @pdata: fme platक्रमm device's pdata
- * @mgr: mgr platक्रमm device needed क्रम region
- * @br: br platक्रमm device needed क्रम region
+ * @pdata: fme platform device's pdata
+ * @mgr: mgr platform device needed for region
+ * @br: br platform device needed for region
  * @port_id: port id
  *
- * Return: fme region अगर successful, and error code otherwise.
+ * Return: fme region if successful, and error code otherwise.
  */
-अटल काष्ठा dfl_fme_region *
-dfl_fme_create_region(काष्ठा dfl_feature_platक्रमm_data *pdata,
-		      काष्ठा platक्रमm_device *mgr,
-		      काष्ठा platक्रमm_device *br, पूर्णांक port_id)
-अणु
-	काष्ठा dfl_fme_region_pdata region_pdata;
-	काष्ठा device *dev = &pdata->dev->dev;
-	काष्ठा dfl_fme_region *fme_region;
-	पूर्णांक ret = -ENOMEM;
+static struct dfl_fme_region *
+dfl_fme_create_region(struct dfl_feature_platform_data *pdata,
+		      struct platform_device *mgr,
+		      struct platform_device *br, int port_id)
+{
+	struct dfl_fme_region_pdata region_pdata;
+	struct device *dev = &pdata->dev->dev;
+	struct dfl_fme_region *fme_region;
+	int ret = -ENOMEM;
 
-	fme_region = devm_kzalloc(dev, माप(*fme_region), GFP_KERNEL);
-	अगर (!fme_region)
-		वापस ERR_PTR(ret);
+	fme_region = devm_kzalloc(dev, sizeof(*fme_region), GFP_KERNEL);
+	if (!fme_region)
+		return ERR_PTR(ret);
 
 	region_pdata.mgr = mgr;
 	region_pdata.br = br;
 
 	/*
-	 * Each FPGA device may have more than one port, so allocate platक्रमm
-	 * device using the same port platक्रमm device id.
+	 * Each FPGA device may have more than one port, so allocate platform
+	 * device using the same port platform device id.
 	 */
-	fme_region->region = platक्रमm_device_alloc(DFL_FPGA_FME_REGION, br->id);
-	अगर (!fme_region->region)
-		वापस ERR_PTR(ret);
+	fme_region->region = platform_device_alloc(DFL_FPGA_FME_REGION, br->id);
+	if (!fme_region->region)
+		return ERR_PTR(ret);
 
 	fme_region->region->dev.parent = dev;
 
-	ret = platक्रमm_device_add_data(fme_region->region, &region_pdata,
-				       माप(region_pdata));
-	अगर (ret)
-		जाओ create_region_err;
+	ret = platform_device_add_data(fme_region->region, &region_pdata,
+				       sizeof(region_pdata));
+	if (ret)
+		goto create_region_err;
 
-	ret = platक्रमm_device_add(fme_region->region);
-	अगर (ret)
-		जाओ create_region_err;
+	ret = platform_device_add(fme_region->region);
+	if (ret)
+		goto create_region_err;
 
 	fme_region->port_id = port_id;
 
-	वापस fme_region;
+	return fme_region;
 
 create_region_err:
-	platक्रमm_device_put(fme_region->region);
-	वापस ERR_PTR(ret);
-पूर्ण
+	platform_device_put(fme_region->region);
+	return ERR_PTR(ret);
+}
 
 /**
  * dfl_fme_destroy_region - destroy fme region
  * @fme_region: fme region to destroy
  */
-अटल व्योम dfl_fme_destroy_region(काष्ठा dfl_fme_region *fme_region)
-अणु
-	platक्रमm_device_unरेजिस्टर(fme_region->region);
-पूर्ण
+static void dfl_fme_destroy_region(struct dfl_fme_region *fme_region)
+{
+	platform_device_unregister(fme_region->region);
+}
 
 /**
  * dfl_fme_destroy_regions - destroy all fme regions
- * @pdata: fme platक्रमm device's pdata
+ * @pdata: fme platform device's pdata
  */
-अटल व्योम dfl_fme_destroy_regions(काष्ठा dfl_feature_platक्रमm_data *pdata)
-अणु
-	काष्ठा dfl_fme *priv = dfl_fpga_pdata_get_निजी(pdata);
-	काष्ठा dfl_fme_region *fme_region, *पंचांगp;
+static void dfl_fme_destroy_regions(struct dfl_feature_platform_data *pdata)
+{
+	struct dfl_fme *priv = dfl_fpga_pdata_get_private(pdata);
+	struct dfl_fme_region *fme_region, *tmp;
 
-	list_क्रम_each_entry_safe(fme_region, पंचांगp, &priv->region_list, node) अणु
+	list_for_each_entry_safe(fme_region, tmp, &priv->region_list, node) {
 		list_del(&fme_region->node);
 		dfl_fme_destroy_region(fme_region);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक pr_mgmt_init(काष्ठा platक्रमm_device *pdev,
-			काष्ठा dfl_feature *feature)
-अणु
-	काष्ठा dfl_feature_platक्रमm_data *pdata = dev_get_platdata(&pdev->dev);
-	काष्ठा dfl_fme_region *fme_region;
-	काष्ठा dfl_fme_bridge *fme_br;
-	काष्ठा platक्रमm_device *mgr;
-	काष्ठा dfl_fme *priv;
-	व्योम __iomem *fme_hdr;
-	पूर्णांक ret = -ENODEV, i = 0;
+static int pr_mgmt_init(struct platform_device *pdev,
+			struct dfl_feature *feature)
+{
+	struct dfl_feature_platform_data *pdata = dev_get_platdata(&pdev->dev);
+	struct dfl_fme_region *fme_region;
+	struct dfl_fme_bridge *fme_br;
+	struct platform_device *mgr;
+	struct dfl_fme *priv;
+	void __iomem *fme_hdr;
+	int ret = -ENODEV, i = 0;
 	u64 fme_cap, port_offset;
 
 	fme_hdr = dfl_get_feature_ioaddr_by_id(&pdev->dev,
 					       FME_FEATURE_ID_HEADER);
 
 	mutex_lock(&pdata->lock);
-	priv = dfl_fpga_pdata_get_निजी(pdata);
+	priv = dfl_fpga_pdata_get_private(pdata);
 
 	/* Initialize the region and bridge sub device list */
 	INIT_LIST_HEAD(&priv->region_list);
 	INIT_LIST_HEAD(&priv->bridge_list);
 
-	/* Create fpga mgr platक्रमm device */
+	/* Create fpga mgr platform device */
 	mgr = dfl_fme_create_mgr(pdata, feature);
-	अगर (IS_ERR(mgr)) अणु
+	if (IS_ERR(mgr)) {
 		dev_err(&pdev->dev, "fail to create fpga mgr pdev\n");
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
 	priv->mgr = mgr;
 
-	/* Read capability रेजिस्टर to check number of regions and bridges */
-	fme_cap = पढ़ोq(fme_hdr + FME_HDR_CAP);
-	क्रम (; i < FIELD_GET(FME_CAP_NUM_PORTS, fme_cap); i++) अणु
-		port_offset = पढ़ोq(fme_hdr + FME_HDR_PORT_OFST(i));
-		अगर (!(port_offset & FME_PORT_OFST_IMP))
-			जारी;
+	/* Read capability register to check number of regions and bridges */
+	fme_cap = readq(fme_hdr + FME_HDR_CAP);
+	for (; i < FIELD_GET(FME_CAP_NUM_PORTS, fme_cap); i++) {
+		port_offset = readq(fme_hdr + FME_HDR_PORT_OFST(i));
+		if (!(port_offset & FME_PORT_OFST_IMP))
+			continue;
 
-		/* Create bridge क्रम each port */
+		/* Create bridge for each port */
 		fme_br = dfl_fme_create_bridge(pdata, i);
-		अगर (IS_ERR(fme_br)) अणु
+		if (IS_ERR(fme_br)) {
 			ret = PTR_ERR(fme_br);
-			जाओ destroy_region;
-		पूर्ण
+			goto destroy_region;
+		}
 
 		list_add(&fme_br->node, &priv->bridge_list);
 
-		/* Create region क्रम each port */
+		/* Create region for each port */
 		fme_region = dfl_fme_create_region(pdata, mgr,
 						   fme_br->br, i);
-		अगर (IS_ERR(fme_region)) अणु
+		if (IS_ERR(fme_region)) {
 			ret = PTR_ERR(fme_region);
-			जाओ destroy_region;
-		पूर्ण
+			goto destroy_region;
+		}
 
 		list_add(&fme_region->node, &priv->region_list);
-	पूर्ण
+	}
 	mutex_unlock(&pdata->lock);
 
-	वापस 0;
+	return 0;
 
 destroy_region:
 	dfl_fme_destroy_regions(pdata);
@@ -434,13 +433,13 @@ destroy_region:
 	dfl_fme_destroy_mgr(pdata);
 unlock:
 	mutex_unlock(&pdata->lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम pr_mgmt_uinit(काष्ठा platक्रमm_device *pdev,
-			  काष्ठा dfl_feature *feature)
-अणु
-	काष्ठा dfl_feature_platक्रमm_data *pdata = dev_get_platdata(&pdev->dev);
+static void pr_mgmt_uinit(struct platform_device *pdev,
+			  struct dfl_feature *feature)
+{
+	struct dfl_feature_platform_data *pdata = dev_get_platdata(&pdev->dev);
 
 	mutex_lock(&pdata->lock);
 
@@ -448,32 +447,32 @@ unlock:
 	dfl_fme_destroy_bridges(pdata);
 	dfl_fme_destroy_mgr(pdata);
 	mutex_unlock(&pdata->lock);
-पूर्ण
+}
 
-अटल दीर्घ fme_pr_ioctl(काष्ठा platक्रमm_device *pdev,
-			 काष्ठा dfl_feature *feature,
-			 अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
-अणु
-	दीर्घ ret;
+static long fme_pr_ioctl(struct platform_device *pdev,
+			 struct dfl_feature *feature,
+			 unsigned int cmd, unsigned long arg)
+{
+	long ret;
 
-	चयन (cmd) अणु
-	हाल DFL_FPGA_FME_PORT_PR:
+	switch (cmd) {
+	case DFL_FPGA_FME_PORT_PR:
 		ret = fme_pr(pdev, arg);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		ret = -ENODEV;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-स्थिर काष्ठा dfl_feature_id fme_pr_mgmt_id_table[] = अणु
-	अणु.id = FME_FEATURE_ID_PR_MGMT,पूर्ण,
-	अणु0पूर्ण
-पूर्ण;
+const struct dfl_feature_id fme_pr_mgmt_id_table[] = {
+	{.id = FME_FEATURE_ID_PR_MGMT,},
+	{0}
+};
 
-स्थिर काष्ठा dfl_feature_ops fme_pr_mgmt_ops = अणु
+const struct dfl_feature_ops fme_pr_mgmt_ops = {
 	.init = pr_mgmt_init,
 	.uinit = pr_mgmt_uinit,
 	.ioctl = fme_pr_ioctl,
-पूर्ण;
+};

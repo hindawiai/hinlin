@@ -1,59 +1,58 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __LIBPERF_INTERNAL_MMAP_H
-#घोषणा __LIBPERF_INTERNAL_MMAP_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __LIBPERF_INTERNAL_MMAP_H
+#define __LIBPERF_INTERNAL_MMAP_H
 
-#समावेश <linux/compiler.h>
-#समावेश <linux/refcount.h>
-#समावेश <linux/types.h>
-#समावेश <stdbool.h>
+#include <linux/compiler.h>
+#include <linux/refcount.h>
+#include <linux/types.h>
+#include <stdbool.h>
 
 /* perf sample has 16 bits size limit */
-#घोषणा PERF_SAMPLE_MAX_SIZE (1 << 16)
+#define PERF_SAMPLE_MAX_SIZE (1 << 16)
 
-काष्ठा perf_mmap;
-काष्ठा perf_counts_values;
+struct perf_mmap;
+struct perf_counts_values;
 
-प्रकार व्योम (*libperf_unmap_cb_t)(काष्ठा perf_mmap *map);
+typedef void (*libperf_unmap_cb_t)(struct perf_mmap *map);
 
 /**
- * काष्ठा perf_mmap - perf's ring buffer mmap details
+ * struct perf_mmap - perf's ring buffer mmap details
  *
  * @refcnt - e.g. code using PERF_EVENT_IOC_SET_OUTPUT to share this
  */
-काष्ठा perf_mmap अणु
-	व्योम			*base;
-	पूर्णांक			 mask;
-	पूर्णांक			 fd;
-	पूर्णांक			 cpu;
+struct perf_mmap {
+	void			*base;
+	int			 mask;
+	int			 fd;
+	int			 cpu;
 	refcount_t		 refcnt;
 	u64			 prev;
 	u64			 start;
 	u64			 end;
-	bool			 overग_लिखो;
+	bool			 overwrite;
 	u64			 flush;
 	libperf_unmap_cb_t	 unmap_cb;
-	अक्षर			 event_copy[PERF_SAMPLE_MAX_SIZE] __aligned(8);
-	काष्ठा perf_mmap	*next;
-पूर्ण;
+	char			 event_copy[PERF_SAMPLE_MAX_SIZE] __aligned(8);
+	struct perf_mmap	*next;
+};
 
-काष्ठा perf_mmap_param अणु
-	पूर्णांक	prot;
-	पूर्णांक	mask;
-पूर्ण;
+struct perf_mmap_param {
+	int	prot;
+	int	mask;
+};
 
-माप_प्रकार perf_mmap__mmap_len(काष्ठा perf_mmap *map);
+size_t perf_mmap__mmap_len(struct perf_mmap *map);
 
-व्योम perf_mmap__init(काष्ठा perf_mmap *map, काष्ठा perf_mmap *prev,
-		     bool overग_लिखो, libperf_unmap_cb_t unmap_cb);
-पूर्णांक perf_mmap__mmap(काष्ठा perf_mmap *map, काष्ठा perf_mmap_param *mp,
-		    पूर्णांक fd, पूर्णांक cpu);
-व्योम perf_mmap__munmap(काष्ठा perf_mmap *map);
-व्योम perf_mmap__get(काष्ठा perf_mmap *map);
-व्योम perf_mmap__put(काष्ठा perf_mmap *map);
+void perf_mmap__init(struct perf_mmap *map, struct perf_mmap *prev,
+		     bool overwrite, libperf_unmap_cb_t unmap_cb);
+int perf_mmap__mmap(struct perf_mmap *map, struct perf_mmap_param *mp,
+		    int fd, int cpu);
+void perf_mmap__munmap(struct perf_mmap *map);
+void perf_mmap__get(struct perf_mmap *map);
+void perf_mmap__put(struct perf_mmap *map);
 
-u64 perf_mmap__पढ़ो_head(काष्ठा perf_mmap *map);
+u64 perf_mmap__read_head(struct perf_mmap *map);
 
-पूर्णांक perf_mmap__पढ़ो_self(काष्ठा perf_mmap *map, काष्ठा perf_counts_values *count);
+int perf_mmap__read_self(struct perf_mmap *map, struct perf_counts_values *count);
 
-#पूर्ण_अगर /* __LIBPERF_INTERNAL_MMAP_H */
+#endif /* __LIBPERF_INTERNAL_MMAP_H */

@@ -1,246 +1,245 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * dev_prपूर्णांकk.h - prपूर्णांकk messages helpers क्रम devices
+ * dev_printk.h - printk messages helpers for devices
  *
  * Copyright (c) 2001-2003 Patrick Mochel <mochel@osdl.org>
- * Copyright (c) 2004-2009 Greg Kroah-Harपंचांगan <gregkh@suse.de>
+ * Copyright (c) 2004-2009 Greg Kroah-Hartman <gregkh@suse.de>
  * Copyright (c) 2008-2009 Novell Inc.
  *
  */
 
-#अगर_अघोषित _DEVICE_PRINTK_H_
-#घोषणा _DEVICE_PRINTK_H_
+#ifndef _DEVICE_PRINTK_H_
+#define _DEVICE_PRINTK_H_
 
-#समावेश <linux/compiler.h>
-#समावेश <linux/types.h>
-#समावेश <linux/ratelimit.h>
+#include <linux/compiler.h>
+#include <linux/types.h>
+#include <linux/ratelimit.h>
 
-#अगर_अघोषित dev_fmt
-#घोषणा dev_fmt(fmt) fmt
-#पूर्ण_अगर
+#ifndef dev_fmt
+#define dev_fmt(fmt) fmt
+#endif
 
-काष्ठा device;
+struct device;
 
-#घोषणा PRINTK_INFO_SUBSYSTEM_LEN	16
-#घोषणा PRINTK_INFO_DEVICE_LEN		48
+#define PRINTK_INFO_SUBSYSTEM_LEN	16
+#define PRINTK_INFO_DEVICE_LEN		48
 
-काष्ठा dev_prपूर्णांकk_info अणु
-	अक्षर subप्रणाली[PRINTK_INFO_SUBSYSTEM_LEN];
-	अक्षर device[PRINTK_INFO_DEVICE_LEN];
-पूर्ण;
+struct dev_printk_info {
+	char subsystem[PRINTK_INFO_SUBSYSTEM_LEN];
+	char device[PRINTK_INFO_DEVICE_LEN];
+};
 
-#अगर_घोषित CONFIG_PRINTK
+#ifdef CONFIG_PRINTK
 
-__म_लिखो(3, 0) __cold
-पूर्णांक dev_vprपूर्णांकk_emit(पूर्णांक level, स्थिर काष्ठा device *dev,
-		     स्थिर अक्षर *fmt, बहु_सूची args);
-__म_लिखो(3, 4) __cold
-पूर्णांक dev_prपूर्णांकk_emit(पूर्णांक level, स्थिर काष्ठा device *dev, स्थिर अक्षर *fmt, ...);
+__printf(3, 0) __cold
+int dev_vprintk_emit(int level, const struct device *dev,
+		     const char *fmt, va_list args);
+__printf(3, 4) __cold
+int dev_printk_emit(int level, const struct device *dev, const char *fmt, ...);
 
-__म_लिखो(3, 4) __cold
-व्योम dev_prपूर्णांकk(स्थिर अक्षर *level, स्थिर काष्ठा device *dev,
-		स्थिर अक्षर *fmt, ...);
-__म_लिखो(2, 3) __cold
-व्योम _dev_emerg(स्थिर काष्ठा device *dev, स्थिर अक्षर *fmt, ...);
-__म_लिखो(2, 3) __cold
-व्योम _dev_alert(स्थिर काष्ठा device *dev, स्थिर अक्षर *fmt, ...);
-__म_लिखो(2, 3) __cold
-व्योम _dev_crit(स्थिर काष्ठा device *dev, स्थिर अक्षर *fmt, ...);
-__म_लिखो(2, 3) __cold
-व्योम _dev_err(स्थिर काष्ठा device *dev, स्थिर अक्षर *fmt, ...);
-__म_लिखो(2, 3) __cold
-व्योम _dev_warn(स्थिर काष्ठा device *dev, स्थिर अक्षर *fmt, ...);
-__म_लिखो(2, 3) __cold
-व्योम _dev_notice(स्थिर काष्ठा device *dev, स्थिर अक्षर *fmt, ...);
-__म_लिखो(2, 3) __cold
-व्योम _dev_info(स्थिर काष्ठा device *dev, स्थिर अक्षर *fmt, ...);
+__printf(3, 4) __cold
+void dev_printk(const char *level, const struct device *dev,
+		const char *fmt, ...);
+__printf(2, 3) __cold
+void _dev_emerg(const struct device *dev, const char *fmt, ...);
+__printf(2, 3) __cold
+void _dev_alert(const struct device *dev, const char *fmt, ...);
+__printf(2, 3) __cold
+void _dev_crit(const struct device *dev, const char *fmt, ...);
+__printf(2, 3) __cold
+void _dev_err(const struct device *dev, const char *fmt, ...);
+__printf(2, 3) __cold
+void _dev_warn(const struct device *dev, const char *fmt, ...);
+__printf(2, 3) __cold
+void _dev_notice(const struct device *dev, const char *fmt, ...);
+__printf(2, 3) __cold
+void _dev_info(const struct device *dev, const char *fmt, ...);
 
-#अन्यथा
+#else
 
-अटल अंतरभूत __म_लिखो(3, 0)
-पूर्णांक dev_vprपूर्णांकk_emit(पूर्णांक level, स्थिर काष्ठा device *dev,
-		     स्थिर अक्षर *fmt, बहु_सूची args)
-अणु वापस 0; पूर्ण
-अटल अंतरभूत __म_लिखो(3, 4)
-पूर्णांक dev_prपूर्णांकk_emit(पूर्णांक level, स्थिर काष्ठा device *dev, स्थिर अक्षर *fmt, ...)
-अणु वापस 0; पूर्ण
+static inline __printf(3, 0)
+int dev_vprintk_emit(int level, const struct device *dev,
+		     const char *fmt, va_list args)
+{ return 0; }
+static inline __printf(3, 4)
+int dev_printk_emit(int level, const struct device *dev, const char *fmt, ...)
+{ return 0; }
 
-अटल अंतरभूत व्योम __dev_prपूर्णांकk(स्थिर अक्षर *level, स्थिर काष्ठा device *dev,
-				काष्ठा va_क्रमmat *vaf)
-अणुपूर्ण
-अटल अंतरभूत __म_लिखो(3, 4)
-व्योम dev_prपूर्णांकk(स्थिर अक्षर *level, स्थिर काष्ठा device *dev,
-		 स्थिर अक्षर *fmt, ...)
-अणुपूर्ण
+static inline void __dev_printk(const char *level, const struct device *dev,
+				struct va_format *vaf)
+{}
+static inline __printf(3, 4)
+void dev_printk(const char *level, const struct device *dev,
+		 const char *fmt, ...)
+{}
 
-अटल अंतरभूत __म_लिखो(2, 3)
-व्योम _dev_emerg(स्थिर काष्ठा device *dev, स्थिर अक्षर *fmt, ...)
-अणुपूर्ण
-अटल अंतरभूत __म_लिखो(2, 3)
-व्योम _dev_crit(स्थिर काष्ठा device *dev, स्थिर अक्षर *fmt, ...)
-अणुपूर्ण
-अटल अंतरभूत __म_लिखो(2, 3)
-व्योम _dev_alert(स्थिर काष्ठा device *dev, स्थिर अक्षर *fmt, ...)
-अणुपूर्ण
-अटल अंतरभूत __म_लिखो(2, 3)
-व्योम _dev_err(स्थिर काष्ठा device *dev, स्थिर अक्षर *fmt, ...)
-अणुपूर्ण
-अटल अंतरभूत __म_लिखो(2, 3)
-व्योम _dev_warn(स्थिर काष्ठा device *dev, स्थिर अक्षर *fmt, ...)
-अणुपूर्ण
-अटल अंतरभूत __म_लिखो(2, 3)
-व्योम _dev_notice(स्थिर काष्ठा device *dev, स्थिर अक्षर *fmt, ...)
-अणुपूर्ण
-अटल अंतरभूत __म_लिखो(2, 3)
-व्योम _dev_info(स्थिर काष्ठा device *dev, स्थिर अक्षर *fmt, ...)
-अणुपूर्ण
+static inline __printf(2, 3)
+void _dev_emerg(const struct device *dev, const char *fmt, ...)
+{}
+static inline __printf(2, 3)
+void _dev_crit(const struct device *dev, const char *fmt, ...)
+{}
+static inline __printf(2, 3)
+void _dev_alert(const struct device *dev, const char *fmt, ...)
+{}
+static inline __printf(2, 3)
+void _dev_err(const struct device *dev, const char *fmt, ...)
+{}
+static inline __printf(2, 3)
+void _dev_warn(const struct device *dev, const char *fmt, ...)
+{}
+static inline __printf(2, 3)
+void _dev_notice(const struct device *dev, const char *fmt, ...)
+{}
+static inline __printf(2, 3)
+void _dev_info(const struct device *dev, const char *fmt, ...)
+{}
 
-#पूर्ण_अगर
+#endif
 
 /*
- * #घोषणाs क्रम all the dev_<level> macros to prefix with whatever
- * possible use of #घोषणा dev_fmt(fmt) ...
+ * #defines for all the dev_<level> macros to prefix with whatever
+ * possible use of #define dev_fmt(fmt) ...
  */
 
-#घोषणा dev_emerg(dev, fmt, ...)					\
+#define dev_emerg(dev, fmt, ...)					\
 	_dev_emerg(dev, dev_fmt(fmt), ##__VA_ARGS__)
-#घोषणा dev_crit(dev, fmt, ...)						\
+#define dev_crit(dev, fmt, ...)						\
 	_dev_crit(dev, dev_fmt(fmt), ##__VA_ARGS__)
-#घोषणा dev_alert(dev, fmt, ...)					\
+#define dev_alert(dev, fmt, ...)					\
 	_dev_alert(dev, dev_fmt(fmt), ##__VA_ARGS__)
-#घोषणा dev_err(dev, fmt, ...)						\
+#define dev_err(dev, fmt, ...)						\
 	_dev_err(dev, dev_fmt(fmt), ##__VA_ARGS__)
-#घोषणा dev_warn(dev, fmt, ...)						\
+#define dev_warn(dev, fmt, ...)						\
 	_dev_warn(dev, dev_fmt(fmt), ##__VA_ARGS__)
-#घोषणा dev_notice(dev, fmt, ...)					\
+#define dev_notice(dev, fmt, ...)					\
 	_dev_notice(dev, dev_fmt(fmt), ##__VA_ARGS__)
-#घोषणा dev_info(dev, fmt, ...)						\
+#define dev_info(dev, fmt, ...)						\
 	_dev_info(dev, dev_fmt(fmt), ##__VA_ARGS__)
 
-#अगर defined(CONFIG_DYNAMIC_DEBUG) || \
+#if defined(CONFIG_DYNAMIC_DEBUG) || \
 	(defined(CONFIG_DYNAMIC_DEBUG_CORE) && defined(DYNAMIC_DEBUG_MODULE))
-#घोषणा dev_dbg(dev, fmt, ...)						\
+#define dev_dbg(dev, fmt, ...)						\
 	dynamic_dev_dbg(dev, dev_fmt(fmt), ##__VA_ARGS__)
-#या_अगर defined(DEBUG)
-#घोषणा dev_dbg(dev, fmt, ...)						\
-	dev_prपूर्णांकk(KERN_DEBUG, dev, dev_fmt(fmt), ##__VA_ARGS__)
-#अन्यथा
-#घोषणा dev_dbg(dev, fmt, ...)						\
-(अणु									\
-	अगर (0)								\
-		dev_prपूर्णांकk(KERN_DEBUG, dev, dev_fmt(fmt), ##__VA_ARGS__); \
-पूर्ण)
-#पूर्ण_अगर
+#elif defined(DEBUG)
+#define dev_dbg(dev, fmt, ...)						\
+	dev_printk(KERN_DEBUG, dev, dev_fmt(fmt), ##__VA_ARGS__)
+#else
+#define dev_dbg(dev, fmt, ...)						\
+({									\
+	if (0)								\
+		dev_printk(KERN_DEBUG, dev, dev_fmt(fmt), ##__VA_ARGS__); \
+})
+#endif
 
-#अगर_घोषित CONFIG_PRINTK
-#घोषणा dev_level_once(dev_level, dev, fmt, ...)			\
-करो अणु									\
-	अटल bool __prपूर्णांक_once __पढ़ो_mostly;				\
+#ifdef CONFIG_PRINTK
+#define dev_level_once(dev_level, dev, fmt, ...)			\
+do {									\
+	static bool __print_once __read_mostly;				\
 									\
-	अगर (!__prपूर्णांक_once) अणु						\
-		__prपूर्णांक_once = true;					\
+	if (!__print_once) {						\
+		__print_once = true;					\
 		dev_level(dev, fmt, ##__VA_ARGS__);			\
-	पूर्ण								\
-पूर्ण जबतक (0)
-#अन्यथा
-#घोषणा dev_level_once(dev_level, dev, fmt, ...)			\
-करो अणु									\
-	अगर (0)								\
+	}								\
+} while (0)
+#else
+#define dev_level_once(dev_level, dev, fmt, ...)			\
+do {									\
+	if (0)								\
 		dev_level(dev, fmt, ##__VA_ARGS__);			\
-पूर्ण जबतक (0)
-#पूर्ण_अगर
+} while (0)
+#endif
 
-#घोषणा dev_emerg_once(dev, fmt, ...)					\
+#define dev_emerg_once(dev, fmt, ...)					\
 	dev_level_once(dev_emerg, dev, fmt, ##__VA_ARGS__)
-#घोषणा dev_alert_once(dev, fmt, ...)					\
+#define dev_alert_once(dev, fmt, ...)					\
 	dev_level_once(dev_alert, dev, fmt, ##__VA_ARGS__)
-#घोषणा dev_crit_once(dev, fmt, ...)					\
+#define dev_crit_once(dev, fmt, ...)					\
 	dev_level_once(dev_crit, dev, fmt, ##__VA_ARGS__)
-#घोषणा dev_err_once(dev, fmt, ...)					\
+#define dev_err_once(dev, fmt, ...)					\
 	dev_level_once(dev_err, dev, fmt, ##__VA_ARGS__)
-#घोषणा dev_warn_once(dev, fmt, ...)					\
+#define dev_warn_once(dev, fmt, ...)					\
 	dev_level_once(dev_warn, dev, fmt, ##__VA_ARGS__)
-#घोषणा dev_notice_once(dev, fmt, ...)					\
+#define dev_notice_once(dev, fmt, ...)					\
 	dev_level_once(dev_notice, dev, fmt, ##__VA_ARGS__)
-#घोषणा dev_info_once(dev, fmt, ...)					\
+#define dev_info_once(dev, fmt, ...)					\
 	dev_level_once(dev_info, dev, fmt, ##__VA_ARGS__)
-#घोषणा dev_dbg_once(dev, fmt, ...)					\
+#define dev_dbg_once(dev, fmt, ...)					\
 	dev_level_once(dev_dbg, dev, fmt, ##__VA_ARGS__)
 
-#घोषणा dev_level_ratelimited(dev_level, dev, fmt, ...)			\
-करो अणु									\
-	अटल DEFINE_RATELIMIT_STATE(_rs,				\
+#define dev_level_ratelimited(dev_level, dev, fmt, ...)			\
+do {									\
+	static DEFINE_RATELIMIT_STATE(_rs,				\
 				      DEFAULT_RATELIMIT_INTERVAL,	\
 				      DEFAULT_RATELIMIT_BURST);		\
-	अगर (__ratelimit(&_rs))						\
+	if (__ratelimit(&_rs))						\
 		dev_level(dev, fmt, ##__VA_ARGS__);			\
-पूर्ण जबतक (0)
+} while (0)
 
-#घोषणा dev_emerg_ratelimited(dev, fmt, ...)				\
+#define dev_emerg_ratelimited(dev, fmt, ...)				\
 	dev_level_ratelimited(dev_emerg, dev, fmt, ##__VA_ARGS__)
-#घोषणा dev_alert_ratelimited(dev, fmt, ...)				\
+#define dev_alert_ratelimited(dev, fmt, ...)				\
 	dev_level_ratelimited(dev_alert, dev, fmt, ##__VA_ARGS__)
-#घोषणा dev_crit_ratelimited(dev, fmt, ...)				\
+#define dev_crit_ratelimited(dev, fmt, ...)				\
 	dev_level_ratelimited(dev_crit, dev, fmt, ##__VA_ARGS__)
-#घोषणा dev_err_ratelimited(dev, fmt, ...)				\
+#define dev_err_ratelimited(dev, fmt, ...)				\
 	dev_level_ratelimited(dev_err, dev, fmt, ##__VA_ARGS__)
-#घोषणा dev_warn_ratelimited(dev, fmt, ...)				\
+#define dev_warn_ratelimited(dev, fmt, ...)				\
 	dev_level_ratelimited(dev_warn, dev, fmt, ##__VA_ARGS__)
-#घोषणा dev_notice_ratelimited(dev, fmt, ...)				\
+#define dev_notice_ratelimited(dev, fmt, ...)				\
 	dev_level_ratelimited(dev_notice, dev, fmt, ##__VA_ARGS__)
-#घोषणा dev_info_ratelimited(dev, fmt, ...)				\
+#define dev_info_ratelimited(dev, fmt, ...)				\
 	dev_level_ratelimited(dev_info, dev, fmt, ##__VA_ARGS__)
-#अगर defined(CONFIG_DYNAMIC_DEBUG) || \
+#if defined(CONFIG_DYNAMIC_DEBUG) || \
 	(defined(CONFIG_DYNAMIC_DEBUG_CORE) && defined(DYNAMIC_DEBUG_MODULE))
 /* descriptor check is first to prevent flooding with "callbacks suppressed" */
-#घोषणा dev_dbg_ratelimited(dev, fmt, ...)				\
-करो अणु									\
-	अटल DEFINE_RATELIMIT_STATE(_rs,				\
+#define dev_dbg_ratelimited(dev, fmt, ...)				\
+do {									\
+	static DEFINE_RATELIMIT_STATE(_rs,				\
 				      DEFAULT_RATELIMIT_INTERVAL,	\
 				      DEFAULT_RATELIMIT_BURST);		\
 	DEFINE_DYNAMIC_DEBUG_METADATA(descriptor, fmt);			\
-	अगर (DYNAMIC_DEBUG_BRANCH(descriptor) &&				\
+	if (DYNAMIC_DEBUG_BRANCH(descriptor) &&				\
 	    __ratelimit(&_rs))						\
 		__dynamic_dev_dbg(&descriptor, dev, dev_fmt(fmt),	\
 				  ##__VA_ARGS__);			\
-पूर्ण जबतक (0)
-#या_अगर defined(DEBUG)
-#घोषणा dev_dbg_ratelimited(dev, fmt, ...)				\
-करो अणु									\
-	अटल DEFINE_RATELIMIT_STATE(_rs,				\
+} while (0)
+#elif defined(DEBUG)
+#define dev_dbg_ratelimited(dev, fmt, ...)				\
+do {									\
+	static DEFINE_RATELIMIT_STATE(_rs,				\
 				      DEFAULT_RATELIMIT_INTERVAL,	\
 				      DEFAULT_RATELIMIT_BURST);		\
-	अगर (__ratelimit(&_rs))						\
-		dev_prपूर्णांकk(KERN_DEBUG, dev, dev_fmt(fmt), ##__VA_ARGS__); \
-पूर्ण जबतक (0)
-#अन्यथा
-#घोषणा dev_dbg_ratelimited(dev, fmt, ...)				\
-करो अणु									\
-	अगर (0)								\
-		dev_prपूर्णांकk(KERN_DEBUG, dev, dev_fmt(fmt), ##__VA_ARGS__); \
-पूर्ण जबतक (0)
-#पूर्ण_अगर
+	if (__ratelimit(&_rs))						\
+		dev_printk(KERN_DEBUG, dev, dev_fmt(fmt), ##__VA_ARGS__); \
+} while (0)
+#else
+#define dev_dbg_ratelimited(dev, fmt, ...)				\
+do {									\
+	if (0)								\
+		dev_printk(KERN_DEBUG, dev, dev_fmt(fmt), ##__VA_ARGS__); \
+} while (0)
+#endif
 
-#अगर_घोषित VERBOSE_DEBUG
-#घोषणा dev_vdbg	dev_dbg
-#अन्यथा
-#घोषणा dev_vdbg(dev, fmt, ...)						\
-(अणु									\
-	अगर (0)								\
-		dev_prपूर्णांकk(KERN_DEBUG, dev, dev_fmt(fmt), ##__VA_ARGS__); \
-पूर्ण)
-#पूर्ण_अगर
+#ifdef VERBOSE_DEBUG
+#define dev_vdbg	dev_dbg
+#else
+#define dev_vdbg(dev, fmt, ...)						\
+({									\
+	if (0)								\
+		dev_printk(KERN_DEBUG, dev, dev_fmt(fmt), ##__VA_ARGS__); \
+})
+#endif
 
 /*
- * dev_WARN*() acts like dev_prपूर्णांकk(), but with the key dअगरference of
- * using WARN/WARN_ONCE to include file/line inक्रमmation and a backtrace.
+ * dev_WARN*() acts like dev_printk(), but with the key difference of
+ * using WARN/WARN_ONCE to include file/line information and a backtrace.
  */
-#घोषणा dev_WARN(dev, क्रमmat, arg...) \
-	WARN(1, "%s %s: " क्रमmat, dev_driver_string(dev), dev_name(dev), ## arg);
+#define dev_WARN(dev, format, arg...) \
+	WARN(1, "%s %s: " format, dev_driver_string(dev), dev_name(dev), ## arg);
 
-#घोषणा dev_WARN_ONCE(dev, condition, क्रमmat, arg...) \
-	WARN_ONCE(condition, "%s %s: " क्रमmat, \
+#define dev_WARN_ONCE(dev, condition, format, arg...) \
+	WARN_ONCE(condition, "%s %s: " format, \
 			dev_driver_string(dev), dev_name(dev), ## arg)
 
-#पूर्ण_अगर /* _DEVICE_PRINTK_H_ */
+#endif /* _DEVICE_PRINTK_H_ */

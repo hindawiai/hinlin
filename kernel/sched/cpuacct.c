@@ -1,282 +1,281 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * CPU accounting code क्रम task groups.
+ * CPU accounting code for task groups.
  *
  * Based on the work by Paul Menage (menage@google.com) and Balbir Singh
  * (balbir@in.ibm.com).
  */
-#समावेश <यंत्र/irq_regs.h>
-#समावेश "sched.h"
+#include <asm/irq_regs.h>
+#include "sched.h"
 
 /* Time spent by the tasks of the CPU accounting group executing in ... */
-क्रमागत cpuacct_stat_index अणु
+enum cpuacct_stat_index {
 	CPUACCT_STAT_USER,	/* ... user mode */
 	CPUACCT_STAT_SYSTEM,	/* ... kernel mode */
 
 	CPUACCT_STAT_NSTATS,
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर cpuacct_stat_desc[] = अणु
+static const char * const cpuacct_stat_desc[] = {
 	[CPUACCT_STAT_USER] = "user",
 	[CPUACCT_STAT_SYSTEM] = "system",
-पूर्ण;
+};
 
-काष्ठा cpuacct_usage अणु
+struct cpuacct_usage {
 	u64	usages[CPUACCT_STAT_NSTATS];
-पूर्ण;
+};
 
 /* track CPU usage of a group of tasks and its child groups */
-काष्ठा cpuacct अणु
-	काष्ठा cgroup_subsys_state	css;
-	/* cpuusage holds poपूर्णांकer to a u64-type object on every CPU */
-	काष्ठा cpuacct_usage __percpu	*cpuusage;
-	काष्ठा kernel_cpustat __percpu	*cpustat;
-पूर्ण;
+struct cpuacct {
+	struct cgroup_subsys_state	css;
+	/* cpuusage holds pointer to a u64-type object on every CPU */
+	struct cpuacct_usage __percpu	*cpuusage;
+	struct kernel_cpustat __percpu	*cpustat;
+};
 
-अटल अंतरभूत काष्ठा cpuacct *css_ca(काष्ठा cgroup_subsys_state *css)
-अणु
-	वापस css ? container_of(css, काष्ठा cpuacct, css) : शून्य;
-पूर्ण
+static inline struct cpuacct *css_ca(struct cgroup_subsys_state *css)
+{
+	return css ? container_of(css, struct cpuacct, css) : NULL;
+}
 
-/* Return CPU accounting group to which this task beदीर्घs */
-अटल अंतरभूत काष्ठा cpuacct *task_ca(काष्ठा task_काष्ठा *tsk)
-अणु
-	वापस css_ca(task_css(tsk, cpuacct_cgrp_id));
-पूर्ण
+/* Return CPU accounting group to which this task belongs */
+static inline struct cpuacct *task_ca(struct task_struct *tsk)
+{
+	return css_ca(task_css(tsk, cpuacct_cgrp_id));
+}
 
-अटल अंतरभूत काष्ठा cpuacct *parent_ca(काष्ठा cpuacct *ca)
-अणु
-	वापस css_ca(ca->css.parent);
-पूर्ण
+static inline struct cpuacct *parent_ca(struct cpuacct *ca)
+{
+	return css_ca(ca->css.parent);
+}
 
-अटल DEFINE_PER_CPU(काष्ठा cpuacct_usage, root_cpuacct_cpuusage);
-अटल काष्ठा cpuacct root_cpuacct = अणु
+static DEFINE_PER_CPU(struct cpuacct_usage, root_cpuacct_cpuusage);
+static struct cpuacct root_cpuacct = {
 	.cpustat	= &kernel_cpustat,
 	.cpuusage	= &root_cpuacct_cpuusage,
-पूर्ण;
+};
 
 /* Create a new CPU accounting group */
-अटल काष्ठा cgroup_subsys_state *
-cpuacct_css_alloc(काष्ठा cgroup_subsys_state *parent_css)
-अणु
-	काष्ठा cpuacct *ca;
+static struct cgroup_subsys_state *
+cpuacct_css_alloc(struct cgroup_subsys_state *parent_css)
+{
+	struct cpuacct *ca;
 
-	अगर (!parent_css)
-		वापस &root_cpuacct.css;
+	if (!parent_css)
+		return &root_cpuacct.css;
 
-	ca = kzalloc(माप(*ca), GFP_KERNEL);
-	अगर (!ca)
-		जाओ out;
+	ca = kzalloc(sizeof(*ca), GFP_KERNEL);
+	if (!ca)
+		goto out;
 
-	ca->cpuusage = alloc_percpu(काष्ठा cpuacct_usage);
-	अगर (!ca->cpuusage)
-		जाओ out_मुक्त_ca;
+	ca->cpuusage = alloc_percpu(struct cpuacct_usage);
+	if (!ca->cpuusage)
+		goto out_free_ca;
 
-	ca->cpustat = alloc_percpu(काष्ठा kernel_cpustat);
-	अगर (!ca->cpustat)
-		जाओ out_मुक्त_cpuusage;
+	ca->cpustat = alloc_percpu(struct kernel_cpustat);
+	if (!ca->cpustat)
+		goto out_free_cpuusage;
 
-	वापस &ca->css;
+	return &ca->css;
 
-out_मुक्त_cpuusage:
-	मुक्त_percpu(ca->cpuusage);
-out_मुक्त_ca:
-	kमुक्त(ca);
+out_free_cpuusage:
+	free_percpu(ca->cpuusage);
+out_free_ca:
+	kfree(ca);
 out:
-	वापस ERR_PTR(-ENOMEM);
-पूर्ण
+	return ERR_PTR(-ENOMEM);
+}
 
 /* Destroy an existing CPU accounting group */
-अटल व्योम cpuacct_css_मुक्त(काष्ठा cgroup_subsys_state *css)
-अणु
-	काष्ठा cpuacct *ca = css_ca(css);
+static void cpuacct_css_free(struct cgroup_subsys_state *css)
+{
+	struct cpuacct *ca = css_ca(css);
 
-	मुक्त_percpu(ca->cpustat);
-	मुक्त_percpu(ca->cpuusage);
-	kमुक्त(ca);
-पूर्ण
+	free_percpu(ca->cpustat);
+	free_percpu(ca->cpuusage);
+	kfree(ca);
+}
 
-अटल u64 cpuacct_cpuusage_पढ़ो(काष्ठा cpuacct *ca, पूर्णांक cpu,
-				 क्रमागत cpuacct_stat_index index)
-अणु
-	काष्ठा cpuacct_usage *cpuusage = per_cpu_ptr(ca->cpuusage, cpu);
+static u64 cpuacct_cpuusage_read(struct cpuacct *ca, int cpu,
+				 enum cpuacct_stat_index index)
+{
+	struct cpuacct_usage *cpuusage = per_cpu_ptr(ca->cpuusage, cpu);
 	u64 data;
 
 	/*
-	 * We allow index == CPUACCT_STAT_NSTATS here to पढ़ो
+	 * We allow index == CPUACCT_STAT_NSTATS here to read
 	 * the sum of usages.
 	 */
 	BUG_ON(index > CPUACCT_STAT_NSTATS);
 
-#अगर_अघोषित CONFIG_64BIT
+#ifndef CONFIG_64BIT
 	/*
-	 * Take rq->lock to make 64-bit पढ़ो safe on 32-bit platक्रमms.
+	 * Take rq->lock to make 64-bit read safe on 32-bit platforms.
 	 */
 	raw_spin_lock_irq(&cpu_rq(cpu)->lock);
-#पूर्ण_अगर
+#endif
 
-	अगर (index == CPUACCT_STAT_NSTATS) अणु
-		पूर्णांक i = 0;
+	if (index == CPUACCT_STAT_NSTATS) {
+		int i = 0;
 
 		data = 0;
-		क्रम (i = 0; i < CPUACCT_STAT_NSTATS; i++)
+		for (i = 0; i < CPUACCT_STAT_NSTATS; i++)
 			data += cpuusage->usages[i];
-	पूर्ण अन्यथा अणु
+	} else {
 		data = cpuusage->usages[index];
-	पूर्ण
+	}
 
-#अगर_अघोषित CONFIG_64BIT
+#ifndef CONFIG_64BIT
 	raw_spin_unlock_irq(&cpu_rq(cpu)->lock);
-#पूर्ण_अगर
+#endif
 
-	वापस data;
-पूर्ण
+	return data;
+}
 
-अटल व्योम cpuacct_cpuusage_ग_लिखो(काष्ठा cpuacct *ca, पूर्णांक cpu, u64 val)
-अणु
-	काष्ठा cpuacct_usage *cpuusage = per_cpu_ptr(ca->cpuusage, cpu);
-	पूर्णांक i;
+static void cpuacct_cpuusage_write(struct cpuacct *ca, int cpu, u64 val)
+{
+	struct cpuacct_usage *cpuusage = per_cpu_ptr(ca->cpuusage, cpu);
+	int i;
 
-#अगर_अघोषित CONFIG_64BIT
+#ifndef CONFIG_64BIT
 	/*
-	 * Take rq->lock to make 64-bit ग_लिखो safe on 32-bit platक्रमms.
+	 * Take rq->lock to make 64-bit write safe on 32-bit platforms.
 	 */
 	raw_spin_lock_irq(&cpu_rq(cpu)->lock);
-#पूर्ण_अगर
+#endif
 
-	क्रम (i = 0; i < CPUACCT_STAT_NSTATS; i++)
+	for (i = 0; i < CPUACCT_STAT_NSTATS; i++)
 		cpuusage->usages[i] = val;
 
-#अगर_अघोषित CONFIG_64BIT
+#ifndef CONFIG_64BIT
 	raw_spin_unlock_irq(&cpu_rq(cpu)->lock);
-#पूर्ण_अगर
-पूर्ण
+#endif
+}
 
 /* Return total CPU usage (in nanoseconds) of a group */
-अटल u64 __cpuusage_पढ़ो(काष्ठा cgroup_subsys_state *css,
-			   क्रमागत cpuacct_stat_index index)
-अणु
-	काष्ठा cpuacct *ca = css_ca(css);
+static u64 __cpuusage_read(struct cgroup_subsys_state *css,
+			   enum cpuacct_stat_index index)
+{
+	struct cpuacct *ca = css_ca(css);
 	u64 totalcpuusage = 0;
-	पूर्णांक i;
+	int i;
 
-	क्रम_each_possible_cpu(i)
-		totalcpuusage += cpuacct_cpuusage_पढ़ो(ca, i, index);
+	for_each_possible_cpu(i)
+		totalcpuusage += cpuacct_cpuusage_read(ca, i, index);
 
-	वापस totalcpuusage;
-पूर्ण
+	return totalcpuusage;
+}
 
-अटल u64 cpuusage_user_पढ़ो(काष्ठा cgroup_subsys_state *css,
-			      काष्ठा cftype *cft)
-अणु
-	वापस __cpuusage_पढ़ो(css, CPUACCT_STAT_USER);
-पूर्ण
+static u64 cpuusage_user_read(struct cgroup_subsys_state *css,
+			      struct cftype *cft)
+{
+	return __cpuusage_read(css, CPUACCT_STAT_USER);
+}
 
-अटल u64 cpuusage_sys_पढ़ो(काष्ठा cgroup_subsys_state *css,
-			     काष्ठा cftype *cft)
-अणु
-	वापस __cpuusage_पढ़ो(css, CPUACCT_STAT_SYSTEM);
-पूर्ण
+static u64 cpuusage_sys_read(struct cgroup_subsys_state *css,
+			     struct cftype *cft)
+{
+	return __cpuusage_read(css, CPUACCT_STAT_SYSTEM);
+}
 
-अटल u64 cpuusage_पढ़ो(काष्ठा cgroup_subsys_state *css, काष्ठा cftype *cft)
-अणु
-	वापस __cpuusage_पढ़ो(css, CPUACCT_STAT_NSTATS);
-पूर्ण
+static u64 cpuusage_read(struct cgroup_subsys_state *css, struct cftype *cft)
+{
+	return __cpuusage_read(css, CPUACCT_STAT_NSTATS);
+}
 
-अटल पूर्णांक cpuusage_ग_लिखो(काष्ठा cgroup_subsys_state *css, काष्ठा cftype *cft,
+static int cpuusage_write(struct cgroup_subsys_state *css, struct cftype *cft,
 			  u64 val)
-अणु
-	काष्ठा cpuacct *ca = css_ca(css);
-	पूर्णांक cpu;
+{
+	struct cpuacct *ca = css_ca(css);
+	int cpu;
 
 	/*
-	 * Only allow '0' here to करो a reset.
+	 * Only allow '0' here to do a reset.
 	 */
-	अगर (val)
-		वापस -EINVAL;
+	if (val)
+		return -EINVAL;
 
-	क्रम_each_possible_cpu(cpu)
-		cpuacct_cpuusage_ग_लिखो(ca, cpu, 0);
+	for_each_possible_cpu(cpu)
+		cpuacct_cpuusage_write(ca, cpu, 0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __cpuacct_percpu_seq_show(काष्ठा seq_file *m,
-				     क्रमागत cpuacct_stat_index index)
-अणु
-	काष्ठा cpuacct *ca = css_ca(seq_css(m));
+static int __cpuacct_percpu_seq_show(struct seq_file *m,
+				     enum cpuacct_stat_index index)
+{
+	struct cpuacct *ca = css_ca(seq_css(m));
 	u64 percpu;
-	पूर्णांक i;
+	int i;
 
-	क्रम_each_possible_cpu(i) अणु
-		percpu = cpuacct_cpuusage_पढ़ो(ca, i, index);
-		seq_म_लिखो(m, "%llu ", (अचिन्हित दीर्घ दीर्घ) percpu);
-	पूर्ण
-	seq_म_लिखो(m, "\n");
-	वापस 0;
-पूर्ण
+	for_each_possible_cpu(i) {
+		percpu = cpuacct_cpuusage_read(ca, i, index);
+		seq_printf(m, "%llu ", (unsigned long long) percpu);
+	}
+	seq_printf(m, "\n");
+	return 0;
+}
 
-अटल पूर्णांक cpuacct_percpu_user_seq_show(काष्ठा seq_file *m, व्योम *V)
-अणु
-	वापस __cpuacct_percpu_seq_show(m, CPUACCT_STAT_USER);
-पूर्ण
+static int cpuacct_percpu_user_seq_show(struct seq_file *m, void *V)
+{
+	return __cpuacct_percpu_seq_show(m, CPUACCT_STAT_USER);
+}
 
-अटल पूर्णांक cpuacct_percpu_sys_seq_show(काष्ठा seq_file *m, व्योम *V)
-अणु
-	वापस __cpuacct_percpu_seq_show(m, CPUACCT_STAT_SYSTEM);
-पूर्ण
+static int cpuacct_percpu_sys_seq_show(struct seq_file *m, void *V)
+{
+	return __cpuacct_percpu_seq_show(m, CPUACCT_STAT_SYSTEM);
+}
 
-अटल पूर्णांक cpuacct_percpu_seq_show(काष्ठा seq_file *m, व्योम *V)
-अणु
-	वापस __cpuacct_percpu_seq_show(m, CPUACCT_STAT_NSTATS);
-पूर्ण
+static int cpuacct_percpu_seq_show(struct seq_file *m, void *V)
+{
+	return __cpuacct_percpu_seq_show(m, CPUACCT_STAT_NSTATS);
+}
 
-अटल पूर्णांक cpuacct_all_seq_show(काष्ठा seq_file *m, व्योम *V)
-अणु
-	काष्ठा cpuacct *ca = css_ca(seq_css(m));
-	पूर्णांक index;
-	पूर्णांक cpu;
+static int cpuacct_all_seq_show(struct seq_file *m, void *V)
+{
+	struct cpuacct *ca = css_ca(seq_css(m));
+	int index;
+	int cpu;
 
-	seq_माला_दो(m, "cpu");
-	क्रम (index = 0; index < CPUACCT_STAT_NSTATS; index++)
-		seq_म_लिखो(m, " %s", cpuacct_stat_desc[index]);
-	seq_माला_दो(m, "\n");
+	seq_puts(m, "cpu");
+	for (index = 0; index < CPUACCT_STAT_NSTATS; index++)
+		seq_printf(m, " %s", cpuacct_stat_desc[index]);
+	seq_puts(m, "\n");
 
-	क्रम_each_possible_cpu(cpu) अणु
-		काष्ठा cpuacct_usage *cpuusage = per_cpu_ptr(ca->cpuusage, cpu);
+	for_each_possible_cpu(cpu) {
+		struct cpuacct_usage *cpuusage = per_cpu_ptr(ca->cpuusage, cpu);
 
-		seq_म_लिखो(m, "%d", cpu);
+		seq_printf(m, "%d", cpu);
 
-		क्रम (index = 0; index < CPUACCT_STAT_NSTATS; index++) अणु
-#अगर_अघोषित CONFIG_64BIT
+		for (index = 0; index < CPUACCT_STAT_NSTATS; index++) {
+#ifndef CONFIG_64BIT
 			/*
-			 * Take rq->lock to make 64-bit पढ़ो safe on 32-bit
-			 * platक्रमms.
+			 * Take rq->lock to make 64-bit read safe on 32-bit
+			 * platforms.
 			 */
 			raw_spin_lock_irq(&cpu_rq(cpu)->lock);
-#पूर्ण_अगर
+#endif
 
-			seq_म_लिखो(m, " %llu", cpuusage->usages[index]);
+			seq_printf(m, " %llu", cpuusage->usages[index]);
 
-#अगर_अघोषित CONFIG_64BIT
+#ifndef CONFIG_64BIT
 			raw_spin_unlock_irq(&cpu_rq(cpu)->lock);
-#पूर्ण_अगर
-		पूर्ण
-		seq_माला_दो(m, "\n");
-	पूर्ण
-	वापस 0;
-पूर्ण
+#endif
+		}
+		seq_puts(m, "\n");
+	}
+	return 0;
+}
 
-अटल पूर्णांक cpuacct_stats_show(काष्ठा seq_file *sf, व्योम *v)
-अणु
-	काष्ठा cpuacct *ca = css_ca(seq_css(sf));
+static int cpuacct_stats_show(struct seq_file *sf, void *v)
+{
+	struct cpuacct *ca = css_ca(seq_css(sf));
 	s64 val[CPUACCT_STAT_NSTATS];
-	पूर्णांक cpu;
-	पूर्णांक stat;
+	int cpu;
+	int stat;
 
-	स_रखो(val, 0, माप(val));
-	क्रम_each_possible_cpu(cpu) अणु
+	memset(val, 0, sizeof(val));
+	for_each_possible_cpu(cpu) {
 		u64 *cpustat = per_cpu_ptr(ca->cpustat, cpu)->cpustat;
 
 		val[CPUACCT_STAT_USER]   += cpustat[CPUTIME_USER];
@@ -284,94 +283,94 @@ out:
 		val[CPUACCT_STAT_SYSTEM] += cpustat[CPUTIME_SYSTEM];
 		val[CPUACCT_STAT_SYSTEM] += cpustat[CPUTIME_IRQ];
 		val[CPUACCT_STAT_SYSTEM] += cpustat[CPUTIME_SOFTIRQ];
-	पूर्ण
+	}
 
-	क्रम (stat = 0; stat < CPUACCT_STAT_NSTATS; stat++) अणु
-		seq_म_लिखो(sf, "%s %lld\n",
+	for (stat = 0; stat < CPUACCT_STAT_NSTATS; stat++) {
+		seq_printf(sf, "%s %lld\n",
 			   cpuacct_stat_desc[stat],
-			   (दीर्घ दीर्घ)nsec_to_घड़ी_प्रकार(val[stat]));
-	पूर्ण
+			   (long long)nsec_to_clock_t(val[stat]));
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा cftype files[] = अणु
-	अणु
+static struct cftype files[] = {
+	{
 		.name = "usage",
-		.पढ़ो_u64 = cpuusage_पढ़ो,
-		.ग_लिखो_u64 = cpuusage_ग_लिखो,
-	पूर्ण,
-	अणु
+		.read_u64 = cpuusage_read,
+		.write_u64 = cpuusage_write,
+	},
+	{
 		.name = "usage_user",
-		.पढ़ो_u64 = cpuusage_user_पढ़ो,
-	पूर्ण,
-	अणु
+		.read_u64 = cpuusage_user_read,
+	},
+	{
 		.name = "usage_sys",
-		.पढ़ो_u64 = cpuusage_sys_पढ़ो,
-	पूर्ण,
-	अणु
+		.read_u64 = cpuusage_sys_read,
+	},
+	{
 		.name = "usage_percpu",
 		.seq_show = cpuacct_percpu_seq_show,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name = "usage_percpu_user",
 		.seq_show = cpuacct_percpu_user_seq_show,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name = "usage_percpu_sys",
 		.seq_show = cpuacct_percpu_sys_seq_show,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name = "usage_all",
 		.seq_show = cpuacct_all_seq_show,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name = "stat",
 		.seq_show = cpuacct_stats_show,
-	पूर्ण,
-	अणु पूर्ण	/* terminate */
-पूर्ण;
+	},
+	{ }	/* terminate */
+};
 
 /*
- * अक्षरge this task's execution समय to its accounting group.
+ * charge this task's execution time to its accounting group.
  *
  * called with rq->lock held.
  */
-व्योम cpuacct_अक्षरge(काष्ठा task_काष्ठा *tsk, u64 cpuसमय)
-अणु
-	काष्ठा cpuacct *ca;
-	पूर्णांक index = CPUACCT_STAT_SYSTEM;
-	काष्ठा pt_regs *regs = get_irq_regs() ? : task_pt_regs(tsk);
+void cpuacct_charge(struct task_struct *tsk, u64 cputime)
+{
+	struct cpuacct *ca;
+	int index = CPUACCT_STAT_SYSTEM;
+	struct pt_regs *regs = get_irq_regs() ? : task_pt_regs(tsk);
 
-	अगर (regs && user_mode(regs))
+	if (regs && user_mode(regs))
 		index = CPUACCT_STAT_USER;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 
-	क्रम (ca = task_ca(tsk); ca; ca = parent_ca(ca))
-		__this_cpu_add(ca->cpuusage->usages[index], cpuसमय);
+	for (ca = task_ca(tsk); ca; ca = parent_ca(ca))
+		__this_cpu_add(ca->cpuusage->usages[index], cputime);
 
-	rcu_पढ़ो_unlock();
-पूर्ण
+	rcu_read_unlock();
+}
 
 /*
- * Add user/प्रणाली समय to cpuacct.
+ * Add user/system time to cpuacct.
  *
  * Note: it's the caller that updates the account of the root cgroup.
  */
-व्योम cpuacct_account_field(काष्ठा task_काष्ठा *tsk, पूर्णांक index, u64 val)
-अणु
-	काष्ठा cpuacct *ca;
+void cpuacct_account_field(struct task_struct *tsk, int index, u64 val)
+{
+	struct cpuacct *ca;
 
-	rcu_पढ़ो_lock();
-	क्रम (ca = task_ca(tsk); ca != &root_cpuacct; ca = parent_ca(ca))
+	rcu_read_lock();
+	for (ca = task_ca(tsk); ca != &root_cpuacct; ca = parent_ca(ca))
 		__this_cpu_add(ca->cpustat->cpustat[index], val);
-	rcu_पढ़ो_unlock();
-पूर्ण
+	rcu_read_unlock();
+}
 
-काष्ठा cgroup_subsys cpuacct_cgrp_subsys = अणु
+struct cgroup_subsys cpuacct_cgrp_subsys = {
 	.css_alloc	= cpuacct_css_alloc,
-	.css_मुक्त	= cpuacct_css_मुक्त,
+	.css_free	= cpuacct_css_free,
 	.legacy_cftypes	= files,
 	.early_init	= true,
-पूर्ण;
+};

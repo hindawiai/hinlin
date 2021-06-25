@@ -1,33 +1,32 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+ OR BSD-2-Clause
+// SPDX-License-Identifier: GPL-2.0+ OR BSD-2-Clause
 /*
- * Streebog hash function as specअगरied by GOST R 34.11-2012 and
- * described at https://tools.ietf.org/hपंचांगl/rfc6986
+ * Streebog hash function as specified by GOST R 34.11-2012 and
+ * described at https://tools.ietf.org/html/rfc6986
  *
- * Copyright (c) 2013 Alexey Degtyarev <alexey@renataप्रणालीs.org>
+ * Copyright (c) 2013 Alexey Degtyarev <alexey@renatasystems.org>
  * Copyright (c) 2018 Vitaly Chikunov <vt@altlinux.org>
  *
- * This program is मुक्त software; you can redistribute it and/or modअगरy it
+ * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
  * Software Foundation; either version 2 of the License, or (at your option)
  * any later version.
  */
 
-#समावेश <crypto/पूर्णांकernal/hash.h>
-#समावेश <linux/module.h>
-#समावेश <linux/crypto.h>
-#समावेश <crypto/streebog.h>
+#include <crypto/internal/hash.h>
+#include <linux/module.h>
+#include <linux/crypto.h>
+#include <crypto/streebog.h>
 
-अटल स्थिर काष्ठा streebog_uपूर्णांक512 buffer0 = अणु अणु
+static const struct streebog_uint512 buffer0 = { {
 	0, 0, 0, 0, 0, 0, 0, 0
-पूर्ण पूर्ण;
+} };
 
-अटल स्थिर काष्ठा streebog_uपूर्णांक512 buffer512 = अणु अणु
+static const struct streebog_uint512 buffer512 = { {
 	cpu_to_le64(0x200), 0, 0, 0, 0, 0, 0, 0
-पूर्ण पूर्ण;
+} };
 
-अटल स्थिर काष्ठा streebog_uपूर्णांक512 C[12] = अणु
-	अणु अणु
+static const struct streebog_uint512 C[12] = {
+	{ {
 		 cpu_to_le64(0xdd806559f2a64507ULL),
 		 cpu_to_le64(0x05767436cc744d23ULL),
 		 cpu_to_le64(0xa2422a08a460d315ULL),
@@ -36,8 +35,8 @@
 		 cpu_to_le64(0x2f6a76432e45d016ULL),
 		 cpu_to_le64(0xebcb2f81c0657c1fULL),
 		 cpu_to_le64(0xb1085bda1ecadae9ULL)
-	 पूर्ण पूर्ण,
-	अणु अणु
+	 } },
+	{ {
 		 cpu_to_le64(0xe679047021b19bb7ULL),
 		 cpu_to_le64(0x55dda21bd7cbcd56ULL),
 		 cpu_to_le64(0x5cb561c2db0aa7caULL),
@@ -46,8 +45,8 @@
 		 cpu_to_le64(0xf3feea720a232b98ULL),
 		 cpu_to_le64(0x4fe39d460f70b5d7ULL),
 		 cpu_to_le64(0x6fa3b58aa99d2f1aULL)
-	 पूर्ण पूर्ण,
-	अणु अणु
+	 } },
+	{ {
 		 cpu_to_le64(0x991e96f50aba0ab2ULL),
 		 cpu_to_le64(0xc2b6f443867adb31ULL),
 		 cpu_to_le64(0xc1c93a376062db09ULL),
@@ -56,8 +55,8 @@
 		 cpu_to_le64(0x06f15e5f529c1f8bULL),
 		 cpu_to_le64(0x0a39fc286a3d8435ULL),
 		 cpu_to_le64(0xf574dcac2bce2fc7ULL)
-	 पूर्ण पूर्ण,
-	अणु अणु
+	 } },
+	{ {
 		 cpu_to_le64(0x220cbebc84e3d12eULL),
 		 cpu_to_le64(0x3453eaa193e837f1ULL),
 		 cpu_to_le64(0xd8b71333935203beULL),
@@ -66,8 +65,8 @@
 		 cpu_to_le64(0x488e857e335c3c7dULL),
 		 cpu_to_le64(0xf948e1a05d71e4ddULL),
 		 cpu_to_le64(0xef1fdfb3e81566d2ULL)
-	 पूर्ण पूर्ण,
-	अणु अणु
+	 } },
+	{ {
 		 cpu_to_le64(0x601758fd7c6cfe57ULL),
 		 cpu_to_le64(0x7a56a27ea9ea63f5ULL),
 		 cpu_to_le64(0xdfff00b723271a16ULL),
@@ -76,8 +75,8 @@
 		 cpu_to_le64(0x7f151c1f1686104aULL),
 		 cpu_to_le64(0x9a3f410c6ca92363ULL),
 		 cpu_to_le64(0x4bea6bacad474799ULL)
-	 पूर्ण पूर्ण,
-	अणु अणु
+	 } },
+	{ {
 		 cpu_to_le64(0xfa68407a46647d6eULL),
 		 cpu_to_le64(0xbf71c57236904f35ULL),
 		 cpu_to_le64(0x0af21f66c2bec6b6ULL),
@@ -86,8 +85,8 @@
 		 cpu_to_le64(0x2d66c4f95142a46cULL),
 		 cpu_to_le64(0x6fa4c33b7a3039c0ULL),
 		 cpu_to_le64(0xae4faeae1d3ad3d9ULL)
-	 पूर्ण पूर्ण,
-	अणु अणु
+	 } },
+	{ {
 		 cpu_to_le64(0x8886564d3a14d493ULL),
 		 cpu_to_le64(0x3517454ca23c4af3ULL),
 		 cpu_to_le64(0x06476983284a0504ULL),
@@ -96,8 +95,8 @@
 		 cpu_to_le64(0x399ec6c7e6bf87c9ULL),
 		 cpu_to_le64(0x51ac86febf240954ULL),
 		 cpu_to_le64(0xf4c70e16eeaac5ecULL)
-	 पूर्ण पूर्ण,
-	अणु अणु
+	 } },
+	{ {
 		 cpu_to_le64(0xa47f0dd4bf02e71eULL),
 		 cpu_to_le64(0x36acc2355951a8d9ULL),
 		 cpu_to_le64(0x69d18d2bd1a5c42fULL),
@@ -106,8 +105,8 @@
 		 cpu_to_le64(0x4eb7f8719c36de1eULL),
 		 cpu_to_le64(0x03e7aa020c6e4141ULL),
 		 cpu_to_le64(0x9b1f5b424d93c9a7ULL)
-	 पूर्ण पूर्ण,
-	अणु अणु
+	 } },
+	{ {
 		 cpu_to_le64(0x7261445183235adbULL),
 		 cpu_to_le64(0x0e38dc92cb1f2a60ULL),
 		 cpu_to_le64(0x7b2b8a9aa6079c54ULL),
@@ -116,8 +115,8 @@
 		 cpu_to_le64(0x3a7d3a1b25894224ULL),
 		 cpu_to_le64(0x944c9ad8ec165fdeULL),
 		 cpu_to_le64(0x378f5a541631229bULL)
-	 पूर्ण पूर्ण,
-	अणु अणु
+	 } },
+	{ {
 		 cpu_to_le64(0x74b4c7fb98459cedULL),
 		 cpu_to_le64(0x3698fad1153bb6c3ULL),
 		 cpu_to_le64(0x7a1e6c303b7652f4ULL),
@@ -126,8 +125,8 @@
 		 cpu_to_le64(0x8941e71cff8a78dbULL),
 		 cpu_to_le64(0x382ae548b2e4f3f3ULL),
 		 cpu_to_le64(0xabbedea680056f52ULL)
-	 पूर्ण पूर्ण,
-	अणु अणु
+	 } },
+	{ {
 		 cpu_to_le64(0x6bcaa4cd81f32d1bULL),
 		 cpu_to_le64(0xdea2594ac06fd85dULL),
 		 cpu_to_le64(0xefbacd1d7d476e98ULL),
@@ -136,8 +135,8 @@
 		 cpu_to_le64(0xd8fa6bbbebab0761ULL),
 		 cpu_to_le64(0x3002c6cd635afe94ULL),
 		 cpu_to_le64(0x7bcd9ed0efc889fbULL)
-	 पूर्ण पूर्ण,
-	अणु अणु
+	 } },
+	{ {
 		 cpu_to_le64(0x48bc924af11bd720ULL),
 		 cpu_to_le64(0xfaf417d5d9b21b99ULL),
 		 cpu_to_le64(0xe71da4aa88e12852ULL),
@@ -146,11 +145,11 @@
 		 cpu_to_le64(0xcda43c32bcdf1d77ULL),
 		 cpu_to_le64(0xd21380b00449b17aULL),
 		 cpu_to_le64(0x378ee767f11631baULL)
-	 पूर्ण पूर्ण
-पूर्ण;
+	 } }
+};
 
-अटल स्थिर अचिन्हित दीर्घ दीर्घ Ax[8][256] = अणु
-	अणु
+static const unsigned long long Ax[8][256] = {
+	{
 	0xd01f715b5c7ef8e6ULL, 0x16fa240980778325ULL, 0xa8a42e857ee049c8ULL,
 	0x6ac1068fa186465bULL, 0x6e417bd7a2e9320bULL, 0x665c8167a437daabULL,
 	0x7666681aa89617f6ULL, 0x4b959163700bdcf5ULL, 0xf14be6b78df36248ULL,
@@ -237,7 +236,7 @@
 	0x61bc1405e13389c7ULL, 0x4ab5c975b9d9c1e1ULL, 0x80cd1bcf606126d2ULL,
 	0x7186fd78ed92449aULL, 0x93971a882aabccb3ULL, 0x88d0e17f66bfce72ULL,
 	0x27945a985d5bd4d6ULL
-	पूर्ण, अणु
+	}, {
 	0xde553f8c05a811c8ULL, 0x1906b59631b4f565ULL, 0x436e70d6b1964ff7ULL,
 	0x36d343cb8b1e9d85ULL, 0x843dfacc858aab5aULL, 0xfdfc95c299bfc7f9ULL,
 	0x0f634bdea1d51fa2ULL, 0x6d458b3b76efb3cdULL, 0x85c3f77cf8593f80ULL,
@@ -324,7 +323,7 @@
 	0xb4d097801d446939ULL, 0xcff0e2f3fbca3033ULL, 0xc38cbee0dd778ee2ULL,
 	0x464f499c252eb162ULL, 0xcad1dbb96f72cea6ULL, 0xba4dd1eec142e241ULL,
 	0xb00fa37af42f0376ULL
-	पूर्ण, अणु
+	}, {
 	0xcce4cd3aa968b245ULL, 0x089d5484e80b7fafULL, 0x638246c1b3548304ULL,
 	0xd2fe0ec8c2355492ULL, 0xa7fbdf7ff2374eeeULL, 0x4df1600c92337a16ULL,
 	0x84e503ea523b12fbULL, 0x0790bbfd53ab0c4aULL, 0x198a780f38f6ea9dULL,
@@ -411,7 +410,7 @@
 	0xd63e248ab6bee54bULL, 0x5dd6c8195f258455ULL, 0x06a03f634e40673bULL,
 	0x1f2a476c76b68da6ULL, 0x217ec9b49ac78af7ULL, 0xecaa80102e4453c3ULL,
 	0x14e78257b99d4f9aULL
-	पूर्ण, अणु
+	}, {
 	0x20329b2cc87bba05ULL, 0x4f5eb6f86546a531ULL, 0xd4f44775f751b6b1ULL,
 	0x8266a47b850dfa8bULL, 0xbb986aa15a6ca985ULL, 0xc979eb08f9ae0f99ULL,
 	0x2da6f447a2375ea1ULL, 0x1e74275dcd7d8576ULL, 0xbc20180a800bc5f8ULL,
@@ -498,7 +497,7 @@
 	0x2b49ff07392e261dULL, 0x57c59ae5332258fbULL, 0x73b6f842e2bcb2ddULL,
 	0xcf96e04862b77725ULL, 0x4ca73dd8a6c4996fULL, 0x015779eb417e14c1ULL,
 	0x37932a9176af8bf4ULL
-	पूर्ण, अणु
+	}, {
 	0x190a2c9b249df23eULL, 0x2f62f8b62263e1e9ULL, 0x7a7f754740993655ULL,
 	0x330b7ba4d5564d9fULL, 0x4c17a16a46672582ULL, 0xb22f08eb7d05f5b8ULL,
 	0x535f47f40bc148ccULL, 0x3aec5d27d4883037ULL, 0x10ed0a1825438f96ULL,
@@ -585,7 +584,7 @@
 	0xaa3a07ffc4e9b365ULL, 0xecebe59a39c32a77ULL, 0x5ba742f8976e8187ULL,
 	0x4b4a48e0b22d0e11ULL, 0xddded83dcb771233ULL, 0xa59feb79ac0c51bdULL,
 	0xc7f5912a55792135ULL
-	पूर्ण, अणु
+	}, {
 	0x6d6ae04668a9b08aULL, 0x3ab3f04b0be8c743ULL, 0xe51e166b54b3c908ULL,
 	0xbe90a9eb35c2f139ULL, 0xb2c7066637f2bec1ULL, 0xaa6945613392202cULL,
 	0x9a28c36f3b5201ebULL, 0xddce5a93ab536994ULL, 0x0e34133ef6382827ULL,
@@ -672,7 +671,7 @@
 	0xa347d140beb61c96ULL, 0xde12b8f7255fb3aaULL, 0x9d324470404e1576ULL,
 	0x9306574eb6763d51ULL, 0xa80af9d2c79a47f3ULL, 0x859c0777442e8b9bULL,
 	0x69ac853d9db97e29ULL
-	पूर्ण, अणु
+	}, {
 	0xc3407dfc2de6377eULL, 0x5b9e93eea4256f77ULL, 0xadb58fdd50c845e0ULL,
 	0x5219ff11a75bed86ULL, 0x356b61cfd90b1de9ULL, 0xfb8f406e25abe037ULL,
 	0x7a5a0231c0f60796ULL, 0x9d3cd216e1f5020bULL, 0x0c6550fb6b48d8f3ULL,
@@ -759,7 +758,7 @@
 	0xf1563866f5c75433ULL, 0x4dae7baf70e13ed9ULL, 0x7ce62ac27bd26b61ULL,
 	0x70837a39109ab392ULL, 0x90988e4b30b3c8abULL, 0xb2020b63877296bfULL,
 	0x156efcb607d6675bULL
-	पूर्ण, अणु
+	}, {
 	0xe63f55ce97c331d0ULL, 0x25b506b0015bba16ULL, 0xc8706e29e6ad9ba8ULL,
 	0x5b43d3775d521f6aULL, 0x0bfa3d577035106eULL, 0xab95fc172afb0e66ULL,
 	0xf64b63979e7a3276ULL, 0xf58b4562649dad4bULL, 0x48f7c3dbae0c83f1ULL,
@@ -846,13 +845,13 @@
 	0xc797d02fd3f14261ULL, 0xe1e2f06a284d674aULL, 0xd2be8c74c97cfd80ULL,
 	0x9a494faf67707e71ULL, 0xb3dbd1eca9908293ULL, 0x72d14d3493b2e388ULL,
 	0xd6a30f258c153427ULL
-	पूर्ण
-पूर्ण; /* Ax */
+	}
+}; /* Ax */
 
-अटल व्योम streebog_xor(स्थिर काष्ठा streebog_uपूर्णांक512 *x,
-			 स्थिर काष्ठा streebog_uपूर्णांक512 *y,
-			 काष्ठा streebog_uपूर्णांक512 *z)
-अणु
+static void streebog_xor(const struct streebog_uint512 *x,
+			 const struct streebog_uint512 *y,
+			 struct streebog_uint512 *z)
+{
 	z->qword[0] = x->qword[0] ^ y->qword[0];
 	z->qword[1] = x->qword[1] ^ y->qword[1];
 	z->qword[2] = x->qword[2] ^ y->qword[2];
@@ -861,14 +860,14 @@
 	z->qword[5] = x->qword[5] ^ y->qword[5];
 	z->qword[6] = x->qword[6] ^ y->qword[6];
 	z->qword[7] = x->qword[7] ^ y->qword[7];
-पूर्ण
+}
 
-अटल व्योम streebog_xlps(स्थिर काष्ठा streebog_uपूर्णांक512 *x,
-			  स्थिर काष्ठा streebog_uपूर्णांक512 *y,
-			  काष्ठा streebog_uपूर्णांक512 *data)
-अणु
+static void streebog_xlps(const struct streebog_uint512 *x,
+			  const struct streebog_uint512 *y,
+			  struct streebog_uint512 *data)
+{
 	u64 r0, r1, r2, r3, r4, r5, r6, r7;
-	पूर्णांक i;
+	int i;
 
 	r0 = le64_to_cpu(x->qword[0] ^ y->qword[0]);
 	r1 = le64_to_cpu(x->qword[1] ^ y->qword[1]);
@@ -879,7 +878,7 @@
 	r6 = le64_to_cpu(x->qword[6] ^ y->qword[6]);
 	r7 = le64_to_cpu(x->qword[7] ^ y->qword[7]);
 
-	क्रम (i = 0; i <= 7; i++) अणु
+	for (i = 0; i <= 7; i++) {
 		data->qword[i]  = cpu_to_le64(Ax[0][r0 & 0xFF]);
 		data->qword[i] ^= cpu_to_le64(Ax[1][r1 & 0xFF]);
 		data->qword[i] ^= cpu_to_le64(Ax[2][r2 & 0xFF]);
@@ -896,65 +895,65 @@
 		r5 >>= 8;
 		r6 >>= 8;
 		r7 >>= 8;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम streebog_round(पूर्णांक i, काष्ठा streebog_uपूर्णांक512 *Ki,
-			   काष्ठा streebog_uपूर्णांक512 *data)
-अणु
+static void streebog_round(int i, struct streebog_uint512 *Ki,
+			   struct streebog_uint512 *data)
+{
 	streebog_xlps(Ki, &C[i], Ki);
 	streebog_xlps(Ki, data, data);
-पूर्ण
+}
 
-अटल पूर्णांक streebog_init(काष्ठा shash_desc *desc)
-अणु
-	काष्ठा streebog_state *ctx = shash_desc_ctx(desc);
-	अचिन्हित पूर्णांक digest_size = crypto_shash_digestsize(desc->tfm);
-	अचिन्हित पूर्णांक i;
+static int streebog_init(struct shash_desc *desc)
+{
+	struct streebog_state *ctx = shash_desc_ctx(desc);
+	unsigned int digest_size = crypto_shash_digestsize(desc->tfm);
+	unsigned int i;
 
-	स_रखो(ctx, 0, माप(काष्ठा streebog_state));
-	क्रम (i = 0; i < 8; i++) अणु
-		अगर (digest_size == STREEBOG256_DIGEST_SIZE)
+	memset(ctx, 0, sizeof(struct streebog_state));
+	for (i = 0; i < 8; i++) {
+		if (digest_size == STREEBOG256_DIGEST_SIZE)
 			ctx->h.qword[i] = cpu_to_le64(0x0101010101010101ULL);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल व्योम streebog_pad(काष्ठा streebog_state *ctx)
-अणु
-	अगर (ctx->fillsize >= STREEBOG_BLOCK_SIZE)
-		वापस;
+static void streebog_pad(struct streebog_state *ctx)
+{
+	if (ctx->fillsize >= STREEBOG_BLOCK_SIZE)
+		return;
 
-	स_रखो(ctx->buffer + ctx->fillsize, 0,
-	       माप(ctx->buffer) - ctx->fillsize);
+	memset(ctx->buffer + ctx->fillsize, 0,
+	       sizeof(ctx->buffer) - ctx->fillsize);
 
 	ctx->buffer[ctx->fillsize] = 1;
-पूर्ण
+}
 
-अटल व्योम streebog_add512(स्थिर काष्ठा streebog_uपूर्णांक512 *x,
-			    स्थिर काष्ठा streebog_uपूर्णांक512 *y,
-			    काष्ठा streebog_uपूर्णांक512 *r)
-अणु
+static void streebog_add512(const struct streebog_uint512 *x,
+			    const struct streebog_uint512 *y,
+			    struct streebog_uint512 *r)
+{
 	u64 carry = 0;
-	पूर्णांक i;
+	int i;
 
-	क्रम (i = 0; i < 8; i++) अणु
-		स्थिर u64 left = le64_to_cpu(x->qword[i]);
+	for (i = 0; i < 8; i++) {
+		const u64 left = le64_to_cpu(x->qword[i]);
 		u64 sum;
 
 		sum = left + le64_to_cpu(y->qword[i]) + carry;
-		अगर (sum != left)
+		if (sum != left)
 			carry = (sum < left);
 		r->qword[i] = cpu_to_le64(sum);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम streebog_g(काष्ठा streebog_uपूर्णांक512 *h,
-		       स्थिर काष्ठा streebog_uपूर्णांक512 *N,
-		       स्थिर काष्ठा streebog_uपूर्णांक512 *m)
-अणु
-	काष्ठा streebog_uपूर्णांक512 Ki, data;
-	अचिन्हित पूर्णांक i;
+static void streebog_g(struct streebog_uint512 *h,
+		       const struct streebog_uint512 *N,
+		       const struct streebog_uint512 *m)
+{
+	struct streebog_uint512 Ki, data;
+	unsigned int i;
 
 	streebog_xlps(h, N, &data);
 
@@ -962,32 +961,32 @@
 	Ki = data;
 	streebog_xlps(&Ki, m, &data);
 
-	क्रम (i = 0; i < 11; i++)
+	for (i = 0; i < 11; i++)
 		streebog_round(i, &Ki, &data);
 
 	streebog_xlps(&Ki, &C[11], &Ki);
 	streebog_xor(&Ki, &data, &data);
-	/* E() करोne */
+	/* E() done */
 
 	streebog_xor(&data, h, &data);
 	streebog_xor(&data, m, h);
-पूर्ण
+}
 
-अटल व्योम streebog_stage2(काष्ठा streebog_state *ctx, स्थिर u8 *data)
-अणु
-	काष्ठा streebog_uपूर्णांक512 m;
+static void streebog_stage2(struct streebog_state *ctx, const u8 *data)
+{
+	struct streebog_uint512 m;
 
-	स_नकल(&m, data, माप(m));
+	memcpy(&m, data, sizeof(m));
 
 	streebog_g(&ctx->h, &ctx->N, &m);
 
 	streebog_add512(&ctx->N, &buffer512, &ctx->N);
 	streebog_add512(&ctx->Sigma, &m, &ctx->Sigma);
-पूर्ण
+}
 
-अटल व्योम streebog_stage3(काष्ठा streebog_state *ctx)
-अणु
-	काष्ठा streebog_uपूर्णांक512 buf = अणु अणु 0 पूर्ण पूर्ण;
+static void streebog_stage3(struct streebog_state *ctx)
+{
+	struct streebog_uint512 buf = { { 0 } };
 
 	buf.qword[0] = cpu_to_le64(ctx->fillsize << 3);
 	streebog_pad(ctx);
@@ -997,94 +996,94 @@
 	streebog_add512(&ctx->Sigma, &ctx->m, &ctx->Sigma);
 	streebog_g(&ctx->h, &buffer0, &ctx->N);
 	streebog_g(&ctx->h, &buffer0, &ctx->Sigma);
-	स_नकल(&ctx->hash, &ctx->h, माप(काष्ठा streebog_uपूर्णांक512));
-पूर्ण
+	memcpy(&ctx->hash, &ctx->h, sizeof(struct streebog_uint512));
+}
 
-अटल पूर्णांक streebog_update(काष्ठा shash_desc *desc, स्थिर u8 *data,
-			   अचिन्हित पूर्णांक len)
-अणु
-	काष्ठा streebog_state *ctx = shash_desc_ctx(desc);
-	माप_प्रकार chunksize;
+static int streebog_update(struct shash_desc *desc, const u8 *data,
+			   unsigned int len)
+{
+	struct streebog_state *ctx = shash_desc_ctx(desc);
+	size_t chunksize;
 
-	अगर (ctx->fillsize) अणु
+	if (ctx->fillsize) {
 		chunksize = STREEBOG_BLOCK_SIZE - ctx->fillsize;
-		अगर (chunksize > len)
+		if (chunksize > len)
 			chunksize = len;
-		स_नकल(&ctx->buffer[ctx->fillsize], data, chunksize);
+		memcpy(&ctx->buffer[ctx->fillsize], data, chunksize);
 		ctx->fillsize += chunksize;
 		len  -= chunksize;
 		data += chunksize;
 
-		अगर (ctx->fillsize == STREEBOG_BLOCK_SIZE) अणु
+		if (ctx->fillsize == STREEBOG_BLOCK_SIZE) {
 			streebog_stage2(ctx, ctx->buffer);
 			ctx->fillsize = 0;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	जबतक (len >= STREEBOG_BLOCK_SIZE) अणु
+	while (len >= STREEBOG_BLOCK_SIZE) {
 		streebog_stage2(ctx, data);
 		data += STREEBOG_BLOCK_SIZE;
 		len  -= STREEBOG_BLOCK_SIZE;
-	पूर्ण
+	}
 
-	अगर (len) अणु
-		स_नकल(&ctx->buffer, data, len);
+	if (len) {
+		memcpy(&ctx->buffer, data, len);
 		ctx->fillsize = len;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल पूर्णांक streebog_final(काष्ठा shash_desc *desc, u8 *digest)
-अणु
-	काष्ठा streebog_state *ctx = shash_desc_ctx(desc);
+static int streebog_final(struct shash_desc *desc, u8 *digest)
+{
+	struct streebog_state *ctx = shash_desc_ctx(desc);
 
 	streebog_stage3(ctx);
 	ctx->fillsize = 0;
-	अगर (crypto_shash_digestsize(desc->tfm) == STREEBOG256_DIGEST_SIZE)
-		स_नकल(digest, &ctx->hash.qword[4], STREEBOG256_DIGEST_SIZE);
-	अन्यथा
-		स_नकल(digest, &ctx->hash.qword[0], STREEBOG512_DIGEST_SIZE);
-	वापस 0;
-पूर्ण
+	if (crypto_shash_digestsize(desc->tfm) == STREEBOG256_DIGEST_SIZE)
+		memcpy(digest, &ctx->hash.qword[4], STREEBOG256_DIGEST_SIZE);
+	else
+		memcpy(digest, &ctx->hash.qword[0], STREEBOG512_DIGEST_SIZE);
+	return 0;
+}
 
-अटल काष्ठा shash_alg algs[2] = अणु अणु
+static struct shash_alg algs[2] = { {
 	.digestsize	=	STREEBOG256_DIGEST_SIZE,
 	.init		=	streebog_init,
 	.update		=	streebog_update,
 	.final		=	streebog_final,
-	.descsize	=	माप(काष्ठा streebog_state),
-	.base		=	अणु
+	.descsize	=	sizeof(struct streebog_state),
+	.base		=	{
 		.cra_name	 =	"streebog256",
 		.cra_driver_name =	"streebog256-generic",
 		.cra_blocksize	 =	STREEBOG_BLOCK_SIZE,
 		.cra_module	 =	THIS_MODULE,
-	पूर्ण,
-पूर्ण, अणु
+	},
+}, {
 	.digestsize	=	STREEBOG512_DIGEST_SIZE,
 	.init		=	streebog_init,
 	.update		=	streebog_update,
 	.final		=	streebog_final,
-	.descsize	=	माप(काष्ठा streebog_state),
-	.base		=	अणु
+	.descsize	=	sizeof(struct streebog_state),
+	.base		=	{
 		.cra_name	 =	"streebog512",
 		.cra_driver_name =	"streebog512-generic",
 		.cra_blocksize	 =	STREEBOG_BLOCK_SIZE,
 		.cra_module	 =	THIS_MODULE,
-	पूर्ण
-पूर्ण पूर्ण;
+	}
+} };
 
-अटल पूर्णांक __init streebog_mod_init(व्योम)
-अणु
-	वापस crypto_रेजिस्टर_shashes(algs, ARRAY_SIZE(algs));
-पूर्ण
+static int __init streebog_mod_init(void)
+{
+	return crypto_register_shashes(algs, ARRAY_SIZE(algs));
+}
 
-अटल व्योम __निकास streebog_mod_fini(व्योम)
-अणु
-	crypto_unरेजिस्टर_shashes(algs, ARRAY_SIZE(algs));
-पूर्ण
+static void __exit streebog_mod_fini(void)
+{
+	crypto_unregister_shashes(algs, ARRAY_SIZE(algs));
+}
 
 subsys_initcall(streebog_mod_init);
-module_निकास(streebog_mod_fini);
+module_exit(streebog_mod_fini);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Vitaly Chikunov <vt@altlinux.org>");

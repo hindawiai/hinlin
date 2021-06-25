@@ -1,12 +1,11 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 
-#अगर_अघोषित _DT_BINDINGS_CLK_LPASS_AONCC_SM8250_H
-#घोषणा _DT_BINDINGS_CLK_LPASS_AONCC_SM8250_H
+#ifndef _DT_BINDINGS_CLK_LPASS_AONCC_SM8250_H
+#define _DT_BINDINGS_CLK_LPASS_AONCC_SM8250_H
 
 /* from AOCC */
-#घोषणा LPASS_CDC_VA_MCLK				0
-#घोषणा LPASS_CDC_TX_NPL				1
-#घोषणा LPASS_CDC_TX_MCLK				2
+#define LPASS_CDC_VA_MCLK				0
+#define LPASS_CDC_TX_NPL				1
+#define LPASS_CDC_TX_MCLK				2
 
-#पूर्ण_अगर /* _DT_BINDINGS_CLK_LPASS_AONCC_SM8250_H */
+#endif /* _DT_BINDINGS_CLK_LPASS_AONCC_SM8250_H */

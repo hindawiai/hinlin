@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * This file is provided under a dual BSD/GPLv2 license.  When using or
- *   redistributing this file, you may करो so under either license.
+ *   redistributing this file, you may do so under either license.
  *
  *   GPL LICENSE SUMMARY
  *
  *   Copyright(c) 2017 Intel Corporation. All rights reserved.
  *
- *   This program is मुक्त software; you can redistribute it and/or modअगरy
+ *   This program is free software; you can redistribute it and/or modify
  *   it under the terms of version 2 of the GNU General Public License as
  *   published by the Free Software Foundation.
  *
@@ -15,25 +14,25 @@
  *
  *   Copyright(c) 2017 Intel Corporation. All rights reserved.
  *
- *   Redistribution and use in source and binary क्रमms, with or without
- *   modअगरication, are permitted provided that the following conditions
+ *   Redistribution and use in source and binary forms, with or without
+ *   modification, are permitted provided that the following conditions
  *   are met:
  *
  *     * Redistributions of source code must retain the above copyright
  *       notice, this list of conditions and the following disclaimer.
- *     * Redistributions in binary क्रमm must reproduce the above copy
+ *     * Redistributions in binary form must reproduce the above copy
  *       notice, this list of conditions and the following disclaimer in
- *       the करोcumentation and/or other materials provided with the
+ *       the documentation and/or other materials provided with the
  *       distribution.
  *     * Neither the name of Intel Corporation nor the names of its
- *       contributors may be used to enकरोrse or promote products derived
- *       from this software without specअगरic prior written permission.
+ *       contributors may be used to endorse or promote products derived
+ *       from this software without specific prior written permission.
  *
  *   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  *   "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  *   LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
  *   A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
- *   OWNER OR CONTRIBUTORS BE LIABLE FOR ANY सूचीECT, INसूचीECT, INCIDENTAL,
+ *   OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
  *   SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
  *   LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
  *   DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
@@ -45,135 +44,135 @@
  *
  */
 
-#समावेश <linux/debugfs.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/init.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/module.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/अक्रमom.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/ntb.h>
+#include <linux/debugfs.h>
+#include <linux/delay.h>
+#include <linux/init.h>
+#include <linux/interrupt.h>
+#include <linux/module.h>
+#include <linux/pci.h>
+#include <linux/random.h>
+#include <linux/slab.h>
+#include <linux/ntb.h>
 
-#समावेश "ntb_hw_intel.h"
-#समावेश "ntb_hw_gen1.h"
-#समावेश "ntb_hw_gen3.h"
+#include "ntb_hw_intel.h"
+#include "ntb_hw_gen1.h"
+#include "ntb_hw_gen3.h"
 
-अटल पूर्णांक gen3_poll_link(काष्ठा पूर्णांकel_ntb_dev *ndev);
+static int gen3_poll_link(struct intel_ntb_dev *ndev);
 
-अटल स्थिर काष्ठा पूर्णांकel_ntb_reg gen3_reg = अणु
+static const struct intel_ntb_reg gen3_reg = {
 	.poll_link		= gen3_poll_link,
 	.link_is_up		= xeon_link_is_up,
-	.db_ioपढ़ो		= gen3_db_ioपढ़ो,
-	.db_ioग_लिखो		= gen3_db_ioग_लिखो,
-	.db_size		= माप(u32),
+	.db_ioread		= gen3_db_ioread,
+	.db_iowrite		= gen3_db_iowrite,
+	.db_size		= sizeof(u32),
 	.ntb_ctl		= GEN3_NTBCNTL_OFFSET,
-	.mw_bar			= अणु2, 4पूर्ण,
-पूर्ण;
+	.mw_bar			= {2, 4},
+};
 
-अटल स्थिर काष्ठा पूर्णांकel_ntb_alt_reg gen3_pri_reg = अणु
+static const struct intel_ntb_alt_reg gen3_pri_reg = {
 	.db_bell		= GEN3_EM_DOORBELL_OFFSET,
 	.db_clear		= GEN3_IM_INT_STATUS_OFFSET,
 	.db_mask		= GEN3_IM_INT_DISABLE_OFFSET,
 	.spad			= GEN3_IM_SPAD_OFFSET,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा पूर्णांकel_ntb_alt_reg gen3_b2b_reg = अणु
+static const struct intel_ntb_alt_reg gen3_b2b_reg = {
 	.db_bell		= GEN3_IM_DOORBELL_OFFSET,
 	.db_clear		= GEN3_EM_INT_STATUS_OFFSET,
 	.db_mask		= GEN3_EM_INT_DISABLE_OFFSET,
 	.spad			= GEN3_B2B_SPAD_OFFSET,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा पूर्णांकel_ntb_xlat_reg gen3_sec_xlat = अणु
+static const struct intel_ntb_xlat_reg gen3_sec_xlat = {
 /*	.bar0_base		= GEN3_EMBAR0_OFFSET, */
 	.bar2_limit		= GEN3_IMBAR1XLMT_OFFSET,
 	.bar2_xlat		= GEN3_IMBAR1XBASE_OFFSET,
-पूर्ण;
+};
 
-अटल पूर्णांक gen3_poll_link(काष्ठा पूर्णांकel_ntb_dev *ndev)
-अणु
+static int gen3_poll_link(struct intel_ntb_dev *ndev)
+{
 	u16 reg_val;
-	पूर्णांक rc;
+	int rc;
 
-	ndev->reg->db_ioग_लिखो(ndev->db_link_mask,
+	ndev->reg->db_iowrite(ndev->db_link_mask,
 			      ndev->self_mmio +
 			      ndev->self_reg->db_clear);
 
-	rc = pci_पढ़ो_config_word(ndev->ntb.pdev,
+	rc = pci_read_config_word(ndev->ntb.pdev,
 				  GEN3_LINK_STATUS_OFFSET, &reg_val);
-	अगर (rc)
-		वापस 0;
+	if (rc)
+		return 0;
 
-	अगर (reg_val == ndev->lnk_sta)
-		वापस 0;
+	if (reg_val == ndev->lnk_sta)
+		return 0;
 
 	ndev->lnk_sta = reg_val;
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल पूर्णांक gen3_init_isr(काष्ठा पूर्णांकel_ntb_dev *ndev)
-अणु
-	पूर्णांक i;
+static int gen3_init_isr(struct intel_ntb_dev *ndev)
+{
+	int i;
 
 	/*
-	 * The MSIX vectors and the पूर्णांकerrupt status bits are not lined up
-	 * on Skylake. By शेष the link status bit is bit 32, however it
-	 * is by शेष MSIX vector0. We need to fixup to line them up.
+	 * The MSIX vectors and the interrupt status bits are not lined up
+	 * on Skylake. By default the link status bit is bit 32, however it
+	 * is by default MSIX vector0. We need to fixup to line them up.
 	 * The vectors at reset is 1-32,0. We need to reprogram to 0-32.
 	 */
 
-	क्रम (i = 0; i < GEN3_DB_MSIX_VECTOR_COUNT; i++)
-		ioग_लिखो8(i, ndev->self_mmio + GEN3_INTVEC_OFFSET + i);
+	for (i = 0; i < GEN3_DB_MSIX_VECTOR_COUNT; i++)
+		iowrite8(i, ndev->self_mmio + GEN3_INTVEC_OFFSET + i);
 
-	/* move link status करोwn one as workaround */
-	अगर (ndev->hwerr_flags & NTB_HWERR_MSIX_VECTOR32_BAD) अणु
-		ioग_लिखो8(GEN3_DB_MSIX_VECTOR_COUNT - 2,
+	/* move link status down one as workaround */
+	if (ndev->hwerr_flags & NTB_HWERR_MSIX_VECTOR32_BAD) {
+		iowrite8(GEN3_DB_MSIX_VECTOR_COUNT - 2,
 			 ndev->self_mmio + GEN3_INTVEC_OFFSET +
 			 (GEN3_DB_MSIX_VECTOR_COUNT - 1));
-	पूर्ण
+	}
 
-	वापस ndev_init_isr(ndev, GEN3_DB_MSIX_VECTOR_COUNT,
+	return ndev_init_isr(ndev, GEN3_DB_MSIX_VECTOR_COUNT,
 			     GEN3_DB_MSIX_VECTOR_COUNT,
 			     GEN3_DB_MSIX_VECTOR_SHIFT,
 			     GEN3_DB_TOTAL_SHIFT);
-पूर्ण
+}
 
-अटल पूर्णांक gen3_setup_b2b_mw(काष्ठा पूर्णांकel_ntb_dev *ndev,
-			    स्थिर काष्ठा पूर्णांकel_b2b_addr *addr,
-			    स्थिर काष्ठा पूर्णांकel_b2b_addr *peer_addr)
-अणु
-	काष्ठा pci_dev *pdev;
-	व्योम __iomem *mmio;
+static int gen3_setup_b2b_mw(struct intel_ntb_dev *ndev,
+			    const struct intel_b2b_addr *addr,
+			    const struct intel_b2b_addr *peer_addr)
+{
+	struct pci_dev *pdev;
+	void __iomem *mmio;
 	phys_addr_t bar_addr;
 
 	pdev = ndev->ntb.pdev;
 	mmio = ndev->self_mmio;
 
-	/* setup incoming bar limits == base addrs (zero length winकरोws) */
+	/* setup incoming bar limits == base addrs (zero length windows) */
 	bar_addr = addr->bar2_addr64;
-	ioग_लिखो64(bar_addr, mmio + GEN3_IMBAR1XLMT_OFFSET);
-	bar_addr = ioपढ़ो64(mmio + GEN3_IMBAR1XLMT_OFFSET);
+	iowrite64(bar_addr, mmio + GEN3_IMBAR1XLMT_OFFSET);
+	bar_addr = ioread64(mmio + GEN3_IMBAR1XLMT_OFFSET);
 	dev_dbg(&pdev->dev, "IMBAR1XLMT %#018llx\n", bar_addr);
 
 	bar_addr = addr->bar4_addr64;
-	ioग_लिखो64(bar_addr, mmio + GEN3_IMBAR2XLMT_OFFSET);
-	bar_addr = ioपढ़ो64(mmio + GEN3_IMBAR2XLMT_OFFSET);
+	iowrite64(bar_addr, mmio + GEN3_IMBAR2XLMT_OFFSET);
+	bar_addr = ioread64(mmio + GEN3_IMBAR2XLMT_OFFSET);
 	dev_dbg(&pdev->dev, "IMBAR2XLMT %#018llx\n", bar_addr);
 
 	/* zero incoming translation addrs */
-	ioग_लिखो64(0, mmio + GEN3_IMBAR1XBASE_OFFSET);
-	ioग_लिखो64(0, mmio + GEN3_IMBAR2XBASE_OFFSET);
+	iowrite64(0, mmio + GEN3_IMBAR1XBASE_OFFSET);
+	iowrite64(0, mmio + GEN3_IMBAR2XBASE_OFFSET);
 
 	ndev->peer_mmio = ndev->self_mmio;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक gen3_init_ntb(काष्ठा पूर्णांकel_ntb_dev *ndev)
-अणु
-	पूर्णांक rc;
+static int gen3_init_ntb(struct intel_ntb_dev *ndev)
+{
+	int rc;
 
 
 	ndev->mw_count = XEON_MW_COUNT;
@@ -181,448 +180,448 @@
 	ndev->db_count = GEN3_DB_COUNT;
 	ndev->db_link_mask = GEN3_DB_LINK_BIT;
 
-	/* DB fixup क्रम using 31 right now */
-	अगर (ndev->hwerr_flags & NTB_HWERR_MSIX_VECTOR32_BAD)
+	/* DB fixup for using 31 right now */
+	if (ndev->hwerr_flags & NTB_HWERR_MSIX_VECTOR32_BAD)
 		ndev->db_link_mask |= BIT_ULL(31);
 
-	चयन (ndev->ntb.topo) अणु
-	हाल NTB_TOPO_B2B_USD:
-	हाल NTB_TOPO_B2B_DSD:
+	switch (ndev->ntb.topo) {
+	case NTB_TOPO_B2B_USD:
+	case NTB_TOPO_B2B_DSD:
 		ndev->self_reg = &gen3_pri_reg;
 		ndev->peer_reg = &gen3_b2b_reg;
 		ndev->xlat_reg = &gen3_sec_xlat;
 
-		अगर (ndev->ntb.topo == NTB_TOPO_B2B_USD) अणु
+		if (ndev->ntb.topo == NTB_TOPO_B2B_USD) {
 			rc = gen3_setup_b2b_mw(ndev,
 					      &xeon_b2b_dsd_addr,
 					      &xeon_b2b_usd_addr);
-		पूर्ण अन्यथा अणु
+		} else {
 			rc = gen3_setup_b2b_mw(ndev,
 					      &xeon_b2b_usd_addr,
 					      &xeon_b2b_dsd_addr);
-		पूर्ण
+		}
 
-		अगर (rc)
-			वापस rc;
+		if (rc)
+			return rc;
 
 		/* Enable Bus Master and Memory Space on the secondary side */
-		ioग_लिखो16(PCI_COMMAND_MEMORY | PCI_COMMAND_MASTER,
+		iowrite16(PCI_COMMAND_MEMORY | PCI_COMMAND_MASTER,
 			  ndev->self_mmio + GEN3_SPCICMD_OFFSET);
 
-		अवरोध;
+		break;
 
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+	default:
+		return -EINVAL;
+	}
 
 	ndev->db_valid_mask = BIT_ULL(ndev->db_count) - 1;
 
-	ndev->reg->db_ioग_लिखो(ndev->db_valid_mask,
+	ndev->reg->db_iowrite(ndev->db_valid_mask,
 			      ndev->self_mmio +
 			      ndev->self_reg->db_mask);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक gen3_init_dev(काष्ठा पूर्णांकel_ntb_dev *ndev)
-अणु
-	काष्ठा pci_dev *pdev;
+int gen3_init_dev(struct intel_ntb_dev *ndev)
+{
+	struct pci_dev *pdev;
 	u8 ppd;
-	पूर्णांक rc;
+	int rc;
 
 	pdev = ndev->ntb.pdev;
 
 	ndev->reg = &gen3_reg;
 
-	rc = pci_पढ़ो_config_byte(pdev, XEON_PPD_OFFSET, &ppd);
-	अगर (rc)
-		वापस -EIO;
+	rc = pci_read_config_byte(pdev, XEON_PPD_OFFSET, &ppd);
+	if (rc)
+		return -EIO;
 
 	ndev->ntb.topo = xeon_ppd_topo(ndev, ppd);
 	dev_dbg(&pdev->dev, "ppd %#x topo %s\n", ppd,
 		ntb_topo_string(ndev->ntb.topo));
-	अगर (ndev->ntb.topo == NTB_TOPO_NONE)
-		वापस -EINVAL;
+	if (ndev->ntb.topo == NTB_TOPO_NONE)
+		return -EINVAL;
 
 	ndev->hwerr_flags |= NTB_HWERR_MSIX_VECTOR32_BAD;
 
 	rc = gen3_init_ntb(ndev);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
-	वापस gen3_init_isr(ndev);
-पूर्ण
+	return gen3_init_isr(ndev);
+}
 
-sमाप_प्रकार ndev_ntb3_debugfs_पढ़ो(काष्ठा file *filp, अक्षर __user *ubuf,
-				      माप_प्रकार count, loff_t *offp)
-अणु
-	काष्ठा पूर्णांकel_ntb_dev *ndev;
-	व्योम __iomem *mmio;
-	अक्षर *buf;
-	माप_प्रकार buf_size;
-	sमाप_प्रकार ret, off;
-	जोड़ अणु u64 v64; u32 v32; u16 v16; पूर्ण u;
+ssize_t ndev_ntb3_debugfs_read(struct file *filp, char __user *ubuf,
+				      size_t count, loff_t *offp)
+{
+	struct intel_ntb_dev *ndev;
+	void __iomem *mmio;
+	char *buf;
+	size_t buf_size;
+	ssize_t ret, off;
+	union { u64 v64; u32 v32; u16 v16; } u;
 
-	ndev = filp->निजी_data;
+	ndev = filp->private_data;
 	mmio = ndev->self_mmio;
 
 	buf_size = min(count, 0x800ul);
 
-	buf = kदो_स्मृति(buf_size, GFP_KERNEL);
-	अगर (!buf)
-		वापस -ENOMEM;
+	buf = kmalloc(buf_size, GFP_KERNEL);
+	if (!buf)
+		return -ENOMEM;
 
 	off = 0;
 
-	off += scnम_लिखो(buf + off, buf_size - off,
+	off += scnprintf(buf + off, buf_size - off,
 			 "NTB Device Information:\n");
 
-	off += scnम_लिखो(buf + off, buf_size - off,
+	off += scnprintf(buf + off, buf_size - off,
 			 "Connection Topology -\t%s\n",
 			 ntb_topo_string(ndev->ntb.topo));
 
-	off += scnम_लिखो(buf + off, buf_size - off,
+	off += scnprintf(buf + off, buf_size - off,
 			 "NTB CTL -\t\t%#06x\n", ndev->ntb_ctl);
-	off += scnम_लिखो(buf + off, buf_size - off,
+	off += scnprintf(buf + off, buf_size - off,
 			 "LNK STA -\t\t%#06x\n", ndev->lnk_sta);
 
-	अगर (!ndev->reg->link_is_up(ndev))
-		off += scnम_लिखो(buf + off, buf_size - off,
+	if (!ndev->reg->link_is_up(ndev))
+		off += scnprintf(buf + off, buf_size - off,
 				 "Link Status -\t\tDown\n");
-	अन्यथा अणु
-		off += scnम_लिखो(buf + off, buf_size - off,
+	else {
+		off += scnprintf(buf + off, buf_size - off,
 				 "Link Status -\t\tUp\n");
-		off += scnम_लिखो(buf + off, buf_size - off,
+		off += scnprintf(buf + off, buf_size - off,
 				 "Link Speed -\t\tPCI-E Gen %u\n",
 				 NTB_LNK_STA_SPEED(ndev->lnk_sta));
-		off += scnम_लिखो(buf + off, buf_size - off,
+		off += scnprintf(buf + off, buf_size - off,
 				 "Link Width -\t\tx%u\n",
 				 NTB_LNK_STA_WIDTH(ndev->lnk_sta));
-	पूर्ण
+	}
 
-	off += scnम_लिखो(buf + off, buf_size - off,
+	off += scnprintf(buf + off, buf_size - off,
 			 "Memory Window Count -\t%u\n", ndev->mw_count);
-	off += scnम_लिखो(buf + off, buf_size - off,
+	off += scnprintf(buf + off, buf_size - off,
 			 "Scratchpad Count -\t%u\n", ndev->spad_count);
-	off += scnम_लिखो(buf + off, buf_size - off,
+	off += scnprintf(buf + off, buf_size - off,
 			 "Doorbell Count -\t%u\n", ndev->db_count);
-	off += scnम_लिखो(buf + off, buf_size - off,
+	off += scnprintf(buf + off, buf_size - off,
 			 "Doorbell Vector Count -\t%u\n", ndev->db_vec_count);
-	off += scnम_लिखो(buf + off, buf_size - off,
-			 "Doorbell Vector Shift -\t%u\n", ndev->db_vec_shअगरt);
+	off += scnprintf(buf + off, buf_size - off,
+			 "Doorbell Vector Shift -\t%u\n", ndev->db_vec_shift);
 
-	off += scnम_लिखो(buf + off, buf_size - off,
+	off += scnprintf(buf + off, buf_size - off,
 			 "Doorbell Valid Mask -\t%#llx\n", ndev->db_valid_mask);
-	off += scnम_लिखो(buf + off, buf_size - off,
+	off += scnprintf(buf + off, buf_size - off,
 			 "Doorbell Link Mask -\t%#llx\n", ndev->db_link_mask);
-	off += scnम_लिखो(buf + off, buf_size - off,
+	off += scnprintf(buf + off, buf_size - off,
 			 "Doorbell Mask Cached -\t%#llx\n", ndev->db_mask);
 
-	u.v64 = ndev_db_पढ़ो(ndev, mmio + ndev->self_reg->db_mask);
-	off += scnम_लिखो(buf + off, buf_size - off,
+	u.v64 = ndev_db_read(ndev, mmio + ndev->self_reg->db_mask);
+	off += scnprintf(buf + off, buf_size - off,
 			 "Doorbell Mask -\t\t%#llx\n", u.v64);
 
-	u.v64 = ndev_db_पढ़ो(ndev, mmio + ndev->self_reg->db_bell);
-	off += scnम_लिखो(buf + off, buf_size - off,
+	u.v64 = ndev_db_read(ndev, mmio + ndev->self_reg->db_bell);
+	off += scnprintf(buf + off, buf_size - off,
 			 "Doorbell Bell -\t\t%#llx\n", u.v64);
 
-	off += scnम_लिखो(buf + off, buf_size - off,
+	off += scnprintf(buf + off, buf_size - off,
 			 "\nNTB Incoming XLAT:\n");
 
-	u.v64 = ioपढ़ो64(mmio + GEN3_IMBAR1XBASE_OFFSET);
-	off += scnम_लिखो(buf + off, buf_size - off,
+	u.v64 = ioread64(mmio + GEN3_IMBAR1XBASE_OFFSET);
+	off += scnprintf(buf + off, buf_size - off,
 			 "IMBAR1XBASE -\t\t%#018llx\n", u.v64);
 
-	u.v64 = ioपढ़ो64(mmio + GEN3_IMBAR2XBASE_OFFSET);
-	off += scnम_लिखो(buf + off, buf_size - off,
+	u.v64 = ioread64(mmio + GEN3_IMBAR2XBASE_OFFSET);
+	off += scnprintf(buf + off, buf_size - off,
 			 "IMBAR2XBASE -\t\t%#018llx\n", u.v64);
 
-	u.v64 = ioपढ़ो64(mmio + GEN3_IMBAR1XLMT_OFFSET);
-	off += scnम_लिखो(buf + off, buf_size - off,
+	u.v64 = ioread64(mmio + GEN3_IMBAR1XLMT_OFFSET);
+	off += scnprintf(buf + off, buf_size - off,
 			 "IMBAR1XLMT -\t\t\t%#018llx\n", u.v64);
 
-	u.v64 = ioपढ़ो64(mmio + GEN3_IMBAR2XLMT_OFFSET);
-	off += scnम_लिखो(buf + off, buf_size - off,
+	u.v64 = ioread64(mmio + GEN3_IMBAR2XLMT_OFFSET);
+	off += scnprintf(buf + off, buf_size - off,
 			 "IMBAR2XLMT -\t\t\t%#018llx\n", u.v64);
 
-	अगर (ntb_topo_is_b2b(ndev->ntb.topo)) अणु
-		off += scnम_लिखो(buf + off, buf_size - off,
+	if (ntb_topo_is_b2b(ndev->ntb.topo)) {
+		off += scnprintf(buf + off, buf_size - off,
 				 "\nNTB Outgoing B2B XLAT:\n");
 
-		u.v64 = ioपढ़ो64(mmio + GEN3_EMBAR1XBASE_OFFSET);
-		off += scnम_लिखो(buf + off, buf_size - off,
+		u.v64 = ioread64(mmio + GEN3_EMBAR1XBASE_OFFSET);
+		off += scnprintf(buf + off, buf_size - off,
 				 "EMBAR1XBASE -\t\t%#018llx\n", u.v64);
 
-		u.v64 = ioपढ़ो64(mmio + GEN3_EMBAR2XBASE_OFFSET);
-		off += scnम_लिखो(buf + off, buf_size - off,
+		u.v64 = ioread64(mmio + GEN3_EMBAR2XBASE_OFFSET);
+		off += scnprintf(buf + off, buf_size - off,
 				 "EMBAR2XBASE -\t\t%#018llx\n", u.v64);
 
-		u.v64 = ioपढ़ो64(mmio + GEN3_EMBAR1XLMT_OFFSET);
-		off += scnम_लिखो(buf + off, buf_size - off,
+		u.v64 = ioread64(mmio + GEN3_EMBAR1XLMT_OFFSET);
+		off += scnprintf(buf + off, buf_size - off,
 				 "EMBAR1XLMT -\t\t%#018llx\n", u.v64);
 
-		u.v64 = ioपढ़ो64(mmio + GEN3_EMBAR2XLMT_OFFSET);
-		off += scnम_लिखो(buf + off, buf_size - off,
+		u.v64 = ioread64(mmio + GEN3_EMBAR2XLMT_OFFSET);
+		off += scnprintf(buf + off, buf_size - off,
 				 "EMBAR2XLMT -\t\t%#018llx\n", u.v64);
 
-		off += scnम_लिखो(buf + off, buf_size - off,
+		off += scnprintf(buf + off, buf_size - off,
 				 "\nNTB Secondary BAR:\n");
 
-		u.v64 = ioपढ़ो64(mmio + GEN3_EMBAR0_OFFSET);
-		off += scnम_लिखो(buf + off, buf_size - off,
+		u.v64 = ioread64(mmio + GEN3_EMBAR0_OFFSET);
+		off += scnprintf(buf + off, buf_size - off,
 				 "EMBAR0 -\t\t%#018llx\n", u.v64);
 
-		u.v64 = ioपढ़ो64(mmio + GEN3_EMBAR1_OFFSET);
-		off += scnम_लिखो(buf + off, buf_size - off,
+		u.v64 = ioread64(mmio + GEN3_EMBAR1_OFFSET);
+		off += scnprintf(buf + off, buf_size - off,
 				 "EMBAR1 -\t\t%#018llx\n", u.v64);
 
-		u.v64 = ioपढ़ो64(mmio + GEN3_EMBAR2_OFFSET);
-		off += scnम_लिखो(buf + off, buf_size - off,
+		u.v64 = ioread64(mmio + GEN3_EMBAR2_OFFSET);
+		off += scnprintf(buf + off, buf_size - off,
 				 "EMBAR2 -\t\t%#018llx\n", u.v64);
-	पूर्ण
+	}
 
-	off += scnम_लिखो(buf + off, buf_size - off,
+	off += scnprintf(buf + off, buf_size - off,
 			 "\nNTB Statistics:\n");
 
-	u.v16 = ioपढ़ो16(mmio + GEN3_USMEMMISS_OFFSET);
-	off += scnम_लिखो(buf + off, buf_size - off,
+	u.v16 = ioread16(mmio + GEN3_USMEMMISS_OFFSET);
+	off += scnprintf(buf + off, buf_size - off,
 			 "Upstream Memory Miss -\t%u\n", u.v16);
 
-	off += scnम_लिखो(buf + off, buf_size - off,
+	off += scnprintf(buf + off, buf_size - off,
 			 "\nNTB Hardware Errors:\n");
 
-	अगर (!pci_पढ़ो_config_word(ndev->ntb.pdev,
+	if (!pci_read_config_word(ndev->ntb.pdev,
 				  GEN3_DEVSTS_OFFSET, &u.v16))
-		off += scnम_लिखो(buf + off, buf_size - off,
+		off += scnprintf(buf + off, buf_size - off,
 				 "DEVSTS -\t\t%#06x\n", u.v16);
 
-	अगर (!pci_पढ़ो_config_word(ndev->ntb.pdev,
+	if (!pci_read_config_word(ndev->ntb.pdev,
 				  GEN3_LINK_STATUS_OFFSET, &u.v16))
-		off += scnम_लिखो(buf + off, buf_size - off,
+		off += scnprintf(buf + off, buf_size - off,
 				 "LNKSTS -\t\t%#06x\n", u.v16);
 
-	अगर (!pci_पढ़ो_config_dword(ndev->ntb.pdev,
+	if (!pci_read_config_dword(ndev->ntb.pdev,
 				   GEN3_UNCERRSTS_OFFSET, &u.v32))
-		off += scnम_लिखो(buf + off, buf_size - off,
+		off += scnprintf(buf + off, buf_size - off,
 				 "UNCERRSTS -\t\t%#06x\n", u.v32);
 
-	अगर (!pci_पढ़ो_config_dword(ndev->ntb.pdev,
+	if (!pci_read_config_dword(ndev->ntb.pdev,
 				   GEN3_CORERRSTS_OFFSET, &u.v32))
-		off += scnम_लिखो(buf + off, buf_size - off,
+		off += scnprintf(buf + off, buf_size - off,
 				 "CORERRSTS -\t\t%#06x\n", u.v32);
 
-	ret = simple_पढ़ो_from_buffer(ubuf, count, offp, buf, off);
-	kमुक्त(buf);
-	वापस ret;
-पूर्ण
+	ret = simple_read_from_buffer(ubuf, count, offp, buf, off);
+	kfree(buf);
+	return ret;
+}
 
-पूर्णांक पूर्णांकel_ntb3_link_enable(काष्ठा ntb_dev *ntb, क्रमागत ntb_speed max_speed,
-		क्रमागत ntb_width max_width)
-अणु
-	काष्ठा पूर्णांकel_ntb_dev *ndev;
+int intel_ntb3_link_enable(struct ntb_dev *ntb, enum ntb_speed max_speed,
+		enum ntb_width max_width)
+{
+	struct intel_ntb_dev *ndev;
 	u32 ntb_ctl;
 
-	ndev = container_of(ntb, काष्ठा पूर्णांकel_ntb_dev, ntb);
+	ndev = container_of(ntb, struct intel_ntb_dev, ntb);
 
 	dev_dbg(&ntb->pdev->dev,
 		"Enabling link with max_speed %d max_width %d\n",
 		max_speed, max_width);
 
-	अगर (max_speed != NTB_SPEED_AUTO)
+	if (max_speed != NTB_SPEED_AUTO)
 		dev_dbg(&ntb->pdev->dev, "ignoring max_speed %d\n", max_speed);
-	अगर (max_width != NTB_WIDTH_AUTO)
+	if (max_width != NTB_WIDTH_AUTO)
 		dev_dbg(&ntb->pdev->dev, "ignoring max_width %d\n", max_width);
 
-	ntb_ctl = ioपढ़ो32(ndev->self_mmio + ndev->reg->ntb_ctl);
+	ntb_ctl = ioread32(ndev->self_mmio + ndev->reg->ntb_ctl);
 	ntb_ctl &= ~(NTB_CTL_DISABLE | NTB_CTL_CFG_LOCK);
 	ntb_ctl |= NTB_CTL_P2S_BAR2_SNOOP | NTB_CTL_S2P_BAR2_SNOOP;
 	ntb_ctl |= NTB_CTL_P2S_BAR4_SNOOP | NTB_CTL_S2P_BAR4_SNOOP;
-	ioग_लिखो32(ntb_ctl, ndev->self_mmio + ndev->reg->ntb_ctl);
+	iowrite32(ntb_ctl, ndev->self_mmio + ndev->reg->ntb_ctl);
 
-	वापस 0;
-पूर्ण
-अटल पूर्णांक पूर्णांकel_ntb3_mw_set_trans(काष्ठा ntb_dev *ntb, पूर्णांक pidx, पूर्णांक idx,
-				   dma_addr_t addr, resource_माप_प्रकार size)
-अणु
-	काष्ठा पूर्णांकel_ntb_dev *ndev = ntb_ndev(ntb);
-	अचिन्हित दीर्घ xlat_reg, limit_reg;
-	resource_माप_प्रकार bar_size, mw_size;
-	व्योम __iomem *mmio;
+	return 0;
+}
+static int intel_ntb3_mw_set_trans(struct ntb_dev *ntb, int pidx, int idx,
+				   dma_addr_t addr, resource_size_t size)
+{
+	struct intel_ntb_dev *ndev = ntb_ndev(ntb);
+	unsigned long xlat_reg, limit_reg;
+	resource_size_t bar_size, mw_size;
+	void __iomem *mmio;
 	u64 base, limit, reg_val;
-	पूर्णांक bar;
+	int bar;
 
-	अगर (pidx != NTB_DEF_PEER_IDX)
-		वापस -EINVAL;
+	if (pidx != NTB_DEF_PEER_IDX)
+		return -EINVAL;
 
-	अगर (idx >= ndev->b2b_idx && !ndev->b2b_off)
+	if (idx >= ndev->b2b_idx && !ndev->b2b_off)
 		idx += 1;
 
 	bar = ndev_mw_to_bar(ndev, idx);
-	अगर (bar < 0)
-		वापस bar;
+	if (bar < 0)
+		return bar;
 
 	bar_size = pci_resource_len(ndev->ntb.pdev, bar);
 
-	अगर (idx == ndev->b2b_idx)
+	if (idx == ndev->b2b_idx)
 		mw_size = bar_size - ndev->b2b_off;
-	अन्यथा
+	else
 		mw_size = bar_size;
 
 	/* hardware requires that addr is aligned to bar size */
-	अगर (addr & (bar_size - 1))
-		वापस -EINVAL;
+	if (addr & (bar_size - 1))
+		return -EINVAL;
 
 	/* make sure the range fits in the usable mw size */
-	अगर (size > mw_size)
-		वापस -EINVAL;
+	if (size > mw_size)
+		return -EINVAL;
 
 	mmio = ndev->self_mmio;
 	xlat_reg = ndev->xlat_reg->bar2_xlat + (idx * 0x10);
 	limit_reg = ndev->xlat_reg->bar2_limit + (idx * 0x10);
 	base = pci_resource_start(ndev->ntb.pdev, bar);
 
-	/* Set the limit अगर supported, अगर size is not mw_size */
-	अगर (limit_reg && size != mw_size)
+	/* Set the limit if supported, if size is not mw_size */
+	if (limit_reg && size != mw_size)
 		limit = base + size;
-	अन्यथा
+	else
 		limit = base + mw_size;
 
-	/* set and verअगरy setting the translation address */
-	ioग_लिखो64(addr, mmio + xlat_reg);
-	reg_val = ioपढ़ो64(mmio + xlat_reg);
-	अगर (reg_val != addr) अणु
-		ioग_लिखो64(0, mmio + xlat_reg);
-		वापस -EIO;
-	पूर्ण
+	/* set and verify setting the translation address */
+	iowrite64(addr, mmio + xlat_reg);
+	reg_val = ioread64(mmio + xlat_reg);
+	if (reg_val != addr) {
+		iowrite64(0, mmio + xlat_reg);
+		return -EIO;
+	}
 
 	dev_dbg(&ntb->pdev->dev, "BAR %d IMBARXBASE: %#Lx\n", bar, reg_val);
 
-	/* set and verअगरy setting the limit */
-	ioग_लिखो64(limit, mmio + limit_reg);
-	reg_val = ioपढ़ो64(mmio + limit_reg);
-	अगर (reg_val != limit) अणु
-		ioग_लिखो64(base, mmio + limit_reg);
-		ioग_लिखो64(0, mmio + xlat_reg);
-		वापस -EIO;
-	पूर्ण
+	/* set and verify setting the limit */
+	iowrite64(limit, mmio + limit_reg);
+	reg_val = ioread64(mmio + limit_reg);
+	if (reg_val != limit) {
+		iowrite64(base, mmio + limit_reg);
+		iowrite64(0, mmio + xlat_reg);
+		return -EIO;
+	}
 
 	dev_dbg(&ntb->pdev->dev, "BAR %d IMBARXLMT: %#Lx\n", bar, reg_val);
 
 	/* setup the EP */
 	limit_reg = ndev->xlat_reg->bar2_limit + (idx * 0x10) + 0x4000;
-	base = ioपढ़ो64(mmio + GEN3_EMBAR1_OFFSET + (8 * idx));
+	base = ioread64(mmio + GEN3_EMBAR1_OFFSET + (8 * idx));
 	base &= ~0xf;
 
-	अगर (limit_reg && size != mw_size)
+	if (limit_reg && size != mw_size)
 		limit = base + size;
-	अन्यथा
+	else
 		limit = base + mw_size;
 
-	/* set and verअगरy setting the limit */
-	ioग_लिखो64(limit, mmio + limit_reg);
-	reg_val = ioपढ़ो64(mmio + limit_reg);
-	अगर (reg_val != limit) अणु
-		ioग_लिखो64(base, mmio + limit_reg);
-		ioग_लिखो64(0, mmio + xlat_reg);
-		वापस -EIO;
-	पूर्ण
+	/* set and verify setting the limit */
+	iowrite64(limit, mmio + limit_reg);
+	reg_val = ioread64(mmio + limit_reg);
+	if (reg_val != limit) {
+		iowrite64(base, mmio + limit_reg);
+		iowrite64(0, mmio + xlat_reg);
+		return -EIO;
+	}
 
 	dev_dbg(&ntb->pdev->dev, "BAR %d EMBARXLMT: %#Lx\n", bar, reg_val);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक पूर्णांकel_ntb3_peer_db_addr(काष्ठा ntb_dev *ntb, phys_addr_t *db_addr,
-				   resource_माप_प्रकार *db_size,
-				   u64 *db_data, पूर्णांक db_bit)
-अणु
+int intel_ntb3_peer_db_addr(struct ntb_dev *ntb, phys_addr_t *db_addr,
+				   resource_size_t *db_size,
+				   u64 *db_data, int db_bit)
+{
 	phys_addr_t db_addr_base;
-	काष्ठा पूर्णांकel_ntb_dev *ndev = ntb_ndev(ntb);
+	struct intel_ntb_dev *ndev = ntb_ndev(ntb);
 
-	अगर (unlikely(db_bit >= BITS_PER_LONG_LONG))
-		वापस -EINVAL;
+	if (unlikely(db_bit >= BITS_PER_LONG_LONG))
+		return -EINVAL;
 
-	अगर (unlikely(BIT_ULL(db_bit) & ~ntb_ndev(ntb)->db_valid_mask))
-		वापस -EINVAL;
+	if (unlikely(BIT_ULL(db_bit) & ~ntb_ndev(ntb)->db_valid_mask))
+		return -EINVAL;
 
 	ndev_db_addr(ndev, &db_addr_base, db_size, ndev->peer_addr,
 				ndev->peer_reg->db_bell);
 
-	अगर (db_addr) अणु
+	if (db_addr) {
 		*db_addr = db_addr_base + (db_bit * 4);
 		dev_dbg(&ndev->ntb.pdev->dev, "Peer db addr %llx db bit %d\n",
 				*db_addr, db_bit);
-	पूर्ण
+	}
 
-	अगर (db_data) अणु
+	if (db_data) {
 		*db_data = 1;
 		dev_dbg(&ndev->ntb.pdev->dev, "Peer db data %llx db bit %d\n",
 				*db_data, db_bit);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक पूर्णांकel_ntb3_peer_db_set(काष्ठा ntb_dev *ntb, u64 db_bits)
-अणु
-	काष्ठा पूर्णांकel_ntb_dev *ndev = ntb_ndev(ntb);
-	पूर्णांक bit;
+int intel_ntb3_peer_db_set(struct ntb_dev *ntb, u64 db_bits)
+{
+	struct intel_ntb_dev *ndev = ntb_ndev(ntb);
+	int bit;
 
-	अगर (db_bits & ~ndev->db_valid_mask)
-		वापस -EINVAL;
+	if (db_bits & ~ndev->db_valid_mask)
+		return -EINVAL;
 
-	जबतक (db_bits) अणु
+	while (db_bits) {
 		bit = __ffs(db_bits);
-		ioग_लिखो32(1, ndev->peer_mmio +
+		iowrite32(1, ndev->peer_mmio +
 				ndev->peer_reg->db_bell + (bit * 4));
 		db_bits &= db_bits - 1;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-u64 पूर्णांकel_ntb3_db_पढ़ो(काष्ठा ntb_dev *ntb)
-अणु
-	काष्ठा पूर्णांकel_ntb_dev *ndev = ntb_ndev(ntb);
+u64 intel_ntb3_db_read(struct ntb_dev *ntb)
+{
+	struct intel_ntb_dev *ndev = ntb_ndev(ntb);
 
-	वापस ndev_db_पढ़ो(ndev,
+	return ndev_db_read(ndev,
 			    ndev->self_mmio +
 			    ndev->self_reg->db_clear);
-पूर्ण
+}
 
-पूर्णांक पूर्णांकel_ntb3_db_clear(काष्ठा ntb_dev *ntb, u64 db_bits)
-अणु
-	काष्ठा पूर्णांकel_ntb_dev *ndev = ntb_ndev(ntb);
+int intel_ntb3_db_clear(struct ntb_dev *ntb, u64 db_bits)
+{
+	struct intel_ntb_dev *ndev = ntb_ndev(ntb);
 
-	वापस ndev_db_ग_लिखो(ndev, db_bits,
+	return ndev_db_write(ndev, db_bits,
 			     ndev->self_mmio +
 			     ndev->self_reg->db_clear);
-पूर्ण
+}
 
-स्थिर काष्ठा ntb_dev_ops पूर्णांकel_ntb3_ops = अणु
-	.mw_count		= पूर्णांकel_ntb_mw_count,
-	.mw_get_align		= पूर्णांकel_ntb_mw_get_align,
-	.mw_set_trans		= पूर्णांकel_ntb3_mw_set_trans,
-	.peer_mw_count		= पूर्णांकel_ntb_peer_mw_count,
-	.peer_mw_get_addr	= पूर्णांकel_ntb_peer_mw_get_addr,
-	.link_is_up		= पूर्णांकel_ntb_link_is_up,
-	.link_enable		= पूर्णांकel_ntb3_link_enable,
-	.link_disable		= पूर्णांकel_ntb_link_disable,
-	.db_valid_mask		= पूर्णांकel_ntb_db_valid_mask,
-	.db_vector_count	= पूर्णांकel_ntb_db_vector_count,
-	.db_vector_mask		= पूर्णांकel_ntb_db_vector_mask,
-	.db_पढ़ो		= पूर्णांकel_ntb3_db_पढ़ो,
-	.db_clear		= पूर्णांकel_ntb3_db_clear,
-	.db_set_mask		= पूर्णांकel_ntb_db_set_mask,
-	.db_clear_mask		= पूर्णांकel_ntb_db_clear_mask,
-	.peer_db_addr		= पूर्णांकel_ntb3_peer_db_addr,
-	.peer_db_set		= पूर्णांकel_ntb3_peer_db_set,
-	.spad_is_unsafe		= पूर्णांकel_ntb_spad_is_unsafe,
-	.spad_count		= पूर्णांकel_ntb_spad_count,
-	.spad_पढ़ो		= पूर्णांकel_ntb_spad_पढ़ो,
-	.spad_ग_लिखो		= पूर्णांकel_ntb_spad_ग_लिखो,
-	.peer_spad_addr		= पूर्णांकel_ntb_peer_spad_addr,
-	.peer_spad_पढ़ो		= पूर्णांकel_ntb_peer_spad_पढ़ो,
-	.peer_spad_ग_लिखो	= पूर्णांकel_ntb_peer_spad_ग_लिखो,
-पूर्ण;
+const struct ntb_dev_ops intel_ntb3_ops = {
+	.mw_count		= intel_ntb_mw_count,
+	.mw_get_align		= intel_ntb_mw_get_align,
+	.mw_set_trans		= intel_ntb3_mw_set_trans,
+	.peer_mw_count		= intel_ntb_peer_mw_count,
+	.peer_mw_get_addr	= intel_ntb_peer_mw_get_addr,
+	.link_is_up		= intel_ntb_link_is_up,
+	.link_enable		= intel_ntb3_link_enable,
+	.link_disable		= intel_ntb_link_disable,
+	.db_valid_mask		= intel_ntb_db_valid_mask,
+	.db_vector_count	= intel_ntb_db_vector_count,
+	.db_vector_mask		= intel_ntb_db_vector_mask,
+	.db_read		= intel_ntb3_db_read,
+	.db_clear		= intel_ntb3_db_clear,
+	.db_set_mask		= intel_ntb_db_set_mask,
+	.db_clear_mask		= intel_ntb_db_clear_mask,
+	.peer_db_addr		= intel_ntb3_peer_db_addr,
+	.peer_db_set		= intel_ntb3_peer_db_set,
+	.spad_is_unsafe		= intel_ntb_spad_is_unsafe,
+	.spad_count		= intel_ntb_spad_count,
+	.spad_read		= intel_ntb_spad_read,
+	.spad_write		= intel_ntb_spad_write,
+	.peer_spad_addr		= intel_ntb_peer_spad_addr,
+	.peer_spad_read		= intel_ntb_peer_spad_read,
+	.peer_spad_write	= intel_ntb_peer_spad_write,
+};
 

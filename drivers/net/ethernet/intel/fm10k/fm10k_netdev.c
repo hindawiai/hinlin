@@ -1,549 +1,548 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /* Copyright(c) 2013 - 2019 Intel Corporation. */
 
-#समावेश "fm10k.h"
-#समावेश <linux/vदो_स्मृति.h>
-#समावेश <net/udp_tunnel.h>
-#समावेश <linux/अगर_macvlan.h>
+#include "fm10k.h"
+#include <linux/vmalloc.h>
+#include <net/udp_tunnel.h>
+#include <linux/if_macvlan.h>
 
 /**
  * fm10k_setup_tx_resources - allocate Tx resources (Descriptors)
- * @tx_ring:    tx descriptor ring (क्रम a specअगरic queue) to setup
+ * @tx_ring:    tx descriptor ring (for a specific queue) to setup
  *
  * Return 0 on success, negative on failure
  **/
-पूर्णांक fm10k_setup_tx_resources(काष्ठा fm10k_ring *tx_ring)
-अणु
-	काष्ठा device *dev = tx_ring->dev;
-	पूर्णांक size;
+int fm10k_setup_tx_resources(struct fm10k_ring *tx_ring)
+{
+	struct device *dev = tx_ring->dev;
+	int size;
 
-	size = माप(काष्ठा fm10k_tx_buffer) * tx_ring->count;
+	size = sizeof(struct fm10k_tx_buffer) * tx_ring->count;
 
 	tx_ring->tx_buffer = vzalloc(size);
-	अगर (!tx_ring->tx_buffer)
-		जाओ err;
+	if (!tx_ring->tx_buffer)
+		goto err;
 
 	u64_stats_init(&tx_ring->syncp);
 
 	/* round up to nearest 4K */
-	tx_ring->size = tx_ring->count * माप(काष्ठा fm10k_tx_desc);
+	tx_ring->size = tx_ring->count * sizeof(struct fm10k_tx_desc);
 	tx_ring->size = ALIGN(tx_ring->size, 4096);
 
 	tx_ring->desc = dma_alloc_coherent(dev, tx_ring->size,
 					   &tx_ring->dma, GFP_KERNEL);
-	अगर (!tx_ring->desc)
-		जाओ err;
+	if (!tx_ring->desc)
+		goto err;
 
-	वापस 0;
+	return 0;
 
 err:
-	vमुक्त(tx_ring->tx_buffer);
-	tx_ring->tx_buffer = शून्य;
-	वापस -ENOMEM;
-पूर्ण
+	vfree(tx_ring->tx_buffer);
+	tx_ring->tx_buffer = NULL;
+	return -ENOMEM;
+}
 
 /**
  * fm10k_setup_all_tx_resources - allocate all queues Tx resources
- * @पूर्णांकerface: board निजी काष्ठाure
+ * @interface: board private structure
  *
- * If this function वापसs with an error, then it's possible one or
- * more of the rings is populated (जबतक the rest are not).  It is the
+ * If this function returns with an error, then it's possible one or
+ * more of the rings is populated (while the rest are not).  It is the
  * callers duty to clean those orphaned rings.
  *
  * Return 0 on success, negative on failure
  **/
-अटल पूर्णांक fm10k_setup_all_tx_resources(काष्ठा fm10k_पूर्णांकfc *पूर्णांकerface)
-अणु
-	पूर्णांक i, err;
+static int fm10k_setup_all_tx_resources(struct fm10k_intfc *interface)
+{
+	int i, err;
 
-	क्रम (i = 0; i < पूर्णांकerface->num_tx_queues; i++) अणु
-		err = fm10k_setup_tx_resources(पूर्णांकerface->tx_ring[i]);
-		अगर (!err)
-			जारी;
+	for (i = 0; i < interface->num_tx_queues; i++) {
+		err = fm10k_setup_tx_resources(interface->tx_ring[i]);
+		if (!err)
+			continue;
 
-		netअगर_err(पूर्णांकerface, probe, पूर्णांकerface->netdev,
+		netif_err(interface, probe, interface->netdev,
 			  "Allocation for Tx Queue %u failed\n", i);
-		जाओ err_setup_tx;
-	पूर्ण
+		goto err_setup_tx;
+	}
 
-	वापस 0;
+	return 0;
 err_setup_tx:
-	/* शुरुआत the index मुक्तing the rings as we go */
-	जबतक (i--)
-		fm10k_मुक्त_tx_resources(पूर्णांकerface->tx_ring[i]);
-	वापस err;
-पूर्ण
+	/* rewind the index freeing the rings as we go */
+	while (i--)
+		fm10k_free_tx_resources(interface->tx_ring[i]);
+	return err;
+}
 
 /**
  * fm10k_setup_rx_resources - allocate Rx resources (Descriptors)
- * @rx_ring:    rx descriptor ring (क्रम a specअगरic queue) to setup
+ * @rx_ring:    rx descriptor ring (for a specific queue) to setup
  *
  * Returns 0 on success, negative on failure
  **/
-पूर्णांक fm10k_setup_rx_resources(काष्ठा fm10k_ring *rx_ring)
-अणु
-	काष्ठा device *dev = rx_ring->dev;
-	पूर्णांक size;
+int fm10k_setup_rx_resources(struct fm10k_ring *rx_ring)
+{
+	struct device *dev = rx_ring->dev;
+	int size;
 
-	size = माप(काष्ठा fm10k_rx_buffer) * rx_ring->count;
+	size = sizeof(struct fm10k_rx_buffer) * rx_ring->count;
 
 	rx_ring->rx_buffer = vzalloc(size);
-	अगर (!rx_ring->rx_buffer)
-		जाओ err;
+	if (!rx_ring->rx_buffer)
+		goto err;
 
 	u64_stats_init(&rx_ring->syncp);
 
 	/* Round up to nearest 4K */
-	rx_ring->size = rx_ring->count * माप(जोड़ fm10k_rx_desc);
+	rx_ring->size = rx_ring->count * sizeof(union fm10k_rx_desc);
 	rx_ring->size = ALIGN(rx_ring->size, 4096);
 
 	rx_ring->desc = dma_alloc_coherent(dev, rx_ring->size,
 					   &rx_ring->dma, GFP_KERNEL);
-	अगर (!rx_ring->desc)
-		जाओ err;
+	if (!rx_ring->desc)
+		goto err;
 
-	वापस 0;
+	return 0;
 err:
-	vमुक्त(rx_ring->rx_buffer);
-	rx_ring->rx_buffer = शून्य;
-	वापस -ENOMEM;
-पूर्ण
+	vfree(rx_ring->rx_buffer);
+	rx_ring->rx_buffer = NULL;
+	return -ENOMEM;
+}
 
 /**
  * fm10k_setup_all_rx_resources - allocate all queues Rx resources
- * @पूर्णांकerface: board निजी काष्ठाure
+ * @interface: board private structure
  *
- * If this function वापसs with an error, then it's possible one or
- * more of the rings is populated (जबतक the rest are not).  It is the
+ * If this function returns with an error, then it's possible one or
+ * more of the rings is populated (while the rest are not).  It is the
  * callers duty to clean those orphaned rings.
  *
  * Return 0 on success, negative on failure
  **/
-अटल पूर्णांक fm10k_setup_all_rx_resources(काष्ठा fm10k_पूर्णांकfc *पूर्णांकerface)
-अणु
-	पूर्णांक i, err;
+static int fm10k_setup_all_rx_resources(struct fm10k_intfc *interface)
+{
+	int i, err;
 
-	क्रम (i = 0; i < पूर्णांकerface->num_rx_queues; i++) अणु
-		err = fm10k_setup_rx_resources(पूर्णांकerface->rx_ring[i]);
-		अगर (!err)
-			जारी;
+	for (i = 0; i < interface->num_rx_queues; i++) {
+		err = fm10k_setup_rx_resources(interface->rx_ring[i]);
+		if (!err)
+			continue;
 
-		netअगर_err(पूर्णांकerface, probe, पूर्णांकerface->netdev,
+		netif_err(interface, probe, interface->netdev,
 			  "Allocation for Rx Queue %u failed\n", i);
-		जाओ err_setup_rx;
-	पूर्ण
+		goto err_setup_rx;
+	}
 
-	वापस 0;
+	return 0;
 err_setup_rx:
-	/* शुरुआत the index मुक्तing the rings as we go */
-	जबतक (i--)
-		fm10k_मुक्त_rx_resources(पूर्णांकerface->rx_ring[i]);
-	वापस err;
-पूर्ण
+	/* rewind the index freeing the rings as we go */
+	while (i--)
+		fm10k_free_rx_resources(interface->rx_ring[i]);
+	return err;
+}
 
-व्योम fm10k_unmap_and_मुक्त_tx_resource(काष्ठा fm10k_ring *ring,
-				      काष्ठा fm10k_tx_buffer *tx_buffer)
-अणु
-	अगर (tx_buffer->skb) अणु
-		dev_kमुक्त_skb_any(tx_buffer->skb);
-		अगर (dma_unmap_len(tx_buffer, len))
+void fm10k_unmap_and_free_tx_resource(struct fm10k_ring *ring,
+				      struct fm10k_tx_buffer *tx_buffer)
+{
+	if (tx_buffer->skb) {
+		dev_kfree_skb_any(tx_buffer->skb);
+		if (dma_unmap_len(tx_buffer, len))
 			dma_unmap_single(ring->dev,
 					 dma_unmap_addr(tx_buffer, dma),
 					 dma_unmap_len(tx_buffer, len),
 					 DMA_TO_DEVICE);
-	पूर्ण अन्यथा अगर (dma_unmap_len(tx_buffer, len)) अणु
+	} else if (dma_unmap_len(tx_buffer, len)) {
 		dma_unmap_page(ring->dev,
 			       dma_unmap_addr(tx_buffer, dma),
 			       dma_unmap_len(tx_buffer, len),
 			       DMA_TO_DEVICE);
-	पूर्ण
-	tx_buffer->next_to_watch = शून्य;
-	tx_buffer->skb = शून्य;
+	}
+	tx_buffer->next_to_watch = NULL;
+	tx_buffer->skb = NULL;
 	dma_unmap_len_set(tx_buffer, len, 0);
 	/* tx_buffer must be completely set up in the transmit path */
-पूर्ण
+}
 
 /**
  * fm10k_clean_tx_ring - Free Tx Buffers
  * @tx_ring: ring to be cleaned
  **/
-अटल व्योम fm10k_clean_tx_ring(काष्ठा fm10k_ring *tx_ring)
-अणु
-	अचिन्हित दीर्घ size;
+static void fm10k_clean_tx_ring(struct fm10k_ring *tx_ring)
+{
+	unsigned long size;
 	u16 i;
 
-	/* ring alपढ़ोy cleared, nothing to करो */
-	अगर (!tx_ring->tx_buffer)
-		वापस;
+	/* ring already cleared, nothing to do */
+	if (!tx_ring->tx_buffer)
+		return;
 
 	/* Free all the Tx ring sk_buffs */
-	क्रम (i = 0; i < tx_ring->count; i++) अणु
-		काष्ठा fm10k_tx_buffer *tx_buffer = &tx_ring->tx_buffer[i];
+	for (i = 0; i < tx_ring->count; i++) {
+		struct fm10k_tx_buffer *tx_buffer = &tx_ring->tx_buffer[i];
 
-		fm10k_unmap_and_मुक्त_tx_resource(tx_ring, tx_buffer);
-	पूर्ण
+		fm10k_unmap_and_free_tx_resource(tx_ring, tx_buffer);
+	}
 
 	/* reset BQL values */
 	netdev_tx_reset_queue(txring_txq(tx_ring));
 
-	size = माप(काष्ठा fm10k_tx_buffer) * tx_ring->count;
-	स_रखो(tx_ring->tx_buffer, 0, size);
+	size = sizeof(struct fm10k_tx_buffer) * tx_ring->count;
+	memset(tx_ring->tx_buffer, 0, size);
 
 	/* Zero out the descriptor ring */
-	स_रखो(tx_ring->desc, 0, tx_ring->size);
-पूर्ण
+	memset(tx_ring->desc, 0, tx_ring->size);
+}
 
 /**
- * fm10k_मुक्त_tx_resources - Free Tx Resources per Queue
- * @tx_ring: Tx descriptor ring क्रम a specअगरic queue
+ * fm10k_free_tx_resources - Free Tx Resources per Queue
+ * @tx_ring: Tx descriptor ring for a specific queue
  *
  * Free all transmit software resources
  **/
-व्योम fm10k_मुक्त_tx_resources(काष्ठा fm10k_ring *tx_ring)
-अणु
+void fm10k_free_tx_resources(struct fm10k_ring *tx_ring)
+{
 	fm10k_clean_tx_ring(tx_ring);
 
-	vमुक्त(tx_ring->tx_buffer);
-	tx_ring->tx_buffer = शून्य;
+	vfree(tx_ring->tx_buffer);
+	tx_ring->tx_buffer = NULL;
 
-	/* अगर not set, then करोn't मुक्त */
-	अगर (!tx_ring->desc)
-		वापस;
+	/* if not set, then don't free */
+	if (!tx_ring->desc)
+		return;
 
-	dma_मुक्त_coherent(tx_ring->dev, tx_ring->size,
+	dma_free_coherent(tx_ring->dev, tx_ring->size,
 			  tx_ring->desc, tx_ring->dma);
-	tx_ring->desc = शून्य;
-पूर्ण
+	tx_ring->desc = NULL;
+}
 
 /**
- * fm10k_clean_all_tx_rings - Free Tx Buffers क्रम all queues
- * @पूर्णांकerface: board निजी काष्ठाure
+ * fm10k_clean_all_tx_rings - Free Tx Buffers for all queues
+ * @interface: board private structure
  **/
-व्योम fm10k_clean_all_tx_rings(काष्ठा fm10k_पूर्णांकfc *पूर्णांकerface)
-अणु
-	पूर्णांक i;
+void fm10k_clean_all_tx_rings(struct fm10k_intfc *interface)
+{
+	int i;
 
-	क्रम (i = 0; i < पूर्णांकerface->num_tx_queues; i++)
-		fm10k_clean_tx_ring(पूर्णांकerface->tx_ring[i]);
-पूर्ण
+	for (i = 0; i < interface->num_tx_queues; i++)
+		fm10k_clean_tx_ring(interface->tx_ring[i]);
+}
 
 /**
- * fm10k_मुक्त_all_tx_resources - Free Tx Resources क्रम All Queues
- * @पूर्णांकerface: board निजी काष्ठाure
+ * fm10k_free_all_tx_resources - Free Tx Resources for All Queues
+ * @interface: board private structure
  *
  * Free all transmit software resources
  **/
-अटल व्योम fm10k_मुक्त_all_tx_resources(काष्ठा fm10k_पूर्णांकfc *पूर्णांकerface)
-अणु
-	पूर्णांक i = पूर्णांकerface->num_tx_queues;
+static void fm10k_free_all_tx_resources(struct fm10k_intfc *interface)
+{
+	int i = interface->num_tx_queues;
 
-	जबतक (i--)
-		fm10k_मुक्त_tx_resources(पूर्णांकerface->tx_ring[i]);
-पूर्ण
+	while (i--)
+		fm10k_free_tx_resources(interface->tx_ring[i]);
+}
 
 /**
  * fm10k_clean_rx_ring - Free Rx Buffers per Queue
- * @rx_ring: ring to मुक्त buffers from
+ * @rx_ring: ring to free buffers from
  **/
-अटल व्योम fm10k_clean_rx_ring(काष्ठा fm10k_ring *rx_ring)
-अणु
-	अचिन्हित दीर्घ size;
+static void fm10k_clean_rx_ring(struct fm10k_ring *rx_ring)
+{
+	unsigned long size;
 	u16 i;
 
-	अगर (!rx_ring->rx_buffer)
-		वापस;
+	if (!rx_ring->rx_buffer)
+		return;
 
-	dev_kमुक्त_skb(rx_ring->skb);
-	rx_ring->skb = शून्य;
+	dev_kfree_skb(rx_ring->skb);
+	rx_ring->skb = NULL;
 
 	/* Free all the Rx ring sk_buffs */
-	क्रम (i = 0; i < rx_ring->count; i++) अणु
-		काष्ठा fm10k_rx_buffer *buffer = &rx_ring->rx_buffer[i];
-		/* clean-up will only set page poपूर्णांकer to शून्य */
-		अगर (!buffer->page)
-			जारी;
+	for (i = 0; i < rx_ring->count; i++) {
+		struct fm10k_rx_buffer *buffer = &rx_ring->rx_buffer[i];
+		/* clean-up will only set page pointer to NULL */
+		if (!buffer->page)
+			continue;
 
 		dma_unmap_page(rx_ring->dev, buffer->dma,
 			       PAGE_SIZE, DMA_FROM_DEVICE);
-		__मुक्त_page(buffer->page);
+		__free_page(buffer->page);
 
-		buffer->page = शून्य;
-	पूर्ण
+		buffer->page = NULL;
+	}
 
-	size = माप(काष्ठा fm10k_rx_buffer) * rx_ring->count;
-	स_रखो(rx_ring->rx_buffer, 0, size);
+	size = sizeof(struct fm10k_rx_buffer) * rx_ring->count;
+	memset(rx_ring->rx_buffer, 0, size);
 
 	/* Zero out the descriptor ring */
-	स_रखो(rx_ring->desc, 0, rx_ring->size);
+	memset(rx_ring->desc, 0, rx_ring->size);
 
 	rx_ring->next_to_alloc = 0;
 	rx_ring->next_to_clean = 0;
 	rx_ring->next_to_use = 0;
-पूर्ण
+}
 
 /**
- * fm10k_मुक्त_rx_resources - Free Rx Resources
+ * fm10k_free_rx_resources - Free Rx Resources
  * @rx_ring: ring to clean the resources from
  *
  * Free all receive software resources
  **/
-व्योम fm10k_मुक्त_rx_resources(काष्ठा fm10k_ring *rx_ring)
-अणु
+void fm10k_free_rx_resources(struct fm10k_ring *rx_ring)
+{
 	fm10k_clean_rx_ring(rx_ring);
 
-	vमुक्त(rx_ring->rx_buffer);
-	rx_ring->rx_buffer = शून्य;
+	vfree(rx_ring->rx_buffer);
+	rx_ring->rx_buffer = NULL;
 
-	/* अगर not set, then करोn't मुक्त */
-	अगर (!rx_ring->desc)
-		वापस;
+	/* if not set, then don't free */
+	if (!rx_ring->desc)
+		return;
 
-	dma_मुक्त_coherent(rx_ring->dev, rx_ring->size,
+	dma_free_coherent(rx_ring->dev, rx_ring->size,
 			  rx_ring->desc, rx_ring->dma);
 
-	rx_ring->desc = शून्य;
-पूर्ण
+	rx_ring->desc = NULL;
+}
 
 /**
- * fm10k_clean_all_rx_rings - Free Rx Buffers क्रम all queues
- * @पूर्णांकerface: board निजी काष्ठाure
+ * fm10k_clean_all_rx_rings - Free Rx Buffers for all queues
+ * @interface: board private structure
  **/
-व्योम fm10k_clean_all_rx_rings(काष्ठा fm10k_पूर्णांकfc *पूर्णांकerface)
-अणु
-	पूर्णांक i;
+void fm10k_clean_all_rx_rings(struct fm10k_intfc *interface)
+{
+	int i;
 
-	क्रम (i = 0; i < पूर्णांकerface->num_rx_queues; i++)
-		fm10k_clean_rx_ring(पूर्णांकerface->rx_ring[i]);
-पूर्ण
+	for (i = 0; i < interface->num_rx_queues; i++)
+		fm10k_clean_rx_ring(interface->rx_ring[i]);
+}
 
 /**
- * fm10k_मुक्त_all_rx_resources - Free Rx Resources क्रम All Queues
- * @पूर्णांकerface: board निजी काष्ठाure
+ * fm10k_free_all_rx_resources - Free Rx Resources for All Queues
+ * @interface: board private structure
  *
  * Free all receive software resources
  **/
-अटल व्योम fm10k_मुक्त_all_rx_resources(काष्ठा fm10k_पूर्णांकfc *पूर्णांकerface)
-अणु
-	पूर्णांक i = पूर्णांकerface->num_rx_queues;
+static void fm10k_free_all_rx_resources(struct fm10k_intfc *interface)
+{
+	int i = interface->num_rx_queues;
 
-	जबतक (i--)
-		fm10k_मुक्त_rx_resources(पूर्णांकerface->rx_ring[i]);
-पूर्ण
+	while (i--)
+		fm10k_free_rx_resources(interface->rx_ring[i]);
+}
 
 /**
- * fm10k_request_glort_range - Request GLORTs क्रम use in configuring rules
- * @पूर्णांकerface: board निजी काष्ठाure
+ * fm10k_request_glort_range - Request GLORTs for use in configuring rules
+ * @interface: board private structure
  *
- * This function allocates a range of glorts क्रम this पूर्णांकerface to use.
+ * This function allocates a range of glorts for this interface to use.
  **/
-अटल व्योम fm10k_request_glort_range(काष्ठा fm10k_पूर्णांकfc *पूर्णांकerface)
-अणु
-	काष्ठा fm10k_hw *hw = &पूर्णांकerface->hw;
+static void fm10k_request_glort_range(struct fm10k_intfc *interface)
+{
+	struct fm10k_hw *hw = &interface->hw;
 	u16 mask = (~hw->mac.dglort_map) >> FM10K_DGLORTMAP_MASK_SHIFT;
 
 	/* establish GLORT base */
-	पूर्णांकerface->glort = hw->mac.dglort_map & FM10K_DGLORTMAP_NONE;
-	पूर्णांकerface->glort_count = 0;
+	interface->glort = hw->mac.dglort_map & FM10K_DGLORTMAP_NONE;
+	interface->glort_count = 0;
 
-	/* nothing we can करो until mask is allocated */
-	अगर (hw->mac.dglort_map == FM10K_DGLORTMAP_NONE)
-		वापस;
+	/* nothing we can do until mask is allocated */
+	if (hw->mac.dglort_map == FM10K_DGLORTMAP_NONE)
+		return;
 
 	/* we support 3 possible GLORT configurations.
 	 * 1: VFs consume all but the last 1
 	 * 2: VFs and PF split glorts with possible gap between
-	 * 3: VFs allocated first 64, all others beदीर्घ to PF
+	 * 3: VFs allocated first 64, all others belong to PF
 	 */
-	अगर (mask <= hw->iov.total_vfs) अणु
-		पूर्णांकerface->glort_count = 1;
-		पूर्णांकerface->glort += mask;
-	पूर्ण अन्यथा अगर (mask < 64) अणु
-		पूर्णांकerface->glort_count = (mask + 1) / 2;
-		पूर्णांकerface->glort += पूर्णांकerface->glort_count;
-	पूर्ण अन्यथा अणु
-		पूर्णांकerface->glort_count = mask - 63;
-		पूर्णांकerface->glort += 64;
-	पूर्ण
-पूर्ण
+	if (mask <= hw->iov.total_vfs) {
+		interface->glort_count = 1;
+		interface->glort += mask;
+	} else if (mask < 64) {
+		interface->glort_count = (mask + 1) / 2;
+		interface->glort += interface->glort_count;
+	} else {
+		interface->glort_count = mask - 63;
+		interface->glort += 64;
+	}
+}
 
 /**
  * fm10k_restore_udp_port_info
- * @पूर्णांकerface: board निजी काष्ठाure
+ * @interface: board private structure
  *
- * This function restores the value in the tunnel_cfg रेजिस्टर(s) after reset
+ * This function restores the value in the tunnel_cfg register(s) after reset
  **/
-अटल व्योम fm10k_restore_udp_port_info(काष्ठा fm10k_पूर्णांकfc *पूर्णांकerface)
-अणु
-	काष्ठा fm10k_hw *hw = &पूर्णांकerface->hw;
+static void fm10k_restore_udp_port_info(struct fm10k_intfc *interface)
+{
+	struct fm10k_hw *hw = &interface->hw;
 
 	/* only the PF supports configuring tunnels */
-	अगर (hw->mac.type != fm10k_mac_pf)
-		वापस;
+	if (hw->mac.type != fm10k_mac_pf)
+		return;
 
-	/* restore tunnel configuration रेजिस्टर */
-	fm10k_ग_लिखो_reg(hw, FM10K_TUNNEL_CFG,
-			ntohs(पूर्णांकerface->vxlan_port) |
+	/* restore tunnel configuration register */
+	fm10k_write_reg(hw, FM10K_TUNNEL_CFG,
+			ntohs(interface->vxlan_port) |
 			(ETH_P_TEB << FM10K_TUNNEL_CFG_NVGRE_SHIFT));
 
-	/* restore Geneve tunnel configuration रेजिस्टर */
-	fm10k_ग_लिखो_reg(hw, FM10K_TUNNEL_CFG_GENEVE,
-			ntohs(पूर्णांकerface->geneve_port));
-पूर्ण
+	/* restore Geneve tunnel configuration register */
+	fm10k_write_reg(hw, FM10K_TUNNEL_CFG_GENEVE,
+			ntohs(interface->geneve_port));
+}
 
 /**
  * fm10k_udp_tunnel_sync - Called when UDP tunnel ports change
- * @dev: network पूर्णांकerface device काष्ठाure
+ * @dev: network interface device structure
  * @table: Tunnel table (according to tables of @fm10k_udp_tunnels)
  *
  * This function is called when a new UDP tunnel port is added or deleted.
  * Due to hardware restrictions, only one port per type can be offloaded at
  * once. Core will send to the driver a port of its choice.
  **/
-अटल पूर्णांक fm10k_udp_tunnel_sync(काष्ठा net_device *dev, अचिन्हित पूर्णांक table)
-अणु
-	काष्ठा fm10k_पूर्णांकfc *पूर्णांकerface = netdev_priv(dev);
-	काष्ठा udp_tunnel_info ti;
+static int fm10k_udp_tunnel_sync(struct net_device *dev, unsigned int table)
+{
+	struct fm10k_intfc *interface = netdev_priv(dev);
+	struct udp_tunnel_info ti;
 
 	udp_tunnel_nic_get_port(dev, table, 0, &ti);
-	अगर (!table)
-		पूर्णांकerface->vxlan_port = ti.port;
-	अन्यथा
-		पूर्णांकerface->geneve_port = ti.port;
+	if (!table)
+		interface->vxlan_port = ti.port;
+	else
+		interface->geneve_port = ti.port;
 
-	fm10k_restore_udp_port_info(पूर्णांकerface);
-	वापस 0;
-पूर्ण
+	fm10k_restore_udp_port_info(interface);
+	return 0;
+}
 
-अटल स्थिर काष्ठा udp_tunnel_nic_info fm10k_udp_tunnels = अणु
+static const struct udp_tunnel_nic_info fm10k_udp_tunnels = {
 	.sync_table	= fm10k_udp_tunnel_sync,
-	.tables		= अणु
-		अणु .n_entries = 1, .tunnel_types = UDP_TUNNEL_TYPE_VXLAN,  पूर्ण,
-		अणु .n_entries = 1, .tunnel_types = UDP_TUNNEL_TYPE_GENEVE, पूर्ण,
-	पूर्ण,
-पूर्ण;
+	.tables		= {
+		{ .n_entries = 1, .tunnel_types = UDP_TUNNEL_TYPE_VXLAN,  },
+		{ .n_entries = 1, .tunnel_types = UDP_TUNNEL_TYPE_GENEVE, },
+	},
+};
 
 /**
- * fm10k_खोलो - Called when a network पूर्णांकerface is made active
- * @netdev: network पूर्णांकerface device काष्ठाure
+ * fm10k_open - Called when a network interface is made active
+ * @netdev: network interface device structure
  *
  * Returns 0 on success, negative value on failure
  *
- * The खोलो entry poपूर्णांक is called when a network पूर्णांकerface is made
- * active by the प्रणाली (IFF_UP).  At this poपूर्णांक all resources needed
- * क्रम transmit and receive operations are allocated, the पूर्णांकerrupt
- * handler is रेजिस्टरed with the OS, the watchकरोg समयr is started,
- * and the stack is notअगरied that the पूर्णांकerface is पढ़ोy.
+ * The open entry point is called when a network interface is made
+ * active by the system (IFF_UP).  At this point all resources needed
+ * for transmit and receive operations are allocated, the interrupt
+ * handler is registered with the OS, the watchdog timer is started,
+ * and the stack is notified that the interface is ready.
  **/
-पूर्णांक fm10k_खोलो(काष्ठा net_device *netdev)
-अणु
-	काष्ठा fm10k_पूर्णांकfc *पूर्णांकerface = netdev_priv(netdev);
-	पूर्णांक err;
+int fm10k_open(struct net_device *netdev)
+{
+	struct fm10k_intfc *interface = netdev_priv(netdev);
+	int err;
 
 	/* allocate transmit descriptors */
-	err = fm10k_setup_all_tx_resources(पूर्णांकerface);
-	अगर (err)
-		जाओ err_setup_tx;
+	err = fm10k_setup_all_tx_resources(interface);
+	if (err)
+		goto err_setup_tx;
 
 	/* allocate receive descriptors */
-	err = fm10k_setup_all_rx_resources(पूर्णांकerface);
-	अगर (err)
-		जाओ err_setup_rx;
+	err = fm10k_setup_all_rx_resources(interface);
+	if (err)
+		goto err_setup_rx;
 
-	/* allocate पूर्णांकerrupt resources */
-	err = fm10k_qv_request_irq(पूर्णांकerface);
-	अगर (err)
-		जाओ err_req_irq;
+	/* allocate interrupt resources */
+	err = fm10k_qv_request_irq(interface);
+	if (err)
+		goto err_req_irq;
 
-	/* setup GLORT assignment क्रम this port */
-	fm10k_request_glort_range(पूर्णांकerface);
+	/* setup GLORT assignment for this port */
+	fm10k_request_glort_range(interface);
 
-	/* Notअगरy the stack of the actual queue counts */
-	err = netअगर_set_real_num_tx_queues(netdev,
-					   पूर्णांकerface->num_tx_queues);
-	अगर (err)
-		जाओ err_set_queues;
+	/* Notify the stack of the actual queue counts */
+	err = netif_set_real_num_tx_queues(netdev,
+					   interface->num_tx_queues);
+	if (err)
+		goto err_set_queues;
 
-	err = netअगर_set_real_num_rx_queues(netdev,
-					   पूर्णांकerface->num_rx_queues);
-	अगर (err)
-		जाओ err_set_queues;
+	err = netif_set_real_num_rx_queues(netdev,
+					   interface->num_rx_queues);
+	if (err)
+		goto err_set_queues;
 
-	fm10k_up(पूर्णांकerface);
+	fm10k_up(interface);
 
-	वापस 0;
+	return 0;
 
 err_set_queues:
-	fm10k_qv_मुक्त_irq(पूर्णांकerface);
+	fm10k_qv_free_irq(interface);
 err_req_irq:
-	fm10k_मुक्त_all_rx_resources(पूर्णांकerface);
+	fm10k_free_all_rx_resources(interface);
 err_setup_rx:
-	fm10k_मुक्त_all_tx_resources(पूर्णांकerface);
+	fm10k_free_all_tx_resources(interface);
 err_setup_tx:
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /**
- * fm10k_बंद - Disables a network पूर्णांकerface
- * @netdev: network पूर्णांकerface device काष्ठाure
+ * fm10k_close - Disables a network interface
+ * @netdev: network interface device structure
  *
  * Returns 0, this is not allowed to fail
  *
- * The बंद entry poपूर्णांक is called when an पूर्णांकerface is de-activated
+ * The close entry point is called when an interface is de-activated
  * by the OS.  The hardware is still under the drivers control, but
  * needs to be disabled.  A global MAC reset is issued to stop the
- * hardware, and all transmit and receive resources are मुक्तd.
+ * hardware, and all transmit and receive resources are freed.
  **/
-पूर्णांक fm10k_बंद(काष्ठा net_device *netdev)
-अणु
-	काष्ठा fm10k_पूर्णांकfc *पूर्णांकerface = netdev_priv(netdev);
+int fm10k_close(struct net_device *netdev)
+{
+	struct fm10k_intfc *interface = netdev_priv(netdev);
 
-	fm10k_करोwn(पूर्णांकerface);
+	fm10k_down(interface);
 
-	fm10k_qv_मुक्त_irq(पूर्णांकerface);
+	fm10k_qv_free_irq(interface);
 
-	fm10k_मुक्त_all_tx_resources(पूर्णांकerface);
-	fm10k_मुक्त_all_rx_resources(पूर्णांकerface);
+	fm10k_free_all_tx_resources(interface);
+	fm10k_free_all_rx_resources(interface);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल netdev_tx_t fm10k_xmit_frame(काष्ठा sk_buff *skb, काष्ठा net_device *dev)
-अणु
-	काष्ठा fm10k_पूर्णांकfc *पूर्णांकerface = netdev_priv(dev);
-	पूर्णांक num_tx_queues = READ_ONCE(पूर्णांकerface->num_tx_queues);
-	अचिन्हित पूर्णांक r_idx = skb->queue_mapping;
-	पूर्णांक err;
+static netdev_tx_t fm10k_xmit_frame(struct sk_buff *skb, struct net_device *dev)
+{
+	struct fm10k_intfc *interface = netdev_priv(dev);
+	int num_tx_queues = READ_ONCE(interface->num_tx_queues);
+	unsigned int r_idx = skb->queue_mapping;
+	int err;
 
-	अगर (!num_tx_queues)
-		वापस NETDEV_TX_BUSY;
+	if (!num_tx_queues)
+		return NETDEV_TX_BUSY;
 
-	अगर ((skb->protocol == htons(ETH_P_8021Q)) &&
-	    !skb_vlan_tag_present(skb)) अणु
+	if ((skb->protocol == htons(ETH_P_8021Q)) &&
+	    !skb_vlan_tag_present(skb)) {
 		/* FM10K only supports hardware tagging, any tags in frame
 		 * are considered 2nd level or "outer" tags
 		 */
-		काष्ठा vlan_hdr *vhdr;
+		struct vlan_hdr *vhdr;
 		__be16 proto;
 
 		/* make sure skb is not shared */
 		skb = skb_share_check(skb, GFP_ATOMIC);
-		अगर (!skb)
-			वापस NETDEV_TX_OK;
+		if (!skb)
+			return NETDEV_TX_OK;
 
 		/* make sure there is enough room to move the ethernet header */
-		अगर (unlikely(!pskb_may_pull(skb, VLAN_ETH_HLEN)))
-			वापस NETDEV_TX_OK;
+		if (unlikely(!pskb_may_pull(skb, VLAN_ETH_HLEN)))
+			return NETDEV_TX_OK;
 
-		/* verअगरy the skb head is not shared */
+		/* verify the skb head is not shared */
 		err = skb_cow_head(skb, 0);
-		अगर (err) अणु
-			dev_kमुक्त_skb(skb);
-			वापस NETDEV_TX_OK;
-		पूर्ण
+		if (err) {
+			dev_kfree_skb(skb);
+			return NETDEV_TX_OK;
+		}
 
 		/* locate VLAN header */
-		vhdr = (काष्ठा vlan_hdr *)(skb->data + ETH_HLEN);
+		vhdr = (struct vlan_hdr *)(skb->data + ETH_HLEN);
 
 		/* pull the 2 key pieces of data out of it */
 		__vlan_hwaccel_put_tag(skb,
@@ -554,148 +553,148 @@ err_setup_tx:
 							 htons(ETH_P_802_2);
 
 		/* squash it by moving the ethernet addresses up 4 bytes */
-		स_हटाओ(skb->data + VLAN_HLEN, skb->data, 12);
+		memmove(skb->data + VLAN_HLEN, skb->data, 12);
 		__skb_pull(skb, VLAN_HLEN);
 		skb_reset_mac_header(skb);
-	पूर्ण
+	}
 
-	/* The minimum packet size क्रम a single buffer is 17B so pad the skb
+	/* The minimum packet size for a single buffer is 17B so pad the skb
 	 * in order to meet this minimum size requirement.
 	 */
-	अगर (unlikely(skb->len < 17)) अणु
-		पूर्णांक pad_len = 17 - skb->len;
+	if (unlikely(skb->len < 17)) {
+		int pad_len = 17 - skb->len;
 
-		अगर (skb_pad(skb, pad_len))
-			वापस NETDEV_TX_OK;
+		if (skb_pad(skb, pad_len))
+			return NETDEV_TX_OK;
 		__skb_put(skb, pad_len);
-	पूर्ण
+	}
 
-	अगर (r_idx >= num_tx_queues)
+	if (r_idx >= num_tx_queues)
 		r_idx %= num_tx_queues;
 
-	err = fm10k_xmit_frame_ring(skb, पूर्णांकerface->tx_ring[r_idx]);
+	err = fm10k_xmit_frame_ring(skb, interface->tx_ring[r_idx]);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /**
- * fm10k_tx_समयout - Respond to a Tx Hang
- * @netdev: network पूर्णांकerface device काष्ठाure
- * @txqueue: the index of the Tx queue that समयd out
+ * fm10k_tx_timeout - Respond to a Tx Hang
+ * @netdev: network interface device structure
+ * @txqueue: the index of the Tx queue that timed out
  **/
-अटल व्योम fm10k_tx_समयout(काष्ठा net_device *netdev, अचिन्हित पूर्णांक txqueue)
-अणु
-	काष्ठा fm10k_पूर्णांकfc *पूर्णांकerface = netdev_priv(netdev);
-	काष्ठा fm10k_ring *tx_ring;
+static void fm10k_tx_timeout(struct net_device *netdev, unsigned int txqueue)
+{
+	struct fm10k_intfc *interface = netdev_priv(netdev);
+	struct fm10k_ring *tx_ring;
 	bool real_tx_hang = false;
 
-	अगर (txqueue >= पूर्णांकerface->num_tx_queues) अणु
+	if (txqueue >= interface->num_tx_queues) {
 		WARN(1, "invalid Tx queue index %d", txqueue);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	tx_ring = पूर्णांकerface->tx_ring[txqueue];
-	अगर (check_क्रम_tx_hang(tx_ring) && fm10k_check_tx_hang(tx_ring))
+	tx_ring = interface->tx_ring[txqueue];
+	if (check_for_tx_hang(tx_ring) && fm10k_check_tx_hang(tx_ring))
 		real_tx_hang = true;
 
-#घोषणा TX_TIMEO_LIMIT 16000
-	अगर (real_tx_hang) अणु
-		fm10k_tx_समयout_reset(पूर्णांकerface);
-	पूर्ण अन्यथा अणु
-		netअगर_info(पूर्णांकerface, drv, netdev,
+#define TX_TIMEO_LIMIT 16000
+	if (real_tx_hang) {
+		fm10k_tx_timeout_reset(interface);
+	} else {
+		netif_info(interface, drv, netdev,
 			   "Fake Tx hang detected with timeout of %d seconds\n",
-			   netdev->watchकरोg_समयo / HZ);
+			   netdev->watchdog_timeo / HZ);
 
-		/* fake Tx hang - increase the kernel समयout */
-		अगर (netdev->watchकरोg_समयo < TX_TIMEO_LIMIT)
-			netdev->watchकरोg_समयo *= 2;
-	पूर्ण
-पूर्ण
+		/* fake Tx hang - increase the kernel timeout */
+		if (netdev->watchdog_timeo < TX_TIMEO_LIMIT)
+			netdev->watchdog_timeo *= 2;
+	}
+}
 
 /**
- * fm10k_host_mbx_पढ़ोy - Check PF पूर्णांकerface's mailbox पढ़ोiness
- * @पूर्णांकerface: board निजी काष्ठाure
+ * fm10k_host_mbx_ready - Check PF interface's mailbox readiness
+ * @interface: board private structure
  *
- * This function checks अगर the PF पूर्णांकerface's mailbox is पढ़ोy beक्रमe queueing
- * mailbox messages क्रम transmission. This will prevent filling the TX mailbox
- * queue when the receiver is not पढ़ोy. VF पूर्णांकerfaces are exempt from this
+ * This function checks if the PF interface's mailbox is ready before queueing
+ * mailbox messages for transmission. This will prevent filling the TX mailbox
+ * queue when the receiver is not ready. VF interfaces are exempt from this
  * check since it will block all PF-VF mailbox messages from being sent from
  * the VF to the PF at initialization.
  **/
-अटल bool fm10k_host_mbx_पढ़ोy(काष्ठा fm10k_पूर्णांकfc *पूर्णांकerface)
-अणु
-	काष्ठा fm10k_hw *hw = &पूर्णांकerface->hw;
+static bool fm10k_host_mbx_ready(struct fm10k_intfc *interface)
+{
+	struct fm10k_hw *hw = &interface->hw;
 
-	वापस (hw->mac.type == fm10k_mac_vf || पूर्णांकerface->host_पढ़ोy);
-पूर्ण
+	return (hw->mac.type == fm10k_mac_vf || interface->host_ready);
+}
 
 /**
  * fm10k_queue_vlan_request - Queue a VLAN update request
- * @पूर्णांकerface: the fm10k पूर्णांकerface काष्ठाure
+ * @interface: the fm10k interface structure
  * @vid: the VLAN vid
  * @vsi: VSI index number
  * @set: whether to set or clear
  *
  * This function queues up a VLAN update. For VFs, this must be sent to the
  * managing PF over the mailbox. For PFs, we'll use the same handling so that
- * it's similar to the VF. This aव्योमs storming the PF<->VF mailbox with too
+ * it's similar to the VF. This avoids storming the PF<->VF mailbox with too
  * many VLAN updates during reset.
  */
-पूर्णांक fm10k_queue_vlan_request(काष्ठा fm10k_पूर्णांकfc *पूर्णांकerface,
+int fm10k_queue_vlan_request(struct fm10k_intfc *interface,
 			     u32 vid, u8 vsi, bool set)
-अणु
-	काष्ठा fm10k_macvlan_request *request;
-	अचिन्हित दीर्घ flags;
+{
+	struct fm10k_macvlan_request *request;
+	unsigned long flags;
 
-	/* This must be atomic since we may be called जबतक the netdev
+	/* This must be atomic since we may be called while the netdev
 	 * addr_list_lock is held
 	 */
-	request = kzalloc(माप(*request), GFP_ATOMIC);
-	अगर (!request)
-		वापस -ENOMEM;
+	request = kzalloc(sizeof(*request), GFP_ATOMIC);
+	if (!request)
+		return -ENOMEM;
 
 	request->type = FM10K_VLAN_REQUEST;
 	request->vlan.vid = vid;
 	request->vlan.vsi = vsi;
 	request->set = set;
 
-	spin_lock_irqsave(&पूर्णांकerface->macvlan_lock, flags);
-	list_add_tail(&request->list, &पूर्णांकerface->macvlan_requests);
-	spin_unlock_irqrestore(&पूर्णांकerface->macvlan_lock, flags);
+	spin_lock_irqsave(&interface->macvlan_lock, flags);
+	list_add_tail(&request->list, &interface->macvlan_requests);
+	spin_unlock_irqrestore(&interface->macvlan_lock, flags);
 
-	fm10k_macvlan_schedule(पूर्णांकerface);
+	fm10k_macvlan_schedule(interface);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * fm10k_queue_mac_request - Queue a MAC update request
- * @पूर्णांकerface: the fm10k पूर्णांकerface काष्ठाure
- * @glort: the target glort क्रम this update
+ * @interface: the fm10k interface structure
+ * @glort: the target glort for this update
  * @addr: the address to update
  * @vid: the vid to update
- * @set: whether to add or हटाओ
+ * @set: whether to add or remove
  *
- * This function queues up a MAC request क्रम sending to the चयन manager.
- * A separate thपढ़ो monitors the queue and sends updates to the चयन
+ * This function queues up a MAC request for sending to the switch manager.
+ * A separate thread monitors the queue and sends updates to the switch
  * manager. Return 0 on success, and negative error code on failure.
  **/
-पूर्णांक fm10k_queue_mac_request(काष्ठा fm10k_पूर्णांकfc *पूर्णांकerface, u16 glort,
-			    स्थिर अचिन्हित अक्षर *addr, u16 vid, bool set)
-अणु
-	काष्ठा fm10k_macvlan_request *request;
-	अचिन्हित दीर्घ flags;
+int fm10k_queue_mac_request(struct fm10k_intfc *interface, u16 glort,
+			    const unsigned char *addr, u16 vid, bool set)
+{
+	struct fm10k_macvlan_request *request;
+	unsigned long flags;
 
-	/* This must be atomic since we may be called जबतक the netdev
+	/* This must be atomic since we may be called while the netdev
 	 * addr_list_lock is held
 	 */
-	request = kzalloc(माप(*request), GFP_ATOMIC);
-	अगर (!request)
-		वापस -ENOMEM;
+	request = kzalloc(sizeof(*request), GFP_ATOMIC);
+	if (!request)
+		return -ENOMEM;
 
-	अगर (is_multicast_ether_addr(addr))
+	if (is_multicast_ether_addr(addr))
 		request->type = FM10K_MC_MAC_REQUEST;
-	अन्यथा
+	else
 		request->type = FM10K_UC_MAC_REQUEST;
 
 	ether_addr_copy(request->mac.addr, addr);
@@ -703,346 +702,346 @@ err_setup_tx:
 	request->mac.vid = vid;
 	request->set = set;
 
-	spin_lock_irqsave(&पूर्णांकerface->macvlan_lock, flags);
-	list_add_tail(&request->list, &पूर्णांकerface->macvlan_requests);
-	spin_unlock_irqrestore(&पूर्णांकerface->macvlan_lock, flags);
+	spin_lock_irqsave(&interface->macvlan_lock, flags);
+	list_add_tail(&request->list, &interface->macvlan_requests);
+	spin_unlock_irqrestore(&interface->macvlan_lock, flags);
 
-	fm10k_macvlan_schedule(पूर्णांकerface);
+	fm10k_macvlan_schedule(interface);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * fm10k_clear_macvlan_queue - Cancel pending updates क्रम a given glort
- * @पूर्णांकerface: the fm10k पूर्णांकerface काष्ठाure
+ * fm10k_clear_macvlan_queue - Cancel pending updates for a given glort
+ * @interface: the fm10k interface structure
  * @glort: the target glort to clear
  * @vlans: true to clear VLAN messages, false to ignore them
  *
- * Cancel any outstanding MAC/VLAN requests क्रम a given glort. This is
- * expected to be called when a logical port goes करोwn.
+ * Cancel any outstanding MAC/VLAN requests for a given glort. This is
+ * expected to be called when a logical port goes down.
  **/
-व्योम fm10k_clear_macvlan_queue(काष्ठा fm10k_पूर्णांकfc *पूर्णांकerface,
+void fm10k_clear_macvlan_queue(struct fm10k_intfc *interface,
 			       u16 glort, bool vlans)
 
-अणु
-	काष्ठा fm10k_macvlan_request *r, *पंचांगp;
-	अचिन्हित दीर्घ flags;
+{
+	struct fm10k_macvlan_request *r, *tmp;
+	unsigned long flags;
 
-	spin_lock_irqsave(&पूर्णांकerface->macvlan_lock, flags);
+	spin_lock_irqsave(&interface->macvlan_lock, flags);
 
-	/* Free any outstanding MAC/VLAN requests क्रम this पूर्णांकerface */
-	list_क्रम_each_entry_safe(r, पंचांगp, &पूर्णांकerface->macvlan_requests, list) अणु
-		चयन (r->type) अणु
-		हाल FM10K_MC_MAC_REQUEST:
-		हाल FM10K_UC_MAC_REQUEST:
-			/* Don't मुक्त requests क्रम other पूर्णांकerfaces */
-			अगर (r->mac.glort != glort)
-				अवरोध;
+	/* Free any outstanding MAC/VLAN requests for this interface */
+	list_for_each_entry_safe(r, tmp, &interface->macvlan_requests, list) {
+		switch (r->type) {
+		case FM10K_MC_MAC_REQUEST:
+		case FM10K_UC_MAC_REQUEST:
+			/* Don't free requests for other interfaces */
+			if (r->mac.glort != glort)
+				break;
 			fallthrough;
-		हाल FM10K_VLAN_REQUEST:
-			अगर (vlans) अणु
+		case FM10K_VLAN_REQUEST:
+			if (vlans) {
 				list_del(&r->list);
-				kमुक्त(r);
-			पूर्ण
-			अवरोध;
-		पूर्ण
-	पूर्ण
+				kfree(r);
+			}
+			break;
+		}
+	}
 
-	spin_unlock_irqrestore(&पूर्णांकerface->macvlan_lock, flags);
-पूर्ण
+	spin_unlock_irqrestore(&interface->macvlan_lock, flags);
+}
 
-अटल पूर्णांक fm10k_uc_vlan_unsync(काष्ठा net_device *netdev,
-				स्थिर अचिन्हित अक्षर *uc_addr)
-अणु
-	काष्ठा fm10k_पूर्णांकfc *पूर्णांकerface = netdev_priv(netdev);
-	u16 glort = पूर्णांकerface->glort;
-	u16 vid = पूर्णांकerface->vid;
+static int fm10k_uc_vlan_unsync(struct net_device *netdev,
+				const unsigned char *uc_addr)
+{
+	struct fm10k_intfc *interface = netdev_priv(netdev);
+	u16 glort = interface->glort;
+	u16 vid = interface->vid;
 	bool set = !!(vid / VLAN_N_VID);
-	पूर्णांक err;
+	int err;
 
 	/* drop any leading bits on the VLAN ID */
 	vid &= VLAN_N_VID - 1;
 
-	err = fm10k_queue_mac_request(पूर्णांकerface, glort, uc_addr, vid, set);
-	अगर (err)
-		वापस err;
+	err = fm10k_queue_mac_request(interface, glort, uc_addr, vid, set);
+	if (err)
+		return err;
 
-	/* वापस non-zero value as we are only करोing a partial sync/unsync */
-	वापस 1;
-पूर्ण
+	/* return non-zero value as we are only doing a partial sync/unsync */
+	return 1;
+}
 
-अटल पूर्णांक fm10k_mc_vlan_unsync(काष्ठा net_device *netdev,
-				स्थिर अचिन्हित अक्षर *mc_addr)
-अणु
-	काष्ठा fm10k_पूर्णांकfc *पूर्णांकerface = netdev_priv(netdev);
-	u16 glort = पूर्णांकerface->glort;
-	u16 vid = पूर्णांकerface->vid;
+static int fm10k_mc_vlan_unsync(struct net_device *netdev,
+				const unsigned char *mc_addr)
+{
+	struct fm10k_intfc *interface = netdev_priv(netdev);
+	u16 glort = interface->glort;
+	u16 vid = interface->vid;
 	bool set = !!(vid / VLAN_N_VID);
-	पूर्णांक err;
+	int err;
 
 	/* drop any leading bits on the VLAN ID */
 	vid &= VLAN_N_VID - 1;
 
-	err = fm10k_queue_mac_request(पूर्णांकerface, glort, mc_addr, vid, set);
-	अगर (err)
-		वापस err;
+	err = fm10k_queue_mac_request(interface, glort, mc_addr, vid, set);
+	if (err)
+		return err;
 
-	/* वापस non-zero value as we are only करोing a partial sync/unsync */
-	वापस 1;
-पूर्ण
+	/* return non-zero value as we are only doing a partial sync/unsync */
+	return 1;
+}
 
-अटल पूर्णांक fm10k_update_vid(काष्ठा net_device *netdev, u16 vid, bool set)
-अणु
-	काष्ठा fm10k_पूर्णांकfc *पूर्णांकerface = netdev_priv(netdev);
-	काष्ठा fm10k_l2_accel *l2_accel = पूर्णांकerface->l2_accel;
-	काष्ठा fm10k_hw *hw = &पूर्णांकerface->hw;
+static int fm10k_update_vid(struct net_device *netdev, u16 vid, bool set)
+{
+	struct fm10k_intfc *interface = netdev_priv(netdev);
+	struct fm10k_l2_accel *l2_accel = interface->l2_accel;
+	struct fm10k_hw *hw = &interface->hw;
 	u16 glort;
 	s32 err;
-	पूर्णांक i;
+	int i;
 
-	/* updates करो not apply to VLAN 0 */
-	अगर (!vid)
-		वापस 0;
+	/* updates do not apply to VLAN 0 */
+	if (!vid)
+		return 0;
 
-	अगर (vid >= VLAN_N_VID)
-		वापस -EINVAL;
+	if (vid >= VLAN_N_VID)
+		return -EINVAL;
 
-	/* Verअगरy that we have permission to add VLANs. If this is a request
-	 * to हटाओ a VLAN, we still want to allow the user to हटाओ the
-	 * VLAN device. In that हाल, we need to clear the bit in the
-	 * active_vlans biपंचांगask.
+	/* Verify that we have permission to add VLANs. If this is a request
+	 * to remove a VLAN, we still want to allow the user to remove the
+	 * VLAN device. In that case, we need to clear the bit in the
+	 * active_vlans bitmask.
 	 */
-	अगर (set && hw->mac.vlan_override)
-		वापस -EACCES;
+	if (set && hw->mac.vlan_override)
+		return -EACCES;
 
-	/* update active_vlans biपंचांगask */
-	set_bit(vid, पूर्णांकerface->active_vlans);
-	अगर (!set)
-		clear_bit(vid, पूर्णांकerface->active_vlans);
+	/* update active_vlans bitmask */
+	set_bit(vid, interface->active_vlans);
+	if (!set)
+		clear_bit(vid, interface->active_vlans);
 
-	/* disable the शेष VLAN ID on ring अगर we have an active VLAN */
-	क्रम (i = 0; i < पूर्णांकerface->num_rx_queues; i++) अणु
-		काष्ठा fm10k_ring *rx_ring = पूर्णांकerface->rx_ring[i];
+	/* disable the default VLAN ID on ring if we have an active VLAN */
+	for (i = 0; i < interface->num_rx_queues; i++) {
+		struct fm10k_ring *rx_ring = interface->rx_ring[i];
 		u16 rx_vid = rx_ring->vid & (VLAN_N_VID - 1);
 
-		अगर (test_bit(rx_vid, पूर्णांकerface->active_vlans))
+		if (test_bit(rx_vid, interface->active_vlans))
 			rx_ring->vid |= FM10K_VLAN_CLEAR;
-		अन्यथा
+		else
 			rx_ring->vid &= ~FM10K_VLAN_CLEAR;
-	पूर्ण
+	}
 
 	/* If our VLAN has been overridden, there is no reason to send VLAN
 	 * removal requests as they will be silently ignored.
 	 */
-	अगर (hw->mac.vlan_override)
-		वापस 0;
+	if (hw->mac.vlan_override)
+		return 0;
 
-	/* Do not हटाओ शेष VLAN ID related entries from VLAN and MAC
+	/* Do not remove default VLAN ID related entries from VLAN and MAC
 	 * tables
 	 */
-	अगर (!set && vid == hw->mac.शेष_vid)
-		वापस 0;
+	if (!set && vid == hw->mac.default_vid)
+		return 0;
 
-	/* Do not throw an error अगर the पूर्णांकerface is करोwn. We will sync once
+	/* Do not throw an error if the interface is down. We will sync once
 	 * we come up
 	 */
-	अगर (test_bit(__FM10K_DOWN, पूर्णांकerface->state))
-		वापस 0;
+	if (test_bit(__FM10K_DOWN, interface->state))
+		return 0;
 
-	fm10k_mbx_lock(पूर्णांकerface);
+	fm10k_mbx_lock(interface);
 
-	/* only need to update the VLAN अगर not in promiscuous mode */
-	अगर (!(netdev->flags & IFF_PROMISC)) अणु
-		err = fm10k_queue_vlan_request(पूर्णांकerface, vid, 0, set);
-		अगर (err)
-			जाओ err_out;
-	पूर्ण
+	/* only need to update the VLAN if not in promiscuous mode */
+	if (!(netdev->flags & IFF_PROMISC)) {
+		err = fm10k_queue_vlan_request(interface, vid, 0, set);
+		if (err)
+			goto err_out;
+	}
 
 	/* Update our base MAC address */
-	err = fm10k_queue_mac_request(पूर्णांकerface, पूर्णांकerface->glort,
+	err = fm10k_queue_mac_request(interface, interface->glort,
 				      hw->mac.addr, vid, set);
-	अगर (err)
-		जाओ err_out;
+	if (err)
+		goto err_out;
 
 	/* Update L2 accelerated macvlan addresses */
-	अगर (l2_accel) अणु
-		क्रम (i = 0; i < l2_accel->size; i++) अणु
-			काष्ठा net_device *sdev = l2_accel->macvlan[i];
+	if (l2_accel) {
+		for (i = 0; i < l2_accel->size; i++) {
+			struct net_device *sdev = l2_accel->macvlan[i];
 
-			अगर (!sdev)
-				जारी;
+			if (!sdev)
+				continue;
 
 			glort = l2_accel->dglort + 1 + i;
 
-			fm10k_queue_mac_request(पूर्णांकerface, glort,
+			fm10k_queue_mac_request(interface, glort,
 						sdev->dev_addr,
 						vid, set);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/* set VLAN ID prior to syncing/unsyncing the VLAN */
-	पूर्णांकerface->vid = vid + (set ? VLAN_N_VID : 0);
+	interface->vid = vid + (set ? VLAN_N_VID : 0);
 
 	/* Update the unicast and multicast address list to add/drop VLAN */
 	__dev_uc_unsync(netdev, fm10k_uc_vlan_unsync);
 	__dev_mc_unsync(netdev, fm10k_mc_vlan_unsync);
 
 err_out:
-	fm10k_mbx_unlock(पूर्णांकerface);
+	fm10k_mbx_unlock(interface);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक fm10k_vlan_rx_add_vid(काष्ठा net_device *netdev,
+static int fm10k_vlan_rx_add_vid(struct net_device *netdev,
 				 __always_unused __be16 proto, u16 vid)
-अणु
+{
 	/* update VLAN and address table based on changes */
-	वापस fm10k_update_vid(netdev, vid, true);
-पूर्ण
+	return fm10k_update_vid(netdev, vid, true);
+}
 
-अटल पूर्णांक fm10k_vlan_rx_समाप्त_vid(काष्ठा net_device *netdev,
+static int fm10k_vlan_rx_kill_vid(struct net_device *netdev,
 				  __always_unused __be16 proto, u16 vid)
-अणु
+{
 	/* update VLAN and address table based on changes */
-	वापस fm10k_update_vid(netdev, vid, false);
-पूर्ण
+	return fm10k_update_vid(netdev, vid, false);
+}
 
-अटल u16 fm10k_find_next_vlan(काष्ठा fm10k_पूर्णांकfc *पूर्णांकerface, u16 vid)
-अणु
-	काष्ठा fm10k_hw *hw = &पूर्णांकerface->hw;
-	u16 शेष_vid = hw->mac.शेष_vid;
-	u16 vid_limit = vid < शेष_vid ? शेष_vid : VLAN_N_VID;
+static u16 fm10k_find_next_vlan(struct fm10k_intfc *interface, u16 vid)
+{
+	struct fm10k_hw *hw = &interface->hw;
+	u16 default_vid = hw->mac.default_vid;
+	u16 vid_limit = vid < default_vid ? default_vid : VLAN_N_VID;
 
-	vid = find_next_bit(पूर्णांकerface->active_vlans, vid_limit, ++vid);
+	vid = find_next_bit(interface->active_vlans, vid_limit, ++vid);
 
-	वापस vid;
-पूर्ण
+	return vid;
+}
 
-अटल व्योम fm10k_clear_unused_vlans(काष्ठा fm10k_पूर्णांकfc *पूर्णांकerface)
-अणु
+static void fm10k_clear_unused_vlans(struct fm10k_intfc *interface)
+{
 	u32 vid, prev_vid;
 
 	/* loop through and find any gaps in the table */
-	क्रम (vid = 0, prev_vid = 0;
+	for (vid = 0, prev_vid = 0;
 	     prev_vid < VLAN_N_VID;
-	     prev_vid = vid + 1, vid = fm10k_find_next_vlan(पूर्णांकerface, vid)) अणु
-		अगर (prev_vid == vid)
-			जारी;
+	     prev_vid = vid + 1, vid = fm10k_find_next_vlan(interface, vid)) {
+		if (prev_vid == vid)
+			continue;
 
-		/* send request to clear multiple bits at a समय */
+		/* send request to clear multiple bits at a time */
 		prev_vid += (vid - prev_vid - 1) << FM10K_VLAN_LENGTH_SHIFT;
-		fm10k_queue_vlan_request(पूर्णांकerface, prev_vid, 0, false);
-	पूर्ण
-पूर्ण
+		fm10k_queue_vlan_request(interface, prev_vid, 0, false);
+	}
+}
 
-अटल पूर्णांक __fm10k_uc_sync(काष्ठा net_device *dev,
-			   स्थिर अचिन्हित अक्षर *addr, bool sync)
-अणु
-	काष्ठा fm10k_पूर्णांकfc *पूर्णांकerface = netdev_priv(dev);
-	u16 vid, glort = पूर्णांकerface->glort;
+static int __fm10k_uc_sync(struct net_device *dev,
+			   const unsigned char *addr, bool sync)
+{
+	struct fm10k_intfc *interface = netdev_priv(dev);
+	u16 vid, glort = interface->glort;
 	s32 err;
 
-	अगर (!is_valid_ether_addr(addr))
-		वापस -EADDRNOTAVAIL;
+	if (!is_valid_ether_addr(addr))
+		return -EADDRNOTAVAIL;
 
-	क्रम (vid = fm10k_find_next_vlan(पूर्णांकerface, 0);
+	for (vid = fm10k_find_next_vlan(interface, 0);
 	     vid < VLAN_N_VID;
-	     vid = fm10k_find_next_vlan(पूर्णांकerface, vid)) अणु
-		err = fm10k_queue_mac_request(पूर्णांकerface, glort,
+	     vid = fm10k_find_next_vlan(interface, vid)) {
+		err = fm10k_queue_mac_request(interface, glort,
 					      addr, vid, sync);
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक fm10k_uc_sync(काष्ठा net_device *dev,
-			 स्थिर अचिन्हित अक्षर *addr)
-अणु
-	वापस __fm10k_uc_sync(dev, addr, true);
-पूर्ण
+static int fm10k_uc_sync(struct net_device *dev,
+			 const unsigned char *addr)
+{
+	return __fm10k_uc_sync(dev, addr, true);
+}
 
-अटल पूर्णांक fm10k_uc_unsync(काष्ठा net_device *dev,
-			   स्थिर अचिन्हित अक्षर *addr)
-अणु
-	वापस __fm10k_uc_sync(dev, addr, false);
-पूर्ण
+static int fm10k_uc_unsync(struct net_device *dev,
+			   const unsigned char *addr)
+{
+	return __fm10k_uc_sync(dev, addr, false);
+}
 
-अटल पूर्णांक fm10k_set_mac(काष्ठा net_device *dev, व्योम *p)
-अणु
-	काष्ठा fm10k_पूर्णांकfc *पूर्णांकerface = netdev_priv(dev);
-	काष्ठा fm10k_hw *hw = &पूर्णांकerface->hw;
-	काष्ठा sockaddr *addr = p;
+static int fm10k_set_mac(struct net_device *dev, void *p)
+{
+	struct fm10k_intfc *interface = netdev_priv(dev);
+	struct fm10k_hw *hw = &interface->hw;
+	struct sockaddr *addr = p;
 	s32 err = 0;
 
-	अगर (!is_valid_ether_addr(addr->sa_data))
-		वापस -EADDRNOTAVAIL;
+	if (!is_valid_ether_addr(addr->sa_data))
+		return -EADDRNOTAVAIL;
 
-	अगर (dev->flags & IFF_UP) अणु
+	if (dev->flags & IFF_UP) {
 		/* setting MAC address requires mailbox */
-		fm10k_mbx_lock(पूर्णांकerface);
+		fm10k_mbx_lock(interface);
 
 		err = fm10k_uc_sync(dev, addr->sa_data);
-		अगर (!err)
+		if (!err)
 			fm10k_uc_unsync(dev, hw->mac.addr);
 
-		fm10k_mbx_unlock(पूर्णांकerface);
-	पूर्ण
+		fm10k_mbx_unlock(interface);
+	}
 
-	अगर (!err) अणु
+	if (!err) {
 		ether_addr_copy(dev->dev_addr, addr->sa_data);
 		ether_addr_copy(hw->mac.addr, addr->sa_data);
 		dev->addr_assign_type &= ~NET_ADDR_RANDOM;
-	पूर्ण
+	}
 
-	/* अगर we had a mailbox error suggest trying again */
-	वापस err ? -EAGAIN : 0;
-पूर्ण
+	/* if we had a mailbox error suggest trying again */
+	return err ? -EAGAIN : 0;
+}
 
-अटल पूर्णांक __fm10k_mc_sync(काष्ठा net_device *dev,
-			   स्थिर अचिन्हित अक्षर *addr, bool sync)
-अणु
-	काष्ठा fm10k_पूर्णांकfc *पूर्णांकerface = netdev_priv(dev);
-	u16 vid, glort = पूर्णांकerface->glort;
+static int __fm10k_mc_sync(struct net_device *dev,
+			   const unsigned char *addr, bool sync)
+{
+	struct fm10k_intfc *interface = netdev_priv(dev);
+	u16 vid, glort = interface->glort;
 	s32 err;
 
-	अगर (!is_multicast_ether_addr(addr))
-		वापस -EADDRNOTAVAIL;
+	if (!is_multicast_ether_addr(addr))
+		return -EADDRNOTAVAIL;
 
-	क्रम (vid = fm10k_find_next_vlan(पूर्णांकerface, 0);
+	for (vid = fm10k_find_next_vlan(interface, 0);
 	     vid < VLAN_N_VID;
-	     vid = fm10k_find_next_vlan(पूर्णांकerface, vid)) अणु
-		err = fm10k_queue_mac_request(पूर्णांकerface, glort,
+	     vid = fm10k_find_next_vlan(interface, vid)) {
+		err = fm10k_queue_mac_request(interface, glort,
 					      addr, vid, sync);
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक fm10k_mc_sync(काष्ठा net_device *dev,
-			 स्थिर अचिन्हित अक्षर *addr)
-अणु
-	वापस __fm10k_mc_sync(dev, addr, true);
-पूर्ण
+static int fm10k_mc_sync(struct net_device *dev,
+			 const unsigned char *addr)
+{
+	return __fm10k_mc_sync(dev, addr, true);
+}
 
-अटल पूर्णांक fm10k_mc_unsync(काष्ठा net_device *dev,
-			   स्थिर अचिन्हित अक्षर *addr)
-अणु
-	वापस __fm10k_mc_sync(dev, addr, false);
-पूर्ण
+static int fm10k_mc_unsync(struct net_device *dev,
+			   const unsigned char *addr)
+{
+	return __fm10k_mc_sync(dev, addr, false);
+}
 
-अटल व्योम fm10k_set_rx_mode(काष्ठा net_device *dev)
-अणु
-	काष्ठा fm10k_पूर्णांकfc *पूर्णांकerface = netdev_priv(dev);
-	काष्ठा fm10k_hw *hw = &पूर्णांकerface->hw;
-	पूर्णांक xcast_mode;
+static void fm10k_set_rx_mode(struct net_device *dev)
+{
+	struct fm10k_intfc *interface = netdev_priv(dev);
+	struct fm10k_hw *hw = &interface->hw;
+	int xcast_mode;
 
-	/* no need to update the harwdare अगर we are not running */
-	अगर (!(dev->flags & IFF_UP))
-		वापस;
+	/* no need to update the harwdare if we are not running */
+	if (!(dev->flags & IFF_UP))
+		return;
 
 	/* determine new mode based on flags */
 	xcast_mode = (dev->flags & IFF_PROMISC) ? FM10K_XCAST_MODE_PROMISC :
@@ -1050,97 +1049,97 @@ err_out:
 		     (dev->flags & (IFF_BROADCAST | IFF_MULTICAST)) ?
 		     FM10K_XCAST_MODE_MULTI : FM10K_XCAST_MODE_NONE;
 
-	fm10k_mbx_lock(पूर्णांकerface);
+	fm10k_mbx_lock(interface);
 
-	/* update xcast mode first, but only अगर it changed */
-	अगर (पूर्णांकerface->xcast_mode != xcast_mode) अणु
+	/* update xcast mode first, but only if it changed */
+	if (interface->xcast_mode != xcast_mode) {
 		/* update VLAN table when entering promiscuous mode */
-		अगर (xcast_mode == FM10K_XCAST_MODE_PROMISC)
-			fm10k_queue_vlan_request(पूर्णांकerface, FM10K_VLAN_ALL,
+		if (xcast_mode == FM10K_XCAST_MODE_PROMISC)
+			fm10k_queue_vlan_request(interface, FM10K_VLAN_ALL,
 						 0, true);
 
-		/* clear VLAN table when निकासing promiscuous mode */
-		अगर (पूर्णांकerface->xcast_mode == FM10K_XCAST_MODE_PROMISC)
-			fm10k_clear_unused_vlans(पूर्णांकerface);
+		/* clear VLAN table when exiting promiscuous mode */
+		if (interface->xcast_mode == FM10K_XCAST_MODE_PROMISC)
+			fm10k_clear_unused_vlans(interface);
 
-		/* update xcast mode अगर host's mailbox is पढ़ोy */
-		अगर (fm10k_host_mbx_पढ़ोy(पूर्णांकerface))
-			hw->mac.ops.update_xcast_mode(hw, पूर्णांकerface->glort,
+		/* update xcast mode if host's mailbox is ready */
+		if (fm10k_host_mbx_ready(interface))
+			hw->mac.ops.update_xcast_mode(hw, interface->glort,
 						      xcast_mode);
 
 		/* record updated xcast mode state */
-		पूर्णांकerface->xcast_mode = xcast_mode;
-	पूर्ण
+		interface->xcast_mode = xcast_mode;
+	}
 
 	/* synchronize all of the addresses */
 	__dev_uc_sync(dev, fm10k_uc_sync, fm10k_uc_unsync);
 	__dev_mc_sync(dev, fm10k_mc_sync, fm10k_mc_unsync);
 
-	fm10k_mbx_unlock(पूर्णांकerface);
-पूर्ण
+	fm10k_mbx_unlock(interface);
+}
 
-व्योम fm10k_restore_rx_state(काष्ठा fm10k_पूर्णांकfc *पूर्णांकerface)
-अणु
-	काष्ठा fm10k_l2_accel *l2_accel = पूर्णांकerface->l2_accel;
-	काष्ठा net_device *netdev = पूर्णांकerface->netdev;
-	काष्ठा fm10k_hw *hw = &पूर्णांकerface->hw;
-	पूर्णांक xcast_mode, i;
+void fm10k_restore_rx_state(struct fm10k_intfc *interface)
+{
+	struct fm10k_l2_accel *l2_accel = interface->l2_accel;
+	struct net_device *netdev = interface->netdev;
+	struct fm10k_hw *hw = &interface->hw;
+	int xcast_mode, i;
 	u16 vid, glort;
 
-	/* record glort क्रम this पूर्णांकerface */
-	glort = पूर्णांकerface->glort;
+	/* record glort for this interface */
+	glort = interface->glort;
 
-	/* convert पूर्णांकerface flags to xcast mode */
-	अगर (netdev->flags & IFF_PROMISC)
+	/* convert interface flags to xcast mode */
+	if (netdev->flags & IFF_PROMISC)
 		xcast_mode = FM10K_XCAST_MODE_PROMISC;
-	अन्यथा अगर (netdev->flags & IFF_ALLMULTI)
+	else if (netdev->flags & IFF_ALLMULTI)
 		xcast_mode = FM10K_XCAST_MODE_ALLMULTI;
-	अन्यथा अगर (netdev->flags & (IFF_BROADCAST | IFF_MULTICAST))
+	else if (netdev->flags & (IFF_BROADCAST | IFF_MULTICAST))
 		xcast_mode = FM10K_XCAST_MODE_MULTI;
-	अन्यथा
+	else
 		xcast_mode = FM10K_XCAST_MODE_NONE;
 
-	fm10k_mbx_lock(पूर्णांकerface);
+	fm10k_mbx_lock(interface);
 
-	/* Enable logical port अगर host's mailbox is पढ़ोy */
-	अगर (fm10k_host_mbx_पढ़ोy(पूर्णांकerface))
+	/* Enable logical port if host's mailbox is ready */
+	if (fm10k_host_mbx_ready(interface))
 		hw->mac.ops.update_lport_state(hw, glort,
-					       पूर्णांकerface->glort_count, true);
+					       interface->glort_count, true);
 
 	/* update VLAN table */
-	fm10k_queue_vlan_request(पूर्णांकerface, FM10K_VLAN_ALL, 0,
+	fm10k_queue_vlan_request(interface, FM10K_VLAN_ALL, 0,
 				 xcast_mode == FM10K_XCAST_MODE_PROMISC);
 
 	/* update table with current entries */
-	क्रम (vid = fm10k_find_next_vlan(पूर्णांकerface, 0);
+	for (vid = fm10k_find_next_vlan(interface, 0);
 	     vid < VLAN_N_VID;
-	     vid = fm10k_find_next_vlan(पूर्णांकerface, vid)) अणु
-		fm10k_queue_vlan_request(पूर्णांकerface, vid, 0, true);
+	     vid = fm10k_find_next_vlan(interface, vid)) {
+		fm10k_queue_vlan_request(interface, vid, 0, true);
 
-		fm10k_queue_mac_request(पूर्णांकerface, glort,
+		fm10k_queue_mac_request(interface, glort,
 					hw->mac.addr, vid, true);
 
 		/* synchronize macvlan addresses */
-		अगर (l2_accel) अणु
-			क्रम (i = 0; i < l2_accel->size; i++) अणु
-				काष्ठा net_device *sdev = l2_accel->macvlan[i];
+		if (l2_accel) {
+			for (i = 0; i < l2_accel->size; i++) {
+				struct net_device *sdev = l2_accel->macvlan[i];
 
-				अगर (!sdev)
-					जारी;
+				if (!sdev)
+					continue;
 
 				glort = l2_accel->dglort + 1 + i;
 
-				fm10k_queue_mac_request(पूर्णांकerface, glort,
+				fm10k_queue_mac_request(interface, glort,
 							sdev->dev_addr,
 							vid, true);
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
-	/* update xcast mode beक्रमe synchronizing addresses अगर host's mailbox
-	 * is पढ़ोy
+	/* update xcast mode before synchronizing addresses if host's mailbox
+	 * is ready
 	 */
-	अगर (fm10k_host_mbx_पढ़ोy(पूर्णांकerface))
+	if (fm10k_host_mbx_ready(interface))
 		hw->mac.ops.update_xcast_mode(hw, glort, xcast_mode);
 
 	/* synchronize all of the addresses */
@@ -1148,416 +1147,416 @@ err_out:
 	__dev_mc_sync(netdev, fm10k_mc_sync, fm10k_mc_unsync);
 
 	/* synchronize macvlan addresses */
-	अगर (l2_accel) अणु
-		क्रम (i = 0; i < l2_accel->size; i++) अणु
-			काष्ठा net_device *sdev = l2_accel->macvlan[i];
+	if (l2_accel) {
+		for (i = 0; i < l2_accel->size; i++) {
+			struct net_device *sdev = l2_accel->macvlan[i];
 
-			अगर (!sdev)
-				जारी;
+			if (!sdev)
+				continue;
 
 			glort = l2_accel->dglort + 1 + i;
 
 			hw->mac.ops.update_xcast_mode(hw, glort,
 						      FM10K_XCAST_MODE_NONE);
-			fm10k_queue_mac_request(पूर्णांकerface, glort,
+			fm10k_queue_mac_request(interface, glort,
 						sdev->dev_addr,
-						hw->mac.शेष_vid, true);
-		पूर्ण
-	पूर्ण
+						hw->mac.default_vid, true);
+		}
+	}
 
-	fm10k_mbx_unlock(पूर्णांकerface);
+	fm10k_mbx_unlock(interface);
 
 	/* record updated xcast mode state */
-	पूर्णांकerface->xcast_mode = xcast_mode;
+	interface->xcast_mode = xcast_mode;
 
 	/* Restore tunnel configuration */
-	fm10k_restore_udp_port_info(पूर्णांकerface);
-पूर्ण
+	fm10k_restore_udp_port_info(interface);
+}
 
-व्योम fm10k_reset_rx_state(काष्ठा fm10k_पूर्णांकfc *पूर्णांकerface)
-अणु
-	काष्ठा net_device *netdev = पूर्णांकerface->netdev;
-	काष्ठा fm10k_hw *hw = &पूर्णांकerface->hw;
+void fm10k_reset_rx_state(struct fm10k_intfc *interface)
+{
+	struct net_device *netdev = interface->netdev;
+	struct fm10k_hw *hw = &interface->hw;
 
-	/* Wait क्रम MAC/VLAN work to finish */
-	जबतक (test_bit(__FM10K_MACVLAN_SCHED, पूर्णांकerface->state))
+	/* Wait for MAC/VLAN work to finish */
+	while (test_bit(__FM10K_MACVLAN_SCHED, interface->state))
 		usleep_range(1000, 2000);
 
 	/* Cancel pending MAC/VLAN requests */
-	fm10k_clear_macvlan_queue(पूर्णांकerface, पूर्णांकerface->glort, true);
+	fm10k_clear_macvlan_queue(interface, interface->glort, true);
 
-	fm10k_mbx_lock(पूर्णांकerface);
+	fm10k_mbx_lock(interface);
 
-	/* clear the logical port state on lower device अगर host's mailbox is
-	 * पढ़ोy
+	/* clear the logical port state on lower device if host's mailbox is
+	 * ready
 	 */
-	अगर (fm10k_host_mbx_पढ़ोy(पूर्णांकerface))
-		hw->mac.ops.update_lport_state(hw, पूर्णांकerface->glort,
-					       पूर्णांकerface->glort_count, false);
+	if (fm10k_host_mbx_ready(interface))
+		hw->mac.ops.update_lport_state(hw, interface->glort,
+					       interface->glort_count, false);
 
-	fm10k_mbx_unlock(पूर्णांकerface);
+	fm10k_mbx_unlock(interface);
 
-	/* reset flags to शेष state */
-	पूर्णांकerface->xcast_mode = FM10K_XCAST_MODE_NONE;
+	/* reset flags to default state */
+	interface->xcast_mode = FM10K_XCAST_MODE_NONE;
 
 	/* clear the sync flag since the lport has been dropped */
-	__dev_uc_unsync(netdev, शून्य);
-	__dev_mc_unsync(netdev, शून्य);
-पूर्ण
+	__dev_uc_unsync(netdev, NULL);
+	__dev_mc_unsync(netdev, NULL);
+}
 
 /**
  * fm10k_get_stats64 - Get System Network Statistics
- * @netdev: network पूर्णांकerface device काष्ठाure
- * @stats: storage space क्रम 64bit statistics
+ * @netdev: network interface device structure
+ * @stats: storage space for 64bit statistics
  *
- * Obtain 64bit statistics in a way that is safe क्रम both 32bit and 64bit
+ * Obtain 64bit statistics in a way that is safe for both 32bit and 64bit
  * architectures.
  */
-अटल व्योम fm10k_get_stats64(काष्ठा net_device *netdev,
-			      काष्ठा rtnl_link_stats64 *stats)
-अणु
-	काष्ठा fm10k_पूर्णांकfc *पूर्णांकerface = netdev_priv(netdev);
-	काष्ठा fm10k_ring *ring;
-	अचिन्हित पूर्णांक start, i;
+static void fm10k_get_stats64(struct net_device *netdev,
+			      struct rtnl_link_stats64 *stats)
+{
+	struct fm10k_intfc *interface = netdev_priv(netdev);
+	struct fm10k_ring *ring;
+	unsigned int start, i;
 	u64 bytes, packets;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 
-	क्रम (i = 0; i < पूर्णांकerface->num_rx_queues; i++) अणु
-		ring = READ_ONCE(पूर्णांकerface->rx_ring[i]);
+	for (i = 0; i < interface->num_rx_queues; i++) {
+		ring = READ_ONCE(interface->rx_ring[i]);
 
-		अगर (!ring)
-			जारी;
+		if (!ring)
+			continue;
 
-		करो अणु
+		do {
 			start = u64_stats_fetch_begin_irq(&ring->syncp);
 			packets = ring->stats.packets;
 			bytes   = ring->stats.bytes;
-		पूर्ण जबतक (u64_stats_fetch_retry_irq(&ring->syncp, start));
+		} while (u64_stats_fetch_retry_irq(&ring->syncp, start));
 
 		stats->rx_packets += packets;
 		stats->rx_bytes   += bytes;
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < पूर्णांकerface->num_tx_queues; i++) अणु
-		ring = READ_ONCE(पूर्णांकerface->tx_ring[i]);
+	for (i = 0; i < interface->num_tx_queues; i++) {
+		ring = READ_ONCE(interface->tx_ring[i]);
 
-		अगर (!ring)
-			जारी;
+		if (!ring)
+			continue;
 
-		करो अणु
+		do {
 			start = u64_stats_fetch_begin_irq(&ring->syncp);
 			packets = ring->stats.packets;
 			bytes   = ring->stats.bytes;
-		पूर्ण जबतक (u64_stats_fetch_retry_irq(&ring->syncp, start));
+		} while (u64_stats_fetch_retry_irq(&ring->syncp, start));
 
 		stats->tx_packets += packets;
 		stats->tx_bytes   += bytes;
-	पूर्ण
+	}
 
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 
 	/* following stats updated by fm10k_service_task() */
 	stats->rx_missed_errors	= netdev->stats.rx_missed_errors;
-पूर्ण
+}
 
-पूर्णांक fm10k_setup_tc(काष्ठा net_device *dev, u8 tc)
-अणु
-	काष्ठा fm10k_पूर्णांकfc *पूर्णांकerface = netdev_priv(dev);
-	पूर्णांक err;
+int fm10k_setup_tc(struct net_device *dev, u8 tc)
+{
+	struct fm10k_intfc *interface = netdev_priv(dev);
+	int err;
 
 	/* Currently only the PF supports priority classes */
-	अगर (tc && (पूर्णांकerface->hw.mac.type != fm10k_mac_pf))
-		वापस -EINVAL;
+	if (tc && (interface->hw.mac.type != fm10k_mac_pf))
+		return -EINVAL;
 
 	/* Hardware supports up to 8 traffic classes */
-	अगर (tc > 8)
-		वापस -EINVAL;
+	if (tc > 8)
+		return -EINVAL;
 
 	/* Hardware has to reinitialize queues to match packet
-	 * buffer alignment. Unक्रमtunately, the hardware is not
-	 * flexible enough to करो this dynamically.
+	 * buffer alignment. Unfortunately, the hardware is not
+	 * flexible enough to do this dynamically.
 	 */
-	अगर (netअगर_running(dev))
-		fm10k_बंद(dev);
+	if (netif_running(dev))
+		fm10k_close(dev);
 
-	fm10k_mbx_मुक्त_irq(पूर्णांकerface);
+	fm10k_mbx_free_irq(interface);
 
-	fm10k_clear_queueing_scheme(पूर्णांकerface);
+	fm10k_clear_queueing_scheme(interface);
 
 	/* we expect the prio_tc map to be repopulated later */
 	netdev_reset_tc(dev);
 	netdev_set_num_tc(dev, tc);
 
-	err = fm10k_init_queueing_scheme(पूर्णांकerface);
-	अगर (err)
-		जाओ err_queueing_scheme;
+	err = fm10k_init_queueing_scheme(interface);
+	if (err)
+		goto err_queueing_scheme;
 
-	err = fm10k_mbx_request_irq(पूर्णांकerface);
-	अगर (err)
-		जाओ err_mbx_irq;
+	err = fm10k_mbx_request_irq(interface);
+	if (err)
+		goto err_mbx_irq;
 
-	err = netअगर_running(dev) ? fm10k_खोलो(dev) : 0;
-	अगर (err)
-		जाओ err_खोलो;
+	err = netif_running(dev) ? fm10k_open(dev) : 0;
+	if (err)
+		goto err_open;
 
 	/* flag to indicate SWPRI has yet to be updated */
-	set_bit(FM10K_FLAG_SWPRI_CONFIG, पूर्णांकerface->flags);
+	set_bit(FM10K_FLAG_SWPRI_CONFIG, interface->flags);
 
-	वापस 0;
-err_खोलो:
-	fm10k_mbx_मुक्त_irq(पूर्णांकerface);
+	return 0;
+err_open:
+	fm10k_mbx_free_irq(interface);
 err_mbx_irq:
-	fm10k_clear_queueing_scheme(पूर्णांकerface);
+	fm10k_clear_queueing_scheme(interface);
 err_queueing_scheme:
-	netअगर_device_detach(dev);
+	netif_device_detach(dev);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक __fm10k_setup_tc(काष्ठा net_device *dev, क्रमागत tc_setup_type type,
-			    व्योम *type_data)
-अणु
-	काष्ठा tc_mqprio_qopt *mqprio = type_data;
+static int __fm10k_setup_tc(struct net_device *dev, enum tc_setup_type type,
+			    void *type_data)
+{
+	struct tc_mqprio_qopt *mqprio = type_data;
 
-	अगर (type != TC_SETUP_QDISC_MQPRIO)
-		वापस -EOPNOTSUPP;
+	if (type != TC_SETUP_QDISC_MQPRIO)
+		return -EOPNOTSUPP;
 
 	mqprio->hw = TC_MQPRIO_HW_OFFLOAD_TCS;
 
-	वापस fm10k_setup_tc(dev, mqprio->num_tc);
-पूर्ण
+	return fm10k_setup_tc(dev, mqprio->num_tc);
+}
 
-अटल व्योम fm10k_assign_l2_accel(काष्ठा fm10k_पूर्णांकfc *पूर्णांकerface,
-				  काष्ठा fm10k_l2_accel *l2_accel)
-अणु
-	पूर्णांक i;
+static void fm10k_assign_l2_accel(struct fm10k_intfc *interface,
+				  struct fm10k_l2_accel *l2_accel)
+{
+	int i;
 
-	क्रम (i = 0; i < पूर्णांकerface->num_rx_queues; i++) अणु
-		काष्ठा fm10k_ring *ring = पूर्णांकerface->rx_ring[i];
+	for (i = 0; i < interface->num_rx_queues; i++) {
+		struct fm10k_ring *ring = interface->rx_ring[i];
 
-		rcu_assign_poपूर्णांकer(ring->l2_accel, l2_accel);
-	पूर्ण
+		rcu_assign_pointer(ring->l2_accel, l2_accel);
+	}
 
-	पूर्णांकerface->l2_accel = l2_accel;
-पूर्ण
+	interface->l2_accel = l2_accel;
+}
 
-अटल व्योम *fm10k_dfwd_add_station(काष्ठा net_device *dev,
-				    काष्ठा net_device *sdev)
-अणु
-	काष्ठा fm10k_पूर्णांकfc *पूर्णांकerface = netdev_priv(dev);
-	काष्ठा fm10k_l2_accel *l2_accel = पूर्णांकerface->l2_accel;
-	काष्ठा fm10k_l2_accel *old_l2_accel = शून्य;
-	काष्ठा fm10k_dglort_cfg dglort = अणु 0 पूर्ण;
-	काष्ठा fm10k_hw *hw = &पूर्णांकerface->hw;
-	पूर्णांक size, i;
+static void *fm10k_dfwd_add_station(struct net_device *dev,
+				    struct net_device *sdev)
+{
+	struct fm10k_intfc *interface = netdev_priv(dev);
+	struct fm10k_l2_accel *l2_accel = interface->l2_accel;
+	struct fm10k_l2_accel *old_l2_accel = NULL;
+	struct fm10k_dglort_cfg dglort = { 0 };
+	struct fm10k_hw *hw = &interface->hw;
+	int size, i;
 	u16 vid, glort;
 
 	/* The hardware supported by fm10k only filters on the destination MAC
-	 * address. In order to aव्योम issues we only support offloading modes
+	 * address. In order to avoid issues we only support offloading modes
 	 * where the hardware can actually provide the functionality.
 	 */
-	अगर (!macvlan_supports_dest_filter(sdev))
-		वापस ERR_PTR(-EMEDIUMTYPE);
+	if (!macvlan_supports_dest_filter(sdev))
+		return ERR_PTR(-EMEDIUMTYPE);
 
-	/* allocate l2 accel काष्ठाure अगर it is not available */
-	अगर (!l2_accel) अणु
-		/* verअगरy there is enough मुक्त GLORTs to support l2_accel */
-		अगर (पूर्णांकerface->glort_count < 7)
-			वापस ERR_PTR(-EBUSY);
+	/* allocate l2 accel structure if it is not available */
+	if (!l2_accel) {
+		/* verify there is enough free GLORTs to support l2_accel */
+		if (interface->glort_count < 7)
+			return ERR_PTR(-EBUSY);
 
-		size = दुरत्व(काष्ठा fm10k_l2_accel, macvlan[7]);
+		size = offsetof(struct fm10k_l2_accel, macvlan[7]);
 		l2_accel = kzalloc(size, GFP_KERNEL);
-		अगर (!l2_accel)
-			वापस ERR_PTR(-ENOMEM);
+		if (!l2_accel)
+			return ERR_PTR(-ENOMEM);
 
 		l2_accel->size = 7;
-		l2_accel->dglort = पूर्णांकerface->glort;
+		l2_accel->dglort = interface->glort;
 
-		/* update poपूर्णांकers */
-		fm10k_assign_l2_accel(पूर्णांकerface, l2_accel);
-	/* करो not expand अगर we are at our limit */
-	पूर्ण अन्यथा अगर ((l2_accel->count == FM10K_MAX_STATIONS) ||
-		   (l2_accel->count == (पूर्णांकerface->glort_count - 1))) अणु
-		वापस ERR_PTR(-EBUSY);
-	/* expand अगर we have hit the size limit */
-	पूर्ण अन्यथा अगर (l2_accel->count == l2_accel->size) अणु
+		/* update pointers */
+		fm10k_assign_l2_accel(interface, l2_accel);
+	/* do not expand if we are at our limit */
+	} else if ((l2_accel->count == FM10K_MAX_STATIONS) ||
+		   (l2_accel->count == (interface->glort_count - 1))) {
+		return ERR_PTR(-EBUSY);
+	/* expand if we have hit the size limit */
+	} else if (l2_accel->count == l2_accel->size) {
 		old_l2_accel = l2_accel;
-		size = दुरत्व(काष्ठा fm10k_l2_accel,
+		size = offsetof(struct fm10k_l2_accel,
 				macvlan[(l2_accel->size * 2) + 1]);
 		l2_accel = kzalloc(size, GFP_KERNEL);
-		अगर (!l2_accel)
-			वापस ERR_PTR(-ENOMEM);
+		if (!l2_accel)
+			return ERR_PTR(-ENOMEM);
 
-		स_नकल(l2_accel, old_l2_accel,
-		       दुरत्व(काष्ठा fm10k_l2_accel,
+		memcpy(l2_accel, old_l2_accel,
+		       offsetof(struct fm10k_l2_accel,
 				macvlan[old_l2_accel->size]));
 
 		l2_accel->size = (old_l2_accel->size * 2) + 1;
 
-		/* update poपूर्णांकers */
-		fm10k_assign_l2_accel(पूर्णांकerface, l2_accel);
-		kमुक्त_rcu(old_l2_accel, rcu);
-	पूर्ण
+		/* update pointers */
+		fm10k_assign_l2_accel(interface, l2_accel);
+		kfree_rcu(old_l2_accel, rcu);
+	}
 
-	/* add macvlan to accel table, and record GLORT क्रम position */
-	क्रम (i = 0; i < l2_accel->size; i++) अणु
-		अगर (!l2_accel->macvlan[i])
-			अवरोध;
-	पूर्ण
+	/* add macvlan to accel table, and record GLORT for position */
+	for (i = 0; i < l2_accel->size; i++) {
+		if (!l2_accel->macvlan[i])
+			break;
+	}
 
 	/* record station */
 	l2_accel->macvlan[i] = sdev;
 	l2_accel->count++;
 
-	/* configure शेष DGLORT mapping क्रम RSS/DCB */
+	/* configure default DGLORT mapping for RSS/DCB */
 	dglort.idx = fm10k_dglort_pf_rss;
 	dglort.inner_rss = 1;
-	dglort.rss_l = fls(पूर्णांकerface->ring_feature[RING_F_RSS].mask);
-	dglort.pc_l = fls(पूर्णांकerface->ring_feature[RING_F_QOS].mask);
-	dglort.glort = पूर्णांकerface->glort;
+	dglort.rss_l = fls(interface->ring_feature[RING_F_RSS].mask);
+	dglort.pc_l = fls(interface->ring_feature[RING_F_QOS].mask);
+	dglort.glort = interface->glort;
 	dglort.shared_l = fls(l2_accel->size);
 	hw->mac.ops.configure_dglort_map(hw, &dglort);
 
-	/* Add rules क्रम this specअगरic dglort to the चयन */
-	fm10k_mbx_lock(पूर्णांकerface);
+	/* Add rules for this specific dglort to the switch */
+	fm10k_mbx_lock(interface);
 
 	glort = l2_accel->dglort + 1 + i;
 
-	अगर (fm10k_host_mbx_पढ़ोy(पूर्णांकerface))
+	if (fm10k_host_mbx_ready(interface))
 		hw->mac.ops.update_xcast_mode(hw, glort,
 					      FM10K_XCAST_MODE_NONE);
 
-	fm10k_queue_mac_request(पूर्णांकerface, glort, sdev->dev_addr,
-				hw->mac.शेष_vid, true);
+	fm10k_queue_mac_request(interface, glort, sdev->dev_addr,
+				hw->mac.default_vid, true);
 
-	क्रम (vid = fm10k_find_next_vlan(पूर्णांकerface, 0);
+	for (vid = fm10k_find_next_vlan(interface, 0);
 	     vid < VLAN_N_VID;
-	     vid = fm10k_find_next_vlan(पूर्णांकerface, vid))
-		fm10k_queue_mac_request(पूर्णांकerface, glort, sdev->dev_addr,
+	     vid = fm10k_find_next_vlan(interface, vid))
+		fm10k_queue_mac_request(interface, glort, sdev->dev_addr,
 					vid, true);
 
-	fm10k_mbx_unlock(पूर्णांकerface);
+	fm10k_mbx_unlock(interface);
 
-	वापस sdev;
-पूर्ण
+	return sdev;
+}
 
-अटल व्योम fm10k_dfwd_del_station(काष्ठा net_device *dev, व्योम *priv)
-अणु
-	काष्ठा fm10k_पूर्णांकfc *पूर्णांकerface = netdev_priv(dev);
-	काष्ठा fm10k_l2_accel *l2_accel = READ_ONCE(पूर्णांकerface->l2_accel);
-	काष्ठा fm10k_dglort_cfg dglort = अणु 0 पूर्ण;
-	काष्ठा fm10k_hw *hw = &पूर्णांकerface->hw;
-	काष्ठा net_device *sdev = priv;
+static void fm10k_dfwd_del_station(struct net_device *dev, void *priv)
+{
+	struct fm10k_intfc *interface = netdev_priv(dev);
+	struct fm10k_l2_accel *l2_accel = READ_ONCE(interface->l2_accel);
+	struct fm10k_dglort_cfg dglort = { 0 };
+	struct fm10k_hw *hw = &interface->hw;
+	struct net_device *sdev = priv;
 	u16 vid, glort;
-	पूर्णांक i;
+	int i;
 
-	अगर (!l2_accel)
-		वापस;
+	if (!l2_accel)
+		return;
 
-	/* search table क्रम matching पूर्णांकerface */
-	क्रम (i = 0; i < l2_accel->size; i++) अणु
-		अगर (l2_accel->macvlan[i] == sdev)
-			अवरोध;
-	पूर्ण
+	/* search table for matching interface */
+	for (i = 0; i < l2_accel->size; i++) {
+		if (l2_accel->macvlan[i] == sdev)
+			break;
+	}
 
-	/* निकास अगर macvlan not found */
-	अगर (i == l2_accel->size)
-		वापस;
+	/* exit if macvlan not found */
+	if (i == l2_accel->size)
+		return;
 
-	/* Remove any rules specअगरic to this dglort */
-	fm10k_mbx_lock(पूर्णांकerface);
+	/* Remove any rules specific to this dglort */
+	fm10k_mbx_lock(interface);
 
 	glort = l2_accel->dglort + 1 + i;
 
-	अगर (fm10k_host_mbx_पढ़ोy(पूर्णांकerface))
+	if (fm10k_host_mbx_ready(interface))
 		hw->mac.ops.update_xcast_mode(hw, glort,
 					      FM10K_XCAST_MODE_NONE);
 
-	fm10k_queue_mac_request(पूर्णांकerface, glort, sdev->dev_addr,
-				hw->mac.शेष_vid, false);
+	fm10k_queue_mac_request(interface, glort, sdev->dev_addr,
+				hw->mac.default_vid, false);
 
-	क्रम (vid = fm10k_find_next_vlan(पूर्णांकerface, 0);
+	for (vid = fm10k_find_next_vlan(interface, 0);
 	     vid < VLAN_N_VID;
-	     vid = fm10k_find_next_vlan(पूर्णांकerface, vid))
-		fm10k_queue_mac_request(पूर्णांकerface, glort, sdev->dev_addr,
+	     vid = fm10k_find_next_vlan(interface, vid))
+		fm10k_queue_mac_request(interface, glort, sdev->dev_addr,
 					vid, false);
 
-	fm10k_mbx_unlock(पूर्णांकerface);
+	fm10k_mbx_unlock(interface);
 
 	/* record removal */
-	l2_accel->macvlan[i] = शून्य;
+	l2_accel->macvlan[i] = NULL;
 	l2_accel->count--;
 
-	/* configure शेष DGLORT mapping क्रम RSS/DCB */
+	/* configure default DGLORT mapping for RSS/DCB */
 	dglort.idx = fm10k_dglort_pf_rss;
 	dglort.inner_rss = 1;
-	dglort.rss_l = fls(पूर्णांकerface->ring_feature[RING_F_RSS].mask);
-	dglort.pc_l = fls(पूर्णांकerface->ring_feature[RING_F_QOS].mask);
-	dglort.glort = पूर्णांकerface->glort;
+	dglort.rss_l = fls(interface->ring_feature[RING_F_RSS].mask);
+	dglort.pc_l = fls(interface->ring_feature[RING_F_QOS].mask);
+	dglort.glort = interface->glort;
 	dglort.shared_l = fls(l2_accel->size);
 	hw->mac.ops.configure_dglort_map(hw, &dglort);
 
-	/* If table is empty हटाओ it */
-	अगर (l2_accel->count == 0) अणु
-		fm10k_assign_l2_accel(पूर्णांकerface, शून्य);
-		kमुक्त_rcu(l2_accel, rcu);
-	पूर्ण
-पूर्ण
+	/* If table is empty remove it */
+	if (l2_accel->count == 0) {
+		fm10k_assign_l2_accel(interface, NULL);
+		kfree_rcu(l2_accel, rcu);
+	}
+}
 
-अटल netdev_features_t fm10k_features_check(काष्ठा sk_buff *skb,
-					      काष्ठा net_device *dev,
+static netdev_features_t fm10k_features_check(struct sk_buff *skb,
+					      struct net_device *dev,
 					      netdev_features_t features)
-अणु
-	अगर (!skb->encapsulation || fm10k_tx_encap_offload(skb))
-		वापस features;
+{
+	if (!skb->encapsulation || fm10k_tx_encap_offload(skb))
+		return features;
 
-	वापस features & ~(NETIF_F_CSUM_MASK | NETIF_F_GSO_MASK);
-पूर्ण
+	return features & ~(NETIF_F_CSUM_MASK | NETIF_F_GSO_MASK);
+}
 
-अटल स्थिर काष्ठा net_device_ops fm10k_netdev_ops = अणु
-	.nकरो_खोलो		= fm10k_खोलो,
-	.nकरो_stop		= fm10k_बंद,
-	.nकरो_validate_addr	= eth_validate_addr,
-	.nकरो_start_xmit		= fm10k_xmit_frame,
-	.nकरो_set_mac_address	= fm10k_set_mac,
-	.nकरो_tx_समयout		= fm10k_tx_समयout,
-	.nकरो_vlan_rx_add_vid	= fm10k_vlan_rx_add_vid,
-	.nकरो_vlan_rx_समाप्त_vid	= fm10k_vlan_rx_समाप्त_vid,
-	.nकरो_set_rx_mode	= fm10k_set_rx_mode,
-	.nकरो_get_stats64	= fm10k_get_stats64,
-	.nकरो_setup_tc		= __fm10k_setup_tc,
-	.nकरो_set_vf_mac		= fm10k_nकरो_set_vf_mac,
-	.nकरो_set_vf_vlan	= fm10k_nकरो_set_vf_vlan,
-	.nकरो_set_vf_rate	= fm10k_nकरो_set_vf_bw,
-	.nकरो_get_vf_config	= fm10k_nकरो_get_vf_config,
-	.nकरो_get_vf_stats	= fm10k_nकरो_get_vf_stats,
-	.nकरो_dfwd_add_station	= fm10k_dfwd_add_station,
-	.nकरो_dfwd_del_station	= fm10k_dfwd_del_station,
-	.nकरो_features_check	= fm10k_features_check,
-पूर्ण;
+static const struct net_device_ops fm10k_netdev_ops = {
+	.ndo_open		= fm10k_open,
+	.ndo_stop		= fm10k_close,
+	.ndo_validate_addr	= eth_validate_addr,
+	.ndo_start_xmit		= fm10k_xmit_frame,
+	.ndo_set_mac_address	= fm10k_set_mac,
+	.ndo_tx_timeout		= fm10k_tx_timeout,
+	.ndo_vlan_rx_add_vid	= fm10k_vlan_rx_add_vid,
+	.ndo_vlan_rx_kill_vid	= fm10k_vlan_rx_kill_vid,
+	.ndo_set_rx_mode	= fm10k_set_rx_mode,
+	.ndo_get_stats64	= fm10k_get_stats64,
+	.ndo_setup_tc		= __fm10k_setup_tc,
+	.ndo_set_vf_mac		= fm10k_ndo_set_vf_mac,
+	.ndo_set_vf_vlan	= fm10k_ndo_set_vf_vlan,
+	.ndo_set_vf_rate	= fm10k_ndo_set_vf_bw,
+	.ndo_get_vf_config	= fm10k_ndo_get_vf_config,
+	.ndo_get_vf_stats	= fm10k_ndo_get_vf_stats,
+	.ndo_dfwd_add_station	= fm10k_dfwd_add_station,
+	.ndo_dfwd_del_station	= fm10k_dfwd_del_station,
+	.ndo_features_check	= fm10k_features_check,
+};
 
-#घोषणा DEFAULT_DEBUG_LEVEL_SHIFT 3
+#define DEFAULT_DEBUG_LEVEL_SHIFT 3
 
-काष्ठा net_device *fm10k_alloc_netdev(स्थिर काष्ठा fm10k_info *info)
-अणु
+struct net_device *fm10k_alloc_netdev(const struct fm10k_info *info)
+{
 	netdev_features_t hw_features;
-	काष्ठा fm10k_पूर्णांकfc *पूर्णांकerface;
-	काष्ठा net_device *dev;
+	struct fm10k_intfc *interface;
+	struct net_device *dev;
 
-	dev = alloc_etherdev_mq(माप(काष्ठा fm10k_पूर्णांकfc), MAX_QUEUES);
-	अगर (!dev)
-		वापस शून्य;
+	dev = alloc_etherdev_mq(sizeof(struct fm10k_intfc), MAX_QUEUES);
+	if (!dev)
+		return NULL;
 
 	/* set net device and ethtool ops */
 	dev->netdev_ops = &fm10k_netdev_ops;
 	fm10k_set_ethtool_ops(dev);
 
-	/* configure शेष debug level */
-	पूर्णांकerface = netdev_priv(dev);
-	पूर्णांकerface->msg_enable = BIT(DEFAULT_DEBUG_LEVEL_SHIFT) - 1;
+	/* configure default debug level */
+	interface = netdev_priv(dev);
+	interface->msg_enable = BIT(DEFAULT_DEBUG_LEVEL_SHIFT) - 1;
 
-	/* configure शेष features */
+	/* configure default features */
 	dev->features |= NETIF_F_IP_CSUM |
 			 NETIF_F_IPV6_CSUM |
 			 NETIF_F_SG |
@@ -1568,7 +1567,7 @@ err_queueing_scheme:
 			 NETIF_F_RXCSUM;
 
 	/* Only the PF can support VXLAN and NVGRE tunnel offloads */
-	अगर (info->mac == fm10k_mac_pf) अणु
+	if (info->mac == fm10k_mac_pf) {
 		dev->hw_enc_features = NETIF_F_IP_CSUM |
 				       NETIF_F_TSO |
 				       NETIF_F_TSO6 |
@@ -1580,12 +1579,12 @@ err_queueing_scheme:
 		dev->features |= NETIF_F_GSO_UDP_TUNNEL;
 
 		dev->udp_tunnel_nic_info = &fm10k_udp_tunnels;
-	पूर्ण
+	}
 
-	/* all features defined to this poपूर्णांक should be changeable */
+	/* all features defined to this point should be changeable */
 	hw_features = dev->features;
 
-	/* allow user to enable L2 क्रमwarding acceleration */
+	/* allow user to enable L2 forwarding acceleration */
 	hw_features |= NETIF_F_HW_L2FW_DOFFLOAD;
 
 	/* configure VLAN features */
@@ -1607,5 +1606,5 @@ err_queueing_scheme:
 	dev->min_mtu = ETH_MIN_MTU;
 	dev->max_mtu = FM10K_MAX_JUMBO_FRAME_SIZE;
 
-	वापस dev;
-पूर्ण
+	return dev;
+}

@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: (LGPL-2.1 OR BSD-2-Clause) */
+/* SPDX-License-Identifier: (LGPL-2.1 OR BSD-2-Clause) */
 
 /*
  * common eBPF ELF operations.
@@ -8,36 +7,36 @@
  * Copyright (C) 2015 Wang Nan <wangnan0@huawei.com>
  * Copyright (C) 2015 Huawei Inc.
  *
- * This program is मुक्त software; you can redistribute it and/or
- * modअगरy it under the terms of the GNU Lesser General Public
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation;
  * version 2.1 of the License (not later!)
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License क्रम more details.
+ * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License aदीर्घ with this program; अगर not,  see <http://www.gnu.org/licenses>
+ * License along with this program; if not,  see <http://www.gnu.org/licenses>
  */
-#अगर_अघोषित __LIBBPF_BPF_H
-#घोषणा __LIBBPF_BPF_H
+#ifndef __LIBBPF_BPF_H
+#define __LIBBPF_BPF_H
 
-#समावेश <linux/bpf.h>
-#समावेश <stdbool.h>
-#समावेश <मानकघोष.स>
-#समावेश <मानक_निवेशt.h>
+#include <linux/bpf.h>
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
 
-#समावेश "libbpf_common.h"
+#include "libbpf_common.h"
 
-#अगर_घोषित __cplusplus
-बाह्य "C" अणु
-#पूर्ण_अगर
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-काष्ठा bpf_create_map_attr अणु
-	स्थिर अक्षर *name;
-	क्रमागत bpf_map_type map_type;
+struct bpf_create_map_attr {
+	const char *name;
+	enum bpf_map_type map_type;
 	__u32 map_flags;
 	__u32 key_size;
 	__u32 value_size;
@@ -46,241 +45,241 @@
 	__u32 btf_fd;
 	__u32 btf_key_type_id;
 	__u32 btf_value_type_id;
-	__u32 map_अगरindex;
-	जोड़ अणु
+	__u32 map_ifindex;
+	union {
 		__u32 inner_map_fd;
 		__u32 btf_vmlinux_value_type_id;
-	पूर्ण;
-पूर्ण;
+	};
+};
 
-LIBBPF_API पूर्णांक
-bpf_create_map_xattr(स्थिर काष्ठा bpf_create_map_attr *create_attr);
-LIBBPF_API पूर्णांक bpf_create_map_node(क्रमागत bpf_map_type map_type, स्थिर अक्षर *name,
-				   पूर्णांक key_size, पूर्णांक value_size,
-				   पूर्णांक max_entries, __u32 map_flags, पूर्णांक node);
-LIBBPF_API पूर्णांक bpf_create_map_name(क्रमागत bpf_map_type map_type, स्थिर अक्षर *name,
-				   पूर्णांक key_size, पूर्णांक value_size,
-				   पूर्णांक max_entries, __u32 map_flags);
-LIBBPF_API पूर्णांक bpf_create_map(क्रमागत bpf_map_type map_type, पूर्णांक key_size,
-			      पूर्णांक value_size, पूर्णांक max_entries, __u32 map_flags);
-LIBBPF_API पूर्णांक bpf_create_map_in_map_node(क्रमागत bpf_map_type map_type,
-					  स्थिर अक्षर *name, पूर्णांक key_size,
-					  पूर्णांक inner_map_fd, पूर्णांक max_entries,
-					  __u32 map_flags, पूर्णांक node);
-LIBBPF_API पूर्णांक bpf_create_map_in_map(क्रमागत bpf_map_type map_type,
-				     स्थिर अक्षर *name, पूर्णांक key_size,
-				     पूर्णांक inner_map_fd, पूर्णांक max_entries,
+LIBBPF_API int
+bpf_create_map_xattr(const struct bpf_create_map_attr *create_attr);
+LIBBPF_API int bpf_create_map_node(enum bpf_map_type map_type, const char *name,
+				   int key_size, int value_size,
+				   int max_entries, __u32 map_flags, int node);
+LIBBPF_API int bpf_create_map_name(enum bpf_map_type map_type, const char *name,
+				   int key_size, int value_size,
+				   int max_entries, __u32 map_flags);
+LIBBPF_API int bpf_create_map(enum bpf_map_type map_type, int key_size,
+			      int value_size, int max_entries, __u32 map_flags);
+LIBBPF_API int bpf_create_map_in_map_node(enum bpf_map_type map_type,
+					  const char *name, int key_size,
+					  int inner_map_fd, int max_entries,
+					  __u32 map_flags, int node);
+LIBBPF_API int bpf_create_map_in_map(enum bpf_map_type map_type,
+				     const char *name, int key_size,
+				     int inner_map_fd, int max_entries,
 				     __u32 map_flags);
 
-काष्ठा bpf_load_program_attr अणु
-	क्रमागत bpf_prog_type prog_type;
-	क्रमागत bpf_attach_type expected_attach_type;
-	स्थिर अक्षर *name;
-	स्थिर काष्ठा bpf_insn *insns;
-	माप_प्रकार insns_cnt;
-	स्थिर अक्षर *license;
-	जोड़ अणु
+struct bpf_load_program_attr {
+	enum bpf_prog_type prog_type;
+	enum bpf_attach_type expected_attach_type;
+	const char *name;
+	const struct bpf_insn *insns;
+	size_t insns_cnt;
+	const char *license;
+	union {
 		__u32 kern_version;
 		__u32 attach_prog_fd;
-	पूर्ण;
-	जोड़ अणु
-		__u32 prog_अगरindex;
+	};
+	union {
+		__u32 prog_ifindex;
 		__u32 attach_btf_id;
-	पूर्ण;
+	};
 	__u32 prog_btf_fd;
 	__u32 func_info_rec_size;
-	स्थिर व्योम *func_info;
+	const void *func_info;
 	__u32 func_info_cnt;
 	__u32 line_info_rec_size;
-	स्थिर व्योम *line_info;
+	const void *line_info;
 	__u32 line_info_cnt;
 	__u32 log_level;
 	__u32 prog_flags;
-पूर्ण;
+};
 
 /* Flags to direct loading requirements */
-#घोषणा MAPS_RELAX_COMPAT	0x01
+#define MAPS_RELAX_COMPAT	0x01
 
 /* Recommend log buffer size */
-#घोषणा BPF_LOG_BUF_SIZE (UINT32_MAX >> 8) /* verअगरier maximum in kernels <= 5.1 */
-LIBBPF_API पूर्णांक
-bpf_load_program_xattr(स्थिर काष्ठा bpf_load_program_attr *load_attr,
-		       अक्षर *log_buf, माप_प्रकार log_buf_sz);
-LIBBPF_API पूर्णांक bpf_load_program(क्रमागत bpf_prog_type type,
-				स्थिर काष्ठा bpf_insn *insns, माप_प्रकार insns_cnt,
-				स्थिर अक्षर *license, __u32 kern_version,
-				अक्षर *log_buf, माप_प्रकार log_buf_sz);
-LIBBPF_API पूर्णांक bpf_verअगरy_program(क्रमागत bpf_prog_type type,
-				  स्थिर काष्ठा bpf_insn *insns,
-				  माप_प्रकार insns_cnt, __u32 prog_flags,
-				  स्थिर अक्षर *license, __u32 kern_version,
-				  अक्षर *log_buf, माप_प्रकार log_buf_sz,
-				  पूर्णांक log_level);
+#define BPF_LOG_BUF_SIZE (UINT32_MAX >> 8) /* verifier maximum in kernels <= 5.1 */
+LIBBPF_API int
+bpf_load_program_xattr(const struct bpf_load_program_attr *load_attr,
+		       char *log_buf, size_t log_buf_sz);
+LIBBPF_API int bpf_load_program(enum bpf_prog_type type,
+				const struct bpf_insn *insns, size_t insns_cnt,
+				const char *license, __u32 kern_version,
+				char *log_buf, size_t log_buf_sz);
+LIBBPF_API int bpf_verify_program(enum bpf_prog_type type,
+				  const struct bpf_insn *insns,
+				  size_t insns_cnt, __u32 prog_flags,
+				  const char *license, __u32 kern_version,
+				  char *log_buf, size_t log_buf_sz,
+				  int log_level);
 
-LIBBPF_API पूर्णांक bpf_map_update_elem(पूर्णांक fd, स्थिर व्योम *key, स्थिर व्योम *value,
+LIBBPF_API int bpf_map_update_elem(int fd, const void *key, const void *value,
 				   __u64 flags);
 
-LIBBPF_API पूर्णांक bpf_map_lookup_elem(पूर्णांक fd, स्थिर व्योम *key, व्योम *value);
-LIBBPF_API पूर्णांक bpf_map_lookup_elem_flags(पूर्णांक fd, स्थिर व्योम *key, व्योम *value,
+LIBBPF_API int bpf_map_lookup_elem(int fd, const void *key, void *value);
+LIBBPF_API int bpf_map_lookup_elem_flags(int fd, const void *key, void *value,
 					 __u64 flags);
-LIBBPF_API पूर्णांक bpf_map_lookup_and_delete_elem(पूर्णांक fd, स्थिर व्योम *key,
-					      व्योम *value);
-LIBBPF_API पूर्णांक bpf_map_delete_elem(पूर्णांक fd, स्थिर व्योम *key);
-LIBBPF_API पूर्णांक bpf_map_get_next_key(पूर्णांक fd, स्थिर व्योम *key, व्योम *next_key);
-LIBBPF_API पूर्णांक bpf_map_मुक्तze(पूर्णांक fd);
+LIBBPF_API int bpf_map_lookup_and_delete_elem(int fd, const void *key,
+					      void *value);
+LIBBPF_API int bpf_map_delete_elem(int fd, const void *key);
+LIBBPF_API int bpf_map_get_next_key(int fd, const void *key, void *next_key);
+LIBBPF_API int bpf_map_freeze(int fd);
 
-काष्ठा bpf_map_batch_opts अणु
-	माप_प्रकार sz; /* size of this काष्ठा क्रम क्रमward/backward compatibility */
+struct bpf_map_batch_opts {
+	size_t sz; /* size of this struct for forward/backward compatibility */
 	__u64 elem_flags;
 	__u64 flags;
-पूर्ण;
-#घोषणा bpf_map_batch_opts__last_field flags
+};
+#define bpf_map_batch_opts__last_field flags
 
-LIBBPF_API पूर्णांक bpf_map_delete_batch(पूर्णांक fd, व्योम *keys,
+LIBBPF_API int bpf_map_delete_batch(int fd, void *keys,
 				    __u32 *count,
-				    स्थिर काष्ठा bpf_map_batch_opts *opts);
-LIBBPF_API पूर्णांक bpf_map_lookup_batch(पूर्णांक fd, व्योम *in_batch, व्योम *out_batch,
-				    व्योम *keys, व्योम *values, __u32 *count,
-				    स्थिर काष्ठा bpf_map_batch_opts *opts);
-LIBBPF_API पूर्णांक bpf_map_lookup_and_delete_batch(पूर्णांक fd, व्योम *in_batch,
-					व्योम *out_batch, व्योम *keys,
-					व्योम *values, __u32 *count,
-					स्थिर काष्ठा bpf_map_batch_opts *opts);
-LIBBPF_API पूर्णांक bpf_map_update_batch(पूर्णांक fd, व्योम *keys, व्योम *values,
+				    const struct bpf_map_batch_opts *opts);
+LIBBPF_API int bpf_map_lookup_batch(int fd, void *in_batch, void *out_batch,
+				    void *keys, void *values, __u32 *count,
+				    const struct bpf_map_batch_opts *opts);
+LIBBPF_API int bpf_map_lookup_and_delete_batch(int fd, void *in_batch,
+					void *out_batch, void *keys,
+					void *values, __u32 *count,
+					const struct bpf_map_batch_opts *opts);
+LIBBPF_API int bpf_map_update_batch(int fd, void *keys, void *values,
 				    __u32 *count,
-				    स्थिर काष्ठा bpf_map_batch_opts *opts);
+				    const struct bpf_map_batch_opts *opts);
 
-LIBBPF_API पूर्णांक bpf_obj_pin(पूर्णांक fd, स्थिर अक्षर *pathname);
-LIBBPF_API पूर्णांक bpf_obj_get(स्थिर अक्षर *pathname);
+LIBBPF_API int bpf_obj_pin(int fd, const char *pathname);
+LIBBPF_API int bpf_obj_get(const char *pathname);
 
-काष्ठा bpf_prog_attach_opts अणु
-	माप_प्रकार sz; /* size of this काष्ठा क्रम क्रमward/backward compatibility */
-	अचिन्हित पूर्णांक flags;
-	पूर्णांक replace_prog_fd;
-पूर्ण;
-#घोषणा bpf_prog_attach_opts__last_field replace_prog_fd
+struct bpf_prog_attach_opts {
+	size_t sz; /* size of this struct for forward/backward compatibility */
+	unsigned int flags;
+	int replace_prog_fd;
+};
+#define bpf_prog_attach_opts__last_field replace_prog_fd
 
-LIBBPF_API पूर्णांक bpf_prog_attach(पूर्णांक prog_fd, पूर्णांक attachable_fd,
-			       क्रमागत bpf_attach_type type, अचिन्हित पूर्णांक flags);
-LIBBPF_API पूर्णांक bpf_prog_attach_xattr(पूर्णांक prog_fd, पूर्णांक attachable_fd,
-				     क्रमागत bpf_attach_type type,
-				     स्थिर काष्ठा bpf_prog_attach_opts *opts);
-LIBBPF_API पूर्णांक bpf_prog_detach(पूर्णांक attachable_fd, क्रमागत bpf_attach_type type);
-LIBBPF_API पूर्णांक bpf_prog_detach2(पूर्णांक prog_fd, पूर्णांक attachable_fd,
-				क्रमागत bpf_attach_type type);
+LIBBPF_API int bpf_prog_attach(int prog_fd, int attachable_fd,
+			       enum bpf_attach_type type, unsigned int flags);
+LIBBPF_API int bpf_prog_attach_xattr(int prog_fd, int attachable_fd,
+				     enum bpf_attach_type type,
+				     const struct bpf_prog_attach_opts *opts);
+LIBBPF_API int bpf_prog_detach(int attachable_fd, enum bpf_attach_type type);
+LIBBPF_API int bpf_prog_detach2(int prog_fd, int attachable_fd,
+				enum bpf_attach_type type);
 
-जोड़ bpf_iter_link_info; /* defined in up-to-date linux/bpf.h */
-काष्ठा bpf_link_create_opts अणु
-	माप_प्रकार sz; /* size of this काष्ठा क्रम क्रमward/backward compatibility */
+union bpf_iter_link_info; /* defined in up-to-date linux/bpf.h */
+struct bpf_link_create_opts {
+	size_t sz; /* size of this struct for forward/backward compatibility */
 	__u32 flags;
-	जोड़ bpf_iter_link_info *iter_info;
+	union bpf_iter_link_info *iter_info;
 	__u32 iter_info_len;
 	__u32 target_btf_id;
-पूर्ण;
-#घोषणा bpf_link_create_opts__last_field target_btf_id
+};
+#define bpf_link_create_opts__last_field target_btf_id
 
-LIBBPF_API पूर्णांक bpf_link_create(पूर्णांक prog_fd, पूर्णांक target_fd,
-			       क्रमागत bpf_attach_type attach_type,
-			       स्थिर काष्ठा bpf_link_create_opts *opts);
+LIBBPF_API int bpf_link_create(int prog_fd, int target_fd,
+			       enum bpf_attach_type attach_type,
+			       const struct bpf_link_create_opts *opts);
 
-LIBBPF_API पूर्णांक bpf_link_detach(पूर्णांक link_fd);
+LIBBPF_API int bpf_link_detach(int link_fd);
 
-काष्ठा bpf_link_update_opts अणु
-	माप_प्रकार sz; /* size of this काष्ठा क्रम क्रमward/backward compatibility */
+struct bpf_link_update_opts {
+	size_t sz; /* size of this struct for forward/backward compatibility */
 	__u32 flags;	   /* extra flags */
 	__u32 old_prog_fd; /* expected old program FD */
-पूर्ण;
-#घोषणा bpf_link_update_opts__last_field old_prog_fd
+};
+#define bpf_link_update_opts__last_field old_prog_fd
 
-LIBBPF_API पूर्णांक bpf_link_update(पूर्णांक link_fd, पूर्णांक new_prog_fd,
-			       स्थिर काष्ठा bpf_link_update_opts *opts);
+LIBBPF_API int bpf_link_update(int link_fd, int new_prog_fd,
+			       const struct bpf_link_update_opts *opts);
 
-LIBBPF_API पूर्णांक bpf_iter_create(पूर्णांक link_fd);
+LIBBPF_API int bpf_iter_create(int link_fd);
 
-काष्ठा bpf_prog_test_run_attr अणु
-	पूर्णांक prog_fd;
-	पूर्णांक repeat;
-	स्थिर व्योम *data_in;
+struct bpf_prog_test_run_attr {
+	int prog_fd;
+	int repeat;
+	const void *data_in;
 	__u32 data_size_in;
-	व्योम *data_out;      /* optional */
+	void *data_out;      /* optional */
 	__u32 data_size_out; /* in: max length of data_out
 			      * out: length of data_out */
-	__u32 retval;        /* out: वापस code of the BPF program */
+	__u32 retval;        /* out: return code of the BPF program */
 	__u32 duration;      /* out: average per repetition in ns */
-	स्थिर व्योम *ctx_in; /* optional */
+	const void *ctx_in; /* optional */
 	__u32 ctx_size_in;
-	व्योम *ctx_out;      /* optional */
+	void *ctx_out;      /* optional */
 	__u32 ctx_size_out; /* in: max length of ctx_out
 			     * out: length of cxt_out */
-पूर्ण;
+};
 
-LIBBPF_API पूर्णांक bpf_prog_test_run_xattr(काष्ठा bpf_prog_test_run_attr *test_attr);
+LIBBPF_API int bpf_prog_test_run_xattr(struct bpf_prog_test_run_attr *test_attr);
 
 /*
- * bpf_prog_test_run करोes not check that data_out is large enough. Consider
+ * bpf_prog_test_run does not check that data_out is large enough. Consider
  * using bpf_prog_test_run_xattr instead.
  */
-LIBBPF_API पूर्णांक bpf_prog_test_run(पूर्णांक prog_fd, पूर्णांक repeat, व्योम *data,
-				 __u32 size, व्योम *data_out, __u32 *size_out,
+LIBBPF_API int bpf_prog_test_run(int prog_fd, int repeat, void *data,
+				 __u32 size, void *data_out, __u32 *size_out,
 				 __u32 *retval, __u32 *duration);
-LIBBPF_API पूर्णांक bpf_prog_get_next_id(__u32 start_id, __u32 *next_id);
-LIBBPF_API पूर्णांक bpf_map_get_next_id(__u32 start_id, __u32 *next_id);
-LIBBPF_API पूर्णांक bpf_btf_get_next_id(__u32 start_id, __u32 *next_id);
-LIBBPF_API पूर्णांक bpf_link_get_next_id(__u32 start_id, __u32 *next_id);
-LIBBPF_API पूर्णांक bpf_prog_get_fd_by_id(__u32 id);
-LIBBPF_API पूर्णांक bpf_map_get_fd_by_id(__u32 id);
-LIBBPF_API पूर्णांक bpf_btf_get_fd_by_id(__u32 id);
-LIBBPF_API पूर्णांक bpf_link_get_fd_by_id(__u32 id);
-LIBBPF_API पूर्णांक bpf_obj_get_info_by_fd(पूर्णांक bpf_fd, व्योम *info, __u32 *info_len);
-LIBBPF_API पूर्णांक bpf_prog_query(पूर्णांक target_fd, क्रमागत bpf_attach_type type,
+LIBBPF_API int bpf_prog_get_next_id(__u32 start_id, __u32 *next_id);
+LIBBPF_API int bpf_map_get_next_id(__u32 start_id, __u32 *next_id);
+LIBBPF_API int bpf_btf_get_next_id(__u32 start_id, __u32 *next_id);
+LIBBPF_API int bpf_link_get_next_id(__u32 start_id, __u32 *next_id);
+LIBBPF_API int bpf_prog_get_fd_by_id(__u32 id);
+LIBBPF_API int bpf_map_get_fd_by_id(__u32 id);
+LIBBPF_API int bpf_btf_get_fd_by_id(__u32 id);
+LIBBPF_API int bpf_link_get_fd_by_id(__u32 id);
+LIBBPF_API int bpf_obj_get_info_by_fd(int bpf_fd, void *info, __u32 *info_len);
+LIBBPF_API int bpf_prog_query(int target_fd, enum bpf_attach_type type,
 			      __u32 query_flags, __u32 *attach_flags,
 			      __u32 *prog_ids, __u32 *prog_cnt);
-LIBBPF_API पूर्णांक bpf_raw_tracepoपूर्णांक_खोलो(स्थिर अक्षर *name, पूर्णांक prog_fd);
-LIBBPF_API पूर्णांक bpf_load_btf(स्थिर व्योम *btf, __u32 btf_size, अक्षर *log_buf,
-			    __u32 log_buf_size, bool करो_log);
-LIBBPF_API पूर्णांक bpf_task_fd_query(पूर्णांक pid, पूर्णांक fd, __u32 flags, अक्षर *buf,
+LIBBPF_API int bpf_raw_tracepoint_open(const char *name, int prog_fd);
+LIBBPF_API int bpf_load_btf(const void *btf, __u32 btf_size, char *log_buf,
+			    __u32 log_buf_size, bool do_log);
+LIBBPF_API int bpf_task_fd_query(int pid, int fd, __u32 flags, char *buf,
 				 __u32 *buf_len, __u32 *prog_id, __u32 *fd_type,
 				 __u64 *probe_offset, __u64 *probe_addr);
 
-क्रमागत bpf_stats_type; /* defined in up-to-date linux/bpf.h */
-LIBBPF_API पूर्णांक bpf_enable_stats(क्रमागत bpf_stats_type type);
+enum bpf_stats_type; /* defined in up-to-date linux/bpf.h */
+LIBBPF_API int bpf_enable_stats(enum bpf_stats_type type);
 
-काष्ठा bpf_prog_bind_opts अणु
-	माप_प्रकार sz; /* size of this काष्ठा क्रम क्रमward/backward compatibility */
+struct bpf_prog_bind_opts {
+	size_t sz; /* size of this struct for forward/backward compatibility */
 	__u32 flags;
-पूर्ण;
-#घोषणा bpf_prog_bind_opts__last_field flags
+};
+#define bpf_prog_bind_opts__last_field flags
 
-LIBBPF_API पूर्णांक bpf_prog_bind_map(पूर्णांक prog_fd, पूर्णांक map_fd,
-				 स्थिर काष्ठा bpf_prog_bind_opts *opts);
+LIBBPF_API int bpf_prog_bind_map(int prog_fd, int map_fd,
+				 const struct bpf_prog_bind_opts *opts);
 
-काष्ठा bpf_test_run_opts अणु
-	माप_प्रकार sz; /* size of this काष्ठा क्रम क्रमward/backward compatibility */
-	स्थिर व्योम *data_in; /* optional */
-	व्योम *data_out;      /* optional */
+struct bpf_test_run_opts {
+	size_t sz; /* size of this struct for forward/backward compatibility */
+	const void *data_in; /* optional */
+	void *data_out;      /* optional */
 	__u32 data_size_in;
 	__u32 data_size_out; /* in: max length of data_out
 			      * out: length of data_out
 			      */
-	स्थिर व्योम *ctx_in; /* optional */
-	व्योम *ctx_out;      /* optional */
+	const void *ctx_in; /* optional */
+	void *ctx_out;      /* optional */
 	__u32 ctx_size_in;
 	__u32 ctx_size_out; /* in: max length of ctx_out
 			     * out: length of cxt_out
 			     */
-	__u32 retval;        /* out: वापस code of the BPF program */
-	पूर्णांक repeat;
+	__u32 retval;        /* out: return code of the BPF program */
+	int repeat;
 	__u32 duration;      /* out: average per repetition in ns */
 	__u32 flags;
 	__u32 cpu;
-पूर्ण;
-#घोषणा bpf_test_run_opts__last_field cpu
+};
+#define bpf_test_run_opts__last_field cpu
 
-LIBBPF_API पूर्णांक bpf_prog_test_run_opts(पूर्णांक prog_fd,
-				      काष्ठा bpf_test_run_opts *opts);
+LIBBPF_API int bpf_prog_test_run_opts(int prog_fd,
+				      struct bpf_test_run_opts *opts);
 
-#अगर_घोषित __cplusplus
-पूर्ण /* बाह्य "C" */
-#पूर्ण_अगर
+#ifdef __cplusplus
+} /* extern "C" */
+#endif
 
-#पूर्ण_अगर /* __LIBBPF_BPF_H */
+#endif /* __LIBBPF_BPF_H */

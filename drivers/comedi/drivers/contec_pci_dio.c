@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * comedi/drivers/contec_pci_dio.c
  *
@@ -15,56 +14,56 @@
  * Updated: Wed, 27 Jun 2007 13:00:06 +0100
  * Status: works
  *
- * Configuration Options: not applicable, uses comedi PCI स्वतः config
+ * Configuration Options: not applicable, uses comedi PCI auto config
  */
 
-#समावेश <linux/module.h>
+#include <linux/module.h>
 
-#समावेश "../comedi_pci.h"
+#include "../comedi_pci.h"
 
 /*
  * Register map
  */
-#घोषणा PIO1616L_DI_REG		0x00
-#घोषणा PIO1616L_DO_REG		0x02
+#define PIO1616L_DI_REG		0x00
+#define PIO1616L_DO_REG		0x02
 
-अटल पूर्णांक contec_करो_insn_bits(काष्ठा comedi_device *dev,
-			       काष्ठा comedi_subdevice *s,
-			       काष्ठा comedi_insn *insn,
-			       अचिन्हित पूर्णांक *data)
-अणु
-	अगर (comedi_dio_update_state(s, data))
+static int contec_do_insn_bits(struct comedi_device *dev,
+			       struct comedi_subdevice *s,
+			       struct comedi_insn *insn,
+			       unsigned int *data)
+{
+	if (comedi_dio_update_state(s, data))
 		outw(s->state, dev->iobase + PIO1616L_DO_REG);
 
 	data[1] = s->state;
 
-	वापस insn->n;
-पूर्ण
+	return insn->n;
+}
 
-अटल पूर्णांक contec_di_insn_bits(काष्ठा comedi_device *dev,
-			       काष्ठा comedi_subdevice *s,
-			       काष्ठा comedi_insn *insn, अचिन्हित पूर्णांक *data)
-अणु
+static int contec_di_insn_bits(struct comedi_device *dev,
+			       struct comedi_subdevice *s,
+			       struct comedi_insn *insn, unsigned int *data)
+{
 	data[1] = inw(dev->iobase + PIO1616L_DI_REG);
 
-	वापस insn->n;
-पूर्ण
+	return insn->n;
+}
 
-अटल पूर्णांक contec_स्वतः_attach(काष्ठा comedi_device *dev,
-			      अचिन्हित दीर्घ context_unused)
-अणु
-	काष्ठा pci_dev *pcidev = comedi_to_pci_dev(dev);
-	काष्ठा comedi_subdevice *s;
-	पूर्णांक ret;
+static int contec_auto_attach(struct comedi_device *dev,
+			      unsigned long context_unused)
+{
+	struct pci_dev *pcidev = comedi_to_pci_dev(dev);
+	struct comedi_subdevice *s;
+	int ret;
 
 	ret = comedi_pci_enable(dev);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 	dev->iobase = pci_resource_start(pcidev, 0);
 
 	ret = comedi_alloc_subdevices(dev, 2);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	s = &dev->subdevices[0];
 	s->type		= COMEDI_SUBD_DI;
@@ -80,37 +79,37 @@
 	s->n_chan	= 16;
 	s->maxdata	= 1;
 	s->range_table	= &range_digital;
-	s->insn_bits	= contec_करो_insn_bits;
+	s->insn_bits	= contec_do_insn_bits;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा comedi_driver contec_pci_dio_driver = अणु
+static struct comedi_driver contec_pci_dio_driver = {
 	.driver_name	= "contec_pci_dio",
 	.module		= THIS_MODULE,
-	.स्वतः_attach	= contec_स्वतः_attach,
+	.auto_attach	= contec_auto_attach,
 	.detach		= comedi_pci_detach,
-पूर्ण;
+};
 
-अटल पूर्णांक contec_pci_dio_pci_probe(काष्ठा pci_dev *dev,
-				    स्थिर काष्ठा pci_device_id *id)
-अणु
-	वापस comedi_pci_स्वतः_config(dev, &contec_pci_dio_driver,
+static int contec_pci_dio_pci_probe(struct pci_dev *dev,
+				    const struct pci_device_id *id)
+{
+	return comedi_pci_auto_config(dev, &contec_pci_dio_driver,
 				      id->driver_data);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा pci_device_id contec_pci_dio_pci_table[] = अणु
-	अणु PCI_DEVICE(PCI_VENDOR_ID_CONTEC, 0x8172) पूर्ण,
-	अणु 0 पूर्ण
-पूर्ण;
+static const struct pci_device_id contec_pci_dio_pci_table[] = {
+	{ PCI_DEVICE(PCI_VENDOR_ID_CONTEC, 0x8172) },
+	{ 0 }
+};
 MODULE_DEVICE_TABLE(pci, contec_pci_dio_pci_table);
 
-अटल काष्ठा pci_driver contec_pci_dio_pci_driver = अणु
+static struct pci_driver contec_pci_dio_pci_driver = {
 	.name		= "contec_pci_dio",
 	.id_table	= contec_pci_dio_pci_table,
 	.probe		= contec_pci_dio_pci_probe,
-	.हटाओ		= comedi_pci_स्वतः_unconfig,
-पूर्ण;
+	.remove		= comedi_pci_auto_unconfig,
+};
 module_comedi_pci_driver(contec_pci_dio_driver, contec_pci_dio_pci_driver);
 
 MODULE_AUTHOR("Comedi https://www.comedi.org");

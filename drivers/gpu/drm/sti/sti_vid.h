@@ -1,32 +1,31 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Copyright (C) STMicroelectronics SA 2014
- * Author: Fabien Dessenne <fabien.dessenne@st.com> क्रम STMicroelectronics.
+ * Author: Fabien Dessenne <fabien.dessenne@st.com> for STMicroelectronics.
  */
 
-#अगर_अघोषित _STI_VID_H_
-#घोषणा _STI_VID_H_
+#ifndef _STI_VID_H_
+#define _STI_VID_H_
 
 /**
- * STI VID काष्ठाure
+ * STI VID structure
  *
  * @dev:   driver device
- * @regs:  vid रेजिस्टरs
+ * @regs:  vid registers
  * @id:    id of the vid
  */
-काष्ठा sti_vid अणु
-	काष्ठा device *dev;
-	व्योम __iomem *regs;
-	पूर्णांक id;
-पूर्ण;
+struct sti_vid {
+	struct device *dev;
+	void __iomem *regs;
+	int id;
+};
 
-व्योम sti_vid_commit(काष्ठा sti_vid *vid,
-		    काष्ठा drm_plane_state *state);
-व्योम sti_vid_disable(काष्ठा sti_vid *vid);
-काष्ठा sti_vid *sti_vid_create(काष्ठा device *dev, काष्ठा drm_device *drm_dev,
-			       पूर्णांक id, व्योम __iomem *baseaddr);
+void sti_vid_commit(struct sti_vid *vid,
+		    struct drm_plane_state *state);
+void sti_vid_disable(struct sti_vid *vid);
+struct sti_vid *sti_vid_create(struct device *dev, struct drm_device *drm_dev,
+			       int id, void __iomem *baseaddr);
 
-व्योम vid_debugfs_init(काष्ठा sti_vid *vid, काष्ठा drm_minor *minor);
+void vid_debugfs_init(struct sti_vid *vid, struct drm_minor *minor);
 
-#पूर्ण_अगर
+#endif

@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * cxd2880_dvbt2.h
  * Sony CXD2880 DVB-T2/T tuner + demodulator driver
@@ -8,24 +7,24 @@
  * Copyright (C) 2016, 2017, 2018 Sony Semiconductor Solutions Corporation
  */
 
-#अगर_अघोषित CXD2880_DVBT2_H
-#घोषणा CXD2880_DVBT2_H
+#ifndef CXD2880_DVBT2_H
+#define CXD2880_DVBT2_H
 
-#समावेश "cxd2880_common.h"
+#include "cxd2880_common.h"
 
-क्रमागत cxd2880_dvbt2_profile अणु
-	CXD2880_DVBT2_PROखाता_BASE,
-	CXD2880_DVBT2_PROखाता_LITE,
-	CXD2880_DVBT2_PROखाता_ANY
-पूर्ण;
+enum cxd2880_dvbt2_profile {
+	CXD2880_DVBT2_PROFILE_BASE,
+	CXD2880_DVBT2_PROFILE_LITE,
+	CXD2880_DVBT2_PROFILE_ANY
+};
 
-क्रमागत cxd2880_dvbt2_version अणु
+enum cxd2880_dvbt2_version {
 	CXD2880_DVBT2_V111,
 	CXD2880_DVBT2_V121,
 	CXD2880_DVBT2_V131
-पूर्ण;
+};
 
-क्रमागत cxd2880_dvbt2_s1 अणु
+enum cxd2880_dvbt2_s1 {
 	CXD2880_DVBT2_S1_BASE_SISO = 0x00,
 	CXD2880_DVBT2_S1_BASE_MISO = 0x01,
 	CXD2880_DVBT2_S1_NON_DVBT2 = 0x02,
@@ -35,9 +34,9 @@
 	CXD2880_DVBT2_S1_RSVD4 = 0x06,
 	CXD2880_DVBT2_S1_RSVD5 = 0x07,
 	CXD2880_DVBT2_S1_UNKNOWN = 0xff
-पूर्ण;
+};
 
-क्रमागत cxd2880_dvbt2_base_s2 अणु
+enum cxd2880_dvbt2_base_s2 {
 	CXD2880_DVBT2_BASE_S2_M2K_G_ANY = 0x00,
 	CXD2880_DVBT2_BASE_S2_M8K_G_DVBT = 0x01,
 	CXD2880_DVBT2_BASE_S2_M4K_G_ANY = 0x02,
@@ -47,9 +46,9 @@
 	CXD2880_DVBT2_BASE_S2_M8K_G_DVBT2 = 0x06,
 	CXD2880_DVBT2_BASE_S2_M32K_G_DVBT2 = 0x07,
 	CXD2880_DVBT2_BASE_S2_UNKNOWN = 0xff
-पूर्ण;
+};
 
-क्रमागत cxd2880_dvbt2_lite_s2 अणु
+enum cxd2880_dvbt2_lite_s2 {
 	CXD2880_DVBT2_LITE_S2_M2K_G_ANY = 0x00,
 	CXD2880_DVBT2_LITE_S2_M8K_G_DVBT = 0x01,
 	CXD2880_DVBT2_LITE_S2_M4K_G_ANY = 0x02,
@@ -59,9 +58,9 @@
 	CXD2880_DVBT2_LITE_S2_M8K_G_DVBT2 = 0x06,
 	CXD2880_DVBT2_LITE_S2_RSVD2 = 0x07,
 	CXD2880_DVBT2_LITE_S2_UNKNOWN = 0xff
-पूर्ण;
+};
 
-क्रमागत cxd2880_dvbt2_guard अणु
+enum cxd2880_dvbt2_guard {
 	CXD2880_DVBT2_G1_32 = 0x00,
 	CXD2880_DVBT2_G1_16 = 0x01,
 	CXD2880_DVBT2_G1_8 = 0x02,
@@ -71,9 +70,9 @@
 	CXD2880_DVBT2_G19_256 = 0x06,
 	CXD2880_DVBT2_G_RSVD1 = 0x07,
 	CXD2880_DVBT2_G_UNKNOWN = 0xff
-पूर्ण;
+};
 
-क्रमागत cxd2880_dvbt2_mode अणु
+enum cxd2880_dvbt2_mode {
 	CXD2880_DVBT2_M2K = 0x00,
 	CXD2880_DVBT2_M8K = 0x01,
 	CXD2880_DVBT2_M4K = 0x02,
@@ -82,9 +81,9 @@
 	CXD2880_DVBT2_M32K = 0x05,
 	CXD2880_DVBT2_M_RSVD1 = 0x06,
 	CXD2880_DVBT2_M_RSVD2 = 0x07
-पूर्ण;
+};
 
-क्रमागत cxd2880_dvbt2_bw अणु
+enum cxd2880_dvbt2_bw {
 	CXD2880_DVBT2_BW_8 = 0x00,
 	CXD2880_DVBT2_BW_7 = 0x01,
 	CXD2880_DVBT2_BW_6 = 0x02,
@@ -102,17 +101,17 @@
 	CXD2880_DVBT2_BW_RSVD9 = 0x0e,
 	CXD2880_DVBT2_BW_RSVD10 = 0x0f,
 	CXD2880_DVBT2_BW_UNKNOWN = 0xff
-पूर्ण;
+};
 
-क्रमागत cxd2880_dvbt2_l1pre_type अणु
+enum cxd2880_dvbt2_l1pre_type {
 	CXD2880_DVBT2_L1PRE_TYPE_TS = 0x00,
 	CXD2880_DVBT2_L1PRE_TYPE_GS = 0x01,
 	CXD2880_DVBT2_L1PRE_TYPE_TS_GS = 0x02,
 	CXD2880_DVBT2_L1PRE_TYPE_RESERVED = 0x03,
 	CXD2880_DVBT2_L1PRE_TYPE_UNKNOWN = 0xff
-पूर्ण;
+};
 
-क्रमागत cxd2880_dvbt2_papr अणु
+enum cxd2880_dvbt2_papr {
 	CXD2880_DVBT2_PAPR_0 = 0x00,
 	CXD2880_DVBT2_PAPR_1 = 0x01,
 	CXD2880_DVBT2_PAPR_2 = 0x02,
@@ -130,9 +129,9 @@
 	CXD2880_DVBT2_PAPR_RSVD11 = 0x0e,
 	CXD2880_DVBT2_PAPR_RSVD12 = 0x0f,
 	CXD2880_DVBT2_PAPR_UNKNOWN = 0xff
-पूर्ण;
+};
 
-क्रमागत cxd2880_dvbt2_l1post_स्थिरell अणु
+enum cxd2880_dvbt2_l1post_constell {
 	CXD2880_DVBT2_L1POST_BPSK = 0x00,
 	CXD2880_DVBT2_L1POST_QPSK = 0x01,
 	CXD2880_DVBT2_L1POST_QAM16 = 0x02,
@@ -150,25 +149,25 @@
 	CXD2880_DVBT2_L1POST_C_RSVD11 = 0x0e,
 	CXD2880_DVBT2_L1POST_C_RSVD12 = 0x0f,
 	CXD2880_DVBT2_L1POST_CONSTELL_UNKNOWN = 0xff
-पूर्ण;
+};
 
-क्रमागत cxd2880_dvbt2_l1post_cr अणु
+enum cxd2880_dvbt2_l1post_cr {
 	CXD2880_DVBT2_L1POST_R1_2 = 0x00,
 	CXD2880_DVBT2_L1POST_R_RSVD1 = 0x01,
 	CXD2880_DVBT2_L1POST_R_RSVD2 = 0x02,
 	CXD2880_DVBT2_L1POST_R_RSVD3 = 0x03,
 	CXD2880_DVBT2_L1POST_R_UNKNOWN = 0xff
-पूर्ण;
+};
 
-क्रमागत cxd2880_dvbt2_l1post_fec_type अणु
+enum cxd2880_dvbt2_l1post_fec_type {
 	CXD2880_DVBT2_L1POST_FEC_LDPC16K = 0x00,
 	CXD2880_DVBT2_L1POST_FEC_RSVD1 = 0x01,
 	CXD2880_DVBT2_L1POST_FEC_RSVD2 = 0x02,
 	CXD2880_DVBT2_L1POST_FEC_RSVD3 = 0x03,
 	CXD2880_DVBT2_L1POST_FEC_UNKNOWN = 0xff
-पूर्ण;
+};
 
-क्रमागत cxd2880_dvbt2_pp अणु
+enum cxd2880_dvbt2_pp {
 	CXD2880_DVBT2_PP1 = 0x00,
 	CXD2880_DVBT2_PP2 = 0x01,
 	CXD2880_DVBT2_PP3 = 0x02,
@@ -186,9 +185,9 @@
 	CXD2880_DVBT2_PP_RSVD7 = 0x0e,
 	CXD2880_DVBT2_PP_RSVD8 = 0x0f,
 	CXD2880_DVBT2_PP_UNKNOWN = 0xff
-पूर्ण;
+};
 
-क्रमागत cxd2880_dvbt2_plp_code_rate अणु
+enum cxd2880_dvbt2_plp_code_rate {
 	CXD2880_DVBT2_R1_2 = 0x00,
 	CXD2880_DVBT2_R3_5 = 0x01,
 	CXD2880_DVBT2_R2_3 = 0x02,
@@ -198,9 +197,9 @@
 	CXD2880_DVBT2_R1_3 = 0x06,
 	CXD2880_DVBT2_R2_5 = 0x07,
 	CXD2880_DVBT2_PLP_CR_UNKNOWN = 0xff
-पूर्ण;
+};
 
-क्रमागत cxd2880_dvbt2_plp_स्थिरell अणु
+enum cxd2880_dvbt2_plp_constell {
 	CXD2880_DVBT2_QPSK = 0x00,
 	CXD2880_DVBT2_QAM16 = 0x01,
 	CXD2880_DVBT2_QAM64 = 0x02,
@@ -210,9 +209,9 @@
 	CXD2880_DVBT2_CON_RSVD3 = 0x06,
 	CXD2880_DVBT2_CON_RSVD4 = 0x07,
 	CXD2880_DVBT2_CONSTELL_UNKNOWN = 0xff
-पूर्ण;
+};
 
-क्रमागत cxd2880_dvbt2_plp_type अणु
+enum cxd2880_dvbt2_plp_type {
 	CXD2880_DVBT2_PLP_TYPE_COMMON = 0x00,
 	CXD2880_DVBT2_PLP_TYPE_DATA1 = 0x01,
 	CXD2880_DVBT2_PLP_TYPE_DATA2 = 0x02,
@@ -222,9 +221,9 @@
 	CXD2880_DVBT2_PLP_TYPE_RSVD4 = 0x06,
 	CXD2880_DVBT2_PLP_TYPE_RSVD5 = 0x07,
 	CXD2880_DVBT2_PLP_TYPE_UNKNOWN = 0xff
-पूर्ण;
+};
 
-क्रमागत cxd2880_dvbt2_plp_payload अणु
+enum cxd2880_dvbt2_plp_payload {
 	CXD2880_DVBT2_PLP_PAYLOAD_GFPS = 0x00,
 	CXD2880_DVBT2_PLP_PAYLOAD_GCS = 0x01,
 	CXD2880_DVBT2_PLP_PAYLOAD_GSE = 0x02,
@@ -258,53 +257,53 @@
 	CXD2880_DVBT2_PLP_PAYLOAD_RSVD27 = 0x1e,
 	CXD2880_DVBT2_PLP_PAYLOAD_RSVD28 = 0x1f,
 	CXD2880_DVBT2_PLP_PAYLOAD_UNKNOWN = 0xff
-पूर्ण;
+};
 
-क्रमागत cxd2880_dvbt2_plp_fec अणु
+enum cxd2880_dvbt2_plp_fec {
 	CXD2880_DVBT2_FEC_LDPC_16K = 0x00,
 	CXD2880_DVBT2_FEC_LDPC_64K = 0x01,
 	CXD2880_DVBT2_FEC_RSVD1 = 0x02,
 	CXD2880_DVBT2_FEC_RSVD2 = 0x03,
 	CXD2880_DVBT2_FEC_UNKNOWN = 0xff
-पूर्ण;
+};
 
-क्रमागत cxd2880_dvbt2_plp_mode अणु
+enum cxd2880_dvbt2_plp_mode {
 	CXD2880_DVBT2_PLP_MODE_NOTSPECIFIED = 0x00,
 	CXD2880_DVBT2_PLP_MODE_NM = 0x01,
 	CXD2880_DVBT2_PLP_MODE_HEM = 0x02,
 	CXD2880_DVBT2_PLP_MODE_RESERVED = 0x03,
 	CXD2880_DVBT2_PLP_MODE_UNKNOWN = 0xff
-पूर्ण;
+};
 
-क्रमागत cxd2880_dvbt2_plp_btype अणु
+enum cxd2880_dvbt2_plp_btype {
 	CXD2880_DVBT2_PLP_COMMON,
 	CXD2880_DVBT2_PLP_DATA
-पूर्ण;
+};
 
-क्रमागत cxd2880_dvbt2_stream अणु
+enum cxd2880_dvbt2_stream {
 	CXD2880_DVBT2_STREAM_GENERIC_PACKETIZED = 0x00,
 	CXD2880_DVBT2_STREAM_GENERIC_CONTINUOUS = 0x01,
 	CXD2880_DVBT2_STREAM_GENERIC_ENCAPSULATED = 0x02,
 	CXD2880_DVBT2_STREAM_TRANSPORT = 0x03,
 	CXD2880_DVBT2_STREAM_UNKNOWN = 0xff
-पूर्ण;
+};
 
-काष्ठा cxd2880_dvbt2_l1pre अणु
-	क्रमागत cxd2880_dvbt2_l1pre_type type;
+struct cxd2880_dvbt2_l1pre {
+	enum cxd2880_dvbt2_l1pre_type type;
 	u8 bw_ext;
-	क्रमागत cxd2880_dvbt2_s1 s1;
+	enum cxd2880_dvbt2_s1 s1;
 	u8 s2;
 	u8 mixed;
-	क्रमागत cxd2880_dvbt2_mode fft_mode;
+	enum cxd2880_dvbt2_mode fft_mode;
 	u8 l1_rep;
-	क्रमागत cxd2880_dvbt2_guard gi;
-	क्रमागत cxd2880_dvbt2_papr papr;
-	क्रमागत cxd2880_dvbt2_l1post_स्थिरell mod;
-	क्रमागत cxd2880_dvbt2_l1post_cr cr;
-	क्रमागत cxd2880_dvbt2_l1post_fec_type fec;
+	enum cxd2880_dvbt2_guard gi;
+	enum cxd2880_dvbt2_papr papr;
+	enum cxd2880_dvbt2_l1post_constell mod;
+	enum cxd2880_dvbt2_l1post_cr cr;
+	enum cxd2880_dvbt2_l1post_fec_type fec;
 	u32 l1_post_size;
 	u32 l1_post_info_size;
-	क्रमागत cxd2880_dvbt2_pp pp;
+	enum cxd2880_dvbt2_pp pp;
 	u8 tx_id_availability;
 	u16 cell_id;
 	u16 network_id;
@@ -315,37 +314,37 @@
 	u8 post_ext;
 	u8 num_rf_freqs;
 	u8 rf_idx;
-	क्रमागत cxd2880_dvbt2_version t2_version;
+	enum cxd2880_dvbt2_version t2_version;
 	u8 l1_post_scrambled;
 	u8 t2_base_lite;
 	u32 crc32;
-पूर्ण;
+};
 
-काष्ठा cxd2880_dvbt2_plp अणु
+struct cxd2880_dvbt2_plp {
 	u8 id;
-	क्रमागत cxd2880_dvbt2_plp_type type;
-	क्रमागत cxd2880_dvbt2_plp_payload payload;
+	enum cxd2880_dvbt2_plp_type type;
+	enum cxd2880_dvbt2_plp_payload payload;
 	u8 ff;
 	u8 first_rf_idx;
 	u8 first_frm_idx;
 	u8 group_id;
-	क्रमागत cxd2880_dvbt2_plp_स्थिरell स्थिरell;
-	क्रमागत cxd2880_dvbt2_plp_code_rate plp_cr;
+	enum cxd2880_dvbt2_plp_constell constell;
+	enum cxd2880_dvbt2_plp_code_rate plp_cr;
 	u8 rot;
-	क्रमागत cxd2880_dvbt2_plp_fec fec;
+	enum cxd2880_dvbt2_plp_fec fec;
 	u16 num_blocks_max;
-	u8 frm_पूर्णांक;
+	u8 frm_int;
 	u8 til_len;
 	u8 til_type;
 	u8 in_band_a_flag;
 	u8 in_band_b_flag;
 	u16 rsvd;
-	क्रमागत cxd2880_dvbt2_plp_mode plp_mode;
-	u8 अटल_flag;
-	u8 अटल_padding_flag;
-पूर्ण;
+	enum cxd2880_dvbt2_plp_mode plp_mode;
+	u8 static_flag;
+	u8 static_padding_flag;
+};
 
-काष्ठा cxd2880_dvbt2_l1post अणु
+struct cxd2880_dvbt2_l1post {
 	u16 sub_slices_per_frame;
 	u8 num_plps;
 	u8 num_aux;
@@ -354,33 +353,33 @@
 	u32 freq;
 	u8 fef_type;
 	u32 fef_length;
-	u8 fef_पूर्णांकvl;
-पूर्ण;
+	u8 fef_intvl;
+};
 
-काष्ठा cxd2880_dvbt2_ofdm अणु
+struct cxd2880_dvbt2_ofdm {
 	u8 mixed;
 	u8 is_miso;
-	क्रमागत cxd2880_dvbt2_mode mode;
-	क्रमागत cxd2880_dvbt2_guard gi;
-	क्रमागत cxd2880_dvbt2_pp pp;
+	enum cxd2880_dvbt2_mode mode;
+	enum cxd2880_dvbt2_guard gi;
+	enum cxd2880_dvbt2_pp pp;
 	u8 bw_ext;
-	क्रमागत cxd2880_dvbt2_papr papr;
+	enum cxd2880_dvbt2_papr papr;
 	u16 num_symbols;
-पूर्ण;
+};
 
-काष्ठा cxd2880_dvbt2_bbheader अणु
-	क्रमागत cxd2880_dvbt2_stream stream_input;
+struct cxd2880_dvbt2_bbheader {
+	enum cxd2880_dvbt2_stream stream_input;
 	u8 is_single_input_stream;
-	u8 is_स्थिरant_coding_modulation;
+	u8 is_constant_coding_modulation;
 	u8 issy_indicator;
 	u8 null_packet_deletion;
 	u8 ext;
-	u8 input_stream_identअगरier;
+	u8 input_stream_identifier;
 	u16 user_packet_length;
 	u16 data_field_length;
 	u8 sync_byte;
 	u32 issy;
-	क्रमागत cxd2880_dvbt2_plp_mode plp_mode;
-पूर्ण;
+	enum cxd2880_dvbt2_plp_mode plp_mode;
+};
 
-#पूर्ण_अगर
+#endif

@@ -1,218 +1,217 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Support code क्रम the SCOOP पूर्णांकerface found on various Sharp PDAs
+ * Support code for the SCOOP interface found on various Sharp PDAs
  *
- * Copyright (c) 2004 Riअक्षरd Purdie
+ * Copyright (c) 2004 Richard Purdie
  *
- *	Based on code written by Sharp/Lineo क्रम 2.4 kernels
+ *	Based on code written by Sharp/Lineo for 2.4 kernels
  */
 
-#समावेश <linux/device.h>
-#समावेश <linux/gpio/driver.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/slab.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/export.h>
-#समावेश <linux/पन.स>
-#समावेश <यंत्र/hardware/scoop.h>
+#include <linux/device.h>
+#include <linux/gpio/driver.h>
+#include <linux/string.h>
+#include <linux/slab.h>
+#include <linux/platform_device.h>
+#include <linux/export.h>
+#include <linux/io.h>
+#include <asm/hardware/scoop.h>
 
 /* PCMCIA to Scoop linkage
 
-   There is no easy way to link multiple scoop devices पूर्णांकo one
-   single entity क्रम the pxa2xx_pcmcia device so this काष्ठाure
-   is used which is setup by the platक्रमm code.
+   There is no easy way to link multiple scoop devices into one
+   single entity for the pxa2xx_pcmcia device so this structure
+   is used which is setup by the platform code.
 
    This file is never modular so this symbol is always
    accessile to the board support files.
 */
-काष्ठा scoop_pcmcia_config *platक्रमm_scoop_config;
-EXPORT_SYMBOL(platक्रमm_scoop_config);
+struct scoop_pcmcia_config *platform_scoop_config;
+EXPORT_SYMBOL(platform_scoop_config);
 
-काष्ठा  scoop_dev अणु
-	व्योम __iomem *base;
-	काष्ठा gpio_chip gpio;
+struct  scoop_dev {
+	void __iomem *base;
+	struct gpio_chip gpio;
 	spinlock_t scoop_lock;
-	अचिन्हित लघु suspend_clr;
-	अचिन्हित लघु suspend_set;
+	unsigned short suspend_clr;
+	unsigned short suspend_set;
 	u32 scoop_gpwr;
-पूर्ण;
+};
 
-व्योम reset_scoop(काष्ठा device *dev)
-अणु
-	काष्ठा scoop_dev *sdev = dev_get_drvdata(dev);
+void reset_scoop(struct device *dev)
+{
+	struct scoop_dev *sdev = dev_get_drvdata(dev);
 
-	ioग_लिखो16(0x0100, sdev->base + SCOOP_MCR);  /* 00 */
-	ioग_लिखो16(0x0000, sdev->base + SCOOP_CDR);  /* 04 */
-	ioग_लिखो16(0x0000, sdev->base + SCOOP_CCR);  /* 10 */
-	ioग_लिखो16(0x0000, sdev->base + SCOOP_IMR);  /* 18 */
-	ioग_लिखो16(0x00FF, sdev->base + SCOOP_IRM);  /* 14 */
-	ioग_लिखो16(0x0000, sdev->base + SCOOP_ISR);  /* 1C */
-	ioग_लिखो16(0x0000, sdev->base + SCOOP_IRM);
-पूर्ण
+	iowrite16(0x0100, sdev->base + SCOOP_MCR);  /* 00 */
+	iowrite16(0x0000, sdev->base + SCOOP_CDR);  /* 04 */
+	iowrite16(0x0000, sdev->base + SCOOP_CCR);  /* 10 */
+	iowrite16(0x0000, sdev->base + SCOOP_IMR);  /* 18 */
+	iowrite16(0x00FF, sdev->base + SCOOP_IRM);  /* 14 */
+	iowrite16(0x0000, sdev->base + SCOOP_ISR);  /* 1C */
+	iowrite16(0x0000, sdev->base + SCOOP_IRM);
+}
 
-अटल व्योम __scoop_gpio_set(काष्ठा scoop_dev *sdev,
-			अचिन्हित offset, पूर्णांक value)
-अणु
-	अचिन्हित लघु gpwr;
+static void __scoop_gpio_set(struct scoop_dev *sdev,
+			unsigned offset, int value)
+{
+	unsigned short gpwr;
 
-	gpwr = ioपढ़ो16(sdev->base + SCOOP_GPWR);
-	अगर (value)
+	gpwr = ioread16(sdev->base + SCOOP_GPWR);
+	if (value)
 		gpwr |= 1 << (offset + 1);
-	अन्यथा
+	else
 		gpwr &= ~(1 << (offset + 1));
-	ioग_लिखो16(gpwr, sdev->base + SCOOP_GPWR);
-पूर्ण
+	iowrite16(gpwr, sdev->base + SCOOP_GPWR);
+}
 
-अटल व्योम scoop_gpio_set(काष्ठा gpio_chip *chip, अचिन्हित offset, पूर्णांक value)
-अणु
-	काष्ठा scoop_dev *sdev = gpiochip_get_data(chip);
-	अचिन्हित दीर्घ flags;
+static void scoop_gpio_set(struct gpio_chip *chip, unsigned offset, int value)
+{
+	struct scoop_dev *sdev = gpiochip_get_data(chip);
+	unsigned long flags;
 
 	spin_lock_irqsave(&sdev->scoop_lock, flags);
 
 	__scoop_gpio_set(sdev, offset, value);
 
 	spin_unlock_irqrestore(&sdev->scoop_lock, flags);
-पूर्ण
+}
 
-अटल पूर्णांक scoop_gpio_get(काष्ठा gpio_chip *chip, अचिन्हित offset)
-अणु
-	काष्ठा scoop_dev *sdev = gpiochip_get_data(chip);
+static int scoop_gpio_get(struct gpio_chip *chip, unsigned offset)
+{
+	struct scoop_dev *sdev = gpiochip_get_data(chip);
 
 	/* XXX: I'm unsure, but it seems so */
-	वापस !!(ioपढ़ो16(sdev->base + SCOOP_GPRR) & (1 << (offset + 1)));
-पूर्ण
+	return !!(ioread16(sdev->base + SCOOP_GPRR) & (1 << (offset + 1)));
+}
 
-अटल पूर्णांक scoop_gpio_direction_input(काष्ठा gpio_chip *chip,
-			अचिन्हित offset)
-अणु
-	काष्ठा scoop_dev *sdev = gpiochip_get_data(chip);
-	अचिन्हित दीर्घ flags;
-	अचिन्हित लघु gpcr;
+static int scoop_gpio_direction_input(struct gpio_chip *chip,
+			unsigned offset)
+{
+	struct scoop_dev *sdev = gpiochip_get_data(chip);
+	unsigned long flags;
+	unsigned short gpcr;
 
 	spin_lock_irqsave(&sdev->scoop_lock, flags);
 
-	gpcr = ioपढ़ो16(sdev->base + SCOOP_GPCR);
+	gpcr = ioread16(sdev->base + SCOOP_GPCR);
 	gpcr &= ~(1 << (offset + 1));
-	ioग_लिखो16(gpcr, sdev->base + SCOOP_GPCR);
+	iowrite16(gpcr, sdev->base + SCOOP_GPCR);
 
 	spin_unlock_irqrestore(&sdev->scoop_lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक scoop_gpio_direction_output(काष्ठा gpio_chip *chip,
-			अचिन्हित offset, पूर्णांक value)
-अणु
-	काष्ठा scoop_dev *sdev = gpiochip_get_data(chip);
-	अचिन्हित दीर्घ flags;
-	अचिन्हित लघु gpcr;
+static int scoop_gpio_direction_output(struct gpio_chip *chip,
+			unsigned offset, int value)
+{
+	struct scoop_dev *sdev = gpiochip_get_data(chip);
+	unsigned long flags;
+	unsigned short gpcr;
 
 	spin_lock_irqsave(&sdev->scoop_lock, flags);
 
 	__scoop_gpio_set(sdev, offset, value);
 
-	gpcr = ioपढ़ो16(sdev->base + SCOOP_GPCR);
+	gpcr = ioread16(sdev->base + SCOOP_GPCR);
 	gpcr |= 1 << (offset + 1);
-	ioग_लिखो16(gpcr, sdev->base + SCOOP_GPCR);
+	iowrite16(gpcr, sdev->base + SCOOP_GPCR);
 
 	spin_unlock_irqrestore(&sdev->scoop_lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अचिन्हित लघु पढ़ो_scoop_reg(काष्ठा device *dev, अचिन्हित लघु reg)
-अणु
-	काष्ठा scoop_dev *sdev = dev_get_drvdata(dev);
-	वापस ioपढ़ो16(sdev->base + reg);
-पूर्ण
+unsigned short read_scoop_reg(struct device *dev, unsigned short reg)
+{
+	struct scoop_dev *sdev = dev_get_drvdata(dev);
+	return ioread16(sdev->base + reg);
+}
 
-व्योम ग_लिखो_scoop_reg(काष्ठा device *dev, अचिन्हित लघु reg, अचिन्हित लघु data)
-अणु
-	काष्ठा scoop_dev *sdev = dev_get_drvdata(dev);
-	ioग_लिखो16(data, sdev->base + reg);
-पूर्ण
+void write_scoop_reg(struct device *dev, unsigned short reg, unsigned short data)
+{
+	struct scoop_dev *sdev = dev_get_drvdata(dev);
+	iowrite16(data, sdev->base + reg);
+}
 
 EXPORT_SYMBOL(reset_scoop);
-EXPORT_SYMBOL(पढ़ो_scoop_reg);
-EXPORT_SYMBOL(ग_लिखो_scoop_reg);
+EXPORT_SYMBOL(read_scoop_reg);
+EXPORT_SYMBOL(write_scoop_reg);
 
-#अगर_घोषित CONFIG_PM
-अटल व्योम check_scoop_reg(काष्ठा scoop_dev *sdev)
-अणु
-	अचिन्हित लघु mcr;
+#ifdef CONFIG_PM
+static void check_scoop_reg(struct scoop_dev *sdev)
+{
+	unsigned short mcr;
 
-	mcr = ioपढ़ो16(sdev->base + SCOOP_MCR);
-	अगर ((mcr & 0x100) == 0)
-		ioग_लिखो16(0x0101, sdev->base + SCOOP_MCR);
-पूर्ण
+	mcr = ioread16(sdev->base + SCOOP_MCR);
+	if ((mcr & 0x100) == 0)
+		iowrite16(0x0101, sdev->base + SCOOP_MCR);
+}
 
-अटल पूर्णांक scoop_suspend(काष्ठा platक्रमm_device *dev, pm_message_t state)
-अणु
-	काष्ठा scoop_dev *sdev = platक्रमm_get_drvdata(dev);
-
-	check_scoop_reg(sdev);
-	sdev->scoop_gpwr = ioपढ़ो16(sdev->base + SCOOP_GPWR);
-	ioग_लिखो16((sdev->scoop_gpwr & ~sdev->suspend_clr) | sdev->suspend_set, sdev->base + SCOOP_GPWR);
-
-	वापस 0;
-पूर्ण
-
-अटल पूर्णांक scoop_resume(काष्ठा platक्रमm_device *dev)
-अणु
-	काष्ठा scoop_dev *sdev = platक्रमm_get_drvdata(dev);
+static int scoop_suspend(struct platform_device *dev, pm_message_t state)
+{
+	struct scoop_dev *sdev = platform_get_drvdata(dev);
 
 	check_scoop_reg(sdev);
-	ioग_लिखो16(sdev->scoop_gpwr, sdev->base + SCOOP_GPWR);
+	sdev->scoop_gpwr = ioread16(sdev->base + SCOOP_GPWR);
+	iowrite16((sdev->scoop_gpwr & ~sdev->suspend_clr) | sdev->suspend_set, sdev->base + SCOOP_GPWR);
 
-	वापस 0;
-पूर्ण
-#अन्यथा
-#घोषणा scoop_suspend	शून्य
-#घोषणा scoop_resume	शून्य
-#पूर्ण_अगर
+	return 0;
+}
 
-अटल पूर्णांक scoop_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा scoop_dev *devptr;
-	काष्ठा scoop_config *inf;
-	काष्ठा resource *mem = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
-	पूर्णांक ret;
+static int scoop_resume(struct platform_device *dev)
+{
+	struct scoop_dev *sdev = platform_get_drvdata(dev);
 
-	अगर (!mem)
-		वापस -EINVAL;
+	check_scoop_reg(sdev);
+	iowrite16(sdev->scoop_gpwr, sdev->base + SCOOP_GPWR);
 
-	devptr = kzalloc(माप(काष्ठा scoop_dev), GFP_KERNEL);
-	अगर (!devptr)
-		वापस -ENOMEM;
+	return 0;
+}
+#else
+#define scoop_suspend	NULL
+#define scoop_resume	NULL
+#endif
+
+static int scoop_probe(struct platform_device *pdev)
+{
+	struct scoop_dev *devptr;
+	struct scoop_config *inf;
+	struct resource *mem = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	int ret;
+
+	if (!mem)
+		return -EINVAL;
+
+	devptr = kzalloc(sizeof(struct scoop_dev), GFP_KERNEL);
+	if (!devptr)
+		return -ENOMEM;
 
 	spin_lock_init(&devptr->scoop_lock);
 
-	inf = pdev->dev.platक्रमm_data;
+	inf = pdev->dev.platform_data;
 	devptr->base = ioremap(mem->start, resource_size(mem));
 
-	अगर (!devptr->base) अणु
+	if (!devptr->base) {
 		ret = -ENOMEM;
-		जाओ err_ioremap;
-	पूर्ण
+		goto err_ioremap;
+	}
 
-	platक्रमm_set_drvdata(pdev, devptr);
+	platform_set_drvdata(pdev, devptr);
 
-	prपूर्णांकk("Sharp Scoop Device found at 0x%08x -> 0x%8p\n",(अचिन्हित पूर्णांक)mem->start, devptr->base);
+	printk("Sharp Scoop Device found at 0x%08x -> 0x%8p\n",(unsigned int)mem->start, devptr->base);
 
-	ioग_लिखो16(0x0140, devptr->base + SCOOP_MCR);
+	iowrite16(0x0140, devptr->base + SCOOP_MCR);
 	reset_scoop(&pdev->dev);
-	ioग_लिखो16(0x0000, devptr->base + SCOOP_CPR);
-	ioग_लिखो16(inf->io_dir & 0xffff, devptr->base + SCOOP_GPCR);
-	ioग_लिखो16(inf->io_out & 0xffff, devptr->base + SCOOP_GPWR);
+	iowrite16(0x0000, devptr->base + SCOOP_CPR);
+	iowrite16(inf->io_dir & 0xffff, devptr->base + SCOOP_GPCR);
+	iowrite16(inf->io_out & 0xffff, devptr->base + SCOOP_GPWR);
 
 	devptr->suspend_clr = inf->suspend_clr;
 	devptr->suspend_set = inf->suspend_set;
 
 	devptr->gpio.base = -1;
 
-	अगर (inf->gpio_base != 0) अणु
+	if (inf->gpio_base != 0) {
 		devptr->gpio.label = dev_name(&pdev->dev);
 		devptr->gpio.base = inf->gpio_base;
 		devptr->gpio.ngpio = 12; /* PA11 = 0, PA12 = 1, etc. up to PA22 = 11 */
@@ -222,51 +221,51 @@ EXPORT_SYMBOL(ग_लिखो_scoop_reg);
 		devptr->gpio.direction_output = scoop_gpio_direction_output;
 
 		ret = gpiochip_add_data(&devptr->gpio, devptr);
-		अगर (ret)
-			जाओ err_gpio;
-	पूर्ण
+		if (ret)
+			goto err_gpio;
+	}
 
-	वापस 0;
+	return 0;
 
 err_gpio:
-	platक्रमm_set_drvdata(pdev, शून्य);
+	platform_set_drvdata(pdev, NULL);
 err_ioremap:
 	iounmap(devptr->base);
-	kमुक्त(devptr);
+	kfree(devptr);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक scoop_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा scoop_dev *sdev = platक्रमm_get_drvdata(pdev);
+static int scoop_remove(struct platform_device *pdev)
+{
+	struct scoop_dev *sdev = platform_get_drvdata(pdev);
 
-	अगर (!sdev)
-		वापस -EINVAL;
+	if (!sdev)
+		return -EINVAL;
 
-	अगर (sdev->gpio.base != -1)
-		gpiochip_हटाओ(&sdev->gpio);
+	if (sdev->gpio.base != -1)
+		gpiochip_remove(&sdev->gpio);
 
-	platक्रमm_set_drvdata(pdev, शून्य);
+	platform_set_drvdata(pdev, NULL);
 	iounmap(sdev->base);
-	kमुक्त(sdev);
+	kfree(sdev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver scoop_driver = अणु
+static struct platform_driver scoop_driver = {
 	.probe		= scoop_probe,
-	.हटाओ		= scoop_हटाओ,
+	.remove		= scoop_remove,
 	.suspend	= scoop_suspend,
 	.resume		= scoop_resume,
-	.driver		= अणु
+	.driver		= {
 		.name	= "sharp-scoop",
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक __init scoop_init(व्योम)
-अणु
-	वापस platक्रमm_driver_रेजिस्टर(&scoop_driver);
-पूर्ण
+static int __init scoop_init(void)
+{
+	return platform_driver_register(&scoop_driver);
+}
 
 subsys_initcall(scoop_init);

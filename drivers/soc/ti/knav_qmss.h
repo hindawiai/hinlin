@@ -1,7 +1,6 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Keystone Navigator QMSS driver पूर्णांकernal header
+ * Keystone Navigator QMSS driver internal header
  *
  * Copyright (C) 2014 Texas Instruments Incorporated - http://www.ti.com
  * Author:	Sandeep Nair <sandeep_n@ti.com>
@@ -9,47 +8,47 @@
  *		Santosh Shilimkar <santosh.shilimkar@ti.com>
  */
 
-#अगर_अघोषित __KNAV_QMSS_H__
-#घोषणा __KNAV_QMSS_H__
+#ifndef __KNAV_QMSS_H__
+#define __KNAV_QMSS_H__
 
-#समावेश <linux/percpu.h>
+#include <linux/percpu.h>
 
-#घोषणा THRESH_GTE	BIT(7)
-#घोषणा THRESH_LT	0
+#define THRESH_GTE	BIT(7)
+#define THRESH_LT	0
 
-#घोषणा PDSP_CTRL_PC_MASK	0xffff0000
-#घोषणा PDSP_CTRL_SOFT_RESET	BIT(0)
-#घोषणा PDSP_CTRL_ENABLE	BIT(1)
-#घोषणा PDSP_CTRL_RUNNING	BIT(15)
+#define PDSP_CTRL_PC_MASK	0xffff0000
+#define PDSP_CTRL_SOFT_RESET	BIT(0)
+#define PDSP_CTRL_ENABLE	BIT(1)
+#define PDSP_CTRL_RUNNING	BIT(15)
 
-#घोषणा ACC_MAX_CHANNEL		48
-#घोषणा ACC_DEFAULT_PERIOD	25 /* usecs */
+#define ACC_MAX_CHANNEL		48
+#define ACC_DEFAULT_PERIOD	25 /* usecs */
 
-#घोषणा ACC_CHANNEL_INT_BASE		2
+#define ACC_CHANNEL_INT_BASE		2
 
-#घोषणा ACC_LIST_ENTRY_TYPE		1
-#घोषणा ACC_LIST_ENTRY_WORDS		(1 << ACC_LIST_ENTRY_TYPE)
-#घोषणा ACC_LIST_ENTRY_QUEUE_IDX	0
-#घोषणा ACC_LIST_ENTRY_DESC_IDX	(ACC_LIST_ENTRY_WORDS - 1)
+#define ACC_LIST_ENTRY_TYPE		1
+#define ACC_LIST_ENTRY_WORDS		(1 << ACC_LIST_ENTRY_TYPE)
+#define ACC_LIST_ENTRY_QUEUE_IDX	0
+#define ACC_LIST_ENTRY_DESC_IDX	(ACC_LIST_ENTRY_WORDS - 1)
 
-#घोषणा ACC_CMD_DISABLE_CHANNEL	0x80
-#घोषणा ACC_CMD_ENABLE_CHANNEL	0x81
-#घोषणा ACC_CFG_MULTI_QUEUE		BIT(21)
+#define ACC_CMD_DISABLE_CHANNEL	0x80
+#define ACC_CMD_ENABLE_CHANNEL	0x81
+#define ACC_CFG_MULTI_QUEUE		BIT(21)
 
-#घोषणा ACC_INTD_OFFSET_EOI		(0x0010)
-#घोषणा ACC_INTD_OFFSET_COUNT(ch)	(0x0300 + 4 * (ch))
-#घोषणा ACC_INTD_OFFSET_STATUS(ch)	(0x0200 + 4 * ((ch) / 32))
+#define ACC_INTD_OFFSET_EOI		(0x0010)
+#define ACC_INTD_OFFSET_COUNT(ch)	(0x0300 + 4 * (ch))
+#define ACC_INTD_OFFSET_STATUS(ch)	(0x0200 + 4 * ((ch) / 32))
 
-#घोषणा RANGE_MAX_IRQS			64
+#define RANGE_MAX_IRQS			64
 
-#घोषणा ACC_DESCS_MAX		SZ_1K
-#घोषणा ACC_DESCS_MASK		(ACC_DESCS_MAX - 1)
-#घोषणा DESC_SIZE_MASK		0xful
-#घोषणा DESC_PTR_MASK		(~DESC_SIZE_MASK)
+#define ACC_DESCS_MAX		SZ_1K
+#define ACC_DESCS_MASK		(ACC_DESCS_MAX - 1)
+#define DESC_SIZE_MASK		0xful
+#define DESC_PTR_MASK		(~DESC_SIZE_MASK)
 
-#घोषणा KNAV_NAME_SIZE			32
+#define KNAV_NAME_SIZE			32
 
-क्रमागत knav_acc_result अणु
+enum knav_acc_result {
 	ACC_RET_IDLE,
 	ACC_RET_SUCCESS,
 	ACC_RET_INVALID_COMMAND,
@@ -58,130 +57,130 @@
 	ACC_RET_ACTIVE_CHANNEL,
 	ACC_RET_INVALID_QUEUE,
 	ACC_RET_INVALID_RET,
-पूर्ण;
+};
 
-काष्ठा knav_reg_config अणु
+struct knav_reg_config {
 	u32		revision;
 	u32		__pad1;
-	u32		भागert;
+	u32		divert;
 	u32		link_ram_base0;
 	u32		link_ram_size0;
 	u32		link_ram_base1;
 	u32		__pad2[2];
 	u32		starvation[];
-पूर्ण;
+};
 
-काष्ठा knav_reg_region अणु
+struct knav_reg_region {
 	u32		base;
 	u32		start_index;
 	u32		size_count;
 	u32		__pad;
-पूर्ण;
+};
 
-काष्ठा knav_reg_pdsp_regs अणु
+struct knav_reg_pdsp_regs {
 	u32		control;
 	u32		status;
 	u32		cycle_count;
 	u32		stall_count;
-पूर्ण;
+};
 
-काष्ठा knav_reg_acc_command अणु
+struct knav_reg_acc_command {
 	u32		command;
 	u32		queue_mask;
 	u32		list_dma;
 	u32		queue_num;
-	u32		समयr_config;
-पूर्ण;
+	u32		timer_config;
+};
 
-काष्ठा knav_link_ram_block अणु
+struct knav_link_ram_block {
 	dma_addr_t	 dma;
-	व्योम		*virt;
-	माप_प्रकार		 size;
-पूर्ण;
+	void		*virt;
+	size_t		 size;
+};
 
-काष्ठा knav_acc_info अणु
+struct knav_acc_info {
 	u32			 pdsp_id;
 	u32			 start_channel;
 	u32			 list_entries;
 	u32			 pacing_mode;
-	u32			 समयr_count;
-	पूर्णांक			 mem_size;
-	पूर्णांक			 list_size;
-	काष्ठा knav_pdsp_info	*pdsp;
-पूर्ण;
+	u32			 timer_count;
+	int			 mem_size;
+	int			 list_size;
+	struct knav_pdsp_info	*pdsp;
+};
 
-काष्ठा knav_acc_channel अणु
+struct knav_acc_channel {
 	u32			channel;
 	u32			list_index;
-	u32			खोलो_mask;
+	u32			open_mask;
 	u32			*list_cpu[2];
 	dma_addr_t		list_dma[2];
-	अक्षर			name[KNAV_NAME_SIZE];
+	char			name[KNAV_NAME_SIZE];
 	atomic_t		retrigger_count;
-पूर्ण;
+};
 
-काष्ठा knav_pdsp_info अणु
-	स्थिर अक्षर					*name;
-	काष्ठा knav_reg_pdsp_regs  __iomem		*regs;
-	जोड़ अणु
-		व्योम __iomem				*command;
-		काष्ठा knav_reg_acc_command __iomem	*acc_command;
+struct knav_pdsp_info {
+	const char					*name;
+	struct knav_reg_pdsp_regs  __iomem		*regs;
+	union {
+		void __iomem				*command;
+		struct knav_reg_acc_command __iomem	*acc_command;
 		u32 __iomem				*qos_command;
-	पूर्ण;
-	व्योम __iomem					*पूर्णांकd;
+	};
+	void __iomem					*intd;
 	u32 __iomem					*iram;
 	u32						id;
-	काष्ठा list_head				list;
+	struct list_head				list;
 	bool						loaded;
 	bool						started;
-पूर्ण;
+};
 
-काष्ठा knav_qmgr_info अणु
-	अचिन्हित			start_queue;
-	अचिन्हित			num_queues;
-	काष्ठा knav_reg_config __iomem	*reg_config;
-	काष्ठा knav_reg_region __iomem	*reg_region;
-	काष्ठा knav_reg_queue __iomem	*reg_push, *reg_pop, *reg_peek;
-	व्योम __iomem			*reg_status;
-	काष्ठा list_head		list;
-पूर्ण;
+struct knav_qmgr_info {
+	unsigned			start_queue;
+	unsigned			num_queues;
+	struct knav_reg_config __iomem	*reg_config;
+	struct knav_reg_region __iomem	*reg_region;
+	struct knav_reg_queue __iomem	*reg_push, *reg_pop, *reg_peek;
+	void __iomem			*reg_status;
+	struct list_head		list;
+};
 
-#घोषणा KNAV_NUM_LINKRAM	2
+#define KNAV_NUM_LINKRAM	2
 
 /**
- * काष्ठा knav_queue_stats:	queue statistics
+ * struct knav_queue_stats:	queue statistics
  * pushes:			number of push operations
  * pops:			number of pop operations
  * push_errors:			number of push errors
  * pop_errors:			number of pop errors
- * notअगरies:			notअगरier counts
+ * notifies:			notifier counts
  */
-काष्ठा knav_queue_stats अणु
-	अचिन्हित पूर्णांक pushes;
-	अचिन्हित पूर्णांक pops;
-	अचिन्हित पूर्णांक push_errors;
-	अचिन्हित पूर्णांक pop_errors;
-	अचिन्हित पूर्णांक notअगरies;
-पूर्ण;
+struct knav_queue_stats {
+	unsigned int pushes;
+	unsigned int pops;
+	unsigned int push_errors;
+	unsigned int pop_errors;
+	unsigned int notifies;
+};
 
 /**
- * काष्ठा knav_reg_queue:	queue रेजिस्टरs
+ * struct knav_reg_queue:	queue registers
  * @entry_count:		valid entries in the queue
  * @byte_count:			total byte count in thhe queue
- * @packet_size:		packet size क्रम the queue
- * @ptr_माप_प्रकारhresh:		packet poपूर्णांकer size threshold
+ * @packet_size:		packet size for the queue
+ * @ptr_size_thresh:		packet pointer size threshold
  */
-काष्ठा knav_reg_queue अणु
+struct knav_reg_queue {
 	u32		entry_count;
 	u32		byte_count;
 	u32		packet_size;
-	u32		ptr_माप_प्रकारhresh;
-पूर्ण;
+	u32		ptr_size_thresh;
+};
 
 /**
- * काष्ठा knav_region:		qmss region info
+ * struct knav_region:		qmss region info
  * @dma_start, dma_end:		start and end dma address
- * @virt_start, virt_end:	start and end भव address
+ * @virt_start, virt_end:	start and end virtual address
  * @desc_size:			descriptor size
  * @used_desc:			consumed descriptors
  * @id:				region number
@@ -191,25 +190,25 @@
  * @list:			instance in the device's region list
  * @pools:			list of descriptor pools in the region
  */
-काष्ठा knav_region अणु
+struct knav_region {
 	dma_addr_t		dma_start, dma_end;
-	व्योम			*virt_start, *virt_end;
-	अचिन्हित		desc_size;
-	अचिन्हित		used_desc;
-	अचिन्हित		id;
-	अचिन्हित		num_desc;
-	अचिन्हित		link_index;
-	स्थिर अक्षर		*name;
-	काष्ठा list_head	list;
-	काष्ठा list_head	pools;
-पूर्ण;
+	void			*virt_start, *virt_end;
+	unsigned		desc_size;
+	unsigned		used_desc;
+	unsigned		id;
+	unsigned		num_desc;
+	unsigned		link_index;
+	const char		*name;
+	struct list_head	list;
+	struct list_head	pools;
+};
 
 /**
- * काष्ठा knav_pool:		qmss pools
- * @dev:			device poपूर्णांकer
+ * struct knav_pool:		qmss pools
+ * @dev:			device pointer
  * @region:			qmss region info
- * @queue:			queue रेजिस्टरs
- * @kdev:			qmss device poपूर्णांकer
+ * @queue:			queue registers
+ * @kdev:			qmss device pointer
  * @region_offset:		offset from the base
  * @num_desc:			total descriptors
  * @desc_size:			descriptor size
@@ -218,171 +217,171 @@
  * @list:			list head
  * @region_inst:		instance in the region's pool list
  */
-काष्ठा knav_pool अणु
-	काष्ठा device			*dev;
-	काष्ठा knav_region		*region;
-	काष्ठा knav_queue		*queue;
-	काष्ठा knav_device		*kdev;
-	पूर्णांक				region_offset;
-	पूर्णांक				num_desc;
-	पूर्णांक				desc_size;
-	पूर्णांक				region_id;
-	स्थिर अक्षर			*name;
-	काष्ठा list_head		list;
-	काष्ठा list_head		region_inst;
-पूर्ण;
+struct knav_pool {
+	struct device			*dev;
+	struct knav_region		*region;
+	struct knav_queue		*queue;
+	struct knav_device		*kdev;
+	int				region_offset;
+	int				num_desc;
+	int				desc_size;
+	int				region_id;
+	const char			*name;
+	struct list_head		list;
+	struct list_head		region_inst;
+};
 
 /**
- * काष्ठा knav_queue_inst:		qmss queue instance properties
- * @descs:				descriptor poपूर्णांकer
+ * struct knav_queue_inst:		qmss queue instance properties
+ * @descs:				descriptor pointer
  * @desc_head, desc_tail, desc_count:	descriptor counters
- * @acc:				accumulator channel poपूर्णांकer
- * @kdev:				qmss device poपूर्णांकer
+ * @acc:				accumulator channel pointer
+ * @kdev:				qmss device pointer
  * @range:				range info
  * @qmgr:				queue manager info
  * @id:					queue instance id
  * @irq_num:				irq line number
- * @notअगरy_needed:			notअगरier needed based on queue type
- * @num_notअगरiers:			total notअगरiers
+ * @notify_needed:			notifier needed based on queue type
+ * @num_notifiers:			total notifiers
  * @handles:				list head
  * @name:				queue instance name
  * @irq_name:				irq line name
  */
-काष्ठा knav_queue_inst अणु
+struct knav_queue_inst {
 	u32				*descs;
 	atomic_t			desc_head, desc_tail, desc_count;
-	काष्ठा knav_acc_channel	*acc;
-	काष्ठा knav_device		*kdev;
-	काष्ठा knav_range_info		*range;
-	काष्ठा knav_qmgr_info		*qmgr;
+	struct knav_acc_channel	*acc;
+	struct knav_device		*kdev;
+	struct knav_range_info		*range;
+	struct knav_qmgr_info		*qmgr;
 	u32				id;
-	पूर्णांक				irq_num;
-	पूर्णांक				notअगरy_needed;
-	atomic_t			num_notअगरiers;
-	काष्ठा list_head		handles;
-	स्थिर अक्षर			*name;
-	स्थिर अक्षर			*irq_name;
-पूर्ण;
+	int				irq_num;
+	int				notify_needed;
+	atomic_t			num_notifiers;
+	struct list_head		handles;
+	const char			*name;
+	const char			*irq_name;
+};
 
 /**
- * काष्ठा knav_queue:			qmss queue properties
- * @reg_push, reg_pop, reg_peek:	push, pop queue रेजिस्टरs
+ * struct knav_queue:			qmss queue properties
+ * @reg_push, reg_pop, reg_peek:	push, pop queue registers
  * @inst:				qmss queue instance properties
- * @notअगरier_fn:			notअगरier function
- * @notअगरier_fn_arg:			notअगरier function argument
- * @notअगरier_enabled:			notier enabled क्रम a give queue
+ * @notifier_fn:			notifier function
+ * @notifier_fn_arg:			notifier function argument
+ * @notifier_enabled:			notier enabled for a give queue
  * @rcu:				rcu head
  * @flags:				queue flags
  * @list:				list head
  */
-काष्ठा knav_queue अणु
-	काष्ठा knav_reg_queue __iomem	*reg_push, *reg_pop, *reg_peek;
-	काष्ठा knav_queue_inst		*inst;
-	काष्ठा knav_queue_stats __percpu	*stats;
-	knav_queue_notअगरy_fn		notअगरier_fn;
-	व्योम				*notअगरier_fn_arg;
-	atomic_t			notअगरier_enabled;
-	काष्ठा rcu_head			rcu;
-	अचिन्हित			flags;
-	काष्ठा list_head		list;
-पूर्ण;
+struct knav_queue {
+	struct knav_reg_queue __iomem	*reg_push, *reg_pop, *reg_peek;
+	struct knav_queue_inst		*inst;
+	struct knav_queue_stats __percpu	*stats;
+	knav_queue_notify_fn		notifier_fn;
+	void				*notifier_fn_arg;
+	atomic_t			notifier_enabled;
+	struct rcu_head			rcu;
+	unsigned			flags;
+	struct list_head		list;
+};
 
-क्रमागत qmss_version अणु
+enum qmss_version {
 	QMSS,
 	QMSS_66AK2G,
-पूर्ण;
+};
 
-काष्ठा knav_device अणु
-	काष्ठा device				*dev;
-	अचिन्हित				base_id;
-	अचिन्हित				num_queues;
-	अचिन्हित				num_queues_in_use;
-	अचिन्हित				inst_shअगरt;
-	काष्ठा knav_link_ram_block		link_rams[KNAV_NUM_LINKRAM];
-	व्योम					*instances;
-	काष्ठा list_head			regions;
-	काष्ठा list_head			queue_ranges;
-	काष्ठा list_head			pools;
-	काष्ठा list_head			pdsps;
-	काष्ठा list_head			qmgrs;
-	क्रमागत qmss_version			version;
-पूर्ण;
+struct knav_device {
+	struct device				*dev;
+	unsigned				base_id;
+	unsigned				num_queues;
+	unsigned				num_queues_in_use;
+	unsigned				inst_shift;
+	struct knav_link_ram_block		link_rams[KNAV_NUM_LINKRAM];
+	void					*instances;
+	struct list_head			regions;
+	struct list_head			queue_ranges;
+	struct list_head			pools;
+	struct list_head			pdsps;
+	struct list_head			qmgrs;
+	enum qmss_version			version;
+};
 
-काष्ठा knav_range_ops अणु
-	पूर्णांक	(*init_range)(काष्ठा knav_range_info *range);
-	पूर्णांक	(*मुक्त_range)(काष्ठा knav_range_info *range);
-	पूर्णांक	(*init_queue)(काष्ठा knav_range_info *range,
-			      काष्ठा knav_queue_inst *inst);
-	पूर्णांक	(*खोलो_queue)(काष्ठा knav_range_info *range,
-			      काष्ठा knav_queue_inst *inst, अचिन्हित flags);
-	पूर्णांक	(*बंद_queue)(काष्ठा knav_range_info *range,
-			       काष्ठा knav_queue_inst *inst);
-	पूर्णांक	(*set_notअगरy)(काष्ठा knav_range_info *range,
-			      काष्ठा knav_queue_inst *inst, bool enabled);
-पूर्ण;
+struct knav_range_ops {
+	int	(*init_range)(struct knav_range_info *range);
+	int	(*free_range)(struct knav_range_info *range);
+	int	(*init_queue)(struct knav_range_info *range,
+			      struct knav_queue_inst *inst);
+	int	(*open_queue)(struct knav_range_info *range,
+			      struct knav_queue_inst *inst, unsigned flags);
+	int	(*close_queue)(struct knav_range_info *range,
+			       struct knav_queue_inst *inst);
+	int	(*set_notify)(struct knav_range_info *range,
+			      struct knav_queue_inst *inst, bool enabled);
+};
 
-काष्ठा knav_irq_info अणु
-	पूर्णांक		irq;
-	काष्ठा cpumask	*cpu_mask;
-पूर्ण;
+struct knav_irq_info {
+	int		irq;
+	struct cpumask	*cpu_mask;
+};
 
-काष्ठा knav_range_info अणु
-	स्थिर अक्षर			*name;
-	काष्ठा knav_device		*kdev;
-	अचिन्हित			queue_base;
-	अचिन्हित			num_queues;
-	व्योम				*queue_base_inst;
-	अचिन्हित			flags;
-	काष्ठा list_head		list;
-	काष्ठा knav_range_ops		*ops;
-	काष्ठा knav_acc_info		acc_info;
-	काष्ठा knav_acc_channel	*acc;
-	अचिन्हित			num_irqs;
-	काष्ठा knav_irq_info		irqs[RANGE_MAX_IRQS];
-पूर्ण;
+struct knav_range_info {
+	const char			*name;
+	struct knav_device		*kdev;
+	unsigned			queue_base;
+	unsigned			num_queues;
+	void				*queue_base_inst;
+	unsigned			flags;
+	struct list_head		list;
+	struct knav_range_ops		*ops;
+	struct knav_acc_info		acc_info;
+	struct knav_acc_channel	*acc;
+	unsigned			num_irqs;
+	struct knav_irq_info		irqs[RANGE_MAX_IRQS];
+};
 
-#घोषणा RANGE_RESERVED		BIT(0)
-#घोषणा RANGE_HAS_IRQ		BIT(1)
-#घोषणा RANGE_HAS_ACCUMULATOR	BIT(2)
-#घोषणा RANGE_MULTI_QUEUE	BIT(3)
+#define RANGE_RESERVED		BIT(0)
+#define RANGE_HAS_IRQ		BIT(1)
+#define RANGE_HAS_ACCUMULATOR	BIT(2)
+#define RANGE_MULTI_QUEUE	BIT(3)
 
-#घोषणा क्रम_each_region(kdev, region)				\
-	list_क्रम_each_entry(region, &kdev->regions, list)
+#define for_each_region(kdev, region)				\
+	list_for_each_entry(region, &kdev->regions, list)
 
-#घोषणा first_region(kdev)					\
+#define first_region(kdev)					\
 	list_first_entry_or_null(&kdev->regions, \
-				 काष्ठा knav_region, list)
+				 struct knav_region, list)
 
-#घोषणा क्रम_each_queue_range(kdev, range)			\
-	list_क्रम_each_entry(range, &kdev->queue_ranges, list)
+#define for_each_queue_range(kdev, range)			\
+	list_for_each_entry(range, &kdev->queue_ranges, list)
 
-#घोषणा first_queue_range(kdev)					\
+#define first_queue_range(kdev)					\
 	list_first_entry_or_null(&kdev->queue_ranges, \
-				 काष्ठा knav_range_info, list)
+				 struct knav_range_info, list)
 
-#घोषणा क्रम_each_pool(kdev, pool)				\
-	list_क्रम_each_entry(pool, &kdev->pools, list)
+#define for_each_pool(kdev, pool)				\
+	list_for_each_entry(pool, &kdev->pools, list)
 
-#घोषणा क्रम_each_pdsp(kdev, pdsp)				\
-	list_क्रम_each_entry(pdsp, &kdev->pdsps, list)
+#define for_each_pdsp(kdev, pdsp)				\
+	list_for_each_entry(pdsp, &kdev->pdsps, list)
 
-#घोषणा क्रम_each_qmgr(kdev, qmgr)				\
-	list_क्रम_each_entry(qmgr, &kdev->qmgrs, list)
+#define for_each_qmgr(kdev, qmgr)				\
+	list_for_each_entry(qmgr, &kdev->qmgrs, list)
 
-अटल अंतरभूत काष्ठा knav_pdsp_info *
-knav_find_pdsp(काष्ठा knav_device *kdev, अचिन्हित pdsp_id)
-अणु
-	काष्ठा knav_pdsp_info *pdsp;
+static inline struct knav_pdsp_info *
+knav_find_pdsp(struct knav_device *kdev, unsigned pdsp_id)
+{
+	struct knav_pdsp_info *pdsp;
 
-	क्रम_each_pdsp(kdev, pdsp)
-		अगर (pdsp_id == pdsp->id)
-			वापस pdsp;
-	वापस शून्य;
-पूर्ण
+	for_each_pdsp(kdev, pdsp)
+		if (pdsp_id == pdsp->id)
+			return pdsp;
+	return NULL;
+}
 
-बाह्य पूर्णांक knav_init_acc_range(काष्ठा knav_device *kdev,
-					काष्ठा device_node *node,
-					काष्ठा knav_range_info *range);
-बाह्य व्योम knav_queue_notअगरy(काष्ठा knav_queue_inst *inst);
+extern int knav_init_acc_range(struct knav_device *kdev,
+					struct device_node *node,
+					struct knav_range_info *range);
+extern void knav_queue_notify(struct knav_queue_inst *inst);
 
-#पूर्ण_अगर /* __KNAV_QMSS_H__ */
+#endif /* __KNAV_QMSS_H__ */

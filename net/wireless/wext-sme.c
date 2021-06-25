@@ -1,191 +1,190 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * cfg80211 wext compat क्रम managed mode.
+ * cfg80211 wext compat for managed mode.
  *
  * Copyright 2009	Johannes Berg <johannes@sipsolutions.net>
  * Copyright (C) 2009, 2020-2021 Intel Corporation.
  */
 
-#समावेश <linux/export.h>
-#समावेश <linux/etherdevice.h>
-#समावेश <linux/अगर_arp.h>
-#समावेश <linux/slab.h>
-#समावेश <net/cfg80211.h>
-#समावेश <net/cfg80211-wext.h>
-#समावेश "wext-compat.h"
-#समावेश "nl80211.h"
+#include <linux/export.h>
+#include <linux/etherdevice.h>
+#include <linux/if_arp.h>
+#include <linux/slab.h>
+#include <net/cfg80211.h>
+#include <net/cfg80211-wext.h>
+#include "wext-compat.h"
+#include "nl80211.h"
 
-पूर्णांक cfg80211_mgd_wext_connect(काष्ठा cfg80211_रेजिस्टरed_device *rdev,
-			      काष्ठा wireless_dev *wdev)
-अणु
-	काष्ठा cfg80211_cached_keys *ck = शून्य;
-	स्थिर u8 *prev_bssid = शून्य;
-	पूर्णांक err, i;
+int cfg80211_mgd_wext_connect(struct cfg80211_registered_device *rdev,
+			      struct wireless_dev *wdev)
+{
+	struct cfg80211_cached_keys *ck = NULL;
+	const u8 *prev_bssid = NULL;
+	int err, i;
 
 	ASSERT_RTNL();
 	ASSERT_WDEV_LOCK(wdev);
 
-	अगर (!netअगर_running(wdev->netdev))
-		वापस 0;
+	if (!netif_running(wdev->netdev))
+		return 0;
 
 	wdev->wext.connect.ie = wdev->wext.ie;
 	wdev->wext.connect.ie_len = wdev->wext.ie_len;
 
-	/* Use शेष background scan period */
+	/* Use default background scan period */
 	wdev->wext.connect.bg_scan_period = -1;
 
-	अगर (wdev->wext.keys) अणु
-		wdev->wext.keys->def = wdev->wext.शेष_key;
-		अगर (wdev->wext.शेष_key != -1)
+	if (wdev->wext.keys) {
+		wdev->wext.keys->def = wdev->wext.default_key;
+		if (wdev->wext.default_key != -1)
 			wdev->wext.connect.privacy = true;
-	पूर्ण
+	}
 
-	अगर (!wdev->wext.connect.ssid_len)
-		वापस 0;
+	if (!wdev->wext.connect.ssid_len)
+		return 0;
 
-	अगर (wdev->wext.keys && wdev->wext.keys->def != -1) अणु
-		ck = kmemdup(wdev->wext.keys, माप(*ck), GFP_KERNEL);
-		अगर (!ck)
-			वापस -ENOMEM;
-		क्रम (i = 0; i < CFG80211_MAX_WEP_KEYS; i++)
+	if (wdev->wext.keys && wdev->wext.keys->def != -1) {
+		ck = kmemdup(wdev->wext.keys, sizeof(*ck), GFP_KERNEL);
+		if (!ck)
+			return -ENOMEM;
+		for (i = 0; i < CFG80211_MAX_WEP_KEYS; i++)
 			ck->params[i].key = ck->data[i];
-	पूर्ण
+	}
 
-	अगर (wdev->wext.prev_bssid_valid)
+	if (wdev->wext.prev_bssid_valid)
 		prev_bssid = wdev->wext.prev_bssid;
 
 	err = cfg80211_connect(rdev, wdev->netdev,
 			       &wdev->wext.connect, ck, prev_bssid);
-	अगर (err)
-		kमुक्त_sensitive(ck);
+	if (err)
+		kfree_sensitive(ck);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक cfg80211_mgd_wext_siwfreq(काष्ठा net_device *dev,
-			      काष्ठा iw_request_info *info,
-			      काष्ठा iw_freq *wextfreq, अक्षर *extra)
-अणु
-	काष्ठा wireless_dev *wdev = dev->ieee80211_ptr;
-	काष्ठा cfg80211_रेजिस्टरed_device *rdev = wiphy_to_rdev(wdev->wiphy);
-	काष्ठा ieee80211_channel *chan = शून्य;
-	पूर्णांक err, freq;
+int cfg80211_mgd_wext_siwfreq(struct net_device *dev,
+			      struct iw_request_info *info,
+			      struct iw_freq *wextfreq, char *extra)
+{
+	struct wireless_dev *wdev = dev->ieee80211_ptr;
+	struct cfg80211_registered_device *rdev = wiphy_to_rdev(wdev->wiphy);
+	struct ieee80211_channel *chan = NULL;
+	int err, freq;
 
-	/* call only क्रम station! */
-	अगर (WARN_ON(wdev->अगरtype != NL80211_IFTYPE_STATION))
-		वापस -EINVAL;
+	/* call only for station! */
+	if (WARN_ON(wdev->iftype != NL80211_IFTYPE_STATION))
+		return -EINVAL;
 
 	freq = cfg80211_wext_freq(wextfreq);
-	अगर (freq < 0)
-		वापस freq;
+	if (freq < 0)
+		return freq;
 
-	अगर (freq) अणु
+	if (freq) {
 		chan = ieee80211_get_channel(wdev->wiphy, freq);
-		अगर (!chan)
-			वापस -EINVAL;
-		अगर (chan->flags & IEEE80211_CHAN_DISABLED)
-			वापस -EINVAL;
-	पूर्ण
+		if (!chan)
+			return -EINVAL;
+		if (chan->flags & IEEE80211_CHAN_DISABLED)
+			return -EINVAL;
+	}
 
 	wdev_lock(wdev);
 
-	अगर (wdev->conn) अणु
+	if (wdev->conn) {
 		bool event = true;
 
-		अगर (wdev->wext.connect.channel == chan) अणु
+		if (wdev->wext.connect.channel == chan) {
 			err = 0;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
-		/* अगर SSID set, we'll try right again, aव्योम event */
-		अगर (wdev->wext.connect.ssid_len)
+		/* if SSID set, we'll try right again, avoid event */
+		if (wdev->wext.connect.ssid_len)
 			event = false;
 		err = cfg80211_disconnect(rdev, dev,
 					  WLAN_REASON_DEAUTH_LEAVING, event);
-		अगर (err)
-			जाओ out;
-	पूर्ण
+		if (err)
+			goto out;
+	}
 
 	wdev->wext.connect.channel = chan;
 	err = cfg80211_mgd_wext_connect(rdev, wdev);
  out:
 	wdev_unlock(wdev);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक cfg80211_mgd_wext_giwfreq(काष्ठा net_device *dev,
-			      काष्ठा iw_request_info *info,
-			      काष्ठा iw_freq *freq, अक्षर *extra)
-अणु
-	काष्ठा wireless_dev *wdev = dev->ieee80211_ptr;
-	काष्ठा ieee80211_channel *chan = शून्य;
+int cfg80211_mgd_wext_giwfreq(struct net_device *dev,
+			      struct iw_request_info *info,
+			      struct iw_freq *freq, char *extra)
+{
+	struct wireless_dev *wdev = dev->ieee80211_ptr;
+	struct ieee80211_channel *chan = NULL;
 
-	/* call only क्रम station! */
-	अगर (WARN_ON(wdev->अगरtype != NL80211_IFTYPE_STATION))
-		वापस -EINVAL;
+	/* call only for station! */
+	if (WARN_ON(wdev->iftype != NL80211_IFTYPE_STATION))
+		return -EINVAL;
 
 	wdev_lock(wdev);
-	अगर (wdev->current_bss)
+	if (wdev->current_bss)
 		chan = wdev->current_bss->pub.channel;
-	अन्यथा अगर (wdev->wext.connect.channel)
+	else if (wdev->wext.connect.channel)
 		chan = wdev->wext.connect.channel;
 	wdev_unlock(wdev);
 
-	अगर (chan) अणु
+	if (chan) {
 		freq->m = chan->center_freq;
 		freq->e = 6;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	/* no channel अगर not joining */
-	वापस -EINVAL;
-पूर्ण
+	/* no channel if not joining */
+	return -EINVAL;
+}
 
-पूर्णांक cfg80211_mgd_wext_siwessid(काष्ठा net_device *dev,
-			       काष्ठा iw_request_info *info,
-			       काष्ठा iw_poपूर्णांक *data, अक्षर *ssid)
-अणु
-	काष्ठा wireless_dev *wdev = dev->ieee80211_ptr;
-	काष्ठा cfg80211_रेजिस्टरed_device *rdev = wiphy_to_rdev(wdev->wiphy);
-	माप_प्रकार len = data->length;
-	पूर्णांक err;
+int cfg80211_mgd_wext_siwessid(struct net_device *dev,
+			       struct iw_request_info *info,
+			       struct iw_point *data, char *ssid)
+{
+	struct wireless_dev *wdev = dev->ieee80211_ptr;
+	struct cfg80211_registered_device *rdev = wiphy_to_rdev(wdev->wiphy);
+	size_t len = data->length;
+	int err;
 
-	/* call only क्रम station! */
-	अगर (WARN_ON(wdev->अगरtype != NL80211_IFTYPE_STATION))
-		वापस -EINVAL;
+	/* call only for station! */
+	if (WARN_ON(wdev->iftype != NL80211_IFTYPE_STATION))
+		return -EINVAL;
 
-	अगर (!data->flags)
+	if (!data->flags)
 		len = 0;
 
 	/* iwconfig uses nul termination in SSID.. */
-	अगर (len > 0 && ssid[len - 1] == '\0')
+	if (len > 0 && ssid[len - 1] == '\0')
 		len--;
 
 	wdev_lock(wdev);
 
 	err = 0;
 
-	अगर (wdev->conn) अणु
+	if (wdev->conn) {
 		bool event = true;
 
-		अगर (wdev->wext.connect.ssid && len &&
+		if (wdev->wext.connect.ssid && len &&
 		    len == wdev->wext.connect.ssid_len &&
-		    स_भेद(wdev->wext.connect.ssid, ssid, len) == 0)
-			जाओ out;
+		    memcmp(wdev->wext.connect.ssid, ssid, len) == 0)
+			goto out;
 
-		/* अगर SSID set now, we'll try to connect, aव्योम event */
-		अगर (len)
+		/* if SSID set now, we'll try to connect, avoid event */
+		if (len)
 			event = false;
 		err = cfg80211_disconnect(rdev, dev,
 					  WLAN_REASON_DEAUTH_LEAVING, event);
-		अगर (err)
-			जाओ out;
-	पूर्ण
+		if (err)
+			goto out;
+	}
 
 	wdev->wext.prev_bssid_valid = false;
 	wdev->wext.connect.ssid = wdev->wext.ssid;
-	स_नकल(wdev->wext.ssid, ssid, len);
+	memcpy(wdev->wext.ssid, ssid, len);
 	wdev->wext.connect.ssid_len = len;
 
 	wdev->wext.connect.crypto.control_port = false;
@@ -195,204 +194,204 @@
 	err = cfg80211_mgd_wext_connect(rdev, wdev);
  out:
 	wdev_unlock(wdev);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक cfg80211_mgd_wext_giwessid(काष्ठा net_device *dev,
-			       काष्ठा iw_request_info *info,
-			       काष्ठा iw_poपूर्णांक *data, अक्षर *ssid)
-अणु
-	काष्ठा wireless_dev *wdev = dev->ieee80211_ptr;
-	पूर्णांक ret = 0;
+int cfg80211_mgd_wext_giwessid(struct net_device *dev,
+			       struct iw_request_info *info,
+			       struct iw_point *data, char *ssid)
+{
+	struct wireless_dev *wdev = dev->ieee80211_ptr;
+	int ret = 0;
 
-	/* call only क्रम station! */
-	अगर (WARN_ON(wdev->अगरtype != NL80211_IFTYPE_STATION))
-		वापस -EINVAL;
+	/* call only for station! */
+	if (WARN_ON(wdev->iftype != NL80211_IFTYPE_STATION))
+		return -EINVAL;
 
 	data->flags = 0;
 
 	wdev_lock(wdev);
-	अगर (wdev->current_bss) अणु
-		स्थिर u8 *ie;
+	if (wdev->current_bss) {
+		const u8 *ie;
 
-		rcu_पढ़ो_lock();
+		rcu_read_lock();
 		ie = ieee80211_bss_get_ie(&wdev->current_bss->pub,
 					  WLAN_EID_SSID);
-		अगर (ie) अणु
+		if (ie) {
 			data->flags = 1;
 			data->length = ie[1];
-			अगर (data->length > IW_ESSID_MAX_SIZE)
+			if (data->length > IW_ESSID_MAX_SIZE)
 				ret = -EINVAL;
-			अन्यथा
-				स_नकल(ssid, ie + 2, data->length);
-		पूर्ण
-		rcu_पढ़ो_unlock();
-	पूर्ण अन्यथा अगर (wdev->wext.connect.ssid && wdev->wext.connect.ssid_len) अणु
+			else
+				memcpy(ssid, ie + 2, data->length);
+		}
+		rcu_read_unlock();
+	} else if (wdev->wext.connect.ssid && wdev->wext.connect.ssid_len) {
 		data->flags = 1;
 		data->length = wdev->wext.connect.ssid_len;
-		स_नकल(ssid, wdev->wext.connect.ssid, data->length);
-	पूर्ण
+		memcpy(ssid, wdev->wext.connect.ssid, data->length);
+	}
 	wdev_unlock(wdev);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक cfg80211_mgd_wext_siwap(काष्ठा net_device *dev,
-			    काष्ठा iw_request_info *info,
-			    काष्ठा sockaddr *ap_addr, अक्षर *extra)
-अणु
-	काष्ठा wireless_dev *wdev = dev->ieee80211_ptr;
-	काष्ठा cfg80211_रेजिस्टरed_device *rdev = wiphy_to_rdev(wdev->wiphy);
+int cfg80211_mgd_wext_siwap(struct net_device *dev,
+			    struct iw_request_info *info,
+			    struct sockaddr *ap_addr, char *extra)
+{
+	struct wireless_dev *wdev = dev->ieee80211_ptr;
+	struct cfg80211_registered_device *rdev = wiphy_to_rdev(wdev->wiphy);
 	u8 *bssid = ap_addr->sa_data;
-	पूर्णांक err;
+	int err;
 
-	/* call only क्रम station! */
-	अगर (WARN_ON(wdev->अगरtype != NL80211_IFTYPE_STATION))
-		वापस -EINVAL;
+	/* call only for station! */
+	if (WARN_ON(wdev->iftype != NL80211_IFTYPE_STATION))
+		return -EINVAL;
 
-	अगर (ap_addr->sa_family != ARPHRD_ETHER)
-		वापस -EINVAL;
+	if (ap_addr->sa_family != ARPHRD_ETHER)
+		return -EINVAL;
 
-	/* स्वतःmatic mode */
-	अगर (is_zero_ether_addr(bssid) || is_broadcast_ether_addr(bssid))
-		bssid = शून्य;
+	/* automatic mode */
+	if (is_zero_ether_addr(bssid) || is_broadcast_ether_addr(bssid))
+		bssid = NULL;
 
 	wdev_lock(wdev);
 
-	अगर (wdev->conn) अणु
+	if (wdev->conn) {
 		err = 0;
-		/* both स्वतःmatic */
-		अगर (!bssid && !wdev->wext.connect.bssid)
-			जाओ out;
+		/* both automatic */
+		if (!bssid && !wdev->wext.connect.bssid)
+			goto out;
 
-		/* fixed alपढ़ोy - and no change */
-		अगर (wdev->wext.connect.bssid && bssid &&
+		/* fixed already - and no change */
+		if (wdev->wext.connect.bssid && bssid &&
 		    ether_addr_equal(bssid, wdev->wext.connect.bssid))
-			जाओ out;
+			goto out;
 
 		err = cfg80211_disconnect(rdev, dev,
 					  WLAN_REASON_DEAUTH_LEAVING, false);
-		अगर (err)
-			जाओ out;
-	पूर्ण
+		if (err)
+			goto out;
+	}
 
-	अगर (bssid) अणु
-		स_नकल(wdev->wext.bssid, bssid, ETH_ALEN);
+	if (bssid) {
+		memcpy(wdev->wext.bssid, bssid, ETH_ALEN);
 		wdev->wext.connect.bssid = wdev->wext.bssid;
-	पूर्ण अन्यथा
-		wdev->wext.connect.bssid = शून्य;
+	} else
+		wdev->wext.connect.bssid = NULL;
 
 	err = cfg80211_mgd_wext_connect(rdev, wdev);
  out:
 	wdev_unlock(wdev);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक cfg80211_mgd_wext_giwap(काष्ठा net_device *dev,
-			    काष्ठा iw_request_info *info,
-			    काष्ठा sockaddr *ap_addr, अक्षर *extra)
-अणु
-	काष्ठा wireless_dev *wdev = dev->ieee80211_ptr;
+int cfg80211_mgd_wext_giwap(struct net_device *dev,
+			    struct iw_request_info *info,
+			    struct sockaddr *ap_addr, char *extra)
+{
+	struct wireless_dev *wdev = dev->ieee80211_ptr;
 
-	/* call only क्रम station! */
-	अगर (WARN_ON(wdev->अगरtype != NL80211_IFTYPE_STATION))
-		वापस -EINVAL;
+	/* call only for station! */
+	if (WARN_ON(wdev->iftype != NL80211_IFTYPE_STATION))
+		return -EINVAL;
 
 	ap_addr->sa_family = ARPHRD_ETHER;
 
 	wdev_lock(wdev);
-	अगर (wdev->current_bss)
-		स_नकल(ap_addr->sa_data, wdev->current_bss->pub.bssid, ETH_ALEN);
-	अन्यथा
+	if (wdev->current_bss)
+		memcpy(ap_addr->sa_data, wdev->current_bss->pub.bssid, ETH_ALEN);
+	else
 		eth_zero_addr(ap_addr->sa_data);
 	wdev_unlock(wdev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक cfg80211_wext_siwgenie(काष्ठा net_device *dev,
-			   काष्ठा iw_request_info *info,
-			   काष्ठा iw_poपूर्णांक *data, अक्षर *extra)
-अणु
-	काष्ठा wireless_dev *wdev = dev->ieee80211_ptr;
-	काष्ठा cfg80211_रेजिस्टरed_device *rdev = wiphy_to_rdev(wdev->wiphy);
+int cfg80211_wext_siwgenie(struct net_device *dev,
+			   struct iw_request_info *info,
+			   struct iw_point *data, char *extra)
+{
+	struct wireless_dev *wdev = dev->ieee80211_ptr;
+	struct cfg80211_registered_device *rdev = wiphy_to_rdev(wdev->wiphy);
 	u8 *ie = extra;
-	पूर्णांक ie_len = data->length, err;
+	int ie_len = data->length, err;
 
-	अगर (wdev->अगरtype != NL80211_IFTYPE_STATION)
-		वापस -EOPNOTSUPP;
+	if (wdev->iftype != NL80211_IFTYPE_STATION)
+		return -EOPNOTSUPP;
 
-	अगर (!ie_len)
-		ie = शून्य;
+	if (!ie_len)
+		ie = NULL;
 
 	wdev_lock(wdev);
 
 	/* no change */
 	err = 0;
-	अगर (wdev->wext.ie_len == ie_len &&
-	    स_भेद(wdev->wext.ie, ie, ie_len) == 0)
-		जाओ out;
+	if (wdev->wext.ie_len == ie_len &&
+	    memcmp(wdev->wext.ie, ie, ie_len) == 0)
+		goto out;
 
-	अगर (ie_len) अणु
+	if (ie_len) {
 		ie = kmemdup(extra, ie_len, GFP_KERNEL);
-		अगर (!ie) अणु
+		if (!ie) {
 			err = -ENOMEM;
-			जाओ out;
-		पूर्ण
-	पूर्ण अन्यथा
-		ie = शून्य;
+			goto out;
+		}
+	} else
+		ie = NULL;
 
-	kमुक्त(wdev->wext.ie);
+	kfree(wdev->wext.ie);
 	wdev->wext.ie = ie;
 	wdev->wext.ie_len = ie_len;
 
-	अगर (wdev->conn) अणु
+	if (wdev->conn) {
 		err = cfg80211_disconnect(rdev, dev,
 					  WLAN_REASON_DEAUTH_LEAVING, false);
-		अगर (err)
-			जाओ out;
-	पूर्ण
+		if (err)
+			goto out;
+	}
 
 	/* userspace better not think we'll reconnect */
 	err = 0;
  out:
 	wdev_unlock(wdev);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक cfg80211_wext_siwmlme(काष्ठा net_device *dev,
-			  काष्ठा iw_request_info *info,
-			  काष्ठा iw_poपूर्णांक *data, अक्षर *extra)
-अणु
-	काष्ठा wireless_dev *wdev = dev->ieee80211_ptr;
-	काष्ठा iw_mlme *mlme = (काष्ठा iw_mlme *)extra;
-	काष्ठा cfg80211_रेजिस्टरed_device *rdev;
-	पूर्णांक err;
+int cfg80211_wext_siwmlme(struct net_device *dev,
+			  struct iw_request_info *info,
+			  struct iw_point *data, char *extra)
+{
+	struct wireless_dev *wdev = dev->ieee80211_ptr;
+	struct iw_mlme *mlme = (struct iw_mlme *)extra;
+	struct cfg80211_registered_device *rdev;
+	int err;
 
-	अगर (!wdev)
-		वापस -EOPNOTSUPP;
+	if (!wdev)
+		return -EOPNOTSUPP;
 
 	rdev = wiphy_to_rdev(wdev->wiphy);
 
-	अगर (wdev->अगरtype != NL80211_IFTYPE_STATION)
-		वापस -EINVAL;
+	if (wdev->iftype != NL80211_IFTYPE_STATION)
+		return -EINVAL;
 
-	अगर (mlme->addr.sa_family != ARPHRD_ETHER)
-		वापस -EINVAL;
+	if (mlme->addr.sa_family != ARPHRD_ETHER)
+		return -EINVAL;
 
 	wiphy_lock(&rdev->wiphy);
 	wdev_lock(wdev);
-	चयन (mlme->cmd) अणु
-	हाल IW_MLME_DEAUTH:
-	हाल IW_MLME_DISASSOC:
+	switch (mlme->cmd) {
+	case IW_MLME_DEAUTH:
+	case IW_MLME_DISASSOC:
 		err = cfg80211_disconnect(rdev, dev, mlme->reason_code, true);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		err = -EOPNOTSUPP;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 	wdev_unlock(wdev);
 	wiphy_unlock(&rdev->wiphy);
 
-	वापस err;
-पूर्ण
+	return err;
+}

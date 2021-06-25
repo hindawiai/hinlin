@@ -1,160 +1,159 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
-/* sun_uflash.c - Driver क्रम user-programmable flash on
- *                Sun Microप्रणालीs SME boardsets.
+// SPDX-License-Identifier: GPL-2.0-only
+/* sun_uflash.c - Driver for user-programmable flash on
+ *                Sun Microsystems SME boardsets.
  *
- * This driver करोes NOT provide access to the OBP-flash क्रम
- * safety reasons-- use <linux>/drivers/sbus/अक्षर/flash.c instead.
+ * This driver does NOT provide access to the OBP-flash for
+ * safety reasons-- use <linux>/drivers/sbus/char/flash.c instead.
  *
  * Copyright (c) 2001 Eric Brower (ebrower@usa.net)
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/ioport.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/slab.h>
-#समावेश <यंत्र/prom.h>
-#समावेश <linux/uaccess.h>
-#समावेश <यंत्र/पन.स>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/fs.h>
+#include <linux/errno.h>
+#include <linux/ioport.h>
+#include <linux/of.h>
+#include <linux/of_device.h>
+#include <linux/slab.h>
+#include <asm/prom.h>
+#include <linux/uaccess.h>
+#include <asm/io.h>
 
-#समावेश <linux/mtd/mtd.h>
-#समावेश <linux/mtd/map.h>
+#include <linux/mtd/mtd.h>
+#include <linux/mtd/map.h>
 
-#घोषणा UFLASH_OBPNAME	"flashprom"
-#घोषणा DRIVER_NAME	"sun_uflash"
-#घोषणा PFX		DRIVER_NAME ": "
+#define UFLASH_OBPNAME	"flashprom"
+#define DRIVER_NAME	"sun_uflash"
+#define PFX		DRIVER_NAME ": "
 
-#घोषणा UFLASH_WINDOW_SIZE	0x200000
-#घोषणा UFLASH_BUSWIDTH		1			/* EBus is 8-bit */
+#define UFLASH_WINDOW_SIZE	0x200000
+#define UFLASH_BUSWIDTH		1			/* EBus is 8-bit */
 
 MODULE_AUTHOR("Eric Brower <ebrower@usa.net>");
 MODULE_DESCRIPTION("User-programmable flash device on Sun Microsystems boardsets");
 MODULE_LICENSE("GPL");
 MODULE_VERSION("2.1");
 
-काष्ठा uflash_dev अणु
-	स्थिर अक्षर		*name;	/* device name */
-	काष्ठा map_info 	map;	/* mtd map info */
-	काष्ठा mtd_info		*mtd;	/* mtd info */
-पूर्ण;
+struct uflash_dev {
+	const char		*name;	/* device name */
+	struct map_info 	map;	/* mtd map info */
+	struct mtd_info		*mtd;	/* mtd info */
+};
 
-काष्ठा map_info uflash_map_templ = अणु
+struct map_info uflash_map_templ = {
 	.name =		"SUNW,???-????",
 	.size =		UFLASH_WINDOW_SIZE,
 	.bankwidth =	UFLASH_BUSWIDTH,
-पूर्ण;
+};
 
-पूर्णांक uflash_devinit(काष्ठा platक्रमm_device *op, काष्ठा device_node *dp)
-अणु
-	काष्ठा uflash_dev *up;
+int uflash_devinit(struct platform_device *op, struct device_node *dp)
+{
+	struct uflash_dev *up;
 
-	अगर (op->resource[1].flags) अणु
+	if (op->resource[1].flags) {
 		/* Non-CFI userflash device-- once I find one we
 		 * can work on supporting it.
 		 */
-		prपूर्णांकk(KERN_ERR PFX "Unsupported device at %pOF, 0x%llx\n",
-		       dp, (अचिन्हित दीर्घ दीर्घ)op->resource[0].start);
+		printk(KERN_ERR PFX "Unsupported device at %pOF, 0x%llx\n",
+		       dp, (unsigned long long)op->resource[0].start);
 
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	up = kzalloc(माप(काष्ठा uflash_dev), GFP_KERNEL);
-	अगर (!up) अणु
-		prपूर्णांकk(KERN_ERR PFX "Cannot allocate struct uflash_dev\n");
-		वापस -ENOMEM;
-	पूर्ण
+	up = kzalloc(sizeof(struct uflash_dev), GFP_KERNEL);
+	if (!up) {
+		printk(KERN_ERR PFX "Cannot allocate struct uflash_dev\n");
+		return -ENOMEM;
+	}
 
-	/* copy शेषs and tweak parameters */
-	स_नकल(&up->map, &uflash_map_templ, माप(uflash_map_templ));
+	/* copy defaults and tweak parameters */
+	memcpy(&up->map, &uflash_map_templ, sizeof(uflash_map_templ));
 
 	up->map.size = resource_size(&op->resource[0]);
 
-	up->name = of_get_property(dp, "model", शून्य);
-	अगर (up->name && 0 < म_माप(up->name))
+	up->name = of_get_property(dp, "model", NULL);
+	if (up->name && 0 < strlen(up->name))
 		up->map.name = up->name;
 
 	up->map.phys = op->resource[0].start;
 
 	up->map.virt = of_ioremap(&op->resource[0], 0, up->map.size,
 				  DRIVER_NAME);
-	अगर (!up->map.virt) अणु
-		prपूर्णांकk(KERN_ERR PFX "Failed to map device.\n");
-		kमुक्त(up);
+	if (!up->map.virt) {
+		printk(KERN_ERR PFX "Failed to map device.\n");
+		kfree(up);
 
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	simple_map_init(&up->map);
 
 	/* MTD registration */
-	up->mtd = करो_map_probe("cfi_probe", &up->map);
-	अगर (!up->mtd) अणु
+	up->mtd = do_map_probe("cfi_probe", &up->map);
+	if (!up->mtd) {
 		of_iounmap(&op->resource[0], up->map.virt, up->map.size);
-		kमुक्त(up);
+		kfree(up);
 
-		वापस -ENXIO;
-	पूर्ण
+		return -ENXIO;
+	}
 
 	up->mtd->owner = THIS_MODULE;
 
-	mtd_device_रेजिस्टर(up->mtd, शून्य, 0);
+	mtd_device_register(up->mtd, NULL, 0);
 
 	dev_set_drvdata(&op->dev, up);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक uflash_probe(काष्ठा platक्रमm_device *op)
-अणु
-	काष्ठा device_node *dp = op->dev.of_node;
+static int uflash_probe(struct platform_device *op)
+{
+	struct device_node *dp = op->dev.of_node;
 
 	/* Flashprom must have the "user" property in order to
 	 * be used by this driver.
 	 */
-	अगर (!of_find_property(dp, "user", शून्य))
-		वापस -ENODEV;
+	if (!of_find_property(dp, "user", NULL))
+		return -ENODEV;
 
-	वापस uflash_devinit(op, dp);
-पूर्ण
+	return uflash_devinit(op, dp);
+}
 
-अटल पूर्णांक uflash_हटाओ(काष्ठा platक्रमm_device *op)
-अणु
-	काष्ठा uflash_dev *up = dev_get_drvdata(&op->dev);
+static int uflash_remove(struct platform_device *op)
+{
+	struct uflash_dev *up = dev_get_drvdata(&op->dev);
 
-	अगर (up->mtd) अणु
-		mtd_device_unरेजिस्टर(up->mtd);
+	if (up->mtd) {
+		mtd_device_unregister(up->mtd);
 		map_destroy(up->mtd);
-	पूर्ण
-	अगर (up->map.virt) अणु
+	}
+	if (up->map.virt) {
 		of_iounmap(&op->resource[0], up->map.virt, up->map.size);
-		up->map.virt = शून्य;
-	पूर्ण
+		up->map.virt = NULL;
+	}
 
-	kमुक्त(up);
+	kfree(up);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id uflash_match[] = अणु
-	अणु
+static const struct of_device_id uflash_match[] = {
+	{
 		.name = UFLASH_OBPNAME,
-	पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+	},
+	{},
+};
 
 MODULE_DEVICE_TABLE(of, uflash_match);
 
-अटल काष्ठा platक्रमm_driver uflash_driver = अणु
-	.driver = अणु
+static struct platform_driver uflash_driver = {
+	.driver = {
 		.name = DRIVER_NAME,
 		.of_match_table = uflash_match,
-	पूर्ण,
+	},
 	.probe		= uflash_probe,
-	.हटाओ		= uflash_हटाओ,
-पूर्ण;
+	.remove		= uflash_remove,
+};
 
-module_platक्रमm_driver(uflash_driver);
+module_platform_driver(uflash_driver);

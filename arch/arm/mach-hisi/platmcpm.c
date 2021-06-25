@@ -1,142 +1,141 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2013-2014 Linaro Ltd.
  * Copyright (c) 2013-2014 HiSilicon Limited.
  */
-#समावेश <linux/init.h>
-#समावेश <linux/smp.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/memblock.h>
-#समावेश <linux/of_address.h>
+#include <linux/init.h>
+#include <linux/smp.h>
+#include <linux/delay.h>
+#include <linux/io.h>
+#include <linux/memblock.h>
+#include <linux/of_address.h>
 
-#समावेश <यंत्र/cputype.h>
-#समावेश <यंत्र/cp15.h>
-#समावेश <यंत्र/cacheflush.h>
-#समावेश <यंत्र/smp.h>
-#समावेश <यंत्र/smp_plat.h>
+#include <asm/cputype.h>
+#include <asm/cp15.h>
+#include <asm/cacheflush.h>
+#include <asm/smp.h>
+#include <asm/smp_plat.h>
 
-#समावेश "core.h"
+#include "core.h"
 
 /* bits definition in SC_CPU_RESET_REQ[x]/SC_CPU_RESET_DREQ[x]
  * 1 -- unreset; 0 -- reset
  */
-#घोषणा CORE_RESET_BIT(x)		(1 << x)
-#घोषणा NEON_RESET_BIT(x)		(1 << (x + 4))
-#घोषणा CORE_DEBUG_RESET_BIT(x)		(1 << (x + 9))
-#घोषणा CLUSTER_L2_RESET_BIT		(1 << 8)
-#घोषणा CLUSTER_DEBUG_RESET_BIT		(1 << 13)
+#define CORE_RESET_BIT(x)		(1 << x)
+#define NEON_RESET_BIT(x)		(1 << (x + 4))
+#define CORE_DEBUG_RESET_BIT(x)		(1 << (x + 9))
+#define CLUSTER_L2_RESET_BIT		(1 << 8)
+#define CLUSTER_DEBUG_RESET_BIT		(1 << 13)
 
 /*
  * bits definition in SC_CPU_RESET_STATUS[x]
  * 1 -- reset status; 0 -- unreset status
  */
-#घोषणा CORE_RESET_STATUS(x)		(1 << x)
-#घोषणा NEON_RESET_STATUS(x)		(1 << (x + 4))
-#घोषणा CORE_DEBUG_RESET_STATUS(x)	(1 << (x + 9))
-#घोषणा CLUSTER_L2_RESET_STATUS		(1 << 8)
-#घोषणा CLUSTER_DEBUG_RESET_STATUS	(1 << 13)
-#घोषणा CORE_WFI_STATUS(x)		(1 << (x + 16))
-#घोषणा CORE_WFE_STATUS(x)		(1 << (x + 20))
-#घोषणा CORE_DEBUG_ACK(x)		(1 << (x + 24))
+#define CORE_RESET_STATUS(x)		(1 << x)
+#define NEON_RESET_STATUS(x)		(1 << (x + 4))
+#define CORE_DEBUG_RESET_STATUS(x)	(1 << (x + 9))
+#define CLUSTER_L2_RESET_STATUS		(1 << 8)
+#define CLUSTER_DEBUG_RESET_STATUS	(1 << 13)
+#define CORE_WFI_STATUS(x)		(1 << (x + 16))
+#define CORE_WFE_STATUS(x)		(1 << (x + 20))
+#define CORE_DEBUG_ACK(x)		(1 << (x + 24))
 
-#घोषणा SC_CPU_RESET_REQ(x)		(0x520 + (x << 3))	/* reset */
-#घोषणा SC_CPU_RESET_DREQ(x)		(0x524 + (x << 3))	/* unreset */
-#घोषणा SC_CPU_RESET_STATUS(x)		(0x1520 + (x << 3))
+#define SC_CPU_RESET_REQ(x)		(0x520 + (x << 3))	/* reset */
+#define SC_CPU_RESET_DREQ(x)		(0x524 + (x << 3))	/* unreset */
+#define SC_CPU_RESET_STATUS(x)		(0x1520 + (x << 3))
 
-#घोषणा FAB_SF_MODE			0x0c
-#घोषणा FAB_SF_INVLD			0x10
+#define FAB_SF_MODE			0x0c
+#define FAB_SF_INVLD			0x10
 
 /* bits definition in FB_SF_INVLD */
-#घोषणा FB_SF_INVLD_START		(1 << 8)
+#define FB_SF_INVLD_START		(1 << 8)
 
-#घोषणा HIP04_MAX_CLUSTERS		4
-#घोषणा HIP04_MAX_CPUS_PER_CLUSTER	4
+#define HIP04_MAX_CLUSTERS		4
+#define HIP04_MAX_CPUS_PER_CLUSTER	4
 
-#घोषणा POLL_MSEC	10
-#घोषणा TIMEOUT_MSEC	1000
+#define POLL_MSEC	10
+#define TIMEOUT_MSEC	1000
 
-अटल व्योम __iomem *sysctrl, *fabric;
-अटल पूर्णांक hip04_cpu_table[HIP04_MAX_CLUSTERS][HIP04_MAX_CPUS_PER_CLUSTER];
-अटल DEFINE_SPINLOCK(boot_lock);
-अटल u32 fabric_phys_addr;
+static void __iomem *sysctrl, *fabric;
+static int hip04_cpu_table[HIP04_MAX_CLUSTERS][HIP04_MAX_CPUS_PER_CLUSTER];
+static DEFINE_SPINLOCK(boot_lock);
+static u32 fabric_phys_addr;
 /*
  * [0]: bootwrapper physical address
  * [1]: bootwrapper size
  * [2]: relocation address
  * [3]: relocation size
  */
-अटल u32 hip04_boot_method[4];
+static u32 hip04_boot_method[4];
 
-अटल bool hip04_cluster_is_करोwn(अचिन्हित पूर्णांक cluster)
-अणु
-	पूर्णांक i;
+static bool hip04_cluster_is_down(unsigned int cluster)
+{
+	int i;
 
-	क्रम (i = 0; i < HIP04_MAX_CPUS_PER_CLUSTER; i++)
-		अगर (hip04_cpu_table[cluster][i])
-			वापस false;
-	वापस true;
-पूर्ण
+	for (i = 0; i < HIP04_MAX_CPUS_PER_CLUSTER; i++)
+		if (hip04_cpu_table[cluster][i])
+			return false;
+	return true;
+}
 
-अटल व्योम hip04_set_snoop_filter(अचिन्हित पूर्णांक cluster, अचिन्हित पूर्णांक on)
-अणु
-	अचिन्हित दीर्घ data;
+static void hip04_set_snoop_filter(unsigned int cluster, unsigned int on)
+{
+	unsigned long data;
 
-	अगर (!fabric)
+	if (!fabric)
 		BUG();
-	data = पढ़ोl_relaxed(fabric + FAB_SF_MODE);
-	अगर (on)
+	data = readl_relaxed(fabric + FAB_SF_MODE);
+	if (on)
 		data |= 1 << cluster;
-	अन्यथा
+	else
 		data &= ~(1 << cluster);
-	ग_लिखोl_relaxed(data, fabric + FAB_SF_MODE);
-	करो अणु
+	writel_relaxed(data, fabric + FAB_SF_MODE);
+	do {
 		cpu_relax();
-	पूर्ण जबतक (data != पढ़ोl_relaxed(fabric + FAB_SF_MODE));
-पूर्ण
+	} while (data != readl_relaxed(fabric + FAB_SF_MODE));
+}
 
-अटल पूर्णांक hip04_boot_secondary(अचिन्हित पूर्णांक l_cpu, काष्ठा task_काष्ठा *idle)
-अणु
-	अचिन्हित पूर्णांक mpidr, cpu, cluster;
-	अचिन्हित दीर्घ data;
-	व्योम __iomem *sys_dreq, *sys_status;
+static int hip04_boot_secondary(unsigned int l_cpu, struct task_struct *idle)
+{
+	unsigned int mpidr, cpu, cluster;
+	unsigned long data;
+	void __iomem *sys_dreq, *sys_status;
 
 	mpidr = cpu_logical_map(l_cpu);
 	cpu = MPIDR_AFFINITY_LEVEL(mpidr, 0);
 	cluster = MPIDR_AFFINITY_LEVEL(mpidr, 1);
 
-	अगर (!sysctrl)
-		वापस -ENODEV;
-	अगर (cluster >= HIP04_MAX_CLUSTERS || cpu >= HIP04_MAX_CPUS_PER_CLUSTER)
-		वापस -EINVAL;
+	if (!sysctrl)
+		return -ENODEV;
+	if (cluster >= HIP04_MAX_CLUSTERS || cpu >= HIP04_MAX_CPUS_PER_CLUSTER)
+		return -EINVAL;
 
 	spin_lock_irq(&boot_lock);
 
-	अगर (hip04_cpu_table[cluster][cpu])
-		जाओ out;
+	if (hip04_cpu_table[cluster][cpu])
+		goto out;
 
 	sys_dreq = sysctrl + SC_CPU_RESET_DREQ(cluster);
 	sys_status = sysctrl + SC_CPU_RESET_STATUS(cluster);
-	अगर (hip04_cluster_is_करोwn(cluster)) अणु
+	if (hip04_cluster_is_down(cluster)) {
 		data = CLUSTER_DEBUG_RESET_BIT;
-		ग_लिखोl_relaxed(data, sys_dreq);
-		करो अणु
+		writel_relaxed(data, sys_dreq);
+		do {
 			cpu_relax();
-			data = पढ़ोl_relaxed(sys_status);
-		पूर्ण जबतक (data & CLUSTER_DEBUG_RESET_STATUS);
+			data = readl_relaxed(sys_status);
+		} while (data & CLUSTER_DEBUG_RESET_STATUS);
 		hip04_set_snoop_filter(cluster, 1);
-	पूर्ण
+	}
 
 	data = CORE_RESET_BIT(cpu) | NEON_RESET_BIT(cpu) | \
 	       CORE_DEBUG_RESET_BIT(cpu);
-	ग_लिखोl_relaxed(data, sys_dreq);
-	करो अणु
+	writel_relaxed(data, sys_dreq);
+	do {
 		cpu_relax();
-	पूर्ण जबतक (data == पढ़ोl_relaxed(sys_status));
+	} while (data == readl_relaxed(sys_status));
 
 	/*
-	 * We may fail to घातer up core again without this delay.
+	 * We may fail to power up core again without this delay.
 	 * It's not mentioned in document. It's found by test.
 	 */
 	udelay(20);
@@ -147,13 +146,13 @@ out:
 	hip04_cpu_table[cluster][cpu]++;
 	spin_unlock_irq(&boot_lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_HOTPLUG_CPU
-अटल व्योम hip04_cpu_die(अचिन्हित पूर्णांक l_cpu)
-अणु
-	अचिन्हित पूर्णांक mpidr, cpu, cluster;
+#ifdef CONFIG_HOTPLUG_CPU
+static void hip04_cpu_die(unsigned int l_cpu)
+{
+	unsigned int mpidr, cpu, cluster;
 	bool last_man;
 
 	mpidr = cpu_logical_map(l_cpu);
@@ -162,37 +161,37 @@ out:
 
 	spin_lock(&boot_lock);
 	hip04_cpu_table[cluster][cpu]--;
-	अगर (hip04_cpu_table[cluster][cpu] == 1) अणु
-		/* A घातer_up request went ahead of us. */
+	if (hip04_cpu_table[cluster][cpu] == 1) {
+		/* A power_up request went ahead of us. */
 		spin_unlock(&boot_lock);
-		वापस;
-	पूर्ण अन्यथा अगर (hip04_cpu_table[cluster][cpu] > 1) अणु
+		return;
+	} else if (hip04_cpu_table[cluster][cpu] > 1) {
 		pr_err("Cluster %d CPU%d boots multiple times\n", cluster, cpu);
 		BUG();
-	पूर्ण
+	}
 
-	last_man = hip04_cluster_is_करोwn(cluster);
+	last_man = hip04_cluster_is_down(cluster);
 	spin_unlock(&boot_lock);
-	अगर (last_man) अणु
+	if (last_man) {
 		/* Since it's Cortex A15, disable L2 prefetching. */
-		यंत्र अस्थिर(
+		asm volatile(
 		"mcr	p15, 1, %0, c15, c0, 3 \n\t"
 		"isb	\n\t"
 		"dsb	"
 		: : "r" (0x400) );
-		v7_निकास_coherency_flush(all);
-	पूर्ण अन्यथा अणु
-		v7_निकास_coherency_flush(louis);
-	पूर्ण
+		v7_exit_coherency_flush(all);
+	} else {
+		v7_exit_coherency_flush(louis);
+	}
 
-	क्रम (;;)
+	for (;;)
 		wfi();
-पूर्ण
+}
 
-अटल पूर्णांक hip04_cpu_समाप्त(अचिन्हित पूर्णांक l_cpu)
-अणु
-	अचिन्हित पूर्णांक mpidr, cpu, cluster;
-	अचिन्हित पूर्णांक data, tries, count;
+static int hip04_cpu_kill(unsigned int l_cpu)
+{
+	unsigned int mpidr, cpu, cluster;
+	unsigned int data, tries, count;
 
 	mpidr = cpu_logical_map(l_cpu);
 	cpu = MPIDR_AFFINITY_LEVEL(mpidr, 0);
@@ -202,137 +201,137 @@ out:
 
 	count = TIMEOUT_MSEC / POLL_MSEC;
 	spin_lock_irq(&boot_lock);
-	क्रम (tries = 0; tries < count; tries++) अणु
-		अगर (hip04_cpu_table[cluster][cpu])
-			जाओ err;
+	for (tries = 0; tries < count; tries++) {
+		if (hip04_cpu_table[cluster][cpu])
+			goto err;
 		cpu_relax();
-		data = पढ़ोl_relaxed(sysctrl + SC_CPU_RESET_STATUS(cluster));
-		अगर (data & CORE_WFI_STATUS(cpu))
-			अवरोध;
+		data = readl_relaxed(sysctrl + SC_CPU_RESET_STATUS(cluster));
+		if (data & CORE_WFI_STATUS(cpu))
+			break;
 		spin_unlock_irq(&boot_lock);
-		/* Wait क्रम clean L2 when the whole cluster is करोwn. */
+		/* Wait for clean L2 when the whole cluster is down. */
 		msleep(POLL_MSEC);
 		spin_lock_irq(&boot_lock);
-	पूर्ण
-	अगर (tries >= count)
-		जाओ err;
+	}
+	if (tries >= count)
+		goto err;
 	data = CORE_RESET_BIT(cpu) | NEON_RESET_BIT(cpu) | \
 	       CORE_DEBUG_RESET_BIT(cpu);
-	ग_लिखोl_relaxed(data, sysctrl + SC_CPU_RESET_REQ(cluster));
-	क्रम (tries = 0; tries < count; tries++) अणु
+	writel_relaxed(data, sysctrl + SC_CPU_RESET_REQ(cluster));
+	for (tries = 0; tries < count; tries++) {
 		cpu_relax();
-		data = पढ़ोl_relaxed(sysctrl + SC_CPU_RESET_STATUS(cluster));
-		अगर (data & CORE_RESET_STATUS(cpu))
-			अवरोध;
-	पूर्ण
-	अगर (tries >= count)
-		जाओ err;
-	अगर (hip04_cluster_is_करोwn(cluster))
+		data = readl_relaxed(sysctrl + SC_CPU_RESET_STATUS(cluster));
+		if (data & CORE_RESET_STATUS(cpu))
+			break;
+	}
+	if (tries >= count)
+		goto err;
+	if (hip04_cluster_is_down(cluster))
 		hip04_set_snoop_filter(cluster, 0);
 	spin_unlock_irq(&boot_lock);
-	वापस 1;
+	return 1;
 err:
 	spin_unlock_irq(&boot_lock);
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+	return 0;
+}
+#endif
 
-अटल स्थिर काष्ठा smp_operations hip04_smp_ops __initस्थिर = अणु
+static const struct smp_operations hip04_smp_ops __initconst = {
 	.smp_boot_secondary	= hip04_boot_secondary,
-#अगर_घोषित CONFIG_HOTPLUG_CPU
+#ifdef CONFIG_HOTPLUG_CPU
 	.cpu_die		= hip04_cpu_die,
-	.cpu_समाप्त		= hip04_cpu_समाप्त,
-#पूर्ण_अगर
-पूर्ण;
+	.cpu_kill		= hip04_cpu_kill,
+#endif
+};
 
-अटल bool __init hip04_cpu_table_init(व्योम)
-अणु
-	अचिन्हित पूर्णांक mpidr, cpu, cluster;
+static bool __init hip04_cpu_table_init(void)
+{
+	unsigned int mpidr, cpu, cluster;
 
-	mpidr = पढ़ो_cpuid_mpidr();
+	mpidr = read_cpuid_mpidr();
 	cpu = MPIDR_AFFINITY_LEVEL(mpidr, 0);
 	cluster = MPIDR_AFFINITY_LEVEL(mpidr, 1);
 
-	अगर (cluster >= HIP04_MAX_CLUSTERS ||
-	    cpu >= HIP04_MAX_CPUS_PER_CLUSTER) अणु
+	if (cluster >= HIP04_MAX_CLUSTERS ||
+	    cpu >= HIP04_MAX_CPUS_PER_CLUSTER) {
 		pr_err("%s: boot CPU is out of bound!\n", __func__);
-		वापस false;
-	पूर्ण
+		return false;
+	}
 	hip04_set_snoop_filter(cluster, 1);
 	hip04_cpu_table[cluster][cpu] = 1;
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल पूर्णांक __init hip04_smp_init(व्योम)
-अणु
-	काष्ठा device_node *np, *np_sctl, *np_fab;
-	काष्ठा resource fab_res;
-	व्योम __iomem *relocation;
-	पूर्णांक ret = -ENODEV;
+static int __init hip04_smp_init(void)
+{
+	struct device_node *np, *np_sctl, *np_fab;
+	struct resource fab_res;
+	void __iomem *relocation;
+	int ret = -ENODEV;
 
-	np = of_find_compatible_node(शून्य, शून्य, "hisilicon,hip04-bootwrapper");
-	अगर (!np)
-		जाओ err;
-	ret = of_property_पढ़ो_u32_array(np, "boot-method",
+	np = of_find_compatible_node(NULL, NULL, "hisilicon,hip04-bootwrapper");
+	if (!np)
+		goto err;
+	ret = of_property_read_u32_array(np, "boot-method",
 					 &hip04_boot_method[0], 4);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 
 	ret = -ENODEV;
-	np_sctl = of_find_compatible_node(शून्य, शून्य, "hisilicon,sysctrl");
-	अगर (!np_sctl)
-		जाओ err;
-	np_fab = of_find_compatible_node(शून्य, शून्य, "hisilicon,hip04-fabric");
-	अगर (!np_fab)
-		जाओ err;
+	np_sctl = of_find_compatible_node(NULL, NULL, "hisilicon,sysctrl");
+	if (!np_sctl)
+		goto err;
+	np_fab = of_find_compatible_node(NULL, NULL, "hisilicon,hip04-fabric");
+	if (!np_fab)
+		goto err;
 
 	ret = memblock_reserve(hip04_boot_method[0], hip04_boot_method[1]);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 
 	relocation = ioremap(hip04_boot_method[2], hip04_boot_method[3]);
-	अगर (!relocation) अणु
+	if (!relocation) {
 		pr_err("failed to map relocation space\n");
 		ret = -ENOMEM;
-		जाओ err_reloc;
-	पूर्ण
+		goto err_reloc;
+	}
 	sysctrl = of_iomap(np_sctl, 0);
-	अगर (!sysctrl) अणु
+	if (!sysctrl) {
 		pr_err("failed to get sysctrl base\n");
 		ret = -ENOMEM;
-		जाओ err_sysctrl;
-	पूर्ण
+		goto err_sysctrl;
+	}
 	ret = of_address_to_resource(np_fab, 0, &fab_res);
-	अगर (ret) अणु
+	if (ret) {
 		pr_err("failed to get fabric base phys\n");
-		जाओ err_fabric;
-	पूर्ण
+		goto err_fabric;
+	}
 	fabric_phys_addr = fab_res.start;
 	sync_cache_w(&fabric_phys_addr);
 	fabric = of_iomap(np_fab, 0);
-	अगर (!fabric) अणु
+	if (!fabric) {
 		pr_err("failed to get fabric base\n");
 		ret = -ENOMEM;
-		जाओ err_fabric;
-	पूर्ण
+		goto err_fabric;
+	}
 
-	अगर (!hip04_cpu_table_init()) अणु
+	if (!hip04_cpu_table_init()) {
 		ret = -EINVAL;
-		जाओ err_table;
-	पूर्ण
+		goto err_table;
+	}
 
 	/*
-	 * Fill the inकाष्ठाion address that is used after secondary core
+	 * Fill the instruction address that is used after secondary core
 	 * out of reset.
 	 */
-	ग_लिखोl_relaxed(hip04_boot_method[0], relocation);
-	ग_लिखोl_relaxed(0xa5a5a5a5, relocation + 4);	/* magic number */
-	ग_लिखोl_relaxed(__pa_symbol(secondary_startup), relocation + 8);
-	ग_लिखोl_relaxed(0, relocation + 12);
+	writel_relaxed(hip04_boot_method[0], relocation);
+	writel_relaxed(0xa5a5a5a5, relocation + 4);	/* magic number */
+	writel_relaxed(__pa_symbol(secondary_startup), relocation + 8);
+	writel_relaxed(0, relocation + 12);
 	iounmap(relocation);
 
 	smp_set_ops(&hip04_smp_ops);
-	वापस ret;
+	return ret;
 err_table:
 	iounmap(fabric);
 err_fabric:
@@ -340,8 +339,8 @@ err_fabric:
 err_sysctrl:
 	iounmap(relocation);
 err_reloc:
-	memblock_मुक्त(hip04_boot_method[0], hip04_boot_method[1]);
+	memblock_free(hip04_boot_method[0], hip04_boot_method[1]);
 err:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 early_initcall(hip04_smp_init);

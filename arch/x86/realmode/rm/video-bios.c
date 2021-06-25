@@ -1,2 +1,1 @@
-<शैली गुरु>
-#समावेश "../../boot/video-bios.c"
+#include "../../boot/video-bios.c"

@@ -1,77 +1,76 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश "units.h"
-#समावेश <पूर्णांकtypes.h>
-#समावेश <सीमा.स>
-#समावेश <मानककोष.स>
-#समावेश <माला.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/समय64.h>
+// SPDX-License-Identifier: GPL-2.0
+#include "units.h"
+#include <inttypes.h>
+#include <limits.h>
+#include <stdlib.h>
+#include <string.h>
+#include <linux/kernel.h>
+#include <linux/time64.h>
 
-अचिन्हित दीर्घ parse_tag_value(स्थिर अक्षर *str, काष्ठा parse_tag *tags)
-अणु
-	काष्ठा parse_tag *i = tags;
+unsigned long parse_tag_value(const char *str, struct parse_tag *tags)
+{
+	struct parse_tag *i = tags;
 
-	जबतक (i->tag) अणु
-		अक्षर *s = म_अक्षर(str, i->tag);
+	while (i->tag) {
+		char *s = strchr(str, i->tag);
 
-		अगर (s) अणु
-			अचिन्हित दीर्घ पूर्णांक value;
-			अक्षर *endptr;
+		if (s) {
+			unsigned long int value;
+			char *endptr;
 
-			value = म_से_अदीर्घ(str, &endptr, 10);
-			अगर (s != endptr)
-				अवरोध;
+			value = strtoul(str, &endptr, 10);
+			if (s != endptr)
+				break;
 
-			अगर (value > अच_दीर्घ_उच्च / i->mult)
-				अवरोध;
+			if (value > ULONG_MAX / i->mult)
+				break;
 			value *= i->mult;
-			वापस value;
-		पूर्ण
+			return value;
+		}
 		i++;
-	पूर्ण
+	}
 
-	वापस (अचिन्हित दीर्घ) -1;
-पूर्ण
+	return (unsigned long) -1;
+}
 
-द्विगुन convert_unit_द्विगुन(द्विगुन value, अक्षर *unit)
-अणु
+double convert_unit_double(double value, char *unit)
+{
 	*unit = ' ';
 
-	अगर (value > 1000.0) अणु
+	if (value > 1000.0) {
 		value /= 1000.0;
 		*unit = 'K';
-	पूर्ण
+	}
 
-	अगर (value > 1000.0) अणु
+	if (value > 1000.0) {
 		value /= 1000.0;
 		*unit = 'M';
-	पूर्ण
+	}
 
-	अगर (value > 1000.0) अणु
+	if (value > 1000.0) {
 		value /= 1000.0;
 		*unit = 'G';
-	पूर्ण
+	}
 
-	वापस value;
-पूर्ण
+	return value;
+}
 
-अचिन्हित दीर्घ convert_unit(अचिन्हित दीर्घ value, अक्षर *unit)
-अणु
-	द्विगुन v = convert_unit_द्विगुन((द्विगुन)value, unit);
+unsigned long convert_unit(unsigned long value, char *unit)
+{
+	double v = convert_unit_double((double)value, unit);
 
-	वापस (अचिन्हित दीर्घ)v;
-पूर्ण
+	return (unsigned long)v;
+}
 
-पूर्णांक unit_number__scnम_लिखो(अक्षर *buf, माप_प्रकार size, u64 n)
-अणु
-	अक्षर unit[4] = "BKMG";
-	पूर्णांक i = 0;
+int unit_number__scnprintf(char *buf, size_t size, u64 n)
+{
+	char unit[4] = "BKMG";
+	int i = 0;
 
-	जबतक (((n / 1024) > 1) && (i < 3)) अणु
+	while (((n / 1024) > 1) && (i < 3)) {
 		n /= 1024;
 		i++;
-	पूर्ण
+	}
 
-	वापस scnम_लिखो(buf, size, "%" PRIu64 "%c", n, unit[i]);
-पूर्ण
+	return scnprintf(buf, size, "%" PRIu64 "%c", n, unit[i]);
+}

@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  *  linux/fs/fat/cache.c
  *
@@ -7,100 +6,100 @@
  *
  *  Mar 1999. AV. Changed cache, so that it uses the starting cluster instead
  *	of inode number.
- *  May 1999. AV. Fixed the bogosity with FAT32 (पढ़ो "FAT28"). Fscking lusers.
+ *  May 1999. AV. Fixed the bogosity with FAT32 (read "FAT28"). Fscking lusers.
  */
 
-#समावेश <linux/slab.h>
-#समावेश "fat.h"
+#include <linux/slab.h>
+#include "fat.h"
 
 /* this must be > 0. */
-#घोषणा FAT_MAX_CACHE	8
+#define FAT_MAX_CACHE	8
 
-काष्ठा fat_cache अणु
-	काष्ठा list_head cache_list;
-	पूर्णांक nr_contig;	/* number of contiguous clusters */
-	पूर्णांक fcluster;	/* cluster number in the file. */
-	पूर्णांक dcluster;	/* cluster number on disk. */
-पूर्ण;
+struct fat_cache {
+	struct list_head cache_list;
+	int nr_contig;	/* number of contiguous clusters */
+	int fcluster;	/* cluster number in the file. */
+	int dcluster;	/* cluster number on disk. */
+};
 
-काष्ठा fat_cache_id अणु
-	अचिन्हित पूर्णांक id;
-	पूर्णांक nr_contig;
-	पूर्णांक fcluster;
-	पूर्णांक dcluster;
-पूर्ण;
+struct fat_cache_id {
+	unsigned int id;
+	int nr_contig;
+	int fcluster;
+	int dcluster;
+};
 
-अटल अंतरभूत पूर्णांक fat_max_cache(काष्ठा inode *inode)
-अणु
-	वापस FAT_MAX_CACHE;
-पूर्ण
+static inline int fat_max_cache(struct inode *inode)
+{
+	return FAT_MAX_CACHE;
+}
 
-अटल काष्ठा kmem_cache *fat_cache_cachep;
+static struct kmem_cache *fat_cache_cachep;
 
-अटल व्योम init_once(व्योम *foo)
-अणु
-	काष्ठा fat_cache *cache = (काष्ठा fat_cache *)foo;
+static void init_once(void *foo)
+{
+	struct fat_cache *cache = (struct fat_cache *)foo;
 
 	INIT_LIST_HEAD(&cache->cache_list);
-पूर्ण
+}
 
-पूर्णांक __init fat_cache_init(व्योम)
-अणु
+int __init fat_cache_init(void)
+{
 	fat_cache_cachep = kmem_cache_create("fat_cache",
-				माप(काष्ठा fat_cache),
+				sizeof(struct fat_cache),
 				0, SLAB_RECLAIM_ACCOUNT|SLAB_MEM_SPREAD,
 				init_once);
-	अगर (fat_cache_cachep == शून्य)
-		वापस -ENOMEM;
-	वापस 0;
-पूर्ण
+	if (fat_cache_cachep == NULL)
+		return -ENOMEM;
+	return 0;
+}
 
-व्योम fat_cache_destroy(व्योम)
-अणु
+void fat_cache_destroy(void)
+{
 	kmem_cache_destroy(fat_cache_cachep);
-पूर्ण
+}
 
-अटल अंतरभूत काष्ठा fat_cache *fat_cache_alloc(काष्ठा inode *inode)
-अणु
-	वापस kmem_cache_alloc(fat_cache_cachep, GFP_NOFS);
-पूर्ण
+static inline struct fat_cache *fat_cache_alloc(struct inode *inode)
+{
+	return kmem_cache_alloc(fat_cache_cachep, GFP_NOFS);
+}
 
-अटल अंतरभूत व्योम fat_cache_मुक्त(काष्ठा fat_cache *cache)
-अणु
+static inline void fat_cache_free(struct fat_cache *cache)
+{
 	BUG_ON(!list_empty(&cache->cache_list));
-	kmem_cache_मुक्त(fat_cache_cachep, cache);
-पूर्ण
+	kmem_cache_free(fat_cache_cachep, cache);
+}
 
-अटल अंतरभूत व्योम fat_cache_update_lru(काष्ठा inode *inode,
-					काष्ठा fat_cache *cache)
-अणु
-	अगर (MSDOS_I(inode)->cache_lru.next != &cache->cache_list)
+static inline void fat_cache_update_lru(struct inode *inode,
+					struct fat_cache *cache)
+{
+	if (MSDOS_I(inode)->cache_lru.next != &cache->cache_list)
 		list_move(&cache->cache_list, &MSDOS_I(inode)->cache_lru);
-पूर्ण
+}
 
-अटल पूर्णांक fat_cache_lookup(काष्ठा inode *inode, पूर्णांक fclus,
-			    काष्ठा fat_cache_id *cid,
-			    पूर्णांक *cached_fclus, पूर्णांक *cached_dclus)
-अणु
-	अटल काष्ठा fat_cache nohit = अणु .fcluster = 0, पूर्ण;
+static int fat_cache_lookup(struct inode *inode, int fclus,
+			    struct fat_cache_id *cid,
+			    int *cached_fclus, int *cached_dclus)
+{
+	static struct fat_cache nohit = { .fcluster = 0, };
 
-	काष्ठा fat_cache *hit = &nohit, *p;
-	पूर्णांक offset = -1;
+	struct fat_cache *hit = &nohit, *p;
+	int offset = -1;
 
 	spin_lock(&MSDOS_I(inode)->cache_lru_lock);
-	list_क्रम_each_entry(p, &MSDOS_I(inode)->cache_lru, cache_list) अणु
+	list_for_each_entry(p, &MSDOS_I(inode)->cache_lru, cache_list) {
 		/* Find the cache of "fclus" or nearest cache. */
-		अगर (p->fcluster <= fclus && hit->fcluster < p->fcluster) अणु
+		if (p->fcluster <= fclus && hit->fcluster < p->fcluster) {
 			hit = p;
-			अगर ((hit->fcluster + hit->nr_contig) < fclus) अणु
+			if ((hit->fcluster + hit->nr_contig) < fclus) {
 				offset = hit->nr_contig;
-			पूर्ण अन्यथा अणु
+			} else {
 				offset = fclus - hit->fcluster;
-				अवरोध;
-			पूर्ण
-		पूर्ण
-	पूर्ण
-	अगर (hit != &nohit) अणु
+				break;
+			}
+		}
+	}
+	if (hit != &nohit) {
 		fat_cache_update_lru(inode, hit);
 
 		cid->id = MSDOS_I(inode)->cache_valid_id;
@@ -109,279 +108,279 @@
 		cid->dcluster = hit->dcluster;
 		*cached_fclus = cid->fcluster + offset;
 		*cached_dclus = cid->dcluster + offset;
-	पूर्ण
+	}
 	spin_unlock(&MSDOS_I(inode)->cache_lru_lock);
 
-	वापस offset;
-पूर्ण
+	return offset;
+}
 
-अटल काष्ठा fat_cache *fat_cache_merge(काष्ठा inode *inode,
-					 काष्ठा fat_cache_id *new)
-अणु
-	काष्ठा fat_cache *p;
+static struct fat_cache *fat_cache_merge(struct inode *inode,
+					 struct fat_cache_id *new)
+{
+	struct fat_cache *p;
 
-	list_क्रम_each_entry(p, &MSDOS_I(inode)->cache_lru, cache_list) अणु
+	list_for_each_entry(p, &MSDOS_I(inode)->cache_lru, cache_list) {
 		/* Find the same part as "new" in cluster-chain. */
-		अगर (p->fcluster == new->fcluster) अणु
+		if (p->fcluster == new->fcluster) {
 			BUG_ON(p->dcluster != new->dcluster);
-			अगर (new->nr_contig > p->nr_contig)
+			if (new->nr_contig > p->nr_contig)
 				p->nr_contig = new->nr_contig;
-			वापस p;
-		पूर्ण
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+			return p;
+		}
+	}
+	return NULL;
+}
 
-अटल व्योम fat_cache_add(काष्ठा inode *inode, काष्ठा fat_cache_id *new)
-अणु
-	काष्ठा fat_cache *cache, *पंचांगp;
+static void fat_cache_add(struct inode *inode, struct fat_cache_id *new)
+{
+	struct fat_cache *cache, *tmp;
 
-	अगर (new->fcluster == -1) /* dummy cache */
-		वापस;
+	if (new->fcluster == -1) /* dummy cache */
+		return;
 
 	spin_lock(&MSDOS_I(inode)->cache_lru_lock);
-	अगर (new->id != FAT_CACHE_VALID &&
+	if (new->id != FAT_CACHE_VALID &&
 	    new->id != MSDOS_I(inode)->cache_valid_id)
-		जाओ out;	/* this cache was invalidated */
+		goto out;	/* this cache was invalidated */
 
 	cache = fat_cache_merge(inode, new);
-	अगर (cache == शून्य) अणु
-		अगर (MSDOS_I(inode)->nr_caches < fat_max_cache(inode)) अणु
+	if (cache == NULL) {
+		if (MSDOS_I(inode)->nr_caches < fat_max_cache(inode)) {
 			MSDOS_I(inode)->nr_caches++;
 			spin_unlock(&MSDOS_I(inode)->cache_lru_lock);
 
-			पंचांगp = fat_cache_alloc(inode);
-			अगर (!पंचांगp) अणु
+			tmp = fat_cache_alloc(inode);
+			if (!tmp) {
 				spin_lock(&MSDOS_I(inode)->cache_lru_lock);
 				MSDOS_I(inode)->nr_caches--;
 				spin_unlock(&MSDOS_I(inode)->cache_lru_lock);
-				वापस;
-			पूर्ण
+				return;
+			}
 
 			spin_lock(&MSDOS_I(inode)->cache_lru_lock);
 			cache = fat_cache_merge(inode, new);
-			अगर (cache != शून्य) अणु
+			if (cache != NULL) {
 				MSDOS_I(inode)->nr_caches--;
-				fat_cache_मुक्त(पंचांगp);
-				जाओ out_update_lru;
-			पूर्ण
-			cache = पंचांगp;
-		पूर्ण अन्यथा अणु
-			काष्ठा list_head *p = MSDOS_I(inode)->cache_lru.prev;
-			cache = list_entry(p, काष्ठा fat_cache, cache_list);
-		पूर्ण
+				fat_cache_free(tmp);
+				goto out_update_lru;
+			}
+			cache = tmp;
+		} else {
+			struct list_head *p = MSDOS_I(inode)->cache_lru.prev;
+			cache = list_entry(p, struct fat_cache, cache_list);
+		}
 		cache->fcluster = new->fcluster;
 		cache->dcluster = new->dcluster;
 		cache->nr_contig = new->nr_contig;
-	पूर्ण
+	}
 out_update_lru:
 	fat_cache_update_lru(inode, cache);
 out:
 	spin_unlock(&MSDOS_I(inode)->cache_lru_lock);
-पूर्ण
+}
 
 /*
  * Cache invalidation occurs rarely, thus the LRU chain is not updated. It
- * fixes itself after a जबतक.
+ * fixes itself after a while.
  */
-अटल व्योम __fat_cache_inval_inode(काष्ठा inode *inode)
-अणु
-	काष्ठा msकरोs_inode_info *i = MSDOS_I(inode);
-	काष्ठा fat_cache *cache;
+static void __fat_cache_inval_inode(struct inode *inode)
+{
+	struct msdos_inode_info *i = MSDOS_I(inode);
+	struct fat_cache *cache;
 
-	जबतक (!list_empty(&i->cache_lru)) अणु
+	while (!list_empty(&i->cache_lru)) {
 		cache = list_entry(i->cache_lru.next,
-				   काष्ठा fat_cache, cache_list);
+				   struct fat_cache, cache_list);
 		list_del_init(&cache->cache_list);
 		i->nr_caches--;
-		fat_cache_मुक्त(cache);
-	पूर्ण
-	/* Update. The copy of caches beक्रमe this id is discarded. */
+		fat_cache_free(cache);
+	}
+	/* Update. The copy of caches before this id is discarded. */
 	i->cache_valid_id++;
-	अगर (i->cache_valid_id == FAT_CACHE_VALID)
+	if (i->cache_valid_id == FAT_CACHE_VALID)
 		i->cache_valid_id++;
-पूर्ण
+}
 
-व्योम fat_cache_inval_inode(काष्ठा inode *inode)
-अणु
+void fat_cache_inval_inode(struct inode *inode)
+{
 	spin_lock(&MSDOS_I(inode)->cache_lru_lock);
 	__fat_cache_inval_inode(inode);
 	spin_unlock(&MSDOS_I(inode)->cache_lru_lock);
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक cache_contiguous(काष्ठा fat_cache_id *cid, पूर्णांक dclus)
-अणु
+static inline int cache_contiguous(struct fat_cache_id *cid, int dclus)
+{
 	cid->nr_contig++;
-	वापस ((cid->dcluster + cid->nr_contig) == dclus);
-पूर्ण
+	return ((cid->dcluster + cid->nr_contig) == dclus);
+}
 
-अटल अंतरभूत व्योम cache_init(काष्ठा fat_cache_id *cid, पूर्णांक fclus, पूर्णांक dclus)
-अणु
+static inline void cache_init(struct fat_cache_id *cid, int fclus, int dclus)
+{
 	cid->id = FAT_CACHE_VALID;
 	cid->fcluster = fclus;
 	cid->dcluster = dclus;
 	cid->nr_contig = 0;
-पूर्ण
+}
 
-पूर्णांक fat_get_cluster(काष्ठा inode *inode, पूर्णांक cluster, पूर्णांक *fclus, पूर्णांक *dclus)
-अणु
-	काष्ठा super_block *sb = inode->i_sb;
-	काष्ठा msकरोs_sb_info *sbi = MSDOS_SB(sb);
-	स्थिर पूर्णांक limit = sb->s_maxbytes >> sbi->cluster_bits;
-	काष्ठा fat_entry fatent;
-	काष्ठा fat_cache_id cid;
-	पूर्णांक nr;
+int fat_get_cluster(struct inode *inode, int cluster, int *fclus, int *dclus)
+{
+	struct super_block *sb = inode->i_sb;
+	struct msdos_sb_info *sbi = MSDOS_SB(sb);
+	const int limit = sb->s_maxbytes >> sbi->cluster_bits;
+	struct fat_entry fatent;
+	struct fat_cache_id cid;
+	int nr;
 
 	BUG_ON(MSDOS_I(inode)->i_start == 0);
 
 	*fclus = 0;
 	*dclus = MSDOS_I(inode)->i_start;
-	अगर (!fat_valid_entry(sbi, *dclus)) अणु
+	if (!fat_valid_entry(sbi, *dclus)) {
 		fat_fs_error_ratelimit(sb,
 			"%s: invalid start cluster (i_pos %lld, start %08x)",
 			__func__, MSDOS_I(inode)->i_pos, *dclus);
-		वापस -EIO;
-	पूर्ण
-	अगर (cluster == 0)
-		वापस 0;
+		return -EIO;
+	}
+	if (cluster == 0)
+		return 0;
 
-	अगर (fat_cache_lookup(inode, cluster, &cid, fclus, dclus) < 0) अणु
+	if (fat_cache_lookup(inode, cluster, &cid, fclus, dclus) < 0) {
 		/*
 		 * dummy, always not contiguous
 		 * This is reinitialized by cache_init(), later.
 		 */
 		cache_init(&cid, -1, -1);
-	पूर्ण
+	}
 
 	fatent_init(&fatent);
-	जबतक (*fclus < cluster) अणु
+	while (*fclus < cluster) {
 		/* prevent the infinite loop of cluster chain */
-		अगर (*fclus > limit) अणु
+		if (*fclus > limit) {
 			fat_fs_error_ratelimit(sb,
 				"%s: detected the cluster chain loop (i_pos %lld)",
 				__func__, MSDOS_I(inode)->i_pos);
 			nr = -EIO;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
-		nr = fat_ent_पढ़ो(inode, &fatent, *dclus);
-		अगर (nr < 0)
-			जाओ out;
-		अन्यथा अगर (nr == FAT_ENT_FREE) अणु
+		nr = fat_ent_read(inode, &fatent, *dclus);
+		if (nr < 0)
+			goto out;
+		else if (nr == FAT_ENT_FREE) {
 			fat_fs_error_ratelimit(sb,
 				"%s: invalid cluster chain (i_pos %lld)",
 				__func__, MSDOS_I(inode)->i_pos);
 			nr = -EIO;
-			जाओ out;
-		पूर्ण अन्यथा अगर (nr == FAT_ENT_खातापूर्ण) अणु
+			goto out;
+		} else if (nr == FAT_ENT_EOF) {
 			fat_cache_add(inode, &cid);
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		(*fclus)++;
 		*dclus = nr;
-		अगर (!cache_contiguous(&cid, *dclus))
+		if (!cache_contiguous(&cid, *dclus))
 			cache_init(&cid, *fclus, *dclus);
-	पूर्ण
+	}
 	nr = 0;
 	fat_cache_add(inode, &cid);
 out:
-	fatent_brअन्यथा(&fatent);
-	वापस nr;
-पूर्ण
+	fatent_brelse(&fatent);
+	return nr;
+}
 
-अटल पूर्णांक fat_bmap_cluster(काष्ठा inode *inode, पूर्णांक cluster)
-अणु
-	काष्ठा super_block *sb = inode->i_sb;
-	पूर्णांक ret, fclus, dclus;
+static int fat_bmap_cluster(struct inode *inode, int cluster)
+{
+	struct super_block *sb = inode->i_sb;
+	int ret, fclus, dclus;
 
-	अगर (MSDOS_I(inode)->i_start == 0)
-		वापस 0;
+	if (MSDOS_I(inode)->i_start == 0)
+		return 0;
 
 	ret = fat_get_cluster(inode, cluster, &fclus, &dclus);
-	अगर (ret < 0)
-		वापस ret;
-	अन्यथा अगर (ret == FAT_ENT_खातापूर्ण) अणु
+	if (ret < 0)
+		return ret;
+	else if (ret == FAT_ENT_EOF) {
 		fat_fs_error(sb, "%s: request beyond EOF (i_pos %lld)",
 			     __func__, MSDOS_I(inode)->i_pos);
-		वापस -EIO;
-	पूर्ण
-	वापस dclus;
-पूर्ण
+		return -EIO;
+	}
+	return dclus;
+}
 
-पूर्णांक fat_get_mapped_cluster(काष्ठा inode *inode, sector_t sector,
+int fat_get_mapped_cluster(struct inode *inode, sector_t sector,
 			   sector_t last_block,
-			   अचिन्हित दीर्घ *mapped_blocks, sector_t *bmap)
-अणु
-	काष्ठा super_block *sb = inode->i_sb;
-	काष्ठा msकरोs_sb_info *sbi = MSDOS_SB(sb);
-	पूर्णांक cluster, offset;
+			   unsigned long *mapped_blocks, sector_t *bmap)
+{
+	struct super_block *sb = inode->i_sb;
+	struct msdos_sb_info *sbi = MSDOS_SB(sb);
+	int cluster, offset;
 
 	cluster = sector >> (sbi->cluster_bits - sb->s_blocksize_bits);
 	offset  = sector & (sbi->sec_per_clus - 1);
 	cluster = fat_bmap_cluster(inode, cluster);
-	अगर (cluster < 0)
-		वापस cluster;
-	अन्यथा अगर (cluster) अणु
+	if (cluster < 0)
+		return cluster;
+	else if (cluster) {
 		*bmap = fat_clus_to_blknr(sbi, cluster) + offset;
 		*mapped_blocks = sbi->sec_per_clus - offset;
-		अगर (*mapped_blocks > last_block - sector)
+		if (*mapped_blocks > last_block - sector)
 			*mapped_blocks = last_block - sector;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक is_exceed_eof(काष्ठा inode *inode, sector_t sector,
-			 sector_t *last_block, पूर्णांक create)
-अणु
-	काष्ठा super_block *sb = inode->i_sb;
-	स्थिर अचिन्हित दीर्घ blocksize = sb->s_blocksize;
-	स्थिर अचिन्हित अक्षर blocksize_bits = sb->s_blocksize_bits;
+static int is_exceed_eof(struct inode *inode, sector_t sector,
+			 sector_t *last_block, int create)
+{
+	struct super_block *sb = inode->i_sb;
+	const unsigned long blocksize = sb->s_blocksize;
+	const unsigned char blocksize_bits = sb->s_blocksize_bits;
 
-	*last_block = (i_size_पढ़ो(inode) + (blocksize - 1)) >> blocksize_bits;
-	अगर (sector >= *last_block) अणु
-		अगर (!create)
-			वापस 1;
+	*last_block = (i_size_read(inode) + (blocksize - 1)) >> blocksize_bits;
+	if (sector >= *last_block) {
+		if (!create)
+			return 1;
 
 		/*
-		 * ->mmu_निजी can access on only allocation path.
+		 * ->mmu_private can access on only allocation path.
 		 * (caller must hold ->i_mutex)
 		 */
-		*last_block = (MSDOS_I(inode)->mmu_निजी + (blocksize - 1))
+		*last_block = (MSDOS_I(inode)->mmu_private + (blocksize - 1))
 			>> blocksize_bits;
-		अगर (sector >= *last_block)
-			वापस 1;
-	पूर्ण
+		if (sector >= *last_block)
+			return 1;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक fat_bmap(काष्ठा inode *inode, sector_t sector, sector_t *phys,
-	     अचिन्हित दीर्घ *mapped_blocks, पूर्णांक create, bool from_bmap)
-अणु
-	काष्ठा msकरोs_sb_info *sbi = MSDOS_SB(inode->i_sb);
+int fat_bmap(struct inode *inode, sector_t sector, sector_t *phys,
+	     unsigned long *mapped_blocks, int create, bool from_bmap)
+{
+	struct msdos_sb_info *sbi = MSDOS_SB(inode->i_sb);
 	sector_t last_block;
 
 	*phys = 0;
 	*mapped_blocks = 0;
-	अगर (!is_fat32(sbi) && (inode->i_ino == MSDOS_ROOT_INO)) अणु
-		अगर (sector < (sbi->dir_entries >> sbi->dir_per_block_bits)) अणु
+	if (!is_fat32(sbi) && (inode->i_ino == MSDOS_ROOT_INO)) {
+		if (sector < (sbi->dir_entries >> sbi->dir_per_block_bits)) {
 			*phys = sector + sbi->dir_start;
 			*mapped_blocks = 1;
-		पूर्ण
-		वापस 0;
-	पूर्ण
+		}
+		return 0;
+	}
 
-	अगर (!from_bmap) अणु
-		अगर (is_exceed_eof(inode, sector, &last_block, create))
-			वापस 0;
-	पूर्ण अन्यथा अणु
+	if (!from_bmap) {
+		if (is_exceed_eof(inode, sector, &last_block, create))
+			return 0;
+	} else {
 		last_block = inode->i_blocks >>
 				(inode->i_sb->s_blocksize_bits - 9);
-		अगर (sector >= last_block)
-			वापस 0;
-	पूर्ण
+		if (sector >= last_block)
+			return 0;
+	}
 
-	वापस fat_get_mapped_cluster(inode, sector, last_block, mapped_blocks,
+	return fat_get_mapped_cluster(inode, sector, last_block, mapped_blocks,
 				      phys);
-पूर्ण
+}

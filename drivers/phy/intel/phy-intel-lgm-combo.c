@@ -1,635 +1,634 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Intel Combo-PHY driver
  *
  * Copyright (C) 2019-2020 Intel Corporation.
  */
 
-#समावेश <linux/bitfield.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/iopoll.h>
-#समावेश <linux/mfd/syscon.h>
-#समावेश <linux/module.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/of.h>
-#समावेश <linux/phy/phy.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/reset.h>
+#include <linux/bitfield.h>
+#include <linux/clk.h>
+#include <linux/iopoll.h>
+#include <linux/mfd/syscon.h>
+#include <linux/module.h>
+#include <linux/mutex.h>
+#include <linux/of.h>
+#include <linux/phy/phy.h>
+#include <linux/platform_device.h>
+#include <linux/regmap.h>
+#include <linux/reset.h>
 
-#समावेश <dt-bindings/phy/phy.h>
+#include <dt-bindings/phy/phy.h>
 
-#घोषणा PCIE_PHY_GEN_CTRL	0x00
-#घोषणा PCIE_PHY_CLK_PAD	BIT(17)
+#define PCIE_PHY_GEN_CTRL	0x00
+#define PCIE_PHY_CLK_PAD	BIT(17)
 
-#घोषणा PAD_DIS_CFG		0x174
+#define PAD_DIS_CFG		0x174
 
-#घोषणा PCS_XF_ATE_OVRD_IN_2	0x3008
-#घोषणा ADAPT_REQ_MSK		GENMASK(5, 4)
+#define PCS_XF_ATE_OVRD_IN_2	0x3008
+#define ADAPT_REQ_MSK		GENMASK(5, 4)
 
-#घोषणा PCS_XF_RX_ADAPT_ACK	0x3010
-#घोषणा RX_ADAPT_ACK_BIT	BIT(0)
+#define PCS_XF_RX_ADAPT_ACK	0x3010
+#define RX_ADAPT_ACK_BIT	BIT(0)
 
-#घोषणा CR_ADDR(addr, lane)	(((addr) + (lane) * 0x100) << 2)
-#घोषणा REG_COMBO_MODE(x)	((x) * 0x200)
-#घोषणा REG_CLK_DISABLE(x)	((x) * 0x200 + 0x124)
+#define CR_ADDR(addr, lane)	(((addr) + (lane) * 0x100) << 2)
+#define REG_COMBO_MODE(x)	((x) * 0x200)
+#define REG_CLK_DISABLE(x)	((x) * 0x200 + 0x124)
 
-#घोषणा COMBO_PHY_ID(x)		((x)->parent->id)
-#घोषणा PHY_ID(x)		((x)->id)
+#define COMBO_PHY_ID(x)		((x)->parent->id)
+#define PHY_ID(x)		((x)->id)
 
-#घोषणा CLK_100MHZ		100000000
-#घोषणा CLK_156_25MHZ		156250000
+#define CLK_100MHZ		100000000
+#define CLK_156_25MHZ		156250000
 
-अटल स्थिर अचिन्हित दीर्घ पूर्णांकel_iphy_clk_rates[] = अणु
+static const unsigned long intel_iphy_clk_rates[] = {
 	CLK_100MHZ, CLK_156_25MHZ, CLK_100MHZ,
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	PHY_0,
 	PHY_1,
 	PHY_MAX_NUM
-पूर्ण;
+};
 
 /*
- * Clock Register bit fields to enable घड़ीs
- * क्रम ComboPhy according to the mode.
+ * Clock Register bit fields to enable clocks
+ * for ComboPhy according to the mode.
  */
-क्रमागत पूर्णांकel_phy_mode अणु
+enum intel_phy_mode {
 	PHY_PCIE_MODE = 0,
 	PHY_XPCS_MODE,
 	PHY_SATA_MODE,
-पूर्ण;
+};
 
 /* ComboPhy mode Register values */
-क्रमागत पूर्णांकel_combo_mode अणु
+enum intel_combo_mode {
 	PCIE0_PCIE1_MODE = 0,
 	PCIE_DL_MODE,
 	RXAUI_MODE,
 	XPCS0_XPCS1_MODE,
 	SATA0_SATA1_MODE,
-पूर्ण;
+};
 
-क्रमागत aggregated_mode अणु
+enum aggregated_mode {
 	PHY_SL_MODE,
 	PHY_DL_MODE,
-पूर्ण;
+};
 
-काष्ठा पूर्णांकel_combo_phy;
+struct intel_combo_phy;
 
-काष्ठा पूर्णांकel_cbphy_iphy अणु
-	काष्ठा phy		*phy;
-	काष्ठा पूर्णांकel_combo_phy	*parent;
-	काष्ठा reset_control	*app_rst;
+struct intel_cbphy_iphy {
+	struct phy		*phy;
+	struct intel_combo_phy	*parent;
+	struct reset_control	*app_rst;
 	u32			id;
-पूर्ण;
+};
 
-काष्ठा पूर्णांकel_combo_phy अणु
-	काष्ठा device		*dev;
-	काष्ठा clk		*core_clk;
-	अचिन्हित दीर्घ		clk_rate;
-	व्योम __iomem		*app_base;
-	व्योम __iomem		*cr_base;
-	काष्ठा regmap		*syscfg;
-	काष्ठा regmap		*hsiocfg;
+struct intel_combo_phy {
+	struct device		*dev;
+	struct clk		*core_clk;
+	unsigned long		clk_rate;
+	void __iomem		*app_base;
+	void __iomem		*cr_base;
+	struct regmap		*syscfg;
+	struct regmap		*hsiocfg;
 	u32			id;
 	u32			bid;
-	काष्ठा reset_control	*phy_rst;
-	काष्ठा reset_control	*core_rst;
-	काष्ठा पूर्णांकel_cbphy_iphy	iphy[PHY_MAX_NUM];
-	क्रमागत पूर्णांकel_phy_mode	phy_mode;
-	क्रमागत aggregated_mode	aggr_mode;
+	struct reset_control	*phy_rst;
+	struct reset_control	*core_rst;
+	struct intel_cbphy_iphy	iphy[PHY_MAX_NUM];
+	enum intel_phy_mode	phy_mode;
+	enum aggregated_mode	aggr_mode;
 	u32			init_cnt;
-	काष्ठा mutex		lock;
-पूर्ण;
+	struct mutex		lock;
+};
 
-अटल पूर्णांक पूर्णांकel_cbphy_iphy_enable(काष्ठा पूर्णांकel_cbphy_iphy *iphy, bool set)
-अणु
-	काष्ठा पूर्णांकel_combo_phy *cbphy = iphy->parent;
+static int intel_cbphy_iphy_enable(struct intel_cbphy_iphy *iphy, bool set)
+{
+	struct intel_combo_phy *cbphy = iphy->parent;
 	u32 mask = BIT(cbphy->phy_mode * 2 + iphy->id);
 	u32 val;
 
 	/* Register: 0 is enable, 1 is disable */
 	val = set ? 0 : mask;
 
-	वापस regmap_update_bits(cbphy->hsiocfg, REG_CLK_DISABLE(cbphy->bid),
+	return regmap_update_bits(cbphy->hsiocfg, REG_CLK_DISABLE(cbphy->bid),
 				  mask, val);
-पूर्ण
+}
 
-अटल पूर्णांक पूर्णांकel_cbphy_pcie_refclk_cfg(काष्ठा पूर्णांकel_cbphy_iphy *iphy, bool set)
-अणु
-	काष्ठा पूर्णांकel_combo_phy *cbphy = iphy->parent;
+static int intel_cbphy_pcie_refclk_cfg(struct intel_cbphy_iphy *iphy, bool set)
+{
+	struct intel_combo_phy *cbphy = iphy->parent;
 	u32 mask = BIT(cbphy->id * 2 + iphy->id);
 	u32 val;
 
 	/* Register: 0 is enable, 1 is disable */
 	val = set ? 0 : mask;
 
-	वापस regmap_update_bits(cbphy->syscfg, PAD_DIS_CFG, mask, val);
-पूर्ण
+	return regmap_update_bits(cbphy->syscfg, PAD_DIS_CFG, mask, val);
+}
 
-अटल अंतरभूत व्योम combo_phy_w32_off_mask(व्योम __iomem *base, अचिन्हित पूर्णांक reg,
+static inline void combo_phy_w32_off_mask(void __iomem *base, unsigned int reg,
 					  u32 mask, u32 val)
-अणु
+{
 	u32 reg_val;
 
-	reg_val = पढ़ोl(base + reg);
+	reg_val = readl(base + reg);
 	reg_val &= ~mask;
 	reg_val |= val;
-	ग_लिखोl(reg_val, base + reg);
-पूर्ण
+	writel(reg_val, base + reg);
+}
 
-अटल पूर्णांक पूर्णांकel_cbphy_iphy_cfg(काष्ठा पूर्णांकel_cbphy_iphy *iphy,
-				पूर्णांक (*phy_cfg)(काष्ठा पूर्णांकel_cbphy_iphy *))
-अणु
-	काष्ठा पूर्णांकel_combo_phy *cbphy = iphy->parent;
-	पूर्णांक ret;
+static int intel_cbphy_iphy_cfg(struct intel_cbphy_iphy *iphy,
+				int (*phy_cfg)(struct intel_cbphy_iphy *))
+{
+	struct intel_combo_phy *cbphy = iphy->parent;
+	int ret;
 
 	ret = phy_cfg(iphy);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (cbphy->aggr_mode != PHY_DL_MODE)
-		वापस 0;
+	if (cbphy->aggr_mode != PHY_DL_MODE)
+		return 0;
 
-	वापस phy_cfg(&cbphy->iphy[PHY_1]);
-पूर्ण
+	return phy_cfg(&cbphy->iphy[PHY_1]);
+}
 
-अटल पूर्णांक पूर्णांकel_cbphy_pcie_en_pad_refclk(काष्ठा पूर्णांकel_cbphy_iphy *iphy)
-अणु
-	काष्ठा पूर्णांकel_combo_phy *cbphy = iphy->parent;
-	पूर्णांक ret;
+static int intel_cbphy_pcie_en_pad_refclk(struct intel_cbphy_iphy *iphy)
+{
+	struct intel_combo_phy *cbphy = iphy->parent;
+	int ret;
 
-	ret = पूर्णांकel_cbphy_pcie_refclk_cfg(iphy, true);
-	अगर (ret) अणु
+	ret = intel_cbphy_pcie_refclk_cfg(iphy, true);
+	if (ret) {
 		dev_err(cbphy->dev, "Failed to enable PCIe pad refclk\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	अगर (cbphy->init_cnt)
-		वापस 0;
+	if (cbphy->init_cnt)
+		return 0;
 
 	combo_phy_w32_off_mask(cbphy->app_base, PCIE_PHY_GEN_CTRL,
 			       PCIE_PHY_CLK_PAD, FIELD_PREP(PCIE_PHY_CLK_PAD, 0));
 
-	/* Delay क्रम stable घड़ी PLL */
+	/* Delay for stable clock PLL */
 	usleep_range(50, 100);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक पूर्णांकel_cbphy_pcie_dis_pad_refclk(काष्ठा पूर्णांकel_cbphy_iphy *iphy)
-अणु
-	काष्ठा पूर्णांकel_combo_phy *cbphy = iphy->parent;
-	पूर्णांक ret;
+static int intel_cbphy_pcie_dis_pad_refclk(struct intel_cbphy_iphy *iphy)
+{
+	struct intel_combo_phy *cbphy = iphy->parent;
+	int ret;
 
-	ret = पूर्णांकel_cbphy_pcie_refclk_cfg(iphy, false);
-	अगर (ret) अणु
+	ret = intel_cbphy_pcie_refclk_cfg(iphy, false);
+	if (ret) {
 		dev_err(cbphy->dev, "Failed to disable PCIe pad refclk\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	अगर (cbphy->init_cnt)
-		वापस 0;
+	if (cbphy->init_cnt)
+		return 0;
 
 	combo_phy_w32_off_mask(cbphy->app_base, PCIE_PHY_GEN_CTRL,
 			       PCIE_PHY_CLK_PAD, FIELD_PREP(PCIE_PHY_CLK_PAD, 1));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक पूर्णांकel_cbphy_set_mode(काष्ठा पूर्णांकel_combo_phy *cbphy)
-अणु
-	क्रमागत पूर्णांकel_combo_mode cb_mode;
-	क्रमागत aggregated_mode aggr = cbphy->aggr_mode;
-	काष्ठा device *dev = cbphy->dev;
-	क्रमागत पूर्णांकel_phy_mode mode;
-	पूर्णांक ret;
+static int intel_cbphy_set_mode(struct intel_combo_phy *cbphy)
+{
+	enum intel_combo_mode cb_mode;
+	enum aggregated_mode aggr = cbphy->aggr_mode;
+	struct device *dev = cbphy->dev;
+	enum intel_phy_mode mode;
+	int ret;
 
 	mode = cbphy->phy_mode;
 
-	चयन (mode) अणु
-	हाल PHY_PCIE_MODE:
+	switch (mode) {
+	case PHY_PCIE_MODE:
 		cb_mode = (aggr == PHY_DL_MODE) ? PCIE_DL_MODE : PCIE0_PCIE1_MODE;
-		अवरोध;
+		break;
 
-	हाल PHY_XPCS_MODE:
+	case PHY_XPCS_MODE:
 		cb_mode = (aggr == PHY_DL_MODE) ? RXAUI_MODE : XPCS0_XPCS1_MODE;
-		अवरोध;
+		break;
 
-	हाल PHY_SATA_MODE:
-		अगर (aggr == PHY_DL_MODE) अणु
+	case PHY_SATA_MODE:
+		if (aggr == PHY_DL_MODE) {
 			dev_err(dev, "Mode:%u not support dual lane!\n", mode);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
 		cb_mode = SATA0_SATA1_MODE;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	ret = regmap_ग_लिखो(cbphy->hsiocfg, REG_COMBO_MODE(cbphy->bid), cb_mode);
-	अगर (ret)
+	ret = regmap_write(cbphy->hsiocfg, REG_COMBO_MODE(cbphy->bid), cb_mode);
+	if (ret)
 		dev_err(dev, "Failed to set ComboPhy mode: %d\n", ret);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम पूर्णांकel_cbphy_rst_निश्चित(काष्ठा पूर्णांकel_combo_phy *cbphy)
-अणु
-	reset_control_निश्चित(cbphy->core_rst);
-	reset_control_निश्चित(cbphy->phy_rst);
-पूर्ण
+static void intel_cbphy_rst_assert(struct intel_combo_phy *cbphy)
+{
+	reset_control_assert(cbphy->core_rst);
+	reset_control_assert(cbphy->phy_rst);
+}
 
-अटल व्योम पूर्णांकel_cbphy_rst_deनिश्चित(काष्ठा पूर्णांकel_combo_phy *cbphy)
-अणु
-	reset_control_deनिश्चित(cbphy->core_rst);
-	reset_control_deनिश्चित(cbphy->phy_rst);
-	/* Delay to ensure reset process is करोne */
+static void intel_cbphy_rst_deassert(struct intel_combo_phy *cbphy)
+{
+	reset_control_deassert(cbphy->core_rst);
+	reset_control_deassert(cbphy->phy_rst);
+	/* Delay to ensure reset process is done */
 	usleep_range(10, 20);
-पूर्ण
+}
 
-अटल पूर्णांक पूर्णांकel_cbphy_iphy_घातer_on(काष्ठा पूर्णांकel_cbphy_iphy *iphy)
-अणु
-	काष्ठा पूर्णांकel_combo_phy *cbphy = iphy->parent;
-	पूर्णांक ret;
+static int intel_cbphy_iphy_power_on(struct intel_cbphy_iphy *iphy)
+{
+	struct intel_combo_phy *cbphy = iphy->parent;
+	int ret;
 
-	अगर (!cbphy->init_cnt) अणु
+	if (!cbphy->init_cnt) {
 		ret = clk_prepare_enable(cbphy->core_clk);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(cbphy->dev, "Clock enable failed!\n");
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 
 		ret = clk_set_rate(cbphy->core_clk, cbphy->clk_rate);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(cbphy->dev, "Clock freq set to %lu failed!\n",
 				cbphy->clk_rate);
-			जाओ clk_err;
-		पूर्ण
+			goto clk_err;
+		}
 
-		पूर्णांकel_cbphy_rst_निश्चित(cbphy);
-		पूर्णांकel_cbphy_rst_deनिश्चित(cbphy);
-		ret = पूर्णांकel_cbphy_set_mode(cbphy);
-		अगर (ret)
-			जाओ clk_err;
-	पूर्ण
+		intel_cbphy_rst_assert(cbphy);
+		intel_cbphy_rst_deassert(cbphy);
+		ret = intel_cbphy_set_mode(cbphy);
+		if (ret)
+			goto clk_err;
+	}
 
-	ret = पूर्णांकel_cbphy_iphy_enable(iphy, true);
-	अगर (ret) अणु
+	ret = intel_cbphy_iphy_enable(iphy, true);
+	if (ret) {
 		dev_err(cbphy->dev, "Failed enabling PHY core\n");
-		जाओ clk_err;
-	पूर्ण
+		goto clk_err;
+	}
 
-	ret = reset_control_deनिश्चित(iphy->app_rst);
-	अगर (ret) अणु
+	ret = reset_control_deassert(iphy->app_rst);
+	if (ret) {
 		dev_err(cbphy->dev, "PHY(%u:%u) reset deassert failed!\n",
 			COMBO_PHY_ID(iphy), PHY_ID(iphy));
-		जाओ clk_err;
-	पूर्ण
+		goto clk_err;
+	}
 
-	/* Delay to ensure reset process is करोne */
+	/* Delay to ensure reset process is done */
 	udelay(1);
 
-	वापस 0;
+	return 0;
 
 clk_err:
 	clk_disable_unprepare(cbphy->core_clk);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक पूर्णांकel_cbphy_iphy_घातer_off(काष्ठा पूर्णांकel_cbphy_iphy *iphy)
-अणु
-	काष्ठा पूर्णांकel_combo_phy *cbphy = iphy->parent;
-	पूर्णांक ret;
+static int intel_cbphy_iphy_power_off(struct intel_cbphy_iphy *iphy)
+{
+	struct intel_combo_phy *cbphy = iphy->parent;
+	int ret;
 
-	ret = reset_control_निश्चित(iphy->app_rst);
-	अगर (ret) अणु
+	ret = reset_control_assert(iphy->app_rst);
+	if (ret) {
 		dev_err(cbphy->dev, "PHY(%u:%u) reset assert failed!\n",
 			COMBO_PHY_ID(iphy), PHY_ID(iphy));
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = पूर्णांकel_cbphy_iphy_enable(iphy, false);
-	अगर (ret) अणु
+	ret = intel_cbphy_iphy_enable(iphy, false);
+	if (ret) {
 		dev_err(cbphy->dev, "Failed disabling PHY core\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	अगर (cbphy->init_cnt)
-		वापस 0;
+	if (cbphy->init_cnt)
+		return 0;
 
 	clk_disable_unprepare(cbphy->core_clk);
-	पूर्णांकel_cbphy_rst_निश्चित(cbphy);
+	intel_cbphy_rst_assert(cbphy);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक पूर्णांकel_cbphy_init(काष्ठा phy *phy)
-अणु
-	काष्ठा पूर्णांकel_cbphy_iphy *iphy = phy_get_drvdata(phy);
-	काष्ठा पूर्णांकel_combo_phy *cbphy = iphy->parent;
-	पूर्णांक ret;
+static int intel_cbphy_init(struct phy *phy)
+{
+	struct intel_cbphy_iphy *iphy = phy_get_drvdata(phy);
+	struct intel_combo_phy *cbphy = iphy->parent;
+	int ret;
 
 	mutex_lock(&cbphy->lock);
-	ret = पूर्णांकel_cbphy_iphy_cfg(iphy, पूर्णांकel_cbphy_iphy_घातer_on);
-	अगर (ret)
-		जाओ err;
+	ret = intel_cbphy_iphy_cfg(iphy, intel_cbphy_iphy_power_on);
+	if (ret)
+		goto err;
 
-	अगर (cbphy->phy_mode == PHY_PCIE_MODE) अणु
-		ret = पूर्णांकel_cbphy_iphy_cfg(iphy, पूर्णांकel_cbphy_pcie_en_pad_refclk);
-		अगर (ret)
-			जाओ err;
-	पूर्ण
+	if (cbphy->phy_mode == PHY_PCIE_MODE) {
+		ret = intel_cbphy_iphy_cfg(iphy, intel_cbphy_pcie_en_pad_refclk);
+		if (ret)
+			goto err;
+	}
 
 	cbphy->init_cnt++;
 
 err:
 	mutex_unlock(&cbphy->lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक पूर्णांकel_cbphy_निकास(काष्ठा phy *phy)
-अणु
-	काष्ठा पूर्णांकel_cbphy_iphy *iphy = phy_get_drvdata(phy);
-	काष्ठा पूर्णांकel_combo_phy *cbphy = iphy->parent;
-	पूर्णांक ret;
+static int intel_cbphy_exit(struct phy *phy)
+{
+	struct intel_cbphy_iphy *iphy = phy_get_drvdata(phy);
+	struct intel_combo_phy *cbphy = iphy->parent;
+	int ret;
 
 	mutex_lock(&cbphy->lock);
 	cbphy->init_cnt--;
-	अगर (cbphy->phy_mode == PHY_PCIE_MODE) अणु
-		ret = पूर्णांकel_cbphy_iphy_cfg(iphy, पूर्णांकel_cbphy_pcie_dis_pad_refclk);
-		अगर (ret)
-			जाओ err;
-	पूर्ण
+	if (cbphy->phy_mode == PHY_PCIE_MODE) {
+		ret = intel_cbphy_iphy_cfg(iphy, intel_cbphy_pcie_dis_pad_refclk);
+		if (ret)
+			goto err;
+	}
 
-	ret = पूर्णांकel_cbphy_iphy_cfg(iphy, पूर्णांकel_cbphy_iphy_घातer_off);
+	ret = intel_cbphy_iphy_cfg(iphy, intel_cbphy_iphy_power_off);
 
 err:
 	mutex_unlock(&cbphy->lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक पूर्णांकel_cbphy_calibrate(काष्ठा phy *phy)
-अणु
-	काष्ठा पूर्णांकel_cbphy_iphy *iphy = phy_get_drvdata(phy);
-	काष्ठा पूर्णांकel_combo_phy *cbphy = iphy->parent;
-	व्योम __iomem *cr_base = cbphy->cr_base;
-	पूर्णांक val, ret, id;
+static int intel_cbphy_calibrate(struct phy *phy)
+{
+	struct intel_cbphy_iphy *iphy = phy_get_drvdata(phy);
+	struct intel_combo_phy *cbphy = iphy->parent;
+	void __iomem *cr_base = cbphy->cr_base;
+	int val, ret, id;
 
-	अगर (cbphy->phy_mode != PHY_XPCS_MODE)
-		वापस 0;
+	if (cbphy->phy_mode != PHY_XPCS_MODE)
+		return 0;
 
 	id = PHY_ID(iphy);
 
-	/* trigger स्वतः RX adaptation */
+	/* trigger auto RX adaptation */
 	combo_phy_w32_off_mask(cr_base, CR_ADDR(PCS_XF_ATE_OVRD_IN_2, id),
 			       ADAPT_REQ_MSK, FIELD_PREP(ADAPT_REQ_MSK, 3));
 	/* Wait RX adaptation to finish */
-	ret = पढ़ोl_poll_समयout(cr_base + CR_ADDR(PCS_XF_RX_ADAPT_ACK, id),
+	ret = readl_poll_timeout(cr_base + CR_ADDR(PCS_XF_RX_ADAPT_ACK, id),
 				 val, val & RX_ADAPT_ACK_BIT, 10, 5000);
-	अगर (ret)
+	if (ret)
 		dev_err(cbphy->dev, "RX Adaptation failed!\n");
-	अन्यथा
+	else
 		dev_dbg(cbphy->dev, "RX Adaptation success!\n");
 
 	/* Stop RX adaptation */
 	combo_phy_w32_off_mask(cr_base, CR_ADDR(PCS_XF_ATE_OVRD_IN_2, id),
 			       ADAPT_REQ_MSK, FIELD_PREP(ADAPT_REQ_MSK, 0));
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक पूर्णांकel_cbphy_fwnode_parse(काष्ठा पूर्णांकel_combo_phy *cbphy)
-अणु
-	काष्ठा device *dev = cbphy->dev;
-	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(dev);
-	काष्ठा fwnode_handle *fwnode = dev_fwnode(dev);
-	काष्ठा fwnode_reference_args ref;
-	पूर्णांक ret;
+static int intel_cbphy_fwnode_parse(struct intel_combo_phy *cbphy)
+{
+	struct device *dev = cbphy->dev;
+	struct platform_device *pdev = to_platform_device(dev);
+	struct fwnode_handle *fwnode = dev_fwnode(dev);
+	struct fwnode_reference_args ref;
+	int ret;
 	u32 val;
 
-	cbphy->core_clk = devm_clk_get(dev, शून्य);
-	अगर (IS_ERR(cbphy->core_clk)) अणु
+	cbphy->core_clk = devm_clk_get(dev, NULL);
+	if (IS_ERR(cbphy->core_clk)) {
 		ret = PTR_ERR(cbphy->core_clk);
-		अगर (ret != -EPROBE_DEFER)
+		if (ret != -EPROBE_DEFER)
 			dev_err(dev, "Get clk failed:%d!\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	cbphy->core_rst = devm_reset_control_get_optional(dev, "core");
-	अगर (IS_ERR(cbphy->core_rst)) अणु
+	if (IS_ERR(cbphy->core_rst)) {
 		ret = PTR_ERR(cbphy->core_rst);
-		अगर (ret != -EPROBE_DEFER)
+		if (ret != -EPROBE_DEFER)
 			dev_err(dev, "Get core reset control err: %d!\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	cbphy->phy_rst = devm_reset_control_get_optional(dev, "phy");
-	अगर (IS_ERR(cbphy->phy_rst)) अणु
+	if (IS_ERR(cbphy->phy_rst)) {
 		ret = PTR_ERR(cbphy->phy_rst);
-		अगर (ret != -EPROBE_DEFER)
+		if (ret != -EPROBE_DEFER)
 			dev_err(dev, "Get PHY reset control err: %d!\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	cbphy->iphy[0].app_rst = devm_reset_control_get_optional(dev, "iphy0");
-	अगर (IS_ERR(cbphy->iphy[0].app_rst)) अणु
+	if (IS_ERR(cbphy->iphy[0].app_rst)) {
 		ret = PTR_ERR(cbphy->iphy[0].app_rst);
-		अगर (ret != -EPROBE_DEFER)
+		if (ret != -EPROBE_DEFER)
 			dev_err(dev, "Get phy0 reset control err: %d!\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	cbphy->iphy[1].app_rst = devm_reset_control_get_optional(dev, "iphy1");
-	अगर (IS_ERR(cbphy->iphy[1].app_rst)) अणु
+	if (IS_ERR(cbphy->iphy[1].app_rst)) {
 		ret = PTR_ERR(cbphy->iphy[1].app_rst);
-		अगर (ret != -EPROBE_DEFER)
+		if (ret != -EPROBE_DEFER)
 			dev_err(dev, "Get phy1 reset control err: %d!\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	cbphy->app_base = devm_platक्रमm_ioremap_resource_byname(pdev, "app");
-	अगर (IS_ERR(cbphy->app_base))
-		वापस PTR_ERR(cbphy->app_base);
+	cbphy->app_base = devm_platform_ioremap_resource_byname(pdev, "app");
+	if (IS_ERR(cbphy->app_base))
+		return PTR_ERR(cbphy->app_base);
 
-	cbphy->cr_base = devm_platक्रमm_ioremap_resource_byname(pdev, "core");
-	अगर (IS_ERR(cbphy->cr_base))
-		वापस PTR_ERR(cbphy->cr_base);
+	cbphy->cr_base = devm_platform_ioremap_resource_byname(pdev, "core");
+	if (IS_ERR(cbphy->cr_base))
+		return PTR_ERR(cbphy->cr_base);
 
 	/*
-	 * syscfg and hsiocfg variables stores the handle of the रेजिस्टरs set
-	 * in which ComboPhy subप्रणाली specअगरic रेजिस्टरs are subset. Using
-	 * Register map framework to access the रेजिस्टरs set.
+	 * syscfg and hsiocfg variables stores the handle of the registers set
+	 * in which ComboPhy subsystem specific registers are subset. Using
+	 * Register map framework to access the registers set.
 	 */
-	ret = fwnode_property_get_reference_args(fwnode, "intel,syscfg", शून्य,
+	ret = fwnode_property_get_reference_args(fwnode, "intel,syscfg", NULL,
 						 1, 0, &ref);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	cbphy->id = ref.args[0];
 	cbphy->syscfg = device_node_to_regmap(to_of_node(ref.fwnode));
 	fwnode_handle_put(ref.fwnode);
 
-	ret = fwnode_property_get_reference_args(fwnode, "intel,hsio", शून्य, 1,
+	ret = fwnode_property_get_reference_args(fwnode, "intel,hsio", NULL, 1,
 						 0, &ref);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	cbphy->bid = ref.args[0];
 	cbphy->hsiocfg = device_node_to_regmap(to_of_node(ref.fwnode));
 	fwnode_handle_put(ref.fwnode);
 
-	ret = fwnode_property_पढ़ो_u32_array(fwnode, "intel,phy-mode", &val, 1);
-	अगर (ret)
-		वापस ret;
+	ret = fwnode_property_read_u32_array(fwnode, "intel,phy-mode", &val, 1);
+	if (ret)
+		return ret;
 
-	चयन (val) अणु
-	हाल PHY_TYPE_PCIE:
+	switch (val) {
+	case PHY_TYPE_PCIE:
 		cbphy->phy_mode = PHY_PCIE_MODE;
-		अवरोध;
+		break;
 
-	हाल PHY_TYPE_SATA:
+	case PHY_TYPE_SATA:
 		cbphy->phy_mode = PHY_SATA_MODE;
-		अवरोध;
+		break;
 
-	हाल PHY_TYPE_XPCS:
+	case PHY_TYPE_XPCS:
 		cbphy->phy_mode = PHY_XPCS_MODE;
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		dev_err(dev, "Invalid PHY mode: %u\n", val);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	cbphy->clk_rate = पूर्णांकel_iphy_clk_rates[cbphy->phy_mode];
+	cbphy->clk_rate = intel_iphy_clk_rates[cbphy->phy_mode];
 
-	अगर (fwnode_property_present(fwnode, "intel,aggregation"))
+	if (fwnode_property_present(fwnode, "intel,aggregation"))
 		cbphy->aggr_mode = PHY_DL_MODE;
-	अन्यथा
+	else
 		cbphy->aggr_mode = PHY_SL_MODE;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा phy_ops पूर्णांकel_cbphy_ops = अणु
-	.init		= पूर्णांकel_cbphy_init,
-	.निकास		= पूर्णांकel_cbphy_निकास,
-	.calibrate	= पूर्णांकel_cbphy_calibrate,
+static const struct phy_ops intel_cbphy_ops = {
+	.init		= intel_cbphy_init,
+	.exit		= intel_cbphy_exit,
+	.calibrate	= intel_cbphy_calibrate,
 	.owner		= THIS_MODULE,
-पूर्ण;
+};
 
-अटल काष्ठा phy *पूर्णांकel_cbphy_xlate(काष्ठा device *dev,
-				     काष्ठा of_phandle_args *args)
-अणु
-	काष्ठा पूर्णांकel_combo_phy *cbphy = dev_get_drvdata(dev);
+static struct phy *intel_cbphy_xlate(struct device *dev,
+				     struct of_phandle_args *args)
+{
+	struct intel_combo_phy *cbphy = dev_get_drvdata(dev);
 	u32 iphy_id;
 
-	अगर (args->args_count < 1) अणु
+	if (args->args_count < 1) {
 		dev_err(dev, "Invalid number of arguments\n");
-		वापस ERR_PTR(-EINVAL);
-	पूर्ण
+		return ERR_PTR(-EINVAL);
+	}
 
 	iphy_id = args->args[0];
-	अगर (iphy_id >= PHY_MAX_NUM) अणु
+	if (iphy_id >= PHY_MAX_NUM) {
 		dev_err(dev, "Invalid phy instance %d\n", iphy_id);
-		वापस ERR_PTR(-EINVAL);
-	पूर्ण
+		return ERR_PTR(-EINVAL);
+	}
 
-	अगर (cbphy->aggr_mode == PHY_DL_MODE && iphy_id == PHY_1) अणु
+	if (cbphy->aggr_mode == PHY_DL_MODE && iphy_id == PHY_1) {
 		dev_err(dev, "Invalid. ComboPhy is in Dual lane mode %d\n", iphy_id);
-		वापस ERR_PTR(-EINVAL);
-	पूर्ण
+		return ERR_PTR(-EINVAL);
+	}
 
-	वापस cbphy->iphy[iphy_id].phy;
-पूर्ण
+	return cbphy->iphy[iphy_id].phy;
+}
 
-अटल पूर्णांक पूर्णांकel_cbphy_create(काष्ठा पूर्णांकel_combo_phy *cbphy)
-अणु
-	काष्ठा phy_provider *phy_provider;
-	काष्ठा device *dev = cbphy->dev;
-	काष्ठा पूर्णांकel_cbphy_iphy *iphy;
-	पूर्णांक i;
+static int intel_cbphy_create(struct intel_combo_phy *cbphy)
+{
+	struct phy_provider *phy_provider;
+	struct device *dev = cbphy->dev;
+	struct intel_cbphy_iphy *iphy;
+	int i;
 
-	क्रम (i = 0; i < PHY_MAX_NUM; i++) अणु
+	for (i = 0; i < PHY_MAX_NUM; i++) {
 		iphy = &cbphy->iphy[i];
 		iphy->parent = cbphy;
 		iphy->id = i;
 
-		/* In dual lane mode skip phy creation क्रम the second phy */
-		अगर (cbphy->aggr_mode == PHY_DL_MODE && iphy->id == PHY_1)
-			जारी;
+		/* In dual lane mode skip phy creation for the second phy */
+		if (cbphy->aggr_mode == PHY_DL_MODE && iphy->id == PHY_1)
+			continue;
 
-		iphy->phy = devm_phy_create(dev, शून्य, &पूर्णांकel_cbphy_ops);
-		अगर (IS_ERR(iphy->phy)) अणु
+		iphy->phy = devm_phy_create(dev, NULL, &intel_cbphy_ops);
+		if (IS_ERR(iphy->phy)) {
 			dev_err(dev, "PHY[%u:%u]: create PHY instance failed!\n",
 				COMBO_PHY_ID(iphy), PHY_ID(iphy));
 
-			वापस PTR_ERR(iphy->phy);
-		पूर्ण
+			return PTR_ERR(iphy->phy);
+		}
 
 		phy_set_drvdata(iphy->phy, iphy);
-	पूर्ण
+	}
 
 	dev_set_drvdata(dev, cbphy);
-	phy_provider = devm_of_phy_provider_रेजिस्टर(dev, पूर्णांकel_cbphy_xlate);
-	अगर (IS_ERR(phy_provider))
+	phy_provider = devm_of_phy_provider_register(dev, intel_cbphy_xlate);
+	if (IS_ERR(phy_provider))
 		dev_err(dev, "Register PHY provider failed!\n");
 
-	वापस PTR_ERR_OR_ZERO(phy_provider);
-पूर्ण
+	return PTR_ERR_OR_ZERO(phy_provider);
+}
 
-अटल पूर्णांक पूर्णांकel_cbphy_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा पूर्णांकel_combo_phy *cbphy;
-	पूर्णांक ret;
+static int intel_cbphy_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	struct intel_combo_phy *cbphy;
+	int ret;
 
-	cbphy = devm_kzalloc(dev, माप(*cbphy), GFP_KERNEL);
-	अगर (!cbphy)
-		वापस -ENOMEM;
+	cbphy = devm_kzalloc(dev, sizeof(*cbphy), GFP_KERNEL);
+	if (!cbphy)
+		return -ENOMEM;
 
 	cbphy->dev = dev;
 	cbphy->init_cnt = 0;
 	mutex_init(&cbphy->lock);
-	ret = पूर्णांकel_cbphy_fwnode_parse(cbphy);
-	अगर (ret)
-		वापस ret;
+	ret = intel_cbphy_fwnode_parse(cbphy);
+	if (ret)
+		return ret;
 
-	platक्रमm_set_drvdata(pdev, cbphy);
+	platform_set_drvdata(pdev, cbphy);
 
-	वापस पूर्णांकel_cbphy_create(cbphy);
-पूर्ण
+	return intel_cbphy_create(cbphy);
+}
 
-अटल पूर्णांक पूर्णांकel_cbphy_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा पूर्णांकel_combo_phy *cbphy = platक्रमm_get_drvdata(pdev);
+static int intel_cbphy_remove(struct platform_device *pdev)
+{
+	struct intel_combo_phy *cbphy = platform_get_drvdata(pdev);
 
-	पूर्णांकel_cbphy_rst_निश्चित(cbphy);
+	intel_cbphy_rst_assert(cbphy);
 	clk_disable_unprepare(cbphy->core_clk);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id of_पूर्णांकel_cbphy_match[] = अणु
-	अणु .compatible = "intel,combo-phy" पूर्ण,
-	अणु .compatible = "intel,combophy-lgm" पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct of_device_id of_intel_cbphy_match[] = {
+	{ .compatible = "intel,combo-phy" },
+	{ .compatible = "intel,combophy-lgm" },
+	{}
+};
 
-अटल काष्ठा platक्रमm_driver पूर्णांकel_cbphy_driver = अणु
-	.probe = पूर्णांकel_cbphy_probe,
-	.हटाओ = पूर्णांकel_cbphy_हटाओ,
-	.driver = अणु
+static struct platform_driver intel_cbphy_driver = {
+	.probe = intel_cbphy_probe,
+	.remove = intel_cbphy_remove,
+	.driver = {
 		.name = "intel-combo-phy",
-		.of_match_table = of_पूर्णांकel_cbphy_match,
-	पूर्ण
-पूर्ण;
+		.of_match_table = of_intel_cbphy_match,
+	}
+};
 
-module_platक्रमm_driver(पूर्णांकel_cbphy_driver);
+module_platform_driver(intel_cbphy_driver);
 
 MODULE_DESCRIPTION("Intel Combo-phy driver");
 MODULE_LICENSE("GPL v2");

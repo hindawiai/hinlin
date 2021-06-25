@@ -1,152 +1,151 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <मानकपन.स>
-#समावेश <मानककोष.स>
-#समावेश <संकेत.स>
-#समावेश <sys/mman.h>
-#समावेश <दीर्घ_लाँघ.h>
+// SPDX-License-Identifier: GPL-2.0
+#include <stdio.h>
+#include <stdlib.h>
+#include <signal.h>
+#include <sys/mman.h>
+#include <longjmp.h>
 
-#अगर_घोषित __i386__
+#ifdef __i386__
 
-अटल लाँघ_बफ buf;
+static jmp_buf buf;
 
-अटल व्योम segfault(पूर्णांक sig)
-अणु
-	दीर्घ_लाँघ(buf, 1);
-पूर्ण
+static void segfault(int sig)
+{
+	longjmp(buf, 1);
+}
 
-अटल पूर्णांक page_ok(अचिन्हित दीर्घ page)
-अणु
-	अचिन्हित दीर्घ *address = (अचिन्हित दीर्घ *) (page << UM_KERN_PAGE_SHIFT);
-	अचिन्हित दीर्घ n = ~0UL;
-	व्योम *mapped = शून्य;
-	पूर्णांक ok = 0;
+static int page_ok(unsigned long page)
+{
+	unsigned long *address = (unsigned long *) (page << UM_KERN_PAGE_SHIFT);
+	unsigned long n = ~0UL;
+	void *mapped = NULL;
+	int ok = 0;
 
 	/*
-	 * First see अगर the page is पढ़ोable.  If it is, it may still
-	 * be a VDSO, so we go on to see अगर it's writable.  If not
+	 * First see if the page is readable.  If it is, it may still
+	 * be a VDSO, so we go on to see if it's writable.  If not
 	 * then try mapping memory there.  If that fails, then we're
-	 * still in the kernel area.  As a sanity check, we'll fail अगर
-	 * the mmap succeeds, but gives us an address dअगरferent from
+	 * still in the kernel area.  As a sanity check, we'll fail if
+	 * the mmap succeeds, but gives us an address different from
 	 * what we wanted.
 	 */
-	अगर (बनाओ_लाँघ(buf) == 0)
+	if (setjmp(buf) == 0)
 		n = *address;
-	अन्यथा अणु
+	else {
 		mapped = mmap(address, UM_KERN_PAGE_SIZE,
 			      PROT_READ | PROT_WRITE,
 			      MAP_FIXED | MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
-		अगर (mapped == MAP_FAILED)
-			वापस 0;
-		अगर (mapped != address)
-			जाओ out;
-	पूर्ण
+		if (mapped == MAP_FAILED)
+			return 0;
+		if (mapped != address)
+			goto out;
+	}
 
 	/*
-	 * Now, is it ग_लिखोable?  If so, then we're in user address
-	 * space.  If not, then try mprotecting it and try the ग_लिखो
+	 * Now, is it writeable?  If so, then we're in user address
+	 * space.  If not, then try mprotecting it and try the write
 	 * again.
 	 */
-	अगर (बनाओ_लाँघ(buf) == 0) अणु
+	if (setjmp(buf) == 0) {
 		*address = n;
 		ok = 1;
-		जाओ out;
-	पूर्ण अन्यथा अगर (mprotect(address, UM_KERN_PAGE_SIZE,
+		goto out;
+	} else if (mprotect(address, UM_KERN_PAGE_SIZE,
 			    PROT_READ | PROT_WRITE) != 0)
-		जाओ out;
+		goto out;
 
-	अगर (बनाओ_लाँघ(buf) == 0) अणु
+	if (setjmp(buf) == 0) {
 		*address = n;
 		ok = 1;
-	पूर्ण
+	}
 
  out:
-	अगर (mapped != शून्य)
+	if (mapped != NULL)
 		munmap(mapped, UM_KERN_PAGE_SIZE);
-	वापस ok;
-पूर्ण
+	return ok;
+}
 
-अचिन्हित दीर्घ os_get_top_address(व्योम)
-अणु
-	काष्ठा sigaction sa, old;
-	अचिन्हित दीर्घ bottom = 0;
+unsigned long os_get_top_address(void)
+{
+	struct sigaction sa, old;
+	unsigned long bottom = 0;
 	/*
-	 * A 32-bit UML on a 64-bit host माला_लो confused about the VDSO at
-	 * 0xffffe000.  It is mapped, is पढ़ोable, can be reरक्षित ग_लिखोable
+	 * A 32-bit UML on a 64-bit host gets confused about the VDSO at
+	 * 0xffffe000.  It is mapped, is readable, can be reprotected writeable
 	 * and written.  However, exec discovers later that it can't be
 	 * unmapped.  So, just set the highest address to be checked to just
 	 * below it.  This might waste some address space on 4G/4G 32-bit
 	 * hosts, but shouldn't hurt otherwise.
 	 */
-	अचिन्हित दीर्घ top = 0xffffd000 >> UM_KERN_PAGE_SHIFT;
-	अचिन्हित दीर्घ test, original;
+	unsigned long top = 0xffffd000 >> UM_KERN_PAGE_SHIFT;
+	unsigned long test, original;
 
-	म_लिखो("Locating the bottom of the address space ... ");
-	ख_साफ(मानक_निकास);
+	printf("Locating the bottom of the address space ... ");
+	fflush(stdout);
 
 	/*
-	 * We're going to be दीर्घ_लाँघing out of the संकेत handler, so
+	 * We're going to be longjmping out of the signal handler, so
 	 * SA_DEFER needs to be set.
 	 */
 	sa.sa_handler = segfault;
 	sigemptyset(&sa.sa_mask);
 	sa.sa_flags = SA_NODEFER;
-	अगर (sigaction(संक_अंश, &sa, &old)) अणु
-		लिखो_त्रुटि("os_get_top_address");
-		निकास(1);
-	पूर्ण
+	if (sigaction(SIGSEGV, &sa, &old)) {
+		perror("os_get_top_address");
+		exit(1);
+	}
 
 	/* Manually scan the address space, bottom-up, until we find
 	 * the first valid page (or run out of them).
 	 */
-	क्रम (bottom = 0; bottom < top; bottom++) अणु
-		अगर (page_ok(bottom))
-			अवरोध;
-	पूर्ण
+	for (bottom = 0; bottom < top; bottom++) {
+		if (page_ok(bottom))
+			break;
+	}
 
 	/* If we've got this far, we ran out of pages. */
-	अगर (bottom == top) अणु
-		ख_लिखो(मानक_त्रुटि, "Unable to determine bottom of address "
+	if (bottom == top) {
+		fprintf(stderr, "Unable to determine bottom of address "
 			"space.\n");
-		निकास(1);
-	पूर्ण
+		exit(1);
+	}
 
-	म_लिखो("0x%lx\n", bottom << UM_KERN_PAGE_SHIFT);
-	म_लिखो("Locating the top of the address space ... ");
-	ख_साफ(मानक_निकास);
+	printf("0x%lx\n", bottom << UM_KERN_PAGE_SHIFT);
+	printf("Locating the top of the address space ... ");
+	fflush(stdout);
 
 	original = bottom;
 
 	/* This could happen with a 4G/4G split */
-	अगर (page_ok(top))
-		जाओ out;
+	if (page_ok(top))
+		goto out;
 
-	करो अणु
+	do {
 		test = bottom + (top - bottom) / 2;
-		अगर (page_ok(test))
+		if (page_ok(test))
 			bottom = test;
-		अन्यथा
+		else
 			top = test;
-	पूर्ण जबतक (top - bottom > 1);
+	} while (top - bottom > 1);
 
 out:
-	/* Restore the old संक_अंश handling */
-	अगर (sigaction(संक_अंश, &old, शून्य)) अणु
-		लिखो_त्रुटि("os_get_top_address");
-		निकास(1);
-	पूर्ण
+	/* Restore the old SIGSEGV handling */
+	if (sigaction(SIGSEGV, &old, NULL)) {
+		perror("os_get_top_address");
+		exit(1);
+	}
 	top <<= UM_KERN_PAGE_SHIFT;
-	म_लिखो("0x%lx\n", top);
+	printf("0x%lx\n", top);
 
-	वापस top;
-पूर्ण
+	return top;
+}
 
-#अन्यथा
+#else
 
-अचिन्हित दीर्घ os_get_top_address(व्योम)
-अणु
+unsigned long os_get_top_address(void)
+{
 	/* The old value of CONFIG_TOP_ADDR */
-	वापस 0x7fc0002000;
-पूर्ण
+	return 0x7fc0002000;
+}
 
-#पूर्ण_अगर
+#endif

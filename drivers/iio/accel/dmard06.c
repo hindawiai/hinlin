@@ -1,236 +1,235 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * IIO driver क्रम Domपूर्णांकech DMARD06 accelerometer
+ * IIO driver for Domintech DMARD06 accelerometer
  *
  * Copyright (C) 2016 Aleksei Mamlin <mamlinav@gmail.com>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/mod_devicetable.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/iio/iपन.स>
+#include <linux/module.h>
+#include <linux/mod_devicetable.h>
+#include <linux/i2c.h>
+#include <linux/iio/iio.h>
 
-#घोषणा DMARD06_DRV_NAME		"dmard06"
+#define DMARD06_DRV_NAME		"dmard06"
 
-/* Device data रेजिस्टरs */
-#घोषणा DMARD06_CHIP_ID_REG		0x0f
-#घोषणा DMARD06_TOUT_REG		0x40
-#घोषणा DMARD06_XOUT_REG		0x41
-#घोषणा DMARD06_YOUT_REG		0x42
-#घोषणा DMARD06_ZOUT_REG		0x43
-#घोषणा DMARD06_CTRL1_REG		0x44
+/* Device data registers */
+#define DMARD06_CHIP_ID_REG		0x0f
+#define DMARD06_TOUT_REG		0x40
+#define DMARD06_XOUT_REG		0x41
+#define DMARD06_YOUT_REG		0x42
+#define DMARD06_ZOUT_REG		0x43
+#define DMARD06_CTRL1_REG		0x44
 
 /* Device ID value */
-#घोषणा DMARD05_CHIP_ID			0x05
-#घोषणा DMARD06_CHIP_ID			0x06
-#घोषणा DMARD07_CHIP_ID			0x07
+#define DMARD05_CHIP_ID			0x05
+#define DMARD06_CHIP_ID			0x06
+#define DMARD07_CHIP_ID			0x07
 
 /* Device values */
-#घोषणा DMARD05_AXIS_SCALE_VAL		15625
-#घोषणा DMARD06_AXIS_SCALE_VAL		31250
-#घोषणा DMARD06_TEMP_CENTER_VAL		25
-#घोषणा DMARD06_SIGN_BIT		7
+#define DMARD05_AXIS_SCALE_VAL		15625
+#define DMARD06_AXIS_SCALE_VAL		31250
+#define DMARD06_TEMP_CENTER_VAL		25
+#define DMARD06_SIGN_BIT		7
 
-/* Device घातer modes */
-#घोषणा DMARD06_MODE_NORMAL		0x27
-#घोषणा DMARD06_MODE_POWERDOWN		0x00
+/* Device power modes */
+#define DMARD06_MODE_NORMAL		0x27
+#define DMARD06_MODE_POWERDOWN		0x00
 
 /* Device channels */
-#घोषणा DMARD06_ACCEL_CHANNEL(_axis, _reg) अणु			\
+#define DMARD06_ACCEL_CHANNEL(_axis, _reg) {			\
 	.type = IIO_ACCEL,					\
 	.address = _reg,					\
 	.channel2 = IIO_MOD_##_axis,				\
 	.info_mask_separate = BIT(IIO_CHAN_INFO_RAW),		\
 	.info_mask_shared_by_type = BIT(IIO_CHAN_INFO_SCALE),	\
-	.modअगरied = 1,						\
-पूर्ण
+	.modified = 1,						\
+}
 
-#घोषणा DMARD06_TEMP_CHANNEL(_reg) अणु				\
+#define DMARD06_TEMP_CHANNEL(_reg) {				\
 	.type = IIO_TEMP,					\
 	.address = _reg,					\
 	.info_mask_separate = BIT(IIO_CHAN_INFO_RAW) |		\
 			      BIT(IIO_CHAN_INFO_OFFSET),	\
-पूर्ण
+}
 
-काष्ठा dmard06_data अणु
-	काष्ठा i2c_client *client;
+struct dmard06_data {
+	struct i2c_client *client;
 	u8 chip_id;
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा iio_chan_spec dmard06_channels[] = अणु
+static const struct iio_chan_spec dmard06_channels[] = {
 	DMARD06_ACCEL_CHANNEL(X, DMARD06_XOUT_REG),
 	DMARD06_ACCEL_CHANNEL(Y, DMARD06_YOUT_REG),
 	DMARD06_ACCEL_CHANNEL(Z, DMARD06_ZOUT_REG),
 	DMARD06_TEMP_CHANNEL(DMARD06_TOUT_REG),
-पूर्ण;
+};
 
-अटल पूर्णांक dmard06_पढ़ो_raw(काष्ठा iio_dev *indio_dev,
-			    काष्ठा iio_chan_spec स्थिर *chan,
-			    पूर्णांक *val, पूर्णांक *val2, दीर्घ mask)
-अणु
-	काष्ठा dmard06_data *dmard06 = iio_priv(indio_dev);
-	पूर्णांक ret;
+static int dmard06_read_raw(struct iio_dev *indio_dev,
+			    struct iio_chan_spec const *chan,
+			    int *val, int *val2, long mask)
+{
+	struct dmard06_data *dmard06 = iio_priv(indio_dev);
+	int ret;
 
-	चयन (mask) अणु
-	हाल IIO_CHAN_INFO_RAW:
-		ret = i2c_smbus_पढ़ो_byte_data(dmard06->client,
+	switch (mask) {
+	case IIO_CHAN_INFO_RAW:
+		ret = i2c_smbus_read_byte_data(dmard06->client,
 					       chan->address);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			dev_err(&dmard06->client->dev,
 				"Error reading data: %d\n", ret);
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 
 		*val = sign_extend32(ret, DMARD06_SIGN_BIT);
 
-		अगर (dmard06->chip_id == DMARD06_CHIP_ID)
+		if (dmard06->chip_id == DMARD06_CHIP_ID)
 			*val = *val >> 1;
 
-		चयन (chan->type) अणु
-		हाल IIO_ACCEL:
-			वापस IIO_VAL_INT;
-		हाल IIO_TEMP:
-			अगर (dmard06->chip_id != DMARD06_CHIP_ID)
+		switch (chan->type) {
+		case IIO_ACCEL:
+			return IIO_VAL_INT;
+		case IIO_TEMP:
+			if (dmard06->chip_id != DMARD06_CHIP_ID)
 				*val = *val / 2;
-			वापस IIO_VAL_INT;
-		शेष:
-			वापस -EINVAL;
-		पूर्ण
-	हाल IIO_CHAN_INFO_OFFSET:
-		चयन (chan->type) अणु
-		हाल IIO_TEMP:
+			return IIO_VAL_INT;
+		default:
+			return -EINVAL;
+		}
+	case IIO_CHAN_INFO_OFFSET:
+		switch (chan->type) {
+		case IIO_TEMP:
 			*val = DMARD06_TEMP_CENTER_VAL;
-			वापस IIO_VAL_INT;
-		शेष:
-			वापस -EINVAL;
-		पूर्ण
-	हाल IIO_CHAN_INFO_SCALE:
-		चयन (chan->type) अणु
-		हाल IIO_ACCEL:
+			return IIO_VAL_INT;
+		default:
+			return -EINVAL;
+		}
+	case IIO_CHAN_INFO_SCALE:
+		switch (chan->type) {
+		case IIO_ACCEL:
 			*val = 0;
-			अगर (dmard06->chip_id == DMARD06_CHIP_ID)
+			if (dmard06->chip_id == DMARD06_CHIP_ID)
 				*val2 = DMARD06_AXIS_SCALE_VAL;
-			अन्यथा
+			else
 				*val2 = DMARD05_AXIS_SCALE_VAL;
-			वापस IIO_VAL_INT_PLUS_MICRO;
-		शेष:
-			वापस -EINVAL;
-		पूर्ण
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-पूर्ण
+			return IIO_VAL_INT_PLUS_MICRO;
+		default:
+			return -EINVAL;
+		}
+	default:
+		return -EINVAL;
+	}
+}
 
-अटल स्थिर काष्ठा iio_info dmard06_info = अणु
-	.पढ़ो_raw	= dmard06_पढ़ो_raw,
-पूर्ण;
+static const struct iio_info dmard06_info = {
+	.read_raw	= dmard06_read_raw,
+};
 
-अटल पूर्णांक dmard06_probe(काष्ठा i2c_client *client,
-			स्थिर काष्ठा i2c_device_id *id)
-अणु
-	पूर्णांक ret;
-	काष्ठा iio_dev *indio_dev;
-	काष्ठा dmard06_data *dmard06;
+static int dmard06_probe(struct i2c_client *client,
+			const struct i2c_device_id *id)
+{
+	int ret;
+	struct iio_dev *indio_dev;
+	struct dmard06_data *dmard06;
 
-	अगर (!i2c_check_functionality(client->adapter, I2C_FUNC_I2C)) अणु
+	if (!i2c_check_functionality(client->adapter, I2C_FUNC_I2C)) {
 		dev_err(&client->dev, "I2C check functionality failed\n");
-		वापस -ENXIO;
-	पूर्ण
+		return -ENXIO;
+	}
 
-	indio_dev = devm_iio_device_alloc(&client->dev, माप(*dmard06));
-	अगर (!indio_dev) अणु
+	indio_dev = devm_iio_device_alloc(&client->dev, sizeof(*dmard06));
+	if (!indio_dev) {
 		dev_err(&client->dev, "Failed to allocate iio device\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	dmard06 = iio_priv(indio_dev);
 	dmard06->client = client;
 
-	ret = i2c_smbus_पढ़ो_byte_data(dmard06->client, DMARD06_CHIP_ID_REG);
-	अगर (ret < 0) अणु
+	ret = i2c_smbus_read_byte_data(dmard06->client, DMARD06_CHIP_ID_REG);
+	if (ret < 0) {
 		dev_err(&client->dev, "Error reading chip id: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	अगर (ret != DMARD05_CHIP_ID && ret != DMARD06_CHIP_ID &&
-	    ret != DMARD07_CHIP_ID) अणु
+	if (ret != DMARD05_CHIP_ID && ret != DMARD06_CHIP_ID &&
+	    ret != DMARD07_CHIP_ID) {
 		dev_err(&client->dev, "Invalid chip id: %02d\n", ret);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	dmard06->chip_id = ret;
 
 	i2c_set_clientdata(client, indio_dev);
 	indio_dev->name = DMARD06_DRV_NAME;
-	indio_dev->modes = INDIO_सूचीECT_MODE;
+	indio_dev->modes = INDIO_DIRECT_MODE;
 	indio_dev->channels = dmard06_channels;
 	indio_dev->num_channels = ARRAY_SIZE(dmard06_channels);
 	indio_dev->info = &dmard06_info;
 
-	वापस devm_iio_device_रेजिस्टर(&client->dev, indio_dev);
-पूर्ण
+	return devm_iio_device_register(&client->dev, indio_dev);
+}
 
-#अगर_घोषित CONFIG_PM_SLEEP
-अटल पूर्णांक dmard06_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा iio_dev *indio_dev = i2c_get_clientdata(to_i2c_client(dev));
-	काष्ठा dmard06_data *dmard06 = iio_priv(indio_dev);
-	पूर्णांक ret;
+#ifdef CONFIG_PM_SLEEP
+static int dmard06_suspend(struct device *dev)
+{
+	struct iio_dev *indio_dev = i2c_get_clientdata(to_i2c_client(dev));
+	struct dmard06_data *dmard06 = iio_priv(indio_dev);
+	int ret;
 
-	ret = i2c_smbus_ग_लिखो_byte_data(dmard06->client, DMARD06_CTRL1_REG,
+	ret = i2c_smbus_write_byte_data(dmard06->client, DMARD06_CTRL1_REG,
 					DMARD06_MODE_POWERDOWN);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dmard06_resume(काष्ठा device *dev)
-अणु
-	काष्ठा iio_dev *indio_dev = i2c_get_clientdata(to_i2c_client(dev));
-	काष्ठा dmard06_data *dmard06 = iio_priv(indio_dev);
-	पूर्णांक ret;
+static int dmard06_resume(struct device *dev)
+{
+	struct iio_dev *indio_dev = i2c_get_clientdata(to_i2c_client(dev));
+	struct dmard06_data *dmard06 = iio_priv(indio_dev);
+	int ret;
 
-	ret = i2c_smbus_ग_लिखो_byte_data(dmard06->client, DMARD06_CTRL1_REG,
+	ret = i2c_smbus_write_byte_data(dmard06->client, DMARD06_CTRL1_REG,
 					DMARD06_MODE_NORMAL);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल SIMPLE_DEV_PM_OPS(dmard06_pm_ops, dmard06_suspend, dmard06_resume);
-#घोषणा DMARD06_PM_OPS (&dmard06_pm_ops)
-#अन्यथा
-#घोषणा DMARD06_PM_OPS शून्य
-#पूर्ण_अगर
+static SIMPLE_DEV_PM_OPS(dmard06_pm_ops, dmard06_suspend, dmard06_resume);
+#define DMARD06_PM_OPS (&dmard06_pm_ops)
+#else
+#define DMARD06_PM_OPS NULL
+#endif
 
-अटल स्थिर काष्ठा i2c_device_id dmard06_id[] = अणु
-	अणु "dmard05", 0 पूर्ण,
-	अणु "dmard06", 0 पूर्ण,
-	अणु "dmard07", 0 पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct i2c_device_id dmard06_id[] = {
+	{ "dmard05", 0 },
+	{ "dmard06", 0 },
+	{ "dmard07", 0 },
+	{ }
+};
 MODULE_DEVICE_TABLE(i2c, dmard06_id);
 
-अटल स्थिर काष्ठा of_device_id dmard06_of_match[] = अणु
-	अणु .compatible = "domintech,dmard05" पूर्ण,
-	अणु .compatible = "domintech,dmard06" पूर्ण,
-	अणु .compatible = "domintech,dmard07" पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct of_device_id dmard06_of_match[] = {
+	{ .compatible = "domintech,dmard05" },
+	{ .compatible = "domintech,dmard06" },
+	{ .compatible = "domintech,dmard07" },
+	{ }
+};
 MODULE_DEVICE_TABLE(of, dmard06_of_match);
 
-अटल काष्ठा i2c_driver dmard06_driver = अणु
+static struct i2c_driver dmard06_driver = {
 	.probe = dmard06_probe,
 	.id_table = dmard06_id,
-	.driver = अणु
+	.driver = {
 		.name = DMARD06_DRV_NAME,
 		.of_match_table = dmard06_of_match,
 		.pm = DMARD06_PM_OPS,
-	पूर्ण,
-पूर्ण;
+	},
+};
 module_i2c_driver(dmard06_driver);
 
 MODULE_AUTHOR("Aleksei Mamlin <mamlinav@gmail.com>");

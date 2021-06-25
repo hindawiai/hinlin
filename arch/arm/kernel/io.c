@@ -1,86 +1,85 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <linux/export.h>
-#समावेश <linux/types.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/spinlock.h>
+// SPDX-License-Identifier: GPL-2.0
+#include <linux/export.h>
+#include <linux/types.h>
+#include <linux/io.h>
+#include <linux/spinlock.h>
 
-अटल DEFINE_RAW_SPINLOCK(__io_lock);
+static DEFINE_RAW_SPINLOCK(__io_lock);
 
 /*
- * Generic atomic MMIO modअगरy.
+ * Generic atomic MMIO modify.
  *
- * Allows thपढ़ो-safe access to रेजिस्टरs shared by unrelated subप्रणालीs.
- * The access is रक्षित by a single MMIO-wide lock.
+ * Allows thread-safe access to registers shared by unrelated subsystems.
+ * The access is protected by a single MMIO-wide lock.
  */
-व्योम atomic_io_modअगरy_relaxed(व्योम __iomem *reg, u32 mask, u32 set)
-अणु
-	अचिन्हित दीर्घ flags;
+void atomic_io_modify_relaxed(void __iomem *reg, u32 mask, u32 set)
+{
+	unsigned long flags;
 	u32 value;
 
 	raw_spin_lock_irqsave(&__io_lock, flags);
-	value = पढ़ोl_relaxed(reg) & ~mask;
+	value = readl_relaxed(reg) & ~mask;
 	value |= (set & mask);
-	ग_लिखोl_relaxed(value, reg);
+	writel_relaxed(value, reg);
 	raw_spin_unlock_irqrestore(&__io_lock, flags);
-पूर्ण
-EXPORT_SYMBOL(atomic_io_modअगरy_relaxed);
+}
+EXPORT_SYMBOL(atomic_io_modify_relaxed);
 
-व्योम atomic_io_modअगरy(व्योम __iomem *reg, u32 mask, u32 set)
-अणु
-	अचिन्हित दीर्घ flags;
+void atomic_io_modify(void __iomem *reg, u32 mask, u32 set)
+{
+	unsigned long flags;
 	u32 value;
 
 	raw_spin_lock_irqsave(&__io_lock, flags);
-	value = पढ़ोl_relaxed(reg) & ~mask;
+	value = readl_relaxed(reg) & ~mask;
 	value |= (set & mask);
-	ग_लिखोl(value, reg);
+	writel(value, reg);
 	raw_spin_unlock_irqrestore(&__io_lock, flags);
-पूर्ण
-EXPORT_SYMBOL(atomic_io_modअगरy);
+}
+EXPORT_SYMBOL(atomic_io_modify);
 
 /*
  * Copy data from IO memory space to "real" memory space.
  * This needs to be optimized.
  */
-व्योम _स_नकल_fromio(व्योम *to, स्थिर अस्थिर व्योम __iomem *from, माप_प्रकार count)
-अणु
-	अचिन्हित अक्षर *t = to;
-	जबतक (count) अणु
+void _memcpy_fromio(void *to, const volatile void __iomem *from, size_t count)
+{
+	unsigned char *t = to;
+	while (count) {
 		count--;
-		*t = पढ़ोb(from);
+		*t = readb(from);
 		t++;
 		from++;
-	पूर्ण
-पूर्ण
-EXPORT_SYMBOL(_स_नकल_fromio);
+	}
+}
+EXPORT_SYMBOL(_memcpy_fromio);
 
 /*
  * Copy data from "real" memory space to IO memory space.
  * This needs to be optimized.
  */
-व्योम _स_नकल_toio(अस्थिर व्योम __iomem *to, स्थिर व्योम *from, माप_प्रकार count)
-अणु
-	स्थिर अचिन्हित अक्षर *f = from;
-	जबतक (count) अणु
+void _memcpy_toio(volatile void __iomem *to, const void *from, size_t count)
+{
+	const unsigned char *f = from;
+	while (count) {
 		count--;
-		ग_लिखोb(*f, to);
+		writeb(*f, to);
 		f++;
 		to++;
-	पूर्ण
-पूर्ण
-EXPORT_SYMBOL(_स_नकल_toio);
+	}
+}
+EXPORT_SYMBOL(_memcpy_toio);
 
 /*
  * "memset" on IO memory space.
  * This needs to be optimized.
  */
-व्योम _स_रखो_io(अस्थिर व्योम __iomem *dst, पूर्णांक c, माप_प्रकार count)
-अणु
-	जबतक (count) अणु
+void _memset_io(volatile void __iomem *dst, int c, size_t count)
+{
+	while (count) {
 		count--;
-		ग_लिखोb(c, dst);
+		writeb(c, dst);
 		dst++;
-	पूर्ण
-पूर्ण
-EXPORT_SYMBOL(_स_रखो_io);
+	}
+}
+EXPORT_SYMBOL(_memset_io);

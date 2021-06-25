@@ -1,76 +1,75 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 // Copyright (c) 2020 Christian Hewitt
 
-#समावेश <media/rc-map.h>
-#समावेश <linux/module.h>
+#include <media/rc-map.h>
+#include <linux/module.h>
 
 /*
- * KHAMSIN is an IR/Bluetooth RCU supplied with the SmartLअसल
+ * KHAMSIN is an IR/Bluetooth RCU supplied with the SmartLabs
  * SML-5442TW DVB-S/VOD box. The RCU has separate IR (TV) and
  * BT (STB) modes. This keymap suppors the IR controls.
  */
 
-अटल काष्ठा rc_map_table khamsin[] = अणु
-	अणु 0x70702, KEY_POWERपूर्ण,
+static struct rc_map_table khamsin[] = {
+	{ 0x70702, KEY_POWER},
 
-	अणु 0x70701, KEY_VIDEOपूर्ण, // source
+	{ 0x70701, KEY_VIDEO}, // source
 
-	अणु 0x7076c, KEY_REDपूर्ण,
-	अणु 0x70714, KEY_GREENपूर्ण,
-	अणु 0x70715, KEY_YELLOWपूर्ण,
-	अणु 0x70716, KEY_BLUEपूर्ण,
+	{ 0x7076c, KEY_RED},
+	{ 0x70714, KEY_GREEN},
+	{ 0x70715, KEY_YELLOW},
+	{ 0x70716, KEY_BLUE},
 
-	अणु 0x7071a, KEY_MENUपूर्ण,
-	अणु 0x7074f, KEY_EPGपूर्ण,
+	{ 0x7071a, KEY_MENU},
+	{ 0x7074f, KEY_EPG},
 
-	अणु 0x70760, KEY_UP पूर्ण,
-	अणु 0x70761, KEY_DOWN पूर्ण,
-	अणु 0x70765, KEY_LEFT पूर्ण,
-	अणु 0x70762, KEY_RIGHT पूर्ण,
-	अणु 0x70768, KEY_ENTER पूर्ण,
+	{ 0x70760, KEY_UP },
+	{ 0x70761, KEY_DOWN },
+	{ 0x70765, KEY_LEFT },
+	{ 0x70762, KEY_RIGHT },
+	{ 0x70768, KEY_ENTER },
 
-	अणु 0x7072d, KEY_ESC पूर्ण, // back
+	{ 0x7072d, KEY_ESC }, // back
 
-	अणु 0x70707, KEY_VOLUMEUP पूर्ण,
-	अणु 0x7070b, KEY_VOLUMEDOWN पूर्ण,
-	अणु 0x7070f, KEY_MUTE पूर्ण,
-	अणु 0x70712, KEY_CHANNELUP पूर्ण,
-	अणु 0x70710, KEY_CHANNELDOWN पूर्ण,
+	{ 0x70707, KEY_VOLUMEUP },
+	{ 0x7070b, KEY_VOLUMEDOWN },
+	{ 0x7070f, KEY_MUTE },
+	{ 0x70712, KEY_CHANNELUP },
+	{ 0x70710, KEY_CHANNELDOWN },
 
-	अणु 0x70704, KEY_1 पूर्ण,
-	अणु 0x70705, KEY_2 पूर्ण,
-	अणु 0x70706, KEY_3 पूर्ण,
-	अणु 0x70708, KEY_4 पूर्ण,
-	अणु 0x70709, KEY_5 पूर्ण,
-	अणु 0x7070a, KEY_6 पूर्ण,
-	अणु 0x7070c, KEY_7 पूर्ण,
-	अणु 0x7070d, KEY_8 पूर्ण,
-	अणु 0x7070e, KEY_9 पूर्ण,
-	अणु 0x70711, KEY_0 पूर्ण,
-पूर्ण;
+	{ 0x70704, KEY_1 },
+	{ 0x70705, KEY_2 },
+	{ 0x70706, KEY_3 },
+	{ 0x70708, KEY_4 },
+	{ 0x70709, KEY_5 },
+	{ 0x7070a, KEY_6 },
+	{ 0x7070c, KEY_7 },
+	{ 0x7070d, KEY_8 },
+	{ 0x7070e, KEY_9 },
+	{ 0x70711, KEY_0 },
+};
 
-अटल काष्ठा rc_map_list khamsin_map = अणु
-	.map = अणु
+static struct rc_map_list khamsin_map = {
+	.map = {
 		.scan     = khamsin,
 		.size     = ARRAY_SIZE(khamsin),
 		.rc_proto = RC_PROTO_NECX,
 		.name     = RC_MAP_KHAMSIN,
-	पूर्ण
-पूर्ण;
+	}
+};
 
-अटल पूर्णांक __init init_rc_map_khamsin(व्योम)
-अणु
-	वापस rc_map_रेजिस्टर(&khamsin_map);
-पूर्ण
+static int __init init_rc_map_khamsin(void)
+{
+	return rc_map_register(&khamsin_map);
+}
 
-अटल व्योम __निकास निकास_rc_map_khamsin(व्योम)
-अणु
-	rc_map_unरेजिस्टर(&khamsin_map);
-पूर्ण
+static void __exit exit_rc_map_khamsin(void)
+{
+	rc_map_unregister(&khamsin_map);
+}
 
 module_init(init_rc_map_khamsin)
-module_निकास(निकास_rc_map_khamsin)
+module_exit(exit_rc_map_khamsin)
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Christian Hewitt <christianshewitt@gmail.com>");

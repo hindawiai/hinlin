@@ -1,4 +1,3 @@
-<शैली गुरु>
 /*
  * Copyright (c) 2012 Intel Corporation.  All rights reserved.
  * Copyright (c) 2006 - 2012 QLogic Corporation. All rights reserved.
@@ -7,20 +6,20 @@
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the मुख्य directory of this source tree, or the
+ * COPYING in the main directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary क्रमms, with or
- *     without modअगरication, are permitted provided that the following
+ *     Redistribution and use in source and binary forms, with or
+ *     without modification, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary क्रमm must reproduce the above
+ *      - Redistributions in binary form must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the करोcumentation and/or other materials
+ *        disclaimer in the documentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -33,62 +32,62 @@
  * SOFTWARE.
  */
 
-#समावेश <rdma/ib_smi.h>
+#include <rdma/ib_smi.h>
 
-#समावेश "qib.h"
-#समावेश "qib_mad.h"
+#include "qib.h"
+#include "qib_mad.h"
 
-अटल पूर्णांक reply(काष्ठा ib_smp *smp)
-अणु
+static int reply(struct ib_smp *smp)
+{
 	/*
 	 * The verbs framework will handle the directed/LID route
 	 * packet changes.
 	 */
 	smp->method = IB_MGMT_METHOD_GET_RESP;
-	अगर (smp->mgmt_class == IB_MGMT_CLASS_SUBN_सूचीECTED_ROUTE)
-		smp->status |= IB_SMP_सूचीECTION;
-	वापस IB_MAD_RESULT_SUCCESS | IB_MAD_RESULT_REPLY;
-पूर्ण
+	if (smp->mgmt_class == IB_MGMT_CLASS_SUBN_DIRECTED_ROUTE)
+		smp->status |= IB_SMP_DIRECTION;
+	return IB_MAD_RESULT_SUCCESS | IB_MAD_RESULT_REPLY;
+}
 
-अटल पूर्णांक reply_failure(काष्ठा ib_smp *smp)
-अणु
+static int reply_failure(struct ib_smp *smp)
+{
 	/*
 	 * The verbs framework will handle the directed/LID route
 	 * packet changes.
 	 */
 	smp->method = IB_MGMT_METHOD_GET_RESP;
-	अगर (smp->mgmt_class == IB_MGMT_CLASS_SUBN_सूचीECTED_ROUTE)
-		smp->status |= IB_SMP_सूचीECTION;
-	वापस IB_MAD_RESULT_FAILURE | IB_MAD_RESULT_REPLY;
-पूर्ण
+	if (smp->mgmt_class == IB_MGMT_CLASS_SUBN_DIRECTED_ROUTE)
+		smp->status |= IB_SMP_DIRECTION;
+	return IB_MAD_RESULT_FAILURE | IB_MAD_RESULT_REPLY;
+}
 
-अटल व्योम qib_send_trap(काष्ठा qib_ibport *ibp, व्योम *data, अचिन्हित len)
-अणु
-	काष्ठा ib_mad_send_buf *send_buf;
-	काष्ठा ib_mad_agent *agent;
-	काष्ठा ib_smp *smp;
-	पूर्णांक ret;
-	अचिन्हित दीर्घ flags;
-	अचिन्हित दीर्घ समयout;
+static void qib_send_trap(struct qib_ibport *ibp, void *data, unsigned len)
+{
+	struct ib_mad_send_buf *send_buf;
+	struct ib_mad_agent *agent;
+	struct ib_smp *smp;
+	int ret;
+	unsigned long flags;
+	unsigned long timeout;
 
 	agent = ibp->rvp.send_agent;
-	अगर (!agent)
-		वापस;
+	if (!agent)
+		return;
 
 	/* o14-3.2.1 */
-	अगर (!(ppd_from_ibp(ibp)->lflags & QIBL_LINKACTIVE))
-		वापस;
+	if (!(ppd_from_ibp(ibp)->lflags & QIBL_LINKACTIVE))
+		return;
 
 	/* o14-2 */
-	अगर (ibp->rvp.trap_समयout &&
-	    समय_beक्रमe(jअगरfies, ibp->rvp.trap_समयout))
-		वापस;
+	if (ibp->rvp.trap_timeout &&
+	    time_before(jiffies, ibp->rvp.trap_timeout))
+		return;
 
 	send_buf = ib_create_send_mad(agent, 0, 0, 0, IB_MGMT_MAD_HDR,
 				      IB_MGMT_MAD_DATA, GFP_ATOMIC,
 				      IB_MGMT_BASE_VERSION);
-	अगर (IS_ERR(send_buf))
-		वापस;
+	if (IS_ERR(send_buf))
+		return;
 
 	smp = send_buf->mad;
 	smp->base_version = IB_MGMT_BASE_VERSION;
@@ -99,48 +98,48 @@
 	smp->tid = cpu_to_be64(ibp->rvp.tid);
 	smp->attr_id = IB_SMP_ATTR_NOTICE;
 	/* o14-1: smp->mkey = 0; */
-	स_नकल(smp->data, data, len);
+	memcpy(smp->data, data, len);
 
 	spin_lock_irqsave(&ibp->rvp.lock, flags);
-	अगर (!ibp->rvp.sm_ah) अणु
-		अगर (ibp->rvp.sm_lid != be16_to_cpu(IB_LID_PERMISSIVE)) अणु
-			काष्ठा ib_ah *ah;
+	if (!ibp->rvp.sm_ah) {
+		if (ibp->rvp.sm_lid != be16_to_cpu(IB_LID_PERMISSIVE)) {
+			struct ib_ah *ah;
 
 			ah = qib_create_qp0_ah(ibp, (u16)ibp->rvp.sm_lid);
-			अगर (IS_ERR(ah))
+			if (IS_ERR(ah))
 				ret = PTR_ERR(ah);
-			अन्यथा अणु
+			else {
 				send_buf->ah = ah;
 				ibp->rvp.sm_ah = ibah_to_rvtah(ah);
 				ret = 0;
-			पूर्ण
-		पूर्ण अन्यथा
+			}
+		} else
 			ret = -EINVAL;
-	पूर्ण अन्यथा अणु
+	} else {
 		send_buf->ah = &ibp->rvp.sm_ah->ibah;
 		ret = 0;
-	पूर्ण
+	}
 	spin_unlock_irqrestore(&ibp->rvp.lock, flags);
 
-	अगर (!ret)
-		ret = ib_post_send_mad(send_buf, शून्य);
-	अगर (!ret) अणु
+	if (!ret)
+		ret = ib_post_send_mad(send_buf, NULL);
+	if (!ret) {
 		/* 4.096 usec. */
-		समयout = (4096 * (1UL << ibp->rvp.subnet_समयout)) / 1000;
-		ibp->rvp.trap_समयout = jअगरfies + usecs_to_jअगरfies(समयout);
-	पूर्ण अन्यथा अणु
-		ib_मुक्त_send_mad(send_buf);
-		ibp->rvp.trap_समयout = 0;
-	पूर्ण
-पूर्ण
+		timeout = (4096 * (1UL << ibp->rvp.subnet_timeout)) / 1000;
+		ibp->rvp.trap_timeout = jiffies + usecs_to_jiffies(timeout);
+	} else {
+		ib_free_send_mad(send_buf);
+		ibp->rvp.trap_timeout = 0;
+	}
+}
 
 /*
  * Send a bad P_Key trap (ch. 14.3.8).
  */
-व्योम qib_bad_pkey(काष्ठा qib_ibport *ibp, u32 key, u32 sl,
+void qib_bad_pkey(struct qib_ibport *ibp, u32 key, u32 sl,
 		  u32 qp1, u32 qp2, __be16 lid1, __be16 lid2)
-अणु
-	काष्ठा ib_mad_notice_attr data;
+{
+	struct ib_mad_notice_attr data;
 
 	ibp->rvp.n_pkt_drops++;
 	ibp->rvp.pkey_violations++;
@@ -152,22 +151,22 @@
 	data.trap_num = IB_NOTICE_TRAP_BAD_PKEY;
 	data.issuer_lid = cpu_to_be16(ppd_from_ibp(ibp)->lid);
 	data.toggle_count = 0;
-	स_रखो(&data.details, 0, माप(data.details));
+	memset(&data.details, 0, sizeof(data.details));
 	data.details.ntc_257_258.lid1 = lid1;
 	data.details.ntc_257_258.lid2 = lid2;
 	data.details.ntc_257_258.key = cpu_to_be32(key);
 	data.details.ntc_257_258.sl_qp1 = cpu_to_be32((sl << 28) | qp1);
 	data.details.ntc_257_258.qp2 = cpu_to_be32(qp2);
 
-	qib_send_trap(ibp, &data, माप(data));
-पूर्ण
+	qib_send_trap(ibp, &data, sizeof(data));
+}
 
 /*
  * Send a bad M_Key trap (ch. 14.3.9).
  */
-अटल व्योम qib_bad_mkey(काष्ठा qib_ibport *ibp, काष्ठा ib_smp *smp)
-अणु
-	काष्ठा ib_mad_notice_attr data;
+static void qib_bad_mkey(struct qib_ibport *ibp, struct ib_smp *smp)
+{
+	struct ib_mad_notice_attr data;
 
 	/* Send violation trap */
 	data.generic_type = IB_NOTICE_TYPE_SECURITY;
@@ -176,40 +175,40 @@
 	data.trap_num = IB_NOTICE_TRAP_BAD_MKEY;
 	data.issuer_lid = cpu_to_be16(ppd_from_ibp(ibp)->lid);
 	data.toggle_count = 0;
-	स_रखो(&data.details, 0, माप(data.details));
+	memset(&data.details, 0, sizeof(data.details));
 	data.details.ntc_256.lid = data.issuer_lid;
 	data.details.ntc_256.method = smp->method;
 	data.details.ntc_256.attr_id = smp->attr_id;
 	data.details.ntc_256.attr_mod = smp->attr_mod;
 	data.details.ntc_256.mkey = smp->mkey;
-	अगर (smp->mgmt_class == IB_MGMT_CLASS_SUBN_सूचीECTED_ROUTE) अणु
+	if (smp->mgmt_class == IB_MGMT_CLASS_SUBN_DIRECTED_ROUTE) {
 		u8 hop_cnt;
 
 		data.details.ntc_256.dr_slid = smp->dr_slid;
 		data.details.ntc_256.dr_trunc_hop = IB_NOTICE_TRAP_DR_NOTICE;
 		hop_cnt = smp->hop_cnt;
-		अगर (hop_cnt > ARRAY_SIZE(data.details.ntc_256.dr_rtn_path)) अणु
+		if (hop_cnt > ARRAY_SIZE(data.details.ntc_256.dr_rtn_path)) {
 			data.details.ntc_256.dr_trunc_hop |=
 				IB_NOTICE_TRAP_DR_TRUNC;
 			hop_cnt = ARRAY_SIZE(data.details.ntc_256.dr_rtn_path);
-		पूर्ण
+		}
 		data.details.ntc_256.dr_trunc_hop |= hop_cnt;
-		स_नकल(data.details.ntc_256.dr_rtn_path, smp->वापस_path,
+		memcpy(data.details.ntc_256.dr_rtn_path, smp->return_path,
 		       hop_cnt);
-	पूर्ण
+	}
 
-	qib_send_trap(ibp, &data, माप(data));
-पूर्ण
+	qib_send_trap(ibp, &data, sizeof(data));
+}
 
 /*
  * Send a Port Capability Mask Changed trap (ch. 14.3.11).
  */
-व्योम qib_cap_mask_chg(काष्ठा rvt_dev_info *rdi, u32 port_num)
-अणु
-	काष्ठा qib_ibdev *ibdev = container_of(rdi, काष्ठा qib_ibdev, rdi);
-	काष्ठा qib_devdata *dd = dd_from_dev(ibdev);
-	काष्ठा qib_ibport *ibp = &dd->pport[port_num - 1].ibport_data;
-	काष्ठा ib_mad_notice_attr data;
+void qib_cap_mask_chg(struct rvt_dev_info *rdi, u32 port_num)
+{
+	struct qib_ibdev *ibdev = container_of(rdi, struct qib_ibdev, rdi);
+	struct qib_devdata *dd = dd_from_dev(ibdev);
+	struct qib_ibport *ibp = &dd->pport[port_num - 1].ibport_data;
+	struct ib_mad_notice_attr data;
 
 	data.generic_type = IB_NOTICE_TYPE_INFO;
 	data.prod_type_msb = 0;
@@ -217,19 +216,19 @@
 	data.trap_num = IB_NOTICE_TRAP_CAP_MASK_CHG;
 	data.issuer_lid = cpu_to_be16(ppd_from_ibp(ibp)->lid);
 	data.toggle_count = 0;
-	स_रखो(&data.details, 0, माप(data.details));
+	memset(&data.details, 0, sizeof(data.details));
 	data.details.ntc_144.lid = data.issuer_lid;
 	data.details.ntc_144.new_cap_mask =
 					cpu_to_be32(ibp->rvp.port_cap_flags);
-	qib_send_trap(ibp, &data, माप(data));
-पूर्ण
+	qib_send_trap(ibp, &data, sizeof(data));
+}
 
 /*
  * Send a System Image GUID Changed trap (ch. 14.3.12).
  */
-व्योम qib_sys_guid_chg(काष्ठा qib_ibport *ibp)
-अणु
-	काष्ठा ib_mad_notice_attr data;
+void qib_sys_guid_chg(struct qib_ibport *ibp)
+{
+	struct ib_mad_notice_attr data;
 
 	data.generic_type = IB_NOTICE_TYPE_INFO;
 	data.prod_type_msb = 0;
@@ -237,19 +236,19 @@
 	data.trap_num = IB_NOTICE_TRAP_SYS_GUID_CHG;
 	data.issuer_lid = cpu_to_be16(ppd_from_ibp(ibp)->lid);
 	data.toggle_count = 0;
-	स_रखो(&data.details, 0, माप(data.details));
+	memset(&data.details, 0, sizeof(data.details));
 	data.details.ntc_145.lid = data.issuer_lid;
 	data.details.ntc_145.new_sys_guid = ib_qib_sys_image_guid;
 
-	qib_send_trap(ibp, &data, माप(data));
-पूर्ण
+	qib_send_trap(ibp, &data, sizeof(data));
+}
 
 /*
  * Send a Node Description Changed trap (ch. 14.3.13).
  */
-व्योम qib_node_desc_chg(काष्ठा qib_ibport *ibp)
-अणु
-	काष्ठा ib_mad_notice_attr data;
+void qib_node_desc_chg(struct qib_ibport *ibp)
+{
+	struct ib_mad_notice_attr data;
 
 	data.generic_type = IB_NOTICE_TYPE_INFO;
 	data.prod_type_msb = 0;
@@ -257,45 +256,45 @@
 	data.trap_num = IB_NOTICE_TRAP_CAP_MASK_CHG;
 	data.issuer_lid = cpu_to_be16(ppd_from_ibp(ibp)->lid);
 	data.toggle_count = 0;
-	स_रखो(&data.details, 0, माप(data.details));
+	memset(&data.details, 0, sizeof(data.details));
 	data.details.ntc_144.lid = data.issuer_lid;
 	data.details.ntc_144.local_changes = 1;
 	data.details.ntc_144.change_flags = IB_NOTICE_TRAP_NODE_DESC_CHG;
 
-	qib_send_trap(ibp, &data, माप(data));
-पूर्ण
+	qib_send_trap(ibp, &data, sizeof(data));
+}
 
-अटल पूर्णांक subn_get_nodedescription(काष्ठा ib_smp *smp,
-				    काष्ठा ib_device *ibdev)
-अणु
-	अगर (smp->attr_mod)
+static int subn_get_nodedescription(struct ib_smp *smp,
+				    struct ib_device *ibdev)
+{
+	if (smp->attr_mod)
 		smp->status |= IB_SMP_INVALID_FIELD;
 
-	स_नकल(smp->data, ibdev->node_desc, माप(smp->data));
+	memcpy(smp->data, ibdev->node_desc, sizeof(smp->data));
 
-	वापस reply(smp);
-पूर्ण
+	return reply(smp);
+}
 
-अटल पूर्णांक subn_get_nodeinfo(काष्ठा ib_smp *smp, काष्ठा ib_device *ibdev,
+static int subn_get_nodeinfo(struct ib_smp *smp, struct ib_device *ibdev,
 			     u8 port)
-अणु
-	काष्ठा ib_node_info *nip = (काष्ठा ib_node_info *)&smp->data;
-	काष्ठा qib_devdata *dd = dd_from_ibdev(ibdev);
+{
+	struct ib_node_info *nip = (struct ib_node_info *)&smp->data;
+	struct qib_devdata *dd = dd_from_ibdev(ibdev);
 	u32 majrev, minrev;
-	अचिन्हित pidx = port - 1; /* IB number port from 1, hdw from 0 */
+	unsigned pidx = port - 1; /* IB number port from 1, hdw from 0 */
 
 	/* GUID 0 is illegal */
-	अगर (smp->attr_mod || pidx >= dd->num_pports ||
+	if (smp->attr_mod || pidx >= dd->num_pports ||
 	    dd->pport[pidx].guid == 0)
 		smp->status |= IB_SMP_INVALID_FIELD;
-	अन्यथा
+	else
 		nip->port_guid = dd->pport[pidx].guid;
 
 	nip->base_version = 1;
 	nip->class_version = 1;
 	nip->node_type = 1;     /* channel adapter */
 	nip->num_ports = ibdev->phys_port_cnt;
-	/* This is alपढ़ोy in network order */
+	/* This is already in network order */
 	nip->sys_guid = ib_qib_sys_image_guid;
 	nip->node_guid = dd->pport->guid; /* Use first-port GUID as node */
 	nip->partition_cap = cpu_to_be16(qib_get_npkeys(dd));
@@ -304,60 +303,60 @@
 	minrev = dd->minrev;
 	nip->revision = cpu_to_be32((majrev << 16) | minrev);
 	nip->local_port_num = port;
-	nip->venकरोr_id[0] = QIB_SRC_OUI_1;
-	nip->venकरोr_id[1] = QIB_SRC_OUI_2;
-	nip->venकरोr_id[2] = QIB_SRC_OUI_3;
+	nip->vendor_id[0] = QIB_SRC_OUI_1;
+	nip->vendor_id[1] = QIB_SRC_OUI_2;
+	nip->vendor_id[2] = QIB_SRC_OUI_3;
 
-	वापस reply(smp);
-पूर्ण
+	return reply(smp);
+}
 
-अटल पूर्णांक subn_get_guidinfo(काष्ठा ib_smp *smp, काष्ठा ib_device *ibdev,
+static int subn_get_guidinfo(struct ib_smp *smp, struct ib_device *ibdev,
 			     u8 port)
-अणु
-	काष्ठा qib_devdata *dd = dd_from_ibdev(ibdev);
+{
+	struct qib_devdata *dd = dd_from_ibdev(ibdev);
 	u32 startgx = 8 * be32_to_cpu(smp->attr_mod);
 	__be64 *p = (__be64 *) smp->data;
-	अचिन्हित pidx = port - 1; /* IB number port from 1, hdw from 0 */
+	unsigned pidx = port - 1; /* IB number port from 1, hdw from 0 */
 
 	/* 32 blocks of 8 64-bit GUIDs per block */
 
-	स_रखो(smp->data, 0, माप(smp->data));
+	memset(smp->data, 0, sizeof(smp->data));
 
-	अगर (startgx == 0 && pidx < dd->num_pports) अणु
-		काष्ठा qib_pportdata *ppd = dd->pport + pidx;
-		काष्ठा qib_ibport *ibp = &ppd->ibport_data;
+	if (startgx == 0 && pidx < dd->num_pports) {
+		struct qib_pportdata *ppd = dd->pport + pidx;
+		struct qib_ibport *ibp = &ppd->ibport_data;
 		__be64 g = ppd->guid;
-		अचिन्हित i;
+		unsigned i;
 
 		/* GUID 0 is illegal */
-		अगर (g == 0)
+		if (g == 0)
 			smp->status |= IB_SMP_INVALID_FIELD;
-		अन्यथा अणु
-			/* The first is a copy of the पढ़ो-only HW GUID. */
+		else {
+			/* The first is a copy of the read-only HW GUID. */
 			p[0] = g;
-			क्रम (i = 1; i < QIB_GUIDS_PER_PORT; i++)
+			for (i = 1; i < QIB_GUIDS_PER_PORT; i++)
 				p[i] = ibp->guids[i - 1];
-		पूर्ण
-	पूर्ण अन्यथा
+		}
+	} else
 		smp->status |= IB_SMP_INVALID_FIELD;
 
-	वापस reply(smp);
-पूर्ण
+	return reply(smp);
+}
 
-अटल व्योम set_link_width_enabled(काष्ठा qib_pportdata *ppd, u32 w)
-अणु
-	(व्योम) ppd->dd->f_set_ib_cfg(ppd, QIB_IB_CFG_LWID_ENB, w);
-पूर्ण
+static void set_link_width_enabled(struct qib_pportdata *ppd, u32 w)
+{
+	(void) ppd->dd->f_set_ib_cfg(ppd, QIB_IB_CFG_LWID_ENB, w);
+}
 
-अटल व्योम set_link_speed_enabled(काष्ठा qib_pportdata *ppd, u32 s)
-अणु
-	(व्योम) ppd->dd->f_set_ib_cfg(ppd, QIB_IB_CFG_SPD_ENB, s);
-पूर्ण
+static void set_link_speed_enabled(struct qib_pportdata *ppd, u32 s)
+{
+	(void) ppd->dd->f_set_ib_cfg(ppd, QIB_IB_CFG_SPD_ENB, s);
+}
 
-अटल पूर्णांक get_overrunthreshold(काष्ठा qib_pportdata *ppd)
-अणु
-	वापस ppd->dd->f_get_ib_cfg(ppd, QIB_IB_CFG_OVERRUN_THRESH);
-पूर्ण
+static int get_overrunthreshold(struct qib_pportdata *ppd)
+{
+	return ppd->dd->f_get_ib_cfg(ppd, QIB_IB_CFG_OVERRUN_THRESH);
+}
 
 /**
  * set_overrunthreshold - set the overrun threshold
@@ -366,17 +365,17 @@
  *
  * Note that this will only take effect when the link state changes.
  */
-अटल पूर्णांक set_overrunthreshold(काष्ठा qib_pportdata *ppd, अचिन्हित n)
-अणु
-	(व्योम) ppd->dd->f_set_ib_cfg(ppd, QIB_IB_CFG_OVERRUN_THRESH,
+static int set_overrunthreshold(struct qib_pportdata *ppd, unsigned n)
+{
+	(void) ppd->dd->f_set_ib_cfg(ppd, QIB_IB_CFG_OVERRUN_THRESH,
 					 (u32)n);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक get_phyerrthreshold(काष्ठा qib_pportdata *ppd)
-अणु
-	वापस ppd->dd->f_get_ib_cfg(ppd, QIB_IB_CFG_PHYERR_THRESH);
-पूर्ण
+static int get_phyerrthreshold(struct qib_pportdata *ppd)
+{
+	return ppd->dd->f_get_ib_cfg(ppd, QIB_IB_CFG_PHYERR_THRESH);
+}
 
 /**
  * set_phyerrthreshold - set the physical error threshold
@@ -385,102 +384,102 @@
  *
  * Note that this will only take effect when the link state changes.
  */
-अटल पूर्णांक set_phyerrthreshold(काष्ठा qib_pportdata *ppd, अचिन्हित n)
-अणु
-	(व्योम) ppd->dd->f_set_ib_cfg(ppd, QIB_IB_CFG_PHYERR_THRESH,
+static int set_phyerrthreshold(struct qib_pportdata *ppd, unsigned n)
+{
+	(void) ppd->dd->f_set_ib_cfg(ppd, QIB_IB_CFG_PHYERR_THRESH,
 					 (u32)n);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * get_linkकरोwnशेषstate - get the शेष linkकरोwn state
+ * get_linkdowndefaultstate - get the default linkdown state
  * @ppd: the physical port data
  *
- * Returns zero अगर the शेष is POLL, 1 अगर the शेष is SLEEP.
+ * Returns zero if the default is POLL, 1 if the default is SLEEP.
  */
-अटल पूर्णांक get_linkकरोwnशेषstate(काष्ठा qib_pportdata *ppd)
-अणु
-	वापस ppd->dd->f_get_ib_cfg(ppd, QIB_IB_CFG_LINKDEFAULT) ==
+static int get_linkdowndefaultstate(struct qib_pportdata *ppd)
+{
+	return ppd->dd->f_get_ib_cfg(ppd, QIB_IB_CFG_LINKDEFAULT) ==
 		IB_LINKINITCMD_SLEEP;
-पूर्ण
+}
 
-अटल पूर्णांक check_mkey(काष्ठा qib_ibport *ibp, काष्ठा ib_smp *smp, पूर्णांक mad_flags)
-अणु
-	पूर्णांक valid_mkey = 0;
-	पूर्णांक ret = 0;
+static int check_mkey(struct qib_ibport *ibp, struct ib_smp *smp, int mad_flags)
+{
+	int valid_mkey = 0;
+	int ret = 0;
 
 	/* Is the mkey in the process of expiring? */
-	अगर (ibp->rvp.mkey_lease_समयout &&
-	    समय_after_eq(jअगरfies, ibp->rvp.mkey_lease_समयout)) अणु
-		/* Clear समयout and mkey protection field. */
-		ibp->rvp.mkey_lease_समयout = 0;
+	if (ibp->rvp.mkey_lease_timeout &&
+	    time_after_eq(jiffies, ibp->rvp.mkey_lease_timeout)) {
+		/* Clear timeout and mkey protection field. */
+		ibp->rvp.mkey_lease_timeout = 0;
 		ibp->rvp.mkeyprot = 0;
-	पूर्ण
+	}
 
-	अगर ((mad_flags & IB_MAD_IGNORE_MKEY) ||  ibp->rvp.mkey == 0 ||
+	if ((mad_flags & IB_MAD_IGNORE_MKEY) ||  ibp->rvp.mkey == 0 ||
 	    ibp->rvp.mkey == smp->mkey)
 		valid_mkey = 1;
 
-	/* Unset lease समयout on any valid Get/Set/TrapRepress */
-	अगर (valid_mkey && ibp->rvp.mkey_lease_समयout &&
+	/* Unset lease timeout on any valid Get/Set/TrapRepress */
+	if (valid_mkey && ibp->rvp.mkey_lease_timeout &&
 	    (smp->method == IB_MGMT_METHOD_GET ||
 	     smp->method == IB_MGMT_METHOD_SET ||
 	     smp->method == IB_MGMT_METHOD_TRAP_REPRESS))
-		ibp->rvp.mkey_lease_समयout = 0;
+		ibp->rvp.mkey_lease_timeout = 0;
 
-	अगर (!valid_mkey) अणु
-		चयन (smp->method) अणु
-		हाल IB_MGMT_METHOD_GET:
+	if (!valid_mkey) {
+		switch (smp->method) {
+		case IB_MGMT_METHOD_GET:
 			/* Bad mkey not a violation below level 2 */
-			अगर (ibp->rvp.mkeyprot < 2)
-				अवरोध;
+			if (ibp->rvp.mkeyprot < 2)
+				break;
 			fallthrough;
-		हाल IB_MGMT_METHOD_SET:
-		हाल IB_MGMT_METHOD_TRAP_REPRESS:
-			अगर (ibp->rvp.mkey_violations != 0xFFFF)
+		case IB_MGMT_METHOD_SET:
+		case IB_MGMT_METHOD_TRAP_REPRESS:
+			if (ibp->rvp.mkey_violations != 0xFFFF)
 				++ibp->rvp.mkey_violations;
-			अगर (!ibp->rvp.mkey_lease_समयout &&
+			if (!ibp->rvp.mkey_lease_timeout &&
 			    ibp->rvp.mkey_lease_period)
-				ibp->rvp.mkey_lease_समयout = jअगरfies +
+				ibp->rvp.mkey_lease_timeout = jiffies +
 					ibp->rvp.mkey_lease_period * HZ;
 			/* Generate a trap notice. */
 			qib_bad_mkey(ibp, smp);
 			ret = 1;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक subn_get_portinfo(काष्ठा ib_smp *smp, काष्ठा ib_device *ibdev,
+static int subn_get_portinfo(struct ib_smp *smp, struct ib_device *ibdev,
 			     u8 port)
-अणु
-	काष्ठा qib_devdata *dd;
-	काष्ठा qib_pportdata *ppd;
-	काष्ठा qib_ibport *ibp;
-	काष्ठा ib_port_info *pip = (काष्ठा ib_port_info *)smp->data;
+{
+	struct qib_devdata *dd;
+	struct qib_pportdata *ppd;
+	struct qib_ibport *ibp;
+	struct ib_port_info *pip = (struct ib_port_info *)smp->data;
 	u8 mtu;
-	पूर्णांक ret;
+	int ret;
 	u32 state;
 	u32 port_num = be32_to_cpu(smp->attr_mod);
 
-	अगर (port_num == 0)
+	if (port_num == 0)
 		port_num = port;
-	अन्यथा अणु
-		अगर (port_num > ibdev->phys_port_cnt) अणु
+	else {
+		if (port_num > ibdev->phys_port_cnt) {
 			smp->status |= IB_SMP_INVALID_FIELD;
 			ret = reply(smp);
-			जाओ bail;
-		पूर्ण
-		अगर (port_num != port) अणु
+			goto bail;
+		}
+		if (port_num != port) {
 			ibp = to_iport(ibdev, port_num);
 			ret = check_mkey(ibp, smp, 0);
-			अगर (ret) अणु
+			if (ret) {
 				ret = IB_MAD_RESULT_FAILURE;
-				जाओ bail;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				goto bail;
+			}
+		}
+	}
 
 	dd = dd_from_ibdev(ibdev);
 	/* IB numbers ports from 1, hdw from 0 */
@@ -488,10 +487,10 @@
 	ibp = &ppd->ibport_data;
 
 	/* Clear all fields.  Only set the non-zero fields. */
-	स_रखो(smp->data, 0, माप(smp->data));
+	memset(smp->data, 0, sizeof(smp->data));
 
-	/* Only वापस the mkey अगर the protection field allows it. */
-	अगर (!(smp->method == IB_MGMT_METHOD_GET &&
+	/* Only return the mkey if the protection field allows it. */
+	if (!(smp->method == IB_MGMT_METHOD_GET &&
 	      ibp->rvp.mkey != smp->mkey &&
 	      ibp->rvp.mkeyprot == 1))
 		pip->mkey = ibp->rvp.mkey;
@@ -508,30 +507,30 @@
 	state = dd->f_iblink_state(ppd->lastibcstat);
 	pip->linkspeed_portstate = ppd->link_speed_supported << 4 | state;
 
-	pip->portphysstate_linkकरोwn =
+	pip->portphysstate_linkdown =
 		(dd->f_ibphys_portstate(ppd->lastibcstat) << 4) |
-		(get_linkकरोwnशेषstate(ppd) ? 1 : 2);
+		(get_linkdowndefaultstate(ppd) ? 1 : 2);
 	pip->mkeyprot_resv_lmc = (ibp->rvp.mkeyprot << 6) | ppd->lmc;
 	pip->linkspeedactive_enabled = (ppd->link_speed_active << 4) |
 		ppd->link_speed_enabled;
-	चयन (ppd->ibmtu) अणु
-	शेष: /* something is wrong; fall through */
-	हाल 4096:
+	switch (ppd->ibmtu) {
+	default: /* something is wrong; fall through */
+	case 4096:
 		mtu = IB_MTU_4096;
-		अवरोध;
-	हाल 2048:
+		break;
+	case 2048:
 		mtu = IB_MTU_2048;
-		अवरोध;
-	हाल 1024:
+		break;
+	case 1024:
 		mtu = IB_MTU_1024;
-		अवरोध;
-	हाल 512:
+		break;
+	case 512:
 		mtu = IB_MTU_512;
-		अवरोध;
-	हाल 256:
+		break;
+	case 256:
 		mtu = IB_MTU_256;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 	pip->neighbormtu_mastersmsl = (mtu << 4) | ibp->rvp.sm_sl;
 	pip->vlcap_inittype = ppd->vls_supported << 4;  /* InitType = 0 */
 	pip->vl_high_limit = ibp->rvp.vl_high_limit;
@@ -541,126 +540,126 @@
 		dd->f_get_ib_cfg(ppd, QIB_IB_CFG_VL_LOW_CAP);
 	/* InitTypeReply = 0 */
 	pip->inittypereply_mtucap = qib_ibmtu ? qib_ibmtu : IB_MTU_4096;
-	/* HCAs ignore VLStallCount and HOQLअगरe */
-	/* pip->vlstallcnt_hoqlअगरe; */
+	/* HCAs ignore VLStallCount and HOQLife */
+	/* pip->vlstallcnt_hoqlife; */
 	pip->operationalvl_pei_peo_fpi_fpo =
 		dd->f_get_ib_cfg(ppd, QIB_IB_CFG_OP_VLS) << 4;
 	pip->mkey_violations = cpu_to_be16(ibp->rvp.mkey_violations);
 	/* P_KeyViolations are counted by hardware. */
 	pip->pkey_violations = cpu_to_be16(ibp->rvp.pkey_violations);
 	pip->qkey_violations = cpu_to_be16(ibp->rvp.qkey_violations);
-	/* Only the hardware GUID is supported क्रम now */
+	/* Only the hardware GUID is supported for now */
 	pip->guid_cap = QIB_GUIDS_PER_PORT;
-	pip->clientrereg_resv_subnetto = ibp->rvp.subnet_समयout;
-	/* 32.768 usec. response समय (guessing) */
-	pip->resv_respसमयvalue = 3;
+	pip->clientrereg_resv_subnetto = ibp->rvp.subnet_timeout;
+	/* 32.768 usec. response time (guessing) */
+	pip->resv_resptimevalue = 3;
 	pip->localphyerrors_overrunerrors =
 		(get_phyerrthreshold(ppd) << 4) |
 		get_overrunthreshold(ppd);
-	/* pip->max_credit_hपूर्णांक; */
-	अगर (ibp->rvp.port_cap_flags & IB_PORT_LINK_LATENCY_SUP) अणु
+	/* pip->max_credit_hint; */
+	if (ibp->rvp.port_cap_flags & IB_PORT_LINK_LATENCY_SUP) {
 		u32 v;
 
 		v = dd->f_get_ib_cfg(ppd, QIB_IB_CFG_LINKLATENCY);
 		pip->link_roundtrip_latency[0] = v >> 16;
 		pip->link_roundtrip_latency[1] = v >> 8;
 		pip->link_roundtrip_latency[2] = v;
-	पूर्ण
+	}
 
 	ret = reply(smp);
 
 bail:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * get_pkeys - वापस the PKEY table
+ * get_pkeys - return the PKEY table
  * @dd: the qlogic_ib device
  * @port: the IB port number
  * @pkeys: the pkey table is placed here
  */
-अटल पूर्णांक get_pkeys(काष्ठा qib_devdata *dd, u8 port, u16 *pkeys)
-अणु
-	काष्ठा qib_pportdata *ppd = dd->pport + port - 1;
+static int get_pkeys(struct qib_devdata *dd, u8 port, u16 *pkeys)
+{
+	struct qib_pportdata *ppd = dd->pport + port - 1;
 	/*
 	 * always a kernel context, no locking needed.
 	 * If we get here with ppd setup, no need to check
 	 * that pd is valid.
 	 */
-	काष्ठा qib_ctxtdata *rcd = dd->rcd[ppd->hw_pidx];
+	struct qib_ctxtdata *rcd = dd->rcd[ppd->hw_pidx];
 
-	स_नकल(pkeys, rcd->pkeys, माप(rcd->pkeys));
+	memcpy(pkeys, rcd->pkeys, sizeof(rcd->pkeys));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक subn_get_pkeytable(काष्ठा ib_smp *smp, काष्ठा ib_device *ibdev,
+static int subn_get_pkeytable(struct ib_smp *smp, struct ib_device *ibdev,
 			      u8 port)
-अणु
+{
 	u32 startpx = 32 * (be32_to_cpu(smp->attr_mod) & 0xffff);
 	u16 *p = (u16 *) smp->data;
 	__be16 *q = (__be16 *) smp->data;
 
 	/* 64 blocks of 32 16-bit P_Key entries */
 
-	स_रखो(smp->data, 0, माप(smp->data));
-	अगर (startpx == 0) अणु
-		काष्ठा qib_devdata *dd = dd_from_ibdev(ibdev);
-		अचिन्हित i, n = qib_get_npkeys(dd);
+	memset(smp->data, 0, sizeof(smp->data));
+	if (startpx == 0) {
+		struct qib_devdata *dd = dd_from_ibdev(ibdev);
+		unsigned i, n = qib_get_npkeys(dd);
 
 		get_pkeys(dd, port, p);
 
-		क्रम (i = 0; i < n; i++)
+		for (i = 0; i < n; i++)
 			q[i] = cpu_to_be16(p[i]);
-	पूर्ण अन्यथा
+	} else
 		smp->status |= IB_SMP_INVALID_FIELD;
 
-	वापस reply(smp);
-पूर्ण
+	return reply(smp);
+}
 
-अटल पूर्णांक subn_set_guidinfo(काष्ठा ib_smp *smp, काष्ठा ib_device *ibdev,
+static int subn_set_guidinfo(struct ib_smp *smp, struct ib_device *ibdev,
 			     u8 port)
-अणु
-	काष्ठा qib_devdata *dd = dd_from_ibdev(ibdev);
+{
+	struct qib_devdata *dd = dd_from_ibdev(ibdev);
 	u32 startgx = 8 * be32_to_cpu(smp->attr_mod);
 	__be64 *p = (__be64 *) smp->data;
-	अचिन्हित pidx = port - 1; /* IB number port from 1, hdw from 0 */
+	unsigned pidx = port - 1; /* IB number port from 1, hdw from 0 */
 
 	/* 32 blocks of 8 64-bit GUIDs per block */
 
-	अगर (startgx == 0 && pidx < dd->num_pports) अणु
-		काष्ठा qib_pportdata *ppd = dd->pport + pidx;
-		काष्ठा qib_ibport *ibp = &ppd->ibport_data;
-		अचिन्हित i;
+	if (startgx == 0 && pidx < dd->num_pports) {
+		struct qib_pportdata *ppd = dd->pport + pidx;
+		struct qib_ibport *ibp = &ppd->ibport_data;
+		unsigned i;
 
-		/* The first entry is पढ़ो-only. */
-		क्रम (i = 1; i < QIB_GUIDS_PER_PORT; i++)
+		/* The first entry is read-only. */
+		for (i = 1; i < QIB_GUIDS_PER_PORT; i++)
 			ibp->guids[i - 1] = p[i];
-	पूर्ण अन्यथा
+	} else
 		smp->status |= IB_SMP_INVALID_FIELD;
 
-	/* The only GUID we support is the first पढ़ो-only entry. */
-	वापस subn_get_guidinfo(smp, ibdev, port);
-पूर्ण
+	/* The only GUID we support is the first read-only entry. */
+	return subn_get_guidinfo(smp, ibdev, port);
+}
 
 /**
- * subn_set_portinfo - set port inक्रमmation
+ * subn_set_portinfo - set port information
  * @smp: the incoming SM packet
  * @ibdev: the infiniband device
  * @port: the port on the device
  *
  * Set Portinfo (see ch. 14.2.5.6).
  */
-अटल पूर्णांक subn_set_portinfo(काष्ठा ib_smp *smp, काष्ठा ib_device *ibdev,
+static int subn_set_portinfo(struct ib_smp *smp, struct ib_device *ibdev,
 			     u8 port)
-अणु
-	काष्ठा ib_port_info *pip = (काष्ठा ib_port_info *)smp->data;
-	काष्ठा ib_event event;
-	काष्ठा qib_devdata *dd;
-	काष्ठा qib_pportdata *ppd;
-	काष्ठा qib_ibport *ibp;
+{
+	struct ib_port_info *pip = (struct ib_port_info *)smp->data;
+	struct ib_event event;
+	struct qib_devdata *dd;
+	struct qib_pportdata *ppd;
+	struct qib_ibport *ibp;
 	u8 clientrereg = (pip->clientrereg_resv_subnetto & 0x80);
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 	u16 lid, smlid;
 	u8 lwe;
 	u8 lse;
@@ -668,18 +667,18 @@ bail:
 	u8 vls;
 	u8 msl;
 	u16 lstate;
-	पूर्णांक ret, ore, mtu;
+	int ret, ore, mtu;
 	u32 port_num = be32_to_cpu(smp->attr_mod);
 
-	अगर (port_num == 0)
+	if (port_num == 0)
 		port_num = port;
-	अन्यथा अणु
-		अगर (port_num > ibdev->phys_port_cnt)
-			जाओ err;
+	else {
+		if (port_num > ibdev->phys_port_cnt)
+			goto err;
 		/* Port attributes can only be set on the receiving port */
-		अगर (port_num != port)
-			जाओ get_only;
-	पूर्ण
+		if (port_num != port)
+			goto get_only;
+	}
 
 	dd = dd_from_ibdev(ibdev);
 	/* IB numbers ports from 1, hdw from 0 */
@@ -694,304 +693,304 @@ bail:
 
 	lid = be16_to_cpu(pip->lid);
 	/* Must be a valid unicast LID address. */
-	अगर (lid == 0 || lid >= be16_to_cpu(IB_MULTICAST_LID_BASE))
+	if (lid == 0 || lid >= be16_to_cpu(IB_MULTICAST_LID_BASE))
 		smp->status |= IB_SMP_INVALID_FIELD;
-	अन्यथा अगर (ppd->lid != lid || ppd->lmc != (pip->mkeyprot_resv_lmc & 7)) अणु
-		अगर (ppd->lid != lid)
+	else if (ppd->lid != lid || ppd->lmc != (pip->mkeyprot_resv_lmc & 7)) {
+		if (ppd->lid != lid)
 			qib_set_uevent_bits(ppd, _QIB_EVENT_LID_CHANGE_BIT);
-		अगर (ppd->lmc != (pip->mkeyprot_resv_lmc & 7))
+		if (ppd->lmc != (pip->mkeyprot_resv_lmc & 7))
 			qib_set_uevent_bits(ppd, _QIB_EVENT_LMC_CHANGE_BIT);
 		qib_set_lid(ppd, lid, pip->mkeyprot_resv_lmc & 7);
 		event.event = IB_EVENT_LID_CHANGE;
 		ib_dispatch_event(&event);
-	पूर्ण
+	}
 
 	smlid = be16_to_cpu(pip->sm_lid);
 	msl = pip->neighbormtu_mastersmsl & 0xF;
 	/* Must be a valid unicast LID address. */
-	अगर (smlid == 0 || smlid >= be16_to_cpu(IB_MULTICAST_LID_BASE))
+	if (smlid == 0 || smlid >= be16_to_cpu(IB_MULTICAST_LID_BASE))
 		smp->status |= IB_SMP_INVALID_FIELD;
-	अन्यथा अगर (smlid != ibp->rvp.sm_lid || msl != ibp->rvp.sm_sl) अणु
+	else if (smlid != ibp->rvp.sm_lid || msl != ibp->rvp.sm_sl) {
 		spin_lock_irqsave(&ibp->rvp.lock, flags);
-		अगर (ibp->rvp.sm_ah) अणु
-			अगर (smlid != ibp->rvp.sm_lid)
+		if (ibp->rvp.sm_ah) {
+			if (smlid != ibp->rvp.sm_lid)
 				rdma_ah_set_dlid(&ibp->rvp.sm_ah->attr,
 						 smlid);
-			अगर (msl != ibp->rvp.sm_sl)
+			if (msl != ibp->rvp.sm_sl)
 				rdma_ah_set_sl(&ibp->rvp.sm_ah->attr, msl);
-		पूर्ण
+		}
 		spin_unlock_irqrestore(&ibp->rvp.lock, flags);
-		अगर (smlid != ibp->rvp.sm_lid)
+		if (smlid != ibp->rvp.sm_lid)
 			ibp->rvp.sm_lid = smlid;
-		अगर (msl != ibp->rvp.sm_sl)
+		if (msl != ibp->rvp.sm_sl)
 			ibp->rvp.sm_sl = msl;
 		event.event = IB_EVENT_SM_CHANGE;
 		ib_dispatch_event(&event);
-	पूर्ण
+	}
 
 	/* Allow 1x or 4x to be set (see 14.2.6.6). */
 	lwe = pip->link_width_enabled;
-	अगर (lwe) अणु
-		अगर (lwe == 0xFF)
+	if (lwe) {
+		if (lwe == 0xFF)
 			set_link_width_enabled(ppd, ppd->link_width_supported);
-		अन्यथा अगर (lwe >= 16 || (lwe & ~ppd->link_width_supported))
+		else if (lwe >= 16 || (lwe & ~ppd->link_width_supported))
 			smp->status |= IB_SMP_INVALID_FIELD;
-		अन्यथा अगर (lwe != ppd->link_width_enabled)
+		else if (lwe != ppd->link_width_enabled)
 			set_link_width_enabled(ppd, lwe);
-	पूर्ण
+	}
 
 	lse = pip->linkspeedactive_enabled & 0xF;
-	अगर (lse) अणु
+	if (lse) {
 		/*
 		 * The IB 1.2 spec. only allows link speed values
-		 * 1, 3, 5, 7, 15.  1.2.1 extended to allow specअगरic
+		 * 1, 3, 5, 7, 15.  1.2.1 extended to allow specific
 		 * speeds.
 		 */
-		अगर (lse == 15)
+		if (lse == 15)
 			set_link_speed_enabled(ppd,
 					       ppd->link_speed_supported);
-		अन्यथा अगर (lse >= 8 || (lse & ~ppd->link_speed_supported))
+		else if (lse >= 8 || (lse & ~ppd->link_speed_supported))
 			smp->status |= IB_SMP_INVALID_FIELD;
-		अन्यथा अगर (lse != ppd->link_speed_enabled)
+		else if (lse != ppd->link_speed_enabled)
 			set_link_speed_enabled(ppd, lse);
-	पूर्ण
+	}
 
-	/* Set link करोwn शेष state. */
-	चयन (pip->portphysstate_linkकरोwn & 0xF) अणु
-	हाल 0: /* NOP */
-		अवरोध;
-	हाल 1: /* SLEEP */
-		(व्योम) dd->f_set_ib_cfg(ppd, QIB_IB_CFG_LINKDEFAULT,
+	/* Set link down default state. */
+	switch (pip->portphysstate_linkdown & 0xF) {
+	case 0: /* NOP */
+		break;
+	case 1: /* SLEEP */
+		(void) dd->f_set_ib_cfg(ppd, QIB_IB_CFG_LINKDEFAULT,
 					IB_LINKINITCMD_SLEEP);
-		अवरोध;
-	हाल 2: /* POLL */
-		(व्योम) dd->f_set_ib_cfg(ppd, QIB_IB_CFG_LINKDEFAULT,
+		break;
+	case 2: /* POLL */
+		(void) dd->f_set_ib_cfg(ppd, QIB_IB_CFG_LINKDEFAULT,
 					IB_LINKINITCMD_POLL);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		smp->status |= IB_SMP_INVALID_FIELD;
-	पूर्ण
+	}
 
 	ibp->rvp.mkeyprot = pip->mkeyprot_resv_lmc >> 6;
 	ibp->rvp.vl_high_limit = pip->vl_high_limit;
-	(व्योम) dd->f_set_ib_cfg(ppd, QIB_IB_CFG_VL_HIGH_LIMIT,
+	(void) dd->f_set_ib_cfg(ppd, QIB_IB_CFG_VL_HIGH_LIMIT,
 				    ibp->rvp.vl_high_limit);
 
-	mtu = ib_mtu_क्रमागत_to_पूर्णांक((pip->neighbormtu_mastersmsl >> 4) & 0xF);
-	अगर (mtu == -1)
+	mtu = ib_mtu_enum_to_int((pip->neighbormtu_mastersmsl >> 4) & 0xF);
+	if (mtu == -1)
 		smp->status |= IB_SMP_INVALID_FIELD;
-	अन्यथा
+	else
 		qib_set_mtu(ppd, mtu);
 
 	/* Set operational VLs */
 	vls = (pip->operationalvl_pei_peo_fpi_fpo >> 4) & 0xF;
-	अगर (vls) अणु
-		अगर (vls > ppd->vls_supported)
+	if (vls) {
+		if (vls > ppd->vls_supported)
 			smp->status |= IB_SMP_INVALID_FIELD;
-		अन्यथा
-			(व्योम) dd->f_set_ib_cfg(ppd, QIB_IB_CFG_OP_VLS, vls);
-	पूर्ण
+		else
+			(void) dd->f_set_ib_cfg(ppd, QIB_IB_CFG_OP_VLS, vls);
+	}
 
-	अगर (pip->mkey_violations == 0)
+	if (pip->mkey_violations == 0)
 		ibp->rvp.mkey_violations = 0;
 
-	अगर (pip->pkey_violations == 0)
+	if (pip->pkey_violations == 0)
 		ibp->rvp.pkey_violations = 0;
 
-	अगर (pip->qkey_violations == 0)
+	if (pip->qkey_violations == 0)
 		ibp->rvp.qkey_violations = 0;
 
 	ore = pip->localphyerrors_overrunerrors;
-	अगर (set_phyerrthreshold(ppd, (ore >> 4) & 0xF))
+	if (set_phyerrthreshold(ppd, (ore >> 4) & 0xF))
 		smp->status |= IB_SMP_INVALID_FIELD;
 
-	अगर (set_overrunthreshold(ppd, (ore & 0xF)))
+	if (set_overrunthreshold(ppd, (ore & 0xF)))
 		smp->status |= IB_SMP_INVALID_FIELD;
 
-	ibp->rvp.subnet_समयout = pip->clientrereg_resv_subnetto & 0x1F;
+	ibp->rvp.subnet_timeout = pip->clientrereg_resv_subnetto & 0x1F;
 
 	/*
 	 * Do the port state change now that the other link parameters
 	 * have been set.
-	 * Changing the port physical state only makes sense अगर the link
-	 * is करोwn or is being set to करोwn.
+	 * Changing the port physical state only makes sense if the link
+	 * is down or is being set to down.
 	 */
 	state = pip->linkspeed_portstate & 0xF;
-	lstate = (pip->portphysstate_linkकरोwn >> 4) & 0xF;
-	अगर (lstate && !(state == IB_PORT_DOWN || state == IB_PORT_NOP))
+	lstate = (pip->portphysstate_linkdown >> 4) & 0xF;
+	if (lstate && !(state == IB_PORT_DOWN || state == IB_PORT_NOP))
 		smp->status |= IB_SMP_INVALID_FIELD;
 
 	/*
 	 * Only state changes of DOWN, ARM, and ACTIVE are valid
 	 * and must be in the correct state to take effect (see 7.2.6).
 	 */
-	चयन (state) अणु
-	हाल IB_PORT_NOP:
-		अगर (lstate == 0)
-			अवरोध;
+	switch (state) {
+	case IB_PORT_NOP:
+		if (lstate == 0)
+			break;
 		fallthrough;
-	हाल IB_PORT_DOWN:
-		अगर (lstate == 0)
+	case IB_PORT_DOWN:
+		if (lstate == 0)
 			lstate = QIB_IB_LINKDOWN_ONLY;
-		अन्यथा अगर (lstate == 1)
+		else if (lstate == 1)
 			lstate = QIB_IB_LINKDOWN_SLEEP;
-		अन्यथा अगर (lstate == 2)
+		else if (lstate == 2)
 			lstate = QIB_IB_LINKDOWN;
-		अन्यथा अगर (lstate == 3)
+		else if (lstate == 3)
 			lstate = QIB_IB_LINKDOWN_DISABLE;
-		अन्यथा अणु
+		else {
 			smp->status |= IB_SMP_INVALID_FIELD;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		spin_lock_irqsave(&ppd->lflags_lock, flags);
 		ppd->lflags &= ~QIBL_LINKV;
 		spin_unlock_irqrestore(&ppd->lflags_lock, flags);
 		qib_set_linkstate(ppd, lstate);
 		/*
-		 * Don't send a reply अगर the response would be sent
+		 * Don't send a reply if the response would be sent
 		 * through the disabled port.
 		 */
-		अगर (lstate == QIB_IB_LINKDOWN_DISABLE && smp->hop_cnt) अणु
+		if (lstate == QIB_IB_LINKDOWN_DISABLE && smp->hop_cnt) {
 			ret = IB_MAD_RESULT_SUCCESS | IB_MAD_RESULT_CONSUMED;
-			जाओ करोne;
-		पूर्ण
-		qib_रुको_linkstate(ppd, QIBL_LINKV, 10);
-		अवरोध;
-	हाल IB_PORT_ARMED:
+			goto done;
+		}
+		qib_wait_linkstate(ppd, QIBL_LINKV, 10);
+		break;
+	case IB_PORT_ARMED:
 		qib_set_linkstate(ppd, QIB_IB_LINKARM);
-		अवरोध;
-	हाल IB_PORT_ACTIVE:
+		break;
+	case IB_PORT_ACTIVE:
 		qib_set_linkstate(ppd, QIB_IB_LINKACTIVE);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		smp->status |= IB_SMP_INVALID_FIELD;
-	पूर्ण
+	}
 
-	अगर (clientrereg) अणु
+	if (clientrereg) {
 		event.event = IB_EVENT_CLIENT_REREGISTER;
 		ib_dispatch_event(&event);
-	पूर्ण
+	}
 
 	/* restore re-reg bit per o14-12.2.1 */
 	pip->clientrereg_resv_subnetto |= clientrereg;
 
-	जाओ get_only;
+	goto get_only;
 
 err:
 	smp->status |= IB_SMP_INVALID_FIELD;
 get_only:
 	ret = subn_get_portinfo(smp, ibdev, port);
-करोne:
-	वापस ret;
-पूर्ण
+done:
+	return ret;
+}
 
 /**
- * rm_pkey - decrecment the reference count क्रम the given PKEY
+ * rm_pkey - decrecment the reference count for the given PKEY
  * @ppd: the qlogic_ib device
  * @key: the PKEY index
  *
- * Return true अगर this was the last reference and the hardware table entry
+ * Return true if this was the last reference and the hardware table entry
  * needs to be changed.
  */
-अटल पूर्णांक rm_pkey(काष्ठा qib_pportdata *ppd, u16 key)
-अणु
-	पूर्णांक i;
-	पूर्णांक ret;
+static int rm_pkey(struct qib_pportdata *ppd, u16 key)
+{
+	int i;
+	int ret;
 
-	क्रम (i = 0; i < ARRAY_SIZE(ppd->pkeys); i++) अणु
-		अगर (ppd->pkeys[i] != key)
-			जारी;
-		अगर (atomic_dec_and_test(&ppd->pkeyrefs[i])) अणु
+	for (i = 0; i < ARRAY_SIZE(ppd->pkeys); i++) {
+		if (ppd->pkeys[i] != key)
+			continue;
+		if (atomic_dec_and_test(&ppd->pkeyrefs[i])) {
 			ppd->pkeys[i] = 0;
 			ret = 1;
-			जाओ bail;
-		पूर्ण
-		अवरोध;
-	पूर्ण
+			goto bail;
+		}
+		break;
+	}
 
 	ret = 0;
 
 bail:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
  * add_pkey - add the given PKEY to the hardware table
  * @ppd: the qlogic_ib device
  * @key: the PKEY
  *
- * Return an error code अगर unable to add the entry, zero अगर no change,
- * or 1 अगर the hardware PKEY रेजिस्टर needs to be updated.
+ * Return an error code if unable to add the entry, zero if no change,
+ * or 1 if the hardware PKEY register needs to be updated.
  */
-अटल पूर्णांक add_pkey(काष्ठा qib_pportdata *ppd, u16 key)
-अणु
-	पूर्णांक i;
+static int add_pkey(struct qib_pportdata *ppd, u16 key)
+{
+	int i;
 	u16 lkey = key & 0x7FFF;
-	पूर्णांक any = 0;
-	पूर्णांक ret;
+	int any = 0;
+	int ret;
 
-	अगर (lkey == 0x7FFF) अणु
+	if (lkey == 0x7FFF) {
 		ret = 0;
-		जाओ bail;
-	पूर्ण
+		goto bail;
+	}
 
-	/* Look क्रम an empty slot or a matching PKEY. */
-	क्रम (i = 0; i < ARRAY_SIZE(ppd->pkeys); i++) अणु
-		अगर (!ppd->pkeys[i]) अणु
+	/* Look for an empty slot or a matching PKEY. */
+	for (i = 0; i < ARRAY_SIZE(ppd->pkeys); i++) {
+		if (!ppd->pkeys[i]) {
 			any++;
-			जारी;
-		पूर्ण
+			continue;
+		}
 		/* If it matches exactly, try to increment the ref count */
-		अगर (ppd->pkeys[i] == key) अणु
-			अगर (atomic_inc_वापस(&ppd->pkeyrefs[i]) > 1) अणु
+		if (ppd->pkeys[i] == key) {
+			if (atomic_inc_return(&ppd->pkeyrefs[i]) > 1) {
 				ret = 0;
-				जाओ bail;
-			पूर्ण
-			/* Lost the race. Look क्रम an empty slot below. */
+				goto bail;
+			}
+			/* Lost the race. Look for an empty slot below. */
 			atomic_dec(&ppd->pkeyrefs[i]);
 			any++;
-		पूर्ण
+		}
 		/*
 		 * It makes no sense to have both the limited and unlimited
-		 * PKEY set at the same समय since the unlimited one will
+		 * PKEY set at the same time since the unlimited one will
 		 * disable the limited one.
 		 */
-		अगर ((ppd->pkeys[i] & 0x7FFF) == lkey) अणु
+		if ((ppd->pkeys[i] & 0x7FFF) == lkey) {
 			ret = -EEXIST;
-			जाओ bail;
-		पूर्ण
-	पूर्ण
-	अगर (!any) अणु
+			goto bail;
+		}
+	}
+	if (!any) {
 		ret = -EBUSY;
-		जाओ bail;
-	पूर्ण
-	क्रम (i = 0; i < ARRAY_SIZE(ppd->pkeys); i++) अणु
-		अगर (!ppd->pkeys[i] &&
-		    atomic_inc_वापस(&ppd->pkeyrefs[i]) == 1) अणु
-			/* क्रम qibstats, etc. */
+		goto bail;
+	}
+	for (i = 0; i < ARRAY_SIZE(ppd->pkeys); i++) {
+		if (!ppd->pkeys[i] &&
+		    atomic_inc_return(&ppd->pkeyrefs[i]) == 1) {
+			/* for qibstats, etc. */
 			ppd->pkeys[i] = key;
 			ret = 1;
-			जाओ bail;
-		पूर्ण
-	पूर्ण
+			goto bail;
+		}
+	}
 	ret = -EBUSY;
 
 bail:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * set_pkeys - set the PKEY table क्रम ctxt 0
+ * set_pkeys - set the PKEY table for ctxt 0
  * @dd: the qlogic_ib device
  * @port: the IB port number
  * @pkeys: the PKEY table
  */
-अटल पूर्णांक set_pkeys(काष्ठा qib_devdata *dd, u8 port, u16 *pkeys)
-अणु
-	काष्ठा qib_pportdata *ppd;
-	काष्ठा qib_ctxtdata *rcd;
-	पूर्णांक i;
-	पूर्णांक changed = 0;
+static int set_pkeys(struct qib_devdata *dd, u8 port, u16 *pkeys)
+{
+	struct qib_pportdata *ppd;
+	struct qib_ctxtdata *rcd;
+	int i;
+	int changed = 0;
 
 	/*
 	 * IB port one/two always maps to context zero/one,
@@ -1002,163 +1001,163 @@ bail:
 	ppd = dd->pport + (port - 1);
 	rcd = dd->rcd[ppd->hw_pidx];
 
-	क्रम (i = 0; i < ARRAY_SIZE(rcd->pkeys); i++) अणु
+	for (i = 0; i < ARRAY_SIZE(rcd->pkeys); i++) {
 		u16 key = pkeys[i];
 		u16 okey = rcd->pkeys[i];
 
-		अगर (key == okey)
-			जारी;
+		if (key == okey)
+			continue;
 		/*
 		 * The value of this PKEY table entry is changing.
 		 * Remove the old entry in the hardware's array of PKEYs.
 		 */
-		अगर (okey & 0x7FFF)
+		if (okey & 0x7FFF)
 			changed |= rm_pkey(ppd, okey);
-		अगर (key & 0x7FFF) अणु
-			पूर्णांक ret = add_pkey(ppd, key);
+		if (key & 0x7FFF) {
+			int ret = add_pkey(ppd, key);
 
-			अगर (ret < 0)
+			if (ret < 0)
 				key = 0;
-			अन्यथा
+			else
 				changed |= ret;
-		पूर्ण
+		}
 		rcd->pkeys[i] = key;
-	पूर्ण
-	अगर (changed) अणु
-		काष्ठा ib_event event;
+	}
+	if (changed) {
+		struct ib_event event;
 
-		(व्योम) dd->f_set_ib_cfg(ppd, QIB_IB_CFG_PKEYS, 0);
+		(void) dd->f_set_ib_cfg(ppd, QIB_IB_CFG_PKEYS, 0);
 
 		event.event = IB_EVENT_PKEY_CHANGE;
 		event.device = &dd->verbs_dev.rdi.ibdev;
 		event.element.port_num = port;
 		ib_dispatch_event(&event);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल पूर्णांक subn_set_pkeytable(काष्ठा ib_smp *smp, काष्ठा ib_device *ibdev,
+static int subn_set_pkeytable(struct ib_smp *smp, struct ib_device *ibdev,
 			      u8 port)
-अणु
+{
 	u32 startpx = 32 * (be32_to_cpu(smp->attr_mod) & 0xffff);
 	__be16 *p = (__be16 *) smp->data;
 	u16 *q = (u16 *) smp->data;
-	काष्ठा qib_devdata *dd = dd_from_ibdev(ibdev);
-	अचिन्हित i, n = qib_get_npkeys(dd);
+	struct qib_devdata *dd = dd_from_ibdev(ibdev);
+	unsigned i, n = qib_get_npkeys(dd);
 
-	क्रम (i = 0; i < n; i++)
+	for (i = 0; i < n; i++)
 		q[i] = be16_to_cpu(p[i]);
 
-	अगर (startpx != 0 || set_pkeys(dd, port, q) != 0)
+	if (startpx != 0 || set_pkeys(dd, port, q) != 0)
 		smp->status |= IB_SMP_INVALID_FIELD;
 
-	वापस subn_get_pkeytable(smp, ibdev, port);
-पूर्ण
+	return subn_get_pkeytable(smp, ibdev, port);
+}
 
-अटल पूर्णांक subn_get_sl_to_vl(काष्ठा ib_smp *smp, काष्ठा ib_device *ibdev,
+static int subn_get_sl_to_vl(struct ib_smp *smp, struct ib_device *ibdev,
 			     u8 port)
-अणु
-	काष्ठा qib_ibport *ibp = to_iport(ibdev, port);
+{
+	struct qib_ibport *ibp = to_iport(ibdev, port);
 	u8 *p = (u8 *) smp->data;
-	अचिन्हित i;
+	unsigned i;
 
-	स_रखो(smp->data, 0, माप(smp->data));
+	memset(smp->data, 0, sizeof(smp->data));
 
-	अगर (!(ibp->rvp.port_cap_flags & IB_PORT_SL_MAP_SUP))
+	if (!(ibp->rvp.port_cap_flags & IB_PORT_SL_MAP_SUP))
 		smp->status |= IB_SMP_UNSUP_METHOD;
-	अन्यथा
-		क्रम (i = 0; i < ARRAY_SIZE(ibp->sl_to_vl); i += 2)
+	else
+		for (i = 0; i < ARRAY_SIZE(ibp->sl_to_vl); i += 2)
 			*p++ = (ibp->sl_to_vl[i] << 4) | ibp->sl_to_vl[i + 1];
 
-	वापस reply(smp);
-पूर्ण
+	return reply(smp);
+}
 
-अटल पूर्णांक subn_set_sl_to_vl(काष्ठा ib_smp *smp, काष्ठा ib_device *ibdev,
+static int subn_set_sl_to_vl(struct ib_smp *smp, struct ib_device *ibdev,
 			     u8 port)
-अणु
-	काष्ठा qib_ibport *ibp = to_iport(ibdev, port);
+{
+	struct qib_ibport *ibp = to_iport(ibdev, port);
 	u8 *p = (u8 *) smp->data;
-	अचिन्हित i;
+	unsigned i;
 
-	अगर (!(ibp->rvp.port_cap_flags & IB_PORT_SL_MAP_SUP)) अणु
+	if (!(ibp->rvp.port_cap_flags & IB_PORT_SL_MAP_SUP)) {
 		smp->status |= IB_SMP_UNSUP_METHOD;
-		वापस reply(smp);
-	पूर्ण
+		return reply(smp);
+	}
 
-	क्रम (i = 0; i < ARRAY_SIZE(ibp->sl_to_vl); i += 2, p++) अणु
+	for (i = 0; i < ARRAY_SIZE(ibp->sl_to_vl); i += 2, p++) {
 		ibp->sl_to_vl[i] = *p >> 4;
 		ibp->sl_to_vl[i + 1] = *p & 0xF;
-	पूर्ण
+	}
 	qib_set_uevent_bits(ppd_from_ibp(to_iport(ibdev, port)),
 			    _QIB_EVENT_SL2VL_CHANGE_BIT);
 
-	वापस subn_get_sl_to_vl(smp, ibdev, port);
-पूर्ण
+	return subn_get_sl_to_vl(smp, ibdev, port);
+}
 
-अटल पूर्णांक subn_get_vl_arb(काष्ठा ib_smp *smp, काष्ठा ib_device *ibdev,
+static int subn_get_vl_arb(struct ib_smp *smp, struct ib_device *ibdev,
 			   u8 port)
-अणु
-	अचिन्हित which = be32_to_cpu(smp->attr_mod) >> 16;
-	काष्ठा qib_pportdata *ppd = ppd_from_ibp(to_iport(ibdev, port));
+{
+	unsigned which = be32_to_cpu(smp->attr_mod) >> 16;
+	struct qib_pportdata *ppd = ppd_from_ibp(to_iport(ibdev, port));
 
-	स_रखो(smp->data, 0, माप(smp->data));
+	memset(smp->data, 0, sizeof(smp->data));
 
-	अगर (ppd->vls_supported == IB_VL_VL0)
+	if (ppd->vls_supported == IB_VL_VL0)
 		smp->status |= IB_SMP_UNSUP_METHOD;
-	अन्यथा अगर (which == IB_VLARB_LOWPRI_0_31)
-		(व्योम) ppd->dd->f_get_ib_table(ppd, QIB_IB_TBL_VL_LOW_ARB,
+	else if (which == IB_VLARB_LOWPRI_0_31)
+		(void) ppd->dd->f_get_ib_table(ppd, QIB_IB_TBL_VL_LOW_ARB,
 						   smp->data);
-	अन्यथा अगर (which == IB_VLARB_HIGHPRI_0_31)
-		(व्योम) ppd->dd->f_get_ib_table(ppd, QIB_IB_TBL_VL_HIGH_ARB,
+	else if (which == IB_VLARB_HIGHPRI_0_31)
+		(void) ppd->dd->f_get_ib_table(ppd, QIB_IB_TBL_VL_HIGH_ARB,
 						   smp->data);
-	अन्यथा
+	else
 		smp->status |= IB_SMP_INVALID_FIELD;
 
-	वापस reply(smp);
-पूर्ण
+	return reply(smp);
+}
 
-अटल पूर्णांक subn_set_vl_arb(काष्ठा ib_smp *smp, काष्ठा ib_device *ibdev,
+static int subn_set_vl_arb(struct ib_smp *smp, struct ib_device *ibdev,
 			   u8 port)
-अणु
-	अचिन्हित which = be32_to_cpu(smp->attr_mod) >> 16;
-	काष्ठा qib_pportdata *ppd = ppd_from_ibp(to_iport(ibdev, port));
+{
+	unsigned which = be32_to_cpu(smp->attr_mod) >> 16;
+	struct qib_pportdata *ppd = ppd_from_ibp(to_iport(ibdev, port));
 
-	अगर (ppd->vls_supported == IB_VL_VL0)
+	if (ppd->vls_supported == IB_VL_VL0)
 		smp->status |= IB_SMP_UNSUP_METHOD;
-	अन्यथा अगर (which == IB_VLARB_LOWPRI_0_31)
-		(व्योम) ppd->dd->f_set_ib_table(ppd, QIB_IB_TBL_VL_LOW_ARB,
+	else if (which == IB_VLARB_LOWPRI_0_31)
+		(void) ppd->dd->f_set_ib_table(ppd, QIB_IB_TBL_VL_LOW_ARB,
 						   smp->data);
-	अन्यथा अगर (which == IB_VLARB_HIGHPRI_0_31)
-		(व्योम) ppd->dd->f_set_ib_table(ppd, QIB_IB_TBL_VL_HIGH_ARB,
+	else if (which == IB_VLARB_HIGHPRI_0_31)
+		(void) ppd->dd->f_set_ib_table(ppd, QIB_IB_TBL_VL_HIGH_ARB,
 						   smp->data);
-	अन्यथा
+	else
 		smp->status |= IB_SMP_INVALID_FIELD;
 
-	वापस subn_get_vl_arb(smp, ibdev, port);
-पूर्ण
+	return subn_get_vl_arb(smp, ibdev, port);
+}
 
-अटल पूर्णांक subn_trap_repress(काष्ठा ib_smp *smp, काष्ठा ib_device *ibdev,
+static int subn_trap_repress(struct ib_smp *smp, struct ib_device *ibdev,
 			     u8 port)
-अणु
+{
 	/*
 	 * For now, we only send the trap once so no need to process this.
 	 * o13-6, o13-7,
 	 * o14-3.a4 The SMA shall not send any message in response to a valid
 	 * SubnTrapRepress() message.
 	 */
-	वापस IB_MAD_RESULT_SUCCESS | IB_MAD_RESULT_CONSUMED;
-पूर्ण
+	return IB_MAD_RESULT_SUCCESS | IB_MAD_RESULT_CONSUMED;
+}
 
-अटल पूर्णांक pma_get_classportinfo(काष्ठा ib_pma_mad *pmp,
-				 काष्ठा ib_device *ibdev)
-अणु
-	काष्ठा ib_class_port_info *p =
-		(काष्ठा ib_class_port_info *)pmp->data;
-	काष्ठा qib_devdata *dd = dd_from_ibdev(ibdev);
+static int pma_get_classportinfo(struct ib_pma_mad *pmp,
+				 struct ib_device *ibdev)
+{
+	struct ib_class_port_info *p =
+		(struct ib_class_port_info *)pmp->data;
+	struct qib_devdata *dd = dd_from_ibdev(ibdev);
 
-	स_रखो(pmp->data, 0, माप(pmp->data));
+	memset(pmp->data, 0, sizeof(pmp->data));
 
-	अगर (pmp->mad_hdr.attr_mod != 0)
+	if (pmp->mad_hdr.attr_mod != 0)
 		pmp->mad_hdr.status |= IB_SMP_INVALID_FIELD;
 
 	/* Note that AllPortSelect is not valid */
@@ -1166,46 +1165,46 @@ bail:
 	p->class_version = 1;
 	p->capability_mask = IB_PMA_CLASS_CAP_EXT_WIDTH;
 	/*
-	 * Set the most signअगरicant bit of CM2 to indicate support क्रम
+	 * Set the most significant bit of CM2 to indicate support for
 	 * congestion statistics
 	 */
 	ib_set_cpi_capmask2(p,
-			    dd->psxmitरुको_supported <<
+			    dd->psxmitwait_supported <<
 			    (31 - IB_CLASS_PORT_INFO_RESP_TIME_FIELD_SIZE));
 	/*
-	 * Expected response समय is 4.096 usec. * 2^18 == 1.073741824 sec.
+	 * Expected response time is 4.096 usec. * 2^18 == 1.073741824 sec.
 	 */
-	ib_set_cpi_resp_समय(p, 18);
+	ib_set_cpi_resp_time(p, 18);
 
-	वापस reply((काष्ठा ib_smp *) pmp);
-पूर्ण
+	return reply((struct ib_smp *) pmp);
+}
 
-अटल पूर्णांक pma_get_portsamplescontrol(काष्ठा ib_pma_mad *pmp,
-				      काष्ठा ib_device *ibdev, u8 port)
-अणु
-	काष्ठा ib_pma_portsamplescontrol *p =
-		(काष्ठा ib_pma_portsamplescontrol *)pmp->data;
-	काष्ठा qib_ibdev *dev = to_idev(ibdev);
-	काष्ठा qib_devdata *dd = dd_from_dev(dev);
-	काष्ठा qib_ibport *ibp = to_iport(ibdev, port);
-	काष्ठा qib_pportdata *ppd = ppd_from_ibp(ibp);
-	अचिन्हित दीर्घ flags;
+static int pma_get_portsamplescontrol(struct ib_pma_mad *pmp,
+				      struct ib_device *ibdev, u8 port)
+{
+	struct ib_pma_portsamplescontrol *p =
+		(struct ib_pma_portsamplescontrol *)pmp->data;
+	struct qib_ibdev *dev = to_idev(ibdev);
+	struct qib_devdata *dd = dd_from_dev(dev);
+	struct qib_ibport *ibp = to_iport(ibdev, port);
+	struct qib_pportdata *ppd = ppd_from_ibp(ibp);
+	unsigned long flags;
 	u8 port_select = p->port_select;
 
-	स_रखो(pmp->data, 0, माप(pmp->data));
+	memset(pmp->data, 0, sizeof(pmp->data));
 
 	p->port_select = port_select;
-	अगर (pmp->mad_hdr.attr_mod != 0 || port_select != port) अणु
+	if (pmp->mad_hdr.attr_mod != 0 || port_select != port) {
 		pmp->mad_hdr.status |= IB_SMP_INVALID_FIELD;
-		जाओ bail;
-	पूर्ण
+		goto bail;
+	}
 	spin_lock_irqsave(&ibp->rvp.lock, flags);
 	p->tick = dd->f_get_ib_cfg(ppd, QIB_IB_CFG_PMA_TICKS);
 	p->sample_status = dd->f_portcntr(ppd, QIBPORTCNTR_PSSTAT);
 	p->counter_width = 4;   /* 32 bit counters */
 	p->counter_mask0_9 = COUNTER_MASK0_9;
 	p->sample_start = cpu_to_be32(ibp->rvp.pma_sample_start);
-	p->sample_पूर्णांकerval = cpu_to_be32(ibp->rvp.pma_sample_पूर्णांकerval);
+	p->sample_interval = cpu_to_be32(ibp->rvp.pma_sample_interval);
 	p->tag = cpu_to_be16(ibp->rvp.pma_tag);
 	p->counter_select[0] = ibp->rvp.pma_counter_select[0];
 	p->counter_select[1] = ibp->rvp.pma_counter_select[1];
@@ -1215,27 +1214,27 @@ bail:
 	spin_unlock_irqrestore(&ibp->rvp.lock, flags);
 
 bail:
-	वापस reply((काष्ठा ib_smp *) pmp);
-पूर्ण
+	return reply((struct ib_smp *) pmp);
+}
 
-अटल पूर्णांक pma_set_portsamplescontrol(काष्ठा ib_pma_mad *pmp,
-				      काष्ठा ib_device *ibdev, u8 port)
-अणु
-	काष्ठा ib_pma_portsamplescontrol *p =
-		(काष्ठा ib_pma_portsamplescontrol *)pmp->data;
-	काष्ठा qib_ibdev *dev = to_idev(ibdev);
-	काष्ठा qib_devdata *dd = dd_from_dev(dev);
-	काष्ठा qib_ibport *ibp = to_iport(ibdev, port);
-	काष्ठा qib_pportdata *ppd = ppd_from_ibp(ibp);
-	अचिन्हित दीर्घ flags;
+static int pma_set_portsamplescontrol(struct ib_pma_mad *pmp,
+				      struct ib_device *ibdev, u8 port)
+{
+	struct ib_pma_portsamplescontrol *p =
+		(struct ib_pma_portsamplescontrol *)pmp->data;
+	struct qib_ibdev *dev = to_idev(ibdev);
+	struct qib_devdata *dd = dd_from_dev(dev);
+	struct qib_ibport *ibp = to_iport(ibdev, port);
+	struct qib_pportdata *ppd = ppd_from_ibp(ibp);
+	unsigned long flags;
 	u8 status, xmit_flags;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (pmp->mad_hdr.attr_mod != 0 || p->port_select != port) अणु
+	if (pmp->mad_hdr.attr_mod != 0 || p->port_select != port) {
 		pmp->mad_hdr.status |= IB_SMP_INVALID_FIELD;
-		ret = reply((काष्ठा ib_smp *) pmp);
-		जाओ bail;
-	पूर्ण
+		ret = reply((struct ib_smp *) pmp);
+		goto bail;
+	}
 
 	spin_lock_irqsave(&ibp->rvp.lock, flags);
 
@@ -1243,69 +1242,69 @@ bail:
 	xmit_flags = ppd->cong_stats.flags;
 	ppd->cong_stats.flags = IB_PMA_CONG_HW_CONTROL_SAMPLE;
 	status = dd->f_portcntr(ppd, QIBPORTCNTR_PSSTAT);
-	अगर (status == IB_PMA_SAMPLE_STATUS_DONE ||
+	if (status == IB_PMA_SAMPLE_STATUS_DONE ||
 	    (status == IB_PMA_SAMPLE_STATUS_RUNNING &&
-	     xmit_flags == IB_PMA_CONG_HW_CONTROL_TIMER)) अणु
+	     xmit_flags == IB_PMA_CONG_HW_CONTROL_TIMER)) {
 		ibp->rvp.pma_sample_start = be32_to_cpu(p->sample_start);
-		ibp->rvp.pma_sample_पूर्णांकerval = be32_to_cpu(p->sample_पूर्णांकerval);
+		ibp->rvp.pma_sample_interval = be32_to_cpu(p->sample_interval);
 		ibp->rvp.pma_tag = be16_to_cpu(p->tag);
 		ibp->rvp.pma_counter_select[0] = p->counter_select[0];
 		ibp->rvp.pma_counter_select[1] = p->counter_select[1];
 		ibp->rvp.pma_counter_select[2] = p->counter_select[2];
 		ibp->rvp.pma_counter_select[3] = p->counter_select[3];
 		ibp->rvp.pma_counter_select[4] = p->counter_select[4];
-		dd->f_set_cntr_sample(ppd, ibp->rvp.pma_sample_पूर्णांकerval,
+		dd->f_set_cntr_sample(ppd, ibp->rvp.pma_sample_interval,
 				      ibp->rvp.pma_sample_start);
-	पूर्ण
+	}
 	spin_unlock_irqrestore(&ibp->rvp.lock, flags);
 
 	ret = pma_get_portsamplescontrol(pmp, ibdev, port);
 
 bail:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल u64 get_counter(काष्ठा qib_ibport *ibp, काष्ठा qib_pportdata *ppd,
+static u64 get_counter(struct qib_ibport *ibp, struct qib_pportdata *ppd,
 		       __be16 sel)
-अणु
+{
 	u64 ret;
 
-	चयन (sel) अणु
-	हाल IB_PMA_PORT_XMIT_DATA:
+	switch (sel) {
+	case IB_PMA_PORT_XMIT_DATA:
 		ret = ppd->dd->f_portcntr(ppd, QIBPORTCNTR_PSXMITDATA);
-		अवरोध;
-	हाल IB_PMA_PORT_RCV_DATA:
+		break;
+	case IB_PMA_PORT_RCV_DATA:
 		ret = ppd->dd->f_portcntr(ppd, QIBPORTCNTR_PSRCVDATA);
-		अवरोध;
-	हाल IB_PMA_PORT_XMIT_PKTS:
+		break;
+	case IB_PMA_PORT_XMIT_PKTS:
 		ret = ppd->dd->f_portcntr(ppd, QIBPORTCNTR_PSXMITPKTS);
-		अवरोध;
-	हाल IB_PMA_PORT_RCV_PKTS:
+		break;
+	case IB_PMA_PORT_RCV_PKTS:
 		ret = ppd->dd->f_portcntr(ppd, QIBPORTCNTR_PSRCVPKTS);
-		अवरोध;
-	हाल IB_PMA_PORT_XMIT_WAIT:
+		break;
+	case IB_PMA_PORT_XMIT_WAIT:
 		ret = ppd->dd->f_portcntr(ppd, QIBPORTCNTR_PSXMITWAIT);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		ret = 0;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-/* This function assumes that the xmit_रुको lock is alपढ़ोy held */
-अटल u64 xmit_रुको_get_value_delta(काष्ठा qib_pportdata *ppd)
-अणु
+/* This function assumes that the xmit_wait lock is already held */
+static u64 xmit_wait_get_value_delta(struct qib_pportdata *ppd)
+{
 	u32 delta;
 
 	delta = get_counter(&ppd->ibport_data, ppd,
 			    IB_PMA_PORT_XMIT_WAIT);
-	वापस ppd->cong_stats.counter + delta;
-पूर्ण
+	return ppd->cong_stats.counter + delta;
+}
 
-अटल व्योम cache_hw_sample_counters(काष्ठा qib_pportdata *ppd)
-अणु
-	काष्ठा qib_ibport *ibp = &ppd->ibport_data;
+static void cache_hw_sample_counters(struct qib_pportdata *ppd)
+{
+	struct qib_ibport *ibp = &ppd->ibport_data;
 
 	ppd->cong_stats.counter_cache.psxmitdata =
 		get_counter(ibp, ppd, IB_PMA_PORT_XMIT_DATA);
@@ -1315,136 +1314,136 @@ bail:
 		get_counter(ibp, ppd, IB_PMA_PORT_XMIT_PKTS);
 	ppd->cong_stats.counter_cache.psrcvpkts =
 		get_counter(ibp, ppd, IB_PMA_PORT_RCV_PKTS);
-	ppd->cong_stats.counter_cache.psxmitरुको =
+	ppd->cong_stats.counter_cache.psxmitwait =
 		get_counter(ibp, ppd, IB_PMA_PORT_XMIT_WAIT);
-पूर्ण
+}
 
-अटल u64 get_cache_hw_sample_counters(काष्ठा qib_pportdata *ppd,
+static u64 get_cache_hw_sample_counters(struct qib_pportdata *ppd,
 					__be16 sel)
-अणु
+{
 	u64 ret;
 
-	चयन (sel) अणु
-	हाल IB_PMA_PORT_XMIT_DATA:
+	switch (sel) {
+	case IB_PMA_PORT_XMIT_DATA:
 		ret = ppd->cong_stats.counter_cache.psxmitdata;
-		अवरोध;
-	हाल IB_PMA_PORT_RCV_DATA:
+		break;
+	case IB_PMA_PORT_RCV_DATA:
 		ret = ppd->cong_stats.counter_cache.psrcvdata;
-		अवरोध;
-	हाल IB_PMA_PORT_XMIT_PKTS:
+		break;
+	case IB_PMA_PORT_XMIT_PKTS:
 		ret = ppd->cong_stats.counter_cache.psxmitpkts;
-		अवरोध;
-	हाल IB_PMA_PORT_RCV_PKTS:
+		break;
+	case IB_PMA_PORT_RCV_PKTS:
 		ret = ppd->cong_stats.counter_cache.psrcvpkts;
-		अवरोध;
-	हाल IB_PMA_PORT_XMIT_WAIT:
-		ret = ppd->cong_stats.counter_cache.psxmitरुको;
-		अवरोध;
-	शेष:
+		break;
+	case IB_PMA_PORT_XMIT_WAIT:
+		ret = ppd->cong_stats.counter_cache.psxmitwait;
+		break;
+	default:
 		ret = 0;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक pma_get_portsamplesresult(काष्ठा ib_pma_mad *pmp,
-				     काष्ठा ib_device *ibdev, u8 port)
-अणु
-	काष्ठा ib_pma_portsamplesresult *p =
-		(काष्ठा ib_pma_portsamplesresult *)pmp->data;
-	काष्ठा qib_ibdev *dev = to_idev(ibdev);
-	काष्ठा qib_devdata *dd = dd_from_dev(dev);
-	काष्ठा qib_ibport *ibp = to_iport(ibdev, port);
-	काष्ठा qib_pportdata *ppd = ppd_from_ibp(ibp);
-	अचिन्हित दीर्घ flags;
+static int pma_get_portsamplesresult(struct ib_pma_mad *pmp,
+				     struct ib_device *ibdev, u8 port)
+{
+	struct ib_pma_portsamplesresult *p =
+		(struct ib_pma_portsamplesresult *)pmp->data;
+	struct qib_ibdev *dev = to_idev(ibdev);
+	struct qib_devdata *dd = dd_from_dev(dev);
+	struct qib_ibport *ibp = to_iport(ibdev, port);
+	struct qib_pportdata *ppd = ppd_from_ibp(ibp);
+	unsigned long flags;
 	u8 status;
-	पूर्णांक i;
+	int i;
 
-	स_रखो(pmp->data, 0, माप(pmp->data));
+	memset(pmp->data, 0, sizeof(pmp->data));
 	spin_lock_irqsave(&ibp->rvp.lock, flags);
 	p->tag = cpu_to_be16(ibp->rvp.pma_tag);
-	अगर (ppd->cong_stats.flags == IB_PMA_CONG_HW_CONTROL_TIMER)
+	if (ppd->cong_stats.flags == IB_PMA_CONG_HW_CONTROL_TIMER)
 		p->sample_status = IB_PMA_SAMPLE_STATUS_DONE;
-	अन्यथा अणु
+	else {
 		status = dd->f_portcntr(ppd, QIBPORTCNTR_PSSTAT);
 		p->sample_status = cpu_to_be16(status);
-		अगर (status == IB_PMA_SAMPLE_STATUS_DONE) अणु
+		if (status == IB_PMA_SAMPLE_STATUS_DONE) {
 			cache_hw_sample_counters(ppd);
 			ppd->cong_stats.counter =
-				xmit_रुको_get_value_delta(ppd);
+				xmit_wait_get_value_delta(ppd);
 			dd->f_set_cntr_sample(ppd,
 					      QIB_CONG_TIMER_PSINTERVAL, 0);
 			ppd->cong_stats.flags = IB_PMA_CONG_HW_CONTROL_TIMER;
-		पूर्ण
-	पूर्ण
-	क्रम (i = 0; i < ARRAY_SIZE(ibp->rvp.pma_counter_select); i++)
+		}
+	}
+	for (i = 0; i < ARRAY_SIZE(ibp->rvp.pma_counter_select); i++)
 		p->counter[i] = cpu_to_be32(
 			get_cache_hw_sample_counters(
 				ppd, ibp->rvp.pma_counter_select[i]));
 	spin_unlock_irqrestore(&ibp->rvp.lock, flags);
 
-	वापस reply((काष्ठा ib_smp *) pmp);
-पूर्ण
+	return reply((struct ib_smp *) pmp);
+}
 
-अटल पूर्णांक pma_get_portsamplesresult_ext(काष्ठा ib_pma_mad *pmp,
-					 काष्ठा ib_device *ibdev, u8 port)
-अणु
-	काष्ठा ib_pma_portsamplesresult_ext *p =
-		(काष्ठा ib_pma_portsamplesresult_ext *)pmp->data;
-	काष्ठा qib_ibdev *dev = to_idev(ibdev);
-	काष्ठा qib_devdata *dd = dd_from_dev(dev);
-	काष्ठा qib_ibport *ibp = to_iport(ibdev, port);
-	काष्ठा qib_pportdata *ppd = ppd_from_ibp(ibp);
-	अचिन्हित दीर्घ flags;
+static int pma_get_portsamplesresult_ext(struct ib_pma_mad *pmp,
+					 struct ib_device *ibdev, u8 port)
+{
+	struct ib_pma_portsamplesresult_ext *p =
+		(struct ib_pma_portsamplesresult_ext *)pmp->data;
+	struct qib_ibdev *dev = to_idev(ibdev);
+	struct qib_devdata *dd = dd_from_dev(dev);
+	struct qib_ibport *ibp = to_iport(ibdev, port);
+	struct qib_pportdata *ppd = ppd_from_ibp(ibp);
+	unsigned long flags;
 	u8 status;
-	पूर्णांक i;
+	int i;
 
 	/* Port Sampling code owns the PS* HW counters */
-	स_रखो(pmp->data, 0, माप(pmp->data));
+	memset(pmp->data, 0, sizeof(pmp->data));
 	spin_lock_irqsave(&ibp->rvp.lock, flags);
 	p->tag = cpu_to_be16(ibp->rvp.pma_tag);
-	अगर (ppd->cong_stats.flags == IB_PMA_CONG_HW_CONTROL_TIMER)
+	if (ppd->cong_stats.flags == IB_PMA_CONG_HW_CONTROL_TIMER)
 		p->sample_status = IB_PMA_SAMPLE_STATUS_DONE;
-	अन्यथा अणु
+	else {
 		status = dd->f_portcntr(ppd, QIBPORTCNTR_PSSTAT);
 		p->sample_status = cpu_to_be16(status);
 		/* 64 bits */
 		p->extended_width = cpu_to_be32(0x80000000);
-		अगर (status == IB_PMA_SAMPLE_STATUS_DONE) अणु
+		if (status == IB_PMA_SAMPLE_STATUS_DONE) {
 			cache_hw_sample_counters(ppd);
 			ppd->cong_stats.counter =
-				xmit_रुको_get_value_delta(ppd);
+				xmit_wait_get_value_delta(ppd);
 			dd->f_set_cntr_sample(ppd,
 					      QIB_CONG_TIMER_PSINTERVAL, 0);
 			ppd->cong_stats.flags = IB_PMA_CONG_HW_CONTROL_TIMER;
-		पूर्ण
-	पूर्ण
-	क्रम (i = 0; i < ARRAY_SIZE(ibp->rvp.pma_counter_select); i++)
+		}
+	}
+	for (i = 0; i < ARRAY_SIZE(ibp->rvp.pma_counter_select); i++)
 		p->counter[i] = cpu_to_be64(
 			get_cache_hw_sample_counters(
 				ppd, ibp->rvp.pma_counter_select[i]));
 	spin_unlock_irqrestore(&ibp->rvp.lock, flags);
 
-	वापस reply((काष्ठा ib_smp *) pmp);
-पूर्ण
+	return reply((struct ib_smp *) pmp);
+}
 
-अटल पूर्णांक pma_get_portcounters(काष्ठा ib_pma_mad *pmp,
-				काष्ठा ib_device *ibdev, u8 port)
-अणु
-	काष्ठा ib_pma_portcounters *p = (काष्ठा ib_pma_portcounters *)
+static int pma_get_portcounters(struct ib_pma_mad *pmp,
+				struct ib_device *ibdev, u8 port)
+{
+	struct ib_pma_portcounters *p = (struct ib_pma_portcounters *)
 		pmp->data;
-	काष्ठा qib_ibport *ibp = to_iport(ibdev, port);
-	काष्ठा qib_pportdata *ppd = ppd_from_ibp(ibp);
-	काष्ठा qib_verbs_counters cntrs;
+	struct qib_ibport *ibp = to_iport(ibdev, port);
+	struct qib_pportdata *ppd = ppd_from_ibp(ibp);
+	struct qib_verbs_counters cntrs;
 	u8 port_select = p->port_select;
 
 	qib_get_counters(ppd, &cntrs);
 
-	/* Adjust counters क्रम any resets करोne. */
+	/* Adjust counters for any resets done. */
 	cntrs.symbol_error_counter -= ibp->z_symbol_error_counter;
 	cntrs.link_error_recovery_counter -=
 		ibp->z_link_error_recovery_counter;
-	cntrs.link_करोwned_counter -= ibp->z_link_करोwned_counter;
+	cntrs.link_downed_counter -= ibp->z_link_downed_counter;
 	cntrs.port_rcv_errors -= ibp->z_port_rcv_errors;
 	cntrs.port_rcv_remphys_errors -= ibp->z_port_rcv_remphys_errors;
 	cntrs.port_xmit_discards -= ibp->z_port_xmit_discards;
@@ -1452,119 +1451,119 @@ bail:
 	cntrs.port_rcv_data -= ibp->z_port_rcv_data;
 	cntrs.port_xmit_packets -= ibp->z_port_xmit_packets;
 	cntrs.port_rcv_packets -= ibp->z_port_rcv_packets;
-	cntrs.local_link_पूर्णांकegrity_errors -=
-		ibp->z_local_link_पूर्णांकegrity_errors;
+	cntrs.local_link_integrity_errors -=
+		ibp->z_local_link_integrity_errors;
 	cntrs.excessive_buffer_overrun_errors -=
 		ibp->z_excessive_buffer_overrun_errors;
 	cntrs.vl15_dropped -= ibp->z_vl15_dropped;
 	cntrs.vl15_dropped += ibp->rvp.n_vl15_dropped;
 
-	स_रखो(pmp->data, 0, माप(pmp->data));
+	memset(pmp->data, 0, sizeof(pmp->data));
 
 	p->port_select = port_select;
-	अगर (pmp->mad_hdr.attr_mod != 0 || port_select != port)
+	if (pmp->mad_hdr.attr_mod != 0 || port_select != port)
 		pmp->mad_hdr.status |= IB_SMP_INVALID_FIELD;
 
-	अगर (cntrs.symbol_error_counter > 0xFFFFUL)
+	if (cntrs.symbol_error_counter > 0xFFFFUL)
 		p->symbol_error_counter = cpu_to_be16(0xFFFF);
-	अन्यथा
+	else
 		p->symbol_error_counter =
 			cpu_to_be16((u16)cntrs.symbol_error_counter);
-	अगर (cntrs.link_error_recovery_counter > 0xFFUL)
+	if (cntrs.link_error_recovery_counter > 0xFFUL)
 		p->link_error_recovery_counter = 0xFF;
-	अन्यथा
+	else
 		p->link_error_recovery_counter =
 			(u8)cntrs.link_error_recovery_counter;
-	अगर (cntrs.link_करोwned_counter > 0xFFUL)
-		p->link_करोwned_counter = 0xFF;
-	अन्यथा
-		p->link_करोwned_counter = (u8)cntrs.link_करोwned_counter;
-	अगर (cntrs.port_rcv_errors > 0xFFFFUL)
+	if (cntrs.link_downed_counter > 0xFFUL)
+		p->link_downed_counter = 0xFF;
+	else
+		p->link_downed_counter = (u8)cntrs.link_downed_counter;
+	if (cntrs.port_rcv_errors > 0xFFFFUL)
 		p->port_rcv_errors = cpu_to_be16(0xFFFF);
-	अन्यथा
+	else
 		p->port_rcv_errors =
 			cpu_to_be16((u16) cntrs.port_rcv_errors);
-	अगर (cntrs.port_rcv_remphys_errors > 0xFFFFUL)
+	if (cntrs.port_rcv_remphys_errors > 0xFFFFUL)
 		p->port_rcv_remphys_errors = cpu_to_be16(0xFFFF);
-	अन्यथा
+	else
 		p->port_rcv_remphys_errors =
 			cpu_to_be16((u16)cntrs.port_rcv_remphys_errors);
-	अगर (cntrs.port_xmit_discards > 0xFFFFUL)
+	if (cntrs.port_xmit_discards > 0xFFFFUL)
 		p->port_xmit_discards = cpu_to_be16(0xFFFF);
-	अन्यथा
+	else
 		p->port_xmit_discards =
 			cpu_to_be16((u16)cntrs.port_xmit_discards);
-	अगर (cntrs.local_link_पूर्णांकegrity_errors > 0xFUL)
-		cntrs.local_link_पूर्णांकegrity_errors = 0xFUL;
-	अगर (cntrs.excessive_buffer_overrun_errors > 0xFUL)
+	if (cntrs.local_link_integrity_errors > 0xFUL)
+		cntrs.local_link_integrity_errors = 0xFUL;
+	if (cntrs.excessive_buffer_overrun_errors > 0xFUL)
 		cntrs.excessive_buffer_overrun_errors = 0xFUL;
-	p->link_overrun_errors = (cntrs.local_link_पूर्णांकegrity_errors << 4) |
+	p->link_overrun_errors = (cntrs.local_link_integrity_errors << 4) |
 		cntrs.excessive_buffer_overrun_errors;
-	अगर (cntrs.vl15_dropped > 0xFFFFUL)
+	if (cntrs.vl15_dropped > 0xFFFFUL)
 		p->vl15_dropped = cpu_to_be16(0xFFFF);
-	अन्यथा
+	else
 		p->vl15_dropped = cpu_to_be16((u16)cntrs.vl15_dropped);
-	अगर (cntrs.port_xmit_data > 0xFFFFFFFFUL)
+	if (cntrs.port_xmit_data > 0xFFFFFFFFUL)
 		p->port_xmit_data = cpu_to_be32(0xFFFFFFFF);
-	अन्यथा
+	else
 		p->port_xmit_data = cpu_to_be32((u32)cntrs.port_xmit_data);
-	अगर (cntrs.port_rcv_data > 0xFFFFFFFFUL)
+	if (cntrs.port_rcv_data > 0xFFFFFFFFUL)
 		p->port_rcv_data = cpu_to_be32(0xFFFFFFFF);
-	अन्यथा
+	else
 		p->port_rcv_data = cpu_to_be32((u32)cntrs.port_rcv_data);
-	अगर (cntrs.port_xmit_packets > 0xFFFFFFFFUL)
+	if (cntrs.port_xmit_packets > 0xFFFFFFFFUL)
 		p->port_xmit_packets = cpu_to_be32(0xFFFFFFFF);
-	अन्यथा
+	else
 		p->port_xmit_packets =
 			cpu_to_be32((u32)cntrs.port_xmit_packets);
-	अगर (cntrs.port_rcv_packets > 0xFFFFFFFFUL)
+	if (cntrs.port_rcv_packets > 0xFFFFFFFFUL)
 		p->port_rcv_packets = cpu_to_be32(0xFFFFFFFF);
-	अन्यथा
+	else
 		p->port_rcv_packets =
 			cpu_to_be32((u32) cntrs.port_rcv_packets);
 
-	वापस reply((काष्ठा ib_smp *) pmp);
-पूर्ण
+	return reply((struct ib_smp *) pmp);
+}
 
-अटल पूर्णांक pma_get_portcounters_cong(काष्ठा ib_pma_mad *pmp,
-				     काष्ठा ib_device *ibdev, u8 port)
-अणु
+static int pma_get_portcounters_cong(struct ib_pma_mad *pmp,
+				     struct ib_device *ibdev, u8 port)
+{
 	/* Congestion PMA packets start at offset 24 not 64 */
-	काष्ठा ib_pma_portcounters_cong *p =
-		(काष्ठा ib_pma_portcounters_cong *)pmp->reserved;
-	काष्ठा qib_verbs_counters cntrs;
-	काष्ठा qib_ibport *ibp = to_iport(ibdev, port);
-	काष्ठा qib_pportdata *ppd = ppd_from_ibp(ibp);
-	काष्ठा qib_devdata *dd = dd_from_ppd(ppd);
+	struct ib_pma_portcounters_cong *p =
+		(struct ib_pma_portcounters_cong *)pmp->reserved;
+	struct qib_verbs_counters cntrs;
+	struct qib_ibport *ibp = to_iport(ibdev, port);
+	struct qib_pportdata *ppd = ppd_from_ibp(ibp);
+	struct qib_devdata *dd = dd_from_ppd(ppd);
 	u32 port_select = be32_to_cpu(pmp->mad_hdr.attr_mod) & 0xFF;
-	u64 xmit_रुको_counter;
-	अचिन्हित दीर्घ flags;
+	u64 xmit_wait_counter;
+	unsigned long flags;
 
 	/*
-	 * This check is perक्रमmed only in the GET method because the
+	 * This check is performed only in the GET method because the
 	 * SET method ends up calling this anyway.
 	 */
-	अगर (!dd->psxmitरुको_supported)
+	if (!dd->psxmitwait_supported)
 		pmp->mad_hdr.status |= IB_SMP_UNSUP_METH_ATTR;
-	अगर (port_select != port)
+	if (port_select != port)
 		pmp->mad_hdr.status |= IB_SMP_INVALID_FIELD;
 
 	qib_get_counters(ppd, &cntrs);
 	spin_lock_irqsave(&ppd->ibport_data.rvp.lock, flags);
-	xmit_रुको_counter = xmit_रुको_get_value_delta(ppd);
+	xmit_wait_counter = xmit_wait_get_value_delta(ppd);
 	spin_unlock_irqrestore(&ppd->ibport_data.rvp.lock, flags);
 
-	/* Adjust counters क्रम any resets करोne. */
+	/* Adjust counters for any resets done. */
 	cntrs.symbol_error_counter -= ibp->z_symbol_error_counter;
 	cntrs.link_error_recovery_counter -=
 		ibp->z_link_error_recovery_counter;
-	cntrs.link_करोwned_counter -= ibp->z_link_करोwned_counter;
+	cntrs.link_downed_counter -= ibp->z_link_downed_counter;
 	cntrs.port_rcv_errors -= ibp->z_port_rcv_errors;
 	cntrs.port_rcv_remphys_errors -=
 		ibp->z_port_rcv_remphys_errors;
 	cntrs.port_xmit_discards -= ibp->z_port_xmit_discards;
-	cntrs.local_link_पूर्णांकegrity_errors -=
-		ibp->z_local_link_पूर्णांकegrity_errors;
+	cntrs.local_link_integrity_errors -=
+		ibp->z_local_link_integrity_errors;
 	cntrs.excessive_buffer_overrun_errors -=
 		ibp->z_excessive_buffer_overrun_errors;
 	cntrs.vl15_dropped -= ibp->z_vl15_dropped;
@@ -1574,110 +1573,110 @@ bail:
 	cntrs.port_xmit_packets -= ibp->z_port_xmit_packets;
 	cntrs.port_rcv_packets -= ibp->z_port_rcv_packets;
 
-	स_रखो(pmp->reserved, 0, माप(pmp->reserved));
-	स_रखो(pmp->data, 0, माप(pmp->data));
+	memset(pmp->reserved, 0, sizeof(pmp->reserved));
+	memset(pmp->data, 0, sizeof(pmp->data));
 
 	/*
-	 * Set top 3 bits to indicate पूर्णांकerval in picoseconds in
-	 * reमुख्यing bits.
+	 * Set top 3 bits to indicate interval in picoseconds in
+	 * remaining bits.
 	 */
 	p->port_check_rate =
 		cpu_to_be16((QIB_XMIT_RATE_PICO << 13) |
-			    (dd->psxmitरुको_check_rate &
+			    (dd->psxmitwait_check_rate &
 			     ~(QIB_XMIT_RATE_PICO << 13)));
 	p->port_adr_events = cpu_to_be64(0);
-	p->port_xmit_रुको = cpu_to_be64(xmit_रुको_counter);
+	p->port_xmit_wait = cpu_to_be64(xmit_wait_counter);
 	p->port_xmit_data = cpu_to_be64(cntrs.port_xmit_data);
 	p->port_rcv_data = cpu_to_be64(cntrs.port_rcv_data);
 	p->port_xmit_packets =
 		cpu_to_be64(cntrs.port_xmit_packets);
 	p->port_rcv_packets =
 		cpu_to_be64(cntrs.port_rcv_packets);
-	अगर (cntrs.symbol_error_counter > 0xFFFFUL)
+	if (cntrs.symbol_error_counter > 0xFFFFUL)
 		p->symbol_error_counter = cpu_to_be16(0xFFFF);
-	अन्यथा
+	else
 		p->symbol_error_counter =
 			cpu_to_be16(
 				(u16)cntrs.symbol_error_counter);
-	अगर (cntrs.link_error_recovery_counter > 0xFFUL)
+	if (cntrs.link_error_recovery_counter > 0xFFUL)
 		p->link_error_recovery_counter = 0xFF;
-	अन्यथा
+	else
 		p->link_error_recovery_counter =
 			(u8)cntrs.link_error_recovery_counter;
-	अगर (cntrs.link_करोwned_counter > 0xFFUL)
-		p->link_करोwned_counter = 0xFF;
-	अन्यथा
-		p->link_करोwned_counter =
-			(u8)cntrs.link_करोwned_counter;
-	अगर (cntrs.port_rcv_errors > 0xFFFFUL)
+	if (cntrs.link_downed_counter > 0xFFUL)
+		p->link_downed_counter = 0xFF;
+	else
+		p->link_downed_counter =
+			(u8)cntrs.link_downed_counter;
+	if (cntrs.port_rcv_errors > 0xFFFFUL)
 		p->port_rcv_errors = cpu_to_be16(0xFFFF);
-	अन्यथा
+	else
 		p->port_rcv_errors =
 			cpu_to_be16((u16) cntrs.port_rcv_errors);
-	अगर (cntrs.port_rcv_remphys_errors > 0xFFFFUL)
+	if (cntrs.port_rcv_remphys_errors > 0xFFFFUL)
 		p->port_rcv_remphys_errors = cpu_to_be16(0xFFFF);
-	अन्यथा
+	else
 		p->port_rcv_remphys_errors =
 			cpu_to_be16(
 				(u16)cntrs.port_rcv_remphys_errors);
-	अगर (cntrs.port_xmit_discards > 0xFFFFUL)
+	if (cntrs.port_xmit_discards > 0xFFFFUL)
 		p->port_xmit_discards = cpu_to_be16(0xFFFF);
-	अन्यथा
+	else
 		p->port_xmit_discards =
 			cpu_to_be16((u16)cntrs.port_xmit_discards);
-	अगर (cntrs.local_link_पूर्णांकegrity_errors > 0xFUL)
-		cntrs.local_link_पूर्णांकegrity_errors = 0xFUL;
-	अगर (cntrs.excessive_buffer_overrun_errors > 0xFUL)
+	if (cntrs.local_link_integrity_errors > 0xFUL)
+		cntrs.local_link_integrity_errors = 0xFUL;
+	if (cntrs.excessive_buffer_overrun_errors > 0xFUL)
 		cntrs.excessive_buffer_overrun_errors = 0xFUL;
-	p->link_overrun_errors = (cntrs.local_link_पूर्णांकegrity_errors << 4) |
+	p->link_overrun_errors = (cntrs.local_link_integrity_errors << 4) |
 		cntrs.excessive_buffer_overrun_errors;
-	अगर (cntrs.vl15_dropped > 0xFFFFUL)
+	if (cntrs.vl15_dropped > 0xFFFFUL)
 		p->vl15_dropped = cpu_to_be16(0xFFFF);
-	अन्यथा
+	else
 		p->vl15_dropped = cpu_to_be16((u16)cntrs.vl15_dropped);
 
-	वापस reply((काष्ठा ib_smp *)pmp);
-पूर्ण
+	return reply((struct ib_smp *)pmp);
+}
 
-अटल व्योम qib_snapshot_pmacounters(
-	काष्ठा qib_ibport *ibp,
-	काष्ठा qib_pma_counters *pmacounters)
-अणु
-	काष्ठा qib_pma_counters *p;
-	पूर्णांक cpu;
+static void qib_snapshot_pmacounters(
+	struct qib_ibport *ibp,
+	struct qib_pma_counters *pmacounters)
+{
+	struct qib_pma_counters *p;
+	int cpu;
 
-	स_रखो(pmacounters, 0, माप(*pmacounters));
-	क्रम_each_possible_cpu(cpu) अणु
+	memset(pmacounters, 0, sizeof(*pmacounters));
+	for_each_possible_cpu(cpu) {
 		p = per_cpu_ptr(ibp->pmastats, cpu);
 		pmacounters->n_unicast_xmit += p->n_unicast_xmit;
 		pmacounters->n_unicast_rcv += p->n_unicast_rcv;
 		pmacounters->n_multicast_xmit += p->n_multicast_xmit;
 		pmacounters->n_multicast_rcv += p->n_multicast_rcv;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक pma_get_portcounters_ext(काष्ठा ib_pma_mad *pmp,
-				    काष्ठा ib_device *ibdev, u8 port)
-अणु
-	काष्ठा ib_pma_portcounters_ext *p =
-		(काष्ठा ib_pma_portcounters_ext *)pmp->data;
-	काष्ठा qib_ibport *ibp = to_iport(ibdev, port);
-	काष्ठा qib_pportdata *ppd = ppd_from_ibp(ibp);
-	u64 swords, rwords, spkts, rpkts, xरुको;
-	काष्ठा qib_pma_counters pma;
+static int pma_get_portcounters_ext(struct ib_pma_mad *pmp,
+				    struct ib_device *ibdev, u8 port)
+{
+	struct ib_pma_portcounters_ext *p =
+		(struct ib_pma_portcounters_ext *)pmp->data;
+	struct qib_ibport *ibp = to_iport(ibdev, port);
+	struct qib_pportdata *ppd = ppd_from_ibp(ibp);
+	u64 swords, rwords, spkts, rpkts, xwait;
+	struct qib_pma_counters pma;
 	u8 port_select = p->port_select;
 
-	स_रखो(pmp->data, 0, माप(pmp->data));
+	memset(pmp->data, 0, sizeof(pmp->data));
 
 	p->port_select = port_select;
-	अगर (pmp->mad_hdr.attr_mod != 0 || port_select != port) अणु
+	if (pmp->mad_hdr.attr_mod != 0 || port_select != port) {
 		pmp->mad_hdr.status |= IB_SMP_INVALID_FIELD;
-		जाओ bail;
-	पूर्ण
+		goto bail;
+	}
 
-	qib_snapshot_counters(ppd, &swords, &rwords, &spkts, &rpkts, &xरुको);
+	qib_snapshot_counters(ppd, &swords, &rwords, &spkts, &rpkts, &xwait);
 
-	/* Adjust counters क्रम any resets करोne. */
+	/* Adjust counters for any resets done. */
 	swords -= ibp->z_port_xmit_data;
 	rwords -= ibp->z_port_rcv_data;
 	spkts -= ibp->z_port_xmit_packets;
@@ -1700,487 +1699,487 @@ bail:
 		- ibp->z_multicast_rcv);
 
 bail:
-	वापस reply((काष्ठा ib_smp *) pmp);
-पूर्ण
+	return reply((struct ib_smp *) pmp);
+}
 
-अटल पूर्णांक pma_set_portcounters(काष्ठा ib_pma_mad *pmp,
-				काष्ठा ib_device *ibdev, u8 port)
-अणु
-	काष्ठा ib_pma_portcounters *p = (काष्ठा ib_pma_portcounters *)
+static int pma_set_portcounters(struct ib_pma_mad *pmp,
+				struct ib_device *ibdev, u8 port)
+{
+	struct ib_pma_portcounters *p = (struct ib_pma_portcounters *)
 		pmp->data;
-	काष्ठा qib_ibport *ibp = to_iport(ibdev, port);
-	काष्ठा qib_pportdata *ppd = ppd_from_ibp(ibp);
-	काष्ठा qib_verbs_counters cntrs;
+	struct qib_ibport *ibp = to_iport(ibdev, port);
+	struct qib_pportdata *ppd = ppd_from_ibp(ibp);
+	struct qib_verbs_counters cntrs;
 
 	/*
-	 * Since the HW करोesn't support clearing counters, we save the
+	 * Since the HW doesn't support clearing counters, we save the
 	 * current count and subtract it from future responses.
 	 */
 	qib_get_counters(ppd, &cntrs);
 
-	अगर (p->counter_select & IB_PMA_SEL_SYMBOL_ERROR)
+	if (p->counter_select & IB_PMA_SEL_SYMBOL_ERROR)
 		ibp->z_symbol_error_counter = cntrs.symbol_error_counter;
 
-	अगर (p->counter_select & IB_PMA_SEL_LINK_ERROR_RECOVERY)
+	if (p->counter_select & IB_PMA_SEL_LINK_ERROR_RECOVERY)
 		ibp->z_link_error_recovery_counter =
 			cntrs.link_error_recovery_counter;
 
-	अगर (p->counter_select & IB_PMA_SEL_LINK_DOWNED)
-		ibp->z_link_करोwned_counter = cntrs.link_करोwned_counter;
+	if (p->counter_select & IB_PMA_SEL_LINK_DOWNED)
+		ibp->z_link_downed_counter = cntrs.link_downed_counter;
 
-	अगर (p->counter_select & IB_PMA_SEL_PORT_RCV_ERRORS)
+	if (p->counter_select & IB_PMA_SEL_PORT_RCV_ERRORS)
 		ibp->z_port_rcv_errors = cntrs.port_rcv_errors;
 
-	अगर (p->counter_select & IB_PMA_SEL_PORT_RCV_REMPHYS_ERRORS)
+	if (p->counter_select & IB_PMA_SEL_PORT_RCV_REMPHYS_ERRORS)
 		ibp->z_port_rcv_remphys_errors =
 			cntrs.port_rcv_remphys_errors;
 
-	अगर (p->counter_select & IB_PMA_SEL_PORT_XMIT_DISCARDS)
+	if (p->counter_select & IB_PMA_SEL_PORT_XMIT_DISCARDS)
 		ibp->z_port_xmit_discards = cntrs.port_xmit_discards;
 
-	अगर (p->counter_select & IB_PMA_SEL_LOCAL_LINK_INTEGRITY_ERRORS)
-		ibp->z_local_link_पूर्णांकegrity_errors =
-			cntrs.local_link_पूर्णांकegrity_errors;
+	if (p->counter_select & IB_PMA_SEL_LOCAL_LINK_INTEGRITY_ERRORS)
+		ibp->z_local_link_integrity_errors =
+			cntrs.local_link_integrity_errors;
 
-	अगर (p->counter_select & IB_PMA_SEL_EXCESSIVE_BUFFER_OVERRUNS)
+	if (p->counter_select & IB_PMA_SEL_EXCESSIVE_BUFFER_OVERRUNS)
 		ibp->z_excessive_buffer_overrun_errors =
 			cntrs.excessive_buffer_overrun_errors;
 
-	अगर (p->counter_select & IB_PMA_SEL_PORT_VL15_DROPPED) अणु
+	if (p->counter_select & IB_PMA_SEL_PORT_VL15_DROPPED) {
 		ibp->rvp.n_vl15_dropped = 0;
 		ibp->z_vl15_dropped = cntrs.vl15_dropped;
-	पूर्ण
+	}
 
-	अगर (p->counter_select & IB_PMA_SEL_PORT_XMIT_DATA)
+	if (p->counter_select & IB_PMA_SEL_PORT_XMIT_DATA)
 		ibp->z_port_xmit_data = cntrs.port_xmit_data;
 
-	अगर (p->counter_select & IB_PMA_SEL_PORT_RCV_DATA)
+	if (p->counter_select & IB_PMA_SEL_PORT_RCV_DATA)
 		ibp->z_port_rcv_data = cntrs.port_rcv_data;
 
-	अगर (p->counter_select & IB_PMA_SEL_PORT_XMIT_PACKETS)
+	if (p->counter_select & IB_PMA_SEL_PORT_XMIT_PACKETS)
 		ibp->z_port_xmit_packets = cntrs.port_xmit_packets;
 
-	अगर (p->counter_select & IB_PMA_SEL_PORT_RCV_PACKETS)
+	if (p->counter_select & IB_PMA_SEL_PORT_RCV_PACKETS)
 		ibp->z_port_rcv_packets = cntrs.port_rcv_packets;
 
-	वापस pma_get_portcounters(pmp, ibdev, port);
-पूर्ण
+	return pma_get_portcounters(pmp, ibdev, port);
+}
 
-अटल पूर्णांक pma_set_portcounters_cong(काष्ठा ib_pma_mad *pmp,
-				     काष्ठा ib_device *ibdev, u8 port)
-अणु
-	काष्ठा qib_ibport *ibp = to_iport(ibdev, port);
-	काष्ठा qib_pportdata *ppd = ppd_from_ibp(ibp);
-	काष्ठा qib_devdata *dd = dd_from_ppd(ppd);
-	काष्ठा qib_verbs_counters cntrs;
+static int pma_set_portcounters_cong(struct ib_pma_mad *pmp,
+				     struct ib_device *ibdev, u8 port)
+{
+	struct qib_ibport *ibp = to_iport(ibdev, port);
+	struct qib_pportdata *ppd = ppd_from_ibp(ibp);
+	struct qib_devdata *dd = dd_from_ppd(ppd);
+	struct qib_verbs_counters cntrs;
 	u32 counter_select = (be32_to_cpu(pmp->mad_hdr.attr_mod) >> 24) & 0xFF;
-	पूर्णांक ret = 0;
-	अचिन्हित दीर्घ flags;
+	int ret = 0;
+	unsigned long flags;
 
 	qib_get_counters(ppd, &cntrs);
-	/* Get counter values beक्रमe we save them */
+	/* Get counter values before we save them */
 	ret = pma_get_portcounters_cong(pmp, ibdev, port);
 
-	अगर (counter_select & IB_PMA_SEL_CONG_XMIT) अणु
+	if (counter_select & IB_PMA_SEL_CONG_XMIT) {
 		spin_lock_irqsave(&ppd->ibport_data.rvp.lock, flags);
 		ppd->cong_stats.counter = 0;
 		dd->f_set_cntr_sample(ppd, QIB_CONG_TIMER_PSINTERVAL,
 				      0x0);
 		spin_unlock_irqrestore(&ppd->ibport_data.rvp.lock, flags);
-	पूर्ण
-	अगर (counter_select & IB_PMA_SEL_CONG_PORT_DATA) अणु
+	}
+	if (counter_select & IB_PMA_SEL_CONG_PORT_DATA) {
 		ibp->z_port_xmit_data = cntrs.port_xmit_data;
 		ibp->z_port_rcv_data = cntrs.port_rcv_data;
 		ibp->z_port_xmit_packets = cntrs.port_xmit_packets;
 		ibp->z_port_rcv_packets = cntrs.port_rcv_packets;
-	पूर्ण
-	अगर (counter_select & IB_PMA_SEL_CONG_ALL) अणु
+	}
+	if (counter_select & IB_PMA_SEL_CONG_ALL) {
 		ibp->z_symbol_error_counter =
 			cntrs.symbol_error_counter;
 		ibp->z_link_error_recovery_counter =
 			cntrs.link_error_recovery_counter;
-		ibp->z_link_करोwned_counter =
-			cntrs.link_करोwned_counter;
+		ibp->z_link_downed_counter =
+			cntrs.link_downed_counter;
 		ibp->z_port_rcv_errors = cntrs.port_rcv_errors;
 		ibp->z_port_rcv_remphys_errors =
 			cntrs.port_rcv_remphys_errors;
 		ibp->z_port_xmit_discards =
 			cntrs.port_xmit_discards;
-		ibp->z_local_link_पूर्णांकegrity_errors =
-			cntrs.local_link_पूर्णांकegrity_errors;
+		ibp->z_local_link_integrity_errors =
+			cntrs.local_link_integrity_errors;
 		ibp->z_excessive_buffer_overrun_errors =
 			cntrs.excessive_buffer_overrun_errors;
 		ibp->rvp.n_vl15_dropped = 0;
 		ibp->z_vl15_dropped = cntrs.vl15_dropped;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक pma_set_portcounters_ext(काष्ठा ib_pma_mad *pmp,
-				    काष्ठा ib_device *ibdev, u8 port)
-अणु
-	काष्ठा ib_pma_portcounters *p = (काष्ठा ib_pma_portcounters *)
+static int pma_set_portcounters_ext(struct ib_pma_mad *pmp,
+				    struct ib_device *ibdev, u8 port)
+{
+	struct ib_pma_portcounters *p = (struct ib_pma_portcounters *)
 		pmp->data;
-	काष्ठा qib_ibport *ibp = to_iport(ibdev, port);
-	काष्ठा qib_pportdata *ppd = ppd_from_ibp(ibp);
-	u64 swords, rwords, spkts, rpkts, xरुको;
-	काष्ठा qib_pma_counters pma;
+	struct qib_ibport *ibp = to_iport(ibdev, port);
+	struct qib_pportdata *ppd = ppd_from_ibp(ibp);
+	u64 swords, rwords, spkts, rpkts, xwait;
+	struct qib_pma_counters pma;
 
-	qib_snapshot_counters(ppd, &swords, &rwords, &spkts, &rpkts, &xरुको);
+	qib_snapshot_counters(ppd, &swords, &rwords, &spkts, &rpkts, &xwait);
 
-	अगर (p->counter_select & IB_PMA_SELX_PORT_XMIT_DATA)
+	if (p->counter_select & IB_PMA_SELX_PORT_XMIT_DATA)
 		ibp->z_port_xmit_data = swords;
 
-	अगर (p->counter_select & IB_PMA_SELX_PORT_RCV_DATA)
+	if (p->counter_select & IB_PMA_SELX_PORT_RCV_DATA)
 		ibp->z_port_rcv_data = rwords;
 
-	अगर (p->counter_select & IB_PMA_SELX_PORT_XMIT_PACKETS)
+	if (p->counter_select & IB_PMA_SELX_PORT_XMIT_PACKETS)
 		ibp->z_port_xmit_packets = spkts;
 
-	अगर (p->counter_select & IB_PMA_SELX_PORT_RCV_PACKETS)
+	if (p->counter_select & IB_PMA_SELX_PORT_RCV_PACKETS)
 		ibp->z_port_rcv_packets = rpkts;
 
 	qib_snapshot_pmacounters(ibp, &pma);
 
-	अगर (p->counter_select & IB_PMA_SELX_PORT_UNI_XMIT_PACKETS)
+	if (p->counter_select & IB_PMA_SELX_PORT_UNI_XMIT_PACKETS)
 		ibp->z_unicast_xmit = pma.n_unicast_xmit;
 
-	अगर (p->counter_select & IB_PMA_SELX_PORT_UNI_RCV_PACKETS)
+	if (p->counter_select & IB_PMA_SELX_PORT_UNI_RCV_PACKETS)
 		ibp->z_unicast_rcv = pma.n_unicast_rcv;
 
-	अगर (p->counter_select & IB_PMA_SELX_PORT_MULTI_XMIT_PACKETS)
+	if (p->counter_select & IB_PMA_SELX_PORT_MULTI_XMIT_PACKETS)
 		ibp->z_multicast_xmit = pma.n_multicast_xmit;
 
-	अगर (p->counter_select & IB_PMA_SELX_PORT_MULTI_RCV_PACKETS)
+	if (p->counter_select & IB_PMA_SELX_PORT_MULTI_RCV_PACKETS)
 		ibp->z_multicast_rcv = pma.n_multicast_rcv;
 
-	वापस pma_get_portcounters_ext(pmp, ibdev, port);
-पूर्ण
+	return pma_get_portcounters_ext(pmp, ibdev, port);
+}
 
-अटल पूर्णांक process_subn(काष्ठा ib_device *ibdev, पूर्णांक mad_flags,
-			u8 port, स्थिर काष्ठा ib_mad *in_mad,
-			काष्ठा ib_mad *out_mad)
-अणु
-	काष्ठा ib_smp *smp = (काष्ठा ib_smp *)out_mad;
-	काष्ठा qib_ibport *ibp = to_iport(ibdev, port);
-	काष्ठा qib_pportdata *ppd = ppd_from_ibp(ibp);
-	पूर्णांक ret;
+static int process_subn(struct ib_device *ibdev, int mad_flags,
+			u8 port, const struct ib_mad *in_mad,
+			struct ib_mad *out_mad)
+{
+	struct ib_smp *smp = (struct ib_smp *)out_mad;
+	struct qib_ibport *ibp = to_iport(ibdev, port);
+	struct qib_pportdata *ppd = ppd_from_ibp(ibp);
+	int ret;
 
 	*out_mad = *in_mad;
-	अगर (smp->class_version != 1) अणु
+	if (smp->class_version != 1) {
 		smp->status |= IB_SMP_UNSUP_VERSION;
 		ret = reply(smp);
-		जाओ bail;
-	पूर्ण
+		goto bail;
+	}
 
 	ret = check_mkey(ibp, smp, mad_flags);
-	अगर (ret) अणु
+	if (ret) {
 		u32 port_num = be32_to_cpu(smp->attr_mod);
 
 		/*
-		 * If this is a get/set portinfo, we alपढ़ोy check the
-		 * M_Key अगर the MAD is क्रम another port and the M_Key
+		 * If this is a get/set portinfo, we already check the
+		 * M_Key if the MAD is for another port and the M_Key
 		 * is OK on the receiving port. This check is needed
 		 * to increment the error counters when the M_Key
 		 * fails to match on *both* ports.
 		 */
-		अगर (in_mad->mad_hdr.attr_id == IB_SMP_ATTR_PORT_INFO &&
+		if (in_mad->mad_hdr.attr_id == IB_SMP_ATTR_PORT_INFO &&
 		    (smp->method == IB_MGMT_METHOD_GET ||
 		     smp->method == IB_MGMT_METHOD_SET) &&
 		    port_num && port_num <= ibdev->phys_port_cnt &&
 		    port != port_num)
-			(व्योम) check_mkey(to_iport(ibdev, port_num), smp, 0);
+			(void) check_mkey(to_iport(ibdev, port_num), smp, 0);
 		ret = IB_MAD_RESULT_FAILURE;
-		जाओ bail;
-	पूर्ण
+		goto bail;
+	}
 
-	चयन (smp->method) अणु
-	हाल IB_MGMT_METHOD_GET:
-		चयन (smp->attr_id) अणु
-		हाल IB_SMP_ATTR_NODE_DESC:
+	switch (smp->method) {
+	case IB_MGMT_METHOD_GET:
+		switch (smp->attr_id) {
+		case IB_SMP_ATTR_NODE_DESC:
 			ret = subn_get_nodedescription(smp, ibdev);
-			जाओ bail;
-		हाल IB_SMP_ATTR_NODE_INFO:
+			goto bail;
+		case IB_SMP_ATTR_NODE_INFO:
 			ret = subn_get_nodeinfo(smp, ibdev, port);
-			जाओ bail;
-		हाल IB_SMP_ATTR_GUID_INFO:
+			goto bail;
+		case IB_SMP_ATTR_GUID_INFO:
 			ret = subn_get_guidinfo(smp, ibdev, port);
-			जाओ bail;
-		हाल IB_SMP_ATTR_PORT_INFO:
+			goto bail;
+		case IB_SMP_ATTR_PORT_INFO:
 			ret = subn_get_portinfo(smp, ibdev, port);
-			जाओ bail;
-		हाल IB_SMP_ATTR_PKEY_TABLE:
+			goto bail;
+		case IB_SMP_ATTR_PKEY_TABLE:
 			ret = subn_get_pkeytable(smp, ibdev, port);
-			जाओ bail;
-		हाल IB_SMP_ATTR_SL_TO_VL_TABLE:
+			goto bail;
+		case IB_SMP_ATTR_SL_TO_VL_TABLE:
 			ret = subn_get_sl_to_vl(smp, ibdev, port);
-			जाओ bail;
-		हाल IB_SMP_ATTR_VL_ARB_TABLE:
+			goto bail;
+		case IB_SMP_ATTR_VL_ARB_TABLE:
 			ret = subn_get_vl_arb(smp, ibdev, port);
-			जाओ bail;
-		हाल IB_SMP_ATTR_SM_INFO:
-			अगर (ibp->rvp.port_cap_flags & IB_PORT_SM_DISABLED) अणु
+			goto bail;
+		case IB_SMP_ATTR_SM_INFO:
+			if (ibp->rvp.port_cap_flags & IB_PORT_SM_DISABLED) {
 				ret = IB_MAD_RESULT_SUCCESS |
 					IB_MAD_RESULT_CONSUMED;
-				जाओ bail;
-			पूर्ण
-			अगर (ibp->rvp.port_cap_flags & IB_PORT_SM) अणु
+				goto bail;
+			}
+			if (ibp->rvp.port_cap_flags & IB_PORT_SM) {
 				ret = IB_MAD_RESULT_SUCCESS;
-				जाओ bail;
-			पूर्ण
+				goto bail;
+			}
 			fallthrough;
-		शेष:
+		default:
 			smp->status |= IB_SMP_UNSUP_METH_ATTR;
 			ret = reply(smp);
-			जाओ bail;
-		पूर्ण
+			goto bail;
+		}
 
-	हाल IB_MGMT_METHOD_SET:
-		चयन (smp->attr_id) अणु
-		हाल IB_SMP_ATTR_GUID_INFO:
+	case IB_MGMT_METHOD_SET:
+		switch (smp->attr_id) {
+		case IB_SMP_ATTR_GUID_INFO:
 			ret = subn_set_guidinfo(smp, ibdev, port);
-			जाओ bail;
-		हाल IB_SMP_ATTR_PORT_INFO:
+			goto bail;
+		case IB_SMP_ATTR_PORT_INFO:
 			ret = subn_set_portinfo(smp, ibdev, port);
-			जाओ bail;
-		हाल IB_SMP_ATTR_PKEY_TABLE:
+			goto bail;
+		case IB_SMP_ATTR_PKEY_TABLE:
 			ret = subn_set_pkeytable(smp, ibdev, port);
-			जाओ bail;
-		हाल IB_SMP_ATTR_SL_TO_VL_TABLE:
+			goto bail;
+		case IB_SMP_ATTR_SL_TO_VL_TABLE:
 			ret = subn_set_sl_to_vl(smp, ibdev, port);
-			जाओ bail;
-		हाल IB_SMP_ATTR_VL_ARB_TABLE:
+			goto bail;
+		case IB_SMP_ATTR_VL_ARB_TABLE:
 			ret = subn_set_vl_arb(smp, ibdev, port);
-			जाओ bail;
-		हाल IB_SMP_ATTR_SM_INFO:
-			अगर (ibp->rvp.port_cap_flags & IB_PORT_SM_DISABLED) अणु
+			goto bail;
+		case IB_SMP_ATTR_SM_INFO:
+			if (ibp->rvp.port_cap_flags & IB_PORT_SM_DISABLED) {
 				ret = IB_MAD_RESULT_SUCCESS |
 					IB_MAD_RESULT_CONSUMED;
-				जाओ bail;
-			पूर्ण
-			अगर (ibp->rvp.port_cap_flags & IB_PORT_SM) अणु
+				goto bail;
+			}
+			if (ibp->rvp.port_cap_flags & IB_PORT_SM) {
 				ret = IB_MAD_RESULT_SUCCESS;
-				जाओ bail;
-			पूर्ण
+				goto bail;
+			}
 			fallthrough;
-		शेष:
+		default:
 			smp->status |= IB_SMP_UNSUP_METH_ATTR;
 			ret = reply(smp);
-			जाओ bail;
-		पूर्ण
+			goto bail;
+		}
 
-	हाल IB_MGMT_METHOD_TRAP_REPRESS:
-		अगर (smp->attr_id == IB_SMP_ATTR_NOTICE)
+	case IB_MGMT_METHOD_TRAP_REPRESS:
+		if (smp->attr_id == IB_SMP_ATTR_NOTICE)
 			ret = subn_trap_repress(smp, ibdev, port);
-		अन्यथा अणु
+		else {
 			smp->status |= IB_SMP_UNSUP_METH_ATTR;
 			ret = reply(smp);
-		पूर्ण
-		जाओ bail;
+		}
+		goto bail;
 
-	हाल IB_MGMT_METHOD_TRAP:
-	हाल IB_MGMT_METHOD_REPORT:
-	हाल IB_MGMT_METHOD_REPORT_RESP:
-	हाल IB_MGMT_METHOD_GET_RESP:
+	case IB_MGMT_METHOD_TRAP:
+	case IB_MGMT_METHOD_REPORT:
+	case IB_MGMT_METHOD_REPORT_RESP:
+	case IB_MGMT_METHOD_GET_RESP:
 		/*
 		 * The ib_mad module will call us to process responses
-		 * beक्रमe checking क्रम other consumers.
+		 * before checking for other consumers.
 		 * Just tell the caller to process it normally.
 		 */
 		ret = IB_MAD_RESULT_SUCCESS;
-		जाओ bail;
+		goto bail;
 
-	हाल IB_MGMT_METHOD_SEND:
-		अगर (ib_get_smp_direction(smp) &&
-		    smp->attr_id == QIB_VENDOR_IPG) अणु
+	case IB_MGMT_METHOD_SEND:
+		if (ib_get_smp_direction(smp) &&
+		    smp->attr_id == QIB_VENDOR_IPG) {
 			ppd->dd->f_set_ib_cfg(ppd, QIB_IB_CFG_PORT,
 					      smp->data[0]);
 			ret = IB_MAD_RESULT_SUCCESS | IB_MAD_RESULT_CONSUMED;
-		पूर्ण अन्यथा
+		} else
 			ret = IB_MAD_RESULT_SUCCESS;
-		जाओ bail;
+		goto bail;
 
-	शेष:
+	default:
 		smp->status |= IB_SMP_UNSUP_METHOD;
 		ret = reply(smp);
-	पूर्ण
+	}
 
 bail:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक process_perf(काष्ठा ib_device *ibdev, u8 port,
-			स्थिर काष्ठा ib_mad *in_mad,
-			काष्ठा ib_mad *out_mad)
-अणु
-	काष्ठा ib_pma_mad *pmp = (काष्ठा ib_pma_mad *)out_mad;
-	पूर्णांक ret;
+static int process_perf(struct ib_device *ibdev, u8 port,
+			const struct ib_mad *in_mad,
+			struct ib_mad *out_mad)
+{
+	struct ib_pma_mad *pmp = (struct ib_pma_mad *)out_mad;
+	int ret;
 
 	*out_mad = *in_mad;
-	अगर (pmp->mad_hdr.class_version != 1) अणु
+	if (pmp->mad_hdr.class_version != 1) {
 		pmp->mad_hdr.status |= IB_SMP_UNSUP_VERSION;
-		ret = reply((काष्ठा ib_smp *) pmp);
-		जाओ bail;
-	पूर्ण
+		ret = reply((struct ib_smp *) pmp);
+		goto bail;
+	}
 
-	चयन (pmp->mad_hdr.method) अणु
-	हाल IB_MGMT_METHOD_GET:
-		चयन (pmp->mad_hdr.attr_id) अणु
-		हाल IB_PMA_CLASS_PORT_INFO:
+	switch (pmp->mad_hdr.method) {
+	case IB_MGMT_METHOD_GET:
+		switch (pmp->mad_hdr.attr_id) {
+		case IB_PMA_CLASS_PORT_INFO:
 			ret = pma_get_classportinfo(pmp, ibdev);
-			जाओ bail;
-		हाल IB_PMA_PORT_SAMPLES_CONTROL:
+			goto bail;
+		case IB_PMA_PORT_SAMPLES_CONTROL:
 			ret = pma_get_portsamplescontrol(pmp, ibdev, port);
-			जाओ bail;
-		हाल IB_PMA_PORT_SAMPLES_RESULT:
+			goto bail;
+		case IB_PMA_PORT_SAMPLES_RESULT:
 			ret = pma_get_portsamplesresult(pmp, ibdev, port);
-			जाओ bail;
-		हाल IB_PMA_PORT_SAMPLES_RESULT_EXT:
+			goto bail;
+		case IB_PMA_PORT_SAMPLES_RESULT_EXT:
 			ret = pma_get_portsamplesresult_ext(pmp, ibdev, port);
-			जाओ bail;
-		हाल IB_PMA_PORT_COUNTERS:
+			goto bail;
+		case IB_PMA_PORT_COUNTERS:
 			ret = pma_get_portcounters(pmp, ibdev, port);
-			जाओ bail;
-		हाल IB_PMA_PORT_COUNTERS_EXT:
+			goto bail;
+		case IB_PMA_PORT_COUNTERS_EXT:
 			ret = pma_get_portcounters_ext(pmp, ibdev, port);
-			जाओ bail;
-		हाल IB_PMA_PORT_COUNTERS_CONG:
+			goto bail;
+		case IB_PMA_PORT_COUNTERS_CONG:
 			ret = pma_get_portcounters_cong(pmp, ibdev, port);
-			जाओ bail;
-		शेष:
+			goto bail;
+		default:
 			pmp->mad_hdr.status |= IB_SMP_UNSUP_METH_ATTR;
-			ret = reply((काष्ठा ib_smp *) pmp);
-			जाओ bail;
-		पूर्ण
+			ret = reply((struct ib_smp *) pmp);
+			goto bail;
+		}
 
-	हाल IB_MGMT_METHOD_SET:
-		चयन (pmp->mad_hdr.attr_id) अणु
-		हाल IB_PMA_PORT_SAMPLES_CONTROL:
+	case IB_MGMT_METHOD_SET:
+		switch (pmp->mad_hdr.attr_id) {
+		case IB_PMA_PORT_SAMPLES_CONTROL:
 			ret = pma_set_portsamplescontrol(pmp, ibdev, port);
-			जाओ bail;
-		हाल IB_PMA_PORT_COUNTERS:
+			goto bail;
+		case IB_PMA_PORT_COUNTERS:
 			ret = pma_set_portcounters(pmp, ibdev, port);
-			जाओ bail;
-		हाल IB_PMA_PORT_COUNTERS_EXT:
+			goto bail;
+		case IB_PMA_PORT_COUNTERS_EXT:
 			ret = pma_set_portcounters_ext(pmp, ibdev, port);
-			जाओ bail;
-		हाल IB_PMA_PORT_COUNTERS_CONG:
+			goto bail;
+		case IB_PMA_PORT_COUNTERS_CONG:
 			ret = pma_set_portcounters_cong(pmp, ibdev, port);
-			जाओ bail;
-		शेष:
+			goto bail;
+		default:
 			pmp->mad_hdr.status |= IB_SMP_UNSUP_METH_ATTR;
-			ret = reply((काष्ठा ib_smp *) pmp);
-			जाओ bail;
-		पूर्ण
+			ret = reply((struct ib_smp *) pmp);
+			goto bail;
+		}
 
-	हाल IB_MGMT_METHOD_TRAP:
-	हाल IB_MGMT_METHOD_GET_RESP:
+	case IB_MGMT_METHOD_TRAP:
+	case IB_MGMT_METHOD_GET_RESP:
 		/*
 		 * The ib_mad module will call us to process responses
-		 * beक्रमe checking क्रम other consumers.
+		 * before checking for other consumers.
 		 * Just tell the caller to process it normally.
 		 */
 		ret = IB_MAD_RESULT_SUCCESS;
-		जाओ bail;
+		goto bail;
 
-	शेष:
+	default:
 		pmp->mad_hdr.status |= IB_SMP_UNSUP_METHOD;
-		ret = reply((काष्ठा ib_smp *) pmp);
-	पूर्ण
+		ret = reply((struct ib_smp *) pmp);
+	}
 
 bail:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक cc_get_classportinfo(काष्ठा ib_cc_mad *ccp,
-				काष्ठा ib_device *ibdev)
-अणु
-	काष्ठा ib_cc_classportinfo_attr *p =
-		(काष्ठा ib_cc_classportinfo_attr *)ccp->mgmt_data;
+static int cc_get_classportinfo(struct ib_cc_mad *ccp,
+				struct ib_device *ibdev)
+{
+	struct ib_cc_classportinfo_attr *p =
+		(struct ib_cc_classportinfo_attr *)ccp->mgmt_data;
 
 	p->base_version = 1;
 	p->class_version = 1;
 	p->cap_mask = 0;
 
 	/*
-	 * Expected response समय is 4.096 usec. * 2^18 == 1.073741824 sec.
+	 * Expected response time is 4.096 usec. * 2^18 == 1.073741824 sec.
 	 */
-	p->resp_समय_value = 18;
+	p->resp_time_value = 18;
 
-	वापस reply((काष्ठा ib_smp *) ccp);
-पूर्ण
+	return reply((struct ib_smp *) ccp);
+}
 
-अटल पूर्णांक cc_get_congestion_info(काष्ठा ib_cc_mad *ccp,
-				काष्ठा ib_device *ibdev, u8 port)
-अणु
-	काष्ठा ib_cc_info_attr *p =
-		(काष्ठा ib_cc_info_attr *)ccp->mgmt_data;
-	काष्ठा qib_ibport *ibp = to_iport(ibdev, port);
-	काष्ठा qib_pportdata *ppd = ppd_from_ibp(ibp);
+static int cc_get_congestion_info(struct ib_cc_mad *ccp,
+				struct ib_device *ibdev, u8 port)
+{
+	struct ib_cc_info_attr *p =
+		(struct ib_cc_info_attr *)ccp->mgmt_data;
+	struct qib_ibport *ibp = to_iport(ibdev, port);
+	struct qib_pportdata *ppd = ppd_from_ibp(ibp);
 
 	p->congestion_info = 0;
 	p->control_table_cap = ppd->cc_max_table_entries;
 
-	वापस reply((काष्ठा ib_smp *) ccp);
-पूर्ण
+	return reply((struct ib_smp *) ccp);
+}
 
-अटल पूर्णांक cc_get_congestion_setting(काष्ठा ib_cc_mad *ccp,
-				काष्ठा ib_device *ibdev, u8 port)
-अणु
-	पूर्णांक i;
-	काष्ठा ib_cc_congestion_setting_attr *p =
-		(काष्ठा ib_cc_congestion_setting_attr *)ccp->mgmt_data;
-	काष्ठा qib_ibport *ibp = to_iport(ibdev, port);
-	काष्ठा qib_pportdata *ppd = ppd_from_ibp(ibp);
-	काष्ठा ib_cc_congestion_entry_shaकरोw *entries;
+static int cc_get_congestion_setting(struct ib_cc_mad *ccp,
+				struct ib_device *ibdev, u8 port)
+{
+	int i;
+	struct ib_cc_congestion_setting_attr *p =
+		(struct ib_cc_congestion_setting_attr *)ccp->mgmt_data;
+	struct qib_ibport *ibp = to_iport(ibdev, port);
+	struct qib_pportdata *ppd = ppd_from_ibp(ibp);
+	struct ib_cc_congestion_entry_shadow *entries;
 
-	spin_lock(&ppd->cc_shaकरोw_lock);
+	spin_lock(&ppd->cc_shadow_lock);
 
-	entries = ppd->congestion_entries_shaकरोw->entries;
+	entries = ppd->congestion_entries_shadow->entries;
 	p->port_control = cpu_to_be16(
-		ppd->congestion_entries_shaकरोw->port_control);
+		ppd->congestion_entries_shadow->port_control);
 	p->control_map = cpu_to_be16(
-		ppd->congestion_entries_shaकरोw->control_map);
-	क्रम (i = 0; i < IB_CC_CCS_ENTRIES; i++) अणु
+		ppd->congestion_entries_shadow->control_map);
+	for (i = 0; i < IB_CC_CCS_ENTRIES; i++) {
 		p->entries[i].ccti_increase = entries[i].ccti_increase;
-		p->entries[i].ccti_समयr = cpu_to_be16(entries[i].ccti_समयr);
+		p->entries[i].ccti_timer = cpu_to_be16(entries[i].ccti_timer);
 		p->entries[i].trigger_threshold = entries[i].trigger_threshold;
 		p->entries[i].ccti_min = entries[i].ccti_min;
-	पूर्ण
+	}
 
-	spin_unlock(&ppd->cc_shaकरोw_lock);
+	spin_unlock(&ppd->cc_shadow_lock);
 
-	वापस reply((काष्ठा ib_smp *) ccp);
-पूर्ण
+	return reply((struct ib_smp *) ccp);
+}
 
-अटल पूर्णांक cc_get_congestion_control_table(काष्ठा ib_cc_mad *ccp,
-				काष्ठा ib_device *ibdev, u8 port)
-अणु
-	काष्ठा ib_cc_table_attr *p =
-		(काष्ठा ib_cc_table_attr *)ccp->mgmt_data;
-	काष्ठा qib_ibport *ibp = to_iport(ibdev, port);
-	काष्ठा qib_pportdata *ppd = ppd_from_ibp(ibp);
+static int cc_get_congestion_control_table(struct ib_cc_mad *ccp,
+				struct ib_device *ibdev, u8 port)
+{
+	struct ib_cc_table_attr *p =
+		(struct ib_cc_table_attr *)ccp->mgmt_data;
+	struct qib_ibport *ibp = to_iport(ibdev, port);
+	struct qib_pportdata *ppd = ppd_from_ibp(ibp);
 	u32 cct_block_index = be32_to_cpu(ccp->attr_mod);
 	u32 max_cct_block;
 	u32 cct_entry;
-	काष्ठा ib_cc_table_entry_shaकरोw *entries;
-	पूर्णांक i;
+	struct ib_cc_table_entry_shadow *entries;
+	int i;
 
 	/* Is the table index more than what is supported? */
-	अगर (cct_block_index > IB_CC_TABLE_CAP_DEFAULT - 1)
-		जाओ bail;
+	if (cct_block_index > IB_CC_TABLE_CAP_DEFAULT - 1)
+		goto bail;
 
-	spin_lock(&ppd->cc_shaकरोw_lock);
+	spin_lock(&ppd->cc_shadow_lock);
 
 	max_cct_block =
-		(ppd->ccti_entries_shaकरोw->ccti_last_entry + 1)/IB_CCT_ENTRIES;
+		(ppd->ccti_entries_shadow->ccti_last_entry + 1)/IB_CCT_ENTRIES;
 	max_cct_block = max_cct_block ? max_cct_block - 1 : 0;
 
-	अगर (cct_block_index > max_cct_block) अणु
-		spin_unlock(&ppd->cc_shaकरोw_lock);
-		जाओ bail;
-	पूर्ण
+	if (cct_block_index > max_cct_block) {
+		spin_unlock(&ppd->cc_shadow_lock);
+		goto bail;
+	}
 
 	ccp->attr_mod = cpu_to_be32(cct_block_index);
 
@@ -2190,69 +2189,69 @@ bail:
 
 	p->ccti_limit = cpu_to_be16(cct_entry);
 
-	entries = &ppd->ccti_entries_shaकरोw->
+	entries = &ppd->ccti_entries_shadow->
 			entries[IB_CCT_ENTRIES * cct_block_index];
 	cct_entry %= IB_CCT_ENTRIES;
 
-	क्रम (i = 0; i <= cct_entry; i++)
+	for (i = 0; i <= cct_entry; i++)
 		p->ccti_entries[i].entry = cpu_to_be16(entries[i].entry);
 
-	spin_unlock(&ppd->cc_shaकरोw_lock);
+	spin_unlock(&ppd->cc_shadow_lock);
 
-	वापस reply((काष्ठा ib_smp *) ccp);
+	return reply((struct ib_smp *) ccp);
 
 bail:
-	वापस reply_failure((काष्ठा ib_smp *) ccp);
-पूर्ण
+	return reply_failure((struct ib_smp *) ccp);
+}
 
-अटल पूर्णांक cc_set_congestion_setting(काष्ठा ib_cc_mad *ccp,
-				काष्ठा ib_device *ibdev, u8 port)
-अणु
-	काष्ठा ib_cc_congestion_setting_attr *p =
-		(काष्ठा ib_cc_congestion_setting_attr *)ccp->mgmt_data;
-	काष्ठा qib_ibport *ibp = to_iport(ibdev, port);
-	काष्ठा qib_pportdata *ppd = ppd_from_ibp(ibp);
-	पूर्णांक i;
+static int cc_set_congestion_setting(struct ib_cc_mad *ccp,
+				struct ib_device *ibdev, u8 port)
+{
+	struct ib_cc_congestion_setting_attr *p =
+		(struct ib_cc_congestion_setting_attr *)ccp->mgmt_data;
+	struct qib_ibport *ibp = to_iport(ibdev, port);
+	struct qib_pportdata *ppd = ppd_from_ibp(ibp);
+	int i;
 
 	ppd->cc_sl_control_map = be16_to_cpu(p->control_map);
 
-	क्रम (i = 0; i < IB_CC_CCS_ENTRIES; i++) अणु
+	for (i = 0; i < IB_CC_CCS_ENTRIES; i++) {
 		ppd->congestion_entries[i].ccti_increase =
 			p->entries[i].ccti_increase;
 
-		ppd->congestion_entries[i].ccti_समयr =
-			be16_to_cpu(p->entries[i].ccti_समयr);
+		ppd->congestion_entries[i].ccti_timer =
+			be16_to_cpu(p->entries[i].ccti_timer);
 
 		ppd->congestion_entries[i].trigger_threshold =
 			p->entries[i].trigger_threshold;
 
 		ppd->congestion_entries[i].ccti_min =
 			p->entries[i].ccti_min;
-	पूर्ण
+	}
 
-	वापस reply((काष्ठा ib_smp *) ccp);
-पूर्ण
+	return reply((struct ib_smp *) ccp);
+}
 
-अटल पूर्णांक cc_set_congestion_control_table(काष्ठा ib_cc_mad *ccp,
-				काष्ठा ib_device *ibdev, u8 port)
-अणु
-	काष्ठा ib_cc_table_attr *p =
-		(काष्ठा ib_cc_table_attr *)ccp->mgmt_data;
-	काष्ठा qib_ibport *ibp = to_iport(ibdev, port);
-	काष्ठा qib_pportdata *ppd = ppd_from_ibp(ibp);
+static int cc_set_congestion_control_table(struct ib_cc_mad *ccp,
+				struct ib_device *ibdev, u8 port)
+{
+	struct ib_cc_table_attr *p =
+		(struct ib_cc_table_attr *)ccp->mgmt_data;
+	struct qib_ibport *ibp = to_iport(ibdev, port);
+	struct qib_pportdata *ppd = ppd_from_ibp(ibp);
 	u32 cct_block_index = be32_to_cpu(ccp->attr_mod);
 	u32 cct_entry;
-	काष्ठा ib_cc_table_entry_shaकरोw *entries;
-	पूर्णांक i;
+	struct ib_cc_table_entry_shadow *entries;
+	int i;
 
 	/* Is the table index more than what is supported? */
-	अगर (cct_block_index > IB_CC_TABLE_CAP_DEFAULT - 1)
-		जाओ bail;
+	if (cct_block_index > IB_CC_TABLE_CAP_DEFAULT - 1)
+		goto bail;
 
 	/* If this packet is the first in the sequence then
 	 * zero the total table entry count.
 	 */
-	अगर (be16_to_cpu(p->ccti_limit) < IB_CCT_ENTRIES)
+	if (be16_to_cpu(p->ccti_limit) < IB_CCT_ENTRIES)
 		ppd->total_cct_entry = 0;
 
 	cct_entry = (be16_to_cpu(p->ccti_limit))%IB_CCT_ENTRIES;
@@ -2260,191 +2259,191 @@ bail:
 	/* ccti_limit is 0 to 63 */
 	ppd->total_cct_entry += (cct_entry + 1);
 
-	अगर (ppd->total_cct_entry > ppd->cc_supported_table_entries)
-		जाओ bail;
+	if (ppd->total_cct_entry > ppd->cc_supported_table_entries)
+		goto bail;
 
 	ppd->ccti_limit = be16_to_cpu(p->ccti_limit);
 
 	entries = ppd->ccti_entries + (IB_CCT_ENTRIES * cct_block_index);
 
-	क्रम (i = 0; i <= cct_entry; i++)
+	for (i = 0; i <= cct_entry; i++)
 		entries[i].entry = be16_to_cpu(p->ccti_entries[i].entry);
 
-	spin_lock(&ppd->cc_shaकरोw_lock);
+	spin_lock(&ppd->cc_shadow_lock);
 
-	ppd->ccti_entries_shaकरोw->ccti_last_entry = ppd->total_cct_entry - 1;
-	स_नकल(ppd->ccti_entries_shaकरोw->entries, ppd->ccti_entries,
-		(ppd->total_cct_entry * माप(काष्ठा ib_cc_table_entry)));
+	ppd->ccti_entries_shadow->ccti_last_entry = ppd->total_cct_entry - 1;
+	memcpy(ppd->ccti_entries_shadow->entries, ppd->ccti_entries,
+		(ppd->total_cct_entry * sizeof(struct ib_cc_table_entry)));
 
-	ppd->congestion_entries_shaकरोw->port_control = IB_CC_CCS_PC_SL_BASED;
-	ppd->congestion_entries_shaकरोw->control_map = ppd->cc_sl_control_map;
-	स_नकल(ppd->congestion_entries_shaकरोw->entries, ppd->congestion_entries,
-		IB_CC_CCS_ENTRIES * माप(काष्ठा ib_cc_congestion_entry));
+	ppd->congestion_entries_shadow->port_control = IB_CC_CCS_PC_SL_BASED;
+	ppd->congestion_entries_shadow->control_map = ppd->cc_sl_control_map;
+	memcpy(ppd->congestion_entries_shadow->entries, ppd->congestion_entries,
+		IB_CC_CCS_ENTRIES * sizeof(struct ib_cc_congestion_entry));
 
-	spin_unlock(&ppd->cc_shaकरोw_lock);
+	spin_unlock(&ppd->cc_shadow_lock);
 
-	वापस reply((काष्ठा ib_smp *) ccp);
+	return reply((struct ib_smp *) ccp);
 
 bail:
-	वापस reply_failure((काष्ठा ib_smp *) ccp);
-पूर्ण
+	return reply_failure((struct ib_smp *) ccp);
+}
 
-अटल पूर्णांक process_cc(काष्ठा ib_device *ibdev, पूर्णांक mad_flags,
-			u8 port, स्थिर काष्ठा ib_mad *in_mad,
-			काष्ठा ib_mad *out_mad)
-अणु
-	काष्ठा ib_cc_mad *ccp = (काष्ठा ib_cc_mad *)out_mad;
+static int process_cc(struct ib_device *ibdev, int mad_flags,
+			u8 port, const struct ib_mad *in_mad,
+			struct ib_mad *out_mad)
+{
+	struct ib_cc_mad *ccp = (struct ib_cc_mad *)out_mad;
 	*out_mad = *in_mad;
 
-	अगर (ccp->class_version != 2) अणु
+	if (ccp->class_version != 2) {
 		ccp->status |= IB_SMP_UNSUP_VERSION;
-		वापस reply((काष्ठा ib_smp *)ccp);
-	पूर्ण
+		return reply((struct ib_smp *)ccp);
+	}
 
-	चयन (ccp->method) अणु
-	हाल IB_MGMT_METHOD_GET:
-		चयन (ccp->attr_id) अणु
-		हाल IB_CC_ATTR_CLASSPORTINFO:
-			वापस cc_get_classportinfo(ccp, ibdev);
-		हाल IB_CC_ATTR_CONGESTION_INFO:
-			वापस cc_get_congestion_info(ccp, ibdev, port);
-		हाल IB_CC_ATTR_CA_CONGESTION_SETTING:
-			वापस cc_get_congestion_setting(ccp, ibdev, port);
-		हाल IB_CC_ATTR_CONGESTION_CONTROL_TABLE:
-			वापस cc_get_congestion_control_table(ccp, ibdev, port);
-		शेष:
+	switch (ccp->method) {
+	case IB_MGMT_METHOD_GET:
+		switch (ccp->attr_id) {
+		case IB_CC_ATTR_CLASSPORTINFO:
+			return cc_get_classportinfo(ccp, ibdev);
+		case IB_CC_ATTR_CONGESTION_INFO:
+			return cc_get_congestion_info(ccp, ibdev, port);
+		case IB_CC_ATTR_CA_CONGESTION_SETTING:
+			return cc_get_congestion_setting(ccp, ibdev, port);
+		case IB_CC_ATTR_CONGESTION_CONTROL_TABLE:
+			return cc_get_congestion_control_table(ccp, ibdev, port);
+		default:
 			ccp->status |= IB_SMP_UNSUP_METH_ATTR;
-			वापस reply((काष्ठा ib_smp *) ccp);
-		पूर्ण
-	हाल IB_MGMT_METHOD_SET:
-		चयन (ccp->attr_id) अणु
-		हाल IB_CC_ATTR_CA_CONGESTION_SETTING:
-			वापस cc_set_congestion_setting(ccp, ibdev, port);
-		हाल IB_CC_ATTR_CONGESTION_CONTROL_TABLE:
-			वापस cc_set_congestion_control_table(ccp, ibdev, port);
-		शेष:
+			return reply((struct ib_smp *) ccp);
+		}
+	case IB_MGMT_METHOD_SET:
+		switch (ccp->attr_id) {
+		case IB_CC_ATTR_CA_CONGESTION_SETTING:
+			return cc_set_congestion_setting(ccp, ibdev, port);
+		case IB_CC_ATTR_CONGESTION_CONTROL_TABLE:
+			return cc_set_congestion_control_table(ccp, ibdev, port);
+		default:
 			ccp->status |= IB_SMP_UNSUP_METH_ATTR;
-			वापस reply((काष्ठा ib_smp *) ccp);
-		पूर्ण
-	हाल IB_MGMT_METHOD_GET_RESP:
+			return reply((struct ib_smp *) ccp);
+		}
+	case IB_MGMT_METHOD_GET_RESP:
 		/*
 		 * The ib_mad module will call us to process responses
-		 * beक्रमe checking क्रम other consumers.
+		 * before checking for other consumers.
 		 * Just tell the caller to process it normally.
 		 */
-		वापस IB_MAD_RESULT_SUCCESS;
-	पूर्ण
+		return IB_MAD_RESULT_SUCCESS;
+	}
 
 	/* method is unsupported */
 	ccp->status |= IB_SMP_UNSUP_METHOD;
-	वापस reply((काष्ठा ib_smp *) ccp);
-पूर्ण
+	return reply((struct ib_smp *) ccp);
+}
 
 /**
  * qib_process_mad - process an incoming MAD packet
  * @ibdev: the infiniband device this packet came in on
  * @mad_flags: MAD flags
  * @port: the port number this packet came in on
- * @in_wc: the work completion entry क्रम this packet
- * @in_grh: the global route header क्रम this packet
+ * @in_wc: the work completion entry for this packet
+ * @in_grh: the global route header for this packet
  * @in: the incoming MAD
  * @out: any outgoing MAD reply
  * @out_mad_size: size of the outgoing MAD reply
  * @out_mad_pkey_index: unused
  *
- * Returns IB_MAD_RESULT_SUCCESS अगर this is a MAD that we are not
- * पूर्णांकerested in processing.
+ * Returns IB_MAD_RESULT_SUCCESS if this is a MAD that we are not
+ * interested in processing.
  *
- * Note that the verbs framework has alपढ़ोy करोne the MAD sanity checks,
- * and hop count/poपूर्णांकer updating क्रम IB_MGMT_CLASS_SUBN_सूचीECTED_ROUTE
+ * Note that the verbs framework has already done the MAD sanity checks,
+ * and hop count/pointer updating for IB_MGMT_CLASS_SUBN_DIRECTED_ROUTE
  * MADs.
  *
  * This is called by the ib_mad module.
  */
-पूर्णांक qib_process_mad(काष्ठा ib_device *ibdev, पूर्णांक mad_flags, u32 port,
-		    स्थिर काष्ठा ib_wc *in_wc, स्थिर काष्ठा ib_grh *in_grh,
-		    स्थिर काष्ठा ib_mad *in, काष्ठा ib_mad *out,
-		    माप_प्रकार *out_mad_size, u16 *out_mad_pkey_index)
-अणु
-	पूर्णांक ret;
-	काष्ठा qib_ibport *ibp = to_iport(ibdev, port);
-	काष्ठा qib_pportdata *ppd = ppd_from_ibp(ibp);
+int qib_process_mad(struct ib_device *ibdev, int mad_flags, u32 port,
+		    const struct ib_wc *in_wc, const struct ib_grh *in_grh,
+		    const struct ib_mad *in, struct ib_mad *out,
+		    size_t *out_mad_size, u16 *out_mad_pkey_index)
+{
+	int ret;
+	struct qib_ibport *ibp = to_iport(ibdev, port);
+	struct qib_pportdata *ppd = ppd_from_ibp(ibp);
 
-	चयन (in->mad_hdr.mgmt_class) अणु
-	हाल IB_MGMT_CLASS_SUBN_सूचीECTED_ROUTE:
-	हाल IB_MGMT_CLASS_SUBN_LID_ROUTED:
+	switch (in->mad_hdr.mgmt_class) {
+	case IB_MGMT_CLASS_SUBN_DIRECTED_ROUTE:
+	case IB_MGMT_CLASS_SUBN_LID_ROUTED:
 		ret = process_subn(ibdev, mad_flags, port, in, out);
-		जाओ bail;
+		goto bail;
 
-	हाल IB_MGMT_CLASS_PERF_MGMT:
+	case IB_MGMT_CLASS_PERF_MGMT:
 		ret = process_perf(ibdev, port, in, out);
-		जाओ bail;
+		goto bail;
 
-	हाल IB_MGMT_CLASS_CONG_MGMT:
-		अगर (!ppd->congestion_entries_shaकरोw ||
-			 !qib_cc_table_size) अणु
+	case IB_MGMT_CLASS_CONG_MGMT:
+		if (!ppd->congestion_entries_shadow ||
+			 !qib_cc_table_size) {
 			ret = IB_MAD_RESULT_SUCCESS;
-			जाओ bail;
-		पूर्ण
+			goto bail;
+		}
 		ret = process_cc(ibdev, mad_flags, port, in, out);
-		जाओ bail;
+		goto bail;
 
-	शेष:
+	default:
 		ret = IB_MAD_RESULT_SUCCESS;
-	पूर्ण
+	}
 
 bail:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम xmit_रुको_समयr_func(काष्ठा समयr_list *t)
-अणु
-	काष्ठा qib_pportdata *ppd = from_समयr(ppd, t, cong_stats.समयr);
-	काष्ठा qib_devdata *dd = dd_from_ppd(ppd);
-	अचिन्हित दीर्घ flags;
+static void xmit_wait_timer_func(struct timer_list *t)
+{
+	struct qib_pportdata *ppd = from_timer(ppd, t, cong_stats.timer);
+	struct qib_devdata *dd = dd_from_ppd(ppd);
+	unsigned long flags;
 	u8 status;
 
 	spin_lock_irqsave(&ppd->ibport_data.rvp.lock, flags);
-	अगर (ppd->cong_stats.flags == IB_PMA_CONG_HW_CONTROL_SAMPLE) अणु
+	if (ppd->cong_stats.flags == IB_PMA_CONG_HW_CONTROL_SAMPLE) {
 		status = dd->f_portcntr(ppd, QIBPORTCNTR_PSSTAT);
-		अगर (status == IB_PMA_SAMPLE_STATUS_DONE) अणु
+		if (status == IB_PMA_SAMPLE_STATUS_DONE) {
 			/* save counter cache */
 			cache_hw_sample_counters(ppd);
 			ppd->cong_stats.flags = IB_PMA_CONG_HW_CONTROL_TIMER;
-		पूर्ण अन्यथा
-			जाओ करोne;
-	पूर्ण
-	ppd->cong_stats.counter = xmit_रुको_get_value_delta(ppd);
+		} else
+			goto done;
+	}
+	ppd->cong_stats.counter = xmit_wait_get_value_delta(ppd);
 	dd->f_set_cntr_sample(ppd, QIB_CONG_TIMER_PSINTERVAL, 0x0);
-करोne:
+done:
 	spin_unlock_irqrestore(&ppd->ibport_data.rvp.lock, flags);
-	mod_समयr(&ppd->cong_stats.समयr, jअगरfies + HZ);
-पूर्ण
+	mod_timer(&ppd->cong_stats.timer, jiffies + HZ);
+}
 
-व्योम qib_notअगरy_create_mad_agent(काष्ठा rvt_dev_info *rdi, पूर्णांक port_idx)
-अणु
-	काष्ठा qib_ibdev *ibdev = container_of(rdi, काष्ठा qib_ibdev, rdi);
-	काष्ठा qib_devdata *dd = container_of(ibdev,
-					      काष्ठा qib_devdata, verbs_dev);
+void qib_notify_create_mad_agent(struct rvt_dev_info *rdi, int port_idx)
+{
+	struct qib_ibdev *ibdev = container_of(rdi, struct qib_ibdev, rdi);
+	struct qib_devdata *dd = container_of(ibdev,
+					      struct qib_devdata, verbs_dev);
 
-	/* Initialize xmit_रुको काष्ठाure */
+	/* Initialize xmit_wait structure */
 	dd->pport[port_idx].cong_stats.counter = 0;
-	समयr_setup(&dd->pport[port_idx].cong_stats.समयr,
-		    xmit_रुको_समयr_func, 0);
-	dd->pport[port_idx].cong_stats.समयr.expires = 0;
-	add_समयr(&dd->pport[port_idx].cong_stats.समयr);
-पूर्ण
+	timer_setup(&dd->pport[port_idx].cong_stats.timer,
+		    xmit_wait_timer_func, 0);
+	dd->pport[port_idx].cong_stats.timer.expires = 0;
+	add_timer(&dd->pport[port_idx].cong_stats.timer);
+}
 
-व्योम qib_notअगरy_मुक्त_mad_agent(काष्ठा rvt_dev_info *rdi, पूर्णांक port_idx)
-अणु
-	काष्ठा qib_ibdev *ibdev = container_of(rdi, काष्ठा qib_ibdev, rdi);
-	काष्ठा qib_devdata *dd = container_of(ibdev,
-					      काष्ठा qib_devdata, verbs_dev);
+void qib_notify_free_mad_agent(struct rvt_dev_info *rdi, int port_idx)
+{
+	struct qib_ibdev *ibdev = container_of(rdi, struct qib_ibdev, rdi);
+	struct qib_devdata *dd = container_of(ibdev,
+					      struct qib_devdata, verbs_dev);
 
-	अगर (dd->pport[port_idx].cong_stats.समयr.function)
-		del_समयr_sync(&dd->pport[port_idx].cong_stats.समयr);
+	if (dd->pport[port_idx].cong_stats.timer.function)
+		del_timer_sync(&dd->pport[port_idx].cong_stats.timer);
 
-	अगर (dd->pport[port_idx].ibport_data.smi_ah)
+	if (dd->pport[port_idx].ibport_data.smi_ah)
 		rdma_destroy_ah(&dd->pport[port_idx].ibport_data.smi_ah->ibah,
 				RDMA_DESTROY_AH_SLEEPABLE);
-पूर्ण
+}

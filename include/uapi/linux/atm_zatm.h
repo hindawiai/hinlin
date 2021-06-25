@@ -1,48 +1,47 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
-/* aपंचांग_zaपंचांग.h - Driver-specअगरic declarations of the ZATM driver (क्रम use by
-		driver-specअगरic utilities) */
+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+/* atm_zatm.h - Driver-specific declarations of the ZATM driver (for use by
+		driver-specific utilities) */
 
 /* Written 1995-1999 by Werner Almesberger, EPFL LRC/ICA */
 
 
-#अगर_अघोषित LINUX_ATM_ZATM_H
-#घोषणा LINUX_ATM_ZATM_H
+#ifndef LINUX_ATM_ZATM_H
+#define LINUX_ATM_ZATM_H
 
 /*
  * Note: non-kernel programs including this file must also include
- * sys/types.h क्रम काष्ठा समयval
+ * sys/types.h for struct timeval
  */
 
-#समावेश <linux/aपंचांगapi.h>
-#समावेश <linux/aपंचांगioc.h>
+#include <linux/atmapi.h>
+#include <linux/atmioc.h>
 
-#घोषणा ZATM_GETPOOL	_IOW('a',ATMIOC_SARPRV+1,काष्ठा aपंचांगअगर_sioc)
+#define ZATM_GETPOOL	_IOW('a',ATMIOC_SARPRV+1,struct atmif_sioc)
 						/* get pool statistics */
-#घोषणा ZATM_GETPOOLZ	_IOW('a',ATMIOC_SARPRV+2,काष्ठा aपंचांगअगर_sioc)
+#define ZATM_GETPOOLZ	_IOW('a',ATMIOC_SARPRV+2,struct atmif_sioc)
 						/* get statistics and zero */
-#घोषणा ZATM_SETPOOL	_IOW('a',ATMIOC_SARPRV+3,काष्ठा aपंचांगअगर_sioc)
+#define ZATM_SETPOOL	_IOW('a',ATMIOC_SARPRV+3,struct atmif_sioc)
 						/* set pool parameters */
 
-काष्ठा zaपंचांग_pool_info अणु
-	पूर्णांक ref_count;			/* मुक्त buffer pool usage counters */
-	पूर्णांक low_water,high_water;	/* refill parameters */
-	पूर्णांक rqa_count,rqu_count;	/* queue condition counters */
-	पूर्णांक offset,next_off;		/* alignment optimizations: offset */
-	पूर्णांक next_cnt,next_thres;	/* repetition counter and threshold */
-पूर्ण;
+struct zatm_pool_info {
+	int ref_count;			/* free buffer pool usage counters */
+	int low_water,high_water;	/* refill parameters */
+	int rqa_count,rqu_count;	/* queue condition counters */
+	int offset,next_off;		/* alignment optimizations: offset */
+	int next_cnt,next_thres;	/* repetition counter and threshold */
+};
 
-काष्ठा zaपंचांग_pool_req अणु
-	पूर्णांक pool_num;			/* pool number */
-	काष्ठा zaपंचांग_pool_info info;	/* actual inक्रमmation */
-पूर्ण;
+struct zatm_pool_req {
+	int pool_num;			/* pool number */
+	struct zatm_pool_info info;	/* actual information */
+};
 
-#घोषणा ZATM_OAM_POOL		0	/* मुक्त buffer pool क्रम OAM cells */
-#घोषणा ZATM_AAL0_POOL		1	/* मुक्त buffer pool क्रम AAL0 cells */
-#घोषणा ZATM_AAL5_POOL_BASE	2	/* first AAL5 मुक्त buffer pool */
-#घोषणा ZATM_LAST_POOL	ZATM_AAL5_POOL_BASE+10 /* max. 64 kB */
+#define ZATM_OAM_POOL		0	/* free buffer pool for OAM cells */
+#define ZATM_AAL0_POOL		1	/* free buffer pool for AAL0 cells */
+#define ZATM_AAL5_POOL_BASE	2	/* first AAL5 free buffer pool */
+#define ZATM_LAST_POOL	ZATM_AAL5_POOL_BASE+10 /* max. 64 kB */
 
-#घोषणा ZATM_TIMER_HISTORY_SIZE	16	/* number of समयr adjusपंचांगents to
+#define ZATM_TIMER_HISTORY_SIZE	16	/* number of timer adjustments to
 					   record; must be 2^n */
 
-#पूर्ण_अगर
+#endif

@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  *  Copyright IBM Corp. 2001, 2018
  *  Author(s): Robert Burroughs
@@ -8,423 +7,423 @@
  *  Hotplug & misc device support: Jochen Roehrig (roehrig@de.ibm.com)
  *  Major cleanup & driver split: Martin Schwidefsky <schwidefsky@de.ibm.com>
  *				  Ralph Wuerthner <rwuerthn@de.ibm.com>
- *  MSGTYPE reकाष्ठा:		  Holger Dengler <hd@linux.vnet.ibm.com>
+ *  MSGTYPE restruct:		  Holger Dengler <hd@linux.vnet.ibm.com>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/init.h>
-#समावेश <linux/err.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/atomic.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/mod_devicetable.h>
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/err.h>
+#include <linux/delay.h>
+#include <linux/slab.h>
+#include <linux/atomic.h>
+#include <linux/uaccess.h>
+#include <linux/mod_devicetable.h>
 
-#समावेश "ap_bus.h"
-#समावेश "zcrypt_api.h"
-#समावेश "zcrypt_error.h"
-#समावेश "zcrypt_msgtype6.h"
-#समावेश "zcrypt_cex2c.h"
-#समावेश "zcrypt_cca_key.h"
-#समावेश "zcrypt_ccamisc.h"
+#include "ap_bus.h"
+#include "zcrypt_api.h"
+#include "zcrypt_error.h"
+#include "zcrypt_msgtype6.h"
+#include "zcrypt_cex2c.h"
+#include "zcrypt_cca_key.h"
+#include "zcrypt_ccamisc.h"
 
-#घोषणा CEX2C_MIN_MOD_SIZE	 16	/*  128 bits	*/
-#घोषणा CEX2C_MAX_MOD_SIZE	256	/* 2048 bits	*/
-#घोषणा CEX3C_MIN_MOD_SIZE	 16	/*  128 bits	*/
-#घोषणा CEX3C_MAX_MOD_SIZE	512	/* 4096 bits	*/
-#घोषणा CEX2C_MAX_XCRB_MESSAGE_SIZE (12*1024)
-#घोषणा CEX2C_CLEANUP_TIME	(15*HZ)
+#define CEX2C_MIN_MOD_SIZE	 16	/*  128 bits	*/
+#define CEX2C_MAX_MOD_SIZE	256	/* 2048 bits	*/
+#define CEX3C_MIN_MOD_SIZE	 16	/*  128 bits	*/
+#define CEX3C_MAX_MOD_SIZE	512	/* 4096 bits	*/
+#define CEX2C_MAX_XCRB_MESSAGE_SIZE (12*1024)
+#define CEX2C_CLEANUP_TIME	(15*HZ)
 
 MODULE_AUTHOR("IBM Corporation");
 MODULE_DESCRIPTION("CEX2C/CEX3C Cryptographic Coprocessor device driver, " \
 		   "Copyright IBM Corp. 2001, 2018");
 MODULE_LICENSE("GPL");
 
-अटल काष्ठा ap_device_id zcrypt_cex2c_card_ids[] = अणु
-	अणु .dev_type = AP_DEVICE_TYPE_CEX2C,
-	  .match_flags = AP_DEVICE_ID_MATCH_CARD_TYPE पूर्ण,
-	अणु .dev_type = AP_DEVICE_TYPE_CEX3C,
-	  .match_flags = AP_DEVICE_ID_MATCH_CARD_TYPE पूर्ण,
-	अणु /* end of list */ पूर्ण,
-पूर्ण;
+static struct ap_device_id zcrypt_cex2c_card_ids[] = {
+	{ .dev_type = AP_DEVICE_TYPE_CEX2C,
+	  .match_flags = AP_DEVICE_ID_MATCH_CARD_TYPE },
+	{ .dev_type = AP_DEVICE_TYPE_CEX3C,
+	  .match_flags = AP_DEVICE_ID_MATCH_CARD_TYPE },
+	{ /* end of list */ },
+};
 
 MODULE_DEVICE_TABLE(ap, zcrypt_cex2c_card_ids);
 
-अटल काष्ठा ap_device_id zcrypt_cex2c_queue_ids[] = अणु
-	अणु .dev_type = AP_DEVICE_TYPE_CEX2C,
-	  .match_flags = AP_DEVICE_ID_MATCH_QUEUE_TYPE पूर्ण,
-	अणु .dev_type = AP_DEVICE_TYPE_CEX3C,
-	  .match_flags = AP_DEVICE_ID_MATCH_QUEUE_TYPE पूर्ण,
-	अणु /* end of list */ पूर्ण,
-पूर्ण;
+static struct ap_device_id zcrypt_cex2c_queue_ids[] = {
+	{ .dev_type = AP_DEVICE_TYPE_CEX2C,
+	  .match_flags = AP_DEVICE_ID_MATCH_QUEUE_TYPE },
+	{ .dev_type = AP_DEVICE_TYPE_CEX3C,
+	  .match_flags = AP_DEVICE_ID_MATCH_QUEUE_TYPE },
+	{ /* end of list */ },
+};
 
 MODULE_DEVICE_TABLE(ap, zcrypt_cex2c_queue_ids);
 
 /*
  * CCA card additional device attributes
  */
-अटल sमाप_प्रकार cca_serialnr_show(काष्ठा device *dev,
-				 काष्ठा device_attribute *attr,
-				 अक्षर *buf)
-अणु
-	काष्ठा cca_info ci;
-	काष्ठा ap_card *ac = to_ap_card(dev);
-	काष्ठा zcrypt_card *zc = ac->निजी;
+static ssize_t cca_serialnr_show(struct device *dev,
+				 struct device_attribute *attr,
+				 char *buf)
+{
+	struct cca_info ci;
+	struct ap_card *ac = to_ap_card(dev);
+	struct zcrypt_card *zc = ac->private;
 
-	स_रखो(&ci, 0, माप(ci));
+	memset(&ci, 0, sizeof(ci));
 
-	अगर (ap_करोमुख्य_index >= 0)
-		cca_get_info(ac->id, ap_करोमुख्य_index, &ci, zc->online);
+	if (ap_domain_index >= 0)
+		cca_get_info(ac->id, ap_domain_index, &ci, zc->online);
 
-	वापस scnम_लिखो(buf, PAGE_SIZE, "%s\n", ci.serial);
-पूर्ण
+	return scnprintf(buf, PAGE_SIZE, "%s\n", ci.serial);
+}
 
-अटल काष्ठा device_attribute dev_attr_cca_serialnr =
-	__ATTR(serialnr, 0444, cca_serialnr_show, शून्य);
+static struct device_attribute dev_attr_cca_serialnr =
+	__ATTR(serialnr, 0444, cca_serialnr_show, NULL);
 
-अटल काष्ठा attribute *cca_card_attrs[] = अणु
+static struct attribute *cca_card_attrs[] = {
 	&dev_attr_cca_serialnr.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल स्थिर काष्ठा attribute_group cca_card_attr_grp = अणु
+static const struct attribute_group cca_card_attr_grp = {
 	.attrs = cca_card_attrs,
-पूर्ण;
+};
 
  /*
   * CCA queue additional device attributes
   */
-अटल sमाप_प्रकार cca_mkvps_show(काष्ठा device *dev,
-			      काष्ठा device_attribute *attr,
-			      अक्षर *buf)
-अणु
-	पूर्णांक n = 0;
-	काष्ठा cca_info ci;
-	काष्ठा zcrypt_queue *zq = to_ap_queue(dev)->निजी;
-	अटल स्थिर अक्षर * स्थिर cao_state[] = अणु "invalid", "valid" पूर्ण;
-	अटल स्थिर अक्षर * स्थिर new_state[] = अणु "empty", "partial", "full" पूर्ण;
+static ssize_t cca_mkvps_show(struct device *dev,
+			      struct device_attribute *attr,
+			      char *buf)
+{
+	int n = 0;
+	struct cca_info ci;
+	struct zcrypt_queue *zq = to_ap_queue(dev)->private;
+	static const char * const cao_state[] = { "invalid", "valid" };
+	static const char * const new_state[] = { "empty", "partial", "full" };
 
-	स_रखो(&ci, 0, माप(ci));
+	memset(&ci, 0, sizeof(ci));
 
 	cca_get_info(AP_QID_CARD(zq->queue->qid),
 		     AP_QID_QUEUE(zq->queue->qid),
 		     &ci, zq->online);
 
-	अगर (ci.new_aes_mk_state >= '1' && ci.new_aes_mk_state <= '3')
-		n = scnम_लिखो(buf, PAGE_SIZE, "AES NEW: %s 0x%016llx\n",
+	if (ci.new_aes_mk_state >= '1' && ci.new_aes_mk_state <= '3')
+		n = scnprintf(buf, PAGE_SIZE, "AES NEW: %s 0x%016llx\n",
 			      new_state[ci.new_aes_mk_state - '1'],
 			      ci.new_aes_mkvp);
-	अन्यथा
-		n = scnम_लिखो(buf, PAGE_SIZE, "AES NEW: - -\n");
+	else
+		n = scnprintf(buf, PAGE_SIZE, "AES NEW: - -\n");
 
-	अगर (ci.cur_aes_mk_state >= '1' && ci.cur_aes_mk_state <= '2')
-		n += scnम_लिखो(buf + n, PAGE_SIZE - n,
+	if (ci.cur_aes_mk_state >= '1' && ci.cur_aes_mk_state <= '2')
+		n += scnprintf(buf + n, PAGE_SIZE - n,
 			       "AES CUR: %s 0x%016llx\n",
 			       cao_state[ci.cur_aes_mk_state - '1'],
 			       ci.cur_aes_mkvp);
-	अन्यथा
-		n += scnम_लिखो(buf + n, PAGE_SIZE - n, "AES CUR: - -\n");
+	else
+		n += scnprintf(buf + n, PAGE_SIZE - n, "AES CUR: - -\n");
 
-	अगर (ci.old_aes_mk_state >= '1' && ci.old_aes_mk_state <= '2')
-		n += scnम_लिखो(buf + n, PAGE_SIZE - n,
+	if (ci.old_aes_mk_state >= '1' && ci.old_aes_mk_state <= '2')
+		n += scnprintf(buf + n, PAGE_SIZE - n,
 			       "AES OLD: %s 0x%016llx\n",
 			       cao_state[ci.old_aes_mk_state - '1'],
 			       ci.old_aes_mkvp);
-	अन्यथा
-		n += scnम_लिखो(buf + n, PAGE_SIZE - n, "AES OLD: - -\n");
+	else
+		n += scnprintf(buf + n, PAGE_SIZE - n, "AES OLD: - -\n");
 
-	अगर (ci.new_apka_mk_state >= '1' && ci.new_apka_mk_state <= '3')
-		n += scnम_लिखो(buf + n, PAGE_SIZE - n,
+	if (ci.new_apka_mk_state >= '1' && ci.new_apka_mk_state <= '3')
+		n += scnprintf(buf + n, PAGE_SIZE - n,
 			       "APKA NEW: %s 0x%016llx\n",
 			       new_state[ci.new_apka_mk_state - '1'],
 			       ci.new_apka_mkvp);
-	अन्यथा
-		n += scnम_लिखो(buf + n, PAGE_SIZE - n, "APKA NEW: - -\n");
+	else
+		n += scnprintf(buf + n, PAGE_SIZE - n, "APKA NEW: - -\n");
 
-	अगर (ci.cur_apka_mk_state >= '1' && ci.cur_apka_mk_state <= '2')
-		n += scnम_लिखो(buf + n, PAGE_SIZE - n,
+	if (ci.cur_apka_mk_state >= '1' && ci.cur_apka_mk_state <= '2')
+		n += scnprintf(buf + n, PAGE_SIZE - n,
 			       "APKA CUR: %s 0x%016llx\n",
 			       cao_state[ci.cur_apka_mk_state - '1'],
 			       ci.cur_apka_mkvp);
-	अन्यथा
-		n += scnम_लिखो(buf + n, PAGE_SIZE - n, "APKA CUR: - -\n");
+	else
+		n += scnprintf(buf + n, PAGE_SIZE - n, "APKA CUR: - -\n");
 
-	अगर (ci.old_apka_mk_state >= '1' && ci.old_apka_mk_state <= '2')
-		n += scnम_लिखो(buf + n, PAGE_SIZE - n,
+	if (ci.old_apka_mk_state >= '1' && ci.old_apka_mk_state <= '2')
+		n += scnprintf(buf + n, PAGE_SIZE - n,
 			       "APKA OLD: %s 0x%016llx\n",
 			       cao_state[ci.old_apka_mk_state - '1'],
 			       ci.old_apka_mkvp);
-	अन्यथा
-		n += scnम_लिखो(buf + n, PAGE_SIZE - n, "APKA OLD: - -\n");
+	else
+		n += scnprintf(buf + n, PAGE_SIZE - n, "APKA OLD: - -\n");
 
-	वापस n;
-पूर्ण
+	return n;
+}
 
-अटल काष्ठा device_attribute dev_attr_cca_mkvps =
-	__ATTR(mkvps, 0444, cca_mkvps_show, शून्य);
+static struct device_attribute dev_attr_cca_mkvps =
+	__ATTR(mkvps, 0444, cca_mkvps_show, NULL);
 
-अटल काष्ठा attribute *cca_queue_attrs[] = अणु
+static struct attribute *cca_queue_attrs[] = {
 	&dev_attr_cca_mkvps.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल स्थिर काष्ठा attribute_group cca_queue_attr_grp = अणु
+static const struct attribute_group cca_queue_attr_grp = {
 	.attrs = cca_queue_attrs,
-पूर्ण;
+};
 
 /**
- * Large अक्रमom number detection function. Its sends a message to a CEX2C/CEX3C
- * card to find out अगर large अक्रमom numbers are supported.
- * @ap_dev: poपूर्णांकer to the AP device.
+ * Large random number detection function. Its sends a message to a CEX2C/CEX3C
+ * card to find out if large random numbers are supported.
+ * @ap_dev: pointer to the AP device.
  *
- * Returns 1 अगर large अक्रमom numbers are supported, 0 अगर not and < 0 on error.
+ * Returns 1 if large random numbers are supported, 0 if not and < 0 on error.
  */
-अटल पूर्णांक zcrypt_cex2c_rng_supported(काष्ठा ap_queue *aq)
-अणु
-	काष्ठा ap_message ap_msg;
-	अचिन्हित दीर्घ दीर्घ psmid;
-	अचिन्हित पूर्णांक करोमुख्य;
-	काष्ठा अणु
-		काष्ठा type86_hdr hdr;
-		काष्ठा type86_fmt2_ext fmt2;
-		काष्ठा CPRBX cprbx;
-	पूर्ण __packed *reply;
-	काष्ठा अणु
-		काष्ठा type6_hdr hdr;
-		काष्ठा CPRBX cprbx;
-		अक्षर function_code[2];
-		लघु पूर्णांक rule_length;
-		अक्षर rule[8];
-		लघु पूर्णांक verb_length;
-		लघु पूर्णांक key_length;
-	पूर्ण __packed *msg;
-	पूर्णांक rc, i;
+static int zcrypt_cex2c_rng_supported(struct ap_queue *aq)
+{
+	struct ap_message ap_msg;
+	unsigned long long psmid;
+	unsigned int domain;
+	struct {
+		struct type86_hdr hdr;
+		struct type86_fmt2_ext fmt2;
+		struct CPRBX cprbx;
+	} __packed *reply;
+	struct {
+		struct type6_hdr hdr;
+		struct CPRBX cprbx;
+		char function_code[2];
+		short int rule_length;
+		char rule[8];
+		short int verb_length;
+		short int key_length;
+	} __packed *msg;
+	int rc, i;
 
 	ap_init_message(&ap_msg);
-	ap_msg.msg = (व्योम *) get_zeroed_page(GFP_KERNEL);
-	अगर (!ap_msg.msg)
-		वापस -ENOMEM;
+	ap_msg.msg = (void *) get_zeroed_page(GFP_KERNEL);
+	if (!ap_msg.msg)
+		return -ENOMEM;
 
-	rng_type6CPRB_msgX(&ap_msg, 4, &करोमुख्य);
+	rng_type6CPRB_msgX(&ap_msg, 4, &domain);
 
 	msg = ap_msg.msg;
-	msg->cprbx.करोमुख्य = AP_QID_QUEUE(aq->qid);
+	msg->cprbx.domain = AP_QID_QUEUE(aq->qid);
 
 	rc = ap_send(aq->qid, 0x0102030405060708ULL, ap_msg.msg, ap_msg.len);
-	अगर (rc)
-		जाओ out_मुक्त;
+	if (rc)
+		goto out_free;
 
-	/* Wait क्रम the test message to complete. */
-	क्रम (i = 0; i < 2 * HZ; i++) अणु
+	/* Wait for the test message to complete. */
+	for (i = 0; i < 2 * HZ; i++) {
 		msleep(1000 / HZ);
 		rc = ap_recv(aq->qid, &psmid, ap_msg.msg, 4096);
-		अगर (rc == 0 && psmid == 0x0102030405060708ULL)
-			अवरोध;
-	पूर्ण
+		if (rc == 0 && psmid == 0x0102030405060708ULL)
+			break;
+	}
 
-	अगर (i >= 2 * HZ) अणु
+	if (i >= 2 * HZ) {
 		/* Got no answer. */
 		rc = -ENODEV;
-		जाओ out_मुक्त;
-	पूर्ण
+		goto out_free;
+	}
 
 	reply = ap_msg.msg;
-	अगर (reply->cprbx.ccp_rtcode == 0 && reply->cprbx.ccp_rscode == 0)
+	if (reply->cprbx.ccp_rtcode == 0 && reply->cprbx.ccp_rscode == 0)
 		rc = 1;
-	अन्यथा
+	else
 		rc = 0;
-out_मुक्त:
-	मुक्त_page((अचिन्हित दीर्घ) ap_msg.msg);
-	वापस rc;
-पूर्ण
+out_free:
+	free_page((unsigned long) ap_msg.msg);
+	return rc;
+}
 
 /**
- * Probe function क्रम CEX2C/CEX3C card devices. It always accepts the
- * AP device since the bus_match alपढ़ोy checked the hardware type.
- * @ap_dev: poपूर्णांकer to the AP card device.
+ * Probe function for CEX2C/CEX3C card devices. It always accepts the
+ * AP device since the bus_match already checked the hardware type.
+ * @ap_dev: pointer to the AP card device.
  */
-अटल पूर्णांक zcrypt_cex2c_card_probe(काष्ठा ap_device *ap_dev)
-अणु
+static int zcrypt_cex2c_card_probe(struct ap_device *ap_dev)
+{
 	/*
 	 * Normalized speed ratings per crypto adapter
 	 * MEX_1k, MEX_2k, MEX_4k, CRT_1k, CRT_2k, CRT_4k, RNG, SECKEY
 	 */
-	अटल स्थिर पूर्णांक CEX2C_SPEED_IDX[] = अणु
-		1000, 1400, 2400, 1100, 1500, 2600, 100, 12पूर्ण;
-	अटल स्थिर पूर्णांक CEX3C_SPEED_IDX[] = अणु
-		500,  700, 1400,  550,	800, 1500,  80, 10पूर्ण;
+	static const int CEX2C_SPEED_IDX[] = {
+		1000, 1400, 2400, 1100, 1500, 2600, 100, 12};
+	static const int CEX3C_SPEED_IDX[] = {
+		500,  700, 1400,  550,	800, 1500,  80, 10};
 
-	काष्ठा ap_card *ac = to_ap_card(&ap_dev->device);
-	काष्ठा zcrypt_card *zc;
-	पूर्णांक rc = 0;
+	struct ap_card *ac = to_ap_card(&ap_dev->device);
+	struct zcrypt_card *zc;
+	int rc = 0;
 
 	zc = zcrypt_card_alloc();
-	अगर (!zc)
-		वापस -ENOMEM;
+	if (!zc)
+		return -ENOMEM;
 	zc->card = ac;
-	ac->निजी = zc;
-	चयन (ac->ap_dev.device_type) अणु
-	हाल AP_DEVICE_TYPE_CEX2C:
+	ac->private = zc;
+	switch (ac->ap_dev.device_type) {
+	case AP_DEVICE_TYPE_CEX2C:
 		zc->user_space_type = ZCRYPT_CEX2C;
 		zc->type_string = "CEX2C";
 		zc->speed_rating = CEX2C_SPEED_IDX;
 		zc->min_mod_size = CEX2C_MIN_MOD_SIZE;
 		zc->max_mod_size = CEX2C_MAX_MOD_SIZE;
 		zc->max_exp_bit_length = CEX2C_MAX_MOD_SIZE;
-		अवरोध;
-	हाल AP_DEVICE_TYPE_CEX3C:
+		break;
+	case AP_DEVICE_TYPE_CEX3C:
 		zc->user_space_type = ZCRYPT_CEX3C;
 		zc->type_string = "CEX3C";
 		zc->speed_rating = CEX3C_SPEED_IDX;
 		zc->min_mod_size = CEX3C_MIN_MOD_SIZE;
 		zc->max_mod_size = CEX3C_MAX_MOD_SIZE;
 		zc->max_exp_bit_length = CEX3C_MAX_MOD_SIZE;
-		अवरोध;
-	शेष:
-		zcrypt_card_मुक्त(zc);
-		वापस -ENODEV;
-	पूर्ण
+		break;
+	default:
+		zcrypt_card_free(zc);
+		return -ENODEV;
+	}
 	zc->online = 1;
 
-	rc = zcrypt_card_रेजिस्टर(zc);
-	अगर (rc) अणु
-		ac->निजी = शून्य;
-		zcrypt_card_मुक्त(zc);
-		वापस rc;
-	पूर्ण
+	rc = zcrypt_card_register(zc);
+	if (rc) {
+		ac->private = NULL;
+		zcrypt_card_free(zc);
+		return rc;
+	}
 
-	अगर (ap_test_bit(&ac->functions, AP_FUNC_COPRO)) अणु
+	if (ap_test_bit(&ac->functions, AP_FUNC_COPRO)) {
 		rc = sysfs_create_group(&ap_dev->device.kobj,
 					&cca_card_attr_grp);
-		अगर (rc) अणु
-			zcrypt_card_unरेजिस्टर(zc);
-			ac->निजी = शून्य;
-			zcrypt_card_मुक्त(zc);
-		पूर्ण
-	पूर्ण
+		if (rc) {
+			zcrypt_card_unregister(zc);
+			ac->private = NULL;
+			zcrypt_card_free(zc);
+		}
+	}
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /**
- * This is called to हटाओ the CEX2C/CEX3C card driver inक्रमmation
- * अगर an AP card device is हटाओd.
+ * This is called to remove the CEX2C/CEX3C card driver information
+ * if an AP card device is removed.
  */
-अटल व्योम zcrypt_cex2c_card_हटाओ(काष्ठा ap_device *ap_dev)
-अणु
-	काष्ठा ap_card *ac = to_ap_card(&ap_dev->device);
-	काष्ठा zcrypt_card *zc = to_ap_card(&ap_dev->device)->निजी;
+static void zcrypt_cex2c_card_remove(struct ap_device *ap_dev)
+{
+	struct ap_card *ac = to_ap_card(&ap_dev->device);
+	struct zcrypt_card *zc = to_ap_card(&ap_dev->device)->private;
 
-	अगर (ap_test_bit(&ac->functions, AP_FUNC_COPRO))
-		sysfs_हटाओ_group(&ap_dev->device.kobj, &cca_card_attr_grp);
-	अगर (zc)
-		zcrypt_card_unरेजिस्टर(zc);
-पूर्ण
+	if (ap_test_bit(&ac->functions, AP_FUNC_COPRO))
+		sysfs_remove_group(&ap_dev->device.kobj, &cca_card_attr_grp);
+	if (zc)
+		zcrypt_card_unregister(zc);
+}
 
-अटल काष्ठा ap_driver zcrypt_cex2c_card_driver = अणु
+static struct ap_driver zcrypt_cex2c_card_driver = {
 	.probe = zcrypt_cex2c_card_probe,
-	.हटाओ = zcrypt_cex2c_card_हटाओ,
+	.remove = zcrypt_cex2c_card_remove,
 	.ids = zcrypt_cex2c_card_ids,
 	.flags = AP_DRIVER_FLAG_DEFAULT,
-पूर्ण;
+};
 
 /**
- * Probe function क्रम CEX2C/CEX3C queue devices. It always accepts the
- * AP device since the bus_match alपढ़ोy checked the hardware type.
- * @ap_dev: poपूर्णांकer to the AP card device.
+ * Probe function for CEX2C/CEX3C queue devices. It always accepts the
+ * AP device since the bus_match already checked the hardware type.
+ * @ap_dev: pointer to the AP card device.
  */
-अटल पूर्णांक zcrypt_cex2c_queue_probe(काष्ठा ap_device *ap_dev)
-अणु
-	काष्ठा ap_queue *aq = to_ap_queue(&ap_dev->device);
-	काष्ठा zcrypt_queue *zq;
-	पूर्णांक rc;
+static int zcrypt_cex2c_queue_probe(struct ap_device *ap_dev)
+{
+	struct ap_queue *aq = to_ap_queue(&ap_dev->device);
+	struct zcrypt_queue *zq;
+	int rc;
 
 	zq = zcrypt_queue_alloc(CEX2C_MAX_XCRB_MESSAGE_SIZE);
-	अगर (!zq)
-		वापस -ENOMEM;
+	if (!zq)
+		return -ENOMEM;
 	zq->queue = aq;
 	zq->online = 1;
 	atomic_set(&zq->load, 0);
 	ap_rapq(aq->qid);
 	rc = zcrypt_cex2c_rng_supported(aq);
-	अगर (rc < 0) अणु
-		zcrypt_queue_मुक्त(zq);
-		वापस rc;
-	पूर्ण
-	अगर (rc)
+	if (rc < 0) {
+		zcrypt_queue_free(zq);
+		return rc;
+	}
+	if (rc)
 		zq->ops = zcrypt_msgtype(MSGTYPE06_NAME,
 					 MSGTYPE06_VARIANT_DEFAULT);
-	अन्यथा
+	else
 		zq->ops = zcrypt_msgtype(MSGTYPE06_NAME,
 					 MSGTYPE06_VARIANT_NORNG);
 	ap_queue_init_state(aq);
 	ap_queue_init_reply(aq, &zq->reply);
-	aq->request_समयout = CEX2C_CLEANUP_TIME;
-	aq->निजी = zq;
-	rc = zcrypt_queue_रेजिस्टर(zq);
-	अगर (rc) अणु
-		aq->निजी = शून्य;
-		zcrypt_queue_मुक्त(zq);
-		वापस rc;
-	पूर्ण
+	aq->request_timeout = CEX2C_CLEANUP_TIME;
+	aq->private = zq;
+	rc = zcrypt_queue_register(zq);
+	if (rc) {
+		aq->private = NULL;
+		zcrypt_queue_free(zq);
+		return rc;
+	}
 
-	अगर (ap_test_bit(&aq->card->functions, AP_FUNC_COPRO)) अणु
+	if (ap_test_bit(&aq->card->functions, AP_FUNC_COPRO)) {
 		rc = sysfs_create_group(&ap_dev->device.kobj,
 					&cca_queue_attr_grp);
-		अगर (rc) अणु
-			zcrypt_queue_unरेजिस्टर(zq);
-			aq->निजी = शून्य;
-			zcrypt_queue_मुक्त(zq);
-		पूर्ण
-	पूर्ण
+		if (rc) {
+			zcrypt_queue_unregister(zq);
+			aq->private = NULL;
+			zcrypt_queue_free(zq);
+		}
+	}
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /**
- * This is called to हटाओ the CEX2C/CEX3C queue driver inक्रमmation
- * अगर an AP queue device is हटाओd.
+ * This is called to remove the CEX2C/CEX3C queue driver information
+ * if an AP queue device is removed.
  */
-अटल व्योम zcrypt_cex2c_queue_हटाओ(काष्ठा ap_device *ap_dev)
-अणु
-	काष्ठा ap_queue *aq = to_ap_queue(&ap_dev->device);
-	काष्ठा zcrypt_queue *zq = aq->निजी;
+static void zcrypt_cex2c_queue_remove(struct ap_device *ap_dev)
+{
+	struct ap_queue *aq = to_ap_queue(&ap_dev->device);
+	struct zcrypt_queue *zq = aq->private;
 
-	अगर (ap_test_bit(&aq->card->functions, AP_FUNC_COPRO))
-		sysfs_हटाओ_group(&ap_dev->device.kobj, &cca_queue_attr_grp);
-	अगर (zq)
-		zcrypt_queue_unरेजिस्टर(zq);
-पूर्ण
+	if (ap_test_bit(&aq->card->functions, AP_FUNC_COPRO))
+		sysfs_remove_group(&ap_dev->device.kobj, &cca_queue_attr_grp);
+	if (zq)
+		zcrypt_queue_unregister(zq);
+}
 
-अटल काष्ठा ap_driver zcrypt_cex2c_queue_driver = अणु
+static struct ap_driver zcrypt_cex2c_queue_driver = {
 	.probe = zcrypt_cex2c_queue_probe,
-	.हटाओ = zcrypt_cex2c_queue_हटाओ,
+	.remove = zcrypt_cex2c_queue_remove,
 	.ids = zcrypt_cex2c_queue_ids,
 	.flags = AP_DRIVER_FLAG_DEFAULT,
-पूर्ण;
+};
 
-पूर्णांक __init zcrypt_cex2c_init(व्योम)
-अणु
-	पूर्णांक rc;
+int __init zcrypt_cex2c_init(void)
+{
+	int rc;
 
-	rc = ap_driver_रेजिस्टर(&zcrypt_cex2c_card_driver,
+	rc = ap_driver_register(&zcrypt_cex2c_card_driver,
 				THIS_MODULE, "cex2card");
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
-	rc = ap_driver_रेजिस्टर(&zcrypt_cex2c_queue_driver,
+	rc = ap_driver_register(&zcrypt_cex2c_queue_driver,
 				THIS_MODULE, "cex2cqueue");
-	अगर (rc)
-		ap_driver_unरेजिस्टर(&zcrypt_cex2c_card_driver);
+	if (rc)
+		ap_driver_unregister(&zcrypt_cex2c_card_driver);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-व्योम zcrypt_cex2c_निकास(व्योम)
-अणु
-	ap_driver_unरेजिस्टर(&zcrypt_cex2c_queue_driver);
-	ap_driver_unरेजिस्टर(&zcrypt_cex2c_card_driver);
-पूर्ण
+void zcrypt_cex2c_exit(void)
+{
+	ap_driver_unregister(&zcrypt_cex2c_queue_driver);
+	ap_driver_unregister(&zcrypt_cex2c_card_driver);
+}
 
 module_init(zcrypt_cex2c_init);
-module_निकास(zcrypt_cex2c_निकास);
+module_exit(zcrypt_cex2c_exit);

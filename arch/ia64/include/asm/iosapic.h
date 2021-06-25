@@ -1,107 +1,106 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __ASM_IA64_IOSAPIC_H
-#घोषणा __ASM_IA64_IOSAPIC_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __ASM_IA64_IOSAPIC_H
+#define __ASM_IA64_IOSAPIC_H
 
-#घोषणा	IOSAPIC_REG_SELECT	0x0
-#घोषणा	IOSAPIC_WINDOW		0x10
-#घोषणा	IOSAPIC_EOI		0x40
+#define	IOSAPIC_REG_SELECT	0x0
+#define	IOSAPIC_WINDOW		0x10
+#define	IOSAPIC_EOI		0x40
 
-#घोषणा	IOSAPIC_VERSION		0x1
+#define	IOSAPIC_VERSION		0x1
 
 /*
  * Redirection table entry
  */
-#घोषणा	IOSAPIC_RTE_LOW(i)	(0x10+i*2)
-#घोषणा	IOSAPIC_RTE_HIGH(i)	(0x11+i*2)
+#define	IOSAPIC_RTE_LOW(i)	(0x10+i*2)
+#define	IOSAPIC_RTE_HIGH(i)	(0x11+i*2)
 
-#घोषणा	IOSAPIC_DEST_SHIFT		16
+#define	IOSAPIC_DEST_SHIFT		16
 
 /*
  * Delivery mode
  */
-#घोषणा	IOSAPIC_DELIVERY_SHIFT		8
-#घोषणा	IOSAPIC_FIXED			0x0
-#घोषणा	IOSAPIC_LOWEST_PRIORITY	0x1
-#घोषणा	IOSAPIC_PMI			0x2
-#घोषणा	IOSAPIC_NMI			0x4
-#घोषणा	IOSAPIC_INIT			0x5
-#घोषणा	IOSAPIC_EXTINT			0x7
+#define	IOSAPIC_DELIVERY_SHIFT		8
+#define	IOSAPIC_FIXED			0x0
+#define	IOSAPIC_LOWEST_PRIORITY	0x1
+#define	IOSAPIC_PMI			0x2
+#define	IOSAPIC_NMI			0x4
+#define	IOSAPIC_INIT			0x5
+#define	IOSAPIC_EXTINT			0x7
 
 /*
  * Interrupt polarity
  */
-#घोषणा	IOSAPIC_POLARITY_SHIFT		13
-#घोषणा	IOSAPIC_POL_HIGH		0
-#घोषणा	IOSAPIC_POL_LOW		1
+#define	IOSAPIC_POLARITY_SHIFT		13
+#define	IOSAPIC_POL_HIGH		0
+#define	IOSAPIC_POL_LOW		1
 
 /*
  * Trigger mode
  */
-#घोषणा	IOSAPIC_TRIGGER_SHIFT		15
-#घोषणा	IOSAPIC_EDGE			0
-#घोषणा	IOSAPIC_LEVEL			1
+#define	IOSAPIC_TRIGGER_SHIFT		15
+#define	IOSAPIC_EDGE			0
+#define	IOSAPIC_LEVEL			1
 
 /*
  * Mask bit
  */
 
-#घोषणा	IOSAPIC_MASK_SHIFT		16
-#घोषणा	IOSAPIC_MASK			(1<<IOSAPIC_MASK_SHIFT)
+#define	IOSAPIC_MASK_SHIFT		16
+#define	IOSAPIC_MASK			(1<<IOSAPIC_MASK_SHIFT)
 
-#घोषणा IOSAPIC_VECTOR_MASK		0xffffff00
+#define IOSAPIC_VECTOR_MASK		0xffffff00
 
-#अगर_अघोषित __ASSEMBLY__
+#ifndef __ASSEMBLY__
 
-#घोषणा NR_IOSAPICS			256
+#define NR_IOSAPICS			256
 
-#घोषणा iosapic_pcat_compat_init	ia64_native_iosapic_pcat_compat_init
-#घोषणा __iosapic_पढ़ो			__ia64_native_iosapic_पढ़ो
-#घोषणा __iosapic_ग_लिखो			__ia64_native_iosapic_ग_लिखो
-#घोषणा iosapic_get_irq_chip		ia64_native_iosapic_get_irq_chip
+#define iosapic_pcat_compat_init	ia64_native_iosapic_pcat_compat_init
+#define __iosapic_read			__ia64_native_iosapic_read
+#define __iosapic_write			__ia64_native_iosapic_write
+#define iosapic_get_irq_chip		ia64_native_iosapic_get_irq_chip
 
-बाह्य व्योम __init ia64_native_iosapic_pcat_compat_init(व्योम);
-बाह्य काष्ठा irq_chip *ia64_native_iosapic_get_irq_chip(अचिन्हित दीर्घ trigger);
+extern void __init ia64_native_iosapic_pcat_compat_init(void);
+extern struct irq_chip *ia64_native_iosapic_get_irq_chip(unsigned long trigger);
 
-अटल अंतरभूत अचिन्हित पूर्णांक
-__ia64_native_iosapic_पढ़ो(अक्षर __iomem *iosapic, अचिन्हित पूर्णांक reg)
-अणु
-	ग_लिखोl(reg, iosapic + IOSAPIC_REG_SELECT);
-	वापस पढ़ोl(iosapic + IOSAPIC_WINDOW);
-पूर्ण
+static inline unsigned int
+__ia64_native_iosapic_read(char __iomem *iosapic, unsigned int reg)
+{
+	writel(reg, iosapic + IOSAPIC_REG_SELECT);
+	return readl(iosapic + IOSAPIC_WINDOW);
+}
 
-अटल अंतरभूत व्योम
-__ia64_native_iosapic_ग_लिखो(अक्षर __iomem *iosapic, अचिन्हित पूर्णांक reg, u32 val)
-अणु
-	ग_लिखोl(reg, iosapic + IOSAPIC_REG_SELECT);
-	ग_लिखोl(val, iosapic + IOSAPIC_WINDOW);
-पूर्ण
+static inline void
+__ia64_native_iosapic_write(char __iomem *iosapic, unsigned int reg, u32 val)
+{
+	writel(reg, iosapic + IOSAPIC_REG_SELECT);
+	writel(val, iosapic + IOSAPIC_WINDOW);
+}
 
-अटल अंतरभूत व्योम iosapic_eoi(अक्षर __iomem *iosapic, u32 vector)
-अणु
-	ग_लिखोl(vector, iosapic + IOSAPIC_EOI);
-पूर्ण
+static inline void iosapic_eoi(char __iomem *iosapic, u32 vector)
+{
+	writel(vector, iosapic + IOSAPIC_EOI);
+}
 
-बाह्य व्योम __init iosapic_प्रणाली_init (पूर्णांक pcat_compat);
-बाह्य पूर्णांक iosapic_init (अचिन्हित दीर्घ address, अचिन्हित पूर्णांक gsi_base);
-बाह्य पूर्णांक iosapic_हटाओ (अचिन्हित पूर्णांक gsi_base);
-बाह्य पूर्णांक gsi_to_irq (अचिन्हित पूर्णांक gsi);
-बाह्य पूर्णांक iosapic_रेजिस्टर_पूर्णांकr (अचिन्हित पूर्णांक gsi, अचिन्हित दीर्घ polarity,
-				  अचिन्हित दीर्घ trigger);
-बाह्य व्योम iosapic_unरेजिस्टर_पूर्णांकr (अचिन्हित पूर्णांक irq);
-बाह्य व्योम iosapic_override_isa_irq (अचिन्हित पूर्णांक isa_irq, अचिन्हित पूर्णांक gsi,
-				      अचिन्हित दीर्घ polarity,
-				      अचिन्हित दीर्घ trigger);
-बाह्य पूर्णांक __init iosapic_रेजिस्टर_platक्रमm_पूर्णांकr (u32 पूर्णांक_type,
-					   अचिन्हित पूर्णांक gsi,
-					   पूर्णांक pmi_vector,
+extern void __init iosapic_system_init (int pcat_compat);
+extern int iosapic_init (unsigned long address, unsigned int gsi_base);
+extern int iosapic_remove (unsigned int gsi_base);
+extern int gsi_to_irq (unsigned int gsi);
+extern int iosapic_register_intr (unsigned int gsi, unsigned long polarity,
+				  unsigned long trigger);
+extern void iosapic_unregister_intr (unsigned int irq);
+extern void iosapic_override_isa_irq (unsigned int isa_irq, unsigned int gsi,
+				      unsigned long polarity,
+				      unsigned long trigger);
+extern int __init iosapic_register_platform_intr (u32 int_type,
+					   unsigned int gsi,
+					   int pmi_vector,
 					   u16 eid, u16 id,
-					   अचिन्हित दीर्घ polarity,
-					   अचिन्हित दीर्घ trigger);
+					   unsigned long polarity,
+					   unsigned long trigger);
 
-#अगर_घोषित CONFIG_NUMA
-बाह्य व्योम map_iosapic_to_node (अचिन्हित पूर्णांक, पूर्णांक);
-#पूर्ण_अगर
+#ifdef CONFIG_NUMA
+extern void map_iosapic_to_node (unsigned int, int);
+#endif
 
-# endअगर /* !__ASSEMBLY__ */
-#पूर्ण_अगर /* __ASM_IA64_IOSAPIC_H */
+# endif /* !__ASSEMBLY__ */
+#endif /* __ASM_IA64_IOSAPIC_H */

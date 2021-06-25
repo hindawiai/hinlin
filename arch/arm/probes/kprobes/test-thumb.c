@@ -1,32 +1,31 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * arch/arm/probes/kprobes/test-thumb.c
  *
  * Copyright (C) 2011 Jon Medhurst <tixy@yxit.co.uk>.
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <यंत्र/opcodes.h>
-#समावेश <यंत्र/probes.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <asm/opcodes.h>
+#include <asm/probes.h>
 
-#समावेश "test-core.h"
+#include "test-core.h"
 
 
-#घोषणा TEST_ISA "16"
+#define TEST_ISA "16"
 
-#घोषणा DONT_TEST_IN_ITBLOCK(tests)			\
+#define DONT_TEST_IN_ITBLOCK(tests)			\
 	kprobe_test_flags |= TEST_FLAG_NO_ITBLOCK;	\
 	tests						\
 	kprobe_test_flags &= ~TEST_FLAG_NO_ITBLOCK;
 
-#घोषणा CONDITION_INSTRUCTIONS(cc_pos, tests)		\
+#define CONDITION_INSTRUCTIONS(cc_pos, tests)		\
 	kprobe_test_cc_position = cc_pos;		\
 	DONT_TEST_IN_ITBLOCK(tests)			\
 	kprobe_test_cc_position = 0;
 
-#घोषणा TEST_ITBLOCK(code)				\
+#define TEST_ITBLOCK(code)				\
 	kprobe_test_flags |= TEST_FLAG_FULL_ITBLOCK;	\
 	TESTCASE_START(code)				\
 	TEST_ARG_END("")				\
@@ -39,7 +38,7 @@
 	TESTCASE_END					\
 	kprobe_test_flags &= ~TEST_FLAG_FULL_ITBLOCK;
 
-#घोषणा TEST_THUMB_TO_ARM_INTERWORK_P(code1, reg, val, code2)	\
+#define TEST_THUMB_TO_ARM_INTERWORK_P(code1, reg, val, code2)	\
 	TESTCASE_START(code1 #reg code2)			\
 	TEST_ARG_PTR(reg, val)					\
 	TEST_ARG_REG(14, 99f+1)					\
@@ -57,8 +56,8 @@
 	TESTCASE_END
 
 
-व्योम kprobe_thumb16_test_हालs(व्योम)
-अणु
+void kprobe_thumb16_test_cases(void)
+{
 	kprobe_test_flags = TEST_FLAG_NARROW_INSTR;
 
 	TEST_GROUP("Shift (immediate), add, subtract, move, and compare")
@@ -89,7 +88,7 @@
 
 	TEST_GROUP("16-bit Thumb data-processing instructions")
 
-#घोषणा DATA_PROCESSING16(op,val)			\
+#define DATA_PROCESSING16(op,val)			\
 	TEST_RR(   op"	r",0,VAL1,", r",7,val,"")	\
 	TEST_RR(   op"	r",7,VAL2,", r",0,val,"")
 
@@ -156,11 +155,11 @@
 
 	TEST_X( "ldr	r0, 3f",
 		".align					\n\t"
-		"3:	.word	"__stringअगरy(VAL1))
+		"3:	.word	"__stringify(VAL1))
 	TEST_X( "ldr	r7, 3f",
 		".space 128				\n\t"
 		".align					\n\t"
-		"3:	.word	"__stringअगरy(VAL2))
+		"3:	.word	"__stringify(VAL2))
 
 	TEST_GROUP("16-bit Thumb Load/store instructions")
 
@@ -216,7 +215,7 @@
 	TEST_UNSUPPORTED( "setend	le")
 	TEST_UNSUPPORTED( "setend	be")
 
-	TEST("add	sp, #"__stringअगरy(TEST_MEMORY_SIZE)) /* Assumes TEST_MEMORY_SIZE < 0x400 */
+	TEST("add	sp, #"__stringify(TEST_MEMORY_SIZE)) /* Assumes TEST_MEMORY_SIZE < 0x400 */
 	TEST("sub	sp, #0x7f*4")
 
 DONT_TEST_IN_ITBLOCK(
@@ -242,7 +241,7 @@ DONT_TEST_IN_ITBLOCK(
 	TEST_R("revsh	r0, r",7, VAL1,"")
 	TEST_R("revsh	r7, r",0, VAL2,"")
 
-#घोषणा TEST_POPPC(code, offset)	\
+#define TEST_POPPC(code, offset)	\
 	TESTCASE_START(code)		\
 	TEST_ARG_PTR(13, offset)	\
 	TEST_ARG_END("")		\
@@ -272,10 +271,10 @@ DONT_TEST_IN_ITBLOCK(
 	TEST("nop")
 	TEST("wfi")
 	TEST_SUPPORTED("wfe")
-	TEST_UNSUPPORTED(__inst_thumb16(0xbf50) "") /* Unasचिन्हित hपूर्णांकs */
-	TEST_UNSUPPORTED(__inst_thumb16(0xbff0) "") /* Unasचिन्हित hपूर्णांकs */
+	TEST_UNSUPPORTED(__inst_thumb16(0xbf50) "") /* Unassigned hints */
+	TEST_UNSUPPORTED(__inst_thumb16(0xbff0) "") /* Unassigned hints */
 
-#घोषणा TEST_IT(code, code2)			\
+#define TEST_IT(code, code2)			\
 	TESTCASE_START(code)			\
 	TEST_ARG_END("")			\
 	"50:	nop			\n\t"	\
@@ -327,11 +326,11 @@ CONDITION_INSTRUCTIONS(8,
 	TEST_ITBLOCK("subs.n r0, r0")
 
 	verbose("\n");
-पूर्ण
+}
 
 
-व्योम kprobe_thumb32_test_हालs(व्योम)
-अणु
+void kprobe_thumb32_test_cases(void)
+{
 	kprobe_test_flags = 0;
 
 	TEST_GROUP("Load/store multiple")
@@ -399,8 +398,8 @@ CONDITION_INSTRUCTIONS(8,
 
 	TEST_X( "ldrd	r12, r14, 3f",
 		".align 3				\n\t"
-		"3:	.word	"__stringअगरy(VAL1)"	\n\t"
-		"	.word	"__stringअगरy(VAL2))
+		"3:	.word	"__stringify(VAL1)"	\n\t"
+		"	.word	"__stringify(VAL2))
 
 	TEST_UNSUPPORTED(__inst_thumb32(0xe9ffec04) "	@ ldrd	r14, r12, [pc, #16]!")
 	TEST_UNSUPPORTED(__inst_thumb32(0xe8ffec04) "	@ ldrd	r14, r12, [pc], #16")
@@ -415,9 +414,9 @@ CONDITION_INSTRUCTIONS(8,
 	TEST_RR( "strd	r",14,VAL2,", r",12,VAL1,", [sp, #16]!")
 	TEST_RRP("strd	r",1, VAL1,", r",0, VAL2,", [r",7, 24,"], #16")
 	TEST_RR( "strd	r",7, VAL2,", r",8, VAL1,", [sp], #-16")
-	TEST_RRP("strd	r",6, VAL1,", r",7, VAL2,", [r",13, TEST_MEMORY_SIZE,", #-"__stringअगरy(MAX_STACK_SIZE)"]!")
-	TEST_UNSUPPORTED("strd r6, r7, [r13, #-"__stringअगरy(MAX_STACK_SIZE)"-8]!")
-	TEST_RRP("strd	r",4, VAL1,", r",5, VAL2,", [r",14, TEST_MEMORY_SIZE,", #-"__stringअगरy(MAX_STACK_SIZE)"-8]!")
+	TEST_RRP("strd	r",6, VAL1,", r",7, VAL2,", [r",13, TEST_MEMORY_SIZE,", #-"__stringify(MAX_STACK_SIZE)"]!")
+	TEST_UNSUPPORTED("strd r6, r7, [r13, #-"__stringify(MAX_STACK_SIZE)"-8]!")
+	TEST_RRP("strd	r",4, VAL1,", r",5, VAL2,", [r",14, TEST_MEMORY_SIZE,", #-"__stringify(MAX_STACK_SIZE)"-8]!")
 	TEST_UNSUPPORTED(__inst_thumb32(0xe9efec04) "	@ strd	r14, r12, [pc, #16]!")
 	TEST_UNSUPPORTED(__inst_thumb32(0xe8efec04) "	@ strd	r14, r12, [pc], #16")
 
@@ -476,7 +475,7 @@ CONDITION_INSTRUCTIONS(8,
 
 	TEST_GROUP("Data-processing (shifted register) and (modified immediate)")
 
-#घोषणा _DATA_PROCESSING32_DNM(op,s,val)					\
+#define _DATA_PROCESSING32_DNM(op,s,val)					\
 	TEST_RR(op s".w	r0,  r",1, VAL1,", r",2, val, "")			\
 	TEST_RR(op s"	r1,  r",1, VAL1,", r",2, val, ", lsl #3")		\
 	TEST_RR(op s"	r2,  r",3, VAL1,", r",2, val, ", lsr #4")		\
@@ -488,11 +487,11 @@ CONDITION_INSTRUCTIONS(8,
 	TEST_R( op s"	r11, r",0, VAL1,", #0xf5000000")			\
 	TEST_R( op s"	r7,  r",8, VAL2,", #0x000af000")
 
-#घोषणा DATA_PROCESSING32_DNM(op,val)		\
+#define DATA_PROCESSING32_DNM(op,val)		\
 	_DATA_PROCESSING32_DNM(op,"",val)	\
 	_DATA_PROCESSING32_DNM(op,"s",val)
 
-#घोषणा DATA_PROCESSING32_NM(op,val)					\
+#define DATA_PROCESSING32_NM(op,val)					\
 	TEST_RR(op".w	r",1, VAL1,", r",2, val, "")			\
 	TEST_RR(op"	r",1, VAL1,", r",2, val, ", lsl #3")		\
 	TEST_RR(op"	r",3, VAL1,", r",2, val, ", lsr #4")		\
@@ -504,7 +503,7 @@ CONDITION_INSTRUCTIONS(8,
 	TEST_R( op"	r",0, VAL1,", #0xf5000000")			\
 	TEST_R( op"	r",8, VAL2,", #0x000af000")
 
-#घोषणा _DATA_PROCESSING32_DM(op,s,val)				\
+#define _DATA_PROCESSING32_DM(op,s,val)				\
 	TEST_R( op s".w	r0,  r",14, val, "")			\
 	TEST_R( op s"	r1,  r",12, val, ", lsl #3")		\
 	TEST_R( op s"	r2,  r",11, val, ", lsr #4")		\
@@ -517,7 +516,7 @@ CONDITION_INSTRUCTIONS(8,
 	TEST(   op s"	r7,  #0x000af000")			\
 	TEST(   op s"	r4,  #0x00005a00")
 
-#घोषणा DATA_PROCESSING32_DM(op,val)		\
+#define DATA_PROCESSING32_DM(op,val)		\
 	_DATA_PROCESSING32_DM(op,"",val)	\
 	_DATA_PROCESSING32_DM(op,"s",val)
 
@@ -808,7 +807,7 @@ CONDITION_INSTRUCTIONS(22,
 
 	TEST_GROUP("Store single data item")
 
-#घोषणा SINGLE_STORE(size)							\
+#define SINGLE_STORE(size)							\
 	TEST_RP( "str"size"	r",0, VAL1,", [r",11,-1024,", #1024]")		\
 	TEST_RP( "str"size"	r",14,VAL2,", [r",1, -1024,", #1080]")		\
 	TEST_RP( "str"size"	r",0, VAL1,", [r",11,256,  ", #-120]")		\
@@ -826,9 +825,9 @@ CONDITION_INSTRUCTIONS(22,
 	TEST_UNSUPPORTED("str"size"	r0, [r13, r1]")				\
 	TEST_R(  "str"size".w	r",7, VAL1,", [sp, #24]")			\
 	TEST_RP( "str"size".w	r",0, VAL2,", [r",0,0, "]")			\
-	TEST_RP( "str"size"	r",6, VAL1,", [r",13, TEST_MEMORY_SIZE,", #-"__stringअगरy(MAX_STACK_SIZE)"]!") \
-	TEST_UNSUPPORTED("str"size"	r6, [r13, #-"__stringअगरy(MAX_STACK_SIZE)"-8]!")			\
-	TEST_RP( "str"size"	r",4, VAL2,", [r",12, TEST_MEMORY_SIZE,", #-"__stringअगरy(MAX_STACK_SIZE)"-8]!") \
+	TEST_RP( "str"size"	r",6, VAL1,", [r",13, TEST_MEMORY_SIZE,", #-"__stringify(MAX_STACK_SIZE)"]!") \
+	TEST_UNSUPPORTED("str"size"	r6, [r13, #-"__stringify(MAX_STACK_SIZE)"-8]!")			\
+	TEST_RP( "str"size"	r",4, VAL2,", [r",12, TEST_MEMORY_SIZE,", #-"__stringify(MAX_STACK_SIZE)"-8]!") \
 	TEST_UNSUPPORTED("str"size"t	r0, [r1, #4]")
 
 	SINGLE_STORE("b")
@@ -852,7 +851,7 @@ CONDITION_INSTRUCTIONS(22,
 
 	TEST_GROUP("Load single data item and memory hints")
 
-#घोषणा SINGLE_LOAD(size)						\
+#define SINGLE_LOAD(size)						\
 	TEST_P( "ldr"size"	r0, [r",11,-1024, ", #1024]")		\
 	TEST_P( "ldr"size"	r14, [r",1, -1024,", #1080]")		\
 	TEST_P( "ldr"size"	r0, [r",11,256,   ", #-120]")		\
@@ -869,10 +868,10 @@ CONDITION_INSTRUCTIONS(22,
 	TEST_PR("ldr"size"	r14, [r",10,0,", r",11,4,", lsl #1]")	\
 	TEST_X( "ldr"size".w	r0, 3f",				\
 		".align 3				\n\t"		\
-		"3:	.word	"__stringअगरy(VAL1))			\
+		"3:	.word	"__stringify(VAL1))			\
 	TEST_X( "ldr"size".w	r14, 3f",				\
 		".align 3				\n\t"		\
-		"3:	.word	"__stringअगरy(VAL2))			\
+		"3:	.word	"__stringify(VAL2))			\
 	TEST(   "ldr"size".w	r7, 3b")				\
 	TEST(   "ldr"size".w	r7, [sp, #24]")				\
 	TEST_P( "ldr"size".w	r0, [r",0,0, "]")			\
@@ -932,7 +931,7 @@ CONDITION_INSTRUCTIONS(22,
 
 	TEST_GROUP("Data-processing (register)")
 
-#घोषणा SHIFTS32(op)					\
+#define SHIFTS32(op)					\
 	TEST_RR(op"	r0,  r",1, VAL1,", r",2, 3, "")	\
 	TEST_RR(op"	r14, r",12,VAL2,", r",11,10,"")
 
@@ -984,7 +983,7 @@ CONDITION_INSTRUCTIONS(22,
 	TEST_UNSUPPORTED(__inst_thumb32(0xfa6000f0) "")
 	TEST_UNSUPPORTED(__inst_thumb32(0xfa7fffff) "")
 
-#घोषणा PARALLEL_ADD_SUB(op)					\
+#define PARALLEL_ADD_SUB(op)					\
 	TEST_RR(  op"add16	r0, r",0,  HH1,", r",1, HH2,"")	\
 	TEST_RR(  op"add16	r14, r",12,HH2,", r",10,HH1,"")	\
 	TEST_RR(  op"asx	r0, r",0,  HH1,", r",1, HH2,"")	\
@@ -1194,5 +1193,5 @@ CONDITION_INSTRUCTIONS(22,
 	TEST_ITBLOCK("sub.w	r0, r0")
 
 	verbose("\n");
-पूर्ण
+}
 

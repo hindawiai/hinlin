@@ -1,185 +1,184 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <linux/kernel.h>
-#समावेश <subcmd/pager.h>
-#समावेश <मानककोष.स>
-#समावेश <मानकपन.स>
-#समावेश <माला.स>
-#समावेश "color.h"
-#समावेश <गणित.स>
-#समावेश <unistd.h>
+// SPDX-License-Identifier: GPL-2.0
+#include <linux/kernel.h>
+#include <subcmd/pager.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include "color.h"
+#include <math.h>
+#include <unistd.h>
 
-पूर्णांक perf_use_color_शेष = -1;
+int perf_use_color_default = -1;
 
-अटल पूर्णांक __color_vsnम_लिखो(अक्षर *bf, माप_प्रकार size, स्थिर अक्षर *color,
-			     स्थिर अक्षर *fmt, बहु_सूची args, स्थिर अक्षर *trail)
-अणु
-	पूर्णांक r = 0;
-
-	/*
-	 * Auto-detect:
-	 */
-	अगर (perf_use_color_शेष < 0) अणु
-		अगर (isatty(1) || pager_in_use())
-			perf_use_color_शेष = 1;
-		अन्यथा
-			perf_use_color_शेष = 0;
-	पूर्ण
-
-	अगर (perf_use_color_शेष && *color)
-		r += scnम_लिखो(bf, size, "%s", color);
-	r += vscnम_लिखो(bf + r, size - r, fmt, args);
-	अगर (perf_use_color_शेष && *color)
-		r += scnम_लिखो(bf + r, size - r, "%s", PERF_COLOR_RESET);
-	अगर (trail)
-		r += scnम_लिखो(bf + r, size - r, "%s", trail);
-	वापस r;
-पूर्ण
-
-/* Colors are not included in वापस value */
-अटल पूर्णांक __color_भख_लिखो(खाता *fp, स्थिर अक्षर *color, स्थिर अक्षर *fmt,
-		बहु_सूची args)
-अणु
-	पूर्णांक r = 0;
+static int __color_vsnprintf(char *bf, size_t size, const char *color,
+			     const char *fmt, va_list args, const char *trail)
+{
+	int r = 0;
 
 	/*
 	 * Auto-detect:
 	 */
-	अगर (perf_use_color_शेष < 0) अणु
-		अगर (isatty(fileno(fp)) || pager_in_use())
-			perf_use_color_शेष = 1;
-		अन्यथा
-			perf_use_color_शेष = 0;
-	पूर्ण
+	if (perf_use_color_default < 0) {
+		if (isatty(1) || pager_in_use())
+			perf_use_color_default = 1;
+		else
+			perf_use_color_default = 0;
+	}
 
-	अगर (perf_use_color_शेष && *color)
-		ख_लिखो(fp, "%s", color);
-	r += भख_लिखो(fp, fmt, args);
-	अगर (perf_use_color_शेष && *color)
-		ख_लिखो(fp, "%s", PERF_COLOR_RESET);
-	वापस r;
-पूर्ण
+	if (perf_use_color_default && *color)
+		r += scnprintf(bf, size, "%s", color);
+	r += vscnprintf(bf + r, size - r, fmt, args);
+	if (perf_use_color_default && *color)
+		r += scnprintf(bf + r, size - r, "%s", PERF_COLOR_RESET);
+	if (trail)
+		r += scnprintf(bf + r, size - r, "%s", trail);
+	return r;
+}
 
-पूर्णांक color_vsnम_लिखो(अक्षर *bf, माप_प्रकार size, स्थिर अक्षर *color,
-		    स्थिर अक्षर *fmt, बहु_सूची args)
-अणु
-	वापस __color_vsnम_लिखो(bf, size, color, fmt, args, शून्य);
-पूर्ण
+/* Colors are not included in return value */
+static int __color_vfprintf(FILE *fp, const char *color, const char *fmt,
+		va_list args)
+{
+	int r = 0;
 
-पूर्णांक color_भख_लिखो(खाता *fp, स्थिर अक्षर *color, स्थिर अक्षर *fmt, बहु_सूची args)
-अणु
-	वापस __color_भख_लिखो(fp, color, fmt, args);
-पूर्ण
+	/*
+	 * Auto-detect:
+	 */
+	if (perf_use_color_default < 0) {
+		if (isatty(fileno(fp)) || pager_in_use())
+			perf_use_color_default = 1;
+		else
+			perf_use_color_default = 0;
+	}
 
-पूर्णांक color_snम_लिखो(अक्षर *bf, माप_प्रकार size, स्थिर अक्षर *color,
-		   स्थिर अक्षर *fmt, ...)
-अणु
-	बहु_सूची args;
-	पूर्णांक r;
+	if (perf_use_color_default && *color)
+		fprintf(fp, "%s", color);
+	r += vfprintf(fp, fmt, args);
+	if (perf_use_color_default && *color)
+		fprintf(fp, "%s", PERF_COLOR_RESET);
+	return r;
+}
 
-	बहु_शुरू(args, fmt);
-	r = color_vsnम_लिखो(bf, size, color, fmt, args);
-	बहु_पूर्ण(args);
-	वापस r;
-पूर्ण
+int color_vsnprintf(char *bf, size_t size, const char *color,
+		    const char *fmt, va_list args)
+{
+	return __color_vsnprintf(bf, size, color, fmt, args, NULL);
+}
 
-पूर्णांक color_ख_लिखो(खाता *fp, स्थिर अक्षर *color, स्थिर अक्षर *fmt, ...)
-अणु
-	बहु_सूची args;
-	पूर्णांक r;
+int color_vfprintf(FILE *fp, const char *color, const char *fmt, va_list args)
+{
+	return __color_vfprintf(fp, color, fmt, args);
+}
 
-	बहु_शुरू(args, fmt);
-	r = color_भख_लिखो(fp, color, fmt, args);
-	बहु_पूर्ण(args);
-	वापस r;
-पूर्ण
+int color_snprintf(char *bf, size_t size, const char *color,
+		   const char *fmt, ...)
+{
+	va_list args;
+	int r;
+
+	va_start(args, fmt);
+	r = color_vsnprintf(bf, size, color, fmt, args);
+	va_end(args);
+	return r;
+}
+
+int color_fprintf(FILE *fp, const char *color, const char *fmt, ...)
+{
+	va_list args;
+	int r;
+
+	va_start(args, fmt);
+	r = color_vfprintf(fp, color, fmt, args);
+	va_end(args);
+	return r;
+}
 
 /*
- * This function splits the buffer by newlines and colors the lines inभागidually.
+ * This function splits the buffer by newlines and colors the lines individually.
  *
  * Returns 0 on success.
  */
-पूर्णांक color_ख_डालो_lines(खाता *fp, स्थिर अक्षर *color,
-		माप_प्रकार count, स्थिर अक्षर *buf)
-अणु
-	अगर (!*color)
-		वापस ख_डालो(buf, count, 1, fp) != 1;
+int color_fwrite_lines(FILE *fp, const char *color,
+		size_t count, const char *buf)
+{
+	if (!*color)
+		return fwrite(buf, count, 1, fp) != 1;
 
-	जबतक (count) अणु
-		अक्षर *p = स_प्रथम(buf, '\n', count);
+	while (count) {
+		char *p = memchr(buf, '\n', count);
 
-		अगर (p != buf && (ख_माला_दो(color, fp) < 0 ||
-				ख_डालो(buf, p ? (माप_प्रकार)(p - buf) : count, 1, fp) != 1 ||
-				ख_माला_दो(PERF_COLOR_RESET, fp) < 0))
-			वापस -1;
-		अगर (!p)
-			वापस 0;
-		अगर (ख_अक्षर_दो('\n', fp) < 0)
-			वापस -1;
+		if (p != buf && (fputs(color, fp) < 0 ||
+				fwrite(buf, p ? (size_t)(p - buf) : count, 1, fp) != 1 ||
+				fputs(PERF_COLOR_RESET, fp) < 0))
+			return -1;
+		if (!p)
+			return 0;
+		if (fputc('\n', fp) < 0)
+			return -1;
 		count -= p + 1 - buf;
 		buf = p + 1;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-स्थिर अक्षर *get_percent_color(द्विगुन percent)
-अणु
-	स्थिर अक्षर *color = PERF_COLOR_NORMAL;
+const char *get_percent_color(double percent)
+{
+	const char *color = PERF_COLOR_NORMAL;
 
 	/*
 	 * We color high-overhead entries in red, mid-overhead
 	 * entries in green - and keep the low overhead places
 	 * normal:
 	 */
-	अगर (भ_असल(percent) >= MIN_RED)
+	if (fabs(percent) >= MIN_RED)
 		color = PERF_COLOR_RED;
-	अन्यथा अणु
-		अगर (भ_असल(percent) > MIN_GREEN)
+	else {
+		if (fabs(percent) > MIN_GREEN)
 			color = PERF_COLOR_GREEN;
-	पूर्ण
-	वापस color;
-पूर्ण
+	}
+	return color;
+}
 
-पूर्णांक percent_color_ख_लिखो(खाता *fp, स्थिर अक्षर *fmt, द्विगुन percent)
-अणु
-	पूर्णांक r;
-	स्थिर अक्षर *color;
-
-	color = get_percent_color(percent);
-	r = color_ख_लिखो(fp, color, fmt, percent);
-
-	वापस r;
-पूर्ण
-
-पूर्णांक value_color_snम_लिखो(अक्षर *bf, माप_प्रकार size, स्थिर अक्षर *fmt, द्विगुन value)
-अणु
-	स्थिर अक्षर *color = get_percent_color(value);
-	वापस color_snम_लिखो(bf, size, color, fmt, value);
-पूर्ण
-
-पूर्णांक percent_color_snम_लिखो(अक्षर *bf, माप_प्रकार size, स्थिर अक्षर *fmt, ...)
-अणु
-	बहु_सूची args;
-	द्विगुन percent;
-
-	बहु_शुरू(args, fmt);
-	percent = बहु_तर्क(args, द्विगुन);
-	बहु_पूर्ण(args);
-	वापस value_color_snम_लिखो(bf, size, fmt, percent);
-पूर्ण
-
-पूर्णांक percent_color_len_snम_लिखो(अक्षर *bf, माप_प्रकार size, स्थिर अक्षर *fmt, ...)
-अणु
-	बहु_सूची args;
-	पूर्णांक len;
-	द्विगुन percent;
-	स्थिर अक्षर *color;
-
-	बहु_शुरू(args, fmt);
-	len = बहु_तर्क(args, पूर्णांक);
-	percent = बहु_तर्क(args, द्विगुन);
-	बहु_पूर्ण(args);
+int percent_color_fprintf(FILE *fp, const char *fmt, double percent)
+{
+	int r;
+	const char *color;
 
 	color = get_percent_color(percent);
-	वापस color_snम_लिखो(bf, size, color, fmt, len, percent);
-पूर्ण
+	r = color_fprintf(fp, color, fmt, percent);
+
+	return r;
+}
+
+int value_color_snprintf(char *bf, size_t size, const char *fmt, double value)
+{
+	const char *color = get_percent_color(value);
+	return color_snprintf(bf, size, color, fmt, value);
+}
+
+int percent_color_snprintf(char *bf, size_t size, const char *fmt, ...)
+{
+	va_list args;
+	double percent;
+
+	va_start(args, fmt);
+	percent = va_arg(args, double);
+	va_end(args);
+	return value_color_snprintf(bf, size, fmt, percent);
+}
+
+int percent_color_len_snprintf(char *bf, size_t size, const char *fmt, ...)
+{
+	va_list args;
+	int len;
+	double percent;
+	const char *color;
+
+	va_start(args, fmt);
+	len = va_arg(args, int);
+	percent = va_arg(args, double);
+	va_end(args);
+
+	color = get_percent_color(percent);
+	return color_snprintf(bf, size, color, fmt, len, percent);
+}

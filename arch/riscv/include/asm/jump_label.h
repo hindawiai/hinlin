@@ -1,24 +1,23 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (C) 2020 Emil Renner Berthing
  *
- * Based on arch/arm64/include/यंत्र/jump_label.h
+ * Based on arch/arm64/include/asm/jump_label.h
  */
-#अगर_अघोषित __ASM_JUMP_LABEL_H
-#घोषणा __ASM_JUMP_LABEL_H
+#ifndef __ASM_JUMP_LABEL_H
+#define __ASM_JUMP_LABEL_H
 
-#अगर_अघोषित __ASSEMBLY__
+#ifndef __ASSEMBLY__
 
-#समावेश <linux/types.h>
-#समावेश <यंत्र/यंत्र.h>
+#include <linux/types.h>
+#include <asm/asm.h>
 
-#घोषणा JUMP_LABEL_NOP_SIZE 4
+#define JUMP_LABEL_NOP_SIZE 4
 
-अटल __always_अंतरभूत bool arch_अटल_branch(काष्ठा अटल_key *key,
+static __always_inline bool arch_static_branch(struct static_key *key,
 					       bool branch)
-अणु
-	यंत्र_अस्थिर_जाओ(
+{
+	asm_volatile_goto(
 		"	.option push				\n\t"
 		"	.option norelax				\n\t"
 		"	.option norvc				\n\t"
@@ -29,17 +28,17 @@
 		"	.long		1b - ., %l[label] - .	\n\t"
 		"	" RISCV_PTR "	%0 - .			\n\t"
 		"	.popsection				\n\t"
-		:  :  "i"(&((अक्षर *)key)[branch]) :  : label);
+		:  :  "i"(&((char *)key)[branch]) :  : label);
 
-	वापस false;
+	return false;
 label:
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल __always_अंतरभूत bool arch_अटल_branch_jump(काष्ठा अटल_key *key,
+static __always_inline bool arch_static_branch_jump(struct static_key *key,
 						    bool branch)
-अणु
-	यंत्र_अस्थिर_जाओ(
+{
+	asm_volatile_goto(
 		"	.option push				\n\t"
 		"	.option norelax				\n\t"
 		"	.option norvc				\n\t"
@@ -50,12 +49,12 @@ label:
 		"	.long		1b - ., %l[label] - .	\n\t"
 		"	" RISCV_PTR "	%0 - .			\n\t"
 		"	.popsection				\n\t"
-		:  :  "i"(&((अक्षर *)key)[branch]) :  : label);
+		:  :  "i"(&((char *)key)[branch]) :  : label);
 
-	वापस false;
+	return false;
 label:
-	वापस true;
-पूर्ण
+	return true;
+}
 
-#पूर्ण_अगर  /* __ASSEMBLY__ */
-#पूर्ण_अगर	/* __ASM_JUMP_LABEL_H */
+#endif  /* __ASSEMBLY__ */
+#endif	/* __ASM_JUMP_LABEL_H */

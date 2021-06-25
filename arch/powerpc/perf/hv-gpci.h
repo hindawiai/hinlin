@@ -1,35 +1,34 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित LINUX_POWERPC_PERF_HV_GPCI_H_
-#घोषणा LINUX_POWERPC_PERF_HV_GPCI_H_
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef LINUX_POWERPC_PERF_HV_GPCI_H_
+#define LINUX_POWERPC_PERF_HV_GPCI_H_
 
 /*
  * counter info version => fw version/reference (spec version)
  *
- * 8 => घातer8 (1.07)
+ * 8 => power8 (1.07)
  * [7 is skipped by spec 1.07]
  * 6 => TLBIE (1.07)
  * 5 => v7r7m0.phyp (1.05)
  * [4 skipped]
  * 3 => v7r6m0.phyp (?)
  * [1,2 skipped]
- * 0 => v7rअणु2,3,4पूर्णm0.phyp (?)
+ * 0 => v7r{2,3,4}m0.phyp (?)
  */
-#घोषणा COUNTER_INFO_VERSION_CURRENT 0x8
+#define COUNTER_INFO_VERSION_CURRENT 0x8
 
 /* capability mask masks. */
-क्रमागत अणु
+enum {
 	HV_GPCI_CM_GA = (1 << 7),
 	HV_GPCI_CM_EXPANDED = (1 << 6),
 	HV_GPCI_CM_LAB = (1 << 5)
-पूर्ण;
+};
 
-#घोषणा REQUEST_खाता "../hv-gpci-requests.h"
-#घोषणा NAME_LOWER hv_gpci
-#घोषणा NAME_UPPER HV_GPCI
-#समावेश "req-gen/perf.h"
-#अघोषित REQUEST_खाता
-#अघोषित NAME_LOWER
-#अघोषित NAME_UPPER
+#define REQUEST_FILE "../hv-gpci-requests.h"
+#define NAME_LOWER hv_gpci
+#define NAME_UPPER HV_GPCI
+#include "req-gen/perf.h"
+#undef REQUEST_FILE
+#undef NAME_LOWER
+#undef NAME_UPPER
 
-#पूर्ण_अगर
+#endif

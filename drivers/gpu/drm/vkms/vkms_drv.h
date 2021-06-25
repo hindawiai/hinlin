@@ -1,135 +1,134 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0+ */
+/* SPDX-License-Identifier: GPL-2.0+ */
 
-#अगर_अघोषित _VKMS_DRV_H_
-#घोषणा _VKMS_DRV_H_
+#ifndef _VKMS_DRV_H_
+#define _VKMS_DRV_H_
 
-#समावेश <linux/hrसमयr.h>
+#include <linux/hrtimer.h>
 
-#समावेश <drm/drm.h>
-#समावेश <drm/drm_gem.h>
-#समावेश <drm/drm_encoder.h>
-#समावेश <drm/drm_ग_लिखोback.h>
+#include <drm/drm.h>
+#include <drm/drm_gem.h>
+#include <drm/drm_encoder.h>
+#include <drm/drm_writeback.h>
 
-#घोषणा XRES_MIN    20
-#घोषणा YRES_MIN    20
+#define XRES_MIN    20
+#define YRES_MIN    20
 
-#घोषणा XRES_DEF  1024
-#घोषणा YRES_DEF   768
+#define XRES_DEF  1024
+#define YRES_DEF   768
 
-#घोषणा XRES_MAX  8192
-#घोषणा YRES_MAX  8192
+#define XRES_MAX  8192
+#define YRES_MAX  8192
 
-काष्ठा vkms_composer अणु
-	काष्ठा drm_framebuffer fb;
-	काष्ठा drm_rect src, dst;
-	अचिन्हित पूर्णांक offset;
-	अचिन्हित पूर्णांक pitch;
-	अचिन्हित पूर्णांक cpp;
-पूर्ण;
+struct vkms_composer {
+	struct drm_framebuffer fb;
+	struct drm_rect src, dst;
+	unsigned int offset;
+	unsigned int pitch;
+	unsigned int cpp;
+};
 
 /**
- * vkms_plane_state - Driver specअगरic plane state
+ * vkms_plane_state - Driver specific plane state
  * @base: base plane state
- * @composer: data required क्रम composing computation
+ * @composer: data required for composing computation
  */
-काष्ठा vkms_plane_state अणु
-	काष्ठा drm_plane_state base;
-	काष्ठा vkms_composer *composer;
-पूर्ण;
+struct vkms_plane_state {
+	struct drm_plane_state base;
+	struct vkms_composer *composer;
+};
 
 /**
- * vkms_crtc_state - Driver specअगरic CRTC state
+ * vkms_crtc_state - Driver specific CRTC state
  * @base: base CRTC state
- * @composer_work: work काष्ठा to compose and add CRC entries
- * @n_frame_start: start frame number क्रम computed CRC
- * @n_frame_end: end frame number क्रम computed CRC
+ * @composer_work: work struct to compose and add CRC entries
+ * @n_frame_start: start frame number for computed CRC
+ * @n_frame_end: end frame number for computed CRC
  */
-काष्ठा vkms_crtc_state अणु
-	काष्ठा drm_crtc_state base;
-	काष्ठा work_काष्ठा composer_work;
+struct vkms_crtc_state {
+	struct drm_crtc_state base;
+	struct work_struct composer_work;
 
-	पूर्णांक num_active_planes;
-	/* stack of active planes क्रम crc computation, should be in z order */
-	काष्ठा vkms_plane_state **active_planes;
-	व्योम *active_ग_लिखोback;
+	int num_active_planes;
+	/* stack of active planes for crc computation, should be in z order */
+	struct vkms_plane_state **active_planes;
+	void *active_writeback;
 
-	/* below four are रक्षित by vkms_output.composer_lock */
+	/* below four are protected by vkms_output.composer_lock */
 	bool crc_pending;
 	bool wb_pending;
 	u64 frame_start;
 	u64 frame_end;
-पूर्ण;
+};
 
-काष्ठा vkms_output अणु
-	काष्ठा drm_crtc crtc;
-	काष्ठा drm_encoder encoder;
-	काष्ठा drm_connector connector;
-	काष्ठा drm_ग_लिखोback_connector wb_connector;
-	काष्ठा hrसमयr vblank_hrसमयr;
-	kसमय_प्रकार period_ns;
-	काष्ठा drm_pending_vblank_event *event;
-	/* ordered wq क्रम composer_work */
-	काष्ठा workqueue_काष्ठा *composer_workq;
+struct vkms_output {
+	struct drm_crtc crtc;
+	struct drm_encoder encoder;
+	struct drm_connector connector;
+	struct drm_writeback_connector wb_connector;
+	struct hrtimer vblank_hrtimer;
+	ktime_t period_ns;
+	struct drm_pending_vblank_event *event;
+	/* ordered wq for composer_work */
+	struct workqueue_struct *composer_workq;
 	/* protects concurrent access to composer */
 	spinlock_t lock;
 
-	/* रक्षित by @lock */
+	/* protected by @lock */
 	bool composer_enabled;
-	काष्ठा vkms_crtc_state *composer_state;
+	struct vkms_crtc_state *composer_state;
 
 	spinlock_t composer_lock;
-पूर्ण;
+};
 
-काष्ठा vkms_device;
+struct vkms_device;
 
-काष्ठा vkms_config अणु
-	bool ग_लिखोback;
+struct vkms_config {
+	bool writeback;
 	bool cursor;
 	/* only set when instantiated */
-	काष्ठा vkms_device *dev;
-पूर्ण;
+	struct vkms_device *dev;
+};
 
-काष्ठा vkms_device अणु
-	काष्ठा drm_device drm;
-	काष्ठा platक्रमm_device *platक्रमm;
-	काष्ठा vkms_output output;
-	स्थिर काष्ठा vkms_config *config;
-पूर्ण;
+struct vkms_device {
+	struct drm_device drm;
+	struct platform_device *platform;
+	struct vkms_output output;
+	const struct vkms_config *config;
+};
 
-#घोषणा drm_crtc_to_vkms_output(target) \
-	container_of(target, काष्ठा vkms_output, crtc)
+#define drm_crtc_to_vkms_output(target) \
+	container_of(target, struct vkms_output, crtc)
 
-#घोषणा drm_device_to_vkms_device(target) \
-	container_of(target, काष्ठा vkms_device, drm)
+#define drm_device_to_vkms_device(target) \
+	container_of(target, struct vkms_device, drm)
 
-#घोषणा to_vkms_crtc_state(target)\
-	container_of(target, काष्ठा vkms_crtc_state, base)
+#define to_vkms_crtc_state(target)\
+	container_of(target, struct vkms_crtc_state, base)
 
-#घोषणा to_vkms_plane_state(target)\
-	container_of(target, काष्ठा vkms_plane_state, base)
+#define to_vkms_plane_state(target)\
+	container_of(target, struct vkms_plane_state, base)
 
 /* CRTC */
-पूर्णांक vkms_crtc_init(काष्ठा drm_device *dev, काष्ठा drm_crtc *crtc,
-		   काष्ठा drm_plane *primary, काष्ठा drm_plane *cursor);
+int vkms_crtc_init(struct drm_device *dev, struct drm_crtc *crtc,
+		   struct drm_plane *primary, struct drm_plane *cursor);
 
-पूर्णांक vkms_output_init(काष्ठा vkms_device *vkmsdev, पूर्णांक index);
+int vkms_output_init(struct vkms_device *vkmsdev, int index);
 
-काष्ठा drm_plane *vkms_plane_init(काष्ठा vkms_device *vkmsdev,
-				  क्रमागत drm_plane_type type, पूर्णांक index);
+struct drm_plane *vkms_plane_init(struct vkms_device *vkmsdev,
+				  enum drm_plane_type type, int index);
 
 /* CRC Support */
-स्थिर अक्षर *स्थिर *vkms_get_crc_sources(काष्ठा drm_crtc *crtc,
-					माप_प्रकार *count);
-पूर्णांक vkms_set_crc_source(काष्ठा drm_crtc *crtc, स्थिर अक्षर *src_name);
-पूर्णांक vkms_verअगरy_crc_source(काष्ठा drm_crtc *crtc, स्थिर अक्षर *source_name,
-			   माप_प्रकार *values_cnt);
+const char *const *vkms_get_crc_sources(struct drm_crtc *crtc,
+					size_t *count);
+int vkms_set_crc_source(struct drm_crtc *crtc, const char *src_name);
+int vkms_verify_crc_source(struct drm_crtc *crtc, const char *source_name,
+			   size_t *values_cnt);
 
 /* Composer Support */
-व्योम vkms_composer_worker(काष्ठा work_काष्ठा *work);
-व्योम vkms_set_composer(काष्ठा vkms_output *out, bool enabled);
+void vkms_composer_worker(struct work_struct *work);
+void vkms_set_composer(struct vkms_output *out, bool enabled);
 
 /* Writeback */
-पूर्णांक vkms_enable_ग_लिखोback_connector(काष्ठा vkms_device *vkmsdev);
+int vkms_enable_writeback_connector(struct vkms_device *vkmsdev);
 
-#पूर्ण_अगर /* _VKMS_DRV_H_ */
+#endif /* _VKMS_DRV_H_ */

@@ -1,41 +1,40 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
 /*
- * include/यंत्र-xtensa/ipcbuf.h
+ * include/asm-xtensa/ipcbuf.h
  *
- * The ipc64_perm काष्ठाure क्रम the Xtensa architecture.
- * Note extra padding because this काष्ठाure is passed back and क्रमth
+ * The ipc64_perm structure for the Xtensa architecture.
+ * Note extra padding because this structure is passed back and forth
  * between kernel and user space.
  *
  * Copyright (C) 2001 - 2005 Tensilica Inc.
  */
 
-#अगर_अघोषित _XTENSA_IPCBUF_H
-#घोषणा _XTENSA_IPCBUF_H
+#ifndef _XTENSA_IPCBUF_H
+#define _XTENSA_IPCBUF_H
 
-#समावेश <linux/posix_types.h>
+#include <linux/posix_types.h>
 
 /*
- * Pad space is left क्रम:
+ * Pad space is left for:
  * - 32-bit mode_t and seq
  * - 2 miscellaneous 32-bit values
  *
  * This file is subject to the terms and conditions of the GNU General
- * Public License.  See the file "COPYING" in the मुख्य directory of
- * this archive क्रम more details.
+ * Public License.  See the file "COPYING" in the main directory of
+ * this archive for more details.
  */
 
-काष्ठा ipc64_perm
-अणु
+struct ipc64_perm
+{
 	__kernel_key_t		key;
 	__kernel_uid32_t	uid;
 	__kernel_gid32_t	gid;
 	__kernel_uid32_t	cuid;
 	__kernel_gid32_t	cgid;
 	__kernel_mode_t		mode;
-	अचिन्हित दीर्घ		seq;
-	अचिन्हित दीर्घ		__unused1;
-	अचिन्हित दीर्घ		__unused2;
-पूर्ण;
+	unsigned long		seq;
+	unsigned long		__unused1;
+	unsigned long		__unused2;
+};
 
-#पूर्ण_अगर /* _XTENSA_IPCBUF_H */
+#endif /* _XTENSA_IPCBUF_H */

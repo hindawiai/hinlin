@@ -1,275 +1,274 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * APEI Hardware Error Source Table support
  *
  * HEST describes error sources in detail; communicates operational
  * parameters (i.e. severity levels, masking bits, and threshold
  * values) to Linux as necessary. It also allows the BIOS to report
- * non-standard error sources to Linux (क्रम example, chipset-specअगरic
- * error रेजिस्टरs).
+ * non-standard error sources to Linux (for example, chipset-specific
+ * error registers).
  *
- * For more inक्रमmation about HEST, please refer to ACPI Specअगरication
+ * For more information about HEST, please refer to ACPI Specification
  * version 4.0, section 17.3.2.
  *
  * Copyright 2009 Intel Corp.
- *   Author: Huang Ying <ying.huang@पूर्णांकel.com>
+ *   Author: Huang Ying <ying.huang@intel.com>
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/init.h>
-#समावेश <linux/acpi.h>
-#समावेश <linux/kdebug.h>
-#समावेश <linux/highस्मृति.स>
-#समावेश <linux/पन.स>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <acpi/apei.h>
-#समावेश <acpi/ghes.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/acpi.h>
+#include <linux/kdebug.h>
+#include <linux/highmem.h>
+#include <linux/io.h>
+#include <linux/platform_device.h>
+#include <acpi/apei.h>
+#include <acpi/ghes.h>
 
-#समावेश "apei-internal.h"
+#include "apei-internal.h"
 
-#घोषणा HEST_PFX "HEST: "
+#define HEST_PFX "HEST: "
 
-पूर्णांक hest_disable;
+int hest_disable;
 EXPORT_SYMBOL_GPL(hest_disable);
 
 /* HEST table parsing */
 
-अटल काष्ठा acpi_table_hest *__पढ़ो_mostly hest_tab;
+static struct acpi_table_hest *__read_mostly hest_tab;
 
-अटल स्थिर पूर्णांक hest_esrc_len_tab[ACPI_HEST_TYPE_RESERVED] = अणु
+static const int hest_esrc_len_tab[ACPI_HEST_TYPE_RESERVED] = {
 	[ACPI_HEST_TYPE_IA32_CHECK] = -1,	/* need further calculation */
 	[ACPI_HEST_TYPE_IA32_CORRECTED_CHECK] = -1,
-	[ACPI_HEST_TYPE_IA32_NMI] = माप(काष्ठा acpi_hest_ia_nmi),
-	[ACPI_HEST_TYPE_AER_ROOT_PORT] = माप(काष्ठा acpi_hest_aer_root),
-	[ACPI_HEST_TYPE_AER_ENDPOINT] = माप(काष्ठा acpi_hest_aer),
-	[ACPI_HEST_TYPE_AER_BRIDGE] = माप(काष्ठा acpi_hest_aer_bridge),
-	[ACPI_HEST_TYPE_GENERIC_ERROR] = माप(काष्ठा acpi_hest_generic),
-	[ACPI_HEST_TYPE_GENERIC_ERROR_V2] = माप(काष्ठा acpi_hest_generic_v2),
+	[ACPI_HEST_TYPE_IA32_NMI] = sizeof(struct acpi_hest_ia_nmi),
+	[ACPI_HEST_TYPE_AER_ROOT_PORT] = sizeof(struct acpi_hest_aer_root),
+	[ACPI_HEST_TYPE_AER_ENDPOINT] = sizeof(struct acpi_hest_aer),
+	[ACPI_HEST_TYPE_AER_BRIDGE] = sizeof(struct acpi_hest_aer_bridge),
+	[ACPI_HEST_TYPE_GENERIC_ERROR] = sizeof(struct acpi_hest_generic),
+	[ACPI_HEST_TYPE_GENERIC_ERROR_V2] = sizeof(struct acpi_hest_generic_v2),
 	[ACPI_HEST_TYPE_IA32_DEFERRED_CHECK] = -1,
-पूर्ण;
+};
 
-अटल अंतरभूत bool is_generic_error(काष्ठा acpi_hest_header *hest_hdr)
-अणु
-	वापस hest_hdr->type == ACPI_HEST_TYPE_GENERIC_ERROR ||
+static inline bool is_generic_error(struct acpi_hest_header *hest_hdr)
+{
+	return hest_hdr->type == ACPI_HEST_TYPE_GENERIC_ERROR ||
 	       hest_hdr->type == ACPI_HEST_TYPE_GENERIC_ERROR_V2;
-पूर्ण
+}
 
-अटल पूर्णांक hest_esrc_len(काष्ठा acpi_hest_header *hest_hdr)
-अणु
+static int hest_esrc_len(struct acpi_hest_header *hest_hdr)
+{
 	u16 hest_type = hest_hdr->type;
-	पूर्णांक len;
+	int len;
 
-	अगर (hest_type >= ACPI_HEST_TYPE_RESERVED)
-		वापस 0;
+	if (hest_type >= ACPI_HEST_TYPE_RESERVED)
+		return 0;
 
 	len = hest_esrc_len_tab[hest_type];
 
-	अगर (hest_type == ACPI_HEST_TYPE_IA32_CORRECTED_CHECK) अणु
-		काष्ठा acpi_hest_ia_corrected *cmc;
-		cmc = (काष्ठा acpi_hest_ia_corrected *)hest_hdr;
-		len = माप(*cmc) + cmc->num_hardware_banks *
-			माप(काष्ठा acpi_hest_ia_error_bank);
-	पूर्ण अन्यथा अगर (hest_type == ACPI_HEST_TYPE_IA32_CHECK) अणु
-		काष्ठा acpi_hest_ia_machine_check *mc;
-		mc = (काष्ठा acpi_hest_ia_machine_check *)hest_hdr;
-		len = माप(*mc) + mc->num_hardware_banks *
-			माप(काष्ठा acpi_hest_ia_error_bank);
-	पूर्ण अन्यथा अगर (hest_type == ACPI_HEST_TYPE_IA32_DEFERRED_CHECK) अणु
-		काष्ठा acpi_hest_ia_deferred_check *mc;
-		mc = (काष्ठा acpi_hest_ia_deferred_check *)hest_hdr;
-		len = माप(*mc) + mc->num_hardware_banks *
-			माप(काष्ठा acpi_hest_ia_error_bank);
-	पूर्ण
+	if (hest_type == ACPI_HEST_TYPE_IA32_CORRECTED_CHECK) {
+		struct acpi_hest_ia_corrected *cmc;
+		cmc = (struct acpi_hest_ia_corrected *)hest_hdr;
+		len = sizeof(*cmc) + cmc->num_hardware_banks *
+			sizeof(struct acpi_hest_ia_error_bank);
+	} else if (hest_type == ACPI_HEST_TYPE_IA32_CHECK) {
+		struct acpi_hest_ia_machine_check *mc;
+		mc = (struct acpi_hest_ia_machine_check *)hest_hdr;
+		len = sizeof(*mc) + mc->num_hardware_banks *
+			sizeof(struct acpi_hest_ia_error_bank);
+	} else if (hest_type == ACPI_HEST_TYPE_IA32_DEFERRED_CHECK) {
+		struct acpi_hest_ia_deferred_check *mc;
+		mc = (struct acpi_hest_ia_deferred_check *)hest_hdr;
+		len = sizeof(*mc) + mc->num_hardware_banks *
+			sizeof(struct acpi_hest_ia_error_bank);
+	}
 	BUG_ON(len == -1);
 
-	वापस len;
-पूर्ण;
+	return len;
+};
 
-पूर्णांक apei_hest_parse(apei_hest_func_t func, व्योम *data)
-अणु
-	काष्ठा acpi_hest_header *hest_hdr;
-	पूर्णांक i, rc, len;
+int apei_hest_parse(apei_hest_func_t func, void *data)
+{
+	struct acpi_hest_header *hest_hdr;
+	int i, rc, len;
 
-	अगर (hest_disable || !hest_tab)
-		वापस -EINVAL;
+	if (hest_disable || !hest_tab)
+		return -EINVAL;
 
-	hest_hdr = (काष्ठा acpi_hest_header *)(hest_tab + 1);
-	क्रम (i = 0; i < hest_tab->error_source_count; i++) अणु
+	hest_hdr = (struct acpi_hest_header *)(hest_tab + 1);
+	for (i = 0; i < hest_tab->error_source_count; i++) {
 		len = hest_esrc_len(hest_hdr);
-		अगर (!len) अणु
+		if (!len) {
 			pr_warn(FW_WARN HEST_PFX
 				"Unknown or unused hardware error source "
 				"type: %d for hardware error source: %d.\n",
 				hest_hdr->type, hest_hdr->source_id);
-			वापस -EINVAL;
-		पूर्ण
-		अगर ((व्योम *)hest_hdr + len >
-		    (व्योम *)hest_tab + hest_tab->header.length) अणु
+			return -EINVAL;
+		}
+		if ((void *)hest_hdr + len >
+		    (void *)hest_tab + hest_tab->header.length) {
 			pr_warn(FW_BUG HEST_PFX
 		"Table contents overflow for hardware error source: %d.\n",
 				hest_hdr->source_id);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
 		rc = func(hest_hdr, data);
-		अगर (rc)
-			वापस rc;
+		if (rc)
+			return rc;
 
-		hest_hdr = (व्योम *)hest_hdr + len;
-	पूर्ण
+		hest_hdr = (void *)hest_hdr + len;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(apei_hest_parse);
 
 /*
- * Check अगर firmware advertises firmware first mode. We need FF bit to be set
- * aदीर्घ with a set of MC banks which work in FF mode.
+ * Check if firmware advertises firmware first mode. We need FF bit to be set
+ * along with a set of MC banks which work in FF mode.
  */
-अटल पूर्णांक __init hest_parse_cmc(काष्ठा acpi_hest_header *hest_hdr, व्योम *data)
-अणु
-	अगर (hest_hdr->type != ACPI_HEST_TYPE_IA32_CORRECTED_CHECK)
-		वापस 0;
+static int __init hest_parse_cmc(struct acpi_hest_header *hest_hdr, void *data)
+{
+	if (hest_hdr->type != ACPI_HEST_TYPE_IA32_CORRECTED_CHECK)
+		return 0;
 
-	अगर (!acpi_disable_cmcff)
-		वापस !arch_apei_enable_cmcff(hest_hdr, data);
+	if (!acpi_disable_cmcff)
+		return !arch_apei_enable_cmcff(hest_hdr, data);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-काष्ठा ghes_arr अणु
-	काष्ठा platक्रमm_device **ghes_devs;
-	अचिन्हित पूर्णांक count;
-पूर्ण;
+struct ghes_arr {
+	struct platform_device **ghes_devs;
+	unsigned int count;
+};
 
-अटल पूर्णांक __init hest_parse_ghes_count(काष्ठा acpi_hest_header *hest_hdr, व्योम *data)
-अणु
-	पूर्णांक *count = data;
+static int __init hest_parse_ghes_count(struct acpi_hest_header *hest_hdr, void *data)
+{
+	int *count = data;
 
-	अगर (is_generic_error(hest_hdr))
+	if (is_generic_error(hest_hdr))
 		(*count)++;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __init hest_parse_ghes(काष्ठा acpi_hest_header *hest_hdr, व्योम *data)
-अणु
-	काष्ठा platक्रमm_device *ghes_dev;
-	काष्ठा ghes_arr *ghes_arr = data;
-	पूर्णांक rc, i;
+static int __init hest_parse_ghes(struct acpi_hest_header *hest_hdr, void *data)
+{
+	struct platform_device *ghes_dev;
+	struct ghes_arr *ghes_arr = data;
+	int rc, i;
 
-	अगर (!is_generic_error(hest_hdr))
-		वापस 0;
+	if (!is_generic_error(hest_hdr))
+		return 0;
 
-	अगर (!((काष्ठा acpi_hest_generic *)hest_hdr)->enabled)
-		वापस 0;
-	क्रम (i = 0; i < ghes_arr->count; i++) अणु
-		काष्ठा acpi_hest_header *hdr;
+	if (!((struct acpi_hest_generic *)hest_hdr)->enabled)
+		return 0;
+	for (i = 0; i < ghes_arr->count; i++) {
+		struct acpi_hest_header *hdr;
 		ghes_dev = ghes_arr->ghes_devs[i];
-		hdr = *(काष्ठा acpi_hest_header **)ghes_dev->dev.platक्रमm_data;
-		अगर (hdr->source_id == hest_hdr->source_id) अणु
+		hdr = *(struct acpi_hest_header **)ghes_dev->dev.platform_data;
+		if (hdr->source_id == hest_hdr->source_id) {
 			pr_warn(FW_WARN HEST_PFX "Duplicated hardware error source ID: %d.\n",
 				hdr->source_id);
-			वापस -EIO;
-		पूर्ण
-	पूर्ण
-	ghes_dev = platक्रमm_device_alloc("GHES", hest_hdr->source_id);
-	अगर (!ghes_dev)
-		वापस -ENOMEM;
+			return -EIO;
+		}
+	}
+	ghes_dev = platform_device_alloc("GHES", hest_hdr->source_id);
+	if (!ghes_dev)
+		return -ENOMEM;
 
-	rc = platक्रमm_device_add_data(ghes_dev, &hest_hdr, माप(व्योम *));
-	अगर (rc)
-		जाओ err;
+	rc = platform_device_add_data(ghes_dev, &hest_hdr, sizeof(void *));
+	if (rc)
+		goto err;
 
-	rc = platक्रमm_device_add(ghes_dev);
-	अगर (rc)
-		जाओ err;
+	rc = platform_device_add(ghes_dev);
+	if (rc)
+		goto err;
 	ghes_arr->ghes_devs[ghes_arr->count++] = ghes_dev;
 
-	वापस 0;
+	return 0;
 err:
-	platक्रमm_device_put(ghes_dev);
-	वापस rc;
-पूर्ण
+	platform_device_put(ghes_dev);
+	return rc;
+}
 
-अटल पूर्णांक __init hest_ghes_dev_रेजिस्टर(अचिन्हित पूर्णांक ghes_count)
-अणु
-	पूर्णांक rc, i;
-	काष्ठा ghes_arr ghes_arr;
+static int __init hest_ghes_dev_register(unsigned int ghes_count)
+{
+	int rc, i;
+	struct ghes_arr ghes_arr;
 
 	ghes_arr.count = 0;
-	ghes_arr.ghes_devs = kदो_स्मृति_array(ghes_count, माप(व्योम *),
+	ghes_arr.ghes_devs = kmalloc_array(ghes_count, sizeof(void *),
 					   GFP_KERNEL);
-	अगर (!ghes_arr.ghes_devs)
-		वापस -ENOMEM;
+	if (!ghes_arr.ghes_devs)
+		return -ENOMEM;
 
 	rc = apei_hest_parse(hest_parse_ghes, &ghes_arr);
-	अगर (rc)
-		जाओ err;
+	if (rc)
+		goto err;
 
 	rc = ghes_estatus_pool_init(ghes_count);
-	अगर (rc)
-		जाओ err;
+	if (rc)
+		goto err;
 
 out:
-	kमुक्त(ghes_arr.ghes_devs);
-	वापस rc;
+	kfree(ghes_arr.ghes_devs);
+	return rc;
 err:
-	क्रम (i = 0; i < ghes_arr.count; i++)
-		platक्रमm_device_unरेजिस्टर(ghes_arr.ghes_devs[i]);
-	जाओ out;
-पूर्ण
+	for (i = 0; i < ghes_arr.count; i++)
+		platform_device_unregister(ghes_arr.ghes_devs[i]);
+	goto out;
+}
 
-अटल पूर्णांक __init setup_hest_disable(अक्षर *str)
-अणु
+static int __init setup_hest_disable(char *str)
+{
 	hest_disable = HEST_DISABLED;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 __setup("hest_disable", setup_hest_disable);
 
-व्योम __init acpi_hest_init(व्योम)
-अणु
+void __init acpi_hest_init(void)
+{
 	acpi_status status;
-	पूर्णांक rc;
-	अचिन्हित पूर्णांक ghes_count = 0;
+	int rc;
+	unsigned int ghes_count = 0;
 
-	अगर (hest_disable) अणु
+	if (hest_disable) {
 		pr_info(HEST_PFX "Table parsing disabled.\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	status = acpi_get_table(ACPI_SIG_HEST, 0,
-				(काष्ठा acpi_table_header **)&hest_tab);
-	अगर (status == AE_NOT_FOUND) अणु
+				(struct acpi_table_header **)&hest_tab);
+	if (status == AE_NOT_FOUND) {
 		hest_disable = HEST_NOT_FOUND;
-		वापस;
-	पूर्ण अन्यथा अगर (ACPI_FAILURE(status)) अणु
-		स्थिर अक्षर *msg = acpi_क्रमmat_exception(status);
+		return;
+	} else if (ACPI_FAILURE(status)) {
+		const char *msg = acpi_format_exception(status);
 		pr_err(HEST_PFX "Failed to get table, %s\n", msg);
 		hest_disable = HEST_DISABLED;
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	rc = apei_hest_parse(hest_parse_cmc, शून्य);
-	अगर (rc)
-		जाओ err;
+	rc = apei_hest_parse(hest_parse_cmc, NULL);
+	if (rc)
+		goto err;
 
-	अगर (!ghes_disable) अणु
+	if (!ghes_disable) {
 		rc = apei_hest_parse(hest_parse_ghes_count, &ghes_count);
-		अगर (rc)
-			जाओ err;
+		if (rc)
+			goto err;
 
-		अगर (ghes_count)
-			rc = hest_ghes_dev_रेजिस्टर(ghes_count);
-		अगर (rc)
-			जाओ err;
-	पूर्ण
+		if (ghes_count)
+			rc = hest_ghes_dev_register(ghes_count);
+		if (rc)
+			goto err;
+	}
 
 	pr_info(HEST_PFX "Table parsing has been initialized.\n");
-	वापस;
+	return;
 err:
 	hest_disable = HEST_DISABLED;
-	acpi_put_table((काष्ठा acpi_table_header *)hest_tab);
-पूर्ण
+	acpi_put_table((struct acpi_table_header *)hest_tab);
+}

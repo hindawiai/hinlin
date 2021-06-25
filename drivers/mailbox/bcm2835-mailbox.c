@@ -1,202 +1,201 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  *  Copyright (C) 2010,2015 Broadcom
- *  Copyright (C) 2013-2014 Lubomir Rपूर्णांकel
+ *  Copyright (C) 2013-2014 Lubomir Rintel
  *  Copyright (C) 2013 Craig McGeachie
  *
  * Parts of the driver are based on:
  *  - arch/arm/mach-bcm2708/vcio.c file written by Gray Girling that was
  *    obtained from branch "rpi-3.6.y" of git://github.com/raspberrypi/
  *    linux.git
- *  - drivers/mailbox/bcm2835-ipc.c by Lubomir Rपूर्णांकel at
+ *  - drivers/mailbox/bcm2835-ipc.c by Lubomir Rintel at
  *    https://github.com/hackerspace/rpi-linux/blob/lr-raspberry-pi/drivers/
  *    mailbox/bcm2835-ipc.c
- *  - करोcumentation available on the following web site:
- *    https://github.com/raspberrypi/firmware/wiki/Mailbox-property-पूर्णांकerface
+ *  - documentation available on the following web site:
+ *    https://github.com/raspberrypi/firmware/wiki/Mailbox-property-interface
  */
 
-#समावेश <linux/device.h>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/err.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/mailbox_controller.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/of_irq.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/spinlock.h>
+#include <linux/device.h>
+#include <linux/dma-mapping.h>
+#include <linux/err.h>
+#include <linux/interrupt.h>
+#include <linux/irq.h>
+#include <linux/kernel.h>
+#include <linux/mailbox_controller.h>
+#include <linux/module.h>
+#include <linux/of_address.h>
+#include <linux/of_irq.h>
+#include <linux/platform_device.h>
+#include <linux/spinlock.h>
 
 /* Mailboxes */
-#घोषणा ARM_0_MAIL0	0x00
-#घोषणा ARM_0_MAIL1	0x20
+#define ARM_0_MAIL0	0x00
+#define ARM_0_MAIL1	0x20
 
 /*
- * Mailbox रेजिस्टरs. We basically only support mailbox 0 & 1. We
+ * Mailbox registers. We basically only support mailbox 0 & 1. We
  * deliver to the VC in mailbox 1, it delivers to us in mailbox 0. See
- * BCM2835-ARM-Peripherals.pdf section 1.3 क्रम an explanation about
+ * BCM2835-ARM-Peripherals.pdf section 1.3 for an explanation about
  * the placement of memory barriers.
  */
-#घोषणा MAIL0_RD	(ARM_0_MAIL0 + 0x00)
-#घोषणा MAIL0_POL	(ARM_0_MAIL0 + 0x10)
-#घोषणा MAIL0_STA	(ARM_0_MAIL0 + 0x18)
-#घोषणा MAIL0_CNF	(ARM_0_MAIL0 + 0x1C)
-#घोषणा MAIL1_WRT	(ARM_0_MAIL1 + 0x00)
-#घोषणा MAIL1_STA	(ARM_0_MAIL1 + 0x18)
+#define MAIL0_RD	(ARM_0_MAIL0 + 0x00)
+#define MAIL0_POL	(ARM_0_MAIL0 + 0x10)
+#define MAIL0_STA	(ARM_0_MAIL0 + 0x18)
+#define MAIL0_CNF	(ARM_0_MAIL0 + 0x1C)
+#define MAIL1_WRT	(ARM_0_MAIL1 + 0x00)
+#define MAIL1_STA	(ARM_0_MAIL1 + 0x18)
 
-/* Status रेजिस्टर: FIFO state. */
-#घोषणा ARM_MS_FULL		BIT(31)
-#घोषणा ARM_MS_EMPTY		BIT(30)
+/* Status register: FIFO state. */
+#define ARM_MS_FULL		BIT(31)
+#define ARM_MS_EMPTY		BIT(30)
 
-/* Configuration रेजिस्टर: Enable पूर्णांकerrupts. */
-#घोषणा ARM_MC_IHAVEDATAIRQEN	BIT(0)
+/* Configuration register: Enable interrupts. */
+#define ARM_MC_IHAVEDATAIRQEN	BIT(0)
 
-काष्ठा bcm2835_mbox अणु
-	व्योम __iomem *regs;
+struct bcm2835_mbox {
+	void __iomem *regs;
 	spinlock_t lock;
-	काष्ठा mbox_controller controller;
-पूर्ण;
+	struct mbox_controller controller;
+};
 
-अटल काष्ठा bcm2835_mbox *bcm2835_link_mbox(काष्ठा mbox_chan *link)
-अणु
-	वापस container_of(link->mbox, काष्ठा bcm2835_mbox, controller);
-पूर्ण
+static struct bcm2835_mbox *bcm2835_link_mbox(struct mbox_chan *link)
+{
+	return container_of(link->mbox, struct bcm2835_mbox, controller);
+}
 
-अटल irqवापस_t bcm2835_mbox_irq(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा bcm2835_mbox *mbox = dev_id;
-	काष्ठा device *dev = mbox->controller.dev;
-	काष्ठा mbox_chan *link = &mbox->controller.chans[0];
+static irqreturn_t bcm2835_mbox_irq(int irq, void *dev_id)
+{
+	struct bcm2835_mbox *mbox = dev_id;
+	struct device *dev = mbox->controller.dev;
+	struct mbox_chan *link = &mbox->controller.chans[0];
 
-	जबतक (!(पढ़ोl(mbox->regs + MAIL0_STA) & ARM_MS_EMPTY)) अणु
-		u32 msg = पढ़ोl(mbox->regs + MAIL0_RD);
+	while (!(readl(mbox->regs + MAIL0_STA) & ARM_MS_EMPTY)) {
+		u32 msg = readl(mbox->regs + MAIL0_RD);
 		dev_dbg(dev, "Reply 0x%08X\n", msg);
 		mbox_chan_received_data(link, &msg);
-	पूर्ण
-	वापस IRQ_HANDLED;
-पूर्ण
+	}
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक bcm2835_send_data(काष्ठा mbox_chan *link, व्योम *data)
-अणु
-	काष्ठा bcm2835_mbox *mbox = bcm2835_link_mbox(link);
+static int bcm2835_send_data(struct mbox_chan *link, void *data)
+{
+	struct bcm2835_mbox *mbox = bcm2835_link_mbox(link);
 	u32 msg = *(u32 *)data;
 
 	spin_lock(&mbox->lock);
-	ग_लिखोl(msg, mbox->regs + MAIL1_WRT);
+	writel(msg, mbox->regs + MAIL1_WRT);
 	dev_dbg(mbox->controller.dev, "Request 0x%08X\n", msg);
 	spin_unlock(&mbox->lock);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक bcm2835_startup(काष्ठा mbox_chan *link)
-अणु
-	काष्ठा bcm2835_mbox *mbox = bcm2835_link_mbox(link);
+static int bcm2835_startup(struct mbox_chan *link)
+{
+	struct bcm2835_mbox *mbox = bcm2835_link_mbox(link);
 
-	/* Enable the पूर्णांकerrupt on data reception */
-	ग_लिखोl(ARM_MC_IHAVEDATAIRQEN, mbox->regs + MAIL0_CNF);
+	/* Enable the interrupt on data reception */
+	writel(ARM_MC_IHAVEDATAIRQEN, mbox->regs + MAIL0_CNF);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम bcm2835_shutकरोwn(काष्ठा mbox_chan *link)
-अणु
-	काष्ठा bcm2835_mbox *mbox = bcm2835_link_mbox(link);
+static void bcm2835_shutdown(struct mbox_chan *link)
+{
+	struct bcm2835_mbox *mbox = bcm2835_link_mbox(link);
 
-	ग_लिखोl(0, mbox->regs + MAIL0_CNF);
-पूर्ण
+	writel(0, mbox->regs + MAIL0_CNF);
+}
 
-अटल bool bcm2835_last_tx_करोne(काष्ठा mbox_chan *link)
-अणु
-	काष्ठा bcm2835_mbox *mbox = bcm2835_link_mbox(link);
+static bool bcm2835_last_tx_done(struct mbox_chan *link)
+{
+	struct bcm2835_mbox *mbox = bcm2835_link_mbox(link);
 	bool ret;
 
 	spin_lock(&mbox->lock);
-	ret = !(पढ़ोl(mbox->regs + MAIL1_STA) & ARM_MS_FULL);
+	ret = !(readl(mbox->regs + MAIL1_STA) & ARM_MS_FULL);
 	spin_unlock(&mbox->lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा mbox_chan_ops bcm2835_mbox_chan_ops = अणु
+static const struct mbox_chan_ops bcm2835_mbox_chan_ops = {
 	.send_data	= bcm2835_send_data,
 	.startup	= bcm2835_startup,
-	.shutकरोwn	= bcm2835_shutकरोwn,
-	.last_tx_करोne	= bcm2835_last_tx_करोne
-पूर्ण;
+	.shutdown	= bcm2835_shutdown,
+	.last_tx_done	= bcm2835_last_tx_done
+};
 
-अटल काष्ठा mbox_chan *bcm2835_mbox_index_xlate(काष्ठा mbox_controller *mbox,
-		    स्थिर काष्ठा of_phandle_args *sp)
-अणु
-	अगर (sp->args_count != 0)
-		वापस ERR_PTR(-EINVAL);
+static struct mbox_chan *bcm2835_mbox_index_xlate(struct mbox_controller *mbox,
+		    const struct of_phandle_args *sp)
+{
+	if (sp->args_count != 0)
+		return ERR_PTR(-EINVAL);
 
-	वापस &mbox->chans[0];
-पूर्ण
+	return &mbox->chans[0];
+}
 
-अटल पूर्णांक bcm2835_mbox_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	पूर्णांक ret = 0;
-	काष्ठा resource *iomem;
-	काष्ठा bcm2835_mbox *mbox;
+static int bcm2835_mbox_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	int ret = 0;
+	struct resource *iomem;
+	struct bcm2835_mbox *mbox;
 
-	mbox = devm_kzalloc(dev, माप(*mbox), GFP_KERNEL);
-	अगर (mbox == शून्य)
-		वापस -ENOMEM;
+	mbox = devm_kzalloc(dev, sizeof(*mbox), GFP_KERNEL);
+	if (mbox == NULL)
+		return -ENOMEM;
 	spin_lock_init(&mbox->lock);
 
 	ret = devm_request_irq(dev, irq_of_parse_and_map(dev->of_node, 0),
 			       bcm2835_mbox_irq, 0, dev_name(dev), mbox);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "Failed to register a mailbox IRQ handler: %d\n",
 			ret);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	iomem = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	iomem = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	mbox->regs = devm_ioremap_resource(&pdev->dev, iomem);
-	अगर (IS_ERR(mbox->regs)) अणु
+	if (IS_ERR(mbox->regs)) {
 		ret = PTR_ERR(mbox->regs);
 		dev_err(&pdev->dev, "Failed to remap mailbox regs: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	mbox->controller.txकरोne_poll = true;
+	mbox->controller.txdone_poll = true;
 	mbox->controller.txpoll_period = 5;
 	mbox->controller.ops = &bcm2835_mbox_chan_ops;
 	mbox->controller.of_xlate = &bcm2835_mbox_index_xlate;
 	mbox->controller.dev = dev;
 	mbox->controller.num_chans = 1;
 	mbox->controller.chans = devm_kzalloc(dev,
-		माप(*mbox->controller.chans), GFP_KERNEL);
-	अगर (!mbox->controller.chans)
-		वापस -ENOMEM;
+		sizeof(*mbox->controller.chans), GFP_KERNEL);
+	if (!mbox->controller.chans)
+		return -ENOMEM;
 
-	ret = devm_mbox_controller_रेजिस्टर(dev, &mbox->controller);
-	अगर (ret)
-		वापस ret;
+	ret = devm_mbox_controller_register(dev, &mbox->controller);
+	if (ret)
+		return ret;
 
-	platक्रमm_set_drvdata(pdev, mbox);
+	platform_set_drvdata(pdev, mbox);
 	dev_info(dev, "mailbox enabled\n");
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा of_device_id bcm2835_mbox_of_match[] = अणु
-	अणु .compatible = "brcm,bcm2835-mbox", पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct of_device_id bcm2835_mbox_of_match[] = {
+	{ .compatible = "brcm,bcm2835-mbox", },
+	{},
+};
 MODULE_DEVICE_TABLE(of, bcm2835_mbox_of_match);
 
-अटल काष्ठा platक्रमm_driver bcm2835_mbox_driver = अणु
-	.driver = अणु
+static struct platform_driver bcm2835_mbox_driver = {
+	.driver = {
 		.name = "bcm2835-mbox",
 		.of_match_table = bcm2835_mbox_of_match,
-	पूर्ण,
+	},
 	.probe		= bcm2835_mbox_probe,
-पूर्ण;
-module_platक्रमm_driver(bcm2835_mbox_driver);
+};
+module_platform_driver(bcm2835_mbox_driver);
 
 MODULE_AUTHOR("Lubomir Rintel <lkundrak@v3.sk>");
 MODULE_DESCRIPTION("BCM2835 mailbox IPC driver");

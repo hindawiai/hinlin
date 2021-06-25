@@ -1,15 +1,14 @@
-<शैली गुरु>
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
  * Copyright 2009 Jerome Glisse.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -24,159 +23,159 @@
  *
  */
 
-#समावेश <linux/kthपढ़ो.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <linux/poll.h>
+#include <linux/kthread.h>
+#include <linux/pci.h>
+#include <linux/uaccess.h>
+#include <linux/pm_runtime.h>
+#include <linux/poll.h>
 
-#समावेश "amdgpu.h"
-#समावेश "amdgpu_pm.h"
-#समावेश "amdgpu_dm_debugfs.h"
-#समावेश "amdgpu_ras.h"
-#समावेश "amdgpu_rap.h"
-#समावेश "amdgpu_securedisplay.h"
-#समावेश "amdgpu_fw_attestation.h"
+#include "amdgpu.h"
+#include "amdgpu_pm.h"
+#include "amdgpu_dm_debugfs.h"
+#include "amdgpu_ras.h"
+#include "amdgpu_rap.h"
+#include "amdgpu_securedisplay.h"
+#include "amdgpu_fw_attestation.h"
 
-पूर्णांक amdgpu_debugfs_रुको_dump(काष्ठा amdgpu_device *adev)
-अणु
-#अगर defined(CONFIG_DEBUG_FS)
-	अचिन्हित दीर्घ समयout = 600 * HZ;
-	पूर्णांक ret;
+int amdgpu_debugfs_wait_dump(struct amdgpu_device *adev)
+{
+#if defined(CONFIG_DEBUG_FS)
+	unsigned long timeout = 600 * HZ;
+	int ret;
 
-	wake_up_पूर्णांकerruptible(&adev->स्वतःdump.gpu_hang);
+	wake_up_interruptible(&adev->autodump.gpu_hang);
 
-	ret = रुको_क्रम_completion_पूर्णांकerruptible_समयout(&adev->स्वतःdump.dumping, समयout);
-	अगर (ret == 0) अणु
+	ret = wait_for_completion_interruptible_timeout(&adev->autodump.dumping, timeout);
+	if (ret == 0) {
 		pr_err("autodump: timeout, move on to gpu recovery\n");
-		वापस -ETIMEDOUT;
-	पूर्ण
-#पूर्ण_अगर
-	वापस 0;
-पूर्ण
+		return -ETIMEDOUT;
+	}
+#endif
+	return 0;
+}
 
-#अगर defined(CONFIG_DEBUG_FS)
+#if defined(CONFIG_DEBUG_FS)
 
-अटल पूर्णांक amdgpu_debugfs_स्वतःdump_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा amdgpu_device *adev = inode->i_निजी;
-	पूर्णांक ret;
+static int amdgpu_debugfs_autodump_open(struct inode *inode, struct file *file)
+{
+	struct amdgpu_device *adev = inode->i_private;
+	int ret;
 
-	file->निजी_data = adev;
+	file->private_data = adev;
 
-	ret = करोwn_पढ़ो_समाप्तable(&adev->reset_sem);
-	अगर (ret)
-		वापस ret;
+	ret = down_read_killable(&adev->reset_sem);
+	if (ret)
+		return ret;
 
-	अगर (adev->स्वतःdump.dumping.करोne) अणु
-		reinit_completion(&adev->स्वतःdump.dumping);
+	if (adev->autodump.dumping.done) {
+		reinit_completion(&adev->autodump.dumping);
 		ret = 0;
-	पूर्ण अन्यथा अणु
+	} else {
 		ret = -EBUSY;
-	पूर्ण
+	}
 
-	up_पढ़ो(&adev->reset_sem);
+	up_read(&adev->reset_sem);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक amdgpu_debugfs_स्वतःdump_release(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा amdgpu_device *adev = file->निजी_data;
+static int amdgpu_debugfs_autodump_release(struct inode *inode, struct file *file)
+{
+	struct amdgpu_device *adev = file->private_data;
 
-	complete_all(&adev->स्वतःdump.dumping);
-	वापस 0;
-पूर्ण
+	complete_all(&adev->autodump.dumping);
+	return 0;
+}
 
-अटल अचिन्हित पूर्णांक amdgpu_debugfs_स्वतःdump_poll(काष्ठा file *file, काष्ठा poll_table_काष्ठा *poll_table)
-अणु
-	काष्ठा amdgpu_device *adev = file->निजी_data;
+static unsigned int amdgpu_debugfs_autodump_poll(struct file *file, struct poll_table_struct *poll_table)
+{
+	struct amdgpu_device *adev = file->private_data;
 
-	poll_रुको(file, &adev->स्वतःdump.gpu_hang, poll_table);
+	poll_wait(file, &adev->autodump.gpu_hang, poll_table);
 
-	अगर (amdgpu_in_reset(adev))
-		वापस POLLIN | POLLRDNORM | POLLWRNORM;
+	if (amdgpu_in_reset(adev))
+		return POLLIN | POLLRDNORM | POLLWRNORM;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा file_operations स्वतःdump_debug_fops = अणु
+static const struct file_operations autodump_debug_fops = {
 	.owner = THIS_MODULE,
-	.खोलो = amdgpu_debugfs_स्वतःdump_खोलो,
-	.poll = amdgpu_debugfs_स्वतःdump_poll,
-	.release = amdgpu_debugfs_स्वतःdump_release,
-पूर्ण;
+	.open = amdgpu_debugfs_autodump_open,
+	.poll = amdgpu_debugfs_autodump_poll,
+	.release = amdgpu_debugfs_autodump_release,
+};
 
-अटल व्योम amdgpu_debugfs_स्वतःdump_init(काष्ठा amdgpu_device *adev)
-अणु
-	init_completion(&adev->स्वतःdump.dumping);
-	complete_all(&adev->स्वतःdump.dumping);
-	init_रुकोqueue_head(&adev->स्वतःdump.gpu_hang);
+static void amdgpu_debugfs_autodump_init(struct amdgpu_device *adev)
+{
+	init_completion(&adev->autodump.dumping);
+	complete_all(&adev->autodump.dumping);
+	init_waitqueue_head(&adev->autodump.gpu_hang);
 
 	debugfs_create_file("amdgpu_autodump", 0600,
 		adev_to_drm(adev)->primary->debugfs_root,
-		adev, &स्वतःdump_debug_fops);
-पूर्ण
+		adev, &autodump_debug_fops);
+}
 
 /**
- * amdgpu_debugfs_process_reg_op - Handle MMIO रेजिस्टर पढ़ोs/ग_लिखोs
+ * amdgpu_debugfs_process_reg_op - Handle MMIO register reads/writes
  *
- * @पढ़ो: True अगर पढ़ोing
- * @f: खोलो file handle
- * @buf: User buffer to ग_लिखो/पढ़ो to
- * @size: Number of bytes to ग_लिखो/पढ़ो
+ * @read: True if reading
+ * @f: open file handle
+ * @buf: User buffer to write/read to
+ * @size: Number of bytes to write/read
  * @pos:  Offset to seek to
  *
  * This debugfs entry has special meaning on the offset being sought.
- * Various bits have dअगरferent meanings:
+ * Various bits have different meanings:
  *
- * Bit 62:  Indicates a GRBM bank चयन is needed
- * Bit 61:  Indicates a SRBM bank चयन is needed (implies bit 62 is
+ * Bit 62:  Indicates a GRBM bank switch is needed
+ * Bit 61:  Indicates a SRBM bank switch is needed (implies bit 62 is
  * 	    zero)
- * Bits 24..33: The SE or ME selector अगर needed
- * Bits 34..43: The SH (or SA) or PIPE selector अगर needed
- * Bits 44..53: The INSTANCE (or CU/WGP) or QUEUE selector अगर needed
+ * Bits 24..33: The SE or ME selector if needed
+ * Bits 34..43: The SH (or SA) or PIPE selector if needed
+ * Bits 44..53: The INSTANCE (or CU/WGP) or QUEUE selector if needed
  *
- * Bit 23:  Indicates that the PM घातer gating lock should be held
- * 	    This is necessary to पढ़ो रेजिस्टरs that might be
- * 	    unreliable during a घातer gating transistion.
+ * Bit 23:  Indicates that the PM power gating lock should be held
+ * 	    This is necessary to read registers that might be
+ * 	    unreliable during a power gating transistion.
  *
- * The lower bits are the BYTE offset of the रेजिस्टर to पढ़ो.  This
- * allows पढ़ोing multiple रेजिस्टरs in a single call and having
- * the वापसed size reflect that.
+ * The lower bits are the BYTE offset of the register to read.  This
+ * allows reading multiple registers in a single call and having
+ * the returned size reflect that.
  */
-अटल पूर्णांक  amdgpu_debugfs_process_reg_op(bool पढ़ो, काष्ठा file *f,
-		अक्षर __user *buf, माप_प्रकार size, loff_t *pos)
-अणु
-	काष्ठा amdgpu_device *adev = file_inode(f)->i_निजी;
-	sमाप_प्रकार result = 0;
-	पूर्णांक r;
+static int  amdgpu_debugfs_process_reg_op(bool read, struct file *f,
+		char __user *buf, size_t size, loff_t *pos)
+{
+	struct amdgpu_device *adev = file_inode(f)->i_private;
+	ssize_t result = 0;
+	int r;
 	bool pm_pg_lock, use_bank, use_ring;
-	अचिन्हित instance_bank, sh_bank, se_bank, me, pipe, queue, vmid;
+	unsigned instance_bank, sh_bank, se_bank, me, pipe, queue, vmid;
 
 	pm_pg_lock = use_bank = use_ring = false;
 	instance_bank = sh_bank = se_bank = me = pipe = queue = vmid = 0;
 
-	अगर (size & 0x3 || *pos & 0x3 ||
+	if (size & 0x3 || *pos & 0x3 ||
 			((*pos & (1ULL << 62)) && (*pos & (1ULL << 61))))
-		वापस -EINVAL;
+		return -EINVAL;
 
-	/* are we पढ़ोing रेजिस्टरs क्रम which a PG lock is necessary? */
+	/* are we reading registers for which a PG lock is necessary? */
 	pm_pg_lock = (*pos >> 23) & 1;
 
-	अगर (*pos & (1ULL << 62)) अणु
+	if (*pos & (1ULL << 62)) {
 		se_bank = (*pos & GENMASK_ULL(33, 24)) >> 24;
 		sh_bank = (*pos & GENMASK_ULL(43, 34)) >> 34;
 		instance_bank = (*pos & GENMASK_ULL(53, 44)) >> 44;
 
-		अगर (se_bank == 0x3FF)
+		if (se_bank == 0x3FF)
 			se_bank = 0xFFFFFFFF;
-		अगर (sh_bank == 0x3FF)
+		if (sh_bank == 0x3FF)
 			sh_bank = 0xFFFFFFFF;
-		अगर (instance_bank == 0x3FF)
+		if (instance_bank == 0x3FF)
 			instance_bank = 0xFFFFFFFF;
 		use_bank = true;
-	पूर्ण अन्यथा अगर (*pos & (1ULL << 61)) अणु
+	} else if (*pos & (1ULL << 61)) {
 
 		me = (*pos & GENMASK_ULL(33, 24)) >> 24;
 		pipe = (*pos & GENMASK_ULL(43, 34)) >> 34;
@@ -184,206 +183,206 @@
 		vmid = (*pos & GENMASK_ULL(58, 54)) >> 54;
 
 		use_ring = true;
-	पूर्ण अन्यथा अणु
+	} else {
 		use_bank = use_ring = false;
-	पूर्ण
+	}
 
 	*pos &= (1UL << 22) - 1;
 
-	r = pm_runसमय_get_sync(adev_to_drm(adev)->dev);
-	अगर (r < 0) अणु
-		pm_runसमय_put_स्वतःsuspend(adev_to_drm(adev)->dev);
-		वापस r;
-	पूर्ण
+	r = pm_runtime_get_sync(adev_to_drm(adev)->dev);
+	if (r < 0) {
+		pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
+		return r;
+	}
 
 	r = amdgpu_virt_enable_access_debugfs(adev);
-	अगर (r < 0) अणु
-		pm_runसमय_put_स्वतःsuspend(adev_to_drm(adev)->dev);
-		वापस r;
-	पूर्ण
+	if (r < 0) {
+		pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
+		return r;
+	}
 
-	अगर (use_bank) अणु
-		अगर ((sh_bank != 0xFFFFFFFF && sh_bank >= adev->gfx.config.max_sh_per_se) ||
-		    (se_bank != 0xFFFFFFFF && se_bank >= adev->gfx.config.max_shader_engines)) अणु
-			pm_runसमय_mark_last_busy(adev_to_drm(adev)->dev);
-			pm_runसमय_put_स्वतःsuspend(adev_to_drm(adev)->dev);
+	if (use_bank) {
+		if ((sh_bank != 0xFFFFFFFF && sh_bank >= adev->gfx.config.max_sh_per_se) ||
+		    (se_bank != 0xFFFFFFFF && se_bank >= adev->gfx.config.max_shader_engines)) {
+			pm_runtime_mark_last_busy(adev_to_drm(adev)->dev);
+			pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
 			amdgpu_virt_disable_access_debugfs(adev);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 		mutex_lock(&adev->grbm_idx_mutex);
 		amdgpu_gfx_select_se_sh(adev, se_bank,
 					sh_bank, instance_bank);
-	पूर्ण अन्यथा अगर (use_ring) अणु
+	} else if (use_ring) {
 		mutex_lock(&adev->srbm_mutex);
 		amdgpu_gfx_select_me_pipe_q(adev, me, pipe, queue, vmid);
-	पूर्ण
+	}
 
-	अगर (pm_pg_lock)
+	if (pm_pg_lock)
 		mutex_lock(&adev->pm.mutex);
 
-	जबतक (size) अणु
-		uपूर्णांक32_t value;
+	while (size) {
+		uint32_t value;
 
-		अगर (पढ़ो) अणु
+		if (read) {
 			value = RREG32(*pos >> 2);
-			r = put_user(value, (uपूर्णांक32_t *)buf);
-		पूर्ण अन्यथा अणु
-			r = get_user(value, (uपूर्णांक32_t *)buf);
-			अगर (!r)
+			r = put_user(value, (uint32_t *)buf);
+		} else {
+			r = get_user(value, (uint32_t *)buf);
+			if (!r)
 				amdgpu_mm_wreg_mmio_rlc(adev, *pos >> 2, value);
-		पूर्ण
-		अगर (r) अणु
+		}
+		if (r) {
 			result = r;
-			जाओ end;
-		पूर्ण
+			goto end;
+		}
 
 		result += 4;
 		buf += 4;
 		*pos += 4;
 		size -= 4;
-	पूर्ण
+	}
 
 end:
-	अगर (use_bank) अणु
+	if (use_bank) {
 		amdgpu_gfx_select_se_sh(adev, 0xffffffff, 0xffffffff, 0xffffffff);
 		mutex_unlock(&adev->grbm_idx_mutex);
-	पूर्ण अन्यथा अगर (use_ring) अणु
+	} else if (use_ring) {
 		amdgpu_gfx_select_me_pipe_q(adev, 0, 0, 0, 0);
 		mutex_unlock(&adev->srbm_mutex);
-	पूर्ण
+	}
 
-	अगर (pm_pg_lock)
+	if (pm_pg_lock)
 		mutex_unlock(&adev->pm.mutex);
 
-	pm_runसमय_mark_last_busy(adev_to_drm(adev)->dev);
-	pm_runसमय_put_स्वतःsuspend(adev_to_drm(adev)->dev);
+	pm_runtime_mark_last_busy(adev_to_drm(adev)->dev);
+	pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
 
 	amdgpu_virt_disable_access_debugfs(adev);
-	वापस result;
-पूर्ण
+	return result;
+}
 
 /*
- * amdgpu_debugfs_regs_पढ़ो - Callback क्रम पढ़ोing MMIO रेजिस्टरs
+ * amdgpu_debugfs_regs_read - Callback for reading MMIO registers
  */
-अटल sमाप_प्रकार amdgpu_debugfs_regs_पढ़ो(काष्ठा file *f, अक्षर __user *buf,
-					माप_प्रकार size, loff_t *pos)
-अणु
-	वापस amdgpu_debugfs_process_reg_op(true, f, buf, size, pos);
-पूर्ण
+static ssize_t amdgpu_debugfs_regs_read(struct file *f, char __user *buf,
+					size_t size, loff_t *pos)
+{
+	return amdgpu_debugfs_process_reg_op(true, f, buf, size, pos);
+}
 
 /*
- * amdgpu_debugfs_regs_ग_लिखो - Callback क्रम writing MMIO रेजिस्टरs
+ * amdgpu_debugfs_regs_write - Callback for writing MMIO registers
  */
-अटल sमाप_प्रकार amdgpu_debugfs_regs_ग_लिखो(काष्ठा file *f, स्थिर अक्षर __user *buf,
-					 माप_प्रकार size, loff_t *pos)
-अणु
-	वापस amdgpu_debugfs_process_reg_op(false, f, (अक्षर __user *)buf, size, pos);
-पूर्ण
+static ssize_t amdgpu_debugfs_regs_write(struct file *f, const char __user *buf,
+					 size_t size, loff_t *pos)
+{
+	return amdgpu_debugfs_process_reg_op(false, f, (char __user *)buf, size, pos);
+}
 
 
 /**
- * amdgpu_debugfs_regs_pcie_पढ़ो - Read from a PCIE रेजिस्टर
+ * amdgpu_debugfs_regs_pcie_read - Read from a PCIE register
  *
- * @f: खोलो file handle
- * @buf: User buffer to store पढ़ो data in
- * @size: Number of bytes to पढ़ो
+ * @f: open file handle
+ * @buf: User buffer to store read data in
+ * @size: Number of bytes to read
  * @pos:  Offset to seek to
  *
- * The lower bits are the BYTE offset of the रेजिस्टर to पढ़ो.  This
- * allows पढ़ोing multiple रेजिस्टरs in a single call and having
- * the वापसed size reflect that.
+ * The lower bits are the BYTE offset of the register to read.  This
+ * allows reading multiple registers in a single call and having
+ * the returned size reflect that.
  */
-अटल sमाप_प्रकार amdgpu_debugfs_regs_pcie_पढ़ो(काष्ठा file *f, अक्षर __user *buf,
-					माप_प्रकार size, loff_t *pos)
-अणु
-	काष्ठा amdgpu_device *adev = file_inode(f)->i_निजी;
-	sमाप_प्रकार result = 0;
-	पूर्णांक r;
+static ssize_t amdgpu_debugfs_regs_pcie_read(struct file *f, char __user *buf,
+					size_t size, loff_t *pos)
+{
+	struct amdgpu_device *adev = file_inode(f)->i_private;
+	ssize_t result = 0;
+	int r;
 
-	अगर (size & 0x3 || *pos & 0x3)
-		वापस -EINVAL;
+	if (size & 0x3 || *pos & 0x3)
+		return -EINVAL;
 
-	r = pm_runसमय_get_sync(adev_to_drm(adev)->dev);
-	अगर (r < 0) अणु
-		pm_runसमय_put_स्वतःsuspend(adev_to_drm(adev)->dev);
-		वापस r;
-	पूर्ण
+	r = pm_runtime_get_sync(adev_to_drm(adev)->dev);
+	if (r < 0) {
+		pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
+		return r;
+	}
 
 	r = amdgpu_virt_enable_access_debugfs(adev);
-	अगर (r < 0) अणु
-		pm_runसमय_put_स्वतःsuspend(adev_to_drm(adev)->dev);
-		वापस r;
-	पूर्ण
+	if (r < 0) {
+		pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
+		return r;
+	}
 
-	जबतक (size) अणु
-		uपूर्णांक32_t value;
+	while (size) {
+		uint32_t value;
 
 		value = RREG32_PCIE(*pos);
-		r = put_user(value, (uपूर्णांक32_t *)buf);
-		अगर (r) अणु
-			pm_runसमय_mark_last_busy(adev_to_drm(adev)->dev);
-			pm_runसमय_put_स्वतःsuspend(adev_to_drm(adev)->dev);
+		r = put_user(value, (uint32_t *)buf);
+		if (r) {
+			pm_runtime_mark_last_busy(adev_to_drm(adev)->dev);
+			pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
 			amdgpu_virt_disable_access_debugfs(adev);
-			वापस r;
-		पूर्ण
+			return r;
+		}
 
 		result += 4;
 		buf += 4;
 		*pos += 4;
 		size -= 4;
-	पूर्ण
+	}
 
-	pm_runसमय_mark_last_busy(adev_to_drm(adev)->dev);
-	pm_runसमय_put_स्वतःsuspend(adev_to_drm(adev)->dev);
+	pm_runtime_mark_last_busy(adev_to_drm(adev)->dev);
+	pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
 
 	amdgpu_virt_disable_access_debugfs(adev);
-	वापस result;
-पूर्ण
+	return result;
+}
 
 /**
- * amdgpu_debugfs_regs_pcie_ग_लिखो - Write to a PCIE रेजिस्टर
+ * amdgpu_debugfs_regs_pcie_write - Write to a PCIE register
  *
- * @f: खोलो file handle
- * @buf: User buffer to ग_लिखो data from
- * @size: Number of bytes to ग_लिखो
+ * @f: open file handle
+ * @buf: User buffer to write data from
+ * @size: Number of bytes to write
  * @pos:  Offset to seek to
  *
- * The lower bits are the BYTE offset of the रेजिस्टर to ग_लिखो.  This
- * allows writing multiple रेजिस्टरs in a single call and having
- * the वापसed size reflect that.
+ * The lower bits are the BYTE offset of the register to write.  This
+ * allows writing multiple registers in a single call and having
+ * the returned size reflect that.
  */
-अटल sमाप_प्रकार amdgpu_debugfs_regs_pcie_ग_लिखो(काष्ठा file *f, स्थिर अक्षर __user *buf,
-					 माप_प्रकार size, loff_t *pos)
-अणु
-	काष्ठा amdgpu_device *adev = file_inode(f)->i_निजी;
-	sमाप_प्रकार result = 0;
-	पूर्णांक r;
+static ssize_t amdgpu_debugfs_regs_pcie_write(struct file *f, const char __user *buf,
+					 size_t size, loff_t *pos)
+{
+	struct amdgpu_device *adev = file_inode(f)->i_private;
+	ssize_t result = 0;
+	int r;
 
-	अगर (size & 0x3 || *pos & 0x3)
-		वापस -EINVAL;
+	if (size & 0x3 || *pos & 0x3)
+		return -EINVAL;
 
-	r = pm_runसमय_get_sync(adev_to_drm(adev)->dev);
-	अगर (r < 0) अणु
-		pm_runसमय_put_स्वतःsuspend(adev_to_drm(adev)->dev);
-		वापस r;
-	पूर्ण
+	r = pm_runtime_get_sync(adev_to_drm(adev)->dev);
+	if (r < 0) {
+		pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
+		return r;
+	}
 
 	r = amdgpu_virt_enable_access_debugfs(adev);
-	अगर (r < 0) अणु
-		pm_runसमय_put_स्वतःsuspend(adev_to_drm(adev)->dev);
-		वापस r;
-	पूर्ण
+	if (r < 0) {
+		pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
+		return r;
+	}
 
-	जबतक (size) अणु
-		uपूर्णांक32_t value;
+	while (size) {
+		uint32_t value;
 
-		r = get_user(value, (uपूर्णांक32_t *)buf);
-		अगर (r) अणु
-			pm_runसमय_mark_last_busy(adev_to_drm(adev)->dev);
-			pm_runसमय_put_स्वतःsuspend(adev_to_drm(adev)->dev);
+		r = get_user(value, (uint32_t *)buf);
+		if (r) {
+			pm_runtime_mark_last_busy(adev_to_drm(adev)->dev);
+			pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
 			amdgpu_virt_disable_access_debugfs(adev);
-			वापस r;
-		पूर्ण
+			return r;
+		}
 
 		WREG32_PCIE(*pos, value);
 
@@ -391,118 +390,118 @@ end:
 		buf += 4;
 		*pos += 4;
 		size -= 4;
-	पूर्ण
+	}
 
-	pm_runसमय_mark_last_busy(adev_to_drm(adev)->dev);
-	pm_runसमय_put_स्वतःsuspend(adev_to_drm(adev)->dev);
+	pm_runtime_mark_last_busy(adev_to_drm(adev)->dev);
+	pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
 
 	amdgpu_virt_disable_access_debugfs(adev);
-	वापस result;
-पूर्ण
+	return result;
+}
 
 /**
- * amdgpu_debugfs_regs_didt_पढ़ो - Read from a DIDT रेजिस्टर
+ * amdgpu_debugfs_regs_didt_read - Read from a DIDT register
  *
- * @f: खोलो file handle
- * @buf: User buffer to store पढ़ो data in
- * @size: Number of bytes to पढ़ो
+ * @f: open file handle
+ * @buf: User buffer to store read data in
+ * @size: Number of bytes to read
  * @pos:  Offset to seek to
  *
- * The lower bits are the BYTE offset of the रेजिस्टर to पढ़ो.  This
- * allows पढ़ोing multiple रेजिस्टरs in a single call and having
- * the वापसed size reflect that.
+ * The lower bits are the BYTE offset of the register to read.  This
+ * allows reading multiple registers in a single call and having
+ * the returned size reflect that.
  */
-अटल sमाप_प्रकार amdgpu_debugfs_regs_didt_पढ़ो(काष्ठा file *f, अक्षर __user *buf,
-					माप_प्रकार size, loff_t *pos)
-अणु
-	काष्ठा amdgpu_device *adev = file_inode(f)->i_निजी;
-	sमाप_प्रकार result = 0;
-	पूर्णांक r;
+static ssize_t amdgpu_debugfs_regs_didt_read(struct file *f, char __user *buf,
+					size_t size, loff_t *pos)
+{
+	struct amdgpu_device *adev = file_inode(f)->i_private;
+	ssize_t result = 0;
+	int r;
 
-	अगर (size & 0x3 || *pos & 0x3)
-		वापस -EINVAL;
+	if (size & 0x3 || *pos & 0x3)
+		return -EINVAL;
 
-	r = pm_runसमय_get_sync(adev_to_drm(adev)->dev);
-	अगर (r < 0) अणु
-		pm_runसमय_put_स्वतःsuspend(adev_to_drm(adev)->dev);
-		वापस r;
-	पूर्ण
+	r = pm_runtime_get_sync(adev_to_drm(adev)->dev);
+	if (r < 0) {
+		pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
+		return r;
+	}
 
 	r = amdgpu_virt_enable_access_debugfs(adev);
-	अगर (r < 0) अणु
-		pm_runसमय_put_स्वतःsuspend(adev_to_drm(adev)->dev);
-		वापस r;
-	पूर्ण
+	if (r < 0) {
+		pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
+		return r;
+	}
 
-	जबतक (size) अणु
-		uपूर्णांक32_t value;
+	while (size) {
+		uint32_t value;
 
 		value = RREG32_DIDT(*pos >> 2);
-		r = put_user(value, (uपूर्णांक32_t *)buf);
-		अगर (r) अणु
-			pm_runसमय_mark_last_busy(adev_to_drm(adev)->dev);
-			pm_runसमय_put_स्वतःsuspend(adev_to_drm(adev)->dev);
+		r = put_user(value, (uint32_t *)buf);
+		if (r) {
+			pm_runtime_mark_last_busy(adev_to_drm(adev)->dev);
+			pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
 			amdgpu_virt_disable_access_debugfs(adev);
-			वापस r;
-		पूर्ण
+			return r;
+		}
 
 		result += 4;
 		buf += 4;
 		*pos += 4;
 		size -= 4;
-	पूर्ण
+	}
 
-	pm_runसमय_mark_last_busy(adev_to_drm(adev)->dev);
-	pm_runसमय_put_स्वतःsuspend(adev_to_drm(adev)->dev);
+	pm_runtime_mark_last_busy(adev_to_drm(adev)->dev);
+	pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
 
 	amdgpu_virt_disable_access_debugfs(adev);
-	वापस result;
-पूर्ण
+	return result;
+}
 
 /**
- * amdgpu_debugfs_regs_didt_ग_लिखो - Write to a DIDT रेजिस्टर
+ * amdgpu_debugfs_regs_didt_write - Write to a DIDT register
  *
- * @f: खोलो file handle
- * @buf: User buffer to ग_लिखो data from
- * @size: Number of bytes to ग_लिखो
+ * @f: open file handle
+ * @buf: User buffer to write data from
+ * @size: Number of bytes to write
  * @pos:  Offset to seek to
  *
- * The lower bits are the BYTE offset of the रेजिस्टर to ग_लिखो.  This
- * allows writing multiple रेजिस्टरs in a single call and having
- * the वापसed size reflect that.
+ * The lower bits are the BYTE offset of the register to write.  This
+ * allows writing multiple registers in a single call and having
+ * the returned size reflect that.
  */
-अटल sमाप_प्रकार amdgpu_debugfs_regs_didt_ग_लिखो(काष्ठा file *f, स्थिर अक्षर __user *buf,
-					 माप_प्रकार size, loff_t *pos)
-अणु
-	काष्ठा amdgpu_device *adev = file_inode(f)->i_निजी;
-	sमाप_प्रकार result = 0;
-	पूर्णांक r;
+static ssize_t amdgpu_debugfs_regs_didt_write(struct file *f, const char __user *buf,
+					 size_t size, loff_t *pos)
+{
+	struct amdgpu_device *adev = file_inode(f)->i_private;
+	ssize_t result = 0;
+	int r;
 
-	अगर (size & 0x3 || *pos & 0x3)
-		वापस -EINVAL;
+	if (size & 0x3 || *pos & 0x3)
+		return -EINVAL;
 
-	r = pm_runसमय_get_sync(adev_to_drm(adev)->dev);
-	अगर (r < 0) अणु
-		pm_runसमय_put_स्वतःsuspend(adev_to_drm(adev)->dev);
-		वापस r;
-	पूर्ण
+	r = pm_runtime_get_sync(adev_to_drm(adev)->dev);
+	if (r < 0) {
+		pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
+		return r;
+	}
 
 	r = amdgpu_virt_enable_access_debugfs(adev);
-	अगर (r < 0) अणु
-		pm_runसमय_put_स्वतःsuspend(adev_to_drm(adev)->dev);
-		वापस r;
-	पूर्ण
+	if (r < 0) {
+		pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
+		return r;
+	}
 
-	जबतक (size) अणु
-		uपूर्णांक32_t value;
+	while (size) {
+		uint32_t value;
 
-		r = get_user(value, (uपूर्णांक32_t *)buf);
-		अगर (r) अणु
-			pm_runसमय_mark_last_busy(adev_to_drm(adev)->dev);
-			pm_runसमय_put_स्वतःsuspend(adev_to_drm(adev)->dev);
+		r = get_user(value, (uint32_t *)buf);
+		if (r) {
+			pm_runtime_mark_last_busy(adev_to_drm(adev)->dev);
+			pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
 			amdgpu_virt_disable_access_debugfs(adev);
-			वापस r;
-		पूर्ण
+			return r;
+		}
 
 		WREG32_DIDT(*pos >> 2, value);
 
@@ -510,118 +509,118 @@ end:
 		buf += 4;
 		*pos += 4;
 		size -= 4;
-	पूर्ण
+	}
 
-	pm_runसमय_mark_last_busy(adev_to_drm(adev)->dev);
-	pm_runसमय_put_स्वतःsuspend(adev_to_drm(adev)->dev);
+	pm_runtime_mark_last_busy(adev_to_drm(adev)->dev);
+	pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
 
 	amdgpu_virt_disable_access_debugfs(adev);
-	वापस result;
-पूर्ण
+	return result;
+}
 
 /**
- * amdgpu_debugfs_regs_smc_पढ़ो - Read from a SMC रेजिस्टर
+ * amdgpu_debugfs_regs_smc_read - Read from a SMC register
  *
- * @f: खोलो file handle
- * @buf: User buffer to store पढ़ो data in
- * @size: Number of bytes to पढ़ो
+ * @f: open file handle
+ * @buf: User buffer to store read data in
+ * @size: Number of bytes to read
  * @pos:  Offset to seek to
  *
- * The lower bits are the BYTE offset of the रेजिस्टर to पढ़ो.  This
- * allows पढ़ोing multiple रेजिस्टरs in a single call and having
- * the वापसed size reflect that.
+ * The lower bits are the BYTE offset of the register to read.  This
+ * allows reading multiple registers in a single call and having
+ * the returned size reflect that.
  */
-अटल sमाप_प्रकार amdgpu_debugfs_regs_smc_पढ़ो(काष्ठा file *f, अक्षर __user *buf,
-					माप_प्रकार size, loff_t *pos)
-अणु
-	काष्ठा amdgpu_device *adev = file_inode(f)->i_निजी;
-	sमाप_प्रकार result = 0;
-	पूर्णांक r;
+static ssize_t amdgpu_debugfs_regs_smc_read(struct file *f, char __user *buf,
+					size_t size, loff_t *pos)
+{
+	struct amdgpu_device *adev = file_inode(f)->i_private;
+	ssize_t result = 0;
+	int r;
 
-	अगर (size & 0x3 || *pos & 0x3)
-		वापस -EINVAL;
+	if (size & 0x3 || *pos & 0x3)
+		return -EINVAL;
 
-	r = pm_runसमय_get_sync(adev_to_drm(adev)->dev);
-	अगर (r < 0) अणु
-		pm_runसमय_put_स्वतःsuspend(adev_to_drm(adev)->dev);
-		वापस r;
-	पूर्ण
+	r = pm_runtime_get_sync(adev_to_drm(adev)->dev);
+	if (r < 0) {
+		pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
+		return r;
+	}
 
 	r = amdgpu_virt_enable_access_debugfs(adev);
-	अगर (r < 0) अणु
-		pm_runसमय_put_स्वतःsuspend(adev_to_drm(adev)->dev);
-		वापस r;
-	पूर्ण
+	if (r < 0) {
+		pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
+		return r;
+	}
 
-	जबतक (size) अणु
-		uपूर्णांक32_t value;
+	while (size) {
+		uint32_t value;
 
 		value = RREG32_SMC(*pos);
-		r = put_user(value, (uपूर्णांक32_t *)buf);
-		अगर (r) अणु
-			pm_runसमय_mark_last_busy(adev_to_drm(adev)->dev);
-			pm_runसमय_put_स्वतःsuspend(adev_to_drm(adev)->dev);
+		r = put_user(value, (uint32_t *)buf);
+		if (r) {
+			pm_runtime_mark_last_busy(adev_to_drm(adev)->dev);
+			pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
 			amdgpu_virt_disable_access_debugfs(adev);
-			वापस r;
-		पूर्ण
+			return r;
+		}
 
 		result += 4;
 		buf += 4;
 		*pos += 4;
 		size -= 4;
-	पूर्ण
+	}
 
-	pm_runसमय_mark_last_busy(adev_to_drm(adev)->dev);
-	pm_runसमय_put_स्वतःsuspend(adev_to_drm(adev)->dev);
+	pm_runtime_mark_last_busy(adev_to_drm(adev)->dev);
+	pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
 
 	amdgpu_virt_disable_access_debugfs(adev);
-	वापस result;
-पूर्ण
+	return result;
+}
 
 /**
- * amdgpu_debugfs_regs_smc_ग_लिखो - Write to a SMC रेजिस्टर
+ * amdgpu_debugfs_regs_smc_write - Write to a SMC register
  *
- * @f: खोलो file handle
- * @buf: User buffer to ग_लिखो data from
- * @size: Number of bytes to ग_लिखो
+ * @f: open file handle
+ * @buf: User buffer to write data from
+ * @size: Number of bytes to write
  * @pos:  Offset to seek to
  *
- * The lower bits are the BYTE offset of the रेजिस्टर to ग_लिखो.  This
- * allows writing multiple रेजिस्टरs in a single call and having
- * the वापसed size reflect that.
+ * The lower bits are the BYTE offset of the register to write.  This
+ * allows writing multiple registers in a single call and having
+ * the returned size reflect that.
  */
-अटल sमाप_प्रकार amdgpu_debugfs_regs_smc_ग_लिखो(काष्ठा file *f, स्थिर अक्षर __user *buf,
-					 माप_प्रकार size, loff_t *pos)
-अणु
-	काष्ठा amdgpu_device *adev = file_inode(f)->i_निजी;
-	sमाप_प्रकार result = 0;
-	पूर्णांक r;
+static ssize_t amdgpu_debugfs_regs_smc_write(struct file *f, const char __user *buf,
+					 size_t size, loff_t *pos)
+{
+	struct amdgpu_device *adev = file_inode(f)->i_private;
+	ssize_t result = 0;
+	int r;
 
-	अगर (size & 0x3 || *pos & 0x3)
-		वापस -EINVAL;
+	if (size & 0x3 || *pos & 0x3)
+		return -EINVAL;
 
-	r = pm_runसमय_get_sync(adev_to_drm(adev)->dev);
-	अगर (r < 0) अणु
-		pm_runसमय_put_स्वतःsuspend(adev_to_drm(adev)->dev);
-		वापस r;
-	पूर्ण
+	r = pm_runtime_get_sync(adev_to_drm(adev)->dev);
+	if (r < 0) {
+		pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
+		return r;
+	}
 
 	r = amdgpu_virt_enable_access_debugfs(adev);
-	अगर (r < 0) अणु
-		pm_runसमय_put_स्वतःsuspend(adev_to_drm(adev)->dev);
-		वापस r;
-	पूर्ण
+	if (r < 0) {
+		pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
+		return r;
+	}
 
-	जबतक (size) अणु
-		uपूर्णांक32_t value;
+	while (size) {
+		uint32_t value;
 
-		r = get_user(value, (uपूर्णांक32_t *)buf);
-		अगर (r) अणु
-			pm_runसमय_mark_last_busy(adev_to_drm(adev)->dev);
-			pm_runसमय_put_स्वतःsuspend(adev_to_drm(adev)->dev);
+		r = get_user(value, (uint32_t *)buf);
+		if (r) {
+			pm_runtime_mark_last_busy(adev_to_drm(adev)->dev);
+			pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
 			amdgpu_virt_disable_access_debugfs(adev);
-			वापस r;
-		पूर्ण
+			return r;
+		}
 
 		WREG32_SMC(*pos, value);
 
@@ -629,45 +628,45 @@ end:
 		buf += 4;
 		*pos += 4;
 		size -= 4;
-	पूर्ण
+	}
 
-	pm_runसमय_mark_last_busy(adev_to_drm(adev)->dev);
-	pm_runसमय_put_स्वतःsuspend(adev_to_drm(adev)->dev);
+	pm_runtime_mark_last_busy(adev_to_drm(adev)->dev);
+	pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
 
 	amdgpu_virt_disable_access_debugfs(adev);
-	वापस result;
-पूर्ण
+	return result;
+}
 
 /**
- * amdgpu_debugfs_gca_config_पढ़ो - Read from gfx config data
+ * amdgpu_debugfs_gca_config_read - Read from gfx config data
  *
- * @f: खोलो file handle
- * @buf: User buffer to store पढ़ो data in
- * @size: Number of bytes to पढ़ो
+ * @f: open file handle
+ * @buf: User buffer to store read data in
+ * @size: Number of bytes to read
  * @pos:  Offset to seek to
  *
  * This file is used to access configuration data in a somewhat
- * stable fashion.  The क्रमmat is a series of DWORDs with the first
+ * stable fashion.  The format is a series of DWORDs with the first
  * indicating which revision it is.  New content is appended to the
- * end so that older software can still पढ़ो the data.
+ * end so that older software can still read the data.
  */
 
-अटल sमाप_प्रकार amdgpu_debugfs_gca_config_पढ़ो(काष्ठा file *f, अक्षर __user *buf,
-					माप_प्रकार size, loff_t *pos)
-अणु
-	काष्ठा amdgpu_device *adev = file_inode(f)->i_निजी;
-	sमाप_प्रकार result = 0;
-	पूर्णांक r;
-	uपूर्णांक32_t *config, no_regs = 0;
+static ssize_t amdgpu_debugfs_gca_config_read(struct file *f, char __user *buf,
+					size_t size, loff_t *pos)
+{
+	struct amdgpu_device *adev = file_inode(f)->i_private;
+	ssize_t result = 0;
+	int r;
+	uint32_t *config, no_regs = 0;
 
-	अगर (size & 0x3 || *pos & 0x3)
-		वापस -EINVAL;
+	if (size & 0x3 || *pos & 0x3)
+		return -EINVAL;
 
-	config = kदो_स्मृति_array(256, माप(*config), GFP_KERNEL);
-	अगर (!config)
-		वापस -ENOMEM;
+	config = kmalloc_array(256, sizeof(*config), GFP_KERNEL);
+	if (!config)
+		return -ENOMEM;
 
-	/* version, increment each समय something is added */
+	/* version, increment each time something is added */
 	config[no_regs++] = 3;
 	config[no_regs++] = adev->gfx.config.max_shader_engines;
 	config[no_regs++] = adev->gfx.config.max_tile_pipes;
@@ -676,12 +675,12 @@ end:
 	config[no_regs++] = adev->gfx.config.max_backends_per_se;
 	config[no_regs++] = adev->gfx.config.max_texture_channel_caches;
 	config[no_regs++] = adev->gfx.config.max_gprs;
-	config[no_regs++] = adev->gfx.config.max_gs_thपढ़ोs;
+	config[no_regs++] = adev->gfx.config.max_gs_threads;
 	config[no_regs++] = adev->gfx.config.max_hw_contexts;
-	config[no_regs++] = adev->gfx.config.sc_prim_fअगरo_size_frontend;
-	config[no_regs++] = adev->gfx.config.sc_prim_fअगरo_size_backend;
-	config[no_regs++] = adev->gfx.config.sc_hiz_tile_fअगरo_size;
-	config[no_regs++] = adev->gfx.config.sc_earlyz_tile_fअगरo_size;
+	config[no_regs++] = adev->gfx.config.sc_prim_fifo_size_frontend;
+	config[no_regs++] = adev->gfx.config.sc_prim_fifo_size_backend;
+	config[no_regs++] = adev->gfx.config.sc_hiz_tile_fifo_size;
+	config[no_regs++] = adev->gfx.config.sc_earlyz_tile_fifo_size;
 	config[no_regs++] = adev->gfx.config.num_tile_pipes;
 	config[no_regs++] = adev->gfx.config.backend_enable_mask;
 	config[no_regs++] = adev->gfx.config.mem_max_burst_length_bytes;
@@ -700,138 +699,138 @@ end:
 
 	/* rev==2 */
 	config[no_regs++] = adev->family;
-	config[no_regs++] = adev->बाह्यal_rev_id;
+	config[no_regs++] = adev->external_rev_id;
 
 	/* rev==3 */
 	config[no_regs++] = adev->pdev->device;
 	config[no_regs++] = adev->pdev->revision;
-	config[no_regs++] = adev->pdev->subप्रणाली_device;
-	config[no_regs++] = adev->pdev->subप्रणाली_venकरोr;
+	config[no_regs++] = adev->pdev->subsystem_device;
+	config[no_regs++] = adev->pdev->subsystem_vendor;
 
-	जबतक (size && (*pos < no_regs * 4)) अणु
-		uपूर्णांक32_t value;
+	while (size && (*pos < no_regs * 4)) {
+		uint32_t value;
 
 		value = config[*pos >> 2];
-		r = put_user(value, (uपूर्णांक32_t *)buf);
-		अगर (r) अणु
-			kमुक्त(config);
-			वापस r;
-		पूर्ण
+		r = put_user(value, (uint32_t *)buf);
+		if (r) {
+			kfree(config);
+			return r;
+		}
 
 		result += 4;
 		buf += 4;
 		*pos += 4;
 		size -= 4;
-	पूर्ण
+	}
 
-	kमुक्त(config);
-	वापस result;
-पूर्ण
+	kfree(config);
+	return result;
+}
 
 /**
- * amdgpu_debugfs_sensor_पढ़ो - Read from the घातerplay sensors
+ * amdgpu_debugfs_sensor_read - Read from the powerplay sensors
  *
- * @f: खोलो file handle
- * @buf: User buffer to store पढ़ो data in
- * @size: Number of bytes to पढ़ो
+ * @f: open file handle
+ * @buf: User buffer to store read data in
+ * @size: Number of bytes to read
  * @pos:  Offset to seek to
  *
  * The offset is treated as the BYTE address of one of the sensors
- * क्रमागतerated in amd/include/kgd_pp_पूर्णांकerface.h under the
- * 'amd_pp_sensors' क्रमागतeration.  For instance to पढ़ो the UVD VCLK
+ * enumerated in amd/include/kgd_pp_interface.h under the
+ * 'amd_pp_sensors' enumeration.  For instance to read the UVD VCLK
  * you would use the offset 3 * 4 = 12.
  */
-अटल sमाप_प्रकार amdgpu_debugfs_sensor_पढ़ो(काष्ठा file *f, अक्षर __user *buf,
-					माप_प्रकार size, loff_t *pos)
-अणु
-	काष्ठा amdgpu_device *adev = file_inode(f)->i_निजी;
-	पूर्णांक idx, x, outsize, r, valuesize;
-	uपूर्णांक32_t values[16];
+static ssize_t amdgpu_debugfs_sensor_read(struct file *f, char __user *buf,
+					size_t size, loff_t *pos)
+{
+	struct amdgpu_device *adev = file_inode(f)->i_private;
+	int idx, x, outsize, r, valuesize;
+	uint32_t values[16];
 
-	अगर (size & 3 || *pos & 0x3)
-		वापस -EINVAL;
+	if (size & 3 || *pos & 0x3)
+		return -EINVAL;
 
-	अगर (!adev->pm.dpm_enabled)
-		वापस -EINVAL;
+	if (!adev->pm.dpm_enabled)
+		return -EINVAL;
 
 	/* convert offset to sensor number */
 	idx = *pos >> 2;
 
-	valuesize = माप(values);
+	valuesize = sizeof(values);
 
-	r = pm_runसमय_get_sync(adev_to_drm(adev)->dev);
-	अगर (r < 0) अणु
-		pm_runसमय_put_स्वतःsuspend(adev_to_drm(adev)->dev);
-		वापस r;
-	पूर्ण
+	r = pm_runtime_get_sync(adev_to_drm(adev)->dev);
+	if (r < 0) {
+		pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
+		return r;
+	}
 
 	r = amdgpu_virt_enable_access_debugfs(adev);
-	अगर (r < 0) अणु
-		pm_runसमय_put_स्वतःsuspend(adev_to_drm(adev)->dev);
-		वापस r;
-	पूर्ण
+	if (r < 0) {
+		pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
+		return r;
+	}
 
-	r = amdgpu_dpm_पढ़ो_sensor(adev, idx, &values[0], &valuesize);
+	r = amdgpu_dpm_read_sensor(adev, idx, &values[0], &valuesize);
 
-	pm_runसमय_mark_last_busy(adev_to_drm(adev)->dev);
-	pm_runसमय_put_स्वतःsuspend(adev_to_drm(adev)->dev);
+	pm_runtime_mark_last_busy(adev_to_drm(adev)->dev);
+	pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
 
-	अगर (r) अणु
+	if (r) {
 		amdgpu_virt_disable_access_debugfs(adev);
-		वापस r;
-	पूर्ण
+		return r;
+	}
 
-	अगर (size > valuesize) अणु
+	if (size > valuesize) {
 		amdgpu_virt_disable_access_debugfs(adev);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	outsize = 0;
 	x = 0;
-	अगर (!r) अणु
-		जबतक (size) अणु
-			r = put_user(values[x++], (पूर्णांक32_t *)buf);
+	if (!r) {
+		while (size) {
+			r = put_user(values[x++], (int32_t *)buf);
 			buf += 4;
 			size -= 4;
 			outsize += 4;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	amdgpu_virt_disable_access_debugfs(adev);
-	वापस !r ? outsize : r;
-पूर्ण
+	return !r ? outsize : r;
+}
 
-/** amdgpu_debugfs_wave_पढ़ो - Read WAVE STATUS data
+/** amdgpu_debugfs_wave_read - Read WAVE STATUS data
  *
- * @f: खोलो file handle
- * @buf: User buffer to store पढ़ो data in
- * @size: Number of bytes to पढ़ो
+ * @f: open file handle
+ * @buf: User buffer to store read data in
+ * @size: Number of bytes to read
  * @pos:  Offset to seek to
  *
  * The offset being sought changes which wave that the status data
- * will be वापसed क्रम.  The bits are used as follows:
+ * will be returned for.  The bits are used as follows:
  *
- * Bits 0..6: 	Byte offset पूर्णांकo data
+ * Bits 0..6: 	Byte offset into data
  * Bits 7..14:	SE selector
  * Bits 15..22:	SH/SA selector
- * Bits 23..30: CU/अणुWGP+SIMDपूर्ण selector
+ * Bits 23..30: CU/{WGP+SIMD} selector
  * Bits 31..36: WAVE ID selector
  * Bits 37..44: SIMD ID selector
  *
- * The वापसed data begins with one DWORD of version inक्रमmation
- * Followed by WAVE STATUS रेजिस्टरs relevant to the GFX IP version
- * being used.  See gfx_v8_0_पढ़ो_wave_data() क्रम an example output.
+ * The returned data begins with one DWORD of version information
+ * Followed by WAVE STATUS registers relevant to the GFX IP version
+ * being used.  See gfx_v8_0_read_wave_data() for an example output.
  */
-अटल sमाप_प्रकार amdgpu_debugfs_wave_पढ़ो(काष्ठा file *f, अक्षर __user *buf,
-					माप_प्रकार size, loff_t *pos)
-अणु
-	काष्ठा amdgpu_device *adev = f->f_inode->i_निजी;
-	पूर्णांक r, x;
-	sमाप_प्रकार result = 0;
-	uपूर्णांक32_t offset, se, sh, cu, wave, simd, data[32];
+static ssize_t amdgpu_debugfs_wave_read(struct file *f, char __user *buf,
+					size_t size, loff_t *pos)
+{
+	struct amdgpu_device *adev = f->f_inode->i_private;
+	int r, x;
+	ssize_t result = 0;
+	uint32_t offset, se, sh, cu, wave, simd, data[32];
 
-	अगर (size & 3 || *pos & 3)
-		वापस -EINVAL;
+	if (size & 3 || *pos & 3)
+		return -EINVAL;
 
 	/* decode offset */
 	offset = (*pos & GENMASK_ULL(6, 0));
@@ -841,89 +840,89 @@ end:
 	wave = (*pos & GENMASK_ULL(36, 31)) >> 31;
 	simd = (*pos & GENMASK_ULL(44, 37)) >> 37;
 
-	r = pm_runसमय_get_sync(adev_to_drm(adev)->dev);
-	अगर (r < 0) अणु
-		pm_runसमय_put_स्वतःsuspend(adev_to_drm(adev)->dev);
-		वापस r;
-	पूर्ण
+	r = pm_runtime_get_sync(adev_to_drm(adev)->dev);
+	if (r < 0) {
+		pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
+		return r;
+	}
 
 	r = amdgpu_virt_enable_access_debugfs(adev);
-	अगर (r < 0) अणु
-		pm_runसमय_put_स्वतःsuspend(adev_to_drm(adev)->dev);
-		वापस r;
-	पूर्ण
+	if (r < 0) {
+		pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
+		return r;
+	}
 
-	/* चयन to the specअगरic se/sh/cu */
+	/* switch to the specific se/sh/cu */
 	mutex_lock(&adev->grbm_idx_mutex);
 	amdgpu_gfx_select_se_sh(adev, se, sh, cu);
 
 	x = 0;
-	अगर (adev->gfx.funcs->पढ़ो_wave_data)
-		adev->gfx.funcs->पढ़ो_wave_data(adev, simd, wave, data, &x);
+	if (adev->gfx.funcs->read_wave_data)
+		adev->gfx.funcs->read_wave_data(adev, simd, wave, data, &x);
 
 	amdgpu_gfx_select_se_sh(adev, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF);
 	mutex_unlock(&adev->grbm_idx_mutex);
 
-	pm_runसमय_mark_last_busy(adev_to_drm(adev)->dev);
-	pm_runसमय_put_स्वतःsuspend(adev_to_drm(adev)->dev);
+	pm_runtime_mark_last_busy(adev_to_drm(adev)->dev);
+	pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
 
-	अगर (!x) अणु
+	if (!x) {
 		amdgpu_virt_disable_access_debugfs(adev);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	जबतक (size && (offset < x * 4)) अणु
-		uपूर्णांक32_t value;
+	while (size && (offset < x * 4)) {
+		uint32_t value;
 
 		value = data[offset >> 2];
-		r = put_user(value, (uपूर्णांक32_t *)buf);
-		अगर (r) अणु
+		r = put_user(value, (uint32_t *)buf);
+		if (r) {
 			amdgpu_virt_disable_access_debugfs(adev);
-			वापस r;
-		पूर्ण
+			return r;
+		}
 
 		result += 4;
 		buf += 4;
 		offset += 4;
 		size -= 4;
-	पूर्ण
+	}
 
 	amdgpu_virt_disable_access_debugfs(adev);
-	वापस result;
-पूर्ण
+	return result;
+}
 
-/** amdgpu_debugfs_gpr_पढ़ो - Read wave gprs
+/** amdgpu_debugfs_gpr_read - Read wave gprs
  *
- * @f: खोलो file handle
- * @buf: User buffer to store पढ़ो data in
- * @size: Number of bytes to पढ़ो
+ * @f: open file handle
+ * @buf: User buffer to store read data in
+ * @size: Number of bytes to read
  * @pos:  Offset to seek to
  *
  * The offset being sought changes which wave that the status data
- * will be वापसed क्रम.  The bits are used as follows:
+ * will be returned for.  The bits are used as follows:
  *
- * Bits 0..11:	Byte offset पूर्णांकo data
+ * Bits 0..11:	Byte offset into data
  * Bits 12..19:	SE selector
  * Bits 20..27:	SH/SA selector
- * Bits 28..35: CU/अणुWGP+SIMDपूर्ण selector
+ * Bits 28..35: CU/{WGP+SIMD} selector
  * Bits 36..43: WAVE ID selector
  * Bits 37..44: SIMD ID selector
- * Bits 52..59: Thपढ़ो selector
+ * Bits 52..59: Thread selector
  * Bits 60..61: Bank selector (VGPR=0,SGPR=1)
  *
- * The वापस data comes from the SGPR or VGPR रेजिस्टर bank क्रम
+ * The return data comes from the SGPR or VGPR register bank for
  * the selected operational unit.
  */
-अटल sमाप_प्रकार amdgpu_debugfs_gpr_पढ़ो(काष्ठा file *f, अक्षर __user *buf,
-					माप_प्रकार size, loff_t *pos)
-अणु
-	काष्ठा amdgpu_device *adev = f->f_inode->i_निजी;
-	पूर्णांक r;
-	sमाप_प्रकार result = 0;
-	uपूर्णांक32_t offset, se, sh, cu, wave, simd, thपढ़ो, bank, *data;
+static ssize_t amdgpu_debugfs_gpr_read(struct file *f, char __user *buf,
+					size_t size, loff_t *pos)
+{
+	struct amdgpu_device *adev = f->f_inode->i_private;
+	int r;
+	ssize_t result = 0;
+	uint32_t offset, se, sh, cu, wave, simd, thread, bank, *data;
 
-	अगर (size > 4096 || size & 3 || *pos & 3)
-		वापस -EINVAL;
+	if (size > 4096 || size & 3 || *pos & 3)
+		return -EINVAL;
 
 	/* decode offset */
 	offset = (*pos & GENMASK_ULL(11, 0)) >> 2;
@@ -932,99 +931,99 @@ end:
 	cu = (*pos & GENMASK_ULL(35, 28)) >> 28;
 	wave = (*pos & GENMASK_ULL(43, 36)) >> 36;
 	simd = (*pos & GENMASK_ULL(51, 44)) >> 44;
-	thपढ़ो = (*pos & GENMASK_ULL(59, 52)) >> 52;
+	thread = (*pos & GENMASK_ULL(59, 52)) >> 52;
 	bank = (*pos & GENMASK_ULL(61, 60)) >> 60;
 
-	data = kसुस्मृति(1024, माप(*data), GFP_KERNEL);
-	अगर (!data)
-		वापस -ENOMEM;
+	data = kcalloc(1024, sizeof(*data), GFP_KERNEL);
+	if (!data)
+		return -ENOMEM;
 
-	r = pm_runसमय_get_sync(adev_to_drm(adev)->dev);
-	अगर (r < 0)
-		जाओ err;
+	r = pm_runtime_get_sync(adev_to_drm(adev)->dev);
+	if (r < 0)
+		goto err;
 
 	r = amdgpu_virt_enable_access_debugfs(adev);
-	अगर (r < 0)
-		जाओ err;
+	if (r < 0)
+		goto err;
 
-	/* चयन to the specअगरic se/sh/cu */
+	/* switch to the specific se/sh/cu */
 	mutex_lock(&adev->grbm_idx_mutex);
 	amdgpu_gfx_select_se_sh(adev, se, sh, cu);
 
-	अगर (bank == 0) अणु
-		अगर (adev->gfx.funcs->पढ़ो_wave_vgprs)
-			adev->gfx.funcs->पढ़ो_wave_vgprs(adev, simd, wave, thपढ़ो, offset, size>>2, data);
-	पूर्ण अन्यथा अणु
-		अगर (adev->gfx.funcs->पढ़ो_wave_sgprs)
-			adev->gfx.funcs->पढ़ो_wave_sgprs(adev, simd, wave, offset, size>>2, data);
-	पूर्ण
+	if (bank == 0) {
+		if (adev->gfx.funcs->read_wave_vgprs)
+			adev->gfx.funcs->read_wave_vgprs(adev, simd, wave, thread, offset, size>>2, data);
+	} else {
+		if (adev->gfx.funcs->read_wave_sgprs)
+			adev->gfx.funcs->read_wave_sgprs(adev, simd, wave, offset, size>>2, data);
+	}
 
 	amdgpu_gfx_select_se_sh(adev, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF);
 	mutex_unlock(&adev->grbm_idx_mutex);
 
-	pm_runसमय_mark_last_busy(adev_to_drm(adev)->dev);
-	pm_runसमय_put_स्वतःsuspend(adev_to_drm(adev)->dev);
+	pm_runtime_mark_last_busy(adev_to_drm(adev)->dev);
+	pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
 
-	जबतक (size) अणु
-		uपूर्णांक32_t value;
+	while (size) {
+		uint32_t value;
 
 		value = data[result >> 2];
-		r = put_user(value, (uपूर्णांक32_t *)buf);
-		अगर (r) अणु
+		r = put_user(value, (uint32_t *)buf);
+		if (r) {
 			amdgpu_virt_disable_access_debugfs(adev);
-			जाओ err;
-		पूर्ण
+			goto err;
+		}
 
 		result += 4;
 		buf += 4;
 		size -= 4;
-	पूर्ण
+	}
 
-	kमुक्त(data);
+	kfree(data);
 	amdgpu_virt_disable_access_debugfs(adev);
-	वापस result;
+	return result;
 
 err:
-	pm_runसमय_put_स्वतःsuspend(adev_to_drm(adev)->dev);
-	kमुक्त(data);
-	वापस r;
-पूर्ण
+	pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
+	kfree(data);
+	return r;
+}
 
 /**
- * amdgpu_debugfs_regs_gfxoff_ग_लिखो - Enable/disable GFXOFF
+ * amdgpu_debugfs_regs_gfxoff_write - Enable/disable GFXOFF
  *
- * @f: खोलो file handle
- * @buf: User buffer to ग_लिखो data from
- * @size: Number of bytes to ग_लिखो
+ * @f: open file handle
+ * @buf: User buffer to write data from
+ * @size: Number of bytes to write
  * @pos:  Offset to seek to
  *
  * Write a 32-bit zero to disable or a 32-bit non-zero to enable
  */
-अटल sमाप_प्रकार amdgpu_debugfs_gfxoff_ग_लिखो(काष्ठा file *f, स्थिर अक्षर __user *buf,
-					 माप_प्रकार size, loff_t *pos)
-अणु
-	काष्ठा amdgpu_device *adev = file_inode(f)->i_निजी;
-	sमाप_प्रकार result = 0;
-	पूर्णांक r;
+static ssize_t amdgpu_debugfs_gfxoff_write(struct file *f, const char __user *buf,
+					 size_t size, loff_t *pos)
+{
+	struct amdgpu_device *adev = file_inode(f)->i_private;
+	ssize_t result = 0;
+	int r;
 
-	अगर (size & 0x3 || *pos & 0x3)
-		वापस -EINVAL;
+	if (size & 0x3 || *pos & 0x3)
+		return -EINVAL;
 
-	r = pm_runसमय_get_sync(adev_to_drm(adev)->dev);
-	अगर (r < 0) अणु
-		pm_runसमय_put_स्वतःsuspend(adev_to_drm(adev)->dev);
-		वापस r;
-	पूर्ण
+	r = pm_runtime_get_sync(adev_to_drm(adev)->dev);
+	if (r < 0) {
+		pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
+		return r;
+	}
 
-	जबतक (size) अणु
-		uपूर्णांक32_t value;
+	while (size) {
+		uint32_t value;
 
-		r = get_user(value, (uपूर्णांक32_t *)buf);
-		अगर (r) अणु
-			pm_runसमय_mark_last_busy(adev_to_drm(adev)->dev);
-			pm_runसमय_put_स्वतःsuspend(adev_to_drm(adev)->dev);
-			वापस r;
-		पूर्ण
+		r = get_user(value, (uint32_t *)buf);
+		if (r) {
+			pm_runtime_mark_last_busy(adev_to_drm(adev)->dev);
+			pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
+			return r;
+		}
 
 		amdgpu_gfx_off_ctrl(adev, value ? true : false);
 
@@ -1032,122 +1031,122 @@ err:
 		buf += 4;
 		*pos += 4;
 		size -= 4;
-	पूर्ण
+	}
 
-	pm_runसमय_mark_last_busy(adev_to_drm(adev)->dev);
-	pm_runसमय_put_स्वतःsuspend(adev_to_drm(adev)->dev);
+	pm_runtime_mark_last_busy(adev_to_drm(adev)->dev);
+	pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
 
 /**
- * amdgpu_debugfs_regs_gfxoff_status - पढ़ो gfxoff status
+ * amdgpu_debugfs_regs_gfxoff_status - read gfxoff status
  *
- * @f: खोलो file handle
- * @buf: User buffer to store पढ़ो data in
- * @size: Number of bytes to पढ़ो
+ * @f: open file handle
+ * @buf: User buffer to store read data in
+ * @size: Number of bytes to read
  * @pos:  Offset to seek to
  */
-अटल sमाप_प्रकार amdgpu_debugfs_gfxoff_पढ़ो(काष्ठा file *f, अक्षर __user *buf,
-					 माप_प्रकार size, loff_t *pos)
-अणु
-	काष्ठा amdgpu_device *adev = file_inode(f)->i_निजी;
-	sमाप_प्रकार result = 0;
-	पूर्णांक r;
+static ssize_t amdgpu_debugfs_gfxoff_read(struct file *f, char __user *buf,
+					 size_t size, loff_t *pos)
+{
+	struct amdgpu_device *adev = file_inode(f)->i_private;
+	ssize_t result = 0;
+	int r;
 
-	अगर (size & 0x3 || *pos & 0x3)
-		वापस -EINVAL;
+	if (size & 0x3 || *pos & 0x3)
+		return -EINVAL;
 
-	r = pm_runसमय_get_sync(adev_to_drm(adev)->dev);
-	अगर (r < 0)
-		वापस r;
+	r = pm_runtime_get_sync(adev_to_drm(adev)->dev);
+	if (r < 0)
+		return r;
 
-	जबतक (size) अणु
-		uपूर्णांक32_t value;
+	while (size) {
+		uint32_t value;
 
 		r = amdgpu_get_gfx_off_status(adev, &value);
-		अगर (r) अणु
-			pm_runसमय_mark_last_busy(adev_to_drm(adev)->dev);
-			pm_runसमय_put_स्वतःsuspend(adev_to_drm(adev)->dev);
-			वापस r;
-		पूर्ण
+		if (r) {
+			pm_runtime_mark_last_busy(adev_to_drm(adev)->dev);
+			pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
+			return r;
+		}
 
-		r = put_user(value, (uपूर्णांक32_t *)buf);
-		अगर (r) अणु
-			pm_runसमय_mark_last_busy(adev_to_drm(adev)->dev);
-			pm_runसमय_put_स्वतःsuspend(adev_to_drm(adev)->dev);
-			वापस r;
-		पूर्ण
+		r = put_user(value, (uint32_t *)buf);
+		if (r) {
+			pm_runtime_mark_last_busy(adev_to_drm(adev)->dev);
+			pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
+			return r;
+		}
 
 		result += 4;
 		buf += 4;
 		*pos += 4;
 		size -= 4;
-	पूर्ण
+	}
 
-	pm_runसमय_mark_last_busy(adev_to_drm(adev)->dev);
-	pm_runसमय_put_स्वतःsuspend(adev_to_drm(adev)->dev);
+	pm_runtime_mark_last_busy(adev_to_drm(adev)->dev);
+	pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
-अटल स्थिर काष्ठा file_operations amdgpu_debugfs_regs_fops = अणु
+static const struct file_operations amdgpu_debugfs_regs_fops = {
 	.owner = THIS_MODULE,
-	.पढ़ो = amdgpu_debugfs_regs_पढ़ो,
-	.ग_लिखो = amdgpu_debugfs_regs_ग_लिखो,
-	.llseek = शेष_llseek
-पूर्ण;
-अटल स्थिर काष्ठा file_operations amdgpu_debugfs_regs_didt_fops = अणु
+	.read = amdgpu_debugfs_regs_read,
+	.write = amdgpu_debugfs_regs_write,
+	.llseek = default_llseek
+};
+static const struct file_operations amdgpu_debugfs_regs_didt_fops = {
 	.owner = THIS_MODULE,
-	.पढ़ो = amdgpu_debugfs_regs_didt_पढ़ो,
-	.ग_लिखो = amdgpu_debugfs_regs_didt_ग_लिखो,
-	.llseek = शेष_llseek
-पूर्ण;
-अटल स्थिर काष्ठा file_operations amdgpu_debugfs_regs_pcie_fops = अणु
+	.read = amdgpu_debugfs_regs_didt_read,
+	.write = amdgpu_debugfs_regs_didt_write,
+	.llseek = default_llseek
+};
+static const struct file_operations amdgpu_debugfs_regs_pcie_fops = {
 	.owner = THIS_MODULE,
-	.पढ़ो = amdgpu_debugfs_regs_pcie_पढ़ो,
-	.ग_लिखो = amdgpu_debugfs_regs_pcie_ग_लिखो,
-	.llseek = शेष_llseek
-पूर्ण;
-अटल स्थिर काष्ठा file_operations amdgpu_debugfs_regs_smc_fops = अणु
+	.read = amdgpu_debugfs_regs_pcie_read,
+	.write = amdgpu_debugfs_regs_pcie_write,
+	.llseek = default_llseek
+};
+static const struct file_operations amdgpu_debugfs_regs_smc_fops = {
 	.owner = THIS_MODULE,
-	.पढ़ो = amdgpu_debugfs_regs_smc_पढ़ो,
-	.ग_लिखो = amdgpu_debugfs_regs_smc_ग_लिखो,
-	.llseek = शेष_llseek
-पूर्ण;
+	.read = amdgpu_debugfs_regs_smc_read,
+	.write = amdgpu_debugfs_regs_smc_write,
+	.llseek = default_llseek
+};
 
-अटल स्थिर काष्ठा file_operations amdgpu_debugfs_gca_config_fops = अणु
+static const struct file_operations amdgpu_debugfs_gca_config_fops = {
 	.owner = THIS_MODULE,
-	.पढ़ो = amdgpu_debugfs_gca_config_पढ़ो,
-	.llseek = शेष_llseek
-पूर्ण;
+	.read = amdgpu_debugfs_gca_config_read,
+	.llseek = default_llseek
+};
 
-अटल स्थिर काष्ठा file_operations amdgpu_debugfs_sensors_fops = अणु
+static const struct file_operations amdgpu_debugfs_sensors_fops = {
 	.owner = THIS_MODULE,
-	.पढ़ो = amdgpu_debugfs_sensor_पढ़ो,
-	.llseek = शेष_llseek
-पूर्ण;
+	.read = amdgpu_debugfs_sensor_read,
+	.llseek = default_llseek
+};
 
-अटल स्थिर काष्ठा file_operations amdgpu_debugfs_wave_fops = अणु
+static const struct file_operations amdgpu_debugfs_wave_fops = {
 	.owner = THIS_MODULE,
-	.पढ़ो = amdgpu_debugfs_wave_पढ़ो,
-	.llseek = शेष_llseek
-पूर्ण;
-अटल स्थिर काष्ठा file_operations amdgpu_debugfs_gpr_fops = अणु
+	.read = amdgpu_debugfs_wave_read,
+	.llseek = default_llseek
+};
+static const struct file_operations amdgpu_debugfs_gpr_fops = {
 	.owner = THIS_MODULE,
-	.पढ़ो = amdgpu_debugfs_gpr_पढ़ो,
-	.llseek = शेष_llseek
-पूर्ण;
+	.read = amdgpu_debugfs_gpr_read,
+	.llseek = default_llseek
+};
 
-अटल स्थिर काष्ठा file_operations amdgpu_debugfs_gfxoff_fops = अणु
+static const struct file_operations amdgpu_debugfs_gfxoff_fops = {
 	.owner = THIS_MODULE,
-	.पढ़ो = amdgpu_debugfs_gfxoff_पढ़ो,
-	.ग_लिखो = amdgpu_debugfs_gfxoff_ग_लिखो,
-	.llseek = शेष_llseek
-पूर्ण;
+	.read = amdgpu_debugfs_gfxoff_read,
+	.write = amdgpu_debugfs_gfxoff_write,
+	.llseek = default_llseek
+};
 
-अटल स्थिर काष्ठा file_operations *debugfs_regs[] = अणु
+static const struct file_operations *debugfs_regs[] = {
 	&amdgpu_debugfs_regs_fops,
 	&amdgpu_debugfs_regs_didt_fops,
 	&amdgpu_debugfs_regs_pcie_fops,
@@ -1157,9 +1156,9 @@ err:
 	&amdgpu_debugfs_wave_fops,
 	&amdgpu_debugfs_gpr_fops,
 	&amdgpu_debugfs_gfxoff_fops,
-पूर्ण;
+};
 
-अटल स्थिर अक्षर *debugfs_regs_names[] = अणु
+static const char *debugfs_regs_names[] = {
 	"amdgpu_regs",
 	"amdgpu_regs_didt",
 	"amdgpu_regs_pcie",
@@ -1169,304 +1168,304 @@ err:
 	"amdgpu_wave",
 	"amdgpu_gpr",
 	"amdgpu_gfxoff",
-पूर्ण;
+};
 
 /**
  * amdgpu_debugfs_regs_init -	Initialize debugfs entries that provide
- * 				रेजिस्टर access.
+ * 				register access.
  *
  * @adev: The device to attach the debugfs entries to
  */
-पूर्णांक amdgpu_debugfs_regs_init(काष्ठा amdgpu_device *adev)
-अणु
-	काष्ठा drm_minor *minor = adev_to_drm(adev)->primary;
-	काष्ठा dentry *ent, *root = minor->debugfs_root;
-	अचिन्हित पूर्णांक i;
+int amdgpu_debugfs_regs_init(struct amdgpu_device *adev)
+{
+	struct drm_minor *minor = adev_to_drm(adev)->primary;
+	struct dentry *ent, *root = minor->debugfs_root;
+	unsigned int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(debugfs_regs); i++) अणु
+	for (i = 0; i < ARRAY_SIZE(debugfs_regs); i++) {
 		ent = debugfs_create_file(debugfs_regs_names[i],
 					  S_IFREG | S_IRUGO, root,
 					  adev, debugfs_regs[i]);
-		अगर (!i && !IS_ERR_OR_शून्य(ent))
-			i_size_ग_लिखो(ent->d_inode, adev->rmmio_size);
-	पूर्ण
+		if (!i && !IS_ERR_OR_NULL(ent))
+			i_size_write(ent->d_inode, adev->rmmio_size);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक amdgpu_debugfs_test_ib_show(काष्ठा seq_file *m, व्योम *unused)
-अणु
-	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)m->निजी;
-	काष्ठा drm_device *dev = adev_to_drm(adev);
-	पूर्णांक r = 0, i;
+static int amdgpu_debugfs_test_ib_show(struct seq_file *m, void *unused)
+{
+	struct amdgpu_device *adev = (struct amdgpu_device *)m->private;
+	struct drm_device *dev = adev_to_drm(adev);
+	int r = 0, i;
 
-	r = pm_runसमय_get_sync(dev->dev);
-	अगर (r < 0) अणु
-		pm_runसमय_put_स्वतःsuspend(dev->dev);
-		वापस r;
-	पूर्ण
+	r = pm_runtime_get_sync(dev->dev);
+	if (r < 0) {
+		pm_runtime_put_autosuspend(dev->dev);
+		return r;
+	}
 
-	/* Aव्योम accidently unparking the sched thपढ़ो during GPU reset */
-	r = करोwn_पढ़ो_समाप्तable(&adev->reset_sem);
-	अगर (r)
-		वापस r;
+	/* Avoid accidently unparking the sched thread during GPU reset */
+	r = down_read_killable(&adev->reset_sem);
+	if (r)
+		return r;
 
 	/* hold on the scheduler */
-	क्रम (i = 0; i < AMDGPU_MAX_RINGS; i++) अणु
-		काष्ठा amdgpu_ring *ring = adev->rings[i];
+	for (i = 0; i < AMDGPU_MAX_RINGS; i++) {
+		struct amdgpu_ring *ring = adev->rings[i];
 
-		अगर (!ring || !ring->sched.thपढ़ो)
-			जारी;
-		kthपढ़ो_park(ring->sched.thपढ़ो);
-	पूर्ण
+		if (!ring || !ring->sched.thread)
+			continue;
+		kthread_park(ring->sched.thread);
+	}
 
-	seq_म_लिखो(m, "run ib test:\n");
+	seq_printf(m, "run ib test:\n");
 	r = amdgpu_ib_ring_tests(adev);
-	अगर (r)
-		seq_म_लिखो(m, "ib ring tests failed (%d).\n", r);
-	अन्यथा
-		seq_म_लिखो(m, "ib ring tests passed.\n");
+	if (r)
+		seq_printf(m, "ib ring tests failed (%d).\n", r);
+	else
+		seq_printf(m, "ib ring tests passed.\n");
 
 	/* go on the scheduler */
-	क्रम (i = 0; i < AMDGPU_MAX_RINGS; i++) अणु
-		काष्ठा amdgpu_ring *ring = adev->rings[i];
+	for (i = 0; i < AMDGPU_MAX_RINGS; i++) {
+		struct amdgpu_ring *ring = adev->rings[i];
 
-		अगर (!ring || !ring->sched.thपढ़ो)
-			जारी;
-		kthपढ़ो_unpark(ring->sched.thपढ़ो);
-	पूर्ण
+		if (!ring || !ring->sched.thread)
+			continue;
+		kthread_unpark(ring->sched.thread);
+	}
 
-	up_पढ़ो(&adev->reset_sem);
+	up_read(&adev->reset_sem);
 
-	pm_runसमय_mark_last_busy(dev->dev);
-	pm_runसमय_put_स्वतःsuspend(dev->dev);
+	pm_runtime_mark_last_busy(dev->dev);
+	pm_runtime_put_autosuspend(dev->dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक amdgpu_debugfs_evict_vram(व्योम *data, u64 *val)
-अणु
-	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)data;
-	काष्ठा drm_device *dev = adev_to_drm(adev);
-	पूर्णांक r;
+static int amdgpu_debugfs_evict_vram(void *data, u64 *val)
+{
+	struct amdgpu_device *adev = (struct amdgpu_device *)data;
+	struct drm_device *dev = adev_to_drm(adev);
+	int r;
 
-	r = pm_runसमय_get_sync(dev->dev);
-	अगर (r < 0) अणु
-		pm_runसमय_put_स्वतःsuspend(dev->dev);
-		वापस r;
-	पूर्ण
+	r = pm_runtime_get_sync(dev->dev);
+	if (r < 0) {
+		pm_runtime_put_autosuspend(dev->dev);
+		return r;
+	}
 
 	*val = amdgpu_bo_evict_vram(adev);
 
-	pm_runसमय_mark_last_busy(dev->dev);
-	pm_runसमय_put_स्वतःsuspend(dev->dev);
+	pm_runtime_mark_last_busy(dev->dev);
+	pm_runtime_put_autosuspend(dev->dev);
 
-	वापस 0;
-पूर्ण
-
-
-अटल पूर्णांक amdgpu_debugfs_evict_gtt(व्योम *data, u64 *val)
-अणु
-	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)data;
-	काष्ठा drm_device *dev = adev_to_drm(adev);
-	काष्ठा tपंचांग_resource_manager *man;
-	पूर्णांक r;
-
-	r = pm_runसमय_get_sync(dev->dev);
-	अगर (r < 0) अणु
-		pm_runसमय_put_स्वतःsuspend(adev_to_drm(adev)->dev);
-		वापस r;
-	पूर्ण
-
-	man = tपंचांग_manager_type(&adev->mman.bdev, TTM_PL_TT);
-	*val = tपंचांग_resource_manager_evict_all(&adev->mman.bdev, man);
-
-	pm_runसमय_mark_last_busy(dev->dev);
-	pm_runसमय_put_स्वतःsuspend(dev->dev);
-
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-अटल पूर्णांक amdgpu_debugfs_vm_info_show(काष्ठा seq_file *m, व्योम *unused)
-अणु
-	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)m->निजी;
-	काष्ठा drm_device *dev = adev_to_drm(adev);
-	काष्ठा drm_file *file;
-	पूर्णांक r;
+static int amdgpu_debugfs_evict_gtt(void *data, u64 *val)
+{
+	struct amdgpu_device *adev = (struct amdgpu_device *)data;
+	struct drm_device *dev = adev_to_drm(adev);
+	struct ttm_resource_manager *man;
+	int r;
 
-	r = mutex_lock_पूर्णांकerruptible(&dev->filelist_mutex);
-	अगर (r)
-		वापस r;
+	r = pm_runtime_get_sync(dev->dev);
+	if (r < 0) {
+		pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
+		return r;
+	}
 
-	list_क्रम_each_entry(file, &dev->filelist, lhead) अणु
-		काष्ठा amdgpu_fpriv *fpriv = file->driver_priv;
-		काष्ठा amdgpu_vm *vm = &fpriv->vm;
+	man = ttm_manager_type(&adev->mman.bdev, TTM_PL_TT);
+	*val = ttm_resource_manager_evict_all(&adev->mman.bdev, man);
 
-		seq_म_लिखो(m, "pid:%d\tProcess:%s ----------\n",
+	pm_runtime_mark_last_busy(dev->dev);
+	pm_runtime_put_autosuspend(dev->dev);
+
+	return 0;
+}
+
+
+static int amdgpu_debugfs_vm_info_show(struct seq_file *m, void *unused)
+{
+	struct amdgpu_device *adev = (struct amdgpu_device *)m->private;
+	struct drm_device *dev = adev_to_drm(adev);
+	struct drm_file *file;
+	int r;
+
+	r = mutex_lock_interruptible(&dev->filelist_mutex);
+	if (r)
+		return r;
+
+	list_for_each_entry(file, &dev->filelist, lhead) {
+		struct amdgpu_fpriv *fpriv = file->driver_priv;
+		struct amdgpu_vm *vm = &fpriv->vm;
+
+		seq_printf(m, "pid:%d\tProcess:%s ----------\n",
 				vm->task_info.pid, vm->task_info.process_name);
 		r = amdgpu_bo_reserve(vm->root.base.bo, true);
-		अगर (r)
-			अवरोध;
+		if (r)
+			break;
 		amdgpu_debugfs_vm_bo_info(vm, m);
 		amdgpu_bo_unreserve(vm->root.base.bo);
-	पूर्ण
+	}
 
 	mutex_unlock(&dev->filelist_mutex);
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
 DEFINE_SHOW_ATTRIBUTE(amdgpu_debugfs_test_ib);
 DEFINE_SHOW_ATTRIBUTE(amdgpu_debugfs_vm_info);
 DEFINE_DEBUGFS_ATTRIBUTE(amdgpu_evict_vram_fops, amdgpu_debugfs_evict_vram,
-			 शून्य, "%lld\n");
+			 NULL, "%lld\n");
 DEFINE_DEBUGFS_ATTRIBUTE(amdgpu_evict_gtt_fops, amdgpu_debugfs_evict_gtt,
-			 शून्य, "%lld\n");
+			 NULL, "%lld\n");
 
-अटल व्योम amdgpu_ib_preempt_fences_swap(काष्ठा amdgpu_ring *ring,
-					  काष्ठा dma_fence **fences)
-अणु
-	काष्ठा amdgpu_fence_driver *drv = &ring->fence_drv;
-	uपूर्णांक32_t sync_seq, last_seq;
+static void amdgpu_ib_preempt_fences_swap(struct amdgpu_ring *ring,
+					  struct dma_fence **fences)
+{
+	struct amdgpu_fence_driver *drv = &ring->fence_drv;
+	uint32_t sync_seq, last_seq;
 
-	last_seq = atomic_पढ़ो(&ring->fence_drv.last_seq);
+	last_seq = atomic_read(&ring->fence_drv.last_seq);
 	sync_seq = ring->fence_drv.sync_seq;
 
 	last_seq &= drv->num_fences_mask;
 	sync_seq &= drv->num_fences_mask;
 
-	करो अणु
-		काष्ठा dma_fence *fence, **ptr;
+	do {
+		struct dma_fence *fence, **ptr;
 
 		++last_seq;
 		last_seq &= drv->num_fences_mask;
 		ptr = &drv->fences[last_seq];
 
-		fence = rcu_dereference_रक्षित(*ptr, 1);
-		RCU_INIT_POINTER(*ptr, शून्य);
+		fence = rcu_dereference_protected(*ptr, 1);
+		RCU_INIT_POINTER(*ptr, NULL);
 
-		अगर (!fence)
-			जारी;
+		if (!fence)
+			continue;
 
 		fences[last_seq] = fence;
 
-	पूर्ण जबतक (last_seq != sync_seq);
-पूर्ण
+	} while (last_seq != sync_seq);
+}
 
-अटल व्योम amdgpu_ib_preempt_संकेत_fences(काष्ठा dma_fence **fences,
-					    पूर्णांक length)
-अणु
-	पूर्णांक i;
-	काष्ठा dma_fence *fence;
+static void amdgpu_ib_preempt_signal_fences(struct dma_fence **fences,
+					    int length)
+{
+	int i;
+	struct dma_fence *fence;
 
-	क्रम (i = 0; i < length; i++) अणु
+	for (i = 0; i < length; i++) {
 		fence = fences[i];
-		अगर (!fence)
-			जारी;
-		dma_fence_संकेत(fence);
+		if (!fence)
+			continue;
+		dma_fence_signal(fence);
 		dma_fence_put(fence);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम amdgpu_ib_preempt_job_recovery(काष्ठा drm_gpu_scheduler *sched)
-अणु
-	काष्ठा drm_sched_job *s_job;
-	काष्ठा dma_fence *fence;
+static void amdgpu_ib_preempt_job_recovery(struct drm_gpu_scheduler *sched)
+{
+	struct drm_sched_job *s_job;
+	struct dma_fence *fence;
 
 	spin_lock(&sched->job_list_lock);
-	list_क्रम_each_entry(s_job, &sched->pending_list, list) अणु
+	list_for_each_entry(s_job, &sched->pending_list, list) {
 		fence = sched->ops->run_job(s_job);
 		dma_fence_put(fence);
-	पूर्ण
+	}
 	spin_unlock(&sched->job_list_lock);
-पूर्ण
+}
 
-अटल व्योम amdgpu_ib_preempt_mark_partial_job(काष्ठा amdgpu_ring *ring)
-अणु
-	काष्ठा amdgpu_job *job;
-	काष्ठा drm_sched_job *s_job, *पंचांगp;
-	uपूर्णांक32_t preempt_seq;
-	काष्ठा dma_fence *fence, **ptr;
-	काष्ठा amdgpu_fence_driver *drv = &ring->fence_drv;
-	काष्ठा drm_gpu_scheduler *sched = &ring->sched;
+static void amdgpu_ib_preempt_mark_partial_job(struct amdgpu_ring *ring)
+{
+	struct amdgpu_job *job;
+	struct drm_sched_job *s_job, *tmp;
+	uint32_t preempt_seq;
+	struct dma_fence *fence, **ptr;
+	struct amdgpu_fence_driver *drv = &ring->fence_drv;
+	struct drm_gpu_scheduler *sched = &ring->sched;
 	bool preempted = true;
 
-	अगर (ring->funcs->type != AMDGPU_RING_TYPE_GFX)
-		वापस;
+	if (ring->funcs->type != AMDGPU_RING_TYPE_GFX)
+		return;
 
 	preempt_seq = le32_to_cpu(*(drv->cpu_addr + 2));
-	अगर (preempt_seq <= atomic_पढ़ो(&drv->last_seq)) अणु
+	if (preempt_seq <= atomic_read(&drv->last_seq)) {
 		preempted = false;
-		जाओ no_preempt;
-	पूर्ण
+		goto no_preempt;
+	}
 
 	preempt_seq &= drv->num_fences_mask;
 	ptr = &drv->fences[preempt_seq];
-	fence = rcu_dereference_रक्षित(*ptr, 1);
+	fence = rcu_dereference_protected(*ptr, 1);
 
 no_preempt:
 	spin_lock(&sched->job_list_lock);
-	list_क्रम_each_entry_safe(s_job, पंचांगp, &sched->pending_list, list) अणु
-		अगर (dma_fence_is_संकेतed(&s_job->s_fence->finished)) अणु
-			/* हटाओ job from ring_mirror_list */
+	list_for_each_entry_safe(s_job, tmp, &sched->pending_list, list) {
+		if (dma_fence_is_signaled(&s_job->s_fence->finished)) {
+			/* remove job from ring_mirror_list */
 			list_del_init(&s_job->list);
-			sched->ops->मुक्त_job(s_job);
-			जारी;
-		पूर्ण
+			sched->ops->free_job(s_job);
+			continue;
+		}
 		job = to_amdgpu_job(s_job);
-		अगर (preempted && job->fence == fence)
+		if (preempted && job->fence == fence)
 			/* mark the job as preempted */
 			job->preemption_status |= AMDGPU_IB_PREEMPTED;
-	पूर्ण
+	}
 	spin_unlock(&sched->job_list_lock);
-पूर्ण
+}
 
-अटल पूर्णांक amdgpu_debugfs_ib_preempt(व्योम *data, u64 val)
-अणु
-	पूर्णांक r, resched, length;
-	काष्ठा amdgpu_ring *ring;
-	काष्ठा dma_fence **fences = शून्य;
-	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)data;
+static int amdgpu_debugfs_ib_preempt(void *data, u64 val)
+{
+	int r, resched, length;
+	struct amdgpu_ring *ring;
+	struct dma_fence **fences = NULL;
+	struct amdgpu_device *adev = (struct amdgpu_device *)data;
 
-	अगर (val >= AMDGPU_MAX_RINGS)
-		वापस -EINVAL;
+	if (val >= AMDGPU_MAX_RINGS)
+		return -EINVAL;
 
 	ring = adev->rings[val];
 
-	अगर (!ring || !ring->funcs->preempt_ib || !ring->sched.thपढ़ो)
-		वापस -EINVAL;
+	if (!ring || !ring->funcs->preempt_ib || !ring->sched.thread)
+		return -EINVAL;
 
 	/* the last preemption failed */
-	अगर (ring->trail_seq != le32_to_cpu(*ring->trail_fence_cpu_addr))
-		वापस -EBUSY;
+	if (ring->trail_seq != le32_to_cpu(*ring->trail_fence_cpu_addr))
+		return -EBUSY;
 
 	length = ring->fence_drv.num_fences_mask + 1;
-	fences = kसुस्मृति(length, माप(व्योम *), GFP_KERNEL);
-	अगर (!fences)
-		वापस -ENOMEM;
+	fences = kcalloc(length, sizeof(void *), GFP_KERNEL);
+	if (!fences)
+		return -ENOMEM;
 
-	/* Aव्योम accidently unparking the sched thपढ़ो during GPU reset */
-	r = करोwn_पढ़ो_समाप्तable(&adev->reset_sem);
-	अगर (r)
-		जाओ pro_end;
+	/* Avoid accidently unparking the sched thread during GPU reset */
+	r = down_read_killable(&adev->reset_sem);
+	if (r)
+		goto pro_end;
 
 	/* stop the scheduler */
-	kthपढ़ो_park(ring->sched.thपढ़ो);
+	kthread_park(ring->sched.thread);
 
-	resched = tपंचांग_bo_lock_delayed_workqueue(&adev->mman.bdev);
+	resched = ttm_bo_lock_delayed_workqueue(&adev->mman.bdev);
 
 	/* preempt the IB */
 	r = amdgpu_ring_preempt_ib(ring);
-	अगर (r) अणु
+	if (r) {
 		DRM_WARN("failed to preempt ring %d\n", ring->idx);
-		जाओ failure;
-	पूर्ण
+		goto failure;
+	}
 
 	amdgpu_fence_process(ring);
 
-	अगर (atomic_पढ़ो(&ring->fence_drv.last_seq) !=
-	    ring->fence_drv.sync_seq) अणु
+	if (atomic_read(&ring->fence_drv.last_seq) !=
+	    ring->fence_drv.sync_seq) {
 		DRM_INFO("ring %d was preempted\n", ring->idx);
 
 		amdgpu_ib_preempt_mark_partial_job(ring);
@@ -1474,124 +1473,124 @@ no_preempt:
 		/* swap out the old fences */
 		amdgpu_ib_preempt_fences_swap(ring, fences);
 
-		amdgpu_fence_driver_क्रमce_completion(ring);
+		amdgpu_fence_driver_force_completion(ring);
 
 		/* resubmit unfinished jobs */
 		amdgpu_ib_preempt_job_recovery(&ring->sched);
 
-		/* रुको क्रम jobs finished */
-		amdgpu_fence_रुको_empty(ring);
+		/* wait for jobs finished */
+		amdgpu_fence_wait_empty(ring);
 
-		/* संकेत the old fences */
-		amdgpu_ib_preempt_संकेत_fences(fences, length);
-	पूर्ण
+		/* signal the old fences */
+		amdgpu_ib_preempt_signal_fences(fences, length);
+	}
 
 failure:
 	/* restart the scheduler */
-	kthपढ़ो_unpark(ring->sched.thपढ़ो);
+	kthread_unpark(ring->sched.thread);
 
-	up_पढ़ो(&adev->reset_sem);
+	up_read(&adev->reset_sem);
 
-	tपंचांग_bo_unlock_delayed_workqueue(&adev->mman.bdev, resched);
+	ttm_bo_unlock_delayed_workqueue(&adev->mman.bdev, resched);
 
 pro_end:
-	kमुक्त(fences);
+	kfree(fences);
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल पूर्णांक amdgpu_debugfs_sclk_set(व्योम *data, u64 val)
-अणु
-	पूर्णांक ret = 0;
-	uपूर्णांक32_t max_freq, min_freq;
-	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)data;
+static int amdgpu_debugfs_sclk_set(void *data, u64 val)
+{
+	int ret = 0;
+	uint32_t max_freq, min_freq;
+	struct amdgpu_device *adev = (struct amdgpu_device *)data;
 
-	अगर (amdgpu_sriov_vf(adev) && !amdgpu_sriov_is_pp_one_vf(adev))
-		वापस -EINVAL;
+	if (amdgpu_sriov_vf(adev) && !amdgpu_sriov_is_pp_one_vf(adev))
+		return -EINVAL;
 
-	ret = pm_runसमय_get_sync(adev_to_drm(adev)->dev);
-	अगर (ret < 0) अणु
-		pm_runसमय_put_स्वतःsuspend(adev_to_drm(adev)->dev);
-		वापस ret;
-	पूर्ण
+	ret = pm_runtime_get_sync(adev_to_drm(adev)->dev);
+	if (ret < 0) {
+		pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
+		return ret;
+	}
 
-	अगर (is_support_sw_smu(adev)) अणु
+	if (is_support_sw_smu(adev)) {
 		ret = smu_get_dpm_freq_range(&adev->smu, SMU_SCLK, &min_freq, &max_freq);
-		अगर (ret || val > max_freq || val < min_freq)
-			वापस -EINVAL;
-		ret = smu_set_soft_freq_range(&adev->smu, SMU_SCLK, (uपूर्णांक32_t)val, (uपूर्णांक32_t)val);
-	पूर्ण अन्यथा अणु
-		वापस 0;
-	पूर्ण
+		if (ret || val > max_freq || val < min_freq)
+			return -EINVAL;
+		ret = smu_set_soft_freq_range(&adev->smu, SMU_SCLK, (uint32_t)val, (uint32_t)val);
+	} else {
+		return 0;
+	}
 
-	pm_runसमय_mark_last_busy(adev_to_drm(adev)->dev);
-	pm_runसमय_put_स्वतःsuspend(adev_to_drm(adev)->dev);
+	pm_runtime_mark_last_busy(adev_to_drm(adev)->dev);
+	pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
 
-	अगर (ret)
-		वापस -EINVAL;
+	if (ret)
+		return -EINVAL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-DEFINE_DEBUGFS_ATTRIBUTE(fops_ib_preempt, शून्य,
+DEFINE_DEBUGFS_ATTRIBUTE(fops_ib_preempt, NULL,
 			amdgpu_debugfs_ib_preempt, "%llu\n");
 
-DEFINE_DEBUGFS_ATTRIBUTE(fops_sclk_set, शून्य,
+DEFINE_DEBUGFS_ATTRIBUTE(fops_sclk_set, NULL,
 			amdgpu_debugfs_sclk_set, "%llu\n");
 
-पूर्णांक amdgpu_debugfs_init(काष्ठा amdgpu_device *adev)
-अणु
-	काष्ठा dentry *root = adev_to_drm(adev)->primary->debugfs_root;
-	काष्ठा dentry *ent;
-	पूर्णांक r, i;
+int amdgpu_debugfs_init(struct amdgpu_device *adev)
+{
+	struct dentry *root = adev_to_drm(adev)->primary->debugfs_root;
+	struct dentry *ent;
+	int r, i;
 
 
 
 	ent = debugfs_create_file("amdgpu_preempt_ib", 0600, root, adev,
 				  &fops_ib_preempt);
-	अगर (!ent) अणु
+	if (!ent) {
 		DRM_ERROR("unable to create amdgpu_preempt_ib debugsfs file\n");
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
 	ent = debugfs_create_file("amdgpu_force_sclk", 0200, root, adev,
 				  &fops_sclk_set);
-	अगर (!ent) अणु
+	if (!ent) {
 		DRM_ERROR("unable to create amdgpu_set_sclk debugsfs file\n");
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	/* Register debugfs entries क्रम amdgpu_tपंचांग */
-	amdgpu_tपंचांग_debugfs_init(adev);
+	/* Register debugfs entries for amdgpu_ttm */
+	amdgpu_ttm_debugfs_init(adev);
 	amdgpu_debugfs_pm_init(adev);
 	amdgpu_debugfs_sa_init(adev);
 	amdgpu_debugfs_fence_init(adev);
 	amdgpu_debugfs_gem_init(adev);
 
 	r = amdgpu_debugfs_regs_init(adev);
-	अगर (r)
+	if (r)
 		DRM_ERROR("registering register debugfs failed (%d).\n", r);
 
 	amdgpu_debugfs_firmware_init(adev);
 
-#अगर defined(CONFIG_DRM_AMD_DC)
-	अगर (amdgpu_device_has_dc_support(adev))
+#if defined(CONFIG_DRM_AMD_DC)
+	if (amdgpu_device_has_dc_support(adev))
 		dtn_debugfs_init(adev);
-#पूर्ण_अगर
+#endif
 
-	क्रम (i = 0; i < AMDGPU_MAX_RINGS; ++i) अणु
-		काष्ठा amdgpu_ring *ring = adev->rings[i];
+	for (i = 0; i < AMDGPU_MAX_RINGS; ++i) {
+		struct amdgpu_ring *ring = adev->rings[i];
 
-		अगर (!ring)
-			जारी;
+		if (!ring)
+			continue;
 
-		अगर (amdgpu_debugfs_ring_init(adev, ring)) अणु
+		if (amdgpu_debugfs_ring_init(adev, ring)) {
 			DRM_ERROR("Failed to register debugfs file for rings !\n");
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	amdgpu_ras_debugfs_create_all(adev);
-	amdgpu_debugfs_स्वतःdump_init(adev);
+	amdgpu_debugfs_autodump_init(adev);
 	amdgpu_rap_debugfs_init(adev);
 	amdgpu_securedisplay_debugfs_init(adev);
 	amdgpu_fw_attestation_debugfs_init(adev);
@@ -1610,16 +1609,16 @@ DEFINE_DEBUGFS_ATTRIBUTE(fops_sclk_set, शून्य,
 	debugfs_create_blob("amdgpu_vbios", 0444, root,
 			    &adev->debugfs_vbios_blob);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अन्यथा
-पूर्णांक amdgpu_debugfs_init(काष्ठा amdgpu_device *adev)
-अणु
-	वापस 0;
-पूर्ण
-पूर्णांक amdgpu_debugfs_regs_init(काष्ठा amdgpu_device *adev)
-अणु
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+#else
+int amdgpu_debugfs_init(struct amdgpu_device *adev)
+{
+	return 0;
+}
+int amdgpu_debugfs_regs_init(struct amdgpu_device *adev)
+{
+	return 0;
+}
+#endif

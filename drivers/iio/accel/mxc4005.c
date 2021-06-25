@@ -1,404 +1,403 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * 3-axis accelerometer driver क्रम MXC4005XC Memsic sensor
+ * 3-axis accelerometer driver for MXC4005XC Memsic sensor
  *
  * Copyright (c) 2014, Intel Corporation.
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/iio/iपन.स>
-#समावेश <linux/acpi.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/iio/sysfs.h>
-#समावेश <linux/iio/trigger.h>
-#समावेश <linux/iio/buffer.h>
-#समावेश <linux/iio/triggered_buffer.h>
-#समावेश <linux/iio/trigger_consumer.h>
+#include <linux/module.h>
+#include <linux/i2c.h>
+#include <linux/iio/iio.h>
+#include <linux/acpi.h>
+#include <linux/regmap.h>
+#include <linux/iio/sysfs.h>
+#include <linux/iio/trigger.h>
+#include <linux/iio/buffer.h>
+#include <linux/iio/triggered_buffer.h>
+#include <linux/iio/trigger_consumer.h>
 
-#घोषणा MXC4005_DRV_NAME		"mxc4005"
-#घोषणा MXC4005_IRQ_NAME		"mxc4005_event"
-#घोषणा MXC4005_REGMAP_NAME		"mxc4005_regmap"
+#define MXC4005_DRV_NAME		"mxc4005"
+#define MXC4005_IRQ_NAME		"mxc4005_event"
+#define MXC4005_REGMAP_NAME		"mxc4005_regmap"
 
-#घोषणा MXC4005_REG_XOUT_UPPER		0x03
-#घोषणा MXC4005_REG_XOUT_LOWER		0x04
-#घोषणा MXC4005_REG_YOUT_UPPER		0x05
-#घोषणा MXC4005_REG_YOUT_LOWER		0x06
-#घोषणा MXC4005_REG_ZOUT_UPPER		0x07
-#घोषणा MXC4005_REG_ZOUT_LOWER		0x08
+#define MXC4005_REG_XOUT_UPPER		0x03
+#define MXC4005_REG_XOUT_LOWER		0x04
+#define MXC4005_REG_YOUT_UPPER		0x05
+#define MXC4005_REG_YOUT_LOWER		0x06
+#define MXC4005_REG_ZOUT_UPPER		0x07
+#define MXC4005_REG_ZOUT_LOWER		0x08
 
-#घोषणा MXC4005_REG_INT_MASK1		0x0B
-#घोषणा MXC4005_REG_INT_MASK1_BIT_DRDYE	0x01
+#define MXC4005_REG_INT_MASK1		0x0B
+#define MXC4005_REG_INT_MASK1_BIT_DRDYE	0x01
 
-#घोषणा MXC4005_REG_INT_CLR1		0x01
-#घोषणा MXC4005_REG_INT_CLR1_BIT_DRDYC	0x01
+#define MXC4005_REG_INT_CLR1		0x01
+#define MXC4005_REG_INT_CLR1_BIT_DRDYC	0x01
 
-#घोषणा MXC4005_REG_CONTROL		0x0D
-#घोषणा MXC4005_REG_CONTROL_MASK_FSR	GENMASK(6, 5)
-#घोषणा MXC4005_CONTROL_FSR_SHIFT	5
+#define MXC4005_REG_CONTROL		0x0D
+#define MXC4005_REG_CONTROL_MASK_FSR	GENMASK(6, 5)
+#define MXC4005_CONTROL_FSR_SHIFT	5
 
-#घोषणा MXC4005_REG_DEVICE_ID		0x0E
+#define MXC4005_REG_DEVICE_ID		0x0E
 
-क्रमागत mxc4005_axis अणु
+enum mxc4005_axis {
 	AXIS_X,
 	AXIS_Y,
 	AXIS_Z,
-पूर्ण;
+};
 
-क्रमागत mxc4005_range अणु
+enum mxc4005_range {
 	MXC4005_RANGE_2G,
 	MXC4005_RANGE_4G,
 	MXC4005_RANGE_8G,
-पूर्ण;
+};
 
-काष्ठा mxc4005_data अणु
-	काष्ठा device *dev;
-	काष्ठा mutex mutex;
-	काष्ठा regmap *regmap;
-	काष्ठा iio_trigger *dपढ़ोy_trig;
+struct mxc4005_data {
+	struct device *dev;
+	struct mutex mutex;
+	struct regmap *regmap;
+	struct iio_trigger *dready_trig;
 	__be16 buffer[8];
 	bool trigger_enabled;
-पूर्ण;
+};
 
 /*
  * MXC4005 can operate in the following ranges:
- * +/- 2G, 4G, 8G (the शेष +/-2G)
+ * +/- 2G, 4G, 8G (the default +/-2G)
  *
  * (2 + 2) * 9.81 / (2^12 - 1) = 0.009582
  * (4 + 4) * 9.81 / (2^12 - 1) = 0.019164
  * (8 + 8) * 9.81 / (2^12 - 1) = 0.038329
  */
-अटल स्थिर काष्ठा अणु
+static const struct {
 	u8 range;
-	पूर्णांक scale;
-पूर्ण mxc4005_scale_table[] = अणु
-	अणुMXC4005_RANGE_2G, 9582पूर्ण,
-	अणुMXC4005_RANGE_4G, 19164पूर्ण,
-	अणुMXC4005_RANGE_8G, 38329पूर्ण,
-पूर्ण;
+	int scale;
+} mxc4005_scale_table[] = {
+	{MXC4005_RANGE_2G, 9582},
+	{MXC4005_RANGE_4G, 19164},
+	{MXC4005_RANGE_8G, 38329},
+};
 
 
-अटल IIO_CONST_ATTR(in_accel_scale_available, "0.009582 0.019164 0.038329");
+static IIO_CONST_ATTR(in_accel_scale_available, "0.009582 0.019164 0.038329");
 
-अटल काष्ठा attribute *mxc4005_attributes[] = अणु
-	&iio_स्थिर_attr_in_accel_scale_available.dev_attr.attr,
-	शून्य,
-पूर्ण;
+static struct attribute *mxc4005_attributes[] = {
+	&iio_const_attr_in_accel_scale_available.dev_attr.attr,
+	NULL,
+};
 
-अटल स्थिर काष्ठा attribute_group mxc4005_attrs_group = अणु
+static const struct attribute_group mxc4005_attrs_group = {
 	.attrs = mxc4005_attributes,
-पूर्ण;
+};
 
-अटल bool mxc4005_is_पढ़ोable_reg(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
-अणु
-	चयन (reg) अणु
-	हाल MXC4005_REG_XOUT_UPPER:
-	हाल MXC4005_REG_XOUT_LOWER:
-	हाल MXC4005_REG_YOUT_UPPER:
-	हाल MXC4005_REG_YOUT_LOWER:
-	हाल MXC4005_REG_ZOUT_UPPER:
-	हाल MXC4005_REG_ZOUT_LOWER:
-	हाल MXC4005_REG_DEVICE_ID:
-	हाल MXC4005_REG_CONTROL:
-		वापस true;
-	शेष:
-		वापस false;
-	पूर्ण
-पूर्ण
+static bool mxc4005_is_readable_reg(struct device *dev, unsigned int reg)
+{
+	switch (reg) {
+	case MXC4005_REG_XOUT_UPPER:
+	case MXC4005_REG_XOUT_LOWER:
+	case MXC4005_REG_YOUT_UPPER:
+	case MXC4005_REG_YOUT_LOWER:
+	case MXC4005_REG_ZOUT_UPPER:
+	case MXC4005_REG_ZOUT_LOWER:
+	case MXC4005_REG_DEVICE_ID:
+	case MXC4005_REG_CONTROL:
+		return true;
+	default:
+		return false;
+	}
+}
 
-अटल bool mxc4005_is_ग_लिखोable_reg(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
-अणु
-	चयन (reg) अणु
-	हाल MXC4005_REG_INT_CLR1:
-	हाल MXC4005_REG_INT_MASK1:
-	हाल MXC4005_REG_CONTROL:
-		वापस true;
-	शेष:
-		वापस false;
-	पूर्ण
-पूर्ण
+static bool mxc4005_is_writeable_reg(struct device *dev, unsigned int reg)
+{
+	switch (reg) {
+	case MXC4005_REG_INT_CLR1:
+	case MXC4005_REG_INT_MASK1:
+	case MXC4005_REG_CONTROL:
+		return true;
+	default:
+		return false;
+	}
+}
 
-अटल स्थिर काष्ठा regmap_config mxc4005_regmap_config = अणु
+static const struct regmap_config mxc4005_regmap_config = {
 	.name = MXC4005_REGMAP_NAME,
 
 	.reg_bits = 8,
 	.val_bits = 8,
 
-	.max_रेजिस्टर = MXC4005_REG_DEVICE_ID,
+	.max_register = MXC4005_REG_DEVICE_ID,
 
-	.पढ़ोable_reg = mxc4005_is_पढ़ोable_reg,
-	.ग_लिखोable_reg = mxc4005_is_ग_लिखोable_reg,
-पूर्ण;
+	.readable_reg = mxc4005_is_readable_reg,
+	.writeable_reg = mxc4005_is_writeable_reg,
+};
 
-अटल पूर्णांक mxc4005_पढ़ो_xyz(काष्ठा mxc4005_data *data)
-अणु
-	पूर्णांक ret;
+static int mxc4005_read_xyz(struct mxc4005_data *data)
+{
+	int ret;
 
-	ret = regmap_bulk_पढ़ो(data->regmap, MXC4005_REG_XOUT_UPPER,
-			       data->buffer, माप(data->buffer));
-	अगर (ret < 0) अणु
+	ret = regmap_bulk_read(data->regmap, MXC4005_REG_XOUT_UPPER,
+			       data->buffer, sizeof(data->buffer));
+	if (ret < 0) {
 		dev_err(data->dev, "failed to read axes\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mxc4005_पढ़ो_axis(काष्ठा mxc4005_data *data,
-			     अचिन्हित पूर्णांक addr)
-अणु
+static int mxc4005_read_axis(struct mxc4005_data *data,
+			     unsigned int addr)
+{
 	__be16 reg;
-	पूर्णांक ret;
+	int ret;
 
-	ret = regmap_bulk_पढ़ो(data->regmap, addr, &reg, माप(reg));
-	अगर (ret < 0) अणु
+	ret = regmap_bulk_read(data->regmap, addr, &reg, sizeof(reg));
+	if (ret < 0) {
 		dev_err(data->dev, "failed to read reg %02x\n", addr);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस be16_to_cpu(reg);
-पूर्ण
+	return be16_to_cpu(reg);
+}
 
-अटल पूर्णांक mxc4005_पढ़ो_scale(काष्ठा mxc4005_data *data)
-अणु
-	अचिन्हित पूर्णांक reg;
-	पूर्णांक ret;
-	पूर्णांक i;
+static int mxc4005_read_scale(struct mxc4005_data *data)
+{
+	unsigned int reg;
+	int ret;
+	int i;
 
-	ret = regmap_पढ़ो(data->regmap, MXC4005_REG_CONTROL, &reg);
-	अगर (ret < 0) अणु
+	ret = regmap_read(data->regmap, MXC4005_REG_CONTROL, &reg);
+	if (ret < 0) {
 		dev_err(data->dev, "failed to read reg_control\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	i = reg >> MXC4005_CONTROL_FSR_SHIFT;
 
-	अगर (i < 0 || i >= ARRAY_SIZE(mxc4005_scale_table))
-		वापस -EINVAL;
+	if (i < 0 || i >= ARRAY_SIZE(mxc4005_scale_table))
+		return -EINVAL;
 
-	वापस mxc4005_scale_table[i].scale;
-पूर्ण
+	return mxc4005_scale_table[i].scale;
+}
 
-अटल पूर्णांक mxc4005_set_scale(काष्ठा mxc4005_data *data, पूर्णांक val)
-अणु
-	अचिन्हित पूर्णांक reg;
-	पूर्णांक i;
-	पूर्णांक ret;
+static int mxc4005_set_scale(struct mxc4005_data *data, int val)
+{
+	unsigned int reg;
+	int i;
+	int ret;
 
-	क्रम (i = 0; i < ARRAY_SIZE(mxc4005_scale_table); i++) अणु
-		अगर (mxc4005_scale_table[i].scale == val) अणु
+	for (i = 0; i < ARRAY_SIZE(mxc4005_scale_table); i++) {
+		if (mxc4005_scale_table[i].scale == val) {
 			reg = i << MXC4005_CONTROL_FSR_SHIFT;
 			ret = regmap_update_bits(data->regmap,
 						 MXC4005_REG_CONTROL,
 						 MXC4005_REG_CONTROL_MASK_FSR,
 						 reg);
-			अगर (ret < 0)
+			if (ret < 0)
 				dev_err(data->dev,
 					"failed to write reg_control\n");
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल पूर्णांक mxc4005_पढ़ो_raw(काष्ठा iio_dev *indio_dev,
-			    काष्ठा iio_chan_spec स्थिर *chan,
-			    पूर्णांक *val, पूर्णांक *val2, दीर्घ mask)
-अणु
-	काष्ठा mxc4005_data *data = iio_priv(indio_dev);
-	पूर्णांक ret;
+static int mxc4005_read_raw(struct iio_dev *indio_dev,
+			    struct iio_chan_spec const *chan,
+			    int *val, int *val2, long mask)
+{
+	struct mxc4005_data *data = iio_priv(indio_dev);
+	int ret;
 
-	चयन (mask) अणु
-	हाल IIO_CHAN_INFO_RAW:
-		चयन (chan->type) अणु
-		हाल IIO_ACCEL:
-			अगर (iio_buffer_enabled(indio_dev))
-				वापस -EBUSY;
+	switch (mask) {
+	case IIO_CHAN_INFO_RAW:
+		switch (chan->type) {
+		case IIO_ACCEL:
+			if (iio_buffer_enabled(indio_dev))
+				return -EBUSY;
 
-			ret = mxc4005_पढ़ो_axis(data, chan->address);
-			अगर (ret < 0)
-				वापस ret;
-			*val = sign_extend32(ret >> chan->scan_type.shअगरt,
+			ret = mxc4005_read_axis(data, chan->address);
+			if (ret < 0)
+				return ret;
+			*val = sign_extend32(ret >> chan->scan_type.shift,
 					     chan->scan_type.realbits - 1);
-			वापस IIO_VAL_INT;
-		शेष:
-			वापस -EINVAL;
-		पूर्ण
-	हाल IIO_CHAN_INFO_SCALE:
-		ret = mxc4005_पढ़ो_scale(data);
-		अगर (ret < 0)
-			वापस ret;
+			return IIO_VAL_INT;
+		default:
+			return -EINVAL;
+		}
+	case IIO_CHAN_INFO_SCALE:
+		ret = mxc4005_read_scale(data);
+		if (ret < 0)
+			return ret;
 
 		*val = 0;
 		*val2 = ret;
-		वापस IIO_VAL_INT_PLUS_MICRO;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-पूर्ण
+		return IIO_VAL_INT_PLUS_MICRO;
+	default:
+		return -EINVAL;
+	}
+}
 
-अटल पूर्णांक mxc4005_ग_लिखो_raw(काष्ठा iio_dev *indio_dev,
-			     काष्ठा iio_chan_spec स्थिर *chan,
-			     पूर्णांक val, पूर्णांक val2, दीर्घ mask)
-अणु
-	काष्ठा mxc4005_data *data = iio_priv(indio_dev);
+static int mxc4005_write_raw(struct iio_dev *indio_dev,
+			     struct iio_chan_spec const *chan,
+			     int val, int val2, long mask)
+{
+	struct mxc4005_data *data = iio_priv(indio_dev);
 
-	चयन (mask) अणु
-	हाल IIO_CHAN_INFO_SCALE:
-		अगर (val != 0)
-			वापस -EINVAL;
+	switch (mask) {
+	case IIO_CHAN_INFO_SCALE:
+		if (val != 0)
+			return -EINVAL;
 
-		वापस mxc4005_set_scale(data, val2);
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-पूर्ण
+		return mxc4005_set_scale(data, val2);
+	default:
+		return -EINVAL;
+	}
+}
 
-अटल स्थिर काष्ठा iio_info mxc4005_info = अणु
-	.पढ़ो_raw	= mxc4005_पढ़ो_raw,
-	.ग_लिखो_raw	= mxc4005_ग_लिखो_raw,
+static const struct iio_info mxc4005_info = {
+	.read_raw	= mxc4005_read_raw,
+	.write_raw	= mxc4005_write_raw,
 	.attrs		= &mxc4005_attrs_group,
-पूर्ण;
+};
 
-अटल स्थिर अचिन्हित दीर्घ mxc4005_scan_masks[] = अणु
+static const unsigned long mxc4005_scan_masks[] = {
 	BIT(AXIS_X) | BIT(AXIS_Y) | BIT(AXIS_Z),
 	0
-पूर्ण;
+};
 
-#घोषणा MXC4005_CHANNEL(_axis, _addr) अणु				\
+#define MXC4005_CHANNEL(_axis, _addr) {				\
 	.type = IIO_ACCEL,					\
-	.modअगरied = 1,						\
+	.modified = 1,						\
 	.channel2 = IIO_MOD_##_axis,				\
 	.address = _addr,					\
 	.info_mask_separate = BIT(IIO_CHAN_INFO_RAW),		\
 	.info_mask_shared_by_type = BIT(IIO_CHAN_INFO_SCALE),	\
 	.scan_index = AXIS_##_axis,				\
-	.scan_type = अणु						\
+	.scan_type = {						\
 		.sign = 's',					\
 		.realbits = 12,					\
 		.storagebits = 16,				\
-		.shअगरt = 4,					\
+		.shift = 4,					\
 		.endianness = IIO_BE,				\
-	पूर्ण,							\
-पूर्ण
+	},							\
+}
 
-अटल स्थिर काष्ठा iio_chan_spec mxc4005_channels[] = अणु
+static const struct iio_chan_spec mxc4005_channels[] = {
 	MXC4005_CHANNEL(X, MXC4005_REG_XOUT_UPPER),
 	MXC4005_CHANNEL(Y, MXC4005_REG_YOUT_UPPER),
 	MXC4005_CHANNEL(Z, MXC4005_REG_ZOUT_UPPER),
 	IIO_CHAN_SOFT_TIMESTAMP(3),
-पूर्ण;
+};
 
-अटल irqवापस_t mxc4005_trigger_handler(पूर्णांक irq, व्योम *निजी)
-अणु
-	काष्ठा iio_poll_func *pf = निजी;
-	काष्ठा iio_dev *indio_dev = pf->indio_dev;
-	काष्ठा mxc4005_data *data = iio_priv(indio_dev);
-	पूर्णांक ret;
+static irqreturn_t mxc4005_trigger_handler(int irq, void *private)
+{
+	struct iio_poll_func *pf = private;
+	struct iio_dev *indio_dev = pf->indio_dev;
+	struct mxc4005_data *data = iio_priv(indio_dev);
+	int ret;
 
-	ret = mxc4005_पढ़ो_xyz(data);
-	अगर (ret < 0)
-		जाओ err;
+	ret = mxc4005_read_xyz(data);
+	if (ret < 0)
+		goto err;
 
-	iio_push_to_buffers_with_बारtamp(indio_dev, data->buffer,
-					   pf->बारtamp);
+	iio_push_to_buffers_with_timestamp(indio_dev, data->buffer,
+					   pf->timestamp);
 
 err:
-	iio_trigger_notअगरy_करोne(indio_dev->trig);
+	iio_trigger_notify_done(indio_dev->trig);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल व्योम mxc4005_clr_पूर्णांकr(काष्ठा mxc4005_data *data)
-अणु
-	पूर्णांक ret;
+static void mxc4005_clr_intr(struct mxc4005_data *data)
+{
+	int ret;
 
-	/* clear पूर्णांकerrupt */
-	ret = regmap_ग_लिखो(data->regmap, MXC4005_REG_INT_CLR1,
+	/* clear interrupt */
+	ret = regmap_write(data->regmap, MXC4005_REG_INT_CLR1,
 			   MXC4005_REG_INT_CLR1_BIT_DRDYC);
-	अगर (ret < 0)
+	if (ret < 0)
 		dev_err(data->dev, "failed to write to reg_int_clr1\n");
-पूर्ण
+}
 
-अटल पूर्णांक mxc4005_set_trigger_state(काष्ठा iio_trigger *trig,
+static int mxc4005_set_trigger_state(struct iio_trigger *trig,
 				     bool state)
-अणु
-	काष्ठा iio_dev *indio_dev = iio_trigger_get_drvdata(trig);
-	काष्ठा mxc4005_data *data = iio_priv(indio_dev);
-	पूर्णांक ret;
+{
+	struct iio_dev *indio_dev = iio_trigger_get_drvdata(trig);
+	struct mxc4005_data *data = iio_priv(indio_dev);
+	int ret;
 
 	mutex_lock(&data->mutex);
-	अगर (state) अणु
-		ret = regmap_ग_लिखो(data->regmap, MXC4005_REG_INT_MASK1,
+	if (state) {
+		ret = regmap_write(data->regmap, MXC4005_REG_INT_MASK1,
 				   MXC4005_REG_INT_MASK1_BIT_DRDYE);
-	पूर्ण अन्यथा अणु
-		ret = regmap_ग_लिखो(data->regmap, MXC4005_REG_INT_MASK1,
+	} else {
+		ret = regmap_write(data->regmap, MXC4005_REG_INT_MASK1,
 				   ~MXC4005_REG_INT_MASK1_BIT_DRDYE);
-	पूर्ण
+	}
 
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		mutex_unlock(&data->mutex);
 		dev_err(data->dev, "failed to update reg_int_mask1");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	data->trigger_enabled = state;
 	mutex_unlock(&data->mutex);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम mxc4005_trigger_reen(काष्ठा iio_trigger *trig)
-अणु
-	काष्ठा iio_dev *indio_dev = iio_trigger_get_drvdata(trig);
-	काष्ठा mxc4005_data *data = iio_priv(indio_dev);
+static void mxc4005_trigger_reen(struct iio_trigger *trig)
+{
+	struct iio_dev *indio_dev = iio_trigger_get_drvdata(trig);
+	struct mxc4005_data *data = iio_priv(indio_dev);
 
-	अगर (!data->dपढ़ोy_trig)
-		वापस;
+	if (!data->dready_trig)
+		return;
 
-	mxc4005_clr_पूर्णांकr(data);
-पूर्ण
+	mxc4005_clr_intr(data);
+}
 
-अटल स्थिर काष्ठा iio_trigger_ops mxc4005_trigger_ops = अणु
+static const struct iio_trigger_ops mxc4005_trigger_ops = {
 	.set_trigger_state = mxc4005_set_trigger_state,
 	.reenable = mxc4005_trigger_reen,
-पूर्ण;
+};
 
-अटल पूर्णांक mxc4005_chip_init(काष्ठा mxc4005_data *data)
-अणु
-	पूर्णांक ret;
-	अचिन्हित पूर्णांक reg;
+static int mxc4005_chip_init(struct mxc4005_data *data)
+{
+	int ret;
+	unsigned int reg;
 
-	ret = regmap_पढ़ो(data->regmap, MXC4005_REG_DEVICE_ID, &reg);
-	अगर (ret < 0) अणु
+	ret = regmap_read(data->regmap, MXC4005_REG_DEVICE_ID, &reg);
+	if (ret < 0) {
 		dev_err(data->dev, "failed to read chip id\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	dev_dbg(data->dev, "MXC4005 chip id %02x\n", reg);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mxc4005_probe(काष्ठा i2c_client *client,
-			 स्थिर काष्ठा i2c_device_id *id)
-अणु
-	काष्ठा mxc4005_data *data;
-	काष्ठा iio_dev *indio_dev;
-	काष्ठा regmap *regmap;
-	पूर्णांक ret;
+static int mxc4005_probe(struct i2c_client *client,
+			 const struct i2c_device_id *id)
+{
+	struct mxc4005_data *data;
+	struct iio_dev *indio_dev;
+	struct regmap *regmap;
+	int ret;
 
-	indio_dev = devm_iio_device_alloc(&client->dev, माप(*data));
-	अगर (!indio_dev)
-		वापस -ENOMEM;
+	indio_dev = devm_iio_device_alloc(&client->dev, sizeof(*data));
+	if (!indio_dev)
+		return -ENOMEM;
 
 	regmap = devm_regmap_init_i2c(client, &mxc4005_regmap_config);
-	अगर (IS_ERR(regmap)) अणु
+	if (IS_ERR(regmap)) {
 		dev_err(&client->dev, "failed to initialize regmap\n");
-		वापस PTR_ERR(regmap);
-	पूर्ण
+		return PTR_ERR(regmap);
+	}
 
 	data = iio_priv(indio_dev);
 	i2c_set_clientdata(client, indio_dev);
@@ -406,10 +405,10 @@ err:
 	data->regmap = regmap;
 
 	ret = mxc4005_chip_init(data);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(&client->dev, "failed to initialize chip\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	mutex_init(&data->mutex);
 
@@ -417,78 +416,78 @@ err:
 	indio_dev->num_channels = ARRAY_SIZE(mxc4005_channels);
 	indio_dev->available_scan_masks = mxc4005_scan_masks;
 	indio_dev->name = MXC4005_DRV_NAME;
-	indio_dev->modes = INDIO_सूचीECT_MODE;
+	indio_dev->modes = INDIO_DIRECT_MODE;
 	indio_dev->info = &mxc4005_info;
 
 	ret = devm_iio_triggered_buffer_setup(&client->dev, indio_dev,
-					 iio_pollfunc_store_समय,
+					 iio_pollfunc_store_time,
 					 mxc4005_trigger_handler,
-					 शून्य);
-	अगर (ret < 0) अणु
+					 NULL);
+	if (ret < 0) {
 		dev_err(&client->dev,
 			"failed to setup iio triggered buffer\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	अगर (client->irq > 0) अणु
-		data->dपढ़ोy_trig = devm_iio_trigger_alloc(&client->dev,
+	if (client->irq > 0) {
+		data->dready_trig = devm_iio_trigger_alloc(&client->dev,
 							   "%s-dev%d",
 							   indio_dev->name,
 							   indio_dev->id);
-		अगर (!data->dपढ़ोy_trig)
-			वापस -ENOMEM;
+		if (!data->dready_trig)
+			return -ENOMEM;
 
-		ret = devm_request_thपढ़ोed_irq(&client->dev, client->irq,
+		ret = devm_request_threaded_irq(&client->dev, client->irq,
 						iio_trigger_generic_data_rdy_poll,
-						शून्य,
+						NULL,
 						IRQF_TRIGGER_FALLING |
 						IRQF_ONESHOT,
 						MXC4005_IRQ_NAME,
-						data->dपढ़ोy_trig);
-		अगर (ret) अणु
+						data->dready_trig);
+		if (ret) {
 			dev_err(&client->dev,
 				"failed to init threaded irq\n");
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 
-		data->dपढ़ोy_trig->ops = &mxc4005_trigger_ops;
-		iio_trigger_set_drvdata(data->dपढ़ोy_trig, indio_dev);
-		indio_dev->trig = data->dपढ़ोy_trig;
+		data->dready_trig->ops = &mxc4005_trigger_ops;
+		iio_trigger_set_drvdata(data->dready_trig, indio_dev);
+		indio_dev->trig = data->dready_trig;
 		iio_trigger_get(indio_dev->trig);
-		ret = devm_iio_trigger_रेजिस्टर(&client->dev,
-						data->dपढ़ोy_trig);
-		अगर (ret) अणु
+		ret = devm_iio_trigger_register(&client->dev,
+						data->dready_trig);
+		if (ret) {
 			dev_err(&client->dev,
 				"failed to register trigger\n");
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
-	वापस devm_iio_device_रेजिस्टर(&client->dev, indio_dev);
-पूर्ण
+	return devm_iio_device_register(&client->dev, indio_dev);
+}
 
-अटल स्थिर काष्ठा acpi_device_id mxc4005_acpi_match[] = अणु
-	अणु"MXC4005",	0पूर्ण,
-	अणु"MXC6655",	0पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+static const struct acpi_device_id mxc4005_acpi_match[] = {
+	{"MXC4005",	0},
+	{"MXC6655",	0},
+	{ },
+};
 MODULE_DEVICE_TABLE(acpi, mxc4005_acpi_match);
 
-अटल स्थिर काष्ठा i2c_device_id mxc4005_id[] = अणु
-	अणु"mxc4005",	0पूर्ण,
-	अणु"mxc6655",	0पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+static const struct i2c_device_id mxc4005_id[] = {
+	{"mxc4005",	0},
+	{"mxc6655",	0},
+	{ },
+};
 MODULE_DEVICE_TABLE(i2c, mxc4005_id);
 
-अटल काष्ठा i2c_driver mxc4005_driver = अणु
-	.driver = अणु
+static struct i2c_driver mxc4005_driver = {
+	.driver = {
 		.name = MXC4005_DRV_NAME,
 		.acpi_match_table = ACPI_PTR(mxc4005_acpi_match),
-	पूर्ण,
+	},
 	.probe		= mxc4005_probe,
 	.id_table	= mxc4005_id,
-पूर्ण;
+};
 
 module_i2c_driver(mxc4005_driver);
 

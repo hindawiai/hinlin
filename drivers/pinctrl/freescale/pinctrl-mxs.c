@@ -1,277 +1,276 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 //
 // Copyright 2012 Freescale Semiconductor, Inc.
 
-#समावेश <linux/err.h>
-#समावेश <linux/init.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/of.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/pinctrl/machine.h>
-#समावेश <linux/pinctrl/pinconf.h>
-#समावेश <linux/pinctrl/pinctrl.h>
-#समावेश <linux/pinctrl/pinmux.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/slab.h>
-#समावेश "../core.h"
-#समावेश "pinctrl-mxs.h"
+#include <linux/err.h>
+#include <linux/init.h>
+#include <linux/io.h>
+#include <linux/of.h>
+#include <linux/of_address.h>
+#include <linux/pinctrl/machine.h>
+#include <linux/pinctrl/pinconf.h>
+#include <linux/pinctrl/pinctrl.h>
+#include <linux/pinctrl/pinmux.h>
+#include <linux/platform_device.h>
+#include <linux/slab.h>
+#include "../core.h"
+#include "pinctrl-mxs.h"
 
-#घोषणा SUFFIX_LEN	4
+#define SUFFIX_LEN	4
 
-काष्ठा mxs_pinctrl_data अणु
-	काष्ठा device *dev;
-	काष्ठा pinctrl_dev *pctl;
-	व्योम __iomem *base;
-	काष्ठा mxs_pinctrl_soc_data *soc;
-पूर्ण;
+struct mxs_pinctrl_data {
+	struct device *dev;
+	struct pinctrl_dev *pctl;
+	void __iomem *base;
+	struct mxs_pinctrl_soc_data *soc;
+};
 
-अटल पूर्णांक mxs_get_groups_count(काष्ठा pinctrl_dev *pctldev)
-अणु
-	काष्ठा mxs_pinctrl_data *d = pinctrl_dev_get_drvdata(pctldev);
+static int mxs_get_groups_count(struct pinctrl_dev *pctldev)
+{
+	struct mxs_pinctrl_data *d = pinctrl_dev_get_drvdata(pctldev);
 
-	वापस d->soc->ngroups;
-पूर्ण
+	return d->soc->ngroups;
+}
 
-अटल स्थिर अक्षर *mxs_get_group_name(काष्ठा pinctrl_dev *pctldev,
-				      अचिन्हित group)
-अणु
-	काष्ठा mxs_pinctrl_data *d = pinctrl_dev_get_drvdata(pctldev);
+static const char *mxs_get_group_name(struct pinctrl_dev *pctldev,
+				      unsigned group)
+{
+	struct mxs_pinctrl_data *d = pinctrl_dev_get_drvdata(pctldev);
 
-	वापस d->soc->groups[group].name;
-पूर्ण
+	return d->soc->groups[group].name;
+}
 
-अटल पूर्णांक mxs_get_group_pins(काष्ठा pinctrl_dev *pctldev, अचिन्हित group,
-			      स्थिर अचिन्हित **pins, अचिन्हित *num_pins)
-अणु
-	काष्ठा mxs_pinctrl_data *d = pinctrl_dev_get_drvdata(pctldev);
+static int mxs_get_group_pins(struct pinctrl_dev *pctldev, unsigned group,
+			      const unsigned **pins, unsigned *num_pins)
+{
+	struct mxs_pinctrl_data *d = pinctrl_dev_get_drvdata(pctldev);
 
 	*pins = d->soc->groups[group].pins;
 	*num_pins = d->soc->groups[group].npins;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम mxs_pin_dbg_show(काष्ठा pinctrl_dev *pctldev, काष्ठा seq_file *s,
-			     अचिन्हित offset)
-अणु
-	seq_म_लिखो(s, " %s", dev_name(pctldev->dev));
-पूर्ण
+static void mxs_pin_dbg_show(struct pinctrl_dev *pctldev, struct seq_file *s,
+			     unsigned offset)
+{
+	seq_printf(s, " %s", dev_name(pctldev->dev));
+}
 
-अटल पूर्णांक mxs_dt_node_to_map(काष्ठा pinctrl_dev *pctldev,
-			      काष्ठा device_node *np,
-			      काष्ठा pinctrl_map **map, अचिन्हित *num_maps)
-अणु
-	काष्ठा pinctrl_map *new_map;
-	अक्षर *group = शून्य;
-	अचिन्हित new_num = 1;
-	अचिन्हित दीर्घ config = 0;
-	अचिन्हित दीर्घ *pconfig;
-	पूर्णांक length = म_माप(np->name) + SUFFIX_LEN;
+static int mxs_dt_node_to_map(struct pinctrl_dev *pctldev,
+			      struct device_node *np,
+			      struct pinctrl_map **map, unsigned *num_maps)
+{
+	struct pinctrl_map *new_map;
+	char *group = NULL;
+	unsigned new_num = 1;
+	unsigned long config = 0;
+	unsigned long *pconfig;
+	int length = strlen(np->name) + SUFFIX_LEN;
 	bool purecfg = false;
 	u32 val, reg;
-	पूर्णांक ret, i = 0;
+	int ret, i = 0;
 
-	/* Check क्रम pin config node which has no 'reg' property */
-	अगर (of_property_पढ़ो_u32(np, "reg", &reg))
+	/* Check for pin config node which has no 'reg' property */
+	if (of_property_read_u32(np, "reg", &reg))
 		purecfg = true;
 
-	ret = of_property_पढ़ो_u32(np, "fsl,drive-strength", &val);
-	अगर (!ret)
+	ret = of_property_read_u32(np, "fsl,drive-strength", &val);
+	if (!ret)
 		config = val | MA_PRESENT;
-	ret = of_property_पढ़ो_u32(np, "fsl,voltage", &val);
-	अगर (!ret)
+	ret = of_property_read_u32(np, "fsl,voltage", &val);
+	if (!ret)
 		config |= val << VOL_SHIFT | VOL_PRESENT;
-	ret = of_property_पढ़ो_u32(np, "fsl,pull-up", &val);
-	अगर (!ret)
+	ret = of_property_read_u32(np, "fsl,pull-up", &val);
+	if (!ret)
 		config |= val << PULL_SHIFT | PULL_PRESENT;
 
-	/* Check क्रम group node which has both mux and config settings */
-	अगर (!purecfg && config)
+	/* Check for group node which has both mux and config settings */
+	if (!purecfg && config)
 		new_num = 2;
 
-	new_map = kसुस्मृति(new_num, माप(*new_map), GFP_KERNEL);
-	अगर (!new_map)
-		वापस -ENOMEM;
+	new_map = kcalloc(new_num, sizeof(*new_map), GFP_KERNEL);
+	if (!new_map)
+		return -ENOMEM;
 
-	अगर (!purecfg) अणु
+	if (!purecfg) {
 		new_map[i].type = PIN_MAP_TYPE_MUX_GROUP;
 		new_map[i].data.mux.function = np->name;
 
 		/* Compose group name */
 		group = kzalloc(length, GFP_KERNEL);
-		अगर (!group) अणु
+		if (!group) {
 			ret = -ENOMEM;
-			जाओ मुक्त;
-		पूर्ण
-		snम_लिखो(group, length, "%s.%d", np->name, reg);
+			goto free;
+		}
+		snprintf(group, length, "%s.%d", np->name, reg);
 		new_map[i].data.mux.group = group;
 		i++;
-	पूर्ण
+	}
 
-	अगर (config) अणु
-		pconfig = kmemdup(&config, माप(config), GFP_KERNEL);
-		अगर (!pconfig) अणु
+	if (config) {
+		pconfig = kmemdup(&config, sizeof(config), GFP_KERNEL);
+		if (!pconfig) {
 			ret = -ENOMEM;
-			जाओ मुक्त_group;
-		पूर्ण
+			goto free_group;
+		}
 
 		new_map[i].type = PIN_MAP_TYPE_CONFIGS_GROUP;
 		new_map[i].data.configs.group_or_pin = purecfg ? np->name :
 								 group;
 		new_map[i].data.configs.configs = pconfig;
 		new_map[i].data.configs.num_configs = 1;
-	पूर्ण
+	}
 
 	*map = new_map;
 	*num_maps = new_num;
 
-	वापस 0;
+	return 0;
 
-मुक्त_group:
-	अगर (!purecfg)
-		kमुक्त(group);
-मुक्त:
-	kमुक्त(new_map);
-	वापस ret;
-पूर्ण
+free_group:
+	if (!purecfg)
+		kfree(group);
+free:
+	kfree(new_map);
+	return ret;
+}
 
-अटल व्योम mxs_dt_मुक्त_map(काष्ठा pinctrl_dev *pctldev,
-			    काष्ठा pinctrl_map *map, अचिन्हित num_maps)
-अणु
+static void mxs_dt_free_map(struct pinctrl_dev *pctldev,
+			    struct pinctrl_map *map, unsigned num_maps)
+{
 	u32 i;
 
-	क्रम (i = 0; i < num_maps; i++) अणु
-		अगर (map[i].type == PIN_MAP_TYPE_MUX_GROUP)
-			kमुक्त(map[i].data.mux.group);
-		अगर (map[i].type == PIN_MAP_TYPE_CONFIGS_GROUP)
-			kमुक्त(map[i].data.configs.configs);
-	पूर्ण
+	for (i = 0; i < num_maps; i++) {
+		if (map[i].type == PIN_MAP_TYPE_MUX_GROUP)
+			kfree(map[i].data.mux.group);
+		if (map[i].type == PIN_MAP_TYPE_CONFIGS_GROUP)
+			kfree(map[i].data.configs.configs);
+	}
 
-	kमुक्त(map);
-पूर्ण
+	kfree(map);
+}
 
-अटल स्थिर काष्ठा pinctrl_ops mxs_pinctrl_ops = अणु
+static const struct pinctrl_ops mxs_pinctrl_ops = {
 	.get_groups_count = mxs_get_groups_count,
 	.get_group_name = mxs_get_group_name,
 	.get_group_pins = mxs_get_group_pins,
 	.pin_dbg_show = mxs_pin_dbg_show,
 	.dt_node_to_map = mxs_dt_node_to_map,
-	.dt_मुक्त_map = mxs_dt_मुक्त_map,
-पूर्ण;
+	.dt_free_map = mxs_dt_free_map,
+};
 
-अटल पूर्णांक mxs_pinctrl_get_funcs_count(काष्ठा pinctrl_dev *pctldev)
-अणु
-	काष्ठा mxs_pinctrl_data *d = pinctrl_dev_get_drvdata(pctldev);
+static int mxs_pinctrl_get_funcs_count(struct pinctrl_dev *pctldev)
+{
+	struct mxs_pinctrl_data *d = pinctrl_dev_get_drvdata(pctldev);
 
-	वापस d->soc->nfunctions;
-पूर्ण
+	return d->soc->nfunctions;
+}
 
-अटल स्थिर अक्षर *mxs_pinctrl_get_func_name(काष्ठा pinctrl_dev *pctldev,
-					     अचिन्हित function)
-अणु
-	काष्ठा mxs_pinctrl_data *d = pinctrl_dev_get_drvdata(pctldev);
+static const char *mxs_pinctrl_get_func_name(struct pinctrl_dev *pctldev,
+					     unsigned function)
+{
+	struct mxs_pinctrl_data *d = pinctrl_dev_get_drvdata(pctldev);
 
-	वापस d->soc->functions[function].name;
-पूर्ण
+	return d->soc->functions[function].name;
+}
 
-अटल पूर्णांक mxs_pinctrl_get_func_groups(काष्ठा pinctrl_dev *pctldev,
-				       अचिन्हित group,
-				       स्थिर अक्षर * स्थिर **groups,
-				       अचिन्हित * स्थिर num_groups)
-अणु
-	काष्ठा mxs_pinctrl_data *d = pinctrl_dev_get_drvdata(pctldev);
+static int mxs_pinctrl_get_func_groups(struct pinctrl_dev *pctldev,
+				       unsigned group,
+				       const char * const **groups,
+				       unsigned * const num_groups)
+{
+	struct mxs_pinctrl_data *d = pinctrl_dev_get_drvdata(pctldev);
 
 	*groups = d->soc->functions[group].groups;
 	*num_groups = d->soc->functions[group].ngroups;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम mxs_pinctrl_rmwl(u32 value, u32 mask, u8 shअगरt, व्योम __iomem *reg)
-अणु
-	u32 पंचांगp;
+static void mxs_pinctrl_rmwl(u32 value, u32 mask, u8 shift, void __iomem *reg)
+{
+	u32 tmp;
 
-	पंचांगp = पढ़ोl(reg);
-	पंचांगp &= ~(mask << shअगरt);
-	पंचांगp |= value << shअगरt;
-	ग_लिखोl(पंचांगp, reg);
-पूर्ण
+	tmp = readl(reg);
+	tmp &= ~(mask << shift);
+	tmp |= value << shift;
+	writel(tmp, reg);
+}
 
-अटल पूर्णांक mxs_pinctrl_set_mux(काष्ठा pinctrl_dev *pctldev, अचिन्हित selector,
-			       अचिन्हित group)
-अणु
-	काष्ठा mxs_pinctrl_data *d = pinctrl_dev_get_drvdata(pctldev);
-	काष्ठा mxs_group *g = &d->soc->groups[group];
-	व्योम __iomem *reg;
-	u8 bank, shअगरt;
+static int mxs_pinctrl_set_mux(struct pinctrl_dev *pctldev, unsigned selector,
+			       unsigned group)
+{
+	struct mxs_pinctrl_data *d = pinctrl_dev_get_drvdata(pctldev);
+	struct mxs_group *g = &d->soc->groups[group];
+	void __iomem *reg;
+	u8 bank, shift;
 	u16 pin;
 	u32 i;
 
-	क्रम (i = 0; i < g->npins; i++) अणु
+	for (i = 0; i < g->npins; i++) {
 		bank = PINID_TO_BANK(g->pins[i]);
 		pin = PINID_TO_PIN(g->pins[i]);
 		reg = d->base + d->soc->regs->muxsel;
 		reg += bank * 0x20 + pin / 16 * 0x10;
-		shअगरt = pin % 16 * 2;
+		shift = pin % 16 * 2;
 
-		mxs_pinctrl_rmwl(g->muxsel[i], 0x3, shअगरt, reg);
-	पूर्ण
+		mxs_pinctrl_rmwl(g->muxsel[i], 0x3, shift, reg);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा pinmux_ops mxs_pinmux_ops = अणु
+static const struct pinmux_ops mxs_pinmux_ops = {
 	.get_functions_count = mxs_pinctrl_get_funcs_count,
 	.get_function_name = mxs_pinctrl_get_func_name,
 	.get_function_groups = mxs_pinctrl_get_func_groups,
 	.set_mux = mxs_pinctrl_set_mux,
-पूर्ण;
+};
 
-अटल पूर्णांक mxs_pinconf_get(काष्ठा pinctrl_dev *pctldev,
-			   अचिन्हित pin, अचिन्हित दीर्घ *config)
-अणु
-	वापस -ENOTSUPP;
-पूर्ण
+static int mxs_pinconf_get(struct pinctrl_dev *pctldev,
+			   unsigned pin, unsigned long *config)
+{
+	return -ENOTSUPP;
+}
 
-अटल पूर्णांक mxs_pinconf_set(काष्ठा pinctrl_dev *pctldev,
-			   अचिन्हित pin, अचिन्हित दीर्घ *configs,
-			   अचिन्हित num_configs)
-अणु
-	वापस -ENOTSUPP;
-पूर्ण
+static int mxs_pinconf_set(struct pinctrl_dev *pctldev,
+			   unsigned pin, unsigned long *configs,
+			   unsigned num_configs)
+{
+	return -ENOTSUPP;
+}
 
-अटल पूर्णांक mxs_pinconf_group_get(काष्ठा pinctrl_dev *pctldev,
-				 अचिन्हित group, अचिन्हित दीर्घ *config)
-अणु
-	काष्ठा mxs_pinctrl_data *d = pinctrl_dev_get_drvdata(pctldev);
+static int mxs_pinconf_group_get(struct pinctrl_dev *pctldev,
+				 unsigned group, unsigned long *config)
+{
+	struct mxs_pinctrl_data *d = pinctrl_dev_get_drvdata(pctldev);
 
 	*config = d->soc->groups[group].config;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mxs_pinconf_group_set(काष्ठा pinctrl_dev *pctldev,
-				 अचिन्हित group, अचिन्हित दीर्घ *configs,
-				 अचिन्हित num_configs)
-अणु
-	काष्ठा mxs_pinctrl_data *d = pinctrl_dev_get_drvdata(pctldev);
-	काष्ठा mxs_group *g = &d->soc->groups[group];
-	व्योम __iomem *reg;
-	u8 ma, vol, pull, bank, shअगरt;
+static int mxs_pinconf_group_set(struct pinctrl_dev *pctldev,
+				 unsigned group, unsigned long *configs,
+				 unsigned num_configs)
+{
+	struct mxs_pinctrl_data *d = pinctrl_dev_get_drvdata(pctldev);
+	struct mxs_group *g = &d->soc->groups[group];
+	void __iomem *reg;
+	u8 ma, vol, pull, bank, shift;
 	u16 pin;
 	u32 i;
-	पूर्णांक n;
-	अचिन्हित दीर्घ config;
+	int n;
+	unsigned long config;
 
-	क्रम (n = 0; n < num_configs; n++) अणु
+	for (n = 0; n < num_configs; n++) {
 		config = configs[n];
 
 		ma = CONFIG_TO_MA(config);
 		vol = CONFIG_TO_VOL(config);
 		pull = CONFIG_TO_PULL(config);
 
-		क्रम (i = 0; i < g->npins; i++) अणु
+		for (i = 0; i < g->npins; i++) {
 			bank = PINID_TO_BANK(g->pins[i]);
 			pin = PINID_TO_PIN(g->pins[i]);
 
@@ -280,176 +279,176 @@
 			reg += bank * 0x40 + pin / 8 * 0x10;
 
 			/* mA */
-			अगर (config & MA_PRESENT) अणु
-				shअगरt = pin % 8 * 4;
-				mxs_pinctrl_rmwl(ma, 0x3, shअगरt, reg);
-			पूर्ण
+			if (config & MA_PRESENT) {
+				shift = pin % 8 * 4;
+				mxs_pinctrl_rmwl(ma, 0x3, shift, reg);
+			}
 
 			/* vol */
-			अगर (config & VOL_PRESENT) अणु
-				shअगरt = pin % 8 * 4 + 2;
-				अगर (vol)
-					ग_लिखोl(1 << shअगरt, reg + SET);
-				अन्यथा
-					ग_लिखोl(1 << shअगरt, reg + CLR);
-			पूर्ण
+			if (config & VOL_PRESENT) {
+				shift = pin % 8 * 4 + 2;
+				if (vol)
+					writel(1 << shift, reg + SET);
+				else
+					writel(1 << shift, reg + CLR);
+			}
 
 			/* pull */
-			अगर (config & PULL_PRESENT) अणु
+			if (config & PULL_PRESENT) {
 				reg = d->base + d->soc->regs->pull;
 				reg += bank * 0x10;
-				shअगरt = pin;
-				अगर (pull)
-					ग_लिखोl(1 << shअगरt, reg + SET);
-				अन्यथा
-					ग_लिखोl(1 << shअगरt, reg + CLR);
-			पूर्ण
-		पूर्ण
+				shift = pin;
+				if (pull)
+					writel(1 << shift, reg + SET);
+				else
+					writel(1 << shift, reg + CLR);
+			}
+		}
 
-		/* cache the config value क्रम mxs_pinconf_group_get() */
+		/* cache the config value for mxs_pinconf_group_get() */
 		g->config = config;
 
-	पूर्ण /* क्रम each config */
+	} /* for each config */
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम mxs_pinconf_dbg_show(काष्ठा pinctrl_dev *pctldev,
-				 काष्ठा seq_file *s, अचिन्हित pin)
-अणु
+static void mxs_pinconf_dbg_show(struct pinctrl_dev *pctldev,
+				 struct seq_file *s, unsigned pin)
+{
 	/* Not support */
-पूर्ण
+}
 
-अटल व्योम mxs_pinconf_group_dbg_show(काष्ठा pinctrl_dev *pctldev,
-				       काष्ठा seq_file *s, अचिन्हित group)
-अणु
-	अचिन्हित दीर्घ config;
+static void mxs_pinconf_group_dbg_show(struct pinctrl_dev *pctldev,
+				       struct seq_file *s, unsigned group)
+{
+	unsigned long config;
 
-	अगर (!mxs_pinconf_group_get(pctldev, group, &config))
-		seq_म_लिखो(s, "0x%lx", config);
-पूर्ण
+	if (!mxs_pinconf_group_get(pctldev, group, &config))
+		seq_printf(s, "0x%lx", config);
+}
 
-अटल स्थिर काष्ठा pinconf_ops mxs_pinconf_ops = अणु
+static const struct pinconf_ops mxs_pinconf_ops = {
 	.pin_config_get = mxs_pinconf_get,
 	.pin_config_set = mxs_pinconf_set,
 	.pin_config_group_get = mxs_pinconf_group_get,
 	.pin_config_group_set = mxs_pinconf_group_set,
 	.pin_config_dbg_show = mxs_pinconf_dbg_show,
 	.pin_config_group_dbg_show = mxs_pinconf_group_dbg_show,
-पूर्ण;
+};
 
-अटल काष्ठा pinctrl_desc mxs_pinctrl_desc = अणु
+static struct pinctrl_desc mxs_pinctrl_desc = {
 	.pctlops = &mxs_pinctrl_ops,
 	.pmxops = &mxs_pinmux_ops,
 	.confops = &mxs_pinconf_ops,
 	.owner = THIS_MODULE,
-पूर्ण;
+};
 
-अटल पूर्णांक mxs_pinctrl_parse_group(काष्ठा platक्रमm_device *pdev,
-				   काष्ठा device_node *np, पूर्णांक idx,
-				   स्थिर अक्षर **out_name)
-अणु
-	काष्ठा mxs_pinctrl_data *d = platक्रमm_get_drvdata(pdev);
-	काष्ठा mxs_group *g = &d->soc->groups[idx];
-	काष्ठा property *prop;
-	स्थिर अक्षर *propname = "fsl,pinmux-ids";
-	अक्षर *group;
-	पूर्णांक length = म_माप(np->name) + SUFFIX_LEN;
+static int mxs_pinctrl_parse_group(struct platform_device *pdev,
+				   struct device_node *np, int idx,
+				   const char **out_name)
+{
+	struct mxs_pinctrl_data *d = platform_get_drvdata(pdev);
+	struct mxs_group *g = &d->soc->groups[idx];
+	struct property *prop;
+	const char *propname = "fsl,pinmux-ids";
+	char *group;
+	int length = strlen(np->name) + SUFFIX_LEN;
 	u32 val, i;
 
 	group = devm_kzalloc(&pdev->dev, length, GFP_KERNEL);
-	अगर (!group)
-		वापस -ENOMEM;
-	अगर (of_property_पढ़ो_u32(np, "reg", &val))
-		snम_लिखो(group, length, "%s", np->name);
-	अन्यथा
-		snम_लिखो(group, length, "%s.%d", np->name, val);
+	if (!group)
+		return -ENOMEM;
+	if (of_property_read_u32(np, "reg", &val))
+		snprintf(group, length, "%s", np->name);
+	else
+		snprintf(group, length, "%s.%d", np->name, val);
 	g->name = group;
 
 	prop = of_find_property(np, propname, &length);
-	अगर (!prop)
-		वापस -EINVAL;
-	g->npins = length / माप(u32);
+	if (!prop)
+		return -EINVAL;
+	g->npins = length / sizeof(u32);
 
-	g->pins = devm_kसुस्मृति(&pdev->dev, g->npins, माप(*g->pins),
+	g->pins = devm_kcalloc(&pdev->dev, g->npins, sizeof(*g->pins),
 			       GFP_KERNEL);
-	अगर (!g->pins)
-		वापस -ENOMEM;
+	if (!g->pins)
+		return -ENOMEM;
 
-	g->muxsel = devm_kसुस्मृति(&pdev->dev, g->npins, माप(*g->muxsel),
+	g->muxsel = devm_kcalloc(&pdev->dev, g->npins, sizeof(*g->muxsel),
 				 GFP_KERNEL);
-	अगर (!g->muxsel)
-		वापस -ENOMEM;
+	if (!g->muxsel)
+		return -ENOMEM;
 
-	of_property_पढ़ो_u32_array(np, propname, g->pins, g->npins);
-	क्रम (i = 0; i < g->npins; i++) अणु
+	of_property_read_u32_array(np, propname, g->pins, g->npins);
+	for (i = 0; i < g->npins; i++) {
 		g->muxsel[i] = MUXID_TO_MUXSEL(g->pins[i]);
 		g->pins[i] = MUXID_TO_PINID(g->pins[i]);
-	पूर्ण
+	}
 
-	अगर (out_name)
+	if (out_name)
 		*out_name = g->name;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mxs_pinctrl_probe_dt(काष्ठा platक्रमm_device *pdev,
-				काष्ठा mxs_pinctrl_data *d)
-अणु
-	काष्ठा mxs_pinctrl_soc_data *soc = d->soc;
-	काष्ठा device_node *np = pdev->dev.of_node;
-	काष्ठा device_node *child;
-	काष्ठा mxs_function *f;
-	स्थिर अक्षर *gpio_compat = "fsl,mxs-gpio";
-	स्थिर अक्षर *fn, *fnull = "";
-	पूर्णांक i = 0, idxf = 0, idxg = 0;
-	पूर्णांक ret;
+static int mxs_pinctrl_probe_dt(struct platform_device *pdev,
+				struct mxs_pinctrl_data *d)
+{
+	struct mxs_pinctrl_soc_data *soc = d->soc;
+	struct device_node *np = pdev->dev.of_node;
+	struct device_node *child;
+	struct mxs_function *f;
+	const char *gpio_compat = "fsl,mxs-gpio";
+	const char *fn, *fnull = "";
+	int i = 0, idxf = 0, idxg = 0;
+	int ret;
 	u32 val;
 
-	child = of_get_next_child(np, शून्य);
-	अगर (!child) अणु
+	child = of_get_next_child(np, NULL);
+	if (!child) {
 		dev_err(&pdev->dev, "no group is defined\n");
-		वापस -ENOENT;
-	पूर्ण
+		return -ENOENT;
+	}
 
 	/* Count total functions and groups */
 	fn = fnull;
-	क्रम_each_child_of_node(np, child) अणु
-		अगर (of_device_is_compatible(child, gpio_compat))
-			जारी;
+	for_each_child_of_node(np, child) {
+		if (of_device_is_compatible(child, gpio_compat))
+			continue;
 		soc->ngroups++;
 		/* Skip pure pinconf node */
-		अगर (of_property_पढ़ो_u32(child, "reg", &val))
-			जारी;
-		अगर (म_भेद(fn, child->name)) अणु
+		if (of_property_read_u32(child, "reg", &val))
+			continue;
+		if (strcmp(fn, child->name)) {
 			fn = child->name;
 			soc->nfunctions++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	soc->functions = devm_kसुस्मृति(&pdev->dev,
+	soc->functions = devm_kcalloc(&pdev->dev,
 				      soc->nfunctions,
-				      माप(*soc->functions),
+				      sizeof(*soc->functions),
 				      GFP_KERNEL);
-	अगर (!soc->functions)
-		वापस -ENOMEM;
+	if (!soc->functions)
+		return -ENOMEM;
 
-	soc->groups = devm_kसुस्मृति(&pdev->dev,
-				   soc->ngroups, माप(*soc->groups),
+	soc->groups = devm_kcalloc(&pdev->dev,
+				   soc->ngroups, sizeof(*soc->groups),
 				   GFP_KERNEL);
-	अगर (!soc->groups)
-		वापस -ENOMEM;
+	if (!soc->groups)
+		return -ENOMEM;
 
-	/* Count groups क्रम each function */
+	/* Count groups for each function */
 	fn = fnull;
 	f = &soc->functions[idxf];
-	क्रम_each_child_of_node(np, child) अणु
-		अगर (of_device_is_compatible(child, gpio_compat))
-			जारी;
-		अगर (of_property_पढ़ो_u32(child, "reg", &val))
-			जारी;
-		अगर (म_भेद(fn, child->name)) अणु
-			काष्ठा device_node *child2;
+	for_each_child_of_node(np, child) {
+		if (of_device_is_compatible(child, gpio_compat))
+			continue;
+		if (of_property_read_u32(child, "reg", &val))
+			continue;
+		if (strcmp(fn, child->name)) {
+			struct device_node *child2;
 
 			/*
 			 * This reference is dropped by
@@ -459,107 +458,107 @@
 
 			/*
 			 * The logic parsing the functions from dt currently
-			 * करोesn't handle अगर functions with the same name are
+			 * doesn't handle if functions with the same name are
 			 * not grouped together. Only the first contiguous
-			 * cluster is usable क्रम each function name. This is a
+			 * cluster is usable for each function name. This is a
 			 * bug that is not trivial to fix, but at least warn
 			 * about it.
 			 */
-			क्रम (child2 = of_get_next_child(np, child);
-			     child2 != शून्य;
-			     child2 = of_get_next_child(np, child2)) अणु
-				अगर (!म_भेद(child2->name, fn))
+			for (child2 = of_get_next_child(np, child);
+			     child2 != NULL;
+			     child2 = of_get_next_child(np, child2)) {
+				if (!strcmp(child2->name, fn))
 					dev_warn(&pdev->dev,
 						 "function nodes must be grouped by name (failed for: %s)",
 						 fn);
-			पूर्ण
+			}
 
 			f = &soc->functions[idxf++];
 			f->name = fn = child->name;
-		पूर्ण
+		}
 		f->ngroups++;
-	पूर्ण
+	}
 
-	/* Get groups क्रम each function */
+	/* Get groups for each function */
 	idxf = 0;
 	fn = fnull;
-	क्रम_each_child_of_node(np, child) अणु
-		अगर (of_device_is_compatible(child, gpio_compat))
-			जारी;
-		अगर (of_property_पढ़ो_u32(child, "reg", &val)) अणु
+	for_each_child_of_node(np, child) {
+		if (of_device_is_compatible(child, gpio_compat))
+			continue;
+		if (of_property_read_u32(child, "reg", &val)) {
 			ret = mxs_pinctrl_parse_group(pdev, child,
-						      idxg++, शून्य);
-			अगर (ret) अणु
+						      idxg++, NULL);
+			if (ret) {
 				of_node_put(child);
-				वापस ret;
-			पूर्ण
-			जारी;
-		पूर्ण
+				return ret;
+			}
+			continue;
+		}
 
-		अगर (म_भेद(fn, child->name)) अणु
+		if (strcmp(fn, child->name)) {
 			f = &soc->functions[idxf++];
-			f->groups = devm_kसुस्मृति(&pdev->dev,
+			f->groups = devm_kcalloc(&pdev->dev,
 						 f->ngroups,
-						 माप(*f->groups),
+						 sizeof(*f->groups),
 						 GFP_KERNEL);
-			अगर (!f->groups) अणु
+			if (!f->groups) {
 				of_node_put(child);
-				वापस -ENOMEM;
-			पूर्ण
+				return -ENOMEM;
+			}
 			fn = child->name;
 			i = 0;
-		पूर्ण
+		}
 		ret = mxs_pinctrl_parse_group(pdev, child, idxg++,
 					      &f->groups[i++]);
-		अगर (ret) अणु
+		if (ret) {
 			of_node_put(child);
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक mxs_pinctrl_probe(काष्ठा platक्रमm_device *pdev,
-		      काष्ठा mxs_pinctrl_soc_data *soc)
-अणु
-	काष्ठा device_node *np = pdev->dev.of_node;
-	काष्ठा mxs_pinctrl_data *d;
-	पूर्णांक ret;
+int mxs_pinctrl_probe(struct platform_device *pdev,
+		      struct mxs_pinctrl_soc_data *soc)
+{
+	struct device_node *np = pdev->dev.of_node;
+	struct mxs_pinctrl_data *d;
+	int ret;
 
-	d = devm_kzalloc(&pdev->dev, माप(*d), GFP_KERNEL);
-	अगर (!d)
-		वापस -ENOMEM;
+	d = devm_kzalloc(&pdev->dev, sizeof(*d), GFP_KERNEL);
+	if (!d)
+		return -ENOMEM;
 
 	d->dev = &pdev->dev;
 	d->soc = soc;
 
 	d->base = of_iomap(np, 0);
-	अगर (!d->base)
-		वापस -EADDRNOTAVAIL;
+	if (!d->base)
+		return -EADDRNOTAVAIL;
 
 	mxs_pinctrl_desc.pins = d->soc->pins;
 	mxs_pinctrl_desc.npins = d->soc->npins;
 	mxs_pinctrl_desc.name = dev_name(&pdev->dev);
 
-	platक्रमm_set_drvdata(pdev, d);
+	platform_set_drvdata(pdev, d);
 
 	ret = mxs_pinctrl_probe_dt(pdev, d);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&pdev->dev, "dt probe failed: %d\n", ret);
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	d->pctl = pinctrl_रेजिस्टर(&mxs_pinctrl_desc, &pdev->dev, d);
-	अगर (IS_ERR(d->pctl)) अणु
+	d->pctl = pinctrl_register(&mxs_pinctrl_desc, &pdev->dev, d);
+	if (IS_ERR(d->pctl)) {
 		dev_err(&pdev->dev, "Couldn't register MXS pinctrl driver\n");
 		ret = PTR_ERR(d->pctl);
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	वापस 0;
+	return 0;
 
 err:
 	iounmap(d->base);
-	वापस ret;
-पूर्ण
+	return ret;
+}

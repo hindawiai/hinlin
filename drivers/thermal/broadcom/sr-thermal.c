@@ -1,113 +1,112 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (C) 2018 Broadcom
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/thermal.h>
+#include <linux/module.h>
+#include <linux/of_address.h>
+#include <linux/platform_device.h>
+#include <linux/thermal.h>
 
 /*
  * In stingray thermal IO memory,
  * Total Number of available TMONs MASK is at offset 0
- * temperature रेजिस्टरs BASE is at 4 byte offset.
- * Each TMON temperature रेजिस्टर size is 4.
+ * temperature registers BASE is at 4 byte offset.
+ * Each TMON temperature register size is 4.
  */
-#घोषणा SR_TMON_TEMP_BASE(id)   ((id) * 0x4)
+#define SR_TMON_TEMP_BASE(id)   ((id) * 0x4)
 
-#घोषणा SR_TMON_MAX_LIST        6
+#define SR_TMON_MAX_LIST        6
 
-काष्ठा sr_पंचांगon अणु
-	काष्ठा thermal_zone_device *tz;
-	अचिन्हित पूर्णांक crit_temp;
-	अचिन्हित पूर्णांक पंचांगon_id;
-	काष्ठा sr_thermal *priv;
-पूर्ण;
+struct sr_tmon {
+	struct thermal_zone_device *tz;
+	unsigned int crit_temp;
+	unsigned int tmon_id;
+	struct sr_thermal *priv;
+};
 
-काष्ठा sr_thermal अणु
-	व्योम __iomem *regs;
-	अचिन्हित पूर्णांक max_crit_temp;
-	काष्ठा sr_पंचांगon पंचांगon[SR_TMON_MAX_LIST];
-पूर्ण;
+struct sr_thermal {
+	void __iomem *regs;
+	unsigned int max_crit_temp;
+	struct sr_tmon tmon[SR_TMON_MAX_LIST];
+};
 
-अटल पूर्णांक sr_get_temp(व्योम *data, पूर्णांक *temp)
-अणु
-	काष्ठा sr_पंचांगon *पंचांगon = data;
-	काष्ठा sr_thermal *sr_thermal = पंचांगon->priv;
+static int sr_get_temp(void *data, int *temp)
+{
+	struct sr_tmon *tmon = data;
+	struct sr_thermal *sr_thermal = tmon->priv;
 
-	*temp = पढ़ोl(sr_thermal->regs + SR_TMON_TEMP_BASE(पंचांगon->पंचांगon_id));
+	*temp = readl(sr_thermal->regs + SR_TMON_TEMP_BASE(tmon->tmon_id));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा thermal_zone_of_device_ops sr_tz_ops = अणु
+static const struct thermal_zone_of_device_ops sr_tz_ops = {
 	.get_temp = sr_get_temp,
-पूर्ण;
+};
 
-अटल पूर्णांक sr_thermal_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा sr_thermal *sr_thermal;
-	काष्ठा sr_पंचांगon *पंचांगon;
-	काष्ठा resource *res;
-	u32 sr_पंचांगon_list = 0;
-	अचिन्हित पूर्णांक i;
-	पूर्णांक ret;
+static int sr_thermal_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	struct sr_thermal *sr_thermal;
+	struct sr_tmon *tmon;
+	struct resource *res;
+	u32 sr_tmon_list = 0;
+	unsigned int i;
+	int ret;
 
-	sr_thermal = devm_kzalloc(dev, माप(*sr_thermal), GFP_KERNEL);
-	अगर (!sr_thermal)
-		वापस -ENOMEM;
+	sr_thermal = devm_kzalloc(dev, sizeof(*sr_thermal), GFP_KERNEL);
+	if (!sr_thermal)
+		return -ENOMEM;
 
-	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
-	sr_thermal->regs = (व्योम __iomem *)devm_memremap(&pdev->dev, res->start,
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	sr_thermal->regs = (void __iomem *)devm_memremap(&pdev->dev, res->start,
 							 resource_size(res),
 							 MEMREMAP_WB);
-	अगर (IS_ERR(sr_thermal->regs)) अणु
+	if (IS_ERR(sr_thermal->regs)) {
 		dev_err(dev, "failed to get io address\n");
-		वापस PTR_ERR(sr_thermal->regs);
-	पूर्ण
+		return PTR_ERR(sr_thermal->regs);
+	}
 
-	ret = device_property_पढ़ो_u32(dev, "brcm,tmon-mask", &sr_पंचांगon_list);
-	अगर (ret)
-		वापस ret;
+	ret = device_property_read_u32(dev, "brcm,tmon-mask", &sr_tmon_list);
+	if (ret)
+		return ret;
 
-	पंचांगon = sr_thermal->पंचांगon;
-	क्रम (i = 0; i < SR_TMON_MAX_LIST; i++, पंचांगon++) अणु
-		अगर (!(sr_पंचांगon_list & BIT(i)))
-			जारी;
+	tmon = sr_thermal->tmon;
+	for (i = 0; i < SR_TMON_MAX_LIST; i++, tmon++) {
+		if (!(sr_tmon_list & BIT(i)))
+			continue;
 
-		/* Flush temperature रेजिस्टरs */
-		ग_लिखोl(0, sr_thermal->regs + SR_TMON_TEMP_BASE(i));
-		पंचांगon->पंचांगon_id = i;
-		पंचांगon->priv = sr_thermal;
-		पंचांगon->tz = devm_thermal_zone_of_sensor_रेजिस्टर(dev, i, पंचांगon,
+		/* Flush temperature registers */
+		writel(0, sr_thermal->regs + SR_TMON_TEMP_BASE(i));
+		tmon->tmon_id = i;
+		tmon->priv = sr_thermal;
+		tmon->tz = devm_thermal_zone_of_sensor_register(dev, i, tmon,
 								&sr_tz_ops);
-		अगर (IS_ERR(पंचांगon->tz))
-			वापस PTR_ERR(पंचांगon->tz);
+		if (IS_ERR(tmon->tz))
+			return PTR_ERR(tmon->tz);
 
 		dev_dbg(dev, "thermal sensor %d registered\n", i);
-	पूर्ण
-	platक्रमm_set_drvdata(pdev, sr_thermal);
+	}
+	platform_set_drvdata(pdev, sr_thermal);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id sr_thermal_of_match[] = अणु
-	अणु .compatible = "brcm,sr-thermal", पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct of_device_id sr_thermal_of_match[] = {
+	{ .compatible = "brcm,sr-thermal", },
+	{},
+};
 MODULE_DEVICE_TABLE(of, sr_thermal_of_match);
 
-अटल काष्ठा platक्रमm_driver sr_thermal_driver = अणु
+static struct platform_driver sr_thermal_driver = {
 	.probe		= sr_thermal_probe,
-	.driver = अणु
+	.driver = {
 		.name = "sr-thermal",
 		.of_match_table = sr_thermal_of_match,
-	पूर्ण,
-पूर्ण;
-module_platक्रमm_driver(sr_thermal_driver);
+	},
+};
+module_platform_driver(sr_thermal_driver);
 
 MODULE_AUTHOR("Pramod Kumar <pramod.kumar@broadcom.com>");
 MODULE_DESCRIPTION("Stingray thermal driver");

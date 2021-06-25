@@ -1,19 +1,18 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Copyright (C) 2018 Texas Instruments Incorporated - https://www.ti.com/
  * Author: Tomi Valkeinen <tomi.valkeinen@ti.com>
  */
 
-#अगर_अघोषित __TIDSS_IRQ_H__
-#घोषणा __TIDSS_IRQ_H__
+#ifndef __TIDSS_IRQ_H__
+#define __TIDSS_IRQ_H__
 
-#समावेश <linux/types.h>
+#include <linux/types.h>
 
-#समावेश "tidss_drv.h"
+#include "tidss_drv.h"
 
 /*
- * The IRQ status from various DISPC IRQ रेजिस्टरs are packed पूर्णांकo a single
+ * The IRQ status from various DISPC IRQ registers are packed into a single
  * value, where the bits are defined as follows:
  *
  * bit group |dev|wb |mrg0|mrg1|mrg2|mrg3|plane0-3| <unused> |
@@ -21,58 +20,58 @@
  * bit number|0  |1-3|4-7 |8-11|  12-19  | 20-23  |  24-31   |
  *
  * device bits:	D = OCP error
- * WB bits:	f = frame करोne wb, o = wb buffer overflow,
+ * WB bits:	f = frame done wb, o = wb buffer overflow,
  *		u = wb buffer uncomplete
- * vp bits:	F = frame करोne, E = vsync even, O = vsync odd, L = sync lost
- * plane bits:	U = fअगरo underflow
+ * vp bits:	F = frame done, E = vsync even, O = vsync odd, L = sync lost
+ * plane bits:	U = fifo underflow
  */
 
-#घोषणा DSS_IRQ_DEVICE_OCP_ERR			BIT(0)
+#define DSS_IRQ_DEVICE_OCP_ERR			BIT(0)
 
-#घोषणा DSS_IRQ_DEVICE_FRAMEDONEWB		BIT(1)
-#घोषणा DSS_IRQ_DEVICE_WBBUFFEROVERFLOW		BIT(2)
-#घोषणा DSS_IRQ_DEVICE_WBUNCOMPLETEERROR	BIT(3)
-#घोषणा DSS_IRQ_DEVICE_WB_MASK			GENMASK(3, 1)
+#define DSS_IRQ_DEVICE_FRAMEDONEWB		BIT(1)
+#define DSS_IRQ_DEVICE_WBBUFFEROVERFLOW		BIT(2)
+#define DSS_IRQ_DEVICE_WBUNCOMPLETEERROR	BIT(3)
+#define DSS_IRQ_DEVICE_WB_MASK			GENMASK(3, 1)
 
-#घोषणा DSS_IRQ_VP_BIT_N(ch, bit)	(4 + 4 * (ch) + (bit))
-#घोषणा DSS_IRQ_PLANE_BIT_N(plane, bit) \
+#define DSS_IRQ_VP_BIT_N(ch, bit)	(4 + 4 * (ch) + (bit))
+#define DSS_IRQ_PLANE_BIT_N(plane, bit) \
 	(DSS_IRQ_VP_BIT_N(TIDSS_MAX_PORTS, 0) + 1 * (plane) + (bit))
 
-#घोषणा DSS_IRQ_VP_BIT(ch, bit)	BIT(DSS_IRQ_VP_BIT_N((ch), (bit)))
-#घोषणा DSS_IRQ_PLANE_BIT(plane, bit) \
+#define DSS_IRQ_VP_BIT(ch, bit)	BIT(DSS_IRQ_VP_BIT_N((ch), (bit)))
+#define DSS_IRQ_PLANE_BIT(plane, bit) \
 	BIT(DSS_IRQ_PLANE_BIT_N((plane), (bit)))
 
-अटल अंतरभूत dispc_irq_t DSS_IRQ_VP_MASK(u32 ch)
-अणु
-	वापस GENMASK(DSS_IRQ_VP_BIT_N((ch), 3), DSS_IRQ_VP_BIT_N((ch), 0));
-पूर्ण
+static inline dispc_irq_t DSS_IRQ_VP_MASK(u32 ch)
+{
+	return GENMASK(DSS_IRQ_VP_BIT_N((ch), 3), DSS_IRQ_VP_BIT_N((ch), 0));
+}
 
-अटल अंतरभूत dispc_irq_t DSS_IRQ_PLANE_MASK(u32 plane)
-अणु
-	वापस GENMASK(DSS_IRQ_PLANE_BIT_N((plane), 0),
+static inline dispc_irq_t DSS_IRQ_PLANE_MASK(u32 plane)
+{
+	return GENMASK(DSS_IRQ_PLANE_BIT_N((plane), 0),
 		       DSS_IRQ_PLANE_BIT_N((plane), 0));
-पूर्ण
+}
 
-#घोषणा DSS_IRQ_VP_FRAME_DONE(ch)	DSS_IRQ_VP_BIT((ch), 0)
-#घोषणा DSS_IRQ_VP_VSYNC_EVEN(ch)	DSS_IRQ_VP_BIT((ch), 1)
-#घोषणा DSS_IRQ_VP_VSYNC_ODD(ch)	DSS_IRQ_VP_BIT((ch), 2)
-#घोषणा DSS_IRQ_VP_SYNC_LOST(ch)	DSS_IRQ_VP_BIT((ch), 3)
+#define DSS_IRQ_VP_FRAME_DONE(ch)	DSS_IRQ_VP_BIT((ch), 0)
+#define DSS_IRQ_VP_VSYNC_EVEN(ch)	DSS_IRQ_VP_BIT((ch), 1)
+#define DSS_IRQ_VP_VSYNC_ODD(ch)	DSS_IRQ_VP_BIT((ch), 2)
+#define DSS_IRQ_VP_SYNC_LOST(ch)	DSS_IRQ_VP_BIT((ch), 3)
 
-#घोषणा DSS_IRQ_PLANE_FIFO_UNDERFLOW(plane)	DSS_IRQ_PLANE_BIT((plane), 0)
+#define DSS_IRQ_PLANE_FIFO_UNDERFLOW(plane)	DSS_IRQ_PLANE_BIT((plane), 0)
 
-काष्ठा drm_crtc;
-काष्ठा drm_device;
+struct drm_crtc;
+struct drm_device;
 
-काष्ठा tidss_device;
+struct tidss_device;
 
-व्योम tidss_irq_enable_vblank(काष्ठा drm_crtc *crtc);
-व्योम tidss_irq_disable_vblank(काष्ठा drm_crtc *crtc);
+void tidss_irq_enable_vblank(struct drm_crtc *crtc);
+void tidss_irq_disable_vblank(struct drm_crtc *crtc);
 
-व्योम tidss_irq_preinstall(काष्ठा drm_device *ddev);
-पूर्णांक tidss_irq_postinstall(काष्ठा drm_device *ddev);
-व्योम tidss_irq_uninstall(काष्ठा drm_device *ddev);
-irqवापस_t tidss_irq_handler(पूर्णांक irq, व्योम *arg);
+void tidss_irq_preinstall(struct drm_device *ddev);
+int tidss_irq_postinstall(struct drm_device *ddev);
+void tidss_irq_uninstall(struct drm_device *ddev);
+irqreturn_t tidss_irq_handler(int irq, void *arg);
 
-व्योम tidss_irq_resume(काष्ठा tidss_device *tidss);
+void tidss_irq_resume(struct tidss_device *tidss);
 
-#पूर्ण_अगर
+#endif

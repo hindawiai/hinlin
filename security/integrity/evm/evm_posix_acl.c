@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (C) 2011 IBM Corporation
  *
@@ -7,18 +6,18 @@
  * Mimi Zohar <zohar@us.ibm.com>
  */
 
-#समावेश <linux/xattr.h>
-#समावेश <linux/evm.h>
+#include <linux/xattr.h>
+#include <linux/evm.h>
 
-पूर्णांक posix_xattr_acl(स्थिर अक्षर *xattr)
-अणु
-	पूर्णांक xattr_len = म_माप(xattr);
+int posix_xattr_acl(const char *xattr)
+{
+	int xattr_len = strlen(xattr);
 
-	अगर ((म_माप(XATTR_NAME_POSIX_ACL_ACCESS) == xattr_len)
-	     && (म_भेदन(XATTR_NAME_POSIX_ACL_ACCESS, xattr, xattr_len) == 0))
-		वापस 1;
-	अगर ((म_माप(XATTR_NAME_POSIX_ACL_DEFAULT) == xattr_len)
-	     && (म_भेदन(XATTR_NAME_POSIX_ACL_DEFAULT, xattr, xattr_len) == 0))
-		वापस 1;
-	वापस 0;
-पूर्ण
+	if ((strlen(XATTR_NAME_POSIX_ACL_ACCESS) == xattr_len)
+	     && (strncmp(XATTR_NAME_POSIX_ACL_ACCESS, xattr, xattr_len) == 0))
+		return 1;
+	if ((strlen(XATTR_NAME_POSIX_ACL_DEFAULT) == xattr_len)
+	     && (strncmp(XATTR_NAME_POSIX_ACL_DEFAULT, xattr, xattr_len) == 0))
+		return 1;
+	return 0;
+}

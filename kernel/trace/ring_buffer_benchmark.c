@@ -1,497 +1,496 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * ring buffer tester and benchmark
  *
  * Copyright (C) 2009 Steven Rostedt <srostedt@redhat.com>
  */
-#समावेश <linux/ring_buffer.h>
-#समावेश <linux/completion.h>
-#समावेश <linux/kthपढ़ो.h>
-#समावेश <uapi/linux/sched/types.h>
-#समावेश <linux/module.h>
-#समावेश <linux/kसमय.स>
-#समावेश <यंत्र/local.h>
+#include <linux/ring_buffer.h>
+#include <linux/completion.h>
+#include <linux/kthread.h>
+#include <uapi/linux/sched/types.h>
+#include <linux/module.h>
+#include <linux/ktime.h>
+#include <asm/local.h>
 
-काष्ठा rb_page अणु
+struct rb_page {
 	u64		ts;
 	local_t		commit;
-	अक्षर		data[4080];
-पूर्ण;
+	char		data[4080];
+};
 
-/* run समय and sleep समय in seconds */
-#घोषणा RUN_TIME	10ULL
-#घोषणा SLEEP_TIME	10
+/* run time and sleep time in seconds */
+#define RUN_TIME	10ULL
+#define SLEEP_TIME	10
 
-/* number of events क्रम ग_लिखोr to wake up the पढ़ोer */
-अटल पूर्णांक wakeup_पूर्णांकerval = 100;
+/* number of events for writer to wake up the reader */
+static int wakeup_interval = 100;
 
-अटल पूर्णांक पढ़ोer_finish;
-अटल DECLARE_COMPLETION(पढ़ो_start);
-अटल DECLARE_COMPLETION(पढ़ो_करोne);
+static int reader_finish;
+static DECLARE_COMPLETION(read_start);
+static DECLARE_COMPLETION(read_done);
 
-अटल काष्ठा trace_buffer *buffer;
-अटल काष्ठा task_काष्ठा *producer;
-अटल काष्ठा task_काष्ठा *consumer;
-अटल अचिन्हित दीर्घ पढ़ो;
+static struct trace_buffer *buffer;
+static struct task_struct *producer;
+static struct task_struct *consumer;
+static unsigned long read;
 
-अटल अचिन्हित पूर्णांक disable_पढ़ोer;
-module_param(disable_पढ़ोer, uपूर्णांक, 0644);
-MODULE_PARM_DESC(disable_पढ़ोer, "only run producer");
+static unsigned int disable_reader;
+module_param(disable_reader, uint, 0644);
+MODULE_PARM_DESC(disable_reader, "only run producer");
 
-अटल अचिन्हित पूर्णांक ग_लिखो_iteration = 50;
-module_param(ग_लिखो_iteration, uपूर्णांक, 0644);
-MODULE_PARM_DESC(ग_लिखो_iteration, "# of writes between timestamp readings");
+static unsigned int write_iteration = 50;
+module_param(write_iteration, uint, 0644);
+MODULE_PARM_DESC(write_iteration, "# of writes between timestamp readings");
 
-अटल पूर्णांक producer_nice = MAX_NICE;
-अटल पूर्णांक consumer_nice = MAX_NICE;
+static int producer_nice = MAX_NICE;
+static int consumer_nice = MAX_NICE;
 
-अटल पूर्णांक producer_fअगरo;
-अटल पूर्णांक consumer_fअगरo;
+static int producer_fifo;
+static int consumer_fifo;
 
-module_param(producer_nice, पूर्णांक, 0644);
+module_param(producer_nice, int, 0644);
 MODULE_PARM_DESC(producer_nice, "nice prio for producer");
 
-module_param(consumer_nice, पूर्णांक, 0644);
+module_param(consumer_nice, int, 0644);
 MODULE_PARM_DESC(consumer_nice, "nice prio for consumer");
 
-module_param(producer_fअगरo, पूर्णांक, 0644);
-MODULE_PARM_DESC(producer_fअगरo, "use fifo for producer: 0 - disabled, 1 - low prio, 2 - fifo");
+module_param(producer_fifo, int, 0644);
+MODULE_PARM_DESC(producer_fifo, "use fifo for producer: 0 - disabled, 1 - low prio, 2 - fifo");
 
-module_param(consumer_fअगरo, पूर्णांक, 0644);
-MODULE_PARM_DESC(consumer_fअगरo, "use fifo for consumer: 0 - disabled, 1 - low prio, 2 - fifo");
+module_param(consumer_fifo, int, 0644);
+MODULE_PARM_DESC(consumer_fifo, "use fifo for consumer: 0 - disabled, 1 - low prio, 2 - fifo");
 
-अटल पूर्णांक पढ़ो_events;
+static int read_events;
 
-अटल पूर्णांक test_error;
+static int test_error;
 
-#घोषणा TEST_ERROR()				\
-	करो अणु					\
-		अगर (!test_error) अणु		\
+#define TEST_ERROR()				\
+	do {					\
+		if (!test_error) {		\
 			test_error = 1;		\
 			WARN_ON(1);		\
-		पूर्ण				\
-	पूर्ण जबतक (0)
+		}				\
+	} while (0)
 
-क्रमागत event_status अणु
+enum event_status {
 	EVENT_FOUND,
 	EVENT_DROPPED,
-पूर्ण;
+};
 
-अटल bool अवरोध_test(व्योम)
-अणु
-	वापस test_error || kthपढ़ो_should_stop();
-पूर्ण
+static bool break_test(void)
+{
+	return test_error || kthread_should_stop();
+}
 
-अटल क्रमागत event_status पढ़ो_event(पूर्णांक cpu)
-अणु
-	काष्ठा ring_buffer_event *event;
-	पूर्णांक *entry;
+static enum event_status read_event(int cpu)
+{
+	struct ring_buffer_event *event;
+	int *entry;
 	u64 ts;
 
-	event = ring_buffer_consume(buffer, cpu, &ts, शून्य);
-	अगर (!event)
-		वापस EVENT_DROPPED;
+	event = ring_buffer_consume(buffer, cpu, &ts, NULL);
+	if (!event)
+		return EVENT_DROPPED;
 
 	entry = ring_buffer_event_data(event);
-	अगर (*entry != cpu) अणु
+	if (*entry != cpu) {
 		TEST_ERROR();
-		वापस EVENT_DROPPED;
-	पूर्ण
+		return EVENT_DROPPED;
+	}
 
-	पढ़ो++;
-	वापस EVENT_FOUND;
-पूर्ण
+	read++;
+	return EVENT_FOUND;
+}
 
-अटल क्रमागत event_status पढ़ो_page(पूर्णांक cpu)
-अणु
-	काष्ठा ring_buffer_event *event;
-	काष्ठा rb_page *rpage;
-	अचिन्हित दीर्घ commit;
-	व्योम *bpage;
-	पूर्णांक *entry;
-	पूर्णांक ret;
-	पूर्णांक inc;
-	पूर्णांक i;
+static enum event_status read_page(int cpu)
+{
+	struct ring_buffer_event *event;
+	struct rb_page *rpage;
+	unsigned long commit;
+	void *bpage;
+	int *entry;
+	int ret;
+	int inc;
+	int i;
 
-	bpage = ring_buffer_alloc_पढ़ो_page(buffer, cpu);
-	अगर (IS_ERR(bpage))
-		वापस EVENT_DROPPED;
+	bpage = ring_buffer_alloc_read_page(buffer, cpu);
+	if (IS_ERR(bpage))
+		return EVENT_DROPPED;
 
-	ret = ring_buffer_पढ़ो_page(buffer, &bpage, PAGE_SIZE, cpu, 1);
-	अगर (ret >= 0) अणु
+	ret = ring_buffer_read_page(buffer, &bpage, PAGE_SIZE, cpu, 1);
+	if (ret >= 0) {
 		rpage = bpage;
 		/* The commit may have missed event flags set, clear them */
-		commit = local_पढ़ो(&rpage->commit) & 0xfffff;
-		क्रम (i = 0; i < commit && !test_error ; i += inc) अणु
+		commit = local_read(&rpage->commit) & 0xfffff;
+		for (i = 0; i < commit && !test_error ; i += inc) {
 
-			अगर (i >= (PAGE_SIZE - दुरत्व(काष्ठा rb_page, data))) अणु
+			if (i >= (PAGE_SIZE - offsetof(struct rb_page, data))) {
 				TEST_ERROR();
-				अवरोध;
-			पूर्ण
+				break;
+			}
 
 			inc = -1;
-			event = (व्योम *)&rpage->data[i];
-			चयन (event->type_len) अणु
-			हाल RINGBUF_TYPE_PADDING:
-				/* failed ग_लिखोs may be discarded events */
-				अगर (!event->समय_delta)
+			event = (void *)&rpage->data[i];
+			switch (event->type_len) {
+			case RINGBUF_TYPE_PADDING:
+				/* failed writes may be discarded events */
+				if (!event->time_delta)
 					TEST_ERROR();
 				inc = event->array[0] + 4;
-				अवरोध;
-			हाल RINGBUF_TYPE_TIME_EXTEND:
+				break;
+			case RINGBUF_TYPE_TIME_EXTEND:
 				inc = 8;
-				अवरोध;
-			हाल 0:
+				break;
+			case 0:
 				entry = ring_buffer_event_data(event);
-				अगर (*entry != cpu) अणु
+				if (*entry != cpu) {
 					TEST_ERROR();
-					अवरोध;
-				पूर्ण
-				पढ़ो++;
-				अगर (!event->array[0]) अणु
+					break;
+				}
+				read++;
+				if (!event->array[0]) {
 					TEST_ERROR();
-					अवरोध;
-				पूर्ण
+					break;
+				}
 				inc = event->array[0] + 4;
-				अवरोध;
-			शेष:
+				break;
+			default:
 				entry = ring_buffer_event_data(event);
-				अगर (*entry != cpu) अणु
+				if (*entry != cpu) {
 					TEST_ERROR();
-					अवरोध;
-				पूर्ण
-				पढ़ो++;
+					break;
+				}
+				read++;
 				inc = ((event->type_len + 1) * 4);
-			पूर्ण
-			अगर (test_error)
-				अवरोध;
+			}
+			if (test_error)
+				break;
 
-			अगर (inc <= 0) अणु
+			if (inc <= 0) {
 				TEST_ERROR();
-				अवरोध;
-			पूर्ण
-		पूर्ण
-	पूर्ण
-	ring_buffer_मुक्त_पढ़ो_page(buffer, cpu, bpage);
+				break;
+			}
+		}
+	}
+	ring_buffer_free_read_page(buffer, cpu, bpage);
 
-	अगर (ret < 0)
-		वापस EVENT_DROPPED;
-	वापस EVENT_FOUND;
-पूर्ण
+	if (ret < 0)
+		return EVENT_DROPPED;
+	return EVENT_FOUND;
+}
 
-अटल व्योम ring_buffer_consumer(व्योम)
-अणु
-	/* toggle between पढ़ोing pages and events */
-	पढ़ो_events ^= 1;
+static void ring_buffer_consumer(void)
+{
+	/* toggle between reading pages and events */
+	read_events ^= 1;
 
-	पढ़ो = 0;
+	read = 0;
 	/*
-	 * Continue running until the producer specअगरically asks to stop
-	 * and is पढ़ोy क्रम the completion.
+	 * Continue running until the producer specifically asks to stop
+	 * and is ready for the completion.
 	 */
-	जबतक (!READ_ONCE(पढ़ोer_finish)) अणु
-		पूर्णांक found = 1;
+	while (!READ_ONCE(reader_finish)) {
+		int found = 1;
 
-		जबतक (found && !test_error) अणु
-			पूर्णांक cpu;
+		while (found && !test_error) {
+			int cpu;
 
 			found = 0;
-			क्रम_each_online_cpu(cpu) अणु
-				क्रमागत event_status stat;
+			for_each_online_cpu(cpu) {
+				enum event_status stat;
 
-				अगर (पढ़ो_events)
-					stat = पढ़ो_event(cpu);
-				अन्यथा
-					stat = पढ़ो_page(cpu);
+				if (read_events)
+					stat = read_event(cpu);
+				else
+					stat = read_page(cpu);
 
-				अगर (test_error)
-					अवरोध;
+				if (test_error)
+					break;
 
-				अगर (stat == EVENT_FOUND)
+				if (stat == EVENT_FOUND)
 					found = 1;
 
-			पूर्ण
-		पूर्ण
+			}
+		}
 
 		/* Wait till the producer wakes us up when there is more data
-		 * available or when the producer wants us to finish पढ़ोing.
+		 * available or when the producer wants us to finish reading.
 		 */
 		set_current_state(TASK_INTERRUPTIBLE);
-		अगर (पढ़ोer_finish)
-			अवरोध;
+		if (reader_finish)
+			break;
 
 		schedule();
-	पूर्ण
+	}
 	__set_current_state(TASK_RUNNING);
-	पढ़ोer_finish = 0;
-	complete(&पढ़ो_करोne);
-पूर्ण
+	reader_finish = 0;
+	complete(&read_done);
+}
 
-अटल व्योम ring_buffer_producer(व्योम)
-अणु
-	kसमय_प्रकार start_समय, end_समय, समयout;
-	अचिन्हित दीर्घ दीर्घ समय;
-	अचिन्हित दीर्घ दीर्घ entries;
-	अचिन्हित दीर्घ दीर्घ overruns;
-	अचिन्हित दीर्घ missed = 0;
-	अचिन्हित दीर्घ hit = 0;
-	अचिन्हित दीर्घ avg;
-	पूर्णांक cnt = 0;
+static void ring_buffer_producer(void)
+{
+	ktime_t start_time, end_time, timeout;
+	unsigned long long time;
+	unsigned long long entries;
+	unsigned long long overruns;
+	unsigned long missed = 0;
+	unsigned long hit = 0;
+	unsigned long avg;
+	int cnt = 0;
 
 	/*
-	 * Hammer the buffer क्रम 10 secs (this may
-	 * make the प्रणाली stall)
+	 * Hammer the buffer for 10 secs (this may
+	 * make the system stall)
 	 */
-	trace_prपूर्णांकk("Starting ring buffer hammer\n");
-	start_समय = kसमय_get();
-	समयout = kसमय_add_ns(start_समय, RUN_TIME * NSEC_PER_SEC);
-	करो अणु
-		काष्ठा ring_buffer_event *event;
-		पूर्णांक *entry;
-		पूर्णांक i;
+	trace_printk("Starting ring buffer hammer\n");
+	start_time = ktime_get();
+	timeout = ktime_add_ns(start_time, RUN_TIME * NSEC_PER_SEC);
+	do {
+		struct ring_buffer_event *event;
+		int *entry;
+		int i;
 
-		क्रम (i = 0; i < ग_लिखो_iteration; i++) अणु
+		for (i = 0; i < write_iteration; i++) {
 			event = ring_buffer_lock_reserve(buffer, 10);
-			अगर (!event) अणु
+			if (!event) {
 				missed++;
-			पूर्ण अन्यथा अणु
+			} else {
 				hit++;
 				entry = ring_buffer_event_data(event);
 				*entry = smp_processor_id();
 				ring_buffer_unlock_commit(buffer, event);
-			पूर्ण
-		पूर्ण
-		end_समय = kसमय_get();
+			}
+		}
+		end_time = ktime_get();
 
 		cnt++;
-		अगर (consumer && !(cnt % wakeup_पूर्णांकerval))
+		if (consumer && !(cnt % wakeup_interval))
 			wake_up_process(consumer);
 
-#अगर_अघोषित CONFIG_PREEMPTION
+#ifndef CONFIG_PREEMPTION
 		/*
 		 * If we are a non preempt kernel, the 10 seconds run will
-		 * stop everything जबतक it runs. Instead, we will call
-		 * cond_resched and also add any समय that was lost by a
+		 * stop everything while it runs. Instead, we will call
+		 * cond_resched and also add any time that was lost by a
 		 * reschedule.
 		 *
 		 * Do a cond resched at the same frequency we would wake up
-		 * the पढ़ोer.
+		 * the reader.
 		 */
-		अगर (cnt % wakeup_पूर्णांकerval)
+		if (cnt % wakeup_interval)
 			cond_resched();
-#पूर्ण_अगर
-	पूर्ण जबतक (kसमय_beक्रमe(end_समय, समयout) && !अवरोध_test());
-	trace_prपूर्णांकk("End ring buffer hammer\n");
+#endif
+	} while (ktime_before(end_time, timeout) && !break_test());
+	trace_printk("End ring buffer hammer\n");
 
-	अगर (consumer) अणु
-		/* Init both completions here to aव्योम races */
-		init_completion(&पढ़ो_start);
-		init_completion(&पढ़ो_करोne);
-		/* the completions must be visible beक्रमe the finish var */
+	if (consumer) {
+		/* Init both completions here to avoid races */
+		init_completion(&read_start);
+		init_completion(&read_done);
+		/* the completions must be visible before the finish var */
 		smp_wmb();
-		पढ़ोer_finish = 1;
+		reader_finish = 1;
 		wake_up_process(consumer);
-		रुको_क्रम_completion(&पढ़ो_करोne);
-	पूर्ण
+		wait_for_completion(&read_done);
+	}
 
-	समय = kसमय_us_delta(end_समय, start_समय);
+	time = ktime_us_delta(end_time, start_time);
 
 	entries = ring_buffer_entries(buffer);
 	overruns = ring_buffer_overruns(buffer);
 
-	अगर (test_error)
-		trace_prपूर्णांकk("ERROR!\n");
+	if (test_error)
+		trace_printk("ERROR!\n");
 
-	अगर (!disable_पढ़ोer) अणु
-		अगर (consumer_fअगरo)
-			trace_prपूर्णांकk("Running Consumer at SCHED_FIFO %s\n",
-				     consumer_fअगरo == 1 ? "low" : "high");
-		अन्यथा
-			trace_prपूर्णांकk("Running Consumer at nice: %d\n",
+	if (!disable_reader) {
+		if (consumer_fifo)
+			trace_printk("Running Consumer at SCHED_FIFO %s\n",
+				     consumer_fifo == 1 ? "low" : "high");
+		else
+			trace_printk("Running Consumer at nice: %d\n",
 				     consumer_nice);
-	पूर्ण
-	अगर (producer_fअगरo)
-		trace_prपूर्णांकk("Running Producer at SCHED_FIFO %s\n",
-			     producer_fअगरo == 1 ? "low" : "high");
-	अन्यथा
-		trace_prपूर्णांकk("Running Producer at nice: %d\n",
+	}
+	if (producer_fifo)
+		trace_printk("Running Producer at SCHED_FIFO %s\n",
+			     producer_fifo == 1 ? "low" : "high");
+	else
+		trace_printk("Running Producer at nice: %d\n",
 			     producer_nice);
 
 	/* Let the user know that the test is running at low priority */
-	अगर (!producer_fअगरo && !consumer_fअगरo &&
+	if (!producer_fifo && !consumer_fifo &&
 	    producer_nice == MAX_NICE && consumer_nice == MAX_NICE)
-		trace_prपूर्णांकk("WARNING!!! This test is running at lowest priority.\n");
+		trace_printk("WARNING!!! This test is running at lowest priority.\n");
 
-	trace_prपूर्णांकk("Time:     %lld (usecs)\n", समय);
-	trace_prपूर्णांकk("Overruns: %lld\n", overruns);
-	अगर (disable_पढ़ोer)
-		trace_prपूर्णांकk("Read:     (reader disabled)\n");
-	अन्यथा
-		trace_prपूर्णांकk("Read:     %ld  (by %s)\n", पढ़ो,
-			पढ़ो_events ? "events" : "pages");
-	trace_prपूर्णांकk("Entries:  %lld\n", entries);
-	trace_prपूर्णांकk("Total:    %lld\n", entries + overruns + पढ़ो);
-	trace_prपूर्णांकk("Missed:   %ld\n", missed);
-	trace_prपूर्णांकk("Hit:      %ld\n", hit);
+	trace_printk("Time:     %lld (usecs)\n", time);
+	trace_printk("Overruns: %lld\n", overruns);
+	if (disable_reader)
+		trace_printk("Read:     (reader disabled)\n");
+	else
+		trace_printk("Read:     %ld  (by %s)\n", read,
+			read_events ? "events" : "pages");
+	trace_printk("Entries:  %lld\n", entries);
+	trace_printk("Total:    %lld\n", entries + overruns + read);
+	trace_printk("Missed:   %ld\n", missed);
+	trace_printk("Hit:      %ld\n", hit);
 
-	/* Convert समय from usecs to millisecs */
-	करो_भाग(समय, USEC_PER_MSEC);
-	अगर (समय)
-		hit /= (दीर्घ)समय;
-	अन्यथा
-		trace_prपूर्णांकk("TIME IS ZERO??\n");
+	/* Convert time from usecs to millisecs */
+	do_div(time, USEC_PER_MSEC);
+	if (time)
+		hit /= (long)time;
+	else
+		trace_printk("TIME IS ZERO??\n");
 
-	trace_prपूर्णांकk("Entries per millisec: %ld\n", hit);
+	trace_printk("Entries per millisec: %ld\n", hit);
 
-	अगर (hit) अणु
-		/* Calculate the average समय in nanosecs */
+	if (hit) {
+		/* Calculate the average time in nanosecs */
 		avg = NSEC_PER_MSEC / hit;
-		trace_prपूर्णांकk("%ld ns per entry\n", avg);
-	पूर्ण
+		trace_printk("%ld ns per entry\n", avg);
+	}
 
-	अगर (missed) अणु
-		अगर (समय)
-			missed /= (दीर्घ)समय;
+	if (missed) {
+		if (time)
+			missed /= (long)time;
 
-		trace_prपूर्णांकk("Total iterations per millisec: %ld\n",
+		trace_printk("Total iterations per millisec: %ld\n",
 			     hit + missed);
 
 		/* it is possible that hit + missed will overflow and be zero */
-		अगर (!(hit + missed)) अणु
-			trace_prपूर्णांकk("hit + missed overflowed and totalled zero!\n");
+		if (!(hit + missed)) {
+			trace_printk("hit + missed overflowed and totalled zero!\n");
 			hit--; /* make it non zero */
-		पूर्ण
+		}
 
-		/* Calculate the average समय in nanosecs */
+		/* Calculate the average time in nanosecs */
 		avg = NSEC_PER_MSEC / (hit + missed);
-		trace_prपूर्णांकk("%ld ns per entry\n", avg);
-	पूर्ण
-पूर्ण
+		trace_printk("%ld ns per entry\n", avg);
+	}
+}
 
-अटल व्योम रुको_to_die(व्योम)
-अणु
+static void wait_to_die(void)
+{
 	set_current_state(TASK_INTERRUPTIBLE);
-	जबतक (!kthपढ़ो_should_stop()) अणु
+	while (!kthread_should_stop()) {
 		schedule();
 		set_current_state(TASK_INTERRUPTIBLE);
-	पूर्ण
+	}
 	__set_current_state(TASK_RUNNING);
-पूर्ण
+}
 
-अटल पूर्णांक ring_buffer_consumer_thपढ़ो(व्योम *arg)
-अणु
-	जबतक (!अवरोध_test()) अणु
-		complete(&पढ़ो_start);
+static int ring_buffer_consumer_thread(void *arg)
+{
+	while (!break_test()) {
+		complete(&read_start);
 
 		ring_buffer_consumer();
 
 		set_current_state(TASK_INTERRUPTIBLE);
-		अगर (अवरोध_test())
-			अवरोध;
+		if (break_test())
+			break;
 		schedule();
-	पूर्ण
+	}
 	__set_current_state(TASK_RUNNING);
 
-	अगर (!kthपढ़ो_should_stop())
-		रुको_to_die();
+	if (!kthread_should_stop())
+		wait_to_die();
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ring_buffer_producer_thपढ़ो(व्योम *arg)
-अणु
-	जबतक (!अवरोध_test()) अणु
+static int ring_buffer_producer_thread(void *arg)
+{
+	while (!break_test()) {
 		ring_buffer_reset(buffer);
 
-		अगर (consumer) अणु
+		if (consumer) {
 			wake_up_process(consumer);
-			रुको_क्रम_completion(&पढ़ो_start);
-		पूर्ण
+			wait_for_completion(&read_start);
+		}
 
 		ring_buffer_producer();
-		अगर (अवरोध_test())
-			जाओ out_समाप्त;
+		if (break_test())
+			goto out_kill;
 
-		trace_prपूर्णांकk("Sleeping for 10 secs\n");
+		trace_printk("Sleeping for 10 secs\n");
 		set_current_state(TASK_INTERRUPTIBLE);
-		अगर (अवरोध_test())
-			जाओ out_समाप्त;
-		schedule_समयout(HZ * SLEEP_TIME);
-	पूर्ण
+		if (break_test())
+			goto out_kill;
+		schedule_timeout(HZ * SLEEP_TIME);
+	}
 
-out_समाप्त:
+out_kill:
 	__set_current_state(TASK_RUNNING);
-	अगर (!kthपढ़ो_should_stop())
-		रुको_to_die();
+	if (!kthread_should_stop())
+		wait_to_die();
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __init ring_buffer_benchmark_init(व्योम)
-अणु
-	पूर्णांक ret;
+static int __init ring_buffer_benchmark_init(void)
+{
+	int ret;
 
 	/* make a one meg buffer in overwite mode */
 	buffer = ring_buffer_alloc(1000000, RB_FL_OVERWRITE);
-	अगर (!buffer)
-		वापस -ENOMEM;
+	if (!buffer)
+		return -ENOMEM;
 
-	अगर (!disable_पढ़ोer) अणु
-		consumer = kthपढ़ो_create(ring_buffer_consumer_thपढ़ो,
-					  शून्य, "rb_consumer");
+	if (!disable_reader) {
+		consumer = kthread_create(ring_buffer_consumer_thread,
+					  NULL, "rb_consumer");
 		ret = PTR_ERR(consumer);
-		अगर (IS_ERR(consumer))
-			जाओ out_fail;
-	पूर्ण
+		if (IS_ERR(consumer))
+			goto out_fail;
+	}
 
-	producer = kthपढ़ो_run(ring_buffer_producer_thपढ़ो,
-			       शून्य, "rb_producer");
+	producer = kthread_run(ring_buffer_producer_thread,
+			       NULL, "rb_producer");
 	ret = PTR_ERR(producer);
 
-	अगर (IS_ERR(producer))
-		जाओ out_समाप्त;
+	if (IS_ERR(producer))
+		goto out_kill;
 
 	/*
-	 * Run them as low-prio background tasks by शेष:
+	 * Run them as low-prio background tasks by default:
 	 */
-	अगर (!disable_पढ़ोer) अणु
-		अगर (consumer_fअगरo >= 2)
-			sched_set_fअगरo(consumer);
-		अन्यथा अगर (consumer_fअगरo == 1)
-			sched_set_fअगरo_low(consumer);
-		अन्यथा
+	if (!disable_reader) {
+		if (consumer_fifo >= 2)
+			sched_set_fifo(consumer);
+		else if (consumer_fifo == 1)
+			sched_set_fifo_low(consumer);
+		else
 			set_user_nice(consumer, consumer_nice);
-	पूर्ण
+	}
 
-	अगर (producer_fअगरo >= 2)
-		sched_set_fअगरo(producer);
-	अन्यथा अगर (producer_fअगरo == 1)
-		sched_set_fअगरo_low(producer);
-	अन्यथा
+	if (producer_fifo >= 2)
+		sched_set_fifo(producer);
+	else if (producer_fifo == 1)
+		sched_set_fifo_low(producer);
+	else
 		set_user_nice(producer, producer_nice);
 
-	वापस 0;
+	return 0;
 
- out_समाप्त:
-	अगर (consumer)
-		kthपढ़ो_stop(consumer);
+ out_kill:
+	if (consumer)
+		kthread_stop(consumer);
 
  out_fail:
-	ring_buffer_मुक्त(buffer);
-	वापस ret;
-पूर्ण
+	ring_buffer_free(buffer);
+	return ret;
+}
 
-अटल व्योम __निकास ring_buffer_benchmark_निकास(व्योम)
-अणु
-	kthपढ़ो_stop(producer);
-	अगर (consumer)
-		kthपढ़ो_stop(consumer);
-	ring_buffer_मुक्त(buffer);
-पूर्ण
+static void __exit ring_buffer_benchmark_exit(void)
+{
+	kthread_stop(producer);
+	if (consumer)
+		kthread_stop(consumer);
+	ring_buffer_free(buffer);
+}
 
 module_init(ring_buffer_benchmark_init);
-module_निकास(ring_buffer_benchmark_निकास);
+module_exit(ring_buffer_benchmark_exit);
 
 MODULE_AUTHOR("Steven Rostedt");
 MODULE_DESCRIPTION("ring_buffer_benchmark");

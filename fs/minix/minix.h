@@ -1,171 +1,170 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित FS_MINIX_H
-#घोषणा FS_MINIX_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef FS_MINIX_H
+#define FS_MINIX_H
 
-#समावेश <linux/fs.h>
-#समावेश <linux/pagemap.h>
-#समावेश <linux/minix_fs.h>
+#include <linux/fs.h>
+#include <linux/pagemap.h>
+#include <linux/minix_fs.h>
 
-#घोषणा INODE_VERSION(inode)	minix_sb(inode->i_sb)->s_version
-#घोषणा MINIX_V1		0x0001		/* original minix fs */
-#घोषणा MINIX_V2		0x0002		/* minix V2 fs */
-#घोषणा MINIX_V3		0x0003		/* minix V3 fs */
+#define INODE_VERSION(inode)	minix_sb(inode->i_sb)->s_version
+#define MINIX_V1		0x0001		/* original minix fs */
+#define MINIX_V2		0x0002		/* minix V2 fs */
+#define MINIX_V3		0x0003		/* minix V3 fs */
 
 /*
  * minix fs inode data in memory
  */
-काष्ठा minix_inode_info अणु
-	जोड़ अणु
+struct minix_inode_info {
+	union {
 		__u16 i1_data[16];
 		__u32 i2_data[16];
-	पूर्ण u;
-	काष्ठा inode vfs_inode;
-पूर्ण;
+	} u;
+	struct inode vfs_inode;
+};
 
 /*
  * minix super-block data in memory
  */
-काष्ठा minix_sb_info अणु
-	अचिन्हित दीर्घ s_ninodes;
-	अचिन्हित दीर्घ s_nzones;
-	अचिन्हित दीर्घ s_imap_blocks;
-	अचिन्हित दीर्घ s_zmap_blocks;
-	अचिन्हित दीर्घ s_firstdatazone;
-	अचिन्हित दीर्घ s_log_zone_size;
-	पूर्णांक s_dirsize;
-	पूर्णांक s_namelen;
-	काष्ठा buffer_head ** s_imap;
-	काष्ठा buffer_head ** s_zmap;
-	काष्ठा buffer_head * s_sbh;
-	काष्ठा minix_super_block * s_ms;
-	अचिन्हित लघु s_mount_state;
-	अचिन्हित लघु s_version;
-पूर्ण;
+struct minix_sb_info {
+	unsigned long s_ninodes;
+	unsigned long s_nzones;
+	unsigned long s_imap_blocks;
+	unsigned long s_zmap_blocks;
+	unsigned long s_firstdatazone;
+	unsigned long s_log_zone_size;
+	int s_dirsize;
+	int s_namelen;
+	struct buffer_head ** s_imap;
+	struct buffer_head ** s_zmap;
+	struct buffer_head * s_sbh;
+	struct minix_super_block * s_ms;
+	unsigned short s_mount_state;
+	unsigned short s_version;
+};
 
-बाह्य काष्ठा inode *minix_iget(काष्ठा super_block *, अचिन्हित दीर्घ);
-बाह्य काष्ठा minix_inode * minix_V1_raw_inode(काष्ठा super_block *, ino_t, काष्ठा buffer_head **);
-बाह्य काष्ठा minix2_inode * minix_V2_raw_inode(काष्ठा super_block *, ino_t, काष्ठा buffer_head **);
-बाह्य काष्ठा inode * minix_new_inode(स्थिर काष्ठा inode *, umode_t, पूर्णांक *);
-बाह्य व्योम minix_मुक्त_inode(काष्ठा inode * inode);
-बाह्य अचिन्हित दीर्घ minix_count_मुक्त_inodes(काष्ठा super_block *sb);
-बाह्य पूर्णांक minix_new_block(काष्ठा inode * inode);
-बाह्य व्योम minix_मुक्त_block(काष्ठा inode *inode, अचिन्हित दीर्घ block);
-बाह्य अचिन्हित दीर्घ minix_count_मुक्त_blocks(काष्ठा super_block *sb);
-बाह्य पूर्णांक minix_getattr(काष्ठा user_namespace *, स्थिर काष्ठा path *,
-			 काष्ठा kstat *, u32, अचिन्हित पूर्णांक);
-बाह्य पूर्णांक minix_prepare_chunk(काष्ठा page *page, loff_t pos, अचिन्हित len);
+extern struct inode *minix_iget(struct super_block *, unsigned long);
+extern struct minix_inode * minix_V1_raw_inode(struct super_block *, ino_t, struct buffer_head **);
+extern struct minix2_inode * minix_V2_raw_inode(struct super_block *, ino_t, struct buffer_head **);
+extern struct inode * minix_new_inode(const struct inode *, umode_t, int *);
+extern void minix_free_inode(struct inode * inode);
+extern unsigned long minix_count_free_inodes(struct super_block *sb);
+extern int minix_new_block(struct inode * inode);
+extern void minix_free_block(struct inode *inode, unsigned long block);
+extern unsigned long minix_count_free_blocks(struct super_block *sb);
+extern int minix_getattr(struct user_namespace *, const struct path *,
+			 struct kstat *, u32, unsigned int);
+extern int minix_prepare_chunk(struct page *page, loff_t pos, unsigned len);
 
-बाह्य व्योम V1_minix_truncate(काष्ठा inode *);
-बाह्य व्योम V2_minix_truncate(काष्ठा inode *);
-बाह्य व्योम minix_truncate(काष्ठा inode *);
-बाह्य व्योम minix_set_inode(काष्ठा inode *, dev_t);
-बाह्य पूर्णांक V1_minix_get_block(काष्ठा inode *, दीर्घ, काष्ठा buffer_head *, पूर्णांक);
-बाह्य पूर्णांक V2_minix_get_block(काष्ठा inode *, दीर्घ, काष्ठा buffer_head *, पूर्णांक);
-बाह्य अचिन्हित V1_minix_blocks(loff_t, काष्ठा super_block *);
-बाह्य अचिन्हित V2_minix_blocks(loff_t, काष्ठा super_block *);
+extern void V1_minix_truncate(struct inode *);
+extern void V2_minix_truncate(struct inode *);
+extern void minix_truncate(struct inode *);
+extern void minix_set_inode(struct inode *, dev_t);
+extern int V1_minix_get_block(struct inode *, long, struct buffer_head *, int);
+extern int V2_minix_get_block(struct inode *, long, struct buffer_head *, int);
+extern unsigned V1_minix_blocks(loff_t, struct super_block *);
+extern unsigned V2_minix_blocks(loff_t, struct super_block *);
 
-बाह्य काष्ठा minix_dir_entry *minix_find_entry(काष्ठा dentry*, काष्ठा page**);
-बाह्य पूर्णांक minix_add_link(काष्ठा dentry*, काष्ठा inode*);
-बाह्य पूर्णांक minix_delete_entry(काष्ठा minix_dir_entry*, काष्ठा page*);
-बाह्य पूर्णांक minix_make_empty(काष्ठा inode*, काष्ठा inode*);
-बाह्य पूर्णांक minix_empty_dir(काष्ठा inode*);
-बाह्य व्योम minix_set_link(काष्ठा minix_dir_entry*, काष्ठा page*, काष्ठा inode*);
-बाह्य काष्ठा minix_dir_entry *minix_करोtकरोt(काष्ठा inode*, काष्ठा page**);
-बाह्य ino_t minix_inode_by_name(काष्ठा dentry*);
+extern struct minix_dir_entry *minix_find_entry(struct dentry*, struct page**);
+extern int minix_add_link(struct dentry*, struct inode*);
+extern int minix_delete_entry(struct minix_dir_entry*, struct page*);
+extern int minix_make_empty(struct inode*, struct inode*);
+extern int minix_empty_dir(struct inode*);
+extern void minix_set_link(struct minix_dir_entry*, struct page*, struct inode*);
+extern struct minix_dir_entry *minix_dotdot(struct inode*, struct page**);
+extern ino_t minix_inode_by_name(struct dentry*);
 
-बाह्य स्थिर काष्ठा inode_operations minix_file_inode_operations;
-बाह्य स्थिर काष्ठा inode_operations minix_dir_inode_operations;
-बाह्य स्थिर काष्ठा file_operations minix_file_operations;
-बाह्य स्थिर काष्ठा file_operations minix_dir_operations;
+extern const struct inode_operations minix_file_inode_operations;
+extern const struct inode_operations minix_dir_inode_operations;
+extern const struct file_operations minix_file_operations;
+extern const struct file_operations minix_dir_operations;
 
-अटल अंतरभूत काष्ठा minix_sb_info *minix_sb(काष्ठा super_block *sb)
-अणु
-	वापस sb->s_fs_info;
-पूर्ण
+static inline struct minix_sb_info *minix_sb(struct super_block *sb)
+{
+	return sb->s_fs_info;
+}
 
-अटल अंतरभूत काष्ठा minix_inode_info *minix_i(काष्ठा inode *inode)
-अणु
-	वापस container_of(inode, काष्ठा minix_inode_info, vfs_inode);
-पूर्ण
+static inline struct minix_inode_info *minix_i(struct inode *inode)
+{
+	return container_of(inode, struct minix_inode_info, vfs_inode);
+}
 
-अटल अंतरभूत अचिन्हित minix_blocks_needed(अचिन्हित bits, अचिन्हित blocksize)
-अणु
-	वापस DIV_ROUND_UP(bits, blocksize * 8);
-पूर्ण
+static inline unsigned minix_blocks_needed(unsigned bits, unsigned blocksize)
+{
+	return DIV_ROUND_UP(bits, blocksize * 8);
+}
 
-#अगर defined(CONFIG_MINIX_FS_NATIVE_ENDIAN) && \
+#if defined(CONFIG_MINIX_FS_NATIVE_ENDIAN) && \
 	defined(CONFIG_MINIX_FS_BIG_ENDIAN_16BIT_INDEXED)
 
-#त्रुटि Minix file प्रणाली byte order broken
+#error Minix file system byte order broken
 
-#या_अगर defined(CONFIG_MINIX_FS_NATIVE_ENDIAN)
-
-/*
- * big-endian 32 or 64 bit indexed biपंचांगaps on big-endian प्रणाली or
- * little-endian biपंचांगaps on little-endian प्रणाली
- */
-
-#घोषणा minix_test_and_set_bit(nr, addr)	\
-	__test_and_set_bit((nr), (अचिन्हित दीर्घ *)(addr))
-#घोषणा minix_set_bit(nr, addr)		\
-	__set_bit((nr), (अचिन्हित दीर्घ *)(addr))
-#घोषणा minix_test_and_clear_bit(nr, addr) \
-	__test_and_clear_bit((nr), (अचिन्हित दीर्घ *)(addr))
-#घोषणा minix_test_bit(nr, addr)		\
-	test_bit((nr), (अचिन्हित दीर्घ *)(addr))
-#घोषणा minix_find_first_zero_bit(addr, size) \
-	find_first_zero_bit((अचिन्हित दीर्घ *)(addr), (size))
-
-#या_अगर defined(CONFIG_MINIX_FS_BIG_ENDIAN_16BIT_INDEXED)
+#elif defined(CONFIG_MINIX_FS_NATIVE_ENDIAN)
 
 /*
- * big-endian 16bit indexed biपंचांगaps
+ * big-endian 32 or 64 bit indexed bitmaps on big-endian system or
+ * little-endian bitmaps on little-endian system
  */
 
-अटल अंतरभूत पूर्णांक minix_find_first_zero_bit(स्थिर व्योम *vaddr, अचिन्हित size)
-अणु
-	स्थिर अचिन्हित लघु *p = vaddr, *addr = vaddr;
-	अचिन्हित लघु num;
+#define minix_test_and_set_bit(nr, addr)	\
+	__test_and_set_bit((nr), (unsigned long *)(addr))
+#define minix_set_bit(nr, addr)		\
+	__set_bit((nr), (unsigned long *)(addr))
+#define minix_test_and_clear_bit(nr, addr) \
+	__test_and_clear_bit((nr), (unsigned long *)(addr))
+#define minix_test_bit(nr, addr)		\
+	test_bit((nr), (unsigned long *)(addr))
+#define minix_find_first_zero_bit(addr, size) \
+	find_first_zero_bit((unsigned long *)(addr), (size))
 
-	अगर (!size)
-		वापस 0;
+#elif defined(CONFIG_MINIX_FS_BIG_ENDIAN_16BIT_INDEXED)
+
+/*
+ * big-endian 16bit indexed bitmaps
+ */
+
+static inline int minix_find_first_zero_bit(const void *vaddr, unsigned size)
+{
+	const unsigned short *p = vaddr, *addr = vaddr;
+	unsigned short num;
+
+	if (!size)
+		return 0;
 
 	size >>= 4;
-	जबतक (*p++ == 0xffff) अणु
-		अगर (--size == 0)
-			वापस (p - addr) << 4;
-	पूर्ण
+	while (*p++ == 0xffff) {
+		if (--size == 0)
+			return (p - addr) << 4;
+	}
 
 	num = *--p;
-	वापस ((p - addr) << 4) + ffz(num);
-पूर्ण
+	return ((p - addr) << 4) + ffz(num);
+}
 
-#घोषणा minix_test_and_set_bit(nr, addr)	\
-	__test_and_set_bit((nr) ^ 16, (अचिन्हित दीर्घ *)(addr))
-#घोषणा minix_set_bit(nr, addr)	\
-	__set_bit((nr) ^ 16, (अचिन्हित दीर्घ *)(addr))
-#घोषणा minix_test_and_clear_bit(nr, addr)	\
-	__test_and_clear_bit((nr) ^ 16, (अचिन्हित दीर्घ *)(addr))
+#define minix_test_and_set_bit(nr, addr)	\
+	__test_and_set_bit((nr) ^ 16, (unsigned long *)(addr))
+#define minix_set_bit(nr, addr)	\
+	__set_bit((nr) ^ 16, (unsigned long *)(addr))
+#define minix_test_and_clear_bit(nr, addr)	\
+	__test_and_clear_bit((nr) ^ 16, (unsigned long *)(addr))
 
-अटल अंतरभूत पूर्णांक minix_test_bit(पूर्णांक nr, स्थिर व्योम *vaddr)
-अणु
-	स्थिर अचिन्हित लघु *p = vaddr;
-	वापस (p[nr >> 4] & (1U << (nr & 15))) != 0;
-पूर्ण
+static inline int minix_test_bit(int nr, const void *vaddr)
+{
+	const unsigned short *p = vaddr;
+	return (p[nr >> 4] & (1U << (nr & 15))) != 0;
+}
 
-#अन्यथा
+#else
 
 /*
- * little-endian biपंचांगaps
+ * little-endian bitmaps
  */
 
-#घोषणा minix_test_and_set_bit	__test_and_set_bit_le
-#घोषणा minix_set_bit		__set_bit_le
-#घोषणा minix_test_and_clear_bit	__test_and_clear_bit_le
-#घोषणा minix_test_bit	test_bit_le
-#घोषणा minix_find_first_zero_bit	find_first_zero_bit_le
+#define minix_test_and_set_bit	__test_and_set_bit_le
+#define minix_set_bit		__set_bit_le
+#define minix_test_and_clear_bit	__test_and_clear_bit_le
+#define minix_test_bit	test_bit_le
+#define minix_find_first_zero_bit	find_first_zero_bit_le
 
-#पूर्ण_अगर
+#endif
 
-#पूर्ण_अगर /* FS_MINIX_H */
+#endif /* FS_MINIX_H */

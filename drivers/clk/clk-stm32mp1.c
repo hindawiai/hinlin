@@ -1,391 +1,390 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (C) STMicroelectronics 2018 - All Rights Reserved
- * Author: Olivier Bideau <olivier.bideau@st.com> क्रम STMicroelectronics.
- * Author: Gabriel Fernandez <gabriel.fernandez@st.com> क्रम STMicroelectronics.
+ * Author: Olivier Bideau <olivier.bideau@st.com> for STMicroelectronics.
+ * Author: Gabriel Fernandez <gabriel.fernandez@st.com> for STMicroelectronics.
  */
 
-#समावेश <linux/clk.h>
-#समावेश <linux/clk-provider.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/err.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/of.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/spinlock.h>
+#include <linux/clk.h>
+#include <linux/clk-provider.h>
+#include <linux/delay.h>
+#include <linux/err.h>
+#include <linux/io.h>
+#include <linux/of.h>
+#include <linux/of_address.h>
+#include <linux/slab.h>
+#include <linux/spinlock.h>
 
-#समावेश <dt-bindings/घड़ी/sपंचांग32mp1-clks.h>
+#include <dt-bindings/clock/stm32mp1-clks.h>
 
-अटल DEFINE_SPINLOCK(rlock);
+static DEFINE_SPINLOCK(rlock);
 
-#घोषणा RCC_OCENSETR		0x0C
-#घोषणा RCC_HSICFGR		0x18
-#घोषणा RCC_RDLSICR		0x144
-#घोषणा RCC_PLL1CR		0x80
-#घोषणा RCC_PLL1CFGR1		0x84
-#घोषणा RCC_PLL1CFGR2		0x88
-#घोषणा RCC_PLL2CR		0x94
-#घोषणा RCC_PLL2CFGR1		0x98
-#घोषणा RCC_PLL2CFGR2		0x9C
-#घोषणा RCC_PLL3CR		0x880
-#घोषणा RCC_PLL3CFGR1		0x884
-#घोषणा RCC_PLL3CFGR2		0x888
-#घोषणा RCC_PLL4CR		0x894
-#घोषणा RCC_PLL4CFGR1		0x898
-#घोषणा RCC_PLL4CFGR2		0x89C
-#घोषणा RCC_APB1ENSETR		0xA00
-#घोषणा RCC_APB2ENSETR		0xA08
-#घोषणा RCC_APB3ENSETR		0xA10
-#घोषणा RCC_APB4ENSETR		0x200
-#घोषणा RCC_APB5ENSETR		0x208
-#घोषणा RCC_AHB2ENSETR		0xA18
-#घोषणा RCC_AHB3ENSETR		0xA20
-#घोषणा RCC_AHB4ENSETR		0xA28
-#घोषणा RCC_AHB5ENSETR		0x210
-#घोषणा RCC_AHB6ENSETR		0x218
-#घोषणा RCC_AHB6LPENSETR	0x318
-#घोषणा RCC_RCK12SELR		0x28
-#घोषणा RCC_RCK3SELR		0x820
-#घोषणा RCC_RCK4SELR		0x824
-#घोषणा RCC_MPCKSELR		0x20
-#घोषणा RCC_ASSCKSELR		0x24
-#घोषणा RCC_MSSCKSELR		0x48
-#घोषणा RCC_SPI6CKSELR		0xC4
-#घोषणा RCC_SDMMC12CKSELR	0x8F4
-#घोषणा RCC_SDMMC3CKSELR	0x8F8
-#घोषणा RCC_FMCCKSELR		0x904
-#घोषणा RCC_I2C46CKSELR		0xC0
-#घोषणा RCC_I2C12CKSELR		0x8C0
-#घोषणा RCC_I2C35CKSELR		0x8C4
-#घोषणा RCC_UART1CKSELR		0xC8
-#घोषणा RCC_QSPICKSELR		0x900
-#घोषणा RCC_ETHCKSELR		0x8FC
-#घोषणा RCC_RNG1CKSELR		0xCC
-#घोषणा RCC_RNG2CKSELR		0x920
-#घोषणा RCC_GPUCKSELR		0x938
-#घोषणा RCC_USBCKSELR		0x91C
-#घोषणा RCC_STGENCKSELR		0xD4
-#घोषणा RCC_SPDIFCKSELR		0x914
-#घोषणा RCC_SPI2S1CKSELR	0x8D8
-#घोषणा RCC_SPI2S23CKSELR	0x8DC
-#घोषणा RCC_SPI2S45CKSELR	0x8E0
-#घोषणा RCC_CECCKSELR		0x918
-#घोषणा RCC_LPTIM1CKSELR	0x934
-#घोषणा RCC_LPTIM23CKSELR	0x930
-#घोषणा RCC_LPTIM45CKSELR	0x92C
-#घोषणा RCC_UART24CKSELR	0x8E8
-#घोषणा RCC_UART35CKSELR	0x8EC
-#घोषणा RCC_UART6CKSELR		0x8E4
-#घोषणा RCC_UART78CKSELR	0x8F0
-#घोषणा RCC_FDCANCKSELR		0x90C
-#घोषणा RCC_SAI1CKSELR		0x8C8
-#घोषणा RCC_SAI2CKSELR		0x8CC
-#घोषणा RCC_SAI3CKSELR		0x8D0
-#घोषणा RCC_SAI4CKSELR		0x8D4
-#घोषणा RCC_ADCCKSELR		0x928
-#घोषणा RCC_MPCKDIVR		0x2C
-#घोषणा RCC_DSICKSELR		0x924
-#घोषणा RCC_CPERCKSELR		0xD0
-#घोषणा RCC_MCO1CFGR		0x800
-#घोषणा RCC_MCO2CFGR		0x804
-#घोषणा RCC_BDCR		0x140
-#घोषणा RCC_AXIDIVR		0x30
-#घोषणा RCC_MCUDIVR		0x830
-#घोषणा RCC_APB1DIVR		0x834
-#घोषणा RCC_APB2DIVR		0x838
-#घोषणा RCC_APB3DIVR		0x83C
-#घोषणा RCC_APB4DIVR		0x3C
-#घोषणा RCC_APB5DIVR		0x40
-#घोषणा RCC_TIMG1PRER		0x828
-#घोषणा RCC_TIMG2PRER		0x82C
-#घोषणा RCC_RTCDIVR		0x44
-#घोषणा RCC_DBGCFGR		0x80C
+#define RCC_OCENSETR		0x0C
+#define RCC_HSICFGR		0x18
+#define RCC_RDLSICR		0x144
+#define RCC_PLL1CR		0x80
+#define RCC_PLL1CFGR1		0x84
+#define RCC_PLL1CFGR2		0x88
+#define RCC_PLL2CR		0x94
+#define RCC_PLL2CFGR1		0x98
+#define RCC_PLL2CFGR2		0x9C
+#define RCC_PLL3CR		0x880
+#define RCC_PLL3CFGR1		0x884
+#define RCC_PLL3CFGR2		0x888
+#define RCC_PLL4CR		0x894
+#define RCC_PLL4CFGR1		0x898
+#define RCC_PLL4CFGR2		0x89C
+#define RCC_APB1ENSETR		0xA00
+#define RCC_APB2ENSETR		0xA08
+#define RCC_APB3ENSETR		0xA10
+#define RCC_APB4ENSETR		0x200
+#define RCC_APB5ENSETR		0x208
+#define RCC_AHB2ENSETR		0xA18
+#define RCC_AHB3ENSETR		0xA20
+#define RCC_AHB4ENSETR		0xA28
+#define RCC_AHB5ENSETR		0x210
+#define RCC_AHB6ENSETR		0x218
+#define RCC_AHB6LPENSETR	0x318
+#define RCC_RCK12SELR		0x28
+#define RCC_RCK3SELR		0x820
+#define RCC_RCK4SELR		0x824
+#define RCC_MPCKSELR		0x20
+#define RCC_ASSCKSELR		0x24
+#define RCC_MSSCKSELR		0x48
+#define RCC_SPI6CKSELR		0xC4
+#define RCC_SDMMC12CKSELR	0x8F4
+#define RCC_SDMMC3CKSELR	0x8F8
+#define RCC_FMCCKSELR		0x904
+#define RCC_I2C46CKSELR		0xC0
+#define RCC_I2C12CKSELR		0x8C0
+#define RCC_I2C35CKSELR		0x8C4
+#define RCC_UART1CKSELR		0xC8
+#define RCC_QSPICKSELR		0x900
+#define RCC_ETHCKSELR		0x8FC
+#define RCC_RNG1CKSELR		0xCC
+#define RCC_RNG2CKSELR		0x920
+#define RCC_GPUCKSELR		0x938
+#define RCC_USBCKSELR		0x91C
+#define RCC_STGENCKSELR		0xD4
+#define RCC_SPDIFCKSELR		0x914
+#define RCC_SPI2S1CKSELR	0x8D8
+#define RCC_SPI2S23CKSELR	0x8DC
+#define RCC_SPI2S45CKSELR	0x8E0
+#define RCC_CECCKSELR		0x918
+#define RCC_LPTIM1CKSELR	0x934
+#define RCC_LPTIM23CKSELR	0x930
+#define RCC_LPTIM45CKSELR	0x92C
+#define RCC_UART24CKSELR	0x8E8
+#define RCC_UART35CKSELR	0x8EC
+#define RCC_UART6CKSELR		0x8E4
+#define RCC_UART78CKSELR	0x8F0
+#define RCC_FDCANCKSELR		0x90C
+#define RCC_SAI1CKSELR		0x8C8
+#define RCC_SAI2CKSELR		0x8CC
+#define RCC_SAI3CKSELR		0x8D0
+#define RCC_SAI4CKSELR		0x8D4
+#define RCC_ADCCKSELR		0x928
+#define RCC_MPCKDIVR		0x2C
+#define RCC_DSICKSELR		0x924
+#define RCC_CPERCKSELR		0xD0
+#define RCC_MCO1CFGR		0x800
+#define RCC_MCO2CFGR		0x804
+#define RCC_BDCR		0x140
+#define RCC_AXIDIVR		0x30
+#define RCC_MCUDIVR		0x830
+#define RCC_APB1DIVR		0x834
+#define RCC_APB2DIVR		0x838
+#define RCC_APB3DIVR		0x83C
+#define RCC_APB4DIVR		0x3C
+#define RCC_APB5DIVR		0x40
+#define RCC_TIMG1PRER		0x828
+#define RCC_TIMG2PRER		0x82C
+#define RCC_RTCDIVR		0x44
+#define RCC_DBGCFGR		0x80C
 
-#घोषणा RCC_CLR	0x4
+#define RCC_CLR	0x4
 
-अटल स्थिर अक्षर * स्थिर ref12_parents[] = अणु
+static const char * const ref12_parents[] = {
 	"ck_hsi", "ck_hse"
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर ref3_parents[] = अणु
+static const char * const ref3_parents[] = {
 	"ck_hsi", "ck_hse", "ck_csi"
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर ref4_parents[] = अणु
+static const char * const ref4_parents[] = {
 	"ck_hsi", "ck_hse", "ck_csi"
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर cpu_src[] = अणु
+static const char * const cpu_src[] = {
 	"ck_hsi", "ck_hse", "pll1_p"
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर axi_src[] = अणु
+static const char * const axi_src[] = {
 	"ck_hsi", "ck_hse", "pll2_p"
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर per_src[] = अणु
+static const char * const per_src[] = {
 	"ck_hsi", "ck_csi", "ck_hse"
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर mcu_src[] = अणु
+static const char * const mcu_src[] = {
 	"ck_hsi", "ck_hse", "ck_csi", "pll3_p"
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर sdmmc12_src[] = अणु
+static const char * const sdmmc12_src[] = {
 	"ck_axi", "pll3_r", "pll4_p", "ck_hsi"
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर sdmmc3_src[] = अणु
+static const char * const sdmmc3_src[] = {
 	"ck_mcu", "pll3_r", "pll4_p", "ck_hsi"
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर fmc_src[] = अणु
+static const char * const fmc_src[] = {
 	"ck_axi", "pll3_r", "pll4_p", "ck_per"
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर qspi_src[] = अणु
+static const char * const qspi_src[] = {
 	"ck_axi", "pll3_r", "pll4_p", "ck_per"
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर eth_src[] = अणु
+static const char * const eth_src[] = {
 	"pll4_p", "pll3_q"
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर rng_src[] = अणु
+static const char * const rng_src[] = {
 	"ck_csi", "pll4_r", "ck_lse", "ck_lsi"
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर usbphy_src[] = अणु
+static const char * const usbphy_src[] = {
 	"ck_hse", "pll4_r", "clk-hse-div2"
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर usbo_src[] = अणु
+static const char * const usbo_src[] = {
 	"pll4_r", "ck_usbo_48m"
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर stgen_src[] = अणु
+static const char * const stgen_src[] = {
 	"ck_hsi", "ck_hse"
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर spdअगर_src[] = अणु
+static const char * const spdif_src[] = {
 	"pll4_p", "pll3_q", "ck_hsi"
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर spi123_src[] = अणु
+static const char * const spi123_src[] = {
 	"pll4_p", "pll3_q", "i2s_ckin", "ck_per", "pll3_r"
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर spi45_src[] = अणु
+static const char * const spi45_src[] = {
 	"pclk2", "pll4_q", "ck_hsi", "ck_csi", "ck_hse"
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर spi6_src[] = अणु
+static const char * const spi6_src[] = {
 	"pclk5", "pll4_q", "ck_hsi", "ck_csi", "ck_hse", "pll3_q"
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर cec_src[] = अणु
+static const char * const cec_src[] = {
 	"ck_lse", "ck_lsi", "ck_csi"
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर i2c12_src[] = अणु
+static const char * const i2c12_src[] = {
 	"pclk1", "pll4_r", "ck_hsi", "ck_csi"
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर i2c35_src[] = अणु
+static const char * const i2c35_src[] = {
 	"pclk1", "pll4_r", "ck_hsi", "ck_csi"
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर i2c46_src[] = अणु
+static const char * const i2c46_src[] = {
 	"pclk5", "pll3_q", "ck_hsi", "ck_csi"
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर lptim1_src[] = अणु
+static const char * const lptim1_src[] = {
 	"pclk1", "pll4_p", "pll3_q", "ck_lse", "ck_lsi", "ck_per"
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर lptim23_src[] = अणु
+static const char * const lptim23_src[] = {
 	"pclk3", "pll4_q", "ck_per", "ck_lse", "ck_lsi"
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर lptim45_src[] = अणु
+static const char * const lptim45_src[] = {
 	"pclk3", "pll4_p", "pll3_q", "ck_lse", "ck_lsi", "ck_per"
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर usart1_src[] = अणु
+static const char * const usart1_src[] = {
 	"pclk5", "pll3_q", "ck_hsi", "ck_csi", "pll4_q", "ck_hse"
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर usart234578_src[] = अणु
+static const char * const usart234578_src[] = {
 	"pclk1", "pll4_q", "ck_hsi", "ck_csi", "ck_hse"
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर usart6_src[] = अणु
+static const char * const usart6_src[] = {
 	"pclk2", "pll4_q", "ck_hsi", "ck_csi", "ck_hse"
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर fdcan_src[] = अणु
+static const char * const fdcan_src[] = {
 	"ck_hse", "pll3_q", "pll4_q", "pll4_r"
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर sai_src[] = अणु
+static const char * const sai_src[] = {
 	"pll4_q", "pll3_q", "i2s_ckin", "ck_per", "pll3_r"
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर sai2_src[] = अणु
+static const char * const sai2_src[] = {
 	"pll4_q", "pll3_q", "i2s_ckin", "ck_per", "spdif_ck_symb", "pll3_r"
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर adc12_src[] = अणु
+static const char * const adc12_src[] = {
 	"pll4_r", "ck_per", "pll3_q"
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर dsi_src[] = अणु
+static const char * const dsi_src[] = {
 	"ck_dsi_phy", "pll4_p"
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर rtc_src[] = अणु
+static const char * const rtc_src[] = {
 	"off", "ck_lse", "ck_lsi", "ck_hse_rtc"
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर mco1_src[] = अणु
+static const char * const mco1_src[] = {
 	"ck_hsi", "ck_hse", "ck_csi", "ck_lsi", "ck_lse"
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर mco2_src[] = अणु
+static const char * const mco2_src[] = {
 	"ck_mpu", "ck_axi", "ck_mcu", "pll4_p", "ck_hse", "ck_hsi"
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर ck_trace_src[] = अणु
+static const char * const ck_trace_src[] = {
 	"ck_axi"
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा clk_भाग_प्रकारable axi_भाग_प्रकारable[] = अणु
-	अणु 0, 1 पूर्ण, अणु 1, 2 पूर्ण, अणु 2, 3 पूर्ण, अणु 3, 4 पूर्ण,
-	अणु 4, 4 पूर्ण, अणु 5, 4 पूर्ण, अणु 6, 4 पूर्ण, अणु 7, 4 पूर्ण,
-	अणु 0 पूर्ण,
-पूर्ण;
+static const struct clk_div_table axi_div_table[] = {
+	{ 0, 1 }, { 1, 2 }, { 2, 3 }, { 3, 4 },
+	{ 4, 4 }, { 5, 4 }, { 6, 4 }, { 7, 4 },
+	{ 0 },
+};
 
-अटल स्थिर काष्ठा clk_भाग_प्रकारable mcu_भाग_प्रकारable[] = अणु
-	अणु 0, 1 पूर्ण, अणु 1, 2 पूर्ण, अणु 2, 4 पूर्ण, अणु 3, 8 पूर्ण,
-	अणु 4, 16 पूर्ण, अणु 5, 32 पूर्ण, अणु 6, 64 पूर्ण, अणु 7, 128 पूर्ण,
-	अणु 8, 256 पूर्ण, अणु 9, 512 पूर्ण, अणु 10, 512पूर्ण, अणु 11, 512 पूर्ण,
-	अणु 12, 512 पूर्ण, अणु 13, 512 पूर्ण, अणु 14, 512पूर्ण, अणु 15, 512 पूर्ण,
-	अणु 0 पूर्ण,
-पूर्ण;
+static const struct clk_div_table mcu_div_table[] = {
+	{ 0, 1 }, { 1, 2 }, { 2, 4 }, { 3, 8 },
+	{ 4, 16 }, { 5, 32 }, { 6, 64 }, { 7, 128 },
+	{ 8, 256 }, { 9, 512 }, { 10, 512}, { 11, 512 },
+	{ 12, 512 }, { 13, 512 }, { 14, 512}, { 15, 512 },
+	{ 0 },
+};
 
-अटल स्थिर काष्ठा clk_भाग_प्रकारable apb_भाग_प्रकारable[] = अणु
-	अणु 0, 1 पूर्ण, अणु 1, 2 पूर्ण, अणु 2, 4 पूर्ण, अणु 3, 8 पूर्ण,
-	अणु 4, 16 पूर्ण, अणु 5, 16 पूर्ण, अणु 6, 16 पूर्ण, अणु 7, 16 पूर्ण,
-	अणु 0 पूर्ण,
-पूर्ण;
+static const struct clk_div_table apb_div_table[] = {
+	{ 0, 1 }, { 1, 2 }, { 2, 4 }, { 3, 8 },
+	{ 4, 16 }, { 5, 16 }, { 6, 16 }, { 7, 16 },
+	{ 0 },
+};
 
-अटल स्थिर काष्ठा clk_भाग_प्रकारable ck_trace_भाग_प्रकारable[] = अणु
-	अणु 0, 1 पूर्ण, अणु 1, 2 पूर्ण, अणु 2, 4 पूर्ण, अणु 3, 8 पूर्ण,
-	अणु 4, 16 पूर्ण, अणु 5, 16 पूर्ण, अणु 6, 16 पूर्ण, अणु 7, 16 पूर्ण,
-	अणु 0 पूर्ण,
-पूर्ण;
+static const struct clk_div_table ck_trace_div_table[] = {
+	{ 0, 1 }, { 1, 2 }, { 2, 4 }, { 3, 8 },
+	{ 4, 16 }, { 5, 16 }, { 6, 16 }, { 7, 16 },
+	{ 0 },
+};
 
-#घोषणा MAX_MUX_CLK 2
+#define MAX_MUX_CLK 2
 
-काष्ठा sपंचांग32_mmux अणु
+struct stm32_mmux {
 	u8 nbr_clk;
-	काष्ठा clk_hw *hws[MAX_MUX_CLK];
-पूर्ण;
+	struct clk_hw *hws[MAX_MUX_CLK];
+};
 
-काष्ठा sपंचांग32_clk_mmux अणु
-	काष्ठा clk_mux mux;
-	काष्ठा sपंचांग32_mmux *mmux;
-पूर्ण;
+struct stm32_clk_mmux {
+	struct clk_mux mux;
+	struct stm32_mmux *mmux;
+};
 
-काष्ठा sपंचांग32_mgate अणु
+struct stm32_mgate {
 	u8 nbr_clk;
 	u32 flag;
-पूर्ण;
+};
 
-काष्ठा sपंचांग32_clk_mgate अणु
-	काष्ठा clk_gate gate;
-	काष्ठा sपंचांग32_mgate *mgate;
+struct stm32_clk_mgate {
+	struct clk_gate gate;
+	struct stm32_mgate *mgate;
 	u32 mask;
-पूर्ण;
+};
 
-काष्ठा घड़ी_config अणु
+struct clock_config {
 	u32 id;
-	स्थिर अक्षर *name;
-	स्थिर अक्षर *parent_name;
-	स्थिर अक्षर * स्थिर *parent_names;
-	पूर्णांक num_parents;
-	अचिन्हित दीर्घ flags;
-	व्योम *cfg;
-	काष्ठा clk_hw * (*func)(काष्ठा device *dev,
-				काष्ठा clk_hw_onecell_data *clk_data,
-				व्योम __iomem *base, spinlock_t *lock,
-				स्थिर काष्ठा घड़ी_config *cfg);
-पूर्ण;
+	const char *name;
+	const char *parent_name;
+	const char * const *parent_names;
+	int num_parents;
+	unsigned long flags;
+	void *cfg;
+	struct clk_hw * (*func)(struct device *dev,
+				struct clk_hw_onecell_data *clk_data,
+				void __iomem *base, spinlock_t *lock,
+				const struct clock_config *cfg);
+};
 
-#घोषणा NO_ID ~0
+#define NO_ID ~0
 
-काष्ठा gate_cfg अणु
+struct gate_cfg {
 	u32 reg_off;
 	u8 bit_idx;
 	u8 gate_flags;
-पूर्ण;
+};
 
-काष्ठा fixed_factor_cfg अणु
-	अचिन्हित पूर्णांक mult;
-	अचिन्हित पूर्णांक भाग;
-पूर्ण;
+struct fixed_factor_cfg {
+	unsigned int mult;
+	unsigned int div;
+};
 
-काष्ठा भाग_cfg अणु
+struct div_cfg {
 	u32 reg_off;
-	u8 shअगरt;
+	u8 shift;
 	u8 width;
-	u8 भाग_flags;
-	स्थिर काष्ठा clk_भाग_प्रकारable *table;
-पूर्ण;
+	u8 div_flags;
+	const struct clk_div_table *table;
+};
 
-काष्ठा mux_cfg अणु
+struct mux_cfg {
 	u32 reg_off;
-	u8 shअगरt;
+	u8 shift;
 	u8 width;
 	u8 mux_flags;
 	u32 *table;
-पूर्ण;
+};
 
-काष्ठा sपंचांग32_gate_cfg अणु
-	काष्ठा gate_cfg		*gate;
-	काष्ठा sपंचांग32_mgate	*mgate;
-	स्थिर काष्ठा clk_ops	*ops;
-पूर्ण;
+struct stm32_gate_cfg {
+	struct gate_cfg		*gate;
+	struct stm32_mgate	*mgate;
+	const struct clk_ops	*ops;
+};
 
-काष्ठा sपंचांग32_भाग_cfg अणु
-	काष्ठा भाग_cfg		*भाग;
-	स्थिर काष्ठा clk_ops	*ops;
-पूर्ण;
+struct stm32_div_cfg {
+	struct div_cfg		*div;
+	const struct clk_ops	*ops;
+};
 
-काष्ठा sपंचांग32_mux_cfg अणु
-	काष्ठा mux_cfg		*mux;
-	काष्ठा sपंचांग32_mmux	*mmux;
-	स्थिर काष्ठा clk_ops	*ops;
-पूर्ण;
+struct stm32_mux_cfg {
+	struct mux_cfg		*mux;
+	struct stm32_mmux	*mmux;
+	const struct clk_ops	*ops;
+};
 
-/* STM32 Composite घड़ी */
-काष्ठा sपंचांग32_composite_cfg अणु
-	स्थिर काष्ठा sपंचांग32_gate_cfg	*gate;
-	स्थिर काष्ठा sपंचांग32_भाग_cfg	*भाग;
-	स्थिर काष्ठा sपंचांग32_mux_cfg	*mux;
-पूर्ण;
+/* STM32 Composite clock */
+struct stm32_composite_cfg {
+	const struct stm32_gate_cfg	*gate;
+	const struct stm32_div_cfg	*div;
+	const struct stm32_mux_cfg	*mux;
+};
 
-अटल काष्ठा clk_hw *
-_clk_hw_रेजिस्टर_gate(काष्ठा device *dev,
-		      काष्ठा clk_hw_onecell_data *clk_data,
-		      व्योम __iomem *base, spinlock_t *lock,
-		      स्थिर काष्ठा घड़ी_config *cfg)
-अणु
-	काष्ठा gate_cfg *gate_cfg = cfg->cfg;
+static struct clk_hw *
+_clk_hw_register_gate(struct device *dev,
+		      struct clk_hw_onecell_data *clk_data,
+		      void __iomem *base, spinlock_t *lock,
+		      const struct clock_config *cfg)
+{
+	struct gate_cfg *gate_cfg = cfg->cfg;
 
-	वापस clk_hw_रेजिस्टर_gate(dev,
+	return clk_hw_register_gate(dev,
 				    cfg->name,
 				    cfg->parent_name,
 				    cfg->flags,
@@ -393,98 +392,98 @@ _clk_hw_रेजिस्टर_gate(काष्ठा device *dev,
 				    gate_cfg->bit_idx,
 				    gate_cfg->gate_flags,
 				    lock);
-पूर्ण
+}
 
-अटल काष्ठा clk_hw *
-_clk_hw_रेजिस्टर_fixed_factor(काष्ठा device *dev,
-			      काष्ठा clk_hw_onecell_data *clk_data,
-			      व्योम __iomem *base, spinlock_t *lock,
-			      स्थिर काष्ठा घड़ी_config *cfg)
-अणु
-	काष्ठा fixed_factor_cfg *ff_cfg = cfg->cfg;
+static struct clk_hw *
+_clk_hw_register_fixed_factor(struct device *dev,
+			      struct clk_hw_onecell_data *clk_data,
+			      void __iomem *base, spinlock_t *lock,
+			      const struct clock_config *cfg)
+{
+	struct fixed_factor_cfg *ff_cfg = cfg->cfg;
 
-	वापस clk_hw_रेजिस्टर_fixed_factor(dev, cfg->name, cfg->parent_name,
+	return clk_hw_register_fixed_factor(dev, cfg->name, cfg->parent_name,
 					    cfg->flags, ff_cfg->mult,
-					    ff_cfg->भाग);
-पूर्ण
+					    ff_cfg->div);
+}
 
-अटल काष्ठा clk_hw *
-_clk_hw_रेजिस्टर_भागider_table(काष्ठा device *dev,
-			       काष्ठा clk_hw_onecell_data *clk_data,
-			       व्योम __iomem *base, spinlock_t *lock,
-			       स्थिर काष्ठा घड़ी_config *cfg)
-अणु
-	काष्ठा भाग_cfg *भाग_cfg = cfg->cfg;
+static struct clk_hw *
+_clk_hw_register_divider_table(struct device *dev,
+			       struct clk_hw_onecell_data *clk_data,
+			       void __iomem *base, spinlock_t *lock,
+			       const struct clock_config *cfg)
+{
+	struct div_cfg *div_cfg = cfg->cfg;
 
-	वापस clk_hw_रेजिस्टर_भागider_table(dev,
+	return clk_hw_register_divider_table(dev,
 					     cfg->name,
 					     cfg->parent_name,
 					     cfg->flags,
-					     भाग_cfg->reg_off + base,
-					     भाग_cfg->shअगरt,
-					     भाग_cfg->width,
-					     भाग_cfg->भाग_flags,
-					     भाग_cfg->table,
+					     div_cfg->reg_off + base,
+					     div_cfg->shift,
+					     div_cfg->width,
+					     div_cfg->div_flags,
+					     div_cfg->table,
 					     lock);
-पूर्ण
+}
 
-अटल काष्ठा clk_hw *
-_clk_hw_रेजिस्टर_mux(काष्ठा device *dev,
-		     काष्ठा clk_hw_onecell_data *clk_data,
-		     व्योम __iomem *base, spinlock_t *lock,
-		     स्थिर काष्ठा घड़ी_config *cfg)
-अणु
-	काष्ठा mux_cfg *mux_cfg = cfg->cfg;
+static struct clk_hw *
+_clk_hw_register_mux(struct device *dev,
+		     struct clk_hw_onecell_data *clk_data,
+		     void __iomem *base, spinlock_t *lock,
+		     const struct clock_config *cfg)
+{
+	struct mux_cfg *mux_cfg = cfg->cfg;
 
-	वापस clk_hw_रेजिस्टर_mux(dev, cfg->name, cfg->parent_names,
+	return clk_hw_register_mux(dev, cfg->name, cfg->parent_names,
 				   cfg->num_parents, cfg->flags,
-				   mux_cfg->reg_off + base, mux_cfg->shअगरt,
+				   mux_cfg->reg_off + base, mux_cfg->shift,
 				   mux_cfg->width, mux_cfg->mux_flags, lock);
-पूर्ण
+}
 
-/* MP1 Gate घड़ी with set & clear रेजिस्टरs */
+/* MP1 Gate clock with set & clear registers */
 
-अटल पूर्णांक mp1_gate_clk_enable(काष्ठा clk_hw *hw)
-अणु
-	अगर (!clk_gate_ops.is_enabled(hw))
+static int mp1_gate_clk_enable(struct clk_hw *hw)
+{
+	if (!clk_gate_ops.is_enabled(hw))
 		clk_gate_ops.enable(hw);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम mp1_gate_clk_disable(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा clk_gate *gate = to_clk_gate(hw);
-	अचिन्हित दीर्घ flags = 0;
+static void mp1_gate_clk_disable(struct clk_hw *hw)
+{
+	struct clk_gate *gate = to_clk_gate(hw);
+	unsigned long flags = 0;
 
-	अगर (clk_gate_ops.is_enabled(hw)) अणु
+	if (clk_gate_ops.is_enabled(hw)) {
 		spin_lock_irqsave(gate->lock, flags);
-		ग_लिखोl_relaxed(BIT(gate->bit_idx), gate->reg + RCC_CLR);
+		writel_relaxed(BIT(gate->bit_idx), gate->reg + RCC_CLR);
 		spin_unlock_irqrestore(gate->lock, flags);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल स्थिर काष्ठा clk_ops mp1_gate_clk_ops = अणु
+static const struct clk_ops mp1_gate_clk_ops = {
 	.enable		= mp1_gate_clk_enable,
 	.disable	= mp1_gate_clk_disable,
 	.is_enabled	= clk_gate_is_enabled,
-पूर्ण;
+};
 
-अटल काष्ठा clk_hw *_get_sपंचांग32_mux(व्योम __iomem *base,
-				     स्थिर काष्ठा sपंचांग32_mux_cfg *cfg,
+static struct clk_hw *_get_stm32_mux(void __iomem *base,
+				     const struct stm32_mux_cfg *cfg,
 				     spinlock_t *lock)
-अणु
-	काष्ठा sपंचांग32_clk_mmux *mmux;
-	काष्ठा clk_mux *mux;
-	काष्ठा clk_hw *mux_hw;
+{
+	struct stm32_clk_mmux *mmux;
+	struct clk_mux *mux;
+	struct clk_hw *mux_hw;
 
-	अगर (cfg->mmux) अणु
-		mmux = kzalloc(माप(*mmux), GFP_KERNEL);
-		अगर (!mmux)
-			वापस ERR_PTR(-ENOMEM);
+	if (cfg->mmux) {
+		mmux = kzalloc(sizeof(*mmux), GFP_KERNEL);
+		if (!mmux)
+			return ERR_PTR(-ENOMEM);
 
 		mmux->mux.reg = cfg->mux->reg_off + base;
-		mmux->mux.shअगरt = cfg->mux->shअगरt;
+		mmux->mux.shift = cfg->mux->shift;
 		mmux->mux.mask = (1 << cfg->mux->width) - 1;
 		mmux->mux.flags = cfg->mux->mux_flags;
 		mmux->mux.table = cfg->mux->table;
@@ -493,56 +492,56 @@ _clk_hw_रेजिस्टर_mux(काष्ठा device *dev,
 		mux_hw = &mmux->mux.hw;
 		cfg->mmux->hws[cfg->mmux->nbr_clk++] = mux_hw;
 
-	पूर्ण अन्यथा अणु
-		mux = kzalloc(माप(*mux), GFP_KERNEL);
-		अगर (!mux)
-			वापस ERR_PTR(-ENOMEM);
+	} else {
+		mux = kzalloc(sizeof(*mux), GFP_KERNEL);
+		if (!mux)
+			return ERR_PTR(-ENOMEM);
 
 		mux->reg = cfg->mux->reg_off + base;
-		mux->shअगरt = cfg->mux->shअगरt;
+		mux->shift = cfg->mux->shift;
 		mux->mask = (1 << cfg->mux->width) - 1;
 		mux->flags = cfg->mux->mux_flags;
 		mux->table = cfg->mux->table;
 		mux->lock = lock;
 		mux_hw = &mux->hw;
-	पूर्ण
+	}
 
-	वापस mux_hw;
-पूर्ण
+	return mux_hw;
+}
 
-अटल काष्ठा clk_hw *_get_sपंचांग32_भाग(व्योम __iomem *base,
-				     स्थिर काष्ठा sपंचांग32_भाग_cfg *cfg,
+static struct clk_hw *_get_stm32_div(void __iomem *base,
+				     const struct stm32_div_cfg *cfg,
 				     spinlock_t *lock)
-अणु
-	काष्ठा clk_भागider *भाग;
+{
+	struct clk_divider *div;
 
-	भाग = kzalloc(माप(*भाग), GFP_KERNEL);
+	div = kzalloc(sizeof(*div), GFP_KERNEL);
 
-	अगर (!भाग)
-		वापस ERR_PTR(-ENOMEM);
+	if (!div)
+		return ERR_PTR(-ENOMEM);
 
-	भाग->reg = cfg->भाग->reg_off + base;
-	भाग->shअगरt = cfg->भाग->shअगरt;
-	भाग->width = cfg->भाग->width;
-	भाग->flags = cfg->भाग->भाग_flags;
-	भाग->table = cfg->भाग->table;
-	भाग->lock = lock;
+	div->reg = cfg->div->reg_off + base;
+	div->shift = cfg->div->shift;
+	div->width = cfg->div->width;
+	div->flags = cfg->div->div_flags;
+	div->table = cfg->div->table;
+	div->lock = lock;
 
-	वापस &भाग->hw;
-पूर्ण
+	return &div->hw;
+}
 
-अटल काष्ठा clk_hw *
-_get_sपंचांग32_gate(व्योम __iomem *base,
-		स्थिर काष्ठा sपंचांग32_gate_cfg *cfg, spinlock_t *lock)
-अणु
-	काष्ठा sपंचांग32_clk_mgate *mgate;
-	काष्ठा clk_gate *gate;
-	काष्ठा clk_hw *gate_hw;
+static struct clk_hw *
+_get_stm32_gate(void __iomem *base,
+		const struct stm32_gate_cfg *cfg, spinlock_t *lock)
+{
+	struct stm32_clk_mgate *mgate;
+	struct clk_gate *gate;
+	struct clk_hw *gate_hw;
 
-	अगर (cfg->mgate) अणु
-		mgate = kzalloc(माप(*mgate), GFP_KERNEL);
-		अगर (!mgate)
-			वापस ERR_PTR(-ENOMEM);
+	if (cfg->mgate) {
+		mgate = kzalloc(sizeof(*mgate), GFP_KERNEL);
+		if (!mgate)
+			return ERR_PTR(-ENOMEM);
 
 		mgate->gate.reg = cfg->gate->reg_off + base;
 		mgate->gate.bit_idx = cfg->gate->bit_idx;
@@ -554,10 +553,10 @@ _get_sपंचांग32_gate(व्योम __iomem *base,
 
 		gate_hw = &mgate->gate.hw;
 
-	पूर्ण अन्यथा अणु
-		gate = kzalloc(माप(*gate), GFP_KERNEL);
-		अगर (!gate)
-			वापस ERR_PTR(-ENOMEM);
+	} else {
+		gate = kzalloc(sizeof(*gate), GFP_KERNEL);
+		if (!gate)
+			return ERR_PTR(-ENOMEM);
 
 		gate->reg = cfg->gate->reg_off + base;
 		gate->bit_idx = cfg->gate->bit_idx;
@@ -565,23 +564,23 @@ _get_sपंचांग32_gate(व्योम __iomem *base,
 		gate->lock = lock;
 
 		gate_hw = &gate->hw;
-	पूर्ण
+	}
 
-	वापस gate_hw;
-पूर्ण
+	return gate_hw;
+}
 
-अटल काष्ठा clk_hw *
-clk_sपंचांग32_रेजिस्टर_gate_ops(काष्ठा device *dev,
-			    स्थिर अक्षर *name,
-			    स्थिर अक्षर *parent_name,
-			    अचिन्हित दीर्घ flags,
-			    व्योम __iomem *base,
-			    स्थिर काष्ठा sपंचांग32_gate_cfg *cfg,
+static struct clk_hw *
+clk_stm32_register_gate_ops(struct device *dev,
+			    const char *name,
+			    const char *parent_name,
+			    unsigned long flags,
+			    void __iomem *base,
+			    const struct stm32_gate_cfg *cfg,
 			    spinlock_t *lock)
-अणु
-	काष्ठा clk_init_data init = अणु शून्य पूर्ण;
-	काष्ठा clk_hw *hw;
-	पूर्णांक ret;
+{
+	struct clk_init_data init = { NULL };
+	struct clk_hw *hw;
+	int ret;
 
 	init.name = name;
 	init.parent_names = &parent_name;
@@ -590,294 +589,294 @@ clk_sपंचांग32_रेजिस्टर_gate_ops(काष्ठा d
 
 	init.ops = &clk_gate_ops;
 
-	अगर (cfg->ops)
+	if (cfg->ops)
 		init.ops = cfg->ops;
 
-	hw = _get_sपंचांग32_gate(base, cfg, lock);
-	अगर (IS_ERR(hw))
-		वापस ERR_PTR(-ENOMEM);
+	hw = _get_stm32_gate(base, cfg, lock);
+	if (IS_ERR(hw))
+		return ERR_PTR(-ENOMEM);
 
 	hw->init = &init;
 
-	ret = clk_hw_रेजिस्टर(dev, hw);
-	अगर (ret)
+	ret = clk_hw_register(dev, hw);
+	if (ret)
 		hw = ERR_PTR(ret);
 
-	वापस hw;
-पूर्ण
+	return hw;
+}
 
-अटल काष्ठा clk_hw *
-clk_sपंचांग32_रेजिस्टर_composite(काष्ठा device *dev,
-			     स्थिर अक्षर *name, स्थिर अक्षर * स्थिर *parent_names,
-			     पूर्णांक num_parents, व्योम __iomem *base,
-			     स्थिर काष्ठा sपंचांग32_composite_cfg *cfg,
-			     अचिन्हित दीर्घ flags, spinlock_t *lock)
-अणु
-	स्थिर काष्ठा clk_ops *mux_ops, *भाग_ops, *gate_ops;
-	काष्ठा clk_hw *mux_hw, *भाग_hw, *gate_hw;
+static struct clk_hw *
+clk_stm32_register_composite(struct device *dev,
+			     const char *name, const char * const *parent_names,
+			     int num_parents, void __iomem *base,
+			     const struct stm32_composite_cfg *cfg,
+			     unsigned long flags, spinlock_t *lock)
+{
+	const struct clk_ops *mux_ops, *div_ops, *gate_ops;
+	struct clk_hw *mux_hw, *div_hw, *gate_hw;
 
-	mux_hw = शून्य;
-	भाग_hw = शून्य;
-	gate_hw = शून्य;
-	mux_ops = शून्य;
-	भाग_ops = शून्य;
-	gate_ops = शून्य;
+	mux_hw = NULL;
+	div_hw = NULL;
+	gate_hw = NULL;
+	mux_ops = NULL;
+	div_ops = NULL;
+	gate_ops = NULL;
 
-	अगर (cfg->mux) अणु
-		mux_hw = _get_sपंचांग32_mux(base, cfg->mux, lock);
+	if (cfg->mux) {
+		mux_hw = _get_stm32_mux(base, cfg->mux, lock);
 
-		अगर (!IS_ERR(mux_hw)) अणु
+		if (!IS_ERR(mux_hw)) {
 			mux_ops = &clk_mux_ops;
 
-			अगर (cfg->mux->ops)
+			if (cfg->mux->ops)
 				mux_ops = cfg->mux->ops;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (cfg->भाग) अणु
-		भाग_hw = _get_sपंचांग32_भाग(base, cfg->भाग, lock);
+	if (cfg->div) {
+		div_hw = _get_stm32_div(base, cfg->div, lock);
 
-		अगर (!IS_ERR(भाग_hw)) अणु
-			भाग_ops = &clk_भागider_ops;
+		if (!IS_ERR(div_hw)) {
+			div_ops = &clk_divider_ops;
 
-			अगर (cfg->भाग->ops)
-				भाग_ops = cfg->भाग->ops;
-		पूर्ण
-	पूर्ण
+			if (cfg->div->ops)
+				div_ops = cfg->div->ops;
+		}
+	}
 
-	अगर (cfg->gate) अणु
-		gate_hw = _get_sपंचांग32_gate(base, cfg->gate, lock);
+	if (cfg->gate) {
+		gate_hw = _get_stm32_gate(base, cfg->gate, lock);
 
-		अगर (!IS_ERR(gate_hw)) अणु
+		if (!IS_ERR(gate_hw)) {
 			gate_ops = &clk_gate_ops;
 
-			अगर (cfg->gate->ops)
+			if (cfg->gate->ops)
 				gate_ops = cfg->gate->ops;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस clk_hw_रेजिस्टर_composite(dev, name, parent_names, num_parents,
-				       mux_hw, mux_ops, भाग_hw, भाग_ops,
+	return clk_hw_register_composite(dev, name, parent_names, num_parents,
+				       mux_hw, mux_ops, div_hw, div_ops,
 				       gate_hw, gate_ops, flags);
-पूर्ण
+}
 
-#घोषणा to_clk_mgate(_gate) container_of(_gate, काष्ठा sपंचांग32_clk_mgate, gate)
+#define to_clk_mgate(_gate) container_of(_gate, struct stm32_clk_mgate, gate)
 
-अटल पूर्णांक mp1_mgate_clk_enable(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा clk_gate *gate = to_clk_gate(hw);
-	काष्ठा sपंचांग32_clk_mgate *clk_mgate = to_clk_mgate(gate);
+static int mp1_mgate_clk_enable(struct clk_hw *hw)
+{
+	struct clk_gate *gate = to_clk_gate(hw);
+	struct stm32_clk_mgate *clk_mgate = to_clk_mgate(gate);
 
 	clk_mgate->mgate->flag |= clk_mgate->mask;
 
 	mp1_gate_clk_enable(hw);
 
-	वापस  0;
-पूर्ण
+	return  0;
+}
 
-अटल व्योम mp1_mgate_clk_disable(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा clk_gate *gate = to_clk_gate(hw);
-	काष्ठा sपंचांग32_clk_mgate *clk_mgate = to_clk_mgate(gate);
+static void mp1_mgate_clk_disable(struct clk_hw *hw)
+{
+	struct clk_gate *gate = to_clk_gate(hw);
+	struct stm32_clk_mgate *clk_mgate = to_clk_mgate(gate);
 
 	clk_mgate->mgate->flag &= ~clk_mgate->mask;
 
-	अगर (clk_mgate->mgate->flag == 0)
+	if (clk_mgate->mgate->flag == 0)
 		mp1_gate_clk_disable(hw);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा clk_ops mp1_mgate_clk_ops = अणु
+static const struct clk_ops mp1_mgate_clk_ops = {
 	.enable		= mp1_mgate_clk_enable,
 	.disable	= mp1_mgate_clk_disable,
 	.is_enabled	= clk_gate_is_enabled,
 
-पूर्ण;
+};
 
-#घोषणा to_clk_mmux(_mux) container_of(_mux, काष्ठा sपंचांग32_clk_mmux, mux)
+#define to_clk_mmux(_mux) container_of(_mux, struct stm32_clk_mmux, mux)
 
-अटल u8 clk_mmux_get_parent(काष्ठा clk_hw *hw)
-अणु
-	वापस clk_mux_ops.get_parent(hw);
-पूर्ण
+static u8 clk_mmux_get_parent(struct clk_hw *hw)
+{
+	return clk_mux_ops.get_parent(hw);
+}
 
-अटल पूर्णांक clk_mmux_set_parent(काष्ठा clk_hw *hw, u8 index)
-अणु
-	काष्ठा clk_mux *mux = to_clk_mux(hw);
-	काष्ठा sपंचांग32_clk_mmux *clk_mmux = to_clk_mmux(mux);
-	काष्ठा clk_hw *hwp;
-	पूर्णांक ret, n;
+static int clk_mmux_set_parent(struct clk_hw *hw, u8 index)
+{
+	struct clk_mux *mux = to_clk_mux(hw);
+	struct stm32_clk_mmux *clk_mmux = to_clk_mmux(mux);
+	struct clk_hw *hwp;
+	int ret, n;
 
 	ret = clk_mux_ops.set_parent(hw, index);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	hwp = clk_hw_get_parent(hw);
 
-	क्रम (n = 0; n < clk_mmux->mmux->nbr_clk; n++)
-		अगर (clk_mmux->mmux->hws[n] != hw)
+	for (n = 0; n < clk_mmux->mmux->nbr_clk; n++)
+		if (clk_mmux->mmux->hws[n] != hw)
 			clk_hw_reparent(clk_mmux->mmux->hws[n], hwp);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा clk_ops clk_mmux_ops = अणु
+static const struct clk_ops clk_mmux_ops = {
 	.get_parent	= clk_mmux_get_parent,
 	.set_parent	= clk_mmux_set_parent,
 	.determine_rate	= __clk_mux_determine_rate,
-पूर्ण;
+};
 
 /* STM32 PLL */
-काष्ठा sपंचांग32_pll_obj अणु
-	/* lock pll enable/disable रेजिस्टरs */
+struct stm32_pll_obj {
+	/* lock pll enable/disable registers */
 	spinlock_t *lock;
-	व्योम __iomem *reg;
-	काष्ठा clk_hw hw;
-पूर्ण;
+	void __iomem *reg;
+	struct clk_hw hw;
+};
 
-#घोषणा to_pll(_hw) container_of(_hw, काष्ठा sपंचांग32_pll_obj, hw)
+#define to_pll(_hw) container_of(_hw, struct stm32_pll_obj, hw)
 
-#घोषणा PLL_ON		BIT(0)
-#घोषणा PLL_RDY		BIT(1)
-#घोषणा DIVN_MASK	0x1FF
-#घोषणा DIVM_MASK	0x3F
-#घोषणा DIVM_SHIFT	16
-#घोषणा DIVN_SHIFT	0
-#घोषणा FRAC_OFFSET	0xC
-#घोषणा FRAC_MASK	0x1FFF
-#घोषणा FRAC_SHIFT	3
-#घोषणा FRACLE		BIT(16)
+#define PLL_ON		BIT(0)
+#define PLL_RDY		BIT(1)
+#define DIVN_MASK	0x1FF
+#define DIVM_MASK	0x3F
+#define DIVM_SHIFT	16
+#define DIVN_SHIFT	0
+#define FRAC_OFFSET	0xC
+#define FRAC_MASK	0x1FFF
+#define FRAC_SHIFT	3
+#define FRACLE		BIT(16)
 
-अटल पूर्णांक __pll_is_enabled(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा sपंचांग32_pll_obj *clk_elem = to_pll(hw);
+static int __pll_is_enabled(struct clk_hw *hw)
+{
+	struct stm32_pll_obj *clk_elem = to_pll(hw);
 
-	वापस पढ़ोl_relaxed(clk_elem->reg) & PLL_ON;
-पूर्ण
+	return readl_relaxed(clk_elem->reg) & PLL_ON;
+}
 
-#घोषणा TIMEOUT 5
+#define TIMEOUT 5
 
-अटल पूर्णांक pll_enable(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा sपंचांग32_pll_obj *clk_elem = to_pll(hw);
+static int pll_enable(struct clk_hw *hw)
+{
+	struct stm32_pll_obj *clk_elem = to_pll(hw);
 	u32 reg;
-	अचिन्हित दीर्घ flags = 0;
-	अचिन्हित पूर्णांक समयout = TIMEOUT;
-	पूर्णांक bit_status = 0;
+	unsigned long flags = 0;
+	unsigned int timeout = TIMEOUT;
+	int bit_status = 0;
 
 	spin_lock_irqsave(clk_elem->lock, flags);
 
-	अगर (__pll_is_enabled(hw))
-		जाओ unlock;
+	if (__pll_is_enabled(hw))
+		goto unlock;
 
-	reg = पढ़ोl_relaxed(clk_elem->reg);
+	reg = readl_relaxed(clk_elem->reg);
 	reg |= PLL_ON;
-	ग_लिखोl_relaxed(reg, clk_elem->reg);
+	writel_relaxed(reg, clk_elem->reg);
 
-	/* We can't use पढ़ोl_poll_समयout() because we can be blocked अगर
-	 * someone enables this घड़ी beक्रमe घड़ीsource changes.
-	 * Only jअगरfies counter is available. Jअगरfies are incremented by
-	 * पूर्णांकerruptions and enable op करोes not allow to be पूर्णांकerrupted.
+	/* We can't use readl_poll_timeout() because we can be blocked if
+	 * someone enables this clock before clocksource changes.
+	 * Only jiffies counter is available. Jiffies are incremented by
+	 * interruptions and enable op does not allow to be interrupted.
 	 */
-	करो अणु
-		bit_status = !(पढ़ोl_relaxed(clk_elem->reg) & PLL_RDY);
+	do {
+		bit_status = !(readl_relaxed(clk_elem->reg) & PLL_RDY);
 
-		अगर (bit_status)
+		if (bit_status)
 			udelay(120);
 
-	पूर्ण जबतक (bit_status && --समयout);
+	} while (bit_status && --timeout);
 
 unlock:
 	spin_unlock_irqrestore(clk_elem->lock, flags);
 
-	वापस bit_status;
-पूर्ण
+	return bit_status;
+}
 
-अटल व्योम pll_disable(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा sपंचांग32_pll_obj *clk_elem = to_pll(hw);
+static void pll_disable(struct clk_hw *hw)
+{
+	struct stm32_pll_obj *clk_elem = to_pll(hw);
 	u32 reg;
-	अचिन्हित दीर्घ flags = 0;
+	unsigned long flags = 0;
 
 	spin_lock_irqsave(clk_elem->lock, flags);
 
-	reg = पढ़ोl_relaxed(clk_elem->reg);
+	reg = readl_relaxed(clk_elem->reg);
 	reg &= ~PLL_ON;
-	ग_लिखोl_relaxed(reg, clk_elem->reg);
+	writel_relaxed(reg, clk_elem->reg);
 
 	spin_unlock_irqrestore(clk_elem->lock, flags);
-पूर्ण
+}
 
-अटल u32 pll_frac_val(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा sपंचांग32_pll_obj *clk_elem = to_pll(hw);
+static u32 pll_frac_val(struct clk_hw *hw)
+{
+	struct stm32_pll_obj *clk_elem = to_pll(hw);
 	u32 reg, frac = 0;
 
-	reg = पढ़ोl_relaxed(clk_elem->reg + FRAC_OFFSET);
-	अगर (reg & FRACLE)
+	reg = readl_relaxed(clk_elem->reg + FRAC_OFFSET);
+	if (reg & FRACLE)
 		frac = (reg >> FRAC_SHIFT) & FRAC_MASK;
 
-	वापस frac;
-पूर्ण
+	return frac;
+}
 
-अटल अचिन्हित दीर्घ pll_recalc_rate(काष्ठा clk_hw *hw,
-				     अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा sपंचांग32_pll_obj *clk_elem = to_pll(hw);
+static unsigned long pll_recalc_rate(struct clk_hw *hw,
+				     unsigned long parent_rate)
+{
+	struct stm32_pll_obj *clk_elem = to_pll(hw);
 	u32 reg;
-	u32 frac, भागm, भागn;
+	u32 frac, divm, divn;
 	u64 rate, rate_frac = 0;
 
-	reg = पढ़ोl_relaxed(clk_elem->reg + 4);
+	reg = readl_relaxed(clk_elem->reg + 4);
 
-	भागm = ((reg >> DIVM_SHIFT) & DIVM_MASK) + 1;
-	भागn = ((reg >> DIVN_SHIFT) & DIVN_MASK) + 1;
-	rate = (u64)parent_rate * भागn;
+	divm = ((reg >> DIVM_SHIFT) & DIVM_MASK) + 1;
+	divn = ((reg >> DIVN_SHIFT) & DIVN_MASK) + 1;
+	rate = (u64)parent_rate * divn;
 
-	करो_भाग(rate, भागm);
+	do_div(rate, divm);
 
 	frac = pll_frac_val(hw);
-	अगर (frac) अणु
+	if (frac) {
 		rate_frac = (u64)parent_rate * (u64)frac;
-		करो_भाग(rate_frac, (भागm * 8192));
-	पूर्ण
+		do_div(rate_frac, (divm * 8192));
+	}
 
-	वापस rate + rate_frac;
-पूर्ण
+	return rate + rate_frac;
+}
 
-अटल पूर्णांक pll_is_enabled(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा sपंचांग32_pll_obj *clk_elem = to_pll(hw);
-	अचिन्हित दीर्घ flags = 0;
-	पूर्णांक ret;
+static int pll_is_enabled(struct clk_hw *hw)
+{
+	struct stm32_pll_obj *clk_elem = to_pll(hw);
+	unsigned long flags = 0;
+	int ret;
 
 	spin_lock_irqsave(clk_elem->lock, flags);
 	ret = __pll_is_enabled(hw);
 	spin_unlock_irqrestore(clk_elem->lock, flags);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा clk_ops pll_ops = अणु
+static const struct clk_ops pll_ops = {
 	.enable		= pll_enable,
 	.disable	= pll_disable,
 	.recalc_rate	= pll_recalc_rate,
 	.is_enabled	= pll_is_enabled,
-पूर्ण;
+};
 
-अटल काष्ठा clk_hw *clk_रेजिस्टर_pll(काष्ठा device *dev, स्थिर अक्षर *name,
-				       स्थिर अक्षर *parent_name,
-				       व्योम __iomem *reg,
-				       अचिन्हित दीर्घ flags,
+static struct clk_hw *clk_register_pll(struct device *dev, const char *name,
+				       const char *parent_name,
+				       void __iomem *reg,
+				       unsigned long flags,
 				       spinlock_t *lock)
-अणु
-	काष्ठा sपंचांग32_pll_obj *element;
-	काष्ठा clk_init_data init;
-	काष्ठा clk_hw *hw;
-	पूर्णांक err;
+{
+	struct stm32_pll_obj *element;
+	struct clk_init_data init;
+	struct clk_hw *hw;
+	int err;
 
-	element = kzalloc(माप(*element), GFP_KERNEL);
-	अगर (!element)
-		वापस ERR_PTR(-ENOMEM);
+	element = kzalloc(sizeof(*element), GFP_KERNEL);
+	if (!element)
+		return ERR_PTR(-ENOMEM);
 
 	init.name = name;
 	init.ops = &pll_ops;
@@ -890,410 +889,410 @@ unlock:
 	element->lock = lock;
 
 	hw = &element->hw;
-	err = clk_hw_रेजिस्टर(dev, hw);
+	err = clk_hw_register(dev, hw);
 
-	अगर (err) अणु
-		kमुक्त(element);
-		वापस ERR_PTR(err);
-	पूर्ण
+	if (err) {
+		kfree(element);
+		return ERR_PTR(err);
+	}
 
-	वापस hw;
-पूर्ण
+	return hw;
+}
 
 /* Kernel Timer */
-काष्ठा समयr_cker अणु
-	/* lock the kernel output भागider रेजिस्टर */
+struct timer_cker {
+	/* lock the kernel output divider register */
 	spinlock_t *lock;
-	व्योम __iomem *apbभाग;
-	व्योम __iomem *timpre;
-	काष्ठा clk_hw hw;
-पूर्ण;
+	void __iomem *apbdiv;
+	void __iomem *timpre;
+	struct clk_hw hw;
+};
 
-#घोषणा to_समयr_cker(_hw) container_of(_hw, काष्ठा समयr_cker, hw)
+#define to_timer_cker(_hw) container_of(_hw, struct timer_cker, hw)
 
-#घोषणा APB_DIV_MASK 0x07
-#घोषणा TIM_PRE_MASK 0x01
+#define APB_DIV_MASK 0x07
+#define TIM_PRE_MASK 0x01
 
-अटल अचिन्हित दीर्घ __besपंचांगult(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
-				अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा समयr_cker *tim_ker = to_समयr_cker(hw);
+static unsigned long __bestmult(struct clk_hw *hw, unsigned long rate,
+				unsigned long parent_rate)
+{
+	struct timer_cker *tim_ker = to_timer_cker(hw);
 	u32 prescaler;
-	अचिन्हित पूर्णांक mult = 0;
+	unsigned int mult = 0;
 
-	prescaler = पढ़ोl_relaxed(tim_ker->apbभाग) & APB_DIV_MASK;
-	अगर (prescaler < 2)
-		वापस 1;
+	prescaler = readl_relaxed(tim_ker->apbdiv) & APB_DIV_MASK;
+	if (prescaler < 2)
+		return 1;
 
 	mult = 2;
 
-	अगर (rate / parent_rate >= 4)
+	if (rate / parent_rate >= 4)
 		mult = 4;
 
-	वापस mult;
-पूर्ण
+	return mult;
+}
 
-अटल दीर्घ समयr_ker_round_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
-				 अचिन्हित दीर्घ *parent_rate)
-अणु
-	अचिन्हित दीर्घ factor = __besपंचांगult(hw, rate, *parent_rate);
+static long timer_ker_round_rate(struct clk_hw *hw, unsigned long rate,
+				 unsigned long *parent_rate)
+{
+	unsigned long factor = __bestmult(hw, rate, *parent_rate);
 
-	वापस *parent_rate * factor;
-पूर्ण
+	return *parent_rate * factor;
+}
 
-अटल पूर्णांक समयr_ker_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
-			      अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा समयr_cker *tim_ker = to_समयr_cker(hw);
-	अचिन्हित दीर्घ flags = 0;
-	अचिन्हित दीर्घ factor = __besपंचांगult(hw, rate, parent_rate);
-	पूर्णांक ret = 0;
+static int timer_ker_set_rate(struct clk_hw *hw, unsigned long rate,
+			      unsigned long parent_rate)
+{
+	struct timer_cker *tim_ker = to_timer_cker(hw);
+	unsigned long flags = 0;
+	unsigned long factor = __bestmult(hw, rate, parent_rate);
+	int ret = 0;
 
 	spin_lock_irqsave(tim_ker->lock, flags);
 
-	चयन (factor) अणु
-	हाल 1:
-		अवरोध;
-	हाल 2:
-		ग_लिखोl_relaxed(0, tim_ker->timpre);
-		अवरोध;
-	हाल 4:
-		ग_लिखोl_relaxed(1, tim_ker->timpre);
-		अवरोध;
-	शेष:
+	switch (factor) {
+	case 1:
+		break;
+	case 2:
+		writel_relaxed(0, tim_ker->timpre);
+		break;
+	case 4:
+		writel_relaxed(1, tim_ker->timpre);
+		break;
+	default:
 		ret = -EINVAL;
-	पूर्ण
+	}
 	spin_unlock_irqrestore(tim_ker->lock, flags);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल अचिन्हित दीर्घ समयr_ker_recalc_rate(काष्ठा clk_hw *hw,
-					   अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा समयr_cker *tim_ker = to_समयr_cker(hw);
+static unsigned long timer_ker_recalc_rate(struct clk_hw *hw,
+					   unsigned long parent_rate)
+{
+	struct timer_cker *tim_ker = to_timer_cker(hw);
 	u32 prescaler, timpre;
 	u32 mul;
 
-	prescaler = पढ़ोl_relaxed(tim_ker->apbभाग) & APB_DIV_MASK;
+	prescaler = readl_relaxed(tim_ker->apbdiv) & APB_DIV_MASK;
 
-	timpre = पढ़ोl_relaxed(tim_ker->timpre) & TIM_PRE_MASK;
+	timpre = readl_relaxed(tim_ker->timpre) & TIM_PRE_MASK;
 
-	अगर (!prescaler)
-		वापस parent_rate;
+	if (!prescaler)
+		return parent_rate;
 
 	mul = (timpre + 1) * 2;
 
-	वापस parent_rate * mul;
-पूर्ण
+	return parent_rate * mul;
+}
 
-अटल स्थिर काष्ठा clk_ops समयr_ker_ops = अणु
-	.recalc_rate	= समयr_ker_recalc_rate,
-	.round_rate	= समयr_ker_round_rate,
-	.set_rate	= समयr_ker_set_rate,
+static const struct clk_ops timer_ker_ops = {
+	.recalc_rate	= timer_ker_recalc_rate,
+	.round_rate	= timer_ker_round_rate,
+	.set_rate	= timer_ker_set_rate,
 
-पूर्ण;
+};
 
-अटल काष्ठा clk_hw *clk_रेजिस्टर_cktim(काष्ठा device *dev, स्थिर अक्षर *name,
-					 स्थिर अक्षर *parent_name,
-					 अचिन्हित दीर्घ flags,
-					 व्योम __iomem *apbभाग,
-					 व्योम __iomem *timpre,
+static struct clk_hw *clk_register_cktim(struct device *dev, const char *name,
+					 const char *parent_name,
+					 unsigned long flags,
+					 void __iomem *apbdiv,
+					 void __iomem *timpre,
 					 spinlock_t *lock)
-अणु
-	काष्ठा समयr_cker *tim_ker;
-	काष्ठा clk_init_data init;
-	काष्ठा clk_hw *hw;
-	पूर्णांक err;
+{
+	struct timer_cker *tim_ker;
+	struct clk_init_data init;
+	struct clk_hw *hw;
+	int err;
 
-	tim_ker = kzalloc(माप(*tim_ker), GFP_KERNEL);
-	अगर (!tim_ker)
-		वापस ERR_PTR(-ENOMEM);
+	tim_ker = kzalloc(sizeof(*tim_ker), GFP_KERNEL);
+	if (!tim_ker)
+		return ERR_PTR(-ENOMEM);
 
 	init.name = name;
-	init.ops = &समयr_ker_ops;
+	init.ops = &timer_ker_ops;
 	init.flags = flags;
 	init.parent_names = &parent_name;
 	init.num_parents = 1;
 
 	tim_ker->hw.init = &init;
 	tim_ker->lock = lock;
-	tim_ker->apbभाग = apbभाग;
+	tim_ker->apbdiv = apbdiv;
 	tim_ker->timpre = timpre;
 
 	hw = &tim_ker->hw;
-	err = clk_hw_रेजिस्टर(dev, hw);
+	err = clk_hw_register(dev, hw);
 
-	अगर (err) अणु
-		kमुक्त(tim_ker);
-		वापस ERR_PTR(err);
-	पूर्ण
+	if (err) {
+		kfree(tim_ker);
+		return ERR_PTR(err);
+	}
 
-	वापस hw;
-पूर्ण
+	return hw;
+}
 
-काष्ठा sपंचांग32_pll_cfg अणु
+struct stm32_pll_cfg {
 	u32 offset;
-पूर्ण;
+};
 
-अटल काष्ठा clk_hw *_clk_रेजिस्टर_pll(काष्ठा device *dev,
-					काष्ठा clk_hw_onecell_data *clk_data,
-					व्योम __iomem *base, spinlock_t *lock,
-					स्थिर काष्ठा घड़ी_config *cfg)
-अणु
-	काष्ठा sपंचांग32_pll_cfg *sपंचांग_pll_cfg = cfg->cfg;
+static struct clk_hw *_clk_register_pll(struct device *dev,
+					struct clk_hw_onecell_data *clk_data,
+					void __iomem *base, spinlock_t *lock,
+					const struct clock_config *cfg)
+{
+	struct stm32_pll_cfg *stm_pll_cfg = cfg->cfg;
 
-	वापस clk_रेजिस्टर_pll(dev, cfg->name, cfg->parent_name,
-				base + sपंचांग_pll_cfg->offset, cfg->flags, lock);
-पूर्ण
+	return clk_register_pll(dev, cfg->name, cfg->parent_name,
+				base + stm_pll_cfg->offset, cfg->flags, lock);
+}
 
-काष्ठा sपंचांग32_cktim_cfg अणु
-	u32 offset_apbभाग;
+struct stm32_cktim_cfg {
+	u32 offset_apbdiv;
 	u32 offset_timpre;
-पूर्ण;
+};
 
-अटल काष्ठा clk_hw *_clk_रेजिस्टर_cktim(काष्ठा device *dev,
-					  काष्ठा clk_hw_onecell_data *clk_data,
-					  व्योम __iomem *base, spinlock_t *lock,
-					  स्थिर काष्ठा घड़ी_config *cfg)
-अणु
-	काष्ठा sपंचांग32_cktim_cfg *cktim_cfg = cfg->cfg;
+static struct clk_hw *_clk_register_cktim(struct device *dev,
+					  struct clk_hw_onecell_data *clk_data,
+					  void __iomem *base, spinlock_t *lock,
+					  const struct clock_config *cfg)
+{
+	struct stm32_cktim_cfg *cktim_cfg = cfg->cfg;
 
-	वापस clk_रेजिस्टर_cktim(dev, cfg->name, cfg->parent_name, cfg->flags,
-				  cktim_cfg->offset_apbभाग + base,
+	return clk_register_cktim(dev, cfg->name, cfg->parent_name, cfg->flags,
+				  cktim_cfg->offset_apbdiv + base,
 				  cktim_cfg->offset_timpre + base, lock);
-पूर्ण
+}
 
-अटल काष्ठा clk_hw *
-_clk_sपंचांग32_रेजिस्टर_gate(काष्ठा device *dev,
-			 काष्ठा clk_hw_onecell_data *clk_data,
-			 व्योम __iomem *base, spinlock_t *lock,
-			 स्थिर काष्ठा घड़ी_config *cfg)
-अणु
-	वापस clk_sपंचांग32_रेजिस्टर_gate_ops(dev,
+static struct clk_hw *
+_clk_stm32_register_gate(struct device *dev,
+			 struct clk_hw_onecell_data *clk_data,
+			 void __iomem *base, spinlock_t *lock,
+			 const struct clock_config *cfg)
+{
+	return clk_stm32_register_gate_ops(dev,
 				    cfg->name,
 				    cfg->parent_name,
 				    cfg->flags,
 				    base,
 				    cfg->cfg,
 				    lock);
-पूर्ण
+}
 
-अटल काष्ठा clk_hw *
-_clk_sपंचांग32_रेजिस्टर_composite(काष्ठा device *dev,
-			      काष्ठा clk_hw_onecell_data *clk_data,
-			      व्योम __iomem *base, spinlock_t *lock,
-			      स्थिर काष्ठा घड़ी_config *cfg)
-अणु
-	वापस clk_sपंचांग32_रेजिस्टर_composite(dev, cfg->name, cfg->parent_names,
+static struct clk_hw *
+_clk_stm32_register_composite(struct device *dev,
+			      struct clk_hw_onecell_data *clk_data,
+			      void __iomem *base, spinlock_t *lock,
+			      const struct clock_config *cfg)
+{
+	return clk_stm32_register_composite(dev, cfg->name, cfg->parent_names,
 					    cfg->num_parents, base, cfg->cfg,
 					    cfg->flags, lock);
-पूर्ण
+}
 
-#घोषणा GATE(_id, _name, _parent, _flags, _offset, _bit_idx, _gate_flags)\
-अणु\
+#define GATE(_id, _name, _parent, _flags, _offset, _bit_idx, _gate_flags)\
+{\
 	.id		= _id,\
 	.name		= _name,\
 	.parent_name	= _parent,\
 	.flags		= _flags,\
-	.cfg		=  &(काष्ठा gate_cfg) अणु\
+	.cfg		=  &(struct gate_cfg) {\
 		.reg_off	= _offset,\
 		.bit_idx	= _bit_idx,\
 		.gate_flags	= _gate_flags,\
-	पूर्ण,\
-	.func		= _clk_hw_रेजिस्टर_gate,\
-पूर्ण
+	},\
+	.func		= _clk_hw_register_gate,\
+}
 
-#घोषणा FIXED_FACTOR(_id, _name, _parent, _flags, _mult, _भाग)\
-अणु\
+#define FIXED_FACTOR(_id, _name, _parent, _flags, _mult, _div)\
+{\
 	.id		= _id,\
 	.name		= _name,\
 	.parent_name	= _parent,\
 	.flags		= _flags,\
-	.cfg		=  &(काष्ठा fixed_factor_cfg) अणु\
+	.cfg		=  &(struct fixed_factor_cfg) {\
 		.mult = _mult,\
-		.भाग = _भाग,\
-	पूर्ण,\
-	.func		= _clk_hw_रेजिस्टर_fixed_factor,\
-पूर्ण
+		.div = _div,\
+	},\
+	.func		= _clk_hw_register_fixed_factor,\
+}
 
-#घोषणा DIV_TABLE(_id, _name, _parent, _flags, _offset, _shअगरt, _width,\
-		  _भाग_flags, _भाग_प्रकारable)\
-अणु\
+#define DIV_TABLE(_id, _name, _parent, _flags, _offset, _shift, _width,\
+		  _div_flags, _div_table)\
+{\
 	.id		= _id,\
 	.name		= _name,\
 	.parent_name	= _parent,\
 	.flags		= _flags,\
-	.cfg		=  &(काष्ठा भाग_cfg) अणु\
+	.cfg		=  &(struct div_cfg) {\
 		.reg_off	= _offset,\
-		.shअगरt		= _shअगरt,\
+		.shift		= _shift,\
 		.width		= _width,\
-		.भाग_flags	= _भाग_flags,\
-		.table		= _भाग_प्रकारable,\
-	पूर्ण,\
-	.func		= _clk_hw_रेजिस्टर_भागider_table,\
-पूर्ण
+		.div_flags	= _div_flags,\
+		.table		= _div_table,\
+	},\
+	.func		= _clk_hw_register_divider_table,\
+}
 
-#घोषणा DIV(_id, _name, _parent, _flags, _offset, _shअगरt, _width, _भाग_flags)\
-	DIV_TABLE(_id, _name, _parent, _flags, _offset, _shअगरt, _width,\
-		  _भाग_flags, शून्य)
+#define DIV(_id, _name, _parent, _flags, _offset, _shift, _width, _div_flags)\
+	DIV_TABLE(_id, _name, _parent, _flags, _offset, _shift, _width,\
+		  _div_flags, NULL)
 
-#घोषणा MUX(_id, _name, _parents, _flags, _offset, _shअगरt, _width, _mux_flags)\
-अणु\
+#define MUX(_id, _name, _parents, _flags, _offset, _shift, _width, _mux_flags)\
+{\
 	.id		= _id,\
 	.name		= _name,\
 	.parent_names	= _parents,\
 	.num_parents	= ARRAY_SIZE(_parents),\
 	.flags		= _flags,\
-	.cfg		=  &(काष्ठा mux_cfg) अणु\
+	.cfg		=  &(struct mux_cfg) {\
 		.reg_off	= _offset,\
-		.shअगरt		= _shअगरt,\
+		.shift		= _shift,\
 		.width		= _width,\
 		.mux_flags	= _mux_flags,\
-	पूर्ण,\
-	.func		= _clk_hw_रेजिस्टर_mux,\
-पूर्ण
+	},\
+	.func		= _clk_hw_register_mux,\
+}
 
-#घोषणा PLL(_id, _name, _parent, _flags, _offset)\
-अणु\
+#define PLL(_id, _name, _parent, _flags, _offset)\
+{\
 	.id		= _id,\
 	.name		= _name,\
 	.parent_name	= _parent,\
 	.flags		= _flags,\
-	.cfg		=  &(काष्ठा sपंचांग32_pll_cfg) अणु\
+	.cfg		=  &(struct stm32_pll_cfg) {\
 		.offset = _offset,\
-	पूर्ण,\
-	.func		= _clk_रेजिस्टर_pll,\
-पूर्ण
+	},\
+	.func		= _clk_register_pll,\
+}
 
-#घोषणा STM32_CKTIM(_name, _parent, _flags, _offset_apbभाग, _offset_timpre)\
-अणु\
+#define STM32_CKTIM(_name, _parent, _flags, _offset_apbdiv, _offset_timpre)\
+{\
 	.id		= NO_ID,\
 	.name		= _name,\
 	.parent_name	= _parent,\
 	.flags		= _flags,\
-	.cfg		=  &(काष्ठा sपंचांग32_cktim_cfg) अणु\
-		.offset_apbभाग = _offset_apbभाग,\
+	.cfg		=  &(struct stm32_cktim_cfg) {\
+		.offset_apbdiv = _offset_apbdiv,\
 		.offset_timpre = _offset_timpre,\
-	पूर्ण,\
-	.func		= _clk_रेजिस्टर_cktim,\
-पूर्ण
+	},\
+	.func		= _clk_register_cktim,\
+}
 
-#घोषणा STM32_TIM(_id, _name, _parent, _offset_set, _bit_idx)\
+#define STM32_TIM(_id, _name, _parent, _offset_set, _bit_idx)\
 		  GATE_MP1(_id, _name, _parent, CLK_SET_RATE_PARENT,\
 			   _offset_set, _bit_idx, 0)
 
 /* STM32 GATE */
-#घोषणा STM32_GATE(_id, _name, _parent, _flags, _gate)\
-अणु\
+#define STM32_GATE(_id, _name, _parent, _flags, _gate)\
+{\
 	.id		= _id,\
 	.name		= _name,\
 	.parent_name	= _parent,\
 	.flags		= _flags,\
-	.cfg		= (काष्ठा sपंचांग32_gate_cfg *) अणु_gateपूर्ण,\
-	.func		= _clk_sपंचांग32_रेजिस्टर_gate,\
-पूर्ण
+	.cfg		= (struct stm32_gate_cfg *) {_gate},\
+	.func		= _clk_stm32_register_gate,\
+}
 
-#घोषणा _STM32_GATE(_gate_offset, _gate_bit_idx, _gate_flags, _mgate, _ops)\
-	(&(काष्ठा sपंचांग32_gate_cfg) अणु\
-		&(काष्ठा gate_cfg) अणु\
+#define _STM32_GATE(_gate_offset, _gate_bit_idx, _gate_flags, _mgate, _ops)\
+	(&(struct stm32_gate_cfg) {\
+		&(struct gate_cfg) {\
 			.reg_off	= _gate_offset,\
 			.bit_idx	= _gate_bit_idx,\
 			.gate_flags	= _gate_flags,\
-		पूर्ण,\
+		},\
 		.mgate		= _mgate,\
 		.ops		= _ops,\
-	पूर्ण)
+	})
 
-#घोषणा _STM32_MGATE(_mgate)\
+#define _STM32_MGATE(_mgate)\
 	(&per_gate_cfg[_mgate])
 
-#घोषणा _GATE(_gate_offset, _gate_bit_idx, _gate_flags)\
+#define _GATE(_gate_offset, _gate_bit_idx, _gate_flags)\
 	_STM32_GATE(_gate_offset, _gate_bit_idx, _gate_flags,\
-		    शून्य, शून्य)\
+		    NULL, NULL)\
 
-#घोषणा _GATE_MP1(_gate_offset, _gate_bit_idx, _gate_flags)\
+#define _GATE_MP1(_gate_offset, _gate_bit_idx, _gate_flags)\
 	_STM32_GATE(_gate_offset, _gate_bit_idx, _gate_flags,\
-		    शून्य, &mp1_gate_clk_ops)\
+		    NULL, &mp1_gate_clk_ops)\
 
-#घोषणा _MGATE_MP1(_mgate)\
+#define _MGATE_MP1(_mgate)\
 	.gate = &per_gate_cfg[_mgate]
 
-#घोषणा GATE_MP1(_id, _name, _parent, _flags, _offset, _bit_idx, _gate_flags)\
+#define GATE_MP1(_id, _name, _parent, _flags, _offset, _bit_idx, _gate_flags)\
 	STM32_GATE(_id, _name, _parent, _flags,\
 		   _GATE_MP1(_offset, _bit_idx, _gate_flags))
 
-#घोषणा MGATE_MP1(_id, _name, _parent, _flags, _mgate)\
+#define MGATE_MP1(_id, _name, _parent, _flags, _mgate)\
 	STM32_GATE(_id, _name, _parent, _flags,\
 		   _STM32_MGATE(_mgate))
 
-#घोषणा _STM32_DIV(_भाग_offset, _भाग_shअगरt, _भाग_width,\
-		   _भाग_flags, _भाग_प्रकारable, _ops)\
-	.भाग = &(काष्ठा sपंचांग32_भाग_cfg) अणु\
-		&(काष्ठा भाग_cfg) अणु\
-			.reg_off	= _भाग_offset,\
-			.shअगरt		= _भाग_shअगरt,\
-			.width		= _भाग_width,\
-			.भाग_flags	= _भाग_flags,\
-			.table		= _भाग_प्रकारable,\
-		पूर्ण,\
+#define _STM32_DIV(_div_offset, _div_shift, _div_width,\
+		   _div_flags, _div_table, _ops)\
+	.div = &(struct stm32_div_cfg) {\
+		&(struct div_cfg) {\
+			.reg_off	= _div_offset,\
+			.shift		= _div_shift,\
+			.width		= _div_width,\
+			.div_flags	= _div_flags,\
+			.table		= _div_table,\
+		},\
 		.ops		= _ops,\
-	पूर्ण
+	}
 
-#घोषणा _DIV(_भाग_offset, _भाग_shअगरt, _भाग_width, _भाग_flags, _भाग_प्रकारable)\
-	_STM32_DIV(_भाग_offset, _भाग_shअगरt, _भाग_width,\
-		   _भाग_flags, _भाग_प्रकारable, शून्य)\
+#define _DIV(_div_offset, _div_shift, _div_width, _div_flags, _div_table)\
+	_STM32_DIV(_div_offset, _div_shift, _div_width,\
+		   _div_flags, _div_table, NULL)\
 
-#घोषणा _STM32_MUX(_offset, _shअगरt, _width, _mux_flags, _mmux, _ops)\
-	.mux = &(काष्ठा sपंचांग32_mux_cfg) अणु\
-		&(काष्ठा mux_cfg) अणु\
+#define _STM32_MUX(_offset, _shift, _width, _mux_flags, _mmux, _ops)\
+	.mux = &(struct stm32_mux_cfg) {\
+		&(struct mux_cfg) {\
 			.reg_off	= _offset,\
-			.shअगरt		= _shअगरt,\
+			.shift		= _shift,\
 			.width		= _width,\
 			.mux_flags	= _mux_flags,\
-			.table		= शून्य,\
-		पूर्ण,\
+			.table		= NULL,\
+		},\
 		.mmux		= _mmux,\
 		.ops		= _ops,\
-	पूर्ण
+	}
 
-#घोषणा _MUX(_offset, _shअगरt, _width, _mux_flags)\
-	_STM32_MUX(_offset, _shअगरt, _width, _mux_flags, शून्य, शून्य)\
+#define _MUX(_offset, _shift, _width, _mux_flags)\
+	_STM32_MUX(_offset, _shift, _width, _mux_flags, NULL, NULL)\
 
-#घोषणा _MMUX(_mmux) .mux = &ker_mux_cfg[_mmux]
+#define _MMUX(_mmux) .mux = &ker_mux_cfg[_mmux]
 
-#घोषणा PARENT(_parent) ((स्थिर अक्षर *[]) अणु _parentपूर्ण)
+#define PARENT(_parent) ((const char *[]) { _parent})
 
-#घोषणा _NO_MUX .mux = शून्य
-#घोषणा _NO_DIV .भाग = शून्य
-#घोषणा _NO_GATE .gate = शून्य
+#define _NO_MUX .mux = NULL
+#define _NO_DIV .div = NULL
+#define _NO_GATE .gate = NULL
 
-#घोषणा COMPOSITE(_id, _name, _parents, _flags, _gate, _mux, _भाग)\
-अणु\
+#define COMPOSITE(_id, _name, _parents, _flags, _gate, _mux, _div)\
+{\
 	.id		= _id,\
 	.name		= _name,\
 	.parent_names	= _parents,\
 	.num_parents	= ARRAY_SIZE(_parents),\
 	.flags		= _flags,\
-	.cfg		= &(काष्ठा sपंचांग32_composite_cfg) अणु\
+	.cfg		= &(struct stm32_composite_cfg) {\
 		_gate,\
 		_mux,\
-		_भाग,\
-	पूर्ण,\
-	.func		= _clk_sपंचांग32_रेजिस्टर_composite,\
-पूर्ण
+		_div,\
+	},\
+	.func		= _clk_stm32_register_composite,\
+}
 
-#घोषणा PCLK(_id, _name, _parent, _flags, _mgate)\
+#define PCLK(_id, _name, _parent, _flags, _mgate)\
 	MGATE_MP1(_id, _name, _parent, _flags, _mgate)
 
-#घोषणा KCLK(_id, _name, _parents, _flags, _mgate, _mmux)\
+#define KCLK(_id, _name, _parents, _flags, _mgate, _mmux)\
 	     COMPOSITE(_id, _name, _parents, CLK_OPS_PARENT_ENABLE |\
 		       CLK_SET_RATE_NO_REPARENT | _flags,\
 		       _MGATE_MP1(_mgate),\
 		       _MMUX(_mmux),\
 		       _NO_DIV)
 
-क्रमागत अणु
+enum {
 	G_SAI1,
 	G_SAI2,
 	G_SAI3,
@@ -1406,32 +1405,32 @@ _clk_sपंचांग32_रेजिस्टर_composite(काष्ठा
 	G_DDRPERFM,
 
 	G_LAST
-पूर्ण;
+};
 
-अटल काष्ठा sपंचांग32_mgate mp1_mgate[G_LAST];
+static struct stm32_mgate mp1_mgate[G_LAST];
 
-#घोषणा _K_GATE(_id, _gate_offset, _gate_bit_idx, _gate_flags,\
+#define _K_GATE(_id, _gate_offset, _gate_bit_idx, _gate_flags,\
 	       _mgate, _ops)\
-	[_id] = अणु\
-		&(काष्ठा gate_cfg) अणु\
+	[_id] = {\
+		&(struct gate_cfg) {\
 			.reg_off	= _gate_offset,\
 			.bit_idx	= _gate_bit_idx,\
 			.gate_flags	= _gate_flags,\
-		पूर्ण,\
+		},\
 		.mgate		= _mgate,\
 		.ops		= _ops,\
-	पूर्ण
+	}
 
-#घोषणा K_GATE(_id, _gate_offset, _gate_bit_idx, _gate_flags)\
+#define K_GATE(_id, _gate_offset, _gate_bit_idx, _gate_flags)\
 	_K_GATE(_id, _gate_offset, _gate_bit_idx, _gate_flags,\
-	       शून्य, &mp1_gate_clk_ops)
+	       NULL, &mp1_gate_clk_ops)
 
-#घोषणा K_MGATE(_id, _gate_offset, _gate_bit_idx, _gate_flags)\
+#define K_MGATE(_id, _gate_offset, _gate_bit_idx, _gate_flags)\
 	_K_GATE(_id, _gate_offset, _gate_bit_idx, _gate_flags,\
 	       &mp1_mgate[_id], &mp1_mgate_clk_ops)
 
 /* Peripheral gates */
-अटल काष्ठा sपंचांग32_gate_cfg per_gate_cfg[G_LAST] = अणु
+static struct stm32_gate_cfg per_gate_cfg[G_LAST] = {
 	/* Multi gates */
 	K_GATE(G_MDIO,		RCC_APB1ENSETR, 31, 0),
 	K_MGATE(G_DAC12,	RCC_APB1ENSETR, 29, 0),
@@ -1552,9 +1551,9 @@ _clk_sपंचांग32_रेजिस्टर_composite(काष्ठा
 	K_MGATE(G_GPU,		RCC_AHB6ENSETR, 5, 0),
 	K_GATE(G_MDMA,		RCC_AHB6ENSETR, 0, 0),
 	K_GATE(G_ETHSTP,	RCC_AHB6LPENSETR, 11, 0),
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	M_SDMMC12,
 	M_SDMMC3,
 	M_FMC,
@@ -1591,32 +1590,32 @@ _clk_sपंचांग32_रेजिस्टर_composite(काष्ठा
 	M_ETHCK,
 	M_CKPER,
 	M_LAST
-पूर्ण;
+};
 
-अटल काष्ठा sपंचांग32_mmux ker_mux[M_LAST];
+static struct stm32_mmux ker_mux[M_LAST];
 
-#घोषणा _K_MUX(_id, _offset, _shअगरt, _width, _mux_flags, _mmux, _ops)\
-	[_id] = अणु\
-		&(काष्ठा mux_cfg) अणु\
+#define _K_MUX(_id, _offset, _shift, _width, _mux_flags, _mmux, _ops)\
+	[_id] = {\
+		&(struct mux_cfg) {\
 			.reg_off	= _offset,\
-			.shअगरt		= _shअगरt,\
+			.shift		= _shift,\
 			.width		= _width,\
 			.mux_flags	= _mux_flags,\
-			.table		= शून्य,\
-		पूर्ण,\
+			.table		= NULL,\
+		},\
 		.mmux		= _mmux,\
 		.ops		= _ops,\
-	पूर्ण
+	}
 
-#घोषणा K_MUX(_id, _offset, _shअगरt, _width, _mux_flags)\
-	_K_MUX(_id, _offset, _shअगरt, _width, _mux_flags,\
-			शून्य, शून्य)
+#define K_MUX(_id, _offset, _shift, _width, _mux_flags)\
+	_K_MUX(_id, _offset, _shift, _width, _mux_flags,\
+			NULL, NULL)
 
-#घोषणा K_MMUX(_id, _offset, _shअगरt, _width, _mux_flags)\
-	_K_MUX(_id, _offset, _shअगरt, _width, _mux_flags,\
+#define K_MMUX(_id, _offset, _shift, _width, _mux_flags)\
+	_K_MUX(_id, _offset, _shift, _width, _mux_flags,\
 			&ker_mux[_id], &clk_mmux_ops)
 
-अटल स्थिर काष्ठा sपंचांग32_mux_cfg ker_mux_cfg[M_LAST] = अणु
+static const struct stm32_mux_cfg ker_mux_cfg[M_LAST] = {
 	/* Kernel multi mux */
 	K_MMUX(M_SDMMC12, RCC_SDMMC12CKSELR, 0, 3, 0),
 	K_MMUX(M_SPI23, RCC_SPI2S23CKSELR, 0, 3, 0),
@@ -1655,10 +1654,10 @@ _clk_sपंचांग32_रेजिस्टर_composite(काष्ठा
 	K_MUX(M_STGEN, RCC_STGENCKSELR, 0, 2, 0),
 	K_MUX(M_USART1, RCC_UART1CKSELR, 0, 3, 0),
 	K_MUX(M_SPI6, RCC_SPI6CKSELR, 0, 3, 0),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा घड़ी_config sपंचांग32mp1_घड़ी_cfg[] = अणु
-	/* Oscillator भागider */
+static const struct clock_config stm32mp1_clock_cfg[] = {
+	/* Oscillator divider */
 	DIV(NO_ID, "clk-hsi-div", "clk-hsi", CLK_DIVIDER_POWER_OF_TWO,
 	    RCC_HSICFGR, 0, 2, CLK_DIVIDER_READ_ONLY),
 
@@ -1673,7 +1672,7 @@ _clk_sपंचांग32_रेजिस्टर_composite(काष्ठा
 
 	FIXED_FACTOR(CK_HSE_DIV2, "clk-hse-div2", "ck_hse", 0, 1, 2),
 
-	/* ref घड़ी pll */
+	/* ref clock pll */
 	MUX(NO_ID, "ref1", ref12_parents, CLK_OPS_PARENT_ENABLE, RCC_RCK12SELR,
 	    0, 2, CLK_MUX_READ_ONLY),
 
@@ -1693,54 +1692,54 @@ _clk_sपंचांग32_रेजिस्टर_composite(काष्ठा
 	COMPOSITE(PLL1_P, "pll1_p", PARENT("pll1"), 0,
 		  _GATE(RCC_PLL1CR, 4, 0),
 		  _NO_MUX,
-		  _DIV(RCC_PLL1CFGR2, 0, 7, 0, शून्य)),
+		  _DIV(RCC_PLL1CFGR2, 0, 7, 0, NULL)),
 
 	COMPOSITE(PLL2_P, "pll2_p", PARENT("pll2"), 0,
 		  _GATE(RCC_PLL2CR, 4, 0),
 		  _NO_MUX,
-		  _DIV(RCC_PLL2CFGR2, 0, 7, 0, शून्य)),
+		  _DIV(RCC_PLL2CFGR2, 0, 7, 0, NULL)),
 
 	COMPOSITE(PLL2_Q, "pll2_q", PARENT("pll2"), 0,
 		  _GATE(RCC_PLL2CR, 5, 0),
 		  _NO_MUX,
-		  _DIV(RCC_PLL2CFGR2, 8, 7, 0, शून्य)),
+		  _DIV(RCC_PLL2CFGR2, 8, 7, 0, NULL)),
 
 	COMPOSITE(PLL2_R, "pll2_r", PARENT("pll2"), CLK_IS_CRITICAL,
 		  _GATE(RCC_PLL2CR, 6, 0),
 		  _NO_MUX,
-		  _DIV(RCC_PLL2CFGR2, 16, 7, 0, शून्य)),
+		  _DIV(RCC_PLL2CFGR2, 16, 7, 0, NULL)),
 
 	COMPOSITE(PLL3_P, "pll3_p", PARENT("pll3"), 0,
 		  _GATE(RCC_PLL3CR, 4, 0),
 		  _NO_MUX,
-		  _DIV(RCC_PLL3CFGR2, 0, 7, 0, शून्य)),
+		  _DIV(RCC_PLL3CFGR2, 0, 7, 0, NULL)),
 
 	COMPOSITE(PLL3_Q, "pll3_q", PARENT("pll3"), 0,
 		  _GATE(RCC_PLL3CR, 5, 0),
 		  _NO_MUX,
-		  _DIV(RCC_PLL3CFGR2, 8, 7, 0, शून्य)),
+		  _DIV(RCC_PLL3CFGR2, 8, 7, 0, NULL)),
 
 	COMPOSITE(PLL3_R, "pll3_r", PARENT("pll3"), 0,
 		  _GATE(RCC_PLL3CR, 6, 0),
 		  _NO_MUX,
-		  _DIV(RCC_PLL3CFGR2, 16, 7, 0, शून्य)),
+		  _DIV(RCC_PLL3CFGR2, 16, 7, 0, NULL)),
 
 	COMPOSITE(PLL4_P, "pll4_p", PARENT("pll4"), 0,
 		  _GATE(RCC_PLL4CR, 4, 0),
 		  _NO_MUX,
-		  _DIV(RCC_PLL4CFGR2, 0, 7, 0, शून्य)),
+		  _DIV(RCC_PLL4CFGR2, 0, 7, 0, NULL)),
 
 	COMPOSITE(PLL4_Q, "pll4_q", PARENT("pll4"), 0,
 		  _GATE(RCC_PLL4CR, 5, 0),
 		  _NO_MUX,
-		  _DIV(RCC_PLL4CFGR2, 8, 7, 0, शून्य)),
+		  _DIV(RCC_PLL4CFGR2, 8, 7, 0, NULL)),
 
 	COMPOSITE(PLL4_R, "pll4_r", PARENT("pll4"), 0,
 		  _GATE(RCC_PLL4CR, 6, 0),
 		  _NO_MUX,
-		  _DIV(RCC_PLL4CFGR2, 16, 7, 0, शून्य)),
+		  _DIV(RCC_PLL4CFGR2, 16, 7, 0, NULL)),
 
-	/* MUX प्रणाली घड़ीs */
+	/* MUX system clocks */
 	MUX(CK_PER, "ck_per", per_src, CLK_OPS_PARENT_ENABLE,
 	    RCC_CPERCKSELR, 0, 2, 0),
 
@@ -1751,28 +1750,28 @@ _clk_sपंचांग32_रेजिस्टर_composite(काष्ठा
 		   CLK_OPS_PARENT_ENABLE,
 		   _NO_GATE,
 		   _MUX(RCC_ASSCKSELR, 0, 2, 0),
-		   _DIV(RCC_AXIDIVR, 0, 3, 0, axi_भाग_प्रकारable)),
+		   _DIV(RCC_AXIDIVR, 0, 3, 0, axi_div_table)),
 
 	COMPOSITE(CK_MCU, "ck_mcu", mcu_src, CLK_IS_CRITICAL |
 		   CLK_OPS_PARENT_ENABLE,
 		   _NO_GATE,
 		   _MUX(RCC_MSSCKSELR, 0, 2, 0),
-		   _DIV(RCC_MCUDIVR, 0, 4, 0, mcu_भाग_प्रकारable)),
+		   _DIV(RCC_MCUDIVR, 0, 4, 0, mcu_div_table)),
 
 	DIV_TABLE(NO_ID, "pclk1", "ck_mcu", CLK_IGNORE_UNUSED, RCC_APB1DIVR, 0,
-		  3, CLK_DIVIDER_READ_ONLY, apb_भाग_प्रकारable),
+		  3, CLK_DIVIDER_READ_ONLY, apb_div_table),
 
 	DIV_TABLE(NO_ID, "pclk2", "ck_mcu", CLK_IGNORE_UNUSED, RCC_APB2DIVR, 0,
-		  3, CLK_DIVIDER_READ_ONLY, apb_भाग_प्रकारable),
+		  3, CLK_DIVIDER_READ_ONLY, apb_div_table),
 
 	DIV_TABLE(NO_ID, "pclk3", "ck_mcu", CLK_IGNORE_UNUSED, RCC_APB3DIVR, 0,
-		  3, CLK_DIVIDER_READ_ONLY, apb_भाग_प्रकारable),
+		  3, CLK_DIVIDER_READ_ONLY, apb_div_table),
 
 	DIV_TABLE(NO_ID, "pclk4", "ck_axi", CLK_IGNORE_UNUSED, RCC_APB4DIVR, 0,
-		  3, CLK_DIVIDER_READ_ONLY, apb_भाग_प्रकारable),
+		  3, CLK_DIVIDER_READ_ONLY, apb_div_table),
 
 	DIV_TABLE(NO_ID, "pclk5", "ck_axi", CLK_IGNORE_UNUSED, RCC_APB5DIVR, 0,
-		  3, CLK_DIVIDER_READ_ONLY, apb_भाग_प्रकारable),
+		  3, CLK_DIVIDER_READ_ONLY, apb_div_table),
 
 	/* Kernel Timers */
 	STM32_CKTIM("ck1_tim", "pclk1", 0, RCC_APB1DIVR, RCC_TIMG1PRER),
@@ -1793,7 +1792,7 @@ _clk_sपंचांग32_रेजिस्टर_composite(काष्ठा
 	STM32_TIM(TIM16_K, "tim16_k", "ck2_tim", RCC_APB2ENSETR, 3),
 	STM32_TIM(TIM17_K, "tim17_k", "ck2_tim", RCC_APB2ENSETR, 4),
 
-	/* Peripheral घड़ीs */
+	/* Peripheral clocks */
 	PCLK(TIM2, "tim2", "pclk1", CLK_IGNORE_UNUSED, G_TIM2),
 	PCLK(TIM3, "tim3", "pclk1", CLK_IGNORE_UNUSED, G_TIM3),
 	PCLK(TIM4, "tim4", "pclk1", CLK_IGNORE_UNUSED, G_TIM4),
@@ -1904,7 +1903,7 @@ _clk_sपंचांग32_रेजिस्टर_composite(काष्ठा
 	PCLK(ETHSTP, "ethstp", "ck_axi", 0, G_ETHSTP),
 	PCLK(DDRPERFM, "ddrperfm", "pclk4", 0, G_DDRPERFM),
 
-	/* Kernel घड़ीs */
+	/* Kernel clocks */
 	KCLK(SDMMC1_K, "sdmmc1_k", sdmmc12_src, 0, G_SDMMC1, M_SDMMC12),
 	KCLK(SDMMC2_K, "sdmmc2_k", sdmmc12_src, 0, G_SDMMC2, M_SDMMC12),
 	KCLK(SDMMC3_K, "sdmmc3_k", sdmmc3_src, 0, G_SDMMC3, M_SDMMC3),
@@ -1914,7 +1913,7 @@ _clk_sपंचांग32_रेजिस्टर_composite(काष्ठा
 	KCLK(RNG2_K, "rng2_k", rng_src, 0, G_RNG2, M_RNG2),
 	KCLK(USBPHY_K, "usbphy_k", usbphy_src, 0, G_USBPHY, M_USBPHY),
 	KCLK(STGEN_K, "stgen_k", stgen_src, CLK_IS_CRITICAL, G_STGEN, M_STGEN),
-	KCLK(SPDIF_K, "spdif_k", spdअगर_src, 0, G_SPDIF, M_SPDIF),
+	KCLK(SPDIF_K, "spdif_k", spdif_src, 0, G_SPDIF, M_SPDIF),
 	KCLK(SPI1_K, "spi1_k", spi123_src, 0, G_SPI1, M_SPI1),
 	KCLK(SPI2_K, "spi2_k", spi123_src, 0, G_SPI2, M_SPI23),
 	KCLK(SPI3_K, "spi3_k", spi123_src, 0, G_SPI3, M_SPI23),
@@ -1963,9 +1962,9 @@ _clk_sपंचांग32_रेजिस्टर_composite(काष्ठा
 		  CLK_SET_RATE_NO_REPARENT,
 		  _NO_GATE,
 		  _MMUX(M_ETHCK),
-		  _DIV(RCC_ETHCKSELR, 4, 4, 0, शून्य)),
+		  _DIV(RCC_ETHCKSELR, 4, 4, 0, NULL)),
 
-	/* RTC घड़ी */
+	/* RTC clock */
 	DIV(NO_ID, "ck_hse_rtc", "ck_hse", 0, RCC_RTCDIVR, 0, 6, 0),
 
 	COMPOSITE(RTC, "ck_rtc", rtc_src, CLK_OPS_PARENT_ENABLE |
@@ -1974,136 +1973,136 @@ _clk_sपंचांग32_रेजिस्टर_composite(काष्ठा
 		  _MUX(RCC_BDCR, 16, 2, 0),
 		  _NO_DIV),
 
-	/* MCO घड़ीs */
+	/* MCO clocks */
 	COMPOSITE(CK_MCO1, "ck_mco1", mco1_src, CLK_OPS_PARENT_ENABLE |
 		  CLK_SET_RATE_NO_REPARENT,
 		  _GATE(RCC_MCO1CFGR, 12, 0),
 		  _MUX(RCC_MCO1CFGR, 0, 3, 0),
-		  _DIV(RCC_MCO1CFGR, 4, 4, 0, शून्य)),
+		  _DIV(RCC_MCO1CFGR, 4, 4, 0, NULL)),
 
 	COMPOSITE(CK_MCO2, "ck_mco2", mco2_src, CLK_OPS_PARENT_ENABLE |
 		  CLK_SET_RATE_NO_REPARENT,
 		  _GATE(RCC_MCO2CFGR, 12, 0),
 		  _MUX(RCC_MCO2CFGR, 0, 3, 0),
-		  _DIV(RCC_MCO2CFGR, 4, 4, 0, शून्य)),
+		  _DIV(RCC_MCO2CFGR, 4, 4, 0, NULL)),
 
-	/* Debug घड़ीs */
+	/* Debug clocks */
 	GATE(CK_DBG, "ck_sys_dbg", "ck_axi", CLK_IGNORE_UNUSED,
 	     RCC_DBGCFGR, 8, 0),
 
 	COMPOSITE(CK_TRACE, "ck_trace", ck_trace_src, CLK_OPS_PARENT_ENABLE,
 		  _GATE(RCC_DBGCFGR, 9, 0),
 		  _NO_MUX,
-		  _DIV(RCC_DBGCFGR, 0, 3, 0, ck_trace_भाग_प्रकारable)),
-पूर्ण;
+		  _DIV(RCC_DBGCFGR, 0, 3, 0, ck_trace_div_table)),
+};
 
-काष्ठा sपंचांग32_घड़ी_match_data अणु
-	स्थिर काष्ठा घड़ी_config *cfg;
-	अचिन्हित पूर्णांक num;
-	अचिन्हित पूर्णांक maxbinding;
-पूर्ण;
+struct stm32_clock_match_data {
+	const struct clock_config *cfg;
+	unsigned int num;
+	unsigned int maxbinding;
+};
 
-अटल काष्ठा sपंचांग32_घड़ी_match_data sपंचांग32mp1_data = अणु
-	.cfg		= sपंचांग32mp1_घड़ी_cfg,
-	.num		= ARRAY_SIZE(sपंचांग32mp1_घड़ी_cfg),
+static struct stm32_clock_match_data stm32mp1_data = {
+	.cfg		= stm32mp1_clock_cfg,
+	.num		= ARRAY_SIZE(stm32mp1_clock_cfg),
 	.maxbinding	= STM32MP1_LAST_CLK,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा of_device_id sपंचांग32mp1_match_data[] = अणु
-	अणु
+static const struct of_device_id stm32mp1_match_data[] = {
+	{
 		.compatible = "st,stm32mp1-rcc",
-		.data = &sपंचांग32mp1_data,
-	पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+		.data = &stm32mp1_data,
+	},
+	{ }
+};
 
-अटल पूर्णांक sपंचांग32_रेजिस्टर_hw_clk(काष्ठा device *dev,
-				 काष्ठा clk_hw_onecell_data *clk_data,
-				 व्योम __iomem *base, spinlock_t *lock,
-				 स्थिर काष्ठा घड़ी_config *cfg)
-अणु
-	काष्ठा clk_hw **hws;
-	काष्ठा clk_hw *hw = ERR_PTR(-ENOENT);
+static int stm32_register_hw_clk(struct device *dev,
+				 struct clk_hw_onecell_data *clk_data,
+				 void __iomem *base, spinlock_t *lock,
+				 const struct clock_config *cfg)
+{
+	struct clk_hw **hws;
+	struct clk_hw *hw = ERR_PTR(-ENOENT);
 
 	hws = clk_data->hws;
 
-	अगर (cfg->func)
+	if (cfg->func)
 		hw = (*cfg->func)(dev, clk_data, base, lock, cfg);
 
-	अगर (IS_ERR(hw)) अणु
+	if (IS_ERR(hw)) {
 		pr_err("Unable to register %s\n", cfg->name);
-		वापस  PTR_ERR(hw);
-	पूर्ण
+		return  PTR_ERR(hw);
+	}
 
-	अगर (cfg->id != NO_ID)
+	if (cfg->id != NO_ID)
 		hws[cfg->id] = hw;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sपंचांग32_rcc_init(काष्ठा device_node *np,
-			  व्योम __iomem *base,
-			  स्थिर काष्ठा of_device_id *match_data)
-अणु
-	काष्ठा clk_hw_onecell_data *clk_data;
-	काष्ठा clk_hw **hws;
-	स्थिर काष्ठा of_device_id *match;
-	स्थिर काष्ठा sपंचांग32_घड़ी_match_data *data;
-	पूर्णांक err, n, max_binding;
+static int stm32_rcc_init(struct device_node *np,
+			  void __iomem *base,
+			  const struct of_device_id *match_data)
+{
+	struct clk_hw_onecell_data *clk_data;
+	struct clk_hw **hws;
+	const struct of_device_id *match;
+	const struct stm32_clock_match_data *data;
+	int err, n, max_binding;
 
 	match = of_match_node(match_data, np);
-	अगर (!match) अणु
+	if (!match) {
 		pr_err("%s: match data not found\n", __func__);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	data = match->data;
 
 	max_binding =  data->maxbinding;
 
-	clk_data = kzalloc(काष्ठा_size(clk_data, hws, max_binding),
+	clk_data = kzalloc(struct_size(clk_data, hws, max_binding),
 			   GFP_KERNEL);
-	अगर (!clk_data)
-		वापस -ENOMEM;
+	if (!clk_data)
+		return -ENOMEM;
 
 	clk_data->num = max_binding;
 
 	hws = clk_data->hws;
 
-	क्रम (n = 0; n < max_binding; n++)
+	for (n = 0; n < max_binding; n++)
 		hws[n] = ERR_PTR(-ENOENT);
 
-	क्रम (n = 0; n < data->num; n++) अणु
-		err = sपंचांग32_रेजिस्टर_hw_clk(शून्य, clk_data, base, &rlock,
+	for (n = 0; n < data->num; n++) {
+		err = stm32_register_hw_clk(NULL, clk_data, base, &rlock,
 					    &data->cfg[n]);
-		अगर (err) अणु
+		if (err) {
 			pr_err("%s: can't register  %s\n", __func__,
 			       data->cfg[n].name);
 
-			kमुक्त(clk_data);
+			kfree(clk_data);
 
-			वापस err;
-		पूर्ण
-	पूर्ण
+			return err;
+		}
+	}
 
-	वापस of_clk_add_hw_provider(np, of_clk_hw_onecell_get, clk_data);
-पूर्ण
+	return of_clk_add_hw_provider(np, of_clk_hw_onecell_get, clk_data);
+}
 
-अटल व्योम sपंचांग32mp1_rcc_init(काष्ठा device_node *np)
-अणु
-	व्योम __iomem *base;
+static void stm32mp1_rcc_init(struct device_node *np)
+{
+	void __iomem *base;
 
 	base = of_iomap(np, 0);
-	अगर (!base) अणु
+	if (!base) {
 		pr_err("%pOFn: unable to map resource", np);
 		of_node_put(np);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (sपंचांग32_rcc_init(np, base, sपंचांग32mp1_match_data)) अणु
+	if (stm32_rcc_init(np, base, stm32mp1_match_data)) {
 		iounmap(base);
 		of_node_put(np);
-	पूर्ण
-पूर्ण
+	}
+}
 
-CLK_OF_DECLARE_DRIVER(sपंचांग32mp1_rcc, "st,stm32mp1-rcc", sपंचांग32mp1_rcc_init);
+CLK_OF_DECLARE_DRIVER(stm32mp1_rcc, "st,stm32mp1-rcc", stm32mp1_rcc_init);

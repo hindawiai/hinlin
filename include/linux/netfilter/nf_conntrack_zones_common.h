@@ -1,25 +1,24 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _NF_CONNTRACK_ZONES_COMMON_H
-#घोषणा _NF_CONNTRACK_ZONES_COMMON_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _NF_CONNTRACK_ZONES_COMMON_H
+#define _NF_CONNTRACK_ZONES_COMMON_H
 
-#समावेश <uapi/linux/netfilter/nf_conntrack_tuple_common.h>
+#include <uapi/linux/netfilter/nf_conntrack_tuple_common.h>
 
-#घोषणा NF_CT_DEFAULT_ZONE_ID	0
+#define NF_CT_DEFAULT_ZONE_ID	0
 
-#घोषणा NF_CT_ZONE_सूची_ORIG	(1 << IP_CT_सूची_ORIGINAL)
-#घोषणा NF_CT_ZONE_सूची_REPL	(1 << IP_CT_सूची_REPLY)
+#define NF_CT_ZONE_DIR_ORIG	(1 << IP_CT_DIR_ORIGINAL)
+#define NF_CT_ZONE_DIR_REPL	(1 << IP_CT_DIR_REPLY)
 
-#घोषणा NF_CT_DEFAULT_ZONE_सूची	(NF_CT_ZONE_सूची_ORIG | NF_CT_ZONE_सूची_REPL)
+#define NF_CT_DEFAULT_ZONE_DIR	(NF_CT_ZONE_DIR_ORIG | NF_CT_ZONE_DIR_REPL)
 
-#घोषणा NF_CT_FLAG_MARK		1
+#define NF_CT_FLAG_MARK		1
 
-काष्ठा nf_conntrack_zone अणु
+struct nf_conntrack_zone {
 	u16	id;
 	u8	flags;
 	u8	dir;
-पूर्ण;
+};
 
-बाह्य स्थिर काष्ठा nf_conntrack_zone nf_ct_zone_dflt;
+extern const struct nf_conntrack_zone nf_ct_zone_dflt;
 
-#पूर्ण_अगर /* _NF_CONNTRACK_ZONES_COMMON_H */
+#endif /* _NF_CONNTRACK_ZONES_COMMON_H */

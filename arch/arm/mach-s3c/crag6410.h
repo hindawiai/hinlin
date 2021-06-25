@@ -1,23 +1,22 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /* Cragganmore 6410 shared definitions
  *
  * Copyright 2011 Wolfson Microelectronics plc
- *	Mark Brown <broonie@खोलोsource.wolfsonmicro.com>
+ *	Mark Brown <broonie@opensource.wolfsonmicro.com>
  */
 
-#अगर_अघोषित MACH_CRAG6410_H
-#घोषणा MACH_CRAG6410_H
+#ifndef MACH_CRAG6410_H
+#define MACH_CRAG6410_H
 
-#समावेश "gpio-samsung.h"
+#include "gpio-samsung.h"
 
-#घोषणा GLENFARCLAS_PMIC_IRQ_BASE	IRQ_BOARD_START
-#घोषणा BANFF_PMIC_IRQ_BASE		(IRQ_BOARD_START + 64)
+#define GLENFARCLAS_PMIC_IRQ_BASE	IRQ_BOARD_START
+#define BANFF_PMIC_IRQ_BASE		(IRQ_BOARD_START + 64)
 
-#घोषणा PCA935X_GPIO_BASE		GPIO_BOARD_START
-#घोषणा CODEC_GPIO_BASE			(GPIO_BOARD_START + 8)
-#घोषणा GLENFARCLAS_PMIC_GPIO_BASE	(GPIO_BOARD_START + 32)
-#घोषणा BANFF_PMIC_GPIO_BASE		(GPIO_BOARD_START + 64)
-#घोषणा MMGPIO_GPIO_BASE		(GPIO_BOARD_START + 96)
+#define PCA935X_GPIO_BASE		GPIO_BOARD_START
+#define CODEC_GPIO_BASE			(GPIO_BOARD_START + 8)
+#define GLENFARCLAS_PMIC_GPIO_BASE	(GPIO_BOARD_START + 32)
+#define BANFF_PMIC_GPIO_BASE		(GPIO_BOARD_START + 64)
+#define MMGPIO_GPIO_BASE		(GPIO_BOARD_START + 96)
 
-#पूर्ण_अगर
+#endif

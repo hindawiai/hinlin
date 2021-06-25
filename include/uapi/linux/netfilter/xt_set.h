@@ -1,95 +1,94 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
-#अगर_अघोषित _XT_SET_H
-#घोषणा _XT_SET_H
+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+#ifndef _XT_SET_H
+#define _XT_SET_H
 
-#समावेश <linux/types.h>
-#समावेश <linux/netfilter/ipset/ip_set.h>
+#include <linux/types.h>
+#include <linux/netfilter/ipset/ip_set.h>
 
-/* Revision 0 पूर्णांकerface: backward compatible with netfilter/iptables */
+/* Revision 0 interface: backward compatible with netfilter/iptables */
 
 /*
- * Option flags क्रम kernel operations (xt_set_info_v0)
+ * Option flags for kernel operations (xt_set_info_v0)
  */
-#घोषणा IPSET_SRC		0x01	/* Source match/add */
-#घोषणा IPSET_DST		0x02	/* Destination match/add */
-#घोषणा IPSET_MATCH_INV		0x04	/* Inverse matching */
+#define IPSET_SRC		0x01	/* Source match/add */
+#define IPSET_DST		0x02	/* Destination match/add */
+#define IPSET_MATCH_INV		0x04	/* Inverse matching */
 
-काष्ठा xt_set_info_v0 अणु
+struct xt_set_info_v0 {
 	ip_set_id_t index;
-	जोड़ अणु
+	union {
 		__u32 flags[IPSET_DIM_MAX + 1];
-		काष्ठा अणु
+		struct {
 			__u32 __flags[IPSET_DIM_MAX];
 			__u8 dim;
 			__u8 flags;
-		पूर्ण compat;
-	पूर्ण u;
-पूर्ण;
+		} compat;
+	} u;
+};
 
 /* match and target infos */
-काष्ठा xt_set_info_match_v0 अणु
-	काष्ठा xt_set_info_v0 match_set;
-पूर्ण;
+struct xt_set_info_match_v0 {
+	struct xt_set_info_v0 match_set;
+};
 
-काष्ठा xt_set_info_target_v0 अणु
-	काष्ठा xt_set_info_v0 add_set;
-	काष्ठा xt_set_info_v0 del_set;
-पूर्ण;
+struct xt_set_info_target_v0 {
+	struct xt_set_info_v0 add_set;
+	struct xt_set_info_v0 del_set;
+};
 
 /* Revision 1  match and target */
 
-काष्ठा xt_set_info अणु
+struct xt_set_info {
 	ip_set_id_t index;
 	__u8 dim;
 	__u8 flags;
-पूर्ण;
+};
 
 /* match and target infos */
-काष्ठा xt_set_info_match_v1 अणु
-	काष्ठा xt_set_info match_set;
-पूर्ण;
+struct xt_set_info_match_v1 {
+	struct xt_set_info match_set;
+};
 
-काष्ठा xt_set_info_target_v1 अणु
-	काष्ठा xt_set_info add_set;
-	काष्ठा xt_set_info del_set;
-पूर्ण;
+struct xt_set_info_target_v1 {
+	struct xt_set_info add_set;
+	struct xt_set_info del_set;
+};
 
 /* Revision 2 target */
 
-काष्ठा xt_set_info_target_v2 अणु
-	काष्ठा xt_set_info add_set;
-	काष्ठा xt_set_info del_set;
+struct xt_set_info_target_v2 {
+	struct xt_set_info add_set;
+	struct xt_set_info del_set;
 	__u32 flags;
-	__u32 समयout;
-पूर्ण;
+	__u32 timeout;
+};
 
 /* Revision 3 match */
 
-काष्ठा xt_set_info_match_v3 अणु
-	काष्ठा xt_set_info match_set;
-	काष्ठा ip_set_counter_match0 packets;
-	काष्ठा ip_set_counter_match0 bytes;
+struct xt_set_info_match_v3 {
+	struct xt_set_info match_set;
+	struct ip_set_counter_match0 packets;
+	struct ip_set_counter_match0 bytes;
 	__u32 flags;
-पूर्ण;
+};
 
 /* Revision 3 target */
 
-काष्ठा xt_set_info_target_v3 अणु
-	काष्ठा xt_set_info add_set;
-	काष्ठा xt_set_info del_set;
-	काष्ठा xt_set_info map_set;
+struct xt_set_info_target_v3 {
+	struct xt_set_info add_set;
+	struct xt_set_info del_set;
+	struct xt_set_info map_set;
 	__u32 flags;
-	__u32 समयout;
-पूर्ण;
+	__u32 timeout;
+};
 
 /* Revision 4 match */
 
-काष्ठा xt_set_info_match_v4 अणु
-	काष्ठा xt_set_info match_set;
-	काष्ठा ip_set_counter_match packets;
-	काष्ठा ip_set_counter_match bytes;
+struct xt_set_info_match_v4 {
+	struct xt_set_info match_set;
+	struct ip_set_counter_match packets;
+	struct ip_set_counter_match bytes;
 	__u32 flags;
-पूर्ण;
+};
 
-#पूर्ण_अगर /*_XT_SET_H*/
+#endif /*_XT_SET_H*/

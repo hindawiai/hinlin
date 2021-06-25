@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  *  linux/drivers/mmc/core/bus.c
  *
@@ -9,49 +8,49 @@
  *  MMC card bus driver model
  */
 
-#समावेश <linux/export.h>
-#समावेश <linux/device.h>
-#समावेश <linux/err.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/स्थिति.स>
-#समावेश <linux/of.h>
-#समावेश <linux/pm_runसमय.स>
+#include <linux/export.h>
+#include <linux/device.h>
+#include <linux/err.h>
+#include <linux/slab.h>
+#include <linux/stat.h>
+#include <linux/of.h>
+#include <linux/pm_runtime.h>
 
-#समावेश <linux/mmc/card.h>
-#समावेश <linux/mmc/host.h>
+#include <linux/mmc/card.h>
+#include <linux/mmc/host.h>
 
-#समावेश "core.h"
-#समावेश "card.h"
-#समावेश "host.h"
-#समावेश "sdio_cis.h"
-#समावेश "bus.h"
+#include "core.h"
+#include "card.h"
+#include "host.h"
+#include "sdio_cis.h"
+#include "bus.h"
 
-#घोषणा to_mmc_driver(d)	container_of(d, काष्ठा mmc_driver, drv)
+#define to_mmc_driver(d)	container_of(d, struct mmc_driver, drv)
 
-अटल sमाप_प्रकार type_show(काष्ठा device *dev,
-	काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा mmc_card *card = mmc_dev_to_card(dev);
+static ssize_t type_show(struct device *dev,
+	struct device_attribute *attr, char *buf)
+{
+	struct mmc_card *card = mmc_dev_to_card(dev);
 
-	चयन (card->type) अणु
-	हाल MMC_TYPE_MMC:
-		वापस प्र_लिखो(buf, "MMC\n");
-	हाल MMC_TYPE_SD:
-		वापस प्र_लिखो(buf, "SD\n");
-	हाल MMC_TYPE_SDIO:
-		वापस प्र_लिखो(buf, "SDIO\n");
-	हाल MMC_TYPE_SD_COMBO:
-		वापस प्र_लिखो(buf, "SDcombo\n");
-	शेष:
-		वापस -EFAULT;
-	पूर्ण
-पूर्ण
-अटल DEVICE_ATTR_RO(type);
+	switch (card->type) {
+	case MMC_TYPE_MMC:
+		return sprintf(buf, "MMC\n");
+	case MMC_TYPE_SD:
+		return sprintf(buf, "SD\n");
+	case MMC_TYPE_SDIO:
+		return sprintf(buf, "SDIO\n");
+	case MMC_TYPE_SD_COMBO:
+		return sprintf(buf, "SDcombo\n");
+	default:
+		return -EFAULT;
+	}
+}
+static DEVICE_ATTR_RO(type);
 
-अटल काष्ठा attribute *mmc_dev_attrs[] = अणु
+static struct attribute *mmc_dev_attrs[] = {
 	&dev_attr_type.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 ATTRIBUTE_GROUPS(mmc_dev);
 
 /*
@@ -59,239 +58,239 @@ ATTRIBUTE_GROUPS(mmc_dev);
  * themselves make the decision whether to drive this card in their
  * probe method.
  */
-अटल पूर्णांक mmc_bus_match(काष्ठा device *dev, काष्ठा device_driver *drv)
-अणु
-	वापस 1;
-पूर्ण
+static int mmc_bus_match(struct device *dev, struct device_driver *drv)
+{
+	return 1;
+}
 
-अटल पूर्णांक
-mmc_bus_uevent(काष्ठा device *dev, काष्ठा kobj_uevent_env *env)
-अणु
-	काष्ठा mmc_card *card = mmc_dev_to_card(dev);
-	स्थिर अक्षर *type;
-	अचिन्हित पूर्णांक i;
-	पूर्णांक retval = 0;
+static int
+mmc_bus_uevent(struct device *dev, struct kobj_uevent_env *env)
+{
+	struct mmc_card *card = mmc_dev_to_card(dev);
+	const char *type;
+	unsigned int i;
+	int retval = 0;
 
-	चयन (card->type) अणु
-	हाल MMC_TYPE_MMC:
+	switch (card->type) {
+	case MMC_TYPE_MMC:
 		type = "MMC";
-		अवरोध;
-	हाल MMC_TYPE_SD:
+		break;
+	case MMC_TYPE_SD:
 		type = "SD";
-		अवरोध;
-	हाल MMC_TYPE_SDIO:
+		break;
+	case MMC_TYPE_SDIO:
 		type = "SDIO";
-		अवरोध;
-	हाल MMC_TYPE_SD_COMBO:
+		break;
+	case MMC_TYPE_SD_COMBO:
 		type = "SDcombo";
-		अवरोध;
-	शेष:
-		type = शून्य;
-	पूर्ण
+		break;
+	default:
+		type = NULL;
+	}
 
-	अगर (type) अणु
+	if (type) {
 		retval = add_uevent_var(env, "MMC_TYPE=%s", type);
-		अगर (retval)
-			वापस retval;
-	पूर्ण
+		if (retval)
+			return retval;
+	}
 
-	अगर (card->type == MMC_TYPE_SDIO || card->type == MMC_TYPE_SD_COMBO) अणु
+	if (card->type == MMC_TYPE_SDIO || card->type == MMC_TYPE_SD_COMBO) {
 		retval = add_uevent_var(env, "SDIO_ID=%04X:%04X",
-					card->cis.venकरोr, card->cis.device);
-		अगर (retval)
-			वापस retval;
+					card->cis.vendor, card->cis.device);
+		if (retval)
+			return retval;
 
 		retval = add_uevent_var(env, "SDIO_REVISION=%u.%u",
 					card->major_rev, card->minor_rev);
-		अगर (retval)
-			वापस retval;
+		if (retval)
+			return retval;
 
-		क्रम (i = 0; i < card->num_info; i++) अणु
+		for (i = 0; i < card->num_info; i++) {
 			retval = add_uevent_var(env, "SDIO_INFO%u=%s", i+1, card->info[i]);
-			अगर (retval)
-				वापस retval;
-		पूर्ण
-	पूर्ण
+			if (retval)
+				return retval;
+		}
+	}
 
 	/*
-	 * SDIO (non-combo) cards are not handled by mmc_block driver and करो not
-	 * have accessible CID रेजिस्टर which used by mmc_card_name() function.
+	 * SDIO (non-combo) cards are not handled by mmc_block driver and do not
+	 * have accessible CID register which used by mmc_card_name() function.
 	 */
-	अगर (card->type == MMC_TYPE_SDIO)
-		वापस 0;
+	if (card->type == MMC_TYPE_SDIO)
+		return 0;
 
 	retval = add_uevent_var(env, "MMC_NAME=%s", mmc_card_name(card));
-	अगर (retval)
-		वापस retval;
+	if (retval)
+		return retval;
 
 	/*
 	 * Request the mmc_block device.  Note: that this is a direct request
-	 * क्रम the module it carries no inक्रमmation as to what is inserted.
+	 * for the module it carries no information as to what is inserted.
 	 */
 	retval = add_uevent_var(env, "MODALIAS=mmc:block");
 
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-अटल पूर्णांक mmc_bus_probe(काष्ठा device *dev)
-अणु
-	काष्ठा mmc_driver *drv = to_mmc_driver(dev->driver);
-	काष्ठा mmc_card *card = mmc_dev_to_card(dev);
+static int mmc_bus_probe(struct device *dev)
+{
+	struct mmc_driver *drv = to_mmc_driver(dev->driver);
+	struct mmc_card *card = mmc_dev_to_card(dev);
 
-	वापस drv->probe(card);
-पूर्ण
+	return drv->probe(card);
+}
 
-अटल पूर्णांक mmc_bus_हटाओ(काष्ठा device *dev)
-अणु
-	काष्ठा mmc_driver *drv = to_mmc_driver(dev->driver);
-	काष्ठा mmc_card *card = mmc_dev_to_card(dev);
+static int mmc_bus_remove(struct device *dev)
+{
+	struct mmc_driver *drv = to_mmc_driver(dev->driver);
+	struct mmc_card *card = mmc_dev_to_card(dev);
 
-	drv->हटाओ(card);
+	drv->remove(card);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम mmc_bus_shutकरोwn(काष्ठा device *dev)
-अणु
-	काष्ठा mmc_driver *drv = to_mmc_driver(dev->driver);
-	काष्ठा mmc_card *card = mmc_dev_to_card(dev);
-	काष्ठा mmc_host *host = card->host;
-	पूर्णांक ret;
+static void mmc_bus_shutdown(struct device *dev)
+{
+	struct mmc_driver *drv = to_mmc_driver(dev->driver);
+	struct mmc_card *card = mmc_dev_to_card(dev);
+	struct mmc_host *host = card->host;
+	int ret;
 
-	अगर (dev->driver && drv->shutकरोwn)
-		drv->shutकरोwn(card);
+	if (dev->driver && drv->shutdown)
+		drv->shutdown(card);
 
-	अगर (host->bus_ops->shutकरोwn) अणु
-		ret = host->bus_ops->shutकरोwn(host);
-		अगर (ret)
+	if (host->bus_ops->shutdown) {
+		ret = host->bus_ops->shutdown(host);
+		if (ret)
 			pr_warn("%s: error %d during shutdown\n",
 				mmc_hostname(host), ret);
-	पूर्ण
-पूर्ण
+	}
+}
 
-#अगर_घोषित CONFIG_PM_SLEEP
-अटल पूर्णांक mmc_bus_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा mmc_card *card = mmc_dev_to_card(dev);
-	काष्ठा mmc_host *host = card->host;
-	पूर्णांक ret;
+#ifdef CONFIG_PM_SLEEP
+static int mmc_bus_suspend(struct device *dev)
+{
+	struct mmc_card *card = mmc_dev_to_card(dev);
+	struct mmc_host *host = card->host;
+	int ret;
 
 	ret = pm_generic_suspend(dev);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = host->bus_ops->suspend(host);
-	अगर (ret)
+	if (ret)
 		pm_generic_resume(dev);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक mmc_bus_resume(काष्ठा device *dev)
-अणु
-	काष्ठा mmc_card *card = mmc_dev_to_card(dev);
-	काष्ठा mmc_host *host = card->host;
-	पूर्णांक ret;
+static int mmc_bus_resume(struct device *dev)
+{
+	struct mmc_card *card = mmc_dev_to_card(dev);
+	struct mmc_host *host = card->host;
+	int ret;
 
 	ret = host->bus_ops->resume(host);
-	अगर (ret)
+	if (ret)
 		pr_warn("%s: error %d during resume (card was removed?)\n",
 			mmc_hostname(host), ret);
 
 	ret = pm_generic_resume(dev);
-	वापस ret;
-पूर्ण
-#पूर्ण_अगर
+	return ret;
+}
+#endif
 
-#अगर_घोषित CONFIG_PM
-अटल पूर्णांक mmc_runसमय_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा mmc_card *card = mmc_dev_to_card(dev);
-	काष्ठा mmc_host *host = card->host;
+#ifdef CONFIG_PM
+static int mmc_runtime_suspend(struct device *dev)
+{
+	struct mmc_card *card = mmc_dev_to_card(dev);
+	struct mmc_host *host = card->host;
 
-	वापस host->bus_ops->runसमय_suspend(host);
-पूर्ण
+	return host->bus_ops->runtime_suspend(host);
+}
 
-अटल पूर्णांक mmc_runसमय_resume(काष्ठा device *dev)
-अणु
-	काष्ठा mmc_card *card = mmc_dev_to_card(dev);
-	काष्ठा mmc_host *host = card->host;
+static int mmc_runtime_resume(struct device *dev)
+{
+	struct mmc_card *card = mmc_dev_to_card(dev);
+	struct mmc_host *host = card->host;
 
-	वापस host->bus_ops->runसमय_resume(host);
-पूर्ण
-#पूर्ण_अगर /* !CONFIG_PM */
+	return host->bus_ops->runtime_resume(host);
+}
+#endif /* !CONFIG_PM */
 
-अटल स्थिर काष्ठा dev_pm_ops mmc_bus_pm_ops = अणु
-	SET_RUNTIME_PM_OPS(mmc_runसमय_suspend, mmc_runसमय_resume, शून्य)
+static const struct dev_pm_ops mmc_bus_pm_ops = {
+	SET_RUNTIME_PM_OPS(mmc_runtime_suspend, mmc_runtime_resume, NULL)
 	SET_SYSTEM_SLEEP_PM_OPS(mmc_bus_suspend, mmc_bus_resume)
-पूर्ण;
+};
 
-अटल काष्ठा bus_type mmc_bus_type = अणु
+static struct bus_type mmc_bus_type = {
 	.name		= "mmc",
 	.dev_groups	= mmc_dev_groups,
 	.match		= mmc_bus_match,
 	.uevent		= mmc_bus_uevent,
 	.probe		= mmc_bus_probe,
-	.हटाओ		= mmc_bus_हटाओ,
-	.shutकरोwn	= mmc_bus_shutकरोwn,
+	.remove		= mmc_bus_remove,
+	.shutdown	= mmc_bus_shutdown,
 	.pm		= &mmc_bus_pm_ops,
-पूर्ण;
+};
 
-पूर्णांक mmc_रेजिस्टर_bus(व्योम)
-अणु
-	वापस bus_रेजिस्टर(&mmc_bus_type);
-पूर्ण
+int mmc_register_bus(void)
+{
+	return bus_register(&mmc_bus_type);
+}
 
-व्योम mmc_unरेजिस्टर_bus(व्योम)
-अणु
-	bus_unरेजिस्टर(&mmc_bus_type);
-पूर्ण
-
-/**
- *	mmc_रेजिस्टर_driver - रेजिस्टर a media driver
- *	@drv: MMC media driver
- */
-पूर्णांक mmc_रेजिस्टर_driver(काष्ठा mmc_driver *drv)
-अणु
-	drv->drv.bus = &mmc_bus_type;
-	वापस driver_रेजिस्टर(&drv->drv);
-पूर्ण
-
-EXPORT_SYMBOL(mmc_रेजिस्टर_driver);
+void mmc_unregister_bus(void)
+{
+	bus_unregister(&mmc_bus_type);
+}
 
 /**
- *	mmc_unरेजिस्टर_driver - unरेजिस्टर a media driver
+ *	mmc_register_driver - register a media driver
  *	@drv: MMC media driver
  */
-व्योम mmc_unरेजिस्टर_driver(काष्ठा mmc_driver *drv)
-अणु
+int mmc_register_driver(struct mmc_driver *drv)
+{
 	drv->drv.bus = &mmc_bus_type;
-	driver_unरेजिस्टर(&drv->drv);
-पूर्ण
+	return driver_register(&drv->drv);
+}
 
-EXPORT_SYMBOL(mmc_unरेजिस्टर_driver);
+EXPORT_SYMBOL(mmc_register_driver);
 
-अटल व्योम mmc_release_card(काष्ठा device *dev)
-अणु
-	काष्ठा mmc_card *card = mmc_dev_to_card(dev);
+/**
+ *	mmc_unregister_driver - unregister a media driver
+ *	@drv: MMC media driver
+ */
+void mmc_unregister_driver(struct mmc_driver *drv)
+{
+	drv->drv.bus = &mmc_bus_type;
+	driver_unregister(&drv->drv);
+}
 
-	sdio_मुक्त_common_cis(card);
+EXPORT_SYMBOL(mmc_unregister_driver);
 
-	kमुक्त(card->info);
+static void mmc_release_card(struct device *dev)
+{
+	struct mmc_card *card = mmc_dev_to_card(dev);
 
-	kमुक्त(card);
-पूर्ण
+	sdio_free_common_cis(card);
+
+	kfree(card->info);
+
+	kfree(card);
+}
 
 /*
- * Allocate and initialise a new MMC card काष्ठाure.
+ * Allocate and initialise a new MMC card structure.
  */
-काष्ठा mmc_card *mmc_alloc_card(काष्ठा mmc_host *host, काष्ठा device_type *type)
-अणु
-	काष्ठा mmc_card *card;
+struct mmc_card *mmc_alloc_card(struct mmc_host *host, struct device_type *type)
+{
+	struct mmc_card *card;
 
-	card = kzalloc(माप(काष्ठा mmc_card), GFP_KERNEL);
-	अगर (!card)
-		वापस ERR_PTR(-ENOMEM);
+	card = kzalloc(sizeof(struct mmc_card), GFP_KERNEL);
+	if (!card)
+		return ERR_PTR(-ENOMEM);
 
 	card->host = host;
 
@@ -302,65 +301,65 @@ EXPORT_SYMBOL(mmc_unरेजिस्टर_driver);
 	card->dev.release = mmc_release_card;
 	card->dev.type = type;
 
-	वापस card;
-पूर्ण
+	return card;
+}
 
 /*
  * Register a new MMC card with the driver model.
  */
-पूर्णांक mmc_add_card(काष्ठा mmc_card *card)
-अणु
-	पूर्णांक ret;
-	स्थिर अक्षर *type;
-	स्थिर अक्षर *uhs_bus_speed_mode = "";
-	अटल स्थिर अक्षर *स्थिर uhs_speeds[] = अणु
+int mmc_add_card(struct mmc_card *card)
+{
+	int ret;
+	const char *type;
+	const char *uhs_bus_speed_mode = "";
+	static const char *const uhs_speeds[] = {
 		[UHS_SDR12_BUS_SPEED] = "SDR12 ",
 		[UHS_SDR25_BUS_SPEED] = "SDR25 ",
 		[UHS_SDR50_BUS_SPEED] = "SDR50 ",
 		[UHS_SDR104_BUS_SPEED] = "SDR104 ",
 		[UHS_DDR50_BUS_SPEED] = "DDR50 ",
-	पूर्ण;
+	};
 
 
 	dev_set_name(&card->dev, "%s:%04x", mmc_hostname(card->host), card->rca);
 
-	चयन (card->type) अणु
-	हाल MMC_TYPE_MMC:
+	switch (card->type) {
+	case MMC_TYPE_MMC:
 		type = "MMC";
-		अवरोध;
-	हाल MMC_TYPE_SD:
+		break;
+	case MMC_TYPE_SD:
 		type = "SD";
-		अगर (mmc_card_blockaddr(card)) अणु
-			अगर (mmc_card_ext_capacity(card))
+		if (mmc_card_blockaddr(card)) {
+			if (mmc_card_ext_capacity(card))
 				type = "SDXC";
-			अन्यथा
+			else
 				type = "SDHC";
-		पूर्ण
-		अवरोध;
-	हाल MMC_TYPE_SDIO:
+		}
+		break;
+	case MMC_TYPE_SDIO:
 		type = "SDIO";
-		अवरोध;
-	हाल MMC_TYPE_SD_COMBO:
+		break;
+	case MMC_TYPE_SD_COMBO:
 		type = "SD-combo";
-		अगर (mmc_card_blockaddr(card))
+		if (mmc_card_blockaddr(card))
 			type = "SDHC-combo";
-		अवरोध;
-	शेष:
+		break;
+	default:
 		type = "?";
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	अगर (mmc_card_uhs(card) &&
+	if (mmc_card_uhs(card) &&
 		(card->sd_bus_speed < ARRAY_SIZE(uhs_speeds)))
 		uhs_bus_speed_mode = uhs_speeds[card->sd_bus_speed];
 
-	अगर (mmc_host_is_spi(card->host)) अणु
+	if (mmc_host_is_spi(card->host)) {
 		pr_info("%s: new %s%s%s card on SPI\n",
 			mmc_hostname(card->host),
 			mmc_card_hs(card) ? "high speed " : "",
 			mmc_card_ddr52(card) ? "DDR " : "",
 			type);
-	पूर्ण अन्यथा अणु
+	} else {
 		pr_info("%s: new %s%s%s%s%s%s card at address %04x\n",
 			mmc_hostname(card->host),
 			mmc_card_uhs(card) ? "ultra high speed " :
@@ -370,52 +369,52 @@ EXPORT_SYMBOL(mmc_unरेजिस्टर_driver);
 			mmc_card_hs400es(card) ? "Enhanced strobe " : "",
 			mmc_card_ddr52(card) ? "DDR " : "",
 			uhs_bus_speed_mode, type, card->rca);
-	पूर्ण
+	}
 
-#अगर_घोषित CONFIG_DEBUG_FS
+#ifdef CONFIG_DEBUG_FS
 	mmc_add_card_debugfs(card);
-#पूर्ण_अगर
+#endif
 	card->dev.of_node = mmc_of_find_child_device(card->host, 0);
 
 	device_enable_async_suspend(&card->dev);
 
 	ret = device_add(&card->dev);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	mmc_card_set_present(card);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Unरेजिस्टर a new MMC card with the driver model, and
- * (eventually) मुक्त it.
+ * Unregister a new MMC card with the driver model, and
+ * (eventually) free it.
  */
-व्योम mmc_हटाओ_card(काष्ठा mmc_card *card)
-अणु
-	काष्ठा mmc_host *host = card->host;
+void mmc_remove_card(struct mmc_card *card)
+{
+	struct mmc_host *host = card->host;
 
-#अगर_घोषित CONFIG_DEBUG_FS
-	mmc_हटाओ_card_debugfs(card);
-#पूर्ण_अगर
+#ifdef CONFIG_DEBUG_FS
+	mmc_remove_card_debugfs(card);
+#endif
 
-	अगर (mmc_card_present(card)) अणु
-		अगर (mmc_host_is_spi(card->host)) अणु
+	if (mmc_card_present(card)) {
+		if (mmc_host_is_spi(card->host)) {
 			pr_info("%s: SPI card removed\n",
 				mmc_hostname(card->host));
-		पूर्ण अन्यथा अणु
+		} else {
 			pr_info("%s: card %04x removed\n",
 				mmc_hostname(card->host), card->rca);
-		पूर्ण
+		}
 		device_del(&card->dev);
 		of_node_put(card->dev.of_node);
-	पूर्ण
+	}
 
-	अगर (host->cqe_enabled) अणु
+	if (host->cqe_enabled) {
 		host->cqe_ops->cqe_disable(host);
 		host->cqe_enabled = false;
-	पूर्ण
+	}
 
 	put_device(&card->dev);
-पूर्ण
+}

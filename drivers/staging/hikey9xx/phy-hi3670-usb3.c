@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Phy provider क्रम USB 3.1 controller on HiSilicon Kirin970 platक्रमm
+ * Phy provider for USB 3.1 controller on HiSilicon Kirin970 platform
  *
  * Copyright (C) 2017-2020 Hilisicon Electronics Co., Ltd.
  *		http://www.huawei.com
@@ -9,126 +8,126 @@
  * Authors: Yu Chen <chenyu56@huawei.com>
  */
 
-#समावेश <linux/bitfield.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/mfd/syscon.h>
-#समावेश <linux/module.h>
-#समावेश <linux/phy/phy.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/regmap.h>
+#include <linux/bitfield.h>
+#include <linux/clk.h>
+#include <linux/kernel.h>
+#include <linux/mfd/syscon.h>
+#include <linux/module.h>
+#include <linux/phy/phy.h>
+#include <linux/platform_device.h>
+#include <linux/regmap.h>
 
-#घोषणा SCTRL_SCDEEPSLEEPED		(0x0)
-#घोषणा USB_CLK_SELECTED		BIT(20)
+#define SCTRL_SCDEEPSLEEPED		(0x0)
+#define USB_CLK_SELECTED		BIT(20)
 
-#घोषणा PERI_CRG_PEREN0			(0x00)
-#घोषणा PERI_CRG_PERDIS0		(0x04)
-#घोषणा PERI_CRG_PEREN4			(0x40)
-#घोषणा PERI_CRG_PERDIS4		(0x44)
-#घोषणा PERI_CRG_PERRSTEN4		(0x90)
-#घोषणा PERI_CRG_PERRSTDIS4		(0x94)
-#घोषणा PERI_CRG_ISODIS			(0x148)
-#घोषणा PERI_CRG_PEREN6			(0x410)
-#घोषणा PERI_CRG_PERDIS6		(0x414)
+#define PERI_CRG_PEREN0			(0x00)
+#define PERI_CRG_PERDIS0		(0x04)
+#define PERI_CRG_PEREN4			(0x40)
+#define PERI_CRG_PERDIS4		(0x44)
+#define PERI_CRG_PERRSTEN4		(0x90)
+#define PERI_CRG_PERRSTDIS4		(0x94)
+#define PERI_CRG_ISODIS			(0x148)
+#define PERI_CRG_PEREN6			(0x410)
+#define PERI_CRG_PERDIS6		(0x414)
 
-#घोषणा USB_REFCLK_ISO_EN		BIT(25)
+#define USB_REFCLK_ISO_EN		BIT(25)
 
-#घोषणा GT_CLK_USB2PHY_REF		BIT(19)
+#define GT_CLK_USB2PHY_REF		BIT(19)
 
-#घोषणा PCTRL_PERI_CTRL3		(0x10)
-#घोषणा PCTRL_PERI_CTRL3_MSK_START	(16)
-#घोषणा USB_TCXO_EN			BIT(1)
+#define PCTRL_PERI_CTRL3		(0x10)
+#define PCTRL_PERI_CTRL3_MSK_START	(16)
+#define USB_TCXO_EN			BIT(1)
 
-#घोषणा PCTRL_PERI_CTRL24		(0x64)
-#घोषणा SC_CLK_USB3PHY_3MUX1_SEL	BIT(25)
+#define PCTRL_PERI_CTRL24		(0x64)
+#define SC_CLK_USB3PHY_3MUX1_SEL	BIT(25)
 
-#घोषणा USB3OTG_CTRL0			(0x00)
-#घोषणा USB3OTG_CTRL3			(0x0c)
-#घोषणा USB3OTG_CTRL4			(0x10)
-#घोषणा USB3OTG_CTRL5			(0x14)
-#घोषणा USB3OTG_CTRL7			(0x1c)
-#घोषणा USB_MISC_CFG50			(0x50)
-#घोषणा USB_MISC_CFG54			(0x54)
-#घोषणा USB_MISC_CFG58			(0x58)
-#घोषणा USB_MISC_CFG5C			(0x5c)
-#घोषणा USB_MISC_CFGA0			(0xa0)
-#घोषणा TCA_CLK_RST			(0x200)
-#घोषणा TCA_INTR_EN			(0x204)
-#घोषणा TCA_INTR_STS			(0x208)
-#घोषणा TCA_GCFG			(0x210)
-#घोषणा TCA_TCPC			(0x214)
-#घोषणा TCA_SYSMODE_CFG			(0x218)
-#घोषणा TCA_VBUS_CTRL			(0x240)
+#define USB3OTG_CTRL0			(0x00)
+#define USB3OTG_CTRL3			(0x0c)
+#define USB3OTG_CTRL4			(0x10)
+#define USB3OTG_CTRL5			(0x14)
+#define USB3OTG_CTRL7			(0x1c)
+#define USB_MISC_CFG50			(0x50)
+#define USB_MISC_CFG54			(0x54)
+#define USB_MISC_CFG58			(0x58)
+#define USB_MISC_CFG5C			(0x5c)
+#define USB_MISC_CFGA0			(0xa0)
+#define TCA_CLK_RST			(0x200)
+#define TCA_INTR_EN			(0x204)
+#define TCA_INTR_STS			(0x208)
+#define TCA_GCFG			(0x210)
+#define TCA_TCPC			(0x214)
+#define TCA_SYSMODE_CFG			(0x218)
+#define TCA_VBUS_CTRL			(0x240)
 
-#घोषणा CTRL0_USB3_VBUSVLD		BIT(7)
-#घोषणा CTRL0_USB3_VBUSVLD_SEL		BIT(6)
+#define CTRL0_USB3_VBUSVLD		BIT(7)
+#define CTRL0_USB3_VBUSVLD_SEL		BIT(6)
 
-#घोषणा CTRL3_USB2_VBUSVLDEXT0		BIT(6)
-#घोषणा CTRL3_USB2_VBUSVLDEXTSEL0	BIT(5)
+#define CTRL3_USB2_VBUSVLDEXT0		BIT(6)
+#define CTRL3_USB2_VBUSVLDEXTSEL0	BIT(5)
 
-#घोषणा CTRL5_USB2_SIDDQ		BIT(0)
+#define CTRL5_USB2_SIDDQ		BIT(0)
 
-#घोषणा CTRL7_USB2_REFCLKSEL_MASK	GENMASK(4, 3)
-#घोषणा CTRL7_USB2_REFCLKSEL_ABB	(BIT(4) | BIT(3))
-#घोषणा CTRL7_USB2_REFCLKSEL_PAD	BIT(4)
+#define CTRL7_USB2_REFCLKSEL_MASK	GENMASK(4, 3)
+#define CTRL7_USB2_REFCLKSEL_ABB	(BIT(4) | BIT(3))
+#define CTRL7_USB2_REFCLKSEL_PAD	BIT(4)
 
-#घोषणा CFG50_USB3_PHY_TEST_POWERDOWN	BIT(23)
+#define CFG50_USB3_PHY_TEST_POWERDOWN	BIT(23)
 
-#घोषणा CFG54_USB31PHY_CR_ADDR_MASK	GENMASK(31, 16)
+#define CFG54_USB31PHY_CR_ADDR_MASK	GENMASK(31, 16)
 
-#घोषणा CFG54_USB3PHY_REF_USE_PAD	BIT(12)
-#घोषणा CFG54_PHY0_PMA_PWR_STABLE	BIT(11)
-#घोषणा CFG54_PHY0_PCS_PWR_STABLE	BIT(9)
-#घोषणा CFG54_USB31PHY_CR_ACK		BIT(7)
-#घोषणा CFG54_USB31PHY_CR_WR_EN		BIT(5)
-#घोषणा CFG54_USB31PHY_CR_SEL		BIT(4)
-#घोषणा CFG54_USB31PHY_CR_RD_EN		BIT(3)
-#घोषणा CFG54_USB31PHY_CR_CLK		BIT(2)
-#घोषणा CFG54_USB3_PHY0_ANA_PWR_EN	BIT(1)
+#define CFG54_USB3PHY_REF_USE_PAD	BIT(12)
+#define CFG54_PHY0_PMA_PWR_STABLE	BIT(11)
+#define CFG54_PHY0_PCS_PWR_STABLE	BIT(9)
+#define CFG54_USB31PHY_CR_ACK		BIT(7)
+#define CFG54_USB31PHY_CR_WR_EN		BIT(5)
+#define CFG54_USB31PHY_CR_SEL		BIT(4)
+#define CFG54_USB31PHY_CR_RD_EN		BIT(3)
+#define CFG54_USB31PHY_CR_CLK		BIT(2)
+#define CFG54_USB3_PHY0_ANA_PWR_EN	BIT(1)
 
-#घोषणा CFG58_USB31PHY_CR_DATA_MASK     GENMASK(31, 16)
+#define CFG58_USB31PHY_CR_DATA_MASK     GENMASK(31, 16)
 
-#घोषणा CFG5C_USB3_PHY0_SS_MPLLA_SSC_EN	BIT(1)
+#define CFG5C_USB3_PHY0_SS_MPLLA_SSC_EN	BIT(1)
 
-#घोषणा CFGA0_VAUX_RESET		BIT(9)
-#घोषणा CFGA0_USB31C_RESET		BIT(8)
-#घोषणा CFGA0_USB2PHY_REFCLK_SELECT	BIT(4)
-#घोषणा CFGA0_USB3PHY_RESET		BIT(1)
-#घोषणा CFGA0_USB2PHY_POR		BIT(0)
+#define CFGA0_VAUX_RESET		BIT(9)
+#define CFGA0_USB31C_RESET		BIT(8)
+#define CFGA0_USB2PHY_REFCLK_SELECT	BIT(4)
+#define CFGA0_USB3PHY_RESET		BIT(1)
+#define CFGA0_USB2PHY_POR		BIT(0)
 
-#घोषणा INTR_EN_XA_TIMEOUT_EVT_EN	BIT(1)
-#घोषणा INTR_EN_XA_ACK_EVT_EN		BIT(0)
+#define INTR_EN_XA_TIMEOUT_EVT_EN	BIT(1)
+#define INTR_EN_XA_ACK_EVT_EN		BIT(0)
 
-#घोषणा CLK_RST_TCA_REF_CLK_EN		BIT(1)
-#घोषणा CLK_RST_SUSPEND_CLK_EN		BIT(0)
+#define CLK_RST_TCA_REF_CLK_EN		BIT(1)
+#define CLK_RST_SUSPEND_CLK_EN		BIT(0)
 
-#घोषणा GCFG_ROLE_HSTDEV		BIT(4)
-#घोषणा GCFG_OP_MODE			GENMASK(1, 0)
-#घोषणा GCFG_OP_MODE_CTRL_SYNC_MODE	BIT(0)
+#define GCFG_ROLE_HSTDEV		BIT(4)
+#define GCFG_OP_MODE			GENMASK(1, 0)
+#define GCFG_OP_MODE_CTRL_SYNC_MODE	BIT(0)
 
-#घोषणा TCPC_VALID			BIT(4)
-#घोषणा TCPC_LOW_POWER_EN		BIT(3)
-#घोषणा TCPC_MUX_CONTROL_MASK		GENMASK(1, 0)
-#घोषणा TCPC_MUX_CONTROL_USB31		BIT(0)
+#define TCPC_VALID			BIT(4)
+#define TCPC_LOW_POWER_EN		BIT(3)
+#define TCPC_MUX_CONTROL_MASK		GENMASK(1, 0)
+#define TCPC_MUX_CONTROL_USB31		BIT(0)
 
-#घोषणा SYSMODE_CFG_TYPEC_DISABLE	BIT(3)
+#define SYSMODE_CFG_TYPEC_DISABLE	BIT(3)
 
-#घोषणा VBUS_CTRL_POWERPRESENT_OVERRD	GENMASK(3, 2)
-#घोषणा VBUS_CTRL_VBUSVALID_OVERRD	GENMASK(1, 0)
+#define VBUS_CTRL_POWERPRESENT_OVERRD	GENMASK(3, 2)
+#define VBUS_CTRL_VBUSVALID_OVERRD	GENMASK(1, 0)
 
-#घोषणा KIRIN970_USB_DEFAULT_PHY_PARAM	(0xfdfee4)
-#घोषणा KIRIN970_USB_DEFAULT_PHY_VBOOST	(0x5)
+#define KIRIN970_USB_DEFAULT_PHY_PARAM	(0xfdfee4)
+#define KIRIN970_USB_DEFAULT_PHY_VBOOST	(0x5)
 
-#घोषणा TX_VBOOST_LVL_REG		(0xf)
-#घोषणा TX_VBOOST_LVL_START		(6)
-#घोषणा TX_VBOOST_LVL_ENABLE		BIT(9)
+#define TX_VBOOST_LVL_REG		(0xf)
+#define TX_VBOOST_LVL_START		(6)
+#define TX_VBOOST_LVL_ENABLE		BIT(9)
 
-काष्ठा hi3670_priv अणु
-	काष्ठा device *dev;
-	काष्ठा regmap *peri_crg;
-	काष्ठा regmap *pctrl;
-	काष्ठा regmap *sctrl;
-	काष्ठा regmap *usb31misc;
+struct hi3670_priv {
+	struct device *dev;
+	struct regmap *peri_crg;
+	struct regmap *pctrl;
+	struct regmap *sctrl;
+	struct regmap *usb31misc;
 
 	u32 eye_diagram_param;
 	u32 tx_vboost_lvl;
@@ -136,231 +135,231 @@
 	u32 peri_crg_offset;
 	u32 pctrl_offset;
 	u32 usb31misc_offset;
-पूर्ण;
+};
 
-अटल पूर्णांक hi3670_phy_cr_clk(काष्ठा regmap *usb31misc)
-अणु
-	पूर्णांक ret;
+static int hi3670_phy_cr_clk(struct regmap *usb31misc)
+{
+	int ret;
 
 	/* Clock up */
 	ret = regmap_update_bits(usb31misc, USB_MISC_CFG54,
 				 CFG54_USB31PHY_CR_CLK, CFG54_USB31PHY_CR_CLK);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	/* Clock करोwn */
+	/* Clock down */
 	ret = regmap_update_bits(usb31misc, USB_MISC_CFG54,
 				 CFG54_USB31PHY_CR_CLK, 0);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक hi3670_phy_cr_set_sel(काष्ठा regmap *usb31misc)
-अणु
-	वापस regmap_update_bits(usb31misc, USB_MISC_CFG54,
+static int hi3670_phy_cr_set_sel(struct regmap *usb31misc)
+{
+	return regmap_update_bits(usb31misc, USB_MISC_CFG54,
 				  CFG54_USB31PHY_CR_SEL, CFG54_USB31PHY_CR_SEL);
-पूर्ण
+}
 
-अटल पूर्णांक hi3670_phy_cr_start(काष्ठा regmap *usb31misc, पूर्णांक direction)
-अणु
-	पूर्णांक ret, reg;
+static int hi3670_phy_cr_start(struct regmap *usb31misc, int direction)
+{
+	int ret, reg;
 
-	अगर (direction)
+	if (direction)
 		reg = CFG54_USB31PHY_CR_WR_EN;
-	अन्यथा
+	else
 		reg = CFG54_USB31PHY_CR_RD_EN;
 
 	ret = regmap_update_bits(usb31misc, USB_MISC_CFG54, reg, reg);
 
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = hi3670_phy_cr_clk(usb31misc);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस regmap_update_bits(usb31misc, USB_MISC_CFG54,
+	return regmap_update_bits(usb31misc, USB_MISC_CFG54,
 				  CFG54_USB31PHY_CR_RD_EN | CFG54_USB31PHY_CR_WR_EN, 0);
-पूर्ण
+}
 
-अटल पूर्णांक hi3670_phy_cr_रुको_ack(काष्ठा regmap *usb31misc)
-अणु
+static int hi3670_phy_cr_wait_ack(struct regmap *usb31misc)
+{
 	u32 reg;
-	पूर्णांक retry = 10;
-	पूर्णांक ret;
+	int retry = 10;
+	int ret;
 
-	जबतक (retry-- > 0) अणु
-		ret = regmap_पढ़ो(usb31misc, USB_MISC_CFG54, &reg);
-		अगर (ret)
-			वापस ret;
-		अगर ((reg & CFG54_USB31PHY_CR_ACK) == CFG54_USB31PHY_CR_ACK)
-			वापस 0;
+	while (retry-- > 0) {
+		ret = regmap_read(usb31misc, USB_MISC_CFG54, &reg);
+		if (ret)
+			return ret;
+		if ((reg & CFG54_USB31PHY_CR_ACK) == CFG54_USB31PHY_CR_ACK)
+			return 0;
 
 		ret = hi3670_phy_cr_clk(usb31misc);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
 		usleep_range(10, 20);
-	पूर्ण
+	}
 
-	वापस -ETIMEDOUT;
-पूर्ण
+	return -ETIMEDOUT;
+}
 
-अटल पूर्णांक hi3670_phy_cr_set_addr(काष्ठा regmap *usb31misc, u32 addr)
-अणु
+static int hi3670_phy_cr_set_addr(struct regmap *usb31misc, u32 addr)
+{
 	u32 reg;
-	पूर्णांक ret;
+	int ret;
 
-	ret = regmap_पढ़ो(usb31misc, USB_MISC_CFG54, &reg);
-	अगर (ret)
-		वापस ret;
+	ret = regmap_read(usb31misc, USB_MISC_CFG54, &reg);
+	if (ret)
+		return ret;
 
 	reg = FIELD_PREP(CFG54_USB31PHY_CR_ADDR_MASK, addr);
 	ret = regmap_update_bits(usb31misc, USB_MISC_CFG54,
 				 CFG54_USB31PHY_CR_ADDR_MASK, reg);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक hi3670_phy_cr_पढ़ो(काष्ठा regmap *usb31misc, u32 addr, u32 *val)
-अणु
-	पूर्णांक reg;
-	पूर्णांक i;
-	पूर्णांक ret;
+static int hi3670_phy_cr_read(struct regmap *usb31misc, u32 addr, u32 *val)
+{
+	int reg;
+	int i;
+	int ret;
 
-	क्रम (i = 0; i < 100; i++) अणु
+	for (i = 0; i < 100; i++) {
 		ret = hi3670_phy_cr_clk(usb31misc);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
 	ret = hi3670_phy_cr_set_sel(usb31misc);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = hi3670_phy_cr_set_addr(usb31misc, addr);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = hi3670_phy_cr_start(usb31misc, 0);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	ret = hi3670_phy_cr_रुको_ack(usb31misc);
-	अगर (ret)
-		वापस ret;
+	ret = hi3670_phy_cr_wait_ack(usb31misc);
+	if (ret)
+		return ret;
 
-	ret = regmap_पढ़ो(usb31misc, USB_MISC_CFG58, &reg);
-	अगर (ret)
-		वापस ret;
+	ret = regmap_read(usb31misc, USB_MISC_CFG58, &reg);
+	if (ret)
+		return ret;
 
 	*val = FIELD_GET(CFG58_USB31PHY_CR_DATA_MASK, reg);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक hi3670_phy_cr_ग_लिखो(काष्ठा regmap *usb31misc, u32 addr, u32 val)
-अणु
-	पूर्णांक i;
-	पूर्णांक ret;
+static int hi3670_phy_cr_write(struct regmap *usb31misc, u32 addr, u32 val)
+{
+	int i;
+	int ret;
 
-	क्रम (i = 0; i < 100; i++) अणु
+	for (i = 0; i < 100; i++) {
 		ret = hi3670_phy_cr_clk(usb31misc);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
 	ret = hi3670_phy_cr_set_sel(usb31misc);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = hi3670_phy_cr_set_addr(usb31misc, addr);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	ret = regmap_ग_लिखो(usb31misc, USB_MISC_CFG58,
+	ret = regmap_write(usb31misc, USB_MISC_CFG58,
 			   FIELD_PREP(CFG58_USB31PHY_CR_DATA_MASK, val));
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = hi3670_phy_cr_start(usb31misc, 1);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	ret = hi3670_phy_cr_रुको_ack(usb31misc);
+	ret = hi3670_phy_cr_wait_ack(usb31misc);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक hi3670_phy_set_params(काष्ठा hi3670_priv *priv)
-अणु
+static int hi3670_phy_set_params(struct hi3670_priv *priv)
+{
 	u32 reg;
-	पूर्णांक ret;
-	पूर्णांक retry = 3;
+	int ret;
+	int retry = 3;
 
-	ret = regmap_ग_लिखो(priv->usb31misc, USB3OTG_CTRL4,
+	ret = regmap_write(priv->usb31misc, USB3OTG_CTRL4,
 			   priv->eye_diagram_param);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(priv->dev, "set USB3OTG_CTRL4 failed\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	जबतक (retry-- > 0) अणु
-		ret = hi3670_phy_cr_पढ़ो(priv->usb31misc,
+	while (retry-- > 0) {
+		ret = hi3670_phy_cr_read(priv->usb31misc,
 					 TX_VBOOST_LVL_REG, &reg);
-		अगर (!ret)
-			अवरोध;
+		if (!ret)
+			break;
 
-		अगर (ret != -ETIMEDOUT) अणु
+		if (ret != -ETIMEDOUT) {
 			dev_err(priv->dev, "read TX_VBOOST_LVL_REG failed\n");
-			वापस ret;
-		पूर्ण
-	पूर्ण
-	अगर (ret)
-		वापस ret;
+			return ret;
+		}
+	}
+	if (ret)
+		return ret;
 
 	reg |= (TX_VBOOST_LVL_ENABLE | (priv->tx_vboost_lvl << TX_VBOOST_LVL_START));
-	ret = hi3670_phy_cr_ग_लिखो(priv->usb31misc, TX_VBOOST_LVL_REG, reg);
-	अगर (ret)
+	ret = hi3670_phy_cr_write(priv->usb31misc, TX_VBOOST_LVL_REG, reg);
+	if (ret)
 		dev_err(priv->dev, "write TX_VBOOST_LVL_REG failed\n");
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल bool hi3670_is_abbclk_selected(काष्ठा hi3670_priv *priv)
-अणु
+static bool hi3670_is_abbclk_selected(struct hi3670_priv *priv)
+{
 	u32 reg;
 
-	अगर (!priv->sctrl) अणु
+	if (!priv->sctrl) {
 		dev_err(priv->dev, "priv->sctrl is null!\n");
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
-	अगर (regmap_पढ़ो(priv->sctrl, SCTRL_SCDEEPSLEEPED, &reg)) अणु
+	if (regmap_read(priv->sctrl, SCTRL_SCDEEPSLEEPED, &reg)) {
 		dev_err(priv->dev, "SCTRL_SCDEEPSLEEPED read failed!\n");
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
-	अगर ((reg & USB_CLK_SELECTED) == 0)
-		वापस false;
+	if ((reg & USB_CLK_SELECTED) == 0)
+		return false;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल पूर्णांक hi3670_config_phy_घड़ी(काष्ठा hi3670_priv *priv)
-अणु
+static int hi3670_config_phy_clock(struct hi3670_priv *priv)
+{
 	u32 val, mask;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (!hi3670_is_abbclk_selected(priv)) अणु
+	if (!hi3670_is_abbclk_selected(priv)) {
 		/* usb refclk iso disable */
-		ret = regmap_ग_लिखो(priv->peri_crg, PERI_CRG_ISODIS,
+		ret = regmap_write(priv->peri_crg, PERI_CRG_ISODIS,
 				   USB_REFCLK_ISO_EN);
-		अगर (ret)
-			जाओ out;
+		if (ret)
+			goto out;
 
 		/* enable usb_tcxo_en */
-		ret = regmap_ग_लिखो(priv->pctrl, PCTRL_PERI_CTRL3,
+		ret = regmap_write(priv->pctrl, PCTRL_PERI_CTRL3,
 				   USB_TCXO_EN |
 				   (USB_TCXO_EN << PCTRL_PERI_CTRL3_MSK_START));
 
@@ -368,301 +367,301 @@
 		mask = SC_CLK_USB3PHY_3MUX1_SEL;
 		ret = regmap_update_bits(priv->pctrl,
 					 PCTRL_PERI_CTRL24, mask, 0);
-		अगर (ret)
-			जाओ out;
+		if (ret)
+			goto out;
 
 		ret = regmap_update_bits(priv->usb31misc, USB_MISC_CFGA0,
 					 CFGA0_USB2PHY_REFCLK_SELECT, 0);
-		अगर (ret)
-			जाओ out;
+		if (ret)
+			goto out;
 
-		ret = regmap_पढ़ो(priv->usb31misc, USB3OTG_CTRL7, &val);
-		अगर (ret)
-			जाओ out;
+		ret = regmap_read(priv->usb31misc, USB3OTG_CTRL7, &val);
+		if (ret)
+			goto out;
 		val &= ~CTRL7_USB2_REFCLKSEL_MASK;
 		val |= CTRL7_USB2_REFCLKSEL_ABB;
-		ret = regmap_ग_लिखो(priv->usb31misc, USB3OTG_CTRL7, val);
-		अगर (ret)
-			जाओ out;
+		ret = regmap_write(priv->usb31misc, USB3OTG_CTRL7, val);
+		if (ret)
+			goto out;
 
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	ret = regmap_update_bits(priv->usb31misc, USB_MISC_CFG54,
 				 CFG54_USB3PHY_REF_USE_PAD,
 				 CFG54_USB3PHY_REF_USE_PAD);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
 	ret = regmap_update_bits(priv->usb31misc, USB_MISC_CFGA0,
 				 CFGA0_USB2PHY_REFCLK_SELECT,
 				 CFGA0_USB2PHY_REFCLK_SELECT);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
-	ret = regmap_पढ़ो(priv->usb31misc, USB3OTG_CTRL7, &val);
-	अगर (ret)
-		जाओ out;
+	ret = regmap_read(priv->usb31misc, USB3OTG_CTRL7, &val);
+	if (ret)
+		goto out;
 	val &= ~CTRL7_USB2_REFCLKSEL_MASK;
 	val |= CTRL7_USB2_REFCLKSEL_PAD;
-	ret = regmap_ग_लिखो(priv->usb31misc, USB3OTG_CTRL7, val);
-	अगर (ret)
-		जाओ out;
+	ret = regmap_write(priv->usb31misc, USB3OTG_CTRL7, val);
+	if (ret)
+		goto out;
 
-	ret = regmap_ग_लिखो(priv->peri_crg,
+	ret = regmap_write(priv->peri_crg,
 			   PERI_CRG_PEREN6, GT_CLK_USB2PHY_REF);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
-	वापस 0;
+	return 0;
 out:
 	dev_err(priv->dev, "failed to config phy clock ret: %d\n", ret);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक hi3670_config_tca(काष्ठा hi3670_priv *priv)
-अणु
+static int hi3670_config_tca(struct hi3670_priv *priv)
+{
 	u32 val, mask;
-	पूर्णांक ret;
+	int ret;
 
-	ret = regmap_ग_लिखो(priv->usb31misc, TCA_INTR_STS, 0xffff);
-	अगर (ret)
-		जाओ out;
+	ret = regmap_write(priv->usb31misc, TCA_INTR_STS, 0xffff);
+	if (ret)
+		goto out;
 
-	ret = regmap_ग_लिखो(priv->usb31misc, TCA_INTR_EN,
+	ret = regmap_write(priv->usb31misc, TCA_INTR_EN,
 			   INTR_EN_XA_TIMEOUT_EVT_EN | INTR_EN_XA_ACK_EVT_EN);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
 	mask = CLK_RST_TCA_REF_CLK_EN | CLK_RST_SUSPEND_CLK_EN;
 	ret = regmap_update_bits(priv->usb31misc, TCA_CLK_RST, mask, 0);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
 	ret = regmap_update_bits(priv->usb31misc, TCA_GCFG,
 				 GCFG_ROLE_HSTDEV | GCFG_OP_MODE,
 				 GCFG_ROLE_HSTDEV | GCFG_OP_MODE_CTRL_SYNC_MODE);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
 	ret = regmap_update_bits(priv->usb31misc, TCA_SYSMODE_CFG,
 				 SYSMODE_CFG_TYPEC_DISABLE, 0);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
-	ret = regmap_पढ़ो(priv->usb31misc, TCA_TCPC, &val);
-	अगर (ret)
-		जाओ out;
+	ret = regmap_read(priv->usb31misc, TCA_TCPC, &val);
+	if (ret)
+		goto out;
 	val &= ~(TCPC_VALID | TCPC_LOW_POWER_EN | TCPC_MUX_CONTROL_MASK);
 	val |= (TCPC_VALID | TCPC_MUX_CONTROL_USB31);
-	ret = regmap_ग_लिखो(priv->usb31misc, TCA_TCPC, val);
-	अगर (ret)
-		जाओ out;
+	ret = regmap_write(priv->usb31misc, TCA_TCPC, val);
+	if (ret)
+		goto out;
 
-	ret = regmap_ग_लिखो(priv->usb31misc, TCA_VBUS_CTRL,
+	ret = regmap_write(priv->usb31misc, TCA_VBUS_CTRL,
 			   VBUS_CTRL_POWERPRESENT_OVERRD | VBUS_CTRL_VBUSVALID_OVERRD);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
-	वापस 0;
+	return 0;
 out:
 	dev_err(priv->dev, "failed to config phy clock ret: %d\n", ret);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक hi3670_phy_init(काष्ठा phy *phy)
-अणु
-	काष्ठा hi3670_priv *priv = phy_get_drvdata(phy);
+static int hi3670_phy_init(struct phy *phy)
+{
+	struct hi3670_priv *priv = phy_get_drvdata(phy);
 	u32 val;
-	पूर्णांक ret;
+	int ret;
 
-	/* निश्चित controller */
+	/* assert controller */
 	val = CFGA0_VAUX_RESET | CFGA0_USB31C_RESET |
 	      CFGA0_USB3PHY_RESET | CFGA0_USB2PHY_POR;
 	ret = regmap_update_bits(priv->usb31misc, USB_MISC_CFGA0, val, 0);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
-	ret = hi3670_config_phy_घड़ी(priv);
-	अगर (ret)
-		जाओ out;
+	ret = hi3670_config_phy_clock(priv);
+	if (ret)
+		goto out;
 
 	/* Exit from IDDQ mode */
 	ret = regmap_update_bits(priv->usb31misc, USB3OTG_CTRL5,
 				 CTRL5_USB2_SIDDQ, 0);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
 	/* Release USB31 PHY out of TestPowerDown mode */
 	ret = regmap_update_bits(priv->usb31misc, USB_MISC_CFG50,
 				 CFG50_USB3_PHY_TEST_POWERDOWN, 0);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
-	/* Deनिश्चित phy */
+	/* Deassert phy */
 	val = CFGA0_USB3PHY_RESET | CFGA0_USB2PHY_POR;
 	ret = regmap_update_bits(priv->usb31misc, USB_MISC_CFGA0, val, val);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
 	usleep_range(100, 120);
 
-	/* Tell the PHY घातer is stable */
+	/* Tell the PHY power is stable */
 	val = CFG54_USB3_PHY0_ANA_PWR_EN | CFG54_PHY0_PCS_PWR_STABLE |
 	      CFG54_PHY0_PMA_PWR_STABLE;
 	ret = regmap_update_bits(priv->usb31misc, USB_MISC_CFG54,
 				 val, val);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
 	ret = hi3670_config_tca(priv);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
 	/* Enable SSC */
 	ret = regmap_update_bits(priv->usb31misc, USB_MISC_CFG5C,
 				 CFG5C_USB3_PHY0_SS_MPLLA_SSC_EN,
 				 CFG5C_USB3_PHY0_SS_MPLLA_SSC_EN);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
-	/* Deनिश्चित controller */
+	/* Deassert controller */
 	val = CFGA0_VAUX_RESET | CFGA0_USB31C_RESET;
 	ret = regmap_update_bits(priv->usb31misc, USB_MISC_CFGA0, val, val);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
 	usleep_range(100, 120);
 
-	/* Set fake vbus valid संकेत */
+	/* Set fake vbus valid signal */
 	val = CTRL0_USB3_VBUSVLD | CTRL0_USB3_VBUSVLD_SEL;
 	ret = regmap_update_bits(priv->usb31misc, USB3OTG_CTRL0, val, val);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
 	val = CTRL3_USB2_VBUSVLDEXT0 | CTRL3_USB2_VBUSVLDEXTSEL0;
 	ret = regmap_update_bits(priv->usb31misc, USB3OTG_CTRL3, val, val);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
 	usleep_range(100, 120);
 
 	ret = hi3670_phy_set_params(priv);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
-	वापस 0;
+	return 0;
 out:
 	dev_err(priv->dev, "failed to init phy ret: %d\n", ret);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक hi3670_phy_निकास(काष्ठा phy *phy)
-अणु
-	काष्ठा hi3670_priv *priv = phy_get_drvdata(phy);
+static int hi3670_phy_exit(struct phy *phy)
+{
+	struct hi3670_priv *priv = phy_get_drvdata(phy);
 	u32 mask;
-	पूर्णांक ret;
+	int ret;
 
 	/* Assert phy */
 	mask = CFGA0_USB3PHY_RESET | CFGA0_USB2PHY_POR;
 	ret = regmap_update_bits(priv->usb31misc, USB_MISC_CFGA0, mask, 0);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
-	अगर (!hi3670_is_abbclk_selected(priv)) अणु
+	if (!hi3670_is_abbclk_selected(priv)) {
 		/* disable usb_tcxo_en */
-		ret = regmap_ग_लिखो(priv->pctrl, PCTRL_PERI_CTRL3,
+		ret = regmap_write(priv->pctrl, PCTRL_PERI_CTRL3,
 				   USB_TCXO_EN << PCTRL_PERI_CTRL3_MSK_START);
-	पूर्ण अन्यथा अणु
-		ret = regmap_ग_लिखो(priv->peri_crg, PERI_CRG_PERDIS6,
+	} else {
+		ret = regmap_write(priv->peri_crg, PERI_CRG_PERDIS6,
 				   GT_CLK_USB2PHY_REF);
-		अगर (ret)
-			जाओ out;
-	पूर्ण
+		if (ret)
+			goto out;
+	}
 
-	वापस 0;
+	return 0;
 out:
 	dev_err(priv->dev, "failed to exit phy ret: %d\n", ret);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा phy_ops hi3670_phy_ops = अणु
+static const struct phy_ops hi3670_phy_ops = {
 	.init		= hi3670_phy_init,
-	.निकास		= hi3670_phy_निकास,
+	.exit		= hi3670_phy_exit,
 	.owner		= THIS_MODULE,
-पूर्ण;
+};
 
-अटल पूर्णांक hi3670_phy_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा phy_provider *phy_provider;
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा phy *phy;
-	काष्ठा hi3670_priv *priv;
+static int hi3670_phy_probe(struct platform_device *pdev)
+{
+	struct phy_provider *phy_provider;
+	struct device *dev = &pdev->dev;
+	struct phy *phy;
+	struct hi3670_priv *priv;
 
-	priv = devm_kzalloc(dev, माप(*priv), GFP_KERNEL);
-	अगर (!priv)
-		वापस -ENOMEM;
+	priv = devm_kzalloc(dev, sizeof(*priv), GFP_KERNEL);
+	if (!priv)
+		return -ENOMEM;
 
 	priv->dev = dev;
 	priv->peri_crg = syscon_regmap_lookup_by_phandle(dev->of_node,
 							 "hisilicon,pericrg-syscon");
-	अगर (IS_ERR(priv->peri_crg)) अणु
+	if (IS_ERR(priv->peri_crg)) {
 		dev_err(dev, "no hisilicon,pericrg-syscon\n");
-		वापस PTR_ERR(priv->peri_crg);
-	पूर्ण
+		return PTR_ERR(priv->peri_crg);
+	}
 
 	priv->pctrl = syscon_regmap_lookup_by_phandle(dev->of_node,
 						      "hisilicon,pctrl-syscon");
-	अगर (IS_ERR(priv->pctrl)) अणु
+	if (IS_ERR(priv->pctrl)) {
 		dev_err(dev, "no hisilicon,pctrl-syscon\n");
-		वापस PTR_ERR(priv->pctrl);
-	पूर्ण
+		return PTR_ERR(priv->pctrl);
+	}
 
 	priv->sctrl = syscon_regmap_lookup_by_phandle(dev->of_node,
 						      "hisilicon,sctrl-syscon");
-	अगर (IS_ERR(priv->sctrl)) अणु
+	if (IS_ERR(priv->sctrl)) {
 		dev_err(dev, "no hisilicon,sctrl-syscon\n");
-		वापस PTR_ERR(priv->sctrl);
-	पूर्ण
+		return PTR_ERR(priv->sctrl);
+	}
 
 	/* node of hi3670 phy is a sub-node of usb3_otg_bc */
 	priv->usb31misc = syscon_node_to_regmap(dev->parent->of_node);
-	अगर (IS_ERR(priv->usb31misc)) अणु
+	if (IS_ERR(priv->usb31misc)) {
 		dev_err(dev, "no hisilicon,usb3-otg-bc-syscon\n");
-		वापस PTR_ERR(priv->usb31misc);
-	पूर्ण
+		return PTR_ERR(priv->usb31misc);
+	}
 
-	अगर (of_property_पढ़ो_u32(dev->of_node, "hisilicon,eye-diagram-param",
+	if (of_property_read_u32(dev->of_node, "hisilicon,eye-diagram-param",
 				 &priv->eye_diagram_param))
 		priv->eye_diagram_param = KIRIN970_USB_DEFAULT_PHY_PARAM;
 
-	अगर (of_property_पढ़ो_u32(dev->of_node, "hisilicon,tx-vboost-lvl",
+	if (of_property_read_u32(dev->of_node, "hisilicon,tx-vboost-lvl",
 				 &priv->tx_vboost_lvl))
 		priv->tx_vboost_lvl = KIRIN970_USB_DEFAULT_PHY_VBOOST;
 
-	phy = devm_phy_create(dev, शून्य, &hi3670_phy_ops);
-	अगर (IS_ERR(phy))
-		वापस PTR_ERR(phy);
+	phy = devm_phy_create(dev, NULL, &hi3670_phy_ops);
+	if (IS_ERR(phy))
+		return PTR_ERR(phy);
 
 	phy_set_drvdata(phy, priv);
-	phy_provider = devm_of_phy_provider_रेजिस्टर(dev, of_phy_simple_xlate);
-	वापस PTR_ERR_OR_ZERO(phy_provider);
-पूर्ण
+	phy_provider = devm_of_phy_provider_register(dev, of_phy_simple_xlate);
+	return PTR_ERR_OR_ZERO(phy_provider);
+}
 
-अटल स्थिर काष्ठा of_device_id hi3670_phy_of_match[] = अणु
-	अणु .compatible = "hisilicon,hi3670-usb-phy" पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+static const struct of_device_id hi3670_phy_of_match[] = {
+	{ .compatible = "hisilicon,hi3670-usb-phy" },
+	{ },
+};
 MODULE_DEVICE_TABLE(of, hi3670_phy_of_match);
 
-अटल काष्ठा platक्रमm_driver hi3670_phy_driver = अणु
+static struct platform_driver hi3670_phy_driver = {
 	.probe	= hi3670_phy_probe,
-	.driver = अणु
+	.driver = {
 		.name	= "hi3670-usb-phy",
 		.of_match_table	= hi3670_phy_of_match,
-	पूर्ण
-पूर्ण;
-module_platक्रमm_driver(hi3670_phy_driver);
+	}
+};
+module_platform_driver(hi3670_phy_driver);
 
 MODULE_AUTHOR("Yu Chen <chenyu56@huawei.com>");
 MODULE_LICENSE("GPL v2");

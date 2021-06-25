@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Base unit test (KUnit) API.
  *
@@ -7,782 +6,782 @@
  * Author: Brendan Higgins <brendanhiggins@google.com>
  */
 
-#अगर_अघोषित _KUNIT_TEST_H
-#घोषणा _KUNIT_TEST_H
+#ifndef _KUNIT_TEST_H
+#define _KUNIT_TEST_H
 
-#समावेश <kunit/निश्चित.स>
-#समावेश <kunit/try-catch.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/types.h>
-#समावेश <linux/kref.h>
+#include <kunit/assert.h>
+#include <kunit/try-catch.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/types.h>
+#include <linux/kref.h>
 
-काष्ठा kunit_resource;
+struct kunit_resource;
 
-प्रकार पूर्णांक (*kunit_resource_init_t)(काष्ठा kunit_resource *, व्योम *);
-प्रकार व्योम (*kunit_resource_मुक्त_t)(काष्ठा kunit_resource *);
+typedef int (*kunit_resource_init_t)(struct kunit_resource *, void *);
+typedef void (*kunit_resource_free_t)(struct kunit_resource *);
 
 /**
- * काष्ठा kunit_resource - represents a *test managed resource*
- * @data: क्रम the user to store arbitrary data.
+ * struct kunit_resource - represents a *test managed resource*
+ * @data: for the user to store arbitrary data.
  * @name: optional name
- * @मुक्त: a user supplied function to मुक्त the resource. Populated by
+ * @free: a user supplied function to free the resource. Populated by
  * kunit_resource_alloc().
  *
- * Represents a *test managed resource*, a resource which will स्वतःmatically be
- * cleaned up at the end of a test हाल.
+ * Represents a *test managed resource*, a resource which will automatically be
+ * cleaned up at the end of a test case.
  *
- * Resources are reference counted so अगर a resource is retrieved via
+ * Resources are reference counted so if a resource is retrieved via
  * kunit_alloc_and_get_resource() or kunit_find_resource(), we need
  * to call kunit_put_resource() to reduce the resource reference count
- * when finished with it.  Note that kunit_alloc_resource() करोes not require a
- * kunit_resource_put() because it करोes not retrieve the resource itself.
+ * when finished with it.  Note that kunit_alloc_resource() does not require a
+ * kunit_resource_put() because it does not retrieve the resource itself.
  *
  * Example:
  *
  * .. code-block:: c
  *
- *	काष्ठा kunit_kदो_स्मृति_params अणु
- *		माप_प्रकार size;
+ *	struct kunit_kmalloc_params {
+ *		size_t size;
  *		gfp_t gfp;
- *	पूर्ण;
+ *	};
  *
- *	अटल पूर्णांक kunit_kदो_स्मृति_init(काष्ठा kunit_resource *res, व्योम *context)
- *	अणु
- *		काष्ठा kunit_kदो_स्मृति_params *params = context;
- *		res->data = kदो_स्मृति(params->size, params->gfp);
+ *	static int kunit_kmalloc_init(struct kunit_resource *res, void *context)
+ *	{
+ *		struct kunit_kmalloc_params *params = context;
+ *		res->data = kmalloc(params->size, params->gfp);
  *
- *		अगर (!res->data)
- *			वापस -ENOMEM;
+ *		if (!res->data)
+ *			return -ENOMEM;
  *
- *		वापस 0;
- *	पूर्ण
+ *		return 0;
+ *	}
  *
- *	अटल व्योम kunit_kदो_स्मृति_मुक्त(काष्ठा kunit_resource *res)
- *	अणु
- *		kमुक्त(res->data);
- *	पूर्ण
+ *	static void kunit_kmalloc_free(struct kunit_resource *res)
+ *	{
+ *		kfree(res->data);
+ *	}
  *
- *	व्योम *kunit_kदो_स्मृति(काष्ठा kunit *test, माप_प्रकार size, gfp_t gfp)
- *	अणु
- *		काष्ठा kunit_kदो_स्मृति_params params;
+ *	void *kunit_kmalloc(struct kunit *test, size_t size, gfp_t gfp)
+ *	{
+ *		struct kunit_kmalloc_params params;
  *
  *		params.size = size;
  *		params.gfp = gfp;
  *
- *		वापस kunit_alloc_resource(test, kunit_kदो_स्मृति_init,
- *			kunit_kदो_स्मृति_मुक्त, &params);
- *	पूर्ण
+ *		return kunit_alloc_resource(test, kunit_kmalloc_init,
+ *			kunit_kmalloc_free, &params);
+ *	}
  *
- * Resources can also be named, with lookup/removal करोne on a name
+ * Resources can also be named, with lookup/removal done on a name
  * basis also.  kunit_add_named_resource(), kunit_find_named_resource()
  * and kunit_destroy_named_resource().  Resource names must be
  * unique within the test instance.
  */
-काष्ठा kunit_resource अणु
-	व्योम *data;
-	स्थिर अक्षर *name;
-	kunit_resource_मुक्त_t मुक्त;
+struct kunit_resource {
+	void *data;
+	const char *name;
+	kunit_resource_free_t free;
 
-	/* निजी: पूर्णांकernal use only. */
-	काष्ठा kref refcount;
-	काष्ठा list_head node;
-पूर्ण;
+	/* private: internal use only. */
+	struct kref refcount;
+	struct list_head node;
+};
 
-काष्ठा kunit;
+struct kunit;
 
 /* Size of log associated with test. */
-#घोषणा KUNIT_LOG_SIZE	512
+#define KUNIT_LOG_SIZE	512
 
 /* Maximum size of parameter description string. */
-#घोषणा KUNIT_PARAM_DESC_SIZE 128
+#define KUNIT_PARAM_DESC_SIZE 128
 
 /*
- * TAP specअगरies subtest stream indentation of 4 spaces, 8 spaces क्रम a
+ * TAP specifies subtest stream indentation of 4 spaces, 8 spaces for a
  * sub-subtest.  See the "Subtests" section in
  * https://node-tap.org/tap-protocol/
  */
-#घोषणा KUNIT_SUBTEST_INDENT		"    "
-#घोषणा KUNIT_SUBSUBTEST_INDENT		"        "
+#define KUNIT_SUBTEST_INDENT		"    "
+#define KUNIT_SUBSUBTEST_INDENT		"        "
 
 /**
- * काष्ठा kunit_हाल - represents an inभागidual test हाल.
+ * struct kunit_case - represents an individual test case.
  *
- * @run_हाल: the function representing the actual test हाल.
- * @name:     the name of the test हाल.
- * @generate_params: the generator function क्रम parameterized tests.
+ * @run_case: the function representing the actual test case.
+ * @name:     the name of the test case.
+ * @generate_params: the generator function for parameterized tests.
  *
- * A test हाल is a function with the signature,
- * ``व्योम (*)(काष्ठा kunit *)``
- * that makes expectations and निश्चितions (see KUNIT_EXPECT_TRUE() and
- * KUNIT_ASSERT_TRUE()) about code under test. Each test हाल is associated
- * with a &काष्ठा kunit_suite and will be run after the suite's init
- * function and followed by the suite's निकास function.
+ * A test case is a function with the signature,
+ * ``void (*)(struct kunit *)``
+ * that makes expectations and assertions (see KUNIT_EXPECT_TRUE() and
+ * KUNIT_ASSERT_TRUE()) about code under test. Each test case is associated
+ * with a &struct kunit_suite and will be run after the suite's init
+ * function and followed by the suite's exit function.
  *
- * A test हाल should be अटल and should only be created with the
- * KUNIT_CASE() macro; additionally, every array of test हालs should be
- * terminated with an empty test हाल.
+ * A test case should be static and should only be created with the
+ * KUNIT_CASE() macro; additionally, every array of test cases should be
+ * terminated with an empty test case.
  *
  * Example:
  *
  * .. code-block:: c
  *
- *	व्योम add_test_basic(काष्ठा kunit *test)
- *	अणु
+ *	void add_test_basic(struct kunit *test)
+ *	{
  *		KUNIT_EXPECT_EQ(test, 1, add(1, 0));
  *		KUNIT_EXPECT_EQ(test, 2, add(1, 1));
  *		KUNIT_EXPECT_EQ(test, 0, add(-1, 1));
- *		KUNIT_EXPECT_EQ(test, पूर्णांक_उच्च, add(0, पूर्णांक_उच्च));
- *		KUNIT_EXPECT_EQ(test, -1, add(पूर्णांक_उच्च, पूर्णांक_न्यून));
- *	पूर्ण
+ *		KUNIT_EXPECT_EQ(test, INT_MAX, add(0, INT_MAX));
+ *		KUNIT_EXPECT_EQ(test, -1, add(INT_MAX, INT_MIN));
+ *	}
  *
- *	अटल काष्ठा kunit_हाल example_test_हालs[] = अणु
+ *	static struct kunit_case example_test_cases[] = {
  *		KUNIT_CASE(add_test_basic),
- *		अणुपूर्ण
- *	पूर्ण;
+ *		{}
+ *	};
  *
  */
-काष्ठा kunit_हाल अणु
-	व्योम (*run_हाल)(काष्ठा kunit *test);
-	स्थिर अक्षर *name;
-	स्थिर व्योम* (*generate_params)(स्थिर व्योम *prev, अक्षर *desc);
+struct kunit_case {
+	void (*run_case)(struct kunit *test);
+	const char *name;
+	const void* (*generate_params)(const void *prev, char *desc);
 
-	/* निजी: पूर्णांकernal use only. */
+	/* private: internal use only. */
 	bool success;
-	अक्षर *log;
-पूर्ण;
+	char *log;
+};
 
-अटल अंतरभूत अक्षर *kunit_status_to_string(bool status)
-अणु
-	वापस status ? "ok" : "not ok";
-पूर्ण
+static inline char *kunit_status_to_string(bool status)
+{
+	return status ? "ok" : "not ok";
+}
 
 /**
- * KUNIT_CASE - A helper क्रम creating a &काष्ठा kunit_हाल
+ * KUNIT_CASE - A helper for creating a &struct kunit_case
  *
- * @test_name: a reference to a test हाल function.
+ * @test_name: a reference to a test case function.
  *
- * Takes a symbol क्रम a function representing a test हाल and creates a
- * &काष्ठा kunit_हाल object from it. See the करोcumentation क्रम
- * &काष्ठा kunit_हाल क्रम an example on how to use it.
+ * Takes a symbol for a function representing a test case and creates a
+ * &struct kunit_case object from it. See the documentation for
+ * &struct kunit_case for an example on how to use it.
  */
-#घोषणा KUNIT_CASE(test_name) अणु .run_हाल = test_name, .name = #test_name पूर्ण
+#define KUNIT_CASE(test_name) { .run_case = test_name, .name = #test_name }
 
 /**
- * KUNIT_CASE_PARAM - A helper क्रम creation a parameterized &काष्ठा kunit_हाल
+ * KUNIT_CASE_PARAM - A helper for creation a parameterized &struct kunit_case
  *
- * @test_name: a reference to a test हाल function.
+ * @test_name: a reference to a test case function.
  * @gen_params: a reference to a parameter generator function.
  *
  * The generator function::
  *
- *	स्थिर व्योम* gen_params(स्थिर व्योम *prev, अक्षर *desc)
+ *	const void* gen_params(const void *prev, char *desc)
  *
- * is used to lazily generate a series of arbitrarily typed values that fit पूर्णांकo
- * a व्योम*. The argument @prev is the previously वापसed value, which should be
- * used to derive the next value; @prev is set to शून्य on the initial generator
- * call. When no more values are available, the generator must वापस शून्य.
- * Optionally ग_लिखो a string पूर्णांकo @desc (size of KUNIT_PARAM_DESC_SIZE)
+ * is used to lazily generate a series of arbitrarily typed values that fit into
+ * a void*. The argument @prev is the previously returned value, which should be
+ * used to derive the next value; @prev is set to NULL on the initial generator
+ * call. When no more values are available, the generator must return NULL.
+ * Optionally write a string into @desc (size of KUNIT_PARAM_DESC_SIZE)
  * describing the parameter.
  */
-#घोषणा KUNIT_CASE_PARAM(test_name, gen_params)			\
-		अणु .run_हाल = test_name, .name = #test_name,	\
-		  .generate_params = gen_params पूर्ण
+#define KUNIT_CASE_PARAM(test_name, gen_params)			\
+		{ .run_case = test_name, .name = #test_name,	\
+		  .generate_params = gen_params }
 
 /**
- * काष्ठा kunit_suite - describes a related collection of &काष्ठा kunit_हाल
+ * struct kunit_suite - describes a related collection of &struct kunit_case
  *
- * @name:	the name of the test. Purely inक्रमmational.
- * @init:	called beक्रमe every test हाल.
- * @निकास:	called after every test हाल.
- * @test_हालs:	a null terminated array of test हालs.
+ * @name:	the name of the test. Purely informational.
+ * @init:	called before every test case.
+ * @exit:	called after every test case.
+ * @test_cases:	a null terminated array of test cases.
  *
- * A kunit_suite is a collection of related &काष्ठा kunit_हाल s, such that
- * @init is called beक्रमe every test हाल and @निकास is called after every
- * test हाल, similar to the notion of a *test fixture* or a *test class*
+ * A kunit_suite is a collection of related &struct kunit_case s, such that
+ * @init is called before every test case and @exit is called after every
+ * test case, similar to the notion of a *test fixture* or a *test class*
  * in other unit testing frameworks like JUnit or Googletest.
  *
- * Every &काष्ठा kunit_हाल must be associated with a kunit_suite क्रम KUnit
+ * Every &struct kunit_case must be associated with a kunit_suite for KUnit
  * to run it.
  */
-काष्ठा kunit_suite अणु
-	स्थिर अक्षर name[256];
-	पूर्णांक (*init)(काष्ठा kunit *test);
-	व्योम (*निकास)(काष्ठा kunit *test);
-	काष्ठा kunit_हाल *test_हालs;
+struct kunit_suite {
+	const char name[256];
+	int (*init)(struct kunit *test);
+	void (*exit)(struct kunit *test);
+	struct kunit_case *test_cases;
 
-	/* निजी: पूर्णांकernal use only */
-	काष्ठा dentry *debugfs;
-	अक्षर *log;
-पूर्ण;
+	/* private: internal use only */
+	struct dentry *debugfs;
+	char *log;
+};
 
 /**
- * काष्ठा kunit - represents a running instance of a test.
+ * struct kunit - represents a running instance of a test.
  *
- * @priv: क्रम user to store arbitrary data. Commonly used to pass data
- *	  created in the init function (see &काष्ठा kunit_suite).
+ * @priv: for user to store arbitrary data. Commonly used to pass data
+ *	  created in the init function (see &struct kunit_suite).
  *
- * Used to store inक्रमmation about the current context under which the test
- * is running. Most of this data is निजी and should only be accessed
- * indirectly via खुला functions; the one exception is @priv which can be
- * used by the test ग_लिखोr to store arbitrary data.
+ * Used to store information about the current context under which the test
+ * is running. Most of this data is private and should only be accessed
+ * indirectly via public functions; the one exception is @priv which can be
+ * used by the test writer to store arbitrary data.
  */
-काष्ठा kunit अणु
-	व्योम *priv;
+struct kunit {
+	void *priv;
 
-	/* निजी: पूर्णांकernal use only. */
-	स्थिर अक्षर *name; /* Read only after initialization! */
-	अक्षर *log; /* Poपूर्णांकs at हाल log after initialization */
-	काष्ठा kunit_try_catch try_catch;
-	/* param_value is the current parameter value क्रम a test हाल. */
-	स्थिर व्योम *param_value;
+	/* private: internal use only. */
+	const char *name; /* Read only after initialization! */
+	char *log; /* Points at case log after initialization */
+	struct kunit_try_catch try_catch;
+	/* param_value is the current parameter value for a test case. */
+	const void *param_value;
 	/* param_index stores the index of the parameter in parameterized tests. */
-	पूर्णांक param_index;
+	int param_index;
 	/*
 	 * success starts as true, and may only be set to false during a
-	 * test हाल; thus, it is safe to update this across multiple
-	 * thपढ़ोs using WRITE_ONCE; however, as a consequence, it may only
-	 * be पढ़ो after the test हाल finishes once all thपढ़ोs associated
-	 * with the test हाल have terminated.
+	 * test case; thus, it is safe to update this across multiple
+	 * threads using WRITE_ONCE; however, as a consequence, it may only
+	 * be read after the test case finishes once all threads associated
+	 * with the test case have terminated.
 	 */
-	bool success; /* Read only after test_हाल finishes! */
+	bool success; /* Read only after test_case finishes! */
 	spinlock_t lock; /* Guards all mutable test state. */
 	/*
-	 * Because resources is a list that may be updated multiple बार (with
-	 * new resources) from any thपढ़ो associated with a test हाल, we must
+	 * Because resources is a list that may be updated multiple times (with
+	 * new resources) from any thread associated with a test case, we must
 	 * protect it with some type of lock.
 	 */
-	काष्ठा list_head resources; /* Protected by lock. */
-पूर्ण;
+	struct list_head resources; /* Protected by lock. */
+};
 
-अटल अंतरभूत व्योम kunit_set_failure(काष्ठा kunit *test)
-अणु
+static inline void kunit_set_failure(struct kunit *test)
+{
 	WRITE_ONCE(test->success, false);
-पूर्ण
+}
 
-व्योम kunit_init_test(काष्ठा kunit *test, स्थिर अक्षर *name, अक्षर *log);
+void kunit_init_test(struct kunit *test, const char *name, char *log);
 
-पूर्णांक kunit_run_tests(काष्ठा kunit_suite *suite);
+int kunit_run_tests(struct kunit_suite *suite);
 
-माप_प्रकार kunit_suite_num_test_हालs(काष्ठा kunit_suite *suite);
+size_t kunit_suite_num_test_cases(struct kunit_suite *suite);
 
-अचिन्हित पूर्णांक kunit_test_हाल_num(काष्ठा kunit_suite *suite,
-				 काष्ठा kunit_हाल *test_हाल);
+unsigned int kunit_test_case_num(struct kunit_suite *suite,
+				 struct kunit_case *test_case);
 
-पूर्णांक __kunit_test_suites_init(काष्ठा kunit_suite * स्थिर * स्थिर suites);
+int __kunit_test_suites_init(struct kunit_suite * const * const suites);
 
-व्योम __kunit_test_suites_निकास(काष्ठा kunit_suite **suites);
+void __kunit_test_suites_exit(struct kunit_suite **suites);
 
-#अगर IS_BUILTIN(CONFIG_KUNIT)
-पूर्णांक kunit_run_all_tests(व्योम);
-#अन्यथा
-अटल अंतरभूत पूर्णांक kunit_run_all_tests(व्योम)
-अणु
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर /* IS_BUILTIN(CONFIG_KUNIT) */
+#if IS_BUILTIN(CONFIG_KUNIT)
+int kunit_run_all_tests(void);
+#else
+static inline int kunit_run_all_tests(void)
+{
+	return 0;
+}
+#endif /* IS_BUILTIN(CONFIG_KUNIT) */
 
-#अगर_घोषित MODULE
+#ifdef MODULE
 /**
- * kunit_test_suites_क्रम_module() - used to रेजिस्टर one or more
- *			 &काष्ठा kunit_suite with KUnit.
+ * kunit_test_suites_for_module() - used to register one or more
+ *			 &struct kunit_suite with KUnit.
  *
- * @__suites: a अटलally allocated list of &काष्ठा kunit_suite.
+ * @__suites: a statically allocated list of &struct kunit_suite.
  *
- * Registers @__suites with the test framework. See &काष्ठा kunit_suite क्रम
- * more inक्रमmation.
+ * Registers @__suites with the test framework. See &struct kunit_suite for
+ * more information.
  *
- * If a test suite is built-in, module_init() माला_लो translated पूर्णांकo
- * an initcall which we करोn't want as the idea is that क्रम builtins
- * the executor will manage execution.  So ensure we करो not define
- * module_अणुinit|निकासपूर्ण functions क्रम the builtin हाल when रेजिस्टरing
+ * If a test suite is built-in, module_init() gets translated into
+ * an initcall which we don't want as the idea is that for builtins
+ * the executor will manage execution.  So ensure we do not define
+ * module_{init|exit} functions for the builtin case when registering
  * suites via kunit_test_suites() below.
  */
-#घोषणा kunit_test_suites_क्रम_module(__suites)				\
-	अटल पूर्णांक __init kunit_test_suites_init(व्योम)			\
-	अणु								\
-		वापस __kunit_test_suites_init(__suites);		\
-	पूर्ण								\
+#define kunit_test_suites_for_module(__suites)				\
+	static int __init kunit_test_suites_init(void)			\
+	{								\
+		return __kunit_test_suites_init(__suites);		\
+	}								\
 	module_init(kunit_test_suites_init);				\
 									\
-	अटल व्योम __निकास kunit_test_suites_निकास(व्योम)			\
-	अणु								\
-		वापस __kunit_test_suites_निकास(__suites);		\
-	पूर्ण								\
-	module_निकास(kunit_test_suites_निकास)
-#अन्यथा
-#घोषणा kunit_test_suites_क्रम_module(__suites)
-#पूर्ण_अगर /* MODULE */
+	static void __exit kunit_test_suites_exit(void)			\
+	{								\
+		return __kunit_test_suites_exit(__suites);		\
+	}								\
+	module_exit(kunit_test_suites_exit)
+#else
+#define kunit_test_suites_for_module(__suites)
+#endif /* MODULE */
 
-#घोषणा __kunit_test_suites(unique_array, unique_suites, ...)		       \
-	अटल काष्ठा kunit_suite *unique_array[] = अणु __VA_ARGS__, शून्य पूर्ण;     \
-	kunit_test_suites_क्रम_module(unique_array);			       \
-	अटल काष्ठा kunit_suite **unique_suites			       \
+#define __kunit_test_suites(unique_array, unique_suites, ...)		       \
+	static struct kunit_suite *unique_array[] = { __VA_ARGS__, NULL };     \
+	kunit_test_suites_for_module(unique_array);			       \
+	static struct kunit_suite **unique_suites			       \
 	__used __section(".kunit_test_suites") = unique_array
 
 /**
- * kunit_test_suites() - used to रेजिस्टर one or more &काष्ठा kunit_suite
+ * kunit_test_suites() - used to register one or more &struct kunit_suite
  *			 with KUnit.
  *
- * @__suites: a अटलally allocated list of &काष्ठा kunit_suite.
+ * @__suites: a statically allocated list of &struct kunit_suite.
  *
- * Registers @suites with the test framework. See &काष्ठा kunit_suite क्रम
- * more inक्रमmation.
+ * Registers @suites with the test framework. See &struct kunit_suite for
+ * more information.
  *
- * When builtin,  KUnit tests are all run via executor; this is करोne
- * by placing the array of काष्ठा kunit_suite * in the .kunit_test_suites
+ * When builtin,  KUnit tests are all run via executor; this is done
+ * by placing the array of struct kunit_suite * in the .kunit_test_suites
  * ELF section.
  *
- * An alternative is to build the tests as a module.  Because modules करो not
- * support multiple initcall()s, we need to initialize an array of suites क्रम a
+ * An alternative is to build the tests as a module.  Because modules do not
+ * support multiple initcall()s, we need to initialize an array of suites for a
  * module.
  *
  */
-#घोषणा kunit_test_suites(__suites...)						\
+#define kunit_test_suites(__suites...)						\
 	__kunit_test_suites(__UNIQUE_ID(array),				\
 			    __UNIQUE_ID(suites),			\
 			    ##__suites)
 
-#घोषणा kunit_test_suite(suite)	kunit_test_suites(&suite)
+#define kunit_test_suite(suite)	kunit_test_suites(&suite)
 
-#घोषणा kunit_suite_क्रम_each_test_हाल(suite, test_हाल)		\
-	क्रम (test_हाल = suite->test_हालs; test_हाल->run_हाल; test_हाल++)
+#define kunit_suite_for_each_test_case(suite, test_case)		\
+	for (test_case = suite->test_cases; test_case->run_case; test_case++)
 
-bool kunit_suite_has_succeeded(काष्ठा kunit_suite *suite);
+bool kunit_suite_has_succeeded(struct kunit_suite *suite);
 
 /*
- * Like kunit_alloc_resource() below, but वापसs the काष्ठा kunit_resource
- * object that contains the allocation. This is mostly क्रम testing purposes.
+ * Like kunit_alloc_resource() below, but returns the struct kunit_resource
+ * object that contains the allocation. This is mostly for testing purposes.
  */
-काष्ठा kunit_resource *kunit_alloc_and_get_resource(काष्ठा kunit *test,
+struct kunit_resource *kunit_alloc_and_get_resource(struct kunit *test,
 						    kunit_resource_init_t init,
-						    kunit_resource_मुक्त_t मुक्त,
-						    gfp_t पूर्णांकernal_gfp,
-						    व्योम *context);
+						    kunit_resource_free_t free,
+						    gfp_t internal_gfp,
+						    void *context);
 
 /**
- * kunit_get_resource() - Hold resource क्रम use.  Should not need to be used
- *			  by most users as we स्वतःmatically get resources
+ * kunit_get_resource() - Hold resource for use.  Should not need to be used
+ *			  by most users as we automatically get resources
  *			  retrieved by kunit_find_resource*().
  * @res: resource
  */
-अटल अंतरभूत व्योम kunit_get_resource(काष्ठा kunit_resource *res)
-अणु
+static inline void kunit_get_resource(struct kunit_resource *res)
+{
 	kref_get(&res->refcount);
-पूर्ण
+}
 
 /*
  * Called when refcount reaches zero via kunit_put_resources();
  * should not be called directly.
  */
-अटल अंतरभूत व्योम kunit_release_resource(काष्ठा kref *kref)
-अणु
-	काष्ठा kunit_resource *res = container_of(kref, काष्ठा kunit_resource,
+static inline void kunit_release_resource(struct kref *kref)
+{
+	struct kunit_resource *res = container_of(kref, struct kunit_resource,
 						  refcount);
 
-	/* If मुक्त function is defined, resource was dynamically allocated. */
-	अगर (res->मुक्त) अणु
-		res->मुक्त(res);
-		kमुक्त(res);
-	पूर्ण
-पूर्ण
+	/* If free function is defined, resource was dynamically allocated. */
+	if (res->free) {
+		res->free(res);
+		kfree(res);
+	}
+}
 
 /**
- * kunit_put_resource() - When caller is करोne with retrieved resource,
+ * kunit_put_resource() - When caller is done with retrieved resource,
  *			  kunit_put_resource() should be called to drop
- *			  reference count.  The resource list मुख्यtains
- *			  a reference count on resources, so अगर no users
- *			  are utilizing a resource and it is हटाओd from
- *			  the resource list, it will be मुक्तd via the
- *			  associated मुक्त function (अगर any).  Only
- *			  needs to be used अगर we alloc_and_get() or
+ *			  reference count.  The resource list maintains
+ *			  a reference count on resources, so if no users
+ *			  are utilizing a resource and it is removed from
+ *			  the resource list, it will be freed via the
+ *			  associated free function (if any).  Only
+ *			  needs to be used if we alloc_and_get() or
  *			  find() resource.
  * @res: resource
  */
-अटल अंतरभूत व्योम kunit_put_resource(काष्ठा kunit_resource *res)
-अणु
+static inline void kunit_put_resource(struct kunit_resource *res)
+{
 	kref_put(&res->refcount, kunit_release_resource);
-पूर्ण
+}
 
 /**
  * kunit_add_resource() - Add a *test managed resource*.
  * @test: The test context object.
- * @init: a user-supplied function to initialize the result (अगर needed).  If
+ * @init: a user-supplied function to initialize the result (if needed).  If
  *        none is supplied, the resource data value is simply set to @data.
  *	  If an init function is supplied, @data is passed to it instead.
- * @मुक्त: a user-supplied function to मुक्त the resource (अगर needed).
+ * @free: a user-supplied function to free the resource (if needed).
  * @res: The resource.
  * @data: value to pass to init function or set in resource data field.
  */
-पूर्णांक kunit_add_resource(काष्ठा kunit *test,
+int kunit_add_resource(struct kunit *test,
 		       kunit_resource_init_t init,
-		       kunit_resource_मुक्त_t मुक्त,
-		       काष्ठा kunit_resource *res,
-		       व्योम *data);
+		       kunit_resource_free_t free,
+		       struct kunit_resource *res,
+		       void *data);
 
 /**
  * kunit_add_named_resource() - Add a named *test managed resource*.
  * @test: The test context object.
- * @init: a user-supplied function to initialize the resource data, अगर needed.
- * @मुक्त: a user-supplied function to मुक्त the resource data, अगर needed.
+ * @init: a user-supplied function to initialize the resource data, if needed.
+ * @free: a user-supplied function to free the resource data, if needed.
  * @res: The resource.
- * @name: name to be set क्रम resource.
+ * @name: name to be set for resource.
  * @data: value to pass to init function or set in resource data field.
  */
-पूर्णांक kunit_add_named_resource(काष्ठा kunit *test,
+int kunit_add_named_resource(struct kunit *test,
 			     kunit_resource_init_t init,
-			     kunit_resource_मुक्त_t मुक्त,
-			     काष्ठा kunit_resource *res,
-			     स्थिर अक्षर *name,
-			     व्योम *data);
+			     kunit_resource_free_t free,
+			     struct kunit_resource *res,
+			     const char *name,
+			     void *data);
 
 /**
  * kunit_alloc_resource() - Allocates a *test managed resource*.
  * @test: The test context object.
  * @init: a user supplied function to initialize the resource.
- * @मुक्त: a user supplied function to मुक्त the resource.
- * @पूर्णांकernal_gfp: gfp to use क्रम पूर्णांकernal allocations, अगर unsure, use GFP_KERNEL
- * @context: क्रम the user to pass in arbitrary data to the init function.
+ * @free: a user supplied function to free the resource.
+ * @internal_gfp: gfp to use for internal allocations, if unsure, use GFP_KERNEL
+ * @context: for the user to pass in arbitrary data to the init function.
  *
- * Allocates a *test managed resource*, a resource which will स्वतःmatically be
- * cleaned up at the end of a test हाल. See &काष्ठा kunit_resource क्रम an
+ * Allocates a *test managed resource*, a resource which will automatically be
+ * cleaned up at the end of a test case. See &struct kunit_resource for an
  * example.
  *
- * Note: KUnit needs to allocate memory क्रम a kunit_resource object. You must
- * specअगरy an @पूर्णांकernal_gfp that is compatible with the use context of your
+ * Note: KUnit needs to allocate memory for a kunit_resource object. You must
+ * specify an @internal_gfp that is compatible with the use context of your
  * resource.
  */
-अटल अंतरभूत व्योम *kunit_alloc_resource(काष्ठा kunit *test,
+static inline void *kunit_alloc_resource(struct kunit *test,
 					 kunit_resource_init_t init,
-					 kunit_resource_मुक्त_t मुक्त,
-					 gfp_t पूर्णांकernal_gfp,
-					 व्योम *context)
-अणु
-	काष्ठा kunit_resource *res;
+					 kunit_resource_free_t free,
+					 gfp_t internal_gfp,
+					 void *context)
+{
+	struct kunit_resource *res;
 
-	res = kzalloc(माप(*res), पूर्णांकernal_gfp);
-	अगर (!res)
-		वापस शून्य;
+	res = kzalloc(sizeof(*res), internal_gfp);
+	if (!res)
+		return NULL;
 
-	अगर (!kunit_add_resource(test, init, मुक्त, res, context))
-		वापस res->data;
+	if (!kunit_add_resource(test, init, free, res, context))
+		return res->data;
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-प्रकार bool (*kunit_resource_match_t)(काष्ठा kunit *test,
-				       काष्ठा kunit_resource *res,
-				       व्योम *match_data);
+typedef bool (*kunit_resource_match_t)(struct kunit *test,
+				       struct kunit_resource *res,
+				       void *match_data);
 
 /**
  * kunit_resource_instance_match() - Match a resource with the same instance.
- * @test: Test हाल to which the resource beदीर्घs.
+ * @test: Test case to which the resource belongs.
  * @res: The resource.
- * @match_data: The resource poपूर्णांकer to match against.
+ * @match_data: The resource pointer to match against.
  *
  * An instance of kunit_resource_match_t that matches a resource whose
  * allocation matches @match_data.
  */
-अटल अंतरभूत bool kunit_resource_instance_match(काष्ठा kunit *test,
-						 काष्ठा kunit_resource *res,
-						 व्योम *match_data)
-अणु
-	वापस res->data == match_data;
-पूर्ण
+static inline bool kunit_resource_instance_match(struct kunit *test,
+						 struct kunit_resource *res,
+						 void *match_data)
+{
+	return res->data == match_data;
+}
 
 /**
  * kunit_resource_name_match() - Match a resource with the same name.
- * @test: Test हाल to which the resource beदीर्घs.
+ * @test: Test case to which the resource belongs.
  * @res: The resource.
  * @match_name: The name to match against.
  */
-अटल अंतरभूत bool kunit_resource_name_match(काष्ठा kunit *test,
-					     काष्ठा kunit_resource *res,
-					     व्योम *match_name)
-अणु
-	वापस res->name && म_भेद(res->name, match_name) == 0;
-पूर्ण
+static inline bool kunit_resource_name_match(struct kunit *test,
+					     struct kunit_resource *res,
+					     void *match_name)
+{
+	return res->name && strcmp(res->name, match_name) == 0;
+}
 
 /**
  * kunit_find_resource() - Find a resource using match function/data.
- * @test: Test हाल to which the resource beदीर्घs.
+ * @test: Test case to which the resource belongs.
  * @match: match function to be applied to resources/match data.
  * @match_data: data to be used in matching.
  */
-अटल अंतरभूत काष्ठा kunit_resource *
-kunit_find_resource(काष्ठा kunit *test,
+static inline struct kunit_resource *
+kunit_find_resource(struct kunit *test,
 		    kunit_resource_match_t match,
-		    व्योम *match_data)
-अणु
-	काष्ठा kunit_resource *res, *found = शून्य;
+		    void *match_data)
+{
+	struct kunit_resource *res, *found = NULL;
 
 	spin_lock(&test->lock);
 
-	list_क्रम_each_entry_reverse(res, &test->resources, node) अणु
-		अगर (match(test, res, (व्योम *)match_data)) अणु
+	list_for_each_entry_reverse(res, &test->resources, node) {
+		if (match(test, res, (void *)match_data)) {
 			found = res;
 			kunit_get_resource(found);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
 	spin_unlock(&test->lock);
 
-	वापस found;
-पूर्ण
+	return found;
+}
 
 /**
  * kunit_find_named_resource() - Find a resource using match name.
- * @test: Test हाल to which the resource beदीर्घs.
+ * @test: Test case to which the resource belongs.
  * @name: match name.
  */
-अटल अंतरभूत काष्ठा kunit_resource *
-kunit_find_named_resource(काष्ठा kunit *test,
-			  स्थिर अक्षर *name)
-अणु
-	वापस kunit_find_resource(test, kunit_resource_name_match,
-				   (व्योम *)name);
-पूर्ण
+static inline struct kunit_resource *
+kunit_find_named_resource(struct kunit *test,
+			  const char *name)
+{
+	return kunit_find_resource(test, kunit_resource_name_match,
+				   (void *)name);
+}
 
 /**
  * kunit_destroy_resource() - Find a kunit_resource and destroy it.
- * @test: Test हाल to which the resource beदीर्घs.
+ * @test: Test case to which the resource belongs.
  * @match: Match function. Returns whether a given resource matches @match_data.
- * @match_data: Data passed पूर्णांकo @match.
+ * @match_data: Data passed into @match.
  *
  * RETURNS:
- * 0 अगर kunit_resource is found and मुक्तd, -ENOENT अगर not found.
+ * 0 if kunit_resource is found and freed, -ENOENT if not found.
  */
-पूर्णांक kunit_destroy_resource(काष्ठा kunit *test,
+int kunit_destroy_resource(struct kunit *test,
 			   kunit_resource_match_t match,
-			   व्योम *match_data);
+			   void *match_data);
 
-अटल अंतरभूत पूर्णांक kunit_destroy_named_resource(काष्ठा kunit *test,
-					       स्थिर अक्षर *name)
-अणु
-	वापस kunit_destroy_resource(test, kunit_resource_name_match,
-				      (व्योम *)name);
-पूर्ण
+static inline int kunit_destroy_named_resource(struct kunit *test,
+					       const char *name)
+{
+	return kunit_destroy_resource(test, kunit_resource_name_match,
+				      (void *)name);
+}
 
 /**
- * kunit_हटाओ_resource() - हटाओ resource from resource list associated with
+ * kunit_remove_resource() - remove resource from resource list associated with
  *			     test.
  * @test: The test context object.
- * @res: The resource to be हटाओd.
+ * @res: The resource to be removed.
  *
- * Note that the resource will not be immediately मुक्तd since it is likely
+ * Note that the resource will not be immediately freed since it is likely
  * the caller has a reference to it via alloc_and_get() or find();
- * in this हाल a final call to kunit_put_resource() is required.
+ * in this case a final call to kunit_put_resource() is required.
  */
-व्योम kunit_हटाओ_resource(काष्ठा kunit *test, काष्ठा kunit_resource *res);
+void kunit_remove_resource(struct kunit *test, struct kunit_resource *res);
 
 /**
- * kunit_kदो_स्मृति() - Like kदो_स्मृति() except the allocation is *test managed*.
+ * kunit_kmalloc() - Like kmalloc() except the allocation is *test managed*.
  * @test: The test context object.
  * @size: The size in bytes of the desired memory.
- * @gfp: flags passed to underlying kदो_स्मृति().
+ * @gfp: flags passed to underlying kmalloc().
  *
- * Just like `kदो_स्मृति(...)`, except the allocation is managed by the test हाल
- * and is स्वतःmatically cleaned up after the test हाल concludes. See &काष्ठा
- * kunit_resource क्रम more inक्रमmation.
+ * Just like `kmalloc(...)`, except the allocation is managed by the test case
+ * and is automatically cleaned up after the test case concludes. See &struct
+ * kunit_resource for more information.
  */
-व्योम *kunit_kदो_स्मृति(काष्ठा kunit *test, माप_प्रकार size, gfp_t gfp);
+void *kunit_kmalloc(struct kunit *test, size_t size, gfp_t gfp);
 
 /**
- * kunit_kमुक्त() - Like kमुक्त except क्रम allocations managed by KUnit.
- * @test: The test हाल to which the resource beदीर्घs.
- * @ptr: The memory allocation to मुक्त.
+ * kunit_kfree() - Like kfree except for allocations managed by KUnit.
+ * @test: The test case to which the resource belongs.
+ * @ptr: The memory allocation to free.
  */
-व्योम kunit_kमुक्त(काष्ठा kunit *test, स्थिर व्योम *ptr);
+void kunit_kfree(struct kunit *test, const void *ptr);
 
 /**
- * kunit_kzalloc() - Just like kunit_kदो_स्मृति(), but zeroes the allocation.
+ * kunit_kzalloc() - Just like kunit_kmalloc(), but zeroes the allocation.
  * @test: The test context object.
  * @size: The size in bytes of the desired memory.
- * @gfp: flags passed to underlying kदो_स्मृति().
+ * @gfp: flags passed to underlying kmalloc().
  *
- * See kzalloc() and kunit_kदो_स्मृति() क्रम more inक्रमmation.
+ * See kzalloc() and kunit_kmalloc() for more information.
  */
-अटल अंतरभूत व्योम *kunit_kzalloc(काष्ठा kunit *test, माप_प्रकार size, gfp_t gfp)
-अणु
-	वापस kunit_kदो_स्मृति(test, size, gfp | __GFP_ZERO);
-पूर्ण
+static inline void *kunit_kzalloc(struct kunit *test, size_t size, gfp_t gfp)
+{
+	return kunit_kmalloc(test, size, gfp | __GFP_ZERO);
+}
 
-व्योम kunit_cleanup(काष्ठा kunit *test);
+void kunit_cleanup(struct kunit *test);
 
-व्योम kunit_log_append(अक्षर *log, स्थिर अक्षर *fmt, ...);
+void kunit_log_append(char *log, const char *fmt, ...);
 
 /*
- * prपूर्णांकk and log to per-test or per-suite log buffer.  Logging only करोne
- * अगर CONFIG_KUNIT_DEBUGFS is 'y'; if it is 'n', no log is allocated/used.
+ * printk and log to per-test or per-suite log buffer.  Logging only done
+ * if CONFIG_KUNIT_DEBUGFS is 'y'; if it is 'n', no log is allocated/used.
  */
-#घोषणा kunit_log(lvl, test_or_suite, fmt, ...)				\
-	करो अणु								\
-		prपूर्णांकk(lvl fmt, ##__VA_ARGS__);				\
+#define kunit_log(lvl, test_or_suite, fmt, ...)				\
+	do {								\
+		printk(lvl fmt, ##__VA_ARGS__);				\
 		kunit_log_append((test_or_suite)->log,	fmt "\n",	\
 				 ##__VA_ARGS__);			\
-	पूर्ण जबतक (0)
+	} while (0)
 
-#घोषणा kunit_prपूर्णांकk(lvl, test, fmt, ...)				\
+#define kunit_printk(lvl, test, fmt, ...)				\
 	kunit_log(lvl, test, KUNIT_SUBTEST_INDENT "# %s: " fmt,		\
 		  (test)->name,	##__VA_ARGS__)
 
 /**
- * kunit_info() - Prपूर्णांकs an INFO level message associated with @test.
+ * kunit_info() - Prints an INFO level message associated with @test.
  *
  * @test: The test context object.
- * @fmt:  A prपूर्णांकk() style क्रमmat string.
+ * @fmt:  A printk() style format string.
  *
- * Prपूर्णांकs an info level message associated with the test suite being run.
- * Takes a variable number of क्रमmat parameters just like prपूर्णांकk().
+ * Prints an info level message associated with the test suite being run.
+ * Takes a variable number of format parameters just like printk().
  */
-#घोषणा kunit_info(test, fmt, ...) \
-	kunit_prपूर्णांकk(KERN_INFO, test, fmt, ##__VA_ARGS__)
+#define kunit_info(test, fmt, ...) \
+	kunit_printk(KERN_INFO, test, fmt, ##__VA_ARGS__)
 
 /**
- * kunit_warn() - Prपूर्णांकs a WARN level message associated with @test.
+ * kunit_warn() - Prints a WARN level message associated with @test.
  *
  * @test: The test context object.
- * @fmt:  A prपूर्णांकk() style क्रमmat string.
+ * @fmt:  A printk() style format string.
  *
- * Prपूर्णांकs a warning level message.
+ * Prints a warning level message.
  */
-#घोषणा kunit_warn(test, fmt, ...) \
-	kunit_prपूर्णांकk(KERN_WARNING, test, fmt, ##__VA_ARGS__)
+#define kunit_warn(test, fmt, ...) \
+	kunit_printk(KERN_WARNING, test, fmt, ##__VA_ARGS__)
 
 /**
- * kunit_err() - Prपूर्णांकs an ERROR level message associated with @test.
+ * kunit_err() - Prints an ERROR level message associated with @test.
  *
  * @test: The test context object.
- * @fmt:  A prपूर्णांकk() style क्रमmat string.
+ * @fmt:  A printk() style format string.
  *
- * Prपूर्णांकs an error level message.
+ * Prints an error level message.
  */
-#घोषणा kunit_err(test, fmt, ...) \
-	kunit_prपूर्णांकk(KERN_ERR, test, fmt, ##__VA_ARGS__)
+#define kunit_err(test, fmt, ...) \
+	kunit_printk(KERN_ERR, test, fmt, ##__VA_ARGS__)
 
 /**
- * KUNIT_SUCCEED() - A no-op expectation. Only exists क्रम code clarity.
+ * KUNIT_SUCCEED() - A no-op expectation. Only exists for code clarity.
  * @test: The test context object.
  *
  * The opposite of KUNIT_FAIL(), it is an expectation that cannot fail. In other
- * words, it करोes nothing and only exists क्रम code clarity. See
- * KUNIT_EXPECT_TRUE() क्रम more inक्रमmation.
+ * words, it does nothing and only exists for code clarity. See
+ * KUNIT_EXPECT_TRUE() for more information.
  */
-#घोषणा KUNIT_SUCCEED(test) करो अणुपूर्ण जबतक (0)
+#define KUNIT_SUCCEED(test) do {} while (0)
 
-व्योम kunit_करो_निश्चितion(काष्ठा kunit *test,
-			काष्ठा kunit_निश्चित *निश्चित,
+void kunit_do_assertion(struct kunit *test,
+			struct kunit_assert *assert,
 			bool pass,
-			स्थिर अक्षर *fmt, ...);
+			const char *fmt, ...);
 
-#घोषणा KUNIT_ASSERTION(test, pass, निश्चित_class, INITIALIZER, fmt, ...) करो अणु  \
-	काष्ठा निश्चित_class __निश्चितion = INITIALIZER;			       \
-	kunit_करो_निश्चितion(test,					       \
-			   &__निश्चितion.निश्चित,				       \
+#define KUNIT_ASSERTION(test, pass, assert_class, INITIALIZER, fmt, ...) do {  \
+	struct assert_class __assertion = INITIALIZER;			       \
+	kunit_do_assertion(test,					       \
+			   &__assertion.assert,				       \
 			   pass,					       \
 			   fmt,						       \
 			   ##__VA_ARGS__);				       \
-पूर्ण जबतक (0)
+} while (0)
 
 
-#घोषणा KUNIT_FAIL_ASSERTION(test, निश्चित_type, fmt, ...)		       \
+#define KUNIT_FAIL_ASSERTION(test, assert_type, fmt, ...)		       \
 	KUNIT_ASSERTION(test,						       \
 			false,						       \
-			kunit_fail_निश्चित,				       \
-			KUNIT_INIT_FAIL_ASSERT_STRUCT(test, निश्चित_type),      \
+			kunit_fail_assert,				       \
+			KUNIT_INIT_FAIL_ASSERT_STRUCT(test, assert_type),      \
 			fmt,						       \
 			##__VA_ARGS__)
 
 /**
  * KUNIT_FAIL() - Always causes a test to fail when evaluated.
  * @test: The test context object.
- * @fmt: an inक्रमmational message to be prपूर्णांकed when the निश्चितion is made.
- * @...: string क्रमmat arguments.
+ * @fmt: an informational message to be printed when the assertion is made.
+ * @...: string format arguments.
  *
  * The opposite of KUNIT_SUCCEED(), it is an expectation that always fails. In
  * other words, it always results in a failed expectation, and consequently
- * always causes the test हाल to fail when evaluated. See KUNIT_EXPECT_TRUE()
- * क्रम more inक्रमmation.
+ * always causes the test case to fail when evaluated. See KUNIT_EXPECT_TRUE()
+ * for more information.
  */
-#घोषणा KUNIT_FAIL(test, fmt, ...)					       \
+#define KUNIT_FAIL(test, fmt, ...)					       \
 	KUNIT_FAIL_ASSERTION(test,					       \
 			     KUNIT_EXPECTATION,				       \
 			     fmt,					       \
 			     ##__VA_ARGS__)
 
-#घोषणा KUNIT_UNARY_ASSERTION(test,					       \
-			      निश्चित_type,				       \
+#define KUNIT_UNARY_ASSERTION(test,					       \
+			      assert_type,				       \
 			      condition,				       \
 			      expected_true,				       \
 			      fmt,					       \
 			      ...)					       \
 	KUNIT_ASSERTION(test,						       \
 			!!(condition) == !!expected_true,		       \
-			kunit_unary_निश्चित,				       \
+			kunit_unary_assert,				       \
 			KUNIT_INIT_UNARY_ASSERT_STRUCT(test,		       \
-						       निश्चित_type,	       \
+						       assert_type,	       \
 						       #condition,	       \
 						       expected_true),	       \
 			fmt,						       \
 			##__VA_ARGS__)
 
-#घोषणा KUNIT_TRUE_MSG_ASSERTION(test, निश्चित_type, condition, fmt, ...)       \
+#define KUNIT_TRUE_MSG_ASSERTION(test, assert_type, condition, fmt, ...)       \
 	KUNIT_UNARY_ASSERTION(test,					       \
-			      निश्चित_type,				       \
+			      assert_type,				       \
 			      condition,				       \
 			      true,					       \
 			      fmt,					       \
 			      ##__VA_ARGS__)
 
-#घोषणा KUNIT_TRUE_ASSERTION(test, निश्चित_type, condition) \
-	KUNIT_TRUE_MSG_ASSERTION(test, निश्चित_type, condition, शून्य)
+#define KUNIT_TRUE_ASSERTION(test, assert_type, condition) \
+	KUNIT_TRUE_MSG_ASSERTION(test, assert_type, condition, NULL)
 
-#घोषणा KUNIT_FALSE_MSG_ASSERTION(test, निश्चित_type, condition, fmt, ...)      \
+#define KUNIT_FALSE_MSG_ASSERTION(test, assert_type, condition, fmt, ...)      \
 	KUNIT_UNARY_ASSERTION(test,					       \
-			      निश्चित_type,				       \
+			      assert_type,				       \
 			      condition,				       \
 			      false,					       \
 			      fmt,					       \
 			      ##__VA_ARGS__)
 
-#घोषणा KUNIT_FALSE_ASSERTION(test, निश्चित_type, condition) \
-	KUNIT_FALSE_MSG_ASSERTION(test, निश्चित_type, condition, शून्य)
+#define KUNIT_FALSE_ASSERTION(test, assert_type, condition) \
+	KUNIT_FALSE_MSG_ASSERTION(test, assert_type, condition, NULL)
 
 /*
- * A factory macro क्रम defining the निश्चितions and expectations क्रम the basic
- * comparisons defined क्रम the built in types.
+ * A factory macro for defining the assertions and expectations for the basic
+ * comparisons defined for the built in types.
  *
- * Unक्रमtunately, there is no common type that all types can be promoted to क्रम
- * which all the binary चालकs behave the same way as क्रम the actual types
- * (क्रम example, there is no type that दीर्घ दीर्घ and अचिन्हित दीर्घ दीर्घ can
- * both be cast to where the comparison result is preserved क्रम all values). So
- * the best we can करो is करो the comparison in the original types and then coerce
- * everything to दीर्घ दीर्घ क्रम prपूर्णांकing; this way, the comparison behaves
- * correctly and the prपूर्णांकed out value usually makes sense without
- * पूर्णांकerpretation, but can always be पूर्णांकerpreted to figure out the actual
+ * Unfortunately, there is no common type that all types can be promoted to for
+ * which all the binary operators behave the same way as for the actual types
+ * (for example, there is no type that long long and unsigned long long can
+ * both be cast to where the comparison result is preserved for all values). So
+ * the best we can do is do the comparison in the original types and then coerce
+ * everything to long long for printing; this way, the comparison behaves
+ * correctly and the printed out value usually makes sense without
+ * interpretation, but can always be interpreted to figure out the actual
  * value.
  */
-#घोषणा KUNIT_BASE_BINARY_ASSERTION(test,				       \
-				    निश्चित_class,			       \
+#define KUNIT_BASE_BINARY_ASSERTION(test,				       \
+				    assert_class,			       \
 				    ASSERT_CLASS_INIT,			       \
-				    निश्चित_type,			       \
+				    assert_type,			       \
 				    left,				       \
 				    op,					       \
 				    right,				       \
 				    fmt,				       \
 				    ...)				       \
-करो अणु									       \
+do {									       \
 	typeof(left) __left = (left);					       \
 	typeof(right) __right = (right);				       \
-	((व्योम)__typecheck(__left, __right));				       \
+	((void)__typecheck(__left, __right));				       \
 									       \
 	KUNIT_ASSERTION(test,						       \
 			__left op __right,				       \
-			निश्चित_class,					       \
+			assert_class,					       \
 			ASSERT_CLASS_INIT(test,				       \
-					  निश्चित_type,			       \
+					  assert_type,			       \
 					  #op,				       \
 					  #left,			       \
 					  __left,			       \
@@ -790,354 +789,354 @@ kunit_find_named_resource(काष्ठा kunit *test,
 					  __right),			       \
 			fmt,						       \
 			##__VA_ARGS__);					       \
-पूर्ण जबतक (0)
+} while (0)
 
-#घोषणा KUNIT_BASE_EQ_MSG_ASSERTION(test,				       \
-				    निश्चित_class,			       \
+#define KUNIT_BASE_EQ_MSG_ASSERTION(test,				       \
+				    assert_class,			       \
 				    ASSERT_CLASS_INIT,			       \
-				    निश्चित_type,			       \
+				    assert_type,			       \
 				    left,				       \
 				    right,				       \
 				    fmt,				       \
 				    ...)				       \
 	KUNIT_BASE_BINARY_ASSERTION(test,				       \
-				    निश्चित_class,			       \
+				    assert_class,			       \
 				    ASSERT_CLASS_INIT,			       \
-				    निश्चित_type,			       \
+				    assert_type,			       \
 				    left, ==, right,			       \
 				    fmt,				       \
 				    ##__VA_ARGS__)
 
-#घोषणा KUNIT_BASE_NE_MSG_ASSERTION(test,				       \
-				    निश्चित_class,			       \
+#define KUNIT_BASE_NE_MSG_ASSERTION(test,				       \
+				    assert_class,			       \
 				    ASSERT_CLASS_INIT,			       \
-				    निश्चित_type,			       \
+				    assert_type,			       \
 				    left,				       \
 				    right,				       \
 				    fmt,				       \
 				    ...)				       \
 	KUNIT_BASE_BINARY_ASSERTION(test,				       \
-				    निश्चित_class,			       \
+				    assert_class,			       \
 				    ASSERT_CLASS_INIT,			       \
-				    निश्चित_type,			       \
+				    assert_type,			       \
 				    left, !=, right,			       \
 				    fmt,				       \
 				    ##__VA_ARGS__)
 
-#घोषणा KUNIT_BASE_LT_MSG_ASSERTION(test,				       \
-				    निश्चित_class,			       \
+#define KUNIT_BASE_LT_MSG_ASSERTION(test,				       \
+				    assert_class,			       \
 				    ASSERT_CLASS_INIT,			       \
-				    निश्चित_type,			       \
+				    assert_type,			       \
 				    left,				       \
 				    right,				       \
 				    fmt,				       \
 				    ...)				       \
 	KUNIT_BASE_BINARY_ASSERTION(test,				       \
-				    निश्चित_class,			       \
+				    assert_class,			       \
 				    ASSERT_CLASS_INIT,			       \
-				    निश्चित_type,			       \
+				    assert_type,			       \
 				    left, <, right,			       \
 				    fmt,				       \
 				    ##__VA_ARGS__)
 
-#घोषणा KUNIT_BASE_LE_MSG_ASSERTION(test,				       \
-				    निश्चित_class,			       \
+#define KUNIT_BASE_LE_MSG_ASSERTION(test,				       \
+				    assert_class,			       \
 				    ASSERT_CLASS_INIT,			       \
-				    निश्चित_type,			       \
+				    assert_type,			       \
 				    left,				       \
 				    right,				       \
 				    fmt,				       \
 				    ...)				       \
 	KUNIT_BASE_BINARY_ASSERTION(test,				       \
-				    निश्चित_class,			       \
+				    assert_class,			       \
 				    ASSERT_CLASS_INIT,			       \
-				    निश्चित_type,			       \
+				    assert_type,			       \
 				    left, <=, right,			       \
 				    fmt,				       \
 				    ##__VA_ARGS__)
 
-#घोषणा KUNIT_BASE_GT_MSG_ASSERTION(test,				       \
-				    निश्चित_class,			       \
+#define KUNIT_BASE_GT_MSG_ASSERTION(test,				       \
+				    assert_class,			       \
 				    ASSERT_CLASS_INIT,			       \
-				    निश्चित_type,			       \
+				    assert_type,			       \
 				    left,				       \
 				    right,				       \
 				    fmt,				       \
 				    ...)				       \
 	KUNIT_BASE_BINARY_ASSERTION(test,				       \
-				    निश्चित_class,			       \
+				    assert_class,			       \
 				    ASSERT_CLASS_INIT,			       \
-				    निश्चित_type,			       \
+				    assert_type,			       \
 				    left, >, right,			       \
 				    fmt,				       \
 				    ##__VA_ARGS__)
 
-#घोषणा KUNIT_BASE_GE_MSG_ASSERTION(test,				       \
-				    निश्चित_class,			       \
+#define KUNIT_BASE_GE_MSG_ASSERTION(test,				       \
+				    assert_class,			       \
 				    ASSERT_CLASS_INIT,			       \
-				    निश्चित_type,			       \
+				    assert_type,			       \
 				    left,				       \
 				    right,				       \
 				    fmt,				       \
 				    ...)				       \
 	KUNIT_BASE_BINARY_ASSERTION(test,				       \
-				    निश्चित_class,			       \
+				    assert_class,			       \
 				    ASSERT_CLASS_INIT,			       \
-				    निश्चित_type,			       \
+				    assert_type,			       \
 				    left, >=, right,			       \
 				    fmt,				       \
 				    ##__VA_ARGS__)
 
-#घोषणा KUNIT_BINARY_EQ_MSG_ASSERTION(test, निश्चित_type, left, right, fmt, ...)\
+#define KUNIT_BINARY_EQ_MSG_ASSERTION(test, assert_type, left, right, fmt, ...)\
 	KUNIT_BASE_EQ_MSG_ASSERTION(test,				       \
-				    kunit_binary_निश्चित,		       \
+				    kunit_binary_assert,		       \
 				    KUNIT_INIT_BINARY_ASSERT_STRUCT,	       \
-				    निश्चित_type,			       \
+				    assert_type,			       \
 				    left,				       \
 				    right,				       \
 				    fmt,				       \
 				    ##__VA_ARGS__)
 
-#घोषणा KUNIT_BINARY_EQ_ASSERTION(test, निश्चित_type, left, right)	       \
+#define KUNIT_BINARY_EQ_ASSERTION(test, assert_type, left, right)	       \
 	KUNIT_BINARY_EQ_MSG_ASSERTION(test,				       \
-				      निश्चित_type,			       \
+				      assert_type,			       \
 				      left,				       \
 				      right,				       \
-				      शून्य)
+				      NULL)
 
-#घोषणा KUNIT_BINARY_PTR_EQ_MSG_ASSERTION(test,				       \
-					  निश्चित_type,			       \
+#define KUNIT_BINARY_PTR_EQ_MSG_ASSERTION(test,				       \
+					  assert_type,			       \
 					  left,				       \
 					  right,			       \
 					  fmt,				       \
 					  ...)				       \
 	KUNIT_BASE_EQ_MSG_ASSERTION(test,				       \
-				    kunit_binary_ptr_निश्चित,		       \
+				    kunit_binary_ptr_assert,		       \
 				    KUNIT_INIT_BINARY_PTR_ASSERT_STRUCT,       \
-				    निश्चित_type,			       \
+				    assert_type,			       \
 				    left,				       \
 				    right,				       \
 				    fmt,				       \
 				    ##__VA_ARGS__)
 
-#घोषणा KUNIT_BINARY_PTR_EQ_ASSERTION(test, निश्चित_type, left, right)	       \
+#define KUNIT_BINARY_PTR_EQ_ASSERTION(test, assert_type, left, right)	       \
 	KUNIT_BINARY_PTR_EQ_MSG_ASSERTION(test,				       \
-					  निश्चित_type,			       \
+					  assert_type,			       \
 					  left,				       \
 					  right,			       \
-					  शून्य)
+					  NULL)
 
-#घोषणा KUNIT_BINARY_NE_MSG_ASSERTION(test, निश्चित_type, left, right, fmt, ...)\
+#define KUNIT_BINARY_NE_MSG_ASSERTION(test, assert_type, left, right, fmt, ...)\
 	KUNIT_BASE_NE_MSG_ASSERTION(test,				       \
-				    kunit_binary_निश्चित,		       \
+				    kunit_binary_assert,		       \
 				    KUNIT_INIT_BINARY_ASSERT_STRUCT,	       \
-				    निश्चित_type,			       \
+				    assert_type,			       \
 				    left,				       \
 				    right,				       \
 				    fmt,				       \
 				    ##__VA_ARGS__)
 
-#घोषणा KUNIT_BINARY_NE_ASSERTION(test, निश्चित_type, left, right)	       \
+#define KUNIT_BINARY_NE_ASSERTION(test, assert_type, left, right)	       \
 	KUNIT_BINARY_NE_MSG_ASSERTION(test,				       \
-				      निश्चित_type,			       \
+				      assert_type,			       \
 				      left,				       \
 				      right,				       \
-				      शून्य)
+				      NULL)
 
-#घोषणा KUNIT_BINARY_PTR_NE_MSG_ASSERTION(test,				       \
-					  निश्चित_type,			       \
+#define KUNIT_BINARY_PTR_NE_MSG_ASSERTION(test,				       \
+					  assert_type,			       \
 					  left,				       \
 					  right,			       \
 					  fmt,				       \
 					  ...)				       \
 	KUNIT_BASE_NE_MSG_ASSERTION(test,				       \
-				    kunit_binary_ptr_निश्चित,		       \
+				    kunit_binary_ptr_assert,		       \
 				    KUNIT_INIT_BINARY_PTR_ASSERT_STRUCT,       \
-				    निश्चित_type,			       \
+				    assert_type,			       \
 				    left,				       \
 				    right,				       \
 				    fmt,				       \
 				    ##__VA_ARGS__)
 
-#घोषणा KUNIT_BINARY_PTR_NE_ASSERTION(test, निश्चित_type, left, right)	       \
+#define KUNIT_BINARY_PTR_NE_ASSERTION(test, assert_type, left, right)	       \
 	KUNIT_BINARY_PTR_NE_MSG_ASSERTION(test,				       \
-					  निश्चित_type,			       \
+					  assert_type,			       \
 					  left,				       \
 					  right,			       \
-					  शून्य)
+					  NULL)
 
-#घोषणा KUNIT_BINARY_LT_MSG_ASSERTION(test, निश्चित_type, left, right, fmt, ...)\
+#define KUNIT_BINARY_LT_MSG_ASSERTION(test, assert_type, left, right, fmt, ...)\
 	KUNIT_BASE_LT_MSG_ASSERTION(test,				       \
-				    kunit_binary_निश्चित,		       \
+				    kunit_binary_assert,		       \
 				    KUNIT_INIT_BINARY_ASSERT_STRUCT,	       \
-				    निश्चित_type,			       \
+				    assert_type,			       \
 				    left,				       \
 				    right,				       \
 				    fmt,				       \
 				    ##__VA_ARGS__)
 
-#घोषणा KUNIT_BINARY_LT_ASSERTION(test, निश्चित_type, left, right)	       \
+#define KUNIT_BINARY_LT_ASSERTION(test, assert_type, left, right)	       \
 	KUNIT_BINARY_LT_MSG_ASSERTION(test,				       \
-				      निश्चित_type,			       \
+				      assert_type,			       \
 				      left,				       \
 				      right,				       \
-				      शून्य)
+				      NULL)
 
-#घोषणा KUNIT_BINARY_PTR_LT_MSG_ASSERTION(test,				       \
-					  निश्चित_type,			       \
+#define KUNIT_BINARY_PTR_LT_MSG_ASSERTION(test,				       \
+					  assert_type,			       \
 					  left,				       \
 					  right,			       \
 					  fmt,				       \
 					  ...)				       \
 	KUNIT_BASE_LT_MSG_ASSERTION(test,				       \
-				    kunit_binary_ptr_निश्चित,		       \
+				    kunit_binary_ptr_assert,		       \
 				    KUNIT_INIT_BINARY_PTR_ASSERT_STRUCT,       \
-				    निश्चित_type,			       \
+				    assert_type,			       \
 				    left,				       \
 				    right,				       \
 				    fmt,				       \
 				    ##__VA_ARGS__)
 
-#घोषणा KUNIT_BINARY_PTR_LT_ASSERTION(test, निश्चित_type, left, right)	       \
+#define KUNIT_BINARY_PTR_LT_ASSERTION(test, assert_type, left, right)	       \
 	KUNIT_BINARY_PTR_LT_MSG_ASSERTION(test,				       \
-					  निश्चित_type,			       \
+					  assert_type,			       \
 					  left,				       \
 					  right,			       \
-					  शून्य)
+					  NULL)
 
-#घोषणा KUNIT_BINARY_LE_MSG_ASSERTION(test, निश्चित_type, left, right, fmt, ...)\
+#define KUNIT_BINARY_LE_MSG_ASSERTION(test, assert_type, left, right, fmt, ...)\
 	KUNIT_BASE_LE_MSG_ASSERTION(test,				       \
-				    kunit_binary_निश्चित,		       \
+				    kunit_binary_assert,		       \
 				    KUNIT_INIT_BINARY_ASSERT_STRUCT,	       \
-				    निश्चित_type,			       \
+				    assert_type,			       \
 				    left,				       \
 				    right,				       \
 				    fmt,				       \
 				    ##__VA_ARGS__)
 
-#घोषणा KUNIT_BINARY_LE_ASSERTION(test, निश्चित_type, left, right)	       \
+#define KUNIT_BINARY_LE_ASSERTION(test, assert_type, left, right)	       \
 	KUNIT_BINARY_LE_MSG_ASSERTION(test,				       \
-				      निश्चित_type,			       \
+				      assert_type,			       \
 				      left,				       \
 				      right,				       \
-				      शून्य)
+				      NULL)
 
-#घोषणा KUNIT_BINARY_PTR_LE_MSG_ASSERTION(test,				       \
-					  निश्चित_type,			       \
+#define KUNIT_BINARY_PTR_LE_MSG_ASSERTION(test,				       \
+					  assert_type,			       \
 					  left,				       \
 					  right,			       \
 					  fmt,				       \
 					  ...)				       \
 	KUNIT_BASE_LE_MSG_ASSERTION(test,				       \
-				    kunit_binary_ptr_निश्चित,		       \
+				    kunit_binary_ptr_assert,		       \
 				    KUNIT_INIT_BINARY_PTR_ASSERT_STRUCT,       \
-				    निश्चित_type,			       \
+				    assert_type,			       \
 				    left,				       \
 				    right,				       \
 				    fmt,				       \
 				    ##__VA_ARGS__)
 
-#घोषणा KUNIT_BINARY_PTR_LE_ASSERTION(test, निश्चित_type, left, right)	       \
+#define KUNIT_BINARY_PTR_LE_ASSERTION(test, assert_type, left, right)	       \
 	KUNIT_BINARY_PTR_LE_MSG_ASSERTION(test,				       \
-					  निश्चित_type,			       \
+					  assert_type,			       \
 					  left,				       \
 					  right,			       \
-					  शून्य)
+					  NULL)
 
-#घोषणा KUNIT_BINARY_GT_MSG_ASSERTION(test, निश्चित_type, left, right, fmt, ...)\
+#define KUNIT_BINARY_GT_MSG_ASSERTION(test, assert_type, left, right, fmt, ...)\
 	KUNIT_BASE_GT_MSG_ASSERTION(test,				       \
-				    kunit_binary_निश्चित,		       \
+				    kunit_binary_assert,		       \
 				    KUNIT_INIT_BINARY_ASSERT_STRUCT,	       \
-				    निश्चित_type,			       \
+				    assert_type,			       \
 				    left,				       \
 				    right,				       \
 				    fmt,				       \
 				    ##__VA_ARGS__)
 
-#घोषणा KUNIT_BINARY_GT_ASSERTION(test, निश्चित_type, left, right)	       \
+#define KUNIT_BINARY_GT_ASSERTION(test, assert_type, left, right)	       \
 	KUNIT_BINARY_GT_MSG_ASSERTION(test,				       \
-				      निश्चित_type,			       \
+				      assert_type,			       \
 				      left,				       \
 				      right,				       \
-				      शून्य)
+				      NULL)
 
-#घोषणा KUNIT_BINARY_PTR_GT_MSG_ASSERTION(test,				       \
-					  निश्चित_type,			       \
+#define KUNIT_BINARY_PTR_GT_MSG_ASSERTION(test,				       \
+					  assert_type,			       \
 					  left,				       \
 					  right,			       \
 					  fmt,				       \
 					  ...)				       \
 	KUNIT_BASE_GT_MSG_ASSERTION(test,				       \
-				    kunit_binary_ptr_निश्चित,		       \
+				    kunit_binary_ptr_assert,		       \
 				    KUNIT_INIT_BINARY_PTR_ASSERT_STRUCT,       \
-				    निश्चित_type,			       \
+				    assert_type,			       \
 				    left,				       \
 				    right,				       \
 				    fmt,				       \
 				    ##__VA_ARGS__)
 
-#घोषणा KUNIT_BINARY_PTR_GT_ASSERTION(test, निश्चित_type, left, right)	       \
+#define KUNIT_BINARY_PTR_GT_ASSERTION(test, assert_type, left, right)	       \
 	KUNIT_BINARY_PTR_GT_MSG_ASSERTION(test,				       \
-					  निश्चित_type,			       \
+					  assert_type,			       \
 					  left,				       \
 					  right,			       \
-					  शून्य)
+					  NULL)
 
-#घोषणा KUNIT_BINARY_GE_MSG_ASSERTION(test, निश्चित_type, left, right, fmt, ...)\
+#define KUNIT_BINARY_GE_MSG_ASSERTION(test, assert_type, left, right, fmt, ...)\
 	KUNIT_BASE_GE_MSG_ASSERTION(test,				       \
-				    kunit_binary_निश्चित,		       \
+				    kunit_binary_assert,		       \
 				    KUNIT_INIT_BINARY_ASSERT_STRUCT,	       \
-				    निश्चित_type,			       \
+				    assert_type,			       \
 				    left,				       \
 				    right,				       \
 				    fmt,				       \
 				    ##__VA_ARGS__)
 
-#घोषणा KUNIT_BINARY_GE_ASSERTION(test, निश्चित_type, left, right)	       \
+#define KUNIT_BINARY_GE_ASSERTION(test, assert_type, left, right)	       \
 	KUNIT_BINARY_GE_MSG_ASSERTION(test,				       \
-				      निश्चित_type,			       \
+				      assert_type,			       \
 				      left,				       \
 				      right,				       \
-				      शून्य)
+				      NULL)
 
-#घोषणा KUNIT_BINARY_PTR_GE_MSG_ASSERTION(test,				       \
-					  निश्चित_type,			       \
+#define KUNIT_BINARY_PTR_GE_MSG_ASSERTION(test,				       \
+					  assert_type,			       \
 					  left,				       \
 					  right,			       \
 					  fmt,				       \
 					  ...)				       \
 	KUNIT_BASE_GE_MSG_ASSERTION(test,				       \
-				    kunit_binary_ptr_निश्चित,		       \
+				    kunit_binary_ptr_assert,		       \
 				    KUNIT_INIT_BINARY_PTR_ASSERT_STRUCT,       \
-				    निश्चित_type,			       \
+				    assert_type,			       \
 				    left,				       \
 				    right,				       \
 				    fmt,				       \
 				    ##__VA_ARGS__)
 
-#घोषणा KUNIT_BINARY_PTR_GE_ASSERTION(test, निश्चित_type, left, right)	       \
+#define KUNIT_BINARY_PTR_GE_ASSERTION(test, assert_type, left, right)	       \
 	KUNIT_BINARY_PTR_GE_MSG_ASSERTION(test,				       \
-					  निश्चित_type,			       \
+					  assert_type,			       \
 					  left,				       \
 					  right,			       \
-					  शून्य)
+					  NULL)
 
-#घोषणा KUNIT_BINARY_STR_ASSERTION(test,				       \
-				   निश्चित_type,				       \
+#define KUNIT_BINARY_STR_ASSERTION(test,				       \
+				   assert_type,				       \
 				   left,				       \
 				   op,					       \
 				   right,				       \
 				   fmt,					       \
 				   ...)					       \
-करो अणु									       \
+do {									       \
 	typeof(left) __left = (left);					       \
 	typeof(right) __right = (right);				       \
 									       \
 	KUNIT_ASSERTION(test,						       \
-			म_भेद(__left, __right) op 0,			       \
-			kunit_binary_str_निश्चित,			       \
+			strcmp(__left, __right) op 0,			       \
+			kunit_binary_str_assert,			       \
 			KUNIT_INIT_BINARY_STR_ASSERT_STRUCT(test,	       \
-							निश्चित_type,	       \
+							assert_type,	       \
 							#op,		       \
 							#left,		       \
 							__left,		       \
@@ -1145,86 +1144,86 @@ kunit_find_named_resource(काष्ठा kunit *test,
 							__right),	       \
 			fmt,						       \
 			##__VA_ARGS__);					       \
-पूर्ण जबतक (0)
+} while (0)
 
-#घोषणा KUNIT_BINARY_STR_EQ_MSG_ASSERTION(test,				       \
-					  निश्चित_type,			       \
+#define KUNIT_BINARY_STR_EQ_MSG_ASSERTION(test,				       \
+					  assert_type,			       \
 					  left,				       \
 					  right,			       \
 					  fmt,				       \
 					  ...)				       \
 	KUNIT_BINARY_STR_ASSERTION(test,				       \
-				   निश्चित_type,				       \
+				   assert_type,				       \
 				   left, ==, right,			       \
 				   fmt,					       \
 				   ##__VA_ARGS__)
 
-#घोषणा KUNIT_BINARY_STR_EQ_ASSERTION(test, निश्चित_type, left, right)	       \
+#define KUNIT_BINARY_STR_EQ_ASSERTION(test, assert_type, left, right)	       \
 	KUNIT_BINARY_STR_EQ_MSG_ASSERTION(test,				       \
-					  निश्चित_type,			       \
+					  assert_type,			       \
 					  left,				       \
 					  right,			       \
-					  शून्य)
+					  NULL)
 
-#घोषणा KUNIT_BINARY_STR_NE_MSG_ASSERTION(test,				       \
-					  निश्चित_type,			       \
+#define KUNIT_BINARY_STR_NE_MSG_ASSERTION(test,				       \
+					  assert_type,			       \
 					  left,				       \
 					  right,			       \
 					  fmt,				       \
 					  ...)				       \
 	KUNIT_BINARY_STR_ASSERTION(test,				       \
-				   निश्चित_type,				       \
+				   assert_type,				       \
 				   left, !=, right,			       \
 				   fmt,					       \
 				   ##__VA_ARGS__)
 
-#घोषणा KUNIT_BINARY_STR_NE_ASSERTION(test, निश्चित_type, left, right)	       \
+#define KUNIT_BINARY_STR_NE_ASSERTION(test, assert_type, left, right)	       \
 	KUNIT_BINARY_STR_NE_MSG_ASSERTION(test,				       \
-					  निश्चित_type,			       \
+					  assert_type,			       \
 					  left,				       \
 					  right,			       \
-					  शून्य)
+					  NULL)
 
-#घोषणा KUNIT_PTR_NOT_ERR_OR_शून्य_MSG_ASSERTION(test,			       \
-						निश्चित_type,		       \
+#define KUNIT_PTR_NOT_ERR_OR_NULL_MSG_ASSERTION(test,			       \
+						assert_type,		       \
 						ptr,			       \
 						fmt,			       \
 						...)			       \
-करो अणु									       \
+do {									       \
 	typeof(ptr) __ptr = (ptr);					       \
 									       \
 	KUNIT_ASSERTION(test,						       \
-			!IS_ERR_OR_शून्य(__ptr),				       \
-			kunit_ptr_not_err_निश्चित,			       \
+			!IS_ERR_OR_NULL(__ptr),				       \
+			kunit_ptr_not_err_assert,			       \
 			KUNIT_INIT_PTR_NOT_ERR_STRUCT(test,		       \
-						      निश्चित_type,	       \
+						      assert_type,	       \
 						      #ptr,		       \
 						      __ptr),		       \
 			fmt,						       \
 			##__VA_ARGS__);					       \
-पूर्ण जबतक (0)
+} while (0)
 
-#घोषणा KUNIT_PTR_NOT_ERR_OR_शून्य_ASSERTION(test, निश्चित_type, ptr)	       \
-	KUNIT_PTR_NOT_ERR_OR_शून्य_MSG_ASSERTION(test,			       \
-						निश्चित_type,		       \
+#define KUNIT_PTR_NOT_ERR_OR_NULL_ASSERTION(test, assert_type, ptr)	       \
+	KUNIT_PTR_NOT_ERR_OR_NULL_MSG_ASSERTION(test,			       \
+						assert_type,		       \
 						ptr,			       \
-						शून्य)
+						NULL)
 
 /**
  * KUNIT_EXPECT_TRUE() - Causes a test failure when the expression is not true.
  * @test: The test context object.
- * @condition: an arbitrary boolean expression. The test fails when this करोes
+ * @condition: an arbitrary boolean expression. The test fails when this does
  * not evaluate to true.
  *
- * This and expectations of the क्रमm `KUNIT_EXPECT_*` will cause the test हाल
- * to fail when the specअगरied condition is not met; however, it will not prevent
- * the test हाल from continuing to run; this is otherwise known as an
+ * This and expectations of the form `KUNIT_EXPECT_*` will cause the test case
+ * to fail when the specified condition is not met; however, it will not prevent
+ * the test case from continuing to run; this is otherwise known as an
  * *expectation failure*.
  */
-#घोषणा KUNIT_EXPECT_TRUE(test, condition) \
+#define KUNIT_EXPECT_TRUE(test, condition) \
 	KUNIT_TRUE_ASSERTION(test, KUNIT_EXPECTATION, condition)
 
-#घोषणा KUNIT_EXPECT_TRUE_MSG(test, condition, fmt, ...)		       \
+#define KUNIT_EXPECT_TRUE_MSG(test, condition, fmt, ...)		       \
 	KUNIT_TRUE_MSG_ASSERTION(test,					       \
 				 KUNIT_EXPECTATION,			       \
 				 condition,				       \
@@ -1234,16 +1233,16 @@ kunit_find_named_resource(काष्ठा kunit *test,
 /**
  * KUNIT_EXPECT_FALSE() - Makes a test failure when the expression is not false.
  * @test: The test context object.
- * @condition: an arbitrary boolean expression. The test fails when this करोes
+ * @condition: an arbitrary boolean expression. The test fails when this does
  * not evaluate to false.
  *
  * Sets an expectation that @condition evaluates to false. See
- * KUNIT_EXPECT_TRUE() क्रम more inक्रमmation.
+ * KUNIT_EXPECT_TRUE() for more information.
  */
-#घोषणा KUNIT_EXPECT_FALSE(test, condition) \
+#define KUNIT_EXPECT_FALSE(test, condition) \
 	KUNIT_FALSE_ASSERTION(test, KUNIT_EXPECTATION, condition)
 
-#घोषणा KUNIT_EXPECT_FALSE_MSG(test, condition, fmt, ...)		       \
+#define KUNIT_EXPECT_FALSE_MSG(test, condition, fmt, ...)		       \
 	KUNIT_FALSE_MSG_ASSERTION(test,					       \
 				  KUNIT_EXPECTATION,			       \
 				  condition,				       \
@@ -1258,13 +1257,13 @@ kunit_find_named_resource(काष्ठा kunit *test,
  *
  * Sets an expectation that the values that @left and @right evaluate to are
  * equal. This is semantically equivalent to
- * KUNIT_EXPECT_TRUE(@test, (@left) == (@right)). See KUNIT_EXPECT_TRUE() क्रम
- * more inक्रमmation.
+ * KUNIT_EXPECT_TRUE(@test, (@left) == (@right)). See KUNIT_EXPECT_TRUE() for
+ * more information.
  */
-#घोषणा KUNIT_EXPECT_EQ(test, left, right) \
+#define KUNIT_EXPECT_EQ(test, left, right) \
 	KUNIT_BINARY_EQ_ASSERTION(test, KUNIT_EXPECTATION, left, right)
 
-#घोषणा KUNIT_EXPECT_EQ_MSG(test, left, right, fmt, ...)		       \
+#define KUNIT_EXPECT_EQ_MSG(test, left, right, fmt, ...)		       \
 	KUNIT_BINARY_EQ_MSG_ASSERTION(test,				       \
 				      KUNIT_EXPECTATION,		       \
 				      left,				       \
@@ -1273,23 +1272,23 @@ kunit_find_named_resource(काष्ठा kunit *test,
 				      ##__VA_ARGS__)
 
 /**
- * KUNIT_EXPECT_PTR_EQ() - Expects that poपूर्णांकers @left and @right are equal.
+ * KUNIT_EXPECT_PTR_EQ() - Expects that pointers @left and @right are equal.
  * @test: The test context object.
- * @left: an arbitrary expression that evaluates to a poपूर्णांकer.
- * @right: an arbitrary expression that evaluates to a poपूर्णांकer.
+ * @left: an arbitrary expression that evaluates to a pointer.
+ * @right: an arbitrary expression that evaluates to a pointer.
  *
  * Sets an expectation that the values that @left and @right evaluate to are
  * equal. This is semantically equivalent to
- * KUNIT_EXPECT_TRUE(@test, (@left) == (@right)). See KUNIT_EXPECT_TRUE() क्रम
- * more inक्रमmation.
+ * KUNIT_EXPECT_TRUE(@test, (@left) == (@right)). See KUNIT_EXPECT_TRUE() for
+ * more information.
  */
-#घोषणा KUNIT_EXPECT_PTR_EQ(test, left, right)				       \
+#define KUNIT_EXPECT_PTR_EQ(test, left, right)				       \
 	KUNIT_BINARY_PTR_EQ_ASSERTION(test,				       \
 				      KUNIT_EXPECTATION,		       \
 				      left,				       \
 				      right)
 
-#घोषणा KUNIT_EXPECT_PTR_EQ_MSG(test, left, right, fmt, ...)		       \
+#define KUNIT_EXPECT_PTR_EQ_MSG(test, left, right, fmt, ...)		       \
 	KUNIT_BINARY_PTR_EQ_MSG_ASSERTION(test,				       \
 					  KUNIT_EXPECTATION,		       \
 					  left,				       \
@@ -1305,13 +1304,13 @@ kunit_find_named_resource(काष्ठा kunit *test,
  *
  * Sets an expectation that the values that @left and @right evaluate to are not
  * equal. This is semantically equivalent to
- * KUNIT_EXPECT_TRUE(@test, (@left) != (@right)). See KUNIT_EXPECT_TRUE() क्रम
- * more inक्रमmation.
+ * KUNIT_EXPECT_TRUE(@test, (@left) != (@right)). See KUNIT_EXPECT_TRUE() for
+ * more information.
  */
-#घोषणा KUNIT_EXPECT_NE(test, left, right) \
+#define KUNIT_EXPECT_NE(test, left, right) \
 	KUNIT_BINARY_NE_ASSERTION(test, KUNIT_EXPECTATION, left, right)
 
-#घोषणा KUNIT_EXPECT_NE_MSG(test, left, right, fmt, ...)		       \
+#define KUNIT_EXPECT_NE_MSG(test, left, right, fmt, ...)		       \
 	KUNIT_BINARY_NE_MSG_ASSERTION(test,				       \
 				      KUNIT_EXPECTATION,		       \
 				      left,				       \
@@ -1320,23 +1319,23 @@ kunit_find_named_resource(काष्ठा kunit *test,
 				      ##__VA_ARGS__)
 
 /**
- * KUNIT_EXPECT_PTR_NE() - Expects that poपूर्णांकers @left and @right are not equal.
+ * KUNIT_EXPECT_PTR_NE() - Expects that pointers @left and @right are not equal.
  * @test: The test context object.
- * @left: an arbitrary expression that evaluates to a poपूर्णांकer.
- * @right: an arbitrary expression that evaluates to a poपूर्णांकer.
+ * @left: an arbitrary expression that evaluates to a pointer.
+ * @right: an arbitrary expression that evaluates to a pointer.
  *
  * Sets an expectation that the values that @left and @right evaluate to are not
  * equal. This is semantically equivalent to
- * KUNIT_EXPECT_TRUE(@test, (@left) != (@right)). See KUNIT_EXPECT_TRUE() क्रम
- * more inक्रमmation.
+ * KUNIT_EXPECT_TRUE(@test, (@left) != (@right)). See KUNIT_EXPECT_TRUE() for
+ * more information.
  */
-#घोषणा KUNIT_EXPECT_PTR_NE(test, left, right)				       \
+#define KUNIT_EXPECT_PTR_NE(test, left, right)				       \
 	KUNIT_BINARY_PTR_NE_ASSERTION(test,				       \
 				      KUNIT_EXPECTATION,		       \
 				      left,				       \
 				      right)
 
-#घोषणा KUNIT_EXPECT_PTR_NE_MSG(test, left, right, fmt, ...)		       \
+#define KUNIT_EXPECT_PTR_NE_MSG(test, left, right, fmt, ...)		       \
 	KUNIT_BINARY_PTR_NE_MSG_ASSERTION(test,				       \
 					  KUNIT_EXPECTATION,		       \
 					  left,				       \
@@ -1352,13 +1351,13 @@ kunit_find_named_resource(काष्ठा kunit *test,
  *
  * Sets an expectation that the value that @left evaluates to is less than the
  * value that @right evaluates to. This is semantically equivalent to
- * KUNIT_EXPECT_TRUE(@test, (@left) < (@right)). See KUNIT_EXPECT_TRUE() क्रम
- * more inक्रमmation.
+ * KUNIT_EXPECT_TRUE(@test, (@left) < (@right)). See KUNIT_EXPECT_TRUE() for
+ * more information.
  */
-#घोषणा KUNIT_EXPECT_LT(test, left, right) \
+#define KUNIT_EXPECT_LT(test, left, right) \
 	KUNIT_BINARY_LT_ASSERTION(test, KUNIT_EXPECTATION, left, right)
 
-#घोषणा KUNIT_EXPECT_LT_MSG(test, left, right, fmt, ...)		       \
+#define KUNIT_EXPECT_LT_MSG(test, left, right, fmt, ...)		       \
 	KUNIT_BINARY_LT_MSG_ASSERTION(test,				       \
 				      KUNIT_EXPECTATION,		       \
 				      left,				       \
@@ -1374,13 +1373,13 @@ kunit_find_named_resource(काष्ठा kunit *test,
  *
  * Sets an expectation that the value that @left evaluates to is less than or
  * equal to the value that @right evaluates to. Semantically this is equivalent
- * to KUNIT_EXPECT_TRUE(@test, (@left) <= (@right)). See KUNIT_EXPECT_TRUE() क्रम
- * more inक्रमmation.
+ * to KUNIT_EXPECT_TRUE(@test, (@left) <= (@right)). See KUNIT_EXPECT_TRUE() for
+ * more information.
  */
-#घोषणा KUNIT_EXPECT_LE(test, left, right) \
+#define KUNIT_EXPECT_LE(test, left, right) \
 	KUNIT_BINARY_LE_ASSERTION(test, KUNIT_EXPECTATION, left, right)
 
-#घोषणा KUNIT_EXPECT_LE_MSG(test, left, right, fmt, ...)		       \
+#define KUNIT_EXPECT_LE_MSG(test, left, right, fmt, ...)		       \
 	KUNIT_BINARY_LE_MSG_ASSERTION(test,				       \
 				      KUNIT_EXPECTATION,		       \
 				      left,				       \
@@ -1396,13 +1395,13 @@ kunit_find_named_resource(काष्ठा kunit *test,
  *
  * Sets an expectation that the value that @left evaluates to is greater than
  * the value that @right evaluates to. This is semantically equivalent to
- * KUNIT_EXPECT_TRUE(@test, (@left) > (@right)). See KUNIT_EXPECT_TRUE() क्रम
- * more inक्रमmation.
+ * KUNIT_EXPECT_TRUE(@test, (@left) > (@right)). See KUNIT_EXPECT_TRUE() for
+ * more information.
  */
-#घोषणा KUNIT_EXPECT_GT(test, left, right) \
+#define KUNIT_EXPECT_GT(test, left, right) \
 	KUNIT_BINARY_GT_ASSERTION(test, KUNIT_EXPECTATION, left, right)
 
-#घोषणा KUNIT_EXPECT_GT_MSG(test, left, right, fmt, ...)		       \
+#define KUNIT_EXPECT_GT_MSG(test, left, right, fmt, ...)		       \
 	KUNIT_BINARY_GT_MSG_ASSERTION(test,				       \
 				      KUNIT_EXPECTATION,		       \
 				      left,				       \
@@ -1418,13 +1417,13 @@ kunit_find_named_resource(काष्ठा kunit *test,
  *
  * Sets an expectation that the value that @left evaluates to is greater than
  * the value that @right evaluates to. This is semantically equivalent to
- * KUNIT_EXPECT_TRUE(@test, (@left) >= (@right)). See KUNIT_EXPECT_TRUE() क्रम
- * more inक्रमmation.
+ * KUNIT_EXPECT_TRUE(@test, (@left) >= (@right)). See KUNIT_EXPECT_TRUE() for
+ * more information.
  */
-#घोषणा KUNIT_EXPECT_GE(test, left, right) \
+#define KUNIT_EXPECT_GE(test, left, right) \
 	KUNIT_BINARY_GE_ASSERTION(test, KUNIT_EXPECTATION, left, right)
 
-#घोषणा KUNIT_EXPECT_GE_MSG(test, left, right, fmt, ...)		       \
+#define KUNIT_EXPECT_GE_MSG(test, left, right, fmt, ...)		       \
 	KUNIT_BINARY_GE_MSG_ASSERTION(test,				       \
 				      KUNIT_EXPECTATION,		       \
 				      left,				       \
@@ -1440,13 +1439,13 @@ kunit_find_named_resource(काष्ठा kunit *test,
  *
  * Sets an expectation that the values that @left and @right evaluate to are
  * equal. This is semantically equivalent to
- * KUNIT_EXPECT_TRUE(@test, !म_भेद((@left), (@right))). See KUNIT_EXPECT_TRUE()
- * क्रम more inक्रमmation.
+ * KUNIT_EXPECT_TRUE(@test, !strcmp((@left), (@right))). See KUNIT_EXPECT_TRUE()
+ * for more information.
  */
-#घोषणा KUNIT_EXPECT_STREQ(test, left, right) \
+#define KUNIT_EXPECT_STREQ(test, left, right) \
 	KUNIT_BINARY_STR_EQ_ASSERTION(test, KUNIT_EXPECTATION, left, right)
 
-#घोषणा KUNIT_EXPECT_STREQ_MSG(test, left, right, fmt, ...)		       \
+#define KUNIT_EXPECT_STREQ_MSG(test, left, right, fmt, ...)		       \
 	KUNIT_BINARY_STR_EQ_MSG_ASSERTION(test,				       \
 					  KUNIT_EXPECTATION,		       \
 					  left,				       \
@@ -1462,13 +1461,13 @@ kunit_find_named_resource(काष्ठा kunit *test,
  *
  * Sets an expectation that the values that @left and @right evaluate to are
  * not equal. This is semantically equivalent to
- * KUNIT_EXPECT_TRUE(@test, म_भेद((@left), (@right))). See KUNIT_EXPECT_TRUE()
- * क्रम more inक्रमmation.
+ * KUNIT_EXPECT_TRUE(@test, strcmp((@left), (@right))). See KUNIT_EXPECT_TRUE()
+ * for more information.
  */
-#घोषणा KUNIT_EXPECT_STRNEQ(test, left, right) \
+#define KUNIT_EXPECT_STRNEQ(test, left, right) \
 	KUNIT_BINARY_STR_NE_ASSERTION(test, KUNIT_EXPECTATION, left, right)
 
-#घोषणा KUNIT_EXPECT_STRNEQ_MSG(test, left, right, fmt, ...)		       \
+#define KUNIT_EXPECT_STRNEQ_MSG(test, left, right, fmt, ...)		       \
 	KUNIT_BINARY_STR_NE_MSG_ASSERTION(test,				       \
 					  KUNIT_EXPECTATION,		       \
 					  left,				       \
@@ -1477,43 +1476,43 @@ kunit_find_named_resource(काष्ठा kunit *test,
 					  ##__VA_ARGS__)
 
 /**
- * KUNIT_EXPECT_NOT_ERR_OR_शून्य() - Expects that @ptr is not null and not err.
+ * KUNIT_EXPECT_NOT_ERR_OR_NULL() - Expects that @ptr is not null and not err.
  * @test: The test context object.
- * @ptr: an arbitrary poपूर्णांकer.
+ * @ptr: an arbitrary pointer.
  *
  * Sets an expectation that the value that @ptr evaluates to is not null and not
- * an त्रुटि_सं stored in a poपूर्णांकer. This is semantically equivalent to
- * KUNIT_EXPECT_TRUE(@test, !IS_ERR_OR_शून्य(@ptr)). See KUNIT_EXPECT_TRUE() क्रम
- * more inक्रमmation.
+ * an errno stored in a pointer. This is semantically equivalent to
+ * KUNIT_EXPECT_TRUE(@test, !IS_ERR_OR_NULL(@ptr)). See KUNIT_EXPECT_TRUE() for
+ * more information.
  */
-#घोषणा KUNIT_EXPECT_NOT_ERR_OR_शून्य(test, ptr) \
-	KUNIT_PTR_NOT_ERR_OR_शून्य_ASSERTION(test, KUNIT_EXPECTATION, ptr)
+#define KUNIT_EXPECT_NOT_ERR_OR_NULL(test, ptr) \
+	KUNIT_PTR_NOT_ERR_OR_NULL_ASSERTION(test, KUNIT_EXPECTATION, ptr)
 
-#घोषणा KUNIT_EXPECT_NOT_ERR_OR_शून्य_MSG(test, ptr, fmt, ...)		       \
-	KUNIT_PTR_NOT_ERR_OR_शून्य_MSG_ASSERTION(test,			       \
+#define KUNIT_EXPECT_NOT_ERR_OR_NULL_MSG(test, ptr, fmt, ...)		       \
+	KUNIT_PTR_NOT_ERR_OR_NULL_MSG_ASSERTION(test,			       \
 						KUNIT_EXPECTATION,	       \
 						ptr,			       \
 						fmt,			       \
 						##__VA_ARGS__)
 
-#घोषणा KUNIT_ASSERT_FAILURE(test, fmt, ...) \
+#define KUNIT_ASSERT_FAILURE(test, fmt, ...) \
 	KUNIT_FAIL_ASSERTION(test, KUNIT_ASSERTION, fmt, ##__VA_ARGS__)
 
 /**
- * KUNIT_ASSERT_TRUE() - Sets an निश्चितion that @condition is true.
+ * KUNIT_ASSERT_TRUE() - Sets an assertion that @condition is true.
  * @test: The test context object.
- * @condition: an arbitrary boolean expression. The test fails and पातs when
- * this करोes not evaluate to true.
+ * @condition: an arbitrary boolean expression. The test fails and aborts when
+ * this does not evaluate to true.
  *
- * This and निश्चितions of the क्रमm `KUNIT_ASSERT_*` will cause the test हाल to
- * fail *and immediately पात* when the specअगरied condition is not met. Unlike
- * an expectation failure, it will prevent the test हाल from continuing to run;
- * this is otherwise known as an *निश्चितion failure*.
+ * This and assertions of the form `KUNIT_ASSERT_*` will cause the test case to
+ * fail *and immediately abort* when the specified condition is not met. Unlike
+ * an expectation failure, it will prevent the test case from continuing to run;
+ * this is otherwise known as an *assertion failure*.
  */
-#घोषणा KUNIT_ASSERT_TRUE(test, condition) \
+#define KUNIT_ASSERT_TRUE(test, condition) \
 	KUNIT_TRUE_ASSERTION(test, KUNIT_ASSERTION, condition)
 
-#घोषणा KUNIT_ASSERT_TRUE_MSG(test, condition, fmt, ...)		       \
+#define KUNIT_ASSERT_TRUE_MSG(test, condition, fmt, ...)		       \
 	KUNIT_TRUE_MSG_ASSERTION(test,					       \
 				 KUNIT_ASSERTION,			       \
 				 condition,				       \
@@ -1521,18 +1520,18 @@ kunit_find_named_resource(काष्ठा kunit *test,
 				 ##__VA_ARGS__)
 
 /**
- * KUNIT_ASSERT_FALSE() - Sets an निश्चितion that @condition is false.
+ * KUNIT_ASSERT_FALSE() - Sets an assertion that @condition is false.
  * @test: The test context object.
  * @condition: an arbitrary boolean expression.
  *
- * Sets an निश्चितion that the value that @condition evaluates to is false. This
- * is the same as KUNIT_EXPECT_FALSE(), except it causes an निश्चितion failure
- * (see KUNIT_ASSERT_TRUE()) when the निश्चितion is not met.
+ * Sets an assertion that the value that @condition evaluates to is false. This
+ * is the same as KUNIT_EXPECT_FALSE(), except it causes an assertion failure
+ * (see KUNIT_ASSERT_TRUE()) when the assertion is not met.
  */
-#घोषणा KUNIT_ASSERT_FALSE(test, condition) \
+#define KUNIT_ASSERT_FALSE(test, condition) \
 	KUNIT_FALSE_ASSERTION(test, KUNIT_ASSERTION, condition)
 
-#घोषणा KUNIT_ASSERT_FALSE_MSG(test, condition, fmt, ...)		       \
+#define KUNIT_ASSERT_FALSE_MSG(test, condition, fmt, ...)		       \
 	KUNIT_FALSE_MSG_ASSERTION(test,					       \
 				  KUNIT_ASSERTION,			       \
 				  condition,				       \
@@ -1540,19 +1539,19 @@ kunit_find_named_resource(काष्ठा kunit *test,
 				  ##__VA_ARGS__)
 
 /**
- * KUNIT_ASSERT_EQ() - Sets an निश्चितion that @left and @right are equal.
+ * KUNIT_ASSERT_EQ() - Sets an assertion that @left and @right are equal.
  * @test: The test context object.
  * @left: an arbitrary expression that evaluates to a primitive C type.
  * @right: an arbitrary expression that evaluates to a primitive C type.
  *
- * Sets an निश्चितion that the values that @left and @right evaluate to are
- * equal. This is the same as KUNIT_EXPECT_EQ(), except it causes an निश्चितion
- * failure (see KUNIT_ASSERT_TRUE()) when the निश्चितion is not met.
+ * Sets an assertion that the values that @left and @right evaluate to are
+ * equal. This is the same as KUNIT_EXPECT_EQ(), except it causes an assertion
+ * failure (see KUNIT_ASSERT_TRUE()) when the assertion is not met.
  */
-#घोषणा KUNIT_ASSERT_EQ(test, left, right) \
+#define KUNIT_ASSERT_EQ(test, left, right) \
 	KUNIT_BINARY_EQ_ASSERTION(test, KUNIT_ASSERTION, left, right)
 
-#घोषणा KUNIT_ASSERT_EQ_MSG(test, left, right, fmt, ...)		       \
+#define KUNIT_ASSERT_EQ_MSG(test, left, right, fmt, ...)		       \
 	KUNIT_BINARY_EQ_MSG_ASSERTION(test,				       \
 				      KUNIT_ASSERTION,			       \
 				      left,				       \
@@ -1561,19 +1560,19 @@ kunit_find_named_resource(काष्ठा kunit *test,
 				      ##__VA_ARGS__)
 
 /**
- * KUNIT_ASSERT_PTR_EQ() - Asserts that poपूर्णांकers @left and @right are equal.
+ * KUNIT_ASSERT_PTR_EQ() - Asserts that pointers @left and @right are equal.
  * @test: The test context object.
- * @left: an arbitrary expression that evaluates to a poपूर्णांकer.
- * @right: an arbitrary expression that evaluates to a poपूर्णांकer.
+ * @left: an arbitrary expression that evaluates to a pointer.
+ * @right: an arbitrary expression that evaluates to a pointer.
  *
- * Sets an निश्चितion that the values that @left and @right evaluate to are
- * equal. This is the same as KUNIT_EXPECT_EQ(), except it causes an निश्चितion
- * failure (see KUNIT_ASSERT_TRUE()) when the निश्चितion is not met.
+ * Sets an assertion that the values that @left and @right evaluate to are
+ * equal. This is the same as KUNIT_EXPECT_EQ(), except it causes an assertion
+ * failure (see KUNIT_ASSERT_TRUE()) when the assertion is not met.
  */
-#घोषणा KUNIT_ASSERT_PTR_EQ(test, left, right) \
+#define KUNIT_ASSERT_PTR_EQ(test, left, right) \
 	KUNIT_BINARY_PTR_EQ_ASSERTION(test, KUNIT_ASSERTION, left, right)
 
-#घोषणा KUNIT_ASSERT_PTR_EQ_MSG(test, left, right, fmt, ...)		       \
+#define KUNIT_ASSERT_PTR_EQ_MSG(test, left, right, fmt, ...)		       \
 	KUNIT_BINARY_PTR_EQ_MSG_ASSERTION(test,				       \
 					  KUNIT_ASSERTION,		       \
 					  left,				       \
@@ -1582,19 +1581,19 @@ kunit_find_named_resource(काष्ठा kunit *test,
 					  ##__VA_ARGS__)
 
 /**
- * KUNIT_ASSERT_NE() - An निश्चितion that @left and @right are not equal.
+ * KUNIT_ASSERT_NE() - An assertion that @left and @right are not equal.
  * @test: The test context object.
  * @left: an arbitrary expression that evaluates to a primitive C type.
  * @right: an arbitrary expression that evaluates to a primitive C type.
  *
- * Sets an निश्चितion that the values that @left and @right evaluate to are not
- * equal. This is the same as KUNIT_EXPECT_NE(), except it causes an निश्चितion
- * failure (see KUNIT_ASSERT_TRUE()) when the निश्चितion is not met.
+ * Sets an assertion that the values that @left and @right evaluate to are not
+ * equal. This is the same as KUNIT_EXPECT_NE(), except it causes an assertion
+ * failure (see KUNIT_ASSERT_TRUE()) when the assertion is not met.
  */
-#घोषणा KUNIT_ASSERT_NE(test, left, right) \
+#define KUNIT_ASSERT_NE(test, left, right) \
 	KUNIT_BINARY_NE_ASSERTION(test, KUNIT_ASSERTION, left, right)
 
-#घोषणा KUNIT_ASSERT_NE_MSG(test, left, right, fmt, ...)		       \
+#define KUNIT_ASSERT_NE_MSG(test, left, right, fmt, ...)		       \
 	KUNIT_BINARY_NE_MSG_ASSERTION(test,				       \
 				      KUNIT_ASSERTION,			       \
 				      left,				       \
@@ -1603,20 +1602,20 @@ kunit_find_named_resource(काष्ठा kunit *test,
 				      ##__VA_ARGS__)
 
 /**
- * KUNIT_ASSERT_PTR_NE() - Asserts that poपूर्णांकers @left and @right are not equal.
- * KUNIT_ASSERT_PTR_EQ() - Asserts that poपूर्णांकers @left and @right are equal.
+ * KUNIT_ASSERT_PTR_NE() - Asserts that pointers @left and @right are not equal.
+ * KUNIT_ASSERT_PTR_EQ() - Asserts that pointers @left and @right are equal.
  * @test: The test context object.
- * @left: an arbitrary expression that evaluates to a poपूर्णांकer.
- * @right: an arbitrary expression that evaluates to a poपूर्णांकer.
+ * @left: an arbitrary expression that evaluates to a pointer.
+ * @right: an arbitrary expression that evaluates to a pointer.
  *
- * Sets an निश्चितion that the values that @left and @right evaluate to are not
- * equal. This is the same as KUNIT_EXPECT_NE(), except it causes an निश्चितion
- * failure (see KUNIT_ASSERT_TRUE()) when the निश्चितion is not met.
+ * Sets an assertion that the values that @left and @right evaluate to are not
+ * equal. This is the same as KUNIT_EXPECT_NE(), except it causes an assertion
+ * failure (see KUNIT_ASSERT_TRUE()) when the assertion is not met.
  */
-#घोषणा KUNIT_ASSERT_PTR_NE(test, left, right) \
+#define KUNIT_ASSERT_PTR_NE(test, left, right) \
 	KUNIT_BINARY_PTR_NE_ASSERTION(test, KUNIT_ASSERTION, left, right)
 
-#घोषणा KUNIT_ASSERT_PTR_NE_MSG(test, left, right, fmt, ...)		       \
+#define KUNIT_ASSERT_PTR_NE_MSG(test, left, right, fmt, ...)		       \
 	KUNIT_BINARY_PTR_NE_MSG_ASSERTION(test,				       \
 					  KUNIT_ASSERTION,		       \
 					  left,				       \
@@ -1624,20 +1623,20 @@ kunit_find_named_resource(काष्ठा kunit *test,
 					  fmt,				       \
 					  ##__VA_ARGS__)
 /**
- * KUNIT_ASSERT_LT() - An निश्चितion that @left is less than @right.
+ * KUNIT_ASSERT_LT() - An assertion that @left is less than @right.
  * @test: The test context object.
  * @left: an arbitrary expression that evaluates to a primitive C type.
  * @right: an arbitrary expression that evaluates to a primitive C type.
  *
- * Sets an निश्चितion that the value that @left evaluates to is less than the
+ * Sets an assertion that the value that @left evaluates to is less than the
  * value that @right evaluates to. This is the same as KUNIT_EXPECT_LT(), except
- * it causes an निश्चितion failure (see KUNIT_ASSERT_TRUE()) when the निश्चितion
+ * it causes an assertion failure (see KUNIT_ASSERT_TRUE()) when the assertion
  * is not met.
  */
-#घोषणा KUNIT_ASSERT_LT(test, left, right) \
+#define KUNIT_ASSERT_LT(test, left, right) \
 	KUNIT_BINARY_LT_ASSERTION(test, KUNIT_ASSERTION, left, right)
 
-#घोषणा KUNIT_ASSERT_LT_MSG(test, left, right, fmt, ...)		       \
+#define KUNIT_ASSERT_LT_MSG(test, left, right, fmt, ...)		       \
 	KUNIT_BINARY_LT_MSG_ASSERTION(test,				       \
 				      KUNIT_ASSERTION,			       \
 				      left,				       \
@@ -1645,20 +1644,20 @@ kunit_find_named_resource(काष्ठा kunit *test,
 				      fmt,				       \
 				      ##__VA_ARGS__)
 /**
- * KUNIT_ASSERT_LE() - An निश्चितion that @left is less than or equal to @right.
+ * KUNIT_ASSERT_LE() - An assertion that @left is less than or equal to @right.
  * @test: The test context object.
  * @left: an arbitrary expression that evaluates to a primitive C type.
  * @right: an arbitrary expression that evaluates to a primitive C type.
  *
- * Sets an निश्चितion that the value that @left evaluates to is less than or
+ * Sets an assertion that the value that @left evaluates to is less than or
  * equal to the value that @right evaluates to. This is the same as
- * KUNIT_EXPECT_LE(), except it causes an निश्चितion failure (see
- * KUNIT_ASSERT_TRUE()) when the निश्चितion is not met.
+ * KUNIT_EXPECT_LE(), except it causes an assertion failure (see
+ * KUNIT_ASSERT_TRUE()) when the assertion is not met.
  */
-#घोषणा KUNIT_ASSERT_LE(test, left, right) \
+#define KUNIT_ASSERT_LE(test, left, right) \
 	KUNIT_BINARY_LE_ASSERTION(test, KUNIT_ASSERTION, left, right)
 
-#घोषणा KUNIT_ASSERT_LE_MSG(test, left, right, fmt, ...)		       \
+#define KUNIT_ASSERT_LE_MSG(test, left, right, fmt, ...)		       \
 	KUNIT_BINARY_LE_MSG_ASSERTION(test,				       \
 				      KUNIT_ASSERTION,			       \
 				      left,				       \
@@ -1667,20 +1666,20 @@ kunit_find_named_resource(काष्ठा kunit *test,
 				      ##__VA_ARGS__)
 
 /**
- * KUNIT_ASSERT_GT() - An निश्चितion that @left is greater than @right.
+ * KUNIT_ASSERT_GT() - An assertion that @left is greater than @right.
  * @test: The test context object.
  * @left: an arbitrary expression that evaluates to a primitive C type.
  * @right: an arbitrary expression that evaluates to a primitive C type.
  *
- * Sets an निश्चितion that the value that @left evaluates to is greater than the
+ * Sets an assertion that the value that @left evaluates to is greater than the
  * value that @right evaluates to. This is the same as KUNIT_EXPECT_GT(), except
- * it causes an निश्चितion failure (see KUNIT_ASSERT_TRUE()) when the निश्चितion
+ * it causes an assertion failure (see KUNIT_ASSERT_TRUE()) when the assertion
  * is not met.
  */
-#घोषणा KUNIT_ASSERT_GT(test, left, right) \
+#define KUNIT_ASSERT_GT(test, left, right) \
 	KUNIT_BINARY_GT_ASSERTION(test, KUNIT_ASSERTION, left, right)
 
-#घोषणा KUNIT_ASSERT_GT_MSG(test, left, right, fmt, ...)		       \
+#define KUNIT_ASSERT_GT_MSG(test, left, right, fmt, ...)		       \
 	KUNIT_BINARY_GT_MSG_ASSERTION(test,				       \
 				      KUNIT_ASSERTION,			       \
 				      left,				       \
@@ -1694,15 +1693,15 @@ kunit_find_named_resource(काष्ठा kunit *test,
  * @left: an arbitrary expression that evaluates to a primitive C type.
  * @right: an arbitrary expression that evaluates to a primitive C type.
  *
- * Sets an निश्चितion that the value that @left evaluates to is greater than the
+ * Sets an assertion that the value that @left evaluates to is greater than the
  * value that @right evaluates to. This is the same as KUNIT_EXPECT_GE(), except
- * it causes an निश्चितion failure (see KUNIT_ASSERT_TRUE()) when the निश्चितion
+ * it causes an assertion failure (see KUNIT_ASSERT_TRUE()) when the assertion
  * is not met.
  */
-#घोषणा KUNIT_ASSERT_GE(test, left, right) \
+#define KUNIT_ASSERT_GE(test, left, right) \
 	KUNIT_BINARY_GE_ASSERTION(test, KUNIT_ASSERTION, left, right)
 
-#घोषणा KUNIT_ASSERT_GE_MSG(test, left, right, fmt, ...)		       \
+#define KUNIT_ASSERT_GE_MSG(test, left, right, fmt, ...)		       \
 	KUNIT_BINARY_GE_MSG_ASSERTION(test,				       \
 				      KUNIT_ASSERTION,			       \
 				      left,				       \
@@ -1711,19 +1710,19 @@ kunit_find_named_resource(काष्ठा kunit *test,
 				      ##__VA_ARGS__)
 
 /**
- * KUNIT_ASSERT_STREQ() - An निश्चितion that strings @left and @right are equal.
+ * KUNIT_ASSERT_STREQ() - An assertion that strings @left and @right are equal.
  * @test: The test context object.
  * @left: an arbitrary expression that evaluates to a null terminated string.
  * @right: an arbitrary expression that evaluates to a null terminated string.
  *
- * Sets an निश्चितion that the values that @left and @right evaluate to are
+ * Sets an assertion that the values that @left and @right evaluate to are
  * equal. This is the same as KUNIT_EXPECT_STREQ(), except it causes an
- * निश्चितion failure (see KUNIT_ASSERT_TRUE()) when the निश्चितion is not met.
+ * assertion failure (see KUNIT_ASSERT_TRUE()) when the assertion is not met.
  */
-#घोषणा KUNIT_ASSERT_STREQ(test, left, right) \
+#define KUNIT_ASSERT_STREQ(test, left, right) \
 	KUNIT_BINARY_STR_EQ_ASSERTION(test, KUNIT_ASSERTION, left, right)
 
-#घोषणा KUNIT_ASSERT_STREQ_MSG(test, left, right, fmt, ...)		       \
+#define KUNIT_ASSERT_STREQ_MSG(test, left, right, fmt, ...)		       \
 	KUNIT_BINARY_STR_EQ_MSG_ASSERTION(test,				       \
 					  KUNIT_ASSERTION,		       \
 					  left,				       \
@@ -1739,13 +1738,13 @@ kunit_find_named_resource(काष्ठा kunit *test,
  *
  * Sets an expectation that the values that @left and @right evaluate to are
  * not equal. This is semantically equivalent to
- * KUNIT_ASSERT_TRUE(@test, म_भेद((@left), (@right))). See KUNIT_ASSERT_TRUE()
- * क्रम more inक्रमmation.
+ * KUNIT_ASSERT_TRUE(@test, strcmp((@left), (@right))). See KUNIT_ASSERT_TRUE()
+ * for more information.
  */
-#घोषणा KUNIT_ASSERT_STRNEQ(test, left, right) \
+#define KUNIT_ASSERT_STRNEQ(test, left, right) \
 	KUNIT_BINARY_STR_NE_ASSERTION(test, KUNIT_ASSERTION, left, right)
 
-#घोषणा KUNIT_ASSERT_STRNEQ_MSG(test, left, right, fmt, ...)		       \
+#define KUNIT_ASSERT_STRNEQ_MSG(test, left, right, fmt, ...)		       \
 	KUNIT_BINARY_STR_NE_MSG_ASSERTION(test,				       \
 					  KUNIT_ASSERTION,		       \
 					  left,				       \
@@ -1754,20 +1753,20 @@ kunit_find_named_resource(काष्ठा kunit *test,
 					  ##__VA_ARGS__)
 
 /**
- * KUNIT_ASSERT_NOT_ERR_OR_शून्य() - Assertion that @ptr is not null and not err.
+ * KUNIT_ASSERT_NOT_ERR_OR_NULL() - Assertion that @ptr is not null and not err.
  * @test: The test context object.
- * @ptr: an arbitrary poपूर्णांकer.
+ * @ptr: an arbitrary pointer.
  *
- * Sets an निश्चितion that the value that @ptr evaluates to is not null and not
- * an त्रुटि_सं stored in a poपूर्णांकer. This is the same as
- * KUNIT_EXPECT_NOT_ERR_OR_शून्य(), except it causes an निश्चितion failure (see
- * KUNIT_ASSERT_TRUE()) when the निश्चितion is not met.
+ * Sets an assertion that the value that @ptr evaluates to is not null and not
+ * an errno stored in a pointer. This is the same as
+ * KUNIT_EXPECT_NOT_ERR_OR_NULL(), except it causes an assertion failure (see
+ * KUNIT_ASSERT_TRUE()) when the assertion is not met.
  */
-#घोषणा KUNIT_ASSERT_NOT_ERR_OR_शून्य(test, ptr) \
-	KUNIT_PTR_NOT_ERR_OR_शून्य_ASSERTION(test, KUNIT_ASSERTION, ptr)
+#define KUNIT_ASSERT_NOT_ERR_OR_NULL(test, ptr) \
+	KUNIT_PTR_NOT_ERR_OR_NULL_ASSERTION(test, KUNIT_ASSERTION, ptr)
 
-#घोषणा KUNIT_ASSERT_NOT_ERR_OR_शून्य_MSG(test, ptr, fmt, ...)		       \
-	KUNIT_PTR_NOT_ERR_OR_शून्य_MSG_ASSERTION(test,			       \
+#define KUNIT_ASSERT_NOT_ERR_OR_NULL_MSG(test, ptr, fmt, ...)		       \
+	KUNIT_PTR_NOT_ERR_OR_NULL_MSG_ASSERTION(test,			       \
 						KUNIT_ASSERTION,	       \
 						ptr,			       \
 						fmt,			       \
@@ -1775,23 +1774,23 @@ kunit_find_named_resource(काष्ठा kunit *test,
 
 /**
  * KUNIT_ARRAY_PARAM() - Define test parameter generator from an array.
- * @name:  prefix क्रम the test parameter generator function.
+ * @name:  prefix for the test parameter generator function.
  * @array: array of test parameters.
- * @get_desc: function to convert param to description; शून्य to use शेष
+ * @get_desc: function to convert param to description; NULL to use default
  *
  * Define function @name_gen_params which uses @array to generate parameters.
  */
-#घोषणा KUNIT_ARRAY_PARAM(name, array, get_desc)						\
-	अटल स्थिर व्योम *name##_gen_params(स्थिर व्योम *prev, अक्षर *desc)			\
-	अणु											\
+#define KUNIT_ARRAY_PARAM(name, array, get_desc)						\
+	static const void *name##_gen_params(const void *prev, char *desc)			\
+	{											\
 		typeof((array)[0]) *__next = prev ? ((typeof(__next)) prev) + 1 : (array);	\
-		अगर (__next - (array) < ARRAY_SIZE((array))) अणु					\
-			व्योम (*__get_desc)(typeof(__next), अक्षर *) = get_desc;			\
-			अगर (__get_desc)								\
+		if (__next - (array) < ARRAY_SIZE((array))) {					\
+			void (*__get_desc)(typeof(__next), char *) = get_desc;			\
+			if (__get_desc)								\
 				__get_desc(__next, desc);					\
-			वापस __next;								\
-		पूर्ण										\
-		वापस शून्य;									\
-	पूर्ण
+			return __next;								\
+		}										\
+		return NULL;									\
+	}
 
-#पूर्ण_अगर /* _KUNIT_TEST_H */
+#endif /* _KUNIT_TEST_H */

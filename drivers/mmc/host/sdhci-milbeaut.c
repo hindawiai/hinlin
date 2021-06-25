@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (C) 2013 - 2015 Fujitsu Semiconductor, Ltd
  *              Vincent Yang <vincent.yang@tw.fujitsu.com>
@@ -8,240 +7,240 @@
  *              Takao Orito <orito.takao@socionext.com>
  */
 
-#समावेश <linux/bits.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/err.h>
-#समावेश <linux/gpio/consumer.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/property.h>
+#include <linux/bits.h>
+#include <linux/clk.h>
+#include <linux/delay.h>
+#include <linux/err.h>
+#include <linux/gpio/consumer.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/property.h>
 
-#समावेश "sdhci-pltfm.h"
-#समावेश "sdhci_f_sdh30.h"
+#include "sdhci-pltfm.h"
+#include "sdhci_f_sdh30.h"
 
-/* milbeaut bridge controller रेजिस्टर */
-#घोषणा MLB_SOFT_RESET		0x0200
-#घोषणा  MLB_SOFT_RESET_RSTX		BIT(0)
+/* milbeaut bridge controller register */
+#define MLB_SOFT_RESET		0x0200
+#define  MLB_SOFT_RESET_RSTX		BIT(0)
 
-#घोषणा MLB_WP_CD_LED_SET	0x0210
-#घोषणा  MLB_WP_CD_LED_SET_LED_INV  BIT(2)
+#define MLB_WP_CD_LED_SET	0x0210
+#define  MLB_WP_CD_LED_SET_LED_INV  BIT(2)
 
-#घोषणा MLB_CR_SET			0x0220
-#घोषणा  MLB_CR_SET_CR_TOCLKUNIT       BIT(24)
-#घोषणा  MLB_CR_SET_CR_TOCLKFREQ_SFT   (16)
-#घोषणा  MLB_CR_SET_CR_TOCLKFREQ_MASK  (0x3F << MLB_CR_SET_CR_TOCLKFREQ_SFT)
-#घोषणा  MLB_CR_SET_CR_BCLKFREQ_SFT    (8)
-#घोषणा  MLB_CR_SET_CR_BCLKFREQ_MASK   (0xFF << MLB_CR_SET_CR_BCLKFREQ_SFT)
-#घोषणा  MLB_CR_SET_CR_RTUNTIMER_SFT   (4)
-#घोषणा  MLB_CR_SET_CR_RTUNTIMER_MASK  (0xF << MLB_CR_SET_CR_RTUNTIMER_SFT)
+#define MLB_CR_SET			0x0220
+#define  MLB_CR_SET_CR_TOCLKUNIT       BIT(24)
+#define  MLB_CR_SET_CR_TOCLKFREQ_SFT   (16)
+#define  MLB_CR_SET_CR_TOCLKFREQ_MASK  (0x3F << MLB_CR_SET_CR_TOCLKFREQ_SFT)
+#define  MLB_CR_SET_CR_BCLKFREQ_SFT    (8)
+#define  MLB_CR_SET_CR_BCLKFREQ_MASK   (0xFF << MLB_CR_SET_CR_BCLKFREQ_SFT)
+#define  MLB_CR_SET_CR_RTUNTIMER_SFT   (4)
+#define  MLB_CR_SET_CR_RTUNTIMER_MASK  (0xF << MLB_CR_SET_CR_RTUNTIMER_SFT)
 
-#घोषणा MLB_SD_TOCLK_I_DIV  16
-#घोषणा MLB_TOCLKFREQ_UNIT_THRES    16000000
-#घोषणा MLB_CAL_TOCLKFREQ_MHZ(rate) (rate / MLB_SD_TOCLK_I_DIV / 1000000)
-#घोषणा MLB_CAL_TOCLKFREQ_KHZ(rate) (rate / MLB_SD_TOCLK_I_DIV / 1000)
-#घोषणा MLB_TOCLKFREQ_MAX   63
-#घोषणा MLB_TOCLKFREQ_MIN    1
+#define MLB_SD_TOCLK_I_DIV  16
+#define MLB_TOCLKFREQ_UNIT_THRES    16000000
+#define MLB_CAL_TOCLKFREQ_MHZ(rate) (rate / MLB_SD_TOCLK_I_DIV / 1000000)
+#define MLB_CAL_TOCLKFREQ_KHZ(rate) (rate / MLB_SD_TOCLK_I_DIV / 1000)
+#define MLB_TOCLKFREQ_MAX   63
+#define MLB_TOCLKFREQ_MIN    1
 
-#घोषणा MLB_SD_BCLK_I_DIV   4
-#घोषणा MLB_CAL_BCLKFREQ(rate)  (rate / MLB_SD_BCLK_I_DIV / 1000000)
-#घोषणा MLB_BCLKFREQ_MAX        255
-#घोषणा MLB_BCLKFREQ_MIN          1
+#define MLB_SD_BCLK_I_DIV   4
+#define MLB_CAL_BCLKFREQ(rate)  (rate / MLB_SD_BCLK_I_DIV / 1000000)
+#define MLB_BCLKFREQ_MAX        255
+#define MLB_BCLKFREQ_MIN          1
 
-#घोषणा MLB_CDR_SET			0x0230
-#घोषणा MLB_CDR_SET_CLK2POW16	3
+#define MLB_CDR_SET			0x0230
+#define MLB_CDR_SET_CLK2POW16	3
 
-काष्ठा f_sdhost_priv अणु
-	काष्ठा clk *clk_अगरace;
-	काष्ठा clk *clk;
-	काष्ठा device *dev;
+struct f_sdhost_priv {
+	struct clk *clk_iface;
+	struct clk *clk;
+	struct device *dev;
 	bool enable_cmd_dat_delay;
-पूर्ण;
+};
 
-अटल व्योम sdhci_milbeaut_soft_voltage_चयन(काष्ठा sdhci_host *host)
-अणु
+static void sdhci_milbeaut_soft_voltage_switch(struct sdhci_host *host)
+{
 	u32 ctrl = 0;
 
 	usleep_range(2500, 3000);
-	ctrl = sdhci_पढ़ोl(host, F_SDH30_IO_CONTROL2);
+	ctrl = sdhci_readl(host, F_SDH30_IO_CONTROL2);
 	ctrl |= F_SDH30_CRES_O_DN;
-	sdhci_ग_लिखोl(host, ctrl, F_SDH30_IO_CONTROL2);
+	sdhci_writel(host, ctrl, F_SDH30_IO_CONTROL2);
 	ctrl |= F_SDH30_MSEL_O_1_8;
-	sdhci_ग_लिखोl(host, ctrl, F_SDH30_IO_CONTROL2);
+	sdhci_writel(host, ctrl, F_SDH30_IO_CONTROL2);
 
 	ctrl &= ~F_SDH30_CRES_O_DN;
-	sdhci_ग_लिखोl(host, ctrl, F_SDH30_IO_CONTROL2);
+	sdhci_writel(host, ctrl, F_SDH30_IO_CONTROL2);
 	usleep_range(2500, 3000);
 
-	ctrl = sdhci_पढ़ोl(host, F_SDH30_TUNING_SETTING);
+	ctrl = sdhci_readl(host, F_SDH30_TUNING_SETTING);
 	ctrl |= F_SDH30_CMD_CHK_DIS;
-	sdhci_ग_लिखोl(host, ctrl, F_SDH30_TUNING_SETTING);
-पूर्ण
+	sdhci_writel(host, ctrl, F_SDH30_TUNING_SETTING);
+}
 
-अटल अचिन्हित पूर्णांक sdhci_milbeaut_get_min_घड़ी(काष्ठा sdhci_host *host)
-अणु
-	वापस F_SDH30_MIN_CLOCK;
-पूर्ण
+static unsigned int sdhci_milbeaut_get_min_clock(struct sdhci_host *host)
+{
+	return F_SDH30_MIN_CLOCK;
+}
 
-अटल व्योम sdhci_milbeaut_reset(काष्ठा sdhci_host *host, u8 mask)
-अणु
-	काष्ठा f_sdhost_priv *priv = sdhci_priv(host);
+static void sdhci_milbeaut_reset(struct sdhci_host *host, u8 mask)
+{
+	struct f_sdhost_priv *priv = sdhci_priv(host);
 	u16 clk;
 	u32 ctl;
-	kसमय_प्रकार समयout;
+	ktime_t timeout;
 
-	clk = sdhci_पढ़ोw(host, SDHCI_CLOCK_CONTROL);
+	clk = sdhci_readw(host, SDHCI_CLOCK_CONTROL);
 	clk = (clk & ~SDHCI_CLOCK_CARD_EN) | SDHCI_CLOCK_INT_EN;
-	sdhci_ग_लिखोw(host, clk, SDHCI_CLOCK_CONTROL);
+	sdhci_writew(host, clk, SDHCI_CLOCK_CONTROL);
 
 	sdhci_reset(host, mask);
 
 	clk |= SDHCI_CLOCK_CARD_EN;
-	sdhci_ग_लिखोw(host, clk, SDHCI_CLOCK_CONTROL);
+	sdhci_writew(host, clk, SDHCI_CLOCK_CONTROL);
 
-	समयout = kसमय_add_ms(kसमय_get(), 10);
-	जबतक (1) अणु
-		bool समयकरोut = kसमय_after(kसमय_get(), समयout);
+	timeout = ktime_add_ms(ktime_get(), 10);
+	while (1) {
+		bool timedout = ktime_after(ktime_get(), timeout);
 
-		clk = sdhci_पढ़ोw(host, SDHCI_CLOCK_CONTROL);
-		अगर (clk & SDHCI_CLOCK_INT_STABLE)
-			अवरोध;
-		अगर (समयकरोut) अणु
+		clk = sdhci_readw(host, SDHCI_CLOCK_CONTROL);
+		if (clk & SDHCI_CLOCK_INT_STABLE)
+			break;
+		if (timedout) {
 			pr_err("%s: Internal clock never stabilised.\n",
 				mmc_hostname(host->mmc));
 			sdhci_dumpregs(host);
-			वापस;
-		पूर्ण
+			return;
+		}
 		udelay(10);
-	पूर्ण
+	}
 
-	अगर (priv->enable_cmd_dat_delay) अणु
-		ctl = sdhci_पढ़ोl(host, F_SDH30_ESD_CONTROL);
+	if (priv->enable_cmd_dat_delay) {
+		ctl = sdhci_readl(host, F_SDH30_ESD_CONTROL);
 		ctl |= F_SDH30_CMD_DAT_DELAY;
-		sdhci_ग_लिखोl(host, ctl, F_SDH30_ESD_CONTROL);
-	पूर्ण
-पूर्ण
+		sdhci_writel(host, ctl, F_SDH30_ESD_CONTROL);
+	}
+}
 
-अटल स्थिर काष्ठा sdhci_ops sdhci_milbeaut_ops = अणु
-	.voltage_चयन = sdhci_milbeaut_soft_voltage_चयन,
-	.get_min_घड़ी = sdhci_milbeaut_get_min_घड़ी,
+static const struct sdhci_ops sdhci_milbeaut_ops = {
+	.voltage_switch = sdhci_milbeaut_soft_voltage_switch,
+	.get_min_clock = sdhci_milbeaut_get_min_clock,
 	.reset = sdhci_milbeaut_reset,
-	.set_घड़ी = sdhci_set_घड़ी,
+	.set_clock = sdhci_set_clock,
 	.set_bus_width = sdhci_set_bus_width,
-	.set_uhs_संकेतing = sdhci_set_uhs_संकेतing,
-	.set_घातer = sdhci_set_घातer_and_bus_voltage,
-पूर्ण;
+	.set_uhs_signaling = sdhci_set_uhs_signaling,
+	.set_power = sdhci_set_power_and_bus_voltage,
+};
 
-अटल व्योम sdhci_milbeaut_bridge_reset(काष्ठा sdhci_host *host,
-						पूर्णांक reset_flag)
-अणु
-	अगर (reset_flag)
-		sdhci_ग_लिखोl(host, 0, MLB_SOFT_RESET);
-	अन्यथा
-		sdhci_ग_लिखोl(host, MLB_SOFT_RESET_RSTX, MLB_SOFT_RESET);
-पूर्ण
+static void sdhci_milbeaut_bridge_reset(struct sdhci_host *host,
+						int reset_flag)
+{
+	if (reset_flag)
+		sdhci_writel(host, 0, MLB_SOFT_RESET);
+	else
+		sdhci_writel(host, MLB_SOFT_RESET_RSTX, MLB_SOFT_RESET);
+}
 
-अटल व्योम sdhci_milbeaut_bridge_init(काष्ठा sdhci_host *host,
-						पूर्णांक rate)
-अणु
+static void sdhci_milbeaut_bridge_init(struct sdhci_host *host,
+						int rate)
+{
 	u32 val, clk;
 
-	/* IO_SDIO_CR_SET should be set जबतक reset */
-	val = sdhci_पढ़ोl(host, MLB_CR_SET);
+	/* IO_SDIO_CR_SET should be set while reset */
+	val = sdhci_readl(host, MLB_CR_SET);
 	val &= ~(MLB_CR_SET_CR_TOCLKFREQ_MASK | MLB_CR_SET_CR_TOCLKUNIT |
 			MLB_CR_SET_CR_BCLKFREQ_MASK);
-	अगर (rate >= MLB_TOCLKFREQ_UNIT_THRES) अणु
+	if (rate >= MLB_TOCLKFREQ_UNIT_THRES) {
 		clk = MLB_CAL_TOCLKFREQ_MHZ(rate);
 		clk = min_t(u32, MLB_TOCLKFREQ_MAX, clk);
 		val |= MLB_CR_SET_CR_TOCLKUNIT |
 			(clk << MLB_CR_SET_CR_TOCLKFREQ_SFT);
-	पूर्ण अन्यथा अणु
+	} else {
 		clk = MLB_CAL_TOCLKFREQ_KHZ(rate);
 		clk = min_t(u32, MLB_TOCLKFREQ_MAX, clk);
 		clk = max_t(u32, MLB_TOCLKFREQ_MIN, clk);
 		val |= clk << MLB_CR_SET_CR_TOCLKFREQ_SFT;
-	पूर्ण
+	}
 
 	clk = MLB_CAL_BCLKFREQ(rate);
 	clk = min_t(u32, MLB_BCLKFREQ_MAX, clk);
 	clk = max_t(u32, MLB_BCLKFREQ_MIN, clk);
 	val |=  clk << MLB_CR_SET_CR_BCLKFREQ_SFT;
 	val &= ~MLB_CR_SET_CR_RTUNTIMER_MASK;
-	sdhci_ग_लिखोl(host, val, MLB_CR_SET);
+	sdhci_writel(host, val, MLB_CR_SET);
 
-	sdhci_ग_लिखोl(host, MLB_CDR_SET_CLK2POW16, MLB_CDR_SET);
+	sdhci_writel(host, MLB_CDR_SET_CLK2POW16, MLB_CDR_SET);
 
-	sdhci_ग_लिखोl(host, MLB_WP_CD_LED_SET_LED_INV, MLB_WP_CD_LED_SET);
-पूर्ण
+	sdhci_writel(host, MLB_WP_CD_LED_SET_LED_INV, MLB_WP_CD_LED_SET);
+}
 
-अटल व्योम sdhci_milbeaut_venकरोr_init(काष्ठा sdhci_host *host)
-अणु
-	काष्ठा f_sdhost_priv *priv = sdhci_priv(host);
+static void sdhci_milbeaut_vendor_init(struct sdhci_host *host)
+{
+	struct f_sdhost_priv *priv = sdhci_priv(host);
 	u32 ctl;
 
-	ctl = sdhci_पढ़ोl(host, F_SDH30_IO_CONTROL2);
+	ctl = sdhci_readl(host, F_SDH30_IO_CONTROL2);
 	ctl |= F_SDH30_CRES_O_DN;
-	sdhci_ग_लिखोl(host, ctl, F_SDH30_IO_CONTROL2);
+	sdhci_writel(host, ctl, F_SDH30_IO_CONTROL2);
 	ctl &= ~F_SDH30_MSEL_O_1_8;
-	sdhci_ग_लिखोl(host, ctl, F_SDH30_IO_CONTROL2);
+	sdhci_writel(host, ctl, F_SDH30_IO_CONTROL2);
 	ctl &= ~F_SDH30_CRES_O_DN;
-	sdhci_ग_लिखोl(host, ctl, F_SDH30_IO_CONTROL2);
+	sdhci_writel(host, ctl, F_SDH30_IO_CONTROL2);
 
-	ctl = sdhci_पढ़ोw(host, F_SDH30_AHB_CONFIG);
+	ctl = sdhci_readw(host, F_SDH30_AHB_CONFIG);
 	ctl |= F_SDH30_SIN | F_SDH30_AHB_INCR_16 | F_SDH30_AHB_INCR_8 |
 	       F_SDH30_AHB_INCR_4;
 	ctl &= ~(F_SDH30_AHB_BIGED | F_SDH30_BUSLOCK_EN);
-	sdhci_ग_लिखोw(host, ctl, F_SDH30_AHB_CONFIG);
+	sdhci_writew(host, ctl, F_SDH30_AHB_CONFIG);
 
-	अगर (priv->enable_cmd_dat_delay) अणु
-		ctl = sdhci_पढ़ोl(host, F_SDH30_ESD_CONTROL);
+	if (priv->enable_cmd_dat_delay) {
+		ctl = sdhci_readl(host, F_SDH30_ESD_CONTROL);
 		ctl |= F_SDH30_CMD_DAT_DELAY;
-		sdhci_ग_लिखोl(host, ctl, F_SDH30_ESD_CONTROL);
-	पूर्ण
-पूर्ण
+		sdhci_writel(host, ctl, F_SDH30_ESD_CONTROL);
+	}
+}
 
-अटल स्थिर काष्ठा of_device_id mlb_dt_ids[] = अणु
-	अणु
+static const struct of_device_id mlb_dt_ids[] = {
+	{
 		.compatible = "socionext,milbeaut-m10v-sdhci-3.0",
-	पूर्ण,
-	अणु /* sentinel */ पूर्ण
-पूर्ण;
+	},
+	{ /* sentinel */ }
+};
 MODULE_DEVICE_TABLE(of, mlb_dt_ids);
 
-अटल व्योम sdhci_milbeaut_init(काष्ठा sdhci_host *host)
-अणु
-	काष्ठा f_sdhost_priv *priv = sdhci_priv(host);
-	पूर्णांक rate = clk_get_rate(priv->clk);
+static void sdhci_milbeaut_init(struct sdhci_host *host)
+{
+	struct f_sdhost_priv *priv = sdhci_priv(host);
+	int rate = clk_get_rate(priv->clk);
 	u16 ctl;
 
 	sdhci_milbeaut_bridge_reset(host, 0);
 
-	ctl = sdhci_पढ़ोw(host, SDHCI_CLOCK_CONTROL);
+	ctl = sdhci_readw(host, SDHCI_CLOCK_CONTROL);
 	ctl &= ~(SDHCI_CLOCK_CARD_EN | SDHCI_CLOCK_INT_EN);
-	sdhci_ग_लिखोw(host, ctl, SDHCI_CLOCK_CONTROL);
+	sdhci_writew(host, ctl, SDHCI_CLOCK_CONTROL);
 
 	sdhci_milbeaut_bridge_reset(host, 1);
 
 	sdhci_milbeaut_bridge_init(host, rate);
 	sdhci_milbeaut_bridge_reset(host, 0);
 
-	sdhci_milbeaut_venकरोr_init(host);
-पूर्ण
+	sdhci_milbeaut_vendor_init(host);
+}
 
-अटल पूर्णांक sdhci_milbeaut_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा sdhci_host *host;
-	काष्ठा device *dev = &pdev->dev;
-	पूर्णांक irq, ret = 0;
-	काष्ठा f_sdhost_priv *priv;
+static int sdhci_milbeaut_probe(struct platform_device *pdev)
+{
+	struct sdhci_host *host;
+	struct device *dev = &pdev->dev;
+	int irq, ret = 0;
+	struct f_sdhost_priv *priv;
 
-	irq = platक्रमm_get_irq(pdev, 0);
-	अगर (irq < 0)
-		वापस irq;
+	irq = platform_get_irq(pdev, 0);
+	if (irq < 0)
+		return irq;
 
-	host = sdhci_alloc_host(dev, माप(काष्ठा f_sdhost_priv));
-	अगर (IS_ERR(host))
-		वापस PTR_ERR(host);
+	host = sdhci_alloc_host(dev, sizeof(struct f_sdhost_priv));
+	if (IS_ERR(host))
+		return PTR_ERR(host);
 
 	priv = sdhci_priv(host);
 	priv->dev = dev;
@@ -254,94 +253,94 @@ MODULE_DEVICE_TABLE(of, mlb_dt_ids);
 			SDHCI_QUIRK2_TUNING_WORK_AROUND |
 			SDHCI_QUIRK2_PRESET_VALUE_BROKEN;
 
-	priv->enable_cmd_dat_delay = device_property_पढ़ो_bool(dev,
+	priv->enable_cmd_dat_delay = device_property_read_bool(dev,
 						"fujitsu,cmd-dat-delay-select");
 
 	ret = mmc_of_parse(host->mmc);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 
-	platक्रमm_set_drvdata(pdev, host);
+	platform_set_drvdata(pdev, host);
 
 	host->hw_name = "f_sdh30";
 	host->ops = &sdhci_milbeaut_ops;
 	host->irq = irq;
 
-	host->ioaddr = devm_platक्रमm_ioremap_resource(pdev, 0);
-	अगर (IS_ERR(host->ioaddr)) अणु
+	host->ioaddr = devm_platform_ioremap_resource(pdev, 0);
+	if (IS_ERR(host->ioaddr)) {
 		ret = PTR_ERR(host->ioaddr);
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	अगर (dev_of_node(dev)) अणु
+	if (dev_of_node(dev)) {
 		sdhci_get_of_property(pdev);
 
-		priv->clk_अगरace = devm_clk_get(&pdev->dev, "iface");
-		अगर (IS_ERR(priv->clk_अगरace)) अणु
-			ret = PTR_ERR(priv->clk_अगरace);
-			जाओ err;
-		पूर्ण
+		priv->clk_iface = devm_clk_get(&pdev->dev, "iface");
+		if (IS_ERR(priv->clk_iface)) {
+			ret = PTR_ERR(priv->clk_iface);
+			goto err;
+		}
 
-		ret = clk_prepare_enable(priv->clk_अगरace);
-		अगर (ret)
-			जाओ err;
+		ret = clk_prepare_enable(priv->clk_iface);
+		if (ret)
+			goto err;
 
 		priv->clk = devm_clk_get(&pdev->dev, "core");
-		अगर (IS_ERR(priv->clk)) अणु
+		if (IS_ERR(priv->clk)) {
 			ret = PTR_ERR(priv->clk);
-			जाओ err_clk;
-		पूर्ण
+			goto err_clk;
+		}
 
 		ret = clk_prepare_enable(priv->clk);
-		अगर (ret)
-			जाओ err_clk;
-	पूर्ण
+		if (ret)
+			goto err_clk;
+	}
 
 	sdhci_milbeaut_init(host);
 
 	ret = sdhci_add_host(host);
-	अगर (ret)
-		जाओ err_add_host;
+	if (ret)
+		goto err_add_host;
 
-	वापस 0;
+	return 0;
 
 err_add_host:
 	clk_disable_unprepare(priv->clk);
 err_clk:
-	clk_disable_unprepare(priv->clk_अगरace);
+	clk_disable_unprepare(priv->clk_iface);
 err:
-	sdhci_मुक्त_host(host);
-	वापस ret;
-पूर्ण
+	sdhci_free_host(host);
+	return ret;
+}
 
-अटल पूर्णांक sdhci_milbeaut_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा sdhci_host *host = platक्रमm_get_drvdata(pdev);
-	काष्ठा f_sdhost_priv *priv = sdhci_priv(host);
+static int sdhci_milbeaut_remove(struct platform_device *pdev)
+{
+	struct sdhci_host *host = platform_get_drvdata(pdev);
+	struct f_sdhost_priv *priv = sdhci_priv(host);
 
-	sdhci_हटाओ_host(host, पढ़ोl(host->ioaddr + SDHCI_INT_STATUS) ==
+	sdhci_remove_host(host, readl(host->ioaddr + SDHCI_INT_STATUS) ==
 			  0xffffffff);
 
-	clk_disable_unprepare(priv->clk_अगरace);
+	clk_disable_unprepare(priv->clk_iface);
 	clk_disable_unprepare(priv->clk);
 
-	sdhci_मुक्त_host(host);
-	platक्रमm_set_drvdata(pdev, शून्य);
+	sdhci_free_host(host);
+	platform_set_drvdata(pdev, NULL);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver sdhci_milbeaut_driver = अणु
-	.driver = अणु
+static struct platform_driver sdhci_milbeaut_driver = {
+	.driver = {
 		.name = "sdhci-milbeaut",
 		.probe_type = PROBE_PREFER_ASYNCHRONOUS,
 		.of_match_table = of_match_ptr(mlb_dt_ids),
-	पूर्ण,
+	},
 	.probe	= sdhci_milbeaut_probe,
-	.हटाओ	= sdhci_milbeaut_हटाओ,
-पूर्ण;
+	.remove	= sdhci_milbeaut_remove,
+};
 
-module_platक्रमm_driver(sdhci_milbeaut_driver);
+module_platform_driver(sdhci_milbeaut_driver);
 
 MODULE_DESCRIPTION("MILBEAUT SD Card Controller driver");
 MODULE_AUTHOR("Takao Orito <orito.takao@socionext.com>");

@@ -1,40 +1,39 @@
-<शैली गुरु>
 /*
  * Copyright (c) 2012 Neratec Solutions AG
  *
- * Permission to use, copy, modअगरy, and/or distribute this software क्रम any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
- * ANY SPECIAL, सूचीECT, INसूचीECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#अगर_अघोषित DFS_PRI_DETECTOR_H
-#घोषणा DFS_PRI_DETECTOR_H
+#ifndef DFS_PRI_DETECTOR_H
+#define DFS_PRI_DETECTOR_H
 
-#समावेश <linux/list.h>
+#include <linux/list.h>
 
-बाह्य काष्ठा ath_dfs_pool_stats global_dfs_pool_stats;
+extern struct ath_dfs_pool_stats global_dfs_pool_stats;
 
 /**
- * काष्ठा pri_sequence - sequence of pulses matching one PRI
+ * struct pri_sequence - sequence of pulses matching one PRI
  * @head: list_head
- * @pri: pulse repetition पूर्णांकerval (PRI) in usecs
+ * @pri: pulse repetition interval (PRI) in usecs
  * @dur: duration of sequence in usecs
  * @count: number of pulses in this sequence
  * @count_falses: number of not matching pulses in this sequence
- * @first_ts: समय stamp of first pulse in usecs
- * @last_ts: समय stamp of last pulse in usecs
+ * @first_ts: time stamp of first pulse in usecs
+ * @last_ts: time stamp of last pulse in usecs
  * @deadline_ts: deadline when this sequence becomes invalid (first_ts + dur)
  */
-काष्ठा pri_sequence अणु
-	काष्ठा list_head head;
+struct pri_sequence {
+	struct list_head head;
 	u32 pri;
 	u32 dur;
 	u32 count;
@@ -42,38 +41,38 @@
 	u64 first_ts;
 	u64 last_ts;
 	u64 deadline_ts;
-पूर्ण;
+};
 
 /**
- * काष्ठा pri_detector - PRI detector element क्रम a dedicated radar type
- * @निकास(): deकाष्ठाor
- * @add_pulse(): add pulse event, वापसs pri_sequence अगर pattern was detected
- * @reset(): clear states and reset to given समय stamp
- * @rs: detector specs क्रम this detector element
- * @last_ts: last pulse समय stamp considered क्रम this element in usecs
+ * struct pri_detector - PRI detector element for a dedicated radar type
+ * @exit(): destructor
+ * @add_pulse(): add pulse event, returns pri_sequence if pattern was detected
+ * @reset(): clear states and reset to given time stamp
+ * @rs: detector specs for this detector element
+ * @last_ts: last pulse time stamp considered for this element in usecs
  * @sequences: list_head holding potential pulse sequences
  * @pulses: list connecting pulse_elem objects
  * @count: number of pulses in queue
  * @max_count: maximum number of pulses to be queued
- * @winकरोw_size: winकरोw size back from newest pulse समय stamp in usecs
+ * @window_size: window size back from newest pulse time stamp in usecs
  */
-काष्ठा pri_detector अणु
-	व्योम (*निकास)     (काष्ठा pri_detector *de);
-	काष्ठा pri_sequence *
-	     (*add_pulse)(काष्ठा pri_detector *de, काष्ठा pulse_event *e);
-	व्योम (*reset)    (काष्ठा pri_detector *de, u64 ts);
+struct pri_detector {
+	void (*exit)     (struct pri_detector *de);
+	struct pri_sequence *
+	     (*add_pulse)(struct pri_detector *de, struct pulse_event *e);
+	void (*reset)    (struct pri_detector *de, u64 ts);
 
-	स्थिर काष्ठा radar_detector_specs *rs;
+	const struct radar_detector_specs *rs;
 
-/* निजी: पूर्णांकernal use only */
+/* private: internal use only */
 	u64 last_ts;
-	काष्ठा list_head sequences;
-	काष्ठा list_head pulses;
+	struct list_head sequences;
+	struct list_head pulses;
 	u32 count;
 	u32 max_count;
-	u32 winकरोw_size;
-पूर्ण;
+	u32 window_size;
+};
 
-काष्ठा pri_detector *pri_detector_init(स्थिर काष्ठा radar_detector_specs *rs);
+struct pri_detector *pri_detector_init(const struct radar_detector_specs *rs);
 
-#पूर्ण_अगर /* DFS_PRI_DETECTOR_H */
+#endif /* DFS_PRI_DETECTOR_H */

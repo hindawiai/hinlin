@@ -1,11 +1,10 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __ASM_MACH_RALINK_IRQ_H
-#घोषणा __ASM_MACH_RALINK_IRQ_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __ASM_MACH_RALINK_IRQ_H
+#define __ASM_MACH_RALINK_IRQ_H
 
-#घोषणा GIC_NUM_INTRS	64
-#घोषणा NR_IRQS 256
+#define GIC_NUM_INTRS	64
+#define NR_IRQS 256
 
-#समावेश <यंत्र/mach-generic/irq.h>
+#include <asm/mach-generic/irq.h>
 
-#पूर्ण_अगर
+#endif

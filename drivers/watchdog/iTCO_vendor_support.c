@@ -1,115 +1,114 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
- *	पूर्णांकel TCO venकरोr specअगरic watchकरोg driver support
+ *	intel TCO vendor specific watchdog driver support
  *
  *	(c) Copyright 2006-2009 Wim Van Sebroeck <wim@iguana.be>.
  *
  *	Neither Wim Van Sebroeck nor Iguana vzw. admit liability nor
- *	provide warranty क्रम any of this software. This material is
- *	provided "AS-IS" and at no अक्षरge.
+ *	provide warranty for any of this software. This material is
+ *	provided "AS-IS" and at no charge.
  */
 
 /*
  *	Includes, defines, variables, module parameters, ...
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-/* Module and version inक्रमmation */
-#घोषणा DRV_NAME	"iTCO_vendor_support"
-#घोषणा DRV_VERSION	"1.04"
+/* Module and version information */
+#define DRV_NAME	"iTCO_vendor_support"
+#define DRV_VERSION	"1.04"
 
 /* Includes */
-#समावेश <linux/module.h>		/* For module specअगरic items */
-#समावेश <linux/moduleparam.h>		/* For new moduleparam's */
-#समावेश <linux/types.h>		/* For standard types (like माप_प्रकार) */
-#समावेश <linux/त्रुटिसं.स>		/* For the -ENODEV/... values */
-#समावेश <linux/kernel.h>		/* For prपूर्णांकk/panic/... */
-#समावेश <linux/init.h>			/* For __init/__निकास/... */
-#समावेश <linux/ioport.h>		/* For io-port access */
-#समावेश <linux/पन.स>			/* For inb/outb/... */
+#include <linux/module.h>		/* For module specific items */
+#include <linux/moduleparam.h>		/* For new moduleparam's */
+#include <linux/types.h>		/* For standard types (like size_t) */
+#include <linux/errno.h>		/* For the -ENODEV/... values */
+#include <linux/kernel.h>		/* For printk/panic/... */
+#include <linux/init.h>			/* For __init/__exit/... */
+#include <linux/ioport.h>		/* For io-port access */
+#include <linux/io.h>			/* For inb/outb/... */
 
-#समावेश "iTCO_vendor.h"
+#include "iTCO_vendor.h"
 
-/* List of venकरोr support modes */
+/* List of vendor support modes */
 /* SuperMicro Pentium 3 Era 370SSE+-OEM1/P3TSSE */
-#घोषणा SUPERMICRO_OLD_BOARD	1
-/* SuperMicro Pentium 4 / Xeon 4 / EMT64T Era Systems - no दीर्घer supported */
-#घोषणा SUPERMICRO_NEW_BOARD	2
+#define SUPERMICRO_OLD_BOARD	1
+/* SuperMicro Pentium 4 / Xeon 4 / EMT64T Era Systems - no longer supported */
+#define SUPERMICRO_NEW_BOARD	2
 /* Broken BIOS */
-#घोषणा BROKEN_BIOS		911
+#define BROKEN_BIOS		911
 
-पूर्णांक iTCO_venकरोrsupport;
-EXPORT_SYMBOL(iTCO_venकरोrsupport);
+int iTCO_vendorsupport;
+EXPORT_SYMBOL(iTCO_vendorsupport);
 
-module_param_named(venकरोrsupport, iTCO_venकरोrsupport, पूर्णांक, 0);
-MODULE_PARM_DESC(venकरोrsupport, "iTCO vendor specific support mode, default="
+module_param_named(vendorsupport, iTCO_vendorsupport, int, 0);
+MODULE_PARM_DESC(vendorsupport, "iTCO vendor specific support mode, default="
 			"0 (none), 1=SuperMicro Pent3, 911=Broken SMI BIOS");
 
 /*
- *	Venकरोr Specअगरic Support
+ *	Vendor Specific Support
  */
 
 /*
- *	Venकरोr Support: 1
+ *	Vendor Support: 1
  *	Board: Super Micro Computer Inc. 370SSE+-OEM1/P3TSSE
  *	iTCO chipset: ICH2
  *
  *	Code contributed by: R. Seretny <lkpatches@paypc.com>
  *	Documentation obtained by R. Seretny from SuperMicro Technical Support
  *
- *	To enable Watchकरोg function:
+ *	To enable Watchdog function:
  *	    BIOS setup -> Power -> TCO Logic SMI Enable -> Within5Minutes
- *	    This setting enables SMI to clear the watchकरोg expired flag.
- *	    If BIOS or CPU fail which may cause SMI hang, then प्रणाली will
- *	    reboot. When application starts to use watchकरोg function,
+ *	    This setting enables SMI to clear the watchdog expired flag.
+ *	    If BIOS or CPU fail which may cause SMI hang, then system will
+ *	    reboot. When application starts to use watchdog function,
  *	    application has to take over the control from SMI.
  *
- *	    For P3TSSE, J36 jumper needs to be हटाओd to enable the Watchकरोg
+ *	    For P3TSSE, J36 jumper needs to be removed to enable the Watchdog
  *	    function.
  *
- *	    Note: The प्रणाली will reboot when Expire Flag is set TWICE.
- *	    So, अगर the watchकरोg समयr is 20 seconds, then the maximum hang
- *	    समय is about 40 seconds, and the minimum hang समय is about
+ *	    Note: The system will reboot when Expire Flag is set TWICE.
+ *	    So, if the watchdog timer is 20 seconds, then the maximum hang
+ *	    time is about 40 seconds, and the minimum hang time is about
  *	    20.6 seconds.
  */
 
-अटल व्योम supermicro_old_pre_start(काष्ठा resource *smires)
-अणु
-	अचिन्हित दीर्घ val32;
+static void supermicro_old_pre_start(struct resource *smires)
+{
+	unsigned long val32;
 
 	/* Bit 13: TCO_EN -> 0 = Disables TCO logic generating an SMI# */
 	val32 = inl(smires->start);
-	val32 &= 0xffffdfff;	/* Turn off SMI clearing watchकरोg */
-	outl(val32, smires->start);	/* Needed to activate watchकरोg */
-पूर्ण
+	val32 &= 0xffffdfff;	/* Turn off SMI clearing watchdog */
+	outl(val32, smires->start);	/* Needed to activate watchdog */
+}
 
-अटल व्योम supermicro_old_pre_stop(काष्ठा resource *smires)
-अणु
-	अचिन्हित दीर्घ val32;
+static void supermicro_old_pre_stop(struct resource *smires)
+{
+	unsigned long val32;
 
 	/* Bit 13: TCO_EN -> 1 = Enables the TCO logic to generate SMI# */
 	val32 = inl(smires->start);
-	val32 |= 0x00002000;	/* Turn on SMI clearing watchकरोg */
-	outl(val32, smires->start);	/* Needed to deactivate watchकरोg */
-पूर्ण
+	val32 |= 0x00002000;	/* Turn on SMI clearing watchdog */
+	outl(val32, smires->start);	/* Needed to deactivate watchdog */
+}
 
 /*
- *	Venकरोr Support: 911
+ *	Vendor Support: 911
  *	Board: Some Intel ICHx based motherboards
  *	iTCO chipset: ICH7+
  *
  *	Some Intel motherboards have a broken BIOS implementation: i.e.
- *	the SMI handler clear's the TIMEOUT bit in the TC01_STS रेजिस्टर
- *	and करोes not reload the समय. Thus the TCO watchकरोg करोes not reboot
- *	the प्रणाली.
+ *	the SMI handler clear's the TIMEOUT bit in the TC01_STS register
+ *	and does not reload the time. Thus the TCO watchdog does not reboot
+ *	the system.
  *
  *	These are the conclusions of Andriy Gapon <avg@icyb.net.ua> after
  *	debugging: the SMI handler is quite simple - it tests value in
  *	TCO1_CNT against 0x800, i.e. checks TCO_TMR_HLT. If the bit is set
- *	the handler goes पूर्णांकo an infinite loop, apparently to allow the
- *	second समयout and reboot. Otherwise it simply clears TIMEOUT bit
+ *	the handler goes into an infinite loop, apparently to allow the
+ *	second timeout and reboot. Otherwise it simply clears TIMEOUT bit
  *	in TCO1_STS and that's it.
  *	So the logic seems to be reversed, because it is hard to see how
  *	TIMEOUT can get set to 1 and SMI generated when TCO_TMR_HLT is set
@@ -121,94 +120,94 @@ MODULE_PARM_DESC(venकरोrsupport, "iTCO vendor specific support mode, defau
  *
  *	WARNING: globally disabling SMI could possibly lead to dramatic
  *	problems, especially on laptops! I.e. various ACPI things where
- *	SMI is used क्रम communication between OS and firmware.
+ *	SMI is used for communication between OS and firmware.
  *
  *	Don't use this fix if you don't need to!!!
  */
 
-अटल व्योम broken_bios_start(काष्ठा resource *smires)
-अणु
-	अचिन्हित दीर्घ val32;
+static void broken_bios_start(struct resource *smires)
+{
+	unsigned long val32;
 
 	val32 = inl(smires->start);
 	/* Bit 13: TCO_EN     -> 0 = Disables TCO logic generating an SMI#
 	   Bit  0: GBL_SMI_EN -> 0 = No SMI# will be generated by ICH. */
 	val32 &= 0xffffdffe;
 	outl(val32, smires->start);
-पूर्ण
+}
 
-अटल व्योम broken_bios_stop(काष्ठा resource *smires)
-अणु
-	अचिन्हित दीर्घ val32;
+static void broken_bios_stop(struct resource *smires)
+{
+	unsigned long val32;
 
 	val32 = inl(smires->start);
 	/* Bit 13: TCO_EN     -> 1 = Enables TCO logic generating an SMI#
 	   Bit  0: GBL_SMI_EN -> 1 = Turn global SMI on again. */
 	val32 |= 0x00002001;
 	outl(val32, smires->start);
-पूर्ण
+}
 
 /*
  *	Generic Support Functions
  */
 
-व्योम iTCO_venकरोr_pre_start(काष्ठा resource *smires,
-			   अचिन्हित पूर्णांक heartbeat)
-अणु
-	चयन (iTCO_venकरोrsupport) अणु
-	हाल SUPERMICRO_OLD_BOARD:
+void iTCO_vendor_pre_start(struct resource *smires,
+			   unsigned int heartbeat)
+{
+	switch (iTCO_vendorsupport) {
+	case SUPERMICRO_OLD_BOARD:
 		supermicro_old_pre_start(smires);
-		अवरोध;
-	हाल BROKEN_BIOS:
+		break;
+	case BROKEN_BIOS:
 		broken_bios_start(smires);
-		अवरोध;
-	पूर्ण
-पूर्ण
-EXPORT_SYMBOL(iTCO_venकरोr_pre_start);
+		break;
+	}
+}
+EXPORT_SYMBOL(iTCO_vendor_pre_start);
 
-व्योम iTCO_venकरोr_pre_stop(काष्ठा resource *smires)
-अणु
-	चयन (iTCO_venकरोrsupport) अणु
-	हाल SUPERMICRO_OLD_BOARD:
+void iTCO_vendor_pre_stop(struct resource *smires)
+{
+	switch (iTCO_vendorsupport) {
+	case SUPERMICRO_OLD_BOARD:
 		supermicro_old_pre_stop(smires);
-		अवरोध;
-	हाल BROKEN_BIOS:
+		break;
+	case BROKEN_BIOS:
 		broken_bios_stop(smires);
-		अवरोध;
-	पूर्ण
-पूर्ण
-EXPORT_SYMBOL(iTCO_venकरोr_pre_stop);
+		break;
+	}
+}
+EXPORT_SYMBOL(iTCO_vendor_pre_stop);
 
-पूर्णांक iTCO_venकरोr_check_noreboot_on(व्योम)
-अणु
-	चयन (iTCO_venकरोrsupport) अणु
-	हाल SUPERMICRO_OLD_BOARD:
-		वापस 0;
-	शेष:
-		वापस 1;
-	पूर्ण
-पूर्ण
-EXPORT_SYMBOL(iTCO_venकरोr_check_noreboot_on);
+int iTCO_vendor_check_noreboot_on(void)
+{
+	switch (iTCO_vendorsupport) {
+	case SUPERMICRO_OLD_BOARD:
+		return 0;
+	default:
+		return 1;
+	}
+}
+EXPORT_SYMBOL(iTCO_vendor_check_noreboot_on);
 
-अटल पूर्णांक __init iTCO_venकरोr_init_module(व्योम)
-अणु
-	अगर (iTCO_venकरोrsupport == SUPERMICRO_NEW_BOARD) अणु
+static int __init iTCO_vendor_init_module(void)
+{
+	if (iTCO_vendorsupport == SUPERMICRO_NEW_BOARD) {
 		pr_warn("Option vendorsupport=%d is no longer supported, "
 			"please use the w83627hf_wdt driver instead\n",
 			SUPERMICRO_NEW_BOARD);
-		वापस -EINVAL;
-	पूर्ण
-	pr_info("vendor-support=%d\n", iTCO_venकरोrsupport);
-	वापस 0;
-पूर्ण
+		return -EINVAL;
+	}
+	pr_info("vendor-support=%d\n", iTCO_vendorsupport);
+	return 0;
+}
 
-अटल व्योम __निकास iTCO_venकरोr_निकास_module(व्योम)
-अणु
+static void __exit iTCO_vendor_exit_module(void)
+{
 	pr_info("Module Unloaded\n");
-पूर्ण
+}
 
-module_init(iTCO_venकरोr_init_module);
-module_निकास(iTCO_venकरोr_निकास_module);
+module_init(iTCO_vendor_init_module);
+module_exit(iTCO_vendor_exit_module);
 
 MODULE_AUTHOR("Wim Van Sebroeck <wim@iguana.be>, "
 		"R. Seretny <lkpatches@paypc.com>");

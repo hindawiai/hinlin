@@ -1,28 +1,27 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-काष्ठा btcx_riscmem अणु
-	अचिन्हित पूर्णांक   size;
+/* SPDX-License-Identifier: GPL-2.0 */
+struct btcx_riscmem {
+	unsigned int   size;
 	__le32         *cpu;
 	__le32         *jmp;
 	dma_addr_t     dma;
-पूर्ण;
+};
 
-काष्ठा btcx_skiplist अणु
-	पूर्णांक start;
-	पूर्णांक end;
-पूर्ण;
+struct btcx_skiplist {
+	int start;
+	int end;
+};
 
-पूर्णांक  btcx_riscmem_alloc(काष्ठा pci_dev *pci,
-			काष्ठा btcx_riscmem *risc,
-			अचिन्हित पूर्णांक size);
-व्योम btcx_riscmem_मुक्त(काष्ठा pci_dev *pci,
-		       काष्ठा btcx_riscmem *risc);
+int  btcx_riscmem_alloc(struct pci_dev *pci,
+			struct btcx_riscmem *risc,
+			unsigned int size);
+void btcx_riscmem_free(struct pci_dev *pci,
+		       struct btcx_riscmem *risc);
 
-पूर्णांक btcx_screen_clips(पूर्णांक swidth, पूर्णांक sheight, काष्ठा v4l2_rect *win,
-		      काष्ठा v4l2_clip *clips, अचिन्हित पूर्णांक n);
-पूर्णांक btcx_align(काष्ठा v4l2_rect *win, काष्ठा v4l2_clip *clips,
-	       अचिन्हित पूर्णांक n, पूर्णांक mask);
-व्योम btcx_sort_clips(काष्ठा v4l2_clip *clips, अचिन्हित पूर्णांक nclips);
-व्योम btcx_calc_skips(पूर्णांक line, पूर्णांक width, पूर्णांक *maxy,
-		     काष्ठा btcx_skiplist *skips, अचिन्हित पूर्णांक *nskips,
-		     स्थिर काष्ठा v4l2_clip *clips, अचिन्हित पूर्णांक nclips);
+int btcx_screen_clips(int swidth, int sheight, struct v4l2_rect *win,
+		      struct v4l2_clip *clips, unsigned int n);
+int btcx_align(struct v4l2_rect *win, struct v4l2_clip *clips,
+	       unsigned int n, int mask);
+void btcx_sort_clips(struct v4l2_clip *clips, unsigned int nclips);
+void btcx_calc_skips(int line, int width, int *maxy,
+		     struct btcx_skiplist *skips, unsigned int *nskips,
+		     const struct v4l2_clip *clips, unsigned int nclips);

@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright IBM Corp. 2020
  *
@@ -8,93 +7,93 @@
  *
  */
 
-#घोषणा KMSG_COMPONENT "zpci"
-#घोषणा pr_fmt(fmt) KMSG_COMPONENT ": " fmt
+#define KMSG_COMPONENT "zpci"
+#define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/pci.h>
+#include <linux/kernel.h>
+#include <linux/pci.h>
 
-#समावेश "pci_iov.h"
+#include "pci_iov.h"
 
-अटल काष्ठा resource iov_res = अणु
+static struct resource iov_res = {
 	.name	= "PCI IOV res",
 	.start	= 0,
 	.end	= -1,
 	.flags	= IORESOURCE_MEM,
-पूर्ण;
+};
 
-व्योम zpci_iov_map_resources(काष्ठा pci_dev *pdev)
-अणु
-	resource_माप_प्रकार len;
-	पूर्णांक i;
+void zpci_iov_map_resources(struct pci_dev *pdev)
+{
+	resource_size_t len;
+	int i;
 
-	क्रम (i = 0; i < PCI_SRIOV_NUM_BARS; i++) अणु
-		पूर्णांक bar = i + PCI_IOV_RESOURCES;
+	for (i = 0; i < PCI_SRIOV_NUM_BARS; i++) {
+		int bar = i + PCI_IOV_RESOURCES;
 
 		len = pci_resource_len(pdev, bar);
-		अगर (!len)
-			जारी;
+		if (!len)
+			continue;
 		pdev->resource[bar].parent = &iov_res;
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम zpci_iov_हटाओ_virtfn(काष्ठा pci_dev *pdev, पूर्णांक vfn)
-अणु
-	pci_lock_rescan_हटाओ();
+void zpci_iov_remove_virtfn(struct pci_dev *pdev, int vfn)
+{
+	pci_lock_rescan_remove();
 	/* Linux' vfid's start at 0 vfn at 1 */
-	pci_iov_हटाओ_virtfn(pdev->physfn, vfn - 1);
-	pci_unlock_rescan_हटाओ();
-पूर्ण
+	pci_iov_remove_virtfn(pdev->physfn, vfn - 1);
+	pci_unlock_rescan_remove();
+}
 
-अटल पूर्णांक zpci_iov_link_virtfn(काष्ठा pci_dev *pdev, काष्ठा pci_dev *virtfn, पूर्णांक vfid)
-अणु
-	पूर्णांक rc;
+static int zpci_iov_link_virtfn(struct pci_dev *pdev, struct pci_dev *virtfn, int vfid)
+{
+	int rc;
 
 	rc = pci_iov_sysfs_link(pdev, virtfn, vfid);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
 	virtfn->is_virtfn = 1;
-	virtfn->multअगरunction = 0;
+	virtfn->multifunction = 0;
 	virtfn->physfn = pci_dev_get(pdev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक zpci_iov_setup_virtfn(काष्ठा zpci_bus *zbus, काष्ठा pci_dev *virtfn, पूर्णांक vfn)
-अणु
-	पूर्णांक i, cand_devfn;
-	काष्ठा zpci_dev *zdev;
-	काष्ठा pci_dev *pdev;
-	पूर्णांक vfid = vfn - 1; /* Linux' vfid's start at 0 vfn at 1*/
-	पूर्णांक rc = 0;
+int zpci_iov_setup_virtfn(struct zpci_bus *zbus, struct pci_dev *virtfn, int vfn)
+{
+	int i, cand_devfn;
+	struct zpci_dev *zdev;
+	struct pci_dev *pdev;
+	int vfid = vfn - 1; /* Linux' vfid's start at 0 vfn at 1*/
+	int rc = 0;
 
-	अगर (!zbus->multअगरunction)
-		वापस 0;
+	if (!zbus->multifunction)
+		return 0;
 
-	/* If the parent PF क्रम the given VF is also configured in the
+	/* If the parent PF for the given VF is also configured in the
 	 * instance, it must be on the same zbus.
-	 * We can then identअगरy the parent PF by checking what
-	 * devfn the VF would have अगर it beदीर्घed to that PF using the PF's
-	 * stride and offset. Only अगर this candidate devfn matches the
+	 * We can then identify the parent PF by checking what
+	 * devfn the VF would have if it belonged to that PF using the PF's
+	 * stride and offset. Only if this candidate devfn matches the
 	 * actual devfn will we link both functions.
 	 */
-	क्रम (i = 0; i < ZPCI_FUNCTIONS_PER_BUS; i++) अणु
+	for (i = 0; i < ZPCI_FUNCTIONS_PER_BUS; i++) {
 		zdev = zbus->function[i];
-		अगर (zdev && zdev->is_physfn) अणु
+		if (zdev && zdev->is_physfn) {
 			pdev = pci_get_slot(zbus->bus, zdev->devfn);
-			अगर (!pdev)
-				जारी;
+			if (!pdev)
+				continue;
 			cand_devfn = pci_iov_virtfn_devfn(pdev, vfid);
-			अगर (cand_devfn == virtfn->devfn) अणु
+			if (cand_devfn == virtfn->devfn) {
 				rc = zpci_iov_link_virtfn(pdev, virtfn, vfid);
 				/* balance pci_get_slot() */
 				pci_dev_put(pdev);
-				अवरोध;
-			पूर्ण
+				break;
+			}
 			/* balance pci_get_slot() */
 			pci_dev_put(pdev);
-		पूर्ण
-	पूर्ण
-	वापस rc;
-पूर्ण
+		}
+	}
+	return rc;
+}

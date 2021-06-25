@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Driver क्रम the Diolan DLN-2 USB-I2C adapter
+ * Driver for the Diolan DLN-2 USB-I2C adapter
  *
  * Copyright (c) 2014 Intel Corporation
  *
@@ -10,113 +9,113 @@
  *  Copyright (c) 2010-2011 Ericsson AB
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/types.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/mfd/dln2.h>
-#समावेश <linux/acpi.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/types.h>
+#include <linux/slab.h>
+#include <linux/i2c.h>
+#include <linux/platform_device.h>
+#include <linux/mfd/dln2.h>
+#include <linux/acpi.h>
 
-#घोषणा DLN2_I2C_MODULE_ID		0x03
-#घोषणा DLN2_I2C_CMD(cmd)		DLN2_CMD(cmd, DLN2_I2C_MODULE_ID)
+#define DLN2_I2C_MODULE_ID		0x03
+#define DLN2_I2C_CMD(cmd)		DLN2_CMD(cmd, DLN2_I2C_MODULE_ID)
 
 /* I2C commands */
-#घोषणा DLN2_I2C_GET_PORT_COUNT		DLN2_I2C_CMD(0x00)
-#घोषणा DLN2_I2C_ENABLE			DLN2_I2C_CMD(0x01)
-#घोषणा DLN2_I2C_DISABLE		DLN2_I2C_CMD(0x02)
-#घोषणा DLN2_I2C_IS_ENABLED		DLN2_I2C_CMD(0x03)
-#घोषणा DLN2_I2C_WRITE			DLN2_I2C_CMD(0x06)
-#घोषणा DLN2_I2C_READ			DLN2_I2C_CMD(0x07)
-#घोषणा DLN2_I2C_SCAN_DEVICES		DLN2_I2C_CMD(0x08)
-#घोषणा DLN2_I2C_PULLUP_ENABLE		DLN2_I2C_CMD(0x09)
-#घोषणा DLN2_I2C_PULLUP_DISABLE		DLN2_I2C_CMD(0x0A)
-#घोषणा DLN2_I2C_PULLUP_IS_ENABLED	DLN2_I2C_CMD(0x0B)
-#घोषणा DLN2_I2C_TRANSFER		DLN2_I2C_CMD(0x0C)
-#घोषणा DLN2_I2C_SET_MAX_REPLY_COUNT	DLN2_I2C_CMD(0x0D)
-#घोषणा DLN2_I2C_GET_MAX_REPLY_COUNT	DLN2_I2C_CMD(0x0E)
+#define DLN2_I2C_GET_PORT_COUNT		DLN2_I2C_CMD(0x00)
+#define DLN2_I2C_ENABLE			DLN2_I2C_CMD(0x01)
+#define DLN2_I2C_DISABLE		DLN2_I2C_CMD(0x02)
+#define DLN2_I2C_IS_ENABLED		DLN2_I2C_CMD(0x03)
+#define DLN2_I2C_WRITE			DLN2_I2C_CMD(0x06)
+#define DLN2_I2C_READ			DLN2_I2C_CMD(0x07)
+#define DLN2_I2C_SCAN_DEVICES		DLN2_I2C_CMD(0x08)
+#define DLN2_I2C_PULLUP_ENABLE		DLN2_I2C_CMD(0x09)
+#define DLN2_I2C_PULLUP_DISABLE		DLN2_I2C_CMD(0x0A)
+#define DLN2_I2C_PULLUP_IS_ENABLED	DLN2_I2C_CMD(0x0B)
+#define DLN2_I2C_TRANSFER		DLN2_I2C_CMD(0x0C)
+#define DLN2_I2C_SET_MAX_REPLY_COUNT	DLN2_I2C_CMD(0x0D)
+#define DLN2_I2C_GET_MAX_REPLY_COUNT	DLN2_I2C_CMD(0x0E)
 
-#घोषणा DLN2_I2C_MAX_XFER_SIZE		256
-#घोषणा DLN2_I2C_BUF_SIZE		(DLN2_I2C_MAX_XFER_SIZE + 16)
+#define DLN2_I2C_MAX_XFER_SIZE		256
+#define DLN2_I2C_BUF_SIZE		(DLN2_I2C_MAX_XFER_SIZE + 16)
 
-काष्ठा dln2_i2c अणु
-	काष्ठा platक्रमm_device *pdev;
-	काष्ठा i2c_adapter adapter;
+struct dln2_i2c {
+	struct platform_device *pdev;
+	struct i2c_adapter adapter;
 	u8 port;
 	/*
-	 * Buffer to hold the packet क्रम पढ़ो or ग_लिखो transfers. One is enough
+	 * Buffer to hold the packet for read or write transfers. One is enough
 	 * since we can't have multiple transfers in parallel on the i2c bus.
 	 */
-	व्योम *buf;
-पूर्ण;
+	void *buf;
+};
 
-अटल पूर्णांक dln2_i2c_enable(काष्ठा dln2_i2c *dln2, bool enable)
-अणु
+static int dln2_i2c_enable(struct dln2_i2c *dln2, bool enable)
+{
 	u16 cmd;
-	काष्ठा अणु
+	struct {
 		u8 port;
-	पूर्ण tx;
+	} tx;
 
 	tx.port = dln2->port;
 
-	अगर (enable)
+	if (enable)
 		cmd = DLN2_I2C_ENABLE;
-	अन्यथा
+	else
 		cmd = DLN2_I2C_DISABLE;
 
-	वापस dln2_transfer_tx(dln2->pdev, cmd, &tx, माप(tx));
-पूर्ण
+	return dln2_transfer_tx(dln2->pdev, cmd, &tx, sizeof(tx));
+}
 
-अटल पूर्णांक dln2_i2c_ग_लिखो(काष्ठा dln2_i2c *dln2, u8 addr,
+static int dln2_i2c_write(struct dln2_i2c *dln2, u8 addr,
 			  u8 *data, u16 data_len)
-अणु
-	पूर्णांक ret;
-	काष्ठा अणु
+{
+	int ret;
+	struct {
 		u8 port;
 		u8 addr;
 		u8 mem_addr_len;
 		__le32 mem_addr;
 		__le16 buf_len;
 		u8 buf[DLN2_I2C_MAX_XFER_SIZE];
-	पूर्ण __packed *tx = dln2->buf;
-	अचिन्हित len;
+	} __packed *tx = dln2->buf;
+	unsigned len;
 
-	BUILD_BUG_ON(माप(*tx) > DLN2_I2C_BUF_SIZE);
+	BUILD_BUG_ON(sizeof(*tx) > DLN2_I2C_BUF_SIZE);
 
 	tx->port = dln2->port;
 	tx->addr = addr;
 	tx->mem_addr_len = 0;
 	tx->mem_addr = 0;
 	tx->buf_len = cpu_to_le16(data_len);
-	स_नकल(tx->buf, data, data_len);
+	memcpy(tx->buf, data, data_len);
 
-	len = माप(*tx) + data_len - DLN2_I2C_MAX_XFER_SIZE;
+	len = sizeof(*tx) + data_len - DLN2_I2C_MAX_XFER_SIZE;
 	ret = dln2_transfer_tx(dln2->pdev, DLN2_I2C_WRITE, tx, len);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	वापस data_len;
-पूर्ण
+	return data_len;
+}
 
-अटल पूर्णांक dln2_i2c_पढ़ो(काष्ठा dln2_i2c *dln2, u16 addr, u8 *data,
+static int dln2_i2c_read(struct dln2_i2c *dln2, u16 addr, u8 *data,
 			 u16 data_len)
-अणु
-	पूर्णांक ret;
-	काष्ठा अणु
+{
+	int ret;
+	struct {
 		u8 port;
 		u8 addr;
 		u8 mem_addr_len;
 		__le32 mem_addr;
 		__le16 buf_len;
-	पूर्ण __packed tx;
-	काष्ठा अणु
+	} __packed tx;
+	struct {
 		__le16 buf_len;
 		u8 buf[DLN2_I2C_MAX_XFER_SIZE];
-	पूर्ण __packed *rx = dln2->buf;
-	अचिन्हित rx_len = माप(*rx);
+	} __packed *rx = dln2->buf;
+	unsigned rx_len = sizeof(*rx);
 
-	BUILD_BUG_ON(माप(*rx) > DLN2_I2C_BUF_SIZE);
+	BUILD_BUG_ON(sizeof(*rx) > DLN2_I2C_BUF_SIZE);
 
 	tx.port = dln2->port;
 	tx.addr = addr;
@@ -124,81 +123,81 @@
 	tx.mem_addr = 0;
 	tx.buf_len = cpu_to_le16(data_len);
 
-	ret = dln2_transfer(dln2->pdev, DLN2_I2C_READ, &tx, माप(tx),
+	ret = dln2_transfer(dln2->pdev, DLN2_I2C_READ, &tx, sizeof(tx),
 			    rx, &rx_len);
-	अगर (ret < 0)
-		वापस ret;
-	अगर (rx_len < माप(rx->buf_len) + data_len)
-		वापस -EPROTO;
-	अगर (le16_to_cpu(rx->buf_len) != data_len)
-		वापस -EPROTO;
+	if (ret < 0)
+		return ret;
+	if (rx_len < sizeof(rx->buf_len) + data_len)
+		return -EPROTO;
+	if (le16_to_cpu(rx->buf_len) != data_len)
+		return -EPROTO;
 
-	स_नकल(data, rx->buf, data_len);
+	memcpy(data, rx->buf, data_len);
 
-	वापस data_len;
-पूर्ण
+	return data_len;
+}
 
-अटल पूर्णांक dln2_i2c_xfer(काष्ठा i2c_adapter *adapter,
-			 काष्ठा i2c_msg *msgs, पूर्णांक num)
-अणु
-	काष्ठा dln2_i2c *dln2 = i2c_get_adapdata(adapter);
-	काष्ठा i2c_msg *pmsg;
-	पूर्णांक i;
+static int dln2_i2c_xfer(struct i2c_adapter *adapter,
+			 struct i2c_msg *msgs, int num)
+{
+	struct dln2_i2c *dln2 = i2c_get_adapdata(adapter);
+	struct i2c_msg *pmsg;
+	int i;
 
-	क्रम (i = 0; i < num; i++) अणु
-		पूर्णांक ret;
+	for (i = 0; i < num; i++) {
+		int ret;
 
 		pmsg = &msgs[i];
 
-		अगर (pmsg->flags & I2C_M_RD) अणु
-			ret = dln2_i2c_पढ़ो(dln2, pmsg->addr, pmsg->buf,
+		if (pmsg->flags & I2C_M_RD) {
+			ret = dln2_i2c_read(dln2, pmsg->addr, pmsg->buf,
 					    pmsg->len);
-			अगर (ret < 0)
-				वापस ret;
+			if (ret < 0)
+				return ret;
 
 			pmsg->len = ret;
-		पूर्ण अन्यथा अणु
-			ret = dln2_i2c_ग_लिखो(dln2, pmsg->addr, pmsg->buf,
+		} else {
+			ret = dln2_i2c_write(dln2, pmsg->addr, pmsg->buf,
 					     pmsg->len);
-			अगर (ret != pmsg->len)
-				वापस -EPROTO;
-		पूर्ण
-	पूर्ण
+			if (ret != pmsg->len)
+				return -EPROTO;
+		}
+	}
 
-	वापस num;
-पूर्ण
+	return num;
+}
 
-अटल u32 dln2_i2c_func(काष्ठा i2c_adapter *a)
-अणु
-	वापस I2C_FUNC_I2C | I2C_FUNC_SMBUS_BYTE | I2C_FUNC_SMBUS_BYTE_DATA |
+static u32 dln2_i2c_func(struct i2c_adapter *a)
+{
+	return I2C_FUNC_I2C | I2C_FUNC_SMBUS_BYTE | I2C_FUNC_SMBUS_BYTE_DATA |
 		I2C_FUNC_SMBUS_WORD_DATA | I2C_FUNC_SMBUS_BLOCK_PROC_CALL |
 		I2C_FUNC_SMBUS_I2C_BLOCK;
-पूर्ण
+}
 
-अटल स्थिर काष्ठा i2c_algorithm dln2_i2c_usb_algorithm = अणु
+static const struct i2c_algorithm dln2_i2c_usb_algorithm = {
 	.master_xfer = dln2_i2c_xfer,
 	.functionality = dln2_i2c_func,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा i2c_adapter_quirks dln2_i2c_quirks = अणु
-	.max_पढ़ो_len = DLN2_I2C_MAX_XFER_SIZE,
-	.max_ग_लिखो_len = DLN2_I2C_MAX_XFER_SIZE,
-पूर्ण;
+static const struct i2c_adapter_quirks dln2_i2c_quirks = {
+	.max_read_len = DLN2_I2C_MAX_XFER_SIZE,
+	.max_write_len = DLN2_I2C_MAX_XFER_SIZE,
+};
 
-अटल पूर्णांक dln2_i2c_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	पूर्णांक ret;
-	काष्ठा dln2_i2c *dln2;
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा dln2_platक्रमm_data *pdata = dev_get_platdata(&pdev->dev);
+static int dln2_i2c_probe(struct platform_device *pdev)
+{
+	int ret;
+	struct dln2_i2c *dln2;
+	struct device *dev = &pdev->dev;
+	struct dln2_platform_data *pdata = dev_get_platdata(&pdev->dev);
 
-	dln2 = devm_kzalloc(dev, माप(*dln2), GFP_KERNEL);
-	अगर (!dln2)
-		वापस -ENOMEM;
+	dln2 = devm_kzalloc(dev, sizeof(*dln2), GFP_KERNEL);
+	if (!dln2)
+		return -ENOMEM;
 
-	dln2->buf = devm_kदो_स्मृति(dev, DLN2_I2C_BUF_SIZE, GFP_KERNEL);
-	अगर (!dln2->buf)
-		वापस -ENOMEM;
+	dln2->buf = devm_kmalloc(dev, DLN2_I2C_BUF_SIZE, GFP_KERNEL);
+	if (!dln2->buf)
+		return -ENOMEM;
 
 	dln2->pdev = pdev;
 	dln2->port = pdata->port;
@@ -212,48 +211,48 @@
 	ACPI_COMPANION_SET(&dln2->adapter.dev, ACPI_COMPANION(&pdev->dev));
 	dln2->adapter.dev.of_node = dev->of_node;
 	i2c_set_adapdata(&dln2->adapter, dln2);
-	snम_लिखो(dln2->adapter.name, माप(dln2->adapter.name), "%s-%s-%d",
+	snprintf(dln2->adapter.name, sizeof(dln2->adapter.name), "%s-%s-%d",
 		 "dln2-i2c", dev_name(pdev->dev.parent), dln2->port);
 
-	platक्रमm_set_drvdata(pdev, dln2);
+	platform_set_drvdata(pdev, dln2);
 
-	/* initialize the i2c पूर्णांकerface */
+	/* initialize the i2c interface */
 	ret = dln2_i2c_enable(dln2, true);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(dev, "failed to initialize adapter: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	/* and finally attach to i2c layer */
 	ret = i2c_add_adapter(&dln2->adapter);
-	अगर (ret < 0)
-		जाओ out_disable;
+	if (ret < 0)
+		goto out_disable;
 
-	वापस 0;
+	return 0;
 
 out_disable:
 	dln2_i2c_enable(dln2, false);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक dln2_i2c_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा dln2_i2c *dln2 = platक्रमm_get_drvdata(pdev);
+static int dln2_i2c_remove(struct platform_device *pdev)
+{
+	struct dln2_i2c *dln2 = platform_get_drvdata(pdev);
 
 	i2c_del_adapter(&dln2->adapter);
 	dln2_i2c_enable(dln2, false);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver dln2_i2c_driver = अणु
+static struct platform_driver dln2_i2c_driver = {
 	.driver.name	= "dln2-i2c",
 	.probe		= dln2_i2c_probe,
-	.हटाओ		= dln2_i2c_हटाओ,
-पूर्ण;
+	.remove		= dln2_i2c_remove,
+};
 
-module_platक्रमm_driver(dln2_i2c_driver);
+module_platform_driver(dln2_i2c_driver);
 
 MODULE_AUTHOR("Laurentiu Palcu <laurentiu.palcu@intel.com>");
 MODULE_DESCRIPTION("Driver for the Diolan DLN2 I2C master interface");

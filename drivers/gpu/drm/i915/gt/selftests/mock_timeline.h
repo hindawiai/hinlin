@@ -1,18 +1,17 @@
-<शैली गुरु>
 /*
- * SPDX-License-Identअगरier: MIT
+ * SPDX-License-Identifier: MIT
  *
- * Copyright तऊ 2017-2018 Intel Corporation
+ * Copyright © 2017-2018 Intel Corporation
  */
 
-#अगर_अघोषित __MOCK_TIMELINE__
-#घोषणा __MOCK_TIMELINE__
+#ifndef __MOCK_TIMELINE__
+#define __MOCK_TIMELINE__
 
-#समावेश <linux/types.h>
+#include <linux/types.h>
 
-काष्ठा पूर्णांकel_समयline;
+struct intel_timeline;
 
-व्योम mock_समयline_init(काष्ठा पूर्णांकel_समयline *समयline, u64 context);
-व्योम mock_समयline_fini(काष्ठा पूर्णांकel_समयline *समयline);
+void mock_timeline_init(struct intel_timeline *timeline, u64 context);
+void mock_timeline_fini(struct intel_timeline *timeline);
 
-#पूर्ण_अगर /* !__MOCK_TIMELINE__ */
+#endif /* !__MOCK_TIMELINE__ */

@@ -1,275 +1,274 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _LINUX_PGTABLE_H
-#घोषणा _LINUX_PGTABLE_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _LINUX_PGTABLE_H
+#define _LINUX_PGTABLE_H
 
-#समावेश <linux/pfn.h>
-#समावेश <यंत्र/pgtable.h>
+#include <linux/pfn.h>
+#include <asm/pgtable.h>
 
-#अगर_अघोषित __ASSEMBLY__
-#अगर_घोषित CONFIG_MMU
+#ifndef __ASSEMBLY__
+#ifdef CONFIG_MMU
 
-#समावेश <linux/mm_types.h>
-#समावेश <linux/bug.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <यंत्र-generic/pgtable_uffd.h>
+#include <linux/mm_types.h>
+#include <linux/bug.h>
+#include <linux/errno.h>
+#include <asm-generic/pgtable_uffd.h>
 
-#अगर 5 - defined(__PAGETABLE_P4D_FOLDED) - defined(__PAGETABLE_PUD_FOLDED) - \
+#if 5 - defined(__PAGETABLE_P4D_FOLDED) - defined(__PAGETABLE_PUD_FOLDED) - \
 	defined(__PAGETABLE_PMD_FOLDED) != CONFIG_PGTABLE_LEVELS
-#त्रुटि CONFIG_PGTABLE_LEVELS is not consistent with __PAGETABLE_अणुP4D,PUD,PMDपूर्ण_FOLDED
-#पूर्ण_अगर
+#error CONFIG_PGTABLE_LEVELS is not consistent with __PAGETABLE_{P4D,PUD,PMD}_FOLDED
+#endif
 
 /*
  * On almost all architectures and configurations, 0 can be used as the
- * upper उच्चमानing to मुक्त_pgtables(): on many architectures it has the same
+ * upper ceiling to free_pgtables(): on many architectures it has the same
  * effect as using TASK_SIZE.  However, there is one configuration which
- * must impose a more careful limit, to aव्योम मुक्तing kernel pgtables.
+ * must impose a more careful limit, to avoid freeing kernel pgtables.
  */
-#अगर_अघोषित USER_PGTABLES_CEILING
-#घोषणा USER_PGTABLES_CEILING	0UL
-#पूर्ण_अगर
+#ifndef USER_PGTABLES_CEILING
+#define USER_PGTABLES_CEILING	0UL
+#endif
 
 /*
  * A page table page can be thought of an array like this: pXd_t[PTRS_PER_PxD]
  *
- * The pXx_index() functions वापस the index of the entry in the page
- * table page which would control the given भव address
+ * The pXx_index() functions return the index of the entry in the page
+ * table page which would control the given virtual address
  *
- * As these functions may be used by the same code क्रम dअगरferent levels of
+ * As these functions may be used by the same code for different levels of
  * the page table folding, they are always available, regardless of
- * CONFIG_PGTABLE_LEVELS value. For the folded levels they simply वापस 0
- * because in such हालs PTRS_PER_PxD equals 1.
+ * CONFIG_PGTABLE_LEVELS value. For the folded levels they simply return 0
+ * because in such cases PTRS_PER_PxD equals 1.
  */
 
-अटल अंतरभूत अचिन्हित दीर्घ pte_index(अचिन्हित दीर्घ address)
-अणु
-	वापस (address >> PAGE_SHIFT) & (PTRS_PER_PTE - 1);
-पूर्ण
+static inline unsigned long pte_index(unsigned long address)
+{
+	return (address >> PAGE_SHIFT) & (PTRS_PER_PTE - 1);
+}
 
-#अगर_अघोषित pmd_index
-अटल अंतरभूत अचिन्हित दीर्घ pmd_index(अचिन्हित दीर्घ address)
-अणु
-	वापस (address >> PMD_SHIFT) & (PTRS_PER_PMD - 1);
-पूर्ण
-#घोषणा pmd_index pmd_index
-#पूर्ण_अगर
+#ifndef pmd_index
+static inline unsigned long pmd_index(unsigned long address)
+{
+	return (address >> PMD_SHIFT) & (PTRS_PER_PMD - 1);
+}
+#define pmd_index pmd_index
+#endif
 
-#अगर_अघोषित pud_index
-अटल अंतरभूत अचिन्हित दीर्घ pud_index(अचिन्हित दीर्घ address)
-अणु
-	वापस (address >> PUD_SHIFT) & (PTRS_PER_PUD - 1);
-पूर्ण
-#घोषणा pud_index pud_index
-#पूर्ण_अगर
+#ifndef pud_index
+static inline unsigned long pud_index(unsigned long address)
+{
+	return (address >> PUD_SHIFT) & (PTRS_PER_PUD - 1);
+}
+#define pud_index pud_index
+#endif
 
-#अगर_अघोषित pgd_index
-/* Must be a compile-समय स्थिरant, so implement it as a macro */
-#घोषणा pgd_index(a)  (((a) >> PGसूची_SHIFT) & (PTRS_PER_PGD - 1))
-#पूर्ण_अगर
+#ifndef pgd_index
+/* Must be a compile-time constant, so implement it as a macro */
+#define pgd_index(a)  (((a) >> PGDIR_SHIFT) & (PTRS_PER_PGD - 1))
+#endif
 
-#अगर_अघोषित pte_offset_kernel
-अटल अंतरभूत pte_t *pte_offset_kernel(pmd_t *pmd, अचिन्हित दीर्घ address)
-अणु
-	वापस (pte_t *)pmd_page_vaddr(*pmd) + pte_index(address);
-पूर्ण
-#घोषणा pte_offset_kernel pte_offset_kernel
-#पूर्ण_अगर
+#ifndef pte_offset_kernel
+static inline pte_t *pte_offset_kernel(pmd_t *pmd, unsigned long address)
+{
+	return (pte_t *)pmd_page_vaddr(*pmd) + pte_index(address);
+}
+#define pte_offset_kernel pte_offset_kernel
+#endif
 
-#अगर defined(CONFIG_HIGHPTE)
-#घोषणा pte_offset_map(dir, address)				\
+#if defined(CONFIG_HIGHPTE)
+#define pte_offset_map(dir, address)				\
 	((pte_t *)kmap_atomic(pmd_page(*(dir))) +		\
 	 pte_index((address)))
-#घोषणा pte_unmap(pte) kunmap_atomic((pte))
-#अन्यथा
-#घोषणा pte_offset_map(dir, address)	pte_offset_kernel((dir), (address))
-#घोषणा pte_unmap(pte) ((व्योम)(pte))	/* NOP */
-#पूर्ण_अगर
+#define pte_unmap(pte) kunmap_atomic((pte))
+#else
+#define pte_offset_map(dir, address)	pte_offset_kernel((dir), (address))
+#define pte_unmap(pte) ((void)(pte))	/* NOP */
+#endif
 
 /* Find an entry in the second-level page table.. */
-#अगर_अघोषित pmd_offset
-अटल अंतरभूत pmd_t *pmd_offset(pud_t *pud, अचिन्हित दीर्घ address)
-अणु
-	वापस (pmd_t *)pud_page_vaddr(*pud) + pmd_index(address);
-पूर्ण
-#घोषणा pmd_offset pmd_offset
-#पूर्ण_अगर
+#ifndef pmd_offset
+static inline pmd_t *pmd_offset(pud_t *pud, unsigned long address)
+{
+	return (pmd_t *)pud_page_vaddr(*pud) + pmd_index(address);
+}
+#define pmd_offset pmd_offset
+#endif
 
-#अगर_अघोषित pud_offset
-अटल अंतरभूत pud_t *pud_offset(p4d_t *p4d, अचिन्हित दीर्घ address)
-अणु
-	वापस (pud_t *)p4d_page_vaddr(*p4d) + pud_index(address);
-पूर्ण
-#घोषणा pud_offset pud_offset
-#पूर्ण_अगर
+#ifndef pud_offset
+static inline pud_t *pud_offset(p4d_t *p4d, unsigned long address)
+{
+	return (pud_t *)p4d_page_vaddr(*p4d) + pud_index(address);
+}
+#define pud_offset pud_offset
+#endif
 
-अटल अंतरभूत pgd_t *pgd_offset_pgd(pgd_t *pgd, अचिन्हित दीर्घ address)
-अणु
-	वापस (pgd + pgd_index(address));
-पूर्ण;
+static inline pgd_t *pgd_offset_pgd(pgd_t *pgd, unsigned long address)
+{
+	return (pgd + pgd_index(address));
+};
 
 /*
- * a लघुcut to get a pgd_t in a given mm
+ * a shortcut to get a pgd_t in a given mm
  */
-#अगर_अघोषित pgd_offset
-#घोषणा pgd_offset(mm, address)		pgd_offset_pgd((mm)->pgd, (address))
-#पूर्ण_अगर
+#ifndef pgd_offset
+#define pgd_offset(mm, address)		pgd_offset_pgd((mm)->pgd, (address))
+#endif
 
 /*
- * a लघुcut which implies the use of the kernel's pgd, instead
+ * a shortcut which implies the use of the kernel's pgd, instead
  * of a process's
  */
-#अगर_अघोषित pgd_offset_k
-#घोषणा pgd_offset_k(address)		pgd_offset(&init_mm, (address))
-#पूर्ण_अगर
+#ifndef pgd_offset_k
+#define pgd_offset_k(address)		pgd_offset(&init_mm, (address))
+#endif
 
 /*
- * In many हालs it is known that a भव address is mapped at PMD or PTE
+ * In many cases it is known that a virtual address is mapped at PMD or PTE
  * level, so instead of traversing all the page table levels, we can get a
- * poपूर्णांकer to the PMD entry in user or kernel page table or translate a भव
- * address to the poपूर्णांकer in the PTE in the kernel page tables with simple
+ * pointer to the PMD entry in user or kernel page table or translate a virtual
+ * address to the pointer in the PTE in the kernel page tables with simple
  * helpers.
  */
-अटल अंतरभूत pmd_t *pmd_off(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ va)
-अणु
-	वापस pmd_offset(pud_offset(p4d_offset(pgd_offset(mm, va), va), va), va);
-पूर्ण
+static inline pmd_t *pmd_off(struct mm_struct *mm, unsigned long va)
+{
+	return pmd_offset(pud_offset(p4d_offset(pgd_offset(mm, va), va), va), va);
+}
 
-अटल अंतरभूत pmd_t *pmd_off_k(अचिन्हित दीर्घ va)
-अणु
-	वापस pmd_offset(pud_offset(p4d_offset(pgd_offset_k(va), va), va), va);
-पूर्ण
+static inline pmd_t *pmd_off_k(unsigned long va)
+{
+	return pmd_offset(pud_offset(p4d_offset(pgd_offset_k(va), va), va), va);
+}
 
-अटल अंतरभूत pte_t *virt_to_kpte(अचिन्हित दीर्घ vaddr)
-अणु
+static inline pte_t *virt_to_kpte(unsigned long vaddr)
+{
 	pmd_t *pmd = pmd_off_k(vaddr);
 
-	वापस pmd_none(*pmd) ? शून्य : pte_offset_kernel(pmd, vaddr);
-पूर्ण
+	return pmd_none(*pmd) ? NULL : pte_offset_kernel(pmd, vaddr);
+}
 
-#अगर_अघोषित __HAVE_ARCH_PTEP_SET_ACCESS_FLAGS
-बाह्य पूर्णांक ptep_set_access_flags(काष्ठा vm_area_काष्ठा *vma,
-				 अचिन्हित दीर्घ address, pte_t *ptep,
-				 pte_t entry, पूर्णांक dirty);
-#पूर्ण_अगर
+#ifndef __HAVE_ARCH_PTEP_SET_ACCESS_FLAGS
+extern int ptep_set_access_flags(struct vm_area_struct *vma,
+				 unsigned long address, pte_t *ptep,
+				 pte_t entry, int dirty);
+#endif
 
-#अगर_अघोषित __HAVE_ARCH_PMDP_SET_ACCESS_FLAGS
-#अगर_घोषित CONFIG_TRANSPARENT_HUGEPAGE
-बाह्य पूर्णांक pmdp_set_access_flags(काष्ठा vm_area_काष्ठा *vma,
-				 अचिन्हित दीर्घ address, pmd_t *pmdp,
-				 pmd_t entry, पूर्णांक dirty);
-बाह्य पूर्णांक pudp_set_access_flags(काष्ठा vm_area_काष्ठा *vma,
-				 अचिन्हित दीर्घ address, pud_t *pudp,
-				 pud_t entry, पूर्णांक dirty);
-#अन्यथा
-अटल अंतरभूत पूर्णांक pmdp_set_access_flags(काष्ठा vm_area_काष्ठा *vma,
-					अचिन्हित दीर्घ address, pmd_t *pmdp,
-					pmd_t entry, पूर्णांक dirty)
-अणु
+#ifndef __HAVE_ARCH_PMDP_SET_ACCESS_FLAGS
+#ifdef CONFIG_TRANSPARENT_HUGEPAGE
+extern int pmdp_set_access_flags(struct vm_area_struct *vma,
+				 unsigned long address, pmd_t *pmdp,
+				 pmd_t entry, int dirty);
+extern int pudp_set_access_flags(struct vm_area_struct *vma,
+				 unsigned long address, pud_t *pudp,
+				 pud_t entry, int dirty);
+#else
+static inline int pmdp_set_access_flags(struct vm_area_struct *vma,
+					unsigned long address, pmd_t *pmdp,
+					pmd_t entry, int dirty)
+{
 	BUILD_BUG();
-	वापस 0;
-पूर्ण
-अटल अंतरभूत पूर्णांक pudp_set_access_flags(काष्ठा vm_area_काष्ठा *vma,
-					अचिन्हित दीर्घ address, pud_t *pudp,
-					pud_t entry, पूर्णांक dirty)
-अणु
+	return 0;
+}
+static inline int pudp_set_access_flags(struct vm_area_struct *vma,
+					unsigned long address, pud_t *pudp,
+					pud_t entry, int dirty)
+{
 	BUILD_BUG();
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_TRANSPARENT_HUGEPAGE */
-#पूर्ण_अगर
+	return 0;
+}
+#endif /* CONFIG_TRANSPARENT_HUGEPAGE */
+#endif
 
-#अगर_अघोषित __HAVE_ARCH_PTEP_TEST_AND_CLEAR_YOUNG
-अटल अंतरभूत पूर्णांक ptep_test_and_clear_young(काष्ठा vm_area_काष्ठा *vma,
-					    अचिन्हित दीर्घ address,
+#ifndef __HAVE_ARCH_PTEP_TEST_AND_CLEAR_YOUNG
+static inline int ptep_test_and_clear_young(struct vm_area_struct *vma,
+					    unsigned long address,
 					    pte_t *ptep)
-अणु
+{
 	pte_t pte = *ptep;
-	पूर्णांक r = 1;
-	अगर (!pte_young(pte))
+	int r = 1;
+	if (!pte_young(pte))
 		r = 0;
-	अन्यथा
+	else
 		set_pte_at(vma->vm_mm, address, ptep, pte_mkold(pte));
-	वापस r;
-पूर्ण
-#पूर्ण_अगर
+	return r;
+}
+#endif
 
-#अगर_अघोषित __HAVE_ARCH_PMDP_TEST_AND_CLEAR_YOUNG
-#अगर_घोषित CONFIG_TRANSPARENT_HUGEPAGE
-अटल अंतरभूत पूर्णांक pmdp_test_and_clear_young(काष्ठा vm_area_काष्ठा *vma,
-					    अचिन्हित दीर्घ address,
+#ifndef __HAVE_ARCH_PMDP_TEST_AND_CLEAR_YOUNG
+#ifdef CONFIG_TRANSPARENT_HUGEPAGE
+static inline int pmdp_test_and_clear_young(struct vm_area_struct *vma,
+					    unsigned long address,
 					    pmd_t *pmdp)
-अणु
+{
 	pmd_t pmd = *pmdp;
-	पूर्णांक r = 1;
-	अगर (!pmd_young(pmd))
+	int r = 1;
+	if (!pmd_young(pmd))
 		r = 0;
-	अन्यथा
+	else
 		set_pmd_at(vma->vm_mm, address, pmdp, pmd_mkold(pmd));
-	वापस r;
-पूर्ण
-#अन्यथा
-अटल अंतरभूत पूर्णांक pmdp_test_and_clear_young(काष्ठा vm_area_काष्ठा *vma,
-					    अचिन्हित दीर्घ address,
+	return r;
+}
+#else
+static inline int pmdp_test_and_clear_young(struct vm_area_struct *vma,
+					    unsigned long address,
 					    pmd_t *pmdp)
-अणु
+{
 	BUILD_BUG();
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_TRANSPARENT_HUGEPAGE */
-#पूर्ण_अगर
+	return 0;
+}
+#endif /* CONFIG_TRANSPARENT_HUGEPAGE */
+#endif
 
-#अगर_अघोषित __HAVE_ARCH_PTEP_CLEAR_YOUNG_FLUSH
-पूर्णांक ptep_clear_flush_young(काष्ठा vm_area_काष्ठा *vma,
-			   अचिन्हित दीर्घ address, pte_t *ptep);
-#पूर्ण_अगर
+#ifndef __HAVE_ARCH_PTEP_CLEAR_YOUNG_FLUSH
+int ptep_clear_flush_young(struct vm_area_struct *vma,
+			   unsigned long address, pte_t *ptep);
+#endif
 
-#अगर_अघोषित __HAVE_ARCH_PMDP_CLEAR_YOUNG_FLUSH
-#अगर_घोषित CONFIG_TRANSPARENT_HUGEPAGE
-बाह्य पूर्णांक pmdp_clear_flush_young(काष्ठा vm_area_काष्ठा *vma,
-				  अचिन्हित दीर्घ address, pmd_t *pmdp);
-#अन्यथा
+#ifndef __HAVE_ARCH_PMDP_CLEAR_YOUNG_FLUSH
+#ifdef CONFIG_TRANSPARENT_HUGEPAGE
+extern int pmdp_clear_flush_young(struct vm_area_struct *vma,
+				  unsigned long address, pmd_t *pmdp);
+#else
 /*
  * Despite relevant to THP only, this API is called from generic rmap code
- * under PageTransHuge(), hence needs a dummy implementation क्रम !THP
+ * under PageTransHuge(), hence needs a dummy implementation for !THP
  */
-अटल अंतरभूत पूर्णांक pmdp_clear_flush_young(काष्ठा vm_area_काष्ठा *vma,
-					 अचिन्हित दीर्घ address, pmd_t *pmdp)
-अणु
+static inline int pmdp_clear_flush_young(struct vm_area_struct *vma,
+					 unsigned long address, pmd_t *pmdp)
+{
 	BUILD_BUG();
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_TRANSPARENT_HUGEPAGE */
-#पूर्ण_अगर
+	return 0;
+}
+#endif /* CONFIG_TRANSPARENT_HUGEPAGE */
+#endif
 
-#अगर_अघोषित __HAVE_ARCH_PTEP_GET_AND_CLEAR
-अटल अंतरभूत pte_t ptep_get_and_clear(काष्ठा mm_काष्ठा *mm,
-				       अचिन्हित दीर्घ address,
+#ifndef __HAVE_ARCH_PTEP_GET_AND_CLEAR
+static inline pte_t ptep_get_and_clear(struct mm_struct *mm,
+				       unsigned long address,
 				       pte_t *ptep)
-अणु
+{
 	pte_t pte = *ptep;
 	pte_clear(mm, address, ptep);
-	वापस pte;
-पूर्ण
-#पूर्ण_अगर
+	return pte;
+}
+#endif
 
-#अगर_अघोषित __HAVE_ARCH_PTEP_GET
-अटल अंतरभूत pte_t ptep_get(pte_t *ptep)
-अणु
-	वापस READ_ONCE(*ptep);
-पूर्ण
-#पूर्ण_अगर
+#ifndef __HAVE_ARCH_PTEP_GET
+static inline pte_t ptep_get(pte_t *ptep)
+{
+	return READ_ONCE(*ptep);
+}
+#endif
 
-#अगर_घोषित CONFIG_GUP_GET_PTE_LOW_HIGH
+#ifdef CONFIG_GUP_GET_PTE_LOW_HIGH
 /*
  * WARNING: only to be used in the get_user_pages_fast() implementation.
  *
- * With get_user_pages_fast(), we walk करोwn the pagetables without taking any
- * locks.  For this we would like to load the poपूर्णांकers atomically, but someबार
+ * With get_user_pages_fast(), we walk down the pagetables without taking any
+ * locks.  For this we would like to load the pointers atomically, but sometimes
  * that is not possible (e.g. without expensive cmpxchg8b on x86_32 PAE).  What
- * we करो have is the guarantee that a PTE will only either go from not present
- * to present, or present to not present or both -- it will not चयन to a
- * completely dअगरferent present page without a TLB flush in between; something
- * that we are blocking by holding पूर्णांकerrupts off.
+ * we do have is the guarantee that a PTE will only either go from not present
+ * to present, or present to not present or both -- it will not switch to a
+ * completely different present page without a TLB flush in between; something
+ * that we are blocking by holding interrupts off.
  *
  * Setting ptes from not present to present goes:
  *
@@ -284,1009 +283,1009 @@
  *   ptep->pte_high = 0;
  *
  * We must ensure here that the load of pte_low sees 'l' IFF pte_high sees 'h'.
- * We load pte_high *after* loading pte_low, which ensures we करोn't see an older
+ * We load pte_high *after* loading pte_low, which ensures we don't see an older
  * value of pte_high.  *Then* we recheck pte_low, which ensures that we haven't
  * picked up a changed pte high. We might have gotten rubbish values from
  * pte_low and pte_high, but we are guaranteed that pte_low will not have the
  * present bit set *unless* it is 'l'. Because get_user_pages_fast() only
  * operates on present ptes we're safe.
  */
-अटल अंतरभूत pte_t ptep_get_lockless(pte_t *ptep)
-अणु
+static inline pte_t ptep_get_lockless(pte_t *ptep)
+{
 	pte_t pte;
 
-	करो अणु
+	do {
 		pte.pte_low = ptep->pte_low;
 		smp_rmb();
 		pte.pte_high = ptep->pte_high;
 		smp_rmb();
-	पूर्ण जबतक (unlikely(pte.pte_low != ptep->pte_low));
+	} while (unlikely(pte.pte_low != ptep->pte_low));
 
-	वापस pte;
-पूर्ण
-#अन्यथा /* CONFIG_GUP_GET_PTE_LOW_HIGH */
+	return pte;
+}
+#else /* CONFIG_GUP_GET_PTE_LOW_HIGH */
 /*
- * We require that the PTE can be पढ़ो atomically.
+ * We require that the PTE can be read atomically.
  */
-अटल अंतरभूत pte_t ptep_get_lockless(pte_t *ptep)
-अणु
-	वापस ptep_get(ptep);
-पूर्ण
-#पूर्ण_अगर /* CONFIG_GUP_GET_PTE_LOW_HIGH */
+static inline pte_t ptep_get_lockless(pte_t *ptep)
+{
+	return ptep_get(ptep);
+}
+#endif /* CONFIG_GUP_GET_PTE_LOW_HIGH */
 
-#अगर_घोषित CONFIG_TRANSPARENT_HUGEPAGE
-#अगर_अघोषित __HAVE_ARCH_PMDP_HUGE_GET_AND_CLEAR
-अटल अंतरभूत pmd_t pmdp_huge_get_and_clear(काष्ठा mm_काष्ठा *mm,
-					    अचिन्हित दीर्घ address,
+#ifdef CONFIG_TRANSPARENT_HUGEPAGE
+#ifndef __HAVE_ARCH_PMDP_HUGE_GET_AND_CLEAR
+static inline pmd_t pmdp_huge_get_and_clear(struct mm_struct *mm,
+					    unsigned long address,
 					    pmd_t *pmdp)
-अणु
+{
 	pmd_t pmd = *pmdp;
 	pmd_clear(pmdp);
-	वापस pmd;
-पूर्ण
-#पूर्ण_अगर /* __HAVE_ARCH_PMDP_HUGE_GET_AND_CLEAR */
-#अगर_अघोषित __HAVE_ARCH_PUDP_HUGE_GET_AND_CLEAR
-अटल अंतरभूत pud_t pudp_huge_get_and_clear(काष्ठा mm_काष्ठा *mm,
-					    अचिन्हित दीर्घ address,
+	return pmd;
+}
+#endif /* __HAVE_ARCH_PMDP_HUGE_GET_AND_CLEAR */
+#ifndef __HAVE_ARCH_PUDP_HUGE_GET_AND_CLEAR
+static inline pud_t pudp_huge_get_and_clear(struct mm_struct *mm,
+					    unsigned long address,
 					    pud_t *pudp)
-अणु
+{
 	pud_t pud = *pudp;
 
 	pud_clear(pudp);
-	वापस pud;
-पूर्ण
-#पूर्ण_अगर /* __HAVE_ARCH_PUDP_HUGE_GET_AND_CLEAR */
-#पूर्ण_अगर /* CONFIG_TRANSPARENT_HUGEPAGE */
+	return pud;
+}
+#endif /* __HAVE_ARCH_PUDP_HUGE_GET_AND_CLEAR */
+#endif /* CONFIG_TRANSPARENT_HUGEPAGE */
 
-#अगर_घोषित CONFIG_TRANSPARENT_HUGEPAGE
-#अगर_अघोषित __HAVE_ARCH_PMDP_HUGE_GET_AND_CLEAR_FULL
-अटल अंतरभूत pmd_t pmdp_huge_get_and_clear_full(काष्ठा vm_area_काष्ठा *vma,
-					    अचिन्हित दीर्घ address, pmd_t *pmdp,
-					    पूर्णांक full)
-अणु
-	वापस pmdp_huge_get_and_clear(vma->vm_mm, address, pmdp);
-पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_TRANSPARENT_HUGEPAGE
+#ifndef __HAVE_ARCH_PMDP_HUGE_GET_AND_CLEAR_FULL
+static inline pmd_t pmdp_huge_get_and_clear_full(struct vm_area_struct *vma,
+					    unsigned long address, pmd_t *pmdp,
+					    int full)
+{
+	return pmdp_huge_get_and_clear(vma->vm_mm, address, pmdp);
+}
+#endif
 
-#अगर_अघोषित __HAVE_ARCH_PUDP_HUGE_GET_AND_CLEAR_FULL
-अटल अंतरभूत pud_t pudp_huge_get_and_clear_full(काष्ठा mm_काष्ठा *mm,
-					    अचिन्हित दीर्घ address, pud_t *pudp,
-					    पूर्णांक full)
-अणु
-	वापस pudp_huge_get_and_clear(mm, address, pudp);
-पूर्ण
-#पूर्ण_अगर
-#पूर्ण_अगर /* CONFIG_TRANSPARENT_HUGEPAGE */
+#ifndef __HAVE_ARCH_PUDP_HUGE_GET_AND_CLEAR_FULL
+static inline pud_t pudp_huge_get_and_clear_full(struct mm_struct *mm,
+					    unsigned long address, pud_t *pudp,
+					    int full)
+{
+	return pudp_huge_get_and_clear(mm, address, pudp);
+}
+#endif
+#endif /* CONFIG_TRANSPARENT_HUGEPAGE */
 
-#अगर_अघोषित __HAVE_ARCH_PTEP_GET_AND_CLEAR_FULL
-अटल अंतरभूत pte_t ptep_get_and_clear_full(काष्ठा mm_काष्ठा *mm,
-					    अचिन्हित दीर्घ address, pte_t *ptep,
-					    पूर्णांक full)
-अणु
+#ifndef __HAVE_ARCH_PTEP_GET_AND_CLEAR_FULL
+static inline pte_t ptep_get_and_clear_full(struct mm_struct *mm,
+					    unsigned long address, pte_t *ptep,
+					    int full)
+{
 	pte_t pte;
 	pte = ptep_get_and_clear(mm, address, ptep);
-	वापस pte;
-पूर्ण
-#पूर्ण_अगर
+	return pte;
+}
+#endif
 
 
 /*
- * If two thपढ़ोs concurrently fault at the same page, the thपढ़ो that
- * won the race updates the PTE and its local TLB/Cache. The other thपढ़ो
- * gives up, simply करोes nothing, and जारीs; on architectures where
- * software can update TLB,  local TLB can be updated here to aव्योम next page
- * fault. This function updates TLB only, करो nothing with cache or others.
- * It is the dअगरference with function update_mmu_cache.
+ * If two threads concurrently fault at the same page, the thread that
+ * won the race updates the PTE and its local TLB/Cache. The other thread
+ * gives up, simply does nothing, and continues; on architectures where
+ * software can update TLB,  local TLB can be updated here to avoid next page
+ * fault. This function updates TLB only, do nothing with cache or others.
+ * It is the difference with function update_mmu_cache.
  */
-#अगर_अघोषित __HAVE_ARCH_UPDATE_MMU_TLB
-अटल अंतरभूत व्योम update_mmu_tlb(काष्ठा vm_area_काष्ठा *vma,
-				अचिन्हित दीर्घ address, pte_t *ptep)
-अणु
-पूर्ण
-#घोषणा __HAVE_ARCH_UPDATE_MMU_TLB
-#पूर्ण_अगर
+#ifndef __HAVE_ARCH_UPDATE_MMU_TLB
+static inline void update_mmu_tlb(struct vm_area_struct *vma,
+				unsigned long address, pte_t *ptep)
+{
+}
+#define __HAVE_ARCH_UPDATE_MMU_TLB
+#endif
 
 /*
- * Some architectures may be able to aव्योम expensive synchronization
- * primitives when modअगरications are made to PTE's which are alपढ़ोy
- * not present, or in the process of an address space deकाष्ठाion.
+ * Some architectures may be able to avoid expensive synchronization
+ * primitives when modifications are made to PTE's which are already
+ * not present, or in the process of an address space destruction.
  */
-#अगर_अघोषित __HAVE_ARCH_PTE_CLEAR_NOT_PRESENT_FULL
-अटल अंतरभूत व्योम pte_clear_not_present_full(काष्ठा mm_काष्ठा *mm,
-					      अचिन्हित दीर्घ address,
+#ifndef __HAVE_ARCH_PTE_CLEAR_NOT_PRESENT_FULL
+static inline void pte_clear_not_present_full(struct mm_struct *mm,
+					      unsigned long address,
 					      pte_t *ptep,
-					      पूर्णांक full)
-अणु
+					      int full)
+{
 	pte_clear(mm, address, ptep);
-पूर्ण
-#पूर्ण_अगर
+}
+#endif
 
-#अगर_अघोषित __HAVE_ARCH_PTEP_CLEAR_FLUSH
-बाह्य pte_t ptep_clear_flush(काष्ठा vm_area_काष्ठा *vma,
-			      अचिन्हित दीर्घ address,
+#ifndef __HAVE_ARCH_PTEP_CLEAR_FLUSH
+extern pte_t ptep_clear_flush(struct vm_area_struct *vma,
+			      unsigned long address,
 			      pte_t *ptep);
-#पूर्ण_अगर
+#endif
 
-#अगर_अघोषित __HAVE_ARCH_PMDP_HUGE_CLEAR_FLUSH
-बाह्य pmd_t pmdp_huge_clear_flush(काष्ठा vm_area_काष्ठा *vma,
-			      अचिन्हित दीर्घ address,
+#ifndef __HAVE_ARCH_PMDP_HUGE_CLEAR_FLUSH
+extern pmd_t pmdp_huge_clear_flush(struct vm_area_struct *vma,
+			      unsigned long address,
 			      pmd_t *pmdp);
-बाह्य pud_t pudp_huge_clear_flush(काष्ठा vm_area_काष्ठा *vma,
-			      अचिन्हित दीर्घ address,
+extern pud_t pudp_huge_clear_flush(struct vm_area_struct *vma,
+			      unsigned long address,
 			      pud_t *pudp);
-#पूर्ण_अगर
+#endif
 
-#अगर_अघोषित __HAVE_ARCH_PTEP_SET_WRPROTECT
-काष्ठा mm_काष्ठा;
-अटल अंतरभूत व्योम ptep_set_wrprotect(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ address, pte_t *ptep)
-अणु
+#ifndef __HAVE_ARCH_PTEP_SET_WRPROTECT
+struct mm_struct;
+static inline void ptep_set_wrprotect(struct mm_struct *mm, unsigned long address, pte_t *ptep)
+{
 	pte_t old_pte = *ptep;
 	set_pte_at(mm, address, ptep, pte_wrprotect(old_pte));
-पूर्ण
-#पूर्ण_अगर
+}
+#endif
 
 /*
- * On some architectures hardware करोes not set page access bit when accessing
+ * On some architectures hardware does not set page access bit when accessing
  * memory page, it is responsibility of software setting this bit. It brings
  * out extra page fault penalty to track page access bit. For optimization page
  * access bit can be set during all page fault flow on these arches.
- * To be dअगरferentiate with macro pte_mkyoung, this macro is used on platक्रमms
- * where software मुख्यtains page access bit.
+ * To be differentiate with macro pte_mkyoung, this macro is used on platforms
+ * where software maintains page access bit.
  */
-#अगर_अघोषित pte_sw_mkyoung
-अटल अंतरभूत pte_t pte_sw_mkyoung(pte_t pte)
-अणु
-	वापस pte;
-पूर्ण
-#घोषणा pte_sw_mkyoung	pte_sw_mkyoung
-#पूर्ण_अगर
+#ifndef pte_sw_mkyoung
+static inline pte_t pte_sw_mkyoung(pte_t pte)
+{
+	return pte;
+}
+#define pte_sw_mkyoung	pte_sw_mkyoung
+#endif
 
-#अगर_अघोषित pte_savedग_लिखो
-#घोषणा pte_savedग_लिखो pte_ग_लिखो
-#पूर्ण_अगर
+#ifndef pte_savedwrite
+#define pte_savedwrite pte_write
+#endif
 
-#अगर_अघोषित pte_mk_savedग_लिखो
-#घोषणा pte_mk_savedग_लिखो pte_mkग_लिखो
-#पूर्ण_अगर
+#ifndef pte_mk_savedwrite
+#define pte_mk_savedwrite pte_mkwrite
+#endif
 
-#अगर_अघोषित pte_clear_savedग_लिखो
-#घोषणा pte_clear_savedग_लिखो pte_wrprotect
-#पूर्ण_अगर
+#ifndef pte_clear_savedwrite
+#define pte_clear_savedwrite pte_wrprotect
+#endif
 
-#अगर_अघोषित pmd_savedग_लिखो
-#घोषणा pmd_savedग_लिखो pmd_ग_लिखो
-#पूर्ण_अगर
+#ifndef pmd_savedwrite
+#define pmd_savedwrite pmd_write
+#endif
 
-#अगर_अघोषित pmd_mk_savedग_लिखो
-#घोषणा pmd_mk_savedग_लिखो pmd_mkग_लिखो
-#पूर्ण_अगर
+#ifndef pmd_mk_savedwrite
+#define pmd_mk_savedwrite pmd_mkwrite
+#endif
 
-#अगर_अघोषित pmd_clear_savedग_लिखो
-#घोषणा pmd_clear_savedग_लिखो pmd_wrprotect
-#पूर्ण_अगर
+#ifndef pmd_clear_savedwrite
+#define pmd_clear_savedwrite pmd_wrprotect
+#endif
 
-#अगर_अघोषित __HAVE_ARCH_PMDP_SET_WRPROTECT
-#अगर_घोषित CONFIG_TRANSPARENT_HUGEPAGE
-अटल अंतरभूत व्योम pmdp_set_wrprotect(काष्ठा mm_काष्ठा *mm,
-				      अचिन्हित दीर्घ address, pmd_t *pmdp)
-अणु
+#ifndef __HAVE_ARCH_PMDP_SET_WRPROTECT
+#ifdef CONFIG_TRANSPARENT_HUGEPAGE
+static inline void pmdp_set_wrprotect(struct mm_struct *mm,
+				      unsigned long address, pmd_t *pmdp)
+{
 	pmd_t old_pmd = *pmdp;
 	set_pmd_at(mm, address, pmdp, pmd_wrprotect(old_pmd));
-पूर्ण
-#अन्यथा
-अटल अंतरभूत व्योम pmdp_set_wrprotect(काष्ठा mm_काष्ठा *mm,
-				      अचिन्हित दीर्घ address, pmd_t *pmdp)
-अणु
+}
+#else
+static inline void pmdp_set_wrprotect(struct mm_struct *mm,
+				      unsigned long address, pmd_t *pmdp)
+{
 	BUILD_BUG();
-पूर्ण
-#पूर्ण_अगर /* CONFIG_TRANSPARENT_HUGEPAGE */
-#पूर्ण_अगर
-#अगर_अघोषित __HAVE_ARCH_PUDP_SET_WRPROTECT
-#अगर_घोषित CONFIG_HAVE_ARCH_TRANSPARENT_HUGEPAGE_PUD
-अटल अंतरभूत व्योम pudp_set_wrprotect(काष्ठा mm_काष्ठा *mm,
-				      अचिन्हित दीर्घ address, pud_t *pudp)
-अणु
+}
+#endif /* CONFIG_TRANSPARENT_HUGEPAGE */
+#endif
+#ifndef __HAVE_ARCH_PUDP_SET_WRPROTECT
+#ifdef CONFIG_HAVE_ARCH_TRANSPARENT_HUGEPAGE_PUD
+static inline void pudp_set_wrprotect(struct mm_struct *mm,
+				      unsigned long address, pud_t *pudp)
+{
 	pud_t old_pud = *pudp;
 
 	set_pud_at(mm, address, pudp, pud_wrprotect(old_pud));
-पूर्ण
-#अन्यथा
-अटल अंतरभूत व्योम pudp_set_wrprotect(काष्ठा mm_काष्ठा *mm,
-				      अचिन्हित दीर्घ address, pud_t *pudp)
-अणु
+}
+#else
+static inline void pudp_set_wrprotect(struct mm_struct *mm,
+				      unsigned long address, pud_t *pudp)
+{
 	BUILD_BUG();
-पूर्ण
-#पूर्ण_अगर /* CONFIG_HAVE_ARCH_TRANSPARENT_HUGEPAGE_PUD */
-#पूर्ण_अगर
+}
+#endif /* CONFIG_HAVE_ARCH_TRANSPARENT_HUGEPAGE_PUD */
+#endif
 
-#अगर_अघोषित pmdp_collapse_flush
-#अगर_घोषित CONFIG_TRANSPARENT_HUGEPAGE
-बाह्य pmd_t pmdp_collapse_flush(काष्ठा vm_area_काष्ठा *vma,
-				 अचिन्हित दीर्घ address, pmd_t *pmdp);
-#अन्यथा
-अटल अंतरभूत pmd_t pmdp_collapse_flush(काष्ठा vm_area_काष्ठा *vma,
-					अचिन्हित दीर्घ address,
+#ifndef pmdp_collapse_flush
+#ifdef CONFIG_TRANSPARENT_HUGEPAGE
+extern pmd_t pmdp_collapse_flush(struct vm_area_struct *vma,
+				 unsigned long address, pmd_t *pmdp);
+#else
+static inline pmd_t pmdp_collapse_flush(struct vm_area_struct *vma,
+					unsigned long address,
 					pmd_t *pmdp)
-अणु
+{
 	BUILD_BUG();
-	वापस *pmdp;
-पूर्ण
-#घोषणा pmdp_collapse_flush pmdp_collapse_flush
-#पूर्ण_अगर /* CONFIG_TRANSPARENT_HUGEPAGE */
-#पूर्ण_अगर
+	return *pmdp;
+}
+#define pmdp_collapse_flush pmdp_collapse_flush
+#endif /* CONFIG_TRANSPARENT_HUGEPAGE */
+#endif
 
-#अगर_अघोषित __HAVE_ARCH_PGTABLE_DEPOSIT
-बाह्य व्योम pgtable_trans_huge_deposit(काष्ठा mm_काष्ठा *mm, pmd_t *pmdp,
+#ifndef __HAVE_ARCH_PGTABLE_DEPOSIT
+extern void pgtable_trans_huge_deposit(struct mm_struct *mm, pmd_t *pmdp,
 				       pgtable_t pgtable);
-#पूर्ण_अगर
+#endif
 
-#अगर_अघोषित __HAVE_ARCH_PGTABLE_WITHDRAW
-बाह्य pgtable_t pgtable_trans_huge_withdraw(काष्ठा mm_काष्ठा *mm, pmd_t *pmdp);
-#पूर्ण_अगर
+#ifndef __HAVE_ARCH_PGTABLE_WITHDRAW
+extern pgtable_t pgtable_trans_huge_withdraw(struct mm_struct *mm, pmd_t *pmdp);
+#endif
 
-#अगर_घोषित CONFIG_TRANSPARENT_HUGEPAGE
+#ifdef CONFIG_TRANSPARENT_HUGEPAGE
 /*
- * This is an implementation of pmdp_establish() that is only suitable क्रम an
- * architecture that करोesn't have hardware dirty/accessed bits. In this हाल we
+ * This is an implementation of pmdp_establish() that is only suitable for an
+ * architecture that doesn't have hardware dirty/accessed bits. In this case we
  * can't race with CPU which sets these bits and non-atomic approach is fine.
  */
-अटल अंतरभूत pmd_t generic_pmdp_establish(काष्ठा vm_area_काष्ठा *vma,
-		अचिन्हित दीर्घ address, pmd_t *pmdp, pmd_t pmd)
-अणु
+static inline pmd_t generic_pmdp_establish(struct vm_area_struct *vma,
+		unsigned long address, pmd_t *pmdp, pmd_t pmd)
+{
 	pmd_t old_pmd = *pmdp;
 	set_pmd_at(vma->vm_mm, address, pmdp, pmd);
-	वापस old_pmd;
-पूर्ण
-#पूर्ण_अगर
+	return old_pmd;
+}
+#endif
 
-#अगर_अघोषित __HAVE_ARCH_PMDP_INVALIDATE
-बाह्य pmd_t pmdp_invalidate(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ address,
+#ifndef __HAVE_ARCH_PMDP_INVALIDATE
+extern pmd_t pmdp_invalidate(struct vm_area_struct *vma, unsigned long address,
 			    pmd_t *pmdp);
-#पूर्ण_अगर
+#endif
 
-#अगर_अघोषित __HAVE_ARCH_PTE_SAME
-अटल अंतरभूत पूर्णांक pte_same(pte_t pte_a, pte_t pte_b)
-अणु
-	वापस pte_val(pte_a) == pte_val(pte_b);
-पूर्ण
-#पूर्ण_अगर
+#ifndef __HAVE_ARCH_PTE_SAME
+static inline int pte_same(pte_t pte_a, pte_t pte_b)
+{
+	return pte_val(pte_a) == pte_val(pte_b);
+}
+#endif
 
-#अगर_अघोषित __HAVE_ARCH_PTE_UNUSED
+#ifndef __HAVE_ARCH_PTE_UNUSED
 /*
- * Some architectures provide facilities to भवization guests
+ * Some architectures provide facilities to virtualization guests
  * so that they can flag allocated pages as unused. This allows the
- * host to transparently reclaim unused pages. This function वापसs
+ * host to transparently reclaim unused pages. This function returns
  * whether the pte's page is unused.
  */
-अटल अंतरभूत पूर्णांक pte_unused(pte_t pte)
-अणु
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+static inline int pte_unused(pte_t pte)
+{
+	return 0;
+}
+#endif
 
-#अगर_अघोषित pte_access_permitted
-#घोषणा pte_access_permitted(pte, ग_लिखो) \
-	(pte_present(pte) && (!(ग_लिखो) || pte_ग_लिखो(pte)))
-#पूर्ण_अगर
+#ifndef pte_access_permitted
+#define pte_access_permitted(pte, write) \
+	(pte_present(pte) && (!(write) || pte_write(pte)))
+#endif
 
-#अगर_अघोषित pmd_access_permitted
-#घोषणा pmd_access_permitted(pmd, ग_लिखो) \
-	(pmd_present(pmd) && (!(ग_लिखो) || pmd_ग_लिखो(pmd)))
-#पूर्ण_अगर
+#ifndef pmd_access_permitted
+#define pmd_access_permitted(pmd, write) \
+	(pmd_present(pmd) && (!(write) || pmd_write(pmd)))
+#endif
 
-#अगर_अघोषित pud_access_permitted
-#घोषणा pud_access_permitted(pud, ग_लिखो) \
-	(pud_present(pud) && (!(ग_लिखो) || pud_ग_लिखो(pud)))
-#पूर्ण_अगर
+#ifndef pud_access_permitted
+#define pud_access_permitted(pud, write) \
+	(pud_present(pud) && (!(write) || pud_write(pud)))
+#endif
 
-#अगर_अघोषित p4d_access_permitted
-#घोषणा p4d_access_permitted(p4d, ग_लिखो) \
-	(p4d_present(p4d) && (!(ग_लिखो) || p4d_ग_लिखो(p4d)))
-#पूर्ण_अगर
+#ifndef p4d_access_permitted
+#define p4d_access_permitted(p4d, write) \
+	(p4d_present(p4d) && (!(write) || p4d_write(p4d)))
+#endif
 
-#अगर_अघोषित pgd_access_permitted
-#घोषणा pgd_access_permitted(pgd, ग_लिखो) \
-	(pgd_present(pgd) && (!(ग_लिखो) || pgd_ग_लिखो(pgd)))
-#पूर्ण_अगर
+#ifndef pgd_access_permitted
+#define pgd_access_permitted(pgd, write) \
+	(pgd_present(pgd) && (!(write) || pgd_write(pgd)))
+#endif
 
-#अगर_अघोषित __HAVE_ARCH_PMD_SAME
-अटल अंतरभूत पूर्णांक pmd_same(pmd_t pmd_a, pmd_t pmd_b)
-अणु
-	वापस pmd_val(pmd_a) == pmd_val(pmd_b);
-पूर्ण
+#ifndef __HAVE_ARCH_PMD_SAME
+static inline int pmd_same(pmd_t pmd_a, pmd_t pmd_b)
+{
+	return pmd_val(pmd_a) == pmd_val(pmd_b);
+}
 
-अटल अंतरभूत पूर्णांक pud_same(pud_t pud_a, pud_t pud_b)
-अणु
-	वापस pud_val(pud_a) == pud_val(pud_b);
-पूर्ण
-#पूर्ण_अगर
+static inline int pud_same(pud_t pud_a, pud_t pud_b)
+{
+	return pud_val(pud_a) == pud_val(pud_b);
+}
+#endif
 
-#अगर_अघोषित __HAVE_ARCH_P4D_SAME
-अटल अंतरभूत पूर्णांक p4d_same(p4d_t p4d_a, p4d_t p4d_b)
-अणु
-	वापस p4d_val(p4d_a) == p4d_val(p4d_b);
-पूर्ण
-#पूर्ण_अगर
+#ifndef __HAVE_ARCH_P4D_SAME
+static inline int p4d_same(p4d_t p4d_a, p4d_t p4d_b)
+{
+	return p4d_val(p4d_a) == p4d_val(p4d_b);
+}
+#endif
 
-#अगर_अघोषित __HAVE_ARCH_PGD_SAME
-अटल अंतरभूत पूर्णांक pgd_same(pgd_t pgd_a, pgd_t pgd_b)
-अणु
-	वापस pgd_val(pgd_a) == pgd_val(pgd_b);
-पूर्ण
-#पूर्ण_अगर
+#ifndef __HAVE_ARCH_PGD_SAME
+static inline int pgd_same(pgd_t pgd_a, pgd_t pgd_b)
+{
+	return pgd_val(pgd_a) == pgd_val(pgd_b);
+}
+#endif
 
 /*
  * Use set_p*_safe(), and elide TLB flushing, when confident that *no*
  * TLB flush will be required as a result of the "set". For example, use
- * in scenarios where it is known ahead of समय that the routine is
+ * in scenarios where it is known ahead of time that the routine is
  * setting non-present entries, or re-setting an existing entry to the
  * same value. Otherwise, use the typical "set" helpers and flush the
  * TLB.
  */
-#घोषणा set_pte_safe(ptep, pte) \
-(अणु \
+#define set_pte_safe(ptep, pte) \
+({ \
 	WARN_ON_ONCE(pte_present(*ptep) && !pte_same(*ptep, pte)); \
 	set_pte(ptep, pte); \
-पूर्ण)
+})
 
-#घोषणा set_pmd_safe(pmdp, pmd) \
-(अणु \
+#define set_pmd_safe(pmdp, pmd) \
+({ \
 	WARN_ON_ONCE(pmd_present(*pmdp) && !pmd_same(*pmdp, pmd)); \
 	set_pmd(pmdp, pmd); \
-पूर्ण)
+})
 
-#घोषणा set_pud_safe(pudp, pud) \
-(अणु \
+#define set_pud_safe(pudp, pud) \
+({ \
 	WARN_ON_ONCE(pud_present(*pudp) && !pud_same(*pudp, pud)); \
 	set_pud(pudp, pud); \
-पूर्ण)
+})
 
-#घोषणा set_p4d_safe(p4dp, p4d) \
-(अणु \
+#define set_p4d_safe(p4dp, p4d) \
+({ \
 	WARN_ON_ONCE(p4d_present(*p4dp) && !p4d_same(*p4dp, p4d)); \
 	set_p4d(p4dp, p4d); \
-पूर्ण)
+})
 
-#घोषणा set_pgd_safe(pgdp, pgd) \
-(अणु \
+#define set_pgd_safe(pgdp, pgd) \
+({ \
 	WARN_ON_ONCE(pgd_present(*pgdp) && !pgd_same(*pgdp, pgd)); \
 	set_pgd(pgdp, pgd); \
-पूर्ण)
+})
 
-#अगर_अघोषित __HAVE_ARCH_DO_SWAP_PAGE
+#ifndef __HAVE_ARCH_DO_SWAP_PAGE
 /*
  * Some architectures support metadata associated with a page. When a
  * page is being swapped out, this metadata must be saved so it can be
  * restored when the page is swapped back in. SPARC M7 and newer
- * processors support an ADI (Application Data Integrity) tag क्रम the
- * page as metadata क्रम the page. arch_करो_swap_page() can restore this
+ * processors support an ADI (Application Data Integrity) tag for the
+ * page as metadata for the page. arch_do_swap_page() can restore this
  * metadata when a page is swapped back in.
  */
-अटल अंतरभूत व्योम arch_करो_swap_page(काष्ठा mm_काष्ठा *mm,
-				     काष्ठा vm_area_काष्ठा *vma,
-				     अचिन्हित दीर्घ addr,
+static inline void arch_do_swap_page(struct mm_struct *mm,
+				     struct vm_area_struct *vma,
+				     unsigned long addr,
 				     pte_t pte, pte_t oldpte)
-अणु
+{
 
-पूर्ण
-#पूर्ण_अगर
+}
+#endif
 
-#अगर_अघोषित __HAVE_ARCH_UNMAP_ONE
+#ifndef __HAVE_ARCH_UNMAP_ONE
 /*
  * Some architectures support metadata associated with a page. When a
  * page is being swapped out, this metadata must be saved so it can be
  * restored when the page is swapped back in. SPARC M7 and newer
- * processors support an ADI (Application Data Integrity) tag क्रम the
- * page as metadata क्रम the page. arch_unmap_one() can save this
+ * processors support an ADI (Application Data Integrity) tag for the
+ * page as metadata for the page. arch_unmap_one() can save this
  * metadata on a swap-out of a page.
  */
-अटल अंतरभूत पूर्णांक arch_unmap_one(काष्ठा mm_काष्ठा *mm,
-				  काष्ठा vm_area_काष्ठा *vma,
-				  अचिन्हित दीर्घ addr,
+static inline int arch_unmap_one(struct mm_struct *mm,
+				  struct vm_area_struct *vma,
+				  unsigned long addr,
 				  pte_t orig_pte)
-अणु
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+{
+	return 0;
+}
+#endif
 
 /*
  * Allow architectures to preserve additional metadata associated with
  * swapped-out pages. The corresponding __HAVE_ARCH_SWAP_* macros and function
- * prototypes must be defined in the arch-specअगरic यंत्र/pgtable.h file.
+ * prototypes must be defined in the arch-specific asm/pgtable.h file.
  */
-#अगर_अघोषित __HAVE_ARCH_PREPARE_TO_SWAP
-अटल अंतरभूत पूर्णांक arch_prepare_to_swap(काष्ठा page *page)
-अणु
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+#ifndef __HAVE_ARCH_PREPARE_TO_SWAP
+static inline int arch_prepare_to_swap(struct page *page)
+{
+	return 0;
+}
+#endif
 
-#अगर_अघोषित __HAVE_ARCH_SWAP_INVALIDATE
-अटल अंतरभूत व्योम arch_swap_invalidate_page(पूर्णांक type, pgoff_t offset)
-अणु
-पूर्ण
+#ifndef __HAVE_ARCH_SWAP_INVALIDATE
+static inline void arch_swap_invalidate_page(int type, pgoff_t offset)
+{
+}
 
-अटल अंतरभूत व्योम arch_swap_invalidate_area(पूर्णांक type)
-अणु
-पूर्ण
-#पूर्ण_अगर
+static inline void arch_swap_invalidate_area(int type)
+{
+}
+#endif
 
-#अगर_अघोषित __HAVE_ARCH_SWAP_RESTORE
-अटल अंतरभूत व्योम arch_swap_restore(swp_entry_t entry, काष्ठा page *page)
-अणु
-पूर्ण
-#पूर्ण_अगर
+#ifndef __HAVE_ARCH_SWAP_RESTORE
+static inline void arch_swap_restore(swp_entry_t entry, struct page *page)
+{
+}
+#endif
 
-#अगर_अघोषित __HAVE_ARCH_PGD_OFFSET_GATE
-#घोषणा pgd_offset_gate(mm, addr)	pgd_offset(mm, addr)
-#पूर्ण_अगर
+#ifndef __HAVE_ARCH_PGD_OFFSET_GATE
+#define pgd_offset_gate(mm, addr)	pgd_offset(mm, addr)
+#endif
 
-#अगर_अघोषित __HAVE_ARCH_MOVE_PTE
-#घोषणा move_pte(pte, prot, old_addr, new_addr)	(pte)
-#पूर्ण_अगर
+#ifndef __HAVE_ARCH_MOVE_PTE
+#define move_pte(pte, prot, old_addr, new_addr)	(pte)
+#endif
 
-#अगर_अघोषित pte_accessible
-# define pte_accessible(mm, pte)	((व्योम)(pte), 1)
-#पूर्ण_अगर
+#ifndef pte_accessible
+# define pte_accessible(mm, pte)	((void)(pte), 1)
+#endif
 
-#अगर_अघोषित flush_tlb_fix_spurious_fault
-#घोषणा flush_tlb_fix_spurious_fault(vma, address) flush_tlb_page(vma, address)
-#पूर्ण_अगर
+#ifndef flush_tlb_fix_spurious_fault
+#define flush_tlb_fix_spurious_fault(vma, address) flush_tlb_page(vma, address)
+#endif
 
 /*
  * When walking page tables, get the address of the next boundary,
- * or the end address of the range अगर that comes earlier.  Although no
+ * or the end address of the range if that comes earlier.  Although no
  * vma end wraps to 0, rounded up __boundary may wrap to 0 throughout.
  */
 
-#घोषणा pgd_addr_end(addr, end)						\
-(अणु	अचिन्हित दीर्घ __boundary = ((addr) + PGसूची_SIZE) & PGसूची_MASK;	\
+#define pgd_addr_end(addr, end)						\
+({	unsigned long __boundary = ((addr) + PGDIR_SIZE) & PGDIR_MASK;	\
 	(__boundary - 1 < (end) - 1)? __boundary: (end);		\
-पूर्ण)
+})
 
-#अगर_अघोषित p4d_addr_end
-#घोषणा p4d_addr_end(addr, end)						\
-(अणु	अचिन्हित दीर्घ __boundary = ((addr) + P4D_SIZE) & P4D_MASK;	\
+#ifndef p4d_addr_end
+#define p4d_addr_end(addr, end)						\
+({	unsigned long __boundary = ((addr) + P4D_SIZE) & P4D_MASK;	\
 	(__boundary - 1 < (end) - 1)? __boundary: (end);		\
-पूर्ण)
-#पूर्ण_अगर
+})
+#endif
 
-#अगर_अघोषित pud_addr_end
-#घोषणा pud_addr_end(addr, end)						\
-(अणु	अचिन्हित दीर्घ __boundary = ((addr) + PUD_SIZE) & PUD_MASK;	\
+#ifndef pud_addr_end
+#define pud_addr_end(addr, end)						\
+({	unsigned long __boundary = ((addr) + PUD_SIZE) & PUD_MASK;	\
 	(__boundary - 1 < (end) - 1)? __boundary: (end);		\
-पूर्ण)
-#पूर्ण_अगर
+})
+#endif
 
-#अगर_अघोषित pmd_addr_end
-#घोषणा pmd_addr_end(addr, end)						\
-(अणु	अचिन्हित दीर्घ __boundary = ((addr) + PMD_SIZE) & PMD_MASK;	\
+#ifndef pmd_addr_end
+#define pmd_addr_end(addr, end)						\
+({	unsigned long __boundary = ((addr) + PMD_SIZE) & PMD_MASK;	\
 	(__boundary - 1 < (end) - 1)? __boundary: (end);		\
-पूर्ण)
-#पूर्ण_अगर
+})
+#endif
 
 /*
  * When walking page tables, we usually want to skip any p?d_none entries;
- * and any p?d_bad entries - reporting the error beक्रमe resetting to none.
- * Do the tests अंतरभूत, but report and clear the bad entry in mm/memory.c.
+ * and any p?d_bad entries - reporting the error before resetting to none.
+ * Do the tests inline, but report and clear the bad entry in mm/memory.c.
  */
-व्योम pgd_clear_bad(pgd_t *);
+void pgd_clear_bad(pgd_t *);
 
-#अगर_अघोषित __PAGETABLE_P4D_FOLDED
-व्योम p4d_clear_bad(p4d_t *);
-#अन्यथा
-#घोषणा p4d_clear_bad(p4d)        करो अणु पूर्ण जबतक (0)
-#पूर्ण_अगर
+#ifndef __PAGETABLE_P4D_FOLDED
+void p4d_clear_bad(p4d_t *);
+#else
+#define p4d_clear_bad(p4d)        do { } while (0)
+#endif
 
-#अगर_अघोषित __PAGETABLE_PUD_FOLDED
-व्योम pud_clear_bad(pud_t *);
-#अन्यथा
-#घोषणा pud_clear_bad(p4d)        करो अणु पूर्ण जबतक (0)
-#पूर्ण_अगर
+#ifndef __PAGETABLE_PUD_FOLDED
+void pud_clear_bad(pud_t *);
+#else
+#define pud_clear_bad(p4d)        do { } while (0)
+#endif
 
-व्योम pmd_clear_bad(pmd_t *);
+void pmd_clear_bad(pmd_t *);
 
-अटल अंतरभूत पूर्णांक pgd_none_or_clear_bad(pgd_t *pgd)
-अणु
-	अगर (pgd_none(*pgd))
-		वापस 1;
-	अगर (unlikely(pgd_bad(*pgd))) अणु
+static inline int pgd_none_or_clear_bad(pgd_t *pgd)
+{
+	if (pgd_none(*pgd))
+		return 1;
+	if (unlikely(pgd_bad(*pgd))) {
 		pgd_clear_bad(pgd);
-		वापस 1;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return 1;
+	}
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक p4d_none_or_clear_bad(p4d_t *p4d)
-अणु
-	अगर (p4d_none(*p4d))
-		वापस 1;
-	अगर (unlikely(p4d_bad(*p4d))) अणु
+static inline int p4d_none_or_clear_bad(p4d_t *p4d)
+{
+	if (p4d_none(*p4d))
+		return 1;
+	if (unlikely(p4d_bad(*p4d))) {
 		p4d_clear_bad(p4d);
-		वापस 1;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return 1;
+	}
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक pud_none_or_clear_bad(pud_t *pud)
-अणु
-	अगर (pud_none(*pud))
-		वापस 1;
-	अगर (unlikely(pud_bad(*pud))) अणु
+static inline int pud_none_or_clear_bad(pud_t *pud)
+{
+	if (pud_none(*pud))
+		return 1;
+	if (unlikely(pud_bad(*pud))) {
 		pud_clear_bad(pud);
-		वापस 1;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return 1;
+	}
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक pmd_none_or_clear_bad(pmd_t *pmd)
-अणु
-	अगर (pmd_none(*pmd))
-		वापस 1;
-	अगर (unlikely(pmd_bad(*pmd))) अणु
+static inline int pmd_none_or_clear_bad(pmd_t *pmd)
+{
+	if (pmd_none(*pmd))
+		return 1;
+	if (unlikely(pmd_bad(*pmd))) {
 		pmd_clear_bad(pmd);
-		वापस 1;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return 1;
+	}
+	return 0;
+}
 
-अटल अंतरभूत pte_t __ptep_modअगरy_prot_start(काष्ठा vm_area_काष्ठा *vma,
-					     अचिन्हित दीर्घ addr,
+static inline pte_t __ptep_modify_prot_start(struct vm_area_struct *vma,
+					     unsigned long addr,
 					     pte_t *ptep)
-अणु
+{
 	/*
 	 * Get the current pte state, but zero it out to make it
 	 * non-present, preventing the hardware from asynchronously
 	 * updating it.
 	 */
-	वापस ptep_get_and_clear(vma->vm_mm, addr, ptep);
-पूर्ण
+	return ptep_get_and_clear(vma->vm_mm, addr, ptep);
+}
 
-अटल अंतरभूत व्योम __ptep_modअगरy_prot_commit(काष्ठा vm_area_काष्ठा *vma,
-					     अचिन्हित दीर्घ addr,
+static inline void __ptep_modify_prot_commit(struct vm_area_struct *vma,
+					     unsigned long addr,
 					     pte_t *ptep, pte_t pte)
-अणु
+{
 	/*
 	 * The pte is non-present, so there's no hardware state to
 	 * preserve.
 	 */
 	set_pte_at(vma->vm_mm, addr, ptep, pte);
-पूर्ण
+}
 
-#अगर_अघोषित __HAVE_ARCH_PTEP_MODIFY_PROT_TRANSACTION
+#ifndef __HAVE_ARCH_PTEP_MODIFY_PROT_TRANSACTION
 /*
- * Start a pte protection पढ़ो-modअगरy-ग_लिखो transaction, which
- * protects against asynchronous hardware modअगरications to the pte.
- * The पूर्णांकention is not to prevent the hardware from making pte
+ * Start a pte protection read-modify-write transaction, which
+ * protects against asynchronous hardware modifications to the pte.
+ * The intention is not to prevent the hardware from making pte
  * updates, but to prevent any updates it may make from being lost.
  *
- * This करोes not protect against other software modअगरications of the
+ * This does not protect against other software modifications of the
  * pte; the appropriate pte lock must be held over the transaction.
  *
- * Note that this पूर्णांकerface is पूर्णांकended to be batchable, meaning that
- * ptep_modअगरy_prot_commit may not actually update the pte, but merely
- * queue the update to be करोne at some later समय.  The update must be
- * actually committed beक्रमe the pte lock is released, however.
+ * Note that this interface is intended to be batchable, meaning that
+ * ptep_modify_prot_commit may not actually update the pte, but merely
+ * queue the update to be done at some later time.  The update must be
+ * actually committed before the pte lock is released, however.
  */
-अटल अंतरभूत pte_t ptep_modअगरy_prot_start(काष्ठा vm_area_काष्ठा *vma,
-					   अचिन्हित दीर्घ addr,
+static inline pte_t ptep_modify_prot_start(struct vm_area_struct *vma,
+					   unsigned long addr,
 					   pte_t *ptep)
-अणु
-	वापस __ptep_modअगरy_prot_start(vma, addr, ptep);
-पूर्ण
+{
+	return __ptep_modify_prot_start(vma, addr, ptep);
+}
 
 /*
  * Commit an update to a pte, leaving any hardware-controlled bits in
- * the PTE unmodअगरied.
+ * the PTE unmodified.
  */
-अटल अंतरभूत व्योम ptep_modअगरy_prot_commit(काष्ठा vm_area_काष्ठा *vma,
-					   अचिन्हित दीर्घ addr,
+static inline void ptep_modify_prot_commit(struct vm_area_struct *vma,
+					   unsigned long addr,
 					   pte_t *ptep, pte_t old_pte, pte_t pte)
-अणु
-	__ptep_modअगरy_prot_commit(vma, addr, ptep, pte);
-पूर्ण
-#पूर्ण_अगर /* __HAVE_ARCH_PTEP_MODIFY_PROT_TRANSACTION */
-#पूर्ण_अगर /* CONFIG_MMU */
+{
+	__ptep_modify_prot_commit(vma, addr, ptep, pte);
+}
+#endif /* __HAVE_ARCH_PTEP_MODIFY_PROT_TRANSACTION */
+#endif /* CONFIG_MMU */
 
 /*
- * No-op macros that just वापस the current protection value. Defined here
- * because these macros can be used even अगर CONFIG_MMU is not defined.
+ * No-op macros that just return the current protection value. Defined here
+ * because these macros can be used even if CONFIG_MMU is not defined.
  */
 
-#अगर_अघोषित pgprot_nx
-#घोषणा pgprot_nx(prot)	(prot)
-#पूर्ण_अगर
+#ifndef pgprot_nx
+#define pgprot_nx(prot)	(prot)
+#endif
 
-#अगर_अघोषित pgprot_noncached
-#घोषणा pgprot_noncached(prot)	(prot)
-#पूर्ण_अगर
+#ifndef pgprot_noncached
+#define pgprot_noncached(prot)	(prot)
+#endif
 
-#अगर_अघोषित pgprot_ग_लिखोcombine
-#घोषणा pgprot_ग_लिखोcombine pgprot_noncached
-#पूर्ण_अगर
+#ifndef pgprot_writecombine
+#define pgprot_writecombine pgprot_noncached
+#endif
 
-#अगर_अघोषित pgprot_ग_लिखोthrough
-#घोषणा pgprot_ग_लिखोthrough pgprot_noncached
-#पूर्ण_अगर
+#ifndef pgprot_writethrough
+#define pgprot_writethrough pgprot_noncached
+#endif
 
-#अगर_अघोषित pgprot_device
-#घोषणा pgprot_device pgprot_noncached
-#पूर्ण_अगर
+#ifndef pgprot_device
+#define pgprot_device pgprot_noncached
+#endif
 
-#अगर_अघोषित pgprot_mhp
-#घोषणा pgprot_mhp(prot)	(prot)
-#पूर्ण_अगर
+#ifndef pgprot_mhp
+#define pgprot_mhp(prot)	(prot)
+#endif
 
-#अगर_घोषित CONFIG_MMU
-#अगर_अघोषित pgprot_modअगरy
-#घोषणा pgprot_modअगरy pgprot_modअगरy
-अटल अंतरभूत pgprot_t pgprot_modअगरy(pgprot_t oldprot, pgprot_t newprot)
-अणु
-	अगर (pgprot_val(oldprot) == pgprot_val(pgprot_noncached(oldprot)))
+#ifdef CONFIG_MMU
+#ifndef pgprot_modify
+#define pgprot_modify pgprot_modify
+static inline pgprot_t pgprot_modify(pgprot_t oldprot, pgprot_t newprot)
+{
+	if (pgprot_val(oldprot) == pgprot_val(pgprot_noncached(oldprot)))
 		newprot = pgprot_noncached(newprot);
-	अगर (pgprot_val(oldprot) == pgprot_val(pgprot_ग_लिखोcombine(oldprot)))
-		newprot = pgprot_ग_लिखोcombine(newprot);
-	अगर (pgprot_val(oldprot) == pgprot_val(pgprot_device(oldprot)))
+	if (pgprot_val(oldprot) == pgprot_val(pgprot_writecombine(oldprot)))
+		newprot = pgprot_writecombine(newprot);
+	if (pgprot_val(oldprot) == pgprot_val(pgprot_device(oldprot)))
 		newprot = pgprot_device(newprot);
-	वापस newprot;
-पूर्ण
-#पूर्ण_अगर
-#पूर्ण_अगर /* CONFIG_MMU */
+	return newprot;
+}
+#endif
+#endif /* CONFIG_MMU */
 
-#अगर_अघोषित pgprot_encrypted
-#घोषणा pgprot_encrypted(prot)	(prot)
-#पूर्ण_अगर
+#ifndef pgprot_encrypted
+#define pgprot_encrypted(prot)	(prot)
+#endif
 
-#अगर_अघोषित pgprot_decrypted
-#घोषणा pgprot_decrypted(prot)	(prot)
-#पूर्ण_अगर
+#ifndef pgprot_decrypted
+#define pgprot_decrypted(prot)	(prot)
+#endif
 
 /*
  * A facility to provide lazy MMU batching.  This allows PTE updates and
  * page invalidations to be delayed until a call to leave lazy MMU mode
- * is issued.  Some architectures may benefit from करोing this, and it is
- * beneficial क्रम both shaकरोw and direct mode hypervisors, which may batch
- * the PTE updates which happen during this winकरोw.  Note that using this
- * पूर्णांकerface requires that पढ़ो hazards be हटाओd from the code.  A पढ़ो
- * hazard could result in the direct mode hypervisor हाल, since the actual
- * ग_लिखो to the page tables may not yet have taken place, so पढ़ोs though
- * a raw PTE poपूर्णांकer after it has been modअगरied are not guaranteed to be
+ * is issued.  Some architectures may benefit from doing this, and it is
+ * beneficial for both shadow and direct mode hypervisors, which may batch
+ * the PTE updates which happen during this window.  Note that using this
+ * interface requires that read hazards be removed from the code.  A read
+ * hazard could result in the direct mode hypervisor case, since the actual
+ * write to the page tables may not yet have taken place, so reads though
+ * a raw PTE pointer after it has been modified are not guaranteed to be
  * up to date.  This mode can only be entered and left under the protection of
- * the page table locks क्रम all page tables which may be modअगरied.  In the UP
- * हाल, this is required so that preemption is disabled, and in the SMP हाल,
- * it must synchronize the delayed page table ग_लिखोs properly on other CPUs.
+ * the page table locks for all page tables which may be modified.  In the UP
+ * case, this is required so that preemption is disabled, and in the SMP case,
+ * it must synchronize the delayed page table writes properly on other CPUs.
  */
-#अगर_अघोषित __HAVE_ARCH_ENTER_LAZY_MMU_MODE
-#घोषणा arch_enter_lazy_mmu_mode()	करो अणुपूर्ण जबतक (0)
-#घोषणा arch_leave_lazy_mmu_mode()	करो अणुपूर्ण जबतक (0)
-#घोषणा arch_flush_lazy_mmu_mode()	करो अणुपूर्ण जबतक (0)
-#पूर्ण_अगर
+#ifndef __HAVE_ARCH_ENTER_LAZY_MMU_MODE
+#define arch_enter_lazy_mmu_mode()	do {} while (0)
+#define arch_leave_lazy_mmu_mode()	do {} while (0)
+#define arch_flush_lazy_mmu_mode()	do {} while (0)
+#endif
 
 /*
  * A facility to provide batching of the reload of page tables and
- * other process state with the actual context चयन code क्रम
- * paraभवized guests.  By convention, only one of the batched
- * update (lazy) modes (CPU, MMU) should be active at any given समय,
- * entry should never be nested, and entry and निकासs should always be
- * paired.  This is क्रम sanity of मुख्यtaining and reasoning about the
- * kernel code.  In this हाल, the निकास (end of the context चयन) is
- * in architecture-specअगरic code, and so करोesn't need a generic
+ * other process state with the actual context switch code for
+ * paravirtualized guests.  By convention, only one of the batched
+ * update (lazy) modes (CPU, MMU) should be active at any given time,
+ * entry should never be nested, and entry and exits should always be
+ * paired.  This is for sanity of maintaining and reasoning about the
+ * kernel code.  In this case, the exit (end of the context switch) is
+ * in architecture-specific code, and so doesn't need a generic
  * definition.
  */
-#अगर_अघोषित __HAVE_ARCH_START_CONTEXT_SWITCH
-#घोषणा arch_start_context_चयन(prev)	करो अणुपूर्ण जबतक (0)
-#पूर्ण_अगर
+#ifndef __HAVE_ARCH_START_CONTEXT_SWITCH
+#define arch_start_context_switch(prev)	do {} while (0)
+#endif
 
-#अगर_घोषित CONFIG_HAVE_ARCH_SOFT_सूचीTY
-#अगर_अघोषित CONFIG_ARCH_ENABLE_THP_MIGRATION
-अटल अंतरभूत pmd_t pmd_swp_mksoft_dirty(pmd_t pmd)
-अणु
-	वापस pmd;
-पूर्ण
+#ifdef CONFIG_HAVE_ARCH_SOFT_DIRTY
+#ifndef CONFIG_ARCH_ENABLE_THP_MIGRATION
+static inline pmd_t pmd_swp_mksoft_dirty(pmd_t pmd)
+{
+	return pmd;
+}
 
-अटल अंतरभूत पूर्णांक pmd_swp_soft_dirty(pmd_t pmd)
-अणु
-	वापस 0;
-पूर्ण
+static inline int pmd_swp_soft_dirty(pmd_t pmd)
+{
+	return 0;
+}
 
-अटल अंतरभूत pmd_t pmd_swp_clear_soft_dirty(pmd_t pmd)
-अणु
-	वापस pmd;
-पूर्ण
-#पूर्ण_अगर
-#अन्यथा /* !CONFIG_HAVE_ARCH_SOFT_सूचीTY */
-अटल अंतरभूत पूर्णांक pte_soft_dirty(pte_t pte)
-अणु
-	वापस 0;
-पूर्ण
+static inline pmd_t pmd_swp_clear_soft_dirty(pmd_t pmd)
+{
+	return pmd;
+}
+#endif
+#else /* !CONFIG_HAVE_ARCH_SOFT_DIRTY */
+static inline int pte_soft_dirty(pte_t pte)
+{
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक pmd_soft_dirty(pmd_t pmd)
-अणु
-	वापस 0;
-पूर्ण
+static inline int pmd_soft_dirty(pmd_t pmd)
+{
+	return 0;
+}
 
-अटल अंतरभूत pte_t pte_mksoft_dirty(pte_t pte)
-अणु
-	वापस pte;
-पूर्ण
+static inline pte_t pte_mksoft_dirty(pte_t pte)
+{
+	return pte;
+}
 
-अटल अंतरभूत pmd_t pmd_mksoft_dirty(pmd_t pmd)
-अणु
-	वापस pmd;
-पूर्ण
+static inline pmd_t pmd_mksoft_dirty(pmd_t pmd)
+{
+	return pmd;
+}
 
-अटल अंतरभूत pte_t pte_clear_soft_dirty(pte_t pte)
-अणु
-	वापस pte;
-पूर्ण
+static inline pte_t pte_clear_soft_dirty(pte_t pte)
+{
+	return pte;
+}
 
-अटल अंतरभूत pmd_t pmd_clear_soft_dirty(pmd_t pmd)
-अणु
-	वापस pmd;
-पूर्ण
+static inline pmd_t pmd_clear_soft_dirty(pmd_t pmd)
+{
+	return pmd;
+}
 
-अटल अंतरभूत pte_t pte_swp_mksoft_dirty(pte_t pte)
-अणु
-	वापस pte;
-पूर्ण
+static inline pte_t pte_swp_mksoft_dirty(pte_t pte)
+{
+	return pte;
+}
 
-अटल अंतरभूत पूर्णांक pte_swp_soft_dirty(pte_t pte)
-अणु
-	वापस 0;
-पूर्ण
+static inline int pte_swp_soft_dirty(pte_t pte)
+{
+	return 0;
+}
 
-अटल अंतरभूत pte_t pte_swp_clear_soft_dirty(pte_t pte)
-अणु
-	वापस pte;
-पूर्ण
+static inline pte_t pte_swp_clear_soft_dirty(pte_t pte)
+{
+	return pte;
+}
 
-अटल अंतरभूत pmd_t pmd_swp_mksoft_dirty(pmd_t pmd)
-अणु
-	वापस pmd;
-पूर्ण
+static inline pmd_t pmd_swp_mksoft_dirty(pmd_t pmd)
+{
+	return pmd;
+}
 
-अटल अंतरभूत पूर्णांक pmd_swp_soft_dirty(pmd_t pmd)
-अणु
-	वापस 0;
-पूर्ण
+static inline int pmd_swp_soft_dirty(pmd_t pmd)
+{
+	return 0;
+}
 
-अटल अंतरभूत pmd_t pmd_swp_clear_soft_dirty(pmd_t pmd)
-अणु
-	वापस pmd;
-पूर्ण
-#पूर्ण_अगर
+static inline pmd_t pmd_swp_clear_soft_dirty(pmd_t pmd)
+{
+	return pmd;
+}
+#endif
 
-#अगर_अघोषित __HAVE_PFNMAP_TRACKING
+#ifndef __HAVE_PFNMAP_TRACKING
 /*
  * Interfaces that can be used by architecture code to keep track of
- * memory type of pfn mappings specअगरied by the remap_pfn_range,
+ * memory type of pfn mappings specified by the remap_pfn_range,
  * vmf_insert_pfn.
  */
 
 /*
  * track_pfn_remap is called when a _new_ pfn mapping is being established
- * by remap_pfn_range() क्रम physical range indicated by pfn and size.
+ * by remap_pfn_range() for physical range indicated by pfn and size.
  */
-अटल अंतरभूत पूर्णांक track_pfn_remap(काष्ठा vm_area_काष्ठा *vma, pgprot_t *prot,
-				  अचिन्हित दीर्घ pfn, अचिन्हित दीर्घ addr,
-				  अचिन्हित दीर्घ size)
-अणु
-	वापस 0;
-पूर्ण
+static inline int track_pfn_remap(struct vm_area_struct *vma, pgprot_t *prot,
+				  unsigned long pfn, unsigned long addr,
+				  unsigned long size)
+{
+	return 0;
+}
 
 /*
  * track_pfn_insert is called when a _new_ single pfn is established
  * by vmf_insert_pfn().
  */
-अटल अंतरभूत व्योम track_pfn_insert(काष्ठा vm_area_काष्ठा *vma, pgprot_t *prot,
+static inline void track_pfn_insert(struct vm_area_struct *vma, pgprot_t *prot,
 				    pfn_t pfn)
-अणु
-पूर्ण
+{
+}
 
 /*
- * track_pfn_copy is called when vma that is covering the pfnmap माला_लो
+ * track_pfn_copy is called when vma that is covering the pfnmap gets
  * copied through copy_page_range().
  */
-अटल अंतरभूत पूर्णांक track_pfn_copy(काष्ठा vm_area_काष्ठा *vma)
-अणु
-	वापस 0;
-पूर्ण
+static inline int track_pfn_copy(struct vm_area_struct *vma)
+{
+	return 0;
+}
 
 /*
- * untrack_pfn is called जबतक unmapping a pfnmap क्रम a region.
- * untrack can be called क्रम a specअगरic region indicated by pfn and size or
- * can be क्रम the entire vma (in which हाल pfn, size are zero).
+ * untrack_pfn is called while unmapping a pfnmap for a region.
+ * untrack can be called for a specific region indicated by pfn and size or
+ * can be for the entire vma (in which case pfn, size are zero).
  */
-अटल अंतरभूत व्योम untrack_pfn(काष्ठा vm_area_काष्ठा *vma,
-			       अचिन्हित दीर्घ pfn, अचिन्हित दीर्घ size)
-अणु
-पूर्ण
+static inline void untrack_pfn(struct vm_area_struct *vma,
+			       unsigned long pfn, unsigned long size)
+{
+}
 
 /*
- * untrack_pfn_moved is called जबतक mremapping a pfnmap क्रम a new region.
+ * untrack_pfn_moved is called while mremapping a pfnmap for a new region.
  */
-अटल अंतरभूत व्योम untrack_pfn_moved(काष्ठा vm_area_काष्ठा *vma)
-अणु
-पूर्ण
-#अन्यथा
-बाह्य पूर्णांक track_pfn_remap(काष्ठा vm_area_काष्ठा *vma, pgprot_t *prot,
-			   अचिन्हित दीर्घ pfn, अचिन्हित दीर्घ addr,
-			   अचिन्हित दीर्घ size);
-बाह्य व्योम track_pfn_insert(काष्ठा vm_area_काष्ठा *vma, pgprot_t *prot,
+static inline void untrack_pfn_moved(struct vm_area_struct *vma)
+{
+}
+#else
+extern int track_pfn_remap(struct vm_area_struct *vma, pgprot_t *prot,
+			   unsigned long pfn, unsigned long addr,
+			   unsigned long size);
+extern void track_pfn_insert(struct vm_area_struct *vma, pgprot_t *prot,
 			     pfn_t pfn);
-बाह्य पूर्णांक track_pfn_copy(काष्ठा vm_area_काष्ठा *vma);
-बाह्य व्योम untrack_pfn(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ pfn,
-			अचिन्हित दीर्घ size);
-बाह्य व्योम untrack_pfn_moved(काष्ठा vm_area_काष्ठा *vma);
-#पूर्ण_अगर
+extern int track_pfn_copy(struct vm_area_struct *vma);
+extern void untrack_pfn(struct vm_area_struct *vma, unsigned long pfn,
+			unsigned long size);
+extern void untrack_pfn_moved(struct vm_area_struct *vma);
+#endif
 
-#अगर_घोषित CONFIG_MMU
-#अगर_घोषित __HAVE_COLOR_ZERO_PAGE
-अटल अंतरभूत पूर्णांक is_zero_pfn(अचिन्हित दीर्घ pfn)
-अणु
-	बाह्य अचिन्हित दीर्घ zero_pfn;
-	अचिन्हित दीर्घ offset_from_zero_pfn = pfn - zero_pfn;
-	वापस offset_from_zero_pfn <= (zero_page_mask >> PAGE_SHIFT);
-पूर्ण
+#ifdef CONFIG_MMU
+#ifdef __HAVE_COLOR_ZERO_PAGE
+static inline int is_zero_pfn(unsigned long pfn)
+{
+	extern unsigned long zero_pfn;
+	unsigned long offset_from_zero_pfn = pfn - zero_pfn;
+	return offset_from_zero_pfn <= (zero_page_mask >> PAGE_SHIFT);
+}
 
-#घोषणा my_zero_pfn(addr)	page_to_pfn(ZERO_PAGE(addr))
+#define my_zero_pfn(addr)	page_to_pfn(ZERO_PAGE(addr))
 
-#अन्यथा
-अटल अंतरभूत पूर्णांक is_zero_pfn(अचिन्हित दीर्घ pfn)
-अणु
-	बाह्य अचिन्हित दीर्घ zero_pfn;
-	वापस pfn == zero_pfn;
-पूर्ण
+#else
+static inline int is_zero_pfn(unsigned long pfn)
+{
+	extern unsigned long zero_pfn;
+	return pfn == zero_pfn;
+}
 
-अटल अंतरभूत अचिन्हित दीर्घ my_zero_pfn(अचिन्हित दीर्घ addr)
-अणु
-	बाह्य अचिन्हित दीर्घ zero_pfn;
-	वापस zero_pfn;
-पूर्ण
-#पूर्ण_अगर
-#अन्यथा
-अटल अंतरभूत पूर्णांक is_zero_pfn(अचिन्हित दीर्घ pfn)
-अणु
-	वापस 0;
-पूर्ण
+static inline unsigned long my_zero_pfn(unsigned long addr)
+{
+	extern unsigned long zero_pfn;
+	return zero_pfn;
+}
+#endif
+#else
+static inline int is_zero_pfn(unsigned long pfn)
+{
+	return 0;
+}
 
-अटल अंतरभूत अचिन्हित दीर्घ my_zero_pfn(अचिन्हित दीर्घ addr)
-अणु
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_MMU */
+static inline unsigned long my_zero_pfn(unsigned long addr)
+{
+	return 0;
+}
+#endif /* CONFIG_MMU */
 
-#अगर_घोषित CONFIG_MMU
+#ifdef CONFIG_MMU
 
-#अगर_अघोषित CONFIG_TRANSPARENT_HUGEPAGE
-अटल अंतरभूत पूर्णांक pmd_trans_huge(pmd_t pmd)
-अणु
-	वापस 0;
-पूर्ण
-#अगर_अघोषित pmd_ग_लिखो
-अटल अंतरभूत पूर्णांक pmd_ग_लिखो(pmd_t pmd)
-अणु
+#ifndef CONFIG_TRANSPARENT_HUGEPAGE
+static inline int pmd_trans_huge(pmd_t pmd)
+{
+	return 0;
+}
+#ifndef pmd_write
+static inline int pmd_write(pmd_t pmd)
+{
 	BUG();
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर /* pmd_ग_लिखो */
-#पूर्ण_अगर /* CONFIG_TRANSPARENT_HUGEPAGE */
+	return 0;
+}
+#endif /* pmd_write */
+#endif /* CONFIG_TRANSPARENT_HUGEPAGE */
 
-#अगर_अघोषित pud_ग_लिखो
-अटल अंतरभूत पूर्णांक pud_ग_लिखो(pud_t pud)
-अणु
+#ifndef pud_write
+static inline int pud_write(pud_t pud)
+{
 	BUG();
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर /* pud_ग_लिखो */
+	return 0;
+}
+#endif /* pud_write */
 
-#अगर !defined(CONFIG_ARCH_HAS_PTE_DEVMAP) || !defined(CONFIG_TRANSPARENT_HUGEPAGE)
-अटल अंतरभूत पूर्णांक pmd_devmap(pmd_t pmd)
-अणु
-	वापस 0;
-पूर्ण
-अटल अंतरभूत पूर्णांक pud_devmap(pud_t pud)
-अणु
-	वापस 0;
-पूर्ण
-अटल अंतरभूत पूर्णांक pgd_devmap(pgd_t pgd)
-अणु
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+#if !defined(CONFIG_ARCH_HAS_PTE_DEVMAP) || !defined(CONFIG_TRANSPARENT_HUGEPAGE)
+static inline int pmd_devmap(pmd_t pmd)
+{
+	return 0;
+}
+static inline int pud_devmap(pud_t pud)
+{
+	return 0;
+}
+static inline int pgd_devmap(pgd_t pgd)
+{
+	return 0;
+}
+#endif
 
-#अगर !defined(CONFIG_TRANSPARENT_HUGEPAGE) || \
+#if !defined(CONFIG_TRANSPARENT_HUGEPAGE) || \
 	(defined(CONFIG_TRANSPARENT_HUGEPAGE) && \
 	 !defined(CONFIG_HAVE_ARCH_TRANSPARENT_HUGEPAGE_PUD))
-अटल अंतरभूत पूर्णांक pud_trans_huge(pud_t pud)
-अणु
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+static inline int pud_trans_huge(pud_t pud)
+{
+	return 0;
+}
+#endif
 
-/* See pmd_none_or_trans_huge_or_clear_bad क्रम discussion. */
-अटल अंतरभूत पूर्णांक pud_none_or_trans_huge_or_dev_or_clear_bad(pud_t *pud)
-अणु
+/* See pmd_none_or_trans_huge_or_clear_bad for discussion. */
+static inline int pud_none_or_trans_huge_or_dev_or_clear_bad(pud_t *pud)
+{
 	pud_t pudval = READ_ONCE(*pud);
 
-	अगर (pud_none(pudval) || pud_trans_huge(pudval) || pud_devmap(pudval))
-		वापस 1;
-	अगर (unlikely(pud_bad(pudval))) अणु
+	if (pud_none(pudval) || pud_trans_huge(pudval) || pud_devmap(pudval))
+		return 1;
+	if (unlikely(pud_bad(pudval))) {
 		pud_clear_bad(pud);
-		वापस 1;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return 1;
+	}
+	return 0;
+}
 
-/* See pmd_trans_unstable क्रम discussion. */
-अटल अंतरभूत पूर्णांक pud_trans_unstable(pud_t *pud)
-अणु
-#अगर defined(CONFIG_TRANSPARENT_HUGEPAGE) &&			\
+/* See pmd_trans_unstable for discussion. */
+static inline int pud_trans_unstable(pud_t *pud)
+{
+#if defined(CONFIG_TRANSPARENT_HUGEPAGE) &&			\
 	defined(CONFIG_HAVE_ARCH_TRANSPARENT_HUGEPAGE_PUD)
-	वापस pud_none_or_trans_huge_or_dev_or_clear_bad(pud);
-#अन्यथा
-	वापस 0;
-#पूर्ण_अगर
-पूर्ण
+	return pud_none_or_trans_huge_or_dev_or_clear_bad(pud);
+#else
+	return 0;
+#endif
+}
 
-#अगर_अघोषित pmd_पढ़ो_atomic
-अटल अंतरभूत pmd_t pmd_पढ़ो_atomic(pmd_t *pmdp)
-अणु
+#ifndef pmd_read_atomic
+static inline pmd_t pmd_read_atomic(pmd_t *pmdp)
+{
 	/*
-	 * Depend on compiler क्रम an atomic pmd पढ़ो. NOTE: this is
-	 * only going to work, अगर the pmdval_t isn't larger than
-	 * an अचिन्हित दीर्घ.
+	 * Depend on compiler for an atomic pmd read. NOTE: this is
+	 * only going to work, if the pmdval_t isn't larger than
+	 * an unsigned long.
 	 */
-	वापस *pmdp;
-पूर्ण
-#पूर्ण_अगर
+	return *pmdp;
+}
+#endif
 
-#अगर_अघोषित arch_needs_pgtable_deposit
-#घोषणा arch_needs_pgtable_deposit() (false)
-#पूर्ण_अगर
+#ifndef arch_needs_pgtable_deposit
+#define arch_needs_pgtable_deposit() (false)
+#endif
 /*
  * This function is meant to be used by sites walking pagetables with
- * the mmap_lock held in पढ़ो mode to protect against MADV_DONTNEED and
+ * the mmap_lock held in read mode to protect against MADV_DONTNEED and
  * transhuge page faults. MADV_DONTNEED can convert a transhuge pmd
- * पूर्णांकo a null pmd and the transhuge page fault can convert a null pmd
- * पूर्णांकo an hugepmd or पूर्णांकo a regular pmd (अगर the hugepage allocation
- * fails). While holding the mmap_lock in पढ़ो mode the pmd becomes
- * stable and stops changing under us only अगर it's not null and not a
+ * into a null pmd and the transhuge page fault can convert a null pmd
+ * into an hugepmd or into a regular pmd (if the hugepage allocation
+ * fails). While holding the mmap_lock in read mode the pmd becomes
+ * stable and stops changing under us only if it's not null and not a
  * transhuge pmd. When those races occurs and this function makes a
- * dअगरference vs the standard pmd_none_or_clear_bad, the result is
- * undefined so behaving like अगर the pmd was none is safe (because it
- * can वापस none anyway). The compiler level barrier() is critically
+ * difference vs the standard pmd_none_or_clear_bad, the result is
+ * undefined so behaving like if the pmd was none is safe (because it
+ * can return none anyway). The compiler level barrier() is critically
  * important to compute the two checks atomically on the same pmdval.
  *
- * For 32bit kernels with a 64bit large pmd_t this स्वतःmatically takes
- * care of पढ़ोing the pmd atomically to aव्योम SMP race conditions
- * against pmd_populate() when the mmap_lock is hold क्रम पढ़ोing by the
- * caller (a special atomic पढ़ो not करोne by "gcc" as in the generic
+ * For 32bit kernels with a 64bit large pmd_t this automatically takes
+ * care of reading the pmd atomically to avoid SMP race conditions
+ * against pmd_populate() when the mmap_lock is hold for reading by the
+ * caller (a special atomic read not done by "gcc" as in the generic
  * version above, is also needed when THP is disabled because the page
  * fault can populate the pmd from under us).
  */
-अटल अंतरभूत पूर्णांक pmd_none_or_trans_huge_or_clear_bad(pmd_t *pmd)
-अणु
-	pmd_t pmdval = pmd_पढ़ो_atomic(pmd);
+static inline int pmd_none_or_trans_huge_or_clear_bad(pmd_t *pmd)
+{
+	pmd_t pmdval = pmd_read_atomic(pmd);
 	/*
-	 * The barrier will stabilize the pmdval in a रेजिस्टर or on
+	 * The barrier will stabilize the pmdval in a register or on
 	 * the stack so that it will stop changing under the code.
 	 *
 	 * When CONFIG_TRANSPARENT_HUGEPAGE=y on x86 32bit PAE,
-	 * pmd_पढ़ो_atomic is allowed to वापस a not atomic pmdval
-	 * (क्रम example poपूर्णांकing to an hugepage that has never been
+	 * pmd_read_atomic is allowed to return a not atomic pmdval
+	 * (for example pointing to an hugepage that has never been
 	 * mapped in the pmd). The below checks will only care about
 	 * the low part of the pmd with 32bit PAE x86 anyway, with the
-	 * exception of pmd_none(). So the important thing is that अगर
+	 * exception of pmd_none(). So the important thing is that if
 	 * the low part of the pmd is found null, the high part will
 	 * be also null or the pmd_none() check below would be
 	 * confused.
 	 */
-#अगर_घोषित CONFIG_TRANSPARENT_HUGEPAGE
+#ifdef CONFIG_TRANSPARENT_HUGEPAGE
 	barrier();
-#पूर्ण_अगर
+#endif
 	/*
-	 * !pmd_present() checks क्रम pmd migration entries
+	 * !pmd_present() checks for pmd migration entries
 	 *
 	 * The complete check uses is_pmd_migration_entry() in linux/swapops.h
 	 * But using that requires moving current function and pmd_trans_unstable()
@@ -1296,301 +1295,301 @@
 	 * because !pmd_present() pages can only be under migration not swapped
 	 * out.
 	 *
-	 * pmd_none() is preserved क्रम future condition checks on pmd migration
+	 * pmd_none() is preserved for future condition checks on pmd migration
 	 * entries and not confusing with this function name, although it is
 	 * redundant with !pmd_present().
 	 */
-	अगर (pmd_none(pmdval) || pmd_trans_huge(pmdval) ||
+	if (pmd_none(pmdval) || pmd_trans_huge(pmdval) ||
 		(IS_ENABLED(CONFIG_ARCH_ENABLE_THP_MIGRATION) && !pmd_present(pmdval)))
-		वापस 1;
-	अगर (unlikely(pmd_bad(pmdval))) अणु
+		return 1;
+	if (unlikely(pmd_bad(pmdval))) {
 		pmd_clear_bad(pmd);
-		वापस 1;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return 1;
+	}
+	return 0;
+}
 
 /*
- * This is a noop अगर Transparent Hugepage Support is not built पूर्णांकo
+ * This is a noop if Transparent Hugepage Support is not built into
  * the kernel. Otherwise it is equivalent to
  * pmd_none_or_trans_huge_or_clear_bad(), and shall only be called in
- * places that alपढ़ोy verअगरied the pmd is not none and they want to
- * walk ptes जबतक holding the mmap sem in पढ़ो mode (ग_लिखो mode करोn't
+ * places that already verified the pmd is not none and they want to
+ * walk ptes while holding the mmap sem in read mode (write mode don't
  * need this). If THP is not enabled, the pmd can't go away under the
- * code even अगर MADV_DONTNEED runs, but अगर THP is enabled we need to
- * run a pmd_trans_unstable beक्रमe walking the ptes after
- * split_huge_pmd वापसs (because it may have run when the pmd become
+ * code even if MADV_DONTNEED runs, but if THP is enabled we need to
+ * run a pmd_trans_unstable before walking the ptes after
+ * split_huge_pmd returns (because it may have run when the pmd become
  * null, but then a page fault can map in a THP and not a regular page).
  */
-अटल अंतरभूत पूर्णांक pmd_trans_unstable(pmd_t *pmd)
-अणु
-#अगर_घोषित CONFIG_TRANSPARENT_HUGEPAGE
-	वापस pmd_none_or_trans_huge_or_clear_bad(pmd);
-#अन्यथा
-	वापस 0;
-#पूर्ण_अगर
-पूर्ण
+static inline int pmd_trans_unstable(pmd_t *pmd)
+{
+#ifdef CONFIG_TRANSPARENT_HUGEPAGE
+	return pmd_none_or_trans_huge_or_clear_bad(pmd);
+#else
+	return 0;
+#endif
+}
 
 /*
- * the ordering of these checks is important क्रम pmds with _page_devmap set.
- * अगर we check pmd_trans_unstable() first we will trip the bad_pmd() check
+ * the ordering of these checks is important for pmds with _page_devmap set.
+ * if we check pmd_trans_unstable() first we will trip the bad_pmd() check
  * inside of pmd_none_or_trans_huge_or_clear_bad(). this will end up correctly
- * वापसing 1 but not beक्रमe it spams dmesg with the pmd_clear_bad() output.
+ * returning 1 but not before it spams dmesg with the pmd_clear_bad() output.
  */
-अटल अंतरभूत पूर्णांक pmd_devmap_trans_unstable(pmd_t *pmd)
-अणु
-	वापस pmd_devmap(*pmd) || pmd_trans_unstable(pmd);
-पूर्ण
+static inline int pmd_devmap_trans_unstable(pmd_t *pmd)
+{
+	return pmd_devmap(*pmd) || pmd_trans_unstable(pmd);
+}
 
-#अगर_अघोषित CONFIG_NUMA_BALANCING
+#ifndef CONFIG_NUMA_BALANCING
 /*
- * Technically a PTE can be PROTNONE even when not करोing NUMA balancing but
- * the only हाल the kernel cares is क्रम NUMA balancing and is only ever set
+ * Technically a PTE can be PROTNONE even when not doing NUMA balancing but
+ * the only case the kernel cares is for NUMA balancing and is only ever set
  * when the VMA is accessible. For PROT_NONE VMAs, the PTEs are not marked
- * _PAGE_PROTNONE so by शेष, implement the helper as "always no". It
+ * _PAGE_PROTNONE so by default, implement the helper as "always no". It
  * is the responsibility of the caller to distinguish between PROT_NONE
- * protections and NUMA hपूर्णांकing fault protections.
+ * protections and NUMA hinting fault protections.
  */
-अटल अंतरभूत पूर्णांक pte_protnone(pte_t pte)
-अणु
-	वापस 0;
-पूर्ण
+static inline int pte_protnone(pte_t pte)
+{
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक pmd_protnone(pmd_t pmd)
-अणु
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_NUMA_BALANCING */
+static inline int pmd_protnone(pmd_t pmd)
+{
+	return 0;
+}
+#endif /* CONFIG_NUMA_BALANCING */
 
-#पूर्ण_अगर /* CONFIG_MMU */
+#endif /* CONFIG_MMU */
 
-#अगर_घोषित CONFIG_HAVE_ARCH_HUGE_VMAP
+#ifdef CONFIG_HAVE_ARCH_HUGE_VMAP
 
-#अगर_अघोषित __PAGETABLE_P4D_FOLDED
-पूर्णांक p4d_set_huge(p4d_t *p4d, phys_addr_t addr, pgprot_t prot);
-पूर्णांक p4d_clear_huge(p4d_t *p4d);
-#अन्यथा
-अटल अंतरभूत पूर्णांक p4d_set_huge(p4d_t *p4d, phys_addr_t addr, pgprot_t prot)
-अणु
-	वापस 0;
-पूर्ण
-अटल अंतरभूत पूर्णांक p4d_clear_huge(p4d_t *p4d)
-अणु
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर /* !__PAGETABLE_P4D_FOLDED */
+#ifndef __PAGETABLE_P4D_FOLDED
+int p4d_set_huge(p4d_t *p4d, phys_addr_t addr, pgprot_t prot);
+int p4d_clear_huge(p4d_t *p4d);
+#else
+static inline int p4d_set_huge(p4d_t *p4d, phys_addr_t addr, pgprot_t prot)
+{
+	return 0;
+}
+static inline int p4d_clear_huge(p4d_t *p4d)
+{
+	return 0;
+}
+#endif /* !__PAGETABLE_P4D_FOLDED */
 
-पूर्णांक pud_set_huge(pud_t *pud, phys_addr_t addr, pgprot_t prot);
-पूर्णांक pmd_set_huge(pmd_t *pmd, phys_addr_t addr, pgprot_t prot);
-पूर्णांक pud_clear_huge(pud_t *pud);
-पूर्णांक pmd_clear_huge(pmd_t *pmd);
-पूर्णांक p4d_मुक्त_pud_page(p4d_t *p4d, अचिन्हित दीर्घ addr);
-पूर्णांक pud_मुक्त_pmd_page(pud_t *pud, अचिन्हित दीर्घ addr);
-पूर्णांक pmd_मुक्त_pte_page(pmd_t *pmd, अचिन्हित दीर्घ addr);
-#अन्यथा	/* !CONFIG_HAVE_ARCH_HUGE_VMAP */
-अटल अंतरभूत पूर्णांक p4d_set_huge(p4d_t *p4d, phys_addr_t addr, pgprot_t prot)
-अणु
-	वापस 0;
-पूर्ण
-अटल अंतरभूत पूर्णांक pud_set_huge(pud_t *pud, phys_addr_t addr, pgprot_t prot)
-अणु
-	वापस 0;
-पूर्ण
-अटल अंतरभूत पूर्णांक pmd_set_huge(pmd_t *pmd, phys_addr_t addr, pgprot_t prot)
-अणु
-	वापस 0;
-पूर्ण
-अटल अंतरभूत पूर्णांक p4d_clear_huge(p4d_t *p4d)
-अणु
-	वापस 0;
-पूर्ण
-अटल अंतरभूत पूर्णांक pud_clear_huge(pud_t *pud)
-अणु
-	वापस 0;
-पूर्ण
-अटल अंतरभूत पूर्णांक pmd_clear_huge(pmd_t *pmd)
-अणु
-	वापस 0;
-पूर्ण
-अटल अंतरभूत पूर्णांक p4d_मुक्त_pud_page(p4d_t *p4d, अचिन्हित दीर्घ addr)
-अणु
-	वापस 0;
-पूर्ण
-अटल अंतरभूत पूर्णांक pud_मुक्त_pmd_page(pud_t *pud, अचिन्हित दीर्घ addr)
-अणु
-	वापस 0;
-पूर्ण
-अटल अंतरभूत पूर्णांक pmd_मुक्त_pte_page(pmd_t *pmd, अचिन्हित दीर्घ addr)
-अणु
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर	/* CONFIG_HAVE_ARCH_HUGE_VMAP */
+int pud_set_huge(pud_t *pud, phys_addr_t addr, pgprot_t prot);
+int pmd_set_huge(pmd_t *pmd, phys_addr_t addr, pgprot_t prot);
+int pud_clear_huge(pud_t *pud);
+int pmd_clear_huge(pmd_t *pmd);
+int p4d_free_pud_page(p4d_t *p4d, unsigned long addr);
+int pud_free_pmd_page(pud_t *pud, unsigned long addr);
+int pmd_free_pte_page(pmd_t *pmd, unsigned long addr);
+#else	/* !CONFIG_HAVE_ARCH_HUGE_VMAP */
+static inline int p4d_set_huge(p4d_t *p4d, phys_addr_t addr, pgprot_t prot)
+{
+	return 0;
+}
+static inline int pud_set_huge(pud_t *pud, phys_addr_t addr, pgprot_t prot)
+{
+	return 0;
+}
+static inline int pmd_set_huge(pmd_t *pmd, phys_addr_t addr, pgprot_t prot)
+{
+	return 0;
+}
+static inline int p4d_clear_huge(p4d_t *p4d)
+{
+	return 0;
+}
+static inline int pud_clear_huge(pud_t *pud)
+{
+	return 0;
+}
+static inline int pmd_clear_huge(pmd_t *pmd)
+{
+	return 0;
+}
+static inline int p4d_free_pud_page(p4d_t *p4d, unsigned long addr)
+{
+	return 0;
+}
+static inline int pud_free_pmd_page(pud_t *pud, unsigned long addr)
+{
+	return 0;
+}
+static inline int pmd_free_pte_page(pmd_t *pmd, unsigned long addr)
+{
+	return 0;
+}
+#endif	/* CONFIG_HAVE_ARCH_HUGE_VMAP */
 
-#अगर_अघोषित __HAVE_ARCH_FLUSH_PMD_TLB_RANGE
-#अगर_घोषित CONFIG_TRANSPARENT_HUGEPAGE
+#ifndef __HAVE_ARCH_FLUSH_PMD_TLB_RANGE
+#ifdef CONFIG_TRANSPARENT_HUGEPAGE
 /*
- * ARCHes with special requirements क्रम evicting THP backing TLB entries can
+ * ARCHes with special requirements for evicting THP backing TLB entries can
  * implement this. Otherwise also, it can help optimize normal TLB flush in
  * THP regime. Stock flush_tlb_range() typically has optimization to nuke the
- * entire TLB अगर flush span is greater than a threshold, which will
- * likely be true क्रम a single huge page. Thus a single THP flush will
+ * entire TLB if flush span is greater than a threshold, which will
+ * likely be true for a single huge page. Thus a single THP flush will
  * invalidate the entire TLB which is not desirable.
  * e.g. see arch/arc: flush_pmd_tlb_range
  */
-#घोषणा flush_pmd_tlb_range(vma, addr, end)	flush_tlb_range(vma, addr, end)
-#घोषणा flush_pud_tlb_range(vma, addr, end)	flush_tlb_range(vma, addr, end)
-#अन्यथा
-#घोषणा flush_pmd_tlb_range(vma, addr, end)	BUILD_BUG()
-#घोषणा flush_pud_tlb_range(vma, addr, end)	BUILD_BUG()
-#पूर्ण_अगर
-#पूर्ण_अगर
+#define flush_pmd_tlb_range(vma, addr, end)	flush_tlb_range(vma, addr, end)
+#define flush_pud_tlb_range(vma, addr, end)	flush_tlb_range(vma, addr, end)
+#else
+#define flush_pmd_tlb_range(vma, addr, end)	BUILD_BUG()
+#define flush_pud_tlb_range(vma, addr, end)	BUILD_BUG()
+#endif
+#endif
 
-काष्ठा file;
-पूर्णांक phys_mem_access_prot_allowed(काष्ठा file *file, अचिन्हित दीर्घ pfn,
-			अचिन्हित दीर्घ size, pgprot_t *vma_prot);
+struct file;
+int phys_mem_access_prot_allowed(struct file *file, unsigned long pfn,
+			unsigned long size, pgprot_t *vma_prot);
 
-#अगर_अघोषित CONFIG_X86_ESPFIX64
-अटल अंतरभूत व्योम init_espfix_bsp(व्योम) अणु पूर्ण
-#पूर्ण_अगर
+#ifndef CONFIG_X86_ESPFIX64
+static inline void init_espfix_bsp(void) { }
+#endif
 
-बाह्य व्योम __init pgtable_cache_init(व्योम);
+extern void __init pgtable_cache_init(void);
 
-#अगर_अघोषित __HAVE_ARCH_PFN_MODIFY_ALLOWED
-अटल अंतरभूत bool pfn_modअगरy_allowed(अचिन्हित दीर्घ pfn, pgprot_t prot)
-अणु
-	वापस true;
-पूर्ण
+#ifndef __HAVE_ARCH_PFN_MODIFY_ALLOWED
+static inline bool pfn_modify_allowed(unsigned long pfn, pgprot_t prot)
+{
+	return true;
+}
 
-अटल अंतरभूत bool arch_has_pfn_modअगरy_check(व्योम)
-अणु
-	वापस false;
-पूर्ण
-#पूर्ण_अगर /* !_HAVE_ARCH_PFN_MODIFY_ALLOWED */
+static inline bool arch_has_pfn_modify_check(void)
+{
+	return false;
+}
+#endif /* !_HAVE_ARCH_PFN_MODIFY_ALLOWED */
 
 /*
  * Architecture PAGE_KERNEL_* fallbacks
  *
- * Some architectures करोn't define certain PAGE_KERNEL_* flags. This is either
- * because they really करोn't support them, or the port needs to be updated to
+ * Some architectures don't define certain PAGE_KERNEL_* flags. This is either
+ * because they really don't support them, or the port needs to be updated to
  * reflect the required functionality. Below are a set of relatively safe
- * fallbacks, as best efक्रमt, which we can count on in lieu of the architectures
+ * fallbacks, as best effort, which we can count on in lieu of the architectures
  * not defining them on their own yet.
  */
 
-#अगर_अघोषित PAGE_KERNEL_RO
+#ifndef PAGE_KERNEL_RO
 # define PAGE_KERNEL_RO PAGE_KERNEL
-#पूर्ण_अगर
+#endif
 
-#अगर_अघोषित PAGE_KERNEL_EXEC
+#ifndef PAGE_KERNEL_EXEC
 # define PAGE_KERNEL_EXEC PAGE_KERNEL
-#पूर्ण_अगर
+#endif
 
 /*
- * Page Table Modअगरication bits क्रम pgtbl_mod_mask.
+ * Page Table Modification bits for pgtbl_mod_mask.
  *
  * These are used by the p?d_alloc_track*() set of functions an in the generic
- * vदो_स्मृति/ioremap code to track at which page-table levels entries have been
- * modअगरied. Based on that the code can better decide when vदो_स्मृति and ioremap
- * mapping changes need to be synchronized to other page-tables in the प्रणाली.
+ * vmalloc/ioremap code to track at which page-table levels entries have been
+ * modified. Based on that the code can better decide when vmalloc and ioremap
+ * mapping changes need to be synchronized to other page-tables in the system.
  */
-#घोषणा		__PGTBL_PGD_MODIFIED	0
-#घोषणा		__PGTBL_P4D_MODIFIED	1
-#घोषणा		__PGTBL_PUD_MODIFIED	2
-#घोषणा		__PGTBL_PMD_MODIFIED	3
-#घोषणा		__PGTBL_PTE_MODIFIED	4
+#define		__PGTBL_PGD_MODIFIED	0
+#define		__PGTBL_P4D_MODIFIED	1
+#define		__PGTBL_PUD_MODIFIED	2
+#define		__PGTBL_PMD_MODIFIED	3
+#define		__PGTBL_PTE_MODIFIED	4
 
-#घोषणा		PGTBL_PGD_MODIFIED	BIT(__PGTBL_PGD_MODIFIED)
-#घोषणा		PGTBL_P4D_MODIFIED	BIT(__PGTBL_P4D_MODIFIED)
-#घोषणा		PGTBL_PUD_MODIFIED	BIT(__PGTBL_PUD_MODIFIED)
-#घोषणा		PGTBL_PMD_MODIFIED	BIT(__PGTBL_PMD_MODIFIED)
-#घोषणा		PGTBL_PTE_MODIFIED	BIT(__PGTBL_PTE_MODIFIED)
+#define		PGTBL_PGD_MODIFIED	BIT(__PGTBL_PGD_MODIFIED)
+#define		PGTBL_P4D_MODIFIED	BIT(__PGTBL_P4D_MODIFIED)
+#define		PGTBL_PUD_MODIFIED	BIT(__PGTBL_PUD_MODIFIED)
+#define		PGTBL_PMD_MODIFIED	BIT(__PGTBL_PMD_MODIFIED)
+#define		PGTBL_PTE_MODIFIED	BIT(__PGTBL_PTE_MODIFIED)
 
-/* Page-Table Modअगरication Mask */
-प्रकार अचिन्हित पूर्णांक pgtbl_mod_mask;
+/* Page-Table Modification Mask */
+typedef unsigned int pgtbl_mod_mask;
 
-#पूर्ण_अगर /* !__ASSEMBLY__ */
+#endif /* !__ASSEMBLY__ */
 
-#अगर !defined(MAX_POSSIBLE_PHYSMEM_BITS) && !defined(CONFIG_64BIT)
-#अगर_घोषित CONFIG_PHYS_ADDR_T_64BIT
+#if !defined(MAX_POSSIBLE_PHYSMEM_BITS) && !defined(CONFIG_64BIT)
+#ifdef CONFIG_PHYS_ADDR_T_64BIT
 /*
  * ZSMALLOC needs to know the highest PFN on 32-bit architectures
  * with physical address space extension, but falls back to
  * BITS_PER_LONG otherwise.
  */
-#त्रुटि Missing MAX_POSSIBLE_PHYSMEM_BITS definition
-#अन्यथा
-#घोषणा MAX_POSSIBLE_PHYSMEM_BITS 32
-#पूर्ण_अगर
-#पूर्ण_अगर
+#error Missing MAX_POSSIBLE_PHYSMEM_BITS definition
+#else
+#define MAX_POSSIBLE_PHYSMEM_BITS 32
+#endif
+#endif
 
-#अगर_अघोषित has_transparent_hugepage
-#अगर_घोषित CONFIG_TRANSPARENT_HUGEPAGE
-#घोषणा has_transparent_hugepage() 1
-#अन्यथा
-#घोषणा has_transparent_hugepage() 0
-#पूर्ण_अगर
-#पूर्ण_अगर
+#ifndef has_transparent_hugepage
+#ifdef CONFIG_TRANSPARENT_HUGEPAGE
+#define has_transparent_hugepage() 1
+#else
+#define has_transparent_hugepage() 0
+#endif
+#endif
 
 /*
- * On some architectures it depends on the mm अगर the p4d/pud or pmd
+ * On some architectures it depends on the mm if the p4d/pud or pmd
  * layer of the page table hierarchy is folded or not.
  */
-#अगर_अघोषित mm_p4d_folded
-#घोषणा mm_p4d_folded(mm)	__is_defined(__PAGETABLE_P4D_FOLDED)
-#पूर्ण_अगर
+#ifndef mm_p4d_folded
+#define mm_p4d_folded(mm)	__is_defined(__PAGETABLE_P4D_FOLDED)
+#endif
 
-#अगर_अघोषित mm_pud_folded
-#घोषणा mm_pud_folded(mm)	__is_defined(__PAGETABLE_PUD_FOLDED)
-#पूर्ण_अगर
+#ifndef mm_pud_folded
+#define mm_pud_folded(mm)	__is_defined(__PAGETABLE_PUD_FOLDED)
+#endif
 
-#अगर_अघोषित mm_pmd_folded
-#घोषणा mm_pmd_folded(mm)	__is_defined(__PAGETABLE_PMD_FOLDED)
-#पूर्ण_अगर
+#ifndef mm_pmd_folded
+#define mm_pmd_folded(mm)	__is_defined(__PAGETABLE_PMD_FOLDED)
+#endif
 
-#अगर_अघोषित p4d_offset_lockless
-#घोषणा p4d_offset_lockless(pgdp, pgd, address) p4d_offset(&(pgd), address)
-#पूर्ण_अगर
-#अगर_अघोषित pud_offset_lockless
-#घोषणा pud_offset_lockless(p4dp, p4d, address) pud_offset(&(p4d), address)
-#पूर्ण_अगर
-#अगर_अघोषित pmd_offset_lockless
-#घोषणा pmd_offset_lockless(pudp, pud, address) pmd_offset(&(pud), address)
-#पूर्ण_अगर
+#ifndef p4d_offset_lockless
+#define p4d_offset_lockless(pgdp, pgd, address) p4d_offset(&(pgd), address)
+#endif
+#ifndef pud_offset_lockless
+#define pud_offset_lockless(p4dp, p4d, address) pud_offset(&(p4d), address)
+#endif
+#ifndef pmd_offset_lockless
+#define pmd_offset_lockless(pudp, pud, address) pmd_offset(&(pud), address)
+#endif
 
 /*
- * p?d_leaf() - true अगर this entry is a final mapping to a physical address.
- * This dअगरfers from p?d_huge() by the fact that they are always available (अगर
+ * p?d_leaf() - true if this entry is a final mapping to a physical address.
+ * This differs from p?d_huge() by the fact that they are always available (if
  * the architecture supports large pages at the appropriate level) even
- * अगर CONFIG_HUGETLB_PAGE is not defined.
+ * if CONFIG_HUGETLB_PAGE is not defined.
  * Only meaningful when called on a valid entry.
  */
-#अगर_अघोषित pgd_leaf
-#घोषणा pgd_leaf(x)	0
-#पूर्ण_अगर
-#अगर_अघोषित p4d_leaf
-#घोषणा p4d_leaf(x)	0
-#पूर्ण_अगर
-#अगर_अघोषित pud_leaf
-#घोषणा pud_leaf(x)	0
-#पूर्ण_अगर
-#अगर_अघोषित pmd_leaf
-#घोषणा pmd_leaf(x)	0
-#पूर्ण_अगर
+#ifndef pgd_leaf
+#define pgd_leaf(x)	0
+#endif
+#ifndef p4d_leaf
+#define p4d_leaf(x)	0
+#endif
+#ifndef pud_leaf
+#define pud_leaf(x)	0
+#endif
+#ifndef pmd_leaf
+#define pmd_leaf(x)	0
+#endif
 
-#अगर_अघोषित pgd_leaf_size
-#घोषणा pgd_leaf_size(x) (1ULL << PGसूची_SHIFT)
-#पूर्ण_अगर
-#अगर_अघोषित p4d_leaf_size
-#घोषणा p4d_leaf_size(x) P4D_SIZE
-#पूर्ण_अगर
-#अगर_अघोषित pud_leaf_size
-#घोषणा pud_leaf_size(x) PUD_SIZE
-#पूर्ण_अगर
-#अगर_अघोषित pmd_leaf_size
-#घोषणा pmd_leaf_size(x) PMD_SIZE
-#पूर्ण_अगर
-#अगर_अघोषित pte_leaf_size
-#घोषणा pte_leaf_size(x) PAGE_SIZE
-#पूर्ण_अगर
+#ifndef pgd_leaf_size
+#define pgd_leaf_size(x) (1ULL << PGDIR_SHIFT)
+#endif
+#ifndef p4d_leaf_size
+#define p4d_leaf_size(x) P4D_SIZE
+#endif
+#ifndef pud_leaf_size
+#define pud_leaf_size(x) PUD_SIZE
+#endif
+#ifndef pmd_leaf_size
+#define pmd_leaf_size(x) PMD_SIZE
+#endif
+#ifndef pte_leaf_size
+#define pte_leaf_size(x) PAGE_SIZE
+#endif
 
-#पूर्ण_अगर /* _LINUX_PGTABLE_H */
+#endif /* _LINUX_PGTABLE_H */

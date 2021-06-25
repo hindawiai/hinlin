@@ -1,265 +1,264 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
-#अगर_अघोषित _UAPI_SPARC_TERMBITS_H
-#घोषणा _UAPI_SPARC_TERMBITS_H
+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+#ifndef _UAPI_SPARC_TERMBITS_H
+#define _UAPI_SPARC_TERMBITS_H
 
-#समावेश <linux/posix_types.h>
+#include <linux/posix_types.h>
 
-प्रकार अचिन्हित अक्षर   cc_t;
-प्रकार अचिन्हित पूर्णांक    speed_t;
+typedef unsigned char   cc_t;
+typedef unsigned int    speed_t;
 
-#अगर defined(__sparc__) && defined(__arch64__)
-प्रकार अचिन्हित पूर्णांक    tcflag_t;
-#अन्यथा
-प्रकार अचिन्हित दीर्घ   tcflag_t;
-#पूर्ण_अगर
+#if defined(__sparc__) && defined(__arch64__)
+typedef unsigned int    tcflag_t;
+#else
+typedef unsigned long   tcflag_t;
+#endif
 
-#घोषणा NCC 8
-काष्ठा termio अणु
-	अचिन्हित लघु c_अगरlag;		/* input mode flags */
-	अचिन्हित लघु c_oflag;		/* output mode flags */
-	अचिन्हित लघु c_cflag;		/* control mode flags */
-	अचिन्हित लघु c_lflag;		/* local mode flags */
-	अचिन्हित अक्षर c_line;		/* line discipline */
-	अचिन्हित अक्षर c_cc[NCC];	/* control अक्षरacters */
-पूर्ण;
+#define NCC 8
+struct termio {
+	unsigned short c_iflag;		/* input mode flags */
+	unsigned short c_oflag;		/* output mode flags */
+	unsigned short c_cflag;		/* control mode flags */
+	unsigned short c_lflag;		/* local mode flags */
+	unsigned char c_line;		/* line discipline */
+	unsigned char c_cc[NCC];	/* control characters */
+};
 
-#घोषणा NCCS 17
-काष्ठा termios अणु
-	tcflag_t c_अगरlag;		/* input mode flags */
+#define NCCS 17
+struct termios {
+	tcflag_t c_iflag;		/* input mode flags */
 	tcflag_t c_oflag;		/* output mode flags */
 	tcflag_t c_cflag;		/* control mode flags */
 	tcflag_t c_lflag;		/* local mode flags */
 	cc_t c_line;			/* line discipline */
-#अगर_अघोषित __KERNEL__
-	cc_t c_cc[NCCS];		/* control अक्षरacters */
-#अन्यथा
-	cc_t c_cc[NCCS+2];	/* kernel needs 2 more to hold vmin/vसमय */
-#घोषणा SIZखातापूर्ण_USER_TERMIOS माप (काष्ठा termios) - (2*माप (cc_t))
-#पूर्ण_अगर
-पूर्ण;
+#ifndef __KERNEL__
+	cc_t c_cc[NCCS];		/* control characters */
+#else
+	cc_t c_cc[NCCS+2];	/* kernel needs 2 more to hold vmin/vtime */
+#define SIZEOF_USER_TERMIOS sizeof (struct termios) - (2*sizeof (cc_t))
+#endif
+};
 
-काष्ठा termios2 अणु
-	tcflag_t c_अगरlag;		/* input mode flags */
+struct termios2 {
+	tcflag_t c_iflag;		/* input mode flags */
 	tcflag_t c_oflag;		/* output mode flags */
 	tcflag_t c_cflag;		/* control mode flags */
 	tcflag_t c_lflag;		/* local mode flags */
 	cc_t c_line;			/* line discipline */
-	cc_t c_cc[NCCS+2];		/* control अक्षरacters */
+	cc_t c_cc[NCCS+2];		/* control characters */
 	speed_t c_ispeed;		/* input speed */
 	speed_t c_ospeed;		/* output speed */
-पूर्ण;
+};
 
-काष्ठा ktermios अणु
-	tcflag_t c_अगरlag;		/* input mode flags */
+struct ktermios {
+	tcflag_t c_iflag;		/* input mode flags */
 	tcflag_t c_oflag;		/* output mode flags */
 	tcflag_t c_cflag;		/* control mode flags */
 	tcflag_t c_lflag;		/* local mode flags */
 	cc_t c_line;			/* line discipline */
-	cc_t c_cc[NCCS+2];		/* control अक्षरacters */
+	cc_t c_cc[NCCS+2];		/* control characters */
 	speed_t c_ispeed;		/* input speed */
 	speed_t c_ospeed;		/* output speed */
-पूर्ण;
+};
 
-/* c_cc अक्षरacters */
-#घोषणा VINTR    0
-#घोषणा VQUIT    1
-#घोषणा VERASE   2
-#घोषणा VKILL    3
-#घोषणा Vखातापूर्ण     4
-#घोषणा VEOL     5
-#घोषणा VEOL2    6
-#घोषणा VSWTC    7
-#घोषणा VSTART   8
-#घोषणा VSTOP    9
+/* c_cc characters */
+#define VINTR    0
+#define VQUIT    1
+#define VERASE   2
+#define VKILL    3
+#define VEOF     4
+#define VEOL     5
+#define VEOL2    6
+#define VSWTC    7
+#define VSTART   8
+#define VSTOP    9
 
 
 
-#घोषणा VSUSP    10
-#घोषणा VDSUSP   11  /* SunOS POSIX nicety I करो believe... */
-#घोषणा VREPRINT 12
-#घोषणा VDISCARD 13
-#घोषणा VWERASE  14
-#घोषणा VLNEXT   15
+#define VSUSP    10
+#define VDSUSP   11  /* SunOS POSIX nicety I do believe... */
+#define VREPRINT 12
+#define VDISCARD 13
+#define VWERASE  14
+#define VLNEXT   15
 
-/* Kernel keeps vmin/vसमय separated, user apps assume vmin/vसमय is
+/* Kernel keeps vmin/vtime separated, user apps assume vmin/vtime is
  * shared with eof/eol
  */
-#अगर_अघोषित __KERNEL__
-#घोषणा VMIN     Vखातापूर्ण
-#घोषणा VTIME    VEOL
-#पूर्ण_अगर
+#ifndef __KERNEL__
+#define VMIN     VEOF
+#define VTIME    VEOL
+#endif
 
-/* c_अगरlag bits */
-#घोषणा IGNBRK	0x00000001
-#घोषणा BRKINT	0x00000002
-#घोषणा IGNPAR	0x00000004
-#घोषणा PARMRK	0x00000008
-#घोषणा INPCK	0x00000010
-#घोषणा ISTRIP	0x00000020
-#घोषणा INLCR	0x00000040
-#घोषणा IGNCR	0x00000080
-#घोषणा ICRNL	0x00000100
-#घोषणा IUCLC	0x00000200
-#घोषणा IXON	0x00000400
-#घोषणा IXANY	0x00000800
-#घोषणा IXOFF	0x00001000
-#घोषणा IMAXBEL	0x00002000
-#घोषणा IUTF8   0x00004000
+/* c_iflag bits */
+#define IGNBRK	0x00000001
+#define BRKINT	0x00000002
+#define IGNPAR	0x00000004
+#define PARMRK	0x00000008
+#define INPCK	0x00000010
+#define ISTRIP	0x00000020
+#define INLCR	0x00000040
+#define IGNCR	0x00000080
+#define ICRNL	0x00000100
+#define IUCLC	0x00000200
+#define IXON	0x00000400
+#define IXANY	0x00000800
+#define IXOFF	0x00001000
+#define IMAXBEL	0x00002000
+#define IUTF8   0x00004000
 
 /* c_oflag bits */
-#घोषणा OPOST	0x00000001
-#घोषणा OLCUC	0x00000002
-#घोषणा ONLCR	0x00000004
-#घोषणा OCRNL	0x00000008
-#घोषणा ONOCR	0x00000010
-#घोषणा ONLRET	0x00000020
-#घोषणा OFILL	0x00000040
-#घोषणा OFDEL	0x00000080
-#घोषणा NLDLY	0x00000100
-#घोषणा   NL0	0x00000000
-#घोषणा   NL1	0x00000100
-#घोषणा CRDLY	0x00000600
-#घोषणा   CR0	0x00000000
-#घोषणा   CR1	0x00000200
-#घोषणा   CR2	0x00000400
-#घोषणा   CR3	0x00000600
-#घोषणा TABDLY	0x00001800
-#घोषणा   TAB0	0x00000000
-#घोषणा   TAB1	0x00000800
-#घोषणा   TAB2	0x00001000
-#घोषणा   TAB3	0x00001800
-#घोषणा   XTABS	0x00001800
-#घोषणा BSDLY	0x00002000
-#घोषणा   BS0	0x00000000
-#घोषणा   BS1	0x00002000
-#घोषणा VTDLY	0x00004000
-#घोषणा   VT0	0x00000000
-#घोषणा   VT1	0x00004000
-#घोषणा FFDLY	0x00008000
-#घोषणा   FF0	0x00000000
-#घोषणा   FF1	0x00008000
-#घोषणा PAGEOUT 0x00010000  /* SUNOS specअगरic */
-#घोषणा WRAP    0x00020000  /* SUNOS specअगरic */
+#define OPOST	0x00000001
+#define OLCUC	0x00000002
+#define ONLCR	0x00000004
+#define OCRNL	0x00000008
+#define ONOCR	0x00000010
+#define ONLRET	0x00000020
+#define OFILL	0x00000040
+#define OFDEL	0x00000080
+#define NLDLY	0x00000100
+#define   NL0	0x00000000
+#define   NL1	0x00000100
+#define CRDLY	0x00000600
+#define   CR0	0x00000000
+#define   CR1	0x00000200
+#define   CR2	0x00000400
+#define   CR3	0x00000600
+#define TABDLY	0x00001800
+#define   TAB0	0x00000000
+#define   TAB1	0x00000800
+#define   TAB2	0x00001000
+#define   TAB3	0x00001800
+#define   XTABS	0x00001800
+#define BSDLY	0x00002000
+#define   BS0	0x00000000
+#define   BS1	0x00002000
+#define VTDLY	0x00004000
+#define   VT0	0x00000000
+#define   VT1	0x00004000
+#define FFDLY	0x00008000
+#define   FF0	0x00000000
+#define   FF1	0x00008000
+#define PAGEOUT 0x00010000  /* SUNOS specific */
+#define WRAP    0x00020000  /* SUNOS specific */
 
 /* c_cflag bit meaning */
-#घोषणा CBAUD	  0x0000100f
-#घोषणा  B0	  0x00000000   /* hang up */
-#घोषणा  B50	  0x00000001
-#घोषणा  B75	  0x00000002
-#घोषणा  B110	  0x00000003
-#घोषणा  B134	  0x00000004
-#घोषणा  B150	  0x00000005
-#घोषणा  B200	  0x00000006
-#घोषणा  B300	  0x00000007
-#घोषणा  B600	  0x00000008
-#घोषणा  B1200	  0x00000009
-#घोषणा  B1800	  0x0000000a
-#घोषणा  B2400	  0x0000000b
-#घोषणा  B4800	  0x0000000c
-#घोषणा  B9600	  0x0000000d
-#घोषणा  B19200	  0x0000000e
-#घोषणा  B38400	  0x0000000f
-#घोषणा EXTA      B19200
-#घोषणा EXTB      B38400
-#घोषणा  CSIZE    0x00000030
-#घोषणा   CS5	  0x00000000
-#घोषणा   CS6	  0x00000010
-#घोषणा   CS7	  0x00000020
-#घोषणा   CS8	  0x00000030
-#घोषणा CSTOPB	  0x00000040
-#घोषणा CREAD	  0x00000080
-#घोषणा PARENB	  0x00000100
-#घोषणा PARODD	  0x00000200
-#घोषणा HUPCL	  0x00000400
-#घोषणा CLOCAL	  0x00000800
-#घोषणा CBAUDEX   0x00001000
-/* We'll never see these speeds with the Zilogs, but क्रम completeness... */
-#घोषणा  BOTHER   0x00001000
-#घोषणा  B57600   0x00001001
-#घोषणा  B115200  0x00001002
-#घोषणा  B230400  0x00001003
-#घोषणा  B460800  0x00001004
-/* This is what we can करो with the Zilogs. */
-#घोषणा  B76800   0x00001005
-/* This is what we can करो with the SAB82532. */
-#घोषणा  B153600  0x00001006
-#घोषणा  B307200  0x00001007
-#घोषणा  B614400  0x00001008
-#घोषणा  B921600  0x00001009
+#define CBAUD	  0x0000100f
+#define  B0	  0x00000000   /* hang up */
+#define  B50	  0x00000001
+#define  B75	  0x00000002
+#define  B110	  0x00000003
+#define  B134	  0x00000004
+#define  B150	  0x00000005
+#define  B200	  0x00000006
+#define  B300	  0x00000007
+#define  B600	  0x00000008
+#define  B1200	  0x00000009
+#define  B1800	  0x0000000a
+#define  B2400	  0x0000000b
+#define  B4800	  0x0000000c
+#define  B9600	  0x0000000d
+#define  B19200	  0x0000000e
+#define  B38400	  0x0000000f
+#define EXTA      B19200
+#define EXTB      B38400
+#define  CSIZE    0x00000030
+#define   CS5	  0x00000000
+#define   CS6	  0x00000010
+#define   CS7	  0x00000020
+#define   CS8	  0x00000030
+#define CSTOPB	  0x00000040
+#define CREAD	  0x00000080
+#define PARENB	  0x00000100
+#define PARODD	  0x00000200
+#define HUPCL	  0x00000400
+#define CLOCAL	  0x00000800
+#define CBAUDEX   0x00001000
+/* We'll never see these speeds with the Zilogs, but for completeness... */
+#define  BOTHER   0x00001000
+#define  B57600   0x00001001
+#define  B115200  0x00001002
+#define  B230400  0x00001003
+#define  B460800  0x00001004
+/* This is what we can do with the Zilogs. */
+#define  B76800   0x00001005
+/* This is what we can do with the SAB82532. */
+#define  B153600  0x00001006
+#define  B307200  0x00001007
+#define  B614400  0x00001008
+#define  B921600  0x00001009
 /* And these are the rest... */
-#घोषणा  B500000  0x0000100a
-#घोषणा  B576000  0x0000100b
-#घोषणा B1000000  0x0000100c
-#घोषणा B1152000  0x0000100d
-#घोषणा B1500000  0x0000100e
-#घोषणा B2000000  0x0000100f
+#define  B500000  0x0000100a
+#define  B576000  0x0000100b
+#define B1000000  0x0000100c
+#define B1152000  0x0000100d
+#define B1500000  0x0000100e
+#define B2000000  0x0000100f
 /* These have totally bogus values and nobody uses them
    so far. Later on we'd have to use say 0x10000x and
-   adjust CBAUD स्थिरant and drivers accordingly.
-#घोषणा B2500000  0x00001010
-#घोषणा B3000000  0x00001011
-#घोषणा B3500000  0x00001012
-#घोषणा B4000000  0x00001013  */
-#घोषणा CIBAUD	  0x100f0000  /* input baud rate (not used) */
-#घोषणा CMSPAR	  0x40000000  /* mark or space (stick) parity */
-#घोषणा CRTSCTS	  0x80000000  /* flow control */
+   adjust CBAUD constant and drivers accordingly.
+#define B2500000  0x00001010
+#define B3000000  0x00001011
+#define B3500000  0x00001012
+#define B4000000  0x00001013  */
+#define CIBAUD	  0x100f0000  /* input baud rate (not used) */
+#define CMSPAR	  0x40000000  /* mark or space (stick) parity */
+#define CRTSCTS	  0x80000000  /* flow control */
 
-#घोषणा IBSHIFT	  16		/* Shअगरt from CBAUD to CIBAUD */
+#define IBSHIFT	  16		/* Shift from CBAUD to CIBAUD */
 
 /* c_lflag bits */
-#घोषणा ISIG	0x00000001
-#घोषणा ICANON	0x00000002
-#घोषणा XCASE	0x00000004
-#घोषणा ECHO	0x00000008
-#घोषणा ECHOE	0x00000010
-#घोषणा ECHOK	0x00000020
-#घोषणा ECHONL	0x00000040
-#घोषणा NOFLSH	0x00000080
-#घोषणा TOSTOP	0x00000100
-#घोषणा ECHOCTL	0x00000200
-#घोषणा ECHOPRT	0x00000400
-#घोषणा ECHOKE	0x00000800
-#घोषणा DEFECHO 0x00001000  /* SUNOS thing, what is it? */
-#घोषणा FLUSHO	0x00002000
-#घोषणा PENDIN	0x00004000
-#घोषणा IEXTEN	0x00008000
-#घोषणा EXTPROC	0x00010000
+#define ISIG	0x00000001
+#define ICANON	0x00000002
+#define XCASE	0x00000004
+#define ECHO	0x00000008
+#define ECHOE	0x00000010
+#define ECHOK	0x00000020
+#define ECHONL	0x00000040
+#define NOFLSH	0x00000080
+#define TOSTOP	0x00000100
+#define ECHOCTL	0x00000200
+#define ECHOPRT	0x00000400
+#define ECHOKE	0x00000800
+#define DEFECHO 0x00001000  /* SUNOS thing, what is it? */
+#define FLUSHO	0x00002000
+#define PENDIN	0x00004000
+#define IEXTEN	0x00008000
+#define EXTPROC	0x00010000
 
 /* modem lines */
-#घोषणा TIOCM_LE	0x001
-#घोषणा TIOCM_DTR	0x002
-#घोषणा TIOCM_RTS	0x004
-#घोषणा TIOCM_ST	0x008
-#घोषणा TIOCM_SR	0x010
-#घोषणा TIOCM_CTS	0x020
-#घोषणा TIOCM_CAR	0x040
-#घोषणा TIOCM_RNG	0x080
-#घोषणा TIOCM_DSR	0x100
-#घोषणा TIOCM_CD	TIOCM_CAR
-#घोषणा TIOCM_RI	TIOCM_RNG
-#घोषणा TIOCM_OUT1	0x2000
-#घोषणा TIOCM_OUT2	0x4000
-#घोषणा TIOCM_LOOP	0x8000
+#define TIOCM_LE	0x001
+#define TIOCM_DTR	0x002
+#define TIOCM_RTS	0x004
+#define TIOCM_ST	0x008
+#define TIOCM_SR	0x010
+#define TIOCM_CTS	0x020
+#define TIOCM_CAR	0x040
+#define TIOCM_RNG	0x080
+#define TIOCM_DSR	0x100
+#define TIOCM_CD	TIOCM_CAR
+#define TIOCM_RI	TIOCM_RNG
+#define TIOCM_OUT1	0x2000
+#define TIOCM_OUT2	0x4000
+#define TIOCM_LOOP	0x8000
 
 /* ioctl (fd, TIOCSERGETLSR, &result) where result may be as below */
-#घोषणा TIOCSER_TEMT    0x01	/* Transmitter physically empty */
+#define TIOCSER_TEMT    0x01	/* Transmitter physically empty */
 
 
 /* tcflow() and TCXONC use these */
-#घोषणा	TCOOFF		0
-#घोषणा	TCOON		1
-#घोषणा	TCIOFF		2
-#घोषणा	TCION		3
+#define	TCOOFF		0
+#define	TCOON		1
+#define	TCIOFF		2
+#define	TCION		3
 
 /* tcflush() and TCFLSH use these */
-#घोषणा	TCIFLUSH	0
-#घोषणा	TCOFLUSH	1
-#घोषणा	TCIOFLUSH	2
+#define	TCIFLUSH	0
+#define	TCOFLUSH	1
+#define	TCIOFLUSH	2
 
 /* tcsetattr uses these */
-#घोषणा	TCSANOW		0
-#घोषणा	TCSADRAIN	1
-#घोषणा	TCSAFLUSH	2
+#define	TCSANOW		0
+#define	TCSADRAIN	1
+#define	TCSAFLUSH	2
 
-#पूर्ण_अगर /* _UAPI_SPARC_TERMBITS_H */
+#endif /* _UAPI_SPARC_TERMBITS_H */

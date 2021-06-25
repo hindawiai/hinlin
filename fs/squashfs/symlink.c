@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * Squashfs - a compressed पढ़ो only fileप्रणाली क्रम Linux
+ * Squashfs - a compressed read only filesystem for Linux
  *
  * Copyright (c) 2002, 2003, 2004, 2005, 2006, 2007, 2008
  * Phillip Lougher <phillip@squashfs.org.uk>
@@ -15,98 +14,98 @@
  * The data contents of symbolic links are stored inside the symbolic
  * link inode within the inode table.  This allows the normally small symbolic
  * link to be compressed as part of the inode table, achieving much greater
- * compression than अगर the symbolic link was compressed inभागidually.
+ * compression than if the symbolic link was compressed individually.
  */
 
-#समावेश <linux/fs.h>
-#समावेश <linux/vfs.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/pagemap.h>
-#समावेश <linux/xattr.h>
+#include <linux/fs.h>
+#include <linux/vfs.h>
+#include <linux/kernel.h>
+#include <linux/string.h>
+#include <linux/pagemap.h>
+#include <linux/xattr.h>
 
-#समावेश "squashfs_fs.h"
-#समावेश "squashfs_fs_sb.h"
-#समावेश "squashfs_fs_i.h"
-#समावेश "squashfs.h"
-#समावेश "xattr.h"
+#include "squashfs_fs.h"
+#include "squashfs_fs_sb.h"
+#include "squashfs_fs_i.h"
+#include "squashfs.h"
+#include "xattr.h"
 
-अटल पूर्णांक squashfs_symlink_पढ़ोpage(काष्ठा file *file, काष्ठा page *page)
-अणु
-	काष्ठा inode *inode = page->mapping->host;
-	काष्ठा super_block *sb = inode->i_sb;
-	काष्ठा squashfs_sb_info *msblk = sb->s_fs_info;
-	पूर्णांक index = page->index << PAGE_SHIFT;
+static int squashfs_symlink_readpage(struct file *file, struct page *page)
+{
+	struct inode *inode = page->mapping->host;
+	struct super_block *sb = inode->i_sb;
+	struct squashfs_sb_info *msblk = sb->s_fs_info;
+	int index = page->index << PAGE_SHIFT;
 	u64 block = squashfs_i(inode)->start;
-	पूर्णांक offset = squashfs_i(inode)->offset;
-	पूर्णांक length = min_t(पूर्णांक, i_size_पढ़ो(inode) - index, PAGE_SIZE);
-	पूर्णांक bytes, copied;
-	व्योम *pageaddr;
-	काष्ठा squashfs_cache_entry *entry;
+	int offset = squashfs_i(inode)->offset;
+	int length = min_t(int, i_size_read(inode) - index, PAGE_SIZE);
+	int bytes, copied;
+	void *pageaddr;
+	struct squashfs_cache_entry *entry;
 
 	TRACE("Entered squashfs_symlink_readpage, page index %ld, start block "
 			"%llx, offset %x\n", page->index, block, offset);
 
 	/*
-	 * Skip index bytes पूर्णांकo symlink metadata.
+	 * Skip index bytes into symlink metadata.
 	 */
-	अगर (index) अणु
-		bytes = squashfs_पढ़ो_metadata(sb, शून्य, &block, &offset,
+	if (index) {
+		bytes = squashfs_read_metadata(sb, NULL, &block, &offset,
 								index);
-		अगर (bytes < 0) अणु
+		if (bytes < 0) {
 			ERROR("Unable to read symlink [%llx:%x]\n",
 				squashfs_i(inode)->start,
 				squashfs_i(inode)->offset);
-			जाओ error_out;
-		पूर्ण
-	पूर्ण
+			goto error_out;
+		}
+	}
 
 	/*
-	 * Read length bytes from symlink metadata.  Squashfs_पढ़ो_metadata
+	 * Read length bytes from symlink metadata.  Squashfs_read_metadata
 	 * is not used here because it can sleep and we want to use
 	 * kmap_atomic to map the page.  Instead call the underlying
 	 * squashfs_cache_get routine.  As length bytes may overlap metadata
-	 * blocks, we may need to call squashfs_cache_get multiple बार.
+	 * blocks, we may need to call squashfs_cache_get multiple times.
 	 */
-	क्रम (bytes = 0; bytes < length; offset = 0, bytes += copied) अणु
+	for (bytes = 0; bytes < length; offset = 0, bytes += copied) {
 		entry = squashfs_cache_get(sb, msblk->block_cache, block, 0);
-		अगर (entry->error) अणु
+		if (entry->error) {
 			ERROR("Unable to read symlink [%llx:%x]\n",
 				squashfs_i(inode)->start,
 				squashfs_i(inode)->offset);
 			squashfs_cache_put(entry);
-			जाओ error_out;
-		पूर्ण
+			goto error_out;
+		}
 
 		pageaddr = kmap_atomic(page);
 		copied = squashfs_copy_data(pageaddr + bytes, entry, offset,
 								length - bytes);
-		अगर (copied == length - bytes)
-			स_रखो(pageaddr + length, 0, PAGE_SIZE - length);
-		अन्यथा
+		if (copied == length - bytes)
+			memset(pageaddr + length, 0, PAGE_SIZE - length);
+		else
 			block = entry->next_index;
 		kunmap_atomic(pageaddr);
 		squashfs_cache_put(entry);
-	पूर्ण
+	}
 
 	flush_dcache_page(page);
 	SetPageUptodate(page);
 	unlock_page(page);
-	वापस 0;
+	return 0;
 
 error_out:
 	SetPageError(page);
 	unlock_page(page);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-स्थिर काष्ठा address_space_operations squashfs_symlink_aops = अणु
-	.पढ़ोpage = squashfs_symlink_पढ़ोpage
-पूर्ण;
+const struct address_space_operations squashfs_symlink_aops = {
+	.readpage = squashfs_symlink_readpage
+};
 
-स्थिर काष्ठा inode_operations squashfs_symlink_inode_ops = अणु
+const struct inode_operations squashfs_symlink_inode_ops = {
 	.get_link = page_get_link,
 	.listxattr = squashfs_listxattr
-पूर्ण;
+};
 

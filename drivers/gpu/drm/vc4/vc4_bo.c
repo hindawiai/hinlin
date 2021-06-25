@@ -1,30 +1,29 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- *  Copyright तऊ 2015 Broadcom
+ *  Copyright © 2015 Broadcom
  */
 
 /**
  * DOC: VC4 GEM BO management support
  *
  * The VC4 GPU architecture (both scanout and rendering) has direct
- * access to प्रणाली memory with no MMU in between.  To support it, we
+ * access to system memory with no MMU in between.  To support it, we
  * use the GEM CMA helper functions to allocate contiguous ranges of
- * physical memory क्रम our BOs.
+ * physical memory for our BOs.
  *
  * Since the CMA allocator is very slow, we keep a cache of recently
- * मुक्तd BOs around so that the kernel's allocation of objects क्रम 3D
- * rendering can वापस quickly.
+ * freed BOs around so that the kernel's allocation of objects for 3D
+ * rendering can return quickly.
  */
 
-#समावेश <linux/dma-buf.h>
+#include <linux/dma-buf.h>
 
-#समावेश "vc4_drv.h"
-#समावेश "uapi/drm/vc4_drm.h"
+#include "vc4_drv.h"
+#include "uapi/drm/vc4_drm.h"
 
-अटल स्थिर काष्ठा drm_gem_object_funcs vc4_gem_object_funcs;
+static const struct drm_gem_object_funcs vc4_gem_object_funcs;
 
-अटल स्थिर अक्षर * स्थिर bo_type_names[] = अणु
+static const char * const bo_type_names[] = {
 	"kernel",
 	"V3D",
 	"V3D shader",
@@ -33,366 +32,366 @@
 	"RCL",
 	"BCL",
 	"kernel BO cache",
-पूर्ण;
+};
 
-अटल bool is_user_label(पूर्णांक label)
-अणु
-	वापस label >= VC4_BO_TYPE_COUNT;
-पूर्ण
+static bool is_user_label(int label)
+{
+	return label >= VC4_BO_TYPE_COUNT;
+}
 
-अटल व्योम vc4_bo_stats_prपूर्णांक(काष्ठा drm_prपूर्णांकer *p, काष्ठा vc4_dev *vc4)
-अणु
-	पूर्णांक i;
+static void vc4_bo_stats_print(struct drm_printer *p, struct vc4_dev *vc4)
+{
+	int i;
 
-	क्रम (i = 0; i < vc4->num_labels; i++) अणु
-		अगर (!vc4->bo_labels[i].num_allocated)
-			जारी;
+	for (i = 0; i < vc4->num_labels; i++) {
+		if (!vc4->bo_labels[i].num_allocated)
+			continue;
 
-		drm_म_लिखो(p, "%30s: %6dkb BOs (%d)\n",
+		drm_printf(p, "%30s: %6dkb BOs (%d)\n",
 			   vc4->bo_labels[i].name,
 			   vc4->bo_labels[i].size_allocated / 1024,
 			   vc4->bo_labels[i].num_allocated);
-	पूर्ण
+	}
 
 	mutex_lock(&vc4->purgeable.lock);
-	अगर (vc4->purgeable.num)
-		drm_म_लिखो(p, "%30s: %6zdkb BOs (%d)\n", "userspace BO cache",
+	if (vc4->purgeable.num)
+		drm_printf(p, "%30s: %6zdkb BOs (%d)\n", "userspace BO cache",
 			   vc4->purgeable.size / 1024, vc4->purgeable.num);
 
-	अगर (vc4->purgeable.purged_num)
-		drm_म_लिखो(p, "%30s: %6zdkb BOs (%d)\n", "total purged BO",
+	if (vc4->purgeable.purged_num)
+		drm_printf(p, "%30s: %6zdkb BOs (%d)\n", "total purged BO",
 			   vc4->purgeable.purged_size / 1024,
 			   vc4->purgeable.purged_num);
 	mutex_unlock(&vc4->purgeable.lock);
-पूर्ण
+}
 
-अटल पूर्णांक vc4_bo_stats_debugfs(काष्ठा seq_file *m, व्योम *unused)
-अणु
-	काष्ठा drm_info_node *node = (काष्ठा drm_info_node *)m->निजी;
-	काष्ठा drm_device *dev = node->minor->dev;
-	काष्ठा vc4_dev *vc4 = to_vc4_dev(dev);
-	काष्ठा drm_prपूर्णांकer p = drm_seq_file_prपूर्णांकer(m);
+static int vc4_bo_stats_debugfs(struct seq_file *m, void *unused)
+{
+	struct drm_info_node *node = (struct drm_info_node *)m->private;
+	struct drm_device *dev = node->minor->dev;
+	struct vc4_dev *vc4 = to_vc4_dev(dev);
+	struct drm_printer p = drm_seq_file_printer(m);
 
-	vc4_bo_stats_prपूर्णांक(&p, vc4);
+	vc4_bo_stats_print(&p, vc4);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Takes ownership of *name and वापसs the appropriate slot क्रम it in
+/* Takes ownership of *name and returns the appropriate slot for it in
  * the bo_labels[] array, extending it as necessary.
  *
  * This is inefficient and could use a hash table instead of walking
- * an array and म_भेद()ing.  However, the assumption is that user
- * labeling will be infrequent (scanout buffers and other दीर्घ-lived
- * objects, or debug driver builds), so we can live with it क्रम now.
+ * an array and strcmp()ing.  However, the assumption is that user
+ * labeling will be infrequent (scanout buffers and other long-lived
+ * objects, or debug driver builds), so we can live with it for now.
  */
-अटल पूर्णांक vc4_get_user_label(काष्ठा vc4_dev *vc4, स्थिर अक्षर *name)
-अणु
-	पूर्णांक i;
-	पूर्णांक मुक्त_slot = -1;
+static int vc4_get_user_label(struct vc4_dev *vc4, const char *name)
+{
+	int i;
+	int free_slot = -1;
 
-	क्रम (i = 0; i < vc4->num_labels; i++) अणु
-		अगर (!vc4->bo_labels[i].name) अणु
-			मुक्त_slot = i;
-		पूर्ण अन्यथा अगर (म_भेद(vc4->bo_labels[i].name, name) == 0) अणु
-			kमुक्त(name);
-			वापस i;
-		पूर्ण
-	पूर्ण
+	for (i = 0; i < vc4->num_labels; i++) {
+		if (!vc4->bo_labels[i].name) {
+			free_slot = i;
+		} else if (strcmp(vc4->bo_labels[i].name, name) == 0) {
+			kfree(name);
+			return i;
+		}
+	}
 
-	अगर (मुक्त_slot != -1) अणु
-		WARN_ON(vc4->bo_labels[मुक्त_slot].num_allocated != 0);
-		vc4->bo_labels[मुक्त_slot].name = name;
-		वापस मुक्त_slot;
-	पूर्ण अन्यथा अणु
+	if (free_slot != -1) {
+		WARN_ON(vc4->bo_labels[free_slot].num_allocated != 0);
+		vc4->bo_labels[free_slot].name = name;
+		return free_slot;
+	} else {
 		u32 new_label_count = vc4->num_labels + 1;
-		काष्ठा vc4_label *new_labels =
-			kपुनः_स्मृति(vc4->bo_labels,
-				 new_label_count * माप(*new_labels),
+		struct vc4_label *new_labels =
+			krealloc(vc4->bo_labels,
+				 new_label_count * sizeof(*new_labels),
 				 GFP_KERNEL);
 
-		अगर (!new_labels) अणु
-			kमुक्त(name);
-			वापस -1;
-		पूर्ण
+		if (!new_labels) {
+			kfree(name);
+			return -1;
+		}
 
-		मुक्त_slot = vc4->num_labels;
+		free_slot = vc4->num_labels;
 		vc4->bo_labels = new_labels;
 		vc4->num_labels = new_label_count;
 
-		vc4->bo_labels[मुक्त_slot].name = name;
-		vc4->bo_labels[मुक्त_slot].num_allocated = 0;
-		vc4->bo_labels[मुक्त_slot].size_allocated = 0;
+		vc4->bo_labels[free_slot].name = name;
+		vc4->bo_labels[free_slot].num_allocated = 0;
+		vc4->bo_labels[free_slot].size_allocated = 0;
 
-		वापस मुक्त_slot;
-	पूर्ण
-पूर्ण
+		return free_slot;
+	}
+}
 
-अटल व्योम vc4_bo_set_label(काष्ठा drm_gem_object *gem_obj, पूर्णांक label)
-अणु
-	काष्ठा vc4_bo *bo = to_vc4_bo(gem_obj);
-	काष्ठा vc4_dev *vc4 = to_vc4_dev(gem_obj->dev);
+static void vc4_bo_set_label(struct drm_gem_object *gem_obj, int label)
+{
+	struct vc4_bo *bo = to_vc4_bo(gem_obj);
+	struct vc4_dev *vc4 = to_vc4_dev(gem_obj->dev);
 
-	lockdep_निश्चित_held(&vc4->bo_lock);
+	lockdep_assert_held(&vc4->bo_lock);
 
-	अगर (label != -1) अणु
+	if (label != -1) {
 		vc4->bo_labels[label].num_allocated++;
 		vc4->bo_labels[label].size_allocated += gem_obj->size;
-	पूर्ण
+	}
 
 	vc4->bo_labels[bo->label].num_allocated--;
 	vc4->bo_labels[bo->label].size_allocated -= gem_obj->size;
 
-	अगर (vc4->bo_labels[bo->label].num_allocated == 0 &&
-	    is_user_label(bo->label)) अणु
+	if (vc4->bo_labels[bo->label].num_allocated == 0 &&
+	    is_user_label(bo->label)) {
 		/* Free user BO label slots on last unreference.
-		 * Slots are just where we track the stats क्रम a given
+		 * Slots are just where we track the stats for a given
 		 * name, and once a name is unused we can reuse that
 		 * slot.
 		 */
-		kमुक्त(vc4->bo_labels[bo->label].name);
-		vc4->bo_labels[bo->label].name = शून्य;
-	पूर्ण
+		kfree(vc4->bo_labels[bo->label].name);
+		vc4->bo_labels[bo->label].name = NULL;
+	}
 
 	bo->label = label;
-पूर्ण
+}
 
-अटल uपूर्णांक32_t bo_page_index(माप_प्रकार size)
-अणु
-	वापस (size / PAGE_SIZE) - 1;
-पूर्ण
+static uint32_t bo_page_index(size_t size)
+{
+	return (size / PAGE_SIZE) - 1;
+}
 
-अटल व्योम vc4_bo_destroy(काष्ठा vc4_bo *bo)
-अणु
-	काष्ठा drm_gem_object *obj = &bo->base.base;
-	काष्ठा vc4_dev *vc4 = to_vc4_dev(obj->dev);
+static void vc4_bo_destroy(struct vc4_bo *bo)
+{
+	struct drm_gem_object *obj = &bo->base.base;
+	struct vc4_dev *vc4 = to_vc4_dev(obj->dev);
 
-	lockdep_निश्चित_held(&vc4->bo_lock);
+	lockdep_assert_held(&vc4->bo_lock);
 
 	vc4_bo_set_label(obj, -1);
 
-	अगर (bo->validated_shader) अणु
-		kमुक्त(bo->validated_shader->unअगरorm_addr_offsets);
-		kमुक्त(bo->validated_shader->texture_samples);
-		kमुक्त(bo->validated_shader);
-		bo->validated_shader = शून्य;
-	पूर्ण
+	if (bo->validated_shader) {
+		kfree(bo->validated_shader->uniform_addr_offsets);
+		kfree(bo->validated_shader->texture_samples);
+		kfree(bo->validated_shader);
+		bo->validated_shader = NULL;
+	}
 
-	drm_gem_cma_मुक्त_object(obj);
-पूर्ण
+	drm_gem_cma_free_object(obj);
+}
 
-अटल व्योम vc4_bo_हटाओ_from_cache(काष्ठा vc4_bo *bo)
-अणु
-	काष्ठा vc4_dev *vc4 = to_vc4_dev(bo->base.base.dev);
+static void vc4_bo_remove_from_cache(struct vc4_bo *bo)
+{
+	struct vc4_dev *vc4 = to_vc4_dev(bo->base.base.dev);
 
-	lockdep_निश्चित_held(&vc4->bo_lock);
+	lockdep_assert_held(&vc4->bo_lock);
 	list_del(&bo->unref_head);
 	list_del(&bo->size_head);
-पूर्ण
+}
 
-अटल काष्ठा list_head *vc4_get_cache_list_क्रम_size(काष्ठा drm_device *dev,
-						     माप_प्रकार size)
-अणु
-	काष्ठा vc4_dev *vc4 = to_vc4_dev(dev);
-	uपूर्णांक32_t page_index = bo_page_index(size);
+static struct list_head *vc4_get_cache_list_for_size(struct drm_device *dev,
+						     size_t size)
+{
+	struct vc4_dev *vc4 = to_vc4_dev(dev);
+	uint32_t page_index = bo_page_index(size);
 
-	अगर (vc4->bo_cache.size_list_size <= page_index) अणु
-		uपूर्णांक32_t new_size = max(vc4->bo_cache.size_list_size * 2,
+	if (vc4->bo_cache.size_list_size <= page_index) {
+		uint32_t new_size = max(vc4->bo_cache.size_list_size * 2,
 					page_index + 1);
-		काष्ठा list_head *new_list;
-		uपूर्णांक32_t i;
+		struct list_head *new_list;
+		uint32_t i;
 
-		new_list = kदो_स्मृति_array(new_size, माप(काष्ठा list_head),
+		new_list = kmalloc_array(new_size, sizeof(struct list_head),
 					 GFP_KERNEL);
-		अगर (!new_list)
-			वापस शून्य;
+		if (!new_list)
+			return NULL;
 
 		/* Rebase the old cached BO lists to their new list
 		 * head locations.
 		 */
-		क्रम (i = 0; i < vc4->bo_cache.size_list_size; i++) अणु
-			काष्ठा list_head *old_list =
+		for (i = 0; i < vc4->bo_cache.size_list_size; i++) {
+			struct list_head *old_list =
 				&vc4->bo_cache.size_list[i];
 
-			अगर (list_empty(old_list))
+			if (list_empty(old_list))
 				INIT_LIST_HEAD(&new_list[i]);
-			अन्यथा
+			else
 				list_replace(old_list, &new_list[i]);
-		पूर्ण
-		/* And initialize the bअक्रम new BO list heads. */
-		क्रम (i = vc4->bo_cache.size_list_size; i < new_size; i++)
+		}
+		/* And initialize the brand new BO list heads. */
+		for (i = vc4->bo_cache.size_list_size; i < new_size; i++)
 			INIT_LIST_HEAD(&new_list[i]);
 
-		kमुक्त(vc4->bo_cache.size_list);
+		kfree(vc4->bo_cache.size_list);
 		vc4->bo_cache.size_list = new_list;
 		vc4->bo_cache.size_list_size = new_size;
-	पूर्ण
+	}
 
-	वापस &vc4->bo_cache.size_list[page_index];
-पूर्ण
+	return &vc4->bo_cache.size_list[page_index];
+}
 
-अटल व्योम vc4_bo_cache_purge(काष्ठा drm_device *dev)
-अणु
-	काष्ठा vc4_dev *vc4 = to_vc4_dev(dev);
+static void vc4_bo_cache_purge(struct drm_device *dev)
+{
+	struct vc4_dev *vc4 = to_vc4_dev(dev);
 
 	mutex_lock(&vc4->bo_lock);
-	जबतक (!list_empty(&vc4->bo_cache.समय_list)) अणु
-		काष्ठा vc4_bo *bo = list_last_entry(&vc4->bo_cache.समय_list,
-						    काष्ठा vc4_bo, unref_head);
-		vc4_bo_हटाओ_from_cache(bo);
+	while (!list_empty(&vc4->bo_cache.time_list)) {
+		struct vc4_bo *bo = list_last_entry(&vc4->bo_cache.time_list,
+						    struct vc4_bo, unref_head);
+		vc4_bo_remove_from_cache(bo);
 		vc4_bo_destroy(bo);
-	पूर्ण
+	}
 	mutex_unlock(&vc4->bo_lock);
-पूर्ण
+}
 
-व्योम vc4_bo_add_to_purgeable_pool(काष्ठा vc4_bo *bo)
-अणु
-	काष्ठा vc4_dev *vc4 = to_vc4_dev(bo->base.base.dev);
+void vc4_bo_add_to_purgeable_pool(struct vc4_bo *bo)
+{
+	struct vc4_dev *vc4 = to_vc4_dev(bo->base.base.dev);
 
 	mutex_lock(&vc4->purgeable.lock);
 	list_add_tail(&bo->size_head, &vc4->purgeable.list);
 	vc4->purgeable.num++;
 	vc4->purgeable.size += bo->base.base.size;
 	mutex_unlock(&vc4->purgeable.lock);
-पूर्ण
+}
 
-अटल व्योम vc4_bo_हटाओ_from_purgeable_pool_locked(काष्ठा vc4_bo *bo)
-अणु
-	काष्ठा vc4_dev *vc4 = to_vc4_dev(bo->base.base.dev);
+static void vc4_bo_remove_from_purgeable_pool_locked(struct vc4_bo *bo)
+{
+	struct vc4_dev *vc4 = to_vc4_dev(bo->base.base.dev);
 
 	/* list_del_init() is used here because the caller might release
 	 * the purgeable lock in order to acquire the madv one and update the
 	 * madv status.
-	 * During this लघु period of समय a user might decide to mark
-	 * the BO as unpurgeable, and अगर bo->madv is set to
-	 * VC4_MADV_DONTNEED it will try to हटाओ the BO from the
-	 * purgeable list which will fail अगर the ->next/prev fields
+	 * During this short period of time a user might decide to mark
+	 * the BO as unpurgeable, and if bo->madv is set to
+	 * VC4_MADV_DONTNEED it will try to remove the BO from the
+	 * purgeable list which will fail if the ->next/prev fields
 	 * are set to LIST_POISON1/LIST_POISON2 (which is what
-	 * list_del() करोes).
+	 * list_del() does).
 	 * Re-initializing the list element guarantees that list_del()
-	 * will work correctly even अगर it's a NOP.
+	 * will work correctly even if it's a NOP.
 	 */
 	list_del_init(&bo->size_head);
 	vc4->purgeable.num--;
 	vc4->purgeable.size -= bo->base.base.size;
-पूर्ण
+}
 
-व्योम vc4_bo_हटाओ_from_purgeable_pool(काष्ठा vc4_bo *bo)
-अणु
-	काष्ठा vc4_dev *vc4 = to_vc4_dev(bo->base.base.dev);
+void vc4_bo_remove_from_purgeable_pool(struct vc4_bo *bo)
+{
+	struct vc4_dev *vc4 = to_vc4_dev(bo->base.base.dev);
 
 	mutex_lock(&vc4->purgeable.lock);
-	vc4_bo_हटाओ_from_purgeable_pool_locked(bo);
+	vc4_bo_remove_from_purgeable_pool_locked(bo);
 	mutex_unlock(&vc4->purgeable.lock);
-पूर्ण
+}
 
-अटल व्योम vc4_bo_purge(काष्ठा drm_gem_object *obj)
-अणु
-	काष्ठा vc4_bo *bo = to_vc4_bo(obj);
-	काष्ठा drm_device *dev = obj->dev;
+static void vc4_bo_purge(struct drm_gem_object *obj)
+{
+	struct vc4_bo *bo = to_vc4_bo(obj);
+	struct drm_device *dev = obj->dev;
 
 	WARN_ON(!mutex_is_locked(&bo->madv_lock));
 	WARN_ON(bo->madv != VC4_MADV_DONTNEED);
 
 	drm_vma_node_unmap(&obj->vma_node, dev->anon_inode->i_mapping);
 
-	dma_मुक्त_wc(dev->dev, obj->size, bo->base.vaddr, bo->base.paddr);
-	bo->base.vaddr = शून्य;
+	dma_free_wc(dev->dev, obj->size, bo->base.vaddr, bo->base.paddr);
+	bo->base.vaddr = NULL;
 	bo->madv = __VC4_MADV_PURGED;
-पूर्ण
+}
 
-अटल व्योम vc4_bo_userspace_cache_purge(काष्ठा drm_device *dev)
-अणु
-	काष्ठा vc4_dev *vc4 = to_vc4_dev(dev);
+static void vc4_bo_userspace_cache_purge(struct drm_device *dev)
+{
+	struct vc4_dev *vc4 = to_vc4_dev(dev);
 
 	mutex_lock(&vc4->purgeable.lock);
-	जबतक (!list_empty(&vc4->purgeable.list)) अणु
-		काष्ठा vc4_bo *bo = list_first_entry(&vc4->purgeable.list,
-						     काष्ठा vc4_bo, size_head);
-		काष्ठा drm_gem_object *obj = &bo->base.base;
-		माप_प्रकार purged_size = 0;
+	while (!list_empty(&vc4->purgeable.list)) {
+		struct vc4_bo *bo = list_first_entry(&vc4->purgeable.list,
+						     struct vc4_bo, size_head);
+		struct drm_gem_object *obj = &bo->base.base;
+		size_t purged_size = 0;
 
-		vc4_bo_हटाओ_from_purgeable_pool_locked(bo);
+		vc4_bo_remove_from_purgeable_pool_locked(bo);
 
-		/* Release the purgeable lock जबतक we're purging the BO so
-		 * that other people can जारी inserting things in the
-		 * purgeable pool without having to रुको क्रम all BOs to be
+		/* Release the purgeable lock while we're purging the BO so
+		 * that other people can continue inserting things in the
+		 * purgeable pool without having to wait for all BOs to be
 		 * purged.
 		 */
 		mutex_unlock(&vc4->purgeable.lock);
 		mutex_lock(&bo->madv_lock);
 
-		/* Since we released the purgeable pool lock beक्रमe acquiring
+		/* Since we released the purgeable pool lock before acquiring
 		 * the BO madv one, the user may have marked the BO as WILLNEED
-		 * and re-used it in the meanसमय.
-		 * Beक्रमe purging the BO we need to make sure
+		 * and re-used it in the meantime.
+		 * Before purging the BO we need to make sure
 		 * - it is still marked as DONTNEED
 		 * - it has not been re-inserted in the purgeable list
 		 * - it is not used by HW blocks
 		 * If one of these conditions is not met, just skip the entry.
 		 */
-		अगर (bo->madv == VC4_MADV_DONTNEED &&
+		if (bo->madv == VC4_MADV_DONTNEED &&
 		    list_empty(&bo->size_head) &&
-		    !refcount_पढ़ो(&bo->usecnt)) अणु
+		    !refcount_read(&bo->usecnt)) {
 			purged_size = bo->base.base.size;
 			vc4_bo_purge(obj);
-		पूर्ण
+		}
 		mutex_unlock(&bo->madv_lock);
 		mutex_lock(&vc4->purgeable.lock);
 
-		अगर (purged_size) अणु
+		if (purged_size) {
 			vc4->purgeable.purged_size += purged_size;
 			vc4->purgeable.purged_num++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	mutex_unlock(&vc4->purgeable.lock);
-पूर्ण
+}
 
-अटल काष्ठा vc4_bo *vc4_bo_get_from_cache(काष्ठा drm_device *dev,
-					    uपूर्णांक32_t size,
-					    क्रमागत vc4_kernel_bo_type type)
-अणु
-	काष्ठा vc4_dev *vc4 = to_vc4_dev(dev);
-	uपूर्णांक32_t page_index = bo_page_index(size);
-	काष्ठा vc4_bo *bo = शून्य;
+static struct vc4_bo *vc4_bo_get_from_cache(struct drm_device *dev,
+					    uint32_t size,
+					    enum vc4_kernel_bo_type type)
+{
+	struct vc4_dev *vc4 = to_vc4_dev(dev);
+	uint32_t page_index = bo_page_index(size);
+	struct vc4_bo *bo = NULL;
 
 	size = roundup(size, PAGE_SIZE);
 
 	mutex_lock(&vc4->bo_lock);
-	अगर (page_index >= vc4->bo_cache.size_list_size)
-		जाओ out;
+	if (page_index >= vc4->bo_cache.size_list_size)
+		goto out;
 
-	अगर (list_empty(&vc4->bo_cache.size_list[page_index]))
-		जाओ out;
+	if (list_empty(&vc4->bo_cache.size_list[page_index]))
+		goto out;
 
 	bo = list_first_entry(&vc4->bo_cache.size_list[page_index],
-			      काष्ठा vc4_bo, size_head);
-	vc4_bo_हटाओ_from_cache(bo);
+			      struct vc4_bo, size_head);
+	vc4_bo_remove_from_cache(bo);
 	kref_init(&bo->base.base.refcount);
 
 out:
-	अगर (bo)
+	if (bo)
 		vc4_bo_set_label(&bo->base.base, type);
 	mutex_unlock(&vc4->bo_lock);
-	वापस bo;
-पूर्ण
+	return bo;
+}
 
 /**
  * vc4_create_object - Implementation of driver->gem_create_object.
  * @dev: DRM device
  * @size: Size in bytes of the memory the object will reference
  *
- * This lets the CMA helpers allocate object काष्ठाs क्रम us, and keep
+ * This lets the CMA helpers allocate object structs for us, and keep
  * our BO stats correct.
  */
-काष्ठा drm_gem_object *vc4_create_object(काष्ठा drm_device *dev, माप_प्रकार size)
-अणु
-	काष्ठा vc4_dev *vc4 = to_vc4_dev(dev);
-	काष्ठा vc4_bo *bo;
+struct drm_gem_object *vc4_create_object(struct drm_device *dev, size_t size)
+{
+	struct vc4_dev *vc4 = to_vc4_dev(dev);
+	struct vc4_bo *bo;
 
-	bo = kzalloc(माप(*bo), GFP_KERNEL);
-	अगर (!bo)
-		वापस ERR_PTR(-ENOMEM);
+	bo = kzalloc(sizeof(*bo), GFP_KERNEL);
+	if (!bo)
+		return ERR_PTR(-ENOMEM);
 
 	bo->madv = VC4_MADV_WILLNEED;
 	refcount_set(&bo->usecnt, 0);
@@ -405,63 +404,63 @@ out:
 
 	bo->base.base.funcs = &vc4_gem_object_funcs;
 
-	वापस &bo->base.base;
-पूर्ण
+	return &bo->base.base;
+}
 
-काष्ठा vc4_bo *vc4_bo_create(काष्ठा drm_device *dev, माप_प्रकार unaligned_size,
-			     bool allow_unzeroed, क्रमागत vc4_kernel_bo_type type)
-अणु
-	माप_प्रकार size = roundup(unaligned_size, PAGE_SIZE);
-	काष्ठा vc4_dev *vc4 = to_vc4_dev(dev);
-	काष्ठा drm_gem_cma_object *cma_obj;
-	काष्ठा vc4_bo *bo;
+struct vc4_bo *vc4_bo_create(struct drm_device *dev, size_t unaligned_size,
+			     bool allow_unzeroed, enum vc4_kernel_bo_type type)
+{
+	size_t size = roundup(unaligned_size, PAGE_SIZE);
+	struct vc4_dev *vc4 = to_vc4_dev(dev);
+	struct drm_gem_cma_object *cma_obj;
+	struct vc4_bo *bo;
 
-	अगर (size == 0)
-		वापस ERR_PTR(-EINVAL);
+	if (size == 0)
+		return ERR_PTR(-EINVAL);
 
 	/* First, try to get a vc4_bo from the kernel BO cache. */
 	bo = vc4_bo_get_from_cache(dev, size, type);
-	अगर (bo) अणु
-		अगर (!allow_unzeroed)
-			स_रखो(bo->base.vaddr, 0, bo->base.base.size);
-		वापस bo;
-	पूर्ण
+	if (bo) {
+		if (!allow_unzeroed)
+			memset(bo->base.vaddr, 0, bo->base.base.size);
+		return bo;
+	}
 
 	cma_obj = drm_gem_cma_create(dev, size);
-	अगर (IS_ERR(cma_obj)) अणु
+	if (IS_ERR(cma_obj)) {
 		/*
-		 * If we've run out of CMA memory, समाप्त the cache of
+		 * If we've run out of CMA memory, kill the cache of
 		 * CMA allocations we've got laying around and try again.
 		 */
 		vc4_bo_cache_purge(dev);
 		cma_obj = drm_gem_cma_create(dev, size);
-	पूर्ण
+	}
 
-	अगर (IS_ERR(cma_obj)) अणु
+	if (IS_ERR(cma_obj)) {
 		/*
 		 * Still not enough CMA memory, purge the userspace BO
 		 * cache and retry.
 		 * This is sub-optimal since we purge the whole userspace
-		 * BO cache which क्रमces user that want to re-use the BO to
+		 * BO cache which forces user that want to re-use the BO to
 		 * restore its initial content.
 		 * Ideally, we should purge entries one by one and retry
-		 * after each to see अगर CMA allocation succeeds. Or even
+		 * after each to see if CMA allocation succeeds. Or even
 		 * better, try to find an entry with at least the same
 		 * size.
 		 */
 		vc4_bo_userspace_cache_purge(dev);
 		cma_obj = drm_gem_cma_create(dev, size);
-	पूर्ण
+	}
 
-	अगर (IS_ERR(cma_obj)) अणु
-		काष्ठा drm_prपूर्णांकer p = drm_info_prपूर्णांकer(vc4->base.dev);
+	if (IS_ERR(cma_obj)) {
+		struct drm_printer p = drm_info_printer(vc4->base.dev);
 		DRM_ERROR("Failed to allocate from CMA:\n");
-		vc4_bo_stats_prपूर्णांक(&p, vc4);
-		वापस ERR_PTR(-ENOMEM);
-	पूर्ण
+		vc4_bo_stats_print(&p, vc4);
+		return ERR_PTR(-ENOMEM);
+	}
 	bo = to_vc4_bo(&cma_obj->base);
 
-	/* By शेष, BOs करो not support the MADV ioctl. This will be enabled
+	/* By default, BOs do not support the MADV ioctl. This will be enabled
 	 * only on BOs that are exposed to userspace (V3D, V3D_SHADER and DUMB
 	 * BOs).
 	 */
@@ -471,229 +470,229 @@ out:
 	vc4_bo_set_label(&cma_obj->base, type);
 	mutex_unlock(&vc4->bo_lock);
 
-	वापस bo;
-पूर्ण
+	return bo;
+}
 
-पूर्णांक vc4_dumb_create(काष्ठा drm_file *file_priv,
-		    काष्ठा drm_device *dev,
-		    काष्ठा drm_mode_create_dumb *args)
-अणु
-	पूर्णांक min_pitch = DIV_ROUND_UP(args->width * args->bpp, 8);
-	काष्ठा vc4_bo *bo = शून्य;
-	पूर्णांक ret;
+int vc4_dumb_create(struct drm_file *file_priv,
+		    struct drm_device *dev,
+		    struct drm_mode_create_dumb *args)
+{
+	int min_pitch = DIV_ROUND_UP(args->width * args->bpp, 8);
+	struct vc4_bo *bo = NULL;
+	int ret;
 
-	अगर (args->pitch < min_pitch)
+	if (args->pitch < min_pitch)
 		args->pitch = min_pitch;
 
-	अगर (args->size < args->pitch * args->height)
+	if (args->size < args->pitch * args->height)
 		args->size = args->pitch * args->height;
 
 	bo = vc4_bo_create(dev, args->size, false, VC4_BO_TYPE_DUMB);
-	अगर (IS_ERR(bo))
-		वापस PTR_ERR(bo);
+	if (IS_ERR(bo))
+		return PTR_ERR(bo);
 
 	bo->madv = VC4_MADV_WILLNEED;
 
 	ret = drm_gem_handle_create(file_priv, &bo->base.base, &args->handle);
 	drm_gem_object_put(&bo->base.base);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम vc4_bo_cache_मुक्त_old(काष्ठा drm_device *dev)
-अणु
-	काष्ठा vc4_dev *vc4 = to_vc4_dev(dev);
-	अचिन्हित दीर्घ expire_समय = jअगरfies - msecs_to_jअगरfies(1000);
+static void vc4_bo_cache_free_old(struct drm_device *dev)
+{
+	struct vc4_dev *vc4 = to_vc4_dev(dev);
+	unsigned long expire_time = jiffies - msecs_to_jiffies(1000);
 
-	lockdep_निश्चित_held(&vc4->bo_lock);
+	lockdep_assert_held(&vc4->bo_lock);
 
-	जबतक (!list_empty(&vc4->bo_cache.समय_list)) अणु
-		काष्ठा vc4_bo *bo = list_last_entry(&vc4->bo_cache.समय_list,
-						    काष्ठा vc4_bo, unref_head);
-		अगर (समय_beक्रमe(expire_समय, bo->मुक्त_समय)) अणु
-			mod_समयr(&vc4->bo_cache.समय_प्रकारimer,
-				  round_jअगरfies_up(jअगरfies +
-						   msecs_to_jअगरfies(1000)));
-			वापस;
-		पूर्ण
+	while (!list_empty(&vc4->bo_cache.time_list)) {
+		struct vc4_bo *bo = list_last_entry(&vc4->bo_cache.time_list,
+						    struct vc4_bo, unref_head);
+		if (time_before(expire_time, bo->free_time)) {
+			mod_timer(&vc4->bo_cache.time_timer,
+				  round_jiffies_up(jiffies +
+						   msecs_to_jiffies(1000)));
+			return;
+		}
 
-		vc4_bo_हटाओ_from_cache(bo);
+		vc4_bo_remove_from_cache(bo);
 		vc4_bo_destroy(bo);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /* Called on the last userspace/kernel unreference of the BO.  Returns
- * it to the BO cache अगर possible, otherwise मुक्तs it.
+ * it to the BO cache if possible, otherwise frees it.
  */
-अटल व्योम vc4_मुक्त_object(काष्ठा drm_gem_object *gem_bo)
-अणु
-	काष्ठा drm_device *dev = gem_bo->dev;
-	काष्ठा vc4_dev *vc4 = to_vc4_dev(dev);
-	काष्ठा vc4_bo *bo = to_vc4_bo(gem_bo);
-	काष्ठा list_head *cache_list;
+static void vc4_free_object(struct drm_gem_object *gem_bo)
+{
+	struct drm_device *dev = gem_bo->dev;
+	struct vc4_dev *vc4 = to_vc4_dev(dev);
+	struct vc4_bo *bo = to_vc4_bo(gem_bo);
+	struct list_head *cache_list;
 
 	/* Remove the BO from the purgeable list. */
 	mutex_lock(&bo->madv_lock);
-	अगर (bo->madv == VC4_MADV_DONTNEED && !refcount_पढ़ो(&bo->usecnt))
-		vc4_bo_हटाओ_from_purgeable_pool(bo);
+	if (bo->madv == VC4_MADV_DONTNEED && !refcount_read(&bo->usecnt))
+		vc4_bo_remove_from_purgeable_pool(bo);
 	mutex_unlock(&bo->madv_lock);
 
 	mutex_lock(&vc4->bo_lock);
-	/* If the object references someone अन्यथा's memory, we can't cache it.
+	/* If the object references someone else's memory, we can't cache it.
 	 */
-	अगर (gem_bo->import_attach) अणु
+	if (gem_bo->import_attach) {
 		vc4_bo_destroy(bo);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	/* Don't cache अगर it was खुलाly named. */
-	अगर (gem_bo->name) अणु
+	/* Don't cache if it was publicly named. */
+	if (gem_bo->name) {
 		vc4_bo_destroy(bo);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	/* If this object was partially स्थिरructed but CMA allocation
-	 * had failed, just मुक्त it. Can also happen when the BO has been
+	/* If this object was partially constructed but CMA allocation
+	 * had failed, just free it. Can also happen when the BO has been
 	 * purged.
 	 */
-	अगर (!bo->base.vaddr) अणु
+	if (!bo->base.vaddr) {
 		vc4_bo_destroy(bo);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	cache_list = vc4_get_cache_list_क्रम_size(dev, gem_bo->size);
-	अगर (!cache_list) अणु
+	cache_list = vc4_get_cache_list_for_size(dev, gem_bo->size);
+	if (!cache_list) {
 		vc4_bo_destroy(bo);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (bo->validated_shader) अणु
-		kमुक्त(bo->validated_shader->unअगरorm_addr_offsets);
-		kमुक्त(bo->validated_shader->texture_samples);
-		kमुक्त(bo->validated_shader);
-		bo->validated_shader = शून्य;
-	पूर्ण
+	if (bo->validated_shader) {
+		kfree(bo->validated_shader->uniform_addr_offsets);
+		kfree(bo->validated_shader->texture_samples);
+		kfree(bo->validated_shader);
+		bo->validated_shader = NULL;
+	}
 
-	/* Reset madv and usecnt beक्रमe adding the BO to the cache. */
+	/* Reset madv and usecnt before adding the BO to the cache. */
 	bo->madv = __VC4_MADV_NOTSUPP;
 	refcount_set(&bo->usecnt, 0);
 
-	bo->t_क्रमmat = false;
-	bo->मुक्त_समय = jअगरfies;
+	bo->t_format = false;
+	bo->free_time = jiffies;
 	list_add(&bo->size_head, cache_list);
-	list_add(&bo->unref_head, &vc4->bo_cache.समय_list);
+	list_add(&bo->unref_head, &vc4->bo_cache.time_list);
 
 	vc4_bo_set_label(&bo->base.base, VC4_BO_TYPE_KERNEL_CACHE);
 
-	vc4_bo_cache_मुक्त_old(dev);
+	vc4_bo_cache_free_old(dev);
 
 out:
 	mutex_unlock(&vc4->bo_lock);
-पूर्ण
+}
 
-अटल व्योम vc4_bo_cache_समय_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा vc4_dev *vc4 =
-		container_of(work, काष्ठा vc4_dev, bo_cache.समय_work);
-	काष्ठा drm_device *dev = &vc4->base;
+static void vc4_bo_cache_time_work(struct work_struct *work)
+{
+	struct vc4_dev *vc4 =
+		container_of(work, struct vc4_dev, bo_cache.time_work);
+	struct drm_device *dev = &vc4->base;
 
 	mutex_lock(&vc4->bo_lock);
-	vc4_bo_cache_मुक्त_old(dev);
+	vc4_bo_cache_free_old(dev);
 	mutex_unlock(&vc4->bo_lock);
-पूर्ण
+}
 
-पूर्णांक vc4_bo_inc_usecnt(काष्ठा vc4_bo *bo)
-अणु
-	पूर्णांक ret;
+int vc4_bo_inc_usecnt(struct vc4_bo *bo)
+{
+	int ret;
 
-	/* Fast path: अगर the BO is alपढ़ोy retained by someone, no need to
+	/* Fast path: if the BO is already retained by someone, no need to
 	 * check the madv status.
 	 */
-	अगर (refcount_inc_not_zero(&bo->usecnt))
-		वापस 0;
+	if (refcount_inc_not_zero(&bo->usecnt))
+		return 0;
 
 	mutex_lock(&bo->madv_lock);
-	चयन (bo->madv) अणु
-	हाल VC4_MADV_WILLNEED:
-		अगर (!refcount_inc_not_zero(&bo->usecnt))
+	switch (bo->madv) {
+	case VC4_MADV_WILLNEED:
+		if (!refcount_inc_not_zero(&bo->usecnt))
 			refcount_set(&bo->usecnt, 1);
 		ret = 0;
-		अवरोध;
-	हाल VC4_MADV_DONTNEED:
-		/* We shouldn't use a BO marked as purgeable अगर at least
-		 * someone अन्यथा retained its content by incrementing usecnt.
+		break;
+	case VC4_MADV_DONTNEED:
+		/* We shouldn't use a BO marked as purgeable if at least
+		 * someone else retained its content by incrementing usecnt.
 		 * Luckily the BO hasn't been purged yet, but something wrong
 		 * is happening here. Just throw an error instead of
-		 * authorizing this use हाल.
+		 * authorizing this use case.
 		 */
-	हाल __VC4_MADV_PURGED:
+	case __VC4_MADV_PURGED:
 		/* We can't use a purged BO. */
-	शेष:
+	default:
 		/* Invalid madv value. */
 		ret = -EINVAL;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 	mutex_unlock(&bo->madv_lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम vc4_bo_dec_usecnt(काष्ठा vc4_bo *bo)
-अणु
-	/* Fast path: अगर the BO is still retained by someone, no need to test
+void vc4_bo_dec_usecnt(struct vc4_bo *bo)
+{
+	/* Fast path: if the BO is still retained by someone, no need to test
 	 * the madv value.
 	 */
-	अगर (refcount_dec_not_one(&bo->usecnt))
-		वापस;
+	if (refcount_dec_not_one(&bo->usecnt))
+		return;
 
 	mutex_lock(&bo->madv_lock);
-	अगर (refcount_dec_and_test(&bo->usecnt) &&
+	if (refcount_dec_and_test(&bo->usecnt) &&
 	    bo->madv == VC4_MADV_DONTNEED)
 		vc4_bo_add_to_purgeable_pool(bo);
 	mutex_unlock(&bo->madv_lock);
-पूर्ण
+}
 
-अटल व्योम vc4_bo_cache_समय_प्रकारimer(काष्ठा समयr_list *t)
-अणु
-	काष्ठा vc4_dev *vc4 = from_समयr(vc4, t, bo_cache.समय_प्रकारimer);
+static void vc4_bo_cache_time_timer(struct timer_list *t)
+{
+	struct vc4_dev *vc4 = from_timer(vc4, t, bo_cache.time_timer);
 
-	schedule_work(&vc4->bo_cache.समय_work);
-पूर्ण
+	schedule_work(&vc4->bo_cache.time_work);
+}
 
-अटल काष्ठा dma_buf *vc4_prime_export(काष्ठा drm_gem_object *obj, पूर्णांक flags)
-अणु
-	काष्ठा vc4_bo *bo = to_vc4_bo(obj);
-	काष्ठा dma_buf *dmabuf;
-	पूर्णांक ret;
+static struct dma_buf *vc4_prime_export(struct drm_gem_object *obj, int flags)
+{
+	struct vc4_bo *bo = to_vc4_bo(obj);
+	struct dma_buf *dmabuf;
+	int ret;
 
-	अगर (bo->validated_shader) अणु
+	if (bo->validated_shader) {
 		DRM_DEBUG("Attempting to export shader BO\n");
-		वापस ERR_PTR(-EINVAL);
-	पूर्ण
+		return ERR_PTR(-EINVAL);
+	}
 
 	/* Note: as soon as the BO is exported it becomes unpurgeable, because
-	 * noone ever decrements the usecnt even अगर the reference held by the
+	 * noone ever decrements the usecnt even if the reference held by the
 	 * exported BO is released. This shouldn't be a problem since we don't
 	 * expect exported BOs to be marked as purgeable.
 	 */
 	ret = vc4_bo_inc_usecnt(bo);
-	अगर (ret) अणु
+	if (ret) {
 		DRM_ERROR("Failed to increment BO usecnt\n");
-		वापस ERR_PTR(ret);
-	पूर्ण
+		return ERR_PTR(ret);
+	}
 
 	dmabuf = drm_gem_prime_export(obj, flags);
-	अगर (IS_ERR(dmabuf))
+	if (IS_ERR(dmabuf))
 		vc4_bo_dec_usecnt(bo);
 
-	वापस dmabuf;
-पूर्ण
+	return dmabuf;
+}
 
-अटल vm_fault_t vc4_fault(काष्ठा vm_fault *vmf)
-अणु
-	काष्ठा vm_area_काष्ठा *vma = vmf->vma;
-	काष्ठा drm_gem_object *obj = vma->vm_निजी_data;
-	काष्ठा vc4_bo *bo = to_vc4_bo(obj);
+static vm_fault_t vc4_fault(struct vm_fault *vmf)
+{
+	struct vm_area_struct *vma = vmf->vma;
+	struct drm_gem_object *obj = vma->vm_private_data;
+	struct vc4_bo *bo = to_vc4_bo(obj);
 
 	/* The only reason we would end up here is when user-space accesses
 	 * BO's memory after it's been purged.
@@ -702,343 +701,343 @@ out:
 	WARN_ON(bo->madv != __VC4_MADV_PURGED);
 	mutex_unlock(&bo->madv_lock);
 
-	वापस VM_FAULT_SIGBUS;
-पूर्ण
+	return VM_FAULT_SIGBUS;
+}
 
-अटल पूर्णांक vc4_gem_object_mmap(काष्ठा drm_gem_object *obj, काष्ठा vm_area_काष्ठा *vma)
-अणु
-	काष्ठा vc4_bo *bo = to_vc4_bo(obj);
+static int vc4_gem_object_mmap(struct drm_gem_object *obj, struct vm_area_struct *vma)
+{
+	struct vc4_bo *bo = to_vc4_bo(obj);
 
-	अगर (bo->validated_shader && (vma->vm_flags & VM_WRITE)) अणु
+	if (bo->validated_shader && (vma->vm_flags & VM_WRITE)) {
 		DRM_DEBUG("mmaping of shader BOs for writing not allowed.\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (bo->madv != VC4_MADV_WILLNEED) अणु
+	if (bo->madv != VC4_MADV_WILLNEED) {
 		DRM_DEBUG("mmaping of %s BO not allowed\n",
 			  bo->madv == VC4_MADV_DONTNEED ?
 			  "purgeable" : "purged");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस drm_gem_cma_mmap(obj, vma);
-पूर्ण
+	return drm_gem_cma_mmap(obj, vma);
+}
 
-अटल स्थिर काष्ठा vm_operations_काष्ठा vc4_vm_ops = अणु
+static const struct vm_operations_struct vc4_vm_ops = {
 	.fault = vc4_fault,
-	.खोलो = drm_gem_vm_खोलो,
-	.बंद = drm_gem_vm_बंद,
-पूर्ण;
+	.open = drm_gem_vm_open,
+	.close = drm_gem_vm_close,
+};
 
-अटल स्थिर काष्ठा drm_gem_object_funcs vc4_gem_object_funcs = अणु
-	.मुक्त = vc4_मुक्त_object,
+static const struct drm_gem_object_funcs vc4_gem_object_funcs = {
+	.free = vc4_free_object,
 	.export = vc4_prime_export,
 	.get_sg_table = drm_gem_cma_get_sg_table,
 	.vmap = drm_gem_cma_vmap,
 	.mmap = vc4_gem_object_mmap,
 	.vm_ops = &vc4_vm_ops,
-पूर्ण;
+};
 
-अटल पूर्णांक vc4_grab_bin_bo(काष्ठा vc4_dev *vc4, काष्ठा vc4_file *vc4file)
-अणु
-	पूर्णांक ret;
+static int vc4_grab_bin_bo(struct vc4_dev *vc4, struct vc4_file *vc4file)
+{
+	int ret;
 
-	अगर (!vc4->v3d)
-		वापस -ENODEV;
+	if (!vc4->v3d)
+		return -ENODEV;
 
-	अगर (vc4file->bin_bo_used)
-		वापस 0;
+	if (vc4file->bin_bo_used)
+		return 0;
 
 	ret = vc4_v3d_bin_bo_get(vc4, &vc4file->bin_bo_used);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक vc4_create_bo_ioctl(काष्ठा drm_device *dev, व्योम *data,
-			काष्ठा drm_file *file_priv)
-अणु
-	काष्ठा drm_vc4_create_bo *args = data;
-	काष्ठा vc4_file *vc4file = file_priv->driver_priv;
-	काष्ठा vc4_dev *vc4 = to_vc4_dev(dev);
-	काष्ठा vc4_bo *bo = शून्य;
-	पूर्णांक ret;
+int vc4_create_bo_ioctl(struct drm_device *dev, void *data,
+			struct drm_file *file_priv)
+{
+	struct drm_vc4_create_bo *args = data;
+	struct vc4_file *vc4file = file_priv->driver_priv;
+	struct vc4_dev *vc4 = to_vc4_dev(dev);
+	struct vc4_bo *bo = NULL;
+	int ret;
 
 	ret = vc4_grab_bin_bo(vc4, vc4file);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	/*
 	 * We can't allocate from the BO cache, because the BOs don't
 	 * get zeroed, and that might leak data between users.
 	 */
 	bo = vc4_bo_create(dev, args->size, false, VC4_BO_TYPE_V3D);
-	अगर (IS_ERR(bo))
-		वापस PTR_ERR(bo);
+	if (IS_ERR(bo))
+		return PTR_ERR(bo);
 
 	bo->madv = VC4_MADV_WILLNEED;
 
 	ret = drm_gem_handle_create(file_priv, &bo->base.base, &args->handle);
 	drm_gem_object_put(&bo->base.base);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक vc4_mmap_bo_ioctl(काष्ठा drm_device *dev, व्योम *data,
-		      काष्ठा drm_file *file_priv)
-अणु
-	काष्ठा drm_vc4_mmap_bo *args = data;
-	काष्ठा drm_gem_object *gem_obj;
+int vc4_mmap_bo_ioctl(struct drm_device *dev, void *data,
+		      struct drm_file *file_priv)
+{
+	struct drm_vc4_mmap_bo *args = data;
+	struct drm_gem_object *gem_obj;
 
 	gem_obj = drm_gem_object_lookup(file_priv, args->handle);
-	अगर (!gem_obj) अणु
+	if (!gem_obj) {
 		DRM_DEBUG("Failed to look up GEM BO %d\n", args->handle);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	/* The mmap offset was set up at BO allocation समय. */
+	/* The mmap offset was set up at BO allocation time. */
 	args->offset = drm_vma_node_offset_addr(&gem_obj->vma_node);
 
 	drm_gem_object_put(gem_obj);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक
-vc4_create_shader_bo_ioctl(काष्ठा drm_device *dev, व्योम *data,
-			   काष्ठा drm_file *file_priv)
-अणु
-	काष्ठा drm_vc4_create_shader_bo *args = data;
-	काष्ठा vc4_file *vc4file = file_priv->driver_priv;
-	काष्ठा vc4_dev *vc4 = to_vc4_dev(dev);
-	काष्ठा vc4_bo *bo = शून्य;
-	पूर्णांक ret;
+int
+vc4_create_shader_bo_ioctl(struct drm_device *dev, void *data,
+			   struct drm_file *file_priv)
+{
+	struct drm_vc4_create_shader_bo *args = data;
+	struct vc4_file *vc4file = file_priv->driver_priv;
+	struct vc4_dev *vc4 = to_vc4_dev(dev);
+	struct vc4_bo *bo = NULL;
+	int ret;
 
-	अगर (args->size == 0)
-		वापस -EINVAL;
+	if (args->size == 0)
+		return -EINVAL;
 
-	अगर (args->size % माप(u64) != 0)
-		वापस -EINVAL;
+	if (args->size % sizeof(u64) != 0)
+		return -EINVAL;
 
-	अगर (args->flags != 0) अणु
+	if (args->flags != 0) {
 		DRM_INFO("Unknown flags set: 0x%08x\n", args->flags);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (args->pad != 0) अणु
+	if (args->pad != 0) {
 		DRM_INFO("Pad set: 0x%08x\n", args->pad);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	ret = vc4_grab_bin_bo(vc4, vc4file);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	bo = vc4_bo_create(dev, args->size, true, VC4_BO_TYPE_V3D_SHADER);
-	अगर (IS_ERR(bo))
-		वापस PTR_ERR(bo);
+	if (IS_ERR(bo))
+		return PTR_ERR(bo);
 
 	bo->madv = VC4_MADV_WILLNEED;
 
-	अगर (copy_from_user(bo->base.vaddr,
-			     (व्योम __user *)(uपूर्णांकptr_t)args->data,
-			     args->size)) अणु
+	if (copy_from_user(bo->base.vaddr,
+			     (void __user *)(uintptr_t)args->data,
+			     args->size)) {
 		ret = -EFAULT;
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 	/* Clear the rest of the memory from allocating from the BO
 	 * cache.
 	 */
-	स_रखो(bo->base.vaddr + args->size, 0,
+	memset(bo->base.vaddr + args->size, 0,
 	       bo->base.base.size - args->size);
 
 	bo->validated_shader = vc4_validate_shader(&bo->base);
-	अगर (!bo->validated_shader) अणु
+	if (!bo->validated_shader) {
 		ret = -EINVAL;
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
-	/* We have to create the handle after validation, to aव्योम
-	 * races क्रम users to करो करोing things like mmap the shader BO.
+	/* We have to create the handle after validation, to avoid
+	 * races for users to do doing things like mmap the shader BO.
 	 */
 	ret = drm_gem_handle_create(file_priv, &bo->base.base, &args->handle);
 
 fail:
 	drm_gem_object_put(&bo->base.base);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * vc4_set_tiling_ioctl() - Sets the tiling modअगरier क्रम a BO.
+ * vc4_set_tiling_ioctl() - Sets the tiling modifier for a BO.
  * @dev: DRM device
  * @data: ioctl argument
- * @file_priv: DRM file क्रम this fd
+ * @file_priv: DRM file for this fd
  *
- * The tiling state of the BO decides the शेष modअगरier of an fb अगर
- * no specअगरic modअगरier was set by userspace, and the वापस value of
+ * The tiling state of the BO decides the default modifier of an fb if
+ * no specific modifier was set by userspace, and the return value of
  * vc4_get_tiling_ioctl() (so that userspace can treat a BO it
- * received from dmabuf as the same tiling क्रमmat as the producer
+ * received from dmabuf as the same tiling format as the producer
  * used).
  */
-पूर्णांक vc4_set_tiling_ioctl(काष्ठा drm_device *dev, व्योम *data,
-			 काष्ठा drm_file *file_priv)
-अणु
-	काष्ठा drm_vc4_set_tiling *args = data;
-	काष्ठा drm_gem_object *gem_obj;
-	काष्ठा vc4_bo *bo;
-	bool t_क्रमmat;
+int vc4_set_tiling_ioctl(struct drm_device *dev, void *data,
+			 struct drm_file *file_priv)
+{
+	struct drm_vc4_set_tiling *args = data;
+	struct drm_gem_object *gem_obj;
+	struct vc4_bo *bo;
+	bool t_format;
 
-	अगर (args->flags != 0)
-		वापस -EINVAL;
+	if (args->flags != 0)
+		return -EINVAL;
 
-	चयन (args->modअगरier) अणु
-	हाल DRM_FORMAT_MOD_NONE:
-		t_क्रमmat = false;
-		अवरोध;
-	हाल DRM_FORMAT_MOD_BROADCOM_VC4_T_TILED:
-		t_क्रमmat = true;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+	switch (args->modifier) {
+	case DRM_FORMAT_MOD_NONE:
+		t_format = false;
+		break;
+	case DRM_FORMAT_MOD_BROADCOM_VC4_T_TILED:
+		t_format = true;
+		break;
+	default:
+		return -EINVAL;
+	}
 
 	gem_obj = drm_gem_object_lookup(file_priv, args->handle);
-	अगर (!gem_obj) अणु
+	if (!gem_obj) {
 		DRM_DEBUG("Failed to look up GEM BO %d\n", args->handle);
-		वापस -ENOENT;
-	पूर्ण
+		return -ENOENT;
+	}
 	bo = to_vc4_bo(gem_obj);
-	bo->t_क्रमmat = t_क्रमmat;
+	bo->t_format = t_format;
 
 	drm_gem_object_put(gem_obj);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * vc4_get_tiling_ioctl() - Gets the tiling modअगरier क्रम a BO.
+ * vc4_get_tiling_ioctl() - Gets the tiling modifier for a BO.
  * @dev: DRM device
  * @data: ioctl argument
- * @file_priv: DRM file क्रम this fd
+ * @file_priv: DRM file for this fd
  *
- * Returns the tiling modअगरier क्रम a BO as set by vc4_set_tiling_ioctl().
+ * Returns the tiling modifier for a BO as set by vc4_set_tiling_ioctl().
  */
-पूर्णांक vc4_get_tiling_ioctl(काष्ठा drm_device *dev, व्योम *data,
-			 काष्ठा drm_file *file_priv)
-अणु
-	काष्ठा drm_vc4_get_tiling *args = data;
-	काष्ठा drm_gem_object *gem_obj;
-	काष्ठा vc4_bo *bo;
+int vc4_get_tiling_ioctl(struct drm_device *dev, void *data,
+			 struct drm_file *file_priv)
+{
+	struct drm_vc4_get_tiling *args = data;
+	struct drm_gem_object *gem_obj;
+	struct vc4_bo *bo;
 
-	अगर (args->flags != 0 || args->modअगरier != 0)
-		वापस -EINVAL;
+	if (args->flags != 0 || args->modifier != 0)
+		return -EINVAL;
 
 	gem_obj = drm_gem_object_lookup(file_priv, args->handle);
-	अगर (!gem_obj) अणु
+	if (!gem_obj) {
 		DRM_DEBUG("Failed to look up GEM BO %d\n", args->handle);
-		वापस -ENOENT;
-	पूर्ण
+		return -ENOENT;
+	}
 	bo = to_vc4_bo(gem_obj);
 
-	अगर (bo->t_क्रमmat)
-		args->modअगरier = DRM_FORMAT_MOD_BROADCOM_VC4_T_TILED;
-	अन्यथा
-		args->modअगरier = DRM_FORMAT_MOD_NONE;
+	if (bo->t_format)
+		args->modifier = DRM_FORMAT_MOD_BROADCOM_VC4_T_TILED;
+	else
+		args->modifier = DRM_FORMAT_MOD_NONE;
 
 	drm_gem_object_put(gem_obj);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम vc4_bo_cache_destroy(काष्ठा drm_device *dev, व्योम *unused);
-पूर्णांक vc4_bo_cache_init(काष्ठा drm_device *dev)
-अणु
-	काष्ठा vc4_dev *vc4 = to_vc4_dev(dev);
-	पूर्णांक i;
+static void vc4_bo_cache_destroy(struct drm_device *dev, void *unused);
+int vc4_bo_cache_init(struct drm_device *dev)
+{
+	struct vc4_dev *vc4 = to_vc4_dev(dev);
+	int i;
 
 	/* Create the initial set of BO labels that the kernel will
-	 * use.  This lets us aव्योम a bunch of string पुनः_स्मृतिation in
+	 * use.  This lets us avoid a bunch of string reallocation in
 	 * the kernel's draw and BO allocation paths.
 	 */
-	vc4->bo_labels = kसुस्मृति(VC4_BO_TYPE_COUNT, माप(*vc4->bo_labels),
+	vc4->bo_labels = kcalloc(VC4_BO_TYPE_COUNT, sizeof(*vc4->bo_labels),
 				 GFP_KERNEL);
-	अगर (!vc4->bo_labels)
-		वापस -ENOMEM;
+	if (!vc4->bo_labels)
+		return -ENOMEM;
 	vc4->num_labels = VC4_BO_TYPE_COUNT;
 
 	BUILD_BUG_ON(ARRAY_SIZE(bo_type_names) != VC4_BO_TYPE_COUNT);
-	क्रम (i = 0; i < VC4_BO_TYPE_COUNT; i++)
+	for (i = 0; i < VC4_BO_TYPE_COUNT; i++)
 		vc4->bo_labels[i].name = bo_type_names[i];
 
 	mutex_init(&vc4->bo_lock);
 
-	vc4_debugfs_add_file(dev, "bo_stats", vc4_bo_stats_debugfs, शून्य);
+	vc4_debugfs_add_file(dev, "bo_stats", vc4_bo_stats_debugfs, NULL);
 
-	INIT_LIST_HEAD(&vc4->bo_cache.समय_list);
+	INIT_LIST_HEAD(&vc4->bo_cache.time_list);
 
-	INIT_WORK(&vc4->bo_cache.समय_work, vc4_bo_cache_समय_work);
-	समयr_setup(&vc4->bo_cache.समय_प्रकारimer, vc4_bo_cache_समय_प्रकारimer, 0);
+	INIT_WORK(&vc4->bo_cache.time_work, vc4_bo_cache_time_work);
+	timer_setup(&vc4->bo_cache.time_timer, vc4_bo_cache_time_timer, 0);
 
-	वापस drmm_add_action_or_reset(dev, vc4_bo_cache_destroy, शून्य);
-पूर्ण
+	return drmm_add_action_or_reset(dev, vc4_bo_cache_destroy, NULL);
+}
 
-अटल व्योम vc4_bo_cache_destroy(काष्ठा drm_device *dev, व्योम *unused)
-अणु
-	काष्ठा vc4_dev *vc4 = to_vc4_dev(dev);
-	पूर्णांक i;
+static void vc4_bo_cache_destroy(struct drm_device *dev, void *unused)
+{
+	struct vc4_dev *vc4 = to_vc4_dev(dev);
+	int i;
 
-	del_समयr(&vc4->bo_cache.समय_प्रकारimer);
-	cancel_work_sync(&vc4->bo_cache.समय_work);
+	del_timer(&vc4->bo_cache.time_timer);
+	cancel_work_sync(&vc4->bo_cache.time_work);
 
 	vc4_bo_cache_purge(dev);
 
-	क्रम (i = 0; i < vc4->num_labels; i++) अणु
-		अगर (vc4->bo_labels[i].num_allocated) अणु
+	for (i = 0; i < vc4->num_labels; i++) {
+		if (vc4->bo_labels[i].num_allocated) {
 			DRM_ERROR("Destroying BO cache with %d %s "
 				  "BOs still allocated\n",
 				  vc4->bo_labels[i].num_allocated,
 				  vc4->bo_labels[i].name);
-		पूर्ण
+		}
 
-		अगर (is_user_label(i))
-			kमुक्त(vc4->bo_labels[i].name);
-	पूर्ण
-	kमुक्त(vc4->bo_labels);
-पूर्ण
+		if (is_user_label(i))
+			kfree(vc4->bo_labels[i].name);
+	}
+	kfree(vc4->bo_labels);
+}
 
-पूर्णांक vc4_label_bo_ioctl(काष्ठा drm_device *dev, व्योम *data,
-		       काष्ठा drm_file *file_priv)
-अणु
-	काष्ठा vc4_dev *vc4 = to_vc4_dev(dev);
-	काष्ठा drm_vc4_label_bo *args = data;
-	अक्षर *name;
-	काष्ठा drm_gem_object *gem_obj;
-	पूर्णांक ret = 0, label;
+int vc4_label_bo_ioctl(struct drm_device *dev, void *data,
+		       struct drm_file *file_priv)
+{
+	struct vc4_dev *vc4 = to_vc4_dev(dev);
+	struct drm_vc4_label_bo *args = data;
+	char *name;
+	struct drm_gem_object *gem_obj;
+	int ret = 0, label;
 
-	अगर (!args->len)
-		वापस -EINVAL;
+	if (!args->len)
+		return -EINVAL;
 
 	name = strndup_user(u64_to_user_ptr(args->name), args->len + 1);
-	अगर (IS_ERR(name))
-		वापस PTR_ERR(name);
+	if (IS_ERR(name))
+		return PTR_ERR(name);
 
 	gem_obj = drm_gem_object_lookup(file_priv, args->handle);
-	अगर (!gem_obj) अणु
+	if (!gem_obj) {
 		DRM_ERROR("Failed to look up GEM BO %d\n", args->handle);
-		kमुक्त(name);
-		वापस -ENOENT;
-	पूर्ण
+		kfree(name);
+		return -ENOENT;
+	}
 
 	mutex_lock(&vc4->bo_lock);
 	label = vc4_get_user_label(vc4, name);
-	अगर (label != -1)
+	if (label != -1)
 		vc4_bo_set_label(gem_obj, label);
-	अन्यथा
+	else
 		ret = -ENOMEM;
 	mutex_unlock(&vc4->bo_lock);
 
 	drm_gem_object_put(gem_obj);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}

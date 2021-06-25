@@ -1,47 +1,46 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Driver क्रम the ST STV0910 DVB-S/S2 demodulator.
+ * Driver for the ST STV0910 DVB-S/S2 demodulator.
  *
  * Copyright (C) 2014-2015 Ralph Metzler <rjkm@metzlerbros.de>
  *                         Marcus Metzler <mocm@metzlerbros.de>
- *                         developed क्रम Digital Devices GmbH
+ *                         developed for Digital Devices GmbH
  *
- * This program is मुक्त software; you can redistribute it and/or
- * modअगरy it under the terms of the GNU General Public License
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
  * version 2 only, as published by the Free Software Foundation.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License क्रम more details.
+ * GNU General Public License for more details.
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/init.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/firmware.h>
-#समावेश <linux/i2c.h>
-#समावेश <यंत्र/भाग64.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/moduleparam.h>
+#include <linux/init.h>
+#include <linux/delay.h>
+#include <linux/firmware.h>
+#include <linux/i2c.h>
+#include <asm/div64.h>
 
-#समावेश <media/dvb_frontend.h>
-#समावेश "stv0910.h"
-#समावेश "stv0910_regs.h"
+#include <media/dvb_frontend.h>
+#include "stv0910.h"
+#include "stv0910_regs.h"
 
-#घोषणा EXT_CLOCK    30000000
-#घोषणा TUNING_DELAY 200
-#घोषणा BER_SRC_S    0x20
-#घोषणा BER_SRC_S2   0x20
+#define EXT_CLOCK    30000000
+#define TUNING_DELAY 200
+#define BER_SRC_S    0x20
+#define BER_SRC_S2   0x20
 
-अटल LIST_HEAD(stvlist);
+static LIST_HEAD(stvlist);
 
-क्रमागत receive_mode अणु RCVMODE_NONE, RCVMODE_DVBS, RCVMODE_DVBS2, RCVMODE_AUTO पूर्ण;
+enum receive_mode { RCVMODE_NONE, RCVMODE_DVBS, RCVMODE_DVBS2, RCVMODE_AUTO };
 
-क्रमागत dvbs2_fectype अणु DVBS2_64K, DVBS2_16K पूर्ण;
+enum dvbs2_fectype { DVBS2_64K, DVBS2_16K };
 
-क्रमागत dvbs2_mod_cod अणु
+enum dvbs2_mod_cod {
 	DVBS2_DUMMY_PLF, DVBS2_QPSK_1_4, DVBS2_QPSK_1_3, DVBS2_QPSK_2_5,
 	DVBS2_QPSK_1_2, DVBS2_QPSK_3_5, DVBS2_QPSK_2_3,	DVBS2_QPSK_3_4,
 	DVBS2_QPSK_4_5,	DVBS2_QPSK_5_6,	DVBS2_QPSK_8_9,	DVBS2_QPSK_9_10,
@@ -50,9 +49,9 @@
 	DVBS2_16APSK_4_5, DVBS2_16APSK_5_6, DVBS2_16APSK_8_9, DVBS2_16APSK_9_10,
 	DVBS2_32APSK_3_4, DVBS2_32APSK_4_5, DVBS2_32APSK_5_6, DVBS2_32APSK_8_9,
 	DVBS2_32APSK_9_10
-पूर्ण;
+};
 
-क्रमागत fe_stv0910_mod_cod अणु
+enum fe_stv0910_mod_cod {
 	FE_DUMMY_PLF, FE_QPSK_14, FE_QPSK_13, FE_QPSK_25,
 	FE_QPSK_12, FE_QPSK_35, FE_QPSK_23, FE_QPSK_34,
 	FE_QPSK_45, FE_QPSK_56, FE_QPSK_89, FE_QPSK_910,
@@ -61,64 +60,64 @@
 	FE_16APSK_45, FE_16APSK_56, FE_16APSK_89, FE_16APSK_910,
 	FE_32APSK_34, FE_32APSK_45, FE_32APSK_56, FE_32APSK_89,
 	FE_32APSK_910
-पूर्ण;
+};
 
-क्रमागत fe_stv0910_roll_off अणु FE_SAT_35, FE_SAT_25, FE_SAT_20, FE_SAT_15 पूर्ण;
+enum fe_stv0910_roll_off { FE_SAT_35, FE_SAT_25, FE_SAT_20, FE_SAT_15 };
 
-अटल अंतरभूत u32 muद_भाग32(u32 a, u32 b, u32 c)
-अणु
-	u64 पंचांगp64;
+static inline u32 muldiv32(u32 a, u32 b, u32 c)
+{
+	u64 tmp64;
 
-	पंचांगp64 = (u64)a * (u64)b;
-	करो_भाग(पंचांगp64, c);
+	tmp64 = (u64)a * (u64)b;
+	do_div(tmp64, c);
 
-	वापस (u32)पंचांगp64;
-पूर्ण
+	return (u32)tmp64;
+}
 
-काष्ठा stv_base अणु
-	काष्ठा list_head     stvlist;
+struct stv_base {
+	struct list_head     stvlist;
 
 	u8                   adr;
-	काष्ठा i2c_adapter  *i2c;
-	काष्ठा mutex         i2c_lock; /* shared I2C access protect */
-	काष्ठा mutex         reg_lock; /* shared रेजिस्टर ग_लिखो protect */
-	पूर्णांक                  count;
+	struct i2c_adapter  *i2c;
+	struct mutex         i2c_lock; /* shared I2C access protect */
+	struct mutex         reg_lock; /* shared register write protect */
+	int                  count;
 
 	u32                  extclk;
 	u32                  mclk;
-पूर्ण;
+};
 
-काष्ठा stv अणु
-	काष्ठा stv_base     *base;
-	काष्ठा dvb_frontend  fe;
-	पूर्णांक                  nr;
+struct stv {
+	struct stv_base     *base;
+	struct dvb_frontend  fe;
+	int                  nr;
 	u16                  regoff;
 	u8                   i2crpt;
 	u8                   tscfgh;
 	u8                   tsgeneral;
 	u8                   tsspeed;
 	u8                   single;
-	अचिन्हित दीर्घ        tune_समय;
+	unsigned long        tune_time;
 
 	s32                  search_range;
 	u32                  started;
-	u32                  demod_lock_समय;
-	क्रमागत receive_mode    receive_mode;
-	u32                  demod_समयout;
-	u32                  fec_समयout;
-	u32                  first_समय_lock;
+	u32                  demod_lock_time;
+	enum receive_mode    receive_mode;
+	u32                  demod_timeout;
+	u32                  fec_timeout;
+	u32                  first_time_lock;
 	u8                   demod_bits;
 	u32                  symbol_rate;
 
 	u8                       last_viterbi_rate;
-	क्रमागत fe_code_rate        puncture_rate;
-	क्रमागत fe_stv0910_mod_cod  mod_cod;
-	क्रमागत dvbs2_fectype       fectype;
+	enum fe_code_rate        puncture_rate;
+	enum fe_stv0910_mod_cod  mod_cod;
+	enum dvbs2_fectype       fectype;
 	u32                      pilots;
-	क्रमागत fe_stv0910_roll_off feroll_off;
+	enum fe_stv0910_roll_off feroll_off;
 
-	पूर्णांक   is_standard_broadcast;
-	पूर्णांक   is_vcm;
+	int   is_standard_broadcast;
+	int   is_vcm;
 
 	u32   cur_scrambling_code;
 
@@ -127,246 +126,246 @@
 	u8    berscale;
 
 	u8    vth[6];
-पूर्ण;
+};
 
-काष्ठा sinit_table अणु
+struct sinit_table {
 	u16  address;
 	u8   data;
-पूर्ण;
+};
 
-काष्ठा slookup अणु
+struct slookup {
 	s16  value;
 	u32  reg_value;
-पूर्ण;
+};
 
-अटल पूर्णांक ग_लिखो_reg(काष्ठा stv *state, u16 reg, u8 val)
-अणु
-	काष्ठा i2c_adapter *adap = state->base->i2c;
-	u8 data[3] = अणुreg >> 8, reg & 0xff, valपूर्ण;
-	काष्ठा i2c_msg msg = अणु.addr = state->base->adr, .flags = 0,
-			      .buf = data, .len = 3पूर्ण;
+static int write_reg(struct stv *state, u16 reg, u8 val)
+{
+	struct i2c_adapter *adap = state->base->i2c;
+	u8 data[3] = {reg >> 8, reg & 0xff, val};
+	struct i2c_msg msg = {.addr = state->base->adr, .flags = 0,
+			      .buf = data, .len = 3};
 
-	अगर (i2c_transfer(adap, &msg, 1) != 1) अणु
+	if (i2c_transfer(adap, &msg, 1) != 1) {
 		dev_warn(&adap->dev, "i2c write error ([%02x] %04x: %02x)\n",
 			 state->base->adr, reg, val);
-		वापस -EIO;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return -EIO;
+	}
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक i2c_पढ़ो_regs16(काष्ठा i2c_adapter *adapter, u8 adr,
-				  u16 reg, u8 *val, पूर्णांक count)
-अणु
-	u8 msg[2] = अणुreg >> 8, reg & 0xffपूर्ण;
-	काष्ठा i2c_msg msgs[2] = अणुअणु.addr = adr, .flags = 0,
-				   .buf  = msg, .len   = 2पूर्ण,
-				  अणु.addr = adr, .flags = I2C_M_RD,
-				   .buf  = val, .len   = count पूर्ण पूर्ण;
+static inline int i2c_read_regs16(struct i2c_adapter *adapter, u8 adr,
+				  u16 reg, u8 *val, int count)
+{
+	u8 msg[2] = {reg >> 8, reg & 0xff};
+	struct i2c_msg msgs[2] = {{.addr = adr, .flags = 0,
+				   .buf  = msg, .len   = 2},
+				  {.addr = adr, .flags = I2C_M_RD,
+				   .buf  = val, .len   = count } };
 
-	अगर (i2c_transfer(adapter, msgs, 2) != 2) अणु
+	if (i2c_transfer(adapter, msgs, 2) != 2) {
 		dev_warn(&adapter->dev, "i2c read error ([%02x] %04x)\n",
 			 adr, reg);
-		वापस -EIO;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return -EIO;
+	}
+	return 0;
+}
 
-अटल पूर्णांक पढ़ो_reg(काष्ठा stv *state, u16 reg, u8 *val)
-अणु
-	वापस i2c_पढ़ो_regs16(state->base->i2c, state->base->adr,
+static int read_reg(struct stv *state, u16 reg, u8 *val)
+{
+	return i2c_read_regs16(state->base->i2c, state->base->adr,
 			       reg, val, 1);
-पूर्ण
+}
 
-अटल पूर्णांक पढ़ो_regs(काष्ठा stv *state, u16 reg, u8 *val, पूर्णांक len)
-अणु
-	वापस i2c_पढ़ो_regs16(state->base->i2c, state->base->adr,
+static int read_regs(struct stv *state, u16 reg, u8 *val, int len)
+{
+	return i2c_read_regs16(state->base->i2c, state->base->adr,
 			       reg, val, len);
-पूर्ण
+}
 
-अटल पूर्णांक ग_लिखो_shared_reg(काष्ठा stv *state, u16 reg, u8 mask, u8 val)
-अणु
-	पूर्णांक status;
-	u8 पंचांगp;
+static int write_shared_reg(struct stv *state, u16 reg, u8 mask, u8 val)
+{
+	int status;
+	u8 tmp;
 
 	mutex_lock(&state->base->reg_lock);
-	status = पढ़ो_reg(state, reg, &पंचांगp);
-	अगर (!status)
-		status = ग_लिखो_reg(state, reg, (पंचांगp & ~mask) | (val & mask));
+	status = read_reg(state, reg, &tmp);
+	if (!status)
+		status = write_reg(state, reg, (tmp & ~mask) | (val & mask));
 	mutex_unlock(&state->base->reg_lock);
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल पूर्णांक ग_लिखो_field(काष्ठा stv *state, u32 field, u8 val)
-अणु
-	पूर्णांक status;
-	u8 shअगरt, mask, old, new;
+static int write_field(struct stv *state, u32 field, u8 val)
+{
+	int status;
+	u8 shift, mask, old, new;
 
-	status = पढ़ो_reg(state, field >> 16, &old);
-	अगर (status)
-		वापस status;
+	status = read_reg(state, field >> 16, &old);
+	if (status)
+		return status;
 	mask = field & 0xff;
-	shअगरt = (field >> 12) & 0xf;
-	new = ((val << shअगरt) & mask) | (old & ~mask);
-	अगर (new == old)
-		वापस 0;
-	वापस ग_लिखो_reg(state, field >> 16, new);
-पूर्ण
+	shift = (field >> 12) & 0xf;
+	new = ((val << shift) & mask) | (old & ~mask);
+	if (new == old)
+		return 0;
+	return write_reg(state, field >> 16, new);
+}
 
-#घोषणा SET_FIELD(_reg, _val)					\
-	ग_लिखो_field(state, state->nr ? FSTV0910_P2_##_reg :	\
+#define SET_FIELD(_reg, _val)					\
+	write_field(state, state->nr ? FSTV0910_P2_##_reg :	\
 		    FSTV0910_P1_##_reg, _val)
 
-#घोषणा SET_REG(_reg, _val)					\
-	ग_लिखो_reg(state, state->nr ? RSTV0910_P2_##_reg :	\
+#define SET_REG(_reg, _val)					\
+	write_reg(state, state->nr ? RSTV0910_P2_##_reg :	\
 		  RSTV0910_P1_##_reg, _val)
 
-#घोषणा GET_REG(_reg, _val)					\
-	पढ़ो_reg(state, state->nr ? RSTV0910_P2_##_reg :	\
+#define GET_REG(_reg, _val)					\
+	read_reg(state, state->nr ? RSTV0910_P2_##_reg :	\
 		 RSTV0910_P1_##_reg, _val)
 
-अटल स्थिर काष्ठा slookup s1_sn_lookup[] = अणु
-	अणु   0,    9242  पूर्ण, /* C/N=   0dB */
-	अणु   5,    9105  पूर्ण, /* C/N= 0.5dB */
-	अणु  10,    8950  पूर्ण, /* C/N= 1.0dB */
-	अणु  15,    8780  पूर्ण, /* C/N= 1.5dB */
-	अणु  20,    8566  पूर्ण, /* C/N= 2.0dB */
-	अणु  25,    8366  पूर्ण, /* C/N= 2.5dB */
-	अणु  30,    8146  पूर्ण, /* C/N= 3.0dB */
-	अणु  35,    7908  पूर्ण, /* C/N= 3.5dB */
-	अणु  40,    7666  पूर्ण, /* C/N= 4.0dB */
-	अणु  45,    7405  पूर्ण, /* C/N= 4.5dB */
-	अणु  50,    7136  पूर्ण, /* C/N= 5.0dB */
-	अणु  55,    6861  पूर्ण, /* C/N= 5.5dB */
-	अणु  60,    6576  पूर्ण, /* C/N= 6.0dB */
-	अणु  65,    6330  पूर्ण, /* C/N= 6.5dB */
-	अणु  70,    6048  पूर्ण, /* C/N= 7.0dB */
-	अणु  75,    5768  पूर्ण, /* C/N= 7.5dB */
-	अणु  80,    5492  पूर्ण, /* C/N= 8.0dB */
-	अणु  85,    5224  पूर्ण, /* C/N= 8.5dB */
-	अणु  90,    4959  पूर्ण, /* C/N= 9.0dB */
-	अणु  95,    4709  पूर्ण, /* C/N= 9.5dB */
-	अणु  100,   4467  पूर्ण, /* C/N=10.0dB */
-	अणु  105,   4236  पूर्ण, /* C/N=10.5dB */
-	अणु  110,   4013  पूर्ण, /* C/N=11.0dB */
-	अणु  115,   3800  पूर्ण, /* C/N=11.5dB */
-	अणु  120,   3598  पूर्ण, /* C/N=12.0dB */
-	अणु  125,   3406  पूर्ण, /* C/N=12.5dB */
-	अणु  130,   3225  पूर्ण, /* C/N=13.0dB */
-	अणु  135,   3052  पूर्ण, /* C/N=13.5dB */
-	अणु  140,   2889  पूर्ण, /* C/N=14.0dB */
-	अणु  145,   2733  पूर्ण, /* C/N=14.5dB */
-	अणु  150,   2587  पूर्ण, /* C/N=15.0dB */
-	अणु  160,   2318  पूर्ण, /* C/N=16.0dB */
-	अणु  170,   2077  पूर्ण, /* C/N=17.0dB */
-	अणु  180,   1862  पूर्ण, /* C/N=18.0dB */
-	अणु  190,   1670  पूर्ण, /* C/N=19.0dB */
-	अणु  200,   1499  पूर्ण, /* C/N=20.0dB */
-	अणु  210,   1347  पूर्ण, /* C/N=21.0dB */
-	अणु  220,   1213  पूर्ण, /* C/N=22.0dB */
-	अणु  230,   1095  पूर्ण, /* C/N=23.0dB */
-	अणु  240,    992  पूर्ण, /* C/N=24.0dB */
-	अणु  250,    900  पूर्ण, /* C/N=25.0dB */
-	अणु  260,    826  पूर्ण, /* C/N=26.0dB */
-	अणु  270,    758  पूर्ण, /* C/N=27.0dB */
-	अणु  280,    702  पूर्ण, /* C/N=28.0dB */
-	अणु  290,    653  पूर्ण, /* C/N=29.0dB */
-	अणु  300,    613  पूर्ण, /* C/N=30.0dB */
-	अणु  310,    579  पूर्ण, /* C/N=31.0dB */
-	अणु  320,    550  पूर्ण, /* C/N=32.0dB */
-	अणु  330,    526  पूर्ण, /* C/N=33.0dB */
-	अणु  350,    490  पूर्ण, /* C/N=33.0dB */
-	अणु  400,    445  पूर्ण, /* C/N=40.0dB */
-	अणु  450,    430  पूर्ण, /* C/N=45.0dB */
-	अणु  500,    426  पूर्ण, /* C/N=50.0dB */
-	अणु  510,    425  पूर्ण  /* C/N=51.0dB */
-पूर्ण;
+static const struct slookup s1_sn_lookup[] = {
+	{   0,    9242  }, /* C/N=   0dB */
+	{   5,    9105  }, /* C/N= 0.5dB */
+	{  10,    8950  }, /* C/N= 1.0dB */
+	{  15,    8780  }, /* C/N= 1.5dB */
+	{  20,    8566  }, /* C/N= 2.0dB */
+	{  25,    8366  }, /* C/N= 2.5dB */
+	{  30,    8146  }, /* C/N= 3.0dB */
+	{  35,    7908  }, /* C/N= 3.5dB */
+	{  40,    7666  }, /* C/N= 4.0dB */
+	{  45,    7405  }, /* C/N= 4.5dB */
+	{  50,    7136  }, /* C/N= 5.0dB */
+	{  55,    6861  }, /* C/N= 5.5dB */
+	{  60,    6576  }, /* C/N= 6.0dB */
+	{  65,    6330  }, /* C/N= 6.5dB */
+	{  70,    6048  }, /* C/N= 7.0dB */
+	{  75,    5768  }, /* C/N= 7.5dB */
+	{  80,    5492  }, /* C/N= 8.0dB */
+	{  85,    5224  }, /* C/N= 8.5dB */
+	{  90,    4959  }, /* C/N= 9.0dB */
+	{  95,    4709  }, /* C/N= 9.5dB */
+	{  100,   4467  }, /* C/N=10.0dB */
+	{  105,   4236  }, /* C/N=10.5dB */
+	{  110,   4013  }, /* C/N=11.0dB */
+	{  115,   3800  }, /* C/N=11.5dB */
+	{  120,   3598  }, /* C/N=12.0dB */
+	{  125,   3406  }, /* C/N=12.5dB */
+	{  130,   3225  }, /* C/N=13.0dB */
+	{  135,   3052  }, /* C/N=13.5dB */
+	{  140,   2889  }, /* C/N=14.0dB */
+	{  145,   2733  }, /* C/N=14.5dB */
+	{  150,   2587  }, /* C/N=15.0dB */
+	{  160,   2318  }, /* C/N=16.0dB */
+	{  170,   2077  }, /* C/N=17.0dB */
+	{  180,   1862  }, /* C/N=18.0dB */
+	{  190,   1670  }, /* C/N=19.0dB */
+	{  200,   1499  }, /* C/N=20.0dB */
+	{  210,   1347  }, /* C/N=21.0dB */
+	{  220,   1213  }, /* C/N=22.0dB */
+	{  230,   1095  }, /* C/N=23.0dB */
+	{  240,    992  }, /* C/N=24.0dB */
+	{  250,    900  }, /* C/N=25.0dB */
+	{  260,    826  }, /* C/N=26.0dB */
+	{  270,    758  }, /* C/N=27.0dB */
+	{  280,    702  }, /* C/N=28.0dB */
+	{  290,    653  }, /* C/N=29.0dB */
+	{  300,    613  }, /* C/N=30.0dB */
+	{  310,    579  }, /* C/N=31.0dB */
+	{  320,    550  }, /* C/N=32.0dB */
+	{  330,    526  }, /* C/N=33.0dB */
+	{  350,    490  }, /* C/N=33.0dB */
+	{  400,    445  }, /* C/N=40.0dB */
+	{  450,    430  }, /* C/N=45.0dB */
+	{  500,    426  }, /* C/N=50.0dB */
+	{  510,    425  }  /* C/N=51.0dB */
+};
 
-अटल स्थिर काष्ठा slookup s2_sn_lookup[] = अणु
-	अणु  -30,  13950  पूर्ण, /* C/N=-2.5dB */
-	अणु  -25,  13580  पूर्ण, /* C/N=-2.5dB */
-	अणु  -20,  13150  पूर्ण, /* C/N=-2.0dB */
-	अणु  -15,  12760  पूर्ण, /* C/N=-1.5dB */
-	अणु  -10,  12345  पूर्ण, /* C/N=-1.0dB */
-	अणु   -5,  11900  पूर्ण, /* C/N=-0.5dB */
-	अणु    0,  11520  पूर्ण, /* C/N=   0dB */
-	अणु    5,  11080  पूर्ण, /* C/N= 0.5dB */
-	अणु   10,  10630  पूर्ण, /* C/N= 1.0dB */
-	अणु   15,  10210  पूर्ण, /* C/N= 1.5dB */
-	अणु   20,   9790  पूर्ण, /* C/N= 2.0dB */
-	अणु   25,   9390  पूर्ण, /* C/N= 2.5dB */
-	अणु   30,   8970  पूर्ण, /* C/N= 3.0dB */
-	अणु   35,   8575  पूर्ण, /* C/N= 3.5dB */
-	अणु   40,   8180  पूर्ण, /* C/N= 4.0dB */
-	अणु   45,   7800  पूर्ण, /* C/N= 4.5dB */
-	अणु   50,   7430  पूर्ण, /* C/N= 5.0dB */
-	अणु   55,   7080  पूर्ण, /* C/N= 5.5dB */
-	अणु   60,   6720  पूर्ण, /* C/N= 6.0dB */
-	अणु   65,   6320  पूर्ण, /* C/N= 6.5dB */
-	अणु   70,   6060  पूर्ण, /* C/N= 7.0dB */
-	अणु   75,   5760  पूर्ण, /* C/N= 7.5dB */
-	अणु   80,   5480  पूर्ण, /* C/N= 8.0dB */
-	अणु   85,   5200  पूर्ण, /* C/N= 8.5dB */
-	अणु   90,   4930  पूर्ण, /* C/N= 9.0dB */
-	अणु   95,   4680  पूर्ण, /* C/N= 9.5dB */
-	अणु  100,   4425  पूर्ण, /* C/N=10.0dB */
-	अणु  105,   4210  पूर्ण, /* C/N=10.5dB */
-	अणु  110,   3980  पूर्ण, /* C/N=11.0dB */
-	अणु  115,   3765  पूर्ण, /* C/N=11.5dB */
-	अणु  120,   3570  पूर्ण, /* C/N=12.0dB */
-	अणु  125,   3315  पूर्ण, /* C/N=12.5dB */
-	अणु  130,   3140  पूर्ण, /* C/N=13.0dB */
-	अणु  135,   2980  पूर्ण, /* C/N=13.5dB */
-	अणु  140,   2820  पूर्ण, /* C/N=14.0dB */
-	अणु  145,   2670  पूर्ण, /* C/N=14.5dB */
-	अणु  150,   2535  पूर्ण, /* C/N=15.0dB */
-	अणु  160,   2270  पूर्ण, /* C/N=16.0dB */
-	अणु  170,   2035  पूर्ण, /* C/N=17.0dB */
-	अणु  180,   1825  पूर्ण, /* C/N=18.0dB */
-	अणु  190,   1650  पूर्ण, /* C/N=19.0dB */
-	अणु  200,   1485  पूर्ण, /* C/N=20.0dB */
-	अणु  210,   1340  पूर्ण, /* C/N=21.0dB */
-	अणु  220,   1212  पूर्ण, /* C/N=22.0dB */
-	अणु  230,   1100  पूर्ण, /* C/N=23.0dB */
-	अणु  240,   1000  पूर्ण, /* C/N=24.0dB */
-	अणु  250,    910  पूर्ण, /* C/N=25.0dB */
-	अणु  260,    836  पूर्ण, /* C/N=26.0dB */
-	अणु  270,    772  पूर्ण, /* C/N=27.0dB */
-	अणु  280,    718  पूर्ण, /* C/N=28.0dB */
-	अणु  290,    671  पूर्ण, /* C/N=29.0dB */
-	अणु  300,    635  पूर्ण, /* C/N=30.0dB */
-	अणु  310,    602  पूर्ण, /* C/N=31.0dB */
-	अणु  320,    575  पूर्ण, /* C/N=32.0dB */
-	अणु  330,    550  पूर्ण, /* C/N=33.0dB */
-	अणु  350,    517  पूर्ण, /* C/N=35.0dB */
-	अणु  400,    480  पूर्ण, /* C/N=40.0dB */
-	अणु  450,    466  पूर्ण, /* C/N=45.0dB */
-	अणु  500,    464  पूर्ण, /* C/N=50.0dB */
-	अणु  510,    463  पूर्ण, /* C/N=51.0dB */
-पूर्ण;
+static const struct slookup s2_sn_lookup[] = {
+	{  -30,  13950  }, /* C/N=-2.5dB */
+	{  -25,  13580  }, /* C/N=-2.5dB */
+	{  -20,  13150  }, /* C/N=-2.0dB */
+	{  -15,  12760  }, /* C/N=-1.5dB */
+	{  -10,  12345  }, /* C/N=-1.0dB */
+	{   -5,  11900  }, /* C/N=-0.5dB */
+	{    0,  11520  }, /* C/N=   0dB */
+	{    5,  11080  }, /* C/N= 0.5dB */
+	{   10,  10630  }, /* C/N= 1.0dB */
+	{   15,  10210  }, /* C/N= 1.5dB */
+	{   20,   9790  }, /* C/N= 2.0dB */
+	{   25,   9390  }, /* C/N= 2.5dB */
+	{   30,   8970  }, /* C/N= 3.0dB */
+	{   35,   8575  }, /* C/N= 3.5dB */
+	{   40,   8180  }, /* C/N= 4.0dB */
+	{   45,   7800  }, /* C/N= 4.5dB */
+	{   50,   7430  }, /* C/N= 5.0dB */
+	{   55,   7080  }, /* C/N= 5.5dB */
+	{   60,   6720  }, /* C/N= 6.0dB */
+	{   65,   6320  }, /* C/N= 6.5dB */
+	{   70,   6060  }, /* C/N= 7.0dB */
+	{   75,   5760  }, /* C/N= 7.5dB */
+	{   80,   5480  }, /* C/N= 8.0dB */
+	{   85,   5200  }, /* C/N= 8.5dB */
+	{   90,   4930  }, /* C/N= 9.0dB */
+	{   95,   4680  }, /* C/N= 9.5dB */
+	{  100,   4425  }, /* C/N=10.0dB */
+	{  105,   4210  }, /* C/N=10.5dB */
+	{  110,   3980  }, /* C/N=11.0dB */
+	{  115,   3765  }, /* C/N=11.5dB */
+	{  120,   3570  }, /* C/N=12.0dB */
+	{  125,   3315  }, /* C/N=12.5dB */
+	{  130,   3140  }, /* C/N=13.0dB */
+	{  135,   2980  }, /* C/N=13.5dB */
+	{  140,   2820  }, /* C/N=14.0dB */
+	{  145,   2670  }, /* C/N=14.5dB */
+	{  150,   2535  }, /* C/N=15.0dB */
+	{  160,   2270  }, /* C/N=16.0dB */
+	{  170,   2035  }, /* C/N=17.0dB */
+	{  180,   1825  }, /* C/N=18.0dB */
+	{  190,   1650  }, /* C/N=19.0dB */
+	{  200,   1485  }, /* C/N=20.0dB */
+	{  210,   1340  }, /* C/N=21.0dB */
+	{  220,   1212  }, /* C/N=22.0dB */
+	{  230,   1100  }, /* C/N=23.0dB */
+	{  240,   1000  }, /* C/N=24.0dB */
+	{  250,    910  }, /* C/N=25.0dB */
+	{  260,    836  }, /* C/N=26.0dB */
+	{  270,    772  }, /* C/N=27.0dB */
+	{  280,    718  }, /* C/N=28.0dB */
+	{  290,    671  }, /* C/N=29.0dB */
+	{  300,    635  }, /* C/N=30.0dB */
+	{  310,    602  }, /* C/N=31.0dB */
+	{  320,    575  }, /* C/N=32.0dB */
+	{  330,    550  }, /* C/N=33.0dB */
+	{  350,    517  }, /* C/N=35.0dB */
+	{  400,    480  }, /* C/N=40.0dB */
+	{  450,    466  }, /* C/N=45.0dB */
+	{  500,    464  }, /* C/N=50.0dB */
+	{  510,    463  }, /* C/N=51.0dB */
+};
 
-अटल स्थिर काष्ठा slookup padc_lookup[] = अणु
-	अणु    0,  118000 पूर्ण, /* PADC= +0dBm */
-	अणु -100,  93600  पूर्ण, /* PADC= -1dBm */
-	अणु -200,  74500  पूर्ण, /* PADC= -2dBm */
-	अणु -300,  59100  पूर्ण, /* PADC= -3dBm */
-	अणु -400,  47000  पूर्ण, /* PADC= -4dBm */
-	अणु -500,  37300  पूर्ण, /* PADC= -5dBm */
-	अणु -600,  29650  पूर्ण, /* PADC= -6dBm */
-	अणु -700,  23520  पूर्ण, /* PADC= -7dBm */
-	अणु -900,  14850  पूर्ण, /* PADC= -9dBm */
-	अणु -1100, 9380   पूर्ण, /* PADC=-11dBm */
-	अणु -1300, 5910   पूर्ण, /* PADC=-13dBm */
-	अणु -1500, 3730   पूर्ण, /* PADC=-15dBm */
-	अणु -1700, 2354   पूर्ण, /* PADC=-17dBm */
-	अणु -1900, 1485   पूर्ण, /* PADC=-19dBm */
-	अणु -2000, 1179   पूर्ण, /* PADC=-20dBm */
-	अणु -2100, 1000   पूर्ण, /* PADC=-21dBm */
-पूर्ण;
+static const struct slookup padc_lookup[] = {
+	{    0,  118000 }, /* PADC= +0dBm */
+	{ -100,  93600  }, /* PADC= -1dBm */
+	{ -200,  74500  }, /* PADC= -2dBm */
+	{ -300,  59100  }, /* PADC= -3dBm */
+	{ -400,  47000  }, /* PADC= -4dBm */
+	{ -500,  37300  }, /* PADC= -5dBm */
+	{ -600,  29650  }, /* PADC= -6dBm */
+	{ -700,  23520  }, /* PADC= -7dBm */
+	{ -900,  14850  }, /* PADC= -9dBm */
+	{ -1100, 9380   }, /* PADC=-11dBm */
+	{ -1300, 5910   }, /* PADC=-13dBm */
+	{ -1500, 3730   }, /* PADC=-15dBm */
+	{ -1700, 2354   }, /* PADC=-17dBm */
+	{ -1900, 1485   }, /* PADC=-19dBm */
+	{ -2000, 1179   }, /* PADC=-20dBm */
+	{ -2100, 1000   }, /* PADC=-21dBm */
+};
 
 /*********************************************************************
- * Tracking carrier loop carrier QPSK 1/4 to 8PSK 9/10 दीर्घ Frame
+ * Tracking carrier loop carrier QPSK 1/4 to 8PSK 9/10 long Frame
  *********************************************************************/
-अटल स्थिर u8 s2car_loop[] =	अणु
+static const u8 s2car_loop[] =	{
 	/*
 	 * Modcod  2MPon 2MPoff 5MPon 5MPoff 10MPon 10MPoff
 	 * 20MPon 20MPoff 30MPon 30MPoff
@@ -408,7 +407,7 @@
 	0x0C,  0x1C,  0x0C,  0x3B,  0x2B,  0x1B,  0x3A,  0x0B,  0x2A,  0x2A,
 
 	/**********************************************************************
-	 * Tracking carrier loop carrier 16APSK 2/3 to 32APSK 9/10 दीर्घ Frame
+	 * Tracking carrier loop carrier 16APSK 2/3 to 32APSK 9/10 long Frame
 	 **********************************************************************/
 
 	/*
@@ -438,38 +437,38 @@
 	0x09,  0x09,  0x09,  0x09,  0x09,  0x09,  0x09,  0x09,  0x09,  0x09,
 	/* FE_32APSK_910 */
 	0x09,  0x09,  0x09,  0x09,  0x09,  0x09,  0x09,  0x09,  0x09,  0x09,
-पूर्ण;
+};
 
-अटल u8 get_optim_cloop(काष्ठा stv *state,
-			  क्रमागत fe_stv0910_mod_cod mod_cod, u32 pilots)
-अणु
-	पूर्णांक i = 0;
+static u8 get_optim_cloop(struct stv *state,
+			  enum fe_stv0910_mod_cod mod_cod, u32 pilots)
+{
+	int i = 0;
 
-	अगर (mod_cod >= FE_32APSK_910)
-		i = ((पूर्णांक)FE_32APSK_910 - (पूर्णांक)FE_QPSK_14) * 10;
-	अन्यथा अगर (mod_cod >= FE_QPSK_14)
-		i = ((पूर्णांक)mod_cod - (पूर्णांक)FE_QPSK_14) * 10;
+	if (mod_cod >= FE_32APSK_910)
+		i = ((int)FE_32APSK_910 - (int)FE_QPSK_14) * 10;
+	else if (mod_cod >= FE_QPSK_14)
+		i = ((int)mod_cod - (int)FE_QPSK_14) * 10;
 
-	अगर (state->symbol_rate <= 3000000)
+	if (state->symbol_rate <= 3000000)
 		i += 0;
-	अन्यथा अगर (state->symbol_rate <=  7000000)
+	else if (state->symbol_rate <=  7000000)
 		i += 2;
-	अन्यथा अगर (state->symbol_rate <= 15000000)
+	else if (state->symbol_rate <= 15000000)
 		i += 4;
-	अन्यथा अगर (state->symbol_rate <= 25000000)
+	else if (state->symbol_rate <= 25000000)
 		i += 6;
-	अन्यथा
+	else
 		i += 8;
 
-	अगर (!pilots)
+	if (!pilots)
 		i += 1;
 
-	वापस s2car_loop[i];
-पूर्ण
+	return s2car_loop[i];
+}
 
-अटल पूर्णांक get_cur_symbol_rate(काष्ठा stv *state, u32 *p_symbol_rate)
-अणु
-	पूर्णांक status = 0;
+static int get_cur_symbol_rate(struct stv *state, u32 *p_symbol_rate)
+{
+	int status = 0;
 	u8 symb_freq0;
 	u8 symb_freq1;
 	u8 symb_freq2;
@@ -481,23 +480,23 @@
 	s32 timing_offset;
 
 	*p_symbol_rate = 0;
-	अगर (!state->started)
-		वापस status;
+	if (!state->started)
+		return status;
 
-	पढ़ो_reg(state, RSTV0910_P2_SFR3 + state->regoff, &symb_freq3);
-	पढ़ो_reg(state, RSTV0910_P2_SFR2 + state->regoff, &symb_freq2);
-	पढ़ो_reg(state, RSTV0910_P2_SFR1 + state->regoff, &symb_freq1);
-	पढ़ो_reg(state, RSTV0910_P2_SFR0 + state->regoff, &symb_freq0);
-	पढ़ो_reg(state, RSTV0910_P2_TMGREG2 + state->regoff, &tim_offs2);
-	पढ़ो_reg(state, RSTV0910_P2_TMGREG1 + state->regoff, &tim_offs1);
-	पढ़ो_reg(state, RSTV0910_P2_TMGREG0 + state->regoff, &tim_offs0);
+	read_reg(state, RSTV0910_P2_SFR3 + state->regoff, &symb_freq3);
+	read_reg(state, RSTV0910_P2_SFR2 + state->regoff, &symb_freq2);
+	read_reg(state, RSTV0910_P2_SFR1 + state->regoff, &symb_freq1);
+	read_reg(state, RSTV0910_P2_SFR0 + state->regoff, &symb_freq0);
+	read_reg(state, RSTV0910_P2_TMGREG2 + state->regoff, &tim_offs2);
+	read_reg(state, RSTV0910_P2_TMGREG1 + state->regoff, &tim_offs1);
+	read_reg(state, RSTV0910_P2_TMGREG0 + state->regoff, &tim_offs0);
 
 	symbol_rate = ((u32)symb_freq3 << 24) | ((u32)symb_freq2 << 16) |
 		((u32)symb_freq1 << 8) | (u32)symb_freq0;
 	timing_offset = ((u32)tim_offs2 << 16) | ((u32)tim_offs1 << 8) |
 		(u32)tim_offs0;
 
-	अगर ((timing_offset & (1 << 23)) != 0)
+	if ((timing_offset & (1 << 23)) != 0)
 		timing_offset |= 0xFF000000; /* Sign extent */
 
 	symbol_rate = (u32)(((u64)symbol_rate * state->base->mclk) >> 32);
@@ -505,425 +504,425 @@
 
 	*p_symbol_rate = symbol_rate + timing_offset;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक get_संकेत_parameters(काष्ठा stv *state)
-अणु
-	u8 पंचांगp;
+static int get_signal_parameters(struct stv *state)
+{
+	u8 tmp;
 
-	अगर (!state->started)
-		वापस -EINVAL;
+	if (!state->started)
+		return -EINVAL;
 
-	अगर (state->receive_mode == RCVMODE_DVBS2) अणु
-		पढ़ो_reg(state, RSTV0910_P2_DMDMODCOD + state->regoff, &पंचांगp);
-		state->mod_cod = (क्रमागत fe_stv0910_mod_cod)((पंचांगp & 0x7c) >> 2);
-		state->pilots = (पंचांगp & 0x01) != 0;
-		state->fectype = (क्रमागत dvbs2_fectype)((पंचांगp & 0x02) >> 1);
+	if (state->receive_mode == RCVMODE_DVBS2) {
+		read_reg(state, RSTV0910_P2_DMDMODCOD + state->regoff, &tmp);
+		state->mod_cod = (enum fe_stv0910_mod_cod)((tmp & 0x7c) >> 2);
+		state->pilots = (tmp & 0x01) != 0;
+		state->fectype = (enum dvbs2_fectype)((tmp & 0x02) >> 1);
 
-	पूर्ण अन्यथा अगर (state->receive_mode == RCVMODE_DVBS) अणु
-		पढ़ो_reg(state, RSTV0910_P2_VITCURPUN + state->regoff, &पंचांगp);
+	} else if (state->receive_mode == RCVMODE_DVBS) {
+		read_reg(state, RSTV0910_P2_VITCURPUN + state->regoff, &tmp);
 		state->puncture_rate = FEC_NONE;
-		चयन (पंचांगp & 0x1F) अणु
-		हाल 0x0d:
+		switch (tmp & 0x1F) {
+		case 0x0d:
 			state->puncture_rate = FEC_1_2;
-			अवरोध;
-		हाल 0x12:
+			break;
+		case 0x12:
 			state->puncture_rate = FEC_2_3;
-			अवरोध;
-		हाल 0x15:
+			break;
+		case 0x15:
 			state->puncture_rate = FEC_3_4;
-			अवरोध;
-		हाल 0x18:
+			break;
+		case 0x18:
 			state->puncture_rate = FEC_5_6;
-			अवरोध;
-		हाल 0x1a:
+			break;
+		case 0x1a:
 			state->puncture_rate = FEC_7_8;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		state->is_vcm = 0;
 		state->is_standard_broadcast = 1;
 		state->feroll_off = FE_SAT_35;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल पूर्णांक tracking_optimization(काष्ठा stv *state)
-अणु
-	u8 पंचांगp;
+static int tracking_optimization(struct stv *state)
+{
+	u8 tmp;
 
-	पढ़ो_reg(state, RSTV0910_P2_DMDCFGMD + state->regoff, &पंचांगp);
-	पंचांगp &= ~0xC0;
+	read_reg(state, RSTV0910_P2_DMDCFGMD + state->regoff, &tmp);
+	tmp &= ~0xC0;
 
-	चयन (state->receive_mode) अणु
-	हाल RCVMODE_DVBS:
-		पंचांगp |= 0x40;
-		अवरोध;
-	हाल RCVMODE_DVBS2:
-		पंचांगp |= 0x80;
-		अवरोध;
-	शेष:
-		पंचांगp |= 0xC0;
-		अवरोध;
-	पूर्ण
-	ग_लिखो_reg(state, RSTV0910_P2_DMDCFGMD + state->regoff, पंचांगp);
+	switch (state->receive_mode) {
+	case RCVMODE_DVBS:
+		tmp |= 0x40;
+		break;
+	case RCVMODE_DVBS2:
+		tmp |= 0x80;
+		break;
+	default:
+		tmp |= 0xC0;
+		break;
+	}
+	write_reg(state, RSTV0910_P2_DMDCFGMD + state->regoff, tmp);
 
-	अगर (state->receive_mode == RCVMODE_DVBS2) अणु
+	if (state->receive_mode == RCVMODE_DVBS2) {
 		/* Disable Reed-Solomon */
-		ग_लिखो_shared_reg(state,
+		write_shared_reg(state,
 				 RSTV0910_TSTTSRS, state->nr ? 0x02 : 0x01,
 				 0x03);
 
-		अगर (state->fectype == DVBS2_64K) अणु
+		if (state->fectype == DVBS2_64K) {
 			u8 aclc = get_optim_cloop(state, state->mod_cod,
 						  state->pilots);
 
-			अगर (state->mod_cod <= FE_QPSK_910) अणु
-				ग_लिखो_reg(state, RSTV0910_P2_ACLC2S2Q +
+			if (state->mod_cod <= FE_QPSK_910) {
+				write_reg(state, RSTV0910_P2_ACLC2S2Q +
 					  state->regoff, aclc);
-			पूर्ण अन्यथा अगर (state->mod_cod <= FE_8PSK_910) अणु
-				ग_लिखो_reg(state, RSTV0910_P2_ACLC2S2Q +
+			} else if (state->mod_cod <= FE_8PSK_910) {
+				write_reg(state, RSTV0910_P2_ACLC2S2Q +
 					  state->regoff, 0x2a);
-				ग_लिखो_reg(state, RSTV0910_P2_ACLC2S28 +
+				write_reg(state, RSTV0910_P2_ACLC2S28 +
 					  state->regoff, aclc);
-			पूर्ण अन्यथा अगर (state->mod_cod <= FE_16APSK_910) अणु
-				ग_लिखो_reg(state, RSTV0910_P2_ACLC2S2Q +
+			} else if (state->mod_cod <= FE_16APSK_910) {
+				write_reg(state, RSTV0910_P2_ACLC2S2Q +
 					  state->regoff, 0x2a);
-				ग_लिखो_reg(state, RSTV0910_P2_ACLC2S216A +
+				write_reg(state, RSTV0910_P2_ACLC2S216A +
 					  state->regoff, aclc);
-			पूर्ण अन्यथा अगर (state->mod_cod <= FE_32APSK_910) अणु
-				ग_लिखो_reg(state, RSTV0910_P2_ACLC2S2Q +
+			} else if (state->mod_cod <= FE_32APSK_910) {
+				write_reg(state, RSTV0910_P2_ACLC2S2Q +
 					  state->regoff, 0x2a);
-				ग_लिखो_reg(state, RSTV0910_P2_ACLC2S232A +
+				write_reg(state, RSTV0910_P2_ACLC2S232A +
 					  state->regoff, aclc);
-			पूर्ण
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+			}
+		}
+	}
+	return 0;
+}
 
-अटल s32 table_lookup(स्थिर काष्ठा slookup *table,
-			पूर्णांक table_size, u32 reg_value)
-अणु
+static s32 table_lookup(const struct slookup *table,
+			int table_size, u32 reg_value)
+{
 	s32 value;
-	पूर्णांक imin = 0;
-	पूर्णांक imax = table_size - 1;
-	पूर्णांक i;
-	s32 reg_dअगरf;
+	int imin = 0;
+	int imax = table_size - 1;
+	int i;
+	s32 reg_diff;
 
 	/* Assumes Table[0].RegValue > Table[imax].RegValue */
-	अगर (reg_value >= table[0].reg_value) अणु
+	if (reg_value >= table[0].reg_value) {
 		value = table[0].value;
-	पूर्ण अन्यथा अगर (reg_value <= table[imax].reg_value) अणु
+	} else if (reg_value <= table[imax].reg_value) {
 		value = table[imax].value;
-	पूर्ण अन्यथा अणु
-		जबतक ((imax - imin) > 1) अणु
+	} else {
+		while ((imax - imin) > 1) {
 			i = (imax + imin) / 2;
-			अगर ((table[imin].reg_value >= reg_value) &&
+			if ((table[imin].reg_value >= reg_value) &&
 			    (reg_value >= table[i].reg_value))
 				imax = i;
-			अन्यथा
+			else
 				imin = i;
-		पूर्ण
+		}
 
-		reg_dअगरf = table[imax].reg_value - table[imin].reg_value;
+		reg_diff = table[imax].reg_value - table[imin].reg_value;
 		value = table[imin].value;
-		अगर (reg_dअगरf != 0)
+		if (reg_diff != 0)
 			value += ((s32)(reg_value - table[imin].reg_value) *
 				  (s32)(table[imax].value
 					- table[imin].value))
-					/ (reg_dअगरf);
-	पूर्ण
+					/ (reg_diff);
+	}
 
-	वापस value;
-पूर्ण
+	return value;
+}
 
-अटल पूर्णांक get_संकेत_to_noise(काष्ठा stv *state, s32 *संकेत_to_noise)
-अणु
+static int get_signal_to_noise(struct stv *state, s32 *signal_to_noise)
+{
 	u8 data0;
 	u8 data1;
 	u16 data;
-	पूर्णांक n_lookup;
-	स्थिर काष्ठा slookup *lookup;
+	int n_lookup;
+	const struct slookup *lookup;
 
-	*संकेत_to_noise = 0;
+	*signal_to_noise = 0;
 
-	अगर (!state->started)
-		वापस -EINVAL;
+	if (!state->started)
+		return -EINVAL;
 
-	अगर (state->receive_mode == RCVMODE_DVBS2) अणु
-		पढ़ो_reg(state, RSTV0910_P2_NNOSPLHT1 + state->regoff,
+	if (state->receive_mode == RCVMODE_DVBS2) {
+		read_reg(state, RSTV0910_P2_NNOSPLHT1 + state->regoff,
 			 &data1);
-		पढ़ो_reg(state, RSTV0910_P2_NNOSPLHT0 + state->regoff,
+		read_reg(state, RSTV0910_P2_NNOSPLHT0 + state->regoff,
 			 &data0);
 		n_lookup = ARRAY_SIZE(s2_sn_lookup);
 		lookup = s2_sn_lookup;
-	पूर्ण अन्यथा अणु
-		पढ़ो_reg(state, RSTV0910_P2_NNOSDATAT1 + state->regoff,
+	} else {
+		read_reg(state, RSTV0910_P2_NNOSDATAT1 + state->regoff,
 			 &data1);
-		पढ़ो_reg(state, RSTV0910_P2_NNOSDATAT0 + state->regoff,
+		read_reg(state, RSTV0910_P2_NNOSDATAT0 + state->regoff,
 			 &data0);
 		n_lookup = ARRAY_SIZE(s1_sn_lookup);
 		lookup = s1_sn_lookup;
-	पूर्ण
+	}
 	data = (((u16)data1) << 8) | (u16)data0;
-	*संकेत_to_noise = table_lookup(lookup, n_lookup, data);
-	वापस 0;
-पूर्ण
+	*signal_to_noise = table_lookup(lookup, n_lookup, data);
+	return 0;
+}
 
-अटल पूर्णांक get_bit_error_rate_s(काष्ठा stv *state, u32 *bernumerator,
+static int get_bit_error_rate_s(struct stv *state, u32 *bernumerator,
 				u32 *berdenominator)
-अणु
+{
 	u8 regs[3];
 
-	पूर्णांक status = पढ़ो_regs(state,
+	int status = read_regs(state,
 			       RSTV0910_P2_ERRCNT12 + state->regoff,
 			       regs, 3);
 
-	अगर (status)
-		वापस -EINVAL;
+	if (status)
+		return -EINVAL;
 
-	अगर ((regs[0] & 0x80) == 0) अणु
+	if ((regs[0] & 0x80) == 0) {
 		state->last_berdenominator = 1ULL << ((state->berscale * 2) +
 						     10 + 3);
 		state->last_bernumerator = ((u32)(regs[0] & 0x7F) << 16) |
 			((u32)regs[1] << 8) | regs[2];
-		अगर (state->last_bernumerator < 256 && state->berscale < 6) अणु
+		if (state->last_bernumerator < 256 && state->berscale < 6) {
 			state->berscale += 1;
-			status = ग_लिखो_reg(state, RSTV0910_P2_ERRCTRL1 +
+			status = write_reg(state, RSTV0910_P2_ERRCTRL1 +
 					   state->regoff,
 					   0x20 | state->berscale);
-		पूर्ण अन्यथा अगर (state->last_bernumerator > 1024 &&
-			   state->berscale > 2) अणु
+		} else if (state->last_bernumerator > 1024 &&
+			   state->berscale > 2) {
 			state->berscale -= 1;
-			status = ग_लिखो_reg(state, RSTV0910_P2_ERRCTRL1 +
+			status = write_reg(state, RSTV0910_P2_ERRCTRL1 +
 					   state->regoff, 0x20 |
 					   state->berscale);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	*bernumerator = state->last_bernumerator;
 	*berdenominator = state->last_berdenominator;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल u32 dvbs2_nbch(क्रमागत dvbs2_mod_cod mod_cod, क्रमागत dvbs2_fectype fectype)
-अणु
-	अटल स्थिर u32 nbch[][2] = अणु
-		अणु    0,     0पूर्ण, /* DUMMY_PLF   */
-		अणु16200,  3240पूर्ण, /* QPSK_1_4,   */
-		अणु21600,  5400पूर्ण, /* QPSK_1_3,   */
-		अणु25920,  6480पूर्ण, /* QPSK_2_5,   */
-		अणु32400,  7200पूर्ण, /* QPSK_1_2,   */
-		अणु38880,  9720पूर्ण, /* QPSK_3_5,   */
-		अणु43200, 10800पूर्ण, /* QPSK_2_3,   */
-		अणु48600, 11880पूर्ण, /* QPSK_3_4,   */
-		अणु51840, 12600पूर्ण, /* QPSK_4_5,   */
-		अणु54000, 13320पूर्ण, /* QPSK_5_6,   */
-		अणु57600, 14400पूर्ण, /* QPSK_8_9,   */
-		अणु58320, 16000पूर्ण, /* QPSK_9_10,  */
-		अणु43200,  9720पूर्ण, /* 8PSK_3_5,   */
-		अणु48600, 10800पूर्ण, /* 8PSK_2_3,   */
-		अणु51840, 11880पूर्ण, /* 8PSK_3_4,   */
-		अणु54000, 13320पूर्ण, /* 8PSK_5_6,   */
-		अणु57600, 14400पूर्ण, /* 8PSK_8_9,   */
-		अणु58320, 16000पूर्ण, /* 8PSK_9_10,  */
-		अणु43200, 10800पूर्ण, /* 16APSK_2_3, */
-		अणु48600, 11880पूर्ण, /* 16APSK_3_4, */
-		अणु51840, 12600पूर्ण, /* 16APSK_4_5, */
-		अणु54000, 13320पूर्ण, /* 16APSK_5_6, */
-		अणु57600, 14400पूर्ण, /* 16APSK_8_9, */
-		अणु58320, 16000पूर्ण, /* 16APSK_9_10 */
-		अणु48600, 11880पूर्ण, /* 32APSK_3_4, */
-		अणु51840, 12600पूर्ण, /* 32APSK_4_5, */
-		अणु54000, 13320पूर्ण, /* 32APSK_5_6, */
-		अणु57600, 14400पूर्ण, /* 32APSK_8_9, */
-		अणु58320, 16000पूर्ण, /* 32APSK_9_10 */
-	पूर्ण;
+static u32 dvbs2_nbch(enum dvbs2_mod_cod mod_cod, enum dvbs2_fectype fectype)
+{
+	static const u32 nbch[][2] = {
+		{    0,     0}, /* DUMMY_PLF   */
+		{16200,  3240}, /* QPSK_1_4,   */
+		{21600,  5400}, /* QPSK_1_3,   */
+		{25920,  6480}, /* QPSK_2_5,   */
+		{32400,  7200}, /* QPSK_1_2,   */
+		{38880,  9720}, /* QPSK_3_5,   */
+		{43200, 10800}, /* QPSK_2_3,   */
+		{48600, 11880}, /* QPSK_3_4,   */
+		{51840, 12600}, /* QPSK_4_5,   */
+		{54000, 13320}, /* QPSK_5_6,   */
+		{57600, 14400}, /* QPSK_8_9,   */
+		{58320, 16000}, /* QPSK_9_10,  */
+		{43200,  9720}, /* 8PSK_3_5,   */
+		{48600, 10800}, /* 8PSK_2_3,   */
+		{51840, 11880}, /* 8PSK_3_4,   */
+		{54000, 13320}, /* 8PSK_5_6,   */
+		{57600, 14400}, /* 8PSK_8_9,   */
+		{58320, 16000}, /* 8PSK_9_10,  */
+		{43200, 10800}, /* 16APSK_2_3, */
+		{48600, 11880}, /* 16APSK_3_4, */
+		{51840, 12600}, /* 16APSK_4_5, */
+		{54000, 13320}, /* 16APSK_5_6, */
+		{57600, 14400}, /* 16APSK_8_9, */
+		{58320, 16000}, /* 16APSK_9_10 */
+		{48600, 11880}, /* 32APSK_3_4, */
+		{51840, 12600}, /* 32APSK_4_5, */
+		{54000, 13320}, /* 32APSK_5_6, */
+		{57600, 14400}, /* 32APSK_8_9, */
+		{58320, 16000}, /* 32APSK_9_10 */
+	};
 
-	अगर (mod_cod >= DVBS2_QPSK_1_4 &&
+	if (mod_cod >= DVBS2_QPSK_1_4 &&
 	    mod_cod <= DVBS2_32APSK_9_10 && fectype <= DVBS2_16K)
-		वापस nbch[mod_cod][fectype];
-	वापस 64800;
-पूर्ण
+		return nbch[mod_cod][fectype];
+	return 64800;
+}
 
-अटल पूर्णांक get_bit_error_rate_s2(काष्ठा stv *state, u32 *bernumerator,
+static int get_bit_error_rate_s2(struct stv *state, u32 *bernumerator,
 				 u32 *berdenominator)
-अणु
+{
 	u8 regs[3];
 
-	पूर्णांक status = पढ़ो_regs(state, RSTV0910_P2_ERRCNT12 + state->regoff,
+	int status = read_regs(state, RSTV0910_P2_ERRCNT12 + state->regoff,
 			       regs, 3);
 
-	अगर (status)
-		वापस -EINVAL;
+	if (status)
+		return -EINVAL;
 
-	अगर ((regs[0] & 0x80) == 0) अणु
+	if ((regs[0] & 0x80) == 0) {
 		state->last_berdenominator =
-			dvbs2_nbch((क्रमागत dvbs2_mod_cod)state->mod_cod,
+			dvbs2_nbch((enum dvbs2_mod_cod)state->mod_cod,
 				   state->fectype) <<
 			(state->berscale * 2);
 		state->last_bernumerator = (((u32)regs[0] & 0x7F) << 16) |
 			((u32)regs[1] << 8) | regs[2];
-		अगर (state->last_bernumerator < 256 && state->berscale < 6) अणु
+		if (state->last_bernumerator < 256 && state->berscale < 6) {
 			state->berscale += 1;
-			ग_लिखो_reg(state, RSTV0910_P2_ERRCTRL1 + state->regoff,
+			write_reg(state, RSTV0910_P2_ERRCTRL1 + state->regoff,
 				  0x20 | state->berscale);
-		पूर्ण अन्यथा अगर (state->last_bernumerator > 1024 &&
-			   state->berscale > 2) अणु
+		} else if (state->last_bernumerator > 1024 &&
+			   state->berscale > 2) {
 			state->berscale -= 1;
-			ग_लिखो_reg(state, RSTV0910_P2_ERRCTRL1 + state->regoff,
+			write_reg(state, RSTV0910_P2_ERRCTRL1 + state->regoff,
 				  0x20 | state->berscale);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	*bernumerator = state->last_bernumerator;
 	*berdenominator = state->last_berdenominator;
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल पूर्णांक get_bit_error_rate(काष्ठा stv *state, u32 *bernumerator,
+static int get_bit_error_rate(struct stv *state, u32 *bernumerator,
 			      u32 *berdenominator)
-अणु
+{
 	*bernumerator = 0;
 	*berdenominator = 1;
 
-	चयन (state->receive_mode) अणु
-	हाल RCVMODE_DVBS:
-		वापस get_bit_error_rate_s(state,
+	switch (state->receive_mode) {
+	case RCVMODE_DVBS:
+		return get_bit_error_rate_s(state,
 					    bernumerator, berdenominator);
-	हाल RCVMODE_DVBS2:
-		वापस get_bit_error_rate_s2(state,
+	case RCVMODE_DVBS2:
+		return get_bit_error_rate_s2(state,
 					     bernumerator, berdenominator);
-	शेष:
-		अवरोध;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	default:
+		break;
+	}
+	return 0;
+}
 
-अटल पूर्णांक set_mघड़ी(काष्ठा stv *state, u32 master_घड़ी)
-अणु
+static int set_mclock(struct stv *state, u32 master_clock)
+{
 	u32 idf = 1;
 	u32 odf = 4;
 	u32 quartz = state->base->extclk / 1000000;
-	u32 fphi = master_घड़ी / 1000000;
-	u32 nभाग = (fphi * odf * idf) / quartz;
+	u32 fphi = master_clock / 1000000;
+	u32 ndiv = (fphi * odf * idf) / quartz;
 	u32 cp = 7;
 	u32 fvco;
 
-	अगर (nभाग >= 7 && nभाग <= 71)
+	if (ndiv >= 7 && ndiv <= 71)
 		cp = 7;
-	अन्यथा अगर (nभाग >=  72 && nभाग <=  79)
+	else if (ndiv >=  72 && ndiv <=  79)
 		cp = 8;
-	अन्यथा अगर (nभाग >=  80 && nभाग <=  87)
+	else if (ndiv >=  80 && ndiv <=  87)
 		cp = 9;
-	अन्यथा अगर (nभाग >=  88 && nभाग <=  95)
+	else if (ndiv >=  88 && ndiv <=  95)
 		cp = 10;
-	अन्यथा अगर (nभाग >=  96 && nभाग <= 103)
+	else if (ndiv >=  96 && ndiv <= 103)
 		cp = 11;
-	अन्यथा अगर (nभाग >= 104 && nभाग <= 111)
+	else if (ndiv >= 104 && ndiv <= 111)
 		cp = 12;
-	अन्यथा अगर (nभाग >= 112 && nभाग <= 119)
+	else if (ndiv >= 112 && ndiv <= 119)
 		cp = 13;
-	अन्यथा अगर (nभाग >= 120 && nभाग <= 127)
+	else if (ndiv >= 120 && ndiv <= 127)
 		cp = 14;
-	अन्यथा अगर (nभाग >= 128 && nभाग <= 135)
+	else if (ndiv >= 128 && ndiv <= 135)
 		cp = 15;
-	अन्यथा अगर (nभाग >= 136 && nभाग <= 143)
+	else if (ndiv >= 136 && ndiv <= 143)
 		cp = 16;
-	अन्यथा अगर (nभाग >= 144 && nभाग <= 151)
+	else if (ndiv >= 144 && ndiv <= 151)
 		cp = 17;
-	अन्यथा अगर (nभाग >= 152 && nभाग <= 159)
+	else if (ndiv >= 152 && ndiv <= 159)
 		cp = 18;
-	अन्यथा अगर (nभाग >= 160 && nभाग <= 167)
+	else if (ndiv >= 160 && ndiv <= 167)
 		cp = 19;
-	अन्यथा अगर (nभाग >= 168 && nभाग <= 175)
+	else if (ndiv >= 168 && ndiv <= 175)
 		cp = 20;
-	अन्यथा अगर (nभाग >= 176 && nभाग <= 183)
+	else if (ndiv >= 176 && ndiv <= 183)
 		cp = 21;
-	अन्यथा अगर (nभाग >= 184 && nभाग <= 191)
+	else if (ndiv >= 184 && ndiv <= 191)
 		cp = 22;
-	अन्यथा अगर (nभाग >= 192 && nभाग <= 199)
+	else if (ndiv >= 192 && ndiv <= 199)
 		cp = 23;
-	अन्यथा अगर (nभाग >= 200 && nभाग <= 207)
+	else if (ndiv >= 200 && ndiv <= 207)
 		cp = 24;
-	अन्यथा अगर (nभाग >= 208 && nभाग <= 215)
+	else if (ndiv >= 208 && ndiv <= 215)
 		cp = 25;
-	अन्यथा अगर (nभाग >= 216 && nभाग <= 223)
+	else if (ndiv >= 216 && ndiv <= 223)
 		cp = 26;
-	अन्यथा अगर (nभाग >= 224 && nभाग <= 225)
+	else if (ndiv >= 224 && ndiv <= 225)
 		cp = 27;
 
-	ग_लिखो_reg(state, RSTV0910_NCOARSE, (cp << 3) | idf);
-	ग_लिखो_reg(state, RSTV0910_NCOARSE2, odf);
-	ग_लिखो_reg(state, RSTV0910_NCOARSE1, nभाग);
+	write_reg(state, RSTV0910_NCOARSE, (cp << 3) | idf);
+	write_reg(state, RSTV0910_NCOARSE2, odf);
+	write_reg(state, RSTV0910_NCOARSE1, ndiv);
 
-	fvco = (quartz * 2 * nभाग) / idf;
+	fvco = (quartz * 2 * ndiv) / idf;
 	state->base->mclk = fvco / (2 * odf) * 1000000;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक stop(काष्ठा stv *state)
-अणु
-	अगर (state->started) अणु
-		u8 पंचांगp;
+static int stop(struct stv *state)
+{
+	if (state->started) {
+		u8 tmp;
 
-		ग_लिखो_reg(state, RSTV0910_P2_TSCFGH + state->regoff,
+		write_reg(state, RSTV0910_P2_TSCFGH + state->regoff,
 			  state->tscfgh | 0x01);
-		पढ़ो_reg(state, RSTV0910_P2_PDELCTRL1 + state->regoff, &पंचांगp);
-		पंचांगp &= ~0x01; /* release reset DVBS2 packet delin */
-		ग_लिखो_reg(state, RSTV0910_P2_PDELCTRL1 + state->regoff, पंचांगp);
+		read_reg(state, RSTV0910_P2_PDELCTRL1 + state->regoff, &tmp);
+		tmp &= ~0x01; /* release reset DVBS2 packet delin */
+		write_reg(state, RSTV0910_P2_PDELCTRL1 + state->regoff, tmp);
 		/* Blind optim*/
-		ग_लिखो_reg(state, RSTV0910_P2_AGC2O + state->regoff, 0x5B);
+		write_reg(state, RSTV0910_P2_AGC2O + state->regoff, 0x5B);
 		/* Stop the demod */
-		ग_लिखो_reg(state, RSTV0910_P2_DMDISTATE + state->regoff, 0x5c);
+		write_reg(state, RSTV0910_P2_DMDISTATE + state->regoff, 0x5c);
 		state->started = 0;
-	पूर्ण
+	}
 	state->receive_mode = RCVMODE_NONE;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम set_pls(काष्ठा stv *state, u32 pls_code)
-अणु
-	अगर (pls_code == state->cur_scrambling_code)
-		वापस;
+static void set_pls(struct stv *state, u32 pls_code)
+{
+	if (pls_code == state->cur_scrambling_code)
+		return;
 
 	/* PLROOT2 bit 2 = gold code */
-	ग_लिखो_reg(state, RSTV0910_P2_PLROOT0 + state->regoff,
+	write_reg(state, RSTV0910_P2_PLROOT0 + state->regoff,
 		  pls_code & 0xff);
-	ग_लिखो_reg(state, RSTV0910_P2_PLROOT1 + state->regoff,
+	write_reg(state, RSTV0910_P2_PLROOT1 + state->regoff,
 		  (pls_code >> 8) & 0xff);
-	ग_लिखो_reg(state, RSTV0910_P2_PLROOT2 + state->regoff,
+	write_reg(state, RSTV0910_P2_PLROOT2 + state->regoff,
 		  0x04 | ((pls_code >> 16) & 0x03));
 	state->cur_scrambling_code = pls_code;
-पूर्ण
+}
 
-अटल व्योम set_isi(काष्ठा stv *state, u32 isi)
-अणु
-	अगर (isi == NO_STREAM_ID_FILTER)
-		वापस;
-	अगर (isi == 0x80000000) अणु
+static void set_isi(struct stv *state, u32 isi)
+{
+	if (isi == NO_STREAM_ID_FILTER)
+		return;
+	if (isi == 0x80000000) {
 		SET_FIELD(FORCE_CONTINUOUS, 1);
 		SET_FIELD(TSOUT_NOSYNC, 1);
-	पूर्ण अन्यथा अणु
+	} else {
 		SET_FIELD(FILTER_EN, 1);
-		ग_लिखो_reg(state, RSTV0910_P2_ISIENTRY + state->regoff,
+		write_reg(state, RSTV0910_P2_ISIENTRY + state->regoff,
 			  isi & 0xff);
-		ग_लिखो_reg(state, RSTV0910_P2_ISIBITENA + state->regoff, 0xff);
-	पूर्ण
+		write_reg(state, RSTV0910_P2_ISIBITENA + state->regoff, 0xff);
+	}
 	SET_FIELD(ALGOSWRST, 1);
 	SET_FIELD(ALGOSWRST, 0);
-पूर्ण
+}
 
-अटल व्योम set_stream_modes(काष्ठा stv *state,
-			     काष्ठा dtv_frontend_properties *p)
-अणु
+static void set_stream_modes(struct stv *state,
+			     struct dtv_frontend_properties *p)
+{
 	set_isi(state, p->stream_id);
 	set_pls(state, p->scrambling_sequence_index);
-पूर्ण
+}
 
-अटल पूर्णांक init_search_param(काष्ठा stv *state,
-			     काष्ठा dtv_frontend_properties *p)
-अणु
+static int init_search_param(struct stv *state,
+			     struct dtv_frontend_properties *p)
+{
 	SET_FIELD(FORCE_CONTINUOUS, 0);
 	SET_FIELD(FRAME_MODE, 0);
 	SET_FIELD(FILTER_EN, 0);
@@ -936,408 +935,408 @@
 	SET_FIELD(ISIOBS_MODE, 1);
 
 	set_stream_modes(state, p);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक enable_puncture_rate(काष्ठा stv *state, क्रमागत fe_code_rate rate)
-अणु
+static int enable_puncture_rate(struct stv *state, enum fe_code_rate rate)
+{
 	u8 val;
 
-	चयन (rate) अणु
-	हाल FEC_1_2:
+	switch (rate) {
+	case FEC_1_2:
 		val = 0x01;
-		अवरोध;
-	हाल FEC_2_3:
+		break;
+	case FEC_2_3:
 		val = 0x02;
-		अवरोध;
-	हाल FEC_3_4:
+		break;
+	case FEC_3_4:
 		val = 0x04;
-		अवरोध;
-	हाल FEC_5_6:
+		break;
+	case FEC_5_6:
 		val = 0x08;
-		अवरोध;
-	हाल FEC_7_8:
+		break;
+	case FEC_7_8:
 		val = 0x20;
-		अवरोध;
-	हाल FEC_NONE:
-	शेष:
+		break;
+	case FEC_NONE:
+	default:
 		val = 0x2f;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस ग_लिखो_reg(state, RSTV0910_P2_PRVIT + state->regoff, val);
-पूर्ण
+	return write_reg(state, RSTV0910_P2_PRVIT + state->regoff, val);
+}
 
-अटल पूर्णांक set_vth_शेष(काष्ठा stv *state)
-अणु
+static int set_vth_default(struct stv *state)
+{
 	state->vth[0] = 0xd7;
 	state->vth[1] = 0x85;
 	state->vth[2] = 0x58;
 	state->vth[3] = 0x3a;
 	state->vth[4] = 0x34;
 	state->vth[5] = 0x28;
-	ग_लिखो_reg(state, RSTV0910_P2_VTH12 + state->regoff + 0, state->vth[0]);
-	ग_लिखो_reg(state, RSTV0910_P2_VTH12 + state->regoff + 1, state->vth[1]);
-	ग_लिखो_reg(state, RSTV0910_P2_VTH12 + state->regoff + 2, state->vth[2]);
-	ग_लिखो_reg(state, RSTV0910_P2_VTH12 + state->regoff + 3, state->vth[3]);
-	ग_लिखो_reg(state, RSTV0910_P2_VTH12 + state->regoff + 4, state->vth[4]);
-	ग_लिखो_reg(state, RSTV0910_P2_VTH12 + state->regoff + 5, state->vth[5]);
-	वापस 0;
-पूर्ण
+	write_reg(state, RSTV0910_P2_VTH12 + state->regoff + 0, state->vth[0]);
+	write_reg(state, RSTV0910_P2_VTH12 + state->regoff + 1, state->vth[1]);
+	write_reg(state, RSTV0910_P2_VTH12 + state->regoff + 2, state->vth[2]);
+	write_reg(state, RSTV0910_P2_VTH12 + state->regoff + 3, state->vth[3]);
+	write_reg(state, RSTV0910_P2_VTH12 + state->regoff + 4, state->vth[4]);
+	write_reg(state, RSTV0910_P2_VTH12 + state->regoff + 5, state->vth[5]);
+	return 0;
+}
 
-अटल पूर्णांक set_vth(काष्ठा stv *state)
-अणु
-	अटल स्थिर काष्ठा slookup vthlookup_table[] = अणु
-		अणु250,	8780पूर्ण, /* C/N= 1.5dB */
-		अणु100,	7405पूर्ण, /* C/N= 4.5dB */
-		अणु40,	6330पूर्ण, /* C/N= 6.5dB */
-		अणु12,	5224पूर्ण, /* C/N= 8.5dB */
-		अणु5,	4236पूर्ण  /* C/N=10.5dB */
-	पूर्ण;
+static int set_vth(struct stv *state)
+{
+	static const struct slookup vthlookup_table[] = {
+		{250,	8780}, /* C/N= 1.5dB */
+		{100,	7405}, /* C/N= 4.5dB */
+		{40,	6330}, /* C/N= 6.5dB */
+		{12,	5224}, /* C/N= 8.5dB */
+		{5,	4236}  /* C/N=10.5dB */
+	};
 
-	पूर्णांक i;
-	u8 पंचांगp[2];
-	पूर्णांक status = पढ़ो_regs(state,
+	int i;
+	u8 tmp[2];
+	int status = read_regs(state,
 			       RSTV0910_P2_NNOSDATAT1 + state->regoff,
-			       पंचांगp, 2);
-	u16 reg_value = (पंचांगp[0] << 8) | पंचांगp[1];
+			       tmp, 2);
+	u16 reg_value = (tmp[0] << 8) | tmp[1];
 	s32 vth = table_lookup(vthlookup_table, ARRAY_SIZE(vthlookup_table),
 			      reg_value);
 
-	क्रम (i = 0; i < 6; i += 1)
-		अगर (state->vth[i] > vth)
+	for (i = 0; i < 6; i += 1)
+		if (state->vth[i] > vth)
 			state->vth[i] = vth;
 
-	ग_लिखो_reg(state, RSTV0910_P2_VTH12 + state->regoff + 0, state->vth[0]);
-	ग_लिखो_reg(state, RSTV0910_P2_VTH12 + state->regoff + 1, state->vth[1]);
-	ग_लिखो_reg(state, RSTV0910_P2_VTH12 + state->regoff + 2, state->vth[2]);
-	ग_लिखो_reg(state, RSTV0910_P2_VTH12 + state->regoff + 3, state->vth[3]);
-	ग_लिखो_reg(state, RSTV0910_P2_VTH12 + state->regoff + 4, state->vth[4]);
-	ग_लिखो_reg(state, RSTV0910_P2_VTH12 + state->regoff + 5, state->vth[5]);
-	वापस status;
-पूर्ण
+	write_reg(state, RSTV0910_P2_VTH12 + state->regoff + 0, state->vth[0]);
+	write_reg(state, RSTV0910_P2_VTH12 + state->regoff + 1, state->vth[1]);
+	write_reg(state, RSTV0910_P2_VTH12 + state->regoff + 2, state->vth[2]);
+	write_reg(state, RSTV0910_P2_VTH12 + state->regoff + 3, state->vth[3]);
+	write_reg(state, RSTV0910_P2_VTH12 + state->regoff + 4, state->vth[4]);
+	write_reg(state, RSTV0910_P2_VTH12 + state->regoff + 5, state->vth[5]);
+	return status;
+}
 
-अटल पूर्णांक start(काष्ठा stv *state, काष्ठा dtv_frontend_properties *p)
-अणु
+static int start(struct stv *state, struct dtv_frontend_properties *p)
+{
 	s32 freq;
 	u8  reg_dmdcfgmd;
 	u16 symb;
 
-	अगर (p->symbol_rate < 100000 || p->symbol_rate > 70000000)
-		वापस -EINVAL;
+	if (p->symbol_rate < 100000 || p->symbol_rate > 70000000)
+		return -EINVAL;
 
 	state->receive_mode = RCVMODE_NONE;
-	state->demod_lock_समय = 0;
+	state->demod_lock_time = 0;
 
 	/* Demod Stop */
-	अगर (state->started)
-		ग_लिखो_reg(state, RSTV0910_P2_DMDISTATE + state->regoff, 0x5C);
+	if (state->started)
+		write_reg(state, RSTV0910_P2_DMDISTATE + state->regoff, 0x5C);
 
 	init_search_param(state, p);
 
-	अगर (p->symbol_rate <= 1000000) अणु /* SR <=1Msps */
-		state->demod_समयout = 3000;
-		state->fec_समयout = 2000;
-	पूर्ण अन्यथा अगर (p->symbol_rate <= 2000000) अणु /* 1Msps < SR <=2Msps */
-		state->demod_समयout = 2500;
-		state->fec_समयout = 1300;
-	पूर्ण अन्यथा अगर (p->symbol_rate <= 5000000) अणु /* 2Msps< SR <=5Msps */
-		state->demod_समयout = 1000;
-		state->fec_समयout = 650;
-	पूर्ण अन्यथा अगर (p->symbol_rate <= 10000000) अणु /* 5Msps< SR <=10Msps */
-		state->demod_समयout = 700;
-		state->fec_समयout = 350;
-	पूर्ण अन्यथा अगर (p->symbol_rate < 20000000) अणु /* 10Msps< SR <=20Msps */
-		state->demod_समयout = 400;
-		state->fec_समयout = 200;
-	पूर्ण अन्यथा अणु /* SR >=20Msps */
-		state->demod_समयout = 300;
-		state->fec_समयout = 200;
-	पूर्ण
+	if (p->symbol_rate <= 1000000) { /* SR <=1Msps */
+		state->demod_timeout = 3000;
+		state->fec_timeout = 2000;
+	} else if (p->symbol_rate <= 2000000) { /* 1Msps < SR <=2Msps */
+		state->demod_timeout = 2500;
+		state->fec_timeout = 1300;
+	} else if (p->symbol_rate <= 5000000) { /* 2Msps< SR <=5Msps */
+		state->demod_timeout = 1000;
+		state->fec_timeout = 650;
+	} else if (p->symbol_rate <= 10000000) { /* 5Msps< SR <=10Msps */
+		state->demod_timeout = 700;
+		state->fec_timeout = 350;
+	} else if (p->symbol_rate < 20000000) { /* 10Msps< SR <=20Msps */
+		state->demod_timeout = 400;
+		state->fec_timeout = 200;
+	} else { /* SR >=20Msps */
+		state->demod_timeout = 300;
+		state->fec_timeout = 200;
+	}
 
 	/* Set the Init Symbol rate */
-	symb = muद_भाग32(p->symbol_rate, 65536, state->base->mclk);
-	ग_लिखो_reg(state, RSTV0910_P2_SFRINIT1 + state->regoff,
+	symb = muldiv32(p->symbol_rate, 65536, state->base->mclk);
+	write_reg(state, RSTV0910_P2_SFRINIT1 + state->regoff,
 		  ((symb >> 8) & 0x7F));
-	ग_लिखो_reg(state, RSTV0910_P2_SFRINIT0 + state->regoff, (symb & 0xFF));
+	write_reg(state, RSTV0910_P2_SFRINIT0 + state->regoff, (symb & 0xFF));
 
 	state->demod_bits |= 0x80;
-	ग_लिखो_reg(state, RSTV0910_P2_DEMOD + state->regoff, state->demod_bits);
+	write_reg(state, RSTV0910_P2_DEMOD + state->regoff, state->demod_bits);
 
 	/* FE_STV0910_SetSearchStandard */
-	पढ़ो_reg(state, RSTV0910_P2_DMDCFGMD + state->regoff, &reg_dmdcfgmd);
-	ग_लिखो_reg(state, RSTV0910_P2_DMDCFGMD + state->regoff,
+	read_reg(state, RSTV0910_P2_DMDCFGMD + state->regoff, &reg_dmdcfgmd);
+	write_reg(state, RSTV0910_P2_DMDCFGMD + state->regoff,
 		  reg_dmdcfgmd |= 0xC0);
 
-	ग_लिखो_shared_reg(state,
+	write_shared_reg(state,
 			 RSTV0910_TSTTSRS, state->nr ? 0x02 : 0x01, 0x00);
 
 	/* Disable DSS */
-	ग_लिखो_reg(state, RSTV0910_P2_FECM  + state->regoff, 0x00);
-	ग_लिखो_reg(state, RSTV0910_P2_PRVIT + state->regoff, 0x2F);
+	write_reg(state, RSTV0910_P2_FECM  + state->regoff, 0x00);
+	write_reg(state, RSTV0910_P2_PRVIT + state->regoff, 0x2F);
 
 	enable_puncture_rate(state, FEC_NONE);
 
 	/* 8PSK 3/5, 8PSK 2/3 Poff tracking optimization WA */
-	ग_लिखो_reg(state, RSTV0910_P2_ACLC2S2Q + state->regoff, 0x0B);
-	ग_लिखो_reg(state, RSTV0910_P2_ACLC2S28 + state->regoff, 0x0A);
-	ग_लिखो_reg(state, RSTV0910_P2_BCLC2S2Q + state->regoff, 0x84);
-	ग_लिखो_reg(state, RSTV0910_P2_BCLC2S28 + state->regoff, 0x84);
-	ग_लिखो_reg(state, RSTV0910_P2_CARHDR + state->regoff, 0x1C);
-	ग_लिखो_reg(state, RSTV0910_P2_CARFREQ + state->regoff, 0x79);
+	write_reg(state, RSTV0910_P2_ACLC2S2Q + state->regoff, 0x0B);
+	write_reg(state, RSTV0910_P2_ACLC2S28 + state->regoff, 0x0A);
+	write_reg(state, RSTV0910_P2_BCLC2S2Q + state->regoff, 0x84);
+	write_reg(state, RSTV0910_P2_BCLC2S28 + state->regoff, 0x84);
+	write_reg(state, RSTV0910_P2_CARHDR + state->regoff, 0x1C);
+	write_reg(state, RSTV0910_P2_CARFREQ + state->regoff, 0x79);
 
-	ग_लिखो_reg(state, RSTV0910_P2_ACLC2S216A + state->regoff, 0x29);
-	ग_लिखो_reg(state, RSTV0910_P2_ACLC2S232A + state->regoff, 0x09);
-	ग_लिखो_reg(state, RSTV0910_P2_BCLC2S216A + state->regoff, 0x84);
-	ग_लिखो_reg(state, RSTV0910_P2_BCLC2S232A + state->regoff, 0x84);
+	write_reg(state, RSTV0910_P2_ACLC2S216A + state->regoff, 0x29);
+	write_reg(state, RSTV0910_P2_ACLC2S232A + state->regoff, 0x09);
+	write_reg(state, RSTV0910_P2_BCLC2S216A + state->regoff, 0x84);
+	write_reg(state, RSTV0910_P2_BCLC2S232A + state->regoff, 0x84);
 
 	/*
 	 * Reset CAR3, bug DVBS2->DVBS1 lock
-	 * Note: The bit is only pulsed -> no lock on shared रेजिस्टर needed
+	 * Note: The bit is only pulsed -> no lock on shared register needed
 	 */
-	ग_लिखो_reg(state, RSTV0910_TSTRES0, state->nr ? 0x04 : 0x08);
-	ग_लिखो_reg(state, RSTV0910_TSTRES0, 0);
+	write_reg(state, RSTV0910_TSTRES0, state->nr ? 0x04 : 0x08);
+	write_reg(state, RSTV0910_TSTRES0, 0);
 
-	set_vth_शेष(state);
+	set_vth_default(state);
 	/* Reset demod */
-	ग_लिखो_reg(state, RSTV0910_P2_DMDISTATE + state->regoff, 0x1F);
+	write_reg(state, RSTV0910_P2_DMDISTATE + state->regoff, 0x1F);
 
-	ग_लिखो_reg(state, RSTV0910_P2_CARCFG + state->regoff, 0x46);
+	write_reg(state, RSTV0910_P2_CARCFG + state->regoff, 0x46);
 
-	अगर (p->symbol_rate <= 5000000)
+	if (p->symbol_rate <= 5000000)
 		freq = (state->search_range / 2000) + 80;
-	अन्यथा
+	else
 		freq = (state->search_range / 2000) + 1600;
 	freq = (freq << 16) / (state->base->mclk / 1000);
 
-	ग_लिखो_reg(state, RSTV0910_P2_CFRUP1 + state->regoff,
+	write_reg(state, RSTV0910_P2_CFRUP1 + state->regoff,
 		  (freq >> 8) & 0xff);
-	ग_लिखो_reg(state, RSTV0910_P2_CFRUP0 + state->regoff, (freq & 0xff));
+	write_reg(state, RSTV0910_P2_CFRUP0 + state->regoff, (freq & 0xff));
 	/* CFR Low Setting */
 	freq = -freq;
-	ग_लिखो_reg(state, RSTV0910_P2_CFRLOW1 + state->regoff,
+	write_reg(state, RSTV0910_P2_CFRLOW1 + state->regoff,
 		  (freq >> 8) & 0xff);
-	ग_लिखो_reg(state, RSTV0910_P2_CFRLOW0 + state->regoff, (freq & 0xff));
+	write_reg(state, RSTV0910_P2_CFRLOW0 + state->regoff, (freq & 0xff));
 
 	/* init the demod frequency offset to 0 */
-	ग_लिखो_reg(state, RSTV0910_P2_CFRINIT1 + state->regoff, 0);
-	ग_लिखो_reg(state, RSTV0910_P2_CFRINIT0 + state->regoff, 0);
+	write_reg(state, RSTV0910_P2_CFRINIT1 + state->regoff, 0);
+	write_reg(state, RSTV0910_P2_CFRINIT0 + state->regoff, 0);
 
-	ग_लिखो_reg(state, RSTV0910_P2_DMDISTATE + state->regoff, 0x1F);
+	write_reg(state, RSTV0910_P2_DMDISTATE + state->regoff, 0x1F);
 	/* Trigger acq */
-	ग_लिखो_reg(state, RSTV0910_P2_DMDISTATE + state->regoff, 0x15);
+	write_reg(state, RSTV0910_P2_DMDISTATE + state->regoff, 0x15);
 
-	state->demod_lock_समय += TUNING_DELAY;
+	state->demod_lock_time += TUNING_DELAY;
 	state->started = 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक init_diseqc(काष्ठा stv *state)
-अणु
+static int init_diseqc(struct stv *state)
+{
 	u16 offs = state->nr ? 0x40 : 0; /* Address offset */
 	u8 freq = ((state->base->mclk + 11000 * 32) / (22000 * 32));
 
 	/* Disable receiver */
-	ग_लिखो_reg(state, RSTV0910_P1_DISRXCFG + offs, 0x00);
-	ग_लिखो_reg(state, RSTV0910_P1_DISTXCFG + offs, 0xBA); /* Reset = 1 */
-	ग_लिखो_reg(state, RSTV0910_P1_DISTXCFG + offs, 0x3A); /* Reset = 0 */
-	ग_लिखो_reg(state, RSTV0910_P1_DISTXF22 + offs, freq);
-	वापस 0;
-पूर्ण
+	write_reg(state, RSTV0910_P1_DISRXCFG + offs, 0x00);
+	write_reg(state, RSTV0910_P1_DISTXCFG + offs, 0xBA); /* Reset = 1 */
+	write_reg(state, RSTV0910_P1_DISTXCFG + offs, 0x3A); /* Reset = 0 */
+	write_reg(state, RSTV0910_P1_DISTXF22 + offs, freq);
+	return 0;
+}
 
-अटल पूर्णांक probe(काष्ठा stv *state)
-अणु
+static int probe(struct stv *state)
+{
 	u8 id;
 
 	state->receive_mode = RCVMODE_NONE;
 	state->started = 0;
 
-	अगर (पढ़ो_reg(state, RSTV0910_MID, &id) < 0)
-		वापस -ENODEV;
+	if (read_reg(state, RSTV0910_MID, &id) < 0)
+		return -ENODEV;
 
-	अगर (id != 0x51)
-		वापस -EINVAL;
+	if (id != 0x51)
+		return -EINVAL;
 
 	/* Configure the I2C repeater to off */
-	ग_लिखो_reg(state, RSTV0910_P1_I2CRPT, 0x24);
+	write_reg(state, RSTV0910_P1_I2CRPT, 0x24);
 	/* Configure the I2C repeater to off */
-	ग_लिखो_reg(state, RSTV0910_P2_I2CRPT, 0x24);
+	write_reg(state, RSTV0910_P2_I2CRPT, 0x24);
 	/* Set the I2C to oversampling ratio */
-	ग_लिखो_reg(state, RSTV0910_I2CCFG, 0x88); /* state->i2ccfg */
+	write_reg(state, RSTV0910_I2CCFG, 0x88); /* state->i2ccfg */
 
-	ग_लिखो_reg(state, RSTV0910_OUTCFG,    0x00); /* OUTCFG */
-	ग_लिखो_reg(state, RSTV0910_PADCFG,    0x05); /* RFAGC Pads Dev = 05 */
-	ग_लिखो_reg(state, RSTV0910_SYNTCTRL,  0x02); /* SYNTCTRL */
-	ग_लिखो_reg(state, RSTV0910_TSGENERAL, state->tsgeneral); /* TSGENERAL */
-	ग_लिखो_reg(state, RSTV0910_CFGEXT,    0x02); /* CFGEXT */
+	write_reg(state, RSTV0910_OUTCFG,    0x00); /* OUTCFG */
+	write_reg(state, RSTV0910_PADCFG,    0x05); /* RFAGC Pads Dev = 05 */
+	write_reg(state, RSTV0910_SYNTCTRL,  0x02); /* SYNTCTRL */
+	write_reg(state, RSTV0910_TSGENERAL, state->tsgeneral); /* TSGENERAL */
+	write_reg(state, RSTV0910_CFGEXT,    0x02); /* CFGEXT */
 
-	अगर (state->single)
-		ग_लिखो_reg(state, RSTV0910_GENCFG, 0x14); /* GENCFG */
-	अन्यथा
-		ग_लिखो_reg(state, RSTV0910_GENCFG, 0x15); /* GENCFG */
+	if (state->single)
+		write_reg(state, RSTV0910_GENCFG, 0x14); /* GENCFG */
+	else
+		write_reg(state, RSTV0910_GENCFG, 0x15); /* GENCFG */
 
-	ग_लिखो_reg(state, RSTV0910_P1_TNRCFG2, 0x02); /* IQSWAP = 0 */
-	ग_लिखो_reg(state, RSTV0910_P2_TNRCFG2, 0x82); /* IQSWAP = 1 */
+	write_reg(state, RSTV0910_P1_TNRCFG2, 0x02); /* IQSWAP = 0 */
+	write_reg(state, RSTV0910_P2_TNRCFG2, 0x82); /* IQSWAP = 1 */
 
-	ग_लिखो_reg(state, RSTV0910_P1_CAR3CFG, 0x02);
-	ग_लिखो_reg(state, RSTV0910_P2_CAR3CFG, 0x02);
-	ग_लिखो_reg(state, RSTV0910_P1_DMDCFG4, 0x04);
-	ग_लिखो_reg(state, RSTV0910_P2_DMDCFG4, 0x04);
+	write_reg(state, RSTV0910_P1_CAR3CFG, 0x02);
+	write_reg(state, RSTV0910_P2_CAR3CFG, 0x02);
+	write_reg(state, RSTV0910_P1_DMDCFG4, 0x04);
+	write_reg(state, RSTV0910_P2_DMDCFG4, 0x04);
 
-	ग_लिखो_reg(state, RSTV0910_TSTRES0, 0x80); /* LDPC Reset */
-	ग_लिखो_reg(state, RSTV0910_TSTRES0, 0x00);
+	write_reg(state, RSTV0910_TSTRES0, 0x80); /* LDPC Reset */
+	write_reg(state, RSTV0910_TSTRES0, 0x00);
 
-	ग_लिखो_reg(state, RSTV0910_P1_TSPIDFLT1, 0x00);
-	ग_लिखो_reg(state, RSTV0910_P2_TSPIDFLT1, 0x00);
+	write_reg(state, RSTV0910_P1_TSPIDFLT1, 0x00);
+	write_reg(state, RSTV0910_P2_TSPIDFLT1, 0x00);
 
-	ग_लिखो_reg(state, RSTV0910_P1_TMGCFG2, 0x80);
-	ग_लिखो_reg(state, RSTV0910_P2_TMGCFG2, 0x80);
+	write_reg(state, RSTV0910_P1_TMGCFG2, 0x80);
+	write_reg(state, RSTV0910_P2_TMGCFG2, 0x80);
 
-	set_mघड़ी(state, 135000000);
+	set_mclock(state, 135000000);
 
 	/* TS output */
-	ग_लिखो_reg(state, RSTV0910_P1_TSCFGH, state->tscfgh | 0x01);
-	ग_लिखो_reg(state, RSTV0910_P1_TSCFGH, state->tscfgh);
-	ग_लिखो_reg(state, RSTV0910_P1_TSCFGM, 0xC0); /* Manual speed */
-	ग_लिखो_reg(state, RSTV0910_P1_TSCFGL, 0x20);
+	write_reg(state, RSTV0910_P1_TSCFGH, state->tscfgh | 0x01);
+	write_reg(state, RSTV0910_P1_TSCFGH, state->tscfgh);
+	write_reg(state, RSTV0910_P1_TSCFGM, 0xC0); /* Manual speed */
+	write_reg(state, RSTV0910_P1_TSCFGL, 0x20);
 
-	ग_लिखो_reg(state, RSTV0910_P1_TSSPEED, state->tsspeed);
+	write_reg(state, RSTV0910_P1_TSSPEED, state->tsspeed);
 
-	ग_लिखो_reg(state, RSTV0910_P2_TSCFGH, state->tscfgh | 0x01);
-	ग_लिखो_reg(state, RSTV0910_P2_TSCFGH, state->tscfgh);
-	ग_लिखो_reg(state, RSTV0910_P2_TSCFGM, 0xC0); /* Manual speed */
-	ग_लिखो_reg(state, RSTV0910_P2_TSCFGL, 0x20);
+	write_reg(state, RSTV0910_P2_TSCFGH, state->tscfgh | 0x01);
+	write_reg(state, RSTV0910_P2_TSCFGH, state->tscfgh);
+	write_reg(state, RSTV0910_P2_TSCFGM, 0xC0); /* Manual speed */
+	write_reg(state, RSTV0910_P2_TSCFGL, 0x20);
 
-	ग_लिखो_reg(state, RSTV0910_P2_TSSPEED, state->tsspeed);
+	write_reg(state, RSTV0910_P2_TSSPEED, state->tsspeed);
 
 	/* Reset stream merger */
-	ग_लिखो_reg(state, RSTV0910_P1_TSCFGH, state->tscfgh | 0x01);
-	ग_लिखो_reg(state, RSTV0910_P2_TSCFGH, state->tscfgh | 0x01);
-	ग_लिखो_reg(state, RSTV0910_P1_TSCFGH, state->tscfgh);
-	ग_लिखो_reg(state, RSTV0910_P2_TSCFGH, state->tscfgh);
+	write_reg(state, RSTV0910_P1_TSCFGH, state->tscfgh | 0x01);
+	write_reg(state, RSTV0910_P2_TSCFGH, state->tscfgh | 0x01);
+	write_reg(state, RSTV0910_P1_TSCFGH, state->tscfgh);
+	write_reg(state, RSTV0910_P2_TSCFGH, state->tscfgh);
 
-	ग_लिखो_reg(state, RSTV0910_P1_I2CRPT, state->i2crpt);
-	ग_लिखो_reg(state, RSTV0910_P2_I2CRPT, state->i2crpt);
+	write_reg(state, RSTV0910_P1_I2CRPT, state->i2crpt);
+	write_reg(state, RSTV0910_P2_I2CRPT, state->i2crpt);
 
-	ग_लिखो_reg(state, RSTV0910_P1_TSINSDELM, 0x17);
-	ग_लिखो_reg(state, RSTV0910_P1_TSINSDELL, 0xff);
+	write_reg(state, RSTV0910_P1_TSINSDELM, 0x17);
+	write_reg(state, RSTV0910_P1_TSINSDELL, 0xff);
 
-	ग_लिखो_reg(state, RSTV0910_P2_TSINSDELM, 0x17);
-	ग_लिखो_reg(state, RSTV0910_P2_TSINSDELL, 0xff);
+	write_reg(state, RSTV0910_P2_TSINSDELM, 0x17);
+	write_reg(state, RSTV0910_P2_TSINSDELL, 0xff);
 
 	init_diseqc(state);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक gate_ctrl(काष्ठा dvb_frontend *fe, पूर्णांक enable)
-अणु
-	काष्ठा stv *state = fe->demodulator_priv;
+static int gate_ctrl(struct dvb_frontend *fe, int enable)
+{
+	struct stv *state = fe->demodulator_priv;
 	u8 i2crpt = state->i2crpt & ~0x86;
 
 	/*
 	 * mutex_lock note: Concurrent I2C gate bus accesses must be
 	 * prevented (STV0910 = dual demod on a single IC with a single I2C
-	 * gate/bus, and two tuners attached), similar to most (अगर not all)
-	 * other I2C host पूर्णांकerfaces/buses.
+	 * gate/bus, and two tuners attached), similar to most (if not all)
+	 * other I2C host interfaces/buses.
 	 *
-	 * enable=1 (खोलो I2C gate) will grab the lock
-	 * enable=0 (बंद I2C gate) releases the lock
+	 * enable=1 (open I2C gate) will grab the lock
+	 * enable=0 (close I2C gate) releases the lock
 	 */
 
-	अगर (enable) अणु
+	if (enable) {
 		mutex_lock(&state->base->i2c_lock);
 		i2crpt |= 0x80;
-	पूर्ण अन्यथा अणु
+	} else {
 		i2crpt |= 0x02;
-	पूर्ण
+	}
 
-	अगर (ग_लिखो_reg(state, state->nr ? RSTV0910_P2_I2CRPT :
-		      RSTV0910_P1_I2CRPT, i2crpt) < 0) अणु
-		/* करोn't hold the I2C bus lock on failure */
-		अगर (!WARN_ON(!mutex_is_locked(&state->base->i2c_lock)))
+	if (write_reg(state, state->nr ? RSTV0910_P2_I2CRPT :
+		      RSTV0910_P1_I2CRPT, i2crpt) < 0) {
+		/* don't hold the I2C bus lock on failure */
+		if (!WARN_ON(!mutex_is_locked(&state->base->i2c_lock)))
 			mutex_unlock(&state->base->i2c_lock);
 		dev_err(&state->base->i2c->dev,
 			"%s() write_reg failure (enable=%d)\n",
 			__func__, enable);
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
 	state->i2crpt = i2crpt;
 
-	अगर (!enable)
-		अगर (!WARN_ON(!mutex_is_locked(&state->base->i2c_lock)))
+	if (!enable)
+		if (!WARN_ON(!mutex_is_locked(&state->base->i2c_lock)))
 			mutex_unlock(&state->base->i2c_lock);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम release(काष्ठा dvb_frontend *fe)
-अणु
-	काष्ठा stv *state = fe->demodulator_priv;
+static void release(struct dvb_frontend *fe)
+{
+	struct stv *state = fe->demodulator_priv;
 
 	state->base->count--;
-	अगर (state->base->count == 0) अणु
+	if (state->base->count == 0) {
 		list_del(&state->base->stvlist);
-		kमुक्त(state->base);
-	पूर्ण
-	kमुक्त(state);
-पूर्ण
+		kfree(state->base);
+	}
+	kfree(state);
+}
 
-अटल पूर्णांक set_parameters(काष्ठा dvb_frontend *fe)
-अणु
-	पूर्णांक stat = 0;
-	काष्ठा stv *state = fe->demodulator_priv;
-	काष्ठा dtv_frontend_properties *p = &fe->dtv_property_cache;
+static int set_parameters(struct dvb_frontend *fe)
+{
+	int stat = 0;
+	struct stv *state = fe->demodulator_priv;
+	struct dtv_frontend_properties *p = &fe->dtv_property_cache;
 
 	stop(state);
-	अगर (fe->ops.tuner_ops.set_params)
+	if (fe->ops.tuner_ops.set_params)
 		fe->ops.tuner_ops.set_params(fe);
 	state->symbol_rate = p->symbol_rate;
 	stat = start(state, p);
-	वापस stat;
-पूर्ण
+	return stat;
+}
 
-अटल पूर्णांक manage_matype_info(काष्ठा stv *state)
-अणु
-	अगर (!state->started)
-		वापस -EINVAL;
-	अगर (state->receive_mode == RCVMODE_DVBS2) अणु
+static int manage_matype_info(struct stv *state)
+{
+	if (!state->started)
+		return -EINVAL;
+	if (state->receive_mode == RCVMODE_DVBS2) {
 		u8 bbheader[2];
 
-		पढ़ो_regs(state, RSTV0910_P2_MATSTR1 + state->regoff,
+		read_regs(state, RSTV0910_P2_MATSTR1 + state->regoff,
 			  bbheader, 2);
 		state->feroll_off =
-			(क्रमागत fe_stv0910_roll_off)(bbheader[0] & 0x03);
+			(enum fe_stv0910_roll_off)(bbheader[0] & 0x03);
 		state->is_vcm = (bbheader[0] & 0x10) == 0;
 		state->is_standard_broadcast = (bbheader[0] & 0xFC) == 0xF0;
-	पूर्ण अन्यथा अगर (state->receive_mode == RCVMODE_DVBS) अणु
+	} else if (state->receive_mode == RCVMODE_DVBS) {
 		state->is_vcm = 0;
 		state->is_standard_broadcast = 1;
 		state->feroll_off = FE_SAT_35;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल पूर्णांक पढ़ो_snr(काष्ठा dvb_frontend *fe)
-अणु
-	काष्ठा stv *state = fe->demodulator_priv;
-	काष्ठा dtv_frontend_properties *p = &fe->dtv_property_cache;
+static int read_snr(struct dvb_frontend *fe)
+{
+	struct stv *state = fe->demodulator_priv;
+	struct dtv_frontend_properties *p = &fe->dtv_property_cache;
 	s32 snrval;
 
-	अगर (!get_संकेत_to_noise(state, &snrval)) अणु
+	if (!get_signal_to_noise(state, &snrval)) {
 		p->cnr.stat[0].scale = FE_SCALE_DECIBEL;
 		p->cnr.stat[0].svalue = 100 * snrval; /* fix scale */
-	पूर्ण अन्यथा अणु
+	} else {
 		p->cnr.stat[0].scale = FE_SCALE_NOT_AVAILABLE;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक पढ़ो_ber(काष्ठा dvb_frontend *fe)
-अणु
-	काष्ठा stv *state = fe->demodulator_priv;
-	काष्ठा dtv_frontend_properties *p = &fe->dtv_property_cache;
+static int read_ber(struct dvb_frontend *fe)
+{
+	struct stv *state = fe->demodulator_priv;
+	struct dtv_frontend_properties *p = &fe->dtv_property_cache;
 	u32 n, d;
 
 	get_bit_error_rate(state, &n, &d);
@@ -1347,217 +1346,217 @@
 	p->pre_bit_count.stat[0].scale = FE_SCALE_COUNTER;
 	p->pre_bit_count.stat[0].uvalue = d;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम पढ़ो_संकेत_strength(काष्ठा dvb_frontend *fe)
-अणु
-	काष्ठा stv *state = fe->demodulator_priv;
-	काष्ठा dtv_frontend_properties *p = &state->fe.dtv_property_cache;
+static void read_signal_strength(struct dvb_frontend *fe)
+{
+	struct stv *state = fe->demodulator_priv;
+	struct dtv_frontend_properties *p = &state->fe.dtv_property_cache;
 	u8 reg[2];
 	u16 agc;
-	s32 padc, घातer = 0;
-	पूर्णांक i;
+	s32 padc, power = 0;
+	int i;
 
-	पढ़ो_regs(state, RSTV0910_P2_AGCIQIN1 + state->regoff, reg, 2);
+	read_regs(state, RSTV0910_P2_AGCIQIN1 + state->regoff, reg, 2);
 
 	agc = (((u32)reg[0]) << 8) | reg[1];
 
-	क्रम (i = 0; i < 5; i += 1) अणु
-		पढ़ो_regs(state, RSTV0910_P2_POWERI + state->regoff, reg, 2);
-		घातer += (u32)reg[0] * (u32)reg[0]
+	for (i = 0; i < 5; i += 1) {
+		read_regs(state, RSTV0910_P2_POWERI + state->regoff, reg, 2);
+		power += (u32)reg[0] * (u32)reg[0]
 			+ (u32)reg[1] * (u32)reg[1];
 		usleep_range(3000, 4000);
-	पूर्ण
-	घातer /= 5;
+	}
+	power /= 5;
 
-	padc = table_lookup(padc_lookup, ARRAY_SIZE(padc_lookup), घातer) + 352;
+	padc = table_lookup(padc_lookup, ARRAY_SIZE(padc_lookup), power) + 352;
 
 	p->strength.stat[0].scale = FE_SCALE_DECIBEL;
 	p->strength.stat[0].svalue = (padc - agc);
-पूर्ण
+}
 
-अटल पूर्णांक पढ़ो_status(काष्ठा dvb_frontend *fe, क्रमागत fe_status *status)
-अणु
-	काष्ठा stv *state = fe->demodulator_priv;
-	काष्ठा dtv_frontend_properties *p = &fe->dtv_property_cache;
+static int read_status(struct dvb_frontend *fe, enum fe_status *status)
+{
+	struct stv *state = fe->demodulator_priv;
+	struct dtv_frontend_properties *p = &fe->dtv_property_cache;
 	u8 dmd_state = 0;
 	u8 dstatus  = 0;
-	क्रमागत receive_mode cur_receive_mode = RCVMODE_NONE;
-	u32 feघड़ी = 0;
+	enum receive_mode cur_receive_mode = RCVMODE_NONE;
+	u32 feclock = 0;
 
 	*status = 0;
 
-	पढ़ो_reg(state, RSTV0910_P2_DMDSTATE + state->regoff, &dmd_state);
+	read_reg(state, RSTV0910_P2_DMDSTATE + state->regoff, &dmd_state);
 
-	अगर (dmd_state & 0x40) अणु
-		पढ़ो_reg(state, RSTV0910_P2_DSTATUS + state->regoff, &dstatus);
-		अगर (dstatus & 0x08)
+	if (dmd_state & 0x40) {
+		read_reg(state, RSTV0910_P2_DSTATUS + state->regoff, &dstatus);
+		if (dstatus & 0x08)
 			cur_receive_mode = (dmd_state & 0x20) ?
 				RCVMODE_DVBS : RCVMODE_DVBS2;
-	पूर्ण
-	अगर (cur_receive_mode == RCVMODE_NONE) अणु
+	}
+	if (cur_receive_mode == RCVMODE_NONE) {
 		set_vth(state);
 
-		/* reset संकेत statistics */
+		/* reset signal statistics */
 		p->strength.stat[0].scale = FE_SCALE_NOT_AVAILABLE;
 		p->cnr.stat[0].scale = FE_SCALE_NOT_AVAILABLE;
 		p->pre_bit_error.stat[0].scale = FE_SCALE_NOT_AVAILABLE;
 		p->pre_bit_count.stat[0].scale = FE_SCALE_NOT_AVAILABLE;
 
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	*status |= (FE_HAS_SIGNAL
 		| FE_HAS_CARRIER
 		| FE_HAS_VITERBI
 		| FE_HAS_SYNC);
 
-	अगर (state->receive_mode == RCVMODE_NONE) अणु
+	if (state->receive_mode == RCVMODE_NONE) {
 		state->receive_mode = cur_receive_mode;
-		state->demod_lock_समय = jअगरfies;
-		state->first_समय_lock = 1;
+		state->demod_lock_time = jiffies;
+		state->first_time_lock = 1;
 
-		get_संकेत_parameters(state);
+		get_signal_parameters(state);
 		tracking_optimization(state);
 
-		ग_लिखो_reg(state, RSTV0910_P2_TSCFGH + state->regoff,
+		write_reg(state, RSTV0910_P2_TSCFGH + state->regoff,
 			  state->tscfgh);
 		usleep_range(3000, 4000);
-		ग_लिखो_reg(state, RSTV0910_P2_TSCFGH + state->regoff,
+		write_reg(state, RSTV0910_P2_TSCFGH + state->regoff,
 			  state->tscfgh | 0x01);
-		ग_लिखो_reg(state, RSTV0910_P2_TSCFGH + state->regoff,
+		write_reg(state, RSTV0910_P2_TSCFGH + state->regoff,
 			  state->tscfgh);
-	पूर्ण
-	अगर (dmd_state & 0x40) अणु
-		अगर (state->receive_mode == RCVMODE_DVBS2) अणु
+	}
+	if (dmd_state & 0x40) {
+		if (state->receive_mode == RCVMODE_DVBS2) {
 			u8 pdelstatus;
 
-			पढ़ो_reg(state,
+			read_reg(state,
 				 RSTV0910_P2_PDELSTATUS1 + state->regoff,
 				 &pdelstatus);
-			feघड़ी = (pdelstatus & 0x02) != 0;
-		पूर्ण अन्यथा अणु
+			feclock = (pdelstatus & 0x02) != 0;
+		} else {
 			u8 vstatus;
 
-			पढ़ो_reg(state,
+			read_reg(state,
 				 RSTV0910_P2_VSTATUSVIT + state->regoff,
 				 &vstatus);
-			feघड़ी = (vstatus & 0x08) != 0;
-		पूर्ण
-	पूर्ण
+			feclock = (vstatus & 0x08) != 0;
+		}
+	}
 
-	अगर (feघड़ी) अणु
+	if (feclock) {
 		*status |= FE_HAS_LOCK;
 
-		अगर (state->first_समय_lock) अणु
-			u8 पंचांगp;
+		if (state->first_time_lock) {
+			u8 tmp;
 
-			state->first_समय_lock = 0;
+			state->first_time_lock = 0;
 
 			manage_matype_info(state);
 
-			अगर (state->receive_mode == RCVMODE_DVBS2) अणु
+			if (state->receive_mode == RCVMODE_DVBS2) {
 				/*
 				 * FSTV0910_P2_MANUALSX_ROLLOFF,
 				 * FSTV0910_P2_MANUALS2_ROLLOFF = 0
 				 */
 				state->demod_bits &= ~0x84;
-				ग_लिखो_reg(state,
+				write_reg(state,
 					  RSTV0910_P2_DEMOD + state->regoff,
 					  state->demod_bits);
-				पढ़ो_reg(state,
+				read_reg(state,
 					 RSTV0910_P2_PDELCTRL2 + state->regoff,
-					 &पंचांगp);
+					 &tmp);
 				/* reset DVBS2 packet delinator error counter */
-				पंचांगp |= 0x40;
-				ग_लिखो_reg(state,
+				tmp |= 0x40;
+				write_reg(state,
 					  RSTV0910_P2_PDELCTRL2 + state->regoff,
-					  पंचांगp);
+					  tmp);
 				/* reset DVBS2 packet delinator error counter */
-				पंचांगp &= ~0x40;
-				ग_लिखो_reg(state,
+				tmp &= ~0x40;
+				write_reg(state,
 					  RSTV0910_P2_PDELCTRL2 + state->regoff,
-					  पंचांगp);
+					  tmp);
 
 				state->berscale = 2;
 				state->last_bernumerator = 0;
 				state->last_berdenominator = 1;
-				/* क्रमce to PRE BCH Rate */
-				ग_लिखो_reg(state,
+				/* force to PRE BCH Rate */
+				write_reg(state,
 					  RSTV0910_P2_ERRCTRL1 + state->regoff,
 					  BER_SRC_S2 | state->berscale);
-			पूर्ण अन्यथा अणु
+			} else {
 				state->berscale = 2;
 				state->last_bernumerator = 0;
 				state->last_berdenominator = 1;
-				/* क्रमce to PRE RS Rate */
-				ग_लिखो_reg(state,
+				/* force to PRE RS Rate */
+				write_reg(state,
 					  RSTV0910_P2_ERRCTRL1 + state->regoff,
 					  BER_SRC_S | state->berscale);
-			पूर्ण
+			}
 			/* Reset the Total packet counter */
-			ग_लिखो_reg(state,
+			write_reg(state,
 				  RSTV0910_P2_FBERCPT4 + state->regoff, 0x00);
 			/*
 			 * Reset the packet Error counter2 (and Set it to
 			 * infinite error count mode)
 			 */
-			ग_लिखो_reg(state,
+			write_reg(state,
 				  RSTV0910_P2_ERRCTRL2 + state->regoff, 0xc1);
 
-			set_vth_शेष(state);
-			अगर (state->receive_mode == RCVMODE_DVBS)
+			set_vth_default(state);
+			if (state->receive_mode == RCVMODE_DVBS)
 				enable_puncture_rate(state,
 						     state->puncture_rate);
-		पूर्ण
+		}
 
-		/* Use highest संकेतed ModCod क्रम quality */
-		अगर (state->is_vcm) अणु
-			u8 पंचांगp;
-			क्रमागत fe_stv0910_mod_cod mod_cod;
+		/* Use highest signaled ModCod for quality */
+		if (state->is_vcm) {
+			u8 tmp;
+			enum fe_stv0910_mod_cod mod_cod;
 
-			पढ़ो_reg(state, RSTV0910_P2_DMDMODCOD + state->regoff,
-				 &पंचांगp);
-			mod_cod = (क्रमागत fe_stv0910_mod_cod)((पंचांगp & 0x7c) >> 2);
+			read_reg(state, RSTV0910_P2_DMDMODCOD + state->regoff,
+				 &tmp);
+			mod_cod = (enum fe_stv0910_mod_cod)((tmp & 0x7c) >> 2);
 
-			अगर (mod_cod > state->mod_cod)
+			if (mod_cod > state->mod_cod)
 				state->mod_cod = mod_cod;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	/* पढ़ो संकेत statistics */
+	/* read signal statistics */
 
-	/* पढ़ो संकेत strength */
-	पढ़ो_संकेत_strength(fe);
+	/* read signal strength */
+	read_signal_strength(fe);
 
-	/* पढ़ो carrier/noise on FE_HAS_CARRIER */
-	अगर (*status & FE_HAS_CARRIER)
-		पढ़ो_snr(fe);
-	अन्यथा
+	/* read carrier/noise on FE_HAS_CARRIER */
+	if (*status & FE_HAS_CARRIER)
+		read_snr(fe);
+	else
 		p->cnr.stat[0].scale = FE_SCALE_NOT_AVAILABLE;
 
-	/* पढ़ो ber */
-	अगर (*status & FE_HAS_VITERBI) अणु
-		पढ़ो_ber(fe);
-	पूर्ण अन्यथा अणु
+	/* read ber */
+	if (*status & FE_HAS_VITERBI) {
+		read_ber(fe);
+	} else {
 		p->pre_bit_error.stat[0].scale = FE_SCALE_NOT_AVAILABLE;
 		p->pre_bit_count.stat[0].scale = FE_SCALE_NOT_AVAILABLE;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक get_frontend(काष्ठा dvb_frontend *fe,
-			काष्ठा dtv_frontend_properties *p)
-अणु
-	काष्ठा stv *state = fe->demodulator_priv;
-	u8 पंचांगp;
+static int get_frontend(struct dvb_frontend *fe,
+			struct dtv_frontend_properties *p)
+{
+	struct stv *state = fe->demodulator_priv;
+	u8 tmp;
 	u32 symbolrate;
 
-	अगर (state->receive_mode == RCVMODE_DVBS2) अणु
+	if (state->receive_mode == RCVMODE_DVBS2) {
 		u32 mc;
-		स्थिर क्रमागत fe_modulation modcod2mod[0x20] = अणु
+		const enum fe_modulation modcod2mod[0x20] = {
 			QPSK, QPSK, QPSK, QPSK,
 			QPSK, QPSK, QPSK, QPSK,
 			QPSK, QPSK, QPSK, QPSK,
@@ -1566,8 +1565,8 @@
 			APSK_16, APSK_16, APSK_16, APSK_16,
 			APSK_32, APSK_32, APSK_32, APSK_32,
 			APSK_32,
-		पूर्ण;
-		स्थिर क्रमागत fe_code_rate modcod2fec[0x20] = अणु
+		};
+		const enum fe_code_rate modcod2fec[0x20] = {
 			FEC_NONE, FEC_NONE, FEC_NONE, FEC_2_5,
 			FEC_1_2, FEC_3_5, FEC_2_3, FEC_3_4,
 			FEC_4_5, FEC_5_6, FEC_8_9, FEC_9_10,
@@ -1576,155 +1575,155 @@
 			FEC_4_5, FEC_5_6, FEC_8_9, FEC_9_10,
 			FEC_3_4, FEC_4_5, FEC_5_6, FEC_8_9,
 			FEC_9_10
-		पूर्ण;
-		पढ़ो_reg(state, RSTV0910_P2_DMDMODCOD + state->regoff, &पंचांगp);
-		mc = ((पंचांगp & 0x7c) >> 2);
-		p->pilot = (पंचांगp & 0x01) ? PILOT_ON : PILOT_OFF;
+		};
+		read_reg(state, RSTV0910_P2_DMDMODCOD + state->regoff, &tmp);
+		mc = ((tmp & 0x7c) >> 2);
+		p->pilot = (tmp & 0x01) ? PILOT_ON : PILOT_OFF;
 		p->modulation = modcod2mod[mc];
 		p->fec_inner = modcod2fec[mc];
-	पूर्ण अन्यथा अगर (state->receive_mode == RCVMODE_DVBS) अणु
-		पढ़ो_reg(state, RSTV0910_P2_VITCURPUN + state->regoff, &पंचांगp);
-		चयन (पंचांगp & 0x1F) अणु
-		हाल 0x0d:
+	} else if (state->receive_mode == RCVMODE_DVBS) {
+		read_reg(state, RSTV0910_P2_VITCURPUN + state->regoff, &tmp);
+		switch (tmp & 0x1F) {
+		case 0x0d:
 			p->fec_inner = FEC_1_2;
-			अवरोध;
-		हाल 0x12:
+			break;
+		case 0x12:
 			p->fec_inner = FEC_2_3;
-			अवरोध;
-		हाल 0x15:
+			break;
+		case 0x15:
 			p->fec_inner = FEC_3_4;
-			अवरोध;
-		हाल 0x18:
+			break;
+		case 0x18:
 			p->fec_inner = FEC_5_6;
-			अवरोध;
-		हाल 0x1a:
+			break;
+		case 0x1a:
 			p->fec_inner = FEC_7_8;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			p->fec_inner = FEC_NONE;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		p->rolloff = ROLLOFF_35;
-	पूर्ण
+	}
 
-	अगर (state->receive_mode != RCVMODE_NONE) अणु
+	if (state->receive_mode != RCVMODE_NONE) {
 		get_cur_symbol_rate(state, &symbolrate);
 		p->symbol_rate = symbolrate;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल पूर्णांक tune(काष्ठा dvb_frontend *fe, bool re_tune,
-		अचिन्हित पूर्णांक mode_flags,
-		अचिन्हित पूर्णांक *delay, क्रमागत fe_status *status)
-अणु
-	काष्ठा stv *state = fe->demodulator_priv;
-	पूर्णांक r;
+static int tune(struct dvb_frontend *fe, bool re_tune,
+		unsigned int mode_flags,
+		unsigned int *delay, enum fe_status *status)
+{
+	struct stv *state = fe->demodulator_priv;
+	int r;
 
-	अगर (re_tune) अणु
+	if (re_tune) {
 		r = set_parameters(fe);
-		अगर (r)
-			वापस r;
-		state->tune_समय = jअगरfies;
-	पूर्ण
+		if (r)
+			return r;
+		state->tune_time = jiffies;
+	}
 
-	r = पढ़ो_status(fe, status);
-	अगर (r)
-		वापस r;
+	r = read_status(fe, status);
+	if (r)
+		return r;
 
-	अगर (*status & FE_HAS_LOCK)
-		वापस 0;
+	if (*status & FE_HAS_LOCK)
+		return 0;
 	*delay = HZ;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल क्रमागत dvbfe_algo get_algo(काष्ठा dvb_frontend *fe)
-अणु
-	वापस DVBFE_ALGO_HW;
-पूर्ण
+static enum dvbfe_algo get_algo(struct dvb_frontend *fe)
+{
+	return DVBFE_ALGO_HW;
+}
 
-अटल पूर्णांक set_tone(काष्ठा dvb_frontend *fe, क्रमागत fe_sec_tone_mode tone)
-अणु
-	काष्ठा stv *state = fe->demodulator_priv;
+static int set_tone(struct dvb_frontend *fe, enum fe_sec_tone_mode tone)
+{
+	struct stv *state = fe->demodulator_priv;
 	u16 offs = state->nr ? 0x40 : 0;
 
-	चयन (tone) अणु
-	हाल SEC_TONE_ON:
-		वापस ग_लिखो_reg(state, RSTV0910_P1_DISTXCFG + offs, 0x38);
-	हाल SEC_TONE_OFF:
-		वापस ग_लिखो_reg(state, RSTV0910_P1_DISTXCFG + offs, 0x3a);
-	शेष:
-		अवरोध;
-	पूर्ण
-	वापस -EINVAL;
-पूर्ण
+	switch (tone) {
+	case SEC_TONE_ON:
+		return write_reg(state, RSTV0910_P1_DISTXCFG + offs, 0x38);
+	case SEC_TONE_OFF:
+		return write_reg(state, RSTV0910_P1_DISTXCFG + offs, 0x3a);
+	default:
+		break;
+	}
+	return -EINVAL;
+}
 
-अटल पूर्णांक रुको_dis(काष्ठा stv *state, u8 flag, u8 val)
-अणु
-	पूर्णांक i;
+static int wait_dis(struct stv *state, u8 flag, u8 val)
+{
+	int i;
 	u8 stat;
 	u16 offs = state->nr ? 0x40 : 0;
 
-	क्रम (i = 0; i < 10; i++) अणु
-		पढ़ो_reg(state, RSTV0910_P1_DISTXSTATUS + offs, &stat);
-		अगर ((stat & flag) == val)
-			वापस 0;
+	for (i = 0; i < 10; i++) {
+		read_reg(state, RSTV0910_P1_DISTXSTATUS + offs, &stat);
+		if ((stat & flag) == val)
+			return 0;
 		usleep_range(10000, 11000);
-	पूर्ण
-	वापस -ETIMEDOUT;
-पूर्ण
+	}
+	return -ETIMEDOUT;
+}
 
-अटल पूर्णांक send_master_cmd(काष्ठा dvb_frontend *fe,
-			   काष्ठा dvb_diseqc_master_cmd *cmd)
-अणु
-	काष्ठा stv *state = fe->demodulator_priv;
-	पूर्णांक i;
+static int send_master_cmd(struct dvb_frontend *fe,
+			   struct dvb_diseqc_master_cmd *cmd)
+{
+	struct stv *state = fe->demodulator_priv;
+	int i;
 
 	SET_FIELD(DISEQC_MODE, 2);
 	SET_FIELD(DIS_PRECHARGE, 1);
-	क्रम (i = 0; i < cmd->msg_len; i++) अणु
-		रुको_dis(state, 0x40, 0x00);
+	for (i = 0; i < cmd->msg_len; i++) {
+		wait_dis(state, 0x40, 0x00);
 		SET_REG(DISTXFIFO, cmd->msg[i]);
-	पूर्ण
+	}
 	SET_FIELD(DIS_PRECHARGE, 0);
-	रुको_dis(state, 0x20, 0x20);
-	वापस 0;
-पूर्ण
+	wait_dis(state, 0x20, 0x20);
+	return 0;
+}
 
-अटल पूर्णांक send_burst(काष्ठा dvb_frontend *fe, क्रमागत fe_sec_mini_cmd burst)
-अणु
-	काष्ठा stv *state = fe->demodulator_priv;
+static int send_burst(struct dvb_frontend *fe, enum fe_sec_mini_cmd burst)
+{
+	struct stv *state = fe->demodulator_priv;
 	u8 value;
 
-	अगर (burst == SEC_MINI_A) अणु
+	if (burst == SEC_MINI_A) {
 		SET_FIELD(DISEQC_MODE, 3);
 		value = 0x00;
-	पूर्ण अन्यथा अणु
+	} else {
 		SET_FIELD(DISEQC_MODE, 2);
 		value = 0xFF;
-	पूर्ण
+	}
 
 	SET_FIELD(DIS_PRECHARGE, 1);
-	रुको_dis(state, 0x40, 0x00);
+	wait_dis(state, 0x40, 0x00);
 	SET_REG(DISTXFIFO, value);
 	SET_FIELD(DIS_PRECHARGE, 0);
-	रुको_dis(state, 0x20, 0x20);
+	wait_dis(state, 0x20, 0x20);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sleep(काष्ठा dvb_frontend *fe)
-अणु
-	काष्ठा stv *state = fe->demodulator_priv;
+static int sleep(struct dvb_frontend *fe)
+{
+	struct stv *state = fe->demodulator_priv;
 
 	stop(state);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा dvb_frontend_ops stv0910_ops = अणु
-	.delsys = अणु SYS_DVBS, SYS_DVBS2, SYS_DSS पूर्ण,
-	.info = अणु
+static const struct dvb_frontend_ops stv0910_ops = {
+	.delsys = { SYS_DVBS, SYS_DVBS2, SYS_DSS },
+	.info = {
 		.name			= "ST STV0910",
 		.frequency_min_hz	=  950 * MHz,
 		.frequency_max_hz	= 2150 * MHz,
@@ -1735,7 +1734,7 @@
 					  FE_CAN_QPSK           |
 					  FE_CAN_2G_MODULATION  |
 					  FE_CAN_MULTISTREAM
-	पूर्ण,
+	},
 	.sleep				= sleep,
 	.release			= release,
 	.i2c_gate_ctrl			= gate_ctrl,
@@ -1743,26 +1742,26 @@
 	.get_frontend_algo		= get_algo,
 	.get_frontend			= get_frontend,
 	.tune				= tune,
-	.पढ़ो_status			= पढ़ो_status,
+	.read_status			= read_status,
 	.set_tone			= set_tone,
 
 	.diseqc_send_master_cmd		= send_master_cmd,
 	.diseqc_send_burst		= send_burst,
-पूर्ण;
+};
 
-अटल काष्ठा stv_base *match_base(काष्ठा i2c_adapter *i2c, u8 adr)
-अणु
-	काष्ठा stv_base *p;
+static struct stv_base *match_base(struct i2c_adapter *i2c, u8 adr)
+{
+	struct stv_base *p;
 
-	list_क्रम_each_entry(p, &stvlist, stvlist)
-		अगर (p->i2c == i2c && p->adr == adr)
-			वापस p;
-	वापस शून्य;
-पूर्ण
+	list_for_each_entry(p, &stvlist, stvlist)
+		if (p->i2c == i2c && p->adr == adr)
+			return p;
+	return NULL;
+}
 
-अटल व्योम stv0910_init_stats(काष्ठा stv *state)
-अणु
-	काष्ठा dtv_frontend_properties *p = &state->fe.dtv_property_cache;
+static void stv0910_init_stats(struct stv *state)
+{
+	struct dtv_frontend_properties *p = &state->fe.dtv_property_cache;
 
 	p->strength.len = 1;
 	p->strength.stat[0].scale = FE_SCALE_NOT_AVAILABLE;
@@ -1772,23 +1771,23 @@
 	p->pre_bit_error.stat[0].scale = FE_SCALE_NOT_AVAILABLE;
 	p->pre_bit_count.len = 1;
 	p->pre_bit_count.stat[0].scale = FE_SCALE_NOT_AVAILABLE;
-पूर्ण
+}
 
-काष्ठा dvb_frontend *stv0910_attach(काष्ठा i2c_adapter *i2c,
-				    काष्ठा stv0910_cfg *cfg,
-				    पूर्णांक nr)
-अणु
-	काष्ठा stv *state;
-	काष्ठा stv_base *base;
+struct dvb_frontend *stv0910_attach(struct i2c_adapter *i2c,
+				    struct stv0910_cfg *cfg,
+				    int nr)
+{
+	struct stv *state;
+	struct stv_base *base;
 
-	state = kzalloc(माप(*state), GFP_KERNEL);
-	अगर (!state)
-		वापस शून्य;
+	state = kzalloc(sizeof(*state), GFP_KERNEL);
+	if (!state)
+		return NULL;
 
 	state->tscfgh = 0x20 | (cfg->parallel ? 0 : 0x40);
 	state->tsgeneral = (cfg->parallel == 2) ? 0x02 : 0x00;
 	state->i2crpt = 0x0A | ((cfg->rptlvl & 0x07) << 4);
-	/* use safe tsspeed value अगर unspecअगरied through stv0910_cfg */
+	/* use safe tsspeed value if unspecified through stv0910_cfg */
 	state->tsspeed = (cfg->tsspeed ? cfg->tsspeed : 0x28);
 	state->nr = nr;
 	state->regoff = state->nr ? 0 : 0x200;
@@ -1799,13 +1798,13 @@
 	state->single = cfg->single ? 1 : 0;
 
 	base = match_base(i2c, cfg->adr);
-	अगर (base) अणु
+	if (base) {
 		base->count++;
 		state->base = base;
-	पूर्ण अन्यथा अणु
-		base = kzalloc(माप(*base), GFP_KERNEL);
-		अगर (!base)
-			जाओ fail;
+	} else {
+		base = kzalloc(sizeof(*base), GFP_KERNEL);
+		if (!base)
+			goto fail;
 		base->i2c = i2c;
 		base->adr = cfg->adr;
 		base->count = 1;
@@ -1814,14 +1813,14 @@
 		mutex_init(&base->i2c_lock);
 		mutex_init(&base->reg_lock);
 		state->base = base;
-		अगर (probe(state) < 0) अणु
+		if (probe(state) < 0) {
 			dev_info(&i2c->dev, "No demod found at adr %02X on %s\n",
 				 cfg->adr, dev_name(&i2c->dev));
-			kमुक्त(base);
-			जाओ fail;
-		पूर्ण
+			kfree(base);
+			goto fail;
+		}
 		list_add(&base->stvlist, &stvlist);
-	पूर्ण
+	}
 	state->fe.ops = stv0910_ops;
 	state->fe.demodulator_priv = state;
 	state->nr = nr;
@@ -1831,12 +1830,12 @@
 
 	stv0910_init_stats(state);
 
-	वापस &state->fe;
+	return &state->fe;
 
 fail:
-	kमुक्त(state);
-	वापस शून्य;
-पूर्ण
+	kfree(state);
+	return NULL;
+}
 EXPORT_SYMBOL_GPL(stv0910_attach);
 
 MODULE_DESCRIPTION("ST STV0910 multistandard frontend driver");

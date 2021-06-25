@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 
-पूर्णांक e(व्योम)
-अणु
-	वापस 0;
-पूर्ण
+int e(void)
+{
+	return 0;
+}

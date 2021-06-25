@@ -1,162 +1,161 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (C) 2018 Red Hat. All rights reserved.
  *
  * This file is released under the GPL.
  */
 
-#समावेश <linux/device-mapper.h>
-#समावेश <linux/module.h>
-#समावेश <linux/init.h>
-#समावेश <linux/vदो_स्मृति.h>
-#समावेश <linux/kthपढ़ो.h>
-#समावेश <linux/dm-पन.स>
-#समावेश <linux/dm-kcopyd.h>
-#समावेश <linux/dax.h>
-#समावेश <linux/pfn_t.h>
-#समावेश <linux/libnvdimm.h>
+#include <linux/device-mapper.h>
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/vmalloc.h>
+#include <linux/kthread.h>
+#include <linux/dm-io.h>
+#include <linux/dm-kcopyd.h>
+#include <linux/dax.h>
+#include <linux/pfn_t.h>
+#include <linux/libnvdimm.h>
 
-#घोषणा DM_MSG_PREFIX "writecache"
+#define DM_MSG_PREFIX "writecache"
 
-#घोषणा HIGH_WATERMARK			50
-#घोषणा LOW_WATERMARK			45
-#घोषणा MAX_WRITEBACK_JOBS		0
-#घोषणा ENDIO_LATENCY			16
-#घोषणा WRITEBACK_LATENCY		64
-#घोषणा AUTOCOMMIT_BLOCKS_SSD		65536
-#घोषणा AUTOCOMMIT_BLOCKS_PMEM		64
-#घोषणा AUTOCOMMIT_MSEC			1000
-#घोषणा MAX_AGE_DIV			16
-#घोषणा MAX_AGE_UNSPECIFIED		-1UL
+#define HIGH_WATERMARK			50
+#define LOW_WATERMARK			45
+#define MAX_WRITEBACK_JOBS		0
+#define ENDIO_LATENCY			16
+#define WRITEBACK_LATENCY		64
+#define AUTOCOMMIT_BLOCKS_SSD		65536
+#define AUTOCOMMIT_BLOCKS_PMEM		64
+#define AUTOCOMMIT_MSEC			1000
+#define MAX_AGE_DIV			16
+#define MAX_AGE_UNSPECIFIED		-1UL
 
-#घोषणा BITMAP_GRANULARITY	65536
-#अगर BITMAP_GRANULARITY < PAGE_SIZE
-#अघोषित BITMAP_GRANULARITY
-#घोषणा BITMAP_GRANULARITY	PAGE_SIZE
-#पूर्ण_अगर
+#define BITMAP_GRANULARITY	65536
+#if BITMAP_GRANULARITY < PAGE_SIZE
+#undef BITMAP_GRANULARITY
+#define BITMAP_GRANULARITY	PAGE_SIZE
+#endif
 
-#अगर IS_ENABLED(CONFIG_ARCH_HAS_PMEM_API) && IS_ENABLED(CONFIG_DAX_DRIVER)
-#घोषणा DM_WRITECACHE_HAS_PMEM
-#पूर्ण_अगर
+#if IS_ENABLED(CONFIG_ARCH_HAS_PMEM_API) && IS_ENABLED(CONFIG_DAX_DRIVER)
+#define DM_WRITECACHE_HAS_PMEM
+#endif
 
-#अगर_घोषित DM_WRITECACHE_HAS_PMEM
-#घोषणा pmem_assign(dest, src)					\
-करो अणु								\
+#ifdef DM_WRITECACHE_HAS_PMEM
+#define pmem_assign(dest, src)					\
+do {								\
 	typeof(dest) uniq = (src);				\
-	स_नकल_flushcache(&(dest), &uniq, माप(dest));	\
-पूर्ण जबतक (0)
-#अन्यथा
-#घोषणा pmem_assign(dest, src)	((dest) = (src))
-#पूर्ण_अगर
+	memcpy_flushcache(&(dest), &uniq, sizeof(dest));	\
+} while (0)
+#else
+#define pmem_assign(dest, src)	((dest) = (src))
+#endif
 
-#अगर IS_ENABLED(CONFIG_ARCH_HAS_COPY_MC) && defined(DM_WRITECACHE_HAS_PMEM)
-#घोषणा DM_WRITECACHE_HANDLE_HARDWARE_ERRORS
-#पूर्ण_अगर
+#if IS_ENABLED(CONFIG_ARCH_HAS_COPY_MC) && defined(DM_WRITECACHE_HAS_PMEM)
+#define DM_WRITECACHE_HANDLE_HARDWARE_ERRORS
+#endif
 
-#घोषणा MEMORY_SUPERBLOCK_MAGIC		0x23489321
-#घोषणा MEMORY_SUPERBLOCK_VERSION	1
+#define MEMORY_SUPERBLOCK_MAGIC		0x23489321
+#define MEMORY_SUPERBLOCK_VERSION	1
 
-काष्ठा wc_memory_entry अणु
+struct wc_memory_entry {
 	__le64 original_sector;
 	__le64 seq_count;
-पूर्ण;
+};
 
-काष्ठा wc_memory_superblock अणु
-	जोड़ अणु
-		काष्ठा अणु
+struct wc_memory_superblock {
+	union {
+		struct {
 			__le32 magic;
 			__le32 version;
 			__le32 block_size;
 			__le32 pad;
 			__le64 n_blocks;
 			__le64 seq_count;
-		पूर्ण;
+		};
 		__le64 padding[8];
-	पूर्ण;
-	काष्ठा wc_memory_entry entries[];
-पूर्ण;
+	};
+	struct wc_memory_entry entries[];
+};
 
-काष्ठा wc_entry अणु
-	काष्ठा rb_node rb_node;
-	काष्ठा list_head lru;
-	अचिन्हित लघु wc_list_contiguous;
-	bool ग_लिखो_in_progress
-#अगर BITS_PER_LONG == 64
+struct wc_entry {
+	struct rb_node rb_node;
+	struct list_head lru;
+	unsigned short wc_list_contiguous;
+	bool write_in_progress
+#if BITS_PER_LONG == 64
 		:1
-#पूर्ण_अगर
+#endif
 	;
-	अचिन्हित दीर्घ index
-#अगर BITS_PER_LONG == 64
+	unsigned long index
+#if BITS_PER_LONG == 64
 		:47
-#पूर्ण_अगर
+#endif
 	;
-	अचिन्हित दीर्घ age;
-#अगर_घोषित DM_WRITECACHE_HANDLE_HARDWARE_ERRORS
-	uपूर्णांक64_t original_sector;
-	uपूर्णांक64_t seq_count;
-#पूर्ण_अगर
-पूर्ण;
+	unsigned long age;
+#ifdef DM_WRITECACHE_HANDLE_HARDWARE_ERRORS
+	uint64_t original_sector;
+	uint64_t seq_count;
+#endif
+};
 
-#अगर_घोषित DM_WRITECACHE_HAS_PMEM
-#घोषणा WC_MODE_PMEM(wc)			((wc)->pmem_mode)
-#घोषणा WC_MODE_FUA(wc)				((wc)->ग_लिखोback_fua)
-#अन्यथा
-#घोषणा WC_MODE_PMEM(wc)			false
-#घोषणा WC_MODE_FUA(wc)				false
-#पूर्ण_अगर
-#घोषणा WC_MODE_SORT_FREELIST(wc)		(!WC_MODE_PMEM(wc))
+#ifdef DM_WRITECACHE_HAS_PMEM
+#define WC_MODE_PMEM(wc)			((wc)->pmem_mode)
+#define WC_MODE_FUA(wc)				((wc)->writeback_fua)
+#else
+#define WC_MODE_PMEM(wc)			false
+#define WC_MODE_FUA(wc)				false
+#endif
+#define WC_MODE_SORT_FREELIST(wc)		(!WC_MODE_PMEM(wc))
 
-काष्ठा dm_ग_लिखोcache अणु
-	काष्ठा mutex lock;
-	काष्ठा list_head lru;
-	जोड़ अणु
-		काष्ठा list_head मुक्तlist;
-		काष्ठा अणु
-			काष्ठा rb_root मुक्तtree;
-			काष्ठा wc_entry *current_मुक्त;
-		पूर्ण;
-	पूर्ण;
-	काष्ठा rb_root tree;
+struct dm_writecache {
+	struct mutex lock;
+	struct list_head lru;
+	union {
+		struct list_head freelist;
+		struct {
+			struct rb_root freetree;
+			struct wc_entry *current_free;
+		};
+	};
+	struct rb_root tree;
 
-	माप_प्रकार मुक्तlist_size;
-	माप_प्रकार ग_लिखोback_size;
-	माप_प्रकार मुक्तlist_high_watermark;
-	माप_प्रकार मुक्तlist_low_watermark;
-	अचिन्हित दीर्घ max_age;
+	size_t freelist_size;
+	size_t writeback_size;
+	size_t freelist_high_watermark;
+	size_t freelist_low_watermark;
+	unsigned long max_age;
 
-	अचिन्हित uncommitted_blocks;
-	अचिन्हित स्वतःcommit_blocks;
-	अचिन्हित max_ग_लिखोback_jobs;
+	unsigned uncommitted_blocks;
+	unsigned autocommit_blocks;
+	unsigned max_writeback_jobs;
 
-	पूर्णांक error;
+	int error;
 
-	अचिन्हित दीर्घ स्वतःcommit_jअगरfies;
-	काष्ठा समयr_list स्वतःcommit_समयr;
-	काष्ठा रुको_queue_head मुक्तlist_रुको;
+	unsigned long autocommit_jiffies;
+	struct timer_list autocommit_timer;
+	struct wait_queue_head freelist_wait;
 
-	काष्ठा समयr_list max_age_समयr;
+	struct timer_list max_age_timer;
 
 	atomic_t bio_in_progress[2];
-	काष्ठा रुको_queue_head bio_in_progress_रुको[2];
+	struct wait_queue_head bio_in_progress_wait[2];
 
-	काष्ठा dm_target *ti;
-	काष्ठा dm_dev *dev;
-	काष्ठा dm_dev *ssd_dev;
+	struct dm_target *ti;
+	struct dm_dev *dev;
+	struct dm_dev *ssd_dev;
 	sector_t start_sector;
-	व्योम *memory_map;
-	uपूर्णांक64_t memory_map_size;
-	माप_प्रकार metadata_sectors;
-	माप_प्रकार n_blocks;
-	uपूर्णांक64_t seq_count;
+	void *memory_map;
+	uint64_t memory_map_size;
+	size_t metadata_sectors;
+	size_t n_blocks;
+	uint64_t seq_count;
 	sector_t data_device_sectors;
-	व्योम *block_start;
-	काष्ठा wc_entry *entries;
-	अचिन्हित block_size;
-	अचिन्हित अक्षर block_size_bits;
+	void *block_start;
+	struct wc_entry *entries;
+	unsigned block_size;
+	unsigned char block_size_bits;
 
 	bool pmem_mode:1;
-	bool ग_लिखोback_fua:1;
+	bool writeback_fua:1;
 
 	bool overwrote_committed:1;
 	bool memory_vmapped:1;
@@ -164,339 +163,339 @@
 	bool start_sector_set:1;
 	bool high_wm_percent_set:1;
 	bool low_wm_percent_set:1;
-	bool max_ग_लिखोback_jobs_set:1;
-	bool स्वतःcommit_blocks_set:1;
-	bool स्वतःcommit_समय_set:1;
+	bool max_writeback_jobs_set:1;
+	bool autocommit_blocks_set:1;
+	bool autocommit_time_set:1;
 	bool max_age_set:1;
-	bool ग_लिखोback_fua_set:1;
+	bool writeback_fua_set:1;
 	bool flush_on_suspend:1;
 	bool cleaner:1;
 	bool cleaner_set:1;
 
-	अचिन्हित high_wm_percent_value;
-	अचिन्हित low_wm_percent_value;
-	अचिन्हित स्वतःcommit_समय_value;
-	अचिन्हित max_age_value;
+	unsigned high_wm_percent_value;
+	unsigned low_wm_percent_value;
+	unsigned autocommit_time_value;
+	unsigned max_age_value;
 
-	अचिन्हित ग_लिखोback_all;
-	काष्ठा workqueue_काष्ठा *ग_लिखोback_wq;
-	काष्ठा work_काष्ठा ग_लिखोback_work;
-	काष्ठा work_काष्ठा flush_work;
+	unsigned writeback_all;
+	struct workqueue_struct *writeback_wq;
+	struct work_struct writeback_work;
+	struct work_struct flush_work;
 
-	काष्ठा dm_io_client *dm_io;
+	struct dm_io_client *dm_io;
 
 	raw_spinlock_t endio_list_lock;
-	काष्ठा list_head endio_list;
-	काष्ठा task_काष्ठा *endio_thपढ़ो;
+	struct list_head endio_list;
+	struct task_struct *endio_thread;
 
-	काष्ठा task_काष्ठा *flush_thपढ़ो;
-	काष्ठा bio_list flush_list;
+	struct task_struct *flush_thread;
+	struct bio_list flush_list;
 
-	काष्ठा dm_kcopyd_client *dm_kcopyd;
-	अचिन्हित दीर्घ *dirty_biपंचांगap;
-	अचिन्हित dirty_biपंचांगap_size;
+	struct dm_kcopyd_client *dm_kcopyd;
+	unsigned long *dirty_bitmap;
+	unsigned dirty_bitmap_size;
 
-	काष्ठा bio_set bio_set;
+	struct bio_set bio_set;
 	mempool_t copy_pool;
-पूर्ण;
+};
 
-#घोषणा WB_LIST_INLINE		16
+#define WB_LIST_INLINE		16
 
-काष्ठा ग_लिखोback_काष्ठा अणु
-	काष्ठा list_head endio_entry;
-	काष्ठा dm_ग_लिखोcache *wc;
-	काष्ठा wc_entry **wc_list;
-	अचिन्हित wc_list_n;
-	काष्ठा wc_entry *wc_list_अंतरभूत[WB_LIST_INLINE];
-	काष्ठा bio bio;
-पूर्ण;
+struct writeback_struct {
+	struct list_head endio_entry;
+	struct dm_writecache *wc;
+	struct wc_entry **wc_list;
+	unsigned wc_list_n;
+	struct wc_entry *wc_list_inline[WB_LIST_INLINE];
+	struct bio bio;
+};
 
-काष्ठा copy_काष्ठा अणु
-	काष्ठा list_head endio_entry;
-	काष्ठा dm_ग_लिखोcache *wc;
-	काष्ठा wc_entry *e;
-	अचिन्हित n_entries;
-	पूर्णांक error;
-पूर्ण;
+struct copy_struct {
+	struct list_head endio_entry;
+	struct dm_writecache *wc;
+	struct wc_entry *e;
+	unsigned n_entries;
+	int error;
+};
 
-DECLARE_DM_KCOPYD_THROTTLE_WITH_MODULE_PARM(dm_ग_लिखोcache_throttle,
+DECLARE_DM_KCOPYD_THROTTLE_WITH_MODULE_PARM(dm_writecache_throttle,
 					    "A percentage of time allocated for data copying");
 
-अटल व्योम wc_lock(काष्ठा dm_ग_लिखोcache *wc)
-अणु
+static void wc_lock(struct dm_writecache *wc)
+{
 	mutex_lock(&wc->lock);
-पूर्ण
+}
 
-अटल व्योम wc_unlock(काष्ठा dm_ग_लिखोcache *wc)
-अणु
+static void wc_unlock(struct dm_writecache *wc)
+{
 	mutex_unlock(&wc->lock);
-पूर्ण
+}
 
-#अगर_घोषित DM_WRITECACHE_HAS_PMEM
-अटल पूर्णांक persistent_memory_claim(काष्ठा dm_ग_लिखोcache *wc)
-अणु
-	पूर्णांक r;
+#ifdef DM_WRITECACHE_HAS_PMEM
+static int persistent_memory_claim(struct dm_writecache *wc)
+{
+	int r;
 	loff_t s;
-	दीर्घ p, da;
+	long p, da;
 	pfn_t pfn;
-	पूर्णांक id;
-	काष्ठा page **pages;
+	int id;
+	struct page **pages;
 	sector_t offset;
 
 	wc->memory_vmapped = false;
 
 	s = wc->memory_map_size;
 	p = s >> PAGE_SHIFT;
-	अगर (!p) अणु
+	if (!p) {
 		r = -EINVAL;
-		जाओ err1;
-	पूर्ण
-	अगर (p != s >> PAGE_SHIFT) अणु
+		goto err1;
+	}
+	if (p != s >> PAGE_SHIFT) {
 		r = -EOVERFLOW;
-		जाओ err1;
-	पूर्ण
+		goto err1;
+	}
 
 	offset = get_start_sect(wc->ssd_dev->bdev);
-	अगर (offset & (PAGE_SIZE / 512 - 1)) अणु
+	if (offset & (PAGE_SIZE / 512 - 1)) {
 		r = -EINVAL;
-		जाओ err1;
-	पूर्ण
+		goto err1;
+	}
 	offset >>= PAGE_SHIFT - 9;
 
-	id = dax_पढ़ो_lock();
+	id = dax_read_lock();
 
 	da = dax_direct_access(wc->ssd_dev->dax_dev, offset, p, &wc->memory_map, &pfn);
-	अगर (da < 0) अणु
-		wc->memory_map = शून्य;
+	if (da < 0) {
+		wc->memory_map = NULL;
 		r = da;
-		जाओ err2;
-	पूर्ण
-	अगर (!pfn_t_has_page(pfn)) अणु
-		wc->memory_map = शून्य;
+		goto err2;
+	}
+	if (!pfn_t_has_page(pfn)) {
+		wc->memory_map = NULL;
 		r = -EOPNOTSUPP;
-		जाओ err2;
-	पूर्ण
-	अगर (da != p) अणु
-		दीर्घ i;
-		wc->memory_map = शून्य;
-		pages = kvदो_स्मृति_array(p, माप(काष्ठा page *), GFP_KERNEL);
-		अगर (!pages) अणु
+		goto err2;
+	}
+	if (da != p) {
+		long i;
+		wc->memory_map = NULL;
+		pages = kvmalloc_array(p, sizeof(struct page *), GFP_KERNEL);
+		if (!pages) {
 			r = -ENOMEM;
-			जाओ err2;
-		पूर्ण
+			goto err2;
+		}
 		i = 0;
-		करो अणु
-			दीर्घ daa;
+		do {
+			long daa;
 			daa = dax_direct_access(wc->ssd_dev->dax_dev, offset + i, p - i,
-						शून्य, &pfn);
-			अगर (daa <= 0) अणु
+						NULL, &pfn);
+			if (daa <= 0) {
 				r = daa ? daa : -EINVAL;
-				जाओ err3;
-			पूर्ण
-			अगर (!pfn_t_has_page(pfn)) अणु
+				goto err3;
+			}
+			if (!pfn_t_has_page(pfn)) {
 				r = -EOPNOTSUPP;
-				जाओ err3;
-			पूर्ण
-			जबतक (daa-- && i < p) अणु
+				goto err3;
+			}
+			while (daa-- && i < p) {
 				pages[i++] = pfn_t_to_page(pfn);
 				pfn.val++;
-				अगर (!(i & 15))
+				if (!(i & 15))
 					cond_resched();
-			पूर्ण
-		पूर्ण जबतक (i < p);
+			}
+		} while (i < p);
 		wc->memory_map = vmap(pages, p, VM_MAP, PAGE_KERNEL);
-		अगर (!wc->memory_map) अणु
+		if (!wc->memory_map) {
 			r = -ENOMEM;
-			जाओ err3;
-		पूर्ण
-		kvमुक्त(pages);
+			goto err3;
+		}
+		kvfree(pages);
 		wc->memory_vmapped = true;
-	पूर्ण
+	}
 
-	dax_पढ़ो_unlock(id);
+	dax_read_unlock(id);
 
-	wc->memory_map += (माप_प्रकार)wc->start_sector << SECTOR_SHIFT;
-	wc->memory_map_size -= (माप_प्रकार)wc->start_sector << SECTOR_SHIFT;
+	wc->memory_map += (size_t)wc->start_sector << SECTOR_SHIFT;
+	wc->memory_map_size -= (size_t)wc->start_sector << SECTOR_SHIFT;
 
-	वापस 0;
+	return 0;
 err3:
-	kvमुक्त(pages);
+	kvfree(pages);
 err2:
-	dax_पढ़ो_unlock(id);
+	dax_read_unlock(id);
 err1:
-	वापस r;
-पूर्ण
-#अन्यथा
-अटल पूर्णांक persistent_memory_claim(काष्ठा dm_ग_लिखोcache *wc)
-अणु
-	वापस -EOPNOTSUPP;
-पूर्ण
-#पूर्ण_अगर
+	return r;
+}
+#else
+static int persistent_memory_claim(struct dm_writecache *wc)
+{
+	return -EOPNOTSUPP;
+}
+#endif
 
-अटल व्योम persistent_memory_release(काष्ठा dm_ग_लिखोcache *wc)
-अणु
-	अगर (wc->memory_vmapped)
-		vunmap(wc->memory_map - ((माप_प्रकार)wc->start_sector << SECTOR_SHIFT));
-पूर्ण
+static void persistent_memory_release(struct dm_writecache *wc)
+{
+	if (wc->memory_vmapped)
+		vunmap(wc->memory_map - ((size_t)wc->start_sector << SECTOR_SHIFT));
+}
 
-अटल काष्ठा page *persistent_memory_page(व्योम *addr)
-अणु
-	अगर (is_vदो_स्मृति_addr(addr))
-		वापस vदो_स्मृति_to_page(addr);
-	अन्यथा
-		वापस virt_to_page(addr);
-पूर्ण
+static struct page *persistent_memory_page(void *addr)
+{
+	if (is_vmalloc_addr(addr))
+		return vmalloc_to_page(addr);
+	else
+		return virt_to_page(addr);
+}
 
-अटल अचिन्हित persistent_memory_page_offset(व्योम *addr)
-अणु
-	वापस (अचिन्हित दीर्घ)addr & (PAGE_SIZE - 1);
-पूर्ण
+static unsigned persistent_memory_page_offset(void *addr)
+{
+	return (unsigned long)addr & (PAGE_SIZE - 1);
+}
 
-अटल व्योम persistent_memory_flush_cache(व्योम *ptr, माप_प्रकार size)
-अणु
-	अगर (is_vदो_स्मृति_addr(ptr))
+static void persistent_memory_flush_cache(void *ptr, size_t size)
+{
+	if (is_vmalloc_addr(ptr))
 		flush_kernel_vmap_range(ptr, size);
-पूर्ण
+}
 
-अटल व्योम persistent_memory_invalidate_cache(व्योम *ptr, माप_प्रकार size)
-अणु
-	अगर (is_vदो_स्मृति_addr(ptr))
+static void persistent_memory_invalidate_cache(void *ptr, size_t size)
+{
+	if (is_vmalloc_addr(ptr))
 		invalidate_kernel_vmap_range(ptr, size);
-पूर्ण
+}
 
-अटल काष्ठा wc_memory_superblock *sb(काष्ठा dm_ग_लिखोcache *wc)
-अणु
-	वापस wc->memory_map;
-पूर्ण
+static struct wc_memory_superblock *sb(struct dm_writecache *wc)
+{
+	return wc->memory_map;
+}
 
-अटल काष्ठा wc_memory_entry *memory_entry(काष्ठा dm_ग_लिखोcache *wc, काष्ठा wc_entry *e)
-अणु
-	वापस &sb(wc)->entries[e->index];
-पूर्ण
+static struct wc_memory_entry *memory_entry(struct dm_writecache *wc, struct wc_entry *e)
+{
+	return &sb(wc)->entries[e->index];
+}
 
-अटल व्योम *memory_data(काष्ठा dm_ग_लिखोcache *wc, काष्ठा wc_entry *e)
-अणु
-	वापस (अक्षर *)wc->block_start + (e->index << wc->block_size_bits);
-पूर्ण
+static void *memory_data(struct dm_writecache *wc, struct wc_entry *e)
+{
+	return (char *)wc->block_start + (e->index << wc->block_size_bits);
+}
 
-अटल sector_t cache_sector(काष्ठा dm_ग_लिखोcache *wc, काष्ठा wc_entry *e)
-अणु
-	वापस wc->start_sector + wc->metadata_sectors +
+static sector_t cache_sector(struct dm_writecache *wc, struct wc_entry *e)
+{
+	return wc->start_sector + wc->metadata_sectors +
 		((sector_t)e->index << (wc->block_size_bits - SECTOR_SHIFT));
-पूर्ण
+}
 
-अटल uपूर्णांक64_t पढ़ो_original_sector(काष्ठा dm_ग_लिखोcache *wc, काष्ठा wc_entry *e)
-अणु
-#अगर_घोषित DM_WRITECACHE_HANDLE_HARDWARE_ERRORS
-	वापस e->original_sector;
-#अन्यथा
-	वापस le64_to_cpu(memory_entry(wc, e)->original_sector);
-#पूर्ण_अगर
-पूर्ण
+static uint64_t read_original_sector(struct dm_writecache *wc, struct wc_entry *e)
+{
+#ifdef DM_WRITECACHE_HANDLE_HARDWARE_ERRORS
+	return e->original_sector;
+#else
+	return le64_to_cpu(memory_entry(wc, e)->original_sector);
+#endif
+}
 
-अटल uपूर्णांक64_t पढ़ो_seq_count(काष्ठा dm_ग_लिखोcache *wc, काष्ठा wc_entry *e)
-अणु
-#अगर_घोषित DM_WRITECACHE_HANDLE_HARDWARE_ERRORS
-	वापस e->seq_count;
-#अन्यथा
-	वापस le64_to_cpu(memory_entry(wc, e)->seq_count);
-#पूर्ण_अगर
-पूर्ण
+static uint64_t read_seq_count(struct dm_writecache *wc, struct wc_entry *e)
+{
+#ifdef DM_WRITECACHE_HANDLE_HARDWARE_ERRORS
+	return e->seq_count;
+#else
+	return le64_to_cpu(memory_entry(wc, e)->seq_count);
+#endif
+}
 
-अटल व्योम clear_seq_count(काष्ठा dm_ग_लिखोcache *wc, काष्ठा wc_entry *e)
-अणु
-#अगर_घोषित DM_WRITECACHE_HANDLE_HARDWARE_ERRORS
+static void clear_seq_count(struct dm_writecache *wc, struct wc_entry *e)
+{
+#ifdef DM_WRITECACHE_HANDLE_HARDWARE_ERRORS
 	e->seq_count = -1;
-#पूर्ण_अगर
+#endif
 	pmem_assign(memory_entry(wc, e)->seq_count, cpu_to_le64(-1));
-पूर्ण
+}
 
-अटल व्योम ग_लिखो_original_sector_seq_count(काष्ठा dm_ग_लिखोcache *wc, काष्ठा wc_entry *e,
-					    uपूर्णांक64_t original_sector, uपूर्णांक64_t seq_count)
-अणु
-	काष्ठा wc_memory_entry me;
-#अगर_घोषित DM_WRITECACHE_HANDLE_HARDWARE_ERRORS
+static void write_original_sector_seq_count(struct dm_writecache *wc, struct wc_entry *e,
+					    uint64_t original_sector, uint64_t seq_count)
+{
+	struct wc_memory_entry me;
+#ifdef DM_WRITECACHE_HANDLE_HARDWARE_ERRORS
 	e->original_sector = original_sector;
 	e->seq_count = seq_count;
-#पूर्ण_अगर
+#endif
 	me.original_sector = cpu_to_le64(original_sector);
 	me.seq_count = cpu_to_le64(seq_count);
 	pmem_assign(*memory_entry(wc, e), me);
-पूर्ण
+}
 
-#घोषणा ग_लिखोcache_error(wc, err, msg, arg...)				\
-करो अणु									\
-	अगर (!cmpxchg(&(wc)->error, 0, err))				\
+#define writecache_error(wc, err, msg, arg...)				\
+do {									\
+	if (!cmpxchg(&(wc)->error, 0, err))				\
 		DMERR(msg, ##arg);					\
-	wake_up(&(wc)->मुक्तlist_रुको);					\
-पूर्ण जबतक (0)
+	wake_up(&(wc)->freelist_wait);					\
+} while (0)
 
-#घोषणा ग_लिखोcache_has_error(wc)	(unlikely(READ_ONCE((wc)->error)))
+#define writecache_has_error(wc)	(unlikely(READ_ONCE((wc)->error)))
 
-अटल व्योम ग_लिखोcache_flush_all_metadata(काष्ठा dm_ग_लिखोcache *wc)
-अणु
-	अगर (!WC_MODE_PMEM(wc))
-		स_रखो(wc->dirty_biपंचांगap, -1, wc->dirty_biपंचांगap_size);
-पूर्ण
+static void writecache_flush_all_metadata(struct dm_writecache *wc)
+{
+	if (!WC_MODE_PMEM(wc))
+		memset(wc->dirty_bitmap, -1, wc->dirty_bitmap_size);
+}
 
-अटल व्योम ग_लिखोcache_flush_region(काष्ठा dm_ग_लिखोcache *wc, व्योम *ptr, माप_प्रकार size)
-अणु
-	अगर (!WC_MODE_PMEM(wc))
-		__set_bit(((अक्षर *)ptr - (अक्षर *)wc->memory_map) / BITMAP_GRANULARITY,
-			  wc->dirty_biपंचांगap);
-पूर्ण
+static void writecache_flush_region(struct dm_writecache *wc, void *ptr, size_t size)
+{
+	if (!WC_MODE_PMEM(wc))
+		__set_bit(((char *)ptr - (char *)wc->memory_map) / BITMAP_GRANULARITY,
+			  wc->dirty_bitmap);
+}
 
-अटल व्योम ग_लिखोcache_disk_flush(काष्ठा dm_ग_लिखोcache *wc, काष्ठा dm_dev *dev);
+static void writecache_disk_flush(struct dm_writecache *wc, struct dm_dev *dev);
 
-काष्ठा io_notअगरy अणु
-	काष्ठा dm_ग_लिखोcache *wc;
-	काष्ठा completion c;
+struct io_notify {
+	struct dm_writecache *wc;
+	struct completion c;
 	atomic_t count;
-पूर्ण;
+};
 
-अटल व्योम ग_लिखोcache_notअगरy_io(अचिन्हित दीर्घ error, व्योम *context)
-अणु
-	काष्ठा io_notअगरy *endio = context;
+static void writecache_notify_io(unsigned long error, void *context)
+{
+	struct io_notify *endio = context;
 
-	अगर (unlikely(error != 0))
-		ग_लिखोcache_error(endio->wc, -EIO, "error writing metadata");
-	BUG_ON(atomic_पढ़ो(&endio->count) <= 0);
-	अगर (atomic_dec_and_test(&endio->count))
+	if (unlikely(error != 0))
+		writecache_error(endio->wc, -EIO, "error writing metadata");
+	BUG_ON(atomic_read(&endio->count) <= 0);
+	if (atomic_dec_and_test(&endio->count))
 		complete(&endio->c);
-पूर्ण
+}
 
-अटल व्योम ग_लिखोcache_रुको_क्रम_ios(काष्ठा dm_ग_लिखोcache *wc, पूर्णांक direction)
-अणु
-	रुको_event(wc->bio_in_progress_रुको[direction],
-		   !atomic_पढ़ो(&wc->bio_in_progress[direction]));
-पूर्ण
+static void writecache_wait_for_ios(struct dm_writecache *wc, int direction)
+{
+	wait_event(wc->bio_in_progress_wait[direction],
+		   !atomic_read(&wc->bio_in_progress[direction]));
+}
 
-अटल व्योम ssd_commit_flushed(काष्ठा dm_ग_लिखोcache *wc, bool रुको_क्रम_ios)
-अणु
-	काष्ठा dm_io_region region;
-	काष्ठा dm_io_request req;
-	काष्ठा io_notअगरy endio = अणु
+static void ssd_commit_flushed(struct dm_writecache *wc, bool wait_for_ios)
+{
+	struct dm_io_region region;
+	struct dm_io_request req;
+	struct io_notify endio = {
 		wc,
 		COMPLETION_INITIALIZER_ONSTACK(endio.c),
 		ATOMIC_INIT(1),
-	पूर्ण;
-	अचिन्हित biपंचांगap_bits = wc->dirty_biपंचांगap_size * 8;
-	अचिन्हित i = 0;
+	};
+	unsigned bitmap_bits = wc->dirty_bitmap_size * 8;
+	unsigned i = 0;
 
-	जबतक (1) अणु
-		अचिन्हित j;
-		i = find_next_bit(wc->dirty_biपंचांगap, biपंचांगap_bits, i);
-		अगर (unlikely(i == biपंचांगap_bits))
-			अवरोध;
-		j = find_next_zero_bit(wc->dirty_biपंचांगap, biपंचांगap_bits, i);
+	while (1) {
+		unsigned j;
+		i = find_next_bit(wc->dirty_bitmap, bitmap_bits, i);
+		if (unlikely(i == bitmap_bits))
+			break;
+		j = find_next_zero_bit(wc->dirty_bitmap, bitmap_bits, i);
 
 		region.bdev = wc->ssd_dev->bdev;
 		region.sector = (sector_t)i * (BITMAP_GRANULARITY >> SECTOR_SHIFT);
 		region.count = (sector_t)(j - i) * (BITMAP_GRANULARITY >> SECTOR_SHIFT);
 
-		अगर (unlikely(region.sector >= wc->metadata_sectors))
-			अवरोध;
-		अगर (unlikely(region.sector + region.count > wc->metadata_sectors))
+		if (unlikely(region.sector >= wc->metadata_sectors))
+			break;
+		if (unlikely(region.sector + region.count > wc->metadata_sectors))
 			region.count = wc->metadata_sectors - region.sector;
 
 		region.sector += wc->start_sector;
@@ -504,38 +503,38 @@ err1:
 		req.bi_op = REQ_OP_WRITE;
 		req.bi_op_flags = REQ_SYNC;
 		req.mem.type = DM_IO_VMA;
-		req.mem.ptr.vma = (अक्षर *)wc->memory_map + (माप_प्रकार)i * BITMAP_GRANULARITY;
+		req.mem.ptr.vma = (char *)wc->memory_map + (size_t)i * BITMAP_GRANULARITY;
 		req.client = wc->dm_io;
-		req.notअगरy.fn = ग_लिखोcache_notअगरy_io;
-		req.notअगरy.context = &endio;
+		req.notify.fn = writecache_notify_io;
+		req.notify.context = &endio;
 
-		/* writing via async dm-io (implied by notअगरy.fn above) won't वापस an error */
-	        (व्योम) dm_io(&req, 1, &region, शून्य);
+		/* writing via async dm-io (implied by notify.fn above) won't return an error */
+	        (void) dm_io(&req, 1, &region, NULL);
 		i = j;
-	पूर्ण
+	}
 
-	ग_लिखोcache_notअगरy_io(0, &endio);
-	रुको_क्रम_completion_io(&endio.c);
+	writecache_notify_io(0, &endio);
+	wait_for_completion_io(&endio.c);
 
-	अगर (रुको_क्रम_ios)
-		ग_लिखोcache_रुको_क्रम_ios(wc, WRITE);
+	if (wait_for_ios)
+		writecache_wait_for_ios(wc, WRITE);
 
-	ग_लिखोcache_disk_flush(wc, wc->ssd_dev);
+	writecache_disk_flush(wc, wc->ssd_dev);
 
-	स_रखो(wc->dirty_biपंचांगap, 0, wc->dirty_biपंचांगap_size);
-पूर्ण
+	memset(wc->dirty_bitmap, 0, wc->dirty_bitmap_size);
+}
 
-अटल व्योम ssd_commit_superblock(काष्ठा dm_ग_लिखोcache *wc)
-अणु
-	पूर्णांक r;
-	काष्ठा dm_io_region region;
-	काष्ठा dm_io_request req;
+static void ssd_commit_superblock(struct dm_writecache *wc)
+{
+	int r;
+	struct dm_io_region region;
+	struct dm_io_request req;
 
 	region.bdev = wc->ssd_dev->bdev;
 	region.sector = 0;
 	region.count = PAGE_SIZE >> SECTOR_SHIFT;
 
-	अगर (unlikely(region.sector + region.count > wc->metadata_sectors))
+	if (unlikely(region.sector + region.count > wc->metadata_sectors))
 		region.count = wc->metadata_sectors - region.sector;
 
 	region.sector += wc->start_sector;
@@ -543,29 +542,29 @@ err1:
 	req.bi_op = REQ_OP_WRITE;
 	req.bi_op_flags = REQ_SYNC | REQ_FUA;
 	req.mem.type = DM_IO_VMA;
-	req.mem.ptr.vma = (अक्षर *)wc->memory_map;
+	req.mem.ptr.vma = (char *)wc->memory_map;
 	req.client = wc->dm_io;
-	req.notअगरy.fn = शून्य;
-	req.notअगरy.context = शून्य;
+	req.notify.fn = NULL;
+	req.notify.context = NULL;
 
-	r = dm_io(&req, 1, &region, शून्य);
-	अगर (unlikely(r))
-		ग_लिखोcache_error(wc, r, "error writing superblock");
-पूर्ण
+	r = dm_io(&req, 1, &region, NULL);
+	if (unlikely(r))
+		writecache_error(wc, r, "error writing superblock");
+}
 
-अटल व्योम ग_लिखोcache_commit_flushed(काष्ठा dm_ग_लिखोcache *wc, bool रुको_क्रम_ios)
-अणु
-	अगर (WC_MODE_PMEM(wc))
+static void writecache_commit_flushed(struct dm_writecache *wc, bool wait_for_ios)
+{
+	if (WC_MODE_PMEM(wc))
 		pmem_wmb();
-	अन्यथा
-		ssd_commit_flushed(wc, रुको_क्रम_ios);
-पूर्ण
+	else
+		ssd_commit_flushed(wc, wait_for_ios);
+}
 
-अटल व्योम ग_लिखोcache_disk_flush(काष्ठा dm_ग_लिखोcache *wc, काष्ठा dm_dev *dev)
-अणु
-	पूर्णांक r;
-	काष्ठा dm_io_region region;
-	काष्ठा dm_io_request req;
+static void writecache_disk_flush(struct dm_writecache *wc, struct dm_dev *dev)
+{
+	int r;
+	struct dm_io_region region;
+	struct dm_io_request req;
 
 	region.bdev = dev->bdev;
 	region.sector = 0;
@@ -573,388 +572,388 @@ err1:
 	req.bi_op = REQ_OP_WRITE;
 	req.bi_op_flags = REQ_PREFLUSH;
 	req.mem.type = DM_IO_KMEM;
-	req.mem.ptr.addr = शून्य;
+	req.mem.ptr.addr = NULL;
 	req.client = wc->dm_io;
-	req.notअगरy.fn = शून्य;
+	req.notify.fn = NULL;
 
-	r = dm_io(&req, 1, &region, शून्य);
-	अगर (unlikely(r))
-		ग_लिखोcache_error(wc, r, "error flushing metadata: %d", r);
-पूर्ण
+	r = dm_io(&req, 1, &region, NULL);
+	if (unlikely(r))
+		writecache_error(wc, r, "error flushing metadata: %d", r);
+}
 
-#घोषणा WFE_RETURN_FOLLOWING	1
-#घोषणा WFE_LOWEST_SEQ		2
+#define WFE_RETURN_FOLLOWING	1
+#define WFE_LOWEST_SEQ		2
 
-अटल काष्ठा wc_entry *ग_लिखोcache_find_entry(काष्ठा dm_ग_लिखोcache *wc,
-					      uपूर्णांक64_t block, पूर्णांक flags)
-अणु
-	काष्ठा wc_entry *e;
-	काष्ठा rb_node *node = wc->tree.rb_node;
+static struct wc_entry *writecache_find_entry(struct dm_writecache *wc,
+					      uint64_t block, int flags)
+{
+	struct wc_entry *e;
+	struct rb_node *node = wc->tree.rb_node;
 
-	अगर (unlikely(!node))
-		वापस शून्य;
+	if (unlikely(!node))
+		return NULL;
 
-	जबतक (1) अणु
-		e = container_of(node, काष्ठा wc_entry, rb_node);
-		अगर (पढ़ो_original_sector(wc, e) == block)
-			अवरोध;
+	while (1) {
+		e = container_of(node, struct wc_entry, rb_node);
+		if (read_original_sector(wc, e) == block)
+			break;
 
-		node = (पढ़ो_original_sector(wc, e) >= block ?
+		node = (read_original_sector(wc, e) >= block ?
 			e->rb_node.rb_left : e->rb_node.rb_right);
-		अगर (unlikely(!node)) अणु
-			अगर (!(flags & WFE_RETURN_FOLLOWING))
-				वापस शून्य;
-			अगर (पढ़ो_original_sector(wc, e) >= block) अणु
-				वापस e;
-			पूर्ण अन्यथा अणु
+		if (unlikely(!node)) {
+			if (!(flags & WFE_RETURN_FOLLOWING))
+				return NULL;
+			if (read_original_sector(wc, e) >= block) {
+				return e;
+			} else {
 				node = rb_next(&e->rb_node);
-				अगर (unlikely(!node))
-					वापस शून्य;
-				e = container_of(node, काष्ठा wc_entry, rb_node);
-				वापस e;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				if (unlikely(!node))
+					return NULL;
+				e = container_of(node, struct wc_entry, rb_node);
+				return e;
+			}
+		}
+	}
 
-	जबतक (1) अणु
-		काष्ठा wc_entry *e2;
-		अगर (flags & WFE_LOWEST_SEQ)
+	while (1) {
+		struct wc_entry *e2;
+		if (flags & WFE_LOWEST_SEQ)
 			node = rb_prev(&e->rb_node);
-		अन्यथा
+		else
 			node = rb_next(&e->rb_node);
-		अगर (unlikely(!node))
-			वापस e;
-		e2 = container_of(node, काष्ठा wc_entry, rb_node);
-		अगर (पढ़ो_original_sector(wc, e2) != block)
-			वापस e;
+		if (unlikely(!node))
+			return e;
+		e2 = container_of(node, struct wc_entry, rb_node);
+		if (read_original_sector(wc, e2) != block)
+			return e;
 		e = e2;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम ग_लिखोcache_insert_entry(काष्ठा dm_ग_लिखोcache *wc, काष्ठा wc_entry *ins)
-अणु
-	काष्ठा wc_entry *e;
-	काष्ठा rb_node **node = &wc->tree.rb_node, *parent = शून्य;
+static void writecache_insert_entry(struct dm_writecache *wc, struct wc_entry *ins)
+{
+	struct wc_entry *e;
+	struct rb_node **node = &wc->tree.rb_node, *parent = NULL;
 
-	जबतक (*node) अणु
-		e = container_of(*node, काष्ठा wc_entry, rb_node);
+	while (*node) {
+		e = container_of(*node, struct wc_entry, rb_node);
 		parent = &e->rb_node;
-		अगर (पढ़ो_original_sector(wc, e) > पढ़ो_original_sector(wc, ins))
+		if (read_original_sector(wc, e) > read_original_sector(wc, ins))
 			node = &parent->rb_left;
-		अन्यथा
+		else
 			node = &parent->rb_right;
-	पूर्ण
+	}
 	rb_link_node(&ins->rb_node, parent, node);
 	rb_insert_color(&ins->rb_node, &wc->tree);
 	list_add(&ins->lru, &wc->lru);
-	ins->age = jअगरfies;
-पूर्ण
+	ins->age = jiffies;
+}
 
-अटल व्योम ग_लिखोcache_unlink(काष्ठा dm_ग_लिखोcache *wc, काष्ठा wc_entry *e)
-अणु
+static void writecache_unlink(struct dm_writecache *wc, struct wc_entry *e)
+{
 	list_del(&e->lru);
 	rb_erase(&e->rb_node, &wc->tree);
-पूर्ण
+}
 
-अटल व्योम ग_लिखोcache_add_to_मुक्तlist(काष्ठा dm_ग_लिखोcache *wc, काष्ठा wc_entry *e)
-अणु
-	अगर (WC_MODE_SORT_FREELIST(wc)) अणु
-		काष्ठा rb_node **node = &wc->मुक्तtree.rb_node, *parent = शून्य;
-		अगर (unlikely(!*node))
-			wc->current_मुक्त = e;
-		जबतक (*node) अणु
+static void writecache_add_to_freelist(struct dm_writecache *wc, struct wc_entry *e)
+{
+	if (WC_MODE_SORT_FREELIST(wc)) {
+		struct rb_node **node = &wc->freetree.rb_node, *parent = NULL;
+		if (unlikely(!*node))
+			wc->current_free = e;
+		while (*node) {
 			parent = *node;
-			अगर (&e->rb_node < *node)
+			if (&e->rb_node < *node)
 				node = &parent->rb_left;
-			अन्यथा
+			else
 				node = &parent->rb_right;
-		पूर्ण
+		}
 		rb_link_node(&e->rb_node, parent, node);
-		rb_insert_color(&e->rb_node, &wc->मुक्तtree);
-	पूर्ण अन्यथा अणु
-		list_add_tail(&e->lru, &wc->मुक्तlist);
-	पूर्ण
-	wc->मुक्तlist_size++;
-पूर्ण
+		rb_insert_color(&e->rb_node, &wc->freetree);
+	} else {
+		list_add_tail(&e->lru, &wc->freelist);
+	}
+	wc->freelist_size++;
+}
 
-अटल अंतरभूत व्योम ग_लिखोcache_verअगरy_watermark(काष्ठा dm_ग_लिखोcache *wc)
-अणु
-	अगर (unlikely(wc->मुक्तlist_size + wc->ग_लिखोback_size <= wc->मुक्तlist_high_watermark))
-		queue_work(wc->ग_लिखोback_wq, &wc->ग_लिखोback_work);
-पूर्ण
+static inline void writecache_verify_watermark(struct dm_writecache *wc)
+{
+	if (unlikely(wc->freelist_size + wc->writeback_size <= wc->freelist_high_watermark))
+		queue_work(wc->writeback_wq, &wc->writeback_work);
+}
 
-अटल व्योम ग_लिखोcache_max_age_समयr(काष्ठा समयr_list *t)
-अणु
-	काष्ठा dm_ग_लिखोcache *wc = from_समयr(wc, t, max_age_समयr);
+static void writecache_max_age_timer(struct timer_list *t)
+{
+	struct dm_writecache *wc = from_timer(wc, t, max_age_timer);
 
-	अगर (!dm_suspended(wc->ti) && !ग_लिखोcache_has_error(wc)) अणु
-		queue_work(wc->ग_लिखोback_wq, &wc->ग_लिखोback_work);
-		mod_समयr(&wc->max_age_समयr, jअगरfies + wc->max_age / MAX_AGE_DIV);
-	पूर्ण
-पूर्ण
+	if (!dm_suspended(wc->ti) && !writecache_has_error(wc)) {
+		queue_work(wc->writeback_wq, &wc->writeback_work);
+		mod_timer(&wc->max_age_timer, jiffies + wc->max_age / MAX_AGE_DIV);
+	}
+}
 
-अटल काष्ठा wc_entry *ग_लिखोcache_pop_from_मुक्तlist(काष्ठा dm_ग_लिखोcache *wc, sector_t expected_sector)
-अणु
-	काष्ठा wc_entry *e;
+static struct wc_entry *writecache_pop_from_freelist(struct dm_writecache *wc, sector_t expected_sector)
+{
+	struct wc_entry *e;
 
-	अगर (WC_MODE_SORT_FREELIST(wc)) अणु
-		काष्ठा rb_node *next;
-		अगर (unlikely(!wc->current_मुक्त))
-			वापस शून्य;
-		e = wc->current_मुक्त;
-		अगर (expected_sector != (sector_t)-1 && unlikely(cache_sector(wc, e) != expected_sector))
-			वापस शून्य;
+	if (WC_MODE_SORT_FREELIST(wc)) {
+		struct rb_node *next;
+		if (unlikely(!wc->current_free))
+			return NULL;
+		e = wc->current_free;
+		if (expected_sector != (sector_t)-1 && unlikely(cache_sector(wc, e) != expected_sector))
+			return NULL;
 		next = rb_next(&e->rb_node);
-		rb_erase(&e->rb_node, &wc->मुक्तtree);
-		अगर (unlikely(!next))
-			next = rb_first(&wc->मुक्तtree);
-		wc->current_मुक्त = next ? container_of(next, काष्ठा wc_entry, rb_node) : शून्य;
-	पूर्ण अन्यथा अणु
-		अगर (unlikely(list_empty(&wc->मुक्तlist)))
-			वापस शून्य;
-		e = container_of(wc->मुक्तlist.next, काष्ठा wc_entry, lru);
-		अगर (expected_sector != (sector_t)-1 && unlikely(cache_sector(wc, e) != expected_sector))
-			वापस शून्य;
+		rb_erase(&e->rb_node, &wc->freetree);
+		if (unlikely(!next))
+			next = rb_first(&wc->freetree);
+		wc->current_free = next ? container_of(next, struct wc_entry, rb_node) : NULL;
+	} else {
+		if (unlikely(list_empty(&wc->freelist)))
+			return NULL;
+		e = container_of(wc->freelist.next, struct wc_entry, lru);
+		if (expected_sector != (sector_t)-1 && unlikely(cache_sector(wc, e) != expected_sector))
+			return NULL;
 		list_del(&e->lru);
-	पूर्ण
-	wc->मुक्तlist_size--;
+	}
+	wc->freelist_size--;
 
-	ग_लिखोcache_verअगरy_watermark(wc);
+	writecache_verify_watermark(wc);
 
-	वापस e;
-पूर्ण
+	return e;
+}
 
-अटल व्योम ग_लिखोcache_मुक्त_entry(काष्ठा dm_ग_लिखोcache *wc, काष्ठा wc_entry *e)
-अणु
-	ग_लिखोcache_unlink(wc, e);
-	ग_लिखोcache_add_to_मुक्तlist(wc, e);
+static void writecache_free_entry(struct dm_writecache *wc, struct wc_entry *e)
+{
+	writecache_unlink(wc, e);
+	writecache_add_to_freelist(wc, e);
 	clear_seq_count(wc, e);
-	ग_लिखोcache_flush_region(wc, memory_entry(wc, e), माप(काष्ठा wc_memory_entry));
-	अगर (unlikely(रुकोqueue_active(&wc->मुक्तlist_रुको)))
-		wake_up(&wc->मुक्तlist_रुको);
-पूर्ण
+	writecache_flush_region(wc, memory_entry(wc, e), sizeof(struct wc_memory_entry));
+	if (unlikely(waitqueue_active(&wc->freelist_wait)))
+		wake_up(&wc->freelist_wait);
+}
 
-अटल व्योम ग_लिखोcache_रुको_on_मुक्तlist(काष्ठा dm_ग_लिखोcache *wc)
-अणु
-	DEFINE_WAIT(रुको);
+static void writecache_wait_on_freelist(struct dm_writecache *wc)
+{
+	DEFINE_WAIT(wait);
 
-	prepare_to_रुको(&wc->मुक्तlist_रुको, &रुको, TASK_UNINTERRUPTIBLE);
+	prepare_to_wait(&wc->freelist_wait, &wait, TASK_UNINTERRUPTIBLE);
 	wc_unlock(wc);
 	io_schedule();
-	finish_रुको(&wc->मुक्तlist_रुको, &रुको);
+	finish_wait(&wc->freelist_wait, &wait);
 	wc_lock(wc);
-पूर्ण
+}
 
-अटल व्योम ग_लिखोcache_poison_lists(काष्ठा dm_ग_लिखोcache *wc)
-अणु
+static void writecache_poison_lists(struct dm_writecache *wc)
+{
 	/*
-	 * Catch incorrect access to these values जबतक the device is suspended.
+	 * Catch incorrect access to these values while the device is suspended.
 	 */
-	स_रखो(&wc->tree, -1, माप wc->tree);
+	memset(&wc->tree, -1, sizeof wc->tree);
 	wc->lru.next = LIST_POISON1;
 	wc->lru.prev = LIST_POISON2;
-	wc->मुक्तlist.next = LIST_POISON1;
-	wc->मुक्तlist.prev = LIST_POISON2;
-पूर्ण
+	wc->freelist.next = LIST_POISON1;
+	wc->freelist.prev = LIST_POISON2;
+}
 
-अटल व्योम ग_लिखोcache_flush_entry(काष्ठा dm_ग_लिखोcache *wc, काष्ठा wc_entry *e)
-अणु
-	ग_लिखोcache_flush_region(wc, memory_entry(wc, e), माप(काष्ठा wc_memory_entry));
-	अगर (WC_MODE_PMEM(wc))
-		ग_लिखोcache_flush_region(wc, memory_data(wc, e), wc->block_size);
-पूर्ण
+static void writecache_flush_entry(struct dm_writecache *wc, struct wc_entry *e)
+{
+	writecache_flush_region(wc, memory_entry(wc, e), sizeof(struct wc_memory_entry));
+	if (WC_MODE_PMEM(wc))
+		writecache_flush_region(wc, memory_data(wc, e), wc->block_size);
+}
 
-अटल bool ग_लिखोcache_entry_is_committed(काष्ठा dm_ग_लिखोcache *wc, काष्ठा wc_entry *e)
-अणु
-	वापस पढ़ो_seq_count(wc, e) < wc->seq_count;
-पूर्ण
+static bool writecache_entry_is_committed(struct dm_writecache *wc, struct wc_entry *e)
+{
+	return read_seq_count(wc, e) < wc->seq_count;
+}
 
-अटल व्योम ग_लिखोcache_flush(काष्ठा dm_ग_लिखोcache *wc)
-अणु
-	काष्ठा wc_entry *e, *e2;
-	bool need_flush_after_मुक्त;
+static void writecache_flush(struct dm_writecache *wc)
+{
+	struct wc_entry *e, *e2;
+	bool need_flush_after_free;
 
 	wc->uncommitted_blocks = 0;
-	del_समयr(&wc->स्वतःcommit_समयr);
+	del_timer(&wc->autocommit_timer);
 
-	अगर (list_empty(&wc->lru))
-		वापस;
+	if (list_empty(&wc->lru))
+		return;
 
-	e = container_of(wc->lru.next, काष्ठा wc_entry, lru);
-	अगर (ग_लिखोcache_entry_is_committed(wc, e)) अणु
-		अगर (wc->overwrote_committed) अणु
-			ग_लिखोcache_रुको_क्रम_ios(wc, WRITE);
-			ग_लिखोcache_disk_flush(wc, wc->ssd_dev);
+	e = container_of(wc->lru.next, struct wc_entry, lru);
+	if (writecache_entry_is_committed(wc, e)) {
+		if (wc->overwrote_committed) {
+			writecache_wait_for_ios(wc, WRITE);
+			writecache_disk_flush(wc, wc->ssd_dev);
 			wc->overwrote_committed = false;
-		पूर्ण
-		वापस;
-	पूर्ण
-	जबतक (1) अणु
-		ग_लिखोcache_flush_entry(wc, e);
-		अगर (unlikely(e->lru.next == &wc->lru))
-			अवरोध;
-		e2 = container_of(e->lru.next, काष्ठा wc_entry, lru);
-		अगर (ग_लिखोcache_entry_is_committed(wc, e2))
-			अवरोध;
+		}
+		return;
+	}
+	while (1) {
+		writecache_flush_entry(wc, e);
+		if (unlikely(e->lru.next == &wc->lru))
+			break;
+		e2 = container_of(e->lru.next, struct wc_entry, lru);
+		if (writecache_entry_is_committed(wc, e2))
+			break;
 		e = e2;
 		cond_resched();
-	पूर्ण
-	ग_लिखोcache_commit_flushed(wc, true);
+	}
+	writecache_commit_flushed(wc, true);
 
 	wc->seq_count++;
 	pmem_assign(sb(wc)->seq_count, cpu_to_le64(wc->seq_count));
-	अगर (WC_MODE_PMEM(wc))
-		ग_लिखोcache_commit_flushed(wc, false);
-	अन्यथा
+	if (WC_MODE_PMEM(wc))
+		writecache_commit_flushed(wc, false);
+	else
 		ssd_commit_superblock(wc);
 
 	wc->overwrote_committed = false;
 
-	need_flush_after_मुक्त = false;
-	जबतक (1) अणु
+	need_flush_after_free = false;
+	while (1) {
 		/* Free another committed entry with lower seq-count */
-		काष्ठा rb_node *rb_node = rb_prev(&e->rb_node);
+		struct rb_node *rb_node = rb_prev(&e->rb_node);
 
-		अगर (rb_node) अणु
-			e2 = container_of(rb_node, काष्ठा wc_entry, rb_node);
-			अगर (पढ़ो_original_sector(wc, e2) == पढ़ो_original_sector(wc, e) &&
-			    likely(!e2->ग_लिखो_in_progress)) अणु
-				ग_लिखोcache_मुक्त_entry(wc, e2);
-				need_flush_after_मुक्त = true;
-			पूर्ण
-		पूर्ण
-		अगर (unlikely(e->lru.prev == &wc->lru))
-			अवरोध;
-		e = container_of(e->lru.prev, काष्ठा wc_entry, lru);
+		if (rb_node) {
+			e2 = container_of(rb_node, struct wc_entry, rb_node);
+			if (read_original_sector(wc, e2) == read_original_sector(wc, e) &&
+			    likely(!e2->write_in_progress)) {
+				writecache_free_entry(wc, e2);
+				need_flush_after_free = true;
+			}
+		}
+		if (unlikely(e->lru.prev == &wc->lru))
+			break;
+		e = container_of(e->lru.prev, struct wc_entry, lru);
 		cond_resched();
-	पूर्ण
+	}
 
-	अगर (need_flush_after_मुक्त)
-		ग_लिखोcache_commit_flushed(wc, false);
-पूर्ण
+	if (need_flush_after_free)
+		writecache_commit_flushed(wc, false);
+}
 
-अटल व्योम ग_लिखोcache_flush_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा dm_ग_लिखोcache *wc = container_of(work, काष्ठा dm_ग_लिखोcache, flush_work);
+static void writecache_flush_work(struct work_struct *work)
+{
+	struct dm_writecache *wc = container_of(work, struct dm_writecache, flush_work);
 
 	wc_lock(wc);
-	ग_लिखोcache_flush(wc);
+	writecache_flush(wc);
 	wc_unlock(wc);
-पूर्ण
+}
 
-अटल व्योम ग_लिखोcache_स्वतःcommit_समयr(काष्ठा समयr_list *t)
-अणु
-	काष्ठा dm_ग_लिखोcache *wc = from_समयr(wc, t, स्वतःcommit_समयr);
-	अगर (!ग_लिखोcache_has_error(wc))
-		queue_work(wc->ग_लिखोback_wq, &wc->flush_work);
-पूर्ण
+static void writecache_autocommit_timer(struct timer_list *t)
+{
+	struct dm_writecache *wc = from_timer(wc, t, autocommit_timer);
+	if (!writecache_has_error(wc))
+		queue_work(wc->writeback_wq, &wc->flush_work);
+}
 
-अटल व्योम ग_लिखोcache_schedule_स्वतःcommit(काष्ठा dm_ग_लिखोcache *wc)
-अणु
-	अगर (!समयr_pending(&wc->स्वतःcommit_समयr))
-		mod_समयr(&wc->स्वतःcommit_समयr, jअगरfies + wc->स्वतःcommit_jअगरfies);
-पूर्ण
+static void writecache_schedule_autocommit(struct dm_writecache *wc)
+{
+	if (!timer_pending(&wc->autocommit_timer))
+		mod_timer(&wc->autocommit_timer, jiffies + wc->autocommit_jiffies);
+}
 
-अटल व्योम ग_लिखोcache_discard(काष्ठा dm_ग_लिखोcache *wc, sector_t start, sector_t end)
-अणु
-	काष्ठा wc_entry *e;
+static void writecache_discard(struct dm_writecache *wc, sector_t start, sector_t end)
+{
+	struct wc_entry *e;
 	bool discarded_something = false;
 
-	e = ग_लिखोcache_find_entry(wc, start, WFE_RETURN_FOLLOWING | WFE_LOWEST_SEQ);
-	अगर (unlikely(!e))
-		वापस;
+	e = writecache_find_entry(wc, start, WFE_RETURN_FOLLOWING | WFE_LOWEST_SEQ);
+	if (unlikely(!e))
+		return;
 
-	जबतक (पढ़ो_original_sector(wc, e) < end) अणु
-		काष्ठा rb_node *node = rb_next(&e->rb_node);
+	while (read_original_sector(wc, e) < end) {
+		struct rb_node *node = rb_next(&e->rb_node);
 
-		अगर (likely(!e->ग_लिखो_in_progress)) अणु
-			अगर (!discarded_something) अणु
-				अगर (!WC_MODE_PMEM(wc)) अणु
-					ग_लिखोcache_रुको_क्रम_ios(wc, READ);
-					ग_लिखोcache_रुको_क्रम_ios(wc, WRITE);
-				पूर्ण
+		if (likely(!e->write_in_progress)) {
+			if (!discarded_something) {
+				if (!WC_MODE_PMEM(wc)) {
+					writecache_wait_for_ios(wc, READ);
+					writecache_wait_for_ios(wc, WRITE);
+				}
 				discarded_something = true;
-			पूर्ण
-			अगर (!ग_लिखोcache_entry_is_committed(wc, e))
+			}
+			if (!writecache_entry_is_committed(wc, e))
 				wc->uncommitted_blocks--;
-			ग_लिखोcache_मुक्त_entry(wc, e);
-		पूर्ण
+			writecache_free_entry(wc, e);
+		}
 
-		अगर (unlikely(!node))
-			अवरोध;
+		if (unlikely(!node))
+			break;
 
-		e = container_of(node, काष्ठा wc_entry, rb_node);
-	पूर्ण
+		e = container_of(node, struct wc_entry, rb_node);
+	}
 
-	अगर (discarded_something)
-		ग_लिखोcache_commit_flushed(wc, false);
-पूर्ण
+	if (discarded_something)
+		writecache_commit_flushed(wc, false);
+}
 
-अटल bool ग_लिखोcache_रुको_क्रम_ग_लिखोback(काष्ठा dm_ग_लिखोcache *wc)
-अणु
-	अगर (wc->ग_लिखोback_size) अणु
-		ग_लिखोcache_रुको_on_मुक्तlist(wc);
-		वापस true;
-	पूर्ण
-	वापस false;
-पूर्ण
+static bool writecache_wait_for_writeback(struct dm_writecache *wc)
+{
+	if (wc->writeback_size) {
+		writecache_wait_on_freelist(wc);
+		return true;
+	}
+	return false;
+}
 
-अटल व्योम ग_लिखोcache_suspend(काष्ठा dm_target *ti)
-अणु
-	काष्ठा dm_ग_लिखोcache *wc = ti->निजी;
+static void writecache_suspend(struct dm_target *ti)
+{
+	struct dm_writecache *wc = ti->private;
 	bool flush_on_suspend;
 
-	del_समयr_sync(&wc->स्वतःcommit_समयr);
-	del_समयr_sync(&wc->max_age_समयr);
+	del_timer_sync(&wc->autocommit_timer);
+	del_timer_sync(&wc->max_age_timer);
 
 	wc_lock(wc);
-	ग_लिखोcache_flush(wc);
+	writecache_flush(wc);
 	flush_on_suspend = wc->flush_on_suspend;
-	अगर (flush_on_suspend) अणु
+	if (flush_on_suspend) {
 		wc->flush_on_suspend = false;
-		wc->ग_लिखोback_all++;
-		queue_work(wc->ग_लिखोback_wq, &wc->ग_लिखोback_work);
-	पूर्ण
+		wc->writeback_all++;
+		queue_work(wc->writeback_wq, &wc->writeback_work);
+	}
 	wc_unlock(wc);
 
-	drain_workqueue(wc->ग_लिखोback_wq);
+	drain_workqueue(wc->writeback_wq);
 
 	wc_lock(wc);
-	अगर (flush_on_suspend)
-		wc->ग_लिखोback_all--;
-	जबतक (ग_लिखोcache_रुको_क्रम_ग_लिखोback(wc));
+	if (flush_on_suspend)
+		wc->writeback_all--;
+	while (writecache_wait_for_writeback(wc));
 
-	अगर (WC_MODE_PMEM(wc))
+	if (WC_MODE_PMEM(wc))
 		persistent_memory_flush_cache(wc->memory_map, wc->memory_map_size);
 
-	ग_लिखोcache_poison_lists(wc);
+	writecache_poison_lists(wc);
 
 	wc_unlock(wc);
-पूर्ण
+}
 
-अटल पूर्णांक ग_लिखोcache_alloc_entries(काष्ठा dm_ग_लिखोcache *wc)
-अणु
-	माप_प्रकार b;
+static int writecache_alloc_entries(struct dm_writecache *wc)
+{
+	size_t b;
 
-	अगर (wc->entries)
-		वापस 0;
-	wc->entries = vदो_स्मृति(array_size(माप(काष्ठा wc_entry), wc->n_blocks));
-	अगर (!wc->entries)
-		वापस -ENOMEM;
-	क्रम (b = 0; b < wc->n_blocks; b++) अणु
-		काष्ठा wc_entry *e = &wc->entries[b];
+	if (wc->entries)
+		return 0;
+	wc->entries = vmalloc(array_size(sizeof(struct wc_entry), wc->n_blocks));
+	if (!wc->entries)
+		return -ENOMEM;
+	for (b = 0; b < wc->n_blocks; b++) {
+		struct wc_entry *e = &wc->entries[b];
 		e->index = b;
-		e->ग_लिखो_in_progress = false;
+		e->write_in_progress = false;
 		cond_resched();
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ग_लिखोcache_पढ़ो_metadata(काष्ठा dm_ग_लिखोcache *wc, sector_t n_sectors)
-अणु
-	काष्ठा dm_io_region region;
-	काष्ठा dm_io_request req;
+static int writecache_read_metadata(struct dm_writecache *wc, sector_t n_sectors)
+{
+	struct dm_io_region region;
+	struct dm_io_request req;
 
 	region.bdev = wc->ssd_dev->bdev;
 	region.sector = wc->start_sector;
@@ -962,660 +961,660 @@ err1:
 	req.bi_op = REQ_OP_READ;
 	req.bi_op_flags = REQ_SYNC;
 	req.mem.type = DM_IO_VMA;
-	req.mem.ptr.vma = (अक्षर *)wc->memory_map;
+	req.mem.ptr.vma = (char *)wc->memory_map;
 	req.client = wc->dm_io;
-	req.notअगरy.fn = शून्य;
+	req.notify.fn = NULL;
 
-	वापस dm_io(&req, 1, &region, शून्य);
-पूर्ण
+	return dm_io(&req, 1, &region, NULL);
+}
 
-अटल व्योम ग_लिखोcache_resume(काष्ठा dm_target *ti)
-अणु
-	काष्ठा dm_ग_लिखोcache *wc = ti->निजी;
-	माप_प्रकार b;
+static void writecache_resume(struct dm_target *ti)
+{
+	struct dm_writecache *wc = ti->private;
+	size_t b;
 	bool need_flush = false;
 	__le64 sb_seq_count;
-	पूर्णांक r;
+	int r;
 
 	wc_lock(wc);
 
 	wc->data_device_sectors = bdev_nr_sectors(wc->dev->bdev);
 
-	अगर (WC_MODE_PMEM(wc)) अणु
+	if (WC_MODE_PMEM(wc)) {
 		persistent_memory_invalidate_cache(wc->memory_map, wc->memory_map_size);
-	पूर्ण अन्यथा अणु
-		r = ग_लिखोcache_पढ़ो_metadata(wc, wc->metadata_sectors);
-		अगर (r) अणु
-			माप_प्रकार sb_entries_offset;
-			ग_लिखोcache_error(wc, r, "unable to read metadata: %d", r);
-			sb_entries_offset = दुरत्व(काष्ठा wc_memory_superblock, entries);
-			स_रखो((अक्षर *)wc->memory_map + sb_entries_offset, -1,
+	} else {
+		r = writecache_read_metadata(wc, wc->metadata_sectors);
+		if (r) {
+			size_t sb_entries_offset;
+			writecache_error(wc, r, "unable to read metadata: %d", r);
+			sb_entries_offset = offsetof(struct wc_memory_superblock, entries);
+			memset((char *)wc->memory_map + sb_entries_offset, -1,
 			       (wc->metadata_sectors << SECTOR_SHIFT) - sb_entries_offset);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	wc->tree = RB_ROOT;
 	INIT_LIST_HEAD(&wc->lru);
-	अगर (WC_MODE_SORT_FREELIST(wc)) अणु
-		wc->मुक्तtree = RB_ROOT;
-		wc->current_मुक्त = शून्य;
-	पूर्ण अन्यथा अणु
-		INIT_LIST_HEAD(&wc->मुक्तlist);
-	पूर्ण
-	wc->मुक्तlist_size = 0;
+	if (WC_MODE_SORT_FREELIST(wc)) {
+		wc->freetree = RB_ROOT;
+		wc->current_free = NULL;
+	} else {
+		INIT_LIST_HEAD(&wc->freelist);
+	}
+	wc->freelist_size = 0;
 
 	r = copy_mc_to_kernel(&sb_seq_count, &sb(wc)->seq_count,
-			      माप(uपूर्णांक64_t));
-	अगर (r) अणु
-		ग_लिखोcache_error(wc, r, "hardware memory error when reading superblock: %d", r);
+			      sizeof(uint64_t));
+	if (r) {
+		writecache_error(wc, r, "hardware memory error when reading superblock: %d", r);
 		sb_seq_count = cpu_to_le64(0);
-	पूर्ण
+	}
 	wc->seq_count = le64_to_cpu(sb_seq_count);
 
-#अगर_घोषित DM_WRITECACHE_HANDLE_HARDWARE_ERRORS
-	क्रम (b = 0; b < wc->n_blocks; b++) अणु
-		काष्ठा wc_entry *e = &wc->entries[b];
-		काष्ठा wc_memory_entry wme;
-		अगर (ग_लिखोcache_has_error(wc)) अणु
+#ifdef DM_WRITECACHE_HANDLE_HARDWARE_ERRORS
+	for (b = 0; b < wc->n_blocks; b++) {
+		struct wc_entry *e = &wc->entries[b];
+		struct wc_memory_entry wme;
+		if (writecache_has_error(wc)) {
 			e->original_sector = -1;
 			e->seq_count = -1;
-			जारी;
-		पूर्ण
+			continue;
+		}
 		r = copy_mc_to_kernel(&wme, memory_entry(wc, e),
-				      माप(काष्ठा wc_memory_entry));
-		अगर (r) अणु
-			ग_लिखोcache_error(wc, r, "hardware memory error when reading metadata entry %lu: %d",
-					 (अचिन्हित दीर्घ)b, r);
+				      sizeof(struct wc_memory_entry));
+		if (r) {
+			writecache_error(wc, r, "hardware memory error when reading metadata entry %lu: %d",
+					 (unsigned long)b, r);
 			e->original_sector = -1;
 			e->seq_count = -1;
-		पूर्ण अन्यथा अणु
+		} else {
 			e->original_sector = le64_to_cpu(wme.original_sector);
 			e->seq_count = le64_to_cpu(wme.seq_count);
-		पूर्ण
+		}
 		cond_resched();
-	पूर्ण
-#पूर्ण_अगर
-	क्रम (b = 0; b < wc->n_blocks; b++) अणु
-		काष्ठा wc_entry *e = &wc->entries[b];
-		अगर (!ग_लिखोcache_entry_is_committed(wc, e)) अणु
-			अगर (पढ़ो_seq_count(wc, e) != -1) अणु
+	}
+#endif
+	for (b = 0; b < wc->n_blocks; b++) {
+		struct wc_entry *e = &wc->entries[b];
+		if (!writecache_entry_is_committed(wc, e)) {
+			if (read_seq_count(wc, e) != -1) {
 erase_this:
 				clear_seq_count(wc, e);
 				need_flush = true;
-			पूर्ण
-			ग_लिखोcache_add_to_मुक्तlist(wc, e);
-		पूर्ण अन्यथा अणु
-			काष्ठा wc_entry *old;
+			}
+			writecache_add_to_freelist(wc, e);
+		} else {
+			struct wc_entry *old;
 
-			old = ग_लिखोcache_find_entry(wc, पढ़ो_original_sector(wc, e), 0);
-			अगर (!old) अणु
-				ग_लिखोcache_insert_entry(wc, e);
-			पूर्ण अन्यथा अणु
-				अगर (पढ़ो_seq_count(wc, old) == पढ़ो_seq_count(wc, e)) अणु
-					ग_लिखोcache_error(wc, -EINVAL,
+			old = writecache_find_entry(wc, read_original_sector(wc, e), 0);
+			if (!old) {
+				writecache_insert_entry(wc, e);
+			} else {
+				if (read_seq_count(wc, old) == read_seq_count(wc, e)) {
+					writecache_error(wc, -EINVAL,
 						 "two identical entries, position %llu, sector %llu, sequence %llu",
-						 (अचिन्हित दीर्घ दीर्घ)b, (अचिन्हित दीर्घ दीर्घ)पढ़ो_original_sector(wc, e),
-						 (अचिन्हित दीर्घ दीर्घ)पढ़ो_seq_count(wc, e));
-				पूर्ण
-				अगर (पढ़ो_seq_count(wc, old) > पढ़ो_seq_count(wc, e)) अणु
-					जाओ erase_this;
-				पूर्ण अन्यथा अणु
-					ग_लिखोcache_मुक्त_entry(wc, old);
-					ग_लिखोcache_insert_entry(wc, e);
+						 (unsigned long long)b, (unsigned long long)read_original_sector(wc, e),
+						 (unsigned long long)read_seq_count(wc, e));
+				}
+				if (read_seq_count(wc, old) > read_seq_count(wc, e)) {
+					goto erase_this;
+				} else {
+					writecache_free_entry(wc, old);
+					writecache_insert_entry(wc, e);
 					need_flush = true;
-				पूर्ण
-			पूर्ण
-		पूर्ण
+				}
+			}
+		}
 		cond_resched();
-	पूर्ण
+	}
 
-	अगर (need_flush) अणु
-		ग_लिखोcache_flush_all_metadata(wc);
-		ग_लिखोcache_commit_flushed(wc, false);
-	पूर्ण
+	if (need_flush) {
+		writecache_flush_all_metadata(wc);
+		writecache_commit_flushed(wc, false);
+	}
 
-	ग_लिखोcache_verअगरy_watermark(wc);
+	writecache_verify_watermark(wc);
 
-	अगर (wc->max_age != MAX_AGE_UNSPECIFIED)
-		mod_समयr(&wc->max_age_समयr, jअगरfies + wc->max_age / MAX_AGE_DIV);
+	if (wc->max_age != MAX_AGE_UNSPECIFIED)
+		mod_timer(&wc->max_age_timer, jiffies + wc->max_age / MAX_AGE_DIV);
 
 	wc_unlock(wc);
-पूर्ण
+}
 
-अटल पूर्णांक process_flush_mesg(अचिन्हित argc, अक्षर **argv, काष्ठा dm_ग_लिखोcache *wc)
-अणु
-	अगर (argc != 1)
-		वापस -EINVAL;
+static int process_flush_mesg(unsigned argc, char **argv, struct dm_writecache *wc)
+{
+	if (argc != 1)
+		return -EINVAL;
 
 	wc_lock(wc);
-	अगर (dm_suspended(wc->ti)) अणु
+	if (dm_suspended(wc->ti)) {
 		wc_unlock(wc);
-		वापस -EBUSY;
-	पूर्ण
-	अगर (ग_लिखोcache_has_error(wc)) अणु
+		return -EBUSY;
+	}
+	if (writecache_has_error(wc)) {
 		wc_unlock(wc);
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	ग_लिखोcache_flush(wc);
-	wc->ग_लिखोback_all++;
-	queue_work(wc->ग_लिखोback_wq, &wc->ग_लिखोback_work);
+	writecache_flush(wc);
+	wc->writeback_all++;
+	queue_work(wc->writeback_wq, &wc->writeback_work);
 	wc_unlock(wc);
 
-	flush_workqueue(wc->ग_लिखोback_wq);
+	flush_workqueue(wc->writeback_wq);
 
 	wc_lock(wc);
-	wc->ग_लिखोback_all--;
-	अगर (ग_लिखोcache_has_error(wc)) अणु
+	wc->writeback_all--;
+	if (writecache_has_error(wc)) {
 		wc_unlock(wc);
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 	wc_unlock(wc);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक process_flush_on_suspend_mesg(अचिन्हित argc, अक्षर **argv, काष्ठा dm_ग_लिखोcache *wc)
-अणु
-	अगर (argc != 1)
-		वापस -EINVAL;
+static int process_flush_on_suspend_mesg(unsigned argc, char **argv, struct dm_writecache *wc)
+{
+	if (argc != 1)
+		return -EINVAL;
 
 	wc_lock(wc);
 	wc->flush_on_suspend = true;
 	wc_unlock(wc);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम activate_cleaner(काष्ठा dm_ग_लिखोcache *wc)
-अणु
+static void activate_cleaner(struct dm_writecache *wc)
+{
 	wc->flush_on_suspend = true;
 	wc->cleaner = true;
-	wc->मुक्तlist_high_watermark = wc->n_blocks;
-	wc->मुक्तlist_low_watermark = wc->n_blocks;
-पूर्ण
+	wc->freelist_high_watermark = wc->n_blocks;
+	wc->freelist_low_watermark = wc->n_blocks;
+}
 
-अटल पूर्णांक process_cleaner_mesg(अचिन्हित argc, अक्षर **argv, काष्ठा dm_ग_लिखोcache *wc)
-अणु
-	अगर (argc != 1)
-		वापस -EINVAL;
+static int process_cleaner_mesg(unsigned argc, char **argv, struct dm_writecache *wc)
+{
+	if (argc != 1)
+		return -EINVAL;
 
 	wc_lock(wc);
 	activate_cleaner(wc);
-	अगर (!dm_suspended(wc->ti))
-		ग_लिखोcache_verअगरy_watermark(wc);
+	if (!dm_suspended(wc->ti))
+		writecache_verify_watermark(wc);
 	wc_unlock(wc);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ग_लिखोcache_message(काष्ठा dm_target *ti, अचिन्हित argc, अक्षर **argv,
-			      अक्षर *result, अचिन्हित maxlen)
-अणु
-	पूर्णांक r = -EINVAL;
-	काष्ठा dm_ग_लिखोcache *wc = ti->निजी;
+static int writecache_message(struct dm_target *ti, unsigned argc, char **argv,
+			      char *result, unsigned maxlen)
+{
+	int r = -EINVAL;
+	struct dm_writecache *wc = ti->private;
 
-	अगर (!strहालcmp(argv[0], "flush"))
+	if (!strcasecmp(argv[0], "flush"))
 		r = process_flush_mesg(argc, argv, wc);
-	अन्यथा अगर (!strहालcmp(argv[0], "flush_on_suspend"))
+	else if (!strcasecmp(argv[0], "flush_on_suspend"))
 		r = process_flush_on_suspend_mesg(argc, argv, wc);
-	अन्यथा अगर (!strहालcmp(argv[0], "cleaner"))
+	else if (!strcasecmp(argv[0], "cleaner"))
 		r = process_cleaner_mesg(argc, argv, wc);
-	अन्यथा
+	else
 		DMERR("unrecognised message received: %s", argv[0]);
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल व्योम स_नकल_flushcache_optimized(व्योम *dest, व्योम *source, माप_प्रकार size)
-अणु
+static void memcpy_flushcache_optimized(void *dest, void *source, size_t size)
+{
 	/*
-	 * clflushopt perक्रमms better with block size 1024, 2048, 4096
-	 * non-temporal stores perक्रमm better with block size 512
+	 * clflushopt performs better with block size 1024, 2048, 4096
+	 * non-temporal stores perform better with block size 512
 	 *
 	 * block size   512             1024            2048            4096
 	 * movnti       496 MB/s        642 MB/s        725 MB/s        744 MB/s
 	 * clflushopt   373 MB/s        688 MB/s        1.1 GB/s        1.2 GB/s
 	 *
-	 * We see that movnti perक्रमms better क्रम 512-byte blocks, and
-	 * clflushopt perक्रमms better क्रम 1024-byte and larger blocks. So, we
-	 * prefer clflushopt क्रम sizes >= 768.
+	 * We see that movnti performs better for 512-byte blocks, and
+	 * clflushopt performs better for 1024-byte and larger blocks. So, we
+	 * prefer clflushopt for sizes >= 768.
 	 *
-	 * NOTE: this happens to be the हाल now (with dm-ग_लिखोcache's single
-	 * thपढ़ोed model) but re-evaluate this once स_नकल_flushcache() is
-	 * enabled to use movdir64b which might invalidate this perक्रमmance
-	 * advantage seen with cache-allocating-ग_लिखोs plus flushing.
+	 * NOTE: this happens to be the case now (with dm-writecache's single
+	 * threaded model) but re-evaluate this once memcpy_flushcache() is
+	 * enabled to use movdir64b which might invalidate this performance
+	 * advantage seen with cache-allocating-writes plus flushing.
 	 */
-#अगर_घोषित CONFIG_X86
-	अगर (अटल_cpu_has(X86_FEATURE_CLFLUSHOPT) &&
+#ifdef CONFIG_X86
+	if (static_cpu_has(X86_FEATURE_CLFLUSHOPT) &&
 	    likely(boot_cpu_data.x86_clflush_size == 64) &&
-	    likely(size >= 768)) अणु
-		करो अणु
-			स_नकल((व्योम *)dest, (व्योम *)source, 64);
-			clflushopt((व्योम *)dest);
+	    likely(size >= 768)) {
+		do {
+			memcpy((void *)dest, (void *)source, 64);
+			clflushopt((void *)dest);
 			dest += 64;
 			source += 64;
 			size -= 64;
-		पूर्ण जबतक (size >= 64);
-		वापस;
-	पूर्ण
-#पूर्ण_अगर
-	स_नकल_flushcache(dest, source, size);
-पूर्ण
+		} while (size >= 64);
+		return;
+	}
+#endif
+	memcpy_flushcache(dest, source, size);
+}
 
-अटल व्योम bio_copy_block(काष्ठा dm_ग_लिखोcache *wc, काष्ठा bio *bio, व्योम *data)
-अणु
-	व्योम *buf;
-	अचिन्हित दीर्घ flags;
-	अचिन्हित size;
-	पूर्णांक rw = bio_data_dir(bio);
-	अचिन्हित reमुख्यing_size = wc->block_size;
+static void bio_copy_block(struct dm_writecache *wc, struct bio *bio, void *data)
+{
+	void *buf;
+	unsigned long flags;
+	unsigned size;
+	int rw = bio_data_dir(bio);
+	unsigned remaining_size = wc->block_size;
 
-	करो अणु
-		काष्ठा bio_vec bv = bio_iter_iovec(bio, bio->bi_iter);
+	do {
+		struct bio_vec bv = bio_iter_iovec(bio, bio->bi_iter);
 		buf = bvec_kmap_irq(&bv, &flags);
 		size = bv.bv_len;
-		अगर (unlikely(size > reमुख्यing_size))
-			size = reमुख्यing_size;
+		if (unlikely(size > remaining_size))
+			size = remaining_size;
 
-		अगर (rw == READ) अणु
-			पूर्णांक r;
+		if (rw == READ) {
+			int r;
 			r = copy_mc_to_kernel(buf, data, size);
 			flush_dcache_page(bio_page(bio));
-			अगर (unlikely(r)) अणु
-				ग_लिखोcache_error(wc, r, "hardware memory error when reading data: %d", r);
+			if (unlikely(r)) {
+				writecache_error(wc, r, "hardware memory error when reading data: %d", r);
 				bio->bi_status = BLK_STS_IOERR;
-			पूर्ण
-		पूर्ण अन्यथा अणु
+			}
+		} else {
 			flush_dcache_page(bio_page(bio));
-			स_नकल_flushcache_optimized(data, buf, size);
-		पूर्ण
+			memcpy_flushcache_optimized(data, buf, size);
+		}
 
 		bvec_kunmap_irq(buf, &flags);
 
-		data = (अक्षर *)data + size;
-		reमुख्यing_size -= size;
+		data = (char *)data + size;
+		remaining_size -= size;
 		bio_advance(bio, size);
-	पूर्ण जबतक (unlikely(reमुख्यing_size));
-पूर्ण
+	} while (unlikely(remaining_size));
+}
 
-अटल पूर्णांक ग_लिखोcache_flush_thपढ़ो(व्योम *data)
-अणु
-	काष्ठा dm_ग_लिखोcache *wc = data;
+static int writecache_flush_thread(void *data)
+{
+	struct dm_writecache *wc = data;
 
-	जबतक (1) अणु
-		काष्ठा bio *bio;
+	while (1) {
+		struct bio *bio;
 
 		wc_lock(wc);
 		bio = bio_list_pop(&wc->flush_list);
-		अगर (!bio) अणु
+		if (!bio) {
 			set_current_state(TASK_INTERRUPTIBLE);
 			wc_unlock(wc);
 
-			अगर (unlikely(kthपढ़ो_should_stop())) अणु
+			if (unlikely(kthread_should_stop())) {
 				set_current_state(TASK_RUNNING);
-				अवरोध;
-			पूर्ण
+				break;
+			}
 
 			schedule();
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		अगर (bio_op(bio) == REQ_OP_DISCARD) अणु
-			ग_लिखोcache_discard(wc, bio->bi_iter.bi_sector,
+		if (bio_op(bio) == REQ_OP_DISCARD) {
+			writecache_discard(wc, bio->bi_iter.bi_sector,
 					   bio_end_sector(bio));
 			wc_unlock(wc);
 			bio_set_dev(bio, wc->dev->bdev);
 			submit_bio_noacct(bio);
-		पूर्ण अन्यथा अणु
-			ग_लिखोcache_flush(wc);
+		} else {
+			writecache_flush(wc);
 			wc_unlock(wc);
-			अगर (ग_लिखोcache_has_error(wc))
+			if (writecache_has_error(wc))
 				bio->bi_status = BLK_STS_IOERR;
 			bio_endio(bio);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ग_लिखोcache_offload_bio(काष्ठा dm_ग_लिखोcache *wc, काष्ठा bio *bio)
-अणु
-	अगर (bio_list_empty(&wc->flush_list))
-		wake_up_process(wc->flush_thपढ़ो);
+static void writecache_offload_bio(struct dm_writecache *wc, struct bio *bio)
+{
+	if (bio_list_empty(&wc->flush_list))
+		wake_up_process(wc->flush_thread);
 	bio_list_add(&wc->flush_list, bio);
-पूर्ण
+}
 
-अटल पूर्णांक ग_लिखोcache_map(काष्ठा dm_target *ti, काष्ठा bio *bio)
-अणु
-	काष्ठा wc_entry *e;
-	काष्ठा dm_ग_लिखोcache *wc = ti->निजी;
+static int writecache_map(struct dm_target *ti, struct bio *bio)
+{
+	struct wc_entry *e;
+	struct dm_writecache *wc = ti->private;
 
-	bio->bi_निजी = शून्य;
+	bio->bi_private = NULL;
 
 	wc_lock(wc);
 
-	अगर (unlikely(bio->bi_opf & REQ_PREFLUSH)) अणु
-		अगर (ग_लिखोcache_has_error(wc))
-			जाओ unlock_error;
-		अगर (WC_MODE_PMEM(wc)) अणु
-			ग_लिखोcache_flush(wc);
-			अगर (ग_लिखोcache_has_error(wc))
-				जाओ unlock_error;
-			जाओ unlock_submit;
-		पूर्ण अन्यथा अणु
-			ग_लिखोcache_offload_bio(wc, bio);
-			जाओ unlock_वापस;
-		पूर्ण
-	पूर्ण
+	if (unlikely(bio->bi_opf & REQ_PREFLUSH)) {
+		if (writecache_has_error(wc))
+			goto unlock_error;
+		if (WC_MODE_PMEM(wc)) {
+			writecache_flush(wc);
+			if (writecache_has_error(wc))
+				goto unlock_error;
+			goto unlock_submit;
+		} else {
+			writecache_offload_bio(wc, bio);
+			goto unlock_return;
+		}
+	}
 
 	bio->bi_iter.bi_sector = dm_target_offset(ti, bio->bi_iter.bi_sector);
 
-	अगर (unlikely((((अचिन्हित)bio->bi_iter.bi_sector | bio_sectors(bio)) &
-				(wc->block_size / 512 - 1)) != 0)) अणु
+	if (unlikely((((unsigned)bio->bi_iter.bi_sector | bio_sectors(bio)) &
+				(wc->block_size / 512 - 1)) != 0)) {
 		DMERR("I/O is not aligned, sector %llu, size %u, block size %u",
-		      (अचिन्हित दीर्घ दीर्घ)bio->bi_iter.bi_sector,
+		      (unsigned long long)bio->bi_iter.bi_sector,
 		      bio->bi_iter.bi_size, wc->block_size);
-		जाओ unlock_error;
-	पूर्ण
+		goto unlock_error;
+	}
 
-	अगर (unlikely(bio_op(bio) == REQ_OP_DISCARD)) अणु
-		अगर (ग_लिखोcache_has_error(wc))
-			जाओ unlock_error;
-		अगर (WC_MODE_PMEM(wc)) अणु
-			ग_लिखोcache_discard(wc, bio->bi_iter.bi_sector, bio_end_sector(bio));
-			जाओ unlock_remap_origin;
-		पूर्ण अन्यथा अणु
-			ग_लिखोcache_offload_bio(wc, bio);
-			जाओ unlock_वापस;
-		पूर्ण
-	पूर्ण
+	if (unlikely(bio_op(bio) == REQ_OP_DISCARD)) {
+		if (writecache_has_error(wc))
+			goto unlock_error;
+		if (WC_MODE_PMEM(wc)) {
+			writecache_discard(wc, bio->bi_iter.bi_sector, bio_end_sector(bio));
+			goto unlock_remap_origin;
+		} else {
+			writecache_offload_bio(wc, bio);
+			goto unlock_return;
+		}
+	}
 
-	अगर (bio_data_dir(bio) == READ) अणु
-पढ़ो_next_block:
-		e = ग_लिखोcache_find_entry(wc, bio->bi_iter.bi_sector, WFE_RETURN_FOLLOWING);
-		अगर (e && पढ़ो_original_sector(wc, e) == bio->bi_iter.bi_sector) अणु
-			अगर (WC_MODE_PMEM(wc)) अणु
+	if (bio_data_dir(bio) == READ) {
+read_next_block:
+		e = writecache_find_entry(wc, bio->bi_iter.bi_sector, WFE_RETURN_FOLLOWING);
+		if (e && read_original_sector(wc, e) == bio->bi_iter.bi_sector) {
+			if (WC_MODE_PMEM(wc)) {
 				bio_copy_block(wc, bio, memory_data(wc, e));
-				अगर (bio->bi_iter.bi_size)
-					जाओ पढ़ो_next_block;
-				जाओ unlock_submit;
-			पूर्ण अन्यथा अणु
+				if (bio->bi_iter.bi_size)
+					goto read_next_block;
+				goto unlock_submit;
+			} else {
 				dm_accept_partial_bio(bio, wc->block_size >> SECTOR_SHIFT);
 				bio_set_dev(bio, wc->ssd_dev->bdev);
 				bio->bi_iter.bi_sector = cache_sector(wc, e);
-				अगर (!ग_लिखोcache_entry_is_committed(wc, e))
-					ग_लिखोcache_रुको_क्रम_ios(wc, WRITE);
-				जाओ unlock_remap;
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			अगर (e) अणु
+				if (!writecache_entry_is_committed(wc, e))
+					writecache_wait_for_ios(wc, WRITE);
+				goto unlock_remap;
+			}
+		} else {
+			if (e) {
 				sector_t next_boundary =
-					पढ़ो_original_sector(wc, e) - bio->bi_iter.bi_sector;
-				अगर (next_boundary < bio->bi_iter.bi_size >> SECTOR_SHIFT) अणु
+					read_original_sector(wc, e) - bio->bi_iter.bi_sector;
+				if (next_boundary < bio->bi_iter.bi_size >> SECTOR_SHIFT) {
 					dm_accept_partial_bio(bio, next_boundary);
-				पूर्ण
-			पूर्ण
-			जाओ unlock_remap_origin;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		करो अणु
+				}
+			}
+			goto unlock_remap_origin;
+		}
+	} else {
+		do {
 			bool found_entry = false;
-			अगर (ग_लिखोcache_has_error(wc))
-				जाओ unlock_error;
-			e = ग_लिखोcache_find_entry(wc, bio->bi_iter.bi_sector, 0);
-			अगर (e) अणु
-				अगर (!ग_लिखोcache_entry_is_committed(wc, e))
-					जाओ bio_copy;
-				अगर (!WC_MODE_PMEM(wc) && !e->ग_लिखो_in_progress) अणु
+			if (writecache_has_error(wc))
+				goto unlock_error;
+			e = writecache_find_entry(wc, bio->bi_iter.bi_sector, 0);
+			if (e) {
+				if (!writecache_entry_is_committed(wc, e))
+					goto bio_copy;
+				if (!WC_MODE_PMEM(wc) && !e->write_in_progress) {
 					wc->overwrote_committed = true;
-					जाओ bio_copy;
-				पूर्ण
+					goto bio_copy;
+				}
 				found_entry = true;
-			पूर्ण अन्यथा अणु
-				अगर (unlikely(wc->cleaner))
-					जाओ direct_ग_लिखो;
-			पूर्ण
-			e = ग_लिखोcache_pop_from_मुक्तlist(wc, (sector_t)-1);
-			अगर (unlikely(!e)) अणु
-				अगर (!found_entry) अणु
-direct_ग_लिखो:
-					e = ग_लिखोcache_find_entry(wc, bio->bi_iter.bi_sector, WFE_RETURN_FOLLOWING);
-					अगर (e) अणु
-						sector_t next_boundary = पढ़ो_original_sector(wc, e) - bio->bi_iter.bi_sector;
+			} else {
+				if (unlikely(wc->cleaner))
+					goto direct_write;
+			}
+			e = writecache_pop_from_freelist(wc, (sector_t)-1);
+			if (unlikely(!e)) {
+				if (!found_entry) {
+direct_write:
+					e = writecache_find_entry(wc, bio->bi_iter.bi_sector, WFE_RETURN_FOLLOWING);
+					if (e) {
+						sector_t next_boundary = read_original_sector(wc, e) - bio->bi_iter.bi_sector;
 						BUG_ON(!next_boundary);
-						अगर (next_boundary < bio->bi_iter.bi_size >> SECTOR_SHIFT) अणु
+						if (next_boundary < bio->bi_iter.bi_size >> SECTOR_SHIFT) {
 							dm_accept_partial_bio(bio, next_boundary);
-						पूर्ण
-					पूर्ण
-					जाओ unlock_remap_origin;
-				पूर्ण
-				ग_लिखोcache_रुको_on_मुक्तlist(wc);
-				जारी;
-			पूर्ण
-			ग_लिखो_original_sector_seq_count(wc, e, bio->bi_iter.bi_sector, wc->seq_count);
-			ग_लिखोcache_insert_entry(wc, e);
+						}
+					}
+					goto unlock_remap_origin;
+				}
+				writecache_wait_on_freelist(wc);
+				continue;
+			}
+			write_original_sector_seq_count(wc, e, bio->bi_iter.bi_sector, wc->seq_count);
+			writecache_insert_entry(wc, e);
 			wc->uncommitted_blocks++;
 bio_copy:
-			अगर (WC_MODE_PMEM(wc)) अणु
+			if (WC_MODE_PMEM(wc)) {
 				bio_copy_block(wc, bio, memory_data(wc, e));
-			पूर्ण अन्यथा अणु
-				अचिन्हित bio_size = wc->block_size;
+			} else {
+				unsigned bio_size = wc->block_size;
 				sector_t start_cache_sec = cache_sector(wc, e);
 				sector_t current_cache_sec = start_cache_sec + (bio_size >> SECTOR_SHIFT);
 
-				जबतक (bio_size < bio->bi_iter.bi_size) अणु
-					काष्ठा wc_entry *f = ग_लिखोcache_pop_from_मुक्तlist(wc, current_cache_sec);
-					अगर (!f)
-						अवरोध;
-					ग_लिखो_original_sector_seq_count(wc, f, bio->bi_iter.bi_sector +
+				while (bio_size < bio->bi_iter.bi_size) {
+					struct wc_entry *f = writecache_pop_from_freelist(wc, current_cache_sec);
+					if (!f)
+						break;
+					write_original_sector_seq_count(wc, f, bio->bi_iter.bi_sector +
 									(bio_size >> SECTOR_SHIFT), wc->seq_count);
-					ग_लिखोcache_insert_entry(wc, f);
+					writecache_insert_entry(wc, f);
 					wc->uncommitted_blocks++;
 					bio_size += wc->block_size;
 					current_cache_sec += wc->block_size >> SECTOR_SHIFT;
-				पूर्ण
+				}
 
 				bio_set_dev(bio, wc->ssd_dev->bdev);
 				bio->bi_iter.bi_sector = start_cache_sec;
 				dm_accept_partial_bio(bio, bio_size >> SECTOR_SHIFT);
 
-				अगर (unlikely(wc->uncommitted_blocks >= wc->स्वतःcommit_blocks)) अणु
+				if (unlikely(wc->uncommitted_blocks >= wc->autocommit_blocks)) {
 					wc->uncommitted_blocks = 0;
-					queue_work(wc->ग_लिखोback_wq, &wc->flush_work);
-				पूर्ण अन्यथा अणु
-					ग_लिखोcache_schedule_स्वतःcommit(wc);
-				पूर्ण
-				जाओ unlock_remap;
-			पूर्ण
-		पूर्ण जबतक (bio->bi_iter.bi_size);
+					queue_work(wc->writeback_wq, &wc->flush_work);
+				} else {
+					writecache_schedule_autocommit(wc);
+				}
+				goto unlock_remap;
+			}
+		} while (bio->bi_iter.bi_size);
 
-		अगर (unlikely(bio->bi_opf & REQ_FUA ||
-			     wc->uncommitted_blocks >= wc->स्वतःcommit_blocks))
-			ग_लिखोcache_flush(wc);
-		अन्यथा
-			ग_लिखोcache_schedule_स्वतःcommit(wc);
-		जाओ unlock_submit;
-	पूर्ण
+		if (unlikely(bio->bi_opf & REQ_FUA ||
+			     wc->uncommitted_blocks >= wc->autocommit_blocks))
+			writecache_flush(wc);
+		else
+			writecache_schedule_autocommit(wc);
+		goto unlock_submit;
+	}
 
 unlock_remap_origin:
 	bio_set_dev(bio, wc->dev->bdev);
 	wc_unlock(wc);
-	वापस DM_MAPIO_REMAPPED;
+	return DM_MAPIO_REMAPPED;
 
 unlock_remap:
-	/* make sure that ग_लिखोcache_end_io decrements bio_in_progress: */
-	bio->bi_निजी = (व्योम *)1;
+	/* make sure that writecache_end_io decrements bio_in_progress: */
+	bio->bi_private = (void *)1;
 	atomic_inc(&wc->bio_in_progress[bio_data_dir(bio)]);
 	wc_unlock(wc);
-	वापस DM_MAPIO_REMAPPED;
+	return DM_MAPIO_REMAPPED;
 
 unlock_submit:
 	wc_unlock(wc);
 	bio_endio(bio);
-	वापस DM_MAPIO_SUBMITTED;
+	return DM_MAPIO_SUBMITTED;
 
-unlock_वापस:
+unlock_return:
 	wc_unlock(wc);
-	वापस DM_MAPIO_SUBMITTED;
+	return DM_MAPIO_SUBMITTED;
 
 unlock_error:
 	wc_unlock(wc);
 	bio_io_error(bio);
-	वापस DM_MAPIO_SUBMITTED;
-पूर्ण
+	return DM_MAPIO_SUBMITTED;
+}
 
-अटल पूर्णांक ग_लिखोcache_end_io(काष्ठा dm_target *ti, काष्ठा bio *bio, blk_status_t *status)
-अणु
-	काष्ठा dm_ग_लिखोcache *wc = ti->निजी;
+static int writecache_end_io(struct dm_target *ti, struct bio *bio, blk_status_t *status)
+{
+	struct dm_writecache *wc = ti->private;
 
-	अगर (bio->bi_निजी != शून्य) अणु
-		पूर्णांक dir = bio_data_dir(bio);
-		अगर (atomic_dec_and_test(&wc->bio_in_progress[dir]))
-			अगर (unlikely(रुकोqueue_active(&wc->bio_in_progress_रुको[dir])))
-				wake_up(&wc->bio_in_progress_रुको[dir]);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	if (bio->bi_private != NULL) {
+		int dir = bio_data_dir(bio);
+		if (atomic_dec_and_test(&wc->bio_in_progress[dir]))
+			if (unlikely(waitqueue_active(&wc->bio_in_progress_wait[dir])))
+				wake_up(&wc->bio_in_progress_wait[dir]);
+	}
+	return 0;
+}
 
-अटल पूर्णांक ग_लिखोcache_iterate_devices(काष्ठा dm_target *ti,
-				      iterate_devices_callout_fn fn, व्योम *data)
-अणु
-	काष्ठा dm_ग_लिखोcache *wc = ti->निजी;
+static int writecache_iterate_devices(struct dm_target *ti,
+				      iterate_devices_callout_fn fn, void *data)
+{
+	struct dm_writecache *wc = ti->private;
 
-	वापस fn(ti, wc->dev, 0, ti->len, data);
-पूर्ण
+	return fn(ti, wc->dev, 0, ti->len, data);
+}
 
-अटल व्योम ग_लिखोcache_io_hपूर्णांकs(काष्ठा dm_target *ti, काष्ठा queue_limits *limits)
-अणु
-	काष्ठा dm_ग_लिखोcache *wc = ti->निजी;
+static void writecache_io_hints(struct dm_target *ti, struct queue_limits *limits)
+{
+	struct dm_writecache *wc = ti->private;
 
-	अगर (limits->logical_block_size < wc->block_size)
+	if (limits->logical_block_size < wc->block_size)
 		limits->logical_block_size = wc->block_size;
 
-	अगर (limits->physical_block_size < wc->block_size)
+	if (limits->physical_block_size < wc->block_size)
 		limits->physical_block_size = wc->block_size;
 
-	अगर (limits->io_min < wc->block_size)
+	if (limits->io_min < wc->block_size)
 		limits->io_min = wc->block_size;
-पूर्ण
+}
 
 
-अटल व्योम ग_लिखोcache_ग_लिखोback_endio(काष्ठा bio *bio)
-अणु
-	काष्ठा ग_लिखोback_काष्ठा *wb = container_of(bio, काष्ठा ग_लिखोback_काष्ठा, bio);
-	काष्ठा dm_ग_लिखोcache *wc = wb->wc;
-	अचिन्हित दीर्घ flags;
+static void writecache_writeback_endio(struct bio *bio)
+{
+	struct writeback_struct *wb = container_of(bio, struct writeback_struct, bio);
+	struct dm_writecache *wc = wb->wc;
+	unsigned long flags;
 
 	raw_spin_lock_irqsave(&wc->endio_list_lock, flags);
-	अगर (unlikely(list_empty(&wc->endio_list)))
-		wake_up_process(wc->endio_thपढ़ो);
+	if (unlikely(list_empty(&wc->endio_list)))
+		wake_up_process(wc->endio_thread);
 	list_add_tail(&wb->endio_entry, &wc->endio_list);
 	raw_spin_unlock_irqrestore(&wc->endio_list_lock, flags);
-पूर्ण
+}
 
-अटल व्योम ग_लिखोcache_copy_endio(पूर्णांक पढ़ो_err, अचिन्हित दीर्घ ग_लिखो_err, व्योम *ptr)
-अणु
-	काष्ठा copy_काष्ठा *c = ptr;
-	काष्ठा dm_ग_लिखोcache *wc = c->wc;
+static void writecache_copy_endio(int read_err, unsigned long write_err, void *ptr)
+{
+	struct copy_struct *c = ptr;
+	struct dm_writecache *wc = c->wc;
 
-	c->error = likely(!(पढ़ो_err | ग_लिखो_err)) ? 0 : -EIO;
+	c->error = likely(!(read_err | write_err)) ? 0 : -EIO;
 
 	raw_spin_lock_irq(&wc->endio_list_lock);
-	अगर (unlikely(list_empty(&wc->endio_list)))
-		wake_up_process(wc->endio_thपढ़ो);
+	if (unlikely(list_empty(&wc->endio_list)))
+		wake_up_process(wc->endio_thread);
 	list_add_tail(&c->endio_entry, &wc->endio_list);
 	raw_spin_unlock_irq(&wc->endio_list_lock);
-पूर्ण
+}
 
-अटल व्योम __ग_लिखोcache_endio_pmem(काष्ठा dm_ग_लिखोcache *wc, काष्ठा list_head *list)
-अणु
-	अचिन्हित i;
-	काष्ठा ग_लिखोback_काष्ठा *wb;
-	काष्ठा wc_entry *e;
-	अचिन्हित दीर्घ n_walked = 0;
+static void __writecache_endio_pmem(struct dm_writecache *wc, struct list_head *list)
+{
+	unsigned i;
+	struct writeback_struct *wb;
+	struct wc_entry *e;
+	unsigned long n_walked = 0;
 
-	करो अणु
-		wb = list_entry(list->next, काष्ठा ग_लिखोback_काष्ठा, endio_entry);
+	do {
+		wb = list_entry(list->next, struct writeback_struct, endio_entry);
 		list_del(&wb->endio_entry);
 
-		अगर (unlikely(wb->bio.bi_status != BLK_STS_OK))
-			ग_लिखोcache_error(wc, blk_status_to_त्रुटि_सं(wb->bio.bi_status),
+		if (unlikely(wb->bio.bi_status != BLK_STS_OK))
+			writecache_error(wc, blk_status_to_errno(wb->bio.bi_status),
 					"write error %d", wb->bio.bi_status);
 		i = 0;
-		करो अणु
+		do {
 			e = wb->wc_list[i];
-			BUG_ON(!e->ग_लिखो_in_progress);
-			e->ग_लिखो_in_progress = false;
+			BUG_ON(!e->write_in_progress);
+			e->write_in_progress = false;
 			INIT_LIST_HEAD(&e->lru);
-			अगर (!ग_लिखोcache_has_error(wc))
-				ग_लिखोcache_मुक्त_entry(wc, e);
-			BUG_ON(!wc->ग_लिखोback_size);
-			wc->ग_लिखोback_size--;
+			if (!writecache_has_error(wc))
+				writecache_free_entry(wc, e);
+			BUG_ON(!wc->writeback_size);
+			wc->writeback_size--;
 			n_walked++;
-			अगर (unlikely(n_walked >= ENDIO_LATENCY)) अणु
-				ग_लिखोcache_commit_flushed(wc, false);
+			if (unlikely(n_walked >= ENDIO_LATENCY)) {
+				writecache_commit_flushed(wc, false);
 				wc_unlock(wc);
 				wc_lock(wc);
 				n_walked = 0;
-			पूर्ण
-		पूर्ण जबतक (++i < wb->wc_list_n);
+			}
+		} while (++i < wb->wc_list_n);
 
-		अगर (wb->wc_list != wb->wc_list_अंतरभूत)
-			kमुक्त(wb->wc_list);
+		if (wb->wc_list != wb->wc_list_inline)
+			kfree(wb->wc_list);
 		bio_put(&wb->bio);
-	पूर्ण जबतक (!list_empty(list));
-पूर्ण
+	} while (!list_empty(list));
+}
 
-अटल व्योम __ग_लिखोcache_endio_ssd(काष्ठा dm_ग_लिखोcache *wc, काष्ठा list_head *list)
-अणु
-	काष्ठा copy_काष्ठा *c;
-	काष्ठा wc_entry *e;
+static void __writecache_endio_ssd(struct dm_writecache *wc, struct list_head *list)
+{
+	struct copy_struct *c;
+	struct wc_entry *e;
 
-	करो अणु
-		c = list_entry(list->next, काष्ठा copy_काष्ठा, endio_entry);
+	do {
+		c = list_entry(list->next, struct copy_struct, endio_entry);
 		list_del(&c->endio_entry);
 
-		अगर (unlikely(c->error))
-			ग_लिखोcache_error(wc, c->error, "copy error");
+		if (unlikely(c->error))
+			writecache_error(wc, c->error, "copy error");
 
 		e = c->e;
-		करो अणु
-			BUG_ON(!e->ग_लिखो_in_progress);
-			e->ग_लिखो_in_progress = false;
+		do {
+			BUG_ON(!e->write_in_progress);
+			e->write_in_progress = false;
 			INIT_LIST_HEAD(&e->lru);
-			अगर (!ग_लिखोcache_has_error(wc))
-				ग_लिखोcache_मुक्त_entry(wc, e);
+			if (!writecache_has_error(wc))
+				writecache_free_entry(wc, e);
 
-			BUG_ON(!wc->ग_लिखोback_size);
-			wc->ग_लिखोback_size--;
+			BUG_ON(!wc->writeback_size);
+			wc->writeback_size--;
 			e++;
-		पूर्ण जबतक (--c->n_entries);
-		mempool_मुक्त(c, &wc->copy_pool);
-	पूर्ण जबतक (!list_empty(list));
-पूर्ण
+		} while (--c->n_entries);
+		mempool_free(c, &wc->copy_pool);
+	} while (!list_empty(list));
+}
 
-अटल पूर्णांक ग_लिखोcache_endio_thपढ़ो(व्योम *data)
-अणु
-	काष्ठा dm_ग_लिखोcache *wc = data;
+static int writecache_endio_thread(void *data)
+{
+	struct dm_writecache *wc = data;
 
-	जबतक (1) अणु
-		काष्ठा list_head list;
+	while (1) {
+		struct list_head list;
 
 		raw_spin_lock_irq(&wc->endio_list_lock);
-		अगर (!list_empty(&wc->endio_list))
-			जाओ pop_from_list;
+		if (!list_empty(&wc->endio_list))
+			goto pop_from_list;
 		set_current_state(TASK_INTERRUPTIBLE);
 		raw_spin_unlock_irq(&wc->endio_list_lock);
 
-		अगर (unlikely(kthपढ़ो_should_stop())) अणु
+		if (unlikely(kthread_should_stop())) {
 			set_current_state(TASK_RUNNING);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		schedule();
 
-		जारी;
+		continue;
 
 pop_from_list:
 		list = wc->endio_list;
@@ -1623,130 +1622,130 @@ pop_from_list:
 		INIT_LIST_HEAD(&wc->endio_list);
 		raw_spin_unlock_irq(&wc->endio_list_lock);
 
-		अगर (!WC_MODE_FUA(wc))
-			ग_लिखोcache_disk_flush(wc, wc->dev);
+		if (!WC_MODE_FUA(wc))
+			writecache_disk_flush(wc, wc->dev);
 
 		wc_lock(wc);
 
-		अगर (WC_MODE_PMEM(wc)) अणु
-			__ग_लिखोcache_endio_pmem(wc, &list);
-		पूर्ण अन्यथा अणु
-			__ग_लिखोcache_endio_ssd(wc, &list);
-			ग_लिखोcache_रुको_क्रम_ios(wc, READ);
-		पूर्ण
+		if (WC_MODE_PMEM(wc)) {
+			__writecache_endio_pmem(wc, &list);
+		} else {
+			__writecache_endio_ssd(wc, &list);
+			writecache_wait_for_ios(wc, READ);
+		}
 
-		ग_लिखोcache_commit_flushed(wc, false);
+		writecache_commit_flushed(wc, false);
 
 		wc_unlock(wc);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल bool wc_add_block(काष्ठा ग_लिखोback_काष्ठा *wb, काष्ठा wc_entry *e, gfp_t gfp)
-अणु
-	काष्ठा dm_ग_लिखोcache *wc = wb->wc;
-	अचिन्हित block_size = wc->block_size;
-	व्योम *address = memory_data(wc, e);
+static bool wc_add_block(struct writeback_struct *wb, struct wc_entry *e, gfp_t gfp)
+{
+	struct dm_writecache *wc = wb->wc;
+	unsigned block_size = wc->block_size;
+	void *address = memory_data(wc, e);
 
 	persistent_memory_flush_cache(address, block_size);
 
-	अगर (unlikely(bio_end_sector(&wb->bio) >= wc->data_device_sectors))
-		वापस true;
+	if (unlikely(bio_end_sector(&wb->bio) >= wc->data_device_sectors))
+		return true;
 
-	वापस bio_add_page(&wb->bio, persistent_memory_page(address),
+	return bio_add_page(&wb->bio, persistent_memory_page(address),
 			    block_size, persistent_memory_page_offset(address)) != 0;
-पूर्ण
+}
 
-काष्ठा ग_लिखोback_list अणु
-	काष्ठा list_head list;
-	माप_प्रकार size;
-पूर्ण;
+struct writeback_list {
+	struct list_head list;
+	size_t size;
+};
 
-अटल व्योम __ग_लिखोback_throttle(काष्ठा dm_ग_लिखोcache *wc, काष्ठा ग_लिखोback_list *wbl)
-अणु
-	अगर (unlikely(wc->max_ग_लिखोback_jobs)) अणु
-		अगर (READ_ONCE(wc->ग_लिखोback_size) - wbl->size >= wc->max_ग_लिखोback_jobs) अणु
+static void __writeback_throttle(struct dm_writecache *wc, struct writeback_list *wbl)
+{
+	if (unlikely(wc->max_writeback_jobs)) {
+		if (READ_ONCE(wc->writeback_size) - wbl->size >= wc->max_writeback_jobs) {
 			wc_lock(wc);
-			जबतक (wc->ग_लिखोback_size - wbl->size >= wc->max_ग_लिखोback_jobs)
-				ग_लिखोcache_रुको_on_मुक्तlist(wc);
+			while (wc->writeback_size - wbl->size >= wc->max_writeback_jobs)
+				writecache_wait_on_freelist(wc);
 			wc_unlock(wc);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	cond_resched();
-पूर्ण
+}
 
-अटल व्योम __ग_लिखोcache_ग_लिखोback_pmem(काष्ठा dm_ग_लिखोcache *wc, काष्ठा ग_लिखोback_list *wbl)
-अणु
-	काष्ठा wc_entry *e, *f;
-	काष्ठा bio *bio;
-	काष्ठा ग_लिखोback_काष्ठा *wb;
-	अचिन्हित max_pages;
+static void __writecache_writeback_pmem(struct dm_writecache *wc, struct writeback_list *wbl)
+{
+	struct wc_entry *e, *f;
+	struct bio *bio;
+	struct writeback_struct *wb;
+	unsigned max_pages;
 
-	जबतक (wbl->size) अणु
+	while (wbl->size) {
 		wbl->size--;
-		e = container_of(wbl->list.prev, काष्ठा wc_entry, lru);
+		e = container_of(wbl->list.prev, struct wc_entry, lru);
 		list_del(&e->lru);
 
 		max_pages = e->wc_list_contiguous;
 
 		bio = bio_alloc_bioset(GFP_NOIO, max_pages, &wc->bio_set);
-		wb = container_of(bio, काष्ठा ग_लिखोback_काष्ठा, bio);
+		wb = container_of(bio, struct writeback_struct, bio);
 		wb->wc = wc;
-		bio->bi_end_io = ग_लिखोcache_ग_लिखोback_endio;
+		bio->bi_end_io = writecache_writeback_endio;
 		bio_set_dev(bio, wc->dev->bdev);
-		bio->bi_iter.bi_sector = पढ़ो_original_sector(wc, e);
-		अगर (max_pages <= WB_LIST_INLINE ||
-		    unlikely(!(wb->wc_list = kदो_स्मृति_array(max_pages, माप(काष्ठा wc_entry *),
+		bio->bi_iter.bi_sector = read_original_sector(wc, e);
+		if (max_pages <= WB_LIST_INLINE ||
+		    unlikely(!(wb->wc_list = kmalloc_array(max_pages, sizeof(struct wc_entry *),
 							   GFP_NOIO | __GFP_NORETRY |
-							   __GFP_NOMEMALLOC | __GFP_NOWARN)))) अणु
-			wb->wc_list = wb->wc_list_अंतरभूत;
+							   __GFP_NOMEMALLOC | __GFP_NOWARN)))) {
+			wb->wc_list = wb->wc_list_inline;
 			max_pages = WB_LIST_INLINE;
-		पूर्ण
+		}
 
 		BUG_ON(!wc_add_block(wb, e, GFP_NOIO));
 
 		wb->wc_list[0] = e;
 		wb->wc_list_n = 1;
 
-		जबतक (wbl->size && wb->wc_list_n < max_pages) अणु
-			f = container_of(wbl->list.prev, काष्ठा wc_entry, lru);
-			अगर (पढ़ो_original_sector(wc, f) !=
-			    पढ़ो_original_sector(wc, e) + (wc->block_size >> SECTOR_SHIFT))
-				अवरोध;
-			अगर (!wc_add_block(wb, f, GFP_NOWAIT | __GFP_NOWARN))
-				अवरोध;
+		while (wbl->size && wb->wc_list_n < max_pages) {
+			f = container_of(wbl->list.prev, struct wc_entry, lru);
+			if (read_original_sector(wc, f) !=
+			    read_original_sector(wc, e) + (wc->block_size >> SECTOR_SHIFT))
+				break;
+			if (!wc_add_block(wb, f, GFP_NOWAIT | __GFP_NOWARN))
+				break;
 			wbl->size--;
 			list_del(&f->lru);
 			wb->wc_list[wb->wc_list_n++] = f;
 			e = f;
-		पूर्ण
+		}
 		bio_set_op_attrs(bio, REQ_OP_WRITE, WC_MODE_FUA(wc) * REQ_FUA);
-		अगर (ग_लिखोcache_has_error(wc)) अणु
+		if (writecache_has_error(wc)) {
 			bio->bi_status = BLK_STS_IOERR;
 			bio_endio(bio);
-		पूर्ण अन्यथा अगर (unlikely(!bio_sectors(bio))) अणु
+		} else if (unlikely(!bio_sectors(bio))) {
 			bio->bi_status = BLK_STS_OK;
 			bio_endio(bio);
-		पूर्ण अन्यथा अणु
+		} else {
 			submit_bio(bio);
-		पूर्ण
+		}
 
-		__ग_लिखोback_throttle(wc, wbl);
-	पूर्ण
-पूर्ण
+		__writeback_throttle(wc, wbl);
+	}
+}
 
-अटल व्योम __ग_लिखोcache_ग_लिखोback_ssd(काष्ठा dm_ग_लिखोcache *wc, काष्ठा ग_लिखोback_list *wbl)
-अणु
-	काष्ठा wc_entry *e, *f;
-	काष्ठा dm_io_region from, to;
-	काष्ठा copy_काष्ठा *c;
+static void __writecache_writeback_ssd(struct dm_writecache *wc, struct writeback_list *wbl)
+{
+	struct wc_entry *e, *f;
+	struct dm_io_region from, to;
+	struct copy_struct *c;
 
-	जबतक (wbl->size) अणु
-		अचिन्हित n_sectors;
+	while (wbl->size) {
+		unsigned n_sectors;
 
 		wbl->size--;
-		e = container_of(wbl->list.prev, काष्ठा wc_entry, lru);
+		e = container_of(wbl->list.prev, struct wc_entry, lru);
 		list_del(&e->lru);
 
 		n_sectors = e->wc_list_contiguous << (wc->block_size_bits - SECTOR_SHIFT);
@@ -1755,7 +1754,7 @@ pop_from_list:
 		from.sector = cache_sector(wc, e);
 		from.count = n_sectors;
 		to.bdev = wc->dev->bdev;
-		to.sector = पढ़ो_original_sector(wc, e);
+		to.sector = read_original_sector(wc, e);
 		to.count = n_sectors;
 
 		c = mempool_alloc(&wc->copy_pool, GFP_NOIO);
@@ -1763,819 +1762,819 @@ pop_from_list:
 		c->e = e;
 		c->n_entries = e->wc_list_contiguous;
 
-		जबतक ((n_sectors -= wc->block_size >> SECTOR_SHIFT)) अणु
+		while ((n_sectors -= wc->block_size >> SECTOR_SHIFT)) {
 			wbl->size--;
-			f = container_of(wbl->list.prev, काष्ठा wc_entry, lru);
+			f = container_of(wbl->list.prev, struct wc_entry, lru);
 			BUG_ON(f != e + 1);
 			list_del(&f->lru);
 			e = f;
-		पूर्ण
+		}
 
-		अगर (unlikely(to.sector + to.count > wc->data_device_sectors)) अणु
-			अगर (to.sector >= wc->data_device_sectors) अणु
-				ग_लिखोcache_copy_endio(0, 0, c);
-				जारी;
-			पूर्ण
+		if (unlikely(to.sector + to.count > wc->data_device_sectors)) {
+			if (to.sector >= wc->data_device_sectors) {
+				writecache_copy_endio(0, 0, c);
+				continue;
+			}
 			from.count = to.count = wc->data_device_sectors - to.sector;
-		पूर्ण
+		}
 
-		dm_kcopyd_copy(wc->dm_kcopyd, &from, 1, &to, 0, ग_लिखोcache_copy_endio, c);
+		dm_kcopyd_copy(wc->dm_kcopyd, &from, 1, &to, 0, writecache_copy_endio, c);
 
-		__ग_लिखोback_throttle(wc, wbl);
-	पूर्ण
-पूर्ण
+		__writeback_throttle(wc, wbl);
+	}
+}
 
-अटल व्योम ग_लिखोcache_ग_लिखोback(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा dm_ग_लिखोcache *wc = container_of(work, काष्ठा dm_ग_लिखोcache, ग_लिखोback_work);
-	काष्ठा blk_plug plug;
-	काष्ठा wc_entry *f, *g, *e = शून्य;
-	काष्ठा rb_node *node, *next_node;
-	काष्ठा list_head skipped;
-	काष्ठा ग_लिखोback_list wbl;
-	अचिन्हित दीर्घ n_walked;
+static void writecache_writeback(struct work_struct *work)
+{
+	struct dm_writecache *wc = container_of(work, struct dm_writecache, writeback_work);
+	struct blk_plug plug;
+	struct wc_entry *f, *g, *e = NULL;
+	struct rb_node *node, *next_node;
+	struct list_head skipped;
+	struct writeback_list wbl;
+	unsigned long n_walked;
 
 	wc_lock(wc);
 restart:
-	अगर (ग_लिखोcache_has_error(wc)) अणु
+	if (writecache_has_error(wc)) {
 		wc_unlock(wc);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (unlikely(wc->ग_लिखोback_all)) अणु
-		अगर (ग_लिखोcache_रुको_क्रम_ग_लिखोback(wc))
-			जाओ restart;
-	पूर्ण
+	if (unlikely(wc->writeback_all)) {
+		if (writecache_wait_for_writeback(wc))
+			goto restart;
+	}
 
-	अगर (wc->overwrote_committed) अणु
-		ग_लिखोcache_रुको_क्रम_ios(wc, WRITE);
-	पूर्ण
+	if (wc->overwrote_committed) {
+		writecache_wait_for_ios(wc, WRITE);
+	}
 
 	n_walked = 0;
 	INIT_LIST_HEAD(&skipped);
 	INIT_LIST_HEAD(&wbl.list);
 	wbl.size = 0;
-	जबतक (!list_empty(&wc->lru) &&
-	       (wc->ग_लिखोback_all ||
-		wc->मुक्तlist_size + wc->ग_लिखोback_size <= wc->मुक्तlist_low_watermark ||
-		(jअगरfies - container_of(wc->lru.prev, काष्ठा wc_entry, lru)->age >=
-		 wc->max_age - wc->max_age / MAX_AGE_DIV))) अणु
+	while (!list_empty(&wc->lru) &&
+	       (wc->writeback_all ||
+		wc->freelist_size + wc->writeback_size <= wc->freelist_low_watermark ||
+		(jiffies - container_of(wc->lru.prev, struct wc_entry, lru)->age >=
+		 wc->max_age - wc->max_age / MAX_AGE_DIV))) {
 
 		n_walked++;
-		अगर (unlikely(n_walked > WRITEBACK_LATENCY) &&
-		    likely(!wc->ग_लिखोback_all) && likely(!dm_suspended(wc->ti))) अणु
-			queue_work(wc->ग_लिखोback_wq, &wc->ग_लिखोback_work);
-			अवरोध;
-		पूर्ण
+		if (unlikely(n_walked > WRITEBACK_LATENCY) &&
+		    likely(!wc->writeback_all) && likely(!dm_suspended(wc->ti))) {
+			queue_work(wc->writeback_wq, &wc->writeback_work);
+			break;
+		}
 
-		अगर (unlikely(wc->ग_लिखोback_all)) अणु
-			अगर (unlikely(!e)) अणु
-				ग_लिखोcache_flush(wc);
-				e = container_of(rb_first(&wc->tree), काष्ठा wc_entry, rb_node);
-			पूर्ण अन्यथा
+		if (unlikely(wc->writeback_all)) {
+			if (unlikely(!e)) {
+				writecache_flush(wc);
+				e = container_of(rb_first(&wc->tree), struct wc_entry, rb_node);
+			} else
 				e = g;
-		पूर्ण अन्यथा
-			e = container_of(wc->lru.prev, काष्ठा wc_entry, lru);
-		BUG_ON(e->ग_लिखो_in_progress);
-		अगर (unlikely(!ग_लिखोcache_entry_is_committed(wc, e))) अणु
-			ग_लिखोcache_flush(wc);
-		पूर्ण
+		} else
+			e = container_of(wc->lru.prev, struct wc_entry, lru);
+		BUG_ON(e->write_in_progress);
+		if (unlikely(!writecache_entry_is_committed(wc, e))) {
+			writecache_flush(wc);
+		}
 		node = rb_prev(&e->rb_node);
-		अगर (node) अणु
-			f = container_of(node, काष्ठा wc_entry, rb_node);
-			अगर (unlikely(पढ़ो_original_sector(wc, f) ==
-				     पढ़ो_original_sector(wc, e))) अणु
-				BUG_ON(!f->ग_लिखो_in_progress);
+		if (node) {
+			f = container_of(node, struct wc_entry, rb_node);
+			if (unlikely(read_original_sector(wc, f) ==
+				     read_original_sector(wc, e))) {
+				BUG_ON(!f->write_in_progress);
 				list_del(&e->lru);
 				list_add(&e->lru, &skipped);
 				cond_resched();
-				जारी;
-			पूर्ण
-		पूर्ण
-		wc->ग_लिखोback_size++;
+				continue;
+			}
+		}
+		wc->writeback_size++;
 		list_del(&e->lru);
 		list_add(&e->lru, &wbl.list);
 		wbl.size++;
-		e->ग_लिखो_in_progress = true;
+		e->write_in_progress = true;
 		e->wc_list_contiguous = 1;
 
 		f = e;
 
-		जबतक (1) अणु
+		while (1) {
 			next_node = rb_next(&f->rb_node);
-			अगर (unlikely(!next_node))
-				अवरोध;
-			g = container_of(next_node, काष्ठा wc_entry, rb_node);
-			अगर (unlikely(पढ़ो_original_sector(wc, g) ==
-			    पढ़ो_original_sector(wc, f))) अणु
+			if (unlikely(!next_node))
+				break;
+			g = container_of(next_node, struct wc_entry, rb_node);
+			if (unlikely(read_original_sector(wc, g) ==
+			    read_original_sector(wc, f))) {
 				f = g;
-				जारी;
-			पूर्ण
-			अगर (पढ़ो_original_sector(wc, g) !=
-			    पढ़ो_original_sector(wc, f) + (wc->block_size >> SECTOR_SHIFT))
-				अवरोध;
-			अगर (unlikely(g->ग_लिखो_in_progress))
-				अवरोध;
-			अगर (unlikely(!ग_लिखोcache_entry_is_committed(wc, g)))
-				अवरोध;
+				continue;
+			}
+			if (read_original_sector(wc, g) !=
+			    read_original_sector(wc, f) + (wc->block_size >> SECTOR_SHIFT))
+				break;
+			if (unlikely(g->write_in_progress))
+				break;
+			if (unlikely(!writecache_entry_is_committed(wc, g)))
+				break;
 
-			अगर (!WC_MODE_PMEM(wc)) अणु
-				अगर (g != f + 1)
-					अवरोध;
-			पूर्ण
+			if (!WC_MODE_PMEM(wc)) {
+				if (g != f + 1)
+					break;
+			}
 
 			n_walked++;
-			//अगर (unlikely(n_walked > WRITEBACK_LATENCY) && likely(!wc->ग_लिखोback_all))
-			//	अवरोध;
+			//if (unlikely(n_walked > WRITEBACK_LATENCY) && likely(!wc->writeback_all))
+			//	break;
 
-			wc->ग_लिखोback_size++;
+			wc->writeback_size++;
 			list_del(&g->lru);
 			list_add(&g->lru, &wbl.list);
 			wbl.size++;
-			g->ग_लिखो_in_progress = true;
+			g->write_in_progress = true;
 			g->wc_list_contiguous = BIO_MAX_VECS;
 			f = g;
 			e->wc_list_contiguous++;
-			अगर (unlikely(e->wc_list_contiguous == BIO_MAX_VECS)) अणु
-				अगर (unlikely(wc->ग_लिखोback_all)) अणु
+			if (unlikely(e->wc_list_contiguous == BIO_MAX_VECS)) {
+				if (unlikely(wc->writeback_all)) {
 					next_node = rb_next(&f->rb_node);
-					अगर (likely(next_node))
-						g = container_of(next_node, काष्ठा wc_entry, rb_node);
-				पूर्ण
-				अवरोध;
-			पूर्ण
-		पूर्ण
+					if (likely(next_node))
+						g = container_of(next_node, struct wc_entry, rb_node);
+				}
+				break;
+			}
+		}
 		cond_resched();
-	पूर्ण
+	}
 
-	अगर (!list_empty(&skipped)) अणु
+	if (!list_empty(&skipped)) {
 		list_splice_tail(&skipped, &wc->lru);
 		/*
-		 * If we didn't करो any progress, we must रुको until some
-		 * ग_लिखोback finishes to aव्योम burning CPU in a loop
+		 * If we didn't do any progress, we must wait until some
+		 * writeback finishes to avoid burning CPU in a loop
 		 */
-		अगर (unlikely(!wbl.size))
-			ग_लिखोcache_रुको_क्रम_ग_लिखोback(wc);
-	पूर्ण
+		if (unlikely(!wbl.size))
+			writecache_wait_for_writeback(wc);
+	}
 
 	wc_unlock(wc);
 
 	blk_start_plug(&plug);
 
-	अगर (WC_MODE_PMEM(wc))
-		__ग_लिखोcache_ग_लिखोback_pmem(wc, &wbl);
-	अन्यथा
-		__ग_लिखोcache_ग_लिखोback_ssd(wc, &wbl);
+	if (WC_MODE_PMEM(wc))
+		__writecache_writeback_pmem(wc, &wbl);
+	else
+		__writecache_writeback_ssd(wc, &wbl);
 
 	blk_finish_plug(&plug);
 
-	अगर (unlikely(wc->ग_लिखोback_all)) अणु
+	if (unlikely(wc->writeback_all)) {
 		wc_lock(wc);
-		जबतक (ग_लिखोcache_रुको_क्रम_ग_लिखोback(wc));
+		while (writecache_wait_for_writeback(wc));
 		wc_unlock(wc);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक calculate_memory_size(uपूर्णांक64_t device_size, अचिन्हित block_size,
-				 माप_प्रकार *n_blocks_p, माप_प्रकार *n_metadata_blocks_p)
-अणु
-	uपूर्णांक64_t n_blocks, offset;
-	काष्ठा wc_entry e;
+static int calculate_memory_size(uint64_t device_size, unsigned block_size,
+				 size_t *n_blocks_p, size_t *n_metadata_blocks_p)
+{
+	uint64_t n_blocks, offset;
+	struct wc_entry e;
 
 	n_blocks = device_size;
-	करो_भाग(n_blocks, block_size + माप(काष्ठा wc_memory_entry));
+	do_div(n_blocks, block_size + sizeof(struct wc_memory_entry));
 
-	जबतक (1) अणु
-		अगर (!n_blocks)
-			वापस -ENOSPC;
-		/* Verअगरy the following entries[n_blocks] won't overflow */
-		अगर (n_blocks >= ((माप_प्रकार)-माप(काष्ठा wc_memory_superblock) /
-				 माप(काष्ठा wc_memory_entry)))
-			वापस -EFBIG;
-		offset = दुरत्व(काष्ठा wc_memory_superblock, entries[n_blocks]);
-		offset = (offset + block_size - 1) & ~(uपूर्णांक64_t)(block_size - 1);
-		अगर (offset + n_blocks * block_size <= device_size)
-			अवरोध;
+	while (1) {
+		if (!n_blocks)
+			return -ENOSPC;
+		/* Verify the following entries[n_blocks] won't overflow */
+		if (n_blocks >= ((size_t)-sizeof(struct wc_memory_superblock) /
+				 sizeof(struct wc_memory_entry)))
+			return -EFBIG;
+		offset = offsetof(struct wc_memory_superblock, entries[n_blocks]);
+		offset = (offset + block_size - 1) & ~(uint64_t)(block_size - 1);
+		if (offset + n_blocks * block_size <= device_size)
+			break;
 		n_blocks--;
-	पूर्ण
+	}
 
-	/* check अगर the bit field overflows */
+	/* check if the bit field overflows */
 	e.index = n_blocks;
-	अगर (e.index != n_blocks)
-		वापस -EFBIG;
+	if (e.index != n_blocks)
+		return -EFBIG;
 
-	अगर (n_blocks_p)
+	if (n_blocks_p)
 		*n_blocks_p = n_blocks;
-	अगर (n_metadata_blocks_p)
+	if (n_metadata_blocks_p)
 		*n_metadata_blocks_p = offset >> __ffs(block_size);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक init_memory(काष्ठा dm_ग_लिखोcache *wc)
-अणु
-	माप_प्रकार b;
-	पूर्णांक r;
+static int init_memory(struct dm_writecache *wc)
+{
+	size_t b;
+	int r;
 
-	r = calculate_memory_size(wc->memory_map_size, wc->block_size, &wc->n_blocks, शून्य);
-	अगर (r)
-		वापस r;
+	r = calculate_memory_size(wc->memory_map_size, wc->block_size, &wc->n_blocks, NULL);
+	if (r)
+		return r;
 
-	r = ग_लिखोcache_alloc_entries(wc);
-	अगर (r)
-		वापस r;
+	r = writecache_alloc_entries(wc);
+	if (r)
+		return r;
 
-	क्रम (b = 0; b < ARRAY_SIZE(sb(wc)->padding); b++)
+	for (b = 0; b < ARRAY_SIZE(sb(wc)->padding); b++)
 		pmem_assign(sb(wc)->padding[b], cpu_to_le64(0));
 	pmem_assign(sb(wc)->version, cpu_to_le32(MEMORY_SUPERBLOCK_VERSION));
 	pmem_assign(sb(wc)->block_size, cpu_to_le32(wc->block_size));
 	pmem_assign(sb(wc)->n_blocks, cpu_to_le64(wc->n_blocks));
 	pmem_assign(sb(wc)->seq_count, cpu_to_le64(0));
 
-	क्रम (b = 0; b < wc->n_blocks; b++) अणु
-		ग_लिखो_original_sector_seq_count(wc, &wc->entries[b], -1, -1);
+	for (b = 0; b < wc->n_blocks; b++) {
+		write_original_sector_seq_count(wc, &wc->entries[b], -1, -1);
 		cond_resched();
-	पूर्ण
+	}
 
-	ग_लिखोcache_flush_all_metadata(wc);
-	ग_लिखोcache_commit_flushed(wc, false);
+	writecache_flush_all_metadata(wc);
+	writecache_commit_flushed(wc, false);
 	pmem_assign(sb(wc)->magic, cpu_to_le32(MEMORY_SUPERBLOCK_MAGIC));
-	ग_लिखोcache_flush_region(wc, &sb(wc)->magic, माप sb(wc)->magic);
-	ग_लिखोcache_commit_flushed(wc, false);
+	writecache_flush_region(wc, &sb(wc)->magic, sizeof sb(wc)->magic);
+	writecache_commit_flushed(wc, false);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ग_लिखोcache_dtr(काष्ठा dm_target *ti)
-अणु
-	काष्ठा dm_ग_लिखोcache *wc = ti->निजी;
+static void writecache_dtr(struct dm_target *ti)
+{
+	struct dm_writecache *wc = ti->private;
 
-	अगर (!wc)
-		वापस;
+	if (!wc)
+		return;
 
-	अगर (wc->endio_thपढ़ो)
-		kthपढ़ो_stop(wc->endio_thपढ़ो);
+	if (wc->endio_thread)
+		kthread_stop(wc->endio_thread);
 
-	अगर (wc->flush_thपढ़ो)
-		kthपढ़ो_stop(wc->flush_thपढ़ो);
+	if (wc->flush_thread)
+		kthread_stop(wc->flush_thread);
 
-	bioset_निकास(&wc->bio_set);
+	bioset_exit(&wc->bio_set);
 
-	mempool_निकास(&wc->copy_pool);
+	mempool_exit(&wc->copy_pool);
 
-	अगर (wc->ग_लिखोback_wq)
-		destroy_workqueue(wc->ग_लिखोback_wq);
+	if (wc->writeback_wq)
+		destroy_workqueue(wc->writeback_wq);
 
-	अगर (wc->dev)
+	if (wc->dev)
 		dm_put_device(ti, wc->dev);
 
-	अगर (wc->ssd_dev)
+	if (wc->ssd_dev)
 		dm_put_device(ti, wc->ssd_dev);
 
-	vमुक्त(wc->entries);
+	vfree(wc->entries);
 
-	अगर (wc->memory_map) अणु
-		अगर (WC_MODE_PMEM(wc))
+	if (wc->memory_map) {
+		if (WC_MODE_PMEM(wc))
 			persistent_memory_release(wc);
-		अन्यथा
-			vमुक्त(wc->memory_map);
-	पूर्ण
+		else
+			vfree(wc->memory_map);
+	}
 
-	अगर (wc->dm_kcopyd)
+	if (wc->dm_kcopyd)
 		dm_kcopyd_client_destroy(wc->dm_kcopyd);
 
-	अगर (wc->dm_io)
+	if (wc->dm_io)
 		dm_io_client_destroy(wc->dm_io);
 
-	vमुक्त(wc->dirty_biपंचांगap);
+	vfree(wc->dirty_bitmap);
 
-	kमुक्त(wc);
-पूर्ण
+	kfree(wc);
+}
 
-अटल पूर्णांक ग_लिखोcache_ctr(काष्ठा dm_target *ti, अचिन्हित argc, अक्षर **argv)
-अणु
-	काष्ठा dm_ग_लिखोcache *wc;
-	काष्ठा dm_arg_set as;
-	स्थिर अक्षर *string;
-	अचिन्हित opt_params;
-	माप_प्रकार offset, data_size;
-	पूर्णांक i, r;
-	अक्षर dummy;
-	पूर्णांक high_wm_percent = HIGH_WATERMARK;
-	पूर्णांक low_wm_percent = LOW_WATERMARK;
-	uपूर्णांक64_t x;
-	काष्ठा wc_memory_superblock s;
+static int writecache_ctr(struct dm_target *ti, unsigned argc, char **argv)
+{
+	struct dm_writecache *wc;
+	struct dm_arg_set as;
+	const char *string;
+	unsigned opt_params;
+	size_t offset, data_size;
+	int i, r;
+	char dummy;
+	int high_wm_percent = HIGH_WATERMARK;
+	int low_wm_percent = LOW_WATERMARK;
+	uint64_t x;
+	struct wc_memory_superblock s;
 
-	अटल काष्ठा dm_arg _args[] = अणु
-		अणु0, 16, "Invalid number of feature args"पूर्ण,
-	पूर्ण;
+	static struct dm_arg _args[] = {
+		{0, 16, "Invalid number of feature args"},
+	};
 
 	as.argc = argc;
 	as.argv = argv;
 
-	wc = kzalloc(माप(काष्ठा dm_ग_लिखोcache), GFP_KERNEL);
-	अगर (!wc) अणु
+	wc = kzalloc(sizeof(struct dm_writecache), GFP_KERNEL);
+	if (!wc) {
 		ti->error = "Cannot allocate writecache structure";
 		r = -ENOMEM;
-		जाओ bad;
-	पूर्ण
-	ti->निजी = wc;
+		goto bad;
+	}
+	ti->private = wc;
 	wc->ti = ti;
 
 	mutex_init(&wc->lock);
 	wc->max_age = MAX_AGE_UNSPECIFIED;
-	ग_लिखोcache_poison_lists(wc);
-	init_रुकोqueue_head(&wc->मुक्तlist_रुको);
-	समयr_setup(&wc->स्वतःcommit_समयr, ग_लिखोcache_स्वतःcommit_समयr, 0);
-	समयr_setup(&wc->max_age_समयr, ग_लिखोcache_max_age_समयr, 0);
+	writecache_poison_lists(wc);
+	init_waitqueue_head(&wc->freelist_wait);
+	timer_setup(&wc->autocommit_timer, writecache_autocommit_timer, 0);
+	timer_setup(&wc->max_age_timer, writecache_max_age_timer, 0);
 
-	क्रम (i = 0; i < 2; i++) अणु
+	for (i = 0; i < 2; i++) {
 		atomic_set(&wc->bio_in_progress[i], 0);
-		init_रुकोqueue_head(&wc->bio_in_progress_रुको[i]);
-	पूर्ण
+		init_waitqueue_head(&wc->bio_in_progress_wait[i]);
+	}
 
 	wc->dm_io = dm_io_client_create();
-	अगर (IS_ERR(wc->dm_io)) अणु
+	if (IS_ERR(wc->dm_io)) {
 		r = PTR_ERR(wc->dm_io);
 		ti->error = "Unable to allocate dm-io client";
-		wc->dm_io = शून्य;
-		जाओ bad;
-	पूर्ण
+		wc->dm_io = NULL;
+		goto bad;
+	}
 
-	wc->ग_लिखोback_wq = alloc_workqueue("writecache-writeback", WQ_MEM_RECLAIM, 1);
-	अगर (!wc->ग_लिखोback_wq) अणु
+	wc->writeback_wq = alloc_workqueue("writecache-writeback", WQ_MEM_RECLAIM, 1);
+	if (!wc->writeback_wq) {
 		r = -ENOMEM;
 		ti->error = "Could not allocate writeback workqueue";
-		जाओ bad;
-	पूर्ण
-	INIT_WORK(&wc->ग_लिखोback_work, ग_लिखोcache_ग_लिखोback);
-	INIT_WORK(&wc->flush_work, ग_लिखोcache_flush_work);
+		goto bad;
+	}
+	INIT_WORK(&wc->writeback_work, writecache_writeback);
+	INIT_WORK(&wc->flush_work, writecache_flush_work);
 
 	raw_spin_lock_init(&wc->endio_list_lock);
 	INIT_LIST_HEAD(&wc->endio_list);
-	wc->endio_thपढ़ो = kthपढ़ो_create(ग_लिखोcache_endio_thपढ़ो, wc, "writecache_endio");
-	अगर (IS_ERR(wc->endio_thपढ़ो)) अणु
-		r = PTR_ERR(wc->endio_thपढ़ो);
-		wc->endio_thपढ़ो = शून्य;
+	wc->endio_thread = kthread_create(writecache_endio_thread, wc, "writecache_endio");
+	if (IS_ERR(wc->endio_thread)) {
+		r = PTR_ERR(wc->endio_thread);
+		wc->endio_thread = NULL;
 		ti->error = "Couldn't spawn endio thread";
-		जाओ bad;
-	पूर्ण
-	wake_up_process(wc->endio_thपढ़ो);
+		goto bad;
+	}
+	wake_up_process(wc->endio_thread);
 
 	/*
 	 * Parse the mode (pmem or ssd)
 	 */
-	string = dm_shअगरt_arg(&as);
-	अगर (!string)
-		जाओ bad_arguments;
+	string = dm_shift_arg(&as);
+	if (!string)
+		goto bad_arguments;
 
-	अगर (!strहालcmp(string, "s")) अणु
+	if (!strcasecmp(string, "s")) {
 		wc->pmem_mode = false;
-	पूर्ण अन्यथा अगर (!strहालcmp(string, "p")) अणु
-#अगर_घोषित DM_WRITECACHE_HAS_PMEM
+	} else if (!strcasecmp(string, "p")) {
+#ifdef DM_WRITECACHE_HAS_PMEM
 		wc->pmem_mode = true;
-		wc->ग_लिखोback_fua = true;
-#अन्यथा
+		wc->writeback_fua = true;
+#else
 		/*
-		 * If the architecture करोesn't support persistent memory or
-		 * the kernel करोesn't support any DAX drivers, this driver can
+		 * If the architecture doesn't support persistent memory or
+		 * the kernel doesn't support any DAX drivers, this driver can
 		 * only be used in SSD-only mode.
 		 */
 		r = -EOPNOTSUPP;
 		ti->error = "Persistent memory or DAX not supported on this system";
-		जाओ bad;
-#पूर्ण_अगर
-	पूर्ण अन्यथा अणु
-		जाओ bad_arguments;
-	पूर्ण
+		goto bad;
+#endif
+	} else {
+		goto bad_arguments;
+	}
 
-	अगर (WC_MODE_PMEM(wc)) अणु
+	if (WC_MODE_PMEM(wc)) {
 		r = bioset_init(&wc->bio_set, BIO_POOL_SIZE,
-				दुरत्व(काष्ठा ग_लिखोback_काष्ठा, bio),
+				offsetof(struct writeback_struct, bio),
 				BIOSET_NEED_BVECS);
-		अगर (r) अणु
+		if (r) {
 			ti->error = "Could not allocate bio set";
-			जाओ bad;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		r = mempool_init_kदो_स्मृति_pool(&wc->copy_pool, 1, माप(काष्ठा copy_काष्ठा));
-		अगर (r) अणु
+			goto bad;
+		}
+	} else {
+		r = mempool_init_kmalloc_pool(&wc->copy_pool, 1, sizeof(struct copy_struct));
+		if (r) {
 			ti->error = "Could not allocate mempool";
-			जाओ bad;
-		पूर्ण
-	पूर्ण
+			goto bad;
+		}
+	}
 
 	/*
 	 * Parse the origin data device
 	 */
-	string = dm_shअगरt_arg(&as);
-	अगर (!string)
-		जाओ bad_arguments;
+	string = dm_shift_arg(&as);
+	if (!string)
+		goto bad_arguments;
 	r = dm_get_device(ti, string, dm_table_get_mode(ti->table), &wc->dev);
-	अगर (r) अणु
+	if (r) {
 		ti->error = "Origin data device lookup failed";
-		जाओ bad;
-	पूर्ण
+		goto bad;
+	}
 
 	/*
 	 * Parse cache data device (be it pmem or ssd)
 	 */
-	string = dm_shअगरt_arg(&as);
-	अगर (!string)
-		जाओ bad_arguments;
+	string = dm_shift_arg(&as);
+	if (!string)
+		goto bad_arguments;
 
 	r = dm_get_device(ti, string, dm_table_get_mode(ti->table), &wc->ssd_dev);
-	अगर (r) अणु
+	if (r) {
 		ti->error = "Cache data device lookup failed";
-		जाओ bad;
-	पूर्ण
-	wc->memory_map_size = i_size_पढ़ो(wc->ssd_dev->bdev->bd_inode);
+		goto bad;
+	}
+	wc->memory_map_size = i_size_read(wc->ssd_dev->bdev->bd_inode);
 
 	/*
 	 * Parse the cache block size
 	 */
-	string = dm_shअगरt_arg(&as);
-	अगर (!string)
-		जाओ bad_arguments;
-	अगर (माला_पूछो(string, "%u%c", &wc->block_size, &dummy) != 1 ||
+	string = dm_shift_arg(&as);
+	if (!string)
+		goto bad_arguments;
+	if (sscanf(string, "%u%c", &wc->block_size, &dummy) != 1 ||
 	    wc->block_size < 512 || wc->block_size > PAGE_SIZE ||
-	    (wc->block_size & (wc->block_size - 1))) अणु
+	    (wc->block_size & (wc->block_size - 1))) {
 		r = -EINVAL;
 		ti->error = "Invalid block size";
-		जाओ bad;
-	पूर्ण
-	अगर (wc->block_size < bdev_logical_block_size(wc->dev->bdev) ||
-	    wc->block_size < bdev_logical_block_size(wc->ssd_dev->bdev)) अणु
+		goto bad;
+	}
+	if (wc->block_size < bdev_logical_block_size(wc->dev->bdev) ||
+	    wc->block_size < bdev_logical_block_size(wc->ssd_dev->bdev)) {
 		r = -EINVAL;
 		ti->error = "Block size is smaller than device logical block size";
-		जाओ bad;
-	पूर्ण
+		goto bad;
+	}
 	wc->block_size_bits = __ffs(wc->block_size);
 
-	wc->max_ग_लिखोback_jobs = MAX_WRITEBACK_JOBS;
-	wc->स्वतःcommit_blocks = !WC_MODE_PMEM(wc) ? AUTOCOMMIT_BLOCKS_SSD : AUTOCOMMIT_BLOCKS_PMEM;
-	wc->स्वतःcommit_jअगरfies = msecs_to_jअगरfies(AUTOCOMMIT_MSEC);
+	wc->max_writeback_jobs = MAX_WRITEBACK_JOBS;
+	wc->autocommit_blocks = !WC_MODE_PMEM(wc) ? AUTOCOMMIT_BLOCKS_SSD : AUTOCOMMIT_BLOCKS_PMEM;
+	wc->autocommit_jiffies = msecs_to_jiffies(AUTOCOMMIT_MSEC);
 
 	/*
 	 * Parse optional arguments
 	 */
-	r = dm_पढ़ो_arg_group(_args, &as, &opt_params, &ti->error);
-	अगर (r)
-		जाओ bad;
+	r = dm_read_arg_group(_args, &as, &opt_params, &ti->error);
+	if (r)
+		goto bad;
 
-	जबतक (opt_params) अणु
-		string = dm_shअगरt_arg(&as), opt_params--;
-		अगर (!strहालcmp(string, "start_sector") && opt_params >= 1) अणु
-			अचिन्हित दीर्घ दीर्घ start_sector;
-			string = dm_shअगरt_arg(&as), opt_params--;
-			अगर (माला_पूछो(string, "%llu%c", &start_sector, &dummy) != 1)
-				जाओ invalid_optional;
+	while (opt_params) {
+		string = dm_shift_arg(&as), opt_params--;
+		if (!strcasecmp(string, "start_sector") && opt_params >= 1) {
+			unsigned long long start_sector;
+			string = dm_shift_arg(&as), opt_params--;
+			if (sscanf(string, "%llu%c", &start_sector, &dummy) != 1)
+				goto invalid_optional;
 			wc->start_sector = start_sector;
 			wc->start_sector_set = true;
-			अगर (wc->start_sector != start_sector ||
+			if (wc->start_sector != start_sector ||
 			    wc->start_sector >= wc->memory_map_size >> SECTOR_SHIFT)
-				जाओ invalid_optional;
-		पूर्ण अन्यथा अगर (!strहालcmp(string, "high_watermark") && opt_params >= 1) अणु
-			string = dm_shअगरt_arg(&as), opt_params--;
-			अगर (माला_पूछो(string, "%d%c", &high_wm_percent, &dummy) != 1)
-				जाओ invalid_optional;
-			अगर (high_wm_percent < 0 || high_wm_percent > 100)
-				जाओ invalid_optional;
+				goto invalid_optional;
+		} else if (!strcasecmp(string, "high_watermark") && opt_params >= 1) {
+			string = dm_shift_arg(&as), opt_params--;
+			if (sscanf(string, "%d%c", &high_wm_percent, &dummy) != 1)
+				goto invalid_optional;
+			if (high_wm_percent < 0 || high_wm_percent > 100)
+				goto invalid_optional;
 			wc->high_wm_percent_value = high_wm_percent;
 			wc->high_wm_percent_set = true;
-		पूर्ण अन्यथा अगर (!strहालcmp(string, "low_watermark") && opt_params >= 1) अणु
-			string = dm_shअगरt_arg(&as), opt_params--;
-			अगर (माला_पूछो(string, "%d%c", &low_wm_percent, &dummy) != 1)
-				जाओ invalid_optional;
-			अगर (low_wm_percent < 0 || low_wm_percent > 100)
-				जाओ invalid_optional;
+		} else if (!strcasecmp(string, "low_watermark") && opt_params >= 1) {
+			string = dm_shift_arg(&as), opt_params--;
+			if (sscanf(string, "%d%c", &low_wm_percent, &dummy) != 1)
+				goto invalid_optional;
+			if (low_wm_percent < 0 || low_wm_percent > 100)
+				goto invalid_optional;
 			wc->low_wm_percent_value = low_wm_percent;
 			wc->low_wm_percent_set = true;
-		पूर्ण अन्यथा अगर (!strहालcmp(string, "writeback_jobs") && opt_params >= 1) अणु
-			string = dm_shअगरt_arg(&as), opt_params--;
-			अगर (माला_पूछो(string, "%u%c", &wc->max_ग_लिखोback_jobs, &dummy) != 1)
-				जाओ invalid_optional;
-			wc->max_ग_लिखोback_jobs_set = true;
-		पूर्ण अन्यथा अगर (!strहालcmp(string, "autocommit_blocks") && opt_params >= 1) अणु
-			string = dm_shअगरt_arg(&as), opt_params--;
-			अगर (माला_पूछो(string, "%u%c", &wc->स्वतःcommit_blocks, &dummy) != 1)
-				जाओ invalid_optional;
-			wc->स्वतःcommit_blocks_set = true;
-		पूर्ण अन्यथा अगर (!strहालcmp(string, "autocommit_time") && opt_params >= 1) अणु
-			अचिन्हित स्वतःcommit_msecs;
-			string = dm_shअगरt_arg(&as), opt_params--;
-			अगर (माला_पूछो(string, "%u%c", &स्वतःcommit_msecs, &dummy) != 1)
-				जाओ invalid_optional;
-			अगर (स्वतःcommit_msecs > 3600000)
-				जाओ invalid_optional;
-			wc->स्वतःcommit_jअगरfies = msecs_to_jअगरfies(स्वतःcommit_msecs);
-			wc->स्वतःcommit_समय_value = स्वतःcommit_msecs;
-			wc->स्वतःcommit_समय_set = true;
-		पूर्ण अन्यथा अगर (!strहालcmp(string, "max_age") && opt_params >= 1) अणु
-			अचिन्हित max_age_msecs;
-			string = dm_shअगरt_arg(&as), opt_params--;
-			अगर (माला_पूछो(string, "%u%c", &max_age_msecs, &dummy) != 1)
-				जाओ invalid_optional;
-			अगर (max_age_msecs > 86400000)
-				जाओ invalid_optional;
-			wc->max_age = msecs_to_jअगरfies(max_age_msecs);
+		} else if (!strcasecmp(string, "writeback_jobs") && opt_params >= 1) {
+			string = dm_shift_arg(&as), opt_params--;
+			if (sscanf(string, "%u%c", &wc->max_writeback_jobs, &dummy) != 1)
+				goto invalid_optional;
+			wc->max_writeback_jobs_set = true;
+		} else if (!strcasecmp(string, "autocommit_blocks") && opt_params >= 1) {
+			string = dm_shift_arg(&as), opt_params--;
+			if (sscanf(string, "%u%c", &wc->autocommit_blocks, &dummy) != 1)
+				goto invalid_optional;
+			wc->autocommit_blocks_set = true;
+		} else if (!strcasecmp(string, "autocommit_time") && opt_params >= 1) {
+			unsigned autocommit_msecs;
+			string = dm_shift_arg(&as), opt_params--;
+			if (sscanf(string, "%u%c", &autocommit_msecs, &dummy) != 1)
+				goto invalid_optional;
+			if (autocommit_msecs > 3600000)
+				goto invalid_optional;
+			wc->autocommit_jiffies = msecs_to_jiffies(autocommit_msecs);
+			wc->autocommit_time_value = autocommit_msecs;
+			wc->autocommit_time_set = true;
+		} else if (!strcasecmp(string, "max_age") && opt_params >= 1) {
+			unsigned max_age_msecs;
+			string = dm_shift_arg(&as), opt_params--;
+			if (sscanf(string, "%u%c", &max_age_msecs, &dummy) != 1)
+				goto invalid_optional;
+			if (max_age_msecs > 86400000)
+				goto invalid_optional;
+			wc->max_age = msecs_to_jiffies(max_age_msecs);
 			wc->max_age_set = true;
 			wc->max_age_value = max_age_msecs;
-		पूर्ण अन्यथा अगर (!strहालcmp(string, "cleaner")) अणु
+		} else if (!strcasecmp(string, "cleaner")) {
 			wc->cleaner_set = true;
 			wc->cleaner = true;
-		पूर्ण अन्यथा अगर (!strहालcmp(string, "fua")) अणु
-			अगर (WC_MODE_PMEM(wc)) अणु
-				wc->ग_लिखोback_fua = true;
-				wc->ग_लिखोback_fua_set = true;
-			पूर्ण अन्यथा जाओ invalid_optional;
-		पूर्ण अन्यथा अगर (!strहालcmp(string, "nofua")) अणु
-			अगर (WC_MODE_PMEM(wc)) अणु
-				wc->ग_लिखोback_fua = false;
-				wc->ग_लिखोback_fua_set = true;
-			पूर्ण अन्यथा जाओ invalid_optional;
-		पूर्ण अन्यथा अणु
+		} else if (!strcasecmp(string, "fua")) {
+			if (WC_MODE_PMEM(wc)) {
+				wc->writeback_fua = true;
+				wc->writeback_fua_set = true;
+			} else goto invalid_optional;
+		} else if (!strcasecmp(string, "nofua")) {
+			if (WC_MODE_PMEM(wc)) {
+				wc->writeback_fua = false;
+				wc->writeback_fua_set = true;
+			} else goto invalid_optional;
+		} else {
 invalid_optional:
 			r = -EINVAL;
 			ti->error = "Invalid optional argument";
-			जाओ bad;
-		पूर्ण
-	पूर्ण
+			goto bad;
+		}
+	}
 
-	अगर (high_wm_percent < low_wm_percent) अणु
+	if (high_wm_percent < low_wm_percent) {
 		r = -EINVAL;
 		ti->error = "High watermark must be greater than or equal to low watermark";
-		जाओ bad;
-	पूर्ण
+		goto bad;
+	}
 
-	अगर (WC_MODE_PMEM(wc)) अणु
-		अगर (!dax_synchronous(wc->ssd_dev->dax_dev)) अणु
+	if (WC_MODE_PMEM(wc)) {
+		if (!dax_synchronous(wc->ssd_dev->dax_dev)) {
 			r = -EOPNOTSUPP;
 			ti->error = "Asynchronous persistent memory not supported as pmem cache";
-			जाओ bad;
-		पूर्ण
+			goto bad;
+		}
 
 		r = persistent_memory_claim(wc);
-		अगर (r) अणु
+		if (r) {
 			ti->error = "Unable to map persistent memory for cache";
-			जाओ bad;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		माप_प्रकार n_blocks, n_metadata_blocks;
-		uपूर्णांक64_t n_biपंचांगap_bits;
+			goto bad;
+		}
+	} else {
+		size_t n_blocks, n_metadata_blocks;
+		uint64_t n_bitmap_bits;
 
-		wc->memory_map_size -= (uपूर्णांक64_t)wc->start_sector << SECTOR_SHIFT;
+		wc->memory_map_size -= (uint64_t)wc->start_sector << SECTOR_SHIFT;
 
 		bio_list_init(&wc->flush_list);
-		wc->flush_thपढ़ो = kthपढ़ो_create(ग_लिखोcache_flush_thपढ़ो, wc, "dm_writecache_flush");
-		अगर (IS_ERR(wc->flush_thपढ़ो)) अणु
-			r = PTR_ERR(wc->flush_thपढ़ो);
-			wc->flush_thपढ़ो = शून्य;
+		wc->flush_thread = kthread_create(writecache_flush_thread, wc, "dm_writecache_flush");
+		if (IS_ERR(wc->flush_thread)) {
+			r = PTR_ERR(wc->flush_thread);
+			wc->flush_thread = NULL;
 			ti->error = "Couldn't spawn flush thread";
-			जाओ bad;
-		पूर्ण
-		wake_up_process(wc->flush_thपढ़ो);
+			goto bad;
+		}
+		wake_up_process(wc->flush_thread);
 
 		r = calculate_memory_size(wc->memory_map_size, wc->block_size,
 					  &n_blocks, &n_metadata_blocks);
-		अगर (r) अणु
+		if (r) {
 			ti->error = "Invalid device size";
-			जाओ bad;
-		पूर्ण
+			goto bad;
+		}
 
-		n_biपंचांगap_bits = (((uपूर्णांक64_t)n_metadata_blocks << wc->block_size_bits) +
+		n_bitmap_bits = (((uint64_t)n_metadata_blocks << wc->block_size_bits) +
 				 BITMAP_GRANULARITY - 1) / BITMAP_GRANULARITY;
 		/* this is limitation of test_bit functions */
-		अगर (n_biपंचांगap_bits > 1U << 31) अणु
+		if (n_bitmap_bits > 1U << 31) {
 			r = -EFBIG;
 			ti->error = "Invalid device size";
-			जाओ bad;
-		पूर्ण
+			goto bad;
+		}
 
-		wc->memory_map = vदो_स्मृति(n_metadata_blocks << wc->block_size_bits);
-		अगर (!wc->memory_map) अणु
+		wc->memory_map = vmalloc(n_metadata_blocks << wc->block_size_bits);
+		if (!wc->memory_map) {
 			r = -ENOMEM;
 			ti->error = "Unable to allocate memory for metadata";
-			जाओ bad;
-		पूर्ण
+			goto bad;
+		}
 
 		wc->dm_kcopyd = dm_kcopyd_client_create(&dm_kcopyd_throttle);
-		अगर (IS_ERR(wc->dm_kcopyd)) अणु
+		if (IS_ERR(wc->dm_kcopyd)) {
 			r = PTR_ERR(wc->dm_kcopyd);
 			ti->error = "Unable to allocate dm-kcopyd client";
-			wc->dm_kcopyd = शून्य;
-			जाओ bad;
-		पूर्ण
+			wc->dm_kcopyd = NULL;
+			goto bad;
+		}
 
 		wc->metadata_sectors = n_metadata_blocks << (wc->block_size_bits - SECTOR_SHIFT);
-		wc->dirty_biपंचांगap_size = (n_biपंचांगap_bits + BITS_PER_LONG - 1) /
-			BITS_PER_LONG * माप(अचिन्हित दीर्घ);
-		wc->dirty_biपंचांगap = vzalloc(wc->dirty_biपंचांगap_size);
-		अगर (!wc->dirty_biपंचांगap) अणु
+		wc->dirty_bitmap_size = (n_bitmap_bits + BITS_PER_LONG - 1) /
+			BITS_PER_LONG * sizeof(unsigned long);
+		wc->dirty_bitmap = vzalloc(wc->dirty_bitmap_size);
+		if (!wc->dirty_bitmap) {
 			r = -ENOMEM;
 			ti->error = "Unable to allocate dirty bitmap";
-			जाओ bad;
-		पूर्ण
+			goto bad;
+		}
 
-		r = ग_लिखोcache_पढ़ो_metadata(wc, wc->block_size >> SECTOR_SHIFT);
-		अगर (r) अणु
+		r = writecache_read_metadata(wc, wc->block_size >> SECTOR_SHIFT);
+		if (r) {
 			ti->error = "Unable to read first block of metadata";
-			जाओ bad;
-		पूर्ण
-	पूर्ण
+			goto bad;
+		}
+	}
 
-	r = copy_mc_to_kernel(&s, sb(wc), माप(काष्ठा wc_memory_superblock));
-	अगर (r) अणु
+	r = copy_mc_to_kernel(&s, sb(wc), sizeof(struct wc_memory_superblock));
+	if (r) {
 		ti->error = "Hardware memory error when reading superblock";
-		जाओ bad;
-	पूर्ण
-	अगर (!le32_to_cpu(s.magic) && !le32_to_cpu(s.version)) अणु
+		goto bad;
+	}
+	if (!le32_to_cpu(s.magic) && !le32_to_cpu(s.version)) {
 		r = init_memory(wc);
-		अगर (r) अणु
+		if (r) {
 			ti->error = "Unable to initialize device";
-			जाओ bad;
-		पूर्ण
+			goto bad;
+		}
 		r = copy_mc_to_kernel(&s, sb(wc),
-				      माप(काष्ठा wc_memory_superblock));
-		अगर (r) अणु
+				      sizeof(struct wc_memory_superblock));
+		if (r) {
 			ti->error = "Hardware memory error when reading superblock";
-			जाओ bad;
-		पूर्ण
-	पूर्ण
+			goto bad;
+		}
+	}
 
-	अगर (le32_to_cpu(s.magic) != MEMORY_SUPERBLOCK_MAGIC) अणु
+	if (le32_to_cpu(s.magic) != MEMORY_SUPERBLOCK_MAGIC) {
 		ti->error = "Invalid magic in the superblock";
 		r = -EINVAL;
-		जाओ bad;
-	पूर्ण
+		goto bad;
+	}
 
-	अगर (le32_to_cpu(s.version) != MEMORY_SUPERBLOCK_VERSION) अणु
+	if (le32_to_cpu(s.version) != MEMORY_SUPERBLOCK_VERSION) {
 		ti->error = "Invalid version in the superblock";
 		r = -EINVAL;
-		जाओ bad;
-	पूर्ण
+		goto bad;
+	}
 
-	अगर (le32_to_cpu(s.block_size) != wc->block_size) अणु
+	if (le32_to_cpu(s.block_size) != wc->block_size) {
 		ti->error = "Block size does not match superblock";
 		r = -EINVAL;
-		जाओ bad;
-	पूर्ण
+		goto bad;
+	}
 
 	wc->n_blocks = le64_to_cpu(s.n_blocks);
 
-	offset = wc->n_blocks * माप(काष्ठा wc_memory_entry);
-	अगर (offset / माप(काष्ठा wc_memory_entry) != le64_to_cpu(sb(wc)->n_blocks)) अणु
+	offset = wc->n_blocks * sizeof(struct wc_memory_entry);
+	if (offset / sizeof(struct wc_memory_entry) != le64_to_cpu(sb(wc)->n_blocks)) {
 overflow:
 		ti->error = "Overflow in size calculation";
 		r = -EINVAL;
-		जाओ bad;
-	पूर्ण
-	offset += माप(काष्ठा wc_memory_superblock);
-	अगर (offset < माप(काष्ठा wc_memory_superblock))
-		जाओ overflow;
-	offset = (offset + wc->block_size - 1) & ~(माप_प्रकार)(wc->block_size - 1);
-	data_size = wc->n_blocks * (माप_प्रकार)wc->block_size;
-	अगर (!offset || (data_size / wc->block_size != wc->n_blocks) ||
+		goto bad;
+	}
+	offset += sizeof(struct wc_memory_superblock);
+	if (offset < sizeof(struct wc_memory_superblock))
+		goto overflow;
+	offset = (offset + wc->block_size - 1) & ~(size_t)(wc->block_size - 1);
+	data_size = wc->n_blocks * (size_t)wc->block_size;
+	if (!offset || (data_size / wc->block_size != wc->n_blocks) ||
 	    (offset + data_size < offset))
-		जाओ overflow;
-	अगर (offset + data_size > wc->memory_map_size) अणु
+		goto overflow;
+	if (offset + data_size > wc->memory_map_size) {
 		ti->error = "Memory area is too small";
 		r = -EINVAL;
-		जाओ bad;
-	पूर्ण
+		goto bad;
+	}
 
 	wc->metadata_sectors = offset >> SECTOR_SHIFT;
-	wc->block_start = (अक्षर *)sb(wc) + offset;
+	wc->block_start = (char *)sb(wc) + offset;
 
-	x = (uपूर्णांक64_t)wc->n_blocks * (100 - high_wm_percent);
+	x = (uint64_t)wc->n_blocks * (100 - high_wm_percent);
 	x += 50;
-	करो_भाग(x, 100);
-	wc->मुक्तlist_high_watermark = x;
-	x = (uपूर्णांक64_t)wc->n_blocks * (100 - low_wm_percent);
+	do_div(x, 100);
+	wc->freelist_high_watermark = x;
+	x = (uint64_t)wc->n_blocks * (100 - low_wm_percent);
 	x += 50;
-	करो_भाग(x, 100);
-	wc->मुक्तlist_low_watermark = x;
+	do_div(x, 100);
+	wc->freelist_low_watermark = x;
 
-	अगर (wc->cleaner)
+	if (wc->cleaner)
 		activate_cleaner(wc);
 
-	r = ग_लिखोcache_alloc_entries(wc);
-	अगर (r) अणु
+	r = writecache_alloc_entries(wc);
+	if (r) {
 		ti->error = "Cannot allocate memory";
-		जाओ bad;
-	पूर्ण
+		goto bad;
+	}
 
 	ti->num_flush_bios = 1;
 	ti->flush_supported = true;
 	ti->num_discard_bios = 1;
 
-	अगर (WC_MODE_PMEM(wc))
+	if (WC_MODE_PMEM(wc))
 		persistent_memory_flush_cache(wc->memory_map, wc->memory_map_size);
 
-	वापस 0;
+	return 0;
 
 bad_arguments:
 	r = -EINVAL;
 	ti->error = "Bad arguments";
 bad:
-	ग_लिखोcache_dtr(ti);
-	वापस r;
-पूर्ण
+	writecache_dtr(ti);
+	return r;
+}
 
-अटल व्योम ग_लिखोcache_status(काष्ठा dm_target *ti, status_type_t type,
-			      अचिन्हित status_flags, अक्षर *result, अचिन्हित maxlen)
-अणु
-	काष्ठा dm_ग_लिखोcache *wc = ti->निजी;
-	अचिन्हित extra_args;
-	अचिन्हित sz = 0;
+static void writecache_status(struct dm_target *ti, status_type_t type,
+			      unsigned status_flags, char *result, unsigned maxlen)
+{
+	struct dm_writecache *wc = ti->private;
+	unsigned extra_args;
+	unsigned sz = 0;
 
-	चयन (type) अणु
-	हाल STATUSTYPE_INFO:
-		DMEMIT("%ld %llu %llu %llu", ग_लिखोcache_has_error(wc),
-		       (अचिन्हित दीर्घ दीर्घ)wc->n_blocks, (अचिन्हित दीर्घ दीर्घ)wc->मुक्तlist_size,
-		       (अचिन्हित दीर्घ दीर्घ)wc->ग_लिखोback_size);
-		अवरोध;
-	हाल STATUSTYPE_TABLE:
+	switch (type) {
+	case STATUSTYPE_INFO:
+		DMEMIT("%ld %llu %llu %llu", writecache_has_error(wc),
+		       (unsigned long long)wc->n_blocks, (unsigned long long)wc->freelist_size,
+		       (unsigned long long)wc->writeback_size);
+		break;
+	case STATUSTYPE_TABLE:
 		DMEMIT("%c %s %s %u ", WC_MODE_PMEM(wc) ? 'p' : 's',
 				wc->dev->name, wc->ssd_dev->name, wc->block_size);
 		extra_args = 0;
-		अगर (wc->start_sector_set)
+		if (wc->start_sector_set)
 			extra_args += 2;
-		अगर (wc->high_wm_percent_set)
+		if (wc->high_wm_percent_set)
 			extra_args += 2;
-		अगर (wc->low_wm_percent_set)
+		if (wc->low_wm_percent_set)
 			extra_args += 2;
-		अगर (wc->max_ग_लिखोback_jobs_set)
+		if (wc->max_writeback_jobs_set)
 			extra_args += 2;
-		अगर (wc->स्वतःcommit_blocks_set)
+		if (wc->autocommit_blocks_set)
 			extra_args += 2;
-		अगर (wc->स्वतःcommit_समय_set)
+		if (wc->autocommit_time_set)
 			extra_args += 2;
-		अगर (wc->max_age_set)
+		if (wc->max_age_set)
 			extra_args += 2;
-		अगर (wc->cleaner_set)
+		if (wc->cleaner_set)
 			extra_args++;
-		अगर (wc->ग_लिखोback_fua_set)
+		if (wc->writeback_fua_set)
 			extra_args++;
 
 		DMEMIT("%u", extra_args);
-		अगर (wc->start_sector_set)
-			DMEMIT(" start_sector %llu", (अचिन्हित दीर्घ दीर्घ)wc->start_sector);
-		अगर (wc->high_wm_percent_set)
+		if (wc->start_sector_set)
+			DMEMIT(" start_sector %llu", (unsigned long long)wc->start_sector);
+		if (wc->high_wm_percent_set)
 			DMEMIT(" high_watermark %u", wc->high_wm_percent_value);
-		अगर (wc->low_wm_percent_set)
+		if (wc->low_wm_percent_set)
 			DMEMIT(" low_watermark %u", wc->low_wm_percent_value);
-		अगर (wc->max_ग_लिखोback_jobs_set)
-			DMEMIT(" writeback_jobs %u", wc->max_ग_लिखोback_jobs);
-		अगर (wc->स्वतःcommit_blocks_set)
-			DMEMIT(" autocommit_blocks %u", wc->स्वतःcommit_blocks);
-		अगर (wc->स्वतःcommit_समय_set)
-			DMEMIT(" autocommit_time %u", wc->स्वतःcommit_समय_value);
-		अगर (wc->max_age_set)
+		if (wc->max_writeback_jobs_set)
+			DMEMIT(" writeback_jobs %u", wc->max_writeback_jobs);
+		if (wc->autocommit_blocks_set)
+			DMEMIT(" autocommit_blocks %u", wc->autocommit_blocks);
+		if (wc->autocommit_time_set)
+			DMEMIT(" autocommit_time %u", wc->autocommit_time_value);
+		if (wc->max_age_set)
 			DMEMIT(" max_age %u", wc->max_age_value);
-		अगर (wc->cleaner_set)
+		if (wc->cleaner_set)
 			DMEMIT(" cleaner");
-		अगर (wc->ग_लिखोback_fua_set)
-			DMEMIT(" %sfua", wc->ग_लिखोback_fua ? "" : "no");
-		अवरोध;
-	पूर्ण
-पूर्ण
+		if (wc->writeback_fua_set)
+			DMEMIT(" %sfua", wc->writeback_fua ? "" : "no");
+		break;
+	}
+}
 
-अटल काष्ठा target_type ग_लिखोcache_target = अणु
+static struct target_type writecache_target = {
 	.name			= "writecache",
-	.version		= अणु1, 4, 0पूर्ण,
+	.version		= {1, 4, 0},
 	.module			= THIS_MODULE,
-	.ctr			= ग_लिखोcache_ctr,
-	.dtr			= ग_लिखोcache_dtr,
-	.status			= ग_लिखोcache_status,
-	.postsuspend		= ग_लिखोcache_suspend,
-	.resume			= ग_लिखोcache_resume,
-	.message		= ग_लिखोcache_message,
-	.map			= ग_लिखोcache_map,
-	.end_io			= ग_लिखोcache_end_io,
-	.iterate_devices	= ग_लिखोcache_iterate_devices,
-	.io_hपूर्णांकs		= ग_लिखोcache_io_hपूर्णांकs,
-पूर्ण;
+	.ctr			= writecache_ctr,
+	.dtr			= writecache_dtr,
+	.status			= writecache_status,
+	.postsuspend		= writecache_suspend,
+	.resume			= writecache_resume,
+	.message		= writecache_message,
+	.map			= writecache_map,
+	.end_io			= writecache_end_io,
+	.iterate_devices	= writecache_iterate_devices,
+	.io_hints		= writecache_io_hints,
+};
 
-अटल पूर्णांक __init dm_ग_लिखोcache_init(व्योम)
-अणु
-	पूर्णांक r;
+static int __init dm_writecache_init(void)
+{
+	int r;
 
-	r = dm_रेजिस्टर_target(&ग_लिखोcache_target);
-	अगर (r < 0) अणु
+	r = dm_register_target(&writecache_target);
+	if (r < 0) {
 		DMERR("register failed %d", r);
-		वापस r;
-	पूर्ण
+		return r;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम __निकास dm_ग_लिखोcache_निकास(व्योम)
-अणु
-	dm_unरेजिस्टर_target(&ग_लिखोcache_target);
-पूर्ण
+static void __exit dm_writecache_exit(void)
+{
+	dm_unregister_target(&writecache_target);
+}
 
-module_init(dm_ग_लिखोcache_init);
-module_निकास(dm_ग_लिखोcache_निकास);
+module_init(dm_writecache_init);
+module_exit(dm_writecache_exit);
 
 MODULE_DESCRIPTION(DM_NAME " writecache target");
 MODULE_AUTHOR("Mikulas Patocka <dm-devel@redhat.com>");

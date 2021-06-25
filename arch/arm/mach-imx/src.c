@@ -1,134 +1,133 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright 2011 Freescale Semiconductor, Inc.
  * Copyright 2011 Linaro Ltd.
  */
 
-#समावेश <linux/init.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/of.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/reset-controller.h>
-#समावेश <linux/smp.h>
-#समावेश <यंत्र/smp_plat.h>
-#समावेश "common.h"
+#include <linux/init.h>
+#include <linux/io.h>
+#include <linux/of.h>
+#include <linux/of_address.h>
+#include <linux/reset-controller.h>
+#include <linux/smp.h>
+#include <asm/smp_plat.h>
+#include "common.h"
 
-#घोषणा SRC_SCR				0x000
-#घोषणा SRC_GPR1			0x020
-#घोषणा BP_SRC_SCR_WARM_RESET_ENABLE	0
-#घोषणा BP_SRC_SCR_SW_GPU_RST		1
-#घोषणा BP_SRC_SCR_SW_VPU_RST		2
-#घोषणा BP_SRC_SCR_SW_IPU1_RST		3
-#घोषणा BP_SRC_SCR_SW_OPEN_VG_RST	4
-#घोषणा BP_SRC_SCR_SW_IPU2_RST		12
-#घोषणा BP_SRC_SCR_CORE1_RST		14
-#घोषणा BP_SRC_SCR_CORE1_ENABLE		22
+#define SRC_SCR				0x000
+#define SRC_GPR1			0x020
+#define BP_SRC_SCR_WARM_RESET_ENABLE	0
+#define BP_SRC_SCR_SW_GPU_RST		1
+#define BP_SRC_SCR_SW_VPU_RST		2
+#define BP_SRC_SCR_SW_IPU1_RST		3
+#define BP_SRC_SCR_SW_OPEN_VG_RST	4
+#define BP_SRC_SCR_SW_IPU2_RST		12
+#define BP_SRC_SCR_CORE1_RST		14
+#define BP_SRC_SCR_CORE1_ENABLE		22
 
-अटल व्योम __iomem *src_base;
-अटल DEFINE_SPINLOCK(scr_lock);
+static void __iomem *src_base;
+static DEFINE_SPINLOCK(scr_lock);
 
-अटल स्थिर पूर्णांक sw_reset_bits[5] = अणु
+static const int sw_reset_bits[5] = {
 	BP_SRC_SCR_SW_GPU_RST,
 	BP_SRC_SCR_SW_VPU_RST,
 	BP_SRC_SCR_SW_IPU1_RST,
 	BP_SRC_SCR_SW_OPEN_VG_RST,
 	BP_SRC_SCR_SW_IPU2_RST
-पूर्ण;
+};
 
-अटल पूर्णांक imx_src_reset_module(काष्ठा reset_controller_dev *rcdev,
-		अचिन्हित दीर्घ sw_reset_idx)
-अणु
-	अचिन्हित दीर्घ समयout;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक bit;
+static int imx_src_reset_module(struct reset_controller_dev *rcdev,
+		unsigned long sw_reset_idx)
+{
+	unsigned long timeout;
+	unsigned long flags;
+	int bit;
 	u32 val;
 
-	अगर (sw_reset_idx >= ARRAY_SIZE(sw_reset_bits))
-		वापस -EINVAL;
+	if (sw_reset_idx >= ARRAY_SIZE(sw_reset_bits))
+		return -EINVAL;
 
 	bit = 1 << sw_reset_bits[sw_reset_idx];
 
 	spin_lock_irqsave(&scr_lock, flags);
-	val = पढ़ोl_relaxed(src_base + SRC_SCR);
+	val = readl_relaxed(src_base + SRC_SCR);
 	val |= bit;
-	ग_लिखोl_relaxed(val, src_base + SRC_SCR);
+	writel_relaxed(val, src_base + SRC_SCR);
 	spin_unlock_irqrestore(&scr_lock, flags);
 
-	समयout = jअगरfies + msecs_to_jअगरfies(1000);
-	जबतक (पढ़ोl(src_base + SRC_SCR) & bit) अणु
-		अगर (समय_after(jअगरfies, समयout))
-			वापस -ETIME;
+	timeout = jiffies + msecs_to_jiffies(1000);
+	while (readl(src_base + SRC_SCR) & bit) {
+		if (time_after(jiffies, timeout))
+			return -ETIME;
 		cpu_relax();
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा reset_control_ops imx_src_ops = अणु
+static const struct reset_control_ops imx_src_ops = {
 	.reset = imx_src_reset_module,
-पूर्ण;
+};
 
-अटल काष्ठा reset_controller_dev imx_reset_controller = अणु
+static struct reset_controller_dev imx_reset_controller = {
 	.ops = &imx_src_ops,
 	.nr_resets = ARRAY_SIZE(sw_reset_bits),
-पूर्ण;
+};
 
-व्योम imx_enable_cpu(पूर्णांक cpu, bool enable)
-अणु
+void imx_enable_cpu(int cpu, bool enable)
+{
 	u32 mask, val;
 
 	cpu = cpu_logical_map(cpu);
 	mask = 1 << (BP_SRC_SCR_CORE1_ENABLE + cpu - 1);
 	spin_lock(&scr_lock);
-	val = पढ़ोl_relaxed(src_base + SRC_SCR);
+	val = readl_relaxed(src_base + SRC_SCR);
 	val = enable ? val | mask : val & ~mask;
 	val |= 1 << (BP_SRC_SCR_CORE1_RST + cpu - 1);
-	ग_लिखोl_relaxed(val, src_base + SRC_SCR);
+	writel_relaxed(val, src_base + SRC_SCR);
 	spin_unlock(&scr_lock);
-पूर्ण
+}
 
-व्योम imx_set_cpu_jump(पूर्णांक cpu, व्योम *jump_addr)
-अणु
+void imx_set_cpu_jump(int cpu, void *jump_addr)
+{
 	cpu = cpu_logical_map(cpu);
-	ग_लिखोl_relaxed(__pa_symbol(jump_addr),
+	writel_relaxed(__pa_symbol(jump_addr),
 		       src_base + SRC_GPR1 + cpu * 8);
-पूर्ण
+}
 
-u32 imx_get_cpu_arg(पूर्णांक cpu)
-अणु
+u32 imx_get_cpu_arg(int cpu)
+{
 	cpu = cpu_logical_map(cpu);
-	वापस पढ़ोl_relaxed(src_base + SRC_GPR1 + cpu * 8 + 4);
-पूर्ण
+	return readl_relaxed(src_base + SRC_GPR1 + cpu * 8 + 4);
+}
 
-व्योम imx_set_cpu_arg(पूर्णांक cpu, u32 arg)
-अणु
+void imx_set_cpu_arg(int cpu, u32 arg)
+{
 	cpu = cpu_logical_map(cpu);
-	ग_लिखोl_relaxed(arg, src_base + SRC_GPR1 + cpu * 8 + 4);
-पूर्ण
+	writel_relaxed(arg, src_base + SRC_GPR1 + cpu * 8 + 4);
+}
 
-व्योम __init imx_src_init(व्योम)
-अणु
-	काष्ठा device_node *np;
+void __init imx_src_init(void)
+{
+	struct device_node *np;
 	u32 val;
 
-	np = of_find_compatible_node(शून्य, शून्य, "fsl,imx51-src");
-	अगर (!np)
-		वापस;
+	np = of_find_compatible_node(NULL, NULL, "fsl,imx51-src");
+	if (!np)
+		return;
 	src_base = of_iomap(np, 0);
 	WARN_ON(!src_base);
 
 	imx_reset_controller.of_node = np;
-	अगर (IS_ENABLED(CONFIG_RESET_CONTROLLER))
-		reset_controller_रेजिस्टर(&imx_reset_controller);
+	if (IS_ENABLED(CONFIG_RESET_CONTROLLER))
+		reset_controller_register(&imx_reset_controller);
 
 	/*
-	 * क्रमce warm reset sources to generate cold reset
-	 * क्रम a more reliable restart
+	 * force warm reset sources to generate cold reset
+	 * for a more reliable restart
 	 */
 	spin_lock(&scr_lock);
-	val = पढ़ोl_relaxed(src_base + SRC_SCR);
+	val = readl_relaxed(src_base + SRC_SCR);
 	val &= ~(1 << BP_SRC_SCR_WARM_RESET_ENABLE);
-	ग_लिखोl_relaxed(val, src_base + SRC_SCR);
+	writel_relaxed(val, src_base + SRC_SCR);
 	spin_unlock(&scr_lock);
-पूर्ण
+}

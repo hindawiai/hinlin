@@ -1,71 +1,70 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * Copyright (C) 2020 Amarula Solutions(India)
  * Author: Jagan Teki <jagan@amarulasolutions.com>
  */
 
-#समावेश <drm/drm_of.h>
-#समावेश <drm/drm_prपूर्णांक.h>
-#समावेश <drm/drm_mipi_dsi.h>
+#include <drm/drm_of.h>
+#include <drm/drm_print.h>
+#include <drm/drm_mipi_dsi.h>
 
-#समावेश <linux/delay.h>
-#समावेश <linux/gpio/consumer.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/regulator/consumer.h>
+#include <linux/delay.h>
+#include <linux/gpio/consumer.h>
+#include <linux/module.h>
+#include <linux/of_device.h>
+#include <linux/regulator/consumer.h>
 
-#समावेश <video/mipi_display.h>
+#include <video/mipi_display.h>
 
-#घोषणा HACTIVE_LI		0x20
-#घोषणा VACTIVE_LI		0x21
-#घोषणा VACTIVE_HACTIVE_HI	0x22
-#घोषणा HFP_LI			0x23
-#घोषणा HSYNC_LI		0x24
-#घोषणा HBP_LI			0x25
-#घोषणा HFP_HSW_HBP_HI		0x26
-#घोषणा VFP			0x27
-#घोषणा VSYNC			0x28
-#घोषणा VBP			0x29
+#define HACTIVE_LI		0x20
+#define VACTIVE_LI		0x21
+#define VACTIVE_HACTIVE_HI	0x22
+#define HFP_LI			0x23
+#define HSYNC_LI		0x24
+#define HBP_LI			0x25
+#define HFP_HSW_HBP_HI		0x26
+#define VFP			0x27
+#define VSYNC			0x28
+#define VBP			0x29
 
-काष्ठा chipone अणु
-	काष्ठा device *dev;
-	काष्ठा drm_bridge bridge;
-	काष्ठा drm_bridge *panel_bridge;
-	काष्ठा gpio_desc *enable_gpio;
-	काष्ठा regulator *vdd1;
-	काष्ठा regulator *vdd2;
-	काष्ठा regulator *vdd3;
-पूर्ण;
+struct chipone {
+	struct device *dev;
+	struct drm_bridge bridge;
+	struct drm_bridge *panel_bridge;
+	struct gpio_desc *enable_gpio;
+	struct regulator *vdd1;
+	struct regulator *vdd2;
+	struct regulator *vdd3;
+};
 
-अटल अंतरभूत काष्ठा chipone *bridge_to_chipone(काष्ठा drm_bridge *bridge)
-अणु
-	वापस container_of(bridge, काष्ठा chipone, bridge);
-पूर्ण
+static inline struct chipone *bridge_to_chipone(struct drm_bridge *bridge)
+{
+	return container_of(bridge, struct chipone, bridge);
+}
 
-अटल काष्ठा drm_display_mode *bridge_to_mode(काष्ठा drm_bridge *bridge)
-अणु
-	वापस &bridge->encoder->crtc->state->adjusted_mode;
-पूर्ण
+static struct drm_display_mode *bridge_to_mode(struct drm_bridge *bridge)
+{
+	return &bridge->encoder->crtc->state->adjusted_mode;
+}
 
-अटल अंतरभूत पूर्णांक chipone_dsi_ग_लिखो(काष्ठा chipone *icn,  स्थिर व्योम *seq,
-				    माप_प्रकार len)
-अणु
-	काष्ठा mipi_dsi_device *dsi = to_mipi_dsi_device(icn->dev);
+static inline int chipone_dsi_write(struct chipone *icn,  const void *seq,
+				    size_t len)
+{
+	struct mipi_dsi_device *dsi = to_mipi_dsi_device(icn->dev);
 
-	वापस mipi_dsi_generic_ग_लिखो(dsi, seq, len);
-पूर्ण
+	return mipi_dsi_generic_write(dsi, seq, len);
+}
 
-#घोषणा ICN6211_DSI(icn, seq...)				\
-	अणु							\
-		स्थिर u8 d[] = अणु seq पूर्ण;				\
-		chipone_dsi_ग_लिखो(icn, d, ARRAY_SIZE(d));	\
-	पूर्ण
+#define ICN6211_DSI(icn, seq...)				\
+	{							\
+		const u8 d[] = { seq };				\
+		chipone_dsi_write(icn, d, ARRAY_SIZE(d));	\
+	}
 
-अटल व्योम chipone_enable(काष्ठा drm_bridge *bridge)
-अणु
-	काष्ठा chipone *icn = bridge_to_chipone(bridge);
-	काष्ठा drm_display_mode *mode = bridge_to_mode(bridge);
+static void chipone_enable(struct drm_bridge *bridge)
+{
+	struct chipone *icn = bridge_to_chipone(bridge);
+	struct drm_display_mode *mode = bridge_to_mode(bridge);
 
 	ICN6211_DSI(icn, 0x7a, 0xc1);
 
@@ -95,7 +94,7 @@
 
 	ICN6211_DSI(icn, VBP, mode->vtotal - mode->vsync_end);
 
-	/* dsi specअगरic sequence */
+	/* dsi specific sequence */
 	ICN6211_DSI(icn, MIPI_DCS_SET_TEAR_OFF, 0x80);
 	ICN6211_DSI(icn, MIPI_DCS_SET_ADDRESS_MODE, 0x28);
 	ICN6211_DSI(icn, 0xb5, 0xa0);
@@ -107,141 +106,141 @@
 	ICN6211_DSI(icn, MIPI_DCS_ENTER_SLEEP_MODE, 0x40);
 	ICN6211_DSI(icn, MIPI_DCS_EXIT_SLEEP_MODE, 0x98);
 
-	/* icn6211 specअगरic sequence */
+	/* icn6211 specific sequence */
 	ICN6211_DSI(icn, 0xb6, 0x20);
 	ICN6211_DSI(icn, 0x51, 0x20);
 	ICN6211_DSI(icn, 0x09, 0x10);
 
 	usleep_range(10000, 11000);
-पूर्ण
+}
 
-अटल व्योम chipone_pre_enable(काष्ठा drm_bridge *bridge)
-अणु
-	काष्ठा chipone *icn = bridge_to_chipone(bridge);
-	पूर्णांक ret;
+static void chipone_pre_enable(struct drm_bridge *bridge)
+{
+	struct chipone *icn = bridge_to_chipone(bridge);
+	int ret;
 
-	अगर (icn->vdd1) अणु
+	if (icn->vdd1) {
 		ret = regulator_enable(icn->vdd1);
-		अगर (ret)
+		if (ret)
 			DRM_DEV_ERROR(icn->dev,
 				      "failed to enable VDD1 regulator: %d\n", ret);
-	पूर्ण
+	}
 
-	अगर (icn->vdd2) अणु
+	if (icn->vdd2) {
 		ret = regulator_enable(icn->vdd2);
-		अगर (ret)
+		if (ret)
 			DRM_DEV_ERROR(icn->dev,
 				      "failed to enable VDD2 regulator: %d\n", ret);
-	पूर्ण
+	}
 
-	अगर (icn->vdd3) अणु
+	if (icn->vdd3) {
 		ret = regulator_enable(icn->vdd3);
-		अगर (ret)
+		if (ret)
 			DRM_DEV_ERROR(icn->dev,
 				      "failed to enable VDD3 regulator: %d\n", ret);
-	पूर्ण
+	}
 
 	gpiod_set_value(icn->enable_gpio, 1);
 
 	usleep_range(10000, 11000);
-पूर्ण
+}
 
-अटल व्योम chipone_post_disable(काष्ठा drm_bridge *bridge)
-अणु
-	काष्ठा chipone *icn = bridge_to_chipone(bridge);
+static void chipone_post_disable(struct drm_bridge *bridge)
+{
+	struct chipone *icn = bridge_to_chipone(bridge);
 
-	अगर (icn->vdd1)
+	if (icn->vdd1)
 		regulator_disable(icn->vdd1);
 
-	अगर (icn->vdd2)
+	if (icn->vdd2)
 		regulator_disable(icn->vdd2);
 
-	अगर (icn->vdd3)
+	if (icn->vdd3)
 		regulator_disable(icn->vdd3);
 
 	gpiod_set_value(icn->enable_gpio, 0);
-पूर्ण
+}
 
-अटल पूर्णांक chipone_attach(काष्ठा drm_bridge *bridge, क्रमागत drm_bridge_attach_flags flags)
-अणु
-	काष्ठा chipone *icn = bridge_to_chipone(bridge);
+static int chipone_attach(struct drm_bridge *bridge, enum drm_bridge_attach_flags flags)
+{
+	struct chipone *icn = bridge_to_chipone(bridge);
 
-	वापस drm_bridge_attach(bridge->encoder, icn->panel_bridge, bridge, flags);
-पूर्ण
+	return drm_bridge_attach(bridge->encoder, icn->panel_bridge, bridge, flags);
+}
 
-अटल स्थिर काष्ठा drm_bridge_funcs chipone_bridge_funcs = अणु
+static const struct drm_bridge_funcs chipone_bridge_funcs = {
 	.attach = chipone_attach,
 	.post_disable = chipone_post_disable,
 	.pre_enable = chipone_pre_enable,
 	.enable = chipone_enable,
-पूर्ण;
+};
 
-अटल पूर्णांक chipone_parse_dt(काष्ठा chipone *icn)
-अणु
-	काष्ठा device *dev = icn->dev;
-	काष्ठा drm_panel *panel;
-	पूर्णांक ret;
+static int chipone_parse_dt(struct chipone *icn)
+{
+	struct device *dev = icn->dev;
+	struct drm_panel *panel;
+	int ret;
 
 	icn->vdd1 = devm_regulator_get_optional(dev, "vdd1");
-	अगर (IS_ERR(icn->vdd1)) अणु
+	if (IS_ERR(icn->vdd1)) {
 		ret = PTR_ERR(icn->vdd1);
-		अगर (ret == -EPROBE_DEFER)
-			वापस -EPROBE_DEFER;
-		icn->vdd1 = शून्य;
+		if (ret == -EPROBE_DEFER)
+			return -EPROBE_DEFER;
+		icn->vdd1 = NULL;
 		DRM_DEV_DEBUG(dev, "failed to get VDD1 regulator: %d\n", ret);
-	पूर्ण
+	}
 
 	icn->vdd2 = devm_regulator_get_optional(dev, "vdd2");
-	अगर (IS_ERR(icn->vdd2)) अणु
+	if (IS_ERR(icn->vdd2)) {
 		ret = PTR_ERR(icn->vdd2);
-		अगर (ret == -EPROBE_DEFER)
-			वापस -EPROBE_DEFER;
-		icn->vdd2 = शून्य;
+		if (ret == -EPROBE_DEFER)
+			return -EPROBE_DEFER;
+		icn->vdd2 = NULL;
 		DRM_DEV_DEBUG(dev, "failed to get VDD2 regulator: %d\n", ret);
-	पूर्ण
+	}
 
 	icn->vdd3 = devm_regulator_get_optional(dev, "vdd3");
-	अगर (IS_ERR(icn->vdd3)) अणु
+	if (IS_ERR(icn->vdd3)) {
 		ret = PTR_ERR(icn->vdd3);
-		अगर (ret == -EPROBE_DEFER)
-			वापस -EPROBE_DEFER;
-		icn->vdd3 = शून्य;
+		if (ret == -EPROBE_DEFER)
+			return -EPROBE_DEFER;
+		icn->vdd3 = NULL;
 		DRM_DEV_DEBUG(dev, "failed to get VDD3 regulator: %d\n", ret);
-	पूर्ण
+	}
 
 	icn->enable_gpio = devm_gpiod_get(dev, "enable", GPIOD_OUT_LOW);
-	अगर (IS_ERR(icn->enable_gpio)) अणु
+	if (IS_ERR(icn->enable_gpio)) {
 		DRM_DEV_ERROR(dev, "failed to get enable GPIO\n");
-		वापस PTR_ERR(icn->enable_gpio);
-	पूर्ण
+		return PTR_ERR(icn->enable_gpio);
+	}
 
-	ret = drm_of_find_panel_or_bridge(dev->of_node, 1, 0, &panel, शून्य);
-	अगर (ret)
-		वापस ret;
+	ret = drm_of_find_panel_or_bridge(dev->of_node, 1, 0, &panel, NULL);
+	if (ret)
+		return ret;
 
 	icn->panel_bridge = devm_drm_panel_bridge_add(dev, panel);
-	अगर (IS_ERR(icn->panel_bridge))
-		वापस PTR_ERR(icn->panel_bridge);
+	if (IS_ERR(icn->panel_bridge))
+		return PTR_ERR(icn->panel_bridge);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक chipone_probe(काष्ठा mipi_dsi_device *dsi)
-अणु
-	काष्ठा device *dev = &dsi->dev;
-	काष्ठा chipone *icn;
-	पूर्णांक ret;
+static int chipone_probe(struct mipi_dsi_device *dsi)
+{
+	struct device *dev = &dsi->dev;
+	struct chipone *icn;
+	int ret;
 
-	icn = devm_kzalloc(dev, माप(काष्ठा chipone), GFP_KERNEL);
-	अगर (!icn)
-		वापस -ENOMEM;
+	icn = devm_kzalloc(dev, sizeof(struct chipone), GFP_KERNEL);
+	if (!icn)
+		return -ENOMEM;
 
 	mipi_dsi_set_drvdata(dsi, icn);
 	icn->dev = dev;
 
 	ret = chipone_parse_dt(icn);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	icn->bridge.funcs = &chipone_bridge_funcs;
 	icn->bridge.type = DRM_MODE_CONNECTOR_DPI;
@@ -250,43 +249,43 @@
 	drm_bridge_add(&icn->bridge);
 
 	dsi->lanes = 4;
-	dsi->क्रमmat = MIPI_DSI_FMT_RGB888;
+	dsi->format = MIPI_DSI_FMT_RGB888;
 	dsi->mode_flags = MIPI_DSI_MODE_VIDEO_SYNC_PULSE;
 
 	ret = mipi_dsi_attach(dsi);
-	अगर (ret < 0) अणु
-		drm_bridge_हटाओ(&icn->bridge);
+	if (ret < 0) {
+		drm_bridge_remove(&icn->bridge);
 		dev_err(dev, "failed to attach dsi\n");
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक chipone_हटाओ(काष्ठा mipi_dsi_device *dsi)
-अणु
-	काष्ठा chipone *icn = mipi_dsi_get_drvdata(dsi);
+static int chipone_remove(struct mipi_dsi_device *dsi)
+{
+	struct chipone *icn = mipi_dsi_get_drvdata(dsi);
 
 	mipi_dsi_detach(dsi);
-	drm_bridge_हटाओ(&icn->bridge);
+	drm_bridge_remove(&icn->bridge);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id chipone_of_match[] = अणु
-	अणु .compatible = "chipone,icn6211", पूर्ण,
-	अणु /* sentinel */ पूर्ण
-पूर्ण;
+static const struct of_device_id chipone_of_match[] = {
+	{ .compatible = "chipone,icn6211", },
+	{ /* sentinel */ }
+};
 MODULE_DEVICE_TABLE(of, chipone_of_match);
 
-अटल काष्ठा mipi_dsi_driver chipone_driver = अणु
+static struct mipi_dsi_driver chipone_driver = {
 	.probe = chipone_probe,
-	.हटाओ = chipone_हटाओ,
-	.driver = अणु
+	.remove = chipone_remove,
+	.driver = {
 		.name = "chipone-icn6211",
 		.owner = THIS_MODULE,
 		.of_match_table = chipone_of_match,
-	पूर्ण,
-पूर्ण;
+	},
+};
 module_mipi_dsi_driver(chipone_driver);
 
 MODULE_AUTHOR("Jagan Teki <jagan@amarulasolutions.com>");

@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2013 Red Hat Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,56 +21,56 @@
  *
  * Authors: Ben Skeggs
  */
-#समावेश "priv.h"
-#समावेश "fuc/gf100.fuc3.h"
+#include "priv.h"
+#include "fuc/gf100.fuc3.h"
 
-#समावेश <subdev/mc.h>
+#include <subdev/mc.h>
 
-व्योम
-gf100_pmu_reset(काष्ठा nvkm_pmu *pmu)
-अणु
-	काष्ठा nvkm_device *device = pmu->subdev.device;
+void
+gf100_pmu_reset(struct nvkm_pmu *pmu)
+{
+	struct nvkm_device *device = pmu->subdev.device;
 	nvkm_mc_disable(device, NVKM_SUBDEV_PMU, 0);
 	nvkm_mc_enable(device, NVKM_SUBDEV_PMU, 0);
-पूर्ण
+}
 
 bool
-gf100_pmu_enabled(काष्ठा nvkm_pmu *pmu)
-अणु
-	वापस nvkm_mc_enabled(pmu->subdev.device, NVKM_SUBDEV_PMU, 0);
-पूर्ण
+gf100_pmu_enabled(struct nvkm_pmu *pmu)
+{
+	return nvkm_mc_enabled(pmu->subdev.device, NVKM_SUBDEV_PMU, 0);
+}
 
-अटल स्थिर काष्ठा nvkm_pmu_func
-gf100_pmu = अणु
+static const struct nvkm_pmu_func
+gf100_pmu = {
 	.flcn = &gt215_pmu_flcn,
 	.code.data = gf100_pmu_code,
-	.code.size = माप(gf100_pmu_code),
+	.code.size = sizeof(gf100_pmu_code),
 	.data.data = gf100_pmu_data,
-	.data.size = माप(gf100_pmu_data),
+	.data.size = sizeof(gf100_pmu_data),
 	.enabled = gf100_pmu_enabled,
 	.reset = gf100_pmu_reset,
 	.init = gt215_pmu_init,
 	.fini = gt215_pmu_fini,
-	.पूर्णांकr = gt215_pmu_पूर्णांकr,
+	.intr = gt215_pmu_intr,
 	.send = gt215_pmu_send,
 	.recv = gt215_pmu_recv,
-पूर्ण;
+};
 
-पूर्णांक
-gf100_pmu_nofw(काष्ठा nvkm_pmu *pmu, पूर्णांक ver, स्थिर काष्ठा nvkm_pmu_fwअगर *fwअगर)
-अणु
-	वापस 0;
-पूर्ण
+int
+gf100_pmu_nofw(struct nvkm_pmu *pmu, int ver, const struct nvkm_pmu_fwif *fwif)
+{
+	return 0;
+}
 
-अटल स्थिर काष्ठा nvkm_pmu_fwअगर
-gf100_pmu_fwअगर[] = अणु
-	अणु -1, gf100_pmu_nofw, &gf100_pmu पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct nvkm_pmu_fwif
+gf100_pmu_fwif[] = {
+	{ -1, gf100_pmu_nofw, &gf100_pmu },
+	{}
+};
 
-पूर्णांक
-gf100_pmu_new(काष्ठा nvkm_device *device, क्रमागत nvkm_subdev_type type, पूर्णांक inst,
-	      काष्ठा nvkm_pmu **ppmu)
-अणु
-	वापस nvkm_pmu_new_(gf100_pmu_fwअगर, device, type, inst, ppmu);
-पूर्ण
+int
+gf100_pmu_new(struct nvkm_device *device, enum nvkm_subdev_type type, int inst,
+	      struct nvkm_pmu **ppmu)
+{
+	return nvkm_pmu_new_(gf100_pmu_fwif, device, type, inst, ppmu);
+}

@@ -1,35 +1,34 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (C) 2015-2019 Jason A. Donenfeld <Jason@zx2c4.com>. All Rights Reserved.
  */
 
-#अगर_घोषित DEBUG
-bool __init wg_packet_counter_selftest(व्योम)
-अणु
-	काष्ठा noise_replay_counter *counter;
-	अचिन्हित पूर्णांक test_num = 0, i;
+#ifdef DEBUG
+bool __init wg_packet_counter_selftest(void)
+{
+	struct noise_replay_counter *counter;
+	unsigned int test_num = 0, i;
 	bool success = true;
 
-	counter = kदो_स्मृति(माप(*counter), GFP_KERNEL);
-	अगर (unlikely(!counter)) अणु
+	counter = kmalloc(sizeof(*counter), GFP_KERNEL);
+	if (unlikely(!counter)) {
 		pr_err("nonce counter self-test malloc: FAIL\n");
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
-#घोषणा T_INIT करो अणु                                    \
-		स_रखो(counter, 0, माप(*counter));  \
+#define T_INIT do {                                    \
+		memset(counter, 0, sizeof(*counter));  \
 		spin_lock_init(&counter->lock);        \
-	पूर्ण जबतक (0)
-#घोषणा T_LIM (COUNTER_WINDOW_SIZE + 1)
-#घोषणा T(n, v) करो अणु                                                  \
+	} while (0)
+#define T_LIM (COUNTER_WINDOW_SIZE + 1)
+#define T(n, v) do {                                                  \
 		++test_num;                                           \
-		अगर (counter_validate(counter, n) != (v)) अणु            \
+		if (counter_validate(counter, n) != (v)) {            \
 			pr_err("nonce counter self-test %u: FAIL\n",  \
 			       test_num);                             \
 			success = false;                              \
-		पूर्ण                                                     \
-	पूर्ण जबतक (0)
+		}                                                     \
+	} while (0)
 
 	T_INIT;
 	/*  1 */ T(0, true);
@@ -68,45 +67,45 @@ bool __init wg_packet_counter_selftest(व्योम)
 	/* 34 */ T(0, false);
 
 	T_INIT;
-	क्रम (i = 1; i <= COUNTER_WINDOW_SIZE; ++i)
+	for (i = 1; i <= COUNTER_WINDOW_SIZE; ++i)
 		T(i, true);
 	T(0, true);
 	T(0, false);
 
 	T_INIT;
-	क्रम (i = 2; i <= COUNTER_WINDOW_SIZE + 1; ++i)
+	for (i = 2; i <= COUNTER_WINDOW_SIZE + 1; ++i)
 		T(i, true);
 	T(1, true);
 	T(0, false);
 
 	T_INIT;
-	क्रम (i = COUNTER_WINDOW_SIZE + 1; i-- > 0;)
+	for (i = COUNTER_WINDOW_SIZE + 1; i-- > 0;)
 		T(i, true);
 
 	T_INIT;
-	क्रम (i = COUNTER_WINDOW_SIZE + 2; i-- > 1;)
+	for (i = COUNTER_WINDOW_SIZE + 2; i-- > 1;)
 		T(i, true);
 	T(0, false);
 
 	T_INIT;
-	क्रम (i = COUNTER_WINDOW_SIZE + 1; i-- > 1;)
+	for (i = COUNTER_WINDOW_SIZE + 1; i-- > 1;)
 		T(i, true);
 	T(COUNTER_WINDOW_SIZE + 1, true);
 	T(0, false);
 
 	T_INIT;
-	क्रम (i = COUNTER_WINDOW_SIZE + 1; i-- > 1;)
+	for (i = COUNTER_WINDOW_SIZE + 1; i-- > 1;)
 		T(i, true);
 	T(0, true);
 	T(COUNTER_WINDOW_SIZE + 1, true);
 
-#अघोषित T
-#अघोषित T_LIM
-#अघोषित T_INIT
+#undef T
+#undef T_LIM
+#undef T_INIT
 
-	अगर (success)
+	if (success)
 		pr_info("nonce counter self-tests: pass\n");
-	kमुक्त(counter);
-	वापस success;
-पूर्ण
-#पूर्ण_अगर
+	kfree(counter);
+	return success;
+}
+#endif

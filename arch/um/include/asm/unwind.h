@@ -1,9 +1,8 @@
-<शैली गुरु>
-#अगर_अघोषित _ASM_UML_UNWIND_H
-#घोषणा _ASM_UML_UNWIND_H
+#ifndef _ASM_UML_UNWIND_H
+#define _ASM_UML_UNWIND_H
 
-अटल अंतरभूत व्योम
-unwind_module_init(काष्ठा module *mod, व्योम *orc_ip, माप_प्रकार orc_ip_size,
-		   व्योम *orc, माप_प्रकार orc_size) अणुपूर्ण
+static inline void
+unwind_module_init(struct module *mod, void *orc_ip, size_t orc_ip_size,
+		   void *orc, size_t orc_size) {}
 
-#पूर्ण_अगर /* _ASM_UML_UNWIND_H */
+#endif /* _ASM_UML_UNWIND_H */

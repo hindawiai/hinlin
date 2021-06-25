@@ -1,116 +1,115 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * Cryptographic scatter and gather helpers.
  *
- * Copyright (c) 2002 James Morris <jmorris@पूर्णांकercode.com.au>
+ * Copyright (c) 2002 James Morris <jmorris@intercode.com.au>
  * Copyright (c) 2002 Adam J. Richter <adam@yggdrasil.com>
  * Copyright (c) 2004 Jean-Luc Cooke <jlcooke@certainkey.com>
- * Copyright (c) 2007 Herbert Xu <herbert@gonकरोr.apana.org.au>
+ * Copyright (c) 2007 Herbert Xu <herbert@gondor.apana.org.au>
  */
 
-#अगर_अघोषित _CRYPTO_SCATTERWALK_H
-#घोषणा _CRYPTO_SCATTERWALK_H
+#ifndef _CRYPTO_SCATTERWALK_H
+#define _CRYPTO_SCATTERWALK_H
 
-#समावेश <crypto/algapi.h>
-#समावेश <linux/highस्मृति.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/scatterlist.h>
+#include <crypto/algapi.h>
+#include <linux/highmem.h>
+#include <linux/kernel.h>
+#include <linux/scatterlist.h>
 
-अटल अंतरभूत व्योम scatterwalk_crypto_chain(काष्ठा scatterlist *head,
-					    काष्ठा scatterlist *sg, पूर्णांक num)
-अणु
-	अगर (sg)
+static inline void scatterwalk_crypto_chain(struct scatterlist *head,
+					    struct scatterlist *sg, int num)
+{
+	if (sg)
 		sg_chain(head, num, sg);
-	अन्यथा
+	else
 		sg_mark_end(head);
-पूर्ण
+}
 
-अटल अंतरभूत अचिन्हित पूर्णांक scatterwalk_pagelen(काष्ठा scatter_walk *walk)
-अणु
-	अचिन्हित पूर्णांक len = walk->sg->offset + walk->sg->length - walk->offset;
-	अचिन्हित पूर्णांक len_this_page = offset_in_page(~walk->offset) + 1;
-	वापस len_this_page > len ? len : len_this_page;
-पूर्ण
+static inline unsigned int scatterwalk_pagelen(struct scatter_walk *walk)
+{
+	unsigned int len = walk->sg->offset + walk->sg->length - walk->offset;
+	unsigned int len_this_page = offset_in_page(~walk->offset) + 1;
+	return len_this_page > len ? len : len_this_page;
+}
 
-अटल अंतरभूत अचिन्हित पूर्णांक scatterwalk_clamp(काष्ठा scatter_walk *walk,
-					     अचिन्हित पूर्णांक nbytes)
-अणु
-	अचिन्हित पूर्णांक len_this_page = scatterwalk_pagelen(walk);
-	वापस nbytes > len_this_page ? len_this_page : nbytes;
-पूर्ण
+static inline unsigned int scatterwalk_clamp(struct scatter_walk *walk,
+					     unsigned int nbytes)
+{
+	unsigned int len_this_page = scatterwalk_pagelen(walk);
+	return nbytes > len_this_page ? len_this_page : nbytes;
+}
 
-अटल अंतरभूत व्योम scatterwalk_advance(काष्ठा scatter_walk *walk,
-				       अचिन्हित पूर्णांक nbytes)
-अणु
+static inline void scatterwalk_advance(struct scatter_walk *walk,
+				       unsigned int nbytes)
+{
 	walk->offset += nbytes;
-पूर्ण
+}
 
-अटल अंतरभूत अचिन्हित पूर्णांक scatterwalk_aligned(काष्ठा scatter_walk *walk,
-					       अचिन्हित पूर्णांक alignmask)
-अणु
-	वापस !(walk->offset & alignmask);
-पूर्ण
+static inline unsigned int scatterwalk_aligned(struct scatter_walk *walk,
+					       unsigned int alignmask)
+{
+	return !(walk->offset & alignmask);
+}
 
-अटल अंतरभूत काष्ठा page *scatterwalk_page(काष्ठा scatter_walk *walk)
-अणु
-	वापस sg_page(walk->sg) + (walk->offset >> PAGE_SHIFT);
-पूर्ण
+static inline struct page *scatterwalk_page(struct scatter_walk *walk)
+{
+	return sg_page(walk->sg) + (walk->offset >> PAGE_SHIFT);
+}
 
-अटल अंतरभूत व्योम scatterwalk_unmap(व्योम *vaddr)
-अणु
+static inline void scatterwalk_unmap(void *vaddr)
+{
 	kunmap_atomic(vaddr);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम scatterwalk_start(काष्ठा scatter_walk *walk,
-				     काष्ठा scatterlist *sg)
-अणु
+static inline void scatterwalk_start(struct scatter_walk *walk,
+				     struct scatterlist *sg)
+{
 	walk->sg = sg;
 	walk->offset = sg->offset;
-पूर्ण
+}
 
-अटल अंतरभूत व्योम *scatterwalk_map(काष्ठा scatter_walk *walk)
-अणु
-	वापस kmap_atomic(scatterwalk_page(walk)) +
+static inline void *scatterwalk_map(struct scatter_walk *walk)
+{
+	return kmap_atomic(scatterwalk_page(walk)) +
 	       offset_in_page(walk->offset);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम scatterwalk_pageकरोne(काष्ठा scatter_walk *walk, पूर्णांक out,
-					अचिन्हित पूर्णांक more)
-अणु
-	अगर (out) अणु
-		काष्ठा page *page;
+static inline void scatterwalk_pagedone(struct scatter_walk *walk, int out,
+					unsigned int more)
+{
+	if (out) {
+		struct page *page;
 
 		page = sg_page(walk->sg) + ((walk->offset - 1) >> PAGE_SHIFT);
 		/* Test ARCH_IMPLEMENTS_FLUSH_DCACHE_PAGE first as
 		 * PageSlab cannot be optimised away per se due to
-		 * use of अस्थिर poपूर्णांकer.
+		 * use of volatile pointer.
 		 */
-		अगर (ARCH_IMPLEMENTS_FLUSH_DCACHE_PAGE && !PageSlab(page))
+		if (ARCH_IMPLEMENTS_FLUSH_DCACHE_PAGE && !PageSlab(page))
 			flush_dcache_page(page);
-	पूर्ण
+	}
 
-	अगर (more && walk->offset >= walk->sg->offset + walk->sg->length)
+	if (more && walk->offset >= walk->sg->offset + walk->sg->length)
 		scatterwalk_start(walk, sg_next(walk->sg));
-पूर्ण
+}
 
-अटल अंतरभूत व्योम scatterwalk_करोne(काष्ठा scatter_walk *walk, पूर्णांक out,
-				    पूर्णांक more)
-अणु
-	अगर (!more || walk->offset >= walk->sg->offset + walk->sg->length ||
+static inline void scatterwalk_done(struct scatter_walk *walk, int out,
+				    int more)
+{
+	if (!more || walk->offset >= walk->sg->offset + walk->sg->length ||
 	    !(walk->offset & (PAGE_SIZE - 1)))
-		scatterwalk_pageकरोne(walk, out, more);
-पूर्ण
+		scatterwalk_pagedone(walk, out, more);
+}
 
-व्योम scatterwalk_copychunks(व्योम *buf, काष्ठा scatter_walk *walk,
-			    माप_प्रकार nbytes, पूर्णांक out);
-व्योम *scatterwalk_map(काष्ठा scatter_walk *walk);
+void scatterwalk_copychunks(void *buf, struct scatter_walk *walk,
+			    size_t nbytes, int out);
+void *scatterwalk_map(struct scatter_walk *walk);
 
-व्योम scatterwalk_map_and_copy(व्योम *buf, काष्ठा scatterlist *sg,
-			      अचिन्हित पूर्णांक start, अचिन्हित पूर्णांक nbytes, पूर्णांक out);
+void scatterwalk_map_and_copy(void *buf, struct scatterlist *sg,
+			      unsigned int start, unsigned int nbytes, int out);
 
-काष्ठा scatterlist *scatterwalk_ffwd(काष्ठा scatterlist dst[2],
-				     काष्ठा scatterlist *src,
-				     अचिन्हित पूर्णांक len);
+struct scatterlist *scatterwalk_ffwd(struct scatterlist dst[2],
+				     struct scatterlist *src,
+				     unsigned int len);
 
-#पूर्ण_अगर  /* _CRYPTO_SCATTERWALK_H */
+#endif  /* _CRYPTO_SCATTERWALK_H */

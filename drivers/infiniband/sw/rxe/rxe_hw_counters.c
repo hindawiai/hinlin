@@ -1,13 +1,12 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0 OR Linux-OpenIB
+// SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB
 /*
  * Copyright (c) 2017 Mellanox Technologies Ltd. All rights reserved.
  */
 
-#समावेश "rxe.h"
-#समावेश "rxe_hw_counters.h"
+#include "rxe.h"
+#include "rxe_hw_counters.h"
 
-अटल स्थिर अक्षर * स्थिर rxe_counter_name[] = अणु
+static const char * const rxe_counter_name[] = {
 	[RXE_CNT_SENT_PKTS]           =  "sent_pkts",
 	[RXE_CNT_RCVD_PKTS]           =  "rcvd_pkts",
 	[RXE_CNT_DUP_REQ]             =  "duplicate_request",
@@ -23,33 +22,33 @@
 	[RXE_CNT_LINK_DOWNED]         =  "link_downed",
 	[RXE_CNT_RDMA_SEND]           =  "rdma_sends",
 	[RXE_CNT_RDMA_RECV]           =  "rdma_recvs",
-पूर्ण;
+};
 
-पूर्णांक rxe_ib_get_hw_stats(काष्ठा ib_device *ibdev,
-			काष्ठा rdma_hw_stats *stats,
-			u32 port, पूर्णांक index)
-अणु
-	काष्ठा rxe_dev *dev = to_rdev(ibdev);
-	अचिन्हित पूर्णांक cnt;
+int rxe_ib_get_hw_stats(struct ib_device *ibdev,
+			struct rdma_hw_stats *stats,
+			u32 port, int index)
+{
+	struct rxe_dev *dev = to_rdev(ibdev);
+	unsigned int cnt;
 
-	अगर (!port || !stats)
-		वापस -EINVAL;
+	if (!port || !stats)
+		return -EINVAL;
 
-	क्रम (cnt = 0; cnt  < ARRAY_SIZE(rxe_counter_name); cnt++)
-		stats->value[cnt] = atomic64_पढ़ो(&dev->stats_counters[cnt]);
+	for (cnt = 0; cnt  < ARRAY_SIZE(rxe_counter_name); cnt++)
+		stats->value[cnt] = atomic64_read(&dev->stats_counters[cnt]);
 
-	वापस ARRAY_SIZE(rxe_counter_name);
-पूर्ण
+	return ARRAY_SIZE(rxe_counter_name);
+}
 
-काष्ठा rdma_hw_stats *rxe_ib_alloc_hw_stats(काष्ठा ib_device *ibdev,
+struct rdma_hw_stats *rxe_ib_alloc_hw_stats(struct ib_device *ibdev,
 					    u32 port_num)
-अणु
+{
 	BUILD_BUG_ON(ARRAY_SIZE(rxe_counter_name) != RXE_NUM_OF_COUNTERS);
 	/* We support only per port stats */
-	अगर (!port_num)
-		वापस शून्य;
+	if (!port_num)
+		return NULL;
 
-	वापस rdma_alloc_hw_stats_काष्ठा(rxe_counter_name,
+	return rdma_alloc_hw_stats_struct(rxe_counter_name,
 					  ARRAY_SIZE(rxe_counter_name),
 					  RDMA_HW_STATS_DEFAULT_LIFESPAN);
-पूर्ण
+}

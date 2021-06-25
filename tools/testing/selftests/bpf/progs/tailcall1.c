@@ -1,49 +1,48 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <linux/bpf.h>
+// SPDX-License-Identifier: GPL-2.0
+#include <linux/bpf.h>
 
-#समावेश <bpf/bpf_helpers.h>
+#include <bpf/bpf_helpers.h>
 
-काष्ठा अणु
-	__uपूर्णांक(type, BPF_MAP_TYPE_PROG_ARRAY);
-	__uपूर्णांक(max_entries, 3);
-	__uपूर्णांक(key_size, माप(__u32));
-	__uपूर्णांक(value_size, माप(__u32));
-पूर्ण jmp_table SEC(".maps");
+struct {
+	__uint(type, BPF_MAP_TYPE_PROG_ARRAY);
+	__uint(max_entries, 3);
+	__uint(key_size, sizeof(__u32));
+	__uint(value_size, sizeof(__u32));
+} jmp_table SEC(".maps");
 
-#घोषणा TAIL_FUNC(x) 				\
+#define TAIL_FUNC(x) 				\
 	SEC("classifier/" #x)			\
-	पूर्णांक bpf_func_##x(काष्ठा __sk_buff *skb)	\
-	अणु					\
-		वापस x;			\
-	पूर्ण
+	int bpf_func_##x(struct __sk_buff *skb)	\
+	{					\
+		return x;			\
+	}
 TAIL_FUNC(0)
 TAIL_FUNC(1)
 TAIL_FUNC(2)
 
 SEC("classifier")
-पूर्णांक entry(काष्ठा __sk_buff *skb)
-अणु
+int entry(struct __sk_buff *skb)
+{
 	/* Multiple locations to make sure we patch
 	 * all of them.
 	 */
-	bpf_tail_call_अटल(skb, &jmp_table, 0);
-	bpf_tail_call_अटल(skb, &jmp_table, 0);
-	bpf_tail_call_अटल(skb, &jmp_table, 0);
-	bpf_tail_call_अटल(skb, &jmp_table, 0);
+	bpf_tail_call_static(skb, &jmp_table, 0);
+	bpf_tail_call_static(skb, &jmp_table, 0);
+	bpf_tail_call_static(skb, &jmp_table, 0);
+	bpf_tail_call_static(skb, &jmp_table, 0);
 
-	bpf_tail_call_अटल(skb, &jmp_table, 1);
-	bpf_tail_call_अटल(skb, &jmp_table, 1);
-	bpf_tail_call_अटल(skb, &jmp_table, 1);
-	bpf_tail_call_अटल(skb, &jmp_table, 1);
+	bpf_tail_call_static(skb, &jmp_table, 1);
+	bpf_tail_call_static(skb, &jmp_table, 1);
+	bpf_tail_call_static(skb, &jmp_table, 1);
+	bpf_tail_call_static(skb, &jmp_table, 1);
 
-	bpf_tail_call_अटल(skb, &jmp_table, 2);
-	bpf_tail_call_अटल(skb, &jmp_table, 2);
-	bpf_tail_call_अटल(skb, &jmp_table, 2);
-	bpf_tail_call_अटल(skb, &jmp_table, 2);
+	bpf_tail_call_static(skb, &jmp_table, 2);
+	bpf_tail_call_static(skb, &jmp_table, 2);
+	bpf_tail_call_static(skb, &jmp_table, 2);
+	bpf_tail_call_static(skb, &jmp_table, 2);
 
-	वापस 3;
-पूर्ण
+	return 3;
+}
 
-अक्षर __license[] SEC("license") = "GPL";
-पूर्णांक _version SEC("version") = 1;
+char __license[] SEC("license") = "GPL";
+int _version SEC("version") = 1;

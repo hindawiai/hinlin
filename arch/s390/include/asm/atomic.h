@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Copyright IBM Corp. 1999, 2016
  * Author(s): Martin Schwidefsky <schwidefsky@de.ibm.com>,
@@ -7,147 +6,147 @@
  *	      Arnd Bergmann,
  */
 
-#अगर_अघोषित __ARCH_S390_ATOMIC__
-#घोषणा __ARCH_S390_ATOMIC__
+#ifndef __ARCH_S390_ATOMIC__
+#define __ARCH_S390_ATOMIC__
 
-#समावेश <linux/compiler.h>
-#समावेश <linux/types.h>
-#समावेश <यंत्र/atomic_ops.h>
-#समावेश <यंत्र/barrier.h>
-#समावेश <यंत्र/cmpxchg.h>
+#include <linux/compiler.h>
+#include <linux/types.h>
+#include <asm/atomic_ops.h>
+#include <asm/barrier.h>
+#include <asm/cmpxchg.h>
 
-अटल अंतरभूत पूर्णांक arch_atomic_पढ़ो(स्थिर atomic_t *v)
-अणु
-	वापस __atomic_पढ़ो(v);
-पूर्ण
-#घोषणा arch_atomic_पढ़ो arch_atomic_पढ़ो
+static inline int arch_atomic_read(const atomic_t *v)
+{
+	return __atomic_read(v);
+}
+#define arch_atomic_read arch_atomic_read
 
-अटल अंतरभूत व्योम arch_atomic_set(atomic_t *v, पूर्णांक i)
-अणु
+static inline void arch_atomic_set(atomic_t *v, int i)
+{
 	__atomic_set(v, i);
-पूर्ण
-#घोषणा arch_atomic_set arch_atomic_set
+}
+#define arch_atomic_set arch_atomic_set
 
-अटल अंतरभूत पूर्णांक arch_atomic_add_वापस(पूर्णांक i, atomic_t *v)
-अणु
-	वापस __atomic_add_barrier(i, &v->counter) + i;
-पूर्ण
-#घोषणा arch_atomic_add_वापस arch_atomic_add_वापस
+static inline int arch_atomic_add_return(int i, atomic_t *v)
+{
+	return __atomic_add_barrier(i, &v->counter) + i;
+}
+#define arch_atomic_add_return arch_atomic_add_return
 
-अटल अंतरभूत पूर्णांक arch_atomic_fetch_add(पूर्णांक i, atomic_t *v)
-अणु
-	वापस __atomic_add_barrier(i, &v->counter);
-पूर्ण
-#घोषणा arch_atomic_fetch_add arch_atomic_fetch_add
+static inline int arch_atomic_fetch_add(int i, atomic_t *v)
+{
+	return __atomic_add_barrier(i, &v->counter);
+}
+#define arch_atomic_fetch_add arch_atomic_fetch_add
 
-अटल अंतरभूत व्योम arch_atomic_add(पूर्णांक i, atomic_t *v)
-अणु
+static inline void arch_atomic_add(int i, atomic_t *v)
+{
 	__atomic_add(i, &v->counter);
-पूर्ण
-#घोषणा arch_atomic_add arch_atomic_add
+}
+#define arch_atomic_add arch_atomic_add
 
-#घोषणा arch_atomic_sub(_i, _v)		arch_atomic_add(-(पूर्णांक)(_i), _v)
-#घोषणा arch_atomic_sub_वापस(_i, _v)	arch_atomic_add_वापस(-(पूर्णांक)(_i), _v)
-#घोषणा arch_atomic_fetch_sub(_i, _v)	arch_atomic_fetch_add(-(पूर्णांक)(_i), _v)
+#define arch_atomic_sub(_i, _v)		arch_atomic_add(-(int)(_i), _v)
+#define arch_atomic_sub_return(_i, _v)	arch_atomic_add_return(-(int)(_i), _v)
+#define arch_atomic_fetch_sub(_i, _v)	arch_atomic_fetch_add(-(int)(_i), _v)
 
-#घोषणा ATOMIC_OPS(op)							\
-अटल अंतरभूत व्योम arch_atomic_##op(पूर्णांक i, atomic_t *v)			\
-अणु									\
+#define ATOMIC_OPS(op)							\
+static inline void arch_atomic_##op(int i, atomic_t *v)			\
+{									\
 	__atomic_##op(i, &v->counter);					\
-पूर्ण									\
-अटल अंतरभूत पूर्णांक arch_atomic_fetch_##op(पूर्णांक i, atomic_t *v)		\
-अणु									\
-	वापस __atomic_##op##_barrier(i, &v->counter);			\
-पूर्ण
+}									\
+static inline int arch_atomic_fetch_##op(int i, atomic_t *v)		\
+{									\
+	return __atomic_##op##_barrier(i, &v->counter);			\
+}
 
 ATOMIC_OPS(and)
 ATOMIC_OPS(or)
 ATOMIC_OPS(xor)
 
-#अघोषित ATOMIC_OPS
+#undef ATOMIC_OPS
 
-#घोषणा arch_atomic_and			arch_atomic_and
-#घोषणा arch_atomic_or			arch_atomic_or
-#घोषणा arch_atomic_xor			arch_atomic_xor
-#घोषणा arch_atomic_fetch_and		arch_atomic_fetch_and
-#घोषणा arch_atomic_fetch_or		arch_atomic_fetch_or
-#घोषणा arch_atomic_fetch_xor		arch_atomic_fetch_xor
+#define arch_atomic_and			arch_atomic_and
+#define arch_atomic_or			arch_atomic_or
+#define arch_atomic_xor			arch_atomic_xor
+#define arch_atomic_fetch_and		arch_atomic_fetch_and
+#define arch_atomic_fetch_or		arch_atomic_fetch_or
+#define arch_atomic_fetch_xor		arch_atomic_fetch_xor
 
-#घोषणा arch_atomic_xchg(v, new)	(arch_xchg(&((v)->counter), new))
+#define arch_atomic_xchg(v, new)	(arch_xchg(&((v)->counter), new))
 
-अटल अंतरभूत पूर्णांक arch_atomic_cmpxchg(atomic_t *v, पूर्णांक old, पूर्णांक new)
-अणु
-	वापस __atomic_cmpxchg(&v->counter, old, new);
-पूर्ण
-#घोषणा arch_atomic_cmpxchg arch_atomic_cmpxchg
+static inline int arch_atomic_cmpxchg(atomic_t *v, int old, int new)
+{
+	return __atomic_cmpxchg(&v->counter, old, new);
+}
+#define arch_atomic_cmpxchg arch_atomic_cmpxchg
 
-#घोषणा ATOMIC64_INIT(i)  अणु (i) पूर्ण
+#define ATOMIC64_INIT(i)  { (i) }
 
-अटल अंतरभूत s64 arch_atomic64_पढ़ो(स्थिर atomic64_t *v)
-अणु
-	वापस __atomic64_पढ़ो(v);
-पूर्ण
-#घोषणा arch_atomic64_पढ़ो arch_atomic64_पढ़ो
+static inline s64 arch_atomic64_read(const atomic64_t *v)
+{
+	return __atomic64_read(v);
+}
+#define arch_atomic64_read arch_atomic64_read
 
-अटल अंतरभूत व्योम arch_atomic64_set(atomic64_t *v, s64 i)
-अणु
+static inline void arch_atomic64_set(atomic64_t *v, s64 i)
+{
 	__atomic64_set(v, i);
-पूर्ण
-#घोषणा arch_atomic64_set arch_atomic64_set
+}
+#define arch_atomic64_set arch_atomic64_set
 
-अटल अंतरभूत s64 arch_atomic64_add_वापस(s64 i, atomic64_t *v)
-अणु
-	वापस __atomic64_add_barrier(i, (दीर्घ *)&v->counter) + i;
-पूर्ण
-#घोषणा arch_atomic64_add_वापस arch_atomic64_add_वापस
+static inline s64 arch_atomic64_add_return(s64 i, atomic64_t *v)
+{
+	return __atomic64_add_barrier(i, (long *)&v->counter) + i;
+}
+#define arch_atomic64_add_return arch_atomic64_add_return
 
-अटल अंतरभूत s64 arch_atomic64_fetch_add(s64 i, atomic64_t *v)
-अणु
-	वापस __atomic64_add_barrier(i, (दीर्घ *)&v->counter);
-पूर्ण
-#घोषणा arch_atomic64_fetch_add arch_atomic64_fetch_add
+static inline s64 arch_atomic64_fetch_add(s64 i, atomic64_t *v)
+{
+	return __atomic64_add_barrier(i, (long *)&v->counter);
+}
+#define arch_atomic64_fetch_add arch_atomic64_fetch_add
 
-अटल अंतरभूत व्योम arch_atomic64_add(s64 i, atomic64_t *v)
-अणु
-	__atomic64_add(i, (दीर्घ *)&v->counter);
-पूर्ण
-#घोषणा arch_atomic64_add arch_atomic64_add
+static inline void arch_atomic64_add(s64 i, atomic64_t *v)
+{
+	__atomic64_add(i, (long *)&v->counter);
+}
+#define arch_atomic64_add arch_atomic64_add
 
-#घोषणा arch_atomic64_xchg(v, new)	(arch_xchg(&((v)->counter), new))
+#define arch_atomic64_xchg(v, new)	(arch_xchg(&((v)->counter), new))
 
-अटल अंतरभूत s64 arch_atomic64_cmpxchg(atomic64_t *v, s64 old, s64 new)
-अणु
-	वापस __atomic64_cmpxchg((दीर्घ *)&v->counter, old, new);
-पूर्ण
-#घोषणा arch_atomic64_cmpxchg arch_atomic64_cmpxchg
+static inline s64 arch_atomic64_cmpxchg(atomic64_t *v, s64 old, s64 new)
+{
+	return __atomic64_cmpxchg((long *)&v->counter, old, new);
+}
+#define arch_atomic64_cmpxchg arch_atomic64_cmpxchg
 
-#घोषणा ATOMIC64_OPS(op)						\
-अटल अंतरभूत व्योम arch_atomic64_##op(s64 i, atomic64_t *v)		\
-अणु									\
-	__atomic64_##op(i, (दीर्घ *)&v->counter);			\
-पूर्ण									\
-अटल अंतरभूत दीर्घ arch_atomic64_fetch_##op(s64 i, atomic64_t *v)	\
-अणु									\
-	वापस __atomic64_##op##_barrier(i, (दीर्घ *)&v->counter);	\
-पूर्ण
+#define ATOMIC64_OPS(op)						\
+static inline void arch_atomic64_##op(s64 i, atomic64_t *v)		\
+{									\
+	__atomic64_##op(i, (long *)&v->counter);			\
+}									\
+static inline long arch_atomic64_fetch_##op(s64 i, atomic64_t *v)	\
+{									\
+	return __atomic64_##op##_barrier(i, (long *)&v->counter);	\
+}
 
 ATOMIC64_OPS(and)
 ATOMIC64_OPS(or)
 ATOMIC64_OPS(xor)
 
-#अघोषित ATOMIC64_OPS
+#undef ATOMIC64_OPS
 
-#घोषणा arch_atomic64_and		arch_atomic64_and
-#घोषणा arch_atomic64_or		arch_atomic64_or
-#घोषणा arch_atomic64_xor		arch_atomic64_xor
-#घोषणा arch_atomic64_fetch_and		arch_atomic64_fetch_and
-#घोषणा arch_atomic64_fetch_or		arch_atomic64_fetch_or
-#घोषणा arch_atomic64_fetch_xor		arch_atomic64_fetch_xor
+#define arch_atomic64_and		arch_atomic64_and
+#define arch_atomic64_or		arch_atomic64_or
+#define arch_atomic64_xor		arch_atomic64_xor
+#define arch_atomic64_fetch_and		arch_atomic64_fetch_and
+#define arch_atomic64_fetch_or		arch_atomic64_fetch_or
+#define arch_atomic64_fetch_xor		arch_atomic64_fetch_xor
 
-#घोषणा arch_atomic64_sub_वापस(_i, _v) arch_atomic64_add_वापस(-(s64)(_i), _v)
-#घोषणा arch_atomic64_fetch_sub(_i, _v)  arch_atomic64_fetch_add(-(s64)(_i), _v)
-#घोषणा arch_atomic64_sub(_i, _v)	 arch_atomic64_add(-(s64)(_i), _v)
+#define arch_atomic64_sub_return(_i, _v) arch_atomic64_add_return(-(s64)(_i), _v)
+#define arch_atomic64_fetch_sub(_i, _v)  arch_atomic64_fetch_add(-(s64)(_i), _v)
+#define arch_atomic64_sub(_i, _v)	 arch_atomic64_add(-(s64)(_i), _v)
 
-#घोषणा ARCH_ATOMIC
+#define ARCH_ATOMIC
 
-#पूर्ण_अगर /* __ARCH_S390_ATOMIC__  */
+#endif /* __ARCH_S390_ATOMIC__  */

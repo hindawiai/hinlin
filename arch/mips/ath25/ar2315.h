@@ -1,24 +1,23 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __AR2315_H
-#घोषणा __AR2315_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __AR2315_H
+#define __AR2315_H
 
-#अगर_घोषित CONFIG_SOC_AR2315
+#ifdef CONFIG_SOC_AR2315
 
-व्योम ar2315_arch_init_irq(व्योम);
-व्योम ar2315_init_devices(व्योम);
-व्योम ar2315_plat_समय_init(व्योम);
-व्योम ar2315_plat_mem_setup(व्योम);
-व्योम ar2315_arch_init(व्योम);
+void ar2315_arch_init_irq(void);
+void ar2315_init_devices(void);
+void ar2315_plat_time_init(void);
+void ar2315_plat_mem_setup(void);
+void ar2315_arch_init(void);
 
-#अन्यथा
+#else
 
-अटल अंतरभूत व्योम ar2315_arch_init_irq(व्योम) अणुपूर्ण
-अटल अंतरभूत व्योम ar2315_init_devices(व्योम) अणुपूर्ण
-अटल अंतरभूत व्योम ar2315_plat_समय_init(व्योम) अणुपूर्ण
-अटल अंतरभूत व्योम ar2315_plat_mem_setup(व्योम) अणुपूर्ण
-अटल अंतरभूत व्योम ar2315_arch_init(व्योम) अणुपूर्ण
+static inline void ar2315_arch_init_irq(void) {}
+static inline void ar2315_init_devices(void) {}
+static inline void ar2315_plat_time_init(void) {}
+static inline void ar2315_plat_mem_setup(void) {}
+static inline void ar2315_arch_init(void) {}
 
-#पूर्ण_अगर
+#endif
 
-#पूर्ण_अगर	/* __AR2315_H */
+#endif	/* __AR2315_H */

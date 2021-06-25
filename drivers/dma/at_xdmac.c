@@ -1,194 +1,193 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Driver क्रम the Aपंचांगel Extensible DMA Controller (aka XDMAC on AT91 प्रणालीs)
+ * Driver for the Atmel Extensible DMA Controller (aka XDMAC on AT91 systems)
  *
- * Copyright (C) 2014 Aपंचांगel Corporation
+ * Copyright (C) 2014 Atmel Corporation
  *
- * Author: Luकरोvic Desroches <luकरोvic.desroches@aपंचांगel.com>
+ * Author: Ludovic Desroches <ludovic.desroches@atmel.com>
  */
 
-#समावेश <यंत्र/barrier.h>
-#समावेश <dt-bindings/dma/at91.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/dmaengine.h>
-#समावेश <linux/dmapool.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/list.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of_dma.h>
-#समावेश <linux/of_platक्रमm.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/pm.h>
+#include <asm/barrier.h>
+#include <dt-bindings/dma/at91.h>
+#include <linux/clk.h>
+#include <linux/dmaengine.h>
+#include <linux/dmapool.h>
+#include <linux/interrupt.h>
+#include <linux/irq.h>
+#include <linux/kernel.h>
+#include <linux/list.h>
+#include <linux/module.h>
+#include <linux/of_dma.h>
+#include <linux/of_platform.h>
+#include <linux/platform_device.h>
+#include <linux/pm.h>
 
-#समावेश "dmaengine.h"
+#include "dmaengine.h"
 
-/* Global रेजिस्टरs */
-#घोषणा AT_XDMAC_GTYPE		0x00	/* Global Type Register */
-#घोषणा		AT_XDMAC_NB_CH(i)	(((i) & 0x1F) + 1)		/* Number of Channels Minus One */
-#घोषणा		AT_XDMAC_FIFO_SZ(i)	(((i) >> 5) & 0x7FF)		/* Number of Bytes */
-#घोषणा		AT_XDMAC_NB_REQ(i)	((((i) >> 16) & 0x3F) + 1)	/* Number of Peripheral Requests Minus One */
-#घोषणा AT_XDMAC_GCFG		0x04	/* Global Configuration Register */
-#घोषणा		AT_XDMAC_WRHP(i)		(((i) & 0xF) << 4)
-#घोषणा		AT_XDMAC_WRMP(i)		(((i) & 0xF) << 8)
-#घोषणा		AT_XDMAC_WRLP(i)		(((i) & 0xF) << 12)
-#घोषणा		AT_XDMAC_RDHP(i)		(((i) & 0xF) << 16)
-#घोषणा		AT_XDMAC_RDMP(i)		(((i) & 0xF) << 20)
-#घोषणा		AT_XDMAC_RDLP(i)		(((i) & 0xF) << 24)
-#घोषणा		AT_XDMAC_RDSG(i)		(((i) & 0xF) << 28)
-#घोषणा AT_XDMAC_GCFG_M2M	(AT_XDMAC_RDLP(0xF) | AT_XDMAC_WRLP(0xF))
-#घोषणा AT_XDMAC_GCFG_P2M	(AT_XDMAC_RDSG(0x1) | AT_XDMAC_RDHP(0x3) | \
+/* Global registers */
+#define AT_XDMAC_GTYPE		0x00	/* Global Type Register */
+#define		AT_XDMAC_NB_CH(i)	(((i) & 0x1F) + 1)		/* Number of Channels Minus One */
+#define		AT_XDMAC_FIFO_SZ(i)	(((i) >> 5) & 0x7FF)		/* Number of Bytes */
+#define		AT_XDMAC_NB_REQ(i)	((((i) >> 16) & 0x3F) + 1)	/* Number of Peripheral Requests Minus One */
+#define AT_XDMAC_GCFG		0x04	/* Global Configuration Register */
+#define		AT_XDMAC_WRHP(i)		(((i) & 0xF) << 4)
+#define		AT_XDMAC_WRMP(i)		(((i) & 0xF) << 8)
+#define		AT_XDMAC_WRLP(i)		(((i) & 0xF) << 12)
+#define		AT_XDMAC_RDHP(i)		(((i) & 0xF) << 16)
+#define		AT_XDMAC_RDMP(i)		(((i) & 0xF) << 20)
+#define		AT_XDMAC_RDLP(i)		(((i) & 0xF) << 24)
+#define		AT_XDMAC_RDSG(i)		(((i) & 0xF) << 28)
+#define AT_XDMAC_GCFG_M2M	(AT_XDMAC_RDLP(0xF) | AT_XDMAC_WRLP(0xF))
+#define AT_XDMAC_GCFG_P2M	(AT_XDMAC_RDSG(0x1) | AT_XDMAC_RDHP(0x3) | \
 				AT_XDMAC_WRHP(0x5))
-#घोषणा AT_XDMAC_GWAC		0x08	/* Global Weighted Arbiter Configuration Register */
-#घोषणा		AT_XDMAC_PW0(i)		(((i) & 0xF) << 0)
-#घोषणा		AT_XDMAC_PW1(i)		(((i) & 0xF) << 4)
-#घोषणा		AT_XDMAC_PW2(i)		(((i) & 0xF) << 8)
-#घोषणा		AT_XDMAC_PW3(i)		(((i) & 0xF) << 12)
-#घोषणा AT_XDMAC_GWAC_M2M	0
-#घोषणा AT_XDMAC_GWAC_P2M	(AT_XDMAC_PW0(0xF) | AT_XDMAC_PW2(0xF))
+#define AT_XDMAC_GWAC		0x08	/* Global Weighted Arbiter Configuration Register */
+#define		AT_XDMAC_PW0(i)		(((i) & 0xF) << 0)
+#define		AT_XDMAC_PW1(i)		(((i) & 0xF) << 4)
+#define		AT_XDMAC_PW2(i)		(((i) & 0xF) << 8)
+#define		AT_XDMAC_PW3(i)		(((i) & 0xF) << 12)
+#define AT_XDMAC_GWAC_M2M	0
+#define AT_XDMAC_GWAC_P2M	(AT_XDMAC_PW0(0xF) | AT_XDMAC_PW2(0xF))
 
-#घोषणा AT_XDMAC_GIE		0x0C	/* Global Interrupt Enable Register */
-#घोषणा AT_XDMAC_GID		0x10	/* Global Interrupt Disable Register */
-#घोषणा AT_XDMAC_GIM		0x14	/* Global Interrupt Mask Register */
-#घोषणा AT_XDMAC_GIS		0x18	/* Global Interrupt Status Register */
-#घोषणा AT_XDMAC_GE		0x1C	/* Global Channel Enable Register */
-#घोषणा AT_XDMAC_GD		0x20	/* Global Channel Disable Register */
-#घोषणा AT_XDMAC_GS		0x24	/* Global Channel Status Register */
-#घोषणा AT_XDMAC_VERSION	0xFFC	/* XDMAC Version Register */
+#define AT_XDMAC_GIE		0x0C	/* Global Interrupt Enable Register */
+#define AT_XDMAC_GID		0x10	/* Global Interrupt Disable Register */
+#define AT_XDMAC_GIM		0x14	/* Global Interrupt Mask Register */
+#define AT_XDMAC_GIS		0x18	/* Global Interrupt Status Register */
+#define AT_XDMAC_GE		0x1C	/* Global Channel Enable Register */
+#define AT_XDMAC_GD		0x20	/* Global Channel Disable Register */
+#define AT_XDMAC_GS		0x24	/* Global Channel Status Register */
+#define AT_XDMAC_VERSION	0xFFC	/* XDMAC Version Register */
 
-/* Channel relative रेजिस्टरs offsets */
-#घोषणा AT_XDMAC_CIE		0x00	/* Channel Interrupt Enable Register */
-#घोषणा		AT_XDMAC_CIE_BIE	BIT(0)	/* End of Block Interrupt Enable Bit */
-#घोषणा		AT_XDMAC_CIE_LIE	BIT(1)	/* End of Linked List Interrupt Enable Bit */
-#घोषणा		AT_XDMAC_CIE_DIE	BIT(2)	/* End of Disable Interrupt Enable Bit */
-#घोषणा		AT_XDMAC_CIE_FIE	BIT(3)	/* End of Flush Interrupt Enable Bit */
-#घोषणा		AT_XDMAC_CIE_RBEIE	BIT(4)	/* Read Bus Error Interrupt Enable Bit */
-#घोषणा		AT_XDMAC_CIE_WBEIE	BIT(5)	/* Write Bus Error Interrupt Enable Bit */
-#घोषणा		AT_XDMAC_CIE_ROIE	BIT(6)	/* Request Overflow Interrupt Enable Bit */
-#घोषणा AT_XDMAC_CID		0x04	/* Channel Interrupt Disable Register */
-#घोषणा		AT_XDMAC_CID_BID	BIT(0)	/* End of Block Interrupt Disable Bit */
-#घोषणा		AT_XDMAC_CID_LID	BIT(1)	/* End of Linked List Interrupt Disable Bit */
-#घोषणा		AT_XDMAC_CID_DID	BIT(2)	/* End of Disable Interrupt Disable Bit */
-#घोषणा		AT_XDMAC_CID_FID	BIT(3)	/* End of Flush Interrupt Disable Bit */
-#घोषणा		AT_XDMAC_CID_RBEID	BIT(4)	/* Read Bus Error Interrupt Disable Bit */
-#घोषणा		AT_XDMAC_CID_WBEID	BIT(5)	/* Write Bus Error Interrupt Disable Bit */
-#घोषणा		AT_XDMAC_CID_ROID	BIT(6)	/* Request Overflow Interrupt Disable Bit */
-#घोषणा AT_XDMAC_CIM		0x08	/* Channel Interrupt Mask Register */
-#घोषणा		AT_XDMAC_CIM_BIM	BIT(0)	/* End of Block Interrupt Mask Bit */
-#घोषणा		AT_XDMAC_CIM_LIM	BIT(1)	/* End of Linked List Interrupt Mask Bit */
-#घोषणा		AT_XDMAC_CIM_DIM	BIT(2)	/* End of Disable Interrupt Mask Bit */
-#घोषणा		AT_XDMAC_CIM_FIM	BIT(3)	/* End of Flush Interrupt Mask Bit */
-#घोषणा		AT_XDMAC_CIM_RBEIM	BIT(4)	/* Read Bus Error Interrupt Mask Bit */
-#घोषणा		AT_XDMAC_CIM_WBEIM	BIT(5)	/* Write Bus Error Interrupt Mask Bit */
-#घोषणा		AT_XDMAC_CIM_ROIM	BIT(6)	/* Request Overflow Interrupt Mask Bit */
-#घोषणा AT_XDMAC_CIS		0x0C	/* Channel Interrupt Status Register */
-#घोषणा		AT_XDMAC_CIS_BIS	BIT(0)	/* End of Block Interrupt Status Bit */
-#घोषणा		AT_XDMAC_CIS_LIS	BIT(1)	/* End of Linked List Interrupt Status Bit */
-#घोषणा		AT_XDMAC_CIS_DIS	BIT(2)	/* End of Disable Interrupt Status Bit */
-#घोषणा		AT_XDMAC_CIS_FIS	BIT(3)	/* End of Flush Interrupt Status Bit */
-#घोषणा		AT_XDMAC_CIS_RBEIS	BIT(4)	/* Read Bus Error Interrupt Status Bit */
-#घोषणा		AT_XDMAC_CIS_WBEIS	BIT(5)	/* Write Bus Error Interrupt Status Bit */
-#घोषणा		AT_XDMAC_CIS_ROIS	BIT(6)	/* Request Overflow Interrupt Status Bit */
-#घोषणा AT_XDMAC_CSA		0x10	/* Channel Source Address Register */
-#घोषणा AT_XDMAC_CDA		0x14	/* Channel Destination Address Register */
-#घोषणा AT_XDMAC_CNDA		0x18	/* Channel Next Descriptor Address Register */
-#घोषणा		AT_XDMAC_CNDA_NDAIF(i)	((i) & 0x1)			/* Channel x Next Descriptor Interface */
-#घोषणा		AT_XDMAC_CNDA_NDA(i)	((i) & 0xfffffffc)		/* Channel x Next Descriptor Address */
-#घोषणा AT_XDMAC_CNDC		0x1C	/* Channel Next Descriptor Control Register */
-#घोषणा		AT_XDMAC_CNDC_NDE		(0x1 << 0)		/* Channel x Next Descriptor Enable */
-#घोषणा		AT_XDMAC_CNDC_NDSUP		(0x1 << 1)		/* Channel x Next Descriptor Source Update */
-#घोषणा		AT_XDMAC_CNDC_NDDUP		(0x1 << 2)		/* Channel x Next Descriptor Destination Update */
-#घोषणा		AT_XDMAC_CNDC_NDVIEW_NDV0	(0x0 << 3)		/* Channel x Next Descriptor View 0 */
-#घोषणा		AT_XDMAC_CNDC_NDVIEW_NDV1	(0x1 << 3)		/* Channel x Next Descriptor View 1 */
-#घोषणा		AT_XDMAC_CNDC_NDVIEW_NDV2	(0x2 << 3)		/* Channel x Next Descriptor View 2 */
-#घोषणा		AT_XDMAC_CNDC_NDVIEW_NDV3	(0x3 << 3)		/* Channel x Next Descriptor View 3 */
-#घोषणा AT_XDMAC_CUBC		0x20	/* Channel Microblock Control Register */
-#घोषणा AT_XDMAC_CBC		0x24	/* Channel Block Control Register */
-#घोषणा AT_XDMAC_CC		0x28	/* Channel Configuration Register */
-#घोषणा		AT_XDMAC_CC_TYPE	(0x1 << 0)	/* Channel Transfer Type */
-#घोषणा			AT_XDMAC_CC_TYPE_MEM_TRAN	(0x0 << 0)	/* Memory to Memory Transfer */
-#घोषणा			AT_XDMAC_CC_TYPE_PER_TRAN	(0x1 << 0)	/* Peripheral to Memory or Memory to Peripheral Transfer */
-#घोषणा		AT_XDMAC_CC_MBSIZE_MASK	(0x3 << 1)
-#घोषणा			AT_XDMAC_CC_MBSIZE_SINGLE	(0x0 << 1)
-#घोषणा			AT_XDMAC_CC_MBSIZE_FOUR		(0x1 << 1)
-#घोषणा			AT_XDMAC_CC_MBSIZE_EIGHT	(0x2 << 1)
-#घोषणा			AT_XDMAC_CC_MBSIZE_SIXTEEN	(0x3 << 1)
-#घोषणा		AT_XDMAC_CC_DSYNC	(0x1 << 4)	/* Channel Synchronization */
-#घोषणा			AT_XDMAC_CC_DSYNC_PER2MEM	(0x0 << 4)
-#घोषणा			AT_XDMAC_CC_DSYNC_MEM2PER	(0x1 << 4)
-#घोषणा		AT_XDMAC_CC_PROT	(0x1 << 5)	/* Channel Protection */
-#घोषणा			AT_XDMAC_CC_PROT_SEC		(0x0 << 5)
-#घोषणा			AT_XDMAC_CC_PROT_UNSEC		(0x1 << 5)
-#घोषणा		AT_XDMAC_CC_SWREQ	(0x1 << 6)	/* Channel Software Request Trigger */
-#घोषणा			AT_XDMAC_CC_SWREQ_HWR_CONNECTED	(0x0 << 6)
-#घोषणा			AT_XDMAC_CC_SWREQ_SWR_CONNECTED	(0x1 << 6)
-#घोषणा		AT_XDMAC_CC_MEMSET	(0x1 << 7)	/* Channel Fill Block of memory */
-#घोषणा			AT_XDMAC_CC_MEMSET_NORMAL_MODE	(0x0 << 7)
-#घोषणा			AT_XDMAC_CC_MEMSET_HW_MODE	(0x1 << 7)
-#घोषणा		AT_XDMAC_CC_CSIZE(i)	((0x7 & (i)) << 8)	/* Channel Chunk Size */
-#घोषणा		AT_XDMAC_CC_DWIDTH_OFFSET	11
-#घोषणा		AT_XDMAC_CC_DWIDTH_MASK	(0x3 << AT_XDMAC_CC_DWIDTH_OFFSET)
-#घोषणा		AT_XDMAC_CC_DWIDTH(i)	((0x3 & (i)) << AT_XDMAC_CC_DWIDTH_OFFSET)	/* Channel Data Width */
-#घोषणा			AT_XDMAC_CC_DWIDTH_BYTE		0x0
-#घोषणा			AT_XDMAC_CC_DWIDTH_HALFWORD	0x1
-#घोषणा			AT_XDMAC_CC_DWIDTH_WORD		0x2
-#घोषणा			AT_XDMAC_CC_DWIDTH_DWORD	0x3
-#घोषणा		AT_XDMAC_CC_SIF(i)	((0x1 & (i)) << 13)	/* Channel Source Interface Identअगरier */
-#घोषणा		AT_XDMAC_CC_DIF(i)	((0x1 & (i)) << 14)	/* Channel Destination Interface Identअगरier */
-#घोषणा		AT_XDMAC_CC_SAM_MASK	(0x3 << 16)	/* Channel Source Addressing Mode */
-#घोषणा			AT_XDMAC_CC_SAM_FIXED_AM	(0x0 << 16)
-#घोषणा			AT_XDMAC_CC_SAM_INCREMENTED_AM	(0x1 << 16)
-#घोषणा			AT_XDMAC_CC_SAM_UBS_AM		(0x2 << 16)
-#घोषणा			AT_XDMAC_CC_SAM_UBS_DS_AM	(0x3 << 16)
-#घोषणा		AT_XDMAC_CC_DAM_MASK	(0x3 << 18)	/* Channel Source Addressing Mode */
-#घोषणा			AT_XDMAC_CC_DAM_FIXED_AM	(0x0 << 18)
-#घोषणा			AT_XDMAC_CC_DAM_INCREMENTED_AM	(0x1 << 18)
-#घोषणा			AT_XDMAC_CC_DAM_UBS_AM		(0x2 << 18)
-#घोषणा			AT_XDMAC_CC_DAM_UBS_DS_AM	(0x3 << 18)
-#घोषणा		AT_XDMAC_CC_INITD	(0x1 << 21)	/* Channel Initialization Terminated (पढ़ो only) */
-#घोषणा			AT_XDMAC_CC_INITD_TERMINATED	(0x0 << 21)
-#घोषणा			AT_XDMAC_CC_INITD_IN_PROGRESS	(0x1 << 21)
-#घोषणा		AT_XDMAC_CC_RDIP	(0x1 << 22)	/* Read in Progress (पढ़ो only) */
-#घोषणा			AT_XDMAC_CC_RDIP_DONE		(0x0 << 22)
-#घोषणा			AT_XDMAC_CC_RDIP_IN_PROGRESS	(0x1 << 22)
-#घोषणा		AT_XDMAC_CC_WRIP	(0x1 << 23)	/* Write in Progress (पढ़ो only) */
-#घोषणा			AT_XDMAC_CC_WRIP_DONE		(0x0 << 23)
-#घोषणा			AT_XDMAC_CC_WRIP_IN_PROGRESS	(0x1 << 23)
-#घोषणा		AT_XDMAC_CC_PERID(i)	(0x7f & (i) << 24)	/* Channel Peripheral Identअगरier */
-#घोषणा AT_XDMAC_CDS_MSP	0x2C	/* Channel Data Stride Memory Set Pattern */
-#घोषणा AT_XDMAC_CSUS		0x30	/* Channel Source Microblock Stride */
-#घोषणा AT_XDMAC_CDUS		0x34	/* Channel Destination Microblock Stride */
+/* Channel relative registers offsets */
+#define AT_XDMAC_CIE		0x00	/* Channel Interrupt Enable Register */
+#define		AT_XDMAC_CIE_BIE	BIT(0)	/* End of Block Interrupt Enable Bit */
+#define		AT_XDMAC_CIE_LIE	BIT(1)	/* End of Linked List Interrupt Enable Bit */
+#define		AT_XDMAC_CIE_DIE	BIT(2)	/* End of Disable Interrupt Enable Bit */
+#define		AT_XDMAC_CIE_FIE	BIT(3)	/* End of Flush Interrupt Enable Bit */
+#define		AT_XDMAC_CIE_RBEIE	BIT(4)	/* Read Bus Error Interrupt Enable Bit */
+#define		AT_XDMAC_CIE_WBEIE	BIT(5)	/* Write Bus Error Interrupt Enable Bit */
+#define		AT_XDMAC_CIE_ROIE	BIT(6)	/* Request Overflow Interrupt Enable Bit */
+#define AT_XDMAC_CID		0x04	/* Channel Interrupt Disable Register */
+#define		AT_XDMAC_CID_BID	BIT(0)	/* End of Block Interrupt Disable Bit */
+#define		AT_XDMAC_CID_LID	BIT(1)	/* End of Linked List Interrupt Disable Bit */
+#define		AT_XDMAC_CID_DID	BIT(2)	/* End of Disable Interrupt Disable Bit */
+#define		AT_XDMAC_CID_FID	BIT(3)	/* End of Flush Interrupt Disable Bit */
+#define		AT_XDMAC_CID_RBEID	BIT(4)	/* Read Bus Error Interrupt Disable Bit */
+#define		AT_XDMAC_CID_WBEID	BIT(5)	/* Write Bus Error Interrupt Disable Bit */
+#define		AT_XDMAC_CID_ROID	BIT(6)	/* Request Overflow Interrupt Disable Bit */
+#define AT_XDMAC_CIM		0x08	/* Channel Interrupt Mask Register */
+#define		AT_XDMAC_CIM_BIM	BIT(0)	/* End of Block Interrupt Mask Bit */
+#define		AT_XDMAC_CIM_LIM	BIT(1)	/* End of Linked List Interrupt Mask Bit */
+#define		AT_XDMAC_CIM_DIM	BIT(2)	/* End of Disable Interrupt Mask Bit */
+#define		AT_XDMAC_CIM_FIM	BIT(3)	/* End of Flush Interrupt Mask Bit */
+#define		AT_XDMAC_CIM_RBEIM	BIT(4)	/* Read Bus Error Interrupt Mask Bit */
+#define		AT_XDMAC_CIM_WBEIM	BIT(5)	/* Write Bus Error Interrupt Mask Bit */
+#define		AT_XDMAC_CIM_ROIM	BIT(6)	/* Request Overflow Interrupt Mask Bit */
+#define AT_XDMAC_CIS		0x0C	/* Channel Interrupt Status Register */
+#define		AT_XDMAC_CIS_BIS	BIT(0)	/* End of Block Interrupt Status Bit */
+#define		AT_XDMAC_CIS_LIS	BIT(1)	/* End of Linked List Interrupt Status Bit */
+#define		AT_XDMAC_CIS_DIS	BIT(2)	/* End of Disable Interrupt Status Bit */
+#define		AT_XDMAC_CIS_FIS	BIT(3)	/* End of Flush Interrupt Status Bit */
+#define		AT_XDMAC_CIS_RBEIS	BIT(4)	/* Read Bus Error Interrupt Status Bit */
+#define		AT_XDMAC_CIS_WBEIS	BIT(5)	/* Write Bus Error Interrupt Status Bit */
+#define		AT_XDMAC_CIS_ROIS	BIT(6)	/* Request Overflow Interrupt Status Bit */
+#define AT_XDMAC_CSA		0x10	/* Channel Source Address Register */
+#define AT_XDMAC_CDA		0x14	/* Channel Destination Address Register */
+#define AT_XDMAC_CNDA		0x18	/* Channel Next Descriptor Address Register */
+#define		AT_XDMAC_CNDA_NDAIF(i)	((i) & 0x1)			/* Channel x Next Descriptor Interface */
+#define		AT_XDMAC_CNDA_NDA(i)	((i) & 0xfffffffc)		/* Channel x Next Descriptor Address */
+#define AT_XDMAC_CNDC		0x1C	/* Channel Next Descriptor Control Register */
+#define		AT_XDMAC_CNDC_NDE		(0x1 << 0)		/* Channel x Next Descriptor Enable */
+#define		AT_XDMAC_CNDC_NDSUP		(0x1 << 1)		/* Channel x Next Descriptor Source Update */
+#define		AT_XDMAC_CNDC_NDDUP		(0x1 << 2)		/* Channel x Next Descriptor Destination Update */
+#define		AT_XDMAC_CNDC_NDVIEW_NDV0	(0x0 << 3)		/* Channel x Next Descriptor View 0 */
+#define		AT_XDMAC_CNDC_NDVIEW_NDV1	(0x1 << 3)		/* Channel x Next Descriptor View 1 */
+#define		AT_XDMAC_CNDC_NDVIEW_NDV2	(0x2 << 3)		/* Channel x Next Descriptor View 2 */
+#define		AT_XDMAC_CNDC_NDVIEW_NDV3	(0x3 << 3)		/* Channel x Next Descriptor View 3 */
+#define AT_XDMAC_CUBC		0x20	/* Channel Microblock Control Register */
+#define AT_XDMAC_CBC		0x24	/* Channel Block Control Register */
+#define AT_XDMAC_CC		0x28	/* Channel Configuration Register */
+#define		AT_XDMAC_CC_TYPE	(0x1 << 0)	/* Channel Transfer Type */
+#define			AT_XDMAC_CC_TYPE_MEM_TRAN	(0x0 << 0)	/* Memory to Memory Transfer */
+#define			AT_XDMAC_CC_TYPE_PER_TRAN	(0x1 << 0)	/* Peripheral to Memory or Memory to Peripheral Transfer */
+#define		AT_XDMAC_CC_MBSIZE_MASK	(0x3 << 1)
+#define			AT_XDMAC_CC_MBSIZE_SINGLE	(0x0 << 1)
+#define			AT_XDMAC_CC_MBSIZE_FOUR		(0x1 << 1)
+#define			AT_XDMAC_CC_MBSIZE_EIGHT	(0x2 << 1)
+#define			AT_XDMAC_CC_MBSIZE_SIXTEEN	(0x3 << 1)
+#define		AT_XDMAC_CC_DSYNC	(0x1 << 4)	/* Channel Synchronization */
+#define			AT_XDMAC_CC_DSYNC_PER2MEM	(0x0 << 4)
+#define			AT_XDMAC_CC_DSYNC_MEM2PER	(0x1 << 4)
+#define		AT_XDMAC_CC_PROT	(0x1 << 5)	/* Channel Protection */
+#define			AT_XDMAC_CC_PROT_SEC		(0x0 << 5)
+#define			AT_XDMAC_CC_PROT_UNSEC		(0x1 << 5)
+#define		AT_XDMAC_CC_SWREQ	(0x1 << 6)	/* Channel Software Request Trigger */
+#define			AT_XDMAC_CC_SWREQ_HWR_CONNECTED	(0x0 << 6)
+#define			AT_XDMAC_CC_SWREQ_SWR_CONNECTED	(0x1 << 6)
+#define		AT_XDMAC_CC_MEMSET	(0x1 << 7)	/* Channel Fill Block of memory */
+#define			AT_XDMAC_CC_MEMSET_NORMAL_MODE	(0x0 << 7)
+#define			AT_XDMAC_CC_MEMSET_HW_MODE	(0x1 << 7)
+#define		AT_XDMAC_CC_CSIZE(i)	((0x7 & (i)) << 8)	/* Channel Chunk Size */
+#define		AT_XDMAC_CC_DWIDTH_OFFSET	11
+#define		AT_XDMAC_CC_DWIDTH_MASK	(0x3 << AT_XDMAC_CC_DWIDTH_OFFSET)
+#define		AT_XDMAC_CC_DWIDTH(i)	((0x3 & (i)) << AT_XDMAC_CC_DWIDTH_OFFSET)	/* Channel Data Width */
+#define			AT_XDMAC_CC_DWIDTH_BYTE		0x0
+#define			AT_XDMAC_CC_DWIDTH_HALFWORD	0x1
+#define			AT_XDMAC_CC_DWIDTH_WORD		0x2
+#define			AT_XDMAC_CC_DWIDTH_DWORD	0x3
+#define		AT_XDMAC_CC_SIF(i)	((0x1 & (i)) << 13)	/* Channel Source Interface Identifier */
+#define		AT_XDMAC_CC_DIF(i)	((0x1 & (i)) << 14)	/* Channel Destination Interface Identifier */
+#define		AT_XDMAC_CC_SAM_MASK	(0x3 << 16)	/* Channel Source Addressing Mode */
+#define			AT_XDMAC_CC_SAM_FIXED_AM	(0x0 << 16)
+#define			AT_XDMAC_CC_SAM_INCREMENTED_AM	(0x1 << 16)
+#define			AT_XDMAC_CC_SAM_UBS_AM		(0x2 << 16)
+#define			AT_XDMAC_CC_SAM_UBS_DS_AM	(0x3 << 16)
+#define		AT_XDMAC_CC_DAM_MASK	(0x3 << 18)	/* Channel Source Addressing Mode */
+#define			AT_XDMAC_CC_DAM_FIXED_AM	(0x0 << 18)
+#define			AT_XDMAC_CC_DAM_INCREMENTED_AM	(0x1 << 18)
+#define			AT_XDMAC_CC_DAM_UBS_AM		(0x2 << 18)
+#define			AT_XDMAC_CC_DAM_UBS_DS_AM	(0x3 << 18)
+#define		AT_XDMAC_CC_INITD	(0x1 << 21)	/* Channel Initialization Terminated (read only) */
+#define			AT_XDMAC_CC_INITD_TERMINATED	(0x0 << 21)
+#define			AT_XDMAC_CC_INITD_IN_PROGRESS	(0x1 << 21)
+#define		AT_XDMAC_CC_RDIP	(0x1 << 22)	/* Read in Progress (read only) */
+#define			AT_XDMAC_CC_RDIP_DONE		(0x0 << 22)
+#define			AT_XDMAC_CC_RDIP_IN_PROGRESS	(0x1 << 22)
+#define		AT_XDMAC_CC_WRIP	(0x1 << 23)	/* Write in Progress (read only) */
+#define			AT_XDMAC_CC_WRIP_DONE		(0x0 << 23)
+#define			AT_XDMAC_CC_WRIP_IN_PROGRESS	(0x1 << 23)
+#define		AT_XDMAC_CC_PERID(i)	(0x7f & (i) << 24)	/* Channel Peripheral Identifier */
+#define AT_XDMAC_CDS_MSP	0x2C	/* Channel Data Stride Memory Set Pattern */
+#define AT_XDMAC_CSUS		0x30	/* Channel Source Microblock Stride */
+#define AT_XDMAC_CDUS		0x34	/* Channel Destination Microblock Stride */
 
 /* Microblock control members */
-#घोषणा AT_XDMAC_MBR_UBC_UBLEN_MAX	0xFFFFFFUL	/* Maximum Microblock Length */
-#घोषणा AT_XDMAC_MBR_UBC_NDE		(0x1 << 24)	/* Next Descriptor Enable */
-#घोषणा AT_XDMAC_MBR_UBC_NSEN		(0x1 << 25)	/* Next Descriptor Source Update */
-#घोषणा AT_XDMAC_MBR_UBC_NDEN		(0x1 << 26)	/* Next Descriptor Destination Update */
-#घोषणा AT_XDMAC_MBR_UBC_NDV0		(0x0 << 27)	/* Next Descriptor View 0 */
-#घोषणा AT_XDMAC_MBR_UBC_NDV1		(0x1 << 27)	/* Next Descriptor View 1 */
-#घोषणा AT_XDMAC_MBR_UBC_NDV2		(0x2 << 27)	/* Next Descriptor View 2 */
-#घोषणा AT_XDMAC_MBR_UBC_NDV3		(0x3 << 27)	/* Next Descriptor View 3 */
+#define AT_XDMAC_MBR_UBC_UBLEN_MAX	0xFFFFFFUL	/* Maximum Microblock Length */
+#define AT_XDMAC_MBR_UBC_NDE		(0x1 << 24)	/* Next Descriptor Enable */
+#define AT_XDMAC_MBR_UBC_NSEN		(0x1 << 25)	/* Next Descriptor Source Update */
+#define AT_XDMAC_MBR_UBC_NDEN		(0x1 << 26)	/* Next Descriptor Destination Update */
+#define AT_XDMAC_MBR_UBC_NDV0		(0x0 << 27)	/* Next Descriptor View 0 */
+#define AT_XDMAC_MBR_UBC_NDV1		(0x1 << 27)	/* Next Descriptor View 1 */
+#define AT_XDMAC_MBR_UBC_NDV2		(0x2 << 27)	/* Next Descriptor View 2 */
+#define AT_XDMAC_MBR_UBC_NDV3		(0x3 << 27)	/* Next Descriptor View 3 */
 
-#घोषणा AT_XDMAC_MAX_CHAN	0x20
-#घोषणा AT_XDMAC_MAX_CSIZE	16	/* 16 data */
-#घोषणा AT_XDMAC_MAX_DWIDTH	8	/* 64 bits */
-#घोषणा AT_XDMAC_RESIDUE_MAX_RETRIES	5
+#define AT_XDMAC_MAX_CHAN	0x20
+#define AT_XDMAC_MAX_CSIZE	16	/* 16 data */
+#define AT_XDMAC_MAX_DWIDTH	8	/* 64 bits */
+#define AT_XDMAC_RESIDUE_MAX_RETRIES	5
 
-#घोषणा AT_XDMAC_DMA_BUSWIDTHS\
+#define AT_XDMAC_DMA_BUSWIDTHS\
 	(BIT(DMA_SLAVE_BUSWIDTH_UNDEFINED) |\
 	BIT(DMA_SLAVE_BUSWIDTH_1_BYTE) |\
 	BIT(DMA_SLAVE_BUSWIDTH_2_BYTES) |\
 	BIT(DMA_SLAVE_BUSWIDTH_4_BYTES) |\
 	BIT(DMA_SLAVE_BUSWIDTH_8_BYTES))
 
-क्रमागत atc_status अणु
+enum atc_status {
 	AT_XDMAC_CHAN_IS_CYCLIC = 0,
 	AT_XDMAC_CHAN_IS_PAUSED,
-पूर्ण;
+};
 
-काष्ठा at_xdmac_layout अणु
+struct at_xdmac_layout {
 	/* Global Channel Read Suspend Register */
 	u8				grs;
 	/* Global Write Suspend Register */
@@ -205,54 +204,54 @@
 	u8				gswf;
 	/* Channel reg base */
 	u8				chan_cc_reg_base;
-	/* Source/Destination Interface must be specअगरied or not */
-	bool				sdअगर;
+	/* Source/Destination Interface must be specified or not */
+	bool				sdif;
 	/* AXI queue priority configuration supported */
 	bool				axi_config;
-पूर्ण;
+};
 
 /* ----- Channels ----- */
-काष्ठा at_xdmac_chan अणु
-	काष्ठा dma_chan			chan;
-	व्योम __iomem			*ch_regs;
+struct at_xdmac_chan {
+	struct dma_chan			chan;
+	void __iomem			*ch_regs;
 	u32				mask;		/* Channel Mask */
 	u32				cfg;		/* Channel Configuration Register */
 	u8				perid;		/* Peripheral ID */
-	u8				perअगर;		/* Peripheral Interface */
-	u8				memअगर;		/* Memory Interface */
+	u8				perif;		/* Peripheral Interface */
+	u8				memif;		/* Memory Interface */
 	u32				save_cc;
 	u32				save_cim;
 	u32				save_cnda;
 	u32				save_cndc;
 	u32				irq_status;
-	अचिन्हित दीर्घ			status;
-	काष्ठा tasklet_काष्ठा		tasklet;
-	काष्ठा dma_slave_config		sconfig;
+	unsigned long			status;
+	struct tasklet_struct		tasklet;
+	struct dma_slave_config		sconfig;
 
 	spinlock_t			lock;
 
-	काष्ठा list_head		xfers_list;
-	काष्ठा list_head		मुक्त_descs_list;
-पूर्ण;
+	struct list_head		xfers_list;
+	struct list_head		free_descs_list;
+};
 
 
 /* ----- Controller ----- */
-काष्ठा at_xdmac अणु
-	काष्ठा dma_device	dma;
-	व्योम __iomem		*regs;
-	पूर्णांक			irq;
-	काष्ठा clk		*clk;
+struct at_xdmac {
+	struct dma_device	dma;
+	void __iomem		*regs;
+	int			irq;
+	struct clk		*clk;
 	u32			save_gim;
-	काष्ठा dma_pool		*at_xdmac_desc_pool;
-	स्थिर काष्ठा at_xdmac_layout	*layout;
-	काष्ठा at_xdmac_chan	chan[];
-पूर्ण;
+	struct dma_pool		*at_xdmac_desc_pool;
+	const struct at_xdmac_layout	*layout;
+	struct at_xdmac_chan	chan[];
+};
 
 
 /* ----- Descriptors ----- */
 
 /* Linked List Descriptor */
-काष्ठा at_xdmac_lld अणु
+struct at_xdmac_lld {
 	dma_addr_t	mbr_nda;	/* Next Descriptor Member */
 	u32		mbr_ubc;	/* Microblock Control Member */
 	dma_addr_t	mbr_sa;		/* Source Address Member */
@@ -262,22 +261,22 @@
 	u32		mbr_ds;		/* Data Stride Register */
 	u32		mbr_sus;	/* Source Microblock Stride Register */
 	u32		mbr_dus;	/* Destination Microblock Stride Register */
-पूर्ण;
+};
 
-/* 64-bit alignment needed to update CNDA and CUBC रेजिस्टरs in an atomic way. */
-काष्ठा at_xdmac_desc अणु
-	काष्ठा at_xdmac_lld		lld;
-	क्रमागत dma_transfer_direction	direction;
-	काष्ठा dma_async_tx_descriptor	tx_dma_desc;
-	काष्ठा list_head		desc_node;
+/* 64-bit alignment needed to update CNDA and CUBC registers in an atomic way. */
+struct at_xdmac_desc {
+	struct at_xdmac_lld		lld;
+	enum dma_transfer_direction	direction;
+	struct dma_async_tx_descriptor	tx_dma_desc;
+	struct list_head		desc_node;
 	/* Following members are only used by the first descriptor */
 	bool				active_xfer;
-	अचिन्हित पूर्णांक			xfer_size;
-	काष्ठा list_head		descs_list;
-	काष्ठा list_head		xfer_node;
-पूर्ण __aligned(माप(u64));
+	unsigned int			xfer_size;
+	struct list_head		descs_list;
+	struct list_head		xfer_node;
+} __aligned(sizeof(u64));
 
-अटल स्थिर काष्ठा at_xdmac_layout at_xdmac_sama5d4_layout = अणु
+static const struct at_xdmac_layout at_xdmac_sama5d4_layout = {
 	.grs = 0x28,
 	.gws = 0x2C,
 	.grws = 0x30,
@@ -286,11 +285,11 @@
 	.gsws = 0x3C,
 	.gswf = 0x40,
 	.chan_cc_reg_base = 0x50,
-	.sdअगर = true,
+	.sdif = true,
 	.axi_config = false,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा at_xdmac_layout at_xdmac_sama7g5_layout = अणु
+static const struct at_xdmac_layout at_xdmac_sama7g5_layout = {
 	.grs = 0x30,
 	.gws = 0x38,
 	.grws = 0x40,
@@ -299,180 +298,180 @@
 	.gsws = 0x4C,
 	.gswf = 0x50,
 	.chan_cc_reg_base = 0x60,
-	.sdअगर = false,
+	.sdif = false,
 	.axi_config = true,
-पूर्ण;
+};
 
-अटल अंतरभूत व्योम __iomem *at_xdmac_chan_reg_base(काष्ठा at_xdmac *atxdmac, अचिन्हित पूर्णांक chan_nb)
-अणु
-	वापस atxdmac->regs + (atxdmac->layout->chan_cc_reg_base + chan_nb * 0x40);
-पूर्ण
+static inline void __iomem *at_xdmac_chan_reg_base(struct at_xdmac *atxdmac, unsigned int chan_nb)
+{
+	return atxdmac->regs + (atxdmac->layout->chan_cc_reg_base + chan_nb * 0x40);
+}
 
-#घोषणा at_xdmac_पढ़ो(atxdmac, reg) पढ़ोl_relaxed((atxdmac)->regs + (reg))
-#घोषणा at_xdmac_ग_लिखो(atxdmac, reg, value) \
-	ग_लिखोl_relaxed((value), (atxdmac)->regs + (reg))
+#define at_xdmac_read(atxdmac, reg) readl_relaxed((atxdmac)->regs + (reg))
+#define at_xdmac_write(atxdmac, reg, value) \
+	writel_relaxed((value), (atxdmac)->regs + (reg))
 
-#घोषणा at_xdmac_chan_पढ़ो(atchan, reg) पढ़ोl_relaxed((atchan)->ch_regs + (reg))
-#घोषणा at_xdmac_chan_ग_लिखो(atchan, reg, value) ग_लिखोl_relaxed((value), (atchan)->ch_regs + (reg))
+#define at_xdmac_chan_read(atchan, reg) readl_relaxed((atchan)->ch_regs + (reg))
+#define at_xdmac_chan_write(atchan, reg, value) writel_relaxed((value), (atchan)->ch_regs + (reg))
 
-अटल अंतरभूत काष्ठा at_xdmac_chan *to_at_xdmac_chan(काष्ठा dma_chan *dchan)
-अणु
-	वापस container_of(dchan, काष्ठा at_xdmac_chan, chan);
-पूर्ण
+static inline struct at_xdmac_chan *to_at_xdmac_chan(struct dma_chan *dchan)
+{
+	return container_of(dchan, struct at_xdmac_chan, chan);
+}
 
-अटल काष्ठा device *chan2dev(काष्ठा dma_chan *chan)
-अणु
-	वापस &chan->dev->device;
-पूर्ण
+static struct device *chan2dev(struct dma_chan *chan)
+{
+	return &chan->dev->device;
+}
 
-अटल अंतरभूत काष्ठा at_xdmac *to_at_xdmac(काष्ठा dma_device *ddev)
-अणु
-	वापस container_of(ddev, काष्ठा at_xdmac, dma);
-पूर्ण
+static inline struct at_xdmac *to_at_xdmac(struct dma_device *ddev)
+{
+	return container_of(ddev, struct at_xdmac, dma);
+}
 
-अटल अंतरभूत काष्ठा at_xdmac_desc *txd_to_at_desc(काष्ठा dma_async_tx_descriptor *txd)
-अणु
-	वापस container_of(txd, काष्ठा at_xdmac_desc, tx_dma_desc);
-पूर्ण
+static inline struct at_xdmac_desc *txd_to_at_desc(struct dma_async_tx_descriptor *txd)
+{
+	return container_of(txd, struct at_xdmac_desc, tx_dma_desc);
+}
 
-अटल अंतरभूत पूर्णांक at_xdmac_chan_is_cyclic(काष्ठा at_xdmac_chan *atchan)
-अणु
-	वापस test_bit(AT_XDMAC_CHAN_IS_CYCLIC, &atchan->status);
-पूर्ण
+static inline int at_xdmac_chan_is_cyclic(struct at_xdmac_chan *atchan)
+{
+	return test_bit(AT_XDMAC_CHAN_IS_CYCLIC, &atchan->status);
+}
 
-अटल अंतरभूत पूर्णांक at_xdmac_chan_is_छोड़ोd(काष्ठा at_xdmac_chan *atchan)
-अणु
-	वापस test_bit(AT_XDMAC_CHAN_IS_PAUSED, &atchan->status);
-पूर्ण
+static inline int at_xdmac_chan_is_paused(struct at_xdmac_chan *atchan)
+{
+	return test_bit(AT_XDMAC_CHAN_IS_PAUSED, &atchan->status);
+}
 
-अटल अंतरभूत bool at_xdmac_chan_is_peripheral_xfer(u32 cfg)
-अणु
-	वापस cfg & AT_XDMAC_CC_TYPE_PER_TRAN;
-पूर्ण
+static inline bool at_xdmac_chan_is_peripheral_xfer(u32 cfg)
+{
+	return cfg & AT_XDMAC_CC_TYPE_PER_TRAN;
+}
 
-अटल अंतरभूत u8 at_xdmac_get_dwidth(u32 cfg)
-अणु
-	वापस (cfg & AT_XDMAC_CC_DWIDTH_MASK) >> AT_XDMAC_CC_DWIDTH_OFFSET;
-पूर्ण;
+static inline u8 at_xdmac_get_dwidth(u32 cfg)
+{
+	return (cfg & AT_XDMAC_CC_DWIDTH_MASK) >> AT_XDMAC_CC_DWIDTH_OFFSET;
+};
 
-अटल अचिन्हित पूर्णांक init_nr_desc_per_channel = 64;
-module_param(init_nr_desc_per_channel, uपूर्णांक, 0644);
+static unsigned int init_nr_desc_per_channel = 64;
+module_param(init_nr_desc_per_channel, uint, 0644);
 MODULE_PARM_DESC(init_nr_desc_per_channel,
 		 "initial descriptors per channel (default: 64)");
 
 
-अटल bool at_xdmac_chan_is_enabled(काष्ठा at_xdmac_chan *atchan)
-अणु
-	वापस at_xdmac_chan_पढ़ो(atchan, AT_XDMAC_GS) & atchan->mask;
-पूर्ण
+static bool at_xdmac_chan_is_enabled(struct at_xdmac_chan *atchan)
+{
+	return at_xdmac_chan_read(atchan, AT_XDMAC_GS) & atchan->mask;
+}
 
-अटल व्योम at_xdmac_off(काष्ठा at_xdmac *atxdmac)
-अणु
-	at_xdmac_ग_लिखो(atxdmac, AT_XDMAC_GD, -1L);
+static void at_xdmac_off(struct at_xdmac *atxdmac)
+{
+	at_xdmac_write(atxdmac, AT_XDMAC_GD, -1L);
 
 	/* Wait that all chans are disabled. */
-	जबतक (at_xdmac_पढ़ो(atxdmac, AT_XDMAC_GS))
+	while (at_xdmac_read(atxdmac, AT_XDMAC_GS))
 		cpu_relax();
 
-	at_xdmac_ग_लिखो(atxdmac, AT_XDMAC_GID, -1L);
-पूर्ण
+	at_xdmac_write(atxdmac, AT_XDMAC_GID, -1L);
+}
 
 /* Call with lock hold. */
-अटल व्योम at_xdmac_start_xfer(काष्ठा at_xdmac_chan *atchan,
-				काष्ठा at_xdmac_desc *first)
-अणु
-	काष्ठा at_xdmac	*atxdmac = to_at_xdmac(atchan->chan.device);
+static void at_xdmac_start_xfer(struct at_xdmac_chan *atchan,
+				struct at_xdmac_desc *first)
+{
+	struct at_xdmac	*atxdmac = to_at_xdmac(atchan->chan.device);
 	u32		reg;
 
 	dev_vdbg(chan2dev(&atchan->chan), "%s: desc 0x%p\n", __func__, first);
 
-	अगर (at_xdmac_chan_is_enabled(atchan))
-		वापस;
+	if (at_xdmac_chan_is_enabled(atchan))
+		return;
 
 	/* Set transfer as active to not try to start it again. */
 	first->active_xfer = true;
 
 	/* Tell xdmac where to get the first descriptor. */
 	reg = AT_XDMAC_CNDA_NDA(first->tx_dma_desc.phys);
-	अगर (atxdmac->layout->sdअगर)
-		reg |= AT_XDMAC_CNDA_NDAIF(atchan->memअगर);
+	if (atxdmac->layout->sdif)
+		reg |= AT_XDMAC_CNDA_NDAIF(atchan->memif);
 
-	at_xdmac_chan_ग_लिखो(atchan, AT_XDMAC_CNDA, reg);
+	at_xdmac_chan_write(atchan, AT_XDMAC_CNDA, reg);
 
 	/*
-	 * When करोing non cyclic transfer we need to use the next
-	 * descriptor view 2 since some fields of the configuration रेजिस्टर
+	 * When doing non cyclic transfer we need to use the next
+	 * descriptor view 2 since some fields of the configuration register
 	 * depend on transfer size and src/dest addresses.
 	 */
-	अगर (at_xdmac_chan_is_cyclic(atchan))
+	if (at_xdmac_chan_is_cyclic(atchan))
 		reg = AT_XDMAC_CNDC_NDVIEW_NDV1;
-	अन्यथा अगर (first->lld.mbr_ubc & AT_XDMAC_MBR_UBC_NDV3)
+	else if (first->lld.mbr_ubc & AT_XDMAC_MBR_UBC_NDV3)
 		reg = AT_XDMAC_CNDC_NDVIEW_NDV3;
-	अन्यथा
+	else
 		reg = AT_XDMAC_CNDC_NDVIEW_NDV2;
 	/*
-	 * Even अगर the रेजिस्टर will be updated from the configuration in the
+	 * Even if the register will be updated from the configuration in the
 	 * descriptor when using view 2 or higher, the PROT bit won't be set
-	 * properly. This bit can be modअगरied only by using the channel
-	 * configuration रेजिस्टर.
+	 * properly. This bit can be modified only by using the channel
+	 * configuration register.
 	 */
-	at_xdmac_chan_ग_लिखो(atchan, AT_XDMAC_CC, first->lld.mbr_cfg);
+	at_xdmac_chan_write(atchan, AT_XDMAC_CC, first->lld.mbr_cfg);
 
 	reg |= AT_XDMAC_CNDC_NDDUP
 	       | AT_XDMAC_CNDC_NDSUP
 	       | AT_XDMAC_CNDC_NDE;
-	at_xdmac_chan_ग_लिखो(atchan, AT_XDMAC_CNDC, reg);
+	at_xdmac_chan_write(atchan, AT_XDMAC_CNDC, reg);
 
 	dev_vdbg(chan2dev(&atchan->chan),
 		 "%s: CC=0x%08x CNDA=0x%08x, CNDC=0x%08x, CSA=0x%08x, CDA=0x%08x, CUBC=0x%08x\n",
-		 __func__, at_xdmac_chan_पढ़ो(atchan, AT_XDMAC_CC),
-		 at_xdmac_chan_पढ़ो(atchan, AT_XDMAC_CNDA),
-		 at_xdmac_chan_पढ़ो(atchan, AT_XDMAC_CNDC),
-		 at_xdmac_chan_पढ़ो(atchan, AT_XDMAC_CSA),
-		 at_xdmac_chan_पढ़ो(atchan, AT_XDMAC_CDA),
-		 at_xdmac_chan_पढ़ो(atchan, AT_XDMAC_CUBC));
+		 __func__, at_xdmac_chan_read(atchan, AT_XDMAC_CC),
+		 at_xdmac_chan_read(atchan, AT_XDMAC_CNDA),
+		 at_xdmac_chan_read(atchan, AT_XDMAC_CNDC),
+		 at_xdmac_chan_read(atchan, AT_XDMAC_CSA),
+		 at_xdmac_chan_read(atchan, AT_XDMAC_CDA),
+		 at_xdmac_chan_read(atchan, AT_XDMAC_CUBC));
 
-	at_xdmac_chan_ग_लिखो(atchan, AT_XDMAC_CID, 0xffffffff);
+	at_xdmac_chan_write(atchan, AT_XDMAC_CID, 0xffffffff);
 	reg = AT_XDMAC_CIE_RBEIE | AT_XDMAC_CIE_WBEIE;
 	/*
-	 * Request Overflow Error is only क्रम peripheral synchronized transfers
+	 * Request Overflow Error is only for peripheral synchronized transfers
 	 */
-	अगर (at_xdmac_chan_is_peripheral_xfer(first->lld.mbr_cfg))
+	if (at_xdmac_chan_is_peripheral_xfer(first->lld.mbr_cfg))
 		reg |= AT_XDMAC_CIE_ROIE;
 
 	/*
-	 * There is no end of list when करोing cyclic dma, we need to get
-	 * an पूर्णांकerrupt after each periods.
+	 * There is no end of list when doing cyclic dma, we need to get
+	 * an interrupt after each periods.
 	 */
-	अगर (at_xdmac_chan_is_cyclic(atchan))
-		at_xdmac_chan_ग_लिखो(atchan, AT_XDMAC_CIE,
+	if (at_xdmac_chan_is_cyclic(atchan))
+		at_xdmac_chan_write(atchan, AT_XDMAC_CIE,
 				    reg | AT_XDMAC_CIE_BIE);
-	अन्यथा
-		at_xdmac_chan_ग_लिखो(atchan, AT_XDMAC_CIE,
+	else
+		at_xdmac_chan_write(atchan, AT_XDMAC_CIE,
 				    reg | AT_XDMAC_CIE_LIE);
-	at_xdmac_ग_लिखो(atxdmac, AT_XDMAC_GIE, atchan->mask);
+	at_xdmac_write(atxdmac, AT_XDMAC_GIE, atchan->mask);
 	dev_vdbg(chan2dev(&atchan->chan),
 		 "%s: enable channel (0x%08x)\n", __func__, atchan->mask);
 	wmb();
-	at_xdmac_ग_लिखो(atxdmac, AT_XDMAC_GE, atchan->mask);
+	at_xdmac_write(atxdmac, AT_XDMAC_GE, atchan->mask);
 
 	dev_vdbg(chan2dev(&atchan->chan),
 		 "%s: CC=0x%08x CNDA=0x%08x, CNDC=0x%08x, CSA=0x%08x, CDA=0x%08x, CUBC=0x%08x\n",
-		 __func__, at_xdmac_chan_पढ़ो(atchan, AT_XDMAC_CC),
-		 at_xdmac_chan_पढ़ो(atchan, AT_XDMAC_CNDA),
-		 at_xdmac_chan_पढ़ो(atchan, AT_XDMAC_CNDC),
-		 at_xdmac_chan_पढ़ो(atchan, AT_XDMAC_CSA),
-		 at_xdmac_chan_पढ़ो(atchan, AT_XDMAC_CDA),
-		 at_xdmac_chan_पढ़ो(atchan, AT_XDMAC_CUBC));
+		 __func__, at_xdmac_chan_read(atchan, AT_XDMAC_CC),
+		 at_xdmac_chan_read(atchan, AT_XDMAC_CNDA),
+		 at_xdmac_chan_read(atchan, AT_XDMAC_CNDC),
+		 at_xdmac_chan_read(atchan, AT_XDMAC_CSA),
+		 at_xdmac_chan_read(atchan, AT_XDMAC_CDA),
+		 at_xdmac_chan_read(atchan, AT_XDMAC_CUBC));
 
-पूर्ण
+}
 
-अटल dma_cookie_t at_xdmac_tx_submit(काष्ठा dma_async_tx_descriptor *tx)
-अणु
-	काष्ठा at_xdmac_desc	*desc = txd_to_at_desc(tx);
-	काष्ठा at_xdmac_chan	*atchan = to_at_xdmac_chan(tx->chan);
+static dma_cookie_t at_xdmac_tx_submit(struct dma_async_tx_descriptor *tx)
+{
+	struct at_xdmac_desc	*desc = txd_to_at_desc(tx);
+	struct at_xdmac_chan	*atchan = to_at_xdmac_chan(tx->chan);
 	dma_cookie_t		cookie;
-	अचिन्हित दीर्घ		irqflags;
+	unsigned long		irqflags;
 
 	spin_lock_irqsave(&atchan->lock, irqflags);
 	cookie = dma_cookie_assign(tx);
@@ -480,121 +479,121 @@ MODULE_PARM_DESC(init_nr_desc_per_channel,
 	dev_vdbg(chan2dev(tx->chan), "%s: atchan 0x%p, add desc 0x%p to xfers_list\n",
 		 __func__, atchan, desc);
 	list_add_tail(&desc->xfer_node, &atchan->xfers_list);
-	अगर (list_is_singular(&atchan->xfers_list))
+	if (list_is_singular(&atchan->xfers_list))
 		at_xdmac_start_xfer(atchan, desc);
 
 	spin_unlock_irqrestore(&atchan->lock, irqflags);
-	वापस cookie;
-पूर्ण
+	return cookie;
+}
 
-अटल काष्ठा at_xdmac_desc *at_xdmac_alloc_desc(काष्ठा dma_chan *chan,
+static struct at_xdmac_desc *at_xdmac_alloc_desc(struct dma_chan *chan,
 						 gfp_t gfp_flags)
-अणु
-	काष्ठा at_xdmac_desc	*desc;
-	काष्ठा at_xdmac		*atxdmac = to_at_xdmac(chan->device);
+{
+	struct at_xdmac_desc	*desc;
+	struct at_xdmac		*atxdmac = to_at_xdmac(chan->device);
 	dma_addr_t		phys;
 
 	desc = dma_pool_zalloc(atxdmac->at_xdmac_desc_pool, gfp_flags, &phys);
-	अगर (desc) अणु
+	if (desc) {
 		INIT_LIST_HEAD(&desc->descs_list);
 		dma_async_tx_descriptor_init(&desc->tx_dma_desc, chan);
 		desc->tx_dma_desc.tx_submit = at_xdmac_tx_submit;
 		desc->tx_dma_desc.phys = phys;
-	पूर्ण
+	}
 
-	वापस desc;
-पूर्ण
+	return desc;
+}
 
-अटल व्योम at_xdmac_init_used_desc(काष्ठा at_xdmac_desc *desc)
-अणु
-	स_रखो(&desc->lld, 0, माप(desc->lld));
+static void at_xdmac_init_used_desc(struct at_xdmac_desc *desc)
+{
+	memset(&desc->lld, 0, sizeof(desc->lld));
 	INIT_LIST_HEAD(&desc->descs_list);
 	desc->direction = DMA_TRANS_NONE;
 	desc->xfer_size = 0;
 	desc->active_xfer = false;
-पूर्ण
+}
 
-/* Call must be रक्षित by lock. */
-अटल काष्ठा at_xdmac_desc *at_xdmac_get_desc(काष्ठा at_xdmac_chan *atchan)
-अणु
-	काष्ठा at_xdmac_desc *desc;
+/* Call must be protected by lock. */
+static struct at_xdmac_desc *at_xdmac_get_desc(struct at_xdmac_chan *atchan)
+{
+	struct at_xdmac_desc *desc;
 
-	अगर (list_empty(&atchan->मुक्त_descs_list)) अणु
+	if (list_empty(&atchan->free_descs_list)) {
 		desc = at_xdmac_alloc_desc(&atchan->chan, GFP_NOWAIT);
-	पूर्ण अन्यथा अणु
-		desc = list_first_entry(&atchan->मुक्त_descs_list,
-					काष्ठा at_xdmac_desc, desc_node);
+	} else {
+		desc = list_first_entry(&atchan->free_descs_list,
+					struct at_xdmac_desc, desc_node);
 		list_del(&desc->desc_node);
 		at_xdmac_init_used_desc(desc);
-	पूर्ण
+	}
 
-	वापस desc;
-पूर्ण
+	return desc;
+}
 
-अटल व्योम at_xdmac_queue_desc(काष्ठा dma_chan *chan,
-				काष्ठा at_xdmac_desc *prev,
-				काष्ठा at_xdmac_desc *desc)
-अणु
-	अगर (!prev || !desc)
-		वापस;
+static void at_xdmac_queue_desc(struct dma_chan *chan,
+				struct at_xdmac_desc *prev,
+				struct at_xdmac_desc *desc)
+{
+	if (!prev || !desc)
+		return;
 
 	prev->lld.mbr_nda = desc->tx_dma_desc.phys;
 	prev->lld.mbr_ubc |= AT_XDMAC_MBR_UBC_NDE;
 
 	dev_dbg(chan2dev(chan),	"%s: chain lld: prev=0x%p, mbr_nda=%pad\n",
 		__func__, prev, &prev->lld.mbr_nda);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम at_xdmac_increment_block_count(काष्ठा dma_chan *chan,
-						  काष्ठा at_xdmac_desc *desc)
-अणु
-	अगर (!desc)
-		वापस;
+static inline void at_xdmac_increment_block_count(struct dma_chan *chan,
+						  struct at_xdmac_desc *desc)
+{
+	if (!desc)
+		return;
 
 	desc->lld.mbr_bc++;
 
 	dev_dbg(chan2dev(chan),
 		"%s: incrementing the block count of the desc 0x%p\n",
 		__func__, desc);
-पूर्ण
+}
 
-अटल काष्ठा dma_chan *at_xdmac_xlate(काष्ठा of_phandle_args *dma_spec,
-				       काष्ठा of_dma *of_dma)
-अणु
-	काष्ठा at_xdmac		*atxdmac = of_dma->of_dma_data;
-	काष्ठा at_xdmac_chan	*atchan;
-	काष्ठा dma_chan		*chan;
-	काष्ठा device		*dev = atxdmac->dma.dev;
+static struct dma_chan *at_xdmac_xlate(struct of_phandle_args *dma_spec,
+				       struct of_dma *of_dma)
+{
+	struct at_xdmac		*atxdmac = of_dma->of_dma_data;
+	struct at_xdmac_chan	*atchan;
+	struct dma_chan		*chan;
+	struct device		*dev = atxdmac->dma.dev;
 
-	अगर (dma_spec->args_count != 1) अणु
+	if (dma_spec->args_count != 1) {
 		dev_err(dev, "dma phandler args: bad number of args\n");
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
 	chan = dma_get_any_slave_channel(&atxdmac->dma);
-	अगर (!chan) अणु
+	if (!chan) {
 		dev_err(dev, "can't get a dma channel\n");
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
 	atchan = to_at_xdmac_chan(chan);
-	atchan->memअगर = AT91_XDMAC_DT_GET_MEM_IF(dma_spec->args[0]);
-	atchan->perअगर = AT91_XDMAC_DT_GET_PER_IF(dma_spec->args[0]);
+	atchan->memif = AT91_XDMAC_DT_GET_MEM_IF(dma_spec->args[0]);
+	atchan->perif = AT91_XDMAC_DT_GET_PER_IF(dma_spec->args[0]);
 	atchan->perid = AT91_XDMAC_DT_GET_PERID(dma_spec->args[0]);
 	dev_dbg(dev, "chan dt cfg: memif=%u perif=%u perid=%u\n",
-		 atchan->memअगर, atchan->perअगर, atchan->perid);
+		 atchan->memif, atchan->perif, atchan->perid);
 
-	वापस chan;
-पूर्ण
+	return chan;
+}
 
-अटल पूर्णांक at_xdmac_compute_chan_conf(काष्ठा dma_chan *chan,
-				      क्रमागत dma_transfer_direction direction)
-अणु
-	काष्ठा at_xdmac_chan	*atchan = to_at_xdmac_chan(chan);
-	काष्ठा at_xdmac		*atxdmac = to_at_xdmac(atchan->chan.device);
-	पूर्णांक			csize, dwidth;
+static int at_xdmac_compute_chan_conf(struct dma_chan *chan,
+				      enum dma_transfer_direction direction)
+{
+	struct at_xdmac_chan	*atchan = to_at_xdmac_chan(chan);
+	struct at_xdmac		*atxdmac = to_at_xdmac(atchan->chan.device);
+	int			csize, dwidth;
 
-	अगर (direction == DMA_DEV_TO_MEM) अणु
+	if (direction == DMA_DEV_TO_MEM) {
 		atchan->cfg =
 			AT91_XDMAC_DT_PERID(atchan->perid)
 			| AT_XDMAC_CC_DAM_INCREMENTED_AM
@@ -603,23 +602,23 @@ MODULE_PARM_DESC(init_nr_desc_per_channel,
 			| AT_XDMAC_CC_DSYNC_PER2MEM
 			| AT_XDMAC_CC_MBSIZE_SIXTEEN
 			| AT_XDMAC_CC_TYPE_PER_TRAN;
-		अगर (atxdmac->layout->sdअगर)
-			atchan->cfg |= AT_XDMAC_CC_DIF(atchan->memअगर) |
-				       AT_XDMAC_CC_SIF(atchan->perअगर);
+		if (atxdmac->layout->sdif)
+			atchan->cfg |= AT_XDMAC_CC_DIF(atchan->memif) |
+				       AT_XDMAC_CC_SIF(atchan->perif);
 
 		csize = ffs(atchan->sconfig.src_maxburst) - 1;
-		अगर (csize < 0) अणु
+		if (csize < 0) {
 			dev_err(chan2dev(chan), "invalid src maxburst value\n");
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 		atchan->cfg |= AT_XDMAC_CC_CSIZE(csize);
 		dwidth = ffs(atchan->sconfig.src_addr_width) - 1;
-		अगर (dwidth < 0) अणु
+		if (dwidth < 0) {
 			dev_err(chan2dev(chan), "invalid src addr width value\n");
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 		atchan->cfg |= AT_XDMAC_CC_DWIDTH(dwidth);
-	पूर्ण अन्यथा अगर (direction == DMA_MEM_TO_DEV) अणु
+	} else if (direction == DMA_MEM_TO_DEV) {
 		atchan->cfg =
 			AT91_XDMAC_DT_PERID(atchan->perid)
 			| AT_XDMAC_CC_DAM_FIXED_AM
@@ -628,124 +627,124 @@ MODULE_PARM_DESC(init_nr_desc_per_channel,
 			| AT_XDMAC_CC_DSYNC_MEM2PER
 			| AT_XDMAC_CC_MBSIZE_SIXTEEN
 			| AT_XDMAC_CC_TYPE_PER_TRAN;
-		अगर (atxdmac->layout->sdअगर)
-			atchan->cfg |= AT_XDMAC_CC_DIF(atchan->perअगर) |
-				       AT_XDMAC_CC_SIF(atchan->memअगर);
+		if (atxdmac->layout->sdif)
+			atchan->cfg |= AT_XDMAC_CC_DIF(atchan->perif) |
+				       AT_XDMAC_CC_SIF(atchan->memif);
 
 		csize = ffs(atchan->sconfig.dst_maxburst) - 1;
-		अगर (csize < 0) अणु
+		if (csize < 0) {
 			dev_err(chan2dev(chan), "invalid src maxburst value\n");
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 		atchan->cfg |= AT_XDMAC_CC_CSIZE(csize);
 		dwidth = ffs(atchan->sconfig.dst_addr_width) - 1;
-		अगर (dwidth < 0) अणु
+		if (dwidth < 0) {
 			dev_err(chan2dev(chan), "invalid dst addr width value\n");
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 		atchan->cfg |= AT_XDMAC_CC_DWIDTH(dwidth);
-	पूर्ण
+	}
 
 	dev_dbg(chan2dev(chan),	"%s: cfg=0x%08x\n", __func__, atchan->cfg);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Only check that maxburst and addr width values are supported by the
- * the controller but not that the configuration is good to perक्रमm the
- * transfer since we करोn't know the direction at this stage.
+ * the controller but not that the configuration is good to perform the
+ * transfer since we don't know the direction at this stage.
  */
-अटल पूर्णांक at_xdmac_check_slave_config(काष्ठा dma_slave_config *sconfig)
-अणु
-	अगर ((sconfig->src_maxburst > AT_XDMAC_MAX_CSIZE)
+static int at_xdmac_check_slave_config(struct dma_slave_config *sconfig)
+{
+	if ((sconfig->src_maxburst > AT_XDMAC_MAX_CSIZE)
 	    || (sconfig->dst_maxburst > AT_XDMAC_MAX_CSIZE))
-		वापस -EINVAL;
+		return -EINVAL;
 
-	अगर ((sconfig->src_addr_width > AT_XDMAC_MAX_DWIDTH)
+	if ((sconfig->src_addr_width > AT_XDMAC_MAX_DWIDTH)
 	    || (sconfig->dst_addr_width > AT_XDMAC_MAX_DWIDTH))
-		वापस -EINVAL;
+		return -EINVAL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक at_xdmac_set_slave_config(काष्ठा dma_chan *chan,
-				      काष्ठा dma_slave_config *sconfig)
-अणु
-	काष्ठा at_xdmac_chan	*atchan = to_at_xdmac_chan(chan);
+static int at_xdmac_set_slave_config(struct dma_chan *chan,
+				      struct dma_slave_config *sconfig)
+{
+	struct at_xdmac_chan	*atchan = to_at_xdmac_chan(chan);
 
-	अगर (at_xdmac_check_slave_config(sconfig)) अणु
+	if (at_xdmac_check_slave_config(sconfig)) {
 		dev_err(chan2dev(chan), "invalid slave configuration\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	स_नकल(&atchan->sconfig, sconfig, माप(atchan->sconfig));
+	memcpy(&atchan->sconfig, sconfig, sizeof(atchan->sconfig));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा dma_async_tx_descriptor *
-at_xdmac_prep_slave_sg(काष्ठा dma_chan *chan, काष्ठा scatterlist *sgl,
-		       अचिन्हित पूर्णांक sg_len, क्रमागत dma_transfer_direction direction,
-		       अचिन्हित दीर्घ flags, व्योम *context)
-अणु
-	काष्ठा at_xdmac_chan		*atchan = to_at_xdmac_chan(chan);
-	काष्ठा at_xdmac_desc		*first = शून्य, *prev = शून्य;
-	काष्ठा scatterlist		*sg;
-	पूर्णांक				i;
-	अचिन्हित पूर्णांक			xfer_size = 0;
-	अचिन्हित दीर्घ			irqflags;
-	काष्ठा dma_async_tx_descriptor	*ret = शून्य;
+static struct dma_async_tx_descriptor *
+at_xdmac_prep_slave_sg(struct dma_chan *chan, struct scatterlist *sgl,
+		       unsigned int sg_len, enum dma_transfer_direction direction,
+		       unsigned long flags, void *context)
+{
+	struct at_xdmac_chan		*atchan = to_at_xdmac_chan(chan);
+	struct at_xdmac_desc		*first = NULL, *prev = NULL;
+	struct scatterlist		*sg;
+	int				i;
+	unsigned int			xfer_size = 0;
+	unsigned long			irqflags;
+	struct dma_async_tx_descriptor	*ret = NULL;
 
-	अगर (!sgl)
-		वापस शून्य;
+	if (!sgl)
+		return NULL;
 
-	अगर (!is_slave_direction(direction)) अणु
+	if (!is_slave_direction(direction)) {
 		dev_err(chan2dev(chan), "invalid DMA direction\n");
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
 	dev_dbg(chan2dev(chan), "%s: sg_len=%d, dir=%s, flags=0x%lx\n",
 		 __func__, sg_len,
 		 direction == DMA_MEM_TO_DEV ? "to device" : "from device",
 		 flags);
 
-	/* Protect dma_sconfig field that can be modअगरied by set_slave_conf. */
+	/* Protect dma_sconfig field that can be modified by set_slave_conf. */
 	spin_lock_irqsave(&atchan->lock, irqflags);
 
-	अगर (at_xdmac_compute_chan_conf(chan, direction))
-		जाओ spin_unlock;
+	if (at_xdmac_compute_chan_conf(chan, direction))
+		goto spin_unlock;
 
 	/* Prepare descriptors. */
-	क्रम_each_sg(sgl, sg, sg_len, i) अणु
-		काष्ठा at_xdmac_desc	*desc = शून्य;
+	for_each_sg(sgl, sg, sg_len, i) {
+		struct at_xdmac_desc	*desc = NULL;
 		u32			len, mem, dwidth, fixed_dwidth;
 
 		len = sg_dma_len(sg);
 		mem = sg_dma_address(sg);
-		अगर (unlikely(!len)) अणु
+		if (unlikely(!len)) {
 			dev_err(chan2dev(chan), "sg data length is zero\n");
-			जाओ spin_unlock;
-		पूर्ण
+			goto spin_unlock;
+		}
 		dev_dbg(chan2dev(chan), "%s: * sg%d len=%u, mem=0x%08x\n",
 			 __func__, i, len, mem);
 
 		desc = at_xdmac_get_desc(atchan);
-		अगर (!desc) अणु
+		if (!desc) {
 			dev_err(chan2dev(chan), "can't get descriptor\n");
-			अगर (first)
-				list_splice_init(&first->descs_list, &atchan->मुक्त_descs_list);
-			जाओ spin_unlock;
-		पूर्ण
+			if (first)
+				list_splice_init(&first->descs_list, &atchan->free_descs_list);
+			goto spin_unlock;
+		}
 
 		/* Linked list descriptor setup. */
-		अगर (direction == DMA_DEV_TO_MEM) अणु
+		if (direction == DMA_DEV_TO_MEM) {
 			desc->lld.mbr_sa = atchan->sconfig.src_addr;
 			desc->lld.mbr_da = mem;
-		पूर्ण अन्यथा अणु
+		} else {
 			desc->lld.mbr_sa = mem;
 			desc->lld.mbr_da = atchan->sconfig.dst_addr;
-		पूर्ण
+		}
 		dwidth = at_xdmac_get_dwidth(atchan->cfg);
 		fixed_dwidth = IS_ALIGNED(len, 1 << dwidth)
 			       ? dwidth
@@ -761,18 +760,18 @@ at_xdmac_prep_slave_sg(काष्ठा dma_chan *chan, काष्ठा sca
 			 __func__, &desc->lld.mbr_sa, &desc->lld.mbr_da, desc->lld.mbr_ubc);
 
 		/* Chain lld. */
-		अगर (prev)
+		if (prev)
 			at_xdmac_queue_desc(chan, prev, desc);
 
 		prev = desc;
-		अगर (!first)
+		if (!first)
 			first = desc;
 
 		dev_dbg(chan2dev(chan), "%s: add desc 0x%p to descs_list 0x%p\n",
 			 __func__, desc, first);
 		list_add_tail(&desc->desc_node, &first->descs_list);
 		xfer_size += len;
-	पूर्ण
+	}
 
 
 	first->tx_dma_desc.flags = flags;
@@ -782,62 +781,62 @@ at_xdmac_prep_slave_sg(काष्ठा dma_chan *chan, काष्ठा sca
 
 spin_unlock:
 	spin_unlock_irqrestore(&atchan->lock, irqflags);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल काष्ठा dma_async_tx_descriptor *
-at_xdmac_prep_dma_cyclic(काष्ठा dma_chan *chan, dma_addr_t buf_addr,
-			 माप_प्रकार buf_len, माप_प्रकार period_len,
-			 क्रमागत dma_transfer_direction direction,
-			 अचिन्हित दीर्घ flags)
-अणु
-	काष्ठा at_xdmac_chan	*atchan = to_at_xdmac_chan(chan);
-	काष्ठा at_xdmac_desc	*first = शून्य, *prev = शून्य;
-	अचिन्हित पूर्णांक		periods = buf_len / period_len;
-	पूर्णांक			i;
-	अचिन्हित दीर्घ		irqflags;
+static struct dma_async_tx_descriptor *
+at_xdmac_prep_dma_cyclic(struct dma_chan *chan, dma_addr_t buf_addr,
+			 size_t buf_len, size_t period_len,
+			 enum dma_transfer_direction direction,
+			 unsigned long flags)
+{
+	struct at_xdmac_chan	*atchan = to_at_xdmac_chan(chan);
+	struct at_xdmac_desc	*first = NULL, *prev = NULL;
+	unsigned int		periods = buf_len / period_len;
+	int			i;
+	unsigned long		irqflags;
 
 	dev_dbg(chan2dev(chan), "%s: buf_addr=%pad, buf_len=%zd, period_len=%zd, dir=%s, flags=0x%lx\n",
 		__func__, &buf_addr, buf_len, period_len,
 		direction == DMA_MEM_TO_DEV ? "mem2per" : "per2mem", flags);
 
-	अगर (!is_slave_direction(direction)) अणु
+	if (!is_slave_direction(direction)) {
 		dev_err(chan2dev(chan), "invalid DMA direction\n");
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	अगर (test_and_set_bit(AT_XDMAC_CHAN_IS_CYCLIC, &atchan->status)) अणु
+	if (test_and_set_bit(AT_XDMAC_CHAN_IS_CYCLIC, &atchan->status)) {
 		dev_err(chan2dev(chan), "channel currently used\n");
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	अगर (at_xdmac_compute_chan_conf(chan, direction))
-		वापस शून्य;
+	if (at_xdmac_compute_chan_conf(chan, direction))
+		return NULL;
 
-	क्रम (i = 0; i < periods; i++) अणु
-		काष्ठा at_xdmac_desc	*desc = शून्य;
+	for (i = 0; i < periods; i++) {
+		struct at_xdmac_desc	*desc = NULL;
 
 		spin_lock_irqsave(&atchan->lock, irqflags);
 		desc = at_xdmac_get_desc(atchan);
-		अगर (!desc) अणु
+		if (!desc) {
 			dev_err(chan2dev(chan), "can't get descriptor\n");
-			अगर (first)
-				list_splice_init(&first->descs_list, &atchan->मुक्त_descs_list);
+			if (first)
+				list_splice_init(&first->descs_list, &atchan->free_descs_list);
 			spin_unlock_irqrestore(&atchan->lock, irqflags);
-			वापस शून्य;
-		पूर्ण
+			return NULL;
+		}
 		spin_unlock_irqrestore(&atchan->lock, irqflags);
 		dev_dbg(chan2dev(chan),
 			"%s: desc=0x%p, tx_dma_desc.phys=%pad\n",
 			__func__, desc, &desc->tx_dma_desc.phys);
 
-		अगर (direction == DMA_DEV_TO_MEM) अणु
+		if (direction == DMA_DEV_TO_MEM) {
 			desc->lld.mbr_sa = atchan->sconfig.src_addr;
 			desc->lld.mbr_da = buf_addr + i * period_len;
-		पूर्ण अन्यथा अणु
+		} else {
 			desc->lld.mbr_sa = buf_addr + i * period_len;
 			desc->lld.mbr_da = atchan->sconfig.dst_addr;
-		पूर्ण
+		}
 		desc->lld.mbr_cfg = atchan->cfg;
 		desc->lld.mbr_ubc = AT_XDMAC_MBR_UBC_NDV1
 			| AT_XDMAC_MBR_UBC_NDEN
@@ -849,81 +848,81 @@ at_xdmac_prep_dma_cyclic(काष्ठा dma_chan *chan, dma_addr_t buf_addr,
 			 __func__, &desc->lld.mbr_sa, &desc->lld.mbr_da, desc->lld.mbr_ubc);
 
 		/* Chain lld. */
-		अगर (prev)
+		if (prev)
 			at_xdmac_queue_desc(chan, prev, desc);
 
 		prev = desc;
-		अगर (!first)
+		if (!first)
 			first = desc;
 
 		dev_dbg(chan2dev(chan), "%s: add desc 0x%p to descs_list 0x%p\n",
 			 __func__, desc, first);
 		list_add_tail(&desc->desc_node, &first->descs_list);
-	पूर्ण
+	}
 
 	at_xdmac_queue_desc(chan, prev, first);
 	first->tx_dma_desc.flags = flags;
 	first->xfer_size = buf_len;
 	first->direction = direction;
 
-	वापस &first->tx_dma_desc;
-पूर्ण
+	return &first->tx_dma_desc;
+}
 
-अटल अंतरभूत u32 at_xdmac_align_width(काष्ठा dma_chan *chan, dma_addr_t addr)
-अणु
+static inline u32 at_xdmac_align_width(struct dma_chan *chan, dma_addr_t addr)
+{
 	u32 width;
 
 	/*
 	 * Check address alignment to select the greater data width we
 	 * can use.
 	 *
-	 * Some XDMAC implementations करोn't provide dword transfer, in
-	 * this हाल selecting dword has the same behavior as
+	 * Some XDMAC implementations don't provide dword transfer, in
+	 * this case selecting dword has the same behavior as
 	 * selecting word transfers.
 	 */
-	अगर (!(addr & 7)) अणु
+	if (!(addr & 7)) {
 		width = AT_XDMAC_CC_DWIDTH_DWORD;
 		dev_dbg(chan2dev(chan), "%s: dwidth: double word\n", __func__);
-	पूर्ण अन्यथा अगर (!(addr & 3)) अणु
+	} else if (!(addr & 3)) {
 		width = AT_XDMAC_CC_DWIDTH_WORD;
 		dev_dbg(chan2dev(chan), "%s: dwidth: word\n", __func__);
-	पूर्ण अन्यथा अगर (!(addr & 1)) अणु
+	} else if (!(addr & 1)) {
 		width = AT_XDMAC_CC_DWIDTH_HALFWORD;
 		dev_dbg(chan2dev(chan), "%s: dwidth: half word\n", __func__);
-	पूर्ण अन्यथा अणु
+	} else {
 		width = AT_XDMAC_CC_DWIDTH_BYTE;
 		dev_dbg(chan2dev(chan), "%s: dwidth: byte\n", __func__);
-	पूर्ण
+	}
 
-	वापस width;
-पूर्ण
+	return width;
+}
 
-अटल काष्ठा at_xdmac_desc *
-at_xdmac_पूर्णांकerleaved_queue_desc(काष्ठा dma_chan *chan,
-				काष्ठा at_xdmac_chan *atchan,
-				काष्ठा at_xdmac_desc *prev,
+static struct at_xdmac_desc *
+at_xdmac_interleaved_queue_desc(struct dma_chan *chan,
+				struct at_xdmac_chan *atchan,
+				struct at_xdmac_desc *prev,
 				dma_addr_t src, dma_addr_t dst,
-				काष्ठा dma_पूर्णांकerleaved_ढाँचा *xt,
-				काष्ठा data_chunk *chunk)
-अणु
-	काष्ठा at_xdmac_desc	*desc;
+				struct dma_interleaved_template *xt,
+				struct data_chunk *chunk)
+{
+	struct at_xdmac_desc	*desc;
 	u32			dwidth;
-	अचिन्हित दीर्घ		flags;
-	माप_प्रकार			ublen;
+	unsigned long		flags;
+	size_t			ublen;
 	/*
 	 * WARNING: The channel configuration is set here since there is no
-	 * dmaengine_slave_config call in this हाल. Moreover we करोn't know the
+	 * dmaengine_slave_config call in this case. Moreover we don't know the
 	 * direction, it involves we can't dynamically set the source and dest
-	 * पूर्णांकerface so we have to use the same one. Only पूर्णांकerface 0 allows EBI
+	 * interface so we have to use the same one. Only interface 0 allows EBI
 	 * access. Hopefully we can access DDR through both ports (at least on
-	 * SAMA5D4x), so we can use the same पूर्णांकerface क्रम source and dest,
-	 * that solves the fact we करोn't know the direction.
-	 * ERRATA: Even अगर useless क्रम memory transfers, the PERID has to not
+	 * SAMA5D4x), so we can use the same interface for source and dest,
+	 * that solves the fact we don't know the direction.
+	 * ERRATA: Even if useless for memory transfers, the PERID has to not
 	 * match the one of another channel. If not, it could lead to spurious
 	 * flag status.
-	 * For SAMA7G5x हाल, the SIF and DIF fields are no दीर्घer used.
-	 * Thus, no need to have the SIF/DIF पूर्णांकerfaces here.
-	 * For SAMA5D4x and SAMA5D2x the SIF and DIF are alपढ़ोy configured as
+	 * For SAMA7G5x case, the SIF and DIF fields are no longer used.
+	 * Thus, no need to have the SIF/DIF interfaces here.
+	 * For SAMA5D4x and SAMA5D2x the SIF and DIF are already configured as
 	 * zero.
 	 */
 	u32			chan_cc = AT_XDMAC_CC_PERID(0x7f)
@@ -931,39 +930,39 @@ at_xdmac_पूर्णांकerleaved_queue_desc(काष्ठा dma_chan
 					| AT_XDMAC_CC_TYPE_MEM_TRAN;
 
 	dwidth = at_xdmac_align_width(chan, src | dst | chunk->size);
-	अगर (chunk->size >= (AT_XDMAC_MBR_UBC_UBLEN_MAX << dwidth)) अणु
+	if (chunk->size >= (AT_XDMAC_MBR_UBC_UBLEN_MAX << dwidth)) {
 		dev_dbg(chan2dev(chan),
 			"%s: chunk too big (%zu, max size %lu)...\n",
 			__func__, chunk->size,
 			AT_XDMAC_MBR_UBC_UBLEN_MAX << dwidth);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	अगर (prev)
+	if (prev)
 		dev_dbg(chan2dev(chan),
 			"Adding items at the end of desc 0x%p\n", prev);
 
-	अगर (xt->src_inc) अणु
-		अगर (xt->src_sgl)
+	if (xt->src_inc) {
+		if (xt->src_sgl)
 			chan_cc |=  AT_XDMAC_CC_SAM_UBS_AM;
-		अन्यथा
+		else
 			chan_cc |=  AT_XDMAC_CC_SAM_INCREMENTED_AM;
-	पूर्ण
+	}
 
-	अगर (xt->dst_inc) अणु
-		अगर (xt->dst_sgl)
+	if (xt->dst_inc) {
+		if (xt->dst_sgl)
 			chan_cc |=  AT_XDMAC_CC_DAM_UBS_AM;
-		अन्यथा
+		else
 			chan_cc |=  AT_XDMAC_CC_DAM_INCREMENTED_AM;
-	पूर्ण
+	}
 
 	spin_lock_irqsave(&atchan->lock, flags);
 	desc = at_xdmac_get_desc(atchan);
 	spin_unlock_irqrestore(&atchan->lock, flags);
-	अगर (!desc) अणु
+	if (!desc) {
 		dev_err(chan2dev(chan), "can't get descriptor\n");
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
 	chan_cc |= AT_XDMAC_CC_DWIDTH(dwidth);
 
@@ -986,33 +985,33 @@ at_xdmac_पूर्णांकerleaved_queue_desc(काष्ठा dma_chan
 		desc->lld.mbr_ubc, desc->lld.mbr_cfg);
 
 	/* Chain lld. */
-	अगर (prev)
+	if (prev)
 		at_xdmac_queue_desc(chan, prev, desc);
 
-	वापस desc;
-पूर्ण
+	return desc;
+}
 
-अटल काष्ठा dma_async_tx_descriptor *
-at_xdmac_prep_पूर्णांकerleaved(काष्ठा dma_chan *chan,
-			  काष्ठा dma_पूर्णांकerleaved_ढाँचा *xt,
-			  अचिन्हित दीर्घ flags)
-अणु
-	काष्ठा at_xdmac_chan	*atchan = to_at_xdmac_chan(chan);
-	काष्ठा at_xdmac_desc	*prev = शून्य, *first = शून्य;
+static struct dma_async_tx_descriptor *
+at_xdmac_prep_interleaved(struct dma_chan *chan,
+			  struct dma_interleaved_template *xt,
+			  unsigned long flags)
+{
+	struct at_xdmac_chan	*atchan = to_at_xdmac_chan(chan);
+	struct at_xdmac_desc	*prev = NULL, *first = NULL;
 	dma_addr_t		dst_addr, src_addr;
-	माप_प्रकार			src_skip = 0, dst_skip = 0, len = 0;
-	काष्ठा data_chunk	*chunk;
-	पूर्णांक			i;
+	size_t			src_skip = 0, dst_skip = 0, len = 0;
+	struct data_chunk	*chunk;
+	int			i;
 
-	अगर (!xt || !xt->numf || (xt->dir != DMA_MEM_TO_MEM))
-		वापस शून्य;
+	if (!xt || !xt->numf || (xt->dir != DMA_MEM_TO_MEM))
+		return NULL;
 
 	/*
-	 * TODO: Handle the हाल where we have to repeat a chain of
+	 * TODO: Handle the case where we have to repeat a chain of
 	 * descriptors...
 	 */
-	अगर ((xt->numf > 1) && (xt->frame_size > 1))
-		वापस शून्य;
+	if ((xt->numf > 1) && (xt->frame_size > 1))
+		return NULL;
 
 	dev_dbg(chan2dev(chan), "%s: src=%pad, dest=%pad, numf=%zu, frame_size=%zu, flags=0x%lx\n",
 		__func__, &xt->src_start, &xt->dst_start,	xt->numf,
@@ -1021,23 +1020,23 @@ at_xdmac_prep_पूर्णांकerleaved(काष्ठा dma_chan *chan
 	src_addr = xt->src_start;
 	dst_addr = xt->dst_start;
 
-	अगर (xt->numf > 1) अणु
-		first = at_xdmac_पूर्णांकerleaved_queue_desc(chan, atchan,
-							शून्य,
+	if (xt->numf > 1) {
+		first = at_xdmac_interleaved_queue_desc(chan, atchan,
+							NULL,
 							src_addr, dst_addr,
 							xt, xt->sgl);
 
 		/* Length of the block is (BLEN+1) microblocks. */
-		क्रम (i = 0; i < xt->numf - 1; i++)
+		for (i = 0; i < xt->numf - 1; i++)
 			at_xdmac_increment_block_count(chan, first);
 
 		dev_dbg(chan2dev(chan), "%s: add desc 0x%p to descs_list 0x%p\n",
 			__func__, first, first);
 		list_add_tail(&first->desc_node, &first->descs_list);
-	पूर्ण अन्यथा अणु
-		क्रम (i = 0; i < xt->frame_size; i++) अणु
-			माप_प्रकार src_icg = 0, dst_icg = 0;
-			काष्ठा at_xdmac_desc *desc;
+	} else {
+		for (i = 0; i < xt->frame_size; i++) {
+			size_t src_icg = 0, dst_icg = 0;
+			struct at_xdmac_desc *desc;
 
 			chunk = xt->sgl + i;
 
@@ -1051,63 +1050,63 @@ at_xdmac_prep_पूर्णांकerleaved(काष्ठा dma_chan *chan
 				"%s: chunk size=%zu, src icg=%zu, dst icg=%zu\n",
 				__func__, chunk->size, src_icg, dst_icg);
 
-			desc = at_xdmac_पूर्णांकerleaved_queue_desc(chan, atchan,
+			desc = at_xdmac_interleaved_queue_desc(chan, atchan,
 							       prev,
 							       src_addr, dst_addr,
 							       xt, chunk);
-			अगर (!desc) अणु
+			if (!desc) {
 				list_splice_init(&first->descs_list,
-						 &atchan->मुक्त_descs_list);
-				वापस शून्य;
-			पूर्ण
+						 &atchan->free_descs_list);
+				return NULL;
+			}
 
-			अगर (!first)
+			if (!first)
 				first = desc;
 
 			dev_dbg(chan2dev(chan), "%s: add desc 0x%p to descs_list 0x%p\n",
 				__func__, desc, first);
 			list_add_tail(&desc->desc_node, &first->descs_list);
 
-			अगर (xt->src_sgl)
+			if (xt->src_sgl)
 				src_addr += src_skip;
 
-			अगर (xt->dst_sgl)
+			if (xt->dst_sgl)
 				dst_addr += dst_skip;
 
 			len += chunk->size;
 			prev = desc;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	first->tx_dma_desc.cookie = -EBUSY;
 	first->tx_dma_desc.flags = flags;
 	first->xfer_size = len;
 
-	वापस &first->tx_dma_desc;
-पूर्ण
+	return &first->tx_dma_desc;
+}
 
-अटल काष्ठा dma_async_tx_descriptor *
-at_xdmac_prep_dma_स_नकल(काष्ठा dma_chan *chan, dma_addr_t dest, dma_addr_t src,
-			 माप_प्रकार len, अचिन्हित दीर्घ flags)
-अणु
-	काष्ठा at_xdmac_chan	*atchan = to_at_xdmac_chan(chan);
-	काष्ठा at_xdmac_desc	*first = शून्य, *prev = शून्य;
-	माप_प्रकार			reमुख्यing_size = len, xfer_size = 0, ublen;
+static struct dma_async_tx_descriptor *
+at_xdmac_prep_dma_memcpy(struct dma_chan *chan, dma_addr_t dest, dma_addr_t src,
+			 size_t len, unsigned long flags)
+{
+	struct at_xdmac_chan	*atchan = to_at_xdmac_chan(chan);
+	struct at_xdmac_desc	*first = NULL, *prev = NULL;
+	size_t			remaining_size = len, xfer_size = 0, ublen;
 	dma_addr_t		src_addr = src, dst_addr = dest;
 	u32			dwidth;
 	/*
-	 * WARNING: We करोn't know the direction, it involves we can't
-	 * dynamically set the source and dest पूर्णांकerface so we have to use the
-	 * same one. Only पूर्णांकerface 0 allows EBI access. Hopefully we can
+	 * WARNING: We don't know the direction, it involves we can't
+	 * dynamically set the source and dest interface so we have to use the
+	 * same one. Only interface 0 allows EBI access. Hopefully we can
 	 * access DDR through both ports (at least on SAMA5D4x), so we can use
-	 * the same पूर्णांकerface क्रम source and dest, that solves the fact we
-	 * करोn't know the direction.
-	 * ERRATA: Even अगर useless क्रम memory transfers, the PERID has to not
+	 * the same interface for source and dest, that solves the fact we
+	 * don't know the direction.
+	 * ERRATA: Even if useless for memory transfers, the PERID has to not
 	 * match the one of another channel. If not, it could lead to spurious
 	 * flag status.
-	 * For SAMA7G5x हाल, the SIF and DIF fields are no दीर्घer used.
-	 * Thus, no need to have the SIF/DIF पूर्णांकerfaces here.
-	 * For SAMA5D4x and SAMA5D2x the SIF and DIF are alपढ़ोy configured as
+	 * For SAMA7G5x case, the SIF and DIF fields are no longer used.
+	 * Thus, no need to have the SIF/DIF interfaces here.
+	 * For SAMA5D4x and SAMA5D2x the SIF and DIF are already configured as
 	 * zero.
 	 */
 	u32			chan_cc = AT_XDMAC_CC_PERID(0x7f)
@@ -1115,51 +1114,51 @@ at_xdmac_prep_dma_स_नकल(काष्ठा dma_chan *chan, dma_addr_t de
 					| AT_XDMAC_CC_SAM_INCREMENTED_AM
 					| AT_XDMAC_CC_MBSIZE_SIXTEEN
 					| AT_XDMAC_CC_TYPE_MEM_TRAN;
-	अचिन्हित दीर्घ		irqflags;
+	unsigned long		irqflags;
 
 	dev_dbg(chan2dev(chan), "%s: src=%pad, dest=%pad, len=%zd, flags=0x%lx\n",
 		__func__, &src, &dest, len, flags);
 
-	अगर (unlikely(!len))
-		वापस शून्य;
+	if (unlikely(!len))
+		return NULL;
 
 	dwidth = at_xdmac_align_width(chan, src_addr | dst_addr);
 
 	/* Prepare descriptors. */
-	जबतक (reमुख्यing_size) अणु
-		काष्ठा at_xdmac_desc	*desc = शून्य;
+	while (remaining_size) {
+		struct at_xdmac_desc	*desc = NULL;
 
-		dev_dbg(chan2dev(chan), "%s: remaining_size=%zu\n", __func__, reमुख्यing_size);
+		dev_dbg(chan2dev(chan), "%s: remaining_size=%zu\n", __func__, remaining_size);
 
 		spin_lock_irqsave(&atchan->lock, irqflags);
 		desc = at_xdmac_get_desc(atchan);
 		spin_unlock_irqrestore(&atchan->lock, irqflags);
-		अगर (!desc) अणु
+		if (!desc) {
 			dev_err(chan2dev(chan), "can't get descriptor\n");
-			अगर (first)
-				list_splice_init(&first->descs_list, &atchan->मुक्त_descs_list);
-			वापस शून्य;
-		पूर्ण
+			if (first)
+				list_splice_init(&first->descs_list, &atchan->free_descs_list);
+			return NULL;
+		}
 
 		/* Update src and dest addresses. */
 		src_addr += xfer_size;
 		dst_addr += xfer_size;
 
-		अगर (reमुख्यing_size >= AT_XDMAC_MBR_UBC_UBLEN_MAX << dwidth)
+		if (remaining_size >= AT_XDMAC_MBR_UBC_UBLEN_MAX << dwidth)
 			xfer_size = AT_XDMAC_MBR_UBC_UBLEN_MAX << dwidth;
-		अन्यथा
-			xfer_size = reमुख्यing_size;
+		else
+			xfer_size = remaining_size;
 
 		dev_dbg(chan2dev(chan), "%s: xfer_size=%zu\n", __func__, xfer_size);
 
-		/* Check reमुख्यing length and change data width अगर needed. */
+		/* Check remaining length and change data width if needed. */
 		dwidth = at_xdmac_align_width(chan,
 					      src_addr | dst_addr | xfer_size);
 		chan_cc &= ~AT_XDMAC_CC_DWIDTH_MASK;
 		chan_cc |= AT_XDMAC_CC_DWIDTH(dwidth);
 
 		ublen = xfer_size >> dwidth;
-		reमुख्यing_size -= xfer_size;
+		remaining_size -= xfer_size;
 
 		desc->lld.mbr_sa = src_addr;
 		desc->lld.mbr_da = dst_addr;
@@ -1174,48 +1173,48 @@ at_xdmac_prep_dma_स_नकल(काष्ठा dma_chan *chan, dma_addr_t de
 			 __func__, &desc->lld.mbr_sa, &desc->lld.mbr_da, desc->lld.mbr_ubc, desc->lld.mbr_cfg);
 
 		/* Chain lld. */
-		अगर (prev)
+		if (prev)
 			at_xdmac_queue_desc(chan, prev, desc);
 
 		prev = desc;
-		अगर (!first)
+		if (!first)
 			first = desc;
 
 		dev_dbg(chan2dev(chan), "%s: add desc 0x%p to descs_list 0x%p\n",
 			 __func__, desc, first);
 		list_add_tail(&desc->desc_node, &first->descs_list);
-	पूर्ण
+	}
 
 	first->tx_dma_desc.flags = flags;
 	first->xfer_size = len;
 
-	वापस &first->tx_dma_desc;
-पूर्ण
+	return &first->tx_dma_desc;
+}
 
-अटल काष्ठा at_xdmac_desc *at_xdmac_स_रखो_create_desc(काष्ठा dma_chan *chan,
-							 काष्ठा at_xdmac_chan *atchan,
+static struct at_xdmac_desc *at_xdmac_memset_create_desc(struct dma_chan *chan,
+							 struct at_xdmac_chan *atchan,
 							 dma_addr_t dst_addr,
-							 माप_प्रकार len,
-							 पूर्णांक value)
-अणु
-	काष्ठा at_xdmac_desc	*desc;
-	अचिन्हित दीर्घ		flags;
-	माप_प्रकार			ublen;
+							 size_t len,
+							 int value)
+{
+	struct at_xdmac_desc	*desc;
+	unsigned long		flags;
+	size_t			ublen;
 	u32			dwidth;
 	/*
 	 * WARNING: The channel configuration is set here since there is no
-	 * dmaengine_slave_config call in this हाल. Moreover we करोn't know the
+	 * dmaengine_slave_config call in this case. Moreover we don't know the
 	 * direction, it involves we can't dynamically set the source and dest
-	 * पूर्णांकerface so we have to use the same one. Only पूर्णांकerface 0 allows EBI
+	 * interface so we have to use the same one. Only interface 0 allows EBI
 	 * access. Hopefully we can access DDR through both ports (at least on
-	 * SAMA5D4x), so we can use the same पूर्णांकerface क्रम source and dest,
-	 * that solves the fact we करोn't know the direction.
-	 * ERRATA: Even अगर useless क्रम memory transfers, the PERID has to not
+	 * SAMA5D4x), so we can use the same interface for source and dest,
+	 * that solves the fact we don't know the direction.
+	 * ERRATA: Even if useless for memory transfers, the PERID has to not
 	 * match the one of another channel. If not, it could lead to spurious
 	 * flag status.
-	 * For SAMA7G5x हाल, the SIF and DIF fields are no दीर्घer used.
-	 * Thus, no need to have the SIF/DIF पूर्णांकerfaces here.
-	 * For SAMA5D4x and SAMA5D2x the SIF and DIF are alपढ़ोy configured as
+	 * For SAMA7G5x case, the SIF and DIF fields are no longer used.
+	 * Thus, no need to have the SIF/DIF interfaces here.
+	 * For SAMA5D4x and SAMA5D2x the SIF and DIF are already configured as
 	 * zero.
 	 */
 	u32			chan_cc = AT_XDMAC_CC_PERID(0x7f)
@@ -1227,20 +1226,20 @@ at_xdmac_prep_dma_स_नकल(काष्ठा dma_chan *chan, dma_addr_t de
 
 	dwidth = at_xdmac_align_width(chan, dst_addr);
 
-	अगर (len >= (AT_XDMAC_MBR_UBC_UBLEN_MAX << dwidth)) अणु
+	if (len >= (AT_XDMAC_MBR_UBC_UBLEN_MAX << dwidth)) {
 		dev_err(chan2dev(chan),
 			"%s: Transfer too large, aborting...\n",
 			__func__);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
 	spin_lock_irqsave(&atchan->lock, flags);
 	desc = at_xdmac_get_desc(atchan);
 	spin_unlock_irqrestore(&atchan->lock, flags);
-	अगर (!desc) अणु
+	if (!desc) {
 		dev_err(chan2dev(chan), "can't get descriptor\n");
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
 	chan_cc |= AT_XDMAC_CC_DWIDTH(dwidth);
 
@@ -1259,69 +1258,69 @@ at_xdmac_prep_dma_स_नकल(काष्ठा dma_chan *chan, dma_addr_t de
 		__func__, &desc->lld.mbr_da, desc->lld.mbr_ds, desc->lld.mbr_ubc,
 		desc->lld.mbr_cfg);
 
-	वापस desc;
-पूर्ण
+	return desc;
+}
 
-अटल काष्ठा dma_async_tx_descriptor *
-at_xdmac_prep_dma_स_रखो(काष्ठा dma_chan *chan, dma_addr_t dest, पूर्णांक value,
-			 माप_प्रकार len, अचिन्हित दीर्घ flags)
-अणु
-	काष्ठा at_xdmac_chan	*atchan = to_at_xdmac_chan(chan);
-	काष्ठा at_xdmac_desc	*desc;
+static struct dma_async_tx_descriptor *
+at_xdmac_prep_dma_memset(struct dma_chan *chan, dma_addr_t dest, int value,
+			 size_t len, unsigned long flags)
+{
+	struct at_xdmac_chan	*atchan = to_at_xdmac_chan(chan);
+	struct at_xdmac_desc	*desc;
 
 	dev_dbg(chan2dev(chan), "%s: dest=%pad, len=%zu, pattern=0x%x, flags=0x%lx\n",
 		__func__, &dest, len, value, flags);
 
-	अगर (unlikely(!len))
-		वापस शून्य;
+	if (unlikely(!len))
+		return NULL;
 
-	desc = at_xdmac_स_रखो_create_desc(chan, atchan, dest, len, value);
+	desc = at_xdmac_memset_create_desc(chan, atchan, dest, len, value);
 	list_add_tail(&desc->desc_node, &desc->descs_list);
 
 	desc->tx_dma_desc.cookie = -EBUSY;
 	desc->tx_dma_desc.flags = flags;
 	desc->xfer_size = len;
 
-	वापस &desc->tx_dma_desc;
-पूर्ण
+	return &desc->tx_dma_desc;
+}
 
-अटल काष्ठा dma_async_tx_descriptor *
-at_xdmac_prep_dma_स_रखो_sg(काष्ठा dma_chan *chan, काष्ठा scatterlist *sgl,
-			    अचिन्हित पूर्णांक sg_len, पूर्णांक value,
-			    अचिन्हित दीर्घ flags)
-अणु
-	काष्ठा at_xdmac_chan	*atchan = to_at_xdmac_chan(chan);
-	काष्ठा at_xdmac_desc	*desc, *pdesc = शून्य,
-				*ppdesc = शून्य, *first = शून्य;
-	काष्ठा scatterlist	*sg, *psg = शून्य, *ppsg = शून्य;
-	माप_प्रकार			stride = 0, pstride = 0, len = 0;
-	पूर्णांक			i;
+static struct dma_async_tx_descriptor *
+at_xdmac_prep_dma_memset_sg(struct dma_chan *chan, struct scatterlist *sgl,
+			    unsigned int sg_len, int value,
+			    unsigned long flags)
+{
+	struct at_xdmac_chan	*atchan = to_at_xdmac_chan(chan);
+	struct at_xdmac_desc	*desc, *pdesc = NULL,
+				*ppdesc = NULL, *first = NULL;
+	struct scatterlist	*sg, *psg = NULL, *ppsg = NULL;
+	size_t			stride = 0, pstride = 0, len = 0;
+	int			i;
 
-	अगर (!sgl)
-		वापस शून्य;
+	if (!sgl)
+		return NULL;
 
 	dev_dbg(chan2dev(chan), "%s: sg_len=%d, value=0x%x, flags=0x%lx\n",
 		__func__, sg_len, value, flags);
 
 	/* Prepare descriptors. */
-	क्रम_each_sg(sgl, sg, sg_len, i) अणु
+	for_each_sg(sgl, sg, sg_len, i) {
 		dev_dbg(chan2dev(chan), "%s: dest=%pad, len=%d, pattern=0x%x, flags=0x%lx\n",
 			__func__, &sg_dma_address(sg), sg_dma_len(sg),
 			value, flags);
-		desc = at_xdmac_स_रखो_create_desc(chan, atchan,
+		desc = at_xdmac_memset_create_desc(chan, atchan,
 						   sg_dma_address(sg),
 						   sg_dma_len(sg),
 						   value);
-		अगर (!desc && first)
+		if (!desc && first)
 			list_splice_init(&first->descs_list,
-					 &atchan->मुक्त_descs_list);
+					 &atchan->free_descs_list);
 
-		अगर (!first)
+		if (!first)
 			first = desc;
 
 		/* Update our strides */
 		pstride = stride;
-		अगर (psg)
+		if (psg)
 			stride = sg_dma_address(sg) -
 				(sg_dma_address(psg) + sg_dma_len(psg));
 
@@ -1329,7 +1328,7 @@ at_xdmac_prep_dma_स_रखो_sg(काष्ठा dma_chan *chan, काष�
 		 * The scatterlist API gives us only the address and
 		 * length of each elements.
 		 *
-		 * Unक्रमtunately, we करोn't have the stride, which we
+		 * Unfortunately, we don't have the stride, which we
 		 * will need to compute.
 		 *
 		 * That make us end up in a situation like this one:
@@ -1342,11 +1341,11 @@ at_xdmac_prep_dma_स_रखो_sg(काष्ठा dma_chan *chan, काष�
 		 * to actually take the decision on whether we need to
 		 * queue N-1 or reuse N-2.
 		 *
-		 * We will only consider N अगर it is the last element.
+		 * We will only consider N if it is the last element.
 		 */
-		अगर (ppdesc && pdesc) अणु
-			अगर ((stride == pstride) &&
-			    (sg_dma_len(ppsg) == sg_dma_len(psg))) अणु
+		if (ppdesc && pdesc) {
+			if ((stride == pstride) &&
+			    (sg_dma_len(ppsg) == sg_dma_len(psg))) {
 				dev_dbg(chan2dev(chan),
 					"%s: desc 0x%p can be merged with desc 0x%p\n",
 					__func__, pdesc, ppdesc);
@@ -1360,28 +1359,28 @@ at_xdmac_prep_dma_स_रखो_sg(काष्ठा dma_chan *chan, काष�
 
 				/*
 				 * Put back the N-1 descriptor in the
-				 * मुक्त descriptor list
+				 * free descriptor list
 				 */
 				list_add_tail(&pdesc->desc_node,
-					      &atchan->मुक्त_descs_list);
+					      &atchan->free_descs_list);
 
 				/*
-				 * Make our N-1 descriptor poपूर्णांकer
-				 * poपूर्णांक to the N-2 since they were
+				 * Make our N-1 descriptor pointer
+				 * point to the N-2 since they were
 				 * actually merged.
 				 */
 				pdesc = ppdesc;
 
 			/*
-			 * Rule out the हाल where we करोn't have
+			 * Rule out the case where we don't have
 			 * pstride computed yet (our second sg
 			 * element)
 			 *
-			 * We also want to catch the हाल where there
+			 * We also want to catch the case where there
 			 * would be a negative stride,
 			 */
-			पूर्ण अन्यथा अगर (pstride ||
-				   sg_dma_address(sg) < sg_dma_address(psg)) अणु
+			} else if (pstride ||
+				   sg_dma_address(sg) < sg_dma_address(psg)) {
 				/*
 				 * Queue the N-1 descriptor after the
 				 * N-2
@@ -1390,7 +1389,7 @@ at_xdmac_prep_dma_स_रखो_sg(काष्ठा dma_chan *chan, काष�
 
 				/*
 				 * Add the N-1 descriptor to the list
-				 * of the descriptors used क्रम this
+				 * of the descriptors used for this
 				 * transfer
 				 */
 				list_add_tail(&desc->desc_node,
@@ -1398,18 +1397,18 @@ at_xdmac_prep_dma_स_रखो_sg(काष्ठा dma_chan *chan, काष�
 				dev_dbg(chan2dev(chan),
 					"%s: add desc 0x%p to descs_list 0x%p\n",
 					__func__, desc, first);
-			पूर्ण
-		पूर्ण
+			}
+		}
 
 		/*
-		 * If we are the last element, just see अगर we have the
+		 * If we are the last element, just see if we have the
 		 * same size than the previous element.
 		 *
 		 * If so, we can merge it with the previous descriptor
-		 * since we करोn't care about the stride anymore.
+		 * since we don't care about the stride anymore.
 		 */
-		अगर ((i == (sg_len - 1)) &&
-		    sg_dma_len(psg) == sg_dma_len(sg)) अणु
+		if ((i == (sg_len - 1)) &&
+		    sg_dma_len(psg) == sg_dma_len(sg)) {
 			dev_dbg(chan2dev(chan),
 				"%s: desc 0x%p can be merged with desc 0x%p\n",
 				__func__, desc, pdesc);
@@ -1422,96 +1421,96 @@ at_xdmac_prep_dma_स_रखो_sg(काष्ठा dma_chan *chan, काष�
 			pdesc->lld.mbr_dus = stride;
 
 			/*
-			 * Put back the N descriptor in the मुक्त
+			 * Put back the N descriptor in the free
 			 * descriptor list
 			 */
 			list_add_tail(&desc->desc_node,
-				      &atchan->मुक्त_descs_list);
-		पूर्ण
+				      &atchan->free_descs_list);
+		}
 
 		/* Update our descriptors */
 		ppdesc = pdesc;
 		pdesc = desc;
 
-		/* Update our scatter poपूर्णांकers */
+		/* Update our scatter pointers */
 		ppsg = psg;
 		psg = sg;
 
 		len += sg_dma_len(sg);
-	पूर्ण
+	}
 
 	first->tx_dma_desc.cookie = -EBUSY;
 	first->tx_dma_desc.flags = flags;
 	first->xfer_size = len;
 
-	वापस &first->tx_dma_desc;
-पूर्ण
+	return &first->tx_dma_desc;
+}
 
-अटल क्रमागत dma_status
-at_xdmac_tx_status(काष्ठा dma_chan *chan, dma_cookie_t cookie,
-		काष्ठा dma_tx_state *txstate)
-अणु
-	काष्ठा at_xdmac_chan	*atchan = to_at_xdmac_chan(chan);
-	काष्ठा at_xdmac		*atxdmac = to_at_xdmac(atchan->chan.device);
-	काष्ठा at_xdmac_desc	*desc, *_desc;
-	काष्ठा list_head	*descs_list;
-	क्रमागत dma_status		ret;
-	पूर्णांक			residue, retry;
+static enum dma_status
+at_xdmac_tx_status(struct dma_chan *chan, dma_cookie_t cookie,
+		struct dma_tx_state *txstate)
+{
+	struct at_xdmac_chan	*atchan = to_at_xdmac_chan(chan);
+	struct at_xdmac		*atxdmac = to_at_xdmac(atchan->chan.device);
+	struct at_xdmac_desc	*desc, *_desc;
+	struct list_head	*descs_list;
+	enum dma_status		ret;
+	int			residue, retry;
 	u32			cur_nda, check_nda, cur_ubc, mask, value;
 	u8			dwidth = 0;
-	अचिन्हित दीर्घ		flags;
+	unsigned long		flags;
 	bool			initd;
 
 	ret = dma_cookie_status(chan, cookie, txstate);
-	अगर (ret == DMA_COMPLETE)
-		वापस ret;
+	if (ret == DMA_COMPLETE)
+		return ret;
 
-	अगर (!txstate)
-		वापस ret;
+	if (!txstate)
+		return ret;
 
 	spin_lock_irqsave(&atchan->lock, flags);
 
-	desc = list_first_entry(&atchan->xfers_list, काष्ठा at_xdmac_desc, xfer_node);
+	desc = list_first_entry(&atchan->xfers_list, struct at_xdmac_desc, xfer_node);
 
 	/*
-	 * If the transfer has not been started yet, करोn't need to compute the
+	 * If the transfer has not been started yet, don't need to compute the
 	 * residue, it's the transfer length.
 	 */
-	अगर (!desc->active_xfer) अणु
+	if (!desc->active_xfer) {
 		dma_set_residue(txstate, desc->xfer_size);
-		जाओ spin_unlock;
-	पूर्ण
+		goto spin_unlock;
+	}
 
 	residue = desc->xfer_size;
 	/*
 	 * Flush FIFO: only relevant when the transfer is source peripheral
-	 * synchronized. Flush is needed beक्रमe पढ़ोing CUBC because data in
+	 * synchronized. Flush is needed before reading CUBC because data in
 	 * the FIFO are not reported by CUBC. Reporting a residue of the
-	 * transfer length जबतक we have data in FIFO can cause issue.
-	 * Useहाल: aपंचांगel USART has a समयout which means I have received
-	 * अक्षरacters but there is no more अक्षरacter received क्रम a जबतक. On
-	 * समयout, it requests the residue. If the data are in the DMA FIFO,
-	 * we will वापस a residue of the transfer length. It means no data
-	 * received. If an application is रुकोing क्रम these data, it will hang
-	 * since we won't have another USART समयout without receiving new
+	 * transfer length while we have data in FIFO can cause issue.
+	 * Usecase: atmel USART has a timeout which means I have received
+	 * characters but there is no more character received for a while. On
+	 * timeout, it requests the residue. If the data are in the DMA FIFO,
+	 * we will return a residue of the transfer length. It means no data
+	 * received. If an application is waiting for these data, it will hang
+	 * since we won't have another USART timeout without receiving new
 	 * data.
 	 */
 	mask = AT_XDMAC_CC_TYPE | AT_XDMAC_CC_DSYNC;
 	value = AT_XDMAC_CC_TYPE_PER_TRAN | AT_XDMAC_CC_DSYNC_PER2MEM;
-	अगर ((desc->lld.mbr_cfg & mask) == value) अणु
-		at_xdmac_ग_लिखो(atxdmac, atxdmac->layout->gswf, atchan->mask);
-		जबतक (!(at_xdmac_chan_पढ़ो(atchan, AT_XDMAC_CIS) & AT_XDMAC_CIS_FIS))
+	if ((desc->lld.mbr_cfg & mask) == value) {
+		at_xdmac_write(atxdmac, atxdmac->layout->gswf, atchan->mask);
+		while (!(at_xdmac_chan_read(atchan, AT_XDMAC_CIS) & AT_XDMAC_CIS_FIS))
 			cpu_relax();
-	पूर्ण
+	}
 
 	/*
-	 * The easiest way to compute the residue should be to छोड़ो the DMA
-	 * but करोing this can lead to miss some data as some devices करोn't
+	 * The easiest way to compute the residue should be to pause the DMA
+	 * but doing this can lead to miss some data as some devices don't
 	 * have FIFO.
-	 * We need to पढ़ो several रेजिस्टरs because:
-	 * - DMA is running thereक्रमe a descriptor change is possible जबतक
-	 * पढ़ोing these रेजिस्टरs
-	 * - When the block transfer is करोne, the value of the CUBC रेजिस्टर
+	 * We need to read several registers because:
+	 * - DMA is running therefore a descriptor change is possible while
+	 * reading these registers
+	 * - When the block transfer is done, the value of the CUBC register
 	 * is set to its initial value until the fetch of the next descriptor.
 	 * This value will corrupt the residue calculation so we have to skip
 	 * it.
@@ -1527,53 +1526,53 @@ at_xdmac_tx_status(काष्ठा dma_chan *chan, dma_cookie_t cookie,
 	 *
 	 * Since descriptors are aligned on 64 bits, we can assume that
 	 * the update of NDA and CUBC is atomic.
-	 * Memory barriers are used to ensure the पढ़ो order of the रेजिस्टरs.
+	 * Memory barriers are used to ensure the read order of the registers.
 	 * A max number of retries is set because unlikely it could never ends.
 	 */
-	क्रम (retry = 0; retry < AT_XDMAC_RESIDUE_MAX_RETRIES; retry++) अणु
-		check_nda = at_xdmac_chan_पढ़ो(atchan, AT_XDMAC_CNDA) & 0xfffffffc;
+	for (retry = 0; retry < AT_XDMAC_RESIDUE_MAX_RETRIES; retry++) {
+		check_nda = at_xdmac_chan_read(atchan, AT_XDMAC_CNDA) & 0xfffffffc;
 		rmb();
-		cur_ubc = at_xdmac_chan_पढ़ो(atchan, AT_XDMAC_CUBC);
+		cur_ubc = at_xdmac_chan_read(atchan, AT_XDMAC_CUBC);
 		rmb();
-		initd = !!(at_xdmac_chan_पढ़ो(atchan, AT_XDMAC_CC) & AT_XDMAC_CC_INITD);
+		initd = !!(at_xdmac_chan_read(atchan, AT_XDMAC_CC) & AT_XDMAC_CC_INITD);
 		rmb();
-		cur_nda = at_xdmac_chan_पढ़ो(atchan, AT_XDMAC_CNDA) & 0xfffffffc;
+		cur_nda = at_xdmac_chan_read(atchan, AT_XDMAC_CNDA) & 0xfffffffc;
 		rmb();
 
-		अगर ((check_nda == cur_nda) && initd)
-			अवरोध;
-	पूर्ण
+		if ((check_nda == cur_nda) && initd)
+			break;
+	}
 
-	अगर (unlikely(retry >= AT_XDMAC_RESIDUE_MAX_RETRIES)) अणु
+	if (unlikely(retry >= AT_XDMAC_RESIDUE_MAX_RETRIES)) {
 		ret = DMA_ERROR;
-		जाओ spin_unlock;
-	पूर्ण
+		goto spin_unlock;
+	}
 
 	/*
 	 * Flush FIFO: only relevant when the transfer is source peripheral
 	 * synchronized. Another flush is needed here because CUBC is updated
-	 * when the controller sends the data ग_लिखो command. It can lead to
+	 * when the controller sends the data write command. It can lead to
 	 * report data that are not written in the memory or the device. The
 	 * FIFO flush ensures that data are really written.
 	 */
-	अगर ((desc->lld.mbr_cfg & mask) == value) अणु
-		at_xdmac_ग_लिखो(atxdmac, atxdmac->layout->gswf, atchan->mask);
-		जबतक (!(at_xdmac_chan_पढ़ो(atchan, AT_XDMAC_CIS) & AT_XDMAC_CIS_FIS))
+	if ((desc->lld.mbr_cfg & mask) == value) {
+		at_xdmac_write(atxdmac, atxdmac->layout->gswf, atchan->mask);
+		while (!(at_xdmac_chan_read(atchan, AT_XDMAC_CIS) & AT_XDMAC_CIS_FIS))
 			cpu_relax();
-	पूर्ण
+	}
 
 	/*
-	 * Remove size of all microblocks alपढ़ोy transferred and the current
-	 * one. Then add the reमुख्यing size to transfer of the current
+	 * Remove size of all microblocks already transferred and the current
+	 * one. Then add the remaining size to transfer of the current
 	 * microblock.
 	 */
 	descs_list = &desc->descs_list;
-	list_क्रम_each_entry_safe(desc, _desc, descs_list, desc_node) अणु
+	list_for_each_entry_safe(desc, _desc, descs_list, desc_node) {
 		dwidth = at_xdmac_get_dwidth(desc->lld.mbr_cfg);
 		residue -= (desc->lld.mbr_ubc & 0xffffff) << dwidth;
-		अगर ((desc->lld.mbr_nda & 0xfffffffc) == cur_nda)
-			अवरोध;
-	पूर्ण
+		if ((desc->lld.mbr_nda & 0xfffffffc) == cur_nda)
+			break;
+	}
 	residue += cur_ubc << dwidth;
 
 	dma_set_residue(txstate, residue);
@@ -1584,100 +1583,100 @@ at_xdmac_tx_status(काष्ठा dma_chan *chan, dma_cookie_t cookie,
 
 spin_unlock:
 	spin_unlock_irqrestore(&atchan->lock, flags);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-/* Call must be रक्षित by lock. */
-अटल व्योम at_xdmac_हटाओ_xfer(काष्ठा at_xdmac_chan *atchan,
-				    काष्ठा at_xdmac_desc *desc)
-अणु
+/* Call must be protected by lock. */
+static void at_xdmac_remove_xfer(struct at_xdmac_chan *atchan,
+				    struct at_xdmac_desc *desc)
+{
 	dev_dbg(chan2dev(&atchan->chan), "%s: desc 0x%p\n", __func__, desc);
 
 	/*
 	 * Remove the transfer from the transfer list then move the transfer
-	 * descriptors पूर्णांकo the मुक्त descriptors list.
+	 * descriptors into the free descriptors list.
 	 */
 	list_del(&desc->xfer_node);
-	list_splice_init(&desc->descs_list, &atchan->मुक्त_descs_list);
-पूर्ण
+	list_splice_init(&desc->descs_list, &atchan->free_descs_list);
+}
 
-अटल व्योम at_xdmac_advance_work(काष्ठा at_xdmac_chan *atchan)
-अणु
-	काष्ठा at_xdmac_desc	*desc;
+static void at_xdmac_advance_work(struct at_xdmac_chan *atchan)
+{
+	struct at_xdmac_desc	*desc;
 
 	/*
-	 * If channel is enabled, करो nothing, advance_work will be triggered
-	 * after the पूर्णांकerruption.
+	 * If channel is enabled, do nothing, advance_work will be triggered
+	 * after the interruption.
 	 */
-	अगर (!at_xdmac_chan_is_enabled(atchan) && !list_empty(&atchan->xfers_list)) अणु
+	if (!at_xdmac_chan_is_enabled(atchan) && !list_empty(&atchan->xfers_list)) {
 		desc = list_first_entry(&atchan->xfers_list,
-					काष्ठा at_xdmac_desc,
+					struct at_xdmac_desc,
 					xfer_node);
 		dev_vdbg(chan2dev(&atchan->chan), "%s: desc 0x%p\n", __func__, desc);
-		अगर (!desc->active_xfer)
+		if (!desc->active_xfer)
 			at_xdmac_start_xfer(atchan, desc);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम at_xdmac_handle_cyclic(काष्ठा at_xdmac_chan *atchan)
-अणु
-	काष्ठा at_xdmac_desc		*desc;
-	काष्ठा dma_async_tx_descriptor	*txd;
+static void at_xdmac_handle_cyclic(struct at_xdmac_chan *atchan)
+{
+	struct at_xdmac_desc		*desc;
+	struct dma_async_tx_descriptor	*txd;
 
-	अगर (!list_empty(&atchan->xfers_list)) अणु
+	if (!list_empty(&atchan->xfers_list)) {
 		desc = list_first_entry(&atchan->xfers_list,
-					काष्ठा at_xdmac_desc, xfer_node);
+					struct at_xdmac_desc, xfer_node);
 		txd = &desc->tx_dma_desc;
 
-		अगर (txd->flags & DMA_PREP_INTERRUPT)
-			dmaengine_desc_get_callback_invoke(txd, शून्य);
-	पूर्ण
-पूर्ण
+		if (txd->flags & DMA_PREP_INTERRUPT)
+			dmaengine_desc_get_callback_invoke(txd, NULL);
+	}
+}
 
-अटल व्योम at_xdmac_handle_error(काष्ठा at_xdmac_chan *atchan)
-अणु
-	काष्ठा at_xdmac		*atxdmac = to_at_xdmac(atchan->chan.device);
-	काष्ठा at_xdmac_desc	*bad_desc;
+static void at_xdmac_handle_error(struct at_xdmac_chan *atchan)
+{
+	struct at_xdmac		*atxdmac = to_at_xdmac(atchan->chan.device);
+	struct at_xdmac_desc	*bad_desc;
 
 	/*
 	 * The descriptor currently at the head of the active list is
-	 * broken. Since we करोn't have any way to report errors, we'll
-	 * just have to scream loudly and try to जारी with other
-	 * descriptors queued (अगर any).
+	 * broken. Since we don't have any way to report errors, we'll
+	 * just have to scream loudly and try to continue with other
+	 * descriptors queued (if any).
 	 */
-	अगर (atchan->irq_status & AT_XDMAC_CIS_RBEIS)
+	if (atchan->irq_status & AT_XDMAC_CIS_RBEIS)
 		dev_err(chan2dev(&atchan->chan), "read bus error!!!");
-	अगर (atchan->irq_status & AT_XDMAC_CIS_WBEIS)
+	if (atchan->irq_status & AT_XDMAC_CIS_WBEIS)
 		dev_err(chan2dev(&atchan->chan), "write bus error!!!");
-	अगर (atchan->irq_status & AT_XDMAC_CIS_ROIS)
+	if (atchan->irq_status & AT_XDMAC_CIS_ROIS)
 		dev_err(chan2dev(&atchan->chan), "request overflow error!!!");
 
 	spin_lock_irq(&atchan->lock);
 
-	/* Channel must be disabled first as it's not करोne स्वतःmatically */
-	at_xdmac_ग_लिखो(atxdmac, AT_XDMAC_GD, atchan->mask);
-	जबतक (at_xdmac_पढ़ो(atxdmac, AT_XDMAC_GS) & atchan->mask)
+	/* Channel must be disabled first as it's not done automatically */
+	at_xdmac_write(atxdmac, AT_XDMAC_GD, atchan->mask);
+	while (at_xdmac_read(atxdmac, AT_XDMAC_GS) & atchan->mask)
 		cpu_relax();
 
 	bad_desc = list_first_entry(&atchan->xfers_list,
-				    काष्ठा at_xdmac_desc,
+				    struct at_xdmac_desc,
 				    xfer_node);
 
 	spin_unlock_irq(&atchan->lock);
 
-	/* Prपूर्णांक bad descriptor's details अगर needed */
+	/* Print bad descriptor's details if needed */
 	dev_dbg(chan2dev(&atchan->chan),
 		"%s: lld: mbr_sa=%pad, mbr_da=%pad, mbr_ubc=0x%08x\n",
 		__func__, &bad_desc->lld.mbr_sa, &bad_desc->lld.mbr_da,
 		bad_desc->lld.mbr_ubc);
 
-	/* Then जारी with usual descriptor management */
-पूर्ण
+	/* Then continue with usual descriptor management */
+}
 
-अटल व्योम at_xdmac_tasklet(काष्ठा tasklet_काष्ठा *t)
-अणु
-	काष्ठा at_xdmac_chan	*atchan = from_tasklet(atchan, t, tasklet);
-	काष्ठा at_xdmac_desc	*desc;
+static void at_xdmac_tasklet(struct tasklet_struct *t)
+{
+	struct at_xdmac_chan	*atchan = from_tasklet(atchan, t, tasklet);
+	struct at_xdmac_desc	*desc;
 	u32			error_mask;
 
 	dev_dbg(chan2dev(&atchan->chan), "%s: status=0x%08x\n",
@@ -1687,71 +1686,71 @@ spin_unlock:
 		     | AT_XDMAC_CIS_WBEIS
 		     | AT_XDMAC_CIS_ROIS;
 
-	अगर (at_xdmac_chan_is_cyclic(atchan)) अणु
+	if (at_xdmac_chan_is_cyclic(atchan)) {
 		at_xdmac_handle_cyclic(atchan);
-	पूर्ण अन्यथा अगर ((atchan->irq_status & AT_XDMAC_CIS_LIS)
-		   || (atchan->irq_status & error_mask)) अणु
-		काष्ठा dma_async_tx_descriptor  *txd;
+	} else if ((atchan->irq_status & AT_XDMAC_CIS_LIS)
+		   || (atchan->irq_status & error_mask)) {
+		struct dma_async_tx_descriptor  *txd;
 
-		अगर (atchan->irq_status & error_mask)
+		if (atchan->irq_status & error_mask)
 			at_xdmac_handle_error(atchan);
 
 		spin_lock_irq(&atchan->lock);
 		desc = list_first_entry(&atchan->xfers_list,
-					काष्ठा at_xdmac_desc,
+					struct at_xdmac_desc,
 					xfer_node);
 		dev_vdbg(chan2dev(&atchan->chan), "%s: desc 0x%p\n", __func__, desc);
-		अगर (!desc->active_xfer) अणु
+		if (!desc->active_xfer) {
 			dev_err(chan2dev(&atchan->chan), "Xfer not active: exiting");
 			spin_unlock_irq(&atchan->lock);
-			वापस;
-		पूर्ण
+			return;
+		}
 
 		txd = &desc->tx_dma_desc;
 
-		at_xdmac_हटाओ_xfer(atchan, desc);
+		at_xdmac_remove_xfer(atchan, desc);
 		spin_unlock_irq(&atchan->lock);
 
 		dma_cookie_complete(txd);
-		अगर (txd->flags & DMA_PREP_INTERRUPT)
-			dmaengine_desc_get_callback_invoke(txd, शून्य);
+		if (txd->flags & DMA_PREP_INTERRUPT)
+			dmaengine_desc_get_callback_invoke(txd, NULL);
 
 		dma_run_dependencies(txd);
 
 		spin_lock_irq(&atchan->lock);
 		at_xdmac_advance_work(atchan);
 		spin_unlock_irq(&atchan->lock);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल irqवापस_t at_xdmac_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा at_xdmac		*atxdmac = (काष्ठा at_xdmac *)dev_id;
-	काष्ठा at_xdmac_chan	*atchan;
+static irqreturn_t at_xdmac_interrupt(int irq, void *dev_id)
+{
+	struct at_xdmac		*atxdmac = (struct at_xdmac *)dev_id;
+	struct at_xdmac_chan	*atchan;
 	u32			imr, status, pending;
 	u32			chan_imr, chan_status;
-	पूर्णांक			i, ret = IRQ_NONE;
+	int			i, ret = IRQ_NONE;
 
-	करो अणु
-		imr = at_xdmac_पढ़ो(atxdmac, AT_XDMAC_GIM);
-		status = at_xdmac_पढ़ो(atxdmac, AT_XDMAC_GIS);
+	do {
+		imr = at_xdmac_read(atxdmac, AT_XDMAC_GIM);
+		status = at_xdmac_read(atxdmac, AT_XDMAC_GIS);
 		pending = status & imr;
 
 		dev_vdbg(atxdmac->dma.dev,
 			 "%s: status=0x%08x, imr=0x%08x, pending=0x%08x\n",
 			 __func__, status, imr, pending);
 
-		अगर (!pending)
-			अवरोध;
+		if (!pending)
+			break;
 
-		/* We have to find which channel has generated the पूर्णांकerrupt. */
-		क्रम (i = 0; i < atxdmac->dma.chancnt; i++) अणु
-			अगर (!((1 << i) & pending))
-				जारी;
+		/* We have to find which channel has generated the interrupt. */
+		for (i = 0; i < atxdmac->dma.chancnt; i++) {
+			if (!((1 << i) & pending))
+				continue;
 
 			atchan = &atxdmac->chan[i];
-			chan_imr = at_xdmac_chan_पढ़ो(atchan, AT_XDMAC_CIM);
-			chan_status = at_xdmac_chan_पढ़ो(atchan, AT_XDMAC_CIS);
+			chan_imr = at_xdmac_chan_read(atchan, AT_XDMAC_CIM);
+			chan_status = at_xdmac_chan_read(atchan, AT_XDMAC_CIS);
 			atchan->irq_status = chan_status & chan_imr;
 			dev_vdbg(atxdmac->dma.dev,
 				 "%s: chan%d: imr=0x%x, status=0x%x\n",
@@ -1759,47 +1758,47 @@ spin_unlock:
 			dev_vdbg(chan2dev(&atchan->chan),
 				 "%s: CC=0x%08x CNDA=0x%08x, CNDC=0x%08x, CSA=0x%08x, CDA=0x%08x, CUBC=0x%08x\n",
 				 __func__,
-				 at_xdmac_chan_पढ़ो(atchan, AT_XDMAC_CC),
-				 at_xdmac_chan_पढ़ो(atchan, AT_XDMAC_CNDA),
-				 at_xdmac_chan_पढ़ो(atchan, AT_XDMAC_CNDC),
-				 at_xdmac_chan_पढ़ो(atchan, AT_XDMAC_CSA),
-				 at_xdmac_chan_पढ़ो(atchan, AT_XDMAC_CDA),
-				 at_xdmac_chan_पढ़ो(atchan, AT_XDMAC_CUBC));
+				 at_xdmac_chan_read(atchan, AT_XDMAC_CC),
+				 at_xdmac_chan_read(atchan, AT_XDMAC_CNDA),
+				 at_xdmac_chan_read(atchan, AT_XDMAC_CNDC),
+				 at_xdmac_chan_read(atchan, AT_XDMAC_CSA),
+				 at_xdmac_chan_read(atchan, AT_XDMAC_CDA),
+				 at_xdmac_chan_read(atchan, AT_XDMAC_CUBC));
 
-			अगर (atchan->irq_status & (AT_XDMAC_CIS_RBEIS | AT_XDMAC_CIS_WBEIS))
-				at_xdmac_ग_लिखो(atxdmac, AT_XDMAC_GD, atchan->mask);
+			if (atchan->irq_status & (AT_XDMAC_CIS_RBEIS | AT_XDMAC_CIS_WBEIS))
+				at_xdmac_write(atxdmac, AT_XDMAC_GD, atchan->mask);
 
 			tasklet_schedule(&atchan->tasklet);
 			ret = IRQ_HANDLED;
-		पूर्ण
+		}
 
-	पूर्ण जबतक (pending);
+	} while (pending);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम at_xdmac_issue_pending(काष्ठा dma_chan *chan)
-अणु
-	काष्ठा at_xdmac_chan *atchan = to_at_xdmac_chan(chan);
-	अचिन्हित दीर्घ flags;
+static void at_xdmac_issue_pending(struct dma_chan *chan)
+{
+	struct at_xdmac_chan *atchan = to_at_xdmac_chan(chan);
+	unsigned long flags;
 
 	dev_dbg(chan2dev(&atchan->chan), "%s\n", __func__);
 
-	अगर (!at_xdmac_chan_is_cyclic(atchan)) अणु
+	if (!at_xdmac_chan_is_cyclic(atchan)) {
 		spin_lock_irqsave(&atchan->lock, flags);
 		at_xdmac_advance_work(atchan);
 		spin_unlock_irqrestore(&atchan->lock, flags);
-	पूर्ण
+	}
 
-	वापस;
-पूर्ण
+	return;
+}
 
-अटल पूर्णांक at_xdmac_device_config(काष्ठा dma_chan *chan,
-				  काष्ठा dma_slave_config *config)
-अणु
-	काष्ठा at_xdmac_chan	*atchan = to_at_xdmac_chan(chan);
-	पूर्णांक ret;
-	अचिन्हित दीर्घ		flags;
+static int at_xdmac_device_config(struct dma_chan *chan,
+				  struct dma_slave_config *config)
+{
+	struct at_xdmac_chan	*atchan = to_at_xdmac_chan(chan);
+	int ret;
+	unsigned long		flags;
 
 	dev_dbg(chan2dev(chan), "%s\n", __func__);
 
@@ -1807,301 +1806,301 @@ spin_unlock:
 	ret = at_xdmac_set_slave_config(chan, config);
 	spin_unlock_irqrestore(&atchan->lock, flags);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक at_xdmac_device_छोड़ो(काष्ठा dma_chan *chan)
-अणु
-	काष्ठा at_xdmac_chan	*atchan = to_at_xdmac_chan(chan);
-	काष्ठा at_xdmac		*atxdmac = to_at_xdmac(atchan->chan.device);
-	अचिन्हित दीर्घ		flags;
+static int at_xdmac_device_pause(struct dma_chan *chan)
+{
+	struct at_xdmac_chan	*atchan = to_at_xdmac_chan(chan);
+	struct at_xdmac		*atxdmac = to_at_xdmac(atchan->chan.device);
+	unsigned long		flags;
 
 	dev_dbg(chan2dev(chan), "%s\n", __func__);
 
-	अगर (test_and_set_bit(AT_XDMAC_CHAN_IS_PAUSED, &atchan->status))
-		वापस 0;
+	if (test_and_set_bit(AT_XDMAC_CHAN_IS_PAUSED, &atchan->status))
+		return 0;
 
 	spin_lock_irqsave(&atchan->lock, flags);
-	at_xdmac_ग_लिखो(atxdmac, atxdmac->layout->grws, atchan->mask);
-	जबतक (at_xdmac_chan_पढ़ो(atchan, AT_XDMAC_CC)
+	at_xdmac_write(atxdmac, atxdmac->layout->grws, atchan->mask);
+	while (at_xdmac_chan_read(atchan, AT_XDMAC_CC)
 	       & (AT_XDMAC_CC_WRIP | AT_XDMAC_CC_RDIP))
 		cpu_relax();
 	spin_unlock_irqrestore(&atchan->lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक at_xdmac_device_resume(काष्ठा dma_chan *chan)
-अणु
-	काष्ठा at_xdmac_chan	*atchan = to_at_xdmac_chan(chan);
-	काष्ठा at_xdmac		*atxdmac = to_at_xdmac(atchan->chan.device);
-	अचिन्हित दीर्घ		flags;
+static int at_xdmac_device_resume(struct dma_chan *chan)
+{
+	struct at_xdmac_chan	*atchan = to_at_xdmac_chan(chan);
+	struct at_xdmac		*atxdmac = to_at_xdmac(atchan->chan.device);
+	unsigned long		flags;
 
 	dev_dbg(chan2dev(chan), "%s\n", __func__);
 
 	spin_lock_irqsave(&atchan->lock, flags);
-	अगर (!at_xdmac_chan_is_छोड़ोd(atchan)) अणु
+	if (!at_xdmac_chan_is_paused(atchan)) {
 		spin_unlock_irqrestore(&atchan->lock, flags);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	at_xdmac_ग_लिखो(atxdmac, atxdmac->layout->grwr, atchan->mask);
+	at_xdmac_write(atxdmac, atxdmac->layout->grwr, atchan->mask);
 	clear_bit(AT_XDMAC_CHAN_IS_PAUSED, &atchan->status);
 	spin_unlock_irqrestore(&atchan->lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक at_xdmac_device_terminate_all(काष्ठा dma_chan *chan)
-अणु
-	काष्ठा at_xdmac_desc	*desc, *_desc;
-	काष्ठा at_xdmac_chan	*atchan = to_at_xdmac_chan(chan);
-	काष्ठा at_xdmac		*atxdmac = to_at_xdmac(atchan->chan.device);
-	अचिन्हित दीर्घ		flags;
+static int at_xdmac_device_terminate_all(struct dma_chan *chan)
+{
+	struct at_xdmac_desc	*desc, *_desc;
+	struct at_xdmac_chan	*atchan = to_at_xdmac_chan(chan);
+	struct at_xdmac		*atxdmac = to_at_xdmac(atchan->chan.device);
+	unsigned long		flags;
 
 	dev_dbg(chan2dev(chan), "%s\n", __func__);
 
 	spin_lock_irqsave(&atchan->lock, flags);
-	at_xdmac_ग_लिखो(atxdmac, AT_XDMAC_GD, atchan->mask);
-	जबतक (at_xdmac_पढ़ो(atxdmac, AT_XDMAC_GS) & atchan->mask)
+	at_xdmac_write(atxdmac, AT_XDMAC_GD, atchan->mask);
+	while (at_xdmac_read(atxdmac, AT_XDMAC_GS) & atchan->mask)
 		cpu_relax();
 
 	/* Cancel all pending transfers. */
-	list_क्रम_each_entry_safe(desc, _desc, &atchan->xfers_list, xfer_node)
-		at_xdmac_हटाओ_xfer(atchan, desc);
+	list_for_each_entry_safe(desc, _desc, &atchan->xfers_list, xfer_node)
+		at_xdmac_remove_xfer(atchan, desc);
 
 	clear_bit(AT_XDMAC_CHAN_IS_PAUSED, &atchan->status);
 	clear_bit(AT_XDMAC_CHAN_IS_CYCLIC, &atchan->status);
 	spin_unlock_irqrestore(&atchan->lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक at_xdmac_alloc_chan_resources(काष्ठा dma_chan *chan)
-अणु
-	काष्ठा at_xdmac_chan	*atchan = to_at_xdmac_chan(chan);
-	काष्ठा at_xdmac_desc	*desc;
-	पूर्णांक			i;
+static int at_xdmac_alloc_chan_resources(struct dma_chan *chan)
+{
+	struct at_xdmac_chan	*atchan = to_at_xdmac_chan(chan);
+	struct at_xdmac_desc	*desc;
+	int			i;
 
-	अगर (at_xdmac_chan_is_enabled(atchan)) अणु
+	if (at_xdmac_chan_is_enabled(atchan)) {
 		dev_err(chan2dev(chan),
 			"can't allocate channel resources (channel enabled)\n");
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	अगर (!list_empty(&atchan->मुक्त_descs_list)) अणु
+	if (!list_empty(&atchan->free_descs_list)) {
 		dev_err(chan2dev(chan),
 			"can't allocate channel resources (channel not free from a previous use)\n");
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	क्रम (i = 0; i < init_nr_desc_per_channel; i++) अणु
+	for (i = 0; i < init_nr_desc_per_channel; i++) {
 		desc = at_xdmac_alloc_desc(chan, GFP_KERNEL);
-		अगर (!desc) अणु
+		if (!desc) {
 			dev_warn(chan2dev(chan),
 				"only %d descriptors have been allocated\n", i);
-			अवरोध;
-		पूर्ण
-		list_add_tail(&desc->desc_node, &atchan->मुक्त_descs_list);
-	पूर्ण
+			break;
+		}
+		list_add_tail(&desc->desc_node, &atchan->free_descs_list);
+	}
 
 	dma_cookie_init(chan);
 
 	dev_dbg(chan2dev(chan), "%s: allocated %d descriptors\n", __func__, i);
 
-	वापस i;
-पूर्ण
+	return i;
+}
 
-अटल व्योम at_xdmac_मुक्त_chan_resources(काष्ठा dma_chan *chan)
-अणु
-	काष्ठा at_xdmac_chan	*atchan = to_at_xdmac_chan(chan);
-	काष्ठा at_xdmac		*atxdmac = to_at_xdmac(chan->device);
-	काष्ठा at_xdmac_desc	*desc, *_desc;
+static void at_xdmac_free_chan_resources(struct dma_chan *chan)
+{
+	struct at_xdmac_chan	*atchan = to_at_xdmac_chan(chan);
+	struct at_xdmac		*atxdmac = to_at_xdmac(chan->device);
+	struct at_xdmac_desc	*desc, *_desc;
 
-	list_क्रम_each_entry_safe(desc, _desc, &atchan->मुक्त_descs_list, desc_node) अणु
+	list_for_each_entry_safe(desc, _desc, &atchan->free_descs_list, desc_node) {
 		dev_dbg(chan2dev(chan), "%s: freeing descriptor %p\n", __func__, desc);
 		list_del(&desc->desc_node);
-		dma_pool_मुक्त(atxdmac->at_xdmac_desc_pool, desc, desc->tx_dma_desc.phys);
-	पूर्ण
+		dma_pool_free(atxdmac->at_xdmac_desc_pool, desc, desc->tx_dma_desc.phys);
+	}
 
-	वापस;
-पूर्ण
+	return;
+}
 
-#अगर_घोषित CONFIG_PM
-अटल पूर्णांक aपंचांगel_xdmac_prepare(काष्ठा device *dev)
-अणु
-	काष्ठा at_xdmac		*atxdmac = dev_get_drvdata(dev);
-	काष्ठा dma_chan		*chan, *_chan;
+#ifdef CONFIG_PM
+static int atmel_xdmac_prepare(struct device *dev)
+{
+	struct at_xdmac		*atxdmac = dev_get_drvdata(dev);
+	struct dma_chan		*chan, *_chan;
 
-	list_क्रम_each_entry_safe(chan, _chan, &atxdmac->dma.channels, device_node) अणु
-		काष्ठा at_xdmac_chan	*atchan = to_at_xdmac_chan(chan);
+	list_for_each_entry_safe(chan, _chan, &atxdmac->dma.channels, device_node) {
+		struct at_xdmac_chan	*atchan = to_at_xdmac_chan(chan);
 
-		/* Wait क्रम transfer completion, except in cyclic हाल. */
-		अगर (at_xdmac_chan_is_enabled(atchan) && !at_xdmac_chan_is_cyclic(atchan))
-			वापस -EAGAIN;
-	पूर्ण
-	वापस 0;
-पूर्ण
-#अन्यथा
-#	define aपंचांगel_xdmac_prepare शून्य
-#पूर्ण_अगर
+		/* Wait for transfer completion, except in cyclic case. */
+		if (at_xdmac_chan_is_enabled(atchan) && !at_xdmac_chan_is_cyclic(atchan))
+			return -EAGAIN;
+	}
+	return 0;
+}
+#else
+#	define atmel_xdmac_prepare NULL
+#endif
 
-#अगर_घोषित CONFIG_PM_SLEEP
-अटल पूर्णांक aपंचांगel_xdmac_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा at_xdmac		*atxdmac = dev_get_drvdata(dev);
-	काष्ठा dma_chan		*chan, *_chan;
+#ifdef CONFIG_PM_SLEEP
+static int atmel_xdmac_suspend(struct device *dev)
+{
+	struct at_xdmac		*atxdmac = dev_get_drvdata(dev);
+	struct dma_chan		*chan, *_chan;
 
-	list_क्रम_each_entry_safe(chan, _chan, &atxdmac->dma.channels, device_node) अणु
-		काष्ठा at_xdmac_chan	*atchan = to_at_xdmac_chan(chan);
+	list_for_each_entry_safe(chan, _chan, &atxdmac->dma.channels, device_node) {
+		struct at_xdmac_chan	*atchan = to_at_xdmac_chan(chan);
 
-		atchan->save_cc = at_xdmac_chan_पढ़ो(atchan, AT_XDMAC_CC);
-		अगर (at_xdmac_chan_is_cyclic(atchan)) अणु
-			अगर (!at_xdmac_chan_is_छोड़ोd(atchan))
-				at_xdmac_device_छोड़ो(chan);
-			atchan->save_cim = at_xdmac_chan_पढ़ो(atchan, AT_XDMAC_CIM);
-			atchan->save_cnda = at_xdmac_chan_पढ़ो(atchan, AT_XDMAC_CNDA);
-			atchan->save_cndc = at_xdmac_chan_पढ़ो(atchan, AT_XDMAC_CNDC);
-		पूर्ण
-	पूर्ण
-	atxdmac->save_gim = at_xdmac_पढ़ो(atxdmac, AT_XDMAC_GIM);
+		atchan->save_cc = at_xdmac_chan_read(atchan, AT_XDMAC_CC);
+		if (at_xdmac_chan_is_cyclic(atchan)) {
+			if (!at_xdmac_chan_is_paused(atchan))
+				at_xdmac_device_pause(chan);
+			atchan->save_cim = at_xdmac_chan_read(atchan, AT_XDMAC_CIM);
+			atchan->save_cnda = at_xdmac_chan_read(atchan, AT_XDMAC_CNDA);
+			atchan->save_cndc = at_xdmac_chan_read(atchan, AT_XDMAC_CNDC);
+		}
+	}
+	atxdmac->save_gim = at_xdmac_read(atxdmac, AT_XDMAC_GIM);
 
 	at_xdmac_off(atxdmac);
 	clk_disable_unprepare(atxdmac->clk);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक aपंचांगel_xdmac_resume(काष्ठा device *dev)
-अणु
-	काष्ठा at_xdmac		*atxdmac = dev_get_drvdata(dev);
-	काष्ठा at_xdmac_chan	*atchan;
-	काष्ठा dma_chan		*chan, *_chan;
-	पूर्णांक			i;
-	पूर्णांक ret;
+static int atmel_xdmac_resume(struct device *dev)
+{
+	struct at_xdmac		*atxdmac = dev_get_drvdata(dev);
+	struct at_xdmac_chan	*atchan;
+	struct dma_chan		*chan, *_chan;
+	int			i;
+	int ret;
 
 	ret = clk_prepare_enable(atxdmac->clk);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	/* Clear pending पूर्णांकerrupts. */
-	क्रम (i = 0; i < atxdmac->dma.chancnt; i++) अणु
+	/* Clear pending interrupts. */
+	for (i = 0; i < atxdmac->dma.chancnt; i++) {
 		atchan = &atxdmac->chan[i];
-		जबतक (at_xdmac_chan_पढ़ो(atchan, AT_XDMAC_CIS))
+		while (at_xdmac_chan_read(atchan, AT_XDMAC_CIS))
 			cpu_relax();
-	पूर्ण
+	}
 
-	at_xdmac_ग_लिखो(atxdmac, AT_XDMAC_GIE, atxdmac->save_gim);
-	list_क्रम_each_entry_safe(chan, _chan, &atxdmac->dma.channels, device_node) अणु
+	at_xdmac_write(atxdmac, AT_XDMAC_GIE, atxdmac->save_gim);
+	list_for_each_entry_safe(chan, _chan, &atxdmac->dma.channels, device_node) {
 		atchan = to_at_xdmac_chan(chan);
-		at_xdmac_chan_ग_लिखो(atchan, AT_XDMAC_CC, atchan->save_cc);
-		अगर (at_xdmac_chan_is_cyclic(atchan)) अणु
-			अगर (at_xdmac_chan_is_छोड़ोd(atchan))
+		at_xdmac_chan_write(atchan, AT_XDMAC_CC, atchan->save_cc);
+		if (at_xdmac_chan_is_cyclic(atchan)) {
+			if (at_xdmac_chan_is_paused(atchan))
 				at_xdmac_device_resume(chan);
-			at_xdmac_chan_ग_लिखो(atchan, AT_XDMAC_CNDA, atchan->save_cnda);
-			at_xdmac_chan_ग_लिखो(atchan, AT_XDMAC_CNDC, atchan->save_cndc);
-			at_xdmac_chan_ग_लिखो(atchan, AT_XDMAC_CIE, atchan->save_cim);
+			at_xdmac_chan_write(atchan, AT_XDMAC_CNDA, atchan->save_cnda);
+			at_xdmac_chan_write(atchan, AT_XDMAC_CNDC, atchan->save_cndc);
+			at_xdmac_chan_write(atchan, AT_XDMAC_CIE, atchan->save_cim);
 			wmb();
-			at_xdmac_ग_लिखो(atxdmac, AT_XDMAC_GE, atchan->mask);
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_PM_SLEEP */
+			at_xdmac_write(atxdmac, AT_XDMAC_GE, atchan->mask);
+		}
+	}
+	return 0;
+}
+#endif /* CONFIG_PM_SLEEP */
 
-अटल व्योम at_xdmac_axi_config(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा at_xdmac	*atxdmac = (काष्ठा at_xdmac *)platक्रमm_get_drvdata(pdev);
+static void at_xdmac_axi_config(struct platform_device *pdev)
+{
+	struct at_xdmac	*atxdmac = (struct at_xdmac *)platform_get_drvdata(pdev);
 	bool dev_m2m = false;
 	u32 dma_requests;
 
-	अगर (!atxdmac->layout->axi_config)
-		वापस; /* Not supported */
+	if (!atxdmac->layout->axi_config)
+		return; /* Not supported */
 
-	अगर (!of_property_पढ़ो_u32(pdev->dev.of_node, "dma-requests",
-				  &dma_requests)) अणु
+	if (!of_property_read_u32(pdev->dev.of_node, "dma-requests",
+				  &dma_requests)) {
 		dev_info(&pdev->dev, "controller in mem2mem mode.\n");
 		dev_m2m = true;
-	पूर्ण
+	}
 
-	अगर (dev_m2m) अणु
-		at_xdmac_ग_लिखो(atxdmac, AT_XDMAC_GCFG, AT_XDMAC_GCFG_M2M);
-		at_xdmac_ग_लिखो(atxdmac, AT_XDMAC_GWAC, AT_XDMAC_GWAC_M2M);
-	पूर्ण अन्यथा अणु
-		at_xdmac_ग_लिखो(atxdmac, AT_XDMAC_GCFG, AT_XDMAC_GCFG_P2M);
-		at_xdmac_ग_लिखो(atxdmac, AT_XDMAC_GWAC, AT_XDMAC_GWAC_P2M);
-	पूर्ण
-पूर्ण
+	if (dev_m2m) {
+		at_xdmac_write(atxdmac, AT_XDMAC_GCFG, AT_XDMAC_GCFG_M2M);
+		at_xdmac_write(atxdmac, AT_XDMAC_GWAC, AT_XDMAC_GWAC_M2M);
+	} else {
+		at_xdmac_write(atxdmac, AT_XDMAC_GCFG, AT_XDMAC_GCFG_P2M);
+		at_xdmac_write(atxdmac, AT_XDMAC_GWAC, AT_XDMAC_GWAC_P2M);
+	}
+}
 
-अटल पूर्णांक at_xdmac_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा at_xdmac	*atxdmac;
-	पूर्णांक		irq, size, nr_channels, i, ret;
-	व्योम __iomem	*base;
+static int at_xdmac_probe(struct platform_device *pdev)
+{
+	struct at_xdmac	*atxdmac;
+	int		irq, size, nr_channels, i, ret;
+	void __iomem	*base;
 	u32		reg;
 
-	irq = platक्रमm_get_irq(pdev, 0);
-	अगर (irq < 0)
-		वापस irq;
+	irq = platform_get_irq(pdev, 0);
+	if (irq < 0)
+		return irq;
 
-	base = devm_platक्रमm_ioremap_resource(pdev, 0);
-	अगर (IS_ERR(base))
-		वापस PTR_ERR(base);
+	base = devm_platform_ioremap_resource(pdev, 0);
+	if (IS_ERR(base))
+		return PTR_ERR(base);
 
 	/*
-	 * Read number of xdmac channels, पढ़ो helper function can't be used
+	 * Read number of xdmac channels, read helper function can't be used
 	 * since atxdmac is not yet allocated and we need to know the number
-	 * of channels to करो the allocation.
+	 * of channels to do the allocation.
 	 */
-	reg = पढ़ोl_relaxed(base + AT_XDMAC_GTYPE);
+	reg = readl_relaxed(base + AT_XDMAC_GTYPE);
 	nr_channels = AT_XDMAC_NB_CH(reg);
-	अगर (nr_channels > AT_XDMAC_MAX_CHAN) अणु
+	if (nr_channels > AT_XDMAC_MAX_CHAN) {
 		dev_err(&pdev->dev, "invalid number of channels (%u)\n",
 			nr_channels);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	size = माप(*atxdmac);
-	size += nr_channels * माप(काष्ठा at_xdmac_chan);
+	size = sizeof(*atxdmac);
+	size += nr_channels * sizeof(struct at_xdmac_chan);
 	atxdmac = devm_kzalloc(&pdev->dev, size, GFP_KERNEL);
-	अगर (!atxdmac) अणु
+	if (!atxdmac) {
 		dev_err(&pdev->dev, "can't allocate at_xdmac structure\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	atxdmac->regs = base;
 	atxdmac->irq = irq;
 
 	atxdmac->layout = of_device_get_match_data(&pdev->dev);
-	अगर (!atxdmac->layout)
-		वापस -ENODEV;
+	if (!atxdmac->layout)
+		return -ENODEV;
 
 	atxdmac->clk = devm_clk_get(&pdev->dev, "dma_clk");
-	अगर (IS_ERR(atxdmac->clk)) अणु
+	if (IS_ERR(atxdmac->clk)) {
 		dev_err(&pdev->dev, "can't get dma_clk\n");
-		वापस PTR_ERR(atxdmac->clk);
-	पूर्ण
+		return PTR_ERR(atxdmac->clk);
+	}
 
 	/* Do not use dev res to prevent races with tasklet */
-	ret = request_irq(atxdmac->irq, at_xdmac_पूर्णांकerrupt, 0, "at_xdmac", atxdmac);
-	अगर (ret) अणु
+	ret = request_irq(atxdmac->irq, at_xdmac_interrupt, 0, "at_xdmac", atxdmac);
+	if (ret) {
 		dev_err(&pdev->dev, "can't request irq\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	ret = clk_prepare_enable(atxdmac->clk);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&pdev->dev, "can't prepare or enable clock\n");
-		जाओ err_मुक्त_irq;
-	पूर्ण
+		goto err_free_irq;
+	}
 
 	atxdmac->at_xdmac_desc_pool =
 		dmam_pool_create(dev_name(&pdev->dev), &pdev->dev,
-				माप(काष्ठा at_xdmac_desc), 4, 0);
-	अगर (!atxdmac->at_xdmac_desc_pool) अणु
+				sizeof(struct at_xdmac_desc), 4, 0);
+	if (!atxdmac->at_xdmac_desc_pool) {
 		dev_err(&pdev->dev, "no memory for descriptors dma pool\n");
 		ret = -ENOMEM;
-		जाओ err_clk_disable;
-	पूर्ण
+		goto err_clk_disable;
+	}
 
 	dma_cap_set(DMA_CYCLIC, atxdmac->dma.cap_mask);
 	dma_cap_set(DMA_INTERLEAVE, atxdmac->dma.cap_mask);
@@ -2111,22 +2110,22 @@ spin_unlock:
 	dma_cap_set(DMA_SLAVE, atxdmac->dma.cap_mask);
 	/*
 	 * Without DMA_PRIVATE the driver is not able to allocate more than
-	 * one channel, second allocation fails in निजी_candidate.
+	 * one channel, second allocation fails in private_candidate.
 	 */
 	dma_cap_set(DMA_PRIVATE, atxdmac->dma.cap_mask);
 	atxdmac->dma.dev				= &pdev->dev;
 	atxdmac->dma.device_alloc_chan_resources	= at_xdmac_alloc_chan_resources;
-	atxdmac->dma.device_मुक्त_chan_resources		= at_xdmac_मुक्त_chan_resources;
+	atxdmac->dma.device_free_chan_resources		= at_xdmac_free_chan_resources;
 	atxdmac->dma.device_tx_status			= at_xdmac_tx_status;
 	atxdmac->dma.device_issue_pending		= at_xdmac_issue_pending;
 	atxdmac->dma.device_prep_dma_cyclic		= at_xdmac_prep_dma_cyclic;
-	atxdmac->dma.device_prep_पूर्णांकerleaved_dma	= at_xdmac_prep_पूर्णांकerleaved;
-	atxdmac->dma.device_prep_dma_स_नकल		= at_xdmac_prep_dma_स_नकल;
-	atxdmac->dma.device_prep_dma_स_रखो		= at_xdmac_prep_dma_स_रखो;
-	atxdmac->dma.device_prep_dma_स_रखो_sg		= at_xdmac_prep_dma_स_रखो_sg;
+	atxdmac->dma.device_prep_interleaved_dma	= at_xdmac_prep_interleaved;
+	atxdmac->dma.device_prep_dma_memcpy		= at_xdmac_prep_dma_memcpy;
+	atxdmac->dma.device_prep_dma_memset		= at_xdmac_prep_dma_memset;
+	atxdmac->dma.device_prep_dma_memset_sg		= at_xdmac_prep_dma_memset_sg;
 	atxdmac->dma.device_prep_slave_sg		= at_xdmac_prep_slave_sg;
 	atxdmac->dma.device_config			= at_xdmac_device_config;
-	atxdmac->dma.device_छोड़ो			= at_xdmac_device_छोड़ो;
+	atxdmac->dma.device_pause			= at_xdmac_device_pause;
 	atxdmac->dma.device_resume			= at_xdmac_device_resume;
 	atxdmac->dma.device_terminate_all		= at_xdmac_device_terminate_all;
 	atxdmac->dma.src_addr_widths = AT_XDMAC_DMA_BUSWIDTHS;
@@ -2134,13 +2133,13 @@ spin_unlock:
 	atxdmac->dma.directions = BIT(DMA_DEV_TO_MEM) | BIT(DMA_MEM_TO_DEV);
 	atxdmac->dma.residue_granularity = DMA_RESIDUE_GRANULARITY_BURST;
 
-	/* Disable all chans and पूर्णांकerrupts. */
+	/* Disable all chans and interrupts. */
 	at_xdmac_off(atxdmac);
 
 	/* Init channels. */
 	INIT_LIST_HEAD(&atxdmac->dma.channels);
-	क्रम (i = 0; i < nr_channels; i++) अणु
-		काष्ठा at_xdmac_chan *atchan = &atxdmac->chan[i];
+	for (i = 0; i < nr_channels; i++) {
+		struct at_xdmac_chan *atchan = &atxdmac->chan[i];
 
 		atchan->chan.device = &atxdmac->dma;
 		list_add_tail(&atchan->chan.device_node,
@@ -2151,98 +2150,98 @@ spin_unlock:
 
 		spin_lock_init(&atchan->lock);
 		INIT_LIST_HEAD(&atchan->xfers_list);
-		INIT_LIST_HEAD(&atchan->मुक्त_descs_list);
+		INIT_LIST_HEAD(&atchan->free_descs_list);
 		tasklet_setup(&atchan->tasklet, at_xdmac_tasklet);
 
-		/* Clear pending पूर्णांकerrupts. */
-		जबतक (at_xdmac_chan_पढ़ो(atchan, AT_XDMAC_CIS))
+		/* Clear pending interrupts. */
+		while (at_xdmac_chan_read(atchan, AT_XDMAC_CIS))
 			cpu_relax();
-	पूर्ण
-	platक्रमm_set_drvdata(pdev, atxdmac);
+	}
+	platform_set_drvdata(pdev, atxdmac);
 
-	ret = dma_async_device_रेजिस्टर(&atxdmac->dma);
-	अगर (ret) अणु
+	ret = dma_async_device_register(&atxdmac->dma);
+	if (ret) {
 		dev_err(&pdev->dev, "fail to register DMA engine device\n");
-		जाओ err_clk_disable;
-	पूर्ण
+		goto err_clk_disable;
+	}
 
-	ret = of_dma_controller_रेजिस्टर(pdev->dev.of_node,
+	ret = of_dma_controller_register(pdev->dev.of_node,
 					 at_xdmac_xlate, atxdmac);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&pdev->dev, "could not register of dma controller\n");
-		जाओ err_dma_unरेजिस्टर;
-	पूर्ण
+		goto err_dma_unregister;
+	}
 
 	dev_info(&pdev->dev, "%d channels, mapped at 0x%p\n",
 		 nr_channels, atxdmac->regs);
 
 	at_xdmac_axi_config(pdev);
 
-	वापस 0;
+	return 0;
 
-err_dma_unरेजिस्टर:
-	dma_async_device_unरेजिस्टर(&atxdmac->dma);
+err_dma_unregister:
+	dma_async_device_unregister(&atxdmac->dma);
 err_clk_disable:
 	clk_disable_unprepare(atxdmac->clk);
-err_मुक्त_irq:
-	मुक्त_irq(atxdmac->irq, atxdmac);
-	वापस ret;
-पूर्ण
+err_free_irq:
+	free_irq(atxdmac->irq, atxdmac);
+	return ret;
+}
 
-अटल पूर्णांक at_xdmac_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा at_xdmac	*atxdmac = (काष्ठा at_xdmac *)platक्रमm_get_drvdata(pdev);
-	पूर्णांक		i;
+static int at_xdmac_remove(struct platform_device *pdev)
+{
+	struct at_xdmac	*atxdmac = (struct at_xdmac *)platform_get_drvdata(pdev);
+	int		i;
 
 	at_xdmac_off(atxdmac);
-	of_dma_controller_मुक्त(pdev->dev.of_node);
-	dma_async_device_unरेजिस्टर(&atxdmac->dma);
+	of_dma_controller_free(pdev->dev.of_node);
+	dma_async_device_unregister(&atxdmac->dma);
 	clk_disable_unprepare(atxdmac->clk);
 
-	मुक्त_irq(atxdmac->irq, atxdmac);
+	free_irq(atxdmac->irq, atxdmac);
 
-	क्रम (i = 0; i < atxdmac->dma.chancnt; i++) अणु
-		काष्ठा at_xdmac_chan *atchan = &atxdmac->chan[i];
+	for (i = 0; i < atxdmac->dma.chancnt; i++) {
+		struct at_xdmac_chan *atchan = &atxdmac->chan[i];
 
-		tasklet_समाप्त(&atchan->tasklet);
-		at_xdmac_मुक्त_chan_resources(&atchan->chan);
-	पूर्ण
+		tasklet_kill(&atchan->tasklet);
+		at_xdmac_free_chan_resources(&atchan->chan);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा dev_pm_ops aपंचांगel_xdmac_dev_pm_ops = अणु
-	.prepare	= aपंचांगel_xdmac_prepare,
-	SET_LATE_SYSTEM_SLEEP_PM_OPS(aपंचांगel_xdmac_suspend, aपंचांगel_xdmac_resume)
-पूर्ण;
+static const struct dev_pm_ops atmel_xdmac_dev_pm_ops = {
+	.prepare	= atmel_xdmac_prepare,
+	SET_LATE_SYSTEM_SLEEP_PM_OPS(atmel_xdmac_suspend, atmel_xdmac_resume)
+};
 
-अटल स्थिर काष्ठा of_device_id aपंचांगel_xdmac_dt_ids[] = अणु
-	अणु
+static const struct of_device_id atmel_xdmac_dt_ids[] = {
+	{
 		.compatible = "atmel,sama5d4-dma",
 		.data = &at_xdmac_sama5d4_layout,
-	पूर्ण, अणु
+	}, {
 		.compatible = "microchip,sama7g5-dma",
 		.data = &at_xdmac_sama7g5_layout,
-	पूर्ण, अणु
+	}, {
 		/* sentinel */
-	पूर्ण
-पूर्ण;
-MODULE_DEVICE_TABLE(of, aपंचांगel_xdmac_dt_ids);
+	}
+};
+MODULE_DEVICE_TABLE(of, atmel_xdmac_dt_ids);
 
-अटल काष्ठा platक्रमm_driver at_xdmac_driver = अणु
+static struct platform_driver at_xdmac_driver = {
 	.probe		= at_xdmac_probe,
-	.हटाओ		= at_xdmac_हटाओ,
-	.driver = अणु
+	.remove		= at_xdmac_remove,
+	.driver = {
 		.name		= "at_xdmac",
-		.of_match_table	= of_match_ptr(aपंचांगel_xdmac_dt_ids),
-		.pm		= &aपंचांगel_xdmac_dev_pm_ops,
-	पूर्ण
-पूर्ण;
+		.of_match_table	= of_match_ptr(atmel_xdmac_dt_ids),
+		.pm		= &atmel_xdmac_dev_pm_ops,
+	}
+};
 
-अटल पूर्णांक __init at_xdmac_init(व्योम)
-अणु
-	वापस platक्रमm_driver_probe(&at_xdmac_driver, at_xdmac_probe);
-पूर्ण
+static int __init at_xdmac_init(void)
+{
+	return platform_driver_probe(&at_xdmac_driver, at_xdmac_probe);
+}
 subsys_initcall(at_xdmac_init);
 
 MODULE_DESCRIPTION("Atmel Extended DMA Controller driver");

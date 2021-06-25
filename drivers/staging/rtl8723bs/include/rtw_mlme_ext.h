@@ -1,33 +1,32 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /******************************************************************************
  *
  * Copyright(c) 2007 - 2011 Realtek Corporation. All rights reserved.
  *
  ******************************************************************************/
-#अगर_अघोषित __RTW_MLME_EXT_H_
-#घोषणा __RTW_MLME_EXT_H_
+#ifndef __RTW_MLME_EXT_H_
+#define __RTW_MLME_EXT_H_
 
 
 /* 	Commented by Albert 20101105 */
 /* 	Increase the SURVEY_TO value from 100 to 150  (100ms to 150ms) */
 /* 	The Realtek 8188CE SoftAP will spend around 100ms to send the probe response after receiving the probe request. */
-/* 	So, this driver tried to extend the dwell समय क्रम each scanning channel. */
+/* 	So, this driver tried to extend the dwell time for each scanning channel. */
 /* 	This will increase the chance to receive the probe response from SoftAP. */
 
-#घोषणा SURVEY_TO		(100)
-#घोषणा REAUTH_TO		(300) /* 50) */
-#घोषणा REASSOC_TO		(300) /* 50) */
+#define SURVEY_TO		(100)
+#define REAUTH_TO		(300) /* 50) */
+#define REASSOC_TO		(300) /* 50) */
 /* define DISCONNECT_TO	(3000) */
-#घोषणा ADDBA_TO			(2000)
+#define ADDBA_TO			(2000)
 
-#घोषणा LINKED_TO (1) /* unit:2 sec, 1x2 =2 sec */
+#define LINKED_TO (1) /* unit:2 sec, 1x2 =2 sec */
 
-#घोषणा REAUTH_LIMIT	(4)
-#घोषणा REASSOC_LIMIT	(4)
-#घोषणा READDBA_LIMIT	(2)
+#define REAUTH_LIMIT	(4)
+#define REASSOC_LIMIT	(4)
+#define READDBA_LIMIT	(2)
 
-#घोषणा ROAMING_LIMIT	8
+#define ROAMING_LIMIT	8
 /* define	IOCMD_REG0		0x10250370 */
 /* define	IOCMD_REG1		0x10250374 */
 /* define	IOCMD_REG2		0x10250378 */
@@ -38,85 +37,85 @@
 /* define	SET_CHANNEL_CMD	0xF3000000 */
 /* define	UPDATE_RA_CMD	0xFD0000A2 */
 
-#घोषणा DYNAMIC_FUNC_DISABLE		(0x0)
+#define DYNAMIC_FUNC_DISABLE		(0x0)
 
 /*  ====== ODM_ABILITY_E ======== */
 /*  BB ODM section BIT 0-15 */
-#घोषणा DYNAMIC_BB_DIG				BIT0 /* ODM_BB_DIG */
-#घोषणा DYNAMIC_BB_RA_MASK			BIT1 /* ODM_BB_RA_MASK */
-#घोषणा DYNAMIC_BB_DYNAMIC_TXPWR	BIT2 /* ODM_BB_DYNAMIC_TXPWR */
-#घोषणा DYNAMIC_BB_BB_FA_CNT		BIT3 /* ODM_BB_FA_CNT */
-#घोषणा DYNAMIC_BB_RSSI_MONITOR		BIT4 /* ODM_BB_RSSI_MONITOR */
-#घोषणा DYNAMIC_BB_CCK_PD			BIT5 /* ODM_BB_CCK_PD */
-#घोषणा DYNAMIC_BB_ANT_DIV			BIT6 /* ODM_BB_ANT_DIV */
-#घोषणा DYNAMIC_BB_PWR_SAVE			BIT7 /* ODM_BB_PWR_SAVE */
-#घोषणा DYNAMIC_BB_PWR_TRAIN		BIT8 /* ODM_BB_PWR_TRAIN */
-#घोषणा DYNAMIC_BB_RATE_ADAPTIVE	BIT9 /* ODM_BB_RATE_ADAPTIVE */
-#घोषणा DYNAMIC_BB_PATH_DIV			BIT10/* ODM_BB_PATH_DIV */
-#घोषणा DYNAMIC_BB_PSD				BIT11/* ODM_BB_PSD */
-#घोषणा DYNAMIC_BB_RXHP				BIT12/* ODM_BB_RXHP */
-#घोषणा DYNAMIC_BB_ADAPTIVITY		BIT13/* ODM_BB_ADAPTIVITY */
-#घोषणा DYNAMIC_BB_DYNAMIC_ATC		BIT14/* ODM_BB_DYNAMIC_ATC */
+#define DYNAMIC_BB_DIG				BIT0 /* ODM_BB_DIG */
+#define DYNAMIC_BB_RA_MASK			BIT1 /* ODM_BB_RA_MASK */
+#define DYNAMIC_BB_DYNAMIC_TXPWR	BIT2 /* ODM_BB_DYNAMIC_TXPWR */
+#define DYNAMIC_BB_BB_FA_CNT		BIT3 /* ODM_BB_FA_CNT */
+#define DYNAMIC_BB_RSSI_MONITOR		BIT4 /* ODM_BB_RSSI_MONITOR */
+#define DYNAMIC_BB_CCK_PD			BIT5 /* ODM_BB_CCK_PD */
+#define DYNAMIC_BB_ANT_DIV			BIT6 /* ODM_BB_ANT_DIV */
+#define DYNAMIC_BB_PWR_SAVE			BIT7 /* ODM_BB_PWR_SAVE */
+#define DYNAMIC_BB_PWR_TRAIN		BIT8 /* ODM_BB_PWR_TRAIN */
+#define DYNAMIC_BB_RATE_ADAPTIVE	BIT9 /* ODM_BB_RATE_ADAPTIVE */
+#define DYNAMIC_BB_PATH_DIV			BIT10/* ODM_BB_PATH_DIV */
+#define DYNAMIC_BB_PSD				BIT11/* ODM_BB_PSD */
+#define DYNAMIC_BB_RXHP				BIT12/* ODM_BB_RXHP */
+#define DYNAMIC_BB_ADAPTIVITY		BIT13/* ODM_BB_ADAPTIVITY */
+#define DYNAMIC_BB_DYNAMIC_ATC		BIT14/* ODM_BB_DYNAMIC_ATC */
 
 /*  MAC DM section BIT 16-23 */
-#घोषणा DYNAMIC_MAC_EDCA_TURBO		BIT16/* ODM_MAC_EDCA_TURBO */
-#घोषणा DYNAMIC_MAC_EARLY_MODE		BIT17/* ODM_MAC_EARLY_MODE */
+#define DYNAMIC_MAC_EDCA_TURBO		BIT16/* ODM_MAC_EDCA_TURBO */
+#define DYNAMIC_MAC_EARLY_MODE		BIT17/* ODM_MAC_EARLY_MODE */
 
 /*  RF ODM section BIT 24-31 */
-#घोषणा DYNAMIC_RF_TX_PWR_TRACK		BIT24/* ODM_RF_TX_PWR_TRACK */
-#घोषणा DYNAMIC_RF_RX_GAIN_TRACK	BIT25/* ODM_RF_RX_GAIN_TRACK */
-#घोषणा DYNAMIC_RF_CALIBRATION		BIT26/* ODM_RF_CALIBRATION */
+#define DYNAMIC_RF_TX_PWR_TRACK		BIT24/* ODM_RF_TX_PWR_TRACK */
+#define DYNAMIC_RF_RX_GAIN_TRACK	BIT25/* ODM_RF_RX_GAIN_TRACK */
+#define DYNAMIC_RF_CALIBRATION		BIT26/* ODM_RF_CALIBRATION */
 
-#घोषणा DYNAMIC_ALL_FUNC_ENABLE		0xFFFFFFF
+#define DYNAMIC_ALL_FUNC_ENABLE		0xFFFFFFF
 
-#घोषणा _HW_STATE_NOLINK_		0x00
-#घोषणा _HW_STATE_ADHOC_		0x01
-#घोषणा _HW_STATE_STATION_	0x02
-#घोषणा _HW_STATE_AP_			0x03
+#define _HW_STATE_NOLINK_		0x00
+#define _HW_STATE_ADHOC_		0x01
+#define _HW_STATE_STATION_	0x02
+#define _HW_STATE_AP_			0x03
 
 
-#घोषणा		_1M_RATE_	0
-#घोषणा		_2M_RATE_	1
-#घोषणा		_5M_RATE_	2
-#घोषणा		_11M_RATE_	3
-#घोषणा		_6M_RATE_	4
-#घोषणा		_9M_RATE_	5
-#घोषणा		_12M_RATE_	6
-#घोषणा		_18M_RATE_	7
-#घोषणा		_24M_RATE_	8
-#घोषणा		_36M_RATE_	9
-#घोषणा		_48M_RATE_	10
-#घोषणा		_54M_RATE_	11
+#define		_1M_RATE_	0
+#define		_2M_RATE_	1
+#define		_5M_RATE_	2
+#define		_11M_RATE_	3
+#define		_6M_RATE_	4
+#define		_9M_RATE_	5
+#define		_12M_RATE_	6
+#define		_18M_RATE_	7
+#define		_24M_RATE_	8
+#define		_36M_RATE_	9
+#define		_48M_RATE_	10
+#define		_54M_RATE_	11
 
 /********************************************************
 MCS rate definitions
 *********************************************************/
-#घोषणा MCS_RATE_1R	(0x000000ff)
-#घोषणा MCS_RATE_2R	(0x0000ffff)
-#घोषणा MCS_RATE_3R	(0x00ffffff)
-#घोषणा MCS_RATE_4R	(0xffffffff)
-#घोषणा MCS_RATE_2R_13TO15_OFF	(0x00001fff)
+#define MCS_RATE_1R	(0x000000ff)
+#define MCS_RATE_2R	(0x0000ffff)
+#define MCS_RATE_3R	(0x00ffffff)
+#define MCS_RATE_4R	(0xffffffff)
+#define MCS_RATE_2R_13TO15_OFF	(0x00001fff)
 
 
-बाह्य अचिन्हित अक्षर RTW_WPA_OUI[];
-बाह्य अचिन्हित अक्षर WMM_OUI[];
-बाह्य अचिन्हित अक्षर WPS_OUI[];
-बाह्य अचिन्हित अक्षर WFD_OUI[];
-बाह्य अचिन्हित अक्षर P2P_OUI[];
+extern unsigned char RTW_WPA_OUI[];
+extern unsigned char WMM_OUI[];
+extern unsigned char WPS_OUI[];
+extern unsigned char WFD_OUI[];
+extern unsigned char P2P_OUI[];
 
-बाह्य अचिन्हित अक्षर WMM_INFO_OUI[];
-बाह्य अचिन्हित अक्षर WMM_PARA_OUI[];
+extern unsigned char WMM_INFO_OUI[];
+extern unsigned char WMM_PARA_OUI[];
 
 
 /*  */
 /*  Channel Plan Type. */
 /*  Note: */
-/* 	We just add new channel plan when the new channel plan is dअगरferent from any of the following */
+/* 	We just add new channel plan when the new channel plan is different from any of the following */
 /* 	channel plan. */
 /* 	If you just want to customize the actions(scan period or join actions) about one of the channel plan, */
 /* 	customize them in rt_channel_info in the RT_CHANNEL_LIST. */
 /*  */
-क्रमागत अणु
+enum {
 	/*  old channel plan mapping ===== */
 	RT_CHANNEL_DOMAIN_FCC = 0x00,
 	RT_CHANNEL_DOMAIN_IC = 0x01,
@@ -141,11 +140,11 @@ MCS rate definitions
 	RT_CHANNEL_DOMAIN_TAIWAN_NO_DFS = 0x14,
 
 	/*  new channel plan mapping, (2GDOMAIN_5GDOMAIN) ===== */
-	RT_CHANNEL_DOMAIN_WORLD_शून्य = 0x20,
-	RT_CHANNEL_DOMAIN_ETSI1_शून्य = 0x21,
-	RT_CHANNEL_DOMAIN_FCC1_शून्य = 0x22,
-	RT_CHANNEL_DOMAIN_MKK1_शून्य = 0x23,
-	RT_CHANNEL_DOMAIN_ETSI2_शून्य = 0x24,
+	RT_CHANNEL_DOMAIN_WORLD_NULL = 0x20,
+	RT_CHANNEL_DOMAIN_ETSI1_NULL = 0x21,
+	RT_CHANNEL_DOMAIN_FCC1_NULL = 0x22,
+	RT_CHANNEL_DOMAIN_MKK1_NULL = 0x23,
+	RT_CHANNEL_DOMAIN_ETSI2_NULL = 0x24,
 	RT_CHANNEL_DOMAIN_FCC1_FCC1 = 0x25,
 	RT_CHANNEL_DOMAIN_WORLD_ETSI1 = 0x26,
 	RT_CHANNEL_DOMAIN_MKK1_MKK1 = 0x27,
@@ -162,7 +161,7 @@ MCS rate definitions
 	RT_CHANNEL_DOMAIN_MKK1_MKK3 = 0x38,
 	RT_CHANNEL_DOMAIN_FCC1_NCC1 = 0x39,
 	RT_CHANNEL_DOMAIN_FCC1_NCC2 = 0x40,
-	RT_CHANNEL_DOMAIN_GLOBAL_शून्य = 0x41,
+	RT_CHANNEL_DOMAIN_GLOBAL_NULL = 0x41,
 	RT_CHANNEL_DOMAIN_ETSI1_ETSI4 = 0x42,
 	RT_CHANNEL_DOMAIN_FCC1_FCC2 = 0x43,
 	RT_CHANNEL_DOMAIN_FCC1_NCC3 = 0x44,
@@ -182,22 +181,22 @@ MCS rate definitions
 	/*  Add new channel plan above this line =============== */
 	RT_CHANNEL_DOMAIN_MAX,
 	RT_CHANNEL_DOMAIN_REALTEK_DEFINE = 0x7F,
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	RT_CHANNEL_DOMAIN_2G_WORLD = 0x00,		/* Worldwird 13 */
 	RT_CHANNEL_DOMAIN_2G_ETSI1 = 0x01,		/* Europe */
 	RT_CHANNEL_DOMAIN_2G_FCC1 = 0x02,		/* US */
 	RT_CHANNEL_DOMAIN_2G_MKK1 = 0x03,		/* Japan */
 	RT_CHANNEL_DOMAIN_2G_ETSI2 = 0x04,		/* France */
-	RT_CHANNEL_DOMAIN_2G_GLOBAL = 0x05,		/* Global करोमुख्य */
-	RT_CHANNEL_DOMAIN_2G_शून्य = 0x06,
+	RT_CHANNEL_DOMAIN_2G_GLOBAL = 0x05,		/* Global domain */
+	RT_CHANNEL_DOMAIN_2G_NULL = 0x06,
 	/*  Add new channel plan above this line =============== */
 	RT_CHANNEL_DOMAIN_2G_MAX,
-पूर्ण;
+};
 
-क्रमागत अणु
-	RT_CHANNEL_DOMAIN_5G_शून्य = 0x00,
+enum {
+	RT_CHANNEL_DOMAIN_5G_NULL = 0x00,
 	RT_CHANNEL_DOMAIN_5G_ETSI1 = 0x01,		/* Europe */
 	RT_CHANNEL_DOMAIN_5G_ETSI2 = 0x02,		/* Australia, New Zealand */
 	RT_CHANNEL_DOMAIN_5G_ETSI3 = 0x03,		/* Russia */
@@ -225,7 +224,7 @@ MCS rate definitions
 	RT_CHANNEL_DOMAIN_5G_ETSI10 = 0x19,		/* Qatar */
 	RT_CHANNEL_DOMAIN_5G_ETSI11 = 0x1A,		/* Russia */
 	RT_CHANNEL_DOMAIN_5G_NCC4 = 0x1B,		/* Taiwan, (w/o Weather radar) */
-	RT_CHANNEL_DOMAIN_5G_ETSI12 = 0x1C,		/* Inकरोnesia */
+	RT_CHANNEL_DOMAIN_5G_ETSI12 = 0x1C,		/* Indonesia */
 	RT_CHANNEL_DOMAIN_5G_FCC9 = 0x1D,		/* w/o Weather radar) */
 	RT_CHANNEL_DOMAIN_5G_ETSI13 = 0x1E,		/* w/o Weather radar) */
 	RT_CHANNEL_DOMAIN_5G_FCC10 = 0x1F,		/* Argentina (w/o Weather radar) */
@@ -235,31 +234,31 @@ MCS rate definitions
 	RT_CHANNEL_DOMAIN_5G_JAPAN_NO_DFS = 0x21,
 	RT_CHANNEL_DOMAIN_5G_FCC4_NO_DFS = 0x22,
 	RT_CHANNEL_DOMAIN_5G_MAX,
-पूर्ण;
+};
 
-#घोषणा rtw_is_channel_plan_valid(chplan) (chplan < RT_CHANNEL_DOMAIN_MAX || chplan == RT_CHANNEL_DOMAIN_REALTEK_DEFINE)
+#define rtw_is_channel_plan_valid(chplan) (chplan < RT_CHANNEL_DOMAIN_MAX || chplan == RT_CHANNEL_DOMAIN_REALTEK_DEFINE)
 
-काष्ठा rt_channel_plan अणु
-	अचिन्हित अक्षर Channel[MAX_CHANNEL_NUM];
-	अचिन्हित अक्षर Len;
-पूर्ण;
+struct rt_channel_plan {
+	unsigned char Channel[MAX_CHANNEL_NUM];
+	unsigned char Len;
+};
 
-काष्ठा rt_channel_plan_2g अणु
-	अचिन्हित अक्षर Channel[MAX_CHANNEL_NUM_2G];
-	अचिन्हित अक्षर Len;
-पूर्ण;
+struct rt_channel_plan_2g {
+	unsigned char Channel[MAX_CHANNEL_NUM_2G];
+	unsigned char Len;
+};
 
-काष्ठा rt_channel_plan_5g अणु
-	अचिन्हित अक्षर Channel[MAX_CHANNEL_NUM_5G];
-	अचिन्हित अक्षर Len;
-पूर्ण;
+struct rt_channel_plan_5g {
+	unsigned char Channel[MAX_CHANNEL_NUM_5G];
+	unsigned char Len;
+};
 
-काष्ठा rt_channel_plan_map अणु
-	अचिन्हित अक्षर Index2G;
-	अचिन्हित अक्षर Index5G;
-पूर्ण;
+struct rt_channel_plan_map {
+	unsigned char Index2G;
+	unsigned char Index5G;
+};
 
-क्रमागत अणु
+enum {
 	HT_IOT_PEER_UNKNOWN			= 0,
 	HT_IOT_PEER_REALTEK			= 1,
 	HT_IOT_PEER_REALTEK_92SE		= 2,
@@ -279,102 +278,102 @@ MCS rate definitions
 	HT_IOT_PEER_REALTEK_JAGUAR_BCUTAP = 16,
 	HT_IOT_PEER_REALTEK_JAGUAR_CCUTAP = 17,
 	HT_IOT_PEER_MAX					= 18
-पूर्ण;
+};
 
 
-क्रमागत अणु
+enum {
 	SCAN_DISABLE = 0,
 	SCAN_START = 1,
-	SCAN_TXशून्य = 2,
+	SCAN_TXNULL = 2,
 	SCAN_PROCESS = 3,
 	SCAN_COMPLETE = 4,
 	SCAN_STATE_MAX,
-पूर्ण;
+};
 
-काष्ठा mlme_handler अणु
-	अचिन्हित पूर्णांक   num;
-	अक्षर *str;
-	अचिन्हित पूर्णांक (*func)(काष्ठा adapter *padapter, जोड़ recv_frame *precv_frame);
-पूर्ण;
+struct mlme_handler {
+	unsigned int   num;
+	char *str;
+	unsigned int (*func)(struct adapter *padapter, union recv_frame *precv_frame);
+};
 
-काष्ठा action_handler अणु
-	अचिन्हित पूर्णांक   num;
-	अक्षर *str;
-	अचिन्हित पूर्णांक (*func)(काष्ठा adapter *padapter, जोड़ recv_frame *precv_frame);
-पूर्ण;
+struct action_handler {
+	unsigned int   num;
+	char *str;
+	unsigned int (*func)(struct adapter *padapter, union recv_frame *precv_frame);
+};
 
-काष्ठा	ss_res अणु
-	पूर्णांक	state;
-	पूर्णांक	bss_cnt;
-	पूर्णांक	channel_idx;
-	पूर्णांक	scan_mode;
+struct	ss_res {
+	int	state;
+	int	bss_cnt;
+	int	channel_idx;
+	int	scan_mode;
 	u8 ssid_num;
 	u8 ch_num;
-	काष्ठा ndis_802_11_ssid ssid[RTW_SSID_SCAN_AMOUNT];
-	काष्ठा rtw_ieee80211_channel ch[RTW_CHANNEL_SCAN_AMOUNT];
-पूर्ण;
+	struct ndis_802_11_ssid ssid[RTW_SSID_SCAN_AMOUNT];
+	struct rtw_ieee80211_channel ch[RTW_CHANNEL_SCAN_AMOUNT];
+};
 
 /* define AP_MODE				0x0C */
 /* define STATION_MODE	0x08 */
 /* define AD_HOC_MODE		0x04 */
 /* define NO_LINK_MODE	0x00 */
 
-#घोषणा		WIFI_FW_शून्य_STATE			_HW_STATE_NOLINK_
-#घोषणा	WIFI_FW_STATION_STATE		_HW_STATE_STATION_
-#घोषणा	WIFI_FW_AP_STATE				_HW_STATE_AP_
-#घोषणा	WIFI_FW_ADHOC_STATE			_HW_STATE_ADHOC_
+#define		WIFI_FW_NULL_STATE			_HW_STATE_NOLINK_
+#define	WIFI_FW_STATION_STATE		_HW_STATE_STATION_
+#define	WIFI_FW_AP_STATE				_HW_STATE_AP_
+#define	WIFI_FW_ADHOC_STATE			_HW_STATE_ADHOC_
 
-#घोषणा	WIFI_FW_AUTH_शून्य			0x00000100
-#घोषणा	WIFI_FW_AUTH_STATE			0x00000200
-#घोषणा	WIFI_FW_AUTH_SUCCESS			0x00000400
+#define	WIFI_FW_AUTH_NULL			0x00000100
+#define	WIFI_FW_AUTH_STATE			0x00000200
+#define	WIFI_FW_AUTH_SUCCESS			0x00000400
 
-#घोषणा	WIFI_FW_ASSOC_STATE			0x00002000
-#घोषणा	WIFI_FW_ASSOC_SUCCESS		0x00004000
+#define	WIFI_FW_ASSOC_STATE			0x00002000
+#define	WIFI_FW_ASSOC_SUCCESS		0x00004000
 
-#घोषणा	WIFI_FW_LINKING_STATE		(WIFI_FW_AUTH_शून्य | WIFI_FW_AUTH_STATE | WIFI_FW_AUTH_SUCCESS | WIFI_FW_ASSOC_STATE)
+#define	WIFI_FW_LINKING_STATE		(WIFI_FW_AUTH_NULL | WIFI_FW_AUTH_STATE | WIFI_FW_AUTH_SUCCESS | WIFI_FW_ASSOC_STATE)
 
-काष्ठा FW_Sta_Info अणु
-	काष्ठा sta_info *psta;
+struct FW_Sta_Info {
+	struct sta_info *psta;
 	u32 status;
 	u32 rx_pkt;
 	u32 retry;
 	NDIS_802_11_RATES_EX  SupportedRates;
-पूर्ण;
+};
 
 /*
  * Usage:
- * When one अगरace acted as AP mode and the other अगरace is STA mode and scanning,
- * it should चयन back to AP's operating channel periodically.
+ * When one iface acted as AP mode and the other iface is STA mode and scanning,
+ * it should switch back to AP's operating channel periodically.
  * Parameters info:
- * When the driver scanned RTW_SCAN_NUM_OF_CH channels, it would चयन back to AP's operating channel क्रम
+ * When the driver scanned RTW_SCAN_NUM_OF_CH channels, it would switch back to AP's operating channel for
  * RTW_STAY_AP_CH_MILLISECOND * SURVEY_TO milliseconds.
  * Example:
  * For chip supports 2.4G + 5GHz and AP mode is operating in channel 1,
  * RTW_SCAN_NUM_OF_CH is 8, RTW_STAY_AP_CH_MILLISECOND is 3 and SURVEY_TO is 100.
- * When it's STA mode माला_लो set_scan command,
+ * When it's STA mode gets set_scan command,
  * it would
  * 1. Doing the scan on channel 1.2.3.4.5.6.7.8
- * 2. Back to channel 1 क्रम 300 milliseconds
- * 3. Go through करोing site survey on channel 9.10.11.36.40.44.48.52
- * 4. Back to channel 1 क्रम 300 milliseconds
- * 5. ... and so on, till survey करोne.
+ * 2. Back to channel 1 for 300 milliseconds
+ * 3. Go through doing site survey on channel 9.10.11.36.40.44.48.52
+ * 4. Back to channel 1 for 300 milliseconds
+ * 5. ... and so on, till survey done.
  */
-काष्ठा mlme_ext_info अणु
+struct mlme_ext_info {
 	u32 state;
 	u32 reauth_count;
 	u32 reassoc_count;
 	u32 link_count;
 	u32 auth_seq;
-	u32 auth_algo;	/*  802.11 auth, could be खोलो, shared, स्वतः */
+	u32 auth_algo;	/*  802.11 auth, could be open, shared, auto */
 	u32 authModeToggle;
 	u32 enc_algo;/* encrypt algorithm; */
-	u32 key_index;	/*  this is only valid क्रम legendary wep, 0~3 क्रम key id. */
+	u32 key_index;	/*  this is only valid for legendary wep, 0~3 for key id. */
 	u32 iv;
 	u8 chg_txt[128];
 	u16 aid;
-	u16 bcn_पूर्णांकerval;
+	u16 bcn_interval;
 	u16 capability;
-	u8 assoc_AP_venकरोr;
+	u8 assoc_AP_vendor;
 	u8 slotTime;
 	u8 preamble_mode;
 	u8 WMM_enable;
@@ -387,9 +386,9 @@ MCS rate definitions
 	u8 turboMode_cts2self;
 	u8 turboMode_rtsen;
 	u8 SM_PS;
-	u8 agg_enable_biपंचांगap;
+	u8 agg_enable_bitmap;
 	u8 ADDBA_retry_count;
-	u8 candidate_tid_biपंचांगap;
+	u8 candidate_tid_bitmap;
 	u8 dialogToken;
 	/*  Accept ADDBA Request */
 	bool accept_addba_req;
@@ -397,33 +396,33 @@ MCS rate definitions
 	u8 hidden_ssid_mode;
 	u8 VHT_enable;
 
-	काष्ठा ADDBA_request		ADDBA_req;
-	काष्ठा WMM_para_element	WMM_param;
-	काष्ठा HT_caps_element	HT_caps;
-	काष्ठा HT_info_element		HT_info;
-	काष्ठा wlan_bssid_ex			network;/* join network or bss_network, अगर in ap mode, it is the same to cur_network.network */
-	काष्ठा FW_Sta_Info		FW_sta_info[NUM_STA];
-पूर्ण;
+	struct ADDBA_request		ADDBA_req;
+	struct WMM_para_element	WMM_param;
+	struct HT_caps_element	HT_caps;
+	struct HT_info_element		HT_info;
+	struct wlan_bssid_ex			network;/* join network or bss_network, if in ap mode, it is the same to cur_network.network */
+	struct FW_Sta_Info		FW_sta_info[NUM_STA];
+};
 
-/*  The channel inक्रमmation about this channel including joining, scanning, and घातer स्थिरraपूर्णांकs. */
-काष्ठा rt_channel_info अणु
+/*  The channel information about this channel including joining, scanning, and power constraints. */
+struct rt_channel_info {
 	u8 		ChannelNum;		/*  The channel number. */
-	क्रमागत rt_scan_type	ScanType;		/*  Scan type such as passive or active scan. */
-पूर्ण;
+	enum rt_scan_type	ScanType;		/*  Scan type such as passive or active scan. */
+};
 
-पूर्णांक rtw_ch_set_search_ch(काष्ठा rt_channel_info *ch_set, स्थिर u32 ch);
-bool rtw_mlme_band_check(काष्ठा adapter *adapter, स्थिर u32 ch);
+int rtw_ch_set_search_ch(struct rt_channel_info *ch_set, const u32 ch);
+bool rtw_mlme_band_check(struct adapter *adapter, const u32 ch);
 
 /*  P2P_MAX_REG_CLASSES - Maximum number of regulatory classes */
-#घोषणा P2P_MAX_REG_CLASSES 10
+#define P2P_MAX_REG_CLASSES 10
 
 /*  P2P_MAX_REG_CLASS_CHANNELS - Maximum number of channels per regulatory class */
-#घोषणा P2P_MAX_REG_CLASS_CHANNELS 20
+#define P2P_MAX_REG_CLASS_CHANNELS 20
 
-/*   काष्ठा p2p_channels - List of supported channels */
-काष्ठा p2p_channels अणु
-	/*  काष्ठा p2p_reg_class - Supported regulatory class */
-	काष्ठा p2p_reg_class अणु
+/*   struct p2p_channels - List of supported channels */
+struct p2p_channels {
+	/*  struct p2p_reg_class - Supported regulatory class */
+	struct p2p_reg_class {
 		/*  reg_class - Regulatory class (IEEE 802.11-2007, Annex J) */
 		u8 reg_class;
 
@@ -431,348 +430,348 @@ bool rtw_mlme_band_check(काष्ठा adapter *adapter, स्थिर u3
 		u8 channel[P2P_MAX_REG_CLASS_CHANNELS];
 
 		/*  channels - Number of channel entries in use */
-		माप_प्रकार channels;
-	पूर्ण reg_class[P2P_MAX_REG_CLASSES];
+		size_t channels;
+	} reg_class[P2P_MAX_REG_CLASSES];
 
 	/*  reg_classes - Number of reg_class entries in use */
-	माप_प्रकार reg_classes;
-पूर्ण;
+	size_t reg_classes;
+};
 
-काष्ठा p2p_oper_class_map अणु
-	क्रमागत hw_mode अणुIEEE80211G, IEEE80211Aपूर्ण mode;
+struct p2p_oper_class_map {
+	enum hw_mode {IEEE80211G, IEEE80211A} mode;
 	u8 op_class;
 	u8 min_chan;
 	u8 max_chan;
 	u8 inc;
-	क्रमागत अणु BW20, BW40PLUS, BW40MINUS पूर्ण bw;
-पूर्ण;
+	enum { BW20, BW40PLUS, BW40MINUS } bw;
+};
 
-काष्ठा mlme_ext_priv अणु
-	काष्ठा adapter	*padapter;
+struct mlme_ext_priv {
+	struct adapter	*padapter;
 	u8 mlmeext_init;
 	atomic_t		event_seq;
 	u16 mgnt_seq;
 	u16 sa_query_seq;
 	u64 mgnt_80211w_IPN;
 	u64 mgnt_80211w_IPN_rx;
-	/* काष्ठा fw_priv fwpriv; */
+	/* struct fw_priv fwpriv; */
 
-	अचिन्हित अक्षर cur_channel;
-	अचिन्हित अक्षर cur_bwmode;
-	अचिन्हित अक्षर cur_ch_offset;/* PRIME_CHNL_OFFSET */
-	अचिन्हित अक्षर cur_wireless_mode;	/*  NETWORK_TYPE */
+	unsigned char cur_channel;
+	unsigned char cur_bwmode;
+	unsigned char cur_ch_offset;/* PRIME_CHNL_OFFSET */
+	unsigned char cur_wireless_mode;	/*  NETWORK_TYPE */
 
-	अचिन्हित अक्षर max_chan_nums;
-	काष्ठा rt_channel_info		channel_set[MAX_CHANNEL_NUM];
-	काष्ठा p2p_channels channel_list;
-	अचिन्हित अक्षर basicrate[NumRates];
-	अचिन्हित अक्षर datarate[NumRates];
-	अचिन्हित अक्षर शेष_supported_mcs_set[16];
+	unsigned char max_chan_nums;
+	struct rt_channel_info		channel_set[MAX_CHANNEL_NUM];
+	struct p2p_channels channel_list;
+	unsigned char basicrate[NumRates];
+	unsigned char datarate[NumRates];
+	unsigned char default_supported_mcs_set[16];
 
-	काष्ठा ss_res		sitesurvey_res;
-	काष्ठा mlme_ext_info mlmext_info;/* क्रम sta/adhoc mode, including current scanning/connecting/connected related info. */
-                                                     /* क्रम ap mode, network includes ap's cap_info */
-	काष्ठा समयr_list		survey_समयr;
-	काष्ठा समयr_list		link_समयr;
-	काष्ठा समयr_list		sa_query_समयr;
-	/* काष्ठा समयr_list		ADDBA_समयr; */
-	u16 		chan_scan_समय;
-	अचिन्हित दीर्घ last_scan_समय;
-	u8 scan_पात;
+	struct ss_res		sitesurvey_res;
+	struct mlme_ext_info mlmext_info;/* for sta/adhoc mode, including current scanning/connecting/connected related info. */
+                                                     /* for ap mode, network includes ap's cap_info */
+	struct timer_list		survey_timer;
+	struct timer_list		link_timer;
+	struct timer_list		sa_query_timer;
+	/* struct timer_list		ADDBA_timer; */
+	u16 		chan_scan_time;
+	unsigned long last_scan_time;
+	u8 scan_abort;
 	u8 tx_rate; /*  TXRATE when USERATE is set. */
 
-	u32 retry; /* retry क्रम issue probereq */
+	u32 retry; /* retry for issue probereq */
 
 	u64 TSFValue;
 
-	/* क्रम LPS-32K to adaptive bcn early and समयout */
-	u8 adaptive_tsf_करोne;
+	/* for LPS-32K to adaptive bcn early and timeout */
+	u8 adaptive_tsf_done;
 	u32 bcn_delay_cnt[9];
 	u32 bcn_delay_ratio[9];
 	u32 bcn_cnt;
 	u8 DrvBcnEarly;
 	u8 DrvBcnTimeOut;
 
-	अचिन्हित अक्षर bstart_bss;
+	unsigned char bstart_bss;
 
-	u8 update_channel_plan_by_ap_करोne;
+	u8 update_channel_plan_by_ap_done;
 
-	/* recv_decache check क्रम Action_खुला frame */
-	u8 action_खुला_dialog_token;
-	u16  action_खुला_rxseq;
+	/* recv_decache check for Action_public frame */
+	u8 action_public_dialog_token;
+	u16  action_public_rxseq;
 
 	u8 active_keep_alive_check;
-#अगर_घोषित DBG_FIXED_CHAN
+#ifdef DBG_FIXED_CHAN
 	u8 fixed_chan;
-#पूर्ण_अगर
+#endif
 
-पूर्ण;
+};
 
-व्योम init_mlme_शेष_rate_set(काष्ठा adapter *padapter);
-व्योम init_mlme_ext_priv(काष्ठा adapter *padapter);
-पूर्णांक init_hw_mlme_ext(काष्ठा adapter *padapter);
-व्योम मुक्त_mlme_ext_priv(काष्ठा mlme_ext_priv *pmlmeext);
-बाह्य व्योम init_mlme_ext_समयr(काष्ठा adapter *padapter);
-बाह्य व्योम init_addba_retry_समयr(काष्ठा adapter *padapter, काष्ठा sta_info *psta);
-बाह्य काष्ठा xmit_frame *alloc_mgtxmitframe(काष्ठा xmit_priv *pxmitpriv);
+void init_mlme_default_rate_set(struct adapter *padapter);
+void init_mlme_ext_priv(struct adapter *padapter);
+int init_hw_mlme_ext(struct adapter *padapter);
+void free_mlme_ext_priv(struct mlme_ext_priv *pmlmeext);
+extern void init_mlme_ext_timer(struct adapter *padapter);
+extern void init_addba_retry_timer(struct adapter *padapter, struct sta_info *psta);
+extern struct xmit_frame *alloc_mgtxmitframe(struct xmit_priv *pxmitpriv);
 
-/* व्योम fill_fwpriv(काष्ठा adapter *padapter, काष्ठा fw_priv *pfwpriv); */
+/* void fill_fwpriv(struct adapter *padapter, struct fw_priv *pfwpriv); */
 
-u8 networktype_to_raid_ex(काष्ठा adapter *adapter, काष्ठा sta_info *psta);
+u8 networktype_to_raid_ex(struct adapter *adapter, struct sta_info *psta);
 
-व्योम get_rate_set(काष्ठा adapter *padapter, अचिन्हित अक्षर *pbssrate, पूर्णांक *bssrate_len);
-व्योम set_mcs_rate_by_mask(u8 *mcs_set, u32 mask);
-व्योम UpdateBrateTbl(काष्ठा adapter *padapter, u8 *mBratesOS);
-व्योम UpdateBrateTblForSoftAP(u8 *bssrateset, u32 bssratelen);
+void get_rate_set(struct adapter *padapter, unsigned char *pbssrate, int *bssrate_len);
+void set_mcs_rate_by_mask(u8 *mcs_set, u32 mask);
+void UpdateBrateTbl(struct adapter *padapter, u8 *mBratesOS);
+void UpdateBrateTblForSoftAP(u8 *bssrateset, u32 bssratelen);
 
-व्योम Save_DM_Func_Flag(काष्ठा adapter *padapter);
-व्योम Restore_DM_Func_Flag(काष्ठा adapter *padapter);
-व्योम Switch_DM_Func(काष्ठा adapter *padapter, u32 mode, u8 enable);
+void Save_DM_Func_Flag(struct adapter *padapter);
+void Restore_DM_Func_Flag(struct adapter *padapter);
+void Switch_DM_Func(struct adapter *padapter, u32 mode, u8 enable);
 
-व्योम Set_MSR(काष्ठा adapter *padapter, u8 type);
+void Set_MSR(struct adapter *padapter, u8 type);
 
-u8 rtw_get_oper_ch(काष्ठा adapter *adapter);
-व्योम rtw_set_oper_ch(काष्ठा adapter *adapter, u8 ch);
-u8 rtw_get_oper_bw(काष्ठा adapter *adapter);
-व्योम rtw_set_oper_bw(काष्ठा adapter *adapter, u8 bw);
-u8 rtw_get_oper_choffset(काष्ठा adapter *adapter);
-व्योम rtw_set_oper_choffset(काष्ठा adapter *adapter, u8 offset);
+u8 rtw_get_oper_ch(struct adapter *adapter);
+void rtw_set_oper_ch(struct adapter *adapter, u8 ch);
+u8 rtw_get_oper_bw(struct adapter *adapter);
+void rtw_set_oper_bw(struct adapter *adapter, u8 bw);
+u8 rtw_get_oper_choffset(struct adapter *adapter);
+void rtw_set_oper_choffset(struct adapter *adapter, u8 offset);
 u8 rtw_get_center_ch(u8 channel, u8 chnl_bw, u8 chnl_offset);
-अचिन्हित दीर्घ rtw_get_on_cur_ch_समय(काष्ठा adapter *adapter);
+unsigned long rtw_get_on_cur_ch_time(struct adapter *adapter);
 
-व्योम set_channel_bwmode(काष्ठा adapter *padapter, अचिन्हित अक्षर channel, अचिन्हित अक्षर channel_offset, अचिन्हित लघु bwmode);
-व्योम SelectChannel(काष्ठा adapter *padapter, अचिन्हित अक्षर channel);
+void set_channel_bwmode(struct adapter *padapter, unsigned char channel, unsigned char channel_offset, unsigned short bwmode);
+void SelectChannel(struct adapter *padapter, unsigned char channel);
 
-अचिन्हित पूर्णांक decide_रुको_क्रम_beacon_समयout(अचिन्हित पूर्णांक bcn_पूर्णांकerval);
+unsigned int decide_wait_for_beacon_timeout(unsigned int bcn_interval);
 
-व्योम पढ़ो_cam(काष्ठा adapter *padapter, u8 entry, u8 *get_key);
+void read_cam(struct adapter *padapter, u8 entry, u8 *get_key);
 
-/* modअगरy HW only */
-व्योम _ग_लिखो_cam(काष्ठा adapter *padapter, u8 entry, u16 ctrl, u8 *mac, u8 *key);
-व्योम _clear_cam_entry(काष्ठा adapter *padapter, u8 entry);
+/* modify HW only */
+void _write_cam(struct adapter *padapter, u8 entry, u16 ctrl, u8 *mac, u8 *key);
+void _clear_cam_entry(struct adapter *padapter, u8 entry);
 
-/* modअगरy both HW and cache */
-व्योम ग_लिखो_cam(काष्ठा adapter *padapter, u8 id, u16 ctrl, u8 *mac, u8 *key);
-व्योम clear_cam_entry(काष्ठा adapter *padapter, u8 id);
+/* modify both HW and cache */
+void write_cam(struct adapter *padapter, u8 id, u16 ctrl, u8 *mac, u8 *key);
+void clear_cam_entry(struct adapter *padapter, u8 id);
 
-/* modअगरy cache only */
-व्योम ग_लिखो_cam_cache(काष्ठा adapter *adapter, u8 id, u16 ctrl, u8 *mac, u8 *key);
-व्योम clear_cam_cache(काष्ठा adapter *adapter, u8 id);
+/* modify cache only */
+void write_cam_cache(struct adapter *adapter, u8 id, u16 ctrl, u8 *mac, u8 *key);
+void clear_cam_cache(struct adapter *adapter, u8 id);
 
-व्योम invalidate_cam_all(काष्ठा adapter *padapter);
-
-
-पूर्णांक allocate_fw_sta_entry(काष्ठा adapter *padapter);
-व्योम flush_all_cam_entry(काष्ठा adapter *padapter);
-
-व्योम site_survey(काष्ठा adapter *padapter);
-u8 collect_bss_info(काष्ठा adapter *padapter, जोड़ recv_frame *precv_frame, काष्ठा wlan_bssid_ex *bssid);
-व्योम update_network(काष्ठा wlan_bssid_ex *dst, काष्ठा wlan_bssid_ex *src, काष्ठा adapter *padapter, bool update_ie);
-
-u8 *get_my_bssid(काष्ठा wlan_bssid_ex *pnetwork);
-u16 get_beacon_पूर्णांकerval(काष्ठा wlan_bssid_ex *bss);
-
-पूर्णांक is_client_associated_to_ap(काष्ठा adapter *padapter);
-पूर्णांक is_client_associated_to_ibss(काष्ठा adapter *padapter);
-पूर्णांक is_IBSS_empty(काष्ठा adapter *padapter);
-
-अचिन्हित अक्षर check_assoc_AP(u8 *pframe, uपूर्णांक len);
-
-पूर्णांक WMM_param_handler(काष्ठा adapter *padapter, काष्ठा ndis_80211_var_ie *pIE);
-व्योम WMMOnAssocRsp(काष्ठा adapter *padapter);
-
-व्योम HT_caps_handler(काष्ठा adapter *padapter, काष्ठा ndis_80211_var_ie *pIE);
-व्योम HT_info_handler(काष्ठा adapter *padapter, काष्ठा ndis_80211_var_ie *pIE);
-व्योम HTOnAssocRsp(काष्ठा adapter *padapter);
-
-व्योम ERP_IE_handler(काष्ठा adapter *padapter, काष्ठा ndis_80211_var_ie *pIE);
-व्योम VCS_update(काष्ठा adapter *padapter, काष्ठा sta_info *psta);
-व्योम update_ldpc_stbc_cap(काष्ठा sta_info *psta);
-
-व्योम update_beacon_info(काष्ठा adapter *padapter, u8 *pframe, uपूर्णांक len, काष्ठा sta_info *psta);
-पूर्णांक rtw_check_bcn_info(काष्ठा adapter *Adapter, u8 *pframe, u32 packet_len);
-व्योम update_IOT_info(काष्ठा adapter *padapter);
-व्योम update_capinfo(काष्ठा adapter *Adapter, u16 updateCap);
-व्योम update_wireless_mode(काष्ठा adapter *padapter);
-व्योम update_sta_basic_rate(काष्ठा sta_info *psta, u8 wireless_mode);
-पूर्णांक update_sta_support_rate(काष्ठा adapter *padapter, u8 *pvar_ie, uपूर्णांक var_ie_len, पूर्णांक cam_idx);
-
-/* क्रम sta/adhoc mode */
-व्योम update_sta_info(काष्ठा adapter *padapter, काष्ठा sta_info *psta);
-व्योम Update_RA_Entry(काष्ठा adapter *padapter, काष्ठा sta_info *psta);
-व्योम set_sta_rate(काष्ठा adapter *padapter, काष्ठा sta_info *psta);
-
-अचिन्हित पूर्णांक receive_disconnect(काष्ठा adapter *padapter, अचिन्हित अक्षर *MacAddr, अचिन्हित लघु reason);
-
-अचिन्हित अक्षर get_highest_rate_idx(u32 mask);
-पूर्णांक support_लघु_GI(काष्ठा adapter *padapter, काष्ठा HT_caps_element *pHT_caps, u8 bwmode);
-अचिन्हित पूर्णांक is_ap_in_tkip(काष्ठा adapter *padapter);
-
-s16 rtw_camid_search(काष्ठा adapter *adapter, u8 *addr, s16 kid);
-s16 rtw_camid_alloc(काष्ठा adapter *adapter, काष्ठा sta_info *sta, u8 kid);
-व्योम rtw_camid_मुक्त(काष्ठा adapter *adapter, u8 cam_id);
-
-बाह्य व्योम rtw_alloc_macid(काष्ठा adapter *padapter, काष्ठा sta_info *psta);
-बाह्य व्योम rtw_release_macid(काष्ठा adapter *padapter, काष्ठा sta_info *psta);
-बाह्य u8 rtw_search_max_mac_id(काष्ठा adapter *padapter);
-
-व्योम report_join_res(काष्ठा adapter *padapter, पूर्णांक res);
-व्योम report_survey_event(काष्ठा adapter *padapter, जोड़ recv_frame *precv_frame);
-व्योम report_surveyकरोne_event(काष्ठा adapter *padapter);
-व्योम report_del_sta_event(काष्ठा adapter *padapter, अचिन्हित अक्षर *MacAddr, अचिन्हित लघु reason);
-व्योम report_add_sta_event(काष्ठा adapter *padapter, अचिन्हित अक्षर *MacAddr, पूर्णांक cam_idx);
-व्योम report_wmm_edca_update(काष्ठा adapter *padapter);
-
-u8 chk_bmc_sleepq_cmd(काष्ठा adapter *padapter);
-बाह्य u8 set_tx_beacon_cmd(काष्ठा adapter *padapter);
-अचिन्हित पूर्णांक setup_beacon_frame(काष्ठा adapter *padapter, अचिन्हित अक्षर *beacon_frame);
-व्योम update_mgnt_tx_rate(काष्ठा adapter *padapter, u8 rate);
-व्योम update_mgntframe_attrib(काष्ठा adapter *padapter, काष्ठा pkt_attrib *pattrib);
-व्योम update_mgntframe_attrib_addr(काष्ठा adapter *padapter, काष्ठा xmit_frame *pmgntframe);
-व्योम dump_mgntframe(काष्ठा adapter *padapter, काष्ठा xmit_frame *pmgntframe);
-s32 dump_mgntframe_and_रुको(काष्ठा adapter *padapter, काष्ठा xmit_frame *pmgntframe, पूर्णांक समयout_ms);
-s32 dump_mgntframe_and_रुको_ack(काष्ठा adapter *padapter, काष्ठा xmit_frame *pmgntframe);
-
-व्योम issue_beacon(काष्ठा adapter *padapter, पूर्णांक समयout_ms);
-व्योम issue_probersp(काष्ठा adapter *padapter, अचिन्हित अक्षर *da, u8 is_valid_p2p_probereq);
-व्योम issue_assocreq(काष्ठा adapter *padapter);
-व्योम issue_asocrsp(काष्ठा adapter *padapter, अचिन्हित लघु status, काष्ठा sta_info *pstat, पूर्णांक pkt_type);
-व्योम issue_auth(काष्ठा adapter *padapter, काष्ठा sta_info *psta, अचिन्हित लघु status);
-व्योम issue_probereq(काष्ठा adapter *padapter, काष्ठा ndis_802_11_ssid *pssid, u8 *da);
-s32 issue_probereq_ex(काष्ठा adapter *padapter, काष्ठा ndis_802_11_ssid *pssid, u8 *da, u8 ch, bool append_wps, पूर्णांक try_cnt, पूर्णांक रुको_ms);
-पूर्णांक issue_nulldata(काष्ठा adapter *padapter, अचिन्हित अक्षर *da, अचिन्हित पूर्णांक घातer_mode, पूर्णांक try_cnt, पूर्णांक रुको_ms);
-s32 issue_nulldata_in_पूर्णांकerrupt(काष्ठा adapter *padapter, u8 *da);
-पूर्णांक issue_qos_nulldata(काष्ठा adapter *padapter, अचिन्हित अक्षर *da, u16 tid, पूर्णांक try_cnt, पूर्णांक रुको_ms);
-पूर्णांक issue_deauth(काष्ठा adapter *padapter, अचिन्हित अक्षर *da, अचिन्हित लघु reason);
-पूर्णांक issue_deauth_ex(काष्ठा adapter *padapter, u8 *da, अचिन्हित लघु reason, पूर्णांक try_cnt, पूर्णांक रुको_ms);
-व्योम issue_action_BA(काष्ठा adapter *padapter, अचिन्हित अक्षर *raddr, अचिन्हित अक्षर action, अचिन्हित लघु status);
-व्योम issue_action_SA_Query(काष्ठा adapter *padapter, अचिन्हित अक्षर *raddr, अचिन्हित अक्षर action, अचिन्हित लघु tid);
-अचिन्हित पूर्णांक send_delba(काष्ठा adapter *padapter, u8 initiator, u8 *addr);
-अचिन्हित पूर्णांक send_beacon(काष्ठा adapter *padapter);
-
-व्योम start_clnt_assoc(काष्ठा adapter *padapter);
-व्योम start_clnt_auth(काष्ठा adapter *padapter);
-व्योम start_clnt_join(काष्ठा adapter *padapter);
-व्योम start_create_ibss(काष्ठा adapter *padapter);
-
-अचिन्हित पूर्णांक OnAssocReq(काष्ठा adapter *padapter, जोड़ recv_frame *precv_frame);
-अचिन्हित पूर्णांक OnAssocRsp(काष्ठा adapter *padapter, जोड़ recv_frame *precv_frame);
-अचिन्हित पूर्णांक OnProbeReq(काष्ठा adapter *padapter, जोड़ recv_frame *precv_frame);
-अचिन्हित पूर्णांक OnProbeRsp(काष्ठा adapter *padapter, जोड़ recv_frame *precv_frame);
-अचिन्हित पूर्णांक DoReserved(काष्ठा adapter *padapter, जोड़ recv_frame *precv_frame);
-अचिन्हित पूर्णांक OnBeacon(काष्ठा adapter *padapter, जोड़ recv_frame *precv_frame);
-अचिन्हित पूर्णांक OnAtim(काष्ठा adapter *padapter, जोड़ recv_frame *precv_frame);
-अचिन्हित पूर्णांक OnDisassoc(काष्ठा adapter *padapter, जोड़ recv_frame *precv_frame);
-अचिन्हित पूर्णांक OnAuth(काष्ठा adapter *padapter, जोड़ recv_frame *precv_frame);
-अचिन्हित पूर्णांक OnAuthClient(काष्ठा adapter *padapter, जोड़ recv_frame *precv_frame);
-अचिन्हित पूर्णांक OnDeAuth(काष्ठा adapter *padapter, जोड़ recv_frame *precv_frame);
-अचिन्हित पूर्णांक OnAction(काष्ठा adapter *padapter, जोड़ recv_frame *precv_frame);
-
-अचिन्हित पूर्णांक on_action_spct(काष्ठा adapter *padapter, जोड़ recv_frame *precv_frame);
-अचिन्हित पूर्णांक OnAction_back(काष्ठा adapter *padapter, जोड़ recv_frame *precv_frame);
-अचिन्हित पूर्णांक on_action_खुला(काष्ठा adapter *padapter, जोड़ recv_frame *precv_frame);
-अचिन्हित पूर्णांक OnAction_ht(काष्ठा adapter *padapter, जोड़ recv_frame *precv_frame);
-अचिन्हित पूर्णांक OnAction_sa_query(काष्ठा adapter *padapter, जोड़ recv_frame *precv_frame);
-
-व्योम mlmeext_joinbss_event_callback(काष्ठा adapter *padapter, पूर्णांक join_res);
-व्योम mlmeext_sta_del_event_callback(काष्ठा adapter *padapter);
-व्योम mlmeext_sta_add_event_callback(काष्ठा adapter *padapter, काष्ठा sta_info *psta);
-
-व्योम linked_status_chk(काष्ठा adapter *padapter);
-
-व्योम _linked_info_dump(काष्ठा adapter *padapter);
-
-व्योम survey_समयr_hdl(काष्ठा समयr_list *t);
-व्योम link_समयr_hdl(काष्ठा समयr_list *t);
-व्योम addba_समयr_hdl(काष्ठा समयr_list *t);
-व्योम sa_query_समयr_hdl(काष्ठा समयr_list *t);
-/* व्योम reauth_समयr_hdl(काष्ठा adapter *padapter); */
-/* व्योम reassoc_समयr_hdl(काष्ठा adapter *padapter); */
-
-#घोषणा set_survey_समयr(mlmeext, ms) \
-	करो अणु \
-		_set_समयr(&(mlmeext)->survey_समयr, (ms)); \
-	पूर्ण जबतक (0)
-
-#घोषणा set_link_समयr(mlmeext, ms) \
-	करो अणु \
-		_set_समयr(&(mlmeext)->link_समयr, (ms)); \
-	पूर्ण जबतक (0)
-#घोषणा set_sa_query_समयr(mlmeext, ms) \
-	करो अणु \
-		_set_समयr(&(mlmeext)->sa_query_समयr, (ms)); \
-	पूर्ण जबतक (0)
-
-बाह्य व्योम process_addba_req(काष्ठा adapter *padapter, u8 *paddba_req, u8 *addr);
-
-बाह्य व्योम update_TSF(काष्ठा mlme_ext_priv *pmlmeext, u8 *pframe, uपूर्णांक len);
-बाह्य व्योम correct_TSF(काष्ठा adapter *padapter, काष्ठा mlme_ext_priv *pmlmeext);
-बाह्य व्योम adaptive_early_32k(काष्ठा mlme_ext_priv *pmlmeext, u8 *pframe, uपूर्णांक len);
-बाह्य u8 traffic_status_watchकरोg(काष्ठा adapter *padapter, u8 from_समयr);
-
-पूर्णांक rtw_chk_start_clnt_join(काष्ठा adapter *padapter, u8 *ch, u8 *bw, u8 *offset);
-पूर्णांक rtw_get_ch_setting_जोड़(काष्ठा adapter *adapter, u8 *ch, u8 *bw, u8 *offset);
-
-काष्ठा cmd_hdl अणु
-	uपूर्णांक	parmsize;
-	u8 (*h2cfuns)(काष्ठा adapter *padapter, u8 *pbuf);
-पूर्ण;
+void invalidate_cam_all(struct adapter *padapter);
 
 
-u8 पढ़ो_macreg_hdl(काष्ठा adapter *padapter, u8 *pbuf);
-u8 ग_लिखो_macreg_hdl(काष्ठा adapter *padapter, u8 *pbuf);
-u8 पढ़ो_bbreg_hdl(काष्ठा adapter *padapter, u8 *pbuf);
-u8 ग_लिखो_bbreg_hdl(काष्ठा adapter *padapter, u8 *pbuf);
-u8 पढ़ो_rfreg_hdl(काष्ठा adapter *padapter, u8 *pbuf);
-u8 ग_लिखो_rfreg_hdl(काष्ठा adapter *padapter, u8 *pbuf);
+int allocate_fw_sta_entry(struct adapter *padapter);
+void flush_all_cam_entry(struct adapter *padapter);
+
+void site_survey(struct adapter *padapter);
+u8 collect_bss_info(struct adapter *padapter, union recv_frame *precv_frame, struct wlan_bssid_ex *bssid);
+void update_network(struct wlan_bssid_ex *dst, struct wlan_bssid_ex *src, struct adapter *padapter, bool update_ie);
+
+u8 *get_my_bssid(struct wlan_bssid_ex *pnetwork);
+u16 get_beacon_interval(struct wlan_bssid_ex *bss);
+
+int is_client_associated_to_ap(struct adapter *padapter);
+int is_client_associated_to_ibss(struct adapter *padapter);
+int is_IBSS_empty(struct adapter *padapter);
+
+unsigned char check_assoc_AP(u8 *pframe, uint len);
+
+int WMM_param_handler(struct adapter *padapter, struct ndis_80211_var_ie *pIE);
+void WMMOnAssocRsp(struct adapter *padapter);
+
+void HT_caps_handler(struct adapter *padapter, struct ndis_80211_var_ie *pIE);
+void HT_info_handler(struct adapter *padapter, struct ndis_80211_var_ie *pIE);
+void HTOnAssocRsp(struct adapter *padapter);
+
+void ERP_IE_handler(struct adapter *padapter, struct ndis_80211_var_ie *pIE);
+void VCS_update(struct adapter *padapter, struct sta_info *psta);
+void update_ldpc_stbc_cap(struct sta_info *psta);
+
+void update_beacon_info(struct adapter *padapter, u8 *pframe, uint len, struct sta_info *psta);
+int rtw_check_bcn_info(struct adapter *Adapter, u8 *pframe, u32 packet_len);
+void update_IOT_info(struct adapter *padapter);
+void update_capinfo(struct adapter *Adapter, u16 updateCap);
+void update_wireless_mode(struct adapter *padapter);
+void update_sta_basic_rate(struct sta_info *psta, u8 wireless_mode);
+int update_sta_support_rate(struct adapter *padapter, u8 *pvar_ie, uint var_ie_len, int cam_idx);
+
+/* for sta/adhoc mode */
+void update_sta_info(struct adapter *padapter, struct sta_info *psta);
+void Update_RA_Entry(struct adapter *padapter, struct sta_info *psta);
+void set_sta_rate(struct adapter *padapter, struct sta_info *psta);
+
+unsigned int receive_disconnect(struct adapter *padapter, unsigned char *MacAddr, unsigned short reason);
+
+unsigned char get_highest_rate_idx(u32 mask);
+int support_short_GI(struct adapter *padapter, struct HT_caps_element *pHT_caps, u8 bwmode);
+unsigned int is_ap_in_tkip(struct adapter *padapter);
+
+s16 rtw_camid_search(struct adapter *adapter, u8 *addr, s16 kid);
+s16 rtw_camid_alloc(struct adapter *adapter, struct sta_info *sta, u8 kid);
+void rtw_camid_free(struct adapter *adapter, u8 cam_id);
+
+extern void rtw_alloc_macid(struct adapter *padapter, struct sta_info *psta);
+extern void rtw_release_macid(struct adapter *padapter, struct sta_info *psta);
+extern u8 rtw_search_max_mac_id(struct adapter *padapter);
+
+void report_join_res(struct adapter *padapter, int res);
+void report_survey_event(struct adapter *padapter, union recv_frame *precv_frame);
+void report_surveydone_event(struct adapter *padapter);
+void report_del_sta_event(struct adapter *padapter, unsigned char *MacAddr, unsigned short reason);
+void report_add_sta_event(struct adapter *padapter, unsigned char *MacAddr, int cam_idx);
+void report_wmm_edca_update(struct adapter *padapter);
+
+u8 chk_bmc_sleepq_cmd(struct adapter *padapter);
+extern u8 set_tx_beacon_cmd(struct adapter *padapter);
+unsigned int setup_beacon_frame(struct adapter *padapter, unsigned char *beacon_frame);
+void update_mgnt_tx_rate(struct adapter *padapter, u8 rate);
+void update_mgntframe_attrib(struct adapter *padapter, struct pkt_attrib *pattrib);
+void update_mgntframe_attrib_addr(struct adapter *padapter, struct xmit_frame *pmgntframe);
+void dump_mgntframe(struct adapter *padapter, struct xmit_frame *pmgntframe);
+s32 dump_mgntframe_and_wait(struct adapter *padapter, struct xmit_frame *pmgntframe, int timeout_ms);
+s32 dump_mgntframe_and_wait_ack(struct adapter *padapter, struct xmit_frame *pmgntframe);
+
+void issue_beacon(struct adapter *padapter, int timeout_ms);
+void issue_probersp(struct adapter *padapter, unsigned char *da, u8 is_valid_p2p_probereq);
+void issue_assocreq(struct adapter *padapter);
+void issue_asocrsp(struct adapter *padapter, unsigned short status, struct sta_info *pstat, int pkt_type);
+void issue_auth(struct adapter *padapter, struct sta_info *psta, unsigned short status);
+void issue_probereq(struct adapter *padapter, struct ndis_802_11_ssid *pssid, u8 *da);
+s32 issue_probereq_ex(struct adapter *padapter, struct ndis_802_11_ssid *pssid, u8 *da, u8 ch, bool append_wps, int try_cnt, int wait_ms);
+int issue_nulldata(struct adapter *padapter, unsigned char *da, unsigned int power_mode, int try_cnt, int wait_ms);
+s32 issue_nulldata_in_interrupt(struct adapter *padapter, u8 *da);
+int issue_qos_nulldata(struct adapter *padapter, unsigned char *da, u16 tid, int try_cnt, int wait_ms);
+int issue_deauth(struct adapter *padapter, unsigned char *da, unsigned short reason);
+int issue_deauth_ex(struct adapter *padapter, u8 *da, unsigned short reason, int try_cnt, int wait_ms);
+void issue_action_BA(struct adapter *padapter, unsigned char *raddr, unsigned char action, unsigned short status);
+void issue_action_SA_Query(struct adapter *padapter, unsigned char *raddr, unsigned char action, unsigned short tid);
+unsigned int send_delba(struct adapter *padapter, u8 initiator, u8 *addr);
+unsigned int send_beacon(struct adapter *padapter);
+
+void start_clnt_assoc(struct adapter *padapter);
+void start_clnt_auth(struct adapter *padapter);
+void start_clnt_join(struct adapter *padapter);
+void start_create_ibss(struct adapter *padapter);
+
+unsigned int OnAssocReq(struct adapter *padapter, union recv_frame *precv_frame);
+unsigned int OnAssocRsp(struct adapter *padapter, union recv_frame *precv_frame);
+unsigned int OnProbeReq(struct adapter *padapter, union recv_frame *precv_frame);
+unsigned int OnProbeRsp(struct adapter *padapter, union recv_frame *precv_frame);
+unsigned int DoReserved(struct adapter *padapter, union recv_frame *precv_frame);
+unsigned int OnBeacon(struct adapter *padapter, union recv_frame *precv_frame);
+unsigned int OnAtim(struct adapter *padapter, union recv_frame *precv_frame);
+unsigned int OnDisassoc(struct adapter *padapter, union recv_frame *precv_frame);
+unsigned int OnAuth(struct adapter *padapter, union recv_frame *precv_frame);
+unsigned int OnAuthClient(struct adapter *padapter, union recv_frame *precv_frame);
+unsigned int OnDeAuth(struct adapter *padapter, union recv_frame *precv_frame);
+unsigned int OnAction(struct adapter *padapter, union recv_frame *precv_frame);
+
+unsigned int on_action_spct(struct adapter *padapter, union recv_frame *precv_frame);
+unsigned int OnAction_back(struct adapter *padapter, union recv_frame *precv_frame);
+unsigned int on_action_public(struct adapter *padapter, union recv_frame *precv_frame);
+unsigned int OnAction_ht(struct adapter *padapter, union recv_frame *precv_frame);
+unsigned int OnAction_sa_query(struct adapter *padapter, union recv_frame *precv_frame);
+
+void mlmeext_joinbss_event_callback(struct adapter *padapter, int join_res);
+void mlmeext_sta_del_event_callback(struct adapter *padapter);
+void mlmeext_sta_add_event_callback(struct adapter *padapter, struct sta_info *psta);
+
+void linked_status_chk(struct adapter *padapter);
+
+void _linked_info_dump(struct adapter *padapter);
+
+void survey_timer_hdl(struct timer_list *t);
+void link_timer_hdl(struct timer_list *t);
+void addba_timer_hdl(struct timer_list *t);
+void sa_query_timer_hdl(struct timer_list *t);
+/* void reauth_timer_hdl(struct adapter *padapter); */
+/* void reassoc_timer_hdl(struct adapter *padapter); */
+
+#define set_survey_timer(mlmeext, ms) \
+	do { \
+		_set_timer(&(mlmeext)->survey_timer, (ms)); \
+	} while (0)
+
+#define set_link_timer(mlmeext, ms) \
+	do { \
+		_set_timer(&(mlmeext)->link_timer, (ms)); \
+	} while (0)
+#define set_sa_query_timer(mlmeext, ms) \
+	do { \
+		_set_timer(&(mlmeext)->sa_query_timer, (ms)); \
+	} while (0)
+
+extern void process_addba_req(struct adapter *padapter, u8 *paddba_req, u8 *addr);
+
+extern void update_TSF(struct mlme_ext_priv *pmlmeext, u8 *pframe, uint len);
+extern void correct_TSF(struct adapter *padapter, struct mlme_ext_priv *pmlmeext);
+extern void adaptive_early_32k(struct mlme_ext_priv *pmlmeext, u8 *pframe, uint len);
+extern u8 traffic_status_watchdog(struct adapter *padapter, u8 from_timer);
+
+int rtw_chk_start_clnt_join(struct adapter *padapter, u8 *ch, u8 *bw, u8 *offset);
+int rtw_get_ch_setting_union(struct adapter *adapter, u8 *ch, u8 *bw, u8 *offset);
+
+struct cmd_hdl {
+	uint	parmsize;
+	u8 (*h2cfuns)(struct adapter *padapter, u8 *pbuf);
+};
 
 
-u8 शून्य_hdl(काष्ठा adapter *padapter, u8 *pbuf);
-u8 join_cmd_hdl(काष्ठा adapter *padapter, u8 *pbuf);
-u8 disconnect_hdl(काष्ठा adapter *padapter, u8 *pbuf);
-u8 createbss_hdl(काष्ठा adapter *padapter, u8 *pbuf);
-u8 setopmode_hdl(काष्ठा adapter *padapter, u8 *pbuf);
-u8 sitesurvey_cmd_hdl(काष्ठा adapter *padapter, u8 *pbuf);
-u8 setauth_hdl(काष्ठा adapter *padapter, u8 *pbuf);
-u8 setkey_hdl(काष्ठा adapter *padapter, u8 *pbuf);
-u8 set_stakey_hdl(काष्ठा adapter *padapter, u8 *pbuf);
-u8 set_assocsta_hdl(काष्ठा adapter *padapter, u8 *pbuf);
-u8 del_assocsta_hdl(काष्ठा adapter *padapter, u8 *pbuf);
-u8 add_ba_hdl(काष्ठा adapter *padapter, अचिन्हित अक्षर *pbuf);
-
-u8 mlme_evt_hdl(काष्ठा adapter *padapter, अचिन्हित अक्षर *pbuf);
-u8 h2c_msg_hdl(काष्ठा adapter *padapter, अचिन्हित अक्षर *pbuf);
-u8 chk_bmc_sleepq_hdl(काष्ठा adapter *padapter, अचिन्हित अक्षर *pbuf);
-u8 tx_beacon_hdl(काष्ठा adapter *padapter, अचिन्हित अक्षर *pbuf);
-u8 set_ch_hdl(काष्ठा adapter *padapter, u8 *pbuf);
-u8 set_chplan_hdl(काष्ठा adapter *padapter, अचिन्हित अक्षर *pbuf);
-u8 set_csa_hdl(काष्ठा adapter *padapter, अचिन्हित अक्षर *pbuf);	/* Kurt: Handling DFS channel चयन announcement ie. */
-u8 tdls_hdl(काष्ठा adapter *padapter, अचिन्हित अक्षर *pbuf);
-u8 run_in_thपढ़ो_hdl(काष्ठा adapter *padapter, u8 *pbuf);
+u8 read_macreg_hdl(struct adapter *padapter, u8 *pbuf);
+u8 write_macreg_hdl(struct adapter *padapter, u8 *pbuf);
+u8 read_bbreg_hdl(struct adapter *padapter, u8 *pbuf);
+u8 write_bbreg_hdl(struct adapter *padapter, u8 *pbuf);
+u8 read_rfreg_hdl(struct adapter *padapter, u8 *pbuf);
+u8 write_rfreg_hdl(struct adapter *padapter, u8 *pbuf);
 
 
-#घोषणा GEN_DRV_CMD_HANDLER(size, cmd)	अणुsize, &cmd ## _hdlपूर्ण,
-#घोषणा GEN_MLME_EXT_HANDLER(size, cmd)	अणुsize, cmdपूर्ण,
+u8 NULL_hdl(struct adapter *padapter, u8 *pbuf);
+u8 join_cmd_hdl(struct adapter *padapter, u8 *pbuf);
+u8 disconnect_hdl(struct adapter *padapter, u8 *pbuf);
+u8 createbss_hdl(struct adapter *padapter, u8 *pbuf);
+u8 setopmode_hdl(struct adapter *padapter, u8 *pbuf);
+u8 sitesurvey_cmd_hdl(struct adapter *padapter, u8 *pbuf);
+u8 setauth_hdl(struct adapter *padapter, u8 *pbuf);
+u8 setkey_hdl(struct adapter *padapter, u8 *pbuf);
+u8 set_stakey_hdl(struct adapter *padapter, u8 *pbuf);
+u8 set_assocsta_hdl(struct adapter *padapter, u8 *pbuf);
+u8 del_assocsta_hdl(struct adapter *padapter, u8 *pbuf);
+u8 add_ba_hdl(struct adapter *padapter, unsigned char *pbuf);
 
-काष्ठा C2HEvent_Header अणु
+u8 mlme_evt_hdl(struct adapter *padapter, unsigned char *pbuf);
+u8 h2c_msg_hdl(struct adapter *padapter, unsigned char *pbuf);
+u8 chk_bmc_sleepq_hdl(struct adapter *padapter, unsigned char *pbuf);
+u8 tx_beacon_hdl(struct adapter *padapter, unsigned char *pbuf);
+u8 set_ch_hdl(struct adapter *padapter, u8 *pbuf);
+u8 set_chplan_hdl(struct adapter *padapter, unsigned char *pbuf);
+u8 set_csa_hdl(struct adapter *padapter, unsigned char *pbuf);	/* Kurt: Handling DFS channel switch announcement ie. */
+u8 tdls_hdl(struct adapter *padapter, unsigned char *pbuf);
+u8 run_in_thread_hdl(struct adapter *padapter, u8 *pbuf);
 
-#अगर_घोषित __LITTLE_ENDIAN
 
-	अचिन्हित पूर्णांक len:16;
-	अचिन्हित पूर्णांक ID:8;
-	अचिन्हित पूर्णांक seq:8;
-#अन्यथा
-	अचिन्हित पूर्णांक seq:8;
-	अचिन्हित पूर्णांक ID:8;
-	अचिन्हित पूर्णांक len:16;
-#पूर्ण_अगर
-	अचिन्हित पूर्णांक rsvd;
-पूर्ण;
+#define GEN_DRV_CMD_HANDLER(size, cmd)	{size, &cmd ## _hdl},
+#define GEN_MLME_EXT_HANDLER(size, cmd)	{size, cmd},
 
-व्योम rtw_dummy_event_callback(काष्ठा adapter *adapter, u8 *pbuf);
-व्योम rtw_fwdbg_event_callback(काष्ठा adapter *adapter, u8 *pbuf);
+struct C2HEvent_Header {
 
-क्रमागत अणु
+#ifdef __LITTLE_ENDIAN
+
+	unsigned int len:16;
+	unsigned int ID:8;
+	unsigned int seq:8;
+#else
+	unsigned int seq:8;
+	unsigned int ID:8;
+	unsigned int len:16;
+#endif
+	unsigned int rsvd;
+};
+
+void rtw_dummy_event_callback(struct adapter *adapter, u8 *pbuf);
+void rtw_fwdbg_event_callback(struct adapter *adapter, u8 *pbuf);
+
+enum {
 	GEN_EVT_CODE(_Read_MACREG) = 0, /*0*/
 	GEN_EVT_CODE(_Read_BBREG),
 	GEN_EVT_CODE(_Read_RFREG),
@@ -797,47 +796,47 @@ u8 run_in_thपढ़ो_hdl(काष्ठा adapter *padapter, u8 *pbuf);
 	GEN_EVT_CODE(_C2HFEEDBACK),               /*20*/
 	GEN_EVT_CODE(_ADDBA),
 	GEN_EVT_CODE(_C2HBCN),
-	GEN_EVT_CODE(_ReportPwrState),		/* filen: only क्रम PCIE, USB */
-	GEN_EVT_CODE(_CloseRF),				/* filen: only क्रम PCIE, work around ASPM */
+	GEN_EVT_CODE(_ReportPwrState),		/* filen: only for PCIE, USB */
+	GEN_EVT_CODE(_CloseRF),				/* filen: only for PCIE, work around ASPM */
 	GEN_EVT_CODE(_WMM),					/*25*/
 	MAX_C2HEVT
-पूर्ण;
+};
 
 
-#अगर_घोषित _RTW_MLME_EXT_C_
+#ifdef _RTW_MLME_EXT_C_
 
-अटल काष्ठा fwevent wlanevents[] =
-अणु
-	अणु0, rtw_dummy_event_callbackपूर्ण,	/*0*/
-	अणु0, शून्यपूर्ण,
-	अणु0, शून्यपूर्ण,
-	अणु0, शून्यपूर्ण,
-	अणु0, शून्यपूर्ण,
-	अणु0, शून्यपूर्ण,
-	अणु0, शून्यपूर्ण,
-	अणु0, शून्यपूर्ण,
-	अणु0, &rtw_survey_event_callbackपूर्ण,		/*8*/
-	अणुमाप(काष्ठा surveyकरोne_event), &rtw_surveyकरोne_event_callbackपूर्ण,	/*9*/
+static struct fwevent wlanevents[] =
+{
+	{0, rtw_dummy_event_callback},	/*0*/
+	{0, NULL},
+	{0, NULL},
+	{0, NULL},
+	{0, NULL},
+	{0, NULL},
+	{0, NULL},
+	{0, NULL},
+	{0, &rtw_survey_event_callback},		/*8*/
+	{sizeof(struct surveydone_event), &rtw_surveydone_event_callback},	/*9*/
 
-	अणु0, &rtw_joinbss_event_callbackपूर्ण,		/*10*/
-	अणुमाप(काष्ठा stassoc_event), &rtw_stassoc_event_callbackपूर्ण,
-	अणुमाप(काष्ठा stadel_event), &rtw_stadel_event_callbackपूर्ण,
-	अणु0, &rtw_atimकरोne_event_callbackपूर्ण,
-	अणु0, rtw_dummy_event_callbackपूर्ण,
-	अणु0, शून्यपूर्ण,	/*15*/
-	अणु0, शून्यपूर्ण,
-	अणु0, शून्यपूर्ण,
-	अणु0, शून्यपूर्ण,
-	अणु0, rtw_fwdbg_event_callbackपूर्ण,
-	अणु0, शून्यपूर्ण,	 /*20*/
-	अणु0, शून्यपूर्ण,
-	अणु0, शून्यपूर्ण,
-	अणु0, &rtw_cpwm_event_callbackपूर्ण,
-	अणु0, शून्यपूर्ण,
-	अणु0, &rtw_wmm_event_callbackपूर्ण,
+	{0, &rtw_joinbss_event_callback},		/*10*/
+	{sizeof(struct stassoc_event), &rtw_stassoc_event_callback},
+	{sizeof(struct stadel_event), &rtw_stadel_event_callback},
+	{0, &rtw_atimdone_event_callback},
+	{0, rtw_dummy_event_callback},
+	{0, NULL},	/*15*/
+	{0, NULL},
+	{0, NULL},
+	{0, NULL},
+	{0, rtw_fwdbg_event_callback},
+	{0, NULL},	 /*20*/
+	{0, NULL},
+	{0, NULL},
+	{0, &rtw_cpwm_event_callback},
+	{0, NULL},
+	{0, &rtw_wmm_event_callback},
 
-पूर्ण;
+};
 
-#पूर्ण_अगर/* _RTL8192C_CMD_C_ */
+#endif/* _RTL8192C_CMD_C_ */
 
-#पूर्ण_अगर
+#endif

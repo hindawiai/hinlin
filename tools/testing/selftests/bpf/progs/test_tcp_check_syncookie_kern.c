@@ -1,168 +1,167 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 // Copyright (c) 2018 Facebook
 // Copyright (c) 2019 Cloudflare
 
-#समावेश <माला.स>
+#include <string.h>
 
-#समावेश <linux/bpf.h>
-#समावेश <linux/pkt_cls.h>
-#समावेश <linux/अगर_ether.h>
-#समावेश <linux/in.h>
-#समावेश <linux/ip.h>
-#समावेश <linux/ipv6.h>
-#समावेश <sys/socket.h>
-#समावेश <linux/tcp.h>
+#include <linux/bpf.h>
+#include <linux/pkt_cls.h>
+#include <linux/if_ether.h>
+#include <linux/in.h>
+#include <linux/ip.h>
+#include <linux/ipv6.h>
+#include <sys/socket.h>
+#include <linux/tcp.h>
 
-#समावेश <bpf/bpf_helpers.h>
-#समावेश <bpf/bpf_endian.h>
+#include <bpf/bpf_helpers.h>
+#include <bpf/bpf_endian.h>
 
-काष्ठा bpf_map_def SEC("maps") results = अणु
+struct bpf_map_def SEC("maps") results = {
 	.type = BPF_MAP_TYPE_ARRAY,
-	.key_size = माप(__u32),
-	.value_size = माप(__u32),
+	.key_size = sizeof(__u32),
+	.value_size = sizeof(__u32),
 	.max_entries = 3,
-पूर्ण;
+};
 
-अटल __always_अंतरभूत __s64 gen_syncookie(व्योम *data_end, काष्ठा bpf_sock *sk,
-					   व्योम *iph, __u32 ip_size,
-					   काष्ठा tcphdr *tcph)
-अणु
-	__u32 thlen = tcph->करोff * 4;
+static __always_inline __s64 gen_syncookie(void *data_end, struct bpf_sock *sk,
+					   void *iph, __u32 ip_size,
+					   struct tcphdr *tcph)
+{
+	__u32 thlen = tcph->doff * 4;
 
-	अगर (tcph->syn && !tcph->ack) अणु
+	if (tcph->syn && !tcph->ack) {
 		// packet should only have an MSS option
-		अगर (thlen != 24)
-			वापस 0;
+		if (thlen != 24)
+			return 0;
 
-		अगर ((व्योम *)tcph + thlen > data_end)
-			वापस 0;
+		if ((void *)tcph + thlen > data_end)
+			return 0;
 
-		वापस bpf_tcp_gen_syncookie(sk, iph, ip_size, tcph, thlen);
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return bpf_tcp_gen_syncookie(sk, iph, ip_size, tcph, thlen);
+	}
+	return 0;
+}
 
-अटल __always_अंतरभूत व्योम check_syncookie(व्योम *ctx, व्योम *data,
-					    व्योम *data_end)
-अणु
-	काष्ठा bpf_sock_tuple tup;
-	काष्ठा bpf_sock *sk;
-	काष्ठा ethhdr *ethh;
-	काष्ठा iphdr *ipv4h;
-	काष्ठा ipv6hdr *ipv6h;
-	काष्ठा tcphdr *tcph;
-	पूर्णांक ret;
+static __always_inline void check_syncookie(void *ctx, void *data,
+					    void *data_end)
+{
+	struct bpf_sock_tuple tup;
+	struct bpf_sock *sk;
+	struct ethhdr *ethh;
+	struct iphdr *ipv4h;
+	struct ipv6hdr *ipv6h;
+	struct tcphdr *tcph;
+	int ret;
 	__u32 key_mss = 2;
 	__u32 key_gen = 1;
 	__u32 key = 0;
 	__s64 seq_mss;
 
 	ethh = data;
-	अगर (ethh + 1 > data_end)
-		वापस;
+	if (ethh + 1 > data_end)
+		return;
 
-	चयन (bpf_ntohs(ethh->h_proto)) अणु
-	हाल ETH_P_IP:
-		ipv4h = data + माप(काष्ठा ethhdr);
-		अगर (ipv4h + 1 > data_end)
-			वापस;
+	switch (bpf_ntohs(ethh->h_proto)) {
+	case ETH_P_IP:
+		ipv4h = data + sizeof(struct ethhdr);
+		if (ipv4h + 1 > data_end)
+			return;
 
-		अगर (ipv4h->ihl != 5)
-			वापस;
+		if (ipv4h->ihl != 5)
+			return;
 
-		tcph = data + माप(काष्ठा ethhdr) + माप(काष्ठा iphdr);
-		अगर (tcph + 1 > data_end)
-			वापस;
+		tcph = data + sizeof(struct ethhdr) + sizeof(struct iphdr);
+		if (tcph + 1 > data_end)
+			return;
 
 		tup.ipv4.saddr = ipv4h->saddr;
 		tup.ipv4.daddr = ipv4h->daddr;
 		tup.ipv4.sport = tcph->source;
 		tup.ipv4.dport = tcph->dest;
 
-		sk = bpf_skc_lookup_tcp(ctx, &tup, माप(tup.ipv4),
+		sk = bpf_skc_lookup_tcp(ctx, &tup, sizeof(tup.ipv4),
 					BPF_F_CURRENT_NETNS, 0);
-		अगर (!sk)
-			वापस;
+		if (!sk)
+			return;
 
-		अगर (sk->state != BPF_TCP_LISTEN)
-			जाओ release;
+		if (sk->state != BPF_TCP_LISTEN)
+			goto release;
 
-		seq_mss = gen_syncookie(data_end, sk, ipv4h, माप(*ipv4h),
+		seq_mss = gen_syncookie(data_end, sk, ipv4h, sizeof(*ipv4h),
 					tcph);
 
-		ret = bpf_tcp_check_syncookie(sk, ipv4h, माप(*ipv4h),
-					      tcph, माप(*tcph));
-		अवरोध;
+		ret = bpf_tcp_check_syncookie(sk, ipv4h, sizeof(*ipv4h),
+					      tcph, sizeof(*tcph));
+		break;
 
-	हाल ETH_P_IPV6:
-		ipv6h = data + माप(काष्ठा ethhdr);
-		अगर (ipv6h + 1 > data_end)
-			वापस;
+	case ETH_P_IPV6:
+		ipv6h = data + sizeof(struct ethhdr);
+		if (ipv6h + 1 > data_end)
+			return;
 
-		अगर (ipv6h->nexthdr != IPPROTO_TCP)
-			वापस;
+		if (ipv6h->nexthdr != IPPROTO_TCP)
+			return;
 
-		tcph = data + माप(काष्ठा ethhdr) + माप(काष्ठा ipv6hdr);
-		अगर (tcph + 1 > data_end)
-			वापस;
+		tcph = data + sizeof(struct ethhdr) + sizeof(struct ipv6hdr);
+		if (tcph + 1 > data_end)
+			return;
 
-		स_नकल(tup.ipv6.saddr, &ipv6h->saddr, माप(tup.ipv6.saddr));
-		स_नकल(tup.ipv6.daddr, &ipv6h->daddr, माप(tup.ipv6.daddr));
+		memcpy(tup.ipv6.saddr, &ipv6h->saddr, sizeof(tup.ipv6.saddr));
+		memcpy(tup.ipv6.daddr, &ipv6h->daddr, sizeof(tup.ipv6.daddr));
 		tup.ipv6.sport = tcph->source;
 		tup.ipv6.dport = tcph->dest;
 
-		sk = bpf_skc_lookup_tcp(ctx, &tup, माप(tup.ipv6),
+		sk = bpf_skc_lookup_tcp(ctx, &tup, sizeof(tup.ipv6),
 					BPF_F_CURRENT_NETNS, 0);
-		अगर (!sk)
-			वापस;
+		if (!sk)
+			return;
 
-		अगर (sk->state != BPF_TCP_LISTEN)
-			जाओ release;
+		if (sk->state != BPF_TCP_LISTEN)
+			goto release;
 
-		seq_mss = gen_syncookie(data_end, sk, ipv6h, माप(*ipv6h),
+		seq_mss = gen_syncookie(data_end, sk, ipv6h, sizeof(*ipv6h),
 					tcph);
 
-		ret = bpf_tcp_check_syncookie(sk, ipv6h, माप(*ipv6h),
-					      tcph, माप(*tcph));
-		अवरोध;
+		ret = bpf_tcp_check_syncookie(sk, ipv6h, sizeof(*ipv6h),
+					      tcph, sizeof(*tcph));
+		break;
 
-	शेष:
-		वापस;
-	पूर्ण
+	default:
+		return;
+	}
 
-	अगर (seq_mss > 0) अणु
+	if (seq_mss > 0) {
 		__u32 cookie = (__u32)seq_mss;
 		__u32 mss = seq_mss >> 32;
 
 		bpf_map_update_elem(&results, &key_gen, &cookie, 0);
 		bpf_map_update_elem(&results, &key_mss, &mss, 0);
-	पूर्ण
+	}
 
-	अगर (ret == 0) अणु
+	if (ret == 0) {
 		__u32 cookie = bpf_ntohl(tcph->ack_seq) - 1;
 
 		bpf_map_update_elem(&results, &key, &cookie, 0);
-	पूर्ण
+	}
 
 release:
 	bpf_sk_release(sk);
-पूर्ण
+}
 
 SEC("clsact/check_syncookie")
-पूर्णांक check_syncookie_clsact(काष्ठा __sk_buff *skb)
-अणु
-	check_syncookie(skb, (व्योम *)(दीर्घ)skb->data,
-			(व्योम *)(दीर्घ)skb->data_end);
-	वापस TC_ACT_OK;
-पूर्ण
+int check_syncookie_clsact(struct __sk_buff *skb)
+{
+	check_syncookie(skb, (void *)(long)skb->data,
+			(void *)(long)skb->data_end);
+	return TC_ACT_OK;
+}
 
 SEC("xdp/check_syncookie")
-पूर्णांक check_syncookie_xdp(काष्ठा xdp_md *ctx)
-अणु
-	check_syncookie(ctx, (व्योम *)(दीर्घ)ctx->data,
-			(व्योम *)(दीर्घ)ctx->data_end);
-	वापस XDP_PASS;
-पूर्ण
+int check_syncookie_xdp(struct xdp_md *ctx)
+{
+	check_syncookie(ctx, (void *)(long)ctx->data,
+			(void *)(long)ctx->data_end);
+	return XDP_PASS;
+}
 
-अक्षर _license[] SEC("license") = "GPL";
+char _license[] SEC("license") = "GPL";

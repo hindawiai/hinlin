@@ -1,11 +1,10 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: ISC
+// SPDX-License-Identifier: ISC
 /*
  * Copyright (c) 2012 Qualcomm Atheros, Inc.
  */
 
-#समावेश <linux/module.h>
+#include <linux/module.h>
 
-#घोषणा CREATE_TRACE_POINTS
-#समावेश "trace.h"
-EXPORT_SYMBOL(__tracepoपूर्णांक_ath10k_log_dbg);
+#define CREATE_TRACE_POINTS
+#include "trace.h"
+EXPORT_SYMBOL(__tracepoint_ath10k_log_dbg);

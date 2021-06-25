@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-1.0+
+// SPDX-License-Identifier: GPL-1.0+
 /*
- * OHCI HCD (Host Controller Driver) क्रम USB.
+ * OHCI HCD (Host Controller Driver) for USB.
  *
  * (C) Copyright 1999 Roman Weissgaerber <weissg@vienna.at>
  * (C) Copyright 2000-2005 David Brownell
@@ -9,278 +8,278 @@
  *
  * OMAP Bus Glue
  *
- * Modअगरied क्रम OMAP by Tony Lindgren <tony@atomide.com>
- * Based on the 2.4 OMAP OHCI driver originally करोne by MontaVista Software Inc.
+ * Modified for OMAP by Tony Lindgren <tony@atomide.com>
+ * Based on the 2.4 OMAP OHCI driver originally done by MontaVista Software Inc.
  * and on ohci-sa1111.c by Christopher Hoover <ch@hpl.hp.com>
  *
  * This file is licenced under the GPL.
  */
 
-#समावेश <linux/clk.h>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/err.h>
-#समावेश <linux/gpio/consumer.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/jअगरfies.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/usb/otg.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/संकेत.स>
-#समावेश <linux/usb.h>
-#समावेश <linux/usb/hcd.h>
+#include <linux/clk.h>
+#include <linux/dma-mapping.h>
+#include <linux/err.h>
+#include <linux/gpio/consumer.h>
+#include <linux/io.h>
+#include <linux/jiffies.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/usb/otg.h>
+#include <linux/platform_device.h>
+#include <linux/signal.h>
+#include <linux/usb.h>
+#include <linux/usb/hcd.h>
 
-#समावेश "ohci.h"
+#include "ohci.h"
 
-#समावेश <यंत्र/पन.स>
-#समावेश <यंत्र/mach-types.h>
+#include <asm/io.h>
+#include <asm/mach-types.h>
 
-#समावेश <mach/mux.h>
+#include <mach/mux.h>
 
-#समावेश <mach/hardware.h>
-#समावेश <mach/usb.h>
+#include <mach/hardware.h>
+#include <mach/usb.h>
 
 
-/* OMAP-1510 OHCI has its own MMU क्रम DMA */
-#घोषणा OMAP1510_LB_MEMSIZE	32	/* Should be same as SDRAM size */
-#घोषणा OMAP1510_LB_CLOCK_DIV	0xfffec10c
-#घोषणा OMAP1510_LB_MMU_CTL	0xfffec208
-#घोषणा OMAP1510_LB_MMU_LCK	0xfffec224
-#घोषणा OMAP1510_LB_MMU_LD_TLB	0xfffec228
-#घोषणा OMAP1510_LB_MMU_CAM_H	0xfffec22c
-#घोषणा OMAP1510_LB_MMU_CAM_L	0xfffec230
-#घोषणा OMAP1510_LB_MMU_RAM_H	0xfffec234
-#घोषणा OMAP1510_LB_MMU_RAM_L	0xfffec238
+/* OMAP-1510 OHCI has its own MMU for DMA */
+#define OMAP1510_LB_MEMSIZE	32	/* Should be same as SDRAM size */
+#define OMAP1510_LB_CLOCK_DIV	0xfffec10c
+#define OMAP1510_LB_MMU_CTL	0xfffec208
+#define OMAP1510_LB_MMU_LCK	0xfffec224
+#define OMAP1510_LB_MMU_LD_TLB	0xfffec228
+#define OMAP1510_LB_MMU_CAM_H	0xfffec22c
+#define OMAP1510_LB_MMU_CAM_L	0xfffec230
+#define OMAP1510_LB_MMU_RAM_H	0xfffec234
+#define OMAP1510_LB_MMU_RAM_L	0xfffec238
 
-#घोषणा DRIVER_DESC "OHCI OMAP driver"
+#define DRIVER_DESC "OHCI OMAP driver"
 
-काष्ठा ohci_omap_priv अणु
-	काष्ठा clk *usb_host_ck;
-	काष्ठा clk *usb_dc_ck;
-	काष्ठा gpio_desc *घातer;
-	काष्ठा gpio_desc *overcurrent;
-पूर्ण;
+struct ohci_omap_priv {
+	struct clk *usb_host_ck;
+	struct clk *usb_dc_ck;
+	struct gpio_desc *power;
+	struct gpio_desc *overcurrent;
+};
 
-अटल स्थिर अक्षर hcd_name[] = "ohci-omap";
-अटल काष्ठा hc_driver __पढ़ो_mostly ohci_omap_hc_driver;
+static const char hcd_name[] = "ohci-omap";
+static struct hc_driver __read_mostly ohci_omap_hc_driver;
 
-#घोषणा hcd_to_ohci_omap_priv(h) \
-	((काष्ठा ohci_omap_priv *)hcd_to_ohci(h)->priv)
+#define hcd_to_ohci_omap_priv(h) \
+	((struct ohci_omap_priv *)hcd_to_ohci(h)->priv)
 
-अटल व्योम omap_ohci_घड़ी_घातer(काष्ठा ohci_omap_priv *priv, पूर्णांक on)
-अणु
-	अगर (on) अणु
+static void omap_ohci_clock_power(struct ohci_omap_priv *priv, int on)
+{
+	if (on) {
 		clk_enable(priv->usb_dc_ck);
 		clk_enable(priv->usb_host_ck);
-		/* guesstimate क्रम T5 == 1x 32K घड़ी + APLL lock समय */
+		/* guesstimate for T5 == 1x 32K clock + APLL lock time */
 		udelay(100);
-	पूर्ण अन्यथा अणु
+	} else {
 		clk_disable(priv->usb_host_ck);
 		clk_disable(priv->usb_dc_ck);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
- * Board specअगरic gang-चयनed transceiver घातer on/off.
- * NOTE:  OSK supplies घातer from DC, not battery.
+ * Board specific gang-switched transceiver power on/off.
+ * NOTE:  OSK supplies power from DC, not battery.
  */
-अटल पूर्णांक omap_ohci_transceiver_घातer(काष्ठा ohci_omap_priv *priv, पूर्णांक on)
-अणु
-	अगर (on) अणु
-		अगर (machine_is_omap_innovator() && cpu_is_omap1510())
-			__raw_ग_लिखोb(__raw_पढ़ोb(INNOVATOR_FPGA_CAM_USB_CONTROL)
+static int omap_ohci_transceiver_power(struct ohci_omap_priv *priv, int on)
+{
+	if (on) {
+		if (machine_is_omap_innovator() && cpu_is_omap1510())
+			__raw_writeb(__raw_readb(INNOVATOR_FPGA_CAM_USB_CONTROL)
 				| ((1 << 5/*usb1*/) | (1 << 3/*usb2*/)),
 			       INNOVATOR_FPGA_CAM_USB_CONTROL);
-		अन्यथा अगर (priv->घातer)
-			gpiod_set_value_cansleep(priv->घातer, 0);
-	पूर्ण अन्यथा अणु
-		अगर (machine_is_omap_innovator() && cpu_is_omap1510())
-			__raw_ग_लिखोb(__raw_पढ़ोb(INNOVATOR_FPGA_CAM_USB_CONTROL)
+		else if (priv->power)
+			gpiod_set_value_cansleep(priv->power, 0);
+	} else {
+		if (machine_is_omap_innovator() && cpu_is_omap1510())
+			__raw_writeb(__raw_readb(INNOVATOR_FPGA_CAM_USB_CONTROL)
 				& ~((1 << 5/*usb1*/) | (1 << 3/*usb2*/)),
 			       INNOVATOR_FPGA_CAM_USB_CONTROL);
-		अन्यथा अगर (priv->घातer)
-			gpiod_set_value_cansleep(priv->घातer, 1);
-	पूर्ण
+		else if (priv->power)
+			gpiod_set_value_cansleep(priv->power, 1);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_ARCH_OMAP15XX
+#ifdef CONFIG_ARCH_OMAP15XX
 /*
- * OMAP-1510 specअगरic Local Bus घड़ी on/off
+ * OMAP-1510 specific Local Bus clock on/off
  */
-अटल पूर्णांक omap_1510_local_bus_घातer(पूर्णांक on)
-अणु
-	अगर (on) अणु
-		omap_ग_लिखोl((1 << 1) | (1 << 0), OMAP1510_LB_MMU_CTL);
+static int omap_1510_local_bus_power(int on)
+{
+	if (on) {
+		omap_writel((1 << 1) | (1 << 0), OMAP1510_LB_MMU_CTL);
 		udelay(200);
-	पूर्ण अन्यथा अणु
-		omap_ग_लिखोl(0, OMAP1510_LB_MMU_CTL);
-	पूर्ण
+	} else {
+		omap_writel(0, OMAP1510_LB_MMU_CTL);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * OMAP-1510 specअगरic Local Bus initialization
+ * OMAP-1510 specific Local Bus initialization
  * NOTE: This assumes 32MB memory size in OMAP1510LB_MEMSIZE.
- *       See also arch/mach-omap/memory.h क्रम __virt_to_dma() and
+ *       See also arch/mach-omap/memory.h for __virt_to_dma() and
  *       __dma_to_virt() which need to match with the physical
  *       Local Bus address below.
  */
-अटल पूर्णांक omap_1510_local_bus_init(व्योम)
-अणु
-	अचिन्हित पूर्णांक tlb;
-	अचिन्हित दीर्घ lbaddr, physaddr;
+static int omap_1510_local_bus_init(void)
+{
+	unsigned int tlb;
+	unsigned long lbaddr, physaddr;
 
-	omap_ग_लिखोl((omap_पढ़ोl(OMAP1510_LB_CLOCK_DIV) & 0xfffffff8) | 0x4,
+	omap_writel((omap_readl(OMAP1510_LB_CLOCK_DIV) & 0xfffffff8) | 0x4,
 	       OMAP1510_LB_CLOCK_DIV);
 
 	/* Configure the Local Bus MMU table */
-	क्रम (tlb = 0; tlb < OMAP1510_LB_MEMSIZE; tlb++) अणु
+	for (tlb = 0; tlb < OMAP1510_LB_MEMSIZE; tlb++) {
 		lbaddr = tlb * 0x00100000 + OMAP1510_LB_OFFSET;
 		physaddr = tlb * 0x00100000 + PHYS_OFFSET;
-		omap_ग_लिखोl((lbaddr & 0x0fffffff) >> 22, OMAP1510_LB_MMU_CAM_H);
-		omap_ग_लिखोl(((lbaddr & 0x003ffc00) >> 6) | 0xc,
+		omap_writel((lbaddr & 0x0fffffff) >> 22, OMAP1510_LB_MMU_CAM_H);
+		omap_writel(((lbaddr & 0x003ffc00) >> 6) | 0xc,
 		       OMAP1510_LB_MMU_CAM_L);
-		omap_ग_लिखोl(physaddr >> 16, OMAP1510_LB_MMU_RAM_H);
-		omap_ग_लिखोl((physaddr & 0x0000fc00) | 0x300, OMAP1510_LB_MMU_RAM_L);
-		omap_ग_लिखोl(tlb << 4, OMAP1510_LB_MMU_LCK);
-		omap_ग_लिखोl(0x1, OMAP1510_LB_MMU_LD_TLB);
-	पूर्ण
+		omap_writel(physaddr >> 16, OMAP1510_LB_MMU_RAM_H);
+		omap_writel((physaddr & 0x0000fc00) | 0x300, OMAP1510_LB_MMU_RAM_L);
+		omap_writel(tlb << 4, OMAP1510_LB_MMU_LCK);
+		omap_writel(0x1, OMAP1510_LB_MMU_LD_TLB);
+	}
 
 	/* Enable the walking table */
-	omap_ग_लिखोl(omap_पढ़ोl(OMAP1510_LB_MMU_CTL) | (1 << 3), OMAP1510_LB_MMU_CTL);
+	omap_writel(omap_readl(OMAP1510_LB_MMU_CTL) | (1 << 3), OMAP1510_LB_MMU_CTL);
 	udelay(200);
 
-	वापस 0;
-पूर्ण
-#अन्यथा
-#घोषणा omap_1510_local_bus_घातer(x)	अणुपूर्ण
-#घोषणा omap_1510_local_bus_init()	अणुपूर्ण
-#पूर्ण_अगर
+	return 0;
+}
+#else
+#define omap_1510_local_bus_power(x)	{}
+#define omap_1510_local_bus_init()	{}
+#endif
 
-#अगर_घोषित	CONFIG_USB_OTG
+#ifdef	CONFIG_USB_OTG
 
-अटल व्योम start_hnp(काष्ठा ohci_hcd *ohci)
-अणु
-	काष्ठा usb_hcd *hcd = ohci_to_hcd(ohci);
-	स्थिर अचिन्हित	port = hcd->self.otg_port - 1;
-	अचिन्हित दीर्घ	flags;
+static void start_hnp(struct ohci_hcd *ohci)
+{
+	struct usb_hcd *hcd = ohci_to_hcd(ohci);
+	const unsigned	port = hcd->self.otg_port - 1;
+	unsigned long	flags;
 	u32 l;
 
 	otg_start_hnp(hcd->usb_phy->otg);
 
 	local_irq_save(flags);
 	hcd->usb_phy->otg->state = OTG_STATE_A_SUSPEND;
-	ग_लिखोl (RH_PS_PSS, &ohci->regs->roothub.portstatus [port]);
-	l = omap_पढ़ोl(OTG_CTRL);
+	writel (RH_PS_PSS, &ohci->regs->roothub.portstatus [port]);
+	l = omap_readl(OTG_CTRL);
 	l &= ~OTG_A_BUSREQ;
-	omap_ग_लिखोl(l, OTG_CTRL);
+	omap_writel(l, OTG_CTRL);
 	local_irq_restore(flags);
-पूर्ण
+}
 
-#पूर्ण_अगर
+#endif
 
 /*-------------------------------------------------------------------------*/
 
-अटल पूर्णांक ohci_omap_reset(काष्ठा usb_hcd *hcd)
-अणु
-	काष्ठा ohci_hcd		*ohci = hcd_to_ohci(hcd);
-	काष्ठा omap_usb_config	*config = dev_get_platdata(hcd->self.controller);
-	काष्ठा ohci_omap_priv	*priv = hcd_to_ohci_omap_priv(hcd);
-	पूर्णांक			need_transceiver = (config->otg != 0);
-	पूर्णांक			ret;
+static int ohci_omap_reset(struct usb_hcd *hcd)
+{
+	struct ohci_hcd		*ohci = hcd_to_ohci(hcd);
+	struct omap_usb_config	*config = dev_get_platdata(hcd->self.controller);
+	struct ohci_omap_priv	*priv = hcd_to_ohci_omap_priv(hcd);
+	int			need_transceiver = (config->otg != 0);
+	int			ret;
 
 	dev_dbg(hcd->self.controller, "starting USB Controller\n");
 
-	अगर (config->otg) अणु
+	if (config->otg) {
 		hcd->self.otg_port = config->otg;
-		/* शेष/minimum OTG घातer budget:  8 mA */
-		hcd->घातer_budget = 8;
-	पूर्ण
+		/* default/minimum OTG power budget:  8 mA */
+		hcd->power_budget = 8;
+	}
 
 	/* boards can use OTG transceivers in non-OTG modes */
 	need_transceiver = need_transceiver
 			|| machine_is_omap_h2() || machine_is_omap_h3();
 
 	/* XXX OMAP16xx only */
-	अगर (config->ocpi_enable)
+	if (config->ocpi_enable)
 		config->ocpi_enable();
 
-#अगर_घोषित	CONFIG_USB_OTG
-	अगर (need_transceiver) अणु
+#ifdef	CONFIG_USB_OTG
+	if (need_transceiver) {
 		hcd->usb_phy = usb_get_phy(USB_PHY_TYPE_USB2);
-		अगर (!IS_ERR_OR_शून्य(hcd->usb_phy)) अणु
-			पूर्णांक	status = otg_set_host(hcd->usb_phy->otg,
+		if (!IS_ERR_OR_NULL(hcd->usb_phy)) {
+			int	status = otg_set_host(hcd->usb_phy->otg,
 						&ohci_to_hcd(ohci)->self);
 			dev_dbg(hcd->self.controller, "init %s phy, status %d\n",
 					hcd->usb_phy->label, status);
-			अगर (status) अणु
+			if (status) {
 				usb_put_phy(hcd->usb_phy);
-				वापस status;
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			वापस -EPROBE_DEFER;
-		पूर्ण
+				return status;
+			}
+		} else {
+			return -EPROBE_DEFER;
+		}
 		hcd->skip_phy_initialization = 1;
 		ohci->start_hnp = start_hnp;
-	पूर्ण
-#पूर्ण_अगर
+	}
+#endif
 
-	omap_ohci_घड़ी_घातer(priv, 1);
+	omap_ohci_clock_power(priv, 1);
 
-	अगर (cpu_is_omap15xx()) अणु
-		omap_1510_local_bus_घातer(1);
+	if (cpu_is_omap15xx()) {
+		omap_1510_local_bus_power(1);
 		omap_1510_local_bus_init();
-	पूर्ण
+	}
 
 	ret = ohci_setup(hcd);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	अगर (config->otg || config->rwc) अणु
+	if (config->otg || config->rwc) {
 		ohci->hc_control = OHCI_CTRL_RWC;
-		ग_लिखोl(OHCI_CTRL_RWC, &ohci->regs->control);
-	पूर्ण
+		writel(OHCI_CTRL_RWC, &ohci->regs->control);
+	}
 
-	/* board-specअगरic घातer चयनing and overcurrent support */
-	अगर (machine_is_omap_osk() || machine_is_omap_innovator()) अणु
+	/* board-specific power switching and overcurrent support */
+	if (machine_is_omap_osk() || machine_is_omap_innovator()) {
 		u32	rh = roothub_a (ohci);
 
-		/* घातer चयनing (ganged by शेष) */
+		/* power switching (ganged by default) */
 		rh &= ~RH_A_NPS;
 
-		/* TPS2045 चयन क्रम पूर्णांकernal transceiver (port 1) */
-		अगर (machine_is_omap_osk()) अणु
-			ohci_to_hcd(ohci)->घातer_budget = 250;
+		/* TPS2045 switch for internal transceiver (port 1) */
+		if (machine_is_omap_osk()) {
+			ohci_to_hcd(ohci)->power_budget = 250;
 
 			rh &= ~RH_A_NOCP;
 
-			/* gpio9 क्रम overcurrent detction */
+			/* gpio9 for overcurrent detction */
 			omap_cfg_reg(W8_1610_GPIO9);
 
-			/* क्रम paranoia's sake:  disable USB.PUEN */
+			/* for paranoia's sake:  disable USB.PUEN */
 			omap_cfg_reg(W4_USB_HIGHZ);
-		पूर्ण
-		ohci_ग_लिखोl(ohci, rh, &ohci->regs->roothub.a);
+		}
+		ohci_writel(ohci, rh, &ohci->regs->roothub.a);
 		ohci->flags &= ~OHCI_QUIRK_HUB_POWER;
-	पूर्ण अन्यथा अगर (machine_is_nokia770()) अणु
-		/* We require a self-घातered hub, which should have
-		 * plenty of घातer. */
-		ohci_to_hcd(ohci)->घातer_budget = 0;
-	पूर्ण
+	} else if (machine_is_nokia770()) {
+		/* We require a self-powered hub, which should have
+		 * plenty of power. */
+		ohci_to_hcd(ohci)->power_budget = 0;
+	}
 
-	/* FIXME hub_wq hub requests should manage घातer चयनing */
-	omap_ohci_transceiver_घातer(priv, 1);
+	/* FIXME hub_wq hub requests should manage power switching */
+	omap_ohci_transceiver_power(priv, 1);
 
-	/* board init will have alपढ़ोy handled HMC and mux setup.
-	 * any बाह्यal transceiver should alपढ़ोy be initialized
-	 * too, so all configured ports use the right संकेतing now.
+	/* board init will have already handled HMC and mux setup.
+	 * any external transceiver should already be initialized
+	 * too, so all configured ports use the right signaling now.
 	 */
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*-------------------------------------------------------------------------*/
 
@@ -290,45 +289,45 @@
  *
  * Context: task context, might sleep
  *
- * Allocates basic resources क्रम this USB host controller, and
- * then invokes the start() method क्रम the HCD associated with it
+ * Allocates basic resources for this USB host controller, and
+ * then invokes the start() method for the HCD associated with it
  * through the hotplug entry's driver_data.
  */
-अटल पूर्णांक ohci_hcd_omap_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	पूर्णांक retval, irq;
-	काष्ठा usb_hcd *hcd = 0;
-	काष्ठा ohci_omap_priv *priv;
+static int ohci_hcd_omap_probe(struct platform_device *pdev)
+{
+	int retval, irq;
+	struct usb_hcd *hcd = 0;
+	struct ohci_omap_priv *priv;
 
-	अगर (pdev->num_resources != 2) अणु
+	if (pdev->num_resources != 2) {
 		dev_err(&pdev->dev, "invalid num_resources: %i\n",
 		       pdev->num_resources);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	अगर (pdev->resource[0].flags != IORESOURCE_MEM
-			|| pdev->resource[1].flags != IORESOURCE_IRQ) अणु
+	if (pdev->resource[0].flags != IORESOURCE_MEM
+			|| pdev->resource[1].flags != IORESOURCE_IRQ) {
 		dev_err(&pdev->dev, "invalid resource type\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	hcd = usb_create_hcd(&ohci_omap_hc_driver, &pdev->dev,
 			dev_name(&pdev->dev));
-	अगर (!hcd)
-		वापस -ENOMEM;
+	if (!hcd)
+		return -ENOMEM;
 
 	hcd->rsrc_start = pdev->resource[0].start;
 	hcd->rsrc_len = pdev->resource[0].end - pdev->resource[0].start + 1;
 	priv = hcd_to_ohci_omap_priv(hcd);
 
 	/* Obtain two optional GPIO lines */
-	priv->घातer = devm_gpiod_get_optional(&pdev->dev, "power", GPIOD_ASIS);
-	अगर (IS_ERR(priv->घातer)) अणु
-		retval = PTR_ERR(priv->घातer);
-		जाओ err_put_hcd;
-	पूर्ण
-	अगर (priv->घातer)
-		gpiod_set_consumer_name(priv->घातer, "OHCI power");
+	priv->power = devm_gpiod_get_optional(&pdev->dev, "power", GPIOD_ASIS);
+	if (IS_ERR(priv->power)) {
+		retval = PTR_ERR(priv->power);
+		goto err_put_hcd;
+	}
+	if (priv->power)
+		gpiod_set_consumer_name(priv->power, "OHCI power");
 
 	/*
 	 * This "overcurrent" GPIO line isn't really used in the code,
@@ -337,53 +336,53 @@
 	 */
 	priv->overcurrent = devm_gpiod_get_optional(&pdev->dev, "overcurrent",
 						    GPIOD_IN);
-	अगर (IS_ERR(priv->overcurrent)) अणु
+	if (IS_ERR(priv->overcurrent)) {
 		retval = PTR_ERR(priv->overcurrent);
-		जाओ err_put_hcd;
-	पूर्ण
-	अगर (priv->overcurrent)
+		goto err_put_hcd;
+	}
+	if (priv->overcurrent)
 		gpiod_set_consumer_name(priv->overcurrent, "OHCI overcurrent");
 
 	priv->usb_host_ck = clk_get(&pdev->dev, "usb_hhc_ck");
-	अगर (IS_ERR(priv->usb_host_ck)) अणु
+	if (IS_ERR(priv->usb_host_ck)) {
 		retval = PTR_ERR(priv->usb_host_ck);
-		जाओ err_put_hcd;
-	पूर्ण
+		goto err_put_hcd;
+	}
 
-	अगर (!cpu_is_omap15xx())
+	if (!cpu_is_omap15xx())
 		priv->usb_dc_ck = clk_get(&pdev->dev, "usb_dc_ck");
-	अन्यथा
+	else
 		priv->usb_dc_ck = clk_get(&pdev->dev, "lb_ck");
 
-	अगर (IS_ERR(priv->usb_dc_ck)) अणु
+	if (IS_ERR(priv->usb_dc_ck)) {
 		retval = PTR_ERR(priv->usb_dc_ck);
-		जाओ err_put_host_ck;
-	पूर्ण
+		goto err_put_host_ck;
+	}
 
-	अगर (!request_mem_region(hcd->rsrc_start, hcd->rsrc_len, hcd_name)) अणु
+	if (!request_mem_region(hcd->rsrc_start, hcd->rsrc_len, hcd_name)) {
 		dev_dbg(&pdev->dev, "request_mem_region failed\n");
 		retval = -EBUSY;
-		जाओ err_put_dc_ck;
-	पूर्ण
+		goto err_put_dc_ck;
+	}
 
 	hcd->regs = ioremap(hcd->rsrc_start, hcd->rsrc_len);
-	अगर (!hcd->regs) अणु
+	if (!hcd->regs) {
 		dev_err(&pdev->dev, "can't ioremap OHCI HCD\n");
 		retval = -ENOMEM;
-		जाओ err2;
-	पूर्ण
+		goto err2;
+	}
 
-	irq = platक्रमm_get_irq(pdev, 0);
-	अगर (irq < 0) अणु
+	irq = platform_get_irq(pdev, 0);
+	if (irq < 0) {
 		retval = -ENXIO;
-		जाओ err3;
-	पूर्ण
+		goto err3;
+	}
 	retval = usb_add_hcd(hcd, irq, 0);
-	अगर (retval)
-		जाओ err3;
+	if (retval)
+		goto err3;
 
 	device_wakeup_enable(hcd->self.controller);
-	वापस 0;
+	return 0;
 err3:
 	iounmap(hcd->regs);
 err2:
@@ -394,124 +393,124 @@ err_put_host_ck:
 	clk_put(priv->usb_host_ck);
 err_put_hcd:
 	usb_put_hcd(hcd);
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
 
 /* may be called with controller, bus, and devices active */
 
 /**
- * ohci_hcd_omap_हटाओ - shutकरोwn processing क्रम OMAP-based HCDs
- * @pdev: USB Host Controller being हटाओd
+ * ohci_hcd_omap_remove - shutdown processing for OMAP-based HCDs
+ * @pdev: USB Host Controller being removed
  *
  * Context: task context, might sleep
  *
  * Reverses the effect of ohci_hcd_omap_probe(), first invoking
- * the HCD's stop() method.  It is always called from a thपढ़ो
+ * the HCD's stop() method.  It is always called from a thread
  * context, normally "rmmod", "apmd", or something similar.
  */
-अटल पूर्णांक ohci_hcd_omap_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा usb_hcd	*hcd = platक्रमm_get_drvdata(pdev);
-	काष्ठा ohci_omap_priv *priv = hcd_to_ohci_omap_priv(hcd);
+static int ohci_hcd_omap_remove(struct platform_device *pdev)
+{
+	struct usb_hcd	*hcd = platform_get_drvdata(pdev);
+	struct ohci_omap_priv *priv = hcd_to_ohci_omap_priv(hcd);
 
 	dev_dbg(hcd->self.controller, "stopping USB Controller\n");
-	usb_हटाओ_hcd(hcd);
-	omap_ohci_घड़ी_घातer(priv, 0);
-	अगर (!IS_ERR_OR_शून्य(hcd->usb_phy)) अणु
-		(व्योम) otg_set_host(hcd->usb_phy->otg, 0);
+	usb_remove_hcd(hcd);
+	omap_ohci_clock_power(priv, 0);
+	if (!IS_ERR_OR_NULL(hcd->usb_phy)) {
+		(void) otg_set_host(hcd->usb_phy->otg, 0);
 		usb_put_phy(hcd->usb_phy);
-	पूर्ण
+	}
 	iounmap(hcd->regs);
 	release_mem_region(hcd->rsrc_start, hcd->rsrc_len);
 	clk_put(priv->usb_dc_ck);
 	clk_put(priv->usb_host_ck);
 	usb_put_hcd(hcd);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*-------------------------------------------------------------------------*/
 
-#अगर_घोषित	CONFIG_PM
+#ifdef	CONFIG_PM
 
-अटल पूर्णांक ohci_omap_suspend(काष्ठा platक्रमm_device *pdev, pm_message_t message)
-अणु
-	काष्ठा usb_hcd *hcd = platक्रमm_get_drvdata(pdev);
-	काष्ठा ohci_hcd *ohci = hcd_to_ohci(hcd);
-	काष्ठा ohci_omap_priv *priv = hcd_to_ohci_omap_priv(hcd);
-	bool करो_wakeup = device_may_wakeup(&pdev->dev);
-	पूर्णांक ret;
+static int ohci_omap_suspend(struct platform_device *pdev, pm_message_t message)
+{
+	struct usb_hcd *hcd = platform_get_drvdata(pdev);
+	struct ohci_hcd *ohci = hcd_to_ohci(hcd);
+	struct ohci_omap_priv *priv = hcd_to_ohci_omap_priv(hcd);
+	bool do_wakeup = device_may_wakeup(&pdev->dev);
+	int ret;
 
-	अगर (समय_beक्रमe(jअगरfies, ohci->next_statechange))
+	if (time_before(jiffies, ohci->next_statechange))
 		msleep(5);
-	ohci->next_statechange = jअगरfies;
+	ohci->next_statechange = jiffies;
 
-	ret = ohci_suspend(hcd, करो_wakeup);
-	अगर (ret)
-		वापस ret;
+	ret = ohci_suspend(hcd, do_wakeup);
+	if (ret)
+		return ret;
 
-	omap_ohci_घड़ी_घातer(priv, 0);
-	वापस ret;
-पूर्ण
+	omap_ohci_clock_power(priv, 0);
+	return ret;
+}
 
-अटल पूर्णांक ohci_omap_resume(काष्ठा platक्रमm_device *dev)
-अणु
-	काष्ठा usb_hcd	*hcd = platक्रमm_get_drvdata(dev);
-	काष्ठा ohci_hcd	*ohci = hcd_to_ohci(hcd);
-	काष्ठा ohci_omap_priv *priv = hcd_to_ohci_omap_priv(hcd);
+static int ohci_omap_resume(struct platform_device *dev)
+{
+	struct usb_hcd	*hcd = platform_get_drvdata(dev);
+	struct ohci_hcd	*ohci = hcd_to_ohci(hcd);
+	struct ohci_omap_priv *priv = hcd_to_ohci_omap_priv(hcd);
 
-	अगर (समय_beक्रमe(jअगरfies, ohci->next_statechange))
+	if (time_before(jiffies, ohci->next_statechange))
 		msleep(5);
-	ohci->next_statechange = jअगरfies;
+	ohci->next_statechange = jiffies;
 
-	omap_ohci_घड़ी_घातer(priv, 1);
+	omap_ohci_clock_power(priv, 1);
 	ohci_resume(hcd, false);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#पूर्ण_अगर
+#endif
 
 /*-------------------------------------------------------------------------*/
 
 /*
- * Driver definition to रेजिस्टर with the OMAP bus
+ * Driver definition to register with the OMAP bus
  */
-अटल काष्ठा platक्रमm_driver ohci_hcd_omap_driver = अणु
+static struct platform_driver ohci_hcd_omap_driver = {
 	.probe		= ohci_hcd_omap_probe,
-	.हटाओ		= ohci_hcd_omap_हटाओ,
-	.shutकरोwn	= usb_hcd_platक्रमm_shutकरोwn,
-#अगर_घोषित	CONFIG_PM
+	.remove		= ohci_hcd_omap_remove,
+	.shutdown	= usb_hcd_platform_shutdown,
+#ifdef	CONFIG_PM
 	.suspend	= ohci_omap_suspend,
 	.resume		= ohci_omap_resume,
-#पूर्ण_अगर
-	.driver		= अणु
+#endif
+	.driver		= {
 		.name	= "ohci",
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा ohci_driver_overrides omap_overrides __initस्थिर = अणु
+static const struct ohci_driver_overrides omap_overrides __initconst = {
 	.product_desc	= "OMAP OHCI",
 	.reset		= ohci_omap_reset,
-	.extra_priv_size = माप(काष्ठा ohci_omap_priv),
-पूर्ण;
+	.extra_priv_size = sizeof(struct ohci_omap_priv),
+};
 
-अटल पूर्णांक __init ohci_omap_init(व्योम)
-अणु
-	अगर (usb_disabled())
-		वापस -ENODEV;
+static int __init ohci_omap_init(void)
+{
+	if (usb_disabled())
+		return -ENODEV;
 
 	pr_info("%s: " DRIVER_DESC "\n", hcd_name);
 
 	ohci_init_driver(&ohci_omap_hc_driver, &omap_overrides);
-	वापस platक्रमm_driver_रेजिस्टर(&ohci_hcd_omap_driver);
-पूर्ण
+	return platform_driver_register(&ohci_hcd_omap_driver);
+}
 module_init(ohci_omap_init);
 
-अटल व्योम __निकास ohci_omap_cleanup(व्योम)
-अणु
-	platक्रमm_driver_unरेजिस्टर(&ohci_hcd_omap_driver);
-पूर्ण
-module_निकास(ohci_omap_cleanup);
+static void __exit ohci_omap_cleanup(void)
+{
+	platform_driver_unregister(&ohci_hcd_omap_driver);
+}
+module_exit(ohci_omap_cleanup);
 
 MODULE_DESCRIPTION(DRIVER_DESC);
 MODULE_ALIAS("platform:ohci");

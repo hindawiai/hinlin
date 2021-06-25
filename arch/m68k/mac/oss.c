@@ -1,187 +1,186 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  *	Operating System Services (OSS) chip handling
  *	Written by Joshua M. Thompson (funaho@jurai.org)
  *
  *
  *	This chip is used in the IIfx in place of VIA #2. It acts like a fancy
- *	VIA chip with prorammable पूर्णांकerrupt levels.
+ *	VIA chip with prorammable interrupt levels.
  *
- * 990502 (jmt) - Major reग_लिखो क्रम new पूर्णांकerrupt architecture as well as some
- *		  recent insights पूर्णांकo OSS operational details.
+ * 990502 (jmt) - Major rewrite for new interrupt architecture as well as some
+ *		  recent insights into OSS operational details.
  * 990610 (jmt) - Now taking full advantage of the OSS. Interrupts are mapped
- *		  to mostly match the A/UX पूर्णांकerrupt scheme supported on the
- *		  VIA side. Also added support क्रम enabling the ISM irq again
+ *		  to mostly match the A/UX interrupt scheme supported on the
+ *		  VIA side. Also added support for enabling the ISM irq again
  *		  since we now have a functional IOP manager.
  */
 
-#समावेश <linux/types.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/init.h>
-#समावेश <linux/irq.h>
+#include <linux/types.h>
+#include <linux/kernel.h>
+#include <linux/mm.h>
+#include <linux/delay.h>
+#include <linux/init.h>
+#include <linux/irq.h>
 
-#समावेश <यंत्र/macपूर्णांकosh.h>
-#समावेश <यंत्र/macपूर्णांकs.h>
-#समावेश <यंत्र/mac_via.h>
-#समावेश <यंत्र/mac_oss.h>
+#include <asm/macintosh.h>
+#include <asm/macints.h>
+#include <asm/mac_via.h>
+#include <asm/mac_oss.h>
 
-पूर्णांक oss_present;
-अस्थिर काष्ठा mac_oss *oss;
+int oss_present;
+volatile struct mac_oss *oss;
 
 /*
  * Initialize the OSS
  */
 
-व्योम __init oss_init(व्योम)
-अणु
-	पूर्णांक i;
+void __init oss_init(void)
+{
+	int i;
 
-	अगर (macपूर्णांकosh_config->ident != MAC_MODEL_IIFX)
-		वापस;
+	if (macintosh_config->ident != MAC_MODEL_IIFX)
+		return;
 
-	oss = (काष्ठा mac_oss *) OSS_BASE;
+	oss = (struct mac_oss *) OSS_BASE;
 	pr_debug("OSS detected at %p", oss);
 	oss_present = 1;
 
-	/* Disable all पूर्णांकerrupts. Unlike a VIA it looks like we    */
-	/* करो this by setting the source's पूर्णांकerrupt level to zero. */
+	/* Disable all interrupts. Unlike a VIA it looks like we    */
+	/* do this by setting the source's interrupt level to zero. */
 
-	क्रम (i = 0; i < OSS_NUM_SOURCES; i++)
+	for (i = 0; i < OSS_NUM_SOURCES; i++)
 		oss->irq_level[i] = 0;
-पूर्ण
+}
 
 /*
- * Handle OSS पूर्णांकerrupts.
- * XXX how करो you clear a pending IRQ? is it even necessary?
+ * Handle OSS interrupts.
+ * XXX how do you clear a pending IRQ? is it even necessary?
  */
 
-अटल व्योम oss_iopism_irq(काष्ठा irq_desc *desc)
-अणु
+static void oss_iopism_irq(struct irq_desc *desc)
+{
 	generic_handle_irq(IRQ_MAC_ADB);
-पूर्ण
+}
 
-अटल व्योम oss_scsi_irq(काष्ठा irq_desc *desc)
-अणु
+static void oss_scsi_irq(struct irq_desc *desc)
+{
 	generic_handle_irq(IRQ_MAC_SCSI);
-पूर्ण
+}
 
-अटल व्योम oss_nubus_irq(काष्ठा irq_desc *desc)
-अणु
+static void oss_nubus_irq(struct irq_desc *desc)
+{
 	u16 events, irq_bit;
-	पूर्णांक irq_num;
+	int irq_num;
 
 	events = oss->irq_pending & OSS_IP_NUBUS;
 	irq_num = NUBUS_SOURCE_BASE + 5;
 	irq_bit = OSS_IP_NUBUS5;
-	करो अणु
-		अगर (events & irq_bit) अणु
+	do {
+		if (events & irq_bit) {
 			events &= ~irq_bit;
 			generic_handle_irq(irq_num);
-		पूर्ण
+		}
 		--irq_num;
 		irq_bit >>= 1;
-	पूर्ण जबतक (events);
-पूर्ण
+	} while (events);
+}
 
-अटल व्योम oss_iopscc_irq(काष्ठा irq_desc *desc)
-अणु
+static void oss_iopscc_irq(struct irq_desc *desc)
+{
 	generic_handle_irq(IRQ_MAC_SCC);
-पूर्ण
+}
 
 /*
- * Register the OSS and NuBus पूर्णांकerrupt dispatchers.
+ * Register the OSS and NuBus interrupt dispatchers.
  *
  * This IRQ mapping is laid out with two things in mind: first, we try to keep
- * things on their own levels to aव्योम having to करो द्विगुन-dispatches. Second,
- * the levels match as बंदly as possible the alternate IRQ mapping mode (aka
+ * things on their own levels to avoid having to do double-dispatches. Second,
+ * the levels match as closely as possible the alternate IRQ mapping mode (aka
  * "A/UX mode") available on some VIA machines.
  */
 
-#घोषणा OSS_IRQLEV_IOPISM    IRQ_AUTO_1
-#घोषणा OSS_IRQLEV_SCSI      IRQ_AUTO_2
-#घोषणा OSS_IRQLEV_NUBUS     IRQ_AUTO_3
-#घोषणा OSS_IRQLEV_IOPSCC    IRQ_AUTO_4
-#घोषणा OSS_IRQLEV_VIA1      IRQ_AUTO_6
+#define OSS_IRQLEV_IOPISM    IRQ_AUTO_1
+#define OSS_IRQLEV_SCSI      IRQ_AUTO_2
+#define OSS_IRQLEV_NUBUS     IRQ_AUTO_3
+#define OSS_IRQLEV_IOPSCC    IRQ_AUTO_4
+#define OSS_IRQLEV_VIA1      IRQ_AUTO_6
 
-व्योम __init oss_रेजिस्टर_पूर्णांकerrupts(व्योम)
-अणु
+void __init oss_register_interrupts(void)
+{
 	irq_set_chained_handler(OSS_IRQLEV_IOPISM, oss_iopism_irq);
 	irq_set_chained_handler(OSS_IRQLEV_SCSI,   oss_scsi_irq);
 	irq_set_chained_handler(OSS_IRQLEV_NUBUS,  oss_nubus_irq);
 	irq_set_chained_handler(OSS_IRQLEV_IOPSCC, oss_iopscc_irq);
 	irq_set_chained_handler(OSS_IRQLEV_VIA1,   via1_irq);
 
-	/* OSS_VIA1 माला_लो enabled here because it has no machspec पूर्णांकerrupt. */
+	/* OSS_VIA1 gets enabled here because it has no machspec interrupt. */
 	oss->irq_level[OSS_VIA1] = OSS_IRQLEV_VIA1;
-पूर्ण
+}
 
 /*
- * Enable an OSS पूर्णांकerrupt
+ * Enable an OSS interrupt
  *
- * It looks messy but it's rather straightक्रमward. The चयन() statement
- * just maps the machspec पूर्णांकerrupt numbers to the right OSS पूर्णांकerrupt
- * source (अगर the OSS handles that पूर्णांकerrupt) and then sets the पूर्णांकerrupt
- * level क्रम that source to nonzero, thus enabling the पूर्णांकerrupt.
+ * It looks messy but it's rather straightforward. The switch() statement
+ * just maps the machspec interrupt numbers to the right OSS interrupt
+ * source (if the OSS handles that interrupt) and then sets the interrupt
+ * level for that source to nonzero, thus enabling the interrupt.
  */
 
-व्योम oss_irq_enable(पूर्णांक irq) अणु
-	चयन(irq) अणु
-		हाल IRQ_MAC_SCC:
+void oss_irq_enable(int irq) {
+	switch(irq) {
+		case IRQ_MAC_SCC:
 			oss->irq_level[OSS_IOPSCC] = OSS_IRQLEV_IOPSCC;
-			वापस;
-		हाल IRQ_MAC_ADB:
+			return;
+		case IRQ_MAC_ADB:
 			oss->irq_level[OSS_IOPISM] = OSS_IRQLEV_IOPISM;
-			वापस;
-		हाल IRQ_MAC_SCSI:
+			return;
+		case IRQ_MAC_SCSI:
 			oss->irq_level[OSS_SCSI] = OSS_IRQLEV_SCSI;
-			वापस;
-		हाल IRQ_NUBUS_9:
-		हाल IRQ_NUBUS_A:
-		हाल IRQ_NUBUS_B:
-		हाल IRQ_NUBUS_C:
-		हाल IRQ_NUBUS_D:
-		हाल IRQ_NUBUS_E:
+			return;
+		case IRQ_NUBUS_9:
+		case IRQ_NUBUS_A:
+		case IRQ_NUBUS_B:
+		case IRQ_NUBUS_C:
+		case IRQ_NUBUS_D:
+		case IRQ_NUBUS_E:
 			irq -= NUBUS_SOURCE_BASE;
 			oss->irq_level[irq] = OSS_IRQLEV_NUBUS;
-			वापस;
-	पूर्ण
+			return;
+	}
 
-	अगर (IRQ_SRC(irq) == 1)
+	if (IRQ_SRC(irq) == 1)
 		via_irq_enable(irq);
-पूर्ण
+}
 
 /*
- * Disable an OSS पूर्णांकerrupt
+ * Disable an OSS interrupt
  *
- * Same as above except we set the source's पूर्णांकerrupt level to zero,
- * to disable the पूर्णांकerrupt.
+ * Same as above except we set the source's interrupt level to zero,
+ * to disable the interrupt.
  */
 
-व्योम oss_irq_disable(पूर्णांक irq) अणु
-	चयन(irq) अणु
-		हाल IRQ_MAC_SCC:
+void oss_irq_disable(int irq) {
+	switch(irq) {
+		case IRQ_MAC_SCC:
 			oss->irq_level[OSS_IOPSCC] = 0;
-			वापस;
-		हाल IRQ_MAC_ADB:
+			return;
+		case IRQ_MAC_ADB:
 			oss->irq_level[OSS_IOPISM] = 0;
-			वापस;
-		हाल IRQ_MAC_SCSI:
+			return;
+		case IRQ_MAC_SCSI:
 			oss->irq_level[OSS_SCSI] = 0;
-			वापस;
-		हाल IRQ_NUBUS_9:
-		हाल IRQ_NUBUS_A:
-		हाल IRQ_NUBUS_B:
-		हाल IRQ_NUBUS_C:
-		हाल IRQ_NUBUS_D:
-		हाल IRQ_NUBUS_E:
+			return;
+		case IRQ_NUBUS_9:
+		case IRQ_NUBUS_A:
+		case IRQ_NUBUS_B:
+		case IRQ_NUBUS_C:
+		case IRQ_NUBUS_D:
+		case IRQ_NUBUS_E:
 			irq -= NUBUS_SOURCE_BASE;
 			oss->irq_level[irq] = 0;
-			वापस;
-	पूर्ण
+			return;
+	}
 
-	अगर (IRQ_SRC(irq) == 1)
+	if (IRQ_SRC(irq) == 1)
 		via_irq_disable(irq);
-पूर्ण
+}

@@ -1,84 +1,83 @@
-<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the मुख्य directory of this archive
- * क्रम more details.
+ * License.  See the file "COPYING" in the main directory of this archive
+ * for more details.
  *
- * This file contains NUMA specअगरic prototypes and definitions.
+ * This file contains NUMA specific prototypes and definitions.
  *
  * 2002/08/05 Erich Focht <efocht@ess.nec.de>
  *
  */
-#अगर_अघोषित _ASM_IA64_NUMA_H
-#घोषणा _ASM_IA64_NUMA_H
+#ifndef _ASM_IA64_NUMA_H
+#define _ASM_IA64_NUMA_H
 
 
-#अगर_घोषित CONFIG_NUMA
+#ifdef CONFIG_NUMA
 
-#समावेश <linux/cache.h>
-#समावेश <linux/cpumask.h>
-#समावेश <linux/numa.h>
-#समावेश <linux/smp.h>
-#समावेश <linux/thपढ़ोs.h>
+#include <linux/cache.h>
+#include <linux/cpumask.h>
+#include <linux/numa.h>
+#include <linux/smp.h>
+#include <linux/threads.h>
 
-#समावेश <यंत्र/mmzone.h>
+#include <asm/mmzone.h>
 
-बाह्य u16 cpu_to_node_map[NR_CPUS] __cacheline_aligned;
-बाह्य cpumask_t node_to_cpu_mask[MAX_NUMNODES] __cacheline_aligned;
-बाह्य pg_data_t *pgdat_list[MAX_NUMNODES];
+extern u16 cpu_to_node_map[NR_CPUS] __cacheline_aligned;
+extern cpumask_t node_to_cpu_mask[MAX_NUMNODES] __cacheline_aligned;
+extern pg_data_t *pgdat_list[MAX_NUMNODES];
 
 /* Stuff below this line could be architecture independent */
 
-बाह्य पूर्णांक num_node_memblks;		/* total number of memory chunks */
+extern int num_node_memblks;		/* total number of memory chunks */
 
 /*
  * List of node memory chunks. Filled when parsing SRAT table to
- * obtain inक्रमmation about memory nodes.
+ * obtain information about memory nodes.
 */
 
-काष्ठा node_memblk_s अणु
-	अचिन्हित दीर्घ start_paddr;
-	अचिन्हित दीर्घ size;
-	पूर्णांक nid;		/* which logical node contains this chunk? */
-	पूर्णांक bank;		/* which mem bank on this node */
-पूर्ण;
+struct node_memblk_s {
+	unsigned long start_paddr;
+	unsigned long size;
+	int nid;		/* which logical node contains this chunk? */
+	int bank;		/* which mem bank on this node */
+};
 
-काष्ठा node_cpuid_s अणु
+struct node_cpuid_s {
 	u16	phys_id;	/* id << 8 | eid */
-	पूर्णांक	nid;		/* logical node containing this CPU */
-पूर्ण;
+	int	nid;		/* logical node containing this CPU */
+};
 
-बाह्य काष्ठा node_memblk_s node_memblk[NR_NODE_MEMBLKS];
-बाह्य काष्ठा node_cpuid_s node_cpuid[NR_CPUS];
+extern struct node_memblk_s node_memblk[NR_NODE_MEMBLKS];
+extern struct node_cpuid_s node_cpuid[NR_CPUS];
 
 /*
- * ACPI 2.0 SLIT (System Locality Inक्रमmation Table)
+ * ACPI 2.0 SLIT (System Locality Information Table)
  * http://devresource.hp.com/devresource/Docs/TechPapers/IA64/slit.pdf
  *
  * This is a matrix with "distances" between nodes, they should be
  * proportional to the memory access latency ratios.
  */
 
-बाह्य u8 numa_slit[MAX_NUMNODES * MAX_NUMNODES];
-#घोषणा slit_distance(from,to) (numa_slit[(from) * MAX_NUMNODES + (to)])
-बाह्य पूर्णांक __node_distance(पूर्णांक from, पूर्णांक to);
-#घोषणा node_distance(from,to) __node_distance(from, to)
+extern u8 numa_slit[MAX_NUMNODES * MAX_NUMNODES];
+#define slit_distance(from,to) (numa_slit[(from) * MAX_NUMNODES + (to)])
+extern int __node_distance(int from, int to);
+#define node_distance(from,to) __node_distance(from, to)
 
-बाह्य पूर्णांक paddr_to_nid(अचिन्हित दीर्घ paddr);
+extern int paddr_to_nid(unsigned long paddr);
 
-#घोषणा local_nodeid (cpu_to_node_map[smp_processor_id()])
+#define local_nodeid (cpu_to_node_map[smp_processor_id()])
 
-#घोषणा numa_off     0
+#define numa_off     0
 
-बाह्य व्योम map_cpu_to_node(पूर्णांक cpu, पूर्णांक nid);
-बाह्य व्योम unmap_cpu_from_node(पूर्णांक cpu, पूर्णांक nid);
-बाह्य व्योम numa_clear_node(पूर्णांक cpu);
+extern void map_cpu_to_node(int cpu, int nid);
+extern void unmap_cpu_from_node(int cpu, int nid);
+extern void numa_clear_node(int cpu);
 
-#अन्यथा /* !CONFIG_NUMA */
-#घोषणा map_cpu_to_node(cpu, nid)	करोअणुपूर्णजबतक(0)
-#घोषणा unmap_cpu_from_node(cpu, nid)	करोअणुपूर्णजबतक(0)
-#घोषणा paddr_to_nid(addr)	0
-#घोषणा numa_clear_node(cpu)	करो अणु पूर्ण जबतक (0)
-#पूर्ण_अगर /* CONFIG_NUMA */
+#else /* !CONFIG_NUMA */
+#define map_cpu_to_node(cpu, nid)	do{}while(0)
+#define unmap_cpu_from_node(cpu, nid)	do{}while(0)
+#define paddr_to_nid(addr)	0
+#define numa_clear_node(cpu)	do { } while (0)
+#endif /* CONFIG_NUMA */
 
-#पूर्ण_अगर /* _ASM_IA64_NUMA_H */
+#endif /* _ASM_IA64_NUMA_H */

@@ -1,179 +1,178 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: (GPL-2.0-only OR BSD-2-Clause)
+// SPDX-License-Identifier: (GPL-2.0-only OR BSD-2-Clause)
 // Copyright (C) 2018 Facebook
 
-#समावेश <मानककोष.स>
-#समावेश <माला.स>
-#समावेश <bpf/libbpf.h>
-#समावेश <linux/rtnetlink.h>
-#समावेश <linux/tc_act/tc_bpf.h>
+#include <stdlib.h>
+#include <string.h>
+#include <bpf/libbpf.h>
+#include <linux/rtnetlink.h>
+#include <linux/tc_act/tc_bpf.h>
 
-#समावेश "bpf/nlattr.h"
-#समावेश "main.h"
-#समावेश "netlink_dumper.h"
+#include "bpf/nlattr.h"
+#include "main.h"
+#include "netlink_dumper.h"
 
-अटल व्योम xdp_dump_prog_id(काष्ठा nlattr **tb, पूर्णांक attr,
-			     स्थिर अक्षर *mode,
+static void xdp_dump_prog_id(struct nlattr **tb, int attr,
+			     const char *mode,
 			     bool new_json_object)
-अणु
-	अगर (!tb[attr])
-		वापस;
+{
+	if (!tb[attr])
+		return;
 
-	अगर (new_json_object)
+	if (new_json_object)
 		NET_START_OBJECT
 	NET_DUMP_STR("mode", " %s", mode);
 	NET_DUMP_UINT("id", " id %u", libbpf_nla_getattr_u32(tb[attr]))
-	अगर (new_json_object)
+	if (new_json_object)
 		NET_END_OBJECT
-पूर्ण
+}
 
-अटल पूर्णांक करो_xdp_dump_one(काष्ठा nlattr *attr, अचिन्हित पूर्णांक अगरindex,
-			   स्थिर अक्षर *name)
-अणु
-	काष्ठा nlattr *tb[IFLA_XDP_MAX + 1];
-	अचिन्हित अक्षर mode;
+static int do_xdp_dump_one(struct nlattr *attr, unsigned int ifindex,
+			   const char *name)
+{
+	struct nlattr *tb[IFLA_XDP_MAX + 1];
+	unsigned char mode;
 
-	अगर (libbpf_nla_parse_nested(tb, IFLA_XDP_MAX, attr, शून्य) < 0)
-		वापस -1;
+	if (libbpf_nla_parse_nested(tb, IFLA_XDP_MAX, attr, NULL) < 0)
+		return -1;
 
-	अगर (!tb[IFLA_XDP_ATTACHED])
-		वापस 0;
+	if (!tb[IFLA_XDP_ATTACHED])
+		return 0;
 
 	mode = libbpf_nla_getattr_u8(tb[IFLA_XDP_ATTACHED]);
-	अगर (mode == XDP_ATTACHED_NONE)
-		वापस 0;
+	if (mode == XDP_ATTACHED_NONE)
+		return 0;
 
 	NET_START_OBJECT;
-	अगर (name)
+	if (name)
 		NET_DUMP_STR("devname", "%s", name);
-	NET_DUMP_UINT("ifindex", "(%d)", अगरindex);
+	NET_DUMP_UINT("ifindex", "(%d)", ifindex);
 
-	अगर (mode == XDP_ATTACHED_MULTI) अणु
-		अगर (json_output) अणु
+	if (mode == XDP_ATTACHED_MULTI) {
+		if (json_output) {
 			jsonw_name(json_wtr, "multi_attachments");
 			jsonw_start_array(json_wtr);
-		पूर्ण
+		}
 		xdp_dump_prog_id(tb, IFLA_XDP_SKB_PROG_ID, "generic", true);
 		xdp_dump_prog_id(tb, IFLA_XDP_DRV_PROG_ID, "driver", true);
 		xdp_dump_prog_id(tb, IFLA_XDP_HW_PROG_ID, "offload", true);
-		अगर (json_output)
+		if (json_output)
 			jsonw_end_array(json_wtr);
-	पूर्ण अन्यथा अगर (mode == XDP_ATTACHED_DRV) अणु
+	} else if (mode == XDP_ATTACHED_DRV) {
 		xdp_dump_prog_id(tb, IFLA_XDP_PROG_ID, "driver", false);
-	पूर्ण अन्यथा अगर (mode == XDP_ATTACHED_SKB) अणु
+	} else if (mode == XDP_ATTACHED_SKB) {
 		xdp_dump_prog_id(tb, IFLA_XDP_PROG_ID, "generic", false);
-	पूर्ण अन्यथा अगर (mode == XDP_ATTACHED_HW) अणु
+	} else if (mode == XDP_ATTACHED_HW) {
 		xdp_dump_prog_id(tb, IFLA_XDP_PROG_ID, "offload", false);
-	पूर्ण
+	}
 
 	NET_END_OBJECT_FINAL;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक करो_xdp_dump(काष्ठा अगरinfomsg *अगरinfo, काष्ठा nlattr **tb)
-अणु
-	अगर (!tb[IFLA_XDP])
-		वापस 0;
+int do_xdp_dump(struct ifinfomsg *ifinfo, struct nlattr **tb)
+{
+	if (!tb[IFLA_XDP])
+		return 0;
 
-	वापस करो_xdp_dump_one(tb[IFLA_XDP], अगरinfo->अगरi_index,
+	return do_xdp_dump_one(tb[IFLA_XDP], ifinfo->ifi_index,
 			       libbpf_nla_getattr_str(tb[IFLA_IFNAME]));
-पूर्ण
+}
 
-अटल पूर्णांक करो_bpf_dump_one_act(काष्ठा nlattr *attr)
-अणु
-	काष्ठा nlattr *tb[TCA_ACT_BPF_MAX + 1];
+static int do_bpf_dump_one_act(struct nlattr *attr)
+{
+	struct nlattr *tb[TCA_ACT_BPF_MAX + 1];
 
-	अगर (libbpf_nla_parse_nested(tb, TCA_ACT_BPF_MAX, attr, शून्य) < 0)
-		वापस -LIBBPF_ERRNO__NLPARSE;
+	if (libbpf_nla_parse_nested(tb, TCA_ACT_BPF_MAX, attr, NULL) < 0)
+		return -LIBBPF_ERRNO__NLPARSE;
 
-	अगर (!tb[TCA_ACT_BPF_PARMS])
-		वापस -LIBBPF_ERRNO__NLPARSE;
+	if (!tb[TCA_ACT_BPF_PARMS])
+		return -LIBBPF_ERRNO__NLPARSE;
 
 	NET_START_OBJECT_NESTED2;
-	अगर (tb[TCA_ACT_BPF_NAME])
+	if (tb[TCA_ACT_BPF_NAME])
 		NET_DUMP_STR("name", "%s",
 			     libbpf_nla_getattr_str(tb[TCA_ACT_BPF_NAME]));
-	अगर (tb[TCA_ACT_BPF_ID])
+	if (tb[TCA_ACT_BPF_ID])
 		NET_DUMP_UINT("id", " id %u",
 			      libbpf_nla_getattr_u32(tb[TCA_ACT_BPF_ID]));
 	NET_END_OBJECT_NESTED;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक करो_dump_one_act(काष्ठा nlattr *attr)
-अणु
-	काष्ठा nlattr *tb[TCA_ACT_MAX + 1];
+static int do_dump_one_act(struct nlattr *attr)
+{
+	struct nlattr *tb[TCA_ACT_MAX + 1];
 
-	अगर (!attr)
-		वापस 0;
+	if (!attr)
+		return 0;
 
-	अगर (libbpf_nla_parse_nested(tb, TCA_ACT_MAX, attr, शून्य) < 0)
-		वापस -LIBBPF_ERRNO__NLPARSE;
+	if (libbpf_nla_parse_nested(tb, TCA_ACT_MAX, attr, NULL) < 0)
+		return -LIBBPF_ERRNO__NLPARSE;
 
-	अगर (tb[TCA_ACT_KIND] &&
-	    म_भेद(libbpf_nla_data(tb[TCA_ACT_KIND]), "bpf") == 0)
-		वापस करो_bpf_dump_one_act(tb[TCA_ACT_OPTIONS]);
+	if (tb[TCA_ACT_KIND] &&
+	    strcmp(libbpf_nla_data(tb[TCA_ACT_KIND]), "bpf") == 0)
+		return do_bpf_dump_one_act(tb[TCA_ACT_OPTIONS]);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक करो_bpf_act_dump(काष्ठा nlattr *attr)
-अणु
-	काष्ठा nlattr *tb[TCA_ACT_MAX_PRIO + 1];
-	पूर्णांक act, ret;
+static int do_bpf_act_dump(struct nlattr *attr)
+{
+	struct nlattr *tb[TCA_ACT_MAX_PRIO + 1];
+	int act, ret;
 
-	अगर (libbpf_nla_parse_nested(tb, TCA_ACT_MAX_PRIO, attr, शून्य) < 0)
-		वापस -LIBBPF_ERRNO__NLPARSE;
+	if (libbpf_nla_parse_nested(tb, TCA_ACT_MAX_PRIO, attr, NULL) < 0)
+		return -LIBBPF_ERRNO__NLPARSE;
 
 	NET_START_ARRAY("act", " %s [");
-	क्रम (act = 0; act <= TCA_ACT_MAX_PRIO; act++) अणु
-		ret = करो_dump_one_act(tb[act]);
-		अगर (ret)
-			अवरोध;
-	पूर्ण
+	for (act = 0; act <= TCA_ACT_MAX_PRIO; act++) {
+		ret = do_dump_one_act(tb[act]);
+		if (ret)
+			break;
+	}
 	NET_END_ARRAY("] ");
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक करो_bpf_filter_dump(काष्ठा nlattr *attr)
-अणु
-	काष्ठा nlattr *tb[TCA_BPF_MAX + 1];
-	पूर्णांक ret;
+static int do_bpf_filter_dump(struct nlattr *attr)
+{
+	struct nlattr *tb[TCA_BPF_MAX + 1];
+	int ret;
 
-	अगर (libbpf_nla_parse_nested(tb, TCA_BPF_MAX, attr, शून्य) < 0)
-		वापस -LIBBPF_ERRNO__NLPARSE;
+	if (libbpf_nla_parse_nested(tb, TCA_BPF_MAX, attr, NULL) < 0)
+		return -LIBBPF_ERRNO__NLPARSE;
 
-	अगर (tb[TCA_BPF_NAME])
+	if (tb[TCA_BPF_NAME])
 		NET_DUMP_STR("name", " %s",
 			     libbpf_nla_getattr_str(tb[TCA_BPF_NAME]));
-	अगर (tb[TCA_BPF_ID])
+	if (tb[TCA_BPF_ID])
 		NET_DUMP_UINT("id", " id %u",
 			      libbpf_nla_getattr_u32(tb[TCA_BPF_ID]));
-	अगर (tb[TCA_BPF_ACT]) अणु
-		ret = करो_bpf_act_dump(tb[TCA_BPF_ACT]);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+	if (tb[TCA_BPF_ACT]) {
+		ret = do_bpf_act_dump(tb[TCA_BPF_ACT]);
+		if (ret)
+			return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक करो_filter_dump(काष्ठा tcmsg *info, काष्ठा nlattr **tb, स्थिर अक्षर *kind,
-		   स्थिर अक्षर *devname, पूर्णांक अगरindex)
-अणु
-	पूर्णांक ret = 0;
+int do_filter_dump(struct tcmsg *info, struct nlattr **tb, const char *kind,
+		   const char *devname, int ifindex)
+{
+	int ret = 0;
 
-	अगर (tb[TCA_OPTIONS] &&
-	    म_भेद(libbpf_nla_data(tb[TCA_KIND]), "bpf") == 0) अणु
+	if (tb[TCA_OPTIONS] &&
+	    strcmp(libbpf_nla_data(tb[TCA_KIND]), "bpf") == 0) {
 		NET_START_OBJECT;
-		अगर (devname[0] != '\0')
+		if (devname[0] != '\0')
 			NET_DUMP_STR("devname", "%s", devname);
-		NET_DUMP_UINT("ifindex", "(%u)", अगरindex);
+		NET_DUMP_UINT("ifindex", "(%u)", ifindex);
 		NET_DUMP_STR("kind", " %s", kind);
-		ret = करो_bpf_filter_dump(tb[TCA_OPTIONS]);
+		ret = do_bpf_filter_dump(tb[TCA_OPTIONS]);
 		NET_END_OBJECT_FINAL;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}

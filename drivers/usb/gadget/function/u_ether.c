@@ -1,25 +1,24 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
- * u_ether.c -- Ethernet-over-USB link layer utilities क्रम Gadget stack
+ * u_ether.c -- Ethernet-over-USB link layer utilities for Gadget stack
  *
  * Copyright (C) 2003-2005,2008 David Brownell
  * Copyright (C) 2003-2004 Robert Schwebel, Benedikt Spranger
  * Copyright (C) 2008 Nokia Corporation
  */
 
-/* #घोषणा VERBOSE_DEBUG */
+/* #define VERBOSE_DEBUG */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/gfp.h>
-#समावेश <linux/device.h>
-#समावेश <linux/प्रकार.स>
-#समावेश <linux/etherdevice.h>
-#समावेश <linux/ethtool.h>
-#समावेश <linux/अगर_vlan.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/gfp.h>
+#include <linux/device.h>
+#include <linux/ctype.h>
+#include <linux/etherdevice.h>
+#include <linux/ethtool.h>
+#include <linux/if_vlan.h>
 
-#समावेश "u_ether.h"
+#include "u_ether.h"
 
 
 /*
@@ -28,79 +27,79 @@
  *
  * The control and data models are handled by the function driver which
  * connects to this code; such as CDC Ethernet (ECM or EEM),
- * "CDC Subset", or RNDIS.  That includes all descriptor and endpoपूर्णांक
+ * "CDC Subset", or RNDIS.  That includes all descriptor and endpoint
  * management.
  *
  * Link level addressing is handled by this component using module
- * parameters; अगर no such parameters are provided, अक्रमom link level
+ * parameters; if no such parameters are provided, random link level
  * addresses are used.  Each end of the link uses one address.  The
  * host end address is exported in various ways, and is often recorded
  * in configuration databases.
  *
  * The driver which assembles each configuration using such a link is
- * responsible क्रम ensuring that each configuration includes at most one
- * instance of is network link.  (The network layer provides ways क्रम
- * this single "physical" link to be used by multiple भव links.)
+ * responsible for ensuring that each configuration includes at most one
+ * instance of is network link.  (The network layer provides ways for
+ * this single "physical" link to be used by multiple virtual links.)
  */
 
-#घोषणा UETH__VERSION	"29-May-2008"
+#define UETH__VERSION	"29-May-2008"
 
-/* Experiments show that both Linux and Winकरोws hosts allow up to 16k
+/* Experiments show that both Linux and Windows hosts allow up to 16k
  * frame sizes. Set the max MTU size to 15k+52 to prevent allocating 32k
  * blocks and still have efficient handling. */
-#घोषणा GETHER_MAX_MTU_SIZE 15412
-#घोषणा GETHER_MAX_ETH_FRAME_LEN (GETHER_MAX_MTU_SIZE + ETH_HLEN)
+#define GETHER_MAX_MTU_SIZE 15412
+#define GETHER_MAX_ETH_FRAME_LEN (GETHER_MAX_MTU_SIZE + ETH_HLEN)
 
-काष्ठा eth_dev अणु
-	/* lock is held जबतक accessing port_usb
+struct eth_dev {
+	/* lock is held while accessing port_usb
 	 */
 	spinlock_t		lock;
-	काष्ठा gether		*port_usb;
+	struct gether		*port_usb;
 
-	काष्ठा net_device	*net;
-	काष्ठा usb_gadget	*gadget;
+	struct net_device	*net;
+	struct usb_gadget	*gadget;
 
-	spinlock_t		req_lock;	/* guard अणुrx,txपूर्ण_reqs */
-	काष्ठा list_head	tx_reqs, rx_reqs;
+	spinlock_t		req_lock;	/* guard {rx,tx}_reqs */
+	struct list_head	tx_reqs, rx_reqs;
 	atomic_t		tx_qlen;
 
-	काष्ठा sk_buff_head	rx_frames;
+	struct sk_buff_head	rx_frames;
 
-	अचिन्हित		qmult;
+	unsigned		qmult;
 
-	अचिन्हित		header_len;
-	काष्ठा sk_buff		*(*wrap)(काष्ठा gether *, काष्ठा sk_buff *skb);
-	पूर्णांक			(*unwrap)(काष्ठा gether *,
-						काष्ठा sk_buff *skb,
-						काष्ठा sk_buff_head *list);
+	unsigned		header_len;
+	struct sk_buff		*(*wrap)(struct gether *, struct sk_buff *skb);
+	int			(*unwrap)(struct gether *,
+						struct sk_buff *skb,
+						struct sk_buff_head *list);
 
-	काष्ठा work_काष्ठा	work;
+	struct work_struct	work;
 
-	अचिन्हित दीर्घ		toकरो;
-#घोषणा	WORK_RX_MEMORY		0
+	unsigned long		todo;
+#define	WORK_RX_MEMORY		0
 
 	bool			zlp;
 	bool			no_skb_reserve;
-	bool			अगरname_set;
+	bool			ifname_set;
 	u8			host_mac[ETH_ALEN];
 	u8			dev_mac[ETH_ALEN];
-पूर्ण;
+};
 
 /*-------------------------------------------------------------------------*/
 
-#घोषणा RX_EXTRA	20	/* bytes guarding against rx overflows */
+#define RX_EXTRA	20	/* bytes guarding against rx overflows */
 
-#घोषणा DEFAULT_QLEN	2	/* द्विगुन buffering by शेष */
+#define DEFAULT_QLEN	2	/* double buffering by default */
 
-/* क्रम dual-speed hardware, use deeper queues at high/super speed */
-अटल अंतरभूत पूर्णांक qlen(काष्ठा usb_gadget *gadget, अचिन्हित qmult)
-अणु
-	अगर (gadget_is_dualspeed(gadget) && (gadget->speed == USB_SPEED_HIGH ||
+/* for dual-speed hardware, use deeper queues at high/super speed */
+static inline int qlen(struct usb_gadget *gadget, unsigned qmult)
+{
+	if (gadget_is_dualspeed(gadget) && (gadget->speed == USB_SPEED_HIGH ||
 					    gadget->speed >= USB_SPEED_SUPER))
-		वापस qmult * DEFAULT_QLEN;
-	अन्यथा
-		वापस DEFAULT_QLEN;
-पूर्ण
+		return qmult * DEFAULT_QLEN;
+	else
+		return DEFAULT_QLEN;
+}
 
 /*-------------------------------------------------------------------------*/
 
@@ -108,48 +107,48 @@
  * of debug calls ...
  */
 
-#अघोषित DBG
-#अघोषित VDBG
-#अघोषित ERROR
-#अघोषित INFO
+#undef DBG
+#undef VDBG
+#undef ERROR
+#undef INFO
 
-#घोषणा xprपूर्णांकk(d, level, fmt, args...) \
-	prपूर्णांकk(level "%s: " fmt , (d)->net->name , ## args)
+#define xprintk(d, level, fmt, args...) \
+	printk(level "%s: " fmt , (d)->net->name , ## args)
 
-#अगर_घोषित DEBUG
-#अघोषित DEBUG
-#घोषणा DBG(dev, fmt, args...) \
-	xprपूर्णांकk(dev , KERN_DEBUG , fmt , ## args)
-#अन्यथा
-#घोषणा DBG(dev, fmt, args...) \
-	करो अणु पूर्ण जबतक (0)
-#पूर्ण_अगर /* DEBUG */
+#ifdef DEBUG
+#undef DEBUG
+#define DBG(dev, fmt, args...) \
+	xprintk(dev , KERN_DEBUG , fmt , ## args)
+#else
+#define DBG(dev, fmt, args...) \
+	do { } while (0)
+#endif /* DEBUG */
 
-#अगर_घोषित VERBOSE_DEBUG
-#घोषणा VDBG	DBG
-#अन्यथा
-#घोषणा VDBG(dev, fmt, args...) \
-	करो अणु पूर्ण जबतक (0)
-#पूर्ण_अगर /* DEBUG */
+#ifdef VERBOSE_DEBUG
+#define VDBG	DBG
+#else
+#define VDBG(dev, fmt, args...) \
+	do { } while (0)
+#endif /* DEBUG */
 
-#घोषणा ERROR(dev, fmt, args...) \
-	xprपूर्णांकk(dev , KERN_ERR , fmt , ## args)
-#घोषणा INFO(dev, fmt, args...) \
-	xprपूर्णांकk(dev , KERN_INFO , fmt , ## args)
+#define ERROR(dev, fmt, args...) \
+	xprintk(dev , KERN_ERR , fmt , ## args)
+#define INFO(dev, fmt, args...) \
+	xprintk(dev , KERN_INFO , fmt , ## args)
 
 /*-------------------------------------------------------------------------*/
 
 /* NETWORK DRIVER HOOKUP (to the layer above this driver) */
 
-अटल व्योम eth_get_drvinfo(काष्ठा net_device *net, काष्ठा ethtool_drvinfo *p)
-अणु
-	काष्ठा eth_dev *dev = netdev_priv(net);
+static void eth_get_drvinfo(struct net_device *net, struct ethtool_drvinfo *p)
+{
+	struct eth_dev *dev = netdev_priv(net);
 
-	strlcpy(p->driver, "g_ether", माप(p->driver));
-	strlcpy(p->version, UETH__VERSION, माप(p->version));
-	strlcpy(p->fw_version, dev->gadget->name, माप(p->fw_version));
-	strlcpy(p->bus_info, dev_name(&dev->gadget->dev), माप(p->bus_info));
-पूर्ण
+	strlcpy(p->driver, "g_ether", sizeof(p->driver));
+	strlcpy(p->version, UETH__VERSION, sizeof(p->version));
+	strlcpy(p->fw_version, dev->gadget->name, sizeof(p->fw_version));
+	strlcpy(p->bus_info, dev_name(&dev->gadget->dev), sizeof(p->bus_info));
+}
 
 /* REVISIT can also support:
  *   - WOL (by tracking suspends and issuing remote wakeup)
@@ -157,80 +156,80 @@
  *   - ... probably more ethtool ops
  */
 
-अटल स्थिर काष्ठा ethtool_ops ops = अणु
+static const struct ethtool_ops ops = {
 	.get_drvinfo = eth_get_drvinfo,
 	.get_link = ethtool_op_get_link,
-पूर्ण;
+};
 
-अटल व्योम defer_kevent(काष्ठा eth_dev *dev, पूर्णांक flag)
-अणु
-	अगर (test_and_set_bit(flag, &dev->toकरो))
-		वापस;
-	अगर (!schedule_work(&dev->work))
+static void defer_kevent(struct eth_dev *dev, int flag)
+{
+	if (test_and_set_bit(flag, &dev->todo))
+		return;
+	if (!schedule_work(&dev->work))
 		ERROR(dev, "kevent %d may have been dropped\n", flag);
-	अन्यथा
+	else
 		DBG(dev, "kevent %d scheduled\n", flag);
-पूर्ण
+}
 
-अटल व्योम rx_complete(काष्ठा usb_ep *ep, काष्ठा usb_request *req);
+static void rx_complete(struct usb_ep *ep, struct usb_request *req);
 
-अटल पूर्णांक
-rx_submit(काष्ठा eth_dev *dev, काष्ठा usb_request *req, gfp_t gfp_flags)
-अणु
-	काष्ठा usb_gadget *g = dev->gadget;
-	काष्ठा sk_buff	*skb;
-	पूर्णांक		retval = -ENOMEM;
-	माप_प्रकार		size = 0;
-	काष्ठा usb_ep	*out;
-	अचिन्हित दीर्घ	flags;
+static int
+rx_submit(struct eth_dev *dev, struct usb_request *req, gfp_t gfp_flags)
+{
+	struct usb_gadget *g = dev->gadget;
+	struct sk_buff	*skb;
+	int		retval = -ENOMEM;
+	size_t		size = 0;
+	struct usb_ep	*out;
+	unsigned long	flags;
 
 	spin_lock_irqsave(&dev->lock, flags);
-	अगर (dev->port_usb)
+	if (dev->port_usb)
 		out = dev->port_usb->out_ep;
-	अन्यथा
-		out = शून्य;
+	else
+		out = NULL;
 
-	अगर (!out)
-	अणु
+	if (!out)
+	{
 		spin_unlock_irqrestore(&dev->lock, flags);
-		वापस -ENOTCONN;
-	पूर्ण
+		return -ENOTCONN;
+	}
 
 	/* Padding up to RX_EXTRA handles minor disagreements with host.
 	 * Normally we use the USB "terminate on short read" convention;
 	 * so allow up to (N*maxpacket), since that memory is normally
-	 * alपढ़ोy allocated.  Some hardware करोesn't deal well with लघु
-	 * पढ़ोs (e.g. DMA must be N*maxpacket), so क्रम now करोn't trim a
-	 * byte off the end (to क्रमce hardware errors on overflow).
+	 * already allocated.  Some hardware doesn't deal well with short
+	 * reads (e.g. DMA must be N*maxpacket), so for now don't trim a
+	 * byte off the end (to force hardware errors on overflow).
 	 *
-	 * RNDIS uses पूर्णांकernal framing, and explicitly allows senders to
-	 * pad to end-of-packet.  That's potentially nice क्रम speed, but
+	 * RNDIS uses internal framing, and explicitly allows senders to
+	 * pad to end-of-packet.  That's potentially nice for speed, but
 	 * means receivers can't recover lost synch on their own (because
-	 * new packets करोn't only start after a लघु RX).
+	 * new packets don't only start after a short RX).
 	 */
-	size += माप(काष्ठा ethhdr) + dev->net->mtu + RX_EXTRA;
+	size += sizeof(struct ethhdr) + dev->net->mtu + RX_EXTRA;
 	size += dev->port_usb->header_len;
 
-	अगर (g->quirk_ep_out_aligned_size) अणु
+	if (g->quirk_ep_out_aligned_size) {
 		size += out->maxpacket - 1;
 		size -= size % out->maxpacket;
-	पूर्ण
+	}
 
-	अगर (dev->port_usb->is_fixed)
-		size = max_t(माप_प्रकार, size, dev->port_usb->fixed_out_len);
+	if (dev->port_usb->is_fixed)
+		size = max_t(size_t, size, dev->port_usb->fixed_out_len);
 	spin_unlock_irqrestore(&dev->lock, flags);
 
 	skb = __netdev_alloc_skb(dev->net, size + NET_IP_ALIGN, gfp_flags);
-	अगर (skb == शून्य) अणु
+	if (skb == NULL) {
 		DBG(dev, "no rx skb\n");
-		जाओ enomem;
-	पूर्ण
+		goto enomem;
+	}
 
-	/* Some platक्रमms perक्रमm better when IP packets are aligned,
+	/* Some platforms perform better when IP packets are aligned,
 	 * but on at least one, checksumming fails otherwise.  Note:
 	 * RNDIS headers involve variable numbers of LE32 values.
 	 */
-	अगर (likely(!dev->no_skb_reserve))
+	if (likely(!dev->no_skb_reserve))
 		skb_reserve(skb, NET_IP_ALIGN);
 
 	req->buf = skb->data;
@@ -239,61 +238,61 @@ rx_submit(काष्ठा eth_dev *dev, काष्ठा usb_request *req, 
 	req->context = skb;
 
 	retval = usb_ep_queue(out, req, gfp_flags);
-	अगर (retval == -ENOMEM)
+	if (retval == -ENOMEM)
 enomem:
 		defer_kevent(dev, WORK_RX_MEMORY);
-	अगर (retval) अणु
+	if (retval) {
 		DBG(dev, "rx submit --> %d\n", retval);
-		अगर (skb)
-			dev_kमुक्त_skb_any(skb);
+		if (skb)
+			dev_kfree_skb_any(skb);
 		spin_lock_irqsave(&dev->req_lock, flags);
 		list_add(&req->list, &dev->rx_reqs);
 		spin_unlock_irqrestore(&dev->req_lock, flags);
-	पूर्ण
-	वापस retval;
-पूर्ण
+	}
+	return retval;
+}
 
-अटल व्योम rx_complete(काष्ठा usb_ep *ep, काष्ठा usb_request *req)
-अणु
-	काष्ठा sk_buff	*skb = req->context, *skb2;
-	काष्ठा eth_dev	*dev = ep->driver_data;
-	पूर्णांक		status = req->status;
+static void rx_complete(struct usb_ep *ep, struct usb_request *req)
+{
+	struct sk_buff	*skb = req->context, *skb2;
+	struct eth_dev	*dev = ep->driver_data;
+	int		status = req->status;
 
-	चयन (status) अणु
+	switch (status) {
 
 	/* normal completion */
-	हाल 0:
+	case 0:
 		skb_put(skb, req->actual);
 
-		अगर (dev->unwrap) अणु
-			अचिन्हित दीर्घ	flags;
+		if (dev->unwrap) {
+			unsigned long	flags;
 
 			spin_lock_irqsave(&dev->lock, flags);
-			अगर (dev->port_usb) अणु
+			if (dev->port_usb) {
 				status = dev->unwrap(dev->port_usb,
 							skb,
 							&dev->rx_frames);
-			पूर्ण अन्यथा अणु
-				dev_kमुक्त_skb_any(skb);
+			} else {
+				dev_kfree_skb_any(skb);
 				status = -ENOTCONN;
-			पूर्ण
+			}
 			spin_unlock_irqrestore(&dev->lock, flags);
-		पूर्ण अन्यथा अणु
+		} else {
 			skb_queue_tail(&dev->rx_frames, skb);
-		पूर्ण
-		skb = शून्य;
+		}
+		skb = NULL;
 
 		skb2 = skb_dequeue(&dev->rx_frames);
-		जबतक (skb2) अणु
-			अगर (status < 0
+		while (skb2) {
+			if (status < 0
 					|| ETH_HLEN > skb2->len
-					|| skb2->len > GETHER_MAX_ETH_FRAME_LEN) अणु
+					|| skb2->len > GETHER_MAX_ETH_FRAME_LEN) {
 				dev->net->stats.rx_errors++;
 				dev->net->stats.rx_length_errors++;
 				DBG(dev, "rx length %d\n", skb2->len);
-				dev_kमुक्त_skb_any(skb2);
-				जाओ next_frame;
-			पूर्ण
+				dev_kfree_skb_any(skb2);
+				goto next_frame;
+			}
 			skb2->protocol = eth_type_trans(skb2, dev->net);
 			dev->net->stats.rx_packets++;
 			dev->net->stats.rx_bytes += skb2->len;
@@ -301,161 +300,161 @@ enomem:
 			/* no buffer copies needed, unless hardware can't
 			 * use skb buffers.
 			 */
-			status = netअगर_rx(skb2);
+			status = netif_rx(skb2);
 next_frame:
 			skb2 = skb_dequeue(&dev->rx_frames);
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	/* software-driven पूर्णांकerface shutकरोwn */
-	हाल -ECONNRESET:		/* unlink */
-	हाल -ESHUTDOWN:		/* disconnect etc */
+	/* software-driven interface shutdown */
+	case -ECONNRESET:		/* unlink */
+	case -ESHUTDOWN:		/* disconnect etc */
 		VDBG(dev, "rx shutdown, code %d\n", status);
-		जाओ quiesce;
+		goto quiesce;
 
-	/* क्रम hardware स्वतःmagic (such as pxa) */
-	हाल -ECONNABORTED:		/* endpoपूर्णांक reset */
+	/* for hardware automagic (such as pxa) */
+	case -ECONNABORTED:		/* endpoint reset */
 		DBG(dev, "rx %s reset\n", ep->name);
 		defer_kevent(dev, WORK_RX_MEMORY);
 quiesce:
-		dev_kमुक्त_skb_any(skb);
-		जाओ clean;
+		dev_kfree_skb_any(skb);
+		goto clean;
 
 	/* data overrun */
-	हाल -EOVERFLOW:
+	case -EOVERFLOW:
 		dev->net->stats.rx_over_errors++;
 		fallthrough;
 
-	शेष:
+	default:
 		dev->net->stats.rx_errors++;
 		DBG(dev, "rx status %d\n", status);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	अगर (skb)
-		dev_kमुक्त_skb_any(skb);
-	अगर (!netअगर_running(dev->net)) अणु
+	if (skb)
+		dev_kfree_skb_any(skb);
+	if (!netif_running(dev->net)) {
 clean:
 		spin_lock(&dev->req_lock);
 		list_add(&req->list, &dev->rx_reqs);
 		spin_unlock(&dev->req_lock);
-		req = शून्य;
-	पूर्ण
-	अगर (req)
+		req = NULL;
+	}
+	if (req)
 		rx_submit(dev, req, GFP_ATOMIC);
-पूर्ण
+}
 
-अटल पूर्णांक pपुनः_स्मृति(काष्ठा list_head *list, काष्ठा usb_ep *ep, अचिन्हित n)
-अणु
-	अचिन्हित		i;
-	काष्ठा usb_request	*req;
+static int prealloc(struct list_head *list, struct usb_ep *ep, unsigned n)
+{
+	unsigned		i;
+	struct usb_request	*req;
 
-	अगर (!n)
-		वापस -ENOMEM;
+	if (!n)
+		return -ENOMEM;
 
 	/* queue/recycle up to N requests */
 	i = n;
-	list_क्रम_each_entry(req, list, list) अणु
-		अगर (i-- == 0)
-			जाओ extra;
-	पूर्ण
-	जबतक (i--) अणु
+	list_for_each_entry(req, list, list) {
+		if (i-- == 0)
+			goto extra;
+	}
+	while (i--) {
 		req = usb_ep_alloc_request(ep, GFP_ATOMIC);
-		अगर (!req)
-			वापस list_empty(list) ? -ENOMEM : 0;
+		if (!req)
+			return list_empty(list) ? -ENOMEM : 0;
 		list_add(&req->list, list);
-	पूर्ण
-	वापस 0;
+	}
+	return 0;
 
 extra:
-	/* मुक्त extras */
-	क्रम (;;) अणु
-		काष्ठा list_head	*next;
+	/* free extras */
+	for (;;) {
+		struct list_head	*next;
 
 		next = req->list.next;
 		list_del(&req->list);
-		usb_ep_मुक्त_request(ep, req);
+		usb_ep_free_request(ep, req);
 
-		अगर (next == list)
-			अवरोध;
+		if (next == list)
+			break;
 
-		req = container_of(next, काष्ठा usb_request, list);
-	पूर्ण
-	वापस 0;
-पूर्ण
+		req = container_of(next, struct usb_request, list);
+	}
+	return 0;
+}
 
-अटल पूर्णांक alloc_requests(काष्ठा eth_dev *dev, काष्ठा gether *link, अचिन्हित n)
-अणु
-	पूर्णांक	status;
+static int alloc_requests(struct eth_dev *dev, struct gether *link, unsigned n)
+{
+	int	status;
 
 	spin_lock(&dev->req_lock);
-	status = pपुनः_स्मृति(&dev->tx_reqs, link->in_ep, n);
-	अगर (status < 0)
-		जाओ fail;
-	status = pपुनः_स्मृति(&dev->rx_reqs, link->out_ep, n);
-	अगर (status < 0)
-		जाओ fail;
-	जाओ करोne;
+	status = prealloc(&dev->tx_reqs, link->in_ep, n);
+	if (status < 0)
+		goto fail;
+	status = prealloc(&dev->rx_reqs, link->out_ep, n);
+	if (status < 0)
+		goto fail;
+	goto done;
 fail:
 	DBG(dev, "can't alloc requests\n");
-करोne:
+done:
 	spin_unlock(&dev->req_lock);
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल व्योम rx_fill(काष्ठा eth_dev *dev, gfp_t gfp_flags)
-अणु
-	काष्ठा usb_request	*req;
-	अचिन्हित दीर्घ		flags;
+static void rx_fill(struct eth_dev *dev, gfp_t gfp_flags)
+{
+	struct usb_request	*req;
+	unsigned long		flags;
 
 	/* fill unused rxq slots with some skb */
 	spin_lock_irqsave(&dev->req_lock, flags);
-	जबतक (!list_empty(&dev->rx_reqs)) अणु
-		req = list_first_entry(&dev->rx_reqs, काष्ठा usb_request, list);
+	while (!list_empty(&dev->rx_reqs)) {
+		req = list_first_entry(&dev->rx_reqs, struct usb_request, list);
 		list_del_init(&req->list);
 		spin_unlock_irqrestore(&dev->req_lock, flags);
 
-		अगर (rx_submit(dev, req, gfp_flags) < 0) अणु
+		if (rx_submit(dev, req, gfp_flags) < 0) {
 			defer_kevent(dev, WORK_RX_MEMORY);
-			वापस;
-		पूर्ण
+			return;
+		}
 
 		spin_lock_irqsave(&dev->req_lock, flags);
-	पूर्ण
+	}
 	spin_unlock_irqrestore(&dev->req_lock, flags);
-पूर्ण
+}
 
-अटल व्योम eth_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा eth_dev	*dev = container_of(work, काष्ठा eth_dev, work);
+static void eth_work(struct work_struct *work)
+{
+	struct eth_dev	*dev = container_of(work, struct eth_dev, work);
 
-	अगर (test_and_clear_bit(WORK_RX_MEMORY, &dev->toकरो)) अणु
-		अगर (netअगर_running(dev->net))
+	if (test_and_clear_bit(WORK_RX_MEMORY, &dev->todo)) {
+		if (netif_running(dev->net))
 			rx_fill(dev, GFP_KERNEL);
-	पूर्ण
+	}
 
-	अगर (dev->toकरो)
-		DBG(dev, "work done, flags = 0x%lx\n", dev->toकरो);
-पूर्ण
+	if (dev->todo)
+		DBG(dev, "work done, flags = 0x%lx\n", dev->todo);
+}
 
-अटल व्योम tx_complete(काष्ठा usb_ep *ep, काष्ठा usb_request *req)
-अणु
-	काष्ठा sk_buff	*skb = req->context;
-	काष्ठा eth_dev	*dev = ep->driver_data;
+static void tx_complete(struct usb_ep *ep, struct usb_request *req)
+{
+	struct sk_buff	*skb = req->context;
+	struct eth_dev	*dev = ep->driver_data;
 
-	चयन (req->status) अणु
-	शेष:
+	switch (req->status) {
+	default:
 		dev->net->stats.tx_errors++;
 		VDBG(dev, "tx err %d\n", req->status);
 		fallthrough;
-	हाल -ECONNRESET:		/* unlink */
-	हाल -ESHUTDOWN:		/* disconnect etc */
-		dev_kमुक्त_skb_any(skb);
-		अवरोध;
-	हाल 0:
+	case -ECONNRESET:		/* unlink */
+	case -ESHUTDOWN:		/* disconnect etc */
+		dev_kfree_skb_any(skb);
+		break;
+	case 0:
 		dev->net->stats.tx_bytes += skb->len;
 		dev_consume_skb_any(skb);
-	पूर्ण
+	}
 	dev->net->stats.tx_packets++;
 
 	spin_lock(&dev->req_lock);
@@ -463,190 +462,190 @@ fail:
 	spin_unlock(&dev->req_lock);
 
 	atomic_dec(&dev->tx_qlen);
-	अगर (netअगर_carrier_ok(dev->net))
-		netअगर_wake_queue(dev->net);
-पूर्ण
+	if (netif_carrier_ok(dev->net))
+		netif_wake_queue(dev->net);
+}
 
-अटल अंतरभूत पूर्णांक is_promisc(u16 cdc_filter)
-अणु
-	वापस cdc_filter & USB_CDC_PACKET_TYPE_PROMISCUOUS;
-पूर्ण
+static inline int is_promisc(u16 cdc_filter)
+{
+	return cdc_filter & USB_CDC_PACKET_TYPE_PROMISCUOUS;
+}
 
-अटल netdev_tx_t eth_start_xmit(काष्ठा sk_buff *skb,
-					काष्ठा net_device *net)
-अणु
-	काष्ठा eth_dev		*dev = netdev_priv(net);
-	पूर्णांक			length = 0;
-	पूर्णांक			retval;
-	काष्ठा usb_request	*req = शून्य;
-	अचिन्हित दीर्घ		flags;
-	काष्ठा usb_ep		*in;
+static netdev_tx_t eth_start_xmit(struct sk_buff *skb,
+					struct net_device *net)
+{
+	struct eth_dev		*dev = netdev_priv(net);
+	int			length = 0;
+	int			retval;
+	struct usb_request	*req = NULL;
+	unsigned long		flags;
+	struct usb_ep		*in;
 	u16			cdc_filter;
 
 	spin_lock_irqsave(&dev->lock, flags);
-	अगर (dev->port_usb) अणु
+	if (dev->port_usb) {
 		in = dev->port_usb->in_ep;
 		cdc_filter = dev->port_usb->cdc_filter;
-	पूर्ण अन्यथा अणु
-		in = शून्य;
+	} else {
+		in = NULL;
 		cdc_filter = 0;
-	पूर्ण
+	}
 	spin_unlock_irqrestore(&dev->lock, flags);
 
-	अगर (skb && !in) अणु
-		dev_kमुक्त_skb_any(skb);
-		वापस NETDEV_TX_OK;
-	पूर्ण
+	if (skb && !in) {
+		dev_kfree_skb_any(skb);
+		return NETDEV_TX_OK;
+	}
 
 	/* apply outgoing CDC or RNDIS filters */
-	अगर (skb && !is_promisc(cdc_filter)) अणु
+	if (skb && !is_promisc(cdc_filter)) {
 		u8		*dest = skb->data;
 
-		अगर (is_multicast_ether_addr(dest)) अणु
+		if (is_multicast_ether_addr(dest)) {
 			u16	type;
 
 			/* ignores USB_CDC_PACKET_TYPE_MULTICAST and host
 			 * SET_ETHERNET_MULTICAST_FILTERS requests
 			 */
-			अगर (is_broadcast_ether_addr(dest))
+			if (is_broadcast_ether_addr(dest))
 				type = USB_CDC_PACKET_TYPE_BROADCAST;
-			अन्यथा
+			else
 				type = USB_CDC_PACKET_TYPE_ALL_MULTICAST;
-			अगर (!(cdc_filter & type)) अणु
-				dev_kमुक्त_skb_any(skb);
-				वापस NETDEV_TX_OK;
-			पूर्ण
-		पूर्ण
-		/* ignores USB_CDC_PACKET_TYPE_सूचीECTED */
-	पूर्ण
+			if (!(cdc_filter & type)) {
+				dev_kfree_skb_any(skb);
+				return NETDEV_TX_OK;
+			}
+		}
+		/* ignores USB_CDC_PACKET_TYPE_DIRECTED */
+	}
 
 	spin_lock_irqsave(&dev->req_lock, flags);
 	/*
-	 * this मुक्तlist can be empty अगर an पूर्णांकerrupt triggered disconnect()
-	 * and reconfigured the gadget (shutting करोwn this queue) after the
-	 * network stack decided to xmit but beक्रमe we got the spinlock.
+	 * this freelist can be empty if an interrupt triggered disconnect()
+	 * and reconfigured the gadget (shutting down this queue) after the
+	 * network stack decided to xmit but before we got the spinlock.
 	 */
-	अगर (list_empty(&dev->tx_reqs)) अणु
+	if (list_empty(&dev->tx_reqs)) {
 		spin_unlock_irqrestore(&dev->req_lock, flags);
-		वापस NETDEV_TX_BUSY;
-	पूर्ण
+		return NETDEV_TX_BUSY;
+	}
 
-	req = list_first_entry(&dev->tx_reqs, काष्ठा usb_request, list);
+	req = list_first_entry(&dev->tx_reqs, struct usb_request, list);
 	list_del(&req->list);
 
-	/* temporarily stop TX queue when the मुक्तlist empties */
-	अगर (list_empty(&dev->tx_reqs))
-		netअगर_stop_queue(net);
+	/* temporarily stop TX queue when the freelist empties */
+	if (list_empty(&dev->tx_reqs))
+		netif_stop_queue(net);
 	spin_unlock_irqrestore(&dev->req_lock, flags);
 
 	/* no buffer copies needed, unless the network stack did it
 	 * or the hardware can't use skb buffers.
-	 * or there's not enough space क्रम extra headers we need
+	 * or there's not enough space for extra headers we need
 	 */
-	अगर (dev->wrap) अणु
-		अचिन्हित दीर्घ	flags;
+	if (dev->wrap) {
+		unsigned long	flags;
 
 		spin_lock_irqsave(&dev->lock, flags);
-		अगर (dev->port_usb)
+		if (dev->port_usb)
 			skb = dev->wrap(dev->port_usb, skb);
 		spin_unlock_irqrestore(&dev->lock, flags);
-		अगर (!skb) अणु
-			/* Multi frame CDC protocols may store the frame क्रम
+		if (!skb) {
+			/* Multi frame CDC protocols may store the frame for
 			 * later which is not a dropped frame.
 			 */
-			अगर (dev->port_usb &&
+			if (dev->port_usb &&
 					dev->port_usb->supports_multi_frame)
-				जाओ multअगरrame;
-			जाओ drop;
-		पूर्ण
-	पूर्ण
+				goto multiframe;
+			goto drop;
+		}
+	}
 
 	length = skb->len;
 	req->buf = skb->data;
 	req->context = skb;
 	req->complete = tx_complete;
 
-	/* NCM requires no zlp अगर transfer is dwNtbInMaxSize */
-	अगर (dev->port_usb &&
+	/* NCM requires no zlp if transfer is dwNtbInMaxSize */
+	if (dev->port_usb &&
 	    dev->port_usb->is_fixed &&
 	    length == dev->port_usb->fixed_in_len &&
 	    (length % in->maxpacket) == 0)
 		req->zero = 0;
-	अन्यथा
+	else
 		req->zero = 1;
 
-	/* use zlp framing on tx क्रम strict CDC-Ether conक्रमmance,
+	/* use zlp framing on tx for strict CDC-Ether conformance,
 	 * though any robust network rx path ignores extra padding.
-	 * and some hardware करोesn't like to ग_लिखो zlps.
+	 * and some hardware doesn't like to write zlps.
 	 */
-	अगर (req->zero && !dev->zlp && (length % in->maxpacket) == 0)
+	if (req->zero && !dev->zlp && (length % in->maxpacket) == 0)
 		length++;
 
 	req->length = length;
 
 	retval = usb_ep_queue(in, req, GFP_ATOMIC);
-	चयन (retval) अणु
-	शेष:
+	switch (retval) {
+	default:
 		DBG(dev, "tx queue err %d\n", retval);
-		अवरोध;
-	हाल 0:
-		netअगर_trans_update(net);
+		break;
+	case 0:
+		netif_trans_update(net);
 		atomic_inc(&dev->tx_qlen);
-	पूर्ण
+	}
 
-	अगर (retval) अणु
-		dev_kमुक्त_skb_any(skb);
+	if (retval) {
+		dev_kfree_skb_any(skb);
 drop:
 		dev->net->stats.tx_dropped++;
-multअगरrame:
+multiframe:
 		spin_lock_irqsave(&dev->req_lock, flags);
-		अगर (list_empty(&dev->tx_reqs))
-			netअगर_start_queue(net);
+		if (list_empty(&dev->tx_reqs))
+			netif_start_queue(net);
 		list_add(&req->list, &dev->tx_reqs);
 		spin_unlock_irqrestore(&dev->req_lock, flags);
-	पूर्ण
-	वापस NETDEV_TX_OK;
-पूर्ण
+	}
+	return NETDEV_TX_OK;
+}
 
 /*-------------------------------------------------------------------------*/
 
-अटल व्योम eth_start(काष्ठा eth_dev *dev, gfp_t gfp_flags)
-अणु
+static void eth_start(struct eth_dev *dev, gfp_t gfp_flags)
+{
 	DBG(dev, "%s\n", __func__);
 
 	/* fill the rx queue */
 	rx_fill(dev, gfp_flags);
 
-	/* and खोलो the tx floodgates */
+	/* and open the tx floodgates */
 	atomic_set(&dev->tx_qlen, 0);
-	netअगर_wake_queue(dev->net);
-पूर्ण
+	netif_wake_queue(dev->net);
+}
 
-अटल पूर्णांक eth_खोलो(काष्ठा net_device *net)
-अणु
-	काष्ठा eth_dev	*dev = netdev_priv(net);
-	काष्ठा gether	*link;
+static int eth_open(struct net_device *net)
+{
+	struct eth_dev	*dev = netdev_priv(net);
+	struct gether	*link;
 
 	DBG(dev, "%s\n", __func__);
-	अगर (netअगर_carrier_ok(dev->net))
+	if (netif_carrier_ok(dev->net))
 		eth_start(dev, GFP_KERNEL);
 
 	spin_lock_irq(&dev->lock);
 	link = dev->port_usb;
-	अगर (link && link->खोलो)
-		link->खोलो(link);
+	if (link && link->open)
+		link->open(link);
 	spin_unlock_irq(&dev->lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक eth_stop(काष्ठा net_device *net)
-अणु
-	काष्ठा eth_dev	*dev = netdev_priv(net);
-	अचिन्हित दीर्घ	flags;
+static int eth_stop(struct net_device *net)
+{
+	struct eth_dev	*dev = netdev_priv(net);
+	unsigned long	flags;
 
 	VDBG(dev, "%s\n", __func__);
-	netअगर_stop_queue(net);
+	netif_stop_queue(net);
 
 	DBG(dev, "stop stats: rx/tx %ld/%ld, errs %ld/%ld\n",
 		dev->net->stats.rx_packets, dev->net->stats.tx_packets,
@@ -655,17 +654,17 @@ multअगरrame:
 
 	/* ensure there are no more active requests */
 	spin_lock_irqsave(&dev->lock, flags);
-	अगर (dev->port_usb) अणु
-		काष्ठा gether	*link = dev->port_usb;
-		स्थिर काष्ठा usb_endpoपूर्णांक_descriptor *in;
-		स्थिर काष्ठा usb_endpoपूर्णांक_descriptor *out;
+	if (dev->port_usb) {
+		struct gether	*link = dev->port_usb;
+		const struct usb_endpoint_descriptor *in;
+		const struct usb_endpoint_descriptor *out;
 
-		अगर (link->बंद)
-			link->बंद(link);
+		if (link->close)
+			link->close(link);
 
-		/* NOTE:  we have no पात-queue primitive we could use
+		/* NOTE:  we have no abort-queue primitive we could use
 		 * to cancel all pending I/O.  Instead, we disable then
-		 * reenable the endpoपूर्णांकs ... this idiom may leave toggle
+		 * reenable the endpoints ... this idiom may leave toggle
 		 * wrong, but that's a self-correcting error.
 		 *
 		 * REVISIT:  we *COULD* just let the transfers complete at
@@ -676,88 +675,88 @@ multअगरrame:
 		out = link->out_ep->desc;
 		usb_ep_disable(link->in_ep);
 		usb_ep_disable(link->out_ep);
-		अगर (netअगर_carrier_ok(net)) अणु
+		if (netif_carrier_ok(net)) {
 			DBG(dev, "host still using in/out endpoints\n");
 			link->in_ep->desc = in;
 			link->out_ep->desc = out;
 			usb_ep_enable(link->in_ep);
 			usb_ep_enable(link->out_ep);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	spin_unlock_irqrestore(&dev->lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*-------------------------------------------------------------------------*/
 
-अटल पूर्णांक get_ether_addr(स्थिर अक्षर *str, u8 *dev_addr)
-अणु
-	अगर (str) अणु
-		अचिन्हित	i;
+static int get_ether_addr(const char *str, u8 *dev_addr)
+{
+	if (str) {
+		unsigned	i;
 
-		क्रम (i = 0; i < 6; i++) अणु
-			अचिन्हित अक्षर num;
+		for (i = 0; i < 6; i++) {
+			unsigned char num;
 
-			अगर ((*str == '.') || (*str == ':'))
+			if ((*str == '.') || (*str == ':'))
 				str++;
 			num = hex_to_bin(*str++) << 4;
 			num |= hex_to_bin(*str++);
 			dev_addr [i] = num;
-		पूर्ण
-		अगर (is_valid_ether_addr(dev_addr))
-			वापस 0;
-	पूर्ण
-	eth_अक्रमom_addr(dev_addr);
-	वापस 1;
-पूर्ण
+		}
+		if (is_valid_ether_addr(dev_addr))
+			return 0;
+	}
+	eth_random_addr(dev_addr);
+	return 1;
+}
 
-अटल पूर्णांक get_ether_addr_str(u8 dev_addr[ETH_ALEN], अक्षर *str, पूर्णांक len)
-अणु
-	अगर (len < 18)
-		वापस -EINVAL;
+static int get_ether_addr_str(u8 dev_addr[ETH_ALEN], char *str, int len)
+{
+	if (len < 18)
+		return -EINVAL;
 
-	snम_लिखो(str, len, "%pM", dev_addr);
-	वापस 18;
-पूर्ण
+	snprintf(str, len, "%pM", dev_addr);
+	return 18;
+}
 
-अटल स्थिर काष्ठा net_device_ops eth_netdev_ops = अणु
-	.nकरो_खोलो		= eth_खोलो,
-	.nकरो_stop		= eth_stop,
-	.nकरो_start_xmit		= eth_start_xmit,
-	.nकरो_set_mac_address 	= eth_mac_addr,
-	.nकरो_validate_addr	= eth_validate_addr,
-पूर्ण;
+static const struct net_device_ops eth_netdev_ops = {
+	.ndo_open		= eth_open,
+	.ndo_stop		= eth_stop,
+	.ndo_start_xmit		= eth_start_xmit,
+	.ndo_set_mac_address 	= eth_mac_addr,
+	.ndo_validate_addr	= eth_validate_addr,
+};
 
-अटल काष्ठा device_type gadget_type = अणु
+static struct device_type gadget_type = {
 	.name	= "gadget",
-पूर्ण;
+};
 
 /*
  * gether_setup_name - initialize one ethernet-over-usb link
  * @g: gadget to associated with these links
- * @ethaddr: शून्य, or a buffer in which the ethernet address of the
+ * @ethaddr: NULL, or a buffer in which the ethernet address of the
  *	host side of the link is recorded
- * @netname: name क्रम network device (क्रम example, "usb")
+ * @netname: name for network device (for example, "usb")
  * Context: may sleep
  *
  * This sets up the single network link that may be exported by a
  * gadget driver using this framework.  The link layer addresses are
  * set up using module parameters.
  *
- * Returns an eth_dev poपूर्णांकer on success, or an ERR_PTR on failure.
+ * Returns an eth_dev pointer on success, or an ERR_PTR on failure.
  */
-काष्ठा eth_dev *gether_setup_name(काष्ठा usb_gadget *g,
-		स्थिर अक्षर *dev_addr, स्थिर अक्षर *host_addr,
-		u8 ethaddr[ETH_ALEN], अचिन्हित qmult, स्थिर अक्षर *netname)
-अणु
-	काष्ठा eth_dev		*dev;
-	काष्ठा net_device	*net;
-	पूर्णांक			status;
+struct eth_dev *gether_setup_name(struct usb_gadget *g,
+		const char *dev_addr, const char *host_addr,
+		u8 ethaddr[ETH_ALEN], unsigned qmult, const char *netname)
+{
+	struct eth_dev		*dev;
+	struct net_device	*net;
+	int			status;
 
-	net = alloc_etherdev(माप *dev);
-	अगर (!net)
-		वापस ERR_PTR(-ENOMEM);
+	net = alloc_etherdev(sizeof *dev);
+	if (!net)
+		return ERR_PTR(-ENOMEM);
 
 	dev = netdev_priv(net);
 	spin_lock_init(&dev->lock);
@@ -771,17 +770,17 @@ multअगरrame:
 	/* network device setup */
 	dev->net = net;
 	dev->qmult = qmult;
-	snम_लिखो(net->name, माप(net->name), "%s%%d", netname);
+	snprintf(net->name, sizeof(net->name), "%s%%d", netname);
 
-	अगर (get_ether_addr(dev_addr, net->dev_addr))
+	if (get_ether_addr(dev_addr, net->dev_addr))
 		dev_warn(&g->dev,
 			"using random %s ethernet address\n", "self");
-	अगर (get_ether_addr(host_addr, dev->host_mac))
+	if (get_ether_addr(host_addr, dev->host_mac))
 		dev_warn(&g->dev,
 			"using random %s ethernet address\n", "host");
 
-	अगर (ethaddr)
-		स_नकल(ethaddr, dev->host_mac, ETH_ALEN);
+	if (ethaddr)
+		memcpy(ethaddr, dev->host_mac, ETH_ALEN);
 
 	net->netdev_ops = &eth_netdev_ops;
 
@@ -795,35 +794,35 @@ multअगरrame:
 	SET_NETDEV_DEV(net, &g->dev);
 	SET_NETDEV_DEVTYPE(net, &gadget_type);
 
-	status = रेजिस्टर_netdev(net);
-	अगर (status < 0) अणु
+	status = register_netdev(net);
+	if (status < 0) {
 		dev_dbg(&g->dev, "register_netdev failed, %d\n", status);
-		मुक्त_netdev(net);
+		free_netdev(net);
 		dev = ERR_PTR(status);
-	पूर्ण अन्यथा अणु
+	} else {
 		INFO(dev, "MAC %pM\n", net->dev_addr);
 		INFO(dev, "HOST MAC %pM\n", dev->host_mac);
 
 		/*
 		 * two kinds of host-initiated state changes:
-		 *  - अगरf DATA transfer is active, carrier is "on"
-		 *  - tx queueing enabled अगर खोलो *and* carrier is "on"
+		 *  - iff DATA transfer is active, carrier is "on"
+		 *  - tx queueing enabled if open *and* carrier is "on"
 		 */
-		netअगर_carrier_off(net);
-	पूर्ण
+		netif_carrier_off(net);
+	}
 
-	वापस dev;
-पूर्ण
+	return dev;
+}
 EXPORT_SYMBOL_GPL(gether_setup_name);
 
-काष्ठा net_device *gether_setup_name_शेष(स्थिर अक्षर *netname)
-अणु
-	काष्ठा net_device	*net;
-	काष्ठा eth_dev		*dev;
+struct net_device *gether_setup_name_default(const char *netname)
+{
+	struct net_device	*net;
+	struct eth_dev		*dev;
 
-	net = alloc_etherdev(माप(*dev));
-	अगर (!net)
-		वापस ERR_PTR(-ENOMEM);
+	net = alloc_etherdev(sizeof(*dev));
+	if (!net)
+		return ERR_PTR(-ENOMEM);
 
 	dev = netdev_priv(net);
 	spin_lock_init(&dev->lock);
@@ -837,11 +836,11 @@ EXPORT_SYMBOL_GPL(gether_setup_name);
 	/* network device setup */
 	dev->net = net;
 	dev->qmult = QMULT_DEFAULT;
-	snम_लिखो(net->name, माप(net->name), "%s%%d", netname);
+	snprintf(net->name, sizeof(net->name), "%s%%d", netname);
 
-	eth_अक्रमom_addr(dev->dev_mac);
+	eth_random_addr(dev->dev_mac);
 	pr_warn("using random %s ethernet address\n", "self");
-	eth_अक्रमom_addr(dev->host_mac);
+	eth_random_addr(dev->host_mac);
 	pr_warn("using random %s ethernet address\n", "host");
 
 	net->netdev_ops = &eth_netdev_ops;
@@ -853,262 +852,262 @@ EXPORT_SYMBOL_GPL(gether_setup_name);
 	net->min_mtu = ETH_HLEN;
 	net->max_mtu = GETHER_MAX_MTU_SIZE;
 
-	वापस net;
-पूर्ण
-EXPORT_SYMBOL_GPL(gether_setup_name_शेष);
+	return net;
+}
+EXPORT_SYMBOL_GPL(gether_setup_name_default);
 
-पूर्णांक gether_रेजिस्टर_netdev(काष्ठा net_device *net)
-अणु
-	काष्ठा eth_dev *dev;
-	काष्ठा usb_gadget *g;
-	काष्ठा sockaddr sa;
-	पूर्णांक status;
+int gether_register_netdev(struct net_device *net)
+{
+	struct eth_dev *dev;
+	struct usb_gadget *g;
+	struct sockaddr sa;
+	int status;
 
-	अगर (!net->dev.parent)
-		वापस -EINVAL;
+	if (!net->dev.parent)
+		return -EINVAL;
 	dev = netdev_priv(net);
 	g = dev->gadget;
-	status = रेजिस्टर_netdev(net);
-	अगर (status < 0) अणु
+	status = register_netdev(net);
+	if (status < 0) {
 		dev_dbg(&g->dev, "register_netdev failed, %d\n", status);
-		वापस status;
-	पूर्ण अन्यथा अणु
+		return status;
+	} else {
 		INFO(dev, "HOST MAC %pM\n", dev->host_mac);
 
 		/* two kinds of host-initiated state changes:
-		 *  - अगरf DATA transfer is active, carrier is "on"
-		 *  - tx queueing enabled अगर खोलो *and* carrier is "on"
+		 *  - iff DATA transfer is active, carrier is "on"
+		 *  - tx queueing enabled if open *and* carrier is "on"
 		 */
-		netअगर_carrier_off(net);
-	पूर्ण
+		netif_carrier_off(net);
+	}
 	sa.sa_family = net->type;
-	स_नकल(sa.sa_data, dev->dev_mac, ETH_ALEN);
+	memcpy(sa.sa_data, dev->dev_mac, ETH_ALEN);
 	rtnl_lock();
-	status = dev_set_mac_address(net, &sa, शून्य);
+	status = dev_set_mac_address(net, &sa, NULL);
 	rtnl_unlock();
-	अगर (status)
+	if (status)
 		pr_warn("cannot set self ethernet address: %d\n", status);
-	अन्यथा
+	else
 		INFO(dev, "MAC %pM\n", dev->dev_mac);
 
-	वापस status;
-पूर्ण
-EXPORT_SYMBOL_GPL(gether_रेजिस्टर_netdev);
+	return status;
+}
+EXPORT_SYMBOL_GPL(gether_register_netdev);
 
-व्योम gether_set_gadget(काष्ठा net_device *net, काष्ठा usb_gadget *g)
-अणु
-	काष्ठा eth_dev *dev;
+void gether_set_gadget(struct net_device *net, struct usb_gadget *g)
+{
+	struct eth_dev *dev;
 
 	dev = netdev_priv(net);
 	dev->gadget = g;
 	SET_NETDEV_DEV(net, &g->dev);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(gether_set_gadget);
 
-पूर्णांक gether_set_dev_addr(काष्ठा net_device *net, स्थिर अक्षर *dev_addr)
-अणु
-	काष्ठा eth_dev *dev;
+int gether_set_dev_addr(struct net_device *net, const char *dev_addr)
+{
+	struct eth_dev *dev;
 	u8 new_addr[ETH_ALEN];
 
 	dev = netdev_priv(net);
-	अगर (get_ether_addr(dev_addr, new_addr))
-		वापस -EINVAL;
-	स_नकल(dev->dev_mac, new_addr, ETH_ALEN);
-	वापस 0;
-पूर्ण
+	if (get_ether_addr(dev_addr, new_addr))
+		return -EINVAL;
+	memcpy(dev->dev_mac, new_addr, ETH_ALEN);
+	return 0;
+}
 EXPORT_SYMBOL_GPL(gether_set_dev_addr);
 
-पूर्णांक gether_get_dev_addr(काष्ठा net_device *net, अक्षर *dev_addr, पूर्णांक len)
-अणु
-	काष्ठा eth_dev *dev;
-	पूर्णांक ret;
+int gether_get_dev_addr(struct net_device *net, char *dev_addr, int len)
+{
+	struct eth_dev *dev;
+	int ret;
 
 	dev = netdev_priv(net);
 	ret = get_ether_addr_str(dev->dev_mac, dev_addr, len);
-	अगर (ret + 1 < len) अणु
+	if (ret + 1 < len) {
 		dev_addr[ret++] = '\n';
 		dev_addr[ret] = '\0';
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(gether_get_dev_addr);
 
-पूर्णांक gether_set_host_addr(काष्ठा net_device *net, स्थिर अक्षर *host_addr)
-अणु
-	काष्ठा eth_dev *dev;
+int gether_set_host_addr(struct net_device *net, const char *host_addr)
+{
+	struct eth_dev *dev;
 	u8 new_addr[ETH_ALEN];
 
 	dev = netdev_priv(net);
-	अगर (get_ether_addr(host_addr, new_addr))
-		वापस -EINVAL;
-	स_नकल(dev->host_mac, new_addr, ETH_ALEN);
-	वापस 0;
-पूर्ण
+	if (get_ether_addr(host_addr, new_addr))
+		return -EINVAL;
+	memcpy(dev->host_mac, new_addr, ETH_ALEN);
+	return 0;
+}
 EXPORT_SYMBOL_GPL(gether_set_host_addr);
 
-पूर्णांक gether_get_host_addr(काष्ठा net_device *net, अक्षर *host_addr, पूर्णांक len)
-अणु
-	काष्ठा eth_dev *dev;
-	पूर्णांक ret;
+int gether_get_host_addr(struct net_device *net, char *host_addr, int len)
+{
+	struct eth_dev *dev;
+	int ret;
 
 	dev = netdev_priv(net);
 	ret = get_ether_addr_str(dev->host_mac, host_addr, len);
-	अगर (ret + 1 < len) अणु
+	if (ret + 1 < len) {
 		host_addr[ret++] = '\n';
 		host_addr[ret] = '\0';
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(gether_get_host_addr);
 
-पूर्णांक gether_get_host_addr_cdc(काष्ठा net_device *net, अक्षर *host_addr, पूर्णांक len)
-अणु
-	काष्ठा eth_dev *dev;
+int gether_get_host_addr_cdc(struct net_device *net, char *host_addr, int len)
+{
+	struct eth_dev *dev;
 
-	अगर (len < 13)
-		वापस -EINVAL;
+	if (len < 13)
+		return -EINVAL;
 
 	dev = netdev_priv(net);
-	snम_लिखो(host_addr, len, "%pm", dev->host_mac);
+	snprintf(host_addr, len, "%pm", dev->host_mac);
 
-	वापस म_माप(host_addr);
-पूर्ण
+	return strlen(host_addr);
+}
 EXPORT_SYMBOL_GPL(gether_get_host_addr_cdc);
 
-व्योम gether_get_host_addr_u8(काष्ठा net_device *net, u8 host_mac[ETH_ALEN])
-अणु
-	काष्ठा eth_dev *dev;
+void gether_get_host_addr_u8(struct net_device *net, u8 host_mac[ETH_ALEN])
+{
+	struct eth_dev *dev;
 
 	dev = netdev_priv(net);
-	स_नकल(host_mac, dev->host_mac, ETH_ALEN);
-पूर्ण
+	memcpy(host_mac, dev->host_mac, ETH_ALEN);
+}
 EXPORT_SYMBOL_GPL(gether_get_host_addr_u8);
 
-व्योम gether_set_qmult(काष्ठा net_device *net, अचिन्हित qmult)
-अणु
-	काष्ठा eth_dev *dev;
+void gether_set_qmult(struct net_device *net, unsigned qmult)
+{
+	struct eth_dev *dev;
 
 	dev = netdev_priv(net);
 	dev->qmult = qmult;
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(gether_set_qmult);
 
-अचिन्हित gether_get_qmult(काष्ठा net_device *net)
-अणु
-	काष्ठा eth_dev *dev;
+unsigned gether_get_qmult(struct net_device *net)
+{
+	struct eth_dev *dev;
 
 	dev = netdev_priv(net);
-	वापस dev->qmult;
-पूर्ण
+	return dev->qmult;
+}
 EXPORT_SYMBOL_GPL(gether_get_qmult);
 
-पूर्णांक gether_get_अगरname(काष्ठा net_device *net, अक्षर *name, पूर्णांक len)
-अणु
-	काष्ठा eth_dev *dev = netdev_priv(net);
-	पूर्णांक ret;
+int gether_get_ifname(struct net_device *net, char *name, int len)
+{
+	struct eth_dev *dev = netdev_priv(net);
+	int ret;
 
 	rtnl_lock();
-	ret = scnम_लिखो(name, len, "%s\n",
-			dev->अगरname_set ? net->name : netdev_name(net));
+	ret = scnprintf(name, len, "%s\n",
+			dev->ifname_set ? net->name : netdev_name(net));
 	rtnl_unlock();
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(gether_get_अगरname);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(gether_get_ifname);
 
-पूर्णांक gether_set_अगरname(काष्ठा net_device *net, स्थिर अक्षर *name, पूर्णांक len)
-अणु
-	काष्ठा eth_dev *dev = netdev_priv(net);
-	अक्षर पंचांगp[IFNAMSIZ];
-	स्थिर अक्षर *p;
+int gether_set_ifname(struct net_device *net, const char *name, int len)
+{
+	struct eth_dev *dev = netdev_priv(net);
+	char tmp[IFNAMSIZ];
+	const char *p;
 
-	अगर (name[len - 1] == '\n')
+	if (name[len - 1] == '\n')
 		len--;
 
-	अगर (len >= माप(पंचांगp))
-		वापस -E2BIG;
+	if (len >= sizeof(tmp))
+		return -E2BIG;
 
-	strscpy(पंचांगp, name, len + 1);
-	अगर (!dev_valid_name(पंचांगp))
-		वापस -EINVAL;
+	strscpy(tmp, name, len + 1);
+	if (!dev_valid_name(tmp))
+		return -EINVAL;
 
 	/* Require exactly one %d, so binding will not fail with EEXIST. */
-	p = म_अक्षर(name, '%');
-	अगर (!p || p[1] != 'd' || strchr(p + 2, '%'))
-		वापस -EINVAL;
+	p = strchr(name, '%');
+	if (!p || p[1] != 'd' || strchr(p + 2, '%'))
+		return -EINVAL;
 
-	म_नकलन(net->name, पंचांगp, माप(net->name));
-	dev->अगरname_set = true;
+	strncpy(net->name, tmp, sizeof(net->name));
+	dev->ifname_set = true;
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(gether_set_अगरname);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(gether_set_ifname);
 
 /*
- * gether_cleanup - हटाओ Ethernet-over-USB device
+ * gether_cleanup - remove Ethernet-over-USB device
  * Context: may sleep
  *
- * This is called to मुक्त all resources allocated by @gether_setup().
+ * This is called to free all resources allocated by @gether_setup().
  */
-व्योम gether_cleanup(काष्ठा eth_dev *dev)
-अणु
-	अगर (!dev)
-		वापस;
+void gether_cleanup(struct eth_dev *dev)
+{
+	if (!dev)
+		return;
 
-	unरेजिस्टर_netdev(dev->net);
+	unregister_netdev(dev->net);
 	flush_work(&dev->work);
-	मुक्त_netdev(dev->net);
-पूर्ण
+	free_netdev(dev->net);
+}
 EXPORT_SYMBOL_GPL(gether_cleanup);
 
 /**
- * gether_connect - notअगरy network layer that USB link is active
- * @link: the USB link, set up with endpoपूर्णांकs, descriptors matching
+ * gether_connect - notify network layer that USB link is active
+ * @link: the USB link, set up with endpoints, descriptors matching
  *	current device speed, and any framing wrapper(s) set up.
  * Context: irqs blocked
  *
- * This is called to activate endpoपूर्णांकs and let the network layer know
+ * This is called to activate endpoints and let the network layer know
  * the connection is active ("carrier detect").  It may cause the I/O
- * queues to खोलो and start letting network packets flow, but will in
- * any हाल activate the endpoपूर्णांकs so that they respond properly to the
+ * queues to open and start letting network packets flow, but will in
+ * any case activate the endpoints so that they respond properly to the
  * USB host.
  *
- * Verअगरy net_device poपूर्णांकer वापसed using IS_ERR().  If it करोesn't
- * indicate some error code (negative त्रुटि_सं), ep->driver_data values
+ * Verify net_device pointer returned using IS_ERR().  If it doesn't
+ * indicate some error code (negative errno), ep->driver_data values
  * have been overwritten.
  */
-काष्ठा net_device *gether_connect(काष्ठा gether *link)
-अणु
-	काष्ठा eth_dev		*dev = link->ioport;
-	पूर्णांक			result = 0;
+struct net_device *gether_connect(struct gether *link)
+{
+	struct eth_dev		*dev = link->ioport;
+	int			result = 0;
 
-	अगर (!dev)
-		वापस ERR_PTR(-EINVAL);
+	if (!dev)
+		return ERR_PTR(-EINVAL);
 
 	link->in_ep->driver_data = dev;
 	result = usb_ep_enable(link->in_ep);
-	अगर (result != 0) अणु
+	if (result != 0) {
 		DBG(dev, "enable %s --> %d\n",
 			link->in_ep->name, result);
-		जाओ fail0;
-	पूर्ण
+		goto fail0;
+	}
 
 	link->out_ep->driver_data = dev;
 	result = usb_ep_enable(link->out_ep);
-	अगर (result != 0) अणु
+	if (result != 0) {
 		DBG(dev, "enable %s --> %d\n",
 			link->out_ep->name, result);
-		जाओ fail1;
-	पूर्ण
+		goto fail1;
+	}
 
-	अगर (result == 0)
+	if (result == 0)
 		result = alloc_requests(dev, link, qlen(dev->gadget,
 					dev->qmult));
 
-	अगर (result == 0) अणु
+	if (result == 0) {
 		dev->zlp = link->is_zlp_ok;
-		dev->no_skb_reserve = gadget_aव्योमs_skb_reserve(dev->gadget);
+		dev->no_skb_reserve = gadget_avoids_skb_reserve(dev->gadget);
 		DBG(dev, "qlen %d\n", qlen(dev->gadget, dev->qmult));
 
 		dev->header_len = link->header_len;
@@ -1117,98 +1116,98 @@ EXPORT_SYMBOL_GPL(gether_cleanup);
 
 		spin_lock(&dev->lock);
 		dev->port_usb = link;
-		अगर (netअगर_running(dev->net)) अणु
-			अगर (link->खोलो)
-				link->खोलो(link);
-		पूर्ण अन्यथा अणु
-			अगर (link->बंद)
-				link->बंद(link);
-		पूर्ण
+		if (netif_running(dev->net)) {
+			if (link->open)
+				link->open(link);
+		} else {
+			if (link->close)
+				link->close(link);
+		}
 		spin_unlock(&dev->lock);
 
-		netअगर_carrier_on(dev->net);
-		अगर (netअगर_running(dev->net))
+		netif_carrier_on(dev->net);
+		if (netif_running(dev->net))
 			eth_start(dev, GFP_ATOMIC);
 
-	/* on error, disable any endpoपूर्णांकs  */
-	पूर्ण अन्यथा अणु
-		(व्योम) usb_ep_disable(link->out_ep);
+	/* on error, disable any endpoints  */
+	} else {
+		(void) usb_ep_disable(link->out_ep);
 fail1:
-		(व्योम) usb_ep_disable(link->in_ep);
-	पूर्ण
+		(void) usb_ep_disable(link->in_ep);
+	}
 fail0:
-	/* caller is responsible क्रम cleanup on error */
-	अगर (result < 0)
-		वापस ERR_PTR(result);
-	वापस dev->net;
-पूर्ण
+	/* caller is responsible for cleanup on error */
+	if (result < 0)
+		return ERR_PTR(result);
+	return dev->net;
+}
 EXPORT_SYMBOL_GPL(gether_connect);
 
 /**
- * gether_disconnect - notअगरy network layer that USB link is inactive
+ * gether_disconnect - notify network layer that USB link is inactive
  * @link: the USB link, on which gether_connect() was called
  * Context: irqs blocked
  *
- * This is called to deactivate endpoपूर्णांकs and let the network layer know
+ * This is called to deactivate endpoints and let the network layer know
  * the connection went inactive ("no carrier").
  *
- * On वापस, the state is as अगर gether_connect() had never been called.
- * The endpoपूर्णांकs are inactive, and accordingly without active USB I/O.
- * Poपूर्णांकers to endpoपूर्णांक descriptors and endpoपूर्णांक निजी data are nulled.
+ * On return, the state is as if gether_connect() had never been called.
+ * The endpoints are inactive, and accordingly without active USB I/O.
+ * Pointers to endpoint descriptors and endpoint private data are nulled.
  */
-व्योम gether_disconnect(काष्ठा gether *link)
-अणु
-	काष्ठा eth_dev		*dev = link->ioport;
-	काष्ठा usb_request	*req;
+void gether_disconnect(struct gether *link)
+{
+	struct eth_dev		*dev = link->ioport;
+	struct usb_request	*req;
 
 	WARN_ON(!dev);
-	अगर (!dev)
-		वापस;
+	if (!dev)
+		return;
 
 	DBG(dev, "%s\n", __func__);
 
-	netअगर_stop_queue(dev->net);
-	netअगर_carrier_off(dev->net);
+	netif_stop_queue(dev->net);
+	netif_carrier_off(dev->net);
 
-	/* disable endpoपूर्णांकs, क्रमcing (synchronous) completion
-	 * of all pending i/o.  then मुक्त the request objects
-	 * and क्रमget about the endpoपूर्णांकs.
+	/* disable endpoints, forcing (synchronous) completion
+	 * of all pending i/o.  then free the request objects
+	 * and forget about the endpoints.
 	 */
 	usb_ep_disable(link->in_ep);
 	spin_lock(&dev->req_lock);
-	जबतक (!list_empty(&dev->tx_reqs)) अणु
-		req = list_first_entry(&dev->tx_reqs, काष्ठा usb_request, list);
+	while (!list_empty(&dev->tx_reqs)) {
+		req = list_first_entry(&dev->tx_reqs, struct usb_request, list);
 		list_del(&req->list);
 
 		spin_unlock(&dev->req_lock);
-		usb_ep_मुक्त_request(link->in_ep, req);
+		usb_ep_free_request(link->in_ep, req);
 		spin_lock(&dev->req_lock);
-	पूर्ण
+	}
 	spin_unlock(&dev->req_lock);
-	link->in_ep->desc = शून्य;
+	link->in_ep->desc = NULL;
 
 	usb_ep_disable(link->out_ep);
 	spin_lock(&dev->req_lock);
-	जबतक (!list_empty(&dev->rx_reqs)) अणु
-		req = list_first_entry(&dev->rx_reqs, काष्ठा usb_request, list);
+	while (!list_empty(&dev->rx_reqs)) {
+		req = list_first_entry(&dev->rx_reqs, struct usb_request, list);
 		list_del(&req->list);
 
 		spin_unlock(&dev->req_lock);
-		usb_ep_मुक्त_request(link->out_ep, req);
+		usb_ep_free_request(link->out_ep, req);
 		spin_lock(&dev->req_lock);
-	पूर्ण
+	}
 	spin_unlock(&dev->req_lock);
-	link->out_ep->desc = शून्य;
+	link->out_ep->desc = NULL;
 
-	/* finish क्रमgetting about this USB link episode */
+	/* finish forgetting about this USB link episode */
 	dev->header_len = 0;
-	dev->unwrap = शून्य;
-	dev->wrap = शून्य;
+	dev->unwrap = NULL;
+	dev->wrap = NULL;
 
 	spin_lock(&dev->lock);
-	dev->port_usb = शून्य;
+	dev->port_usb = NULL;
 	spin_unlock(&dev->lock);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(gether_disconnect);
 
 MODULE_LICENSE("GPL");

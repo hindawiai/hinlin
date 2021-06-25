@@ -1,151 +1,150 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (C) 2019 BayLibre, SAS
  * Author: Neil Armstrong <narmstrong@baylibre.com>
  * Copyright (C) 2015 Amlogic, Inc. All rights reserved.
  */
-#समावेश <linux/module.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/rtc.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/of.h>
-#समावेश <linux/समय64.h>
+#include <linux/module.h>
+#include <linux/platform_device.h>
+#include <linux/rtc.h>
+#include <linux/io.h>
+#include <linux/of.h>
+#include <linux/time64.h>
 
-काष्ठा meson_vrtc_data अणु
-	व्योम __iomem *io_alarm;
-	काष्ठा rtc_device *rtc;
-	अचिन्हित दीर्घ alarm_समय;
+struct meson_vrtc_data {
+	void __iomem *io_alarm;
+	struct rtc_device *rtc;
+	unsigned long alarm_time;
 	bool enabled;
-पूर्ण;
+};
 
-अटल पूर्णांक meson_vrtc_पढ़ो_समय(काष्ठा device *dev, काष्ठा rtc_समय *पंचांग)
-अणु
-	काष्ठा बारpec64 समय;
+static int meson_vrtc_read_time(struct device *dev, struct rtc_time *tm)
+{
+	struct timespec64 time;
 
 	dev_dbg(dev, "%s\n", __func__);
-	kसमय_get_raw_ts64(&समय);
-	rtc_समय64_to_पंचांग(समय.tv_sec, पंचांग);
+	ktime_get_raw_ts64(&time);
+	rtc_time64_to_tm(time.tv_sec, tm);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम meson_vrtc_set_wakeup_समय(काष्ठा meson_vrtc_data *vrtc,
-				       अचिन्हित दीर्घ समय)
-अणु
-	ग_लिखोl_relaxed(समय, vrtc->io_alarm);
-पूर्ण
+static void meson_vrtc_set_wakeup_time(struct meson_vrtc_data *vrtc,
+				       unsigned long time)
+{
+	writel_relaxed(time, vrtc->io_alarm);
+}
 
-अटल पूर्णांक meson_vrtc_set_alarm(काष्ठा device *dev, काष्ठा rtc_wkalrm *alarm)
-अणु
-	काष्ठा meson_vrtc_data *vrtc = dev_get_drvdata(dev);
+static int meson_vrtc_set_alarm(struct device *dev, struct rtc_wkalrm *alarm)
+{
+	struct meson_vrtc_data *vrtc = dev_get_drvdata(dev);
 
 	dev_dbg(dev, "%s: alarm->enabled=%d\n", __func__, alarm->enabled);
-	अगर (alarm->enabled)
-		vrtc->alarm_समय = rtc_पंचांग_to_समय64(&alarm->समय);
-	अन्यथा
-		vrtc->alarm_समय = 0;
+	if (alarm->enabled)
+		vrtc->alarm_time = rtc_tm_to_time64(&alarm->time);
+	else
+		vrtc->alarm_time = 0;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक meson_vrtc_alarm_irq_enable(काष्ठा device *dev, अचिन्हित पूर्णांक enabled)
-अणु
-	काष्ठा meson_vrtc_data *vrtc = dev_get_drvdata(dev);
+static int meson_vrtc_alarm_irq_enable(struct device *dev, unsigned int enabled)
+{
+	struct meson_vrtc_data *vrtc = dev_get_drvdata(dev);
 
 	vrtc->enabled = enabled;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा rtc_class_ops meson_vrtc_ops = अणु
-	.पढ़ो_समय = meson_vrtc_पढ़ो_समय,
+static const struct rtc_class_ops meson_vrtc_ops = {
+	.read_time = meson_vrtc_read_time,
 	.set_alarm = meson_vrtc_set_alarm,
 	.alarm_irq_enable = meson_vrtc_alarm_irq_enable,
-पूर्ण;
+};
 
-अटल पूर्णांक meson_vrtc_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा meson_vrtc_data *vrtc;
+static int meson_vrtc_probe(struct platform_device *pdev)
+{
+	struct meson_vrtc_data *vrtc;
 
-	vrtc = devm_kzalloc(&pdev->dev, माप(*vrtc), GFP_KERNEL);
-	अगर (!vrtc)
-		वापस -ENOMEM;
+	vrtc = devm_kzalloc(&pdev->dev, sizeof(*vrtc), GFP_KERNEL);
+	if (!vrtc)
+		return -ENOMEM;
 
-	vrtc->io_alarm = devm_platक्रमm_ioremap_resource(pdev, 0);
-	अगर (IS_ERR(vrtc->io_alarm))
-		वापस PTR_ERR(vrtc->io_alarm);
+	vrtc->io_alarm = devm_platform_ioremap_resource(pdev, 0);
+	if (IS_ERR(vrtc->io_alarm))
+		return PTR_ERR(vrtc->io_alarm);
 
 	device_init_wakeup(&pdev->dev, 1);
 
-	platक्रमm_set_drvdata(pdev, vrtc);
+	platform_set_drvdata(pdev, vrtc);
 
 	vrtc->rtc = devm_rtc_allocate_device(&pdev->dev);
-	अगर (IS_ERR(vrtc->rtc))
-		वापस PTR_ERR(vrtc->rtc);
+	if (IS_ERR(vrtc->rtc))
+		return PTR_ERR(vrtc->rtc);
 
 	vrtc->rtc->ops = &meson_vrtc_ops;
-	वापस devm_rtc_रेजिस्टर_device(vrtc->rtc);
-पूर्ण
+	return devm_rtc_register_device(vrtc->rtc);
+}
 
-अटल पूर्णांक __maybe_unused meson_vrtc_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा meson_vrtc_data *vrtc = dev_get_drvdata(dev);
+static int __maybe_unused meson_vrtc_suspend(struct device *dev)
+{
+	struct meson_vrtc_data *vrtc = dev_get_drvdata(dev);
 
 	dev_dbg(dev, "%s\n", __func__);
-	अगर (vrtc->alarm_समय) अणु
-		अचिन्हित दीर्घ local_समय;
-		दीर्घ alarm_secs;
-		काष्ठा बारpec64 समय;
+	if (vrtc->alarm_time) {
+		unsigned long local_time;
+		long alarm_secs;
+		struct timespec64 time;
 
-		kसमय_get_raw_ts64(&समय);
-		local_समय = समय.tv_sec;
+		ktime_get_raw_ts64(&time);
+		local_time = time.tv_sec;
 
 		dev_dbg(dev, "alarm_time = %lus, local_time=%lus\n",
-			vrtc->alarm_समय, local_समय);
-		alarm_secs = vrtc->alarm_समय - local_समय;
-		अगर (alarm_secs > 0) अणु
-			meson_vrtc_set_wakeup_समय(vrtc, alarm_secs);
+			vrtc->alarm_time, local_time);
+		alarm_secs = vrtc->alarm_time - local_time;
+		if (alarm_secs > 0) {
+			meson_vrtc_set_wakeup_time(vrtc, alarm_secs);
 			dev_dbg(dev, "system will wakeup in %lds.\n",
 				alarm_secs);
-		पूर्ण अन्यथा अणु
+		} else {
 			dev_err(dev, "alarm time already passed: %lds.\n",
 				alarm_secs);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __maybe_unused meson_vrtc_resume(काष्ठा device *dev)
-अणु
-	काष्ठा meson_vrtc_data *vrtc = dev_get_drvdata(dev);
+static int __maybe_unused meson_vrtc_resume(struct device *dev)
+{
+	struct meson_vrtc_data *vrtc = dev_get_drvdata(dev);
 
 	dev_dbg(dev, "%s\n", __func__);
 
-	vrtc->alarm_समय = 0;
-	meson_vrtc_set_wakeup_समय(vrtc, 0);
-	वापस 0;
-पूर्ण
+	vrtc->alarm_time = 0;
+	meson_vrtc_set_wakeup_time(vrtc, 0);
+	return 0;
+}
 
-अटल SIMPLE_DEV_PM_OPS(meson_vrtc_pm_ops,
+static SIMPLE_DEV_PM_OPS(meson_vrtc_pm_ops,
 			 meson_vrtc_suspend, meson_vrtc_resume);
 
-अटल स्थिर काष्ठा of_device_id meson_vrtc_dt_match[] = अणु
-	अणु .compatible = "amlogic,meson-vrtc"पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct of_device_id meson_vrtc_dt_match[] = {
+	{ .compatible = "amlogic,meson-vrtc"},
+	{},
+};
 MODULE_DEVICE_TABLE(of, meson_vrtc_dt_match);
 
-अटल काष्ठा platक्रमm_driver meson_vrtc_driver = अणु
+static struct platform_driver meson_vrtc_driver = {
 	.probe = meson_vrtc_probe,
-	.driver = अणु
+	.driver = {
 		.name = "meson-vrtc",
 		.of_match_table = meson_vrtc_dt_match,
 		.pm = &meson_vrtc_pm_ops,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver(meson_vrtc_driver);
+module_platform_driver(meson_vrtc_driver);
 
 MODULE_DESCRIPTION("Amlogic Virtual Wakeup RTC Timer driver");
 MODULE_LICENSE("GPL");

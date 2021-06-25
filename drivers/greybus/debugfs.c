@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Greybus debugfs code
  *
@@ -7,24 +6,24 @@
  * Copyright 2014 Linaro Ltd.
  */
 
-#समावेश <linux/debugfs.h>
-#समावेश <linux/greybus.h>
+#include <linux/debugfs.h>
+#include <linux/greybus.h>
 
-अटल काष्ठा dentry *gb_debug_root;
+static struct dentry *gb_debug_root;
 
-व्योम __init gb_debugfs_init(व्योम)
-अणु
-	gb_debug_root = debugfs_create_dir("greybus", शून्य);
-पूर्ण
+void __init gb_debugfs_init(void)
+{
+	gb_debug_root = debugfs_create_dir("greybus", NULL);
+}
 
-व्योम gb_debugfs_cleanup(व्योम)
-अणु
-	debugfs_हटाओ_recursive(gb_debug_root);
-	gb_debug_root = शून्य;
-पूर्ण
+void gb_debugfs_cleanup(void)
+{
+	debugfs_remove_recursive(gb_debug_root);
+	gb_debug_root = NULL;
+}
 
-काष्ठा dentry *gb_debugfs_get(व्योम)
-अणु
-	वापस gb_debug_root;
-पूर्ण
+struct dentry *gb_debugfs_get(void)
+{
+	return gb_debug_root;
+}
 EXPORT_SYMBOL_GPL(gb_debugfs_get);

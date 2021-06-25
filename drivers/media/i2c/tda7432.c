@@ -1,10 +1,9 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * For the STS-Thompson TDA7432 audio processor chip
  *
  * Handles audio functions: volume, balance, tone, loudness
- * This driver will not complain अगर used with any
+ * This driver will not complain if used with any
  * other i2c device with the same address.
  *
  * Muting and tone control by Jonathan Isom <jisom@ematic.com>
@@ -16,103 +15,103 @@
  * Which was based on tda8425.c by Greg Alexander (c) 1998
  *
  * OPTIONS:
- * debug    - set to 1 अगर you'd like to see debug messages
- *            set to 2 अगर you'd like to be inundated with debug messages
+ * debug    - set to 1 if you'd like to see debug messages
+ *            set to 2 if you'd like to be inundated with debug messages
  *
- * loudness - set between 0 and 15 क्रम varying degrees of loudness effect
+ * loudness - set between 0 and 15 for varying degrees of loudness effect
  *
- * maxvol   - set maximum volume to +20db (1), शेष is 0db(0)
+ * maxvol   - set maximum volume to +20db (1), default is 0db(0)
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/init.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/समयr.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/slab.h>
-#समावेश <linux/videodev2.h>
-#समावेश <linux/i2c.h>
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/kernel.h>
+#include <linux/string.h>
+#include <linux/timer.h>
+#include <linux/delay.h>
+#include <linux/errno.h>
+#include <linux/slab.h>
+#include <linux/videodev2.h>
+#include <linux/i2c.h>
 
-#समावेश <media/v4l2-device.h>
-#समावेश <media/v4l2-ioctl.h>
-#समावेश <media/v4l2-ctrls.h>
+#include <media/v4l2-device.h>
+#include <media/v4l2-ioctl.h>
+#include <media/v4l2-ctrls.h>
 
-#अगर_अघोषित VIDEO_AUDIO_BALANCE
+#ifndef VIDEO_AUDIO_BALANCE
 # define VIDEO_AUDIO_BALANCE 32
-#पूर्ण_अगर
+#endif
 
 MODULE_AUTHOR("Eric Sandeen <eric_sandeen@bigfoot.com>");
 MODULE_DESCRIPTION("bttv driver for the tda7432 audio processor chip");
 MODULE_LICENSE("GPL");
 
-अटल पूर्णांक maxvol;
-अटल पूर्णांक loudness; /* disable loudness by शेष */
-अटल पूर्णांक debug;	 /* insmod parameter */
-module_param(debug, पूर्णांक, S_IRUGO | S_IWUSR);
+static int maxvol;
+static int loudness; /* disable loudness by default */
+static int debug;	 /* insmod parameter */
+module_param(debug, int, S_IRUGO | S_IWUSR);
 MODULE_PARM_DESC(debug, "Set debugging level from 0 to 3. Default is off(0).");
-module_param(loudness, पूर्णांक, S_IRUGO);
+module_param(loudness, int, S_IRUGO);
 MODULE_PARM_DESC(loudness, "Turn loudness on(1) else off(0). Default is off(0).");
-module_param(maxvol, पूर्णांक, S_IRUGO | S_IWUSR);
+module_param(maxvol, int, S_IRUGO | S_IWUSR);
 MODULE_PARM_DESC(maxvol, "Set maximum volume to +20dB(0) else +0dB(1). Default is +20dB(0).");
 
 
-/* Structure of address and subaddresses क्रम the tda7432 */
+/* Structure of address and subaddresses for the tda7432 */
 
-काष्ठा tda7432 अणु
-	काष्ठा v4l2_subdev sd;
-	काष्ठा v4l2_ctrl_handler hdl;
-	काष्ठा अणु
+struct tda7432 {
+	struct v4l2_subdev sd;
+	struct v4l2_ctrl_handler hdl;
+	struct {
 		/* bass/treble cluster */
-		काष्ठा v4l2_ctrl *bass;
-		काष्ठा v4l2_ctrl *treble;
-	पूर्ण;
-	काष्ठा अणु
+		struct v4l2_ctrl *bass;
+		struct v4l2_ctrl *treble;
+	};
+	struct {
 		/* mute/balance cluster */
-		काष्ठा v4l2_ctrl *mute;
-		काष्ठा v4l2_ctrl *balance;
-	पूर्ण;
-पूर्ण;
+		struct v4l2_ctrl *mute;
+		struct v4l2_ctrl *balance;
+	};
+};
 
-अटल अंतरभूत काष्ठा tda7432 *to_state(काष्ठा v4l2_subdev *sd)
-अणु
-	वापस container_of(sd, काष्ठा tda7432, sd);
-पूर्ण
+static inline struct tda7432 *to_state(struct v4l2_subdev *sd)
+{
+	return container_of(sd, struct tda7432, sd);
+}
 
-अटल अंतरभूत काष्ठा v4l2_subdev *to_sd(काष्ठा v4l2_ctrl *ctrl)
-अणु
-	वापस &container_of(ctrl->handler, काष्ठा tda7432, hdl)->sd;
-पूर्ण
+static inline struct v4l2_subdev *to_sd(struct v4l2_ctrl *ctrl)
+{
+	return &container_of(ctrl->handler, struct tda7432, hdl)->sd;
+}
 
 /* The TDA7432 is made by STS-Thompson
  * http://www.st.com
- * http://us.st.com/stonline/books/pdf/करोcs/4056.pdf
+ * http://us.st.com/stonline/books/pdf/docs/4056.pdf
  *
  * TDA7432: I2C-bus controlled basic audio processor
  *
  * The TDA7432 controls basic audio functions like volume, balance,
  * and tone control (including loudness).  It also has four channel
- * output (क्रम front and rear).  Since most vidcap cards probably
- * करोn't have 4 channel output, this driver will set front & rear
+ * output (for front and rear).  Since most vidcap cards probably
+ * don't have 4 channel output, this driver will set front & rear
  * together (no independent control).
  */
 
-		/* Subaddresses क्रम TDA7432 */
+		/* Subaddresses for TDA7432 */
 
-#घोषणा TDA7432_IN	0x00 /* Input select                 */
-#घोषणा TDA7432_VL	0x01 /* Volume                       */
-#घोषणा TDA7432_TN	0x02 /* Bass, Treble (Tone)          */
-#घोषणा TDA7432_LF	0x03 /* Attenuation LF (Left Front)  */
-#घोषणा TDA7432_LR	0x04 /* Attenuation LR (Left Rear)   */
-#घोषणा TDA7432_RF	0x05 /* Attenuation RF (Right Front) */
-#घोषणा TDA7432_RR	0x06 /* Attenuation RR (Right Rear)  */
-#घोषणा TDA7432_LD	0x07 /* Loudness                     */
+#define TDA7432_IN	0x00 /* Input select                 */
+#define TDA7432_VL	0x01 /* Volume                       */
+#define TDA7432_TN	0x02 /* Bass, Treble (Tone)          */
+#define TDA7432_LF	0x03 /* Attenuation LF (Left Front)  */
+#define TDA7432_LR	0x04 /* Attenuation LR (Left Rear)   */
+#define TDA7432_RF	0x05 /* Attenuation RF (Right Front) */
+#define TDA7432_RR	0x06 /* Attenuation RR (Right Rear)  */
+#define TDA7432_LD	0x07 /* Loudness                     */
 
 
-		/* Masks क्रम bits in TDA7432 subaddresses */
+		/* Masks for bits in TDA7432 subaddresses */
 
-/* Many of these not used - just क्रम करोcumentation */
+/* Many of these not used - just for documentation */
 
 /* Subaddress 0x00 - Input selection and bass control */
 
@@ -129,10 +128,10 @@ MODULE_PARM_DESC(maxvol, "Set maximum volume to +20dB(0) else +0dB(1). Default i
  * Highest 3 bits not used
  */
 
-#घोषणा TDA7432_STEREO_IN	0
-#घोषणा TDA7432_MONO_IN		2	/* Probably won't be used */
-#घोषणा TDA7432_BASS_SYM	1 << 3
-#घोषणा TDA7432_BASS_NORM	1 << 4
+#define TDA7432_STEREO_IN	0
+#define TDA7432_MONO_IN		2	/* Probably won't be used */
+#define TDA7432_BASS_SYM	1 << 3
+#define TDA7432_BASS_NORM	1 << 4
 
 /* Subaddress 0x01 - Volume */
 
@@ -147,21 +146,21 @@ MODULE_PARM_DESC(maxvol, "Set maximum volume to +20dB(0) else +0dB(1). Default i
  * MSB (bit 7) controls loudness: 1/0 is loudness on/off
  */
 
-#घोषणा	TDA7432_VOL_0DB		0x20
-#घोषणा TDA7432_LD_ON		1 << 7
+#define	TDA7432_VOL_0DB		0x20
+#define TDA7432_LD_ON		1 << 7
 
 
 /* Subaddress 0x02 - Tone control */
 
-/* Bits 0,1,2 control असलolute treble gain from 0dB to 14dB
+/* Bits 0,1,2 control absolute treble gain from 0dB to 14dB
  * 0x0 is 14dB, 0x7 is 0dB
  *
  * Bit 3 controls treble attenuation/gain (sign)
  * 1 = gain (+)
  * 0 = attenuation (-)
  *
- * Bits 4,5,6 control असलolute bass gain from 0dB to 14dB
- * (This is only true क्रम normal base range, set in 0x00)
+ * Bits 4,5,6 control absolute bass gain from 0dB to 14dB
+ * (This is only true for normal base range, set in 0x00)
  * 0x0 << 4 is 14dB, 0x7 is 0dB
  *
  * Bit 7 controls bass attenuation/gain (sign)
@@ -172,12 +171,12 @@ MODULE_PARM_DESC(maxvol, "Set maximum volume to +20dB(0) else +0dB(1). Default i
  * 1 1 0 1 0 1 0 1 is +4dB bass, -4dB treble
  */
 
-#घोषणा TDA7432_TREBLE_0DB		0xf
-#घोषणा TDA7432_TREBLE			7
-#घोषणा TDA7432_TREBLE_GAIN		1 << 3
-#घोषणा TDA7432_BASS_0DB		0xf
-#घोषणा TDA7432_BASS			7 << 4
-#घोषणा TDA7432_BASS_GAIN		1 << 7
+#define TDA7432_TREBLE_0DB		0xf
+#define TDA7432_TREBLE			7
+#define TDA7432_TREBLE_GAIN		1 << 3
+#define TDA7432_BASS_0DB		0xf
+#define TDA7432_BASS			7 << 4
+#define TDA7432_BASS_GAIN		1 << 7
 
 
 /* Subaddress 0x03 - Left  Front attenuation */
@@ -196,8 +195,8 @@ MODULE_PARM_DESC(maxvol, "Set maximum volume to +20dB(0) else +0dB(1). Default i
  * Bits 6,7 unused
  */
 
-#घोषणा TDA7432_ATTEN_0DB	0x00
-#घोषणा TDA7432_MUTE        0x1 << 5
+#define TDA7432_ATTEN_0DB	0x00
+#define TDA7432_MUTE        0x1 << 5
 
 
 /* Subaddress 0x07 - Loudness Control */
@@ -218,34 +217,34 @@ MODULE_PARM_DESC(maxvol, "Set maximum volume to +20dB(0) else +0dB(1). Default i
 
 /* Begin code */
 
-अटल पूर्णांक tda7432_ग_लिखो(काष्ठा v4l2_subdev *sd, पूर्णांक subaddr, पूर्णांक val)
-अणु
-	काष्ठा i2c_client *client = v4l2_get_subdevdata(sd);
-	अचिन्हित अक्षर buffer[2];
+static int tda7432_write(struct v4l2_subdev *sd, int subaddr, int val)
+{
+	struct i2c_client *client = v4l2_get_subdevdata(sd);
+	unsigned char buffer[2];
 
 	v4l2_dbg(2, debug, sd, "In tda7432_write\n");
 	v4l2_dbg(1, debug, sd, "Writing %d 0x%x\n", subaddr, val);
 	buffer[0] = subaddr;
 	buffer[1] = val;
-	अगर (2 != i2c_master_send(client, buffer, 2)) अणु
+	if (2 != i2c_master_send(client, buffer, 2)) {
 		v4l2_err(sd, "I/O error, trying (write %d 0x%x)\n",
 		       subaddr, val);
-		वापस -1;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return -1;
+	}
+	return 0;
+}
 
-अटल पूर्णांक tda7432_set(काष्ठा v4l2_subdev *sd)
-अणु
-	काष्ठा i2c_client *client = v4l2_get_subdevdata(sd);
-	अचिन्हित अक्षर buf[16];
+static int tda7432_set(struct v4l2_subdev *sd)
+{
+	struct i2c_client *client = v4l2_get_subdevdata(sd);
+	unsigned char buf[16];
 
 	buf[0]  = TDA7432_IN;
 	buf[1]  = TDA7432_STEREO_IN |  /* Main (stereo) input   */
 		  TDA7432_BASS_SYM  |  /* Symmetric bass cut    */
 		  TDA7432_BASS_NORM;   /* Normal bass range     */
 	buf[2]  = 0x3b;
-	अगर (loudness)			 /* Turn loudness on?     */
+	if (loudness)			 /* Turn loudness on?     */
 		buf[2] |= TDA7432_LD_ON;
 	buf[3]  = TDA7432_TREBLE_0DB | (TDA7432_BASS_0DB << 4);
 	buf[4]  = TDA7432_ATTEN_0DB;
@@ -253,109 +252,109 @@ MODULE_PARM_DESC(maxvol, "Set maximum volume to +20dB(0) else +0dB(1). Default i
 	buf[6]  = TDA7432_ATTEN_0DB;
 	buf[7]  = TDA7432_ATTEN_0DB;
 	buf[8]  = loudness;
-	अगर (9 != i2c_master_send(client, buf, 9)) अणु
+	if (9 != i2c_master_send(client, buf, 9)) {
 		v4l2_err(sd, "I/O error, trying tda7432_set\n");
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tda7432_log_status(काष्ठा v4l2_subdev *sd)
-अणु
-	काष्ठा tda7432 *state = to_state(sd);
+static int tda7432_log_status(struct v4l2_subdev *sd)
+{
+	struct tda7432 *state = to_state(sd);
 
 	v4l2_ctrl_handler_log_status(&state->hdl, sd->name);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tda7432_s_ctrl(काष्ठा v4l2_ctrl *ctrl)
-अणु
-	काष्ठा v4l2_subdev *sd = to_sd(ctrl);
-	काष्ठा tda7432 *t = to_state(sd);
+static int tda7432_s_ctrl(struct v4l2_ctrl *ctrl)
+{
+	struct v4l2_subdev *sd = to_sd(ctrl);
+	struct tda7432 *t = to_state(sd);
 	u8 bass, treble, volume;
 	u8 lf, lr, rf, rr;
 
-	चयन (ctrl->id) अणु
-	हाल V4L2_CID_AUDIO_MUTE:
-		अगर (t->balance->val < 0) अणु
-			/* shअगरted to left, attenuate right */
+	switch (ctrl->id) {
+	case V4L2_CID_AUDIO_MUTE:
+		if (t->balance->val < 0) {
+			/* shifted to left, attenuate right */
 			rr = rf = -t->balance->val;
 			lr = lf = TDA7432_ATTEN_0DB;
-		पूर्ण अन्यथा अगर (t->balance->val > 0) अणु
-			/* shअगरted to right, attenuate left */
+		} else if (t->balance->val > 0) {
+			/* shifted to right, attenuate left */
 			rr = rf = TDA7432_ATTEN_0DB;
 			lr = lf = t->balance->val;
-		पूर्ण अन्यथा अणु
+		} else {
 			/* centered */
 			rr = rf = TDA7432_ATTEN_0DB;
 			lr = lf = TDA7432_ATTEN_0DB;
-		पूर्ण
-		अगर (t->mute->val) अणु
+		}
+		if (t->mute->val) {
 			lf |= TDA7432_MUTE;
 			lr |= TDA7432_MUTE;
 			rf |= TDA7432_MUTE;
 			rr |= TDA7432_MUTE;
-		पूर्ण
+		}
 		/* Mute & update balance*/
-		tda7432_ग_लिखो(sd, TDA7432_LF, lf);
-		tda7432_ग_लिखो(sd, TDA7432_LR, lr);
-		tda7432_ग_लिखो(sd, TDA7432_RF, rf);
-		tda7432_ग_लिखो(sd, TDA7432_RR, rr);
-		वापस 0;
-	हाल V4L2_CID_AUDIO_VOLUME:
+		tda7432_write(sd, TDA7432_LF, lf);
+		tda7432_write(sd, TDA7432_LR, lr);
+		tda7432_write(sd, TDA7432_RF, rf);
+		tda7432_write(sd, TDA7432_RR, rr);
+		return 0;
+	case V4L2_CID_AUDIO_VOLUME:
 		volume = 0x6f - ctrl->val;
-		अगर (loudness)		/* Turn on the loudness bit */
+		if (loudness)		/* Turn on the loudness bit */
 			volume |= TDA7432_LD_ON;
 
-		tda7432_ग_लिखो(sd, TDA7432_VL, volume);
-		वापस 0;
-	हाल V4L2_CID_AUDIO_BASS:
+		tda7432_write(sd, TDA7432_VL, volume);
+		return 0;
+	case V4L2_CID_AUDIO_BASS:
 		bass = t->bass->val;
 		treble = t->treble->val;
-		अगर (bass >= 0x8)
+		if (bass >= 0x8)
 			bass = 14 - (bass - 8);
-		अगर (treble >= 0x8)
+		if (treble >= 0x8)
 			treble = 14 - (treble - 8);
 
-		tda7432_ग_लिखो(sd, TDA7432_TN, 0x10 | (bass << 4) | treble);
-		वापस 0;
-	पूर्ण
-	वापस -EINVAL;
-पूर्ण
+		tda7432_write(sd, TDA7432_TN, 0x10 | (bass << 4) | treble);
+		return 0;
+	}
+	return -EINVAL;
+}
 
 /* ----------------------------------------------------------------------- */
 
-अटल स्थिर काष्ठा v4l2_ctrl_ops tda7432_ctrl_ops = अणु
+static const struct v4l2_ctrl_ops tda7432_ctrl_ops = {
 	.s_ctrl = tda7432_s_ctrl,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा v4l2_subdev_core_ops tda7432_core_ops = अणु
+static const struct v4l2_subdev_core_ops tda7432_core_ops = {
 	.log_status = tda7432_log_status,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा v4l2_subdev_ops tda7432_ops = अणु
+static const struct v4l2_subdev_ops tda7432_ops = {
 	.core = &tda7432_core_ops,
-पूर्ण;
+};
 
 /* ----------------------------------------------------------------------- */
 
 /* *********************** *
- * i2c पूर्णांकerface functions *
+ * i2c interface functions *
  * *********************** */
 
-अटल पूर्णांक tda7432_probe(काष्ठा i2c_client *client,
-			स्थिर काष्ठा i2c_device_id *id)
-अणु
-	काष्ठा tda7432 *t;
-	काष्ठा v4l2_subdev *sd;
+static int tda7432_probe(struct i2c_client *client,
+			const struct i2c_device_id *id)
+{
+	struct tda7432 *t;
+	struct v4l2_subdev *sd;
 
 	v4l_info(client, "chip found @ 0x%02x (%s)\n",
 			client->addr << 1, client->adapter->name);
 
-	t = devm_kzalloc(&client->dev, माप(*t), GFP_KERNEL);
-	अगर (!t)
-		वापस -ENOMEM;
+	t = devm_kzalloc(&client->dev, sizeof(*t), GFP_KERNEL);
+	if (!t)
+		return -ENOMEM;
 	sd = &t->sd;
 	v4l2_i2c_subdev_init(sd, client, &tda7432_ops);
 	v4l2_ctrl_handler_init(&t->hdl, 5);
@@ -370,51 +369,51 @@ MODULE_PARM_DESC(maxvol, "Set maximum volume to +20dB(0) else +0dB(1). Default i
 	t->treble = v4l2_ctrl_new_std(&t->hdl, &tda7432_ctrl_ops,
 		V4L2_CID_AUDIO_TREBLE, 0, 14, 1, 7);
 	sd->ctrl_handler = &t->hdl;
-	अगर (t->hdl.error) अणु
-		पूर्णांक err = t->hdl.error;
+	if (t->hdl.error) {
+		int err = t->hdl.error;
 
-		v4l2_ctrl_handler_मुक्त(&t->hdl);
-		वापस err;
-	पूर्ण
+		v4l2_ctrl_handler_free(&t->hdl);
+		return err;
+	}
 	v4l2_ctrl_cluster(2, &t->bass);
 	v4l2_ctrl_cluster(2, &t->mute);
 	v4l2_ctrl_handler_setup(&t->hdl);
-	अगर (loudness < 0 || loudness > 15) अणु
+	if (loudness < 0 || loudness > 15) {
 		v4l2_warn(sd, "loudness parameter must be between 0 and 15\n");
-		अगर (loudness < 0)
+		if (loudness < 0)
 			loudness = 0;
-		अगर (loudness > 15)
+		if (loudness > 15)
 			loudness = 15;
-	पूर्ण
+	}
 
 	tda7432_set(sd);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tda7432_हटाओ(काष्ठा i2c_client *client)
-अणु
-	काष्ठा v4l2_subdev *sd = i2c_get_clientdata(client);
-	काष्ठा tda7432 *t = to_state(sd);
+static int tda7432_remove(struct i2c_client *client)
+{
+	struct v4l2_subdev *sd = i2c_get_clientdata(client);
+	struct tda7432 *t = to_state(sd);
 
 	tda7432_set(sd);
-	v4l2_device_unरेजिस्टर_subdev(sd);
-	v4l2_ctrl_handler_मुक्त(&t->hdl);
-	वापस 0;
-पूर्ण
+	v4l2_device_unregister_subdev(sd);
+	v4l2_ctrl_handler_free(&t->hdl);
+	return 0;
+}
 
-अटल स्थिर काष्ठा i2c_device_id tda7432_id[] = अणु
-	अणु "tda7432", 0 पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct i2c_device_id tda7432_id[] = {
+	{ "tda7432", 0 },
+	{ }
+};
 MODULE_DEVICE_TABLE(i2c, tda7432_id);
 
-अटल काष्ठा i2c_driver tda7432_driver = अणु
-	.driver = अणु
+static struct i2c_driver tda7432_driver = {
+	.driver = {
 		.name	= "tda7432",
-	पूर्ण,
+	},
 	.probe		= tda7432_probe,
-	.हटाओ		= tda7432_हटाओ,
+	.remove		= tda7432_remove,
 	.id_table	= tda7432_id,
-पूर्ण;
+};
 
 module_i2c_driver(tda7432_driver);

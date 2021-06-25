@@ -1,36 +1,35 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Vidtv serves as a reference DVB driver and helps validate the existing APIs
- * in the media subप्रणाली. It can also aid developers working on userspace
+ * in the media subsystem. It can also aid developers working on userspace
  * applications.
  *
- * This file contains a generic encoder type that can provide data क्रम a stream
+ * This file contains a generic encoder type that can provide data for a stream
  *
  * Copyright (C) 2020 Daniel W. S. Almeida
  */
 
-#अगर_अघोषित VIDTV_ENCODER_H
-#घोषणा VIDTV_ENCODER_H
+#ifndef VIDTV_ENCODER_H
+#define VIDTV_ENCODER_H
 
-#समावेश <linux/types.h>
+#include <linux/types.h>
 
-क्रमागत vidtv_encoder_id अणु
+enum vidtv_encoder_id {
 	/* add IDs here when implementing new encoders */
 	S302M,
-पूर्ण;
+};
 
-काष्ठा vidtv_access_unit अणु
+struct vidtv_access_unit {
 	u32 num_samples;
 	u64 pts;
 	u64 dts;
 	u32 nbytes;
 	u32 offset;
-	काष्ठा vidtv_access_unit *next;
-पूर्ण;
+	struct vidtv_access_unit *next;
+};
 
 /* Some musical notes, used by a tone generator. Values are in Hz */
-क्रमागत musical_notes अणु
+enum musical_notes {
 	NOTE_SILENT = 0,
 
 	NOTE_C_2 = 65,
@@ -94,40 +93,40 @@
 	NOTE_AS_6 = 1865,
 	NOTE_B_6 = 1976,
 	NOTE_C_7 = 2093
-पूर्ण;
+};
 
 /**
- * काष्ठा vidtv_encoder - A generic encoder type.
+ * struct vidtv_encoder - A generic encoder type.
  * @id: So we can cast to a concrete implementation when needed.
  * @name: Usually the same as the stream name.
- * @encoder_buf: The encoder पूर्णांकernal buffer क्रम the access units.
+ * @encoder_buf: The encoder internal buffer for the access units.
  * @encoder_buf_sz: The encoder buffer size, in bytes
  * @encoder_buf_offset: Our byte position in the encoder buffer.
  * @sample_count: How many samples we have encoded in total.
- * @access_units: encoder payload units, used क्रम घड़ी references
+ * @access_units: encoder payload units, used for clock references
  * @src_buf: The source of raw data to be encoded, encoder might set a
- * शेष अगर null.
+ * default if null.
  * @src_buf_sz: size of @src_buf.
  * @src_buf_offset: Our position in the source buffer.
  * @is_video_encoder: Whether this a video encoder (as opposed to audio)
- * @ctx: Encoder-specअगरic state.
+ * @ctx: Encoder-specific state.
  * @stream_id: Examples: Audio streams (0xc0-0xdf), Video streams
  * (0xe0-0xef).
- * @es_pid: The TS PID to use क्रम the elementary stream in this encoder.
- * @encode: Prepare enough AUs क्रम the given amount of समय.
+ * @es_pid: The TS PID to use for the elementary stream in this encoder.
+ * @encode: Prepare enough AUs for the given amount of time.
  * @clear: Clear the encoder output.
  * @sync: Attempt to synchronize with this encoder.
- * @sampling_rate_hz: The sampling rate (or fps, अगर video) used.
+ * @sampling_rate_hz: The sampling rate (or fps, if video) used.
  * @last_sample_cb: Called when the encoder runs out of data.This is
- *		    so the source can पढ़ो data in a
+ *		    so the source can read data in a
  *		    piecemeal fashion instead of having to
  *		    provide it all at once.
- * @destroy: Destroy this encoder, मुक्तing allocated resources.
+ * @destroy: Destroy this encoder, freeing allocated resources.
  * @next: Next in the chain
  */
-काष्ठा vidtv_encoder अणु
-	क्रमागत vidtv_encoder_id id;
-	अक्षर *name;
+struct vidtv_encoder {
+	enum vidtv_encoder_id id;
+	char *name;
 
 	u8 *encoder_buf;
 	u32 encoder_buf_sz;
@@ -135,32 +134,32 @@
 
 	u64 sample_count;
 
-	काष्ठा vidtv_access_unit *access_units;
+	struct vidtv_access_unit *access_units;
 
-	व्योम *src_buf;
+	void *src_buf;
 	u32 src_buf_sz;
 	u32 src_buf_offset;
 
 	bool is_video_encoder;
-	व्योम *ctx;
+	void *ctx;
 
 	__be16 stream_id;
 
 	__be16 es_pid;
 
-	व्योम *(*encode)(काष्ठा vidtv_encoder *e);
+	void *(*encode)(struct vidtv_encoder *e);
 
-	u32 (*clear)(काष्ठा vidtv_encoder *e);
+	u32 (*clear)(struct vidtv_encoder *e);
 
-	काष्ठा vidtv_encoder *sync;
+	struct vidtv_encoder *sync;
 
 	u32 sampling_rate_hz;
 
-	व्योम (*last_sample_cb)(u32 sample_no);
+	void (*last_sample_cb)(u32 sample_no);
 
-	व्योम (*destroy)(काष्ठा vidtv_encoder *e);
+	void (*destroy)(struct vidtv_encoder *e);
 
-	काष्ठा vidtv_encoder *next;
-पूर्ण;
+	struct vidtv_encoder *next;
+};
 
-#पूर्ण_अगर /* VIDTV_ENCODER_H */
+#endif /* VIDTV_ENCODER_H */

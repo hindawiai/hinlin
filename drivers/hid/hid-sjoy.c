@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- *  Force feedback support क्रम SmartJoy PLUS PS2->USB adapter
+ *  Force feedback support for SmartJoy PLUS PS2->USB adapter
  *
  *  Copyright (c) 2009 Jussi Kivilinna <jussi.kivilinna@mbnet.fi>
  *
@@ -13,25 +12,25 @@
 /*
  */
 
-/* #घोषणा DEBUG */
+/* #define DEBUG */
 
-#समावेश <linux/input.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/hid.h>
-#समावेश <linux/module.h>
-#समावेश "hid-ids.h"
+#include <linux/input.h>
+#include <linux/slab.h>
+#include <linux/hid.h>
+#include <linux/module.h>
+#include "hid-ids.h"
 
-#अगर_घोषित CONFIG_SMARTJOYPLUS_FF
+#ifdef CONFIG_SMARTJOYPLUS_FF
 
-काष्ठा sjoyff_device अणु
-	काष्ठा hid_report *report;
-पूर्ण;
+struct sjoyff_device {
+	struct hid_report *report;
+};
 
-अटल पूर्णांक hid_sjoyff_play(काष्ठा input_dev *dev, व्योम *data,
-			 काष्ठा ff_effect *effect)
-अणु
-	काष्ठा hid_device *hid = input_get_drvdata(dev);
-	काष्ठा sjoyff_device *sjoyff = data;
+static int hid_sjoyff_play(struct input_dev *dev, void *data,
+			 struct ff_effect *effect)
+{
+	struct hid_device *hid = input_get_drvdata(dev);
+	struct sjoyff_device *sjoyff = data;
 	u32 left, right;
 
 	left = effect->u.rumble.strong_magnitude;
@@ -46,127 +45,127 @@
 	dev_dbg(&dev->dev, "running with 0x%02x 0x%02x\n", left, right);
 	hid_hw_request(hid, sjoyff->report, HID_REQ_SET_REPORT);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sjoyff_init(काष्ठा hid_device *hid)
-अणु
-	काष्ठा sjoyff_device *sjoyff;
-	काष्ठा hid_report *report;
-	काष्ठा hid_input *hidinput;
-	काष्ठा list_head *report_list =
-			&hid->report_क्रमागत[HID_OUTPUT_REPORT].report_list;
-	काष्ठा list_head *report_ptr = report_list;
-	काष्ठा input_dev *dev;
-	पूर्णांक error;
+static int sjoyff_init(struct hid_device *hid)
+{
+	struct sjoyff_device *sjoyff;
+	struct hid_report *report;
+	struct hid_input *hidinput;
+	struct list_head *report_list =
+			&hid->report_enum[HID_OUTPUT_REPORT].report_list;
+	struct list_head *report_ptr = report_list;
+	struct input_dev *dev;
+	int error;
 
-	अगर (list_empty(report_list)) अणु
+	if (list_empty(report_list)) {
 		hid_err(hid, "no output reports found\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	list_क्रम_each_entry(hidinput, &hid->inमाला_दो, list) अणु
+	list_for_each_entry(hidinput, &hid->inputs, list) {
 		report_ptr = report_ptr->next;
 
-		अगर (report_ptr == report_list) अणु
+		if (report_ptr == report_list) {
 			hid_err(hid, "required output report is missing\n");
-			वापस -ENODEV;
-		पूर्ण
+			return -ENODEV;
+		}
 
-		report = list_entry(report_ptr, काष्ठा hid_report, list);
-		अगर (report->maxfield < 1) अणु
+		report = list_entry(report_ptr, struct hid_report, list);
+		if (report->maxfield < 1) {
 			hid_err(hid, "no fields in the report\n");
-			वापस -ENODEV;
-		पूर्ण
+			return -ENODEV;
+		}
 
-		अगर (report->field[0]->report_count < 3) अणु
+		if (report->field[0]->report_count < 3) {
 			hid_err(hid, "not enough values in the field\n");
-			वापस -ENODEV;
-		पूर्ण
+			return -ENODEV;
+		}
 
-		sjoyff = kzalloc(माप(काष्ठा sjoyff_device), GFP_KERNEL);
-		अगर (!sjoyff)
-			वापस -ENOMEM;
+		sjoyff = kzalloc(sizeof(struct sjoyff_device), GFP_KERNEL);
+		if (!sjoyff)
+			return -ENOMEM;
 
 		dev = hidinput->input;
 
 		set_bit(FF_RUMBLE, dev->ffbit);
 
 		error = input_ff_create_memless(dev, sjoyff, hid_sjoyff_play);
-		अगर (error) अणु
-			kमुक्त(sjoyff);
-			वापस error;
-		पूर्ण
+		if (error) {
+			kfree(sjoyff);
+			return error;
+		}
 
 		sjoyff->report = report;
 		sjoyff->report->field[0]->value[0] = 0x01;
 		sjoyff->report->field[0]->value[1] = 0x00;
 		sjoyff->report->field[0]->value[2] = 0x00;
 		hid_hw_request(hid, sjoyff->report, HID_REQ_SET_REPORT);
-	पूर्ण
+	}
 
 	hid_info(hid, "Force feedback for SmartJoy PLUS PS2/USB adapter\n");
 
-	वापस 0;
-पूर्ण
-#अन्यथा
-अटल अंतरभूत पूर्णांक sjoyff_init(काष्ठा hid_device *hid)
-अणु
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+	return 0;
+}
+#else
+static inline int sjoyff_init(struct hid_device *hid)
+{
+	return 0;
+}
+#endif
 
-अटल पूर्णांक sjoy_probe(काष्ठा hid_device *hdev, स्थिर काष्ठा hid_device_id *id)
-अणु
-	पूर्णांक ret;
+static int sjoy_probe(struct hid_device *hdev, const struct hid_device_id *id)
+{
+	int ret;
 
 	hdev->quirks |= id->driver_data;
 
 	ret = hid_parse(hdev);
-	अगर (ret) अणु
+	if (ret) {
 		hid_err(hdev, "parse failed\n");
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	ret = hid_hw_start(hdev, HID_CONNECT_DEFAULT & ~HID_CONNECT_FF);
-	अगर (ret) अणु
+	if (ret) {
 		hid_err(hdev, "hw start failed\n");
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	sjoyff_init(hdev);
 
-	वापस 0;
+	return 0;
 err:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा hid_device_id sjoy_devices[] = अणु
-	अणु HID_USB_DEVICE(USB_VENDOR_ID_WISEGROUP_LTD, USB_DEVICE_ID_SUPER_JOY_BOX_3_PRO),
-		.driver_data = HID_QUIRK_NOGET पूर्ण,
-	अणु HID_USB_DEVICE(USB_VENDOR_ID_WISEGROUP_LTD, USB_DEVICE_ID_SUPER_DUAL_BOX_PRO),
+static const struct hid_device_id sjoy_devices[] = {
+	{ HID_USB_DEVICE(USB_VENDOR_ID_WISEGROUP_LTD, USB_DEVICE_ID_SUPER_JOY_BOX_3_PRO),
+		.driver_data = HID_QUIRK_NOGET },
+	{ HID_USB_DEVICE(USB_VENDOR_ID_WISEGROUP_LTD, USB_DEVICE_ID_SUPER_DUAL_BOX_PRO),
 		.driver_data = HID_QUIRK_MULTI_INPUT | HID_QUIRK_NOGET |
-			       HID_QUIRK_SKIP_OUTPUT_REPORTS पूर्ण,
-	अणु HID_USB_DEVICE(USB_VENDOR_ID_WISEGROUP_LTD, USB_DEVICE_ID_SUPER_JOY_BOX_5_PRO),
+			       HID_QUIRK_SKIP_OUTPUT_REPORTS },
+	{ HID_USB_DEVICE(USB_VENDOR_ID_WISEGROUP_LTD, USB_DEVICE_ID_SUPER_JOY_BOX_5_PRO),
 		.driver_data = HID_QUIRK_MULTI_INPUT | HID_QUIRK_NOGET |
-			       HID_QUIRK_SKIP_OUTPUT_REPORTS पूर्ण,
-	अणु HID_USB_DEVICE(USB_VENDOR_ID_WISEGROUP, USB_DEVICE_ID_SMARTJOY_PLUS) पूर्ण,
-	अणु HID_USB_DEVICE(USB_VENDOR_ID_WISEGROUP, USB_DEVICE_ID_SUPER_JOY_BOX_3) पूर्ण,
-	अणु HID_USB_DEVICE(USB_VENDOR_ID_WISEGROUP, USB_DEVICE_ID_DUAL_USB_JOYPAD),
+			       HID_QUIRK_SKIP_OUTPUT_REPORTS },
+	{ HID_USB_DEVICE(USB_VENDOR_ID_WISEGROUP, USB_DEVICE_ID_SMARTJOY_PLUS) },
+	{ HID_USB_DEVICE(USB_VENDOR_ID_WISEGROUP, USB_DEVICE_ID_SUPER_JOY_BOX_3) },
+	{ HID_USB_DEVICE(USB_VENDOR_ID_WISEGROUP, USB_DEVICE_ID_DUAL_USB_JOYPAD),
 		.driver_data = HID_QUIRK_MULTI_INPUT |
-			       HID_QUIRK_SKIP_OUTPUT_REPORTS पूर्ण,
-	अणु HID_USB_DEVICE(USB_VENDOR_ID_PLAYDOTCOM, USB_DEVICE_ID_PLAYDOTCOM_EMS_USBII),
+			       HID_QUIRK_SKIP_OUTPUT_REPORTS },
+	{ HID_USB_DEVICE(USB_VENDOR_ID_PLAYDOTCOM, USB_DEVICE_ID_PLAYDOTCOM_EMS_USBII),
 		.driver_data = HID_QUIRK_MULTI_INPUT |
-			       HID_QUIRK_SKIP_OUTPUT_REPORTS पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+			       HID_QUIRK_SKIP_OUTPUT_REPORTS },
+	{ }
+};
 MODULE_DEVICE_TABLE(hid, sjoy_devices);
 
-अटल काष्ठा hid_driver sjoy_driver = अणु
+static struct hid_driver sjoy_driver = {
 	.name = "smartjoyplus",
 	.id_table = sjoy_devices,
 	.probe = sjoy_probe,
-पूर्ण;
+};
 module_hid_driver(sjoy_driver);
 
 MODULE_LICENSE("GPL");

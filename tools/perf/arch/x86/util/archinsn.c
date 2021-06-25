@@ -1,28 +1,27 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश "archinsn.h"
-#समावेश "event.h"
-#समावेश "machine.h"
-#समावेश "thread.h"
-#समावेश "symbol.h"
-#समावेश "../../../../arch/x86/include/asm/insn.h"
+// SPDX-License-Identifier: GPL-2.0
+#include "archinsn.h"
+#include "event.h"
+#include "machine.h"
+#include "thread.h"
+#include "symbol.h"
+#include "../../../../arch/x86/include/asm/insn.h"
 
-व्योम arch_fetch_insn(काष्ठा perf_sample *sample,
-		     काष्ठा thपढ़ो *thपढ़ो,
-		     काष्ठा machine *machine)
-अणु
-	काष्ठा insn insn;
-	पूर्णांक len, ret;
+void arch_fetch_insn(struct perf_sample *sample,
+		     struct thread *thread,
+		     struct machine *machine)
+{
+	struct insn insn;
+	int len, ret;
 	bool is64bit = false;
 
-	अगर (!sample->ip)
-		वापस;
-	len = thपढ़ो__स_नकल(thपढ़ो, machine, sample->insn, sample->ip, माप(sample->insn), &is64bit);
-	अगर (len <= 0)
-		वापस;
+	if (!sample->ip)
+		return;
+	len = thread__memcpy(thread, machine, sample->insn, sample->ip, sizeof(sample->insn), &is64bit);
+	if (len <= 0)
+		return;
 
 	ret = insn_decode(&insn, sample->insn, len,
 			  is64bit ? INSN_MODE_64 : INSN_MODE_32);
-	अगर (ret >= 0 && insn.length <= len)
+	if (ret >= 0 && insn.length <= len)
 		sample->insn_len = insn.length;
-पूर्ण
+}

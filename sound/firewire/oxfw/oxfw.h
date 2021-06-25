@@ -1,143 +1,142 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * oxfw.h - a part of driver क्रम OXFW970/971 based devices
+ * oxfw.h - a part of driver for OXFW970/971 based devices
  *
  * Copyright (c) Clemens Ladisch <clemens@ladisch.de>
  */
 
-#समावेश <linux/device.h>
-#समावेश <linux/firewire.h>
-#समावेश <linux/firewire-स्थिरants.h>
-#समावेश <linux/module.h>
-#समावेश <linux/mod_devicetable.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/compat.h>
-#समावेश <linux/sched/संकेत.स>
+#include <linux/device.h>
+#include <linux/firewire.h>
+#include <linux/firewire-constants.h>
+#include <linux/module.h>
+#include <linux/mod_devicetable.h>
+#include <linux/mutex.h>
+#include <linux/slab.h>
+#include <linux/compat.h>
+#include <linux/sched/signal.h>
 
-#समावेश <sound/control.h>
-#समावेश <sound/core.h>
-#समावेश <sound/initval.h>
-#समावेश <sound/pcm.h>
-#समावेश <sound/pcm_params.h>
-#समावेश <sound/info.h>
-#समावेश <sound/rawmidi.h>
-#समावेश <sound/firewire.h>
-#समावेश <sound/hwdep.h>
+#include <sound/control.h>
+#include <sound/core.h>
+#include <sound/initval.h>
+#include <sound/pcm.h>
+#include <sound/pcm_params.h>
+#include <sound/info.h>
+#include <sound/rawmidi.h>
+#include <sound/firewire.h>
+#include <sound/hwdep.h>
 
-#समावेश "../lib.h"
-#समावेश "../fcp.h"
-#समावेश "../packets-buffer.h"
-#समावेश "../iso-resources.h"
-#समावेश "../amdtp-am824.h"
-#समावेश "../cmp.h"
+#include "../lib.h"
+#include "../fcp.h"
+#include "../packets-buffer.h"
+#include "../iso-resources.h"
+#include "../amdtp-am824.h"
+#include "../cmp.h"
 
-/* This is an arbitrary number क्रम convinience. */
-#घोषणा	SND_OXFW_STREAM_FORMAT_ENTRIES	10
-काष्ठा snd_oxfw अणु
-	काष्ठा snd_card *card;
-	काष्ठा fw_unit *unit;
-	काष्ठा mutex mutex;
+/* This is an arbitrary number for convinience. */
+#define	SND_OXFW_STREAM_FORMAT_ENTRIES	10
+struct snd_oxfw {
+	struct snd_card *card;
+	struct fw_unit *unit;
+	struct mutex mutex;
 	spinlock_t lock;
 
-	bool रेजिस्टरed;
-	काष्ठा delayed_work dwork;
+	bool registered;
+	struct delayed_work dwork;
 
 	bool wrong_dbs;
 	bool has_output;
 	bool has_input;
-	u8 *tx_stream_क्रमmats[SND_OXFW_STREAM_FORMAT_ENTRIES];
-	u8 *rx_stream_क्रमmats[SND_OXFW_STREAM_FORMAT_ENTRIES];
+	u8 *tx_stream_formats[SND_OXFW_STREAM_FORMAT_ENTRIES];
+	u8 *rx_stream_formats[SND_OXFW_STREAM_FORMAT_ENTRIES];
 	bool assumed;
-	काष्ठा cmp_connection out_conn;
-	काष्ठा cmp_connection in_conn;
-	काष्ठा amdtp_stream tx_stream;
-	काष्ठा amdtp_stream rx_stream;
-	अचिन्हित पूर्णांक substreams_count;
+	struct cmp_connection out_conn;
+	struct cmp_connection in_conn;
+	struct amdtp_stream tx_stream;
+	struct amdtp_stream rx_stream;
+	unsigned int substreams_count;
 
-	अचिन्हित पूर्णांक midi_input_ports;
-	अचिन्हित पूर्णांक midi_output_ports;
+	unsigned int midi_input_ports;
+	unsigned int midi_output_ports;
 
-	पूर्णांक dev_lock_count;
+	int dev_lock_count;
 	bool dev_lock_changed;
-	रुको_queue_head_t hwdep_रुको;
+	wait_queue_head_t hwdep_wait;
 
-	स्थिर काष्ठा ieee1394_device_id *entry;
-	व्योम *spec;
+	const struct ieee1394_device_id *entry;
+	void *spec;
 
-	काष्ठा amdtp_करोमुख्य करोमुख्य;
-पूर्ण;
+	struct amdtp_domain domain;
+};
 
 /*
- * AV/C Stream Format Inक्रमmation Specअगरication 1.1 Working Draft
+ * AV/C Stream Format Information Specification 1.1 Working Draft
  * (Apr 2005, 1394TA)
  */
-पूर्णांक avc_stream_set_क्रमmat(काष्ठा fw_unit *unit, क्रमागत avc_general_plug_dir dir,
-			  अचिन्हित पूर्णांक pid, u8 *क्रमmat, अचिन्हित पूर्णांक len);
-पूर्णांक avc_stream_get_क्रमmat(काष्ठा fw_unit *unit,
-			  क्रमागत avc_general_plug_dir dir, अचिन्हित पूर्णांक pid,
-			  u8 *buf, अचिन्हित पूर्णांक *len, अचिन्हित पूर्णांक eid);
-अटल अंतरभूत पूर्णांक
-avc_stream_get_क्रमmat_single(काष्ठा fw_unit *unit,
-			     क्रमागत avc_general_plug_dir dir, अचिन्हित पूर्णांक pid,
-			     u8 *buf, अचिन्हित पूर्णांक *len)
-अणु
-	वापस avc_stream_get_क्रमmat(unit, dir, pid, buf, len, 0xff);
-पूर्ण
-अटल अंतरभूत पूर्णांक
-avc_stream_get_क्रमmat_list(काष्ठा fw_unit *unit,
-			   क्रमागत avc_general_plug_dir dir, अचिन्हित पूर्णांक pid,
-			   u8 *buf, अचिन्हित पूर्णांक *len,
-			   अचिन्हित पूर्णांक eid)
-अणु
-	वापस avc_stream_get_क्रमmat(unit, dir, pid, buf, len, eid);
-पूर्ण
+int avc_stream_set_format(struct fw_unit *unit, enum avc_general_plug_dir dir,
+			  unsigned int pid, u8 *format, unsigned int len);
+int avc_stream_get_format(struct fw_unit *unit,
+			  enum avc_general_plug_dir dir, unsigned int pid,
+			  u8 *buf, unsigned int *len, unsigned int eid);
+static inline int
+avc_stream_get_format_single(struct fw_unit *unit,
+			     enum avc_general_plug_dir dir, unsigned int pid,
+			     u8 *buf, unsigned int *len)
+{
+	return avc_stream_get_format(unit, dir, pid, buf, len, 0xff);
+}
+static inline int
+avc_stream_get_format_list(struct fw_unit *unit,
+			   enum avc_general_plug_dir dir, unsigned int pid,
+			   u8 *buf, unsigned int *len,
+			   unsigned int eid)
+{
+	return avc_stream_get_format(unit, dir, pid, buf, len, eid);
+}
 
 /*
- * AV/C Digital Interface Command Set General Specअगरication 4.2
+ * AV/C Digital Interface Command Set General Specification 4.2
  * (Sep 2004, 1394TA)
  */
-पूर्णांक avc_general_inquiry_sig_fmt(काष्ठा fw_unit *unit, अचिन्हित पूर्णांक rate,
-				क्रमागत avc_general_plug_dir dir,
-				अचिन्हित लघु pid);
+int avc_general_inquiry_sig_fmt(struct fw_unit *unit, unsigned int rate,
+				enum avc_general_plug_dir dir,
+				unsigned short pid);
 
-पूर्णांक snd_oxfw_stream_init_duplex(काष्ठा snd_oxfw *oxfw);
-पूर्णांक snd_oxfw_stream_reserve_duplex(काष्ठा snd_oxfw *oxfw,
-				   काष्ठा amdtp_stream *stream,
-				   अचिन्हित पूर्णांक rate, अचिन्हित पूर्णांक pcm_channels,
-				   अचिन्हित पूर्णांक frames_per_period,
-				   अचिन्हित पूर्णांक frames_per_buffer);
-पूर्णांक snd_oxfw_stream_start_duplex(काष्ठा snd_oxfw *oxfw);
-व्योम snd_oxfw_stream_stop_duplex(काष्ठा snd_oxfw *oxfw);
-व्योम snd_oxfw_stream_destroy_duplex(काष्ठा snd_oxfw *oxfw);
-व्योम snd_oxfw_stream_update_duplex(काष्ठा snd_oxfw *oxfw);
+int snd_oxfw_stream_init_duplex(struct snd_oxfw *oxfw);
+int snd_oxfw_stream_reserve_duplex(struct snd_oxfw *oxfw,
+				   struct amdtp_stream *stream,
+				   unsigned int rate, unsigned int pcm_channels,
+				   unsigned int frames_per_period,
+				   unsigned int frames_per_buffer);
+int snd_oxfw_stream_start_duplex(struct snd_oxfw *oxfw);
+void snd_oxfw_stream_stop_duplex(struct snd_oxfw *oxfw);
+void snd_oxfw_stream_destroy_duplex(struct snd_oxfw *oxfw);
+void snd_oxfw_stream_update_duplex(struct snd_oxfw *oxfw);
 
-काष्ठा snd_oxfw_stream_क्रमmation अणु
-	अचिन्हित पूर्णांक rate;
-	अचिन्हित पूर्णांक pcm;
-	अचिन्हित पूर्णांक midi;
-पूर्ण;
-पूर्णांक snd_oxfw_stream_parse_क्रमmat(u8 *क्रमmat,
-				 काष्ठा snd_oxfw_stream_क्रमmation *क्रमmation);
-पूर्णांक snd_oxfw_stream_get_current_क्रमmation(काष्ठा snd_oxfw *oxfw,
-				क्रमागत avc_general_plug_dir dir,
-				काष्ठा snd_oxfw_stream_क्रमmation *क्रमmation);
+struct snd_oxfw_stream_formation {
+	unsigned int rate;
+	unsigned int pcm;
+	unsigned int midi;
+};
+int snd_oxfw_stream_parse_format(u8 *format,
+				 struct snd_oxfw_stream_formation *formation);
+int snd_oxfw_stream_get_current_formation(struct snd_oxfw *oxfw,
+				enum avc_general_plug_dir dir,
+				struct snd_oxfw_stream_formation *formation);
 
-पूर्णांक snd_oxfw_stream_discover(काष्ठा snd_oxfw *oxfw);
+int snd_oxfw_stream_discover(struct snd_oxfw *oxfw);
 
-व्योम snd_oxfw_stream_lock_changed(काष्ठा snd_oxfw *oxfw);
-पूर्णांक snd_oxfw_stream_lock_try(काष्ठा snd_oxfw *oxfw);
-व्योम snd_oxfw_stream_lock_release(काष्ठा snd_oxfw *oxfw);
+void snd_oxfw_stream_lock_changed(struct snd_oxfw *oxfw);
+int snd_oxfw_stream_lock_try(struct snd_oxfw *oxfw);
+void snd_oxfw_stream_lock_release(struct snd_oxfw *oxfw);
 
-पूर्णांक snd_oxfw_create_pcm(काष्ठा snd_oxfw *oxfw);
+int snd_oxfw_create_pcm(struct snd_oxfw *oxfw);
 
-व्योम snd_oxfw_proc_init(काष्ठा snd_oxfw *oxfw);
+void snd_oxfw_proc_init(struct snd_oxfw *oxfw);
 
-पूर्णांक snd_oxfw_create_midi(काष्ठा snd_oxfw *oxfw);
+int snd_oxfw_create_midi(struct snd_oxfw *oxfw);
 
-पूर्णांक snd_oxfw_create_hwdep(काष्ठा snd_oxfw *oxfw);
+int snd_oxfw_create_hwdep(struct snd_oxfw *oxfw);
 
-पूर्णांक snd_oxfw_add_spkr(काष्ठा snd_oxfw *oxfw, bool is_lacie);
-पूर्णांक snd_oxfw_scs1x_add(काष्ठा snd_oxfw *oxfw);
-व्योम snd_oxfw_scs1x_update(काष्ठा snd_oxfw *oxfw);
+int snd_oxfw_add_spkr(struct snd_oxfw *oxfw, bool is_lacie);
+int snd_oxfw_scs1x_add(struct snd_oxfw *oxfw);
+void snd_oxfw_scs1x_update(struct snd_oxfw *oxfw);

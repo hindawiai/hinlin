@@ -1,65 +1,64 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 
-#अगर_अघोषित __KVM_IODEV_H__
-#घोषणा __KVM_IODEV_H__
+#ifndef __KVM_IODEV_H__
+#define __KVM_IODEV_H__
 
-#समावेश <linux/kvm_types.h>
-#समावेश <linux/त्रुटिसं.स>
+#include <linux/kvm_types.h>
+#include <linux/errno.h>
 
-काष्ठा kvm_io_device;
-काष्ठा kvm_vcpu;
+struct kvm_io_device;
+struct kvm_vcpu;
 
 /**
  * kvm_io_device_ops are called under kvm slots_lock.
- * पढ़ो and ग_लिखो handlers वापस 0 अगर the transaction has been handled,
+ * read and write handlers return 0 if the transaction has been handled,
  * or non-zero to have it passed to the next device.
  **/
-काष्ठा kvm_io_device_ops अणु
-	पूर्णांक (*पढ़ो)(काष्ठा kvm_vcpu *vcpu,
-		    काष्ठा kvm_io_device *this,
+struct kvm_io_device_ops {
+	int (*read)(struct kvm_vcpu *vcpu,
+		    struct kvm_io_device *this,
 		    gpa_t addr,
-		    पूर्णांक len,
-		    व्योम *val);
-	पूर्णांक (*ग_लिखो)(काष्ठा kvm_vcpu *vcpu,
-		     काष्ठा kvm_io_device *this,
+		    int len,
+		    void *val);
+	int (*write)(struct kvm_vcpu *vcpu,
+		     struct kvm_io_device *this,
 		     gpa_t addr,
-		     पूर्णांक len,
-		     स्थिर व्योम *val);
-	व्योम (*deकाष्ठाor)(काष्ठा kvm_io_device *this);
-पूर्ण;
+		     int len,
+		     const void *val);
+	void (*destructor)(struct kvm_io_device *this);
+};
 
 
-काष्ठा kvm_io_device अणु
-	स्थिर काष्ठा kvm_io_device_ops *ops;
-पूर्ण;
+struct kvm_io_device {
+	const struct kvm_io_device_ops *ops;
+};
 
-अटल अंतरभूत व्योम kvm_iodevice_init(काष्ठा kvm_io_device *dev,
-				     स्थिर काष्ठा kvm_io_device_ops *ops)
-अणु
+static inline void kvm_iodevice_init(struct kvm_io_device *dev,
+				     const struct kvm_io_device_ops *ops)
+{
 	dev->ops = ops;
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक kvm_iodevice_पढ़ो(काष्ठा kvm_vcpu *vcpu,
-				    काष्ठा kvm_io_device *dev, gpa_t addr,
-				    पूर्णांक l, व्योम *v)
-अणु
-	वापस dev->ops->पढ़ो ? dev->ops->पढ़ो(vcpu, dev, addr, l, v)
+static inline int kvm_iodevice_read(struct kvm_vcpu *vcpu,
+				    struct kvm_io_device *dev, gpa_t addr,
+				    int l, void *v)
+{
+	return dev->ops->read ? dev->ops->read(vcpu, dev, addr, l, v)
 				: -EOPNOTSUPP;
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक kvm_iodevice_ग_लिखो(काष्ठा kvm_vcpu *vcpu,
-				     काष्ठा kvm_io_device *dev, gpa_t addr,
-				     पूर्णांक l, स्थिर व्योम *v)
-अणु
-	वापस dev->ops->ग_लिखो ? dev->ops->ग_लिखो(vcpu, dev, addr, l, v)
+static inline int kvm_iodevice_write(struct kvm_vcpu *vcpu,
+				     struct kvm_io_device *dev, gpa_t addr,
+				     int l, const void *v)
+{
+	return dev->ops->write ? dev->ops->write(vcpu, dev, addr, l, v)
 				 : -EOPNOTSUPP;
-पूर्ण
+}
 
-अटल अंतरभूत व्योम kvm_iodevice_deकाष्ठाor(काष्ठा kvm_io_device *dev)
-अणु
-	अगर (dev->ops->deकाष्ठाor)
-		dev->ops->deकाष्ठाor(dev);
-पूर्ण
+static inline void kvm_iodevice_destructor(struct kvm_io_device *dev)
+{
+	if (dev->ops->destructor)
+		dev->ops->destructor(dev);
+}
 
-#पूर्ण_अगर /* __KVM_IODEV_H__ */
+#endif /* __KVM_IODEV_H__ */

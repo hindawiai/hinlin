@@ -1,93 +1,92 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/miscdevice.h>	/* क्रम misc_रेजिस्टर, and MISC_DYNAMIC_MINOR */
-#समावेश <linux/types.h>
-#समावेश <linux/uaccess.h>
+// SPDX-License-Identifier: GPL-2.0
+#include <linux/errno.h>
+#include <linux/miscdevice.h>	/* for misc_register, and MISC_DYNAMIC_MINOR */
+#include <linux/types.h>
+#include <linux/uaccess.h>
 
-#समावेश "speakup.h"
-#समावेश "spk_priv.h"
+#include "speakup.h"
+#include "spk_priv.h"
 
-अटल पूर्णांक misc_रेजिस्टरed;
-अटल पूर्णांक dev_खोलोed;
+static int misc_registered;
+static int dev_opened;
 
-अटल sमाप_प्रकार speakup_file_ग_लिखो(काष्ठा file *fp, स्थिर अक्षर __user *buffer,
-				  माप_प्रकार nbytes, loff_t *ppos)
-अणु
-	माप_प्रकार count = nbytes;
-	स्थिर अक्षर __user *ptr = buffer;
-	माप_प्रकार bytes;
-	अचिन्हित दीर्घ flags;
-	u_अक्षर buf[256];
+static ssize_t speakup_file_write(struct file *fp, const char __user *buffer,
+				  size_t nbytes, loff_t *ppos)
+{
+	size_t count = nbytes;
+	const char __user *ptr = buffer;
+	size_t bytes;
+	unsigned long flags;
+	u_char buf[256];
 
-	अगर (!synth)
-		वापस -ENODEV;
-	जबतक (count > 0) अणु
-		bytes = min(count, माप(buf));
-		अगर (copy_from_user(buf, ptr, bytes))
-			वापस -EFAULT;
+	if (!synth)
+		return -ENODEV;
+	while (count > 0) {
+		bytes = min(count, sizeof(buf));
+		if (copy_from_user(buf, ptr, bytes))
+			return -EFAULT;
 		count -= bytes;
 		ptr += bytes;
 		spin_lock_irqsave(&speakup_info.spinlock, flags);
-		synth_ग_लिखो(buf, bytes);
+		synth_write(buf, bytes);
 		spin_unlock_irqrestore(&speakup_info.spinlock, flags);
-	पूर्ण
-	वापस (sमाप_प्रकार)nbytes;
-पूर्ण
+	}
+	return (ssize_t)nbytes;
+}
 
-अटल sमाप_प्रकार speakup_file_पढ़ो(काष्ठा file *fp, अक्षर __user *buf,
-				 माप_प्रकार nbytes, loff_t *ppos)
-अणु
-	वापस 0;
-पूर्ण
+static ssize_t speakup_file_read(struct file *fp, char __user *buf,
+				 size_t nbytes, loff_t *ppos)
+{
+	return 0;
+}
 
-अटल पूर्णांक speakup_file_खोलो(काष्ठा inode *ip, काष्ठा file *fp)
-अणु
-	अगर (!synth)
-		वापस -ENODEV;
-	अगर (xchg(&dev_खोलोed, 1))
-		वापस -EBUSY;
-	वापस 0;
-पूर्ण
+static int speakup_file_open(struct inode *ip, struct file *fp)
+{
+	if (!synth)
+		return -ENODEV;
+	if (xchg(&dev_opened, 1))
+		return -EBUSY;
+	return 0;
+}
 
-अटल पूर्णांक speakup_file_release(काष्ठा inode *ip, काष्ठा file *fp)
-अणु
-	dev_खोलोed = 0;
-	वापस 0;
-पूर्ण
+static int speakup_file_release(struct inode *ip, struct file *fp)
+{
+	dev_opened = 0;
+	return 0;
+}
 
-अटल स्थिर काष्ठा file_operations synth_fops = अणु
-	.पढ़ो = speakup_file_पढ़ो,
-	.ग_लिखो = speakup_file_ग_लिखो,
-	.खोलो = speakup_file_खोलो,
+static const struct file_operations synth_fops = {
+	.read = speakup_file_read,
+	.write = speakup_file_write,
+	.open = speakup_file_open,
 	.release = speakup_file_release,
-पूर्ण;
+};
 
-अटल काष्ठा miscdevice synth_device = अणु
+static struct miscdevice synth_device = {
 	.minor = MISC_DYNAMIC_MINOR,
 	.name = "synth",
 	.fops = &synth_fops,
-पूर्ण;
+};
 
-व्योम speakup_रेजिस्टर_devsynth(व्योम)
-अणु
-	अगर (misc_रेजिस्टरed != 0)
-		वापस;
-/* zero it so अगर रेजिस्टर fails, deरेजिस्टर will not ref invalid ptrs */
-	अगर (misc_रेजिस्टर(&synth_device)) अणु
+void speakup_register_devsynth(void)
+{
+	if (misc_registered != 0)
+		return;
+/* zero it so if register fails, deregister will not ref invalid ptrs */
+	if (misc_register(&synth_device)) {
 		pr_warn("Couldn't initialize miscdevice /dev/synth.\n");
-	पूर्ण अन्यथा अणु
+	} else {
 		pr_info("initialized device: /dev/synth, node (MAJOR %d, MINOR %d)\n",
 			MISC_MAJOR, synth_device.minor);
-		misc_रेजिस्टरed = 1;
-	पूर्ण
-पूर्ण
+		misc_registered = 1;
+	}
+}
 
-व्योम speakup_unरेजिस्टर_devsynth(व्योम)
-अणु
-	अगर (!misc_रेजिस्टरed)
-		वापस;
+void speakup_unregister_devsynth(void)
+{
+	if (!misc_registered)
+		return;
 	pr_info("speakup: unregistering synth device /dev/synth\n");
-	misc_deरेजिस्टर(&synth_device);
-	misc_रेजिस्टरed = 0;
-पूर्ण
+	misc_deregister(&synth_device);
+	misc_registered = 0;
+}
